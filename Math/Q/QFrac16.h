@@ -35,37 +35,37 @@
 
 #include <stdint.h>
 
-#define QFRAC16_NBITS (15) 	// Q1.15, 15 fraction bits, shift mul/div by 32768
+#define QFRAC16_N_FRAC_BITS (15U) /*!< Q1.15, 15 fractional bits, shift mul/div by 32768 */
 
-typedef int16_t qfrac16_t; // Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125
-typedef int16_t qangle16_t; // [-pi, pi] signed or [0, 2pi] unsigned, angle loops.
+typedef int16_t qfrac16_t; 	/*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
+typedef int16_t qangle16_t; /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
 
-static const qfrac16_t QFRAC16_MAX = 0x7FFF;	//(32767)
-static const qfrac16_t QFRAC16_MIN = (int16_t)0x8000; 	//(-32768) //or should bound to -32767?
+static const qfrac16_t QFRAC16_MAX = 0x7FFF; /*!< (32767) */
+static const qfrac16_t QFRAC16_MIN = (int16_t) 0x8000; /*!< (-32768) */
 
-static const qfrac16_t QFRAC16_1_DIV_2 = 0x4000; 	// 16384
+static const qfrac16_t QFRAC16_1_DIV_2 = 0x4000; /*!< 16384 */
 static const qfrac16_t QFRAC16_1_DIV_4 = 0x2000;
 static const qfrac16_t QFRAC16_1_DIV_3 = 0x2AAB;
 static const qfrac16_t QFRAC16_2_DIV_3 = 0x5555;
-static const qfrac16_t QFRAC16_1_DIV_SQRT3 = 0x49E7; // 0.57735026919
+static const qfrac16_t QFRAC16_1_DIV_SQRT3 = 0x49E7; /*!< 0.57735026919f */
 static const qfrac16_t QFRAC16_SQRT3_DIV_2 = 0x6EDA;
 static const qfrac16_t QFRAC16_SQRT3_DIV_4 = 0x376D;
 static const qfrac16_t QFRAC16_SQRT2_DIV_2 = 0x5A82;
-static const qfrac16_t QFRAC16_SQRT3_MOD_1 = 0x5DB4; // 0.73205080756
+static const qfrac16_t QFRAC16_SQRT3_MOD_1 = 0x5DB4; /*!< 0.73205080756f */
 
-static const qangle16_t QANGLE16_90 = 0x4000; // 16384
-static const qangle16_t QANGLE16_180 = (int16_t)0x8000; // 32768, -32768, == 180, -180
-static const qangle16_t QANGLE16_270 = (int16_t)0xC000; // 49152, -16384, == -90
+static const qangle16_t QANGLE16_90 = 0x4000; /*!< 16384 */
+static const qangle16_t QANGLE16_180 = (int16_t) 0x8000; /*!< 32768, -32768, 180 == -180 */
+static const qangle16_t QANGLE16_270 = (int16_t) 0xC000; /*!< 49152, -16384, 270 == -90 */
 
 #define SINE_90_TABLE_ENTRIES 	256
-#define SINE_90_TABLE_LSB 		6	// Insignificant bits
+#define SINE_90_TABLE_LSB 		6	/*!< Insignificant bits, shifted away*/
 
 /*! Resolution: 1024 steps per revolution */
 extern const qfrac16_t QFRAC16_SINE_90_TABLE[SINE_90_TABLE_ENTRIES];
 
 static inline qfrac16_t qfrac16(int16_t num, int32_t max)
 {
-	return (qfrac16_t) (((int32_t)num << QFRAC16_NBITS) / max);
+	return (qfrac16_t) (((int32_t)num << QFRAC16_N_FRAC_BITS) / max);
 }
 
 static inline qfrac16_t qfrac16_convert(int16_t num, int32_t max)
@@ -90,24 +90,24 @@ static inline qfrac16_t qfrac16_sat(int32_t qfrac) //sat to -32767?
 	return sat;
 }
 
-/*
- * returns [-32767, 32768] as int32_t
- *
- * 0x8000 * 0x8000 returns as positive int32_t 0x00008000
- * 0x8000 cannot be cast from int32_t to int16_t
- * must call sat to convert to proper 16 bit value
- *
- * (frac, frac) 	returns frac value, 0x8000 => over saturated 1
- * (integer, frac) 	returns integer value, 0x8000 => positive 32768
- *
+/*!
+	@brief Unsaturated multiply
+	@return [-32767, 32768] as int32_t
+	qfrac16_mul(frac, frac) 	returns frac value, 0x8000 -> over saturated 1
+	qfrac16_mul(integer, frac) 	returns integer value, 0x8000 -> positive 32768
+
+	0x8000 casts from -32768 int16_t to -32768 int32_t correctly
+	0x8000 [-32768] * 0x8000 [-32768] returns as positive int32_t 0x00008000
+	0x8000 casts from 32768 int32_t to -32768 int16_t incorrectly
+	must call sat to convert to correct int16_t value
  */
 static inline int32_t qfrac16_mul(int16_t factor, qfrac16_t frac)
 {
-	return (((int32_t)factor * (int32_t)frac) >> QFRAC16_NBITS);
+	return (((int32_t)factor * (int32_t)frac) >> QFRAC16_N_FRAC_BITS);
 }
 
-/*
- * returns [-32767, 32767] as int16_t
+/*!
+	@return [-32767, 32767] as int16_t
  */
 static inline int16_t qfrac16_mul_sat(int16_t factor, qfrac16_t frac)
 {
@@ -116,26 +116,23 @@ static inline int16_t qfrac16_mul_sat(int16_t factor, qfrac16_t frac)
 	if (product == 32768) product = 32767;
 
 	return product;
-	//return qfrac16_sat(qfrac16_mul(factor, frac));
 }
 
-/*
- * return [c0000000, 3fff8000]
- * return [-1073741824, 1073709056]
- *
- * (frac, frac) 	returns frac
- * 					when value when dividend >= divisor, over saturated, 0x8000 => over saturated 1
- * 					when dividend < divisor, within 16-bit range
- *
- * (integer, frac) 	returns integer value
+/*!
+	@return [-1073741824, 1073709056] as int32_t
+	@return [c0000000, 3fff8000]
+	(frac, frac) 		returns frac value
+							when dividend >= divisor, over saturated qfrac16_t. 0x8000 -> over saturated 1
+							when dividend < divisor, within qfrac16_t range
+	(integer, frac) 	returns integer value
 */
 static inline int32_t qfrac16_div(int16_t dividend, qfrac16_t divisor)
 {
-	return (((int32_t)dividend << QFRAC16_NBITS) / (int32_t)divisor);
+	return (((int32_t)dividend << QFRAC16_N_FRAC_BITS) / (int32_t)divisor);
 }
 
-/*
- * returns [-32768, 32767] as int16_t
+/*!
+	@return [-32768, 32767] as int16_t
  */
 static inline int16_t qfrac16_div_sat(int16_t dividend, qfrac16_t divisor)
 {
@@ -254,9 +251,9 @@ static inline void qfrac16_vector(qfrac16_t * const p_cos, qfrac16_t * const p_s
 
 
 
-qfrac16_t qfrac16_sqrt(qfrac16_t x)
+static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
 {
-	return q_sqrt((int32_t)x << QFRAC16_NBITS);
+	return q_sqrt((int32_t)x << QFRAC16_N_FRAC_BITS);
 }
 
 //qfrac16_t qfrac16_sqrt(qfrac16_t x)

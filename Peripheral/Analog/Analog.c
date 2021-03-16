@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,17 +19,18 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
 	@file 	Analog.c
 	@author FireSoucery
-	@brief 	ADC wrapper module. Implements run time configurable settings.
-    		Persistent setting delegated to outer module with scope of hardware.
+	@brief 	Analog module conventional function definitions
 	@version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #include "Analog.h"
+#include "HAL.h"
+
 #include "Private.h"
 #include "Config.h"
 
@@ -39,28 +40,35 @@
 void Analog_Init
 (
 	Analog_T * p_analog,
-	volatile void const * p_adcMap,
+	void * p_adcMap,
 	uint8_t nAdc,
-	uint8_t mHwBuffer,
+	uint8_t mHwBufferLength,
+	uint8_t virtualChannelCount,
 	const adcpin_t * p_virtualChannelMapPinsBuffer,
 	volatile analog_t * p_virtualChannelMapResultsBuffer,
-	uint8_t virtualChannelCount
+	volatile uint8_t * p_activeAdcChannelIndexesBuffer, /* length of N ADC */
+	void * p_onCompleteUserData
 )
 {
 	if (nAdc > 1)
 	{
-		p_analog->pp_AdcRegisterMaps = (volatile void (* const (*))) p_adcMap;
+		p_analog->pp_Adcs = (HAL_ADC_T (* const (*))) p_adcMap;
 	}
+	else
 	{
-		p_analog->p_AdcRegisterMap = (volatile void *) p_adcMap;
+		p_analog->p_Adc = (HAL_ADC_T *) p_adcMap;
 	}
 
-	p_analog->N_Adc 		= nAdc;
-	p_analog->M_HwBuffer 	= mHwBuffer;
+	p_analog->AdcN_Count 			= nAdc;
+	p_analog->AdcM_LengthBuffer 	= mHwBufferLength;
 
-	p_analog->p_VirtualChannelMapPins 		= p_virtualChannelMapPinsBuffer;
-	p_analog->p_VirtualChannelMapResults 	= p_virtualChannelMapResultsBuffer;
-	p_analog->VirtualChannelMapLength		= virtualChannelCount;
+	p_analog->p_MapChannelPins 		= p_virtualChannelMapPinsBuffer;
+	p_analog->p_MapChannelResults 	= p_virtualChannelMapResultsBuffer;
+	p_analog->ChannelCount			= virtualChannelCount;
+
+	p_analog->p_OnCompleteUserData = p_onCompleteUserData;
+
+	p_analog->p_MapChannelAdcs = 0;
 }
 
 /*!
@@ -74,14 +82,14 @@ void Analog_ActivateConversion(Analog_T * p_analog, Analog_Conversion_T * p_conv
 	/* Convert from union to pointer for uniform processing */
 	if (p_conversion->ChannelCount > 1)
 	{
-		p_virtualChannels = &p_conversion->p_VirtualChannels[0];
+		p_virtualChannels = p_conversion->p_VirtualChannels;
 	}
 	else
 	{
 		p_virtualChannels = &p_conversion->VirtualChannel;
 	}
 
-	activateChannelCount = GetActivateChannelCount(p_analog, p_conversion->ChannelCount);
+	activateChannelCount = CalcActivateChannelCount(p_analog, p_conversion->ChannelCount);
 
 	/*
 	 * Single threaded calling of Activate.
@@ -91,7 +99,7 @@ void Analog_ActivateConversion(Analog_T * p_analog, Analog_Conversion_T * p_conv
 	 * In single threaded calling of Activate and calling thread priority is higher than ADC ISR, Activate will run to completion, overwriting the active conversion,
 	 * Disable IRQ is not needed, however ADC ISR will still need Critical_Enter
 	 */
-	ADC_DisableInterrupt(p_analog);
+	Analog_DisableInterrupt(p_analog);
 
 	/*
 	 * Multithreaded calling of Activate.
@@ -100,7 +108,7 @@ void Analog_ActivateConversion(Analog_T * p_analog, Analog_Conversion_T * p_conv
 	 * Higher priority thread may overwrite Conversion setup data before ADC ISR returns.
 	 * e.g. must be implemented if calling from inside interrupts and main.
 	 */
-#if !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE) /* && (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_OS_HAL)) */
+#if  (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_OS_HAL)) && !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
 	Critical_Enter();
 #endif
 
@@ -109,7 +117,16 @@ void Analog_ActivateConversion(Analog_T * p_analog, Analog_Conversion_T * p_conv
 	//	p_analog->ActiveRemainder 	= p_analog->ActiveTotal % adcCount; /* ideally uses the result of the division. */
 
 	p_analog->p_ActiveConversion = p_conversion;
-	p_analog->ActiveConversionChannelIndex = 0;
+	p_analog->ActiveConversionChannelIndex = 0U;
+
+#ifdef CONFIG_ANALOG_CHANNEL_FIXED
+	for (uint8_t iAdc; iAdc < p_analog->AdcN_Count; iAdc++)
+	{
+		p_analog->p_ActiveConversionChannelIndexes[iAdc] = 0;
+	}
+#endif
+	for (uint8_t index = 0U; (index < p_analog->AdcM_LengthBuffer) && (index < p_analog->p_ActiveConversion->ChannelCount); index++) //iChannel + p_analog->ActiveConversionIteration*p_analog->ADC_M_LengthBuffer
+	{
 
 	if (p_conversion->Config.UseConfig == 1U)
 	{
@@ -118,9 +135,10 @@ void Analog_ActivateConversion(Analog_T * p_analog, Analog_Conversion_T * p_conv
 
 	ActivateConversion(p_analog, p_virtualChannels, activateChannelCount);
 
-#if !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE) /* && (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_OS_HAL)) */
+#if (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_OS_HAL)) && !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
 	Critical_Exit();
 #endif
+	}
 }
 
 
@@ -131,9 +149,9 @@ analog_t Analog_ReadChannel(const Analog_T * p_analog, Analog_VirtualChannel_T c
 {
 	analog_t result;
 
-	if (channel < p_analog->VirtualChannelMapLength)
+	if (channel < p_analog->ChannelCount)
 	{
-		result = p_analog->p_VirtualChannelMapResults[(uint8_t)channel];
+		result = p_analog->p_MapChannelResults[(uint8_t)channel];
 	}
 	else
 	{
@@ -154,9 +172,9 @@ volatile analog_t * Analog_GetPtrChannelResult(const Analog_T * p_analog, Analog
 {
 	volatile analog_t * p_result;
 
-	if (channel < p_analog->VirtualChannelMapLength)
+	if (channel < p_analog->ChannelCount)
 	{
-		p_result = &p_analog->p_VirtualChannelMapResults[(uint8_t)channel];
+		p_result = &p_analog->p_MapChannelResults[(uint8_t)channel];
 	}
 	else
 	{
@@ -171,7 +189,7 @@ volatile analog_t * Analog_GetPtrChannelResult(const Analog_T * p_analog, Analog
  */
 void Analog_ResetChannelResult(Analog_T * p_analog, Analog_VirtualChannel_T channel)
 {
-	p_analog->p_VirtualChannelMapResults[channel] = 0U;
+	p_analog->p_MapChannelResults[channel] = 0U;
 }
 
 /*!
@@ -180,26 +198,69 @@ void Analog_ResetChannelResult(Analog_T * p_analog, Analog_VirtualChannel_T chan
 void Analog_Dectivate(const Analog_T * p_analog)
 {
 #if  defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-	ADC_Dectivate(p_analog->p_AdcRegisterMap);
+	ADC_Dectivate(p_analog->p_Adc);
 #elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	for (uint8_t iAdc = 0U; iAdc < p_analog->N_Adc; iAdc++)
+	for (uint8_t iAdc = 0U; iAdc < p_analog->AdcN_Count; iAdc++)
 	{
-		ADC_Dectivate(p_analog->pp_AdcRegisterMaps[iAdc]);
+		HAL_ADC_Dectivate(p_analog->pp_Adcs[iAdc]);
 	}
 #endif
+}
+
+void Analog_DisableInterrupt(const Analog_T * p_analog)
+{
+#if  defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
+	HAL_ADC_DisableInterrupt(p_analog->p_Adc);
+#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+	for (uint8_t iAdc = 0U; iAdc < p_analog->AdcN_Count; iAdc++)
+	{
+		HAL_ADC_DisableInterrupt(p_analog->pp_Adcs[iAdc]);
+	}
+#endif
+}
+
+static inline uint32_t ReadRequest(const Analog_T * p_analog, const HAL_ADC_T * p_adc, Analog_Request_T request)
+{
+	uint32_t response;
+
+	switch (request)
+	{
+	case ANALOG_REQUEST_REG_CONVERSION_COMPLETE:
+		response = (uint32_t) HAL_ADC_ReadConversionCompleteFlag(p_adc);
+		break;
+	default:
+		response = 0;
+		break;
+	}
+
+	return response;
+}
+
+static inline void WriteConfig(Analog_T * p_analog, HAL_ADC_T * p_adc, Analog_Config_T config)
+{
+	p_analog->ActiveConfig = config;
+
+	if (config.UseInterrrupt)
+	{
+		HAL_ADC_EnableInterrupt(p_adc);
+	}
+	else
+	{
+		HAL_ADC_DisableInterrupt(p_adc);
+	}
 }
 
 /*!
 	 @brief
  */
-void Analog_WriteConfig(const Analog_T * p_analog, Analog_Config_T config)
+void Analog_WriteConfig(Analog_T * p_analog, Analog_Config_T config)
 {
 #if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-	ADC_WriteConfig(p_analog->p_AdcRegisterMap, config);
+	WriteConfig(p_analog,  p_analog->p_Adc, config);
 #elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	for (uint8_t iAdc = 0U; iAdc < p_analog->N_Adc; iAdc++)
+	for (uint8_t iAdc = 0U; iAdc < p_analog->AdcN_Count; iAdc++)
 	{
-		ADC_WriteConfig(p_analog->pp_AdcRegisterMaps[iAdc], config);
+		WriteConfig(p_analog, p_analog->pp_Adcs[iAdc], config);
 	}
 #endif
 }

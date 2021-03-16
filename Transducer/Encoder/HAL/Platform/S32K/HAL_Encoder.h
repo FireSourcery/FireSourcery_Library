@@ -22,19 +22,58 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.h
+	@file 	HAL_Encoder.h
 	@author FireSoucery
-	@brief 	Peripheral module HAL preprocessor configuration options and defaults.
+	@brief 	Encoder Timer Counter HAL for S32K
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_PERIPHERAL_HAL_H
-#define CONFIG_PERIPHERAL_HAL_H
+#ifndef HAL_ENCODER_PLATFORM_H
+#define HAL_ENCODER_PLATFORM_H
 
-#ifdef CONFIG_PERIPHERAL_HAL_S32K
+#include "External/S32K142/include/S32K142.h"
 
-#elif defined(CONFIG_PERIPHERAL_HAL_USER_DEFINED)
+#include <stdint.h>
+#include <stdbool.h>
 
-#endif
+typedef struct
+{
+	FTM_Type * p_FtmBase;
+	uint8_t FtmChannel;
+
+	GPIO_Type * p_GpioBasePhaseA;
+	uint32_t GpioPinMaskPhaseA;
+
+	GPIO_Type * p_GpioBasePhaseB;
+	uint32_t GpioPinMaskPhaseB;
+} HAL_Encoder_T;
+
+
+static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder)
+{
+	return p_encoder->p_FtmBase->CONTROLS[p_encoder->FtmChannel].CnV;
+}
+
+static inline bool HAL_Encoder_ReadPhaseA(const HAL_Encoder_T * p_encoder)
+{
+	return p_encoder->p_GpioBasePhaseA->PDIR & p_encoder->GpioPinMaskPhaseA;
+}
+
+static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder)
+{
+	return p_encoder->p_GpioBasePhaseB->PDIR & p_encoder->GpioPinMaskPhaseB;
+}
+
+static inline bool HAL_Encoder_ReadDirection(const HAL_Encoder_T * p_encoder)
+{
+	if((HAL_Encoder_ReadPhaseA(p_encoder) == true) && (HAL_Encoder_ReadPhaseB(p_encoder) == false))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 
 #endif

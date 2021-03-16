@@ -24,25 +24,53 @@
 /*!
     @file 	Config.h
     @author FireSoucery
-    @brief  Critical module preprocessor configuration options and defaults
+    @brief  Motor module preprocessor configuration options and defaults
     @version V0
 */
 /**************************************************************************/
-#ifndef CONFIG_CRITICAL_H
-#define CONFIG_CRITICAL_H
+#ifndef CONFIG_MOTOR_H
+#define CONFIG_MOTOR_H
 
-#ifdef CONFIG_CRITICAL_MCU_ARM
+#ifdef CONFIG_MOTOR_HAL_S32K
 
-#elif defined(CONFIG_CRITICAL_USER_DEFINED)
-/*
- * User provide
- * #define DISABLE_INTERRUPTS() {...}
- * #define ENABLE_INTERRUPTS() {...}
- */
-#elif defined(CONFIG_CRITICAL_DISABLED)
+#elif defined(CONFIG_MOTOR_HAL_USER_DEFINED)
 
 #else
-	#define CONFIG_CRITICAL_DISABLED
+	#define CONFIG_MOTOR_HAL_USER_DEFINED
 #endif
 
+#ifdef CONFIG_PHASE_HAL_PWM_FUNCTIONS_KLS_S32K
+
+#elif defined(CONFIG_PHASE_HAL_PWM_FUNCTIONS_S32K)
+
+#elif defined(CONFIG_PHASE_HAL_PWM_FUNCTIONS_USER_DEFINED)
+
+#else
+	#define CONFIG_PHASE_HAL_PWM_FUNCTIONS_USER_DEFINED
 #endif
+
+
+/*
+ * Motor Module
+ */
+#ifdef CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
+
+
+#elif defined(CONFIG_MOTOR_LOAD_PARAMETERS_FLASH)
+
+#else
+	#define CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
+#endif
+
+#ifdef CONFIG_MOTOR_CONTROL_FREQ
+
+#else
+	#define CONFIG_MOTOR_CONTROL_FREQ (20000U)
+#endif
+
+
+
+#endif
+
+
+

@@ -22,27 +22,57 @@
 /**************************************************************************/
 /**************************************************************************/
 /*!
-    @file 	Config.h
+    @file 	Motor_IO.h
     @author FireSoucery
-    @brief  Critical module preprocessor configuration options and defaults
+    @brief  Motor module functions must be placed into corresponding user app threads
+    		Most outer functions to call from MCU app
     @version V0
 */
 /**************************************************************************/
-#ifndef CONFIG_CRITICAL_H
-#define CONFIG_CRITICAL_H
+#include "Motor.h"
 
-#ifdef CONFIG_CRITICAL_MCU_ARM
+#include "Motor_FOC.h"
 
-#elif defined(CONFIG_CRITICAL_USER_DEFINED)
+#include "Peripheral/Analog/Analog_IO.h"
+
+#include "OS/StateMachine/StateMachine.h"
+
+
 /*
- * User provide
- * #define DISABLE_INTERRUPTS() {...}
- * #define ENABLE_INTERRUPTS() {...}
+    Default 50us
  */
-#elif defined(CONFIG_CRITICAL_DISABLED)
+static inline void Motor_PWM_Thread(Motor_T * p_motor)
+{
+	/*	All FOC Modes start all ADC measurements */
+//	Analog_StartConversion(&p_motor->Analog, &FOC_SAMPLE_GROUP);
 
-#else
-	#define CONFIG_CRITICAL_DISABLED
-#endif
+	//timer in pwm, machine in adc
+	//adc returns irregular times between modes, must check addtional flags
+	//machine in pwm, proc foc conversion to pwm in adc
+	//check foc proc flag, or set in analog conversion object
+	StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
 
-#endif
+	p_motor->Timer_ControlFreq++;
+}
+
+
+/*
+	ADC on complete. Possibly multiple per 1 PWM
+ */
+static inline void Motor_ADC_Thread(Motor_T * p_motor)
+{
+	Analog_CaptureResults_IO(&p_motor->Analog);
+}
+
+static inline void Motor_Timer_Thread(Motor_T * p_motor) //1ms
+{
+	//Motor_SpeedLoop();
+	//Monitor
+}
+
+
+static inline void Motor_Main_Thread(Motor_T * p_motor)
+{
+	//UI
+	//Motor_SetRamp(user input)
+}

@@ -1,4 +1,4 @@
-/******************************************************************************/
+/**************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,22 +19,36 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/******************************************************************************/
-/******************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
 /*!
-	@file 	Config.h
-	@author FireSoucery
-	@brief 	Peripheral module HAL preprocessor configuration options and defaults.
-	@version V0
+    @file 	HAL.h
+    @author FireSoucery
+    @brief  Motor module HAL
+    @version V0
 */
-/******************************************************************************/
-#ifndef CONFIG_PERIPHERAL_HAL_H
-#define CONFIG_PERIPHERAL_HAL_H
+/**************************************************************************/
+#ifndef HAL_MOTOR_H
+#define HAL_MOTOR_H
 
-#ifdef CONFIG_PERIPHERAL_HAL_S32K
+#include "Config.h"
 
-#elif defined(CONFIG_PERIPHERAL_HAL_USER_DEFINED)
+
+#ifdef CONFIG_MOTOR_HAL_LIBRARY_S32K
+
+	#include "Peripheral/HAL/Platform/S32K/HAL_Pin.h"
+
+#elif defined(CONFIG_MOTOR_HAL_USER_DEFINED)
+
+typedef const struct
+{
+	void * p_PinBase;
+	uint32_t PinMask;
+} HAL_Pin_T;
+
+extern inline void HAL_Pin_WriteState(const HAL_Pin_T * p_pin, bool isOn);
+extern inline bool HAL_Pin_ReadState(const HAL_Pin_T * p_pin);
 
 #endif
 
-#endif
+#endif /* IMPORT_MOTOR_H */

@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,19 +19,20 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
 	@file 	Analog_IO.h
 	@author FireSoucery
 	@brief 	Analog module functions must be placed into corresponding user app threads
 	@version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef ANALOG_IO_H
 #define ANALOG_IO_H
 
 #include "Analog.h"
+#include "HAL.h"
 #include "Private.h"
 
 #include <stdint.h>
@@ -45,10 +46,10 @@
 
 	 Compiler may optimize when arguments are constant literals
  */
-static inline void CaptureResults_CompilerOptimize
+static inline void CaptureResults_NDemux
 (
-	Analog_T * p_analog,
-	volatile void const (* const (* pp_adcMaps)),
+	const Analog_T * p_analog,
+	HAL_ADC_T (* const (* pp_adcMaps)),
 	uint8_t nAdc,
 	const Analog_VirtualChannel_T * p_virtualChannels,
 	uint8_t activeChannelCount
@@ -66,11 +67,28 @@ static inline void CaptureResults_CompilerOptimize
 			if (iChannel + iAdc < activeChannelCount)
 			{
 				iVirtualChannel = p_virtualChannels[iChannel + iAdc];
-				p_analog->p_VirtualChannelMapResults[iVirtualChannel] = ADC_ReadResult(pp_adcMaps[iAdc], iHwBuffer);
+				p_analog->p_MapChannelResults[iVirtualChannel] = HAL_ADC_ReadResult(pp_adcMaps[iAdc]);
 			}
 		}
 		iHwBuffer++;
 	}
+}
+
+
+static inline void CaptureResults_Fixed
+(
+	const Analog_T * p_analog,
+	HAL_ADC_T (* const (* pp_adcMaps)),
+	uint8_t nAdc,
+	const Analog_VirtualChannel_T * p_virtualChannels,
+	uint8_t activeChannelCount
+)
+{
+
+
+
+
+
 }
 
 /*!
@@ -85,6 +103,12 @@ static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 	bool allChannelsComplete = false;
 	uint8_t remainingChannelCount;
 	uint8_t activateChannelCount;
+
+#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER) && !defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
+	uint8_t savedActiveConversionChannelIndex = p_analog->ActiveConversionChannelIndex;
+	uint8_t savedActiveChannelCount = p_analog->ActiveChannelCount;
+#endif
+
 	//ADC_ClearCompleteFlag(p_analog->p_AdcRegisterMap); //if applicable
 
 	/*
@@ -110,19 +134,21 @@ static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 
 #ifdef CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
 	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
-	CaptureResults_CompilerOptimize(p_analog, &p_analog->p_AdcRegisterMap, 1, 					p_virtualChannels, 1);
+	CaptureResults_NDemux(p_analog, &p_analog->p_Adc, 									1, 					p_virtualChannels, 1);
 #elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
 	/* Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel is in the same buffer */
-	CaptureResults_CompilerOptimize(p_analog, &p_analog->p_AdcRegisterMap, 1, 					p_virtualChannels, p_analog->ActiveChannelCount);
+	CaptureResults_NDemux(p_analog, &p_analog->p_Adc, 									1, 					p_virtualChannels, p_analog->ActiveChannelCount);
 #elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER)
 	/* Case N ADC 1 Buffer: ActiveChannelCount <= N_ADC Count */
-	CaptureResults_CompilerOptimize(p_analog, (const volatile void * const*)p_analog->pp_AdcRegisterMaps, p_analog->N_Adc, 	p_virtualChannels, p_analog->ActiveChannelCount);
+	CaptureResults_NDemux(p_analog,  p_analog->pp_Adcs, 	p_analog->AdcN_Count, 	p_virtualChannels, p_analog->ActiveChannelCount);
 #elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
 	/* Case N ADC M Buffer: ActiveChannelCount <= N_ADC Count * M_Buffer Length */
-	CaptureResults_CompilerOptimize(p_analog, (const volatile void * const*)p_analog->pp_AdcRegisterMaps, p_analog->N_Adc, 	p_virtualChannels, p_analog->ActiveChannelCount);
+	CaptureResults_NDemux(p_analog,  p_analog->pp_Adcs, 	p_analog->AdcN_Count, 	p_virtualChannels, p_analog->ActiveChannelCount);
 #endif
 
-	/* Start next channels */
+	/*
+	 * Start next group of channels in selected p_ActiveConversion, same conversion, update index
+	 */
 #ifdef CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
 	p_analog->ActiveConversionChannelIndex++;
 #elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER) && !defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
@@ -131,14 +157,13 @@ static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 
 	remainingChannelCount = p_analog->p_ActiveConversion->ChannelCount - p_analog->ActiveConversionChannelIndex;
 
-	/* Start next group of channels in selected p_ActiveConversion, same conversion, updated index */
 	if (remainingChannelCount > 0)
 	{
 		/* p_analog->p_ActiveConversion->ChannelCount > 1, past this point, safe to dereference p_virtualChannels[index>0] */
 		p_virtualChannels = &p_analog->p_ActiveConversion->p_VirtualChannels[p_analog->ActiveConversionChannelIndex];
 
 		/* For where p_analog->ActiveAdcChannelCount is always == 1, when using generalized case over single register case -> 1 excess runtime comparison to determine next active channel count*/
-		activateChannelCount = GetActivateChannelCount(p_analog, remainingChannelCount);
+		activateChannelCount = CalcActivateChannelCount(p_analog, remainingChannelCount);
 		ActivateConversion(p_analog, p_virtualChannels, activateChannelCount);
 	}
 	else
@@ -152,31 +177,60 @@ static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 	}
 
 	/*	Critical_Exit(); */
+	/*
+	 * if the next conversion completes before OnComplete functions return, ADC ISR should queue, but cannot(should not) interrupt the on going ISR
+	 */
+
+//	if (p_analog->p_ActiveConversion->OnAdcComplete != 0)
+//	{
+//		p_analog->p_ActiveConversion->OnAdcComplete(p_analog);
+//	}
+
+
+#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER) && !defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
+//	for (; savedActiveConversionChannelIndex < savedActiveChannelCount; savedActiveConversionChannelIndex++)
+//	{
+	while (savedActiveConversionChannelIndex < savedActiveChannelCount)
+	{
+		if ((p_analog->p_ActiveConversion != 0) && (p_analog->p_ActiveConversion->p_OnCompleteChannels[savedActiveConversionChannelIndex] != 0))
+		{
+			p_analog->p_ActiveConversion->p_OnCompleteChannels[savedActiveConversionChannelIndex](p_analog->p_OnCompleteUserData);
+		}
+		savedActiveConversionChannelIndex++;
+	}
+//	}
+#endif
 
 	if (allChannelsComplete)
 	{
-		if (p_analog->p_ActiveConversion->OnConversionComplete != 0)
+		if (p_analog->p_ActiveConversion->OnCompleteConversion != 0)
 		{
-			p_analog->p_ActiveConversion->OnConversionComplete(p_analog);
+			p_analog->p_ActiveConversion->OnCompleteConversion(p_analog->p_OnCompleteUserData);
 		}
 	}
-
-	if (p_analog->p_ActiveConversion->OnAdcComplete != 0)
-	{
-		p_analog->p_ActiveConversion->OnAdcComplete(p_analog);
-	}
 }
+
+//static inline void Analog_ActivateNextConversion_IO(Analog_T * p_analog)
+//{
+//	const Analog_VirtualChannel_T * p_virtualChannels;
+//	bool allChannelsComplete = false;
+//	uint8_t remainingChannelCount;
+//	uint8_t activateChannelCount;
+//
+//
+//}
+
 
 /*!
 	@brief	Compiler may optimize when arguments are constant literals
  */
-static inline void PollResults_CompilerOptimize(Analog_T * p_analog, const volatile void (* const (* pp_adcMaps)), uint8_t nAdc)
+static inline void PollResults(Analog_T * p_analog, HAL_ADC_T (* const (* pp_adcMaps)), uint8_t nAdc)
 {
 	bool capture;
 
 	for (uint8_t iAdc = 0; iAdc < nAdc; iAdc++)
 	{
-		capture = ADC_ReadConversionCompleteFlag(pp_adcMaps[iAdc]);
+		capture = HAL_ADC_ReadConversionCompleteFlag(pp_adcMaps[iAdc]);
 
 		if (capture == false)
 		{
@@ -195,11 +249,10 @@ static inline void PollResults_CompilerOptimize(Analog_T * p_analog, const volat
  */
 static inline void Analog_PollResults_IO(Analog_T * p_analog)
 {
-
 #if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-	PollResults_CompilerOptimize(p_analog, &p_analog->p_AdcRegisterMap, 1);
+	PollResults(p_analog, &p_analog->p_Adc , 1);
 #elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	PollResults_CompilerOptimize(p_analog, (const volatile void * const*)p_analog->pp_AdcRegisterMaps, p_analog->N_Adc);
+	PollResults(p_analog,  p_analog->pp_Adcs, 	p_analog->AdcN_Count);
 #endif
 }
 

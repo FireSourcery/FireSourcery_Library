@@ -22,19 +22,36 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.h
+	@file 	HAL.h
 	@author FireSoucery
-	@brief 	Peripheral module HAL preprocessor configuration options and defaults.
+	@brief 	Phase HAL import functions
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_PERIPHERAL_HAL_H
-#define CONFIG_PERIPHERAL_HAL_H
+#ifndef HAL_PHASE_H
+#define HAL_PHASE_H
 
-#ifdef CONFIG_PERIPHERAL_HAL_S32K
+#include "Motor/Config.h" /* module shared default config */
 
-#elif defined(CONFIG_PERIPHERAL_HAL_USER_DEFINED)
+#if defined(CONFIG_PHASE_HAL_PWM_FUNCTIONS_S32K)
+	#include "Motor/Transducer/HAL/S32K/PWM.h"
+#elif defined(CONFIG_PHASE_HAL_PWM_FUNCTIONS_KLS_S32K)
+	#include "Motor/Transducer/HAL/KLS_S32K/PWM.h"
+#elif defined(CONFIG_PHASE_HAL_PWM_FUNCTIONS_USER_DEFINED)
+
+	typedef struct
+	{
+		PWMTimer_T * p_PwmTimer;
+		uint8_t PwmTimerChannel;
+	} HAL_PWM_T;
+
+	extern inline void HAL_PWM_WritePeriod(const HAL_PWM_T * p_pwm, uint32_t pwmPeroid);
+
+	/*	true is inverted, false is noninverted	 */
+	extern inline void HAL_PWM_WriteInvertPolarity(const HAL_PWM_T * p_pwm, bool isInvertedPolarity);
+	extern inline void HAL_PWM_WriteState(const HAL_PWM_T * p_pwm, bool isOn);
 
 #endif
+
 
 #endif

@@ -22,19 +22,40 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.h
+	@file 	StateMachine.c
 	@author FireSoucery
-	@brief 	Peripheral module HAL preprocessor configuration options and defaults.
+	@brief 	StateMachine module conventional function definitions
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_PERIPHERAL_HAL_H
-#define CONFIG_PERIPHERAL_HAL_H
+#include "StateMachine.h"
 
-#ifdef CONFIG_PERIPHERAL_HAL_S32K
+#include <stdint.h>
 
-#elif defined(CONFIG_PERIPHERAL_HAL_USER_DEFINED)
+/*
+ * States const strut should be compile time def
+ */
 
-#endif
+void StateMachine_Init
+(
+	StateMachine_T * const p_stateMachine,
+	const State_T * const p_stateInitial,
+	const uint8_t transitionInputCount,
+	const uint8_t selfTransitionInputCount,
+	const void * const p_UserData
+)
+{
+	p_stateMachine->p_StateInitial 			= p_stateInitial;
+	p_stateMachine->p_StateActive 			= p_stateInitial;
+	p_stateMachine->TransitionInputCount 	= transitionInputCount;
+	p_stateMachine->TotalInputCount 		= transitionInputCount + selfTransitionInputCount;
+	p_stateMachine->p_UserData 				= p_UserData;
+	p_stateMachine->Input 					= 0xff;
+}
 
-#endif
+void StateMachine_Reset(StateMachine_T * const p_stateMachine)
+{
+	p_stateMachine->p_StateActive 			= p_stateMachine->p_StateInitial;
+	p_stateMachine->Input 					= 0xff;
+}
+

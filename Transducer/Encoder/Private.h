@@ -22,19 +22,17 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.h
-	@author FireSoucery
-	@brief 	Peripheral module HAL preprocessor configuration options and defaults.
+	@file  	Private.h
+	@author FireSourcery
+	@brief 	Encoder module private functions
 	@version V0
-*/
+ */
 /******************************************************************************/
-#ifndef CONFIG_PERIPHERAL_HAL_H
-#define CONFIG_PERIPHERAL_HAL_H
+#ifndef PRIVATE_ENCODER_H
+#define PRIVATE_ENCODER_H
 
-#ifdef CONFIG_PERIPHERAL_HAL_S32K
+#include <stdint.h>
 
-#elif defined(CONFIG_PERIPHERAL_HAL_USER_DEFINED)
 
-#endif
 
 #endif

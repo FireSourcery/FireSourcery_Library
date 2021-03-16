@@ -22,27 +22,25 @@
 /**************************************************************************/
 /**************************************************************************/
 /*!
-    @file 	Config.h
+    @file 	Default.h
     @author FireSoucery
-    @brief  Critical module preprocessor configuration options and defaults
+    @brief  Motor default fallback parameters
     @version V0
 */
 /**************************************************************************/
-#ifndef CONFIG_CRITICAL_H
-#define CONFIG_CRITICAL_H
+#ifndef DEFAULT_MOTOR_H
+#define DEFAULT_MOTOR_H
 
-#ifdef CONFIG_CRITICAL_MCU_ARM
-
-#elif defined(CONFIG_CRITICAL_USER_DEFINED)
 /*
- * User provide
- * #define DISABLE_INTERRUPTS() {...}
- * #define ENABLE_INTERRUPTS() {...}
+ * Default value. If not load from flash. Run time adjustable
  */
-#elif defined(CONFIG_CRITICAL_DISABLED)
 
-#else
-	#define CONFIG_CRITICAL_DISABLED
-#endif
+#define MOTOR_PARAMETER_DEFAULT_FOC_OPEN_LOOP_VQ 3276 /* 10 percent */
+
+#define MOTOR_PARAMETER_DEFAULT_FOC_KP_FACTOR 	148 //qangle16, milliseconds
+#define MOTOR_PARAMETER_DEFAULT_FOC_KP_DIVISOR 	1
+
+#define MOTOR_PARAMETER_DEFAULT_FOC_KI_FACTOR 	1 //qangle16, milliseconds
+#define MOTOR_PARAMETER_DEFAULT_FOC_KI_DIVISOR 	4
 
 #endif

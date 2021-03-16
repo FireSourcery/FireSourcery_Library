@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,28 +19,32 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
 	@file 	HAL.h
 	@author FireSoucery
 	@brief 	Peripheral module HAL
 	@version V0
 */
-/**************************************************************************/
-#ifndef PERIPHERAL_HAL_H
-#define PERIPHERAL_HAL_H
+/******************************************************************************/
+#ifndef HAL_PERIPHERAL_H
+#define HAL_PERIPHERAL_H
 
-#include "Config.h"
+//#ifdef CONFIG_PERIPHERAL_HAL_S32K
+//
+//	#include "Platform/S32K/HAL_ADC.h"
+//	#include "Platform/S32K/HAL_Pin.h"
+////	#include "Platform/S32K/FTM.h"
+////	#include "Platform/S32K/LPUART.h"
+////	#include "Platform/S32K/MSCAN.h"
+//
+//
+//#elif defined(CONFIG_PERIPHERAL_HAL_FUNCTIONS_XYZ)
+//
+//#endif
 
-#ifdef CONFIG_PERIPHERAL_HAL_S32K
-	#include "Platform/S32K/ADC.h"
-//	#include "Platform/S32K/FTM.h"
-//	#include "Platform/S32K/LPUART.h"
-//	#include "Platform/S32K/MSCAN.h"
 
-#elif defined(CONFIG_PERIPHERAL_HAL_XYZ)
 
 #endif
 
-#endif

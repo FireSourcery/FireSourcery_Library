@@ -28,24 +28,28 @@
 	@version V0
 */
 /**************************************************************************/
-#ifndef Q_MATH_H
-#define Q_MATH_H
+#ifndef Q_MATH_H_
+#define Q_MATH_H_
 
 #include <stdint.h>
 
 #ifndef INT16_MAX
-#define INT16_MAX           (0x7FFF)
+	#define INT16_MAX           (0x7FFF)
 #endif
 
 #ifndef INT16_MIN
-#define INT16_MIN           (0x8000)
+	#define INT16_MIN           (0x8000)
 #endif
 
 static inline int16_t q_sat16(int32_t x)
 {
-	if (x > INT16_MAX) 			return INT16_MAX;
-	else if (x < INT16_MIN) 	return INT16_MIN;
-	else 						return (int16_t)x;
+	int16_t sat;
+
+	if 		(x > (int32_t)INT16_MAX) 	{sat = INT16_MAX;}
+	else if (x < (int32_t)INT16_MIN) 	{sat = INT16_MIN;}
+	else 								{sat = (int16_t)x;}
+
+	return sat;
 }
 
 /*!
@@ -56,29 +60,29 @@ static inline int16_t q_sat16(int32_t x)
 
 	<https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method>
  */
-int32_t q_sqrt(int32_t x)
+static inline uint16_t q_sqrt(int32_t x)
 {
 	uint8_t iteration = 0;
-	int32_t yPrev;
-	int32_t y;
+	uint32_t yPrev;
+	uint32_t y;
 
 	if (x > 0)
 	{
 		/*
 		 * Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
 		 */
-		if (x > (int32_t) 1048576)	// (1 << 20)
+		if ((uint32_t) x > (uint32_t) 1048576U) /* (1 << 20) */
 		{
-			yPrev = (int32_t) 8192; // 8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
+			yPrev = (uint32_t) 8192U; /* 8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations */
 		}
 		else
 		{
-			yPrev = (int32_t) 128;	// 128*128 == (1 << 14), solve < 1048576
+			yPrev = (uint32_t) 128U; /* 128*128 == (1 << 14), solve < 1048576 */
 		}
 
 		do
 		{
-			y = (yPrev + (x / yPrev)) / (int32_t) 2;
+			y = (yPrev + ((uint32_t) x / yPrev)) / (uint32_t) 2U;
 
 			if (y == yPrev)
 			{
@@ -88,14 +92,14 @@ int32_t q_sqrt(int32_t x)
 			iteration++;
 			yPrev = y;
 
-		} while (iteration < 6);
+		} while (iteration < 6U);
 	}
 	else
 	{
-		y = (int32_t) 0;
+		y = (uint32_t) 0U;
 	}
 
-	return (y);
+	return (uint16_t) y;
 }
 
 #endif

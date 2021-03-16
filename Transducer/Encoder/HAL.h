@@ -22,19 +22,44 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.h
-	@author FireSoucery
-	@brief 	Peripheral module HAL preprocessor configuration options and defaults.
+	@file  	HAL.h
+	@author FireSourcery
+	@brief 	Encoder module import functions.
+			User must provide HW functions, or configure HAL
 	@version V0
-*/
+ */
 /******************************************************************************/
-#ifndef CONFIG_PERIPHERAL_HAL_H
-#define CONFIG_PERIPHERAL_HAL_H
+#ifndef HAL_ENCODER_H
 
-#ifdef CONFIG_PERIPHERAL_HAL_S32K
+#define HAL_ENCODER_H
 
-#elif defined(CONFIG_PERIPHERAL_HAL_USER_DEFINED)
+#include "Config.h"
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#if defined(CONFIG_ENCODER_HAL_S32K)
+	#include "HAL/Platform/S32K/HAL_Encoder.h"
+#elif defined(CONFIG_ENCODER_HAL_XYZ)
+
+#elif defined(CONFIG_ENCODER_HAL_USER_DEFINED)
+
+typedef struct
+{
+	void * p_TimerCounterBase;
+	uint8_t TimerCounterChannel;
+} HAL_Encoder_T;
+
+extern inline uint32_T HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder);
+extern inline bool HAL_Encoder_ReadDirection(const HAL_Encoder_T * p_encoder);
+extern inline bool HAL_Encoder_ReadPhaseA(const HAL_Encoder_T * p_encoder);
+extern inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder);
+extern inline bool HAL_Encoder_EnableInterrupt(const HAL_Encoder_T * p_encoder);
+//Timer_ConfigPeriodicIRQ
+//Timer_ConfigCaptureIRQ
+#endif
+
+
 
 #endif
 
-#endif

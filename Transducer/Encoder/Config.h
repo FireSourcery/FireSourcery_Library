@@ -24,17 +24,19 @@
 /*!
 	@file 	Config.h
 	@author FireSoucery
-	@brief 	Peripheral module HAL preprocessor configuration options and defaults.
+	@brief 	Encoder module preprocessor configuration options and defaults.
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_PERIPHERAL_HAL_H
-#define CONFIG_PERIPHERAL_HAL_H
+#ifndef CONFIG_ENCODER_H
+#define CONFIG_ENCODER_H
 
-#ifdef CONFIG_PERIPHERAL_HAL_S32K
+#ifdef CONFIG_ENCODER_HAL_S32K
 
-#elif defined(CONFIG_PERIPHERAL_HAL_USER_DEFINED)
+#elif defined(CONFIG_ENCODER_HAL_USER_DEFINED)
 
+#else
+	#define CONFIG_ENCODER_HAL_USER_DEFINED
 #endif
 
 #endif

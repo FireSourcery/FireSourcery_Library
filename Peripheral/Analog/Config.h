@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,15 +19,15 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
 	@file 	Config.h
 	@author FireSoucery
 	@brief 	Analog module preprocessor configuration options and defaults.
 	@version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef CONFIG_ANALOG_H
 #define CONFIG_ANALOG_H
 
@@ -99,15 +99,17 @@
 
 #else
 	#define CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
-	#define ANALOG_N_ADC_DISABLED
+//	#define ANALOG_N_ADC_DISABLED
 #endif
 
-#ifdef CONFIG_ANALOG_ADC_FUNCTIONS_HAL_DEFINED
+#ifdef CONFIG_ANALOG_HAL_ADC_FUNCTIONS_USER_DEFINED
 
-#elif defined(CONFIG_ANALOG_ADC_FUNCTIONS_USER_DEFINED)
+#elif defined (CONFIG_ANALOG_HAL_ADC_FUNCTIONS_S32K)
 
 #else
-	#error "Config Analog: USER MUST DEFINE ADC FUNCTIONS"
+#define CONFIG_ANALOG_HAL_ADC_FUNCTIONS_USER_DEFINED
+//	#error "Config Analog: USER MUST DEFINE ADC FUNCTIONS"
 #endif
+
 
 #endif

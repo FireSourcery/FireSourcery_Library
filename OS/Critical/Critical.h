@@ -41,11 +41,11 @@
  */
 #ifdef CONFIG_CRITICAL_MCU_ARM
 	#if defined (__GNUC__)
-		#define DISABLE_INTERRUPTS() __asm volatile ("cpsid i" : : : "memory");
-		#define ENABLE_INTERRUPTS() __asm volatile ("cpsie i" : : : "memory");
+		#define CRITICAL_DISABLE_INTERRUPTS() __asm volatile ("cpsid i" : : : "memory");
+		#define CRITICAL_ENABLE_INTERRUPTS() __asm volatile ("cpsie i" : : : "memory");
 	#else
-		#define DISABLE_INTERRUPTS() __asm("cpsid i")
-		#define ENABLE_INTERRUPTS() __asm("cpsie i")
+		#define CRITICAL_DISABLE_INTERRUPTS() __asm("cpsid i")
+		#define CRITICAL_ENABLE_INTERRUPTS() __asm("cpsie i")
 	#endif
 #elif defined(CONFIG_CRITICAL_USER_DEFINED)
 /*
@@ -54,15 +54,15 @@
  * #define ENABLE_INTERRUPTS() {...}
  */
 #elif defined(CONFIG_CRITICAL_DISABLED)
-	#define DISABLE_INTERRUPTS() {}
-	#define ENABLE_INTERRUPTS() {}
+	#define CRITICAL_DISABLE_INTERRUPTS() {}
+	#define CRITICAL_ENABLE_INTERRUPTS() {}
 #endif
 
 static int32_t InterruptDisableCount = 0;
 
 static inline void Critical_Enter(void)
 {
-	DISABLE_INTERRUPTS();
+	CRITICAL_DISABLE_INTERRUPTS();
 	InterruptDisableCount++;
 }
 
@@ -73,7 +73,7 @@ static inline void Critical_Exit(void)
 		InterruptDisableCount--;
 		if (InterruptDisableCount <= 0)
 		{
-			ENABLE_INTERRUPTS();
+			CRITICAL_ENABLE_INTERRUPTS();
 		}
 	}
 }

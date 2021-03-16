@@ -22,19 +22,49 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.h
+	@file 	HAL_PWM.h
 	@author FireSoucery
-	@brief 	Peripheral module HAL preprocessor configuration options and defaults.
+	@brief 	PWM HAL for S32K
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_PERIPHERAL_HAL_H
-#define CONFIG_PERIPHERAL_HAL_H
+#ifndef PWM_HAL_H
+#define PWM_HAL_H
 
-#ifdef CONFIG_PERIPHERAL_HAL_S32K
+#include <stdint.h>
+#include <stdbool.h>
 
-#elif defined(CONFIG_PERIPHERAL_HAL_USER_DEFINED)
+typedef struct
+{
+	FTM_Type * p_FtmBase;
+	uint8_t FtmChannel;
+} HAL_PWM_T;
 
-#endif
+static inline void HAL_PWM_WritePeriod(const HAL_PWM_T * p_pwm, uint32_t pwmPeroid)
+{
+	p_pwm->p_FtmBase->CONTROLS[p_pwm->FtmChannel].CnV = pwmPeroid;
+
+//	if (softwareTrigger)
+//	{
+//		ftmBase->SYNC |= FTM_SYNC_SWSYNC_MASK;
+//	}
+}
+
+/*
+ true is invert, false is noninvert
+ */
+static inline void HAL_PWM_WriteInvertPolarity(const HAL_PWM_T * p_pwm, bool isInvertedPolarity)
+{
+//    p_pwm->p_FtmBase->In[p_pwm->FtmChannel].CnV = isInvertedPolarity;
+//	PWM_1ABC_PIN_SET_POL((uint8_t)invA<<2|(uint8_t)invB<<1|(uint8_t)invC);
+}
+
+//static inline void HAL_Pin_WriteState(HAL_Pin_T * p_pwmPin, bool state)
+static inline void HAL_PWM_WriteState(const HAL_PWM_T * p_pwmPin, bool state)
+{
+	//reg enable disable
+//	p_pwmPin->p_FtmBase->In[p_pwm->FtmChannel].CnV = state;
+}
+
 
 #endif
