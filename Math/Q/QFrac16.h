@@ -174,7 +174,6 @@ static inline qfrac16_t cos90(qangle16_t theta)
     return QFRAC16_SINE_90_TABLE[((uint8_t)0xFF - (uint8_t)(theta >> SINE_90_TABLE_LSB))];
 }
 
-
 /*
  * [0, 90)		=> [0x0000, 0x3FFF]	=> [0, 0xFF] -> [0, 1)
  * [90, 180)	=> [0x4000, 0x7FFF] => [0xFF, 0] -> (1, 0]
@@ -247,9 +246,6 @@ static inline void qfrac16_vector(qfrac16_t * const p_cos, qfrac16_t * const p_s
 
 	return;
 }
-
-
-
 
 static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
 {

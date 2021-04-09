@@ -30,7 +30,6 @@
  */
 /******************************************************************************/
 #ifndef HAL_ENCODER_H
-
 #define HAL_ENCODER_H
 
 #include "Config.h"
@@ -50,7 +49,7 @@ typedef struct
 	uint8_t TimerCounterChannel;
 } HAL_Encoder_T;
 
-extern inline uint32_T HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder);
+extern inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder);
 extern inline bool HAL_Encoder_ReadDirection(const HAL_Encoder_T * p_encoder);
 extern inline bool HAL_Encoder_ReadPhaseA(const HAL_Encoder_T * p_encoder);
 extern inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder);

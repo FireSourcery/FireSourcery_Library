@@ -81,13 +81,13 @@ static inline void Encoder_CaptureDeltaT_IO(Encoder_T * p_encoder)
 	p_encoder->TotalT += p_encoder->DeltaT;
 	p_encoder->TotalD += 1;
 
-	if(p_encoder->AngleD < p_encoder->EncoderResolution - 1)
+	if(p_encoder->AngularD < p_encoder->EncoderResolution - 1)
 	{
-		p_encoder->AngleD++;
+		p_encoder->AngularD++;
 	}
 	else
 	{
-		p_encoder->AngleD = 0;
+		p_encoder->AngularD = 0;
 	}
 }
 
@@ -122,7 +122,7 @@ static inline void Encoder_CaptureDeltaD_IO(Encoder_T * p_encoder)
 
 	p_encoder->TotalD += p_encoder->DeltaD;
 	p_encoder->TotalT += 1;
-	p_encoder->AngleD = HAL_Encoder_ReadTimerCounter(p_encoder->p_EncoderTimerCounter);
+	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->p_EncoderTimerCounter);
 }
 
 ///*!

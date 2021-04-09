@@ -54,7 +54,7 @@ void Phase_Init
 	p_phase->p_PwmB = p_pwmB;
 	p_phase->p_PwmC = p_pwmC;
 
-	p_phase->PwmTotalPeriod = pwmPeroidMax;
+	p_phase->PwmPeriodTotal = pwmPeroidMax;
 
 	p_phase->PhaseMode = PHASE_MODE_UNIPOLAR_1;
 

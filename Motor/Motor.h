@@ -31,6 +31,9 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
+
+#include "HAL.h" //for Digital IO Pins
+
 #include "Peripheral/Analog/Analog.h"
 
 #include "Transducer/Encoder/Encoder.h"
@@ -54,25 +57,28 @@
  */
 typedef enum
 {
-	MOTOR_VIRTUAL_CHANNEL_VA, /* Must implement for BEMF sensorless */
-	MOTOR_VIRTUAL_CHANNEL_VB,
-	MOTOR_VIRTUAL_CHANNEL_VC,
+	/* Must implement for BEMF sensorless */
+	MOTOR_ANALOG_CHANNEL_VA,
+	MOTOR_ANALOG_CHANNEL_VB,
+	MOTOR_ANALOG_CHANNEL_VC,
 
-	MOTOR_VIRTUAL_CHANNEL_IA, /* Must implement for FOC */
-	MOTOR_VIRTUAL_CHANNEL_IB,
-	MOTOR_VIRTUAL_CHANNEL_IC,
+	/* Must implement for FOC */
+	MOTOR_ANALOG_CHANNEL_IA,
+	MOTOR_ANALOG_CHANNEL_IB,
+	MOTOR_ANALOG_CHANNEL_IC,
 
 	/* Error checking */
-	MOTOR_VIRTUAL_CHANNEL_VBUS, 	/* V battery, V in */
-	MOTOR_VIRTUAL_CHANNEL_VACC,		/* V accessories */
-	MOTOR_VIRTUAL_CHANNEL_VSENS,	/* V sensor */
+	MOTOR_ANALOG_CHANNEL_VBUS, 	/* V battery, V in */
+	MOTOR_ANALOG_CHANNEL_VACC,		/* V accessories */
+	MOTOR_ANALOG_CHANNEL_VSENSE,	/* V analog sensors */
 
-	MOTOR_VIRTUAL_CHANNEL_TEMP_MOTOR,
-	MOTOR_VIRTUAL_CHANNEL_TEMP_CONTROLLER,
+	MOTOR_ANALOG_CHANNEL_HEAT_MOTOR,
+	MOTOR_ANALOG_CHANNEL_HEAT_PCB,
+	MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS,
 
-	MOTOR_VIRTUAL_CHANNEL_THROTTLE, /* Optional implement for analog sensor input */
-	MOTOR_VIRTUAL_CHANNEL_BRAKE,
-//	MOTOR_VIRTUAL_CHANNEL_AUX,
+	/* Optional implement for analog sensor input */
+	MOTOR_ANALOG_CHANNEL_THROTTLE,
+	MOTOR_ANALOG_CHANNEL_BRAKE,
 } Motor_AnalogChannel_T;
 
 
@@ -145,59 +151,66 @@ typedef enum
 } Motor_FocMode_T;
 
 
+typedef enum
+{
+	MOTOR_DRIVE_MODE_FOC,
+	MOTOR_DRIVE_MODE_SIX_STEP,
+} Motor_DriveMode_T;
+
 
 /*!
-	@brief Parameters load from memory or load const default
+	@brief Parameters load from flash else load default
  */
 typedef struct
 {
+	//runtime use
 	qfrac16_t FocOpenLoopVq;
 	qfrac16_t FocAlignVd;
+
+	//init use only
+    uint8_t PolePairs;
+    uint32_t ControlFreq_Hz;
+
+	uint32_t EncoderCountsPerRevolution;
+	uint32_t EncoderDistancePerCount;
 }
 Motor_Parameters_T;
 
 /*
-	todo split to const hw config and parameters load from flash
+	Compile time const Hw config
  */
 typedef const struct Motor_Init_Tag
 {
-	volatile void * p_AdcRegMap;
-	uint8_t N_Adc;
-	uint8_t M_HwBuffer;
+	HAL_ADC_T * p_AdcRegMap;
+	uint8_t AdcNCount;
+	uint8_t AdcMLengthBuffer;
 	const uint32_t * p_AdcChannelPinMap;
 
-	uint8_t PolePairs;
-	uint32_t ControlFreq_Hz; 		/* unitT_Freq,*/
-
-	void * p_EncoderTimerCounter;
-    uint32_t EncoderTimerCounterId;
+	const HAL_Encoder_T * p_HalEncoder;
     uint32_t EncoderTimerCounterMax;
 
-	void * p_EncoderPinDeltaDReference;
-	uint32_t EncoderPinIdDeltaDReference;
+    const HAL_PWM_T * p_PhasePwmA;
+    const HAL_PWM_T * p_PhasePwmB;
+    const HAL_PWM_T * p_PhasePwmC;
+	uint32_t PhasePwmMax;
+//	void (*PhaseOnAB)(void * phaseData);
+//	void (*PhaseOnAC)(void * phaseData);
+//	void (*PhaseOnBC)(void * phaseData);
+//	void (*PhaseOnBA)(void * phaseData);
+//	void (*PhaseOnCA)(void * phaseData);
+//	void (*PhaseOnCB)(void * phaseData);
 
-	uint32_t EncoderCountsPerRevolution; 	/* unitAngle_SensorResolution */
-	uint32_t EncoderDistancePerCount;
-
-//		uint32_t AngleDataBits const 16,	/* unitAngle_DataBits */
-
-	HAL_PWM_T * p_PhasePwmA;
-	HAL_PWM_T * p_PhasePwmB;
-	HAL_PWM_T * p_PhasePwmC;
-	uint32_t PhasePwmPeroid;
-	void (*PhaseOnAB)(void * phaseData);
-	void (*PhaseOnAC)(void * phaseData);
-	void (*PhaseOnBC)(void * phaseData);
-	void (*PhaseOnBA)(void * phaseData);
-	void (*PhaseOnCA)(void * phaseData);
-	void (*PhaseOnCB)(void * phaseData);
+	const HAL_Pin_T * p_PinBrake;
+	const HAL_Pin_T * p_PinThrottle;
+	const HAL_Pin_T * p_PinForward;
+	const HAL_Pin_T * p_PinReverse;
 } Motor_Init_T;
 
 
 typedef struct
 {
 	/*
-	 * Hardware Peripherals
+	 * Hardware Wrappers
 	 */
 	/* Analog_T scale 1 per motor, if Analog_T controls all adc. else if controls 1 adc, motor import HAL_start ADC to abtract adc selection */
 	Analog_T Analog;
@@ -209,11 +222,19 @@ typedef struct
 //	Flash_T Flash; //flash/eeprom access
 //	Hall_T Hall;
 
+	//No wrapper layer for pins
+//	HAL_Pin_T PinBrake;
+//	HAL_Pin_T PinThrottle;
+//	HAL_Pin_T PinForward;
+//	HAL_Pin_T PinReverse;
+
+
 	Motor_Parameters_T 	Parameters;
 	Motor_FocMode_T 	FocMode;
 
 	StateMachine_T StateMachine;
-	uint32_t Timer_ControlFreq;
+	uint32_t TimerCounter; /* Control Freq */
+
 	/* FOC Mode */
 	FOC_T		 Foc;
 	//	//PID_T 	PidSpeed;

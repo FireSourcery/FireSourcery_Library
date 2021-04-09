@@ -84,8 +84,7 @@ static inline void Motor_FOC_ActivateAlign(Motor_T * p_motor)
 	Phase_Actuate(&p_motor->Phase);
 
 	//should this be in state wrapper?
-	p_motor->Timer_ControlFreq = CONFIG_MOTOR_CONTROL_FREQ; /* set timer for 1 second */
-
+	p_motor->TimerCounter = CONFIG_MOTOR_CONTROL_FREQ; /* set timer for 1 second */
 }
 
 static inline void Motor_FOC_SetZeros(Motor_T * p_motor)

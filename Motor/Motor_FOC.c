@@ -50,12 +50,17 @@
  */
 void Motor_FOC_LoadParameters(Motor_T * p_motor)
 {
-#ifdef CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
-	p_motor->Parameters.FocOpenLoopVq = MOTOR_PARAMETER_DEFAULT_FOC_OPEN_LOOP_VQ;
 
-#elif defined(CONFIG_MOTOR_LOAD_PARAMETERS_FLASH)
-	p_motor->Parameters.FocOpenLoopVq = Flash_Read(&p_motor->Flash, MEMORY_ADDRESS_FOC_OPEN_LOOP_VOLTAGE);
-#endif
+	p_motor->Parameters.FocOpenLoopVq = DEFAULT_FOC_OPEN_LOOP_VQ;
+	/*
+	 * Load default via HAL
+	 */
+//#ifdef CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
+//	p_motor->Parameters.FocOpenLoopVq = DEFAULT_FOC_OPEN_LOOP_VQ;
+//
+//#elif defined(CONFIG_MOTOR_LOAD_PARAMETERS_FLASH)
+//	p_motor->Parameters.FocOpenLoopVq = Flash_Read(&p_motor->Flash, MEMORY_ADDRESS_FOC_OPEN_LOOP_VOLTAGE);
+//#endif
 }
 
 
@@ -71,19 +76,19 @@ void Motor_FOC_LoadParameters(Motor_T * p_motor)
 void Motor_FOC_ConvertIa(Motor_T * p_motor)
 {
 	//Filter here if needed
-//	qfrac16_t i_temp = Linear_Convert(&p_motor->UnitIa_Frac16, p_motor->AnalogChannelResults[MOTOR_VIRTUAL_CHANNEL_IA]);
+//	qfrac16_t i_temp = Linear_Convert(&p_motor->UnitIa_Frac16, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA]);
 //	FOC_SetIa(&p_motor->Foc, i_temp);
 }
 
 void Motor_FOC_ConvertIb(Motor_T * p_motor)
 {
-//	qfrac16_t i_temp = Linear_Convert(&p_motor->UnitIb_Frac16, p_motor->AnalogChannelResults[MOTOR_VIRTUAL_CHANNEL_IB]);
+//	qfrac16_t i_temp = Linear_Convert(&p_motor->UnitIb_Frac16, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IB]);
 //	FOC_SetIb(&p_motor->Foc, i_temp);
 }
 
 void Motor_FOC_ConvertIc(Motor_T * p_motor)
 {
-//	qfrac16_t i_temp = Linear_Convert(&p_motor->UnitIc_Frac16, p_motor->AnalogChannelResults[MOTOR_VIRTUAL_CHANNEL_IC]);
+//	qfrac16_t i_temp = Linear_Convert(&p_motor->UnitIc_Frac16, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IC]);
 //	FOC_SetIc(&p_motor->Foc, i_temp);
 }
 
@@ -98,9 +103,9 @@ void Motor_FOC_ActivateCurrentFeedbackWrapper(Motor_T * p_motor);
  */
 const uint8_t FOC_ANALOG_CONVERSION_CHANNELS_ANGLE_CONTROL[] =
 {
-	[0] = MOTOR_VIRTUAL_CHANNEL_IA,
-	[1] = MOTOR_VIRTUAL_CHANNEL_IB,
-	[2] = MOTOR_VIRTUAL_CHANNEL_IC,
+	[0] = MOTOR_ANALOG_CHANNEL_IA,
+	[1] = MOTOR_ANALOG_CHANNEL_IB,
+	[2] = MOTOR_ANALOG_CHANNEL_IC,
 };
 
 void (* FOC_ANALOG_CONVERSION_CHANNEL_FUNCTIONS_ANGLE_CONTROL[])(Motor_T *) =
@@ -113,30 +118,37 @@ void (* FOC_ANALOG_CONVERSION_CHANNEL_FUNCTIONS_ANGLE_CONTROL[])(Motor_T *) =
 Analog_Conversion_T FOC_ANALOG_CONVERSION_ANGLE_CONTROL =
 {
 	.p_VirtualChannels 	= FOC_ANALOG_CONVERSION_CHANNELS_ANGLE_CONTROL,
+	.ChannelCount = sizeof(FOC_ANALOG_CONVERSION_CHANNELS_ANGLE_CONTROL)/sizeof(uint8_t),
+	.Config = 0,
 	.p_OnCompleteChannels = (void (*(*))(void *))FOC_ANALOG_CONVERSION_CHANNEL_FUNCTIONS_ANGLE_CONTROL,
 	.OnCompleteConversion = (void (*)(void *)) &Motor_FOC_ActivateCurrentFeedbackWrapper,
 };
 
 const uint8_t FOC_ANALOG_CONVERSION_CHANNELS_2[] =
 {
-	MOTOR_VIRTUAL_CHANNEL_VA,
-	MOTOR_VIRTUAL_CHANNEL_VB,
-	MOTOR_VIRTUAL_CHANNEL_VC,
+	MOTOR_ANALOG_CHANNEL_VA,
+	MOTOR_ANALOG_CHANNEL_VB,
+	MOTOR_ANALOG_CHANNEL_VC,
 
-	MOTOR_VIRTUAL_CHANNEL_VBUS,
-	MOTOR_VIRTUAL_CHANNEL_VACC,
-	MOTOR_VIRTUAL_CHANNEL_VSENS,
+	MOTOR_ANALOG_CHANNEL_VBUS,
+//	MOTOR_ANALOG_CHANNEL_VACC,
+//	MOTOR_ANALOG_CHANNEL_VSENSE,
 
-	MOTOR_VIRTUAL_CHANNEL_TEMP_MOTOR,
-	MOTOR_VIRTUAL_CHANNEL_TEMP_CONTROLLER,
+	MOTOR_ANALOG_CHANNEL_HEAT_MOTOR,
+	MOTOR_ANALOG_CHANNEL_HEAT_PCB,
+	MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS,
+	MOTOR_ANALOG_CHANNEL_THROTTLE,
+	MOTOR_ANALOG_CHANNEL_BRAKE,
 
-	MOTOR_VIRTUAL_CHANNEL_THROTTLE,
-	MOTOR_VIRTUAL_CHANNEL_BRAKE,
 };
 
 Analog_Conversion_T FOC_ANALOG_CONVERSION_2 =
 {
-	.p_VirtualChannels 	= FOC_ANALOG_CONVERSION_CHANNELS_2,
+	{.p_VirtualChannels 	= FOC_ANALOG_CONVERSION_CHANNELS_2},
+	.ChannelCount = sizeof(FOC_ANALOG_CONVERSION_CHANNELS_2)/sizeof(uint8_t),
+	.Config = 0,
+	.p_OnCompleteChannels = 0,
+	.OnCompleteConversion = 0,
 };
 
 void Motor_FOC_ActivateCurrentFeedbackWrapper(Motor_T * p_motor)

@@ -52,7 +52,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 	//check foc proc flag, or set in analog conversion object
 	StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
 
-	p_motor->Timer_ControlFreq++;
+	p_motor->TimerCounter++;
 }
 
 

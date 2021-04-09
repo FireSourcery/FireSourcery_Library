@@ -70,7 +70,7 @@ static inline uint32_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
 	 * Multiply by PolePairs first can be more accurate in cases of uneven encoder division.
 	 * Encoder CPR == 8192, PolePairs == 10: TotalAngularD [0:8192], overflow at 1 electrical cycle, ~819. Multiplication overflow should loop angle, and maintain correct angular position.
 	 */
-	return p_encoder->AngleD * p_encoder->UnitAngularD_Factor * p_encoder->PolePairs >> p_encoder->UnitAngularD_DivisorShift;
+	return p_encoder->AngularD * p_encoder->UnitAngularD_Factor * p_encoder->PolePairs >> p_encoder->UnitAngularD_DivisorShift;
 }
 
 static inline uint32_t Encoder_Motor_GetMechanicalDelta(Encoder_T * p_encoder)
@@ -190,13 +190,13 @@ static inline int32_t Encoder_Motor_GetGroundSpeed(Encoder_T * p_encoder)
 extern void Encoder_Motor_Init
 (
 	Encoder_T * p_encoder,
-	HAL_Encoder_T * p_encoderTimerCounter,
-	uint32_t encoderTimerCounterMax,
-	uint32_t controlFreq_Hz, 				/* unitT_Freq,*/
-	uint8_t polePairs,
-//	uint32_t angleBits,						/* unitAngle_DataBits */
-	uint32_t encoderCountsPerRevolution, 	/* unitAngle_SensorResolution */
-	uint32_t encoderDistancePerCount
+	HAL_Encoder_T * p_encoderCounter,
+	uint32_t encoderCounterMax,
+	uint32_t controlFreq_Hz,				/* UnitT_Freq */
+	uint32_t encoderDistancePerCount,		/* UnitLinearD */
+	uint32_t encoderCountsPerRevolution,	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */
+	uint8_t angleDataBits,					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
+	uint8_t polePairs
 );
 
 #endif

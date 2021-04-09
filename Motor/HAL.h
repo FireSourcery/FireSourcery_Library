@@ -33,11 +33,8 @@
 
 #include "Config.h"
 
-
-#ifdef CONFIG_MOTOR_HAL_LIBRARY_S32K
-
+#ifdef CONFIG_MOTOR_HAL_S32K
 	#include "Peripheral/HAL/Platform/S32K/HAL_Pin.h"
-
 #elif defined(CONFIG_MOTOR_HAL_USER_DEFINED)
 
 typedef const struct

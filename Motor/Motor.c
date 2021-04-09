@@ -29,6 +29,7 @@
 */
 /**************************************************************************/
 #include "Motor.h"
+#include "Default.h"
 
 //#include "Motor/Instance/MotorAnalog.h"
 
@@ -58,35 +59,39 @@ void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInitStruct)
 //		p_motor
 //	);
 
-	//FOC Init
+	//temp foc init
 	Encoder_Motor_Init
 	(
 		&p_motor->Encoder,
-		p_motorInitStruct->p_EncoderTimerCounter,
+		p_motorInitStruct->p_HalEncoder,
 		p_motorInitStruct->EncoderTimerCounterMax,
-		p_motorInitStruct->ControlFreq_Hz,
-		p_motorInitStruct->PolePairs,
-		p_motorInitStruct->EncoderCountsPerRevolution,
-		p_motorInitStruct->EncoderDistancePerCount
+		DEFAULT_CONTROL_FREQ_HZ,
+		DEFAULT_ENCODER_DISTANCE_PER_COUNT,
+		DEFAULT_ENCODER_COUNTS_PER_REVOLUTION,
+		16,
+		DEFAULT_POLE_PAIRS
 	);
 
 	Phase_Init
 	(
 		&p_motor->Phase,
-		p_motorInitStruct->p_PhasePwmA,		/* load from flash as defined const */
+		p_motorInitStruct->p_PhasePwmA,
 		p_motorInitStruct->p_PhasePwmB,
 		p_motorInitStruct->p_PhasePwmC,
-		p_motorInitStruct->PhasePwmPeroid, /* possibly load via parameters extension */
-		p_motorInitStruct->PhaseOnAB,
-		p_motorInitStruct->PhaseOnAC,
-		p_motorInitStruct->PhaseOnBC,
-		p_motorInitStruct->PhaseOnBA,
-		p_motorInitStruct->PhaseOnCA,
-		p_motorInitStruct->PhaseOnCB
+		p_motorInitStruct->PhasePwmMax,
+		0,	0,	0,	0,	0,	0
+//		p_motorInitStruct->PhaseOnAB,
+//		p_motorInitStruct->PhaseOnAC,
+//		p_motorInitStruct->PhaseOnBC,
+//		p_motorInitStruct->PhaseOnBA,
+//		p_motorInitStruct->PhaseOnCA,
+//		p_motorInitStruct->PhaseOnCB
 	);
+
 	//MotorStateMachine_Init(p_Motor);
 	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage
-	//	Linear_Voltage_Init(&DividerBatteryVoltage, R1, R2, 5, 12);
+	//Linear_Voltage_Init(&DividerBatteryVoltage, R1, R2, 5, 12);
+	//load param from flash?
 }
 
 

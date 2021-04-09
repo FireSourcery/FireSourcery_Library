@@ -70,7 +70,7 @@ typedef struct
 //	HAL_Pin_T PwmSwitchB;
 //	HAL_Pin_T PwmSwitchC;
 
-	uint32_t PwmTotalPeriod; //	uint32_t PwmTotalPeriodHalf;
+	uint32_t PwmPeriodTotal; //	uint32_t PwmPeriodTotalHalf;
 
 	volatile Phase_Mode_T PhaseMode; //const PhaseMode[8];
 
@@ -132,9 +132,9 @@ static inline void Phase_ActuatePeriod(const Phase_T * p_phase, uint16_t pwmPeri
 
 static inline void Phase_ActuatePeriod_DutyCycle(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
 {
-	HAL_PWM_WritePeriod(p_phase->p_PwmA, pwmDutyA * p_phase->PwmTotalPeriod / 65536U);
-	HAL_PWM_WritePeriod(p_phase->p_PwmB, pwmDutyB * p_phase->PwmTotalPeriod / 65536U);
-	HAL_PWM_WritePeriod(p_phase->p_PwmC, pwmDutyC * p_phase->PwmTotalPeriod / 65536U);
+	HAL_PWM_WritePeriod(p_phase->p_PwmA, pwmDutyA * p_phase->PwmPeriodTotal / 65536U);
+	HAL_PWM_WritePeriod(p_phase->p_PwmB, pwmDutyB * p_phase->PwmPeriodTotal / 65536U);
+	HAL_PWM_WritePeriod(p_phase->p_PwmC, pwmDutyC * p_phase->PwmPeriodTotal / 65536U);
 }
 
 static inline void Phase_ActuateInvertPolarity(const Phase_T * p_phase, bool isInvA, bool isInvB, bool isInvC)
@@ -160,9 +160,9 @@ static inline void Phase_ActuateState(const Phase_T * p_phase, bool a, bool b, b
  */
 static inline void Phase_SetDutyCyle(Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
 {
-	p_phase->PeriodA = pwmDutyA * p_phase->PwmTotalPeriod / 65536U;
-	p_phase->PeriodB = pwmDutyB * p_phase->PwmTotalPeriod / 65536U;
-	p_phase->PeriodC = pwmDutyC * p_phase->PwmTotalPeriod / 65536U;
+	p_phase->PeriodA = pwmDutyA * p_phase->PwmPeriodTotal / 65536U;
+	p_phase->PeriodB = pwmDutyB * p_phase->PwmPeriodTotal / 65536U;
+	p_phase->PeriodC = pwmDutyC * p_phase->PwmPeriodTotal / 65536U;
 }
 
 static inline void Phase_SetState(Phase_T * p_phase, bool a, bool b, bool c)
@@ -222,20 +222,20 @@ static inline void Phase_Unipolar1_ActivateAB(const Phase_T * p_phase)
 
 //static inline void Phase_Unipolar1_ActivateAB_Duty(Phase_T * p_phase, uint16_t pwmDuty)
 //{
-//	Phase_ActuatePeriod(p_phase, (pwmDuty * p_phase->PwmTotalPeriod >> 16), 0, 0);
+//	Phase_ActuatePeriod(p_phase, (pwmDuty * p_phase->PwmPeriodTotal >> 16), 0, 0);
 //}
 
 /*
-	PwmPeriodA = PwmTotalPeriod/2 + PwmScale/2
+	PwmPeriodA = PwmPeriodTotal/2 + PwmScale/2
  */
 static inline void Phase_Unipolar2_ActivateAB(const Phase_T * p_phase)
 {
-	Phase_ActuatePeriod(p_phase, (p_phase->PwmTotalPeriod + p_phase->PeriodScalar) / 2U, (p_phase->PwmTotalPeriod - p_phase->PeriodScalar) / 2U, 0U);
+	Phase_ActuatePeriod(p_phase, (p_phase->PwmPeriodTotal + p_phase->PeriodScalar) / 2U, (p_phase->PwmPeriodTotal - p_phase->PeriodScalar) / 2U, 0U);
 }
 
 static inline void Phase_Bipolar_ActivateAB(const Phase_T * p_phase)
 {
-	Phase_ActuatePeriod(p_phase, (p_phase->PwmTotalPeriod + p_phase->PeriodScalar) / 2U, (p_phase->PwmTotalPeriod + p_phase->PeriodScalar) / 2U, 0U);
+	Phase_ActuatePeriod(p_phase, (p_phase->PwmPeriodTotal + p_phase->PeriodScalar) / 2U, (p_phase->PwmPeriodTotal + p_phase->PeriodScalar) / 2U, 0U);
 	Phase_ActuateInvertPolarity(p_phase, false, true, false);
 }
 
@@ -247,7 +247,7 @@ static inline void Phase_Polar_SetPeriod(Phase_T * p_phase, uint16_t pwmPeriod)
 
 static inline void Phase_Polar_SetDutyCyle(Phase_T * p_phase, uint16_t pwmDuty)
 {
-	p_phase->PeriodScalar = pwmDuty * p_phase->PwmTotalPeriod / 65536U;
+	p_phase->PeriodScalar = pwmDuty * p_phase->PwmPeriodTotal / 65536U;
 }
 
 static inline void Phase_Polar_ActivateAB(const Phase_T * p_phase)

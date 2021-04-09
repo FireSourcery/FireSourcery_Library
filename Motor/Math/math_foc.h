@@ -24,7 +24,7 @@
 /*!
 	@file 	math_foc.h
 	@author FireSoucery
-	@brief 	PWM HAL for S32K
+	@brief	FOC pure math functions.
 	@version V0
 */
 /******************************************************************************/

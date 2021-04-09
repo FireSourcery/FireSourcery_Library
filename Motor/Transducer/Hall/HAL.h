@@ -24,33 +24,25 @@
 /*!
 	@file 	HAL.h
 	@author FireSoucery
-	@brief 	Phase HAL import functions
+	@brief 	Hall sensor HAL import functions
 	@version V0
 */
 /******************************************************************************/
-#ifndef HAL_PHASE_H
+#ifndef HAL_HALL_H
+#define HAL_HALL_H
 
-#define HAL_PHASE_H
+//#include "Motor/Config.h" /* module shared default config */
 
-#include "Motor/Config.h" /* module shared default config */
-
-#if defined(CONFIG_PHASE_HAL_PWM_S32K)
-	#include "Motor/Transducer/HAL/S32K/HAL_PWM.h"
-#elif defined(CONFIG_PHASE_HAL_PWM_KLS_S32K)
-	#include "Motor/Transducer/HAL/KLS_S32K/HAL_PWM.h"
-#elif defined(CONFIG_PHASE_HAL_PWM_USER_DEFINED)
+#if defined(CONFIG_HALL_HAL_KLS_S32K)
+	#include "Motor/Transducer/HAL/KLS_S32K/HAL_Hall.h"
+#elif defined(CONFIG_HALL_HAL_USER_DEFINED)
 
 	typedef struct
 	{
-		PWMTimer_T * p_PwmTimer;
-		uint8_t PwmTimerChannel;
-	} HAL_PWM_T;
 
-	extern inline void HAL_PWM_WritePeriod(const HAL_PWM_T * p_pwm, uint32_t pwmPeroid);
+	} HAL_Hall_T;
 
-	/*	true is inverted, false is noninverted	 */
-	extern inline void HAL_PWM_WriteInvertPolarity(const HAL_PWM_T * p_pwm, bool isInvertedPolarity);
-	extern inline void HAL_PWM_WriteState(const HAL_PWM_T * p_pwm, bool isOn);
+	extern inline uint8_t HAL_Hall_ReadSensors(const HAL_HALL_T * p_hall);
 
 #endif
 

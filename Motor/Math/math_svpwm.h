@@ -24,7 +24,7 @@
 /*!
 	@file 	math_svpwm.h
 	@author FireSoucery
-	@brief 	PWM HAL for S32K
+	@brief	SVPWM pure math functions.
 	@version V0
 */
 /*******************************************************************************/
@@ -37,11 +37,10 @@
  * Standard SVM calculation method. Inclusive of equivalent reverse Clarke transform.
  * Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
  * https://microchipdeveloper.com/mct5001:which-zsm-is-best
- *
  */
 static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t * p_pwmC, uint16_t pwmPeriod, qfrac16_t alpha, qfrac16_t beta)
 {
-	int32_t magX, magY, magZ;
+	int32_t magX, magY, magZ, z0;
 
 	/*
 	 * Derives 3 magnitudes (duty cycles) belonging to basic unit vectors.
@@ -55,7 +54,6 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 	magX = beta;
 	magY = (beta + (QFRAC16_SQRT3_MOD_1 * alpha) + alpha) / 2;
 	magZ = (beta - (QFRAC16_SQRT3_MOD_1 * alpha) - alpha) / 2;
-
 
 	if (magX >= 0)
 	{
@@ -71,21 +69,18 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 			 * SVPWM:
 			 * A -> Max, B -> Mid, C -> Min
 			 * z0 = (1/2) - (max + min)/2 = (1 - (-Z - X))/2
-			 * A = -Z + z0;
+			 * A = z0 - Z;
 			 * B = z0;
-			 * C = -X + z0;
+			 * C = z0 - X;
 			 *
 			 * A = (1 + X - Z) / 2;
 			 * B = (1 + X + Z) / 2;
 			 * C = (1 - X + Z) / 2;
 			 */
-
-			*p_pwmB = (pwmPeriod + pwmPeriod * magZ + pwmPeriod * magX) / 2;
-			*p_pwmA = (pwmPeriod - pwmPeriod * magZ + pwmPeriod * magX) / 2;
-			*p_pwmA = (*p_pwmB - magZ) >> 15;
-			*p_pwmC = *p_pwmB - magX;
-
-
+			z0 = (pwmPeriod + pwmPeriod * magX + pwmPeriod * magZ) / 2;
+			*p_pwmA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS;
+			*p_pwmB = z0 			>> QFRAC16_N_FRAC_BITS;
+			*p_pwmC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS;
 		}
 		else if (magY >= 0)
 		{
@@ -101,10 +96,13 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 			 * A -> Mid, B -> Max, C -> Min
 			 * z0 = (1/2) - (max + min)/2 = (1 - (Z - Y))/2
 			 * A = z0;
-			 * B = Z + z0;
-			 * C = -Y + z0;
+			 * B = z0 + Z;
+			 * C = z0 - Y;
 			 */
-
+			z0 = (pwmPeriod + pwmPeriod * magY - pwmPeriod * magZ) / 2;
+			*p_pwmA = z0 			>> QFRAC16_N_FRAC_BITS;
+			*p_pwmB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS;
+			*p_pwmC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS;
 		}
 		else
 		{
@@ -118,10 +116,14 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 			 * SVPWM:
 			 * A -> Min, B -> Max, C -> Mid
 			 * z0 = (1 - (X + Y))/2
-			 * A = Y + z0;
-			 * B = X + z0;
+			 * A = z0 + Y;
+			 * B = z0 + X;
 			 * C = z0;
 			 */
+			z0 = (pwmPeriod - pwmPeriod * magX - pwmPeriod * magY) / 2;
+			*p_pwmA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS;
+			*p_pwmB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS;
+			*p_pwmC = z0 			>> QFRAC16_N_FRAC_BITS;
 		}
 	}
 	else
@@ -138,10 +140,14 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 			 * SVPWM:
 			 * A -> Min, B -> Mid, C -> Max
 			 * z0 = (1 - (-X - Z))/2
-			 * A = -Z + z0;
+			 * A = z0 - Z;
 			 * B = z0;
-			 * C = -X + z0;
+			 * C = z0 - X;
 			 */
+			z0 = (pwmPeriod + pwmPeriod * magX + pwmPeriod * magZ) / 2;
+			*p_pwmA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS;
+			*p_pwmB = z0 			>> QFRAC16_N_FRAC_BITS;
+			*p_pwmC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS;
 		}
 		else if (magY < 0)
 		{
@@ -156,10 +162,13 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 			 * A -> Mid, B -> Min, C -> Max
 			 * z0 = (1 - (-Y + Z))/2
 			 * A = z0;
-			 * B = Z + z0;
-			 * C = -Y + z0;
+			 * B = z0 + Z;
+			 * C = z0 - Y;
 			 */
-
+			z0 = (pwmPeriod + pwmPeriod * magY - pwmPeriod * magZ) / 2;
+			*p_pwmA = z0 			>> QFRAC16_N_FRAC_BITS;
+			*p_pwmB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS;
+			*p_pwmC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS;
 		}
 		else
 		{
@@ -173,11 +182,14 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 			 * SVPWM:
 			 * A -> Max, B -> Min, C -> Mid
 			 * z0 = (1 - (X + Y))/2
-			 * A = Y + z0;
-			 * B = X + z0;
+			 * A = z0 + Y;
+			 * B = z0 + X;
 			 * C = z0;
 			 */
-
+			z0 = (pwmPeriod - pwmPeriod * magX - pwmPeriod * magY) / 2;
+			*p_pwmA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS;
+			*p_pwmB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS;
+			*p_pwmC = z0			>> QFRAC16_N_FRAC_BITS;
 		}
 	}
 }
@@ -196,8 +208,6 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 //{
 //
 //}
-
-
 
 
 #endif

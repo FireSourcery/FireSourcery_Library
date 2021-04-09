@@ -41,15 +41,29 @@
 void Encoder_Motor_Init
 (
 	Encoder_T * p_encoder,
-	HAL_Encoder_T * p_encoderTimerCounter,
-	uint32_t encoderTimerCounterMax,
-	uint32_t controlFreq_Hz, 				/* unitT_Freq,*/
-	uint8_t polePairs,
-//	uint32_t angleBits,						/* unitAngle_DataBits */
-	uint32_t encoderCountsPerRevolution, 	/* unitAngle_SensorResolution */
-	uint32_t encoderDistancePerCount
+	const HAL_Encoder_T * p_encoderCounter,
+	uint32_t encoderCounterMax,
+	uint32_t controlFreq_Hz,				/* UnitT_Freq */
+	uint32_t encoderDistancePerCount,		/* UnitLinearD */
+	uint32_t encoderCountsPerRevolution,	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */
+	uint8_t angleDataBits,					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
+	uint8_t polePairs
 )
 {
+	Encoder_Init
+	(
+		p_encoder,
+		p_encoderCounter,
+		encoderCounterMax,
+		controlFreq_Hz,
+		controlFreq_Hz,
+		encoderDistancePerCount,
+		encoderCountsPerRevolution,
+		angleDataBits
+	);
+
+	p_encoder->PolePairs = polePairs;
+
 	/*
 	 * UnitD set to reflect mechanical angle => set for electrical angle to be derived value.
 	 * Allow TotalD of at least PulsePerRevolution
@@ -69,21 +83,8 @@ void Encoder_Motor_Init
 	 * 20k RPM => DeltaD = 136
 	 * 10k RPM => DeltaD = 10000/60 * 8192 /20000 = 68
 	 */
-//	p_speed->UnitSpeed = MaxLeftShiftDivide(controlFreq_Hz * nPolePairs, pulsePerRevolution, 16);
+//	p_speed->UnitAngularSpeed = MaxLeftShiftDivide(controlFreq_Hz * nPolePairs, pulsePerRevolution, 16);
 
-	Encoder_Init
-	(
-		p_encoder,
-		p_encoderTimerCounter,
-		encoderTimerCounterMax,
-		controlFreq_Hz,
-		controlFreq_Hz,
-		encoderDistancePerCount,		//	unitLinearD
-		encoderCountsPerRevolution,	//	uint32_t unitAngle_SensorResolution,
-		16				//	uint32_t unitAngle_DataBits,
-	);
-
-	p_encoder->PolePairs = polePairs;
 }
 
 //// calculate distance per revolution using components

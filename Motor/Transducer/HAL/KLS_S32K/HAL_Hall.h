@@ -22,37 +22,41 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	HAL.h
+	@file 	HAL_Hall.h
 	@author FireSoucery
-	@brief 	Phase HAL import functions
+	@brief
 	@version V0
 */
 /******************************************************************************/
-#ifndef HAL_PHASE_H
+#ifndef HAL_HALL_HAL_H
+#define HAL_HALL_HAL_H
 
-#define HAL_PHASE_H
+#include "External/S32K142/include/S32K142.h"
 
-#include "Motor/Config.h" /* module shared default config */
+#include <stdint.h>
+#include <stdbool.h>
 
-#if defined(CONFIG_PHASE_HAL_PWM_S32K)
-	#include "Motor/Transducer/HAL/S32K/HAL_PWM.h"
-#elif defined(CONFIG_PHASE_HAL_PWM_KLS_S32K)
-	#include "Motor/Transducer/HAL/KLS_S32K/HAL_PWM.h"
-#elif defined(CONFIG_PHASE_HAL_PWM_USER_DEFINED)
+typedef const struct
+{
+ 	GPIO_Type * p_GpioBase;
+	uint8_t PinIndexSensorA;
+	uint8_t PinIndexSensorB;
+	uint8_t PinIndexSensorC;
+} HAL_Hall_T;
 
-	typedef struct
-	{
-		PWMTimer_T * p_PwmTimer;
-		uint8_t PwmTimerChannel;
-	} HAL_PWM_T;
+/*
+ * Only 1 set of hall sensor on KLS_S32K. Can use hard coded value
+ */
+static inline uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
+{
+	(void)p_hall;
 
-	extern inline void HAL_PWM_WritePeriod(const HAL_PWM_T * p_pwm, uint32_t pwmPeroid);
-
-	/*	true is inverted, false is noninverted	 */
-	extern inline void HAL_PWM_WriteInvertPolarity(const HAL_PWM_T * p_pwm, bool isInvertedPolarity);
-	extern inline void HAL_PWM_WriteState(const HAL_PWM_T * p_pwm, bool isOn);
-
-#endif
-
+	/*
+	 * 	PTE4 -> SA
+	 * 	PTE5 -> SB
+	 * 	PTE10 -> SC
+	 */
+	return (((PTE->PDIR >> 4) | (PTE->PDIR >> 4) | (PTE->PDIR >> 8)) & 0x07);
+}
 
 #endif

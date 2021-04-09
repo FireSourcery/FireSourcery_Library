@@ -30,7 +30,23 @@
 /*******************************************************************************/
 #include "Linear.h"
 
-#ifdef CONFIG_LINEAR_NUMIRICAL_DIVIDE
+#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+/*
+ * Left shift must retain sign bit
+ */
+void Linear_Init(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset)
+{
+	p_linear->SlopeFactor 	= (factor << 16) / divisor;
+	p_linear->SlopeDivisor 	= (divisor << 16) / factor; //InvF factor
+
+	p_linear->SlopeFactorShift 	= 16;
+	p_linear->SlopeDivisorShift = 16;
+
+	p_linear->Offset = offset;
+}
+
+#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+
 void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset)
 {
 	p_linear->SlopeFactor 	= factor;
@@ -38,18 +54,39 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t o
 	p_linear->Offset 		= offset;
 }
 
-#elif defined(CONFIG_LINEAR_SHIFT_DIVIDE)
-/*
- * Left shift must retain sign bit
- */
-void Linear_Init(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset)
-{
-	p_linear->SlopeFactor 	= (factor << 16) / divisor;
-	p_linear->SlopeDivisor 	= (divisor << 16) / factor;
-
-	p_linear->SlopeFactor 	= (factor << shift) / divisor;
-	p_linear->SlopeDivisor_Shift = shift;
-
-	p_linear->Offset = offset;
-}
 #endif
+
+
+///******************************************************************************/
+///*!
+//	@brief Init for results expressed in Q1.15 where 32,767 ~= 100%
+// */
+///******************************************************************************/
+//#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+//void Linear_Init_SignedFrac16(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset, uint32_t max)
+//{
+//
+//}
+//#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+//void Linear_Init_SignedFrac16(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset, uint32_t max)
+//{
+//
+//}
+//#endif
+//
+///******************************************************************************/
+///*!
+//	@brief Init for results expressed in Q1.15 where 65356 ~= 100%
+// */
+///****************************************************************************5**/
+//#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+//void Linear_Init_UnsignedFrac16(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset, uint32_t max)
+//{
+//
+//}
+//#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+//void Linear_Init_UnsignedFrac16(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset, uint32_t max)
+//{
+//
+//}
+//#endif

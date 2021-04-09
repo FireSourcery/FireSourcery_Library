@@ -355,7 +355,20 @@ typedef struct
 
 
 
-//extern void 				Analog_Init(Analog_T * p_analog, volatile void const * p_adcMap, uint8_t nAdc, uint8_t mHwBuffer, const adcpin_t * p_virtualChannelMapPinsBuffer, volatile analog_t * p_virtualChannelMapResultsBuffer, uint8_t virtualChannelCount, void *p_onCompleteUserDat);
+
+//extern void Analog_Init
+//(
+//	Analog_T * p_analog,
+//	const void * p_adcMap,
+//	uint8_t nAdc,
+//	uint8_t mHwBufferLength,
+//	uint8_t virtualChannelCount,
+//	const adcpin_t * p_virtualChannelMapPins,
+//	volatile analog_t * p_virtualChannelMapResultsBuffer,
+//	volatile uint8_t * p_activeAdcChannelIndexesBuffer, /* length of N ADC */
+//	void * p_onCompleteUserData
+//);
+
 extern void 				Analog_ActivateConversion(Analog_T * p_analog, Analog_Conversion_T * p_conversion);
 extern analog_t 			Analog_ReadChannel(const Analog_T * p_analog, Analog_VirtualChannel_T channel);
 extern volatile analog_t * 	Analog_GetPtrChannelResult(const Analog_T * p_analog, Analog_VirtualChannel_T channel);

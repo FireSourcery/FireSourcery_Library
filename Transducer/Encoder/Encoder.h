@@ -87,7 +87,7 @@ typedef struct
 
 	/*! @{ */
 	/* HW Config */
-	HAL_Encoder_T * p_EncoderTimerCounter;	/*!< Delta timer counter */
+	const HAL_Encoder_T * p_EncoderTimerCounter;	/*!< Delta timer counter */
     uint32_t TimerCounterMax; 				/*!< TimerCounter overflow checking */
 
     /* SW Config, unit conversion */
@@ -99,7 +99,7 @@ typedef struct
 	uint32_t UnitAngularD_DivisorShift;		/*!< [32 - unitAngle_DataBits] */
 	uint32_t UnitAngularSpeed; 				/*!< [(1 << unitAngle_DataBits) * UnitT_Freq / unitAngle_SensorResolution] => AngularSpeed = DeltaD * UnitAngularSpeed / DeltaT
 												e.g. UnitAngularSpeed == 160,000 { unitAngle_DataBits = 16, UnitT_Freq = 20000, unitAngle_SensorResolution = 8912 } */
-	uint32_t PollingFreq;					/*!< Polling D Freq, CaptureDeltaT mode + interpolation calculations */ 		//	uint32_t UnitInterpolateD;	 /*!< [UnitD * UnitT_Freq / interpolationFreq] */
+	uint32_t PollingFreq;					/*!< Polling D reference Freq, CaptureDeltaT mode + interpolation calculations */ 		//	uint32_t UnitInterpolateD;	 /*!< [UnitD * UnitT_Freq / interpolationFreq] */
 	uint32_t EncoderResolution;				/*!< Max for Capture looping AngleD */
 
 	/* Runtime Vars */
@@ -108,7 +108,7 @@ typedef struct
 	volatile uint32_t DeltaD;				/*!< Captured TimerCounter distance interval counts between 2 points in time. Units in raw timer ticks */
 	volatile uint32_t TotalT;				/*!< TimerCounter ticks, persistent through Delta captures*/
 	volatile uint32_t TotalD;
-	volatile uint32_t AngleD;				/*!< Looping TotalD at EncoderResolution. TotalAngularD */
+	volatile uint32_t AngularD;				/*!< Looping TotalD at EncoderResolution. TotalAngularD */
 //	volatile uint32_t UserT;				/*!< TimerCounter ticks, persistent until user reset*/
 //	volatile uint32_t UserD;
 	volatile uint32_t SpeedSaved; 			/*!< Most recently calculated speed, used for acceleration calc */
@@ -752,7 +752,7 @@ static inline uint32_t Encoder_GetDeltaAngle(Encoder_T * p_encoder)
 static inline uint32_t Encoder_GetTotalAngle(Encoder_T * p_encoder)
 {
 	/* overflow if TotalD > unitAngle_SensorResolution, should maintain correct absolute position */
-	return  p_encoder->AngleD * p_encoder->UnitAngularD_Factor >> p_encoder->UnitAngularD_DivisorShift;
+	return  p_encoder->AngularD * p_encoder->UnitAngularD_Factor >> p_encoder->UnitAngularD_DivisorShift;
 //	return ((p_encoder->AngleD << unitAngle_DataBits) / unitAngle_SensorResolution);
 }
 
@@ -865,11 +865,11 @@ extern void Encoder_Init
 	Encoder_T * p_encoder,
 	HAL_Encoder_T * p_encoderTimerCounter,
 	uint32_t timerCounterMax,
-	uint32_t unitT_Freq,
-	uint32_t pollingFreq,
-	uint32_t encoderDistancePerPulse,		//	unitLinearD
-	uint32_t encoderPulsesPerRevolution,	//	uint32_t unitAngle_SensorResolution,
-	uint8_t angleDataTypeBits				//	uint32_t unitAngle_DataBits,
+	uint32_t unitT_Freq,					/* UnitT_Freq */
+	uint32_t pollingFreq,					/* PollingFreq */
+	uint32_t encoderDistancePerCount,		/* UnitLinearD */
+	uint32_t encoderCountsPerRevolution,	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */
+	uint8_t angleDataBits					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
 );
 
 extern void Encoder_Reset(Encoder_T * p_encoder);

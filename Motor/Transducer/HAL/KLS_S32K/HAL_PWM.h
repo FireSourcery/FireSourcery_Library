@@ -28,8 +28,8 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef PWM_HAL_H
-#define PWM_HAL_H
+#ifndef HAL_PWM_H
+#define HAL_PWM_H
 
 #include "External/S32K142/include/S32K142.h"
 
@@ -72,26 +72,26 @@ static inline void HAL_PWM_WriteState(const HAL_PWM_T * p_pwm, bool isOn)
 }
 
 
-
-
 /*
- * Use compile time constant for improved performance. Single motor only.
+ * Use compile time constant for improved performance. Single motor controllers only.
  */
+static inline void HAL_PWM_WritePeriodPhaseA(HAL_PWM_T * p_pwm, uint32_t pwmPeroid)
+{
+	(void) p_pwm;
+	FTM0->CONTROLS[5].CnV = pwmPeroid;
+}
 
-//static inline void PWM_WritePeriodPhaseA(HAL_PWM_T * p_pwm, uint32_t pwmPeroid)
-//{
-//	FTM0_BASE->CONTROLS[5].CnV = pwmPeroid;
-//}
-//
-//static inline void PWM_WritePeriodPhaseB(HAL_PWM_T * p_pwm, uint32_t pwmPeroid)
-//{
-//	FTM0_BASE->CONTROLS[6].CnV = pwmPeroid;
-//}
-//
-//static inline void PWM_WritePeriodPhaseC(HAL_PWM_T * p_pwm, uint32_t pwmPeroid)
-//{
-//	FTM0_BASE->CONTROLS[7].CnV = pwmPeroid;
-//}
+static inline void HAL_PWM_WritePeriodPhaseB(HAL_PWM_T * p_pwm, uint32_t pwmPeroid)
+{
+	(void) p_pwm;
+	FTM0->CONTROLS[6].CnV = pwmPeroid;
+}
+
+static inline void HAL_PWM_WritePeriodPhaseC(HAL_PWM_T * p_pwm, uint32_t pwmPeroid)
+{
+	(void) p_pwm;
+	FTM0->CONTROLS[7].CnV = pwmPeroid;
+}
 
 
 #endif

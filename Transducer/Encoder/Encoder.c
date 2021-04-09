@@ -86,21 +86,20 @@ void Encoder_Init
 	Encoder_T * p_encoder,
 	HAL_Encoder_T * p_encoderTimerCounter,
 	uint32_t timerCounterMax,
-	uint32_t unitT_Freq,
-	uint32_t pollingFreq,
-	uint32_t encoderDistancePerPulse,		//	unitLinearD
-	uint32_t encoderPulsesPerRevolution,	//	uint32_t unitAngle_SensorResolution,
-	uint8_t angleDataTypeBits				//	uint32_t unitAngle_DataBits,
+	uint32_t unitT_Freq,					/* UnitT_Freq */
+	uint32_t pollingFreq,					/* PollingFreq */
+	uint32_t encoderDistancePerCount,		/* UnitLinearD */
+	uint32_t encoderCountsPerRevolution,	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */
+	uint8_t angleDataBits					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
 )
 {
 	p_encoder->p_EncoderTimerCounter 	= p_encoderTimerCounter;
 	p_encoder->TimerCounterMax 			= timerCounterMax;
 
 	p_encoder->UnitT_Freq 	= unitT_Freq;
-	p_encoder->PollingFreq = pollingFreq; /* For CaptureDeltaT() */
-	//	p_encoder->UnitInterpolateD = p_encoder->UnitSpeed / interpolatedDFreq;;
+	p_encoder->PollingFreq = pollingFreq; /* For CaptureDeltaT() and InterpolateD */ 	//	p_encoder->UnitInterpolateD = p_encoder->UnitSpeed / interpolatedDFreq;;
 
-	p_encoder->UnitD 		= encoderDistancePerPulse;
+	p_encoder->UnitD 		= encoderDistancePerCount;
 
 	/*
 	 * Possible 32 bit overflow
@@ -113,11 +112,9 @@ void Encoder_Init
 	 * Max deltaD will be UINT32_MAX / (unitDeltaD * unitDeltaT_Freq)
 	 * deltaD ~14,000, for 300,000 (unitDeltaD * unitDeltaT_Freq)
 	 */
-	p_encoder->UnitSpeed = encoderDistancePerPulse * unitT_Freq;
+	p_encoder->UnitSpeed = encoderDistancePerCount * unitT_Freq;
 
-
-
-	p_encoder->EncoderResolution = encoderPulsesPerRevolution;
+	p_encoder->EncoderResolution = encoderCountsPerRevolution;
 
 
 	/*
@@ -134,8 +131,8 @@ void Encoder_Init
 	 * DeltaD, TotalD max PulsePerRevolution in GetDeltaD_Units(), GetTotalD_Units()
 	 * Multiplication overflow should wrap angle, maintain angle position correctness
 	 */
-	p_encoder->UnitAngularD_Factor			= 0xFFFFFFFFU/encoderPulsesPerRevolution + 1;
-	p_encoder->UnitAngularD_DivisorShift 	= (32 - angleDataTypeBits);
+	p_encoder->UnitAngularD_Factor			= 0xFFFFFFFFU/encoderCountsPerRevolution + 1;
+	p_encoder->UnitAngularD_DivisorShift 	= (32 - angleDataBits);
 
 	/*
 	 * Speed calc
@@ -154,10 +151,11 @@ void Encoder_Init
 	 * speed = (DeltaD * UnitD) / Correction * UnitT_Freq / DeltaT == 1,048,560,000
 	 * speed = DeltaD * [UnitD * UnitT_Freq / Correction] / DeltaT == 1,048,576,000
 	 */
-	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(unitT_Freq, encoderPulsesPerRevolution, angleDataTypeBits);
+	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(unitT_Freq, encoderCountsPerRevolution, angleDataBits);
 
 	Encoder_Reset(p_encoder);
 }
+
 void Encoder_Reset(Encoder_T * p_encoder)
 {
 	p_encoder->DeltaD = 1;

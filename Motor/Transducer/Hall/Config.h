@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/**************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,24 +19,25 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
 /*!
-    @file 	Config.c
+    @file 	Config.h
     @author FireSoucery
-    @brief
+    @brief	Hall module
     @version V0
 */
-/*******************************************************************************/
-#ifndef CONFIG_LINEAR_H
-#define CONFIG_LINEAR_H
+/**************************************************************************/
+#ifndef CONFIG_HALL_H
+#define CONFIG_HALL_H
 
-#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+#if  	defined(CONFIG_HALL_COMMUTATION_TABLE_SECTOR_ID)
 
-#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+#elif 	defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
 
 #else
-	#define CONFIG_LINEAR_SHIFT_DIVIDE
+	#define CONFIG_HALL_COMMUTATION_TABLE_SECTOR_ID
 #endif
 
 #endif
+

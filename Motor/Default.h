@@ -35,12 +35,20 @@
  * Default value. If not load from flash. Run time adjustable
  */
 
-#define MOTOR_PARAMETER_DEFAULT_FOC_OPEN_LOOP_VQ 3276 /* 10 percent */
 
-#define MOTOR_PARAMETER_DEFAULT_FOC_KP_FACTOR 	148 //qangle16, milliseconds
-#define MOTOR_PARAMETER_DEFAULT_FOC_KP_DIVISOR 	1
 
-#define MOTOR_PARAMETER_DEFAULT_FOC_KI_FACTOR 	1 //qangle16, milliseconds
-#define MOTOR_PARAMETER_DEFAULT_FOC_KI_DIVISOR 	4
+#define DEFAULT_CONTROL_FREQ_HZ 20000
+#define DEFAULT_ENCODER_DISTANCE_PER_COUNT 1
+#define DEFAULT_ENCODER_COUNTS_PER_REVOLUTION 8192
+#define DEFAULT_POLE_PAIRS 7
+
+
+#define DEFAULT_FOC_OPEN_LOOP_VQ 3276 /* 10 percent */
+
+#define DEFAULT_FOC_KP_FACTOR 	148 //qangle16, milliseconds
+#define DEFAULT_FOC_KP_DIVISOR 	1
+
+#define DEFAULT_FOC_KI_FACTOR 	1 //qangle16, milliseconds
+#define DEFAULT_FOC_KI_DIVISOR 	4
 
 #endif

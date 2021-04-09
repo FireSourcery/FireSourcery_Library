@@ -36,7 +36,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct
+typedef const struct
 {
 	FTM_Type * p_FtmBase;
 	uint8_t FtmChannel;

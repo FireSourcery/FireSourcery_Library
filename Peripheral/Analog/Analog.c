@@ -40,13 +40,14 @@
 void Analog_Init
 (
 	Analog_T * p_analog,
-	void * p_adcMap,
+	const void * p_adcMap,
 	uint8_t nAdc,
 	uint8_t mHwBufferLength,
 	uint8_t virtualChannelCount,
-	const adcpin_t * p_virtualChannelMapPinsBuffer,
+	const adcpin_t * p_virtualChannelMapPins,
+	const uint8_t * p_virtualChannelMapAdcs,
 	volatile analog_t * p_virtualChannelMapResultsBuffer,
-	volatile uint8_t * p_activeAdcChannelIndexesBuffer, /* length of N ADC */
+//	volatile uint8_t * p_activeAdcChannelIndexesBuffer, /* length of N ADC */
 	void * p_onCompleteUserData
 )
 {
@@ -62,7 +63,7 @@ void Analog_Init
 	p_analog->AdcN_Count 			= nAdc;
 	p_analog->AdcM_LengthBuffer 	= mHwBufferLength;
 
-	p_analog->p_MapChannelPins 		= p_virtualChannelMapPinsBuffer;
+	p_analog->p_MapChannelPins 		= p_virtualChannelMapPins;
 	p_analog->p_MapChannelResults 	= p_virtualChannelMapResultsBuffer;
 	p_analog->ChannelCount			= virtualChannelCount;
 

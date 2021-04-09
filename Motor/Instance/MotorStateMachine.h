@@ -22,21 +22,36 @@
 /*******************************************************************************/
 /*******************************************************************************/
 /*!
-    @file 	Config.c
+    @file 	MotorStateMachine.h
     @author FireSoucery
-    @brief
+    @brief  MotorStateMachine
     @version V0
 */
 /*******************************************************************************/
-#ifndef CONFIG_LINEAR_H
-#define CONFIG_LINEAR_H
+#ifndef MOTOR_STATE_MACHINE_H
+#define MOTOR_STATE_MACHINE_H
 
-#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+//#define CONFIG_STATE_MACHINE_INPUT_ENUM_USER_DEFINED
+//#define CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL
+//#define CONFIG_STATE_MACHINE_MULTITHREADED_OS_HAL
+//#include "OS/StateMachine/StateMachine.h"
 
-#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+typedef enum StateMachine_Input_Tag
+{
+	MOTOR_TRANSISTION_CALIBRATION_COMPLETE,
+	MOTOR_TRANSISTION_FOC_ALIGN,
+	MOTOR_TRANSISTION_FOC_ALIGN_COMPLETE,
 
-#else
-	#define CONFIG_LINEAR_SHIFT_DIVIDE
-#endif
+	MOTOR_TRANSISTION_FAULT,
+	MOTOR_TRANSISTION_FAULT_CLEAR,
+
+	STATE_INPUT_BUTTON_NEXT,
+	STATE_INPUT_ID_A,
+	BUTTON_FUNCTION_NEXT,
+	BUTTON_FUNCTION_PREV,
+
+	MOTOR_STATUS_NO_OP = 0xFFu,
+	STATE_INPUT_RESERVED_NO_OP = 0xFFu,
+} MotorStateMachine_Input_T;
 
 #endif
