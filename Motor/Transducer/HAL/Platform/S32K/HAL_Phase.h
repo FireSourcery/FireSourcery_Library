@@ -22,19 +22,57 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.h
+	@file 	HAL_Phase.h
 	@author FireSoucery
-	@brief 	Peripheral module HAL preprocessor configuration options and defaults.
+	@brief
 	@version V0
 */
 /******************************************************************************/
-//#ifndef CONFIG_PERIPHERAL_HAL_H
-//#define CONFIG_PERIPHERAL_HAL_H
-//
-//#ifdef CONFIG_PERIPHERAL_HAL_S32K
-//
-//#elif defined(CONFIG_PERIPHERAL_HAL_USER_DEFINED)
-//
-//#endif
-//
-//#endif
+#ifndef HAL_PHASE_PLATFORM_H
+#define HAL_PHASE_PLATFORM_H
+
+#include "External/S32K142/include/S32K142.h"
+
+#include <stdint.h>
+#include <stdbool.h>
+
+typedef const struct
+{
+	FTM_Type * p_FtmA;
+	uint8_t FtmChannelA;
+
+	GPIO_Type * p_GpioA;
+	uint32_t GpioPinMaskA;
+	//	FTM_Type * p_FtmA;
+	//	uint8_t FtmChannelA;
+	//
+	//	GPIO_Type * p_GpioA;
+	//	uint32_t GpioPinMaskA;
+	//	FTM_Type * p_FtmA;
+	//	uint8_t FtmChannelA;
+	//
+	//	GPIO_Type * p_GpioA;
+	//	uint32_t GpioPinMaskA;
+} HAL_Phase_T;
+
+/*
+	true is inverted, false is noninverted
+ */
+static inline void HAL_Phase_WriteInvertPolarityA(const HAL_Phase_T * p_phase, bool isInvertedPolarity)
+{
+//	isInvertedPolarity ? (p_phase->p_FtmBase->POL |= (1U << p_phase->FtmChannel)) : (p_phase->p_FtmBase->POL &= ~(1U << p_phase->FtmChannel));
+}
+
+/*
+	KLS board uses additional hw enable/disable pin
+ */
+static inline void HAL_Phase_WriteStateA(const HAL_Phase_T * p_phase, bool isOn)
+{
+//	isOn ? (p_phase->p_GpioBase->PDOR |= p_phase->GpioPinMask) : (p_phase->p_GpioBase->PDOR &= ~(p_phase->GpioPinMask));
+
+}
+
+
+
+
+#endif

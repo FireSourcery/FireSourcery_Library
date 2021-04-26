@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -28,14 +28,14 @@
     @version V0
 */
 /**************************************************************************/
-#ifndef HAL_MOTOR_H
-#define HAL_MOTOR_H
+#ifndef HAL_PIN_H
+#define HAL_PIN_H
 
 #include "Config.h"
 
-#ifdef CONFIG_MOTOR_HAL_S32K
+#ifdef CONFIG_PIN_HAL_S32K
 	#include "Peripheral/HAL/Platform/S32K/HAL_Pin.h"
-#elif defined(CONFIG_MOTOR_HAL_USER_DEFINED)
+#elif defined(CONFIG_PIN_HAL_USER_DEFINED)
 
 typedef const struct
 {
@@ -48,4 +48,4 @@ extern inline bool HAL_Pin_ReadState(const HAL_Pin_T * p_pin);
 
 #endif
 
-#endif /* IMPORT_MOTOR_H */
+#endif

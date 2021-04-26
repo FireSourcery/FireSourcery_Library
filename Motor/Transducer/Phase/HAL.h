@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -29,16 +29,16 @@
 */
 /******************************************************************************/
 #ifndef HAL_PHASE_H
-
 #define HAL_PHASE_H
 
-#include "Motor/Config.h" /* module shared default config */
+#include "Config.h"
 
-#if defined(CONFIG_PHASE_HAL_PWM_S32K)
-	#include "Motor/Transducer/HAL/S32K/HAL_PWM.h"
-#elif defined(CONFIG_PHASE_HAL_PWM_KLS_S32K)
-	#include "Motor/Transducer/HAL/KLS_S32K/HAL_PWM.h"
-#elif defined(CONFIG_PHASE_HAL_PWM_USER_DEFINED)
+#if defined(CONFIG_PHASE_HAL_PLATFORM_S32K)
+	#include "Peripheral/HAL/Platform/S32K/HAL_Pin.h"
+	#include "Peripheral/HAL/Platform/S32K/HAL_PWM.h"
+#elif defined(CONFIG_PHASE_HAL_KLS_S32K)
+	#include "Motor/Transducer/HAL/Board/KLS_S32K/HAL_Phase.h"
+#elif defined(CONFIG_PHASE_HAL_USER_DEFINED_PWM)
 
 	typedef struct
 	{
@@ -51,6 +51,13 @@
 	/*	true is inverted, false is noninverted	 */
 	extern inline void HAL_PWM_WriteInvertPolarity(const HAL_PWM_T * p_pwm, bool isInvertedPolarity);
 	extern inline void HAL_PWM_WriteState(const HAL_PWM_T * p_pwm, bool isOn);
+
+#elif defined(CONFIG_PHASE_HAL_USER_DEFINED_PHASE)
+
+	typedef struct
+	{
+
+	} HAL_Phase_T;
 
 #endif
 

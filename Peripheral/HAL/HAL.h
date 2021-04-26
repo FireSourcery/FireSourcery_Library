@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -31,6 +31,7 @@
 #ifndef HAL_PERIPHERAL_H
 #define HAL_PERIPHERAL_H
 
+// Includes all HALs
 //#ifdef CONFIG_PERIPHERAL_HAL_S32K
 //
 //	#include "Platform/S32K/HAL_ADC.h"

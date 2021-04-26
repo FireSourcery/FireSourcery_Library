@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -49,12 +49,12 @@ void Hall_Init
 	Hall_Phase_T phaseCA,
 	Hall_Phase_T phaseCB,
 	Hall_Phase_T phaseAB,
-	uint8_t sensorPhaseAC,
-	uint8_t sensorPhaseBC,
-	uint8_t sensorPhaseBA,
-	uint8_t sensorPhaseCA,
-	uint8_t sensorPhaseCB,
-	uint8_t sensorPhaseAB,
+	uint8_t sensorIndexPhaseAC,
+	uint8_t sensorIndexPhaseBC,
+	uint8_t sensorIndexPhaseBA,
+	uint8_t sensorIndexPhaseCA,
+	uint8_t sensorIndexPhaseCB,
+	uint8_t sensorIndexPhaseAB,
 	Hall_Phase_T fault000,
 	Hall_Phase_T fault111
 )
@@ -68,7 +68,7 @@ void Hall_Init
 	(
 		p_hall,
 		phaseAC, phaseBC, phaseBA, phaseCA, phaseCB, phaseAB,
-		sensorPhaseAC, sensorPhaseBC, sensorPhaseBA, sensorPhaseCA, sensorPhaseCB, sensorPhaseAB
+		sensorIndexPhaseAC, sensorIndexPhaseBC, sensorIndexPhaseBA, sensorIndexPhaseCA, sensorIndexPhaseCB, sensorIndexPhaseAB
 	);
 
 	Hall_MapCommuntationTableFaultStates(p_hall, fault000, fault111);
@@ -83,20 +83,20 @@ void Hall_MapCommuntationTable
 	Hall_Phase_T phaseCA,
 	Hall_Phase_T phaseCB,
 	Hall_Phase_T phaseAB,
-	uint8_t sensorPhaseAC,
-	uint8_t sensorPhaseBC,
-	uint8_t sensorPhaseBA,
-	uint8_t sensorPhaseCA,
-	uint8_t sensorPhaseCB,
-	uint8_t sensorPhaseAB
+	uint8_t sensorIndexPhaseAC,
+	uint8_t sensorIndexPhaseBC,
+	uint8_t sensorIndexPhaseBA,
+	uint8_t sensorIndexPhaseCA,
+	uint8_t sensorIndexPhaseCB,
+	uint8_t sensorIndexPhaseAB
 )
 {
-	p_hall->CommuntationTable[sensorPhaseAC] = phaseAC;
-	p_hall->CommuntationTable[sensorPhaseBC] = phaseBC;
-	p_hall->CommuntationTable[sensorPhaseBA] = phaseBA;
-	p_hall->CommuntationTable[sensorPhaseCA] = phaseCA;
-	p_hall->CommuntationTable[sensorPhaseCB] = phaseCB;
-	p_hall->CommuntationTable[sensorPhaseAB] = phaseAB;
+	p_hall->CommuntationTable[sensorIndexPhaseAC] = phaseAC;
+	p_hall->CommuntationTable[sensorIndexPhaseBC] = phaseBC;
+	p_hall->CommuntationTable[sensorIndexPhaseBA] = phaseBA;
+	p_hall->CommuntationTable[sensorIndexPhaseCA] = phaseCA;
+	p_hall->CommuntationTable[sensorIndexPhaseCB] = phaseCB;
+	p_hall->CommuntationTable[sensorIndexPhaseAB] = phaseAB;
 }
 
 void Hall_MapCommuntationTable_Default
@@ -180,42 +180,42 @@ void Hall_CalibrateCommuntationTable_Blocking
 	activatePwmPhaseABC(pwm, 0, 0);
 	activatePwmStatePhaseABC(1,1,1);
 	delay(delayTime);
-	p_hall->CommuntationTable[HAL_Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseBC;
-//	if (returnIndexBC) *returnIndexBC = HAL_Hall_ReadSensors(p_hall->p_HAL_Hall);
+	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseBC;
+//	if (returnIndexBC) *returnIndexBC = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
 	activatePwmPhaseABC(pwm, pwm, 0);
 	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
 	delay(delayTime);
-	p_hall->CommuntationTable[HAL_Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseBA;
-//	if (returnIndexBA) *returnIndexBA = HAL_Hall_ReadSensors(p_hall->p_HAL_Hall);
+	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseBA;
+//	if (returnIndexBA) *returnIndexBA = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
 
 	activatePwmPhaseABC(0, pwm, 0);
 	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
 	delay(delayTime);
-	p_hall->CommuntationTable[HAL_Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseCA;
-//	if (returnIndexCA) *returnIndexCA = HAL_Hall_ReadSensors(p_hall->p_HAL_Hall);
+	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseCA;
+//	if (returnIndexCA) *returnIndexCA = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
 
 	activatePwmPhaseABC(0, pwm, pwm);
 	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
 	delay(delayTime);
-	p_hall->CommuntationTable[HAL_Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseCB;
-//	if (returnIndexCB) *returnIndexCB = HAL_Hall_ReadSensors(p_hall->p_HAL_Hall);
+	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseCB;
+//	if (returnIndexCB) *returnIndexCB = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
 
 	activatePwmPhaseABC(0, 0, pwm);
 	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
 	delay(delayTime);
-	p_hall->CommuntationTable[HAL_Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseAB;
-//	if (returnIndexAB) *returnIndexAB = HAL_Hall_ReadSensors(p_hall->p_HAL_Hall);
+	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseAB;
+//	if (returnIndexAB) *returnIndexAB = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
 
 	activatePwmPhaseABC(pwm, 0, pwm);
 	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
 	delay(delayTime);
-	p_hall->CommuntationTable[HAL_Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseAC;
-//	if (returnIndexAC) *returnIndexAC = HAL_Hall_ReadSensors(p_hall->p_HAL_Hall);
+	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseAC;
+//	if (returnIndexAC) *returnIndexAC = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
 	activatePwmStatePhaseABC(0,0,0);
 }

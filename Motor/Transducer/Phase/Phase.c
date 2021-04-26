@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -38,10 +38,14 @@
 void Phase_Init
 (
 	Phase_T * p_phase,
-	HAL_PWM_T * p_pwmA,
-	HAL_PWM_T * p_pwmB,
-	HAL_PWM_T * p_pwmC,
-	uint16_t pwmPeroidMax,
+#if  	defined(CONFIG_PHASE_HAL_PLATFORM_PWM)
+	const HAL_PWM_T * p_HAL_pwmA,
+	const HAL_PWM_T * p_HAL_pwmB,
+	const HAL_PWM_T * p_HAL_pwmC,
+#elif 	defined(CONFIG_PHASE_HAL_BOARD_PHASE)
+	const HAL_Phase_T * p_HAL_phase,
+#endif
+	uint16_t pwmPeroid_Ticks,
 	void (*onPhaseAB)(void * onPhaseData),
 	void (*onPhaseAC)(void * onPhaseData),
 	void (*onPhaseBC)(void * onPhaseData),
@@ -50,11 +54,15 @@ void Phase_Init
 	void (*onPhaseCB)(void * onPhaseData)
 )
 {
-	p_phase->p_PwmA = p_pwmA;
-	p_phase->p_PwmB = p_pwmB;
-	p_phase->p_PwmC = p_pwmC;
+#if  	defined(CONFIG_PHASE_HAL_PLATFORM_PWM)
+	p_phase->p_HAL_PwmA = p_HAL_pwmA;
+	p_phase->p_HAL_PwmB = p_HAL_pwmB;
+	p_phase->p_HAL_PwmC = p_HAL_pwmC;
+#elif 	defined(CONFIG_PHASE_HAL_BOARD_PHASE)
+	p_phase->p_HAL_Phase = p_HAL_phase;
+#endif
 
-	p_phase->PwmPeriodTotal = pwmPeroidMax;
+	p_phase->PwmPeriod_Ticks = pwmPeroid_Ticks;
 
 	p_phase->PhaseMode = PHASE_MODE_UNIPOLAR_1;
 
@@ -102,14 +110,5 @@ void Phase_DisableSinusoidalModulation(Phase_T * p_phase)
 	Phase_ActuatePeriod(p_phase, 0U, 0U, 0U);
 	Phase_ActuateInvertPolarity(p_phase, false, false, false);
 }
-
-
-
-
-
-
-
-
-
 
 

@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -41,7 +41,7 @@
 void Encoder_Motor_Init
 (
 	Encoder_T * p_encoder,
-	const HAL_Encoder_T * p_encoderCounter,
+	const HAL_Encoder_T * p_HAL_encoder,
 	uint32_t encoderCounterMax,
 	uint32_t controlFreq_Hz,				/* UnitT_Freq */
 	uint32_t encoderDistancePerCount,		/* UnitLinearD */
@@ -53,7 +53,7 @@ void Encoder_Motor_Init
 	Encoder_Init
 	(
 		p_encoder,
-		p_encoderCounter,
+		p_HAL_encoder,
 		encoderCounterMax,
 		controlFreq_Hz,
 		controlFreq_Hz,

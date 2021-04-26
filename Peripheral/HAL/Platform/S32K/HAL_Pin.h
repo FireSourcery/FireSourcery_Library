@@ -1,5 +1,5 @@
-#ifndef HAL_PIN_H
-#define HAL_PIN_H
+#ifndef HAL_PIN_PLATFORM_H
+#define HAL_PIN_PLATFORM_H
 
 #include "External/S32K142/include/S32K142.h"
 

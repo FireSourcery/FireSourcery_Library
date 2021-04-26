@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -46,20 +46,20 @@
 	@return Calculated voltage
  */
 /******************************************************************************/
-int32_t Linear_Voltage_CalcV(Linear_T * p_linear, uint16_t adcu)
+static inline int32_t Linear_Voltage_CalcV(Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Function(p_linear, adcu); // (adcu*VREF*(R1+R2))/(ADC_MAX*R2);
-};
+}
 
-int32_t Linear_Voltage_CalcMilliV(Linear_T * p_linear, uint16_t adcu)
+static inline int32_t Linear_Voltage_CalcMilliV(Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Function(p_linear, adcu*1000);
-};
+}
 
-//uint32_t Linear_Voltage_CalcVDigits(VOLTAGE_DIVIDER_T * div, uint16_t adcRaw, uint8_t digits)
-//{
-//	return ((adcRaw*div->VPerADCFactor * (10^digits)) / div->VPerADCDivisor);
-//}
+static inline int32_t Linear_Voltage_CalcV_NDigits(Linear_T * p_linear, uint16_t adcu, uint8_t nDigits)
+{
+	return Linear_Function(p_linear, adcu*(10^nDigits));;
+}
 
 /******************************************************************************/
 /*!
@@ -70,16 +70,15 @@ int32_t Linear_Voltage_CalcMilliV(Linear_T * p_linear, uint16_t adcu)
 	@return Calculated ADC value
  */
 /******************************************************************************/
-uint16_t Linear_Voltage_CalcADCU(Linear_T * p_linear, uint16_t volts)
+static inline uint16_t Linear_Voltage_CalcADCU(Linear_T * p_linear, uint16_t volts)
 {
 	return (uint16_t) Linear_InvFunction(p_linear, volts);
 }
 
-uint16_t Linear_Voltage_CalcADCU_MilliV(Linear_T * p_linear, uint16_t milliV)
+static inline uint16_t Linear_Voltage_CalcADCU_MilliV(Linear_T * p_linear, uint16_t milliV)
 {
 	return (uint16_t) (Linear_InvFunction(p_linear, milliV) / 1000);
 }
-
 
 extern void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t vRefFactor, uint8_t vRefDivisor, uint8_t adcBits);
 

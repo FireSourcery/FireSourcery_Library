@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -54,7 +54,7 @@
  */
 static inline void CaptureDelta(Encoder_T * p_encoder, volatile uint32_t * p_delta)
 {
-	uint32_t timerCounterValue = HAL_Encoder_ReadTimerCounter(p_encoder->p_EncoderTimerCounter);
+	uint32_t timerCounterValue = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
 
 	if (timerCounterValue < p_encoder->TimerCounterSaved) /* TimerCounter overflow */
 	{
@@ -100,10 +100,17 @@ static inline void Encoder_CaptureDeltaT_IO(Encoder_T * p_encoder)
  */
 static inline void Encoder_PollDeltaT_IO(Encoder_T * p_encoder)
 {
-	bool reference = HAL_Encoder_ReadPhaseA(p_encoder->p_EncoderTimerCounter);
+	bool reference = HAL_Encoder_ReadPhaseA(p_encoder->p_HAL_Encoder);
 
+	/* rising edge detect */
 	/* if (reference - p_encoder->ReferenceSignalSaved > 0) */
-	if ((reference == true) && (p_encoder->PulseReferenceSaved == false)) /* rising edge detect, detect per full cycle */
+//	if ((reference == true) && (p_encoder->PulseReferenceSaved == false))
+//	{
+//		Encoder_CaptureDeltaT_IO(p_encoder);
+//	}
+
+	/* both edge detect*/
+	if ((reference ^ p_encoder->PulseReferenceSaved) == true)
 	{
 		Encoder_CaptureDeltaT_IO(p_encoder);
 	}
@@ -122,7 +129,7 @@ static inline void Encoder_CaptureDeltaD_IO(Encoder_T * p_encoder)
 
 	p_encoder->TotalD += p_encoder->DeltaD;
 	p_encoder->TotalT += 1;
-	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->p_EncoderTimerCounter);
+	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
 }
 
 ///*!

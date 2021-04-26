@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -32,7 +32,7 @@
 #define MOTOR_H
 
 
-#include "HAL.h" //for Digital IO Pins
+#include "Peripheral/Pin/Pin.h"
 
 #include "Peripheral/Analog/Analog.h"
 
@@ -157,6 +157,12 @@ typedef enum
 	MOTOR_DRIVE_MODE_SIX_STEP,
 } Motor_DriveMode_T;
 
+typedef enum
+{
+	MOTOR_STATUS_OKAY,
+	MOTOR_STATUS_ERROR_1,
+} Motor_Status_T;
+
 
 /*!
 	@brief Parameters load from flash else load default
@@ -189,9 +195,11 @@ typedef const struct Motor_Init_Tag
 	const HAL_Encoder_T * p_HalEncoder;
     uint32_t EncoderTimerCounterMax;
 
-    const HAL_PWM_T * p_PhasePwmA;
-    const HAL_PWM_T * p_PhasePwmB;
-    const HAL_PWM_T * p_PhasePwmC;
+//    const HAL_PWM_T * p_PhasePwmA;
+//    const HAL_PWM_T * p_PhasePwmB;
+//    const HAL_PWM_T * p_PhasePwmC;
+    const HAL_Phase_T * p_HAL_Phase;
+
 	uint32_t PhasePwmMax;
 //	void (*PhaseOnAB)(void * phaseData);
 //	void (*PhaseOnAC)(void * phaseData);

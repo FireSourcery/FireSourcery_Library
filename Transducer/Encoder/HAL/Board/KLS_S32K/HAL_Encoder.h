@@ -22,19 +22,47 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.h
+	@file 	HAL_Encoder.h
 	@author FireSoucery
-	@brief 	Peripheral module HAL preprocessor configuration options and defaults.
+	@brief 	Encoder Timer Counter HAL for S32K
 	@version V0
 */
 /******************************************************************************/
-//#ifndef CONFIG_PERIPHERAL_HAL_H
-//#define CONFIG_PERIPHERAL_HAL_H
-//
-//#ifdef CONFIG_PERIPHERAL_HAL_S32K
-//
-//#elif defined(CONFIG_PERIPHERAL_HAL_USER_DEFINED)
-//
-//#endif
-//
-//#endif
+#ifndef HAL_ENCODER_BOARD_H
+#define HAL_ENCODER_BOARD_H
+
+#include "External/S32K142/include/S32K142.h"
+
+#include <stdint.h>
+#include <stdbool.h>
+
+typedef const struct
+{
+	uint32_t InstanceID;
+} HAL_Encoder_T;
+
+static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder)
+{
+	(void)p_encoder; /* KLS has only 1 possible encoder */
+	return FTM2->CNT;
+}
+
+static inline bool HAL_Encoder_ReadDirection(const HAL_Encoder_T * p_encoder)
+{
+	(void)p_encoder;
+	return (bool)(FTM2->QDCTRL & FTM_QDCTRL_QUADIR_MASK);
+}
+
+static inline bool HAL_Encoder_ReadPhaseA(const HAL_Encoder_T * p_encoder)
+{
+	(void)p_encoder;
+	return (bool)(PTE->PDIR & ((uint32_t)1U << 5));
+}
+
+static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder)
+{
+	(void)p_encoder;
+	return (bool)(PTE->PDIR & ((uint32_t)1U << 4));
+}
+
+#endif

@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -22,49 +22,38 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	HAL_PWM.h
+	@file 	HAL_Hall.h
 	@author FireSoucery
-	@brief 	PWM HAL for S32K
+	@brief
 	@version V0
 */
 /******************************************************************************/
-#ifndef PWM_HAL_H
-#define PWM_HAL_H
+#ifndef HAL_HALL_BOARD_H
+#define HAL_HALL_BOARD_H
+
+#include "External/S32K142/include/S32K142.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct
+typedef const struct
 {
-	FTM_Type * p_FtmBase;
-	uint8_t FtmChannel;
-} HAL_PWM_T;
-
-static inline void HAL_PWM_WritePeriod(const HAL_PWM_T * p_pwm, uint32_t pwmPeroid)
-{
-	p_pwm->p_FtmBase->CONTROLS[p_pwm->FtmChannel].CnV = pwmPeroid;
-
-//	if (softwareTrigger)
-//	{
-//		ftmBase->SYNC |= FTM_SYNC_SWSYNC_MASK;
-//	}
-}
+//	uint32_t InstanceID;
+} HAL_Hall_T;
 
 /*
- true is invert, false is noninvert
+ * Only 1 set of hall sensor on KLS_S32K. Can use hard coded value
  */
-static inline void HAL_PWM_WriteInvertPolarity(const HAL_PWM_T * p_pwm, bool isInvertedPolarity)
+static inline uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
 {
-//    p_pwm->p_FtmBase->In[p_pwm->FtmChannel].CnV = isInvertedPolarity;
-//	PWM_1ABC_PIN_SET_POL((uint8_t)invA<<2|(uint8_t)invB<<1|(uint8_t)invC);
-}
+	(void)p_hall;
 
-//static inline void HAL_Pin_WriteState(HAL_Pin_T * p_pwmPin, bool state)
-static inline void HAL_PWM_WriteState(const HAL_PWM_T * p_pwmPin, bool state)
-{
-	//reg enable disable
-//	p_pwmPin->p_FtmBase->In[p_pwm->FtmChannel].CnV = state;
+	/*
+	 * 	PTE4 -> SA
+	 * 	PTE5 -> SB
+	 * 	PTE10 -> SC
+	 */
+	return (((PTE->PDIR >> 4) | (PTE->PDIR >> 4) | (PTE->PDIR >> 8)) & 0x07);
 }
-
 
 #endif

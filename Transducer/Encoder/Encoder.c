@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -93,7 +93,7 @@ void Encoder_Init
 	uint8_t angleDataBits					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
 )
 {
-	p_encoder->p_EncoderTimerCounter 	= p_encoderTimerCounter;
+	p_encoder->p_HAL_Encoder 	= p_encoderTimerCounter;
 	p_encoder->TimerCounterMax 			= timerCounterMax;
 
 	p_encoder->UnitT_Freq 	= unitT_Freq;
@@ -164,7 +164,7 @@ void Encoder_Reset(Encoder_T * p_encoder)
 	p_encoder->TotalT = 0;
 //	p_encoder->UserD 	= 0;
 //	p_encoder->UserT 	= 0;
-	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->p_EncoderTimerCounter);
+	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
 }
 
 //void Encoder_InitLongDelta(Encoder_T * p_encoder, volatile uint32_t * longDeltaTimer, uint32_t longTimerFreq)

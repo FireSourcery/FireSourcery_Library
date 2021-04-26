@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -72,21 +72,6 @@ void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInitStruct)
 		DEFAULT_POLE_PAIRS
 	);
 
-	Phase_Init
-	(
-		&p_motor->Phase,
-		p_motorInitStruct->p_PhasePwmA,
-		p_motorInitStruct->p_PhasePwmB,
-		p_motorInitStruct->p_PhasePwmC,
-		p_motorInitStruct->PhasePwmMax,
-		0,	0,	0,	0,	0,	0
-//		p_motorInitStruct->PhaseOnAB,
-//		p_motorInitStruct->PhaseOnAC,
-//		p_motorInitStruct->PhaseOnBC,
-//		p_motorInitStruct->PhaseOnBA,
-//		p_motorInitStruct->PhaseOnCA,
-//		p_motorInitStruct->PhaseOnCB
-	);
 
 	//MotorStateMachine_Init(p_Motor);
 	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage

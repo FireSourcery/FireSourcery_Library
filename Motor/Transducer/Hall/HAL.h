@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -31,10 +31,12 @@
 #ifndef HAL_HALL_H
 #define HAL_HALL_H
 
-//#include "Motor/Config.h" /* module shared default config */
+#include "Config.h"
 
-#if defined(CONFIG_HALL_HAL_KLS_S32K)
-	#include "Motor/Transducer/HAL/KLS_S32K/HAL_Hall.h"
+#if defined(CONFIG_HALL_HAL_S32K)
+	#include "Peripheral/HAL/Platform/S32K/HAL_Pin.h"
+#elif defined(CONFIG_HALL_HAL_KLS_S32K)
+	#include "Motor/Transducer/HAL/Board/KLS_S32K/HAL_Hall.h"
 #elif defined(CONFIG_HALL_HAL_USER_DEFINED)
 
 	typedef struct

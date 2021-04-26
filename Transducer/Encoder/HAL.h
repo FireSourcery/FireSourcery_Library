@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -39,14 +39,22 @@
 
 #if defined(CONFIG_ENCODER_HAL_S32K)
 	#include "HAL/Platform/S32K/HAL_Encoder.h"
+#elif defined(CONFIG_ENCODER_HAL_KLS_S32K)
+	#include "HAL/Board/KLS_S32K/HAL_Encoder.h"
 #elif defined(CONFIG_ENCODER_HAL_XYZ)
 
 #elif defined(CONFIG_ENCODER_HAL_USER_DEFINED)
 
 typedef struct
 {
-	void * p_TimerCounterBase;
+	HAL_TimerCounter_T * p_TimerCounter;
 	uint8_t TimerCounterChannel;
+
+	HAL_Pin_T * p_PinPhaseA;
+	uint32_t PinMaskPhaseA;
+
+	HAL_Pin_T * p_PinPhaseB;
+	uint32_t PinMaskPhaseB;
 } HAL_Encoder_T;
 
 extern inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder);

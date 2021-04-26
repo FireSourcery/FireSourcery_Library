@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -40,19 +40,11 @@ typedef const struct
 {
 	FTM_Type * p_FtmBase;
 	uint8_t FtmChannel;
-
-	GPIO_Type * p_GpioBase;
-	uint32_t GpioPinMask;
 } HAL_PWM_T;
 
 static inline void HAL_PWM_WritePeriod(const HAL_PWM_T * p_pwm, uint32_t pwmPeroid)
 {
 	p_pwm->p_FtmBase->CONTROLS[p_pwm->FtmChannel].CnV = pwmPeroid;
-
-//	if (softwareTrigger)
-//	{
-//		ftmBase->SYNC |= FTM_SYNC_SWSYNC_MASK;
-//	}
 }
 
 /*
@@ -64,34 +56,13 @@ static inline void HAL_PWM_WriteInvertPolarity(const HAL_PWM_T * p_pwm, bool isI
 }
 
 /*
-	KLS board uses additional hw enable/disable pin
+ * Mask to disable output
  */
 static inline void HAL_PWM_WriteState(const HAL_PWM_T * p_pwm, bool isOn)
 {
-	isOn ? (p_pwm->p_GpioBase->PDOR |= p_pwm->GpioPinMask) : (p_pwm->p_GpioBase->PDOR &= ~(p_pwm->GpioPinMask));
+	(!isOn) ? (p_pwm->p_FtmBase->OUTMASK |= (1U << p_pwm->FtmChannel)) : (p_pwm->p_FtmBase->OUTMASK &= ~(1U << p_pwm->FtmChannel));
 }
 
-
-/*
- * Use compile time constant for improved performance. Single motor controllers only.
- */
-static inline void HAL_PWM_WritePeriodPhaseA(HAL_PWM_T * p_pwm, uint32_t pwmPeroid)
-{
-	(void) p_pwm;
-	FTM0->CONTROLS[5].CnV = pwmPeroid;
-}
-
-static inline void HAL_PWM_WritePeriodPhaseB(HAL_PWM_T * p_pwm, uint32_t pwmPeroid)
-{
-	(void) p_pwm;
-	FTM0->CONTROLS[6].CnV = pwmPeroid;
-}
-
-static inline void HAL_PWM_WritePeriodPhaseC(HAL_PWM_T * p_pwm, uint32_t pwmPeroid)
-{
-	(void) p_pwm;
-	FTM0->CONTROLS[7].CnV = pwmPeroid;
-}
 
 
 #endif

@@ -1,4 +1,4 @@
-/******************************************************************************/
+/**************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,22 +19,18 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/******************************************************************************/
-/******************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
 /*!
-	@file 	Config.h
-	@author FireSoucery
-	@brief 	Peripheral module HAL preprocessor configuration options and defaults.
-	@version V0
+    @file 	Pin.h
+    @author FireSoucery
+    @brief
+    @version V0
 */
-/******************************************************************************/
-//#ifndef CONFIG_PERIPHERAL_HAL_H
-//#define CONFIG_PERIPHERAL_HAL_H
-//
-//#ifdef CONFIG_PERIPHERAL_HAL_S32K
-//
-//#elif defined(CONFIG_PERIPHERAL_HAL_USER_DEFINED)
-//
-//#endif
-//
-//#endif
+/**************************************************************************/
+#ifndef PIN_PERIPHERAL_H
+#define PIN_PERIPHERAL_H
+
+#include "HAL.h"
+
+#endif

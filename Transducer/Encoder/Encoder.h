@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -87,10 +87,15 @@ typedef struct
 
 	/*! @{ */
 	/* HW Config */
-	const HAL_Encoder_T * p_EncoderTimerCounter;	/*!< Delta timer counter */
+	const HAL_Encoder_T * p_HAL_Encoder;	/*!< Delta timer counter */
+
+	//	const HAL_TimerCounter_T * p_TimerCounter;	/*!< Delta timer counter */
+	//	const HAL_Pin_T * p_PinPhaseA;
+	//	const HAL_Pin_T * p_PinPhaseB;
+
     uint32_t TimerCounterMax; 				/*!< TimerCounter overflow checking */
 
-    /* SW Config, unit conversion */
+    /* SW Config, unit conversion. todo move to linear math */
 	uint32_t UnitT_Freq;					/*!< T unit(seconds) conversion factor. TimerCounter freq, using Capture DeltaT (DeltaD is 1). Polling DeltaD freq, using Capture DeltaD (DeltaT is 1). */
 	uint32_t UnitD;							/*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT is 1). Units per DeltaT capture, using Capture DeltaT (DeltaD is 1).*/
 	uint32_t UnitSpeed;						/*!< [UnitD * UnitT_Freq] => Speed = DeltaD * UnitSpeed / DeltaT */
@@ -135,7 +140,7 @@ typedef struct
 	 */
 
 	/*
-	 * Quadrature Encoder - Signed Speed
+	 * SW Quadrature Encoder - Signed Speed
 	 */
 	//	bool DirectionSaved;
 	//	volatile int32_t DeltaCountSigned;
@@ -385,7 +390,7 @@ static inline void Encoder_ResetTotals(Encoder_T * p_encoder)
 
 static inline void Encoder_ResetTimer(Encoder_T * p_encoder)
 {
-	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->p_EncoderTimerCounter);
+	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
 }
 /******************************************************************************/
 /*! @} */

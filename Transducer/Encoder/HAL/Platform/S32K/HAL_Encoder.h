@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -39,7 +39,6 @@
 typedef const struct
 {
 	FTM_Type * p_FtmBase;
-	uint8_t FtmChannel;
 
 	GPIO_Type * p_GpioBasePhaseA;
 	uint32_t GpioPinMaskPhaseA;
@@ -51,29 +50,22 @@ typedef const struct
 
 static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder)
 {
-	return p_encoder->p_FtmBase->CONTROLS[p_encoder->FtmChannel].CnV;
+	return p_encoder->p_FtmBase->CNT;
 }
 
 static inline bool HAL_Encoder_ReadPhaseA(const HAL_Encoder_T * p_encoder)
 {
-	return p_encoder->p_GpioBasePhaseA->PDIR & p_encoder->GpioPinMaskPhaseA;
+	return (bool)(p_encoder->p_GpioBasePhaseA->PDIR & p_encoder->GpioPinMaskPhaseA);
 }
 
 static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder)
 {
-	return p_encoder->p_GpioBasePhaseB->PDIR & p_encoder->GpioPinMaskPhaseB;
+	return (bool)(p_encoder->p_GpioBasePhaseB->PDIR & p_encoder->GpioPinMaskPhaseB);
 }
 
 static inline bool HAL_Encoder_ReadDirection(const HAL_Encoder_T * p_encoder)
 {
-	if((HAL_Encoder_ReadPhaseA(p_encoder) == true) && (HAL_Encoder_ReadPhaseB(p_encoder) == false))
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	return (bool)(p_encoder->p_FtmBase->QDCTRL & FTM_QDCTRL_QUADIR_MASK);
 }
 
 #endif

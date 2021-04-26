@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -32,7 +32,6 @@
 #define HALL_H
 
 #include "Config.h"
-
 #include "HAL.h"
 
 #include <stdbool.h>
@@ -73,29 +72,36 @@ typedef enum
 typedef void (* Hall_Phase_T)(void * p_userData);
 #endif
 
-//typedef struct
-//{
-//	union {
-//		struct {
-//			uint8_t A : 1;
-//			uint8_t B : 1;
-//			uint8_t C : 1;
-//			uint8_t Resv3 : 1;
-//			uint8_t Resv4 : 1;
-//			uint8_t Resv5 : 1;
-//			uint8_t Resv6 : 1;
-//			uint8_t Resv7 : 1;
-//        } Bits;
-//		uint8_t Byte;
-//	};
-//} HALL_Sensor_T;
+typedef struct
+{
+	union {
+		struct {
+			uint8_t A : 1;
+			uint8_t B : 1;
+			uint8_t C : 1;
+			uint8_t Resv3 : 1;
+			uint8_t Resv4 : 1;
+			uint8_t Resv5 : 1;
+			uint8_t Resv6 : 1;
+			uint8_t Resv7 : 1;
+        } Bits;
+		uint8_t Byte;
+	};
+} Hall_Sensors_T;
 
 typedef struct 
 {
+#ifdef CONFIG_HALL_HAL_PLATFORM_PIN
+	const HAL_Pin_T * p_HAL_PinA;
+	const HAL_Pin_T * p_HAL_PinB;
+	const HAL_Pin_T * p_HAL_PinC;
+#elif defined(CONFIG_HALL_HAL_BOARD_HALL)
 	/*
 	 * user provides function to return hall sensors in 0bxxxxxcba format, user accounts for endianess
 	 */
 	const HAL_Hall_T * p_HAL_Hall;
+#endif
+
 	Hall_Phase_T CommuntationTable[8];
 	volatile Hall_Direction_T Direction;
 	volatile uint8_t SensorsSaved;	/* Save last read */
@@ -107,7 +113,25 @@ typedef struct
 }
 Hall_T;
 
-static inline uint8_t InverseHall(uint8_t hall) {return (~hall)&0x07;}
+static inline uint8_t InverseHall(uint8_t hall)
+{
+	return (~hall) & 0x07;
+}
+
+static inline uint8_t Hall_ReadSensors(const Hall_T * p_hall)
+{
+#ifdef CONFIG_HALL_HAL_BOARD_HALL
+	return HAL_Hall_ReadSensors(p_hall->p_HAL_Hall);
+#elif defined(CONFIG_HALL_HAL_PLATFORM_PIN)
+	Hall_Sensors_T sensors;
+
+	sensors.Bits.A = HAL_Pin_ReadState(p_hall->p_HAL_PinA);
+	sensors.Bits.B = HAL_Pin_ReadState(p_hall->p_HAL_PinB);
+	sensors.Bits.C = HAL_Pin_ReadState(p_hall->p_HAL_PinC);
+
+	return sensors.Byte;
+#endif
+}
 
 /*
  * ISR version
@@ -116,11 +140,11 @@ static inline uint8_t Hall_CapturePhase_IO(Hall_T * p_hall)
 {
 	if (p_hall->Direction == HALL_DIRECTION_CCW)
 	{
-		p_hall->PhaseSaved = p_hall->CommuntationTable[InverseHall(HAL_Hall_ReadSensors(p_hall->p_HAL_Hall))];
+		p_hall->PhaseSaved = p_hall->CommuntationTable[InverseHall(Hall_ReadSensors(p_hall))];
 	}
 	else
 	{
-		p_hall->PhaseSaved = p_hall->CommuntationTable[HAL_Hall_ReadSensors(p_hall->p_HAL_Hall)];
+		p_hall->PhaseSaved = p_hall->CommuntationTable[Hall_ReadSensors(p_hall)];
 	}
 
 	return p_hall->PhaseSaved;
@@ -133,9 +157,9 @@ static inline bool Hall_PollPhase_IO(Hall_T * p_hall)
 {
 	bool isNewPhase;
 
-	if (p_hall->SensorsSaved != HAL_Hall_ReadSensors(p_hall->p_HAL_Hall))
+	if (p_hall->SensorsSaved != Hall_ReadSensors(p_hall))
 	{
-		p_hall->SensorsSaved = HAL_Hall_ReadSensors(p_hall->p_HAL_Hall);
+		p_hall->SensorsSaved = Hall_ReadSensors(p_hall);
 		Hall_CapturePhase_IO(p_hall);
 		isNewPhase = true;
 	}
@@ -152,11 +176,11 @@ static inline bool Hall_PollPhase_IO(Hall_T * p_hall)
 	{
 		if (p_hall->Direction == HALL_DIRECTION_CCW)
 		{
-			p_hall->CommuntationTable[InverseHall(HAL_Hall_ReadSensors(p_hall->p_HAL_Hall))]();
+			p_hall->CommuntationTable[InverseHall(Hall_ReadSensors(p_hall))]();
 		}
 		else
 		{
-			p_hall->CommuntationTable[HAL_Hall_ReadSensors(p_hall->p_HAL_Hall)]();
+			p_hall->CommuntationTable[Hall_ReadSensors(p_hall)]();
 		}
 	}
 
@@ -165,9 +189,9 @@ static inline bool Hall_PollPhase_IO(Hall_T * p_hall)
 
 		bool isNewPhase;
 		//	XOR bits to div 6 for
-		if (p_hall->SensorsSaved != HAL_Hall_ReadSensors(p_hall->p_HAL_Hall))
+		if (p_hall->SensorsSaved != Hall_ReadSensors(p_hall))
 		{
-			p_hall->SensorsSaved = HAL_Hall_ReadSensors(p_hall->p_HAL_Hall);
+			p_hall->SensorsSaved = Hall_ReadSensors(p_hall);
 			Hall_Commutate(p_hall);
 			isNewPhase = true;
 		}
@@ -208,12 +232,12 @@ void Hall_Init
 	Hall_Phase_T phaseCA,
 	Hall_Phase_T phaseCB,
 	Hall_Phase_T phaseAB,
-	uint8_t sensorPhaseAC,
-	uint8_t sensorPhaseBC,
-	uint8_t sensorPhaseBA,
-	uint8_t sensorPhaseCA,
-	uint8_t sensorPhaseCB,
-	uint8_t sensorPhaseAB,
+	uint8_t sensorIndexPhaseAC,
+	uint8_t sensorIndexPhaseBC,
+	uint8_t sensorIndexPhaseBA,
+	uint8_t sensorIndexPhaseCA,
+	uint8_t sensorIndexPhaseCB,
+	uint8_t sensorIndexPhaseAB,
 	Hall_Phase_T fault000,
 	Hall_Phase_T fault111
 );
@@ -227,12 +251,12 @@ void Hall_MapCommuntationTable
 	Hall_Phase_T phaseCA,
 	Hall_Phase_T phaseCB,
 	Hall_Phase_T phaseAB,
-	uint8_t sensorPhaseAC,
-	uint8_t sensorPhaseBC,
-	uint8_t sensorPhaseBA,
-	uint8_t sensorPhaseCA,
-	uint8_t sensorPhaseCB,
-	uint8_t sensorPhaseAB
+	uint8_t sensorIndexPhaseAC,
+	uint8_t sensorIndexPhaseBC,
+	uint8_t sensorIndexPhaseBA,
+	uint8_t sensorIndexPhaseCA,
+	uint8_t sensorIndexPhaseCB,
+	uint8_t sensorIndexPhaseAB
 );
 
 void Hall_MapCommuntationTable_Default

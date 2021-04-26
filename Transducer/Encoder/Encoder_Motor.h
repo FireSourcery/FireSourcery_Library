@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -161,15 +161,16 @@ static inline uint32_t Encoder_Motor_ConvertElectricalRpmToElectricalDelta(Encod
 /*!
 	Integrates speed to position
  */
-static inline void Encoder_Motor_IntegrateSpeed(Encoder_T * p_encoder, uint32_t * p_position, uint16_t speed)
-{
-	*p_position += speed;
-}
+//static inline void Encoder_Motor_IntegrateSpeed(Encoder_T * p_encoder, int32_t * p_position, uint16_t speed)
+//{
+//	*p_position += speed;
+//}
 
-static inline void Encoder_Motor_IntegrateSpeed_RPM(Encoder_T * p_encoder, uint32_t * p_position, uint16_t speed_Rpm)
+static inline void Encoder_Motor_IntegrateSpeed_RPM(Encoder_T * p_encoder, int32_t * p_theta, uint16_t speed_Rpm)
 {
 	uint32_t electricalDelta = Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(p_encoder, speed_Rpm);
-	Encoder_Motor_IntegrateSpeed(p_encoder, p_position, electricalDelta);
+	*p_theta += electricalDelta;
+//	Encoder_Motor_IntegrateSpeed(p_encoder, p_theta, electricalDelta);
 }
 
 static inline uint32_t Encoder_Motor_InterpolateAngle(Encoder_T * p_encoder, uint32_t index, uint32_t domain)
@@ -190,7 +191,7 @@ static inline int32_t Encoder_Motor_GetGroundSpeed(Encoder_T * p_encoder)
 extern void Encoder_Motor_Init
 (
 	Encoder_T * p_encoder,
-	HAL_Encoder_T * p_encoderCounter,
+	const HAL_Encoder_T * p_HAL_encoder,
 	uint32_t encoderCounterMax,
 	uint32_t controlFreq_Hz,				/* UnitT_Freq */
 	uint32_t encoderDistancePerCount,		/* UnitLinearD */

@@ -7,7 +7,7 @@
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
-	it under the terupdateInterval of the GNU General Public License as published by
+	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
@@ -74,7 +74,7 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t 
 #endif
 }
 
-//void Linear_Voltage_Init_UsignedFrac16(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint8_t vRef, uint16_t adcBits, uint16_t v100Percent, uint16_t v0Percent)
+//void Linear_Voltage_Init_Frac16(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint8_t vRef, uint16_t adcBits, )
 //{
 ////	linear->V100Percent;
 ////	linear->V0Percent;
