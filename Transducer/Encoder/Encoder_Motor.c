@@ -36,13 +36,20 @@
 #include <stdbool.h>
 
 /*!
+	Fixed to CaptureDeltaD
 	@param controlFreq pwm timer freq
  */
+	/*
+	 * UnitD set to reflect mechanical angle => set for electrical angle to be derived value.
+	 * Allow TotalD of at least CountsPerRevolution
+	 *
+
+	 */
+
 void Encoder_Motor_Init
 (
 	Encoder_T * p_encoder,
-	const HAL_Encoder_T * p_HAL_encoder,
-	uint32_t encoderCounterMax,
+	const HAL_Encoder_T * p_hal_encoder,
 	uint32_t controlFreq_Hz,				/* UnitT_Freq */
 	uint32_t encoderDistancePerCount,		/* UnitLinearD */
 	uint32_t encoderCountsPerRevolution,	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */
@@ -53,8 +60,8 @@ void Encoder_Motor_Init
 	Encoder_Init
 	(
 		p_encoder,
-		p_HAL_encoder,
-		encoderCounterMax,
+		p_hal_encoder,
+		encoderCountsPerRevolution - 1,
 		controlFreq_Hz,
 		controlFreq_Hz,
 		encoderDistancePerCount,
@@ -64,18 +71,15 @@ void Encoder_Motor_Init
 
 	p_encoder->PolePairs = polePairs;
 
-	/*
-	 * UnitD set to reflect mechanical angle => set for electrical angle to be derived value.
-	 * Allow TotalD of at least PulsePerRevolution
-	 *
-	 * UnitD set to reflect electrical angle
+
+	/* UnitD set to reflect electrical angle
 	 * Allow CapturedD, TotalD of at least 1 electrical revolution
 	 *
+	 * e.g.
 	 * 8192ppr
 	 * 12 pole pairs
 	 * 682 ticks per electrical cycle
 	 */
-
 	/*
 	 * UnitSpeed = 160,000 => Max DeltaD = 26,843
 	 * UnitSpeed = 1,600,000 => Max DeltaD = 2684

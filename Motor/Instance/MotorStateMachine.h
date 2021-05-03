@@ -36,6 +36,8 @@
 //#define CONFIG_STATE_MACHINE_MULTITHREADED_OS_HAL
 //#include "OS/StateMachine/StateMachine.h"
 
+
+
 typedef enum StateMachine_Input_Tag
 {
 	MOTOR_TRANSISTION_CALIBRATION_COMPLETE,

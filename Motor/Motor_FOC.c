@@ -51,7 +51,7 @@
 void Motor_FOC_LoadParameters(Motor_T * p_motor)
 {
 
-	p_motor->Parameters.FocOpenLoopVq = DEFAULT_FOC_OPEN_LOOP_VQ;
+//	p_motor->Parameters.FocOpenLoopVq = DEFAULT_FOC_OPEN_LOOP_VQ;
 	/*
 	 * Load default via HAL
 	 */
@@ -154,7 +154,7 @@ Analog_Conversion_T FOC_ANALOG_CONVERSION_2 =
 void Motor_FOC_ActivateCurrentFeedbackWrapper(Motor_T * p_motor)
 {
 	Analog_ActivateConversion(&p_motor->Analog, &FOC_ANALOG_CONVERSION_2);
-	Motor_FOC_ActivateCurrentFeedback(p_motor);
+	Motor_FOC_ProcCurrentFeedback(p_motor);
 }
 
 /******************************************************************************/

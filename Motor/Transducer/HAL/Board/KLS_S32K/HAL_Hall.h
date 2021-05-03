@@ -31,7 +31,11 @@
 #ifndef HAL_HALL_BOARD_H
 #define HAL_HALL_BOARD_H
 
-#include "External/S32K142/include/S32K142.h"
+//#include "External/S32K142/include/S32K142.h"
+#include "SDK/platform/devices/S32K142/include/S32K142.h"
+
+#include "SDK/platform/drivers/inc/pins_driver.h"
+#include "SDK/platform/drivers/inc/interrupt_manager.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -55,5 +59,63 @@ static inline uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
 	 */
 	return (((PTE->PDIR >> 4) | (PTE->PDIR >> 4) | (PTE->PDIR >> 8)) & 0x07);
 }
+
+
+
+static inline void HAL_Hall_Init(const HAL_Hall_T * p_hall)
+{
+	(void)p_hall;
+
+	const pin_settings_config_t pin_mux_InitConfigArr0[3U] = {
+		{
+			.base            = PORTE,
+			.pinPortIdx      = 4U,
+			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
+			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
+			.passiveFilter   = false,
+			.mux             = PORT_MUX_AS_GPIO,
+			.pinLock         = false,
+			.intConfig       = PORT_DMA_INT_DISABLED,
+			.clearIntFlag    = false,
+			.gpioBase        = PTE,
+			.direction       = GPIO_INPUT_DIRECTION,
+			.digitalFilter   = false,
+			.initValue       = 0U,
+		},
+		{
+			.base            = PORTE,
+			.pinPortIdx      = 5U,
+			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
+			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
+			.passiveFilter   = false,
+			.mux             = PORT_MUX_AS_GPIO,
+			.pinLock         = false,
+			.intConfig       = PORT_DMA_INT_DISABLED,
+			.clearIntFlag    = false,
+			.gpioBase        = PTE,
+			.direction       = GPIO_INPUT_DIRECTION,
+			.digitalFilter   = false,
+			.initValue       = 0U,
+		},
+		{
+			.base            = PORTE,
+			.pinPortIdx      = 10U,
+			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
+			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
+			.passiveFilter   = false,
+			.mux             = PORT_MUX_AS_GPIO,
+			.pinLock         = false,
+			.intConfig       = PORT_DMA_INT_DISABLED,
+			.clearIntFlag    = false,
+			.gpioBase        = PTE,
+			.direction       = GPIO_INPUT_DIRECTION,
+			.digitalFilter   = false,
+			.initValue       = 0U,
+		}
+	};
+
+	PINS_DRV_Init(3U, pin_mux_InitConfigArr0);
+}
+
 
 #endif

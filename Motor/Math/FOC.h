@@ -35,6 +35,7 @@
 #include "math_foc.h"
 #include "math_svpwm.h"
 
+#include "Math/Q/QFrac16.h"
 
 typedef enum
 {
@@ -55,7 +56,7 @@ typedef struct
 	uint16_t PwmPeriod;
 
 	qfrac16_t VectorMaxMagnitude;
-	qfrac16_t VectorMaxD; /* default sqrt3 */
+	qfrac16_t VectorMaxD; /* default sqrt1/3 */
 
 	/* Inputs */
 	qfrac16_t Ia;
@@ -73,17 +74,21 @@ typedef struct
 	qfrac16_t Iq;
 
 	/* PID control variable */
-	/* Intermediate Input, outside may set directly */
+	/* Intermediate Input to bypass current feedback */
 	qfrac16_t Vd;
 	qfrac16_t Vq;
 
 	qfrac16_t Valpha;
 	qfrac16_t Vbeta;
 
+//	qfrac16_t DutyA;
+//	qfrac16_t DutyB;
+//	qfrac16_t DutyC;
+
 	/* Pointer mapped outputs */
-	uint16_t * p_PwmA;
-	uint16_t * p_PwmB;
-	uint16_t * p_PwmC;
+	uint16_t *p_PwmA;
+	uint16_t *p_PwmB;
+	uint16_t *p_PwmC;
 
 } FOC_T;
 
@@ -97,13 +102,20 @@ static inline void FOC_ProcClarkePark(FOC_T *  p_foc)
 
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T *  p_foc)
 {
+	qfrac16_t magA, magB, magC;
+
 	foc_limitvector_dmax(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
 
 	foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
-	svpwm_midclamp(p_foc->p_PwmA, p_foc->p_PwmB, p_foc->p_PwmC, p_foc->PwmPeriod, p_foc->Valpha, p_foc->Vbeta);
+	svpwm_midclamp(&magA, &magB, &magC, p_foc->Valpha, p_foc->Vbeta);
+
+	//todo handle with phase module
+	*(p_foc->p_PwmA) = qfrac16_mul(p_foc->PwmPeriod, magA);
+	*(p_foc->p_PwmB) = qfrac16_mul(p_foc->PwmPeriod, magB);
+	*(p_foc->p_PwmC) = qfrac16_mul(p_foc->PwmPeriod, magC);
 }
 
-static inline void FOC_SetVector(FOC_T * p_foc, qangle16_t theta)
+static inline void FOC_SetTheta(FOC_T * p_foc, qangle16_t theta)
 {
 	qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, theta);
 }
@@ -133,8 +145,16 @@ static inline void FOC_SetVq(FOC_T * p_foc, qfrac16_t vq)
 	p_foc->Vq = vq;
 }
 
-void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
-void FOC_SetZero(FOC_T * p_foc);
+extern void FOC_Init(FOC_T * p_foc, uint16_t pwmPeroid, volatile uint16_t * p_pwmA, volatile uint16_t * p_pwmB, volatile uint16_t * p_pwmC);
+extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
+extern void FOC_SetZero(FOC_T * p_foc);
+
+
+//data version
+//static inline void FOC_SetPwmA(FOC_T *p_foc, uint16_t pwmA)
+//{
+//	p_foc->PwmA = pwmA;
+//}
 
 //void FOC_GetId(FOC_t * p_foc)
 //{

@@ -36,9 +36,10 @@
 /*
  * Standard SVM calculation method. Inclusive of equivalent reverse Clarke transform.
  * Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
- * https://microchipdeveloper.com/mct5001:which-zsm-is-best
+ *
+ * dutyA, dutyB, dutyC -> 15 bits, always positive
  */
-static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t * p_pwmC, uint16_t pwmPeriod, qfrac16_t alpha, qfrac16_t beta)
+static inline void svpwm_midclamp(qfrac16_t * p_dutyA, qfrac16_t * p_dutyB, qfrac16_t * p_dutyC, qfrac16_t alpha, qfrac16_t beta)
 {
 	int32_t magX, magY, magZ, z0;
 
@@ -51,9 +52,9 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 	 * Y = (beta + sqrt3 * alpha) / 2;
 	 * Z = (beta - sqrt3 * alpha) / 2;
 	 */
-	magX = beta;
-	magY = (beta + (QFRAC16_SQRT3_MOD_1 * alpha) + alpha) / 2;
-	magZ = (beta - (QFRAC16_SQRT3_MOD_1 * alpha) - alpha) / 2;
+	magX = beta * QFRAC16_1_OVERSAT;
+	magY = ((beta * QFRAC16_1_OVERSAT) + (QFRAC16_SQRT3_MOD_1 * alpha) + (alpha * QFRAC16_1_OVERSAT)) / 2;
+	magZ = ((beta * QFRAC16_1_OVERSAT) - (QFRAC16_SQRT3_MOD_1 * alpha) - (alpha * QFRAC16_1_OVERSAT)) / 2;
 
 	if (magX >= 0)
 	{
@@ -77,10 +78,10 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 			 * B = (1 + X + Z) / 2;
 			 * C = (1 - X + Z) / 2;
 			 */
-			z0 = (pwmPeriod + pwmPeriod * magX + pwmPeriod * magZ) / 2;
-			*p_pwmA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS;
-			*p_pwmB = z0 			>> QFRAC16_N_FRAC_BITS;
-			*p_pwmC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS;
+			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT + magX + magZ) / 2;
+			*p_dutyA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS;
+			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS;
+			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS;
 		}
 		else if (magY >= 0)
 		{
@@ -99,10 +100,10 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 			 * B = z0 + Z;
 			 * C = z0 - Y;
 			 */
-			z0 = (pwmPeriod + pwmPeriod * magY - pwmPeriod * magZ) / 2;
-			*p_pwmA = z0 			>> QFRAC16_N_FRAC_BITS;
-			*p_pwmB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS;
-			*p_pwmC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS;
+			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT +  magY -  magZ) / 2;
+			*p_dutyA = z0 			>> QFRAC16_N_FRAC_BITS;
+			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS;
+			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS;
 		}
 		else
 		{
@@ -120,10 +121,10 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 			 * B = z0 + X;
 			 * C = z0;
 			 */
-			z0 = (pwmPeriod - pwmPeriod * magX - pwmPeriod * magY) / 2;
-			*p_pwmA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS;
-			*p_pwmB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS;
-			*p_pwmC = z0 			>> QFRAC16_N_FRAC_BITS;
+			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT -  magX -  magY) / 2;
+			*p_dutyA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS;
+			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS;
+			*p_dutyC = z0 			>> QFRAC16_N_FRAC_BITS;
 		}
 	}
 	else
@@ -144,10 +145,10 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 			 * B = z0;
 			 * C = z0 - X;
 			 */
-			z0 = (pwmPeriod + pwmPeriod * magX + pwmPeriod * magZ) / 2;
-			*p_pwmA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS;
-			*p_pwmB = z0 			>> QFRAC16_N_FRAC_BITS;
-			*p_pwmC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS;
+			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT +  magX +  magZ) / 2;
+			*p_dutyA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS;
+			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS;
+			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS;
 		}
 		else if (magY < 0)
 		{
@@ -165,10 +166,10 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 			 * B = z0 + Z;
 			 * C = z0 - Y;
 			 */
-			z0 = (pwmPeriod + pwmPeriod * magY - pwmPeriod * magZ) / 2;
-			*p_pwmA = z0 			>> QFRAC16_N_FRAC_BITS;
-			*p_pwmB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS;
-			*p_pwmC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS;
+			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT +  magY -  magZ) / 2;
+			*p_dutyA = z0 			>> QFRAC16_N_FRAC_BITS;
+			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS;
+			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS;
 		}
 		else
 		{
@@ -186,10 +187,10 @@ static inline void svpwm_midclamp(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t
 			 * B = z0 + X;
 			 * C = z0;
 			 */
-			z0 = (pwmPeriod - pwmPeriod * magX - pwmPeriod * magY) / 2;
-			*p_pwmA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS;
-			*p_pwmB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS;
-			*p_pwmC = z0			>> QFRAC16_N_FRAC_BITS;
+			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT - magX -  magY) / 2;
+			*p_dutyA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS;
+			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS;
+			*p_dutyC = z0			>> QFRAC16_N_FRAC_BITS;
 		}
 	}
 }

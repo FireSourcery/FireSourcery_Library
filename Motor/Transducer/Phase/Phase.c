@@ -38,11 +38,11 @@
 void Phase_Init
 (
 	Phase_T * p_phase,
-#if  	defined(CONFIG_PHASE_HAL_PLATFORM_PWM)
+#if  	defined(CONFIG_PHASE_HAL_PWM)
 	const HAL_PWM_T * p_HAL_pwmA,
 	const HAL_PWM_T * p_HAL_pwmB,
 	const HAL_PWM_T * p_HAL_pwmC,
-#elif 	defined(CONFIG_PHASE_HAL_BOARD_PHASE)
+#elif 	defined(CONFIG_PHASE_HAL_PHASE)
 	const HAL_Phase_T * p_HAL_phase,
 #endif
 	uint16_t pwmPeroid_Ticks,
@@ -54,12 +54,13 @@ void Phase_Init
 	void (*onPhaseCB)(void * onPhaseData)
 )
 {
-#if  	defined(CONFIG_PHASE_HAL_PLATFORM_PWM)
+#if  	defined(CONFIG_PHASE_HAL_PWM)
 	p_phase->p_HAL_PwmA = p_HAL_pwmA;
 	p_phase->p_HAL_PwmB = p_HAL_pwmB;
 	p_phase->p_HAL_PwmC = p_HAL_pwmC;
-#elif 	defined(CONFIG_PHASE_HAL_BOARD_PHASE)
+#elif 	defined(CONFIG_PHASE_HAL_PHASE)
 	p_phase->p_HAL_Phase = p_HAL_phase;
+	HAL_Phase_Init(p_HAL_phase);
 #endif
 
 	p_phase->PwmPeriod_Ticks = pwmPeroid_Ticks;
@@ -83,8 +84,8 @@ static inline void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phas
 	switch (phaseMode)
 	{
 	case PHASE_MODE_UNIPOLAR_1:
-//	p_phase->array[1] = Phase_Unipolar_ActivateAC(); /* fp style*/
-//	p_phase->array[2] = 0;
+	//	p_phase->array[1] = Phase_Unipolar_ActivateAC(); /* fp style*/
+	//	p_phase->array[2] = 0;
 	break;
 
 	case PHASE_MODE_UNIPOLAR_2:
@@ -98,6 +99,7 @@ static inline void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phas
 void Phase_EnableSinusoidalModulation(Phase_T * p_phase)
 {
 //	p_phase->SinusoidalModulation = true;
+//	p_phase->PhaseMode = SINUSOIDAL; /* switch style*/
 	Phase_SetState(p_phase, true, true, true);
 	Phase_ActuatePeriod(p_phase, 0U, 0U, 0U);
 	Phase_ActuateInvertPolarity(p_phase, false, false, false);

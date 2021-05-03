@@ -32,11 +32,23 @@
 
 #include "Math/Q/QFrac16.h"
 
-void FOC_Init(FOC_T * p_foc, uint16_t pwmPeroid, uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t * p_pwmC)
+void FOC_Init(FOC_T * p_foc, uint16_t pwmPeroid, volatile uint16_t * p_pwmA, volatile uint16_t * p_pwmB, volatile uint16_t * p_pwmC)
 {
+	p_foc->p_PwmA = p_pwmA;
+	p_foc->p_PwmB = p_pwmB;
+	p_foc->p_PwmC = p_pwmC;
 
+	p_foc->PwmPeriod = pwmPeroid;
 
+	p_foc->VectorMaxMagnitude = QFRAC16_MAX;
+	p_foc->VectorMaxD = QFRAC16_1_DIV_SQRT3;
+}
 
+void FOC_MapPwm(FOC_T * p_foc, volatile uint16_t * p_pwmA, volatile uint16_t * p_pwmB, volatile uint16_t * p_pwmC)
+{
+	p_foc->p_PwmA = p_pwmA;
+	p_foc->p_PwmB = p_pwmB;
+	p_foc->p_PwmC = p_pwmC;
 }
 
 void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd)

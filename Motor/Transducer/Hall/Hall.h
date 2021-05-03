@@ -91,11 +91,11 @@ typedef struct
 
 typedef struct 
 {
-#ifdef CONFIG_HALL_HAL_PLATFORM_PIN
+#ifdef CONFIG_HALL_HAL_PIN
 	const HAL_Pin_T * p_HAL_PinA;
 	const HAL_Pin_T * p_HAL_PinB;
 	const HAL_Pin_T * p_HAL_PinC;
-#elif defined(CONFIG_HALL_HAL_BOARD_HALL)
+#elif defined(CONFIG_HALL_HAL_HALL)
 	/*
 	 * user provides function to return hall sensors in 0bxxxxxcba format, user accounts for endianess
 	 */
@@ -120,9 +120,9 @@ static inline uint8_t InverseHall(uint8_t hall)
 
 static inline uint8_t Hall_ReadSensors(const Hall_T * p_hall)
 {
-#ifdef CONFIG_HALL_HAL_BOARD_HALL
+#ifdef CONFIG_HALL_HAL_HALL
 	return HAL_Hall_ReadSensors(p_hall->p_HAL_Hall);
-#elif defined(CONFIG_HALL_HAL_PLATFORM_PIN)
+#elif defined(CONFIG_HALL_HAL_PIN)
 	Hall_Sensors_T sensors;
 
 	sensors.Bits.A = HAL_Pin_ReadState(p_hall->p_HAL_PinA);
@@ -176,17 +176,16 @@ static inline bool Hall_PollPhase_IO(Hall_T * p_hall)
 	{
 		if (p_hall->Direction == HALL_DIRECTION_CCW)
 		{
-			p_hall->CommuntationTable[InverseHall(Hall_ReadSensors(p_hall))]();
+			p_hall->CommuntationTable[InverseHall(Hall_ReadSensors(p_hall))](p_hall->p_UserData);
 		}
 		else
 		{
-			p_hall->CommuntationTable[Hall_ReadSensors(p_hall)]();
+			p_hall->CommuntationTable[Hall_ReadSensors(p_hall)](p_hall->p_UserData);
 		}
 	}
 
 	static inline bool Hall_PollCommutate(Hall_T * p_hall)
 	{
-
 		bool isNewPhase;
 		//	XOR bits to div 6 for
 		if (p_hall->SensorsSaved != Hall_ReadSensors(p_hall))
@@ -220,7 +219,7 @@ static inline Hall_Direction_T Hall_GetDirection(Hall_T * p_hall)
 }
 
 /*
-	Can use 0 for phase and sensor ids, and calibrate after
+	Can pass 0 for phase and sensor ids, and calibrate after
  */
 void Hall_Init
 (
@@ -284,25 +283,15 @@ void Hall_MapCommuntationTableFaultStates
 void Hall_CalibrateCommuntationTable_Blocking
 (
 	Hall_T * p_hall,
-
-//	void (* phaseAC)(void * userData),
-//	void (* phaseBC)(void * userData),
-//	void (* phaseBA)(void * userData),
-//	void (* phaseCA)(void * userData),
-//	void (* phaseCB)(void * userData),
-//	void (* phaseAB)(void * userData),
-
 	Hall_Phase_T phaseAC,
 	Hall_Phase_T phaseBC,
 	Hall_Phase_T phaseBA,
 	Hall_Phase_T phaseCA,
 	Hall_Phase_T phaseCB,
 	Hall_Phase_T phaseAB,
-
-	void (* activatePwmPhaseABC)(uint16_t pwmA, uint16_t pwmB, uint16_t pwmC),
+	void (* activatePwmValuePhaseABC)(uint16_t pwmA, uint16_t pwmB, uint16_t pwmC),
 	uint16_t pwm,
 	void (*activatePwmStatePhaseABC)(bool enA, bool enB, bool enC),
-
 	void (*delay)(uint32_t),
 	uint32_t delayTime
 );

@@ -33,19 +33,26 @@
 
 #include "Config.h"
 
-#if defined(CONFIG_HALL_HAL_S32K)
+#if defined(CONFIG_HALL_HAL_PIN_S32K)
 	#include "Peripheral/HAL/Platform/S32K/HAL_Pin.h"
+#elif defined(CONFIG_HALL_HAL_HALL_S32K)
+	#include "Motor/Transducer/HAL/Platform/KLS_S32K/HAL_Hall.h"
 #elif defined(CONFIG_HALL_HAL_KLS_S32K)
 	#include "Motor/Transducer/HAL/Board/KLS_S32K/HAL_Hall.h"
-#elif defined(CONFIG_HALL_HAL_USER_DEFINED)
+#elif defined(CONFIG_HALL_HAL_HALL_USER_DEFINED)
 
-	typedef struct
-	{
 
-	} HAL_Hall_T;
+/*
+typedef const struct
+{
+//	uint32_t InstanceID;
+} HAL_Hall_T;
 
-	extern inline uint8_t HAL_Hall_ReadSensors(const HAL_HALL_T * p_hall);
+static inline uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
+{
 
+}
+*/
 #endif
 
 

@@ -158,6 +158,8 @@ Encoder_T;
 /*!
 	@addtogroup	Delta
 	@brief 	 Captured Delta calculations and conversions.
+
+	todo untested
  */
 /*! @{ */
 /******************************************************************************/
@@ -376,20 +378,34 @@ static inline uint32_t Encoder_ConvertUnitsToDeltaD(Encoder_T * p_encoder, uint3
 	Inline Setters
  */
 /******************************************************************************/
-static inline void Encoder_ResetDeltas(Encoder_T * p_encoder)
+static inline void Encoder_ZeroDeltas(Encoder_T * p_encoder)
 {
 	p_encoder->DeltaD = 1;
 	p_encoder->DeltaT = 1;
 }
 
-static inline void Encoder_ResetTotals(Encoder_T * p_encoder)
+static inline void Encoder_ZeroTotals(Encoder_T * p_encoder)
 {
 	p_encoder->TotalD = 0;
 	p_encoder->TotalT = 0;
 }
 
-static inline void Encoder_ResetTimer(Encoder_T * p_encoder)
+static inline void Encoder_ZeroTimerCounter(Encoder_T * p_encoder)
 {
+	HAL_Encoder_WriteTimerCounter(p_encoder->p_HAL_Encoder, 0U);
+	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
+}
+
+static inline void Encoder_Zero(Encoder_T * p_encoder)
+{
+	p_encoder->DeltaD = 1;
+	p_encoder->DeltaT = 1;
+	p_encoder->TotalD = 0;
+	p_encoder->TotalT = 0;
+	p_encoder->AngularD = 0;
+//	p_encoder->UserD 	= 0;
+//	p_encoder->UserT 	= 0;
+	HAL_Encoder_WriteTimerCounter(p_encoder->p_HAL_Encoder, 0U);; /* reset for angularD */
 	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
 }
 /******************************************************************************/
@@ -877,7 +893,7 @@ extern void Encoder_Init
 	uint8_t angleDataBits					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
 );
 
-extern void Encoder_Reset(Encoder_T * p_encoder);
+extern void Encoder_Zero(Encoder_T * p_encoder);
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

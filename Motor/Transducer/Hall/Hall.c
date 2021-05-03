@@ -169,50 +169,42 @@ void Hall_CalibrateCommuntationTable_Blocking
 	Hall_Phase_T phaseCB,
 	Hall_Phase_T phaseAB,
 
-	void (* activatePwmPhaseABC)(uint16_t pwmA, uint16_t pwmB, uint16_t pwmC),
+	void (*activatePwmValuePhaseABC)(uint16_t pwmA, uint16_t pwmB, uint16_t pwmC),
 	uint16_t pwm,
 	void (*activatePwmStatePhaseABC)(bool enA, bool enB, bool enC),
 
-	void (*delay)(uint32_t),
+	void (*delay)(uint32_t time),
 	uint32_t delayTime
 )
 {
-	activatePwmPhaseABC(pwm, 0, 0);
-	activatePwmStatePhaseABC(1,1,1);
+	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
+
+	activatePwmValuePhaseABC(pwm, 0, 0);
 	delay(delayTime);
 	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseBC;
 //	if (returnIndexBC) *returnIndexBC = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
-	activatePwmPhaseABC(pwm, pwm, 0);
-	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
+	activatePwmValuePhaseABC(pwm, pwm, 0);
 	delay(delayTime);
 	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseBA;
 //	if (returnIndexBA) *returnIndexBA = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
-
-	activatePwmPhaseABC(0, pwm, 0);
-	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
+	activatePwmValuePhaseABC(0, pwm, 0);
 	delay(delayTime);
 	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseCA;
 //	if (returnIndexCA) *returnIndexCA = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
-
-	activatePwmPhaseABC(0, pwm, pwm);
-	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
+	activatePwmValuePhaseABC(0, pwm, pwm);
 	delay(delayTime);
 	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseCB;
 //	if (returnIndexCB) *returnIndexCB = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
-
-	activatePwmPhaseABC(0, 0, pwm);
-	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
+	activatePwmValuePhaseABC(0, 0, pwm);
 	delay(delayTime);
 	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseAB;
 //	if (returnIndexAB) *returnIndexAB = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
-
-	activatePwmPhaseABC(pwm, 0, pwm);
-	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
+	activatePwmValuePhaseABC(pwm, 0, pwm);
 	delay(delayTime);
 	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseAC;
 //	if (returnIndexAC) *returnIndexAC = Hall_ReadSensors(p_hall->p_HAL_Hall);

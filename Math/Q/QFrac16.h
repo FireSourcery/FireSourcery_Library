@@ -53,9 +53,11 @@ static const qfrac16_t QFRAC16_SQRT3_DIV_4 = 0x376D;
 static const qfrac16_t QFRAC16_SQRT2_DIV_2 = 0x5A82;
 static const qfrac16_t QFRAC16_SQRT3_MOD_1 = 0x5DB4; /*!< 0.73205080756f */
 
+static const int32_t QFRAC16_1_OVERSAT = (int32_t)0x00008000; /*!< (32768) */
+
 static const qangle16_t QANGLE16_90 = 0x4000; /*!< 16384 */
-static const qangle16_t QANGLE16_180 = (int16_t) 0x8000; /*!< 32768, -32768, 180 == -180 */
-static const qangle16_t QANGLE16_270 = (int16_t) 0xC000; /*!< 49152, -16384, 270 == -90 */
+static const qangle16_t QANGLE16_180 = 0x8000; /*!< 32768, -32768, 180 == -180 */
+static const qangle16_t QANGLE16_270 = 0xC000; /*!< 49152, -16384, 270 == -90 */
 
 #define SINE_90_TABLE_ENTRIES 	256
 #define SINE_90_TABLE_LSB 		6	/*!< Insignificant bits, shifted away*/
@@ -206,20 +208,20 @@ static inline qfrac16_t qfrac16_cos(qangle16_t theta)
 	if ((uint16_t)theta < (uint16_t)QANGLE16_180)
 	{
 		if ((uint16_t)theta < (uint16_t)QANGLE16_90)	return sin90(QANGLE16_180 - 1 - theta);
-		else											return sin90(theta);
+		else											return (0 - sin90(theta));
 	}
 	else
 	{
 		if ((uint16_t)theta < (uint16_t)QANGLE16_270) 	return (0 - sin90(QANGLE16_180 - 1 - theta));
-		else											return (0 - sin90(theta));
+		else											return sin90(theta);
 	}
 }
 
-static inline void qfrac16_vector(qfrac16_t * const p_cos, qfrac16_t * const p_sin, qangle16_t theta)
+static inline void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16_t theta)
 {
-	if (theta < QANGLE16_180)
+	if ((uint16_t)theta < (uint16_t)QANGLE16_180)
 	{
-		if (theta < QANGLE16_90)
+		if ((uint16_t)theta < (uint16_t)QANGLE16_90)
 		{
 			*p_sin = sin90(theta);
 			*p_cos = sin90(QANGLE16_180 - 1 - theta);
@@ -227,12 +229,12 @@ static inline void qfrac16_vector(qfrac16_t * const p_cos, qfrac16_t * const p_s
 		else
 		{
 			*p_sin = sin90(QANGLE16_180 - 1 - theta);
-			*p_cos = sin90(theta);
+			*p_cos = 0 - sin90(theta);
 		}
 	}
 	else
 	{
-		if (theta < QANGLE16_270)
+		if ((uint16_t)theta < (uint16_t)QANGLE16_270)
 		{
 			*p_sin = 0 - sin90(theta);
 			*p_cos = 0 - sin90(QANGLE16_180 - 1 - theta);;
@@ -240,7 +242,7 @@ static inline void qfrac16_vector(qfrac16_t * const p_cos, qfrac16_t * const p_s
 		else
 		{
 			*p_sin = 0 - sin90(QANGLE16_180 - 1 - theta);
-			*p_cos = 0 - sin90(theta);
+			*p_cos = sin90(theta);
 		}
 	}
 

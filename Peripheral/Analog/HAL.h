@@ -32,15 +32,14 @@
 #ifndef HAL_ANALOG_H
 #define HAL_ANALOG_H
 
-//#include "Analog.h"
 #include "Config.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifdef CONFIG_ANALOG_HAL_ADC_FUNCTIONS_S32K
+#ifdef CONFIG_ANALOG_HAL_S32K
 	#include "Peripheral/HAL/Platform/S32K/HAL_ADC.h"
-#elif defined(CONFIG_ANALOG_HAL_ADC_FUNCTIONS_USER_DEFINED)
+#elif defined(CONFIG_ANALOG_HAL_USER_DEFINED)
 
 	typedef volatile void HAL_ADC_T;
 

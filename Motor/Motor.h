@@ -32,18 +32,21 @@
 #define MOTOR_H
 
 
-#include "Peripheral/Pin/Pin.h"
+#include "HAL.h"
 
+#include "Peripheral/Pin/Pin.h"
 #include "Peripheral/Analog/Analog.h"
 
 #include "Transducer/Encoder/Encoder.h"
 #include "Transducer/Encoder/Encoder_Motor.h"
 
-#include "Transducer/Phase/Phase.h"
+#include "Motor/Transducer/Phase/Phase.h"
+#include "Motor/Transducer/Hall/Hall.h"
 
 #include "OS/StateMachine/StateMachine.h"
 
-#include "Math/FOC.h"
+#include "Motor/Math/FOC.h"
+
 #include "Math/Q/Q.h"
 #include "Math/Linear/Linear.h"
 
@@ -85,10 +88,17 @@ typedef enum
 /*
  * All modules independently conform to same ID
  */
-//typedef enum
-//{
-//	MOTOR_SECTOR_ID_1, //Phase AC
-//} Motor_SectorId_T;
+typedef enum
+{
+	MOTOR_SECTOR_ID_0 = 0,
+	MOTOR_SECTOR_ID_1 = 1, //Phase AC
+	MOTOR_SECTOR_ID_2 = 2,
+	MOTOR_SECTOR_ID_3 = 3,
+	MOTOR_SECTOR_ID_4 = 4,
+	MOTOR_SECTOR_ID_5 = 5,
+	MOTOR_SECTOR_ID_6 = 6,
+	MOTOR_SECTOR_ID_7 = 7,
+} Motor_SectorId_T;
 //
 //typedef enum
 //{
@@ -122,7 +132,7 @@ typedef enum
 	VoltageFreq		Position 			Speed (Scalar)
 	SpeedVoltage	Position 			Speed
 	SpeedCurrent	Position Current	Speed
-
+	sensorless..
  */
 //typedef struct
 //{
@@ -187,31 +197,36 @@ Motor_Parameters_T;
  */
 typedef const struct Motor_Init_Tag
 {
-	HAL_ADC_T * p_AdcRegMap;
-	uint8_t AdcNCount;
-	uint8_t AdcMLengthBuffer;
-	const uint32_t * p_AdcChannelPinMap;
+//    const HAL_PWM_T PhasePwmA;
+//    const HAL_PWM_T PhasePwmB;
+//    const HAL_PWM_T PhasePwmC;
+    const HAL_Phase_T HAL_PHASE;
+//    const uint32_t PHASE_PWM_PERIOD_MAX;
 
-	const HAL_Encoder_T * p_HalEncoder;
-    uint32_t EncoderTimerCounterMax;
+	const HAL_Encoder_T HAL_ENCODER;
+//	const uint32_t ENCODER_TIMER_COUNTER_MAX;
+//	const uint32_t ENCODER_TIMER_COUNTER_MAX_HALL;
+//	const uint32_t ENCODER_TIMER_COUNTER_MAX_ENCODER;
 
-//    const HAL_PWM_T * p_PhasePwmA;
-//    const HAL_PWM_T * p_PhasePwmB;
-//    const HAL_PWM_T * p_PhasePwmC;
-    const HAL_Phase_T * p_HAL_Phase;
+	const HAL_Hall_T HAL_HALL;
 
-	uint32_t PhasePwmMax;
-//	void (*PhaseOnAB)(void * phaseData);
-//	void (*PhaseOnAC)(void * phaseData);
-//	void (*PhaseOnBC)(void * phaseData);
-//	void (*PhaseOnBA)(void * phaseData);
-//	void (*PhaseOnCA)(void * phaseData);
-//	void (*PhaseOnCB)(void * phaseData);
 
-	const HAL_Pin_T * p_PinBrake;
-	const HAL_Pin_T * p_PinThrottle;
-	const HAL_Pin_T * p_PinForward;
-	const HAL_Pin_T * p_PinReverse;
+
+    //	HAL_ADC_T * p_AdcRegMap;
+    //	uint8_t AdcNCount;
+    //	uint8_t AdcMLengthBuffer;
+    //	const uint32_t * p_AdcChannelPinMap;
+
+	const HAL_Pin_T HAL_PIN_BRAKE;
+	const HAL_Pin_T HAL_PIN_THROTTLE;
+	const HAL_Pin_T HAL_PIN_FORWARD;
+	const HAL_Pin_T HAL_PIN_REVERSE;
+
+	const uint32_t PWM_FREQ;
+	const uint32_t PWM_PERIOD;
+	const uint32_t ANGLE_RES_BITS;
+	const uint32_t V_ABC_R1;
+	const uint32_t V_ABC_R2;
 } Motor_Init_T;
 
 
@@ -231,19 +246,20 @@ typedef struct
 //	Hall_T Hall;
 
 	//No wrapper layer for pins
-//	HAL_Pin_T PinBrake;
-//	HAL_Pin_T PinThrottle;
-//	HAL_Pin_T PinForward;
-//	HAL_Pin_T PinReverse;
+//	HAL_Pin_T * p_PinBrake;
+//	HAL_Pin_T * p_PinThrottle;
+//	HAL_Pin_T * p_PinForward;
+//	HAL_Pin_T * p_PinReverse;
 
 
 	Motor_Parameters_T 	Parameters;
-	Motor_FocMode_T 	FocMode;
+
 
 	StateMachine_T StateMachine;
 	uint32_t TimerCounter; /* Control Freq */
 
 	/* FOC Mode */
+	Motor_FocMode_T 	FocMode;
 	FOC_T		 Foc;
 	//	//PID_T 	PidSpeed;
 

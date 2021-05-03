@@ -34,38 +34,18 @@
 #define MOTOR_FOC_H
 
 #include "Motor.h"
+#include "Default.h"
+#include "Config.h"
 
 #include "Math/FOC.h"
 
 #include "Transducer/Encoder/Encoder_IO.h"
-
 #include "Transducer/Encoder/Encoder_Motor.h"
 //#include "Transducer/Encoder/Encoder.h"
 
-#include "Config.h"
-
+#include <stdint.h>
 #include <stdbool.h>
 
-/*
- * Current PID Feedback Loop
- *
- *	Input by  pointer:
- *	motor->IdReq
- *	motor->IqReq
- *	p_foc->Id
- *	p_foc->Iq
- *
- *	output by pointer:
- *	p_foc->Vd
- *	p_foc->Vq
- */
-static inline void Motor_FOC_ProcCurrentLoop(Motor_T * p_motor)
-{
-	FOC_ProcClarkePark(&p_motor->Foc);
-//	PID_Proc_ISR(&PIDd);
-//	PID_Proc_ISR(&PIDq);
-//	//qfract16_limitvector_xy(&p_foc->Vd, &p_foc->Vq, p_foc->vectorMax, sqrt13);
-}
 
 /******************************************************************************/
 /*!
@@ -78,18 +58,18 @@ static inline void Motor_FOC_ProcCurrentLoop(Motor_T * p_motor)
 /*!
 	Called by StateMachine wrapper
  */
-static inline void Motor_FOC_ActivateAlign(Motor_T * p_motor)
+static inline void Motor_FOC_TestAlign(Motor_T * p_motor)
 {
-	FOC_SetAlign(&p_motor->Foc, p_motor->Parameters.FocAlignVd); /* 5-10 percent*/
-	Phase_Actuate(&p_motor->Phase);
+	FOC_SetAlign(&p_motor->Foc, DEFAULT_FOC_OPEN_LOOP_VQ); //p_motor->Parameters.FocAlignVd); /* 5-10 percent*/
+//	Phase_Actuate(&p_motor->Phase);
 
 	//should this be in state wrapper?
-	p_motor->TimerCounter = CONFIG_MOTOR_CONTROL_FREQ; /* set timer for 1 second */
+//	p_motor->TimerCounter = DEFAULT_CONTROL_FREQ_HZ; //CONFIG_MOTOR_CONTROL_FREQ; /* set timer for 1 second */
 }
 
-static inline void Motor_FOC_SetZeros(Motor_T * p_motor)
+static inline void Motor_FOC_Zero(Motor_T * p_motor)
 {
-	Encoder_Reset(&p_motor->Encoder);
+	Encoder_Zero(&p_motor->Encoder);
 	FOC_SetZero(&p_motor->Foc);
 }
 
@@ -137,6 +117,30 @@ static inline void Motor_FOC_SetRunMode(Motor_T * p_motor)
 //		break;
 //	}
 
+
+		switch (p_motor->FocMode)
+		{
+		case MOTOR_FOC_MODE_OPENLOOP:
+//			FOC_SetVd(&p_motor->Foc, 0);
+//			FOC_SetVq(&p_motor->Foc, p_motor->Parameters.FocOpenLoopVq);
+			break;
+		case  MOTOR_FOC_MODE_CONSTANT_SPEED_CURRENT:
+			//foc->DMax = sqrt1/3
+
+//		case CONTROL_MODE_VOLTAGE:
+//
+//		case CONTROL_MODE_SPEED_VOLTAGE:
+//
+//		case CONTROL_MODE_OPEN_LOOP:
+//			//Linear_Ramp_Init(&p_motor->Ramp, pollingFreq, setpoint);
+//			//Linear_Ramp_Init(&p_motor->Ramp, freq, start, end, accerleration);
+//			break;
+
+
+		default:
+			break;
+		}
+
 	/*
 	 * Common
 	 */
@@ -152,7 +156,7 @@ static inline void Motor_FOC_SetRunMode(Motor_T * p_motor)
 
 extern Analog_Conversion_T FOC_ANALOG_CONVERSION_ANGLE_CONTROL;
 
-static inline void Motor_FOC_ActivateAngleControl(Motor_T * p_motor)
+static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
 	//check local fault
 
@@ -168,17 +172,18 @@ static inline void Motor_FOC_ActivateAngleControl(Motor_T * p_motor)
 			//	uint16_t speedRPM = Linear_Ramp_ConvertIndex(&p_motor->Ramp, p_motor->RampIndex);
 			//	p_motor->Speed_RPM = Linear_Ramp_ProcIndex(&p_motor->Ramp, &p_motor->RampIndex);
 			p_motor->ElectricalAngle += Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(&p_motor->Encoder, p_motor->Speed_RPM);
+			FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
 			//FOC_SetVd(&p_motor->Foc, 0);
-			FOC_SetVq(&p_motor->Foc, p_motor->Parameters.FocOpenLoopVq);
+			FOC_SetVq(&p_motor->Foc, DEFAULT_FOC_OPEN_LOOP_VQ/2); //const open loop voltage
+//			FOC_SetVq(&p_motor->Foc, p_motor->VCmd); //prop to throttle
+
 		}
 		else /* Position Feedback */
 		{
 			Encoder_CaptureDeltaD_IO(&p_motor->Encoder);
-
 			p_motor->Speed_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder); //Always calc speed?
 			p_motor->ElectricalAngle = Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);  //need to save theta?
-
-			FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
+			FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
 
 			if (p_motor->FocMode == MOTOR_FOC_MODE_SCALAR_VOLTAGE_FREQ)
 			{
@@ -199,32 +204,56 @@ static inline void Motor_FOC_ActivateAngleControl(Motor_T * p_motor)
 		}
 
 		FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
-		Phase_Actuate(&p_motor->Phase);	//Phase_Actuate_ABC(&p_motor->Phase, a,b,c);
+
+//		Phase_SetDutyCyle_(&p_motor->Phase,  FOC_GetDutyA(),  pwmDutyB,  pwmDutyC);
+
+		Phase_Actuate(&p_motor->Phase);	//Phase_ActuatePeriod(&p_motor->Phase, a,b,c);
 	}
+}
+
+/*
+ * Current PID Feedback Loop
+ *
+ *	Input by  pointer:
+ *	motor->IdReq
+ *	motor->IqReq
+ *	p_foc->Id
+ *	p_foc->Iq
+ *
+ *	output by pointer:
+ *	p_foc->Vd
+ *	p_foc->Vq
+ */
+static inline void Motor_FOC_ProcCurrentLoop(Motor_T * p_motor)
+{
+	FOC_ProcClarkePark(&p_motor->Foc);
+//	PID_Proc_ISR(&PIDd);
+//	PID_Proc_ISR(&PIDq);
+	FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
 }
 
 
 /*
  * ADC conversion complete call
  */
-static inline void Motor_FOC_ActivateCurrentFeedback(Motor_T * p_motor)
+static inline void Motor_FOC_ProcCurrentFeedback(Motor_T * p_motor)
 {
+	Encoder_CaptureDeltaD_IO(&p_motor->Encoder);
+	p_motor->Speed_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder); //Always calc speed?
+	p_motor->ElectricalAngle = Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);  //need to save theta?
+	FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
+
 	if(p_motor->FocMode == MOTOR_FOC_MODE_CONSTANT_SPEED_CURRENT)
 	{
-		p_motor->Speed_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
 		Motor_PollSpeedLoop(p_motor);
-
 	} /* else (p_motor->FocMode == MOTOR_FOC_MODE_CONSTANT_CURRENT) */
 
 	FOC_ProcClarkePark(&p_motor->Foc);
-	Motor_FOC_ProcCurrentLoop(p_motor);
+//	Motor_FOC_ProcCurrentLoop(p_motor);
+	//	PID_Proc_ISR(&PIDd);
+	//	PID_Proc_ISR(&PIDq);
 	FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
 	Phase_Actuate(&p_motor->Phase); //Phase_Actuate_ABC(&p_motor->Phase, a,b,c);
 }
 
-
-
-
-
 #endif
-

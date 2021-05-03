@@ -54,17 +54,17 @@ typedef enum
 
 typedef struct
 {
-#if  	defined(CONFIG_PHASE_HAL_PLATFORM_PWM)
-	HAL_PWM_T * p_HAL_PwmA;
-	HAL_PWM_T * p_HAL_PwmB;
-	HAL_PWM_T * p_HAL_PwmC;
+#if  	defined(CONFIG_PHASE_HAL_PWM)
+	const HAL_PWM_T * p_HAL_PwmA;
+	const HAL_PWM_T * p_HAL_PwmB;
+	const HAL_PWM_T * p_HAL_PwmC;
 	#ifdef CONFIG_PHASE_HAL_EXTERNAL_SWITCH
-		HAL_Pin_T p_HAL_PinSwitchA;
-		HAL_Pin_T p_HAL_PinSwitchB;
-		HAL_Pin_T p_HAL_PinSwitchC;
+		const HAL_Pin_T * p_HAL_PinSwitchA;
+		const HAL_Pin_T * p_HAL_PinSwitchB;
+		const HAL_Pin_T * p_HAL_PinSwitchC;
 	#endif
-#elif 	defined(CONFIG_PHASE_HAL_BOARD_PHASE) || defined(CONFIG_PHASE_HAL_PLATFORM_PHASE)
-	HAL_Phase_T * p_HAL_Phase;
+#elif 	defined(CONFIG_PHASE_HAL_PHASE)
+	const HAL_Phase_T * p_HAL_Phase;
 #endif
 
 	uint32_t PwmPeriod_Ticks;
@@ -75,6 +75,10 @@ typedef struct
 	volatile uint16_t PeriodA; /* Phase PWM peroid in ticks */
 	volatile uint16_t PeriodB;
 	volatile uint16_t PeriodC;
+
+	volatile uint16_t DutyA;
+	volatile uint16_t DutyB;
+	volatile uint16_t DutyC;
 
 	volatile bool StateA; /*  On/Off State */
 	volatile bool StateB;
@@ -91,8 +95,7 @@ typedef struct
 //	volatile  uint32_t * HallTimerDelta;
 //	volatile  uint32_t ISRCount;
 
-	void * OnPhaseData;
-
+	void * p_OnPhaseData;
 	void (*OnPhaseAB)(void * onPhaseData); /*< User provides function e.g. measure current, start ADC*/
 	void (*OnPhaseAC)(void * onPhaseData);
 	void (*OnPhaseBC)(void * onPhaseData);
@@ -108,7 +111,7 @@ typedef struct
  */
 static inline void Phase_Actuate(const Phase_T * p_phase)
 {
-#if  	defined(CONFIG_PHASE_HAL_PLATFORM_PWM)
+#if  	defined(CONFIG_PHASE_HAL_PWM)
 	HAL_PWM_WritePeriod(p_phase->p_HAL_PwmA, p_phase->PeriodA);
 	HAL_PWM_WritePeriod(p_phase->p_HAL_PwmB, p_phase->PeriodB);
 	HAL_PWM_WritePeriod(p_phase->p_HAL_PwmC, p_phase->PeriodC);
@@ -116,11 +119,11 @@ static inline void Phase_Actuate(const Phase_T * p_phase)
 	HAL_PWM_WriteState(p_phase->p_HAL_PwmB, b);
 	HAL_PWM_WriteState(p_phase->p_HAL_PwmC, c);
 	#ifdef CONFIG_PHASE_HAL_EXTERNAL_SWITCH
-	HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchA, p_phase->StateA);
-	HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchB, p_phase->StateB);
-	HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchC, p_phase->StateC);
+		HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchA, p_phase->StateA);
+		HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchB, p_phase->StateB);
+		HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchC, p_phase->StateC);
 	#endif
-#elif 	defined(CONFIG_PHASE_HAL_BOARD_PHASE)
+#elif 	defined(CONFIG_PHASE_HAL_PHASE)
 	HAL_Phase_WritePeriod(p_phase->p_HAL_Phase, p_phase->PeriodA, p_phase->PeriodB, p_phase->PeriodC);
 	HAL_Phase_WriteState(p_phase->p_HAL_Phase, p_phase->StateA, p_phase->StateB, p_phase->StateC);
 #endif
@@ -129,18 +132,23 @@ static inline void Phase_Actuate(const Phase_T * p_phase)
 /*
 	Actuate arguments immediately
  */
-static inline void Phase_ActuatePeriod(const Phase_T * p_phase, uint16_t pwmPeriodA, uint16_t pwmPeriodB, uint16_t pwmPeriodC)
+/*
+	period in ticks
+ */
+static inline void Phase_ActuatePeriod(const Phase_T * p_phase, uint32_t pwmPeriodA, uint32_t pwmPeriodB, uint32_t pwmPeriodC)
 {
-#if  	defined(CONFIG_PHASE_HAL_PLATFORM_PWM)
+#if  	defined(CONFIG_PHASE_HAL_PWM)
 	HAL_PWM_WritePeriod(p_phase->p_HAL_PwmA, p_phase->PeriodA);
 	HAL_PWM_WritePeriod(p_phase->p_HAL_PwmB, p_phase->PeriodB);
 	HAL_PWM_WritePeriod(p_phase->p_HAL_PwmC, p_phase->PeriodC);
-#elif 	defined(CONFIG_PHASE_HAL_BOARD_PHASE)
+#elif 	defined(CONFIG_PHASE_HAL_PHASE)
 	HAL_Phase_WritePeriod(p_phase->p_HAL_Phase, pwmPeriodA, pwmPeriodB, pwmPeriodC);
 #endif
 }
 
-
+/*
+ * where 65536 is 100% duty
+ */
 static inline void Phase_ActuatePeriod_DutyCycle(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
 {
 	Phase_ActuatePeriod
@@ -154,27 +162,27 @@ static inline void Phase_ActuatePeriod_DutyCycle(const Phase_T * p_phase, uint16
 
 static inline void Phase_ActuateState(const Phase_T * p_phase, bool a, bool b, bool c)
 {
-#if  	defined(CONFIG_PHASE_HAL_PLATFORM_PWM)
+#if  	defined(CONFIG_PHASE_HAL_PWM)
 	HAL_PWM_WriteState(p_phase->p_HAL_PwmA, a);
 	HAL_PWM_WriteState(p_phase->p_HAL_PwmB, b);
 	HAL_PWM_WriteState(p_phase->p_HAL_PwmC, c);
 	#ifdef CONFIG_PHASE_HAL_EXTERNAL_SWITCH
-	HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchA, a);
-	HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchB, b);
-	HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchC, c);
+		HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchA, a);
+		HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchB, b);
+		HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchC, c);
 	#endif
-#elif 	defined(CONFIG_PHASE_HAL_BOARD_PHASE)
+#elif 	defined(CONFIG_PHASE_HAL_PHASE)
 	HAL_Phase_WriteState(p_phase->p_HAL_Phase, a, b, c);
 #endif
 }
 
 static inline void Phase_ActuateInvertPolarity(const Phase_T * p_phase, bool isInvA, bool isInvB, bool isInvC)
 {
-#if  	defined(CONFIG_PHASE_HAL_PLATFORM_PWM)
+#if  	defined(CONFIG_PHASE_HAL_PWM)
 	HAL_PWM_WriteInvertPolarity(p_phase->p_HAL_PwmA, isInvA);
 	HAL_PWM_WriteInvertPolarity(p_phase->p_HAL_PwmB, isInvB);
 	HAL_PWM_WriteInvertPolarity(p_phase->p_HAL_PwmC, isInvC);
-#elif 	defined(CONFIG_PHASE_HAL_BOARD_PHASE)
+#elif 	defined(CONFIG_PHASE_HAL_PHASE)
 	HAL_Phase_WriteInvertPolarity(p_phase->p_HAL_Phase, isInvA, isInvB, isInvC);
 #endif
 }
@@ -200,78 +208,96 @@ static inline void Phase_SetState(Phase_T * p_phase, bool a, bool b, bool c)
 
 
 
-
-/*
+/******************************************************************************/
+/*!
 	2-Phase Polar PWM
  */
+/*! @{ */
+/******************************************************************************/
 
-//static inline void Phase_Unipolar1_ActivateAB(const Phase_T * p_phase)
-//{
-//	Phase_ActuatePeriod(p_phase, p_phase->Magnitude, 0U, 0U);
-//	Phase_ActuateState(p_phase, true, true, false);
-////	Phase_ActuatePeriod_DutyCycle(p_phase, p_phase->PeriodScalar, 0, 0);
-//}
-//
-////static inline void Phase_Unipolar1_ActivateAB_Duty(Phase_T * p_phase, uint16_t pwmDuty)
-////{
-////	Phase_ActuatePeriod(p_phase, (pwmDuty * p_phase->PwmPeriodTotal >> 16), 0, 0);
-////}
-//
-///*
-//	PwmPeriodA = PwmPeriodTotal/2 + PwmScale/2
-// */
-//static inline void Phase_Unipolar2_ActivateAB(const Phase_T * p_phase)
-//{
-//	Phase_ActuatePeriod(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->Magnitude) / 2U, (p_phase->PwmPeriod_Ticks - p_phase->Magnitude) / 2U, 0U);
-//}
-//
-//static inline void Phase_Bipolar_ActivateAB(const Phase_T * p_phase)
-//{
-//	Phase_ActuatePeriod(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->Magnitude) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->Magnitude) / 2U, 0U);
-//	Phase_ActuateInvertPolarity(p_phase, false, true, false);
-//}
-//
-//
-//static inline void Phase_Polar_SetPeriod(Phase_T * p_phase, uint16_t pwmPeriod)
-//{
-//	p_phase->Magnitude = pwmPeriod;
-//}
-//
-//static inline void Phase_Polar_SetDutyCyle(Phase_T * p_phase, uint16_t pwmDuty)
-//{
-//	p_phase->Magnitude = pwmDuty * p_phase->PwmPeriod_Ticks / 65536U;
-//}
-//
-//static inline void Phase_Polar_ActivateAB(const Phase_T * p_phase)
-//{
-//	switch (p_phase->PhaseMode)
-//	{
-//	case PHASE_MODE_UNIPOLAR_1:		Phase_Unipolar1_ActivateAB(p_phase);	break;
-//	case PHASE_MODE_UNIPOLAR_2:		Phase_Unipolar2_ActivateAB(p_phase);	break;
-//	case PHASE_MODE_BIPOLAR:		Phase_Bipolar_ActivateAB(p_phase);		break;
-//	default: break;
-//	}
-//
-//	Phase_ActuateState(p_phase, true, true, false);
-//	p_phase->OnPhaseAB(p_phase->OnPhaseData);
-//}
-//
-//static inline void Phase_Polar_ActivateAB_Duty(Phase_T * p_phase, uint16_t pwmDuty)
-//{
-//	Phase_Polar_SetDutyCyle(p_phase, pwmDuty);
-//	Phase_Polar_ActivateAB(p_phase);
-//}
 
+
+static inline void Phase_Unipolar1_ActivateAB(const Phase_T * p_phase)
+{
+	Phase_ActuatePeriod(p_phase, p_phase->Magnitude, 0U, 0U);
+	Phase_ActuateState(p_phase, true, true, false);
+//	Phase_ActuatePeriod_DutyCycle(p_phase, p_phase->PeriodScalar, 0, 0);
+}
+		//static inline void Phase_Unipolar1_ActivateAB_Duty(Phase_T * p_phase, uint16_t pwmDuty)
+		//{
+		//	Phase_ActuatePeriod(p_phase, (pwmDuty * p_phase->PwmPeriodTotal >> 16), 0, 0);
+		//}
+
+/*
+	PwmPeriodA = PwmPeriodTotal/2 + PwmScale/2
+ */
+static inline void Phase_Unipolar2_ActivateAB(const Phase_T * p_phase)
+{
+	Phase_ActuatePeriod(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->Magnitude) / 2U, (p_phase->PwmPeriod_Ticks - p_phase->Magnitude) / 2U, 0U);
+}
+
+static inline void Phase_Bipolar_ActivateAB(const Phase_T * p_phase)
+{
+	Phase_ActuatePeriod(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->Magnitude) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->Magnitude) / 2U, 0U);
+	Phase_ActuateInvertPolarity(p_phase, false, true, false);
+}
+
+
+
+
+static inline void Phase_Polar_SetPeriod(Phase_T * p_phase, uint16_t pwmPeriod)
+{
+	p_phase->Magnitude = pwmPeriod;
+}
+
+static inline void Phase_Polar_SetDutyCyle(Phase_T * p_phase, uint16_t pwmDuty)
+{
+	p_phase->Magnitude = pwmDuty * p_phase->PwmPeriod_Ticks / 65536U;
+}
+
+static inline void Phase_Polar_ActivateAB(const Phase_T * p_phase)
+{
+	switch (p_phase->PhaseMode)
+	{
+	case PHASE_MODE_UNIPOLAR_1:		Phase_Unipolar1_ActivateAB(p_phase);	break;
+	case PHASE_MODE_UNIPOLAR_2:		Phase_Unipolar2_ActivateAB(p_phase);	break;
+	case PHASE_MODE_BIPOLAR:		Phase_Bipolar_ActivateAB(p_phase);		break;
+	default: break;
+	}
+
+	Phase_ActuateState(p_phase, true, true, false);
+	p_phase->OnPhaseAB(p_phase->p_OnPhaseData);
+}
+
+static inline void Phase_Polar_ActivateAB_Duty(Phase_T * p_phase, uint16_t pwmDuty)
+{
+	Phase_Polar_SetDutyCyle(p_phase, pwmDuty);
+	Phase_Polar_ActivateAB(p_phase);
+}
+
+static inline void Phase_Polar_ActivateAC(const Phase_T * p_phase)
+{
+
+}
+
+static inline void Phase_Polar_ActivateAC_Duty(Phase_T * p_phase, uint16_t pwmDuty)
+{
+	Phase_Polar_SetDutyCyle(p_phase, pwmDuty);
+	Phase_Polar_ActivateAC(p_phase);
+}
+/******************************************************************************/
+/*! @} */
+/******************************************************************************/
 
 
 extern void Phase_Init
 (
 	Phase_T * p_phase,
-#if  	defined(CONFIG_PHASE_HAL_PLATFORM_PWM)
+#if  	defined(CONFIG_PHASE_HAL_PWM)
 	const HAL_PWM_T * p_HAL_pwmA,
 	const HAL_PWM_T * p_HAL_pwmB,
 	const HAL_PWM_T * p_HAL_pwmC,
-#elif 	defined(CONFIG_PHASE_HAL_BOARD_PHASE)
+#elif 	defined(CONFIG_PHASE_HAL_PHASE)
 	const HAL_Phase_T * p_HAL_phase,
 #endif
 	uint16_t pwmPeroid_Ticks,

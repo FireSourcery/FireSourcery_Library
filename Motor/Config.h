@@ -39,17 +39,6 @@
 	#define CONFIG_MOTOR_HAL_USER_DEFINED
 #endif
 
-#ifdef CONFIG_PHASE_HAL_PWM_FUNCTIONS_KLS_S32K
-
-#elif defined(CONFIG_PHASE_HAL_PWM_FUNCTIONS_S32K)
-
-#elif defined(CONFIG_PHASE_HAL_PWM_FUNCTIONS_USER_DEFINED)
-
-#else
-	#define CONFIG_PHASE_HAL_PWM_FUNCTIONS_USER_DEFINED
-#endif
-
-
 /*
  * Motor Module
  */
@@ -61,13 +50,6 @@
 #else
 	#define CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
 #endif
-
-#ifdef CONFIG_MOTOR_CONTROL_FREQ
-
-#else
-	#define CONFIG_MOTOR_CONTROL_FREQ (20000U)
-#endif
-
 
 
 #endif

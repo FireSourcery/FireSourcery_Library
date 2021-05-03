@@ -31,6 +31,9 @@
 #ifndef CONFIG_HALL_H
 #define CONFIG_HALL_H
 
+/*
+	Module Options
+ */
 #if  	defined(CONFIG_HALL_COMMUTATION_TABLE_SECTOR_ID)
 
 #elif 	defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
@@ -40,20 +43,26 @@
 #endif
 
 
-
-#if  	defined(CONFIG_HALL_HALKLS)
-	#define CONFIG_HALL_HAL_PLATFORM_PIN
-#elif 	defined(CONFIG_HALL_HAL_KLS_S32K)
-	#define CONFIG_HALL_HAL_BOARD_HALL
-#elif 	defined(CONFIG_HALL_HAL_USER_DEFINED)
-
+/*
+	HAL Select
+ */
+#if defined(CONFIG_HALL_HAL_PIN_S32K)
+	#define CONFIG_HALL_HAL_PIN
+#elif defined(CONFIG_HALL_HAL_HALL_S32K)
+	#define CONFIG_HALL_HAL_HALL
+#elif defined(CONFIG_HALL_HAL_KLS_S32K)
+	#define CONFIG_HALL_HAL_HALL
+#elif defined(CONFIG_HALL_HAL_HALL_USER_DEFINED)
+	#define CONFIG_HALL_HAL_HALL
 #else
-	#define CONFIG_HALL_HAL_USER_DEFINED
+	#define CONFIG_HALL_HAL_HALL_USER_DEFINED
+	#define CONFIG_HALL_HAL_HALL
 #endif
 
-#if  	defined(CONFIG_HALL_HAL_PLATFORM_PIN)
 
-#elif 	defined(CONFIG_HALL_HAL_BOARD_HALL)
+#if  	defined(CONFIG_HALL_HAL_PIN)
+
+#elif 	defined(CONFIG_HALL_HAL_HALL)
 
 #else
 	#define CONFIG_HALL_HAL_BOARD_HALL

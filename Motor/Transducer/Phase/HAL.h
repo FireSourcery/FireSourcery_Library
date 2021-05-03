@@ -33,13 +33,15 @@
 
 #include "Config.h"
 
-#if defined(CONFIG_PHASE_HAL_PLATFORM_S32K)
+#if defined(CONFIG_PHASE_HAL_PWM_S32K)
 	#include "Peripheral/HAL/Platform/S32K/HAL_Pin.h"
 	#include "Peripheral/HAL/Platform/S32K/HAL_PWM.h"
+#elif defined(CONFIG_PHASE_HAL_PHASE_S32K)
+	#include "Motor/Transducer/HAL/Platform/KLS_S32K/HAL_Phase.h"
 #elif defined(CONFIG_PHASE_HAL_KLS_S32K)
 	#include "Motor/Transducer/HAL/Board/KLS_S32K/HAL_Phase.h"
-#elif defined(CONFIG_PHASE_HAL_USER_DEFINED_PWM)
-
+#elif defined(CONFIG_PHASE_HAL_USER_DEFINED)
+/*
 	typedef struct
 	{
 		PWMTimer_T * p_PwmTimer;
@@ -48,17 +50,34 @@
 
 	extern inline void HAL_PWM_WritePeriod(const HAL_PWM_T * p_pwm, uint32_t pwmPeroid);
 
-	/*	true is inverted, false is noninverted	 */
+	true is inverted, false is noninverted
 	extern inline void HAL_PWM_WriteInvertPolarity(const HAL_PWM_T * p_pwm, bool isInvertedPolarity);
 	extern inline void HAL_PWM_WriteState(const HAL_PWM_T * p_pwm, bool isOn);
+*/
 
-#elif defined(CONFIG_PHASE_HAL_USER_DEFINED_PHASE)
 
-	typedef struct
-	{
+/*
+typedef const struct
+{
+	uint32_t InstanceID;
+} HAL_Phase_T;
 
-	} HAL_Phase_T;
+static inline void HAL_Phase_WritePeriod(const HAL_Phase_T * p_phase, uint32_t pwmPeroidA, uint32_t pwmPeroidB, uint32_t pwmPeroidC)
+{
 
+}
+
+static inline void HAL_Phase_WriteState(const HAL_Phase_T * p_phase, bool isOnPwmA, bool isOnPwmB, bool isOnPwmC)
+{
+
+}
+
+// true is inverted, false is noninverted
+static inline void HAL_Phase_WriteInvertPolarity(const HAL_Phase_T * p_phase, bool isInvPwmA, bool isInvPwmB, bool isInvPwmC)
+{
+
+}
+*/
 #endif
 
 

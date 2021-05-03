@@ -1,0 +1,3 @@
+/*
+ * Six Step commutation strategy
+ */

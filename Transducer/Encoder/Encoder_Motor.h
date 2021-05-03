@@ -150,12 +150,12 @@ static inline uint32_t Encoder_Motor_ConvertDeltaDToMechanicalRpm(Encoder_T * p_
  */
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(Encoder_T * p_encoder, uint16_t mechRpm)
 {
-	return mechRpm << (32 - p_encoder->UnitAngularD_DivisorShift) / 60  * p_encoder->PolePairs / p_encoder->UnitT_Freq;
+	return (mechRpm << (32 - p_encoder->UnitAngularD_DivisorShift)) / 60 * p_encoder->PolePairs / p_encoder->UnitT_Freq;
 }
 
 static inline uint32_t Encoder_Motor_ConvertElectricalRpmToElectricalDelta(Encoder_T * p_encoder, uint16_t elecRpm)
 {
-	return elecRpm << (32 - p_encoder->UnitAngularD_DivisorShift) / 60 / p_encoder->UnitT_Freq;
+	return (elecRpm << (32 - p_encoder->UnitAngularD_DivisorShift)) / 60 / p_encoder->UnitT_Freq;
 }
 
 /*!
@@ -192,7 +192,6 @@ extern void Encoder_Motor_Init
 (
 	Encoder_T * p_encoder,
 	const HAL_Encoder_T * p_HAL_encoder,
-	uint32_t encoderCounterMax,
 	uint32_t controlFreq_Hz,				/* UnitT_Freq */
 	uint32_t encoderDistancePerCount,		/* UnitLinearD */
 	uint32_t encoderCountsPerRevolution,	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */

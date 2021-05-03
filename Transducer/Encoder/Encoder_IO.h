@@ -132,21 +132,8 @@ static inline void Encoder_CaptureDeltaD_IO(Encoder_T * p_encoder)
 	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
 }
 
-///*!
-//	Uses periodic timer ISR.
-// */
-//static inline void Encoder_ActivateCaptureDeltaD_IO(Encoder_T * p_encoder)
-//{
-//
-//}
-//
-///*!
-//	Uses pin ISR, or polling
-// */
-//static inline void Encoder_ActivateCaptureDeltaT_IO(Encoder_T * p_encoder)
-//{
-//
-//}
+
+
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

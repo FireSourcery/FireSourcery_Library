@@ -72,7 +72,9 @@ static inline void HAL_Phase_WriteStateA(const HAL_Phase_T * p_phase, bool isOn)
 
 }
 
-
-
+static inline void HAL_Phase_WriteState(const HAL_Phase_T * p_phase, bool isOnPwmA, bool isOnPwmB, bool isOnPwmC)
+{
+	isOnPwmA ? (p_phase->p_FtmA->OUTMASK |= ((uint32_t)1U << p_phase->FtmChannelA)) : (p_phase->p_FtmA->OUTMASK &= ~((uint32_t)1U << p_phase->FtmChannelA));
+}
 
 #endif

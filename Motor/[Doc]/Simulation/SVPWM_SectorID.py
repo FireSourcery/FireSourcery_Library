@@ -5,9 +5,12 @@ theta = np.linspace(0, np.deg2rad(360), 500)
 angles = [np.deg2rad(60), np.deg2rad(120), np.deg2rad(180), np.deg2rad(240), np.deg2rad(300), np.deg2rad(360)]
 anglelabels = ['60', '120', '180', '240', '300', '360']
 
-X = np.sin(theta)
-Y = (np.sin(theta) + np.sqrt(3)*np.cos(theta))/2
-Z = (np.sin(theta) - np.sqrt(3)*np.cos(theta))/2
+alpha = np.cos(theta)
+beta = np.sin(theta)
+
+X = beta
+Y = (beta + np.sqrt(3)*alpha)/2
+Z = (beta - np.sqrt(3)*alpha)/2
 
 #A = -Z + 0
 #A[theta>np.deg2rad(60)] = z0

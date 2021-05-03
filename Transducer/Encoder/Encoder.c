@@ -74,32 +74,27 @@ static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uin
 
 
 /*!
-	@brief Init with provided parameters
-	@param unitT_Freq 					T unit(seconds) conversion factor. TimerCounter freq, using Capture DeltaT (DeltaD is 1). Polling DeltaD freq, using Capture DeltaD (DeltaT is 1).
-	@param unitAngle_DataBits			Angle unit conversion. Degrees per Revolution Bits. e.g. 16 for 65535 degrees cycle
-	@param unitAngle_SensorResolution 	Angle unit conversion. Encoder Pulses Per Revolution
-	@param unitLinearD					D unit linear conversion factor. Linear unit conversion factor. [Encoder Distance Per Revolution]/[Pulses Per Revolution]. Units per TimerCounter tick, using Capture DeltaD (DeltaT is 1). Units per DeltaT capture, using Capture DeltaT (DeltaD is 1).
-
+	@brief Init with provided parameters.
+	Default capture mode. HAL function responsible for all corresponding settings
  */
 void Encoder_Init
 (
 	Encoder_T * p_encoder,
-	HAL_Encoder_T * p_encoderTimerCounter,
+	HAL_Encoder_T * p_hal_encoder,
 	uint32_t timerCounterMax,
-	uint32_t unitT_Freq,					/* UnitT_Freq */
-	uint32_t pollingFreq,					/* PollingFreq */
+	uint32_t unitT_Freq,					/* UnitT_Freq  */
+	uint32_t pollingFreq,					/* PollingFreq. For CaptureDeltaD Mode and CaptureDeltaT Mode polling and InterpolateD */
 	uint32_t encoderDistancePerCount,		/* UnitLinearD */
 	uint32_t encoderCountsPerRevolution,	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */
 	uint8_t angleDataBits					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
 )
 {
-	p_encoder->p_HAL_Encoder 	= p_encoderTimerCounter;
-	p_encoder->TimerCounterMax 			= timerCounterMax;
-
-	p_encoder->UnitT_Freq 	= unitT_Freq;
-	p_encoder->PollingFreq = pollingFreq; /* For CaptureDeltaT() and InterpolateD */ 	//	p_encoder->UnitInterpolateD = p_encoder->UnitSpeed / interpolatedDFreq;;
-
-	p_encoder->UnitD 		= encoderDistancePerCount;
+	HAL_Encoder_Init(p_hal_encoder);
+	p_encoder->p_HAL_Encoder = p_hal_encoder;
+	p_encoder->TimerCounterMax = timerCounterMax;
+	p_encoder->UnitT_Freq = unitT_Freq;
+	p_encoder->PollingFreq = pollingFreq;  	//	p_encoder->UnitInterpolateD = p_encoder->UnitSpeed / pollingFreq;;
+	p_encoder->UnitD = encoderDistancePerCount;
 
 	/*
 	 * Possible 32 bit overflow
@@ -113,9 +108,6 @@ void Encoder_Init
 	 * deltaD ~14,000, for 300,000 (unitDeltaD * unitDeltaT_Freq)
 	 */
 	p_encoder->UnitSpeed = encoderDistancePerCount * unitT_Freq;
-
-	p_encoder->EncoderResolution = encoderCountsPerRevolution;
-
 
 	/*
 	 * Angle Calc
@@ -153,18 +145,71 @@ void Encoder_Init
 	 */
 	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(unitT_Freq, encoderCountsPerRevolution, angleDataBits);
 
-	Encoder_Reset(p_encoder);
+	p_encoder->EncoderResolution = encoderCountsPerRevolution;
+
+	Encoder_Zero(p_encoder);
 }
 
-void Encoder_Reset(Encoder_T * p_encoder)
+/*!
+	Uses periodic timer ISR.
+ */
+void Encoder_InitCaptureDeltaD
+(
+	Encoder_T * p_encoder,
+	HAL_Encoder_T * p_hal_encoder,
+	uint32_t timerCounterMax,
+	uint32_t pollingFreq,
+	uint32_t encoderDistancePerCount,
+	uint32_t encoderCountsPerRevolution,
+	uint8_t angleDataBits
+)
 {
-	p_encoder->DeltaD = 1;
-	p_encoder->DeltaT = 1;
-	p_encoder->TotalD = 0;
-	p_encoder->TotalT = 0;
-//	p_encoder->UserD 	= 0;
-//	p_encoder->UserT 	= 0;
-	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
+	Encoder_Init
+	(
+		p_encoder,
+		p_hal_encoder,
+		timerCounterMax,
+		pollingFreq,
+		pollingFreq,
+		encoderDistancePerCount,
+		encoderCountsPerRevolution,
+		angleDataBits
+	);
+
+	HAL_Encoder_ConfigCaptureCount(p_hal_encoder);
+	HAL_Encoder_WriteTimerCounterMax(p_hal_encoder, timerCounterMax);
+}
+
+/*!
+	Uses pin ISR, or polling
+ */
+void Encoder_InitCaptureDeltaT
+(
+	Encoder_T * p_encoder,
+	HAL_Encoder_T * p_hal_encoder,
+	uint32_t timerCounterMax,
+	uint32_t timerFreq,
+	uint32_t pollingFreq,	/* Polling and InterpolateD */
+	uint32_t encoderDistancePerCount,
+	uint32_t encoderCountsPerRevolution,
+	uint8_t angleDataBits
+)
+{
+	Encoder_Init
+	(
+		p_encoder,
+		p_hal_encoder,
+		timerCounterMax,
+		timerFreq,
+		pollingFreq,
+		encoderDistancePerCount,
+		encoderCountsPerRevolution,
+		angleDataBits
+	);
+
+	HAL_Encoder_ConfigCaptureTime(p_hal_encoder);
+	HAL_Encoder_WriteTimerCounterMax(p_hal_encoder, timerCounterMax);
+	HAL_Encoder_WriteTimerCounterFreq(p_hal_encoder, timerFreq);
 }
 
 //void Encoder_InitLongDelta(Encoder_T * p_encoder, volatile uint32_t * longDeltaTimer, uint32_t longTimerFreq)

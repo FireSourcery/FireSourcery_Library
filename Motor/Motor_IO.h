@@ -30,8 +30,9 @@
 */
 /**************************************************************************/
 #include "Motor.h"
-
 #include "Motor_FOC.h"
+
+#include "HAL.h"
 
 #include "Peripheral/Analog/Analog_IO.h"
 
@@ -43,25 +44,40 @@
  */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-	/*	All FOC Modes start all ADC measurements */
-//	Analog_StartConversion(&p_motor->Analog, &FOC_SAMPLE_GROUP);
+	if (p_motor->TimerCounter > 1)
+	{
+		p_motor->TimerCounter--;
+	}
+	else if(p_motor->TimerCounter == 1)
+	{
+		p_motor->TimerCounter--;
+		Motor_FOC_Zero(p_motor);
+		p_motor->FocMode = MOTOR_FOC_MODE_OPENLOOP;
+		p_motor->Speed_RPM = 60;
+		Phase_SetState(&p_motor->Phase,  true,  true,  true);
+	}
+	else
+	{
+		Motor_FOC_ProcAngleControl(p_motor);
+	}
 
 	//timer in pwm, machine in adc
 	//adc returns irregular times between modes, must check addtional flags
 	//machine in pwm, proc foc conversion to pwm in adc
 	//check foc proc flag, or set in analog conversion object
-	StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
+	//StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
 
-	p_motor->TimerCounter++;
+//	p_motor->TimerCounter++;
 }
 
 
 /*
 	ADC on complete. Possibly multiple per 1 PWM
+	todo adc algo to coordinate multiple adc using 1 channel samples list
  */
 static inline void Motor_ADC_Thread(Motor_T * p_motor)
 {
-	Analog_CaptureResults_IO(&p_motor->Analog);
+//	Analog_CaptureResults_IO(&p_motor->Analog);
 }
 
 static inline void Motor_Timer_Thread(Motor_T * p_motor) //1ms
