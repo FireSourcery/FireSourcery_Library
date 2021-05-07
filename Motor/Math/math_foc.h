@@ -25,6 +25,7 @@
 	@file 	math_foc.h
 	@author FireSoucery
 	@brief	FOC pure math functions.
+			Aligned in CW order: a, b, c; alpha, beta; d, q
 	@version V0
 */
 /******************************************************************************/
@@ -136,15 +137,13 @@ static inline void foc_park(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t alpha, q
 	qfrac16_t cos, sin;
 	int32_t d, q;
 
-	qfrac16_vector(&cos, &sin, theta); /// returns cos and sin by reference
+	qfrac16_vector(&cos, &sin, theta);
 
 	d = (int32_t)qfrac16_mul(alpha, cos) + (int32_t)qfrac16_mul(beta, sin);
 	q = (int32_t)qfrac16_mul(beta, cos) - (int32_t)qfrac16_mul(alpha, sin);
 
 	*p_d = qfrac16_sat(d);
 	*p_q = qfrac16_sat(q);
-
-	return;
 }
 
 /*
@@ -159,8 +158,6 @@ static inline void foc_park_vector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t a
 
 	*p_d = qfrac16_sat(d);
 	*p_q = qfrac16_sat(q);
-
-	return;
 }
 
 /*******************************************************************************/
@@ -176,15 +173,13 @@ static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_
 	qfrac16_t cos, sin;
 	int32_t alpha, beta;
 
-	qfrac16_vector(&cos, &sin, theta); /// returns cos and sin by reference
+	qfrac16_vector(&cos, &sin, theta);
 
 	alpha = (int32_t)qfrac16_mul(d, cos) - (int32_t)qfrac16_mul(q, sin);
-	beta = (int32_t)qfrac16_mul(d, sin) - (int32_t)qfrac16_mul(q, cos);
+	beta = (int32_t)qfrac16_mul(d, sin) + (int32_t)qfrac16_mul(q, cos);
 
 	*p_alpha = qfrac16_sat(alpha);
 	*p_beta = qfrac16_sat(beta);
-
-	return;
 }
 
 static inline void foc_invpark_vector(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t d, qfrac16_t q, qfrac16_t sin, qfrac16_t cos)
@@ -192,12 +187,10 @@ static inline void foc_invpark_vector(qfrac16_t * p_alpha, qfrac16_t * p_beta, q
 	int32_t alpha, beta;
 
 	alpha = (int32_t)qfrac16_mul(d, cos) - (int32_t)qfrac16_mul(q, sin);
-	beta = (int32_t)qfrac16_mul(d, sin) - (int32_t)qfrac16_mul(q, cos);
+	beta = (int32_t)qfrac16_mul(d, sin) + (int32_t)qfrac16_mul(q, cos);
 
 	*p_alpha = qfrac16_sat(alpha);
 	*p_beta = qfrac16_sat(beta);
-
-	return;
 }
 
 

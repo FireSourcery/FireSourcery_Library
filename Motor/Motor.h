@@ -42,8 +42,10 @@
 
 #include "Motor/Transducer/Phase/Phase.h"
 #include "Motor/Transducer/Hall/Hall.h"
+#include "Motor/Transducer/BEMF/BEMF.h"
 
-#include "OS/StateMachine/StateMachine.h"
+#include "System/StateMachine/StateMachine.h"
+#include "System/Thread/Thread.h"
 
 #include "Motor/Math/FOC.h"
 
@@ -52,6 +54,90 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
+
+
+
+
+/*
+ * All modules independently conform to same ID
+ */
+typedef enum
+{
+	MOTOR_SECTOR_ID_0 = 0,
+	MOTOR_SECTOR_ID_1 = 1, //Phase AC
+	MOTOR_SECTOR_ID_2 = 2,
+	MOTOR_SECTOR_ID_3 = 3,
+	MOTOR_SECTOR_ID_4 = 4,
+	MOTOR_SECTOR_ID_5 = 5,
+	MOTOR_SECTOR_ID_6 = 6,
+	MOTOR_SECTOR_ID_7 = 7,
+
+	MOTOR_PHASE_AC = 1,
+	MOTOR_PHASE_BC = 2,
+	MOTOR_PHASE_BA = 3,
+	MOTOR_PHASE_CA = 4,
+	MOTOR_PHASE_CB = 5,
+	MOTOR_PHASE_AB = 6,
+} Motor_SectorId_T;
+
+typedef enum
+{
+	MOTOR_DIRECTION_CW,
+	MOTOR_DIRECTION_CCW,
+} Motor_Direction_T;
+
+//typedef enum
+//{
+//	MOTOR_CONTROL_MODE_FOC,
+//	MOTOR_CONTROL_MODE_SIX_STEP,
+//} Motor_CommutationMode_T;
+
+typedef enum
+{
+	MOTOR_CONTROL_MODE_OPEN_LOOP,
+	MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE,
+	MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ,
+	MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE,
+	MOTOR_CONTROL_MODE_CONSTANT_CURRENT,		//foc only
+	MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT,	//foc only
+} Motor_ControlMode_T;
+
+typedef enum
+{
+	MOTOR_SENSOR_MODE_OPEN_LOOP,
+	MOTOR_SENSOR_MODE_HALL,
+	MOTOR_SENSOR_MODE_ENCODER,
+	MOTOR_SENSOR_MODE_BEMF,
+} Motor_SensorMode_T;
+
+
+/*
+	Motor run modes
+	Mode			Feedback
+	Openloop		None
+	Voltage			Position
+	Current			Position Current
+	VoltageFreq		Position 					 (Scalar)
+	SpeedVoltage	Position 			Speed
+	SpeedCurrent	Position Current	Speed
+	sensorless..
+ */
+
+//typedefstruct
+//{
+// uint8_t Position: 1; 	//0 -> Openloop, 1 -> position feedback encoder or bemf
+// uint8_t Sensorless: 1; 	//0 -> encoder, 1 -> bemf
+// uint8_t Current: 1; 		//0 -> voltage, 1-> current feedback PID loop
+// uint8_t Speed: 1; 		//0 -> const voltage or current, 1 -> speed feedback
+// uint8_t SpeedPID: 1; 	//0 -> speed scalar, 1-> speed feedback PID loop
+//} Motor_FocMode_T;
+
+//typedef enum
+//{
+//	MOTOR_STATUS_OKAY,
+//	MOTOR_STATUS_ERROR_1,
+//} Motor_Status_T;
 
 #define MOTOR_ANALOG_ADC_CHANNEL_COUNT 			13U
 
@@ -84,109 +170,17 @@ typedef enum
 	MOTOR_ANALOG_CHANNEL_BRAKE,
 } Motor_AnalogChannel_T;
 
-
-/*
- * All modules independently conform to same ID
- */
-typedef enum
-{
-	MOTOR_SECTOR_ID_0 = 0,
-	MOTOR_SECTOR_ID_1 = 1, //Phase AC
-	MOTOR_SECTOR_ID_2 = 2,
-	MOTOR_SECTOR_ID_3 = 3,
-	MOTOR_SECTOR_ID_4 = 4,
-	MOTOR_SECTOR_ID_5 = 5,
-	MOTOR_SECTOR_ID_6 = 6,
-	MOTOR_SECTOR_ID_7 = 7,
-} Motor_SectorId_T;
-//
-//typedef enum
-//{
-//	MOTOR_SENSOR_MODE_ENCODER,
-//	MOTOR_SENSOR_MODE_BEMF,
-//	MOTOR_SENSOR_MODE_OPEN_LOOP,
-//	MOTOR_SENSOR_MODE_HALL,
-//} Motor_SensorMode_T;
-//
-//typedef enum
-//{
-//	MOTOR_CONTROL_FOC,
-//	MOTOR_CONTROL_SIX_STEP,
-//} Motor_ControlMode_T;
-//typedef enum
-//{
-//	MOTOR_FEEDBACK_OPEN,
-//	MOTOR_FEEDBACK_POSITION,
-//	MOTOR_FEEDBACK_CURRENT,
-//	MOTOR_FEEDBACK_SPEED_VOLTAGE,
-//	MOTOR_FEEDBACK_SPEED_CURRENT,
-
-//} Motor_FeedbackMode_T;
-
-/*
-	Motor run modes
-	Mode			Feedback
-	Openloop		None
-	Voltage			Position
-	Current			Position Current
-	VoltageFreq		Position 			Speed (Scalar)
-	SpeedVoltage	Position 			Speed
-	SpeedCurrent	Position Current	Speed
-	sensorless..
- */
-//typedef struct
-//{
-// uint8_t Position: 1; 		//0 -> Openloop, 1 -> position feedback encoder or bemf
-// uint8_t Sensorless: 1; 	//0 -> encoder, 1 -> bemf
-// uint8_t Current: 1; 		//0 -> voltage, 1-> current feedback PID loop
-// uint8_t Speed: 1; 			//0 -> const voltage or current, 1 -> speed feedback
-// uint8_t SpeedPID: 1; 		//0 -> speed scalar, 1-> speed feedback PID loop
-//} Motor_FocMode_T;
-
-typedef enum
-{
-	MOTOR_FOC_MODE_OPENLOOP,
-	MOTOR_FOC_MODE_CONSTANT_VOLTAGE,
-	MOTOR_FOC_MODE_CONSTANT_CURRENT,
-	MOTOR_FOC_MODE_CONSTANT_SPEED_VOLTAGE,
-	MOTOR_FOC_MODE_CONSTANT_SPEED_CURRENT,
-	MOTOR_FOC_MODE_SCALAR_VOLTAGE_FREQ,
-
-//	MOTOR_FOC_MODE_SENSORLESS_CONSTANT_VOLTAGE,
-//	MOTOR_FOC_MODE_SENSORLESS_CONSTANT_CURRENT,
-//	MOTOR_FOC_MODE_SENSORLESS_CONSTANT_SPEED_VOLTAGE,
-//	MOTOR_FOC_MODE_SENSORLESS_CONSTANT_SPEED_CURRENT,
-//	MOTOR_FOC_MODE_SENSORLESS_SCALAR_VOLTAGE_FREQ,
-
-} Motor_FocMode_T;
-
-
-typedef enum
-{
-	MOTOR_DRIVE_MODE_FOC,
-	MOTOR_DRIVE_MODE_SIX_STEP,
-} Motor_DriveMode_T;
-
-typedef enum
-{
-	MOTOR_STATUS_OKAY,
-	MOTOR_STATUS_ERROR_1,
-} Motor_Status_T;
-
-
 /*!
 	@brief Parameters load from flash else load default
  */
 typedef struct
 {
-	//runtime use
+
 	qfrac16_t FocOpenLoopVq;
 	qfrac16_t FocAlignVd;
 
-	//init use only
-    uint8_t PolePairs;
-    uint32_t ControlFreq_Hz;
 
+    uint8_t PolePairs;
 	uint32_t EncoderCountsPerRevolution;
 	uint32_t EncoderDistancePerCount;
 }
@@ -197,36 +191,28 @@ Motor_Parameters_T;
  */
 typedef const struct Motor_Init_Tag
 {
-//    const HAL_PWM_T PhasePwmA;
-//    const HAL_PWM_T PhasePwmB;
-//    const HAL_PWM_T PhasePwmC;
     const HAL_Phase_T HAL_PHASE;
-//    const uint32_t PHASE_PWM_PERIOD_MAX;
-
 	const HAL_Encoder_T HAL_ENCODER;
-//	const uint32_t ENCODER_TIMER_COUNTER_MAX;
-//	const uint32_t ENCODER_TIMER_COUNTER_MAX_HALL;
-//	const uint32_t ENCODER_TIMER_COUNTER_MAX_ENCODER;
-
 	const HAL_Hall_T HAL_HALL;
-
-
-
-    //	HAL_ADC_T * p_AdcRegMap;
-    //	uint8_t AdcNCount;
-    //	uint8_t AdcMLengthBuffer;
-    //	const uint32_t * p_AdcChannelPinMap;
+	const HAL_BEMF_T HAL_BEMF;
 
 	const HAL_Pin_T HAL_PIN_BRAKE;
 	const HAL_Pin_T HAL_PIN_THROTTLE;
 	const HAL_Pin_T HAL_PIN_FORWARD;
 	const HAL_Pin_T HAL_PIN_REVERSE;
 
-	const uint32_t PWM_FREQ;
-	const uint32_t PWM_PERIOD;
-	const uint32_t ANGLE_RES_BITS;
-	const uint32_t V_ABC_R1;
-	const uint32_t V_ABC_R2;
+    //	HAL_ADC_T * p_AdcRegMap;
+    //	uint8_t AdcNCount;
+    //	uint8_t AdcMLengthBuffer;
+    //	const uint32_t * p_AdcChannelPinMap;
+
+	const uint32_t HALL_ENCODER_TIMER_COUNTER_MAX; //Hall mode only
+	const uint32_t HALL_ENCODER_TIMER_COUNTER_FREQ; //Hall mode only
+	const uint32_t ENCODER_ANGLE_RES_BITS;
+	const uint32_t MOTOR_PWM_FREQ;
+	const uint32_t PHASE_PWM_PERIOD;
+	const uint32_t LINEAR_V_ABC_R1;
+	const uint32_t LINEAR_V_ABC_R2;
 } Motor_Init_T;
 
 
@@ -242,37 +228,43 @@ typedef struct
 
 	Encoder_T Encoder;
 	Phase_T Phase;
-//	Flash_T Flash; //flash/eeprom access
-//	Hall_T Hall;
+	Hall_T Hall;
+	BEMF_T Bemf;
+	//	Flash_T Flash; // flash/eeprom access
 
-	//No wrapper layer for pins
-//	HAL_Pin_T * p_PinBrake;
-//	HAL_Pin_T * p_PinThrottle;
-//	HAL_Pin_T * p_PinForward;
-//	HAL_Pin_T * p_PinReverse;
+	// No wrapper layer for pins
+	const HAL_Pin_T * p_PinBrake;
+	const HAL_Pin_T * p_PinThrottle;
+	const HAL_Pin_T * p_PinForward;
+	const HAL_Pin_T * p_PinReverse;
 
-
-	Motor_Parameters_T 	Parameters;
-
-
+	uint32_t ControlTimer;	 /* Control Freq */
 	StateMachine_T StateMachine;
-	uint32_t TimerCounter; /* Control Freq */
+	Thread_T ThreadTimer;
 
-	/* FOC Mode */
-	Motor_FocMode_T 	FocMode;
-	FOC_T		 Foc;
-	//	//PID_T 	PidSpeed;
-
-	uint32_t SpeedControlTimer;
-	uint32_t SpeedControlPeriod;
-
+	FOC_T Foc;
+	//	//PID_T PidSpeed;
 	//	PID_T PidId;
 	//	PID_T PidIq;
 	//	qfrac16_t IdReq; /* PID setpoint */
 	//	qfrac16_t IqReq;
 
+	uint32_t OpenLoopPeriod;
+	uint32_t OpenLoopZcd;
+
+	/* Mode selection. Substates */
+	Motor_Parameters_T 		Parameters;
+	Motor_Direction_T 		Direction;
+	Motor_ControlMode_T 	ControlMode;
+	Motor_SensorMode_T 		SensorMode;
+
+	uint32_t SpeedControlTimer;
+	uint32_t SpeedControlPeriod;
+
+
+
 	//	//Monitor_T 		Monitor;
-	//	//BEMF_T		 Bemf;
+
 	Linear_T UnitIa_Frac16;
 	Linear_T UnitIb_Frac16;
 	Linear_T UnitIc_Frac16;
@@ -281,24 +273,56 @@ typedef struct
 	Linear_T UnitIb_Amp;
 	Linear_T UnitIc_Amp;
 
-	//	Linear_T SpeedRamp;
-	//	uint32_t SpeedRampIndex;
-	uint16_t VCmd;
+	Linear_T SpeedRamp;
+	uint32_t SpeedRampIndex;
+
+
 	uint32_t Speed_RPM;
+
+	uint16_t VCmd; //same as PWM duty
 
 	qfrac16_t ElectricalAngle;
 	qfrac16_t MechanicalAngle;
 
+	uint32_t InterpolatedAngleIndex;
+
+	/*
+	 * SixStep Settings
+	 */
+	Motor_SectorId_T NextSector; //for 6 step openloop/sensorless
+
 //	/*
-//	 * FOC Open Loop Settings,
+//	 * FOC  Settings
 //	 */
-//	qfrac16_t VHzGain; //vhz scale
+//	qfrac16_t OpenLoopVHzGain; //vhz scale
 
 //	uint32_t JogSteps;
 //	uint32_t StepCount;
 
 }
 Motor_T;
+
+
+static inline void Motor_ReadSensor(Motor_T *p_motor)
+{
+	switch (p_motor->SensorMode)
+	{
+	case MOTOR_SENSOR_MODE_ENCODER:
+
+		break;
+
+	case MOTOR_SENSOR_MODE_BEMF:
+
+		break;
+
+	case MOTOR_SENSOR_MODE_HALL:
+
+		break;
+
+	default:
+		break;
+	}
+}
 
 /*
  * Speed PID Feedback Loop
@@ -344,5 +368,7 @@ static inline void Motor_PollSpeedLoop(Motor_T * p_motor)
 //}
 
 extern void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInitStruct);
+
+extern void Motor_StartAlign(Motor_T * p_motor);
 
 #endif

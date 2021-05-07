@@ -22,47 +22,55 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	HAL_PWM.h
+	@file 	HAL_Hall.h
 	@author FireSoucery
-	@brief 	PWM HAL for S32K
+	@brief
 	@version V0
 */
 /******************************************************************************/
-#ifndef HAL_PWM_H
-#define HAL_PWM_H
+#ifndef HAL_BEMF_BOARD_H
+#define HAL_BEMF_BOARD_H
 
-#include "External/S32K142/include/S32K142.h"
+//#include "External/S32K142/include/S32K142.h"
+#include "SDK/platform/devices/S32K142/include/S32K142.h"
+
+#include "SDK/platform/drivers/inc/pins_driver.h"
+#include "SDK/platform/drivers/inc/interrupt_manager.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
 typedef const struct
 {
-	FTM_Type * p_FtmBase;
-	uint8_t FtmChannel;
-} HAL_PWM_T;
+//	uint32_t InstanceID;
+} HAL_BEMF_T;
 
-static inline void HAL_PWM_WriteDutyCycle(const HAL_PWM_T * p_pwm, uint32_t pwm)
+
+
+
+
+/// User app provides timer. Use to track commutation time, reset each commutation cycle
+static inline uint8_t HAL_BEMF_ReadTimer(const HAL_BEMF_T * p_hal_bemf)
 {
-	p_pwm->p_FtmBase->CONTROLS[p_pwm->FtmChannel].CnV = pwm;
+	(void)p_hal_bemf;
+
 }
 
-/*
-	true is inverted, false is noninverted
- */
-static inline void HAL_PWM_WriteInvertPolarity(const HAL_PWM_T * p_pwm, bool isInvertedPolarity)
+/// set timer time till next isr, reset timer.
+static inline void HAL_BEMF_StartTimerInterrupt(const HAL_BEMF_T * p_hal_bemf, uint32_t ticks)
 {
-	isInvertedPolarity ? (p_pwm->p_FtmBase->POL |= (1U << p_pwm->FtmChannel)) : (p_pwm->p_FtmBase->POL &= ~(1U << p_pwm->FtmChannel));
+	(void)p_hal_bemf;
+
+
 }
 
-/*
- * Mask to disable output
- */
-static inline void HAL_PWM_WriteState(const HAL_PWM_T * p_pwm, bool isOn)
+// 16-bit timer, Freq = 50 kHz: Peroid = 20 uS, Overflow 1.3 seconds,  rpm min for 10 pole pairs
+static inline void HAL_BEMF_Init(const HAL_BEMF_T * p_hal_bemf)
 {
-	(!isOn) ? (p_pwm->p_FtmBase->OUTMASK |= (1U << p_pwm->FtmChannel)) : (p_pwm->p_FtmBase->OUTMASK &= ~(1U << p_pwm->FtmChannel));
-}
+	(void)p_hal_bemf;
 
+
+}
 
 
 #endif

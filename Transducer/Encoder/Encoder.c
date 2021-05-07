@@ -72,7 +72,6 @@ static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uin
 	return result;
 }
 
-
 /*!
 	@brief Init with provided parameters.
 	Default capture mode. HAL function responsible for all corresponding settings
@@ -89,7 +88,10 @@ void Encoder_Init
 	uint8_t angleDataBits					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
 )
 {
-	HAL_Encoder_Init(p_hal_encoder);
+	HAL_Encoder_InitCaptureCount(p_hal_encoder);
+//	HAL_Encoder_ConfigCaptureCount(p_hal_encoder);
+//	HAL_Encoder_WriteTimerCounterMax(p_hal_encoder, timerCounterMax);
+
 	p_encoder->p_HAL_Encoder = p_hal_encoder;
 	p_encoder->TimerCounterMax = timerCounterMax;
 	p_encoder->UnitT_Freq = unitT_Freq;
@@ -145,6 +147,9 @@ void Encoder_Init
 	 */
 	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(unitT_Freq, encoderCountsPerRevolution, angleDataBits);
 
+
+	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitT_Freq, pollingFreq, angleDataBits);
+
 	p_encoder->EncoderResolution = encoderCountsPerRevolution;
 
 	Encoder_Zero(p_encoder);
@@ -175,9 +180,6 @@ void Encoder_InitCaptureDeltaD
 		encoderCountsPerRevolution,
 		angleDataBits
 	);
-
-	HAL_Encoder_ConfigCaptureCount(p_hal_encoder);
-	HAL_Encoder_WriteTimerCounterMax(p_hal_encoder, timerCounterMax);
 }
 
 /*!
@@ -207,9 +209,9 @@ void Encoder_InitCaptureDeltaT
 		angleDataBits
 	);
 
-	HAL_Encoder_ConfigCaptureTime(p_hal_encoder);
-	HAL_Encoder_WriteTimerCounterMax(p_hal_encoder, timerCounterMax);
-	HAL_Encoder_WriteTimerCounterFreq(p_hal_encoder, timerFreq);
+	HAL_Encoder_InitCaptureTime(p_hal_encoder);
+//	HAL_Encoder_WriteTimerCounterMax(p_hal_encoder, timerCounterMax);
+//	HAL_Encoder_WriteTimerCounterFreq(p_hal_encoder, timerFreq);
 }
 
 //void Encoder_InitLongDelta(Encoder_T * p_encoder, volatile uint32_t * longDeltaTimer, uint32_t longTimerFreq)

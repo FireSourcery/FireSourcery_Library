@@ -73,7 +73,7 @@ static inline void HAL_Encoder_WriteTimerCounterMax(const HAL_Encoder_T * p_enco
 static inline void HAL_Encoder_WriteTimerCounterFreq(const HAL_Encoder_T * p_encoder, uint32_t freq)
 {
 	(void)p_encoder;
-//	FTM2-> = freq; todo
+	(void)freq;
 }
 
 static inline bool HAL_Encoder_ReadDirection(const HAL_Encoder_T * p_encoder)
@@ -98,75 +98,73 @@ static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder)
 }
 
 /*
-	SW Polling capture mode? Or HW capture Hall B Only
+	Config SW Polling capture mode
+	On S32K Hw capture mode disables gpio pin read
  */
-static inline void HAL_Encoder_ConfigCaptureTime(const HAL_Encoder_T * p_encoder)
+static inline void HAL_Encoder_InitCaptureTime(const HAL_Encoder_T * p_encoder)
 {
-	(void) p_encoder;
-
-	/* Polling CaptureT Config */
-	const pin_settings_config_t pin_mux_InitConfigArr1[3U] = {
-		{
-			.base            = PORTE,
-			.pinPortIdx      = 4U,
-			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
-			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
-			.passiveFilter   = false,
-			.mux             = PORT_MUX_AS_GPIO,
-			.pinLock         = false,
-			.intConfig       = PORT_DMA_INT_DISABLED,
-			.clearIntFlag    = false,
-			.gpioBase        = PTE,
-			.direction       = GPIO_INPUT_DIRECTION,
-			.digitalFilter   = false,
-			.initValue       = 0U,
-		},
-		{
-			.base            = PORTE,
-			.pinPortIdx      = 5U,
-			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
-			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
-			.passiveFilter   = false,
-			.mux             = PORT_MUX_AS_GPIO,
-			.pinLock         = false,
-			.intConfig       = PORT_DMA_INT_DISABLED,
-			.clearIntFlag    = false,
-			.gpioBase        = PTE,
-			.direction       = GPIO_INPUT_DIRECTION,
-			.digitalFilter   = false,
-			.initValue       = 0U,
-		},
-		{
-			.base            = PORTE,
-			.pinPortIdx      = 10U,
-			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
-			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
-			.passiveFilter   = false,
-			.mux             = PORT_MUX_AS_GPIO,
-			.pinLock         = false,
-			.intConfig       = PORT_DMA_INT_DISABLED,
-			.clearIntFlag    = false,
-			.gpioBase        = PTE,
-			.direction       = GPIO_INPUT_DIRECTION,
-			.digitalFilter   = false,
-			.initValue       = 0U,
-		}
-	};
-
-
-	/*
-	 * CaptureT Init
-	 */
-	(FTM2->QDCTRL) &= ~(1UL << FTM_QDCTRL_QUADEN_SHIFT);
-	INT_SYS_DisableIRQ(FTM2_Ovf_Reload_IRQn);
-
-	PINS_DRV_Init(3U, pin_mux_InitConfigArr1);
+//	(void) p_encoder;
+//
+//	const pin_settings_config_t pin_mux_InitConfigArr1[2U] = {
+//		{
+//			.base            = PORTE,
+//			.pinPortIdx      = 4U,
+//			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
+//			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
+//			.passiveFilter   = false,
+//			.mux             = PORT_MUX_AS_GPIO,
+//			.pinLock         = false,
+//			.intConfig       = PORT_DMA_INT_DISABLED,
+//			.clearIntFlag    = false,
+//			.gpioBase        = PTE,
+//			.direction       = GPIO_INPUT_DIRECTION,
+//			.digitalFilter   = false,
+//			.initValue       = 0U,
+//		},
+//		{
+//			.base            = PORTE,
+//			.pinPortIdx      = 5U,
+//			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
+//			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
+//			.passiveFilter   = false,
+//			.mux             = PORT_MUX_AS_GPIO,
+//			.pinLock         = false,
+//			.intConfig       = PORT_DMA_INT_DISABLED,
+//			.clearIntFlag    = false,
+//			.gpioBase        = PTE,
+//			.direction       = GPIO_INPUT_DIRECTION,
+//			.digitalFilter   = false,
+//			.initValue       = 0U,
+//		},
+////		{
+////			.base            = PORTE,
+////			.pinPortIdx      = 10U,
+////			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
+////			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
+////			.passiveFilter   = false,
+////			.mux             = PORT_MUX_AS_GPIO,
+////			.pinLock         = false,
+////			.intConfig       = PORT_DMA_INT_DISABLED,
+////			.clearIntFlag    = false,
+////			.gpioBase        = PTE,
+////			.direction       = GPIO_INPUT_DIRECTION,
+////			.digitalFilter   = false,
+////			.initValue       = 0U,
+////		}
+//	};
+//
+//	(FTM2->QDCTRL) &= ~(1UL << FTM_QDCTRL_QUADEN_SHIFT);
+//	INT_SYS_DisableIRQ(FTM2_Ovf_Reload_IRQn);
+//
+//	//Set base timer
+//
+//	PINS_DRV_Init(2U, pin_mux_InitConfigArr1);
 }
 
 /*
  * Enocder Res still needs to be configured.
  */
-static inline void HAL_Encoder_ConfigCaptureCount(const HAL_Encoder_T * p_encoder)
+static inline void HAL_Encoder_InitCaptureCount(const HAL_Encoder_T * p_encoder)
 {
 	(void) p_encoder;
 
@@ -242,9 +240,6 @@ static inline void HAL_Encoder_ConfigCaptureCount(const HAL_Encoder_T * p_encode
 
 	ftm_state_t ftm2State;
 
-	/*
-	 * CaptureD Init
-	 */
 	PINS_DRV_Init(2U, pin_mux_InitConfigArr0);
 
 	FTM_DRV_Init(2U, &flexTimer_qd_1_InitConfig, &ftm2State); 	/* FTM2 module initialized to work in quadrature decoder mode, specifically PhaseA and PhaseB mode */

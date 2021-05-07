@@ -22,47 +22,27 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	HAL_PWM.h
+	@file 	HAL.h
 	@author FireSoucery
-	@brief 	PWM HAL for S32K
+	@brief 	Bemf HAL import functions
 	@version V0
 */
 /******************************************************************************/
-#ifndef HAL_PWM_H
-#define HAL_PWM_H
+#ifndef HAL_BEMF_H
+#define HAL_BEMF_H
 
-#include "External/S32K142/include/S32K142.h"
+#include "Config.h"
 
-#include <stdint.h>
-#include <stdbool.h>
 
-typedef const struct
-{
-	FTM_Type * p_FtmBase;
-	uint8_t FtmChannel;
-} HAL_PWM_T;
+#if defined(CONFIG_HAL_LIBRARY_DEFINED)// || defined(CONFIG_BEMF_HAL_LIBRARY_DEFINED)
+	#include "../HAL/HAL.h"
 
-static inline void HAL_PWM_WriteDutyCycle(const HAL_PWM_T * p_pwm, uint32_t pwm)
-{
-	p_pwm->p_FtmBase->CONTROLS[p_pwm->FtmChannel].CnV = pwm;
-}
+#elif defined(CONFIG_HAL_USER_DEFINED)// || defined(CONFIG_BEMF_HAL_USER_DEFINED)
+	#include "HAL.h"
 
-/*
-	true is inverted, false is noninverted
- */
-static inline void HAL_PWM_WriteInvertPolarity(const HAL_PWM_T * p_pwm, bool isInvertedPolarity)
-{
-	isInvertedPolarity ? (p_pwm->p_FtmBase->POL |= (1U << p_pwm->FtmChannel)) : (p_pwm->p_FtmBase->POL &= ~(1U << p_pwm->FtmChannel));
-}
-
-/*
- * Mask to disable output
- */
-static inline void HAL_PWM_WriteState(const HAL_PWM_T * p_pwm, bool isOn)
-{
-	(!isOn) ? (p_pwm->p_FtmBase->OUTMASK |= (1U << p_pwm->FtmChannel)) : (p_pwm->p_FtmBase->OUTMASK &= ~(1U << p_pwm->FtmChannel));
-}
-
+#elif defined(CONFIG_BEMF_HAL_KLS_S32K)
+	#include "Motor/Transducer/HAL/Board/KLS_S32K/HAL_BEMF.h"
+#endif
 
 
 #endif

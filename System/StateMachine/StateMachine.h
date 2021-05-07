@@ -54,7 +54,7 @@
 
 
 #ifdef CONFIG_STATE_MACHINE_MULTITHREADED_OS_HAL
-	#include "OS/Critical/Critical.h"
+	#include "System/Critical/Critical.h"
 #elif defined(ONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
 	extern inline void Critical_Enter(void){}
 	extern inline void Critical_Exit(void){}

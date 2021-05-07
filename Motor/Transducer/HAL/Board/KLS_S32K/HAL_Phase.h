@@ -48,13 +48,13 @@ typedef const struct
 //	uint32_t InstanceID;
 } HAL_Phase_T;
 
-static inline void HAL_Phase_WritePeriod(const HAL_Phase_T * p_phase, uint32_t pwmPeroidA, uint32_t pwmPeroidB, uint32_t pwmPeroidC)
+static inline void HAL_Phase_WriteDuty(const HAL_Phase_T * p_phase, uint32_t pwmA, uint32_t pwmB, uint32_t pwmC)
 {
 	(void)p_phase;
 
-	FTM0->CONTROLS[5].CnV = FTM_CnV_VAL(pwmPeroidA);
-	FTM0->CONTROLS[6].CnV = FTM_CnV_VAL(pwmPeroidB);
-	FTM0->CONTROLS[7].CnV = FTM_CnV_VAL(pwmPeroidC);
+	FTM0->CONTROLS[5].CnV = FTM_CnV_VAL(pwmA);
+	FTM0->CONTROLS[6].CnV = FTM_CnV_VAL(pwmB);
+	FTM0->CONTROLS[7].CnV = FTM_CnV_VAL(pwmC);
 //	FTM0->SYNC |= FTM_SYNC_SWSYNC_MASK;
 }
 

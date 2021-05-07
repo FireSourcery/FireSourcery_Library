@@ -42,7 +42,13 @@
 	#define CONFIG_HALL_COMMUTATION_TABLE_SECTOR_ID
 #endif
 
+#if (CONFIG_HALL_SENSOR_ORDER_CBA)
 
+#elif (CONFIG_HALL_HALL_SENSORS_ORDER_ABC)
+
+#else
+	#define CONFIG_HALL_SENSORS_ORDER_CBA
+#endif
 /*
 	HAL Select
  */
@@ -65,7 +71,7 @@
 #elif 	defined(CONFIG_HALL_HAL_HALL)
 
 #else
-	#define CONFIG_HALL_HAL_BOARD_HALL
+	#define CONFIG_HALL_HAL_HALL
 #endif
 
 #endif

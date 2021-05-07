@@ -31,11 +31,7 @@
 				Capture DeltaD, variable DeltaD (DeltaT is fixed, == 1).
 				Capture DeltaT, variable DeltaT (DeltaD is fixed, == 1).
 
-			User set linear capture units/s. e.g. angular, linear; degrees, millimeter
-
-			todo split module to capture ticks and unit conversion using Linear module
-
-			Encoder defined in Counts per Revolution and Distance Per Count
+			Encoder defined in Counts Per Revolution and Distance Per Count
 
 	@version V0
  */
@@ -50,43 +46,43 @@
 #include <stdbool.h>
 
 /*
+ * Linear
+ *
+ * DeltaTime[s]												= DeltaT[TimerTicks] * UnitT[s] = DeltaT[TimerTicks] / UnitT_Freq[Hz]
+ * DeltaDistance[Units]										= DeltaD[CounterTicks] * UnitD[Units]
+ * Speed[Units/s] == DeltaDistance[Units] / DeltaTime[s] 	= DeltaD[CounterTicks] * UnitD[Units] * UnitT_Freq[Hz] / DeltaT[TimerTicks]
+ * UnitSpeed												= UnitD[Units] * UnitT_Freq[Hz]
+ */
+/*
+ * LinearDistance[Units]	= DeltaD[EncoderTicks] * DistancePerRevolution[Units/1] / PulsePerRevolution[EncoderTicks/1] = DeltaD[EncoderTicks] * UnitD[Units]
+ * LinearSpeed[Units/s] 	= LinearDistance[Units]/DeltaTime[s] = DeltaD[Ticks] * UnitD[Units] * UnitT_Freq[Hz] / DeltaT[Ticks]
+ */
+/*
+ * Rotational/Angular
+ *
+ * User Input:
+ * unitAngle_DataBits			Angle unit conversion. Degrees per revolution in Bits. e.g. 16 for 65535 degrees cycle
+ * unitAngle_SensorResolution 	Angle unit conversion. Encoder Pulses Per Revolution
+ *
+ * unitLinearDistance			Linear unit conversion factor. Set to UnitD. Encoder [Distance Per Revolution]/[Pulses Per Revolution]. Enforce user input whole number value.
+ * unitLinearSpeed				Linear Speed conversion factor. Set to UnitSpeed.
+ */
+/*
+ * Revolutions[N]											= DeltaD[EncoderTicks] / PulsePerRevolution[EncoderTicks/1]
+ * RotationalSpeed[N/s]	== Revolutions[N] / DeltaTime[s] 	= DeltaD[EncoderTicks] * UnitT_Freq[Hz] / PulsePerRevolution[EncoderTicks/1] / DeltaT[TimerTicks]
+ *
+ * DeltaAngle[DegreesNBits]			= DeltaD[EncoderTicks] * DegreesPerRevolution[DegreesNBits/1] / PulsesPerRevolution[EncoderTicks/1]
+ * AngularSpeed[DegreesNBits/s] 	= DeltaD[EncoderTicks] * DegreesPerRevolution[DegreesNBits/1] * UnitT_Freq[Hz] / PulsesPerRevolution[EncoderTicks/1] / DeltaT[TimerTicks]
+ * UnitAngle[DegreesNBits]			= DegreesPerRevolution[DegreesNBits/1]/PulsesPerRevolution[EncoderTicks/1]
+ */
+
+/*
 	Overallocation of variable space to allow runtime polymorphism
  */
 typedef struct
 {
-	/*
-	 * Linear
-	 *
-	 * DeltaTime[s]												= DeltaT[TimerTicks] * UnitT[s] = DeltaT[TimerTicks] / UnitT_Freq[Hz]
-	 * DeltaDistance[Units]										= DeltaD[CounterTicks] * UnitD[Units]
-	 * Speed[Units/s] == DeltaDistance[Units] / DeltaTime[s] 	= DeltaD[CounterTicks] * UnitD[Units] * UnitT_Freq[Hz] / DeltaT[TimerTicks]
-	 * UnitSpeed												= UnitD[Units] * UnitT_Freq[Hz]
-	 */
-	/*
-	 * LinearDistance[Units]	= DeltaD[EncoderTicks] * DistancePerRevolution[Units/1] / PulsePerRevolution[EncoderTicks/1] = DeltaD[EncoderTicks] * UnitD[Units]
-	 * LinearSpeed[Units/s] 	= LinearDistance[Units]/DeltaTime[s] = DeltaD[Ticks] * UnitD[Units] * UnitT_Freq[Hz] / DeltaT[Ticks]
-	 */
-	/*
-	 * Rotational/Angular
-	 *
-	 * User Input:
-	 * unitAngle_DataBits			Angle unit conversion. Degrees per revolution in Bits. e.g. 16 for 65535 degrees cycle
-	 * unitAngle_SensorResolution 	Angle unit conversion. Encoder Pulses Per Revolution
-	 *
-	 * unitLinearDistance			Linear unit conversion factor. Set to UnitD. Encoder [Distance Per Revolution]/[Pulses Per Revolution]. Enforce user input whole number value.
-	 * unitLinearSpeed				Linear Speed conversion factor. Set to UnitSpeed.
-	 */
-	/*
-	 * Revolutions[N]											= DeltaD[EncoderTicks] / PulsePerRevolution[EncoderTicks/1]
-	 * RotationalSpeed[N/s]	== Revolutions[N] / DeltaTime[s] 	= DeltaD[EncoderTicks] * UnitT_Freq[Hz] / PulsePerRevolution[EncoderTicks/1] / DeltaT[TimerTicks]
-	 *
-	 * DeltaAngle[DegreesNBits]			= DeltaD[EncoderTicks] * DegreesPerRevolution[DegreesNBits/1] / PulsesPerRevolution[EncoderTicks/1]
-	 * AngularSpeed[DegreesNBits/s] 	= DeltaD[EncoderTicks] * DegreesPerRevolution[DegreesNBits/1] * UnitT_Freq[Hz] / PulsesPerRevolution[EncoderTicks/1] / DeltaT[TimerTicks]
-	 * UnitAngle[DegreesNBits]			= DegreesPerRevolution[DegreesNBits/1]/PulsesPerRevolution[EncoderTicks/1]
-	 */
-
-	/*! @{ */
 	/* HW Config */
+
 	const HAL_Encoder_T * p_HAL_Encoder;	/*!< Delta timer counter */
 
 	//	const HAL_TimerCounter_T * p_TimerCounter;	/*!< Delta timer counter */
@@ -94,6 +90,8 @@ typedef struct
 	//	const HAL_Pin_T * p_PinPhaseB;
 
     uint32_t TimerCounterMax; 				/*!< TimerCounter overflow checking */
+	uint32_t PollingFreq;					/*!< Polling D reference Freq, CaptureDeltaT mode + interpolation calculations */ 		//	uint32_t UnitInterpolateD;	 /*!< [UnitD * UnitT_Freq / interpolationFreq] */
+	uint32_t EncoderResolution;				/*!< Max for Capture looping AngleD, CaptureT mode need 2nd TimerCounterMax */
 
     /* SW Config, unit conversion. todo move to linear math */
 	uint32_t UnitT_Freq;					/*!< T unit(seconds) conversion factor. TimerCounter freq, using Capture DeltaT (DeltaD is 1). Polling DeltaD freq, using Capture DeltaD (DeltaT is 1). */
@@ -104,40 +102,31 @@ typedef struct
 	uint32_t UnitAngularD_DivisorShift;		/*!< [32 - unitAngle_DataBits] */
 	uint32_t UnitAngularSpeed; 				/*!< [(1 << unitAngle_DataBits) * UnitT_Freq / unitAngle_SensorResolution] => AngularSpeed = DeltaD * UnitAngularSpeed / DeltaT
 												e.g. UnitAngularSpeed == 160,000 { unitAngle_DataBits = 16, UnitT_Freq = 20000, unitAngle_SensorResolution = 8912 } */
-	uint32_t PollingFreq;					/*!< Polling D reference Freq, CaptureDeltaT mode + interpolation calculations */ 		//	uint32_t UnitInterpolateD;	 /*!< [UnitD * UnitT_Freq / interpolationFreq] */
-	uint32_t EncoderResolution;				/*!< Max for Capture looping AngleD */
+
+	uint32_t UnitInterpolateAngle;
 
 	/* Runtime Vars */
 	volatile uint32_t TimerCounterSaved;	/*!< First time/count sample used to calculate Delta */
     volatile uint32_t DeltaT;				/*!< Captured TimerCounter time interval counts between 2 distance events. Units in raw timer ticks */
 	volatile uint32_t DeltaD;				/*!< Captured TimerCounter distance interval counts between 2 points in time. Units in raw timer ticks */
-	volatile uint32_t TotalT;				/*!< TimerCounter ticks, persistent through Delta captures*/
-	volatile uint32_t TotalD;
 	volatile uint32_t AngularD;				/*!< Looping TotalD at EncoderResolution. TotalAngularD */
+
+	volatile uint32_t TotalT;				/*!< TimerCounter ticks, persistent through Delta captures*/
+	volatile int32_t TotalD;
 //	volatile uint32_t UserT;				/*!< TimerCounter ticks, persistent until user reset*/
 //	volatile uint32_t UserD;
+
 	volatile uint32_t SpeedSaved; 			/*!< Most recently calculated speed, used for acceleration calc */
 	volatile uint32_t DeltaSpeed;			/*!< Save for acceleration calc */
 	volatile bool PulseReferenceSaved;		/*!< PhaseA state. For polling capture of DeltaT */
 
-	/*! @} */
-
 	/*
-	 * Motor Encoder - CaptureDeltaD Mode
-	 *
-	 * Angle Vars set as Mechanical Angle Vars
-	 *
-	 * User Input:
-	 * polePairs
+	 * Motor Encoder
 	 */
 	uint8_t PolePairs; /*! Convert between electrical speed and mechanical speed */
 	//    uint32_t UnitEletricalAngle_Factor;
 	//    uint32_t UnitEletricalAngle_DivisorShift;
 	//    uint32_t UnitEletricalSpeed;
-
-	/*
-	 * Hall Encoder - CaptureDeltaT Mode
-	 */
 
 	/*
 	 * SW Quadrature Encoder - Signed Speed
@@ -146,7 +135,6 @@ typedef struct
 	//	volatile int32_t DeltaCountSigned;
 
 	//for long deltas
-	//need data to determine timer validity. invalid for first time sample. invalid for time > than 1 timer cycle.
 	//	volatile const uint32_t * p_OverflowTimer;
 	//	volatile uint32_t OverflowTimerSaved;
 	//	uint32_t OverflowLength;						//short timer time in long timer counts
@@ -813,12 +801,12 @@ static inline  uint32_t Encoder_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
  */
 static inline uint32_t Encoder_ConvertRotationalSpeedToDeltaD_RPM(Encoder_T * p_encoder, uint32_t rpm)
 {
-	return rpm << (32U - p_encoder->UnitAngularD_DivisorShift) / 60 / p_encoder->UnitAngularSpeed;
+	return (rpm << (32U - p_encoder->UnitAngularD_DivisorShift)) / 60 / p_encoder->UnitAngularSpeed;
 }
 
 static inline uint32_t Encoder_ConvertDeltaDToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
 {
-	return deltaD_Ticks * p_encoder->UnitAngularSpeed * 60 >> (32U - p_encoder->UnitAngularD_DivisorShift);
+	return (deltaD_Ticks * p_encoder->UnitAngularSpeed * 60) >> (32U - p_encoder->UnitAngularD_DivisorShift);
 }
 
 static inline uint32_t Encoder_ConvertAngularSpeedToDeltaD(Encoder_T * p_encoder, uint32_t angularSpeed_DegreesNBitsPerSecond)
@@ -859,7 +847,7 @@ static inline uint32_t Encoder_ConvertDeltaTToRotationalSpeed_RPM(Encoder_T * p_
 /*!
 
  */
-static inline uint32_t Encoder_InterpolateAngle(Encoder_T * p_encoder, uint32_t index, uint32_t domain)
+static inline uint32_t Encoder_InterpolateAngle_Slope(Encoder_T * p_encoder, uint32_t index, uint32_t domain)
 {
 	return index * Encoder_GetDeltaAngle(p_encoder) / domain;
 }
@@ -867,10 +855,12 @@ static inline uint32_t Encoder_InterpolateAngle(Encoder_T * p_encoder, uint32_t 
 /*!
 	@brief 	  CaptureDeltaT mode
  */
-static inline uint32_t Encoder_InterpolateAngle_TimeDomain(Encoder_T * p_encoder, uint32_t index)
+static inline uint32_t Encoder_InterpolateAngle(Encoder_T * p_encoder, uint32_t index)
 {
-	return index * Encoder_GetAngularSpeed(p_encoder) / p_encoder->PollingFreq; 	//index * 1 * [UnitD * UnitT_Freq] / p_encoder->DeltaT / interpolationFreq;
+	return index * p_encoder->UnitInterpolateAngle / p_encoder->DeltaT; //	AngleControlIndex * [AngleSize[0x10000] * (UnitDeltaT_Freq / PollingFreq)] / DeltaT;
+//	return index * Encoder_GetAngularSpeed(p_encoder) / p_encoder->PollingFreq; 	//[DeltaD * (UnitT_Freq * 0x10000 *  PolePairs /  PulsePerRevolution) /  DeltaT] / PollingFreq;
 }
+
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

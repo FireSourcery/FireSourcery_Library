@@ -31,7 +31,7 @@
 
 #include "MotorStateMachine.h"
 
-#include "OS/StateMachine/StateMachine.h"
+#include "System/StateMachine/StateMachine.h"
 
 #include "../Motor.h"
 #include "../Motor_FOC.h"

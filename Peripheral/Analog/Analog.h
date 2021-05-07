@@ -47,7 +47,7 @@
 #include "Config.h"
 
 #ifdef CONFIG_ANALOG_MULTITHREADED_OS_HAL
-	#include "OS/Critical/Critical.h"
+	#include "System/Critical/Critical.h"
 #elif defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED)
 	extern inline void Critical_Enter(void);
 	extern inline void Critical_Exit(void);

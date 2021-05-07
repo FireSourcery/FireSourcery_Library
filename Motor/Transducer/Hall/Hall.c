@@ -43,26 +43,26 @@ void Hall_Init
 (
 	Hall_T * p_hall,
 	const HAL_Hall_T * p_hal_Hall,
-	Hall_Phase_T phaseAC,
-	Hall_Phase_T phaseBC,
-	Hall_Phase_T phaseBA,
-	Hall_Phase_T phaseCA,
-	Hall_Phase_T phaseCB,
-	Hall_Phase_T phaseAB,
+	Hall_Id_T phaseAC,
+	Hall_Id_T phaseBC,
+	Hall_Id_T phaseBA,
+	Hall_Id_T phaseCA,
+	Hall_Id_T phaseCB,
+	Hall_Id_T phaseAB,
 	uint8_t sensorIndexPhaseAC,
 	uint8_t sensorIndexPhaseBC,
 	uint8_t sensorIndexPhaseBA,
 	uint8_t sensorIndexPhaseCA,
 	uint8_t sensorIndexPhaseCB,
 	uint8_t sensorIndexPhaseAB,
-	Hall_Phase_T fault000,
-	Hall_Phase_T fault111
+	Hall_Id_T fault000,
+	Hall_Id_T fault111
 )
 {
 	p_hall->p_HAL_Hall = p_hal_Hall;
 	p_hall->Direction = HALL_DIRECTION_CW;
-	p_hall->SensorsSaved = 0;
-	p_hall->PhaseSaved = 0;
+	p_hall->SensorsSaved.Byte = 0;
+	p_hall->IdSaved = 0;
 
 	Hall_MapCommuntationTable
 	(
@@ -77,12 +77,12 @@ void Hall_Init
 void Hall_MapCommuntationTable
 (
 	Hall_T * p_hall,
-	Hall_Phase_T phaseAC,
-	Hall_Phase_T phaseBC,
-	Hall_Phase_T phaseBA,
-	Hall_Phase_T phaseCA,
-	Hall_Phase_T phaseCB,
-	Hall_Phase_T phaseAB,
+	Hall_Id_T phaseAC,
+	Hall_Id_T phaseBC,
+	Hall_Id_T phaseBA,
+	Hall_Id_T phaseCA,
+	Hall_Id_T phaseCB,
+	Hall_Id_T phaseAB,
 	uint8_t sensorIndexPhaseAC,
 	uint8_t sensorIndexPhaseBC,
 	uint8_t sensorIndexPhaseBA,
@@ -101,53 +101,112 @@ void Hall_MapCommuntationTable
 
 void Hall_MapCommuntationTable_Default
 (
-	Hall_T * p_hall,
-	Hall_Phase_T phaseAC,
-	Hall_Phase_T phaseBC,
-	Hall_Phase_T phaseBA,
-	Hall_Phase_T phaseCA,
-	Hall_Phase_T phaseCB,
-	Hall_Phase_T phaseAB
+	Hall_T * p_hall
 )
 {
-	//#if (HALL_SENSOR_ORDER_CBA)
-	//	typedef enum
-	//	{
-	//		//2, 6, 4, 5, 1, 3,
-	//		PHASE_DISABLE = 0,
-	//		PHASE_AB = 0b011, //3
-	//		PHASE_AC = 0b010, //2
-	//		PHASE_BC = 0b110, //6
-	//		PHASE_BA = 0b100, //4
-	//		PHASE_CA = 0b101, //5
-	//		PHASE_CB = 0b001, //1
-	//	} PHASE_ID_T;
-	//#elif (HALL_SENSOR_ORDER_ABC)
-	//	typedef enum
-	//	{
-	//		PHASE_DISABLE = 0,
-	//		PHASE_AB = 0b110, //6
-	//		PHASE_AC = 0b010, //2
-	//		PHASE_BC = 0b011, //3
-	//		PHASE_BA = 0b001, //1
-	//		PHASE_CA = 0b101, //5
-	//		PHASE_CB = 0b100, //4
-	//	} PHASE_ID_T;
-	//#endif
 
+//	/*
+//	 * Calibrating for CW
+//	 */
+//	Hall_MapCommuntationTable
+//	(
+//		p_hall,
+//		HALL_PHASE_AC,
+//		HALL_PHASE_BC,
+//		HALL_PHASE_BA,
+//		HALL_PHASE_CA,
+//		HALL_PHASE_CB,
+//		HALL_PHASE_AB,
+//		HALL_SENSORS_B,
+//		HALL_SENSORS_NOT_A,
+//		HALL_SENSORS_C,
+//		HALL_SENSORS_NOT_B,
+//		HALL_SENSORS_A,
+//		HALL_SENSORS_NOT_C
+//	);
+
+	/*
+	 * Calibrating for CCW
+	 */
 	Hall_MapCommuntationTable
 	(
 		p_hall,
-		phaseAC, phaseBC, phaseBA, phaseCA, phaseCB, phaseAB,
-		2, 3, 1, 5, 4, 6
+		HALL_PHASE_AC,
+		HALL_PHASE_BC,
+		HALL_PHASE_BA,
+		HALL_PHASE_CA,
+		HALL_PHASE_CB,
+		HALL_PHASE_AB,
+		HALL_SENSORS_NOT_B,
+		HALL_SENSORS_A,
+		HALL_SENSORS_NOT_C,
+		HALL_SENSORS_B,
+		HALL_SENSORS_NOT_A,
+		HALL_SENSORS_C
 	);
 }
+
+/*
+ * In cases where Hall_Id_T is a function pointer
+ */
+void Hall_MapCommuntationTable_PhaseDefault
+(
+	Hall_T * p_hall,
+	Hall_Id_T phaseAC,
+	Hall_Id_T phaseBC,
+	Hall_Id_T phaseBA,
+	Hall_Id_T phaseCA,
+	Hall_Id_T phaseCB,
+	Hall_Id_T phaseAB
+)
+{
+//	/*
+//	 * Calibrating for CW
+//	 */
+//	Hall_MapCommuntationTable
+//	(
+//		p_hall,
+//		phaseAC,
+//		phaseBC,
+//		phaseBA,
+//		phaseCA,
+//		phaseCB,
+//		phaseAB,
+//		HALL_SENSORS_B,
+//		HALL_SENSORS_NOT_A,
+//		HALL_SENSORS_C,
+//		HALL_SENSORS_NOT_B,
+//		HALL_SENSORS_A,
+//		HALL_SENSORS_NOT_C
+//	);
+
+	/*
+	 * Calibrating for CCW
+	 */
+	Hall_MapCommuntationTable
+	(
+		p_hall,
+		phaseAC,
+		phaseBC,
+		phaseBA,
+		phaseCA,
+		phaseCB,
+		phaseAB,
+		HALL_SENSORS_NOT_B,
+		HALL_SENSORS_A,
+		HALL_SENSORS_NOT_C,
+		HALL_SENSORS_B,
+		HALL_SENSORS_NOT_A,
+		HALL_SENSORS_C
+	);
+}
+
 
 void Hall_MapCommuntationTableFaultStates
 (
 	Hall_T * p_hall,
-	Hall_Phase_T fault000,
-	Hall_Phase_T fault111
+	Hall_Id_T fault000,
+	Hall_Id_T fault111
 )
 {
 	p_hall->CommuntationTable[0] = fault000;
@@ -162,12 +221,12 @@ void Hall_CalibrateCommuntationTable_Blocking
 (
 	Hall_T * p_hall,
 
-	Hall_Phase_T phaseAC,
-	Hall_Phase_T phaseBC,
-	Hall_Phase_T phaseBA,
-	Hall_Phase_T phaseCA,
-	Hall_Phase_T phaseCB,
-	Hall_Phase_T phaseAB,
+	Hall_Id_T phaseAC,
+	Hall_Id_T phaseBC,
+	Hall_Id_T phaseBA,
+	Hall_Id_T phaseCA,
+	Hall_Id_T phaseCB,
+	Hall_Id_T phaseAB,
 
 	void (*activatePwmValuePhaseABC)(uint16_t pwmA, uint16_t pwmB, uint16_t pwmC),
 	uint16_t pwm,
@@ -179,34 +238,37 @@ void Hall_CalibrateCommuntationTable_Blocking
 {
 	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
 
+	/*
+	 * Calibrating for CW, while rotating CCW, if ABC are connected as intended
+	 */
 	activatePwmValuePhaseABC(pwm, 0, 0);
 	delay(delayTime);
-	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseBC;
+	p_hall->CommuntationTable[Hall_ReadSensors(p_hall).Byte] = phaseBC;
 //	if (returnIndexBC) *returnIndexBC = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
 	activatePwmValuePhaseABC(pwm, pwm, 0);
 	delay(delayTime);
-	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseBA;
+	p_hall->CommuntationTable[Hall_ReadSensors(p_hall).Byte] = phaseBA;
 //	if (returnIndexBA) *returnIndexBA = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
 	activatePwmValuePhaseABC(0, pwm, 0);
 	delay(delayTime);
-	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseCA;
+	p_hall->CommuntationTable[Hall_ReadSensors(p_hall).Byte] = phaseCA;
 //	if (returnIndexCA) *returnIndexCA = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
 	activatePwmValuePhaseABC(0, pwm, pwm);
 	delay(delayTime);
-	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseCB;
+	p_hall->CommuntationTable[Hall_ReadSensors(p_hall).Byte] = phaseCB;
 //	if (returnIndexCB) *returnIndexCB = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
 	activatePwmValuePhaseABC(0, 0, pwm);
 	delay(delayTime);
-	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseAB;
+	p_hall->CommuntationTable[Hall_ReadSensors(p_hall).Byte] = phaseAB;
 //	if (returnIndexAB) *returnIndexAB = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
 	activatePwmValuePhaseABC(pwm, 0, pwm);
 	delay(delayTime);
-	p_hall->CommuntationTable[Hall_ReadSensors(p_hall->p_HAL_Hall)] 	= phaseAC;
+	p_hall->CommuntationTable[Hall_ReadSensors(p_hall).Byte] = phaseAC;
 //	if (returnIndexAC) *returnIndexAC = Hall_ReadSensors(p_hall->p_HAL_Hall);
 
 	activatePwmStatePhaseABC(0,0,0);

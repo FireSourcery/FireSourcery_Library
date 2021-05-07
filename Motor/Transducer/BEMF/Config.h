@@ -28,31 +28,29 @@
     @version V0
 */
 /**************************************************************************/
-#ifndef CONFIG_PHASE_H
-#define CONFIG_PHASE_H
+#ifndef CONFIG_BEMF_H
+#define CONFIG_BEMF_H
 
-//#if defined(CONFIG_PHASE_HAL_PWM_S32K)
-//	#define CONFIG_PHASE_HAL_PWM
-//#elif defined(CONFIG_PHASE_HAL_PHASE_S32K)
-//	#define CONFIG_PHASE_HAL_PHASE
-//#elif defined(CONFIG_PHASE_HAL_KLS_S32K)
-//	#define CONFIG_PHASE_HAL_PHASE
-//#elif defined(CONFIG_PHASE_HAL_PWM_USER_DEFINED)
-//	#define CONFIG_PHASE_HAL_PWM
-//#elif defined(CONFIG_PHASE_HAL_PHASE_USER_DEFINED)
-//	#define CONFIG_PHASE_HAL_PHASE
-//#else
-//	#define CONFIG_PHASE_HAL_PHASE_USER_DEFINED
-//	#define CONFIG_PHASE_HAL_PHASE
-//#endif
-
-#if  	defined(CONFIG_PHASE_HAL_PWM)
-
-#elif 	defined(CONFIG_PHASE_HAL_PHASE)
+#if defined(CONFIG_BEMF_HAL_KLS_S32K)
 
 #else
-	#define CONFIG_PHASE_HAL_PHASE
+	#define CONFIG_BEMF_HAL_USER_DEFINED
 #endif
+
+#ifdef CONFIG_BEMF_ADC_8
+
+#elif defined(CONFIG_BEMF_ADC_16)
+
+#else
+	#define CONFIG_BEMF_ADC_16
+#endif
+
+
+//#if  defined(CONFIG_BEMF_HAL_BEMF)
+//
+//#else
+//	#define CONFIG_BEMF_HAL_BEMF
+//#endif
 
 
 #endif

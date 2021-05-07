@@ -44,24 +44,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/*!
-	@brief Init motor with FOC parameters
-	@param p_motor
- */
-void Motor_FOC_LoadParameters(Motor_T * p_motor)
-{
 
-//	p_motor->Parameters.FocOpenLoopVq = DEFAULT_FOC_OPEN_LOOP_VQ;
-	/*
-	 * Load default via HAL
-	 */
-//#ifdef CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
-//	p_motor->Parameters.FocOpenLoopVq = DEFAULT_FOC_OPEN_LOOP_VQ;
-//
-//#elif defined(CONFIG_MOTOR_LOAD_PARAMETERS_FLASH)
-//	p_motor->Parameters.FocOpenLoopVq = Flash_Read(&p_motor->Flash, MEMORY_ADDRESS_FOC_OPEN_LOOP_VOLTAGE);
-//#endif
-}
 
 
 
@@ -72,7 +55,9 @@ void Motor_FOC_LoadParameters(Motor_T * p_motor)
 	@{
 */
 /******************************************************************************/
-
+/*
+	Convert current from ADCU to Qfrac
+ */
 void Motor_FOC_ConvertIa(Motor_T * p_motor)
 {
 	//Filter here if needed

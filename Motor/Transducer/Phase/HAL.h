@@ -33,7 +33,15 @@
 
 #include "Config.h"
 
-#if defined(CONFIG_PHASE_HAL_PWM_S32K)
+
+#if defined(CONFIG_HAL_LIBRARY_DEFINED)
+	#include "../HAL/HAL.h"
+#elif defined(CONFIG_HAL_USER_DEFINED)
+	#include "HAL.h"
+
+
+
+#elif defined(CONFIG_PHASE_HAL_PWM_S32K)
 	#include "Peripheral/HAL/Platform/S32K/HAL_Pin.h"
 	#include "Peripheral/HAL/Platform/S32K/HAL_PWM.h"
 #elif defined(CONFIG_PHASE_HAL_PHASE_S32K)

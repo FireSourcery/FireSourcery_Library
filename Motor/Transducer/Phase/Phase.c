@@ -43,15 +43,15 @@ void Phase_Init
 	const HAL_PWM_T * p_HAL_pwmB,
 	const HAL_PWM_T * p_HAL_pwmC,
 #elif 	defined(CONFIG_PHASE_HAL_PHASE)
-	const HAL_Phase_T * p_HAL_phase,
+	const HAL_Phase_T * p_HAL_Phase,
 #endif
-	uint16_t pwmPeroid_Ticks,
-	void (*onPhaseAB)(void * onPhaseData),
-	void (*onPhaseAC)(void * onPhaseData),
-	void (*onPhaseBC)(void * onPhaseData),
-	void (*onPhaseBA)(void * onPhaseData),
-	void (*onPhaseCA)(void * onPhaseData),
-	void (*onPhaseCB)(void * onPhaseData)
+	uint16_t pwmPeroid_Ticks
+//	void (*onPhaseAB)(void * onPhaseData),
+//	void (*onPhaseAC)(void * onPhaseData),
+//	void (*onPhaseBC)(void * onPhaseData),
+//	void (*onPhaseBA)(void * onPhaseData),
+//	void (*onPhaseCA)(void * onPhaseData),
+//	void (*onPhaseCB)(void * onPhaseData)
 )
 {
 #if  	defined(CONFIG_PHASE_HAL_PWM)
@@ -59,23 +59,21 @@ void Phase_Init
 	p_phase->p_HAL_PwmB = p_HAL_pwmB;
 	p_phase->p_HAL_PwmC = p_HAL_pwmC;
 #elif 	defined(CONFIG_PHASE_HAL_PHASE)
-	p_phase->p_HAL_Phase = p_HAL_phase;
-	HAL_Phase_Init(p_HAL_phase);
+	p_phase->p_HAL_Phase = p_HAL_Phase;
+	HAL_Phase_Init(p_HAL_Phase);
 #endif
-
 	p_phase->PwmPeriod_Ticks = pwmPeroid_Ticks;
-
 	p_phase->PhaseMode = PHASE_MODE_UNIPOLAR_1;
 
-	p_phase->OnPhaseAB = onPhaseAB;
-	p_phase->OnPhaseAC = onPhaseAC;
-	p_phase->OnPhaseBC = onPhaseBC;
-	p_phase->OnPhaseBA = onPhaseBA;
-	p_phase->OnPhaseCA = onPhaseCA;
-	p_phase->OnPhaseCB = onPhaseCB;
+//	p_phase->OnPhaseAB = onPhaseAB;
+//	p_phase->OnPhaseAC = onPhaseAC;
+//	p_phase->OnPhaseBC = onPhaseBC;
+//	p_phase->OnPhaseBA = onPhaseBA;
+//	p_phase->OnPhaseCA = onPhaseCA;
+//	p_phase->OnPhaseCB = onPhaseCB;
 }
 
-static inline void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phaseMode)
+void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phaseMode)
 {
 	p_phase->PhaseMode = phaseMode; /* switch style*/
 
@@ -96,21 +94,21 @@ static inline void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phas
 
 }
 
-void Phase_EnableSinusoidalModulation(Phase_T * p_phase)
-{
-//	p_phase->SinusoidalModulation = true;
-//	p_phase->PhaseMode = SINUSOIDAL; /* switch style*/
-	Phase_SetState(p_phase, true, true, true);
-	Phase_ActuatePeriod(p_phase, 0U, 0U, 0U);
-	Phase_ActuateInvertPolarity(p_phase, false, false, false);
-}
-
-void Phase_DisableSinusoidalModulation(Phase_T * p_phase)
-{
-//	p_phase->SinusoidalModulation = false;
-	Phase_SetState(p_phase, true, true, true);
-	Phase_ActuatePeriod(p_phase, 0U, 0U, 0U);
-	Phase_ActuateInvertPolarity(p_phase, false, false, false);
-}
+//void Phase_EnableSinusoidalModulation(Phase_T * p_phase)
+//{
+////	p_phase->SinusoidalModulation = true;
+////	p_phase->PhaseMode = SINUSOIDAL; /* switch style*/
+//	Phase_SetState(p_phase, true, true, true);
+//	Phase_ActuatePeriod(p_phase, 0U, 0U, 0U);
+//	Phase_ActuateInvertPolarity(p_phase, false, false, false);
+//}
+//
+//void Phase_DisableSinusoidalModulation(Phase_T * p_phase)
+//{
+////	p_phase->SinusoidalModulation = false;
+//	Phase_SetState(p_phase, true, true, true);
+//	Phase_ActuatePeriod(p_phase, 0U, 0U, 0U);
+//	Phase_ActuateInvertPolarity(p_phase, false, false, false);
+//}
 
 

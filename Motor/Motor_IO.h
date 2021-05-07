@@ -31,12 +31,13 @@
 /**************************************************************************/
 #include "Motor.h"
 #include "Motor_FOC.h"
+#include "Motor_SixStep.h"
 
 #include "HAL.h"
 
 #include "Peripheral/Analog/Analog_IO.h"
 
-#include "OS/StateMachine/StateMachine.h"
+#include "System/StateMachine/StateMachine.h"
 
 
 /*
@@ -44,30 +45,21 @@
  */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-	if (p_motor->TimerCounter > 1)
-	{
-		p_motor->TimerCounter--;
-	}
-	else if(p_motor->TimerCounter == 1)
-	{
-		p_motor->TimerCounter--;
-		Motor_FOC_Zero(p_motor);
-		p_motor->FocMode = MOTOR_FOC_MODE_OPENLOOP;
-		p_motor->Speed_RPM = 60;
-		Phase_SetState(&p_motor->Phase,  true,  true,  true);
-	}
-	else
-	{
-		Motor_FOC_ProcAngleControl(p_motor);
-	}
-
+	p_motor->ControlTimer++;
 	//timer in pwm, machine in adc
 	//adc returns irregular times between modes, must check addtional flags
-	//machine in pwm, proc foc conversion to pwm in adc
+	//machine in pwm, proc foc conversion  in adc
 	//check foc proc flag, or set in analog conversion object
 	//StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
+	Motor_SixStep_ProcCommutationControl(p_motor);
 
-//	p_motor->TimerCounter++;
+
+
+//		Motor_FOC_ProcAngleControl(p_motor);
+
+
+
+
 }
 
 
@@ -78,14 +70,22 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 static inline void Motor_ADC_Thread(Motor_T * p_motor)
 {
 //	Analog_CaptureResults_IO(&p_motor->Analog);
+	//if complete == Iabc Motor_FOC_ProcCurrentControl(Motor_T * p_motor)
 }
 
-static inline void Motor_Timer_Thread(Motor_T * p_motor) //1ms
+static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms
 {
 	//Motor_SpeedLoop();
 	//Monitor
 }
 
+/*
+ * SixStep openloop and sensorless
+ */
+static inline void Motor_TimerCommutation_Thread(Motor_T * p_motor)
+{
+//	BEMF_ProcTimer_IO(&p_motor->Bemf);
+}
 
 static inline void Motor_Main_Thread(Motor_T * p_motor)
 {

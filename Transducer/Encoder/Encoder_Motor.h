@@ -24,9 +24,8 @@
 /*!
 	@file 	Encoder_Motor.h
 	@author FireSourcery
-	@brief 	Encoder + pole pairs calculation.
+	@brief 	Encoder + pole pairs, electrical angle calculation
 			Capture DeltaD, fixed DeltaT
-			Pole pair and control freq calculations
 			Angle defined to be  16 bits
 	@version V0
  */
@@ -53,7 +52,7 @@ static inline uint32_t Encoder_Motor_GetElectricalDelta(Encoder_T * p_encoder)
 	 * Multiply by PolePairs first can be more accurate in cases of uneven encoder division.
 	 * Encoder CPR == 8192, PolePairs == 10: DeltaD is Max is 1 electrical cycle, ~682. Multiplication overflow should loop angle maintain correct angular position.
 	 */
-	return p_encoder->DeltaD * p_encoder->UnitAngularD_Factor * p_encoder->PolePairs >> p_encoder->UnitAngularD_DivisorShift;
+	return (p_encoder->DeltaD * p_encoder->UnitAngularD_Factor * p_encoder->PolePairs) >> p_encoder->UnitAngularD_DivisorShift;
 
 	/*
 	 * Capture DeltaT Mode
@@ -70,7 +69,7 @@ static inline uint32_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
 	 * Multiply by PolePairs first can be more accurate in cases of uneven encoder division.
 	 * Encoder CPR == 8192, PolePairs == 10: TotalAngularD [0:8192], overflow at 1 electrical cycle, ~819. Multiplication overflow should loop angle, and maintain correct angular position.
 	 */
-	return p_encoder->AngularD * p_encoder->UnitAngularD_Factor * p_encoder->PolePairs >> p_encoder->UnitAngularD_DivisorShift;
+	return (p_encoder->AngularD * p_encoder->UnitAngularD_Factor * p_encoder->PolePairs) >> p_encoder->UnitAngularD_DivisorShift;
 }
 
 static inline uint32_t Encoder_Motor_GetMechanicalDelta(Encoder_T * p_encoder)
@@ -88,7 +87,7 @@ static inline uint32_t Encoder_Motor_GetMechanicalTheta(Encoder_T * p_encoder)
  */
 static inline uint32_t Encoder_Motor_ConvertDeltaDToElectricalAngle(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
 {
-	return (deltaD_Ticks * p_encoder->UnitAngularD_Factor * p_encoder->PolePairs >> p_encoder->UnitAngularD_DivisorShift);
+	return ((deltaD_Ticks * p_encoder->UnitAngularD_Factor * p_encoder->PolePairs) >> p_encoder->UnitAngularD_DivisorShift);
 }
 
 /*!
@@ -96,53 +95,67 @@ static inline uint32_t Encoder_Motor_ConvertDeltaDToElectricalAngle(Encoder_T * 
  */
 static inline uint32_t Encoder_Motor_ConvertElectricalAngleToDeltaD(Encoder_T * p_encoder, uint16_t electricalAngle_Degrees16)
 {
-	return electricalAngle_Degrees16 << p_encoder->UnitAngularD_DivisorShift / p_encoder->PolePairs / p_encoder->UnitAngularD_Factor;
+	return (electricalAngle_Degrees16 << p_encoder->UnitAngularD_DivisorShift) / p_encoder->PolePairs / p_encoder->UnitAngularD_Factor;
 }
 
 /******************************************************************************/
 /*!
-	Speed
+	Speed - can be updated with DeltaT for both modes
  */
 /******************************************************************************/
-/*!
-	Get Mechanical Angular Speed [Degree16s Per Second]
- */
-static inline uint32_t Encoder_Motor_GetMechanicalSpeed(Encoder_T * p_encoder)
-{
-	return p_encoder->DeltaD * p_encoder->UnitAngularSpeed;
-}
-
 /*!
 	Get Electrical Angular Speed [Degree16s Per Second]
  */
 static inline uint32_t Encoder_Motor_GetElectricalSpeed(Encoder_T * p_encoder)
 {
 	/* Max DeltaD = 2,236, for UnitSpeed = 160000, PolerPairs = 12 */
-	return p_encoder->DeltaD * p_encoder->UnitAngularSpeed * p_encoder->PolePairs;
+	return p_encoder->DeltaD * p_encoder->UnitAngularSpeed * p_encoder->PolePairs; //DeltaT mode will not use, skip div p_encoder->Delta
 }
-
-static inline uint32_t Encoder_Motor_GetMechanicalRpm(Encoder_T * p_encoder)
-{
-	/* Max DeltaD = 447, for UnitSpeed = 160000, PolerPairs = 12 */
-	return p_encoder->DeltaD * p_encoder->UnitAngularSpeed * 60 >> (32 - p_encoder->UnitAngularD_DivisorShift) ;
-}
-
 static inline uint32_t Encoder_Motor_GetElectricalRpm(Encoder_T * p_encoder)
 {
 	return (p_encoder->DeltaD * p_encoder->UnitAngularSpeed * 60 >> (32 - p_encoder->UnitAngularD_DivisorShift)) * p_encoder->PolePairs;
 }
 
+/*!
+	Get Mechanical Angular Speed [Degree16s Per Second]
+ */
+static inline uint32_t Encoder_Motor_GetMechanicalSpeed(Encoder_T * p_encoder)
+{
+	return Encoder_GetAngularSpeed(p_encoder);
+//	return p_encoder->DeltaD * p_encoder->UnitAngularSpeed;
+}
+
+static inline uint32_t Encoder_Motor_GetMechanicalRpm(Encoder_T * p_encoder)
+{
+	/* Max DeltaD = 447, for UnitSpeed = 160000, PolerPairs = 12 */
+	return Encoder_GetRotationalSpeed_RPM(p_encoder);
+	//return p_encoder->DeltaD * p_encoder->UnitAngularSpeed * 60 >> (32 - p_encoder->UnitAngularD_DivisorShift) ;
+}
+
+/*
+	When UnitAngularSpeed is too high. Large timer freq (> 16 bits), angle res, small countsPerRevolution
+*/
+static inline uint32_t Encoder_Motor_GetMechanicalSpeed_Coarse(Encoder_T * p_encoder)
+{
+	 return (p_encoder->DeltaD * p_encoder->UnitT_Freq) / (p_encoder->EncoderResolution * p_encoder->DeltaT) << (32U - p_encoder->UnitAngularD_DivisorShift);
+}
+
+static inline uint32_t Encoder_Motor_GetMechanicalRpm_Coarse(Encoder_T * p_encoder)
+{
+//	UnitRotationalSpeed = (p_encoder->UnitT_Freq) / (p_encoder->EncoderResolution)
+	return (p_encoder->DeltaD * p_encoder->UnitT_Freq * 60) / (p_encoder->EncoderResolution * p_encoder->DeltaT);
+}
+
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToDeltaD(Encoder_T * p_encoder, uint16_t mechRpm)
 {
 	return Encoder_ConvertRotationalSpeedToDeltaD_RPM(p_encoder, mechRpm);
-//	return mechRpm << (32 - p_encoder->UnitAngularD_DivisorShift) / 60 / p_encoder->UnitAngularSpeed;
 }
 
 static inline uint32_t Encoder_Motor_ConvertDeltaDToMechanicalRpm(Encoder_T * p_encoder, uint16_t deltaD_Ticks)
 {
 	return Encoder_ConvertDeltaDToRotationalSpeed_RPM(p_encoder, deltaD_Ticks);
-//	return deltaD_Ticks * p_encoder->UnitAngularSpeed * 60 >> (32 - p_encoder->UnitAngularD_DivisorShift);
 }
+
 /*!
 	Convert Mechanical Angular Speed [Revolutions per Minute] to Electrical Delta [Degree16s Per Control Period]
 
@@ -150,13 +163,73 @@ static inline uint32_t Encoder_Motor_ConvertDeltaDToMechanicalRpm(Encoder_T * p_
  */
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(Encoder_T * p_encoder, uint16_t mechRpm)
 {
-	return (mechRpm << (32 - p_encoder->UnitAngularD_DivisorShift)) / 60 * p_encoder->PolePairs / p_encoder->UnitT_Freq;
+	return (mechRpm << (32U - p_encoder->UnitAngularD_DivisorShift)) / 60U * p_encoder->PolePairs / p_encoder->PollingFreq;
 }
 
 static inline uint32_t Encoder_Motor_ConvertElectricalRpmToElectricalDelta(Encoder_T * p_encoder, uint16_t elecRpm)
 {
-	return (elecRpm << (32 - p_encoder->UnitAngularD_DivisorShift)) / 60 / p_encoder->UnitT_Freq;
+	return (elecRpm << (32U - p_encoder->UnitAngularD_DivisorShift)) / 60U / p_encoder->PollingFreq;
 }
+
+/*
+	Control Period per Delta Period capture
+	CaptureDeltaT only, CaptureDeltaD returns 1
+ */
+static inline uint32_t Encoder_Motor_GetControlPeriods(Encoder_T *p_encoder)
+{
+	return p_encoder->PollingFreq * p_encoder->DeltaT / p_encoder->UnitT_Freq; //	return p_encoder->PollingFreq / (p_encoder->UnitT_Freq / p_encoder->DeltaT);
+}
+
+/*
+ */
+static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToControlPeriods(Encoder_T * p_encoder, uint16_t mechRpm)
+{
+//	return Encoder_ConvertRotationalSpeedToDeltaT_RPM(p_encoder, mechRpm);
+	return p_encoder->PollingFreq * 60 / (p_encoder->EncoderResolution * mechRpm);
+}
+
+static inline uint32_t Encoder_Motor_ConvertControlPeriodsToMechanicalRpm(Encoder_T * p_encoder, uint16_t controlPeriods)
+{
+	return p_encoder->PollingFreq * 60 / (p_encoder->EncoderResolution * controlPeriods);
+}
+
+/*!
+	Estimate speed in between ticks
+
+	AngleControlIndex * 1(DeltaD) * AngleSize * UnitT_Freq / DeltaT / PollingFreq;
+
+	angle index ranges from 0 to (AngleControlCyclesPerDeltaCycle)
+ */
+static inline uint32_t Encoder_Motor_InterpolateElectricalDelta(Encoder_T * p_encoder, uint32_t index)
+{
+	return index * p_encoder->UnitInterpolateAngle / p_encoder->DeltaT; //	AngleControlIndex * [AngleSize[0x10000] * (UnitDeltaT_Freq / PollingFreq)] / DeltaT;
+
+
+	//UnitT_Freq * AngleData(0x10000) is too large
+//	return index * Encoder_GetAngularSpeed(p_encoder) / p_encoder->PollingFreq;
+//		[ DeltaD * (UnitT_Freq * 0x10000 *  PolePairs /  PulsePerRevolution) /  DeltaT] / PollingFreq;
+//		[1 * (UnitT_Freq * 0x10000 * 1 / 1) /  DeltaT] / PollingFreq;
+}
+
+//static inline uint32_t Encoder_Motor_InterpolateAngle_Slope(Encoder_T * p_encoder, uint32_t index, uint32_t domain)
+//{
+//	return Encoder_InterpolateAngle(p_encoder, index, domain);
+//}
+//
+//static inline uint32_t Encoder_Motor_InterpolateElectricalDelta(Encoder_T * p_encoder, uint32_t index)
+//{
+//	return Encoder_InterpolateAngle_TimeDomain(p_encoder, index);
+//}
+
+/*
+
+ */
+static inline int32_t Encoder_Motor_GetGroundSpeed(Encoder_T * p_encoder)
+{
+	return Encoder_GetLinearSpeed(p_encoder);
+}
+
+
 
 /*!
 	Integrates speed to position
@@ -165,38 +238,24 @@ static inline uint32_t Encoder_Motor_ConvertElectricalRpmToElectricalDelta(Encod
 //{
 //	*p_position += speed;
 //}
+//handle inside module or outside?
+//static inline void Encoder_Motor_IntegrateSpeed_RPM(Encoder_T * p_encoder, int32_t * p_theta, uint16_t speed_Rpm)
+//{
+//	uint32_t electricalDelta = Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(p_encoder, speed_Rpm);
+//	*p_theta += electricalDelta;
+////	Encoder_Motor_IntegrateSpeed(p_encoder, p_theta, electricalDelta);
+//}
 
-static inline void Encoder_Motor_IntegrateSpeed_RPM(Encoder_T * p_encoder, int32_t * p_theta, uint16_t speed_Rpm)
-{
-	uint32_t electricalDelta = Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(p_encoder, speed_Rpm);
-	*p_theta += electricalDelta;
-//	Encoder_Motor_IntegrateSpeed(p_encoder, p_theta, electricalDelta);
-}
 
-static inline uint32_t Encoder_Motor_InterpolateAngle(Encoder_T * p_encoder, uint32_t index, uint32_t domain)
-{
-	return Encoder_InterpolateAngle(p_encoder, index, domain);
-}
-
-static inline uint32_t Encoder_Motor_InterpolateAngle_TimeDomain(Encoder_T * p_encoder, uint32_t index)
-{
-	return Encoder_InterpolateAngle_TimeDomain(p_encoder, index);
-}
-
-static inline int32_t Encoder_Motor_GetGroundSpeed(Encoder_T * p_encoder)
-{
-	return Encoder_GetLinearSpeed(p_encoder);
-}
-
-extern void Encoder_Motor_Init
-(
-	Encoder_T * p_encoder,
-	const HAL_Encoder_T * p_HAL_encoder,
-	uint32_t controlFreq_Hz,				/* UnitT_Freq */
-	uint32_t encoderDistancePerCount,		/* UnitLinearD */
-	uint32_t encoderCountsPerRevolution,	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */
-	uint8_t angleDataBits,					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
-	uint8_t polePairs
-);
+//extern void Encoder_Motor_Init
+//(
+//	Encoder_T * p_encoder,
+//	const HAL_Encoder_T * p_HAL_encoder,
+//	uint32_t controlFreq_Hz,				/* UnitT_Freq */
+//	uint32_t encoderDistancePerCount,		/* UnitLinearD */
+//	uint32_t encoderCountsPerRevolution,	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */
+//	uint8_t angleDataBits,					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
+//	uint8_t polePairs
+//);
 
 #endif

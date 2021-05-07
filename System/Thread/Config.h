@@ -28,32 +28,15 @@
     @version V0
 */
 /**************************************************************************/
-#ifndef CONFIG_PHASE_H
-#define CONFIG_PHASE_H
+#ifndef CONFIG_THREAD_H
+#define CONFIG_THREAD_H
 
-//#if defined(CONFIG_PHASE_HAL_PWM_S32K)
-//	#define CONFIG_PHASE_HAL_PWM
-//#elif defined(CONFIG_PHASE_HAL_PHASE_S32K)
-//	#define CONFIG_PHASE_HAL_PHASE
-//#elif defined(CONFIG_PHASE_HAL_KLS_S32K)
-//	#define CONFIG_PHASE_HAL_PHASE
-//#elif defined(CONFIG_PHASE_HAL_PWM_USER_DEFINED)
-//	#define CONFIG_PHASE_HAL_PWM
-//#elif defined(CONFIG_PHASE_HAL_PHASE_USER_DEFINED)
-//	#define CONFIG_PHASE_HAL_PHASE
-//#else
-//	#define CONFIG_PHASE_HAL_PHASE_USER_DEFINED
-//	#define CONFIG_PHASE_HAL_PHASE
-//#endif
+#ifdef CONFIG_THREAD_FUNCTION_CONTEXT_ENABLED
 
-#if  	defined(CONFIG_PHASE_HAL_PWM)
-
-#elif 	defined(CONFIG_PHASE_HAL_PHASE)
+#elif defined (CONFIG_THREAD_FUNCTION_CONTEXT_DISABLED)
 
 #else
-	#define CONFIG_PHASE_HAL_PHASE
+	#define CONFIG_THREAD_FUNCTION_CONTEXT_ENABLED
 #endif
 
-
 #endif
-
