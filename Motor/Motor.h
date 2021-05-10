@@ -87,11 +87,11 @@ typedef enum
 	MOTOR_DIRECTION_CCW,
 } Motor_Direction_T;
 
-//typedef enum
-//{
-//	MOTOR_CONTROL_MODE_FOC,
-//	MOTOR_CONTROL_MODE_SIX_STEP,
-//} Motor_CommutationMode_T;
+typedef enum
+{
+	MOTOR_CONTROL_MODE_FOC,
+	MOTOR_CONTROL_MODE_SIX_STEP,
+} Motor_CommutationMode_T;
 
 typedef enum
 {
@@ -201,11 +201,6 @@ typedef const struct Motor_Init_Tag
 	const HAL_Pin_T HAL_PIN_FORWARD;
 	const HAL_Pin_T HAL_PIN_REVERSE;
 
-    //	HAL_ADC_T * p_AdcRegMap;
-    //	uint8_t AdcNCount;
-    //	uint8_t AdcMLengthBuffer;
-    //	const uint32_t * p_AdcChannelPinMap;
-
 	const uint32_t HALL_ENCODER_TIMER_COUNTER_MAX; //Hall mode only
 	const uint32_t HALL_ENCODER_TIMER_COUNTER_FREQ; //Hall mode only
 	const uint32_t ENCODER_ANGLE_RES_BITS;
@@ -221,10 +216,11 @@ typedef struct
 	/*
 	 * Hardware Wrappers
 	 */
-	/* Analog_T scale 1 per motor, if Analog_T controls all adc. else if controls 1 adc, motor import HAL_start ADC to abtract adc selection */
-	Analog_T Analog;
+	/* if Analog_T abstracted to controls all adc.(nfixed and nmultimuxed modes). Analog_T scale 1 per motor, can be controlled within motor module */
+	//	Analog_T Analog;
+
 	/* Analog Channel Results Scales 1 per motor instance */
-	uint16_t AnalogChannelResults[MOTOR_ANALOG_ADC_CHANNEL_COUNT];
+	volatile uint16_t AnalogChannelResults[MOTOR_ANALOG_ADC_CHANNEL_COUNT];
 
 	Encoder_T Encoder;
 	Phase_T Phase;
@@ -257,6 +253,7 @@ typedef struct
 	Motor_Direction_T 		Direction;
 	Motor_ControlMode_T 	ControlMode;
 	Motor_SensorMode_T 		SensorMode;
+	Motor_CommutationMode_T CommutationMode;
 
 	uint32_t SpeedControlTimer;
 	uint32_t SpeedControlPeriod;

@@ -52,9 +52,7 @@ typedef struct
 //	volatile const qfrac16_t * p_Ic;
 //	volatile const qangle16_t * p_Theta;
 
-	/* persistent after init */
-//	uint16_t PwmPeriod;
-
+	/* Config */
 	qfrac16_t VectorMaxMagnitude;
 	qfrac16_t VectorMaxD; /* default sqrt1/3 */
 
@@ -66,6 +64,7 @@ typedef struct
 	 qfrac16_t Sine; /* save for inverse park call */
 	 qfrac16_t Cosine;
 
+	 /* calculated */
 	 qfrac16_t Ialpha;
 	 qfrac16_t Ibeta;
 
@@ -112,9 +111,9 @@ static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T *  p_foc)
 //	*(p_foc->p_PwmB) = qfrac16_mul(p_foc->PwmPeriod, magB);
 //	*(p_foc->p_PwmC) = qfrac16_mul(p_foc->PwmPeriod, magC);
 }
-
+static inline void FOC_SetVector(FOC_T * p_foc, qangle16_t theta){qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, theta);}
 static inline void FOC_SetTheta(FOC_T * p_foc, qangle16_t theta){qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, theta);}
-//static inline void FOC_SetTheta(FOC_T *  p_foc, qangle16_t theta){	p_foc->Theta = theta;}
+//static inline void FOC_SetTheta(FOC_T * p_foc, qangle16_t theta){p_foc->Theta = theta;}
 
 static inline void FOC_SetIa(FOC_T * p_foc, qfrac16_t ia){p_foc->Ia = ia;}
 static inline void FOC_SetIb(FOC_T * p_foc, qfrac16_t ib){p_foc->Ib = ib;}
@@ -129,11 +128,11 @@ extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
 extern void FOC_SetZero(FOC_T * p_foc);
 
-//void FOC_GetId(FOC_t * p_foc)
+//void FOC_SetId(FOC_t * p_foc)
 //{
 //}
 //
-//void FOC_GetIq(FOC_t * p_foc)
+//void FOC_SetIq(FOC_t * p_foc)
 //{
 //}
 

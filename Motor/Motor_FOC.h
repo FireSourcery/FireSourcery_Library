@@ -41,7 +41,7 @@
 
 #include "Transducer/Encoder/Encoder_IO.h"
 #include "Transducer/Encoder/Encoder_Motor.h"
-//#include "Transducer/Encoder/Encoder.h"
+#include "Transducer/Encoder/Encoder.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -136,7 +136,7 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 	StateMachine calls each PWM, ~20kHz
 	shared function -> less states
  */
-extern Analog_Conversion_T FOC_ANALOG_CONVERSION_ANGLE_CONTROL;
+//extern Analog_Conversion_T FOC_ANALOG_CONVERSION_ANGLE_CONTROL;
 
 static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
@@ -144,7 +144,7 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 
 	if ((p_motor->ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT))
 	{
-		Analog_ActivateConversion(&p_motor->Analog, &FOC_ANALOG_CONVERSION_ANGLE_CONTROL);
+//		Analog_ActivateConversion(&p_motor->Analog, &FOC_ANALOG_CONVERSION_ANGLE_CONTROL);
 	}
 	else
 	{
@@ -265,5 +265,39 @@ static inline void Motor_FOC_ProcCurrentControl(Motor_T * p_motor)
 	Phase_SetDutyCyle_15(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 	Phase_Actuate(&p_motor->Phase); //Phase_Actuate_ABC(&p_motor->Phase, a,b,c);
 }
+
+
+/******************************************************************************/
+/*!
+	@addtogroup
+	FOC ADC conversion
+	@{
+*/
+/******************************************************************************/
+/*
+	Convert current from ADCU to Qfrac
+ */
+static inline void Motor_FOC_ConvertIa(Motor_T * p_motor)
+{
+	//Filter here if needed
+//	qfrac16_t i_temp = Linear_Convert(&p_motor->UnitIa_Frac16, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA]);
+	FOC_SetIa(&p_motor->Foc, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA]);
+}
+
+static inline void Motor_FOC_ConvertIb(Motor_T * p_motor)
+{
+//	qfrac16_t i_temp = Linear_Convert(&p_motor->UnitIb_Frac16, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IB]);
+	FOC_SetIb(&p_motor->Foc, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IB]);
+}
+
+static inline void Motor_FOC_ConvertIc(Motor_T * p_motor)
+{
+//	qfrac16_t i_temp = Linear_Convert(&p_motor->UnitIc_Frac16, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IC]);
+	FOC_SetIc(&p_motor->Foc, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IC]);
+}
+
+/******************************************************************************/
+/*! @} */
+/******************************************************************************/
 
 #endif

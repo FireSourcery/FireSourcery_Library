@@ -72,6 +72,15 @@ typedef enum
 }
 BEMF_ZcdStatus_T;
 
+typedef enum
+{
+	BEMF_PHASE_A,
+	BEMF_PHASE_B,
+	BEMF_PHASE_C,
+}
+BEMF_PhaseId_T;
+
+
 typedef struct
 {
 	const HAL_BEMF_T * p_HAL_Bemf;
@@ -85,6 +94,8 @@ typedef struct
 	volatile const bemf_t * p_VBus_ADCU;
 
 	volatile const bemf_t * volatile p_VBemf_ADCU;	///observe phase.  Variable pointer to ADC results. Phase voltage PWM On: VPhase == (3/2)VBEMF + VBus/2
+
+	volatile BEMF_PhaseId_T BemfPhase;
 
 	volatile int16_t VBemf_SignedADCU;				/// Phase-to-ground voltage, 3/2 * phase to-neutral
 	volatile int16_t VBemfPrev_SignedADCU;			/// better to save 2 samples, delta is only used for zc
@@ -117,20 +128,12 @@ typedef struct
 BEMF_T;
 
 
-
-static inline void BEMF_MapPhaseA(BEMF_T * p_bemf) {p_bemf->p_VBemf_ADCU = p_bemf->p_VPhaseA_ADCU;}
-static inline void BEMF_MapPhaseB(BEMF_T * p_bemf) {p_bemf->p_VBemf_ADCU = p_bemf->p_VPhaseB_ADCU;}
-static inline void BEMF_MapPhaseC(BEMF_T * p_bemf) {p_bemf->p_VBemf_ADCU = p_bemf->p_VPhaseC_ADCU;}
-
 /*
 	Set from outside method
  */
-//static inline void BEMF_OnPhaseAC_IO(BEMF_T * p_bemf){BEMF_MapPhaseB(p_bemf);}
-//static inline void BEMF_OnPhaseBC_IO(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf);}
-//static inline void BEMF_OnPhaseBA_IO(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf);}
-//static inline void BEMF_OnPhaseCA_IO(BEMF_T * p_bemf){BEMF_MapPhaseB(p_bemf);}
-//static inline void BEMF_OnPhaseCB_IO(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf);}
-//static inline void BEMF_OnPhaseAB_IO(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf);}
+static inline void BEMF_MapPhaseA(BEMF_T * p_bemf) {p_bemf->p_VBemf_ADCU = p_bemf->p_VPhaseA_ADCU; p_bemf->BemfPhase = BEMF_PHASE_A;}
+static inline void BEMF_MapPhaseB(BEMF_T * p_bemf) {p_bemf->p_VBemf_ADCU = p_bemf->p_VPhaseB_ADCU; p_bemf->BemfPhase = BEMF_PHASE_B;}
+static inline void BEMF_MapPhaseC(BEMF_T * p_bemf) {p_bemf->p_VBemf_ADCU = p_bemf->p_VPhaseC_ADCU; p_bemf->BemfPhase = BEMF_PHASE_C;}
 
 static inline void BEMF_MapCwPhaseAC_IO(BEMF_T * p_bemf){BEMF_MapPhaseB(p_bemf); p_bemf->IsBemfRising = true;} //todo
 static inline void BEMF_MapCwPhaseBC_IO(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf); p_bemf->IsBemfRising = true;}
@@ -145,6 +148,8 @@ static inline void BEMF_MapCcwPhaseBA_IO(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf)
 static inline void BEMF_MapCcwPhaseCA_IO(BEMF_T * p_bemf){BEMF_MapPhaseB(p_bemf); p_bemf->IsBemfRising = true;}
 static inline void BEMF_MapCcwPhaseCB_IO(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf); p_bemf->IsBemfRising = true;}
 static inline void BEMF_MapCcwPhaseAB_IO(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p_bemf->IsBemfRising = true;}
+
+static inline BEMF_PhaseId_T BEMF_GetPhaseId(BEMF_T * p_bemf) {return p_bemf->BemfPhase;}
 
 /*
  * Module determines sector Id via zcd
@@ -172,13 +177,13 @@ static inline void BEMF_MapCcwPhaseAB_IO(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf)
  */
 static inline void BEMF_CaptureBemf(BEMF_T * p_bemf)
 {
-	p_bemf->VBemfPrev_SignedADCU 	= p_bemf->VBemf_SignedADCU;
+	p_bemf->VBemfPrev_SignedADCU = p_bemf->VBemf_SignedADCU;
 
 	switch(p_bemf->SampleMode)
 	{
 	case BEMF_SAMPLE_MODE_PWM_BIPOLAR: break;
 	case BEMF_SAMPLE_MODE_PWM_ON: 	p_bemf->VBemf_SignedADCU = (int32_t)(*p_bemf->p_VBemf_ADCU) - ((int32_t)(*p_bemf->p_VBus_ADCU) / 2); break;
-	case BEMF_SAMPLE_MODE_PWM_OFF: 	p_bemf->VBemf_SignedADCU = (int32_t)(*p_bemf->p_VBemf_ADCU) -  (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
+	case BEMF_SAMPLE_MODE_PWM_OFF: 	p_bemf->VBemf_SignedADCU = (int32_t)(*p_bemf->p_VBemf_ADCU) - (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
 	default:	break;
 	}
 }

@@ -239,7 +239,7 @@ void Hall_CalibrateCommuntationTable_Blocking
 	if(activatePwmStatePhaseABC) activatePwmStatePhaseABC(1,1,1);
 
 	/*
-	 * Calibrating for CW, while rotating CCW, if ABC are connected as intended
+	 * Calibrating for CCW, while rotating CCW, if ABC are connected as intended
 	 */
 	activatePwmValuePhaseABC(pwm, 0, 0);
 	delay(delayTime);

@@ -24,28 +24,32 @@
 /*!
 	@file 	HAL.h
 	@author FireSoucery
-	@brief 	Peripheral module HAL
+	@brief 	Analog module imports the following ADC functions.
+			User must provide HW functions, or configure peripheral HAL
 	@version V0
 */
 /******************************************************************************/
-#ifndef HAL_PERIPHERAL_H
-#define HAL_PERIPHERAL_H
+#ifndef HAL_ANALOG_H
+#define HAL_ANALOG_H
 
-// Includes all HALs
-#ifdef CONFIG_HAL_S32K
+#include "Config.h"
 
-	#include "Platform/S32K/HAL_ADC.h"
-	#include "Platform/S32K/HAL_Pin.h"
-//	#include "Platform/S32K/FTM.h"
-//	#include "Platform/S32K/LPUART.h"
-//	#include "Platform/S32K/MSCAN.h"
+#include <stdint.h>
+#include <stdbool.h>
 
+//#if defined(CONFIG_ANALOG_HAL_S32K)
+//	#include "Peripheral/HAL/Platform/S32K/HAL_ADC.h"
+//#elif defined(CONFIG_ANALOG_HAL_USER_DEFINED)
+//	#include "HAL/HAL_ADC.h"
+//#endif
 
-#elif defined(CONFIG__HAL__XYZ)
-
+#if defined(CONFIG_HAL_LIBRARY_DEFINED)
+	#include "Peripheral/HAL/HAL.h"
+#elif defined(CONFIG_HAL_USER_DEFINED)
+	#include "HAL/HAL.h"
+#elif defined(CONFIG_HAL_ADC_USER_DEFINED)
+	#include "HAL/HAL_ADC.h"
 #endif
 
 
-
 #endif
-

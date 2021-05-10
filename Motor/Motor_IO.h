@@ -46,18 +46,13 @@
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
 	p_motor->ControlTimer++;
-	//timer in pwm, machine in adc
-	//adc returns irregular times between modes, must check addtional flags
-	//machine in pwm, proc foc conversion  in adc
-	//check foc proc flag, or set in analog conversion object
+
 	//StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
 	Motor_SixStep_ProcCommutationControl(p_motor);
 
 
 
 //		Motor_FOC_ProcAngleControl(p_motor);
-
-
 
 
 }

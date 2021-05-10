@@ -32,7 +32,7 @@
 #define PRIVATE_ANALOG_H
 
 #include "Analog.h"
-#include "HAL.h"
+#include "HAL_ADC.h"
 #include "Config.h"
 
 /*!
@@ -54,23 +54,27 @@
 
 	Compiler may able to optimize when arguments are constant literals
  */
-static inline void ActivateAdc_NDemux
+static inline void ActivateAdc_NMultiMuxed
 (
 	Analog_T * p_analog,
 	HAL_ADC_T (* const (* pp_adcMaps)),
 	uint8_t nAdc,
 	const Analog_VirtualChannel_T * p_virtualChannels,
-	uint8_t activateChannelCount
+	uint8_t channelCount,
+	Analog_Config_T config
 )
 {
 	Analog_VirtualChannel_T iVirtualChannel;
 
 	for (uint8_t iAdc = 0U; iAdc < nAdc; iAdc++)
 	{
-		HAL_ADC_WriteHwTriggerState(pp_adcMaps[iAdc], p_analog->ActiveConfig.UseHwTrigger);
+		if (config.UseHwTriggerPerChannel || config.UseHwTriggerPerConversion)
+		{
+			HAL_ADC_WriteHwTriggerState(pp_adcMaps[iAdc], 1U);
+		}
 	}
 
-	for (uint8_t iChannel = 0U; iChannel < activateChannelCount; iChannel += nAdc)
+	for (uint8_t iChannel = 0U; iChannel < channelCount; iChannel += nAdc)
 	{
 		for (uint8_t iAdc = 0U; iAdc < nAdc; iAdc++)
 		{
@@ -80,9 +84,9 @@ static inline void ActivateAdc_NDemux
 			 * Boundary check if needed
 			 * if (iVirtualChannel < p_analog->VirtualChannelMapLength)
 			 */
-			p_analog->p_MapChannelResults[iVirtualChannel] = 0;
+			p_analog->p_MapChannelResults[iVirtualChannel] = 0U;
 
-			if (iChannel + iAdc < activateChannelCount - 1)
+			if (iChannel + iAdc < channelCount - 1U)
 			{
 				HAL_ADC_WritePinSelect(pp_adcMaps[iAdc], (uint32_t) p_analog->p_MapChannelPins[iVirtualChannel]);
 			}
@@ -93,10 +97,6 @@ static inline void ActivateAdc_NDemux
 			}
 		}
 	}
-
-#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER) && !defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
-	p_analog->ActiveChannelCount = activateChannelCount;
-#endif
 }
 
 /*!
@@ -105,40 +105,74 @@ static inline void ActivateAdc_NDemux
 	@param[in] p_virtualChannels 	offset by p_analog->ActiveConversionChannelIndex
 
 	Fill N ADCs. When channels are fixed to particular ADC
-		//todo optimize with N adc activation
+		//todo algo N adc activation, need virtualchannel to adc map
  */
-static inline void ActivateAdc_Fixed
+//static inline void ActivateAdc_NFixed
+//(
+//	Analog_T * p_analog,
+//	HAL_ADC_T (* const (* pp_adcMaps)),
+//	uint8_t nAdc,
+//	const Analog_VirtualChannel_T * p_virtualChannels,
+//	uint8_t channelCount
+//)
+//{
+////	Analog_VirtualChannel_T iVirtualChannel;
+////	uint8_t iAdc;
+////
+////	iVirtualChannel = *p_virtualChannels;
+////	iAdc = p_analog->p_MapChannelAdcs[iVirtualChannel];
+////
+////	for (uint8_t index = 0U; index < channelCount - 1; index++)
+////	{
+////
+////	}
+//
+//}
+
+/*!
+	@brief Fill 1 ADCs
+ */
+//static inline void ActivateAdc_Single
+//(
+//	Analog_T * p_analog,
+//	const Analog_VirtualChannel_T * p_virtualChannels,
+//	uint8_t activateChannelCount
+//)
+//{
+//	ActivateAdc_NMultiMuxed(p_analog, &p_analog->p_Adc, 1U, p_virtualChannels, activateChannelCount);
+//}
+
+/*!
+	@brief 	Start the selected segment channels
+ 	 	 	Share by public Analog_ActivateConversion, and Analog_CaptureResults_IO
+ */
+static inline void ActivateAdc
 (
 	Analog_T * p_analog,
-	HAL_ADC_T (* const (* pp_adcMaps)),
-	uint8_t nAdc,
 	const Analog_VirtualChannel_T * p_virtualChannels,
-	uint8_t activeChannelCount
+	uint8_t channelCount,
+	Analog_Config_T config
 )
 {
-	Analog_VirtualChannel_T iVirtualChannel;
-	uint8_t iAdc;
-
-	iVirtualChannel = *p_virtualChannels;
-
-	iAdc = p_analog->p_MapChannelAdcs[iVirtualChannel];
-
-	HAL_ADC_WriteHwTriggerState(pp_adcMaps[iAdc], p_analog->ActiveConfig.UseHwTrigger);
-
-	for (uint8_t index = 0U; index < activeChannelCount - 1; index++)
-	{
-		iVirtualChannel = p_virtualChannels[index];
-
-		if (p_analog->p_MapChannelAdcs[iVirtualChannel] == iAdc)
-		{
-			HAL_ADC_WritePinSelect(pp_adcMaps[iAdc], p_analog->p_MapChannelPins[iVirtualChannel]);
-		}
-	}
-
-	iVirtualChannel = p_virtualChannels[activeChannelCount - 1];
-
-	HAL_ADC_Activate(pp_adcMaps[iAdc], p_analog->p_MapChannelPins[iVirtualChannel]);
-
+/* Channel Demux N ADC  */
+#ifdef CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
+	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
+	(void)channelCount;
+	ActivateAdc_NMultiMuxed(p_analog, &p_analog->p_Adc, 1U, 				p_virtualChannels, 1U, config);
+//	ActivateAdc_Single(p_analog, p_virtualChannels, 1U);
+#elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
+	/* * Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel must be in same buffer */
+	ActivateAdc_NMultiMuxed(p_analog, &p_analog->p_Adc, 1U, 				p_virtualChannels, channelCount, config);
+//	ActivateAdc_Single(p_analog, p_virtualChannels, activateChannelCount);
+#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER)
+	/* Case N ADC 1 Buffer:  ActiveChannelCount <= N_ADC Count */
+	ActivateAdc_NMultiMuxed(p_analog, p_analog->pp_Adcs, p_analog->AdcN_Count, 	p_virtualChannels, channelCount, config);
+//	ActivateAdc_NFixed()
+#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+	/* Case N ADC M Buffer: ActiveChannelCount <= N_ADC Count * M_Buffer Length */
+	ActivateAdc_NMultiMuxed(p_analog, p_analog->pp_Adcs, p_analog->AdcN_Count, 	p_virtualChannels, channelCount, config);
+//	ActivateAdc_NFixed()
+#endif
 }
 
 /*!
@@ -146,67 +180,65 @@ static inline void ActivateAdc_Fixed
 
 			Share by public Analog_ActivateConversion, and Analog_CaptureResults_IO
  */
-static inline uint8_t CalcActivateChannelCount
+static inline uint8_t CalcAdcActiveChannelCountMax
 (
 	Analog_T * p_analog,
 	uint8_t targetChannelCount
 )
 {
-	uint8_t activateChannelCount;
+	uint8_t maxChannelCount;
 
 	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
-
-#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
+#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
+	(void)p_analog;
+	(void)targetChannelCount;
+	maxChannelCount = 1U;
+#elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
 	/* Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel must be in same buffer */
-	activateChannelCount = p_analog->ADC_M_LengthBuffer;
+	maxChannelCount = p_analog->AdcM_Buffer;
 #elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER)
 	/* Case N ADC 1 Buffer:  ActiveChannelCount <= N_ADC Count */
-	activateChannelCount = p_analog->AdcN_Count;
+	maxChannelCount = p_analog->AdcN_Count;
 #elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
 	/* Case N ADC M Buffer: ActiveChannelCount <= N_ADC Count * M_Buffer Length */
-	activateChannelCount = p_analog->AdcN_Count * p_analog->ADC_M_LengthBuffer;
+	maxChannelCount = p_analog->AdcN_Count * p_analog->AdcM_Buffer;
 #endif
 
 #if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER) && !defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
-	if (targetChannelCount < activateChannelCount)
+	if (targetChannelCount < maxChannelCount)
 	{
-		activateChannelCount = targetChannelCount;
+		maxChannelCount = targetChannelCount;
 	}
 #endif
 
-	return activateChannelCount;
+	return maxChannelCount;
 }
 
-/*!
-	@brief 	Start the selected segment channels
- 	 	 	Share by public Analog_ActivateConversion, and Analog_CaptureResults_IO
- */
-static inline void ActivateConversion
+
+static inline Analog_Config_T CalcAdcActiveConfig
 (
 	Analog_T * p_analog,
-	const Analog_VirtualChannel_T * p_virtualChannels,
-	uint8_t activateChannelCount
+	Analog_Config_T conversionConfig,
+	bool isFirstActivation
 )
 {
+	Analog_Config_T activateConfig;
 
+	if (conversionConfig.UseConfig == 1U)
+	{
+		activateConfig = conversionConfig;
+	}
+	else
+	{
+		activateConfig = p_analog->DefaultConfig;
+	}
 
+	if (isFirstActivation == false)
+	{
+		activateConfig.UseHwTriggerPerConversion = 0;
+	}
 
-/* Channel Demux N ADC  */
-#ifdef CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
-	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
-	ActivateAdc_NDemux(p_analog, &p_analog->p_ADC_RegisterMap, 1U, 				p_virtualChannels, 1U);
-#elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-	/* * Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel must be in same buffer */
-	ActivateAdc_NDemux(p_analog, &p_analog->p_ADC_RegisterMap, 1U, 				p_virtualChannels, activateChannelCount);
-#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER)
-	/* Case N ADC 1 Buffer:  ActiveChannelCount <= N_ADC Count */
-	ActivateAdc_NDemux(p_analog, p_analog->pp_Adcs, p_analog->AdcN_Count, 	p_virtualChannels, activateChannelCount);
-#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	/* Case N ADC M Buffer: ActiveChannelCount <= N_ADC Count * M_Buffer Length */
-	ActivateAdc_NDemux(p_analog, p_analog->pp_Adcs, p_analog->AdcN_Count, 	p_virtualChannels, activateChannelCount);
-#endif
-
-
+	return activateConfig;
 }
 
 #endif

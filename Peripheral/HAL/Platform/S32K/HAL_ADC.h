@@ -56,8 +56,9 @@ static inline void HAL_ADC_WriteLast(HAL_ADC_T * p_adcRegBase, uint32_t pinChann
  	p_adcRegBase->SC1[0] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
 }
 
-static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_adcRegBase)
+static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_adcRegBase, uint32_t pinChannel)
 {
+	(void)pinChannel;
 	return (uint32_t) p_adcRegBase->R[0];
 }
 
@@ -119,9 +120,16 @@ static inline bool HAL_ADC_ReadConversionCompleteFlag(const HAL_ADC_T * p_adcReg
 	return (tmp != 0u) ? true : false;
 }
 
-//static inline void HAL_ADC_Init(uint32_t instance, const adc_converter_config_t * config)
-//{
-////	ADC_DRV_ConfigConverter(instance, config);
-//}
+static inline void HAL_ADC_ClearConversionCompleteFlag(const HAL_ADC_T * p_adcRegBase)
+{
+	(void)p_adcRegBase;
+	//automatic after read on S32k
+}
+
+
+static inline void HAL_ADC_Init(const HAL_ADC_T * p_adcRegBase)
+{
+//	ADC_DRV_ConfigConverter(instance, config);
+}
 
 #endif

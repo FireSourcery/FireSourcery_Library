@@ -88,6 +88,9 @@ void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInit)
 
 	p_motor->ControlMode = MOTOR_CONTROL_MODE_OPEN_LOOP;
 	p_motor->SensorMode = MOTOR_SENSOR_MODE_OPEN_LOOP;
+	p_motor->CommutationMode = MOTOR_CONTROL_MODE_FOC;
+//	p_motor->SensorMode = MOTOR_CONTROL_MODE_SIX_STEP;
+
 
 	//ALL FOC modes except hall sensor use standard encoder
 //	Encoder_Motor_Init
@@ -126,13 +129,13 @@ void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInit)
 		&p_motor->ThreadTimer,
 		&p_motor->ControlTimer,
 		20000U,
-		0,
-		0,
-		1U
+		1U,
+		0U,
+		0U
 	);
 
 
-//	iff anlog module algo supports matching channel to adc virtualization layer
+//	if analog module algo supports matching channel to adc virtualization layer
 //	Analog_Init
 //	(
 //		&p_motor->Analog,
@@ -153,6 +156,7 @@ void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInit)
 
 
 //testing
+	p_motor->CommutationMode =   MOTOR_CONTROL_MODE_SIX_STEP;
 //	Motor_StartAlign(p_motor);
 //	Motor_SixStep_Start(p_motor);
 //	Motor_FOC_StartAngleControlMode(p_motor);
@@ -201,5 +205,9 @@ void Motor_LoadParameters(Motor_T * p_motor)
 //	p_motor->Parameters.FocOpenLoopVq = Flash_Read(&p_motor->Flash, MEMORY_ADDRESS_FOC_OPEN_LOOP_VOLTAGE);
 //#endif
 }
+
+
+
+
 
 

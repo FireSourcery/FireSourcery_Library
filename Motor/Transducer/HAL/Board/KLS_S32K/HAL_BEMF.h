@@ -45,32 +45,32 @@ typedef const struct
 //	uint32_t InstanceID;
 } HAL_BEMF_T;
 
-
-
-
-
-/// User app provides timer. Use to track commutation time, reset each commutation cycle
-static inline uint8_t HAL_BEMF_ReadTimer(const HAL_BEMF_T * p_hal_bemf)
-{
-	(void)p_hal_bemf;
-
-}
-
-/// set timer time till next isr, reset timer.
-static inline void HAL_BEMF_StartTimerInterrupt(const HAL_BEMF_T * p_hal_bemf, uint32_t ticks)
-{
-	(void)p_hal_bemf;
-
-
-}
-
-// 16-bit timer, Freq = 50 kHz: Peroid = 20 uS, Overflow 1.3 seconds,  rpm min for 10 pole pairs
-static inline void HAL_BEMF_Init(const HAL_BEMF_T * p_hal_bemf)
-{
-	(void)p_hal_bemf;
-
-
-}
+//
+//
+//
+//
+///// User app provides timer. Use to track commutation time, reset each commutation cycle
+//static inline uint8_t HAL_BEMF_ReadTimer(const HAL_BEMF_T * p_hal_bemf)
+//{
+//	(void)p_hal_bemf;
+//
+//}
+//
+///// set timer time till next isr, reset timer.
+//static inline void HAL_BEMF_StartTimerInterrupt(const HAL_BEMF_T * p_hal_bemf, uint32_t ticks)
+//{
+//	(void)p_hal_bemf;
+//
+//
+//}
+//
+//// 16-bit timer, Freq = 50 kHz: Peroid = 20 uS, Overflow 1.3 seconds,  rpm min for 10 pole pairs
+//static inline void HAL_BEMF_Init(const HAL_BEMF_T * p_hal_bemf)
+//{
+//	(void)p_hal_bemf;
+//
+//
+//}
 
 
 #endif

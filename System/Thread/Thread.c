@@ -180,8 +180,8 @@ void Thread_InitThreadPeriodic_Period
 (
 	Thread_T * p_thread,
 	const volatile uint32_t *p_timer,
-	uint32_t period,
 	uint32_t timerfreq,
+	uint32_t period,
 	void (*function)(volatile void *),
 	volatile void * p_context
 )
@@ -193,8 +193,8 @@ void Thread_InitThreadPeriodic_Freq
 (
 	Thread_T * p_thread,
 	const volatile uint32_t *p_timer,
-	uint32_t freq,
 	uint32_t timerfreq,
+	uint32_t freq,
 	void (*function)(volatile void *),
 	volatile void * p_context
 )
@@ -211,7 +211,7 @@ void Thread_InitThreadOneShot_Period
 	const volatile uint32_t *p_timer,
 	uint32_t timerfreq,
 	uint32_t period,
-	uint32_t ticks,
+	uint32_t ticks, //run count, not timer ticks
 	void (*function)(volatile void *),
 	volatile void * p_context,
 	void(*onComplete)(volatile void *),
@@ -230,7 +230,7 @@ void Thread_InitThreadOneShot_Freq
 	const volatile uint32_t *p_timer,
 	uint32_t timerfreq,
 	uint32_t freq,
-	uint32_t ticks,
+	uint32_t ticks, //run count, not timer ticks
 	void (*function)(volatile void *),
 	volatile void * p_context,
 	void(*onComplete)(volatile void *),
@@ -249,7 +249,7 @@ void Thread_InitThreadOneShot_Millis
 	const volatile uint32_t *p_timer,
 	uint32_t timerfreq,
 	uint32_t millis,
-	uint32_t ticks,
+	uint32_t ticks, //run count, not timer ticks
 	void (*function)(volatile void *),
 	volatile void * p_context,
 	void(*onComplete)(volatile void *),

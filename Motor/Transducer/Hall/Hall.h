@@ -234,7 +234,7 @@ static inline bool Hall_PollSector_IO(Hall_T * p_hall)
 }
 
 #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
-	static inline void Hall_Commutate(Hall_T * p_hall)
+	static inline void Hall_Commutate_IO(Hall_T * p_hall)
 	{
 		if (p_hall->Direction == HALL_DIRECTION_CCW)
 		{
@@ -246,7 +246,7 @@ static inline bool Hall_PollSector_IO(Hall_T * p_hall)
 		}
 	}
 
-	static inline bool Hall_PollCommutate(Hall_T * p_hall)
+	static inline bool Hall_PollCommutate_IO(Hall_T * p_hall)
 	{
 		bool isNewPhase;
 		//	XOR bits to div 6 for
@@ -293,12 +293,13 @@ static inline uint16_t Hall_GetRotorAngle_Degrees16(Hall_T * p_hall)
 	{
 		switch (p_hall->IdSaved)
 		{
+			case HALL_ANGLE_CCW_270: degrees = 270; break;
+			case HALL_ANGLE_CCW_330: degrees = 330; break;
 			case HALL_ANGLE_CCW_30:	degrees = 30; break;
 			case HALL_ANGLE_CCW_90:	degrees = 90; break;
 			case HALL_ANGLE_CCW_150: degrees = 150; break;
 			case HALL_ANGLE_CCW_210: degrees = 210; break;
-			case HALL_ANGLE_CCW_270: degrees = 270; break;
-			case HALL_ANGLE_CCW_330: degrees = 330; break;
+			default: break;
 		}
 	}
 	else
@@ -311,6 +312,7 @@ static inline uint16_t Hall_GetRotorAngle_Degrees16(Hall_T * p_hall)
 			case HALL_ANGLE_CW_210:	degrees = 210; break;
 			case HALL_ANGLE_CW_270:	degrees = 270; break;
 			case HALL_ANGLE_CW_330:	degrees = 330; break;
+			default: break;
 		}
 	}
 

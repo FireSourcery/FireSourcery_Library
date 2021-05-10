@@ -36,7 +36,7 @@
 #include "Config.h"
 
 #include "Transducer/Hall/Hall.h"
-#include "BEMF/BEMF.h"
+#include "Transducer/BEMF/BEMF.h"
 
 #include "Transducer/Encoder/Encoder_IO.h"
 #include "Transducer/Encoder/Encoder_Motor.h"
@@ -238,19 +238,19 @@ static inline void Motor_SixStep_ProcCommutationControl(Motor_T * p_motor)
 		break;
 
 	case MOTOR_SENSOR_MODE_BEMF:
-		if (Thread_PollTimer(&p_motor->ThreadTimer) == true)
-		{
-			p_motor->ControlTimer = 0U; //reset timer every time to simplify bemf zcd calc for now
-			BEMF_OnCommutation_IO(&p_motor->Bemf); //reset blanktime
-			commutate = true;
-		}
-		else
-		{
-			if (BEMF_PollTimeZeroCrossing_IO(&p_motor->Bemf))
-			{
-				Thread_SetTimer(&p_motor->ThreadTimer, BEMF_GetCommutationTime(&p_motor->Bemf));
-			}
-		}
+//		if (Thread_PollTimer(&p_motor->ThreadTimer) == true)
+//		{
+//			p_motor->ControlTimer = 0U; //reset timer every time to simplify bemf zcd calc for now
+//			BEMF_OnCommutation_IO(&p_motor->Bemf); //reset blanktime
+//			commutate = true;
+//		}
+//		else
+//		{
+//			if (BEMF_PollTimeZeroCrossing_IO(&p_motor->Bemf))
+//			{
+//				Thread_SetTimer(&p_motor->ThreadTimer, BEMF_GetCommutationTime(&p_motor->Bemf));
+//			}
+//		}
 
 		break;
 
