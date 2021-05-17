@@ -94,15 +94,46 @@ void Analog_Init
 	p_analog->ConversionQueueTail = 0U;
 }
 
-//void Analog_Init_Struct
-//(
-//	Analog_T * p_analog,
-//	Analog_Init_T * p_init
-//)
-//{
-//	p_analog->p_Adc =  p_init->p_HAL_ADC;
+void Analog_Init_Struct
+(
+	Analog_T * p_analog,
+	Analog_Init_T * p_init
+)
+{
+#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
+	p_analog->p_Adc =  p_init->P_HAL_ADC;
+#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+	if (nAdc > 1U)
+	{
+		p_analog->pp_Adcs = p_init->P_HAL_ADC;
+	}
+	else
+	{
+		p_analog->p_Adc = p_init->P_HAL_ADC;
+	}
+#endif
 
-//}
+#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+	p_analog->AdcN_Count 	= p_init->ADC_COUNT;
+#endif
+
+#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+	p_analog->AdcM_Buffer 	= p_init->ADC_BUFFER_LENGTH;
+#endif
+
+	p_analog->p_MapChannelPins 		= p_init->P_VIRTUAL_CHANNEL_MAP_PINS;
+	p_analog->p_MapChannelResults 	= p_init->P_VIRTUAL_CHANNEL_MAP_RESULTS_BUFFER;
+	p_analog->ChannelCount			= p_init->CHANNEL_COUNT;
+
+#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
+	p_analog->p_MapChannelAdcs = P_VIRTUAL_CHANNEL_MAP_ADCS;
+#endif
+
+	p_analog->pp_ConversionQueue = p_init->PP_CONVERSION_QUEUE;
+	p_analog->ConversionQueueLength = p_init->CONVERSION_QUEUE_LENGTH;
+	p_analog->ConversionQueueHead = 0U;
+	p_analog->ConversionQueueTail = 0U;
+}
 
 
 /*!
@@ -127,6 +158,17 @@ void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * 
 	activateChannelCount = CalcAdcActiveChannelCountMax(p_analog, p_conversion->ChannelCount);
 	activateConfig = CalcAdcActiveConfig(p_analog, p_conversion->Config, true);
 
+
+#if  (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
+	/*
+	 * Multithreaded calling of Activate.
+	 * Must implement Critical_Enter
+	 *
+	 * Higher priority thread may overwrite Conversion setup data before ADC ISR returns.
+	 * e.g. must be implemented if calling from inside interrupts and main.
+	 */
+	Critical_Enter();
+#else
 	/*
 	 * Single threaded calling of Activate.
 	 * Single threaded case, and calling thread is lower priority than ADC ISR, may implement ADC_DisableInterrupt instead of Critical_Enter global disable interrupt
@@ -136,16 +178,6 @@ void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * 
 	 * Disable IRQ is not needed, however ADC ISR will still need Critical_Enter
 	 */
 	Analog_DisableInterrupt(p_analog);
-
-	/*
-	 * Multithreaded calling of Activate.
-	 * Must implement Critical_Enter
-	 *
-	 * Higher priority thread may overwrite Conversion setup data before ADC ISR returns.
-	 * e.g. must be implemented if calling from inside interrupts and main.
-	 */
-#if  (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
-	Critical_Enter();
 #endif
 
 
@@ -162,7 +194,7 @@ void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * 
 	p_analog->p_ActiveConversion = p_conversion;
 	p_analog->ActiveConversionChannelIndex = 0U;
 #if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER) && !defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
-	p_analog->ActiveChannelCount = activateChannelCount; //channels to activate are now active
+	p_analog->ActiveChannelCount = activateChannelCount;
 #endif
 
 #if (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
@@ -171,24 +203,19 @@ void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * 
 
 }
 
-//void Analog_ActivateTriggeredConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
-//{
-//
-//}
-
 // cannot overwrite first item i.e head of queue
-bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+bool Analog_EnqueueConversion(Analog_T *p_analog, const Analog_Conversion_T *p_conversion)
 {
 	uint8_t newTail;
 	bool isSucess;
 
-	if(Analog_ReadConversionActive(p_analog) == true)
+	if (Analog_ReadConversionActive(p_analog) == true)
 	{
 		Critical_Enter();
 
 		newTail = (p_analog->ConversionQueueTail + 1U) % p_analog->ConversionQueueLength;
 
-		if(newTail != p_analog->ConversionQueueHead)
+		if (newTail != p_analog->ConversionQueueHead)
 		{
 			p_analog->ConversionQueueTail = newTail;
 			p_analog->pp_ConversionQueue[newTail] = p_conversion;
@@ -203,41 +230,8 @@ bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p
 	}
 	else
 	{
-		Analog_ActivateConversion(p_analog, p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead]);
+		Analog_ActivateConversion(p_analog, p_conversion);
 		isSucess = true;
-	}
-
-	return isSucess;
-}
-
-
-/*
-	Dequeue if no conversions are active. Active conversion will automatically dequeue next conversion
- */
-bool Analog_DequeueConversion(Analog_T * p_analog)
-{
-	bool isSucess;
-
-	if(Analog_ReadConversionActive(p_analog) == false)
-	{
-		Critical_Enter(); // still needed if multi threaded activate
-
-		if (p_analog->ConversionQueueHead != p_analog->ConversionQueueTail)
-		{
-			Analog_ActivateConversion(p_analog, p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead]);
-			p_analog->ConversionQueueHead = (p_analog->ConversionQueueHead + 1U) % p_analog->ConversionQueueLength;
-			isSucess = true;
-		}
-		else
-		{
-			isSucess = false;
-		}
-
-		Critical_Exit();
-	}
-	else
-	{
-		isSucess = false;
 	}
 
 	return isSucess;
@@ -265,10 +259,41 @@ void Analog_EnqueueFrontConversion(Analog_T *p_analog, const Analog_Conversion_T
 	}
 	else
 	{
-		Analog_ActivateConversion(p_analog, p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead]);
+		Analog_ActivateConversion(p_analog, p_conversion);
 	}
 }
 
+/*
+ Dequeue if no conversions are active. Active conversion will automatically dequeue next conversion
+ */
+bool Analog_DequeueConversion(Analog_T *p_analog)
+{
+	bool isSucess;
+
+	if (Analog_ReadConversionActive(p_analog) == false)
+	{
+		Critical_Enter(); // still needed if multi threaded activate
+
+		if (p_analog->ConversionQueueHead != p_analog->ConversionQueueTail)
+		{
+			Analog_ActivateConversion(p_analog, p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead]);
+			p_analog->ConversionQueueHead = (p_analog->ConversionQueueHead + 1U) % p_analog->ConversionQueueLength;
+			isSucess = true;
+		}
+		else
+		{
+			isSucess = false;
+		}
+
+		Critical_Exit();
+	}
+	else
+	{
+		isSucess = false;
+	}
+
+	return isSucess;
+}
 
 
 

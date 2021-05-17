@@ -88,9 +88,7 @@ void Encoder_Init
 	uint8_t angleDataBits					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
 )
 {
-	HAL_Encoder_InitCaptureCount(p_hal_encoder);
-//	HAL_Encoder_ConfigCaptureCount(p_hal_encoder);
-//	HAL_Encoder_WriteTimerCounterMax(p_hal_encoder, timerCounterMax);
+	HAL_Encoder_Init(p_hal_encoder);
 
 	p_encoder->p_HAL_Encoder = p_hal_encoder;
 	p_encoder->TimerCounterMax = timerCounterMax;
@@ -180,6 +178,10 @@ void Encoder_InitCaptureDeltaD
 		encoderCountsPerRevolution,
 		angleDataBits
 	);
+
+		HAL_Encoder_InitCaptureCount(p_hal_encoder);
+	//	HAL_Encoder_ConfigCaptureCount(p_hal_encoder);
+	//	HAL_Encoder_WriteTimerCounterMax(p_hal_encoder, timerCounterMax);
 }
 
 /*!

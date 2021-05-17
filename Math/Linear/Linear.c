@@ -30,63 +30,87 @@
 /*******************************************************************************/
 #include "Linear.h"
 
-#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
 /*
- * Left shift must retain sign bit
+ * CONFIG_LINEAR_SHIFT_DIVIDE mode
+ * Right shift must retain sign bit,
+ * user factor, divisor, input must be less than 16 bits
  */
-void Linear_Init(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset)
+
+/*
+ * f(in) = ((factor * in) / divisor + offset) =>
+ *
+ * 0 percent 	=> f([-offset*divisor/factor]) 	= 0
+ * 100 percent 	=> f([(rangeRef - offset)*divisor/factor]) = rangeRef
+ */
+void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset, int32_t rangeRef)
 {
-	p_linear->SlopeFactor 	= (factor << 16) / divisor;
-	p_linear->SlopeDivisor 	= (divisor << 16) / factor; //InvF factor
-
-	p_linear->SlopeFactorShift 	= 16;
-	p_linear->SlopeDivisorShift = 16;
-
-	p_linear->Offset = offset;
-}
-
+#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+	p_linear->SlopeFactor 			= (factor << 16U) / divisor;
+	p_linear->SlopeDivisor_Shift 	= 16U;
+	p_linear->SlopeDivisor 			= (divisor << 16U) / factor; //InvF factor
+	p_linear->SlopeFactor_Shift 	= 16U;
+	p_linear->Offset = offset << 16U;
 #elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
-
-void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset)
-{
 	p_linear->SlopeFactor 	= factor;
 	p_linear->SlopeDivisor 	= divisor;
-	p_linear->Offset 		= offset;
+	p_linear->Offset = offset;
+#endif
+	p_linear->RangeReference = rangeRef;
 }
 
+
+static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uint8_t targetShift)
+{
+	uint32_t result = 0;
+	uint32_t shiftedValue = (1U << targetShift);
+
+	if (shiftedValue % divisor == 0U) /* when divisor is a whole number factor of shifted. */
+	{
+		result = factor * (shiftedValue / divisor);
+	}
+	else
+	{
+		for (uint8_t maxShift = targetShift; maxShift > 0U; maxShift--)
+		{
+			if ( factor <= (UINT32_MAX >> maxShift) )
+			{
+				result = (factor << maxShift) / divisor;
+
+				if ( result <= (UINT32_MAX >> (targetShift - maxShift)) )
+				{
+					result = result << (targetShift - maxShift);
+				}
+				else  /* error, will overflow 32 bit even using ((factor << 0)/divisor) << leftShift */
+				{
+					result = 0U;
+				}
+				break;
+			}
+		}
+
+	}
+
+	return result;
+}
+/*
+ * f(in) = ((factor * (in - x0)) / divisor) =>
+ */
+#if defined(CONFIG_LINEAR_SHIFT_DIVIDE)
+void Linear_Init_X0(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t x0, int32_t rangeRef)
+{
+	Linear_Init(p_linear, factor, divisor,  0, rangeRef);
+	p_linear->Offset = MaxLeftShiftDivide(factor * x0, divisor, 16U);
+//	p_linear->Offset = 0 - (x0 * factor << 16U) / divisor;
+}
 #endif
 
-
-///******************************************************************************/
-///*!
-//	@brief Init for results expressed in Q1.15 where 32,767 ~= 100%
-// */
-///******************************************************************************/
-//#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
-//void Linear_Init_SignedFrac16(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset, uint32_t max)
+//#if defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+//   F  return frac16  efficiently. F16 invalid
+//void Linear_Init_Frac16(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset, int32_t rangeRef)
 //{
-//
-//}
-//#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
-//void Linear_Init_SignedFrac16(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset, uint32_t max)
-//{
-//
-//}
-//#endif
-//
-///******************************************************************************/
-///*!
-//	@brief Init for results expressed in Q1.15 where 65356 ~= 100%
-// */
-///****************************************************************************5**/
-//#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
-//void Linear_Init_UnsignedFrac16(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset, uint32_t max)
-//{
-//
-//}
-//#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
-//void Linear_Init_UnsignedFrac16(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset, uint32_t max)
-//{
-//
+//	p_linear->SlopeFactor 	= factor * 65536;
+//	p_linear->SlopeDivisor 	= divisor * rangeRef;
+//	p_linear->Offset 		= offset * 65536 / yref;
+//	p_linear->RangeReference = rangeRef;
 //}
 //#endif

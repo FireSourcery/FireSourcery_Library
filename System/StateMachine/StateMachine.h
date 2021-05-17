@@ -33,8 +33,17 @@
 
 #include "Config.h"
 
+
+#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
+	#include "System/Critical/Critical.h"
+//#elif defined(ONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
+//	extern inline void Critical_Enter(void);
+//	extern inline void Critical_Exit(void);
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
+
 
 /*
  * Inputs shared between all instances of state machine. boundary checking wont work, must be per statemchaines input, or enum must overlap
@@ -44,37 +53,26 @@
  * User provide typedef enum StateMachine_Input_Tag { ..., STATE_INPUT_RESERVED_NO_OP = 0xFFu } StateMachine_Input_T
  * #include defs before including State.h
  */
-	#define STATE_MACHINE_RESERVED_INPUT_NO_OP (0xFFu)
+//	#define STATE_MACHINE_RESERVED_INPUT_NO_OP (0xFFu)
 //if multiple state machines
 #elif defined (CONFIG_STATE_MACHINE_INPUT_UINT8)
 //multiple state machines must use?
-	#define STATE_MACHINE_RESERVED_INPUT_NO_OP (0xFFu)
+//	#define STATE_MACHINE_RESERVED_INPUT_NO_OP (0xFFu)
 	typedef uint8_t StateMachine_Input_T;
 #endif
 
-
-#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_OS_HAL
-	#include "System/Critical/Critical.h"
-#elif defined(ONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
-	extern inline void Critical_Enter(void){}
-	extern inline void Critical_Exit(void){}
-#endif
-
-//#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL
-//	#define STATE_MACHINE_TRANSITION_INPUT_COUNT (p_stateMachine->TransitionInputCount)
-//	#define STATE_MACHINE_TOTAL_INPUT_COUNT (p_stateMachine->TotalInputCount)
-//#elif defined(CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_ARRAY)
-//	#define STATE_MACHINE_TOTAL_INPUT_COUNT (STATE_MACHINE_TRANSITION_INPUT_COUNT + STATE_MACHINE_SELF_TRANSITION_INPUT_COUNT)
-//#endif
+typedef void (* StateMachine_TransitionFunction_T)(volatile void *userData);
+typedef void (* StateMachine_StateFunction_T)(volatile void *userData);
 
 struct State_Tag;
 
 /*
  * Array Implementation - 2D input table
- * Map allocates for all possible transitions/inputs for each state, valid and invalid
- * only space efficient when inputs are common across many states.
- * can assign fault transition to invalid inputs
- *	//States belongin to the same state machine must have same size maps
+ *  Map allocates for all possible transitions/inputs for each state, valid and invalid
+ *  only space efficient when inputs are common across many states.
+ *  can assign fault transition to invalid inputs
+ *  States belonging to the same state machine must have same size maps
+ *
  * List Implementation
  *	using list and check condition will have no wasted space
  *	must check all entries and end of list. user provide function to validate transition
@@ -84,114 +82,103 @@ struct State_Tag;
 typedef const struct State_Tag
 {
 	/*
-	 * Input to Transition Map
-	 * 	 struct StateTransition
-	 *	 {
-	 *		 const struct State * const p_TargetState;
-	 *	  	 void (* const OnTransition)(void * userData);
-	 *	 } InputTransitionMap[StateMachine_Input_TRANSITION_COUNT];
-	 *
-	 * Input to Output Function Map - Mealy machine style outputs.
-	 *   void (* const InputOutputMap[STATE_MACHINE_INPUT_OUTPUT_COUNT])(void * userData);
-	 *
-	 * Cannot determine return type is of which input type, non transition or transition, when using 2 tables
-	 */
-
-	/*
 	 * Parallel array
 	 * 	Allows 1 share input var, can return state input
 	 * 		 * Inputs with functions without state transition, bypass self transitions.
 	 *
-	 * Inputs with associated p_FunctionMap and pp_TransitionMap are transition functions
+	 * Inputs with associated p_FunctionMap and pp_TransitionStateMap are transition functions
 	 * Remaining functions, only associated with p_FunctionMap, are output only functions i.e. mealy style outputs, self transition functions
 	 * SelfTransitionInputCount == 0 for moore case
 	 */
+	//	void (*(* const p_FunctionMap))(volatile void * userData);
+	//	const struct State_Tag (* const (* const pp_TransitionStateMap));
 
-	void (*(* const p_FunctionMap))(volatile void * userData);
-	const struct State_Tag (* const (* const pp_TransitionMap));
+	//#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_ARRAY //module memory allocation, all state machine must be same size
+	//
+	//	void (* const p_FunctionMap[STATE_MACHINE_TRANSITION_INPUT_COUNT + STATE_MACHINE_SELF_TRANSITION_INPUT_COUNT])(void * userData);
+	//	const struct State_Tag * const pp_TransitionStateMap[STATE_MACHINE_TRANSITION_INPUT_COUNT];
+	//
+	//#elif defined(CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL)
 
-//#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_ARRAY
-//
-//	void (* const p_FunctionMap[STATE_MACHINE_TRANSITION_INPUT_COUNT + STATE_MACHINE_SELF_TRANSITION_INPUT_COUNT])(void * userData);
-//	const struct State_Tag * const pp_TransitionMap[STATE_MACHINE_TRANSITION_INPUT_COUNT];
-//
-//#elif defined(CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL)
+	/*
+	 * Input to Transition Map
+	 */
+//	struct StateTransition
+//	{
+		const struct State_Tag (*const (*const pp_TransitionStateMap));
+		void (*(*const p_TransitionFunctionMap))(volatile void *userData);
+//	};
 
-	void (* Entry)(volatile void * userData); //common to all transition to current state, factored segment
+	/* Input to Output Function Map - Mealy machine style outputs.
+	 * Theoretical State Machine -> all out outputs without state change transition to self.
+	 * save memory without this way,   user operate 2 input variables.
+	 */
+	void (*(*const p_SelfTransitionFunctionMap))(volatile void *userData);
+
+	void (* Entry)(volatile void * userData); 	//common to all transition to current state, factored segment
 	void (* Output)(volatile void * userData);  //common output to all state input self transition, factored out segment
-	//	void (* const Exit)(void); //todo?	//should exit function be state feedback input?
+	//	void (* const Exit)(void); //should exit function be state feedback input
 } State_T;
 
 typedef struct StateMachine_Tag
 {
 	const State_T * p_StateInitial;
-	const State_T * p_StateActive; 	//uint8_t CurrentStateID?
+	const State_T * volatile p_StateActive; 	//uint8_t CurrentStateID?
 //#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL
-	uint8_t TransitionInputCount;	//	uint8_t SelfTransitionInputCount;
-	uint8_t TotalInputCount;
+	uint8_t TransitionInputCount;
+	uint8_t SelfTransitionInputCount;
+	//uint8_t TotalInputCount;
 //#endif
-	volatile void * p_UserData;
-	volatile StateMachine_Input_T Input; /* for synchronous transition */
+	volatile void * volatile p_UserData;
+
+	/* for Synchronous Machine */
+	volatile StateMachine_Input_T InputTransition;
+	volatile StateMachine_Input_T InputSelfTransition;
+	volatile bool IsSetInputTransition;
+	volatile bool IsSetInputSelfTransition;
+
+#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
+	   critical_mutex_t Mutex;
+#endif
 } StateMachine_T;
 
 
-static inline void ProcTransition(StateMachine_T * p_stateMachine, StateMachine_Input_T input)
+static inline void ProcStateMachineTransition(StateMachine_T * p_stateMachine, StateMachine_Input_T transitionInput)
 {
-	Critical_Enter();
-	if (p_stateMachine->p_StateActive->pp_TransitionMap[input] != 0)
+	if (p_stateMachine->p_StateActive->pp_TransitionStateMap[transitionInput] != 0)
 	{
 		/* proc input function */
-		if (p_stateMachine->p_StateActive->p_FunctionMap[input] != 0)
+		if (p_stateMachine->p_StateActive->p_TransitionFunctionMap[transitionInput] != 0)
 		{
-			p_stateMachine->p_StateActive->p_FunctionMap[input](p_stateMachine->p_UserData);
+			p_stateMachine->p_StateActive->p_TransitionFunctionMap[transitionInput](p_stateMachine->p_UserData);
 		}
 
 		/* map new state */
-		p_stateMachine->p_StateActive = p_stateMachine->p_StateActive->pp_TransitionMap[input];
+		p_stateMachine->p_StateActive = p_stateMachine->p_StateActive->pp_TransitionStateMap[transitionInput];
 
+		/* proc new state entry function */
 		if (p_stateMachine->p_StateActive->Entry != 0)
 		{
 			p_stateMachine->p_StateActive->Entry(p_stateMachine->p_UserData);
 		}
 	}
-
-	// if synchronous machine 	p_stateMachine->Input = reserved;
-	Critical_Exit();
 }
 
-static inline void ProcSelfTransition(StateMachine_T * p_stateMachine, StateMachine_Input_T input)
+static inline void ProcStateMachineSelfTransition(StateMachine_T * p_stateMachine, StateMachine_Input_T input)
 {
-//	Critical_Enter();
-	//need to block transition during processing
-	if (p_stateMachine->p_StateActive->p_FunctionMap[input] != 0)
+	//dont need critical section if no null pointers
+	if (p_stateMachine->p_StateActive->p_TransitionFunctionMap[input] != 0)
 	{
-		p_stateMachine->p_StateActive->p_FunctionMap[input](p_stateMachine->p_UserData);
+		p_stateMachine->p_StateActive->p_TransitionFunctionMap[input](p_stateMachine->p_UserData);
 	}
+}
+
+static inline void ProcStateMachineOutput(StateMachine_T * p_stateMachine)
+{
 	if (p_stateMachine->p_StateActive->Output != 0)
 	{
 		p_stateMachine->p_StateActive->Output(p_stateMachine->p_UserData);
 	}
-//	Critical_Exit();
-}
-
-static inline void ProcFunctionMap(StateMachine_T * p_stateMachine, StateMachine_Input_T input)
-{
-//	Critical_Enter();
-	if (p_stateMachine->p_StateActive->p_FunctionMap[input] != 0)
-	{
-		p_stateMachine->p_StateActive->p_FunctionMap[input](p_stateMachine->p_UserData);
-	}
-//	Critical_Exit();
-}
-
-static inline void ProcOutput(StateMachine_T * p_stateMachine)
-{
-//	Critical_Enter();
-	if (p_stateMachine->p_StateActive->Output != 0)
-	{
-		p_stateMachine->p_StateActive->Output(p_stateMachine->p_UserData);
-	}
-//	Critical_Exit();
 }
 
 
@@ -201,10 +188,10 @@ static inline void ProcOutput(StateMachine_T * p_stateMachine)
  */
 static inline void StateMachine_Semisynchronous_ProcState(StateMachine_T * p_stateMachine)
 {
-	ProcOutput(p_stateMachine);
+	ProcStateMachineOutput(p_stateMachine);
 }
 
-static inline void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, StateMachine_Input_T input)
+static inline void StateMachine_Semisynchronous_ProcTransition(StateMachine_T * p_stateMachine, StateMachine_Input_T input)
 {
 //#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL
 //	#define STATE_MACHINE_TRANSITION_INPUT_COUNT (p_stateMachine->TransitionInputCount)
@@ -215,11 +202,20 @@ static inline void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_sta
 
 	if (input < p_stateMachine->TransitionInputCount)
 	{
-		ProcTransition(p_stateMachine, input);
+		if (Critical_MutexAquire(&p_stateMachine->Mutex))
+		{
+			ProcStateMachineTransition(p_stateMachine, input);
+			Critical_MutexRelease(&p_stateMachine->Mutex);
+		}
 	}
-	else if (input < p_stateMachine->TotalInputCount)
+
+}
+
+static inline void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, StateMachine_Input_T input)
+{
+	if (input < p_stateMachine->SelfTransitionInputCount)
 	{
-		ProcFunctionMap(p_stateMachine, input);
+		ProcStateMachineSelfTransition(p_stateMachine, input);
 	}
 }
 
@@ -227,56 +223,68 @@ static inline void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_sta
  * Asynchronous Process
  * Asynchronous Machine has no periodic output
  */
-static inline void StateMachine_Asynchronous_ProcMachine(StateMachine_T * p_stateMachine, StateMachine_Input_T input)
+static inline void StateMachine_Asynchronous_ProcTransition(StateMachine_T *p_stateMachine, StateMachine_Input_T input)
 {
-//	StateMachine_Asynchronous_ProcInput();
 	if (input < p_stateMachine->TransitionInputCount)
 	{
-		ProcTransition(p_stateMachine, input);
+		if (Critical_MutexAquire(&p_stateMachine->Mutex))
+		{
+			ProcStateMachineTransition(p_stateMachine, input);
+			Critical_MutexRelease(&p_stateMachine->Mutex);
+		}
 	}
-	else if (input < p_stateMachine->TotalInputCount)
+	ProcStateMachineOutput(p_stateMachine);
+}
+
+static inline void StateMachine_Asynchronous_ProcInput(StateMachine_T * p_stateMachine, StateMachine_Input_T input)
+{
+	if (input < p_stateMachine->SelfTransitionInputCount)
 	{
-		ProcSelfTransition(p_stateMachine, input);
+		ProcStateMachineSelfTransition(p_stateMachine, input);
 	}
+	ProcStateMachineOutput(p_stateMachine);
 }
 
 
 /*
  * Synchronous Process
- * should be single threaded proc
- * supports timer counter
- * Map decides if current state reacts to input
+ * should be single threaded proc  to be Synchronous
  */
 static inline void StateMachine_Synchronous_ProcMachine(StateMachine_T * p_stateMachine)
 {
-	StateMachine_Input_T input;
-
-	/* eliminate chance of missing next input */
-	Critical_Enter();
-
-	input = p_stateMachine->Input;
-	p_stateMachine->Input = STATE_MACHINE_RESERVED_INPUT_NO_OP;
-
-	Critical_Exit();
-
-	if (input < p_stateMachine->TransitionInputCount)
+	if (p_stateMachine->IsSetInputTransition == true)
 	{
-		ProcTransition(p_stateMachine, input);
+		p_stateMachine->IsSetInputTransition = false;
+		p_stateMachine->IsSetInputTransition = false;
+
+		if (p_stateMachine->InputTransition < p_stateMachine->TransitionInputCount)
+		{
+			ProcStateMachineTransition(p_stateMachine, p_stateMachine->InputTransition);
+		}
 	}
-	else if (input < p_stateMachine->TotalInputCount)
+	else if (p_stateMachine->IsSetInputSelfTransition == true)
 	{
-		ProcSelfTransition(p_stateMachine, input);
-	}
-	else
-	{
-		ProcOutput(p_stateMachine);
+		p_stateMachine->IsSetInputTransition = false;
+
+		if (p_stateMachine->InputSelfTransition < p_stateMachine->SelfTransitionInputCount)
+		{
+			ProcStateMachineSelfTransition(p_stateMachine, p_stateMachine->InputSelfTransition);
+		}
 	}
 
+	ProcStateMachineOutput(p_stateMachine);
 }
 
-static inline void StateMachine_Synchronous_SetInput(StateMachine_T * p_stateMachine, StateMachine_Input_T input)
+static inline void StateMachine_Synchronous_SetTransitionInput(StateMachine_T * p_stateMachine, StateMachine_Input_T input)
 {
-	p_stateMachine->Input = input;
+	p_stateMachine->InputTransition = input;
+	p_stateMachine->IsSetInputTransition = true;
+}
+
+static inline void StateMachine_Synchronous_SetSelfTransitionInput(StateMachine_T * p_stateMachine, StateMachine_Input_T input)
+{
+	p_stateMachine->InputSelfTransition = input;
+	p_stateMachine->IsSetInputSelfTransition = true;
 }
 
 //static inline void State_InputAccumulated(StateMachine_t * stateMachine, StateInput_t input)

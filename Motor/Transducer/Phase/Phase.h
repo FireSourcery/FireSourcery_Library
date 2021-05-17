@@ -45,6 +45,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define PHASE_DUTY_CYCLE_MAX (65536U)
+
 typedef enum
 {
 	PHASE_MODE_UNIPOLAR_1,	/*!< PHASE_MODE_UNIPOLAR_1 */
@@ -224,6 +226,17 @@ static inline void Phase_SetState(Phase_T * p_phase, bool a, bool b, bool c)
 	p_phase->StateC = c;
 }
 
+static inline void Phase_Float(const Phase_T *p_phase)
+{
+//	Phase_ActuateDutyCycle_Ticks(p_phase, 0U, 0U, 0U);
+	Phase_ActuateState(p_phase, false, false, false);
+}
+
+static inline void Phase_Short(const Phase_T *p_phase)
+{
+	Phase_ActuateDutyCycle_Ticks(p_phase, 0U, 0U, 0U);
+	Phase_ActuateState(p_phase, true, true, true);
+}
 
 /******************************************************************************/
 /*!

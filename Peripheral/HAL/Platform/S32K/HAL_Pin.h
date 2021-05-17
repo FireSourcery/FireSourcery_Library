@@ -19,7 +19,7 @@ static inline void HAL_Pin_WriteState(const HAL_Pin_T * p_pin, bool isOn)
 
 static inline bool HAL_Pin_ReadState(const HAL_Pin_T * p_pin)
 {
-	return (bool)(p_pin->p_GpioBase->PDIR | p_pin->GpioPinMask);
+	return ((p_pin->p_GpioBase->PDIR | p_pin->GpioPinMask) != 0U) ? true : false;
 }
 
 #endif

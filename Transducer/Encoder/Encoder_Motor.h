@@ -181,6 +181,7 @@ static inline uint32_t Encoder_Motor_GetControlPeriods(Encoder_T *p_encoder)
 }
 
 /*
+	Control periods per tick
  */
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToControlPeriods(Encoder_T * p_encoder, uint16_t mechRpm)
 {

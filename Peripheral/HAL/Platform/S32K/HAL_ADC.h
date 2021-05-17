@@ -29,8 +29,8 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef HAL_ADC_H
-#define HAL_ADC_H
+#ifndef HAL_ADC_PLATFORM_H
+#define HAL_ADC_PLATFORM_H
 
 #include "External/S32K142/include/S32K142.h" /* use drivers or direct register access */
 
@@ -48,18 +48,18 @@ typedef ADC_Type HAL_ADC_T;
 
 static inline void HAL_ADC_Activate(HAL_ADC_T * p_adcRegBase, uint32_t pinChannel)
 {
- 	p_adcRegBase->SC1[0] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
+ 	p_adcRegBase->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
 }
 
 static inline void HAL_ADC_WriteLast(HAL_ADC_T * p_adcRegBase, uint32_t pinChannel)
 {
- 	p_adcRegBase->SC1[0] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
+ 	p_adcRegBase->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
 }
 
 static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_adcRegBase, uint32_t pinChannel)
 {
 	(void)pinChannel;
-	return (uint32_t) p_adcRegBase->R[0];
+	return (uint32_t) p_adcRegBase->R[0U];
 }
 
 /*
@@ -67,7 +67,7 @@ static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_adcRegBase, uint32
  */
 static inline void HAL_ADC_WritePinSelect(HAL_ADC_T * p_adcRegBase, uint32_t pinChannel)
 {
-	p_adcRegBase->SC1[0] = ADC_SC1_ADCH((uint32_t )pinChannel);
+	p_adcRegBase->SC1[0U] = ADC_SC1_ADCH((uint32_t )pinChannel);
 }
 
 static inline void HAL_ADC_WriteHwTriggerState(HAL_ADC_T * p_adcRegBase, bool isHwTrigger)
@@ -78,17 +78,17 @@ static inline void HAL_ADC_WriteHwTriggerState(HAL_ADC_T * p_adcRegBase, bool is
 static inline void HAL_ADC_DisableInterrupt(HAL_ADC_T * p_adcRegBase)
 {
 	/* this will start conversion on channel 0 (without interrupt)? */
-	p_adcRegBase->SC1[0] &=  ~ADC_SC1_AIEN_MASK;
+	p_adcRegBase->SC1[0U] &= ~ADC_SC1_AIEN_MASK;
 }
 
 static inline void HAL_ADC_EnableInterrupt(HAL_ADC_T * p_adcRegBase)
 {
-	p_adcRegBase->SC1[0] |= ADC_SC1_AIEN_MASK;
+	p_adcRegBase->SC1[0U] |= ADC_SC1_AIEN_MASK;
 }
 
 static inline void HAL_ADC_WriteInterruptState(HAL_ADC_T * p_adcRegBase, bool isOn)
 {
-	isOn ? (p_adcRegBase->SC1[0] |= ADC_SC1_AIEN_MASK) : (p_adcRegBase->SC1[0] &= ~(ADC_SC1_AIEN_MASK));
+	isOn ? (p_adcRegBase->SC1[0U] |= ADC_SC1_AIEN_MASK) : (p_adcRegBase->SC1[0U] &= ~(ADC_SC1_AIEN_MASK));
 }
 
 static inline void HAL_ADC_Dectivate(HAL_ADC_T * p_adcRegBase)
@@ -103,7 +103,8 @@ static inline void HAL_ADC_Dectivate(HAL_ADC_T * p_adcRegBase)
 	 *	when continuous conversions are not enabled because the module automatically enters a low-power
 	 *	state when a conversion completes.
 	 */
-	p_adcRegBase->SC1[0] = 0x3FU;
+//	p_adcRegBase->SC2 = 0x00U;
+	p_adcRegBase->SC1[0U] = 0x3FU;
 }
 
 static inline bool HAL_ADC_ReadConversionActiveFlag(const HAL_ADC_T * p_adcRegBase)
@@ -115,7 +116,7 @@ static inline bool HAL_ADC_ReadConversionActiveFlag(const HAL_ADC_T * p_adcRegBa
 
 static inline bool HAL_ADC_ReadConversionCompleteFlag(const HAL_ADC_T * p_adcRegBase)
 {
-	uint32_t tmp = (uint32_t) p_adcRegBase->SC1[0];
+	uint32_t tmp = (uint32_t) p_adcRegBase->SC1[0U];
 	tmp = (tmp & ADC_SC1_COCO_MASK) >> ADC_SC1_COCO_SHIFT;
 	return (tmp != 0u) ? true : false;
 }
@@ -129,6 +130,7 @@ static inline void HAL_ADC_ClearConversionCompleteFlag(const HAL_ADC_T * p_adcRe
 
 static inline void HAL_ADC_Init(const HAL_ADC_T * p_adcRegBase)
 {
+	(void)p_adcRegBase;
 //	ADC_DRV_ConfigConverter(instance, config);
 }
 

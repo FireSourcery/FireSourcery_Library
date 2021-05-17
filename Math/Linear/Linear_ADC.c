@@ -22,38 +22,44 @@
 /*******************************************************************************/
 /*******************************************************************************/
 /*!
-    @file 	MotorStateMachine.h
+    @file 	Linear_ADC.c
     @author FireSoucery
-    @brief  MotorStateMachine
+    @brief  linear function using known measured value adc limits
     @version V0
 */
 /*******************************************************************************/
-#ifndef MOTOR_STATE_MACHINE_H
-#define MOTOR_STATE_MACHINE_H
+#include "Linear_ADC.h"
+#include "Linear.h"
 
-//#define CONFIG_STATE_MACHINE_INPUT_ENUM_USER_DEFINED
-//#define CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL
-//#define CONFIG_STATE_MACHINE_MULTITHREADED_OS_HAL
-//#include "OS/StateMachine/StateMachine.h"
+#include <stdint.h>
 
+/******************************************************************************/
+/*!
+	@brief  return 0-65535 using max reading as 100 percent
 
+	linear_invf(adcu) = frac16
+	linear_f(frac16) = adcu
 
-typedef enum StateMachine_Input_Tag
+ */
+/******************************************************************************/
+void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcUnitZero, uint16_t adcUnitRef, int16_t physicalUnitRef)
 {
-	MOTOR_TRANSISTION_CALIBRATION_COMPLETE,
-	MOTOR_TRANSISTION_FOC_ALIGN,
-	MOTOR_TRANSISTION_FOC_ALIGN_COMPLETE,
+	int32_t factor 	= physicalUnitRef;
+	int32_t divisor = (adcUnitRef - adcUnitZero);
 
-	MOTOR_TRANSISTION_FAULT,
-	MOTOR_TRANSISTION_FAULT_CLEAR,
+#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+	Linear_Init_X0(p_linear, factor, divisor, adcUnitZero, physicalUnitRef);
 
-	STATE_INPUT_BUTTON_NEXT,
-	STATE_INPUT_ID_A,
-	BUTTON_FUNCTION_NEXT,
-	BUTTON_FUNCTION_PREV,
+#elif defined (CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+//	p_linear->SlopeFactor = factor;
+//	p_linear->SlopeDivisor = divisor;
+//	p_linear->OffsetY = (0 -  factor * adcUnitZero  / divisor);
 
-	MOTOR_STATUS_NO_OP = 0xFFu,
-	STATE_INPUT_RESERVED_NO_OP = 0xFFu,
-} MotorStateMachine_Input_T;
-
+	//use InvFunction to calc using offset as X0
+	p_linear->SlopeFactor =  factor;
+	p_linear->SlopeDivisor = divisor;
+	p_linear->Offset = adcuZero; //offset x, linear_invf(adcu) = frac16
+ 	p_linear->RangeReference = physicalUnitRef;
 #endif
+}
+

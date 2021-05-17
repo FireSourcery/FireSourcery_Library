@@ -29,8 +29,8 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef HAL_ANALOG_H
-#define HAL_ANALOG_H
+#ifndef HAL_ADC_H
+#define HAL_ADC_H
 
 #include "Config.h"
 
@@ -53,3 +53,31 @@
 
 
 #endif
+
+//	typedef volatile void HAL_ADC_T;
+//
+//	/*
+//	 * Must Implement
+//	 */
+//	extern inline void 		HAL_ADC_Activate(HAL_ADC_T * p_adcRegBase, uint32_t pinChannel);
+//	extern inline uint32_t 	HAL_ADC_ReadResult(const HAL_ADC_T * p_adcRegBase);
+//	extern inline void 		HAL_ADC_WritePinSelect(HAL_ADC_T * p_adcRegBase, uint32_t pinChannel);
+//
+//	extern inline bool HAL_ADC_ReadActiveCompleteFlag(const HAL_ADC_T * p_adcMap);
+//	extern inline bool HAL_ADC_ReadConversionCompleteFlag(const HAL_ADC_T * p_adcMap);
+//	extern inline void HAL_ADC_DisableInterrupt(HAL_ADC_T * p_adcMap);
+//
+//	extern inline void HAL_ADC_WriteLast(HAL_ADC_T * p_adcRegBase, uint32_t pinChannel);
+//
+//	/*
+//	 * Optionally Implement
+//	 */
+//	extern inline void 		HAL_ADC_Dectivate(HAL_ADC_T * p_adcMap);
+//	extern inline uint32_t 	HAL_ADC_ReadRequest(const HAL_ADC_T * p_adcMap, Analog_Request_T req);
+//	extern inline void 		HAL_ADC_WriteConfig(HAL_ADC_T * p_adcMap, Analog_Config_T config);
+//
+//	/*
+//	 * User implements operations using HW Queue/FIFO/Buffer.
+//	 */
+//	//	extern void HAL_ADC_Activate(void * p_adcRegBase, const uint8_t * p_virtualChannels, const uint32_t * p_channelMap, uint8_t channelCount, Analog_Config_T config)
+//	//	extern void HAL_ADC_ReadResult(void * p_adcRegBase, analog_t * p_resultsBuffer, const uint32_t * p_channelMap, const uint8_t * p_virtualChannels, uint8_t channelCount);

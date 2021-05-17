@@ -44,7 +44,7 @@
 	@param controlFreq_Hz pwm timer freq
  */
 
-void Encoder_Motor_Init
+void Encoder_Motor_InitCaptureCount
 (
 	Encoder_T * p_encoder,
 	const HAL_Encoder_T * p_hal_encoder,
@@ -114,7 +114,7 @@ void Encoder_Motor_Init
 	Best for interpolate angle
  */
 /**************************************************************************/
-void Encoder_Motor_InitHall
+void Encoder_Motor_InitCaptureTime
 (
 	Encoder_T * p_encoder,
 	const HAL_Encoder_T * p_hal_encoder,
@@ -122,7 +122,8 @@ void Encoder_Motor_InitHall
 	uint32_t timerFreqHz,				/* UnitT_Freq */
 	uint32_t controlFreq_Hz,			/* PollingFreq */
 	uint8_t angleDataBits,				/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
-	uint8_t polePairs,					/* EncoderRes */
+	uint8_t polePairs,
+	uint8_t countsPerRevolution,		/* EncoderRes */
 	uint32_t distancePerPolePair		/* UnitLinearD */
 )
 {
@@ -134,11 +135,16 @@ void Encoder_Motor_InitHall
 		timerFreqHz,
 		controlFreq_Hz,
 		distancePerPolePair,
-		polePairs,
+		countsPerRevolution,
 		angleDataBits
 	);
-	// PulsePerRevolution = 1 => Speed_GetRotationalSpeed_RPM reflects electrical speed
-	// PulsePerRevolution = PolePairs => Speed_GetRotationalSpeed_RPM reflects mechanical speed
+
+
+	// Pulse Per Hall Cycle, PulsePerRevolution = 1 			=> Speed_GetRotationalSpeed_RPM reflects electrical speed
+	// Pulse Per Hall Cycle, PulsePerRevolution = PolePairs 	=> Speed_GetRotationalSpeed_RPM reflects mechanical speed
+	// Pulse Per Commutation, PulsePerRevolution = PolePairs*6 => Speed_GetRotationalSpeed_RPM reflects mechanical speed
+
+
 	p_encoder->PolePairs = polePairs;
 
 	//Too large unused

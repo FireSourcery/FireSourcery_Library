@@ -22,40 +22,37 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	StateMachine.c
-	@author FireSoucery
-	@brief 	StateMachine module conventional function definitions
+	@file  	Shell.h
+	@author FireSourcery
+	@brief
 	@version V0
-*/
-/******************************************************************************/
-#include "StateMachine.h"
-
-#include <stdint.h>
-
-/*
- * States const strut should be compile time def
  */
+/******************************************************************************/
+#ifndef SHELL_H
+#define SHELL_H
 
-void StateMachine_Init
-(
-	StateMachine_T * p_stateMachine,
-	const State_T * p_stateInitial,
-	uint8_t transitionInputCount,
-	uint8_t selfTransitionInputCount,
-	const void * p_userData
-)
+//#ifdef SHELL_OPTION_USE_LIST
+//#include "List.h"
+//#endif
+#include "Cmd.h"
+
+typedef enum
 {
-	p_stateMachine->p_StateInitial 				= p_stateInitial;
-	p_stateMachine->p_StateActive 				= p_stateInitial;
-	p_stateMachine->TransitionInputCount 		= transitionInputCount;
-	p_stateMachine->SelfTransitionInputCount 	= selfTransitionInputCount;
-	p_stateMachine->p_UserData 					= p_userData;
-//	p_stateMachine->Input 						= 0xff;
-}
+//	SHELL_STATUS_SUCCESS,
+	SHELL_STATUS_TERMINAL_PARSER_FAIL,
+	SHELL_STATUS_CMD_INVALID,
+	SHELL_STATUS_CMD_ACCEPTED,
+	SHELL_STATUS_CMD_PROCESSING,
+} Shell_Status_T;
 
-void StateMachine_Reset(StateMachine_T * p_stateMachine)
-{
-	p_stateMachine->p_StateActive 			= p_stateMachine->p_StateInitial;
-//	p_stateMachine->Input 					= 0xff;
-}
 
+extern int Shell_Proc(void);
+//extern void Shell_Init(uint16_t cmdLoopFreq, uint16_t shellProcFreq);
+
+//extern Cmd_Function_T Cmd_help;
+//extern Cmd_Function_T Cmd_exit;
+
+extern Cmd_T CmdEntry_exit;
+extern Cmd_T CmdEntry_help;
+
+#endif

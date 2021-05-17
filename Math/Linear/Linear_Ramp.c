@@ -22,45 +22,32 @@
 /*******************************************************************************/
 /*******************************************************************************/
 /*!
-    @file 	MotorStateMachine.h
+    @file 	Linear_Ramp.c
     @author FireSoucery
-    @brief  MotorStateMachine
     @version V0
+    @brief  dynamic look up table
+			linear_f(index) = user units
 */
 /*******************************************************************************/
-#ifndef MOTOR_STATE_MACHINE_H
-#define MOTOR_STATE_MACHINE_H
 
-#include "../Motor.h"
-//#include "../Motor_FOC.h"
+#include "Linear.h"
 
-typedef enum MotorStateMachine_TransitionInput_Tag
+#include <stdint.h>
+
+/******************************************************************************/
+/*!
+	@brief
+ */
+/******************************************************************************/
+void Linear_Ramp_InitAcceleration(Linear_T * p_linear, int16_t initial, int16_t final, int16_t acceleration_Seconds, uint32_t updateFreq_Hz)
 {
-	MOTOR_TRANSITION_FAULT_CLEAR,
-	MOTOR_TRANSITION_INIT_COMPLETE,
-	MOTOR_TRANSITION_CALIBRATION_COMPLETE,
-	MOTOR_TRANSITION_ALIGN_COMPLETE,
-	MOTOR_TRANSITION_FAULT,
+	Linear_Init(p_linear, acceleration_Seconds, updateFreq_Hz, initial, final);
+}
 
-	MOTOR_TRANSITION_STOP,
-
-	MOTOR_TRANSITION_ALIGN,
-
-
-
-
-
-} MotorStateMachine_TransitionInput_T;
-
-typedef enum MotorStateMachine_OutputInput_Tag
+void Linear_Ramp_InitMillis(Linear_T * p_linear, int16_t initial, int16_t final, uint32_t peroid_Ms, uint32_t updateFreq_Hz)
 {
-	MOTOR_STATE_BUTTON_NEXT,
-	MOTOR_OUTPUT_BUTTON_PREV,
+	Linear_Init(p_linear, (final - initial) * 1000U, peroid_Ms * updateFreq_Hz, initial, final);
+}
 
-//	MOTOR_STATUS_NO_OP = 0xFFu,
-//	STATE_INPUT_RESERVED_NO_OP = 0xFFu,
-} MotorStateMachine_OutputInput_T;
 
-extern void MotorStateMachine_Init(Motor_T * p_motor);
 
-#endif

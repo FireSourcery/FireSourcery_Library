@@ -51,6 +51,7 @@
 
 #include "Math/Q/Q.h"
 #include "Math/Linear/Linear.h"
+#include "Math/PID/PID.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -146,28 +147,29 @@ typedef enum
  */
 typedef enum
 {
-	/* Must implement for BEMF sensorless */
+	/* BEMF sensorless */
+	MOTOR_ANALOG_CHANNEL_VBUS, 	/* V battery, V in */
 	MOTOR_ANALOG_CHANNEL_VA,
 	MOTOR_ANALOG_CHANNEL_VB,
 	MOTOR_ANALOG_CHANNEL_VC,
 
-	/* Must implement for FOC */
+	/* FOC */
 	MOTOR_ANALOG_CHANNEL_IA,
 	MOTOR_ANALOG_CHANNEL_IB,
 	MOTOR_ANALOG_CHANNEL_IC,
 
-	/* Error checking */
-	MOTOR_ANALOG_CHANNEL_VBUS, 	/* V battery, V in */
-	MOTOR_ANALOG_CHANNEL_VACC,		/* V accessories */
-	MOTOR_ANALOG_CHANNEL_VSENSE,	/* V analog sensors */
+	/* analog sensor input */
+	MOTOR_ANALOG_CHANNEL_THROTTLE,
+	MOTOR_ANALOG_CHANNEL_BRAKE,
 
+	/* Temperature */
 	MOTOR_ANALOG_CHANNEL_HEAT_MOTOR,
 	MOTOR_ANALOG_CHANNEL_HEAT_PCB,
 	MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS,
 
-	/* Optional implement for analog sensor input */
-	MOTOR_ANALOG_CHANNEL_THROTTLE,
-	MOTOR_ANALOG_CHANNEL_BRAKE,
+	/* Error checking */
+	MOTOR_ANALOG_CHANNEL_VACC,		/* V accessories */
+	MOTOR_ANALOG_CHANNEL_VSENSE,	/* V analog sensors */
 } Motor_AnalogChannel_T;
 
 /*!
@@ -175,10 +177,8 @@ typedef enum
  */
 typedef struct
 {
-
 	qfrac16_t FocOpenLoopVq;
 	qfrac16_t FocAlignVd;
-
 
     uint8_t PolePairs;
 	uint32_t EncoderCountsPerRevolution;
@@ -208,11 +208,22 @@ typedef const struct Motor_Init_Tag
 	const uint32_t PHASE_PWM_PERIOD;
 	const uint32_t LINEAR_V_ABC_R1;
 	const uint32_t LINEAR_V_ABC_R2;
+	const uint32_t LINEAR_V_BUS_R1;
+	const uint32_t LINEAR_V_BUS_R2;
 } Motor_Init_T;
 
 
 typedef struct
 {
+	//todo alarm and thermistor
+
+
+	// No wrapper layer for pins
+	const HAL_Pin_T * p_PinBrake;
+	const HAL_Pin_T * p_PinThrottle;
+	const HAL_Pin_T * p_PinForward;
+	const HAL_Pin_T * p_PinReverse;
+
 	/*
 	 * Hardware Wrappers
 	 */
@@ -228,25 +239,10 @@ typedef struct
 	BEMF_T Bemf;
 	//	Flash_T Flash; // flash/eeprom access
 
-	// No wrapper layer for pins
-	const HAL_Pin_T * p_PinBrake;
-	const HAL_Pin_T * p_PinThrottle;
-	const HAL_Pin_T * p_PinForward;
-	const HAL_Pin_T * p_PinReverse;
-
-	uint32_t ControlTimer;	 /* Control Freq */
-	StateMachine_T StateMachine;
-	Thread_T ThreadTimer;
-
 	FOC_T Foc;
-	//	//PID_T PidSpeed;
-	//	PID_T PidId;
-	//	PID_T PidIq;
-	//	qfrac16_t IdReq; /* PID setpoint */
-	//	qfrac16_t IqReq;
-
-	uint32_t OpenLoopPeriod;
-	uint32_t OpenLoopZcd;
+	qangle16_t ElectricalAngle;
+//	qangle16_t MechanicalAngle;
+	uint32_t InterpolatedAngleIndex;
 
 	/* Mode selection. Substates */
 	Motor_Parameters_T 		Parameters;
@@ -255,71 +251,76 @@ typedef struct
 	Motor_SensorMode_T 		SensorMode;
 	Motor_CommutationMode_T CommutationMode;
 
+	StateMachine_T StateMachine;
+	uint32_t ControlTimerBase;	 /* Control Freq */
+	Thread_T ControlTimerThread;
+
+	Thread_T Timer1Ms;
+
+	//	//PID_T PidSpeed;
 	uint32_t SpeedControlTimer;
 	uint32_t SpeedControlPeriod;
+	//	PID_T PidId;
+	//	PID_T PidIq;
+	//	qfrac16_t IdReq; /* PID setpoint */
+	//	qfrac16_t IqReq;
+
+	uint32_t CommutationPeriodCmd; //CommutationPeriodCmd
+	uint32_t OpenLoopZcdCount;
+	//	qfrac16_t OpenLoopVHzGain; //vhz scale
+
+	Linear_T UnitIa; //Frac16 and UserUnits (Amp)
+	Linear_T UnitIb;
+	Linear_T UnitIc;
+
+	Linear_T UnitVabc; //Bemf
+	Linear_T UnitVBus;
+
+	Linear_T UnitThrottle;
+	Linear_T UnitBrake;
+
+	Linear_T Ramp;
+	uint32_t RampIndex;
+
+	uint32_t SpeedReq_RPM; ///req or setpoint
+	uint32_t SpeedFeedback_RPM;
 
 
+	uint16_t VReq; //User input, set point
 
-	//	//Monitor_T 		Monitor;
-
-	Linear_T UnitIa_Frac16;
-	Linear_T UnitIb_Frac16;
-	Linear_T UnitIc_Frac16;
-
-	Linear_T UnitIa_Amp;
-	Linear_T UnitIb_Amp;
-	Linear_T UnitIc_Amp;
-
-	Linear_T SpeedRamp;
-	uint32_t SpeedRampIndex;
+	uint16_t VCtrl; // same as PWM duty
 
 
-	uint32_t Speed_RPM;
-
-	uint16_t VCmd; //same as PWM duty
-
-	qfrac16_t ElectricalAngle;
-	qfrac16_t MechanicalAngle;
-
-	uint32_t InterpolatedAngleIndex;
 
 	/*
 	 * SixStep Settings
 	 */
 	Motor_SectorId_T NextSector; //for 6 step openloop/sensorless
 
-//	/*
-//	 * FOC  Settings
-//	 */
-//	qfrac16_t OpenLoopVHzGain; //vhz scale
-
 //	uint32_t JogSteps;
 //	uint32_t StepCount;
 
+	/* UI report */
+	uint16_t VBus;
 }
 Motor_T;
 
 
-static inline void Motor_ReadSensor(Motor_T *p_motor)
+static inline void Motor_Float(Motor_T * p_motor)
 {
-	switch (p_motor->SensorMode)
-	{
-	case MOTOR_SENSOR_MODE_ENCODER:
-
-		break;
-
-	case MOTOR_SENSOR_MODE_BEMF:
-
-		break;
-
-	case MOTOR_SENSOR_MODE_HALL:
-
-		break;
-
-	default:
-		break;
-	}
+	Phase_Float(&p_motor->Phase);
 }
+
+static inline void Motor_BrakeDynamic(Motor_T * p_motor)
+{
+	Phase_Short(&p_motor->Phase); //set pwm = 0
+}
+
+static inline void Motor_BrakePlugging(Motor_T * p_motor)
+{
+	Motor_SetDirectionReverse(p_motor);
+}
+
 
 /*
  * Speed PID Feedback Loop
@@ -337,7 +338,7 @@ static inline void Motor_ReadSensor(Motor_T *p_motor)
  */
 static inline void Motor_ProcSpeedLoop(Motor_T * p_motor)
 {
-	p_motor->Speed_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
+	p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
 //	//p_motor->Speed_RPM = Filter_MovAvg(p_motor->Speed_RPM, coef, coef);
 //	PID_Proc(&p_motor->PidSpeed);
 }
@@ -369,3 +370,47 @@ extern void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInitStruct
 extern void Motor_StartAlign(Motor_T * p_motor);
 
 #endif
+
+//Throttle is VUserSetPoint
+//poll throttle or set from outter module functions?
+//static inline void Motor_GetThrottle(Motor_T *p_motor)
+//{
+//	switch (p_motor->InputMode)
+//	{
+//	case MOTOR_SHELL:
+//		p_motor->Throttle =
+//		break;
+//
+//	case MOTOR_ANALOG:
+//		p_motor->Throttle = Linear_ADC_CalcUnsignedFraction16(&p_motor->UnitThrottle, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_THROTTLE]);
+//		break;
+//
+//	case MOTOR_COM:
+//		p_motor->Throttle = SerialApp_GetThrottle();
+//		break;
+//
+//	default:
+//		break;
+//	}
+//}
+
+//static inline void Motor_ReadSensor(Motor_T *p_motor)
+//{
+//	switch (p_motor->SensorMode)
+//	{
+//	case MOTOR_SENSOR_MODE_ENCODER:
+//
+//		break;
+//
+//	case MOTOR_SENSOR_MODE_BEMF:
+//
+//		break;
+//
+//	case MOTOR_SENSOR_MODE_HALL:
+//
+//		break;
+//
+//	default:
+//		break;
+//	}
+//}

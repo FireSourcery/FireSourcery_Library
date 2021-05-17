@@ -68,9 +68,14 @@ static inline void ActivateAdc_NMultiMuxed
 
 	for (uint8_t iAdc = 0U; iAdc < nAdc; iAdc++)
 	{
+		//deactivate if needed
 		if (config.UseHwTriggerPerChannel || config.UseHwTriggerPerConversion)
 		{
 			HAL_ADC_WriteHwTriggerState(pp_adcMaps[iAdc], 1U);
+		}
+		else
+		{
+			HAL_ADC_WriteHwTriggerState(pp_adcMaps[iAdc], 0U);
 		}
 	}
 
@@ -84,7 +89,7 @@ static inline void ActivateAdc_NMultiMuxed
 			 * Boundary check if needed
 			 * if (iVirtualChannel < p_analog->VirtualChannelMapLength)
 			 */
-			p_analog->p_MapChannelResults[iVirtualChannel] = 0U;
+//			p_analog->p_MapChannelResults[iVirtualChannel] = 0U;
 
 			if (iChannel + iAdc < channelCount - 1U)
 			{

@@ -37,6 +37,8 @@
 
 #define QFRAC16_N_FRAC_BITS (15U) /*!< Q1.15, 15 fractional bits, shift mul/div by 32768 */
 
+typedef uint16_t uqfrac16_t; 	/*!< Q16    */
+
 typedef int16_t qfrac16_t; 	/*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
 typedef int16_t qangle16_t; /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
 

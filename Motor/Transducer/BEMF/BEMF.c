@@ -46,53 +46,32 @@ void BEMF_Init
 	p_bemf->p_VPhaseB_ADCU = p_phaseB;
 	p_bemf->p_VPhaseC_ADCU = p_phaseC;
 	p_bemf->p_VBus_ADCU = p_vbus;
+	p_bemf->p_VPhaseObserve_ADCU = p_phaseA;
 	p_bemf->PhaseAdvanceTime = 0;
 	p_bemf->ZeroCrossingThreshold_ADCU = 0;
 }
 
-/*
-	return Phase-To-Neutral signed ADCU
- */
-static inline int16_t BEMF_GetBemf(BEMF_T * p_bemf)
-{
-//	int16_t bemf;
-//
-//	switch(p_bemf->SampleMode)
-//	{
-//	case BEMF_SAMPLE_MODE_PWM_BIPOLAR:
-//	case BEMF_SAMPLE_MODE_PWM_ON:  bemf = p_bemf->VBemf_SignedADCU * 2 / 3; break;
-//	case BEMF_SAMPLE_MODE_PWM_OFF: bemf = p_bemf->VBemf_SignedADCU;	break;
-//	default:	break;
-//	}
-//
-//	return bemf;
-}
-
 //calc speed-> calc advance angle
-void BEMF_SetAdvanceAngle(BEMF_T * p_bemf, uint16_t angle_frac16)
+void BEMF_SetAdvanceAngleTime(BEMF_T * p_bemf, uint16_t angle_frac16)
 {
-	//delaytime = t*angleRadian16/INT16_MAX
-}
-
-void BEMF_SetMode(BEMF_T * p_bemf, BEMF_Mode_T mode)
-{
-// 	p_bemf->Mode = mode;
-//
-// 	bemf->ZeroCrossingThreshold_ADCU = 0;
+//	p_bemf->PhaseAdvanceTime = t*angle_frac16>>15;
 }
 
 
 void BEMF_SetSampleMode(BEMF_T * p_bemf, BEMF_SampleMode_T mode)
 {
-// 	p_bemf->SampleMode = mode;
-//
-//	switch(p_bemf->SampleMode)
-//	{
-//	case BEMF_SAMPLE_MODE_PWM_BIPOLAR:
-//	case BEMF_SAMPLE_MODE_PWM_ON:  p_bemf->ZeroCrossingThreshold_ADCU = 0; break;
-//	case BEMF_SAMPLE_MODE_PWM_OFF: p_bemf->ZeroCrossingThreshold_ADCU = defaultoffset;	break;
-//	default:	break;
-//	}
+ 	p_bemf->SampleMode = mode;
 
+	switch(p_bemf->SampleMode)
+	{
+	case BEMF_SAMPLE_MODE_PWM_BIPOLAR:		break;
+	case BEMF_SAMPLE_MODE_PWM_ON:  p_bemf->ZeroCrossingThreshold_ADCU = 0; break;
+	case BEMF_SAMPLE_MODE_PWM_OFF:  		break;
+	default:	break;
+	}
 }
 
+void BEMF_ResetTimer(BEMF_T * p_bemf)
+{
+	p_bemf->TimeReference = 0U;
+}

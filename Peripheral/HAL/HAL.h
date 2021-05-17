@@ -36,12 +36,10 @@
 
 	#include "Platform/S32K/HAL_ADC.h"
 	#include "Platform/S32K/HAL_Pin.h"
-//	#include "Platform/S32K/FTM.h"
-//	#include "Platform/S32K/LPUART.h"
-//	#include "Platform/S32K/MSCAN.h"
+	#include "Platform/S32K/HAL_Serial.h"
 
 
-#elif defined(CONFIG__HAL__XYZ)
+#elif defined(CONFIG_HAL_XYZ)
 
 #endif
 

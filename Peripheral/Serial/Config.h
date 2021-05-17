@@ -22,40 +22,15 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	StateMachine.c
+	@file 	Config.h
 	@author FireSoucery
-	@brief 	StateMachine module conventional function definitions
+	@brief
 	@version V0
 */
 /******************************************************************************/
-#include "StateMachine.h"
+#ifndef CONFIG_SERIAL_H
+#define CONFIG_SERIAL_H
 
-#include <stdint.h>
 
-/*
- * States const strut should be compile time def
- */
-
-void StateMachine_Init
-(
-	StateMachine_T * p_stateMachine,
-	const State_T * p_stateInitial,
-	uint8_t transitionInputCount,
-	uint8_t selfTransitionInputCount,
-	const void * p_userData
-)
-{
-	p_stateMachine->p_StateInitial 				= p_stateInitial;
-	p_stateMachine->p_StateActive 				= p_stateInitial;
-	p_stateMachine->TransitionInputCount 		= transitionInputCount;
-	p_stateMachine->SelfTransitionInputCount 	= selfTransitionInputCount;
-	p_stateMachine->p_UserData 					= p_userData;
-//	p_stateMachine->Input 						= 0xff;
-}
-
-void StateMachine_Reset(StateMachine_T * p_stateMachine)
-{
-	p_stateMachine->p_StateActive 			= p_stateMachine->p_StateInitial;
-//	p_stateMachine->Input 					= 0xff;
-}
+#endif
 

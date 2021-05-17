@@ -36,6 +36,11 @@ void Millis_MapYield(void (*fp)(void))
 //	Millis_OnTick = fp;
 //}
 
+uint32_t * Millis_GetPtr(void)
+{
+	return &Millis_TickCount;
+}
+
 #ifdef CONFIG_MILLIS_MCU_ARM
 // KE/KEA PE priority 2 -> PRI_15 = 0x80
 #ifdef CPU_FREQ

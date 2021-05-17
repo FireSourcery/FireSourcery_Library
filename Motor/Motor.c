@@ -36,9 +36,8 @@
 #include "Default.h"
 
 //#include "Motor/Instance/MotorAnalog.h"
-#include "Motor/Instance/MotorStateMachine.h"
-//#include "OS/StateMachine/StateMachine.h"
-
+#include "System/MotorStateMachine.h"
+#include "System/StateMachine/StateMachine.h"
 #include "System/Thread/Thread.h"
 
 #include "Transducer/Encoder/Encoder_Motor.h"
@@ -46,7 +45,8 @@
 #include "Transducer/Phase/Phase.h"
 #include "Transducer/Phase/HAL.h"
 
-//#include "Math/Q/Q.h"
+#include "Math/Linear/Linear_ADC.h"
+#include "Math/Linear/Linear.h"
 //#define CONFIG_MOTOR_COUNT 1
 
 //Motor_T Motors[CONFIG_MOTOR_COUNT];
@@ -66,31 +66,8 @@ void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInit)
 	(
 		&p_motor->Phase,
 		&p_motorInit->HAL_PHASE,
-		p_motorInit->MOTOR_PWM_FREQ  //firmware const
-//		0,	0,	0,	0,	0,	0
+		p_motorInit->PHASE_PWM_PERIOD
 	);
-
-	Phase_Polar_ActivateMode(&p_motor->Phase, PHASE_MODE_UNIPOLAR_1);
-
-	//	BEMF_Init
-	//	(
-	//		&p_motor->Bemf,
-	//
-	//	);
-	//
-	//	Hall_Init
-	//	(
-	//		&p_motor->Hall,
-	//
-	//	);
-
-	FOC_Init(&p_motor->Foc);
-
-	p_motor->ControlMode = MOTOR_CONTROL_MODE_OPEN_LOOP;
-	p_motor->SensorMode = MOTOR_SENSOR_MODE_OPEN_LOOP;
-	p_motor->CommutationMode = MOTOR_CONTROL_MODE_FOC;
-//	p_motor->SensorMode = MOTOR_CONTROL_MODE_SIX_STEP;
-
 
 	//ALL FOC modes except hall sensor use standard encoder
 //	Encoder_Motor_Init
@@ -105,7 +82,7 @@ void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInit)
 //	);
 
 	//all sixstep modes and hall foc mode user hall version
-	Encoder_Motor_InitHall
+	Encoder_Motor_InitCaptureTime
 	(
 		&p_motor->Encoder,
 		&p_motorInit->HAL_ENCODER,
@@ -113,61 +90,94 @@ void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInit)
 		p_motorInit->HALL_ENCODER_TIMER_COUNTER_FREQ,
 		p_motorInit->MOTOR_PWM_FREQ,
 		p_motorInit->ENCODER_ANGLE_RES_BITS,
-		7,
-		0
+		7U*6U, //runtime variable, load from flash  //config for per commutation or per erotation
+		0U
 	);
 
+	//	Hall_Init
+	//	(
+	//		&p_motor->Hall,
+	//
+	//	);
 
+	//	BEMF_Init
+	//	(
+	//		&p_motor->Bemf,
+	//
+	//	);
+	//
 
-	p_motor->Direction = MOTOR_DIRECTION_CW;
-	Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW);
+	//	if analog module algo supports matching channel to adc virtualization layer
+	//	Analog_Init
+	//	(
+	//		&p_motor->Analog,
+	//		p_motorInit->p_AdcRegMap,
+	//		p_motorInit->N_Adc,
+	//		p_motorInit->M_HwBuffer,
+	//		MOTOR_ANALOG_ADC_CHANNEL_COUNT,
+	//		p_motorInit->p_AdcChannelPinMap,
+	//		p_motor->AnalogChannelMapResults,
+	//		p_motor->AnalogIndexesBuffer,
+	//		p_motor
+	//	);
 
-
+	FOC_Init(&p_motor->Foc);
 
 	Thread_InitThreadPeriodic_Period
 	(
-		&p_motor->ThreadTimer,
-		&p_motor->ControlTimer,
-		20000U,
+		&p_motor->ControlTimerThread,
+		&p_motor->ControlTimerBase,
+		p_motorInit->MOTOR_PWM_FREQ,
 		1U,
 		0U,
 		0U
 	);
 
-
-//	if analog module algo supports matching channel to adc virtualization layer
-//	Analog_Init
-//	(
-//		&p_motor->Analog,
-//		p_motorInit->p_AdcRegMap,
-//		p_motorInit->N_Adc,
-//		p_motorInit->M_HwBuffer,
-//		MOTOR_ANALOG_ADC_CHANNEL_COUNT,
-//		p_motorInit->p_AdcChannelPinMap,
-//		p_motor->AnalogChannelMapResults,
-//		p_motor->AnalogIndexesBuffer,
-//		p_motor
-//	);
-
 	//MotorStateMachine_Init(p_Motor);
-	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage
-	//Linear_Voltage_Init(&DividerBatteryVoltage, R1, R2, 5, 12);
-	//load param from flash?
 
 
-//testing
-	p_motor->CommutationMode =   MOTOR_CONTROL_MODE_SIX_STEP;
-//	Motor_StartAlign(p_motor);
-//	Motor_SixStep_Start(p_motor);
-//	Motor_FOC_StartAngleControlMode(p_motor);
-//	p_motor->ControlMode = MOTOR_CONTROL_MODE_OPEN_LOOP;
+	//initial runtime config settings
+
+	p_motor->Direction = MOTOR_DIRECTION_CW;
+	Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW);
+
+//	p_motor->CommutationMode = MOTOR_CONTROL_MODE_FOC;
 //	p_motor->SensorMode = MOTOR_SENSOR_MODE_OPEN_LOOP;
+
+	p_motor->CommutationMode = MOTOR_CONTROL_MODE_SIX_STEP;
+	p_motor->SensorMode = MOTOR_SENSOR_MODE_OPEN_LOOP;
+	p_motor->ControlMode = MOTOR_CONTROL_MODE_OPEN_LOOP;
+	Motor_SixStep_SetCommutationControl(p_motor);
+
+
+	Phase_Polar_ActivateMode(&p_motor->Phase, PHASE_MODE_UNIPOLAR_1);
+
+	//uncalibrated default
+	Linear_ADC_Init(&p_motor->UnitThrottle, 0U, 4095U, 100U);
+	Linear_ADC_Init(&p_motor->UnitBrake, 0U, 4095U, 100U);
+
+	/*
+	 * Run calibration later, default zero to middle adc
+	 */
+	Linear_ADC_Init(&p_motor->UnitIa, 2048U, 4095U, 120U); //temp 120amp
+	Linear_ADC_Init(&p_motor->UnitIb, 2048U, 4095U, 120U);
+	Linear_ADC_Init(&p_motor->UnitIc, 2048U, 4095U, 120U);
+
+
+	Linear_Voltage_Init(&p_motor->UnitVBus, 42U, p_motorInit->LINEAR_V_BUS_R1 , p_motorInit->LINEAR_V_BUS_R2, 50U, 12U);
+	Linear_Voltage_Init(&p_motor->UnitVabc, 42U, p_motorInit->LINEAR_V_ABC_R1 , p_motorInit->LINEAR_V_ABC_R2, 50U, 12U);
+
+	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage
+//testing
+
+//	Motor_StartAlign(p_motor);
+//	Motor_FOC_StartAngleControlMode(p_motor);
 
 //	Phase_ActuateDutyCycle_Ticks(&p_motor->Phase, 100, 100, 100);
 //	Phase_ActuateState(&p_motor->Phase, 1, 1, 1);
 }
 
-void Motor_Align(Motor_T * p_motor)
+void Motor_ActivateAlign(Motor_T * p_motor)
 {
 	Phase_ActuateDutyCycle(&p_motor->Phase, 6553U/4U, 0, 0); /* Align Phase A 10% pwm */
 	Phase_ActuateState(&p_motor->Phase, 1, 1, 1);
@@ -175,15 +185,22 @@ void Motor_Align(Motor_T * p_motor)
 
 void Motor_StartAlign(Motor_T * p_motor)
 {
-	Motor_Align(p_motor);
-	//should this be in state wrapper?
-	p_motor->ControlTimer = DEFAULT_CONTROL_FREQ_HZ; /* set timer for 1 second */
+	Thread_SetTimer(&p_motor->ControlTimerThread, 1000U);
+	Motor_ActivateAlign(p_motor);
 }
 
-void Motor_SetDirection(Motor_T * p_motor)
+bool Motor_WaitAlign(Motor_T *p_motor)
 {
-//	 Hall_SetDirection(&p_motor->Hall);
-//	 BEMF_SetDirection(&p_motor->Bemf);
+	bool status;
+	if (Thread_PollTimer(&p_motor->ControlTimerThread) == true)	{status = true;}
+	else														{status = false;}
+	return status;
+}
+
+void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
+{
+	 Hall_SetDirection(&p_motor->Hall, direction);
+//	 BEMF_SetDirection(&p_motor->Bemf, direction);
 //	 Motor_FOC_SetDirection(&p_motor);
 }
 

@@ -34,6 +34,7 @@
 #include "Config.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /*
  * Implement per submodule HAL for now
@@ -78,19 +79,60 @@ static inline void Critical_Exit(void)
 	}
 }
 
+
+
+typedef volatile uint8_t critical_mutex_t;
+
+static inline bool Critical_MutexAquire(critical_mutex_t * p_mutex)
+{
+	bool status = false;
+
+	CRITICAL_DISABLE_INTERRUPTS();
+	if (*p_mutex == 1U)
+	{
+		*p_mutex = 0U;
+		status = true;
+	}
+	CRITICAL_ENABLE_INTERRUPTS();
+
+	return status;
+}
+
+static inline void Critical_MutexRelease(critical_mutex_t * p_mutex)
+{
+	CRITICAL_DISABLE_INTERRUPTS();
+	if (*p_mutex == 0U)
+	{
+		*p_mutex = 1U;
+	}
+	CRITICAL_ENABLE_INTERRUPTS();
+}
+
 /*
  * Todo static inline void Critical_Enter(void * stateData) for other/semaphore implementation
  */
-//typedef uint32_t critical_semaphore_t;
+//typedef volatile uint32_t critical_semaphore_t;
+////typedef volatile bool critical_mutex_t;
 //
-//static inline void Critical_SemaphorePost(critical_semaphore_t sem)
+//static inline void Critical_SemaphorePost(critical_semaphore_t * p_semaphore)
 //{
+//	CRITICAL_DISABLE_INTERRUPTS();
+//	if (*p_semaphore > 0U)
+//	{
+//		*p_semaphore--;
+//	}
+//	CRITICAL_ENABLE_INTERRUPTS();
 //
 //}
 //
-//static inline void Critical_SemaphoreSignal(critical_semaphore_t sem)
+//static inline void Critical_SemaphoreSignal(critical_semaphore_t *p_semaphore)
 //{
-//
+//	CRITICAL_DISABLE_INTERRUPTS();
+//	if (*p_semaphore < 1U)
+//	{
+//		*p_semaphore++;
+//	}
+//	CRITICAL_ENABLE_INTERRUPTS();
 //}
 
 #endif

@@ -37,7 +37,7 @@
 #include "SDK/platform/drivers/inc/pins_driver.h"
 #include "SDK/platform/drivers/inc/interrupt_manager.h"
 #include "SDK/platform/drivers/inc/ftm_common.h"
-#include "SDK/platform/drivers/inc/ftm_pwm_driver.h"
+#include "SDK/platform/drivers/inc/ftm_mc_driver.h"
 #include "SDK/platform/drivers/inc/ftm_qd_driver.h"
 
 #include <stdint.h>
@@ -103,12 +103,42 @@ static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder)
  */
 static inline void HAL_Encoder_InitCaptureTime(const HAL_Encoder_T * p_encoder)
 {
-//	(void) p_encoder;
-//
-//	const pin_settings_config_t pin_mux_InitConfigArr1[2U] = {
+	(void) p_encoder;
+
+	const pin_settings_config_t pin_mux_InitConfigArr1[2U] = {
+		{
+			.base            = PORTE,
+			.pinPortIdx      = 4U,
+			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
+			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
+			.passiveFilter   = false,
+			.mux             = PORT_MUX_AS_GPIO,
+			.pinLock         = false,
+			.intConfig       = PORT_DMA_INT_DISABLED,
+			.clearIntFlag    = false,
+			.gpioBase        = PTE,
+			.direction       = GPIO_INPUT_DIRECTION,
+			.digitalFilter   = false,
+			.initValue       = 0U,
+		},
+		{
+			.base            = PORTE,
+			.pinPortIdx      = 5U,
+			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
+			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
+			.passiveFilter   = false,
+			.mux             = PORT_MUX_AS_GPIO,
+			.pinLock         = false,
+			.intConfig       = PORT_DMA_INT_DISABLED,
+			.clearIntFlag    = false,
+			.gpioBase        = PTE,
+			.direction       = GPIO_INPUT_DIRECTION,
+			.digitalFilter   = false,
+			.initValue       = 0U,
+		},
 //		{
 //			.base            = PORTE,
-//			.pinPortIdx      = 4U,
+//			.pinPortIdx      = 10U,
 //			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
 //			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
 //			.passiveFilter   = false,
@@ -120,45 +150,52 @@ static inline void HAL_Encoder_InitCaptureTime(const HAL_Encoder_T * p_encoder)
 //			.direction       = GPIO_INPUT_DIRECTION,
 //			.digitalFilter   = false,
 //			.initValue       = 0U,
-//		},
-//		{
-//			.base            = PORTE,
-//			.pinPortIdx      = 5U,
-//			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
-//			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
-//			.passiveFilter   = false,
-//			.mux             = PORT_MUX_AS_GPIO,
-//			.pinLock         = false,
-//			.intConfig       = PORT_DMA_INT_DISABLED,
-//			.clearIntFlag    = false,
-//			.gpioBase        = PTE,
-//			.direction       = GPIO_INPUT_DIRECTION,
-//			.digitalFilter   = false,
-//			.initValue       = 0U,
-//		},
-////		{
-////			.base            = PORTE,
-////			.pinPortIdx      = 10U,
-////			.pullConfig      = PORT_INTERNAL_PULL_NOT_ENABLED,
-////			.driveSelect     = PORT_LOW_DRIVE_STRENGTH,
-////			.passiveFilter   = false,
-////			.mux             = PORT_MUX_AS_GPIO,
-////			.pinLock         = false,
-////			.intConfig       = PORT_DMA_INT_DISABLED,
-////			.clearIntFlag    = false,
-////			.gpioBase        = PTE,
-////			.direction       = GPIO_INPUT_DIRECTION,
-////			.digitalFilter   = false,
-////			.initValue       = 0U,
-////		}
-//	};
-//
+//		}
+	};
+
+	const ftm_user_config_t flexTimer_mc_1_InitConfig_0 =
+	{
+	    {
+	        true,    /* Software trigger state */
+	        false,  /* Hardware trigger 1 state */
+	        false,  /* Hardware trigger 2 state */
+	        false,  /* Hardware trigger 3 state */
+	        false, /* Max loading point state */
+	        false, /* Min loading point state */
+	        FTM_SYSTEM_CLOCK, /* Update mode for INVCTRL register */
+	        FTM_SYSTEM_CLOCK, /* Update mode for SWOCTRL register */
+	        FTM_SYSTEM_CLOCK, /* Update mode for OUTMASK register */
+	        FTM_SYSTEM_CLOCK, /* Update mode for CNTIN register */
+	        false, /* Automatic clear of the trigger*/
+	        FTM_UPDATE_NOW, /* Synchronization point */
+	    },
+	        FTM_MODE_UP_TIMER, /* Mode of operation for FTM */
+	        FTM_CLOCK_DIVID_BY_128, /* FTM clock prescaler */
+	        FTM_CLOCK_SOURCE_SYSTEMCLK,   /* FTM clock source */
+	        FTM_BDM_MODE_00, /* FTM debug mode */
+	        false,    /* Interrupt state */
+	        false     /* Initialization trigger */
+	};
+
+	/* Timer mode configuration for flexTimer_mc_1 TimerConfig 0 */
+	const  ftm_timer_param_t flexTimer_mc_1_TimerConfig_0 =
+	{
+	        FTM_MODE_UP_TIMER, /* Counter mode */
+	        0, /* Initial counter value */
+	        65535 /* Final counter value */
+	};
+
+	ftm_state_t ftm2State;
+
+	PINS_DRV_Init(2U, pin_mux_InitConfigArr1);
+
 //	(FTM2->QDCTRL) &= ~(1UL << FTM_QDCTRL_QUADEN_SHIFT);
-//	INT_SYS_DisableIRQ(FTM2_Ovf_Reload_IRQn);
-//
-//	//Set base timer
-//
-//	PINS_DRV_Init(2U, pin_mux_InitConfigArr1);
+	FTM_DRV_Deinit(2U);
+	INT_SYS_DisableIRQ(FTM2_Ovf_Reload_IRQn);
+
+	FTM_DRV_Init(2U, &flexTimer_mc_1_InitConfig_0, &ftm2State); 	/* FTM2 module initialized to work in quadrature decoder mode, specifically PhaseA and PhaseB mode */
+	FTM_DRV_InitCounter(2U, &flexTimer_mc_1_TimerConfig_0);
+
 }
 
 /*
@@ -242,6 +279,7 @@ static inline void HAL_Encoder_InitCaptureCount(const HAL_Encoder_T * p_encoder)
 
 	PINS_DRV_Init(2U, pin_mux_InitConfigArr0);
 
+	FTM_DRV_Deinit(2U);
 	FTM_DRV_Init(2U, &flexTimer_qd_1_InitConfig, &ftm2State); 	/* FTM2 module initialized to work in quadrature decoder mode, specifically PhaseA and PhaseB mode */
 	FTM_DRV_QuadDecodeStart(2U, &flexTimer_qd_1_QuadDecoderConfig);
 	INT_SYS_EnableIRQ(FTM2_Ovf_Reload_IRQn);
