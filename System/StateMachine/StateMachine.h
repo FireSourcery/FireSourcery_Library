@@ -125,7 +125,7 @@ typedef struct StateMachine_Tag
 	const State_T * p_StateInitial;
 	const State_T * volatile p_StateActive; 	//uint8_t CurrentStateID?
 //#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL
-	uint8_t TransitionInputCount;
+	uint8_t TransitionInputCount;		//state count
 	uint8_t SelfTransitionInputCount;
 	//uint8_t TotalInputCount;
 //#endif

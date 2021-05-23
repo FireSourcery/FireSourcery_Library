@@ -47,52 +47,49 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase++;
 
-	//StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
-
-
-	//test
-	Motor_SixStep_ProcCommutationControl(p_motor);
-//		Motor_FOC_ProcAngleControl(p_motor);
-
+	StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
 
 }
-
 
 /*
 	ADC on complete. Possibly multiple per 1 PWM
 	todo adc algo to coordinate multiple adc using 1 channel samples list. handle outside for now
  */
-static inline void Motor_ADC_Thread(Motor_T * p_motor)
-{
-//	Analog_CaptureResults_IO(&p_motor->Analog);
-	//if Iabc complete, Motor_FOC_ProcCurrentControl(Motor_T * p_motor)
-}
+//static inline void Motor_ADC_Thread(Motor_T * p_motor)
+//{
+////	Analog_CaptureResults_IO(&p_motor->Analog);
+//	//if Iabc complete, Motor_FOC_ProcCurrentControl(Motor_T * p_motor)
+//}
 
-static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms
+static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priotiy
 {
 	//Motor_SpeedLoop();
 	//Monitor
+	//		if(Motor_PollFault(p_motor))	{ StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_FAULT);	}
 }
 
-/*
- * SixStep openloop and sensorless
- */
-static inline void Motor_TimerCommutation_Thread(Motor_T * p_motor)
-{
-//	BEMF_ProcTimer_IO(&p_motor->Bemf);
-}
+///*
+// * SixStep openloop and sensorless
+// */
+//static inline void Motor_TimerCommutation_Thread(Motor_T * p_motor)
+//{
+////	BEMF_ProcTimer_IO(&p_motor->Bemf);
+//}
 
 static inline void Motor_Main_Thread(Motor_T * p_motor)
 {
 	//UI
-	//Motor_SetRamp(user input)
 	if (Thread_PollTimer(&p_motor->Timer1Ms) == true)
 	{
+		Thread_RestartTimer(&p_motor->Timer1Ms);
+
 		p_motor->VReq = Linear_ADC_CalcUnsignedFraction16(&p_motor->UnitThrottle, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_THROTTLE]);
 
-//		Linear_Ramp_InitMillis(&p_motor->Ramp, 4U, 10U, 1000U, 20000U); // must start at sufficent speed for fixed angle displacements
+		//Motor_SetRamp(user input)
+//		Linear_Ramp_InitMillis(&p_motor->Ramp, 4U, 10U, 1000U, 20000U);
 //		p_motor->SpeedReq_RPM = Linear_Ramp_CalcTarget_IncIndex(&p_motor->Ramp, &p_motor->RampIndex, p_motor->CommutationPeriodCmd);
 
 		p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder); //speed UI
+
 	}
 }

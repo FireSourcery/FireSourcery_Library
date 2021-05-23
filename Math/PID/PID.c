@@ -39,7 +39,7 @@
 	Standard PID calculation
 	control = (Kp * error)
 			+ (Ki * ErrorSum * SampleTime)
-			+ (Kd * (error - ErrorPrev) * SampleTime)
+			+ (Kd * (error - ErrorPrev) / SampleTime)
 
  */
 static inline int32_t CalcPID(PID_T * p_pid, int32_t error)

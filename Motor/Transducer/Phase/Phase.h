@@ -442,6 +442,6 @@ extern void Phase_Init
 //	void (*onPhaseCA)(void * onPhaseData),
 //	void (*onPhaseCB)(void * onPhaseData)
 );
-extern  void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phaseMode);
+extern void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phaseMode);
 
 #endif

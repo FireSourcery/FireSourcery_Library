@@ -34,9 +34,6 @@
 
 #include "Config.h"
 
-#include <stdint.h>
-#include <stdbool.h>
-
 //#if defined(CONFIG_ANALOG_HAL_S32K)
 //	#include "Peripheral/HAL/Platform/S32K/HAL_ADC.h"
 //#elif defined(CONFIG_ANALOG_HAL_USER_DEFINED)

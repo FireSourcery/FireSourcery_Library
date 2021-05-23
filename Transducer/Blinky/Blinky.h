@@ -8,7 +8,7 @@
 
 typedef struct
 {
-	HAL_Pin_T p_HAL_Pin;
+	HAL_Pin_T * p_HAL_Pin;
 	volatile bool IsOn;
 
 //	Thread_Timer_T ThreadTimer;

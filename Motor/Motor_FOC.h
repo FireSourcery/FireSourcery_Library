@@ -307,7 +307,7 @@ static inline void  Motor_FOC_StartCalibrateAdc(Motor_T * p_motor)
 static inline bool Motor_FOC_CalibrateAdc(Motor_T *p_motor)
 {
 //	State_Input_T returnInput;
-	bool status;
+	bool isComplete;
 //	p_motor->ZeroIa = filter_movavgn(p_motor->ZeroIa, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA], p_motor->CurrentFilterCoeffcientN);
 //	p_motor->ZeroIb = filter_movavgn(p_motor->ZeroIb, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IB], p_motor->CurrentFilterCoeffcientN);
 //	p_motor->ZeroIc = filter_movavgn(p_motor->ZeroIc, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IC], p_motor->CurrentFilterCoeffcientN);
@@ -322,15 +322,15 @@ static inline bool Motor_FOC_CalibrateAdc(Motor_T *p_motor)
 		Linear_ADC_Init(&p_motor->UnitIb, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IB], 4095U, 120U);
 		Linear_ADC_Init(&p_motor->UnitIc, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IC], 4095U, 120U);
 //		Linear_ADC_Init(&p_motor->UnitIc, Filter_MovAvg_GetResult(&p_motor->FilterIc), 4095U, 120U);
-		status = true;
+		isComplete = true;
 //		//State_Transition(&(p_motor->StateMachine), MOTOR_CALIBRATION_COMPLETE);
 //		returnInput = MOTOR_INPUT_CALIBRATION_COMPLETE;
 	}
 	else
 	{
-		status = false;
+		isComplete = false;
 	}
-	return status;
+	return isComplete;
 }
 
 

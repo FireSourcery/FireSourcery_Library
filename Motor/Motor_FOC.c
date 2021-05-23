@@ -46,9 +46,6 @@
 
 
 
-
-
-
 /*
 	For motor controlled virtualized analog module
  */

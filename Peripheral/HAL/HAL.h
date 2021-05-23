@@ -37,7 +37,7 @@
 	#include "Platform/S32K/HAL_ADC.h"
 	#include "Platform/S32K/HAL_Pin.h"
 	#include "Platform/S32K/HAL_Serial.h"
-
+	#include "Platform/S32K/HAL_Flash.h"
 
 #elif defined(CONFIG_HAL_XYZ)
 

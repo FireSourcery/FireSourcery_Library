@@ -67,7 +67,7 @@ static inline void CaptureAdcResults_NMultiMuxed
 			if (iChannel + iAdc < activeChannelCount)
 			{
 				iVirtualChannel = p_virtualChannels[iChannel + iAdc];
-				p_analog->p_MapChannelResults[iVirtualChannel] = HAL_ADC_ReadResult(pp_adcMaps[iAdc], (uint32_t) p_analog->p_MapChannelPins[iVirtualChannel]);
+				p_analog->p_VirtualChannelResults[iVirtualChannel] = HAL_ADC_ReadResult(pp_adcMaps[iAdc], (uint32_t) p_analog->p_VirtualChannelMapPins[iVirtualChannel]);
 			}
 		}
 	}

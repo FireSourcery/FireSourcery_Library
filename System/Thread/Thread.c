@@ -149,19 +149,19 @@ void Thread_InitThread
 (
 	Thread_T * p_thread,
 	const volatile uint32_t *p_timer,
-	uint32_t timerfreq,
-	uint32_t period,
+	uint32_t timerfreq_Hz,
+	uint32_t period_Ticks, 		//in timerTicks
 	void (*function)(volatile void *),
 	volatile void * p_context,
 	bool oneShot,
-	uint32_t ticks,
+	uint32_t ticks,		//proc counts
 	void(*onComplete)(volatile void *),
 	volatile void * p_onCompleteContext
 )
 {
 	p_thread->p_Timer 	= p_timer;
-	p_thread->TimerFreq = timerfreq;
-	p_thread->Period 	= period;
+	p_thread->TimerFreq = timerfreq_Hz;
+	p_thread->Period 	= period_Ticks;
 
 	p_thread->Function 	= function;
 	p_thread->p_Context = p_context;
@@ -173,7 +173,7 @@ void Thread_InitThread
 	p_thread->p_OnCompleteContext	= p_onCompleteContext;
 
 	p_thread->IsEnabled = false;
-	p_thread->TimePrev 	= *p_thread->p_Timer - period;
+	p_thread->TimePrev 	= *p_thread->p_Timer - period_Ticks;
 }
 
 void Thread_InitThreadPeriodic_Period

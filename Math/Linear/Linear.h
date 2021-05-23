@@ -161,12 +161,13 @@ static inline int32_t Linear_InvFunction_Round(Linear_T * p_linear, int32_t y)
 }
 
 void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset, int32_t rangeRef);
+
 #if defined(CONFIG_LINEAR_SHIFT_DIVIDE)
 void Linear_Init_X0(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t x0, int32_t rangeRef);
 #endif
 
-
 #endif
+
 //static inline int32_t Linear_Function_RangeBound(Linear_T * p_linear, int32_t x)
 //{
 //#ifdef CONFIG_LINEAR_SHIFT_DIVIDE

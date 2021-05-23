@@ -59,10 +59,10 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t o
 }
 
 
-static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uint8_t targetShift)
+static inline int32_t MaxLeftShiftDivide(int32_t factor, int32_t divisor, uint8_t targetShift)
 {
-	uint32_t result = 0;
-	uint32_t shiftedValue = (1U << targetShift);
+	int32_t result = 0;
+	int32_t shiftedValue = (1U << targetShift);
 
 	if (shiftedValue % divisor == 0U) /* when divisor is a whole number factor of shifted. */
 	{
@@ -99,7 +99,7 @@ static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uin
 void Linear_Init_X0(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t x0, int32_t rangeRef)
 {
 	Linear_Init(p_linear, factor, divisor,  0, rangeRef);
-	p_linear->Offset = MaxLeftShiftDivide(factor * x0, divisor, 16U);
+	p_linear->Offset = 0 - MaxLeftShiftDivide(factor * x0, divisor, 16U);
 //	p_linear->Offset = 0 - (x0 * factor << 16U) / divisor;
 }
 #endif

@@ -80,8 +80,8 @@ void Analog_Init
 	p_analog->AdcM_Buffer 	= mHwBufferLength;
 #endif
 
-	p_analog->p_MapChannelPins 		= p_virtualChannelMapPins;
-	p_analog->p_MapChannelResults 	= p_virtualChannelMapResultsBuffer;
+	p_analog->p_VirtualChannelMapPins 		= p_virtualChannelMapPins;
+	p_analog->p_VirtualChannelResults 	= p_virtualChannelMapResultsBuffer;
 	p_analog->ChannelCount			= virtualChannelCount;
 
 #if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
@@ -121,8 +121,8 @@ void Analog_Init_Struct
 	p_analog->AdcM_Buffer 	= p_init->ADC_BUFFER_LENGTH;
 #endif
 
-	p_analog->p_MapChannelPins 		= p_init->P_VIRTUAL_CHANNEL_MAP_PINS;
-	p_analog->p_MapChannelResults 	= p_init->P_VIRTUAL_CHANNEL_MAP_RESULTS_BUFFER;
+	p_analog->p_VirtualChannelMapPins 		= p_init->P_VIRTUAL_CHANNEL_MAP_PINS;
+	p_analog->p_VirtualChannelResults 	= p_init->P_VIRTUAL_CHANNEL_MAP_RESULTS_BUFFER;
 	p_analog->ChannelCount			= p_init->CHANNEL_COUNT;
 
 #if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
@@ -159,7 +159,7 @@ void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * 
 	activateConfig = CalcAdcActiveConfig(p_analog, p_conversion->Config, true);
 
 
-#if  (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
+#if  (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED))
 	/*
 	 * Multithreaded calling of Activate.
 	 * Must implement Critical_Enter
@@ -168,7 +168,7 @@ void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * 
 	 * e.g. must be implemented if calling from inside interrupts and main.
 	 */
 	Critical_Enter();
-#else
+#elif defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
 	/*
 	 * Single threaded calling of Activate.
 	 * Single threaded case, and calling thread is lower priority than ADC ISR, may implement ADC_DisableInterrupt instead of Critical_Enter global disable interrupt
@@ -306,7 +306,7 @@ volatile analog_t * Analog_GetPtrChannelResult(const Analog_T * p_analog, Analog
 
 	if (channel < p_analog->ChannelCount)
 	{
-		p_result = &p_analog->p_MapChannelResults[(uint8_t)channel];
+		p_result = &p_analog->p_VirtualChannelResults[(uint8_t)channel];
 	}
 	else
 	{

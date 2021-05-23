@@ -36,6 +36,7 @@
 
 #include "Peripheral/Pin/Pin.h"
 #include "Peripheral/Analog/Analog.h"
+#include "Peripheral/Flash/Flash.h"
 
 #include "Transducer/Encoder/Encoder.h"
 #include "Transducer/Encoder/Encoder_Motor.h"
@@ -90,8 +91,8 @@ typedef enum
 
 typedef enum
 {
-	MOTOR_CONTROL_MODE_FOC,
-	MOTOR_CONTROL_MODE_SIX_STEP,
+	MOTOR_COMMUTATION_MODE_FOC,
+	MOTOR_COMMUTATION_MODE_SIX_STEP,
 } Motor_CommutationMode_T;
 
 typedef enum
@@ -111,6 +112,20 @@ typedef enum
 	MOTOR_SENSOR_MODE_ENCODER,
 	MOTOR_SENSOR_MODE_BEMF,
 } Motor_SensorMode_T;
+
+typedef enum
+{
+	MOTOR_SENSOR_INSTALL_HALL,
+	MOTOR_SENSOR_INSTALL_ENCODER,
+	MOTOR_SENSOR_INSTALL_BEMF,
+} Motor_SensorInstall_T;
+
+typedef enum
+{
+	MOTOR_ALIGN_MODE_DISABLE,
+	MOTOR_ALIGN_MODE_ALIGN,
+	MOTOR_ALIGN_MODE_HFI,
+} Motor_AlignMode_T;
 
 
 /*
@@ -173,7 +188,10 @@ typedef enum
 } Motor_AnalogChannel_T;
 
 /*!
-	@brief Parameters load from flash else load default
+	@brief Parameters
+	Runtime configuration
+
+	load from flash else load default
  */
 typedef struct
 {
@@ -230,14 +248,16 @@ typedef struct
 	/* if Analog_T abstracted to controls all adc.(nfixed and nmultimuxed modes). Analog_T scale 1 per motor, can be controlled within motor module */
 	//	Analog_T Analog;
 
-	/* Analog Channel Results Scales 1 per motor instance */
+	// trottle and brake may need to be pointers
 	volatile uint16_t AnalogChannelResults[MOTOR_ANALOG_ADC_CHANNEL_COUNT];
 
 	Encoder_T Encoder;
 	Phase_T Phase;
 	Hall_T Hall;
 	BEMF_T Bemf;
-	//	Flash_T Flash; // flash/eeprom access
+
+
+	Flash_Region_T * p_FlashRegion;
 
 	FOC_T Foc;
 	qangle16_t ElectricalAngle;
@@ -245,11 +265,15 @@ typedef struct
 	uint32_t InterpolatedAngleIndex;
 
 	/* Mode selection. Substates */
-	Motor_Parameters_T 		Parameters;
-	Motor_Direction_T 		Direction;
-	Motor_ControlMode_T 	ControlMode;
-	Motor_SensorMode_T 		SensorMode;
-	Motor_CommutationMode_T CommutationMode;
+
+	Motor_SensorInstall_T 		SensorInstall;
+	Motor_Parameters_T 			Parameters;
+	Motor_Direction_T 			Direction;
+	Motor_ControlMode_T 		ControlMode;
+	Motor_SensorMode_T 			SensorMode;
+	Motor_CommutationMode_T 	CommutationMode;
+
+
 
 	StateMachine_T StateMachine;
 	uint32_t ControlTimerBase;	 /* Control Freq */
@@ -302,6 +326,8 @@ typedef struct
 
 	/* UI report */
 	uint16_t VBus;
+
+	Motor_Init_T * p_Init;
 }
 Motor_T;
 
@@ -366,8 +392,9 @@ static inline void Motor_PollSpeedLoop(Motor_T * p_motor)
 //}
 
 extern void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInitStruct);
-
 extern void Motor_StartAlign(Motor_T * p_motor);
+
+
 
 #endif
 

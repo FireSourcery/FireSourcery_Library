@@ -22,37 +22,9 @@
 /*******************************************************************************/
 /*******************************************************************************/
 /*!
-    @file 	MotorStateMachine.h
+    @file
     @author FireSoucery
-    @brief  MotorStateMachine
+    @brief
     @version V0
 */
 /*******************************************************************************/
-#ifndef MOTOR_STATE_MACHINE_H
-#define MOTOR_STATE_MACHINE_H
-
-#include "../Motor.h"
-//#include "../Motor_FOC.h"
-
-typedef enum MotorStateMachine_TransitionInput
-{
-	MOTOR_TRANSITION_FAULT,
-	MOTOR_TRANSITION_INIT,
-	MOTOR_TRANSITION_CALIBRATION,
-	MOTOR_TRANSITION_ALIGN,
-	MOTOR_TRANSITION_RUN,
-	MOTOR_TRANSITION_STOP,
-} MotorStateMachine_TransitionInput_T;
-
-typedef enum MotorStateMachine_OutputInput
-{
-	MOTOR_STATE_BUTTON_NEXT,
-	MOTOR_OUTPUT_BUTTON_PREV,
-
-//	MOTOR_STATUS_NO_OP = 0xFFu,
-//	STATE_INPUT_RESERVED_NO_OP = 0xFFu,
-} MotorStateMachine_OutputInput_T;
-
-extern void MotorStateMachine_Init(Motor_T * p_motor);
-
-#endif

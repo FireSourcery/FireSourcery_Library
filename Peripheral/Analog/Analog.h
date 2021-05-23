@@ -267,12 +267,12 @@ typedef struct
 	 };
 	 */
 
-	const adcpin_t * p_MapChannelPins; /*!< Channel Pins array, virtual channel index. Translates virtual channels to ADC pin channels */
+	const adcpin_t * p_VirtualChannelMapPins; /*!< Channel Pins array, virtual channel index. Translates virtual channels to ADC pin channels */
 #if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
 	const uint8_t * p_MapChannelAdcs; 	/*! for case of fixed N ADCs Fixed channels */
 #endif
 
-	volatile analog_t * p_MapChannelResults; 	/*!< Persistent ADC results buffer, virtual channel index.  */
+	volatile analog_t * p_VirtualChannelResults; 	/*!< Persistent ADC results buffer, virtual channel index.  */
 	//volatile uint32_t * p_ChannelSumBuffer;	/*!< sum if multiple conversions are required */
 
 	uint8_t ChannelCount; /*!< VirtualChannelCount p_VirtualChannelResults and p_VirtualChannelMap length / boundary check */
@@ -351,7 +351,7 @@ static inline analog_t Analog_ReadChannel(const Analog_T * p_analog, Analog_Virt
 
 	if (channel < p_analog->ChannelCount)
 	{
-		result = p_analog->p_MapChannelResults[(uint8_t)channel];
+		result = p_analog->p_VirtualChannelResults[(uint8_t)channel];
 	}
 	else
 	{
@@ -368,7 +368,7 @@ static inline analog_t Analog_ReadChannel(const Analog_T * p_analog, Analog_Virt
  */
 static inline void Analog_ResetChannelResult(Analog_T * p_analog, Analog_VirtualChannel_T channel)
 {
-	p_analog->p_MapChannelResults[channel] = 0U;
+	p_analog->p_VirtualChannelResults[channel] = 0U;
 }
 
 static inline Analog_VirtualChannel_T Analog_GetActiveChannelId(Analog_T * p_analog)

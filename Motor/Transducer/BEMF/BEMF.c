@@ -36,12 +36,15 @@
 void BEMF_Init
 (
 	BEMF_T * p_bemf,
+	uint32_t * p_timer,
 	volatile const bemf_t * p_phaseA,
 	volatile const bemf_t * p_phaseB,
 	volatile const bemf_t * p_phaseC,
 	volatile const bemf_t * p_vbus
 )
 {
+	p_bemf->p_Timer = p_timer;
+
 	p_bemf->p_VPhaseA_ADCU = p_phaseA;
 	p_bemf->p_VPhaseB_ADCU = p_phaseB;
 	p_bemf->p_VPhaseC_ADCU = p_phaseC;

@@ -108,6 +108,7 @@ typedef struct
 	volatile BEMF_Mode_T Mode; 					/// UseSensorlessCommutation
 
 	//Time in Timer Ticks
+	//todo rename TimeDelta and TimePoint
 	volatile uint32_t TimeReference;		//reference start time								
 	volatile uint32_t TimeBemf;						/// sample time stamp, from commutation
 	volatile uint32_t TimeBemfPrev;					/// sample time stamp, from commutation
@@ -121,7 +122,7 @@ typedef struct
 	//uint16_t UsePWMOnThreshold;			/// for mixed sample mode, use PWM On ZCD when PWM On cycle is above this time.
 	//uin16t_t DiodeDrop; //if no complementry pwm vd/2
 
-	volatile uint32_t TimeCommutation; 			/// use for polling method, commutation time stamp, not needed if isr generated and counter resets to 0,
+	volatile uint32_t TimeNextCommutation; 			///  time till next
 }
 BEMF_T;
 
@@ -149,7 +150,7 @@ static inline void BEMF_MapCcwPhaseAB_IO(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf)
 
 static inline void BEMF_SetNewCycle_IO(BEMF_T * p_bemf) //OnCommutation
 {
-	p_bemf->TimeCommutation = p_bemf->TimeZeroCrossingPeriod - p_bemf->PhaseAdvanceTime;//back up time, will be overwritten upon zcd
+	p_bemf->TimeNextCommutation = p_bemf->TimeZeroCrossingPeriod - p_bemf->PhaseAdvanceTime;//back up time, will be overwritten upon zcd
 	p_bemf->IsZeroCrossingDetectionComplete = false;
 	p_bemf->TimeBlank = p_bemf->TimeZeroCrossing / 2; //default case 25% of commutation time, 50% of zct. set 0 for passive mode?
 
@@ -271,8 +272,8 @@ static inline bool BEMF_PollZeroCrossingDetection_IO(BEMF_T * p_bemf)
 		CaptureBemf(p_bemf);
 		if (ProcBemfZeroCrossingDetection(p_bemf))
 		{
-			p_bemf->TimeCommutation = p_bemf->TimeZeroCrossing - p_bemf->PhaseAdvanceTime;
-			//HAL_BEMF_StartTimerInterrupt(p_bemf->p_HAL_Bemf, p_bemf->TimeCommutation);
+			p_bemf->TimeNextCommutation = p_bemf->TimeZeroCrossing - p_bemf->PhaseAdvanceTime;
+			//HAL_BEMF_StartTimerInterrupt(p_bemf->p_HAL_Bemf, p_bemf->TimeNextCommutation);
 			newData =  true;
 		}
 	}
@@ -283,9 +284,9 @@ static inline bool BEMF_PollZeroCrossingDetection_IO(BEMF_T * p_bemf)
 //60 degree time after BEMF_PollZeroCrossingDetection_IO
 //30 degrees time after BEMF_SetNewCycle_IO
 // adjusted with PhaseAdvanceTime
-static inline uint16_t BEMF_GetCommutationTime(BEMF_T * p_bemf)
+static inline uint16_t BEMF_GetNextCommutationTime(BEMF_T * p_bemf)
 {
-	return p_bemf->TimeCommutation;
+	return p_bemf->TimeNextCommutation;
 }
 
 //60 degrees time
@@ -322,5 +323,8 @@ static inline uint16_t BEMF_GetVPhase(BEMF_T * p_bemf)
 {
 	return *p_bemf->p_VPhaseObserve_ADCU;
 }
+
+
+
 
 #endif
