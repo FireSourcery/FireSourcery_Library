@@ -138,6 +138,8 @@ void Analog_Init_Struct
 
 /*!
 	 @brief Public function to activate ADC.
+
+	 overwrite active conversion
  */
 void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
 {
@@ -203,8 +205,13 @@ void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * 
 
 }
 
+/*
+ * Conversion Queue
+ * Dequeue from header
+ * Enqueue to tail
+ */
 // cannot overwrite first item i.e head of queue
-bool Analog_EnqueueConversion(Analog_T *p_analog, const Analog_Conversion_T *p_conversion)
+bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
 {
 	uint8_t newTail;
 	bool isSucess;
@@ -217,8 +224,8 @@ bool Analog_EnqueueConversion(Analog_T *p_analog, const Analog_Conversion_T *p_c
 
 		if (newTail != p_analog->ConversionQueueHead)
 		{
+			p_analog->pp_ConversionQueue[p_analog->ConversionQueueTail] = p_conversion;
 			p_analog->ConversionQueueTail = newTail;
-			p_analog->pp_ConversionQueue[newTail] = p_conversion;
 			isSucess = true;
 		}
 		else
@@ -237,36 +244,10 @@ bool Analog_EnqueueConversion(Analog_T *p_analog, const Analog_Conversion_T *p_c
 	return isSucess;
 }
 
-//can overwrite last item i.e tail of queue
-void Analog_EnqueueFrontConversion(Analog_T *p_analog, const Analog_Conversion_T *p_conversion)
-{
-	if (Analog_ReadConversionActive(p_analog) == true)
-	{
-		Critical_Enter();
-
-		if (p_analog->ConversionQueueHead < 1U)
-		{
-			p_analog->ConversionQueueHead = p_analog->ConversionQueueLength - 1;
-		}
-		else
-		{
-			p_analog->ConversionQueueHead--;
-		}
-
-		p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead] = p_conversion;
-
-		Critical_Exit();
-	}
-	else
-	{
-		Analog_ActivateConversion(p_analog, p_conversion);
-	}
-}
-
 /*
  Dequeue if no conversions are active. Active conversion will automatically dequeue next conversion
  */
-bool Analog_DequeueConversion(Analog_T *p_analog)
+bool Analog_DequeueConversion(Analog_T * p_analog)
 {
 	bool isSucess;
 
@@ -294,6 +275,34 @@ bool Analog_DequeueConversion(Analog_T *p_analog)
 
 	return isSucess;
 }
+
+//can overwrite last item i.e tail of queue
+void Analog_EnqueueFrontConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+{
+	if (Analog_ReadConversionActive(p_analog) == true)
+	{
+		Critical_Enter();
+
+		if (p_analog->ConversionQueueHead < 1U)
+		{
+			p_analog->ConversionQueueHead = p_analog->ConversionQueueLength - 1;
+		}
+		else
+		{
+			p_analog->ConversionQueueHead--;
+		}
+
+		p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead] = p_conversion;
+
+		Critical_Exit();
+	}
+	else
+	{
+		Analog_ActivateConversion(p_analog, p_conversion);
+	}
+}
+
+
 
 
 
@@ -361,3 +370,46 @@ volatile analog_t * Analog_GetPtrChannelResult(const Analog_T * p_analog, Analog
 //	}
 //#endif
 //}
+
+
+/*
+ * ProcVirtualToPinChannels
+ */
+//static inline bool ProcChannelPinBufferMap(Analog_T * p_analog,  Analog_VirtualChannel_T * p_virtualChannels, uint8_t channelCount)
+//{
+//	uint8_t iVirtualChannel;
+//	for (uint8_t index = 0; index < channelCount; index++)
+//	{
+//		iVirtualChannel = (uint8_t)(p_virtualChannels[index]);
+//
+//		if (iVirtualChannel< p_analog->VirtualChannelCount) // check for invalid pin channel??
+//		{
+//			p_analog->p_PinChannelsBuffer[index] = p_analog->p_VirtualChannelMap[iVirtualChannel];
+//			p_analog->p_VirtualChannelResults[iVirtualChannel] = 0;
+//			// settings to reset before conversion?
+//		}
+//	}
+//}
+//
+////is new data available
+//bool Analog_IsNewData(Analog_T * p_analog, Analog_VirtualChannel_T channel)
+//{
+//
+//}
+//
+////read new data
+//void Analog_PollChannel(Analog_T * p_analog, Analog_VirtualChannel_T channel)
+//{
+//	if (Analog_IsNewData(p_analog, channel))
+//	{
+//		Analog_ReadChannel(p_analog, channel);
+//	}
+//}
+//void Analog_WaitResult(Analog_T * p_analog)
+//{
+//	//while(!p_analog->ADC_GetCompleteFlag());
+//	ADC_GetCompleteFlag(p_analog->p_ADC_RegMap_IO);
+//
+//	while(!ADC_GetCompleteFlag(p_analog->p_ADC_RegMap_IO[p_analog->ADC_Count_IO - 1]));
+//}
+

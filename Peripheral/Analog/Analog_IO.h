@@ -86,37 +86,33 @@ static inline void CaptureAdcResults_NMultiMuxed
 //
 //}
 
-static inline void ProcAnalogOnCompleteChannel
+static inline void CaptureAdcResults
 (
 	const Analog_T * p_analog,
-	uint8_t activeChannelStartIndex,
-	uint8_t activeChannelCount
+	const Analog_VirtualChannel_T * p_virtualChannels
 )
 {
-	for (uint8_t index = activeChannelStartIndex; index < activeChannelCount; index++)
-	{
-		if ((p_analog->p_ActiveConversion->p_OnCompleteChannels != 0U))
-		{
-			if ((p_analog->p_ActiveConversion->p_OnCompleteChannels[index] != 0U))
-			{
-				p_analog->p_ActiveConversion->p_OnCompleteChannels[index](p_analog->p_ActiveConversion->p_OnCompleteUserData);
-			}
-		}
-	}
+#ifdef CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
+	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
+	CaptureAdcResults_NMultiMuxed(p_analog, &p_analog->p_Adc, 1U, p_virtualChannels, 1U);
+#elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
+	/* Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel is in the same buffer */
+	CaptureAdcResults_NMultiMuxed(p_analog, &p_analog->p_Adc, 1U, 	p_virtualChannels, p_analog->ActiveChannelCount);
+#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER)
+	/* Case N ADC 1 Buffer: ActiveChannelCount <= N_ADC Count */
+	CaptureAdcResults_NMultiMuxed(p_analog, p_analog->pp_Adcs, p_analog->AdcN_Count, p_virtualChannels, p_analog->ActiveChannelCount);
+//	CaptureAdcResults_NFixed()
+#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+	/* Case N ADC M Buffer: ActiveChannelCount <= N_ADC Count * M_Buffer Length */
+	CaptureAdcResults_NMultiMuxed(p_analog, p_analog->pp_Adcs, p_analog->AdcN_Count, p_virtualChannels, p_analog->ActiveChannelCount);
+//	CaptureAdcResults_NFixed()
+#endif
 }
-
 
 //bool DequeueAnalogConversion(Analog_T * p_analog)
 //{
 //
-//	bool isSucess = false;
-//
-//	Critical_Enter();
-//
-//
-//	Critical_Exit();
-//
-//	return isSucess;
+
 //}
 
 
@@ -128,20 +124,21 @@ static inline void ProcAnalogOnCompleteChannel
  */
 static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 {
-	const Analog_VirtualChannel_T * p_virtualChannels;
+	const Analog_VirtualChannel_T * p_virtualChannels; //temp buffer argument
+
+	const Analog_Conversion_T *  p_completedConversion;
+	uint8_t completedChannelStartIndex;
 	uint8_t completedChannelCount;
 	uint8_t remainingChannelCount;
-//	bool allChannelsComplete;
-	const Analog_Conversion_T *  p_newActiveConversion;
-	uint8_t newActiveConversionChannelIndex;
+
 	uint8_t newActiveChannelCount;
 	Analog_Config_T newConfig;
-//	uint8_t onCompleteStartIndex = p_analog->ActiveConversionChannelIndex;
 
+	static uint32_t debug;
 
 	if((p_analog->p_ActiveConversion != 0U) && (Analog_ReadConversionComplete(p_analog) == true))
 	{
-	//	Analog_ClearConversionComplete_IO(p_analog); //clears flags corresponding isrs set during activate, todo
+		Analog_ClearConversionComplete(p_analog);
 
 		/*
 		 * Should not need to boundary check on return
@@ -164,21 +161,14 @@ static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 			p_virtualChannels = &p_analog->p_ActiveConversion->VirtualChannel;
 		}
 
-	#ifdef CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
-		/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
-		CaptureAdcResults_NMultiMuxed(p_analog, &p_analog->p_Adc, 1U, p_virtualChannels, 1U);
-	#elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-		/* Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel is in the same buffer */
-		CaptureAdcResults_NMultiMuxed(p_analog, &p_analog->p_Adc, 1U, 	p_virtualChannels, p_analog->ActiveChannelCount);
-	#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER)
-		/* Case N ADC 1 Buffer: ActiveChannelCount <= N_ADC Count */
-		CaptureAdcResults_NMultiMuxed(p_analog, p_analog->pp_Adcs, p_analog->AdcN_Count, p_virtualChannels, p_analog->ActiveChannelCount);
-	#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-		/* Case N ADC M Buffer: ActiveChannelCount <= N_ADC Count * M_Buffer Length */
-		CaptureAdcResults_NMultiMuxed(p_analog, p_analog->pp_Adcs, p_analog->AdcN_Count, p_virtualChannels, p_analog->ActiveChannelCount);
-	#endif
+		CaptureAdcResults(p_analog, p_virtualChannels);
 
+		/*
+		 * Set up next conversion
+		 */
 
+		p_completedConversion = p_analog->p_ActiveConversion;
+		completedChannelStartIndex = p_analog->ActiveConversionChannelIndex;
 	#ifdef CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
 		completedChannelCount = 1U;
 	#elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
@@ -188,46 +178,51 @@ static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 		remainingChannelCount = p_analog->p_ActiveConversion->ChannelCount - p_analog->ActiveConversionChannelIndex - completedChannelCount;
 
 		if (remainingChannelCount > 0U)
-//		if (p_analog->ActiveConversionChannelIndex + completedChannelCount < p_analog->p_ActiveConversion->ChannelCount)
 		{
-			/* Continue conversion, update index, Start next group of channels in selected p_ActiveConversion,  */
-			p_newActiveConversion = p_analog->p_ActiveConversion; //no changes
-			newActiveConversionChannelIndex = p_analog->ActiveConversionChannelIndex + completedChannelCount;
+			/* Continue Conversion: update index, Start next group of channels in selected p_ActiveConversion  */
+
+			p_analog->ActiveConversionChannelIndex = p_analog->ActiveConversionChannelIndex + completedChannelCount;
+			p_virtualChannels = &(p_analog->p_ActiveConversion->p_VirtualChannels[p_analog->ActiveConversionChannelIndex]);
 			newActiveChannelCount = CalcAdcActiveChannelCountMax(p_analog, remainingChannelCount);
-			newConfig = CalcAdcActiveConfig(p_analog, p_newActiveConversion->Config, false);
-			ActivateAdc(p_analog, &(p_newActiveConversion->p_VirtualChannels[newActiveConversionChannelIndex]), newActiveChannelCount, newConfig);
+			newConfig = CalcAdcActiveConfig(p_analog, p_analog->p_ActiveConversion->Config, false);
 		}
 		else
 		{
-			newActiveConversionChannelIndex = 0U;
+			/* Conversion Complete */
+			p_analog->ActiveConversionChannelIndex = 0U;
 
 			if (p_analog->ConversionQueueHead != p_analog->ConversionQueueTail)
 			{
-				/* Dequeue conversion, Analog_DequeueConversion */
-				p_newActiveConversion = p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead];
+				/* Dequeue Conversion:  DequeueAnalogConversion */
+				p_analog->p_ActiveConversion = p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead];
+				p_analog->ConversionQueueHead = (p_analog->ConversionQueueHead + 1U) % p_analog->ConversionQueueLength;
 
 				if(p_analog->p_ActiveConversion->ChannelCount > 1U)
 				{
-					p_virtualChannels = p_newActiveConversion->p_VirtualChannels;
+					p_virtualChannels = p_analog->p_ActiveConversion->p_VirtualChannels;
 				}
 				else
 				{
-					p_virtualChannels = &p_newActiveConversion->VirtualChannel;
+					p_virtualChannels = &p_analog->p_ActiveConversion->VirtualChannel;
 				}
 
-				newActiveChannelCount = CalcAdcActiveChannelCountMax(p_analog, p_newActiveConversion->ChannelCount);
-				newConfig = CalcAdcActiveConfig(p_analog, p_newActiveConversion->Config, true);
-				ActivateAdc(p_analog, p_virtualChannels, newActiveChannelCount, newConfig);
-
-				p_analog->ConversionQueueHead = (p_analog->ConversionQueueHead + 1U) % p_analog->ConversionQueueLength;
+				newActiveChannelCount = CalcAdcActiveChannelCountMax(p_analog, p_analog->p_ActiveConversion->ChannelCount);
+				newConfig = CalcAdcActiveConfig(p_analog, p_analog->p_ActiveConversion->Config, true);
 			}
 			else
 			{
-				/* All conversions complete */
-				p_newActiveConversion = 0U;
-				newActiveChannelCount = 0U;
-				//(Analog_Disable(p_analog)
+				/* All Conversions Complete */
+				p_analog->p_ActiveConversion = 0U;
+				Analog_Dectivate(p_analog);
 			}
+		}
+
+		if (p_analog->p_ActiveConversion != 0)
+		{
+			#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+				p_analog->ActiveChannelCount = newActiveChannelCount;
+			#endif
+			ActivateAdc(p_analog, p_virtualChannels, newActiveChannelCount, newConfig);
 		}
 
 		/*	Critical_Exit(); */
@@ -244,25 +239,28 @@ static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 		 *  OnComplete functions run after starting next set of channel to pipeline adc run
 		 *  main context variables of initial conversion
 		 */
-	#ifdef CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
-		ProcAnalogOnCompleteChannel(p_analog, p_analog->ActiveConversionChannelIndex, 1U);
-	#elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-		ProcAnalogOnCompleteChannel(p_analog, onCompleteStartIndex, completedChannelCount)
-	#endif
-
-		if (remainingChannelCount <= 0U)
+		for (uint8_t index = completedChannelStartIndex; index < completedChannelStartIndex + completedChannelCount; index++)
 		{
-			if (p_analog->p_ActiveConversion->OnCompleteConversion != 0U)
+			if ((p_completedConversion->p_OnCompleteChannels != 0U))
 			{
-				p_analog->p_ActiveConversion->OnCompleteConversion(p_analog->p_ActiveConversion->p_OnCompleteUserData);
+				if ((p_completedConversion->p_OnCompleteChannels[index] != 0U))
+				{
+					p_completedConversion->p_OnCompleteChannels[index](p_completedConversion->p_OnCompleteUserData);
+				}
 			}
 		}
 
-		p_analog->p_ActiveConversion = p_newActiveConversion;
-		p_analog->ActiveConversionChannelIndex = newActiveConversionChannelIndex;
-	#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-		p_analog->ActiveChannelCount = newActiveChannelCount;
-	#endif
+		if (remainingChannelCount == 0U)
+		{
+			if (p_completedConversion->OnCompleteConversion != 0U)
+			{
+				p_completedConversion->OnCompleteConversion(p_completedConversion->p_OnCompleteUserData);
+			}
+		}
+	}
+	else
+	{
+		debug++;
 	}
 }
 

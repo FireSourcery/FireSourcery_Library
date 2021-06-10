@@ -40,6 +40,9 @@
 
 typedef LPUART_Type HAL_Serial_T;
 
+
+
+
 static inline void HAL_Serial_WriteTxChar(HAL_Serial_T *p_uartRegMap, uint8_t txChar)
 {
 	*((volatile uint8_t*) &(p_uartRegMap->DATA)) = txChar;

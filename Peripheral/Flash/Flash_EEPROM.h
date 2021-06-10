@@ -52,7 +52,7 @@
 //
 //}
 
-static inline bool Flash_EEPROM_WriteAlignedBytes_NonBlocking(Flash_T *p_flash, uint8_t *p_destEeprom, uint8_t *p_source, uint32_t sizeBytes)
+static inline bool Flash_EEPROM_WriteAlignedBytes_NonBlocking(Flash_T * p_flash, uint8_t * p_destEeprom, const uint8_t * p_source, uint32_t sizeBytes)
 {
 
 }
@@ -60,7 +60,7 @@ static inline bool Flash_EEPROM_WriteAlignedBytes_NonBlocking(Flash_T *p_flash, 
 /*
  * May write excess data. maintains dest data address correctly
  */
-static inline bool Flash_EEPROM_WriteAlignedBytes_Blocking(Flash_T *p_flash, uint8_t *p_destEeprom, uint8_t *p_source, uint32_t sizeBytes)
+static inline bool Flash_EEPROM_WriteAlignedBytes_Blocking(Flash_T * p_flash, uint8_t * p_destEeprom, const uint8_t * p_source, uint32_t sizeBytes)
 {
 	bool isSuccess = true;
 
@@ -72,7 +72,7 @@ static inline bool Flash_EEPROM_WriteAlignedBytes_Blocking(Flash_T *p_flash, uin
 
 	//#ifdefine CONFIG_FLASH_WRITE_ALIGNED_ONLY (p_dest | 0x3 == p_source | 0x3)
 //	if(p_destEeprom % FLASH_EEPROM_UNIT_SIZE_WRITE != 0U)
-	if ((p_destEeprom & (FLASH_UNIT_SIZE_WRITE - 1U)) != 0U)
+	if (((uint32_t)p_destEeprom & (FLASH_UNIT_SIZE_WRITE - 1U)) != 0U)
 	{
 		isSuccess = false;
 	}
@@ -112,7 +112,7 @@ static inline bool Flash_EEPROM_WriteAlignedBytes_Blocking(Flash_T *p_flash, uin
     return isSuccess;
 }
 
-static inline bool Flash_EEPROM_WriteAlignedBytes(Flash_T *p_flash, uint8_t *p_destEeprom, uint8_t *p_source, uint32_t sizeBytes)
+static inline bool Flash_EEPROM_WriteAlignedBytes(Flash_T * p_flash, uint8_t * p_destEeprom, const uint8_t * p_source, uint32_t sizeBytes)
 {
 #ifdef CONFIG_FLASH_WRITE_BLOCKING
 	Flash_EEPROM_WriteAlignedBytes_Blocking();
@@ -132,29 +132,48 @@ static inline bool Flash_EEPROM_WriteAlignedBytes(Flash_T *p_flash, uint8_t *p_d
 //	}
 //}
 
-static inline bool Flash_EEPROM_WriteRegion_Blocking(Flash_T *p_flash, Flash_Region_T *p_dest, uint8_t *p_sourcApp)
+static inline bool Flash_EEPROM_WritePartition_Blocking(Flash_T * p_flash, Flash_Partition_T * p_dest, const uint8_t * p_sourcApp)
 {
 
 }
 
-static inline bool Flash_EEPROM_ReadRegion_Blocking(Flash_T *p_flash, uint8_t *p_destApp, Flash_Region_T *p_sourc)
+static inline bool Flash_EEPROM_ReadPartition_Blocking(Flash_T * p_flash, uint8_t * p_destApp, const Flash_Partition_T * p_sourc)
 {
 
 }
 
-static inline uint8_t Flash_EEPROM_EraseUnit(Flash_T *p_flash, uint8_t *p_addressEeprom)
+static inline uint8_t Flash_EEPROM_EraseUnit(Flash_T * p_flash, uint8_t * p_addressEeprom)
 {
 
 }
 
-static inline uint8_t Flash_EEPROM_EraseUnits(Flash_T *p_flash, uint8_t *p_addressEeprom, uint32_t sizeUnits)
+static inline uint8_t Flash_EEPROM_EraseUnits(Flash_T * p_flash, uint8_t * p_addressEeprom, uint32_t sizeUnits)
 {
 
 }
 
-static inline uint8_t Flash_EEPROM_EraseBytes(Flash_T *p_flash, uint8_t *p_addressEeprom, uint32_t sizeBytes)
+static inline uint8_t Flash_EEPROM_EraseBytes(Flash_T * p_flash, uint8_t * p_addressEeprom, uint32_t sizeBytes)
 {
 
+}
+
+
+
+
+static inline uint8_t Flash_EEPROM_ReadBytes(Flash_T * p_flash, uint8_t * p_dest, const uint8_t * p_sourceEeprom, uint32_t sizeBytes)
+{
+	for (uint32_t index = 0; index < sizeBytes; index++)
+	{
+		p_dest[index] = p_sourceEeprom[index];
+	}
+}
+
+static inline uint8_t Flash_EEPROM_ReadAlignedBytes(Flash_T * p_flash, uint8_t * p_dest, const uint8_t * p_sourceEeprom, uint32_t sizeBytes)
+{
+	for (uint32_t index = 0; index < sizeBytes; index += 4U)
+	{
+		((volatile uint32_t*)p_dest)[index] = ((uint32_t*)p_sourceEeprom)[index];
+	}
 }
 
 #endif /*   */

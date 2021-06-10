@@ -29,13 +29,14 @@
 */
 /**************************************************************************/
 #include "Motor.h"
-#include "Motor_SixStep.h"
-#include "Motor_FOC.h"
 
 #include "Config.h"
-#include "Default.h"
+//#include "Default.h"
 
+#include "System/MotorFlash.h"
 #include "System/MotorStateMachine.h"
+
+
 #include "System/StateMachine/StateMachine.h"
 #include "System/Thread/Thread.h"
 
@@ -53,17 +54,34 @@
 void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInit)
 {
 	p_motor->p_Init = p_motorInit;
+
+	//if first time boot, use serial com instead
+
 	MotorStateMachine_Init(p_motor);
 }
 
-
+//state machine init-state run
 void Motor_InitReboot(Motor_T * p_motor)
 {
 	const Motor_Init_T * p_motorInit = p_motor->p_Init; //Load Compile time consts
 
-	//LoadParams from flash
 
-	/*HW Wrappers Init */
+	/*
+	 * Motor Utility Instance Init, 1 for all motor
+	 */
+
+	//call from outside since there is only 1
+//	MotorFlash_Init
+//	(
+//		&p_motorInit->HAL_FLASH
+//	);
+	//	MotorShell_Init();
+
+	MotorFlash_LoadParameterAll(p_motor);
+
+	/*
+	 * HW Wrappers Init
+	 */
 	Phase_Init
 	(
 		&p_motor->Phase,
@@ -83,7 +101,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 //		1 //runtime variable
 //	);
 
-	//all sixstep modes and hall foc mode user hall version
+	//all sixstep modes and hall foc mode use CaptureTime
 	Encoder_Motor_InitCaptureTime
 	(
 		&p_motor->Encoder,
@@ -91,16 +109,40 @@ void Motor_InitReboot(Motor_T * p_motor)
 		p_motorInit->HALL_ENCODER_TIMER_COUNTER_MAX,
 		p_motorInit->HALL_ENCODER_TIMER_COUNTER_FREQ,
 		p_motorInit->MOTOR_PWM_FREQ,
-		p_motorInit->ENCODER_ANGLE_RES_BITS,
-		7U*6U, //runtime variable, load from flash  //config for per commutation or per erotation
-		0U
+		16U, //always 16 bits
+		p_motor->Parameters.PolePairs,
+		p_motor->Parameters.PolePairs*6U,  // use PolePairs * 6 for count per commutation or PolePairs for per erotation
+		p_motor->Parameters.EncoderDistancePerCount
 	);
 
-	//	Hall_Init
-	//	(
-	//		&p_motor->Hall,
-	//
-	//	);
+	Encoder_InitExtendedDeltaT
+	(
+		&p_motor->Encoder,
+		&p_motor->MillisTimerBase,
+		1000U,
+		1000U
+	);
+
+
+	Hall_Init
+	(
+		&p_motor->Hall,
+		&p_motorInit->HAL_HALL,
+		MOTOR_SECTOR_ID_1,
+		MOTOR_SECTOR_ID_2,
+		MOTOR_SECTOR_ID_3,
+		MOTOR_SECTOR_ID_4,
+		MOTOR_SECTOR_ID_5,
+		MOTOR_SECTOR_ID_6,
+		p_motor->Parameters.HallVirtualSensorInvBMap,
+		p_motor->Parameters.HallVirtualSensorAMap,
+		p_motor->Parameters.HallVirtualSensorInvCMap,
+		p_motor->Parameters.HallVirtualSensorBMap,
+		p_motor->Parameters.HallVirtualSensorInvAMap,
+		p_motor->Parameters.HallVirtualSensorCMap,
+		MOTOR_SECTOR_ERROR_000,
+		MOTOR_SECTOR_ERROR_111
+	);
 
 	//	BEMF_Init
 	//	(
@@ -108,6 +150,11 @@ void Motor_InitReboot(Motor_T * p_motor)
 	//
 	//	);
 	//
+
+	Debounce_Init(&p_motor->PinBrake, 		&p_motorInit->HAL_PIN_BRAKE, 		&p_motor->MillisTimerBase, 5U);	//5millis
+	Debounce_Init(&p_motor->PinThrottle,	&p_motorInit->HAL_PIN_THROTTLE, 	&p_motor->MillisTimerBase, 5U);	//5millis
+	Debounce_Init(&p_motor->PinForward, 	&p_motorInit->HAL_PIN_FORWARD, 		&p_motor->MillisTimerBase, 5U);	//5millis
+	Debounce_Init(&p_motor->PinReverse, 	&p_motorInit->HAL_PIN_REVERSE, 		&p_motor->MillisTimerBase, 5U);	//5millis
 
 	//	if analog module algo supports matching channel to adc virtualization layer
 	//	Analog_Init
@@ -128,29 +175,26 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	Thread_InitThreadPeriodic_Period //Timer only mode
 	(
-		&p_motor->Timer1Ms,
-		&p_motor->ControlTimerBase,
-		p_motorInit->MOTOR_PWM_FREQ,
-		20U,
+		&p_motor->MillisTimerThread,
+		&p_motor->MillisTimerBase,
+		1000U,
+		1U,
 		0U,
 		0U
 	);
 
-	//MotorStateMachine_Init(p_Motor);
+	Thread_InitThreadPeriodic_Period //Timer only mode
+	(
+		&p_motor->SecondsTimerThread,
+		&p_motor->MillisTimerBase,
+		1000U,
+		1000U,
+		0U,
+		0U
+	);
+
+
 	//initial runtime config settings
-
-	p_motor->Direction = MOTOR_DIRECTION_CW;
-	Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW);
-
-//	p_motor->CommutationMode = MOTOR_CONTROL_MODE_FOC;
-//	p_motor->SensorMode = MOTOR_SENSOR_MODE_OPEN_LOOP;
-
-	p_motor->CommutationMode 	= MOTOR_COMMUTATION_MODE_SIX_STEP;
-	p_motor->SensorMode 		= MOTOR_SENSOR_MODE_OPEN_LOOP;
-	p_motor->ControlMode 		= MOTOR_CONTROL_MODE_OPEN_LOOP;
-	Motor_SixStep_SetCommutationControl(p_motor);
-
-
 	Phase_Polar_ActivateMode(&p_motor->Phase, PHASE_MODE_UNIPOLAR_1);
 
 	//uncalibrated default
@@ -169,15 +213,10 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage
 
+	p_motor->Direction 		= MOTOR_DIRECTION_CCW;
+	p_motor->DirectionInput = MOTOR_DIRECTION_CCW;
+	p_motor->SpeedFeedback_RPM = 0U;
 
-
-//testing
-
-//	Motor_StartAlign(p_motor);
-//	Motor_FOC_StartAngleControlMode(p_motor);
-
-//	Phase_ActuateDutyCycle_Ticks(&p_motor->Phase, 100, 100, 100);
-//	Phase_ActuateState(&p_motor->Phase, 1, 1, 1);
 }
 
 
@@ -189,7 +228,7 @@ void Motor_ActivateAlign(Motor_T * p_motor)
 
 void Motor_StartAlign(Motor_T * p_motor)
 {
-	Thread_SetTimer(&p_motor->ControlTimerThread, 1000U);
+	Thread_SetTimer(&p_motor->ControlTimerThread, 20000U);
 	Motor_ActivateAlign(p_motor);
 }
 
@@ -201,32 +240,21 @@ bool Motor_WaitAlign(Motor_T *p_motor)
 	return status;
 }
 
-
 Motor_AlignMode_T Motor_GetAlignMode(Motor_T *p_motor)
 {
 	Motor_AlignMode_T alignMode;
 
-	switch (p_motor->SensorMode)
+	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
 	{
-	case MOTOR_SENSOR_MODE_ENCODER:
-//		if useHFI alignMode = MOTOR_ALIGN_MODE_HFI;
-//		else
-		alignMode = MOTOR_ALIGN_MODE_ALIGN;
-		break;
-
-	case MOTOR_SENSOR_MODE_BEMF:
-//		if useHFI alignMode= MOTOR_ALIGN_MODE_HFI;
-//		else
-		alignMode = MOTOR_ALIGN_MODE_ALIGN;
-		break;
-
-	case MOTOR_SENSOR_MODE_HALL:
 		alignMode = MOTOR_ALIGN_MODE_DISABLE;
-		break;
-
-	default:
-		break;
 	}
+//	else
+//	{
+//		//		if useHFI alignMode= MOTOR_ALIGN_MODE_HFI;
+//		//		else
+//				alignMode = MOTOR_ALIGN_MODE_ALIGN;
+//	}
+//
 
 	return alignMode;
 }
@@ -234,32 +262,125 @@ Motor_AlignMode_T Motor_GetAlignMode(Motor_T *p_motor)
 void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
 	p_motor->Direction = direction;
-	Hall_SetDirection(&p_motor->Hall, direction);
-//	 BEMF_SetDirection(&p_motor->Bemf, direction);
-//	 Motor_FOC_SetDirection(&p_motor);
-}
 
-/*!
-	@brief Load from flash
-	@param p_motor
- */
-void Motor_LoadParameters(Motor_T * p_motor)
-{
+	if (direction = MOTOR_DIRECTION_CW)
+	{
+		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW);
+	}
+	else
+	{
+		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW);
+	}
 
-//	p_motor->Parameters.FocOpenLoopVq = DEFAULT_FOC_OPEN_LOOP_VQ;
-	/*
-	 * Load default via HAL
-	 */
-//#ifdef CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
-//	p_motor->Parameters.FocOpenLoopVq = DEFAULT_FOC_OPEN_LOOP_VQ;
+
+//	switch (direction)
+//	{
 //
-//#elif defined(CONFIG_MOTOR_LOAD_PARAMETERS_FLASH)
-//	p_motor->Parameters.FocOpenLoopVq = Flash_Read(&p_motor->Flash, MEMORY_ADDRESS_FOC_OPEN_LOOP_VOLTAGE);
-//#endif
+//	case MOTOR_DIRECTION_CW:
+//		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW);
+//		//	 BEMF_SetDirection(&p_motor->Bemf, direction);
+//		//	 FOC_SetDirection(&p_motor);
+//		break;
+//
+//	case MOTOR_DIRECTION_CCW:
+//		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW);
+//		//	 BEMF_SetDirection(&p_motor->Bemf, direction);
+//		//	 FOC_SetDirection(&p_motor);
+//		break;
+//
+////	case	MOTOR_DIRECTION_NEUTRAL:
+////		break;
+//
+//	default:
+//		break;
+//	}
+
+
+}
+
+
+void Motor_StartCalibrateHall(Motor_T * p_motor)
+{
+	p_motor->ControlTimerBase = 0U;
+	Thread_SetTimer(&p_motor->ControlTimerThread, 20000U); //Parameter.HallCalibrationTime
+}
+
+//120 degree hall aligned with phase
+bool Motor_CalibrateHall(Motor_T * p_motor)
+{
+	static uint8_t state = 0; //limits calibration to 1 at a time;
+
+	const uint16_t duty = 65536 / 10/4;
+
+	bool isComplete = false;
+
+	if (Thread_PollTimer(&p_motor->ControlTimerThread) == true)
+	{
+		switch (state)
+		{
+		case 0U:
+			Phase_ActuateState(&p_motor->Phase, true, true, true);
+
+			Phase_ActuateDutyCycle(&p_motor->Phase, duty, 0U, 0U);
+			state++;
+			break;
+
+		case 1U:
+			Hall_CalibrateSensorAPhaseBC(&p_motor->Hall, MOTOR_SECTOR_ID_2);
+
+			Phase_ActuateDutyCycle(&p_motor->Phase, duty, duty, 0U);
+			state++;
+			break;
+
+		case 2U:
+			Hall_CalibrateSensorInvCPhaseBA(&p_motor->Hall, MOTOR_SECTOR_ID_3);
+
+			Phase_ActuateDutyCycle(&p_motor->Phase, 0U, duty, 0);
+			state++;
+			break;
+
+		case 3U:
+			Hall_CalibrateSensorBPhaseCA(&p_motor->Hall, MOTOR_SECTOR_ID_4);
+
+			Phase_ActuateDutyCycle(&p_motor->Phase, 0U, duty, duty);
+			state++;
+			break;
+
+		case 4U:
+			Hall_CalibrateSensorInvAPhaseCB(&p_motor->Hall, MOTOR_SECTOR_ID_5);
+
+			Phase_ActuateDutyCycle(&p_motor->Phase, 0U, 0U, duty);
+			state++;
+			break;
+
+		case 5U:
+			Hall_CalibrateSensorCPhaseAB(&p_motor->Hall, MOTOR_SECTOR_ID_6);
+
+			Phase_ActuateDutyCycle(&p_motor->Phase, duty, 0U, duty);
+			state++;
+			break;
+
+		case 6U:
+			Hall_CalibrateSensorInvBPhaseAC(&p_motor->Hall, MOTOR_SECTOR_ID_1);
+
+			Phase_ActuateState(&p_motor->Phase, false, false, false);
+			state = 0;
+			isComplete = true;
+			break;
+
+		default:
+			break;
+
+		}
+	}
+
+	return isComplete;
 }
 
 
 
 
-
-
+//void Motor_OnBlock(Motor_T * p_motor)
+//{
+//
+//}

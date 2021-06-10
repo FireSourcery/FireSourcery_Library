@@ -36,6 +36,8 @@
 
 #include <stdint.h>
 
+//static inline int16_t Linear_ADC_ConvertAdcuToFraction_Signed16(Linear_T * p_linear, uint16_t adcu)
+
 static inline int16_t Linear_ADC_CalcSignedFraction16(Linear_T * p_linear, uint16_t adcu)
 {
 #ifdef CONFIG_LINEAR_SHIFT_DIVIDE

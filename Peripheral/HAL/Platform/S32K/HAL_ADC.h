@@ -48,18 +48,18 @@ typedef ADC_Type HAL_ADC_T;
 
 static inline void HAL_ADC_Activate(HAL_ADC_T * p_adcRegBase, uint32_t pinChannel)
 {
- 	p_adcRegBase->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
+	p_adcRegBase->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
 }
 
 static inline void HAL_ADC_WriteLast(HAL_ADC_T * p_adcRegBase, uint32_t pinChannel)
 {
- 	p_adcRegBase->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
+	p_adcRegBase->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
 }
 
 static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_adcRegBase, uint32_t pinChannel)
 {
 	(void)pinChannel;
-	return (uint32_t) p_adcRegBase->R[0U];
+	return (uint32_t)p_adcRegBase->R[0U];
 }
 
 /*
@@ -109,18 +109,19 @@ static inline void HAL_ADC_Dectivate(HAL_ADC_T * p_adcRegBase)
 
 static inline bool HAL_ADC_ReadConversionActiveFlag(const HAL_ADC_T * p_adcRegBase)
 {
-	uint32_t tmp = (uint32_t) p_adcRegBase->SC2;
+	uint32_t tmp = (uint32_t)p_adcRegBase->SC2;
 	tmp = (tmp & ADC_SC2_ADACT_MASK) >> ADC_SC2_ADACT_SHIFT;
 	return (tmp != 0u) ? true : false;
 }
 
 static inline bool HAL_ADC_ReadConversionCompleteFlag(const HAL_ADC_T * p_adcRegBase)
 {
-	uint32_t tmp = (uint32_t) p_adcRegBase->SC1[0U];
+	uint32_t tmp = (uint32_t)p_adcRegBase->SC1[0U];
 	tmp = (tmp & ADC_SC1_COCO_MASK) >> ADC_SC1_COCO_SHIFT;
 	return (tmp != 0u) ? true : false;
 }
 
+//clears interrupt
 static inline void HAL_ADC_ClearConversionCompleteFlag(const HAL_ADC_T * p_adcRegBase)
 {
 	(void)p_adcRegBase;

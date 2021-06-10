@@ -33,19 +33,27 @@
 
 #include "Config.h"
 
-#ifdef CONFIG_PIN_HAL_S32K
-	#include "Peripheral/HAL/Platform/S32K/HAL_Pin.h"
-#elif defined(CONFIG_PIN_HAL_USER_DEFINED)
-
-typedef const struct
-{
-	void * p_PinBase;
-	uint32_t PinMask;
-} HAL_Pin_T;
-
-extern inline void HAL_Pin_WriteState(const HAL_Pin_T * p_pin, bool isOn);
-extern inline bool HAL_Pin_ReadState(const HAL_Pin_T * p_pin);
-
+#if defined(CONFIG_HAL_LIBRARY_DEFINED)
+	#include "Peripheral/HAL/HAL.h"
+#elif defined(CONFIG_HAL_USER_DEFINED)
+	#include "HAL/HAL.h"
+#elif defined(CONFIG_HAL_PIN_USER_DEFINED)
+	#include "HAL/HAL_Pin.h"
 #endif
+
+//#ifdef CONFIG_PIN_HAL_S32K
+//	#include "Peripheral/HAL/Platform/S32K/HAL_Pin.h"
+//#elif defined(CONFIG_PIN_HAL_USER_DEFINED)
+//
+//typedef const struct
+//{
+//	void * p_PinBase;
+//	uint32_t PinMask;
+//} HAL_Pin_T;
+//
+//extern inline void HAL_Pin_WriteState(const HAL_Pin_T * p_pin, bool isOn);
+//extern inline bool HAL_Pin_ReadState(const HAL_Pin_T * p_pin);
+//
+//#endif
 
 #endif

@@ -32,6 +32,7 @@
 #define MOTOR_FLASH_H
 
 #include "Motor/Motor.h"
+#include "Peripheral/Flash/Flash_EEPROM.h"
 #include "Peripheral/Flash/Flash.h"
 
 //typedef const struct
@@ -66,39 +67,52 @@
 //#define MOTOR_FLASH_PARAMETERS                                  ((Motor_Parameters_T *)FLASH_EEPROM_START)
 //#define MOTOR_FLASH_PARAMETERS_DATA                             ((uint32_t *)FLASH_EEPROM_START)
 
+
+
 static Flash_T MotorFlashController;
 
 static inline uint32_t MotorFlash_LoadParameterAll(Motor_T * p_motor)
 {
-	Flash_EEPROM_ReadBytes(&MotorFlashController, &p_motor->Parameters, p_motor->p_MotorFlashRegion->p_Address, sizeof(Motor_Parameters_T));
+	Flash_EEPROM_ReadBytes(&MotorFlashController, &p_motor->Parameters, p_motor->p_Init->P_EEPROM, sizeof(Motor_Parameters_T));
 }
 
 static inline uint32_t MotorFlash_SaveParametersAll(Motor_T * p_motor)
 {
- 	Flash_EEPROM_WriteAlignedBytes(&MotorFlashController, p_motor->p_MotorFlashRegion->p_Address, &p_motor->Parameter, sizeof(Motor_Parameters_T));
+ 	Flash_EEPROM_WriteAlignedBytes(&MotorFlashController, p_motor->p_Init->P_EEPROM, &p_motor->Parameters, sizeof(Motor_Parameters_T));
 }
 
 
-//static inline void MotorFlash_Init //per app
-//(
-//	Motor_T* p_motor,
-//	HAL_Flash * p_hal_flash,
-//	void (* flashCallback)(void *),
-//	void * p_callbackData
-//)
-//{
-//
-//	Flash_Init(&p_motor->Flash, hal);
-//}
 
-static inline void MotorFlashRegion_Init //per motor
+static inline void MotorFlash_OnBlock(void * p_void)
+{
+
+}
+
+
+
+static inline void MotorFlash_Init //per app
 (
-	Motor_T* p_motor,
-	const Flash_Region_T * p_flashRegion
+	HAL_Flash_T * p_hal_flash
 )
 {
-	p_motor->p_MotorFlashRegion = p_flashRegion;
+	Flash_Init
+	(
+		&MotorFlashController,
+		p_hal_flash,
+		MotorFlash_OnBlock,
+		0U
+	);
 }
+
+static inline void MotorFlash_InitParition //per motor
+(
+	Motor_T* p_motor,
+	const Flash_Partition_T * p_flashParition
+)
+{
+//	p_motor->p_MotorFlashParition = p_flashParition;
+}
+
 //static inline uint32_t MotorFlash_LoadParameter_FocOpenLoopVq(Motor * p_motor)
 //{
 //	return ((Motor_Parameters_T *)(p_flash->p_ParametersStart))->FocOpenLoopVq;

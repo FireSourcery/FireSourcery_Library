@@ -150,12 +150,13 @@ static inline void BEMF_MapCcwPhaseAB_IO(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf)
 
 static inline void BEMF_SetNewCycle_IO(BEMF_T * p_bemf) //OnCommutation
 {
-	p_bemf->TimeNextCommutation = p_bemf->TimeZeroCrossingPeriod - p_bemf->PhaseAdvanceTime;//back up time, will be overwritten upon zcd
+//	p_bemf->TimeNextCommutation = p_bemf->TimeZeroCrossingPeriod - p_bemf->PhaseAdvanceTime;//back up time, will be overwritten upon zcd
 	p_bemf->IsZeroCrossingDetectionComplete = false;
 	p_bemf->TimeBlank = p_bemf->TimeZeroCrossing / 2; //default case 25% of commutation time, 50% of zct. set 0 for passive mode?
 
 	//sw timer version
 	p_bemf->TimeReference = *p_bemf->p_Timer;
+
 	//hw timer version
 	//	HAL_BEMF_StartTimerInterrupt(p_bemf->p_HAL_Bemf, p_bemf->TimeZeroCrossingPeriod); //back up time, if zcd miss
 
@@ -256,7 +257,7 @@ static inline bool ProcBemfZeroCrossingDetection(BEMF_T * p_bemf)
 }
 
 
-//Observe bemf
+//2 phase active
 static inline bool BEMF_PollZeroCrossingDetection_IO(BEMF_T * p_bemf)
 {
 
@@ -272,7 +273,7 @@ static inline bool BEMF_PollZeroCrossingDetection_IO(BEMF_T * p_bemf)
 		CaptureBemf(p_bemf);
 		if (ProcBemfZeroCrossingDetection(p_bemf))
 		{
-			p_bemf->TimeNextCommutation = p_bemf->TimeZeroCrossing - p_bemf->PhaseAdvanceTime;
+//			p_bemf->TimeNextCommutation = p_bemf->TimeZeroCrossing - p_bemf->PhaseAdvanceTime;
 			//HAL_BEMF_StartTimerInterrupt(p_bemf->p_HAL_Bemf, p_bemf->TimeNextCommutation);
 			newData =  true;
 		}
@@ -281,12 +282,19 @@ static inline bool BEMF_PollZeroCrossingDetection_IO(BEMF_T * p_bemf)
 	return newData;
 }
 
+//passive always observe
+static inline bool BEMF_CapturePassive_IO(BEMF_T * p_bemf)
+{
+
+
+}
+
 //60 degree time after BEMF_PollZeroCrossingDetection_IO
 //30 degrees time after BEMF_SetNewCycle_IO
 // adjusted with PhaseAdvanceTime
-static inline uint16_t BEMF_GetNextCommutationTime(BEMF_T * p_bemf)
+static inline uint16_t BEMF_GetNextCommutationTime(BEMF_T * p_bemf) //GetCommutationPeriod
 {
-	return p_bemf->TimeNextCommutation;
+	return p_bemf->TimeNextCommutation; //p_bemf->TimeZeroCrossingPeriod - p_bemf->PhaseAdvanceTime;//back up time, will be overwritten upon zcd
 }
 
 //60 degrees time
@@ -299,6 +307,19 @@ static inline uint16_t BEMF_GetZeroCrossingPeriod(BEMF_T * p_bemf)
 static inline uint16_t BEMF_GetZeroCrossingTime(BEMF_T * p_bemf)
 {
 	return p_bemf->TimeZeroCrossing;
+}
+
+
+//60 degrees time
+static inline uint16_t BEMF_GetTimeAngle60(BEMF_T * p_bemf)
+{
+	return p_bemf->TimeZeroCrossingPeriod - p_bemf->PhaseAdvanceTime;
+}
+
+//30 degrees time
+static inline uint16_t BEMF_GetTimeAngle30(BEMF_T * p_bemf)
+{
+	return p_bemf->TimeZeroCrossing - p_bemf->PhaseAdvanceTime;
 }
 
 /*

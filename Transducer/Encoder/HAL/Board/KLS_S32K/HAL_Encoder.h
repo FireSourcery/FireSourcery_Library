@@ -60,14 +60,14 @@ static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_enco
 
 static inline void HAL_Encoder_WriteTimerCounter(const HAL_Encoder_T * p_encoder, uint32_t count)
 {
-	(void) p_encoder;
-	FTM2->CNT = count;
+	(void)p_encoder;
+	FTM2->CNT = FTM_CNT_COUNT(count);
 }
 
 static inline void HAL_Encoder_WriteTimerCounterMax(const HAL_Encoder_T * p_encoder, uint32_t max)
 {
 	(void)p_encoder;
-	FTM2->MOD = max;
+	FTM2->MOD = FTM_MOD_MOD(max);
 }
 
 static inline void HAL_Encoder_WriteTimerCounterFreq(const HAL_Encoder_T * p_encoder, uint32_t freq)
@@ -95,6 +95,14 @@ static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder)
 {
 	(void)p_encoder;
 	return (bool)(PTE->PDIR & ((uint32_t)1U << 4U));
+}
+
+//clear interrupt
+static inline void HAL_Encoder_ClearTimerCounterOverflow(const HAL_Encoder_T * p_encoder)
+{
+	(void)p_encoder;
+	FTM2->SC &= ~FTM_SC_TOF_MASK;
+	FTM2->SC;
 }
 
 /*
@@ -172,7 +180,7 @@ static inline void HAL_Encoder_InitCaptureTime(const HAL_Encoder_T * p_encoder)
 	        FTM_MODE_UP_TIMER, /* Mode of operation for FTM */
 	        FTM_CLOCK_DIVID_BY_128, /* FTM clock prescaler */
 	        FTM_CLOCK_SOURCE_SYSTEMCLK,   /* FTM clock source */
-	        FTM_BDM_MODE_00, /* FTM debug mode */
+	        FTM_BDM_MODE_11, /* FTM debug mode */
 	        false,    /* Interrupt state */
 	        false     /* Initialization trigger */
 	};
@@ -193,9 +201,9 @@ static inline void HAL_Encoder_InitCaptureTime(const HAL_Encoder_T * p_encoder)
 	FTM_DRV_Deinit(2U);
 	INT_SYS_DisableIRQ(FTM2_Ovf_Reload_IRQn);
 
-	FTM_DRV_Init(2U, &flexTimer_mc_1_InitConfig_0, &ftm2State); 	/* FTM2 module initialized to work in quadrature decoder mode, specifically PhaseA and PhaseB mode */
+	FTM_DRV_Init(2U, &flexTimer_mc_1_InitConfig_0, &ftm2State);
 	FTM_DRV_InitCounter(2U, &flexTimer_mc_1_TimerConfig_0);
-
+	FTM_DRV_CounterStart(2U);
 }
 
 /*

@@ -50,12 +50,18 @@ void StateMachine_Init
 	p_stateMachine->TransitionInputCount 		= transitionInputCount;
 	p_stateMachine->SelfTransitionInputCount 	= selfTransitionInputCount;
 	p_stateMachine->p_UserData 					= p_userData;
-//	p_stateMachine->Input 						= 0xff;
+
+#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
+	p_stateMachine->Mutex = 1U;
+#endif
 }
 
 void StateMachine_Reset(StateMachine_T * p_stateMachine)
 {
-	p_stateMachine->p_StateActive 			= p_stateMachine->p_StateInitial;
-//	p_stateMachine->Input 					= 0xff;
+	if (Critical_MutexAquire(&p_stateMachine->Mutex))
+	{
+		p_stateMachine->p_StateActive 			= p_stateMachine->p_StateInitial;
+		Critical_MutexRelease(&p_stateMachine->Mutex);
+	}
 }
 

@@ -116,6 +116,10 @@ static inline uint32_t Encoder_Motor_GetElectricalRpm(Encoder_T * p_encoder)
 	return (p_encoder->DeltaD * p_encoder->UnitAngularSpeed * 60 >> (32 - p_encoder->UnitAngularD_DivisorShift)) * p_encoder->PolePairs;
 }
 
+
+
+
+
 /*!
 	Get Mechanical Angular Speed [Degree16s Per Second]
  */
@@ -132,19 +136,8 @@ static inline uint32_t Encoder_Motor_GetMechanicalRpm(Encoder_T * p_encoder)
 	//return p_encoder->DeltaD * p_encoder->UnitAngularSpeed * 60 >> (32 - p_encoder->UnitAngularD_DivisorShift) ;
 }
 
-/*
-	When UnitAngularSpeed is too high. Large timer freq (> 16 bits), angle res, small countsPerRevolution
-*/
-static inline uint32_t Encoder_Motor_GetMechanicalSpeed_Coarse(Encoder_T * p_encoder)
-{
-	 return (p_encoder->DeltaD * p_encoder->UnitT_Freq) / (p_encoder->EncoderResolution * p_encoder->DeltaT) << (32U - p_encoder->UnitAngularD_DivisorShift);
-}
 
-static inline uint32_t Encoder_Motor_GetMechanicalRpm_Coarse(Encoder_T * p_encoder)
-{
-//	UnitRotationalSpeed = (p_encoder->UnitT_Freq) / (p_encoder->EncoderResolution)
-	return (p_encoder->DeltaD * p_encoder->UnitT_Freq * 60) / (p_encoder->EncoderResolution * p_encoder->DeltaT);
-}
+
 
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToDeltaD(Encoder_T * p_encoder, uint16_t mechRpm)
 {

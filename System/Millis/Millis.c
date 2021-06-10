@@ -8,20 +8,20 @@
 
 #include <stdint.h>
 
-volatile uint32_t Millis_TickCount = 0;
+volatile uint32_t Millis_Count = 0;
 	
 //void (*Millis_OnTick)(void);
 void (*Millis_Yield)(void);
 
-void Delay(uint32_t ms) //blocking delay
+void Millis_Delay(uint32_t ms) //blocking delay
 {
-	uint32_t start = Millis_TickCount;
+	uint32_t start = Millis_Count;
 	uint32_t elapsed = 1U;
 
-	while (Millis_TickCount < start + ms)
+	while (Millis_Count < start + ms)
 	{
 		if (Millis_Yield) Millis_Yield();
-		while (Millis_TickCount < start + elapsed);
+		while (Millis_Count < start + elapsed);
 		elapsed++;
 	}
 }
@@ -38,12 +38,13 @@ void Millis_MapYield(void (*fp)(void))
 
 uint32_t * Millis_GetPtr(void)
 {
-	return &Millis_TickCount;
+	return &Millis_Count;
 }
 
 #ifdef CONFIG_MILLIS_MCU_ARM
-// KE/KEA PE priority 2 -> PRI_15 = 0x80
+
 #ifdef CPU_FREQ
+// KE/KEA PE priority 2 -> PRI_15 = 0x80
 void Millis_Init(uint8_t priority)
 {
 	SYST_RVR = (CPU_FREQ / 1000U) - 1U;
@@ -60,4 +61,5 @@ void Millis_Init(uint32_t freqCpu, uint8_t priority)
 	SCB_SHPR3 = (uint32_t) ((SCB_SHPR3 & (uint32_t) ~(uint32_t) (SCB_SHPR3_PRI_15(0xFF))) | (uint32_t) (SCB_SHPR3_PRI_15(priority)));
 }
 #endif
+
 #endif

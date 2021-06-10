@@ -49,21 +49,23 @@
 #else
 	#define CONFIG_HALL_SENSORS_ORDER_CBA
 #endif
-/*
-	HAL Select
- */
-#if defined(CONFIG_HALL_HAL_PIN_S32K)
-	#define CONFIG_HALL_HAL_PIN
-#elif defined(CONFIG_HALL_HAL_HALL_S32K)
-	#define CONFIG_HALL_HAL_HALL
-#elif defined(CONFIG_HALL_HAL_KLS_S32K)
-	#define CONFIG_HALL_HAL_HALL
-#elif defined(CONFIG_HALL_HAL_HALL_USER_DEFINED)
-	#define CONFIG_HALL_HAL_HALL
-#else
-	#define CONFIG_HALL_HAL_HALL_USER_DEFINED
-	#define CONFIG_HALL_HAL_HALL
-#endif
+
+
+///*
+//	HAL Select
+// */
+//#if defined(CONFIG_HALL_HAL_PIN_S32K)
+//	#define CONFIG_HALL_HAL_PIN
+//#elif defined(CONFIG_HALL_HAL_HALL_S32K)
+//	#define CONFIG_HALL_HAL_HALL
+//#elif defined(CONFIG_HALL_HAL_KLS_S32K)
+//	#define CONFIG_HALL_HAL_HALL
+//#elif defined(CONFIG_HALL_HAL_HALL_USER_DEFINED)
+//	#define CONFIG_HALL_HAL_HALL
+//#else
+//	#define CONFIG_HALL_HAL_HALL_USER_DEFINED
+//	#define CONFIG_HALL_HAL_HALL
+//#endif
 
 
 #if  	defined(CONFIG_HALL_HAL_PIN)

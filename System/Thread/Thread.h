@@ -45,7 +45,7 @@
 
 typedef struct
 {
-	const volatile uint32_t *p_Timer; 	// User app must provide millis timer. Shared between all thread instances
+	const volatile uint32_t *p_Timer; 	// User app must provide timercounter. per thread instance allows different timers bases
 	uint32_t TimerFreq;					// 1000 ticks per second using millis
 
 //	uint32_t PeriodMax;
@@ -63,8 +63,8 @@ typedef struct
 #endif
 
 	volatile bool IsOneShot;			// One-time or periodic
-	volatile uint32_t Ticks;			// One shot procs count, not timer ticks
-	volatile uint32_t TicksRemaining;	// One shot procs count, not timer timer
+	volatile uint32_t ProcCounts;			// One shot procs count, not timer ticks
+	volatile uint32_t ProcCountsRemaining;	// One shot procs count, not timer timer
 
 #ifdef CONFIG_THREAD_FUNCTION_CONTEXT_ENABLED
 	void (*OnComplete)(volatile void * p_context); /* Current function to run */
@@ -91,6 +91,10 @@ static inline bool Thread_PollTimer(Thread_T * p_thread)
 	}
 	else
 	{
+		if (p_thread->IsOneShot == false)
+		{
+			p_thread->TimePrev = *p_thread->p_Timer;
+		}
 		proc = true;
 	}
 
@@ -107,7 +111,7 @@ static inline uint32_t Thread_GetTimer_Millis(Thread_T *p_thread)
 	return p_thread->TimerFreq / ((*p_thread->p_Timer - p_thread->TimePrev) * 1000U);
 }
 
-static inline uint32_t Thread_ConvertMillisToTimer(Thread_T *p_thread, uint32_t ms)
+static inline uint32_t Thread_ConvertTimerMillisToTicks(Thread_T *p_thread, uint32_t ms) //ticks
 {
 	return p_thread->TimerFreq / (ms * 1000U);
 }

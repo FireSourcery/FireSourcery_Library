@@ -48,7 +48,7 @@ typedef const struct
 /*
  * Only 1 set of hall sensor on KLS_S32K. Can use hard coded value
  */
-static inline uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
+static inline volatile uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
 {
 	(void)p_hall;
 
@@ -57,7 +57,8 @@ static inline uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
 	 * 	PTE5 -> SB
 	 * 	PTE10 -> SC
 	 */
-	return (((PTE->PDIR >> 4) | (PTE->PDIR >> 4) | (PTE->PDIR >> 8)) & 0x07);
+//	return ((((PTE->PDIR >> 4)&0x01) | ((PTE->PDIR >> 4)&0x02) | ((PTE->PDIR >> 8)&0x04)));
+	return (((PTE->PDIR >> 4) & 0b0011) | ((PTE->PDIR >> 8) & 0b0100));
 }
 
 

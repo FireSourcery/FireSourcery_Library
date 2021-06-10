@@ -34,24 +34,28 @@
 #include "../Motor.h"
 //#include "../Motor_FOC.h"
 
-typedef enum MotorStateMachine_TransitionInput
+typedef enum MotorStateMachine_InputTransition
 {
 	MOTOR_TRANSITION_FAULT,
 	MOTOR_TRANSITION_INIT,
-	MOTOR_TRANSITION_CALIBRATION,
+	MOTOR_TRANSITION_CALIBRATE_ADC,
+	MOTOR_TRANSITION_CALIBRATE_HALL,
 	MOTOR_TRANSITION_ALIGN,
-	MOTOR_TRANSITION_RUN,
+	MOTOR_TRANSITION_SPIN,
 	MOTOR_TRANSITION_STOP,
-} MotorStateMachine_TransitionInput_T;
+	MOTOR_TRANSITION_FREEWHEEL,
+} MotorStateMachine_InputTransition_T;
 
-typedef enum MotorStateMachine_OutputInput
+typedef enum MotorStateMachine_InputOutput
 {
+	MOTOR_BUTTON_FORWARD,
+
 	MOTOR_STATE_BUTTON_NEXT,
 	MOTOR_OUTPUT_BUTTON_PREV,
 
 //	MOTOR_STATUS_NO_OP = 0xFFu,
 //	STATE_INPUT_RESERVED_NO_OP = 0xFFu,
-} MotorStateMachine_OutputInput_T;
+} MotorStateMachine_InputOutput_T;
 
 extern void MotorStateMachine_Init(Motor_T * p_motor);
 

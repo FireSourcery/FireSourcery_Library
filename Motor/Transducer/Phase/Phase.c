@@ -62,8 +62,20 @@ void Phase_Init
 	p_phase->p_HAL_Phase = p_HAL_Phase;
 	HAL_Phase_Init(p_HAL_Phase);
 #endif
+
 	p_phase->PwmPeriod_Ticks = pwmPeroid_Ticks;
+
+	Phase_ActuateDutyCycle(p_phase, 0U, 0U, 0U);
+	Phase_ActuateState(p_phase, false, false, false);
+	Phase_ActuateInvertPolarity(p_phase, false, false, false);
 	p_phase->PhaseMode = PHASE_MODE_UNIPOLAR_1;
+	p_phase->DutyA_Ticks = 0U;
+	p_phase->DutyB_Ticks = 0U;
+	p_phase->DutyC_Ticks = 0U;
+	p_phase->StateA = false;
+	p_phase->StateB = false;
+	p_phase->StateC = false;
+	p_phase->Duty_Ticks = 0U;
 
 //	p_phase->OnPhaseAB = onPhaseAB;
 //	p_phase->OnPhaseAC = onPhaseAC;

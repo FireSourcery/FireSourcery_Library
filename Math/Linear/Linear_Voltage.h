@@ -76,7 +76,7 @@ static inline uint32_t Linear_Voltage_CalcFraction16(Linear_T * p_linear, uint16
 {
 	return Linear_Function_UnsignedFraction16(p_linear, adcu);
 }
-
+//	Linear_Voltage_ConvertAdcuToFractionUnsigned16()
 static inline uint16_t Linear_Voltage_CalcUnsignedFraction16(Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Function_UnsignedFraction16(p_linear, adcu);

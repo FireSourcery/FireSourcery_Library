@@ -54,9 +54,9 @@ static inline bool ProcThreadOneShot(Thread_T * p_thread)
 {
 	bool proc;
 
-	if (p_thread->TicksRemaining > 0) // last update on 1 ticks remaining
+	if (p_thread->ProcCountsRemaining > 0) // last update on 1 procCounts remaining
 	{
-		p_thread->TicksRemaining--;
+		p_thread->ProcCountsRemaining--;
 		ProcThread(p_thread);
 		proc = true;
 	}
@@ -154,7 +154,7 @@ void Thread_InitThread
 	void (*function)(volatile void *),
 	volatile void * p_context,
 	bool oneShot,
-	uint32_t ticks,		//proc counts
+	uint32_t procCounts,
 	void(*onComplete)(volatile void *),
 	volatile void * p_onCompleteContext
 )
@@ -167,8 +167,8 @@ void Thread_InitThread
 	p_thread->p_Context = p_context;
 
 	p_thread->IsOneShot				= oneShot;
-	p_thread->Ticks		 			= ticks;
-	p_thread->TicksRemaining 		= ticks;
+	p_thread->ProcCounts		 			= procCounts;
+	p_thread->ProcCountsRemaining 		= procCounts;
 	p_thread->OnComplete 			= onComplete;
 	p_thread->p_OnCompleteContext	= p_onCompleteContext;
 
@@ -186,7 +186,7 @@ void Thread_InitThreadPeriodic_Period
 	volatile void * p_context
 )
 {
-	Thread_InitThread(p_thread, p_timer, timerfreq, period, function, p_context, 0, 0, 0, 0);
+	Thread_InitThread(p_thread, p_timer, timerfreq, period, function, p_context, false, 0U, 0U, 0U);
 }
 
 void Thread_InitThreadPeriodic_Freq
@@ -199,7 +199,7 @@ void Thread_InitThreadPeriodic_Freq
 	volatile void * p_context
 )
 {
-	Thread_InitThread(p_thread, p_timer, timerfreq, timerfreq / freq, function, p_context, 0, 0, 0, 0);
+	Thread_InitThread(p_thread, p_timer, timerfreq, timerfreq / freq, function, p_context, false, 0U, 0U, 0U);
 }
 
 /*
@@ -211,14 +211,14 @@ void Thread_InitThreadOneShot_Period
 	const volatile uint32_t *p_timer,
 	uint32_t timerfreq,
 	uint32_t period,
-	uint32_t ticks, //run count, not timer ticks
+	uint32_t procCounts,
 	void (*function)(volatile void *),
 	volatile void * p_context,
 	void(*onComplete)(volatile void *),
 	volatile void * p_onCompleteContext
 )
 {
-	Thread_InitThread(p_thread, p_timer, timerfreq, period, function, p_context, true, ticks, onComplete, p_onCompleteContext);
+	Thread_InitThread(p_thread, p_timer, timerfreq, period, function, p_context, true, procCounts, onComplete, p_onCompleteContext);
 }
 
 /*
@@ -230,18 +230,18 @@ void Thread_InitThreadOneShot_Freq
 	const volatile uint32_t *p_timer,
 	uint32_t timerfreq,
 	uint32_t freq,
-	uint32_t ticks, //run count, not timer ticks
+	uint32_t procCounts,
 	void (*function)(volatile void *),
 	volatile void * p_context,
 	void(*onComplete)(volatile void *),
 	volatile void * p_onCompleteContext
 )
 {
-	Thread_InitThread(p_thread, p_timer, timerfreq, timerfreq / freq, function, p_context, true, ticks, onComplete, p_onCompleteContext);
+	Thread_InitThread(p_thread, p_timer, timerfreq, timerfreq / freq, function, p_context, true, procCounts, onComplete, p_onCompleteContext);
 }
 
 /*
-	e.g. wipe 2 leds at the total time of 1200ms, fader of 100 ticks in 1200ms
+	e.g. wipe 2 leds at the total time of 1200ms, fader of 100 procCounts in 1200ms
  */
 void Thread_InitThreadOneShot_Millis
 (
@@ -249,14 +249,14 @@ void Thread_InitThreadOneShot_Millis
 	const volatile uint32_t *p_timer,
 	uint32_t timerfreq,
 	uint32_t millis,
-	uint32_t ticks, //run count, not timer ticks
+	uint32_t procCounts,
 	void (*function)(volatile void *),
 	volatile void * p_context,
 	void(*onComplete)(volatile void *),
 	volatile void * p_onCompleteContext
 )
 {
-	Thread_InitThread(p_thread, p_timer, timerfreq, timerfreq / (millis * 1000U) / ticks, function, p_context, true, ticks, onComplete, p_onCompleteContext);
+	Thread_InitThread(p_thread, p_timer, timerfreq, timerfreq / (millis * 1000U) / procCounts, function, p_context, true, procCounts, onComplete, p_onCompleteContext);
 }
 
 /*
@@ -290,7 +290,7 @@ void Thread_InitThreadOneShot_MillisFreq
 void Thread_StartThread(Thread_T * p_thread)
 {
 	p_thread->IsEnabled = true;
-	if (p_thread->IsOneShot) {p_thread->TicksRemaining = p_thread->Ticks;}
+	if (p_thread->IsOneShot) {p_thread->ProcCountsRemaining = p_thread->ProcCounts;}
 }
 
 void Thread_StopThread(Thread_T * p_thread)
@@ -320,38 +320,38 @@ void Thread_SetFreq(Thread_T * p_thread, uint16_t freq)
 //	else														p_thread->Period = p_thread->TimerFreq / freq;
 }
 
-void Thread_SetOneShot(Thread_T *p_thread, uint32_t ticks)
+void Thread_SetOneShot(Thread_T *p_thread, uint32_t procCounts)
 {
 	p_thread->IsOneShot = true;
-	p_thread->Ticks = ticks;
-	p_thread->TicksRemaining = ticks;
+	p_thread->ProcCounts = procCounts;
+	p_thread->ProcCountsRemaining = procCounts;
 }
 
-void Thread_SetOneShot_Period(Thread_T *p_thread, uint32_t ticks, uint32_t period)
+void Thread_SetOneShot_Period(Thread_T *p_thread, uint32_t procCounts, uint32_t period)
 {
 	p_thread->IsOneShot = true;
-	p_thread->Ticks = ticks;
-	p_thread->TicksRemaining = ticks;
+	p_thread->ProcCounts = procCounts;
+	p_thread->ProcCountsRemaining = procCounts;
 //		Thread_SetPeriod(thread, period);
 	p_thread->Period = period;
 }
 
-void Thread_SetOneShot_Freq(Thread_T *p_thread, uint32_t ticks, uint32_t freq)
+void Thread_SetOneShot_Freq(Thread_T *p_thread, uint32_t procCounts, uint32_t freq)
 {
 	p_thread->IsOneShot = true;
-	p_thread->Ticks = ticks;
-	p_thread->TicksRemaining = ticks;
+	p_thread->ProcCounts = procCounts;
+	p_thread->ProcCountsRemaining = procCounts;
 //	Thread_SetPeriod(thread, TimerFreq / freq);
 	p_thread->Period = p_thread->TimerFreq / freq;
 }
 
-void Thread_SetOneShot_Millis(Thread_T *p_thread, uint32_t millis, uint32_t ticks)
+void Thread_SetOneShot_Millis(Thread_T *p_thread, uint32_t millis, uint32_t procCounts)
 {
 	p_thread->IsOneShot = true;
-	p_thread->Ticks = ticks;
-	p_thread->TicksRemaining = ticks;
-//	Thread_SetPeriod(thread, period / ticks);
-	p_thread->Period = p_thread->TimerFreq / (millis * 1000U) / ticks; //check error
+	p_thread->ProcCounts = procCounts;
+	p_thread->ProcCountsRemaining = procCounts;
+//	Thread_SetPeriod(thread, period / procCounts);
+	p_thread->Period = p_thread->TimerFreq / (millis * 1000U) / procCounts; //check error
 }
 
 void Thread_SetOneShot_MillisFreq(Thread_T *p_thread, uint32_t millis, uint32_t freq)
@@ -359,8 +359,8 @@ void Thread_SetOneShot_MillisFreq(Thread_T *p_thread, uint32_t millis, uint32_t 
 	p_thread->IsOneShot = true;
 //	Thread_SetPeriod(thread, TimerFreq / freq);
 	p_thread->Period = p_thread->TimerFreq / freq;
-	p_thread->Ticks = freq / (millis * 1000U); //check error //round up or down?
-	p_thread->TicksRemaining = p_thread->Ticks;
+	p_thread->ProcCounts = freq / (millis * 1000U); //check error //round up or down?
+	p_thread->ProcCountsRemaining = p_thread->ProcCounts;
 }
 
 	static uint32_t BoundedFaster(uint32_t timerFreq, uint16_t freqInc, uint16_t freqCurrent, uint16_t freqMin, uint16_t freqMax, bool useLoopBoundary)
@@ -436,7 +436,7 @@ void Thread_SetSlower_MinMax(Thread_T * p_thread, uint8_t freqDec, uint8_t freqM
 /******************************************************************************/
 void Thread_InitTimer(Thread_T *p_thread, const volatile uint32_t *p_timer, uint32_t timerfreq, uint32_t period)
 {
-	Thread_InitThread(p_thread, p_timer, timerfreq, period, 0U, 0U, 0U, 0U, 0U, 0U);
+	Thread_InitThread(p_thread, p_timer, timerfreq, period, 0U, 0U, false, 0U, 0U, 0U);
 	p_thread->TimePrev = *p_thread->p_Timer;
 }
 

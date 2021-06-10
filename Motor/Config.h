@@ -31,25 +31,19 @@
 #ifndef CONFIG_MOTOR_H
 #define CONFIG_MOTOR_H
 
-#ifdef CONFIG_MOTOR_HAL_S32K
 
-#elif defined(CONFIG_MOTOR_HAL_USER_DEFINED)
-
-#else
-	#define CONFIG_MOTOR_HAL_USER_DEFINED
-#endif
 
 /*
  * Motor Module
  */
-#ifdef CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
-
-
-#elif defined(CONFIG_MOTOR_LOAD_PARAMETERS_FLASH)
-
-#else
-	#define CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
-#endif
+//#ifdef CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
+//
+//
+//#elif defined(CONFIG_MOTOR_LOAD_PARAMETERS_FLASH)
+//
+//#else
+//	#define CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
+//#endif
 
 
 #endif

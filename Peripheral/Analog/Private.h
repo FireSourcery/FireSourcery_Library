@@ -188,7 +188,7 @@ static inline void ActivateAdc
 static inline uint8_t CalcAdcActiveChannelCountMax
 (
 	Analog_T * p_analog,
-	uint8_t targetChannelCount
+	uint8_t remainingChannelCount
 )
 {
 	uint8_t maxChannelCount;
@@ -196,7 +196,7 @@ static inline uint8_t CalcAdcActiveChannelCountMax
 	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
 #if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
 	(void)p_analog;
-	(void)targetChannelCount;
+	(void)remainingChannelCount;
 	maxChannelCount = 1U;
 #elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
 	/* Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel must be in same buffer */
@@ -210,9 +210,9 @@ static inline uint8_t CalcAdcActiveChannelCountMax
 #endif
 
 #if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER) && !defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
-	if (targetChannelCount < maxChannelCount)
+	if (remainingChannelCount < maxChannelCount)
 	{
-		maxChannelCount = targetChannelCount;
+		maxChannelCount = remainingChannelCount;
 	}
 #endif
 
@@ -227,23 +227,23 @@ static inline Analog_Config_T CalcAdcActiveConfig
 	bool isFirstActivation
 )
 {
-	Analog_Config_T activateConfig;
+	Analog_Config_T config;
 
 	if (conversionConfig.UseConfig == 1U)
 	{
-		activateConfig = conversionConfig;
+		config = conversionConfig;
 	}
 	else
 	{
-		activateConfig = p_analog->DefaultConfig;
+		config = p_analog->DefaultConfig;
 	}
 
 	if (isFirstActivation == false)
 	{
-		activateConfig.UseHwTriggerPerConversion = 0;
+		config.UseHwTriggerPerConversion = 0;
 	}
 
-	return activateConfig;
+	return config;
 }
 
 #endif

@@ -47,6 +47,7 @@
 /*! @{ */
 typedef struct
 {
+
 	 Motor_T * p_Motors;
 	 uint8_t MotorCount;
 }
@@ -54,8 +55,61 @@ MotorShell_T;
 
 MotorShell_T MainMotorShell;
 
+//extern int Cmd_pwm 		(int argc, char ** argv);
+//extern int Cmd_rpm 		(int argc, char ** argv);
+//extern int Cmd_jog 		(int argc, char ** argv);
+//extern int Cmd_run 		(int argc, char ** argv);
+//extern int Cmd_stop		(int argc, char ** argv);
+//extern int Cmd_release 	(int argc, char ** argv);
+//extern int Cmd_vbat		(int argc, char ** argv);
+//extern int Cmd_v		(int argc, char ** argv);
+//extern int Cmd_phase	(int argc, char ** argv);
+//extern int Cmd_hold		(int argc, char ** argv);
+//extern int Cmd_print	(int argc, char ** argv);
+
+//Cmd_T Cmd_pwm 		=	{ "pwm", 		"Sets pwm value", 			Cmd_pwm		};
+//Cmd_T Cmd_v	 		=	{ "v", 			"Sets applied voltage", 	Cmd_v		};
+//Cmd_T Cmd_rpm 		=	{ "rpm", 		"Display rpm", 				Cmd_rpm		};
+//Cmd_T Cmd_jog 		=	{ "jog", 		"Jog motor", 				Cmd_jog		};
+//Cmd_T Cmd_run 		=	{ "run", 		"Set motor to run mode", 	Cmd_run		};
+//Cmd_T Cmd_stop 		=	{ "stop", 		"Set motor to idle mode", 	Cmd_stop	};
+//Cmd_T Cmd_release 	=	{ "release", 	"Release hold", 			Cmd_release	};
+//Cmd_T Cmd_vbat 		=	{ "vbat", 		"Display battery voltage", 	Cmd_vbat	};
+//Cmd_T Cmd_phase		=	{ "phase", 		"Set motor phase", 			Cmd_phase	};
+//Cmd_T Cmd_hold		=	{ "hold", 		"hold position", 			Cmd_hold	};
+//Cmd_T Cmd_print		=	{ "print", 		"print debug info",			Cmd_print	};
+
+
+//const Cmd_T CMD_TABLE[] =
+//{
+//	{ "pwm", 		"Sets pwm value", 			Cmd_pwm		},
+////	{ "v", 			"Sets applied voltage", 	Cmd_v		},
+////	{ "rpm", 		"Display rpm", 				Cmd_rpm		},
+////	{ "jog", 		"Jog motor", 				Cmd_jog		},
+////	{ "run", 		"Set motor to run mode", 	Cmd_run		},
+////	{ "stop", 		"Set motor to idle mode", 	Cmd_stop	},
+////	{ "release", 	"Release hold", 			Cmd_release	},
+////	{ "vbat", 		"Display battery voltage", 	Cmd_vbat	},
+////	{ "phase", 		"Set motor phase", 			Cmd_phase	},
+////	{ "hold", 		"hold position", 			Cmd_hold	},
+////	{ "print", 		"print debug info",			Cmd_print	},
+//};
+
+
 void MotorShell_Init(Motor_T * p_motors, uint8_t motorCount)
 {
+
+//	Shell_Init
+//	(
+//		&CMD_TABLE,
+//	);
+//	Cmd_T * p_cmdTable,
+//	uint8_t cmdCount,
+//	Cmd_ReturnCode_T * p_returnCodeTable,
+//	uint8_t returnCodeCount,
+//	uint16_t cmdLoopFreq,
+//	uint16_t shellProcFreq
+
 	MainMotorShell.p_Motors  = p_motors;
 	MainMotorShell.MotorCount = motorCount;
 }
@@ -78,7 +132,7 @@ int Cmd_configfile(int argc, char **argv)
 int Cmd_read(int argc, char **argv)
 {
 	static char buffer[5];
-	snprintf(buffer, 5, "%d", MainMotorShell.p_Motors[0].VBus);
+//	snprintf(buffer, 5, "%d", MainMotorShell.p_Motors[0].VBus);
 //	sprintf()
 	if (strcmp(argv[1], "vbus") == 0U)
 	{
@@ -284,47 +338,10 @@ int Cmd_pwm(int argc, char **argv)
 //    return MOTOR_SHELL_CMD_RETURN_CODE_OK;
 //}
 
-const Cmd_T CMD_TABLE[] =
-{
-	{ "pwm", 		"Sets pwm value", 			Cmd_pwm		},
-//	{ "v", 			"Sets applied voltage", 	Cmd_v		},
-//	{ "rpm", 		"Display rpm", 				Cmd_rpm		},
-//	{ "jog", 		"Jog motor", 				Cmd_jog		},
-//	{ "run", 		"Set motor to run mode", 	Cmd_run		},
-//	{ "stop", 		"Set motor to idle mode", 	Cmd_stop	},
-//	{ "release", 	"Release hold", 			Cmd_release	},
-//	{ "vbat", 		"Display battery voltage", 	Cmd_vbat	},
-//	{ "phase", 		"Set motor phase", 			Cmd_phase	},
-//	{ "hold", 		"hold position", 			Cmd_hold	},
-//	{ "print", 		"print debug info",			Cmd_print	},
-};
 
 
 
 
-//extern int Cmd_pwm 		(int argc, char ** argv);
-//extern int Cmd_rpm 		(int argc, char ** argv);
-//extern int Cmd_jog 		(int argc, char ** argv);
-//extern int Cmd_run 		(int argc, char ** argv);
-//extern int Cmd_stop		(int argc, char ** argv);
-//extern int Cmd_release 	(int argc, char ** argv);
-//extern int Cmd_vbat		(int argc, char ** argv);
-//extern int Cmd_v		(int argc, char ** argv);
-//extern int Cmd_phase	(int argc, char ** argv);
-//extern int Cmd_hold		(int argc, char ** argv);
-//extern int Cmd_print	(int argc, char ** argv);
-
-//Cmd_T Cmd_pwm 		=	{ "pwm", 		"Sets pwm value", 			Cmd_pwm		};
-//Cmd_T Cmd_v	 		=	{ "v", 			"Sets applied voltage", 	Cmd_v		};
-//Cmd_T Cmd_rpm 		=	{ "rpm", 		"Display rpm", 				Cmd_rpm		};
-//Cmd_T Cmd_jog 		=	{ "jog", 		"Jog motor", 				Cmd_jog		};
-//Cmd_T Cmd_run 		=	{ "run", 		"Set motor to run mode", 	Cmd_run		};
-//Cmd_T Cmd_stop 		=	{ "stop", 		"Set motor to idle mode", 	Cmd_stop	};
-//Cmd_T Cmd_release 	=	{ "release", 	"Release hold", 			Cmd_release	};
-//Cmd_T Cmd_vbat 		=	{ "vbat", 		"Display battery voltage", 	Cmd_vbat	};
-//Cmd_T Cmd_phase		=	{ "phase", 		"Set motor phase", 			Cmd_phase	};
-//Cmd_T Cmd_hold		=	{ "hold", 		"hold position", 			Cmd_hold	};
-//Cmd_T Cmd_print		=	{ "print", 		"print debug info",			Cmd_print	};
 
 //void MotorShell_RegisterShellCmds()
 //{

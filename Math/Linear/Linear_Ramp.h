@@ -72,7 +72,7 @@ static inline int16_t Linear_Ramp_CalcTarget_IncIndex(Linear_T *p_linear, uint32
 	{
 		if(target < p_linear->RangeReference)
 		{
-			p_index += indexIncreament;
+			*p_index += indexIncreament;
 		}
 		else
 		{
@@ -83,7 +83,7 @@ static inline int16_t Linear_Ramp_CalcTarget_IncIndex(Linear_T *p_linear, uint32
 	{
 		if(target > p_linear->RangeReference)
 		{
-			p_index += indexIncreament;
+			*p_index += indexIncreament;
 		}
 		else
 		{

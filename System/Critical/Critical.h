@@ -112,7 +112,6 @@ static inline void Critical_MutexRelease(critical_mutex_t * p_mutex)
  * Todo static inline void Critical_Enter(void * stateData) for other/semaphore implementation
  */
 //typedef volatile uint32_t critical_semaphore_t;
-////typedef volatile bool critical_mutex_t;
 //
 //static inline void Critical_SemaphorePost(critical_semaphore_t * p_semaphore)
 //{

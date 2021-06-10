@@ -42,22 +42,42 @@
  * 0 percent 	=> f([-offset*divisor/factor]) 	= 0
  * 100 percent 	=> f([(rangeRef - offset)*divisor/factor]) = rangeRef
  */
-void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset, int32_t rangeRef)
-{
+//void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset, int32_t rangeRef)
+//{
+//#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+//	p_linear->SlopeFactor 			= (factor << 16U) / divisor;
+//	p_linear->SlopeDivisor_Shift 	= 16U;
+//	p_linear->SlopeDivisor 			= (divisor << 16U) / factor; //InvF factor
+//	p_linear->SlopeFactor_Shift 	= 16U;
+//	p_linear->Offset = offset << 16U;
+//#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+//	p_linear->SlopeFactor 	= factor;
+//	p_linear->SlopeDivisor 	= divisor;
+//	p_linear->Offset = offset;
+//#endif
+//	p_linear->RangeReference = rangeRef;
+//}
 #ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+void Linear_Init(Linear_T * p_linear, int16_t factor, int16_t divisor, int16_t offset, int32_t rangeRef)
+{
 	p_linear->SlopeFactor 			= (factor << 16U) / divisor;
 	p_linear->SlopeDivisor_Shift 	= 16U;
 	p_linear->SlopeDivisor 			= (divisor << 16U) / factor; //InvF factor
 	p_linear->SlopeFactor_Shift 	= 16U;
 	p_linear->Offset = offset << 16U;
+
+	p_linear->RangeReference = rangeRef;
+}
 #elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset, int32_t rangeRef)
+{
 	p_linear->SlopeFactor 	= factor;
 	p_linear->SlopeDivisor 	= divisor;
 	p_linear->Offset = offset;
-#endif
+
 	p_linear->RangeReference = rangeRef;
 }
-
+#endif
 
 static inline int32_t MaxLeftShiftDivide(int32_t factor, int32_t divisor, uint8_t targetShift)
 {
@@ -92,6 +112,7 @@ static inline int32_t MaxLeftShiftDivide(int32_t factor, int32_t divisor, uint8_
 
 	return result;
 }
+
 /*
  * f(in) = ((factor * (in - x0)) / divisor) =>
  */

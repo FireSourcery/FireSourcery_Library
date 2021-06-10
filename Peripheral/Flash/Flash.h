@@ -40,12 +40,13 @@
 #define FLASH_UNIT_SIZE_ERASE	HAL_FLASH_UNIT_SIZE_ERASE
 #define FLASH_UNIT_SIZE_WRITE	HAL_FLASH_UNIT_SIZE_WRITE
 
-typedef const struct
+//Flash controller
+typedef struct
 {
 	HAL_Flash_T * p_HAL_Flash;	//flash controller registers
 
-    void (* Callback)(void *);    	/*!< OnComplete */
-    void (* Yield)(void *);    		/*!< OnComplete */
+    void (* Callback)(void *);    	/*!<  Union*/
+    void (* Yield)(void *);    		/*!<  On Block*/
     void (* OnComplete)(void *);    /*!< OnComplete */
 
     void * p_CallbackData;
@@ -53,10 +54,11 @@ typedef const struct
 
 typedef const struct
 {
-	uint32_t *p_Address;
+	uint8_t * p_Address;
 	uint32_t Size;
+//	uint8_t Alignment;
 }
-Flash_Region_T;
+Flash_Partition_T;
 
 
 //little endian
@@ -178,26 +180,24 @@ static inline uint8_t Flash_EraseUnits(Flash_T *p_flash, uint8_t *p_addressFlash
 
 }
 
+//round up or down to nearest unit or return error
 static inline uint8_t Flash_EraseBytes(Flash_T *p_flash, uint8_t *p_addressFlash, uint32_t sizeBytes)
 {
 
 }
 
-//static inline void  Flash_Init //per app
-//(
-//	Flash_T * p_flash,
-//	HAL_Flash * p_hal_flash,
-//	void (* flashCallback)(void *),
-//	void * p_callbackData
-//)
-//{
-//
-//	Flash_Init(&p_motor->Flash, hal);
-//}
-
-
-
-
+static inline void  Flash_Init
+(
+	Flash_T * p_flash,
+	HAL_Flash_T * p_hal_flash,
+	void (* flashCallback)(void *),
+	void * p_callbackData
+)
+{
+	p_flash->p_HAL_Flash = p_hal_flash;
+	p_flash->Callback = flashCallback;
+	p_flash->p_CallbackData = p_callbackData;
+}
 
 
 #endif /* FLASH_H */

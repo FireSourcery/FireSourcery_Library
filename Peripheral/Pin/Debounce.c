@@ -22,33 +22,33 @@
 /**************************************************************************/
 /**************************************************************************/
 /*!
-    @file 	Default.h
+    @file
     @author FireSoucery
-    @brief  Motor default fallback parameters
+    @brief
     @version V0
 */
 /**************************************************************************/
-#ifndef DEFAULT_MOTOR_H
-#define DEFAULT_MOTOR_H
+#include "Debounce.h"
 
-/*
- * Default value. If not load from flash. Run time adjustable
- */
+#include "HAL_Pin.h"
 
+#include <stdint.h>
+#include <stdbool.h>
 
+void Debounce_Init
+(
+	Debounce_T * p_pin,
+	const volatile HAL_Pin_T * p_hal_pin,
+	const volatile uint32_t * p_Timer,
+	uint16_t debounceTime
+)
+{
+	p_pin->p_HAL_Pin = p_hal_pin;
 
-#define DEFAULT_CONTROL_FREQ_HZ 20000
-#define DEFAULT_ENCODER_DISTANCE_PER_COUNT 1
-#define DEFAULT_ENCODER_COUNTS_PER_REVOLUTION 8192
-#define DEFAULT_POLE_PAIRS 7
+	p_pin->p_Timer = p_Timer;
+	p_pin->DebounceTime = debounceTime;
 
-
-#define DEFAULT_FOC_OPEN_LOOP_VQ 3276 /* 10 percent */
-
-#define DEFAULT_FOC_KP_FACTOR 	148 //qangle16, milliseconds
-#define DEFAULT_FOC_KP_DIVISOR 	1
-
-#define DEFAULT_FOC_KI_FACTOR 	1 //qangle16, milliseconds
-#define DEFAULT_FOC_KI_DIVISOR 	4
-
-#endif
+	p_pin->DebouncedState = HAL_Pin_ReadState(p_pin->p_HAL_Pin);
+	p_pin->DebouncedStatePrev = p_pin->DebouncedState;
+	p_pin->RawStatePrev = p_pin->DebouncedState;
+}

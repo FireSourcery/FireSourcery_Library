@@ -216,14 +216,18 @@ void Encoder_InitCaptureDeltaT
 //	HAL_Encoder_WriteTimerCounterFreq(p_hal_encoder, timerFreq);
 }
 
-//void Encoder_InitLongDelta(Encoder_T * p_encoder, volatile uint32_t * longDeltaTimer, uint32_t longTimerFreq)
-//{
-//	p_encoder->OverflowTimer 	= longDeltaTimer;
-//	p_encoder->OverflowLength 	= p_encoder->TimerCounterMax * longTimerFreq / p_encoder->UnitDeltaT_Freq; //long timer ticks per short timer overflow
-//	p_encoder->OverflowTimerSaved = *p_encoder->OverflowTimer;
-//
-//	//todo longTimerFreq adjust for deltaD
-//}
+/*
+ * extendedTimerFreq should be small, < 65536
+ */
+void Encoder_InitExtendedDeltaT(Encoder_T * p_encoder, const volatile uint32_t * p_extendedTimer, uint16_t extendedTimerFreq, uint16_t effectiveStopTime_Millis)
+{
+	p_encoder->p_ExtendedDeltaTimer = p_extendedTimer;
+	p_encoder->ExtendedDeltaTimerFreq = extendedTimerFreq;
+	p_encoder->ExtendedDeltaTimerConversion = p_encoder->TimerCounterMax * extendedTimerFreq / p_encoder->UnitT_Freq; //long timer ticks per short timer overflow
+	p_encoder->ExtendedDeltaTimerEffectiveStopTime = effectiveStopTime_Millis * extendedTimerFreq / 1000U ;
+	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->p_ExtendedDeltaTimer;
+}
+
 
 //volatile uint32_t * Encoder_GetPtrDelta(Encoder_T *p_encoder)
 //{

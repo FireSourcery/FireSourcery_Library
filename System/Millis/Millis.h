@@ -27,30 +27,30 @@
 #define SYSTICK_COUNT() (SYST_CVR)
 #endif
 
-extern volatile uint32_t Millis_TickCount;
-
-//extern void (*Millis_OnTick)(void);
-extern void (*Millis_Yield)(void);
+/*
+ * MISRA Violation
+ */
+extern volatile uint32_t Millis_Count;
 
 /*
  *  User Map to 1ms ISR
  */
 static inline void Millis_Tick_IO(void)
 {
-	Millis_TickCount++;
+	Millis_Count++;
 //	if (Millis_OnTick) Millis_OnTick();
 }
 
 static inline uint32_t Millis(void)
 {
-	return Millis_TickCount;
+	return Millis_Count;
 }
 
 #if defined(CONFIG_MILLIS_MCU_ARM) && defined(CPU_FREQ)
 static inline uint32_t Micros(void)
 {
 	uint32_t micros = (CPU_FREQ / 1000U - 1U) - (SYST_CVR / (CPU_FREQ / 1000000U)); //SYST_CVR ticks down
-	return Millis_TickCount * 1000U + micros;
+	return Millis_Count * 1000U + micros;
 }
 #endif
 
