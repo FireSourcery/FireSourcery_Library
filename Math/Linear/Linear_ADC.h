@@ -38,20 +38,20 @@
 
 //static inline int16_t Linear_ADC_ConvertAdcuToFraction_Signed16(Linear_T * p_linear, uint16_t adcu)
 
-static inline int16_t Linear_ADC_CalcSignedFraction16(Linear_T * p_linear, uint16_t adcu)
+static inline int16_t Linear_ADC_CalcFractionSigned16(Linear_T * p_linear, uint16_t adcu)
 {
 #ifdef CONFIG_LINEAR_SHIFT_DIVIDE
-	return Linear_Function_SignedFraction16(p_linear, adcu);
+	return Linear_Function_FractionSigned16(p_linear, adcu);
 #elif defined (CONFIG_LINEAR_NUMIRICAL_DIVIDE)
 //	return  p_linear->SlopeDivisor * (adcu - p_linear->Offset) / p_linear->SlopeFactor / 2U;
 	return (Linear_InvFunction(p_linear, adcu) / 2U);
 #endif
 }
 
-static inline uint16_t Linear_ADC_CalcUnsignedFraction16(Linear_T * p_linear, uint16_t adcu)
+static inline uint16_t Linear_ADC_CalcFractionUnsigned16(Linear_T * p_linear, uint16_t adcu)
 {
 #ifdef CONFIG_LINEAR_SHIFT_DIVIDE
-	return Linear_Function_UnsignedFraction16(p_linear, adcu);
+	return Linear_Function_FractionUnsigned16(p_linear, adcu);
 #elif defined (CONFIG_LINEAR_NUMIRICAL_DIVIDE)
 	Linear_InvFunction(p_linear, adcu);
 
@@ -69,6 +69,20 @@ static inline uint16_t Linear_ADC_CalcUnsignedFraction16(Linear_T * p_linear, ui
 
 }
 
+static inline uint16_t Linear_ADC_CalcFractionSigned16_Physical(Linear_T * p_linear, uint16_t units)
+{
+
+
+}
+
+static inline uint16_t Linear_ADC_CalcFractionUnsigned16_Physical(Linear_T * p_linear, uint16_t units)
+{
+
+
+}
+
+
+
 static inline int32_t Linear_ADC_CalcPhysical(Linear_T * p_linear, uint16_t adcu)
 {
 #ifdef CONFIG_LINEAR_SHIFT_DIVIDE
@@ -79,22 +93,22 @@ static inline int32_t Linear_ADC_CalcPhysical(Linear_T * p_linear, uint16_t adcu
 #endif
 }
 
-static inline int32_t Linear_ADC_CalcAdcu_SignedFraction16(Linear_T * p_linear, int16_t signedFrac16)
+static inline int32_t Linear_ADC_CalcAdcu_FractionSigned16(Linear_T * p_linear, int16_t signedFrac16)
 {
 #ifdef CONFIG_LINEAR_SHIFT_DIVIDE
-	return Linear_InvFunction_SignedFraction16(p_linear, signedFrac16);
+	return Linear_InvFunction_FractionSigned16(p_linear, signedFrac16);
 #elif defined (CONFIG_LINEAR_NUMIRICAL_DIVIDE)
-	Linear_Function_SignedFraction16(p_linear, signedFrac16); //todo check
+	Linear_Function_FractionSigned16(p_linear, signedFrac16); //todo check
 	//	return signedFrac16 * 2U * p_linear->SlopeFactor / p_linear->SlopeDivisor + p_linear->Offset;
 #endif
 }
 
-static inline uint32_t Linear_ADC_CalcAdcu_UnsignedFraction16(Linear_T * p_linear, uint16_t unsignedFrac16)
+static inline uint32_t Linear_ADC_CalcAdcu_FractionUnsigned16(Linear_T * p_linear, uint16_t unsignedFrac16)
 {
 #ifdef CONFIG_LINEAR_SHIFT_DIVIDE
-	return Linear_InvFunction_UnsignedFraction16(p_linear, unsignedFrac16);
+	return Linear_InvFunction_FractionUnsigned16(p_linear, unsignedFrac16);
 #elif defined (CONFIG_LINEAR_NUMIRICAL_DIVIDE)
-	Linear_Function_SignedFraction16(p_linear, unsignedFrac16)  //todo check
+	Linear_Function_FractionSigned16(p_linear, unsignedFrac16)  //todo check
 //	return unsignedFrac16* p_linear->SlopeFactor / p_linear->SlopeDivisor + p_linear->Offset;
 #endif
 }

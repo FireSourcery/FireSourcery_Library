@@ -64,3 +64,12 @@
 //	//Setsetpoint ramp
 //}
 //
+
+//Motor_OutputUnits()
+//{
+//
+//}
+//
+//Motor_OutputADCU()
+//{
+//}

@@ -54,7 +54,7 @@
 	@param[in] adcBit - Number of ADC bits
  */
 /******************************************************************************/
-void Linear_Voltage_Init(Linear_T * p_linear, uint16_t vInMax, uint16_t r1, uint16_t r2, uint8_t adcVRef10, uint8_t adcBits)
+void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcVRef10, uint8_t adcBits, uint16_t vInMax)
 {
 	/*
 	 * 	Init as Linear_Function(adcu) == voltage

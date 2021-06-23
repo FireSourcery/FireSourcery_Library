@@ -380,41 +380,45 @@ static inline void Phase_Polar_SetDutyCyle_Ticks(Phase_T * p_phase, uint32_t pwm
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
+static inline void Phase_Polar_ActivatePhase(Phase_T * p_phase, Phase_Id_T phaseId)
+{
+//	CommutationTable[phaseID][p_phase->PhaseMode]();
+	switch (phaseId)
+	{
+	case PHASE_ID_0: break;
+	case PHASE_ID_1_AC:	Phase_Polar_ActivateAC(p_phase); break; //p_phase->OnPhaseAC;
+	case PHASE_ID_2_BC: Phase_Polar_ActivateBC(p_phase); break;
+	case PHASE_ID_3_BA: Phase_Polar_ActivateBA(p_phase); break;
+	case PHASE_ID_4_CA: Phase_Polar_ActivateCA(p_phase); break;
+	case PHASE_ID_5_CB: Phase_Polar_ActivateCB(p_phase); break;
+	case PHASE_ID_6_AB: Phase_Polar_ActivateAB(p_phase); break;
+	case PHASE_ID_7: break;
+	default: break;
+	}
 
-//static inline void Phase_Polar_Commutate(Phase_T * p_phase, Phase_Id_T phaseId)
-//{
-////	CommutationTable[phaseID][p_phase->PhaseMode]();
-//	switch (phaseId)
-//	{
-//	case PHASE_ID_0: break;
-//	case PHASE_ID_1_AC:	Phase_Polar_ActivateAC(p_phase); p_phase->OnPhaseAC; break;
-//	case PHASE_ID_2_BC: Phase_Polar_ActivateBC(p_phase); break;
-//	case PHASE_ID_3_BA: Phase_Polar_ActivateBA(p_phase); break;
-//	case PHASE_ID_4_CA: Phase_Polar_ActivateCA(p_phase); break;
-//	case PHASE_ID_5_CB: Phase_Polar_ActivateCB(p_phase); break;
-//	case PHASE_ID_6_AB: Phase_Polar_ActivateAB(p_phase); break;
-//	case PHASE_ID_7: break;
-//	default: break;
-//	}
-//
-//	//	if (waveform->SinusoidalModulation)
-//	//	{
-//	//
-//	//		waveform->Index = 0;
-//	//	switch (phaseId)
-//	//	{
-//	//	case PHASE_ID_0: break;
-//	//	case PHASE_ID_1_AC:	waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
-//	//	case PHASE_ID_2_BC: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
-//	//	case PHASE_ID_3_BA: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
-//	//	case PHASE_ID_4_CA: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
-//	//	case PHASE_ID_5_CB: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
-//	//	case PHASE_ID_6_AB: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
-//	//	case PHASE_ID_7: break;
-//	//	default: break;
-//	//	}
-//	//	}
-//}
+	//	if (waveform->SinusoidalModulation)
+	//	{
+	//
+	//		waveform->Index = 0;
+	//	switch (phaseId)
+	//	{
+	//	case PHASE_ID_0: break;
+	//	case PHASE_ID_1_AC:	waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
+	//	case PHASE_ID_2_BC: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
+	//	case PHASE_ID_3_BA: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
+	//	case PHASE_ID_4_CA: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
+	//	case PHASE_ID_5_CB: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
+	//	case PHASE_ID_6_AB: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
+	//	case PHASE_ID_7: break;
+	//	default: break;
+	//	}
+	//	}
+}
+
+static inline void Phase_Polar_ActivateAngle(Phase_T * p_phase, uint16_t theta)
+{
+
+}
 
 
 static inline void Phase_ActivateA(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->Duty_Ticks, 0, 0);}

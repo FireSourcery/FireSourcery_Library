@@ -45,31 +45,27 @@
 
 typedef struct
 {
-	const volatile uint32_t *p_Timer; 	// User app must provide timercounter. per thread instance allows different timers bases
-	uint32_t TimerFreq;					// 1000 ticks per second using millis
+	const volatile uint32_t * p_Timer; 	// User app must provide timercounter. per thread instance allows different timers bases
 
+	uint32_t TimerFreq;					// 1000 ticks per second using millis
 //	uint32_t PeriodMax;
 //	uint32_t PeriodMin;
+	uint32_t Period;				// Number of timer ticks between updates
+	volatile uint32_t TimerPrev; 	// Last update time
 
-	volatile uint32_t Period;		// Number of timer ticks between updates
-	volatile uint32_t TimePrev; 	// Last update time
+	bool IsOneShot;					// One-time or periodic
+	uint32_t ProcCounts;			// One shot procs count, not timer ticks
+	volatile uint32_t ProcCountsRemaining;	// One shot procs count, not timer timer
+
 	volatile bool IsEnabled;		// Enable or disable
 
 #ifdef CONFIG_THREAD_FUNCTION_CONTEXT_ENABLED
 	void (*Function)(volatile void * p_context); /* Current function to run */
 	volatile void * p_Context;						// Option to load context before running
+	void (*OnComplete)(volatile void * p_context);
+	volatile void * p_OnCompleteContext;
 #elif defined (CONFIG_THREAD_FUNCTION_CONTEXT_DISABLED)
 	void (*Function)(void);
-#endif
-
-	volatile bool IsOneShot;			// One-time or periodic
-	volatile uint32_t ProcCounts;			// One shot procs count, not timer ticks
-	volatile uint32_t ProcCountsRemaining;	// One shot procs count, not timer timer
-
-#ifdef CONFIG_THREAD_FUNCTION_CONTEXT_ENABLED
-	void (*OnComplete)(volatile void * p_context); /* Current function to run */
-	volatile void * p_OnCompleteContext;						// Option to load context before running
-#elif defined (CONFIG_THREAD_FUNCTION_CONTEXT_DISABLED)
 	void (*OnComplete)(void);
 #endif
 } Thread_T;
@@ -81,56 +77,147 @@ typedef struct
     @brief	Timer SubModule Functions
 */
 /**************************************************************************/
-static inline bool Thread_PollTimer(Thread_T * p_thread)
+static inline uint32_t Thread_GetTimerElapsed(Thread_T *p_thread)
+{
+	uint32_t ticks;
+
+#ifdef CONFIG_THREAD_TIMER_OVERFLOW_WRAP
+	//Not necessarily needed is overflow time is in days
+	if (*p_thread->p_Timer < p_thread->TimerPrev)
+	{
+		ticks = UINT32_MAX - p_thread->TimePrev + *p_thread->p_Timer
+	}
+	else
+#else
+	{
+		ticks = *p_thread->p_Timer - p_thread->TimerPrev;
+	}
+#endif
+
+	return ticks;
+}
+
+static inline uint32_t Thread_GetTimerElapsedTicks(Thread_T * p_thread)
+{
+	return Thread_GetTimerElapsed(p_thread);
+}
+
+static inline uint32_t Thread_GetTimerElapsedSeconds(Thread_T * p_thread)
+{
+	return Thread_GetTimerElapsedTicks(p_thread) / p_thread->TimerFreq;
+}
+
+static inline uint32_t Thread_GetTimerElapsedMillis(Thread_T * p_thread)
+{
+	return Thread_GetTimerElapsedTicks(p_thread) * 1000U / p_thread->TimerFreq;
+}
+
+static inline uint32_t Thread_GetTimerElapsedMicros(Thread_T *p_thread)
+{
+	uint32_t ticks = Thread_GetTimerElapsedTicks(p_thread);
+	uint32_t micros;
+
+	if(ticks > UINT32_MAX / 1000000U)
+	{
+		micros = ticks / p_thread->TimerFreq * 1000000U;
+	}
+	else
+	{
+		micros = ticks * 1000000U / p_thread->TimerFreq;
+	}
+
+	return  micros;
+}
+
+static inline uint32_t Thread_ConvertTimerMillisToTicks(Thread_T *p_thread, uint32_t ms)
+{
+	return (p_thread->TimerFreq * ms / 1000U);
+}
+
+static inline bool Thread_PollTimerComplete(Thread_T * p_thread)
 {
 	bool proc;
 
-	if (*p_thread->p_Timer < p_thread->TimePrev + p_thread->Period)
+	//will return erroneous true if timer wraps + period
+	if (Thread_GetTimerElapsedTicks(p_thread) < p_thread->Period)
 	{
 		proc = false;
 	}
 	else
 	{
-		if (p_thread->IsOneShot == false)
-		{
-			p_thread->TimePrev = *p_thread->p_Timer;
-		}
+
 		proc = true;
 	}
 
 	return proc;
 }
 
-static inline uint32_t Thread_GetTimer(Thread_T *p_thread)
+static inline bool Thread_PollTimerCompleteOnce(Thread_T * p_thread)
 {
-	return *p_thread->p_Timer - p_thread->TimePrev;
+ 	return Thread_PollTimerComplete(p_thread) ;
 }
 
-static inline uint32_t Thread_GetTimer_Millis(Thread_T *p_thread)
+static inline bool Thread_PollTimerCompletePeriodic(Thread_T * p_thread)
 {
-	return p_thread->TimerFreq / ((*p_thread->p_Timer - p_thread->TimePrev) * 1000U);
+	bool proc;
+
+	if (Thread_GetTimerElapsedTicks(p_thread) < p_thread->Period)
+	{
+		proc = false;
+	}
+	else
+	{
+		p_thread->TimerPrev = *p_thread->p_Timer;
+		proc = true;
+	}
+
+	return proc;
 }
 
-static inline uint32_t Thread_ConvertTimerMillisToTicks(Thread_T *p_thread, uint32_t ms) //ticks
-{
-	return p_thread->TimerFreq / (ms * 1000U);
-}
+//static inline bool Thread_PollTimerCompleteThread(Thread_T * p_thread)
+//{
+//	bool proc;
+//
+//	if ((Thread_GetTimerElapsedTicks(p_thread) >= p_thread->Period) && p_thread->IsEnabled == true)
+//	{
+//		proc = true;
+//		if (p_thread->IsOneShot == true)
+//		{
+//			p_thread->IsEnabled = false;
+//		}
+//		else
+//		{
+//			p_thread->TimerPrev = *p_thread->p_Timer;
+//		}
+//	}
+//	else
+//	{
+//		proc = false;
+//	}
+//
+//	return proc;
+//}
 
-static inline void Thread_SetTimer(Thread_T *p_thread, uint32_t ticks)
+static inline void Thread_SetTimerPeriod(Thread_T *p_thread, uint32_t ticks)
 {
 	p_thread->Period = ticks;
-	p_thread->TimePrev = *p_thread->p_Timer;
+	p_thread->TimerPrev = *p_thread->p_Timer;
 }
 
-static inline void Thread_SetTimer_Millis(Thread_T *p_thread, uint32_t ms)
+static inline void Thread_SetTimerPeriodTicks(Thread_T *p_thread, uint32_t ticks)
 {
-	p_thread->Period = p_thread->TimerFreq / (1000U * ms);
-	p_thread->TimePrev = *p_thread->p_Timer;
+	Thread_SetTimerPeriod(p_thread, ticks);
+}
+
+static inline void Thread_SetTimerPeriodMillis(Thread_T *p_thread, uint32_t ms)
+{
+	p_thread->Period = p_thread->TimerFreq * ms / 1000U;
+	p_thread->TimerPrev = *p_thread->p_Timer;
 }
 
 static inline void Thread_RestartTimer(Thread_T *p_thread)
 {
-	p_thread->TimePrev = *p_thread->p_Timer;
+	p_thread->TimerPrev = *p_thread->p_Timer;
 }
 
 #endif /* THREAD_H_ */

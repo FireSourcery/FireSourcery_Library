@@ -114,7 +114,7 @@ typedef enum
 	MOTOR_POSITION_FEEDBACK_HALL,
 	MOTOR_POSITION_FEEDBACK_ENCODER,
 	MOTOR_POSITION_FEEDBACK_BEMF,
-} Motor_PositionFeedback_T;
+} Motor_PositionFeedback_T; //bemf/openloop state
 
 //typedef enum
 //{
@@ -150,11 +150,11 @@ typedef enum
 	MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE,
 	MOTOR_CONTROL_MODE_CONSTANT_CURRENT,		//foc only
 	MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT,	//foc only
-} Motor_ControlMode_T; //ControlVariableFeedbackMode
+} Motor_ControlMode_T; //ControlVariableMode
 
 typedef enum
 {
-	MOTOR_SENSOR_MODE_NONE,
+	MOTOR_SENSOR_MODE_OPEN_LOOP,
 	MOTOR_SENSOR_MODE_HALL,
 	MOTOR_SENSOR_MODE_ENCODER,
 	MOTOR_SENSOR_MODE_BEMF,
@@ -187,6 +187,9 @@ typedef enum
 	MOTOR_BRAKE_MODE_REGEN_SCALAR,
 
 } Motor_BrakeMode_T;
+
+
+
 
 /*
 	Motor run modes
@@ -259,13 +262,17 @@ typedef  __attribute__ ((aligned (4U))) struct
 	uint16_t AdcRefBrake;		//max adc read value for brake
 	uint16_t AdcRefThrottle;
 
+	uint16_t SpeedRef; //max speed for throttle calibration
+	uint16_t VBusRef;
+
+
 	uint16_t OpenLoopZcdTransition;
 
 	uint8_t BrakeCoeffcient;
 
 	uint32_t SpeedControlPeriod;
 
-	uint16_t SpeedRef; //max speed for throttle calibration
+
 
 	uint8_t HallVirtualSensorAMap;
 	uint8_t HallVirtualSensorBMap;
@@ -280,6 +287,7 @@ typedef  __attribute__ ((aligned (4U))) struct
 	Motor_CommutationMode_T 	CommutationMode;
 	Motor_ControlMode_T 		ControlMode;
 	Motor_BrakeMode_T 			BrakeMode;
+	Phase_Mode_T				PhasePwmMode;
 
 	qfrac16_t FocOpenLoopVq;
 	qfrac16_t FocAlignVd;
@@ -315,6 +323,9 @@ typedef const struct Motor_Init_Tag
 	const uint32_t LINEAR_V_ABC_R2;
 	const uint32_t LINEAR_V_BUS_R1;
 	const uint32_t LINEAR_V_BUS_R2;
+
+	const uint32_t LINEAR_V_ADC_VREF;
+	const uint32_t LINEAR_V_ADC_BITS;
 
 	uint8_t * const P_EEPROM; 	//or flash partition struct
 }
@@ -368,8 +379,6 @@ typedef struct
 	volatile uint32_t OpenLoopRampIndex;
 
 	//	//PID_T PidSpeed;
-	uint32_t SpeedControlPeriod; //flag for remove
-	uint32_t SpeedControlTimer; //flag for remove
 	//	PID_T PidId;
 	//	PID_T PidIq;
 	//	volatile qfrac16_t IdReq; /* PID setpoint */
@@ -385,8 +394,10 @@ typedef struct
 
 	volatile bool IsThrottleRelease;
 
-	volatile uint16_t UserCmd; 		// from user input throttle and brake VReq or SpeedReq
-	volatile int32_t UserCmdDelta;
+	volatile uint16_t UserCmd; 		// from user input throttle or brake, VReq/IReq/SpeedReq
+	volatile uint16_t UserCmdPrev;
+//	volatile int32_t UserCmdDelta;
+
 	volatile uint16_t RampCmd;
 	volatile uint16_t VPwm; 		//VPwm for SixStep Control
 	volatile uint16_t SpeedFeedback_RPM;
@@ -397,7 +408,11 @@ typedef struct
 	volatile FOC_T Foc;
 	volatile qangle16_t ElectricalAngle;
 //	volatile qangle16_t MechanicalAngle;
+
+	volatile qangle16_t ElectricalDeltaPrev;
+
 	volatile uint32_t InterpolatedAngleIndex;
+	volatile qangle16_t HallAngle;
 
 	volatile Motor_SectorId_T NextSector; //for 6 step openloop/sensorless
 	volatile Motor_SectorId_T CommutationSector; //for 6 step openloop/sensorless
@@ -434,6 +449,14 @@ typedef struct
 }
 Motor_T;
 
+
+//per motor
+static inline void Motor_SetUserCmd(Motor_T * p_motor, uint16_t userCommand)
+{
+	p_motor->UserCmdPrev = p_motor->UserCmd;
+	p_motor->UserCmd = userCommand;
+}
+
 static inline void Motor_Float(Motor_T * p_motor)
 {
 	Phase_Float(&p_motor->Phase);
@@ -445,77 +468,137 @@ static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
 	return p_motor->SpeedFeedback_RPM;
 }
 
-static inline uint32_t Motor_CalcSpeed(Motor_T * p_motor)
+static inline void Motor_ProcSpeed(Motor_T * p_motor)
 {
-	p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
+	if(p_motor->Parameters.SensorMode != MOTOR_SENSOR_MODE_OPEN_LOOP)
+	{
+		p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
+	}
+//	else
+//	{
+//		p_motor->SpeedFeedback_RPM = p_motor->Openloop_RPM;
+//	}
 }
 
-static inline uint32_t Motor_PollStop(Motor_T * p_motor)
+static inline void Motor_PollStop(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
 	{
-		Encoder_PollDeltaTStop_IO(&p_motor->Encoder);
+		//Capture deltaT mode need
+		if (Encoder_PollDeltaTStop_IO(&p_motor->Encoder))
+		{
+			p_motor->SpeedFeedback_RPM = 0;
+		}
 	}
-	else
+	else if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP)
+	{
+		if ((p_motor->UserCmd == 0U)) //todo fix
+		{
+			if(p_motor->UserCmdPrev > 0U)
+			{
+//
+//				Thread_RestartTimer(&StopPollTimer);
+//
+//			}
+//			else if(Thread_PollTimerCompletePeriodic(&StopPollTimer))
+//			{
+				p_motor->SpeedFeedback_RPM = 0;
+			}
+		}
+	}
+	else //other modes covered by always capture DeltaD
 	{
 
 	}
 }
 
-//proc ramp update ~millis
-static inline void Motor_SetRampAccel(Motor_T * p_motor)
+
+static inline void Motor_ProcRamp(Motor_T * p_motor) // input voltage/speed cmd
 {
+	p_motor->RampCmd = Linear_Ramp_CalcTarget_IncIndex(&p_motor->Ramp, &p_motor->RampIndex, 1U);
+}
+
+
+//proc ramp update ~millis
+static inline void Motor_SetRampAccelerate(Motor_T * p_motor, uint16_t acceration)
+{
+
 	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE || p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
+	{
+
+	}
+	else if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT)
 	{
 
 	}
 	else
 	{
 		//Ramp to throttle over 1s
+//		if (p_motor->UserCmd > p_motor->UserCmdPrev)
+		{
+			Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->UserCmdPrev, p_motor->UserCmd, (int32_t)p_motor->UserCmd - (int32_t)p_motor->UserCmdPrev);
+		}
 
-		//user input -> 65536
-
-//			Linear_Ramp_InitMillis(&p_motor->Ramp, 0, p_motor->UserCmd, 1000U, 20000U);
-		Linear_Ramp_InitAcceleration(&p_motor->Ramp, p_motor->VPwm, p_motor->UserCmd, p_motor->UserCmd/2, 20000U);
+		//todo match  bemf
 	}
 	p_motor->RampIndex = 0;
 }
 
-static inline void Motor_SetRampDecel(Motor_T * p_motor)
+static inline void Motor_SetRampDecelerate(Motor_T * p_motor, uint16_t deceleration)
 {
 	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE || p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
 	{
+		//ramp unit is speed
+	}
+	else if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT)
+	{
 
 	}
-	else
+	else //ramp unit is pwm voltage
 	{
 		//Decel by Brake per 1 s
-		Linear_Ramp_InitAcceleration(&p_motor->Ramp, p_motor->VPwm, 0, -((int32_t)p_motor->UserCmd/2), 20000U);
+		//todo match  bemf
+		Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, 0, -(int32_t)p_motor->UserCmd);
+
 	}
 	p_motor->RampIndex = 0;
 }
 
-static inline void Motor_SetRamp(Motor_T * p_motor)
+
+static inline void Motor_SetOpenLoopSpeedRamp(Motor_T * p_motor, uint16_t acceration)
 {
-	if (p_motor->InputSwitchBrake == true)
+	int32_t speedNew;
+	int32_t speedPrev;
+	int32_t delta;
+
+	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_OPEN_LOOP)
 	{
-		Motor_SetRampDecel(p_motor);
+		speedNew = p_motor->UserCmd / 10U;
+		speedPrev = Motor_GetSpeed(p_motor);
+
+		delta = speedNew - speedPrev;
+
+		//		Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, Motor_GetSpeed(p_motor), p_motor->UserCmd/6, 1000U);
+
+		Linear_Ramp_InitAcceleration(&p_motor->OpenLoopRamp, 20000U, speedPrev, speedNew, delta);
+
+		p_motor->OpenLoopRampIndex = 0U;
 	}
-	else
-	{
-		Motor_SetRampAccel(p_motor);
-	}
+
 }
+//static inline void Motor_SetRamp(Motor_T * p_motor)
+//{
+//	if (p_motor->InputSwitchBrake == true)
+//	{
+//		Motor_SetRampDecel(p_motor);
+//	}
+//	else
+//	{
+//		Motor_SetRampAccel(p_motor);
+//	}
+//}
 
 
-
-static inline void Motor_ProcRamp(Motor_T * p_motor)
-{
-//	p_motor->RampCmdTemp = Linear_Ramp_CalcTarget_IncIndex(&p_motor->Ramp, &p_motor->RampIndex, Encoder_Motor_GetControlPeriods(&p_motor->Encoder));
-//
-//	p_motor->RampCmd = p_motor->UserCmd;
-	//if (p_motor->Parameters.ControlMode != MOTOR_CONTROL_MODE_OPEN_LOOP) for shared ramp
-}
 
 /*
  * Speed PID Feedback Loop
@@ -534,31 +617,28 @@ static inline void Motor_ProcRamp(Motor_T * p_motor)
 static inline void Motor_ProcSpeedFeedback(Motor_T * p_motor)
 {
 	p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
-//	//p_motor->Speed_RPM = Filter_MovAvg(p_motor->Speed_RPM, coef, coef);
-//	PID_Proc(&p_motor->PidSpeed);
+//	//p_motor->SpeedFeedback_RPM = Filter_MovAvg(p_motor->Speed_RPM, coef, coef);
+//	PID_Proc(&p_motor->PidSpeed, p_motor->SpeedFeedback_RPM, setpoint);
 }
-
 
 static inline void Motor_PollSpeedFeedback(Motor_T * p_motor)
 {
-	if (p_motor->SpeedControlTimer > p_motor->SpeedControlPeriod)
+	if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
 	{
-		Motor_ProcSpeedFeedback(p_motor);
-		p_motor->SpeedControlTimer = 0;
-	}
-	else
-	{
-		p_motor->SpeedControlTimer++;
+		 Motor_ProcSpeedFeedback(p_motor);
 	}
 }
 
-static inline void Motor_ProcControlVariable(Motor_T * p_motor)
+//static inline void Motor_SetControlVariable(Motor_T * p_motor, mode, cmd) // input voltage/speed cmd
+
+static inline void Motor_ProcControlVariable(Motor_T * p_motor) // input voltage/speed cmd
 {
+
 	switch (p_motor->Parameters.ControlMode)
 	{
 
 	case MOTOR_CONTROL_MODE_OPEN_LOOP:
-		p_motor->VPwm = p_motor->RampCmd/ 4U;
+		p_motor->VPwm = p_motor->UserCmd/2U;
 		break;
 
 	case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:
@@ -570,39 +650,44 @@ static inline void Motor_ProcControlVariable(Motor_T * p_motor)
 		break;
 
 	case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:
-		Motor_PollSpeedFeedback(p_motor);
-		p_motor->VPwm = 00000; //get from PID
+		if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
+		{
+			 Motor_ProcSpeedFeedback(p_motor); //get from PID
+		}
 		break;
 
 	default:
 		break;
 	}
+
 }
 
+
+
+//passive "control"
 static inline void Motor_ObserveSensors(Motor_T * p_motor)
 {
 
-	switch (p_motor->Parameters.SensorMode)
-	{
-//	case MOTOR_SENSOR_MODE_NONE:
-
-	case MOTOR_SENSOR_MODE_BEMF:
-		break;
-
-	case MOTOR_SENSOR_MODE_HALL:
-		if(Hall_PollEdge_IO(&p_motor->Hall))
-		{
-			BEMF_SetNewCycle_IO(&p_motor->Bemf); //always observe bemf
-			Encoder_CaptureDeltaT_IO(&p_motor->Encoder);
-			Encoder_CaptureExtendedDeltaT_IO(&p_motor->Encoder);
-	//		p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder); //more responsive to always calc speed
-
-		}
-
-	default:
-		break;
-	}
-
+//	switch (p_motor->Parameters.SensorMode)
+//	{
+////	case MOTOR_SENSOR_MODE_NONE:
+//
+//	case MOTOR_SENSOR_MODE_BEMF:
+//		break;
+//
+//	case MOTOR_SENSOR_MODE_HALL:
+//		if(Hall_PollEdge_IO(&p_motor->Hall))
+//		{
+//			BEMF_SetNewCycle_IO(&p_motor->Bemf); //always observe bemf
+//			Encoder_CaptureDeltaT_IO(&p_motor->Encoder);
+//			Encoder_CaptureExtendedDeltaT_IO(&p_motor->Encoder);
+//	//		p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder); //more responsive to always calc speed
+//
+//		}
+//
+//	default:
+//		break;
+//	}
 
 }
 
@@ -625,6 +710,9 @@ static inline bool Motor_PollToggleDirectionError(Motor_T * p_motor)
 	//		}
 }
 
+
+//move to ui?
+
 static inline bool Motor_PollToggleDirectionUpdate(Motor_T * p_motor)
 {
 	if (p_motor->Direction != p_motor->DirectionInput)
@@ -633,12 +721,11 @@ static inline bool Motor_PollToggleDirectionUpdate(Motor_T * p_motor)
 	}
 }
 
-//move to ui?
 static inline bool Motor_PollStopToSpin(Motor_T * p_motor)
 {
 	bool transition = true;
 
-	transition &= (p_motor->InputSwitchBrake == false) | ((p_motor->InputSwitchBrake == true) && (Motor_GetSpeed(p_motor) > 0));
+	transition &= (p_motor->InputSwitchBrake == false) || ((p_motor->InputSwitchBrake == true) && (Motor_GetSpeed(p_motor) > 0));
 	transition &= (p_motor->IsDirectionNeutral == false);
 	transition &= (p_motor->UserCmd > 0U);
 	transition &= (p_motor->IsThrottleRelease == false);
@@ -662,7 +749,7 @@ static inline bool Motor_PollFreewheelToSpin(Motor_T * p_motor)
 {
 	bool transition = true;
 
-	transition &= (p_motor->InputSwitchBrake == false) | ((p_motor->InputSwitchBrake == true) && (p_motor->Parameters.BrakeMode != MOTOR_BRAKE_MODE_PASSIVE) && (Motor_GetSpeed(p_motor) > 0));
+	transition &= (p_motor->InputSwitchBrake == false) || ((p_motor->InputSwitchBrake == true) && (p_motor->Parameters.BrakeMode != MOTOR_BRAKE_MODE_PASSIVE) && (Motor_GetSpeed(p_motor) > 0));
 	transition &= (p_motor->UserCmd > 0U);
 	transition &= (p_motor->IsDirectionNeutral == false);
 	transition &= (p_motor->IsThrottleRelease == false);

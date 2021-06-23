@@ -69,8 +69,9 @@ static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priotiy
 {
 	p_motor->MillisTimerBase++;
 
+	Motor_ProcSpeed(p_motor);
 	Motor_PollStop(p_motor);
-	Motor_CalcSpeed(p_motor);
+
 	//high prioirty brake decel
 //	if (MotorUser_PollBrake(p_motor))
 //	if (p_motor->InputSwitchBrake == true)
@@ -139,7 +140,7 @@ static inline bool MotorUser_GetCmdRelease(Motor_T * p_motor)
 static inline void Motor_Main_Thread(Motor_T * p_motor)
 {
 
-	if (Thread_PollTimer(&p_motor->MillisTimerThread) == true)
+	if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
 	{
 
 		//UI
@@ -162,10 +163,8 @@ static inline void Motor_Main_Thread(Motor_T * p_motor)
 
 			p_motor->InputValueThrottlePrev = p_motor->InputValueThrottle;
 			p_motor->InputValueBrakePrev = p_motor->InputValueBrake;
-			p_motor->InputValueThrottle 	= Linear_ADC_CalcUnsignedFraction16(&p_motor->UnitThrottle, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_THROTTLE]);
-			p_motor->InputValueBrake 		= Linear_ADC_CalcUnsignedFraction16(&p_motor->UnitBrake, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_BRAKE]);
-
-
+			p_motor->InputValueThrottle 	= Linear_ADC_CalcFractionUnsigned16(&p_motor->UnitThrottle, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_THROTTLE]);
+			p_motor->InputValueBrake 		= Linear_ADC_CalcFractionUnsigned16(&p_motor->UnitBrake, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_BRAKE]);
 
 			break;
 
@@ -180,7 +179,6 @@ static inline void Motor_Main_Thread(Motor_T * p_motor)
 		}
 
 		//proc inputs
-
 		//	if(GetSwitchEdge(DirectionButton)) {StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, PIN_FUNCTION_FORWARD);}
 		//	if(GetSwitchEdge(DirectionButton)) {StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, PIN_FUNCTION_REVERSE);}
 
@@ -210,8 +208,6 @@ static inline void Motor_Main_Thread(Motor_T * p_motor)
 		{
 			if (p_motor->Parameters.BrakeMode == MOTOR_BRAKE_MODE_SCALAR)
 			{
-
-
 //				if (p_motor->InputValueBrake < p_motor->InputValueBrakePrev)
 //				{
 //					p_motor->IsThrottleRelease == true;
@@ -220,20 +216,10 @@ static inline void Motor_Main_Thread(Motor_T * p_motor)
 //				{
 //					p_motor->IsThrottleRelease == false;
 //				}
-				p_motor->UserCmd =  p_motor->InputValueBrake;
-				Motor_SetRampDecel(p_motor);
+
+				Motor_SetUserCmd(p_motor, p_motor->InputValueBrake);
+				Motor_SetRampDecelerate(p_motor, p_motor->InputValueBrake);
 			}
-//			else
-//			{
-//				if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-//				{
-//
-//				}
-//				else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-//				{
-//
-//				}
-//			}
 		}
 		else
 		{
@@ -247,15 +233,10 @@ static inline void Motor_Main_Thread(Motor_T * p_motor)
 			else
 			{
 					p_motor->IsThrottleRelease == false;
-
 			}
 
-//			if (Thread_PollTimer(&p_motor->SecondsTimerThread) == true)
-			{
-//			if (p_motor->InputValueThrottle > feedback)
-				p_motor->UserCmd = p_motor->InputValueThrottle;
-				Motor_SetRampAccel(p_motor);
-			}
+			Motor_SetUserCmd(p_motor, p_motor->InputValueThrottle);
+			Motor_SetRampAccelerate(p_motor, p_motor->InputValueThrottle);
 		}
 
 

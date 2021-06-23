@@ -107,7 +107,7 @@ static inline int32_t Linear_Function_Fraction16(Linear_T * p_linear, int32_t x)
 
 //static inline uint32_t Linear_Function_FractionUnsigned16(Linear_T * p_linear, int32_t x)
 
-static inline uint16_t Linear_Function_UnsignedFraction16(Linear_T * p_linear, int32_t x)
+static inline uint16_t Linear_Function_FractionUnsigned16(Linear_T * p_linear, int32_t x)
 {
 	return (uint16_t) Linear_Function_Fraction16(p_linear, x);
 }
@@ -117,7 +117,7 @@ static inline uint16_t Linear_Function_UnsignedFraction16(Linear_T * p_linear, i
  * 			32768 => 100 percent, unsat
  * 			-32768 => -100 percent, unsat
  */
-static inline int16_t Linear_Function_SignedFraction16(Linear_T * p_linear, int32_t x)
+static inline int16_t Linear_Function_FractionSigned16(Linear_T * p_linear, int32_t x)
 {
 	return Linear_Function_Fraction16(p_linear, x) / 2U;
 }
@@ -143,12 +143,12 @@ static inline int32_t Linear_InvFunction_Fraction16(Linear_T * p_linear, int32_t
 #endif
 }
 
-static inline int16_t Linear_InvFunction_UnsignedFraction16(Linear_T * p_linear, uint32_t y_frac16)
+static inline int16_t Linear_InvFunction_FractionUnsigned16(Linear_T * p_linear, uint32_t y_frac16)
 {
 	return Linear_InvFunction_Fraction16(p_linear, y_frac16);
 }
 
-static inline int16_t Linear_InvFunction_SignedFraction16(Linear_T * p_linear, int32_t y_frac16)
+static inline int16_t Linear_InvFunction_FractionSigned16(Linear_T * p_linear, int32_t y_frac16)
 {
 	return Linear_InvFunction_Fraction16(p_linear, y_frac16*2U);
 }
@@ -166,7 +166,7 @@ static inline int32_t Linear_InvFunction_Round(Linear_T * p_linear, int32_t y)
 //extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset, int32_t rangeRef);
 
 #if defined(CONFIG_LINEAR_SHIFT_DIVIDE)
-extern void Linear_Init_X0(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t x0, int32_t rangeRef);
+extern void Linear_Init_X0(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t rangeRef);
 #endif
 
 #endif

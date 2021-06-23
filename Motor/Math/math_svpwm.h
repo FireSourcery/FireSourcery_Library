@@ -33,13 +33,15 @@
 
 #include "Math/Q/QFrac16.h"
 
+
+#define QFRAC16_N_FRAC_BITS_MINUS_1 14U
 /*
  * Standard SVM calculation method. Inclusive of equivalent reverse Clarke transform.
  * Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
  *
- * dutyA, dutyB, dutyC -> 15 bits, always positive
+ * dutyA, dutyB, dutyC -> 16 bits, q0.16, always positive
  */
-static inline void svpwm_midclamp(qfrac16_t * p_dutyA, qfrac16_t * p_dutyB, qfrac16_t * p_dutyC, qfrac16_t alpha, qfrac16_t beta)
+static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16_t * p_dutyC, qfrac16_t alpha, qfrac16_t beta)
 {
 	int32_t magX, magY, magZ, z0;
 
@@ -79,9 +81,9 @@ static inline void svpwm_midclamp(qfrac16_t * p_dutyA, qfrac16_t * p_dutyB, qfra
 			 * C = (1 - X + Z) / 2;
 			 */
 			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT + magX + magZ) / 2;
-			*p_dutyA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS;
-			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS;
-			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS;
+			*p_dutyA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
+			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
 		}
 		else if (magY >= 0)
 		{
@@ -101,9 +103,9 @@ static inline void svpwm_midclamp(qfrac16_t * p_dutyA, qfrac16_t * p_dutyB, qfra
 			 * C = z0 - Y;
 			 */
 			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT +  magY -  magZ) / 2;
-			*p_dutyA = z0 			>> QFRAC16_N_FRAC_BITS;
-			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS;
-			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS;
+			*p_dutyA = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
+			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
 		}
 		else
 		{
@@ -122,9 +124,9 @@ static inline void svpwm_midclamp(qfrac16_t * p_dutyA, qfrac16_t * p_dutyB, qfra
 			 * C = z0;
 			 */
 			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT -  magX -  magY) / 2;
-			*p_dutyA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS;
-			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS;
-			*p_dutyC = z0 			>> QFRAC16_N_FRAC_BITS;
+			*p_dutyA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+			*p_dutyC = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
 		}
 	}
 	else
@@ -146,9 +148,9 @@ static inline void svpwm_midclamp(qfrac16_t * p_dutyA, qfrac16_t * p_dutyB, qfra
 			 * C = z0 - X;
 			 */
 			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT +  magX +  magZ) / 2;
-			*p_dutyA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS;
-			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS;
-			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS;
+			*p_dutyA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
+			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
 		}
 		else if (magY < 0)
 		{
@@ -167,9 +169,9 @@ static inline void svpwm_midclamp(qfrac16_t * p_dutyA, qfrac16_t * p_dutyB, qfra
 			 * C = z0 - Y;
 			 */
 			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT +  magY -  magZ) / 2;
-			*p_dutyA = z0 			>> QFRAC16_N_FRAC_BITS;
-			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS;
-			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS;
+			*p_dutyA = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
+			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
 		}
 		else
 		{
@@ -188,9 +190,9 @@ static inline void svpwm_midclamp(qfrac16_t * p_dutyA, qfrac16_t * p_dutyB, qfra
 			 * C = z0;
 			 */
 			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT - magX -  magY) / 2;
-			*p_dutyA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS;
-			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS;
-			*p_dutyC = z0			>> QFRAC16_N_FRAC_BITS;
+			*p_dutyA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+			*p_dutyC = z0			>> QFRAC16_N_FRAC_BITS_MINUS_1;
 		}
 	}
 }
@@ -210,5 +212,61 @@ static inline void svpwm_midclamp(qfrac16_t * p_dutyA, qfrac16_t * p_dutyB, qfra
 //
 //}
 
+extern const uint16_t MATH_SVPWM_SADDLE_120[170];
+
+static inline uint16_t svpwm_saddle120(qangle16_t theta)
+{
+	return MATH_SVPWM_SADDLE_120[(((uint16_t)theta) >> 7U)];
+}
+static inline uint16_t svpwm_saddle(qangle16_t theta)
+{
+	uint16_t saddle;
+
+	if ((uint16_t)theta < (uint16_t)QANGLE16_120)
+	{
+		saddle = svpwm_saddle120(theta);
+	}
+	else if ((uint16_t)theta < (uint16_t)QANGLE16_240)
+	{
+		saddle = svpwm_saddle120((QANGLE16_240 - 1U - theta));
+	}
+	else
+	{
+		saddle = 0U;
+	}
+
+	return saddle;
+}
+
+/*
+ *
+ */
+static inline void svpwm_unipolar1(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16_t * p_dutyC, uint16_t dutyScalar, qangle16_t rotorAngle, qangle16_t voltageLeadAngle)
+{
+	qangle16_t angleA;
+	qangle16_t angleB;
+	qangle16_t angleC;
+
+	uint16_t saddleA;
+	uint16_t saddleB;
+	uint16_t saddleC;
+
+	#define PHASE_SHIFT_A  QANGLE16_120
+	#define PHASE_SHIFT_B  QANGLE16_240
+	#define PHASE_SHIFT_C  0
+
+	angleA = PHASE_SHIFT_A + rotorAngle + voltageLeadAngle; // angle loops
+	angleB = PHASE_SHIFT_B + rotorAngle + voltageLeadAngle;
+	angleC = PHASE_SHIFT_C + rotorAngle + voltageLeadAngle;
+
+	saddleA = svpwm_saddle(angleA);
+	saddleB = svpwm_saddle(angleB);
+	saddleC = svpwm_saddle(angleC);
+
+	//saddle and duty are NOT qfrac16
+	*p_dutyA = ((uint32_t)saddleA * (uint32_t)dutyScalar) / 65536U;
+	*p_dutyB = ((uint32_t)saddleB * (uint32_t)dutyScalar) / 65536U;
+	*p_dutyC = ((uint32_t)saddleC * (uint32_t)dutyScalar) / 65536U;
+}
 
 #endif

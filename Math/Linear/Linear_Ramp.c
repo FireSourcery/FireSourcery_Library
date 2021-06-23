@@ -39,12 +39,12 @@
 	@brief
  */
 /******************************************************************************/
-void Linear_Ramp_InitAcceleration(Linear_T * p_linear, int16_t initial, int16_t final, int16_t acceleration_UnitPerSecond, uint32_t updateFreq_Hz)
+void Linear_Ramp_InitAcceleration(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t initial, int32_t final, int32_t acceleration_UnitPerSecond)
 {
 	Linear_Init(p_linear, acceleration_UnitPerSecond, updateFreq_Hz, initial, final);
 }
 
-void Linear_Ramp_InitMillis(Linear_T * p_linear, int16_t initial, int16_t final, uint32_t peroid_Ms, uint32_t updateFreq_Hz)
+void Linear_Ramp_InitMillis(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t initial, int32_t final, uint32_t peroid_Ms)
 {
 	Linear_Init(p_linear, (final - initial), peroid_Ms * updateFreq_Hz / 1000U, initial, final);
 }

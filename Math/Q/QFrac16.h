@@ -61,6 +61,10 @@ static const qangle16_t QANGLE16_90 = 0x4000; /*!< 16384 */
 static const qangle16_t QANGLE16_180 = 0x8000; /*!< 32768, -32768, 180 == -180 */
 static const qangle16_t QANGLE16_270 = 0xC000; /*!< 49152, -16384, 270 == -90 */
 
+static const qangle16_t QANGLE16_0 = 0; 		/*!  */
+static const qangle16_t QANGLE16_120 = 21845; 	/*!  */
+static const qangle16_t QANGLE16_240 = 43690; 	/*!  */
+
 #define SINE_90_TABLE_ENTRIES 	256
 #define SINE_90_TABLE_LSB 		6	/*!< Insignificant bits, shifted away*/
 

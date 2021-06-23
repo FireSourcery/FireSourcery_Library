@@ -302,6 +302,23 @@ static inline bool Hall_PollEdge_IO(Hall_T * p_hall)
 	return (isEdge);
 }
 
+//temp
+static inline bool Hall_GetCycle(Hall_T * p_hall)
+{
+	bool isCycle;
+
+	if ((Hall_ReadSensors(p_hall) & 0x01 == true) && (p_hall->SensorsSaved & 0x01 == false))
+	{
+		isCycle = true;
+	}
+	else
+	{
+		isCycle = false;
+	}
+
+	return (isCycle);
+}
+
 static inline Hall_CommutationId_T Hall_GetCommutationId(Hall_T * p_hall)
 {
 //	const Hall_CommutationId_T VIRTUAL_ID_COMMUTATION_TABLE[8] =

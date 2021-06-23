@@ -112,6 +112,10 @@ void Encoder_Motor_InitCaptureCount
 	Encoder_Motor_GetElectricalAngle is meaningless, always returns 1
 	Encoder_Motor_GetMechanicalAngle is coarse polepair step resolution
 	Best for interpolate angle
+
+	// Pulse Per Hall Cycle, PulsePerRevolution = 1 			=> Speed_GetRotationalSpeed_RPM reflects electrical speed
+	// Pulse Per Hall Cycle, PulsePerRevolution = PolePairs 	=> Speed_GetRotationalSpeed_RPM reflects mechanical speed
+	// Pulse Per Commutation, PulsePerRevolution = PolePairs*6 => Speed_GetRotationalSpeed_RPM reflects mechanical speed
  */
 /**************************************************************************/
 void Encoder_Motor_InitCaptureTime
@@ -138,21 +142,14 @@ void Encoder_Motor_InitCaptureTime
 		countsPerRevolution,
 		angleDataBits
 	);
-
-
-	// Pulse Per Hall Cycle, PulsePerRevolution = 1 			=> Speed_GetRotationalSpeed_RPM reflects electrical speed
-	// Pulse Per Hall Cycle, PulsePerRevolution = PolePairs 	=> Speed_GetRotationalSpeed_RPM reflects mechanical speed
-	// Pulse Per Commutation, PulsePerRevolution = PolePairs*6 => Speed_GetRotationalSpeed_RPM reflects mechanical speed
-
-
-	p_encoder->PolePairs = polePairs;
-
-	//Too large unused
+	//Too large may be unused
 	//p_encoder->UnitAngularD_Factor		= 0xFFFFFFFFU/polePairs + 1;
 	//p_encoder->UnitAngularD_DivisorShift 	= (32 - angleDataBits);
+	//p_encoder->UnitAngularSpeed
 
-	//p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(timerFreqHz, polePairs, 1); //can interpolate angle still be used?
+	p_encoder->PolePairs = polePairs;
 }
+
 
 //// calculate distance per revolution using components
 //uint32_t Speed_SetUnitGroundSpeed(Speed_T *p_speed, uint32_t wheelDiameter, uint32_t wheeltoMotorGearRatio)

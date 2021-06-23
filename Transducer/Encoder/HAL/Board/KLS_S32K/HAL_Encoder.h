@@ -290,7 +290,8 @@ static inline void HAL_Encoder_InitCaptureCount(const HAL_Encoder_T * p_encoder)
 	FTM_DRV_Deinit(2U);
 	FTM_DRV_Init(2U, &flexTimer_qd_1_InitConfig, &ftm2State); 	/* FTM2 module initialized to work in quadrature decoder mode, specifically PhaseA and PhaseB mode */
 	FTM_DRV_QuadDecodeStart(2U, &flexTimer_qd_1_QuadDecoderConfig);
-	INT_SYS_EnableIRQ(FTM2_Ovf_Reload_IRQn);
+	FTM_DRV_CounterStart(2U);
+//	INT_SYS_EnableIRQ(FTM2_Ovf_Reload_IRQn);
 }
 
 static inline void HAL_Encoder_Init(const HAL_Encoder_T * p_encoder)

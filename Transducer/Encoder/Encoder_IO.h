@@ -51,14 +51,16 @@
 
 /*!
 	@brief Private CaptureDelta Helper
+
+	capture increasing
  */
-static inline void CaptureEncoderDelta(Encoder_T * p_encoder, volatile uint32_t * p_delta)
+static inline void CaptureEncoderDeltaIncreasing(Encoder_T * p_encoder, volatile uint32_t * p_delta)
 {
 	uint32_t timerCounterValue = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
 
 	if (timerCounterValue < p_encoder->TimerCounterSaved) /* TimerCounter overflow */
 	{
-		*p_delta = p_encoder->TimerCounterMax - p_encoder->TimerCounterSaved + timerCounterValue;
+		*p_delta = p_encoder->TimerCounterMax - p_encoder->TimerCounterSaved + timerCounterValue + 1U;
 	}
 	else /* normal case */
 	{
@@ -76,7 +78,7 @@ static inline void CaptureEncoderDelta(Encoder_T * p_encoder, volatile uint32_t 
  */
 static inline void Encoder_CaptureDeltaT_IO(Encoder_T * p_encoder)
 {
-	CaptureEncoderDelta(p_encoder,  &p_encoder->DeltaT);
+	CaptureEncoderDeltaIncreasing(p_encoder,  &p_encoder->DeltaT);
 
 	if (p_encoder->AngularD < p_encoder->EncoderResolution - 1U)
 	{
@@ -137,31 +139,46 @@ static inline void Encoder_CaptureDeltaT_IO(Encoder_T * p_encoder)
 	polling frequency must be > signal freq, at least 2x to satisfy Nyquist theorem
 	2000ppr encoder, 20000hz sample => 300rpm max
  */
-static inline void Encoder_PollDeltaTRisingEdge_IO(Encoder_T * p_encoder)
+static inline bool Encoder_PollDeltaTRisingEdge_IO(Encoder_T * p_encoder)
 {
 	bool reference = HAL_Encoder_ReadPhaseA(p_encoder->p_HAL_Encoder);
+	bool status;
 
 	/* rising edge detect */
 	/* if (reference - p_encoder->ReferenceSignalSaved > 0) */
 	if ((reference == true) && (p_encoder->PulseReferenceSaved == false))
 	{
 		Encoder_CaptureDeltaT_IO(p_encoder);
+		status = true;
+	}
+	else
+	{
+		status = false;
 	}
 
 	p_encoder->PulseReferenceSaved = reference;
+
+	return status;
 }
 
 static inline void Encoder_PollDeltaTDualEdge_IO(Encoder_T * p_encoder)
 {
 	bool reference = HAL_Encoder_ReadPhaseA(p_encoder->p_HAL_Encoder);
-
+	bool status;
 	/* both edge detect*/
 	if ((reference ^ p_encoder->PulseReferenceSaved) == true)
 	{
 		Encoder_CaptureDeltaT_IO(p_encoder);
+		status = true;
+	}
+	else
+	{
+		status = false;
 	}
 
 	p_encoder->PulseReferenceSaved = reference;
+
+	return status;
 }
 
 /*
@@ -169,7 +186,7 @@ static inline void Encoder_PollDeltaTDualEdge_IO(Encoder_T * p_encoder)
  */
 static inline void Encoder_CaptureDeltaT_Quadrature_IO(Encoder_T * p_encoder)
 {
-	CaptureEncoderDelta(p_encoder, &p_encoder->DeltaT);
+	CaptureEncoderDeltaIncreasing(p_encoder, &p_encoder->DeltaT);
 
 	 //only when capturing single phase, not for 3 phase hall commutation capture
 	if (HAL_Encoder_ReadPhaseB(p_encoder->p_HAL_Encoder) == false) //^positive calibration
@@ -213,51 +230,51 @@ static inline void Encoder_CaptureDeltaT_Quadrature_IO(Encoder_T * p_encoder)
  * 			32-bit timer for 3.2us intervals is 3.8 hours
  */
 /******************************************************************************/
-//static inline uint32_t CaptureEncoderExtendedDeltaTWrap(Encoder_T * p_encoder)
-//{
-//	uint32_t time = *(p_encoder->p_ExtendedDeltaTimer);
-//	uint32_t deltaTime;
-//
-//	if (time < p_encoder->ExtendedDeltaTimerSaved)
-//	{
-//		deltaTime = UINT32_MAX - p_encoder->ExtendedDeltaTimerSaved + time;
-//	}
-//	else
-//	{
-//		deltaTime = time - p_encoder->ExtendedDeltaTimerSaved;
-//	}
-//
-//	p_encoder->ExtendedDeltaTimerSaved = time;
-//
-//	return deltaTime;
-//}
+static inline uint32_t CaptureEncoderExtendedDeltaT(Encoder_T * p_encoder)
+{
+	uint32_t time = *(p_encoder->p_ExtendedDeltaTimer);
+	uint32_t deltaTime;
 
-//static inline bool Encoder_IsDeltaTOverflow(Encoder_T * p_encoder)
-//{
-//	bool isDeltaTOverflow;
-//	uint32_t time = *(p_encoder->p_ExtendedDeltaTimer);
-//	uint32_t deltaTime;
-//
-//	if (time < p_encoder->ExtendedDeltaTimerSaved)
-//	{
-//		deltaTime = UINT32_MAX - p_encoder->ExtendedDeltaTimerSaved + time;
-//	}
-//	else
-//	{
-//		deltaTime = time - p_encoder->ExtendedDeltaTimerSaved;
-//	}
-//
-//	if (deltaTime > p_encoder->ExtendedDeltaTimerConversion)
-//	{
-//		isDeltaTOverflow = true;
-//	}
-//	else
-//	{
-//		isDeltaTOverflow = false;
-//	}
-//
-//	return isDeltaTOverflow;
-//}
+	if (time < p_encoder->ExtendedDeltaTimerSaved)
+	{
+		deltaTime = UINT32_MAX - p_encoder->ExtendedDeltaTimerSaved + time;
+	}
+	else
+	{
+		deltaTime = time - p_encoder->ExtendedDeltaTimerSaved;
+	}
+
+	p_encoder->ExtendedDeltaTimerSaved = time;
+
+	return deltaTime;
+}
+
+static inline bool Encoder_IsDeltaTOverflow(Encoder_T * p_encoder)
+{
+	bool isDeltaTOverflow;
+	uint32_t time = *(p_encoder->p_ExtendedDeltaTimer);
+	uint32_t deltaTime;
+
+	if (time < p_encoder->ExtendedDeltaTimerSaved)
+	{
+		deltaTime = UINT32_MAX - p_encoder->ExtendedDeltaTimerSaved + time;
+	}
+	else
+	{
+		deltaTime = time - p_encoder->ExtendedDeltaTimerSaved;
+	}
+
+	if (deltaTime > p_encoder->ExtendedDeltaTimerConversion)
+	{
+		isDeltaTOverflow = true;
+	}
+	else
+	{
+		isDeltaTOverflow = false;
+	}
+
+	return isDeltaTOverflow;
+}
 
 // use this after captureDeltaT or extended capture
 static inline void Encoder_FeedDeltaTStop_IO(Encoder_T * p_encoder)
@@ -339,27 +356,6 @@ static inline bool Encoder_PollDeltaTStop_IO(Encoder_T * p_encoder)
 
 
 
-//static inline void Encoder_PollExtendedDeltaT(Encoder_T * p_encoder, bool reference)
-//{
-//	uint32_t longTimer = *(p_encoder->p_DeltaOverflowTimer); // need volatile update of *p_encoder->TimerCounterValue?
-//	uint32_t deltaLongTimer = longTimer - p_encoder->DeltaOverflowTimerSaved;
-//
-//	if (reference && !p_encoder->ReferenceSignalSaved) // rising edge detect
-//	{
-//		Encoder_CaptureExtendedDeltaT_IO();
-//	}
-//	else //falling edge or no changes
-//	{
-//		if (deltaLongTimer > p_encoder->DeltaOverflowLength) //overflow detected before next pulse
-//		{
-//
-//		}
-//	}
-//
-//	p_encoder->ReferenceSignalSaved = reference;
-//}
-
-
 /*!
 	@brief 	Capture DeltaD, per fixed changed in time, via timer periodic interrupt
 			Looping Angle Capture
@@ -370,7 +366,7 @@ static inline bool Encoder_PollDeltaTStop_IO(Encoder_T * p_encoder)
  */
 static inline void Encoder_CaptureDeltaD_IO(Encoder_T * p_encoder)
 {
-	CaptureEncoderDelta(p_encoder,  &p_encoder->DeltaD);
+	CaptureEncoderDeltaIncreasing(p_encoder,  &p_encoder->DeltaD);
 
 	p_encoder->AngularD = p_encoder->TimerCounterSaved;
 	p_encoder->TotalD += p_encoder->DeltaD;
@@ -383,27 +379,17 @@ static inline void Encoder_CaptureDeltaD_Quadrature_IO(Encoder_T * p_encoder)
 {
  	uint32_t counterValue = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
 
-
-
 	if (HAL_Encoder_ReadDirection(p_encoder->p_HAL_Encoder)) //^quadrature mode
 	{
-		if (counterValue < p_encoder->TimerCounterSaved)
-		{
-			p_encoder->DeltaD = p_encoder->TimerCounterMax - p_encoder->TimerCounterSaved + counterValue;
-		}
-		else /* normal case */
-		{
-			p_encoder->DeltaD = counterValue - p_encoder->TimerCounterSaved;
-		}
-
+		CaptureEncoderDeltaIncreasing(p_encoder, &p_encoder->DeltaD);
 		p_encoder->TotalD += p_encoder->DeltaD;
 	}
 	else
 	{
 		//counter counts down, deltaD is negative
-		if (counterValue > p_encoder->TimerCounterSaved)  /* TimerCounter overflow */
+		if (counterValue > p_encoder->TimerCounterSaved)  /* TimerCounter underflow */
 		{
-			p_encoder->DeltaD = p_encoder->TimerCounterMax + p_encoder->TimerCounterSaved - counterValue;
+			p_encoder->DeltaD = p_encoder->TimerCounterMax - counterValue + p_encoder->TimerCounterSaved + 1U;
 		}
 		else /* normal case */
 		{
@@ -419,20 +405,15 @@ static inline void Encoder_CaptureDeltaD_Quadrature_IO(Encoder_T * p_encoder)
 }
 
 //full revolution counting deltaD
-static inline void Encoder_OnCaptureDOverflow_IO(Encoder_T * p_encoder)
+static inline void Encoder_ProcCounterDOverflow_IO(Encoder_T * p_encoder)
 {
-//	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->p_HAL_Encoder);
-//
-//	p_encoder->AngularD = 0U;
+	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->p_HAL_Encoder);
 }
 
-static inline void Encoder_ProcOnIndex_IO(Encoder_T * p_encoder)
+static inline void Encoder_ProcIndex_IO(Encoder_T * p_encoder)
 {
-//	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->p_HAL_Encoder);
-//
-//	HAL_Encoder_WriteTimerCounter(p_encoder->p_HAL_Encoder, 0U);
-//
-//	p_encoder->AngularD = 0U;
+	HAL_Encoder_WriteTimerCounter(p_encoder->p_HAL_Encoder, 0U);
+	p_encoder->AngularD = 0U;
 }
 
 /******************************************************************************/

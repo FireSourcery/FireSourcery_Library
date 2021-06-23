@@ -37,7 +37,7 @@
 
 #include <stdint.h>
 
-static inline int16_t Linear_Ramp_CalcTarget(Linear_T * p_linear, uint32_t index)
+static inline int32_t Linear_Ramp_CalcTarget(Linear_T * p_linear, uint32_t index)
 {
 	return Linear_Function(p_linear, index);
 }
@@ -64,34 +64,34 @@ static inline int16_t Linear_Ramp_CalcTarget(Linear_T * p_linear, uint32_t index
 //	return target;
 //}
 
-static inline int16_t Linear_Ramp_CalcTarget_IncIndex(Linear_T *p_linear, uint32_t *p_index, uint32_t indexIncreament)
+static inline int32_t Linear_Ramp_CalcTarget_IncIndex(Linear_T *p_linear, uint32_t *p_index, uint32_t indexIncreament)
 {
-	int32_t target = Linear_Function(p_linear, *p_index);
+	int32_t rampValue = Linear_Function(p_linear, *p_index);
 
-	if (p_linear->SlopeFactor >= (int32_t)0) //slope is positive
+	if (p_linear->SlopeFactor < (int32_t)0)  //slope is negative
 	{
-		if(target < p_linear->RangeReference)
+		if(rampValue > p_linear->RangeReference)
 		{
 			*p_index += indexIncreament;
 		}
 		else
 		{
-			target = p_linear->RangeReference;
+			rampValue = p_linear->RangeReference;
 		}
 	}
-	else //slope is negative
+	else //slope is positive
 	{
-		if(target > p_linear->RangeReference)
+		if(rampValue < p_linear->RangeReference)
 		{
 			*p_index += indexIncreament;
 		}
 		else
 		{
-			target = p_linear->RangeReference;
+			rampValue = p_linear->RangeReference;
 		}
 	}
 
-	return target;
+	return rampValue;
 }
 
 //uint16_t Linear_Ramp_CalcIndex(Linear_T * p_linear, int16_t rampValue)

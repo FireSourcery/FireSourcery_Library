@@ -92,8 +92,11 @@ void Encoder_Init
 
 	p_encoder->p_HAL_Encoder = p_hal_encoder;
 	p_encoder->TimerCounterMax = timerCounterMax;
+	p_encoder->EncoderResolution = encoderCountsPerRevolution;
+	p_encoder->PollingFreq = pollingFreq;  	//	p_encoder->UnitInterpolateD = p_encoder->UnitSpeed / pollingFreq;
+
+
 	p_encoder->UnitT_Freq = unitT_Freq;
-	p_encoder->PollingFreq = pollingFreq;  	//	p_encoder->UnitInterpolateD = p_encoder->UnitSpeed / pollingFreq;;
 	p_encoder->UnitD = encoderDistancePerCount;
 
 	/*
@@ -145,13 +148,19 @@ void Encoder_Init
 	 */
 	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(unitT_Freq, encoderCountsPerRevolution, angleDataBits);
 
+	p_encoder->IsUnitAngularSpeedOverflow = !p_encoder->UnitAngularSpeed;
 
-	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitT_Freq, pollingFreq, angleDataBits);
+	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitT_Freq, pollingFreq*encoderCountsPerRevolution, angleDataBits);
+	//e.g. 48,761
 
-	p_encoder->EncoderResolution = encoderCountsPerRevolution;
-
-	Encoder_Zero(p_encoder);
+	Encoder_Reset(p_encoder);
 }
+
+void Encoder_CalibrateAngularD(Encoder_T * p_encoder )
+{
+	p_encoder->AngularD = 0U;
+}
+
 
 /*!
 	Uses periodic timer ISR.
@@ -183,6 +192,7 @@ void Encoder_InitCaptureDeltaD
 	//	HAL_Encoder_ConfigCaptureCount(p_hal_encoder);
 	//	HAL_Encoder_WriteTimerCounterMax(p_hal_encoder, timerCounterMax);
 }
+
 
 /*!
 	Uses pin ISR, or polling
@@ -228,6 +238,36 @@ void Encoder_InitExtendedDeltaT(Encoder_T * p_encoder, const volatile uint32_t *
 	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->p_ExtendedDeltaTimer;
 }
 
+/*
+ * set to lowest speed or 1rpm
+ */
+void Encoder_StartDeltaT(Encoder_T * p_encoder, uint16_t initialRpm)
+{
+	p_encoder->DeltaT = Encoder_ConvertRotationalSpeedToDeltaT_RPM(p_encoder, initialRpm);
+	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
+	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->p_ExtendedDeltaTimer;
+//	Encoder_Zero( p_encoder);
+}
+
+
+void Encoder_Reset(Encoder_T * p_encoder)
+{
+	p_encoder->DeltaD = 1U;
+	p_encoder->DeltaT = 1U;
+	p_encoder->TotalD = 0U;
+	p_encoder->TotalT = 0U;
+	p_encoder->AngularD = 0U;
+//	p_encoder->UserD 	= 0;
+//	p_encoder->UserT 	= 0;
+
+	p_encoder->SpeedSaved = 0U;
+	p_encoder->DeltaSpeed = 0U;
+
+	HAL_Encoder_WriteTimerCounter(p_encoder->p_HAL_Encoder, 0U);; /* reset for angularD */
+	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
+
+	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->p_ExtendedDeltaTimer;
+}
 
 //volatile uint32_t * Encoder_GetPtrDelta(Encoder_T *p_encoder)
 //{

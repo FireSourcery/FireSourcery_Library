@@ -50,15 +50,12 @@ static inline void ProcThread(Thread_T * p_thread)
 	}
 }
 
-static inline bool ProcThreadOneShot(Thread_T * p_thread)
+static inline void ProcThreadOneShot(Thread_T * p_thread)
 {
-	bool proc;
-
 	if (p_thread->ProcCountsRemaining > 0) // last update on 1 procCounts remaining
 	{
 		p_thread->ProcCountsRemaining--;
 		ProcThread(p_thread);
-		proc = true;
 	}
 	else
 	{
@@ -72,10 +69,7 @@ static inline bool ProcThreadOneShot(Thread_T * p_thread)
 			p_thread->OnComplete();
 #endif
 		}
-		proc = false;
 	}
-
-	return proc;
 }
 
 /*!
@@ -85,43 +79,31 @@ static inline bool ProcThreadOneShot(Thread_T * p_thread)
     @param	thread pointer to the thread to be processed
     @return True if the function ran, otherwise false.
 */
-bool Thread_ProcThread(Thread_T * p_thread)
+void Thread_ProcThread(Thread_T * p_thread)
 {
-	bool proc;
-
-	if (!p_thread->IsEnabled)
+	if (p_thread->IsOneShot)
 	{
-		proc = false;
+		ProcThreadOneShot(p_thread);
 	}
 	else
 	{
-		p_thread->TimePrev = *p_thread->p_Timer;
-
-		if (p_thread->IsOneShot)
-		{
-			proc = ProcThreadOneShot(p_thread);
-		}
-		else
-		{
-			ProcThread(p_thread);
-			proc = true;
-		}
+		ProcThread(p_thread);
 	}
-
-	return proc;
 }
 
 bool Thread_PollThread(Thread_T * p_thread)
 {
 	bool proc;
 
-	if (Thread_PollTimer(p_thread) == false)
+	if ((Thread_PollTimerComplete(p_thread) == true) && (p_thread->IsEnabled))
 	{
-		proc = false;
+		p_thread->TimerPrev = *p_thread->p_Timer;
+		Thread_ProcThread(p_thread);
+		proc = true;
 	}
 	else
 	{
-		proc = Thread_ProcThread(p_thread);
+		proc = false;
 	}
 
 	return proc;
@@ -129,11 +111,25 @@ bool Thread_PollThread(Thread_T * p_thread)
 
 uint32_t Thread_ProcThreadNRepeat(Thread_T * p_thread, uint32_t n)
 {
-	uint8_t count = 0;
+	uint32_t count;
 
-	for (uint32_t t = 0; t < n; t++)
+	if (p_thread->IsOneShot)
 	{
-		if (ProcThreadOneShot(p_thread)) {count++;}
+		(n > p_thread->ProcCountsRemaining) ? (count = p_thread->ProcCountsRemaining + 1) : (count = n);
+
+		for (uint32_t t = 0; t < count; t++)
+		{
+			ProcThreadOneShot(p_thread);
+		}
+	}
+	else
+	{
+		count = n;
+
+		for (uint32_t t = 0; t < count; t++)
+		{
+			ProcThread(p_thread);
+		}
 	}
 
 	return count;
@@ -167,13 +163,13 @@ void Thread_InitThread
 	p_thread->p_Context = p_context;
 
 	p_thread->IsOneShot				= oneShot;
-	p_thread->ProcCounts		 			= procCounts;
-	p_thread->ProcCountsRemaining 		= procCounts;
+	p_thread->ProcCounts		 	= procCounts;
+	p_thread->ProcCountsRemaining 	= procCounts;
 	p_thread->OnComplete 			= onComplete;
 	p_thread->p_OnCompleteContext	= p_onCompleteContext;
 
-	p_thread->IsEnabled = false;
-	p_thread->TimePrev 	= *p_thread->p_Timer - period_Ticks;
+	p_thread->IsEnabled 	= true;
+	p_thread->TimerPrev 	= *p_thread->p_Timer - period_Ticks;
 }
 
 void Thread_InitThreadPeriodic_Period
@@ -434,13 +430,13 @@ void Thread_SetSlower_MinMax(Thread_T * p_thread, uint8_t freqDec, uint8_t freqM
  */
 /*! @{ */
 /******************************************************************************/
-void Thread_InitTimer(Thread_T *p_thread, const volatile uint32_t *p_timer, uint32_t timerfreq, uint32_t period)
+void Thread_InitTimer(Thread_T * p_thread, const volatile uint32_t * p_timer, uint32_t timerfreq, uint32_t period)
 {
 	Thread_InitThread(p_thread, p_timer, timerfreq, period, 0U, 0U, false, 0U, 0U, 0U);
-	p_thread->TimePrev = *p_thread->p_Timer;
+	p_thread->TimerPrev = *p_thread->p_Timer;
 }
 
-void Thread_InitTimer_Millis(Thread_T *p_thread, const volatile uint32_t *p_timer, uint32_t timerfreq, uint32_t ms)
+void Thread_InitTimer_Millis(Thread_T * p_thread, const volatile uint32_t * p_timer, uint32_t timerfreq, uint32_t ms)
 {
 	Thread_InitTimer(p_thread, p_timer, timerfreq, p_thread->TimerFreq / (1000 * ms));
 }

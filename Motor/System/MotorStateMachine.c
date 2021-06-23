@@ -120,7 +120,17 @@ static void InitEntry(Motor_T * p_motor)
 
 static void InitLoop(Motor_T * p_motor)
 {
-	StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_CALIBRATE_ADC);
+	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
+	{
+		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_CALIBRATE_HALL);
+	}
+	else
+	{
+		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
+	}
+
+//		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_CALIBRATE_ADC);
+
 }
 
 const State_T * const P_INIT_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_TRANSITION_MAP_ENTRIES] =
@@ -168,48 +178,34 @@ static void StopEntry(Motor_T * p_motor)
 {
 	Motor_Float(p_motor);
 
-	//set zeros
+	//set zeros Motor_SetZero
 	p_motor->VPwm = 0U;
 }
 
 static void StopLoop(Motor_T * p_motor)
 {
-	static uint8_t tempFirstTime = 0;
 
-	if (tempFirstTime == 0)
+	//proc direction
+	//		Motor_PollToggleDirectionUpdate(p_motor);
+
+	//observe speed and appy brake
+	//		Motor_ObserveSensors(p_motor);
+
+	if (Motor_PollStopToSpin(p_motor))
 	{
-		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_CALIBRATE_HALL);
-		tempFirstTime++;
-	}
-	else
-	{
-		//proc direction
-//		Motor_PollToggleDirectionUpdate(p_motor);
-
-		//observe speed and appy brake
-		Motor_ObserveSensors(p_motor);
-
-		if (Motor_PollStopToSpin(p_motor))
+		if (Motor_GetAlignMode(p_motor) == MOTOR_ALIGN_MODE_DISABLE)
 		{
-			if (Motor_GetAlignMode(p_motor) == MOTOR_ALIGN_MODE_DISABLE)
-			{
-
-				Linear_Ramp_InitAcceleration(&p_motor->Ramp, 65536U/20U, p_motor->UserCmd, p_motor->UserCmd/2, 20000U);
-				p_motor->RampIndex = 1;
-
-				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_SPIN);
-			}
-			else
-			{
-				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_ALIGN);
-			}
+			StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_SPIN);
 		}
-
-
-
-		//proc flash
-		//	StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_LOCK);
+		else
+		{
+			StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_ALIGN);
+		}
 	}
+
+	//proc flash
+	//	StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_LOCK);
+
 }
 
 const State_T * const P_STOP_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_TRANSITION_MAP_ENTRIES] =
@@ -257,12 +253,12 @@ const State_T MOTOR_STATE_STOP =
 /*******************************************************************************/
 static void AlignEntry(Motor_T * p_motor)
 {
-	Motor_ActivateAlign(p_motor);
+	Motor_StartAlign(p_motor);
 }
 
 static void AlignLoop(Motor_T * p_motor)
 {
-	if(Motor_WaitAlign(p_motor))
+	if(Motor_ProcAlign(p_motor))
 	{
 		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_SPIN);
 	}
@@ -318,7 +314,7 @@ static void SpinEntry(Motor_T * p_motor)
 	}
 	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		Motor_SixStep_StartCommutationControl(p_motor);
+		Motor_SixStep_StartSectorControl(p_motor);
 	}
 }
 
@@ -331,15 +327,12 @@ static void SpinLoop(Motor_T * p_motor)
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		Motor_SixStep_ProcCommutationControl(p_motor);
+		Motor_SixStep_ProcSectorControl(p_motor);
 	}
 
-	if (Motor_GetSpeed(p_motor) == 0U)
+	if (Motor_PollSpinToFreewheel(p_motor))
 	{
-		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
-	}
-	else if (Motor_PollSpinToFreewheel(p_motor))
-	{
+		//resume spin function
 		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_FREEWHEEL);
 	}
 
@@ -415,18 +408,15 @@ static void FreewheelLoop(Motor_T * p_motor)
 	}
 	else if (Motor_PollFreewheelToSpin(p_motor))
 	{
-		if (p_motor->InputSwitchBrake == true)
-		{
-			//todo p_motor->VPwm to bemf
-			Linear_Ramp_InitAcceleration(&p_motor->Ramp, p_motor->VPwm, 0, -((int32_t)p_motor->UserCmd/2), 20000U);
-			p_motor->RampIndex = 1;
-		}
-		else
-		{
-			//todo p_motor->VPwm to bemf
-			Linear_Ramp_InitAcceleration(&p_motor->Ramp, p_motor->UserCmd/2, p_motor->UserCmd, p_motor->UserCmd/2, 20000U);
-			p_motor->RampIndex = 1;
-		}
+		//ramp should already be set from ui poll
+//		if (p_motor->InputSwitchBrake == true)
+//		{
+//			Motor_SetRampDecelerate(p_motor);
+//		}
+//		else
+//		{
+//			Motor_SetRampAccelerate(p_motor);
+//		}
 
 		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_SPIN);
 	}
@@ -473,12 +463,30 @@ const State_T MOTOR_STATE_FREEWHEEL =
 /*******************************************************************************/
 static void CalibrateAdcEntry(Motor_T * p_motor)
 {
-	Motor_FOC_StartCalibrateAdc(p_motor);
+	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+	{
+		Motor_FOC_StartCalibrateAdc(p_motor);
+	}
+	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+	{
+
+	}
 }
 
 static void CalibrateAdcLoop(Motor_T * p_motor)
 {
-	if (Motor_FOC_CalibrateAdc(p_motor))
+	bool isComplete;
+
+	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+	{
+		isComplete = Motor_FOC_CalibrateAdc(p_motor);
+	}
+	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+	{
+
+	}
+
+	if (isComplete == true)
 	{
 		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
 	}
@@ -544,7 +552,7 @@ const State_T * const P_CALIBRATE_HALL_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_
 	[MOTOR_TRANSITION_STOP] 			= &MOTOR_STATE_STOP,
 	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= &MOTOR_STATE_FAULT,
 	[MOTOR_TRANSITION_ALIGN] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_SPIN] 				= &MOTOR_STATE_FAULT,
+	[MOTOR_TRANSITION_SPIN] 			= &MOTOR_STATE_FAULT,
 };
 
 //void (* const CALIBRATE_HALL_TRANSITION_FUNCTION_MAP[MOTOR_STATE_MACHINE_TRANSITION_MAP_ENTRIES])(Motor_T * p_motor) =
@@ -596,7 +604,7 @@ static void Flash(Motor_T * p_motor)
 //static void FocSpinLoop(Motor_T * p_motor)
 //{
 //	Motor_FOC_ProcAngleControl(p_motor);
-//	Motor_SixStep_ProcCommutationControl(p_motor);
+//	Motor_SixStep_ProcSectorControl(p_motor);
 //
 ////	only check flags in pwm loop. set flags in main loop
 //	if(Motor_PollFaultFlag(p_motor))	{ StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_FAULT);	}
@@ -643,12 +651,12 @@ static void Flash(Motor_T * p_motor)
 ///*******************************************************************************/
 //static void SixStepSpinEntry(Motor_T * p_motor)
 //{
-//	Motor_SixStep_SetCommutationControl(p_motor);
+//	Motor_SixStep_SetSectorControl(p_motor);
 //}
 //
 //static void SixStepSpinLoop(Motor_T * p_motor)
 //{
-//	Motor_SixStep_ProcCommutationControl(p_motor);
+//	Motor_SixStep_ProcSectorControl(p_motor);
 //
 ////	only check flags in pwm loop. set flags in main loop
 ////	if(Motor_PollFaultFlag(p_motor))	{ StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_FAULT);	}
