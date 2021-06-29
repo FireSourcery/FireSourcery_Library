@@ -31,7 +31,13 @@
 #ifndef CONFIG_MOTOR_H
 #define CONFIG_MOTOR_H
 
+#ifdef CONFIG_MOTOR_ADC_8
 
+#elif defined(CONFIG_MOTOR_ADC_16)
+
+#else
+	#define CONFIG_MOTOR_ADC_16
+#endif
 
 /*
  * Motor Module

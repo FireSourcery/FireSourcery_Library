@@ -61,7 +61,23 @@ static inline volatile uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
 	return (((PTE->PDIR >> 4) & 0b0011) | ((PTE->PDIR >> 8) & 0b0100));
 }
 
+static inline bool HAL_Hall_ReadSensorA(const HAL_Hall_T * p_encoder)
+{
+	(void)p_encoder;
+	return (bool)(PTE->PDIR & ((uint32_t)1U << 4U));
+}
 
+static inline bool HAL_Hall_ReadSensorB(const HAL_Hall_T * p_encoder)
+{
+	(void)p_encoder;
+	return (bool)(PTE->PDIR & ((uint32_t)1U << 5U));
+}
+
+static inline bool HAL_Hall_ReadSensorC(const HAL_Hall_T * p_encoder)
+{
+	(void)p_encoder;
+	return (bool)(PTE->PDIR & ((uint32_t)1U << 10U));
+}
 
 static inline void HAL_Hall_Init(const HAL_Hall_T * p_hall)
 {

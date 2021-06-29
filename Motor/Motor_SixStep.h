@@ -39,7 +39,8 @@
 #include "Transducer/BEMF/BEMF.h"
 #include "Transducer/Phase/Phase.h"
 
-#include "Transducer/Encoder/Encoder_IO.h"
+#include "Transducer/Encoder/Encoder_DeltaT.h"
+#include "Transducer/Encoder/Encoder_DeltaD.h"
 #include "Transducer/Encoder/Encoder_Motor.h"
 #include "Transducer/Encoder/Encoder.h"
 
@@ -52,8 +53,91 @@
 #include <stdbool.h>
 
 
+//call at end of adc
+static inline bool Motor_SixStep_ProcBemf_IO(Motor_T * p_motor)
+{
+	BEMF_CaptureSample_IO(&p_motor->Bemf); //must be inside adc isr for capture time
+	BEMF_PollZeroCrossingDetection(&p_motor->Bemf); //inside adc isr is shared between spin and freewheel state
+}
+
+static inline bool Motor_SixStep_CapturePeakCurrent_IO(Motor_T * p_motor)
+{
+
+}
 
 
+static inline void Motor_SixStep_ActivateSector(Motor_T * p_motor, Motor_SectorId_T sectorId, bool actuatePwm)
+{
+	if(actuatePwm) {Phase_Polar_SetDutyCyle(&p_motor->Phase, p_motor->VPwm);}
+
+	//hall: 	phase
+	//openloop: phase, sector
+	//bemf: 	phase, sector, bemfmap
+
+	switch (sectorId)
+	{
+	case MOTOR_SECTOR_ID_0:
+		//set error
+		break;
+
+	case MOTOR_SECTOR_ID_1: //Phase AC
+		if(actuatePwm) {Phase_Polar_ActivateAC(&p_motor->Phase);}
+		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_2; BEMF_MapCcwPhaseAC_IO(&p_motor->Bemf);}
+		else											{p_motor->NextSector = MOTOR_SECTOR_ID_6; BEMF_MapCwPhaseAC_IO(&p_motor->Bemf);}
+
+		p_motor->PhaseCurrent_ADCU = *p_motor->p_Ia_ADCU;
+		break;
+
+	case MOTOR_SECTOR_ID_2:
+		if(actuatePwm) {Phase_Polar_ActivateBC(&p_motor->Phase);}
+		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_3; BEMF_MapCcwPhaseBC_IO(&p_motor->Bemf);}
+		else											{p_motor->NextSector = MOTOR_SECTOR_ID_1; BEMF_MapCwPhaseBC_IO(&p_motor->Bemf);}
+
+		p_motor->PhaseCurrent_ADCU = *p_motor->p_Ib_ADCU;
+		break;
+
+	case MOTOR_SECTOR_ID_3:
+		if(actuatePwm) {Phase_Polar_ActivateBA(&p_motor->Phase);}
+		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_4; BEMF_MapCcwPhaseBA_IO(&p_motor->Bemf);}
+		else											{p_motor->NextSector = MOTOR_SECTOR_ID_2; BEMF_MapCwPhaseBA_IO(&p_motor->Bemf);}
+
+		p_motor->PhaseCurrent_ADCU = *p_motor->p_Ib_ADCU;
+		break;
+
+	case MOTOR_SECTOR_ID_4:
+		if(actuatePwm) {Phase_Polar_ActivateCA(&p_motor->Phase);}
+		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_5; BEMF_MapCcwPhaseCA_IO(&p_motor->Bemf);}
+		else											{p_motor->NextSector = MOTOR_SECTOR_ID_3; BEMF_MapCwPhaseCA_IO(&p_motor->Bemf);}
+
+		p_motor->PhaseCurrent_ADCU = *p_motor->p_Ic_ADCU;
+		break;
+
+	case MOTOR_SECTOR_ID_5:
+		if(actuatePwm) {Phase_Polar_ActivateCB(&p_motor->Phase);}
+		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_6; BEMF_MapCcwPhaseCA_IO(&p_motor->Bemf);}
+		else											{p_motor->NextSector = MOTOR_SECTOR_ID_4; BEMF_MapCwPhaseCA_IO(&p_motor->Bemf);}
+
+		p_motor->PhaseCurrent_ADCU = *p_motor->p_Ic_ADCU;
+
+		break;
+
+	case MOTOR_SECTOR_ID_6:
+		if(actuatePwm) {Phase_Polar_ActivateAB(&p_motor->Phase);}
+		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_1; BEMF_MapCcwPhaseAB_IO(&p_motor->Bemf);}
+		else											{p_motor->NextSector = MOTOR_SECTOR_ID_5; BEMF_MapCwPhaseAB_IO(&p_motor->Bemf);}
+
+		p_motor->PhaseCurrent_ADCU = *p_motor->p_Ia_ADCU;
+		break;
+
+	case MOTOR_SECTOR_ID_7:
+		//set error
+		break;
+
+	default:
+		break;
+	}
+
+}
 
 static inline void Motor_SixStep_SetBrakeRegenOptimal(Motor_T * p_motor)
 {
@@ -84,27 +168,27 @@ static inline void Motor_SixStep_SetBrakeRegenScalar(Motor_T * p_motor, uint16_t
 	//braking 100% -> pwm 37.5% of back emf;
 }
 
-static inline void Motor_SixStep_ProcRamp(Motor_T * p_motor)
-{
-	switch (p_motor->Parameters.BrakeMode)
-	{
-	case MOTOR_BRAKE_MODE_SCALAR:
-		Motor_ProcRamp(p_motor);
-		break;
-	case MOTOR_BRAKE_MODE_REGEN_OPTIMAL:
-		Motor_SixStep_SetBrakeRegenOptimal(p_motor);
-		break;
-	case MOTOR_BRAKE_MODE_REGEN_PROPRTIONAL:
-		Motor_SixStep_SetBrakeRegenProportional(p_motor, p_motor->UserCmd);
-		break;
-	case MOTOR_BRAKE_MODE_REGEN_SCALAR:
-		Motor_SixStep_SetBrakeRegenScalar(p_motor, p_motor->UserCmd);
-		break;
-	default:
-		break;
-	}
-
-}
+//static inline void Motor_SixStep_ProcRamp(Motor_T * p_motor)
+//{
+//	switch (p_motor->Parameters.BrakeMode)
+//	{
+//	case MOTOR_BRAKE_MODE_SCALAR:
+//		Motor_ProcRamp(p_motor);
+//		break;
+//	case MOTOR_BRAKE_MODE_REGEN_OPTIMAL:
+//		Motor_SixStep_SetBrakeRegenOptimal(p_motor);
+//		break;
+//	case MOTOR_BRAKE_MODE_REGEN_PROPRTIONAL:
+//		Motor_SixStep_SetBrakeRegenProportional(p_motor, p_motor->UserCmd);
+//		break;
+//	case MOTOR_BRAKE_MODE_REGEN_SCALAR:
+//		Motor_SixStep_SetBrakeRegenScalar(p_motor, p_motor->UserCmd);
+//		break;
+//	default:
+//		break;
+//	}
+//
+//}
 
 static inline void Motor_SixStep_ProcControlVariable(Motor_T * p_motor)
 {
@@ -115,126 +199,118 @@ static inline void Motor_SixStep_ProcControlVariable(Motor_T * p_motor)
 //	else
 //	{
 
-	Motor_ProcRamp(p_motor);
-//	}
+//	Motor_ProcRamp(p_motor);
+////	}
+//
+//	Motor_ProcControlVariable_LimitCurrent(p_motor);
 
-	Motor_ProcControlVariable(p_motor);
+
 }
 
-
-static inline void Motor_SixStep_ActivateSector(Motor_T * p_motor, Motor_SectorId_T sectorId)
+static inline bool Motor_SixStep_PollOpenLoop(Motor_T * p_motor)
 {
-	Phase_Polar_SetDutyCyle(&p_motor->Phase, p_motor->VPwm);
+	bool commutation ;
 
-	//hall: 	phase
-	//openloop: phase, sector
-	//bemf: 	phase, sector, bemfmap
-
-	switch (sectorId)
+	if (Thread_PollTimerCompletePeriodic(&p_motor->ControlTimerThread) == true)
 	{
-	case MOTOR_SECTOR_ID_0:
-		//set error
-		break;
-	case MOTOR_SECTOR_ID_1: //Phase AC
-		Phase_Polar_ActivateAC(&p_motor->Phase);
-		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_2; BEMF_MapCcwPhaseAC_IO(&p_motor->Bemf);}
-		else											{p_motor->NextSector = MOTOR_SECTOR_ID_6; BEMF_MapCwPhaseAC_IO(&p_motor->Bemf);}
-
-		break;
-	case MOTOR_SECTOR_ID_2:
-		Phase_Polar_ActivateBC(&p_motor->Phase);
-		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_3; BEMF_MapCcwPhaseBC_IO(&p_motor->Bemf);}
-		else											{p_motor->NextSector = MOTOR_SECTOR_ID_1; BEMF_MapCwPhaseBC_IO(&p_motor->Bemf);}
-
-		break;
-	case MOTOR_SECTOR_ID_3:
-		Phase_Polar_ActivateBA(&p_motor->Phase);
-		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_4; BEMF_MapCcwPhaseBA_IO(&p_motor->Bemf);}
-		else											{p_motor->NextSector = MOTOR_SECTOR_ID_2; BEMF_MapCwPhaseBA_IO(&p_motor->Bemf);}
-
-		break;
-	case MOTOR_SECTOR_ID_4:
-		Phase_Polar_ActivateCA(&p_motor->Phase);
-		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_5; BEMF_MapCcwPhaseCA_IO(&p_motor->Bemf);}
-		else											{p_motor->NextSector = MOTOR_SECTOR_ID_3; BEMF_MapCwPhaseCA_IO(&p_motor->Bemf);}
-
-		break;
-	case MOTOR_SECTOR_ID_5:
-		Phase_Polar_ActivateCB(&p_motor->Phase);
-		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_6; BEMF_MapCcwPhaseCA_IO(&p_motor->Bemf);}
-		else											{p_motor->NextSector = MOTOR_SECTOR_ID_4; BEMF_MapCwPhaseCA_IO(&p_motor->Bemf);}
-
-		break;
-	case MOTOR_SECTOR_ID_6:
-		Phase_Polar_ActivateAB(&p_motor->Phase);
-		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_1; BEMF_MapCcwPhaseAB_IO(&p_motor->Bemf);}
-		else											{p_motor->NextSector = MOTOR_SECTOR_ID_5; BEMF_MapCwPhaseAB_IO(&p_motor->Bemf);}
-
-		break;
-	case MOTOR_SECTOR_ID_7:
-		//set error
-		break;
-	default:
-		break;
+		p_motor->OpenLoopSpeed_RPM = Linear_Ramp_CalcTarget_IncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopCommutationPeriod);
+		p_motor->OpenLoopCommutationPeriod = Encoder_Motor_ConvertMechanicalRpmToControlResolution(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
+		Thread_SetTimerPeriod(&p_motor->ControlTimerThread, p_motor->OpenLoopCommutationPeriod);
+		commutation = true;
+	}
+	else
+	{
+		commutation = false;
 	}
 
+	return commutation;
 }
 
-///*
-// * Seperate state for OpenLoop start? maps to different inputs
-// */
-//static inline void Motor_SixStep_ProcOpenLoop(Motor_T *p_motor)
-//{
-//
-//}
-
-
-//state loop in 20khz pwm thread
-static inline void Motor_SixStep_ProcSectorControl(Motor_T * p_motor)
+static inline bool Motor_SixStep_ProcSensorFeedback(Motor_T * p_motor, Motor_SensorMode_T liveSensorMode)
 {
 	bool commutation = false;
-	bool updatePwm = false;
-	switch (p_motor->Parameters.SensorMode)
+
+
+	switch (liveSensorMode)	//active sensor feedback
 	{
 	case MOTOR_SENSOR_MODE_OPEN_LOOP:
-		if(Thread_PollTimerCompletePeriodic(&p_motor->ControlTimerThread) == true)
+		if(p_motor->IsActiveControl)
 		{
-			p_motor->Openloop_RPM = Linear_Ramp_CalcTarget_IncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->CommutationPeriodCmd);
-			p_motor->CommutationPeriodCmd = Encoder_Motor_ConvertMechanicalRpmToControlPeriods(&p_motor->Encoder, p_motor->Openloop_RPM );
-			Thread_SetTimerPeriod(&p_motor->ControlTimerThread, p_motor->CommutationPeriodCmd);
-
+		if(Motor_SixStep_PollOpenLoop(p_motor)) //todo fix state
+		{
 			p_motor->CommutationSector = p_motor->NextSector;
 			commutation = true;
+		}
 		}
 		break;
 
 	case MOTOR_SENSOR_MODE_BEMF:
-		if (Thread_PollTimerCompletePeriodic(&p_motor->ControlTimerThread) == true) //20KHz 59 hour overflow
+		if (BEMF_PollCycleTimer(&p_motor->Bemf))
 		{
-//			BEMF_SetNewCycle_IO(&p_motor->Bemf);
-
-			p_motor->CommutationPeriodCmd = BEMF_GetTimeAngle60(&p_motor->Bemf);
-			Thread_SetTimerPeriod(&p_motor->ControlTimerThread, p_motor->CommutationPeriodCmd);
-
 			p_motor->CommutationSector = p_motor->NextSector;
 			commutation = true;
-		}
-		else
-		{
-			if (BEMF_PollZeroCrossingDetection_IO(&p_motor->Bemf))
-			{
-				p_motor->CommutationPeriodCmd = BEMF_GetTimeAngle30(&p_motor->Bemf);
-				Thread_SetTimerPeriod(&p_motor->ControlTimerThread, p_motor->CommutationPeriodCmd);
-			}
 		}
 		break;
 
 	case MOTOR_SENSOR_MODE_HALL:
-		if(Hall_PollEdge_IO(&p_motor->Hall))
+		if(Hall_PollSensorsEdge_IO(&p_motor->Hall))
 		{
-			p_motor->CommutationSector = Hall_GetCommutationId(&p_motor->Hall);
+			p_motor->CommutationSector = Hall_GetCommutation(&p_motor->Hall);
 			commutation = true;
 		}
+		break;
+
+	case MOTOR_SENSOR_MODE_ENCODER:
+		break;
+
+	default:
+		break;
+	}
+
+	return commutation;
+}
+
+
+/*
+ * State Threads
+ */
+
+//state loop in 20khz pwm thread
+//spin and freewheel state
+static inline void Motor_SixStep_ProcPhaseControl(Motor_T * p_motor)
+{
+	bool commutation = false;
+//	bool updatePwm = false;
+
+	Motor_SensorMode_T liveSensorMode;
+
+	//start ADC in later abstraction
+
+	switch (p_motor->Parameters.SensorMode) //active sensor feedback
+	{
+	case MOTOR_SENSOR_MODE_OPEN_LOOP:
+		liveSensorMode = MOTOR_SENSOR_MODE_OPEN_LOOP;
+		p_motor->VPwm = p_motor->UserCmd/4U;
+		break;
+
+	case MOTOR_SENSOR_MODE_BEMF:
+		if (p_motor->IsStartUp) //eliminate with separate state?
+		{
+			if(BEMF_GetZeroCrossingCounter(&p_motor->Bemf) > 10U)
+			{
+				p_motor->IsStartUp = false;
+			}
+			liveSensorMode = MOTOR_SENSOR_MODE_OPEN_LOOP;
+			p_motor->VPwm = p_motor->UserCmd/4U;
+		}
+		else
+		{
+			liveSensorMode = MOTOR_SENSOR_MODE_BEMF;
+		}
+		break;
+
+	case MOTOR_SENSOR_MODE_HALL:
+		liveSensorMode = MOTOR_SENSOR_MODE_HALL;
 		break;
 
 	case MOTOR_SENSOR_MODE_ENCODER:
@@ -245,119 +321,104 @@ static inline void Motor_SixStep_ProcSectorControl(Motor_T * p_motor)
 		break;
 	}
 
-
-//	switch (p_motor->PositionFeedback)
-//	{
-//
-//	case MOTOR_POSITION_FEEDBACK_OPEN_LOOP:		//openloop drive common
-//		if(Thread_PollTimerCompletePeriodic(&p_motor->ControlTimerThread) == true)
-//		{
-//			p_motor->Openloop_RPM = Linear_Ramp_CalcTarget_IncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->CommutationPeriodCmd);
-//			p_motor->CommutationPeriodCmd = Encoder_Motor_ConvertMechanicalRpmToControlPeriods(&p_motor->Encoder, p_motor->Openloop_RPM );
-//			Thread_SetTimerPeriod(&p_motor->ControlTimerThread, p_motor->CommutationPeriodCmd);
-//
-//			p_motor->CommutationSector = p_motor->NextSector;
-//			commutation = true;
-//		}
-//		break;
-//
-//	case MOTOR_POSITION_FEEDBACK_BEMF:		//if bemf reliable
-//
-//		break;
-//
-//	case MOTOR_POSITION_FEEDBACK_HALL:
-//
-//		break;
-//
-////	case MOTOR_POSITION_FEEDBACK_ENCODER: //encoder use foc
-////
-////		break;
-//
-//	default:
-//		break;
-//	}
+	commutation = Motor_SixStep_ProcSensorFeedback(p_motor, liveSensorMode);
 
 	if(commutation)
 	{
-		BEMF_SetNewCycle_IO(&p_motor->Bemf); //always observe bemf
-		Encoder_CaptureDeltaT_IO(&p_motor->Encoder);
-		Encoder_CaptureExtendedDeltaT_IO(&p_motor->Encoder);
+		Encoder_DeltaT_Capture_IO(&p_motor->Encoder);
+		Encoder_DeltaT_CaptureExtension_IO(&p_motor->Encoder);
+		BEMF_StartCycle_IO(&p_motor->Bemf);
 	}
 
-//	if(updatePwm)
-//	{
+	if(p_motor->IsActiveControl && !(liveSensorMode==MOTOR_SENSOR_MODE_OPEN_LOOP)) //todo fix
+	{
 		Motor_ProcRamp(p_motor);
-		Motor_ProcControlVariable(p_motor);
-		Motor_SixStep_ActivateSector(p_motor, p_motor->CommutationSector);
-//	}
-//	if(Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
-//	{
-//		Encoder_PollDeltaTStop_IO(&p_motor->Encoder);
-//	}
+		Motor_ProcControlVariable_Thread(p_motor);
+	}
+
+	Motor_SixStep_ActivateSector(p_motor, p_motor->CommutationSector, p_motor->IsActiveControl);
+
+	//filterconver phase current
+//	p_motor->PhaseCurrent_ADCU = *p_motor->p_Ia_ADCU;
 }
 
-
-
+//static inline void Motor_ConvertIBat(Motor_T * p_motor)
+//{
+//	p_motor->PhaseCurrent_ADCU = MovAvg
+//}
 
 //run state entry
-static inline void Motor_SixStep_StartSectorControl(Motor_T * p_motor) //Prep
+static inline void Motor_SixStep_StartSpin(Motor_T * p_motor) //start active control
 {
+#define OPEN_LOOP_START_SPEED 5U
+#define OPEN_LOOP_SPEED 100U
+	p_motor->IsActiveControl = true;
+	BEMF_SetObserveMode(&p_motor->Bemf, BEMF_MODE_COMMUTATION);
+
+
+
 	if(Motor_GetSpeed(p_motor) == 0)
 	{
 		p_motor->ControlTimerBase = 0U;
+//		Encoder_DeltaT_SetInitial(&p_motor->Encoder, 5U);
 
-		Encoder_SetZeroSpeed(&p_motor->Encoder);
-		p_motor->SpeedFeedback_RPM = 1;
-
-	}
-	else
-	{
-
+		BEMF_Reset(&p_motor->Bemf); //ret zcdCount
 	}
 
 	switch (p_motor->Parameters.SensorMode)
 	{
 
 	case MOTOR_SENSOR_MODE_OPEN_LOOP:
-		p_motor->PositionFeedback = MOTOR_POSITION_FEEDBACK_OPEN_LOOP;
-		Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, 5U, 100U, 1000U);
+		if(Motor_GetSpeed(p_motor) == 0)
+		{
+//			Linear_Ramp_InitAcceleration(&p_motor->OpenLoopRamp, 20000U, OPEN_LOOP_START_SPEED, 100U, 100U);
+
+			Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, OPEN_LOOP_START_SPEED, OPEN_LOOP_SPEED, 1000U);
+			p_motor->OpenLoopRampIndex = 0U;
+
+			p_motor->OpenLoopCommutationPeriod = 0U;
+			Thread_SetTimerPeriod(&p_motor->ControlTimerThread, 0U);
+
+			p_motor->NextSector = MOTOR_SECTOR_ID_2;
+		}
+		else
+		{
+//			allow openloop transition from freewheel state?
+//			Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, Motor_GetSpeed(p_motor), Motor_GetSpeed(p_motor), 1000U);
+		}
 		break;
 
 	case MOTOR_SENSOR_MODE_BEMF:
-//		p_motor->PositionFeedback = MOTOR_POSITION_FEEDBACK_OPEN_LOOP;
 
-//		if (p_motor->PositionFeedback = MOTOR_POSITION_FEEDBACK_OPEN_LOOP)
-//		{
+		if(Motor_GetSpeed(p_motor) == 0)
+		{
+			p_motor->IsStartUp = true;
+			//openloop speed ramp	// must start at sufficient speed for timer driven fixed angle displacements
+			Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, OPEN_LOOP_START_SPEED, OPEN_LOOP_SPEED, 1000U);
 			p_motor->OpenLoopRampIndex = 0U;
-			p_motor->NextSector = MOTOR_SECTOR_ID_1;
-			p_motor->CommutationPeriodCmd = 0U;
-			Thread_SetTimerPeriod(&p_motor->ControlTimerThread, 1U); //next pwm will commutate
 
-			//openloop speed ramp
-			// must start at sufficient speed for fixed angle displacements
-			Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, 5U, 100U, 1000U);
-//		}
-//		else if (p_motor->PositionFeedback = MOTOR_POSITION_FEEDBACK_BEMF)
-//		{
-//
-//		}
+			p_motor->OpenLoopCommutationPeriod = 0U;
+			Thread_SetTimerPeriod(&p_motor->ControlTimerThread, 0U); //next pwm will commutate
 
+//			if aligned 		//motor aligned to phase A
+//			if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_2;}
+//			else											{p_motor->NextSector = MOTOR_SECTOR_ID_6;}
+
+			p_motor->NextSector = MOTOR_SECTOR_ID_2;
+		}
+		else //transition to bemf from freewheel
+		{
+			//bemf module already set commutation time
+		}
 		break;
 
 	case MOTOR_SENSOR_MODE_HALL:
-		p_motor->PositionFeedback = MOTOR_POSITION_FEEDBACK_HALL;
 		Hall_CaptureSensors_IO(&p_motor->Hall);
-		p_motor->CommutationSector = Hall_GetCommutationId(&p_motor->Hall);
-
-		if (Motor_GetSpeed(p_motor) == 1U)
-		{
-			Encoder_StartDeltaT(&p_motor->Encoder, 20U);
-		}
+		p_motor->CommutationSector = Hall_GetCommutation(&p_motor->Hall);
 
 		break;
 
 //	case MOTOR_SENSOR_MODE_ENCODER: //encoder use foc
-//		p_motor->PositionFeedback = MOTOR_POSITION_FEEDBACK_ENCODER;
 //		break;
 
 	default:
@@ -366,85 +427,44 @@ static inline void Motor_SixStep_StartSectorControl(Motor_T * p_motor) //Prep
 
 }
 
-static inline void Motor_SixStep_ProcFreewheel(Motor_T * p_motor)
+
+static inline void Motor_SixStep_StartFreewheel(Motor_T * p_motor) //start observe
 {
-	bool commutation = false;
+	Motor_Float(p_motor);
+	p_motor->IsActiveControl = false;
+	BEMF_Reset(&p_motor->Bemf);
+	BEMF_SetObserveMode(&p_motor->Bemf, BEMF_MODE_PASSIVE);
+
+//	switch (p_motor->Parameters.SensorMode)
+//	{
+//	case MOTOR_SENSOR_MODE_OPEN_LOOP:
+//		break;
+//
+//	case MOTOR_SENSOR_MODE_BEMF:
+//
+//		break;
+//
+//	case MOTOR_SENSOR_MODE_HALL:
+//		break;
+//
+////	case MOTOR_SENSOR_MODE_ENCODER: //encoder use foc
+//	default:
+//		break;
+//	}
+}
 
 
-	//	p_motor->VPwm = speed
+static inline bool Motor_SixStep_SetBemfState(Motor_T * p_motor)
+{
 
-	switch (p_motor->Parameters.SensorMode)
-	{
 
-//	case MOTOR_SENSOR_MODE_NONE:
-
-	case MOTOR_SENSOR_MODE_BEMF:
-		//	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF)
-		//	{
-		//		if (BEMF_PollZeroCrossingDetection_IO(&p_motor->Bemf) == true)
-		//		{
-		//			//poll is bemf reliable
-		//			if (p_motor->PositionFeedback == MOTOR_POSITION_FEEDBACK_OPEN_LOOP)
-		//			{ //todo move to bemf module
-		//				if (p_motor->CommutationPeriodCmd >> 4U == BEMF_GetZeroCrossingPeriod(&p_motor->Bemf) >> 4U) //within 15 ticks or 750us
-		//				{
-		//					p_motor->OpenLoopZcdCount++;
-		//					if (p_motor->OpenLoopZcdCount > 10U)
-		//					{
-		//						//transition from openloop to bemf
-		//						p_motor->PositionFeedback = MOTOR_POSITION_FEEDBACK_BEMF;
-		//						p_motor->CommutationPeriodCmd = BEMF_GetTimeAngle30(&p_motor->Bemf); //commutation time using same 20khz timer
-		//						Thread_SetTimerPeriod(&p_motor->ControlTimerThread, p_motor->CommutationPeriodCmd);
-		//					}
-		//				}
-		//			} //passive MOTOR_POSITION_FEEDBACK_OBSERVE
-		//			else
-		//			{
-		//				p_motor->NextSector = MOTOR_SECTOR_ID_2;
-		//				p_motor->CommutationPeriodCmd = BEMF_GetZeroCrossingPeriod(&p_motor->Bemf)/6U;
-		//				Thread_SetTimerPeriod(&p_motor->ControlTimerThread, p_motor->CommutationPeriodCmd);//?
-		//			}
-		//		}
-		//
-		//
-		//
-		////		else			//		if bemf unreliable,  //start from observe mode
-		////		{
-		////				p_motor->PositionFeedback = MOTOR_POSITION_FEEDBACK_OBSERVE;
-		////		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{BEMF_MapCcwPhaseAC_IO(&p_motor->Bemf);}
-		////		else											{BEMF_MapCwPhaseAC_IO(&p_motor->Bemf);
-		//		//Phase_Float()
-		//		//report errot to statemechiane
-		////		}
-		////		}
-		//	}
-
-		break;
-
-	case MOTOR_SENSOR_MODE_HALL:
-		if(Hall_PollEdge_IO(&p_motor->Hall))
-		{
-			commutation = true;
-		}
-
-	default:
-		break;
-	}
-
-	if(commutation)
-	{
-		BEMF_SetNewCycle_IO(&p_motor->Bemf);
-		Encoder_CaptureDeltaT_IO(&p_motor->Encoder);
-		Encoder_CaptureExtendedDeltaT_IO(&p_motor->Encoder);
-	}
 
 }
 
-static inline void Motor_SixStep_StartFreewheel(Motor_T * p_motor)
+static inline void Motor_SixStep_PollTransition(Motor_T * p_motor)
 {
 
 }
-
 
 //void Motor_SixStep_Jog(Motor_T *p_motor)
 //{
@@ -456,3 +476,42 @@ static inline void Motor_SixStep_StartFreewheel(Motor_T * p_motor)
 //}
 
 #endif
+
+
+
+//static inline void Motor_SixStep_ProcFreewheel(Motor_T * p_motor)
+//{
+//	bool isBoundary = false;
+//
+//	switch (p_motor->Parameters.SensorMode)
+//	{
+//
+//	case MOTOR_SENSOR_MODE_OPEN_LOOP:
+//
+//	case MOTOR_SENSOR_MODE_BEMF:
+//		if(BEMF_PollCycle(&p_motor->Bemf))
+//		{
+//			p_motor->CommutationSector = p_motor->NextSector;
+//
+//			isBoundary = true;
+//		}
+//		break;
+//
+//	case MOTOR_SENSOR_MODE_HALL:
+//		if(Hall_PollEdge_IO(&p_motor->Hall))
+//		{
+//			isBoundary = true;
+//		}
+//
+//	default:
+//		break;
+//	}
+//
+//	if(isBoundary)
+//	{
+//		Encoder_DeltaT_Capture_IO(&p_motor->Encoder);
+//		Encoder_DeltaT_CaptureExtension_IO(&p_motor->Encoder);
+//
+//		Motor_SixStep_ActivateSector(p_motor, p_motor->CommutationSector,  0U); //observe bemf in hall mode?
+//	}
+//}

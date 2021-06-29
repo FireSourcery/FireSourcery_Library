@@ -29,7 +29,7 @@
 */
 /**************************************************************************/
 #include "Hall.h"
-#include "HAL.h"
+#include "HAL_Hall.h"
 
 #include "Config.h"
 
@@ -43,28 +43,28 @@ void Hall_Init //InitCommutationTable
 (
 	Hall_T * p_hall,
 	const HAL_Hall_T * p_hal_Hall,
-	Hall_CommutationId_T phaseAC,
-	Hall_CommutationId_T phaseBC,
-	Hall_CommutationId_T phaseBA,
-	Hall_CommutationId_T phaseCA,
-	Hall_CommutationId_T phaseCB,
-	Hall_CommutationId_T phaseAB,
+	Hall_CommutationPhase_T phaseAC,
+	Hall_CommutationPhase_T phaseBC,
+	Hall_CommutationPhase_T phaseBA,
+	Hall_CommutationPhase_T phaseCA,
+	Hall_CommutationPhase_T phaseCB,
+	Hall_CommutationPhase_T phaseAB,
 	uint8_t sensorInvBPhaseAC,
 	uint8_t sensorAPhaseBC,
 	uint8_t sensorInvCPhaseBA,
 	uint8_t sensorBPhaseCA,
 	uint8_t sensorInvAPhaseCB,
 	uint8_t sensorCPhaseAB,
-	Hall_CommutationId_T fault000,
-	Hall_CommutationId_T fault111
+	Hall_CommutationPhase_T fault000,
+	Hall_CommutationPhase_T fault111
 )
 
 {
 	p_hall->p_HAL_Hall = p_hal_Hall;
 	p_hall->Direction = HALL_DIRECTION_CCW;
 	p_hall->SensorsSaved  = 0U;
-	p_hall->VirtualSensorSaved = 0U;
-	p_hall->CommutationIdSaved = 0U;
+//	p_hall->VirtualSensorSaved = 0U;
+//	p_hall->CommutationIdSaved = 0U;
 
 	Hall_MapCommuntationTable
 	(
@@ -73,43 +73,35 @@ void Hall_Init //InitCommutationTable
 		sensorInvBPhaseAC, sensorAPhaseBC, sensorInvCPhaseBA, sensorBPhaseCA, sensorInvAPhaseCB, sensorCPhaseAB
 	);
 
-
-	p_hall->VirtualSensorTable[0] = 0U;
-	p_hall->VirtualSensorTable[7] = 7U;
+	p_hall->RotorAngleTable[0U] = 0U;
+	p_hall->RotorAngleTable[7U] = 7U;
 
 	Hall_MapCommuntationTableFaultStates(p_hall, fault000, fault111);
 
 	HAL_Hall_Init(p_hal_Hall);
 }
 
+void Hall_Init_Default(Hall_T * p_hall, const HAL_Hall_T * p_hal_Hall)
+{
+	p_hall->p_HAL_Hall = p_hal_Hall;
+	p_hall->Direction = HALL_DIRECTION_CCW;
+	p_hall->SensorsSaved = 0U;
 
-//void Hall_Init_Default //InitCommutationTable
-//(
-//	Hall_T * p_hall,
-//	const HAL_Hall_T * p_hal_Hall
-//)
-//{
-//	p_hall->p_HAL_Hall = p_hal_Hall;
-//	p_hall->Direction = HALL_DIRECTION_CCW;
-//	p_hall->SensorsSaved  = 0U;
-//	p_hall->VirtualSensorSaved = 0U;
-//	p_hall->CommutationIdSaved = 0U;
-//
 //	Hall_MapCommuntationTable_Default(p_hall);
 //	Hall_MapCommuntationTableFaultStates(p_hall, 0U, 7U);
-//
-//	HAL_Hall_Init(p_hal_Hall);
-//}
+
+	HAL_Hall_Init(p_hal_Hall);
+}
 
 void Hall_MapCommuntationTable
 (
 	Hall_T * p_hall,
-	Hall_CommutationId_T phaseAC,
-	Hall_CommutationId_T phaseBC,
-	Hall_CommutationId_T phaseBA,
-	Hall_CommutationId_T phaseCA,
-	Hall_CommutationId_T phaseCB,
-	Hall_CommutationId_T phaseAB,
+	Hall_CommutationPhase_T phaseAC,
+	Hall_CommutationPhase_T phaseBC,
+	Hall_CommutationPhase_T phaseBA,
+	Hall_CommutationPhase_T phaseCA,
+	Hall_CommutationPhase_T phaseCB,
+	Hall_CommutationPhase_T phaseAB,
 	uint8_t sensorIndexPhaseAC,
 	uint8_t sensorIndexPhaseBC,
 	uint8_t sensorIndexPhaseBA,
@@ -125,12 +117,12 @@ void Hall_MapCommuntationTable
 	p_hall->CommuntationTable[sensorIndexPhaseCB] = phaseCB;
 	p_hall->CommuntationTable[sensorIndexPhaseAB] = phaseAB;
 
-	p_hall->VirtualSensorTable[sensorIndexPhaseAC] = HALL_VIRTUAL_SENSORS_INV_B;
-	p_hall->VirtualSensorTable[sensorIndexPhaseBC] = HALL_VIRTUAL_SENSORS_A;
-	p_hall->VirtualSensorTable[sensorIndexPhaseBA] = HALL_VIRTUAL_SENSORS_INV_C;
-	p_hall->VirtualSensorTable[sensorIndexPhaseCA] = HALL_VIRTUAL_SENSORS_B;
-	p_hall->VirtualSensorTable[sensorIndexPhaseCB] = HALL_VIRTUAL_SENSORS_INV_A;
-	p_hall->VirtualSensorTable[sensorIndexPhaseAB] = HALL_VIRTUAL_SENSORS_C;
+	p_hall->RotorAngleTable[sensorIndexPhaseAC] = HALL_VIRTUAL_SENSORS_INV_B;
+	p_hall->RotorAngleTable[sensorIndexPhaseBC] = HALL_VIRTUAL_SENSORS_A;
+	p_hall->RotorAngleTable[sensorIndexPhaseBA] = HALL_VIRTUAL_SENSORS_INV_C;
+	p_hall->RotorAngleTable[sensorIndexPhaseCA] = HALL_VIRTUAL_SENSORS_B;
+	p_hall->RotorAngleTable[sensorIndexPhaseCB] = HALL_VIRTUAL_SENSORS_INV_A;
+	p_hall->RotorAngleTable[sensorIndexPhaseAB] = HALL_VIRTUAL_SENSORS_C;
 }
 
 
@@ -172,12 +164,12 @@ void Hall_MapCommuntationTable_Default
 		HALL_PHASE_CA,
 		HALL_PHASE_CB,
 		HALL_PHASE_AB,
-		HALL_SENSORS_INV_B,
-		HALL_SENSORS_A,
-		HALL_SENSORS_INV_C,
-		HALL_SENSORS_B,
-		HALL_SENSORS_INV_A,
-		HALL_SENSORS_C
+		HALL_VIRTUAL_SENSORS_INV_B,
+		HALL_VIRTUAL_SENSORS_A,
+		HALL_VIRTUAL_SENSORS_INV_C,
+		HALL_VIRTUAL_SENSORS_B,
+		HALL_VIRTUAL_SENSORS_INV_A,
+		HALL_VIRTUAL_SENSORS_C
 	);
 }
 #elif defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
@@ -187,12 +179,12 @@ void Hall_MapCommuntationTable_Default
 void Hall_MapCommuntationTable_PhaseDefault
 (
 	Hall_T * p_hall,
-	Hall_CommutationId_T phaseAC,
-	Hall_CommutationId_T phaseBC,
-	Hall_CommutationId_T phaseBA,
-	Hall_CommutationId_T phaseCA,
-	Hall_CommutationId_T phaseCB,
-	Hall_CommutationId_T phaseAB
+	Hall_CommutationPhase_T phaseAC,
+	Hall_CommutationPhase_T phaseBC,
+	Hall_CommutationPhase_T phaseBA,
+	Hall_CommutationPhase_T phaseCA,
+	Hall_CommutationPhase_T phaseCB,
+	Hall_CommutationPhase_T phaseAB
 )
 {
 //	/*
@@ -240,8 +232,8 @@ void Hall_MapCommuntationTable_PhaseDefault
 void Hall_MapCommuntationTableFaultStates
 (
 	Hall_T * p_hall,
-	Hall_CommutationId_T fault000,
-	Hall_CommutationId_T fault111
+	Hall_CommutationPhase_T fault000,
+	Hall_CommutationPhase_T fault111
 )
 {
 	p_hall->CommuntationTable[0] = fault000;
@@ -252,62 +244,62 @@ void Hall_MapCommuntationTableFaultStates
 void Hall_CalibrateSensorAPhaseBC
 (
 	Hall_T * p_hall,
-	Hall_CommutationId_T phaseBC
+	Hall_CommutationPhase_T phaseBC
 )
 {
 	p_hall->CommuntationTable[Hall_ReadSensors(p_hall)] = phaseBC;
-	p_hall->VirtualSensorTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_A;
-//	p_hall->VirtualSensorTable[HALL_VIRTUAL_SENSOR_A] = Hall_ReadSensors(p_hall);
+	p_hall->RotorAngleTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_A;
+//	p_hall->RotorAngleTable[HALL_VIRTUAL_SENSOR_A] = Hall_ReadSensors(p_hall);
 }
 
 void Hall_CalibrateSensorInvCPhaseBA
 (
 	Hall_T * p_hall,
-	Hall_CommutationId_T phaseBA
+	Hall_CommutationPhase_T phaseBA
 )
 {
 	p_hall->CommuntationTable[Hall_ReadSensors(p_hall)] = phaseBA;
-	p_hall->VirtualSensorTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_C;
+	p_hall->RotorAngleTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_C;
 }
 
 void Hall_CalibrateSensorBPhaseCA
 (
 	Hall_T * p_hall,
-	Hall_CommutationId_T phaseCA
+	Hall_CommutationPhase_T phaseCA
 )
 {
 	p_hall->CommuntationTable[Hall_ReadSensors(p_hall)] = phaseCA;
-	p_hall->VirtualSensorTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_B;
+	p_hall->RotorAngleTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_B;
 }
 
 void Hall_CalibrateSensorInvAPhaseCB
 (
 	Hall_T * p_hall,
-	Hall_CommutationId_T phaseCB
+	Hall_CommutationPhase_T phaseCB
 )
 {
 	p_hall->CommuntationTable[Hall_ReadSensors(p_hall)] = phaseCB;
-	p_hall->VirtualSensorTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_A;
+	p_hall->RotorAngleTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_A;
 }
 
 void Hall_CalibrateSensorCPhaseAB
 (
 	Hall_T * p_hall,
-	Hall_CommutationId_T phaseAB
+	Hall_CommutationPhase_T phaseAB
 )
 {
 	p_hall->CommuntationTable[Hall_ReadSensors(p_hall)] = phaseAB;
-	p_hall->VirtualSensorTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_C;
+	p_hall->RotorAngleTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_C;
 }
 
 void Hall_CalibrateSensorInvBPhaseAC
 (
 	Hall_T * p_hall,
-	Hall_CommutationId_T phaseAC
+	Hall_CommutationPhase_T phaseAC
 )
 {
 	p_hall->CommuntationTable[Hall_ReadSensors(p_hall)] = phaseAC;
-	p_hall->VirtualSensorTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_B;
+	p_hall->RotorAngleTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_B;
 }
 
 /*
@@ -318,12 +310,12 @@ void Hall_CalibrateCommuntationTable_Blocking
 (
 	Hall_T * p_hall,
 
-	Hall_CommutationId_T phaseAC,
-	Hall_CommutationId_T phaseBC,
-	Hall_CommutationId_T phaseBA,
-	Hall_CommutationId_T phaseCA,
-	Hall_CommutationId_T phaseCB,
-	Hall_CommutationId_T phaseAB,
+	Hall_CommutationPhase_T phaseAC,
+	Hall_CommutationPhase_T phaseBC,
+	Hall_CommutationPhase_T phaseBA,
+	Hall_CommutationPhase_T phaseCA,
+	Hall_CommutationPhase_T phaseCB,
+	Hall_CommutationPhase_T phaseAB,
 
 	void (*activatePwmValuePhaseABC)(uint16_t pwmA, uint16_t pwmB, uint16_t pwmC),
 	uint16_t pwm,

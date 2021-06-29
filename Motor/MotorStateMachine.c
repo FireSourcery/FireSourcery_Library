@@ -33,9 +33,9 @@
 
 #include "System/StateMachine/StateMachine.h"
 
-#include "../Motor.h"
-#include "../Motor_FOC.h"
-#include "../Motor_SixStep.h"
+#include "Motor.h"
+#include "Motor_FOC.h"
+#include "Motor_SixStep.h"
 
 #define MOTOR_STATE_MACHINE_TRANSITION_MAP_ENTRIES 			(10)
 #define MOTOR_STATE_MACHINE_INPUT_MAP_ENTRIES 				(2) //input output map
@@ -57,17 +57,73 @@ extern const State_T MOTOR_STATE_CALIBRATE_HALL;
 //extern const State_T MOTOR_STATE_FOC_SPIN;
 //extern const State_T MOTOR_STATE_SIX_STEP_SPIN;
 
+
+
+/*******************************************************************************/
+/*!
+    @brief  Transition Conditions
+*/
+/*******************************************************************************/
+static inline bool Motor_PollStopToSpin(Motor_T * p_motor)
+{
+	bool transition = true;
+
+	transition &= (p_motor->InputSwitchBrake == false) || ((p_motor->InputSwitchBrake == true) && (Motor_GetSpeed(p_motor) > 0));
+	transition &= (p_motor->IsDirectionNeutral == false);
+	transition &= (p_motor->UserCmd > 0U);
+	transition &= (p_motor->IsThrottleRelease == false);
+
+	return transition;
+}
+
+static inline bool Motor_PollSpinToFreewheel(Motor_T * p_motor)
+{
+	bool transition = false;
+
+	transition |= (p_motor->IsDirectionNeutral == true);
+	transition |= (p_motor->UserCmd == 0); 	//brake 0 and throttle 0
+	transition |= (p_motor->IsThrottleRelease == true);
+	transition |= ((p_motor->InputSwitchBrake == true) && (p_motor->Parameters.BrakeMode == MOTOR_BRAKE_MODE_PASSIVE));
+
+	//poll stall
+	return transition;
+}
+
+static inline bool Motor_PollFreewheelToSpin(Motor_T * p_motor)
+{
+	bool transition = true;
+
+	transition &= (p_motor->InputSwitchBrake == false) || ((p_motor->InputSwitchBrake == true) && (p_motor->Parameters.BrakeMode != MOTOR_BRAKE_MODE_PASSIVE) && (Motor_GetSpeed(p_motor) > 0));
+	transition &= (p_motor->UserCmd > 0U);
+	transition &= (p_motor->IsDirectionNeutral == false);
+	transition &= (p_motor->IsThrottleRelease == false);
+
+	return transition;
+}
+
+static inline bool Motor_PollFreewheelToStop(Motor_T * p_motor)
+{
+	if (Motor_GetSpeed(p_motor) == 0U)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 /*******************************************************************************/
 /*!
     @brief  State
 */
 /*******************************************************************************/
-void FaultEntry(Motor_T * p_motor)
+static void FaultEntry(Motor_T * p_motor)
 {
 
 }
 
-void FaultLoop(Motor_T * p_motor)
+static void FaultLoop(Motor_T * p_motor)
 {
 	//if fault clear
 //	StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_INIT);
@@ -120,6 +176,7 @@ static void InitEntry(Motor_T * p_motor)
 
 static void InitLoop(Motor_T * p_motor)
 {
+	//temp
 	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
 	{
 		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_CALIBRATE_HALL);
@@ -136,7 +193,7 @@ static void InitLoop(Motor_T * p_motor)
 const State_T * const P_INIT_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_TRANSITION_MAP_ENTRIES] =
 {
 	[MOTOR_TRANSITION_FAULT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_INIT] 			= &MOTOR_STATE_FAULT,
+	[MOTOR_TRANSITION_INIT] 			= &MOTOR_STATE_INIT,
 	[MOTOR_TRANSITION_STOP] 			= &MOTOR_STATE_STOP,
 	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= &MOTOR_STATE_CALIBRATE_ADC,
 	[MOTOR_TRANSITION_CALIBRATE_HALL] 	= &MOTOR_STATE_CALIBRATE_HALL,
@@ -188,8 +245,6 @@ static void StopLoop(Motor_T * p_motor)
 	//proc direction
 	//		Motor_PollToggleDirectionUpdate(p_motor);
 
-	//observe speed and appy brake
-	//		Motor_ObserveSensors(p_motor);
 
 	if (Motor_PollStopToSpin(p_motor))
 	{
@@ -314,7 +369,7 @@ static void SpinEntry(Motor_T * p_motor)
 	}
 	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		Motor_SixStep_StartSectorControl(p_motor);
+		Motor_SixStep_StartSpin(p_motor);
 	}
 }
 
@@ -327,7 +382,7 @@ static void SpinLoop(Motor_T * p_motor)
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		Motor_SixStep_ProcSectorControl(p_motor);
+		Motor_SixStep_ProcPhaseControl(p_motor);
 	}
 
 	if (Motor_PollSpinToFreewheel(p_motor))
@@ -388,7 +443,7 @@ const State_T MOTOR_STATE_SPIN =
 /*******************************************************************************/
 static void FreewheelEntry(Motor_T * p_motor)
 {
-	Motor_Float(p_motor);
+	Motor_SixStep_StartFreewheel(p_motor);
 }
 
 static void FreewheelLoop(Motor_T * p_motor)
@@ -399,25 +454,15 @@ static void FreewheelLoop(Motor_T * p_motor)
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		Motor_SixStep_ProcFreewheel(p_motor);
+		Motor_SixStep_ProcPhaseControl(p_motor);
 	}
 
-	if (Motor_GetSpeed(p_motor) == 0U)
+	if (Motor_PollFreewheelToStop(p_motor))
 	{
 		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
 	}
 	else if (Motor_PollFreewheelToSpin(p_motor))
 	{
-		//ramp should already be set from ui poll
-//		if (p_motor->InputSwitchBrake == true)
-//		{
-//			Motor_SetRampDecelerate(p_motor);
-//		}
-//		else
-//		{
-//			Motor_SetRampAccelerate(p_motor);
-//		}
-
 		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_SPIN);
 	}
 
@@ -604,7 +649,7 @@ static void Flash(Motor_T * p_motor)
 //static void FocSpinLoop(Motor_T * p_motor)
 //{
 //	Motor_FOC_ProcAngleControl(p_motor);
-//	Motor_SixStep_ProcSectorControl(p_motor);
+//	Motor_SixStep_ProcPhaseControl(p_motor);
 //
 ////	only check flags in pwm loop. set flags in main loop
 //	if(Motor_PollFaultFlag(p_motor))	{ StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_FAULT);	}
@@ -651,12 +696,12 @@ static void Flash(Motor_T * p_motor)
 ///*******************************************************************************/
 //static void SixStepSpinEntry(Motor_T * p_motor)
 //{
-//	Motor_SixStep_SetSectorControl(p_motor);
+//	Motor_SixStep_SetPhaseControl(p_motor);
 //}
 //
 //static void SixStepSpinLoop(Motor_T * p_motor)
 //{
-//	Motor_SixStep_ProcSectorControl(p_motor);
+//	Motor_SixStep_ProcPhaseControl(p_motor);
 //
 ////	only check flags in pwm loop. set flags in main loop
 ////	if(Motor_PollFaultFlag(p_motor))	{ StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_FAULT);	}
@@ -705,11 +750,11 @@ void MotorStateMachine_Init(Motor_T * p_motor)
 	StateMachine_Init
 	(
 		&(p_motor->StateMachine),
-		&MOTOR_STATE_FAULT,
+		&MOTOR_STATE_INIT,
 		MOTOR_STATE_MACHINE_TRANSITION_MAP_ENTRIES,
 		MOTOR_STATE_MACHINE_INPUT_MAP_ENTRIES,
 		p_motor
 	);
 
-	StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_INIT);
+//	StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_INIT);
 }

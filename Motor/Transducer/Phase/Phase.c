@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "Phase.h"
 
-#include "HAL.h"
+#include "HAL_Phase.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -75,7 +75,7 @@ void Phase_Init
 	p_phase->StateA = false;
 	p_phase->StateB = false;
 	p_phase->StateC = false;
-	p_phase->Duty_Ticks = 0U;
+	p_phase->DutyXY_Ticks = 0U;
 
 //	p_phase->OnPhaseAB = onPhaseAB;
 //	p_phase->OnPhaseAC = onPhaseAC;

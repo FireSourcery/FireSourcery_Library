@@ -383,10 +383,12 @@ static inline void Analog_Dectivate(const Analog_T * p_analog)
 {
 #if  defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
 	HAL_ADC_Dectivate(p_analog->p_Adc);
+	HAL_ADC_DisableInterrupt(p_analog->p_Adc);
 #elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
 	for (uint8_t iAdc = 0U; iAdc < p_analog->AdcN_Count; iAdc++)
 	{
 		HAL_ADC_Dectivate(p_analog->pp_Adcs[iAdc]);
+		HAL_ADC_DisableInterrupt(p_analog->pp_Adcs[iAdc]);
 	}
 #endif
 }

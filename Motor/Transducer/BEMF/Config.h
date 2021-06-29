@@ -31,11 +31,11 @@
 #ifndef CONFIG_BEMF_H
 #define CONFIG_BEMF_H
 
-#if defined(CONFIG_BEMF_HAL_KLS_S32K)
-
-#else
-	#define CONFIG_BEMF_HAL_USER_DEFINED
-#endif
+//#if defined(CONFIG_BEMF_HAL_KLS_S32K)
+//
+//#else
+//	#define CONFIG_BEMF_HAL_USER_DEFINED
+//#endif
 
 #ifdef CONFIG_BEMF_ADC_8
 

@@ -43,31 +43,28 @@
 
 	@param controlFreq_Hz pwm timer freq
  */
-
 void Encoder_Motor_InitCaptureCount
 (
 	Encoder_T * p_encoder,
 	const HAL_Encoder_T * p_hal_encoder,
 	uint32_t controlFreq_Hz,				/* UnitT_Freq and PollingFreq */
-	uint8_t angleDataBits,					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
+//	uint8_t angleDataBits,					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
 	uint8_t polePairs,
 	uint32_t encoderCountsPerRevolution,	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */
 	uint32_t encoderDistancePerCount		/* UnitLinearD */
 )
 {
-	Encoder_InitCaptureDeltaD
+	Encoder_DeltaD_Init
 	(
 		p_encoder,
 		p_hal_encoder,
-		encoderCountsPerRevolution - 1,
 		controlFreq_Hz,
 		encoderDistancePerCount,
-		encoderCountsPerRevolution,
-		angleDataBits
+		encoderCountsPerRevolution
+//		angleDataBits
 	);
 
 	p_encoder->PolePairs = polePairs;
-
 
 	/* UnitAngularD set to reflect electrical angle
 	 * Allow CapturedD, TotalD of at least 1 electrical revolution
@@ -85,7 +82,6 @@ void Encoder_Motor_InitCaptureCount
 	 * 10k RPM => DeltaD = 10000/60 * 8192 /20000 = 68
 	 */
 //	p_speed->UnitAngularSpeed = MaxLeftShiftDivide(controlFreq_Hz * nPolePairs, pulsePerRevolution, 16);
-
 }
 
 
@@ -125,27 +121,36 @@ void Encoder_Motor_InitCaptureTime
 	uint32_t timerCounterMax,
 	uint32_t timerFreqHz,				/* UnitT_Freq */
 	uint32_t controlFreq_Hz,			/* PollingFreq */
-	uint8_t angleDataBits,				/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
+//	uint8_t angleDataBits,				/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
 	uint8_t polePairs,
 	uint8_t countsPerRevolution,		/* EncoderRes */
-	uint32_t distancePerPolePair		/* UnitLinearD */
+	uint32_t distancePerCount		/* UnitLinearD */
 )
 {
-	Encoder_InitCaptureDeltaT
+	Encoder_DeltaT_Init
 	(
 		p_encoder,
 		p_hal_encoder,
 		timerCounterMax,
 		timerFreqHz,
 		controlFreq_Hz,
-		distancePerPolePair,
-		countsPerRevolution,
-		angleDataBits
+		distancePerCount,
+		countsPerRevolution
+//		angleDataBits
 	);
 	//Too large may be unused
 	//p_encoder->UnitAngularD_Factor		= 0xFFFFFFFFU/polePairs + 1;
 	//p_encoder->UnitAngularD_DivisorShift 	= (32 - angleDataBits);
 	//p_encoder->UnitAngularSpeed
+
+	//motor must use for stop poll
+//	Encoder_InitExtendedDeltaT
+//	(
+//		&p_motor->Encoder,
+//		&p_motor->MillisTimerBase,
+//		1000U,
+//		1000U
+//	);
 
 	p_encoder->PolePairs = polePairs;
 }

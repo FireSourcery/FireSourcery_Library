@@ -22,27 +22,27 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	HAL_Serial.h
+	@file 	HAL.h
 	@author FireSoucery
-	@brief
+	@brief 	  module HAL
 	@version V0
 */
 /******************************************************************************/
-#ifndef HAL_SERIAL_H
-#define HAL_SERIAL_H
+#ifndef HAL_ENCODER_TRANSDUCER_H
+#define HAL_ENCODER_TRANSDUCER_H
 
-#include "Config.h"
 
-//#include <stdint.h>
-//#include <stdbool.h>
+#ifdef CONFIG_HAL_KLS_S32K
 
-#if defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include "Peripheral/HAL/HAL.h"
-#elif defined(CONFIG_HAL_LIBRARY_USER_DEFINED)
-	#include "HAL/HAL.h"
-#elif defined(CONFIG_HAL_SERIAL_USER_DEFINED)
-	#include "HAL_Serial.h"
+	#include "Board/KLS_S32K/HAL_Encoder.h"
+#elif defined(CONFIG_HAL_S32K)
+	#include "Platform/S32K/HAL_Encoder.h"
+
+#elif defined(CONFIG_HAL_LIBRARY_XYZ)
+	#include "Board/XYZ/HAL_Hardware.h"
+
 #endif
+
 
 
 

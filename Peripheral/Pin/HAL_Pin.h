@@ -31,8 +31,6 @@
 #ifndef HAL_PIN_H
 #define HAL_PIN_H
 
-#include "Config.h"
-
 #if defined(CONFIG_HAL_LIBRARY_DEFINED)
 	#include "Peripheral/HAL/HAL.h"
 #elif defined(CONFIG_HAL_USER_DEFINED)

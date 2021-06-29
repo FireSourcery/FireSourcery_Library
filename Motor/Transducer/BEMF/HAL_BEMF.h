@@ -24,36 +24,25 @@
 /*!
 	@file 	HAL.h
 	@author FireSoucery
-	@brief 	Hall sensor HAL import functions
+	@brief 	Bemf HAL import functions
 	@version V0
 */
 /******************************************************************************/
-#ifndef HAL_HALL_H
-#define HAL_HALL_H
-
-#include "Config.h"
-
-#if defined(CONFIG_HALL_HAL_PIN_S32K)
-	#include "Peripheral/HAL/Platform/S32K/HAL_Pin.h"
-#elif defined(CONFIG_HALL_HAL_HALL_S32K)
-	#include "Motor/Transducer/HAL/Platform/KLS_S32K/HAL_Hall.h"
-#elif defined(CONFIG_HALL_HAL_KLS_S32K)
-	#include "Motor/Transducer/HAL/Board/KLS_S32K/HAL_Hall.h"
-#elif defined(CONFIG_HALL_HAL_HALL_USER_DEFINED)
-
-
-/*
-typedef const struct
-{
-//	uint32_t InstanceID;
-} HAL_Hall_T;
-
-static inline uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
-{
-
-}
-*/
-#endif
-
-
-#endif
+//#ifndef HAL_BEMF_H
+//#define HAL_BEMF_H
+//
+//#include "Config.h"
+//
+//
+//#if defined(CONFIG_HAL_LIBRARY_DEFINED)// || defined(CONFIG_BEMF_HAL_LIBRARY_DEFINED)
+//	#include "../HAL/HAL.h"
+//
+//#elif defined(CONFIG_HAL_USER_DEFINED)// || defined(CONFIG_BEMF_HAL_USER_DEFINED)
+//	#include "HAL.h"
+//
+//#elif defined(CONFIG_BEMF_HAL_KLS_S32K)
+//	#include "Motor/Transducer/HAL/Board/KLS_S32K/HAL_BEMF.h"
+//#endif
+//
+//
+//#endif

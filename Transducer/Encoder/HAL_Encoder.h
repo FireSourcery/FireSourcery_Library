@@ -37,35 +37,43 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#if defined(CONFIG_ENCODER_HAL_S32K)
-	#include "HAL/Platform/S32K/HAL_Encoder.h"
-#elif defined(CONFIG_ENCODER_HAL_KLS_S32K)
-	#include "HAL/Board/KLS_S32K/HAL_Encoder.h"
-#elif defined(CONFIG_ENCODER_HAL_XYZ)
-
-#elif defined(CONFIG_ENCODER_HAL_USER_DEFINED)
+#if defined(CONFIG_HAL_LIBRARY_DEFINED)
+	#include "HAL/HAL.h"
+#elif defined(CONFIG_HAL_LIBRARY_USER_DEFINED)
+	#include "HAL.h"
+#elif defined(CONFIG_HAL_ENCODER_USER_DEFINED)
 	#include "HAL_Encoder.h"
-/*
-	typedef struct
-	{
-		HAL_TimerCounter_T * p_TimerCounter;
-		uint8_t TimerCounterChannel;
-
-		HAL_Pin_T * p_PinPhaseA;
-		uint32_t PinMaskPhaseA;
-
-		HAL_Pin_T * p_PinPhaseB;
-		uint32_t PinMaskPhaseB;
-	} HAL_Encoder_T;
-
-	static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder){ }
-	static inline bool HAL_Encoder_ReadDirection(const HAL_Encoder_T * p_encoder){ }
-	static inline bool HAL_Encoder_ReadPhaseA(const HAL_Encoder_T * p_encoder){ }
-	static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder){ }
-	static inline bool HAL_Encoder_EnableInterrupt(const HAL_Encoder_T * p_encoder){ }
-*/
-//Timer_ConfigPeriodicIRQ
-//Timer_ConfigCaptureIRQ
 #endif
+
+//#if defined(CONFIG_ENCODER_HAL_S32K)
+//	#include "HAL/Platform/S32K/HAL_Encoder.h"
+//#elif defined(CONFIG_ENCODER_HAL_KLS_S32K)
+//	#include "HAL/Board/KLS_S32K/HAL_Encoder.h"
+//#elif defined(CONFIG_ENCODER_HAL_XYZ)
+//
+//#elif defined(CONFIG_ENCODER_HAL_USER_DEFINED)
+//	#include "HAL_Encoder.h"
+///*
+//	typedef struct
+//	{
+//		HAL_TimerCounter_T * p_TimerCounter;
+//		uint8_t TimerCounterChannel;
+//
+//		HAL_Pin_T * p_PinPhaseA;
+//		uint32_t PinMaskPhaseA;
+//
+//		HAL_Pin_T * p_PinPhaseB;
+//		uint32_t PinMaskPhaseB;
+//	} HAL_Encoder_T;
+//
+//	static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder){ }
+//	static inline bool HAL_Encoder_ReadDirection(const HAL_Encoder_T * p_encoder){ }
+//	static inline bool HAL_Encoder_ReadPhaseA(const HAL_Encoder_T * p_encoder){ }
+//	static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder){ }
+//	static inline bool HAL_Encoder_EnableInterrupt(const HAL_Encoder_T * p_encoder){ }
+//*/
+////Timer_ConfigPeriodicIRQ
+////Timer_ConfigCaptureIRQ
+//#endif
 
 #endif

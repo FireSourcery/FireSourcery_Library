@@ -32,6 +32,18 @@
 #define CONFIG_HALL_H
 
 /*
+	Match in HAL
+ */
+#if (CONFIG_HALL_HW_SENSOR_ORDER_CBA)
+
+#elif (CONFIG_HALL_HW_SENSOR_ORDER_ABC)
+
+#else
+	#define CONFIG_HALL_HW_SENSOR_ORDER_CBA
+#endif
+
+
+/*
 	Module Options
  */
 #if  	defined(CONFIG_HALL_COMMUTATION_TABLE_SECTOR_ID)
@@ -41,31 +53,6 @@
 #else
 	#define CONFIG_HALL_COMMUTATION_TABLE_SECTOR_ID
 #endif
-
-#if (CONFIG_HALL_SENSOR_ORDER_CBA)
-
-#elif (CONFIG_HALL_HALL_SENSORS_ORDER_ABC)
-
-#else
-	#define CONFIG_HALL_SENSORS_ORDER_CBA
-#endif
-
-
-///*
-//	HAL Select
-// */
-//#if defined(CONFIG_HALL_HAL_PIN_S32K)
-//	#define CONFIG_HALL_HAL_PIN
-//#elif defined(CONFIG_HALL_HAL_HALL_S32K)
-//	#define CONFIG_HALL_HAL_HALL
-//#elif defined(CONFIG_HALL_HAL_KLS_S32K)
-//	#define CONFIG_HALL_HAL_HALL
-//#elif defined(CONFIG_HALL_HAL_HALL_USER_DEFINED)
-//	#define CONFIG_HALL_HAL_HALL
-//#else
-//	#define CONFIG_HALL_HAL_HALL_USER_DEFINED
-//	#define CONFIG_HALL_HAL_HALL
-//#endif
 
 
 #if  	defined(CONFIG_HALL_HAL_PIN)

@@ -22,7 +22,7 @@
 /**************************************************************************/
 /**************************************************************************/
 /*!
-    @file 	Motor_IO.h
+    @file 	Motor_Controller.h
     @author FireSoucery
     @brief  Motor module functions must be placed into corresponding user app threads
     		Most outer functions to call from MCU app
@@ -33,23 +33,22 @@
 #include "Motor_FOC.h"
 #include "Motor_SixStep.h"
 
-#include "HAL_Motor.h"
+//#include "HAL_Motor.h"
 
-#include "Peripheral/Analog/Analog_IO.h"
-
-#include "System/StateMachine/StateMachine.h"
-
+//#include "Peripheral/Analog/Analog_IO.h"
+//
+//#include "System/StateMachine/StateMachine.h"
 
 /*
     Default 50us
  */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-//	HAL_Phase_ClearInterrupt(&p_motor->Phase);
 	p_motor->ControlTimerBase++;
 
 	StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
 
+	Phase_ClearInterrupt(&p_motor->Phase); //proc after, clear interrupt flag that may be set up pwm update
 }
 
 /*
@@ -59,10 +58,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 //static inline void Motor_ADC_Thread(Motor_T * p_motor)
 //{
 ////	Analog_CaptureResults_IO(&p_motor->Analog);
-//	//if Iabc complete, Motor_FOC_ProcCurrentControl(Motor_T * p_motor)
 //}
-
-
 
 
 static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priotiy
@@ -102,15 +98,13 @@ static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priotiy
 	{
 
 	}
-
-
 	//Motor_SpeedLoop();
 	//Monitor
 	//		if(Motor_PollFault(p_motor))	{ StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_FAULT);	}
 }
 
 ///*
-// * SixStep openloop and sensorless
+// * SixStep openloop and sensorless hw timer
 // */
 //static inline void Motor_TimerCommutation_Thread(Motor_T * p_motor)
 //{
@@ -118,25 +112,7 @@ static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priotiy
 //}
 
 
-static inline bool MotorUser_GetCmdRelease(Motor_T * p_motor)
-{
-	bool isReleased;
-
-	if (p_motor->InputValueThrottle < p_motor->InputValueThrottlePrev)
-	{
-		if ((p_motor->InputValueThrottlePrev - p_motor->InputValueThrottle) > (65535/100))
-		{
-			isReleased == true;
-		}
-	}
-	else
-	{
-		isReleased == false;
-	}
-
-	return isReleased;
-}
-
+//todo move to user
 static inline void Motor_Main_Thread(Motor_T * p_motor)
 {
 
@@ -161,10 +137,10 @@ static inline void Motor_Main_Thread(Motor_T * p_motor)
 			//p_motor->InputSwitchNeutral = Debounce_GetState(&p_motor->PinNeutral);
 //			p_motor->InputSwitchNeutral = p_motor->InputSwitchForward | p_motor->InputSwitchReverse ? false : true;
 
-			p_motor->InputValueThrottlePrev = p_motor->InputValueThrottle;
-			p_motor->InputValueBrakePrev = p_motor->InputValueBrake;
-			p_motor->InputValueThrottle 	= Linear_ADC_CalcFractionUnsigned16(&p_motor->UnitThrottle, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_THROTTLE]);
-			p_motor->InputValueBrake 		= Linear_ADC_CalcFractionUnsigned16(&p_motor->UnitBrake, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_BRAKE]);
+			p_motor->InputValueThrottlePrev 	= p_motor->InputValueThrottle;
+			p_motor->InputValueBrakePrev 		= p_motor->InputValueBrake;
+			p_motor->InputValueThrottle 		= Linear_ADC_CalcFractionUnsigned16(&p_motor->UnitThrottle, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_THROTTLE]);
+			p_motor->InputValueBrake 			= Linear_ADC_CalcFractionUnsigned16(&p_motor->UnitBrake, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_BRAKE]);
 
 			break;
 
@@ -186,14 +162,16 @@ static inline void Motor_Main_Thread(Motor_T * p_motor)
 //
 //		if(p_motor->IsDirectionNeutral == false)
 //		{
-			p_motor->IsDirectionNeutral = false;
+
 			if (p_motor->InputSwitchForward  == true) // ^ reverse direction
 			{
 				p_motor->DirectionInput = MOTOR_DIRECTION_CCW;
+				p_motor->IsDirectionNeutral = false;
 			}
 			else if (p_motor->InputSwitchReverse == true)
 			{
 				p_motor->DirectionInput = MOTOR_DIRECTION_CW;
+				p_motor->IsDirectionNeutral = false;
 			}
 			else
 			{
@@ -225,7 +203,7 @@ static inline void Motor_Main_Thread(Motor_T * p_motor)
 		{
 			if (p_motor->InputValueThrottle < p_motor->InputValueThrottlePrev)
 			{
-				if ((p_motor->InputValueThrottlePrev - p_motor->InputValueThrottle) > (65535/2000))
+				if ((p_motor->InputValueThrottlePrev - p_motor->InputValueThrottle) > (p_motor->InputValueThrottle/10U))
 				{
 					p_motor->IsThrottleRelease == true;
 				}
@@ -235,8 +213,8 @@ static inline void Motor_Main_Thread(Motor_T * p_motor)
 					p_motor->IsThrottleRelease == false;
 			}
 
-			Motor_SetUserCmd(p_motor, p_motor->InputValueThrottle);
-			Motor_SetRampAccelerate(p_motor, p_motor->InputValueThrottle);
+			Motor_SetUserCmd(p_motor, (p_motor->InputValueThrottle + p_motor->InputValueThrottlePrev)/2);
+			Motor_SetRampAccelerate(p_motor, (p_motor->InputValueThrottle + p_motor->InputValueThrottlePrev)/2);
 		}
 
 

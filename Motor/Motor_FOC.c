@@ -44,7 +44,7 @@
 #include <stdint.h>
 
 
-  volatile uint32_t debug[1000];
+
 
 /*
 	For motor controlled virtualized analog module

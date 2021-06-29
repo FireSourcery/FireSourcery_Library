@@ -1,4 +1,4 @@
-/******************************************************************************/
+/**************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,30 +19,30 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/******************************************************************************/
-/******************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
 /*!
-	@file 	HAL.h
-	@author FireSoucery
-	@brief 	Bemf HAL import functions
-	@version V0
+    @file 	Motor_Controller.h
+    @author FireSoucery
+    @brief  Motor module functions must be placed into corresponding user app threads
+    		Most outer functions to call from MCU app
+    @version V0
 */
-/******************************************************************************/
-#ifndef HAL_BEMF_H
-#define HAL_BEMF_H
+/**************************************************************************/
+#include "../Motor.h"
+#include "../Motor_FOC.h"
+#include "../Motor_SixStep.h"
 
-#include "Config.h"
+//#include "HAL_Motor.h"
 
-
-#if defined(CONFIG_HAL_LIBRARY_DEFINED)// || defined(CONFIG_BEMF_HAL_LIBRARY_DEFINED)
-	#include "../HAL/HAL.h"
-
-#elif defined(CONFIG_HAL_USER_DEFINED)// || defined(CONFIG_BEMF_HAL_USER_DEFINED)
-	#include "HAL.h"
-
-#elif defined(CONFIG_BEMF_HAL_KLS_S32K)
-	#include "Motor/Transducer/HAL/Board/KLS_S32K/HAL_BEMF.h"
-#endif
+//#include "Peripheral/Analog/Analog_IO.h"
+//
+//#include "System/StateMachine/StateMachine.h"
 
 
-#endif
+//Serial1
+//User
+//
+
+
+

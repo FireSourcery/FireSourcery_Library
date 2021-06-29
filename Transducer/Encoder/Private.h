@@ -31,8 +31,48 @@
 #ifndef PRIVATE_ENCODER_H
 #define PRIVATE_ENCODER_H
 
+#include "Encoder.h"
+#include "HAL_Encoder.h"
+
 #include <stdint.h>
+#include <stdbool.h>
+
+/******************************************************************************/
+/*!
+	@addtogroup	CaptureDelta
+	@brief	Capture DeltaT or DeltaD between 2 samples.
+			Either DeltaT or DeltaD is selected to be fixed.
+			Used for all speed calculations.
+
+			Filtering Delta is responsibility of caller.
+ */
+/*! @{ */
+/******************************************************************************/
+
+/*!
+	@brief Private CaptureDelta Helper
+
+	capture increasing
+ */
+//static inline void CaptureEncoderDeltaIncreasing(Encoder_T * p_encoder, volatile uint32_t * capturedest, *timercounter, max, prev)
+//{
+//	uint32_t timerCounterValue = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
+//
+//	if (timerCounterValue < p_encoder->TimerCounterSaved) /* TimerCounter overflow */
+//	{
+//		*p_delta = p_encoder->TimerCounterMax - p_encoder->TimerCounterSaved + timerCounterValue + 1U;
+//	}
+//	else /* normal case */
+//	{
+//		*p_delta = timerCounterValue - p_encoder->TimerCounterSaved;
+//	}
+//
+//	p_encoder->TimerCounterSaved = timerCounterValue;
+//}
 
 
+/******************************************************************************/
+/*! @} */
+/******************************************************************************/
 
 #endif

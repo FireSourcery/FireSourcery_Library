@@ -31,7 +31,7 @@
 	e.g. PhaseAB -> PWM phase A MOSFETs, phase B bottom MOSFET stays on.
 	Implementation details; dead time, are delegated to user/HAL functions
 
-	Only necessary for 2-Phase actuation. However all motor actuating will use this module for uniform interface.
+	Includes 2-Phase implementation
 
     @version V0
 */
@@ -39,7 +39,7 @@
 #ifndef PHASE_H
 #define PHASE_H
 
-#include "HAL.h"
+#include "HAL_Phase.h"
 #include "Config.h"
 
 #include <stdint.h>
@@ -81,7 +81,7 @@ typedef struct
 	const HAL_Phase_T * p_HAL_Phase;
 #endif
 
-	uint32_t PwmPeriod_Ticks;
+	uint32_t PwmPeriod_Ticks; //match to HAL
 
 	volatile Phase_Mode_T PhaseMode; //const PhaseMode[8];
 
@@ -100,7 +100,7 @@ typedef struct
 	volatile bool StateB;
 	volatile bool StateC;
 
-	volatile uint32_t Duty_Ticks; /* 2-phase polar pwm mode scalar */
+	volatile uint32_t DutyXY_Ticks; /* 2-phase polar pwm mode scalar */
 
 //	bool UseSinusoidalInterpolation;
 //	uint32_t AngularSpeedTime; // (384*HallBaseTimerFreq/ISRFreq)
@@ -118,7 +118,15 @@ typedef struct
 //	void (*OnPhaseCB)(void * onPhaseData);
 } Phase_T;
 
+static inline void Phase_ClearInterrupt(const Phase_T * p_phase)
+{
+#if  	defined(CONFIG_PHASE_HAL_PWM)
 
+
+#elif 	defined(CONFIG_PHASE_HAL_PHASE)
+	HAL_Phase_ClearInterrupt(p_phase->p_HAL_Phase);
+#endif
+}
 
 /*
 	Actuate arguments immediately
@@ -126,6 +134,7 @@ typedef struct
 /*
 	Duty in ticks
  */
+//static inline void ActuateDutyCycleTicks(const Phase_T * p_phase, uint32_t pwmDutyA, uint32_t pwmDutyB, uint32_t pwmDutyC)
 static inline void Phase_ActuateDutyCycle_Ticks(const Phase_T * p_phase, uint32_t pwmDutyA, uint32_t pwmDutyB, uint32_t pwmDutyC)
 {
 #if  	defined(CONFIG_PHASE_HAL_PWM)
@@ -207,16 +216,16 @@ static inline void Phase_Actuate(const Phase_T * p_phase)
  */
 static inline void Phase_SetDutyCyle(Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
 {
-	p_phase->DutyA_Ticks = (uint32_t) pwmDutyA * (uint32_t) p_phase->PwmPeriod_Ticks / 65536U;
-	p_phase->DutyB_Ticks = (uint32_t) pwmDutyB * (uint32_t) p_phase->PwmPeriod_Ticks / 65536U;
-	p_phase->DutyC_Ticks = (uint32_t) pwmDutyC * (uint32_t) p_phase->PwmPeriod_Ticks / 65536U;
+	p_phase->DutyA_Ticks = (uint32_t)pwmDutyA * (uint32_t)p_phase->PwmPeriod_Ticks / 65536U;
+	p_phase->DutyB_Ticks = (uint32_t)pwmDutyB * (uint32_t)p_phase->PwmPeriod_Ticks / 65536U;
+	p_phase->DutyC_Ticks = (uint32_t)pwmDutyC * (uint32_t)p_phase->PwmPeriod_Ticks / 65536U;
 }
 
 static inline void Phase_SetDutyCyle_15(Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
 {
-	p_phase->DutyA_Ticks = (uint32_t) pwmDutyA * (uint32_t) p_phase->PwmPeriod_Ticks / 32768U;
-	p_phase->DutyB_Ticks = (uint32_t) pwmDutyB * (uint32_t) p_phase->PwmPeriod_Ticks / 32768U;
-	p_phase->DutyC_Ticks = (uint32_t) pwmDutyC * (uint32_t) p_phase->PwmPeriod_Ticks / 32768U;
+	p_phase->DutyA_Ticks = (uint32_t)pwmDutyA * (uint32_t)p_phase->PwmPeriod_Ticks / 32768U;
+	p_phase->DutyB_Ticks = (uint32_t)pwmDutyB * (uint32_t)p_phase->PwmPeriod_Ticks / 32768U;
+	p_phase->DutyC_Ticks = (uint32_t)pwmDutyC * (uint32_t)p_phase->PwmPeriod_Ticks / 32768U;
 }
 
 static inline void Phase_SetState(Phase_T * p_phase, bool a, bool b, bool c)
@@ -244,34 +253,34 @@ static inline void Phase_Short(const Phase_T *p_phase)
  */
 /*! @{ */
 /******************************************************************************/
-static inline void Phase_Unipolar1_ActivateAC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->Duty_Ticks, 0U, 0U);}
-static inline void Phase_Unipolar1_ActivateBC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, p_phase->Duty_Ticks, 0U);}
-static inline void Phase_Unipolar1_ActivateBA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, p_phase->Duty_Ticks, 0U);}
-static inline void Phase_Unipolar1_ActivateCA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, 0U, p_phase->Duty_Ticks);}
-static inline void Phase_Unipolar1_ActivateCB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, 0U, p_phase->Duty_Ticks);}
-static inline void Phase_Unipolar1_ActivateAB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->Duty_Ticks, 0U, 0U);}
+static inline void Phase_Unipolar1_ActivateAC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->DutyXY_Ticks, 0U, 0U);}
+static inline void Phase_Unipolar1_ActivateBC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, p_phase->DutyXY_Ticks, 0U);}
+static inline void Phase_Unipolar1_ActivateBA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, p_phase->DutyXY_Ticks, 0U);}
+static inline void Phase_Unipolar1_ActivateCA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, 0U, p_phase->DutyXY_Ticks);}
+static inline void Phase_Unipolar1_ActivateCB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, 0U, p_phase->DutyXY_Ticks);}
+static inline void Phase_Unipolar1_ActivateAB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->DutyXY_Ticks, 0U, 0U);}
 
 /*
 	PwmPositive = PwmPeriodTotal/2 + PwmScalar/2
 	PwmNegative = PwmPeriodTotal/2 - PwmScalar/2
  */
-static inline void Phase_Unipolar2_ActivateAC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks - p_phase->Duty_Ticks) / 2U);}
-static inline void Phase_Unipolar2_ActivateBC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U, (p_phase->PwmPeriod_Ticks - p_phase->Duty_Ticks) / 2U);}
-static inline void Phase_Unipolar2_ActivateBA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks - p_phase->Duty_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U, 0U);}
-static inline void Phase_Unipolar2_ActivateCA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks - p_phase->Duty_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U);}
-static inline void Phase_Unipolar2_ActivateCB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks - p_phase->Duty_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U);}
-static inline void Phase_Unipolar2_ActivateAB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U, (p_phase->PwmPeriod_Ticks - p_phase->Duty_Ticks) / 2U, 0U);}
+static inline void Phase_Unipolar2_ActivateAC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks - p_phase->DutyXY_Ticks) / 2U);}
+static inline void Phase_Unipolar2_ActivateBC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks - p_phase->DutyXY_Ticks) / 2U);}
+static inline void Phase_Unipolar2_ActivateBA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks - p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U);}
+static inline void Phase_Unipolar2_ActivateCA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks - p_phase->DutyXY_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
+static inline void Phase_Unipolar2_ActivateCB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks - p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
+static inline void Phase_Unipolar2_ActivateAB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks - p_phase->DutyXY_Ticks) / 2U, 0U);}
 
 /*
 	PwmPositive = PwmPeriodTotal/2 + PwmScalar/2
 	PwmNegative = PwmPeriodTotal/2 + PwmScalar/2, Inverse polarity
  */
-static inline void Phase_Bipolar_ActivateAC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U);}
-static inline void Phase_Bipolar_ActivateBC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U);}
-static inline void Phase_Bipolar_ActivateBA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U, 0U);}
-static inline void Phase_Bipolar_ActivateCA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U);}
-static inline void Phase_Bipolar_ActivateCB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U);}
-static inline void Phase_Bipolar_ActivateAB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->Duty_Ticks) / 2U, 0U);}
+static inline void Phase_Bipolar_ActivateAC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
+static inline void Phase_Bipolar_ActivateBC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
+static inline void Phase_Bipolar_ActivateBA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U);}
+static inline void Phase_Bipolar_ActivateCA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
+static inline void Phase_Bipolar_ActivateCB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
+static inline void Phase_Bipolar_ActivateAB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U);}
 
 
 static inline void Phase_Polar_ActivateAC(const Phase_T * p_phase)
@@ -363,17 +372,17 @@ static inline void Phase_Polar_ActivateAB(const Phase_T * p_phase)
 
 static inline void Phase_Polar_SetDutyCyle(Phase_T * p_phase, uint16_t pwmDuty)
 {
-	p_phase->Duty_Ticks = (uint32_t)pwmDuty * (uint32_t)p_phase->PwmPeriod_Ticks / 65536U;
+	p_phase->DutyXY_Ticks = (uint32_t)pwmDuty * (uint32_t)p_phase->PwmPeriod_Ticks / 65536U;
 }
 
 static inline void Phase_Polar_SetDutyCyle_Ticks(Phase_T * p_phase, uint32_t pwmTicks)
 {
-	p_phase->Duty_Ticks = pwmTicks;
+	p_phase->DutyXY_Ticks = pwmTicks;
 }
 
 //static inline void Phase_Polar_SetDutyCyle_NBits(Phase_T * p_phase, uint16_t pwmDuty)
 //{
-////	p_phase->Duty_Ticks = pwmDuty * p_phase->PwmPeriod_Ticks >> p_phase->NBits;
+////	p_phase->DutyXY_Ticks = pwmDuty * p_phase->PwmPeriod_Ticks >> p_phase->NBits;
 //}
 
 
@@ -421,12 +430,12 @@ static inline void Phase_Polar_ActivateAngle(Phase_T * p_phase, uint16_t theta)
 }
 
 
-static inline void Phase_ActivateA(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->Duty_Ticks, 0, 0);}
-static inline void Phase_ActivateB(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0, p_phase->Duty_Ticks, 0);}
-static inline void Phase_ActivateC(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0, 0, p_phase->Duty_Ticks);}
-static inline void Phase_ActivateInvA(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0, p_phase->Duty_Ticks, p_phase->Duty_Ticks);}
-static inline void Phase_ActivateInvB(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->Duty_Ticks, 0, p_phase->Duty_Ticks);}
-static inline void Phase_ActivateInvC(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0, p_phase->Duty_Ticks, p_phase->Duty_Ticks);}
+static inline void Phase_ActivateA(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->DutyXY_Ticks, 0, 0);}
+static inline void Phase_ActivateB(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0, p_phase->DutyXY_Ticks, 0);}
+static inline void Phase_ActivateC(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0, 0, p_phase->DutyXY_Ticks);}
+static inline void Phase_ActivateInvA(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0, p_phase->DutyXY_Ticks, p_phase->DutyXY_Ticks);}
+static inline void Phase_ActivateInvB(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->DutyXY_Ticks, 0, p_phase->DutyXY_Ticks);}
+static inline void Phase_ActivateInvC(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0, p_phase->DutyXY_Ticks, p_phase->DutyXY_Ticks);}
 
 extern void Phase_Init
 (

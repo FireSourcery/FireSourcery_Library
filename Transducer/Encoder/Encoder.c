@@ -29,7 +29,7 @@
  */
 /******************************************************************************/
 #include "Encoder.h"
-#include "HAL.h"
+#include "HAL_Encoder.h"
 #include "Config.h"
 
 #include <stdint.h>
@@ -82,10 +82,10 @@ void Encoder_Init
 	HAL_Encoder_T * p_hal_encoder,
 	uint32_t timerCounterMax,
 	uint32_t unitT_Freq,					/* UnitT_Freq  */
-	uint32_t pollingFreq,					/* PollingFreq. For CaptureDeltaD Mode and CaptureDeltaT Mode polling and InterpolateD */
+	uint32_t pollingFreq,					/* PollingFreq.  CaptureDeltaT Mode polling and InterpolateD */
 	uint32_t encoderDistancePerCount,		/* UnitLinearD */
-	uint32_t encoderCountsPerRevolution,	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */
-	uint8_t angleDataBits					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
+	uint32_t encoderCountsPerRevolution	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */
+//	uint8_t angleDataBits					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */ //remove todo
 )
 {
 	HAL_Encoder_Init(p_hal_encoder);
@@ -94,7 +94,6 @@ void Encoder_Init
 	p_encoder->TimerCounterMax = timerCounterMax;
 	p_encoder->EncoderResolution = encoderCountsPerRevolution;
 	p_encoder->PollingFreq = pollingFreq;  	//	p_encoder->UnitInterpolateD = p_encoder->UnitSpeed / pollingFreq;
-
 
 	p_encoder->UnitT_Freq = unitT_Freq;
 	p_encoder->UnitD = encoderDistancePerCount;
@@ -127,7 +126,7 @@ void Encoder_Init
 	 * Multiplication overflow should wrap angle, maintain angle position correctness
 	 */
 	p_encoder->UnitAngularD_Factor			= 0xFFFFFFFFU/encoderCountsPerRevolution + 1;
-	p_encoder->UnitAngularD_DivisorShift 	= (32 - angleDataBits);
+//	p_encoder->UnitAngularD_DivisorShift 	= (32 - angleDataBits);
 
 	/*
 	 * Speed calc
@@ -146,110 +145,18 @@ void Encoder_Init
 	 * speed = (DeltaD * UnitD) / Correction * UnitT_Freq / DeltaT == 1,048,560,000
 	 * speed = DeltaD * [UnitD * UnitT_Freq / Correction] / DeltaT == 1,048,576,000
 	 */
-	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(unitT_Freq, encoderCountsPerRevolution, angleDataBits);
+	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(unitT_Freq, encoderCountsPerRevolution, CONFIG_ENCODER_ANGLE_RESOLUTION_BITS);
 
 	p_encoder->IsUnitAngularSpeedOverflow = !p_encoder->UnitAngularSpeed;
 
-	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitT_Freq, pollingFreq*encoderCountsPerRevolution, angleDataBits);
+	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitT_Freq, pollingFreq*encoderCountsPerRevolution, CONFIG_ENCODER_ANGLE_RESOLUTION_BITS);
 	//e.g. 48,761
 
 	Encoder_Reset(p_encoder);
 }
 
-void Encoder_CalibrateAngularD(Encoder_T * p_encoder )
-{
-	p_encoder->AngularD = 0U;
-}
 
-
-/*!
-	Uses periodic timer ISR.
- */
-void Encoder_InitCaptureDeltaD
-(
-	Encoder_T * p_encoder,
-	HAL_Encoder_T * p_hal_encoder,
-	uint32_t timerCounterMax,
-	uint32_t pollingFreq,
-	uint32_t encoderDistancePerCount,
-	uint32_t encoderCountsPerRevolution,
-	uint8_t angleDataBits
-)
-{
-	Encoder_Init
-	(
-		p_encoder,
-		p_hal_encoder,
-		timerCounterMax,
-		pollingFreq,
-		pollingFreq,
-		encoderDistancePerCount,
-		encoderCountsPerRevolution,
-		angleDataBits
-	);
-
-		HAL_Encoder_InitCaptureCount(p_hal_encoder);
-	//	HAL_Encoder_ConfigCaptureCount(p_hal_encoder);
-	//	HAL_Encoder_WriteTimerCounterMax(p_hal_encoder, timerCounterMax);
-}
-
-
-/*!
-	Uses pin ISR, or polling
- */
-void Encoder_InitCaptureDeltaT
-(
-	Encoder_T * p_encoder,
-	HAL_Encoder_T * p_hal_encoder,
-	uint32_t timerCounterMax,
-	uint32_t timerFreq,
-	uint32_t pollingFreq,	/* Polling and InterpolateD */
-	uint32_t encoderDistancePerCount,
-	uint32_t encoderCountsPerRevolution,
-	uint8_t angleDataBits
-)
-{
-	Encoder_Init
-	(
-		p_encoder,
-		p_hal_encoder,
-		timerCounterMax,
-		timerFreq,
-		pollingFreq,
-		encoderDistancePerCount,
-		encoderCountsPerRevolution,
-		angleDataBits
-	);
-
-	HAL_Encoder_InitCaptureTime(p_hal_encoder);
-//	HAL_Encoder_WriteTimerCounterMax(p_hal_encoder, timerCounterMax);
-//	HAL_Encoder_WriteTimerCounterFreq(p_hal_encoder, timerFreq);
-}
-
-/*
- * extendedTimerFreq should be small, < 65536
- */
-void Encoder_InitExtendedDeltaT(Encoder_T * p_encoder, const volatile uint32_t * p_extendedTimer, uint16_t extendedTimerFreq, uint16_t effectiveStopTime_Millis)
-{
-	p_encoder->p_ExtendedDeltaTimer = p_extendedTimer;
-	p_encoder->ExtendedDeltaTimerFreq = extendedTimerFreq;
-	p_encoder->ExtendedDeltaTimerConversion = p_encoder->TimerCounterMax * extendedTimerFreq / p_encoder->UnitT_Freq; //long timer ticks per short timer overflow
-	p_encoder->ExtendedDeltaTimerEffectiveStopTime = effectiveStopTime_Millis * extendedTimerFreq / 1000U ;
-	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->p_ExtendedDeltaTimer;
-}
-
-/*
- * set to lowest speed or 1rpm
- */
-void Encoder_StartDeltaT(Encoder_T * p_encoder, uint16_t initialRpm)
-{
-	p_encoder->DeltaT = Encoder_ConvertRotationalSpeedToDeltaT_RPM(p_encoder, initialRpm);
-	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
-	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->p_ExtendedDeltaTimer;
-//	Encoder_Zero( p_encoder);
-}
-
-
+//reset volatile variables
 void Encoder_Reset(Encoder_T * p_encoder)
 {
 	p_encoder->DeltaD = 1U;
@@ -268,6 +175,33 @@ void Encoder_Reset(Encoder_T * p_encoder)
 
 	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->p_ExtendedDeltaTimer;
 }
+
+//must use encoder init first
+void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)
+{
+	p_encoder->IsQuadratureCounterEnabled = isEnabled;
+}
+
+/*!
+ * isALeadBIncrement - Match to HAL/unused for deltaT Mode
+ * isALeadBPositive - User runtime calibrate
+ */
+void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive)
+{
+	p_encoder-> IsALeadBDirectionPositive = isALeadBPositive; //for deltaT mode and UI output
+
+	//	p_encoder->IsCounterIncrementDirectionPositive = !(isALeadBIncrement ^ isALeadBPositive);
+//#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+//	p_encoder->IsCounterIncrementDirectionPositive = isALeadBPositive;
+//#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+//	p_encoder->IsCounterIncrementDirectionPositive = !isALeadBPositive;
+//#endif
+
+}
+
+
+
+
 
 //volatile uint32_t * Encoder_GetPtrDelta(Encoder_T *p_encoder)
 //{

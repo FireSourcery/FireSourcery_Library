@@ -103,7 +103,7 @@ static inline void HAL_ADC_Dectivate(HAL_ADC_T * p_adcRegBase)
 	 *	when continuous conversions are not enabled because the module automatically enters a low-power
 	 *	state when a conversion completes.
 	 */
-//	p_adcRegBase->SC2 = 0x00U;
+
 	p_adcRegBase->SC1[0U] = 0x3FU;
 }
 

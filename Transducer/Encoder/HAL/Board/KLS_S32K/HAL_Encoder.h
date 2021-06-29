@@ -48,6 +48,24 @@ typedef const struct
 //	uint8_t InstanceID; /* KLS has only 1 possible encoder */
 } HAL_Encoder_T;
 
+
+//#include "../../Platform/S32K/HAL_Encoder.h"
+//typedef const struct
+//{
+//	FTM_Type * p_FtmBase;
+//
+//	GPIO_Type * p_GpioBasePhaseA;
+//	uint32_t GpioPinMaskPhaseA;
+//
+//	GPIO_Type * p_GpioBasePhaseB;
+//	uint32_t GpioPinMaskPhaseB;
+//} HAL_Encoder_T;
+//
+//const HAL_Encoder_T HAL_Encoder1 =
+//{
+//		.p_FtmBase = FTM2,
+//};
+
 /*
  * TimerCounter can also captures Hall B. (Still use CaptureT with Hall)
  */
@@ -70,19 +88,35 @@ static inline void HAL_Encoder_WriteTimerCounterMax(const HAL_Encoder_T * p_enco
 	FTM2->MOD = FTM_MOD_MOD(max);
 }
 
-static inline void HAL_Encoder_WriteTimerCounterFreq(const HAL_Encoder_T * p_encoder, uint32_t freq)
+//static inline void HAL_Encoder_WriteTimerCounterFreq(const HAL_Encoder_T * p_encoder, uint32_t freq)
+//{
+//	(void)p_encoder;
+//	(void)freq;
+//}
+
+static inline bool HAL_Encoder_ReadTimerCounterOverflow(const HAL_Encoder_T * p_encoder)
 {
 	(void)p_encoder;
-	(void)freq;
+	return FTM2->SC & FTM_SC_TOF_MASK;
+
 }
 
-static inline bool HAL_Encoder_ReadDirection(const HAL_Encoder_T * p_encoder)
+static inline void HAL_Encoder_ClearTimerCounterOverflow(const HAL_Encoder_T * p_encoder)
 {
 	(void)p_encoder;
-	return (bool)(FTM2->QDCTRL & FTM_QDCTRL_QUADIR_MASK);
+	FTM2->SC &= ~FTM_SC_TOF_MASK;
+	/* Read-after-write sequence to guarantee required serialization of memory operations */
+	FTM2->SC;
+}
+
+//clear interrupt
+static inline void HAL_Encoder_ClearTimerCounterOverflowInterrupt(const HAL_Encoder_T * p_encoder)
+{
+	HAL_Encoder_ClearTimerCounterOverflow(p_encoder);
 }
 
 /*
+ * read pin phaseA
  * Works only for PollingCaptureT mode. shared pin with Hall B on KLS_S32K.
  */
 static inline bool HAL_Encoder_ReadPhaseA(const HAL_Encoder_T * p_encoder)
@@ -97,12 +131,32 @@ static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder)
 	return (bool)(PTE->PDIR & ((uint32_t)1U << 4U));
 }
 
-//clear interrupt
-static inline void HAL_Encoder_ClearTimerCounterOverflow(const HAL_Encoder_T * p_encoder)
+//static inline bool HAL_Encoder_ReadQuadraturePhaseA(const HAL_Encoder_T * p_encoder)
+//{
+//	(void)p_encoder;
+//}
+//
+//static inline bool HAL_Encoder_ReadQuadraturePhaseB(const HAL_Encoder_T * p_encoder)
+//{
+//	(void)p_encoder;
+//}
+
+static inline bool HAL_Encoder_ReadQuadratureCounterDirection(const HAL_Encoder_T * p_encoder)
 {
 	(void)p_encoder;
-	FTM2->SC &= ~FTM_SC_TOF_MASK;
-	FTM2->SC;
+	return (bool)(FTM2->QDCTRL & FTM_QDCTRL_QUADIR_MASK);
+}
+
+static inline bool HAL_Encoder_ReadQuadratureCounterOverflowIncrement(const HAL_Encoder_T * p_encoder)
+{
+	(void)p_encoder;
+	return (bool)(FTM2->QDCTRL & FTM_QDCTRL_TOFDIR_MASK);
+}
+
+static inline bool HAL_Encoder_ReadQuadratureCounterOverflowDecrement(const HAL_Encoder_T * p_encoder)
+{
+	(void)p_encoder;
+	return !(bool)(FTM2->QDCTRL & FTM_QDCTRL_TOFDIR_MASK);
 }
 
 /*
@@ -291,7 +345,9 @@ static inline void HAL_Encoder_InitCaptureCount(const HAL_Encoder_T * p_encoder)
 	FTM_DRV_Init(2U, &flexTimer_qd_1_InitConfig, &ftm2State); 	/* FTM2 module initialized to work in quadrature decoder mode, specifically PhaseA and PhaseB mode */
 	FTM_DRV_QuadDecodeStart(2U, &flexTimer_qd_1_QuadDecoderConfig);
 	FTM_DRV_CounterStart(2U);
+	INT_SYS_DisableIRQ(FTM2_Ovf_Reload_IRQn);
 //	INT_SYS_EnableIRQ(FTM2_Ovf_Reload_IRQn);
+
 }
 
 static inline void HAL_Encoder_Init(const HAL_Encoder_T * p_encoder)

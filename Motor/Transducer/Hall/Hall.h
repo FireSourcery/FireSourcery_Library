@@ -32,7 +32,7 @@
 #define HALL_H
 
 #include "Config.h"
-#include "HAL.h"
+#include "HAL_Hall.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -46,21 +46,21 @@ typedef enum
 /*
  * Compile-time sensor order from HAL
  */
-#if defined(CONFIG_HALL_SENSORS_ORDER_CBA)
-	#define	HALL_SENSORS_A (0b001)
-	#define	HALL_SENSORS_B (0b010)
-	#define	HALL_SENSORS_C (0b100)
-	#define	HALL_SENSORS_INV_A (0b110)
-	#define	HALL_SENSORS_INV_B (0b101)
-	#define	HALL_SENSORS_INV_C (0b011)
-#elif (CONFIG_HALL_HALL_SENSORS_ORDER_ABC)
-	#define	HALL_SENSORS_A (0b100)
-	#define	HALL_SENSORS_B (0b010)
-	#define	HALL_SENSORS_C (0b001)
-	#define	HALL_SENSORS_NOT_A (0b011)
-	#define	HALL_SENSORS_NOT_B (0b101)
-	#define	HALL_SENSORS_NOT_C (0b110)
-#endif
+//#if defined(CONFIG_HALL_SENSORS_ORDER_CBA)
+//	#define	HALL_SENSORS_A (0b001)
+//	#define	HALL_SENSORS_B (0b010)
+//	#define	HALL_SENSORS_C (0b100)
+//	#define	HALL_SENSORS_INV_A (0b110)
+//	#define	HALL_SENSORS_INV_B (0b101)
+//	#define	HALL_SENSORS_INV_C (0b011)
+//#elif (CONFIG_HALL_HALL_SENSORS_ORDER_ABC)
+//	#define	HALL_SENSORS_A (0b100)
+//	#define	HALL_SENSORS_B (0b010)
+//	#define	HALL_SENSORS_C (0b001)
+//	#define	HALL_SENSORS_NOT_A (0b011)
+//	#define	HALL_SENSORS_NOT_B (0b101)
+//	#define	HALL_SENSORS_NOT_C (0b110)
+//#endif
 
 //Virtual hall sensor state
 #define	HALL_VIRTUAL_SENSORS_A (0b001)
@@ -101,7 +101,6 @@ Applied Voltage
 #if defined(CONFIG_HALL_COMMUTATION_TABLE_SECTOR_ID)
 typedef enum
 {
-
 	HALL_SECTOR_0 = 0,
 	HALL_SECTOR_1 = 1,
 	HALL_SECTOR_2 = 2,
@@ -120,12 +119,12 @@ typedef enum
 	HALL_PHASE_AB = 6,
 	HALL_PHASE_7 = 7,
 
-	HALL_ANGLE_30 = 1,
-	HALL_ANGLE_90 = 2,
-	HALL_ANGLE_150 = 3,
-	HALL_ANGLE_210 = 4,
-	HALL_ANGLE_270 = 5,
-	HALL_ANGLE_330 = 6,
+	HALL_COMMUTATION_ANGLE_30 = 1,
+	HALL_COMMUTATION_ANGLE_90 = 2,
+	HALL_COMMUTATION_ANGLE_150 = 3,
+	HALL_COMMUTATION_ANGLE_210 = 4,
+	HALL_COMMUTATION_ANGLE_270 = 5,
+	HALL_COMMUTATION_ANGLE_330 = 6,
 
 	/*
 	 * Rotor Angle
@@ -144,7 +143,12 @@ typedef enum
 //	HALL_ANGLE_CW_210 = 2, 	//HALL_PHASE_BC,
 //	HALL_ANGLE_CW_270 = 3, 	//HALL_PHASE_BA,
 //	HALL_ANGLE_CW_330 = 4, 	//HALL_PHASE_CA,
-} Hall_CommutationId_T;
+} Hall_CommutationPhase_T;
+
+#elif 	defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
+//typedef void * Hall_CommutationId_T;
+typedef void (* Hall_CommutationPhase_T)(void * p_userData);
+#endif
 
 /*
  * hall position angle
@@ -173,12 +177,7 @@ typedef enum
 	HALL_ANGLE_CW_210 	= HALL_ANGLE_150_210,
 	HALL_ANGLE_CW_270 	= HALL_ANGLE_210_270,
 	HALL_ANGLE_CW_330 	= HALL_ANGLE_270_330,
-} Hall_PositionId_T;
-
-#elif 	defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
-//typedef void * Hall_CommutationId_T;
-typedef void (* Hall_CommutationId_T)(void * p_userData);
-#endif
+} Hall_RotorAngle_T;
 
 typedef struct 
 {
@@ -196,14 +195,17 @@ typedef struct
 
 	/*
 	 * includes user mapped sensor virtualization map and const commutationId map
+	 *
+	 * CommutationTable - can be const at cost of 1 more level of dereference
+	 * AngleTable - convert back from commutation id, commutation plus or minus 90 //need user maped tabled in either case
 	 */
-	Hall_CommutationId_T CommuntationTable[8U]; //edit n
-	Hall_PositionId_T VirtualSensorTable[8U]; //  angle id table
+	Hall_CommutationPhase_T 	CommuntationTable[8U];
+	Hall_RotorAngle_T 			RotorAngleTable[8U];
 
-	volatile Hall_Direction_T Direction;
-	volatile uint8_t 				SensorsSaved;	/* Save last read */
-	volatile Hall_PositionId_T 		VirtualSensorSaved;
-	volatile Hall_CommutationId_T 	CommutationIdSaved; /* Save last read */
+	volatile Hall_Direction_T 	Direction;
+	volatile uint8_t 			SensorsSaved;	/* Save last read */
+//	volatile Hall_Angle_T 		VirtualSensorSaved;
+//	volatile Hall_CommutationPhase_T 	CommutationIdSaved; /* Save last read */
 
 #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
 	void * p_UserData;
@@ -211,6 +213,10 @@ typedef struct
 }
 Hall_T;
 
+
+/*
+ * +180 degrees
+ */
 static inline uint8_t InverseHall(uint8_t hall)
 {
 	return (~hall) & 0x07;
@@ -243,19 +249,7 @@ static inline void Hall_CaptureSensors_IO(Hall_T * p_hall)
 {
 	uint8_t hall = Hall_ReadSensors(p_hall);
 	p_hall->SensorsSaved = hall;
-	p_hall->VirtualSensorSaved = p_hall->VirtualSensorTable[p_hall->SensorsSaved];
-
-	/*
-	 * Calibrated for CCW
-	 */
-//	if (p_hall->Direction == HALL_DIRECTION_CW)
-//	{
-//		p_hall->CommutationIdSaved = p_hall->CommuntationTable[InverseHall(hall)];
-//	}
-//	else
-//	{
-//		p_hall->CommutationIdSaved = p_hall->CommuntationTable[hall];
-//	}
+//	p_hall->VirtualSensorSaved = p_hall->AngleTable[p_hall->SensorsSaved];
 
 //	return (p_hall->CommutationIdSaved);
 }
@@ -272,13 +266,35 @@ static inline void Hall_CaptureSensors_IO(Hall_T * p_hall)
 			p_hall->CommuntationTable[Hall_ReadSensors(p_hall)](p_hall->p_UserData);
 		}
 	}
+
+	static inline bool Hall_PollCommutation_IO(Hall_T * p_hall)
+	{
+		bool isEdge;
+
+		uint8_t hall = Hall_ReadSensors(p_hall);
+
+		if (hall != p_hall->SensorsSaved)
+		{
+//			p_hall->SensorsSaved = hall;
+			Hall_Commutate_IO(p_hall);
+
+			isEdge = true;
+		}
+		else
+		{
+			isEdge = false;
+		}
+
+		return (isEdge);
+	}
+
 #endif
 
 /*
  * Polling
  * hall edge, angle boundary
  */
-static inline bool Hall_PollEdge_IO(Hall_T * p_hall)
+static inline bool Hall_PollSensorsEdge_IO(Hall_T * p_hall)
 {
 	bool isEdge;
 
@@ -287,11 +303,7 @@ static inline bool Hall_PollEdge_IO(Hall_T * p_hall)
 	if (hall != p_hall->SensorsSaved)
 	{
 		p_hall->SensorsSaved = hall;
-		p_hall->VirtualSensorSaved = p_hall->VirtualSensorTable[p_hall->SensorsSaved];
-#if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
-		Hall_Commutate_IO(p_hall);
-#endif
-
+//		p_hall->VirtualSensorSaved = p_hall->VirtualSensorTable[p_hall->SensorsSaved];
 		isEdge = true;
 	}
 	else
@@ -303,7 +315,7 @@ static inline bool Hall_PollEdge_IO(Hall_T * p_hall)
 }
 
 //temp
-static inline bool Hall_GetCycle(Hall_T * p_hall)
+static inline bool Hall_PollSensorA(Hall_T * p_hall)
 {
 	bool isCycle;
 
@@ -319,49 +331,57 @@ static inline bool Hall_GetCycle(Hall_T * p_hall)
 	return (isCycle);
 }
 
-static inline Hall_CommutationId_T Hall_GetCommutationId(Hall_T * p_hall)
+static inline Hall_CommutationPhase_T Hall_ConvertCommutation(Hall_T * p_hall, uint8_t hallSensors)
 {
-//	const Hall_CommutationId_T VIRTUAL_ID_COMMUTATION_TABLE[8] =
+//	const uint16_t COMMUTATION_TABLE[] =  //using virtual angle
 //	{
-//		 [HALL_VIRTUAL_SENSORS_A] = HALL_SECTOR_2,
+//		[HALL_ANGLE_CCW_30] 	= HALL_SECTOR_2,
+//		[HALL_ANGLE_CCW_90] 	= HALL_SECTOR_3,
+//		[HALL_ANGLE_CCW_150] 	= HALL_SECTOR_4,
+//		[HALL_ANGLE_CCW_210] 	= HALL_SECTOR_5,
+//		[HALL_ANGLE_CCW_270] 	= HALL_SECTOR_6,
+//		[HALL_ANGLE_CCW_330] 	= HALL_SECTOR_1,
 //	};
-	//		p_hall->CommutationIdSaved = p_hall->VIRTUAL_ID_COMMUTATION_TABLE[ p_hall->VirtualSensorsSaved ];
+
+	volatile Hall_CommutationPhase_T id;
 
 	if (p_hall->Direction == HALL_DIRECTION_CW)
 	{
-		p_hall->CommutationIdSaved = p_hall->CommuntationTable[InverseHall(p_hall->SensorsSaved)];
+		id = p_hall->CommuntationTable[InverseHall(hallSensors)];
 	}
 	else
 	{
-		p_hall->CommutationIdSaved = p_hall->CommuntationTable[p_hall->SensorsSaved];
+		id = p_hall->CommuntationTable[hallSensors];
 	}
 
-	return (p_hall->CommutationIdSaved);
+	return (id);
 }
 
-//static inline Hall_CommutationId_T Hall_ReadCommutationId(Hall_T * p_hall)
-//{
-//	if (p_hall->Direction == HALL_DIRECTION_CW)
-//	{
-//		p_hall->CommutationIdSaved = p_hall->CommuntationTable[InverseHall(Hall_ReadSensors(p_hall))];
-//	}
-//	else
-//	{
-//		p_hall->CommutationIdSaved = p_hall->CommuntationTable[Hall_ReadSensors(p_hall)];
-//	}
-//
-//	return (p_hall->CommutationIdSaved);
-//}
-
-static inline Hall_PositionId_T Hall_ConvertToVirtualSensor(Hall_T * p_hall, uint8_t physicalSensor)
+static inline Hall_CommutationPhase_T Hall_GetCommutation(Hall_T * p_hall)
 {
-	//need user maped tabled in either case
-	return p_hall->VirtualSensorTable[physicalSensor];
+	Hall_CommutationPhase_T id = Hall_ConvertCommutation(p_hall, p_hall->SensorsSaved);
+	return (id);
 }
 
-static inline uint16_t Hall_GetRotorAngle_Degrees16(Hall_T * p_hall)
+static inline Hall_CommutationPhase_T Hall_ReadSensorsCommutation(Hall_T * p_hall)
 {
-	uint16_t degrees;
+	Hall_CommutationPhase_T id = Hall_ConvertCommutation(p_hall, Hall_ReadSensors(p_hall));
+	return (id);
+}
+
+static inline Hall_RotorAngle_T Hall_ConvertRotorAngle(Hall_T * p_hall, uint8_t physicalSensors)
+{
+	return p_hall->RotorAngleTable[physicalSensors];
+}
+
+static inline uint16_t Hall_GetRotorAngle(Hall_T * p_hall)
+{
+	return p_hall->RotorAngleTable[p_hall->SensorsSaved];
+//	return p_hall->VirtualSensorSaved;
+}
+
+static inline uint16_t Hall_ConvertRotorAngle_Degrees16(Hall_T * p_hall, uint8_t physicalSensors)
+{
 	const uint16_t DEGREES_TABLE[] =
 	{
 		[HALL_ANGLE_CCW_30] 	= 5461U,
@@ -372,13 +392,17 @@ static inline uint16_t Hall_GetRotorAngle_Degrees16(Hall_T * p_hall)
 		[HALL_ANGLE_CCW_330] 	= 60074U,
 	};
 
+	uint16_t degrees;
+
+	Hall_RotorAngle_T angle = p_hall->RotorAngleTable[physicalSensors];
+
 	if (p_hall->Direction == HALL_DIRECTION_CW)
 	{
-		degrees = DEGREES_TABLE[InverseHall(p_hall->VirtualSensorSaved)];
+		degrees = DEGREES_TABLE[angle] + 10922U; //+ 60 degrees
 	}
 	else
 	{
-		degrees = DEGREES_TABLE[p_hall->VirtualSensorSaved];
+		degrees = DEGREES_TABLE[angle];
 	}
 
 //	switch (tempVirtualSensorSaved)
@@ -393,7 +417,7 @@ static inline uint16_t Hall_GetRotorAngle_Degrees16(Hall_T * p_hall)
 //	}
 
 	// convert back from commutation id	// commutation plus or minus 90
-//	degrees = DEGREES_TABLE[p_hall->CommutationIdSaved];
+//	degrees = DEGREES_TABLE[p_hall->CommutationIdSaved]; DEGREES_TABLE[Hall_GetCommutation(p_hall->SensorsSaved)];
 //
 //	if (p_hall->Direction == HALL_DIRECTION_CW)
 //	{
@@ -403,6 +427,17 @@ static inline uint16_t Hall_GetRotorAngle_Degrees16(Hall_T * p_hall)
 	return degrees;
 }
 
+static inline uint16_t Hall_GetRotorAngle_Degrees16(Hall_T * p_hall)
+{
+	Hall_ConvertRotorAngle_Degrees16(p_hall, p_hall->SensorsSaved);
+}
+
+static inline Hall_Direction_T Hall_GetDirection(Hall_T * p_hall)
+{
+	return (p_hall->Direction);
+}
+
+//Sets commutation direction
 static inline void Hall_SetDirection(Hall_T * p_hall, Hall_Direction_T dir)
 {
 	p_hall->Direction = dir;
@@ -413,12 +448,6 @@ static inline void Hall_ToggleDirection(Hall_T * p_hall)
 	p_hall->Direction = ~p_hall->Direction;
 }
 
-static inline Hall_Direction_T Hall_GetDirection(Hall_T * p_hall)
-{
-	return (p_hall->Direction);
-}
-
-
 
 /*
 	Can pass 0 for phase and sensor ids, and calibrate after
@@ -427,31 +456,31 @@ void Hall_Init
 (
 	Hall_T * p_hall,
 	const HAL_Hall_T * p_hal_Hall,
-	Hall_CommutationId_T phaseAC,
-	Hall_CommutationId_T phaseBC,
-	Hall_CommutationId_T phaseBA,
-	Hall_CommutationId_T phaseCA,
-	Hall_CommutationId_T phaseCB,
-	Hall_CommutationId_T phaseAB,
+	Hall_CommutationPhase_T phaseAC,
+	Hall_CommutationPhase_T phaseBC,
+	Hall_CommutationPhase_T phaseBA,
+	Hall_CommutationPhase_T phaseCA,
+	Hall_CommutationPhase_T phaseCB,
+	Hall_CommutationPhase_T phaseAB,
 	uint8_t sensorIndexPhaseAC,
 	uint8_t sensorIndexPhaseBC,
 	uint8_t sensorIndexPhaseBA,
 	uint8_t sensorIndexPhaseCA,
 	uint8_t sensorIndexPhaseCB,
 	uint8_t sensorIndexPhaseAB,
-	Hall_CommutationId_T fault000,
-	Hall_CommutationId_T fault111
+	Hall_CommutationPhase_T fault000,
+	Hall_CommutationPhase_T fault111
 );
 
 void Hall_MapCommuntationTable
 (
 	Hall_T * p_hall,
-	Hall_CommutationId_T phaseAC,
-	Hall_CommutationId_T phaseBC,
-	Hall_CommutationId_T phaseBA,
-	Hall_CommutationId_T phaseCA,
-	Hall_CommutationId_T phaseCB,
-	Hall_CommutationId_T phaseAB,
+	Hall_CommutationPhase_T phaseAC,
+	Hall_CommutationPhase_T phaseBC,
+	Hall_CommutationPhase_T phaseBA,
+	Hall_CommutationPhase_T phaseCA,
+	Hall_CommutationPhase_T phaseCB,
+	Hall_CommutationPhase_T phaseAB,
 	uint8_t sensorIndexPhaseAC,
 	uint8_t sensorIndexPhaseBC,
 	uint8_t sensorIndexPhaseBA,
@@ -468,8 +497,8 @@ void Hall_MapCommuntationTable_Default
 void Hall_MapCommuntationTableFaultStates
 (
 	Hall_T * p_hall,
-	Hall_CommutationId_T fault000,
-	Hall_CommutationId_T fault111
+	Hall_CommutationPhase_T fault000,
+	Hall_CommutationPhase_T fault111
 );
 
 /*
@@ -479,12 +508,12 @@ void Hall_MapCommuntationTableFaultStates
 void Hall_CalibrateCommuntationTable_Blocking
 (
 	Hall_T * p_hall,
-	Hall_CommutationId_T phaseAC,
-	Hall_CommutationId_T phaseBC,
-	Hall_CommutationId_T phaseBA,
-	Hall_CommutationId_T phaseCA,
-	Hall_CommutationId_T phaseCB,
-	Hall_CommutationId_T phaseAB,
+	Hall_CommutationPhase_T phaseAC,
+	Hall_CommutationPhase_T phaseBC,
+	Hall_CommutationPhase_T phaseBA,
+	Hall_CommutationPhase_T phaseCA,
+	Hall_CommutationPhase_T phaseCB,
+	Hall_CommutationPhase_T phaseAB,
 	void (* activatePwmValuePhaseABC)(uint16_t pwmA, uint16_t pwmB, uint16_t pwmC),
 	uint16_t pwm,
 	void (*activatePwmStatePhaseABC)(bool enA, bool enB, bool enC),

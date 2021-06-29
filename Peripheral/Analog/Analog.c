@@ -80,9 +80,9 @@ void Analog_Init
 	p_analog->AdcM_Buffer 	= mHwBufferLength;
 #endif
 
-	p_analog->p_VirtualChannelMapPins 		= p_virtualChannelMapPins;
+	p_analog->p_VirtualChannelMapPins 	= p_virtualChannelMapPins;
 	p_analog->p_VirtualChannelResults 	= p_virtualChannelMapResultsBuffer;
-	p_analog->ChannelCount			= virtualChannelCount;
+	p_analog->ChannelCount				= virtualChannelCount;
 
 #if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
 	p_analog->p_MapChannelAdcs = p_virtualChannelMapAdcs;
@@ -92,6 +92,8 @@ void Analog_Init
 	p_analog->ConversionQueueLength = conversionQueueLength;
 	p_analog->ConversionQueueHead = 0U;
 	p_analog->ConversionQueueTail = 0U;
+
+	Analog_Dectivate(p_analog);
 }
 
 void Analog_Init_Struct

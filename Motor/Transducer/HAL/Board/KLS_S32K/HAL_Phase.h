@@ -40,6 +40,8 @@
 #include "SDK/platform/drivers/inc/ftm_common.h"
 #include "SDK/platform/drivers/inc/ftm_pwm_driver.h"
 
+#include "KMC/HAL/Board/KLS_S32K/Generated/sdk_project_config.h" /* includes all generated code */
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -95,6 +97,8 @@ static inline void HAL_Phase_ClearInterrupt(const HAL_Phase_T * p_phase)
 {
 	(void)p_phase;
 	FTM0->SC &= ~FTM_SC_TOF_MASK;
+	/* Read-after-write sequence to guarantee required serialization of memory operations */
+	FTM0->SC;
 }
 
 static inline void HAL_Phase_WriteSoftwareControlValue(const HAL_Phase_T * p_phase, bool isHighA, bool isHighB, bool isHighC)
@@ -128,6 +132,13 @@ static inline void HAL_Phase_WriteSoftwareControlSwitch(const HAL_Phase_T * p_ph
 static inline void HAL_Phase_Init(const HAL_Phase_T * p_phase)
 {
 	(void)p_phase;
+
+	ftm_state_t ftm0State;
+
+	FTM_DRV_Init(0U, &flexTimer_pwm_1_InitConfig, &ftm0State); 	/* FTM0 module initialized as PWM signals generator */
+	FTM_DRV_InitPwm(0U, &flexTimer_pwm_1_PwmConfig); 			/* FTM0 module PWM initialization */
+	FTM_DRV_MaskOutputChannels(0U, 0xFFU, true); 				/* Mask all FTM0 channels to disable PWM output */
+	INT_SYS_EnableIRQ(FTM0_Ovf_Reload_IRQn);
 
 	///* Generate array of configured pin structures */
 //	const pin_settings_config_t pin_mux_InitConfigArr0[6U] = {
@@ -235,6 +246,9 @@ static inline void HAL_Phase_Init(const HAL_Phase_T * p_phase)
 ////	FTM0->SYNCONF = FTM_SYNCONF_SYNCMODE_MASK | FTM_SYNCONF_SWWRBUF_MASK;
 //
 //	INT_SYS_EnableIRQ(FTM0_Ovf_Reload_IRQn);
+
+
+
 }
 
 #endif

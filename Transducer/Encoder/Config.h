@@ -31,12 +31,35 @@
 #ifndef CONFIG_ENCODER_H
 #define CONFIG_ENCODER_H
 
-#ifdef CONFIG_ENCODER_HAL_S32K
+/*
+ * Compile time define if chip supports quadrature capture. Enables toggle during runtime
+ */
+#ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
 
-#elif defined(CONFIG_ENCODER_HAL_USER_DEFINED)
+#elif defined(CONFIG_ENCODER_HW_QUADRATURE_DISABLED)
 
 #else
-	#define CONFIG_ENCODER_HAL_USER_DEFINED
+	#define CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
 #endif
+
+/*
+ * Compile time define for all encoder instances if A Lead B is increment
+ */
+#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+
+#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+
+#else
+	#define CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+#endif
+
+//todo change configurable to compile time const
+#ifdef CONFIG_ENCODER_ANGLE_RESOLUTION_BITS
+
+#else
+	#define CONFIG_ENCODER_ANGLE_RESOLUTION_BITS 16U
+#endif
+
+
 
 #endif

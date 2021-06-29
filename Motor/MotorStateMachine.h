@@ -31,7 +31,7 @@
 #ifndef MOTOR_STATE_MACHINE_H
 #define MOTOR_STATE_MACHINE_H
 
-#include "../Motor.h"
+#include "Motor.h"
 //#include "../Motor_FOC.h"
 
 typedef enum MotorStateMachine_InputTransition

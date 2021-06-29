@@ -32,16 +32,20 @@
 #define MOTOR_H
 
 
-#include "HAL_Motor.h"
+//#include "HAL_Motor.h"
+
+#include "Config.h"
 
 #include "Peripheral/Pin/Debounce.h"
 #include "Peripheral/Pin/Pin.h"
 #include "Peripheral/Analog/Analog.h"
 #include "Peripheral/Flash/Flash.h"
 
-#include "Transducer/Encoder/Encoder.h"
+#include "Transducer/Encoder/Encoder_DeltaT.h"
+#include "Transducer/Encoder/Encoder_DeltaD.h"
 #include "Transducer/Encoder/Encoder_Motor.h"
-#include "Transducer/Encoder/Encoder_IO.h"
+#include "Transducer/Encoder/Encoder.h"
+
 
 #include "Motor/Transducer/Phase/Phase.h"
 #include "Motor/Transducer/Hall/Hall.h"
@@ -148,9 +152,9 @@ typedef enum
 	MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE,
 	MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ,
 	MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE,
-	MOTOR_CONTROL_MODE_CONSTANT_CURRENT,		//foc only
-	MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT,	//foc only
-} Motor_ControlMode_T; //ControlVariableMode
+	MOTOR_CONTROL_MODE_CONSTANT_CURRENT,
+	MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT,
+} Motor_ControlMode_T; //ControlFeedbackVariableMode
 
 typedef enum
 {
@@ -233,18 +237,21 @@ typedef enum
 	MOTOR_ANALOG_CHANNEL_IB,
 	MOTOR_ANALOG_CHANNEL_IC,
 
-	/* analog sensor input */
-	MOTOR_ANALOG_CHANNEL_THROTTLE,
-	MOTOR_ANALOG_CHANNEL_BRAKE,
+
 
 	/* Temperature */
 	MOTOR_ANALOG_CHANNEL_HEAT_MOTOR,
-	MOTOR_ANALOG_CHANNEL_HEAT_PCB,
 	MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS,
+
+	MOTOR_ANALOG_CHANNEL_HEAT_PCB,
 
 	/* Error checking */
 	MOTOR_ANALOG_CHANNEL_VACC,		/* V accessories */
 	MOTOR_ANALOG_CHANNEL_VSENSE,	/* V analog sensors */
+
+	/* analog sensor input */
+	MOTOR_ANALOG_CHANNEL_THROTTLE,
+	MOTOR_ANALOG_CHANNEL_BRAKE,
 } Motor_AnalogChannel_T;
 
 /*!
@@ -258,6 +265,8 @@ typedef  __attribute__ ((aligned (4U))) struct
     uint8_t PolePairs;
 	uint32_t EncoderCountsPerRevolution;
 	uint32_t EncoderDistancePerCount;
+	bool EncoderIsQuadratureModeEnabled;
+	bool EncoderIsALeadBPositive;
 
 	uint16_t AdcRefBrake;		//max adc read value for brake
 	uint16_t AdcRefThrottle;
@@ -281,13 +290,16 @@ typedef  __attribute__ ((aligned (4U))) struct
 	uint8_t HallVirtualSensorInvBMap;
 	uint8_t HallVirtualSensorInvCMap;
 
-	Motor_SensorMode_T 			SensorMode;
-	Motor_AlignMode_T 			AlignMode;
-	Motor_InputMode_T 			InputMode;
 	Motor_CommutationMode_T 	CommutationMode;
+	Motor_SensorMode_T 			SensorMode;
 	Motor_ControlMode_T 		ControlMode;
 	Motor_BrakeMode_T 			BrakeMode;
+	Motor_AlignMode_T 			AlignMode;
+
 	Phase_Mode_T				PhasePwmMode;
+	BEMF_SampleMode_T			BemfSampleMode;
+
+	Motor_InputMode_T 			InputMode; //UserMode
 
 	qfrac16_t FocOpenLoopVq;
 	qfrac16_t FocAlignVd;
@@ -312,13 +324,6 @@ typedef const struct Motor_Init_Tag
 	const HAL_Pin_T HAL_PIN_FORWARD;
 	const HAL_Pin_T HAL_PIN_REVERSE;
 
-	const uint32_t MOTOR_PWM_FREQ;
-	const uint32_t PHASE_PWM_PERIOD;
-
-	const uint32_t HALL_ENCODER_TIMER_COUNTER_MAX; //Hall mode only
-	const uint32_t HALL_ENCODER_TIMER_COUNTER_FREQ; //Hall mode only
-//	const uint32_t ENCODER_ANGLE_RES_BITS;
-
 	const uint32_t LINEAR_V_ABC_R1;
 	const uint32_t LINEAR_V_ABC_R2;
 	const uint32_t LINEAR_V_BUS_R1;
@@ -328,9 +333,24 @@ typedef const struct Motor_Init_Tag
 	const uint32_t LINEAR_V_ADC_BITS;
 
 	uint8_t * const P_EEPROM; 	//or flash partition struct
+
+
+	//static across motor and sub module instances, todo
+	const uint32_t MOTOR_PWM_FREQ;
+	const uint32_t PHASE_PWM_PERIOD;
+	//	const uint32_t ENCODER_ANGLE_RES_BITS;
+	//	const bool ENCODER_IS_A_LEAD_B_INCREMENT;
+	const uint32_t HALL_ENCODER_TIMER_COUNTER_MAX; //Hall mode only
+	const uint32_t HALL_ENCODER_TIMER_COUNTER_FREQ; //Hall mode only
 }
 Motor_Init_T;
 
+
+#ifdef CONFIG_MOTOR_ADC_8
+	typedef uint16_t adc_t;
+#elif defined(CONFIG_MOTOR_ADC_16)
+	typedef uint16_t adc_t;
+#endif
 
 typedef struct
 {
@@ -340,6 +360,11 @@ typedef struct
 
 	// throttle and brake may need to be pointers, when 1 adc channel controls multiple motors
 	volatile uint16_t AnalogChannelResults[MOTOR_ANALOG_ADC_CHANNEL_COUNT];
+	volatile const adc_t * p_Ia_ADCU;
+	volatile const adc_t * p_Ib_ADCU;
+	volatile const adc_t * p_Ic_ADCU;
+//	volatile const adc_t * p_VBus_ADCU;
+
 
 	const Motor_Init_T * p_Init;			//compile time const
 	Motor_Parameters_T	Parameters;			//Programmable parameters, runtime variable load from eeprom
@@ -365,18 +390,25 @@ typedef struct
 	Linear_T UnitIb;
 	Linear_T UnitIc;
 
+
+	/*
+	 * Runtime vars
+	 */
 	volatile uint32_t ControlTimerBase;	 /* Control Freq, calibration, commutation, angle control */
 	Thread_T ControlTimerThread;
 	volatile uint32_t MillisTimerBase;	 /* Millis, UI */
 	Thread_T MillisTimerThread;
 	Thread_T SecondsTimerThread;
 
+
+
+	volatile Motor_Direction_T 			Direction; //active spin direction
+	volatile bool IsActiveControl; 		//six step observe/control
+	volatile bool IsStartUp;			//bemf substate
+
+	//control and feedback
 	Linear_T Ramp;
 	volatile uint32_t RampIndex;
-
-
-	Linear_T OpenLoopRamp;
-	volatile uint32_t OpenLoopRampIndex;
 
 	//	//PID_T PidSpeed;
 	//	PID_T PidId;
@@ -384,43 +416,44 @@ typedef struct
 	//	volatile qfrac16_t IdReq; /* PID setpoint */
 	//	volatile qfrac16_t IqReq;
 
-	/*
-	 * Runtime vars
-	 */
-	volatile Motor_Direction_T 			Direction; //active spin direction
-	volatile Motor_Direction_T 			DirectionInput; ///buffered
-	volatile bool IsDirectionNeutral;
-	volatile Motor_PositionFeedback_T 	PositionFeedback;
-
-	volatile bool IsThrottleRelease;
-
-	volatile uint16_t UserCmd; 		// from user input throttle or brake, VReq/IReq/SpeedReq
+	volatile uint16_t UserCmd; 				// SetPoint pre ramp, VReq/IReq/SpeedReq,  user input throttle or brake,
 	volatile uint16_t UserCmdPrev;
 //	volatile int32_t UserCmdDelta;
+	volatile uint16_t RampCmd;				//SetPoint after ramp
+	volatile uint16_t VPwm; 				//Control Variable
+	volatile uint16_t SpeedFeedback_RPM;	//Feedback Variable
 
-	volatile uint16_t RampCmd;
-	volatile uint16_t VPwm; 		//VPwm for SixStep Control
-	volatile uint16_t SpeedFeedback_RPM;
-	volatile uint16_t Openloop_RPM;
+	volatile uint32_t PhaseCurrent_ADCU;
+	volatile uint32_t PhaseCurrentPeak_ADCU;
 
-	volatile uint16_t RampCmdTemp;
+	volatile uint32_t PhaseCurrentFiltered_Frac16;
 
+	//openloop
+	Linear_T OpenLoopRamp;
+	volatile uint32_t OpenLoopRampIndex;
+	volatile uint32_t OpenLoopCommutationPeriod;		 //CommutationPeriodCtrl openloop
+	volatile uint16_t OpenLoopSpeed_RPM;
+	volatile uint16_t OpenLoopVPwm;
+
+	//FOC
 	volatile FOC_T Foc;
-	volatile qangle16_t ElectricalAngle;
-//	volatile qangle16_t MechanicalAngle;
+	volatile qangle16_t ElectricalAngle; //same as foc.theta
+	//	volatile qangle16_t MechanicalAngle;
 
-	volatile qangle16_t ElectricalDeltaPrev;
 
-	volatile uint32_t InterpolatedAngleIndex;
+	//interpolated angle
 	volatile qangle16_t HallAngle;
+	volatile qangle16_t ElectricalDeltaPrev;
+	volatile uint32_t InterpolatedAngleIndex;
 
-	volatile Motor_SectorId_T NextSector; //for 6 step openloop/sensorless
-	volatile Motor_SectorId_T CommutationSector; //for 6 step openloop/sensorless
-	volatile uint32_t CommutationPeriodCmd; //CommutationPeriodCtrl openloop and backemf
-	volatile uint32_t OpenLoopZcdCount;
-
+	//sixstep
+	volatile Motor_SectorId_T NextSector;			 //for 6 step openloop/sensorless
+	volatile Motor_SectorId_T CommutationSector;	 //for 6 step openloop/sensorless
 
 	//move to UI
+	volatile Motor_Direction_T 			DirectionInput; ///buffered
+	volatile bool IsDirectionNeutral;
+
 	//UI - change to 1 per all motor?
 	//todo alarm and thermistor
 	Debounce_T PinBrake;
@@ -441,6 +474,7 @@ typedef struct
 	volatile uint16_t InputValueBrake;
 	volatile uint16_t InputValueBrakePrev;
 
+	volatile bool IsThrottleRelease;
 //	uint32_t JogSteps;
 //	uint32_t StepCount;
 
@@ -450,18 +484,6 @@ typedef struct
 Motor_T;
 
 
-//per motor
-static inline void Motor_SetUserCmd(Motor_T * p_motor, uint16_t userCommand)
-{
-	p_motor->UserCmdPrev = p_motor->UserCmd;
-	p_motor->UserCmd = userCommand;
-}
-
-static inline void Motor_Float(Motor_T * p_motor)
-{
-	Phase_Float(&p_motor->Phase);
-}
-
 static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
 {
 //	p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
@@ -470,7 +492,7 @@ static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
 
 static inline void Motor_ProcSpeed(Motor_T * p_motor)
 {
-	if(p_motor->Parameters.SensorMode != MOTOR_SENSOR_MODE_OPEN_LOOP)
+//	if(p_motor->Parameters.SensorMode != MOTOR_SENSOR_MODE_OPEN_LOOP)
 	{
 		p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
 	}
@@ -484,212 +506,41 @@ static inline void Motor_PollStop(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
 	{
-		//Capture deltaT mode need
-		if (Encoder_PollDeltaTStop_IO(&p_motor->Encoder))
+		if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder))
 		{
-			p_motor->SpeedFeedback_RPM = 0;
+			p_motor->SpeedFeedback_RPM = 0; //todo stop flag
 		}
 	}
 	else if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP)
 	{
-		if ((p_motor->UserCmd == 0U)) //todo fix
+		if ((p_motor->UserCmd == 0U)) //no braking/freewheel in openloop
 		{
-			if(p_motor->UserCmdPrev > 0U)
-			{
-//
-//				Thread_RestartTimer(&StopPollTimer);
-//
-//			}
-//			else if(Thread_PollTimerCompletePeriodic(&StopPollTimer))
+//			if(p_motor->UserCmdPrev > 0U)
 //			{
 				p_motor->SpeedFeedback_RPM = 0;
-			}
+//			}
 		}
 	}
-	else //other modes covered by always capture DeltaD
-	{
-
-	}
-}
-
-
-static inline void Motor_ProcRamp(Motor_T * p_motor) // input voltage/speed cmd
-{
-	p_motor->RampCmd = Linear_Ramp_CalcTarget_IncIndex(&p_motor->Ramp, &p_motor->RampIndex, 1U);
-}
-
-
-//proc ramp update ~millis
-static inline void Motor_SetRampAccelerate(Motor_T * p_motor, uint16_t acceration)
-{
-
-	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE || p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
-	{
-
-	}
-	else if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT)
-	{
-
-	}
-	else
-	{
-		//Ramp to throttle over 1s
-//		if (p_motor->UserCmd > p_motor->UserCmdPrev)
-		{
-			Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->UserCmdPrev, p_motor->UserCmd, (int32_t)p_motor->UserCmd - (int32_t)p_motor->UserCmdPrev);
-		}
-
-		//todo match  bemf
-	}
-	p_motor->RampIndex = 0;
-}
-
-static inline void Motor_SetRampDecelerate(Motor_T * p_motor, uint16_t deceleration)
-{
-	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE || p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
-	{
-		//ramp unit is speed
-	}
-	else if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT)
-	{
-
-	}
-	else //ramp unit is pwm voltage
-	{
-		//Decel by Brake per 1 s
-		//todo match  bemf
-		Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, 0, -(int32_t)p_motor->UserCmd);
-
-	}
-	p_motor->RampIndex = 0;
-}
-
-
-static inline void Motor_SetOpenLoopSpeedRamp(Motor_T * p_motor, uint16_t acceration)
-{
-	int32_t speedNew;
-	int32_t speedPrev;
-	int32_t delta;
-
-	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_OPEN_LOOP)
-	{
-		speedNew = p_motor->UserCmd / 10U;
-		speedPrev = Motor_GetSpeed(p_motor);
-
-		delta = speedNew - speedPrev;
-
-		//		Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, Motor_GetSpeed(p_motor), p_motor->UserCmd/6, 1000U);
-
-		Linear_Ramp_InitAcceleration(&p_motor->OpenLoopRamp, 20000U, speedPrev, speedNew, delta);
-
-		p_motor->OpenLoopRampIndex = 0U;
-	}
-
-}
-//static inline void Motor_SetRamp(Motor_T * p_motor)
-//{
-//	if (p_motor->InputSwitchBrake == true)
+//	else //other modes covered by always capture DeltaD
 //	{
-//		Motor_SetRampDecel(p_motor);
+//
 //	}
-//	else
-//	{
-//		Motor_SetRampAccel(p_motor);
-//	}
-//}
-
-
-
-/*
- * Speed PID Feedback Loop
- *
- * Inputs by pointer:
- * 	p_motor->Speed_RPM
- * 	p_motor->SpeedReq_RPM
- *
- * Output by pointer:
- * 	FOC Mode - sets iqReq, Vcmd,
- * 	SixStep -
- *
- * generalize to scalar feedback variable e.g. temperature
- *
- */
-static inline void Motor_ProcSpeedFeedback(Motor_T * p_motor)
-{
-	p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
-//	//p_motor->SpeedFeedback_RPM = Filter_MovAvg(p_motor->Speed_RPM, coef, coef);
-//	PID_Proc(&p_motor->PidSpeed, p_motor->SpeedFeedback_RPM, setpoint);
 }
 
-static inline void Motor_PollSpeedFeedback(Motor_T * p_motor)
+
+static inline void Motor_Float(Motor_T * p_motor)
 {
-	if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
-	{
-		 Motor_ProcSpeedFeedback(p_motor);
-	}
-}
-
-//static inline void Motor_SetControlVariable(Motor_T * p_motor, mode, cmd) // input voltage/speed cmd
-
-static inline void Motor_ProcControlVariable(Motor_T * p_motor) // input voltage/speed cmd
-{
-
-	switch (p_motor->Parameters.ControlMode)
-	{
-
-	case MOTOR_CONTROL_MODE_OPEN_LOOP:
-		p_motor->VPwm = p_motor->UserCmd/2U;
-		break;
-
-	case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:
-		p_motor->VPwm = p_motor->RampCmd;
-		break;
-
-	case MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ:
-		//p_motor->VPwm = p_motor->RampCmd * p_motor->SpeedReq_RPM * p_motor->VRpmGain;
-		break;
-
-	case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:
-		if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
-		{
-			 Motor_ProcSpeedFeedback(p_motor); //get from PID
-		}
-		break;
-
-	default:
-		break;
-	}
-
+	Phase_Float(&p_motor->Phase);
 }
 
 
 
-//passive "control"
-static inline void Motor_ObserveSensors(Motor_T * p_motor)
-{
 
-//	switch (p_motor->Parameters.SensorMode)
-//	{
-////	case MOTOR_SENSOR_MODE_NONE:
-//
-//	case MOTOR_SENSOR_MODE_BEMF:
-//		break;
-//
-//	case MOTOR_SENSOR_MODE_HALL:
-//		if(Hall_PollEdge_IO(&p_motor->Hall))
-//		{
-//			BEMF_SetNewCycle_IO(&p_motor->Bemf); //always observe bemf
-//			Encoder_CaptureDeltaT_IO(&p_motor->Encoder);
-//			Encoder_CaptureExtendedDeltaT_IO(&p_motor->Encoder);
-//	//		p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder); //more responsive to always calc speed
-//
-//		}
-//
-//	default:
-//		break;
-//	}
 
-}
+
+
+
+
 
 
 static inline bool Motor_IsCurrentFeedbackMode(Motor_T * p_motor)
@@ -700,7 +551,7 @@ static inline bool Motor_IsCurrentFeedbackMode(Motor_T * p_motor)
 			) ? true : false;
 }
 
-
+//move to ui?
 static inline bool Motor_PollToggleDirectionError(Motor_T * p_motor)
 {
 	//proc direction
@@ -710,9 +561,6 @@ static inline bool Motor_PollToggleDirectionError(Motor_T * p_motor)
 	//		}
 }
 
-
-//move to ui?
-
 static inline bool Motor_PollToggleDirectionUpdate(Motor_T * p_motor)
 {
 	if (p_motor->Direction != p_motor->DirectionInput)
@@ -721,49 +569,14 @@ static inline bool Motor_PollToggleDirectionUpdate(Motor_T * p_motor)
 	}
 }
 
-static inline bool Motor_PollStopToSpin(Motor_T * p_motor)
-{
-	bool transition = true;
-
-	transition &= (p_motor->InputSwitchBrake == false) || ((p_motor->InputSwitchBrake == true) && (Motor_GetSpeed(p_motor) > 0));
-	transition &= (p_motor->IsDirectionNeutral == false);
-	transition &= (p_motor->UserCmd > 0U);
-	transition &= (p_motor->IsThrottleRelease == false);
-
-	return transition;
-}
-
-static inline bool Motor_PollSpinToFreewheel(Motor_T * p_motor)
-{
-	bool transition = false;
-
-	transition |= (p_motor->IsDirectionNeutral == true);
-	transition |= (p_motor->UserCmd == 0); 	//brake 0 and throttle 0
-	transition |= (p_motor->IsThrottleRelease == true);
-	transition |= ((p_motor->InputSwitchBrake == true) && (p_motor->Parameters.BrakeMode == MOTOR_BRAKE_MODE_PASSIVE));
-
-	return transition;
-}
-
-static inline bool Motor_PollFreewheelToSpin(Motor_T * p_motor)
-{
-	bool transition = true;
-
-	transition &= (p_motor->InputSwitchBrake == false) || ((p_motor->InputSwitchBrake == true) && (p_motor->Parameters.BrakeMode != MOTOR_BRAKE_MODE_PASSIVE) && (Motor_GetSpeed(p_motor) > 0));
-	transition &= (p_motor->UserCmd > 0U);
-	transition &= (p_motor->IsDirectionNeutral == false);
-	transition &= (p_motor->IsThrottleRelease == false);
-
-	return transition;
-}
-
 
 
 
 
 extern void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInitStruct);
-extern void Motor_StartAlign(Motor_T * p_motor);
-extern void Motor_OnBlock(Motor_T * p_motor);
+extern void Motor_InitReboot(Motor_T * p_motor);
+//extern void Motor_StartAlign(Motor_T * p_motor);
+//extern void Motor_OnBlock(Motor_T * p_motor);
 
 
 #endif
