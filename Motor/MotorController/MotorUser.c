@@ -118,14 +118,7 @@ void MotorUser_SetInput(Motor_T * p_motorDest)
 		{
 			if (MotorUserMain.InputValueThrottle < 5U) // less then threshold
 			{
-//				if(p_motorDest->IsActiveControl == false) //if currently not active dontt start
-				{
-					activeControl = false;
-				}
-//				else
-//				{
-//					activeControl = true;
-//				}
+				activeControl = false;
 			}
 			else
 			{

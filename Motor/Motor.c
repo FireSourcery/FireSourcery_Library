@@ -437,11 +437,11 @@ void Motor_ProcControlVariable(Motor_T * p_motor)
 	case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:
 		if (p_motor->IBus_Frac16 > (58982U/2U))
 		{
-			debug = p_motor->IBus_Frac16;
-			p_motor->VPwm = p_motor->RampCmd;
+//			debug = p_motor->IBus_Frac16;
+//			p_motor->VPwm = p_motor->RampCmd;
 
 
-//			p_motor->VPwm = p_motor->VPwm - ((p_motor->IBus_Frac16 - 58982U) * p_motor->VPwm >> 16U);
+			p_motor->VPwm = p_motor->VPwm - ((p_motor->IBus_Frac16 - 58982U/2U) * p_motor->VPwm >> 15U);
 //			p_motor->VPwm = p_motor->VPwm * 58982U / p_motor->PhaseCurrentFiltered_Frac16;
 
 			//proc constant current pid, set integral term to vpwm.
