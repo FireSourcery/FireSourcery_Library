@@ -102,6 +102,7 @@ void Serial_SendChar(Serial_T * p_serial, uint8_t txChar) //enqueue
 	}
 	else
 	{
+		EnterCriticalTx(p_serial);
 		txBufferHeadNext = (p_serial->TxBufferHead + 1) % p_serial->TxBufferSize;
 
 		if (txBufferHeadNext == p_serial->TxBufferTail)
@@ -110,12 +111,11 @@ void Serial_SendChar(Serial_T * p_serial, uint8_t txChar) //enqueue
 		}
 		else
 		{
-			EnterCriticalTx(p_serial);
 			p_serial->p_TxBuffer[p_serial->TxBufferHead] = txChar;
 			p_serial->TxBufferHead = txBufferHeadNext;
 			HAL_Serial_EnableTxInterrupt(p_serial->p_HAL_Serial);
-			ExitCriticalTx(p_serial);
 		}
+		ExitCriticalTx(p_serial);
 	}
 }
 

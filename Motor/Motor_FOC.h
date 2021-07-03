@@ -326,22 +326,22 @@ static inline void Motor_FOC_ProcCurrentFeedback(Motor_T * p_motor)
 /*
 	Convert current from ADCU to QFrac
  */
-static inline void Motor_FOC_ConvertIa(Motor_T * p_motor)
+static inline void Motor_FOC_CaptureIa_IO(Motor_T * p_motor)
 {
 	//Filter here if needed
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA]);
+	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, *p_motor->p_Init->P_IA_ADCU);
 	FOC_SetIa(&p_motor->Foc, i_temp);
 }
 
-static inline void Motor_FOC_ConvertIb(Motor_T * p_motor)
+static inline void Motor_FOC_CaptureIb_IO(Motor_T * p_motor)
 {
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IB]);
+	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, *p_motor->p_Init->P_IB_ADCU);
 	FOC_SetIb(&p_motor->Foc, i_temp);
 }
 
-static inline void Motor_FOC_ConvertIc(Motor_T * p_motor)
+static inline void Motor_FOC_CaptureIc_IO(Motor_T * p_motor)
 {
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IC]);
+	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, *p_motor->p_Init->P_IC_ADCU);
 	FOC_SetIc(&p_motor->Foc, i_temp);
 }
 
@@ -377,9 +377,9 @@ static inline bool Motor_FOC_CalibrateAdc(Motor_T *p_motor)
 
 	if (Thread_PollTimerCompletePeriodic(&p_motor->ControlTimerThread) == true)
 	{
-		Linear_ADC_Init(&p_motor->UnitIa, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA], 4095U, 120U); //temp 120amp
-		Linear_ADC_Init(&p_motor->UnitIb, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IB], 4095U, 120U);
-		Linear_ADC_Init(&p_motor->UnitIc, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IC], 4095U, 120U);
+		Linear_ADC_Init(&p_motor->UnitIa, *p_motor->p_Init->P_IA_ADCU , 4095U, 120U); //temp 120amp
+		Linear_ADC_Init(&p_motor->UnitIb, *p_motor->p_Init->P_IB_ADCU, 4095U, 120U);
+		Linear_ADC_Init(&p_motor->UnitIc, *p_motor->p_Init->P_IC_ADCU, 4095U, 120U);
 //		Linear_ADC_Init(&p_motor->UnitIc, Filter_MovAvg_GetResult(&p_motor->FilterIc), 4095U, 120U);
 		isComplete = true;
 

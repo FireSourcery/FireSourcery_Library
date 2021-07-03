@@ -1,75 +1,180 @@
-//#include "MotorUser.h"
-//
-//MotorUser_T MotorUserMain;
-//
-//static inline void MotorUser_CaptureInput( )
-//{
-//	//UI
-//	switch (MotorUserMain.Mode)
-//	{
-//	case MOTOR_INPUT_MODE_ANALOG:
-//		Debounce_CaptureState_IO(&MotorUserMain.PinBrake);
-//		Debounce_CaptureState_IO(&MotorUserMain.PinThrottle);
-//		Debounce_CaptureState_IO(&MotorUserMain.PinForward);
-//		Debounce_CaptureState_IO(&MotorUserMain.PinReverse);
-//
-//		MotorUserMain->InputSwitchBrake 	= Debounce_GetState(&MotorUserMain.PinBrake);
-//		MotorUserMain->InputSwitchThrottle 	= Debounce_GetState(&MotorUserMain.PinThrottle);
-//		MotorUserMain->InputSwitchForward 	= Debounce_GetState(&MotorUserMain.PinForward);
-//		MotorUserMain->InputSwitchReverse 	= Debounce_GetState(&MotorUserMain.PinReverse);
-//		MotorUserMain->InputSwitchNeutral = MotorUserMain->InputSwitchForward | MotorUserMain->InputSwitchReverse ? false : true;
-//
-//
-//		MotorUserMain->InputValueThrottle 	= Linear_ADC_CalcUnsignedFraction16(&MotorUserMain.UnitThrottle, *MotorUserMain.p_AdcChannelThrottle );
-//		MotorUserMain->InputValueBrake 		= Linear_ADC_CalcUnsignedFraction16(&MotorUserMain.UnitBrake,  *MotorUserMain.p_AdcChannelBrake );
-//
-//
-////			if (Debounce_GetState(&MotorUserMain.PinForward) == true)
-////			{
-////				p_motor->InputDirection = MOTOR_DIRECTION_CW;
-////			}
-////			else if (Debounce_GetState(&MotorUserMain.PinReverse) == true)
-////			{
-////				p_motor->InputDirection = MOTOR_DIRECTION_CCW;
-////			}
-////			else
-////			{
-////				p_motor->InputDirection = MOTOR_DIRECTION_NEUTRAL;
-////			}
-//
-//		break;
-//
-//	case MOTOR_INPUT_MODE_SERIAL:
-//		break;
-//
-////		case MOTOR_INPUT_MODE_SHELL:
-////			break;
-//
-//	default:
-//		break;
-//}
-//
-//	//proc inputs
-//static inline void MotorUser_ProcInput(Motor_T * p_motor)
-//{
-//
-////	if(GetSwitchEdge(DirectionButton)) {StateMachine_Semisynchronous_ProcInput(&MotorUserMain.StateMachine, PIN_FUNCTION_FORWARD);}
-////	if(GetSwitchEdge(DirectionButton)) {StateMachine_Semisynchronous_ProcInput(&MotorUserMain.StateMachine, PIN_FUNCTION_REVERSE);}
-//
-//
-//
-//  Motor_SetSetpointScalarBrake(p_motor);
-//
-//	//set ramp to p_motor->InputValueThrottle
-//	//Setsetpoint ramp
-//}
-//
+/**************************************************************************/
+/*!
+	@section LICENSE
 
-//Motor_OutputUnits()
+	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+
+	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/**************************************************************************/
+/**************************************************************************/
+/*!
+    @file 	Motor.h
+    @author FireSoucery
+    @brief
+    @version V0
+*/
+/**************************************************************************/
+ #include "MotorUser.h"
+
+//#include "Config.h"
+
+#include "Peripheral/Pin/Debounce.h"
+#include "Peripheral/Pin/Pin.h"
+
+#include "Math/Linear/Linear_ADC.h"
+#include "Math/Linear/Linear.h"
+
+#include <stdint.h>
+#include <stdbool.h>
+
+MotorUser_T MotorUserMain;
+
+void MotorUser_Init(MotorUser_Init_T * p_init)
+{
+	MotorUserMain.P_MOTOR_USER_CONST = p_init;
+
+	Debounce_Init(&MotorUserMain.MotorUserAnalog.PinBrake, 		&p_init->HAL_PIN_BRAKE, 		&p_init->P_DEBOUNCE_TIMER, 5U);	//5millis
+	Debounce_Init(&MotorUserMain.MotorUserAnalog.PinThrottle,	&p_init->HAL_PIN_THROTTLE, 		&p_init->P_DEBOUNCE_TIMER, 5U);	//5millis
+	Debounce_Init(&MotorUserMain.MotorUserAnalog.PinForward, 	&p_init->HAL_PIN_FORWARD, 		&p_init->P_DEBOUNCE_TIMER, 5U);	//5millis
+	Debounce_Init(&MotorUserMain.MotorUserAnalog.PinReverse, 	&p_init->HAL_PIN_REVERSE, 		&p_init->P_DEBOUNCE_TIMER, 5U);	//5millis
+
+	//uncalibrated default
+	Linear_ADC_Init(&MotorUserMain.MotorUserAnalog.UnitThrottle, 	0U, 4095U, 100U);
+	Linear_ADC_Init(&MotorUserMain.MotorUserAnalog.UnitBrake,		0U, 4095U, 100U);
+}
+
+
+//static inline bool Motor_PollStopToSpin(Motor_T * p_motor)
 //{
-//
+//	bool transition = true;
+//	transition &= (p_motor->InputSwitchBrake == false) || ((p_motor->InputSwitchBrake == true) && (Motor_GetSpeed(p_motor) > 0));
+
+//	transition &= (p_motor->UserCmd > 0U);
+//	transition &= (p_motor->IsThrottleRelease == false);
+//	return transition;
 //}
-//
-//Motor_OutputADCU()
+//static inline bool Motor_PollSpinToFreewheel(Motor_T * p_motor)
 //{
+//	bool transition = false;
+
+//	transition |= (p_motor->UserCmd == 0); 	//brake 0 and throttle 0
+//	transition |= (p_motor->IsThrottleRelease == true);
+//	transition |= ((p_motor->InputSwitchBrake == true) && (p_motor->Parameters.BrakeMode == MOTOR_BRAKE_MODE_PASSIVE));
+//	//poll stall
+//	return transition;
 //}
+
+//static inline bool Motor_PollFreewheelToSpin(Motor_T * p_motor)
+//{
+//	bool transition = true;
+//	transition &= (p_motor->InputSwitchBrake == false) || ((p_motor->InputSwitchBrake == true) && (p_motor->Parameters.BrakeMode != MOTOR_BRAKE_MODE_PASSIVE) && (Motor_GetSpeed(p_motor) > 0));
+//	transition &= (p_motor->UserCmd > 0U);
+
+//	transition &= (p_motor->IsThrottleRelease == false);
+//	return transition;
+//}
+
+//write to motor
+void MotorUser_SetInput(Motor_T * p_motorDest)
+{
+	//proc inputs
+	//	if(GetSwitchEdge(DirectionButton)) {StateMachine_Semisynchronous_ProcInput(&MotorUserMain.StateMachine, PIN_FUNCTION_FORWARD);}
+	//	if(GetSwitchEdge(DirectionButton)) {StateMachine_Semisynchronous_ProcInput(&MotorUserMain.StateMachine, PIN_FUNCTION_REVERSE);}
+
+	bool activeControl;
+
+	if (
+			!MotorUserMain.InputSwitchNeutral //&&
+//			!MotorUser_Analog_GetThrottleRelease()
+		)
+	{
+		if (MotorUserMain.InputSwitchBrake == true)
+		{
+			if (p_motorDest->Parameters.BrakeMode == MOTOR_BRAKE_MODE_PASSIVE)
+			{
+				activeControl = false;
+			}
+			else
+			{
+//				 (Motor_GetSpeed(p_motorDest) == 0)
+				activeControl = true;
+			}
+		}
+		else
+		{
+			if (MotorUserMain.InputValueThrottle < 5U) // less then threshold
+			{
+//				if(p_motorDest->IsActiveControl == false) //if currently not active dontt start
+				{
+					activeControl = false;
+				}
+//				else
+//				{
+//					activeControl = true;
+//				}
+			}
+			else
+			{
+				activeControl = true;
+			}
+		}
+	}
+	else
+	{
+		activeControl = false;
+	}
+
+	if (activeControl == false)
+	{
+//		Motor_SetActiveControl(p_motorDest, false);
+//		p_motorDest->IsDirectionNeutral = true;
+		p_motorDest->IsActiveControl = false;
+	}
+	else
+	{
+//		p_motorDest->IsDirectionNeutral = false;
+		p_motorDest->IsActiveControl = true;
+
+		if (MotorUserMain.InputSwitchForward == true) // ^ reverse direction
+		{
+			Motor_SetDirectionInput(p_motorDest, MOTOR_DIRECTION_CCW);
+		}
+		else if (MotorUserMain.InputSwitchReverse == true)
+		{
+			Motor_SetDirectionInput(p_motorDest, MOTOR_DIRECTION_CW);
+		}
+
+		//set ramp per second
+		if (MotorUserMain.InputSwitchBrake == true)
+		{
+	//			if (p_motor->Parameters.BrakeMode == MOTOR_BRAKE_MODE_SCALAR)
+	//			{
+			Motor_SetUserCmd(p_motorDest, (MotorUserMain.InputValueBrake + MotorUserMain.InputValueBrakePrev) / 2U);
+			Motor_SetRampDecelerate(p_motorDest, 0);
+	//			}
+		}
+		else
+		{
+			Motor_SetUserCmd(p_motorDest, (MotorUserMain.InputValueThrottle + MotorUserMain.InputValueThrottlePrev) / 2U);
+			Motor_SetRampAccelerate(p_motorDest, 0);
+		}
+	}
+}
+
+
+
+

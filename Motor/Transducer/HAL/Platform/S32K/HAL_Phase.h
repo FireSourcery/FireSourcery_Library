@@ -38,43 +38,21 @@
 
 typedef const struct
 {
-	FTM_Type * p_FtmA;
-	uint8_t FtmChannelA;
+	FTM_Type * P_FTM_A;
+	uint8_t FTM_CHANNEL_A;
+	GPIO_Type * P_GPIO_A;
+	uint32_t GPIO_PIN_MASK_A;
 
-	GPIO_Type * p_GpioA;
-	uint32_t GpioPinMaskA;
-	//	FTM_Type * p_FtmA;
-	//	uint8_t FtmChannelA;
-	//
-	//	GPIO_Type * p_GpioA;
-	//	uint32_t GpioPinMaskA;
-	//	FTM_Type * p_FtmA;
-	//	uint8_t FtmChannelA;
-	//
-	//	GPIO_Type * p_GpioA;
-	//	uint32_t GpioPinMaskA;
+	FTM_Type * P_FTM_B;
+	uint8_t FTM_CHANNEL_B;
+	GPIO_Type * P_GPIO_B;
+	uint32_t GPIO_PIN_MASK_B;
+
+	FTM_Type * P_FTM_C;
+	uint8_t FTM_CHANNEL_C;
+	GPIO_Type * P_GPIO_C;
+	uint32_t GPIO_PIN_MASK_C;
 } HAL_Phase_T;
 
-/*
-	true is inverted, false is noninverted
- */
-static inline void HAL_Phase_WriteInvertPolarityA(const HAL_Phase_T * p_phase, bool isInvertedPolarity)
-{
-//	isInvertedPolarity ? (p_phase->p_FtmBase->POL |= (1U << p_phase->FtmChannel)) : (p_phase->p_FtmBase->POL &= ~(1U << p_phase->FtmChannel));
-}
-
-/*
-	KLS board uses additional hw enable/disable pin
- */
-static inline void HAL_Phase_WriteStateA(const HAL_Phase_T * p_phase, bool isOn)
-{
-//	isOn ? (p_phase->p_GpioBase->PDOR |= p_phase->GpioPinMask) : (p_phase->p_GpioBase->PDOR &= ~(p_phase->GpioPinMask));
-
-}
-
-static inline void HAL_Phase_WriteState(const HAL_Phase_T * p_phase, bool isOnPwmA, bool isOnPwmB, bool isOnPwmC)
-{
-	isOnPwmA ? (p_phase->p_FtmA->OUTMASK |= ((uint32_t)1U << p_phase->FtmChannelA)) : (p_phase->p_FtmA->OUTMASK &= ~((uint32_t)1U << p_phase->FtmChannelA));
-}
 
 #endif

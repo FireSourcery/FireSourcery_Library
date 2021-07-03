@@ -24,34 +24,19 @@
 /*!
     @file 	HAL.h
     @author FireSoucery
-    @brief  Motor module HAL
+    @brief
     @version V0
 */
 /**************************************************************************/
 #ifndef HAL_PIN_H
 #define HAL_PIN_H
 
-#if defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include "Peripheral/HAL/HAL.h"
-#elif defined(CONFIG_HAL_USER_DEFINED)
-	#include "HAL/HAL.h"
-#elif defined(CONFIG_HAL_PIN_USER_DEFINED)
-	#include "HAL/HAL_Pin.h"
-#endif
+#include "HAL/HAL.h"
 
-//#ifdef CONFIG_PIN_HAL_S32K
-//	#include "Peripheral/HAL/Platform/S32K/HAL_Pin.h"
-//#elif defined(CONFIG_PIN_HAL_USER_DEFINED)
-//
-//typedef const struct
-//{
-//	void * p_PinBase;
-//	uint32_t PinMask;
-//} HAL_Pin_T;
-//
-//extern inline void HAL_Pin_WriteState(const HAL_Pin_T * p_pin, bool isOn);
-//extern inline bool HAL_Pin_ReadState(const HAL_Pin_T * p_pin);
-//
-//#endif
+#if 	defined(CONFIG_HAL_PIN_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
+	#include HAL_PATH_USER(HAL_Pin.h)
+#elif 	defined(CONFIG_HAL_PIN_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
+	#include HAL_PATH_PLATFORM(Peripheral/HAL, HAL_Pin.h)
+#endif
 
 #endif

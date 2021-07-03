@@ -28,3 +28,34 @@
     @version V0
 */
 /*******************************************************************************/
+#include "MotorFlash.h"
+
+
+#include "Peripheral/Flash/Flash_EEPROM.h"
+#include "Peripheral/Flash/Flash.h"
+
+Flash_T MotorFlashMain;
+
+void MotorFlash_Init //per app
+(
+	HAL_Flash_T * p_hal_flash
+)
+{
+	Flash_Init
+	(
+		&MotorFlashMain,
+		p_hal_flash,
+		MotorFlash_OnBlock,
+		0U
+	);
+}
+
+// void MotorFlash_InitParition //per motor
+//(
+//	Motor_T * p_motorDest,
+//	const Flash_Partition_T * p_flashParition
+//)
+//{
+////	p_motor->p_MotorFlashParition = p_flashParition;
+//}
+

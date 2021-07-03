@@ -30,19 +30,53 @@
 */
 /**************************************************************************/
 #include "../Motor.h"
-#include "../Motor_FOC.h"
-#include "../Motor_SixStep.h"
+//#include "../Motor_FOC.h"
+//#include "../Motor_SixStep.h"
+
+#include "MotorShell.h"
+#include "MotorUser.h"
+#include "MotorFlash.h"
 
 //#include "HAL_Motor.h"
 
-//#include "Peripheral/Analog/Analog_IO.h"
-//
-//#include "System/StateMachine/StateMachine.h"
+
+typedef const struct
+{
+	Motor_T * const P_MOTORS;
+	uint8_t MOTORS_COUNT;
+
+	const HAL_Flash_T * const P_HAL_FLASH;
+	const MotorUser_Init_T MOTOR_USER_INIT;
 
 
-//Serial1
-//User
-//
+	//todo alarm
+
+//	volatile const adc_t * p_VBus_ADCU;
+//	volatile const adc_t * p_VAcc_ADCU;
+//	volatile const adc_t * p_VSense_ADCU;
+//	volatile const adc_t * p_HeatPcb_ADCU;
+} MotorController_Init_T;
+
+typedef const struct
+{
+	 Motor_T * p_Motors;
+	 uint8_t MotorCount;
+
+	 //mode all motor
+} MotorController_T;
 
 
+static inline void MotorController_Main_Thread()
+{
+	MotorUser_Analog_CaptureInput_IO();
 
+	MotorUser_WriteOutput();
+
+	HAL_Motor_EnqueueConversionUser( );
+
+//	MotorUser_SetInput(MotorControllerMain.p_Init.P_MOTORS); //write input to motor
+
+//		if (Thread_PollTimerCompletePeriodic(&MotorUserMain.MotorUserAnalog.MillisTimerThread) == true)
+//		{
+//		}
+}

@@ -31,15 +31,12 @@
 #ifndef HAL_FLASH_H
 #define HAL_FLASH_H
 
-//#include "Config.h"
+#include "HAL/HAL.h"
 
-
-#if defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include "Peripheral/HAL/HAL.h"
-#elif defined(CONFIG_HAL_LIBRARY_USER_DEFINED)
-	#include "HAL.h"
-#elif defined(CONFIG_HAL_FLASH_USER_DEFINED)
-	#include "HAL_Flash.h"
+#if 	defined(CONFIG_HAL_FLASH_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
+	#include HAL_PATH_USER(HAL_Flash.h)
+#elif 	defined(CONFIG_HAL_FLASH_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
+	#include HAL_PATH_PLATFORM(Peripheral/HAL, HAL_Flash.h)
 #endif
 
 #endif /* HAL_FLASH_H */

@@ -29,7 +29,7 @@
 */
 /******************************************************************************/
 #include "Analog.h"
-#include "HAL_ADC.h"
+#include "HAL_Analog.h"
 
 #include "Private.h"
 #include "Config.h"
@@ -53,7 +53,7 @@ void Analog_Init
 	const uint8_t * p_virtualChannelMapAdcs,
 	//	volatile uint8_t * p_activeChannelIndexesBuffer,
 #endif
-	volatile analog_t * p_virtualChannelMapResultsBuffer,
+	volatile adcdata_t * p_virtualChannelMapResultsBuffer,
 	const Analog_Conversion_T * volatile * pp_conversionQueue,
 	uint8_t conversionQueueLength
 )
@@ -150,14 +150,14 @@ void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * 
 	Analog_Config_T activateConfig;
 
 	/* Convert from union to pointer for uniform processing */
-	if (p_conversion->ChannelCount > 1U)
-	{
+//	if (p_conversion->ChannelCount > 1U)
+//	{
 		p_virtualChannels = p_conversion->p_VirtualChannels;
-	}
-	else
-	{
-		p_virtualChannels = &p_conversion->VirtualChannel;
-	}
+//	}
+//	else
+//	{
+//		p_virtualChannels = &p_conversion->VirtualChannel;
+//	}
 
 	activateChannelCount = CalcAdcActiveChannelCountMax(p_analog, p_conversion->ChannelCount);
 	activateConfig = CalcAdcActiveConfig(p_analog, p_conversion->Config, true);
@@ -209,18 +209,20 @@ void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * 
 
 /*
  * Conversion Queue
- * Dequeue from header
+ * Dequeue from head
  * Enqueue to tail
  */
-// cannot overwrite first item i.e head of queue
+// cannot overwrite
 bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
 {
 	uint8_t newTail;
 	bool isSucess;
 
+	Critical_Enter();
+
 	if (Analog_ReadConversionActive(p_analog) == true)
 	{
-		Critical_Enter();
+		//if comelete occurs here conversion will not auto dequeue
 
 		newTail = (p_analog->ConversionQueueTail + 1U) % p_analog->ConversionQueueLength;
 
@@ -235,13 +237,14 @@ bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p
 			isSucess = false;
 		}
 
-		Critical_Exit();
 	}
 	else
 	{
 		Analog_ActivateConversion(p_analog, p_conversion);
 		isSucess = true;
 	}
+
+	Critical_Exit();
 
 	return isSucess;
 }
@@ -253,10 +256,10 @@ bool Analog_DequeueConversion(Analog_T * p_analog)
 {
 	bool isSucess;
 
+	Critical_Enter();
+
 	if (Analog_ReadConversionActive(p_analog) == false)
 	{
-		Critical_Enter(); // still needed if multi threaded activate
-
 		if (p_analog->ConversionQueueHead != p_analog->ConversionQueueTail)
 		{
 			Analog_ActivateConversion(p_analog, p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead]);
@@ -267,13 +270,13 @@ bool Analog_DequeueConversion(Analog_T * p_analog)
 		{
 			isSucess = false;
 		}
-
-		Critical_Exit();
 	}
 	else
 	{
 		isSucess = false;
 	}
+
+	Critical_Exit();
 
 	return isSucess;
 }
@@ -281,13 +284,13 @@ bool Analog_DequeueConversion(Analog_T * p_analog)
 //can overwrite last item i.e tail of queue
 void Analog_EnqueueFrontConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
 {
+	Critical_Enter();
+
 	if (Analog_ReadConversionActive(p_analog) == true)
 	{
-		Critical_Enter();
-
 		if (p_analog->ConversionQueueHead < 1U)
 		{
-			p_analog->ConversionQueueHead = p_analog->ConversionQueueLength - 1;
+			p_analog->ConversionQueueHead = p_analog->ConversionQueueLength - 1U;
 		}
 		else
 		{
@@ -296,12 +299,13 @@ void Analog_EnqueueFrontConversion(Analog_T * p_analog, const Analog_Conversion_
 
 		p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead] = p_conversion;
 
-		Critical_Exit();
 	}
 	else
 	{
 		Analog_ActivateConversion(p_analog, p_conversion);
 	}
+
+	Critical_Exit();
 }
 
 
@@ -311,9 +315,9 @@ void Analog_EnqueueFrontConversion(Analog_T * p_analog, const Analog_Conversion_
 /*!
 	 @brief Get pointer to channel result
  */
-volatile analog_t * Analog_GetPtrChannelResult(const Analog_T * p_analog, Analog_VirtualChannel_T channel)
+volatile adcdata_t * Analog_GetPtrChannelResult(const Analog_T * p_analog, Analog_VirtualChannel_T channel)
 {
-	volatile analog_t * p_result;
+	volatile adcdata_t * p_result;
 
 	if (channel < p_analog->ChannelCount)
 	{
@@ -415,3 +419,24 @@ volatile analog_t * Analog_GetPtrChannelResult(const Analog_T * p_analog, Analog
 //	while(!ADC_GetCompleteFlag(p_analog->p_ADC_RegMap_IO[p_analog->ADC_Count_IO - 1]));
 //}
 
+
+
+/*!
+	 @brief Single Channel Conversion
+ */
+//void Analog_ActivateConversionChannel(Analog_T * p_analog, Analog_VirtualChannel_T p_channel, Analog_Config_T config, void (*onComplete)(volatile void * p_userData), volatile void * p_userData)
+//{
+//#if  (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED))
+//	Critical_Enter();
+//#elif defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
+//	Analog_DisableInterrupt(p_analog);
+//#endif
+//
+//	ActivateAdc(p_analog, p_channel, 1U, config);
+////	p_analog->p_ActiveConversion = 0U;
+////	p_analog->ActiveConversionChannelIndex = 0U;
+//
+//#if (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
+//	Critical_Exit();
+//#endif
+//}

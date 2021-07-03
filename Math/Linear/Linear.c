@@ -51,11 +51,11 @@ static inline int32_t MaxLeftShiftDivide(int32_t factor, int32_t divisor, uint8_
 		{
 			if(factor > 0)
 			{
-				if (factor <= (UINT32_MAX >> maxShift))
+				if (factor <= (INT32_MAX >> maxShift))
 				{
 					result = (factor << maxShift) / divisor; //max shift before divide
 
-					if (result <= (UINT32_MAX >> (leftShift - maxShift)))
+					if (result <= (INT32_MAX >> (leftShift - maxShift)))
 					{
 						result = result << (leftShift - maxShift); //remaining shift
 					}

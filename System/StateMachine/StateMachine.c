@@ -56,6 +56,184 @@ void StateMachine_Init
 #endif
 }
 
+static inline void ProcStateMachineTransition(StateMachine_T * p_stateMachine, uint8_t transitionInput)
+{
+	/* check new state exists*/
+	if (p_stateMachine->p_StateActive->pp_TransitionStateMap != 0)
+	{
+		if (p_stateMachine->p_StateActive->pp_TransitionStateMap[transitionInput] != 0)
+		{
+
+			/* proc input function */
+			if (p_stateMachine->p_StateActive->p_TransitionFunctionMap != 0)
+			{
+				if (p_stateMachine->p_StateActive->p_TransitionFunctionMap[transitionInput] != 0)
+				{
+					p_stateMachine->p_StateActive->p_TransitionFunctionMap[transitionInput](p_stateMachine->p_UserData);
+				}
+			}
+
+			/* map new state */
+			p_stateMachine->p_StateActive = p_stateMachine->p_StateActive->pp_TransitionStateMap[transitionInput];
+
+			/* proc new state common entry function */
+			if (p_stateMachine->p_StateActive->Entry != 0)
+			{
+				p_stateMachine->p_StateActive->Entry(p_stateMachine->p_UserData);
+			}
+
+		}
+	}
+}
+
+static inline void ProcStateMachineSelfTransition(StateMachine_T * p_stateMachine, uint8_t input)
+{
+	if (p_stateMachine->p_StateActive->p_SelfTransitionFunctionMap != 0)
+	{
+		if (p_stateMachine->p_StateActive->p_SelfTransitionFunctionMap[input] != 0)
+		{
+			p_stateMachine->p_StateActive->p_SelfTransitionFunctionMap[input](p_stateMachine->p_UserData);
+		}
+	}
+}
+
+static inline void ProcStateMachineOutput(StateMachine_T * p_stateMachine)
+{
+	if (p_stateMachine->p_StateActive->Output != 0)
+	{
+		p_stateMachine->p_StateActive->Output(p_stateMachine->p_UserData);
+	}
+}
+
+
+/*
+ * Semi synchronous
+ * Synchronous state logic proc, asynchronous input proc
+ *
+ * State Ouput
+ */
+void StateMachine_Semisynchronous_ProcState(StateMachine_T * p_stateMachine)
+{
+	ProcStateMachineOutput(p_stateMachine);
+}
+
+void StateMachine_Semisynchronous_ProcTransition(StateMachine_T * p_stateMachine, uint8_t input)
+{
+	if (input < p_stateMachine->TransitionInputCount)
+	{
+#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
+		if (Critical_MutexAquire(&p_stateMachine->Mutex))
+#endif
+		{
+			ProcStateMachineTransition(p_stateMachine, input);
+#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
+			Critical_MutexRelease(&p_stateMachine->Mutex);
+#endif
+		}
+	}
+}
+
+/*
+ * Input Output
+ */
+void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, uint8_t input)
+{
+	if (input < p_stateMachine->SelfTransitionInputCount)
+	{
+		ProcStateMachineSelfTransition(p_stateMachine, input);
+	}
+}
+
+/*
+ * Asynchronous Process
+ * Asynchronous Machine has no periodic output
+ */
+void StateMachine_Asynchronous_ProcTransition(StateMachine_T *p_stateMachine, uint8_t input)
+{
+	if (input < p_stateMachine->TransitionInputCount)
+	{
+#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
+		if (Critical_MutexAquire(&p_stateMachine->Mutex))
+#endif
+		{
+			ProcStateMachineTransition(p_stateMachine, input);
+#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
+			Critical_MutexRelease(&p_stateMachine->Mutex);
+#endif
+		}
+	}
+	ProcStateMachineOutput(p_stateMachine);
+}
+
+void StateMachine_Asynchronous_ProcInput(StateMachine_T * p_stateMachine, uint8_t input)
+{
+	if (input < p_stateMachine->SelfTransitionInputCount)
+	{
+		ProcStateMachineSelfTransition(p_stateMachine, input);
+	}
+	ProcStateMachineOutput(p_stateMachine);
+}
+
+
+/*
+ * Synchronous Process
+ * should be single threaded proc  to be Synchronous
+ */
+void StateMachine_Synchronous_ProcMachine(StateMachine_T * p_stateMachine)
+{
+	if (p_stateMachine->IsSetInputTransition == true)
+	{
+		p_stateMachine->IsSetInputTransition = false;
+		p_stateMachine->IsSetInputTransition = false;
+
+		if (p_stateMachine->InputTransition < p_stateMachine->TransitionInputCount)
+		{
+			ProcStateMachineTransition(p_stateMachine, p_stateMachine->InputTransition);
+		}
+	}
+	else if (p_stateMachine->IsSetInputSelfTransition == true)
+	{
+		p_stateMachine->IsSetInputTransition = false;
+
+		if (p_stateMachine->InputSelfTransition < p_stateMachine->SelfTransitionInputCount)
+		{
+			ProcStateMachineSelfTransition(p_stateMachine, p_stateMachine->InputSelfTransition);
+		}
+	}
+
+	ProcStateMachineOutput(p_stateMachine);
+}
+
+void StateMachine_Synchronous_SetInput(StateMachine_T * p_stateMachine, uint8_t input)
+{
+	p_stateMachine->InputTransition 		= input;
+	p_stateMachine->IsSetInputTransition 	= true;
+}
+
+void StateMachine_Synchronous_SetTransitionInput(StateMachine_T * p_stateMachine, uint8_t input)
+{
+	p_stateMachine->InputTransition 		= input;
+	p_stateMachine->IsSetInputTransition 	= true;
+}
+
+void StateMachine_Synchronous_SetSelfTransitionInput(StateMachine_T * p_stateMachine, uint8_t input)
+{
+	p_stateMachine->InputSelfTransition 		= input;
+	p_stateMachine->IsSetInputSelfTransition 	= true;
+}
+
+//static inline void State_InputAccumulated(StateMachine_t * stateMachine, StateInput_t input)
+//{
+//	for (uint8_t bitIdx = 0; bitIdx < STATE_INPUT_OUTPUT_COUNT; bitIdx++)
+//	{
+//		if (((input >> bitIdx) & (uint32_t)0x01) && stateMachine->p_StateActive->InputOutputMap[bitIdx] =! 0) stateMachine->p_StateActive->InputOutputMap[bitIdx]();
+//	}
+//}
+//void State_SetInputAccumulated(StateMachine_t * stateMachine, uint8_t input)
+//{
+//	stateMachine->InputOutput |= ((uint32_t)0x01 << input);
+//}
+
 void StateMachine_Reset(StateMachine_T * p_stateMachine)
 {
 	if (Critical_MutexAquire(&p_stateMachine->Mutex))

@@ -32,6 +32,8 @@
 #ifndef HAL_PHASE_BOARD_H
 #define HAL_PHASE_BOARD_H
 
+#include "../../Platform/S32K/HAL_Phase.h"
+
 //#include "External/S32K142/include/S32K142.h"
 #include "SDK/platform/devices/S32K142/include/S32K142.h"
 
@@ -45,10 +47,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct
-{
-//	uint32_t InstanceID;
-} HAL_Phase_T;
+
+//HAL_Phase_T HAL_PHASE_1 =
+//{
+//	.P_FTM_A 			= FTM0,
+//	.FTM_CHANNEL_A 		= 5U,
+//	.P_GPIO_A 			= PTE,
+//	.GPIO_PIN_MASK_A 	= ((uint32_t)1U << 0U),
+//
+//	.P_FTM_B 			= FTM0,
+//	.FTM_CHANNEL_B 		= 6U,
+//	.P_GPIO_B 			= PTE,
+//	.GPIO_PIN_MASK_B 	= ((uint32_t)1U << 1U),
+//
+//	.P_FTM_C 			= FTM0,
+//	.FTM_CHANNEL_C 		= 7U,
+//	.P_GPIO_C 			= PTE,
+//	.GPIO_PIN_MASK_C 	= ((uint32_t)1U << 2U),
+//};
 
 static inline void HAL_Phase_WriteDuty(const HAL_Phase_T * p_phase, uint32_t pwmA, uint32_t pwmB, uint32_t pwmC)
 {

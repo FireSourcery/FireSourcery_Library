@@ -33,9 +33,7 @@
 #include "Config.h"
 //#include "Default.h"
 
-#include "MotorController/MotorFlash.h"
 #include "MotorStateMachine.h"
-
 
 #include "System/StateMachine/StateMachine.h"
 #include "System/Thread/Thread.h"
@@ -55,34 +53,25 @@
 void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInit)
 {
 	p_motor->p_Init = p_motorInit;
-
-	//if first time boot, use serial com instead
-
 	MotorStateMachine_Init(p_motor);
-	Motor_InitReboot(p_motor);
 }
+
+//void Motor_InitConst(Motor_T * p_motor, const Motor_Init_T * p_motorInit)
+//{
+//	p_motor->p_Init = p_motorInit;
+//}
+//
+//void Motor_InitParam(Motor_T * p_motor, const Motor_Parameters_T * p_parameters)
+//{
+//
+//}
 
 //state machine init-state run
 void Motor_InitReboot(Motor_T * p_motor)
 {
 	const Motor_Init_T * p_motorInit = p_motor->p_Init; //Load Compile time consts
 
-
-	/*
-	 * Motor Utility Instance Init, 1 for all motor
-	 */
-
-	//call from outside since there is only 1
-//	MotorFlash_Init
-//	(
-//		&p_motorInit->HAL_FLASH
-//	);
-
-
-	MotorFlash_LoadParameterAll(p_motor);
-
-	//	MotorShell_Init();
-	//	MotorUser_Init();
+//	MotorFlash_LoadParameterAll(p_motor);   //todo circular depenency
 
 	/*
 	 * HW Wrappers Init
@@ -94,7 +83,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 		p_motorInit->PHASE_PWM_PERIOD
 	);
 
-
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
 	{
 		//all sixstep modes and hall foc mode use CaptureTime
@@ -105,7 +93,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 			p_motorInit->HALL_ENCODER_TIMER_COUNTER_MAX,
 			p_motorInit->HALL_ENCODER_TIMER_COUNTER_FREQ,
 			p_motorInit->MOTOR_PWM_FREQ,
-//			16U, //always 16 bits
 			p_motor->Parameters.PolePairs,
 			p_motor->Parameters.PolePairs*6U,  // use PolePairs * 6 for count per commutation or PolePairs for per erotation
 			p_motor->Parameters.EncoderDistancePerCount
@@ -146,7 +133,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 			&p_motor->Encoder,
 			&p_motorInit->HAL_ENCODER,
 			p_motorInit->MOTOR_PWM_FREQ,
-//			16U,
 			p_motor->Parameters.PolePairs,
 			p_motor->Parameters.EncoderCountsPerRevolution,
 			p_motor->Parameters.EncoderDistancePerCount
@@ -163,7 +149,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 			&p_motor->Encoder,
 			&p_motorInit->HAL_ENCODER,
 			p_motorInit->MOTOR_PWM_FREQ,
-//			16U,
 			p_motor->Parameters.PolePairs,
 			p_motor->Parameters.PolePairs, //p_motor->Parameters.EncoderCountsPerRevolution,
 			p_motor->Parameters.EncoderDistancePerCount
@@ -174,22 +159,12 @@ void Motor_InitReboot(Motor_T * p_motor)
 	(
 		&p_motor->Bemf,
 		&p_motor->ControlTimerBase,
-		&p_motor-> AnalogChannelResults[MOTOR_ANALOG_CHANNEL_VA], //change todo
-		&p_motor-> AnalogChannelResults[MOTOR_ANALOG_CHANNEL_VB],
-		&p_motor-> AnalogChannelResults[MOTOR_ANALOG_CHANNEL_VC],
-		&p_motor-> AnalogChannelResults[MOTOR_ANALOG_CHANNEL_VBUS],
+		&p_motor->p_Init->P_VA_ADCU,
+		&p_motor->p_Init->P_VB_ADCU,
+		&p_motor->p_Init->P_VC_ADCU,
+		&p_motor->p_Init->P_VBUS_ADCU,
 		p_motor->Parameters.BemfSampleMode
 	);
-
-	Debounce_Init(&p_motor->PinBrake, 		&p_motorInit->HAL_PIN_BRAKE, 		&p_motor->MillisTimerBase, 5U);	//5millis
-	Debounce_Init(&p_motor->PinThrottle,	&p_motorInit->HAL_PIN_THROTTLE, 	&p_motor->MillisTimerBase, 5U);	//5millis
-	Debounce_Init(&p_motor->PinForward, 	&p_motorInit->HAL_PIN_FORWARD, 		&p_motor->MillisTimerBase, 5U);	//5millis
-	Debounce_Init(&p_motor->PinReverse, 	&p_motorInit->HAL_PIN_REVERSE, 		&p_motor->MillisTimerBase, 5U);	//5millis
-
-	//	if analog module algo supports matching channel to adc virtualization layer
-	//	Analog_Init
-	//	(
-	//	);
 
 	FOC_Init(&p_motor->Foc);
 
@@ -224,12 +199,12 @@ void Motor_InitReboot(Motor_T * p_motor)
 	);
 
 
-	//initial runtime config settings
+	/*
+	 * initial runtime config settings
+	 */
+
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
 
-	//uncalibrated default
-	Linear_ADC_Init(&p_motor->UnitThrottle, 0U, 4095U, 100U);
-	Linear_ADC_Init(&p_motor->UnitBrake, 0U, 4095U, 100U);
 
 	/*
 	 * Run calibration later, default zero to middle adc
@@ -251,82 +226,95 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 }
 
-
 void Motor_SetZero(Motor_T * p_motor)
 {
 	p_motor->SpeedFeedback_RPM = 0U;
 	p_motor->VPwm = 0;
 }
 
-
 void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
 	p_motor->Direction = direction;
 
+	if (direction = MOTOR_DIRECTION_CW)
+	{
+		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW); //only hall sensor tracks commutation direction
+//		BEMF_SetDirection(&p_motor->Bemf, direction); //if bemf module parses rising/falling edge
+	}
+	else
+	{
+		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW);
+//		BEMF_SetDirection(&p_motor->Bemf, direction);
+	}
+}
 
-	//sets for 6 step
-//	if (direction = MOTOR_DIRECTION_CW)
+////set buffered direction, check on state machine run
+void Motor_SetDirectionInput(Motor_T * p_motor, Motor_Direction_T direction)
+{
+	p_motor->DirectionInput = direction;
+}
+
+//static inline bool Motor_SetDirection_ (Motor_T * p_motor)
+//{
+//	//proc direction
+//	//		 if (p_motor->Direction != p_motor->InputDirection)//direction reversed
+//	//		{
+//	//			Blinky_SetOnTime(&p_Motor->Alarm, 1000)
+//	//		}
+//}
+//
+//static inline bool Motor_SetDirection_ (Motor_T * p_motor)
+//{
+//	if (p_motor->Direction != p_motor->DirectionInput)
 //	{
-//		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW);
+//		Motor_SetDirection(p_motor->DirectionInput);
 //	}
-//	else
+//}
+
+void Motor_PollStop(Motor_T * p_motor)
+{
+	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
+	{
+		if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder))
+		{
+			p_motor->SpeedFeedback_RPM = 0; //todo stop flag
+		}
+	}
+	else if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP)
+	{
+		if ((p_motor->UserCmd == 0U)) //no braking/freewheel in openloop
+		{
+//			if(p_motor->UserCmdPrev > 0U)
+//			{
+				p_motor->SpeedFeedback_RPM = 0;
+//			}
+		}
+	}
+//	else //other modes covered by always capture DeltaD
 //	{
-//		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW);
+//
 //	}
-
-
-//	switch (direction)
-//	{
-//
-//	case MOTOR_DIRECTION_CW:
-//		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW);
-//		//	 BEMF_SetDirection(&p_motor->Bemf, direction);
-//		//	 FOC_SetDirection(&p_motor);
-//		break;
-//
-//	case MOTOR_DIRECTION_CCW:
-//		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW);
-//		//	 BEMF_SetDirection(&p_motor->Bemf, direction);
-//		//	 FOC_SetDirection(&p_motor);
-//		break;
-//
-////	case	MOTOR_DIRECTION_NEUTRAL:
-////		break;
-//
-//	default:
-//		break;
-//	}
-
-
 }
 
 
-
-
-
-
-
-//Move to control variable
+/*
+ * Control Variable Functions
+ */
 //per motor
- void Motor_SetUserCmd(Motor_T * p_motor, uint16_t userCommand)
+void Motor_SetUserCmd(Motor_T * p_motor, uint16_t userCommand)
 {
 	p_motor->UserCmdPrev = p_motor->UserCmd;
 	p_motor->UserCmd = userCommand;
 }
 
-// int32_t Motor_GetRampIncIndex(Motor_T * p_motor, uint32_t * p_index)
+//int32_t Motor_CalcRampIncIndex(Motor_T * p_motor, uint32_t * p_index)
 //{
 //	return Linear_Ramp_CalcTarget_IncIndex(&p_motor->Ramp, p_index, 1U);
 //}
 
- void Motor_ProcRamp(Motor_T * p_motor) // input voltage/speed cmd
-{
-	p_motor->RampCmd = Linear_Ramp_CalcTarget_IncIndex(&p_motor->Ramp, &p_motor->RampIndex, 1U);
-}
-
 
 //proc ramp update ~millis
- void Motor_SetRampAccelerate(Motor_T * p_motor, uint16_t acceration)
+void Motor_SetRampAccelerate(Motor_T * p_motor, uint16_t acceration)
 {
 
 	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE || p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
@@ -351,7 +339,7 @@ void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 	p_motor->RampIndex = 0;
 }
 
- void Motor_SetRampDecelerate(Motor_T * p_motor, uint16_t deceleration)
+void Motor_SetRampDecelerate(Motor_T * p_motor, uint16_t deceleration)
 {
 	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE || p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
 	{
@@ -371,100 +359,97 @@ void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 	p_motor->RampIndex = 0;
 }
 
-// void Motor_SetRamp(Motor_T * p_motor)
+
+/*
+ * Speed PID Feedback Loop
+ */
+void Motor_ProcSpeedFeedback(Motor_T * p_motor)
+{
+	p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
+	//	//p_motor->SpeedFeedback_RPM = Filter_MovAvg(p_motor->Speed_RPM, coef, coef);
+	//	PID_Proc(&p_motor->PidSpeed, p_motor->SpeedFeedback_RPM, setpoint);
+}
+
+
+
+//static inline void Motor_SetBrakeRegenOptimal(Motor_T * p_motor)
 //{
-//	if (p_motor->InputSwitchBrake == true)
-//	{
-//		Motor_SetRampDecel(p_motor);
-//	}
-//	else
-//	{
-//		Motor_SetRampAccel(p_motor);
-//	}
+//	p_motor->VPwm = Linear_Voltage_CalcUnsignedFraction16(&p_motor->UnitVabc, GetVBemf(&p_motor)) / 2U;
+//}
+//
+//static inline void Motor_SetBrakeRegenProportional(Motor_T * p_motor, uint16_t intensity)
+//{
+//	p_motor->VPwm = Linear_Voltage_CalcUnsignedFraction16(&p_motor->UnitVabc, GetVBemf(&p_motor)) * (65536U - intensity) >> 16U;
+//
+//	//braking 0% -> pwm 100% of back emf;
+//	//braking 10% -> pwm 90% of back emf;
+//	//braking 50% -> pwm 50% of back emf;
+//	//braking 90% -> pwm 10% of back emf;
+//}
+//
+//static inline void Motor_SetBrakeRegenScalar(Motor_T * p_motor, uint16_t intensity)
+//{
+//	p_motor->VPwm = Linear_Voltage_CalcUnsignedFraction16(&p_motor->UnitVabc, GetVBemf(&p_motor)) * (32768U - ((intensity + 32768U) / p_motor->Parameters.BrakeCoeffcient)) >> 16U;
+//
+//	// e.g
+//	// RegenCoeffcientInput = 4, RegenCoeffcient -> fract16(1,4)
+//
+//	//braking 0% -> pwm 62.5% of back emf;
+//	//braking 10% -> pwm 60% of back emf;
+//	//braking 50% -> pwm 50% of back emf;
+//	//braking 90% -> pwm 40% of back emf;
+//	//braking 100% -> pwm 37.5% of back emf;
 //}
 
- /*
-  * Speed PID Feedback Loop
-  *
-  * Inputs by pointer:
-  * 	p_motor->Speed_RPM
-  * 	p_motor->SpeedReq_RPM
-  *
-  * Output by pointer:
-  * 	FOC Mode - sets iqReq, Vcmd,
-  * 	SixStep -
-  *
-  * generalize to scalar feedback variable e.g. temperature
-  *
-  */
- void Motor_ProcSpeedFeedback(Motor_T * p_motor)
- {
- 	p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
- //	//p_motor->SpeedFeedback_RPM = Filter_MovAvg(p_motor->Speed_RPM, coef, coef);
- //	PID_Proc(&p_motor->PidSpeed, p_motor->SpeedFeedback_RPM, setpoint);
- }
 
- void Motor_PollSpeedFeedback(Motor_T * p_motor)
- {
- 	if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
- 	{
- 		 Motor_ProcSpeedFeedback(p_motor);
- 	}
- }
+//static inline void Motor_ProcControlVarBrake(Motor_T * p_motor)
+//{
+//	switch (p_motor->Parameters.BrakeMode)
+//	{
+//	case MOTOR_BRAKE_MODE_SCALAR:
+//		Motor_ProcRamp(p_motor);
+//		break;
+//	case MOTOR_BRAKE_MODE_REGEN_OPTIMAL:
+//		Motor_SixStep_SetBrakeRegenOptimal(p_motor);
+//		break;
+//	case MOTOR_BRAKE_MODE_REGEN_PROPRTIONAL:
+//		Motor_SixStep_SetBrakeRegenProportional(p_motor, p_motor->UserCmd);
+//		break;
+//	case MOTOR_BRAKE_MODE_REGEN_SCALAR:
+//		Motor_SixStep_SetBrakeRegenScalar(p_motor, p_motor->UserCmd);
+//		break;
+//	default:
+//		break;
+//	}
+//
+//}
 
-
-
-uint32_t Motor_CalcControlVariable(Motor_T * p_motor, Motor_ControlMode_T liveControlVarMode, uint32_t var) // input voltage/speed cmd
+//split motor state version and controvar verions
+void Motor_ProcControlVariable(Motor_T * p_motor)
 {
-	switch (liveControlVarMode)
+	uint32_t debug;
+	switch (p_motor->Parameters.ControlMode)
 	{
-	case MOTOR_CONTROL_MODE_OPEN_LOOP:
-		p_motor->VPwm = var/4U;
-		break;
+//	case MOTOR_CONTROL_MODE_OPEN_LOOP:
+//		p_motor->VPwm = p_motor->UserCmd / 4U;
+//		break;
 
 	case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:
-		p_motor->VPwm = var;
-		break;
-
-	case MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ:
-		//p_motor->VPwm = p_motor->RampCmd * p_motor->Speed_RPM * p_motor->VRpmGain;
-		break;
-
-	case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:
-		if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
+		if (p_motor->IBus_Frac16 > (58982U/2U))
 		{
-			 Motor_ProcSpeedFeedback(p_motor); //get from PID
+			debug = p_motor->IBus_Frac16;
+			p_motor->VPwm = p_motor->RampCmd;
+
+
+//			p_motor->VPwm = p_motor->VPwm - ((p_motor->IBus_Frac16 - 58982U) * p_motor->VPwm >> 16U);
+//			p_motor->VPwm = p_motor->VPwm * 58982U / p_motor->PhaseCurrentFiltered_Frac16;
+
+			//proc constant current pid, set integral term to vpwm.
 		}
-
-		break;
-
-	case MOTOR_CONTROL_MODE_CONSTANT_CURRENT:
-		p_motor->VPwm = p_motor->VPwm * 58982U/p_motor->PhaseCurrentFiltered_Frac16;
-		//proc constant current pid
-		break;
-
-	default:
-		break;
-	}
-
-}
-
-
-
-
-
-// void Motor_SetControlVariable(Motor_T * p_motor, mode, cmd) // input voltage/speed cmd
-
- void Motor_ProcControlVariable(Motor_T * p_motor, Motor_ControlMode_T liveControlVarMode, uint32_t var) // input voltage/speed cmd
-{
-	switch (liveControlVarMode)
-	{
-	case MOTOR_CONTROL_MODE_OPEN_LOOP:
-		p_motor->VPwm = p_motor->UserCmd/4U;
-		break;
-
-	case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:
-		p_motor->VPwm = p_motor->RampCmd;
+		else
+		{
+			p_motor->VPwm = p_motor->RampCmd;
+		}
 		break;
 
 	case MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ:
@@ -472,10 +457,7 @@ uint32_t Motor_CalcControlVariable(Motor_T * p_motor, Motor_ControlMode_T liveCo
 		break;
 
 	case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:
-//		if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
-//		{
-//			 Motor_ProcSpeedFeedback(p_motor); //get from PID
-//		}
+		Motor_PollSpeedFeedback(p_motor);
 		break;
 
 	case MOTOR_CONTROL_MODE_CONSTANT_CURRENT:
@@ -488,43 +470,43 @@ uint32_t Motor_CalcControlVariable(Motor_T * p_motor, Motor_ControlMode_T liveCo
 
 }
 
- void Motor_ProcControlVariable_Thread(Motor_T * p_motor)
+/*
+ * Align State
+ */
+void Motor_StartAlign(Motor_T * p_motor)
 {
-	Motor_ControlMode_T liveControlVarMode;
+	p_motor->ControlTimerBase = 0U;
+	Thread_SetTimerPeriod(&p_motor->ControlTimerThread, 20000U); //Parameter.AlignTime
 
-	if (p_motor->PhaseCurrentFiltered_Frac16 > 58982U)
+	//	set to usercmd  ? p_motor->UserCmd
+	//Phase_ActuatePhaseA
+	Phase_ActuateDutyCycle(&p_motor->Phase, 6553U/4U, 0, 0); /* Align Phase A 10% pwm */
+	Phase_ActuateState(&p_motor->Phase, 1, 1, 1);
+}
+
+bool Motor_ProcAlign(Motor_T * p_motor)
+{
+	bool status;
+
+	if (Thread_PollTimerComplete(&p_motor->ControlTimerThread) == true)
 	{
-		p_motor->VPwm = p_motor->VPwm * 58982U/p_motor->PhaseCurrentFiltered_Frac16;
-				//proc constant current pid
-		liveControlVarMode = MOTOR_CONTROL_MODE_CONSTANT_CURRENT;
+		p_motor->ElectricalAngle= 0U;
+		Encoder_Reset(&p_motor->Encoder);
+//		Motor_Float(&p_motor->Foc);
+		status = true;
 	}
 	else
 	{
-		liveControlVarMode = p_motor->Parameters.ControlMode;
+		status = false;
 	}
 
-	Motor_ProcControlVariable(p_motor, liveControlVarMode, p_motor->RampCmd);
-
-	//< 90%
-//	if(p_motor->PhaseCurrentFiltered_Frac16 > 58982U)
-//	{
-//		p_motor->VPwm = p_motor->VPwm * 58982U/p_motor->PhaseCurrentFiltered_Frac16;
-//		//proc constant current pid
-//	}
-//	else
-//	{
-//		Motor_ProcControlVariable(p_motor);
-//	}
+	return status;
 }
 
 
-
-
-
-
-
-
-
+/*
+ * Calibration State Functions
+ */
 void Motor_StartCalibrateEncoder(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase = 0U;
@@ -570,7 +552,6 @@ void Motor_CalibrateEncoder(Motor_T * p_motor)
 	return isComplete;
 }
 
-
 Motor_AlignMode_T Motor_GetAlignMode(Motor_T *p_motor)
 {
 	Motor_AlignMode_T alignMode;
@@ -589,40 +570,6 @@ Motor_AlignMode_T Motor_GetAlignMode(Motor_T *p_motor)
 
 	return alignMode;
 }
-
-//void Motor_ActivateAlign(Motor_T * p_motor)
-//{
-//	Phase_ActuateDutyCycle(&p_motor->Phase, 6553U/4U, 0, 0); /* Align Phase A 10% pwm */
-//	Phase_ActuateState(&p_motor->Phase, 1, 1, 1);
-//}
-
-void Motor_StartAlign(Motor_T * p_motor)
-{
-	p_motor->ControlTimerBase = 0U;
-	Thread_SetTimerPeriod(&p_motor->ControlTimerThread, 20000U); //Parameter.AlignTime
-//	Motor_ActivateAlign(p_motor);
-	//set to usercmd  6553U/4U p_motor->UserCmd
-	Phase_ActuateDutyCycle(&p_motor->Phase, 6553U/4U, 0, 0); /* Align Phase A 10% pwm */
-	Phase_ActuateState(&p_motor->Phase, 1, 1, 1);
-}
-
-bool Motor_ProcAlign(Motor_T * p_motor)
-{
-	bool status;
-	if (Thread_PollTimerComplete(&p_motor->ControlTimerThread) == true)
-	{
-		p_motor->ElectricalAngle= 0U;
-		Encoder_Reset(&p_motor->Encoder);
-//		Motor_Float(&p_motor->Foc);
-		status = true;
-	}
-	else
-	{
-		status = false;
-	}
-	return status;
-}
-
 
 void Motor_StartCalibrateHall(Motor_T * p_motor)
 {

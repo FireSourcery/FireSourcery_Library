@@ -40,13 +40,13 @@ typedef struct
 {
 	const volatile HAL_Pin_T * p_HAL_Pin;
 
-	const volatile uint32_t * p_Timer;
-	uint16_t DebounceTime;
-
-	volatile uint16_t TimePrev;
-	volatile bool DebouncedState;
-	volatile bool DebouncedStatePrev;
-	volatile bool RawStatePrev;
+//	const volatile uint32_t * p_Timer;
+//	uint16_t DebounceTime;
+//
+//	volatile uint16_t TimePrev;
+//	volatile bool DebouncedState;
+//	volatile bool DebouncedStatePrev;
+//	volatile bool RawStatePrev;
 
 }Pin_T;
 

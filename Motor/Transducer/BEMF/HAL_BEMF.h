@@ -34,15 +34,5 @@
 //#include "Config.h"
 //
 //
-//#if defined(CONFIG_HAL_LIBRARY_DEFINED)// || defined(CONFIG_BEMF_HAL_LIBRARY_DEFINED)
-//	#include "../HAL/HAL.h"
-//
-//#elif defined(CONFIG_HAL_USER_DEFINED)// || defined(CONFIG_BEMF_HAL_USER_DEFINED)
-//	#include "HAL.h"
-//
-//#elif defined(CONFIG_BEMF_HAL_KLS_S32K)
-//	#include "Motor/Transducer/HAL/Board/KLS_S32K/HAL_BEMF.h"
-//#endif
-//
 //
 //#endif

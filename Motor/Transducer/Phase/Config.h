@@ -55,5 +55,11 @@
 #endif
 
 
+//todo pwm period as compile time cost
+//#if  	defined(CONFIG_PHASE_HAL_PWM_PERIOD)
+//
+//#endif
+//
+
 #endif
 

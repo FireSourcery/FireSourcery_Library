@@ -32,7 +32,7 @@
 #define ANALOG_IO_H
 
 #include "Analog.h"
-#include "HAL_ADC.h"
+#include "HAL_Analog.h"
 #include "Private.h"
 
 #include <stdint.h>
@@ -121,6 +121,8 @@ static inline void CaptureAdcResults
 			Run in corresponding ADC ISR
 
 	ADC ISR should be higher priority than thread calling Analog_Activate()
+
+	CompleteConversion
  */
 static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 {
@@ -152,21 +154,20 @@ static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 		 */
 
 		/* Convert from union form to pointer for uniform processing */
-		if(p_analog->p_ActiveConversion->ChannelCount > 1U)
-		{
+//		if(p_analog->p_ActiveConversion->ChannelCount > 1U)
+//		{
 			p_virtualChannels = &p_analog->p_ActiveConversion->p_VirtualChannels[p_analog->ActiveConversionChannelIndex];
-		}
-		else
-		{
-			p_virtualChannels = &p_analog->p_ActiveConversion->VirtualChannel;
-		}
+//		}
+//		else
+//		{
+//			p_virtualChannels = &p_analog->p_ActiveConversion->VirtualChannel;
+//		}
 
 		CaptureAdcResults(p_analog, p_virtualChannels);
 
 		/*
-		 * Set up next conversion
+		 * buffer current conversion for on complete at the end of routine.
 		 */
-
 		p_completedConversion = p_analog->p_ActiveConversion;
 		completedChannelStartIndex = p_analog->ActiveConversionChannelIndex;
 	#ifdef CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
@@ -175,6 +176,9 @@ static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 		completedChannelCount = p_analog->ActiveChannelCount;
 	#endif
 
+		/*
+		 * Set up next conversion
+		 */
 		remainingChannelCount = p_analog->p_ActiveConversion->ChannelCount - p_analog->ActiveConversionChannelIndex - completedChannelCount;
 
 		if (remainingChannelCount > 0U)
@@ -197,14 +201,14 @@ static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 				p_analog->p_ActiveConversion = p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead];
 				p_analog->ConversionQueueHead = (p_analog->ConversionQueueHead + 1U) % p_analog->ConversionQueueLength;
 
-				if(p_analog->p_ActiveConversion->ChannelCount > 1U)
-				{
+//				if(p_analog->p_ActiveConversion->ChannelCount > 1U)
+//				{
 					p_virtualChannels = p_analog->p_ActiveConversion->p_VirtualChannels;
-				}
-				else
-				{
-					p_virtualChannels = &p_analog->p_ActiveConversion->VirtualChannel;
-				}
+//				}
+//				else
+//				{
+//					p_virtualChannels = &p_analog->p_ActiveConversion->VirtualChannel;
+//				}
 
 				newActiveChannelCount = CalcAdcActiveChannelCountMax(p_analog, p_analog->p_ActiveConversion->ChannelCount);
 				newConfig = CalcAdcActiveConfig(p_analog, p_analog->p_ActiveConversion->Config, true);

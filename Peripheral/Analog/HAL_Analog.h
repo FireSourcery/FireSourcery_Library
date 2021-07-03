@@ -24,26 +24,21 @@
 /*!
 	@file 	HAL.h
 	@author FireSoucery
-	@brief 	  module HAL
+	@brief 	Analog module import functions.
+			User must provide HW functions, or configure peripheral HAL
 	@version V0
 */
 /******************************************************************************/
-#ifndef HAL_ENCODER_TRANSDUCER_H
-#define HAL_ENCODER_TRANSDUCER_H
+#ifndef HAL_ANALOG_H
+#define HAL_ANALOG_H
 
+#include "HAL/HAL.h"
 
-#ifdef CONFIG_HAL_KLS_S32K
-
-	#include "Board/KLS_S32K/HAL_Encoder.h"
-#elif defined(CONFIG_HAL_S32K)
-	#include "Platform/S32K/HAL_Encoder.h"
-
-#elif defined(CONFIG_HAL_LIBRARY_XYZ)
-	#include "Board/XYZ/HAL_Hardware.h"
-
+#if 	defined(CONFIG_HAL_ANALOG_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
+	#include HAL_PATH_USER(HAL_Analog.h)
+#elif 	defined(CONFIG_HAL_ANALOG_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
+	#include HAL_PATH_PLATFORM(Peripheral/HAL, HAL_Analog.h)
 #endif
-
-
 
 
 #endif

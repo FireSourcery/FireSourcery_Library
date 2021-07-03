@@ -38,18 +38,19 @@
 
 typedef const struct
 {
-// 	GPIO_Type * p_GpioBase;
-// 	GPIO_Type * p_GpioBase;
-// 	GPIO_Type * p_GpioBase;
-//	uint8_t PinSensorA;
-//	uint8_t PinSensorB;
-//	uint8_t PinSensorC;
+ 	GPIO_Type * P_GPIO_BASE_A;
+ 	GPIO_Type * P_GPIO_BASE_B;
+ 	GPIO_Type * P_GPIO_BASE_C;
+
+	uint8_t PIN_SENSOR_A;
+	uint8_t PIN_SENSOR_B;
+	uint8_t PIN_SENSOR_C;
 } HAL_Hall_T;
 
 
-static inline uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
-{
-//	return (((p_hall->p_GpioBase->PDIR >> (p_hall->PinIndexSensorA)) | (p_hall->p_GpioBase->PDIR >>  (p_hall->PinIndexSensorB - 1)) | (p_hall->p_GpioBase->PDIR >>  (p_hall->PinIndexSensorC - 2))) & 0x07);
-}
+//static inline uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
+//{
+////	return (((p_hall->p_GpioBase->PDIR >> (p_hall->PinIndexSensorA)) | (p_hall->p_GpioBase->PDIR >>  (p_hall->PinIndexSensorB - 1)) | (p_hall->p_GpioBase->PDIR >>  (p_hall->PinIndexSensorC - 2))) & 0x07);
+//}
 
 #endif

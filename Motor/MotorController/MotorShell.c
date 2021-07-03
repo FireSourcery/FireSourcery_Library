@@ -53,7 +53,7 @@ typedef struct
 }
 MotorShell_T;
 
-MotorShell_T MainMotorShell;
+MotorShell_T MotorShellMain;
 
 //extern int Cmd_pwm 		(int argc, char ** argv);
 //extern int Cmd_rpm 		(int argc, char ** argv);
@@ -110,8 +110,8 @@ void MotorShell_Init(Motor_T * p_motors, uint8_t motorCount)
 //	uint16_t cmdLoopFreq,
 //	uint16_t shellProcFreq
 
-	MainMotorShell.p_Motors  = p_motors;
-	MainMotorShell.MotorCount = motorCount;
+	MotorShellMain.p_Motors  = p_motors;
+	MotorShellMain.MotorCount = motorCount;
 }
 
 //#define SHELL_OUTTER_LOOP_FREQ 100
@@ -132,13 +132,13 @@ int Cmd_configfile(int argc, char **argv)
 int Cmd_read(int argc, char **argv)
 {
 	static char buffer[5];
-//	snprintf(buffer, 5, "%d", MainMotorShell.p_Motors[0].VBus);
+//	snprintf(buffer, 5, "%d", MotorShellMain.p_Motors[0].VBus);
 //	sprintf()
 	if (strcmp(argv[1], "vbus") == 0U)
 	{
 		Terminal_SendString("\r\nVBus = ");
 		Terminal_SendString(buffer);
-//    	Terminal_SendNum(MainMotorShell.p_Motors[0].VBus);
+//    	Terminal_SendNum(MotorShellMain.p_Motors[0].VBus);
 		Terminal_SendString("\r\n");
 	}
 	else
@@ -163,7 +163,7 @@ int Cmd_pwm(int argc, char **argv)
 		pwm = strtoul(argv[3], 0, 10);
 	}
 
-	Phase_Polar_SetDutyCyle(&MainMotorShell.p_Motors[0].Phase, pwm);
+	Phase_Polar_SetDutyCyle(&MotorShellMain.p_Motors[0].Phase, pwm);
 
 	return MOTOR_SHELL_CMD_RETURN_CODE_OK;
 }

@@ -31,17 +31,17 @@
 #ifndef HAL_PERIPHERAL_H
 #define HAL_PERIPHERAL_H
 
-// Includes all HALs
-#ifdef CONFIG_HAL_S32K
-
-	#include "Platform/S32K/HAL_ADC.h"
-	#include "Platform/S32K/HAL_Pin.h"
-	#include "Platform/S32K/HAL_Serial.h"
-	#include "Platform/S32K/HAL_Flash.h"
-
-#elif defined(CONFIG_HAL_XYZ)
-
-#endif
+//// Includes all HALs
+//#ifdef CONFIG_HAL_S32K
+//
+//	#include "Platform/S32K/HAL_ADC.h"
+//	#include "Platform/S32K/HAL_Pin.h"
+//	#include "Platform/S32K/HAL_Serial.h"
+//	#include "Platform/S32K/HAL_Flash.h"
+//
+//#elif defined(CONFIG_HAL_XYZ)
+//
+//#endif
 
 
 

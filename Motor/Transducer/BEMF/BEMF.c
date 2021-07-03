@@ -57,7 +57,7 @@ void BEMF_Init
  	p_bemf->SampleMode = mode;
 
 	p_bemf->p_VPhaseObserve_ADCU = p_phaseA;
-	p_bemf->PhaseObserveId = BEMF_PHASE_A;
+//	p_bemf->PhaseObserveId = BEMF_PHASE_A;
 	p_bemf->Mode = BEMF_MODE_PASSIVE;
 }
 
@@ -79,14 +79,9 @@ void BEMF_SetSampleMode(BEMF_T * p_bemf, BEMF_SampleMode_T mode)
 void BEMF_SetObserveMode(BEMF_T * p_bemf, BEMF_Mode_T mode)
 {
  	p_bemf->Mode = mode;
+	p_bemf->ZeroCrossingCounter = 0U; //reset consecutive zcd counter
 }
 
-void BEMF_Reset(BEMF_T * p_bemf)
-{
-//	p_bemf->IsReliable = 0U;
-	p_bemf->ZeroCrossingCounter = 0U;
-	//map phase if module maps phase
-}
 
 
 //calc speed-> calc advance angle
@@ -98,4 +93,11 @@ void BEMF_SetAdvanceAngleTime(BEMF_T * p_bemf, uint16_t angle_frac16)
 //void BEMF_ResetTimer(BEMF_T * p_bemf)
 //{
 //	p_bemf->TimeCommutationStart = 0U;
+//}
+
+//void BEMF_Reset(BEMF_T * p_bemf)
+//{
+////	p_bemf->IsReliable = 0U;
+//	p_bemf->ZeroCrossingCounter = 0U;
+//	//map phase if module maps phase
 //}

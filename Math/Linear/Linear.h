@@ -48,6 +48,7 @@ typedef struct Linear_Tag
 #endif
 	int32_t Offset;			//b, y offset
 //	int32_t OffsetX;
+//	int32_t OffsetY; //2 offsets for x offset mode precision
 	int32_t RangeReference; //100 percent, x-intercept is 0 percent
 } Linear_T;
 
@@ -104,13 +105,17 @@ static inline int32_t Linear_Function_Fraction16(Linear_T * p_linear, int32_t x)
  * 			65536 => 100 percent, unsat
  * 			-percent returns invalid  or abs or zero??
  */
-
-//static inline uint32_t Linear_Function_FractionUnsigned16(Linear_T * p_linear, int32_t x)
-
 static inline uint16_t Linear_Function_FractionUnsigned16(Linear_T * p_linear, int32_t x)
 {
 	return (uint16_t) Linear_Function_Fraction16(p_linear, x);
 }
+
+//static inline uint16_t Linear_FunctionAbs_FractionUnsigned16(Linear_T * p_linear, int32_t x)
+//{
+//	int32_t temp = Linear_Function_Fraction16(p_linear, x);
+//	if t
+//	return (uint16_t) Linear_Function_Fraction16(p_linear, x);
+//}
 
 /*
  * returns q1.15

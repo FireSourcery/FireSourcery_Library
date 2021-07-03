@@ -31,6 +31,8 @@
 #ifndef HAL_HALL_BOARD_H
 #define HAL_HALL_BOARD_H
 
+#include "../../Platform/S32K/HAL_Hall.h"
+
 //#include "External/S32K142/include/S32K142.h"
 #include "SDK/platform/devices/S32K142/include/S32K142.h"
 
@@ -40,10 +42,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct
-{
-//	uint32_t InstanceID;
-} HAL_Hall_T;
 
 /*
  * Only 1 set of hall sensor on KLS_S32K. Can use hard coded value

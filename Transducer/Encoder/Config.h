@@ -53,7 +53,7 @@
 	#define CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
 #endif
 
-//todo change configurable to compile time const
+
 #ifdef CONFIG_ENCODER_ANGLE_RESOLUTION_BITS
 
 #else

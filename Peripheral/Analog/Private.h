@@ -32,7 +32,7 @@
 #define PRIVATE_ANALOG_H
 
 #include "Analog.h"
-#include "HAL_ADC.h"
+#include "HAL_Analog.h"
 #include "Config.h"
 
 /*!

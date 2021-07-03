@@ -32,27 +32,15 @@
 #ifndef HAL_ENCODER_H
 #define HAL_ENCODER_H
 
-#include "Config.h"
+#include "HAL/HAL.h"
 
-#include <stdint.h>
-#include <stdbool.h>
-
-#if defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include "HAL/HAL.h"
-#elif defined(CONFIG_HAL_LIBRARY_USER_DEFINED)
-	#include "HAL.h"
-#elif defined(CONFIG_HAL_ENCODER_USER_DEFINED)
-	#include "HAL_Encoder.h"
+#if 	defined(CONFIG_HAL_ENCODER_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
+	#include HAL_PATH_USER(HAL_Encoder.h)
+#elif 	defined(CONFIG_HAL_ENCODER_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
+	#include HAL_PATH_BOARD(Transducer/Encoder/HAL, HAL_Encoder.h)
 #endif
 
-//#if defined(CONFIG_ENCODER_HAL_S32K)
-//	#include "HAL/Platform/S32K/HAL_Encoder.h"
-//#elif defined(CONFIG_ENCODER_HAL_KLS_S32K)
-//	#include "HAL/Board/KLS_S32K/HAL_Encoder.h"
-//#elif defined(CONFIG_ENCODER_HAL_XYZ)
-//
-//#elif defined(CONFIG_ENCODER_HAL_USER_DEFINED)
-//	#include "HAL_Encoder.h"
+
 ///*
 //	typedef struct
 //	{
@@ -65,15 +53,6 @@
 //		HAL_Pin_T * p_PinPhaseB;
 //		uint32_t PinMaskPhaseB;
 //	} HAL_Encoder_T;
-//
-//	static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder){ }
-//	static inline bool HAL_Encoder_ReadDirection(const HAL_Encoder_T * p_encoder){ }
-//	static inline bool HAL_Encoder_ReadPhaseA(const HAL_Encoder_T * p_encoder){ }
-//	static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder){ }
-//	static inline bool HAL_Encoder_EnableInterrupt(const HAL_Encoder_T * p_encoder){ }
-//*/
-////Timer_ConfigPeriodicIRQ
-////Timer_ConfigCaptureIRQ
-//#endif
+
 
 #endif

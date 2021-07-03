@@ -38,18 +38,18 @@
 
 typedef const struct
 {
-	GPIO_Type * p_GpioBase;
-	uint32_t GpioPinMask;
+	GPIO_Type * P_GPIO_BASE;
+	uint32_t GPIO_PIN_MASK;
 } HAL_Pin_T;
 
 static inline void HAL_Pin_WriteState(const HAL_Pin_T * p_pin, bool isOn)
 {
-	isOn ? (p_pin->p_GpioBase->PDOR |= p_pin->GpioPinMask) : (p_pin->p_GpioBase->PDOR &= ~(p_pin->GpioPinMask));
+	isOn ? (p_pin->P_GPIO_BASE->PDOR |= p_pin->GPIO_PIN_MASK) : (p_pin->P_GPIO_BASE->PDOR &= ~(p_pin->GPIO_PIN_MASK));
 }
 
 static inline bool HAL_Pin_ReadState(const HAL_Pin_T * p_pin)
 {
-	return ((p_pin->p_GpioBase->PDIR & p_pin->GpioPinMask) == p_pin->GpioPinMask) ? true : false;
+	return ((p_pin->P_GPIO_BASE->PDIR & p_pin->GPIO_PIN_MASK) == p_pin->GPIO_PIN_MASK) ? true : false;
 }
 
 #endif
