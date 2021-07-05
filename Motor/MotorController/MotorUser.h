@@ -58,7 +58,6 @@ typedef enum
 
 typedef struct
 {
-
 	Linear_T UnitThrottle;
 	Linear_T UnitBrake;
 

@@ -54,7 +54,7 @@ typedef enum
 	BEMF_SAMPLE_MODE_PWM_BIPOLAR,
 	BEMF_SAMPLE_MODE_INTEGRAL,
 }
-BEMF_SampleMode_T; //sample voltage mode
+BEMF_SampleMode_T; //pwm sample mode
 
 typedef enum
 {
@@ -62,7 +62,7 @@ typedef enum
 	BEMF_MODE_COMMUTATION,  // phase voltage active
 //	BEMF_MODE_DRIVEN, //module hw timer driven
 }
-BEMF_Mode_T; //visibility
+BEMF_Mode_T; //phase active/inactive sample mode
 
 //typedef enum
 //{
@@ -101,28 +101,41 @@ typedef struct
 	volatile const bemf_t * p_VBus_ADCU;
 
 	BEMF_SampleMode_T SampleMode;
-	uint16_t ZeroCrossingThreshold_ADCU;		/// set value other than zero
+	uint16_t ZeroCrossingThreshold_ADCU;		/// sensitivity offset
+//	uint16_t ZeroCrossingThresholdSampleZero_ADCU;		/// set value other than zero
+
 	//uint16_t BlankTimeScalar;
 	//uint16_t UsePWMOnThreshold;			/// for mixed sample mode, use PWM On ZCD when PWM On cycle is above this time.
 	//uin16t_t DiodeDrop; 					//if no complementary pwm vd/2
 
 	volatile BEMF_Mode_T Mode;						/// UseSensorlessCommutation //substate
-	//map module from outside
+
+	//mode module determines off phase, map from inside or outside
 	volatile const bemf_t * volatile p_VPhaseObserve_ADCU;	///observe phase. Phase-to-ground voltage,  Variable pointer to ADC results. Phase voltage PWM On: VPhase == (3/2)VBEMF + VBus/2
 //	volatile BEMF_PhaseId_T PhaseObserveId;
 
-	volatile bemf_t VPhaseObserve_ADCU; //capture buffer
-	volatile bemf_t VPhaseObservePeak_ADCU;
+//	volatile uint16_t VPhaseObserve_ADCU; //capture buffer
+//	volatile uint16_t VPhaseObservePeak_ADCU;
 
 	volatile uint32_t TimerReferenceZero;			/// reference start time, commutation start in active mode
+	
 	//bemf sample parameters
 	volatile uint32_t TimeBlankPeriod;				/// Blank time after commutation. aka "demagnetization time".
 
 	//ZCD sample data
-	volatile int16_t Emf_SignedADCU;				/// VPhase-to-neutral, ZCD voltage, PWM On: (3/2)VBEMF
-	volatile int16_t EmfPrev_SignedADCU;			/// better to save 2 samples, delta is only used for zc
+//	volatile int16_t Emf_SignedADCU;				/// VPhase-to-neutral, ofset for ZCD , PWM On: (3/2)VBEMF
+//	volatile int16_t EmfPrev_SignedADCU;			///
+
+
+	//phase sample, track prev for zcd
+	volatile uint16_t Emf_ADCU;					/// VPhase-to-neutral, PWM On: (3/2)VBEMF
+	volatile uint16_t EmfPrev_ADCU;				///
 	volatile uint32_t TimeEmf;					/// sample time stamp, from TimerReferenceZero
-	volatile uint32_t TimeEmfPrev;				/// sample time stamp, from TimerReferenceZero
+	volatile uint32_t TimeEmfPrev;				/// or use constant periodic sample time
+
+	//sample for peak
+	volatile uint16_t EmfPeak_ADCU;
+	volatile uint16_t EmfPeakTemp_ADCU;
 
 	//ZCD runtime parameters
 	volatile bool IsZeroCrossingDetectionComplete;
@@ -152,14 +165,24 @@ BEMF_T;
 //call on Commutation
 static inline void BEMF_StartCycle_IO(BEMF_T * p_bemf)
 {
-	if (p_bemf->IsZeroCrossingDetectionComplete = false)
+	static uint32_t debug = 0;
+
+	if (p_bemf->IsZeroCrossingDetectionComplete == false) //commutation occurred before a zcd
 	{
 //		p_bemf->IsReliable = false;
 		p_bemf->ZeroCrossingCounter = 0U;
+		debug++;
+	}
+	else
+	{
+		debug = 0;
+		p_bemf->IsZeroCrossingDetectionComplete = false;
 	}
 
-	p_bemf->IsZeroCrossingDetectionComplete = false;
 	p_bemf->TimeBlankPeriod = p_bemf->TimeZeroCrossingDetect / 2; //default case 25% of commutation time, 50% of zct. set 0 for passive mode?
+
+	p_bemf->EmfPeak_ADCU = p_bemf->EmfPeakTemp_ADCU;
+	p_bemf->EmfPeakTemp_ADCU = 0U;
 
 	// module determine next phase from inside
 //	BEMF_MapSector_IO();
@@ -224,36 +247,50 @@ static inline bool BEMF_PollCycle_IO(BEMF_T * p_bemf)
  */
 static void CaptureEmf(BEMF_T * p_bemf, int32_t vPhaseObserve)
 {
-	p_bemf->EmfPrev_SignedADCU = p_bemf->Emf_SignedADCU;
+	p_bemf->EmfPrev_ADCU = p_bemf->Emf_ADCU;
+	p_bemf->Emf_ADCU = vPhaseObserve;
 
-	if (p_bemf->Mode != BEMF_MODE_PASSIVE)
+	if (vPhaseObserve > p_bemf->EmfPeakTemp_ADCU)
 	{
-		switch(p_bemf->SampleMode)
-		{
-//		case BEMF_SAMPLE_MODE_PWM_BIPOLAR: 	p_bemf->Emf_SignedADCU = (int32_t)(*p_bemf->p_VPhaseObserve_ADCU) - ((int32_t)(*p_bemf->p_VBus_ADCU) / 2); break;
-//		case BEMF_SAMPLE_MODE_PWM_MIXED: 			break;
-		case BEMF_SAMPLE_MODE_PWM_ON: 		p_bemf->Emf_SignedADCU = vPhaseObserve - ((int32_t)(*p_bemf->p_VBus_ADCU) / 2); break;
-//		case BEMF_SAMPLE_MODE_PWM_OFF: 		p_bemf->Emf_SignedADCU = (int32_t)(*p_bemf->p_VPhaseObserve_ADCU) - (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
-		default:	break;
-		}
-	}
-	else
-	{
-		p_bemf->Emf_SignedADCU = vPhaseObserve;
+		p_bemf->EmfPeakTemp_ADCU = vPhaseObserve;
 	}
 
-	p_bemf->VPhaseObserve_ADCU = vPhaseObserve;	// store seperate VPhaseObserve or store mode Zero ((int32_t)(*p_bemf->p_VBus_ADCU) / 2);
+//	if (p_bemf->Mode != BEMF_MODE_PASSIVE)
+//	{
+//		switch(p_bemf->SampleMode)
+//		{
+////		case BEMF_SAMPLE_MODE_PWM_BIPOLAR: 	p_bemf->Emf_SignedADCU = (int32_t)(*p_bemf->p_VPhaseObserve_ADCU) - ((int32_t)(*p_bemf->p_VBus_ADCU) / 2); break;
+////		case BEMF_SAMPLE_MODE_PWM_MIXED: 			break;
+//		case BEMF_SAMPLE_MODE_PWM_ON: 		p_bemf->Emf_SignedADCU = vPhaseObserve - ((int32_t)(*p_bemf->p_VBus_ADCU) / 2); break;
+////		case BEMF_SAMPLE_MODE_PWM_OFF: 		p_bemf->Emf_SignedADCU = (int32_t)(*p_bemf->p_VPhaseObserve_ADCU) - (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
+//		default:	break;
+//		}
+//	}
+//	else
+//	{
+//		p_bemf->Emf_SignedADCU = vPhaseObserve;
+//	}
+
+
 }
 
 static bool PollTimeEmf(BEMF_T * p_bemf)
 {
 	uint32_t timeNew = *p_bemf->p_Timer - p_bemf->TimerReferenceZero;
+	bool isCapture;
 
-	if ((timeNew > p_bemf->TimeBlankPeriod) || p_bemf->Mode == BEMF_MODE_PASSIVE)
+	if ((timeNew > p_bemf->TimeBlankPeriod) || (p_bemf->Mode == BEMF_MODE_PASSIVE))
 	{
 		p_bemf->TimeEmfPrev 			= p_bemf->TimeEmf;
 		p_bemf->TimeEmf 				= timeNew;
+		isCapture = true;
 	}
+	else
+	{
+		isCapture = false;
+	}
+
+	return isCapture;
 }
 
 
@@ -377,9 +414,7 @@ static inline void BEMF_PollTimeCaptureVPhaseC_IO(BEMF_T * p_bemf)
 static inline void BEMF_MapBemfRising_IO(BEMF_T * p_bemf){p_bemf->IsBemfRising = true;}
 static inline void BEMF_MapBemfFalling_IO(BEMF_T * p_bemf){p_bemf->IsBemfRising = false;}
 
-
-
-
+ 
 
 //static inline void BEMF_CapturePeak_IO(BEMF_T * p_bemf)
 //{
@@ -394,46 +429,62 @@ static inline void BEMF_MapBemfFalling_IO(BEMF_T * p_bemf){p_bemf->IsBemfRising 
  */
 static inline bool ProcZeroCrossingDetection(BEMF_T * p_bemf)
 {
-	int16_t vBemf;
-	int16_t vBemfPrev;
+	int16_t vEmf;
+	int16_t vEmfPrev;
 	uint32_t timeZeroCrossing; /* new zc time */
 	bool isZcd = false;
+	
+	int16_t vZero;
 
-	if(p_bemf->IsZeroCrossingDetectionComplete == false)
+	if (p_bemf->Mode != BEMF_MODE_PASSIVE)
 	{
-		if(!p_bemf->IsBemfRising) // invert falling bemf to use same rising zcd routine
+		switch(p_bemf->SampleMode)
 		{
-			vBemf 	= -p_bemf->Emf_SignedADCU;
-			vBemfPrev = -p_bemf->EmfPrev_SignedADCU;
-		}
-		else
-		{
-			vBemf 	= p_bemf->Emf_SignedADCU;
-			vBemfPrev = p_bemf->EmfPrev_SignedADCU;
-		}
-
-		if(vBemf >= p_bemf->ZeroCrossingThreshold_ADCU) // is zero crossing, calc time of zc
-		{
-			// find midpoint to account for error of (TimeBemf - TimeZeroCrossing) past zc time
-			if ((vBemf - vBemfPrev) > vBemf) // zcd falls within 2 samples
-			{
-				timeZeroCrossing = p_bemf->TimeEmf - (((p_bemf->TimeEmf - p_bemf->TimeEmfPrev) * vBemf / (vBemf - vBemfPrev))); //estimate using slope
-			}
-			else //missed zcd
-			{
-				timeZeroCrossing = p_bemf->TimeEmf - ((p_bemf->TimeEmf - p_bemf->TimeEmfPrev) / 2); //assume average
-			}
-
-			//			p_bemf->TimeZeroCrossingPeriod = timeZeroCrossing + p_bemf->TimeZeroCrossing;
-			//			p_bemf->TimeZeroCrossingDetect = timeZeroCrossing;
-			// average zc with last zc
-			p_bemf->TimeZeroCrossingPeriod = (p_bemf->TimeZeroCrossingPeriod + (p_bemf->TimeZeroCrossingDetect + timeZeroCrossing)) / 2;
-			p_bemf->TimeZeroCrossingDetect = (p_bemf->TimeZeroCrossingDetect + timeZeroCrossing) / 2;
-
-			p_bemf->IsZeroCrossingDetectionComplete = true;
-			isZcd = true;
+//		case BEMF_SAMPLE_MODE_PWM_BIPOLAR: 	vZero = (int32_t)(*p_bemf->p_VPhaseObserve_ADCU) - ((int32_t)(*p_bemf->p_VBus_ADCU) / 2); break;
+//		case BEMF_SAMPLE_MODE_PWM_MIXED: 			break;
+		case BEMF_SAMPLE_MODE_PWM_ON: 		vZero = ((int32_t)(*p_bemf->p_VBus_ADCU) / 2) + (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
+//		case BEMF_SAMPLE_MODE_PWM_OFF: 		vZero =  (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
+		default:	break;
 		}
 	}
+	else
+	{
+		vZero = (int32_t)p_bemf->ZeroCrossingThreshold_ADCU;
+	}
+	
+	if(!p_bemf->IsBemfRising) // invert falling bemf to use same rising zcd routine
+	{
+		vEmf 		= -(int16_t)p_bemf->Emf_ADCU;
+		vEmfPrev 	= -(int16_t)p_bemf->EmfPrev_ADCU;
+	}
+	else
+	{
+		vEmf 		= p_bemf->Emf_ADCU;
+		vEmfPrev 	= p_bemf->EmfPrev_ADCU;
+	}
+
+	if((vEmf - vZero) >= 0) // is zero crossing, calc time of zc
+	{
+		// find midpoint to account for error of (TimeBemf - TimeZeroCrossing) past zc time
+		if ((vEmf - vEmfPrev) > (vEmf - vZero)) // zcd falls within 2 samples
+		{
+			timeZeroCrossing = p_bemf->TimeEmf - (((p_bemf->TimeEmf - p_bemf->TimeEmfPrev) * (vEmf - vZero) / (vEmf - vEmfPrev))); //estimate using slope
+		}
+		else //missed zero crossing, both samples past vZero
+		{
+			timeZeroCrossing = p_bemf->TimeEmfPrev - ((p_bemf->TimeEmf - p_bemf->TimeEmfPrev) / 2U);
+		}
+
+		//			p_bemf->TimeZeroCrossingPeriod = timeZeroCrossing + p_bemf->TimeZeroCrossing;
+		//			p_bemf->TimeZeroCrossingDetect = timeZeroCrossing;
+		// average zc with last zc
+//		p_bemf->TimeZeroCrossingPeriod = (p_bemf->TimeZeroCrossingPeriod + (p_bemf->TimeZeroCrossingDetect + timeZeroCrossing)) / 2U;
+		p_bemf->TimeZeroCrossingDetect = (p_bemf->TimeZeroCrossingDetect + timeZeroCrossing) / 2U;
+		p_bemf->TimeZeroCrossingPeriod = (p_bemf->TimeZeroCrossingPeriod + (p_bemf->TimeZeroCrossingDetect * 2U)) / 2U; //increase contribution of current timeZeroCrossing
+
+		isZcd = true;
+	}
+	
 
 	return isZcd;
 }
@@ -443,27 +494,29 @@ static inline bool ProcZeroCrossingDetection(BEMF_T * p_bemf)
 static inline bool BEMF_PollZeroCrossingDetection(BEMF_T * p_bemf)
 {
 	bool isZcd = false;
-
-	if (ProcZeroCrossingDetection(p_bemf))
+	
+	if(p_bemf->IsZeroCrossingDetectionComplete == false)
 	{
-		//if  BEMF_CYCLE_PERIOD_FULL,  p_bemf->TimeCyclePeriod = p_bemf->TimeZeroCrossingPeriod*6
-		p_bemf->TimeCyclePeriod = p_bemf->TimeZeroCrossingPeriod; //updated period
-		//HAL_BEMF_StartTimerInterrupt(p_bemf->p_HAL_Bemf, p_bemf->TimeNextCommutation);
-
-		if (p_bemf->ZeroCrossingCounter < UINT32_MAX)
+		if (ProcZeroCrossingDetection(p_bemf))
 		{
-			p_bemf->ZeroCrossingCounter++;
+			p_bemf->IsZeroCrossingDetectionComplete = true;
+			
+			//if  BEMF_CYCLE_PERIOD_FULL,  p_bemf->TimeCyclePeriod = p_bemf->TimeZeroCrossingPeriod*6
+			p_bemf->TimeCyclePeriod = p_bemf->TimeZeroCrossingPeriod; //updated period
+			//HAL_BEMF_StartTimerInterrupt(p_bemf->p_HAL_Bemf, p_bemf->TimeNextCommutation);
+	
+			if (p_bemf->ZeroCrossingCounter < UINT32_MAX)
+			{
+				p_bemf->ZeroCrossingCounter++;
+			}
+	 
+			//emf peak is ~ 2* emf at acd
+	
+			isZcd = true;
 		}
-
-
-		//todo peak capture when zcd polling stops
-		p_bemf->VPhaseObservePeak_ADCU = 2 * p_bemf->VPhaseObserve_ADCU; //emf peak is ~ 2* emf at acd
-
-		isZcd = true;
 	}
 
 	return isZcd;
-//threshhold for capture in passive mode, need allow outter timer to expire
 }
 
 static inline uint32_t BEMF_GetZeroCrossingCounter(BEMF_T * p_bemf)
@@ -487,21 +540,21 @@ static inline uint16_t BEMF_GetTimeCyclePeriod(BEMF_T * p_bemf){return p_bemf->T
  */
 static inline int16_t ConvertVPhaseToVBemf(BEMF_T * p_bemf, int16_t emf)
 {
-	int16_t bemf;
+	uint16_t bemf;
 
 	if (p_bemf->Mode == BEMF_MODE_COMMUTATION)
 	{
 		switch(p_bemf->SampleMode)
 		{
-		case BEMF_SAMPLE_MODE_PWM_BIPOLAR: 	bemf = emf;				break;
-		case BEMF_SAMPLE_MODE_PWM_ON:  		bemf = emf * 2 / 3; 	break;
-		case BEMF_SAMPLE_MODE_PWM_OFF: 		bemf = emf;				break;
-		default:	break;
+			case BEMF_SAMPLE_MODE_PWM_BIPOLAR: 	bemf = emf;				break; //todo
+			case BEMF_SAMPLE_MODE_PWM_ON:  		bemf = emf * 2U / 3U; 	break;
+			case BEMF_SAMPLE_MODE_PWM_OFF: 		bemf = emf;				break;
+			default:	break;
 		}
 	}
 	else
 	{
-		bemf = p_bemf->Emf_SignedADCU;
+		bemf = emf;
 	}
 
 	return bemf;
@@ -509,12 +562,12 @@ static inline int16_t ConvertVPhaseToVBemf(BEMF_T * p_bemf, int16_t emf)
 
 static inline int16_t BEMF_GetVBemfPeak_ADCU(BEMF_T * p_bemf)
 {
-	return ConvertVPhaseToVBemf(p_bemf, p_bemf->VPhaseObservePeak_ADCU);
+	return ConvertVPhaseToVBemf(p_bemf, p_bemf->Emf_ADCU);
 }
 
-static inline int16_t BEMF_GetVPhaseBemfPeak_ADCU(BEMF_T * p_bemf)
+static inline int16_t BEMF_GetVPhasePeak_ADCU(BEMF_T * p_bemf)
 {
-	return p_bemf->VPhaseObservePeak_ADCU;
+	return p_bemf->Emf_ADCU;
 }
 
 

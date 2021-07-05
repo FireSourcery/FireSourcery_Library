@@ -30,8 +30,8 @@
 */
 /**************************************************************************/
 #include "Motor.h"
-#include "Motor_FOC.h"
-#include "Motor_SixStep.h"
+//#include "Motor_FOC.h"
+//#include "Motor_SixStep.h"
 
 #include "System/StateMachine/StateMachine.h"
 
@@ -86,9 +86,8 @@ static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priotiy
 //user/monitor thread 1ms low priority
 static inline void Motor_Main_Thread(Motor_T * p_motor)
 {
+	Motor_ProcOutputs(p_motor);
 
-	p_motor->VBus_mV 		= Linear_Voltage_CalcMilliV(&p_motor->UnitVBus, *p_motor->p_Init->P_VBUS_ADCU);
-	p_motor->VBemfPeak_mV 	= Linear_Voltage_CalcMilliV(&p_motor->UnitVabc, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));
 
 //	if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
 //	{

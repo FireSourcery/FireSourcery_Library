@@ -31,7 +31,6 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
-
 #include "HAL_Motor.h"
 
 #include "Config.h"
@@ -41,20 +40,19 @@
 //#include "Peripheral/Analog/Analog.h"
 //#include "Peripheral/Flash/Flash.h"
 
-#include "Transducer/Encoder/Encoder_DeltaT.h"
-#include "Transducer/Encoder/Encoder_DeltaD.h"
-#include "Transducer/Encoder/Encoder_Motor.h"
-#include "Transducer/Encoder/Encoder.h"
-
-
 #include "Motor/Transducer/Phase/Phase.h"
 #include "Motor/Transducer/Hall/Hall.h"
 #include "Motor/Transducer/BEMF/BEMF.h"
 
+#include "Motor/Math/FOC.h"
+
+#include "Transducer/Encoder/Encoder_Motor.h"
+#include "Transducer/Encoder/Encoder_DeltaT.h"
+#include "Transducer/Encoder/Encoder_DeltaD.h"
+#include "Transducer/Encoder/Encoder.h"
+
 #include "System/StateMachine/StateMachine.h"
 #include "System/Thread/Thread.h"
-
-#include "Motor/Math/FOC.h"
 
 #include "Math/Q/Q.h"
 #include "Math/Linear/Linear_ADC.h"
@@ -278,7 +276,7 @@ typedef const struct Motor_Init_Tag
 
 	volatile const adc_t * const P_HEAT_MOTOR_ADCU;
 	volatile const adc_t * const P_HEAT_MOSFETS_ADCU;
-	volatile const adc_t * const P_HEAT_PCB_ADCU;
+//	volatile const adc_t * const P_HEAT_PCB_ADCU;
 
 	//use define macro if static across motor and sub module instances, todo
 	const uint32_t MOTOR_PWM_FREQ;
@@ -292,6 +290,14 @@ Motor_Init_T;
 
 typedef struct
 {
+	//	volatile const adc_t * p_HeatMotor_ADCU;
+	//	volatile const adc_t * p_HeatMosfets_ADCU;
+	//	volatile const adc_t * p_HeatPcb_ADCU;
+	//	volatile const adc_t * p_Ia_ADCU;
+	//	volatile const adc_t * p_Ib_ADCU;
+	//	volatile const adc_t * p_Ic_ADCU;
+	//	volatile const adc_t * p_VBus_ADCU;
+
  	const Motor_Init_T * p_Init;			//compile time const, unique per moter
 	Motor_Parameters_T	Parameters;			//Programmable parameters, runtime variable load from eeprom
 
@@ -308,24 +314,17 @@ typedef struct
 	 */
 	StateMachine_T StateMachine;
 
-//	volatile const adc_t * p_HeatMotor_ADCU;
-//	volatile const adc_t * p_HeatMosfets_ADCU;
-//	volatile const adc_t * p_HeatPcb_ADCU;
-//	volatile const adc_t * p_Ia_ADCU;
-//	volatile const adc_t * p_Ib_ADCU;
-//	volatile const adc_t * p_Ic_ADCU;
-//	volatile const adc_t * p_VBus_ADCU;
-
 	Linear_T UnitVBus;
 	Linear_T UnitVabc; //Bemf
 	Linear_T UnitIa; //Frac16 and UserUnits (Amp)
 	Linear_T UnitIb;
 	Linear_T UnitIc;
 
-
+	/******************************************************************************/
 	/*
 	 * Runtime vars
 	 */
+	/******************************************************************************/
 	volatile uint32_t ControlTimerBase;	 /* Control Freq, calibration, commutation, angle control */
 	Thread_T ControlTimerThread;
 	volatile uint32_t MillisTimerBase;	 /* Millis, UI */
@@ -335,49 +334,54 @@ typedef struct
 	volatile Motor_Direction_T 			Direction; //active spin direction
 	volatile Motor_Direction_T 			DirectionInput; ///buffered
 //	volatile bool IsDirectionNeutral;
-	volatile bool IsActiveControl; 		//merge
+	volatile bool IsActiveControl;
 
-	//Control Variable
-	volatile uint16_t UserCmd; 				// SetPoint pre ramp, VReq/IReq/SpeedReq,  user input throttle or brake,
+	/*
+	 * Control Variable
+	 */
+	volatile uint16_t UserCmd; 				//Fraction16 SetPoint pre ramp, VReq/IReq/SpeedReq,  user input throttle or brake,
 	volatile uint16_t UserCmdPrev;
-//	volatile int32_t UserCmdDelta;
-	Linear_T Ramp;
+	volatile Linear_T Ramp;
 	volatile uint32_t RampIndex;
 	volatile uint16_t RampCmd;				//SetPoint after ramp
 	volatile uint16_t VPwm; 				//Control Variable
 	volatile uint16_t SpeedFeedback_RPM;	//Feedback Variable
 	volatile uint32_t IBus_ADCU; 			//phase positive current
 	volatile uint32_t IBus_Frac16;
-//	volatile uint32_t PhaseCurrentPeak_ADCU;
-//	volatile uint32_t PhaseCurrentFiltered_Frac16;
+
 	//	PID_T PidSpeed;
 	//	PID_T PidId;
 	//	PID_T PidIq;
 	//	volatile qfrac16_t IdReq; /* PID setpoint */
 	//	volatile qfrac16_t IqReq;
 
-	//openloop
+	/*
+	 * Open-loop
+	 */
 	Linear_T OpenLoopRamp;
 	volatile uint32_t OpenLoopRampIndex;
 	volatile uint32_t OpenLoopCommutationPeriod;		 //CommutationPeriodCtrl openloop
 	volatile uint16_t OpenLoopSpeed_RPM;
 	volatile uint16_t OpenLoopVPwm;
 
-	//FOC
+	/*
+	 * FOC
+	 */
 	volatile FOC_T Foc;
 	volatile qangle16_t ElectricalAngle; //same as foc.theta
 	//	volatile qangle16_t MechanicalAngle;
 
-	//interpolated angle
+	/* interpolated angle */
 	volatile qangle16_t HallAngle;
 	volatile qangle16_t ElectricalDeltaPrev;
 	volatile uint32_t InterpolatedAngleIndex;
 
-	//sixstep
+	/*
+	 * Six-Step
+	 */
 	volatile Motor_SectorId_T NextSector;			 //for 6 step openloop/sensorless
 	volatile Motor_SectorId_T CommutationSector;	 //for 6 step openloop/sensorless
-
-//	volatile bool IsStartUp;			//bemf substate
+	//	volatile bool IsStartUp;			//bemf substate
 
 	//todo alarm and thermistor
 
@@ -410,25 +414,11 @@ static inline void Motor_ProcSpeed(Motor_T * p_motor)
 //	}
 }
 
-
-
 static inline void Motor_Float(Motor_T * p_motor)
 {
 	Phase_Float(&p_motor->Phase);
 }
 
-static inline void Motor_ProcRamp(Motor_T * p_motor) // input voltage/speed cmd
-{
-	p_motor->RampCmd = Linear_Ramp_CalcTarget_IncIndex(&p_motor->Ramp, &p_motor->RampIndex, 1U);
-}
-
-static inline void Motor_PollSpeedFeedback(Motor_T * p_motor)
-{
-	if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
-	{
-		Motor_ProcSpeedFeedback(p_motor);
-	}
-}
 
 
 static inline void Motor_PollAnalogStartAll(Motor_T * p_motor)
@@ -440,31 +430,31 @@ static inline void Motor_PollAnalogStartAll(Motor_T * p_motor)
 }
 
 
-
 static inline void CaptureIBus(Motor_T * p_motor, qfrac16_t i_temp)
 {
  	if(i_temp > 0)
 	{
-		p_motor->IBus_Frac16 = i_temp;// * 2U;
+		p_motor->IBus_Frac16 = i_temp * 2U;
 	}
 	else
 	{
-		p_motor->IBus_Frac16 = (-i_temp);// * 2U;
+		p_motor->IBus_Frac16 = (-i_temp) * 2U;
 	}
 //	p_motor->IBus_ADCU = *p_motor->p_Init->P_IA_ADCU;
 }
 
 
-static inline void Motor_CaptureIa_IO(Motor_T * p_motor)
+static inline void Motor_CaptureIBusIa_IO(Motor_T * p_motor)
 {
 	//Filter here if needed
 	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, *p_motor->p_Init->P_IA_ADCU);
 
 	CaptureIBus(p_motor, i_temp);
 //	p_motor->IBus_ADCU = *p_motor->p_Init->P_IA_ADCU;
+//	p_motor->IBus_ADCU  Filter_MovAvg(&p_motor->FilterIa, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA]);
 }
 
-static inline void Motor_CaptureIb_IO(Motor_T * p_motor)
+static inline void Motor_CaptureIBusIb_IO(Motor_T * p_motor)
 {
 	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, *p_motor->p_Init->P_IB_ADCU);
 
@@ -472,7 +462,7 @@ static inline void Motor_CaptureIb_IO(Motor_T * p_motor)
 //	p_motor->IBus_ADCU = *p_motor->p_Init->P_IB_ADCU;
 }
 
-static inline void Motor_CaptureIc_IO(Motor_T * p_motor)
+static inline void Motor_CaptureIBusIc_IO(Motor_T * p_motor)
 {
 	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, *p_motor->p_Init->P_IC_ADCU);
 
@@ -481,16 +471,14 @@ static inline void Motor_CaptureIc_IO(Motor_T * p_motor)
 }
 
 
+// todo monitor heat functions
 
 
-// monitor heat functions
-
-
-
-extern void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInitStruct);
+extern void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInitStruct, const Motor_Parameters_T * p_parameters);
+extern void Motor_InitConsts(Motor_T * p_motor, const Motor_Init_T * p_motorInit);
+extern void Motor_InitParamaters(Motor_T * p_motor, const Motor_Parameters_T * p_parameters);
 extern void Motor_InitReboot(Motor_T * p_motor);
 //extern void Motor_StartAlign(Motor_T * p_motor);
 //extern void Motor_OnBlock(Motor_T * p_motor);
-
 
 #endif

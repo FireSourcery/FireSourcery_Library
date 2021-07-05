@@ -43,24 +43,21 @@
 typedef const struct
 {
 	Motor_T * const P_MOTORS;
-	uint8_t MOTORS_COUNT;
+	const uint8_t MOTORS_COUNT;
 
-	const HAL_Flash_T * const P_HAL_FLASH;
+	const HAL_Flash_T * const P_HAL_FLASH; //motorflash init
 	const MotorUser_Init_T MOTOR_USER_INIT;
 
-
-	//todo alarm
+	//todo alarm thermistor
 
 //	volatile const adc_t * p_VBus_ADCU;
-//	volatile const adc_t * p_VAcc_ADCU;
-//	volatile const adc_t * p_VSense_ADCU;
-//	volatile const adc_t * p_HeatPcb_ADCU;
+	volatile const adc_t * const P_VACC_ADCU;
+	volatile const adc_t * const P_VSENSE_ADCU;
+	volatile const adc_t * const P_HEAT_PCB_ADCU;
 } MotorController_Init_T;
 
 typedef const struct
 {
-	 Motor_T * p_Motors;
-	 uint8_t MotorCount;
 
 	 //mode all motor
 } MotorController_T;

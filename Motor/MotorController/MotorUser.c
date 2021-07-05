@@ -53,40 +53,9 @@ void MotorUser_Init(MotorUser_Init_T * p_init)
 	Debounce_Init(&MotorUserMain.MotorUserAnalog.PinReverse, 	&p_init->HAL_PIN_REVERSE, 		&p_init->P_DEBOUNCE_TIMER, 5U);	//5millis
 
 	//uncalibrated default
-	Linear_ADC_Init(&MotorUserMain.MotorUserAnalog.UnitThrottle, 	0U, 4095U, 100U);
-	Linear_ADC_Init(&MotorUserMain.MotorUserAnalog.UnitBrake,		0U, 4095U, 100U);
+	Linear_ADC_Init(&MotorUserMain.MotorUserAnalog.UnitThrottle, 	0U, 4095U, 50U);
+	Linear_ADC_Init(&MotorUserMain.MotorUserAnalog.UnitBrake,		0U, 4095U, 50U);
 }
-
-
-//static inline bool Motor_PollStopToSpin(Motor_T * p_motor)
-//{
-//	bool transition = true;
-//	transition &= (p_motor->InputSwitchBrake == false) || ((p_motor->InputSwitchBrake == true) && (Motor_GetSpeed(p_motor) > 0));
-
-//	transition &= (p_motor->UserCmd > 0U);
-//	transition &= (p_motor->IsThrottleRelease == false);
-//	return transition;
-//}
-//static inline bool Motor_PollSpinToFreewheel(Motor_T * p_motor)
-//{
-//	bool transition = false;
-
-//	transition |= (p_motor->UserCmd == 0); 	//brake 0 and throttle 0
-//	transition |= (p_motor->IsThrottleRelease == true);
-//	transition |= ((p_motor->InputSwitchBrake == true) && (p_motor->Parameters.BrakeMode == MOTOR_BRAKE_MODE_PASSIVE));
-//	//poll stall
-//	return transition;
-//}
-
-//static inline bool Motor_PollFreewheelToSpin(Motor_T * p_motor)
-//{
-//	bool transition = true;
-//	transition &= (p_motor->InputSwitchBrake == false) || ((p_motor->InputSwitchBrake == true) && (p_motor->Parameters.BrakeMode != MOTOR_BRAKE_MODE_PASSIVE) && (Motor_GetSpeed(p_motor) > 0));
-//	transition &= (p_motor->UserCmd > 0U);
-
-//	transition &= (p_motor->IsThrottleRelease == false);
-//	return transition;
-//}
 
 //write to motor
 void MotorUser_SetInput(Motor_T * p_motorDest)
