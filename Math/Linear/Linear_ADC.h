@@ -48,6 +48,7 @@ static inline int16_t Linear_ADC_CalcFractionSigned16(Linear_T * p_linear, uint1
 #endif
 }
 
+//todo negative number returns abs value
 static inline uint16_t Linear_ADC_CalcFractionUnsigned16(Linear_T * p_linear, uint16_t adcu)
 {
 #ifdef CONFIG_LINEAR_SHIFT_DIVIDE

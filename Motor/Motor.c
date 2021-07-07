@@ -167,10 +167,10 @@ void Motor_InitReboot(Motor_T * p_motor)
 	(
 		&p_motor->Bemf,
 		&p_motor->ControlTimerBase,
-		&p_motor->p_Init->P_VA_ADCU,
-		&p_motor->p_Init->P_VB_ADCU,
-		&p_motor->p_Init->P_VC_ADCU,
-		&p_motor->p_Init->P_VBUS_ADCU,
+		p_motor->p_Init->P_VA_ADCU,
+		p_motor->p_Init->P_VB_ADCU,
+		p_motor->p_Init->P_VC_ADCU,
+		p_motor->p_Init->P_VBUS_ADCU,
 		p_motor->Parameters.BemfSampleMode
 	);
 
@@ -344,14 +344,34 @@ void Motor_SetRampAccelerate(Motor_T * p_motor, uint16_t acceration)
 	}
 	else //p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE
 	{
+
+
+
+
 		//Ramp to throttle over 1s
-//		if (p_motor->UserCmd > p_motor->UserCmdPrev)
+		if (p_motor->UserCmd > p_motor->UserCmdPrev)
 		{
-			//(int32_t)p_motor->UserCmd - (int32_t)p_motor->UserCmdPrev
-			Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, p_motor->UserCmd, p_motor->UserCmd);
+
+			if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF)
+			{
+				if  (BEMF_GetZeroCrossingCounter(&p_motor->Bemf) > 10U)
+				{
+					Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, p_motor->UserCmd, 65536U / 10U);
+				}
+			}
+			else
+			{
+				//(int32_t)p_motor->UserCmd - (int32_t)p_motor->UserCmdPrev
+				// voltage ramp start match  bemf
+				Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, p_motor->UserCmd, 65536U / 10U);
+			}
+		}
+		else
+		{
+			Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, p_motor->UserCmd, -65536U/10U);
 		}
 
-		//todo match  bemf
+
 	}
 	p_motor->RampIndex = 0;
 }
@@ -370,7 +390,7 @@ void Motor_SetRampDecelerate(Motor_T * p_motor, uint16_t deceleration)
 	{
 		//Decel by Brake per 1s
 		//todo match  bemf/current
-		Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, 0, -(int32_t)p_motor->UserCmd);
+		Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, 0, -(int32_t)p_motor->UserCmd); //todo scale to current
 	}
 	p_motor->RampIndex = 0;
 }

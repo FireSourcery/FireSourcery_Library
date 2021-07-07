@@ -254,7 +254,7 @@ static inline bool Motor_SixStep_GetBemfReliable(Motor_T * p_motor)
 {
 	bool isComplete;
 
-	if (BEMF_GetZeroCrossingCounter(p_motor) > 10U)
+	if (BEMF_GetZeroCrossingCounter(&p_motor->Bemf) > 10U)
 	{
 		isComplete = true;
 	}
@@ -304,7 +304,7 @@ static inline void Motor_SixStep_ProcPhaseControl(Motor_T * p_motor, Motor_Senso
 //			{
 //				p_motor->VPwm = (65536U/10U/4U);
 //			}
-			p_motor->VPwm = (65536U/10U/4U) + (p_motor->UserCmd / 2U);
+			p_motor->VPwm = (65536U/10U/4U); //+ (p_motor->UserCmd / 2U);
 		}
 		break;
 
@@ -345,7 +345,6 @@ static inline void Motor_SixStep_ProcPhaseControl(Motor_T * p_motor, Motor_Senso
 		break;
 	}
 
-	BEMF_PollZeroCrossingDetection(&p_motor->Bemf); //always poll zcd with last capture
 
 	if(commutation)
 	{
@@ -357,6 +356,10 @@ static inline void Motor_SixStep_ProcPhaseControl(Motor_T * p_motor, Motor_Senso
 		BEMF_StartCycle_IO(&p_motor->Bemf);
 
 		Debug_CapturePeriod(6);
+	}
+	else
+	{
+		BEMF_PollZeroCrossingDetection(&p_motor->Bemf); //always poll zcd with last capture
 	}
 
 

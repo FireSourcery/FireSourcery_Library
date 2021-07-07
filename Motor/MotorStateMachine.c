@@ -503,10 +503,10 @@ static void FreewheelLoop(Motor_T * p_motor)
 //				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_OPEN_LOOP);
 
 				//bemf sensor mode use last capture to determine if speed == 0, or missed zcd count
-				if (Motor_GetBemf_Frac16(p_motor) < 5U)
-				{
-					StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
-				}
+//				if (Motor_GetBemf_Frac16(p_motor) < 5U)
+//				{
+//					StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
+//				}
 
 			}
 		}
