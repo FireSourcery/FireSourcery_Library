@@ -49,7 +49,7 @@ static inline uint32_t Millis(void)
 #if defined(CONFIG_MILLIS_MCU_ARM) && defined(CPU_FREQ)
 static inline uint32_t Micros(void)
 {
-	uint32_t micros = (CPU_FREQ / 1000U - 1U) - (SYST_CVR / (CPU_FREQ / 1000000U)); //SYST_CVR ticks down
+	volatile uint32_t micros = (CPU_FREQ / 1000U - 1U) - (SYST_CVR / (CPU_FREQ / 1000000U)); //SYST_CVR ticks down
 	return Millis_Count * 1000U + micros;
 }
 #endif

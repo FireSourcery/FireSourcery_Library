@@ -31,6 +31,9 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
+
+
+
 #include "HAL_Motor.h"
 
 #include "Config.h"
@@ -127,7 +130,7 @@ typedef enum
 
 typedef enum
 {
-	MOTOR_CONTROL_MODE_OPEN_LOOP,
+//	MOTOR_CONTROL_MODE_OPEN_LOOP,
 	MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE,
 	MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ,
 	MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE,
@@ -414,6 +417,12 @@ static inline void Motor_ProcSpeed(Motor_T * p_motor)
 //	}
 }
 
+static inline uint32_t Motor_GetBemf_Frac16(Motor_T * p_motor)
+{
+	return BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf);
+}
+
+
 static inline void Motor_Float(Motor_T * p_motor)
 {
 	Phase_Float(&p_motor->Phase);
@@ -454,12 +463,15 @@ static inline void Motor_CaptureIBusIa_IO(Motor_T * p_motor)
 //	p_motor->IBus_ADCU  Filter_MovAvg(&p_motor->FilterIa, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA]);
 }
 
+#include "System/Debug/Debug.h"
+
 static inline void Motor_CaptureIBusIb_IO(Motor_T * p_motor)
 {
 	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, *p_motor->p_Init->P_IB_ADCU);
 
 	CaptureIBus(p_motor, i_temp);
 //	p_motor->IBus_ADCU = *p_motor->p_Init->P_IB_ADCU;
+	Debug_CaptureElapsed(4);
 }
 
 static inline void Motor_CaptureIBusIc_IO(Motor_T * p_motor)

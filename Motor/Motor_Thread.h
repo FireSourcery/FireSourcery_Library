@@ -30,8 +30,6 @@
 */
 /**************************************************************************/
 #include "Motor.h"
-//#include "Motor_FOC.h"
-//#include "Motor_SixStep.h"
 
 #include "System/StateMachine/StateMachine.h"
 

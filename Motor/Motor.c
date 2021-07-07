@@ -206,13 +206,10 @@ void Motor_InitReboot(Motor_T * p_motor)
 		0U
 	);
 
-
 	/*
 	 * initial runtime config settings
 	 */
-
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
-
 
 	/*
 	 * Run calibration later, default zero to middle adc
@@ -221,17 +218,17 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Linear_ADC_Init(&p_motor->UnitIb, 2048U, 4095U, 120U);
 	Linear_ADC_Init(&p_motor->UnitIc, 2048U, 4095U, 120U);
 
-
 	Linear_Voltage_Init(&p_motor->UnitVBus, p_motor->p_Init->LINEAR_V_BUS_R1, p_motor->p_Init->LINEAR_V_BUS_R2, p_motor->p_Init->LINEAR_V_ADC_VREF, p_motor->p_Init->LINEAR_V_ADC_BITS, p_motor->Parameters.VBusRef);
 	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->p_Init->LINEAR_V_ABC_R1, p_motor->p_Init->LINEAR_V_ABC_R2, p_motor->p_Init->LINEAR_V_ADC_VREF, p_motor->p_Init->LINEAR_V_ADC_BITS, p_motor->Parameters.VBusRef);
 
 	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage
 
-	p_motor->Direction 		= MOTOR_DIRECTION_CCW;
-	p_motor->DirectionInput = MOTOR_DIRECTION_CCW;
-	p_motor->SpeedFeedback_RPM = 0U;
-	p_motor->VPwm = 0U;
-
+	p_motor->Direction 				= MOTOR_DIRECTION_CCW;
+	p_motor->DirectionInput 		= MOTOR_DIRECTION_CCW;
+	p_motor->SpeedFeedback_RPM 		= 0U;
+	p_motor->VPwm 					= 0U;
+	p_motor->ControlTimerBase 		= 0U;
+	p_motor->MillisTimerBase 		= 0U;
 }
 
 //void Motor_SetZero(Motor_T * p_motor)
@@ -524,12 +521,11 @@ Motor_AlignMode_T Motor_GetAlignMode(Motor_T *p_motor)
 
 void Motor_StartAlign(Motor_T * p_motor)
 {
-	p_motor->ControlTimerBase = 0U;
+	uint32_t alignVoltage = (65536U/10U/4U) + (p_motor->UserCmd / 2U); //= (65536U/10U/4U) + (p_motor->VPwm / 2U);
 	Thread_SetTimerPeriod(&p_motor->ControlTimerThread, 20000U); //Parameter.AlignTime
 
-	//	set to usercmd  ? p_motor->UserCmd
 	//Phase_ActuatePhaseA
-	Phase_ActuateDutyCycle(&p_motor->Phase, 6553U/4U, 0, 0); /* Align Phase A 10% pwm */
+	Phase_ActuateDutyCycle(&p_motor->Phase, alignVoltage, 0, 0); /* Align Phase A 10% pwm */
 	Phase_ActuateState(&p_motor->Phase, 1, 1, 1);
 }
 
@@ -539,8 +535,11 @@ bool Motor_ProcAlign(Motor_T * p_motor)
 
 	if (Thread_PollTimerComplete(&p_motor->ControlTimerThread) == true)
 	{
-		p_motor->ElectricalAngle= 0U;
+		p_motor->ElectricalAngle = 0U;
+		p_motor->NextSector = MOTOR_SECTOR_ID_2;
+
 		Encoder_Reset(&p_motor->Encoder);
+
 //		Motor_Float(&p_motor->Foc);
 		status = true;
 	}
@@ -646,9 +645,9 @@ void Motor_StartCalibrateHall(Motor_T * p_motor)
 //120 degree hall aligned with phase
 bool Motor_CalibrateHall(Motor_T * p_motor)
 {
-	static uint8_t state = 0; //limits calibration to 1 at a time;
+	static uint8_t state = 0U; //limits calibration to 1 at a time;
 
-	const uint16_t duty = 65536 / 10/4;
+	const uint16_t duty = 65536U/10U/4U;
 
 	bool isComplete = false;
 
@@ -664,42 +663,42 @@ bool Motor_CalibrateHall(Motor_T * p_motor)
 			break;
 
 		case 1U:
-			Hall_CalibrateSensorAPhaseBC(&p_motor->Hall, MOTOR_SECTOR_ID_2);
+			Hall_CalibrateSensorAPhaseBC(&p_motor->Hall, HALL_SECTOR_2);
 
 			Phase_ActuateDutyCycle(&p_motor->Phase, duty, duty, 0U);
 			state++;
 			break;
 
 		case 2U:
-			Hall_CalibrateSensorInvCPhaseBA(&p_motor->Hall, MOTOR_SECTOR_ID_3);
+			Hall_CalibrateSensorInvCPhaseBA(&p_motor->Hall, HALL_SECTOR_3);
 
 			Phase_ActuateDutyCycle(&p_motor->Phase, 0U, duty, 0);
 			state++;
 			break;
 
 		case 3U:
-			Hall_CalibrateSensorBPhaseCA(&p_motor->Hall, MOTOR_SECTOR_ID_4);
+			Hall_CalibrateSensorBPhaseCA(&p_motor->Hall, HALL_SECTOR_4);
 
 			Phase_ActuateDutyCycle(&p_motor->Phase, 0U, duty, duty);
 			state++;
 			break;
 
 		case 4U:
-			Hall_CalibrateSensorInvAPhaseCB(&p_motor->Hall, MOTOR_SECTOR_ID_5);
+			Hall_CalibrateSensorInvAPhaseCB(&p_motor->Hall, HALL_SECTOR_5);
 
 			Phase_ActuateDutyCycle(&p_motor->Phase, 0U, 0U, duty);
 			state++;
 			break;
 
 		case 5U:
-			Hall_CalibrateSensorCPhaseAB(&p_motor->Hall, MOTOR_SECTOR_ID_6);
+			Hall_CalibrateSensorCPhaseAB(&p_motor->Hall, HALL_SECTOR_6);
 
 			Phase_ActuateDutyCycle(&p_motor->Phase, duty, 0U, duty);
 			state++;
 			break;
 
 		case 6U:
-			Hall_CalibrateSensorInvBPhaseAC(&p_motor->Hall, MOTOR_SECTOR_ID_1);
+			Hall_CalibrateSensorInvBPhaseAC(&p_motor->Hall, HALL_SECTOR_1);
 
 			Phase_ActuateState(&p_motor->Phase, false, false, false);
 			state = 0;

@@ -105,6 +105,7 @@ void MotorUser_SetInput(Motor_T * p_motorDest)
 //		Motor_SetActiveControl(p_motorDest, false);
 //		p_motorDest->IsDirectionNeutral = true;
 		p_motorDest->IsActiveControl = false;
+//		Motor_SetUserCmd(p_motorDest, 0U);
 	}
 	else
 	{
@@ -140,3 +141,12 @@ void MotorUser_SetInput(Motor_T * p_motorDest)
 
 
 
+  void MotorUser_SetOutput_Units(const Motor_T * p_motorSrc)
+{
+
+}
+
+  void MotorUser_SetOutput_ADCU(const Motor_T * p_motorSrc)
+{
+
+}

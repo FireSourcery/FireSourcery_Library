@@ -88,7 +88,7 @@ typedef struct
 	/*
 	 * Buffered data
 	 */
-	volatile uint16_t DutyA_Ticks; /* Phase PWM peroid in ticks */
+	volatile uint16_t DutyA_Ticks; /* Phase PWM duty peroid in ticks */
 	volatile uint16_t DutyB_Ticks;
 	volatile uint16_t DutyC_Ticks;
 
@@ -210,6 +210,8 @@ static inline void Phase_Actuate(const Phase_T * p_phase)
 #endif
 }
 
+
+
 /*
 	Set buffered data
 	Duty cycle in 16 bits. e.g. 65536 == 100%
@@ -275,12 +277,12 @@ static inline void Phase_Unipolar2_ActivateAB(const Phase_T * p_phase){Phase_Act
 	PwmPositive = PwmPeriodTotal/2 + PwmScalar/2
 	PwmNegative = PwmPeriodTotal/2 + PwmScalar/2, Inverse polarity
  */
-static inline void Phase_Bipolar_ActivateAC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
-static inline void Phase_Bipolar_ActivateBC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
-static inline void Phase_Bipolar_ActivateBA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U);}
-static inline void Phase_Bipolar_ActivateCA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
-static inline void Phase_Bipolar_ActivateCB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
-static inline void Phase_Bipolar_ActivateAB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U);}
+static inline void Phase_Bipolar_ActivateAC(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, false, false, true); Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
+static inline void Phase_Bipolar_ActivateBC(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, false, false, true); Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
+static inline void Phase_Bipolar_ActivateBA(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, true, false, false); Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U);}
+static inline void Phase_Bipolar_ActivateCA(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, true, false, false); Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
+static inline void Phase_Bipolar_ActivateCB(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, false, true, false); Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
+static inline void Phase_Bipolar_ActivateAB(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, false, true, false); Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U);}
 
 
 static inline void Phase_Polar_ActivateAC(const Phase_T * p_phase)
@@ -295,7 +297,7 @@ static inline void Phase_Polar_ActivateAC(const Phase_T * p_phase)
 	{
 	case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateAC(p_phase);	break;
 	case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateAC(p_phase);	break;
-	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateAC(p_phase);	Phase_ActuateInvertPolarity(p_phase, false, false, true); break;
+	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateAC(p_phase);	 	break;
 	default: break;
 	}
 
@@ -309,7 +311,7 @@ static inline void Phase_Polar_ActivateBC(const Phase_T * p_phase)
 	{
 	case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateBC(p_phase);	break;
 	case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateBC(p_phase);	break;
-	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateBC(p_phase);	Phase_ActuateInvertPolarity(p_phase, false, false, true); break;
+	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateBC(p_phase);	 	break;
 	default: break;
 	}
 	Phase_ActuateState(p_phase, false, true, true);
@@ -321,7 +323,7 @@ static inline void Phase_Polar_ActivateBA(const Phase_T * p_phase)
 	{
 	case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateBA(p_phase);	break;
 	case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateBA(p_phase);	break;
-	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateBA(p_phase);	Phase_ActuateInvertPolarity(p_phase, true, false, false); break;
+	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateBA(p_phase);		break;
 	default: break;
 	}
 	Phase_ActuateState(p_phase, true, true, false);
@@ -333,7 +335,7 @@ static inline void Phase_Polar_ActivateCA(const Phase_T * p_phase)
 	{
 	case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateCA(p_phase);	break;
 	case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateCA(p_phase);	break;
-	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateCA(p_phase);	Phase_ActuateInvertPolarity(p_phase, true, false, false); break;
+	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateCA(p_phase);	 	break;
 	default: break;
 	}
 	Phase_ActuateState(p_phase, true, false, true);
@@ -345,7 +347,7 @@ static inline void Phase_Polar_ActivateCB(const Phase_T * p_phase)
 	{
 	case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateCB(p_phase);	break;
 	case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateCB(p_phase);	break;
-	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateCB(p_phase);	Phase_ActuateInvertPolarity(p_phase, false, true, false); break;
+	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateCB(p_phase);		break;
 	default: break;
 	}
 	Phase_ActuateState(p_phase, false, true, true);
@@ -362,7 +364,7 @@ static inline void Phase_Polar_ActivateAB(const Phase_T * p_phase)
 	{
 	case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateAB(p_phase);	break;
 	case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateAB(p_phase);	break;
-	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateAB(p_phase);	Phase_ActuateInvertPolarity(p_phase, false, true, false); break;
+	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateAB(p_phase);		break;
 	default: break;
 	}
 

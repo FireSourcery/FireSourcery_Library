@@ -192,15 +192,6 @@ static inline void MotorUser_CaptureInput_IO()
 
 
 
-static inline void MotorUser_SetOutput_Units(const Motor_T * p_motorSrc)
-{
-
-}
-
-static inline void MotorUser_SetOutput_ADCU(const Motor_T * p_motorSrc)
-{
-
-}
 
 
 static inline void MotorUser_WriteOutput()

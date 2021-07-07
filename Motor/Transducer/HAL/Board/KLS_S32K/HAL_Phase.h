@@ -103,10 +103,8 @@ static inline void HAL_Phase_WriteState(const HAL_Phase_T * p_phase, bool isOnPw
 static inline void HAL_Phase_WriteInvertPolarity(const HAL_Phase_T * p_phase, bool isInvPwmA, bool isInvPwmB, bool isInvPwmC)
 {
 	(void)p_phase;
-
 	FTM0->POL = (FTM0->POL & (~(FTM_POL_POL5_MASK | FTM_POL_POL6_MASK | FTM_POL_POL7_MASK))) |
 				FTM_POL_POL5(isInvPwmA) | FTM_POL_POL6(isInvPwmB) | FTM_POL_POL7(isInvPwmC);
-	FTM0->SYNC |= FTM_SYNC_SWSYNC_MASK;
 }
 
 static inline void HAL_Phase_ClearInterrupt(const HAL_Phase_T * p_phase)
@@ -122,6 +120,7 @@ static inline void HAL_Phase_WriteSoftwareControlValue(const HAL_Phase_T * p_pha
 	(void)p_phase;
 	FTM0->SWOCTRL = (FTM0->SWOCTRL & (~(FTM_SWOCTRL_CH5OCV_MASK | FTM_SWOCTRL_CH6OCV_MASK | FTM_SWOCTRL_CH7OCV_MASK))) |
 					FTM_SWOCTRL_CH5OCV(isHighA) | FTM_SWOCTRL_CH6OCV(isHighB) | FTM_SWOCTRL_CH7OCV(isHighC);
+	FTM0->SYNC |= FTM_SYNC_SWSYNC_MASK;
 }
 
 static inline void HAL_Phase_WriteSoftwareControlSwitch(const HAL_Phase_T * p_phase, bool isSwcA, bool isSwcB, bool isSwcC)
@@ -129,6 +128,7 @@ static inline void HAL_Phase_WriteSoftwareControlSwitch(const HAL_Phase_T * p_ph
 	(void)p_phase;
 	FTM0->SWOCTRL = (FTM0->SWOCTRL & (~(FTM_SWOCTRL_CH5OC_MASK | FTM_SWOCTRL_CH6OC_MASK | FTM_SWOCTRL_CH7OC_MASK))) |
 					FTM_SWOCTRL_CH5OC(isSwcA) | FTM_SWOCTRL_CH6OC(isSwcB) | FTM_SWOCTRL_CH7OC(isSwcC);
+	FTM0->SYNC |= FTM_SYNC_SWSYNC_MASK;
 }
 
 /*
