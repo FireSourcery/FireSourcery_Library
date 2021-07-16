@@ -54,16 +54,16 @@
 /*
  * General Init
  */
-void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInit, const Motor_Parameters_T * p_parameters)
+void Motor_Init(Motor_T * p_motor, const Motor_Constants_T * p_motorInit, const Motor_Parameters_T * p_parameters)
 {
-	Motor_InitConsts(p_motor, p_motorInit);
+	Motor_InitConstants(p_motor, p_motorInit);
 	Motor_InitParamaters(p_motor, p_parameters);
 	Motor_InitReboot(p_motor);
 }
 
-void Motor_InitConsts(Motor_T * p_motor, const Motor_Init_T * p_motorInit)
+void Motor_InitConstants(Motor_T * p_motor, const Motor_Constants_T * p_motorInit)
 {
-	p_motor->p_Init = p_motorInit;
+	p_motor->p_Constants = p_motorInit;
 	MotorStateMachine_Init(p_motor);
 }
 
@@ -87,8 +87,8 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Phase_Init
 	(
 		&p_motor->Phase,
-		&p_motor->p_Init->HAL_PHASE,
-		p_motor->p_Init->PHASE_PWM_PERIOD
+		&p_motor->p_Constants->HAL_PHASE,
+		p_motor->p_Constants->PHASE_PWM_PERIOD
 	);
 
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
@@ -97,10 +97,10 @@ void Motor_InitReboot(Motor_T * p_motor)
 		Encoder_Motor_InitCaptureTime
 		(
 			&p_motor->Encoder,
-			&p_motor->p_Init->HAL_ENCODER,
-			p_motor->p_Init->HALL_ENCODER_TIMER_COUNTER_MAX,
-			p_motor->p_Init->HALL_ENCODER_TIMER_COUNTER_FREQ,
-			p_motor->p_Init->MOTOR_PWM_FREQ,
+			&p_motor->p_Constants->HAL_ENCODER,
+			p_motor->p_Constants->HALL_ENCODER_TIMER_COUNTER_MAX,
+			p_motor->p_Constants->HALL_ENCODER_TIMER_COUNTER_FREQ,
+			p_motor->p_Constants->MOTOR_PWM_FREQ,
 			p_motor->Parameters.PolePairs,
 			p_motor->Parameters.PolePairs*6U,  // use PolePairs * 6 for count per commutation or PolePairs for per erotation
 			p_motor->Parameters.EncoderDistancePerCount
@@ -117,7 +117,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 		Hall_Init
 		(
 			&p_motor->Hall,
-			&p_motor->p_Init->HAL_HALL,
+			&p_motor->p_Constants->HAL_HALL,
 			MOTOR_SECTOR_ID_1,
 			MOTOR_SECTOR_ID_2,
 			MOTOR_SECTOR_ID_3,
@@ -139,8 +139,8 @@ void Motor_InitReboot(Motor_T * p_motor)
 		Encoder_Motor_InitCaptureCount
 		(
 			&p_motor->Encoder,
-			&p_motor->p_Init->HAL_ENCODER,
-			p_motor->p_Init->MOTOR_PWM_FREQ,
+			&p_motor->p_Constants->HAL_ENCODER,
+			p_motor->p_Constants->MOTOR_PWM_FREQ,
 			p_motor->Parameters.PolePairs,
 			p_motor->Parameters.EncoderCountsPerRevolution,
 			p_motor->Parameters.EncoderDistancePerCount
@@ -155,8 +155,8 @@ void Motor_InitReboot(Motor_T * p_motor)
 		Encoder_Motor_InitCaptureCount
 		(
 			&p_motor->Encoder,
-			&p_motor->p_Init->HAL_ENCODER,
-			p_motor->p_Init->MOTOR_PWM_FREQ,
+			&p_motor->p_Constants->HAL_ENCODER,
+			p_motor->p_Constants->MOTOR_PWM_FREQ,
 			p_motor->Parameters.PolePairs,
 			p_motor->Parameters.PolePairs, //p_motor->Parameters.EncoderCountsPerRevolution,
 			p_motor->Parameters.EncoderDistancePerCount
@@ -167,10 +167,10 @@ void Motor_InitReboot(Motor_T * p_motor)
 	(
 		&p_motor->Bemf,
 		&p_motor->ControlTimerBase,
-		p_motor->p_Init->P_VA_ADCU,
-		p_motor->p_Init->P_VB_ADCU,
-		p_motor->p_Init->P_VC_ADCU,
-		p_motor->p_Init->P_VBUS_ADCU,
+		p_motor->p_Constants->P_VA_ADCU,
+		p_motor->p_Constants->P_VB_ADCU,
+		p_motor->p_Constants->P_VC_ADCU,
+		p_motor->p_Constants->P_VBUS_ADCU,
 		p_motor->Parameters.BemfSampleMode
 	);
 
@@ -180,7 +180,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	(
 		&p_motor->ControlTimerThread,
 		&p_motor->ControlTimerBase,
-		p_motor->p_Init->MOTOR_PWM_FREQ,
+		p_motor->p_Constants->MOTOR_PWM_FREQ,
 		1U,
 		0U,
 		0U
@@ -218,8 +218,8 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Linear_ADC_Init(&p_motor->UnitIb, 2048U, 4095U, 120U);
 	Linear_ADC_Init(&p_motor->UnitIc, 2048U, 4095U, 120U);
 
-	Linear_Voltage_Init(&p_motor->UnitVBus, p_motor->p_Init->LINEAR_V_BUS_R1, p_motor->p_Init->LINEAR_V_BUS_R2, p_motor->p_Init->LINEAR_V_ADC_VREF, p_motor->p_Init->LINEAR_V_ADC_BITS, p_motor->Parameters.VBusRef);
-	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->p_Init->LINEAR_V_ABC_R1, p_motor->p_Init->LINEAR_V_ABC_R2, p_motor->p_Init->LINEAR_V_ADC_VREF, p_motor->p_Init->LINEAR_V_ADC_BITS, p_motor->Parameters.VBusRef);
+	Linear_Voltage_Init(&p_motor->UnitVBus, p_motor->p_Constants->LINEAR_V_BUS_R1, p_motor->p_Constants->LINEAR_V_BUS_R2, p_motor->p_Constants->LINEAR_V_ADC_VREF, p_motor->p_Constants->LINEAR_V_ADC_BITS, p_motor->Parameters.VBusRef);
+	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->p_Constants->LINEAR_V_ABC_R1, p_motor->p_Constants->LINEAR_V_ABC_R2, p_motor->p_Constants->LINEAR_V_ADC_VREF, p_motor->p_Constants->LINEAR_V_ADC_BITS, p_motor->Parameters.VBusRef);
 
 	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage
 
@@ -303,7 +303,7 @@ void Motor_PollStop(Motor_T * p_motor)
 
 void Motor_ProcOutputs(Motor_T * p_motor)
 {
-	p_motor->VBus_mV 		= Linear_Voltage_CalcMilliV(&p_motor->UnitVBus, *p_motor->p_Init->P_VBUS_ADCU);
+	p_motor->VBus_mV 		= Linear_Voltage_CalcMilliV(&p_motor->UnitVBus, *p_motor->p_Constants->P_VBUS_ADCU);
 	p_motor->VBemfPeak_mV 	= Linear_Voltage_CalcMilliV(&p_motor->UnitVabc, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));
 }
 
@@ -595,9 +595,9 @@ bool Motor_CalibrateAdc(Motor_T *p_motor)
 
 	if (Thread_PollTimerCompletePeriodic(&p_motor->ControlTimerThread) == true)
 	{
-		Linear_ADC_Init(&p_motor->UnitIa, *p_motor->p_Init->P_IA_ADCU , 4095U, 120U); //temp 120amp
-		Linear_ADC_Init(&p_motor->UnitIb, *p_motor->p_Init->P_IB_ADCU, 4095U, 120U);
-		Linear_ADC_Init(&p_motor->UnitIc, *p_motor->p_Init->P_IC_ADCU, 4095U, 120U);
+		Linear_ADC_Init(&p_motor->UnitIa, *p_motor->p_Constants->P_IA_ADCU , 4095U, 120U); //temp 120amp
+		Linear_ADC_Init(&p_motor->UnitIb, *p_motor->p_Constants->P_IB_ADCU, 4095U, 120U);
+		Linear_ADC_Init(&p_motor->UnitIc, *p_motor->p_Constants->P_IC_ADCU, 4095U, 120U);
 //		Linear_ADC_Init(&p_motor->UnitIc, Filter_MovAvg_GetResult(&p_motor->FilterIc), 4095U, 120U);
 		isComplete = true;
 

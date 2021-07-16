@@ -289,7 +289,7 @@ typedef const struct Motor_Init_Tag
 	const uint32_t HALL_ENCODER_TIMER_COUNTER_MAX;
 	const uint32_t HALL_ENCODER_TIMER_COUNTER_FREQ;
 }
-Motor_Init_T;
+Motor_Constants_T;
 
 typedef struct
 {
@@ -301,8 +301,8 @@ typedef struct
 	//	volatile const adc_t * p_Ic_ADCU;
 	//	volatile const adc_t * p_VBus_ADCU;
 
- 	const Motor_Init_T * p_Init;			//compile time const, unique per moter
-	Motor_Parameters_T	Parameters;			//Programmable parameters, runtime variable load from eeprom
+ 	const Motor_Constants_T * p_Constants;		//compile time const, unique per moter
+	Motor_Parameters_T Parameters;				//Programmable parameters, runtime variable load from eeprom
 
 	/*
 	 * Hardware Wrappers
@@ -348,6 +348,9 @@ typedef struct
 	volatile uint32_t RampIndex;
 	volatile uint16_t RampCmd;				//SetPoint after ramp
 	volatile uint16_t VPwm; 				//Control Variable
+
+
+	/* Feedback */
 	volatile uint16_t SpeedFeedback_RPM;	//Feedback Variable
 	volatile uint32_t IBus_ADCU; 			//phase positive current
 	volatile uint32_t IBus_Frac16;
@@ -456,7 +459,7 @@ static inline void CaptureIBus(Motor_T * p_motor, qfrac16_t i_temp)
 static inline void Motor_CaptureIBusIa_IO(Motor_T * p_motor)
 {
 	//Filter here if needed
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, *p_motor->p_Init->P_IA_ADCU);
+	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, *p_motor->p_Constants->P_IA_ADCU);
 
 	CaptureIBus(p_motor, i_temp);
 //	p_motor->IBus_ADCU = *p_motor->p_Init->P_IA_ADCU;
@@ -467,7 +470,7 @@ static inline void Motor_CaptureIBusIa_IO(Motor_T * p_motor)
 
 static inline void Motor_CaptureIBusIb_IO(Motor_T * p_motor)
 {
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, *p_motor->p_Init->P_IB_ADCU);
+	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, *p_motor->p_Constants->P_IB_ADCU);
 
 	CaptureIBus(p_motor, i_temp);
 //	p_motor->IBus_ADCU = *p_motor->p_Init->P_IB_ADCU;
@@ -476,7 +479,7 @@ static inline void Motor_CaptureIBusIb_IO(Motor_T * p_motor)
 
 static inline void Motor_CaptureIBusIc_IO(Motor_T * p_motor)
 {
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, *p_motor->p_Init->P_IC_ADCU);
+	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, *p_motor->p_Constants->P_IC_ADCU);
 
 	CaptureIBus(p_motor, i_temp);
 //	p_motor->IBus_ADCU = *p_motor->p_Init->P_IC_ADCU;
@@ -486,8 +489,8 @@ static inline void Motor_CaptureIBusIc_IO(Motor_T * p_motor)
 // todo monitor heat functions
 
 
-extern void Motor_Init(Motor_T * p_motor, const Motor_Init_T * p_motorInitStruct, const Motor_Parameters_T * p_parameters);
-extern void Motor_InitConsts(Motor_T * p_motor, const Motor_Init_T * p_motorInit);
+extern void Motor_Init(Motor_T * p_motor, const Motor_Constants_T * p_motorInitStruct, const Motor_Parameters_T * p_parameters);
+extern void Motor_InitConsts(Motor_T * p_motor, const Motor_Constants_T * p_motorInit);
 extern void Motor_InitParamaters(Motor_T * p_motor, const Motor_Parameters_T * p_parameters);
 extern void Motor_InitReboot(Motor_T * p_motor);
 //extern void Motor_StartAlign(Motor_T * p_motor);

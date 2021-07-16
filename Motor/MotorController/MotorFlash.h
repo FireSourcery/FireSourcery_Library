@@ -42,12 +42,12 @@ extern Flash_T MotorFlashMain;
 
 static inline uint32_t MotorFlash_LoadParameterAll(Motor_T * p_motor)
 {
-	Flash_EEPROM_ReadBytes(&MotorFlashMain, &p_motor->Parameters, p_motor->p_Init->P_EEPROM, sizeof(Motor_Parameters_T));
+	Flash_EEPROM_ReadBytes(&MotorFlashMain, &p_motor->Parameters, p_motor->p_Constants->P_EEPROM, sizeof(Motor_Parameters_T));
 }
 
 static inline uint32_t MotorFlash_SaveParametersAll(Motor_T * p_motor)
 {
- 	Flash_EEPROM_WriteAlignedBytes(&MotorFlashMain, p_motor->p_Init->P_EEPROM, &p_motor->Parameters, sizeof(Motor_Parameters_T));
+ 	Flash_EEPROM_WriteAlignedBytes(&MotorFlashMain, p_motor->p_Constants->P_EEPROM, &p_motor->Parameters, sizeof(Motor_Parameters_T));
 }
 
 static inline void MotorFlash_OnBlock(void * p_void)

@@ -235,7 +235,7 @@ static inline void HAL_Serial_Init(HAL_Serial_T *p_uartRegMap)
 
     p_uartRegMap->BAUD = (p_uartRegMap->BAUD & ~LPUART_BAUD_SBNS_MASK) | ((uint32_t)1U << LPUART_BAUD_SBNS_SHIFT);
 
-	INT_SYS_EnableIRQ(LPUART1_RxTx_IRQn);
+//	INT_SYS_EnableIRQ(LPUART1_RxTx_IRQn);
 }
 
 #endif

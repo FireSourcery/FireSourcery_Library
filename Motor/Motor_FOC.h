@@ -329,19 +329,19 @@ static inline void Motor_FOC_ProcCurrentFeedback(Motor_T * p_motor)
 static inline void Motor_FOC_ProcIa_IO(Motor_T * p_motor)
 {
 	//Filter here if needed
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, *p_motor->p_Init->P_IA_ADCU);
+	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, *p_motor->p_Constants->P_IA_ADCU);
 	FOC_SetIa(&p_motor->Foc, i_temp);
 }
 
 static inline void Motor_FOC_ProcIb_IO(Motor_T * p_motor)
 {
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, *p_motor->p_Init->P_IB_ADCU);
+	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, *p_motor->p_Constants->P_IB_ADCU);
 	FOC_SetIb(&p_motor->Foc, i_temp);
 }
 
 static inline void Motor_FOC_ProcIc_IO(Motor_T * p_motor)
 {
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, *p_motor->p_Init->P_IC_ADCU);
+	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, *p_motor->p_Constants->P_IC_ADCU);
 	FOC_SetIc(&p_motor->Foc, i_temp);
 }
 

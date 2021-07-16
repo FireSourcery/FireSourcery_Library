@@ -469,10 +469,11 @@ static inline bool ProcZeroCrossingDetection(BEMF_T * p_bemf)
 		//			p_bemf->TimeZeroCrossingPeriod = timeZeroCrossing + p_bemf->TimeZeroCrossing;
 		//			p_bemf->TimeZeroCrossingDetect = timeZeroCrossing;
 		// average zc with last zc
-//		p_bemf->TimeZeroCrossingPeriod = (p_bemf->TimeZeroCrossingPeriod + (p_bemf->TimeZeroCrossingDetect + timeZeroCrossing)) / 2U;
-		p_bemf->TimeZeroCrossingDetect = (p_bemf->TimeZeroCrossingDetect + timeZeroCrossing) / 2U;
-//		p_bemf->TimeZeroCrossingPeriod = (p_bemf->TimeCyclePeriod + (p_bemf->TimeZeroCrossingDetect * 2U)) / 2U;
-		p_bemf->TimeZeroCrossingPeriod = (p_bemf->TimeZeroCrossingDetect * 2U);
+		//		p_bemf->TimeZeroCrossingPeriod = (p_bemf->TimeZeroCrossingPeriod + (p_bemf->TimeZeroCrossingDetect + timeZeroCrossing)) / 2U;
+		//		p_bemf->TimeZeroCrossingPeriod = (p_bemf->TimeCyclePeriod + (p_bemf->TimeZeroCrossingDetect * 2U)) / 2U;
+
+		p_bemf->TimeZeroCrossingPeriod = (p_bemf->TimeZeroCrossingDetect + timeZeroCrossing);
+		p_bemf->TimeZeroCrossingDetect = (p_bemf->TimeZeroCrossingPeriod) / 2U;
 
 		isZcd = true;
 	}
@@ -497,14 +498,6 @@ static inline bool BEMF_PollZeroCrossingDetection(BEMF_T * p_bemf)
 			{
 				p_bemf->TimeCyclePeriod = p_bemf->TimeZeroCrossingPeriod;
 			}
-			else
-			{
-				(p_bemf->TimeCyclePeriod = p_bemf->TimeZeroCrossingPeriod + p_bemf->TimeCyclePeriod ) / 2; //updated period
-
-			}
-
-
-
 
 			//if  BEMF_CYCLE_PERIOD_FULL,  p_bemf->TimeCyclePeriod = p_bemf->TimeZeroCrossingPeriod*6
 			//HAL_BEMF_StartTimerInterrupt(p_bemf->p_HAL_Bemf, p_bemf->TimeNextCommutation);
