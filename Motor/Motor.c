@@ -352,18 +352,19 @@ void Motor_SetRampAccelerate(Motor_T * p_motor, uint16_t acceration)
 		if (p_motor->UserCmd > p_motor->UserCmdPrev)
 		{
 
-			if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF)
-			{
-				if  (BEMF_GetZeroCrossingCounter(&p_motor->Bemf) > 10U)
-				{
-					Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, p_motor->UserCmd, 65536U / 10U);
-				}
-			}
-			else
+//			if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF)
+//			{
+//				if  (BEMF_GetZeroCrossingCounter(&p_motor->Bemf) > 10U)
+//				{
+//					Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, p_motor->UserCmd, 65536U / 100U);
+//				}
+//			}
+//			else
 			{
 				//(int32_t)p_motor->UserCmd - (int32_t)p_motor->UserCmdPrev
 				// voltage ramp start match  bemf
-				Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, p_motor->UserCmd, 65536U / 10U);
+				Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, p_motor->UserCmd, 65536U / 100U);
+//				Linear_Ramp_InitAcceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, p_motor->UserCmd, (int32_t)p_motor->UserCmd - (int32_t)p_motor->UserCmdPrev);
 			}
 		}
 		else

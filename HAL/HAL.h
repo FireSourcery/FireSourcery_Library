@@ -8,11 +8,11 @@
 #define HAL_PATH_PLATFORM(Path, File)  	HAL_PATH(Path/Platform/CONFIG_HAL_PLATFORM, File)
 #define HAL_PATH_USER(File) 			XSTR(CONFIG_HAL_USER_DIRECTORY/File)
 
-#if defined(CONFIG_HAL_LIBRARY_DEFINED)
-
-#elif defined(CONFIG_HAL_USER_DEFINED)
-
-#endif
+//#if defined(CONFIG_HAL_LIBRARY_DEFINED)
+//
+//#elif defined(CONFIG_HAL_USER_DEFINED)
+//
+//#endif
 
 
 #endif
