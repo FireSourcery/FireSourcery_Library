@@ -1,5 +1,7 @@
-#ifndef HAL_DEFINE_H
-#define HAL_DEFINE_H
+#ifndef PATH_H
+#define PATH_H
+
+//HAL Macros
 
 #define XSTR(V...) #V
 #define HAL_PATH(Path, File)  XSTR(Path/File)

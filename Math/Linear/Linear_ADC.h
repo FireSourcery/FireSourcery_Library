@@ -36,8 +36,6 @@
 
 #include <stdint.h>
 
-//static inline int16_t Linear_ADC_ConvertAdcuToFraction_Signed16(Linear_T * p_linear, uint16_t adcu)
-
 static inline int16_t Linear_ADC_CalcFractionSigned16(Linear_T * p_linear, uint16_t adcu)
 {
 #ifdef CONFIG_LINEAR_SHIFT_DIVIDE
@@ -48,7 +46,6 @@ static inline int16_t Linear_ADC_CalcFractionSigned16(Linear_T * p_linear, uint1
 #endif
 }
 
-//todo negative number returns abs value
 static inline uint16_t Linear_ADC_CalcFractionUnsigned16(Linear_T * p_linear, uint16_t adcu)
 {
 #ifdef CONFIG_LINEAR_SHIFT_DIVIDE
@@ -69,6 +66,18 @@ static inline uint16_t Linear_ADC_CalcFractionUnsigned16(Linear_T * p_linear, ui
 #endif
 
 }
+
+//todo check 65536 boundary case
+static inline uint16_t Linear_ADC_CalcFractionUnsigned16_Abs(Linear_T * p_linear, uint16_t adcu)
+{
+#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+	return Linear_Function_FractionUnsigned16_Abs(p_linear, adcu);
+#elif defined (CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+
+#endif
+}
+
+
 
 static inline uint16_t Linear_ADC_CalcFractionSigned16_Physical(Linear_T * p_linear, uint16_t units)
 {

@@ -22,58 +22,86 @@
 /**************************************************************************/
 /**************************************************************************/
 /*!
-    @file 	Motor_Controller.h
+    @file 	MotorController.h
     @author FireSoucery
-    @brief  Motor module functions must be placed into corresponding user app threads
-    		Most outer functions to call from MCU app
+    @brief
     @version V0
 */
 /**************************************************************************/
-#include "../Motor.h"
-//#include "../Motor_FOC.h"
-//#include "../Motor_SixStep.h"
+#ifndef MOTOR_CONTROLLER_H
+#define MOTOR_CONTROLLER_H
 
-#include "MotorShell.h"
-#include "MotorUser.h"
-#include "MotorFlash.h"
+#include "Config.h"
 
-//#include "HAL_Motor.h"
+#include "Motor/Utility/MotorUser.h"
+//#include "MotorFlash.h"
 
+#include "Motor/Motor.h"
+#include "Motor/HAL_Motor.h"
+
+#include "System/Shell/Shell.h"
+
+#ifdef CONFIG_MOTOR_ADC_8
+	typedef uint16_t adc_t;
+#elif defined(CONFIG_MOTOR_ADC_16)
+	typedef uint16_t adc_t;
+#endif
 
 typedef const struct
 {
-	Motor_T * const P_MOTORS;
-	const uint8_t MOTORS_COUNT;
+//	volatile Motor_T * const P_MOTORS;
+//	const uint8_t MOTORS_COUNT;
 
-	const HAL_Flash_T * const P_HAL_FLASH; //motorflash init
-	const MotorUser_Init_T MOTOR_USER_INIT;
-
-	//todo alarm thermistor
-
-//	volatile const adc_t * p_VBus_ADCU;
+	//	volatile const adc_t * P_VBUS_ADCU;
 	volatile const adc_t * const P_VACC_ADCU;
 	volatile const adc_t * const P_VSENSE_ADCU;
 	volatile const adc_t * const P_HEAT_PCB_ADCU;
-} MotorController_Init_T;
 
-typedef const struct
-{
+	const MotorUser_Consts_T MOTOR_USER_INIT;
 
-	 //mode all motor
-} MotorController_T;
+	const HAL_Serial_T * const P_HAL_SERIALS[CONFIG_MOTOR_CONTROLLER_HW_HAL_SERIAL_COUNT];
 
+//	const HAL_Flash_T * const P_HAL_FLASH;
 
-static inline void MotorController_Main_Thread()
-{
-	MotorUser_Analog_CaptureInput_IO();
+	//		.P_TX_BUFFER
+	//		.P_RX_BUFFER
+	//		.TX_BUFFER_SIZE
+	//		.RX_BUFFER_SIZE
 
-	MotorUser_WriteOutput();
-
-	HAL_Motor_EnqueueConversionUser( );
-
-//	MotorUser_SetInput(MotorControllerMain.p_Init.P_MOTORS); //write input to motor
-
-//		if (Thread_PollTimerCompletePeriodic(&MotorUserMain.MotorUserAnalog.MillisTimerThread) == true)
-//		{
-//		}
+	//todo alarm thermistor
 }
+MotorController_Constants_T;
+
+typedef struct
+{
+	uint8_t ShellConnectId;
+}
+MotorController_Parameters_T;
+
+typedef struct
+{
+	const MotorController_Constants_T * p_Constants;
+	MotorController_Parameters_T Parameters;
+
+	/* compile time const for all instancesl, only 1 instance expected. */
+
+	Motor_T Motors[CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT];
+
+	uint8_t SerialTxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT][100U];
+	uint8_t SerialRxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT][100U];
+	Serial_T Serials[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT]; //simutanous active serial
+
+
+	Shell_T MotorControllerShell;
+	MotorUser_T MotorUser;
+
+	//Flash_T MotorFlash;
+}
+MotorController_T;
+
+
+
+
+
+
+#endif

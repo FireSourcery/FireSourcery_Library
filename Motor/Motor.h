@@ -28,11 +28,11 @@
     @version V0
 */
 /**************************************************************************/
+
 #ifndef MOTOR_H
 #define MOTOR_H
 
-
-
+#include "System/Debug/Debug.h"
 
 #include "HAL_Motor.h"
 
@@ -59,6 +59,7 @@
 
 #include "Math/Q/Q.h"
 #include "Math/Linear/Linear_ADC.h"
+#include "Math/Linear/Linear_Voltage.h"
 #include "Math/Linear/Linear_Ramp.h"
 #include "Math/Linear/Linear.h"
 #include "Math/PID/PID.h"
@@ -66,29 +67,30 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
 /*
  * All modules independently conform to same ID
  */
 typedef enum
 {
-	MOTOR_SECTOR_ID_0 = 0,
-	MOTOR_SECTOR_ID_1 = 1, //Phase AC
-	MOTOR_SECTOR_ID_2 = 2,
-	MOTOR_SECTOR_ID_3 = 3,
-	MOTOR_SECTOR_ID_4 = 4,
-	MOTOR_SECTOR_ID_5 = 5,
-	MOTOR_SECTOR_ID_6 = 6,
-	MOTOR_SECTOR_ID_7 = 7,
+	MOTOR_SECTOR_ID_0 = 0U,
+	MOTOR_SECTOR_ID_1 = 1U, //Phase AC
+	MOTOR_SECTOR_ID_2 = 2U,
+	MOTOR_SECTOR_ID_3 = 3U,
+	MOTOR_SECTOR_ID_4 = 4U,
+	MOTOR_SECTOR_ID_5 = 5U,
+	MOTOR_SECTOR_ID_6 = 6U,
+	MOTOR_SECTOR_ID_7 = 7U,
 
-	MOTOR_SECTOR_ERROR_000 = 0,
-	MOTOR_SECTOR_ERROR_111 = 7,
+	MOTOR_SECTOR_ERROR_000 = 0U,
+	MOTOR_SECTOR_ERROR_111 = 7U,
 
-	MOTOR_PHASE_AC = 1,
-	MOTOR_PHASE_BC = 2,
-	MOTOR_PHASE_BA = 3,
-	MOTOR_PHASE_CA = 4,
-	MOTOR_PHASE_CB = 5,
-	MOTOR_PHASE_AB = 6,
+	MOTOR_PHASE_AC = 1U,
+	MOTOR_PHASE_BC = 2U,
+	MOTOR_PHASE_BA = 3U,
+	MOTOR_PHASE_CA = 4U,
+	MOTOR_PHASE_CB = 5U,
+	MOTOR_PHASE_AB = 6U,
 } Motor_SectorId_T;
 
 /*
@@ -97,8 +99,8 @@ typedef enum
 typedef enum
 {
 //	MOTOR_DIRECTION_N,
-	MOTOR_DIRECTION_CW = 0,
-	MOTOR_DIRECTION_CCW = 1,
+	MOTOR_DIRECTION_CW = 0U,
+	MOTOR_DIRECTION_CCW = 1U,
 } Motor_Direction_T;
 
 //typedef enum
@@ -276,9 +278,8 @@ typedef const struct Motor_Init_Tag
 	volatile const adc_t * const P_IA_ADCU;
 	volatile const adc_t * const P_IB_ADCU;
 	volatile const adc_t * const P_IC_ADCU;
-
 	volatile const adc_t * const P_HEAT_MOTOR_ADCU;
-	volatile const adc_t * const P_HEAT_MOSFETS_ADCU;
+	volatile const adc_t * const P_HEAT_MOSFETS_ADCU; //if per motor mosfet sensor is implemented
 //	volatile const adc_t * const P_HEAT_PCB_ADCU;
 
 	//use define macro if static across motor and sub module instances, todo
@@ -318,7 +319,7 @@ typedef struct
 	StateMachine_T StateMachine;
 
 	Linear_T UnitVBus;
-	Linear_T UnitVabc; //Bemf
+	Linear_T UnitVabc; //Bemf V and mV conversion
 	Linear_T UnitIa; //Frac16 and UserUnits (Amp)
 	Linear_T UnitIb;
 	Linear_T UnitIc;
@@ -328,8 +329,12 @@ typedef struct
 	 * Runtime vars
 	 */
 	/******************************************************************************/
-	volatile uint32_t ControlTimerBase;	 /* Control Freq, calibration, commutation, angle control */
+//	volatile Motor_AdcConversionFlag_T  //move hal motor analog outside
+
+	volatile uint32_t ControlTimerBase;	 /* Control Freq ~ 20kHz, calibration, commutation, angle control */
 	Thread_T ControlTimerThread;
+
+	//can be shared across motor instances, not reset in motor module
 	volatile uint32_t MillisTimerBase;	 /* Millis, UI */
 	Thread_T MillisTimerThread;
 	Thread_T SecondsTimerThread;
@@ -351,9 +356,9 @@ typedef struct
 
 
 	/* Feedback */
-	volatile uint16_t SpeedFeedback_RPM;	//Feedback Variable
+	volatile uint16_t Speed_RPM;	//Feedback Variable
 	volatile uint32_t IBus_ADCU; 			//phase positive current
-	volatile uint32_t IBus_Frac16;
+	volatile uint32_t IBus_Frac16;			//0-65535
 
 	//	PID_T PidSpeed;
 	//	PID_T PidId;
@@ -394,25 +399,62 @@ typedef struct
 //	uint32_t JogSteps;
 //	uint32_t StepCount;
 
-	/* UI report */
+	/* UI Unit report */
 	volatile uint16_t VBus_mV;
 	volatile uint16_t VBemfPeak_mV;
+	volatile uint16_t VBemfA_mV;
 	volatile uint16_t IBus_Amp;
 }
 Motor_T;
 
+static inline void Motor_PollAnalogStartAll(Motor_T * p_motor) //run doing stop state
+{
+	if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
+	{
+		HAL_Motor_EnqueueConversionIdle(p_motor);
+	}
+}
+
+//todo check 65536 boundary case
+static inline void Motor_CaptureIBusIa_IO(Motor_T * p_motor)
+{
+	//Filter here if needed
+	p_motor->IBus_Frac16 = Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIa, *p_motor->p_Constants->P_IA_ADCU);
+
+//	p_motor->IBus_ADCU = *p_motor->p_Init->P_IA_ADCU;
+//	p_motor->IBus_ADCU  Filter_MovAvg(&p_motor->FilterIa, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA]);
+}
+
+static inline void Motor_CaptureIBusIb_IO(Motor_T * p_motor)
+{
+	p_motor->IBus_Frac16 = Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIb, *p_motor->p_Constants->P_IB_ADCU);
+
+//	p_motor->IBus_ADCU = *p_motor->p_Init->P_IB_ADCU;
+	Debug_CaptureElapsed(4);
+}
+
+static inline void Motor_CaptureIBusIc_IO(Motor_T * p_motor)
+{
+	p_motor->IBus_Frac16 = Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIc, *p_motor->p_Constants->P_IC_ADCU);
+
+//	p_motor->IBus_ADCU = *p_motor->p_Init->P_IC_ADCU;
+}
+
+
+
+//Wrappers
 
 static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
 {
 //	p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
-	return p_motor->SpeedFeedback_RPM;
+	return p_motor->Speed_RPM;
 }
 
 static inline void Motor_ProcSpeed(Motor_T * p_motor)
 {
 //	if(p_motor->Parameters.SensorMode != MOTOR_SENSOR_MODE_OPEN_LOOP)
 	{
-		p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
+		p_motor->Speed_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
 	}
 //	else
 //	{
@@ -422,67 +464,33 @@ static inline void Motor_ProcSpeed(Motor_T * p_motor)
 
 static inline uint32_t Motor_GetBemf_Frac16(Motor_T * p_motor)
 {
-	return BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf);
+	return Linear_Voltage_CalcUnsignedFraction16(&p_motor->UnitVabc, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));
+}
+
+
+//static inline uint32_t Motor_LoadParameterAll(Motor_T * p_motor)
+//{
+//	Flash_EEPROM_ReadBytes(&MotorFlashMain, &p_motor->Parameters, p_motor->p_Constants->P_EEPROM, sizeof(Motor_Parameters_T));
+//}
+//
+//static inline uint32_t Motor_SaveParametersAll(Motor_T * p_motor)
+//{
+// 	Flash_EEPROM_WriteAlignedBytes(&MotorFlashMain, p_motor->p_Constants->P_EEPROM, &p_motor->Parameters, sizeof(Motor_Parameters_T));
+//}
+
+
+
+//UI
+static inline void Motor_ProcUnitOutputs(Motor_T * p_motor)
+{
+	p_motor->VBus_mV 		= Linear_Voltage_CalcMilliV(&p_motor->UnitVBus, *p_motor->p_Constants->P_VBUS_ADCU);
+	p_motor->VBemfPeak_mV 	= Linear_Voltage_CalcMilliV(&p_motor->UnitVabc, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));
 }
 
 
 static inline void Motor_Float(Motor_T * p_motor)
 {
 	Phase_Float(&p_motor->Phase);
-}
-
-
-
-static inline void Motor_PollAnalogStartAll(Motor_T * p_motor)
-{
-	if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
-	{
-		HAL_Motor_EnqueueConversionIdle(p_motor);
-	}
-}
-
-
-static inline void CaptureIBus(Motor_T * p_motor, qfrac16_t i_temp)
-{
- 	if(i_temp > 0)
-	{
-		p_motor->IBus_Frac16 = i_temp * 2U;
-	}
-	else
-	{
-		p_motor->IBus_Frac16 = (-i_temp) * 2U;
-	}
-//	p_motor->IBus_ADCU = *p_motor->p_Init->P_IA_ADCU;
-}
-
-
-static inline void Motor_CaptureIBusIa_IO(Motor_T * p_motor)
-{
-	//Filter here if needed
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, *p_motor->p_Constants->P_IA_ADCU);
-
-	CaptureIBus(p_motor, i_temp);
-//	p_motor->IBus_ADCU = *p_motor->p_Init->P_IA_ADCU;
-//	p_motor->IBus_ADCU  Filter_MovAvg(&p_motor->FilterIa, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA]);
-}
-
-#include "System/Debug/Debug.h"
-
-static inline void Motor_CaptureIBusIb_IO(Motor_T * p_motor)
-{
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, *p_motor->p_Constants->P_IB_ADCU);
-
-	CaptureIBus(p_motor, i_temp);
-//	p_motor->IBus_ADCU = *p_motor->p_Init->P_IB_ADCU;
-	Debug_CaptureElapsed(4);
-}
-
-static inline void Motor_CaptureIBusIc_IO(Motor_T * p_motor)
-{
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, *p_motor->p_Constants->P_IC_ADCU);
-
-	CaptureIBus(p_motor, i_temp);
-//	p_motor->IBus_ADCU = *p_motor->p_Init->P_IC_ADCU;
 }
 
 

@@ -47,9 +47,9 @@ void StateMachine_Init
 {
 	p_stateMachine->p_StateInitial 				= p_stateInitial;
 	p_stateMachine->p_StateActive 				= p_stateInitial;
-	p_stateMachine->InputTransitionMapLength 		= transitionInputCount;
-	p_stateMachine->InputOutputMapLength 	= selfTransitionInputCount;
-	p_stateMachine->p_UserData 					= p_userData;
+	p_stateMachine->InputTransitionMapLength 	= transitionInputCount;
+	p_stateMachine->InputOutputMapLength 		= selfTransitionInputCount;
+	p_stateMachine->p_TypeData 					= p_userData;
 
 #ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
 	p_stateMachine->Mutex = 1U;
@@ -69,7 +69,7 @@ static inline void ProcTransition(StateMachine_T * p_stateMachine, uint8_t trans
 			{
 				if (p_stateMachine->p_StateActive->P_INPUT_TRANSITION_FUNCTION_MAP[transitionInput] != 0)
 				{
-					p_stateMachine->p_StateActive->P_INPUT_TRANSITION_FUNCTION_MAP[transitionInput](p_stateMachine->p_UserData);
+					p_stateMachine->p_StateActive->P_INPUT_TRANSITION_FUNCTION_MAP[transitionInput](p_stateMachine->p_TypeData);
 				}
 			}
 
@@ -79,7 +79,7 @@ static inline void ProcTransition(StateMachine_T * p_stateMachine, uint8_t trans
 			/* proc new state common entry function */
 			if (p_stateMachine->p_StateActive->TRANSITION_ENTRY != 0)
 			{
-				p_stateMachine->p_StateActive->TRANSITION_ENTRY(p_stateMachine->p_UserData);
+				p_stateMachine->p_StateActive->TRANSITION_ENTRY(p_stateMachine->p_TypeData);
 			}
 
 		}
@@ -95,7 +95,7 @@ static inline void ProcInputOuput(StateMachine_T * p_stateMachine, uint8_t input
 	{
 		if (p_stateMachine->p_StateActive->P_INPUT_OUTPUT_FUNCTION_MAP[input] != 0)
 		{
-			p_stateMachine->p_StateActive->P_INPUT_OUTPUT_FUNCTION_MAP[input](p_stateMachine->p_UserData);
+			p_stateMachine->p_StateActive->P_INPUT_OUTPUT_FUNCTION_MAP[input](p_stateMachine->p_TypeData);
 		}
 	}
 }
@@ -104,7 +104,7 @@ static inline void ProcOutput(StateMachine_T * p_stateMachine)
 {
 	if (p_stateMachine->p_StateActive->OUTPUT != 0)
 	{
-		p_stateMachine->p_StateActive->OUTPUT(p_stateMachine->p_UserData);
+		p_stateMachine->p_StateActive->OUTPUT(p_stateMachine->p_TypeData);
 	}
 }
 

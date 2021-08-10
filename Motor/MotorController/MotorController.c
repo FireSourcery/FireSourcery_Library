@@ -24,37 +24,41 @@
 /*!
     @file 	Motor.h
     @author FireSoucery
-    @brief
+    @brief Motor Utilities Instance, 1 instance per all motor
     @version V0
 */
 /**************************************************************************/
 #include "MotorController.h"
-#include "MotorUser.h"
-#include "MotorFlash.h"
 
-//#include "Config.h"
+#include "Config.h"
 
-//#include "Peripheral/Pin/Debounce.h"
-//#include "Peripheral/Pin/Pin.h"
-//
-//#include "Math/Linear/Linear_ADC.h"
-//#include "Math/Linear/Linear.h"
+#include "Motor/HAL_Motor.h"
+#include "Motor/Utility/MotorUser.h"
+
+//#include "Motor/Utility/MotorFlash.h"
 
 #include <stdint.h>
-#include <stdbool.h>
 
 /*
- * Motor Utility Instance Init, 1 for all motor
+
  */
-void MotorController_Init(MotorController_Init_T * p_init)
+//MotorController_T MotorControllerMain
+//void MotorController_Init(const MotorController_Constants_T * p_consts)
+void MotorController_Init(MotorController_T * p_motorController, const MotorController_Constants_T * p_consts)
 {
+	MotorUser_Init(&p_motorController->MotorUser, &p_consts->MOTOR_USER_INIT);
+	MotorControllerShell_Init(p_motorController);
 
-	MotorUser_Init(&p_init->MOTOR_USER_INIT);
+	HAL_Motor_Init(); //HAL_MotorController_Init init hal analog instances
 
-	MotorFlash_Init(p_init->P_HAL_FLASH);
+	for(uint8_t iMotor = 0U; iMotor < CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT; iMotor++)
+	{
+//		Motor_Init(&p_motorController->Motors[iMotor], &MOTOR_CONSTANTS_1, &MOTOR_PARAMETERS_DEFAULT);
+	}
 
 
-//	MotorShell_Init()
+//	Serial_Init();
+	//MotorFlash_Init(&p_motorController->MotorFlash, p_init->P_HAL_FLASH);
 }
 
-//writeflash state
+

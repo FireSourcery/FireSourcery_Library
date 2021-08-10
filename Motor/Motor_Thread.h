@@ -22,7 +22,7 @@
 /**************************************************************************/
 /**************************************************************************/
 /*!
-    @file 	Motor_Controller.h
+    @file 	Motor_Thread.h
     @author FireSoucery
     @brief  Motor module functions must be placed into corresponding user app threads
     		Most outer functions to call from MCU app
@@ -31,8 +31,23 @@
 /**************************************************************************/
 #include "Motor.h"
 
-#include "System/StateMachine/StateMachine.h"
+#include "HAL_Motor.h"
 
+#include "Motor/Transducer/Phase/Phase.h"
+
+#include "System/StateMachine/StateMachine.h"
+#include "System/Thread/Thread.h"
+
+
+
+/******************************************************************************/
+/*!
+    @name 	MotorThread
+    @brief  Motor module functions must be placed into corresponding user app threads
+    		Most outer functions to call from MCU app
+*/
+/* @{ */
+/******************************************************************************/
 /*
     Default 50us
  */
@@ -53,7 +68,6 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 //{
 ////	Analog_CaptureResults_IO(&p_motor->Analog);
 //}
-
 
 static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priotiy
 {
@@ -81,16 +95,29 @@ static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priotiy
 ////	BEMF_ProcTimer_IO(&p_motor->Bemf);
 //}
 
-//user/monitor thread 1ms low priority
-static inline void Motor_Main_Thread(Motor_T * p_motor)
-{
-	Motor_ProcOutputs(p_motor);
 
+
+
+//Low Freq Main
+//user/monitor thread 1ms low priority
+static inline void Motor_Main1Ms_Thread(Motor_T * p_motor)
+{
+	Motor_ProcUnitOutputs(p_motor);
+
+//	HAL_Motor_EnqueueConversionIdle(p_motor); //handle in stop state
 
 //	if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
 //	{
-
-
-
+//
 //	}
 }
+
+//low priotiy, max freq
+static inline void Motor_Main_Thread(Motor_T * p_motor)
+{
+
+}
+
+/******************************************************************************/
+/*! @} */
+/******************************************************************************/

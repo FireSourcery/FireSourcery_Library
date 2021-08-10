@@ -127,7 +127,7 @@ uint32_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, uint32_t buffe
 
 	EnterCriticalRx(p_serial);
 
-	for (charCount = 0; charCount < bufferSize - 1; charCount++)
+	for (charCount = 0U; charCount < bufferSize - 1U; charCount++)
 	{
 		if (p_serial->RxBufferHead == p_serial->RxBufferTail)
 		{
@@ -139,6 +139,7 @@ uint32_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, uint32_t buffe
 			p_serial->RxBufferTail = (p_serial->RxBufferTail + 1) % p_serial->RxBufferSize;
 		}
 	}
+
 	ExitCriticalRx(p_serial);
 
 	return charCount;

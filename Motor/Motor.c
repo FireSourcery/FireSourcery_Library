@@ -33,7 +33,7 @@
 #include "Config.h"
 //#include "Default.h"
 
-#include "MotorStateMachine.h"
+#include "MotorStateMachine.h" //circular modular depency
 
 #include "System/StateMachine/StateMachine.h"
 #include "System/Thread/Thread.h"
@@ -58,13 +58,14 @@ void Motor_Init(Motor_T * p_motor, const Motor_Constants_T * p_motorInit, const 
 {
 	Motor_InitConstants(p_motor, p_motorInit);
 	Motor_InitParamaters(p_motor, p_parameters);
+
+	MotorStateMachine_Init(p_motor); // circular modular dependency
 	Motor_InitReboot(p_motor);
 }
 
 void Motor_InitConstants(Motor_T * p_motor, const Motor_Constants_T * p_motorInit)
 {
 	p_motor->p_Constants = p_motorInit;
-	MotorStateMachine_Init(p_motor);
 }
 
 void Motor_InitParamaters(Motor_T * p_motor, const Motor_Parameters_T * p_parameters)
@@ -225,7 +226,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	p_motor->Direction 				= MOTOR_DIRECTION_CCW;
 	p_motor->DirectionInput 		= MOTOR_DIRECTION_CCW;
-	p_motor->SpeedFeedback_RPM 		= 0U;
+	p_motor->Speed_RPM 		= 0U;
 	p_motor->VPwm 					= 0U;
 	p_motor->ControlTimerBase 		= 0U;
 	p_motor->MillisTimerBase 		= 0U;
@@ -233,7 +234,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 //void Motor_SetZero(Motor_T * p_motor)
 //{
-//	p_motor->SpeedFeedback_RPM = 0U;
+//	p_motor->Speed_RPM = 0U;
 //	p_motor->VPwm = 0;
 //}
 
@@ -282,7 +283,7 @@ void Motor_PollStop(Motor_T * p_motor)
 	{
 		if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder))
 		{
-			p_motor->SpeedFeedback_RPM = 0; //todo stop flag
+			p_motor->Speed_RPM = 0; //todo stop flag
 		}
 	}
 	else if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP)
@@ -291,7 +292,7 @@ void Motor_PollStop(Motor_T * p_motor)
 		{
 //			if(p_motor->UserCmdPrev > 0U)
 //			{
-				p_motor->SpeedFeedback_RPM = 0;
+				p_motor->Speed_RPM = 0;
 //			}
 		}
 	}
@@ -301,11 +302,7 @@ void Motor_PollStop(Motor_T * p_motor)
 //	}
 }
 
-void Motor_ProcOutputs(Motor_T * p_motor)
-{
-	p_motor->VBus_mV 		= Linear_Voltage_CalcMilliV(&p_motor->UnitVBus, *p_motor->p_Constants->P_VBUS_ADCU);
-	p_motor->VBemfPeak_mV 	= Linear_Voltage_CalcMilliV(&p_motor->UnitVabc, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));
-}
+
 
 
 /**************************************************************************/
@@ -402,9 +399,9 @@ void Motor_SetRampDecelerate(Motor_T * p_motor, uint16_t deceleration)
  */
 void Motor_ProcSpeedFeedbackLoop(Motor_T * p_motor)
 {
-	p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
-	//	//p_motor->SpeedFeedback_RPM = Filter_MovAvg(p_motor->Speed_RPM, coef, coef);
-	//	PID_Proc(&p_motor->PidSpeed, p_motor->SpeedFeedback_RPM, setpoint);
+	p_motor->Speed_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
+	//	//p_motor->Speed_RPM = Filter_MovAvg(p_motor->Speed_RPM, coef, coef);
+	//	PID_Proc(&p_motor->PidSpeed, p_motor->Speed_RPM, setpoint);
 }
 
 void Motor_PollSpeedFeedbackLoop(Motor_T * p_motor)
@@ -511,9 +508,7 @@ void Motor_ProcControlVariable(Motor_T * p_motor)
 
 }
 /**************************************************************************/
-/*
- * @}
- */
+/*! @} */
 /**************************************************************************/
 
 
@@ -572,6 +567,13 @@ bool Motor_ProcAlign(Motor_T * p_motor)
 	return status;
 }
 
+
+/**************************************************************************/
+/*
+ * Calibration State Functions
+ * @{
+ */
+/**************************************************************************/
 
 /*
  * Nonblocking Calibration State Functions
@@ -734,6 +736,11 @@ bool Motor_CalibrateHall(Motor_T * p_motor)
 
 	return isComplete;
 }
+
+/**************************************************************************/
+/*! @} */
+/**************************************************************************/
+
 
 //void Motor_OnBlock(Motor_T * p_motor)
 //{

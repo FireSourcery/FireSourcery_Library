@@ -103,19 +103,26 @@ static inline int32_t Linear_Function_Fraction16(Linear_T * p_linear, int32_t x)
 /*
  * returns 	q0.16
  * 			65536 => 100 percent, unsat
- * 			-percent returns invalid  or abs or zero??
+ * 			negative => returns invalid
+ * 			todo negative returns invalid or abs or zero?
  */
 static inline uint16_t Linear_Function_FractionUnsigned16(Linear_T * p_linear, int32_t x)
 {
 	return (uint16_t) Linear_Function_Fraction16(p_linear, x);
 }
 
-//static inline uint16_t Linear_FunctionAbs_FractionUnsigned16(Linear_T * p_linear, int32_t x)
-//{
-//	int32_t temp = Linear_Function_Fraction16(p_linear, x);
-//	if t
-//	return (uint16_t) Linear_Function_Fraction16(p_linear, x);
-//}
+//todo check 65536 boundary case
+static inline uint16_t Linear_Function_FractionUnsigned16_Abs(Linear_T * p_linear, int32_t x)
+{
+	int32_t frac16 = Linear_Function_Fraction16(p_linear, x);
+
+ 	if(frac16 < 0)
+	{
+ 		frac16 = (-frac16);
+	}
+
+	return (uint16_t)frac16;
+}
 
 /*
  * returns q1.15

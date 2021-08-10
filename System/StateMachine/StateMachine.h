@@ -53,9 +53,9 @@
 //typedef uint8_t statemachine_input_transition_t;
 //typedef uint8_t statemachine_input_selftransition_t;
 
-//typedef void (* StateMachine_TransitionFunction_T)(volatile void * p_userData);
-typedef void (* StateMachine_StateFunction_T)(volatile void * p_userData);
-//typedef void (* StateMachine_Function_T)(volatile void * p_userData);
+//typedef void (* StateMachine_TransitionFunction_T)(volatile void * p_typeData);
+typedef void (* StateMachine_StateFunction_T)(volatile void * p_typeData);
+//typedef void (* StateMachine_Function_T)(volatile void * p_typeData);
 
 struct State_Tag;
 
@@ -92,21 +92,19 @@ typedef const struct State_Tag
 //	struct StateTransition
 //	{
 	const struct State_Tag (*const (*const PP_INPUT_TRANSITION_STATE_MAP));
-	void (*(*const P_INPUT_TRANSITION_FUNCTION_MAP))(volatile void * userData);
+	void (*(*const P_INPUT_TRANSITION_FUNCTION_MAP))(volatile void * p_typeData);
 //	};
 
 	/*
-	 * seperate table for inputs without transitions less memory use, user must operate 2 input variables.
+	 * Separate table for inputs without transitions less memory use, user must operate 2 input variables.
 	 *
 	 * Input to Output Function Map - Mealy machine style outputs.
 	 * Theoretical State Machine -> all out outputs without state change transition to self, without common entry function
-	 * bypass selftransitions,
+	 * bypass self transitions,
 	 */
-	void (*(*const P_INPUT_OUTPUT_FUNCTION_MAP))(volatile void * userData);
-
-	void (*TRANSITION_ENTRY)(volatile void * userData); 	//common to all transition to current state
-
-	void (*OUTPUT)(volatile void * userData); 				 //synchronous output, or common output to all inputs for asynchronous case
+	void (*(*const P_INPUT_OUTPUT_FUNCTION_MAP))(volatile void * p_typeData);
+	void (*TRANSITION_ENTRY)(volatile void * p_typeData); 	//common to all transition to current state
+	void (*OUTPUT)(volatile void * p_typeData); 				 //synchronous output, or common output to all inputs for asynchronous case
 //	void (* const Exit)(void);
 } State_T;
 
@@ -119,7 +117,7 @@ typedef struct StateMachine_Tag
 	uint8_t InputOutputMapLength;
 	//uint8_t TotalInputCount;
 //#endif
-	volatile void * volatile p_UserData;
+	volatile void * p_TypeData; //StateMachine Instance Type data
 
 	/* for Synchronous Machine */
 	volatile uint8_t InputTransition;

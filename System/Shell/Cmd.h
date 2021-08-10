@@ -3,39 +3,50 @@
 
 #include <stdint.h>
 
-#define CMD_RESERVED_RETURN_CODE_SUCCESS 0U
+#define CMD_RESERVED_RETURN_CODE_SUCCESS 		0U
+#define CMD_RESERVED_RETURN_CODE_INVALID_ARGS 	-1 //Must be implement at cmd function level / per cmd function
 
-typedef int (*Cmd_Function_T)(int argc, char *argv[]);
+typedef int (*Cmd_Function_T)(int argc, char * argv[]);
+//typedef int (*Cmd_SuperFunction_T)(void * p_s, int argc, char * argv[]);
+typedef int (*Cmd_SuperFunction_T)(void * p_context, int argc, char * argv[]);
 
-typedef const struct
-{
-	int ReturnCode;
-    char * p_ReturnCodeString;
-    //errorhandlingfunction
 
-//#ifdef SHELL_OPTION_USE_LIST
-//    LIST_NODE_T Link;
-//#endif
-}
-Cmd_ReturnCode_T;
+//enum Cmd_Type_T
+//{
+//
+//}
 
 typedef const struct
 {
-    const char * p_CmdName;
-    const char * p_CmdHelp;
-    Cmd_Function_T CmdFunction;
-    //ExpectedArgCount;
-    //Cmd_Mode_T
+    const char * P_NAME;
+    const char * P_HELP;
+    const Cmd_Function_T FUNCTION;
+//    bool IS_CONTEXT_TYPE;
+//    Cmd_Type_T
+    // ArgCMax;
+    //Cmd_Mode_T loop/single loop time
 #ifdef CONFIG_SHELL_USE_LIST
     LIST_NODE_T Link;
 #endif
 }
 Cmd_T;
 
+typedef const struct
+{
+	int CODE_ID;
+	const char * P_STRING;
+
+	//errorhandlingfunction
+//#ifdef SHELL_OPTION_USE_LIST
+//    LIST_NODE_T Link;
+//#endif
+}
+Cmd_Return_T;
+
+
 //#ifdef SHELL_OPTION_USE_ARRAY_TABLE
 #define CMD_ENTRY(CmdName, CmdHelpString, CmdFunction) { (#CmdName), (CmdHelpString), (CmdFunction) }
-#define RETURN_ENTRY(ReturnCode) { (ReturnCode), (#ReturnCode) }
-
+#define CMD_RETURN_ENTRY(ReturnCode) { (ReturnCode), (#ReturnCode) }
 //#endif
 
 #endif

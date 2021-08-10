@@ -10,4 +10,46 @@
 #endif
 
 
+
+//static inline void HAL_Motor_LoadConversionBemfA(void * p_motor)
+//{
+//
+//}
+//
+//static inline void HAL_Motor_LoadConversionBemfB(void * p_motor)
+//{
+//
+//}
+//
+//static inline void HAL_Motor_LoadConversionBemfC(void * p_motor)
+//{
+//
+//}
+//
+//static inline void HAL_Motor_LoadConversionIabc(void * p_motor)
+//{
+//
+//}
+
+//per controller init
+//static inline void HAL_Motor_EnqueueConversionUser(void)
+//{
+//
+//}
+//
+//static inline void HAL_Motor_EnqueueConversionIdle(void)
+//{
+//
+//}
+//
+//static inline void HAL_Motor_EnqueueConversionMonitor(void)
+//{
+//
+//}
+//
+//static inline void HAL_Motor_Init(void)
+//{
+//
+//}
+
 #endif

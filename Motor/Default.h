@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/**************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,18 +19,30 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
 /*!
-    @file
+    @file 	Default.h
     @author FireSoucery
-    @brief
+    @brief  Motor default fallback parameters
     @version V0
 */
-/*******************************************************************************/
-#ifndef MOTOR_SHELL_H
-#define MOTOR_SHELL_H
+/**************************************************************************/
+#ifndef DEFAULT_MOTOR_H
+#define DEFAULT_MOTOR_H
+
+/*
+ * Default value. If not load from flash. Run time adjustable
+ */
 
 
 
-#endif /* MOTOR_SHELL_H */
+#define DEFAULT_FOC_OPEN_LOOP_VQ 3276 /* 10 percent */
+
+#define DEFAULT_FOC_KP_FACTOR 	148 //qangle16, milliseconds
+#define DEFAULT_FOC_KP_DIVISOR 	1
+
+#define DEFAULT_FOC_KI_FACTOR 	1 //qangle16, milliseconds
+#define DEFAULT_FOC_KI_DIVISOR 	4
+
+#endif
