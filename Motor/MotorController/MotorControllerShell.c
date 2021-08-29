@@ -30,7 +30,7 @@
 /*******************************************************************************/
 #include "MotorControllerShell.h"
 
-#include "Motor/MotorController/MotorController.h"
+#include "MotorController.h"
 
 #include "System/Shell/Shell.h"
 #include "System/Shell/Terminal.h"
@@ -50,6 +50,7 @@ extern const Cmd_Return_T MOTOR_CMD_RETURN_TABLE[MOTOR_SHELL_CMD_RETURN_COUNT];
 
 //support 1 instance of shell
 //Cmds function reference 1 instace of Motor Controller
+//this way cmd functions do not need to include context data in arugments.
 static MotorController_T * p_CmdContextMotorController;
 static const Shell_T * p_CmdContextShell;
 static const Terminal_T * p_CmdContextTerminal;
@@ -57,6 +58,8 @@ static const Terminal_T * p_CmdContextTerminal;
 /*******************************************************************************/
 /*!
     @brief Init
+
+    inits single instance of cmd context
 */
 /*******************************************************************************/
 void MotorControllerShell_Init(const MotorController_T * p_motorController)
@@ -69,7 +72,7 @@ void MotorControllerShell_Init(const MotorController_T * p_motorController)
 		&MOTOR_CMD_RETURN_TABLE,
 		MOTOR_SHELL_CMD_RETURN_COUNT,
 		&p_motorController->Serials[0], //&p_motorController->Parameters.ShellSerialId
-		p_motorController,
+//		p_motorController,
 		MOTOR_SHELL_PROC_FREQ
 	);
 
@@ -181,7 +184,7 @@ int Cmd_pwm(int argc, char ** argv)
 
 //set direct
 	//	p_Motors[0].Pwm;
-	//	Phase_Polar_SetDutyCyle(&MotorShellMain.p_Motors[0].Phase, pwm);
+	//	Phase_Polar_SetDutyCyle(&MotorControllerShellMain.p_Motors[0].Phase, pwm);
 
 	return MOTOR_SHELL_CMD_RETURN_CODE_SUCCESS;
 }
@@ -206,14 +209,14 @@ int Cmd_configfile(int argc, char **argv)
 //int Cmd_read(int argc, char **argv)
 //{
 //	static char buffer[5];
-////	snprintf(buffer, 5, "%d", MotorShellMain.p_Motors[0].VBus);
+////	snprintf(buffer, 5, "%d", MotorControllerShellMain.p_Motors[0].VBus);
 ////	sprintf()
 //	if (strcmp(argv[1], "vbus") == 0U)
 //	{
-//		Terminal_SendString(&MotorShellMain.Terminal, "\r\nVBus = ");
-//		Terminal_SendString(&MotorShellMain.Terminal, buffer);
-////    	Terminal_SendNum(MotorShellMain.p_Motors[0].VBus);
-//		Terminal_SendString(&MotorShellMain.Terminal, "\r\n");
+//		Terminal_SendString(&MotorControllerShellMain.Terminal, "\r\nVBus = ");
+//		Terminal_SendString(&MotorControllerShellMain.Terminal, buffer);
+////    	Terminal_SendNum(MotorControllerShellMain.p_Motors[0].VBus);
+//		Terminal_SendString(&MotorControllerShellMain.Terminal, "\r\n");
 //	}
 //	else
 //	{
@@ -402,7 +405,7 @@ const Cmd_Return_T MOTOR_CMD_RETURN_TABLE[MOTOR_SHELL_CMD_RETURN_COUNT] =
 /*! @} */
 /*******************************************************************************/
 
-//void MotorShell_RegisterShellCmds()
+//void MotorControllerShell_RegisterShellCmds()
 //{
 //	Shell_RegisterCmdLineEntry(&Cmd_pwm);
 //	Shell_RegisterCmdLineEntry(&Cmd_rpm);

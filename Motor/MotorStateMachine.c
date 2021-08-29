@@ -61,6 +61,7 @@ extern const State_T MOTOR_STATE_CALIBRATE_HALL;
 /*******************************************************************************/
 void MotorStateMachine_Init(Motor_T * p_motor)
 {
+	//move to motor removes circular dependency
 	StateMachine_Init
 	(
 		&(p_motor->StateMachine),

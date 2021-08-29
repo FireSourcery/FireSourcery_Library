@@ -79,18 +79,20 @@ typedef struct
 	uint8_t CmdReturnCount;
 
 	Terminal_T Terminal;
-	volatile void * p_TypeData;
+//	volatile void * p_TypeData;
+
+//	volatile void ** pp_CmdDataTable; //array of pointers to user data
 
 	//processing
 	volatile Shell_State_T State;
-	volatile Cmd_Function_T CmdFunction; /*!< Cmd in process */ //preserve across state change
+	volatile Cmd_Function_T CmdFunction; /*!< Cmd retrieved and in process */ //preserve across state change
 	volatile int CmdReturnCode;
 
 	//loop mode
 	uint32_t ProcFreq; //loop mode reference
-	bool IsLoopModeEnable;
-	volatile uint32_t LoopModePeriod;
-	volatile uint32_t LoopModeCounter;
+//	bool IsLoopModeEnable;
+//	volatile uint32_t LoopModePeriod;
+//	volatile uint32_t LoopModeCounter;
 
 //	bool PrintReturnCode;
 }
@@ -98,12 +100,5 @@ Shell_T;
 
 extern Shell_Status_T Shell_Proc(Shell_T * p_shell);
 //extern void Shell_Init(uint16_t cmdLoopFreq, uint16_t shellProcFreq);
-
-//extern int Cmd_help(Shell_T p_shell, int argc, char * argv[]);
-//extern int Cmd_exit(Shell_T p_shell, int argc, char * argv[]);
-//extern int Cmd_echo(int argc, char * argv[]);
-
-//extern Cmd_T Cmd_exit;
-//extern Cmd_T Cmd_help;
 
 #endif

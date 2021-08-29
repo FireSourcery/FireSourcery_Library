@@ -34,7 +34,7 @@
 #include "Config.h"
 
 #include "Motor/Utility/MotorUser.h"
-//#include "MotorFlash.h"
+//#include "Motor/Utility/MotorFlash.h"
 
 #include "Motor/Motor.h"
 #include "Motor/HAL_Motor.h"
@@ -59,6 +59,10 @@ typedef const struct
 
 	const MotorUser_Consts_T MOTOR_USER_INIT;
 
+
+	const Motor_Constants_T * const P_MOTORS_CONSTANTS[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT];
+	const Motor_Parameters_T * const P_MOTORS_PARAMETERS[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT]; //parameters default
+
 	const HAL_Serial_T * const P_HAL_SERIALS[CONFIG_MOTOR_CONTROLLER_HW_HAL_SERIAL_COUNT];
 
 //	const HAL_Flash_T * const P_HAL_FLASH;
@@ -72,29 +76,28 @@ typedef const struct
 }
 MotorController_Constants_T;
 
-typedef struct
-{
-	uint8_t ShellConnectId;
-}
-MotorController_Parameters_T;
+//typedef struct
+//{
+//	uint8_t ShellConnectId;
+//}
+//MotorController_Parameters_T;
 
 typedef struct
 {
 	const MotorController_Constants_T * p_Constants;
-	MotorController_Parameters_T Parameters;
+//	MotorController_Parameters_T Parameters;
 
-	/* compile time const for all instancesl, only 1 instance expected. */
+	/* compile time const for all instances, only 1 instance of MotorController_T expected. */
 
 	Motor_T Motors[CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT];
 
 	uint8_t SerialTxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT][100U];
 	uint8_t SerialRxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT][100U];
-	Serial_T Serials[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT]; //simutanous active serial
+	Serial_T Serials[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT]; //simultaneous active serial
 
 
 	Shell_T MotorControllerShell;
 	MotorUser_T MotorUser;
-
 	//Flash_T MotorFlash;
 }
 MotorController_T;

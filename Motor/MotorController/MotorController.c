@@ -32,9 +32,10 @@
 
 #include "Config.h"
 
+#include "Motor/Motor.h"
 #include "Motor/HAL_Motor.h"
-#include "Motor/Utility/MotorUser.h"
 
+#include "Motor/Utility/MotorUser.h"
 //#include "Motor/Utility/MotorFlash.h"
 
 #include <stdint.h>
@@ -47,13 +48,14 @@
 void MotorController_Init(MotorController_T * p_motorController, const MotorController_Constants_T * p_consts)
 {
 	MotorUser_Init(&p_motorController->MotorUser, &p_consts->MOTOR_USER_INIT);
+//	MotorFlash_Init(&p_motorController->MotorFlash, &p_consts->MOTOR_FLASH_CONSTS);
 	MotorControllerShell_Init(p_motorController);
 
 	HAL_Motor_Init(); //HAL_MotorController_Init init hal analog instances
 
 	for(uint8_t iMotor = 0U; iMotor < CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT; iMotor++)
 	{
-//		Motor_Init(&p_motorController->Motors[iMotor], &MOTOR_CONSTANTS_1, &MOTOR_PARAMETERS_DEFAULT);
+		Motor_Init(&p_motorController->Motors[iMotor], &p_consts->P_MOTORS_CONSTANTS[iMotor], &p_consts->P_MOTORS_PARAMETERS[iMotor]);
 	}
 
 

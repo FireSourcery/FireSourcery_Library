@@ -6,15 +6,22 @@
 #define CMD_RESERVED_RETURN_CODE_SUCCESS 		0U
 #define CMD_RESERVED_RETURN_CODE_INVALID_ARGS 	-1 //Must be implement at cmd function level / per cmd function
 
-typedef int (*Cmd_Function_T)(int argc, char * argv[]);
-//typedef int (*Cmd_SuperFunction_T)(void * p_s, int argc, char * argv[]);
-typedef int (*Cmd_SuperFunction_T)(void * p_context, int argc, char * argv[]);
-
-
-//enum Cmd_Type_T
+//typedef enum
 //{
-//
+//	CMD_RESERVED_RETURN_CODE_SUCCESS = 0,
+//	CMD_RESERVED_RETURN_CODE_INVALID_ARGS = -1,
 //}
+//Cmd_ReservedReturnCode_T;
+
+typedef int (*Cmd_Function_T)(int argc, char * argv[]);
+typedef int (*Cmd_ContextFunction_T)(void * p_context, int argc, char * argv[]);
+
+//enum
+//{
+// shell
+// userdata
+// fixedScope
+//} Cmd_Type_T
 
 typedef const struct
 {
@@ -51,7 +58,7 @@ Cmd_Return_T;
 
 #endif
 
-//
+
 //#ifdef SHELL_OPTION_USE_LIST
 //#define DEFINE_CMD_ENTRY(CmdName, CmdHelpString, CmdFunction) CMDLINE_ENTRY_T CmdEntry##CmdName = { (#CmdName), (CmdHelpString), (CmdFunction), {0} }
 //#define DEFINE_RETURN_ENTRY(ReturnCode)	RESULT_ENTRY_T ReturnEntry##ReturnCode = { (ReturnCode), (#ReturnCode) }

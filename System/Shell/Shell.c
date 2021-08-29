@@ -45,8 +45,25 @@
  */
 /******************************************************************************/
 /*! @{ */
-//static void PrintShellStatus(Shell_T * p_shell, Shell_Status_T status)
+static void PrintCmdReturnCode(Shell_T * p_shell, int cmdReturnCode)
+{
+	Terminal_SendString(&p_shell->Terminal, "Command returned error code ");
+	Terminal_SendString(&p_shell->Terminal, Cmd_SearchReturnString(p_shell->p_CmdReturnTable, p_shell->CmdReturnCount, cmdReturnCode));
+	Terminal_SendString(&p_shell->Terminal, "\r\n");
+}
+
+//static void PrintShellException(Shell_T * p_shell, Shell_Status_T status)
 //{
+
+//if (PrintShellStatusError)
+//{
+//	switch(status)
+//	{
+//	case SHELL_STATUS_CMD_INVALID:
+//	Terminal_SendString(&p_shell->Terminal, "Invalid command\r\n");
+
+
+
 //	switch (status)
 //	{
 //		case SHELL_STATUS_TERMINAL_PARSER_FAIL:
@@ -64,19 +81,19 @@
 //	}
 //}
 
-static void PrintCmdReturnCode(Shell_T * p_shell, int cmdReturnCode)
+void Shell_PollEscape(Shell_T * p_shell) //poll escape on separate thread
 {
-	Terminal_SendString(&p_shell->Terminal, "Command returned error code ");
-	Terminal_SendString(&p_shell->Terminal, Cmd_SearchReturnString(p_shell->p_CmdReturnTable, p_shell->CmdReturnCount, cmdReturnCode));
-	Terminal_SendString(&p_shell->Terminal, "\r\n");
+	if (Terminal_PollCmdlineEsc(&p_shell->Terminal))
+	{
+		Terminal_SendString(&p_shell->Terminal, "Exit\r\n");
+		p_shell->State = SHELL_STATE_PROMPT;
+	}
 }
-
 
 //non blocking proc
 Shell_Status_T Shell_Proc(Shell_T * p_shell)
 {
 	Shell_Status_T status = 0U;
-
 //	Cmd_Function_T * p_cmdSearch;
 
 	switch(p_shell->State)
@@ -166,7 +183,6 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 					}
 				}
 			}
-
 			break;
 
 		case SHELL_STATE_PROCESS_CMD_LOOP:
@@ -192,13 +208,7 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 			break;
 
 //		case SHELL_STATE_PRINT_EXCEPTION:
-			//if (PrintShellStatusError)
-			//{
-		//	switch(status)
-		//	{
-			//	case SHELL_STATUS_CMD_INVALID:
-		//	Terminal_SendString(&p_shell->Terminal, "Invalid command\r\n");
-
+//			PrintShellException()
 
 		//	case SHELL_STATUS_CMD_ERROR:
 		//	if(PrintCmdReturnCode)
@@ -213,8 +223,6 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 		default: break;
 	}
 
-
-
 	return status;
 }
 
@@ -226,7 +234,7 @@ void Shell_Init
 	Cmd_Return_T * p_returnCodeTable,
 	uint8_t returnCodeCount,
 	void * p_terminalConnect,
-	void * p_typeData,
+//	void * p_typeData,
 	uint16_t shellProcFreq
 )
 {
@@ -235,7 +243,7 @@ void Shell_Init
 	p_shell->p_CmdReturnTable = p_returnCodeTable;
 	p_shell->CmdReturnCount = returnCodeCount;
 	Terminal_Init(&p_shell->Terminal, p_terminalConnect);
-	p_shell->p_TypeData = p_typeData;
+//	p_shell->p_TypeData = p_typeData;
 	p_shell->ProcFreq = shellProcFreq;
 	p_shell->State = SHELL_STATE_PROMPT;
 }
@@ -251,78 +259,6 @@ void Shell_Init
 //	PrintReturnCode = print;
 //}
 
-
-/******************************************************************************/
-/*!
- *  @name Cmds
- *  Default commands
- */
-/******************************************************************************/
-/*! @{ */
-//int Cmd_help(Shell_T p_shell, int argc, char * argv[])
-//{
-//    (void)argc;
-//    (void)argv;
-//
-//    Terminal_SendString("\r\nCommands Available\r\n--------------------\r\n");
-//
-////#ifdef SHELL_OPTION_USE_ARRAY_TABLE
-//	for (uint8_t idx; idx < p_shell->CmdCount; idx++)
-//	{
-//		if(p_shell->p_CmdTable[idx].P_NAME != 0U)
-//		{
-//			Terminal_SendString(p_shell->p_CmdTable[idx].P_NAME);
-//			Terminal_SendString("	");
-//			Terminal_SendString(p_shell->p_CmdTable[idx].P_HELP);
-//			Terminal_SendString("\r\n");
-//		}
-//	}
-////#endif
-//
-////#ifdef SHELL_OPTION_USE_LIST
-////	LIST_NODE_HANDLE_T node = List_GetHead(&CmdList);
-////    while(node != NULL)
-////    {
-////        Terminal_SendString(GET_CONTAINER_STRUCT_POINTER(node, CMDLINE_ENTRY_T, Link)->CmdName);
-////        Terminal_SendString("	");
-////        Terminal_SendString(GET_CONTAINER_STRUCT_POINTER(node, CMDLINE_ENTRY_T, Link)->CmdHelp);
-////        Terminal_SendString("\r\n");
-////        node = List_GetNext(node);
-////    }
-////#endif
-//
-//    Terminal_SendString("\r\n");
-//
-//    return CMD_RESERVED_RETURN_CODE_SUCCESS;
-//}
-//
-//int Cmd_exit(Shell_T p_shell, int argc, char * argv[])
-//{
-//    (void)argc;
-//    (void)argv;
-//
-//    p_shell->State = SHELL_STATE_INACTIVE;
-//    Terminal_SendString("\r\nShell exited\r\n");
-//
-//    return CMD_RESERVED_RETURN_CODE_SUCCESS;
-//}
-//
-//int Cmd_echo(int argc, char * argv[])
-//{
-//	if(argc == 2U)
-//	{
-//	    Terminal_SendString("\r\n");
-//	    Terminal_SendString(argv[1]);
-//	    Terminal_SendString("\r\n");
-//	}
-//
-//	return CMD_RESERVED_RETURN_CODE_SUCCESS;
-//}
-
-///*! @} */
-//
-//Cmd_T Cmd_help 	= { "help", 	"Display list of available commands",  	Cmd_Function_help };
-//Cmd_T Cmd_exit 	= { "exit", 	"Exit program",  						Cmd_Function_exit };
 
 /******************************************************************************/
 /*!
