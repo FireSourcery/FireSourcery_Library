@@ -55,12 +55,16 @@ void MotorController_Init(MotorController_T * p_motorController, const MotorCont
 
 	for(uint8_t iMotor = 0U; iMotor < CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT; iMotor++)
 	{
-		Motor_Init(&p_motorController->Motors[iMotor], &p_consts->P_MOTORS_CONSTANTS[iMotor], &p_consts->P_MOTORS_PARAMETERS[iMotor]);
+		//if default
+		Motor_Init_Default(&p_motorController->Motors[iMotor], &p_consts->P_MOTORS_CONSTANTS[iMotor]);
+
+		//if flash
+		//must set eeprom pointer first
+		//	Motor_Init(&p_motorController->Motors[iMotor], &p_consts->P_MOTORS_CONSTANTS[iMotor]);
 	}
 
-
-//	Serial_Init();
-	//MotorFlash_Init(&p_motorController->MotorFlash, p_init->P_HAL_FLASH);
+	//	Serial_Init();
+	//	MotorFlash_Init(&p_motorController->MotorFlash, p_init->P_HAL_FLASH);
 }
 
 

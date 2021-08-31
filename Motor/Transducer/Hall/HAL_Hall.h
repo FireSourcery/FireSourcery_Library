@@ -31,12 +31,12 @@
 #ifndef HAL_HALL_H
 #define HAL_HALL_H
 
-#include "HAL/HAL.h"
+#include "Path/Path.h"
 
 #if 	defined(CONFIG_HAL_HALL_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
-	#include HAL_PATH_USER(HAL_Hall.h)
+	#include PATH_USER(HAL_Hall.h)
 #elif 	defined(CONFIG_HAL_HALL_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include HAL_PATH_BOARD(Motor/Transducer/HAL, HAL_Hall.h)
+	#include PATH_BOARD(Motor/Transducer/HAL, HAL_Hall.h)
 #endif
 
 #endif

@@ -32,12 +32,12 @@
 #ifndef HAL_ENCODER_H
 #define HAL_ENCODER_H
 
-#include "HAL/HAL.h"
+#include "Path/Path.h"
 
 #if 	defined(CONFIG_HAL_ENCODER_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
-	#include HAL_PATH_USER(HAL_Encoder.h)
+	#include PATH_USER(HAL_Encoder.h)
 #elif 	defined(CONFIG_HAL_ENCODER_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include HAL_PATH_BOARD(Transducer/Encoder/HAL, HAL_Encoder.h)
+	#include PATH_BOARD(Transducer/Encoder/HAL, HAL_Encoder.h)
 #endif
 
 

@@ -270,6 +270,7 @@ typedef const struct Motor_Init_Tag
 
 	const uint8_t * const P_EEPROM; 	//or flash partition struct
 	//	Flash_Partition_T  p_FlashPartition;
+	const Motor_Parameters_T * const P_PARAMETERS_DEFAULT;
 
 	volatile const adc_t * const P_VBUS_ADCU;
 	volatile const adc_t * const P_VA_ADCU;

@@ -31,13 +31,12 @@
 #ifndef HAL_PHASE_H
 #define HAL_PHASE_H
 
-//#include "Config.h"
-#include "HAL/HAL.h"
+#include "Path/Path.h"
 
 #if 	defined(CONFIG_HAL_PHASE_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
-	#include HAL_PATH_USER(HAL_Phase.h)
+	#include PATH_USER(HAL_Phase.h)
 #elif 	defined(CONFIG_HAL_PHASE_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include HAL_PATH_BOARD(Motor/Transducer/HAL, HAL_Phase.h)
+	#include PATH_BOARD(Motor/Transducer/HAL, HAL_Phase.h)
 #endif
 
 #endif

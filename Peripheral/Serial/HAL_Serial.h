@@ -31,12 +31,12 @@
 #ifndef HAL_SERIAL_H
 #define HAL_SERIAL_H
 
-#include "HAL/HAL.h"
+#include "Path/Path.h"
 
 #if 	defined(CONFIG_HAL_SERIAL_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
-	#include HAL_PATH_USER(HAL_Serial.h)
+	#include PATH_USER(HAL_Serial.h)
 #elif 	defined(CONFIG_HAL_SERIAL_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include HAL_PATH_PLATFORM(Peripheral/HAL, HAL_Serial.h)
+	#include PATH_PLATFORM(Peripheral/HAL, HAL_Serial.h)
 #endif
 
 #endif

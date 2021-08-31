@@ -22,21 +22,27 @@
 /*******************************************************************************/
 /*******************************************************************************/
 /*!
-    @file
+    @file 	Path.h
     @author FireSoucery
-    @brief
+    @brief  Path Macros fo HAL
     @version V0
 */
 /*******************************************************************************/
-#ifndef HAL_FLASH_H
-#define HAL_FLASH_H
+#ifndef PATH_H
+#define PATH_H
 
-#include "Path/Path.h"
+#define XSTR(V...) #V
+#define PATH(Root, File)  XSTR(Root/File)
 
-#if 	defined(CONFIG_HAL_FLASH_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
-	#include PATH_USER(HAL_Flash.h)
-#elif 	defined(CONFIG_HAL_FLASH_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include PATH_PLATFORM(Peripheral/HAL, HAL_Flash.h)
+#define PATH_BOARD(Root, File)  	PATH(Root/Board/CONFIG_PATH_BOARD, File)
+#define PATH_PLATFORM(Root, File)  	PATH(Root/Platform/CONFIG_PATH_PLATFORM, File)
+#define PATH_USER(File) 			PATH(CONFIG_PATH_USER, File)
+
+/* user defines the following path macros */
+/*
+	#define CONFIG_PATH_BOARD 			Demo_Board
+	#define CONFIG_PATH_PLATFORM 		Demo_Platform
+	#define CONFIG_PATH_USER 			Demo/HAL/Board/
+*/
+
 #endif
-
-#endif /* HAL_FLASH_H */

@@ -52,8 +52,10 @@ extern const Cmd_Return_T MOTOR_CMD_RETURN_TABLE[MOTOR_SHELL_CMD_RETURN_COUNT];
 //Cmds function reference 1 instace of Motor Controller
 //this way cmd functions do not need to include context data in arugments.
 static MotorController_T * p_CmdContextMotorController;
-static const Shell_T * p_CmdContextShell;
-static const Terminal_T * p_CmdContextTerminal;
+
+//static Motor_T * p_CmdMotors; //pointer to array of motors
+static const Shell_T * p_CmdContextShell; //Read-only
+static const Terminal_T * p_CmdContextTerminal; //read-only
 
 /*******************************************************************************/
 /*!

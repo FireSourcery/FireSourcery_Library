@@ -57,9 +57,27 @@
 void Motor_Init(Motor_T * p_motor, const Motor_Constants_T * p_motorInit, const Motor_Parameters_T * p_parameters)
 {
 	Motor_InitConstants(p_motor, p_motorInit);
-	Motor_InitParamaters(p_motor, p_parameters);
+	Motor_InitParamaters(p_motor, p_parameters); //p_motorInit->P_PARAMETERS_DEFAULT
 
 	MotorStateMachine_Init(p_motor); // circular modular dependency
+	Motor_InitReboot(p_motor);
+}
+
+void Motor_Init_Default(Motor_T * p_motor, const Motor_Constants_T * p_motorInit)
+{
+	Motor_InitConstants(p_motor, p_motorInit);
+	Motor_InitParamaters(p_motor, p_motorInit->P_PARAMETERS_DEFAULT);
+
+	MotorStateMachine_Init(p_motor);
+	Motor_InitReboot(p_motor);
+}
+
+void Motor_Init_Flash(Motor_T * p_motor, const Motor_Constants_T * p_motorInit)
+{
+	Motor_InitConstants(p_motor, p_motorInit);
+	Motor_InitParamaters(p_motor, p_motorInit->P_EEPROM);
+
+	MotorStateMachine_Init(p_motor);
 	Motor_InitReboot(p_motor);
 }
 
