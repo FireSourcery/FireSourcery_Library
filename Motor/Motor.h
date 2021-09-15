@@ -497,10 +497,11 @@ static inline void Motor_Float(Motor_T * p_motor)
 
 // todo monitor heat functions
 
+extern void Motor_Init_Default(Motor_T * p_motor, const Motor_Constants_T * p_motorInit);
 
 extern void Motor_Init(Motor_T * p_motor, const Motor_Constants_T * p_motorInitStruct, const Motor_Parameters_T * p_parameters);
 extern void Motor_InitConsts(Motor_T * p_motor, const Motor_Constants_T * p_motorInit);
-extern void Motor_InitParamaters(Motor_T * p_motor, const Motor_Parameters_T * p_parameters);
+extern void Motor_InitParameters(Motor_T * p_motor, const Motor_Parameters_T * p_parameters);
 extern void Motor_InitReboot(Motor_T * p_motor);
 //extern void Motor_StartAlign(Motor_T * p_motor);
 //extern void Motor_OnBlock(Motor_T * p_motor);

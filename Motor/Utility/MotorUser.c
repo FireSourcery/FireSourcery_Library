@@ -44,9 +44,9 @@ void MotorUser_Init(MotorUser_T * p_motorUser, const MotorUser_Consts_T * p_cons
 	p_motorUser->P_MOTOR_USER_CONST = p_consts;
 
 	Debounce_Init(&p_motorUser->InputAnalog.PinBrake, 		&p_consts->HAL_PIN_BRAKE, 		&p_consts->P_DEBOUNCE_TIMER, 5U);	//5millis
-	Debounce_Init(&p_motorUser->InputAnalog.PinThrottle,	&p_consts->HAL_PIN_THROTTLE, 		&p_consts->P_DEBOUNCE_TIMER, 5U);	//5millis
-	Debounce_Init(&p_motorUser->InputAnalog.PinForward, 	&p_consts->HAL_PIN_FORWARD, 		&p_consts->P_DEBOUNCE_TIMER, 5U);	//5millis
-	Debounce_Init(&p_motorUser->InputAnalog.PinReverse, 	&p_consts->HAL_PIN_REVERSE, 		&p_consts->P_DEBOUNCE_TIMER, 5U);	//5millis
+	Debounce_Init(&p_motorUser->InputAnalog.PinThrottle,	&p_consts->HAL_PIN_THROTTLE, 	&p_consts->P_DEBOUNCE_TIMER, 5U);	//5millis
+	Debounce_Init(&p_motorUser->InputAnalog.PinForward, 	&p_consts->HAL_PIN_FORWARD, 	&p_consts->P_DEBOUNCE_TIMER, 5U);	//5millis
+	Debounce_Init(&p_motorUser->InputAnalog.PinReverse, 	&p_consts->HAL_PIN_REVERSE, 	&p_consts->P_DEBOUNCE_TIMER, 5U);	//5millis
 
 	//uncalibrated default
 	Linear_ADC_Init(&p_motorUser->InputAnalog.UnitThrottle, 	0U, 4095U, 50U);
@@ -104,6 +104,13 @@ void MotorUser_Serial_CaptureInput_IO(MotorUser_T * p_motorUser)
 //	}
 }
 
+void MotorUser_SetInputThrottle(MotorUser_T * p_motorUser, uint16_t throttle)
+{
+	p_motorUser->InputValueThrottlePrev 	= p_motorUser->InputValueThrottle;
+	p_motorUser->InputValueThrottle 		= throttle;
+}
+
+
 
 void MotorUser_CaptureInput_IO(MotorUser_T * p_motorUser)
 {
@@ -139,7 +146,7 @@ void MotorUser_WriteOutput(const MotorUser_T * p_motorUser)
 //write to motor
 void MotorUser_SetMotorInput(const MotorUser_T * p_motorUser, Motor_T * p_motorDest)
 {
-	//proc inputs
+	// semisync inputs
 	//	if(GetSwitchEdge(DirectionButton)) {StateMachine_Semisynchronous_ProcInput(p_motorUser->StateMachine, PIN_FUNCTION_FORWARD);}
 	//	if(GetSwitchEdge(DirectionButton)) {StateMachine_Semisynchronous_ProcInput(p_motorUser->StateMachine, PIN_FUNCTION_REVERSE);}
 
@@ -164,7 +171,7 @@ void MotorUser_SetMotorInput(const MotorUser_T * p_motorUser, Motor_T * p_motorD
 		}
 		else
 		{
-			if (p_motorUser->InputValueThrottle < 5U) // less then threshold
+			if (p_motorUser->InputValueThrottle < 5U) // less then threshold //p_motorUser->InputValueThrottleThreshold
 			{
 				activeControl = false;
 			}
@@ -181,14 +188,11 @@ void MotorUser_SetMotorInput(const MotorUser_T * p_motorUser, Motor_T * p_motorD
 
 	if (activeControl == false)
 	{
-//		Motor_SetActiveControl(p_motorDest, false);
-//		p_motorDest->IsDirectionNeutral = true;
-		p_motorDest->IsActiveControl = false;
+		p_motorDest->IsActiveControl = false; //		Motor_SetActiveControl(p_motorDest, false);
 //		Motor_SetUserCmd(p_motorDest, 0U);
 	}
 	else
 	{
-//		p_motorDest->IsDirectionNeutral = false;
 		p_motorDest->IsActiveControl = true;
 
 		if (p_motorUser->InputSwitchForward == true) // ^ reverse direction
@@ -203,11 +207,8 @@ void MotorUser_SetMotorInput(const MotorUser_T * p_motorUser, Motor_T * p_motorD
 		//set ramp per second
 		if (p_motorUser->InputSwitchBrake == true)
 		{
-	//			if (p_motor->Parameters.BrakeMode == MOTOR_BRAKE_MODE_SCALAR)
-	//			{
 			Motor_SetUserCmd(p_motorDest, (p_motorUser->InputValueBrake + p_motorUser->InputValueBrakePrev) / 2U);
 			Motor_SetRampDecelerate(p_motorDest, 0);
-	//			}
 		}
 		else
 		{

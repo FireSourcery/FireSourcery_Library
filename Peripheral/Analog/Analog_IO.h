@@ -59,10 +59,10 @@ static inline void CaptureAdcResults_NMultiMuxed
 	Analog_VirtualChannel_T iVirtualChannel;
 
 	/* Read in the same way it was pushed */
-	for (uint8_t iChannel = 0; iChannel < activeChannelCount; iChannel += nAdc)
+	for (uint8_t iChannel = 0U; iChannel < activeChannelCount; iChannel += nAdc)
 	{
 		/* p_analog->p_ActiveConversion->ChannelCount > 1, on second loop, safe to dereference p_virtualChannels[index>0] */
-		for (uint8_t iAdc = 0; iAdc < nAdc; iAdc++)
+		for (uint8_t iAdc = 0U; iAdc < nAdc; iAdc++)
 		{
 			if (iChannel + iAdc < activeChannelCount)
 			{
@@ -86,11 +86,7 @@ static inline void CaptureAdcResults_NMultiMuxed
 //
 //}
 
-static inline void CaptureAdcResults
-(
-	const Analog_T * p_analog,
-	const Analog_VirtualChannel_T * p_virtualChannels
-)
+static inline void CaptureAdcResults(const Analog_T * p_analog,	const Analog_VirtualChannel_T * p_virtualChannels)
 {
 #ifdef CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
 	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
@@ -221,7 +217,7 @@ static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
 			}
 		}
 
-		if (p_analog->p_ActiveConversion != 0)
+		if (p_analog->p_ActiveConversion != 0U)
 		{
 			#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
 				p_analog->ActiveChannelCount = newActiveChannelCount;
@@ -276,7 +272,7 @@ static inline void PollAdcResults(Analog_T * p_analog, 	HAL_ADC_T (* const (* pp
 {
 	bool capture;
 
-	for (uint8_t iAdc = 0; iAdc < nAdc; iAdc++)
+	for (uint8_t iAdc = 0U; iAdc < nAdc; iAdc++)
 	{
 		capture = HAL_ADC_ReadConversionCompleteFlag(pp_adcMaps[iAdc]);
 

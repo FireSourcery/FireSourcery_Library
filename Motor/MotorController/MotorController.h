@@ -39,7 +39,14 @@
 #include "Motor/Motor.h"
 #include "Motor/HAL_Motor.h"
 
+//#include "Motor/Utility/MotorShell.h"
+
+#include "Peripheral/Serial/Serial.h"
 #include "System/Shell/Shell.h"
+
+#include "System/Thread/Thread.h"
+
+#include "Transducer/Blinky/Blinky.h"
 
 #ifdef CONFIG_MOTOR_ADC_8
 	typedef uint16_t adc_t;
@@ -49,62 +56,59 @@
 
 typedef const struct
 {
-//	volatile Motor_T * const P_MOTORS;
-//	const uint8_t MOTORS_COUNT;
+	const HAL_Pin_T HAL_PIN_ALARM;
 
+	volatile const uint32_t * const P_MILLIS_TIMER;
+
+	//MotorControllerMonitor MotorUserAnalog
 	//	volatile const adc_t * P_VBUS_ADCU;
 	volatile const adc_t * const P_VACC_ADCU;
 	volatile const adc_t * const P_VSENSE_ADCU;
 	volatile const adc_t * const P_HEAT_PCB_ADCU;
 
 	const MotorUser_Consts_T MOTOR_USER_INIT;
-
-
-	const Motor_Constants_T * const P_MOTORS_CONSTANTS[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT];
-	const Motor_Parameters_T * const P_MOTORS_PARAMETERS[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT]; //parameters default
-
-	const HAL_Serial_T * const P_HAL_SERIALS[CONFIG_MOTOR_CONTROLLER_HW_HAL_SERIAL_COUNT];
+	const Motor_Constants_T MOTOR_INITS[CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT];
+	const Serial_Init_T SERIAL_INITS[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT];
 
 //	const HAL_Flash_T * const P_HAL_FLASH;
 
-	//		.P_TX_BUFFER
-	//		.P_RX_BUFFER
-	//		.TX_BUFFER_SIZE
-	//		.RX_BUFFER_SIZE
+	//todo alarm, thermistor
 
-	//todo alarm thermistor
+
+
 }
 MotorController_Constants_T;
 
-//typedef struct
-//{
-//	uint8_t ShellConnectId;
-//}
-//MotorController_Parameters_T;
+typedef struct
+{
+	uint8_t ShellConnectId;
+}
+MotorController_Parameters_T;
 
 typedef struct
 {
 	const MotorController_Constants_T * p_Constants;
-//	MotorController_Parameters_T Parameters;
+	MotorController_Parameters_T Parameters;
 
-	/* compile time const for all instances, only 1 instance of MotorController_T expected. */
-
+	/* compile time define const for all instances, only 1 instance of MotorController_T expected. */
 	Motor_T Motors[CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT];
 
-	uint8_t SerialTxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT][100U];
-	uint8_t SerialRxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT][100U];
+//	uint8_t SerialTxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT][100U];
+//	uint8_t SerialRxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT][100U];
 	Serial_T Serials[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT]; //simultaneous active serial
 
 
-	Shell_T MotorControllerShell;
+	Shell_T MotorShell;
 	MotorUser_T MotorUser;
 	//Flash_T MotorFlash;
+
+	Thread_T TimerSeconds;
+	Thread_T TimerMillis;
+	Thread_T TimerMillis10;
+
+	Blinky_T BlinkyAlarm;
 }
 MotorController_T;
-
-
-
-
 
 
 #endif

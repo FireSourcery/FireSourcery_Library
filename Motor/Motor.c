@@ -33,7 +33,7 @@
 #include "Config.h"
 //#include "Default.h"
 
-#include "MotorStateMachine.h" //circular modular depency
+#include "MotorStateMachine.h" //circular modular dependency
 
 #include "System/StateMachine/StateMachine.h"
 #include "System/Thread/Thread.h"
@@ -57,7 +57,7 @@
 void Motor_Init(Motor_T * p_motor, const Motor_Constants_T * p_motorInit, const Motor_Parameters_T * p_parameters)
 {
 	Motor_InitConstants(p_motor, p_motorInit);
-	Motor_InitParamaters(p_motor, p_parameters); //p_motorInit->P_PARAMETERS_DEFAULT
+	Motor_InitParameters(p_motor, p_parameters); //p_motorInit->P_PARAMETERS_DEFAULT
 
 	MotorStateMachine_Init(p_motor); // circular modular dependency
 	Motor_InitReboot(p_motor);
@@ -65,20 +65,12 @@ void Motor_Init(Motor_T * p_motor, const Motor_Constants_T * p_motorInit, const 
 
 void Motor_Init_Default(Motor_T * p_motor, const Motor_Constants_T * p_motorInit)
 {
-	Motor_InitConstants(p_motor, p_motorInit);
-	Motor_InitParamaters(p_motor, p_motorInit->P_PARAMETERS_DEFAULT);
-
-	MotorStateMachine_Init(p_motor);
-	Motor_InitReboot(p_motor);
+	Motor_Init(p_motor, p_motorInit, p_motorInit->P_PARAMETERS_DEFAULT);
 }
 
 void Motor_Init_Flash(Motor_T * p_motor, const Motor_Constants_T * p_motorInit)
 {
-	Motor_InitConstants(p_motor, p_motorInit);
-	Motor_InitParamaters(p_motor, p_motorInit->P_EEPROM);
-
-	MotorStateMachine_Init(p_motor);
-	Motor_InitReboot(p_motor);
+	Motor_Init(p_motor, p_motorInit, p_motorInit->P_EEPROM);
 }
 
 void Motor_InitConstants(Motor_T * p_motor, const Motor_Constants_T * p_motorInit)
@@ -86,7 +78,7 @@ void Motor_InitConstants(Motor_T * p_motor, const Motor_Constants_T * p_motorIni
 	p_motor->p_Constants = p_motorInit;
 }
 
-void Motor_InitParamaters(Motor_T * p_motor, const Motor_Parameters_T * p_parameters)
+void Motor_InitParameters(Motor_T * p_motor, const Motor_Parameters_T * p_parameters)
 {
 	uint8_t * p_dest = &p_motor->Parameters;
 	const uint8_t * p_source = p_parameters;
@@ -182,6 +174,10 @@ void Motor_InitReboot(Motor_T * p_motor)
 		 );
 	}
 
+	/*
+	 * SW Structs
+	 */
+
 	BEMF_Init
 	(
 		&p_motor->Bemf,
@@ -195,38 +191,15 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	FOC_Init(&p_motor->Foc);
 
-	Thread_InitThreadPeriodic_Period //Timer only mode
-	(
-		&p_motor->ControlTimerThread,
-		&p_motor->ControlTimerBase,
-		p_motor->p_Constants->MOTOR_PWM_FREQ,
-		1U,
-		0U,
-		0U
-	);
-
-	Thread_InitThreadPeriodic_Period //Timer only mode
-	(
-		&p_motor->MillisTimerThread,
-		&p_motor->MillisTimerBase,
-		1000U,
-		1U,
-		0U,
-		0U
-	);
-
-	Thread_InitThreadPeriodic_Period //Timer only mode
-	(
-		&p_motor->SecondsTimerThread,
-		&p_motor->MillisTimerBase,
-		1000U,
-		1000U,
-		0U,
-		0U
-	);
+	/*
+	 * Timer only mode, no function attached
+	 */
+	Thread_InitThreadPeriodic_Period(&p_motor->ControlTimerThread, 	&p_motor->ControlTimerBase, 	p_motor->p_Constants->MOTOR_PWM_FREQ, 	1U, 	0U, 0U);
+	Thread_InitThreadPeriodic_Period(&p_motor->MillisTimerThread, 	&p_motor->MillisTimerBase, 		1000U, 									1U, 	0U, 0U);
+	Thread_InitThreadPeriodic_Period(&p_motor->SecondsTimerThread, 	&p_motor->MillisTimerBase, 		1000U, 									1000U, 	0U, 0U);
 
 	/*
-	 * initial runtime config settings
+	 * Initial runtime config settings
 	 */
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
 
@@ -244,7 +217,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	p_motor->Direction 				= MOTOR_DIRECTION_CCW;
 	p_motor->DirectionInput 		= MOTOR_DIRECTION_CCW;
-	p_motor->Speed_RPM 		= 0U;
+	p_motor->Speed_RPM 				= 0U;
 	p_motor->VPwm 					= 0U;
 	p_motor->ControlTimerBase 		= 0U;
 	p_motor->MillisTimerBase 		= 0U;

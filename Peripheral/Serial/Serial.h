@@ -60,9 +60,9 @@ typedef struct
 	uint32_t TxBufferSize;
 	uint32_t RxBufferSize;
 
-	volatile uint32_t TxBufferHead; //head is end of buffer queue,
+	volatile uint32_t TxBufferHead; // Write to buffer head. Tx from buffer tail
 	volatile uint32_t TxBufferTail;
-	volatile uint32_t RxBufferHead;
+	volatile uint32_t RxBufferHead; // Rx to buffer head. Read from buffer tail.
 	volatile uint32_t RxBufferTail;
 
 #if defined(CONFIG_SERIAL_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_SERIAL_MULTITHREADED_USER_DEFINED)
@@ -99,12 +99,78 @@ typedef const struct
 	//	bool HasRxHarwareFIFO;
 	uint8_t * const P_TX_BUFFER;
 	uint8_t * const P_RX_BUFFER;
-	const uint32_t TX_BUFFER_SIZE;
+	const uint32_t TX_BUFFER_SIZE; //change to #define const?
 	const uint32_t RX_BUFFER_SIZE;
 } Serial_Init_T;
 
 //static inline bool IsTxBufferEmpty(Serial_T * p_serial) 	{return (p_serial->TxBufferHead == p_serial->TxBufferTail);};
 //static inline bool IsRxBufferFull(Serial_T * p_serial) 	{return (p_serial->RxBufferHead == p_serial->RxBufferTail);};
+
+//Rx data reg full ISR, enqueue data, head is end of queue
+static inline void Serial_RxData_ISR(Serial_T *p_serial)
+{
+	uint32_t rxBufferHeadNext;
+
+	while (HAL_Serial_ReadRxRegFull(p_serial->p_HAL_Serial))
+	{
+		rxBufferHeadNext = (p_serial->RxBufferHead + 1) % p_serial->RxBufferSize;
+
+		if (rxBufferHeadNext == p_serial->RxBufferTail) //software buffer is full
+		{
+			//if buffer stays full, need to disable irq to prevent blocking main loop
+			//user must restart rx irq
+			HAL_Serial_DisableRxInterrupt(p_serial->p_HAL_Serial);
+			break;
+		}
+		else
+		{
+			p_serial->p_RxBuffer[p_serial->RxBufferHead] = HAL_Serial_ReadRxChar(p_serial->p_HAL_Serial);
+			p_serial->RxBufferHead = rxBufferHeadNext;
+		}
+	}
+}
+
+//Tx data reg empty ISR
+static inline void Serial_TxData_ISR(Serial_T * p_serial)
+{
+	while(HAL_Serial_ReadTxRegEmpty(p_serial->p_HAL_Serial))
+	{
+		if (p_serial->TxBufferHead == p_serial->TxBufferTail)  //software buffer is empty
+		{
+			HAL_Serial_DisableTxInterrupt(p_serial->p_HAL_Serial);
+			break;
+		}
+		else
+		{
+			HAL_Serial_WriteTxChar(p_serial->p_HAL_Serial, p_serial->p_TxBuffer[p_serial->TxBufferTail]);
+			p_serial->TxBufferTail = (p_serial->TxBufferTail + 1) % p_serial->TxBufferSize;
+		}
+	}
+}
+
+//If shared ISR
+static inline void Serial_RxTxData_ISR(Serial_T * p_serial)
+{
+	Serial_RxData_ISR(p_serial);
+	Serial_TxData_ISR(p_serial);
+}
+
+
+static inline void Serial_PollRestartRx_IO(Serial_T *p_serial)
+{
+//	Serial_EnableRx(p_serial);
+	HAL_Serial_EnableRxInterrupt(p_serial->p_HAL_Serial);
+}
+
+static inline void  Serial_TxComplete_IO(Serial_T * p_serial)
+{
+
+}
+
+//static inline void  Serial_Error_IO(Serial_T * p_serial)
+//{
+//  //HAL_Serial_GetError( );
+//}
 
 static inline uint32_t Serial_GetAvailableRx(Serial_T * p_serial)
 {
@@ -149,11 +215,7 @@ extern bool Serial_WriteChar(Serial_T * p_serial, uint8_t txChar);
 extern bool Serial_WriteString(Serial_T * p_serial, const uint8_t * p_srcBuffer, uint32_t length);
 extern void Serial_SetBaudRate(Serial_T * p_serial, uint32_t baudRate);
 
-extern void Serial_Init
-(
-	Serial_T * p_serial,
-	Serial_Init_T * p_serialInit
-);
+extern void Serial_Init(Serial_T * p_serial,	Serial_Init_T * p_serialInit);
 
 #endif
 

@@ -22,10 +22,10 @@
 /**************************************************************************/
 /**************************************************************************/
 /*!
-    @file 	MotorController.h
+    @file 	MotorController_Thread.h
     @author FireSoucery
-    @brief  Motor module functions must be placed into corresponding user app threads
-    		Most outer functions to call from MCU app
+    @brief  MotorController module functions must be placed into corresponding user app threads.
+    		Most outer functions to call from MCU app.
     @version V0
 */
 /**************************************************************************/
@@ -41,34 +41,51 @@
 #include "Motor/Motor_Thread.h"
 #include "Motor/HAL_Motor.h"
 
+#include "Peripheral/Serial/Serial.h"
 #include "System/Shell/Shell.h"
 
-static inline void MotorController_Main1Ms_Thread(MotorController_T * p_motorController)
+static inline void MotorController_Main_Thread(MotorController_T * p_motorController)
 {
-	MotorUser_Analog_CaptureInput_IO(&p_motorController->MotorUser);
-	MotorUser_WriteOutput(&p_motorController->MotorUser);
-
-	for(uint8_t iMotor = 0U; iMotor < CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT; iMotor++)
+	if (Thread_PollTimerCompletePeriodic(&p_motorController->TimerMillis) == true) 	//Med Freq, Low Priority 1 ms, Main
 	{
-		MotorUser_SetMotorInput(&p_motorController->MotorUser, p_motorController->Motors[iMotor]); //copy UI input to motor
-		MotorUser_SetUserOutput(&p_motorController->MotorUser, p_motorController->Motors[iMotor]); //copy motor output to UI
+		MotorUser_Analog_CaptureInput_IO(&p_motorController->MotorUser);
+		MotorUser_WriteOutput(&p_motorController->MotorUser); //actuate hw
 
-		Motor_Main1Ms_Thread(&p_motorController->Motors[iMotor]);
+		for (uint8_t iMotor = 0U; iMotor < CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT; iMotor++)
+		{
+			MotorUser_SetMotorInput(&p_motorController->MotorUser, &p_motorController->Motors[iMotor]); //copy UI input to motor
+			MotorUser_SetUserOutput(&p_motorController->MotorUser, &p_motorController->Motors[iMotor]); //copy motor output to UI
+
+			Motor_Main1Ms_Thread(&p_motorController->Motors[iMotor]);
+		}
+
+		HAL_Motor_EnqueueConversionUser();
+		//HAL_MotorController_EnqueueConversionUser();
+		//HAL_MotorController_EnqueueConversionMonitor();
+
+		//		Shell_Proc(&p_motorController->MotorControllerShell);
 	}
 
-//	for(uint8_t iMotor = 0U; iMotor < CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT; iMotor++)
-//	{
-//		Motor_Main1Ms_Thread(&p_motorController->Motors[iMotor]);
-//	}
+	if (Thread_PollTimerCompletePeriodic(&p_motorController->TimerMillis10) == true) 	//Low Freq, Low Priority 1 ms, Main
+	{
+		Shell_Proc(&p_motorController->MotorShell);
+	}
 
-	HAL_Motor_EnqueueConversionUser();
 
-	Shell_Proc(&p_motorController->MotorControllerShell);
-}
+	if (Thread_PollTimerCompletePeriodic(&p_motorController->TimerSeconds) == true)
+	{
+		//Incase of Serial Rx Overflow Timeout
+//		for (uint8_t iSerial = 0U; iSerial < CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT; iSerial++)
+//		{
+//			Serial_PollRestartRx_IO(&p_motorController->Serials[iSerial]);
+//		}
 
-static inline void MotorController_Main10Ms_Thread(MotorController_T * p_motorController)
-{
-//	Shell_Proc(&p_motorController->MotorControllerShell);
+//			Serial_SendChar(&p_motorController->Serials[1U], 'a');
+//			Blinky_Toggle(&p_motorController->BlinkyAlarm);
+
+	}
+
+	//High Freq, Low Priority 1 ms, Main
 }
 
 static inline void MotorController_PWM_Thread(MotorController_T * p_motorController)
@@ -77,9 +94,9 @@ static inline void MotorController_PWM_Thread(MotorController_T * p_motorControl
 	{
 		Motor_PWM_Thread(&p_motorController->Motors[iMotor]);
 	}
-
 }
 
+//Med Freq, High Priority 1 ms
 static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_motorController)
 {
 	for(uint8_t iMotor = 0U; iMotor < CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT; iMotor++)
@@ -87,5 +104,13 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_motorCo
 		Motor_Timer1Ms_Thread(&p_motorController->Motors[iMotor]);
 	}
 }
+
+static inline void MotorController_Serial_Thread(MotorController_T * p_motorController, uint8_t serialId)
+{
+//	Serial_RxData_ISR(&p_motorController->Serials[serialId]);
+	Serial_TxData_ISR(&p_motorController->Serials[serialId]);
+}
+
+
 
 #endif

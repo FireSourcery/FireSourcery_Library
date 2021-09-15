@@ -22,27 +22,21 @@
 /**************************************************************************/
 /**************************************************************************/
 /*!
-    @file 	Default.h
+    @file 	HAL.h
     @author FireSoucery
-    @brief  Motor default fallback parameters
+    @brief
     @version V0
 */
 /**************************************************************************/
-#ifndef DEFAULT_MOTOR_H
-#define DEFAULT_MOTOR_H
+#ifndef HAL_PIN_H
+#define HAL_PIN_H
 
-/*
- * Default value. If not load from flash. Run time adjustable
- */
+#include "Path/Path.h"
 
-
-
-#define DEFAULT_FOC_OPEN_LOOP_VQ 3276 /* 10 percent */
-
-#define DEFAULT_FOC_KP_FACTOR 	148 //qangle16, milliseconds
-#define DEFAULT_FOC_KP_DIVISOR 	1
-
-#define DEFAULT_FOC_KI_FACTOR 	1 //qangle16, milliseconds
-#define DEFAULT_FOC_KI_DIVISOR 	4
+#if 	defined(CONFIG_HAL_PIN_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
+	#include PATH_USER(HAL_Pin.h)
+#elif 	defined(CONFIG_HAL_PIN_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
+	#include PATH_PLATFORM(Peripheral/HAL, HAL_Pin.h)
+#endif
 
 #endif

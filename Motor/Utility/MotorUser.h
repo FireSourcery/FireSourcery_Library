@@ -62,7 +62,17 @@ typedef struct
 	Debounce_T PinForward;
 	Debounce_T PinReverse;
 }
-MotorUser_Analog_T;
+MotorUser_Analog_T; //analog in
+
+
+////per motor outputs
+//typedef struct
+//{
+//
+//
+//}
+//MotorUser_Ouputs_T;
+
 
 #ifdef CONFIG_MOTOR_ADC_8
 	typedef uint16_t adc_t;
@@ -120,13 +130,7 @@ typedef struct
 }
 MotorUser_T;
 
-////per motor outputs
-//typedef struct
-//{
-//
-//
-//}
-//MotorUser_Ouputs_T;
+
 
 //priority brake thread
 //static inline void MotorUser_PollBrake(MotorUser_T * p_motorUser, Motor_T * p_motor)

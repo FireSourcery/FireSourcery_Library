@@ -3,17 +3,14 @@
  * Copyright 2016-2020 NXP
  * All rights reserved.
  *
- * THIS SOFTWARE IS PROVIDED BY NXP "AS IS" AND ANY EXPRESSED OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL NXP OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
+ * NXP Confidential. This software is owned or controlled by NXP and may only be
+ * used strictly in accordance with the applicable license terms. By expressly
+ * accepting such terms or by downloading, installing, activating and/or otherwise
+ * using the software, you are agreeing that you have read, and that you agree to
+ * comply with and are bound by, such license terms. If you do not agree to be
+ * bound by the applicable license terms, then you may not retain, install,
+ * activate or otherwise use the software. The production use license in
+ * Section 2.3 is expressly granted for this software.
  */
 
 /*!
@@ -75,10 +72,6 @@
  * Interrupts for transfer data should be enabled after the address valid event is detected and
  * disabled at the end of the transfer. */
 #define ERRATA_E10792
-
-/* @brief Errata workaround: System clock status register may be a erroneous status during the system clock switch.
- * Read system clock source twice. */
-#define ERRATA_E10777
 
 /* @brief E10856: FTM: Safe state is not removed from channel outputs after fault condition
  * ends if SWOCTRL is being used to control the pin */
@@ -1187,6 +1180,8 @@ typedef enum {
 #define FEATURE_CAN_RXFIFO_WARNING          (6U)
 /* @brief Rx FIFO overflow flag shift */
 #define FEATURE_CAN_RXFIFO_OVERFLOW         (7U)
+/* @brief The list contains definitions of the FD feature support on all instances */
+#define FEATURE_CAN_INSTANCES_HAS_FD        {true, false}
 /* @brief Has Flexible Data Rate for CAN0 */
 #define FEATURE_CAN0_HAS_FD                 (1)
 /* @brief Has Flexible Data Rate for CAN1 */
@@ -1483,7 +1478,7 @@ enum trgmux_target_module_e
 /* PDB module features */
 
 /* @brief PDB has instance back to back mode between PDB0 CH0 and PDB1 CH0 pre-triggers */
-#define FEATURE_PDB_HAS_INSTANCE_BACKTOBACK  (1)
+#define FEATURE_PDB_HAS_INSTANCE_BACKTOBACK     (1)
 
 /* @brief PDB has inter-channel back to back mode between PDBx CH0 and PDBx CH1 pre-triggers */
 #define FEATURE_PDB_HAS_INTERCHANNEL_BACKTOBACK (0)

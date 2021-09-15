@@ -57,7 +57,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 
 	StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
 
-	Phase_ClearInterrupt(&p_motor->Phase); //proc after, clear interrupt flag that may be set up pwm update
+//	Phase_ClearInterrupt(&p_motor->Phase); //proc after, clear interrupt flag that may be set up pwm update
 }
 
 /*
@@ -69,7 +69,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 ////	Analog_CaptureResults_IO(&p_motor->Analog);
 //}
 
-static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priotiy
+static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priority
 {
 	p_motor->MillisTimerBase++;
 

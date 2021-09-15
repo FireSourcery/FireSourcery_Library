@@ -96,7 +96,7 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 	Shell_Status_T status = 0U;
 //	Cmd_Function_T * p_cmdSearch;
 
-	switch(p_shell->State)
+	switch (p_shell->State)
 	{
 		case SHELL_STATE_PROMPT:
 			Terminal_SendString(&p_shell->Terminal, "cmd> ");
@@ -258,6 +258,11 @@ void Shell_Init
 //{
 //	PrintReturnCode = print;
 //}
+
+void Shell_SetCom(Shell_T * p_shell, void * p_terminalConnect)
+{
+	Terminal_Init(&p_shell->Terminal, p_terminalConnect);
+}
 
 
 /******************************************************************************/

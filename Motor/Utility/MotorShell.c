@@ -28,9 +28,11 @@
     @version V0
 */
 /*******************************************************************************/
-#include "MotorControllerShell.h"
+#include "MotorShell.h"
 
-#include "MotorController.h"
+//#include "MotorController.h"
+#include "MotorUser.h"
+#include "Motor/Motor.h"
 
 #include "System/Shell/Shell.h"
 #include "System/Shell/Terminal.h"
@@ -51,11 +53,14 @@ extern const Cmd_Return_T MOTOR_CMD_RETURN_TABLE[MOTOR_SHELL_CMD_RETURN_COUNT];
 //support 1 instance of shell
 //Cmds function reference 1 instace of Motor Controller
 //this way cmd functions do not need to include context data in arugments.
-static MotorController_T * p_CmdContextMotorController;
+//static MotorController_T * p_CmdContextMotorController;
+//
+////static Motor_T * p_CmdMotors; //pointer to array of motors
+//static const Shell_T * p_CmdContextShell; //Read-only
+//static const Terminal_T * p_CmdContextTerminal; //read-only
 
-//static Motor_T * p_CmdMotors; //pointer to array of motors
-static const Shell_T * p_CmdContextShell; //Read-only
-static const Terminal_T * p_CmdContextTerminal; //read-only
+static MotorUser_T * p_CmdMotorUser;
+static Motor_Parameters_T * p_CmdMotorParametersArray[1U]; //array of pointers
 
 /*******************************************************************************/
 /*!
@@ -64,25 +69,50 @@ static const Terminal_T * p_CmdContextTerminal; //read-only
     inits single instance of cmd context
 */
 /*******************************************************************************/
-void MotorControllerShell_Init(const MotorController_T * p_motorController)
+//void MotorControllerShell_Init(const MotorController_T * p_motorController)
+//{
+//	Shell_Init
+//	(
+//		&p_motorController->MotorControllerShell,
+//		&MOTOR_CMD_TABLE,
+//		MOTOR_SHELL_CMD_COUNT,
+//		&MOTOR_CMD_RETURN_TABLE,
+//		MOTOR_SHELL_CMD_RETURN_COUNT,
+//		&p_motorController->Serials[p_motorController->Parameters.ShellConnectId],
+////		p_motorController,
+//		MOTOR_SHELL_PROC_FREQ
+//	);
+//
+//	p_CmdContextMotorController 	= p_motorController;
+//	p_CmdContextShell 				= &p_motorController->MotorControllerShell;
+//	p_CmdContextTerminal 			= &p_motorController->MotorControllerShell.Terminal;
+//}
+
+
+void MotorShell_Init
+(
+	Shell_T * p_shell,
+	void * p_serial,
+	const Motor_T * p_motors,
+	uint8_t motorCount,
+	const MotorUser_T * p_motorUser
+)
 {
 	Shell_Init
 	(
-		&p_motorController->MotorControllerShell,
+		p_shell,
 		&MOTOR_CMD_TABLE,
 		MOTOR_SHELL_CMD_COUNT,
 		&MOTOR_CMD_RETURN_TABLE,
 		MOTOR_SHELL_CMD_RETURN_COUNT,
-		&p_motorController->Serials[0], //&p_motorController->Parameters.ShellSerialId
+		p_serial,
 //		p_motorController,
 		MOTOR_SHELL_PROC_FREQ
 	);
 
-	p_CmdContextMotorController 	= p_motorController;
-	p_CmdContextShell 				= &p_motorController->MotorControllerShell;
-	p_CmdContextTerminal 			= &p_motorController->MotorControllerShell.Terminal;
+	p_CmdMotorUser = p_motorUser;
+	p_CmdMotorParametersArray[0U] = &p_motors->Parameters; //array of pointers
 }
-
 
 //void MotorControllerShell_SetContext(const MotorController_T * p_motorController, Shell_T * p_shell, Terminal_T * p_terminal)
 //{
@@ -181,8 +211,7 @@ int Cmd_pwm(int argc, char ** argv)
 	}
 
 //set user
-	p_CmdContextMotorController->MotorUser.InputValueThrottlePrev 	= p_CmdContextMotorController->MotorUser.InputValueThrottle;
-	p_CmdContextMotorController->MotorUser.InputValueThrottle 		= pwm;
+	MotorUser_SetInputThrottle(p_CmdMotorUser, pwm);
 
 //set direct
 	//	p_Motors[0].Pwm;

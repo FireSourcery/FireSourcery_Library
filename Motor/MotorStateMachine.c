@@ -91,7 +91,7 @@ void MotorStateMachine_Init(Motor_T * p_motor)
 /*******************************************************************************/
 static void InitEntry(Motor_T * p_motor)
 {
-	Motor_InitReboot(p_motor);
+//	Motor_InitReboot(p_motor);
 }
 
 static void InitProc(Motor_T * p_motor)

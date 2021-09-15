@@ -31,17 +31,19 @@
 #ifndef HAL_HALL_BOARD_H
 #define HAL_HALL_BOARD_H
 
-#include "../../Platform/S32K/HAL_Hall.h"
+//#include "../../Platform/S32K/HAL_Hall.h"
 
-//#include "External/S32K142/include/S32K142.h"
-#include "SDK/platform/devices/S32K142/include/S32K142.h"
-
-#include "SDK/platform/drivers/inc/pins_driver.h"
-#include "SDK/platform/drivers/inc/interrupt_manager.h"
+#include "External/S32K142/include/S32K142.h"
+//#include "SDK/platform/devices/S32K142/include/S32K142.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
+
+typedef const struct
+{
+
+} HAL_Hall_T;
 
 /*
  * Only 1 set of hall sensor on KLS_S32K. Can use hard coded value
@@ -59,23 +61,26 @@ static inline volatile uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
 	return (((PTE->PDIR >> 4) & 0b0011) | ((PTE->PDIR >> 8) & 0b0100));
 }
 
-static inline bool HAL_Hall_ReadSensorA(const HAL_Hall_T * p_encoder)
+static inline bool HAL_Hall_ReadSensorA(const HAL_Hall_T * p_hall)
 {
-	(void)p_encoder;
+	(void)p_hall;
 	return (bool)(PTE->PDIR & ((uint32_t)1U << 4U));
 }
 
-static inline bool HAL_Hall_ReadSensorB(const HAL_Hall_T * p_encoder)
+static inline bool HAL_Hall_ReadSensorB(const HAL_Hall_T * p_hall)
 {
-	(void)p_encoder;
+	(void)p_hall;
 	return (bool)(PTE->PDIR & ((uint32_t)1U << 5U));
 }
 
-static inline bool HAL_Hall_ReadSensorC(const HAL_Hall_T * p_encoder)
+static inline bool HAL_Hall_ReadSensorC(const HAL_Hall_T * p_hall)
 {
-	(void)p_encoder;
+	(void)p_hall;
 	return (bool)(PTE->PDIR & ((uint32_t)1U << 10U));
 }
+
+#include "SDK/platform/drivers/inc/pins_driver.h"
+#include "SDK/platform/drivers/inc/interrupt_manager.h"
 
 static inline void HAL_Hall_Init(const HAL_Hall_T * p_hall)
 {

@@ -43,7 +43,7 @@ typedef enum
 	MOTOR_SHELL_CMD_RETURN_CODE_INVALID_ARGS 	= CMD_RESERVED_RETURN_CODE_INVALID_ARGS,
 	MOTOR_SHELL_CMD_RETURN_CODE_ERROR_1 		= 1,
 }
-MotorControllerShell_CmdReturnCode_T;
+MotorShell_CmdReturnCode_T;
 
 
 #endif /* MOTOR_SHELL_H */

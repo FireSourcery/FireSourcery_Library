@@ -37,34 +37,54 @@
 
 #include "Motor/Utility/MotorUser.h"
 //#include "Motor/Utility/MotorFlash.h"
+#include "Motor/Utility/MotorShell.h"
 
 #include <stdint.h>
 
 /*
 
  */
-//MotorController_T MotorControllerMain
-//void MotorController_Init(const MotorController_Constants_T * p_consts)
 void MotorController_Init(MotorController_T * p_motorController, const MotorController_Constants_T * p_consts)
 {
-	MotorUser_Init(&p_motorController->MotorUser, &p_consts->MOTOR_USER_INIT);
-//	MotorFlash_Init(&p_motorController->MotorFlash, &p_consts->MOTOR_FLASH_CONSTS);
-	MotorControllerShell_Init(p_motorController);
+	p_motorController->p_Constants = p_consts;
+
+	p_motorController->Parameters.ShellConnectId = 1U;
 
 	HAL_Motor_Init(); //HAL_MotorController_Init init hal analog instances
 
 	for(uint8_t iMotor = 0U; iMotor < CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT; iMotor++)
 	{
 		//if default
-		Motor_Init_Default(&p_motorController->Motors[iMotor], &p_consts->P_MOTORS_CONSTANTS[iMotor]);
+		Motor_Init_Default(&p_motorController->Motors[iMotor], &p_consts->MOTOR_INITS[iMotor]);
 
 		//if flash
-		//must set eeprom pointer first
-		//	Motor_Init(&p_motorController->Motors[iMotor], &p_consts->P_MOTORS_CONSTANTS[iMotor]);
+		// must set eeprom pointer first
+		// Motor_Init(&p_motorController->Motors[iMotor], &p_consts->P_MOTORS_CONSTANTS[iMotor]);
 	}
 
-	//	Serial_Init();
-	//	MotorFlash_Init(&p_motorController->MotorFlash, p_init->P_HAL_FLASH);
+	for(uint8_t iSerial = 0U; iSerial < CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT; iSerial++)
+	{
+		Serial_Init(&p_motorController->Serials[iSerial], &p_consts->SERIAL_INITS[iSerial]);
+	}
+
+	MotorUser_Init(&p_motorController->MotorUser, &p_consts->MOTOR_USER_INIT);
+//	MotorFlash_Init(&p_motorController->MotorFlash, &p_consts->MOTOR_FLASH_CONSTS);
+//	MotorShell_Init(p_motorController);
+	MotorShell_Init
+	(
+		&p_motorController->MotorShell,
+		&p_motorController->Serials[p_motorController->Parameters.ShellConnectId],
+		&p_motorController->Motors[0U],
+		CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT,
+		&p_motorController->MotorUser
+	);
+
+	Thread_InitThreadPeriodic_Period(&p_motorController->TimerSeconds, 	p_consts->P_MILLIS_TIMER, 1000U, 1000U, 	0U, 0U);
+	Thread_InitThreadPeriodic_Period(&p_motorController->TimerMillis, 	p_consts->P_MILLIS_TIMER, 1000U, 1U, 		0U, 0U);
+	Thread_InitThreadPeriodic_Period(&p_motorController->TimerMillis10, p_consts->P_MILLIS_TIMER, 1000U, 10U, 		0U, 0U);
+
+
+	Blinky_Init(&p_motorController->BlinkyAlarm, &p_consts->HAL_PIN_ALARM);
 }
 
 

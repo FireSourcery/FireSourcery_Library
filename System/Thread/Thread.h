@@ -139,14 +139,13 @@ static inline bool Thread_PollTimerComplete(Thread_T * p_thread)
 	bool proc;
 
 	//will return erroneous true if timer wraps + period
-	if (Thread_GetTimerElapsedTicks(p_thread) < p_thread->Period)
+	if (Thread_GetTimerElapsedTicks(p_thread) >= p_thread->Period)
 	{
-		proc = false;
+		proc = true;
 	}
 	else
 	{
-
-		proc = true;
+		proc = false;
 	}
 
 	return proc;
@@ -161,14 +160,14 @@ static inline bool Thread_PollTimerCompletePeriodic(Thread_T * p_thread)
 {
 	bool proc;
 
-	if (Thread_GetTimerElapsedTicks(p_thread) < p_thread->Period)
-	{
-		proc = false;
-	}
-	else
+	if (Thread_PollTimerComplete(p_thread) == true)
 	{
 		p_thread->TimerPrev = *p_thread->p_Timer;
 		proc = true;
+	}
+	else
+	{
+		proc = false;
 	}
 
 	return proc;

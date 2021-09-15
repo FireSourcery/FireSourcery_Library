@@ -36,23 +36,23 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct
-{
-	FTM_Type * P_FTM_A;
-	uint8_t FTM_CHANNEL_A;
-	GPIO_Type * P_GPIO_A;
-	uint32_t GPIO_PIN_MASK_A;
-
-	FTM_Type * P_FTM_B;
-	uint8_t FTM_CHANNEL_B;
-	GPIO_Type * P_GPIO_B;
-	uint32_t GPIO_PIN_MASK_B;
-
-	FTM_Type * P_FTM_C;
-	uint8_t FTM_CHANNEL_C;
-	GPIO_Type * P_GPIO_C;
-	uint32_t GPIO_PIN_MASK_C;
-} HAL_Phase_T;
+//typedef const struct
+//{
+//	FTM_Type * P_FTM_A;
+//	uint8_t FTM_CHANNEL_A;
+//	GPIO_Type * P_GPIO_A;
+//	uint32_t GPIO_PIN_MASK_A;
+//
+//	FTM_Type * P_FTM_B;
+//	uint8_t FTM_CHANNEL_B;
+//	GPIO_Type * P_GPIO_B;
+//	uint32_t GPIO_PIN_MASK_B;
+//
+//	FTM_Type * P_FTM_C;
+//	uint8_t FTM_CHANNEL_C;
+//	GPIO_Type * P_GPIO_C;
+//	uint32_t GPIO_PIN_MASK_C;
+//} HAL_Phase_T;
 
 
 #endif

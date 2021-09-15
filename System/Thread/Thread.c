@@ -177,12 +177,12 @@ void Thread_InitThreadPeriodic_Period
 	Thread_T * p_thread,
 	const volatile uint32_t *p_timer,
 	uint32_t timerfreq,
-	uint32_t period,
+	uint32_t period_Ticks, 		//in timerTicks
 	void (*function)(volatile void *),
 	volatile void * p_context
 )
 {
-	Thread_InitThread(p_thread, p_timer, timerfreq, period, function, p_context, false, 0U, 0U, 0U);
+	Thread_InitThread(p_thread, p_timer, timerfreq, period_Ticks, function, p_context, false, 0U, 0U, 0U);
 }
 
 void Thread_InitThreadPeriodic_Freq

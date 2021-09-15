@@ -20,30 +20,30 @@ void Terminal_Init(Terminal_T * p_terminal, void * p_connect)
 bool Terminal_ProcCmdline(Terminal_T * p_terminal) //read from terminal
 {
 	bool isComplete = false;
-	char ch = Terminal_RecvChar(p_terminal);
+	char ch;
 
-	if(ch == 0xFFU)
+	if (Terminal_PollKeyPressed(p_terminal))
 	{
+		ch = Terminal_RecvChar(p_terminal);
 
-	}
-	else if ((ch > 31U && ch < 127U) && (p_terminal->CursorIndex < CMDLINE_CHAR_MAX - 2U))  /* printable char */
-	{
-		Terminal_SendChar(p_terminal, ch);
-		p_terminal->Cmdline[p_terminal->CursorIndex] = ch;
-		p_terminal->CursorIndex++;
-	}
-	else if ((ch == '\b' || ch == KEY_DEL) && (p_terminal->CursorIndex > 0U))  /* backspace key */  //ch == '^H' || ch == '^?'
-	{
-		Terminal_SendString(p_terminal, "\b \b");
-		p_terminal->CursorIndex--;
-	}
-	else if (ch == '\n' || ch == '\r')
-	{
-		Terminal_SendString(p_terminal, "\r\n");
-		p_terminal->Cmdline[p_terminal->CursorIndex] = '\0';
-		p_terminal->CursorIndex = 0;
-		isComplete = true;
-	}
+		if ((ch > 31U && ch < 127U) && (p_terminal->CursorIndex < CMDLINE_CHAR_MAX - 2U)) /* printable char */
+		{
+			Terminal_SendChar(p_terminal, ch);
+			p_terminal->Cmdline[p_terminal->CursorIndex] = ch;
+			p_terminal->CursorIndex++;
+		}
+		else if ((ch == '\b' || ch == KEY_DEL) && (p_terminal->CursorIndex > 0U)) /* backspace key */  //ch == '^H' || ch == '^?'
+		{
+			Terminal_SendString(p_terminal, "\b \b");
+			p_terminal->CursorIndex--;
+		}
+		else if (ch == '\n' || ch == '\r')
+		{
+			Terminal_SendString(p_terminal, "\r\n");
+			p_terminal->Cmdline[p_terminal->CursorIndex] = '\0';
+			p_terminal->CursorIndex = 0;
+			isComplete = true;
+		}
 //			#ifdef CONFIG_SHELL_ARROW_KEYS_ENABLE
 //			else if (ch == '\e')
 //			{
@@ -61,9 +61,10 @@ bool Terminal_ProcCmdline(Terminal_T * p_terminal) //read from terminal
 //			{
 //
 //			}
-	else
-	{
-		Terminal_SendString(p_terminal, "\a"); //beep
+		else
+		{
+			Terminal_SendString(p_terminal, "\a"); //beep
+		}
 	}
 
 	return isComplete;

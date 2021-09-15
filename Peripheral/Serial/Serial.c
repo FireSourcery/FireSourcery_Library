@@ -78,7 +78,7 @@ uint8_t Serial_RecvChar(Serial_T * p_serial) //Dequeue data
 
 	if(p_serial->RxBufferHead == p_serial->RxBufferTail)
 	{
-		rxChar = -1;
+		rxChar = -1; //Return empty char
 	}
 	else
 	{
@@ -233,6 +233,7 @@ void Serial_Init
 )
 {
 	p_serial->p_HAL_Serial 			= p_serialInit->P_HAL_SERIAL;
+	HAL_Serial_Init(p_serial->p_HAL_Serial);
 
 	p_serial->p_TxBuffer 			= p_serialInit->P_TX_BUFFER;
 	p_serial->TxBufferSize 			= p_serialInit->TX_BUFFER_SIZE;
@@ -244,7 +245,7 @@ void Serial_Init
 	p_serial->RxBufferHead 			= 0;
 	p_serial->RxBufferTail 			= 0;
 
-	Serial_EnableRx(p_serial);
+//	Serial_EnableRx(p_serial);
 }
 
 //bool Serial_RecvChar_Buffer(Serial_T * p_serial, uint8_t * p_rxChar)

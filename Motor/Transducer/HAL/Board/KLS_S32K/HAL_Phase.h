@@ -32,21 +32,13 @@
 #ifndef HAL_PHASE_BOARD_H
 #define HAL_PHASE_BOARD_H
 
-#include "../../Platform/S32K/HAL_Phase.h"
+//#include "../../Platform/S32K/HAL_Phase.h"
 
-//#include "External/S32K142/include/S32K142.h"
-#include "SDK/platform/devices/S32K142/include/S32K142.h"
-
-#include "SDK/platform/drivers/inc/pins_driver.h"
-#include "SDK/platform/drivers/inc/interrupt_manager.h"
-#include "SDK/platform/drivers/inc/ftm_common.h"
-#include "SDK/platform/drivers/inc/ftm_pwm_driver.h"
-
-#include "KMC/HAL/Board/KLS_S32K/Generated/sdk_project_config.h" /* includes all generated code */
+#include "External/S32K142/include/S32K142.h"
+//#include "SDK/platform/devices/S32K142/include/S32K142.h"
 
 #include <stdint.h>
 #include <stdbool.h>
-
 
 //HAL_Phase_T HAL_PHASE_1 =
 //{
@@ -65,6 +57,11 @@
 //	.P_GPIO_C 			= PTE,
 //	.GPIO_PIN_MASK_C 	= ((uint32_t)1U << 2U),
 //};
+
+typedef const struct
+{
+
+} HAL_Phase_T;
 
 static inline void HAL_Phase_WriteDuty(const HAL_Phase_T * p_phase, uint32_t pwmA, uint32_t pwmB, uint32_t pwmC)
 {
@@ -130,6 +127,14 @@ static inline void HAL_Phase_WriteSoftwareControlSwitch(const HAL_Phase_T * p_ph
 					FTM_SWOCTRL_CH5OC(isSwcA) | FTM_SWOCTRL_CH6OC(isSwcB) | FTM_SWOCTRL_CH7OC(isSwcC);
 	FTM0->SYNC |= FTM_SYNC_SWSYNC_MASK;
 }
+
+
+#include "SDK/platform/drivers/inc/pins_driver.h"
+#include "SDK/platform/drivers/inc/interrupt_manager.h"
+#include "SDK/platform/drivers/inc/ftm_common.h"
+#include "SDK/platform/drivers/inc/ftm_pwm_driver.h"
+
+#include "KMC/HAL/Board/KLS_S32K/Generated/sdk_project_config.h" /* includes all generated code */
 
 /*
  * PWM_FREQ = 20000
@@ -262,9 +267,6 @@ static inline void HAL_Phase_Init(const HAL_Phase_T * p_phase)
 ////	FTM0->SYNCONF = FTM_SYNCONF_SYNCMODE_MASK | FTM_SYNCONF_SWWRBUF_MASK;
 //
 //	INT_SYS_EnableIRQ(FTM0_Ovf_Reload_IRQn);
-
-
-
 }
 
 #endif

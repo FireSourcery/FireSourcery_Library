@@ -36,16 +36,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct
-{
- 	GPIO_Type * P_GPIO_BASE_A;
- 	GPIO_Type * P_GPIO_BASE_B;
- 	GPIO_Type * P_GPIO_BASE_C;
-
-	uint8_t PIN_SENSOR_A;
-	uint8_t PIN_SENSOR_B;
-	uint8_t PIN_SENSOR_C;
-} HAL_Hall_T;
+//typedef const struct
+//{
+// 	GPIO_Type * P_GPIO_BASE_A;
+// 	GPIO_Type * P_GPIO_BASE_B;
+// 	GPIO_Type * P_GPIO_BASE_C;
+//
+//	uint8_t PIN_SENSOR_A;
+//	uint8_t PIN_SENSOR_B;
+//	uint8_t PIN_SENSOR_C;
+//} HAL_Hall_T;
 
 
 //static inline uint8_t HAL_Hall_ReadSensors(const HAL_Hall_T * p_hall)
