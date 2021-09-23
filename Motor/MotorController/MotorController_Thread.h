@@ -33,46 +33,57 @@
 #define MOTOR_CONTROLLER_THREAD_H
 
 #include "Config.h"
-
 #include "MotorController.h"
 
-#include "Motor/Utility/MotorUser.h"
+#include "Motor/Utility/MotShell/MotShell.h"
+#include "Motor/Utility/MotProtocol/MotProtocol.h"
+#include "Motor/Utility/MotProtocol/MotProtocol_Motor.h"
+#include "Motor/Utility/MotAnalogUser/MotAnalogUser.h"
+#include "Motor/Utility/MotAnalogUser/MotAnalogUser_Motor.h"
 
-#include "Motor/Motor_Thread.h"
-#include "Motor/HAL_Motor.h"
+#include "Motor/Motor/Motor_Thread.h"
+#include "Motor/Motor/HAL_Motor.h"
 
 #include "Peripheral/Serial/Serial.h"
 #include "System/Shell/Shell.h"
 
-static inline void MotorController_Main_Thread(MotorController_T * p_motorController)
+static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 {
-	if (Thread_PollTimerCompletePeriodic(&p_motorController->TimerMillis) == true) 	//Med Freq, Low Priority 1 ms, Main
+	if (Thread_PollTimerCompletePeriodic(&p_controller->TimerMillis) == true) 	//Med Freq, Low Priority 1 ms, Main
 	{
-		MotorUser_Analog_CaptureInput_IO(&p_motorController->MotorUser);
-		MotorUser_WriteOutput(&p_motorController->MotorUser); //actuate hw
-
 		for (uint8_t iMotor = 0U; iMotor < CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT; iMotor++)
 		{
-			MotorUser_SetMotorInput(&p_motorController->MotorUser, &p_motorController->Motors[iMotor]); //copy UI input to motor
-			MotorUser_SetUserOutput(&p_motorController->MotorUser, &p_motorController->Motors[iMotor]); //copy motor output to UI
-
-			Motor_Main1Ms_Thread(&p_motorController->Motors[iMotor]);
+			Motor_Main1Ms_Thread(&p_controller->Motors[iMotor]);
 		}
 
-		HAL_Motor_EnqueueConversionUser();
-		//HAL_MotorController_EnqueueConversionUser();
-		//HAL_MotorController_EnqueueConversionMonitor();
+		if(p_controller->Parameters.AnalogUserEnable == true)
+		{
+			MotAnalogUser_CaptureInput(&p_controller->AnalogUser);
+			MotAnalogUser_Motor_Write(&p_controller->AnalogUser, &p_controller->Motors, CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT);
+		}
 
-		//		Shell_Proc(&p_motorController->MotorControllerShell);
+//		for(uint8_t iProtocol = 0U; iProtocol < CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT; iProtocol++)
+//		{
+//			ProtocolG_Slave_Proc(&p_controller->AuxProtocols[iProtocol]);
+//		}
+
+		ProtocolG_Slave_Proc(&p_controller->MotProtocol);
+		MotProtocol_Motor_WriteInput(&p_controller->MotProtocolInput,  &p_controller->Motors, CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT);  //copy UI input to motor
+//		MotProtocol_Acc_WriteInput(&p_motorController->Interface.Input,  &p_motorController->Motors[iMotor]);  //copy UI input to peripherals
+		MotProtocol_Motor_ReadOutput(&p_controller->MotProtocolOutput, &p_controller->Motors, CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT);	//copy motor output to UI
+
+
+//		MotorInterface_Input_ProcWriteToMotor(&p_motorController->Interface.Input,  &p_motorController->Motors[iMotor]);  //copy UI input to motor
+//		MotorInterface_Output_ProcReadFromMotor(&p_motorController->Interface.Output, &p_motorController->Motors[iMotor]);	//copy motor output to UI
+//		MotorInterface_Output_WriteTo(&p_motorController->MotorUser); //actuate hw
 	}
 
-	if (Thread_PollTimerCompletePeriodic(&p_motorController->TimerMillis10) == true) 	//Low Freq, Low Priority 1 ms, Main
+	if (Thread_PollTimerCompletePeriodic(&p_controller->TimerMillis10) == true) 	//Low Freq, Low Priority 1 ms, Main
 	{
-		Shell_Proc(&p_motorController->MotorShell);
+//		Shell_Proc(&p_controller->MotShell);
 	}
 
-
-	if (Thread_PollTimerCompletePeriodic(&p_motorController->TimerSeconds) == true)
+	if (Thread_PollTimerCompletePeriodic(&p_controller->TimerSeconds) == true)
 	{
 		//Incase of Serial Rx Overflow Timeout
 //		for (uint8_t iSerial = 0U; iSerial < CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT; iSerial++)
@@ -80,10 +91,13 @@ static inline void MotorController_Main_Thread(MotorController_T * p_motorContro
 //			Serial_PollRestartRx_IO(&p_motorController->Serials[iSerial]);
 //		}
 
-//			Serial_SendChar(&p_motorController->Serials[1U], 'a');
-//			Blinky_Toggle(&p_motorController->BlinkyAlarm);
+//		Blinky_Toggle(&p_motorController->BlinkyAlarm);
 
 	}
+
+	HAL_Motor_EnqueueConversionUser();
+	//HAL_MotoAnalogr_EnqueueConversionUser();
+	//HAL_MotoAnalogr_EnqueueConversionMonitor();
 
 	//High Freq, Low Priority 1 ms, Main
 }
@@ -107,8 +121,10 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_motorCo
 
 static inline void MotorController_Serial_Thread(MotorController_T * p_motorController, uint8_t serialId)
 {
-//	Serial_RxData_ISR(&p_motorController->Serials[serialId]);
+	Serial_RxData_ISR(&p_motorController->Serials[serialId]);
 	Serial_TxData_ISR(&p_motorController->Serials[serialId]);
+
+//	Shell_PollEscape(Shell_T * p_shell)
 }
 
 

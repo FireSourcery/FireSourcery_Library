@@ -37,6 +37,10 @@
 //#include <string.h>
 //#include <stddef.h>
 
+/*! @{ */
+//static const char CMD_PROMPT_STRING[] = "cmd> ";
+////static const char * const CMD_PROMPT_STRING = "cmd> ";
+/*! @} */
 
 /******************************************************************************/
 /*!
@@ -54,31 +58,32 @@ static void PrintCmdReturnCode(Shell_T * p_shell, int cmdReturnCode)
 
 //static void PrintShellException(Shell_T * p_shell, Shell_Status_T status)
 //{
-
 //if (PrintShellStatusError)
 //{
-//	switch(status)
+//	switch(shellstatus)
 //	{
 //	case SHELL_STATUS_CMD_INVALID:
 //	Terminal_SendString(&p_shell->Terminal, "Invalid command\r\n");
 
-
-
-//	switch (status)
-//	{
-//		case SHELL_STATUS_TERMINAL_PARSER_FAIL:
-//			break;
-//
-//		case SHELL_STATUS_CMD_INVALID:
-//			Terminal_SendString(&p_shell->Terminal, "Invalid command\r\n");
-//			break;
-//
-//		case SHELL_STATUS_CMD_ACCEPTED:
-//			break;
-//
-//		case SHELL_STATUS_CMD_PROCESSING:
-//			break;
+	//	switch (status)
+	//	{
+	//		case SHELL_STATUS_TERMINAL_PARSER_FAIL:
+	//			break;
+	//
+	//		case SHELL_STATUS_CMD_INVALID:
+	//			Terminal_SendString(&p_shell->Terminal, "Invalid command\r\n");
+	//			break;
+	//
+	//		case SHELL_STATUS_CMD_ACCEPTED:
+	//			break;
+	//
+	//		case SHELL_STATUS_CMD_PROCESSING:
+	//			break;
 //	}
+
+//case SHELL_STATUS_CMD_EXCEPTION:
+//	 PrintCmdReturnCode(Shell_T * p_shell, int cmdReturnCode)
+
 //}
 
 void Shell_PollEscape(Shell_T * p_shell) //poll escape on separate thread
@@ -94,7 +99,6 @@ void Shell_PollEscape(Shell_T * p_shell) //poll escape on separate thread
 Shell_Status_T Shell_Proc(Shell_T * p_shell)
 {
 	Shell_Status_T status = 0U;
-//	Cmd_Function_T * p_cmdSearch;
 
 	switch (p_shell->State)
 	{
@@ -105,12 +109,9 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 			break;
 
 		case SHELL_STATE_WAIT_INPUT:
-//			if (Shell_KeyPressed())
-//			switch(Terminal_ProcCmdline())
 			if (Terminal_ProcCmdline(&p_shell->Terminal))
 			{
-				p_shell->State = SHELL_STATE_PARSE_INPUT;
-				//input complete
+				p_shell->State = SHELL_STATE_PARSE_INPUT;		//input complete
 			}
 			status = SHELL_STATUS_OK;
 			break;
@@ -137,36 +138,25 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 			break;
 
 		case SHELL_STATE_PROCESS_CMD:
-//			if (Terminal_PollCmdlineEsc(&p_shell->Terminal))
-//			{
-//				Terminal_SendString(&p_shell->Terminal, "Exit\r\n");
-////				p_shell->State = SHELL_STATE_PROMPT;
-//			}
-//			else
+			//switch (function type) p_shell->CmdFunction(p_shell, Terminal_GetCmdlineArgC(&p_shell->Terminal), Terminal_GetCmdlineArgV(&p_shell->Terminal));
+
+			p_shell->CmdReturnCode = p_shell->CmdFunction(Terminal_GetCmdlineArgC(&p_shell->Terminal), Terminal_GetCmdlineArgV(&p_shell->Terminal));
+
+			if (p_shell->CmdReturnCode != CMD_RESERVED_RETURN_CODE_SUCCESS)
 			{
-				//switch (function type) pass shell context
-
-				p_shell->CmdReturnCode = p_shell->CmdFunction(Terminal_GetCmdlineArgC(&p_shell->Terminal), Terminal_GetCmdlineArgV(&p_shell->Terminal));
-
-				if (p_shell->CmdReturnCode != CMD_RESERVED_RETURN_CODE_SUCCESS)
+				if (p_shell->CmdReturnCode == CMD_RESERVED_RETURN_CODE_INVALID_ARGS)
 				{
-
-					if (p_shell->CmdReturnCode == CMD_RESERVED_RETURN_CODE_INVALID_ARGS)
-					{
-						Terminal_SendString(&p_shell->Terminal, "Invalid args\r\n");
-						status = SHELL_STATUS_CMD_INVALID_ARGS;
-					}
-					else
-					{
-						PrintCmdReturnCode(p_shell, p_shell->CmdReturnCode);
-						status = SHELL_STATUS_CMD_EXCEPTION;
-					}
-
-
-
+					Terminal_SendString(&p_shell->Terminal, "Invalid args\r\n");
+					status = SHELL_STATUS_CMD_INVALID_ARGS;
 				}
 				else
 				{
+					PrintCmdReturnCode(p_shell, p_shell->CmdReturnCode);
+					status = SHELL_STATUS_CMD_EXCEPTION;
+				}
+			}
+			else
+			{
 //					if (p_shell->IsLoopModeEnable)
 //					{
 //						p_shell->State = SHELL_STATE_CMD_PROCESS_LOOP;
@@ -177,12 +167,12 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 //					status = SHELL_STATUS_CMD_PROCESSING;
 //					}
 //					else
-					{
-						p_shell->State = SHELL_STATE_PROMPT;
-						status = SHELL_STATUS_CMD_COMPLETE;
-					}
+				{
+					p_shell->State = SHELL_STATE_PROMPT;
+					status = SHELL_STATUS_CMD_COMPLETE;
 				}
 			}
+
 			break;
 
 		case SHELL_STATE_PROCESS_CMD_LOOP:
@@ -214,8 +204,7 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 		//	if(PrintCmdReturnCode)
 		//		PrintCmdReturnCode(p_shell, p_shell->CmdReturnCode);
 		//	}
-			//
-
+		//
 
 		case SHELL_STATE_INACTIVE:
 			break;
@@ -267,12 +256,10 @@ void Shell_SetCom(Shell_T * p_shell, void * p_terminalConnect)
 
 /******************************************************************************/
 /*!
+ *
  */
 /******************************************************************************/
-/*! @{ */
-//static const char CMD_PROMPT_STRING[] = "cmd> ";
-////static const char * const CMD_PROMPT_STRING = "cmd> ";
-/*! @} */
+
 
 
 

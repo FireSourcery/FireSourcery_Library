@@ -103,8 +103,8 @@ typedef const struct State_Tag
 	 * bypass self transitions,
 	 */
 	void (*(*const P_INPUT_OUTPUT_FUNCTION_MAP))(volatile void * p_typeData);
-	void (*TRANSITION_ENTRY)(volatile void * p_typeData); 	//common to all transition to current state
-	void (*OUTPUT)(volatile void * p_typeData); 				 //synchronous output, or common output to all inputs for asynchronous case
+	void (*const TRANSITION_ENTRY)(volatile void * p_typeData); 	//common to all transition to current state
+	void (*const OUTPUT)(volatile void * p_typeData); 				 //synchronous output, or common output to all inputs for asynchronous case
 //	void (* const Exit)(void);
 } State_T;
 
@@ -115,7 +115,6 @@ typedef struct StateMachine_Tag
 //#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL
 	uint8_t InputTransitionMapLength;		//state count
 	uint8_t InputOutputMapLength;
-	//uint8_t TotalInputCount;
 //#endif
 	volatile void * p_TypeData; //StateMachine Instance Type data
 

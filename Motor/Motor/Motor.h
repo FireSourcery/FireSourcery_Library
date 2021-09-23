@@ -38,16 +38,11 @@
 
 #include "Config.h"
 
-//#include "Peripheral/Pin/Debounce.h"
-//#include "Peripheral/Pin/Pin.h"
-//#include "Peripheral/Analog/Analog.h"
-//#include "Peripheral/Flash/Flash.h"
+#include "Transducer/Phase/Phase.h"
+#include "Transducer/Hall/Hall.h"
+#include "Transducer/BEMF/BEMF.h"
 
-#include "Motor/Transducer/Phase/Phase.h"
-#include "Motor/Transducer/Hall/Hall.h"
-#include "Motor/Transducer/BEMF/BEMF.h"
-
-#include "Motor/Math/FOC.h"
+#include "Math/FOC.h"
 
 #include "Transducer/Encoder/Encoder_Motor.h"
 #include "Transducer/Encoder/Encoder_DeltaT.h"
@@ -192,7 +187,41 @@ typedef enum
 // uint8_t SpeedPID: 1; 	//0 -> speed scalar, 1-> speed feedback PID loop
 //} Motor_ConfigMode_T;
 
+#ifdef CONFIG_MOTOR_ADC_8
+	typedef uint16_t adc_t;
+#elif defined(CONFIG_MOTOR_ADC_16)
+	typedef uint16_t adc_t;
+#endif
 
+
+typedef const struct
+{
+	volatile const adc_t * const P_VBUS_ADCU;
+	volatile const adc_t * const P_VA_ADCU;
+	volatile const adc_t * const P_VB_ADCU;
+	volatile const adc_t * const P_VC_ADCU;
+	volatile const adc_t * const P_IA_ADCU;
+	volatile const adc_t * const P_IB_ADCU;
+	volatile const adc_t * const P_IC_ADCU;
+	volatile const adc_t * const P_HEAT_MOTOR_ADCU;
+	volatile const adc_t * const P_HEAT_MOSFETS_ADCU; //if per motor mosfet sensor is implemented
+}
+Motor_AdcMap_T;
+
+//shared between instances
+//typedef const struct
+//{
+//	volatile const adc_t * const P_VBUS_ADCU;
+//	volatile const adc_t * const P_VACC_ADCU;
+//	volatile const adc_t * const P_VSENSE_ADCU;
+//	volatile const adc_t * const P_HEAT_PCB_ADCU;
+//	volatile const adc_t * const P_HEAT_MOSFETS_H_ADCU;
+//	volatile const adc_t * const P_HEAT_MOSFETS_L_ADCU;
+//	volatile const adc_t * const P_THROTTLE_ADCU;
+//	volatile const adc_t * const P_BRAKE_ADCU;
+//}
+//Motor_AdcMapCommon_T;
+//
 /*!
 	@brief Motor Parameters
 	Runtime variable configuration
@@ -212,7 +241,6 @@ typedef  __attribute__ ((aligned (4U))) struct
 
 	uint16_t SpeedRef; //max speed for throttle calibration
 	uint16_t VBusRef;
-
 
 	uint16_t OpenLoopZcdTransition;
 
@@ -236,6 +264,8 @@ typedef  __attribute__ ((aligned (4U))) struct
 	Phase_Mode_T				PhasePwmMode;
 	BEMF_SampleMode_T			BemfSampleMode;
 
+//	DirectionCalibration_T
+
 //	Motor_InputMode_T 			InputMode; //UserMode
 
 	qfrac16_t FocOpenLoopVq;
@@ -243,12 +273,6 @@ typedef  __attribute__ ((aligned (4U))) struct
 	//	qfrac16_t OpenLoopVHzGain; //vhz scale
 }
 Motor_Parameters_T;
-
-#ifdef CONFIG_MOTOR_ADC_8
-	typedef uint16_t adc_t;
-#elif defined(CONFIG_MOTOR_ADC_16)
-	typedef uint16_t adc_t;
-#endif
 
 /*
 	@brief Motor Init
@@ -271,6 +295,8 @@ typedef const struct Motor_Init_Tag
 	const uint8_t * const P_EEPROM; 	//or flash partition struct
 	//	Flash_Partition_T  p_FlashPartition;
 	const Motor_Parameters_T * const P_PARAMETERS_DEFAULT;
+
+//	const Motor_AdcMap_T ADC_MAP;
 
 	volatile const adc_t * const P_VBUS_ADCU;
 	volatile const adc_t * const P_VA_ADCU;
@@ -295,14 +321,6 @@ Motor_Constants_T;
 
 typedef struct
 {
-	//	volatile const adc_t * p_HeatMotor_ADCU;
-	//	volatile const adc_t * p_HeatMosfets_ADCU;
-	//	volatile const adc_t * p_HeatPcb_ADCU;
-	//	volatile const adc_t * p_Ia_ADCU;
-	//	volatile const adc_t * p_Ib_ADCU;
-	//	volatile const adc_t * p_Ic_ADCU;
-	//	volatile const adc_t * p_VBus_ADCU;
-
  	const Motor_Constants_T * p_Constants;		//compile time const, unique per moter
 	Motor_Parameters_T Parameters;				//Programmable parameters, runtime variable load from eeprom
 
@@ -319,6 +337,7 @@ typedef struct
 	 */
 	StateMachine_T StateMachine;
 
+	//not const due to adc calibration
 	Linear_T UnitVBus;
 	Linear_T UnitVabc; //Bemf V and mV conversion
 	Linear_T UnitIa; //Frac16 and UserUnits (Amp)
@@ -451,7 +470,7 @@ static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
 	return p_motor->Speed_RPM;
 }
 
-static inline void Motor_ProcSpeed(Motor_T * p_motor)
+static inline void Motor_CaptureSpeed(Motor_T * p_motor)
 {
 //	if(p_motor->Parameters.SensorMode != MOTOR_SENSOR_MODE_OPEN_LOOP)
 	{

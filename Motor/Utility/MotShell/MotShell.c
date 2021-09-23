@@ -28,11 +28,10 @@
     @version V0
 */
 /*******************************************************************************/
-#include "MotorShell.h"
+#include "MotShell.h"
 
-//#include "MotorController.h"
-#include "MotorUser.h"
-#include "Motor/Motor.h"
+//#include "MotorInterface.h"
+#include "Motor/Motor/Motor.h"
 
 #include "System/Shell/Shell.h"
 #include "System/Shell/Terminal.h"
@@ -47,20 +46,25 @@
 #define MOTOR_SHELL_CMD_RETURN_COUNT 	1U
 #define MOTOR_SHELL_PROC_FREQ			100U
 
+//#define CONFIG_MOTOR_SHELL_MOTOR_COUNT 1U //temp
+
 extern const Cmd_T MOTOR_CMD_TABLE[MOTOR_SHELL_CMD_COUNT];
 extern const Cmd_Return_T MOTOR_CMD_RETURN_TABLE[MOTOR_SHELL_CMD_RETURN_COUNT];
 
-//support 1 instance of shell
-//Cmds function reference 1 instace of Motor Controller
-//this way cmd functions do not need to include context data in arugments.
-//static MotorController_T * p_CmdContextMotorController;
-//
+//Cmd Context
+//this way cmd functions scope is limited and do not need to include context data in arugments.
+static const Terminal_T * p_CmdTerminal; //read-only
+//static MotorUser_T * p_CmdMotorUser;
+//static Motor_Parameters_T * CmdMotorParametersArray[CONFIG_MOTOR_SHELL_MOTOR_COUNT]; // array of pointers
+//static uint8_t CmdMotorCount;
+
 ////static Motor_T * p_CmdMotors; //pointer to array of motors
 //static const Shell_T * p_CmdContextShell; //Read-only
-//static const Terminal_T * p_CmdContextTerminal; //read-only
 
-static MotorUser_T * p_CmdMotorUser;
-static Motor_Parameters_T * p_CmdMotorParametersArray[1U]; //array of pointers
+
+
+static const MotShell_Config_T * p_MotShellConfig;
+
 
 /*******************************************************************************/
 /*!
@@ -69,6 +73,49 @@ static Motor_Parameters_T * p_CmdMotorParametersArray[1U]; //array of pointers
     inits single instance of cmd context
 */
 /*******************************************************************************/
+void MotShell_Init
+(
+	Shell_T * p_shell,
+	MotShell_Config_T * p_config
+//	void * p_serial
+//	const Motor_T * p_motors,
+//	uint8_t motorCount,
+//	const MotorUser_T * p_motorUser
+)
+{
+	Shell_Init
+	(
+		p_shell,
+		&MOTOR_CMD_TABLE,
+		MOTOR_SHELL_CMD_COUNT,
+		&MOTOR_CMD_RETURN_TABLE,
+		MOTOR_SHELL_CMD_RETURN_COUNT,
+		p_config->P_DATA_LINK,
+//		p_motorController,
+		MOTOR_SHELL_PROC_FREQ
+	);
+
+	p_MotShellConfig = p_config;
+	p_CmdTerminal = &p_shell->Terminal;
+//	p_CmdMotorUser = p_motorUser;
+//	CmdMotorCount = motorCount;
+//	for(uint8_t iMotor = 0U; iMotor < CmdMotorCount; iMotor++)
+//	{
+//		CmdMotorParametersArray[iMotor] = &p_motors->Parameters; //array of pointers
+//	}
+}
+
+//void MotorShell_SetContext
+//(
+//	const Motor_T * p_motors,
+//	uint8_t motorCount,
+//	const MotorUser_T * p_motorUser
+//)
+//{
+//
+//}
+
+
 //void MotorControllerShell_Init(const MotorController_T * p_motorController)
 //{
 //	Shell_Init
@@ -85,48 +132,14 @@ static Motor_Parameters_T * p_CmdMotorParametersArray[1U]; //array of pointers
 //
 //	p_CmdContextMotorController 	= p_motorController;
 //	p_CmdContextShell 				= &p_motorController->MotorControllerShell;
-//	p_CmdContextTerminal 			= &p_motorController->MotorControllerShell.Terminal;
+//	p_CmdTerminal 			= &p_motorController->MotorControllerShell.Terminal;
 //}
-
-
-void MotorShell_Init
-(
-	Shell_T * p_shell,
-	void * p_serial,
-	const Motor_T * p_motors,
-	uint8_t motorCount,
-	const MotorUser_T * p_motorUser
-)
-{
-	Shell_Init
-	(
-		p_shell,
-		&MOTOR_CMD_TABLE,
-		MOTOR_SHELL_CMD_COUNT,
-		&MOTOR_CMD_RETURN_TABLE,
-		MOTOR_SHELL_CMD_RETURN_COUNT,
-		p_serial,
-//		p_motorController,
-		MOTOR_SHELL_PROC_FREQ
-	);
-
-	p_CmdMotorUser = p_motorUser;
-	p_CmdMotorParametersArray[0U] = &p_motors->Parameters; //array of pointers
-}
-
-//void MotorControllerShell_SetContext(const MotorController_T * p_motorController, Shell_T * p_shell, Terminal_T * p_terminal)
-//{
-//	p_CmdContextMotorController 	= p_motorController;
-//	p_CmdContextShell 				= p_shell;
-//	p_CmdContextTerminal 			= p_terminal;
-//}
-//
 //
 //void MotorControllerShell_SetMotorController(const MotorController_T * p_motorController)
 //{
 //	p_CmdContextMotorController 	= p_motorController;
 //	p_CmdContextShell 				= &p_motorController->MotorControllerShell;
-//	p_CmdContextTerminal 			= &p_motorController->MotorControllerShell.Terminal;
+//	p_CmdTerminal 			= &p_motorController->MotorControllerShell.Terminal;
 //}
 
 /*******************************************************************************/
@@ -161,32 +174,34 @@ int Cmd_monitor(int argc, char ** argv)
 
     if(argc == 1U)
     {
-    	//printf("Loop Time is %d \n", LoopDelta);
-    	//printf("PWM %d \n", Motor1.PWM);
+//    	for(uint8_t iMotor = 0U; iMotor < CmdMotorCount; iMotor++)
+//    	{
+//    		Terminal_SendString(p_CmdTerminal, "\r\nMotor ");
+//     		Terminal_SendNum(p_CmdTerminal, iMotor + 1U);
+//        	Terminal_SendString(p_CmdTerminal, ":\r\n");
 
-    	//	printf("Motor Desired %d \n", *Motor1PID.SetPoint);
-    	//	printf("Motor Input %d \n", *Motor1PID.Input);
-    	//	printf("Motor Error (Measured - Input) %d \n", *Motor1PID.SetPoint - *Motor1PID.Input);
+//        	Terminal_SendString(p_CmdTerminal, "\r\nBackEMF A 			= ");
+//    		Terminal_SendNum(p_CmdTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBemfA_mV);
+//    		Terminal_SendString(p_CmdTerminal, " mV\r\n");
+//
+//        	Terminal_SendString(p_CmdTerminal, "\r\nBackEMF Peak 		= ");
+//    		Terminal_SendNum(p_CmdTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBemfPeak_mV);
+//    		Terminal_SendString(p_CmdTerminal, " mV\r\n");
+//
+//        	Terminal_SendString(p_CmdTerminal, "\r\nBus Voltage 			= ");
+//    		Terminal_SendNum(p_CmdTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBus_mV);
+//    		Terminal_SendString(p_CmdTerminal, " mV\r\n");
+//
+//        	Terminal_SendString(p_CmdTerminal, "\r\nSpeed 				= ");
+//    		Terminal_SendNum(p_CmdTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].Speed_RPM);
+//    		Terminal_SendString(p_CmdTerminal, " RPM\r\n");
+//
+//        	Terminal_SendString(p_CmdTerminal, "\r\nCurrent 				= ");
+//    		Terminal_SendNum(p_CmdTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].IBus_Amp);
+//    		Terminal_SendString(p_CmdTerminal, " Amp\r\n");
 
-//    	Terminal_SendString(p_CmdContextTerminal, "\r\nBackEMF A 			= ");
-//		Terminal_SendNum(p_CmdContextTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBemfA_mV);
-//		Terminal_SendString(p_CmdContextTerminal, " mV\r\n");
-//
-//    	Terminal_SendString(p_CmdContextTerminal, "\r\nBackEMF Peak 		= ");
-//		Terminal_SendNum(p_CmdContextTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBemfPeak_mV);
-//		Terminal_SendString(p_CmdContextTerminal, " mV\r\n");
-//
-//    	Terminal_SendString(p_CmdContextTerminal, "\r\nBus Voltage 			= ");
-//		Terminal_SendNum(p_CmdContextTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBus_mV);
-//		Terminal_SendString(p_CmdContextTerminal, " mV\r\n");
-//
-//    	Terminal_SendString(p_CmdContextTerminal, "\r\nSpeed 				= ");
-//		Terminal_SendNum(p_CmdContextTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].Speed_RPM);
-//		Terminal_SendString(p_CmdContextTerminal, " RPM\r\n");
-//
-//    	Terminal_SendString(p_CmdContextTerminal, "\r\nCurrent 				= ");
-//		Terminal_SendNum(p_CmdContextTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].IBus_Amp);
-//		Terminal_SendString(p_CmdContextTerminal, " Amp\r\n");
+//    	}
+
 
     }
 
@@ -198,20 +213,20 @@ int Cmd_monitor(int argc, char ** argv)
 int Cmd_pwm(int argc, char ** argv)
 {
 	uint16_t pwm;
-	uint8_t motorN;
+//	uint8_t motorIndex = 0U;
 
 	if (argc == 2U)
 	{
-		pwm = strtoul(argv[2U], 0U, 10);
+		pwm = strtoul(argv[1U], 0U, 10);
 	}
-	else if (argc == 3U)
-	{
-		motorN = argv[2];
-		pwm = strtoul(argv[3U], 0U, 10);
-	}
+//	else if (argc == 3U)
+//	{
+//		motorIndex = argv[2];
+//		pwm = strtoul(argv[3U], 0U, 10);
+//	}
 
 //set user
-	MotorUser_SetInputThrottle(p_CmdMotorUser, pwm);
+//	MotorUser_SetInputThrottle(p_CmdMotorUser, pwm);
 
 //set direct
 	//	p_Motors[0].Pwm;
@@ -221,41 +236,43 @@ int Cmd_pwm(int argc, char ** argv)
 }
 
 
-int Cmd_mode(int argc, char ** argv)
+////	.CommutationMode 	= MOTOR_COMMUTATION_MODE_FOC,
+////	.SensorMode 		= MOTOR_SENSOR_MODE_ENCODER,
+////	.ControlMode 		= MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE,
+//
+//	.PhasePwmMode		= PHASE_MODE_UNIPOLAR_1,
+////	.PhasePwmMode		= PHASE_MODE_BIPOLAR,
+//	.BemfSampleMode 	= BEMF_SAMPLE_MODE_PWM_ON,
+int Cmd_param(int argc, char ** argv)
 {
+	if (argc == 2U)
+	{
+		//read
+	}
+	else if (argc == 3U)
+	{
+		//write
 
+	}
+
+	if (strcmp(argv[1U], "sensor") == 0U)
+	{
+		if (strcmp(argv[2U], "hall") == 0U)
+		{
+//			for (uint8_t iMotor = 0U; iMotor < CmdMotorCount; iMotor++)
+//			{
+////				CmdMotorParametersArray[iMotor]->SensorMode = MOTOR_SENSOR_MODE_HALL;
+//			}
+		}
+	}
 }
 
-int Cmd_hall(int argc, char ** argv)
-{
-
-}
 
 int Cmd_configfile(int argc, char **argv)
 {
 
 	return MOTOR_SHELL_CMD_RETURN_CODE_SUCCESS;
 }
-//
-//int Cmd_read(int argc, char **argv)
-//{
-//	static char buffer[5];
-////	snprintf(buffer, 5, "%d", MotorControllerShellMain.p_Motors[0].VBus);
-////	sprintf()
-//	if (strcmp(argv[1], "vbus") == 0U)
-//	{
-//		Terminal_SendString(&MotorControllerShellMain.Terminal, "\r\nVBus = ");
-//		Terminal_SendString(&MotorControllerShellMain.Terminal, buffer);
-////    	Terminal_SendNum(MotorControllerShellMain.p_Motors[0].VBus);
-//		Terminal_SendString(&MotorControllerShellMain.Terminal, "\r\n");
-//	}
-//	else
-//	{
-//
-//	}
-//
-//	return MOTOR_SHELL_CMD_RETURN_CODE_OK;
-//}
 
 
 //int Cmd_v(int argc, char ** argv)
@@ -409,10 +426,11 @@ int Cmd_configfile(int argc, char **argv)
 
 const Cmd_T MOTOR_CMD_TABLE[MOTOR_SHELL_CMD_COUNT] =
 {
-	{"monitor", 	"Display motor info",			Cmd_monitor	},
 	{"pwm", 		"Sets pwm value", 				Cmd_pwm		},
-	{"mode", 		"Sets mode using options",	 	Cmd_mode	},
-	{"hall", 		"Sets commutation hall mode", 	Cmd_hall	},
+	{"monitor", 	"Display motor info",			Cmd_monitor	},
+	{"param", 		"Sets motor parameterss",	 	Cmd_param	},
+//	{"mode", 		"Sets mode using options",	 	Cmd_mode	},
+//	{"hall", 		"Sets commutation hall mode", 	Cmd_hall	},
 
 ////	{ "v", 			"Sets applied voltage", 	Cmd_v		},
 ////	{ "rpm", 		"Display rpm", 				Cmd_rpm		},

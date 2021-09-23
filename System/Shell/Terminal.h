@@ -10,9 +10,10 @@
 #include <stdio.h> //for snprintf
 
 //each terminal instance fixed to this max
-#ifndef CMDLINE_ARGC_MAX
-#define CMDLINE_ARGC_MAX	5 //including cmd string
+#ifndef CMDLINE_ARG_MAX
+#define CMDLINE_ARG_MAX		5 //including cmd string
 #endif
+
 #ifndef CMDLINE_CHAR_MAX
 #define CMDLINE_CHAR_MAX	50
 #endif
@@ -53,7 +54,7 @@ typedef struct
 #endif
 
 	volatile char Cmdline[CMDLINE_CHAR_MAX]; /*!< Cmdline buffer */
-	volatile char * (ArgV[CMDLINE_ARGC_MAX]); /*!<  */
+	volatile char * (ArgV[CMDLINE_ARG_MAX]); /*!<  */
 	volatile uint8_t ArgC;
 	volatile uint8_t CursorIndex;
 }
@@ -121,9 +122,23 @@ static inline void Terminal_Clear(const Terminal_T * p_terminal)
 	Terminal_SendChar(p_terminal, 0x4AU); /* 'J' */
 }
 
+//static inline bool Terminal_PollCmdlineEsc(const Terminal_T * p_terminal)
+//{
+//	return (Terminal_RecvChar(p_terminal) == KEY_ESC) ? true : false;
+//}
+
 static inline bool Terminal_PollCmdlineEsc(const Terminal_T * p_terminal)
 {
-	return (Terminal_RecvChar(p_terminal) == KEY_ESC) ? true : false;
+//	char ch;
+	bool isEsc;
+
+	if (Terminal_PollKeyPressed(p_terminal))
+	{
+//		ch = Terminal_RecvChar(p_terminal);
+		isEsc = (Terminal_RecvChar(p_terminal) == KEY_ESC) ? true : false;
+	}
+
+	return isEsc;
 }
 
 static inline uint8_t Terminal_GetCmdlineArgC(const Terminal_T * p_terminal) //read from terminal

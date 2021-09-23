@@ -44,6 +44,10 @@ bool Terminal_ProcCmdline(Terminal_T * p_terminal) //read from terminal
 			p_terminal->CursorIndex = 0;
 			isComplete = true;
 		}
+//		else if (ch == '/0' || ch == 0xFF)
+//		{
+//
+//		}
 //			#ifdef CONFIG_SHELL_ARROW_KEYS_ENABLE
 //			else if (ch == '\e')
 //			{
@@ -74,22 +78,26 @@ void Terminal_ParseCmdline(Terminal_T * p_terminal)
 {
     char * p_cmdline = p_terminal->Cmdline;
     uint8_t argc = 0U;
-	bool isArgv = true;
+	bool isArgv = true; //start each iteration assuming current char is a arg char, check if its not first
 
 	while (*p_cmdline != '\0')
 	{
-		if (isArgv)
+		if (*p_cmdline == ' ')
 		{
-			isArgv = false;
-			p_terminal->ArgV[argc] = p_cmdline;
-			argc++;
+			*p_cmdline = '\0';
+			isArgv = true; //next char is Argv or another ' '
 		}
-		else
+		else if (isArgv)
 		{
-			if (*p_cmdline == ' ')
+			if (argc < CMDLINE_ARG_MAX)
 			{
-				isArgv = true; //next char is Argv
-				*p_cmdline = '\0';
+				p_terminal->ArgV[argc] = p_cmdline;
+				isArgv = false;
+				argc++;
+			}
+			else
+			{
+				//error
 			}
 		}
 		p_cmdline++;

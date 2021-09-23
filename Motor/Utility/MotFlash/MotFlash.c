@@ -28,54 +28,34 @@
     @version V0
 */
 /*******************************************************************************/
-#ifndef MOTOR_FLASH_H
-#define MOTOR_FLASH_H
+#include "MotFlash.h"
 
-#include "Motor/Motor.h"
 #include "Peripheral/Flash/Flash_EEPROM.h"
 #include "Peripheral/Flash/Flash.h"
 
 
 
-//static inline uint32_t MotorFlash_LoadParameterAll(Motor_T * p_motor)
+//void MotorFlash_Init
+//(
+//	Motor_T * p_motor,
+//	HAL_Flash_T * p_hal_flash
+//)
 //{
-//	Flash_EEPROM_ReadBytes(&MotorFlashMain, &p_motor->Parameters, p_motor->p_Constants->P_EEPROM, sizeof(Motor_Parameters_T));
-//}
-//
-//static inline uint32_t MotorFlash_SaveParametersAll(Motor_T * p_motor)
-//{
-// 	Flash_EEPROM_WriteAlignedBytes(&MotorFlashMain, p_motor->p_Constants->P_EEPROM, &p_motor->Parameters, sizeof(Motor_Parameters_T));
-//}
-//
-//static inline void MotorFlash_OnBlock(void * p_void)
-//{
-//
-//}
-
-//static inline uint32_t MotorFlash_LoadParameter_FocOpenLoopVq(Motor * p_motor)
-//{
-//	return ((Motor_Parameters_T *)(p_flash->p_ParametersStart))->FocOpenLoopVq;
-//
-//}
-//
-//static inline void MotorFlash_WriteParameter_FocOpenLoopVq(Motor * p_motor,  qfrac16_t value)
-//{
-//
-//
-//	Flash_WriteBuffer(&((Motor_Parameters_T *)(p_flash->p_ParametersStart))->FocOpenLoopVq,  value);
-//
-//	Flash_WriteBuffer16(&(MOTOR_FLASH_PARAMETERS->FocOpenLoopVq)),  value);
-//
+//	Flash_Init
+//	(
+//		&p_motor->MotorFlash,
+//		p_hal_flash,
+//		MotorFlash_OnBlock,
+//		p_motor
+//	);
 //}
 
-#endif
-//typedef const struct
+// void MotorFlash_InitParition //per motor
+//(
+//	Motor_T * p_motorDest,
+//	const Flash_Partition_T * p_flashParition
+//)
 //{
-//
-
-//
-//
+////	p_motor->p_MotorFlashParition = p_flashParition;
 //}
-//MotorFlash_T;
 
-//#define MOTOR_FLASH_BASE                             FLASH_EEPROM_START

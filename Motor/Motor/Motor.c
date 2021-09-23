@@ -33,19 +33,19 @@
 #include "Config.h"
 //#include "Default.h"
 
-#include "MotorStateMachine.h" //circular modular dependency
+#include "MotorStateMachine.h" //circular modular dependency only for MotorStateMachine_Init
 
-#include "System/StateMachine/StateMachine.h"
-#include "System/Thread/Thread.h"
-
-#include "Motor/Transducer/Phase/Phase.h"
-#include "Motor/Transducer/Hall/Hall.h"
-#include "Motor/Transducer/BEMF/BEMF.h"
+#include "Transducer/Phase/Phase.h"
+#include "Transducer/Hall/Hall.h"
+#include "Transducer/BEMF/BEMF.h"
 
 #include "Transducer/Encoder/Encoder_Motor.h"
 #include "Transducer/Encoder/Encoder_DeltaT.h"
 #include "Transducer/Encoder/Encoder_DeltaD.h"
 #include "Transducer/Encoder/Encoder.h"
+
+#include "System/StateMachine/StateMachine.h"
+#include "System/Thread/Thread.h"
 
 #include "Math/Linear/Linear_ADC.h"
 #include "Math/Linear/Linear_Voltage.h"
@@ -318,9 +318,17 @@ void Motor_ProcRamp(Motor_T * p_motor) // input voltage/speed cmd
 	p_motor->RampCmd = Linear_Ramp_CalcTarget_IncIndex(&p_motor->Ramp, &p_motor->RampIndex, 1U);
 }
 
+
+void Motor_SetRamp(Motor_T * p_motor, int32_t accerationSigned)
+{
+
+}
+
 //proc ramp update ~millis
 void Motor_SetRampAccelerate(Motor_T * p_motor, uint16_t acceration)
 {
+
+//	Motor_SetUserCmd(p_motor, acceration);
 
 	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE || p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
 	{
@@ -367,6 +375,8 @@ void Motor_SetRampAccelerate(Motor_T * p_motor, uint16_t acceration)
 
 void Motor_SetRampDecelerate(Motor_T * p_motor, uint16_t deceleration)
 {
+
+
 	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE || p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
 	{
 

@@ -49,14 +49,17 @@
 
 typedef struct
 {
+	//todo
+//	Serial_Init_T * p_Config;
+
 	HAL_Serial_T * p_HAL_Serial;
 
 	//	bool HasTxHarwareFIFO;
 	//	bool HasRxHarwareFIFO;
 
 	// software buffer
-	uint8_t * p_TxBuffer;	/*!< */
-	uint8_t * p_RxBuffer;	/*!< */
+	volatile uint8_t * p_TxBuffer;	/*!< */
+	volatile uint8_t * p_RxBuffer;	/*!< */
 	uint32_t TxBufferSize;
 	uint32_t RxBufferSize;
 
@@ -78,14 +81,13 @@ typedef struct
 //	void (* TxCallback)(void *); 	/*!< Callback on Tx */
 //	void * TxCallbackData; 			/*!< Transmit callback parameter pointer.*/
 //
-//    Serial_TransferMode_T TransferMode;	 /*!< interrupt/dma mode */
-//
 //    bool RxComplete;
 //    bool TxComplete;
 //
 //    volatile Serial_Status_T TxStatus;	/*!< Status of last driver transmit operation */
 //    volatile Serial_Status_T RxStatus;	/*!< Status of last driver receive operation */
 
+//    Serial_TransferMode_T TransferMode;	 /*!< interrupt/dma mode */
 #if CONFIG_SERIAL_DMA_ENABLE
     uint8_t RxDMAChannel;                /*!< DMA channel number for DMA-based rx. */
     uint8_t TxDMAChannel;                /*!< DMA channel number for DMA-based tx. */
@@ -97,28 +99,27 @@ typedef const struct
 	HAL_Serial_T * const P_HAL_SERIAL;
 	//	bool HasTxHarwareFIFO;
 	//	bool HasRxHarwareFIFO;
-	uint8_t * const P_TX_BUFFER;
-	uint8_t * const P_RX_BUFFER;
+	volatile uint8_t * const P_TX_BUFFER;
+	volatile uint8_t * const P_RX_BUFFER;
 	const uint32_t TX_BUFFER_SIZE; //change to #define const?
 	const uint32_t RX_BUFFER_SIZE;
 } Serial_Init_T;
 
 //static inline bool IsTxBufferEmpty(Serial_T * p_serial) 	{return (p_serial->TxBufferHead == p_serial->TxBufferTail);};
-//static inline bool IsRxBufferFull(Serial_T * p_serial) 	{return (p_serial->RxBufferHead == p_serial->RxBufferTail);};
+//static inline bool IsRxBufferFull(Serial_T * p_serial) 	{return (rxBufferHeadNext = (p_serial->RxBufferHead + 1) % p_serial->RxBufferSize == p_serial->RxBufferTail);};
 
-//Rx data reg full ISR, enqueue data, head is end of queue
+//Rx data reg/fifo full ISR, receive from hw to software buffer
 static inline void Serial_RxData_ISR(Serial_T *p_serial)
 {
 	uint32_t rxBufferHeadNext;
 
 	while (HAL_Serial_ReadRxRegFull(p_serial->p_HAL_Serial))
 	{
-		rxBufferHeadNext = (p_serial->RxBufferHead + 1) % p_serial->RxBufferSize;
+		rxBufferHeadNext = (p_serial->RxBufferHead + 1U) % p_serial->RxBufferSize;
 
 		if (rxBufferHeadNext == p_serial->RxBufferTail) //software buffer is full
 		{
-			//if buffer stays full, need to disable irq to prevent blocking main loop
-			//user must restart rx irq
+			//if buffer stays full, need to disable irq to prevent blocking lower prio threads. user must restart rx irq
 			HAL_Serial_DisableRxInterrupt(p_serial->p_HAL_Serial);
 			break;
 		}
@@ -130,7 +131,7 @@ static inline void Serial_RxData_ISR(Serial_T *p_serial)
 	}
 }
 
-//Tx data reg empty ISR
+//Tx data reg/fifo empty ISR, transmit from software buffer to hw
 static inline void Serial_TxData_ISR(Serial_T * p_serial)
 {
 	while(HAL_Serial_ReadTxRegEmpty(p_serial->p_HAL_Serial))
@@ -143,10 +144,20 @@ static inline void Serial_TxData_ISR(Serial_T * p_serial)
 		else
 		{
 			HAL_Serial_WriteTxChar(p_serial->p_HAL_Serial, p_serial->p_TxBuffer[p_serial->TxBufferTail]);
-			p_serial->TxBufferTail = (p_serial->TxBufferTail + 1) % p_serial->TxBufferSize;
+			p_serial->TxBufferTail = (p_serial->TxBufferTail + 1U) % p_serial->TxBufferSize;
 		}
 	}
 }
+
+//static inline void  Serial_TxComplete_ISR(Serial_T * p_serial)
+//{
+//
+//}
+
+//static inline void  Serial_Error_ISR(Serial_T * p_serial)
+//{
+//  //HAL_Serial_GetError( );
+//}
 
 //If shared ISR
 static inline void Serial_RxTxData_ISR(Serial_T * p_serial)
@@ -155,22 +166,11 @@ static inline void Serial_RxTxData_ISR(Serial_T * p_serial)
 	Serial_TxData_ISR(p_serial);
 }
 
-
-static inline void Serial_PollRestartRx_IO(Serial_T *p_serial)
+static inline void Serial_PollRestartRx_IO(const Serial_T *p_serial)
 {
 //	Serial_EnableRx(p_serial);
 	HAL_Serial_EnableRxInterrupt(p_serial->p_HAL_Serial);
 }
-
-static inline void  Serial_TxComplete_IO(Serial_T * p_serial)
-{
-
-}
-
-//static inline void  Serial_Error_IO(Serial_T * p_serial)
-//{
-//  //HAL_Serial_GetError( );
-//}
 
 static inline uint32_t Serial_GetAvailableRx(Serial_T * p_serial)
 {
@@ -189,22 +189,22 @@ static inline uint32_t Serial_GetAvailableTx(Serial_T * p_serial)
 	}
 }
 
-static inline void Serial_EnableTx(Serial_T * p_serial)
+static inline void Serial_EnableTx(const Serial_T * p_serial)
 {
 	HAL_Serial_EnableTxInterrupt(p_serial->p_HAL_Serial);
 }
 
-static inline void Serial_DisableTx(Serial_T * p_serial)
+static inline void Serial_DisableTx(const Serial_T * p_serial)
 {
 	HAL_Serial_DisableTxInterrupt(p_serial->p_HAL_Serial);
 }
 
-static inline void Serial_EnableRx(Serial_T * p_serial)
+static inline void Serial_EnableRx(const Serial_T * p_serial)
 {
 	HAL_Serial_EnableRxInterrupt(p_serial->p_HAL_Serial);
 }
 
-static inline void Serial_DisableRx(Serial_T * p_serial)
+static inline void Serial_DisableRx(const Serial_T * p_serial)
 {
 	HAL_Serial_DisableRxInterrupt(p_serial->p_HAL_Serial);
 }

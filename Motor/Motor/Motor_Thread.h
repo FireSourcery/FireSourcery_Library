@@ -33,7 +33,7 @@
 
 #include "HAL_Motor.h"
 
-#include "Motor/Transducer/Phase/Phase.h"
+#include "Motor/Motor/Transducer/Phase/Phase.h"
 
 #include "System/StateMachine/StateMachine.h"
 #include "System/Thread/Thread.h"
@@ -73,7 +73,7 @@ static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priority
 {
 	p_motor->MillisTimerBase++;
 
-	Motor_ProcSpeed(p_motor);
+	Motor_CaptureSpeed(p_motor);
 	Motor_PollStop(p_motor);
 
 	//high prioirty brake decel

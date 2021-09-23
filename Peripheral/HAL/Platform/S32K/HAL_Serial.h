@@ -40,67 +40,61 @@
 
 typedef LPUART_Type HAL_Serial_T;
 
-
-static inline void HAL_Serial_WriteTxChar(HAL_Serial_T *p_uartRegMap, uint8_t txChar)
+static inline void HAL_Serial_WriteTxChar(HAL_Serial_T * p_uartRegMap, uint8_t txChar)
 {
-	*((volatile uint8_t*) &(p_uartRegMap->DATA)) = txChar;
+	*((volatile uint8_t*)&(p_uartRegMap->DATA)) = txChar;
 }
 
-static inline uint8_t HAL_Serial_ReadRxChar(const HAL_Serial_T *p_uartRegMap)
+static inline uint8_t HAL_Serial_ReadRxChar(const HAL_Serial_T * p_uartRegMap)
 {
 	return (uint8_t)p_uartRegMap->DATA;
 }
 
-static inline bool HAL_Serial_ReadTxRegEmpty(const HAL_Serial_T *p_uartRegMap)
+static inline bool HAL_Serial_ReadTxRegEmpty(const HAL_Serial_T * p_uartRegMap)
 {
-	return ((p_uartRegMap->FIFO | LPUART_FIFO_TXEMPT_MASK) != 0U) ? true : false;
+	return ((p_uartRegMap->STAT & LPUART_STAT_TDRE_MASK) != 0U) ? true : false;
 }
 
-static inline bool HAL_Serial_ReadRxRegFull(const HAL_Serial_T *p_uartRegMap)
+static inline bool HAL_Serial_ReadRxRegFull(const HAL_Serial_T * p_uartRegMap)
 {
-	return ((p_uartRegMap->FIFO | LPUART_FIFO_RXEMPT_MASK) != 0U) ? false : true;
+	return ((p_uartRegMap->STAT & LPUART_STAT_RDRF_MASK) != 0U) ? true : false;
 }
 
-static inline void HAL_Serial_EnableTxInterrupt(HAL_Serial_T *p_uartRegMap)
+static inline void HAL_Serial_EnableTxInterrupt(HAL_Serial_T * p_uartRegMap)
 {
 	p_uartRegMap->CTRL |= LPUART_CTRL_TIE_MASK;
 }
 
-static inline void HAL_Serial_DisableTxInterrupt(HAL_Serial_T *p_uartRegMap)
+static inline void HAL_Serial_DisableTxInterrupt(HAL_Serial_T * p_uartRegMap)
 {
 	p_uartRegMap->CTRL &= ~LPUART_CTRL_TIE_MASK;
 }
 
-static inline void HAL_Serial_WriteTxSwitch(HAL_Serial_T *p_uartRegMap, bool enable)
+static inline void HAL_Serial_WriteTxSwitch(HAL_Serial_T * p_uartRegMap, bool enable)
 {
 	p_uartRegMap->CTRL = (p_uartRegMap->CTRL & ~LPUART_CTRL_TE_MASK) | ((enable ? 1UL : 0UL) << LPUART_CTRL_TE_SHIFT);
-    /* Wait for the register write operation to complete */
-    while((bool)((p_uartRegMap->CTRL & LPUART_CTRL_TE_MASK) != 0U) != enable) {}
+	/* Wait for the register write operation to complete */
+	while ((bool)((p_uartRegMap->CTRL & LPUART_CTRL_TE_MASK) != 0U) != enable) {}
 }
 
-static inline void HAL_Serial_EnableRxInterrupt(HAL_Serial_T *p_uartRegMap)
+static inline void HAL_Serial_EnableRxInterrupt(HAL_Serial_T * p_uartRegMap)
 {
 	p_uartRegMap->CTRL |= LPUART_CTRL_RIE_MASK;
 }
 
-static inline void HAL_Serial_DisableRxInterrupt(HAL_Serial_T *p_uartRegMap)
+static inline void HAL_Serial_DisableRxInterrupt(HAL_Serial_T * p_uartRegMap)
 {
 	p_uartRegMap->CTRL &= ~LPUART_CTRL_RIE_MASK;
 }
 
-//static inline void HAL_Serial_ReadIsTxInterruptFlag(HAL_Serial_T *p_uartRegMap)
-//{
-//	p_uartRegMap->STAT[TDRE]
-//}
-
-static inline void HAL_Serial_WriteRxSwitch(HAL_Serial_T *p_uartRegMap, bool enable)
+static inline void HAL_Serial_WriteRxSwitch(HAL_Serial_T * p_uartRegMap, bool enable)
 {
 	p_uartRegMap->CTRL = (p_uartRegMap->CTRL & ~LPUART_CTRL_RE_MASK) | ((enable ? 1UL : 0UL) << LPUART_CTRL_RE_SHIFT);
     /* Wait for the register write operation to complete */
     while((bool)((p_uartRegMap->CTRL & LPUART_CTRL_RE_MASK) != 0U) != enable) {}
 }
 
-static inline void HAL_Serial_ConfigBaudRate(HAL_Serial_T *p_uartRegMap, uint32_t baudRate)
+static inline void HAL_Serial_ConfigBaudRate(HAL_Serial_T * p_uartRegMap, uint32_t baudRate)
 {
 	const uint32_t UART_BASE_FREQ = 48000000U;
 
@@ -187,7 +181,7 @@ static inline void HAL_Serial_ConfigBaudRate(HAL_Serial_T *p_uartRegMap, uint32_
 	HAL_Serial_WriteRxSwitch(p_uartRegMap, true);
 }
 
-static inline void HAL_Serial_Init(HAL_Serial_T *p_uartRegMap)
+static inline void HAL_Serial_Init(HAL_Serial_T * p_uartRegMap)
 {
 //	lpuart_state_t lpUartState0;
 //
@@ -231,8 +225,10 @@ static inline void HAL_Serial_Init(HAL_Serial_T *p_uartRegMap)
 
     HAL_Serial_ConfigBaudRate(p_uartRegMap, 9600U);
 
+	p_uartRegMap->FIFO |= LPUART_FIFO_RXFE_MASK | LPUART_FIFO_TXFE_MASK;
+
     /* config 8-bit (M=0) or 9-bits (M=1) */
-    p_uartRegMap->CTRL = (p_uartRegMap->CTRL & ~LPUART_CTRL_M_MASK) | (8U << LPUART_CTRL_M_SHIFT);
+    p_uartRegMap->CTRL = (p_uartRegMap->CTRL & ~LPUART_CTRL_M_MASK);
     /* clear M10 to make sure not 10-bit mode */
     p_uartRegMap->BAUD &= ~LPUART_BAUD_M10_MASK;
 
@@ -248,8 +244,6 @@ static inline void HAL_Serial_Init(HAL_Serial_T *p_uartRegMap)
 //    	INT_SYS_SetPriority(LPUART1_RxTx_IRQn, 15U);
     	INT_SYS_EnableIRQ(LPUART1_RxTx_IRQn);
     }
-
-
 }
 
 #endif

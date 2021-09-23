@@ -314,6 +314,19 @@ static inline bool Hall_PollSensorsEdge_IO(Hall_T * p_hall)
 	return (isEdge);
 }
 
+
+//static inline bool Hall_PollCaptureSensors_IO(Hall_T * p_hall)
+//{
+//	bool isEdge = Hall_PollSensorsEdge_IO(p_hall);
+//
+//	if (isEdge)
+//	{
+//		Hall_CaptureSensors_IO(p_hall);
+//	}
+//
+//	return (isEdge);
+//}
+
 //temp
 static inline bool Hall_PollSensorA(Hall_T * p_hall)
 {

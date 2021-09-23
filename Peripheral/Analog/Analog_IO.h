@@ -120,7 +120,7 @@ static inline void CaptureAdcResults(const Analog_T * p_analog,	const Analog_Vir
 
 	CompleteConversion
  */
-static inline void Analog_CaptureResults_IO(Analog_T * p_analog)
+static inline void Analog_CaptureResults_ISR(Analog_T * p_analog)
 {
 	const Analog_VirtualChannel_T * p_virtualChannels; //temp buffer argument
 

@@ -24,18 +24,17 @@
 /*!
     @file 	Motor.h
     @author FireSoucery
-    @brief  1 instance for all motor, input output control
+    @brief  Analog user controls. 1 instance for all motor, input
     @version V0
 */
 /**************************************************************************/
-#ifndef MOTOR_USER_H
-#define MOTOR_USER_H
+#ifndef MOT_ANALOG_USER_H
+#define MOT_ANALOG_USER_H
 
-#include "Motor/Config.h"
+#include "Motor/Motor/Config.h"
 
 #include "Peripheral/Pin/Debounce.h"
 #include "Peripheral/Pin/Pin.h"
-#include "Peripheral/Serial/Serial.h"
 
 #include "Math/Linear/Linear_ADC.h"
 #include "Math/Linear/Linear.h"
@@ -43,17 +42,31 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef CONFIG_MOTOR_ADC_8
+	typedef uint8_t adc_t;
+#elif defined(CONFIG_MOTOR_ADC_16)
+	typedef uint16_t adc_t;
+#endif
 
-typedef enum
+typedef const struct
 {
-	MOTOR_INPUT_MODE_ANALOG,
-	MOTOR_INPUT_MODE_SERIAL,
-	MOTOR_INPUT_MODE_CAN,
+	const HAL_Pin_T HAL_PIN_BRAKE;
+	const HAL_Pin_T HAL_PIN_THROTTLE;
+	const HAL_Pin_T HAL_PIN_FORWARD;
+	const HAL_Pin_T HAL_PIN_REVERSE;
+	const HAL_Pin_T HAL_PIN_NEUTRAL;
+	volatile const uint32_t * const P_DEBOUNCE_TIMER;
+	volatile const adc_t * const P_THROTTLE_ADCU;
+	volatile const adc_t * const P_BRAKE_ADCU;
+	const uint32_t LINEAR_V_ADC_VREF;
+	const uint32_t LINEAR_V_ADC_BITS;
 }
-MotorUser_InputMode_T;
+MotAnalogUser_Config_T;
 
 typedef struct
 {
+	MotAnalogUser_Config_T * p_Config;
+
 	Linear_T UnitThrottle;
 	Linear_T UnitBrake;
 
@@ -61,90 +74,25 @@ typedef struct
 	Debounce_T PinThrottle;
 	Debounce_T PinForward;
 	Debounce_T PinReverse;
-}
-MotorUser_Analog_T; //analog in
 
+	bool InputSwitchNeutralEnable;
 
-////per motor outputs
-//typedef struct
-//{
-//
-//
-//}
-//MotorUser_Ouputs_T;
-
-
-#ifdef CONFIG_MOTOR_ADC_8
-	typedef uint16_t adc_t;
-#elif defined(CONFIG_MOTOR_ADC_16)
-	typedef uint16_t adc_t;
-#endif
-
-typedef const struct
-{
-	//analog in
-	const HAL_Pin_T HAL_PIN_BRAKE;
-	const HAL_Pin_T HAL_PIN_THROTTLE;
-	const HAL_Pin_T HAL_PIN_FORWARD;
-	const HAL_Pin_T HAL_PIN_REVERSE;
-	volatile const uint32_t * const P_DEBOUNCE_TIMER; //millis timer
-	volatile const adc_t * const P_THROTTLE_ADCU;
-	volatile const adc_t * const P_BRAKE_ADCU;
-	const uint32_t LINEAR_V_ADC_VREF;
-	const uint32_t LINEAR_V_ADC_BITS;
-
-	//per controller sensors?
-//	volatile const adc_t * const P_VACC_ADCU;
-//	volatile const adc_t * const P_VSENSE_ADCU;
-//	volatile const adc_t * const P_HEAT_PCB_ADCU;
-
-}
-MotorUser_Consts_T;
-
-typedef struct
-{
-	const MotorUser_Consts_T * P_MOTOR_USER_CONST;
-
-	MotorUser_Analog_T InputAnalog;
-//	Serial_T * p_Serial; //serial maybe shared
-	//MotorProtocol_T ;
-
-	MotorUser_InputMode_T InputMode;
-
-	//input values buffer
+	//input values regs/buffer
 	volatile bool InputSwitchBrake;
 	volatile bool InputSwitchThrottle;
 	volatile bool InputSwitchForward;
 	volatile bool InputSwitchReverse;
 	volatile bool InputSwitchNeutral;
-	volatile bool InputIsThrottleRelease;
+	volatile bool IsThrottleRelease;
 
 	volatile uint16_t InputValueThrottle;
 	volatile uint16_t InputValueThrottlePrev;
 	volatile uint16_t InputValueBrake;
 	volatile uint16_t InputValueBrakePrev;
-
-	//output
-	//todo alarm Blinky_T Alarm
-
 }
-MotorUser_T;
+MotAnalogUser_T;
 
+extern void MotAnalogUser_Init(MotAnalogUser_T * p_motorUser, const MotAnalogUser_Config_T * p_config);
+extern void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_motorUser);
 
-
-//priority brake thread
-//static inline void MotorUser_PollBrake(MotorUser_T * p_motorUser, Motor_T * p_motor)
-//{
-//	Debounce_CaptureState_IO(p_motorUser->MotorUserAnalog.PinBrake);
-//	p_motorUser->InputSwitchBrake 		= Debounce_GetState(p_motorUser->MotorUserAnalog.PinBrake);
-//
-//	if (p_motorUser->InputSwitchBrake == true)
-//	{
-//			Motor_SetUserCmd(p_motor, (p_motorUser->InputValueBrake + p_motorUser->InputValueBrake) / 2U);
-//			Motor_SetRampDecelerate(p_motor, 0);
-//	}
-//}
-
-
-extern void MotorUser_Init(MotorUser_T * p_motorUser, MotorUser_Consts_T * p_consts);
 #endif

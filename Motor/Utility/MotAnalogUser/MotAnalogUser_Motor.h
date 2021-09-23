@@ -1,4 +1,4 @@
-/******************************************************************************/
+/**************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,24 +19,21 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/******************************************************************************/
-/******************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
 /*!
-	@file 	HAL_Phase.h
-	@author FireSoucery
-	@brief 	Phase HAL import functions
-	@version V0
+    @file 	MotAnalogUser_Motor.h
+    @author FireSoucery
+    @brief  1 instance for all motor, input output control
+    @version V0
 */
-/******************************************************************************/
-#ifndef HAL_PHASE_H
-#define HAL_PHASE_H
+/**************************************************************************/
+#ifndef MOT_ANALOG_USER_MOTOR_H
+#define MOT_ANALOG_USER_MOTOR_H
 
-#include "Path/Path.h"
+#include "MotAnalogUser.h"
+#include "Motor/Motor/Motor.h"
 
-#if 	defined(CONFIG_HAL_PHASE_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
-	#include PATH_USER(HAL_Phase.h)
-#elif 	defined(CONFIG_HAL_PHASE_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include PATH_BOARD(Motor/Transducer/HAL, HAL_Phase.h)
-#endif
+void MotAnalogUser_Motor_Write(const MotAnalogUser_T * input, Motor_T * p_motorDest, uint8_t motorCount);
 
 #endif

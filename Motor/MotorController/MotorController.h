@@ -33,20 +33,20 @@
 
 #include "Config.h"
 
-#include "Motor/Utility/MotorUser.h"
-//#include "Motor/Utility/MotorFlash.h"
+#include "Motor/Utility/MotShell/MotShell.h"
+#include "Motor/Utility/MotProtocol/MotProtocol.h"
+#include "Motor/Utility/MotAnalogUser/MotAnalogUser.h"
 
-#include "Motor/Motor.h"
-#include "Motor/HAL_Motor.h"
-
-//#include "Motor/Utility/MotorShell.h"
-
-#include "Peripheral/Serial/Serial.h"
-#include "System/Shell/Shell.h"
-
-#include "System/Thread/Thread.h"
+#include "Motor/Motor/Motor.h"
+#include "Motor/Motor/HAL_Motor.h"
 
 #include "Transducer/Blinky/Blinky.h"
+#include "Protocol/ProtocolG/ProtocolG.h"
+#include "Peripheral/Serial/Serial.h"
+#include "System/Shell/Shell.h"
+#include "System/Thread/Thread.h"
+
+#include <stdint.h>
 
 #ifdef CONFIG_MOTOR_ADC_8
 	typedef uint16_t adc_t;
@@ -54,61 +54,104 @@
 	typedef uint16_t adc_t;
 #endif
 
-typedef const struct
-{
-	const HAL_Pin_T HAL_PIN_ALARM;
 
-	volatile const uint32_t * const P_MILLIS_TIMER;
+	typedef enum
+	{
+		MOTOR_INPUT_MODE_ANALOG,
+		MOTOR_INPUT_MODE_SERIAL,
+		MOTOR_INPUT_MODE_CAN,
+	}
+	MotorController_InputMode_T;
 
-	//MotorControllerMonitor MotorUserAnalog
-	//	volatile const adc_t * P_VBUS_ADCU;
-	volatile const adc_t * const P_VACC_ADCU;
-	volatile const adc_t * const P_VSENSE_ADCU;
-	volatile const adc_t * const P_HEAT_PCB_ADCU;
+//typedef enum
+//{
+//	MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
+//} MotorController_InputMode_T;
 
-	const MotorUser_Consts_T MOTOR_USER_INIT;
-	const Motor_Constants_T MOTOR_INITS[CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT];
-	const Serial_Init_T SERIAL_INITS[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT];
+#define	CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT 1U
 
-//	const HAL_Flash_T * const P_HAL_FLASH;
-
-	//todo alarm, thermistor
-
-
-
-}
-MotorController_Constants_T;
-
-typedef struct
+typedef  __attribute__ ((aligned (4U))) struct
 {
 	uint8_t ShellConnectId;
+//	uint8_t ProtocolDataLinkId[1]; //per protocol
+	uint8_t AuxProtocolSpecsId[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT];
+
+	uint8_t MotProtocolSpecsId;
+
+	bool AnalogUserEnable;
 }
 MotorController_Parameters_T;
 
+typedef const struct
+{
+	const HAL_Pin_T HAL_PIN_ALARM;
+	////		.HAL_PIN_METER 		= {.P_GPIO_BASE = MTR_OUT_PORT,		.GPIO_PIN_MASK = (uint32_t)1U << MTR_OUT_PIN,	},
+	////		.HAL_PIN_COIL	 	= {.P_GPIO_BASE = COIL_OUT_PORT,	.GPIO_PIN_MASK = (uint32_t)1U << COIL_OUT_PIN,	},
+	////		.HAL_PIN_AUX1	 	= {.P_GPIO_BASE = ECO_IN_PORT,		.GPIO_PIN_MASK = (uint32_t)1U << ECO_IN_PIN,	},
+
+	//	const HAL_Flash_T * const P_HAL_FLASH;
+
+	const Motor_Constants_T 			MOTOR_INITS[CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT];
+	const Serial_Init_T 				SERIAL_INITS[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT];
+	const ProtocolG_Specs_T * const 	P_PROTOCOL_SPECS[1];	//protocols available, not necessary simultaneous
+	const ProtocolG_Config_T 			AUX_PROTOCOL_CONFIG[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT]; 	//Simultaneously active protocols
+	const ProtocolG_Config_T 			MOT_PROTOCOL_CONFIG;
+	const MotProtocol_Config_T			MOT_PROTOCOL_CONFIG_REGISTERS;
+	const MotShell_Config_T 			MOT_SHELL_CONFIG;
+	const MotAnalogUser_Config_T 		MOT_ANALOG_USER_CONFIG;
+
+	volatile const uint32_t * const 	P_MILLIS_TIMER;
+	//todo alarm, thermistor
+
+}
+MotorController_Config_T;
+
 typedef struct
 {
-	const MotorController_Constants_T * p_Constants;
+	const MotorController_Config_T * p_Config;
 	MotorController_Parameters_T Parameters;
 
 	/* compile time define const for all instances, only 1 instance of MotorController_T expected. */
 	Motor_T Motors[CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT];
 
-//	uint8_t SerialTxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT][100U];
-//	uint8_t SerialRxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT][100U];
+//	uint8_t TxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT+1][100U];
+//	uint8_t RxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT+1][100U];
+
 	Serial_T Serials[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT]; //simultaneous active serial
 
+//	void * p_Coms[]; 			//list of all datalink structs id by index
+	ProtocolG_T				AuxProtocols[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT]; 	//Simultaneously active protocols
 
-	Shell_T MotorShell;
-	MotorUser_T MotorUser;
+	ProtocolG_T				MotProtocol;
+	MotProtocol_Output_T 	MotProtocolOutput;
+	MotProtocol_Input_T 	MotProtocolInput;
+
+	Shell_T MotShell;
+
+	MotAnalogUser_T AnalogUser;
+	Blinky_T BlinkyAlarm;
+
 	//Flash_T MotorFlash;
 
 	Thread_T TimerSeconds;
 	Thread_T TimerMillis;
 	Thread_T TimerMillis10;
 
-	Blinky_T BlinkyAlarm;
+	volatile MotorController_InputMode_T InputMode; //arbitrate input overwrite
 }
 MotorController_T;
 
+//priority brake thread
+//static inline void MotorUser_PollBrake(MotorUser_T * p_motorUser, Motor_T * p_motor)
+//{
+//	Debounce_CaptureState_IO(p_motorUser->MotorUserAnalog.PinBrake);
+//	p_motorUser->InputSwitchBrake 		= Debounce_GetState(p_motorUser->MotorUserAnalog.PinBrake);
+//
+//	if (p_motorUser->InputSwitchBrake == true)
+//	{
+//			Motor_SetUserCmd(p_motor, (p_motorUser->InputValueBrake + p_motorUser->InputValueBrake) / 2U);
+//			Motor_SetRampDecelerate(p_motor, 0);
+//	}
+//}
 
 #endif

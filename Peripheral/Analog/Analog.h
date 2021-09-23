@@ -174,7 +174,7 @@ typedef struct Analog_Config_Tag
 
 	conversion share same config and same callback data
  */
-typedef struct Analog_Conversion_Tag
+typedef const struct Analog_Conversion_Tag
 {
 	/*!
 	 * MISRA violation.

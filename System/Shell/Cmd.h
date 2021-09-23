@@ -3,16 +3,6 @@
 
 #include <stdint.h>
 
-#define CMD_RESERVED_RETURN_CODE_SUCCESS 		0U
-#define CMD_RESERVED_RETURN_CODE_INVALID_ARGS 	-1 //Must be implement at cmd function level / per cmd function
-
-//typedef enum
-//{
-//	CMD_RESERVED_RETURN_CODE_SUCCESS = 0,
-//	CMD_RESERVED_RETURN_CODE_INVALID_ARGS = -1,
-//}
-//Cmd_ReservedReturnCode_T;
-
 typedef int (*Cmd_Function_T)(int argc, char * argv[]);
 typedef int (*Cmd_ContextFunction_T)(void * p_context, int argc, char * argv[]);
 
@@ -25,8 +15,8 @@ typedef int (*Cmd_ContextFunction_T)(void * p_context, int argc, char * argv[]);
 
 typedef const struct
 {
-    const char * P_NAME;
-    const char * P_HELP;
+    const char * const P_NAME;
+    const char * const P_HELP;
     const Cmd_Function_T FUNCTION;
 //    bool IS_CONTEXT_TYPE;
 //    Cmd_Type_T
@@ -38,10 +28,22 @@ typedef const struct
 }
 Cmd_T;
 
+
+#define CMD_RESERVED_RETURN_CODE_SUCCESS 		(0U)
+#define CMD_RESERVED_RETURN_CODE_INVALID_ARGS 	(-1) //Must be implement at cmd function level / per cmd function
+#define CMD_RESERVED_RETURN_CODE_ARGS_ERROR		(-2)
+
+//typedef enum
+//{
+//	CMD_RESERVED_RETURN_CODE_SUCCESS = 0,
+//	CMD_RESERVED_RETURN_CODE_INVALID_ARGS = -1,
+//}
+//Cmd_ReservedReturnCode_T;
+
 typedef const struct
 {
-	int CODE_ID;
-	const char * P_STRING;
+	const int CODE_ID;
+	const char * const P_STRING;
 
 	//errorhandlingfunction
 //#ifdef SHELL_OPTION_USE_LIST

@@ -600,7 +600,7 @@ static inline uint32_t Encoder_GetSpeed_UnitsPerMinute(Encoder_T * p_encoder)
 /*!
 	Also save speed for acceleration calculation
  */
-static inline uint32_t Encoder_ProcSpeed(Encoder_T * p_encoder)
+static inline uint32_t Encoder_CaptureSpeed(Encoder_T * p_encoder)
 {
 	uint32_t newSpeed;
 

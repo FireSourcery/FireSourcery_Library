@@ -34,7 +34,9 @@
 #include <stdbool.h>
 
 
-
+/*
+ * Single threaded buffer read/write only need disable channel ISR
+ */
 static inline void EnterCriticalTx(Serial_T * p_serial)
 {
 #if defined(CONFIG_SERIAL_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_SERIAL_MULTITHREADED_USER_DEFINED)
@@ -84,7 +86,7 @@ uint8_t Serial_RecvChar(Serial_T * p_serial) //Dequeue data
 	{
 		EnterCriticalRx(p_serial);
 		rxChar = p_serial->p_RxBuffer[p_serial->RxBufferTail];
-		p_serial->RxBufferTail = (p_serial->RxBufferTail + 1) % p_serial->RxBufferSize;
+		p_serial->RxBufferTail = (p_serial->RxBufferTail + 1U) % p_serial->RxBufferSize;
 		ExitCriticalRx(p_serial);
 	}
 
@@ -103,7 +105,7 @@ void Serial_SendChar(Serial_T * p_serial, uint8_t txChar) //enqueue
 	else
 	{
 		EnterCriticalTx(p_serial);
-		txBufferHeadNext = (p_serial->TxBufferHead + 1) % p_serial->TxBufferSize;
+		txBufferHeadNext = (p_serial->TxBufferHead + 1U) % p_serial->TxBufferSize;
 
 		if (txBufferHeadNext == p_serial->TxBufferTail)
 		{
@@ -119,55 +121,58 @@ void Serial_SendChar(Serial_T * p_serial, uint8_t txChar) //enqueue
 	}
 }
 
-uint32_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, uint32_t bufferSize)
+// buffer length
+
+uint32_t Serial_RecvBuffer(Serial_T * p_serial, uint8_t * p_destBuffer, uint32_t bufferSize)
 {
 	uint32_t charCount;
 
-//	if(p_serial->RxBufferHead == p_serial->RxBufferTail) return;
-
-	EnterCriticalRx(p_serial);
-
-	for (charCount = 0U; charCount < bufferSize - 1U; charCount++)
+	if(p_serial->RxBufferHead != p_serial->RxBufferTail)
 	{
-		if (p_serial->RxBufferHead == p_serial->RxBufferTail)
+		EnterCriticalRx(p_serial);
+		for (charCount = 0U; charCount < bufferSize; charCount++)
 		{
-			break;
+			if (p_serial->RxBufferHead == p_serial->RxBufferTail)
+			{
+				break;
+			}
+			else
+			{
+				p_destBuffer[charCount] = p_serial->p_RxBuffer[p_serial->RxBufferTail];
+				p_serial->RxBufferTail = (p_serial->RxBufferTail + 1U) % p_serial->RxBufferSize;
+			}
 		}
-		else
-		{
-			p_destBuffer[charCount] = p_serial->p_RxBuffer[p_serial->RxBufferTail];
-			p_serial->RxBufferTail = (p_serial->RxBufferTail + 1) % p_serial->RxBufferSize;
-		}
+		ExitCriticalRx(p_serial);
 	}
-
-	ExitCriticalRx(p_serial);
 
 	return charCount;
 }
 
-uint32_t Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, uint32_t bufferSize)
+uint32_t Serial_SendBuffer(Serial_T * p_serial, const uint8_t * p_srcBuffer, uint32_t bufferSize)
 {
 	uint32_t charCount;
-	uint32_t txBufferHeadNext;
+//	EnterCriticalTx(p_serial); if multi threaded move
+	uint32_t txBufferHeadNext = (p_serial->TxBufferHead + 1U) % p_serial->TxBufferSize;
 
-//	if (txBufferHeadNext == p_serial->TxBufferTail) return;
-
-	EnterCriticalTx(p_serial);
-	for (charCount = 0; charCount < bufferSize - 1; charCount++)
+	if (txBufferHeadNext != p_serial->TxBufferTail)
 	{
-		txBufferHeadNext = (p_serial->TxBufferHead + 1) % p_serial->TxBufferSize;
-		if (txBufferHeadNext == p_serial->TxBufferTail)
+		EnterCriticalTx(p_serial);
+		for (charCount = 0; charCount < bufferSize; charCount++)
 		{
-			break;
+			txBufferHeadNext = (p_serial->TxBufferHead + 1U) % p_serial->TxBufferSize;
+			if (txBufferHeadNext == p_serial->TxBufferTail)
+			{
+				break;
+			}
+			else
+			{
+				p_serial->p_TxBuffer[p_serial->TxBufferHead] = p_srcBuffer[charCount];
+				p_serial->TxBufferHead = txBufferHeadNext;
+			}
 		}
-		else
-		{
-			p_serial->p_TxBuffer[p_serial->TxBufferHead] = p_srcBuffer[charCount];
-			p_serial->TxBufferHead = txBufferHeadNext;
-		}
+		HAL_Serial_EnableTxInterrupt(p_serial->p_HAL_Serial);
+		ExitCriticalTx(p_serial);
 	}
-	HAL_Serial_EnableTxInterrupt(p_serial->p_HAL_Serial);
-	ExitCriticalTx(p_serial);
 
 	return charCount;
 }
@@ -183,10 +188,10 @@ bool Serial_RecvString(Serial_T * p_serial, uint8_t * p_destBuffer, uint32_t len
 	else
 	{
 		EnterCriticalRx(p_serial);
-		for (uint32_t destBufferIndex = 0; destBufferIndex < length - 1; destBufferIndex++)
+		for (uint32_t destBufferIndex = 0U; destBufferIndex < length; destBufferIndex++)
 		{
 			p_destBuffer[destBufferIndex] = p_serial->p_RxBuffer[p_serial->RxBufferTail];
-			p_serial->RxBufferTail = (p_serial->RxBufferTail + 1) % p_serial->RxBufferSize;
+			p_serial->RxBufferTail = (p_serial->RxBufferTail + 1U) % p_serial->RxBufferSize;
 		}
 		ExitCriticalRx(p_serial);
 
@@ -207,10 +212,10 @@ bool Serial_SendString(Serial_T * p_serial, const uint8_t * p_srcBuffer, uint32_
 	else
 	{
 		EnterCriticalTx(p_serial);
-		for (uint32_t srcBufferIndex = 0; srcBufferIndex < length - 1; srcBufferIndex++)
+		for (uint32_t srcBufferIndex = 0U; srcBufferIndex < length; srcBufferIndex++)
 		{
 			p_serial->p_TxBuffer[p_serial->TxBufferHead] = p_srcBuffer[srcBufferIndex];
-			p_serial->TxBufferHead = (p_serial->TxBufferHead + 1) % p_serial->TxBufferSize;
+			p_serial->TxBufferHead = (p_serial->TxBufferHead + 1U) % p_serial->TxBufferSize;
 		}
 		HAL_Serial_EnableTxInterrupt(p_serial->p_HAL_Serial);
 		ExitCriticalTx(p_serial);
@@ -232,9 +237,9 @@ void Serial_Init
 	Serial_Init_T * p_serialInit
 )
 {
-	p_serial->p_HAL_Serial 			= p_serialInit->P_HAL_SERIAL;
-	HAL_Serial_Init(p_serial->p_HAL_Serial);
 
+	//todo change to 1 pointer
+	p_serial->p_HAL_Serial 			= p_serialInit->P_HAL_SERIAL;
 	p_serial->p_TxBuffer 			= p_serialInit->P_TX_BUFFER;
 	p_serial->TxBufferSize 			= p_serialInit->TX_BUFFER_SIZE;
 	p_serial->p_RxBuffer 			= p_serialInit->P_RX_BUFFER;
@@ -245,7 +250,9 @@ void Serial_Init
 	p_serial->RxBufferHead 			= 0;
 	p_serial->RxBufferTail 			= 0;
 
-//	Serial_EnableRx(p_serial);
+
+	HAL_Serial_Init(p_serial->p_HAL_Serial);
+	Serial_EnableRx(p_serial);
 }
 
 //bool Serial_RecvChar_Buffer(Serial_T * p_serial, uint8_t * p_rxChar)
