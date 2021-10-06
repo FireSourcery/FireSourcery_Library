@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,15 +19,16 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Motor.c
     @author FireSoucery
     @brief  Motor module conventional function definitions.
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
+
 #include "Motor.h"
 
 #include "Config.h"
@@ -51,9 +52,7 @@
 #include "Math/Linear/Linear_Voltage.h"
 #include "Math/Linear/Linear.h"
 
-/*
- * General Init
- */
+
 void Motor_Init(Motor_T * p_motor, const Motor_Constants_T * p_motorInit, const Motor_Parameters_T * p_parameters)
 {
 	Motor_InitConstants(p_motor, p_motorInit);
@@ -70,7 +69,7 @@ void Motor_Init_Default(Motor_T * p_motor, const Motor_Constants_T * p_motorInit
 
 void Motor_Init_Flash(Motor_T * p_motor, const Motor_Constants_T * p_motorInit)
 {
-	Motor_Init(p_motor, p_motorInit, p_motorInit->P_EEPROM);
+//	Motor_Init(p_motor, p_motorInit, p_motorInit->P_EEPROM);
 }
 
 void Motor_InitConstants(Motor_T * p_motor, const Motor_Constants_T * p_motorInit)
@@ -296,12 +295,12 @@ void Motor_PollStop(Motor_T * p_motor)
 
 
 
-/**************************************************************************/
+/******************************************************************************/
 /*
  * Control Variable Functions
  * @{
  */
-/**************************************************************************/
+/******************************************************************************/
 void Motor_SetUserCmd(Motor_T * p_motor, uint16_t userCommand)
 {
 	p_motor->UserCmdPrev = p_motor->UserCmd;
@@ -508,9 +507,9 @@ void Motor_ProcControlVariable(Motor_T * p_motor)
 	}
 
 }
-/**************************************************************************/
+/******************************************************************************/
 /*! @} */
-/**************************************************************************/
+/******************************************************************************/
 
 
 
@@ -569,12 +568,12 @@ bool Motor_ProcAlign(Motor_T * p_motor)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 /*
  * Calibration State Functions
  * @{
  */
-/**************************************************************************/
+/******************************************************************************/
 
 /*
  * Nonblocking Calibration State Functions
@@ -738,9 +737,9 @@ bool Motor_CalibrateHall(Motor_T * p_motor)
 	return isComplete;
 }
 
-/**************************************************************************/
+/******************************************************************************/
 /*! @} */
-/**************************************************************************/
+/******************************************************************************/
 
 
 //void Motor_OnBlock(Motor_T * p_motor)

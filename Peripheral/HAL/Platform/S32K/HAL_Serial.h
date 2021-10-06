@@ -70,13 +70,6 @@ static inline void HAL_Serial_DisableTxInterrupt(HAL_Serial_T * p_uartRegMap)
 	p_uartRegMap->CTRL &= ~LPUART_CTRL_TIE_MASK;
 }
 
-static inline void HAL_Serial_WriteTxSwitch(HAL_Serial_T * p_uartRegMap, bool enable)
-{
-	p_uartRegMap->CTRL = (p_uartRegMap->CTRL & ~LPUART_CTRL_TE_MASK) | ((enable ? 1UL : 0UL) << LPUART_CTRL_TE_SHIFT);
-	/* Wait for the register write operation to complete */
-	while ((bool)((p_uartRegMap->CTRL & LPUART_CTRL_TE_MASK) != 0U) != enable) {}
-}
-
 static inline void HAL_Serial_EnableRxInterrupt(HAL_Serial_T * p_uartRegMap)
 {
 	p_uartRegMap->CTRL |= LPUART_CTRL_RIE_MASK;
@@ -85,6 +78,13 @@ static inline void HAL_Serial_EnableRxInterrupt(HAL_Serial_T * p_uartRegMap)
 static inline void HAL_Serial_DisableRxInterrupt(HAL_Serial_T * p_uartRegMap)
 {
 	p_uartRegMap->CTRL &= ~LPUART_CTRL_RIE_MASK;
+}
+
+static inline void HAL_Serial_WriteTxSwitch(HAL_Serial_T * p_uartRegMap, bool enable)
+{
+	p_uartRegMap->CTRL = (p_uartRegMap->CTRL & ~LPUART_CTRL_TE_MASK) | ((enable ? 1UL : 0UL) << LPUART_CTRL_TE_SHIFT);
+	/* Wait for the register write operation to complete */
+	while ((bool)((p_uartRegMap->CTRL & LPUART_CTRL_TE_MASK) != 0U) != enable) {}
 }
 
 static inline void HAL_Serial_WriteRxSwitch(HAL_Serial_T * p_uartRegMap, bool enable)
@@ -221,7 +221,7 @@ static inline void HAL_Serial_Init(HAL_Serial_T * p_uartRegMap)
     /* Reset FIFO feature */
 	p_uartRegMap->FIFO = 0x0003C000U; //FEATURE_LPUART_FIFO_RESET_MASK;
     /* Reset FIFO Watermark values */
-	p_uartRegMap->WATER = 0x00000000;
+	p_uartRegMap->WATER = 0x00000000; //todo set rx threshhold to 1/2 fifo
 
     HAL_Serial_ConfigBaudRate(p_uartRegMap, 9600U);
 
@@ -234,16 +234,16 @@ static inline void HAL_Serial_Init(HAL_Serial_T * p_uartRegMap)
 
     p_uartRegMap->BAUD = (p_uartRegMap->BAUD & ~LPUART_BAUD_SBNS_MASK) | ((uint32_t)1U << LPUART_BAUD_SBNS_SHIFT);
 
-    if(p_uartRegMap == LPUART0)
-    {
-//    	INT_SYS_SetPriority(LPUART0_RxTx_IRQn, 15U);
-    	INT_SYS_EnableIRQ(LPUART0_RxTx_IRQn);
-    }
-    else if (p_uartRegMap == LPUART1)
-    {
-//    	INT_SYS_SetPriority(LPUART1_RxTx_IRQn, 15U);
-    	INT_SYS_EnableIRQ(LPUART1_RxTx_IRQn);
-    }
+//    if(p_uartRegMap == LPUART0)
+//    {
+////    	INT_SYS_SetPriority(LPUART0_RxTx_IRQn, 15U);
+////    	INT_SYS_EnableIRQ(LPUART0_RxTx_IRQn);
+//    }
+//    else if (p_uartRegMap == LPUART1)
+//    {
+////    	INT_SYS_SetPriority(LPUART1_RxTx_IRQn, 15U);
+////    	INT_SYS_EnableIRQ(LPUART1_RxTx_IRQn);
+//    }
 }
 
 #endif

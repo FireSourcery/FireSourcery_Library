@@ -46,52 +46,52 @@ typedef ADC_Type HAL_ADC_T;
 	time adder (5 ADC cycles + 5 bus clock cycles)
 */
 
-static inline void HAL_ADC_Activate(HAL_ADC_T * p_adcRegBase, uint32_t pinChannel)
+static inline void HAL_ADC_Activate(HAL_ADC_T * p_adc)
 {
-	p_adcRegBase->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
+
 }
 
-static inline void HAL_ADC_WriteLast(HAL_ADC_T * p_adcRegBase, uint32_t pinChannel)
+static inline void HAL_ADC_WriteLast(HAL_ADC_T * p_adc, uint32_t pinChannel)
 {
-	p_adcRegBase->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
+	p_adc->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
 }
 
-static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_adcRegBase, uint32_t pinChannel)
+static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_adc, uint32_t pinChannel)
 {
 	(void)pinChannel;
-	return (uint32_t)p_adcRegBase->R[0U];
+	return (uint32_t)p_adc->R[0U];
 }
 
 /*
  * cannot support cases where interrupt must be set along with pinChannel
  */
-static inline void HAL_ADC_WritePinSelect(HAL_ADC_T * p_adcRegBase, uint32_t pinChannel)
+static inline void HAL_ADC_WritePinSelect(HAL_ADC_T * p_adc, uint32_t pinChannel)
 {
-	p_adcRegBase->SC1[0U] = ADC_SC1_ADCH((uint32_t )pinChannel);
+	p_adc->SC1[0U] = ADC_SC1_ADCH((uint32_t )pinChannel);
 }
 
-static inline void HAL_ADC_WriteHwTriggerState(HAL_ADC_T * p_adcRegBase, bool isHwTrigger)
+static inline void HAL_ADC_WriteHwTriggerState(HAL_ADC_T * p_adc, bool isHwTrigger)
 {
-	isHwTrigger ? (p_adcRegBase->SC2 |= ADC_SC2_ADTRG_MASK) : (p_adcRegBase->SC2 &= ~(ADC_SC2_ADTRG_MASK));
+	isHwTrigger ? (p_adc->SC2 |= ADC_SC2_ADTRG_MASK) : (p_adc->SC2 &= ~(ADC_SC2_ADTRG_MASK));
 }
 
-static inline void HAL_ADC_DisableInterrupt(HAL_ADC_T * p_adcRegBase)
+static inline void HAL_ADC_DisableInterrupt(HAL_ADC_T * p_adc)
 {
 	/* this will start conversion on channel 0 (without interrupt)? */
-	p_adcRegBase->SC1[0U] &= ~ADC_SC1_AIEN_MASK;
+	p_adc->SC1[0U] &= ~ADC_SC1_AIEN_MASK;
 }
 
-static inline void HAL_ADC_EnableInterrupt(HAL_ADC_T * p_adcRegBase)
+static inline void HAL_ADC_EnableInterrupt(HAL_ADC_T * p_adc)
 {
-	p_adcRegBase->SC1[0U] |= ADC_SC1_AIEN_MASK;
+	p_adc->SC1[0U] |= ADC_SC1_AIEN_MASK;
 }
 
-static inline void HAL_ADC_WriteInterruptState(HAL_ADC_T * p_adcRegBase, bool isOn)
+static inline void HAL_ADC_WriteInterruptState(HAL_ADC_T * p_adc, bool isOn)
 {
-	isOn ? (p_adcRegBase->SC1[0U] |= ADC_SC1_AIEN_MASK) : (p_adcRegBase->SC1[0U] &= ~(ADC_SC1_AIEN_MASK));
+	isOn ? (p_adc->SC1[0U] |= ADC_SC1_AIEN_MASK) : (p_adc->SC1[0U] &= ~(ADC_SC1_AIEN_MASK));
 }
 
-static inline void HAL_ADC_Dectivate(HAL_ADC_T * p_adcRegBase)
+static inline void HAL_ADC_Dectivate(HAL_ADC_T * p_adc)
 {
 	/*
 	 *  111111b - Module is disabled
@@ -104,34 +104,30 @@ static inline void HAL_ADC_Dectivate(HAL_ADC_T * p_adcRegBase)
 	 *	state when a conversion completes.
 	 */
 
-	p_adcRegBase->SC1[0U] = 0x3FU;
+	p_adc->SC1[0U] = 0x3FU;
 }
 
-static inline bool HAL_ADC_ReadConversionActiveFlag(const HAL_ADC_T * p_adcRegBase)
+static inline bool HAL_ADC_ReadConversionActiveFlag(const HAL_ADC_T * p_adc)
 {
-	uint32_t tmp = (uint32_t)p_adcRegBase->SC2;
-	tmp = (tmp & ADC_SC2_ADACT_MASK) >> ADC_SC2_ADACT_SHIFT;
-	return (tmp != 0u) ? true : false;
+	return ((((uint32_t)p_adc->SC2 & ADC_SC2_ADACT_MASK) >> ADC_SC2_ADACT_SHIFT) != 0u) ? true : false;
 }
 
-static inline bool HAL_ADC_ReadConversionCompleteFlag(const HAL_ADC_T * p_adcRegBase)
+static inline bool HAL_ADC_ReadConversionCompleteFlag(const HAL_ADC_T * p_adc)
 {
-	uint32_t tmp = (uint32_t)p_adcRegBase->SC1[0U];
-	tmp = (tmp & ADC_SC1_COCO_MASK) >> ADC_SC1_COCO_SHIFT;
-	return (tmp != 0u) ? true : false;
+	return ((((uint32_t)p_adc->SC1[0U] & ADC_SC1_COCO_MASK) >> ADC_SC1_COCO_SHIFT) != 0u) ? true : false;
 }
 
 //clears interrupt
-static inline void HAL_ADC_ClearConversionCompleteFlag(const HAL_ADC_T * p_adcRegBase)
+static inline void HAL_ADC_ClearConversionCompleteFlag(const HAL_ADC_T * p_adc)
 {
-	(void)p_adcRegBase;
+	(void)p_adc;
 	//automatic after read on S32k
 }
 
 
-static inline void HAL_ADC_Init(const HAL_ADC_T * p_adcRegBase)
+static inline void HAL_ADC_Init(const HAL_ADC_T * p_adc)
 {
-	(void)p_adcRegBase;
+	(void)p_adc;
 //	ADC_DRV_ConfigConverter(instance, config);
 }
 

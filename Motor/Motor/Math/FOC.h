@@ -57,33 +57,33 @@ typedef struct
 	qfrac16_t VectorMaxD; /* default sqrt1/3 */
 
 	/* Inputs */
-	 qfrac16_t Ia;
-	 qfrac16_t Ib;
-	 qfrac16_t Ic;
+	 volatile qfrac16_t Ia;
+	 volatile qfrac16_t Ib;
+	 volatile qfrac16_t Ic;
 
-	 qangle16_t Theta;  // electrical angle
-	 qfrac16_t Sine; /* save for inverse park call */
-	 qfrac16_t Cosine;
+	 volatile qangle16_t Theta;  // electrical angle
+	 volatile qfrac16_t Sine; /* save for inverse park call */
+	 volatile qfrac16_t Cosine;
 
 	 /* calculated */
-	 qfrac16_t Ialpha;
-	 qfrac16_t Ibeta;
+	 volatile qfrac16_t Ialpha;
+	 volatile qfrac16_t Ibeta;
 
 	/* PID process/feedback variable */
-	 qfrac16_t Id;
-	 qfrac16_t Iq;
+	 volatile qfrac16_t Id;
+	 volatile qfrac16_t Iq;
 
 	/* PID control variable */
 	/* Intermediate Input to bypass current feedback */
-	 qfrac16_t Vd;
-	 qfrac16_t Vq;
+	 volatile qfrac16_t Vd;
+	 volatile qfrac16_t Vq;
 
-	 qfrac16_t Valpha;
-	 qfrac16_t Vbeta;
+	 volatile qfrac16_t Valpha;
+	 volatile qfrac16_t Vbeta;
 
-	 uint16_t DutyA;
-	 uint16_t DutyB;
-	 uint16_t DutyC;
+	 volatile uint16_t DutyA;
+	 volatile uint16_t DutyB;
+	 volatile uint16_t DutyC;
 
 	/* Pointer mapped outputs */
 //	uint16_t *p_PwmA;

@@ -38,21 +38,27 @@
 	#include PATH_USER(HAL_Encoder.h)
 #elif 	defined(CONFIG_HAL_ENCODER_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
 	#include PATH_BOARD(Transducer/Encoder/HAL, HAL_Encoder.h)
+#else
+
+typedef const struct
+{
+
+} HAL_Encoder_T;
+
+static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder){}
+static inline void HAL_Encoder_WriteTimerCounter(const HAL_Encoder_T * p_encoder, uint32_t count){}
+static inline void HAL_Encoder_WriteTimerCounterMax(const HAL_Encoder_T * p_encoder, uint32_t max){}
+static inline bool HAL_Encoder_ReadTimerCounterOverflow(const HAL_Encoder_T * p_encoder){}
+static inline void HAL_Encoder_ClearTimerCounterOverflow(const HAL_Encoder_T * p_encoder){}
+static inline bool HAL_Encoder_ReadPhaseA(const HAL_Encoder_T * p_encoder){}
+static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder){}
+static inline bool HAL_Encoder_ReadQuadratureCounterDirection(const HAL_Encoder_T * p_encoder){}
+static inline bool HAL_Encoder_ReadQuadratureCounterOverflowIncrement(const HAL_Encoder_T * p_encoder){}
+static inline bool HAL_Encoder_ReadQuadratureCounterOverflowDecrement(const HAL_Encoder_T * p_encoder){}
+static inline void HAL_Encoder_InitCaptureTime(const HAL_Encoder_T * p_encoder){}
+static inline void HAL_Encoder_InitCaptureCount(const HAL_Encoder_T * p_encoder){}
+static inline void HAL_Encoder_Init(const HAL_Encoder_T * p_encoder){}
+
 #endif
-
-
-///*
-//	typedef struct
-//	{
-//		HAL_TimerCounter_T * p_TimerCounter;
-//		uint8_t TimerCounterChannel;
-//
-//		HAL_Pin_T * p_PinPhaseA;
-//		uint32_t PinMaskPhaseA;
-//
-//		HAL_Pin_T * p_PinPhaseB;
-//		uint32_t PinMaskPhaseB;
-//	} HAL_Encoder_T;
-
 
 #endif

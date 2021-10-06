@@ -365,7 +365,7 @@ typedef const struct
 /*!
 	 @brief Read last data captured by Analog_Capture_IO()
  */
-static inline adcdata_t Analog_ReadChannel(const Analog_T * p_analog, Analog_VirtualChannel_T channel)
+static inline adcdata_t Analog_ReadChannelResult(const Analog_T * p_analog, Analog_VirtualChannel_T channel)
 {
 	adcdata_t result;
 

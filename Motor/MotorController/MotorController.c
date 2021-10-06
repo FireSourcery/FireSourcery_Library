@@ -47,9 +47,6 @@ void MotorController_Init(MotorController_T * p_controller, const MotorControlle
 {
 	p_controller->p_Config = p_consts;
 
-	p_controller->Parameters.ShellConnectId = 1U;
-	p_controller->Parameters.AnalogUserEnable = true;
-
 	HAL_Motor_Init(); //HAL_MotorController_Init init hal analog instances
 
 	for(uint8_t iMotor = 0U; iMotor < CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT; iMotor++)
@@ -64,7 +61,7 @@ void MotorController_Init(MotorController_T * p_controller, const MotorControlle
 
 	for(uint8_t iSerial = 0U; iSerial < CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT; iSerial++)
 	{
-		Serial_Init(&p_controller->Serials[iSerial], &p_consts->SERIAL_INITS[iSerial]);
+		Serial_Init(&p_controller->Serials[iSerial]);
 	}
 
 //	for(uint8_t iProtocol = 0U; iProtocol < 1; iProtocol++)
@@ -90,7 +87,7 @@ void MotorController_Init(MotorController_T * p_controller, const MotorControlle
 
 	Thread_InitThreadPeriodic_Period(&p_controller->TimerSeconds, 	p_consts->P_MILLIS_TIMER, 1000U, 1000U,	0U, 0U);
 	Thread_InitThreadPeriodic_Period(&p_controller->TimerMillis, 	p_consts->P_MILLIS_TIMER, 1000U, 1U,	0U, 0U);
-	Thread_InitThreadPeriodic_Period(&p_controller->TimerMillis10, p_consts->P_MILLIS_TIMER, 1000U, 10U,	0U, 0U);
+	Thread_InitThreadPeriodic_Period(&p_controller->TimerMillis10, 	p_consts->P_MILLIS_TIMER, 1000U, 10U,	0U, 0U);
 
 	Blinky_Init(&p_controller->BlinkyAlarm, &p_consts->HAL_PIN_ALARM);
 

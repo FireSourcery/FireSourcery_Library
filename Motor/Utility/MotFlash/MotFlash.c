@@ -30,7 +30,7 @@
 /*******************************************************************************/
 #include "MotFlash.h"
 
-#include "Peripheral/Flash/Flash_EEPROM.h"
+//#include "Peripheral/Flash/Flash_EEPROM.h"
 #include "Peripheral/Flash/Flash.h"
 
 

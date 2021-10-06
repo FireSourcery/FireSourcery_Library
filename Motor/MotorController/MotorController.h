@@ -32,6 +32,7 @@
 #define MOTOR_CONTROLLER_H
 
 #include "Config.h"
+//#include "MotorController_Params.h"
 
 #include "Motor/Utility/MotShell/MotShell.h"
 #include "Motor/Utility/MotProtocol/MotProtocol.h"
@@ -41,8 +42,13 @@
 #include "Motor/Motor/HAL_Motor.h"
 
 #include "Transducer/Blinky/Blinky.h"
+
 #include "Protocol/ProtocolG/ProtocolG.h"
+
 #include "Peripheral/Serial/Serial.h"
+#include "Peripheral/Flash/Flash.h"
+#include "Peripheral/EEPROM/EEPROM.h"
+
 #include "System/Shell/Shell.h"
 #include "System/Thread/Thread.h"
 
@@ -68,19 +74,22 @@
 //	MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
 //} MotorController_InputMode_T;
 
-#define	CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT 1U
+//todo replace with user options
+	typedef  __attribute__ ((aligned (4U))) const volatile struct
+	{
+		const uint8_t SHELL_CONNECT_ID;
 
-typedef  __attribute__ ((aligned (4U))) struct
-{
-	uint8_t ShellConnectId;
-//	uint8_t ProtocolDataLinkId[1]; //per protocol
-	uint8_t AuxProtocolSpecsId[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT];
+		uint8_t ShellConnectId;
+	//	uint8_t ProtocolDataLinkId[1]; //per protocol
+		uint8_t AuxProtocolSpecsId[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT];
 
-	uint8_t MotProtocolSpecsId;
+		uint8_t MotProtocolSpecsId;
 
-	bool AnalogUserEnable;
-}
-MotorController_Parameters_T;
+		bool AnalogUserEnable;
+	}
+	MotorController_Parameters_T;
+
+
 
 typedef const struct
 {
@@ -92,7 +101,6 @@ typedef const struct
 	//	const HAL_Flash_T * const P_HAL_FLASH;
 
 	const Motor_Constants_T 			MOTOR_INITS[CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT];
-	const Serial_Init_T 				SERIAL_INITS[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT];
 	const ProtocolG_Specs_T * const 	P_PROTOCOL_SPECS[1];	//protocols available, not necessary simultaneous
 	const ProtocolG_Config_T 			AUX_PROTOCOL_CONFIG[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT]; 	//Simultaneously active protocols
 	const ProtocolG_Config_T 			MOT_PROTOCOL_CONFIG;
@@ -103,23 +111,24 @@ typedef const struct
 	volatile const uint32_t * const 	P_MILLIS_TIMER;
 	//todo alarm, thermistor
 
+	const MotorController_Parameters_T * const P_PARAMS;
 }
 MotorController_Config_T;
 
+/* Compile time preprocessor define array allocation, only 1 instance of MotorController_T is expected. */
 typedef struct
 {
 	const MotorController_Config_T * p_Config;
 	MotorController_Parameters_T Parameters;
 
-	/* compile time define const for all instances, only 1 instance of MotorController_T expected. */
 	Motor_T Motors[CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT];
-
-//	uint8_t TxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT+1][100U];
-//	uint8_t RxBuffers[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT+1][100U];
-
 	Serial_T Serials[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT]; //simultaneous active serial
 
-//	void * p_Coms[]; 			//list of all datalink structs id by index
+
+	Flash_T Flash;
+	EEPROM_T Eeprom;
+
+	//	void * p_Coms[]; 			//list of all datalink structs id by index
 	ProtocolG_T				AuxProtocols[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT]; 	//Simultaneously active protocols
 
 	ProtocolG_T				MotProtocol;
@@ -131,7 +140,6 @@ typedef struct
 	MotAnalogUser_T AnalogUser;
 	Blinky_T BlinkyAlarm;
 
-	//Flash_T MotorFlash;
 
 	Thread_T TimerSeconds;
 	Thread_T TimerMillis;

@@ -97,9 +97,11 @@ static inline void ActivateAdc_NMultiMuxed
 			}
 			else /* (iChannel + iAdc == activeChannelCount - 1) */
 			{
-				HAL_ADC_Activate(pp_adcMaps[iAdc], (uint32_t) p_analog->p_VirtualChannelMapPins[iVirtualChannel]); /* enable interrupt of last ADC written */
+				HAL_ADC_WriteLast(pp_adcMaps[iAdc], (uint32_t) p_analog->p_VirtualChannelMapPins[iVirtualChannel]); /* enable interrupt of last ADC written */
+				HAL_ADC_Activate(pp_adcMaps[iAdc]);
 				break; 		/* iChannel += nAdc should also break from outer loop */
 			}
+
 		}
 	}
 }

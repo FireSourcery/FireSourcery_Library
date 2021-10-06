@@ -28,54 +28,66 @@
     @version V0
 */
 /*******************************************************************************/
-#ifndef MOTOR_FLASH_H
-#define MOTOR_FLASH_H
+#ifndef MOT_FLASH_H
+#define MOT_FLASH_H
 
 #include "Motor/Motor/Motor.h"
-#include "Peripheral/Flash/Flash_EEPROM.h"
+#include "Peripheral/EEPROM/EEPROM.h"
 #include "Peripheral/Flash/Flash.h"
 
 
 
+
+//typedef struct
+//{
+//	Flash_T Flash;
+//	EEPROM_T Eeprom;
+//}
+//MotFlash_T;
+//static inline uint32_t MotorFlash_Proc(MotFlash_T * p_motor)
+//{
+// if context
+// saveall
+
+//}
+//#ifdef CONFIG_MOTOR_PARAM_IN_RAM
 //static inline uint32_t MotorFlash_LoadParameterAll(Motor_T * p_motor)
 //{
-//	Flash_EEPROM_ReadBytes(&MotorFlashMain, &p_motor->Parameters, p_motor->p_Constants->P_EEPROM, sizeof(Motor_Parameters_T));
+//	EEPROM_ReadBytes(&MotorFlashMain, &p_motor->Parameters, p_motor->p_Constants->P_EEPROM, sizeof(Motor_Parameters_T));
 //}
 //
 //static inline uint32_t MotorFlash_SaveParametersAll(Motor_T * p_motor)
 //{
-// 	Flash_EEPROM_WriteAlignedBytes(&MotorFlashMain, p_motor->p_Constants->P_EEPROM, &p_motor->Parameters, sizeof(Motor_Parameters_T));
+// 	EEPROM_WriteAlignedBytes(&MotorFlashMain, p_motor->p_Constants->P_EEPROM, &p_motor->Parameters, sizeof(Motor_Parameters_T));
 //}
 //
-//static inline void MotorFlash_OnBlock(void * p_void)
-//{
+////static inline void MotorFlash_OnBlock(void * p_void)
+////{
+////
+////}
 //
-//}
+////static inline uint32_t MotorFlash_Load_PolePairs(Motor_T * p_motor)
+////{
+////	return p_motor->CONFIG.p_Parameters->PolePairs;
+////}
+//
+//#endif
 
-//static inline uint32_t MotorFlash_LoadParameter_FocOpenLoopVq(Motor * p_motor)
+
+
+
+//static inline void MotorFlash_Save_PolePairs(Motor_T * p_motor,  qfrac16_t value)
 //{
-//	return ((Motor_Parameters_T *)(p_flash->p_ParametersStart))->FocOpenLoopVq;
+//	EEPROM_WriteBuffer16(&p_motor->CONFIG.P_PARAMETERS->PolePairs,  value);
 //
-//}
-//
-//static inline void MotorFlash_WriteParameter_FocOpenLoopVq(Motor * p_motor,  qfrac16_t value)
-//{
-//
-//
-//	Flash_WriteBuffer(&((Motor_Parameters_T *)(p_flash->p_ParametersStart))->FocOpenLoopVq,  value);
-//
-//	Flash_WriteBuffer16(&(MOTOR_FLASH_PARAMETERS->FocOpenLoopVq)),  value);
-//
+//#ifdef CONFIG_MOT_FLASH_PARAMS_EEPROM
+//	EEPROM_WriteBuffer16(&p_motor->CONFIG.p_Parameters->PolePairs,  value);
+//#elif defined(CONFIG_MOT_FLASH_PARAMS_FLASH)
+//	Flash_WriteBuffer(&p_motor->CONFIG.p_Parameters->PolePairs,  value);
+//#endif
 //}
 
 #endif
-//typedef const struct
-//{
-//
 
-//
-//
-//}
-//MotorFlash_T;
 
-//#define MOTOR_FLASH_BASE                             FLASH_EEPROM_START
+

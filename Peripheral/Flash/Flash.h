@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,185 +19,99 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file
     @author FireSoucery
     @brief
     @version V0
 */
-/*******************************************************************************/
+/******************************************************************************/
 #ifndef FLASH_H
 #define FLASH_H
 
-
 #include "HAL_Flash.h"
 
-#define FLASH_START				HAL_FLASH_START	/* */
-#define FLASH_SIZE				HAL_FLASH_SIZE	/* */
+#include "System/Queue/Queue.h"
 
 #define FLASH_UNIT_SIZE_ERASE	HAL_FLASH_UNIT_SIZE_ERASE
 #define FLASH_UNIT_SIZE_WRITE	HAL_FLASH_UNIT_SIZE_WRITE
+#define FLASH_ALIGN_MASK		(HAL_FLASH_UNIT_SIZE_WRITE - 1U)	/* */
+
+//#define QUEUE_INIT_BUFFER(flash) (flash.CONFIG.QUEUE.P_BUFFER = &flash.Buffer)
+
+typedef const struct
+{
+	uint8_t * P_ADDRESS;
+	uint32_t SIZE;
+//	uint8_t Alignment;
+	//#define FLASH_START				HAL_FLASH_START	/* */
+	//#define FLASH_SIZE				HAL_FLASH_SIZE	/* */
+}
+Flash_Partition_T;
+
+typedef const struct
+{
+	HAL_Flash_T * P_HAL_FLASH;	//flash controller registers
+
+
+	Queue_Config_T QUEUE; //
+
+	Flash_Partition_T PARTITIONS[1U]; //CONFIG_FLASH_PARTITION_COUNT
+}
+Flash_Config_T;
+
+typedef enum
+{
+//	FLASH_STATUS_IDLE,
+	FLASH_STATUS_SUCCESS,
+	FLASH_STATUS_ERROR,
+}
+Flash_Status_T;
+
+
+typedef enum
+{
+	FLASH_STATE_IDLE,
+	FLASH_STATE_WRITE,
+	FLASH_STATE_VERIFY,
+}
+Flash_State_T;
 
 //Flash controller
 typedef struct
 {
-	HAL_Flash_T * p_HAL_Flash;	//flash controller registers
+	Flash_Config_T CONFIG;
 
-    void (* Callback)(void *);    	/*!<  Union*/
+	//for virtual write,
+	//static allocate size, only be 1 instance of flash is expected
+	uint8_t Buffer[512U]; //CONFIG_FLASH_BUFFER_SIZE
+
+	bool IsVerifyEnable;
+	bool IsForceAlignEnable;
+
+	uint32_t CheckSum; //compare if checksum is set
+
+	Queue_T Queue; //data queue for nonblocking operation
+
+	//job quee
+	volatile Flash_Status_T Status;
+	volatile Flash_State_T State;
+
+	const uint8_t * volatile p_Write;
+	volatile size_t WriteIndex; 		//in page/phrase
+	volatile size_t WriteSize; 	//total bytes at start
+
+
+	//Blocking
     void (* Yield)(void *);    		/*!<  On Block*/
+//    void (* Callback)(void *);    	/*!<  Union*/
+
     void (* OnComplete)(void *);    /*!< OnComplete */
-
     void * p_CallbackData;
-}Flash_T;
+} Flash_T;
 
-typedef const struct
-{
-	uint8_t * p_Address;
-	uint32_t Size;
-//	uint8_t Alignment;
-}
-Flash_Partition_T;
-
-
-//little endian
-typedef union
-{
-	uint32_t UInt32;
-	struct
-	{
-		uint16_t UInt16_Low;
-		uint16_t UInt16_High;
-	};
-	struct
-	{
-		uint8_t UInt8_Low;
-		uint8_t UInt8_LowHigh;
-		uint8_t UInt8_HighLow;
-		uint8_t UInt8_High;
-	};
-} Interger32_T;
-//else big endian
-//typedef union
-//{
-//	uint32_t UInt32;
-//	struct
-//	{
-//		uint16_t UInt16_High;
-//		uint16_t UInt16_Low;
-//	};
-//	struct
-//	{
-//		uint8_t UInt8_High;
-//		uint8_t UInt8_HighLow;
-//		uint8_t UInt8_LowHigh;
-//		uint8_t UInt8_Low;
-//	};
-//} Interger32_T;
-////
-
-
-//static inline void FlashWriteUnit(Flash_T *p_flash, uint8_t *p_destFlash, uint8_t *p_source)
-//{
-//	HAL_Flash_ClearErrorFlags(p_flash->p_HAL_Flash);
-//	HAL_Flash_WriteCmdPrep(p_flash->p_HAL_Flash);
-//	HAL_Flash_WriteCmdLength(p_flash->p_HAL_Flash); //FLASH_UNIT_SIZE_WRITE
-//	HAL_Flash_WriteCmdDest(p_flash->p_HAL_Flash, &p_destFlash);
-//	HAL_Flash_WriteCmdSource(p_flash->p_HAL_Flash, &p_source);
-//	HAL_Flash_WriteCmdStart(p_flash->p_HAL_Flash);
-//}
-
-static inline uint8_t Flash_Write_NonBlocking(Flash_T *p_flash, uint8_t *p_destFlash, uint8_t *p_source, uint16_t sizeBytes)
-{
-
-}
-
-static inline uint8_t Flash_WriteBytes_Blocking(Flash_T *p_flash, uint8_t *p_destFlash, uint8_t *p_source, uint16_t sizeBytes)
-{
-	bool isSuccess = true;
-
-	if ((((uint32_t)p_destFlash & (FLASH_UNIT_SIZE_WRITE - 1U)) != 0U) || (((uint32_t)sizeBytes & (FLASH_UNIT_SIZE_WRITE - 1U)) != 0U)) //p_destFlash%FLASH_UNIT_SIZE_WRITE == 0
-	{
-		isSuccess = false;
-	}
-	else
-	{
-
-		for (uint32_t index = 0; index < sizeBytes; index += FLASH_UNIT_SIZE_WRITE)
-		{
-
-			if (HAL_Flash_ReadCompleteFlag(p_flash->p_HAL_Flash) == false)
-			{
-				isSuccess = false;
-				break;
-			}
-			else
-			{
-				HAL_Flash_ClearErrorFlags(p_flash->p_HAL_Flash);
-
-				HAL_Flash_Prep(p_flash->p_HAL_Flash); //Chip unique procedures
-
-				HAL_Flash_WriteCmdLength(p_flash->p_HAL_Flash); //FLASH_UNIT_SIZE_WRITE
-				HAL_Flash_WriteCmdDest(p_flash->p_HAL_Flash, &p_destFlash[index]);
-				HAL_Flash_WriteCmdSource(p_flash->p_HAL_Flash, &p_source[index]);
-				HAL_Flash_WriteCmdStart(p_flash->p_HAL_Flash);
-
-				while (HAL_Flash_ReadCompleteFlag(p_flash->p_HAL_Flash) != true)
-				{
-					if (p_flash->Yield)
-					{
-						p_flash->Yield(p_flash->p_CallbackData);
-					}
-					if (HAL_Flash_ReadErrorFlags(p_flash->p_HAL_Flash) == true)
-					{
-						isSuccess = false;
-						break;
-					}
-				}
-
-				HAL_Flash_ReadCompleteFlag(p_flash->p_HAL_Flash); //Chip unique procedures
-
-				if (HAL_Flash_ReadErrorFlags(p_flash->p_HAL_Flash) == true)
-				{
-					isSuccess = false;
-					break;
-				}
-			}
-		}
-    }
-
-    return isSuccess;
-}
-
-static inline uint8_t Flash_EraseUnit(Flash_T *p_flash, uint8_t *p_addressFlash)
-{
-
-}
-
-static inline uint8_t Flash_EraseUnits(Flash_T *p_flash, uint8_t *p_addressFlash, uint32_t sizeUnits)
-{
-
-}
-
-//round up or down to nearest unit or return error
-static inline uint8_t Flash_EraseBytes(Flash_T *p_flash, uint8_t *p_addressFlash, uint32_t sizeBytes)
-{
-
-}
-
-static inline void  Flash_Init
-(
-	Flash_T * p_flash,
-	HAL_Flash_T * p_hal_flash,
-	void (* flashCallback)(void *),
-	void * p_callbackData
-)
-{
-	p_flash->p_HAL_Flash = p_hal_flash;
-	p_flash->Callback = flashCallback;
-	p_flash->p_CallbackData = p_callbackData;
-}
 
 
 #endif /* FLASH_H */

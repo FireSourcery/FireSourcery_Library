@@ -38,6 +38,10 @@
 #define PATH_PLATFORM(Root, File)  	PATH(Root/Platform/CONFIG_PATH_PLATFORM, File)
 #define PATH_USER(File) 			PATH(CONFIG_PATH_USER, File)
 
+#define HAL_PATH_BOARD(Root, File)  	PATH(Root/Board/CONFIG_PATH_BOARD, File)
+#define HAL_PATH_PLATFORM(Root, File)  	PATH(Root/Platform/CONFIG_PATH_PLATFORM, File)
+#define HAL_PATH_USER(File) 			PATH(CONFIG_PATH_USER, File)
+
 /* user defines the following path macros */
 /*
 	#define CONFIG_PATH_BOARD 			Demo_Board

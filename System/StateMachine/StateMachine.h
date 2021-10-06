@@ -74,8 +74,8 @@ struct State_Tag;
  */
 typedef const struct State_Tag
 {
-	//#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_ARRAY //module memory allocation, all state machine must be same size
-	//	const struct State_Tag * const pp_TransitionStateMap[STATE_MACHINE_SELF_TRANSITION_INPUT_COUNT];
+	//#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_STATIC //module memory allocation, all state machine must be same size
+	//	const struct State_Tag * const p_TransitionStateMap[STATE_MACHINE_SELF_TRANSITION_INPUT_COUNT];
 	//	void (* const p_TransitionFunctionMap[STATE_MACHINE_TRANSITION_INPUT_COUNT ])(void * userData);
 	//#elif defined(CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL)
 
@@ -93,6 +93,8 @@ typedef const struct State_Tag
 //	{
 	const struct State_Tag (*const (*const PP_INPUT_TRANSITION_STATE_MAP));
 	void (*(*const P_INPUT_TRANSITION_FUNCTION_MAP))(volatile void * p_typeData);
+
+	//inputID, state, transition function
 //	};
 
 	/*
@@ -103,6 +105,8 @@ typedef const struct State_Tag
 	 * bypass self transitions,
 	 */
 	void (*(*const P_INPUT_OUTPUT_FUNCTION_MAP))(volatile void * p_typeData);
+	//inputID, ouput function
+
 	void (*const TRANSITION_ENTRY)(volatile void * p_typeData); 	//common to all transition to current state
 	void (*const OUTPUT)(volatile void * p_typeData); 				 //synchronous output, or common output to all inputs for asynchronous case
 //	void (* const Exit)(void);
@@ -111,12 +115,16 @@ typedef const struct State_Tag
 typedef struct StateMachine_Tag
 {
 	const State_T * p_StateInitial;
-	const State_T * volatile p_StateActive; 	//uint8_t CurrentStateID?
+
+	//shared map length, allow for time effecient access, and error handling for invalid transitions
+	//per state map length
 //#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL
 	uint8_t InputTransitionMapLength;		//state count
 	uint8_t InputOutputMapLength;
 //#endif
 	volatile void * p_TypeData; //StateMachine Instance Type data
+
+	const State_T * volatile p_StateActive; 	//uint8_t CurrentStateID?
 
 	/* for Synchronous Machine */
 	volatile uint8_t InputTransition;

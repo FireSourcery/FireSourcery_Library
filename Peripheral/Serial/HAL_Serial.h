@@ -37,6 +37,10 @@
 	#include PATH_USER(HAL_Serial.h)
 #elif 	defined(CONFIG_HAL_SERIAL_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
 	#include PATH_PLATFORM(Peripheral/HAL, HAL_Serial.h)
+
+//	#if defined(CONFIG_SERIAL_MULTITHREADED_LIBRARY_DEFINED)
+//		#include "System/Critical/Critical.h"
+//	#endif
 #endif
 
 #endif

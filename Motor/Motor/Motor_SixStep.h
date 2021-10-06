@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,8 +19,8 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Motor_Step.h
     @author FireSoucery
@@ -28,7 +28,7 @@
     		Six Step commutation strategy. Polar PWM
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef MOTOR_SIXSTEP_H
 #define MOTOR_SIXSTEP_H
 
@@ -410,7 +410,7 @@ static inline void Motor_SixStep_StartPhaseControlActive(Motor_T * p_motor, Moto
 		break;
 
 	case MOTOR_SENSOR_MODE_HALL:
-		Hall_CaptureSensors_IO(&p_motor->Hall);
+		Hall_CaptureSensors_ISR(&p_motor->Hall);
 		p_motor->CommutationSector = Hall_GetCommutation(&p_motor->Hall);
 
 		break;

@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,8 +19,8 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Motor_FOC.h
     @author FireSoucery
@@ -29,7 +29,7 @@
     		defined as inline for StateMachine wrapper functions
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef MOTOR_FOC_H
 #define MOTOR_FOC_H
 
@@ -228,7 +228,7 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 //		p_motor->PositionFeedback = MOTOR_POSITION_FEEDBACK_HALL;
 
 		//or reset hall for next edge
-		Hall_CaptureSensors_IO(&p_motor->Hall);
+		Hall_CaptureSensors_ISR(&p_motor->Hall);
 
 		p_motor->HallAngle = (qangle16_t)Hall_GetRotorAngle_Degrees16(&p_motor->Hall) ; // + 65536/12 compensate for boarder to middle
 		p_motor->ElectricalAngle = p_motor->HallAngle;

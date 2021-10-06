@@ -1,7 +1,7 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#include "System/Millis/Millis.h"
+#include "System/SysTime/SysTime.h"
 
 #include <stdbool.h>
 #include <stdint.h>

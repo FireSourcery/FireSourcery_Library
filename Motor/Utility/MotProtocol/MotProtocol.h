@@ -61,6 +61,8 @@ typedef struct
 	volatile bool SwitchShutdown;
 	volatile bool SwitchCoil;
 	volatile bool SettingUseX;
+
+	//flash context
 }
 MotProtocol_Input_T;
 

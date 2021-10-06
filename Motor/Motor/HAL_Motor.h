@@ -1,5 +1,5 @@
-#ifndef HAL_MOTOR_H
-#define HAL_MOTOR_H
+#ifndef HAL_MOTOR_ANALOG_H
+#define HAL_MOTOR_ANALOG_H
 
 #include "Path/Path.h"
 

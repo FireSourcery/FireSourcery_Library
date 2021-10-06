@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,16 +19,15 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Motor.h
     @author FireSoucery
     @brief  Per Motor State Control.
     @version V0
 */
-/**************************************************************************/
-
+/******************************************************************************/
 #ifndef MOTOR_H
 #define MOTOR_H
 
@@ -271,6 +270,10 @@ typedef  __attribute__ ((aligned (4U))) struct
 	qfrac16_t FocOpenLoopVq;
 	qfrac16_t FocAlignVd;
 	//	qfrac16_t OpenLoopVHzGain; //vhz scale
+
+	const volatile uint16_t IA_ZERO_ADCU;
+	const volatile uint16_t IB_ZERO_ADCU;
+	const volatile uint16_t IC_ZERO_ADCU;
 }
 Motor_Parameters_T;
 
@@ -292,7 +295,7 @@ typedef const struct Motor_Init_Tag
 	const uint32_t LINEAR_V_ADC_VREF;
 	const uint32_t LINEAR_V_ADC_BITS;
 
-	const uint8_t * const P_EEPROM; 	//or flash partition struct
+	const Motor_Parameters_T * const P_PARAMS; //user define location in Nv mem
 	//	Flash_Partition_T  p_FlashPartition;
 	const Motor_Parameters_T * const P_PARAMETERS_DEFAULT;
 
@@ -322,7 +325,9 @@ Motor_Constants_T;
 typedef struct
 {
  	const Motor_Constants_T * p_Constants;		//compile time const, unique per moter
-	Motor_Parameters_T Parameters;				//Programmable parameters, runtime variable load from eeprom
+
+ 	//#ifdef ram copy
+ 	Motor_Parameters_T Parameters;				//Programmable parameters, runtime variable load from eeprom
 
 	/*
 	 * Hardware Wrappers
@@ -431,6 +436,11 @@ static inline void Motor_PollAnalogStartAll(Motor_T * p_motor) //run doing stop 
 {
 	if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
 	{
+#ifdef CONFIG_MOTOR_ANALOG_USE_HAL
+#elif defined(CONFIG_MOTOR_ANALOG_USE_POINTER)
+		Analog_Enqueue(p_motor->p_Analog, p_motor->p_ConversionIdle);
+#endif
+
 		HAL_Motor_EnqueueConversionIdle(p_motor);
 	}
 }

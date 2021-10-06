@@ -1,0 +1,71 @@
+
+//static inline void Serial_TxComplete_ISR(Serial_T * p_serial)
+//{
+//
+//}
+
+//static inline void Serial_Error_ISR(Serial_T * p_serial)
+//{
+//  //HAL_Serial_GetError( );
+//}
+
+
+//typedef union
+//{
+//	uint8_t Byte;
+//	struct
+//	{
+//		bool OverRun	:1;
+//		bool Parity		:1;
+//	};
+//} Serial_Error_T;
+
+
+static inline uint8_t Hw_ReadChar(Serial_T * p_serial)
+{
+	uint8_t rxChar;
+
+	if (HAL_Serial_ReadRxRegFull(p_serial->CONFIG.P_HAL_SERIAL) == true)
+	{
+		rxChar = HAL_Serial_ReadRxChar(p_serial->CONFIG.P_HAL_SERIAL);
+	}
+	else
+	{
+		rxChar = -1; //Return empty char, 0xFF
+	}
+
+	return rxChar;
+}
+
+// calling function must check available to avoid meta data collision
+uint8_t Serial_ReadChar(Serial_T * p_serial)
+{
+	uint8_t rxChar;
+
+	if(p_serial->RxBufferHead == p_serial->RxBufferTail)
+	{
+		rxChar = Hw_ReadChar(p_serial);
+	}
+	else
+	{
+		EnterCriticalRx(p_serial);
+		rxChar = p_serial->CONFIG.P_RX_BUFFER[p_serial->RxBufferTail];
+		p_serial->RxBufferTail = (p_serial->RxBufferTail + 1U) % p_serial->CONFIG.RX_BUFFER_SIZE;
+		ExitCriticalRx(p_serial);
+	}
+
+	return rxChar;
+}
+
+//#ifdef CONFIG_SERIAL_BUFFER_SIZE_STATIC
+//	#if defined(CONFIG_SERIAL_TX_BUFFER_SIZE) && defined(CONFIG_SERIAL_RX_BUFFER_SIZE)
+//
+//	#else
+//		#define CONFIG_SERIAL_TX_BUFFER_SIZE (100U)
+//		#define CONFIG_SERIAL_RX_BUFFER_SIZE (100U)
+//	#endif
+//#elif defined(CONFIG_SERIAL_BUFFER_SIZE_POINTER)
+//
+//#else
+//	#define CONFIG_SERIAL_BUFFER_SIZE_POINTER
+//#endif

@@ -47,6 +47,8 @@
 #include "Peripheral/Serial/Serial.h"
 #include "System/Shell/Shell.h"
 
+#include "Protocol/ProtocolG/ProtocolG.h"
+
 static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 {
 	if (Thread_PollTimerCompletePeriodic(&p_controller->TimerMillis) == true) 	//Med Freq, Low Priority 1 ms, Main
@@ -56,7 +58,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 			Motor_Main1Ms_Thread(&p_controller->Motors[iMotor]);
 		}
 
-		if(p_controller->Parameters.AnalogUserEnable == true)
+//		if(p_controller->Parameters.AnalogUserEnable == true)
 		{
 			MotAnalogUser_CaptureInput(&p_controller->AnalogUser);
 			MotAnalogUser_Motor_Write(&p_controller->AnalogUser, &p_controller->Motors, CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT);
@@ -76,6 +78,10 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 //		MotorInterface_Input_ProcWriteToMotor(&p_motorController->Interface.Input,  &p_motorController->Motors[iMotor]);  //copy UI input to motor
 //		MotorInterface_Output_ProcReadFromMotor(&p_motorController->Interface.Output, &p_motorController->Motors[iMotor]);	//copy motor output to UI
 //		MotorInterface_Output_WriteTo(&p_motorController->MotorUser); //actuate hw
+
+
+		//proc flash
+
 	}
 
 	if (Thread_PollTimerCompletePeriodic(&p_controller->TimerMillis10) == true) 	//Low Freq, Low Priority 1 ms, Main

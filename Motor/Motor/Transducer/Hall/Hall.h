@@ -179,6 +179,29 @@ typedef enum
 	HALL_ANGLE_CW_330 	= HALL_ANGLE_270_330,
 } Hall_RotorAngle_T;
 
+
+
+typedef struct
+{
+#ifdef CONFIG_HALL_HAL_PIN
+	const HAL_Pin_T HAL_Pin_A;
+	const HAL_Pin_T HAL_Pin_B;
+	const HAL_Pin_T HAL_Pin_C;
+#elif defined(CONFIG_HALL_HAL_HALL)
+	const HAL_Hall_T HAL_HALL;
+#endif
+
+#ifdef CONFIG_HALL_COMMUTATION_TABLE_FLASH
+	const Hall_CommutationPhase_T 	Communtation_Table[8U];
+	const Hall_RotorAngle_T 		Rotor_Angle_Table[8U];
+#endif
+
+#if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
+	void * p_UserData;
+#endif
+}
+Hall_Config_T;
+
 typedef struct 
 {
 #ifdef CONFIG_HALL_HAL_PIN
@@ -245,7 +268,7 @@ static inline volatile uint8_t Hall_ReadSensors(const Hall_T * p_hall)
 /*
  * ISR version
  */
-static inline void Hall_CaptureSensors_IO(Hall_T * p_hall)
+static inline void Hall_CaptureSensors_ISR(Hall_T * p_hall)
 {
 	uint8_t hall = Hall_ReadSensors(p_hall);
 	p_hall->SensorsSaved = hall;
@@ -315,17 +338,24 @@ static inline bool Hall_PollSensorsEdge_IO(Hall_T * p_hall)
 }
 
 
-//static inline bool Hall_PollCaptureSensors_IO(Hall_T * p_hall)
-//{
-//	bool isEdge = Hall_PollSensorsEdge_IO(p_hall);
-//
-//	if (isEdge)
-//	{
-//		Hall_CaptureSensors_IO(p_hall);
-//	}
-//
-//	return (isEdge);
-//}
+static inline bool Hall_PollCaptureSensors(Hall_T * p_hall)
+{
+	bool isEdge;
+
+	uint8_t hall = Hall_ReadSensors(p_hall);
+
+	if (hall != p_hall->SensorsSaved)
+	{
+		p_hall->SensorsSaved = hall;
+		isEdge = true;
+	}
+	else
+	{
+		isEdge = false;
+	}
+
+	return (isEdge);
+}
 
 //temp
 static inline bool Hall_PollSensorA(Hall_T * p_hall)

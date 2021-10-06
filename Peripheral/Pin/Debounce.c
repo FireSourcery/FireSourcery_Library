@@ -35,20 +35,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-void Debounce_Init
-(
-	Debounce_T * p_pin,
-	const volatile HAL_Pin_T * p_hal_pin,
-	const volatile uint32_t * p_Timer,
-	uint16_t debounceTime
-)
+void Debounce_Init(Debounce_T * p_pin, const volatile HAL_Pin_T * p_hal_pin, const volatile uint32_t * p_Timer, uint16_t debounceTime)
 {
 	p_pin->p_HAL_Pin = p_hal_pin;
 
 	p_pin->p_Timer = p_Timer;
 	p_pin->DebounceTime = debounceTime;
 
-	p_pin->DebouncedState = HAL_Pin_ReadState(p_pin->p_HAL_Pin);
-	p_pin->DebouncedStatePrev = p_pin->DebouncedState;
-	p_pin->RawStatePrev = p_pin->DebouncedState;
+	p_pin->DebouncedState 		= HAL_Pin_ReadState(p_pin->p_HAL_Pin);
+	p_pin->DebouncedStatePrev 	= p_pin->DebouncedState;
+	p_pin->RawStatePrev 		= p_pin->DebouncedState;
 }

@@ -39,19 +39,19 @@ typedef struct
 	/*
 	 * TxRx string functions must be supplied by the user application.
 	 */
-//#ifdef CONFIG_SHELL_USE_SERIAL
+//#ifdef CONFIG_TERMINAL_CONNECT_SERIAL
     Serial_T * p_Serial;
+//#elif CONFIG_TERMINAL_CONNECT_STREAM
+    //stream
+//#elif CONFIG_TERMINAL_CONNECT_PRIMITIVE
+
+    //uint8_t BufferIn
+    //uint8_t BufferOut
+
 //#endif
 
 //    Terminal_Connect_T * p_Connect;
 //    Terminal_ConnectId_T ConnectId;
-
-#ifdef CONFIG_SHELL_USE_FUNCTION_POINTER
-     char (* ReadChar)(Terminal_T * p_terminal);
-     void (* WriteChar)(char ch);
-     void WriteString(char * p_str);
-     bool PollKeyPressed(Terminal_T * p_terminal);
-#endif
 
 	volatile char Cmdline[CMDLINE_CHAR_MAX]; /*!< Cmdline buffer */
 	volatile char * (ArgV[CMDLINE_ARG_MAX]); /*!<  */
@@ -64,7 +64,9 @@ Terminal_T;
 
 static inline char Terminal_RecvChar(const Terminal_T * p_terminal)
 {
-  return Serial_RecvChar(p_terminal->p_Serial);
+	char rxChar;
+	Serial_RecvChar(p_terminal->p_Serial, &rxChar);
+	return rxChar;
 }
 
 static inline void Terminal_SendChar(const Terminal_T * p_terminal, char ch)
@@ -83,11 +85,19 @@ static inline void Terminal_SendString(const Terminal_T * p_terminal, const char
 	}
 }
 
+//GetIs
 static inline bool Terminal_PollKeyPressed(const Terminal_T * p_terminal)
 {
-	return ((Serial_GetAvailableRx(p_terminal->p_Serial) == 0U) ? false : true);
+	return ((Serial_GeteRxFull(p_terminal->p_Serial) == 0U) ? false : true);
 }
 //#endif
+
+//static inline char Terminal_ProcWriteStream(const Terminal_T * p_terminal, const char * p_str, length)
+//{
+////	p_terminal->Buffer[] = p_str[];
+//}
+
+
 
 static inline void Terminal_SendNum(const Terminal_T * p_terminal, int32_t number)
 {
@@ -166,9 +176,9 @@ static inline char* Terminal_GetCmdlineArgVIndex(const Terminal_T * p_terminal, 
 //extern void Terminal_SendCtrl_CRLF(Terminal_T * p_terminal);
 //extern void Terminal_Clear(Terminal_T * p_terminal);
 
-extern void Terminal_Init(Terminal_T * p_terminal, void * p_connect);
-extern bool Terminal_ProcCmdline(Terminal_T * p_terminal);
-extern void Terminal_ParseCmdline(Terminal_T * p_terminal);
-extern bool Terminal_WaitCmdline(Terminal_T * p_terminal);
+//extern void Terminal_Init(Terminal_T * p_terminal, void * p_connect);
+//extern bool Terminal_ProcCmdline(Terminal_T * p_terminal);
+//extern void Terminal_ParseCmdline(Terminal_T * p_terminal);
+//extern bool Terminal_WaitCmdline(Terminal_T * p_terminal);
 
 #endif
