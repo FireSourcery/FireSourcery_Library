@@ -84,7 +84,7 @@ static inline size_t WrapArrayIndex(Queue_T * p_queue, size_t index)
  * Public
  */
 /******************************************************************************/
-void  Queue_Init(Queue_T * p_queue)
+void Queue_Init(Queue_T * p_queue)
 {
 	Queue_Clear(p_queue);
 }
