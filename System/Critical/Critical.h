@@ -87,25 +87,25 @@ static inline bool Critical_MutexAquire(critical_mutex_t * p_mutex)
 {
 	bool status = false;
 
-	CRITICAL_DISABLE_INTERRUPTS();
+	Critical_Enter();
 	if (*p_mutex == 1U)
 	{
 		*p_mutex = 0U;
 		status = true;
 	}
-	CRITICAL_ENABLE_INTERRUPTS();
+	Critical_Exit();
 
 	return status;
 }
 
 static inline void Critical_MutexRelease(critical_mutex_t * p_mutex)
 {
-	CRITICAL_DISABLE_INTERRUPTS();
+	Critical_Enter();
 	if (*p_mutex == 0U)
 	{
 		*p_mutex = 1U;
 	}
-	CRITICAL_ENABLE_INTERRUPTS();
+	Critical_Exit();
 }
 
 /*

@@ -1,0 +1,169 @@
+//typedef struct Protocol_ControlContext_Tag Protocol_ControlContext_T;
+
+//typedef void (*ProtocolG_ReqFunction_T)(); //generic function pointer type
+//typedef void * ProtocolG_ReqFunction_T;
+//typedef uint32_t (*ProtocolG_ReqFunctionExecute_T)	(uint8_t * p_txPacket, uint8_t * p_txSize, volatile const uint8_t * p_rxPacket, void * p_execute, void * p_writeRegs, volatile const void * p_readRegs);
+//typedef uint32_t (*ProtocolG_ReqFunctionRead_T)		(uint8_t * p_txPacket, uint8_t * p_txSize, volatile const uint8_t * p_rxPacket, volatile const void * p_readRegs);
+//typedef uint32_t (*ProtocolG_ReqFunctionWrite_T)		(volatile const uint8_t * p_rxPacket, void * p_writeRegs);
+//typedef uint32_t (*ProtocolG_ReqFunctionReadWrite_T)	(uint8_t * p_txPacket, uint8_t * p_txSize, volatile const uint8_t * p_rxPacket, void * p_writeRegs, volatile const void * p_readRegs);
+//typedef uint32_t (*ProtocolG_ReqFunctionFull_T)		(uint8_t * p_txPacket, uint8_t * p_txSize, volatile const uint8_t * p_rxPacket, void * p_writeRegs, volatile const void * p_readRegs, Protocol_ControlContext_T * p_control);
+
+//typedef uint32_t (*ProtocolG_ControlFunction_T)		(Protocol_ControlContext_T * p_control);
+		
+			//pre parse rx id
+//	const (*const BUILD_TX_ACK_PACKET)(volatile uint8_t * p_txPacket, uint8_t * p_txSize);
+//	const (*const BUILD_TX_NACK_DATA)(volatile uint8_t * p_txPacket, uint8_t * p_txSize);
+//	const (*const BUILD_TX_NACK_CMD)(volatile uint8_t * p_txPacket, uint8_t * p_txSize);
+//	const (*const BUILD_TX_NACK_TIMEOUT)(volatile uint8_t * p_txPacket, uint8_t * p_txSize);
+		
+
+
+//typedef ProtocolG_ReqExt_T Protocol_ReqFlash_T;	
+
+//run inside isr if nonblocking super loop speed is too slow
+//Encoded and non encoded checks
+//static bool ProtocolG_RxPacket_ISR(ProtocolG_T * p_protocol)
+//{
+////	uint8_t rxChar;
+//	bool isComplete = false;
+//
+//	case SUBSTATE_1:
+//		if (DataLinkRxByte(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex]) != false)
+//		{
+//			p_protocol->RxIndex++;
+//			p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);  //reset  byte timeout
+//		}
+//
+//	case SUBSTATE_2:
+////		if (*p_protocol->CONFIG.P_TIMER - p_protocol->TimeStart < p_protocol->p_Specs->TIME_OUT_PACKET) //packet time out if needed
+//
+//
+//			if(isComplete)
+//			{
+//				p_protocol->RxIndex = 0;
+//				//reset packet timeout
+//			}
+//		}
+//		else
+//		{
+////			set SUBSTATE_1
+//			p_protocol->RxIndex = 0;
+//			//send txtimeout
+//		}
+//
+//	return isComplete;
+//}
+
+
+//				if (p_protocol->p_Specs->BUILD_TX_NACK_CMD != 0U){p_protocol->p_Specs->BUILD_TX_NACK_CMD(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength);}
+//				if (p_protocol->p_Specs->BUILD_TX_NACK_DATA != 0U){p_protocol->p_Specs->BUILD_TX_NACK_DATA(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength);}
+//				if (p_protocol->p_Specs->P_TX_NACK_TIMEOUT != 0U){p_protocol->p_Specs->BUILD_TX_NACK_TIMEOUT(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength);}
+//						if (p_protocol->p_Specs->BUILD_TX_ACK_PACKET != 0U)	{p_protocol->p_Specs->BUILD_TX_ACK_PACKET(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength);}
+//						//pre id, reception ack
+						//DataLinkTxString(p_protocol, p_protocol->p_Specs->P_TX_ACK_PACKET_STRING, p_protocol->p_Specs->TX_ACK_PACKET_LENGTH);
+						
+						
+						static ProtocolG_State_T ProcReqWaitForAck(ProtocolG_T * p_protocol, ProtocolG_ReqExt_T * p_reqExt)
+{
+	ProtocolG_State_T nextState;
+
+	if (*p_protocol->CONFIG.P_TIMER - p_protocol->TimeStart < p_reqExt->WAIT_RX_ACK_RX_TIME_OUT)
+	{
+		if(RxPacket(p_protocol))
+		{
+			if(strncmp(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_reqExt->P_WAIT_RX_ACK_STRING, p_reqExt->WAIT_RX_ACK_LENGTH) == 0U)
+			{
+				p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+			}
+			else
+			{
+//				p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
+//				p_protocol->RxIndex = 0U; //try again until timeout?
+			}
+		}
+//		while (DataLinkRxByte(p_protocol) == true)
+//		{
+//			p_protocol->RxIndex++;
+//			p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);  //reset byte timeout
+//
+//			if (p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex - 1U] != p_reqExt->P_WAIT_RX_ACK_STRING[0U])
+//			{
+//				p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
+//				p_protocol->RxIndex = 0U;
+//			}
+//
+//			if(p_protocol->RxIndex >= p_reqExt->WAIT_RX_ACK_LENGTH)
+//			{
+//				if(strncmp(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_reqExt->P_WAIT_RX_ACK_STRING, p_reqExt->WAIT_RX_ACK_LENGTH) == 0U)
+//				{
+//					p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+//				}
+//				else
+//				{
+////					p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
+//					p_protocol->RxIndex = 0U; //try again until timeout?
+//					p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+//				}
+//			}
+//			else
+//			{
+//
+//			}
+//		}
+	}
+	else
+	{
+//		DataLinkTxString(p_protocol, p_protocol->p_Specs->P_TX_NACK_TIMEOUT, p_protocol->p_Specs->TX_NACK_TIMEOUT_LENGTH);
+		p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+	}
+
+	return nextState;
+}
+
+
+
+
+		//			if(p_reqExt->P_WAIT_RX_ACK_STRING != 0U)
+		//			{
+		//				p_protocol->RxIndex = 0U;
+		//				p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
+		//				nextState = PROTOCOL_STATE_WAIT_ACK;
+		//			}
+		//			else
+		
+		
+		
+		static ProtocolG_State_T ProcReqExtProcess(ProtocolG_T * p_protocol, ProtocolG_ReqExt_T * p_reqExt)
+{
+	ProtocolG_State_T nextState;
+
+	if (*p_protocol->CONFIG.P_TIMER - p_protocol->TimeStart < p_reqExt->WAIT_PROCESS_TIME_OUT)
+	{
+		if(p_reqExt->PROCESS(p_reqExt->P_PROCESS_CONTEXT) == p_reqExt->WAIT_PROCESS_CODE)
+		{
+			if(p_reqExt->BUILD_TX != 0U)
+			{
+				p_reqExt->BUILD_TX(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_READ_REGS, p_reqExt->P_PROCESS_CONTEXT);
+				DataLinkTxPacket(p_protocol);
+			}
+
+//			if(p_reqExt->P_WAIT_RX_ACK_STRING != 0U)
+//			{
+//				p_protocol->RxIndex = 0U;
+//				p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
+//				nextState = PROTOCOL_STATE_WAIT_ACK;
+//			}
+//			else
+			{
+				nextState = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+			}
+		}
+	}
+	else
+	{
+//		DataLinkTxString(p_protocol, p_protocol->p_Specs->P_TX_NACK_TIMEOUT, p_protocol->p_Specs->TX_NACK_TIMEOUT_LENGTH);
+		p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+	}
+
+	return nextState;
+}

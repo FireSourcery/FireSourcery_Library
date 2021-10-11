@@ -1,0 +1,105 @@
+static inline bool StartWritePage(const Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_data)
+{
+	bool isStarted = false;
+
+	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
+//	HAL_Flash_PrepCmdWritePage(p_flash->CONFIG.P_HAL_FLASH, p_destFlash, p_data); //Chip unique procedures
+//	HAL_Flash_WriteCmdWritePage(p_flash->CONFIG.P_HAL_FLASH);
+//	HAL_Flash_WriteCmdWriteDest(p_flash->CONFIG.P_HAL_FLASH, p_destFlash);
+//	HAL_Flash_WriteCmdWriteData(p_flash->CONFIG.P_HAL_FLASH, p_data);
+//	HAL_Flash_WriteCmdWriteStart(p_flash->CONFIG.P_HAL_FLASH);
+	HAL_Flash_StartCmdWritePage(p_flash->CONFIG.P_HAL_FLASH, p_destFlash, p_data);  //Chip unique procedures
+	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
+
+    return isStarted;
+}
+
+static inline bool StartEraseSector(const Flash_T * p_flash, const uint8_t * p_destFlash)
+{
+	bool isStarted = false;
+
+	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
+//	HAL_Flash_PrepCmdErase(p_flash->CONFIG.P_HAL_FLASH, p_destFlash); //Chip unique procedures
+//	HAL_Flash_WriteCmdEraseSector(p_flash->CONFIG.P_HAL_FLASH);
+//	HAL_Flash_WriteCmdEraseDest(p_flash->CONFIG.P_HAL_FLASH, p_destFlash);
+//	HAL_Flash_WriteCmdEraseStart(p_flash->CONFIG.P_HAL_FLASH);
+	HAL_Flash_StartCmdEraseSector(p_flash->CONFIG.P_HAL_FLASH, p_destFlash); //Chip unique procedures
+	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
+
+    return isStarted;
+}
+
+static inline bool StartVerifyWriteUnit(const Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_data)
+{
+	bool isStarted = false;
+
+	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
+//	HAL_Flash_PrepCmdVerifyWrite(p_flash->CONFIG.P_HAL_FLASH, p_destFlash); //Chip unique procedures
+//	HAL_Flash_WriteCmdVerifyWrite(p_flash->CONFIG.P_HAL_FLASH);
+//	HAL_Flash_WriteCmdVerifyWriteDest(p_flash->CONFIG.P_HAL_FLASH, p_destFlash);
+//	HAL_Flash_WriteCmdVerifyWriteStart(p_flash->CONFIG.P_HAL_FLASH);
+	HAL_Flash_StartCmdVerifyWriteUnit(p_flash->CONFIG.P_HAL_FLASH, p_destFlash); //Chip unique procedures
+	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
+
+    return isStarted;
+}
+
+	//static inline bool StartVerifyEraseUnit(const Flash_T * p_flash, const uint8_t * p_destFlash)
+	//{
+	//	bool isStarted = false;
+	//
+	//	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
+	////	HAL_Flash_PrepCmdVerifyErase(p_flash->CONFIG.P_HAL_FLASH, p_destFlash); //Chip unique procedures
+	////	HAL_Flash_WriteCmdVerifyBlock(p_flash->CONFIG.P_HAL_FLASH);
+	////	HAL_Flash_WriteCmdVerifyEraseDest(p_flash->CONFIG.P_HAL_FLASH, p_destFlash);
+	////	HAL_Flash_WriteCmdVerifyEraseStart(p_flash->CONFIG.P_HAL_FLASH);
+	//	HAL_Flash_StartCmdVerifyErase(p_flash->CONFIG.P_HAL_FLASH, p_destFlash);
+	//	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
+	//
+	//    return isStarted;
+	//}
+
+
+static inline bool StartVerifyEraseUnits(const Flash_T * p_flash, const uint8_t * p_destFlash, uint8_t units)
+{
+	bool isStarted = false;
+
+	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
+	HAL_Flash_StartCmdVerifyEraseUnits(p_flash->CONFIG.P_HAL_FLASH, p_destFlash, units);
+	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
+
+    return isStarted;
+}
+
+
+static inline bool StartWriteOnce(const Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_data)
+{
+	bool isStarted = false;
+
+	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
+//	HAL_Flash_PrepCmdWriteOnce(p_flash->CONFIG.P_HAL_FLASH, p_destFlash, p_data); //Chip unique procedures
+//	HAL_Flash_WriteCmdWriteOnce(p_flash->CONFIG.P_HAL_FLASH);
+//	HAL_Flash_WriteCmdWriteOnceDest(p_flash->CONFIG.P_HAL_FLASH, p_destFlash);
+//	HAL_Flash_WriteCmdWriteOnceData(p_flash->CONFIG.P_HAL_FLASH, p_data);
+//	HAL_Flash_WriteCmdWriteOnceStart(p_flash->CONFIG.P_HAL_FLASH);
+	HAL_Flash_StartCmdWriteOnce(p_flash->CONFIG.P_HAL_FLASH, p_destFlash, p_data); //Chip unique procedures
+	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
+
+    return isStarted;
+}
+
+static inline bool StartReadOnce(const Flash_T * p_flash, const uint8_t * p_destFlash)
+{
+	bool isStarted = false;
+
+	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
+//	HAL_Flash_PrepCmdWriteOnce(p_flash->CONFIG.P_HAL_FLASH, p_destFlash, p_data); //Chip unique procedures
+//	HAL_Flash_WriteCmdWriteOnce(p_flash->CONFIG.P_HAL_FLASH);
+//	HAL_Flash_WriteCmdWriteOnceDest(p_flash->CONFIG.P_HAL_FLASH, p_destFlash);
+//	HAL_Flash_WriteCmdWriteOnceData(p_flash->CONFIG.P_HAL_FLASH, p_data);
+//	HAL_Flash_WriteCmdWriteOnceStart(p_flash->CONFIG.P_HAL_FLASH);
+	HAL_Flash_StartCmdReadOnce(p_flash->CONFIG.P_HAL_FLASH, p_destFlash); //Chip unique procedures
+	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
+
+    return isStarted;
+}

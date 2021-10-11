@@ -1,0 +1,42 @@
+//	lpuart_state_t lpUartState0;
+//
+//	const lpuart_user_config_t lpuart_0_InitConfig0 = {
+//	  .transferType = LPUART_USING_INTERRUPTS,
+//	  .baudRate = 9600UL,
+//	  .parityMode = LPUART_PARITY_DISABLED,
+//	  .stopBitCount = LPUART_ONE_STOP_BIT,
+//	  .bitCountPerChar = LPUART_8_BITS_PER_CHAR,
+//	  .rxDMAChannel = 0UL,
+//	  .txDMAChannel = 0UL
+//	};
+
+    /* Set the default oversampling ratio (16) and baud-rate divider (4) */
+//	p_uartRegMap->BAUD = ((uint32_t)((FEATURE_LPUART_DEFAULT_OSR << LPUART_BAUD_OSR_SHIFT) |  (FEATURE_LPUART_DEFAULT_SBR << LPUART_BAUD_SBR_SHIFT)));
+//	p_uartRegMap->BAUD = ((uint32_t)((0x0FUL << LPUART_BAUD_OSR_SHIFT) |  (0x04UL << LPUART_BAUD_SBR_SHIFT)));
+
+    /* Clear the error/interrupt flags */
+//	p_uartRegMap->STAT = 0xC01FC000U; //FEATURE_LPUART_STAT_REG_FLAGS_MASK;
+
+//	p_uartRegMap->CTRL = 0x00000000;   /* Reset all features/interrupts by default */
+    /* Reset match addresses */
+//	p_uartRegMap->MATCH = 0x00000000;
+    /* Reset IrDA modem features */
+//	p_uartRegMap->MODIR = 0x00000000;
+
+    /* config 8-bit (M=0) or 9-bits (M=1) */
+//    p_uartRegMap->CTRL = (p_uartRegMap->CTRL & ~LPUART_CTRL_M_MASK);
+    /* clear M10 to make sure not 10-bit mode */
+//    p_uartRegMap->BAUD &= ~LPUART_BAUD_M10_MASK;
+
+//    p_uartRegMap->BAUD = (p_uartRegMap->BAUD & ~LPUART_BAUD_SBNS_MASK) | ((uint32_t)1U << LPUART_BAUD_SBNS_SHIFT);
+
+//    if(p_uartRegMap == LPUART0)
+//    {
+////    	INT_SYS_SetPriority(LPUART0_RxTx_IRQn, 15U);
+////    	INT_SYS_EnableIRQ(LPUART0_RxTx_IRQn);
+//    }
+//    else if (p_uartRegMap == LPUART1)
+//    {
+////    	INT_SYS_SetPriority(LPUART1_RxTx_IRQn, 15U);
+////    	INT_SYS_EnableIRQ(LPUART1_RxTx_IRQn);
+//    }

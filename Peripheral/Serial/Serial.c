@@ -29,7 +29,6 @@
 */
 /******************************************************************************/
 #include "Serial.h"
-
 #include "Config.h"
 
 #include "System/Queue/Queue.h"
@@ -112,110 +111,205 @@ static inline void ReleaseMutexRx(Serial_T * p_serial)
 #endif
 }
 
-static inline bool Hw_SendChar(Serial_T * p_serial, uint8_t txChar)
-{
-	bool isSuccess;
-
-	if (HAL_Serial_ReadTxRegEmpty(p_serial->CONFIG.P_HAL_SERIAL) == true)
-	{
-		HAL_Serial_WriteTxChar(p_serial->CONFIG.P_HAL_SERIAL, txChar);
-		isSuccess = true;
-	}
-	else
-	{
-		isSuccess = false;
-	}
-
-	return isSuccess;
-}
-
-static inline bool Hw_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
-{
-	bool isSuccess;
-
-	if (HAL_Serial_ReadRxRegFull(p_serial->CONFIG.P_HAL_SERIAL) == true)
-	{
-		*p_rxChar = HAL_Serial_ReadRxChar(p_serial->CONFIG.P_HAL_SERIAL);
-		isSuccess = true;
-	}
-	else
-	{
-		isSuccess = false;
-	}
-
-	return isSuccess;
-}
 
 static uint32_t Hw_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, uint32_t length)
 {
 #ifdef CONFIG_SERIAL_NO_HW_FIFO
-	return (Hw_SendChar(p_serial, p_srcBuffer[charCount]) == true) ? 1U : 0U;
+	(void)length
+	#define LENGTH (1U)
 #else
+	#define LENGTH (length)
+#endif
+
 	uint32_t charCount;
 
-	for (charCount = 0; charCount < length; charCount++)
+	EnterCriticalTx(p_serial);
+	for (charCount = 0U; charCount < LENGTH; charCount++)
 	{
-		if (Hw_SendChar(p_serial, p_srcBuffer[charCount]) == false)
+		if (HAL_Serial_ReadTxEmptyCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U)
+		{	//prevent interrupt after checking empty
+			HAL_Serial_WriteTxChar(p_serial->CONFIG.P_HAL_SERIAL, p_srcBuffer[charCount]);
+		}
+		else
 		{
 			break;
 		}
+
 	}
+	EnterCriticalTx(p_serial);
 
 	return charCount;
-#endif
 }
 
 static uint32_t Hw_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, uint32_t length)
 {
 #ifdef CONFIG_SERIAL_NO_HW_FIFO
-	return (Hw_RecvChar(p_serial, p_destBuffer[charCount]) == true) ? 1U : 0U;
+	(void)length
+	#define LENGTH (1U)
 #else
+	#define LENGTH (length)
+#endif
+
 	uint32_t charCount;
 
-	for (charCount = 0; charCount < length; charCount++)
+	EnterCriticalRx(p_serial);
+	for (charCount = 0U; charCount < LENGTH; charCount++)
 	{
-		if (Hw_RecvChar(p_serial, p_destBuffer[charCount]) == false)
+		if (HAL_Serial_ReadRxFullCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U)
+		{
+			p_destBuffer[charCount] = HAL_Serial_ReadRxChar(p_serial->CONFIG.P_HAL_SERIAL);
+		}
+		else
 		{
 			break;
 		}
 	}
+	ExitCriticalRx(p_serial);
 
 	return charCount;
-#endif
 }
 
 
-//bool Serial_SendChar(Serial_T * p_serial, uint8_t txChar)
-//{
-//	bool isSuccess;
-//
-//	if (AquireMutexTx(p_serial))
-//	{
-//		if (Queue_GetIsEmpty(&p_serial->TxQueue))
-//		{
-//			isSuccess = Hw_SendChar(p_serial, txChar);
-//		}
+
+#ifdef CONFIG_SERIAL_QUEUE_LIBRARY
+void Serial_Init(Serial_T * p_serial)
+{
+	HAL_Serial_InitDefault(p_serial->CONFIG.P_HAL_SERIAL);
+	Queue_Init(&p_serial->TxQueue);
+	Queue_Init(&p_serial->RxQueue);
+	Serial_EnableRx(p_serial);
+}
+
+bool Serial_SendChar(Serial_T * p_serial, uint8_t txChar)
+{
+	bool isSuccess = false;
+
+	if (AquireMutexTx(p_serial) == true)
+	{
+		if (Queue_GetIsEmpty(&p_serial->TxQueue) == true)
+		{
+			isSuccess = Hw_Send(p_serial, &txChar, 1U);
+		}
+		else
+		{
+			EnterCriticalTx(p_serial);
+			isSuccess = Queue_Enqueue(&p_serial->TxQueue, &txChar);
+			if (isSuccess == true)
+			{
+				HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+			}
+			ExitCriticalTx(p_serial);
+		}
+		ReleaseMutexTx(p_serial);
+	}
+
+	return isSuccess;
+}
+
+bool Serial_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
+{
+	bool isSuccess = false;
+
+	if (AquireMutexRx(p_serial) == true)
+	{
+		if(Queue_GetIsEmpty(&p_serial->RxQueue) == true)
+		{
+			isSuccess = Hw_Recv(p_serial, p_rxChar, 1U);
+		}
+		else
+		{
+			EnterCriticalRx(p_serial);
+			isSuccess = Queue_Dequeue(&p_serial->RxQueue, p_rxChar);
+			ExitCriticalRx(p_serial);
+		}
+		ReleaseMutexRx(p_serial);
+	}
+
+	return isSuccess;
+}
+
+//send immediate if fit in hardware fifo
+uint32_t Serial_SendBytes(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t srcSize)
+{
+	uint32_t charCount;
+
+	if (AquireMutexTx(p_serial) == true)
+	{
+		if (Queue_GetIsEmpty(&p_serial->TxQueue) == true)
+		{
+			//if Tx interrupt occurs here, no data will transfer from queue to hw buffer,
+			charCount = Hw_Send(p_serial, p_srcBuffer, srcSize);
+		}
+
+		if(charCount < srcSize)
+		{
+			EnterCriticalTx(p_serial);
+			charCount += Queue_EnqueueMax(&p_serial->RxQueue, p_srcBuffer, srcSize - charCount);
+			HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+			ExitCriticalTx(p_serial);
+		}
+
+		ReleaseMutexTx(p_serial);
+	}
+
+	return charCount;
+}
+
+uint32_t Serial_RecvBytes(Serial_T * p_serial, uint8_t * p_destBuffer, size_t destSize)
+{
+	uint32_t charCount;
+
+	if (AquireMutexRx(p_serial) == true)
+	{
+		if (Queue_GetIsEmpty(&p_serial->RxQueue) == true)
+		{
+			charCount = Hw_Recv(p_serial, p_destBuffer, destSize);
+		}
 //		else
-//		{
-//			EnterCriticalTx(p_serial);
-//
-//			isSuccess = Queue_Enqueue(&p_serial->TxQueue, txChar);
-//
-//			if (isSuccess == true)
-//			{
-//				HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-//			}
-//
-//			ExitCriticalTx(p_serial);
-//		}
-//
-//		ReleaseMutexTx(p_serial);
-//	}
-//
-//	return isSuccess;
-//}
+		if(charCount == destSize)
+		{
+			EnterCriticalRx(p_serial);
+			charCount += Queue_DequeueMax(&p_serial->RxQueue, p_destBuffer, destSize - charCount);
+			ExitCriticalRx(p_serial);
+		}
+		ReleaseMutexRx(p_serial);
+	}
 
+	return charCount;
+}
 
+bool Serial_SendString(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
+{
+	bool status = false;
+
+	if (Queue_GetEmptyCount(&p_serial->TxQueue) >= length)
+	{
+		EnterCriticalTx(p_serial);
+		Queue_EnqueueN(&p_serial->TxQueue, p_srcBuffer, length);
+		HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+		ExitCriticalTx(p_serial);
+		status = true;
+	}
+
+	return status;
+}
+
+bool Serial_RecvString(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
+{
+	bool status = false;
+
+	if (Queue_GetFullCount(&p_serial->RxQueue) >= length)
+	{
+		EnterCriticalRx(p_serial);
+		Queue_DequeueN(&p_serial->RxQueue, p_destBuffer, length);
+		ExitCriticalRx(p_serial);
+		status = true;
+	}
+
+	return status;
+}
+
+#elif defined(CONFIG_SERIAL_QUEUE_INTERNAL)
 void Serial_Init(Serial_T * p_serial)
 {
 	p_serial->TxBufferHead 	= 0;
@@ -232,30 +326,32 @@ bool Serial_SendChar(Serial_T * p_serial, uint8_t txChar)
 	uint32_t txBufferHeadNext;
 	bool isSuccess;
 
-	AquireMutexTx(p_serial);
-	if (p_serial->TxBufferHead == p_serial->TxBufferTail)
+	if(AquireMutexTx(p_serial))
 	{
-		isSuccess = Hw_SendChar(p_serial, txChar);
-	}
-	else
-	{
-		EnterCriticalTx(p_serial);
-		txBufferHeadNext = (p_serial->TxBufferHead + 1U) % p_serial->CONFIG.TX_BUFFER_SIZE;
-
-		if (txBufferHeadNext == p_serial->TxBufferTail)
+		if (p_serial->TxBufferHead == p_serial->TxBufferTail)
 		{
-			isSuccess = false;
+			isSuccess = Hw_SendChar(p_serial, txChar);
 		}
 		else
 		{
-			p_serial->CONFIG.P_TX_BUFFER[p_serial->TxBufferHead] = txChar;
-			p_serial->TxBufferHead = txBufferHeadNext;
-			HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-			isSuccess = true;
+			EnterCriticalTx(p_serial);
+			txBufferHeadNext = (p_serial->TxBufferHead + 1U) % p_serial->CONFIG.TX_BUFFER_SIZE;
+
+			if (txBufferHeadNext == p_serial->TxBufferTail)
+			{
+				isSuccess = false;
+			}
+			else
+			{
+				p_serial->CONFIG.P_TX_BUFFER[p_serial->TxBufferHead] = txChar;
+				p_serial->TxBufferHead = txBufferHeadNext;
+				HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+				isSuccess = true;
+			}
+			ExitCriticalTx(p_serial);
 		}
-		ExitCriticalTx(p_serial);
+		ReleaseMutexTx(p_serial);
 	}
-	ReleaseMutexTx(p_serial);
 
 	return isSuccess;
 }
@@ -293,7 +389,7 @@ uint32_t Serial_SendBytes(Serial_T * p_serial, const uint8_t * p_srcBuffer, uint
 //	else
 	{
 		EnterCriticalTx(p_serial);
-		for (charCount = 0; charCount < bufferSize; charCount++)
+		for (charCount = 0U; charCount < bufferSize; charCount++)
 		{
 			txBufferHeadNext = (p_serial->TxBufferHead + 1U) % p_serial->CONFIG.TX_BUFFER_SIZE;
 			if (txBufferHeadNext == p_serial->TxBufferTail)
@@ -390,13 +486,14 @@ bool Serial_RecvString(Serial_T * p_serial, uint8_t * p_destBuffer, uint32_t len
 
 	return status;
 }
+#endif
 
-bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, uint32_t length)
+bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
 {
 	return Serial_SendString(p_serial, p_srcBuffer, length);
 }
 
-uint32_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, uint32_t length)
+uint32_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
 {
 	return Serial_RecvBytes(p_serial, p_destBuffer, length);
 }
@@ -405,4 +502,3 @@ void Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate)
 {
 	HAL_Serial_ConfigBaudRate(p_serial->CONFIG.P_HAL_SERIAL, baudRate);
 }
-

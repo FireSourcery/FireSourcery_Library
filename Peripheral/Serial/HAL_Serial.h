@@ -37,10 +37,96 @@
 	#include PATH_USER(HAL_Serial.h)
 #elif 	defined(CONFIG_HAL_SERIAL_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
 	#include PATH_PLATFORM(Peripheral/HAL, HAL_Serial.h)
+#else
 
-//	#if defined(CONFIG_SERIAL_MULTITHREADED_LIBRARY_DEFINED)
-//		#include "System/Critical/Critical.h"
-//	#endif
+typedef void HAL_Serial_T;
+
+static inline void HAL_Serial_WriteTxChar(HAL_Serial_T * p_uartRegMap, uint8_t txChar)
+{
+
+}
+
+static inline uint8_t HAL_Serial_ReadRxChar(const HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
+static inline bool HAL_Serial_ReadIsTxRegEmpty(const HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
+static inline uint8_t HAL_Serial_ReadTxFifoEmpty(const HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
+static inline uint8_t HAL_Serial_ReadTxEmptyCount(const HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
+static inline bool HAL_Serial_ReadIsRxRegFull(const HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
+static inline uint8_t HAL_Serial_ReadRxFifoFull(const HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
+static inline uint8_t HAL_Serial_ReadRxFullCount(const HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
+static inline void HAL_Serial_ClearRxErrors(HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
+
+static inline void HAL_Serial_EnableTxInterrupt(HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
+static inline void HAL_Serial_DisableTxInterrupt(HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
+static inline void HAL_Serial_EnableRxInterrupt(HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
+static inline void HAL_Serial_DisableRxInterrupt(HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
+static inline void HAL_Serial_WriteTxSwitch(HAL_Serial_T * p_uartRegMap, bool enable)
+{
+
+}
+
+static inline void HAL_Serial_WriteRxSwitch(HAL_Serial_T * p_uartRegMap, bool enable)
+{
+
+}
+
+static inline void HAL_Serial_ConfigBaudRate(HAL_Serial_T * p_uartRegMap, uint32_t baudRate)
+{
+
+}
+
+static inline void HAL_Serial_Init(HAL_Serial_T * p_uartRegMap)
+{
+
+}
+
 #endif
 
 #endif

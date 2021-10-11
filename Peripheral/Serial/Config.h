@@ -40,8 +40,19 @@
 #elif defined(CONFIG_SERIAL_SINGLE_THREADED)
 
 #else
-	#define CONFIG_SERIAL_SINGLE_THREADED;
+	#define CONFIG_SERIAL_SINGLE_THREADED
 #endif
+
+#if defined(CONFIG_SERIAL_QUEUE_INTERNAL)
+
+#elif defined(CONFIG_SERIAL_QUEUE_LIBRARY)
+
+#else
+	#define CONFIG_SERIAL_QUEUE_LIBRARY
+#endif
+
+	//	bool HasTxHarwareFIFO;
+	//	bool HasRxHarwareFIFO;
 
 #endif
 

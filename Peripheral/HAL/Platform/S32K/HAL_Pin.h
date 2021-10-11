@@ -52,9 +52,22 @@ static inline bool HAL_Pin_ReadState(const HAL_Pin_T * p_pin)
 	return ((p_pin->P_GPIO_BASE->PDIR & p_pin->GPIO_PIN_MASK) == p_pin->GPIO_PIN_MASK) ? true : false;
 }
 
+static inline void HAL_Pin_InitInput(const HAL_Pin_T * p_pin)
+{
+	p_pin->P_GPIO_BASE->PDDR &= ~(p_pin->GPIO_PIN_MASK);
+	p_pin->P_GPIO_BASE->PIDR &= ~(p_pin->GPIO_PIN_MASK);
+}
 
-//static inline bool HAL_Pin_Init(const HAL_Pin_T * p_pin)
-//{
-//}
+static inline void HAL_Pin_InitOutput(const HAL_Pin_T * p_pin)
+{
+	p_pin->P_GPIO_BASE->PDDR |= (p_pin->GPIO_PIN_MASK);
+	p_pin->P_GPIO_BASE->PIDR |= (p_pin->GPIO_PIN_MASK);
+}
+
+static inline void HAL_Pin_Deinit(const HAL_Pin_T * p_pin)
+{
+	p_pin->P_GPIO_BASE->PDDR &= ~(p_pin->GPIO_PIN_MASK);
+	p_pin->P_GPIO_BASE->PIDR |= (p_pin->GPIO_PIN_MASK);
+}
 
 #endif

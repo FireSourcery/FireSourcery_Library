@@ -88,10 +88,10 @@
 /*
  * Bounds
  */
-#define HAL_FLASH_UNIT_SIZE_ERASE	S32K_FLASH_SECTOR_SIZE
-#define HAL_FLASH_UNIT_SIZE_WRITE	S32K_FLASH_PHRASE_SIZE /* 8 byte aligned */
-#define HAL_FLASH_ERASE_BLOCK_SIZE	HAL_FLASH_UNIT_SIZE_ERASE /* alias */
-#define HAL_FLASH_WRITE_PAGE_SIZE	HAL_FLASH_UNIT_SIZE_WRITE
+#define HAL_FLASH_UNIT_ERASE_SIZE	S32K_FLASH_SECTOR_SIZE
+#define HAL_FLASH_UNIT_WRITE_SIZE	S32K_FLASH_PHRASE_SIZE /* 8 byte aligned */
+#define HAL_FLASH_ERASE_BLOCK_SIZE	HAL_FLASH_UNIT_ERASE_SIZE /* alias */
+#define HAL_FLASH_WRITE_PAGE_SIZE	HAL_FLASH_UNIT_WRITE_SIZE
 
 #define HAL_FLASH_START				S32K_PROGRAM_FLASH_START	/* */
 #define HAL_FLASH_END				S32K_PROGRAM_FLASH_END	/* */
@@ -214,8 +214,35 @@
  */
 typedef FTFC_Type HAL_Flash_T;
 
+
 /*
- *   Common, module private
+ *   module helper
+ */
+static inline void HAL_Flash_WriteCmdDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest)
+{
+    FTFx_FCCOB1 = GET_BIT_16_23(p_dest);
+    FTFx_FCCOB2 = GET_BIT_8_15(p_dest);
+    FTFx_FCCOB3 = GET_BIT_0_7(p_dest);
+}
+
+static inline void HAL_Flash_WriteCmdWriteData(HAL_Flash_T * p_hal_flash, const uint8_t * p_data)
+{
+	for (uint8_t i = 0U; i < FTFx_PHRASE_SIZE; i++)
+	{
+		((uint8_t*)FTFx_BASE)[i + 0x08U] = p_data[i];
+	}
+}
+
+static inline void HAL_Flash_WriteCmdStart(HAL_Flash_T * p_hal_flash)
+{
+	 FTFx_FSTAT |= FTFx_FSTAT_CCIF_MASK;
+}
+
+/*
+ * API
+ */
+/*
+ *   Common
  */
 static inline bool HAL_Flash_ReadErrorFlags(HAL_Flash_T *p_hal_flash)
 {
@@ -227,119 +254,187 @@ static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T *p_hal_flash)
 	FTFx_FSTAT = (uint8_t)(FTFx_FSTAT_FPVIOL_MASK | FTFx_FSTAT_ACCERR_MASK | FTFx_FSTAT_RDCOLERR_MASK);
 }
 
-static inline void HAL_Flash_WriteCmdDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest)
-{
-    FTFx_FCCOB1 = GET_BIT_16_23(p_dest);
-    FTFx_FCCOB2 = GET_BIT_8_15(p_dest);
-    FTFx_FCCOB3 = GET_BIT_0_7(p_dest);
-}
-
-static inline void HAL_Flash_WriteCmdStart(HAL_Flash_T * p_hal_flash)
-{
-	 FTFx_FSTAT |= FTFx_FSTAT_CCIF_MASK;
-}
-
-static inline bool HAL_Flash_ReadCompleteFlag(HAL_Flash_T * p_hal_flash)
+static inline bool HAL_Flash_ReadCompleteFlags(HAL_Flash_T * p_hal_flash)
 {
 	return (bool)(FTFx_FSTAT & FTFx_FSTAT_CCIF_MASK);
 }
 
+static inline bool HAL_Flash_ReadErrorVerifyFlag(HAL_Flash_T *p_hal_flash)
+{
+	return	(FTFx_FSTAT & (FTFx_FSTAT_MGSTAT0_MASK));
+}
 
 /*
- * Mapped
+ * Functions
  */
-static inline void HAL_Flash_Init(HAL_Flash_T * p_hal_flash)
+static inline void HAL_Flash_StartCmdWritePage(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest, const uint8_t * p_data)
 {
-
+    FTFx_FCCOB0 = FTFx_PROGRAM_PHRASE;
+    HAL_Flash_WriteCmdDest(p_hal_flash, p_dest);
+    HAL_Flash_WriteCmdWriteData(p_hal_flash, p_data);
+	HAL_Flash_WriteCmdStart(p_hal_flash);
 }
 
-static inline void HAL_Flash_WriteCmdWritePage(HAL_Flash_T * p_hal_flash)
+static inline void HAL_Flash_StartCmdEraseSector(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest)
 {
-	FTFx_FCCOB0 = FTFx_PROGRAM_PHRASE;
+	FTFx_FCCOB0 = FTFx_ERASE_SECTOR;
+    HAL_Flash_WriteCmdDest(p_hal_flash, p_dest);
+	HAL_Flash_WriteCmdStart(p_hal_flash);
 }
 
-static inline void HAL_Flash_WriteCmdWriteData(HAL_Flash_T * p_hal_flash, const uint8_t * p_data)
-{
-	for (uint8_t i = 0U; i < FTFx_PHRASE_SIZE; i++)
-	{
-		((uint8_t*)FTFx_BASE)[i + 0x08U] = p_data[i];
-	}
-}
-
-static inline void HAL_Flash_WriteCmdEraseBlock(HAL_Flash_T * p_hal_flash)
-{
-	FTFx_FCCOB0 = FTFx_ERASE_BLOCK;
-}
-
-static inline void HAL_Flash_WriteCmdVerifyEraseBlock(HAL_Flash_T * p_hal_flash)
-{
-	FTFx_FCCOB0 = FTFx_VERIFY_BLOCK;
-}
-
-static inline void HAL_Flash_WriteCmdVerifyWritePage(HAL_Flash_T * p_hal_flash)
+static inline void HAL_Flash_StartCmdVerifyWriteUnit(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest, const uint8_t * p_data)
 {
 	FTFx_FCCOB0 = FTFx_PROGRAM_CHECK;
+    HAL_Flash_WriteCmdDest(p_hal_flash, p_dest);
+    //writedata
+	HAL_Flash_WriteCmdStart(p_hal_flash);
 }
 
-static inline void HAL_Flash_WriteCmdWriteOnce(HAL_Flash_T * p_hal_flash)
+//static inline void HAL_Flash_StartCmdVerifyEraseUnit(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest)
+//{
+//	FTFx_FCCOB0 = FTFx_VERIFY_SECTION;
+//}
+
+static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest, uint8_t units)
 {
-	FTFx_FCCOB0 = FTFx_PROGRAM_ONCE;
+	FTFx_FCCOB0 = FTFx_VERIFY_SECTION;
+    HAL_Flash_WriteCmdDest(p_hal_flash, p_dest);
+    //write units
+	HAL_Flash_WriteCmdStart(p_hal_flash);
 }
-
-static inline void HAL_Flash_WriteCmdReadOnce(HAL_Flash_T * p_hal_flash)
-{
-	FTFx_FCCOB0 = FTFx_READ_ONCE;
-}
-
-static inline void HAL_Flash_WriteCmdWriteDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){HAL_Flash_WriteCmdDest(p_hal_flash, p_dest);}
-static inline void HAL_Flash_WriteCmdWriteStart(HAL_Flash_T * p_hal_flash){HAL_Flash_WriteCmdStart(p_hal_flash);}
-static inline bool HAL_Flash_ReadCompleteWriteFlag(HAL_Flash_T * p_hal_flash){HAL_Flash_ReadCompleteFlag(p_hal_flash);}
-static inline void HAL_Flash_PrepCmdWrite(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest, const uint8_t * p_data){}
-
-static inline void HAL_Flash_WriteCmdEraseDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){HAL_Flash_WriteCmdDest(p_hal_flash, p_dest);}
-static inline void HAL_Flash_WriteCmdEraseStart(HAL_Flash_T * p_hal_flash){HAL_Flash_WriteCmdStart(p_hal_flash);}
-static inline bool HAL_Flash_ReadCompleteEraseFlag(HAL_Flash_T * p_hal_flash){HAL_Flash_ReadCompleteFlag(p_hal_flash);}
-static inline void HAL_Flash_PrepCmdErase(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){}
-
-static inline void HAL_Flash_WriteCmdVerifyWriteDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){HAL_Flash_WriteCmdDest(p_hal_flash, p_dest);}
-static inline void HAL_Flash_WriteCmdVerifyWriteStart(HAL_Flash_T * p_hal_flash){HAL_Flash_WriteCmdStart(p_hal_flash);}
-static inline bool HAL_Flash_ReadCompleteVerifyWriteFlag(HAL_Flash_T * p_hal_flash){HAL_Flash_ReadCompleteFlag(p_hal_flash);}
-static inline void HAL_Flash_PrepCmdVerifyWrite(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){}
-
-static inline void HAL_Flash_WriteCmdVerifyEraseDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){HAL_Flash_WriteCmdDest(p_hal_flash, p_dest);}
-static inline void HAL_Flash_WriteCmdVerifyEraseStart(HAL_Flash_T * p_hal_flash){HAL_Flash_WriteCmdStart(p_hal_flash);}
-static inline bool HAL_Flash_ReadCompleteVerifyEraseFlag(HAL_Flash_T * p_hal_flash){HAL_Flash_ReadCompleteFlag(p_hal_flash);}
-static inline void HAL_Flash_PrepCmdVerifyErase(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){}
 
 /*
  * Calling module ensures alignment
  * 0x03C0 => 0
  * 0x03C8 => 1
  */
-static inline void HAL_Flash_WriteCmdWriteOnceDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest)
+static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest, const uint8_t * p_data)
 {
 	uint8_t recordIndex = p_dest - (uint8_t *)HAL_FLASH_ONCE_START;
 
+	FTFx_FCCOB0 = FTFx_PROGRAM_ONCE;
 	FTFx_FCCOB1 = recordIndex;
-}
-static inline void HAL_Flash_WriteCmdWriteOnceData(HAL_Flash_T *p_hal_flash, const uint8_t * p_data){HAL_Flash_WriteCmdWriteData(p_hal_flash, p_data);}
-static inline void HAL_Flash_WriteCmdWriteOnceStart(HAL_Flash_T * p_hal_flash){HAL_Flash_WriteCmdStart(p_hal_flash);}
-static inline bool HAL_Flash_ReadCompleteWriteOnceFlag(HAL_Flash_T * p_hal_flash){HAL_Flash_ReadCompleteFlag(p_hal_flash);}
-static inline void HAL_Flash_PrepCmdWriteOnce(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest, const uint8_t * p_data){}
 
-static inline void HAL_Flash_WriteCmdReadOnceDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest)
-{
-	HAL_Flash_WriteCmdWriteOnceDest(p_hal_flash, p_dest);
+	HAL_Flash_WriteCmdWriteData(p_hal_flash, p_data);
+	HAL_Flash_WriteCmdStart(p_hal_flash);
 }
-static inline void HAL_Flash_WriteCmdReadOnceStart(HAL_Flash_T * p_hal_flash){HAL_Flash_WriteCmdStart(p_hal_flash);}
-static inline bool HAL_Flash_ReadCompleteReadOnceFlag(HAL_Flash_T * p_hal_flash){HAL_Flash_ReadCompleteFlag(p_hal_flash);}
-static inline void HAL_Flash_ReadOnceData(HAL_Flash_T *p_hal_flash, uint8_t * p_result)
+
+static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest)
+{
+	uint8_t recordIndex = p_dest - (uint8_t *)HAL_FLASH_ONCE_START;
+
+	FTFx_FCCOB0 = FTFx_READ_ONCE;
+	FTFx_FCCOB1 = recordIndex;
+
+	HAL_Flash_WriteCmdStart(p_hal_flash);
+}
+
+static inline void HAL_Flash_ReadOnceData(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest)
 {
 	for (uint8_t i = 0U; i < FTFx_PHRASE_SIZE; i++)
 	{
         p_result[i] = ((uint8_t *)FTFx_BASE)[i + 0x08U];
     }
 }
-static inline void HAL_Flash_PrepCmdReadOnce(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){}
+
+static inline void HAL_Flash_Init(HAL_Flash_T * p_hal_flash)
+{
+
+}
+
+
+/*
+ * Mapped
+ */
+//static inline void HAL_Flash_WriteCmdWritePage(HAL_Flash_T * p_hal_flash)
+//{
+//	FTFx_FCCOB0 = FTFx_PROGRAM_PHRASE;
+//}
+//
+//static inline void HAL_Flash_WriteCmdWriteData(HAL_Flash_T * p_hal_flash, const uint8_t * p_data)
+//{
+//	for (uint8_t i = 0U; i < FTFx_PHRASE_SIZE; i++)
+//	{
+//		((uint8_t*)FTFx_BASE)[i + 0x08U] = p_data[i];
+//	}
+//}
+//
+//static inline void HAL_Flash_WriteCmdEraseSector(HAL_Flash_T * p_hal_flash)
+//{
+//	FTFx_FCCOB0 = FTFx_ERASE_SECTOR;
+//}
+//
+//static inline void HAL_Flash_WriteCmdVerifyEraseSector(HAL_Flash_T * p_hal_flash)
+//{
+//	FTFx_FCCOB0 = FTFx_VERIFY_SECTION;
+//}
+//
+//static inline void HAL_Flash_WriteCmdVerifyWritePage(HAL_Flash_T * p_hal_flash)
+//{
+//	FTFx_FCCOB0 = FTFx_PROGRAM_CHECK;
+//}
+//
+//static inline void HAL_Flash_WriteCmdWriteOnce(HAL_Flash_T * p_hal_flash)
+//{
+//	FTFx_FCCOB0 = FTFx_PROGRAM_ONCE;
+//}
+//
+//static inline void HAL_Flash_WriteCmdReadOnce(HAL_Flash_T * p_hal_flash)
+//{
+//	FTFx_FCCOB0 = FTFx_READ_ONCE;
+//}
+//
+//static inline void HAL_Flash_WriteCmdWriteDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){HAL_Flash_WriteCmdDest(p_hal_flash, p_dest);}
+//static inline void HAL_Flash_WriteCmdWriteStart(HAL_Flash_T * p_hal_flash){HAL_Flash_WriteCmdStart(p_hal_flash);}
+//static inline bool HAL_Flash_ReadCompleteWriteFlag(HAL_Flash_T * p_hal_flash){return HAL_Flash_ReadCompleteFlags(p_hal_flash);}
+//static inline void HAL_Flash_PrepCmdWrite(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest, const uint8_t * p_data){}
+//
+//static inline void HAL_Flash_WriteCmdEraseDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){HAL_Flash_WriteCmdDest(p_hal_flash, p_dest);}
+//static inline void HAL_Flash_WriteCmdEraseStart(HAL_Flash_T * p_hal_flash){HAL_Flash_WriteCmdStart(p_hal_flash);}
+//static inline bool HAL_Flash_ReadCompleteEraseFlag(HAL_Flash_T * p_hal_flash){return HAL_Flash_ReadCompleteFlags(p_hal_flash);}
+//static inline void HAL_Flash_PrepCmdErase(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){}
+//
+//static inline void HAL_Flash_WriteCmdVerifyWriteDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){HAL_Flash_WriteCmdDest(p_hal_flash, p_dest);}
+//static inline void HAL_Flash_WriteCmdVerifyWriteStart(HAL_Flash_T * p_hal_flash){HAL_Flash_WriteCmdStart(p_hal_flash);}
+//static inline bool HAL_Flash_ReadCompleteVerifyWriteFlag(HAL_Flash_T * p_hal_flash){return HAL_Flash_ReadCompleteFlags(p_hal_flash);}
+//static inline void HAL_Flash_PrepCmdVerifyWrite(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){}
+//
+//static inline void HAL_Flash_WriteCmdVerifyEraseDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){HAL_Flash_WriteCmdDest(p_hal_flash, p_dest);}
+//static inline void HAL_Flash_WriteCmdVerifyEraseStart(HAL_Flash_T * p_hal_flash){HAL_Flash_WriteCmdStart(p_hal_flash);}
+//static inline bool HAL_Flash_ReadCompleteVerifyEraseFlag(HAL_Flash_T * p_hal_flash){return HAL_Flash_ReadCompleteFlags(p_hal_flash);}
+//static inline void HAL_Flash_PrepCmdVerifyErase(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){}
+
+/*
+ * Calling module ensures alignment
+ * 0x03C0 => 0
+ * 0x03C8 => 1
+ */
+//static inline void HAL_Flash_WriteCmdWriteOnceDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest)
+//{
+//	uint8_t recordIndex = p_dest - (uint8_t *)HAL_FLASH_ONCE_START;
+//
+//	FTFx_FCCOB1 = recordIndex;
+//}
+//static inline void HAL_Flash_WriteCmdWriteOnceData(HAL_Flash_T *p_hal_flash, const uint8_t * p_data){HAL_Flash_WriteCmdWriteData(p_hal_flash, p_data);}
+//static inline void HAL_Flash_WriteCmdWriteOnceStart(HAL_Flash_T * p_hal_flash){HAL_Flash_WriteCmdStart(p_hal_flash);}
+//static inline bool HAL_Flash_ReadCompleteWriteOnceFlag(HAL_Flash_T * p_hal_flash){return HAL_Flash_ReadCompleteFlags(p_hal_flash);}
+//static inline void HAL_Flash_PrepCmdWriteOnce(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest, const uint8_t * p_data){}
+//
+//static inline void HAL_Flash_WriteCmdReadOnceDest(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest)
+//{
+//	HAL_Flash_WriteCmdWriteOnceDest(p_hal_flash, p_dest);
+//}
+//static inline void HAL_Flash_WriteCmdReadOnceStart(HAL_Flash_T * p_hal_flash){HAL_Flash_WriteCmdStart(p_hal_flash);}
+//static inline bool HAL_Flash_ReadCompleteReadOnceFlag(HAL_Flash_T * p_hal_flash){return HAL_Flash_ReadCompleteFlags(p_hal_flash);}
+//static inline void HAL_Flash_ReadOnceData(HAL_Flash_T *p_hal_flash, uint8_t * p_result)
+//{
+//	for (uint8_t i = 0U; i < FTFx_PHRASE_SIZE; i++)
+//	{
+//        p_result[i] = ((uint8_t *)FTFx_BASE)[i + 0x08U];
+//    }
+//}
+//static inline void HAL_Flash_PrepCmdReadOnce(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest){}
 
 #endif /* HAL_FLASH_H */
+
+

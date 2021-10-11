@@ -91,7 +91,8 @@ void MotorController_Init(MotorController_T * p_controller, const MotorControlle
 
 	Blinky_Init(&p_controller->BlinkyAlarm, &p_consts->HAL_PIN_ALARM);
 
-	//	MotorFlash_Init(&p_controller->MotorFlash, &p_consts->MOTOR_FLASH_CONSTS);
+//	Flash_Init(&p_controller->Flash);
+//	EEPROM_Init(&p_controller->Eeprom);
 }
 
 

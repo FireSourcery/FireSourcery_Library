@@ -227,7 +227,7 @@ Motor_AdcMap_T;
 
 	load from flash
  */
-typedef  __attribute__ ((aligned (4U))) struct
+typedef struct __attribute__ ((aligned (4U)))
 {
     uint8_t PolePairs;
 	uint32_t EncoderCountsPerRevolution;
