@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/**************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,30 +19,39 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
 /*!
-    @file
+    @file 	Config.h
     @author FireSoucery
     @brief
     @version V0
 */
-/*******************************************************************************/
-#ifndef HAL_EEPROM_H
-#define HAL_EEPROM_H
+/**************************************************************************/
+#ifndef CONFIG_FLASH_H
+#define CONFIG_FLASH_H
 
-#include "Path/Path.h"
+#ifdef CONFIG_FLASH_HW_OP_ADDRESS_RELATIVE
 
-#if 	defined(CONFIG_HAL_EEPROM_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
-	#include PATH_USER(HAL_EEPROM.h)
-#elif 	defined(CONFIG_HAL_EEPROM_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include PATH_PLATFORM(Peripheral/HAL, HAL_EEPROM.h)
+#elif defined(CONFIG_FLASH_HW_OP_ADDRESS_ABSOLUTE)
+
 #else
-
-//#include <stdint.h>
-//#include <stdbool.h>
-
-typedef void HAL_EEPROM_T;
+	#define CONFIG_FLASH_HW_OP_ADDRESS_ABSOLUTE
 #endif
 
-#endif /* HAL_EEPROM_H */
+#ifdef CONFIG_FLASH_PARTITION_COUNT
+
+#else
+	#define CONFIG_FLASH_PARTITION_COUNT 1U
+#endif
+
+#ifdef CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
+
+#elif defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
+
+#else
+	#define CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
+#endif
+
+
+#endif

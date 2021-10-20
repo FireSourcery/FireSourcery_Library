@@ -284,7 +284,6 @@ static inline void Phase_Bipolar_ActivateCA(const Phase_T * p_phase){Phase_Actua
 static inline void Phase_Bipolar_ActivateCB(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, false, true, false); Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
 static inline void Phase_Bipolar_ActivateAB(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, false, true, false); Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U);}
 
-
 static inline void Phase_Polar_ActivateAC(const Phase_T * p_phase)
 {
 	//	if (waveform->SinusoidalModulation)

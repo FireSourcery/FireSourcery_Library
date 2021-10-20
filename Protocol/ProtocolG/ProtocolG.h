@@ -1,6 +1,8 @@
 #ifndef PROTOCOL_G_H
 #define PROTOCOL_G_H
 
+#include "Datagram.h"
+
 #include "Peripheral/Serial/Serial.h"
 #include "Peripheral/Flash/Flash.h"
 
@@ -12,6 +14,8 @@
 /*
 	ProtocolG_Req_T
  */
+typedef uint32_t protocolg_reqid_t;
+
 typedef enum
 {
 //	PROTOCOLG_REQ_READ,
@@ -20,96 +24,123 @@ typedef enum
 //	PROTOCOLG_REQ_EXECUTE,
 //	PROTOCOLG_REQ_FULL,
 	PROTOCOLG_REQ_FAST_READ_WRITE,
-	PROTOCOLG_REQ_EXT,
-	PROTOCOLG_REQ_FLASH,
+	PROTOCOLG_REQ_EXT, 		//passes user defined P_PROCESS_CONTEXT
+	PROTOCOLG_REQ_FLASH, 	//passes special control context
+	PROTOCOLG_REQ_DATAGRAM,	//passes special control context
+//	PROTOCOLG_REQ_DATAGRAM_CONTROL,	//when datagram uses non unique acks, need seperate state
 }
 ProtocolG_ReqType_T;
 
-typedef uint32_t (*ProtocolG_ReqFastReadWrite_T)	(uint8_t * p_txPacket, uint8_t * p_txSize, const uint8_t * p_rxPacket, volatile void * p_writeRegs, const volatile void * p_readRegs);
+typedef uint32_t (*ProtocolG_ReqFastReadWrite_T)	(volatile void * p_appInterface, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
 
 /*
-	ProtocolG_ReqExt_T
+ *
  */
-typedef struct
+
+typedef enum
 {
-	uint8_t Options[1]; //buffer;
-//	volatile ProtocolG_ReqEntry_T * p_ReqActive;
+	PROTOCOLG_REQ_RETURN_WAIT,
+	PROTOCOLG_REQ_RETURN_COMPLETE, //exit nonblocking wait state upon reception
+	PROTOCOLG_REQ_RETURN_REPEAT,
+	PROTOCOLG_REQ_RETURN_REPEAT_AFTER_ACK,
+
+	PROTOCOLG_REQ_RETURN_REPEAT_PROCESS,
+	PROTOCOLG_REQ_RETURN_REPEAT_PROCESS_ACK,
+	PROTOCOLG_REQ_RETURN_REPEAT_RX_PROCESS_ACK,
 }
-ProtocolG_ControlContext_T;
+ProtocolG_ReqReturn_T;
 
-typedef void (*ProtocolG_ReqParseRx_T)		(const uint8_t * p_rxPacket, volatile void * p_writeRegs, ProtocolG_ControlContext_T * p_processContext);
-typedef void (*ProtocolG_ReqBuildTx_T)		(uint8_t * p_txPacket, uint8_t * p_txSize,  const volatile void * p_readRegs, ProtocolG_ControlContext_T * p_processContext);
-//typedef uint32_t (*ProtocolG_ReqOnComplete_T)	(void * p_writeRegs, ProtocolG_ControlContext_T * p_processContext);
-typedef uint32_t protocolg_returncode_t;
-typedef protocolg_returncode_t (*ProtocolG_ReqProcess_T) (ProtocolG_ControlContext_T * p_processContext);
+//typedef uint32_t protocolg_retcode_t;
 
-//default version in protocol specs, post req id specs, default and per req
-typedef const struct Protocol_ReqExt_Tag
+typedef void 					(*ProtocolG_ReqParseRx_T)	(volatile void * p_processContext, volatile void * p_appInterface, const volatile uint8_t * p_rxPacket, size_t rxSize);
+typedef void 					(*ProtocolG_ReqBuildTx_T)	(volatile void * p_processContext, volatile void * p_appInterface, volatile uint8_t * p_txPacket, volatile size_t * p_txSize);
+typedef ProtocolG_ReqReturn_T 	(*ProtocolG_ReqProcess_T) 	(volatile void * p_processContext, volatile void * p_appInterface);
+
+/*
+	for wait process state, and template/format behavior
+	process context support, flash, datagram, user provide
+ */
+typedef const struct
 {
-	const uint8_t * const P_TX_ACK_PACKET_STRING;
-	const uint8_t TX_ACK_PACKET_LENGTH;
-
 	const ProtocolG_ReqParseRx_T PARSE_RX;
+	const ProtocolG_ReqBuildTx_T BUILD_TX_ACK_REQ;	//dynamic ack using parsed info
 
-	const ProtocolG_ReqProcess_T PROCESS;
-	volatile void * P_PROCESS_CONTEXT;
-	const protocolg_returncode_t WAIT_PROCESS_CODE; //exit nonblocking wait state upon reception
-	const uint8_t WAIT_PROCESS_TIME_OUT;
-	const uint8_t * const P_TX_NACK_PROCESS_STRING;
-	const uint8_t TX_NACK_PROCESS_LENGTH;
+	const ProtocolG_ReqProcess_T WAIT_PROCESS;
+//	const protocolg_retcode_t WAIT_PROCESS_COMPLETE; //exit nonblocking wait state upon reception
+	const uint8_t WAIT_PROCESS_TIME;
 
-	const ProtocolG_ReqBuildTx_T BUILD_TX;
+	const ProtocolG_ReqBuildTx_T BUILD_TX_PROCESS;
 
-//remove
-//	const uint8_t * const P_WAIT_RX_ACK_STRING;
-//	const uint8_t WAIT_RX_ACK_LENGTH;
-//	const uint8_t WAIT_RX_ACK_TIME_OUT;
-//	const uint8_t * const P_TX_NACK_WAIT_STRING;  //when wait for ack times out
-//	const uint8_t TX_NACK_WAIT_LENGTH;
+	// dynamic ack nack response using parsed info
+	//	const ProtocolG_ReqProcess_T ON_RX_ACK_PROCESS;
+	//	const ProtocolG_ReqProcess_T ON_RX_NACK_PROCESS;
+	//
+	//	const ProtocolG_ReqBuildTx_T ON_RX_ACK_BUILD_TX;
+	//	const ProtocolG_ReqBuildTx_T ON_RX_NACK_BUILD_TX;
+	//
+	//	const ProtocolG_ReqBuildTx_T RX_ACK_ERROR_BUILD_TX;
+	//	const ProtocolG_ReqBuildTx_T RX_ACK_TIME_OUT_BUILD_TX;
 
-	//	uint8_t REPEAT;
-} ProtocolG_ReqExt_T;
-
-typedef uint32_t protocolg_reqid_t;
+} ProtocolG_ReqExtProcess_T;
 
 typedef const struct
 {
-	const protocolg_reqid_t ID;
-	const ProtocolG_ReqType_T TYPE;
+	//pre process
+	const uint8_t * const P_TX_ACK_REQ_STRING; //static pre parse ack
+	const uint8_t TX_ACK_REQ_LENGTH;
+
+	//post process
+	//	bool (*const WAIT_RX_ACK) (const void * p_rxPacket, uint8_t rxCount);  //fp faster over string compare?
+	const uint8_t WAIT_RX_ACK_TIME;
+	const uint8_t * const P_WAIT_RX_ACK_STRING;		const uint8_t WAIT_RX_ACK_LENGTH;
+	const uint8_t * const P_WAIT_RX_NACK_STRING;	const uint8_t WAIT_RX_NACK_LENGTH;
+
+//	const uint8_t * const P_TX_WAIT_RX_ACK_TIME_OUT_STRING;  //when wait for ack times out
+//	const uint8_t P_TX_WAIT_RX_ACK_TIME_OUT_LENGTH;
+
+	const uint8_t RX_NACK_REPEAT; //stay in wait for ack state
+}
+ProtocolG_ReqExtSync_T;
+
+typedef const struct
+{
+	const protocolg_reqid_t 			ID;
+	const ProtocolG_ReqType_T 			TYPE; /* module cmd code, corresponds to context passed to functions */
 	const ProtocolG_ReqFastReadWrite_T 	FAST;
-	const ProtocolG_ReqExt_T * const 	P_EXT;
-//	const Protocol_ReqFlash_T * const P_FLASH_OP;
+	volatile void * P_EXT_CONTEXT;
+	const ProtocolG_ReqExtProcess_T * const P_EXT_PROCESS;
+	const ProtocolG_ReqExtSync_T 	* const P_EXT_SYNC;
 }
 ProtocolG_ReqEntry_T;
 
 #define PROTOCOL_G_REQ_ENTRY(ReqId, ReqType, ReqFast, p_ReqExt) { (.ID = ReqId), (.TYPE = ReqType), (.FAST_READ_WRITE = ReqFast), (.P_EXT = p_ReqExt) }
+
 
 /*
  * Packet Format Specs
  */
 typedef const struct
 {
-	//pre Id Settings
-	const uint32_t RX_TIME_OUT;		//reset if packet is not complete
+	/* required to identify rx cmd */
+	const uint32_t RX_TIME_OUT;			//reset if packet is not complete
 //	const uint32_t TIME_OUT_BYTE;		//reset if byte is not received
+	const uint8_t RX_LENGTH_MIN;
 	const uint8_t RX_LENGTH_MAX;
+	bool (*const CHECK_RX_COMPLETE)	(const volatile void * p_rxPacket, uint8_t rxCount);
+	bool (*const CHECK_RX_CORRECT)	(const volatile void * p_rxPacket);
+	protocolg_reqid_t (*const PARSE_RX_REQ_ID) (const volatile void * p_rxPacket);
 
-	bool (*const CHECK_RX_COMPLETE)		(const void * p_rxPacket, uint8_t rxCount);
-	bool (*const CHECK_RX_CORRECT)		(const void * p_rxPacket);
-	protocolg_reqid_t (*const PARSE_RX_REQ_ID)	(const void * p_rxPacket);
-//	bool (*const CHECK_RX_PROCESS_CANCEL)	(volatile const uint8_t * p_rxPacket);
+//	bool (*const CHECK_RX_COMPLETE)	(const volatile void * p_rxPacket, uint8_t rxCount, void* p_appInterface);
 
 	const ProtocolG_ReqEntry_T * const P_REQ_TABLE;
 	const uint8_t REQ_TABLE_LENGTH;
 
 	//optional
-//	const uint8_t * const P_TX_ACK_PACKET;		const uint8_t TX_ACK_PACKET_LENGTH; //preparse ack?
-	const uint8_t * const P_TX_NACK_TIMEOUT;	const uint8_t TX_NACK_TIMEOUT_LENGTH;
-	const uint8_t * const P_TX_NACK_DATA;		const uint8_t TX_NACK_DATA_LENGTH;
-	const uint8_t * const P_TX_NACK_CMD;		const uint8_t TX_NACK_CMD_LENGTH;
+	const uint8_t * const P_TX_NACK_TIME;	const uint8_t TX_NACK_TIME_LENGTH;
+	const uint8_t * const P_TX_NACK_DATA;	const uint8_t TX_NACK_DATA_LENGTH;
+	const uint8_t * const P_TX_NACK_REQ;	const uint8_t TX_NACK_REQ_LENGTH;
 
-	//todo remove
-	ProtocolG_ReqExt_T REQ_EXT_DEFAULT; //default request format
+//	bool (*const CHECK_ACK)	(const void * p_txPacket, uint8_t * p_txCount, protocolg_reqid_t activeReq);
 
 	const union
 	{
@@ -142,6 +173,7 @@ typedef enum
 	PROTOCOL_STATE_WAIT_RX_PACKET,
 	PROTOCOL_STATE_WAIT_PROCESS,
 	PROTOCOL_STATE_WAIT_ACK,
+	PROTOCOL_STATE_DATAGRAM_CONTROL,
 	PROTOCOL_STATE_INACTIVE,
 }
 ProtocolG_State_T;
@@ -155,34 +187,42 @@ typedef enum
 }
 ProtocolG_DataLinkType_T;
 
-
-
+/*
+	ProtocolG_ReqExt_T
+ */
+typedef struct
+{
+	//	uint8_t Options[1]; //buffer;
+	//	uint32_t StatusCode;
+	//	uint32_t EnableDatagramMode;
+	//	volatile ProtocolG_ReqEntry_T * p_ReqActive;
+	//	size_t TxLength;
+	//	repeat
+	//	wait for ack
+}
+ProtocolG_Control_T; // control interface registers
 
 typedef const struct
 {
-	//user map to packet parser
-	uint8_t * const P_RX_PACKET_BUFFER;
-	uint8_t * const P_TX_PACKET_BUFFER;
-	const uint8_t PACKET_BUFFER_LENGTH; //  must be greater than PACKET_LENGTH_MAX
-	//user map to app data interface
-	volatile void * const P_WRITE_REGS;
-	const volatile void * const P_READ_REGS;
+	const volatile uint32_t * const P_TIMER;
+	const uint8_t PACKET_BUFFER_LENGTH; // must be greater than RX_LENGTH_MAX
+
+	volatile uint8_t * const P_RX_PACKET_BUFFER;
+	volatile uint8_t * const P_TX_PACKET_BUFFER;
+	// user map to app data interface
+//	volatile void * const P_WRITE_REGS;
+//	const volatile void * const P_READ_REGS;
+	volatile void * const P_INTERFACE;
+
 	Flash_T * const P_FLASH;
-
-	const volatile uint32_t * P_TIMER;
-
-//	volatile const void * volatile * const pp_DatagramVarAddressTable;
-//	volatile uint8_t * p_DatagramVarSizeTable;
-//	[DATAGRAM_VARS_MAX]
+	Datagram_T * const P_DATAGRAM;
 
 	// Can be set after init. 0 to set later
-	ProtocolG_Specs_T * P_INIT_SPECS;
-	void * P_INIT_DATA_LINK;
-	ProtocolG_DataLinkType_T INIT_DATA_LINK_TYPE;
+	const ProtocolG_Specs_T * const P_INIT_SPECS;
+	void * const P_INIT_DATA_LINK;
+	const ProtocolG_DataLinkType_T INIT_DATA_LINK_TYPE;
 }
 ProtocolG_Config_T;
-
-
 
 typedef struct ProtocolG_Tag
 {
@@ -192,24 +232,27 @@ typedef struct ProtocolG_Tag
 	//run time config
 	const ProtocolG_Specs_T * p_Specs;
 
-	union
-	{
-		void * p_DataLink;
-		Serial_T * p_Serial;
-	};
-	ProtocolG_DataLinkType_T DataLinkType;
+		union
+		{
+			void * p_DataLink;
+			Serial_T * p_Serial;
+		};
+		ProtocolG_DataLinkType_T DataLinkType;
 
-//	volatile const void * volatile p_DatagramVarAddressTable[DATAGRAM_VARS_MAX];
-//	volatile uint8_t DatagramVarSizeTable[DATAGRAM_VARS_MAX];
+	Datagram_T Datagram;
+//	ProtocolG_Control_T Control;
 
 	//proc variables
 	volatile ProtocolG_State_T State;
 	volatile uint32_t TimeStart;
-	volatile uint8_t RxIndex;
-	volatile uint8_t TxLength;
-	volatile ProtocolG_ReqEntry_T * p_ReqActive;
+	volatile size_t RxIndex;
+	volatile size_t TxLength;
+	volatile uint8_t NackCount;
 
-	volatile ProtocolG_ControlContext_T Control;
+	volatile bool RepeatFlag; /* for repeat after ack */
+
+	//todo concurrent req wait process, non unique acks procs first in buffer
+	volatile ProtocolG_ReqEntry_T * p_ReqActive;
 }
 ProtocolG_T;
 
@@ -219,65 +262,3 @@ extern void ProtocolG_SetDataLink(ProtocolG_T * p_protocol, void * p_dataLink, P
 extern ProtocolG_Status_T ProtocolG_Slave_Proc(ProtocolG_T * p_protocol);
 
 #endif
-
-
-//section pass to user function
-//typedef const struct
-//{
-//	volatile uint8_t * const P_RX_PACKET_BUFFER;
-//	volatile uint8_t * const P_TX_PACKET_BUFFER;
-//	const uint8_t PACKET_BUFFER_LENGTH;
-//	volatile void * const P_WRITE_REGS;
-//	volatile const void * const P_READ_REGS;
-//	Flash_T * const P_FLASH;
-//}
-//ProtocolG_UserContext_T;
-
-//typedef uint32_t (*ProtocolG_ReqOpContext_T) (ProtocolG_UserContext_T * p_context, ProtocolG_ControlContext_T * p_buffer);
-
-//typedef const struct Protocol_ReqExt_Tag
-//{
-
-//	const ProtocolG_ReqOpContext_T 	PRE_PROCESS;
-//
-//	const ProtocolG_ReqOpContext_T 	PROCESS;
-
-//	volatile void * P_PROCESS_CONTEXT;
-//const protocolg_returncode_t WAIT_PROCESS_CODE; //nonblocking wait state
-//const uint8_t WAIT_PROCESS_TIME_OUT;
-//const uint8_t * const P_TX_NACK_PROCESS_STRING;
-//const uint8_t TX_NACK_PROCESS_LENGTH;
-//
-//const uint8_t * const P_WAIT_RX_ACK_STRING;
-//const uint8_t WAIT_RX_ACK_LENGTH;
-//const uint8_t WAIT_RX_ACK_TIME_OUT;
-//const uint8_t * const P_TX_NACK_WAIT_ST
-
-//	const ProtocolG_ReqOpContext_T 	POST_PROCESS;
-
-//} ProtocolG_ReqExtOpContext_T;
-
-
-
-
-//typedef struct
-//{
-//		uint8_t VarWritten;
-//} Protocol_FlashContext_T;
-
-//typedef Flash_T Protocol_FlashContext_T;
-//
-//typedef uint32_t (*ProtocolG_ReqFlashParseRx_T)						(volatile const uint8_t * p_rxPacket, volatile void * p_writeRegs, Protocol_FlashContext_T * p_flashContext);
-//typedef protocolg_returncode_t (*ProtocolG_ReqFlashProcess_T)		(Protocol_FlashContext_T * p_processContext);
-//typedef uint32_t (*ProtocolG_ReqFlashBuildTx_T)						(uint8_t * p_txPacket, uint8_t * p_txSize, volatile const void * p_readRegs, Protocol_FlashContext_T * p_flashContext);
-
-//typedef const struct Protocol_ReqFlash_Tag
-//{
-//	bool REPEAT;
-//	bool WAIT_FOR_PROCESS;
-//	uint8_t * P_WAIT_FOR_ACK_STRING;
-//	const ProtocolG_ReqFlashParseRx_T 	PARSE_RX;
-//	const ProtocolG_ReqFlashBuildTx_T 	BUILD_TX;
-//	const ProtocolG_ReqOnComplete_T 	ON_COMPLETE;
-//	bool Start;
-//} Protocol_ReqFlash_T;

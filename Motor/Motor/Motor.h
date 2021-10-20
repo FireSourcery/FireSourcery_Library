@@ -326,6 +326,8 @@ typedef struct
 {
  	const Motor_Constants_T * p_Constants;		//compile time const, unique per moter
 
+// 	const Motor_Config_T CONFIG;		//compile time const, unique per moter
+
  	//#ifdef ram copy
  	Motor_Parameters_T Parameters;				//Programmable parameters, runtime variable load from eeprom
 
@@ -338,10 +340,13 @@ typedef struct
 	BEMF_T Bemf;
 
 	/*
-	 * SW config
+	 * State Machine
 	 */
 	StateMachine_T StateMachine;
 
+	/*
+	 * SW config
+	 */
 	//not const due to adc calibration
 	Linear_T UnitVBus;
 	Linear_T UnitVabc; //Bemf V and mV conversion

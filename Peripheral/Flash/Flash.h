@@ -33,7 +33,11 @@
 
 #include "HAL_Flash.h"
 
-#include "System/Queue/Queue.h"
+//#include "System/Queue/Queue.h"
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 #define FLASH_UNIT_SIZE_ERASE	HAL_FLASH_UNIT_SIZE_ERASE
 #define FLASH_UNIT_SIZE_WRITE	HAL_FLASH_UNIT_SIZE_WRITE
@@ -43,21 +47,19 @@
 
 typedef const struct
 {
-	uint8_t * P_ADDRESS;
-	uint32_t SIZE;
+	uint8_t * P_START;
+	size_t SIZE;
+
+#if CONFIG_FLASH_HAL_USE_ADDRESS_RELATIVE
+	uint32_t HW_OP_OFFSET;
+#endif
 //	uint8_t Alignment;
-	//#define FLASH_START				HAL_FLASH_START	/* */
-	//#define FLASH_SIZE				HAL_FLASH_SIZE	/* */
 }
 Flash_Partition_T;
 
 typedef const struct
 {
 	HAL_Flash_T * P_HAL_FLASH;	//flash controller registers
-
-
-	Queue_Config_T QUEUE; //
-
 	Flash_Partition_T PARTITIONS[1U]; //CONFIG_FLASH_PARTITION_COUNT
 }
 Flash_Config_T;
@@ -65,9 +67,14 @@ Flash_Config_T;
 typedef enum
 {
 	FLASH_STATUS_SUCCESS,
+	FLASH_STATUS_PROCESSING,
+	FLASH_STATUS_START_VERIFY,
 	FLASH_STATUS_ERROR,
-	FLASH_STATUS_ERROR_CMD,
-	FLASH_STATUS_ERROR_VERIFY,
+	FLASH_STATUS_ERROR_BUSY,
+	FLASH_STATUS_ERROR_INPUT,		/* op param input */
+	FLASH_STATUS_ERROR_CMD,			/* flash controller error */
+	FLASH_STATUS_ERROR_VERIFY,		/* Verify cmd*/
+	FLASH_STATUS_ERROR_CHECKSUM,	/*  */
 }
 Flash_Status_T;
 
@@ -82,11 +89,10 @@ typedef enum
 }
 Flash_Operation_T;
 
-
-
 typedef enum
 {
 	FLASH_STATE_IDLE,
+	FLASH_STATE_ACTIVE,
 	FLASH_STATE_WRITE,
 	FLASH_STATE_VERIFY,
 }
@@ -96,36 +102,38 @@ Flash_State_T;
 typedef struct
 {
 	Flash_Config_T CONFIG;
+//	Queue_T Queue; //data queue for nonblocking operation
+	//job quee
 
-	//for virtual write,
+	//for virtual buffer, non blocking op
 	//static allocate size, only be 1 instance of flash is expected
 	uint8_t Buffer[512U]; //CONFIG_FLASH_BUFFER_SIZE
 
 	bool IsVerifyEnable;
 	bool IsForceAlignEnable;
+	bool IsOpBuffered; //copy to buffer first or use pointer
 
-	uint32_t CheckSum; //compare if checksum is set
-
-	Queue_T Queue; //data queue for nonblocking operation
-
-	//job quee
 	volatile Flash_Status_T Status;
 	volatile Flash_State_T State;
+	volatile Flash_Operation_T OpType;
+	const uint8_t * volatile p_OpFlash; //op dest
+	const uint8_t * volatile p_OpData;
+	volatile size_t OpSize; 	//total bytes at start
+	volatile size_t OpIndex; 	//in page/phrase
 
-	const uint8_t * volatile p_Write;
-	volatile size_t WriteIndex; 		//in page/phrase
-	volatile size_t WriteSize; 	//total bytes at start
+	volatile uint8_t BytesPerCmd; //only for erase
+	volatile uint8_t UnitsPerCmd;
 
+//	volatile uint32_t Checksum; //compare if checksum is set
 
-	//Blocking
-    void (* Yield)(void *);    		/*!<  On Block*/
-//    void (* Callback)(void *);    	/*!<  Union*/
-
-    void (* OnComplete)(void *);    /*!< OnComplete */
     void * p_CallbackData;
+    void (* OnComplete)(void * p_callbackData);    /*!< OnComplete */
+    void (* Yield)(void * p_callbackData);    		/*!<  On Block*/
+//    void (* Callback)(void *);    	/*!<  Union*/
 } Flash_T;
 
-
+//extern Flash_Status_T Flash_StartVerifyWrite(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
+//extern Flash_Status_T Flash_StartVerifyErase(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
 
 #endif /* FLASH_H */
 

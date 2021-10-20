@@ -35,96 +35,82 @@
 
 #ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
 	#include "System/Critical/Critical.h"
-//#elif defined(ONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
-//	extern inline void Critical_MutexAquire(critical_mutex_t);
-//	extern inline void Critical_MutexRelease(critical_mutex_t);
+#elif defined(ONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
+	extern inline void Critical_AquireMutex(critical_mutex_t);
+	extern inline void Critical_ReleaseMutex(critical_mutex_t);
 #endif
 
 #include <stdint.h>
 #include <stdbool.h>
 
-//#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL
-//	#define STATE_MACHINE_TRANSITION_INPUT_COUNT (p_stateMachine->TransitionInputCount)
-//	#define STATE_MACHINE_TOTAL_INPUT_COUNT (p_stateMachine->TotalInputCount)
-//#elif defined(CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_ARRAY)
-//	#define STATE_MACHINE_TOTAL_INPUT_COUNT (STATE_MACHINE_TRANSITION_INPUT_COUNT + STATE_MACHINE_SELF_TRANSITION_INPUT_COUNT)
-//#endif
+//typedef uint8_t statemachine_transition_t;
+//typedef uint8_t statemachine_selftransition_t;
 
-//typedef uint8_t statemachine_input_transition_t;
-//typedef uint8_t statemachine_input_selftransition_t;
-
-//typedef void (* StateMachine_TransitionFunction_T)(volatile void * p_typeData);
-typedef void (* StateMachine_StateFunction_T)(volatile void * p_typeData);
-//typedef void (* StateMachine_Function_T)(volatile void * p_typeData);
+//typedef void (* StateMachine_TransitionFunction_T)(volatile void * p_context);
+//typedef void (* StateMachine_Function_T)(volatile void * p_context);
+typedef void (* StateMachine_StateFunction_T)(volatile void * p_context);
 
 struct State_Tag;
 
+typedef const struct StateTransition_Tag
+{
+	const struct State_Tag * const  P_STATE;			/* next state */
+	const StateMachine_StateFunction_T ON_TRANSITION; 	/* Process on transition */
+}
+StateMachine_Transition_T;
+
 /*
- * Array Implementation - 2D input table
+ *	Array Implementation - 2D input table
  *  Map allocates for all possible transitions/inputs for each state, valid and invalid
  *  only space efficient when inputs are common across many states.
  *  can assign fault transition to invalid inputs
  *  States belonging to the same state machine must have same size maps
- *
- * List Implementation
- *	using list and check condition will have no wasted space
- *	must check all entries and end of list. user provide function to validate transition
- *
- * User define const states. No init function.
+ *  User define const states at compile time.
  */
-typedef const struct State_Tag
+typedef const struct StateMachine_State_Tag
 {
-	//#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_STATIC //module memory allocation, all state machine must be same size
-	//	const struct State_Tag * const p_TransitionStateMap[STATE_MACHINE_SELF_TRANSITION_INPUT_COUNT];
-	//	void (* const p_TransitionFunctionMap[STATE_MACHINE_TRANSITION_INPUT_COUNT ])(void * userData);
-	//#elif defined(CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL)
-
 	/*
-	 * Parallel array
-	 * 	Allows 1 share input var, can return state input
-	 * 		 * Inputs with functions without state transition, bypass self transitions.
+	 * Transition Input Map
+	 * Inputs with without state transition, self transitions.
 	 * Inputs with associated p_FunctionMap and pp_TransitionStateMap are transition function
 	 */
+	StateMachine_Transition_T * P_TRANSITION_TABLE;
 
 	/*
-	 * Input to Transition Map
+	 * Nontransition (Output only) Input Map - Mealy machine style outputs.
+	 * Separate table for inputs without transitions, self transitions bypass check , less memory use, user must operate 2 input variables.
 	 */
-//	struct StateTransition
-//	{
-	const struct State_Tag (*const (*const PP_INPUT_TRANSITION_STATE_MAP));
-	void (*(*const P_INPUT_TRANSITION_FUNCTION_MAP))(volatile void * p_typeData);
+	StateMachine_StateFunction_T * P_OUTPUT_TABLE;
+	StateMachine_StateFunction_T OUTPUT_COMMON;		/* Synchronous output / Common output to all inputs for asynchronous case */
+	StateMachine_StateFunction_T ON_ENTRY;			/* common to all transition to current state, including self transition */
+}
+StateMachine_State_T;
 
-	//inputID, state, transition function
-//	};
+//typedef struct StateMachine_Tag
+//{
+//	const StateMachine_State_T * const P_STATE_INITIAL;
+//	/* Shared table length for all states */
+//	const uint8_t TRANSITION_TABLE_LENGTH;		/* Total state count */
+//	const uint8_t OUTPUT_TABLE_LENGTH;
+//}
+//StateMachine_Machine_T;
 
-	/*
-	 * Separate table for inputs without transitions less memory use, user must operate 2 input variables.
-	 *
-	 * Input to Output Function Map - Mealy machine style outputs.
-	 * Theoretical State Machine -> all out outputs without state change transition to self, without common entry function
-	 * bypass self transitions,
-	 */
-	void (*(*const P_INPUT_OUTPUT_FUNCTION_MAP))(volatile void * p_typeData);
-	//inputID, ouput function
-
-	void (*const TRANSITION_ENTRY)(volatile void * p_typeData); 	//common to all transition to current state
-	void (*const OUTPUT)(volatile void * p_typeData); 				 //synchronous output, or common output to all inputs for asynchronous case
-//	void (* const Exit)(void);
-} State_T;
+//typedef const struct StateMachine_Config_Tag
+//{
+//
+//} StateMachine_Config_T;
 
 typedef struct StateMachine_Tag
 {
-	const State_T * p_StateInitial;
+//	const StateMachine_Machine_T * const P_MACHINE;
+	const StateMachine_State_T * const P_STATE_INITIAL;
+	/* Shared table length for all states */
+	const uint8_t TRANSITION_TABLE_LENGTH;		/* Total state count */
+	const uint8_t OUTPUT_TABLE_LENGTH;
 
-	//shared map length, allow for time effecient access, and error handling for invalid transitions
-	//per state map length
-//#ifdef CONFIG_STATE_MACHINE_MAPS_MEMORY_ALLOCATION_EXTERNAL
-	uint8_t InputTransitionMapLength;		//state count
-	uint8_t InputOutputMapLength;
-//#endif
-	volatile void * p_TypeData; //StateMachine Instance Type data
+	volatile void * const P_FUNCTIONS_CONTEXT;		/* Share functions data for all state */
 
-	const State_T * volatile p_StateActive; 	//uint8_t CurrentStateID?
+	const StateMachine_State_T * volatile p_StateActive; 	//uint8_t CurrentStateID
 
 	/* for Synchronous Machine */
 	volatile uint8_t InputTransition;
@@ -132,9 +118,26 @@ typedef struct StateMachine_Tag
 	volatile bool IsSetInputTransition;
 	volatile bool IsSetInputOutput;
 
-#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
+#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
+	const bool IS_MULTITHREADED;
 	volatile critical_mutex_t Mutex;
 #endif
-} StateMachine_T;
+}
+StateMachine_T;
+
+#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
+	#define STATE_MACHINE_CONFIG_MULTITHREADED(IsMultithreaded) .IS_MULTITHREADED = IsMultithreaded,
+#else
+	#define STATE_MACHINE_CONFIG_MULTITHREADED(IsMultithreaded)
+#endif
+
+#define STATE_MACHINE_CONFIG(p_StateInitial, TransitionTableLength, OutputTableLength, p_FunctionContext, IsMultithreaded)	\
+{																		\
+	.P_STATE_INITIAL			= p_StateInitial,						\
+	.TRANSITION_TABLE_LENGTH	= TransitionTableLength,				\
+	.OUTPUT_TABLE_LENGTH		= OutputTableLength,					\
+	.P_FUNCTIONS_CONTEXT		= p_FunctionContext,					\
+	STATE_MACHINE_CONFIG_MULTITHREADED(IsMultithreaded)					\
+}
 
 #endif

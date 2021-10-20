@@ -34,8 +34,6 @@
 #include "Config.h"
 //#include "Default.h"
 
-#include "MotorStateMachine.h" //circular modular dependency only for MotorStateMachine_Init
-
 #include "Transducer/Phase/Phase.h"
 #include "Transducer/Hall/Hall.h"
 #include "Transducer/BEMF/BEMF.h"
@@ -57,8 +55,6 @@ void Motor_Init(Motor_T * p_motor, const Motor_Constants_T * p_motorInit, const 
 {
 	Motor_InitConstants(p_motor, p_motorInit);
 	Motor_InitParameters(p_motor, p_parameters); //p_motorInit->P_PARAMETERS_DEFAULT
-
-	MotorStateMachine_Init(p_motor); // circular modular dependency
 	Motor_InitReboot(p_motor);
 }
 
@@ -91,15 +87,12 @@ void Motor_InitParameters(Motor_T * p_motor, const Motor_Parameters_T * p_parame
 //state machine init-state run
 void Motor_InitReboot(Motor_T * p_motor)
 {
+	StateMachine_Init(&p_motor->StateMachine);
+
 	/*
 	 * HW Wrappers Init
 	 */
-	Phase_Init
-	(
-		&p_motor->Phase,
-		&p_motor->p_Constants->HAL_PHASE,
-		p_motor->p_Constants->PHASE_PWM_PERIOD
-	);
+	Phase_Init(&p_motor->Phase, &p_motor->p_Constants->HAL_PHASE, p_motor->p_Constants->PHASE_PWM_PERIOD);
 
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
 	{

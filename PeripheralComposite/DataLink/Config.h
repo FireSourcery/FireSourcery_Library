@@ -24,30 +24,14 @@
 /*!
 	@file 	Config.h
 	@author FireSoucery
-	@brief 	State machine module preprocessor configuration options and defaults.
+	@brief
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_STATE_MACHINE_H
-#define CONFIG_STATE_MACHINE_H
+#ifndef CONFIG_DATA_LINK_H
+#define CONFIG_DATA_LINK_H
 
-
-
-#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
-
-#elif defined(CONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
-/*
- * User provide functions
- * void Critical_Enter(void);
- * void Critical_Exit(void);
- */
-#elif defined(CONFIG_STATE_MACHINE_MULTITHREADED_DISABLED)
-/*
- * Default configuration
- */
-#else
-	#define CONFIG_STATE_MULTITHREADED_DISABLED
-#endif
 
 
 #endif
+

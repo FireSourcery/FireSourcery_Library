@@ -31,8 +31,12 @@
 #ifndef MOTOR_STATE_MACHINE_H
 #define MOTOR_STATE_MACHINE_H
 
-#include "Motor.h"
+//#include "Motor.h"
 //#include "../Motor_FOC.h"
+#include "System/StateMachine/StateMachine.h"
+
+#define MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH 			(10)
+#define MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH 				(0U)
 
 typedef enum MotorStateMachine_InputTransition
 {
@@ -52,15 +56,20 @@ typedef enum MotorStateMachine_InputTransition
 
 typedef enum MotorStateMachine_InputOutput
 {
-	MOTOR_BUTTON_FORWARD,
+	MOTOR_OUTPUT_BUTTON_FORWARD,
 
-	MOTOR_STATE_BUTTON_NEXT,
+	MOTOR_OUTPUT_BUTTON_NEXT,
 	MOTOR_OUTPUT_BUTTON_PREV,
 
 //	MOTOR_STATUS_NO_OP = 0xFFu,
 //	STATE_INPUT_RESERVED_NO_OP = 0xFFu,
 } MotorStateMachine_InputOutput_T;
 
-extern void MotorStateMachine_Init(Motor_T * p_motor);
+//extern void MotorStateMachine_Init(Motor_T * p_motor);
+extern const StateMachine_State_T MOTOR_STATE_INIT;
+
+#define MOTOR_STATE_MACHINE_CONFIG(p_FunctionContext) \
+	STATE_MACHINE_CONFIG(&MOTOR_STATE_INIT, MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH, MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH, p_FunctionContext, false)
+
 
 #endif

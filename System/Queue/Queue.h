@@ -178,7 +178,6 @@ extern bool Queue_PopBack	(Queue_T * p_queue, void * p_dest);
 extern bool Queue_PeekFront	(Queue_T * p_queue, void * p_dest);
 extern bool Queue_PeekBack	(Queue_T * p_queue, void * p_dest);
 extern bool Queue_PeekIndex	(Queue_T * p_queue, void * p_dest, size_t index);
-
 extern void * Queue_PeekPtrFront(Queue_T * p_queue);
 extern void * Queue_PeekPtrIndex(Queue_T * p_queue, size_t index);
 extern void * Queue_DequeuePtr(Queue_T * p_queue);

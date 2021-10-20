@@ -31,97 +31,121 @@
 #include "StateMachine.h"
 
 #include <stdint.h>
+#include <stdbool.h>
+
+static inline bool AquireMutex(StateMachine_T * p_stateMachine)
+{
+#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
+	return (p_stateMachine->IS_MULTITHREADED == true) ? Critical_AquireMutex(&p_stateMachine->Mutex) : true;
+#else
+	return true;
+#endif
+}
+
+static inline void ReleaseMutex(StateMachine_T * p_stateMachine)
+{
+#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
+	if (p_stateMachine->IS_MULTITHREADED == true) { Critical_ReleaseMutex(&p_stateMachine->Mutex); };
+#endif
+}
+
+/*
+ * Transition Input
+ */
+static inline void ProcTransition(StateMachine_T * p_stateMachine, uint8_t input)
+{
+	if (p_stateMachine->p_StateActive->P_TRANSITION_TABLE != 0)
+	{
+		/* proc input function */
+		if (p_stateMachine->p_StateActive->P_TRANSITION_TABLE[input].ON_TRANSITION != 0)
+		{
+			p_stateMachine->p_StateActive->P_TRANSITION_TABLE[input].ON_TRANSITION(p_stateMachine->P_FUNCTIONS_CONTEXT);
+		}
+
+		/* check new state exists, map new state, else it's a self transition */
+		if (p_stateMachine->p_StateActive->P_TRANSITION_TABLE[input].P_STATE != 0)
+		{
+			p_stateMachine->p_StateActive = p_stateMachine->p_StateActive->P_TRANSITION_TABLE[input];
+		}
+
+		/* proc new state common entry function */
+		if (p_stateMachine->p_StateActive->ON_ENTRY != 0)
+		{
+			p_stateMachine->p_StateActive->ON_ENTRY(p_stateMachine->P_FUNCTIONS_CONTEXT);
+		}
+	}
+}
+
+/*
+ * Nontransition (output only) Input, bypass entry
+ */
+static inline void ProcOutputInput(StateMachine_T * p_stateMachine, uint8_t input)
+{
+	if (p_stateMachine->p_StateActive->P_OUTPUT_TABLE != 0)
+	{
+		if (p_stateMachine->p_StateActive->P_OUTPUT_TABLE[input] != 0)
+		{
+			p_stateMachine->p_StateActive->P_OUTPUT_TABLE[input](p_stateMachine->P_FUNCTIONS_CONTEXT);
+		}
+	}
+}
+
+static inline void ProcOutputCommon(StateMachine_T * p_stateMachine)
+{
+	if (p_stateMachine->p_StateActive->OUTPUT_COMMON != 0)
+	{
+		p_stateMachine->p_StateActive->OUTPUT_COMMON(p_stateMachine->P_FUNCTIONS_CONTEXT);
+	}
+}
+
+static inline void ProcAsynchronousTransition(StateMachine_T * p_stateMachine, uint8_t input)
+{
+	if (AquireMutex(p_stateMachine))
+	{
+		ProcTransition(p_stateMachine, input);
+		ReleaseMutex(p_stateMachine);
+	}
+}
 
 /*
  * States const strut should be compile time def
  */
-
-void StateMachine_Init
-(
-	StateMachine_T * p_stateMachine,
-	const State_T * p_stateInitial,
-	uint8_t transitionInputCount,
-	uint8_t selfTransitionInputCount,
-	const void * p_userData
-)
+void StateMachine_Init(StateMachine_T * p_stateMachine)
 {
-	p_stateMachine->p_StateInitial 				= p_stateInitial;
-	p_stateMachine->p_StateActive 				= p_stateInitial;
-	p_stateMachine->InputTransitionMapLength 	= transitionInputCount;
-	p_stateMachine->InputOutputMapLength 		= selfTransitionInputCount;
-	p_stateMachine->p_TypeData 					= p_userData;
-
 #ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
 	p_stateMachine->Mutex = 1U;
+	p_stateMachine->InputTransition = 0U;
+	p_stateMachine->InputOutput = 0U;
+	p_stateMachine->IsSetInputTransition = false;
+	p_stateMachine->IsSetInputOutput = false;
 #endif
 }
 
-static inline void ProcTransition(StateMachine_T * p_stateMachine, uint8_t transitionInput)
+void StateMachine_Reset(StateMachine_T * p_stateMachine)
 {
-	/* check new state exists*/
-	if (p_stateMachine->p_StateActive->PP_INPUT_TRANSITION_STATE_MAP != 0)
+	if (AquireMutex(p_stateMachine))
 	{
-		if (p_stateMachine->p_StateActive->PP_INPUT_TRANSITION_STATE_MAP[transitionInput] != 0)
+		p_stateMachine->p_StateActive = p_stateMachine->P_STATE_INITIAL;
+
+		if (p_stateMachine->p_StateActive->ON_ENTRY != 0)
 		{
-
-			/* proc input function */
-			if (p_stateMachine->p_StateActive->P_INPUT_TRANSITION_FUNCTION_MAP != 0)
-			{
-				if (p_stateMachine->p_StateActive->P_INPUT_TRANSITION_FUNCTION_MAP[transitionInput] != 0)
-				{
-					p_stateMachine->p_StateActive->P_INPUT_TRANSITION_FUNCTION_MAP[transitionInput](p_stateMachine->p_TypeData);
-				}
-			}
-
-			/* map new state */
-			p_stateMachine->p_StateActive = p_stateMachine->p_StateActive->PP_INPUT_TRANSITION_STATE_MAP[transitionInput];
-
-			/* proc new state common entry function */
-			if (p_stateMachine->p_StateActive->TRANSITION_ENTRY != 0)
-			{
-				p_stateMachine->p_StateActive->TRANSITION_ENTRY(p_stateMachine->p_TypeData);
-			}
-
+			p_stateMachine->p_StateActive->ON_ENTRY(p_stateMachine->P_FUNCTIONS_CONTEXT);
 		}
+		ReleaseMutex(p_stateMachine);
 	}
 }
 
 /*
- * Input Output, bypass entry
+ * Synchronous Machine Process -
+ * proc last set input, always single threaded proc
  */
-static inline void ProcInputOuput(StateMachine_T * p_stateMachine, uint8_t input)
-{
-	if (p_stateMachine->p_StateActive->P_INPUT_OUTPUT_FUNCTION_MAP != 0)
-	{
-		if (p_stateMachine->p_StateActive->P_INPUT_OUTPUT_FUNCTION_MAP[input] != 0)
-		{
-			p_stateMachine->p_StateActive->P_INPUT_OUTPUT_FUNCTION_MAP[input](p_stateMachine->p_TypeData);
-		}
-	}
-}
-
-static inline void ProcOutput(StateMachine_T * p_stateMachine)
-{
-	if (p_stateMachine->p_StateActive->OUTPUT != 0)
-	{
-		p_stateMachine->p_StateActive->OUTPUT(p_stateMachine->p_TypeData);
-	}
-}
-
-
-/*
- * Synchronous Process
- * always single threaded proc
- *
- * synchronous machine proc last set input
- */
-void StateMachine_Synchronous_ProcMachine(StateMachine_T * p_stateMachine)
+void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine)
 {
 	if (p_stateMachine->IsSetInputTransition == true)
 	{
 		p_stateMachine->IsSetInputTransition = false;
 
-		if (p_stateMachine->InputTransition < p_stateMachine->InputTransitionMapLength)
+		if (p_stateMachine->InputTransition < p_stateMachine->TRANSITION_TABLE_LENGTH)
 		{
 			ProcTransition(p_stateMachine, p_stateMachine->InputTransition);
 		}
@@ -130,119 +154,81 @@ void StateMachine_Synchronous_ProcMachine(StateMachine_T * p_stateMachine)
 	{
 		p_stateMachine->IsSetInputTransition = false;
 
-		if (p_stateMachine->InputOutput < p_stateMachine->InputOutputMapLength)
+		if (p_stateMachine->InputOutput < p_stateMachine->OUTPUT_TABLE_LENGTH)
 		{
-			ProcInputOuput(p_stateMachine, p_stateMachine->InputOutput);
+			ProcOutputInput(p_stateMachine, p_stateMachine->InputOutput);
 		}
 	}
 
-	ProcOutput(p_stateMachine);
+	ProcOutputCommon(p_stateMachine);
 }
 
-//void StateMachine_Synchronous_SetInput(StateMachine_T * p_stateMachine, uint8_t input)
-//{
-//	p_stateMachine->InputTransition 		= input;
-//	p_stateMachine->IsSetInputTransition 	= true;
-//}
 
-void StateMachine_Synchronous_SetInputTransition(StateMachine_T * p_stateMachine, uint8_t input)
+void StateMachine_Synchronous_SetTransition(StateMachine_T * p_stateMachine, uint8_t input)
 {
-	p_stateMachine->InputTransition 		= input;
-	p_stateMachine->IsSetInputTransition 	= true;
-	p_stateMachine->IsSetInputOutput 		= false;
+	if (input < p_stateMachine->TRANSITION_TABLE_LENGTH)
+	{
+		p_stateMachine->InputTransition 		= input;
+		p_stateMachine->IsSetInputTransition 	= true;
+		p_stateMachine->IsSetInputOutput 		= false;
+	}
 }
 
-void StateMachine_Synchronous_SetInputOutput(StateMachine_T * p_stateMachine, uint8_t input)
+void StateMachine_Synchronous_SetOutput(StateMachine_T * p_stateMachine, uint8_t input)
 {
-	p_stateMachine->InputOutput 			= input;
-	p_stateMachine->IsSetInputOutput 		= true;
-	p_stateMachine->IsSetInputTransition 	= false;
+	if (input < p_stateMachine->OUTPUT_TABLE_LENGTH)
+	{
+		p_stateMachine->InputOutput 			= input;
+		p_stateMachine->IsSetInputOutput 		= true;
+		p_stateMachine->IsSetInputTransition 	= false;
+	}
 }
-
 
 /*
  * Asynchronous Process
- * Asynchronous Machine has no periodic output
+ * Asynchronous Machine has no synchronous periodic output
  */
-
-static inline void ProcAsynchronousInputTransition(StateMachine_T *p_stateMachine, uint8_t input)
+void StateMachine_Asynchronous_ProcTransition(StateMachine_T * p_stateMachine, uint8_t input)
 {
-	if (input < p_stateMachine->InputTransitionMapLength)
+	if (input < p_stateMachine->TRANSITION_TABLE_LENGTH)
 	{
-#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
-		if (Critical_MutexAquire(&p_stateMachine->Mutex))
-#endif
-		{
-			ProcTransition(p_stateMachine, input);
-#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
-			Critical_MutexRelease(&p_stateMachine->Mutex);
-#endif
-		}
+		ProcAsynchronousTransition(p_stateMachine, input);
 	}
+	ProcOutputCommon(p_stateMachine);
 }
 
-static inline void ProcAsynchronousInputOuput(StateMachine_T * p_stateMachine, uint8_t input)
+void StateMachine_Asynchronous_ProcOutput(StateMachine_T * p_stateMachine, uint8_t input)
 {
-	if (input < p_stateMachine->InputOutputMapLength)
+	if (input < p_stateMachine->OUTPUT_TABLE_LENGTH)
 	{
-		ProcInputOuput(p_stateMachine, input);
+		ProcOuputInput(p_stateMachine, input);
 	}
-}
-
-void StateMachine_Asynchronous_ProcTransition(StateMachine_T *p_stateMachine, uint8_t input)
-{
-	ProcAsynchronousInputTransition(p_stateMachine, input);
-	ProcOutput(p_stateMachine);
-}
-
-void StateMachine_Asynchronous_ProcInput(StateMachine_T * p_stateMachine, uint8_t input)
-{
-	ProcAsynchronousInputOuput(p_stateMachine, input);
-	ProcOutput(p_stateMachine);
+	ProcOutputCommon(p_stateMachine);
 }
 
 /*
  * Semi synchronous
  * Synchronous state logic proc, asynchronous input proc
- *
- * State Ouput
  */
 void StateMachine_Semisynchronous_ProcState(StateMachine_T * p_stateMachine)
 {
-	ProcOutput(p_stateMachine);
+	ProcOutputCommon(p_stateMachine);
 }
 
 void StateMachine_Semisynchronous_ProcTransition(StateMachine_T * p_stateMachine, uint8_t input)
 {
-	ProcAsynchronousInputTransition(p_stateMachine, input);
-}
-
-/*
- * Input Output
- */
-void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, uint8_t input)
-{
-	ProcAsynchronousInputOuput(p_stateMachine, input);
-}
-
-//static inline void State_InputAccumulated(StateMachine_t * stateMachine, StateInput_t input)
-//{
-//	for (uint8_t bitIdx = 0; bitIdx < STATE_INPUT_OUTPUT_COUNT; bitIdx++)
-//	{
-//		if (((input >> bitIdx) & (uint32_t)0x01) && stateMachine->p_StateActive->InputOutputMap[bitIdx] =! 0) stateMachine->p_StateActive->InputOutputMap[bitIdx]();
-//	}
-//}
-//void State_SetInputAccumulated(StateMachine_t * stateMachine, uint8_t input)
-//{
-//	stateMachine->InputOutput |= ((uint32_t)0x01 << input);
-//}
-
-void StateMachine_Reset(StateMachine_T * p_stateMachine)
-{
-	if (Critical_MutexAquire(&p_stateMachine->Mutex))
+	if (input < p_stateMachine->TRANSITION_TABLE_LENGTH)
 	{
-		p_stateMachine->p_StateActive 			= p_stateMachine->p_StateInitial;
-		Critical_MutexRelease(&p_stateMachine->Mutex);
+		ProcAsynchronousTransition(p_stateMachine, input);
 	}
 }
+
+void StateMachine_Semisynchronous_ProcOutput(StateMachine_T * p_stateMachine, uint8_t input)
+{
+	if (input < p_stateMachine->OUTPUT_TABLE_LENGTH)
+	{
+		ProcOuputInput(p_stateMachine, input);
+	}
+}
+
 

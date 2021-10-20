@@ -96,46 +96,46 @@ void Analog_Init
 	Analog_Dectivate(p_analog);
 }
 
-void Analog_Init_Struct
-(
-	Analog_T * p_analog,
-	Analog_Init_T * p_init
-)
-{
-#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
-	p_analog->p_Adc =  p_init->P_HAL_ADC;
-#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	if (nAdc > 1U)
-	{
-		p_analog->pp_Adcs = p_init->P_HAL_ADC;
-	}
-	else
-	{
-		p_analog->p_Adc = p_init->P_HAL_ADC;
-	}
-#endif
-
-#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	p_analog->AdcN_Count 	= p_init->ADC_COUNT;
-#endif
-
-#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	p_analog->AdcM_Buffer 	= p_init->ADC_BUFFER_LENGTH;
-#endif
-
-	p_analog->p_VirtualChannelMapPins 		= p_init->P_VIRTUAL_CHANNEL_MAP_PINS;
-	p_analog->p_VirtualChannelResults 	= p_init->P_VIRTUAL_CHANNEL_MAP_RESULTS_BUFFER;
-	p_analog->ChannelCount			= p_init->CHANNEL_COUNT;
-
-#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
-	p_analog->p_MapChannelAdcs = P_VIRTUAL_CHANNEL_MAP_ADCS;
-#endif
-
-	p_analog->pp_ConversionQueue = p_init->PP_CONVERSION_QUEUE;
-	p_analog->ConversionQueueLength = p_init->CONVERSION_QUEUE_LENGTH;
-	p_analog->ConversionQueueHead = 0U;
-	p_analog->ConversionQueueTail = 0U;
-}
+//void Analog_Init_Struct
+//(
+//	Analog_T * p_analog,
+//	Analog_Init_T * p_init
+//)
+//{
+//#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
+//	p_analog->p_Adc =  p_init->P_HAL_ADC;
+//#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+//	if (nAdc > 1U)
+//	{
+//		p_analog->pp_Adcs = p_init->P_HAL_ADC;
+//	}
+//	else
+//	{
+//		p_analog->p_Adc = p_init->P_HAL_ADC;
+//	}
+//#endif
+//
+//#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+//	p_analog->AdcN_Count 	= p_init->ADC_COUNT;
+//#endif
+//
+//#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+//	p_analog->AdcM_Buffer 	= p_init->ADC_BUFFER_LENGTH;
+//#endif
+//
+//	p_analog->p_VirtualChannelMapPins 		= p_init->P_VIRTUAL_CHANNEL_MAP_PINS;
+//	p_analog->p_VirtualChannelResults 	= p_init->P_VIRTUAL_CHANNEL_MAP_RESULTS_BUFFER;
+//	p_analog->ChannelCount			= p_init->CHANNEL_COUNT;
+//
+//#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
+//	p_analog->p_MapChannelAdcs = P_VIRTUAL_CHANNEL_MAP_ADCS;
+//#endif
+//
+//	p_analog->pp_ConversionQueue = p_init->PP_CONVERSION_QUEUE;
+//	p_analog->ConversionQueueLength = p_init->CONVERSION_QUEUE_LENGTH;
+//	p_analog->ConversionQueueHead = 0U;
+//	p_analog->ConversionQueueTail = 0U;
+//}
 
 
 /*!
@@ -425,6 +425,23 @@ volatile adcdata_t * Analog_GetPtrChannelResult(const Analog_T * p_analog, Analo
 	 @brief Single Channel Conversion
  */
 //void Analog_ActivateConversionChannel(Analog_T * p_analog, Analog_VirtualChannel_T p_channel, Analog_Config_T config, void (*onComplete)(volatile void * p_userData), volatile void * p_userData)
+//{
+//#if  (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED))
+//	Critical_Enter();
+//#elif defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
+//	Analog_DisableInterrupt(p_analog);
+//#endif
+//
+//	ActivateAdc(p_analog, p_channel, 1U, config);
+////	p_analog->p_ActiveConversion = 0U;
+////	p_analog->ActiveConversionChannelIndex = 0U;
+//
+//#if (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
+//	Critical_Exit();
+//#endif
+//}
+
+//void Analog_ActivateChannel(Analog_T * p_analog, Analog_VirtualChannel_T p_channel, Analog_Config_T config, void (*onComplete)(volatile void * p_userData), volatile void * p_userData)
 //{
 //#if  (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED))
 //	Critical_Enter();

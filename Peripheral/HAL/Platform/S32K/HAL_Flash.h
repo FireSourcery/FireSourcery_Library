@@ -79,8 +79,8 @@
 #define S32K_FLASH_RESERVED_EEPROM_SIZE			0x03FD
 #define S32K_FLASH_RESERVED_FLEX_NVM_CODE		0x03FC
 
-#define S32K_FLASH_SECTOR_SIZE				0x00000800	/* 2KB */
-#define S32K_FLASH_PHRASE_SIZE				0x00000008	/* 64-bits */
+#define S32K_FLASH_SECTOR_SIZE				(0x00000800U)	/* 2KB */
+#define S32K_FLASH_PHRASE_SIZE				0x00000008U	/* 64-bits */
 
 #define S32K_FLASH_EEPROM_UNIT_SIZE_ERASE	0x01
 #define S32K_FLASH_EEPROM_UNIT_SIZE_WRITE	0x01
@@ -329,7 +329,7 @@ static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_hal_flash, const u
 	HAL_Flash_WriteCmdStart(p_hal_flash);
 }
 
-static inline void HAL_Flash_ReadOnceData(HAL_Flash_T * p_hal_flash, const uint8_t * p_dest)
+static inline void HAL_Flash_ReadOnceData(HAL_Flash_T * p_hal_flash, uint8_t * p_result)
 {
 	for (uint8_t i = 0U; i < FTFx_PHRASE_SIZE; i++)
 	{

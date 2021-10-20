@@ -45,59 +45,43 @@ void ProtocolG_SetDataLink(ProtocolG_T * p_protocol, void * p_dataLink, Protocol
 	}
 }
 
-static bool DataLinkRxByte(ProtocolG_T * p_protocol)
-{
-	bool rxChar;
-
-	switch(p_protocol->DataLinkType)
+	static bool DataLinkRxByte(ProtocolG_T * p_protocol, uint8_t * p_rxChar)
 	{
-		case PROTOCOL_DATA_LINK_MODE_SERIAL:	rxChar = Serial_RecvChar(p_protocol->p_Serial,  &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex]);		break;
-//		case PROTOCOL_DATA_LINK_MODE_I2C:		rxChar = I2C_RecvChar(p_protocol->p_Serial);		break;
-//		case PROTOCOL_DATA_LINK_MODE_CAN:		rxChar = CanBus_RecvChar(p_protocol->p_Serial);		break;
-		default: break;
+		bool rxChar;
+
+		switch(p_protocol->DataLinkType)
+		{
+			case PROTOCOL_DATA_LINK_MODE_SERIAL:	rxChar = Serial_RecvChar(p_protocol->p_Serial, p_rxChar);		break;
+	//		case PROTOCOL_DATA_LINK_MODE_I2C:		rxChar = I2C_RecvChar(p_protocol->p_Serial);		break;
+	//		case PROTOCOL_DATA_LINK_MODE_CAN:		rxChar = CanBus_RecvChar(p_protocol->p_Serial);		break;
+			default: break;
+		}
+
+		return rxChar;
 	}
 
-	return rxChar;
-}
-
-static void DataLinkTxPacket(ProtocolG_T * p_protocol)
-{
-	switch(p_protocol->DataLinkType)
+	static void DataLinkTxString(ProtocolG_T * p_protocol, const uint8_t * p_string, uint16_t length)
 	{
-		case PROTOCOL_DATA_LINK_MODE_SERIAL:	 Serial_SendString(p_protocol->p_Serial, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);		break;
-//		case PROTOCOL_DATA_LINK_MODE_I2C:		 I2C_RecvChar(p_protocol->p_Serial);		break;
-//		case PROTOCOL_DATA_LINK_MODE_CAN:		 CanBus_RecvChar(p_protocol->p_Serial);		break;
-		default: break;
+		switch(p_protocol->DataLinkType)
+		{
+			case PROTOCOL_DATA_LINK_MODE_SERIAL:	 Serial_SendString(p_protocol->p_Serial, p_string, length);		break;
+	//		case PROTOCOL_DATA_LINK_MODE_I2C:		 I2C_RecvChar(p_protocol->p_Serial);		break;
+	//		case PROTOCOL_DATA_LINK_MODE_CAN:		 CanBus_RecvChar(p_protocol->p_Serial);		break;
+			default: break;
+		}
 	}
-}
-static void DataLinkTxString(ProtocolG_T * p_protocol, const uint8_t * p_string, uint16_t length)
-{
-	switch(p_protocol->DataLinkType)
-	{
-		case PROTOCOL_DATA_LINK_MODE_SERIAL:	 Serial_SendString(p_protocol->p_Serial, p_string, length);		break;
-//		case PROTOCOL_DATA_LINK_MODE_I2C:		 I2C_RecvChar(p_protocol->p_Serial);		break;
-//		case PROTOCOL_DATA_LINK_MODE_CAN:		 CanBus_RecvChar(p_protocol->p_Serial);		break;
-		default: break;
-	}
-}
-
-//static void RestartRx(ProtocolG_T * p_protocol)
-//{
-//	p_protocol->RxIndex = 0;
-//	p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
-//}
 
 //Receive into buffer and check for completion
-static bool RxPacket(ProtocolG_T * p_protocol)
+//PollRxPacket
+static bool BuildRxPacket(ProtocolG_T * p_protocol)
 {
 //	uint8_t rxChar;
 	bool isComplete = false;
 
-	//todo dynamic packet timeout
-	while (DataLinkRxByte(p_protocol) == true) //skip checking sw buffer
+	while (DataLinkRxByte(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex]) == true) //skip checking sw buffer
 	{
 		p_protocol->RxIndex++;
-//		p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);  //reset  byte timeout
+//		p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER); //todo byte timeout //reset  byte timeout
 
 		//seperate check for header?
 		if(p_protocol->p_Specs->CHECK_RX_COMPLETE(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex) == true)
@@ -150,51 +134,82 @@ static ProtocolG_ReqEntry_T * SearchReqTable(ProtocolG_T * p_protocol, uint32_t 
 }
 
 
-static ProtocolG_State_T ProcReqExt(ProtocolG_T * p_protocol, ProtocolG_ReqExt_T * p_reqExt, ProtocolG_ReqFastReadWrite_T fastFunction)
+static void ProcReq(ProtocolG_T * p_protocol)
 {
 	ProtocolG_State_T nextState;
 
-	if(p_reqExt->P_TX_ACK_PACKET_STRING != 0U)
-	{
-		DataLinkTxString(p_protocol, p_reqExt->P_TX_ACK_PACKET_STRING, p_reqExt->TX_ACK_PACKET_LENGTH);
-	}
-
-	if (fastFunction != 0U)
-	{
-		fastFunction(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->CONFIG.P_WRITE_REGS, p_protocol->CONFIG.P_READ_REGS);
-		DataLinkTxPacket(p_protocol);
-	}
-
-	if(p_reqExt->PARSE_RX != 0U)
-	{
-		p_reqExt->PARSE_RX(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->CONFIG.P_WRITE_REGS, p_reqExt->P_PROCESS_CONTEXT);
-	}
-
-	if(p_reqExt->PROCESS != 0U)
-	{
-		nextState = PROTOCOL_STATE_WAIT_PROCESS;
-		//WAIT_PROCESS_RX_TIME_OUT
-	}
-//	else if(p_reqExt->P_WAIT_RX_ACK_STRING != 0U)
-//	{
-//		p_protocol->RxIndex = 0U;
-//		p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
-//		nextState = PROTOCOL_STATE_WAIT_ACK;
-//	}
-	else
-	{
-		if(p_reqExt->BUILD_TX != 0U)
-		{
-			p_reqExt->BUILD_TX(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_READ_REGS, p_reqExt->P_PROCESS_CONTEXT);
-			DataLinkTxPacket(p_protocol);
-		}
-		nextState = PROTOCOL_STATE_WAIT_RX_BYTE_1;
-	}
+	//								if(p_protocol->p_ReqActive->P_EXT != 0U)
+	//								{
+	//									p_protocol->State = ProcReqExt(p_protocol, p_protocol->p_ReqActive->P_EXT, p_protocol->p_ReqActive->FAST);
+	//
+	//									// if datagram enable and throttled signal
+	//								}
+	//								else
+	//								{
+	//									if (p_protocol->p_ReqActive->FAST != 0U)
+	//									{
+	//										p_protocol->p_ReqActive->FAST(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->CONFIG.P_WRITE_REGS, p_protocol->CONFIG.P_READ_REGS);
+	//									}
+	//								}
+//		if(p_reqExt->P_TX_ACK_RECEPTION_STRING != 0U)
+//		{
+//			DataLinkTxString(p_protocol, p_reqExt->P_TX_ACK_RECEPTION_STRING, p_reqExt->TX_ACK_RECEPTION_LENGTH);
+//		}
+//
+//	//	if (fastFunction != 0U)
+//	//	{
+//	//		fastFunction(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->CONFIG.P_WRITE_REGS, p_protocol->CONFIG.P_READ_REGS);
+//	//		DataLinkTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+//	//	}
+//
+//		if(p_reqExt->PARSE_RX != 0U)
+//		{
+//			p_reqExt->PARSE_RX(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->CONFIG.P_WRITE_REGS, p_reqExt->P_PROCESS_CONTEXT);
+//		}
+//
+//		if(p_reqExt->PROCESS != 0U)
+//		{
+//			nextState = PROTOCOL_STATE_WAIT_PROCESS;
+//			//WAIT_PROCESS_RX_TIME_OUT
+//		}
+//	//	else if(p_reqExt->P_WAIT_RX_ACK_STRING != 0U)
+//	//	{
+//	//		p_protocol->RxIndex = 0U;
+//	//		p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
+//	//		nextState = PROTOCOL_STATE_WAIT_ACK;
+//	//	}
+//		else
+//		{
+//			if(p_reqExt->BUILD_TX != 0U)
+//			{
+//				p_reqExt->BUILD_TX(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_READ_REGS, p_reqExt->P_PROCESS_CONTEXT);
+//				DataLinkTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+//			}
+//			nextState = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+//
+//		}
 
 	return nextState;
 }
 
+static bool CheckSetWaitForAck(ProtocolG_T * p_protocol)
+{
+	bool isWaitForAck;
+	if ((p_protocol->p_ReqActive->P_EXT_SYNC != 0U) && (p_protocol->p_ReqActive->P_EXT_SYNC->P_WAIT_RX_ACK_STRING != 0U))
+	{
+		p_protocol->RxIndex = 0U;
+		p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
+		p_protocol->State = PROTOCOL_STATE_WAIT_ACK;
+		isWaitForAck = true;
+	}
+	else
+	{
+		p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+		isWaitForAck = false;
+	}
 
+	return isWaitForAck;
+}
 
 /*
  * Slave Mode, sequential receive/response
@@ -207,20 +222,17 @@ ProtocolG_Status_T ProtocolG_Slave_Proc(ProtocolG_T * p_protocol)
 {
 	ProtocolG_Status_T status = 0U;
 
-	uint32_t responseId;
+	uint32_t reqId;
 
 	switch (p_protocol->State)
 	{
-		case PROTOCOL_STATE_WAIT_RX_BYTE_1: //wait state, no timer
-			p_protocol->RxIndex = 0U;
-			if (DataLinkRxByte(p_protocol) == true)
+		case PROTOCOL_STATE_WAIT_RX_BYTE_1: /* nonblocking wait state, no timer */
+			if (DataLinkRxByte(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U]) == true)
 			{
-//				if (p_protocol->p_Specs->ENCODED == true) //discard all except start byte if using encoding
-				if ((p_protocol->p_Specs->START_ID != 0x00U) && (p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U] != p_protocol->p_Specs->START_ID))
-				{
-					p_protocol->RxIndex = 0U;
-				}
-				else
+				/*
+				 * Use starting byte even if data segment is unencoded. first char in separate state.
+				 */
+				if (!((p_protocol->p_Specs->START_ID != 0x00U) && (p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U] != p_protocol->p_Specs->START_ID)))
 				{
 					p_protocol->RxIndex = 1U;
 					p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
@@ -229,30 +241,23 @@ ProtocolG_Status_T ProtocolG_Slave_Proc(ProtocolG_T * p_protocol)
 			}
 			break;
 
-		case PROTOCOL_STATE_WAIT_RX_PACKET: //wait state, timer started
-			if (*p_protocol->CONFIG.P_TIMER - p_protocol->TimeStart < p_protocol->p_Specs->RX_TIME_OUT)  //no need to check for overflow if using millis
+		case PROTOCOL_STATE_WAIT_RX_PACKET: /* nonblocking wait state, timer started */
+			if (*p_protocol->CONFIG.P_TIMER - p_protocol->TimeStart < p_protocol->p_Specs->RX_TIME_OUT)  /* no need to check for overflow if using millis */
 			{
-				if (RxPacket(p_protocol) == true)
+				if (BuildRxPacket(p_protocol) == true)
 				{
 					if (p_protocol->p_Specs->CHECK_RX_CORRECT(p_protocol->CONFIG.P_RX_PACKET_BUFFER) == true)
 					{
-						responseId = p_protocol->p_Specs->PARSE_RX_REQ_ID(p_protocol->CONFIG.P_RX_PACKET_BUFFER);
-						p_protocol->p_ReqActive = SearchReqTable(p_protocol, responseId);
+						reqId = p_protocol->p_Specs->PARSE_RX_REQ_ID(p_protocol->CONFIG.P_RX_PACKET_BUFFER);
+						p_protocol->p_ReqActive = SearchReqTable(p_protocol, reqId);
 
 						if (p_protocol->p_ReqActive != 0U)
 						{
-							if(p_protocol->p_ReqActive->P_EXT != 0U)
-							{
-								p_protocol->State = ProcReqExt(p_protocol, p_protocol->p_ReqActive->P_EXT, p_protocol->p_ReqActive->FAST);
-							}
-							else
-							{
-								p_protocol, p_protocol->p_ReqActive->FAST(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->CONFIG.P_WRITE_REGS, p_protocol->CONFIG.P_READ_REGS);
-							}
+							ProcReq(p_protocol);
 						}
 						else
 						{
-							DataLinkTxString(p_protocol, p_protocol->p_Specs->P_TX_NACK_CMD, p_protocol->p_Specs->TX_NACK_CMD_LENGTH);
+							DataLinkTxString(p_protocol, p_protocol->p_Specs->P_TX_NACK_REQ, p_protocol->p_Specs->TX_NACK_REQ_LENGTH);
 							p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
 						}
 					}
@@ -265,50 +270,140 @@ ProtocolG_Status_T ProtocolG_Slave_Proc(ProtocolG_T * p_protocol)
 			}
 			else
 			{
-				DataLinkTxString(p_protocol, p_protocol->p_Specs->P_TX_NACK_TIMEOUT, p_protocol->p_Specs->TX_NACK_TIMEOUT_LENGTH);
+				DataLinkTxString(p_protocol, p_protocol->p_Specs->P_TX_NACK_TIME, p_protocol->p_Specs->TX_NACK_TIME_LENGTH);
 				p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
 			}
 			break;
 
 		case PROTOCOL_STATE_WAIT_PROCESS:
-			if (*p_protocol->CONFIG.P_TIMER - p_protocol->TimeStart < p_protocol->p_ReqActive->P_EXT->WAIT_PROCESS_TIME_OUT)
+			if (*p_protocol->CONFIG.P_TIMER - p_protocol->TimeStart < p_protocol->p_ReqActive->P_EXT_PROCESS->WAIT_PROCESS_TIME)
 			{
-				if(p_protocol->p_ReqActive->P_EXT->PROCESS(p_protocol->p_ReqActive->P_EXT->P_PROCESS_CONTEXT) == p_protocol->p_ReqActive->P_EXT->WAIT_PROCESS_CODE)
+				switch(p_protocol->p_ReqActive->P_EXT_PROCESS->WAIT_PROCESS(p_protocol->p_ReqActive->P_EXT_CONTEXT,  p_protocol->CONFIG.P_INTERFACE))
 				{
-					if(p_protocol->p_ReqActive->P_EXT->BUILD_TX != 0U)
-					{
-						p_protocol->p_ReqActive->P_EXT->BUILD_TX(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_READ_REGS, p_protocol->p_ReqActive->P_EXT->P_PROCESS_CONTEXT);
-						DataLinkTxPacket(p_protocol);
-					}
-					p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+					case PROTOCOLG_REQ_RETURN_WAIT:
+						break;
+
+					case PROTOCOLG_REQ_RETURN_COMPLETE:
+						if(p_protocol->p_ReqActive->P_EXT_PROCESS->BUILD_TX_PROCESS != 0U)
+						{
+							p_protocol->p_ReqActive->P_EXT_PROCESS->BUILD_TX_PROCESS(p_protocol->p_ReqActive->P_EXT_CONTEXT, p_protocol->CONFIG.P_INTERFACE, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength);
+
+							if(p_protocol->TxLength > 0U)
+							{
+								DataLinkTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+							}
+						}
+
+						 CheckSetWaitForAck(p_protocol);
+//						if ((p_protocol->p_ReqActive->P_EXT_SYNC != 0U) && (p_protocol->p_ReqActive->P_EXT_SYNC->P_WAIT_RX_ACK_STRING != 0U))
+//						{
+//							p_protocol->RxIndex = 0U;
+//							p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
+//							p_protocol->State = PROTOCOL_STATE_WAIT_ACK;
+//						}
+//						else
+//						{
+//							p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+//						}
+
+						break;
+
+					case PROTOCOLG_REQ_RETURN_REPEAT: //REPEAT PROCESS
+						p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
+						break;
+
+					case PROTOCOLG_REQ_RETURN_REPEAT_AFTER_ACK: //PREPEAT PROCESS_ACK
+						 CheckSetWaitForAck(p_protocol);
+//						if ((p_protocol->p_ReqActive->P_EXT_SYNC != 0U) && (p_protocol->p_ReqActive->P_EXT_SYNC->P_WAIT_RX_ACK_STRING != 0U))
+//						{
+//							p_protocol->RxIndex = 0U;
+//							p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
+//							p_protocol->State = PROTOCOL_STATE_WAIT_ACK;
+//						}
+//						else
+//						{
+//
+//						}
+
+						p_protocol->RepeatFlag = PROTOCOLG_REQ_RETURN_REPEAT_AFTER_ACK;
+
+						break;
+
+					case PROTOCOLG_REQ_RETURN_REPEAT_RX_PROCESS_ACK: //REAT RX
+						 CheckSetWaitForAck(p_protocol);
+						 p_protocol->RepeatFlag = PROTOCOLG_REQ_RETURN_REPEAT_RX_PROCESS_ACK;
+						break;
+					default: break;
 				}
 			}
 			else
 			{
-				DataLinkTxString(p_protocol, p_protocol->p_Specs->P_TX_NACK_TIMEOUT, p_protocol->p_Specs->TX_NACK_TIMEOUT_LENGTH);
+				DataLinkTxString(p_protocol, p_protocol->p_Specs->P_TX_NACK_TIME, p_protocol->p_Specs->TX_NACK_TIME_LENGTH);
 				p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
 			}
+			break;
 
-//			if(p_protocol->p_ReqActive->P_EXT != 0U)
+		case PROTOCOL_STATE_WAIT_ACK: 	/* wait for ack, recognize Ack, as ack has special behavior over Req entry */
+			if (*p_protocol->CONFIG.P_TIMER - p_protocol->TimeStart < p_protocol->p_ReqActive->P_EXT_SYNC->WAIT_RX_ACK_TIME)
+			{
+				while (DataLinkRxByte(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex]) == true)
+				{
+					p_protocol->RxIndex++;
+
+					if(p_protocol->RxIndex == p_protocol->p_ReqActive->P_EXT_SYNC->WAIT_RX_ACK_LENGTH)
+					{
+						if(strncmp(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->p_ReqActive->P_EXT_SYNC->P_WAIT_RX_ACK_STRING, p_protocol->p_ReqActive->P_EXT_SYNC->WAIT_RX_ACK_LENGTH) == 0)
+						{
+							if(p_protocol->p_ReqActive->P_EXT_PROCESS->BUILD_TX_PROCESS != 0U)
+							{
+								p_protocol->p_ReqActive->P_EXT_PROCESS->BUILD_TX_PROCESS(p_protocol->p_ReqActive->P_EXT_CONTEXT, p_protocol->CONFIG.P_INTERFACE, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength);
+								DataLinkTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+							}
+
+							if (p_protocol->RepeatFlag == true)
+							{
+								p_protocol->State = PROTOCOL_STATE_WAIT_PROCESS;
+								p_protocol->TimeStart = *(p_protocol->CONFIG.P_TIMER);
+							}
+							else
+							{
+								p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+							}
+						}
+						break;
+					}
+					else if(p_protocol->RxIndex == p_protocol->p_ReqActive->P_EXT_SYNC->WAIT_RX_NACK_LENGTH)
+					{
+						if(strncmp(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->p_ReqActive->P_EXT_SYNC->P_WAIT_RX_NACK_STRING, p_protocol->p_ReqActive->P_EXT_SYNC->WAIT_RX_NACK_LENGTH) == 0)
+						{
+							if (p_protocol->NackCount < p_protocol->p_ReqActive->P_EXT_SYNC->RX_NACK_REPEAT)
+							{
+								p_protocol->NackCount++;
+								DataLinkTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength); //retransmit
+							}
+							else
+							{
+								p_protocol->NackCount = 0U;
+								p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+							}
+						}
+						break;
+					}
+					else if(p_protocol->RxIndex >= p_protocol->p_Specs->RX_LENGTH_MAX) //error unexpected rx
+					{
+						p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
+						break;
+					}
+				}
+			}
+//			else
 //			{
-//				p_protocol->State = ProcReqExtProcess(p_protocol, p_protocol->p_ReqActive->P_EXT);
+//				DataLinkTxString(p_protocol, p_protocol->p_Specs->P_TX_NACK_TIME, p_protocol->p_Specs->TX_NACK_TIME_LENGTH);
+//				p_protocol->State = PROTOCOL_STATE_WAIT_RX_BYTE_1;
 //			}
-
 			break;
 
-//		case PROTOCOL_STATE_WAIT_ACK:
-////			if(p_protocol->p_ReqActive->P_EXT != 0U)
-////			{
-////				p_protocol->State = ProcReqWaitForAck(p_protocol, p_protocol->p_ReqActive->P_EXT);
-////			}
-////			else
-////			{
-////				p_protocol->State = ProcReqWaitForAck(p_protocol, &p_protocol->p_Specs->REQ_EXT_DEFAULT);
-////			}
 
-			break;
-
-//		case PROTOCOL_STATE_SEQUENCE:
 
 		case PROTOCOL_STATE_INACTIVE:
 			break;
@@ -316,21 +411,38 @@ ProtocolG_Status_T ProtocolG_Slave_Proc(ProtocolG_T * p_protocol)
 		default: break;
 	}
 
+
+	if(p_protocol->State != PROTOCOL_STATE_INACTIVE)
+	{
+//		Protocol_Datagram_Proc(p_protocol);
+		//	if(DataLink_GetTxEmpty() > Datagram_GetPacketSize(&p_protocol->Datagram) +  p_protocol->CONFIG.PACKET_BUFFER_LENGTH)
+		//	{
+				if (Datagram_Server_Proc(&p_protocol->Datagram))
+				{
+					DataLinkTxString(p_protocol, p_protocol->Datagram.P_TX_BUFFER, p_protocol->Datagram.TxDataSizeActive + p_protocol->Datagram.HeaderSize);
+				}
+		//	}
+	}
+
+
+
 	return status;
 }
 
 
-
-//ProtocolG_Status_T Protocol_Datagram_Proc(ProtocolG_T * p_protocol)
+//void Protocol_Datagram_Proc(ProtocolG_T * p_protocol)
 //{
-//	for (uint8_t iData; iData < p_protocol->TxLength; iData++)
-//	{
-//if(TxEmpty>p_protocol->TxLength - save space for 1 reply)
-//		p_protocol->CONFIG.P_TX_PACKET_BUFFER[iData] = *p_protocol->p_DatagramVarAddressTable[iData];
-//	}
-//
-//	DataLinkTxPacket(p_protocol);
+//	//* save room for 1 req packet
+////	if(DataLink_GetTxEmpty() > Datagram_GetPacketSize(&p_protocol->Datagram) +  p_protocol->CONFIG.PACKET_BUFFER_LENGTH)
+////	{
+//		if (Datagram_Server_Proc(&p_protocol->Datagram))
+//		{
+//			DataLinkTxString(p_protocol, p_protocol->Datagram.P_TX_BUFFER, p_protocol->Datagram.TxDataSizeActive + p_protocol->Datagram.HeaderSize);
+//		}
+////	}
 //}
+
+
 
 /*
  * Master Mode, sequential cmd/Rx

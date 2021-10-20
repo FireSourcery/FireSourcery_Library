@@ -28,21 +28,76 @@
     @version V0
 */
 /******************************************************************************/
+/******************************************************************************/
+/*!
+	Abstraction details
+	Shared completion and error status -> simultaneous operations not supported.
+*/
+/******************************************************************************/
 #include "Flash.h"
-
 #include "HAL_Flash.h"
+#include "Config.h"
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <string.h>
 
 #define FLASH_UNIT_ERASE_SIZE			HAL_FLASH_UNIT_ERASE_SIZE
 #define FLASH_UNIT_WRITE_SIZE			HAL_FLASH_UNIT_WRITE_SIZE
-#define FLASH_UNIT_VERIFY_ERASE_SIZE	HAL_FLASH_UNIT_ERASE_SIZE
-#define FLASH_UNIT_VERIFY_WRITE_SIZE	HAL_FLASH_UNIT_WRITE_SIZE
+#define FLASH_UNIT_VERIFY_ERASE_SIZE	1//HAL_FLASH_UNIT_VERIFY_ERASE_SIZE
+#define FLASH_UNIT_VERIFY_WRITE_SIZE	1//HAL_FLASH_UNIT_VERIFY_ERASE_SIZE
+#define FLASH_UNIT_WRITE_ONCE_SIZE		1//HAL_FLASH_UNIT_WRITE_ONCE_SIZE
+#define FLASH_UNIT_READ_ONCE_SIZE		1//HAL_FLASH_UNIT_READ_ONCE_SIZE
 
-uint8_t * CalcRemapAddress(const Flash_T * p_flash, uint8_t * p_dest)
+static inline uint32_t CalcAlignDown(uint32_t value, uint8_t align)
 {
-#if CONFIG_FLASH_HAL_USE_ADDRESS_RELATIVE
+	return ((value) & -(align));
+}
+
+static inline uint32_t CalcAlignUp(uint32_t value, uint8_t align)
+{
+	return (-(-(value) & -(align)));
+}
+
+static inline bool CheckIsAligned(uint32_t value, uint8_t align)
+{
+	return ((align & (align - 1U)) == 0U); //align unit always power of 2
+}
+
+static inline bool CheckDestIsAligned(const uint8_t * p_destFlash, size_t size, uint8_t align)
+{
+	return (CheckIsAligned((uint32_t)p_destFlash, align) && CheckIsAligned(size, align) ? true : false);
+}
+
+static inline bool CheckIsBounded(uint32_t targetStart, size_t targetSize, uint32_t boundaryStart, size_t boundarySize)
+{
+	return ((targetStart >= boundaryStart) && ((targetStart + targetSize) <= (boundaryStart + boundarySize)));
+}
+
+static inline bool CheckDestIsBoundedPartition(const uint8_t * p_dest, size_t size, Flash_Partition_T * p_partition)
+{
+	return CheckIsBounded((uint32_t)p_dest, size, (uint32_t)p_partition->P_START, p_partition->SIZE);
+//	(((uint32_t)p_destFlash > p_partition->P_START) && ((uint32_t)p_destFlash + size) < ((uint32_t)p_partition->P_START + p_partition->SIZE));
+}
+
+static inline uint32_t CalcChecksum(const uint8_t * p_data, size_t size)
+{
+	uint32_t sum = 0U;
+	for (size_t iByte = 0U; iByte < size; iByte++)	{ sum += p_data[iByte]; }
+	return sum;
+}
+
+static inline bool ChecksumOp(const Flash_T * p_flash)
+{
+	return (CalcChecksum(&p_flash->p_OpFlash[0U], p_flash->OpSize) == CalcChecksum(&p_flash->Buffer[0U], p_flash->OpSize)) ? true : false;
+}
+
+static inline const uint8_t * CalcOpCmdAddress(const Flash_T * p_flash, const uint8_t * p_dest)
+{
+#if CONFIG_FLASH_HW_OP_ADDRESS_RELATIVE
+	//	if dataflash section
+//	address += offset = (0x800000U - 0x10000000);
 	return address - p_flash.PARTITION_START;
 	if ((dest >= temp) && (dest < (temp + pSSDConfig->DFlashSize)))
     {
@@ -57,711 +112,699 @@ uint8_t * CalcRemapAddress(const Flash_T * p_flash, uint8_t * p_dest)
 		*pp_dest -= p_flash.PARTITION_SIZE;
 	}
 
-#elif defined(CONFIG_FLASH_HAL_USE_ADDRESS_ABSOLUTE)
-	return address;
+#elif defined(CONFIG_FLASH_HW_OP_ADDRESS_ABSOLUTE)
+	return p_dest;
 #endif
-	//	if dataflash section
-//	address += offset = (0x800000U - 0x10000000);
 }
 
-#ifndef FORCE_ALIGN_DOWN
-#define FORCE_ALIGN_DOWN(size, align) ((size) & -(align))
-#endif
-#ifndef FORCE_ALIGN_UP
-#define FORCE_ALIGN_UP(size, align) (-(-(size) & -(align)))
-#endif
-
-static inline bool ProcForceAlign(const Flash_T * p_flash, const uint8_t * p_dest)
+//or use uniform function pointer/wrapper
+bool StartOpCmd(const Flash_T * p_flash, size_t opIndex)
 {
+	//HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
 
-}
+	switch(p_flash->OpType)
+	{
+		case FLASH_OPERATION_WRITE: 		HAL_Flash_StartCmdWritePage			(p_flash->CONFIG.P_HAL_FLASH, &p_flash->p_OpFlash[opIndex], &p_flash->p_OpData[opIndex]);	break;
+		case FLASH_OPERATION_ERASE:			HAL_Flash_StartCmdEraseSector		(p_flash->CONFIG.P_HAL_FLASH, &p_flash->p_OpFlash[opIndex]); 								break;
+		case FLASH_OPERATION_VERIFY_WRITE:	HAL_Flash_StartCmdVerifyWriteUnit	(p_flash->CONFIG.P_HAL_FLASH, &p_flash->p_OpFlash[opIndex], &p_flash->p_OpData[opIndex]); 	break;
+		case FLASH_OPERATION_VERIFY_ERASE:	HAL_Flash_StartCmdVerifyEraseUnits	(p_flash->CONFIG.P_HAL_FLASH, &p_flash->p_OpFlash[opIndex], p_flash->UnitsPerCmd); 			break;
+		case FLASH_OPERATION_WRITE_ONCE:	HAL_Flash_StartCmdWriteOnce			(p_flash->CONFIG.P_HAL_FLASH, &p_flash->p_OpFlash[opIndex], &p_flash->p_OpData[opIndex]);	break;
+		case FLASH_OPERATION_READ_ONCE:		HAL_Flash_StartCmdReadOnce			(p_flash->CONFIG.P_HAL_FLASH, &p_flash->p_OpFlash[opIndex]); 								break;
+		default: break;
+	}
 
-static inline bool CheckIsAligned(const Flash_T * p_flash, const uint8_t * p_destFlash, size_t sizeBytes)
-{
-	//p_destFlash%FLASH_UNIT_WRITE_SIZE == 0, unit size always power of 2
-	return (((uint32_t)p_destFlash & (FLASH_UNIT_WRITE_SIZE - 1U)) == 0U) &&
-			(((uint32_t)sizeBytes & (FLASH_UNIT_WRITE_SIZE - 1U)) == 0U);
-}
-
-//static inline bool CheckIsAligned(const Flash_T * p_flash, uint32_t alignUnit, uint32_t target)
-//{
-//	return ((target & (alignUnit - 1U)) == 0U);
-//}
-
-
-static inline bool StartWritePage(const Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_data)
-{
-	bool isStarted = false;
-	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
-	HAL_Flash_StartCmdWritePage(p_flash->CONFIG.P_HAL_FLASH, p_destFlash, p_data);  //Chip unique procedures
-	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
-    return isStarted;
-}
-
-static inline bool StartEraseSector(const Flash_T * p_flash, const uint8_t * p_destFlash)
-{
-	bool isStarted = false;
-	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
-	HAL_Flash_StartCmdEraseSector(p_flash->CONFIG.P_HAL_FLASH, p_destFlash); //Chip unique procedures
-	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
-    return isStarted;
-}
-
-static inline bool StartVerifyWriteUnit(const Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_data)
-{
-	bool isStarted = false;
-	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
-	HAL_Flash_StartCmdVerifyWriteUnit(p_flash->CONFIG.P_HAL_FLASH, p_destFlash); //Chip unique procedures
-	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
-    return isStarted;
-}
-
-static inline bool StartVerifyEraseUnit(const Flash_T * p_flash, const uint8_t * p_destFlash)
-{
-	bool isStarted = false;
-	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
-	HAL_Flash_StartCmdVerifyEraseUnit(p_flash->CONFIG.P_HAL_FLASH, p_destFlash);
-	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
-	return isStarted;
-}
-
-static inline bool StartVerifyEraseUnits(const Flash_T * p_flash, const uint8_t * p_destFlash, uint8_t units)
-{
-	bool isStarted = false;
-	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
-	HAL_Flash_StartCmdVerifyEraseUnits(p_flash->CONFIG.P_HAL_FLASH, p_destFlash, units);
-	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
-    return isStarted;
-}
-
-static inline bool StartWriteOnce(const Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_data)
-{
-	bool isStarted = false;
-	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
-	HAL_Flash_StartCmdWriteOnce(p_flash->CONFIG.P_HAL_FLASH, p_destFlash, p_data); //Chip unique procedures
-	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
-    return isStarted;
-}
-
-static inline bool StartReadOnce(const Flash_T * p_flash, const uint8_t * p_destFlash)
-{
-	bool isStarted = false;
-	HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
-	HAL_Flash_StartCmdReadOnce(p_flash->CONFIG.P_HAL_FLASH, p_destFlash); //Chip unique procedures
-	if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) != true)	{isStarted = true;}
-    return isStarted;
+	return (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == false) ? true : false;
 }
 
 
-static inline uint32_t CalcCheckSum(const uint8_t * p_data, uint16_t sizeBytes)
-{
-	uint32_t sum = 0U;
-	for (size_t iByte = 0U; iByte < sizeBytes; iByte++)	{ sum += p_data[iByte]; }
-	return sum;
-}
-
-
-
+/******************************************************************************/
+/*!
+	Public Functions
+*/
+/******************************************************************************/
 void Flash_Init(Flash_T * p_flash)
 {
-	Queue_Init(&p_flash->Queue);
-	p_flash->Status = FLASH_STATUS_SUCCESS;
-	p_flash->State 	= FLASH_STATE_IDLE;
-	p_flash->p_Write 		= 0U;
-	p_flash->WriteIndex  	= 0U;
-	p_flash->WriteSize 		= 0U;
+	p_flash->Status 			= FLASH_STATUS_SUCCESS;
+	p_flash->State 				= FLASH_STATE_IDLE;
+	p_flash->p_OpFlash 			= 0U;
+	p_flash->OpIndex	  		= 0U;
+	p_flash->OpSize 			= 0U;
 	p_flash->IsVerifyEnable 	= true;
 	p_flash->IsForceAlignEnable = true;;
 }
 
-void Flash_SetBlockingYield(Flash_T * p_flash, void (* yield)(void *), void * p_callbackData)
+void Flash_SetYield(Flash_T * p_flash, void (* yield)(void *), void * p_callbackData)
 {
 	p_flash->Yield = yield;
 	p_flash->p_CallbackData = p_callbackData;
 }
 
-static inline uint32_t Flash_CalcCheckSumFlash(const Flash_T * p_flash)
+
+bool Flash_CheckIsBounded(const Flash_T * p_flash, const uint8_t * p_dest, size_t size)
 {
-	return CalcCheckSum(p_flash->p_Write, p_flash->WriteSize);
+	bool isBounded = false;
+
+	for (uint8_t iPartition = 0U; iPartition < CONFIG_FLASH_PARTITION_COUNT; iPartition++)
+	{
+		if(CheckDestIsBoundedPartition(p_dest, size, &p_flash->CONFIG.PARTITIONS[iPartition]) == true)
+		{
+			isBounded = true;
+		}
+	}
+
+	return isBounded;
 }
 
-static inline uint32_t Flash_CalcCheckSumBuffer(const Flash_T * p_flash)
+void Flash_GetReadOnce(const Flash_T * p_flash, uint8_t * p_result)
 {
-	return CalcCheckSum(p_flash->CONFIG.QUEUE.P_BUFFER, p_flash->WriteSize);
-}
-
-bool Flash_CheckBoundary(const Flash_T * p_flash, const uint8_t * p_dest)
-{
-	//for each partition in flash, check dest
+	memcpy(p_result, &p_flash->Buffer[0], p_flash->OpSize);
 }
 
 /******************************************************************************/
 /*!
-	Abstraction details
-	Shared completion and error status -> simultaneous operations not supported.
+	Set - Common Blocking Non Blocking
 */
 /******************************************************************************/
-//returns true when "blocking" is over
-bool Flash_PollWrite(Flash_T * p_flash)
+inline void Flash_SetOpDataBuffer(Flash_T * p_flash, const uint8_t * p_source, size_t size)
 {
-	bool isCompleteNow = false;
+	if(p_source != 0U)
+	{
+		memcpy(&p_flash->Buffer[0U], p_source, size);
+		p_flash->p_OpData	= p_flash->Buffer;
+		p_flash->OpSize  	= size;
+	}
+}
+
+inline void Flash_SetOpDataPtr(Flash_T * p_flash, const uint8_t * p_source, size_t size)
+{
+	p_flash->p_OpData	= p_source;
+	p_flash->OpSize 	= size;
+}
+
+inline void Flash_SetOpData(Flash_T * p_flash, const uint8_t * p_source, size_t size)
+{
+	(p_flash->IsOpBuffered == true) ? Flash_SetOpDataBuffer(p_flash, p_source, size) : Flash_SetOpDataPtr(p_flash, p_source, size);
+}
+
+//inline void Flash_SetOpNextData(Flash_T * p_flash, const uint8_t * p_source, size_t size)
+//{
+//	p_flash->p_OpFlash	+= p_flash->OpSize;
+//	p_flash->OpIndex 	= 0U;
+//	Flash_SetOpData(p_flash, p_source, size);
+//}
+
+static bool SetOpCommon(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, Flash_Operation_T opType, size_t unitSize, uint8_t unitsPerCmd)
+{
+	bool isSuccess;
+
+	if ((Flash_CheckIsBounded(p_flash, p_destFlash, size) == true) && (CheckDestIsAligned(p_destFlash, size, unitSize) == true))
+	{
+		p_flash->p_OpFlash	= CalcOpCmdAddress(p_flash, p_destFlash);
+		p_flash->OpIndex 	= 0U;
+		p_flash->OpType		= opType;
+		Flash_SetOpData(p_flash, p_source, size);
+//		p_flash->Status 	= FLASH_STATUS_SUCCESS;
+
+		p_flash->UnitsPerCmd = unitsPerCmd;
+		p_flash->BytesPerCmd = unitsPerCmd * unitSize;
+		isSuccess = true;
+	}
+	else
+	{
+//		p_flash->Status = FLASH_STATUS_ERROR_INPUT;
+		isSuccess = false;
+	}
+
+	return isSuccess;
+}
+
+//static bool SetOpMultiUnit(Flash_T * p_flash, uint8_t unitSize, uint8_t unitsPerCmd)
+//{
+//	p_flash->UnitsPerCmd = unitsPerCmd;
+//	p_flash->BytesPerCmd = unitsPerCmd * unitSize;
+//}
+
+bool Flash_SetWrite(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
+{
+	return SetOpCommon(p_flash, p_destFlash, p_source, size, FLASH_OPERATION_WRITE, FLASH_UNIT_WRITE_SIZE, 1U);
+}
+
+bool Flash_SetErase(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
+{
+	return SetOpCommon(p_flash, p_destFlash, 0U, size, FLASH_OPERATION_ERASE, FLASH_UNIT_ERASE_SIZE, 1U);
+}
+
+bool Flash_SetVerifyWrite(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
+{
+	return SetOpCommon(p_flash, p_destFlash, p_source, size, FLASH_OPERATION_WRITE, FLASH_UNIT_VERIFY_WRITE_SIZE, 1U);
+}
+
+static inline size_t CalcVerifyEraseUnitsPerCmd(size_t bytes)
+{
+#ifdef CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
+	return bytes/FLASH_UNIT_VERIFY_ERASE_SIZE;
+#elif defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
+	return 1U;
+#endif
+}
+
+bool Flash_SetVerifyErase(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
+{
+	return SetOpCommon(p_flash, p_destFlash, 0U, size, FLASH_OPERATION_VERIFY_ERASE, FLASH_UNIT_VERIFY_ERASE_SIZE, CalcVerifyEraseUnitsPerCmd(size));
+}
+
+bool Flash_SetWriteOnce(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
+{
+	return SetOpCommon(p_flash, p_destFlash, p_source, size, FLASH_OPERATION_WRITE_ONCE, FLASH_UNIT_WRITE_ONCE_SIZE, 1U);
+}
+
+bool Flash_SetReadOnce(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
+{
+	return SetOpCommon(p_flash, p_destFlash, 0U, size, FLASH_OPERATION_READ_ONCE, FLASH_UNIT_READ_ONCE_SIZE, 1U);
+}
+
+bool Flash_SetOp(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, Flash_Operation_T opType)
+{
+	bool isSuccess;
+
+	switch(opType)
+	{
+		case FLASH_OPERATION_WRITE:			isSuccess = Flash_SetWrite			(p_flash, p_destFlash, p_source, size);		break;
+		case FLASH_OPERATION_ERASE:			isSuccess = Flash_SetErase			(p_flash, p_destFlash, size); 				break;
+		case FLASH_OPERATION_VERIFY_WRITE:	isSuccess = Flash_SetVerifyWrite	(p_flash, p_destFlash, p_source, size);		break;
+		case FLASH_OPERATION_VERIFY_ERASE:	isSuccess = Flash_SetVerifyErase	(p_flash, p_destFlash, size); 				break;
+		case FLASH_OPERATION_WRITE_ONCE:	isSuccess = Flash_SetWriteOnce		(p_flash, p_destFlash, p_source, size); 	break;
+		case FLASH_OPERATION_READ_ONCE:		isSuccess = Flash_SetReadOnce		(p_flash, p_destFlash, size);				break;
+		default:  break;
+	}
+
+	return isSuccess;
+}
+
+/******************************************************************************/
+/*!
+	 Common Blocking Non Blocking
+*/
+/******************************************************************************/
+static inline Flash_Status_T CheckEndNeedVerify(const Flash_T * p_flash)
+{
+	return (p_flash->IsVerifyEnable == true) ? FLASH_STATUS_START_VERIFY : FLASH_STATUS_SUCCESS;
+}
+
+static inline Flash_Status_T CheckEndWrite(const Flash_T * p_flash)
+{
+	return (ChecksumOp(p_flash) == true) ? CheckEndNeedVerify(p_flash) : FLASH_STATUS_ERROR_CHECKSUM;
+}
+
+static inline Flash_Status_T CheckEndErase(const Flash_T * p_flash)
+{
+	return CheckEndNeedVerify(p_flash);
+}
+
+static inline Flash_Status_T CheckEndVerify(const Flash_T * p_flash)
+{
+	return (HAL_Flash_ReadErrorVerifyFlag(p_flash->CONFIG.P_HAL_FLASH) == true) ? FLASH_STATUS_ERROR_VERIFY : FLASH_STATUS_ERROR_CMD;
+}
+
+//static inline Flash_Status_T CheckEndWriteErase(const Flash_T * p_flash)
+//{
+//	Flash_Status_T status;
+//
+//	switch(p_flash->OpType)
+//	{
+//		case FLASH_OPERATION_WRITE:	status = CheckEndWrite(p_flash);	break;
+//		case FLASH_OPERATION_ERASE:	status = CheckEndErase(p_flash);	break;
+//		default:  break;
+//	}
+//
+//	return status;
+//}
+
+/******************************************************************************/
+/*!
+	Blocking Implementations
+*/
+/******************************************************************************/
+/*
+ * no finalize, verify etc
+ */
+static Flash_Status_T ProcOpCommon_Blocking(Flash_T * p_flash)
+{
+	Flash_Status_T status = FLASH_STATUS_ERROR_CMD;
+
+	if (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
+	{
+		for (size_t opIndex = 0U; opIndex < p_flash->OpSize; opIndex += p_flash->BytesPerCmd)
+		{
+			if (StartOpCmd(p_flash, opIndex) == true)
+			{
+				while (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
+				{
+					if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
+					{
+						break;
+					}
+					if (p_flash->Yield != 0U)
+					{
+						p_flash->Yield(p_flash->p_CallbackData);
+					}
+				}
+
+				if(p_flash->OpType == FLASH_OPERATION_READ_ONCE)
+				{
+					HAL_Flash_ReadOnceData(p_flash->CONFIG.P_HAL_FLASH, &p_flash->Buffer[opIndex]);
+				}
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
+		{
+			status = FLASH_STATUS_SUCCESS;
+		}
+		else
+		{
+			status = FLASH_STATUS_ERROR; //error tbd
+		}
+	}
+	else
+	{
+		status = FLASH_STATUS_ERROR_BUSY;
+	}
+
+    return status;
+}
+
+/*
+ * Block Proc after set
+ */
+Flash_Status_T Flash_ProcVerify_Blocking(Flash_T * p_flash)
+{
+	Flash_Status_T status = ProcOpCommon_Blocking(p_flash);
+	return ((status == FLASH_STATUS_ERROR) ? CheckEndVerify(p_flash) : status);
+}
+
+Flash_Status_T Flash_ProcWrite_Blocking(Flash_T * p_flash)
+{
+	Flash_Status_T status = ProcOpCommon_Blocking(p_flash);
+
+	if(status == FLASH_STATUS_SUCCESS)
+	{
+		status = CheckEndWrite(p_flash); // (ChecksumOp(p_flash) == true) ? CheckEndNeedVerify(p_flash) : FLASH_STATUS_ERROR_CHECKSUM;
+
+		if(status == FLASH_STATUS_START_VERIFY)
+		{
+			p_flash->OpType	= FLASH_OPERATION_VERIFY_WRITE;
+			Flash_ProcVerify_Blocking(p_flash);
+		}
+	}
+
+	return status;
+}
+
+Flash_Status_T Flash_ProcErase_Blocking(Flash_T * p_flash)
+{
+	Flash_Status_T status = ProcOpCommon_Blocking(p_flash);
+
+	if(status == FLASH_STATUS_SUCCESS)
+	{
+		status = CheckEndNeedVerify(p_flash);
+
+		if(status == FLASH_STATUS_START_VERIFY)
+		{
+			p_flash->OpType	= FLASH_OPERATION_VERIFY_ERASE;
+			status = Flash_ProcVerify_Blocking(p_flash);
+		}
+	}
+
+	return status;
+}
+
+/*
+	Set and Proc
+ */
+Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
+{
+	return (Flash_SetWrite(p_flash, p_destFlash, p_source, size) ? Flash_ProcWrite_Blocking(p_flash) : FLASH_STATUS_ERROR_INPUT);
+}
+
+Flash_Status_T Flash_Erase_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
+{
+	return (Flash_SetErase(p_flash, p_destFlash, size) ? Flash_ProcErase_Blocking(p_flash) : FLASH_STATUS_ERROR_INPUT);
+}
+
+Flash_Status_T Flash_VerifyWrite_Blocking(Flash_T *p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
+{
+	return (Flash_SetVerifyWrite(p_flash, p_destFlash, p_source, size) ? Flash_ProcVerify_Blocking(p_flash) : FLASH_STATUS_ERROR_INPUT);
+}
+
+Flash_Status_T Flash_VerifyErase_Blocking(Flash_T *p_flash, const uint8_t * p_destFlash, size_t size)
+{
+	return (Flash_SetVerifyErase(p_flash, p_destFlash, size) ? Flash_ProcVerify_Blocking(p_flash) : FLASH_STATUS_ERROR_INPUT);
+}
+
+Flash_Status_T Flash_WriteOnce_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
+{
+	return (Flash_SetWriteOnce(p_flash, p_destFlash, p_source, size) ? ProcOpCommon_Blocking(p_flash) : FLASH_STATUS_ERROR_INPUT);
+}
+
+Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
+{
+	return (Flash_SetReadOnce(p_flash, p_destFlash, size) ? ProcOpCommon_Blocking(p_flash) : FLASH_STATUS_ERROR_INPUT);
+}
+
+/*
+	Erase all unsecured
+ */
+//Flash_Status_T Flash_EraseAll_Blocking(Flash_T *p_flash)
+//{
+////	Flash_EraseBytes_Blocking( p_flash, p_flash->Start , -end );
+//}
+
+
+/*
+ * Wrapper
+ * Common with finalize, verify
+ */
+Flash_Status_T Flash_ProcOpThis_Blocking(Flash_T * p_flash)
+{
+	Flash_Status_T status;
+
+	switch(p_flash->OpType)
+	{
+		case FLASH_OPERATION_WRITE: 		status = Flash_ProcWrite_Blocking	(p_flash); 	break;
+		case FLASH_OPERATION_ERASE:			status = Flash_ProcErase_Blocking	(p_flash); 	break;
+		case FLASH_OPERATION_VERIFY_WRITE:	status = Flash_ProcVerify_Blocking	(p_flash); 	break;
+		case FLASH_OPERATION_VERIFY_ERASE:	status = Flash_ProcVerify_Blocking	(p_flash); 	break;
+		case FLASH_OPERATION_WRITE_ONCE:	status = ProcOpCommon_Blocking		(p_flash); 	break;
+		case FLASH_OPERATION_READ_ONCE:		status = ProcOpCommon_Blocking		(p_flash); 	break;
+		default: break;
+	}
+
+	return status;
+}
+
+Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, Flash_Operation_T opType)
+{
+	return (Flash_SetOp(p_flash, p_destFlash, p_source, size, opType) ? Flash_ProcOpThis_Blocking(p_flash) : FLASH_STATUS_ERROR_INPUT);
+}
+
+/******************************************************************************/
+/*!
+	Non Blocking
+*/
+/******************************************************************************/
+size_t Flash_GetOpBytesRemaining(Flash_T * p_flash)
+{
+	return p_flash->OpSize - p_flash->OpIndex;
+}
+
+bool Flash_GetIsOpComplete(Flash_T *p_flash)
+{
+	return (p_flash->State == FLASH_STATE_IDLE) && (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == true);
+}
+
+static Flash_Status_T StartOpCommon(Flash_T * p_flash)
+{
+	if(Flash_GetIsOpComplete(p_flash) == true)
+	{
+		HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
+		p_flash->State = FLASH_STATE_ACTIVE;
+		p_flash->Status = FLASH_STATUS_PROCESSING;
+	}
+	else
+	{
+		p_flash->Status = FLASH_STATUS_ERROR_BUSY;
+	}
+
+    return p_flash->Status;
+}
+
+//Flash_Status_T FinalizeWriteEraseCommon(Flash_T * p_flash, Flash_Operation_T verifyOp)
+//{
+//		p_flash->OpType = verifyOp;
+//		p_flash->OpIndex = 0U;
+//		p_flash->Status = StartOpCommon(p_flash);
+//
+//	return (p_flash->Status);
+//}
+
+/*
+ * returns ERROR_CHECKSUM, FLASH_STATUS_SUCCESS, FLASH_STATUS_PROCESSING, ERROR_INPUT
+ *
+ */
+Flash_Status_T Flash_FinalizeWrite(Flash_T * p_flash)
+{
+	p_flash->Status = CheckEndWrite(p_flash);
+
+	if (p_flash->Status == FLASH_STATUS_START_VERIFY)
+	{
+		p_flash->OpType = FLASH_OPERATION_VERIFY_WRITE;
+		p_flash->OpIndex = 0U;
+		p_flash->Status = StartOpCommon(p_flash);
+	}
+	else
+	{
+		p_flash->State = FLASH_STATE_IDLE;
+	}
+
+	return (p_flash->Status);
+
+//	return ((p_flash->Status == FLASH_STATUS_START_VERIFY) ? FinalizeWriteEraseCommon(p_flash, FLASH_OPERATION_VERIFY_WRITE) : p_flash->Status);
+}
+
+Flash_Status_T Flash_FinalizeErase(Flash_T * p_flash)
+{
+	p_flash->Status = CheckEndErase(p_flash);
+
+	if (p_flash->Status == FLASH_STATUS_START_VERIFY)
+	{
+		p_flash->OpType = FLASH_OPERATION_VERIFY_ERASE;
+		p_flash->OpIndex = 0U;
+		p_flash->Status = StartOpCommon(p_flash);
+	}
+	else
+	{
+		p_flash->State = FLASH_STATE_IDLE;
+	}
+
+	return (p_flash->Status);
+
+//	return ((p_flash->Status == FLASH_STATUS_START_VERIFY) ? FinalizeWriteEraseCommon(p_flash, FLASH_OPERATION_VERIFY_ERASE) : p_flash->Status);
+}
+
+Flash_Status_T Flash_FinalizeVerify(Flash_T * p_flash)
+{
+	p_flash->Status = CheckEndVerify(p_flash);
+	p_flash->State = FLASH_STATE_IDLE;
+	return (p_flash->Status);
+}
+
+/*
+ * returns true when complete
+ */
+bool Flash_ProcOpCommon(Flash_T * p_flash)
+{
+	bool isComplete = false;
 
 	switch (p_flash->State)
 	{
 		case FLASH_STATE_IDLE:
 			break;
 
-		case FLASH_STATE_WRITE:
+		case FLASH_STATE_ACTIVE:
 			//multithread use mutex
 			if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
 			{
-				if (HAL_Flash_ReadCompleteWriteFlag(p_flash->CONFIG.P_HAL_FLASH) == true)
+				if (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
 				{
-					Queue_Remove(&p_flash->Queue, 1U);
-					p_flash->WriteIndex++;
+//					if(p_flash->OpType == FLASH_OPERATION_READ_ONCE)
+//					{
+//						HAL_Flash_ReadOnceData(p_flash->CONFIG.P_HAL_FLASH, &p_flash->Buffer[p_flash->OpIndex]);
+//					}
 
-					if (Queue_PeekPtrFront(&p_flash->Queue) != 0U)
+					if(p_flash->OpIndex < p_flash->OpSize)
 					{
-						if (StartWritePage(p_flash, &p_flash->p_Write[p_flash->WriteIndex], Queue_PeekPtrFront(&p_flash->Queue)) == false)
+						if (StartOpCmd(p_flash, p_flash->OpIndex) == true)
 						{
-							p_flash->State = FLASH_STATE_IDLE;
-							p_flash->Status = FLASH_STATUS_ERROR;
-							isCompleteNow = true;
-						}
-					}
-					else  //all pages complete
-					{
-						if(p_flash->IsVerifyEnable == true)
-						{
-							p_flash->State = FLASH_STATE_VERIFY;
+							p_flash->OpIndex += p_flash->BytesPerCmd;
 						}
 						else
 						{
 							p_flash->State = FLASH_STATE_IDLE;
-							p_flash->Status = FLASH_STATUS_SUCCESS;
-							isCompleteNow = true;
-							//oncomplete
+							p_flash->Status = FLASH_STATUS_ERROR_CMD;
+							isComplete = true;
 						}
+					}
+					else  //all pages complete
+					{
+						//user finalize to return to idle state// go to idle if multi threaded?
+						p_flash->State = FLASH_STATE_IDLE;
+						p_flash->Status = FLASH_STATUS_SUCCESS;
+						isComplete = true;
 					}
 				}
 			}
 			else
 			{
-				p_flash->Status == FLASH_STATUS_ERROR;
 				p_flash->State = FLASH_STATE_IDLE;
+				p_flash->Status = FLASH_STATUS_ERROR_CMD;
+				isComplete = true;
 			}
 			break;
 
-		case FLASH_STATE_VERIFY:
-
-			break;
 		default:
 			break;
 	}
 
-	return isCompleteNow;
+	return isComplete;
 }
 
-//bool Flash_GetIsWriteComplete(Flash_T *p_flash)
-//{
-////	return HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH);
-////	{
-////	return (p_flash->IsWriteComplete);
-//}
-
-bool Flash_CheckIsSuccess(Flash_T * p_flash)
+/*
+ * Nonblock uses wrapper proc function by default
+ */
+bool Flash_ProcOp(Flash_T * p_flash)
 {
-	return (p_flash->Status == FLASH_STATUS_SUCCESS) ? true : false;
-}
+	bool isComplete = false;
 
-bool Flash_PollWriteSuccess(Flash_T *p_flash)
-{
-	if(Flash_PollWrite(p_flash))
+	if(Flash_ProcOpCommon(p_flash) == true)
 	{
-		return Flash_GetIsSuccess(p_flash);
+		if (p_flash->Status == FLASH_STATUS_SUCCESS)
+		{
+			switch(p_flash->OpType)
+			{
+				case FLASH_OPERATION_WRITE: 		Flash_FinalizeWrite			(p_flash); 	break;
+				case FLASH_OPERATION_ERASE:			Flash_FinalizeErase			(p_flash); 	break;
+				case FLASH_OPERATION_WRITE_ONCE:	  	break;
+				case FLASH_OPERATION_READ_ONCE:		  	break;
+				default: break;
+			}
+		}
+		else
+		{
+			switch(p_flash->OpType)
+			{
+				case FLASH_OPERATION_VERIFY_WRITE:	Flash_FinalizeVerify	(p_flash); 	break;
+				case FLASH_OPERATION_VERIFY_ERASE:	Flash_FinalizeVerify	(p_flash); 	break;
+				default: break;
+			}
+		}
+
+		if(p_flash->Status != FLASH_STATUS_PROCESSING)
+		{
+//				p_flash->State = FLASH_STATE_IDLE;
+			isComplete = true;
+		}
 	}
+
+	return isComplete;
 }
 
-//size_t Flash_GetWriteBytesRemaining(Flash_T * p_flash)
-//{
-//	return (Queue_GetFullCount(&p_flash->Queue) * FLASH_UNIT_WRITE_SIZE);
-//}
-
-
-//bool Flash_StartWritePages(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t countPages)
-//{
-//	bool isSuccess = false;
-//
-//    return isSuccess;
-//}
-
-//bool Flash_StartEraseSectors(Flash_T * p_flash, const uint8_t * p_destFlash, size_t sizeUnits)
-//{
-//	bool isSuccess = false;
-//
-//    return isSuccess;
-//}
-
-bool Flash_StartWrite(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t sizeBytes)
+Flash_Status_T Flash_StartWrite(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
 {
-	bool isSuccess = false;
-	Flash_Status_T status = FLASH_STATUS_ERROR;
-	//check partition boundarys and align address up if needed
-
-	if((p_flash->State == FLASH_STATE_IDLE) && (HAL_Flash_ReadCompleteWriteFlag(p_flash->CONFIG.P_HAL_FLASH) == true))
-	{
-		if (CheckIsAligned(p_flash, p_destFlash, p_source))
-		{
-			if(Queue_EnqueueBytes(&p_flash->Queue, p_source, sizeBytes))
-			{
-				if (Queue_PeekPtrFront(&p_flash->Queue) != 0U)
-				{
-					if (StartWritePage(p_flash, p_destFlash, Queue_PeekPtrFront(&p_flash->Queue)) == true)
-					{
-						p_flash->p_Write  	= p_destFlash;
-						p_flash->WriteIndex = 0U;
-						p_flash->WriteSize 	= sizeBytes;
-
-						p_flash->State = FLASH_STATE_WRITE;
-						status = FLASH_STATUS_SUCCESS;
-						isSuccess = true;
-					}
-				}
-
-			}
-		}
-    }
-
-	p_flash->Status = status;
-
-    return isSuccess;
+	return (p_flash->Status = (Flash_SetWrite(p_flash, p_destFlash, p_source, size) ? StartOpCommon(p_flash) : FLASH_STATUS_ERROR_INPUT));
 }
 
-
-bool Flash_StartErase(Flash_T * p_flash, const uint8_t * p_destFlash, size_t sizeBytes)
+Flash_Status_T Flash_StartErase(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
 {
-	bool isSuccess = false;
-
-    return isSuccess;
+	return (p_flash->Status = (Flash_SetErase(p_flash, p_destFlash, size) ? StartOpCommon(p_flash) : FLASH_STATUS_ERROR_INPUT));
 }
 
-bool Flash_StartVerifyWrite(Flash_T * p_flash, const uint8_t * p_destFlash, size_t sizeBytes)
+Flash_Status_T Flash_StartVerifyWrite(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
 {
-	bool isSuccess = false;
-
-    return isSuccess;
+	return (p_flash->Status = (Flash_SetVerifyWrite(p_flash, p_destFlash, p_source, size) ? StartOpCommon(p_flash) : FLASH_STATUS_ERROR_INPUT));
 }
 
-bool Flash_StartVerifyErase(Flash_T * p_flash, const uint8_t * p_destFlash, size_t sizeBytes)
+Flash_Status_T Flash_StartVerifyErase(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
 {
-	bool isSuccess = false;
-
-    return isSuccess;
+	return (p_flash->Status = (Flash_SetVerifyErase(p_flash, p_destFlash, size) ? StartOpCommon(p_flash) : FLASH_STATUS_ERROR_INPUT));
 }
 
-
-bool Flash_StartWriteOnce(const Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_data)
+Flash_Status_T Flash_StartWriteOnce(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
 {
-	bool isStarted = false;
-
-
-    return isStarted;
+	return (p_flash->Status = (Flash_SetWriteOnce(p_flash, p_destFlash, p_source, size) ? StartOpCommon(p_flash) : FLASH_STATUS_ERROR_INPUT));
 }
 
-bool Flash_StartReadOnce(const Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_data)
+Flash_Status_T Flash_StartReadOnce(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
 {
-	bool isStarted = false;
-
-
-    return isStarted;
+	return (p_flash->Status = (Flash_SetReadOnce(p_flash, p_destFlash, size) ? StartOpCommon(p_flash) : FLASH_STATUS_ERROR_INPUT));
 }
 
-bool Flash_CaptureReadOnce(const Flash_T * p_flash)
-{
-	bool isStarted = false;
-
-
-    return isStarted;
-}
-
-bool Flash_GetReadOnce(const Flash_T * p_flash, uint8_t * p_dest, uint8_t destMax)
-{
-	bool isStarted = false;
-
-    return isStarted;
-}
-
-/*
-	Blocking Implmentations
- */
-Flash_Status_T OpCommon_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t sizeBytes, Flash_Operation_T opType)
-{
-	Flash_Status_T status = FLASH_STATUS_ERROR_CMD;
-	size_t incSize;
-
-	if (CheckIsAligned(p_flash, p_destFlash, sizeBytes))
-	{
-		//check partition boundaries and update address
-		if (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
-		{
-			switch(opType)
-			{
-				case FLASH_OPERATION_WRITE: incSize = FLASH_UNIT_WRITE_SIZE; break;
-				default: incSize = sizeBytes; break;
-			}
-
-			for (size_t index = 0U; index < sizeBytes; index += FLASH_UNIT_WRITE_SIZE)
-			{
-				switch(opType)
-				{
-					case FLASH_OPERATION_WRITE: status = StartWritePage(p_flash->CONFIG.P_HAL_FLASH, &p_destFlash[index], &p_source[index]); break;
-					default: status = FLASH_STATUS_ERROR_CMD; break;
-				}
-
-				if (status == FLASH_STATUS_SUCCESS)
-				{
-					while (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
-					{
-						if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
-						{
-							break;
-						}
-						if (p_flash->Yield != 0U)
-						{
-							p_flash->Yield(p_flash->p_CallbackData);
-						}
-					}
-				}
-				else
-				{
-					break;
-				}
-			}
-
-			if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
-			{
-				status = FLASH_STATUS_SUCCESS;
-			}
-			else
-			{
-				if (HAL_Flash_ReadErrorVerifyFlag(p_flash->CONFIG.P_HAL_FLASH) == true)
-				{
-					status = FLASH_STATUS_ERROR_VERIFY;
-				}
-				else
-				{
-					status = FLASH_STATUS_ERROR_CMD;
-				}
-			}
-		}
-    }
-
-    return status;
-}
-
-Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t sizeBytes)
-{
-//	bool isSuccess = false;
-
-	return OpCommon_Blocking(p_flash, p_destFlash, p_source, sizeBytes, FLASH_OPERATION_WRITE);
-
-//	if (CheckIsAligned(p_flash, p_destFlash, sizeBytes))
-//	{
-//		//check partition boundaries and update address
-//		if (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
-//		{
-//			for (uint32_t index = 0U; index < sizeBytes; index += FLASH_UNIT_WRITE_SIZE)
-//			{
-//				if (StartWritePage(p_flash->CONFIG.P_HAL_FLASH, &p_destFlash[index], &p_source[index]) == true)
-//				{
-//					while (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
-//					{
-//						if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
-//						{
-//							break;
-//						}
-//						if (p_flash->Yield != 0U)
-//						{
-//							p_flash->Yield(p_flash->p_CallbackData);
-//						}
-//					}
-//				}
-//				else
-//				{
-//					break;
-//				}
-//			}
-//
-//			if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
-//			{
-//				isSuccess = true;
-//			}
-//		}
-//    }
-
-//    return isSuccess;
-}
-
-Flash_Status_T Flash_Erase_Blocking(Flash_T *p_flash, const uint8_t * p_destFlash, size_t sizeBytes)
-{
-
-	return OpCommon_Blocking(p_flash, p_destFlash, 0U, sizeBytes, FLASH_OPERATION_ERASE);
-//	bool isSuccess = false;
-//
-//	if (CheckIsAligned(p_flash, p_destFlash, sizeBytes)) //to erase sector
-//	{
-//		if (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
-//		{
-//			for (uint32_t index = 0U; index < sizeBytes; index += FLASH_UNIT_ERASE_SIZE)
-//			{
-//				if (StartEraseSector(p_flash->CONFIG.P_HAL_FLASH, &p_destFlash[index]) == true)
-//				{
-//					while (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
-//					{
-//						if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
-//						{
-//							break;
-//						}
-//						if (p_flash->Yield != 0U)
-//						{
-//							p_flash->Yield(p_flash->p_CallbackData);
-//						}
-//					}
-//				}
-//				else
-//				{
-//					break;
-//				}
-//			}
-//
-//			if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
-//			{
-//				isSuccess = true;
-//			}
-//		}
-//    }
-//
-//    return isSuccess;
-}
-
-/*
-	Erase all unsecure
- */
-Flash_Status_T Flash_EraseAll_Blocking(Flash_T *p_flash)
-{
-//	Flash_EraseBytes_Blocking( p_flash, p_flash->Start , -end );
-}
-
-Flash_Status_T Flash_VerifyWrite_Blocking(Flash_T *p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t sizeBytes)
-{
-	return OpCommon_Blocking(p_flash, p_destFlash, p_source, sizeBytes, FLASH_OPERATION_VERIFY_WRITE);
-
-//	Flash_Status_T status = FLASH_STATUS_ERROR_CMD;
-//	if (CheckIsAligned(p_flash, p_destFlash, sizeBytes)) //to write page
-//	{
-//		if (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
-//		{
-//			for (uint32_t index = 0U; index < sizeBytes; index += FLASH_UNIT_VERIFY_WRITE_SIZE)
-//			{
-//				if (StartVerifyWrite(p_flash->CONFIG.P_HAL_FLASH, &p_destFlash[index], &p_source[index]) == true)
-//				{
-//					while (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
-//					{
-//						if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
-//						{
-//							break;
-//						}
-//						if (p_flash->Yield != 0U)
-//						{
-//							p_flash->Yield(p_flash->p_CallbackData);
-//						}
-//					}
-//				}
-//				else
-//				{
-//					break;
-//				}
-//			}
-//
-//			if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
-//			{
-//				status = FLASH_STATUS_SUCCESS;
-//			}
-//			else
-//			{
-//				if (HAL_Flash_ReadErrorVerifyFlag(p_flash->CONFIG.P_HAL_FLASH) == true)
-//				{
-//					status = FLASH_STATUS_ERROR_VERIFY;
-//				}
-//				else
-//				{
-//					status = FLASH_STATUS_ERROR_CMD;
-//				}
-//			}
-//		}
-//    }
-
-//    return status;
-}
-
-static inline size_t CalcVerifyEraseUnitsPerCmd(size_t bytes)
-{
-//#ifdef CONFIG_FLASH_HW_SUPPORT_VERIFY_ERASE_N_UNITS
-	return bytes/FLASH_UNIT_VERIFY_ERASE_SIZE;
-//#elif defined(CONFIG_FLASH_HW_SUPPORT_VERIFY_ERASE_1_UNIT)
-//	return 1U;
-//#endif
-}
-
-Flash_Status_T Flash_VerifyErase_Blocking(Flash_T *p_flash, const uint8_t * p_destFlash, size_t sizeBytes)
-{
-
-//	return OpCommon_Blocking(p_flash, p_destFlash, p_source, sizeBytes, FLASH_OPERATION_VERIFY_WRITE);
-
-	Flash_Status_T status = FLASH_STATUS_ERROR_CMD;
-
-	if (CheckIsAligned(p_flash, p_destFlash, sizeBytes)) //check isaligned to erase sector size
-	{
-
-		if (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
-		{
-			for (uint32_t index = 0U; index < sizeBytes; index += CalcVerifyEraseUnitsPerCmd(sizeBytes)*FLASH_UNIT_VERIFY_ERASE_SIZE)
-			{
-				if (StartVerifyErase(p_flash->CONFIG.P_HAL_FLASH, &p_destFlash[index], CalcVerifyEraseUnitsPerCmd(sizeBytes)) == true)
-				{
-					while (HAL_Flash_ReadCompleteFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
-					{
-						if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == true)
-						{
-							break;
-						}
-						if (p_flash->Yield != 0U)
-						{
-							p_flash->Yield(p_flash->p_CallbackData);
-						}
-					}
-				}
-				else
-				{
-					break;
-				}
-			}
-
-			if (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == false)
-			{
-				status = FLASH_STATUS_SUCCESS;
-			}
-			else
-			{
-				if (HAL_Flash_ReadErrorVerifyFlag(p_flash->CONFIG.P_HAL_FLASH) == true)
-				{
-					status = FLASH_STATUS_ERROR_VERIFY;
-				}
-				else
-				{
-					status = FLASH_STATUS_ERROR_CMD;
-				}
-			}
-		}
-    }
-
-    return status;
-}
-
-Flash_Status_T Flash_WriteOnce_Blocking(const Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t sizeBytes)
-{
-	return OpCommon_Blocking(p_flash, p_destFlash, 0U, sizeBytes, FLASH_OPERATION_WRITE_ONCE);
-}
-
-uint8_t * Flash_ReadOnce_Blocking(const Flash_T * p_flash, const uint8_t * p_destFlash, size_t sizeBytes)
-{
-	//for 0 to size
-	//op
-	//save buffer
-
-	return OpCommon_Blocking(p_flash, p_destFlash, 0U, sizeBytes, FLASH_OPERATION_READ_ONCE);
-}
-
-//uint32_t Flash_GetReadOnce_Blocking(const Flash_T * p_flash, const uint8_t * p_destFlash, size_t sizeBytes)
-//{
-//	return OpCommon_Blocking(p_flash, p_destFlash, 0U, sizeBytes, FLASH_OPERATION_READ_ONCE);
-//}
-
-
+/******************************************************************************/
+/*!
+	Virtual
+*/
+/******************************************************************************/
 /*
  * creates copy of flash in buffer
  */
-bool Flash_OpenVirtual(Flash_T * p_flash, const uint8_t * p_physical, size_t sizeBytes)
-{
-	Queue_Clear(&p_flash->Queue);
-
-	if(Queue_EnqueueN(&p_flash->Queue, p_physical, sizeBytes))
-	{
-		p_flash->p_Write = p_flash;
-		p_flash->WriteIndex = 0U;
-		p_flash->WriteSize = sizeBytes;
-	}
-}
-
-/*
- * dest of physical flash location
- */
-bool Flash_WriteVirtual(Flash_T * p_flash, const uint8_t * p_physical, const uint8_t * p_src, size_t sizeBytes)
-{
-	uint32_t offset;
-
-	if (p_physical >= p_flash->p_Write && p_physical < p_flash->p_Write + p_flash->WriteSize)
-	{
-		offset = p_physical - p_flash->p_Write;
-		memcpy(&p_flash->CONFIG.QUEUE.P_BUFFER[offset], p_src, sizeBytes);
-//		for (uint32_t index = 0U; index < sizeBytes; index++)
+//void Flash_OpenVirtual(Flash_T * p_flash, const uint8_t * p_physical, size_t size)
+//{
+//	memcpy(&p_flash->Buffer[0U], p_physical, size);
+//
+//	p_flash->p_OpFlash = CalcOpCmdAddress(p_flash, p_physical);
+//	p_flash->OpIndex = 0U;
+//	p_flash->OpSize = size;
+//
+//}
+//
+///*
+// * dest of physical flash location
+// */
+//void Flash_WriteVirtual(Flash_T * p_flash, const uint8_t * p_physical, const uint8_t * p_src, size_t size)
+//{
+//	uint32_t offset;
+//
+//	if (p_physical >= p_flash->p_OpFlash && p_physical + size < p_flash->p_OpFlash + p_flash->OpSize)
+//	{
+//		offset = p_physical - p_flash->p_OpFlash;
+//		memcpy(&p_flash->Buffer[offset], p_src, size);
+//	}
+//}
+//
+//void Flash_ReadVirtual(Flash_T * p_flash, uint8_t * p_dest, const uint8_t * p_physical, size_t size)
+//{
+//	uint32_t offset;
+//
+//	if (p_physical >= p_flash->p_OpFlash && p_physical <= p_flash->p_OpFlash + p_flash->OpSize)
+//	{
+//		offset = p_physical - p_flash->p_OpFlash;
+//		memcpy(p_dest, &p_flash->Buffer[offset], size);
+//	}
+//}
+//
+//void Flash_CloseVirtual(Flash_T * p_flash)
+//{
+//	p_flash->State = FLASH_STATE_WRITE;
+//}
+//
+//bool Flash_CloseVirtual_Blocking(Flash_T * p_flash)
+//{
+//	bool isSuccess = false;
+//
+//	if(Flash_Erase_Blocking(p_flash, p_flash->p_OpFlash, p_flash->OpSize) == true)
+//	{
+//		if(Flash_Write_Blocking(p_flash, p_flash->p_OpFlash, &p_flash->Buffer[0U], p_flash->OpSize) == true)
 //		{
-////			p_flash->Buffer[offset + index] = p_src[index];
-//			((uint8_t *)p_flash->CONFIG.QUEUE.P_BUFFER)[offset + index] = p_src[index];
+//			if (ChecksumOp(p_flash) == true)
+//			{
+//				if(p_flash->IsVerifyEnable == true)
+//				{
+//					if (Flash_VerifyWrite_Blocking(p_flash, p_flash->p_OpFlash, &p_flash->Buffer[0U], p_flash->OpSize) == true)
+//					{
+//						isSuccess = true;
+//					}
+//				}
+//				else
+//				{
+//					isSuccess = true;
+//				}
+//			}
 //		}
-	}
-}
-
-bool Flash_ReadVirtual(Flash_T * p_flash, uint8_t * p_dest, const uint8_t * p_physical, size_t sizeBytes)
-{
-	uint32_t offset;
-
-	if (p_physical >= p_flash->p_Write && p_physical < p_flash->p_Write + p_flash->WriteSize)
-	{
-		offset = p_physical - p_flash->p_Write;
-		memcpy(p_dest, &p_flash->CONFIG.QUEUE.P_BUFFER[offset], sizeBytes);
-	}
-}
-
-bool Flash_CloseVirtual(Flash_T * p_flash)
-{
-	p_flash->State = FLASH_STATE_WRITE;
-}
-
-bool Flash_CloseVirtual_Blocking(Flash_T * p_flash)
-{
-	bool isSucess = false;
-
-	if(Flash_EraseBytes_Blocking(p_flash, p_flash->p_Write, p_flash->WriteSize) == true)
-	{
-		if(Flash_WriteBytes_Blocking(p_flash, p_flash->p_Write, &p_flash->Buffer, p_flash->WriteSize) == true)
-		{
-			if (Flash_GetCheckSumFlash(p_flash) == Flash_GetCheckSumBuffer(p_flash))
-			{
-				if(p_flash->IsVerifyEnable == true)
-				{
-					if (Flash_VerifyBytes_Blocking(p_flash, p_flash->p_Write, p_flash->WriteSize) == true)
-					{
-						isSucess = true;
-					}
-				}
-				else
-				{
-					isSucess = true;
-				}
-			}
-		}
-	}
-
-	return isSucess;
-}
+//	}
+//
+//	return isSuccess;
+//}

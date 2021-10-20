@@ -1,8 +1,8 @@
 //for elapsed time
 typedef struct
 {
-	const volatile uint32_t * p_Counter;
-	uint32_t CounterFreq;
+	const volatile uint32_t * P_COUNTER;
+	const uint32_t COUNTER_FREQ;
 
 	uint32_t Period;			// Number of timer ticks between updates
 	bool IsOneShot;
