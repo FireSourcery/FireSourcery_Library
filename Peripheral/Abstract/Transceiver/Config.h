@@ -28,8 +28,8 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_DATA_LINK_H
-#define CONFIG_DATA_LINK_H
+#ifndef CONFIG_TRANSCEIVER_H
+#define CONFIG_TRANSCEIVER_H
 
 
 

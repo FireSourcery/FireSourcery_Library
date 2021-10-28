@@ -90,7 +90,7 @@ static inline void __attribute__((weak)) HAL_Flash_StartCmdReadOnce(HAL_Flash_T 
 static inline void __attribute__((weak)) HAL_Flash_ReadOnceData(HAL_Flash_T *p_hal_flash, uint8_t * p_result){}
 __attribute__((weak)) static inline bool HAL_Flash_ReadErrorFlags(HAL_Flash_T *p_hal_flash){}
 __attribute__((weak)) static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T *p_hal_flash){}
-__attribute__((weak)) static inline bool HAL_Flash_ReadCompleteFlags(HAL_Flash_T * p_hal_flash){}
+__attribute__((weak)) static inline bool HAL_Flash_ReadCompleteFlag(HAL_Flash_T * p_hal_flash){}
 __attribute__((weak)) static inline bool HAL_Flash_ReadErrorVerifyFlag(HAL_Flash_T *p_hal_flash){}
 #endif
 

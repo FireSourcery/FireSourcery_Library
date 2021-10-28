@@ -425,7 +425,7 @@ static inline uint16_t Hall_GetRotorAngle(Hall_T * p_hall)
 
 static inline uint16_t Hall_ConvertRotorAngle_Degrees16(Hall_T * p_hall, uint8_t physicalSensors)
 {
-	const uint16_t DEGREES_TABLE[] =
+	static const uint16_t DEGREES_TABLE[] =
 	{
 		[HALL_ANGLE_CCW_30] 	= 5461U,
 		[HALL_ANGLE_CCW_90] 	= 16384U,

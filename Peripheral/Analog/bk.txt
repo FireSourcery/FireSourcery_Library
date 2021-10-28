@@ -1,0 +1,275 @@
+/*
+ * Virtual Channel
+ *
+ * Virtual indexes for ADC pin IDs. Scales 1 per application or pin set.
+ */
+//#ifdef CONFIG_ANALOG_VIRUTAL_CHANNEL_ENUM_USER_DEFINED
+///*
+// * User provide enum typedef
+// */
+///*
+//typedef enum
+//{
+//	ANALOG_VIRTUAL_CHANNEL_X,
+//	ANALOG_VIRTUAL_CHANNEL_Y,
+//	ANALOG_VIRTUAL_CHANNEL_Z,
+//	ANALOG_VIRTUAL_CHANNEL_A,
+//	ANALOG_VIRTUAL_CHANNEL_B,
+//	ANALOG_VIRTUAL_CHANNEL_C,
+//}
+//Analog_VirtualChannel_T;
+//*/
+///*
+// * Multi applications use overlapping enum values, or use uint8_t
+// */
+///*
+//typedef enum
+//{
+//	APP1_ANALOG_VIRTUAL_CHANNEL_X = 1,
+//	APP1_ANALOG_VIRTUAL_CHANNEL_Y = 2,
+//	APP1_ANALOG_VIRTUAL_CHANNEL_Z = 3,
+//	APP2_ANALOG_VIRTUAL_CHANNEL_A = 1,
+//	APP2_ANALOG_VIRTUAL_CHANNEL_B = 2,
+//	APP2_ANALOG_VIRTUAL_CHANNEL_C = 3,
+//}
+//Analog_VirtualChannel_T;
+//*/
+//#elif defined(CONFIG_ANALOG_VIRUTAL_CHANNEL_UINT8)
+//	typedef uint8_t Analog_VirtualChannel_T;
+//#endif
+
+
+
+
+///*!
+//	 @brief Public function to activate ADC.
+//
+//	 overwrite active conversion
+// */
+//void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+//{
+//	const Analog_VirtualChannel_T * p_virtualChannels;
+//	uint8_t activateChannelCount;
+//	Analog_Config_T activateConfig;
+//
+//	/* Convert from union to pointer for uniform processing */
+////	if (p_conversion->ChannelCount > 1U)
+////	{
+//		p_virtualChannels = p_conversion->p_VirtualChannels;
+////	}
+////	else
+////	{
+////		p_virtualChannels = &p_conversion->VirtualChannel;
+////	}
+//
+//	activateChannelCount = CalcAdcActiveChannelCountMax(p_analog, p_conversion->ChannelCount);
+//	activateConfig = CalcAdcActiveConfig(p_analog, p_conversion->Config, true);
+//
+//
+//#if  (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED))
+//	/*
+//	 * Multithreaded calling of Activate.
+//	 * Must implement Critical_Enter
+//	 *
+//	 * Higher priority thread may overwrite Conversion setup data before ADC ISR returns.
+//	 * e.g. must be implemented if calling from inside interrupts and main.
+//	 */
+//	Critical_Enter();
+//#elif defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
+//	/*
+//	 * Single threaded calling of Activate.
+//	 * Single threaded case, and calling thread is lower priority than ADC ISR, may implement ADC_DisableInterrupt instead of Critical_Enter global disable interrupt
+//	 *
+//	 * If calling thread is lower priority than ADC ISR, ADC ISR may occur after Conversion setup data is written by lower priority thread.
+//	 * In single threaded calling of Activate and calling thread priority is higher than ADC ISR, Activate will run to completion, overwriting the active conversion,
+//	 * Disable IRQ is not needed, however ADC ISR will still need Critical_Enter
+//	 */
+//	Analog_DisableInterrupt(p_analog);
+//#endif
+//
+//
+////#ifdef CONFIG_ANALOG_ADC_HW_N_ADC_FIXED
+////	for (uint8_t iAdc; iAdc < p_analog->AdcN_Count; iAdc++)
+////	{
+////		p_analog->p_ActiveConversionChannelIndexes[iAdc] = 0;
+////	}
+////	p_analog->ActiveM 			= p_analog->ActiveTotal / adcCount;
+////	p_analog->ActiveRemainder 	= p_analog->ActiveTotal % adcCount; /* ideally uses the result of the division. */
+////#endif
+//
+//	ActivateAdc(p_analog, p_virtualChannels, activateChannelCount, activateConfig);
+//	p_analog->p_ActiveConversion = p_conversion;
+//	p_analog->ActiveConversionChannelIndex = 0U;
+//#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER) && !defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
+//	p_analog->ActiveChannelCount = activateChannelCount;
+//#endif
+//
+//#if (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
+//	Critical_Exit();
+//#endif
+//
+//}
+
+/*
+ * Conversion Queue
+ * Dequeue from head
+ * Enqueue to tail
+ */
+// cannot overwrite
+//bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+//{
+//	uint8_t newTail;
+//	bool isSuccess;
+//
+//	Critical_Enter();
+//
+//	if (Analog_ReadConversionActive(p_analog) == true)
+//	{
+//		//if comelete occurs here conversion will not auto dequeue
+//
+//		newTail = (p_analog->ConversionQueueTail + 1U) % p_analog->ConversionQueueLength;
+//
+//		if (newTail != p_analog->ConversionQueueHead)
+//		{
+//			p_analog->pp_ConversionQueue[p_analog->ConversionQueueTail] = p_conversion;
+//			p_analog->ConversionQueueTail = newTail;
+//			isSuccess = true;
+//		}
+//		else
+//		{
+//			isSuccess = false;
+//		}
+//
+//	}
+//	else
+//	{
+//		Analog_ActivateConversion(p_analog, p_conversion);
+//		isSuccess = true;
+//	}
+//
+//	Critical_Exit();
+//
+//	return isSuccess;
+//}
+
+///*
+// Dequeue if no conversions are active. Active conversion will automatically dequeue next conversion
+// */
+//bool Analog_DequeueConversion(Analog_T * p_analog)
+//{
+//	bool isSuccess;
+//
+//	Critical_Enter();
+//
+//	if (Analog_ReadConversionActive(p_analog) == false)
+//	{
+//		if (p_analog->ConversionQueueHead != p_analog->ConversionQueueTail)
+//		{
+//			Analog_ActivateConversion(p_analog, p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead]);
+//			p_analog->ConversionQueueHead = (p_analog->ConversionQueueHead + 1U) % p_analog->ConversionQueueLength;
+//			isSuccess = true;
+//		}
+//		else
+//		{
+//			isSuccess = false;
+//		}
+//	}
+//	else
+//	{
+//		isSuccess = false;
+//	}
+//
+//	Critical_Exit();
+//
+//	return isSuccess;
+//}
+//
+////can overwrite last item i.e tail of queue
+//void Analog_EnqueueFrontConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+//{
+//	Critical_Enter();
+//
+//	if (Analog_ReadConversionActive(p_analog) == true)
+//	{
+//		if (p_analog->ConversionQueueHead < 1U)
+//		{
+//			p_analog->ConversionQueueHead = p_analog->ConversionQueueLength - 1U;
+//		}
+//		else
+//		{
+//			p_analog->ConversionQueueHead--;
+//		}
+//
+//		p_analog->pp_ConversionQueue[p_analog->ConversionQueueHead] = p_conversion;
+//
+//	}
+//	else
+//	{
+//		Analog_ActivateConversion(p_analog, p_conversion);
+//	}
+//
+//	Critical_Exit();
+//}
+
+
+ /*!
+	 @brief Initialize struct object
+ */
+//void Analog_Init
+//(
+//	Analog_T * p_analog,
+//	const void * p_adcMap,
+//#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+//	uint8_t nAdc,
+//#endif
+//#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+//	uint8_t mHwBufferLength,
+//#endif
+//	uint8_t virtualChannelCount,
+//	const adcpin_t * p_virtualChannelMapPins,
+//#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
+//	const uint8_t * p_virtualChannelMapAdcs,
+//	//	volatile uint8_t * p_activeChannelIndexesBuffer,
+//#endif
+//	volatile adcdata_t * p_virtualChannelMapResultsBuffer,
+//	const Analog_Conversion_T * volatile * pp_conversionQueue,
+//	uint8_t conversionQueueLength
+//)
+//{
+//
+//#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
+//	p_analog->p_Adc = (HAL_ADC_T *) p_adcMap;
+//#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+//	if (nAdc > 1U)
+//	{
+//		p_analog->pp_Adcs = (HAL_ADC_T (* const (*))) p_adcMap;
+//	}
+//	else
+//	{
+//		p_analog->p_Adc = (HAL_ADC_T *) p_adcMap;
+//	}
+//#endif
+//
+//#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+//	p_analog->AdcN_Count 	= nAdc;
+//#endif
+//
+//#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+//	p_analog->AdcM_Buffer 	= mHwBufferLength;
+//#endif
+//
+//	p_analog->p_VirtualChannelMapPins 	= p_virtualChannelMapPins;
+//	p_analog->p_VirtualChannelResults 	= p_virtualChannelMapResultsBuffer;
+//	p_analog->ChannelCount				= virtualChannelCount;
+//
+//#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
+//	p_analog->p_MapChannelAdcs = p_virtualChannelMapAdcs;
+//#endif
+//
+//	p_analog->pp_ConversionQueue = pp_conversionQueue;
+//	p_analog->ConversionQueueLength = conversionQueueLength;
+//	p_analog->ConversionQueueHead = 0U;
+//	p_analog->ConversionQueueTail = 0U;
+//
+//	Analog_Dectivate(p_analog);
+//}

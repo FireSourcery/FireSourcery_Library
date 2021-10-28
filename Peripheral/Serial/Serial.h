@@ -145,29 +145,19 @@ static inline void Serial_TxData_ISR(Serial_T * p_serial)
 			HAL_Serial_WriteTxChar(p_serial->CONFIG.P_HAL_SERIAL, txChar);
 		}
 	}
-
-
 }
 
 static inline void Serial_PollRestartRxIsr(const Serial_T * p_serial)
 {
-	if ((Queue_GetIsFull(&p_serial->RxQueue) == false) && (HAL_Serial_ReadRxFullCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U))
+	if ((HAL_Serial_ReadRxOverrun(p_serial->CONFIG.P_HAL_SERIAL) == true) && (Queue_GetIsFull(&p_serial->RxQueue) == false))
 	{
 		HAL_Serial_ClearRxErrors(p_serial->CONFIG.P_HAL_SERIAL);
 		HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 	}
-
 }
 
-static inline uint32_t Serial_GetRxFullCount(Serial_T * p_serial)
-{
-	return Queue_GetFullCount(&p_serial->RxQueue);
-}
-
-static inline uint32_t Serial_GetTxEmptyCount(Serial_T * p_serial)
-{
-	return Queue_GetEmptyCount(&p_serial->TxQueue);
-}
+static inline uint32_t Serial_GetRxFullCount(Serial_T * p_serial)	{return Queue_GetFullCount(&p_serial->RxQueue);}
+static inline uint32_t Serial_GetTxEmptyCount(Serial_T * p_serial)	{return Queue_GetEmptyCount(&p_serial->TxQueue);}
 
 #elif defined(CONFIG_SERIAL_QUEUE_INTERNAL)
 static inline bool IsTxBufferEmpty(Serial_T * p_serial)	{return (p_serial->TxBufferHead == p_serial->TxBufferTail);};
@@ -244,25 +234,10 @@ static inline uint32_t Serial_GetTxEmpty(Serial_T * p_serial)
 }
 #endif
 
-static inline void Serial_EnableTx(const Serial_T * p_serial)
-{
-	HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-}
-
-static inline void Serial_DisableTx(const Serial_T * p_serial)
-{
-	HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-}
-
-static inline void Serial_EnableRx(const Serial_T * p_serial)
-{
-	HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-}
-
-static inline void Serial_DisableRx(const Serial_T * p_serial)
-{
-	HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-}
+static inline void Serial_EnableTxIsr(const Serial_T * p_serial)	{HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);}
+static inline void Serial_DisableTxIsr(const Serial_T * p_serial)	{HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);}
+static inline void Serial_EnableRx(const Serial_T * p_serial)		{HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);}
+static inline void Serial_DisableRx(const Serial_T * p_serial)		{HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);}
 
 extern bool Serial_SendChar(Serial_T * p_serial, uint8_t txChar);
 extern bool Serial_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar);

@@ -83,10 +83,7 @@ static inline int32_t MaxLeftShiftDivide(int32_t factor, int32_t divisor, uint8_
 					break;
 				}
 			}
-
-
 		}
-
 	}
 
 	return result;

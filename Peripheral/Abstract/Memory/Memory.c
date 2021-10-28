@@ -1,4 +1,5 @@
-/**************************************************************************/
+
+/*******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,44 +20,22 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
 /*!
-    @file 	Config.h
+    @file
     @author FireSoucery
     @brief
     @version V0
 */
-/**************************************************************************/
-#ifndef CONFIG_FLASH_H
-#define CONFIG_FLASH_H
+/*******************************************************************************/
+#include "Memory.h"
 
-#ifdef CONFIG_FLASH_HW_OP_ADDRESS_RELATIVE
+//#include "System/Queue/Queue.h"
 
-#elif defined(CONFIG_FLASH_HW_OP_ADDRESS_ABSOLUTE)
+#include <stdint.h>
+#include <stdbool.h>
 
-#else
-	#define CONFIG_FLASH_HW_OP_ADDRESS_ABSOLUTE
-#endif
 
-#ifdef CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
 
-#elif defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
 
-#else
-	#define CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
-#endif
-
-#ifdef CONFIG_FLASH_PARTITION_COUNT
-
-#else
-	#define CONFIG_FLASH_PARTITION_COUNT 1U
-#endif
-
-#ifdef CONFIG_FLASH_BUFFER_SIZE
-
-#else
-	#define CONFIG_FLASH_BUFFER_SIZE 64U
-#endif
-
-#endif

@@ -84,6 +84,11 @@ static inline uint8_t HAL_Serial_ReadRxFullCount(const HAL_Serial_T * p_uartRegM
 	return HAL_Serial_ReadRxFifoFull(p_uartRegMap);
 }
 
+static inline bool HAL_Serial_ReadRxOverrun(HAL_Serial_T * p_uartRegMap)
+{
+	return ((p_uartRegMap->STAT & LPUART_STAT_OR_MASK) != 0U) ? true : false;
+}
+
 static inline void HAL_Serial_ClearRxErrors(HAL_Serial_T * p_uartRegMap)
 {
 	p_uartRegMap->STAT = 0xC01FC000U; //FEATURE_LPUART_STAT_REG_FLAGS_MASK;
@@ -203,7 +208,7 @@ static inline void HAL_Serial_ConfigBaudRate(HAL_Serial_T * p_uartRegMap, uint32
 	HAL_Serial_WriteRxSwitch(p_uartRegMap, true);
 }
 
-static inline void HAL_Serial_InitDefault(HAL_Serial_T * p_uartRegMap)
+static inline void HAL_Serial_Init(HAL_Serial_T * p_uartRegMap)
 {
     /* Clear the error/interrupt flags */
 	p_uartRegMap->STAT = 0xC01FC000U; //FEATURE_LPUART_STAT_REG_FLAGS_MASK;

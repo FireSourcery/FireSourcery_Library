@@ -58,14 +58,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
 /*
- * Compile time define size of data size. Should not need to change at run time.
- * transient in function call, can use uint32. is this needed?
+ * Software side data storage format
+ * User may implement app side buffer size larger than register size
  */
-#ifdef CONFIG_ANALOG_ADC_RESULT_REGISTER_8BIT
-	typedef volatile const uint8_t adcreg_t;
-#elif defined(CONFIG_ANALOG_ADC_RESULT_REGISTER_16BIT)
-	typedef volatile const uint16_t adcreg_t;
+#ifdef CONFIG_ANALOG_ADC_RESULT_DATA_8BIT
+	typedef uint8_t adcdata_t;
+#elif defined(CONFIG_ANALOG_ADC_RESULT_DATA_16BIT)
+	typedef uint16_t analog_adcdata_t;
 #endif
 
 /*
@@ -77,58 +78,11 @@
 #elif defined(CONFIG_ANALOG_ADC_PIN_CHANNEL_UINT16)
 	typedef const  uint16_t adcpin_t;
 #elif defined(CONFIG_ANALOG_ADC_PIN_CHANNEL_UINT32)
-	typedef const uint32_t adcpin_t;
+	typedef const uint32_t analog_adcpin_t;
 #endif
 
-/*
- * Software side data storage format
- * User may implement app side buffer size larger than register size
- */
-#ifdef CONFIG_ANALOG_ADC_RESULT_DATA_8BIT
-	typedef uint8_t adcdata_t;
-#elif defined(CONFIG_ANALOG_ADC_RESULT_DATA_16BIT)
-	typedef uint16_t adcdata_t;
-#endif
 
-/*
- * Virtual Channel
- *
- * Virtual indexes for ADC pin IDs. Scales 1 per application or pin set.
- */
-#ifdef CONFIG_ANALOG_VIRUTAL_CHANNEL_ENUM_USER_DEFINED
-/*
- * User provide enum typedef
- */
-/*
-typedef enum
-{
-	ANALOG_VIRTUAL_CHANNEL_X,
-	ANALOG_VIRTUAL_CHANNEL_Y,
-	ANALOG_VIRTUAL_CHANNEL_Z,
-	ANALOG_VIRTUAL_CHANNEL_A,
-	ANALOG_VIRTUAL_CHANNEL_B,
-	ANALOG_VIRTUAL_CHANNEL_C,
-}
-Analog_VirtualChannel_T;
-*/
-/*
- * Multi applications use overlapping enum values, or use uint8_t
- */
-/*
-typedef enum
-{
-	APP1_ANALOG_VIRTUAL_CHANNEL_X = 1,
-	APP1_ANALOG_VIRTUAL_CHANNEL_Y = 2,
-	APP1_ANALOG_VIRTUAL_CHANNEL_Z = 3,
-	APP2_ANALOG_VIRTUAL_CHANNEL_A = 1,
-	APP2_ANALOG_VIRTUAL_CHANNEL_B = 2,
-	APP2_ANALOG_VIRTUAL_CHANNEL_C = 3,
-}
-Analog_VirtualChannel_T;
-*/
-#elif defined(CONFIG_ANALOG_VIRUTAL_CHANNEL_UINT8)
-	typedef uint8_t Analog_VirtualChannel_T;
-#endif
+typedef uint8_t analog_channel_t;
 
 //typedef enum
 //{
@@ -148,21 +102,20 @@ Analog_VirtualChannel_T;
 typedef struct Analog_Config_Tag
 {
 	uint32_t UseConfig 					:1; /* config == zero, use default config */ //change check defualt first
-//	uint32_t IsActive 					:1;
-	uint32_t UseHwTriggerPerChannel 	:1;
+	uint32_t UseHwTriggerPerChannel 	:1; /* Per Channel if both are set*/
 	uint32_t UseHwTriggerPerConversion 	:1;
-	uint32_t UseInterrrupt 				:1;
+	uint32_t UseInterrupt 				:1;
 	uint32_t UseDma 					:1;
 /*
  * bool UseContinuousConversion;
  * uniform for future update
  */
-} Analog_Config_T;
+} Analog_ConversionOptions_T;
 
 typedef const struct Analog_ConversionChannel_Tag
 {
-	Analog_VirtualChannel_T VirtualChannel;
-	void (*OnComplete)(volatile void * p_userData);
+	const analog_channel_t CHANNEL;
+	void (*const ON_COMPLETE)(volatile void * p_userData); /* On each channel complete, runs first adc isr, depends on adc hw fifo length */
 //	volatile void *p_OnCompleteUserData;
 }  Analog_ConversionChannel_T;
 
@@ -176,42 +129,42 @@ typedef const struct Analog_ConversionChannel_Tag
  */
 typedef const struct Analog_Conversion_Tag
 {
-	/*!
-	 * MISRA violation.
-	 *
-	 * Use of unions. Share memory space.
-	 *
-	 * Rationale: allows clearer definition of Channel within struct for cases of single Channel
-	 * ChannelCount used to disambiguate union.
-	 *
-	 * Content will be read in the same form it is written.
-	 */
-//	union
-//	{
-		const 	Analog_VirtualChannel_T * p_VirtualChannels;
-//				Analog_VirtualChannel_T VirtualChannel;
-//	};
-
-	void (*(*p_OnCompleteChannels))(volatile void * p_userData); 	/* On each channel complete, runs first adc isr, depends on adc hw fifo length */
-	uint8_t ChannelCount;
-
-	Analog_Config_T Config; //per conversion sample config. should this be pointer to allow run time modification of config, while struct is const,
-	void (*OnCompleteConversion)(volatile void * p_userData); 		/* On conversion group complete */
-	volatile void *p_OnCompleteUserData;
-
+	const Analog_ConversionChannel_T * P_CHANNELS; /* Virtual Index */
+	const uint8_t CHANNEL_COUNT;
+	const Analog_ConversionOptions_T OPTIONS; //per conversion sample config. should this be pointer to allow run time modification of config, while struct is const,
+	void (* const ON_COMPLETE)(volatile void * p_userData); 		/* On conversion group complete */
 	//uint8_t Priority
 	//uint8_t RepeatCount;
 	//const Analog_VirtualChannel_T Channels[];	use/abuse last element array, for ease of definition? should follow return arg pointer or return value pattern?
 }  Analog_Conversion_T;
 
+typedef struct
+{
+//	const Analog_ConversionChannel_T * p_ConversionChannels;
+//	const uint8_t ChannelCount;
+	Analog_ConversionChannel_T Channel;
+	analog_adcpin_t Pin;
+	volatile void * p_OnCompleteContext;
+}  Analog_ConversionChannelActive_T;
+
+typedef struct
+{
+	const Analog_Conversion_T * p_Conversion;
+	Analog_ConversionOptions_T Options;
+	volatile void * p_OnCompleteContext;
+}  Analog_ConversionActive_T; //conversion queue entry
+
+
+
 
 typedef const struct
 {
-	const adcpin_t PIN;
+	const analog_adcpin_t PIN;
 #if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
-	const HAL_ADC_T * P_ADC;
+	HAL_ADC_T * const P_HAL_ADC;
 #endif
-	volatile adcdata_t * const P_RESULT;
+	//	volatile void *p_OnCompleteUserData;
+//	volatile analog_adcdata_t * const P_RESULT;
 } Analog_ChannelMapEntry_T;
 
 
@@ -219,9 +172,9 @@ typedef const struct
 {
 	union
 	{
-		HAL_ADC_T * P_ADC;						/*!< 1 ADC: pointer to ADC register map base address */
+		HAL_ADC_T * P_HAL_ADC;						/*!< 1 ADC: pointer to ADC register map base address */
 #if defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-		HAL_ADC_T (* const (* const PP_ADCS)); 	/*!< N ADC: pointer to array of pointers to ADC register map base addresses */
+		HAL_ADC_T (* const (* const PP_HAL_ADCS)); 	/*!< N ADC: pointer to array of pointers to ADC register map base addresses */
 #endif
 	};
 
@@ -232,14 +185,15 @@ typedef const struct
 	const uint8_t ADC_BUFFER_LENGTH;
 #endif
 
-//	const adcpin_t * P_VIRTUAL_CHANNEL_MAP_PINS;
 //#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
-//	const uint8_t VIRTUAL_CHANNEL_MAP_ADCS;
-//	//	volatile uint8_t * P_ACTIVE_CHANNEL_INDEXES_BUFFER;
+//	//	volatile uint8_t * P_ACTIVE_PINS_BUFFER;
 //#endif
-//	volatile adcdata_t * const P_VIRTUAL_CHANNEL_MAP_RESULTS_BUFFER;
+	volatile analog_adcdata_t * const P_CHANNEL_RESULTS_BUFFER;
+//	volatile analog_adcdata_t * const P_CHANNEL_SUM_BUFFER;
 	const Analog_ChannelMapEntry_T * P_CHANNEL_MAP;
 	const uint8_t CHANNEL_COUNT;
+
+	//channel conversion offset
 } Analog_Config_T;
 
 /*
@@ -249,6 +203,8 @@ typedef const struct
  */
 typedef struct
 {
+	const Analog_Config_T CONFIG;
+
 	/*!
 	 * MISRA violation.
 	 *
@@ -259,11 +215,11 @@ typedef struct
 	 *
 	 * Content will be read in the same form it is written.
 	 */
-	union
-	{
-		HAL_ADC_T * p_Adc;					/*!< 1 ADC: pointer to ADC register map base address */
-		HAL_ADC_T (* const (* pp_Adcs)); 	/*!< N ADC: pointer to array of pointers to ADC register map base addresses */
-	};
+//	union
+//	{
+//		HAL_ADC_T * p_Adc;					/*!< 1 ADC: pointer to ADC register map base address */
+//		HAL_ADC_T (* const (* pp_Adcs)); 	/*!< N ADC: pointer to array of pointers to ADC register map base addresses */
+//	};
 
 	/*
 	 * N ADC use inheritance vs preprocessor compile time directive vs super class
@@ -279,12 +235,12 @@ typedef struct
 	 * is runtime polymorphism needed?
 	 */
 
-#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	uint8_t AdcN_Count;  	/*!< Adc N Count */ 	/* count should be per instance define in case of multiple n adc groups with different adc count */
-#endif
-#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	uint8_t AdcM_Buffer; /*!< Adc M Hw Buffer Length */ 	/* use for hw queue implementation, run time define, in case buffer are of different sizes? use pointer to array */
-#endif
+//#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+//	uint8_t AdcN_Count;  	/*!< Adc N Count */ 	/* count should be per instance define in case of multiple n adc groups with different adc count */
+//#endif
+//#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+//	uint8_t AdcM_Buffer; /*!< Adc M Hw Buffer Length */ 	/* use for hw queue implementation, run time define, in case buffer are of different sizes? use pointer to array */
+//#endif
 
 
 	/*
@@ -309,31 +265,41 @@ typedef struct
 	 };
 	 */
 
-//	const adcpin_t * p_VirtualChannelMap; //swapable map struct
-	const adcpin_t * p_VirtualChannelMapPins; /*!< Channel Pins array, virtual channel index. Translates virtual channels to ADC pin channels */
-#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
-	const uint8_t * p_VirtualChannelMapAdcs; 	/*! for case of fixed N ADCs Fixed channels */
-#endif
-	volatile adcdata_t * p_VirtualChannelResults; 	/*!< Persistent ADC results buffer, virtual channel index.  */
-	//volatile uint32_t * p_VirtualChannelResultsBuffer;	/*!< sum if multiple conversions are required */
-	uint8_t ChannelCount; /*!< VirtualChannelCount p_VirtualChannelResults and p_VirtualChannelMap length / boundary check */
 
+
+
+//	const adcpin_t * p_VirtualChannelMapPins; /*!< Channel Pins array, virtual channel index. Translates virtual channels to ADC pin channels */
+//#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
+//	const uint8_t * p_VirtualChannelMapAdcs; 	/*! for case of fixed N ADCs Fixed channels */
+//#endif
+//	volatile adcdata_t * p_VirtualChannelResults; 	/*!< Persistent ADC results buffer, virtual channel index.  */
+//	//volatile uint32_t * p_VirtualChannelResultsBuffer;	/*!< sum if multiple conversions are required */
+//	uint8_t ChannelCount; /*!< VirtualChannelCount p_VirtualChannelResults and p_VirtualChannelMap length / boundary check */
+
+	Queue_T ChannelQueue;
+
+	Queue_T ConverisionQueue;
 
 	//virtualized n_adc mode must wait for all adcs to finish before dequeue
-	const Analog_Conversion_T * volatile * pp_ConversionQueue;
-	uint8_t ConversionQueueLength;
-	volatile uint8_t ConversionQueueHead;
-	volatile uint8_t ConversionQueueTail;
+//	const Analog_Conversion_T * volatile * pp_ConversionQueue;
+//	uint8_t ConversionQueueLength;
+//	volatile uint8_t ConversionQueueHead;
+//	volatile uint8_t ConversionQueueTail;
 	// callback data set per conversion
-
 
 	Analog_Config_T DefaultConfig;	/*   Default config when conversion does not specify */
 //	volatile Analog_Config_T ActiveConfig; //not needed unless it is checked on ADC return
 	//	* pp_DefaultCallbackData
 
-	const Analog_Conversion_T * volatile p_ActiveConversion; 	/*! Selected conversion group in process */
-	volatile uint8_t ActiveConversionChannelIndex; 				/*! Channel index of Selected conversion group */
+	/* need to copy channels only if n ADCs none multi muxed */
+	const Analog_ConversionChannelActive_T * volatile p_ActiveConversionChannels; 	/*! Selected conversion group in process */
+	volatile uint8_t ActiveChannelCount; 	/*! Hw fifo only. Number of active channels being processed by ADC */
 
+
+
+	const Analog_ConversionActive_T * volatile p_ActiveConversion; 	/*! Selected conversion group in process */
+	volatile uint8_t ActiveConversionCount;
+	volatile uint8_t ActiveConversionChannelIndex; 				/*! Channel index of Selected conversion group */
 
 #if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER) && !defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
 	//#ifdef CONFIG_ANALOG_ADC_HW_CHANNELS_N_DEMUX
@@ -345,7 +311,6 @@ typedef struct
 //	uint8_t ActiveChannelMax; 		//store for run time optimization, preprocessor non single conversion case
 	//#endif
 #endif
-
 
 	//	bool ActiveConversionComplete; //use status or oncomplete fp?
 
@@ -367,6 +332,226 @@ typedef struct
 
 } Analog_T;
 
+
+
+
+/*!
+	@brief Fill 1 ADCs
+ */
+static inline uint8_t ActivateAdc_Single(Analog_T * p_analog, const Analog_ConversionChannel_T * p_channels, uint8_t activateChannelCount, Analog_ConversionOptions_T options)
+{
+	uint8_t channelCount = CalcAdcActiveChannelCountMax(p_analog, activateChannelCount);
+	analog_channel_t channel;
+	uint32_t pin;
+
+	//deactivate if needed
+	//perchannel is persw buffer
+	if (options.UseHwTriggerPerChannel || options.UseHwTriggerPerConversion)
+	{
+		HAL_ADC_WriteHwTriggerState(p_analog->CONFIG.P_HAL_ADC, true);
+	}
+	else
+	{
+		HAL_ADC_WriteHwTriggerState(p_analog->CONFIG.P_HAL_ADC, false);
+	}
+
+	for (uint8_t iChannelIndex = 0U; iChannelIndex < channelCount; iChannelIndex++)
+	{
+		channel = p_channels[iChannelIndex].CHANNEL;
+		pin = p_analog->CONFIG.P_CHANNEL_MAP->PIN[channel];
+		/*
+		 * iVirtualChannel should be less than p_analog->VirtualChannelMapLength
+		 * No need to boundary check if compile time const
+		 */
+//			p_analog->p_MapChannelResults[iVirtualChannel] = 0U;
+		if (iChannelIndex < channelCount - 1U)
+		{
+			HAL_ADC_WritePinSelect(p_analog->CONFIG.P_HAL_ADC, pin);
+		}
+		else /* (iChannel + iAdc == activeChannelCount - 1) */
+		{
+			HAL_ADC_WriteLast(p_analog->CONFIG.P_HAL_ADC, pin); /* enable interrupt of last ADC written */
+			HAL_ADC_Activate(p_analog->CONFIG.P_HAL_ADC);
+		}
+	}
+
+	return channelCount;
+}
+
+
+/*!
+	@brief Fill N ADCs "round robin"
+	@param[in] pp_adcMaps			read-only
+	@param[in] p_virtualChannels 	offset by p_analog->ActiveConversionChannelIndex
+
+	Only when channel can demux to any ADC
+
+	Fill N ADCs "round robin" as follows:
+
+	const uint8_t ANALOG_CONVERSION_CHANNELS[] =
+	{
+		ANALOG_VIRTUAL_CHANNEL_A, 		<- ADC0 Buffer0
+		ANALOG_VIRTUAL_CHANNEL_B, 		<- ADC1 Buffer0
+		ANALOG_VIRTUAL_CHANNEL_C, 		<- ADCN Buffer0
+		ANALOG_VIRTUAL_CHANNEL_D,	 	<- ADC0 Buffer1
+	};
+
+	Compiler may able to optimize when arguments are constant literals
+ */
+static inline void ActivateAdc_NMultiMuxed
+(
+	Analog_T * p_analog,
+	HAL_ADC_T (* const (* pp_adcMaps)),
+	uint8_t nAdc,
+	const Analog_VirtualChannel_T * p_virtualChannels,
+	uint8_t channelCount,
+	Analog_Config_T config
+)
+{
+	Analog_VirtualChannel_T iVirtualChannel;
+
+	for (uint8_t iAdc = 0U; iAdc < nAdc; iAdc++)
+	{
+		//deactivate if needed
+		if (config.UseHwTriggerPerChannel || config.UseHwTriggerPerConversion)
+		{
+			HAL_ADC_WriteHwTriggerState(pp_adcMaps[iAdc], 1U);
+		}
+		else
+		{
+			HAL_ADC_WriteHwTriggerState(pp_adcMaps[iAdc], 0U);
+		}
+	}
+
+	for (uint8_t iChannel = 0U; iChannel < channelCount; iChannel += nAdc)
+	{
+		for (uint8_t iAdc = 0U; iAdc < nAdc; iAdc++)
+		{
+			iVirtualChannel = p_virtualChannels[iChannel + iAdc];
+			/*
+			 * iVirtualChannel should be less than p_analog->VirtualChannelMapLength
+			 * Boundary check if needed
+			 * if (iVirtualChannel < p_analog->VirtualChannelMapLength)
+			 */
+//			p_analog->p_MapChannelResults[iVirtualChannel] = 0U;
+
+			if (iChannel + iAdc < channelCount - 1U)
+			{
+				HAL_ADC_WritePinSelect(pp_adcMaps[iAdc], (uint32_t) p_analog->p_VirtualChannelMapPins[iVirtualChannel]);
+			}
+			else /* (iChannel + iAdc == activeChannelCount - 1) */
+			{
+				HAL_ADC_WriteLast(pp_adcMaps[iAdc], (uint32_t) p_analog->p_VirtualChannelMapPins[iVirtualChannel]); /* enable interrupt of last ADC written */
+				HAL_ADC_Activate(pp_adcMaps[iAdc]);
+				break; 		/* iChannel += nAdc should also break from outer loop */
+			}
+
+		}
+	}
+}
+
+
+
+
+
+/*!
+	@brief 	Start the selected segment channels
+ 	 	 	Share by public Analog_ActivateConversion, and Analog_CaptureResults
+ */
+static inline void ActivateAdcs
+(
+	Analog_T * p_analog,
+	const Analog_VirtualChannel_T * p_virtualChannels,
+	uint8_t channelCount,
+	Analog_Config_T config
+)
+{
+/* Channel Demux N ADC  */
+#ifdef CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
+	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
+	(void)channelCount;
+	ActivateAdc_NMultiMuxed(p_analog, &p_analog->CONFIG.P_HAL_ADC, 1U, 				p_virtualChannels, 1U, config);
+//	ActivateAdc_Single(p_analog, p_virtualChannels, 1U);
+#elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
+	/* * Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel must be in same buffer */
+	ActivateAdc_NMultiMuxed(p_analog, &p_analog->CONFIG.P_HAL_ADC, 1U, 				p_virtualChannels, channelCount, config);
+//	ActivateAdc_Single(p_analog, p_virtualChannels, activateChannelCount);
+#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER)
+	/* Case N ADC 1 Buffer:  ActiveChannelCount <= N_ADC Count */
+	ActivateAdc_NMultiMuxed(p_analog, p_analog->pp_Adcs, p_analog->AdcN_Count, 	p_virtualChannels, channelCount, config);
+//	ActivateAdc_NFixed()
+#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+	/* Case N ADC M Buffer: ActiveChannelCount <= N_ADC Count * M_Buffer Length */
+	ActivateAdc_NMultiMuxed(p_analog, p_analog->pp_Adcs, p_analog->AdcN_Count, 	p_virtualChannels, channelCount, config);
+//	ActivateAdc_NFixed()
+#endif
+}
+
+/*!
+	@brief 	Get Active channel count called before ActivateConversion()
+
+			Share by public Analog_ActivateConversion, and Analog_CaptureResults
+ */
+static inline uint8_t CalcAdcActiveChannelCountMax
+(
+	Analog_T * p_analog,
+	uint8_t remainingChannelCount
+)
+{
+	uint8_t maxChannelCount;
+
+	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
+#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
+	(void)p_analog;
+	(void)remainingChannelCount;
+	maxChannelCount = 1U;
+#elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
+	/* Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel must be in same buffer */
+	maxChannelCount = p_analog->AdcM_Buffer;
+#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER)
+	/* Case N ADC 1 Buffer:  ActiveChannelCount <= N_ADC Count */
+	maxChannelCount = p_analog->AdcN_Count;
+#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+	/* Case N ADC M Buffer: ActiveChannelCount <= N_ADC Count * M_Buffer Length */
+	maxChannelCount = p_analog->AdcN_Count * p_analog->AdcM_Buffer;
+#endif
+
+#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER) && !defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
+	if (remainingChannelCount < maxChannelCount)
+	{
+		maxChannelCount = remainingChannelCount;
+	}
+#endif
+
+	return maxChannelCount;
+}
+
+
+static inline Analog_Config_T CalcAdcActiveConfig
+(
+	Analog_T * p_analog,
+	Analog_Config_T conversionConfig,
+	bool isFirstActivation
+)
+{
+	Analog_Config_T config;
+
+	if (conversionConfig.UseConfig == 1U)
+	{
+		config = conversionConfig;
+	}
+	else
+	{
+		config = p_analog->DefaultConfig;
+	}
+
+	if (isFirstActivation == false)
+	{
+		config.UseHwTriggerPerConversion = 0;
+	}
+
+	return config;
+}
 
 
 /*!
@@ -404,27 +589,14 @@ static inline void CaptureAdcResults_NMultiMuxed
 	}
 }
 
-
-//static inline void CaptureAdcResults_NFixed
-//(
-//	const Analog_T * p_analog,
-//	HAL_ADC_T (* const (* pp_adcMaps)),
-//	uint8_t nAdc,
-//	const Analog_VirtualChannel_T * p_virtualChannels,
-//	uint8_t activeChannelCount
-//)
-//{
-//
-//}
-
 static inline void CaptureAdcResults(const Analog_T * p_analog,	const Analog_VirtualChannel_T * p_virtualChannels)
 {
 #ifdef CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
 	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
-	CaptureAdcResults_NMultiMuxed(p_analog, &p_analog->p_Adc, 1U, p_virtualChannels, 1U);
+	CaptureAdcResults_NMultiMuxed(p_analog, &p_analog->CONFIG.P_HAL_ADC, 1U, p_virtualChannels, 1U);
 #elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
 	/* Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel is in the same buffer */
-	CaptureAdcResults_NMultiMuxed(p_analog, &p_analog->p_Adc, 1U, 	p_virtualChannels, p_analog->ActiveChannelCount);
+	CaptureAdcResults_NMultiMuxed(p_analog, &p_analog->CONFIG.P_HAL_ADC, 1U, 	p_virtualChannels, p_analog->ActiveChannelCount);
 #elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER)
 	/* Case N ADC 1 Buffer: ActiveChannelCount <= N_ADC Count */
 	CaptureAdcResults_NMultiMuxed(p_analog, p_analog->pp_Adcs, p_analog->AdcN_Count, p_virtualChannels, p_analog->ActiveChannelCount);
@@ -441,7 +613,6 @@ static inline void CaptureAdcResults(const Analog_T * p_analog,	const Analog_Vir
 //
 
 //}
-
 
 /*!
 	@brief	Capture ADC results, when conversion is complete.
@@ -596,174 +767,66 @@ static inline void Analog_CaptureResults_ISR(Analog_T * p_analog)
 }
 
 
-/*!
-	@brief	Compiler may optimize when arguments are constant literals
- */
-static inline void PollAdcResults(Analog_T * p_analog, 	HAL_ADC_T (* const (* pp_adcMaps)), uint8_t nAdc)
-{
-	bool capture;
-
-	for (uint8_t iAdc = 0U; iAdc < nAdc; iAdc++)
-	{
-		capture = HAL_ADC_ReadConversionCompleteFlag(pp_adcMaps[iAdc]);
-
-		if (capture == false)
-		{
-			break;
-		}
-	}
-
-	if (capture == true)
-	{
-		Analog_CaptureResults_IO(p_analog);
-	}
-}
+///*!
+//	@brief	Compiler may optimize when arguments are constant literals
+// */
+//static inline void PollAdcResults(Analog_T * p_analog, 	HAL_ADC_T (* const (* pp_adcMaps)), uint8_t nAdc)
+//{
+//	bool capture;
+//
+//	for (uint8_t iAdc = 0U; iAdc < nAdc; iAdc++)
+//	{
+//		capture = HAL_ADC_ReadConversionCompleteFlag(pp_adcMaps[iAdc]);
+//
+//		if (capture == false)
+//		{
+//			break;
+//		}
+//	}
+//
+//	if (capture == true)
+//	{
+//		Analog_CaptureResults(p_analog);
+//	}
+//}
 
 /*!
 	@brief	Capture ADC results, by polling status register, if ISR is unavailable
  */
-static inline void Analog_PollResults_IO(Analog_T * p_analog)
+static inline void Analog_PollCaptureResults(Analog_T * p_analog)
 {
-#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-	PollAdcResults(p_analog, &p_analog->p_Adc, 1U);
-#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	PollAdcResults(p_analog, p_analog->pp_Adcs, p_analog->AdcN_Count);
-#endif
-}
-
-
-/*!
-	 @brief Read last data captured by Analog_Capture_IO()
- */
-static inline adcdata_t Analog_ReadChannelResult(const Analog_T * p_analog, Analog_VirtualChannel_T channel)
-{
-	adcdata_t result;
-
-	if (channel < p_analog->ChannelCount)
+	if (HAL_ADC_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC))
 	{
-		result = p_analog->p_VirtualChannelResults[(uint8_t)channel];
+		Analog_CaptureResults(p_analog);
 	}
-	else
-	{
-		result = 0U;
-	}
-
-	return result;
-
-	/* new data check?*/
 }
 
 /*!
-	 @brief
+	 @brief Read last data captured by Analog_Capture() 	 new data check?
  */
-static inline void Analog_ResetChannelResult(Analog_T * p_analog, Analog_VirtualChannel_T channel)
-{
-	p_analog->p_VirtualChannelResults[channel] = 0U;
-}
+static inline analog_adcdata_t Analog_GetChannelResult(const Analog_T * p_analog, analog_channel_t channel)					{return (channel < p_analog->CONFIG.CHANNEL_COUNT) ? p_analog->CONFIG.P_CHANNEL_RESULTS_BUFFER[channel] : 0U;}
+static inline volatile analog_adcdata_t * Analog_GetPtrChannelResult(const Analog_T * p_analog, analog_channel_t channel)	{return (channel < p_analog->CONFIG.CHANNEL_COUNT) ? &p_analog->CONFIG.P_CHANNEL_RESULTS_BUFFER[channel] : 0U;}
+static inline void Analog_ResetChannelResult(Analog_T * p_analog, analog_channel_t channel)									{p_analog->CONFIG.P_CHANNEL_RESULTS_BUFFER[channel] = 0U;}
+static inline analog_channel_t Analog_GetActiveChannelId(const Analog_T * p_analog)											{return p_analog->p_ActiveConversion->p_Conversion->P_CHANNELS[p_analog->ActiveConversionChannelIndex];}
 
-static inline Analog_VirtualChannel_T Analog_GetActiveChannelId(Analog_T * p_analog)
-{
-	return p_analog->p_ActiveConversion->p_VirtualChannels[p_analog->ActiveConversionChannelIndex];
-}
-
-/*!
-	 @brief
- */
-static inline void Analog_Dectivate(const Analog_T * p_analog)
-{
-#if  defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-	HAL_ADC_Dectivate(p_analog->p_Adc);
-	HAL_ADC_DisableInterrupt(p_analog->p_Adc);
-#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	for (uint8_t iAdc = 0U; iAdc < p_analog->AdcN_Count; iAdc++)
-	{
-		HAL_ADC_Dectivate(p_analog->pp_Adcs[iAdc]);
-		HAL_ADC_DisableInterrupt(p_analog->pp_Adcs[iAdc]);
-	}
-#endif
-}
-
-static inline void Analog_DisableInterrupt(const Analog_T * p_analog)
-{
-#if  defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-	HAL_ADC_DisableInterrupt(p_analog->p_Adc);
-#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	for (uint8_t iAdc = 0U; iAdc < p_analog->AdcN_Count; iAdc++)
-	{
-		HAL_ADC_DisableInterrupt(p_analog->pp_Adcs[iAdc]);
-	}
-#endif
-}
-
-//when treating n adc virtualize as a single adc, if 1 conversion active
-static inline bool Analog_ReadConversionActive(const Analog_T * p_analog)
-{
-	bool isActive = (p_analog->p_ActiveConversion != 0U);
-
-#if  defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-	isActive |= HAL_ADC_ReadConversionActiveFlag(p_analog->p_Adc);
-#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	for (uint8_t iAdc = 0U; iAdc < p_analog->AdcN_Count; iAdc++)
-	{
-		isActive |= HAL_ADC_ReadConversionActiveFlag(p_analog->pp_Adcs[iAdc]);
-	}
-#endif
-
-	return isActive;
-}
-
-//when treating n adc virtualize as a single adc, if all conversion complete
-static inline bool Analog_ReadConversionComplete(const Analog_T * p_analog)
-{
-	bool isComplete;
-
-#if  defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-	isComplete = HAL_ADC_ReadConversionCompleteFlag(p_analog->p_Adc);
-#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	isComplete = false;
-	for (uint8_t iAdc = 0U; iAdc < p_analog->AdcN_Count; iAdc++)
-	{
-		isActive &= HAL_ADC_ReadConversionCompleteFlag(p_analog->pp_Adcs[iAdc]);
-	}
-#endif
-
-	return isComplete;
-}
-
-static inline void Analog_ClearConversionComplete(Analog_T * p_analog)
-{
-#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-	HAL_ADC_ClearConversionCompleteFlag(p_analog->p_Adc);
-#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-	for (uint8_t iAdc = 0U; iAdc < p_analog->AdcN_Count; iAdc++)
-	{
-		HAL_ADC_ClearConversionCompleteFlag(p_analog->pp_Adcs[iAdc]);
-	}
-#endif
-}
+static inline void Analog_Dectivate(const Analog_T * p_analog)				{HAL_ADC_Dectivate(p_analog->CONFIG.P_HAL_ADC);	HAL_ADC_DisableInterrupt(p_analog->CONFIG.P_HAL_ADC);}
+static inline void Analog_DisableInterrupt(const Analog_T * p_analog)		{HAL_ADC_DisableInterrupt(p_analog->CONFIG.P_HAL_ADC);}
+static inline bool Analog_ReadConversionActive(const Analog_T * p_analog)	{return (p_analog->p_ActiveConversion != 0U) || HAL_ADC_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ADC);}
+static inline bool Analog_ReadConversionComplete(const Analog_T * p_analog)	{return HAL_ADC_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);}
+static inline void Analog_ClearConversionComplete(Analog_T * p_analog)		{HAL_ADC_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);}
 
 //extern void Analog_Init
 //(
 //	Analog_T * p_analog,
 //);
 
-extern void 				Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion);
-extern adcdata_t 			Analog_ReadChannel(const Analog_T * p_analog, Analog_VirtualChannel_T channel);
-extern volatile adcdata_t * 	Analog_GetPtrChannelResult(const Analog_T * p_analog, Analog_VirtualChannel_T channel);
-extern void 				Analog_ResetChannelResult(Analog_T * p_analog, Analog_VirtualChannel_T channel);
+//extern void 					Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion);
+//extern adcdata_t 				Analog_ReadChannel(const Analog_T * p_analog, Analog_VirtualChannel_T channel);
+//extern volatile adcdata_t * 	Analog_GetPtrChannelResult(const Analog_T * p_analog, Analog_VirtualChannel_T channel);
+//extern void 					Analog_ResetChannelResult(Analog_T * p_analog, Analog_VirtualChannel_T channel);
 
 
 #endif
-
-/*
- * can use module internal compile time memory allocation if all concurrent apps share 1 channel maps
- */
-//#define CONFIG_ANALOG_CHANNEL_COUNT
-//extern const adcpin_t		ANALOG_CHANNEL_PINS[CONFIG_ANALOG_CHANNEL_COUNT]; 		/*!< User define */
-//extern const uint8_t		ANALOG_CHANNEL_ADCS[CONFIG_ANALOG_CHANNEL_COUNT];
-//extern volatile adcdata_t 	Analog_ChannelResults[CONFIG_ANALOG_CHANNEL_COUNT];		/*!< Measure Result Buffer */
-//extern volatile uint32_t 	Analog_ChannelSumBuffer[CONFIG_ANALOG_CHANNEL_COUNT];			/*!< sum if multiple samples are required */
-
 
 //typedef struct Analog_Result_Tag
 //{

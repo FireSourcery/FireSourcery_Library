@@ -90,11 +90,11 @@ static inline void ProcOutputInput(StateMachine_T * p_stateMachine, uint8_t inpu
 	}
 }
 
-static inline void ProcOutputCommon(StateMachine_T * p_stateMachine)
+static inline void ProcOutputSynchronous(StateMachine_T * p_stateMachine)
 {
-	if (p_stateMachine->p_StateActive->OUTPUT_COMMON != 0)
+	if (p_stateMachine->p_StateActive->OUTPUT_SYNCHRONOUS != 0)
 	{
-		p_stateMachine->p_StateActive->OUTPUT_COMMON(p_stateMachine->P_FUNCTIONS_CONTEXT);
+		p_stateMachine->p_StateActive->OUTPUT_SYNCHRONOUS(p_stateMachine->P_FUNCTIONS_CONTEXT);
 	}
 }
 
@@ -139,6 +139,7 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
  * Synchronous Machine Process -
  * proc last set input, always single threaded proc
  */
+//void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine, void * p_userContext)
 void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine)
 {
 	if (p_stateMachine->IsSetInputTransition == true)
@@ -152,7 +153,7 @@ void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine)
 	}
 	else if (p_stateMachine->IsSetInputOutput == true)
 	{
-		p_stateMachine->IsSetInputTransition = false;
+		p_stateMachine->IsSetInputOutput = false;
 
 		if (p_stateMachine->InputOutput < p_stateMachine->OUTPUT_TABLE_LENGTH)
 		{
@@ -160,9 +161,8 @@ void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine)
 		}
 	}
 
-	ProcOutputCommon(p_stateMachine);
+	ProcOutputSynchronous(p_stateMachine);
 }
-
 
 void StateMachine_Synchronous_SetTransition(StateMachine_T * p_stateMachine, uint8_t input)
 {
@@ -194,7 +194,7 @@ void StateMachine_Asynchronous_ProcTransition(StateMachine_T * p_stateMachine, u
 	{
 		ProcAsynchronousTransition(p_stateMachine, input);
 	}
-	ProcOutputCommon(p_stateMachine);
+	ProcOutputSynchronous(p_stateMachine);
 }
 
 void StateMachine_Asynchronous_ProcOutput(StateMachine_T * p_stateMachine, uint8_t input)
@@ -203,7 +203,7 @@ void StateMachine_Asynchronous_ProcOutput(StateMachine_T * p_stateMachine, uint8
 	{
 		ProcOuputInput(p_stateMachine, input);
 	}
-	ProcOutputCommon(p_stateMachine);
+	ProcOutputSynchronous(p_stateMachine);
 }
 
 /*
@@ -212,7 +212,7 @@ void StateMachine_Asynchronous_ProcOutput(StateMachine_T * p_stateMachine, uint8
  */
 void StateMachine_Semisynchronous_ProcState(StateMachine_T * p_stateMachine)
 {
-	ProcOutputCommon(p_stateMachine);
+	ProcOutputSynchronous(p_stateMachine);
 }
 
 void StateMachine_Semisynchronous_ProcTransition(StateMachine_T * p_stateMachine, uint8_t input)
@@ -230,5 +230,3 @@ void StateMachine_Semisynchronous_ProcOutput(StateMachine_T * p_stateMachine, ui
 		ProcOuputInput(p_stateMachine, input);
 	}
 }
-
-

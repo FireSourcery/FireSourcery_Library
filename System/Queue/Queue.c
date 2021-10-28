@@ -281,13 +281,37 @@ bool Queue_PushFront(Queue_T * p_queue, const void * p_unit)
 	return isSucess;
 }
 
+//bool Queue_PushFrontOverwrite(Queue_T * p_queue, const void * p_unit)
+//{
+//	bool isSucess = false;
+//
+//	EnterCritical();
+//
+//	if (Queue_GetIsFull(p_queue) == false)
+//	{
+//		p_queue->Tail = CalcQueueIndexDec(p_queue, p_queue->Tail, 1U);
+//		memcpy(p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail), p_unit, p_queue->CONFIG.UNIT_SIZE);
+//		isSucess = true;
+//	}
+//	else
+//	{
+//		p_queue->Head = CalcQueueIndexDec(p_queue, p_queue->Head, 1U); //not needed for CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED
+//		p_queue->Tail = CalcQueueIndexDec(p_queue, p_queue->Tail, 1U);
+//		memcpy(p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail), p_unit, p_queue->CONFIG.UNIT_SIZE);
+//	}
+//
+//	ExitCritical();
+//
+//	return isSucess;
+//}
+
 bool Queue_PopBack(Queue_T * p_queue, void * p_dest)
 {
 	bool isSucess = false;
 
 	EnterCritical();
 
-	if (Queue_GetIsFull(p_queue) == false)
+	if (Queue_GetIsEmpty(p_queue) == false)
 	{
 		p_queue->Head = CalcQueueIndexDec(p_queue, p_queue->Head, 1U);
 		memcpy(p_dest, p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Head), p_queue->CONFIG.UNIT_SIZE);
@@ -303,11 +327,15 @@ bool Queue_PeekFront(Queue_T * p_queue, void * p_dest)
 {
 	bool isSucess = false;
 
+	EnterCritical();
+
 	if (Queue_GetIsEmpty(p_queue) == false)
 	{
 		memcpy(p_dest, p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail), p_queue->CONFIG.UNIT_SIZE);
 		isSucess = true;
 	}
+
+	ExitCritical();
 
 	return isSucess;
 }
@@ -316,11 +344,15 @@ bool Queue_PeekIndex(Queue_T * p_queue, void * p_dest, size_t index)
 {
 	bool isSucess = false;
 
-	if (index < Queue_GetEmptyCount(p_queue))
+	EnterCritical();
+
+	if (index < Queue_GetFullCount(p_queue))
 	{
 		memcpy(p_dest, p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail + index), p_queue->CONFIG.UNIT_SIZE);
 		isSucess = true;
 	}
+
+	ExitCritical();
 
 	return isSucess;
 }
@@ -329,22 +361,26 @@ bool Queue_PeekBack(Queue_T * p_queue, void * p_dest)
 {
 	bool isSucess = false;
 
+	EnterCritical();
+
 	if (Queue_GetIsEmpty(p_queue) == false)
 	{
 		memcpy(p_dest, p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Head), p_queue->CONFIG.UNIT_SIZE);
 		isSucess = true;
 	}
 
+	ExitCritical();
+
 	return isSucess;
 }
 
-bool Queue_Remove(Queue_T * p_queue, size_t nUnits)
+bool Queue_RemoveFront(Queue_T * p_queue, size_t nUnits)
 {
 	bool isSucess = false;
 
 	EnterCritical();
 
-	if (nUnits < Queue_GetEmptyCount(p_queue))
+	if (nUnits < Queue_GetFullCount(p_queue))
 	{
 		p_queue->Tail = CalcQueueIndexInc(p_queue, p_queue->Tail, nUnits);
 		isSucess = true;
@@ -354,6 +390,24 @@ bool Queue_Remove(Queue_T * p_queue, size_t nUnits)
 
 	return isSucess;
 }
+
+bool Queue_RemoveBack(Queue_T * p_queue, size_t nUnits)
+{
+	bool isSucess = false;
+
+	EnterCritical();
+
+	if (nUnits < Queue_GetFullCount(p_queue))
+	{
+		p_queue->Head = CalcQueueIndexDec(p_queue, p_queue->Head, 1U);
+		isSucess = true;
+	}
+
+	ExitCritical();
+
+	return isSucess;
+}
+
 
 bool Queue_Seek(Queue_T * p_queue, size_t nUnits)
 {

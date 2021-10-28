@@ -43,27 +43,25 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-//typedef uint8_t statemachine_transition_t;
-//typedef uint8_t statemachine_selftransition_t;
-
-//typedef void (* StateMachine_TransitionFunction_T)(volatile void * p_context);
-//typedef void (* StateMachine_Function_T)(volatile void * p_context);
-typedef void (* StateMachine_StateFunction_T)(volatile void * p_context);
+typedef uint8_t statemachine_input_t;
+typedef uint8_t statemachine_tinput_t;
+typedef uint8_t statemachine_oinput_t;
+typedef void (* StateMachine_Output_T)(volatile void * p_context);
 
 struct State_Tag;
 
 typedef const struct StateTransition_Tag
 {
-	const struct State_Tag * const  P_STATE;			/* next state */
-	const StateMachine_StateFunction_T ON_TRANSITION; 	/* Process on transition */
+	const struct State_Tag * const  P_STATE;	/* next state */
+	const StateMachine_Output_T ON_TRANSITION; 	/* Process on transition */
 }
 StateMachine_Transition_T;
 
 /*
  *	Array Implementation - 2D input table
  *  Map allocates for all possible transitions/inputs for each state, valid and invalid
- *  only space efficient when inputs are common across many states.
- *  can assign fault transition to invalid inputs
+ * 	Allocates space for fault transition for invalid inputs
+ *  Array index is input, eliminates search, only space efficient when inputs are common across many states.
  *  States belonging to the same state machine must have same size maps
  *  User define const states at compile time.
  */
@@ -74,41 +72,40 @@ typedef const struct StateMachine_State_Tag
 	 * Inputs with without state transition, self transitions.
 	 * Inputs with associated p_FunctionMap and pp_TransitionStateMap are transition function
 	 */
-	StateMachine_Transition_T * P_TRANSITION_TABLE;
+	const StateMachine_Transition_T * const P_TRANSITION_TABLE;
 
 	/*
 	 * Nontransition (Output only) Input Map - Mealy machine style outputs.
 	 * Separate table for inputs without transitions, self transitions bypass check , less memory use, user must operate 2 input variables.
 	 */
-	StateMachine_StateFunction_T * P_OUTPUT_TABLE;
-	StateMachine_StateFunction_T OUTPUT_COMMON;		/* Synchronous output / Common output to all inputs for asynchronous case */
-	StateMachine_StateFunction_T ON_ENTRY;			/* common to all transition to current state, including self transition */
+	const StateMachine_Output_T * const P_OUTPUT_TABLE;
+	const StateMachine_Output_T OUTPUT_SYNCHRONOUS;		/* Synchronous output / Common output to all inputs for asynchronous case */
+	const StateMachine_Output_T ON_ENTRY;				/* common to all transition to current state, including self transition */
 }
 StateMachine_State_T;
 
-//typedef struct StateMachine_Tag
-//{
-//	const StateMachine_State_T * const P_STATE_INITIAL;
-//	/* Shared table length for all states */
-//	const uint8_t TRANSITION_TABLE_LENGTH;		/* Total state count */
-//	const uint8_t OUTPUT_TABLE_LENGTH;
-//}
-//StateMachine_Machine_T;
-
-//typedef const struct StateMachine_Config_Tag
-//{
-//
-//} StateMachine_Config_T;
-
 typedef struct StateMachine_Tag
 {
-//	const StateMachine_Machine_T * const P_MACHINE;
 	const StateMachine_State_T * const P_STATE_INITIAL;
 	/* Shared table length for all states */
 	const uint8_t TRANSITION_TABLE_LENGTH;		/* Total state count */
 	const uint8_t OUTPUT_TABLE_LENGTH;
+}
+StateMachine_Machine_T;
 
-	volatile void * const P_FUNCTIONS_CONTEXT;		/* Share functions data for all state */
+typedef const struct StateMachine_Config_Tag
+{
+	volatile void * const P_CONTEXT;		/* Share functions data for all state */
+	const StateMachine_Machine_T * const P_MACHINE;
+#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
+	const bool IS_MULTITHREADED;
+#endif
+}
+StateMachine_Config_T;
+
+typedef struct StateMachine_Tag
+{
+	const StateMachine_Config_T const CONFIG;
 
 	const StateMachine_State_T * volatile p_StateActive; 	//uint8_t CurrentStateID
 
@@ -119,7 +116,6 @@ typedef struct StateMachine_Tag
 	volatile bool IsSetInputOutput;
 
 #if defined(CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
-	const bool IS_MULTITHREADED;
 	volatile critical_mutex_t Mutex;
 #endif
 }

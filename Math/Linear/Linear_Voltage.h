@@ -37,6 +37,34 @@
 
 #include <stdint.h>
 
+
+void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcVRef10, uint8_t adcBits, uint16_t vInMax)
+{
+	/*
+	 * 	Init as Linear_Function(adcu) == voltage
+	 *  VPerADCFactor = vRef * (r1 + r2);
+	 *	VPerADCDivisor = (2^adcBits - 1) * r2;
+	 */
+#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+	p_linear->SlopeFactor = ((adcVRef10 * (r1 + r2)) << (16U - adcBits)) / r2 / 10; 	// (VREF*(R1 + R2) << 16)/(ADC_MAX*R2)
+	p_linear->SlopeDivisor_Shift = 16U;
+	p_linear->SlopeDivisor = ((r2 << 16U) / (adcVRef10 * (r1 + r2)) / 10);				// ((R2) << 16)/(VREF*(R1 + R2))
+	p_linear->SlopeFactor_Shift = 16U - adcBits;
+#elif defined (CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+	p_linear->SlopeFactor = adcVRef10 * (r1 + r2);									// (VREF*(R1+R2))
+	p_linear->SlopeDivisor = (((uint32_t)1U << adcBits) - 1U) * r2 * 10; 			// (ADC_MAX*R2)
+#endif
+
+	p_linear->Offset = 0U;
+ 	p_linear->RangeReference = vInMax - 0U;
+}
+
+#define LINEAR_VOLTAGE_CONFIG(r1, r2, adcVRef10, adcBits, vInMax) 			\
+{																			\
+	.SlopeFactor = ((adcVRef10 * (r1 + r2)) << (16U - adcBits)) / r2 / 10;  \
+}
+
+
 /******************************************************************************/
 /*!
 	@brief Calculate voltage from given ADC value

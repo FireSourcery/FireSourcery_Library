@@ -158,4 +158,14 @@ typedef const struct
 }
 MotProtocol_Config_T;
 
+
+typedef struct
+{
+	MotProtocol_Input_T 	Input;
+	MotProtocol_Output_T 	Output;
+}
+MotProtocol_T;
+
+
+
 #endif

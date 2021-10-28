@@ -32,26 +32,27 @@
 #define FLASH_H
 
 #include "HAL_Flash.h"
-
+#include "Config.h"
 //#include "System/Queue/Queue.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 
-#define FLASH_UNIT_SIZE_ERASE	HAL_FLASH_UNIT_SIZE_ERASE
-#define FLASH_UNIT_SIZE_WRITE	HAL_FLASH_UNIT_SIZE_WRITE
-#define FLASH_ALIGN_MASK		(HAL_FLASH_UNIT_SIZE_WRITE - 1U)	/* */
-
-//#define QUEUE_INIT_BUFFER(flash) (flash.CONFIG.QUEUE.P_BUFFER = &flash.Buffer)
-
 typedef const struct
 {
 	uint8_t * P_START;
 	size_t SIZE;
 
-#if CONFIG_FLASH_HAL_USE_ADDRESS_RELATIVE
-	uint32_t HW_OP_OFFSET;
+#ifdef CONFIG_FLASH_HW_OP_SIZE_PER_PARITION
+	size_t WRITE_SIZE;
+	size_t ERASE_SIZE;
+	size_t VERIFY_WRITE_SIZE;
+	size_t VERIFY_ERASE_SIZE;
+#endif
+
+#ifdef CONFIG_FLASH_HW_OP_ADDRESS_RELATIVE
+	int32_t OP_ADDRESS_OFFSET;
 #endif
 //	uint8_t Alignment;
 }
@@ -60,7 +61,7 @@ Flash_Partition_T;
 typedef const struct
 {
 	HAL_Flash_T * P_HAL_FLASH;	//flash controller registers
-	Flash_Partition_T PARTITIONS[1U]; //CONFIG_FLASH_PARTITION_COUNT
+	Flash_Partition_T PARTITIONS[CONFIG_FLASH_PARTITION_COUNT];
 }
 Flash_Config_T;
 
@@ -107,24 +108,29 @@ typedef struct
 
 	//for virtual buffer, non blocking op
 	//static allocate size, only be 1 instance of flash is expected
-	uint8_t Buffer[512U]; //CONFIG_FLASH_BUFFER_SIZE
+	uint8_t Buffer[CONFIG_FLASH_BUFFER_SIZE];
 
 	bool IsVerifyEnable;
-	bool IsForceAlignEnable;
+//	bool IsForceAlignEnable;
 	bool IsOpBuffered; //copy to buffer first or use pointer
 
-	volatile Flash_Status_T Status;
-	volatile Flash_State_T State;
-	volatile Flash_Operation_T OpType;
-	const uint8_t * volatile p_OpFlash; //op dest
+	const uint8_t * volatile p_OpDest;
 	const uint8_t * volatile p_OpData;
 	volatile size_t OpSize; 	//total bytes at start
+	volatile size_t BytesPerCmd; //only for erase
+	volatile size_t UnitsPerCmd;
+
+	volatile Flash_State_T State;
+//	volatile Flash_Operation_T OpType;
+	volatile Flash_Status_T Status;
 	volatile size_t OpIndex; 	//in page/phrase
 
-	volatile uint8_t BytesPerCmd; //only for erase
-	volatile uint8_t UnitsPerCmd;
+	const Flash_Partition_T * volatile p_OpPartition; //op dest
 
-//	volatile uint32_t Checksum; //compare if checksum is set
+	void (*StartCmd)(HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
+	Flash_Status_T (*CheckSetVerify)(void * p_this);
+//	Flash_Status_T (*ParseErrorCode)(void * p_this);
+
 
     void * p_CallbackData;
     void (* OnComplete)(void * p_callbackData);    /*!< OnComplete */

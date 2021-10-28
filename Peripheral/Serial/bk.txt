@@ -1,33 +1,4 @@
-
-//static inline bool Hw_SendChar(Serial_T * p_serial, uint8_t txChar)
-//{
-//	bool isSuccess = false;
-//
-//	EnterCriticalTx(p_serial);
-//	if (HAL_Serial_ReadTxEmptyCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U)
-//	{	//prevent interrupt after checking empty
-//		HAL_Serial_WriteTxChar(p_serial->CONFIG.P_HAL_SERIAL, txChar);
-//		isSuccess = true;
-//	}
-//	EnterCriticalTx(p_serial);
-//
-//	return isSuccess;
-//}
-//
-//static inline bool Hw_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
-//{
-//	bool isSuccess = false;
-//
-//	EnterCriticalRx(p_serial);
-//	if (HAL_Serial_ReadRxFullCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U)
-//	{
-//		*p_rxChar = HAL_Serial_ReadRxChar(p_serial->CONFIG.P_HAL_SERIAL);
-//		isSuccess = true;
-//	}
-//	ExitCriticalRx(p_serial);
-//
-//	return isSuccess;
-//}
+ 
 
 
 //static inline void Serial_TxComplete_ISR(Serial_T * p_serial)

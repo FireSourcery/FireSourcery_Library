@@ -324,9 +324,9 @@ Motor_Constants_T;
 
 typedef struct
 {
- 	const Motor_Constants_T * p_Constants;		//compile time const, unique per moter
+ 	const Motor_Constants_T * p_Constants;		//compile time const, unique per motor
 
-// 	const Motor_Config_T CONFIG;		//compile time const, unique per moter
+// 	const Motor_Config_T CONFIG;		//compile time const, unique per motor
 
  	//#ifdef ram copy
  	Motor_Parameters_T Parameters;				//Programmable parameters, runtime variable load from eeprom

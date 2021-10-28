@@ -41,38 +41,38 @@ void Datagram_Build(Datagram_T * p_datagram)
 
 	size_t fullCount = 0U;
 
-	for (uint8_t iVar = p_datagram->ActiveVar; iVar < p_datagram->DatagramVarCount; iVar++)
-	{
-		if(p_datagram->P_VAR_TABLE[iVar].VarSize + fullCount > p_datagram->TxDataSize)
-		{
-			memcpy(p_datagram->P_TX_BUFFER + packetOffset, p_datagram->P_VAR_TABLE[iVar].p_Var, p_datagram->TxDataSize - fullCount);
-			p_datagram->ActiveVar = iVar;
-			p_datagram->ActiveVarByte = p_datagram->TxDataSize - fullCount;
-			fullCount = p_datagram->TxDataSize;
-			packetOffset = fullCount + p_datagram->HeaderSize;
-			break;
-		}
-		else
-		{
-			memcpy(p_datagram->P_TX_BUFFER  + packetOffset, p_datagram->P_VAR_TABLE[iVar].p_Var, p_datagram->P_VAR_TABLE[iVar].VarSize);
-			fullCount += p_datagram->P_VAR_TABLE[iVar].VarSize;
-			packetOffset += p_datagram->P_VAR_TABLE[iVar].VarSize;
-
-
-
-			if(iVar == p_datagram->DatagramVarCount - 1U)
-			{
-				//flag on cycle
-			}
-		}
-	}
-
-	 p_datagram->TxDataSizeCurrent = fullCount;
-
-	if (p_datagram->BUILD_HEADER != 0U)
-	{
-		p_datagram->BUILD_HEADER(p_datagram->P_TX_BUFFER , packetOffset - p_datagram->DATAGRAM_HEADER_SIZE);
-	}
+//	for (uint8_t iVar = p_datagram->ActiveVar; iVar < p_datagram->DatagramVarCount; iVar++)
+//	{
+//		if(p_datagram->P_VAR_TABLE[iVar].VarSize + fullCount > p_datagram->TxDataSize)
+//		{
+//			memcpy(p_datagram->P_TX_BUFFER + packetOffset, p_datagram->P_VAR_TABLE[iVar].p_Var, p_datagram->TxDataSize - fullCount);
+//			p_datagram->ActiveVar = iVar;
+//			p_datagram->ActiveVarByte = p_datagram->TxDataSize - fullCount;
+//			fullCount = p_datagram->TxDataSize;
+//			packetOffset = fullCount + p_datagram->HeaderSize;
+//			break;
+//		}
+//		else
+//		{
+//			memcpy(p_datagram->P_TX_BUFFER  + packetOffset, p_datagram->P_VAR_TABLE[iVar].p_Var, p_datagram->P_VAR_TABLE[iVar].VarSize);
+//			fullCount += p_datagram->P_VAR_TABLE[iVar].VarSize;
+//			packetOffset += p_datagram->P_VAR_TABLE[iVar].VarSize;
+//
+//
+//
+//			if(iVar == p_datagram->DatagramVarCount - 1U)
+//			{
+//				//flag on cycle
+//			}
+//		}
+//	}
+//
+//	 p_datagram->TxDataSizeCurrent = fullCount;
+//
+//	if (p_datagram->BUILD_HEADER != 0U)
+//	{
+//		p_datagram->BUILD_HEADER(p_datagram->P_TX_BUFFER , packetOffset - p_datagram->DATAGRAM_HEADER_SIZE);
+//	}
 
 
 //	*p_size = packetOffset;
@@ -123,7 +123,7 @@ void Datagram_Enable(Datagram_T * p_datagram)
 
 void Datagram_Signal(Datagram_T * p_datagram)
 {
-	p_datagram->Signal++;
+//	p_datagram->Signal++;
 }
 
 /*
@@ -139,33 +139,33 @@ size_t Datagram_GetPacketSize(Datagram_T * p_datagram)
  */
 bool Datagram_Server_Proc(Datagram_T * p_datagram)
 {
-	bool isComplete = false;
-
-	switch (p_datagram->State)
-	{
-		case DATAGRAM_STATE_ACTIVE:
-			if (p_datagram->Signal > 0U)
-			{
-				if (*p_datagram->P_TIMER - p_datagram->TxTime > p_datagram->TX_PERIOD_MIN)
-				{
-					p_datagram->TxTime = *p_datagram->P_TIMER;
-					p_datagram->Signal--;
-
-					Datagram_Build(p_datagram);
-
-
-					isComplete = true;
-				}
-			}
-			break;
-
-		case DATAGRAM_STATE_INACTIVE:
-			break;
-
-		default: break;
-	}
-
-	return isComplete;
+//	bool isComplete = false;
+//
+//	switch (p_datagram->State)
+//	{
+//		case DATAGRAM_STATE_ACTIVE:
+//			if (p_datagram->Signal > 0U)
+//			{
+//				if (*p_datagram->P_TIMER - p_datagram->TxTime > p_datagram->TX_PERIOD_MIN)
+//				{
+//					p_datagram->TxTime = *p_datagram->P_TIMER;
+//					p_datagram->Signal--;
+//
+//					Datagram_Build(p_datagram);
+//
+//
+//					isComplete = true;
+//				}
+//			}
+//			break;
+//
+//		case DATAGRAM_STATE_INACTIVE:
+//			break;
+//
+//		default: break;
+//	}
+//
+//	return isComplete;
 }
 
 

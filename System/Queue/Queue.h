@@ -42,7 +42,7 @@ typedef const struct
 	void * const P_BUFFER;
 	const size_t LENGTH; 	/* in unit counts */
 	const size_t UNIT_SIZE;
-#if defined(CONFIG_QUEUE_LENGTH_POW2) || defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
+#if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
 	const uint32_t POW2_MASK;
 #endif
 #if defined(CONFIG_QUEUE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_MULTITHREADED_USER_DEFINED)
@@ -66,7 +66,7 @@ typedef struct
 }
 Queue_T;
 
-#if defined(CONFIG_QUEUE_LENGTH_POW2) || defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
+#if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
 	#define QUEUE_CONFIG_POW2(Pow2Mask) .POW2_MASK = Pow2Mask,
 #else
 	#define QUEUE_CONFIG_POW2(Pow2Mask)
@@ -92,7 +92,7 @@ Queue_T;
 
 static inline size_t CalcQueueIndexMasked(const Queue_T * p_queue, size_t index)
 {
-#if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED) || defined(CONFIG_QUEUE_LENGTH_POW2)
+#if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED) || defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED)
 	return (index & p_queue->CONFIG.POW2_MASK);
 #else
 	return (index % p_queue->CONFIG.LENGTH);
@@ -111,7 +111,7 @@ static inline size_t CalcQueueIndexInc(const Queue_T * p_queue, size_t index, si
 
 static inline size_t CalcQueueIndexDec(const Queue_T * p_queue, size_t index, size_t dec)
 {
-#if defined(CONFIG_QUEUE_LENGTH_POW2) || defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
+#if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
 	return CalcQueueIndexMasked(p_queue, index - dec);
 #else
 	return CalcQueueIndexMasked(p_queue, p_queue->CONFIG.LENGTH + index - dec);
@@ -126,7 +126,7 @@ static inline size_t Queue_GetFullCount(const Queue_T * p_queue)
 {
 #ifdef CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED
 	return (p_queue->Head - p_queue->Tail);
-#elif defined(CONFIG_QUEUE_LENGTH_POW2)
+#elif defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED)
 	return CalcQueueIndexMasked(p_queue, p_queue->Head - p_queue->Tail);
 #else
 	return CalcQueueIndexMasked(p_queue, p_queue->CONFIG.LENGTH + p_queue->Head - p_queue->Tail);
@@ -140,7 +140,7 @@ static inline size_t Queue_GetEmptyCount(const Queue_T * p_queue)
 {
 #ifdef CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED
 	return p_queue->CONFIG.LENGTH + p_queue->Tail - p_queue->Head;
-#elif defined(CONFIG_QUEUE_LENGTH_POW2)
+#elif defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED)
 	return CalcQueueIndexMasked(p_queue, p_queue->CONFIG.LENGTH + p_queue->Tail - p_queue->Head - 1U);
 #else
 	return CalcQueueIndexMasked(p_queue, p_queue->CONFIG.LENGTH + p_queue->Tail - p_queue->Head - 1U);

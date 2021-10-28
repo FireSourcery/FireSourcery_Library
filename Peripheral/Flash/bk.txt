@@ -188,3 +188,160 @@ static inline bool StartReadOnce(const Flash_T * p_flash, const uint8_t * p_dest
 	//		return (p_flash->Status == FLASH_STATUS_SUCCESS) ? true : false;
 	//	}
 	//}
+	
+	
+ 
+
+//or use uniform function pointer/wrapper
+//bool StartOpCmd(const Flash_T * p_flash, size_t opIndex)
+//{
+//	//HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
+//	const uint8_t * p_cmdDest = CalcOpCmdAddress(p_flash, &p_flash->p_OpDest[opIndex]);
+//
+//	switch(p_flash->OpType)
+//	{
+//		case FLASH_OPERATION_WRITE: 		HAL_Flash_StartCmdWritePage			(p_flash->CONFIG.P_HAL_FLASH, p_cmdDest, &p_flash->p_OpData[opIndex]);	break;
+//		case FLASH_OPERATION_ERASE:			HAL_Flash_StartCmdEraseSector		(p_flash->CONFIG.P_HAL_FLASH, p_cmdDest); 								break;
+//		case FLASH_OPERATION_VERIFY_WRITE:	HAL_Flash_StartCmdVerifyWriteUnit	(p_flash->CONFIG.P_HAL_FLASH, p_cmdDest, &p_flash->p_OpData[opIndex]); 	break;
+//		case FLASH_OPERATION_VERIFY_ERASE:	HAL_Flash_StartCmdVerifyEraseUnits	(p_flash->CONFIG.P_HAL_FLASH, p_cmdDest, p_flash->UnitsPerCmd); 		break;
+//		case FLASH_OPERATION_WRITE_ONCE:	HAL_Flash_StartCmdWriteOnce			(p_flash->CONFIG.P_HAL_FLASH, p_cmdDest, &p_flash->p_OpData[opIndex]);	break;
+//		case FLASH_OPERATION_READ_ONCE:		HAL_Flash_StartCmdReadOnce			(p_flash->CONFIG.P_HAL_FLASH, p_cmdDest); 								break;
+//		default: break;
+//	}
+//
+//	return (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == false) ? true : false;
+//}
+
+//static bool SetOpCommon(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, Flash_Operation_T opType, size_t unitSize, uint8_t unitsPerCmd)
+//{
+//		p_flash->p_OpDest	= p_destFlash;
+//		p_flash->OpIndex 	= 0U;
+//		p_flash->OpType		= opType;
+//		Flash_SetOpData(p_flash, p_source, size);
+//		p_flash->UnitsPerCmd = unitsPerCmd;
+//		p_flash->BytesPerCmd = unitsPerCmd * unitSize;
+//}
+
+//static bool SetOpCommon_MultiUnit(Flash_T * p_flash, uint8_t unitSize, uint8_t unitsPerCmd)
+//{
+//	p_flash->UnitsPerCmd = unitsPerCmd;
+//	p_flash->BytesPerCmd = unitsPerCmd * unitSize;
+//}
+//
+//static bool SetOpCommon_Fp(Flash_T * p_flash, Flash_Status_T (*checkStartVerify)(Flash_T *), Flash_Status_T (*parseErrorCode)(Flash_T *))
+//{
+//	p_flash->CheckStartVerify = checkStartVerify;
+//	p_flash->ParseErrorCode = parseErrorCode;
+//}
+
+//static inline Flash_Status_T CheckVerify(const Flash_T * p_flash)
+//{
+//	return (p_flash->IsVerifyEnable == true) ? FLASH_STATUS_START_VERIFY : FLASH_STATUS_SUCCESS;
+//}
+
+//static inline Flash_Status_T CheckVerifyWrite(const Flash_T * p_flash)
+//{
+//	return (ChecksumOp(p_flash) == true) ? CheckVerify(p_flash) : FLASH_STATUS_ERROR_CHECKSUM;
+//}
+//
+//static inline Flash_Status_T CheckVerifyErase(const Flash_T * p_flash)
+//{
+//	return CheckVerify(p_flash);
+//}
+
+
+//inline void Flash_SetOpNextData(Flash_T * p_flash, const uint8_t * p_source, size_t size)
+//{
+//	p_flash->p_OpDest	+= p_flash->OpSize;
+//	p_flash->OpIndex 	= 0U;
+//	Flash_SetOpData(p_flash, p_source, size);
+//}
+
+//static inline bool CheckSetOpCommon(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, size_t unitSize)
+//{
+//	return (Flash_CheckIsBounded(p_flash, p_destFlash, size) == true) && (CheckDestIsAligned(p_destFlash, size, unitSize) == true);
+//}
+
+//Flash_Status_T CheckProcVerifyWrite_Blocking(Flash_T * p_flash)
+//{
+//	Flash_Status_T status = CheckVerifyWrite(p_flash);
+//
+//	if(status == FLASH_STATUS_START_VERIFY)
+//	{
+//		p_flash->StartCmd = StartCmdVerifyWriteUnit;
+//		status = ProcOpCommon_Blocking(p_flash);
+//	}
+//
+//	return status;
+//}
+//
+//Flash_Status_T CheckProcVerifyErase_Blocking(Flash_T * p_flash)
+//{
+//	Flash_Status_T status = CheckVerifyErase(p_flash);
+//
+//	if(status == FLASH_STATUS_START_VERIFY)
+//	{
+//		p_flash->StartCmd = StartCmdVerifyEraseUnits;
+//		status = ProcOpCommon_Blocking(p_flash);
+//	}
+//
+//	return status;
+//}
+
+/*
+ * returns ERROR_CHECKSUM, FLASH_STATUS_SUCCESS, FLASH_STATUS_PROCESSING, ERROR_INPUT
+ */
+//Flash_Status_T ProcCheckStartVerifyWrite(Flash_T * p_flash)
+//{
+//	p_flash->Status = CheckVerifyWrite(p_flash);
+//
+//	if (p_flash->Status == FLASH_STATUS_START_VERIFY)
+//	{
+//		p_flash->OpType = FLASH_OPERATION_VERIFY_WRITE;
+//
+//		p_flash->Status = StartOpCommon(p_flash);
+//	}
+//	else
+//	{
+//		p_flash->State = FLASH_STATE_IDLE;
+//	}
+//
+//	return (p_flash->Status);
+//
+////	return ((p_flash->Status == FLASH_STATUS_START_VERIFY) ? FinalizeWriteEraseCommon(p_flash, FLASH_OPERATION_VERIFY_WRITE) : p_flash->Status);
+//}
+//
+//Flash_Status_T ProcCheckStartVerifyErase(Flash_T * p_flash)
+//{
+//	p_flash->Status = CheckVerifyErase(p_flash);
+//
+//	if (p_flash->Status == FLASH_STATUS_START_VERIFY)
+//	{
+//		p_flash->OpType = FLASH_OPERATION_VERIFY_ERASE;
+//
+//		p_flash->Status = StartOpCommon(p_flash);
+//	}
+//	else
+//	{
+//		p_flash->State = FLASH_STATE_IDLE;
+//	}
+//
+//	return (p_flash->Status);
+//
+//	return (p_flash->Status = ((CheckVerifyErase(p_flash) == FLASH_STATUS_START_VERIFY) ? StartOpCommon(p_flash) : FLASH_STATUS_SUCCESS));
+//}
+
+//	Flash_Status_T status;
+//
+//	switch(p_flash->OpType)
+//	{
+//		case FLASH_OPERATION_WRITE: 		status = Flash_ProcWrite_Blocking	(p_flash); 	break;
+//		case FLASH_OPERATION_ERASE:			status = Flash_ProcErase_Blocking	(p_flash); 	break;
+//		case FLASH_OPERATION_VERIFY_WRITE:	status = Flash_ProcVerify_Blocking	(p_flash); 	break;
+//		case FLASH_OPERATION_VERIFY_ERASE:	status = Flash_ProcVerify_Blocking	(p_flash); 	break;
+//		case FLASH_OPERATION_WRITE_ONCE:	status = ProcOpCommon_Blocking		(p_flash); 	break;
+//		case FLASH_OPERATION_READ_ONCE:		status = ProcOpCommon_Blocking		(p_flash); 	break;
+//		default: break;
+//	}
+//
+//	return status;
