@@ -31,34 +31,27 @@
 #include "Analog.h"
 #include "HAL_Analog.h"
 
-#include "Private.h"
 #include "Config.h"
 
+#include "System/Queue/Queue.h"
+
+#ifdef CONFIG_ANALOG_CRITICAL_LIBRARY_DEFINED
+	#include "System/Critical/Critical.h"
+#elif defined(CONFIG_ANALOG_CRITICAL_USER_DEFINED)
+	extern inline void Critical_Enter(void);
+	extern inline void Critical_Exit(void);
+#elif defined(CONFIG_ANALOG_CRITICAL_DISABLE)
+
+#endif
 
 /******************************************************************************/
 /*!
  * Private
  */
 /******************************************************************************/
-static inline bool AquireMutex(Analog_T * p_analog)
+static inline void EnterCritical()
 {
-#if defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED)
-	return Critical_AquireMutex(&p_analog->Mutex);
-#else
-	return true;
-#endif
-}
-
-static inline void ReleaseMutex(Analog_T * p_analog)
-{
-#if defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED)
-	Critical_ReleaseMutex(&p_analog->Mutex);
-#endif
-}
-
-static inline void EnterCritical(Analog_T * p_analog)
-{
-#if  (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED))
+#if  (defined(CONFIG_ANALOG_CRITICAL_USER_DEFINED) || defined(CONFIG_ANALOG_CRITICAL_LIBRARY_DEFINED))
 	/*
 	 * Multithreaded calling of Activate.
 	 * Must implement Critical_Enter
@@ -66,9 +59,12 @@ static inline void EnterCritical(Analog_T * p_analog)
 	 * Higher priority thread may overwrite Conversion setup data before ADC ISR returns.
 	 * e.g. must be implemented if calling from inside interrupts and main.
 	 */
-//	Critical_Enter();
-	AquireMutex(p_analog);
-#elif defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
+	Critical_Enter();
+//#if defined(CONFIG_ANALOG_MULTITHREADED_USE_MUTEX)
+//	return Critical_AquireMutex(&p_analog->Mutex);
+//#endif
+
+#elif (defined(CONFIG_ANALOG_CRITICAL_DISABLE) || defined(CONFIG_ANALOG_SINGLE_THREADED))
 	/*
 	 * Single threaded calling of Activate.
 	 * Single threaded case, and calling thread is lower priority than ADC ISR, may implement ADC_DisableInterrupt instead of Critical_Enter global disable interrupt
@@ -81,125 +77,105 @@ static inline void EnterCritical(Analog_T * p_analog)
 #endif
 }
 
-static inline void ExitCritical(Analog_T * p_analog)
+static inline void ExitCritical()
 {
-#if (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
-//	Critical_Exit();
-	ReleaseMutex(p_analog);
+#if (defined(CONFIG_ANALOG_CRITICAL_USER_DEFINED) || defined(CONFIG_ANALOG_CRITICAL_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_CRITICAL_DISABLE)
+	Critical_Exit();
+//#elif  || defined(CONFIG_ANALOG_SINGLE_THREADED) 	//interrupts already enabled
 #endif
-	//interrupts already enabled
 }
 
 void Analog_Init(Analog_T * p_analog)
 {
 	HAL_Analog_Init(p_analog->CONFIG.P_ADC);
 	Analog_Dectivate(p_analog);
-	Queue_Init(&p_analog->ChannelQueue);
-	Queue_Init(&p_analog->ConverisionQueue);
+//	Queue_Init(&p_analog->ChannelQueue);
+	Queue_Init(&p_analog->ConversionQueue);
 }
 
-//void Analog_ActivateConversion_simple(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
-//{
-//
-//
-//}
+void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+{
+	EnterCritical();
+	p_analog->ActiveChannelIndex = 0U;
+	ActivateAnalogConversion(p_analog, p_conversion);
+	ExitCritical();
+}
 
 /*!
 	 @brief Public function to activate ADC.
 
 	 overwrite active conversion
  */
-void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion, void * p_onCompleteContext)
+void Analog_ActivateConversion_Context(Analog_T * p_analog, const Analog_Conversion_T * p_conversion, Analog_ConversionContext_T * p_onContext)
 {
-//	const Analog_VirtualChannel_T * p_virtualChannels;
-	uint8_t activateChannelCount;
-//	Analog_Config_T activateConfig;
-
-	if(EnterCritical(p_analog))
-	{
-		//copy if n adc. no copy, no mixed channels, use conversion, if 1 adc
-	//	p_virtualChannels = p_conversion->P_CHANNELS;
-	//
-	//	activateChannelCount 	= CalcAdcActiveChannelCountMax(p_analog, p_conversion->CHANNEL_COUNT);
-	//	activateConfig 			= CalcAdcActiveConfig(p_analog, p_conversion->OPTIONS, true);
-
-		activateChannelCount = ActivateAdc(p_analog, p_conversion->P_CHANNELS, p_conversion->CHANNEL_COUNT, p_conversion->OPTIONS);
-
-		p_analog->p_ActiveConversion->p_Conversion = p_conversion;
-		p_analog->p_ActiveConversion->p_OnCompleteContext = p_onCompleteContext;
-		p_analog->p_ActiveConversion->Options = p_conversion->OPTIONS;
-
-		p_analog->ActiveConversionChannelIndex = 0U;
-#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER) && !defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
-		p_analog->ActiveChannelCount = activateChannelCount;
-#endif
-
-		Critical_Exit();
-	}
+	EnterCritical();
+	p_analog->ActiveChannelIndex = 0U;
+	ActivateAnalogConversion_Context(p_analog, p_conversion, p_onContext);
+	ExitCritical();
 }
 
 /*
 	cannot overwrite
  */
-bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion, void * p_onCompleteContext)
+bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion, Analog_ConversionContext_T * p_onContext)
 {
 	bool isSuccess;
 
 	Analog_ConversionActive_T conversionActive =
 	{
 		.p_Conversion = p_conversion,
-		.p_OnCompleteContext = p_onCompleteContext,
-		.Options = p_conversion->OPTIONS,
+		.p_OnCompleteContext = p_onContext,
 	};
 
-	Critical_Enter(); //  if multithreaded
+	EnterCritical();
 
 	if (Analog_ReadConversionActive(p_analog) == true)
 	{	//if interrupt occurs here, next conversion will not chain
-		isSuccess = Queue_Enqueue(&p_analog->ConverisionQueue, &conversionActive);
+		isSuccess = Queue_Enqueue(&p_analog->ConversionQueue, &conversionActive);
 	}
 	else
 	{
-		Analog_ActivateConversion(p_analog, p_conversion, p_onCompleteContext);
+		p_analog->ActiveChannelIndex = 0U;
+		ActivateAnalogConversion_Context(p_analog, p_conversion, p_onContext);
 		isSuccess = true;
 	}
 
-	Critical_Exit();
+	ExitCritical();
 
 	return isSuccess;
 }
 
 /*
-	can overwrite last item i.e tail of queue
+	can overwrite last item
  */
-bool Analog_EnqueueFrontConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion, void * p_onCompleteContext)
+bool Analog_EnqueueFrontConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion, Analog_ConversionContext_T * p_onContext)
 {
-	bool isSuccess;
+	bool isSuccess = false;
 
 	Analog_ConversionActive_T conversionActive =
 	{
 		.p_Conversion = p_conversion,
-		.p_OnCompleteContext = p_onCompleteContext,
-		.Options = p_conversion->OPTIONS,
+		.p_OnCompleteContext = p_onContext,
 	};
 
-	Critical_Enter();
+	EnterCritical();
 
 	if (Analog_ReadConversionActive(p_analog) == true)
 	{
-		if (Queue_GetIsFull(&p_analog->ConverisionQueue) == true)
+		if (Queue_GetIsFull(&p_analog->ConversionQueue) == true)
 		{
-			Queue_RemoveBack(&p_analog->ConverisionQueue, 1U);
+			Queue_RemoveBack(&p_analog->ConversionQueue, 1U);
 		}
 
-		isSuccess = Queue_Push(&p_analog->ConverisionQueue, &conversionActive);
+		isSuccess = Queue_PushFront(&p_analog->ConversionQueue, &conversionActive);
 	}
 	else
 	{
-		Analog_ActivateConversion(p_analog, p_conversion, p_onCompleteContext);
+		p_analog->ActiveChannelIndex = 0U;
+		ActivateAnalogConversion_Context(p_analog, p_conversion, p_onContext);
 	}
 
-	Critical_Exit();
+	ExitCritical();
 
 	return isSuccess;
 }
@@ -209,137 +185,23 @@ bool Analog_EnqueueFrontConversion(Analog_T * p_analog, const Analog_Conversion_
  */
 bool Analog_DequeueConversion(Analog_T * p_analog)
 {
-	bool isSuccess;
-	Analog_ConversionActive_T conversionActive;
+	bool isSuccess = false;
 
-	Critical_Enter();
+	EnterCritical();
 
 	if (Analog_ReadConversionActive(p_analog) == false)
 	{
-		isSuccess = Queue_Denqueue(&p_analog->ConverisionQueue, &conversionActive);
-
-		if(isSuccess == true)
+		if(Queue_Dequeue(&p_analog->ConversionQueue, &p_analog->ActiveConversion) == true)
 		{
-			Analog_ActivateConversion(p_analog, conversionActive.p_Conversion, conversionActive.p_OnCompleteContext);
+			isSuccess = true;
+			p_analog->ActiveChannelIndex = 0U;
+			ActivateAnalogConversionThis(p_analog);
 		}
 	}
-	else
-	{
-		isSuccess = false;
-	}
 
-	Critical_Exit();
+	ExitCritical();
 
 	return isSuccess;
 }
 
 
-
-//static inline uint32_t ReadRequest(const HAL_ADC_T * p_adc, Analog_Request_T request)
-//{
-//	uint32_t response;
-//
-//	switch (request)
-//	{
-//	case ANALOG_REQUEST_REG_CONVERSION_COMPLETE:
-//		response = (uint32_t) HAL_ADC_ReadConversionCompleteFlag(p_adc);
-//		break;
-//	default:
-//		response = 0;
-//		break;
-//	}
-//
-//	return response;
-//}
-//
-//static inline void WriteConfig(HAL_ADC_T * p_adc, Analog_Config_T config)
-//{
-//	p_analog->ActiveConfig = config;
-//
-//	if (config.UseInterrrupt)
-//	{
-//		HAL_ADC_EnableInterrupt(p_adc);
-//	}
-//	else
-//	{
-//		HAL_ADC_DisableInterrupt(p_adc);
-//	}
-//}
-//
-///*!
-//	 @brief
-// */
-//void Analog_WriteConfig(Analog_T * p_analog, Analog_Config_T config)
-//{
-//#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-//	WriteConfig(p_analog,  p_analog->p_Adc, config);
-//#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-//	for (uint8_t iAdc = 0U; iAdc < p_analog->AdcN_Count; iAdc++)
-//	{
-//		WriteConfig(p_analog->pp_Adcs[iAdc], config);
-//	}
-//#endif
-//}
-
-
-
-////is new data available
-//bool Analog_IsNewData(Analog_T * p_analog, Analog_VirtualChannel_T channel)
-//{
-//
-//}
-//
-////read new data
-//void Analog_PollChannel(Analog_T * p_analog, Analog_VirtualChannel_T channel)
-//{
-//	if (Analog_IsNewData(p_analog, channel))
-//	{
-//		Analog_ReadChannel(p_analog, channel);
-//	}
-//}
-//void Analog_WaitResult(Analog_T * p_analog)
-//{
-//	//while(!p_analog->ADC_GetCompleteFlag());
-//	ADC_GetCompleteFlag(p_analog->p_ADC_RegMap_IO);
-//
-//	while(!ADC_GetCompleteFlag(p_analog->p_ADC_RegMap_IO[p_analog->ADC_Count_IO - 1]));
-//}
-
-
-
-/*!
-	 @brief Single Channel Conversion
- */
-//void Analog_ActivateConversionChannel(Analog_T * p_analog, Analog_VirtualChannel_T p_channel, Analog_Config_T config, void (*onComplete)(volatile void * p_userData), volatile void * p_userData)
-//{
-//#if  (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED))
-//	Critical_Enter();
-//#elif defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
-//	Analog_DisableInterrupt(p_analog);
-//#endif
-//
-//	ActivateAdc(p_analog, p_channel, 1U, config);
-////	p_analog->p_ActiveConversion = 0U;
-////	p_analog->ActiveConversionChannelIndex = 0U;
-//
-//#if (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
-//	Critical_Exit();
-//#endif
-//}
-
-//void Analog_ActivateChannel(Analog_T * p_analog, Analog_VirtualChannel_T p_channel, Analog_Config_T config, void (*onComplete)(volatile void * p_userData), volatile void * p_userData)
-//{
-//#if  (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED))
-//	Critical_Enter();
-//#elif defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
-//	Analog_DisableInterrupt(p_analog);
-//#endif
-//
-//	ActivateAdc(p_analog, p_channel, 1U, config);
-////	p_analog->p_ActiveConversion = 0U;
-////	p_analog->ActiveConversionChannelIndex = 0U;
-//
-//#if (defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED) || defined(CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
-//	Critical_Exit();
-//#endif
-//}

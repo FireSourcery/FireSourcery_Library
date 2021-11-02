@@ -226,15 +226,28 @@
  */
 typedef FTFC_Type HAL_Flash_T;
 
+
+/*
+ * incase functions are not inlined
+ */
+#include "Peripheral/Flash/Config.h"
+static inline bool HAL_Flash_ReadErrorFlags(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+//static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static inline bool HAL_Flash_ReadCompleteFlag(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+//static inline bool HAL_Flash_ReadErrorVerifyFlag(HAL_Flash_T *p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static inline void HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+
 /*
  *   module helper
  */
+
 static inline void HAL_Flash_WriteCmdDest(HAL_Flash_T * p_regs, const uint8_t * p_dest)
 {
     FTFx_FCCOB1 = GET_BIT_16_23(p_dest);
     FTFx_FCCOB2 = GET_BIT_8_15(p_dest);
     FTFx_FCCOB3 = GET_BIT_0_7(p_dest);
 }
+
 
 static inline void HAL_Flash_WriteCmdWriteData(HAL_Flash_T * p_regs, const uint8_t * p_data)
 {
@@ -247,6 +260,11 @@ static inline void HAL_Flash_WriteCmdWriteData(HAL_Flash_T * p_regs, const uint8
 static inline void HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs)
 {
 	 FTFx_FSTAT |= FTFx_FSTAT_CCIF_MASK;
+}
+
+static inline bool HAL_Flash_ReadErrorFlagShared(HAL_Flash_T * p_regs)
+{
+	return ((FTFx_FSTAT & (FTFx_FSTAT_MGSTAT0_MASK)) != 0U) ? true : false;
 }
 
 /*
@@ -269,12 +287,13 @@ static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs)
 
 static inline bool HAL_Flash_ReadCompleteFlag(HAL_Flash_T * p_regs)
 {
+	(void)p_regs;
 	return ((FTFx_FSTAT & FTFx_FSTAT_CCIF_MASK) != 0U) ? true : false;
 }
 
 static inline bool HAL_Flash_ReadErrorVerifyFlag(HAL_Flash_T *p_regs)
 {
-	return ((FTFx_FSTAT & (FTFx_FSTAT_MGSTAT0_MASK)) != 0U) ? true : false;
+	return HAL_Flash_ReadErrorFlagShared(p_regs);
 }
 
 /*

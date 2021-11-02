@@ -44,7 +44,8 @@ typedef const struct
 
 static inline void HAL_Pin_WriteState(const HAL_Pin_T * p_pin, bool isOn)
 {
-	isOn ? (p_pin->P_GPIO_BASE->PDOR |= p_pin->GPIO_PIN_MASK) : (p_pin->P_GPIO_BASE->PDOR &= ~(p_pin->GPIO_PIN_MASK));
+//	isOn ? (p_pin->P_GPIO_BASE->PDOR |= p_pin->GPIO_PIN_MASK) : (p_pin->P_GPIO_BASE->PDOR &= ~(p_pin->GPIO_PIN_MASK));
+	isOn ? (p_pin->P_GPIO_BASE->PSOR |= p_pin->GPIO_PIN_MASK) : (p_pin->P_GPIO_BASE->PCOR |= p_pin->GPIO_PIN_MASK);
 }
 
 static inline bool HAL_Pin_ReadState(const HAL_Pin_T * p_pin)

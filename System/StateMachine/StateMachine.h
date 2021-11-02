@@ -33,13 +33,6 @@
 
 #include "Config.h"
 
-#ifdef CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED
-	#include "System/Critical/Critical.h"
-#elif defined(ONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
-	extern inline void Critical_AquireMutex(critical_mutex_t);
-	extern inline void Critical_ReleaseMutex(critical_mutex_t);
-#endif
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -84,7 +77,7 @@ typedef const struct StateMachine_State_Tag
 }
 StateMachine_State_T;
 
-typedef struct StateMachine_Tag
+typedef struct StateMachine_Machine_Tag
 {
 	const StateMachine_State_T * const P_STATE_INITIAL;
 	/* Shared table length for all states */
@@ -95,10 +88,10 @@ StateMachine_Machine_T;
 
 typedef const struct StateMachine_Config_Tag
 {
-	volatile void * const P_CONTEXT;		/* Share functions data for all state */
+	void * const P_CONTEXT;		/* Share functions data for all state */
 	const StateMachine_Machine_T * const P_MACHINE;
-#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
-	const bool IS_MULTITHREADED;
+#if defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
+	const bool USE_CRITICAL;
 #endif
 }
 StateMachine_Config_T;
@@ -115,16 +108,16 @@ typedef struct StateMachine_Tag
 	volatile bool IsSetInputTransition;
 	volatile bool IsSetInputOutput;
 
-#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
+#if defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
 	volatile critical_mutex_t Mutex;
 #endif
 }
 StateMachine_T;
 
-#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_MULTITHREADED_USER_DEFINED)
-	#define STATE_MACHINE_CONFIG_MULTITHREADED(IsMultithreaded) .IS_MULTITHREADED = IsMultithreaded,
+#if defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
+	#define STATE_MACHINE_CONFIG_CRITICAL(IsMultithreaded) .USE_CRITICAL = IsMultithreaded,
 #else
-	#define STATE_MACHINE_CONFIG_MULTITHREADED(IsMultithreaded)
+	#define STATE_MACHINE_CONFIG_CRITICAL(IsMultithreaded)
 #endif
 
 #define STATE_MACHINE_CONFIG(p_StateInitial, TransitionTableLength, OutputTableLength, p_FunctionContext, IsMultithreaded)	\
@@ -133,7 +126,7 @@ StateMachine_T;
 	.TRANSITION_TABLE_LENGTH	= TransitionTableLength,				\
 	.OUTPUT_TABLE_LENGTH		= OutputTableLength,					\
 	.P_FUNCTIONS_CONTEXT		= p_FunctionContext,					\
-	STATE_MACHINE_CONFIG_MULTITHREADED(IsMultithreaded)					\
+	STATE_MACHINE_CONFIG_CRITICAL(IsMultithreaded)						\
 }
 
 #endif

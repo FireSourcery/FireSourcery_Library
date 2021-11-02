@@ -59,4 +59,6 @@
 	#define CONFIG_FLASH_BUFFER_SIZE 64U
 #endif
 
+#define CONFIG_FLASH_ATTRIBUTE_RAM_SECTION __attribute__((section (".code_ram")))
+
 #endif

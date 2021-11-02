@@ -111,8 +111,8 @@ typedef struct
 	uint8_t Buffer[CONFIG_FLASH_BUFFER_SIZE];
 
 	bool IsVerifyEnable;
-//	bool IsForceAlignEnable;
 	bool IsOpBuffered; //copy to buffer first or use pointer
+	//	bool IsForceAlignEnable;
 
 	const uint8_t * volatile p_OpDest;
 	const uint8_t * volatile p_OpData;
@@ -120,6 +120,7 @@ typedef struct
 	volatile size_t BytesPerCmd; //only for erase
 	volatile size_t UnitsPerCmd;
 
+	//Nonblocking use only
 	volatile Flash_State_T State;
 //	volatile Flash_Operation_T OpType;
 	volatile Flash_Status_T Status;
@@ -128,7 +129,7 @@ typedef struct
 	const Flash_Partition_T * volatile p_OpPartition; //op dest
 
 	void (*StartCmd)(HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
-	Flash_Status_T (*CheckSetVerify)(void * p_this);
+	Flash_Status_T (*FinalizeOp)(void * p_this);
 //	Flash_Status_T (*ParseErrorCode)(void * p_this);
 
 

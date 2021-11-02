@@ -66,12 +66,12 @@ typedef struct
 
 static inline bool Pin_ReadState(Pin_T * p_pin)
 {
-	HAL_Pin_ReadState(p_pin->p_HAL_Pin);
+	return HAL_Pin_ReadState(p_pin->p_HAL_Pin);
 }
 
 static inline void Pin_WriteState(Pin_T *p_pin, bool isOn)
 {
-	HAL_Pin_WriteState(p_pin->p_HAL_Pin, isOn);
+	return HAL_Pin_WriteState(p_pin->p_HAL_Pin, isOn);
 }
 
 

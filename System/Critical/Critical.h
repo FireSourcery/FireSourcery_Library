@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,15 +19,15 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Critical.h
     @author FireSoucery
     @brief  Implements Critical Section
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef CRITICAL_H
 #define CRITICAL_H
 
@@ -41,6 +41,8 @@
  * 	or implement in parent HAL and include
  */
 #ifdef CONFIG_CRITICAL_MCU_ARM
+
+	#include "External/CMSIS/Core/Include/cmsis_compiler.h"
 	#if defined (__GNUC__)
 		#define CRITICAL_DISABLE_INTERRUPTS() __asm volatile ("cpsid i" : : : "memory");
 		#define CRITICAL_ENABLE_INTERRUPTS() __asm volatile ("cpsie i" : : : "memory");
@@ -59,28 +61,34 @@
 	#define CRITICAL_ENABLE_INTERRUPTS() {}
 #endif
 
-static int32_t InterruptDisableCount = 0;
+extern int32_t g_InterruptDisableCount;
+extern uint32_t g_RegPrimask;
 
 static inline void Critical_Enter(void)
 {
+	g_RegPrimask = __get_PRIMASK();
 	CRITICAL_DISABLE_INTERRUPTS();
-	InterruptDisableCount++;
+//	g_InterruptDisableCount++;
 }
 
 static inline void Critical_Exit(void)
 {
-	if (InterruptDisableCount > 0)
-	{
-		InterruptDisableCount--;
-		if (InterruptDisableCount <= 0)
-		{
-			CRITICAL_ENABLE_INTERRUPTS();
-		}
-	}
+	__set_PRIMASK(g_RegPrimask);
+
+//	if (g_InterruptDisableCount > 0U)
+//	{
+//		g_InterruptDisableCount--;
+//		if (g_InterruptDisableCount <= 0U)
+//		{
+//			CRITICAL_ENABLE_INTERRUPTS();
+//		}
+//	}
 }
 
 
-
+/*
+ * Non blocking mutex. must check if process completed
+ */
 typedef volatile uint8_t critical_mutex_t;
 
 static inline bool Critical_MutexAquire(critical_mutex_t * p_mutex)
@@ -107,6 +115,26 @@ static inline void Critical_MutexRelease(critical_mutex_t * p_mutex)
 	}
 	Critical_Exit();
 }
+
+static inline bool Critical_Enter_Common(critical_mutex_t * p_mutex)
+{
+#if defined(CONFIG_CRITICAL_USE_MUTEX)
+	return Critical_AquireMutex(p_mutex) ? true : false;
+#else
+	EnterCritical();
+	return true;
+#endif
+}
+
+static inline void Critical_Exit_Common(critical_mutex_t * p_mutex)
+{
+#if defined(CONFIG_CRITICAL_USE_MUTEX)
+	Critical_ReleaseMutex(p_mutex);
+#else
+	ExitCritical();
+#endif
+}
+
 
 /*
  * Todo static inline void Critical_Enter(void * stateData) for other/semaphore implementation

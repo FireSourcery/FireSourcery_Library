@@ -1,38 +1,4 @@
-/*
- * ProcVirtualToPinChannels
- */
-//static inline bool ProcChannelPinBufferMap(Analog_T * p_analog,  Analog_VirtualChannel_T * p_virtualChannels, uint8_t channelCount)
-//{
-//	uint8_t iVirtualChannel;
-//	for (uint8_t index = 0; index < channelCount; index++)
-//	{
-//		iVirtualChannel = (uint8_t)(p_virtualChannels[index]);
-//
-//		if (iVirtualChannel< p_analog->VirtualChannelCount) // check for invalid pin channel??
-//		{
-//			p_analog->p_PinChannelsBuffer[index] = p_analog->p_VirtualChannelMap[iVirtualChannel];
-//			p_analog->p_VirtualChannelResults[iVirtualChannel] = 0;
-//			// settings to reset before conversion?
-//		}
-//	}
-//}
-//
 
-/*!
-	@brief Fill N ADCs
-	@param[in] pp_adcMaps			read-only
-	@param[in] p_virtualChannels 	offset by p_analog->ActiveConversionChannelIndex
-
-	Fill N ADCs. When channels are fixed to particular ADC
-		//todo algo N adc activation, need virtualchannel to adc map
- */
-static inline void ActivateAdc_NFixed
-(
-
-)
-{
-
-}
 
 void AnalogN_ActivateConversion (Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
 {

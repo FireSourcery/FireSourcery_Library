@@ -45,8 +45,8 @@ typedef const struct
 #if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
 	const uint32_t POW2_MASK;
 #endif
-#if defined(CONFIG_QUEUE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_MULTITHREADED_USER_DEFINED)
-	const bool IS_MULTITHREADED;
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+	const bool USE_CRITICAL;
 #endif
 }
 Queue_Config_T;
@@ -60,7 +60,7 @@ typedef struct
 //	bool IsOverwritable;
 	volatile size_t Head;	//write to head
 	volatile size_t Tail;	//read from tail
-#if defined(CONFIG_QUEUE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_MULTITHREADED_USER_DEFINED)
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
 	volatile critical_mutext_t Mutex;
 #endif
 }
@@ -72,13 +72,13 @@ Queue_T;
 	#define QUEUE_CONFIG_POW2(Pow2Mask)
 #endif
 
-#if defined(CONFIG_QUEUE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_MULTITHREADED_USER_DEFINED)
-	#define QUEUE_CONFIG_MULTITHREADED(IsMultithreaded) .IS_MULTITHREADED = IsMultithreaded,
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+	#define QUEUE_CONFIG_CRITICAL(UseCritical) .USE_CRITICAL = UseCritical,
 #else
-	#define QUEUE_CONFIG_MULTITHREADED(IsMultithreaded)
+	#define QUEUE_CONFIG_CRITICAL(UseCritical)
 #endif
 
-#define QUEUE_CONFIG(p_Buffer, Length, UnitSize, IsMultithreaded)	\
+#define QUEUE_CONFIG(p_Buffer, Length, UnitSize, UseCritical)	\
 {														\
 	.CONFIG =											\
 	{                                               	\
@@ -86,7 +86,7 @@ Queue_T;
 		.LENGTH				= Length,					\
 		.UNIT_SIZE			= UnitSize,					\
 		QUEUE_CONFIG_POW2(Length - 1U)					\
-		QUEUE_CONFIG_MULTITHREADED(IsMultithreaded)		\
+		QUEUE_CONFIG_CRITICAL(UseCritical)				\
 	},													\
 }
 
@@ -172,14 +172,18 @@ extern bool Queue_Dequeue	(Queue_T * p_queue, void * p_dest);
 extern bool Queue_EnqueueN	(Queue_T * p_queue, const void * p_unit, size_t nUnits);
 extern bool Queue_DequeueN	(Queue_T * p_queue, void * p_dest, size_t nUnits);
 extern size_t Queue_EnqueueMax(Queue_T * p_queue, const void * p_units, size_t nUnits);
-extern size_t Queue_DequeueMax(Queue_T * p_queue, void * p_dest, size_t p_destLength);
+extern size_t Queue_DequeueMax(Queue_T * p_queue, void * p_dest, size_t destLength);
 extern bool Queue_PushFront	(Queue_T * p_queue, const void * p_unit);
 extern bool Queue_PopBack	(Queue_T * p_queue, void * p_dest);
 extern bool Queue_PeekFront	(Queue_T * p_queue, void * p_dest);
 extern bool Queue_PeekBack	(Queue_T * p_queue, void * p_dest);
 extern bool Queue_PeekIndex	(Queue_T * p_queue, void * p_dest, size_t index);
+extern bool Queue_RemoveFront(Queue_T * p_queue, size_t nUnits);
+extern bool Queue_RemoveBack(Queue_T * p_queue, size_t nUnits);
+extern bool Queue_Seek(Queue_T * p_queue, void * p_dest, size_t index);
 extern void * Queue_PeekPtrFront(Queue_T * p_queue);
+extern void * Queue_PeekPtrBack(Queue_T * p_queue);
 extern void * Queue_PeekPtrIndex(Queue_T * p_queue, size_t index);
-extern void * Queue_DequeuePtr(Queue_T * p_queue);
+extern void * Queue_SeekPtr(Queue_T * p_queue, size_t index);
 
 #endif

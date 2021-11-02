@@ -82,6 +82,7 @@ typedef struct
 #endif
 
 	uint32_t PwmPeriod_Ticks; //match to HAL
+	void(*ActivatePhase)(const void * p_this);
 
 	volatile Phase_Mode_T PhaseMode; //const PhaseMode[8];
 
@@ -160,6 +161,8 @@ static inline void Phase_ActuateDutyCycle(const Phase_T * p_phase, uint16_t pwmD
 	);
 }
 
+
+//static inline void Phase_ActuateState(const Phase_T * p_phase, Phase_Id_T id)
 static inline void Phase_ActuateState(const Phase_T * p_phase, bool a, bool b, bool c)
 {
 #if  	defined(CONFIG_PHASE_HAL_PWM)

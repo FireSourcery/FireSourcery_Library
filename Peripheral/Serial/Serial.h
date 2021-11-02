@@ -69,7 +69,7 @@ typedef struct
 	volatile uint32_t RxBufferTail;
 #endif
 
-#if defined(CONFIG_SERIAL_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_SERIAL_MULTITHREADED_USER_DEFINED)
+#if defined(CONFIG_SERIAL_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_SERIAL_CRITICAL_USER_DEFINED)
 	uint8_t TxMutex;
 	uint8_t RxMutex;
 #endif

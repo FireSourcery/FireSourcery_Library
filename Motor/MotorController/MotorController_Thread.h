@@ -47,7 +47,7 @@
 #include "Peripheral/Serial/Serial.h"
 #include "System/Shell/Shell.h"
 
-#include "Protocol/ProtocolG/ProtocolG.h"
+#include "Protocol/Protocol/Protocol.h"
 
 static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 {

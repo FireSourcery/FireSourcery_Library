@@ -32,26 +32,26 @@
 #define CONFIG_ANALOG_H
 
 
-#ifdef CONFIG_ANALOG_MULTITHREADED_LIBRARY_DEFINED
+#ifdef CONFIG_ANALOG_CRITICAL_LIBRARY_DEFINED
 
-#elif defined(CONFIG_ANALOG_MULTITHREADED_USER_DEFINED)
+#elif defined(CONFIG_ANALOG_CRITICAL_USER_DEFINED)
 
-#elif defined(CONFIG_ANALOG_MULTITHREADED_DISABLE)
+#elif defined(CONFIG_ANALOG_CRITICAL_DISABLE)
 
 #else
-	#define CONFIG_ANALOG_MULTITHREADED_DISABLE
+	#define CONFIG_ANALOG_CRITICAL_DISABLE
 #endif
 
 /*
  *
  */
-#ifdef CONFIG_ANALOG_ADC_RESULT_REGISTER_8BIT
-
-#elif defined(CONFIG_ANALOG_ADC_RESULT_REGISTER_16BIT)
-/* Default case */
-#else
-	#define CONFIG_ANALOG_ADC_RESULT_REGISTER_16BIT
-#endif
+//#ifdef CONFIG_ANALOG_ADC_RESULT_REGISTER_8BIT
+//
+//#elif defined(CONFIG_ANALOG_ADC_RESULT_REGISTER_16BIT)
+///* Default case */
+//#else
+//	#define CONFIG_ANALOG_ADC_RESULT_REGISTER_16BIT
+//#endif
 
 /*
  *
@@ -78,48 +78,40 @@
 /*
  *
  */
-#ifdef CONFIG_ANALOG_VIRUTAL_CHANNEL_ENUM_USER_DEFINED
-/*
- * User must provide enum typedef
- */
-#elif defined(CONFIG_ANALOG_VIRUTAL_CHANNEL_UINT8)
-/* Default case */
-#else
-	#define CONFIG_ANALOG_VIRUTAL_CHANNEL_UINT8
-#endif
+//#ifdef CONFIG_ANALOG_VIRUTAL_CHANNEL_ENUM_USER_DEFINED
+///*
+// * User must provide enum typedef
+// */
+//#elif defined(CONFIG_ANALOG_VIRUTAL_CHANNEL_UINT8)
+///* Default case */
+//#else
+//	#define CONFIG_ANALOG_VIRUTAL_CHANNEL_UINT8
+//#endif
 
 
-#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
-
-#elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
-
-#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER)
-
-#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
-
-#else
-	#define CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
-#endif
-
-
-
-#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
-
-#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_MULTIMUXED)
-
-#else
-	#define CONFIG_ANALOG_ADC_HW_N_ADC_DISABLED
-#endif
-
-
-//#ifdef CONFIG_ANALOG_HAL_ADC_FUNCTIONS_USER_DEFINED
+//#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER)
 //
-//#elif defined (CONFIG_ANALOG_HAL_ADC_FUNCTIONS_S32K)
+//#elif defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
+//
+//#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER)
+//
+//#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
 //
 //#else
-//#define CONFIG_ANALOG_HAL_ADC_FUNCTIONS_USER_DEFINED
-
+//	#define CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER
 //#endif
+//
+//
+//
+//#if defined(CONFIG_ANALOG_ADC_HW_N_ADC_FIXED)
+//
+//#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_MULTIMUXED)
+//
+//#else
+//	#define CONFIG_ANALOG_ADC_HW_N_ADC_DISABLED
+//#endif
+
+
 
 
 #endif

@@ -273,3 +273,128 @@
 //
 //	Analog_Dectivate(p_analog);
 //}
+
+
+
+
+//typedef enum
+//{
+//	ANALOG_STATUS_OK = 0,
+//	ANALOG_STATUS_ERROR_A = 1,
+//} Analog_Status_T;
+//
+//typedef enum
+//{
+//	ANALOG_REQUEST_REG_CONVERSION_COMPLETE,
+//	ANALOG_REQUEST_REG_CONVERSION_ACTIVE,
+//} Analog_Request_T;
+
+
+//static inline uint32_t ReadRequest(const HAL_ADC_T * p_adc, Analog_Request_T request)
+//{
+//	uint32_t response;
+//
+//	switch (request)
+//	{
+//	case ANALOG_REQUEST_REG_CONVERSION_COMPLETE:
+//		response = (uint32_t) HAL_ADC_ReadConversionCompleteFlag(p_adc);
+//		break;
+//	default:
+//		response = 0;
+//		break;
+//	}
+//
+//	return response;
+//}
+//
+//static inline void WriteConfig(HAL_ADC_T * p_adc, Analog_Config_T config)
+//{
+//	p_analog->ActiveConfig = config;
+//
+//	if (config.UseInterrrupt)
+//	{
+//		HAL_ADC_EnableInterrupt(p_adc);
+//	}
+//	else
+//	{
+//		HAL_ADC_DisableInterrupt(p_adc);
+//	}
+//}
+//
+///*!
+//	 @brief
+// */
+//void Analog_WriteConfig(Analog_T * p_analog, Analog_Config_T config)
+//{
+//#if defined(CONFIG_ANALOG_ADC_HW_1_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_1_ADC_M_BUFFER)
+//	WriteConfig(p_analog,  p_analog->p_Adc, config);
+//#elif defined(CONFIG_ANALOG_ADC_HW_N_ADC_1_BUFFER) || defined(CONFIG_ANALOG_ADC_HW_N_ADC_M_BUFFER)
+//	for (uint8_t iAdc = 0U; iAdc < p_analog->AdcN_Count; iAdc++)
+//	{
+//		WriteConfig(p_analog->pp_Adcs[iAdc], config);
+//	}
+//#endif
+//}
+
+
+
+////is new data available
+//bool Analog_IsNewData(Analog_T * p_analog, Analog_VirtualChannel_T channel)
+//{
+//
+//}
+//
+////read new data
+//void Analog_PollChannel(Analog_T * p_analog, Analog_VirtualChannel_T channel)
+//{
+//	if (Analog_IsNewData(p_analog, channel))
+//	{
+//		Analog_ReadChannel(p_analog, channel);
+//	}
+//}
+//void Analog_WaitResult(Analog_T * p_analog)
+//{
+//	//while(!p_analog->ADC_GetCompleteFlag());
+//	ADC_GetCompleteFlag(p_analog->p_ADC_RegMap_IO);
+//
+//	while(!ADC_GetCompleteFlag(p_analog->p_ADC_RegMap_IO[p_analog->ADC_Count_IO - 1]));
+//}
+
+
+
+/*!
+	 @brief Single Channel Conversion
+ */
+//void Analog_ActivateConversionChannel(Analog_T * p_analog, Analog_VirtualChannel_T p_channel, Analog_Config_T config, void (*onComplete)(volatile void * p_userData), volatile void * p_userData)
+//{
+//#if  (defined(CONFIG_ANALOG_CRITICAL_USER_DEFINED) || defined(CONFIG_ANALOG_CRITICAL_LIBRARY_DEFINED))
+//	EnterCritical();
+//#elif defined(CONFIG_ANALOG_CRITICAL_DISABLE)
+//	Analog_DisableInterrupt(p_analog);
+//#endif
+//
+//	ActivateAdc(p_analog, p_channel, 1U, config);
+////	p_analog->p_ActiveConversion = 0U;
+////	p_analog->ActiveConversionChannelIndex = 0U;
+//
+//#if (defined(CONFIG_ANALOG_CRITICAL_USER_DEFINED) || defined(CONFIG_ANALOG_CRITICAL_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_CRITICAL_DISABLE)
+//	ExitCritical();
+//#endif
+//}
+
+//void Analog_ActivateChannel(Analog_T * p_analog, Analog_VirtualChannel_T p_channel, Analog_Config_T config, void (*onComplete)(volatile void * p_userData), volatile void * p_userData)
+//{
+//#if  (defined(CONFIG_ANALOG_CRITICAL_USER_DEFINED) || defined(CONFIG_ANALOG_CRITICAL_LIBRARY_DEFINED))
+//	EnterCritical();
+//#elif defined(CONFIG_ANALOG_CRITICAL_DISABLE)
+//	Analog_DisableInterrupt(p_analog);
+//#endif
+//
+//	ActivateAdc(p_analog, p_channel, 1U, config);
+////	p_analog->p_ActiveConversion = 0U;
+////	p_analog->ActiveConversionChannelIndex = 0U;
+//
+//#if (defined(CONFIG_ANALOG_CRITICAL_USER_DEFINED) || defined(CONFIG_ANALOG_CRITICAL_LIBRARY_DEFINED)) && !defined(CONFIG_ANALOG_CRITICAL_DISABLE)
+//	ExitCritical();
+//#endif
+//}

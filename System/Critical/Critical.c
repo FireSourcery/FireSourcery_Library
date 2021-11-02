@@ -22,19 +22,16 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Private.h
-	@author FireSoucery
-	@brief 	Analog module common "private" functions
-	@version V0
+    @file 	Critical.h
+    @author FireSoucery
+    @brief  Implements Critical Section
+    @version V0
 */
 /******************************************************************************/
-#ifndef PRIVATE_ANALOG_H
-#define PRIVATE_ANALOG_H
-
-#include "Analog.h"
-#include "HAL_Analog.h"
 #include "Config.h"
 
+#include <stdint.h>
+#include <stdbool.h>
 
-
-#endif
+int32_t g_InterruptDisableCount = 0U;
+uint32_t g_RegPrimask;

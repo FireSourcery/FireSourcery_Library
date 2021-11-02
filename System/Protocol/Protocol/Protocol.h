@@ -136,7 +136,9 @@ typedef enum
 {
 	PROTOCOL_RX_STATUS_WAIT,
 	PROTOCOL_RX_STATUS_SUCCESS,
-	PROTOCOL_RX_STATUS_ERROR_REQ,
+//	PROTOCOL_RX_STATUS_SUCCESS_REQ,
+//	PROTOCOL_RX_STATUS_SUCCESS_DATA, //continue req
+	PROTOCOL_RX_STATUS_ERROR_PACKET,
 	PROTOCOL_RX_STATUS_ERROR_DATA,
 	PROTOCOL_RX_STATUS_ACK,
 	PROTOCOL_RX_STATUS_NACK,
@@ -165,6 +167,7 @@ typedef enum
 {
 	PROTOCOL_TX_SYNC_ACK_REQ,
 	PROTOCOL_TX_SYNC_NACK_TIMEOUT,
+	PROTOCOL_TX_SYNC_NACK_PACKET_ERROR,
 	PROTOCOL_TX_SYNC_NACK_DATA_ERROR,
 	PROTOCOL_TX_SYNC_NACK_REQ_ID,
 }
@@ -240,8 +243,6 @@ typedef struct Protocol_Tag
 	Datagram_T Datagram;
 
 	//proc variables
-//	volatile Protocol_State_T State;
-
 	volatile Protocol_RxState_T		RxState;
 	volatile Protocol_RxStatus_T 	RxStatus;
 	volatile Protocol_ReqState_T 	ReqState;

@@ -43,7 +43,7 @@
 
 #include "Transducer/Blinky/Blinky.h"
 
-#include "Protocol/ProtocolG/ProtocolG.h"
+#include "System/Protocol/Protocol/Protocol.h"
 
 #include "Peripheral/Serial/Serial.h"
 #include "Peripheral/Flash/Flash.h"
@@ -101,9 +101,9 @@ typedef const struct
 	//	const HAL_Flash_T * const P_HAL_FLASH;
 
 	const Motor_Constants_T 			MOTOR_INITS[CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT];
-	const ProtocolG_Specs_T * const 	P_PROTOCOL_SPECS[1];	//protocols available, not necessary simultaneous
-	const ProtocolG_Config_T 			AUX_PROTOCOL_CONFIG[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT]; 	//Simultaneously active protocols
-	const ProtocolG_Config_T 			MOT_PROTOCOL_CONFIG;
+	const Protocol_Specs_T * const 	P_PROTOCOL_SPECS[1];	//protocols available, not necessary simultaneous
+	const Protocol_Config_T 			AUX_PROTOCOL_CONFIG[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT]; 	//Simultaneously active protocols
+	const Protocol_Config_T 			MOT_PROTOCOL_CONFIG;
 	const MotProtocol_Config_T			MOT_PROTOCOL_CONFIG_REGISTERS;
 	const MotShell_Config_T 			MOT_SHELL_CONFIG;
 	const MotAnalogUser_Config_T 		MOT_ANALOG_USER_CONFIG;
@@ -129,9 +129,9 @@ typedef struct
 	EEPROM_T Eeprom;
 
 	//	void * p_Coms[]; 			//list of all datalink structs id by index
-	ProtocolG_T				AuxProtocols[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT]; 	//Simultaneously active protocols
+	Protocol_T				AuxProtocols[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT]; 	//Simultaneously active protocols
 
-	ProtocolG_T				MotProtocol;
+	Protocol_T				MotProtocol;
 	MotProtocol_Output_T 	MotProtocolOutput;
 	MotProtocol_Input_T 	MotProtocolInput;
 

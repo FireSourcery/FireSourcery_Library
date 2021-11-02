@@ -31,9 +31,9 @@
 #include "Queue.h"
 #include "Config.h"
 
-#if defined(CONFIG_QUEUE_MULTITHREADED_LIBRARY_DEFINED)
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED)
 	#include "System/Critical/Critical.h"
-#elif defined(CONFIG_QUEUE_MULTITHREADED_USER_DEFINED)
+#elif defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
 	extern inline void Critical_Enter();
 	extern inline void Critical_Exit();
 	extern inline void Critical_AquireMutex(void * p_mutex);
@@ -51,31 +51,31 @@
 /******************************************************************************/
 static inline void EnterCritical(void)
 {
-#if defined(CONFIG_QUEUE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_MULTITHREADED_USER_DEFINED)
-	Critical_Enter();
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+	if (p_queue.CONFIG.USE_CRITICAL == true) { Critical_Enter(); }
 #endif
 }
 
 static inline void ExitCritical(void)
 {
-#if defined(CONFIG_QUEUE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_MULTITHREADED_USER_DEFINED)
-	Critical_Exit();
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+	if (p_queue.CONFIG.USE_CRITICAL == true) { Critical_Exit(); }
 #endif
 }
 
 static inline bool AquireMutex(Queue_T * p_queue)
 {
-#if defined(CONFIG_QUEUE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_MULTITHREADED_USER_DEFINED)
-	return (p_queue.CONFIG.IS_MULTITHREADED == true) ? Critical_AquireMutex(&p_queue->Mutex) : true;
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+		return (p_queue.CONFIG.USE_CRITICAL == true) ? Critical_Enter_Common(&p_queue->Mutex) : true;
 #else
-	return true;
+		return true;
 #endif
 }
 
 static inline void ReleaseMutex(Queue_T * p_queue)
 {
-#if defined(CONFIG_QUEUE_MULTITHREADED_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_MULTITHREADED_USER_DEFINED)
-	if (p_queue.CONFIG.IS_MULTITHREADED == true) { Critical_ReleaseMutex(&p_queue->Mutex) };
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+		if (p_queue.CONFIG.USE_CRITICAL == true) { Critical_Exit_Common(&p_queue->Mutex) };
 #endif
 }
 
@@ -93,18 +93,24 @@ static inline size_t CalcIndexOffset(Queue_T * p_queue, size_t index)
 	return CalcIndexWrap(p_queue, index) * p_queue->CONFIG.UNIT_SIZE;
 }
 
-static void Enqueue(Queue_T * p_queue, const void * p_unit)
-{
-	memcpy(p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Head), p_unit, p_queue->CONFIG.UNIT_SIZE);
-	p_queue->Head = CalcQueueIndexInc(p_queue, p_queue->Head, 1U);
-}
-
-static void Dequeue(Queue_T * p_queue, void * p_dest)
-{
- 	memcpy(p_dest, p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail), p_queue->CONFIG.UNIT_SIZE);
-	p_queue->Tail = CalcQueueIndexInc(p_queue, p_queue->Tail, 1U);
-}
-
+static inline void * GetPtrFront(Queue_T * p_queue)								{return p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail);}
+static inline void * GetPtrBack(Queue_T * p_queue)								{return p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Head);}
+static inline void * GetPtrIndex(Queue_T * p_queue, size_t index)				{return p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail + index);}
+static inline void PeekFront(Queue_T * p_queue, void * p_dest)					{memcpy(p_dest, GetPtrFront(p_queue), p_queue->CONFIG.UNIT_SIZE);}
+static inline void PeekBack(Queue_T * p_queue, void * p_dest)					{memcpy(p_dest, GetPtrBack(p_queue), p_queue->CONFIG.UNIT_SIZE);}
+static inline void PeekIndex(Queue_T * p_queue, void * p_dest, size_t index)	{memcpy(p_dest, GetPtrIndex(p_queue, index), p_queue->CONFIG.UNIT_SIZE);}
+static inline void PlaceFront(Queue_T * p_queue, const void * p_unit)			{memcpy(GetPtrFront(p_queue), p_unit, p_queue->CONFIG.UNIT_SIZE);}
+static inline void PlaceBack(Queue_T * p_queue, const void * p_unit)			{memcpy(GetPtrBack(p_queue), p_unit, p_queue->CONFIG.UNIT_SIZE);}
+static inline void RemoveFront(Queue_T * p_queue, size_t nUnits)				{p_queue->Tail = CalcQueueIndexInc(p_queue, p_queue->Tail, nUnits);}
+static inline void RemoveBack(Queue_T * p_queue, size_t nUnits)					{p_queue->Head = CalcQueueIndexDec(p_queue, p_queue->Head, nUnits);}
+static inline void AddFront(Queue_T * p_queue, size_t nUnits)					{p_queue->Tail = CalcQueueIndexDec(p_queue, p_queue->Tail, nUnits);}
+static inline void AddBack(Queue_T * p_queue, size_t nUnits)					{p_queue->Head = CalcQueueIndexInc(p_queue, p_queue->Head, nUnits);}
+static inline void Enqueue(Queue_T * p_queue, const void * p_unit)				{PlaceBack(p_queue, p_unit); AddBack(p_queue, 1U);}
+static inline void Dequeue(Queue_T * p_queue, void * p_dest)					{PeekFront(p_queue, p_dest); RemoveFront(p_queue, 1U);}
+static inline void PushFront(Queue_T * p_queue, const void * p_unit) 			{AddFront(p_queue, 1U); PlaceFront(p_queue, p_unit);}
+static inline void PopBack(Queue_T * p_queue, void * p_dest)					{RemoveBack(p_queue, 1U); PeekBack(p_queue, p_dest);}
+static inline void * SeekPtr(Queue_T * p_queue, size_t index) 					{RemoveFront(p_queue, index); return GetPtrFront(p_queue);}
+static inline void Seek(Queue_T * p_queue, void * p_dest, size_t index)			{RemoveFront(p_queue, index); PeekFront(p_queue, p_dest);}
 
 /******************************************************************************/
 /*!
@@ -122,7 +128,7 @@ Queue_T * Queue_New(size_t unitCount, size_t unitSize)
 	Queue_T * p_queue = malloc(sizeof(Queue_T));
 	void * p_buffer = malloc(unitCount * unitSize);
 
-	if(p_queue != 0U && p_buffer != 0U)
+	if (p_queue != 0U && p_buffer != 0U)
 	{
 		*(void *)&p_queue->CONFIG.P_BUFFER 		= p_buffer;
 		*(size_t)&p_queue->CONFIG.LENGTH 		= unitCount;
@@ -137,50 +143,41 @@ Queue_T * Queue_New(size_t unitCount, size_t unitSize)
 
 void Queue_Clear(Queue_T * p_queue)
 {
-	//	queue->Count 		= 0;
 	p_queue->Head = 0U;
 	p_queue->Tail = 0U;
 }
 
 bool Queue_Enqueue(Queue_T * p_queue, const void * p_unit)
 {
-	bool isSucess = false;
-
+	bool isSuccess = false;
 	EnterCritical();
-
 	if (Queue_GetIsFull(p_queue) == false) //ideally compiler stores value from inline function
 	{
 		Enqueue(p_queue, p_unit);
-		isSucess = true;
+		isSuccess = true;
 	}
-
 	ExitCritical();
-
-	return isSucess;
+	return isSuccess;
 }
 
 bool Queue_Dequeue(Queue_T * p_queue, void * p_dest)
 {
-	bool isSucess = false;
-
+	bool isSuccess = false;
 	EnterCritical();
-
 	if (Queue_GetIsEmpty(p_queue) == false)
 	{
 		Dequeue(p_queue, p_dest);
-		isSucess = true;
+		isSuccess = true;
 	}
-
 	ExitCritical();
-
-	return isSucess;
+	return isSuccess;
 }
 
 bool Queue_EnqueueN(Queue_T * p_queue, const void * p_units, size_t nUnits)
 {
-	bool isSucess = false;
+	bool isSuccess = false;
 
-	if(AquireMutex(p_queue) == true)
+	if (AquireMutex(p_queue) == true)
 	{
 		if (nUnits < Queue_GetEmptyCount(p_queue))
 		{
@@ -188,19 +185,19 @@ bool Queue_EnqueueN(Queue_T * p_queue, const void * p_units, size_t nUnits)
 			{
 				Enqueue(p_queue, p_units + (iUnit * p_queue->CONFIG.UNIT_SIZE));
 			}
-			isSucess = true;
+			isSuccess = true;
 		}
 		ReleaseMutex(p_queue);
 	}
 
-	return isSucess;
+	return isSuccess;
 }
 
 bool Queue_DequeueN(Queue_T * p_queue, void * p_dest, size_t nUnits)
 {
-	bool isSucess = false;
+	bool isSuccess = false;
 
-	if(AquireMutex(p_queue) == true)
+	if (AquireMutex(p_queue) == true)
 	{
 		if (nUnits < Queue_GetFullCount(p_queue))
 		{
@@ -208,20 +205,19 @@ bool Queue_DequeueN(Queue_T * p_queue, void * p_dest, size_t nUnits)
 			{
 				Dequeue(p_queue, p_dest + (iUnit * p_queue->CONFIG.UNIT_SIZE));
 			}
-			isSucess = true;
+			isSuccess = true;
 		}
-
 		ReleaseMutex(p_queue);
 	}
 
-	return isSucess;
+	return isSuccess;
 }
 
 size_t Queue_EnqueueMax(Queue_T * p_queue, const void * p_units, size_t nUnits)
 {
 	size_t count;
 
-	if(AquireMutex(p_queue) == true)
+	if (AquireMutex(p_queue) == true)
 	{
 		for (count = 0; count < nUnits; count++)
 		{
@@ -244,7 +240,7 @@ size_t Queue_DequeueMax(Queue_T * p_queue, void * p_dest, size_t p_destLength)
 {
 	size_t count;
 
-	if(AquireMutex(p_queue) == true)
+	if (AquireMutex(p_queue) == true)
 	{
 		for (count = 0; count < p_destLength; count++)
 		{
@@ -265,196 +261,113 @@ size_t Queue_DequeueMax(Queue_T * p_queue, void * p_dest, size_t p_destLength)
 
 bool Queue_PushFront(Queue_T * p_queue, const void * p_unit)
 {
-	bool isSucess = false;
-
+	bool isSuccess = false;
 	EnterCritical();
-
 	if (Queue_GetIsFull(p_queue) == false)
 	{
-		p_queue->Tail = CalcQueueIndexDec(p_queue, p_queue->Tail, 1U);
-		memcpy(p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail), p_unit, p_queue->CONFIG.UNIT_SIZE);
-		isSucess = true;
+		PushFront(p_queue, p_unit);
+		isSuccess = true;
 	}
-
 	ExitCritical();
-
-	return isSucess;
+	return isSuccess;
 }
-
-//bool Queue_PushFrontOverwrite(Queue_T * p_queue, const void * p_unit)
-//{
-//	bool isSucess = false;
-//
-//	EnterCritical();
-//
-//	if (Queue_GetIsFull(p_queue) == false)
-//	{
-//		p_queue->Tail = CalcQueueIndexDec(p_queue, p_queue->Tail, 1U);
-//		memcpy(p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail), p_unit, p_queue->CONFIG.UNIT_SIZE);
-//		isSucess = true;
-//	}
-//	else
-//	{
-//		p_queue->Head = CalcQueueIndexDec(p_queue, p_queue->Head, 1U); //not needed for CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED
-//		p_queue->Tail = CalcQueueIndexDec(p_queue, p_queue->Tail, 1U);
-//		memcpy(p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail), p_unit, p_queue->CONFIG.UNIT_SIZE);
-//	}
-//
-//	ExitCritical();
-//
-//	return isSucess;
-//}
 
 bool Queue_PopBack(Queue_T * p_queue, void * p_dest)
 {
-	bool isSucess = false;
-
+	bool isSuccess = false;
 	EnterCritical();
-
 	if (Queue_GetIsEmpty(p_queue) == false)
 	{
-		p_queue->Head = CalcQueueIndexDec(p_queue, p_queue->Head, 1U);
-		memcpy(p_dest, p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Head), p_queue->CONFIG.UNIT_SIZE);
-		isSucess = true;
+		PopBack(p_queue, p_dest);
+		isSuccess = true;
 	}
-
 	ExitCritical();
-
-	return isSucess;
+	return isSuccess;
 }
 
 bool Queue_PeekFront(Queue_T * p_queue, void * p_dest)
 {
-	bool isSucess = false;
-
+	bool isSuccess = false;
 	EnterCritical();
-
 	if (Queue_GetIsEmpty(p_queue) == false)
 	{
-		memcpy(p_dest, p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail), p_queue->CONFIG.UNIT_SIZE);
-		isSucess = true;
+		PeekFront(p_queue, p_dest);
+		isSuccess = true;
 	}
-
 	ExitCritical();
-
-	return isSucess;
-}
-
-bool Queue_PeekIndex(Queue_T * p_queue, void * p_dest, size_t index)
-{
-	bool isSucess = false;
-
-	EnterCritical();
-
-	if (index < Queue_GetFullCount(p_queue))
-	{
-		memcpy(p_dest, p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail + index), p_queue->CONFIG.UNIT_SIZE);
-		isSucess = true;
-	}
-
-	ExitCritical();
-
-	return isSucess;
+	return isSuccess;
 }
 
 bool Queue_PeekBack(Queue_T * p_queue, void * p_dest)
 {
-	bool isSucess = false;
-
+	bool isSuccess = false;
 	EnterCritical();
-
 	if (Queue_GetIsEmpty(p_queue) == false)
 	{
-		memcpy(p_dest, p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Head), p_queue->CONFIG.UNIT_SIZE);
-		isSucess = true;
+		PeekBack(p_queue, p_dest);
+		isSuccess = true;
 	}
-
 	ExitCritical();
+	return isSuccess;
+}
 
-	return isSucess;
+bool Queue_PeekIndex(Queue_T * p_queue, void * p_dest, size_t index)
+{
+	bool isSuccess = false;
+	EnterCritical();
+	if (index < Queue_GetFullCount(p_queue))
+	{
+		PeekIndex(p_queue, p_dest, index);
+		isSuccess = true;
+	}
+	ExitCritical();
+	return isSuccess;
 }
 
 bool Queue_RemoveFront(Queue_T * p_queue, size_t nUnits)
 {
-	bool isSucess = false;
-
+	bool isSuccess = false;
 	EnterCritical();
-
 	if (nUnits < Queue_GetFullCount(p_queue))
 	{
-		p_queue->Tail = CalcQueueIndexInc(p_queue, p_queue->Tail, nUnits);
-		isSucess = true;
+		RemoveFront(p_queue, 1U);
+		isSuccess = true;
 	}
-
 	ExitCritical();
-
-	return isSucess;
+	return isSuccess;
 }
 
 bool Queue_RemoveBack(Queue_T * p_queue, size_t nUnits)
 {
-	bool isSucess = false;
-
+	bool isSuccess = false;
 	EnterCritical();
-
 	if (nUnits < Queue_GetFullCount(p_queue))
 	{
-		p_queue->Head = CalcQueueIndexDec(p_queue, p_queue->Head, 1U);
-		isSucess = true;
+		RemoveBack(p_queue, 1U);
+		isSuccess = true;
 	}
-
 	ExitCritical();
-
-	return isSucess;
+	return isSuccess;
 }
 
-
-bool Queue_Seek(Queue_T * p_queue, size_t nUnits)
+bool Queue_Seek(Queue_T * p_queue, void * p_dest, size_t index)
 {
-	return Queue_Remove(p_queue, nUnits);
+	bool isSuccess = false;
+	EnterCritical();
+	if (index < Queue_GetFullCount(p_queue))
+	{
+		Seek(p_queue, p_dest, index);
+		isSuccess = true;
+	}
+	ExitCritical();
+	return isSuccess;
 }
 
 /*
 	single threaded use only, buffer may be overwritten
-	result in return value, pointer cannot be 0
+	result in return value, pointer 0 indicate invalid
  */
-void * Queue_PeekPtrFront(Queue_T * p_queue)
-{
-	void * p_peek = 0U;
-
-	if (Queue_GetIsEmpty(p_queue) == false)
-	{
-		p_peek = p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail);
-	}
-
-	return p_peek;
-}
-
-void * Queue_PeekPtrIndex(Queue_T * p_queue, size_t index)
-{
-	void * p_peek = 0U;
-
-	if (index < Queue_GetFullCount(p_queue))
-	{
-		p_peek = p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail + index);
-	}
-
-	return p_peek;
-}
-
-void * Queue_DequeuePtr(Queue_T * p_queue)
-{
-	void * p_unit;
-
-	EnterCritical();
-
-	if (Queue_GetIsEmpty(p_queue) == false)
-	{
-		p_unit = p_queue->CONFIG.P_BUFFER + CalcIndexOffset(p_queue, p_queue->Tail);
-		p_queue->Tail = CalcQueueIndexInc(p_queue, p_queue->Tail, 1U);
-	}
-
-	ExitCritical();
-
-	return p_unit;
-}
+void * Queue_PeekPtrFront(Queue_T * p_queue) 				{return (Queue_GetIsEmpty(p_queue) == false) ? GetPtrFront(p_queue) : 0U;}
+void * Queue_PeekPtrBack(Queue_T * p_queue)					{return (Queue_GetIsEmpty(p_queue) == false) ? GetPtrBack(p_queue) : 0U;}
+void * Queue_PeekPtrIndex(Queue_T * p_queue, size_t index)	{return (index < Queue_GetFullCount(p_queue)) ? GetPtrIndex(p_queue, index) : 0U;}
+void * Queue_SeekPtr(Queue_T * p_queue, size_t index) 		{return (index < Queue_GetFullCount(p_queue)) ? SeekPtr(p_queue, index) : 0U;}

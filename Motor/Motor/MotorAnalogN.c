@@ -1,54 +1,11 @@
+#include "MotorAnalogN.h"
 #include "Peripheral/Analog/Analog.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
 
-/* if Analog_T abstracted to controls all adc.(nfixed and nmultimuxed modes). Analog_T   can be controlled within motor module */
-//	Analog_T MotorAnalog;
-
-// Analog_T scale 1 per motor, still need shared queue for adc retrurn. and solve with activate overwrite bewteen virtual analogs
-
-//1 analog nadc mode per all motors to share queue,  set active conversion pin map prior to start
-//analog per adc hw, hal layer
-
-
-/*!
-	@brief Virtual channel identifiers, index into arrays containing ADC channel data
- */
-#define MOTOR_ANALOG_ADC_CHANNEL_COUNT 			14U
-typedef enum
-{
-	/* BEMF sensorless */
-	MOTOR_ANALOG_CHANNEL_VBUS, 	/* V battery, V in */
-	MOTOR_ANALOG_CHANNEL_VA,
-	MOTOR_ANALOG_CHANNEL_VB,
-	MOTOR_ANALOG_CHANNEL_VC,
-
-	/* FOC */
-	MOTOR_ANALOG_CHANNEL_IA,
-	MOTOR_ANALOG_CHANNEL_IB,
-	MOTOR_ANALOG_CHANNEL_IC,
-
-	/* Temperature */
-	MOTOR_ANALOG_CHANNEL_HEAT_MOTOR,
-	MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS,
-	MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS_HIGH,
-	MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS_LOW,
-	MOTOR_ANALOG_CHANNEL_HEAT_PCB,
-
-	/* Error checking */
-	MOTOR_ANALOG_CHANNEL_VACC,		/* V accessories */
-	MOTOR_ANALOG_CHANNEL_VSENSE,	/* V analog sensors */
-
-	/* analog sensor input */
-//	MOTOR_ANALOG_CHANNEL_THROTTLE,
-//	MOTOR_ANALOG_CHANNEL_BRAKE,
-} MotorAnalog_Channel_T;
-
-#define CONVERSION_QUEUE_BUFFER_SIZE (8U)
-static Analog_ConversionActive_T ConversionQueue[ANALOG_CONVERSION_QUEUE_BUFFER_SIZE];
-
+//Analog_T MotorAnalog;
 
 //void MotorAnalog_Init(Motor_T * p_motor, uint32_t * p_ChannelPinMap,  uint32_t * p_ChannelAdcMap)
 //{
@@ -107,7 +64,7 @@ static const Analog_Conversion_T CONVERSION_IABC =
 
 void MotorAnalog_ActivateIabc(Analog_T * p_analog, Motor_T * p_motor)
 {
-//	Analog_ActivateConversion(&MotorAnalog, &CONVERSION_IABC, p_motor);
+//	Analog_ActivateConversion(&MotorAnalog, &CONVERSION_IABC, p_motor, p_motor->AnalogChannelMap);
 }
 
 /*******************************************************************************/
@@ -157,9 +114,9 @@ static const Analog_ConversionChannel_T CHANNELS_BEMF_A[] =
 
 static const Analog_Conversion_T CONVERSION_BEMF_A =
 {
-	.P_CHANNELS 			= CHANNELS_BEMF_A,
-	.CHANNEL_COUNT 			= sizeof(CHANNELS_BEMF_A)/sizeof(Analog_Conversion_T),
-	.ON_COMPLETE = 0U,//MotorAnalog_LoadBemfA, //re arm for next pwm pulse on complete, if phase bemf called once per commutation
+	.P_CHANNELS 	= CHANNELS_BEMF_A,
+	.CHANNEL_COUNT 	= sizeof(CHANNELS_BEMF_A)/sizeof(Analog_Conversion_T),
+	.ON_COMPLETE 	= 0U,//MotorAnalog_LoadBemfA, //re arm for next pwm pulse on complete, if phase bemf called once per commutation
 	.OPTIONS =
 	{
 		.UseConfig = 1U,
@@ -189,8 +146,8 @@ static const Analog_ConversionChannel_T CHANNELS_BEMF_B[] =
 
 static const Analog_Conversion_T CONVERSION_BEMF_B =
 {
-	.P_CHANNELS 			= CHANNELS_BEMF_B,
-	.CHANNEL_COUNT 			= sizeof(CHANNELS_BEMF_B)/sizeof(Analog_ConversionChannel_T),
+	.P_CHANNELS 	= CHANNELS_BEMF_B,
+	.CHANNEL_COUNT 	= sizeof(CHANNELS_BEMF_B)/sizeof(Analog_ConversionChannel_T),
 	.ON_COMPLETE 	= 0U,//MotorAnalog_LoadBemfB,
 	.OPTIONS =
 	{
@@ -260,7 +217,7 @@ void MotorAnalog_LoadBemfC(Analog_T * p_analog, Motor_T * p_motor)
 //	},
 //};
 
-void MotorAnalog_EnqueueBemfRemainder()
+void MotorAnalog_EnqueueBemfRemainder(Analog_T * p_analog, Motor_T * p_motor)
 {
 
 }
@@ -290,12 +247,12 @@ const Analog_Conversion_T CONVERSION_MONITOR =
 	},
 };
 
-void MotorAnalog_EnqueueMonitor()
+void MotorAnalog_EnqueueMonitor(Analog_T * p_analog, Motor_T * p_motor)
 {
 //	Analog_Conversion_T * saveConversion = MotorAnalog.p_ActiveConversion;
 //
-//	Analog_ActivateConversion(&MotorAnalog, &CONVERSION_MONITOR); //todo return to load bemf
-//	Analog_EnqueueConversion(&MotorAnalog, saveConversion); //todo return to load bemf
+//	Analog_ActivateConversion(&MotorAnalog, &CONVERSION_MONITOR); 	//todo return to load bemf
+//	Analog_EnqueueConversion(&MotorAnalog, saveConversion); 		//todo return to load bemf
 }
 
 
@@ -306,18 +263,17 @@ void MotorAnalog_EnqueueMonitor()
 /*******************************************************************************/
 static const Analog_ConversionChannel_T CHANNELS_IDLE[] =
 {
-	{MOTOR_ANALOG_CHANNEL_VBUS, 	0U},
-	{MOTOR_ANALOG_CHANNEL_VA, 		Motor_SixStep_CaptureBemfA_IO},
-	{MOTOR_ANALOG_CHANNEL_VB, 		Motor_SixStep_CaptureBemfB_IO},
-	{MOTOR_ANALOG_CHANNEL_VC, 		Motor_SixStep_CaptureBemfC_IO},
-	{MOTOR_ANALOG_CHANNEL_IA, 		Motor_CaptureIBusIa_IO},
-	{MOTOR_ANALOG_CHANNEL_IB, 		Motor_CaptureIBusIb_IO},
-	{MOTOR_ANALOG_CHANNEL_IC, 		Motor_CaptureIBusIc_IO},
+	{MOTOR_ANALOG_CHANNEL_VBUS, 			0U},
+	{MOTOR_ANALOG_CHANNEL_VA, 				Motor_SixStep_CaptureBemfA_IO},
+	{MOTOR_ANALOG_CHANNEL_VB, 				Motor_SixStep_CaptureBemfB_IO},
+	{MOTOR_ANALOG_CHANNEL_VC, 				Motor_SixStep_CaptureBemfC_IO},
+	{MOTOR_ANALOG_CHANNEL_IA, 				Motor_CaptureIBusIa_IO},
+	{MOTOR_ANALOG_CHANNEL_IB, 				Motor_CaptureIBusIb_IO},
+	{MOTOR_ANALOG_CHANNEL_IC, 				Motor_CaptureIBusIc_IO},
 	{MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS, 	0U},
 	{MOTOR_ANALOG_CHANNEL_HEAT_PCB, 		0U},
 	{MOTOR_ANALOG_CHANNEL_HEAT_MOTOR, 		0U},
 };
-
 
 const Analog_Conversion_T CONVERSION_IDLE =
 {
@@ -331,8 +287,7 @@ const Analog_Conversion_T CONVERSION_IDLE =
 	},
 };
 
-
-void MotorAnalog_EnqueueIdle()
+void MotorAnalog_EnqueueIdle(Analog_T * p_analog, Motor_T * p_motor)
 {
 	Analog_EnqueueConversion(&MotorAnalog, &CONVERSION_IDLE);
 //	Analog_DequeueConversion(&MotorAnalog);
@@ -342,27 +297,23 @@ static const Analog_ConversionChannel_T CHANNELS_USER[] =
 {
 //	MOTOR_ANALOG_CHANNEL_BRAKE,
 //	MOTOR_ANALOG_CHANNEL_THROTTLE,
-
-
 //	MOTOR_ANALOG_CHANNEL_VACC,
 //	MOTOR_ANALOG_CHANNEL_VSENSE,
 };
 
 static Analog_Conversion_T CONVERSION_USER =
 {
-	.P_CHANNELS = CHANNELS_USER,
-	.CHANNEL_COUNT = sizeof(CHANNELS_USER)/sizeof(Analog_ConversionChannel_T),
+	.P_CHANNELS 	= CHANNELS_USER,
+	.CHANNEL_COUNT 	= sizeof(CHANNELS_USER)/sizeof(Analog_ConversionChannel_T),
+	.ON_COMPLETE 	= 0U,
 	.OPTIONS =
 	{
 		.UseConfig = 1U,
 		.UseInterrrupt = 1U,
 	},
-	.p_OnCompleteChannels = 0,
-	.ON_COMPLETE = 0,
-	.p_OnCompleteUserData = 0,
 };
 
-void MotorAnalog_EnqueueUser()
+void MotorAnalog_EnqueueUser(Analog_T * p_analog, Motor_T * p_motor)
 {
 	Analog_EnqueueConversion(&MotorAnalog, &CONVERSION_USER);
 //	Analog_DequeueConversion(&MotorAnalog);	//starts chain if no conversion is currently active
