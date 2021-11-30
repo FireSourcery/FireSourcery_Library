@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,47 +19,19 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Config.h
     @author FireSoucery
     @brief
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef CONFIG_PHASE_H
 #define CONFIG_PHASE_H
 
-//#if defined(CONFIG_PHASE_HAL_PWM_S32K)
-//	#define CONFIG_PHASE_HAL_PWM
-//#elif defined(CONFIG_PHASE_HAL_PHASE_S32K)
-//	#define CONFIG_PHASE_HAL_PHASE
-//#elif defined(CONFIG_PHASE_HAL_KLS_S32K)
-//	#define CONFIG_PHASE_HAL_PHASE
-//#elif defined(CONFIG_PHASE_HAL_PWM_USER_DEFINED)
-//	#define CONFIG_PHASE_HAL_PWM
-//#elif defined(CONFIG_PHASE_HAL_PHASE_USER_DEFINED)
-//	#define CONFIG_PHASE_HAL_PHASE
-//#else
-//	#define CONFIG_PHASE_HAL_PHASE_USER_DEFINED
-//	#define CONFIG_PHASE_HAL_PHASE
-//#endif
-
-#if  	defined(CONFIG_PHASE_HAL_PWM)
-
-#elif 	defined(CONFIG_PHASE_HAL_PHASE)
-
-#else
-	#define CONFIG_PHASE_HAL_PHASE
-#endif
-
-
-//todo pwm period as compile time cost
-//#if  	defined(CONFIG_PHASE_HAL_PWM_PERIOD)
-//
-//#endif
-//
+#define CONFIG_PHASE_DUTY_MAX (65536U)
 
 #endif
 

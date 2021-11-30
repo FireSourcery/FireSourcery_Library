@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,49 +19,21 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Config.h
     @author FireSoucery
     @brief	Hall module
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef CONFIG_HALL_H
 #define CONFIG_HALL_H
 
-/*
-	Match in HAL
- */
-#if (CONFIG_HALL_HW_SENSOR_ORDER_CBA)
-
-#elif (CONFIG_HALL_HW_SENSOR_ORDER_ABC)
-
-#else
-	#define CONFIG_HALL_HW_SENSOR_ORDER_CBA
+#if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
 #endif
 
-
-/*
-	Module Options
- */
-#if  	defined(CONFIG_HALL_COMMUTATION_TABLE_SECTOR_ID)
-
-#elif 	defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
-
-#else
-	#define CONFIG_HALL_COMMUTATION_TABLE_SECTOR_ID
-#endif
-
-
-#if  	defined(CONFIG_HALL_HAL_PIN)
-
-#elif 	defined(CONFIG_HALL_HAL_HALL)
-
-#else
-	#define CONFIG_HALL_HAL_HALL
-#endif
 
 #endif
 

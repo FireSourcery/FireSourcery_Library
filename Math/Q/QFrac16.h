@@ -37,9 +37,9 @@
 
 #define QFRAC16_N_FRAC_BITS (15U) /*!< Q1.15, 15 fractional bits, shift mul/div by 32768 */
 
-typedef int16_t qfrac16_t; 	/*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
-typedef int16_t qangle16_t; /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
-//typedef uint16_t uqfrac16_t; 	/*!< Q16    */
+typedef int16_t qfrac16_t; 		/*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
+typedef int16_t qangle16_t; 	/*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
+//typedef uint16_t uqfrac16_t; 	/*!< Q0.16    */
 
 static const qfrac16_t QFRAC16_MAX = 0x7FFF; /*!< (32767) */
 static const qfrac16_t QFRAC16_MIN = (int16_t) 0x8000; /*!< (-32768) */
@@ -116,7 +116,7 @@ static inline int32_t qfrac16_mul(int16_t factor, qfrac16_t frac)
 /*!
 	@return [-32767, 32767] as int16_t
  */
-static inline int16_t qfrac16_mul_sat(int16_t factor, qfrac16_t frac)
+static inline qfrac16_t qfrac16_mul_sat(int16_t factor, qfrac16_t frac)
 {
 	int32_t product = qfrac16_mul(factor, frac);
 
@@ -141,7 +141,7 @@ static inline int32_t qfrac16_div(int16_t dividend, qfrac16_t divisor)
 /*!
 	@return [-32768, 32767] as int16_t
  */
-static inline int16_t qfrac16_div_sat(int16_t dividend, qfrac16_t divisor)
+static inline qfrac16_t qfrac16_div_sat(int16_t dividend, qfrac16_t divisor)
 {
 	int32_t quotient = qfrac16_div(dividend, divisor);
 	return qfrac16_sat(quotient);

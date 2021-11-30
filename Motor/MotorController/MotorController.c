@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,84 +19,70 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Motor.h
     @author FireSoucery
     @brief Motor Utilities Instance, 1 instance per all motor
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #include "MotorController.h"
 #include "Config.h"
 
-#include "Motor/Utility/MotShell/MotShell.h"
-#include "Motor/Utility/MotProtocol/MotProtocol.h"
+//#include "Motor/Utility/MotShell/MotShell.h"
+//#include "Motor/Utility/MotProtocol/MotProtocol.h"
 #include "Motor/Utility/MotAnalogUser/MotAnalogUser.h"
 
 #include "Motor/Motor/Motor.h"
-#include "Motor/Motor/HAL_Motor.h"
 
 #include <stdint.h>
 
 /*
 
  */
-void MotorController_Init(MotorController_T * p_controller, const MotorController_Config_T * p_consts)
+void MotorController_Init(MotorController_T * p_controller)
 {
-	p_controller->p_Config = p_consts;
-
-	HAL_Motor_Init(); //HAL_MotorController_Init init hal analog instances
-
-	for(uint8_t iMotor = 0U; iMotor < CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT; iMotor++)
+	for (uint8_t iMotor = 0U; iMotor < p_controller->CONFIG.MOTOR_COUNT; iMotor++)
 	{
-		//if default
-		Motor_Init_Default(&p_controller->Motors[iMotor], &p_consts->MOTOR_INITS[iMotor]);
-
-		//if flash
-		// must set eeprom pointer first
-		// Motor_Init(&p_controller->Motors[iMotor], &p_consts->P_MOTORS_CONSTANTS[iMotor]);
+		Motor_Init(&p_controller->CONFIG.P_MOTORS[iMotor]);
 	}
 
-	for(uint8_t iSerial = 0U; iSerial < CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT; iSerial++)
+	for (uint8_t iSerial = 0U; iSerial < p_controller->CONFIG.SERIAL_COUNT; iSerial++)
 	{
-		Serial_Init(&p_controller->Serials[iSerial]);
+//		Serial_Init(&p_controller->CONFIG.P_SERIALS[iSerial]);
 	}
 
-//	for(uint8_t iProtocol = 0U; iProtocol < 1; iProtocol++)
-//	{
-//		ProtocolG_Init(&p_controller->AuxProtocols[iProtocol], &p_consts->AUX_PROTOCOL_CONFIG[iProtocol]);
-//
-//		//if flash set, com port and protocol can be fixed
-////		ProtocolG_SetSpecs(&p_motorController->Protocols[iProtocol], p_motorController->p_Constants->P_PROTOCOL_SPECS[p_controller->Parameters.ProtocolSpecsId[iProtocol]]);
-//	}
+	MotAnalogUser_Init(&p_controller->AnalogUser);
 
-	ProtocolG_Init(&p_controller->MotProtocol, &p_consts->MOT_PROTOCOL_CONFIG);
-	MotProtocol_Output_Init(&p_controller->MotProtocolOutput, &p_controller->p_Config->MOT_PROTOCOL_CONFIG_REGISTERS);
-	MotProtocol_Input_Init(&p_controller->MotProtocolInput,  &p_controller->p_Config->MOT_PROTOCOL_CONFIG_REGISTERS);
-
-	MotAnalogUser_Init(&p_controller->AnalogUser, &p_consts->MOT_ANALOG_USER_CONFIG);
-
-	MotShell_Init(&p_controller->MotShell, &p_consts->MOT_SHELL_CONFIG);
-//		&p_motorController->Serials[p_motorController->Parameters.ShellConnectId]
-//		&p_motorController->Motors[0U],
-//		CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT,
-//		&p_controller->MotorUser
-
-
-	Thread_InitThreadPeriodic_Period(&p_controller->TimerSeconds, 	p_consts->P_MILLIS_TIMER, 1000U, 1000U,	0U, 0U);
-	Thread_InitThreadPeriodic_Period(&p_controller->TimerMillis, 	p_consts->P_MILLIS_TIMER, 1000U, 1U,	0U, 0U);
-	Thread_InitThreadPeriodic_Period(&p_controller->TimerMillis10, 	p_consts->P_MILLIS_TIMER, 1000U, 10U,	0U, 0U);
-
-	Blinky_Init(&p_controller->BlinkyAlarm, &p_consts->HAL_PIN_ALARM);
-
+	Blinky_Init(&p_controller->Buzzer);
 //	Flash_Init(&p_controller->Flash);
 //	EEPROM_Init(&p_controller->Eeprom);
+
+	Timer_InitPeriodic(&p_controller->TimerSeconds,		1000U);
+	Timer_InitPeriodic(&p_controller->TimerMillis, 		1U);
+	Timer_InitPeriodic(&p_controller->TimerMillis10, 	10U);
+
+	p_controller->SignalBufferAnalogMonitor.AdcFlags = 0U;
+	p_controller->SignalBufferAnalogUser.AdcFlags = 0U;
+
+	//	for (uint8_t iProtocol = 0U; iProtocol < p_controller->CONFIG.AUX_PROTOCOL_COUNT; iProtocol++)
+	//	{
+	//		Protocol_Init(&p_controller->CONFIG.P_AUX_PROTOCOLS[iProtocol]);
+	////		ProtocolG_SetSpecs(&p_motorController->Protocols[iProtocol], p_motorController->p_Constants->P_PROTOCOL_SPECS[p_controller->Parameters.ProtocolSpecsId[iProtocol]]);
+	//	}
+	//
+	//	Protocol_Init(&p_controller->MotProtocol);
+	//	MotProtocol_Output_Init(&p_controller->MotProtocolOutput);
+	//	MotProtocol_Input_Init(&p_controller->MotProtocolInput);
+
+	//	MotShell_Init(&p_controller->MotShell);
+	//	HAL_Motor_Init(); //HAL_MotorController_Init init hal analog instances
 }
 
 
-//void MotorUser_CaptureInput_IO(MotorUser_T * p_motorUser)
+//void MotorUser_CaptureInput (MotorUser_T * p_motorUser)
 //{
 //	switch (p_motorUser->InputMode)
 //	{

@@ -30,7 +30,6 @@
 /******************************************************************************/
 #include "Encoder_Motor.h"
 #include "Encoder.h"
-#include "Private.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -43,32 +42,12 @@
 
 	@param controlFreq_Hz pwm timer freq
  */
-void Encoder_Motor_InitCaptureCount
-(
-	Encoder_T * p_encoder,
-	const HAL_Encoder_T * p_hal_encoder,
-	uint32_t controlFreq_Hz,				/* UnitT_Freq and PollingFreq */
-//	uint8_t angleDataBits,					/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
-	uint8_t polePairs,
-	uint32_t encoderCountsPerRevolution,	/* UnitAngularD_Factor = [0xFFFFFFFFU/encoderCountsPerRevolution + 1] */
-	uint32_t encoderDistancePerCount		/* UnitLinearD */
-)
+void Encoder_Motor_InitCaptureCount(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount, uint8_t polePairs)
 {
-	Encoder_DeltaD_Init
-	(
-		p_encoder,
-		p_hal_encoder,
-		controlFreq_Hz,
-		encoderDistancePerCount,
-		encoderCountsPerRevolution
-//		angleDataBits
-	);
-
+	Encoder_DeltaD_Init(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount);
 	p_encoder->PolePairs = polePairs;
 
-	/* UnitAngularD set to reflect electrical angle
-	 * Allow CapturedD, TotalD of at least 1 electrical revolution
-	 *
+	/*
 	 * e.g.
 	 * 8192ppr
 	 * 12 pole pairs
@@ -81,7 +60,6 @@ void Encoder_Motor_InitCaptureCount
 	 * 20k RPM => DeltaD = 136
 	 * 10k RPM => DeltaD = 10000/60 * 8192 /20000 = 68
 	 */
-//	p_speed->UnitAngularSpeed = MaxLeftShiftDivide(controlFreq_Hz * nPolePairs, pulsePerRevolution, 16);
 }
 
 
@@ -89,7 +67,14 @@ void Encoder_Motor_InitCaptureCount
 /**************************************************************************/
 /*!
 	Init to CaptureDeltaT Mode
-	e.g. using 1 hall sensor as speed encoder.
+	e.g.   hall sensors  as speed encoder.
+
+	Hall => Use CountPerRevolution = polePairs*6. Capture on Commutation Step
+
+	// Capture Pulse Per Hall Cycle, 	PulsePerRevolution = 1 				=> Speed_GetRotationalSpeed_RPM reflects electrical speed
+	// Capture Pulse Per Hall Cycle, 	PulsePerRevolution = PolePairs 		=> Speed_GetRotationalSpeed_RPM reflects mechanical speed
+	// Capture Pulse Per Commutation, 	PulsePerRevolution = PolePairs*6 	=> Speed_GetRotationalSpeed_RPM reflects mechanical speed
+	 *
   	deltaT = hall period = 1 electric revolution
 
 	MECH_R = ELECTRIC_R / N_POLE_PAIRS
@@ -105,53 +90,13 @@ void Encoder_Motor_InitCaptureCount
 	16-bit timer, Freq = 312,500 Hz: Peroid = 3.2 uS, Overflow 209,712 us, 209 ms, 28 rpm min for 10 pole pairs
 	16-bit timer, Freq = 625,000 Hz: Peroid = 1.6 uS, Overflow 104,856 us, 104.5 ms, 56 rpm min for 10 pole pairs
 
-	Encoder_Motor_GetElectricalAngle is meaningless, always returns 1
-	Encoder_Motor_GetMechanicalAngle is coarse polepair step resolution
-	Best for interpolate angle
 
-	// Pulse Per Hall Cycle, PulsePerRevolution = 1 			=> Speed_GetRotationalSpeed_RPM reflects electrical speed
-	// Pulse Per Hall Cycle, PulsePerRevolution = PolePairs 	=> Speed_GetRotationalSpeed_RPM reflects mechanical speed
-	// Pulse Per Commutation, PulsePerRevolution = PolePairs*6 => Speed_GetRotationalSpeed_RPM reflects mechanical speed
  */
 /**************************************************************************/
-void Encoder_Motor_InitCaptureTime
-(
-	Encoder_T * p_encoder,
-	const HAL_Encoder_T * p_hal_encoder,
-	uint32_t timerCounterMax,
-	uint32_t timerFreqHz,				/* UnitT_Freq */
-	uint32_t controlFreq_Hz,			/* PollingFreq */
-//	uint8_t angleDataBits,				/* UnitAngularD_DivisorShift = [32 - unitAngle_DataBits] */
-	uint8_t polePairs,
-	uint8_t countsPerRevolution,		/* EncoderRes */
-	uint32_t distancePerCount		/* UnitLinearD */
-)
+void Encoder_Motor_InitCaptureTime(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount, uint8_t polePairs)
 {
-	Encoder_DeltaT_Init
-	(
-		p_encoder,
-		p_hal_encoder,
-		timerCounterMax,
-		timerFreqHz,
-		controlFreq_Hz,
-		distancePerCount,
-		countsPerRevolution
-//		angleDataBits
-	);
-	//Too large may be unused
-	//p_encoder->UnitAngularD_Factor		= 0xFFFFFFFFU/polePairs + 1;
-	//p_encoder->UnitAngularD_DivisorShift 	= (32 - angleDataBits);
-	//p_encoder->UnitAngularSpeed
-
-	//motor must use for stop poll
-//	Encoder_InitExtendedDeltaT
-//	(
-//		&p_motor->Encoder,
-//		&p_motor->MillisTimerBase,
-//		1000U,
-//		1000U
-//	);
-
+	Encoder_DeltaT_Init(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount);
+	Encoder_DeltaT_InitExtendedTimer(p_encoder, 1000U);	//motor must use for stop poll
 	p_encoder->PolePairs = polePairs;
 }
 

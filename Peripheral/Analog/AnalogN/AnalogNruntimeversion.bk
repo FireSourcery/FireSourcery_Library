@@ -1,0 +1,483 @@
+/*
+ *  conversion virtual channel map
+ */
+//typedef const struct
+//{
+////	analog_channel_t ANALOG_CHANNEL;
+//	void * const P_ANALOG;
+//
+//	uint8_t HOST; //host analog id
+//	const analog_adcpin_t PIN;
+//}
+//AnalogI_Pin_T;
+
+/*
+ * Maps app virtual conversion channels
+ * can be shared betwen conversions
+ */
+//typedef const struct
+//{
+//	const AnalogI_Pin_T * const P_PINS_MAP;				//overload into Analog Conversion Queue, not used on return
+//	analog_adcresult_t 	* const P_RESULTS_BUFFER;		/*!< Persistent ADC results buffer, virtual channel index.  */
+//	//	uint8_t CHANNEL_COUNT;
+//	void * P_ON_COMPLETE_CONTEXT;
+//
+//	//compile time determine which analogs are used to simplify runtime
+//	//requires map per unique conversion
+//	//	AnalogI_AdcFlags_T AnalogsActive;
+////	uint8_T * const P_ANALOGS_CHANNEL_COUNT;
+////	volatile AnalogI_AdcFlags_T * P_ON_COMPLETE_SIGNAL_BUFFER;
+//}
+//AnalogI_ConversionMap_T; //resltsmap
+
+
+//typedef const struct
+//{
+//	analog_adcresult_t * const P_RESULTS_BUFFER; /*!< Persistent ADC results buffer, virtual channel index.  */
+//	void * P_ON_COMPLETE_CONTEXT;
+//}
+//AnalogI_ConversionResultsMap_T; //resltsmap
+
+/*
+ * need to signal complete
+ * per conversion
+ */
+//typedef const struct
+//{
+//	AnalogI_AdcFlags_T * const P_SIGNAL_BUFFER;	//at least buffer needs to be implemented
+//	//compile time determine which analogs are used to simplify runtime
+//	//requires map per unique conversion
+//	const AnalogI_AdcFlags_T ACTIVE; 	//also on complete state
+////	uint8_t * const P_ANALOGS_CHANNEL_COUNT;
+//	const uint8_t CHANNEL_COUNTS[]; 	//last element as array
+//
+//}
+//AnalogI_ConversionSignal_T;
+
+
+
+
+
+////per conversion in analogi
+//// select map by id
+////	oor analog has conversion -> channelist
+//typedef const struct
+//{
+//	AnalogI_ConversionSubsetChannel_T * P_CHANNELS;
+//	uint8_t CHANNEL_COUNT;
+//	AnalogI_ConversionResultsMap_T * const P_RESULTS_MAP;
+//	AnalogI_AdcFlags_T * const P_SIGNAL_BUFFER;
+//}
+//AnalogI_ConversionMap_T;
+
+
+//runtime version
+//		/*
+//		 * Overload into AnalogI Queue
+//		 */
+//		typedef struct
+//		{
+//			const Analog_Conversion_T 			* p_Conversion;
+//			const AnalogI_ConversionMap_T 		* p_Map;	//	const AnalogI_ConversionCaptureMap_T * p_CaptureMap; //save 1 map
+//			const AnalogI_ConversionSignal_T 	* p_Signal;
+//
+//			uint8_t ChannelCount; //need for AnalogN, compare against index to determine conversion complete, or use channel queue end
+//			AnalogI_AdcFlags_T * p_SignalComplete;
+//			// use signal complete queue if mutiple copies of smae conversion must be queue?
+//			// reject multiples of smae conversion is not complete signal
+//		}
+//		AnalogI_ConversionActive_T;
+//
+//		typedef struct
+//		{
+//			Analog_ConversionChannel_T * p_ConversionChannel;
+//
+//		//	analog_channel_t 	Channel; //conversion index
+//			analog_adcpin_t 	Pin; //save //1 additional write on start, 2 less map derefence
+//			//queue oncomplete or conversion index index
+//		}
+//		AnalogI_ConversionChannelActive_T;
+
+//#define CONFIG_ANALOG_DISABLE_CRITICAL //analogN handle critical sections
+
+//
+//static inline bool _AnalogI_EnqueueActiveChannel(Queue_T * p_channelQueue, const Analog_ConversionChannel_T * p_conversionChannel, analog_channel_t channel, analog_adcpin_t pin)
+//{
+//	AnalogI_ConversionChannelActive_T active;
+//	active.p_ConversionChannel = p_conversionChannel;
+//	active.Channel = channel;
+//	active.Pin = pin;
+//	return Queue_Enqueue(p_channelQueue, &active);
+//}
+//
+//static inline bool _AnalogI_EnqueueFrontActiveChannel(Queue_T * p_channelQueue, const Analog_ConversionChannel_T * p_conversionChannel, analog_channel_t channel, analog_adcpin_t pin)
+//{
+//	AnalogI_ConversionChannelActive_T active;
+//	active.p_ConversionChannel = p_conversionChannel;
+//	active.Channel = channel;
+//	active.Pin = pin;
+//	return Queue_PushFront(p_channelQueue, &active);
+//}
+//
+//static inline void _AnalogI_InitActiveConversion(AnalogI_ConversionActive_T * p_active, const Analog_Conversion_T * p_conversion, const AnalogI_ConversionMap_T * p_map, uint8_t channelCount, void * p_signalFlags)
+//{
+//	p_active->p_Conversion = p_conversion;
+//	p_active->p_Map = p_map;
+//	p_active->ChannelCount = channelCount;
+//	p_active->p_SignalComplete = p_signalFlags;
+//}
+//
+//static inline bool _AnalogI_EnqueueActiveConversion(Queue_T * p_conversionQueue, const Analog_Conversion_T * p_conversion, const AnalogI_ConversionMap_T * p_map, uint8_t channelCount, void * p_signalFlags)
+//{
+//	AnalogI_ConversionActive_T active;
+//	_AnalogI_InitConversionActive(&active, p_conversion, p_map, channelCount, p_signalFlags);
+//	return Queue_Enqueue(p_conversionQueue, &active);
+//}
+//
+//static inline bool _AnalogI_EnqueueFrontActiveConversion(Queue_T * p_conversionQueue, const Analog_Conversion_T * p_conversion, const AnalogI_ConversionMap_T * p_map, uint8_t channelCount, void * p_signalFlags)
+//{
+//	AnalogI_ConversionActive_T active;
+//	_AnalogI_InitConversionActive(&active, p_conversion, p_map, channelCount, p_signalFlags);
+//	return Queue_PushFront(p_conversionQueue, &active);
+//}
+
+/******************************************************************************/
+/*!
+	@section LICENSE
+
+	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+
+	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+    @file 	.h
+    @author FireSoucery
+    @brief
+    @version V0
+*/
+/******************************************************************************/
+#include "AnalogN.h"
+#include "AnalogI.h"
+
+#include <stdint.h>
+#include <stdbool.h>
+
+
+static inline bool CheckEnqueueConversionCommon(AnalogI_T * p_analogI, AnalogN_AdcFlags_T * p_signalBuffer)
+{
+	bool isEnqueue = false;
+
+	if (p_analogI->IsNewConversionFlag == false) //activate/enqueue conversion only once,
+	{
+		//do not activate if not all adcs completed selected conversion
+		//use pointer to queue if multiple copies of same conversion need to be in queue
+		if (*p_signalBuffer == 0U)
+		{
+			isEnqueue = true;
+
+//			if (_AnalogI_CheckIsActive(p_analogI) == true)
+//			{
+//				isEnqueue = true;
+//			}
+//			else
+//			{
+////				_AnalogI_InitConversionActive(&p_analogI->ActiveConversion, p_conversion, p_conversionMap, 0U, p_signalBuffer);
+//				p_analogI->IsActivateFlag = true;
+//			}
+			p_analogI->IsNewConversionFlag = true;
+		}
+	}
+
+	return isEnqueue;
+}
+
+static inline bool ActivateAdcsCommon(AnalogN_T * p_analogn, AnalogN_AdcFlags_T * p_signalBuffer)
+{
+	AnalogI_T * p_analogI;
+
+	for (uint8_t iAdc = 0U; iAdc < p_analogn->CONFIG.ANALOG_COUNT; iAdc++)
+	{
+		p_analogI = &p_analogn->CONFIG.P_ANALOGS[iAdc];
+
+		if (p_analogI->IsNewConversionFlag == true)
+		{
+			if (AnalogI_ReadConversionActive(p_analogI) == false) // we know queue is not empty if new conversion flag is set
+			{
+				p_analogI->ActiveConversionIndex = 0U;
+				_AnalogI_ActivateAdc(p_analogI);
+			}
+		}
+		else
+		{
+			*p_signalBuffer |= (1UL << iAdc); //signal this conversion is already complete on this adc
+		}
+
+		p_analogI->IsNewConversionFlag = false;
+	}
+}
+
+/*
+ * conversion activates which adcs is known at compile time,
+ *  can move to map struct
+ *  speed up runtime with addtion struct {P_analog, channelcount}
+ */
+static inline void EnqueueConversion
+(
+	AnalogN_T * p_analogn,
+	const Analog_Conversion_T * p_conversion,
+	const AnalogI_ConversionMap_T * p_conversionMap,
+	AnalogN_AdcFlags_T * p_signalBuffer
+)
+{
+	AnalogI_T * p_analogI;
+	AnalogI_Pin_T 				* p_pinsMap 			= p_conversionMap->P_PINS_MAP;
+	Analog_ConversionChannel_T 	* p_conversionChannels 	= p_conversion->P_CHANNELS;
+	analog_channel_t analogChannel;
+
+//	AnalogN_AdcFlags_T actiavteFlags;
+//	AnalogN_AdcFlags_T enqueueFlags;
+
+	for (uint8_t iChannelIndex = 0U; iChannelIndex < p_conversion->CHANNEL_COUNT; iChannelIndex++)
+	{
+		p_analogI = p_pinsMap[iChannelIndex].P_ANALOG;
+		if (CheckEnqueueConversionCommon(p_analogI,  p_signalBuffer) == true)
+		{
+			_AnalogI_EnqueueConversion(&p_analogI->ConversionQueue, p_conversion, p_conversionMap, 0U, p_signalBuffer);
+		}
+
+		analogChannel = p_conversionChannels[iChannelIndex].CHANNEL;
+		if (_AnalogI_EnqueueChannel(&p_analogI->ChannelQueue, p_conversionChannels[iChannelIndex], analogChannel, p_pinsMap[analogChannel].PIN) == true)
+		{
+			((AnalogI_ConversionActive_T*)Queue_PeekPtrBack(&p_analogI->ConversionQueue))->ChannelCount++;
+		}
+		else // error
+		{ 	// roll back attempt, this way only traverse channels once
+//			if(p_analogI->IsActivateFlag == false)
+//			{
+//				Queue_RemoveBack(&p_analogI->ChannelQueue, ((AnalogI_ConversionActive_T*)Queue_PeekPtrBack(&p_analogI->ConversionQueue))->ChannelCount);
+//			}
+//			else
+//			{
+//				Queue_RemoveBack(&p_analogI->ChannelQueue, p_analogI->ActiveConversion.ChannelCount);
+//			}
+		}
+	}
+
+	ActivateAdcsCommon(p_analogn, p_signalBuffer);
+
+}
+
+
+static inline void EnqueueFrontConversion
+(
+	AnalogN_T * p_analogn,
+	const Analog_Conversion_T * p_conversion,
+	const AnalogI_ConversionMap_T * p_conversionMap,
+	AnalogN_AdcFlags_T * p_signalBuffer
+)
+{
+	AnalogI_T * p_analogI;
+	AnalogI_Pin_T 				* p_pinsMap 			= p_conversionMap->P_PINS_MAP;
+	Analog_ConversionChannel_T 	* p_conversionChannels 	= p_conversion->P_CHANNELS;
+	analog_channel_t analogChannel;
+
+	/*
+	 * Push channel backswards, first item in user list will be processes first
+	 */
+	for (uint8_t iChannelIndex = p_conversion->CHANNEL_COUNT; iChannelIndex > 0U ; iChannelIndex--)
+	{
+		p_analogI = p_pinsMap[iChannelIndex].P_ANALOG;
+		if (CheckEnqueueConversionCommon(p_analogI,  p_signalBuffer) == true)
+		{
+			_AnalogI_EnqueueFrontConversion(&p_analogI->ConversionQueue, p_conversion, p_conversionMap, 0U, p_signalBuffer);
+		}
+
+		analogChannel = p_conversionChannels[iChannelIndex].CHANNEL;
+		//queue is still full, overwrite// quque size must to be to greater than largest conversion channel count, or infinite loop here.
+		if (_AnalogI_EnqueueFrontChannel(&p_analogI->ChannelQueue, p_conversionChannels[iChannelIndex], analogChannel, p_pinsMap[analogChannel]) == false)
+		{
+			//error check channel count
+			Queue_RemoveBack(&p_analogI->ChannelQueue, ((AnalogI_ConversionActive_T*)Queue_PeekPtrBack(&p_analogI->ConversionQueue))->ChannelCount);
+			Queue_RemoveBack(&p_analogI->ConversionQueue, 1U);
+
+			_AnalogI_EnqueueFrontChannel(&p_analogI->ChannelQueue, p_conversionChannels[iChannelIndex], analogChannel, p_pinsMap[analogChannel]);
+		}
+
+		((AnalogI_ConversionActive_T*)Queue_PeekPtrFront(&p_analogI->ConversionQueue))->ChannelCount++;
+	}
+
+	ActivateAdcsCommon(p_analogn, p_signalBuffer);
+}
+
+
+void AnalogN_PollDequeueConversion(AnalogN_T * p_analogn)
+{
+	AnalogI_T * p_analogI;
+
+	for (uint8_t iAdc = 0U; iAdc < p_analogn->CONFIG.ANALOG_COUNT; iAdc++)
+	{
+		p_analogI = &p_analogn->CONFIG.P_ANALOGS[iAdc];
+
+		_AnalogI_EnterCritical(p_analogI);
+		if ((Queue_GetIsEmpty(&p_analogI->ConversionQueue) == false) && (AnalogI_ReadConversionActive(p_analogI) == false))
+		{
+			p_analogI->ActiveConversionIndex = 0U; //if needed
+//			Queue_Dequeue(&p_analogI->ConversionQueue, &p_analogI->ActiveConversion); //or peek
+			_AnalogI_ActivateAdc(p_analogI);
+		}
+		_AnalogI_ExitCritical(p_analogI);
+	}
+}
+
+/*
+	Check for channels matching analog
+	option 1: copy channel and pin to buffer, loop twice
+	AnalogN loop all conversion channels once, Analog loops only valid channels.
+	Time Complexity: k*N[Channels] + (l[Writes] * N[Channels])
+	+ circular queue boundary check
+	+ deqeue conversion when 1 adc is open
+
+	option 2: lower module function pointer valid check date channel
+	option 3: AnalogN activate adc with some duplication
+	Analog loops all channels. Each channel compared against each ADC
+	Time Complexity: k*N[Channels]*M[Adcs]
+ */
+/*
+ Overwrites active conversion
+ */
+//static inline void ActivateConversion (AnalogN_T * p_analogn, AnalogN_Pin_T * p_pinsMap)
+//{
+//	AnalogI_T * p_analogI;
+//	AnalogN_Pin_T 				* p_pinsMap 			= p_conversionMap->P_PINS_MAP;
+//	Analog_ConversionChannel_T 	* p_conversionChannels = p_conversion->P_CHANNELS;
+//	analog_channel_t analogChannel;
+//
+//	AnalogI_ConversionActive_T activeBuffer;
+//
+//	//change to push backwas
+//	for (uint8_t iChannelIndex = 0U; iChannelIndex < p_conversion->CHANNEL_COUNT; iChannelIndex++)
+//	{
+//		p_analogI = p_pinsMap[iChannelIndex].P_ANALOG;
+//		if (ProcEnqueueConversionCommon(p_analogI, p_conversion, p_pinsMap, p_signalBuffer) == true)
+//		{
+//			//over write even if active
+//			_AnalogI_InitConversionActive(&p_analogI->ActiveConversion, p_conversion, p_conversionMap, 0U, p_signalBuffer);
+//			p_analogI->IsActivateFlag = true;
+//		}
+//	}
+//
+////	for (uint8_t iChannelIndex = 0U; iChannelIndex < p_analogn->ActiveConversion.p_Conversion->CHANNEL_COUNT; iChannelIndex++)
+////	{
+////		p_analog = p_pinsMap[iChannelIndex].P_ANALOG;
+////
+////		if (p_analog->IsNewConversionFlag == false) //known at compile time
+//////		if (p_analog->ActiveConversion.p_Conversion != p_analogn->ActiveConversion.p_Conversion) //only set activate conversion once
+////		{
+////			p_analog->ActiveConversion.p_Conversion = p_analogn->ActiveConversion.p_Conversion;
+////			p_analog->ActiveConversion.p_Map = p_analogn->ActiveConversion.p_Map; 			//overloading, p_Map.P_PINS_MAP not used on return
+////
+////			if (AnalogI_ReadConversionActive(p_analog) == true) //todo check in between dequeue polls
+////			{
+////				Queue_RemoveFront(&p_analog->ChannelQueue, p_analog->ActiveConversionChannelCount - p_analog->ActiveConversionChannelIndex);
+////				p_analog->ActiveConversionChannelIndex = 0U;
+////				p_analog->ActiveConversionChannelCount = 0U;
+////			}
+////
+////			p_analog->IsNewConversionFlag = true;
+////			*p_completeContext->P_ON_COMPLETE_SIGNAL_BUFFER = 0U; //do not activate if not all adcs completed selected coinversion? or we need to track stacking on complete states
+////		}
+////
+////		analogChannel = p_conversionChannels[iChannelIndex].CHANNEL;
+////		conversionChannel.Channel = analogChannel;
+////		conversionChannel.Pin = p_pinsMap[analogChannel].PIN;
+////		//		p_analog->CONFIG.P_ACTIVE_CHANNELS_BUFFER[iChannelIndex] 	= analogChannel;
+////		//		p_analog->CONFIG.P_ACTIVE_PINS_BUFFER[iChannelIndex] 		= p_pinsMap[analogChannel].PIN;
+////
+////		//todo push bakcwards
+////		//queue is still full, overwrite
+////		// quque size must to be to greater than largest conversion channel count, or infinite loop here.
+////		while (Queue_PushFront(&p_analog->ChannelQueue, &conversionChannel) == false)
+////		{
+////			//occurs only when new channel count is > active (removed) channel count
+////			p_conversionActive = Queue_PeekPtrBack(&p_analog->ConversionQueue);
+////			Queue_RemoveBack(&p_analog->ChannelQueue, p_conversionActive->p_Conversion->CHANNEL_COUNT);
+////			Queue_RemoveBack(&p_analog->ConversionQueue, 1U);
+////		}
+////
+////		p_analog->ActiveConversionChannelCount++; //known at compile time, can optimize with addtion struct {P_analog, channelcount}
+////	}
+//
+//
+//	ActivateAdcsCommon(p_analogn, p_signalBuffer);
+//}
+
+
+
+
+//static inline void AnalogN_ActivateConversion(AnalogN_T * p_analogn, const AnalogI_Conversion_T * p_conversion, const AnalogI_ConversionMap_T * p_map)
+//{
+//	EnterCritical();
+//	p_analogn->ActiveConversion.p_CaptureMap = &p_map->CAPTURE_RESULTS;
+//	p_analogn->ActiveConversion.p_Conversion = p_conversion;
+//	ActivateAnalogNConversionThis(p_analogn, p_map->P_PINS_MAP); //no need to use union this way
+//	ExitCritical();
+//}
+//
+///*
+// * Deqeue conversion to all Adcs if 1 adc is available.
+// * All Adcs wait, if one Adc Buffer is full.
+// */
+//void AnalogN_DequeueConversion(AnalogN_T * p_analogn)
+//{
+////	EnterCritical();
+//	for (uint8_t iAnalog = 0U; iAnalog < p_analogn->CONFIG.ANALOG_COUNT; iAnalog++)
+//	{
+//		if (AnalogI_ReadConversionActive(&p_analogn->CONFIG.P_ANALOGS[iAnalog]) == false)
+//		{
+//
+//		}
+//
+//		if (Queue_Dequeue(&p_analog->ConversionQueue, &p_analog->ActiveConversion) == true)
+//		{
+//
+//			AnalogActivateConversionThis(p_analog);
+//		}
+//	}
+////	EnterCritical();
+//}
+//
+//static inline void AnalogN_EnqeueConversion(AnalogN_T * p_analogn, const AnalogI_Conversion_T * p_conversion, const AnalogI_ConversionMap_T * p_map)
+//{
+//	AnalogN_ConversionActive_T conversionActive =
+//			{
+//					.p_Conversion = p_conversion,
+//					.p_Map = p_map,
+//			};
+//
+//	bool isSuccess;
+//
+//	EnterCritical();
+//
+//	ExitCritical();
+//
+//	return isSuccess;
+//
+//}
+
+
+

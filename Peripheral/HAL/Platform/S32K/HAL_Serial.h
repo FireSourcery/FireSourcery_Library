@@ -38,6 +38,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifndef CONFIG_HAL_SERIAL_FIFO_SIZE
+	#define CONFIG_HAL_SERIAL_FIFO_SIZE 4U
+#endif
+
+#ifndef CONFIG_HAL_SERIAL_BASE_FREQ
+	#define CONFIG_HAL_SERIAL_BASE_FREQ 48000000U
+#endif
+
 typedef LPUART_Type HAL_Serial_T;
 
 static inline void HAL_Serial_WriteTxChar(HAL_Serial_T * p_uartRegMap, uint8_t txChar)
@@ -55,28 +63,35 @@ static inline bool HAL_Serial_ReadIsTxRegEmpty(const HAL_Serial_T * p_uartRegMap
 	return ((p_uartRegMap->STAT & LPUART_STAT_TDRE_MASK) != 0U) ? true : false;
 }
 
-static inline uint8_t HAL_Serial_ReadTxFifoEmpty(const HAL_Serial_T * p_uartRegMap)
-{
-#ifndef CONFIG_HAL_SERIAL_FIFO_SIZE
-	#define CONFIG_HAL_SERIAL_FIFO_SIZE 4U
-#endif
-	uint32_t count = (p_uartRegMap->WATER & LPUART_WATER_TXCOUNT_MASK) >> LPUART_WATER_TXCOUNT_SHIFT;
-	return (CONFIG_HAL_SERIAL_FIFO_SIZE - count);
-}
-static inline uint8_t HAL_Serial_ReadTxEmptyCount(const HAL_Serial_T * p_uartRegMap)
-{
-	return HAL_Serial_ReadTxFifoEmpty(p_uartRegMap);
-}
-
 static inline bool HAL_Serial_ReadIsRxRegFull(const HAL_Serial_T * p_uartRegMap)
 {
 	return ((p_uartRegMap->STAT & LPUART_STAT_RDRF_MASK) != 0U) ? true : false;
 }
 
+static inline uint8_t HAL_Serial_ReadTxFifoFull(const HAL_Serial_T * p_uartRegMap)
+{
+	return (p_uartRegMap->WATER & LPUART_WATER_TXCOUNT_MASK) >> LPUART_WATER_TXCOUNT_SHIFT;
+}
+
+static inline uint8_t HAL_Serial_ReadTxFifoEmpty(const HAL_Serial_T * p_uartRegMap)
+{
+	uint32_t count = (p_uartRegMap->WATER & LPUART_WATER_TXCOUNT_MASK) >> LPUART_WATER_TXCOUNT_SHIFT;
+	return (CONFIG_HAL_SERIAL_FIFO_SIZE - count);
+}
+
 static inline uint8_t HAL_Serial_ReadRxFifoFull(const HAL_Serial_T * p_uartRegMap)
 {
-	uint32_t count = (p_uartRegMap->WATER & LPUART_WATER_RXCOUNT_MASK) >> LPUART_WATER_RXCOUNT_SHIFT;
-	return (count);
+	return (p_uartRegMap->WATER & LPUART_WATER_RXCOUNT_MASK) >> LPUART_WATER_RXCOUNT_SHIFT;
+}
+
+static inline uint8_t HAL_Serial_ReadTxEmptyCount(const HAL_Serial_T * p_uartRegMap)
+{
+	return HAL_Serial_ReadTxFifoEmpty(p_uartRegMap);
+}
+
+static inline uint8_t HAL_Serial_ReadTxFullCount(const HAL_Serial_T * p_uartRegMap)
+{
+	return HAL_Serial_ReadTxFifoFull(p_uartRegMap);
 }
 
 static inline uint8_t HAL_Serial_ReadRxFullCount(const HAL_Serial_T * p_uartRegMap)
@@ -128,7 +143,6 @@ static inline void HAL_Serial_WriteRxSwitch(HAL_Serial_T * p_uartRegMap, bool en
 
 static inline void HAL_Serial_ConfigBaudRate(HAL_Serial_T * p_uartRegMap, uint32_t baudRate)
 {
-	#define CONFIG_HAL_SERIAL_BASE_FREQ 48000000U
 	const uint32_t UART_BASE_FREQ = CONFIG_HAL_SERIAL_BASE_FREQ;
 
 	uint16_t sbr, sbrTemp;
@@ -142,7 +156,7 @@ static inline void HAL_Serial_ConfigBaudRate(HAL_Serial_T * p_uartRegMap, uint32
 	 * The idea is to use the best OSR (over-sampling rate) possible
 	 * Note, osr is typically hard-set to 16 in other lpuart instantiations
 	 * First calculate the baud rate using the minimum OSR possible (4) */
-	osr = 4;
+	osr = 4U;
 	sbr = (uint16_t) (UART_BASE_FREQ / (baudRate * osr));
 	calculatedBaud = (UART_BASE_FREQ / (osr * sbr));
 
@@ -210,8 +224,7 @@ static inline void HAL_Serial_ConfigBaudRate(HAL_Serial_T * p_uartRegMap, uint32
 
 static inline void HAL_Serial_Init(HAL_Serial_T * p_uartRegMap)
 {
-    /* Clear the error/interrupt flags */
-	p_uartRegMap->STAT = 0xC01FC000U; //FEATURE_LPUART_STAT_REG_FLAGS_MASK;
+	p_uartRegMap->STAT = 0xC01FC000U; /* Clear the error/interrupt flags */ //FEATURE_LPUART_STAT_REG_FLAGS_MASK;
 //	p_uartRegMap->CTRL = 0x00000000;   /* Reset all features/interrupts by default */
 	p_uartRegMap->FIFO = 0x0003C000U | LPUART_FIFO_RXFE_MASK | LPUART_FIFO_TXFE_MASK;
 	p_uartRegMap->WATER = LPUART_WATER_RXWATER(0x03U) | LPUART_WATER_TXWATER(0x01U);

@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,69 +19,50 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	MotorStateMachine.c
     @author FireSoucery
     @brief  MotorStateMachine
     @version V0
 */
-/*******************************************************************************/
+/******************************************************************************/
 #include "MotorStateMachine.h"
 
-#include "System/StateMachine/StateMachine.h"
+#include "Utility/StateMachine/StateMachine.h"
 
 #include "Motor.h"
 #include "Motor_FOC.h"
 #include "Motor_SixStep.h"
 
+static const StateMachine_State_T MOTOR_STATE_INIT;
+static const StateMachine_State_T MOTOR_STATE_STOP;
+static const StateMachine_State_T MOTOR_STATE_ALIGN;
+static const StateMachine_State_T MOTOR_STATE_OPEN_LOOP;
+static const StateMachine_State_T MOTOR_STATE_RUN;
+static const StateMachine_State_T MOTOR_STATE_FREEWHEEL;
+static const StateMachine_State_T MOTOR_STATE_CALIBRATION;
+static const StateMachine_State_T MOTOR_STATE_FAULT;
 
-extern const StateMachine_State_T MOTOR_STATE_INIT;
-extern const StateMachine_State_T MOTOR_STATE_STOP;
-extern const StateMachine_State_T MOTOR_STATE_ALIGN;
-extern const StateMachine_State_T MOTOR_STATE_OPEN_LOOP;
-extern const StateMachine_State_T MOTOR_STATE_SPIN;
-extern const StateMachine_State_T MOTOR_STATE_FREEWHEEL;
-extern const StateMachine_State_T MOTOR_STATE_FAULT;
-extern const StateMachine_State_T MOTOR_STATE_CALIBRATE_ADC;
-extern const StateMachine_State_T MOTOR_STATE_CALIBRATE_HALL;
-//extern const StateMachine_State_T MOTOR_STATE_CALIBRATE;
-
-//StateMachine_T MotorStateMachine =
-//{
-//	.P_STATE_INITIAL 			= &MOTOR_STATE_INIT,
-//	.TRANSITION_TABLE_LENGTH 	= MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH,
-//	.OUTPUT_TABLE_LENGTH 		= MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH,
-////	.IS_MULTITHREADED 			= 0U,
-//};
-
-/*******************************************************************************/
+/******************************************************************************/
 /*!
-    @brief Init
+    @brief
 */
-/*******************************************************************************/
-//void MotorStateMachine_Init(Motor_T * p_motor)
-//{
-//	StateMachine_Init
-//	(
-//		&(p_motor->StateMachine)
-////		&MOTOR_STATE_INIT,
-////		MOTOR_STATE_MACHINE_TRANSITION_MAP_LENGTH,
-////		MOTOR_STATE_MACHINE_INPUT_MAP_LENGTH,
-////		p_motor
-//	);
-//
-//
-////	StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_INIT);
-//}
+/******************************************************************************/
+const StateMachine_Machine_T MOTOR_STATE_MACHINE =
+{
+	.P_STATE_INITIAL 			= &MOTOR_STATE_INIT,
+	.TRANSITION_TABLE_LENGTH 	= MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH,
+	.OUTPUT_TABLE_LENGTH 		= MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH,
+//	.IS_MULTITHREADED 			= 0U,
+};
 
-
-/*******************************************************************************/
+/******************************************************************************/
 /*!
     @brief  State
 */
-/*******************************************************************************/
+/******************************************************************************/
 static void InitEntry(Motor_T * p_motor)
 {
 //	Motor_InitReboot(p_motor);
@@ -100,40 +81,40 @@ static void InitProc(Motor_T * p_motor)
 	}
 
 //		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_CALIBRATE_ADC);
-
 }
 
-const StateMachine_Transition_T INIT_TRANSITION_TABLE[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
+static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
 {
+	[MOTOR_TRANSITION_STOP] 			= {&MOTOR_STATE_STOP, 			0U},
+
 	[MOTOR_TRANSITION_FAULT] 			= {&MOTOR_STATE_FAULT, 			0U},
 	[MOTOR_TRANSITION_INIT] 			= {&MOTOR_STATE_INIT, 			0U},
-	[MOTOR_TRANSITION_STOP] 			= {&MOTOR_STATE_STOP, 			0U},
-	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= {&MOTOR_STATE_CALIBRATE_ADC, 	0U},
-	[MOTOR_TRANSITION_CALIBRATE_HALL] 	= {&MOTOR_STATE_CALIBRATE_HALL, 0U},
-
+//	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= {&MOTOR_STATE_CALIBRATION, 	0U},
+	[MOTOR_TRANSITION_CALIBRATE_HALL] 	= {&MOTOR_STATE_CALIBRATION, 	(StateMachine_Output_T)Motor_SetCalibrationStateHall},
 	[MOTOR_TRANSITION_ALIGN] 			= {&MOTOR_STATE_FAULT, 			0U},
-	[MOTOR_TRANSITION_SPIN] 			= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_RUN] 				= {&MOTOR_STATE_FAULT, 			0U},
 };
 
-const StateMachine_Transition_T INIT_OUTPUT_TABLE[MOTOR_STATE_MACHINE_INPUT_MAP_LENGTH] =
+static const StateMachine_Output_T INIT_OUTPUT_TABLE[MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH] =
 {
 
 };
 
-const StateMachine_State_T MOTOR_STATE_INIT =
+static const StateMachine_State_T MOTOR_STATE_INIT =
 {
-	.P_TRANSITION_TABLE 					= &INIT_TRANSITION_TABLE[0U],
-//	.P_INPUT_OUTPUT_FUNCTION_MAP 			= (StateMachine_StateFunction_T*)INIT_OUTPUT_FUNCTION_MAP,
-	.ON_ENTRY 							= (StateMachine_StateFunction_T)InitEntry,
-	.OUTPUT_COMMON 						= (StateMachine_StateFunction_T)InitProc,
+	.P_TRANSITION_TABLE		= &INIT_TRANSITION_TABLE[0U],
+	.P_OUTPUT_TABLE 		= (StateMachine_Output_T *)INIT_OUTPUT_TABLE,
+	.ON_ENTRY 				= (StateMachine_Output_T)InitEntry,
+	.OUTPUT_SYNCHRONOUS 	= (StateMachine_Output_T)InitProc,
 };
 
 
-/*******************************************************************************/
+/******************************************************************************/
 /*!
-    @brief  State long term stop?
+    @brief  State
+    todo long term stop
 */
-/*******************************************************************************/
+/******************************************************************************/
 static void StopEntry(Motor_T * p_motor)
 {
 	Motor_Float(p_motor);
@@ -153,7 +134,7 @@ static void StopProc(Motor_T * p_motor)
 //			}
 //			else
 //			{
-//				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_SPIN);
+//				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_RUN);
 //			}
 //		}
 //		else
@@ -169,7 +150,7 @@ static void StopProc(Motor_T * p_motor)
 			}
 			else
 			{
-				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_SPIN);
+				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_RUN);
 			}
 //		}
 //		else
@@ -190,52 +171,42 @@ static void StopProc(Motor_T * p_motor)
 
 }
 
-const StateMachine_State_T * const P_STOP_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
+static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
 {
-	[MOTOR_TRANSITION_ALIGN] 			= &MOTOR_STATE_ALIGN,
-	[MOTOR_TRANSITION_SPIN] 			= &MOTOR_STATE_SPIN,
-	[MOTOR_TRANSITION_OPEN_LOOP] 		= &MOTOR_STATE_OPEN_LOOP,
+	[MOTOR_TRANSITION_ALIGN] 			= {&MOTOR_STATE_ALIGN, 			0U},
+	[MOTOR_TRANSITION_RUN] 				= {&MOTOR_STATE_RUN, 			0U},
+	[MOTOR_TRANSITION_OPEN_LOOP] 		= {&MOTOR_STATE_OPEN_LOOP,		0U},
 
-	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= &MOTOR_STATE_CALIBRATE_ADC,
-	[MOTOR_TRANSITION_CALIBRATE_HALL] 	= &MOTOR_STATE_CALIBRATE_HALL,
+	[MOTOR_TRANSITION_CALIBRATE_ADC] 		= {&MOTOR_STATE_CALIBRATION, 	(StateMachine_Output_T)Motor_SetCalibrationStateAdc},
+	[MOTOR_TRANSITION_CALIBRATE_HALL] 		= {&MOTOR_STATE_CALIBRATION, 	(StateMachine_Output_T)Motor_SetCalibrationStateHall},
+	[MOTOR_TRANSITION_CALIBRATE_ENCODER] 	= {&MOTOR_STATE_CALIBRATION, 	(StateMachine_Output_T)Motor_SetCalibrationStateEncoder},
 
-	[MOTOR_TRANSITION_FAULT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_INIT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_STOP] 			= &MOTOR_STATE_FAULT,
+	[MOTOR_TRANSITION_FAULT] 				= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_INIT] 				= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_STOP] 				= {&MOTOR_STATE_FAULT, 			0U},
 };
 
-//void (* const STOP_TRANSITION_FUNCTION_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH])(Motor_T * p_motor) =
-//{
-//	[MOTOR_TRANSITION_FAULT] 			= 0U,
-//	[MOTOR_TRANSITION_INIT] 			= 0U,
-//	[MOTOR_TRANSITION_STOP] 			= 0U,
-//	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= 0U,
-//	[MOTOR_TRANSITION_ALIGN] 			= 0U,
-//	[MOTOR_TRANSITION_SPIN] 			= 0U,
-//};
 
-void (* const STOP_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_INPUT_MAP_LENGTH])(Motor_T * p_motor) =
+static const StateMachine_Output_T STOP_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH] =
 {
 //set align on not brake
 
-
 };
 
-const StateMachine_State_T MOTOR_STATE_STOP =
+static const StateMachine_State_T MOTOR_STATE_STOP =
 {
-	.PP_INPUT_TRANSITION_STATE_MAP 			= P_STOP_TRANSITION_STATE_MAP,
-//	.P_INPUT_TRANSITION_FUNCTION_MAP 		= (StateMachine_StateFunction_T *)STOP_TRANSITION_FUNCTION_MAP,
-	.P_INPUT_OUTPUT_FUNCTION_MAP 			= (StateMachine_StateFunction_T *)STOP_OUTPUT_FUNCTION_MAP,
-	.ON_ENTRY 						= (StateMachine_StateFunction_T)StopEntry,
-	.OUTPUT_COMMON 								= (StateMachine_StateFunction_T)StopProc,
+	.P_TRANSITION_TABLE 	= STOP_TRANSITION_TABLE,
+	.P_OUTPUT_TABLE 		= (StateMachine_Output_T *)STOP_OUTPUT_FUNCTION_MAP,
+	.ON_ENTRY 				= (StateMachine_Output_T)StopEntry,
+	.OUTPUT_SYNCHRONOUS 	= (StateMachine_Output_T)StopProc,
 };
 
 
-/*******************************************************************************/
+/******************************************************************************/
 /*!
     @brief  State
 */
-/*******************************************************************************/
+/******************************************************************************/
 static void AlignEntry(Motor_T * p_motor)
 {
 	Motor_StartAlign(p_motor);
@@ -251,52 +222,41 @@ static void AlignProc(Motor_T * p_motor)
 		}
 		else
 		{
-			StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_SPIN);
+			StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_RUN);
 		}
 	}
 }
 
-const StateMachine_State_T * const P_ALIGN_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
+static const StateMachine_Transition_T ALIGN_TRANSITION_TABLE[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
 {
-	[MOTOR_TRANSITION_SPIN] 			= &MOTOR_STATE_SPIN,
-	[MOTOR_TRANSITION_OPEN_LOOP] 		= &MOTOR_STATE_OPEN_LOOP,
+	[MOTOR_TRANSITION_RUN] 				= {&MOTOR_STATE_RUN, 			0U},
+	[MOTOR_TRANSITION_OPEN_LOOP] 		= {&MOTOR_STATE_OPEN_LOOP, 		0U},
 
-	[MOTOR_TRANSITION_FAULT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_INIT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_STOP] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_ALIGN] 			= &MOTOR_STATE_FAULT,
+	[MOTOR_TRANSITION_FAULT] 			= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_INIT] 			= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_STOP] 			= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_ALIGN] 			= {&MOTOR_STATE_FAULT, 			0U},
 };
 
-//void (* const ALIGN_TRANSITION_FUNCTION_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH])(Motor_T * p_motor) =
-//{
-//	[MOTOR_TRANSITION_FAULT] 		= 0U,
-//	[MOTOR_TRANSITION_INIT] 		= 0U,
-//	[MOTOR_TRANSITION_STOP] 		= 0U,
-//	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= 0U,
-//	[MOTOR_TRANSITION_ALIGN] 		= 0U,
-//	[MOTOR_TRANSITION_SPIN] 			= 0U,
-//};
-
-//void (* const ALIGN_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_INPUT_MAP_LENGTH])(Motor_T * p_motor) =
-//{
-//
-//};
-
-const StateMachine_State_T MOTOR_STATE_ALIGN =
+static const StateMachine_Output_T ALIGN_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH] =
 {
-	.PP_INPUT_TRANSITION_STATE_MAP 			= P_ALIGN_TRANSITION_STATE_MAP,
-//	.P_INPUT_TRANSITION_FUNCTION_MAP 		= (StateMachine_StateFunction_T *)ALIGN_TRANSITION_FUNCTION_MAP,
-//	.P_INPUT_OUTPUT_FUNCTION_MAP 			= (StateMachine_StateFunction_T *)ALIGN_OUTPUT_FUNCTION_MAP,
-	.ON_ENTRY 						= (StateMachine_StateFunction_T)AlignEntry,
-	.OUTPUT_COMMON 								= (StateMachine_StateFunction_T)AlignProc,
+
 };
 
-/*******************************************************************************/
+static const StateMachine_State_T MOTOR_STATE_ALIGN =
+{
+	.P_TRANSITION_TABLE 	= ALIGN_TRANSITION_TABLE,
+	.P_OUTPUT_TABLE 		= (StateMachine_Output_T *)ALIGN_OUTPUT_FUNCTION_MAP,
+	.ON_ENTRY 				= (StateMachine_Output_T)AlignEntry,
+	.OUTPUT_SYNCHRONOUS 	= (StateMachine_Output_T)AlignProc,
+};
+
+/******************************************************************************/
 /*!
     @brief  State OpenProc
 */
-/*******************************************************************************/
+/******************************************************************************/
 static void OpenProcEntry(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
@@ -305,7 +265,7 @@ static void OpenProcEntry(Motor_T * p_motor)
 	}
 	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		Motor_SixStep_StartPhaseControlActive(p_motor, MOTOR_SENSOR_MODE_OPEN_LOOP);
+		Motor_SixStep_StartPhaseControl(p_motor, MOTOR_SENSOR_MODE_OPEN_LOOP);
 	}
 
 	p_motor->Bemf.ZeroCrossingCounter = 0U;
@@ -331,55 +291,44 @@ static void OpenLoopProc(Motor_T * p_motor)
 			{
 				if (Motor_SixStep_GetBemfReliable(p_motor))
 				{
-					StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_SPIN);
+					StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_RUN);
 				}
 			}
 		}
 	}
 }
 
-const StateMachine_State_T * const P_OPEN_LOOP_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
+static const StateMachine_Transition_T OPEN_LOOP_TRANSITION_TABLE[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
 {
-	[MOTOR_TRANSITION_SPIN] 			= &MOTOR_STATE_SPIN,
-	[MOTOR_TRANSITION_FREEWHEEL] 		= &MOTOR_STATE_FREEWHEEL,
+	[MOTOR_TRANSITION_RUN] 				= {&MOTOR_STATE_RUN, 			0U},
+	[MOTOR_TRANSITION_FREEWHEEL] 		= {&MOTOR_STATE_FREEWHEEL, 		0U},
 
-	[MOTOR_TRANSITION_STOP] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_FAULT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_INIT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_ALIGN] 			= &MOTOR_STATE_FAULT,
+	[MOTOR_TRANSITION_STOP] 			= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_FAULT] 			= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_INIT] 			= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_ALIGN] 			= {&MOTOR_STATE_FAULT, 			0U},
 };
 
-//void (* const SPIN_TRANSITION_FUNCTION_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH])(Motor_T * p_motor) =
-//{
-//	[MOTOR_TRANSITION_FAULT] 			= 0U,
-//	[MOTOR_TRANSITION_INIT] 			= 0U,
-//	[MOTOR_TRANSITION_STOP] 			= 0U,
-//	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= 0U,
-//	[MOTOR_TRANSITION_ALIGN] 			= 0U,
-//	[MOTOR_TRANSITION_OPEN_LOOP] 		= 0U,
-//};
-
-//void (*const SPIN_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_INPUT_MAP_LENGTH])(Motor_T * p_motor) =
-//{
+static const StateMachine_Output_T OPEN_LOOP_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH] =
+{
 //	&OpenProcInputAll,
-//};
-
-const StateMachine_State_T MOTOR_STATE_OPEN_LOOP =
-{
-	.PP_INPUT_TRANSITION_STATE_MAP 		= P_OPEN_LOOP_TRANSITION_STATE_MAP,
-//	.P_INPUT_TRANSITION_FUNCTION_MAP 	= (StateMachine_StateFunction_T *)0U,
-//	.P_INPUT_OUTPUT_FUNCTION_MAP 		= (StateMachine_StateFunction_T *)0U,
-	.ON_ENTRY 					= (StateMachine_StateFunction_T)OpenProcEntry,
-	.OUTPUT_COMMON 							= (StateMachine_StateFunction_T)OpenLoopProc,
 };
 
-/*******************************************************************************/
+static const StateMachine_State_T MOTOR_STATE_OPEN_LOOP =
+{
+	.P_TRANSITION_TABLE 	= OPEN_LOOP_TRANSITION_TABLE,
+	.P_OUTPUT_TABLE 		= (StateMachine_Output_T *)OPEN_LOOP_OUTPUT_FUNCTION_MAP,
+	.ON_ENTRY 				= (StateMachine_Output_T)OpenProcEntry,
+	.OUTPUT_SYNCHRONOUS 	= (StateMachine_Output_T)OpenLoopProc,
+};
+
+/******************************************************************************/
 /*!
     @brief  State
 */
-/*******************************************************************************/
-static void SpinEntry(Motor_T * p_motor)
+/******************************************************************************/
+static void RunEntry(Motor_T * p_motor)
 {
 //	Motor_SetRamp(p_motor);
 
@@ -389,7 +338,7 @@ static void SpinEntry(Motor_T * p_motor)
 	}
 	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		Motor_SixStep_StartPhaseControlActive(p_motor, p_motor->Parameters.SensorMode);
+		Motor_SixStep_StartPhaseControl(p_motor, p_motor->Parameters.SensorMode);
 
 //		if ((p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF) && Motor_SixStep_GetBemfReliable(p_motor) == false)
 //		{
@@ -403,7 +352,7 @@ static void SpinEntry(Motor_T * p_motor)
 	}
 }
 
-static void SpinProc(Motor_T * p_motor)
+static void RunProc(Motor_T * p_motor)
 {
 	if (p_motor->IsActiveControl == false)
 	{
@@ -411,7 +360,6 @@ static void SpinProc(Motor_T * p_motor)
 	}
 	else
 	{
-	//	if (Motor_GetCommutationMode(p_motor) == MOTOR_COMMUTATION_MODE_FOC)
 		if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 		{
 			Motor_FOC_ProcAngleControl(p_motor);
@@ -420,69 +368,60 @@ static void SpinProc(Motor_T * p_motor)
 		{
 			Motor_SixStep_ProcPhaseControl(p_motor, p_motor->Parameters.SensorMode);
 		}
+
+//		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF)
+//		{
+//			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
+//			{
+//				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_FREEWHEEL);
+//			}
+//		}
 	}
 }
 
-//static void SpinInputAll(Motor_T * p_motor)
-//{
-//
-//}
-
-const StateMachine_State_T * const P_SPIN_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_TRANSITION_MAP_LENGTH] =
+static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
 {
-	[MOTOR_TRANSITION_STOP] 			= &MOTOR_STATE_FREEWHEEL,
-	[MOTOR_TRANSITION_SPIN] 			= &MOTOR_STATE_SPIN,
-	[MOTOR_TRANSITION_FREEWHEEL] 		= &MOTOR_STATE_FREEWHEEL,
+	[MOTOR_TRANSITION_STOP] 			= {&MOTOR_STATE_FREEWHEEL, 		0U},
+	[MOTOR_TRANSITION_RUN] 				= {&MOTOR_STATE_RUN, 			0U},
+	[MOTOR_TRANSITION_FREEWHEEL] 		= {&MOTOR_STATE_FREEWHEEL, 		0U},
 
-	[MOTOR_TRANSITION_FAULT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_INIT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_ALIGN] 			= &MOTOR_STATE_FAULT,
+	[MOTOR_TRANSITION_FAULT] 			= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_INIT] 			= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_ALIGN] 			= {&MOTOR_STATE_FAULT, 			0U},
 };
 
-//void (* const SPIN_TRANSITION_FUNCTION_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH])(Motor_T * p_motor) =
-//{
-//	[MOTOR_TRANSITION_FAULT] 		= 0U,
-//	[MOTOR_TRANSITION_INIT] 		= 0U,
-//	[MOTOR_TRANSITION_STOP] 		= 0U,
-//	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= 0U,
-//	[MOTOR_TRANSITION_ALIGN] 			= 0U,
-//	[MOTOR_TRANSITION_SPIN] 			= 0U,
-//};
-
-//void (*const SPIN_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_INPUT_MAP_LENGTH])(Motor_T * p_motor) =
-//{
-//	&SpinInputAll,
-//};
-
-const StateMachine_State_T MOTOR_STATE_SPIN =
+static const StateMachine_Output_T RUN_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH] =
 {
-	.PP_INPUT_TRANSITION_STATE_MAP 		= P_SPIN_TRANSITION_STATE_MAP,
-//	.P_INPUT_TRANSITION_FUNCTION_MAP 	= (StateMachine_StateFunction_T *)SPIN_TRANSITION_FUNCTION_MAP,
-//	.P_INPUT_OUTPUT_FUNCTION_MAP 		= (StateMachine_StateFunction_T *)SPIN_OUTPUT_FUNCTION_MAP,
-	.ON_ENTRY 					= (StateMachine_StateFunction_T)SpinEntry,
-	.OUTPUT_COMMON 							= (StateMachine_StateFunction_T)SpinProc,
+//	&RunInputAll,
 };
 
+static const StateMachine_State_T MOTOR_STATE_RUN =
+{
+	.P_TRANSITION_TABLE 		= RUN_TRANSITION_TABLE,
+	.P_OUTPUT_TABLE 			= (StateMachine_Output_T *)RUN_OUTPUT_FUNCTION_MAP,
+	.ON_ENTRY 					= (StateMachine_Output_T)RunEntry,
+	.OUTPUT_SYNCHRONOUS 		= (StateMachine_Output_T)RunProc,
+};
 
-
-/*******************************************************************************/
+/******************************************************************************/
 /*!
     @brief  State
 */
-/*******************************************************************************/
+/******************************************************************************/
 static void FreewheelEntry(Motor_T * p_motor)
 {
-
+	Motor_Float(p_motor);
 
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-//		Motor_FOC_ProcAngleControl(p_motor);
+//		Motor_FOC_StartAngleObserve(p_motor);
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		Motor_SixStep_StartPhaseControlPassive(p_motor);
+		Motor_SixStep_StartPhaseObserve(p_motor);
 	}
+
 }
 
 static void FreewheelProc(Motor_T * p_motor)
@@ -491,93 +430,155 @@ static void FreewheelProc(Motor_T * p_motor)
 	{
 		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
 	}
-	else if (p_motor->IsActiveControl == true)
-	{
-		if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP)
-		{
-//			StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_OPEN_LOOP);
-//
-//			if (Motor_GetBemf_Frac16(p_motor) < 5U)
-//			{
-//				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
-//			}
-//			//no transition to freewheel from open loop
-
-			//openloop sensor mode must wait for stop detect
-		}
-		else if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF)
-		{
-			if (Motor_SixStep_GetBemfReliable(p_motor))
-			{
-				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_SPIN);
-			}
-			else
-			{
-//				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_OPEN_LOOP);
-
-				//bemf sensor mode use last capture to determine if speed == 0, or missed zcd count
-//				if (Motor_GetBemf_Frac16(p_motor) < 5U)
-//				{
-//					StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
-//				}
-
-			}
-		}
-		else
-		{
-			StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_SPIN);
-		}
-	}
-	else //(p_motor->IsActiveControl == false)
+	else
 	{
 		if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 		{
-	//		Motor_FOC_ProcAngleControl(p_motor);
+	//		Motor_FOC_ProcAngleObserve(p_motor);
 		}
 		else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 		{
-			Motor_SixStep_ProcPhaseControl(p_motor, p_motor->Parameters.SensorMode);
+			Motor_SixStep_ProcPhaseObserve(p_motor, p_motor->Parameters.SensorMode);
 		}
+
+		if (p_motor->IsActiveControl == true)
+		{
+			if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP)
+			{
+				//			StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_OPEN_LOOP);
+				//
+				//			if (Motor_GetBemf_Frac16(p_motor) < 5U)
+				//			{
+				//				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
+				//			}
+				//			//no transition to freewheel from open loop
+
+				//openloop sensor mode must wait for stop detect
+			}
+			else if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF)
+			{
+				if (Motor_SixStep_GetBemfReliable(p_motor))
+				{
+					StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_RUN);
+				}
+				else
+				{
+					//				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_OPEN_LOOP);
+
+					//bemf sensor mode use last capture to determine if speed == 0, or missed zcd count
+					//				if (Motor_GetBemf_Frac16(p_motor) < 5U)
+					//				{
+					//					StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
+					//				}
+
+				}
+			}
+			else //hall or encoder
+			{
+				StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_RUN);
+			}
+		}
+
+	}
+
+}
+
+static const StateMachine_Transition_T FREEWHEEL_TRANSITION_TABLE[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
+{
+	[MOTOR_TRANSITION_STOP] 			= {&MOTOR_STATE_STOP, 			0U},
+	[MOTOR_TRANSITION_RUN] 				= {&MOTOR_STATE_RUN, 			0U},
+//	[MOTOR_TRANSITION_OPEN_LOOP] 		= {&MOTOR_STATE_OPEN_LOOP, 		0U},
+
+	[MOTOR_TRANSITION_FAULT] 			= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_INIT] 			= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= {&MOTOR_STATE_FAULT, 			0U},
+	[MOTOR_TRANSITION_ALIGN] 			= {&MOTOR_STATE_FAULT, 			0U},
+};
+
+static const StateMachine_Output_T FREEWHEEL_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH] =
+{
+
+};
+
+static const StateMachine_State_T MOTOR_STATE_FREEWHEEL =
+{
+	.P_TRANSITION_TABLE 	= FREEWHEEL_TRANSITION_TABLE,
+	.P_OUTPUT_TABLE 		= (StateMachine_Output_T *)FREEWHEEL_OUTPUT_FUNCTION_MAP,
+	.ON_ENTRY 				= (StateMachine_Output_T)FreewheelEntry,
+	.OUTPUT_SYNCHRONOUS 	= (StateMachine_Output_T)FreewheelProc,
+};
+
+/******************************************************************************/
+/*!
+    @brief  State shared calibration
+*/
+/******************************************************************************/
+static void CalibrationEntry(Motor_T * p_motor)
+{
+	switch (p_motor->CalibrationState)
+	{
+	case MOTOR_CALIBRATION_STATE_ADC:
+		if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+		{
+//			Motor_FOC_StartCalibrateAdc(p_motor);
+		}
+		else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+		{
+			Motor_StartCalibrateAdc(p_motor);
+		}
+		break;
+	case MOTOR_CALIBRATION_STATE_HALL:
+		Motor_StartCalibrateHall(p_motor);
+		break;
+	case MOTOR_CALIBRATION_STATE_ENCODER:
+		Motor_StartCalibrateEncoder(p_motor);
+		break;
 	}
 }
 
-const StateMachine_State_T * const P_FREEWHEEL_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
+static void CalibrationProc(Motor_T * p_motor)
 {
-	[MOTOR_TRANSITION_STOP] 			= &MOTOR_STATE_STOP,
-	[MOTOR_TRANSITION_SPIN] 			= &MOTOR_STATE_SPIN,
-//	[MOTOR_TRANSITION_OPEN_LOOP] 		= &MOTOR_STATE_OPEN_LOOP,
+	bool isComplete = false;
 
-	[MOTOR_TRANSITION_FAULT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_INIT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_ALIGN] 			= &MOTOR_STATE_FAULT,
+	switch (p_motor->CalibrationState)
+	{
+		case MOTOR_CALIBRATION_STATE_ADC:		isComplete = Motor_CalibrateAdc(p_motor); 		break;
+		case MOTOR_CALIBRATION_STATE_HALL:		isComplete = Motor_CalibrateHall(p_motor); 		break;
+		case MOTOR_CALIBRATION_STATE_ENCODER:	isComplete = Motor_CalibrateEncoder(p_motor); 	break;
+	}
+
+	if (isComplete == true) {StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);}
+}
+
+static const StateMachine_Transition_T CALIBRATION_TRANSITION_TABLE[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
+{
+	[MOTOR_TRANSITION_STOP] 	= {&MOTOR_STATE_STOP, 	0U},
+
+	[MOTOR_TRANSITION_FAULT] 	= {&MOTOR_STATE_FAULT, 	0U},
+	[MOTOR_TRANSITION_INIT] 	= {&MOTOR_STATE_FAULT, 	0U},
+	[MOTOR_TRANSITION_ALIGN] 	= {&MOTOR_STATE_FAULT, 	0U},
+	[MOTOR_TRANSITION_RUN] 		= {&MOTOR_STATE_FAULT, 	0U},
 };
 
-//void (* const FREEWHEEL_TRANSITION_FUNCTION_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH])(Motor_T * p_motor) =
-//{
-//	[MOTOR_TRANSITION_FAULT] 		= 0U,
-//	[MOTOR_TRANSITION_INIT] 		= 0U,
-//	[MOTOR_TRANSITION_STOP] 		= 0U,
-//	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= 0U,
-//	[MOTOR_TRANSITION_ALIGN] 			= 0U,
-//	[MOTOR_TRANSITION_SPIN] 			= 0U,
-//};
-
-const StateMachine_State_T MOTOR_STATE_FREEWHEEL =
+static const StateMachine_Output_T CALIBRATION_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH] =
 {
-	.PP_INPUT_TRANSITION_STATE_MAP 		= P_FREEWHEEL_TRANSITION_STATE_MAP,
-//	.P_INPUT_TRANSITION_FUNCTION_MAP 	= (StateMachine_StateFunction_T *)FREEWHEEL_TRANSITION_FUNCTION_MAP,
-//	.P_INPUT_OUTPUT_FUNCTION_MAP 		= (StateMachine_StateFunction_T *)FREEWHEEL_OUTPUT_FUNCTION_MAP,
-	.ON_ENTRY 					= (StateMachine_StateFunction_T)FreewheelEntry,
-	.OUTPUT_COMMON 							= (StateMachine_StateFunction_T)FreewheelProc,
+
+};
+
+static const StateMachine_State_T MOTOR_STATE_CALIBRATION  =
+{
+	.P_TRANSITION_TABLE 	= CALIBRATION_TRANSITION_TABLE,
+	.P_OUTPUT_TABLE 		= (StateMachine_Output_T *)CALIBRATION_OUTPUT_FUNCTION_MAP,
+	.ON_ENTRY 				= (StateMachine_Output_T)CalibrationEntry,
+	.OUTPUT_SYNCHRONOUS 	= (StateMachine_Output_T)CalibrationProc,
 };
 
 
-/*******************************************************************************/
+/******************************************************************************/
 /*!
     @brief  State
 */
-/*******************************************************************************/
+/******************************************************************************/
 static void FaultEntry(Motor_T * p_motor)
 {
 
@@ -585,230 +586,23 @@ static void FaultEntry(Motor_T * p_motor)
 
 static void FaultProc(Motor_T * p_motor)
 {
-	//if fault clear
-//	StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_INIT);
+	//if fault clears	StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_INIT);
 }
 
-const StateMachine_State_T * const P_FAULT_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_TRANSITION_MAP_LENGTH] =
+static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
 {
-	[MOTOR_TRANSITION_FAULT] 		= 0U,
-	[MOTOR_TRANSITION_INIT] 		= &MOTOR_STATE_INIT,
-	[MOTOR_TRANSITION_STOP] 		= 0U,
-	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= 0U,
-	[MOTOR_TRANSITION_ALIGN] 		= 0U,
-	[MOTOR_TRANSITION_SPIN] 			= 0U,
-
+	[MOTOR_TRANSITION_INIT] = {&MOTOR_STATE_INIT, 0U},
 };
 
-//void (* const FAULT_TRANSITION_FUNCTION_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH])(Motor_T * p_motor) =
-//{
-//	[MOTOR_TRANSITION_FAULT] 		= 0U,
-//	[MOTOR_TRANSITION_INIT] 		= 0U,
-//	[MOTOR_TRANSITION_STOP] 		= 0U,
-//	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= 0U,
-//	[MOTOR_TRANSITION_ALIGN] 		= 0U,
-//	[MOTOR_TRANSITION_SPIN] 			= 0U,
-//};
-
-void (* const FAULT_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_INPUT_MAP_LENGTH])(Motor_T * p_motor) =
+static const StateMachine_Output_T FAULT_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH] =
 {
 
 };
 
-const StateMachine_State_T MOTOR_STATE_FAULT =
+static const StateMachine_State_T MOTOR_STATE_FAULT =
 {
-	.PP_INPUT_TRANSITION_STATE_MAP 			= P_FAULT_TRANSITION_STATE_MAP,
-//	.P_INPUT_TRANSITION_FUNCTION_MAP 		= (StateMachine_StateFunction_T *)FAULT_TRANSITION_FUNCTION_MAP,
-	.P_INPUT_OUTPUT_FUNCTION_MAP 	= (StateMachine_StateFunction_T *)FAULT_OUTPUT_FUNCTION_MAP,
-	.ON_ENTRY 		= (StateMachine_StateFunction_T)FaultEntry,
-	.OUTPUT_COMMON 	= (StateMachine_StateFunction_T)FaultProc,
+	.P_TRANSITION_TABLE 	= FAULT_TRANSITION_TABLE,
+	.P_OUTPUT_TABLE 		= (StateMachine_Output_T *)FAULT_OUTPUT_FUNCTION_MAP,
+	.ON_ENTRY 				= (StateMachine_Output_T)FaultEntry,
+	.OUTPUT_SYNCHRONOUS 	= (StateMachine_Output_T)FaultProc,
 };
-
-
-
-///*******************************************************************************/
-///*!
-//    @brief  State shared calibration
-//*/
-///*******************************************************************************/
-//static void CalibrationEntry(Motor_T * p_motor)
-//{
-//	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-//	{
-//		switch(p_motor->CalibrationParameter)
-//		{
-//		case adc:
-//			Motor_FOC_StartCalibrateAdc(p_motor);
-//		}
-//
-//	}
-//	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-//	{
-//		Motor_StartCalibration(p_motor);
-//	}
-//}
-//
-//static void CalibrationProc(Motor_T * p_motor)
-//{
-//	switch(p_motor->CalibrationParameter)
-//	{
-//	case adc:
-//		if (Motor_CalibrateAdc(p_motor) == true)
-//		{
-//			StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
-//		}
-//	}
-//
-//}
-//
-//const StateMachine_State_T * const P_CALIBRATION_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_TRANSITION_MAP_LENGTH] =
-//{
-//	[MOTOR_TRANSITION_FAULT] 			= &MOTOR_STATE_FAULT,
-//	[MOTOR_TRANSITION_INIT] 			= &MOTOR_STATE_FAULT,
-//	[MOTOR_TRANSITION_STOP] 			= &MOTOR_STATE_STOP,
-////	[MOTOR_TRANSITION_CALIBRATION] 	= &MOTOR_STATE_FAULT,
-//	[MOTOR_TRANSITION_ALIGN] 			= &MOTOR_STATE_FAULT,
-//	[MOTOR_TRANSITION_SPIN] 			= &MOTOR_STATE_FAULT,
-//};
-//
-////void (* const CALIBRATION_TRANSITION_FUNCTION_MAP[MOTOR_STATE_MACHINE_TRANSITION_MAP_LENGTH])(Motor_T * p_motor) =
-////{
-////	[MOTOR_TRANSITION_FAULT] 		= 0U,
-////	[MOTOR_TRANSITION_INIT] 		= 0U,
-////	[MOTOR_TRANSITION_STOP] 		= 0U,
-////	[MOTOR_TRANSITION_CALIBRATION] 	= 0U,
-////	[MOTOR_TRANSITION_ALIGN] 		= 0U,
-////	[MOTOR_TRANSITION_SPIN] 			= 0U,
-////};
-//
-////void (* const CALIBRATION_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_INPUT_MAP_LENGTH])(Motor_T * p_motor) =
-////{
-////
-////};
-//
-//const StateMachine_State_T MOTOR_STATE_CALIBRATION  =
-//{
-//	.PP_INPUT_TRANSITION_STATE_MAP 			= P_CALIBRATION_TRANSITION_STATE_MAP,
-////	.P_INPUT_TRANSITION_FUNCTION_MAP 		= (StateMachine_StateFunction_T *)CALIBRATION_TRANSITION_FUNCTION_MAP,
-////	.P_INPUT_OUTPUT_FUNCTION_MAP 			= (StateMachine_StateFunction_T *)CALIBRATION_OUTPUT_FUNCTION_MAP,
-//	.ON_ENTRY 						= (StateMachine_StateFunction_T)CalibrationEntry,
-//	.OUTPUT_COMMON 								= (StateMachine_StateFunction_T)CalibrationProc,
-//};
-
-
-
-/*******************************************************************************/
-/*!
-    @brief  State
-*/
-/*******************************************************************************/
-static void CalibrateAdcEntry(Motor_T * p_motor)
-{
-	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-	{
-		Motor_FOC_StartCalibrateAdc(p_motor);
-	}
-	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-	{
-		Motor_StartCalibrateAdc(p_motor);
-	}
-}
-
-static void CalibrateAdcProc(Motor_T * p_motor)
-{
-	if (Motor_CalibrateAdc(p_motor) == true)
-	{
-		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
-	}
-}
-
-const StateMachine_State_T * const P_CALIBRATE_ADC_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
-{
-	[MOTOR_TRANSITION_FAULT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_INIT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_STOP] 			= &MOTOR_STATE_STOP,
-	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_ALIGN] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_SPIN] 			= &MOTOR_STATE_FAULT,
-};
-
-//void (* const CALIBRATE_ADC_TRANSITION_FUNCTION_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH])(Motor_T * p_motor) =
-//{
-//	[MOTOR_TRANSITION_FAULT] 		= 0U,
-//	[MOTOR_TRANSITION_INIT] 		= 0U,
-//	[MOTOR_TRANSITION_STOP] 		= 0U,
-//	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= 0U,
-//	[MOTOR_TRANSITION_ALIGN] 		= 0U,
-//	[MOTOR_TRANSITION_SPIN] 			= 0U,
-//};
-
-void (* const CALIBRATE_ADC_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_INPUT_MAP_LENGTH])(Motor_T * p_motor) =
-{
-
-};
-
-const StateMachine_State_T MOTOR_STATE_CALIBRATE_ADC  =
-{
-	.PP_INPUT_TRANSITION_STATE_MAP 			= P_CALIBRATE_ADC_TRANSITION_STATE_MAP,
-//	.P_INPUT_TRANSITION_FUNCTION_MAP 		= (StateMachine_StateFunction_T *)CALIBRATE_ADC_TRANSITION_FUNCTION_MAP,
-	.P_INPUT_OUTPUT_FUNCTION_MAP 	= (StateMachine_StateFunction_T *)CALIBRATE_ADC_OUTPUT_FUNCTION_MAP,
-	.ON_ENTRY 				= (StateMachine_StateFunction_T)CalibrateAdcEntry,
-	.OUTPUT_COMMON 						= (StateMachine_StateFunction_T)CalibrateAdcProc,
-};
-
-
-/*******************************************************************************/
-/*!
-    @brief  State
-*/
-/*******************************************************************************/
-static void CalibrateHallEntry(Motor_T * p_motor)
-{
-	Motor_StartCalibrateHall(p_motor);
-}
-
-static void CalibrateHallProc(Motor_T * p_motor)
-{
-	if (Motor_CalibrateHall(p_motor))
-	{
-		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);
-	}
-}
-
-const StateMachine_State_T * const P_CALIBRATE_HALL_TRANSITION_STATE_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH] =
-{
-	[MOTOR_TRANSITION_FAULT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_INIT] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_STOP] 			= &MOTOR_STATE_STOP,
-	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_ALIGN] 			= &MOTOR_STATE_FAULT,
-	[MOTOR_TRANSITION_SPIN] 			= &MOTOR_STATE_FAULT,
-};
-
-//void (* const CALIBRATE_HALL_TRANSITION_FUNCTION_MAP[MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH])(Motor_T * p_motor) =
-//{
-//	[MOTOR_TRANSITION_FAULT] 			= 0U,
-//	[MOTOR_TRANSITION_INIT] 			= 0U,
-//	[MOTOR_TRANSITION_STOP] 			= 0U,
-//	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= 0U,
-//	[MOTOR_TRANSITION_ALIGN] 			= 0U,
-//	[MOTOR_TRANSITION_SPIN] 				= 0U,
-//};
-
-void (* const CALIBRATE_HALL_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_INPUT_MAP_LENGTH])(Motor_T * p_motor) =
-{
-
-};
-
-const StateMachine_State_T MOTOR_STATE_CALIBRATE_HALL  =
-{
-	.PP_INPUT_TRANSITION_STATE_MAP 		= P_CALIBRATE_HALL_TRANSITION_STATE_MAP,
-//	.P_INPUT_TRANSITION_FUNCTION_MAP 	= (StateMachine_StateFunction_T *)CALIBRATE_HALL_TRANSITION_FUNCTION_MAP,
-	.P_INPUT_OUTPUT_FUNCTION_MAP 		= (StateMachine_StateFunction_T *)CALIBRATE_HALL_OUTPUT_FUNCTION_MAP,
-	.ON_ENTRY 		= (StateMachine_StateFunction_T)CalibrateHallEntry,
-	.OUTPUT_COMMON 				= (StateMachine_StateFunction_T)CalibrateHallProc,
-};
-
-
-
-

@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,24 +19,19 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	HAL.h
     @author FireSoucery
     @brief
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef HAL_PIN_H
 #define HAL_PIN_H
 
-#include "Path/Path.h"
-
-#if 	defined(CONFIG_HAL_PIN_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
-	#include PATH_USER(HAL_Pin.h)
-#elif 	defined(CONFIG_HAL_PIN_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include PATH_PLATFORM(Peripheral/HAL, HAL_Pin.h)
-#endif
+#include "Peripheral/HAL/Path.h"
+#include PATH_HAL_PERIPHERAL(HAL_Pin.h)
 
 #endif

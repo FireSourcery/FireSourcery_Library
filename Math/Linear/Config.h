@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,25 +19,25 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Config.c
     @author FireSoucery
     @brief
     @version V0
 */
-/*******************************************************************************/
+/******************************************************************************/
 #ifndef CONFIG_LINEAR_H
 #define CONFIG_LINEAR_H
 
-#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
-
-#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
-
-#else
+//#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+//
+//#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+//
+//#else
 	#define CONFIG_LINEAR_SHIFT_DIVIDE
-#endif
+//#endif
 
 
 // compile time const adc bits for all linear adc instances

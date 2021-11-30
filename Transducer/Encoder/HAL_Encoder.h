@@ -32,33 +32,37 @@
 #ifndef HAL_ENCODER_H
 #define HAL_ENCODER_H
 
-#include "Path/Path.h"
 
-#if 	defined(CONFIG_HAL_ENCODER_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
-	#include PATH_USER(HAL_Encoder.h)
-#elif 	defined(CONFIG_HAL_ENCODER_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include PATH_BOARD(Transducer/Encoder/HAL, HAL_Encoder.h)
-#else
+#define XSTR(String) #String
+#define STR(String) XSTR(String)
 
-typedef const struct
-{
+#if defined(CONFIG_PATH_HAL_ENCODER)
+	#include STR(CONFIG_PATH_HAL_ENCODER/HAL_Encoder.h)
 
-} HAL_Encoder_T;
-
-static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder){}
-static inline void HAL_Encoder_WriteTimerCounter(const HAL_Encoder_T * p_encoder, uint32_t count){}
-static inline void HAL_Encoder_WriteTimerCounterMax(const HAL_Encoder_T * p_encoder, uint32_t max){}
-static inline bool HAL_Encoder_ReadTimerCounterOverflow(const HAL_Encoder_T * p_encoder){}
-static inline void HAL_Encoder_ClearTimerCounterOverflow(const HAL_Encoder_T * p_encoder){}
-static inline bool HAL_Encoder_ReadPhaseA(const HAL_Encoder_T * p_encoder){}
-static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder){}
-static inline bool HAL_Encoder_ReadQuadratureCounterDirection(const HAL_Encoder_T * p_encoder){}
-static inline bool HAL_Encoder_ReadQuadratureCounterOverflowIncrement(const HAL_Encoder_T * p_encoder){}
-static inline bool HAL_Encoder_ReadQuadratureCounterOverflowDecrement(const HAL_Encoder_T * p_encoder){}
-static inline void HAL_Encoder_InitCaptureTime(const HAL_Encoder_T * p_encoder){}
-static inline void HAL_Encoder_InitCaptureCount(const HAL_Encoder_T * p_encoder){}
-static inline void HAL_Encoder_Init(const HAL_Encoder_T * p_encoder){}
-
+#elif defined(CONFIG_HAL_PLATFORM)
+	#include STR(HAL/Platform/CONFIG_HAL_PLATFORM/HAL_Encoder.h)
 #endif
+//#else
+
+//typedef const struct
+//{
+//
+//} HAL_Encoder_T;
+//
+//static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder){}
+//static inline void HAL_Encoder_WriteTimerCounter(const HAL_Encoder_T * p_encoder, uint32_t count){}
+//static inline void HAL_Encoder_WriteTimerCounterMax(const HAL_Encoder_T * p_encoder, uint32_t max){}
+//static inline bool HAL_Encoder_ReadTimerCounterOverflow(const HAL_Encoder_T * p_encoder){}
+//static inline void HAL_Encoder_ClearTimerCounterOverflow(const HAL_Encoder_T * p_encoder){}
+//static inline bool HAL_Encoder_ReadPhaseA(const HAL_Encoder_T * p_encoder){}
+//static inline bool HAL_Encoder_ReadPhaseB(const HAL_Encoder_T * p_encoder){}
+//static inline bool HAL_Encoder_ReadQuadratureCounterDirection(const HAL_Encoder_T * p_encoder){}
+//static inline bool HAL_Encoder_ReadQuadratureCounterOverflowIncrement(const HAL_Encoder_T * p_encoder){}
+//static inline bool HAL_Encoder_ReadQuadratureCounterOverflowDecrement(const HAL_Encoder_T * p_encoder){}
+//static inline void HAL_Encoder_InitCaptureTime(const HAL_Encoder_T * p_encoder){}
+//static inline void HAL_Encoder_InitCaptureCount(const HAL_Encoder_T * p_encoder){}
+//static inline void HAL_Encoder_Init(const HAL_Encoder_T * p_encoder){}
+
+//#endif
 
 #endif

@@ -36,39 +36,52 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct
-{
-	GPIO_Type * P_GPIO_BASE;
-	uint32_t GPIO_PIN_MASK;
-} HAL_Pin_T;
+//typedef const struct
+//{
+//	GPIO_Type * P_GPIO_BASE;
+//	uint32_t GPIO_PIN_MASK;
+//}
+//HAL_Pin_T;
 
-static inline void HAL_Pin_WriteState(const HAL_Pin_T * p_pin, bool isOn)
+typedef GPIO_Type HAL_Pin_T;
+
+static inline void HAL_Pin_WriteOutputOn(HAL_Pin_T * p_hal, uint32_t pinId)
 {
-//	isOn ? (p_pin->P_GPIO_BASE->PDOR |= p_pin->GPIO_PIN_MASK) : (p_pin->P_GPIO_BASE->PDOR &= ~(p_pin->GPIO_PIN_MASK));
-	isOn ? (p_pin->P_GPIO_BASE->PSOR |= p_pin->GPIO_PIN_MASK) : (p_pin->P_GPIO_BASE->PCOR |= p_pin->GPIO_PIN_MASK);
+	(p_hal->PSOR |= pinId);
 }
 
-static inline bool HAL_Pin_ReadState(const HAL_Pin_T * p_pin)
+static inline void HAL_Pin_WriteOutputOff(HAL_Pin_T * p_hal, uint32_t pinId)
 {
-	return ((p_pin->P_GPIO_BASE->PDIR & p_pin->GPIO_PIN_MASK) == p_pin->GPIO_PIN_MASK) ? true : false;
+	(p_hal->PCOR |= pinId);
 }
 
-static inline void HAL_Pin_InitInput(const HAL_Pin_T * p_pin)
+static inline void HAL_Pin_WriteOutput(HAL_Pin_T * p_hal, uint32_t pinId, bool isOn)
 {
-	p_pin->P_GPIO_BASE->PDDR &= ~(p_pin->GPIO_PIN_MASK);
-	p_pin->P_GPIO_BASE->PIDR &= ~(p_pin->GPIO_PIN_MASK);
+//	isOn ? (p_hal->PDOR |= pinId) : (p_hal->PDOR &= ~(pinId));
+	isOn ? HAL_Pin_WriteOutputOn(p_hal, pinId) : HAL_Pin_WriteOutputOff(p_hal, pinId);
 }
 
-static inline void HAL_Pin_InitOutput(const HAL_Pin_T * p_pin)
+static inline bool HAL_Pin_ReadInput(const HAL_Pin_T * p_hal, uint32_t pinId)
 {
-	p_pin->P_GPIO_BASE->PDDR |= (p_pin->GPIO_PIN_MASK);
-	p_pin->P_GPIO_BASE->PIDR |= (p_pin->GPIO_PIN_MASK);
+	return ((p_hal->PDIR & pinId) == pinId) ? true : false;
 }
 
-static inline void HAL_Pin_Deinit(const HAL_Pin_T * p_pin)
+static inline void HAL_Pin_InitInput(HAL_Pin_T * p_hal, uint32_t pinId)
 {
-	p_pin->P_GPIO_BASE->PDDR &= ~(p_pin->GPIO_PIN_MASK);
-	p_pin->P_GPIO_BASE->PIDR |= (p_pin->GPIO_PIN_MASK);
+	p_hal->PDDR &= ~(pinId);
+	p_hal->PIDR &= ~(pinId);
+}
+
+static inline void HAL_Pin_InitOutput(HAL_Pin_T * p_hal, uint32_t pinId)
+{
+	p_hal->PDDR |= (pinId);
+	p_hal->PIDR |= (pinId);
+}
+
+static inline void HAL_Pin_Deinit(HAL_Pin_T * p_hal, uint32_t pinId)
+{
+	p_hal->PDDR &= ~(pinId);
+	p_hal->PIDR |= (pinId);
 }
 
 #endif

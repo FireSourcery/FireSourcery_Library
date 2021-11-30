@@ -30,7 +30,7 @@
 /**************************************************************************/
 #include "MotAnalogUser.h"
 
-#include "Peripheral/Pin/Debounce.h"
+#include "Transducer/Debounce/Debounce.h"
 #include "Peripheral/Pin/Pin.h"
 
 #include "Math/Linear/Linear_ADC.h"
@@ -40,30 +40,33 @@
 #include <stdbool.h>
 
 
-void MotAnalogUser_Init(MotAnalogUser_T * p_motorUser, const MotAnalogUser_Config_T * p_config)
+void MotAnalogUser_Init(MotAnalogUser_T * p_motorUser)
 {
-	p_motorUser->p_Config = p_config;
+	Debounce_Init(&p_motorUser->PinBrake, 		5U);	//5millis
 
-	Debounce_Init(&p_motorUser->PinBrake, 		&p_config->HAL_PIN_BRAKE, 		&p_config->P_DEBOUNCE_TIMER, 5U);	//5millis
-	Debounce_Init(&p_motorUser->PinThrottle,	&p_config->HAL_PIN_THROTTLE, 	&p_config->P_DEBOUNCE_TIMER, 5U);	//5millis
-	Debounce_Init(&p_motorUser->PinForward, 	&p_config->HAL_PIN_FORWARD, 	&p_config->P_DEBOUNCE_TIMER, 5U);	//5millis
-	Debounce_Init(&p_motorUser->PinReverse, 	&p_config->HAL_PIN_REVERSE, 	&p_config->P_DEBOUNCE_TIMER, 5U);	//5millis
+#ifdef CONFIG_MOT_ANALOG_USER_THROTTLE_ON_OFF_ENABLE
+	Debounce_Init(&p_motorUser->PinThrottle,	5U);	//5millis
+#endif
+
+	Debounce_Init(&p_motorUser->PinForward, 	5U);	//5millis
+	Debounce_Init(&p_motorUser->PinReverse, 	5U);	//5millis
 
 	//uncalibrated default
-	Linear_ADC_Init(&p_motorUser->UnitThrottle, 	0U, 4095U, 50U);
-	Linear_ADC_Init(&p_motorUser->UnitBrake,		0U, 4095U, 50U);
+	//todo set calibration
+	Linear_ADC_Init(&p_motorUser->UnitThrottle, 	0U, 4095U, 1000U);
+	Linear_ADC_Init(&p_motorUser->UnitBrake,		0U, 4095U, 1000U);
 }
 
 
-//void MotAnalogUser_CaptureInput_IO(MotAnalogUser_T * p_motorUser)
+//void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_motorUser)
 //{
-//	Debounce_CaptureState_IO(&p_motorUser->PinBrake);
-//	Debounce_CaptureState_IO(&p_motorUser->PinThrottle);
-//	Debounce_CaptureState_IO(&p_motorUser->PinForward);
-//	Debounce_CaptureState_IO(&p_motorUser->PinReverse);
+//	Debounce_CaptureState(&p_motorUser->PinBrake);
+//	Debounce_CaptureState(&p_motorUser->PinThrottle);
+//	Debounce_CaptureState(&p_motorUser->PinForward);
+//	Debounce_CaptureState(&p_motorUser->PinReverse);
 //}
 //
-//bool MotAnalogUser_GetInput_IO(MotAnalogUser_T * p_motorUser)
+//bool MotAnalogUser_GetInput(MotAnalogUser_T * p_motorUser)
 //{
 //	return Debounce_GetState(&p_motorUser->PinBrake);
 //}
@@ -88,12 +91,12 @@ static inline bool GetThrottleRelease(MotAnalogUser_T * p_motorUser)
 	{
 		if ((p_motorUser->InputValueThrottlePrev - p_motorUser->InputValueThrottle) > (65535U/10U))
 		{
-			isReleased == true;
+			isReleased = true;
 		}
 	}
 	else
 	{
-		isReleased == false;
+		isReleased = false;
 	}
 
 	return isReleased;
@@ -101,31 +104,38 @@ static inline bool GetThrottleRelease(MotAnalogUser_T * p_motorUser)
 
 void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_motorUser)
 {
-	Debounce_CaptureState_IO(&p_motorUser->PinBrake);
-	Debounce_CaptureState_IO(&p_motorUser->PinThrottle);
-	Debounce_CaptureState_IO(&p_motorUser->PinForward);
-	Debounce_CaptureState_IO(&p_motorUser->PinReverse);
+	Debounce_PollCaptureState(&p_motorUser->PinBrake);
+#ifdef CONFIG_MOT_ANALOG_USER_THROTTLE_HW_SWITCH
+	Debounce_PollCaptureState(&p_motorUser->PinThrottle);
+#endif
+	Debounce_PollCaptureState(&p_motorUser->PinForward);
+	Debounce_PollCaptureState(&p_motorUser->PinReverse);
 
+#ifdef CONFIG_MOT_ANALOG_USER_NEUTRAL_HW_SWITCH
+//	if(p_motorUser->InputSwitchNeutralEnable = true)
+	//	p_motorUser->InputSwitchNeutral = Debounce_GetState(p_motorUser->PinNeutral);
+#else
+	p_motorUser->InputSwitchNeutral = Debounce_GetState(&p_motorUser->PinForward) | Debounce_GetState(&p_motorUser->PinReverse) ? false : true;
+#endif
+
+	p_motorUser->InputValueThrottlePrev 	= p_motorUser->InputValueThrottle;
+	p_motorUser->InputValueBrakePrev 		= p_motorUser->InputValueBrake;
+	p_motorUser->InputValueThrottle 		= Linear_ADC_CalcFractionUnsigned16(&p_motorUser->UnitThrottle, *p_motorUser->CONFIG.P_THROTTLE_ADCU);
+	p_motorUser->InputValueBrake 			= Linear_ADC_CalcFractionUnsigned16(&p_motorUser->UnitBrake, 	*p_motorUser->CONFIG.P_BRAKE_ADCU);
+
+	/*
+	 * or MA filter
+	 */
+	p_motorUser->InputValueBrake 		= (p_motorUser->InputValueBrake + p_motorUser->InputValueBrakePrev) / 2U;
+	p_motorUser->InputValueThrottle 	= (p_motorUser->InputValueThrottle + p_motorUser->InputValueThrottlePrev) / 2U;
+
+//	p_motorUser->IsThrottleRelease = GetThrottleRelease(p_motorUser);
+	p_motorUser->IsThrottleRelease = false;
+
+//remove or move to common interface
 	p_motorUser->InputSwitchBrake 		= Debounce_GetState(&p_motorUser->PinBrake);
 	p_motorUser->InputSwitchThrottle 	= Debounce_GetState(&p_motorUser->PinThrottle);
 	p_motorUser->InputSwitchForward 	= Debounce_GetState(&p_motorUser->PinForward);
 	p_motorUser->InputSwitchReverse 	= Debounce_GetState(&p_motorUser->PinReverse);
-
-//	if(p_motorUser->InputSwitchNeutralEnable = true)
-//	{
-//	p_motorUser->InputSwitchNeutral = Debounce_GetState(p_motorUser->PinNeutral);
-//	}
-//	else
-	{
-		p_motorUser->InputSwitchNeutral = p_motorUser->InputSwitchForward | p_motorUser->InputSwitchReverse ? false : true;
-	}
-
-	p_motorUser->InputValueThrottlePrev 	= p_motorUser->InputValueThrottle;
-	p_motorUser->InputValueBrakePrev 		= p_motorUser->InputValueBrake;
-	p_motorUser->InputValueThrottle 		= Linear_ADC_CalcFractionUnsigned16(&p_motorUser->UnitThrottle, 	*p_motorUser->p_Config->P_THROTTLE_ADCU);
-	p_motorUser->InputValueBrake 			= Linear_ADC_CalcFractionUnsigned16(&p_motorUser->UnitBrake, 		*p_motorUser->p_Config->P_BRAKE_ADCU);
-
-//	p_motorUser->IsThrottleRelease = GetThrottleRelease(p_motorUser);
-	p_motorUser->IsThrottleRelease = false;
 }
 

@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,8 +19,8 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	FOC.h
     @author FireSoucery
@@ -28,7 +28,7 @@
     		 Only this modules call math_foc, math_svpwm
     @version V0
 */
-/*******************************************************************************/
+/******************************************************************************/
 #ifndef FOC_H
 #define FOC_H
 
@@ -47,43 +47,45 @@ typedef enum
 typedef struct
 {
 //	/* Pointer mapped inputs, FOC read-only */
-//	volatile const qfrac16_t * p_Ia;
-//	volatile const qfrac16_t * p_Ib;
-//	volatile const qfrac16_t * p_Ic;
-//	volatile const qangle16_t * p_Theta;
+//	 const qfrac16_t * p_Ia;
+//	 const qfrac16_t * p_Ib;
+//	 const qfrac16_t * p_Ic;
+//	 const qangle16_t * p_Theta;
 
 	/* Config */
 	qfrac16_t VectorMaxMagnitude;
 	qfrac16_t VectorMaxD; /* default sqrt1/3 */
 
 	/* Inputs */
-	 volatile qfrac16_t Ia;
-	 volatile qfrac16_t Ib;
-	 volatile qfrac16_t Ic;
+	qfrac16_t Ia;
+	qfrac16_t Ib;
+	qfrac16_t Ic;
 
-	 volatile qangle16_t Theta;  // electrical angle
-	 volatile qfrac16_t Sine; /* save for inverse park call */
-	 volatile qfrac16_t Cosine;
+	qangle16_t Theta;  // electrical angle
+	qfrac16_t Sine; /* save for inverse park call */
+	qfrac16_t Cosine;
 
-	 /* calculated */
-	 volatile qfrac16_t Ialpha;
-	 volatile qfrac16_t Ibeta;
+	/* calculated */
+	qfrac16_t Ialpha;
+	qfrac16_t Ibeta;
 
 	/* PID process/feedback variable */
-	 volatile qfrac16_t Id;
-	 volatile qfrac16_t Iq;
+	qfrac16_t Id;
+	qfrac16_t Iq;
 
 	/* PID control variable */
 	/* Intermediate Input to bypass current feedback */
-	 volatile qfrac16_t Vd;
-	 volatile qfrac16_t Vq;
+	qfrac16_t Vd;
+	qfrac16_t Vq;
 
-	 volatile qfrac16_t Valpha;
-	 volatile qfrac16_t Vbeta;
+	qfrac16_t Valpha;
+	qfrac16_t Vbeta;
 
-	 volatile uint16_t DutyA;
-	 volatile uint16_t DutyB;
-	 volatile uint16_t DutyC;
+	/* dutyA, dutyB, dutyC -> 16 bits, q0.16, always positive */
+	//check 65536 case
+	uint16_t DutyA;
+	uint16_t DutyB;
+	uint16_t DutyC;
 
 	/* Pointer mapped outputs */
 //	uint16_t *p_PwmA;
@@ -108,7 +110,7 @@ static inline void FOC_ProcClarkePark(FOC_T *  p_foc)
 
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T *  p_foc)
 {
-	foc_limitvector_dmax(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
+//	foc_limitvector_dmax(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
 	foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
 	svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
 }
@@ -121,7 +123,7 @@ static inline void FOC_ProcDirectThetaSvpwm(FOC_T *  p_foc)
 //	svpwm_unipolar1(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, magnitude, p_foc->Theta, phi);
 
 	//vq is positive
-	svpwm_unipolar1(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, (uint16_t)(p_foc->Vq << 1U), p_foc->Theta, QANGLE16_90);
+//	svpwm_unipolar1(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, (uint16_t)(p_foc->Vq << 1U), p_foc->Theta, QANGLE16_90);
 }
 
 

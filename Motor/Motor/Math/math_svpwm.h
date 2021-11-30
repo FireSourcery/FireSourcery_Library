@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,15 +19,15 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
 	@file 	math_svpwm.h
 	@author FireSoucery
 	@brief	SVPWM pure math functions.
 	@version V0
 */
-/*******************************************************************************/
+/******************************************************************************/
 #ifndef MATH_SVPWM_H
 #define MATH_SVPWM_H
 
@@ -212,61 +212,6 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 //
 //}
 
-extern const uint16_t MATH_SVPWM_SADDLE_120[170];
 
-static inline uint16_t svpwm_saddle120(qangle16_t theta)
-{
-	return MATH_SVPWM_SADDLE_120[(((uint16_t)theta) >> 7U)];
-}
-static inline uint16_t svpwm_saddle(qangle16_t theta)
-{
-	uint16_t saddle;
-
-	if ((uint16_t)theta < (uint16_t)QANGLE16_120)
-	{
-		saddle = svpwm_saddle120(theta);
-	}
-	else if ((uint16_t)theta < (uint16_t)QANGLE16_240)
-	{
-		saddle = svpwm_saddle120((QANGLE16_240 - 1U - theta));
-	}
-	else
-	{
-		saddle = 0U;
-	}
-
-	return saddle;
-}
-
-/*
- *
- */
-static inline void svpwm_unipolar1(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16_t * p_dutyC, uint16_t dutyScalar, qangle16_t rotorAngle, qangle16_t voltageLeadAngle)
-{
-	qangle16_t angleA;
-	qangle16_t angleB;
-	qangle16_t angleC;
-
-	uint16_t saddleA;
-	uint16_t saddleB;
-	uint16_t saddleC;
-
-	#define PHASE_SHIFT_A  QANGLE16_120
-	#define PHASE_SHIFT_B  QANGLE16_240
-	#define PHASE_SHIFT_C  0
-
-	angleA = PHASE_SHIFT_A + rotorAngle + voltageLeadAngle; // angle loops
-	angleB = PHASE_SHIFT_B + rotorAngle + voltageLeadAngle;
-	angleC = PHASE_SHIFT_C + rotorAngle + voltageLeadAngle;
-
-	saddleA = svpwm_saddle(angleA);
-	saddleB = svpwm_saddle(angleB);
-	saddleC = svpwm_saddle(angleC);
-
-	//saddle and duty are NOT qfrac16
-	*p_dutyA = ((uint32_t)saddleA * (uint32_t)dutyScalar) / 65536U;
-	*p_dutyB = ((uint32_t)saddleB * (uint32_t)dutyScalar) / 65536U;
-	*p_dutyC = ((uint32_t)saddleC * (uint32_t)dutyScalar) / 65536U;
-}
 
 #endif

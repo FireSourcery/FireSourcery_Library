@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,8 +19,8 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Phase.h
     @author FireSoucery
@@ -35,17 +35,16 @@
 
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef PHASE_H
 #define PHASE_H
 
-#include "HAL_Phase.h"
+#include "Peripheral/PWM/PWM.h"
+#include "Peripheral/Pin/Pin.h"
 #include "Config.h"
 
 #include <stdint.h>
 #include <stdbool.h>
-
-#define PHASE_DUTY_CYCLE_MAX (65536U)
 
 typedef enum
 {
@@ -56,358 +55,355 @@ typedef enum
 
 typedef enum
 {
-	PHASE_ID_0 = 0,
-	PHASE_ID_1_AC = 1, //Phase AC
-	PHASE_ID_2_BC = 2,
-	PHASE_ID_3_BA = 3,
-	PHASE_ID_4_CA = 4,
-	PHASE_ID_5_CB = 5,
-	PHASE_ID_6_AB = 6,
-	PHASE_ID_7 = 7,
+	PHASE_ID_0 = 0U,
+	PHASE_ID_1_AC = 1U,
+	PHASE_ID_2_BC = 2U,
+	PHASE_ID_3_BA = 3U,
+	PHASE_ID_4_CA = 4U,
+	PHASE_ID_5_CB = 5U,
+	PHASE_ID_6_AB = 6U,
+	PHASE_ID_7 = 7U,
 } Phase_Id_T;
+
 
 typedef struct
 {
-#if  	defined(CONFIG_PHASE_HAL_PWM)
-	const HAL_PWM_T * p_HAL_PwmA;
-	const HAL_PWM_T * p_HAL_PwmB;
-	const HAL_PWM_T * p_HAL_PwmC;
-	#ifdef CONFIG_PHASE_HAL_EXTERNAL_SWITCH
-		const HAL_Pin_T * p_HAL_PinSwitchA;
-		const HAL_Pin_T * p_HAL_PinSwitchB;
-		const HAL_Pin_T * p_HAL_PinSwitchC;
-	#endif
-#elif 	defined(CONFIG_PHASE_HAL_PHASE)
-	const HAL_Phase_T * p_HAL_Phase;
-#endif
+	//	#ifdef CONFIG_PHASE_EXTERNAL_SWITCH
+	Pin_T OnOffA;
+	Pin_T OnOffB;
+	Pin_T OnOffC;
+	//	#endif
+}
+Phase_Config_T;
 
-	uint32_t PwmPeriod_Ticks; //match to HAL
-	void(*ActivatePhase)(const void * p_this);
+typedef struct
+{
+	Phase_Config_T CONFIG;
 
-	volatile Phase_Mode_T PhaseMode; //const PhaseMode[8];
+	PWM_T PwmA;
+	PWM_T PwmB;
+	PWM_T PwmC;
 
-	/*
-	 * Buffered data
-	 */
-	volatile uint16_t DutyA_Ticks; /* Phase PWM duty peroid in ticks */
-	volatile uint16_t DutyB_Ticks;
-	volatile uint16_t DutyC_Ticks;
+//	PWM3X_T Pwm3x;
 
-//	volatile uint16_t DutyA;
-//	volatile uint16_t DutyB;
-//	volatile uint16_t DutyC;
+	Phase_Mode_T PhaseMode;
+//	uint32_t DutyPolar_Ticks; /* 2-phase polar pwm mode scalar */
+//	void(*ActivatePhase[])(const void * p_this); //or use switch
+}
+Phase_T;
 
-	volatile bool StateA; /* On/Off State */
-	volatile bool StateB;
-	volatile bool StateC;
+#define PHASE_CONFIG(p_OnOffA_Hal, OnOffA_Id, p_OnOffB_Hal, OnOffB_Id, p_OnOffC_Hal, OnOffC_Id, p_Pwm_Hal, Pwm_PeriodTicks, PwmA_Channel, PwmB_Channel, PwmC_Channel)	\
+{																	\
+	.CONFIG = 														\
+	{																\
+		.OnOffA = PIN_CONFIG(p_OnOffA_Hal, OnOffA_Id),				\
+		.OnOffB = PIN_CONFIG(p_OnOffB_Hal, OnOffB_Id),				\
+		.OnOffC = PIN_CONFIG(p_OnOffC_Hal, OnOffC_Id),				\
+	},																\
+	.PwmA = PWM_CONFIG(p_Pwm_Hal, Pwm_PeriodTicks, PwmA_Channel),	\
+	.PwmB = PWM_CONFIG(p_Pwm_Hal, Pwm_PeriodTicks, PwmB_Channel),	\
+	.PwmC = PWM_CONFIG(p_Pwm_Hal, Pwm_PeriodTicks, PwmC_Channel),	\
+}
 
-	volatile uint32_t DutyXY_Ticks; /* 2-phase polar pwm mode scalar */
-
-//	bool UseSinusoidalInterpolation;
-//	uint32_t AngularSpeedTime; // (384*HallBaseTimerFreq/ISRFreq)
-//	volatile  uint16_t Angle;
-//	volatile  uint16_t AngleOffset;
-//	volatile  uint32_t * HallTimerDelta;
-//	volatile  uint32_t ISRCount;
-
-//	void * p_OnPhaseData;
-//	void (*OnPhaseAB)(void * onPhaseData); /*< User provides function e.g. measure current, start ADC*/
-//	void (*OnPhaseAC)(void * onPhaseData);
-//	void (*OnPhaseBC)(void * onPhaseData);
-//	void (*OnPhaseBA)(void * onPhaseData);
-//	void (*OnPhaseCA)(void * onPhaseData);
-//	void (*OnPhaseCB)(void * onPhaseData);
-} Phase_T;
 
 static inline void Phase_ClearInterrupt(const Phase_T * p_phase)
 {
-#if  	defined(CONFIG_PHASE_HAL_PWM)
-
-
-#elif 	defined(CONFIG_PHASE_HAL_PHASE)
-	HAL_Phase_ClearInterrupt(p_phase->p_HAL_Phase);
-#endif
+	PWM_ClearInterrupt(&p_phase->PwmA); //configurable clear all if needed
 }
+
+static inline void SyncPhasePwm(const Phase_T * p_phase)
+{
+	PWM_ActuateSync(&p_phase->PwmA); //configurable clear all if needed
+//	PWM_Sync(&p_phase->PwmB);
+//	PWM_Sync(&p_phase->PwmC);
+}
+
+static inline void EnablePhaseA(const Phase_T * p_phase)
+{
+	PWM_Enable(&p_phase->PwmA);
+	Pin_Output_On(&p_phase->CONFIG.OnOffA);
+}
+
+static inline void EnablePhaseB(const Phase_T * p_phase)
+{
+	PWM_Enable(&p_phase->PwmB);
+	Pin_Output_On(&p_phase->CONFIG.OnOffB);
+}
+
+static inline void EnablePhaseC(const Phase_T * p_phase)
+{
+	PWM_Enable(&p_phase->PwmC);
+	Pin_Output_On(&p_phase->CONFIG.OnOffC);
+}
+
+static inline void DisablePhaseA(const Phase_T * p_phase)
+{
+	PWM_Disable(&p_phase->PwmA);
+	Pin_Output_Off(&p_phase->CONFIG.OnOffA);
+}
+
+static inline void DisablePhaseB(const Phase_T * p_phase)
+{
+	PWM_Disable(&p_phase->PwmB);
+	Pin_Output_Off(&p_phase->CONFIG.OnOffB);
+}
+
+static inline void DisablePhaseC(const Phase_T * p_phase)
+{
+	PWM_Disable(&p_phase->PwmC);
+	Pin_Output_Off(&p_phase->CONFIG.OnOffC);
+}
+
+//static inline void Phase_ActuateState(const Phase_T * p_phase, uint16_t enumnstate)
+//{
+//	switch()
+//	{
+////		PWM_ActuateOnOff(&p_phase->Pwm3x, enumnstate);
+//	}
+//
+//}
 
 /*
-	Actuate arguments immediately
+ * For SVPWM
+	where CONFIG_PHASE_DUTY_MAX is 100% duty
  */
-/*
-	Duty in ticks
- */
-//static inline void ActuateDutyCycleTicks(const Phase_T * p_phase, uint32_t pwmDutyA, uint32_t pwmDutyB, uint32_t pwmDutyC)
-static inline void Phase_ActuateDutyCycle_Ticks(const Phase_T * p_phase, uint32_t pwmDutyA, uint32_t pwmDutyB, uint32_t pwmDutyC)
+static inline void Phase_ActuateDuty(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
 {
-#if  	defined(CONFIG_PHASE_HAL_PWM)
-	HAL_PWM_WriteDuty(p_phase->p_HAL_PwmA, p_phase->DutyA);
-	HAL_PWM_WriteDuty(p_phase->p_HAL_PwmB, p_phase->DutyB);
-	HAL_PWM_WriteDuty(p_phase->p_HAL_PwmC, p_phase->DutyC);
-#elif 	defined(CONFIG_PHASE_HAL_PHASE)
-	HAL_Phase_WriteDuty(p_phase->p_HAL_Phase, pwmDutyA, pwmDutyB, pwmDutyC);
-#endif
+	PWM_ActuateDuty(&p_phase->PwmA, pwmDutyA);
+	PWM_ActuateDuty(&p_phase->PwmB, pwmDutyB);
+	PWM_ActuateDuty(&p_phase->PwmC, pwmDutyC);
+	SyncPhasePwm(p_phase);
 }
 
-/*
-	where 65536 is 100% duty
- */
-static inline void Phase_ActuateDutyCycle(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
-{
-	Phase_ActuateDutyCycle_Ticks
-	(
-		p_phase,
-		(uint32_t)pwmDutyA * (uint32_t)p_phase->PwmPeriod_Ticks / 65536U,
-		(uint32_t)pwmDutyB * (uint32_t)p_phase->PwmPeriod_Ticks / 65536U,
-		(uint32_t)pwmDutyC * (uint32_t)p_phase->PwmPeriod_Ticks / 65536U
-	);
-}
-
-
-//static inline void Phase_ActuateState(const Phase_T * p_phase, Phase_Id_T id)
-static inline void Phase_ActuateState(const Phase_T * p_phase, bool a, bool b, bool c)
-{
-#if  	defined(CONFIG_PHASE_HAL_PWM)
-	HAL_PWM_WriteState(p_phase->p_HAL_PwmA, a);
-	HAL_PWM_WriteState(p_phase->p_HAL_PwmB, b);
-	HAL_PWM_WriteState(p_phase->p_HAL_PwmC, c);
-	#ifdef CONFIG_PHASE_HAL_EXTERNAL_SWITCH
-		HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchA, a);
-		HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchB, b);
-		HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchC, c);
-	#endif
-#elif 	defined(CONFIG_PHASE_HAL_PHASE)
-	HAL_Phase_WriteState(p_phase->p_HAL_Phase, a, b, c);
-#endif
-}
-
-static inline void Phase_ActuateInvertPolarity(const Phase_T * p_phase, bool isInvA, bool isInvB, bool isInvC)
-{
-#if  	defined(CONFIG_PHASE_HAL_PWM)
-	HAL_PWM_WriteInvertPolarity(p_phase->p_HAL_PwmA, isInvA);
-	HAL_PWM_WriteInvertPolarity(p_phase->p_HAL_PwmB, isInvB);
-	HAL_PWM_WriteInvertPolarity(p_phase->p_HAL_PwmC, isInvC);
-#elif 	defined(CONFIG_PHASE_HAL_PHASE)
-	HAL_Phase_WriteInvertPolarity(p_phase->p_HAL_Phase, isInvA, isInvB, isInvC);
-#endif
-}
+//static inline void Phase_ActuateDuty_Frac15(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+//{
+//	PWM_ActuateDuty_Frac15(&p_phase->PwmA, pwmDutyA);
+//	PWM_ActuateDuty_Frac15(&p_phase->PwmB, pwmDutyB);
+//	PWM_ActuateDuty_Frac15(&p_phase->PwmC, pwmDutyC);
+//	SyncPhasePwm(p_phase);
+//}
+//
+//static inline void Phase_ActuateDuty_Frac16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+//{
+//	PWM_ActuateDuty_Frac16(&p_phase->PwmA, pwmDutyA);
+//	PWM_ActuateDuty_Frac16(&p_phase->PwmB, pwmDutyB);
+//	PWM_ActuateDuty_Frac16(&p_phase->PwmC, pwmDutyC);
+//	SyncPhasePwm(p_phase);
+//}
 
 /*
-	Actuate buffered data
+ * Need to change to PWM3 or HAL_Phase for sync on writes to 1 register
  */
-static inline void Phase_Actuate(const Phase_T * p_phase)
+static inline void Phase_Float(const Phase_T * p_phase)
 {
-#if  	defined(CONFIG_PHASE_HAL_PWM)
-	HAL_PWM_WriteDuty(p_phase->p_HAL_PwmA, p_phase->DutyA);
-	HAL_PWM_WriteDuty(p_phase->p_HAL_PwmB, p_phase->DutyB);
-	HAL_PWM_WriteDuty(p_phase->p_HAL_PwmC, p_phase->DutyC);
-	HAL_PWM_WriteState(p_phase->p_HAL_PwmA, a);
-	HAL_PWM_WriteState(p_phase->p_HAL_PwmB, b);
-	HAL_PWM_WriteState(p_phase->p_HAL_PwmC, c);
-	#ifdef CONFIG_PHASE_HAL_EXTERNAL_SWITCH
-		HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchA, p_phase->StateA);
-		HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchB, p_phase->StateB);
-		HAL_Pin_WriteState(p_phase->p_HAL_PinSwitchC, p_phase->StateC);
-	#endif
-#elif 	defined(CONFIG_PHASE_HAL_PHASE)
-	HAL_Phase_WriteDuty(p_phase->p_HAL_Phase, p_phase->DutyA_Ticks, p_phase->DutyB_Ticks, p_phase->DutyC_Ticks);
-	HAL_Phase_WriteState(p_phase->p_HAL_Phase, p_phase->StateA, p_phase->StateB, p_phase->StateC);
-#endif
+	DisablePhaseA(p_phase);
+	DisablePhaseB(p_phase);
+	DisablePhaseC(p_phase);
+	SyncPhasePwm(p_phase);
 }
 
-
-
-/*
-	Set buffered data
-	Duty cycle in 16 bits. e.g. 65536 == 100%
- */
-static inline void Phase_SetDutyCyle(Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+static inline void Phase_Ground(const Phase_T * p_phase)
 {
-	p_phase->DutyA_Ticks = (uint32_t)pwmDutyA * (uint32_t)p_phase->PwmPeriod_Ticks / 65536U;
-	p_phase->DutyB_Ticks = (uint32_t)pwmDutyB * (uint32_t)p_phase->PwmPeriod_Ticks / 65536U;
-	p_phase->DutyC_Ticks = (uint32_t)pwmDutyC * (uint32_t)p_phase->PwmPeriod_Ticks / 65536U;
-}
-
-static inline void Phase_SetDutyCyle_15(Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
-{
-	p_phase->DutyA_Ticks = (uint32_t)pwmDutyA * (uint32_t)p_phase->PwmPeriod_Ticks / 32768U;
-	p_phase->DutyB_Ticks = (uint32_t)pwmDutyB * (uint32_t)p_phase->PwmPeriod_Ticks / 32768U;
-	p_phase->DutyC_Ticks = (uint32_t)pwmDutyC * (uint32_t)p_phase->PwmPeriod_Ticks / 32768U;
-}
-
-static inline void Phase_SetState(Phase_T * p_phase, bool a, bool b, bool c)
-{
-	p_phase->StateA = a;
-	p_phase->StateB = b;
-	p_phase->StateC = c;
-}
-
-static inline void Phase_Float(const Phase_T *p_phase)
-{
-//	Phase_ActuateDutyCycle_Ticks(p_phase, 0U, 0U, 0U);
-	Phase_ActuateState(p_phase, false, false, false);
-}
-
-static inline void Phase_Short(const Phase_T *p_phase)
-{
-	Phase_ActuateDutyCycle_Ticks(p_phase, 0U, 0U, 0U);
-	Phase_ActuateState(p_phase, true, true, true);
+	Phase_ActuateDuty(p_phase, 0U, 0U, 0U);
+	EnablePhaseA(p_phase);
+	EnablePhaseB(p_phase);
+	EnablePhaseC(p_phase);
+//	PWM_ActuateOnOff(&p_phase->Pwm3x, enumnstate[0,0,0]);
+	SyncPhasePwm(p_phase);
 }
 
 /******************************************************************************/
 /*!
 	2-Phase Polar PWM
+	if Pwm is updated every cycle, no need to save calculated value
  */
 /*! @{ */
 /******************************************************************************/
-static inline void Phase_Unipolar1_ActivateAC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->DutyXY_Ticks, 0U, 0U);}
-static inline void Phase_Unipolar1_ActivateBC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, p_phase->DutyXY_Ticks, 0U);}
-static inline void Phase_Unipolar1_ActivateBA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, p_phase->DutyXY_Ticks, 0U);}
-static inline void Phase_Unipolar1_ActivateCA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, 0U, p_phase->DutyXY_Ticks);}
-static inline void Phase_Unipolar1_ActivateCB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, 0U, p_phase->DutyXY_Ticks);}
-static inline void Phase_Unipolar1_ActivateAB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->DutyXY_Ticks, 0U, 0U);}
+static inline void EnablePhaseABC(const Phase_T * p_phase) 	{EnablePhaseA(p_phase); EnablePhaseB(p_phase); EnablePhaseC(p_phase); 	SyncPhasePwm(p_phase);}
+static inline void EnablePhaseNotB(const Phase_T * p_phase) {EnablePhaseA(p_phase); DisablePhaseB(p_phase); EnablePhaseC(p_phase); 	SyncPhasePwm(p_phase);}
+static inline void EnablePhaseNotA(const Phase_T * p_phase) {DisablePhaseA(p_phase); EnablePhaseB(p_phase); EnablePhaseC(p_phase); 	SyncPhasePwm(p_phase);}
+static inline void EnablePhaseNotC(const Phase_T * p_phase) {EnablePhaseA(p_phase); EnablePhaseB(p_phase); DisablePhaseC(p_phase); 	SyncPhasePwm(p_phase);}
+static inline void EnablePhaseInvertA(const Phase_T * p_phase) {PWM_EnableInvertPolarity(&p_phase->PwmA); PWM_DisableInvertPolarity(&p_phase->PwmB); PWM_DisableInvertPolarity(&p_phase->PwmC);}
+static inline void EnablePhaseInvertB(const Phase_T * p_phase) {PWM_DisableInvertPolarity(&p_phase->PwmA); PWM_EnableInvertPolarity(&p_phase->PwmB); PWM_DisableInvertPolarity(&p_phase->PwmC);}
+static inline void EnablePhaseInvertC(const Phase_T * p_phase) {PWM_DisableInvertPolarity(&p_phase->PwmA); PWM_DisableInvertPolarity(&p_phase->PwmB); PWM_EnableInvertPolarity(&p_phase->PwmC);}
+
+static inline void Phase_Unipolar1_ActivateAC(const Phase_T * p_phase, uint16_t duty) {PWM_ActuateDuty(&p_phase->PwmA, duty); PWM_ActuateDuty(&p_phase->PwmC, 0U); }
+static inline void Phase_Unipolar1_ActivateBC(const Phase_T * p_phase, uint16_t duty) {PWM_ActuateDuty(&p_phase->PwmB, duty); PWM_ActuateDuty(&p_phase->PwmC, 0U); }
+static inline void Phase_Unipolar1_ActivateBA(const Phase_T * p_phase, uint16_t duty) {PWM_ActuateDuty(&p_phase->PwmB, duty); PWM_ActuateDuty(&p_phase->PwmA, 0U); }
+static inline void Phase_Unipolar1_ActivateCA(const Phase_T * p_phase, uint16_t duty) {PWM_ActuateDuty(&p_phase->PwmC, duty); PWM_ActuateDuty(&p_phase->PwmA, 0U); }
+static inline void Phase_Unipolar1_ActivateCB(const Phase_T * p_phase, uint16_t duty) {PWM_ActuateDuty(&p_phase->PwmC, duty); PWM_ActuateDuty(&p_phase->PwmB, 0U); }
+static inline void Phase_Unipolar1_ActivateAB(const Phase_T * p_phase, uint16_t duty) {PWM_ActuateDuty(&p_phase->PwmA, duty); PWM_ActuateDuty(&p_phase->PwmB, 0U); }
 
 /*
 	PwmPositive = PwmPeriodTotal/2 + PwmScalar/2
 	PwmNegative = PwmPeriodTotal/2 - PwmScalar/2
  */
-static inline void Phase_Unipolar2_ActivateAC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks - p_phase->DutyXY_Ticks) / 2U);}
-static inline void Phase_Unipolar2_ActivateBC(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks - p_phase->DutyXY_Ticks) / 2U);}
-static inline void Phase_Unipolar2_ActivateBA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks - p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U);}
-static inline void Phase_Unipolar2_ActivateCA(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks - p_phase->DutyXY_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
-static inline void Phase_Unipolar2_ActivateCB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks - p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
-static inline void Phase_Unipolar2_ActivateAB(const Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks - p_phase->DutyXY_Ticks) / 2U, 0U);}
+static inline void Phase_Unipolar2_ActivateAC(const Phase_T * p_phase, uint16_t duty) {PWM_ActuateDutyMidPlus(&p_phase->PwmA, duty); PWM_ActuateDutyMidMinus(&p_phase->PwmC, duty); }
+static inline void Phase_Unipolar2_ActivateBC(const Phase_T * p_phase, uint16_t duty) {PWM_ActuateDutyMidPlus(&p_phase->PwmB, duty); PWM_ActuateDutyMidMinus(&p_phase->PwmC, duty); }
+static inline void Phase_Unipolar2_ActivateBA(const Phase_T * p_phase, uint16_t duty) {PWM_ActuateDutyMidPlus(&p_phase->PwmB, duty); PWM_ActuateDutyMidMinus(&p_phase->PwmA, duty); }
+static inline void Phase_Unipolar2_ActivateCA(const Phase_T * p_phase, uint16_t duty) {PWM_ActuateDutyMidPlus(&p_phase->PwmC, duty); PWM_ActuateDutyMidMinus(&p_phase->PwmA, duty); }
+static inline void Phase_Unipolar2_ActivateCB(const Phase_T * p_phase, uint16_t duty) {PWM_ActuateDutyMidPlus(&p_phase->PwmC, duty); PWM_ActuateDutyMidMinus(&p_phase->PwmB, duty); }
+static inline void Phase_Unipolar2_ActivateAB(const Phase_T * p_phase, uint16_t duty) {PWM_ActuateDutyMidPlus(&p_phase->PwmC, duty); PWM_ActuateDutyMidMinus(&p_phase->PwmB, duty); }
 
 /*
 	PwmPositive = PwmPeriodTotal/2 + PwmScalar/2
 	PwmNegative = PwmPeriodTotal/2 + PwmScalar/2, Inverse polarity
  */
-static inline void Phase_Bipolar_ActivateAC(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, false, false, true); Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
-static inline void Phase_Bipolar_ActivateBC(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, false, false, true); Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
-static inline void Phase_Bipolar_ActivateBA(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, true, false, false); Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U);}
-static inline void Phase_Bipolar_ActivateCA(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, true, false, false); Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
-static inline void Phase_Bipolar_ActivateCB(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, false, true, false); Phase_ActuateDutyCycle_Ticks(p_phase, 0U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U);}
-static inline void Phase_Bipolar_ActivateAB(const Phase_T * p_phase){Phase_ActuateInvertPolarity(p_phase, false, true, false); Phase_ActuateDutyCycle_Ticks(p_phase, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, (p_phase->PwmPeriod_Ticks + p_phase->DutyXY_Ticks) / 2U, 0U);}
+static inline void Phase_Bipolar_ActivateAC(const Phase_T * p_phase, uint16_t duty) {EnablePhaseInvertC(p_phase); PWM_ActuateDutyMidPlus(&p_phase->PwmA, duty); PWM_ActuateDutyMidPlus(&p_phase->PwmC, duty); }
+static inline void Phase_Bipolar_ActivateBC(const Phase_T * p_phase, uint16_t duty) {EnablePhaseInvertC(p_phase); PWM_ActuateDutyMidPlus(&p_phase->PwmB, duty); PWM_ActuateDutyMidPlus(&p_phase->PwmC, duty); }
+static inline void Phase_Bipolar_ActivateBA(const Phase_T * p_phase, uint16_t duty) {EnablePhaseInvertA(p_phase); PWM_ActuateDutyMidPlus(&p_phase->PwmB, duty); PWM_ActuateDutyMidPlus(&p_phase->PwmA, duty); }
+static inline void Phase_Bipolar_ActivateCA(const Phase_T * p_phase, uint16_t duty) {EnablePhaseInvertA(p_phase); PWM_ActuateDutyMidPlus(&p_phase->PwmC, duty); PWM_ActuateDutyMidPlus(&p_phase->PwmA, duty); }
+static inline void Phase_Bipolar_ActivateCB(const Phase_T * p_phase, uint16_t duty) {EnablePhaseInvertB(p_phase); PWM_ActuateDutyMidPlus(&p_phase->PwmC, duty); PWM_ActuateDutyMidPlus(&p_phase->PwmB, duty); }
+static inline void Phase_Bipolar_ActivateAB(const Phase_T * p_phase, uint16_t duty) {EnablePhaseInvertB(p_phase); PWM_ActuateDutyMidPlus(&p_phase->PwmC, duty); PWM_ActuateDutyMidPlus(&p_phase->PwmB, duty); }
 
-static inline void Phase_Polar_ActivateAC(const Phase_T * p_phase)
-{
-	//	if (waveform->SinusoidalModulation)
-	//	{
-	//		waveform->Angle = REFERENCE_ANGLE_PHASE_AC;
-	//		waveform->ISRCount = 0;
-	//		//if (PhaseMode == PHASE_MODE_BIPOLAR) EnablePWM(1, 0, 1);
-	//	}
-	switch (p_phase->PhaseMode)
-	{
-	case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateAC(p_phase);	break;
-	case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateAC(p_phase);	break;
-	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateAC(p_phase);	 	break;
-	default: break;
-	}
+static inline void Phase_Polar_ActivateA(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActuateDuty(p_phase, duty, 0U, 0U); EnablePhaseABC(p_phase);}
+static inline void Phase_Polar_ActivateB(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActuateDuty(p_phase, 0U, duty, 0U); EnablePhaseABC(p_phase);}
+static inline void Phase_Polar_ActivateC(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActuateDuty(p_phase, 0U, 0U, duty); EnablePhaseABC(p_phase);}
+static inline void Phase_Polar_ActivateInvA(const Phase_T * p_phase, uint16_t duty) {Phase_ActuateDuty(p_phase, 0U, duty, duty); EnablePhaseABC(p_phase);}
+static inline void Phase_Polar_ActivateInvB(const Phase_T * p_phase, uint16_t duty) {Phase_ActuateDuty(p_phase, duty, 0U, duty); EnablePhaseABC(p_phase);}
+static inline void Phase_Polar_ActivateInvC(const Phase_T * p_phase, uint16_t duty) {Phase_ActuateDuty(p_phase, duty, duty, 0U); EnablePhaseABC(p_phase);}
 
-	Phase_ActuateState(p_phase, true, false, true);
-//	waveform->OnPhaseAC();
-}
-
-static inline void Phase_Polar_ActivateBC(const Phase_T * p_phase)
+static inline void Phase_Polar_ActivateAC(const Phase_T * p_phase, uint16_t duty)
 {
 	switch (p_phase->PhaseMode)
 	{
-	case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateBC(p_phase);	break;
-	case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateBC(p_phase);	break;
-	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateBC(p_phase);	 	break;
-	default: break;
+		case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateAC(p_phase, duty);	break;
+		case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateAC(p_phase, duty);	break;
+		case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateAC(p_phase, duty); 	break;
+		default: break;
 	}
-	Phase_ActuateState(p_phase, false, true, true);
+
+	EnablePhaseNotB(p_phase); //todo on phase change only
 }
 
-static inline void Phase_Polar_ActivateBA(const Phase_T * p_phase)
+static inline void Phase_Polar_ActivateBC(const Phase_T * p_phase, uint16_t duty)
 {
 	switch (p_phase->PhaseMode)
 	{
-	case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateBA(p_phase);	break;
-	case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateBA(p_phase);	break;
-	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateBA(p_phase);		break;
-	default: break;
+		case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateBC(p_phase, duty);	break;
+		case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateBC(p_phase, duty);	break;
+		case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateBC(p_phase, duty); 	break;
+		default: break;
 	}
-	Phase_ActuateState(p_phase, true, true, false);
+
+	EnablePhaseNotA(p_phase);
 }
 
-static inline void Phase_Polar_ActivateCA(const Phase_T * p_phase)
+static inline void Phase_Polar_ActivateBA(const Phase_T * p_phase, uint16_t duty)
 {
 	switch (p_phase->PhaseMode)
 	{
-	case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateCA(p_phase);	break;
-	case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateCA(p_phase);	break;
-	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateCA(p_phase);	 	break;
-	default: break;
+		case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateBA(p_phase, duty);	break;
+		case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateBA(p_phase, duty);	break;
+		case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateBA(p_phase, duty);	break;
+		default: break;
 	}
-	Phase_ActuateState(p_phase, true, false, true);
+
+	EnablePhaseNotC(p_phase);
 }
 
-static inline void Phase_Polar_ActivateCB(const Phase_T * p_phase)
+static inline void Phase_Polar_ActivateCA(const Phase_T * p_phase, uint16_t duty)
 {
 	switch (p_phase->PhaseMode)
 	{
-	case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateCB(p_phase);	break;
-	case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateCB(p_phase);	break;
-	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateCB(p_phase);		break;
-	default: break;
+		case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateCA(p_phase, duty);	break;
+		case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateCA(p_phase, duty);	break;
+		case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateCA(p_phase, duty); 	break;
+		default: break;
 	}
-	Phase_ActuateState(p_phase, false, true, true);
+
+	EnablePhaseNotB(p_phase);
 }
 
-static inline void Phase_Polar_ActivateAB(const Phase_T * p_phase)
+static inline void Phase_Polar_ActivateCB(const Phase_T * p_phase, uint16_t duty)
 {
-//	if (waveform->SinusoidalModulation)
-//	{
-//		waveform->Angle = REFERENCE_ANGLE_PHASE_AB;
-//		waveform->ISRCount = 0;
-//	}
 	switch (p_phase->PhaseMode)
 	{
-	case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateAB(p_phase);	break;
-	case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateAB(p_phase);	break;
-	case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateAB(p_phase);		break;
-	default: break;
+		case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateCB(p_phase, duty);	break;
+		case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateCB(p_phase, duty);	break;
+		case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateCB(p_phase, duty); 	break;
+		default: break;
 	}
 
-	Phase_ActuateState(p_phase, true, true, false);
-//	p_phase->OnPhaseAB(p_phase->p_OnPhaseData);
+	EnablePhaseNotA(p_phase);
 }
 
-static inline void Phase_Polar_SetDutyCyle(Phase_T * p_phase, uint16_t pwmDuty)
+static inline void Phase_Polar_ActivateAB(const Phase_T * p_phase, uint16_t duty)
 {
-	p_phase->DutyXY_Ticks = (uint32_t)pwmDuty * (uint32_t)p_phase->PwmPeriod_Ticks / 65536U;
+	switch (p_phase->PhaseMode)
+	{
+		case PHASE_MODE_UNIPOLAR_1:	Phase_Unipolar1_ActivateAB(p_phase, duty);	break;
+		case PHASE_MODE_UNIPOLAR_2:	Phase_Unipolar2_ActivateAB(p_phase, duty);	break;
+		case PHASE_MODE_BIPOLAR:	Phase_Bipolar_ActivateAB(p_phase, duty);	break;
+		default: break;
+	}
+
+	EnablePhaseNotC(p_phase);
 }
 
-static inline void Phase_Polar_SetDutyCyle_Ticks(Phase_T * p_phase, uint32_t pwmTicks)
-{
-	p_phase->DutyXY_Ticks = pwmTicks;
-}
-
-//static inline void Phase_Polar_SetDutyCyle_NBits(Phase_T * p_phase, uint16_t pwmDuty)
+//static inline void Phase_Polar_ActivateAB(const Phase_T * p_phase, uint16_t duty)
 //{
-////	p_phase->DutyXY_Ticks = pwmDuty * p_phase->PwmPeriod_Ticks >> p_phase->NBits;
+//	Phase_Polar_ActivateDutyAB(p_phase, duty);
+//	EnablePhaseNotC(p_phase);
 //}
 
+//static inline void Phase_Polar_ActivateDuty(Phase_T * p_phase, uint16_t pwmDuty)
+//{
+//	switch (p_phase->PhaseActive)
+//	{
+//		case PHASE_ID_0: break;
+//		case PHASE_ID_1_AC:	Phase_Polar_ActivateAC(p_phase, duty); break;
+//		case PHASE_ID_2_BC: Phase_Polar_ActivateBC(p_phase, duty); break;
+//		case PHASE_ID_3_BA: Phase_Polar_ActivateBA(p_phase, duty); break;
+//		case PHASE_ID_4_CA: Phase_Polar_ActivateCA(p_phase, duty); break;
+//		case PHASE_ID_5_CB: Phase_Polar_ActivateCB(p_phase, duty); break;
+//		case PHASE_ID_6_AB: Phase_Polar_ActivateAB(p_phase, duty); break;
+//		case PHASE_ID_7: break;
+//		default: break;
+//	}
+//}
+
+//static inline void Phase_Polar_SetDuty(Phase_T * p_phase, uint16_t pwmDuty)
+//{
+//	switch (p_phase->PhaseMode)
+//	{
+//	case PHASE_MODE_UNIPOLAR_1:
+//		p_phase->DutyPolarPositive_Ticks = CalcPhaseDutyTicks(p_phase, pwmDuty);
+//		break;
+//	case PHASE_MODE_UNIPOLAR_2:
+//		p_phase->DutyPolarPositive_Ticks = (uint32_t)pwmDuty * GetPhasePwmPeriodTicks(p_phase) / CONFIG_PHASE_DUTY_MAX;
+//		p_phase->DutyPolarNegative_Ticks = (uint32_t)pwmDuty * GetPhasePwmPeriodTicks(p_phase) / CONFIG_PHASE_DUTY_MAX;
+//		break;
+//	case PHASE_MODE_BIPOLAR:
+//		Phase_Bipolar_ActivateAB(p_phase);
+//		break;
+//		default: break;
+//	}
+//}
+
+//static inline void Phase_Polar_ActivateABThis(const Phase_T * p_phase)
+//{
+//	Phase_Polar_ActivateAB(p_phase, p_phase->DutyPolar_Ticks);
+//}
 
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
-static inline void Phase_Polar_ActivatePhase(Phase_T * p_phase, Phase_Id_T phaseId)
+static inline void Phase_Polar_Activate(Phase_T * p_phase, Phase_Id_T phaseId, uint16_t duty)
 {
-//	CommutationTable[phaseID][p_phase->PhaseMode]();
 	switch (phaseId)
 	{
 	case PHASE_ID_0: break;
-	case PHASE_ID_1_AC:	Phase_Polar_ActivateAC(p_phase); break; //p_phase->OnPhaseAC;
-	case PHASE_ID_2_BC: Phase_Polar_ActivateBC(p_phase); break;
-	case PHASE_ID_3_BA: Phase_Polar_ActivateBA(p_phase); break;
-	case PHASE_ID_4_CA: Phase_Polar_ActivateCA(p_phase); break;
-	case PHASE_ID_5_CB: Phase_Polar_ActivateCB(p_phase); break;
-	case PHASE_ID_6_AB: Phase_Polar_ActivateAB(p_phase); break;
+	case PHASE_ID_1_AC:	Phase_Polar_ActivateAC(p_phase, duty); break;
+	case PHASE_ID_2_BC: Phase_Polar_ActivateBC(p_phase, duty); break;
+	case PHASE_ID_3_BA: Phase_Polar_ActivateBA(p_phase, duty); break;
+	case PHASE_ID_4_CA: Phase_Polar_ActivateCA(p_phase, duty); break;
+	case PHASE_ID_5_CB: Phase_Polar_ActivateCB(p_phase, duty); break;
+	case PHASE_ID_6_AB: Phase_Polar_ActivateAB(p_phase, duty); break;
 	case PHASE_ID_7: break;
 	default: break;
 	}
+	//	CommutationTable[phaseID][p_phase->PhaseMode]();
 
 	//	if (waveform->SinusoidalModulation)
 	//	{
@@ -428,37 +424,94 @@ static inline void Phase_Polar_ActivatePhase(Phase_T * p_phase, Phase_Id_T phase
 	//	}
 }
 
-static inline void Phase_Polar_ActivateAngle(Phase_T * p_phase, uint16_t theta)
-{
 
+
+//extern const uint16_t MATH_SVPWM_SADDLE_120[170];
+//
+//static inline uint16_t svpwm_saddle120(qangle16_t theta)
+//{
+//	return MATH_SVPWM_SADDLE_120[(((uint16_t)theta) >> 7U)];
+//}
+//static inline uint16_t svpwm_saddle(qangle16_t theta)
+//{
+//	uint16_t saddle;
+//
+//	if ((uint16_t)theta < (uint16_t)QANGLE16_120)
+//	{
+//		saddle = svpwm_saddle120(theta);
+//	}
+//	else if ((uint16_t)theta < (uint16_t)QANGLE16_240)
+//	{
+//		saddle = svpwm_saddle120((QANGLE16_240 - 1U - theta));
+//	}
+//	else
+//	{
+//		saddle = 0U;
+//	}
+//
+//	return saddle;
+//}
+//
+///*
+// *
+// */
+//static inline void svpwm_unipolar1(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16_t * p_dutyC, uint16_t dutyScalar, qangle16_t rotorAngle, qangle16_t voltageLeadAngle)
+//{
+//	qangle16_t angleA;
+//	qangle16_t angleB;
+//	qangle16_t angleC;
+//
+//	uint16_t saddleA;
+//	uint16_t saddleB;
+//	uint16_t saddleC;
+//
+//	#define PHASE_SHIFT_A  QANGLE16_120
+//	#define PHASE_SHIFT_B  QANGLE16_240
+//	#define PHASE_SHIFT_C  0
+//
+//	angleA = PHASE_SHIFT_A + rotorAngle + voltageLeadAngle; // angle loops
+//	angleB = PHASE_SHIFT_B + rotorAngle + voltageLeadAngle;
+//	angleC = PHASE_SHIFT_C + rotorAngle + voltageLeadAngle;
+//
+//	saddleA = svpwm_saddle(angleA);
+//	saddleB = svpwm_saddle(angleB);
+//	saddleC = svpwm_saddle(angleC);
+//
+//	//saddle and duty are NOT qfrac16
+//	*p_dutyA = ((uint32_t)saddleA * (uint32_t)dutyScalar) / 65536U;
+//	*p_dutyB = ((uint32_t)saddleB * (uint32_t)dutyScalar) / 65536U;
+//	*p_dutyC = ((uint32_t)saddleC * (uint32_t)dutyScalar) / 65536U;
+//}
+
+/*
+ * simpler, single vector angle compared to FOC, Vq only
+ */
+static inline void ActivatePhaseVoltageAngle(Phase_T * p_phase, uint16_t theta)
+{
+	/* theta = 0 => Va Max*/
+
+//	#define PHASE_SHIFT_A  (65536U/2U)
+//	#define PHASE_SHIFT_B  (65536U/2U - 65536U/3U)
+//	#define PHASE_SHIFT_C  (65536U/2U + 65536U/3U)
+//
+//	uint16_t angleA = PHASE_SHIFT_A + theta; // angle loops
+//	uint16_t angleB = PHASE_SHIFT_B + theta;
+//	uint16_t angleC = PHASE_SHIFT_C + theta;
+
+	//if 384 table
+//	uint16_t angleAIndex = (uint32_t)angleA * 3U / 512U;
+//	uint16_t angleBIndex = (uint32_t)angleB * 3U / 512U;
+//	uint16_t angleCIndex = (uint32_t)angleC * 3U / 512U;
 }
 
+//static inline void Phase_Polar_ActivateEstimateAngle(Phase_T * p_phase, uint16_t hallAngle, uint16_t anglespeedtime)
+//{
+//  angleA = PHASE_SHIFT_A + rotorAngle + voltageLeadAngle; // angle loops
+//	angleB = PHASE_SHIFT_B + rotorAngle + voltageLeadAngle;
+//	angleC = PHASE_SHIFT_C + rotorAngle + voltageLeadAngle;
+//}
 
-static inline void Phase_ActivateA(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->DutyXY_Ticks, 0, 0);}
-static inline void Phase_ActivateB(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0, p_phase->DutyXY_Ticks, 0);}
-static inline void Phase_ActivateC(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0, 0, p_phase->DutyXY_Ticks);}
-static inline void Phase_ActivateInvA(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0, p_phase->DutyXY_Ticks, p_phase->DutyXY_Ticks);}
-static inline void Phase_ActivateInvB(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, p_phase->DutyXY_Ticks, 0, p_phase->DutyXY_Ticks);}
-static inline void Phase_ActivateInvC(Phase_T * p_phase){Phase_ActuateDutyCycle_Ticks(p_phase, 0, p_phase->DutyXY_Ticks, p_phase->DutyXY_Ticks);}
-
-extern void Phase_Init
-(
-	Phase_T * p_phase,
-#if  	defined(CONFIG_PHASE_HAL_PWM)
-	const HAL_PWM_T * p_HAL_pwmA,
-	const HAL_PWM_T * p_HAL_pwmB,
-	const HAL_PWM_T * p_HAL_pwmC,
-#elif 	defined(CONFIG_PHASE_HAL_PHASE)
-	const HAL_Phase_T * p_HAL_Phase,
-#endif
-	uint16_t pwmPeroid_Ticks
-//	void (*onPhaseAB)(void * onPhaseData),
-//	void (*onPhaseAC)(void * onPhaseData),
-//	void (*onPhaseBC)(void * onPhaseData),
-//	void (*onPhaseBA)(void * onPhaseData),
-//	void (*onPhaseCA)(void * onPhaseData),
-//	void (*onPhaseCB)(void * onPhaseData)
-);
+extern void Phase_Init(Phase_T * p_phase);
 extern void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phaseMode);
 
 #endif

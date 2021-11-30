@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,23 +19,18 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Config.h
     @author FireSoucery
     @brief
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef CONFIG_BEMF_H
 #define CONFIG_BEMF_H
 
-//#if defined(CONFIG_BEMF_HAL_KLS_S32K)
-//
-//#else
-//	#define CONFIG_BEMF_HAL_USER_DEFINED
-//#endif
 
 #ifdef CONFIG_BEMF_ADC_8
 
@@ -44,13 +39,6 @@
 #else
 	#define CONFIG_BEMF_ADC_16
 #endif
-
-
-//#if  defined(CONFIG_BEMF_HAL_BEMF)
-//
-//#else
-//	#define CONFIG_BEMF_HAL_BEMF
-//#endif
 
 
 #endif

@@ -70,28 +70,54 @@ static inline void HAL_ADC_WritePinSelect(HAL_ADC_T * p_adc, uint32_t pinChannel
 	p_adc->SC1[0U] = ADC_SC1_ADCH((uint32_t )pinChannel);
 }
 
-static inline void HAL_ADC_WriteHwTriggerState(HAL_ADC_T * p_adc, bool isHwTrigger)
+static inline void HAL_ADC_EnableHwTrigger(HAL_ADC_T * p_adc)
 {
-	isHwTrigger ? (p_adc->SC2 |= ADC_SC2_ADTRG_MASK) : (p_adc->SC2 &= ~(ADC_SC2_ADTRG_MASK));
+	p_adc->SC2 |= ADC_SC2_ADTRG_MASK;
 }
+
+static inline void HAL_ADC_DisableHwTrigger(HAL_ADC_T * p_adc)
+{
+	p_adc->SC2 &= ~(ADC_SC2_ADTRG_MASK);
+}
+
+
 
 static inline void HAL_ADC_DisableInterrupt(HAL_ADC_T * p_adc)
 {
-	/* this will start conversion on channel 0 (without interrupt)? */
 	p_adc->SC1[0U] &= ~ADC_SC1_AIEN_MASK;
+	//may need to switch to nvic interrupt for critical section, with interfering with conversion
+//	switch ((uint32_t)p_adc)
+//	{
+//		case (uint32_t)ADC0: S32_NVIC->ICER[ADC0_IRQn >> 5U] = (1UL << (ADC0_IRQn & 0x1FU)); break;
+//		case (uint32_t)ADC1: S32_NVIC->ICER[ADC1_IRQn >> 5U] = (1UL << (ADC1_IRQn & 0x1FU)); break;
+//		default: break;
+//	}
 }
 
 static inline void HAL_ADC_EnableInterrupt(HAL_ADC_T * p_adc)
 {
 	p_adc->SC1[0U] |= ADC_SC1_AIEN_MASK;
+
+	//may need to switch to nvic interrupt for critical section, with interfering with conversion
+//	switch ((uint32_t)p_adc)
+//	{
+//		case (uint32_t)ADC0: S32_NVIC->ISER[ADC0_IRQn >> 5U] = (1UL << (ADC0_IRQn & 0x1FU)); break;
+//		case (uint32_t)ADC1: S32_NVIC->ISER[ADC1_IRQn >> 5U] = (1UL << (ADC1_IRQn & 0x1FU)); break;
+//		default: break;
+//	}
 }
 
-static inline void HAL_ADC_WriteInterruptState(HAL_ADC_T * p_adc, bool isOn)
+static inline void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_adc)
 {
-	isOn ? (p_adc->SC1[0U] |= ADC_SC1_AIEN_MASK) : (p_adc->SC1[0U] &= ~(ADC_SC1_AIEN_MASK));
+	p_adc->SC3 &= ~ADC_SC3_ADCO_MASK;
 }
 
-static inline void HAL_ADC_Dectivate(HAL_ADC_T * p_adc)
+static inline void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_adc)
+{
+	p_adc->SC3 |= ADC_SC3_ADCO_MASK;
+}
+
+static inline void HAL_ADC_Deactivate(HAL_ADC_T * p_adc)
 {
 	/*
 	 *  111111b - Module is disabled
@@ -109,12 +135,12 @@ static inline void HAL_ADC_Dectivate(HAL_ADC_T * p_adc)
 
 static inline bool HAL_ADC_ReadConversionActiveFlag(const HAL_ADC_T * p_adc)
 {
-	return ((((uint32_t)p_adc->SC2 & ADC_SC2_ADACT_MASK) >> ADC_SC2_ADACT_SHIFT) != 0u) ? true : false;
+	return ((p_adc->SC2 & (uint32_t)ADC_SC2_ADACT_MASK) != 0U) ? true : false;
 }
 
 static inline bool HAL_ADC_ReadConversionCompleteFlag(const HAL_ADC_T * p_adc)
 {
-	return ((((uint32_t)p_adc->SC1[0U] & ADC_SC1_COCO_MASK) >> ADC_SC1_COCO_SHIFT) != 0u) ? true : false;
+	return ((p_adc->SC1[0U] & (uint32_t)ADC_SC1_COCO_MASK) != 0U) ? true : false;
 }
 
 //clears interrupt
@@ -128,7 +154,6 @@ static inline void HAL_ADC_ClearConversionCompleteFlag(const HAL_ADC_T * p_adc)
 static inline void HAL_ADC_Init(const HAL_ADC_T * p_adc)
 {
 	(void)p_adc;
-//	ADC_DRV_ConfigConverter(instance, config);
 }
 
 #endif

@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,49 +19,73 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	BEMF.h
     @author FireSoucery
     @brief
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #include "BEMF.h"
+
+#include "Peripheral/Analog/AnalogN/AnalogN.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
-void BEMF_Init
-(
-	BEMF_T * p_bemf,
-	const uint32_t * p_timer,
-	volatile const bemf_t * p_phaseA,
-	volatile const bemf_t * p_phaseB,
-	volatile const bemf_t * p_phaseC,
-	volatile const bemf_t * p_vbus,
-	BEMF_SampleMode_T mode
-)
+
+
+
+ volatile uint16_t BemfDebug[300];
+ volatile uint16_t BemfDebugIndex = 0;
+
+
+ /*
+ call on adc
+ capture bemf with time stamp
+  capture bemf sample only at end of adc
+ proc zcd next pwm
+  */
+static inline void CaptureVPhaseA(BEMF_T * p_bemf)
 {
-	p_bemf->p_Timer = p_timer;
+//	CaptureEmf(p_bemf,  &p_bemf->AnalogResults[BEMF_ANALOG_CHANNEL_VA]);
+}
 
-	p_bemf->p_VPhaseA_ADCU = p_phaseA;
-	p_bemf->p_VPhaseB_ADCU = p_phaseB;
-	p_bemf->p_VPhaseC_ADCU = p_phaseC;
-	p_bemf->p_VBus_ADCU = p_vbus;
+static inline void CaptureVPhaseB(BEMF_T * p_bemf)
+{
+//	CaptureEmf(p_bemf,  &p_bemf->AnalogResults[BEMF_ANALOG_CHANNEL_VB]);
+}
 
-	p_bemf->PhaseAdvanceTime = 0u;
-	p_bemf->ZeroCrossingThreshold_ADCU = 0u;
-
- 	p_bemf->SampleMode = mode;
-
-	p_bemf->p_VPhaseObserve_ADCU = p_phaseA;
-//	p_bemf->PhaseObserveId = BEMF_PHASE_A;
-	p_bemf->Mode = BEMF_MODE_PASSIVE;
+static inline void CaptureVPhaseC(BEMF_T * p_bemf)
+{
+//	CaptureEmf(p_bemf,  &p_bemf->AnalogResults[BEMF_ANALOG_CHANNEL_VC]);
 }
 
 
+//static const Analog_ConversionVirtualChannel_T CHANNELS_BEMF_A_REPEAT[] =
+//{
+//[0U] = {MOTOR_ANALOG_CHANNEL_VA, 	(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfA},
+//};
+//
+//const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_A_REPEAT =
+//{
+//.P_CHANNELS 	= CHANNELS_BEMF_A_REPEAT,
+//.CHANNEL_COUNT 	= sizeof(CHANNELS_BEMF_A_REPEAT)/sizeof(Analog_ConversionVirtualChannel_T),
+//.ON_COMPLETE 	= 0U,
+//.OPTIONS =		{.HwTriggerConversion = 0U, .ContinuousConversion = 1U, .CaptureLocalPeak = 1U },
+//};
+
+void BEMF_Init(BEMF_T * p_bemf)
+{
+	p_bemf->PhaseAdvanceTime = 0u;
+	p_bemf->ZeroCrossingThreshold_ADCU = 0u;
+	p_bemf->SampleMode = BEMF_SAMPLE_MODE_PWM_ON;
+//	p_bemf->p_VPhaseObserve_ADCU = p_phaseA;
+//	p_bemf->PhaseObserveId = BEMF_PHASE_A;
+	p_bemf->Mode = BEMF_MODE_PASSIVE;
+}
 
 void BEMF_SetSampleMode(BEMF_T * p_bemf, BEMF_SampleMode_T mode)
 {
@@ -72,6 +96,7 @@ void BEMF_SetSampleMode(BEMF_T * p_bemf, BEMF_SampleMode_T mode)
 //	case BEMF_SAMPLE_MODE_PWM_BIPOLAR:		break;
 	case BEMF_SAMPLE_MODE_PWM_ON:  p_bemf->ZeroCrossingThreshold_ADCU = 0; break;
 //	case BEMF_SAMPLE_MODE_PWM_OFF:  		break;
+//	case BEMF_SAMPLE_MODE_PWM_ON_OFF:  		break;
 	default:	break;
 	}
 }
@@ -81,8 +106,6 @@ void BEMF_SetObserveMode(BEMF_T * p_bemf, BEMF_Mode_T mode)
  	p_bemf->Mode = mode;
 	p_bemf->ZeroCrossingCounter = 0U; //reset consecutive zcd counter
 }
-
-
 
 //calc speed-> calc advance angle
 void BEMF_SetAdvanceAngleTime(BEMF_T * p_bemf, uint16_t angle_frac16)

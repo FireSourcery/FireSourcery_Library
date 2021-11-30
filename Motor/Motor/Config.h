@@ -39,18 +39,6 @@
 	#define CONFIG_MOTOR_ADC_16
 #endif
 
-/*
- * Motor Module
- */
-//#ifdef CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
-//
-//
-//#elif defined(CONFIG_MOTOR_LOAD_PARAMETERS_FLASH)
-//
-//#else
-//	#define CONFIG_MOTOR_LOAD_PARAMETERS_DEFAULT
-//#endif
-
 
 #endif
 

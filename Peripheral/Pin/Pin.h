@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,18 +19,19 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Pin.h
     @author FireSoucery
-    @brief
+    @brief	Uniform Wrapper for HAL_Pin
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef PIN_H
 #define PIN_H
 
+#include "Config.h"
 #include "HAL_Pin.h"
 
 #include <stdint.h>
@@ -38,58 +39,33 @@
 
 typedef struct
 {
-	const volatile HAL_Pin_T * p_HAL_Pin;
+	HAL_Pin_T * const P_HAL_PIN;
+	const uint32_t ID;
+	const uint32_t MASK;
+}
+Pin_T;
 
-//	const volatile uint32_t * p_Timer;
-//	uint16_t DebounceTime;
-//
-//	volatile uint16_t TimePrev;
-//	volatile bool DebouncedState;
-//	volatile bool DebouncedStatePrev;
-//	volatile bool RawStatePrev;
-
-}Pin_T;
-
-//typedef struct
-//{
-//	volatile const HAL_Pin_T * p_HAL_Pin;
-//
-//	volatile const uint32_t * p_Timer;
-//	uint16_t DebounceTime;
-//
-//	volatile uint16_t TimePrev;
-//	volatile bool DebouncedState;
-//	volatile bool DebouncedStatePrev;
-//	volatile bool RawStatePrev;
-//}Pin_Bounce_T;
-
-
-static inline bool Pin_ReadState(Pin_T * p_pin)
-{
-	return HAL_Pin_ReadState(p_pin->p_HAL_Pin);
+#define PIN_CONFIG(p_Hal, Id)	\
+{								\
+	.P_HAL_PIN = p_Hal,			\
+	.ID = Id,					\
+	.MASK = (1UL << Id)			\
 }
 
-static inline void Pin_WriteState(Pin_T *p_pin, bool isOn)
-{
-	return HAL_Pin_WriteState(p_pin->p_HAL_Pin, isOn);
-}
+#ifdef CONFIG_PIN_HAL_USE_MASK
+	#define PIN_ARG_ID p_pin->MASK
+#elif defined(CONFIG_PIN_HAL_USE_ID)
+	#define PIN_ARG_ID p_pin->ID
+#endif
 
+static inline void Pin_Input_Init(const Pin_T * p_pin) {HAL_Pin_InitInput(p_pin->P_HAL_PIN, PIN_ARG_ID);}
+static inline bool Pin_Input_Read(const Pin_T * p_pin) {return HAL_Pin_ReadInput(p_pin->P_HAL_PIN, PIN_ARG_ID);}
 
+static inline void Pin_Output_Init(const Pin_T * p_pin) 				{HAL_Pin_InitOutput(p_pin->P_HAL_PIN, PIN_ARG_ID); HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, PIN_ARG_ID);}
+static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn) 	{return HAL_Pin_WriteOutput(p_pin->P_HAL_PIN, PIN_ARG_ID, isOn);}
+static inline void Pin_Output_Off(const Pin_T * p_pin) 					{return HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, PIN_ARG_ID);}
+static inline void Pin_Output_On(const Pin_T * p_pin)					{return HAL_Pin_WriteOutputOn(p_pin->P_HAL_PIN, PIN_ARG_ID);}
 
-//typedef struct
-//{
-//	HAL_Pin_T * p_HAL_Pin;
-//
-//	uint32_t PinsMask;
-//
-//	uint16_t DebounceTime_Ms;
-//
-//	uint8_t * p_VirtualPinMap;
-//
-//}Pins_T;
-//
-//void Pins_Register_GetPinState(Pins_T * p_pins, uint8_t virtualPinIndex)
-//{
-//	HAL_Pin_ReadRegisterState(p_pins->p_HAL_Pin, p_pins->p_VirtualPinMap[virtualPinIndex]);
-//}
+static inline void Pin_Deinit(const Pin_T * p_pin) {HAL_Pin_Deinit(p_pin->P_HAL_PIN, PIN_ARG_ID);}
+
 #endif

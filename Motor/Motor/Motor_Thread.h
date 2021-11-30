@@ -30,14 +30,11 @@
 */
 /******************************************************************************/
 #include "Motor.h"
-
-#include "HAL_Motor.h"
-
+//#include "HAL_Motor.h"
 #include "Motor/Motor/Transducer/Phase/Phase.h"
-
-#include "System/StateMachine/StateMachine.h"
-#include "System/Thread/Thread.h"
-
+#include "Utility/StateMachine/StateMachine.h"
+//#include "Utility/Thread/Thread.h"
+//#include "Utility/Timer/Timer.h"
 
 
 /******************************************************************************/
@@ -54,27 +51,15 @@
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase++;
-
 	StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
-
-//	Phase_ClearInterrupt(&p_motor->Phase); //proc after, clear interrupt flag that may be set up pwm update
+	//	Analog_LoadConversion(p_motor->CONFIG.P_ANALOG , p_motor->p_ConversionActive);
+	Phase_ClearInterrupt(&p_motor->Phase); //proc after, clear interrupt flag that may be set up pwm update
 }
-
-/*
-	ADC on complete. Possibly multiple per 1 PWM
-	todo adc algo to coordinate multiple adc using 1 channel samples list. handle outside for now
- */
-//static inline void Motor_ADC_Thread(Motor_T * p_motor)
-//{
-////	Analog_CaptureResults_IO(&p_motor->Analog);
-//}
 
 static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priority
 {
-	p_motor->MillisTimerBase++;
 
-	Motor_CaptureSpeed(p_motor);
-	Motor_PollStop(p_motor);
+	Motor_PollStop(p_motor); //todo transition freewheel state
 
 	//high prioirty brake decel
 
@@ -87,6 +72,27 @@ static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priority
 	//		if(Motor_PollFault(p_motor))	{ StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_FAULT);	}
 }
 
+
+//Low Freq Main //user/monitor thread 1ms low priority
+static inline void Motor_Main1Ms_Thread(Motor_T * p_motor)
+{
+
+//	HAL_Motor_EnqueueConversionIdle(p_motor); //handle in stop state
+}
+
+//low priotiy, max freq
+static inline void Motor_Main_Thread(Motor_T * p_motor)
+{
+	if (Timer_Poll(&p_motor->MillisTimer) == true)
+	{
+		Motor_CaptureSpeed(p_motor);
+		Motor_ProcUnitOutputs(p_motor);
+	}
+}
+
+/******************************************************************************/
+/*! @} */
+/******************************************************************************/
 ///*
 // * SixStep openloop and sensorless hw timer
 // */
@@ -95,29 +101,3 @@ static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priority
 ////	BEMF_ProcTimer_IO(&p_motor->Bemf);
 //}
 
-
-
-
-//Low Freq Main
-//user/monitor thread 1ms low priority
-static inline void Motor_Main1Ms_Thread(Motor_T * p_motor)
-{
-	Motor_ProcUnitOutputs(p_motor);
-
-//	HAL_Motor_EnqueueConversionIdle(p_motor); //handle in stop state
-
-//	if (Thread_PollTimerCompletePeriodic(&p_motor->MillisTimerThread) == true)
-//	{
-//
-//	}
-}
-
-//low priotiy, max freq
-static inline void Motor_Main_Thread(Motor_T * p_motor)
-{
-
-}
-
-/******************************************************************************/
-/*! @} */
-/******************************************************************************/

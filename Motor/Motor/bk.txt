@@ -1,3 +1,13 @@
+static inline uint32_t Motor_LoadParameterAll(Motor_T * p_motor)
+{
+//	Flash_EEPROM_ReadBytes(&MotorFlashMain, &p_motor->Parameters, p_motor->p_Constants->P_EEPROM, sizeof(Motor_Parameters_T));
+
+}
+
+static inline uint32_t Motor_SaveParametersAll(Motor_T * p_motor)
+{
+ 	Flash_EEPROM_WriteAlignedBytes(&MotorFlashMain, p_motor->p_Constants->P_EEPROM, &p_motor->Parameters, sizeof(Motor_Parameters_T));
+}
 
 ///*******************************************************************************/
 ///*!
@@ -26,15 +36,7 @@
 //	[MOTOR_TRANSITION_STOP] 					= &MOTOR_STATE_STOP,
 //};
 //
-//void (* const FOC_SPIN_TRANSITION_FUNCTION_MAP[MOTOR_STATE_MACHINE_TRANSITION_MAP_LENGTH])(Motor_T * p_motor) =
-//{
-//	[MOTOR_TRANSITION_FAULT] 		= 0U,
-//	[MOTOR_TRANSITION_INIT] 		= 0U,
-//	[MOTOR_TRANSITION_STOP] 		= 0U,
-//	[MOTOR_TRANSITION_CALIBRATE_ADC] 	= 0U,
-//	[MOTOR_TRANSITION_ALIGN] 		= 0U,
-//	[MOTOR_TRANSITION_SPIN] 			= 0U,
-//};
+ 
 //
 //void (* const FOC_SPIN_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_INPUT_MAP_LENGTH])(Motor_T * p_motor) =
 //{
@@ -76,13 +78,7 @@
 //	[MOTOR_TRANSITION_ALIGN_COMPLETE] 			= &MOTOR_STATE_FAULT,
 //	[MOTOR_TRANSITION_STOP] 					= &MOTOR_STATE_STOP,
 //};
-//
-//void (* const SIX_STEP_SPIN_TRANSITION_FUNCTION_MAP[MOTOR_STATE_MACHINE_TRANSITION_MAP_LENGTH])(Motor_T * p_motor) =
-//{
-//	[MOTOR_TRANSITION_CALIBRATE_ADC_COMPLETE] 	= 0U,
-//	[MOTOR_TRANSITION_ALIGN_COMPLETE] 			= 0U,
-//};
-//
+ 
 //void (* const SIX_STEP_SPIN_OUTPUT_FUNCTION_MAP[MOTOR_STATE_MACHINE_INPUT_MAP_LENGTH])(Motor_T * p_motor) =
 //{
 //	[MOTOR_TRANSITION_FAULT] 		= 0U,
@@ -105,25 +101,4 @@
 
 
 
-
-/*******************************************************************************/
-/*!
-    @brief  StateMachine Transition Input Parse
-*/
-/*******************************************************************************/
-//static inline bool IsInputSpin(Motor_T * p_motor)
-//{
-//	return (p_motor->IsActiveControl == true);
-////	return (p_motor->IsDirectionNeutral == false); //&& (p_motor->UserCmd > 0U);
-//}
-//
-//static inline bool IsInputFreewheel(Motor_T * p_motor)
-//{
-//	return (p_motor->IsActiveControl == false);
-////	return (p_motor->IsDirectionNeutral == true); //|| (passive brake &&(p_motor->UserCmd == 0));
-//}
-//
-//static inline bool IsInputStop(Motor_T * p_motor)
-//{
-//	return (Motor_GetSpeed(p_motor) == 0U);
-//}
+ 

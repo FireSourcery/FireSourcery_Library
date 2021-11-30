@@ -31,16 +31,23 @@
 #ifndef HAL_SERIAL_H
 #define HAL_SERIAL_H
 
-#include "Path/Path.h"
 
-#if 	defined(CONFIG_HAL_SERIAL_USER_DEFINED) || defined(CONFIG_HAL_USER_DEFINED)
-	#include PATH_USER(HAL_Serial.h)
-#elif 	defined(CONFIG_HAL_SERIAL_LIBRARY_DEFINED) || defined(CONFIG_HAL_LIBRARY_DEFINED)
-	#include PATH_PLATFORM(Peripheral/HAL, HAL_Serial.h)
-#else
+//#define XSTR(String) #String
+//#define STR(String) XSTR(String)
+//
+//#if defined(CONFIG_HAL_SERIAL_PATH)
+//	#include STR(CONFIG_HAL_SERIAL_PATH/HAL_Serial.h)
+//#elif defined(CONFIG_HAL_PLATFORM)
+//	#include STR(Peripheral/HAL/Platform/CONFIG_HAL_PLATFORM/HAL_Serial.h)
+//#endif
 
-typedef void HAL_Serial_T;
+#include "Peripheral/HAL/Path.h"
+#include PATH_HAL_PERIPHERAL(HAL_Serial.h)
 
+
+/*
+//typedef void HAL_Serial_T;
+ *
 static inline void HAL_Serial_WriteTxChar(HAL_Serial_T * p_uartRegMap, uint8_t txChar)
 {
 
@@ -127,6 +134,8 @@ static inline void HAL_Serial_Init(HAL_Serial_T * p_uartRegMap)
 
 }
 
-#endif
+*/
+
+//#endif
 
 #endif

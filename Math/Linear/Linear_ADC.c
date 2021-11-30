@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,15 +19,15 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Linear_ADC.c
     @author FireSoucery
-    @brief  linear function using known measured value adc limits
+    @brief  Scale ADCU to provided reference value
     @version V0
 */
-/*******************************************************************************/
+/******************************************************************************/
 #include "Linear_ADC.h"
 #include "Linear.h"
 
@@ -35,31 +35,63 @@
 
 /******************************************************************************/
 /*!
-	@brief  return 0-65535 using max reading as 100 percent
+	@brief
 
-	linear_invf(adcu) = frac16
-	linear_f(frac16) = adcu
+	f(adcuZero) = 0
+	f(adcuRef) = physicalRef
+
+	@input - physicalRef < 32768, 65536, resolution of initial y offset
+				set > adcuResolution for max res
+
+	e.g
+	adcuZero 		= 2000
+	adcuRef 		= 4095
+	physicalRef 	= 100
+	factor 		= 100
+	divisor 	= 2095
+
+	x0 with shifted b
+		m_shiftedFactor 		= 3128
+		m_shiftedDivisor 		= 1372979
+		Intercept	 			= -95 =>
+		shift back 		-6,225,920 (error 300) (res 32)
+		save shifted 	-6,256,420	=> (error - 4) (res 27)
+
+	e.g
+	adcuZero 		= 2000
+	adcuRef 		= 4095
+	physicalRef 	= 1000
+	factor 		= 1000
+	divisor 	= 2095
+
+	x0 with shifted b
+		m_shiftedFactor 		= 31282
+		m_shiftedDivisor 		= 137297
+		Intercept	 		= -954
+		shift back 	-62,521,344 (error 42)
+		preshift  	-62,564,200 (error 0)
+
+
+	adcuZero 		= 2000
+	adcuRef 		= 4095
+	physicalRef 	= 10000
+	factor 		= 10000
+	divisor 	= 2095
+
+	x0 with shifted b
+		m_shiftedFactor 		= 312821
+		m_shiftedDivisor 		= 13729
+		Intercept	 		= -9546
+		shift back 		-625,606,656 (3) (res 34)
+		save shifted  	-625,642,004 (error0)
 
  */
 /******************************************************************************/
-void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcUnitZero, uint16_t adcUnitRef, int16_t physicalUnitRef)
+void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef)
 {
-	int32_t factor 	= physicalUnitRef;
-	int32_t divisor = (adcUnitRef - adcUnitZero);
+	Linear_Init_X0(p_linear, physicalRef, (adcuRef - adcuZero), adcuZero, physicalRef);
 
-#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
-	Linear_Init_X0(p_linear, factor, divisor, adcUnitZero, physicalUnitRef);
+	//alternatively set up using InvFunction //	//use InvFunction to calc using offset as X0S
+	//	Linear_Init(p_linear, (adcuRef - adcuZero), physicalRef, adcuZero, physicalRef);
 
-#elif defined (CONFIG_LINEAR_NUMIRICAL_DIVIDE)
-//	p_linear->SlopeFactor = factor;
-//	p_linear->SlopeDivisor = divisor;
-//	p_linear->OffsetY = (0 -  factor * adcUnitZero  / divisor);
-
-	//use InvFunction to calc using offset as X0
-	p_linear->SlopeFactor =  factor;
-	p_linear->SlopeDivisor = divisor;
-	p_linear->Offset = adcuZero; //offset x, linear_invf(adcu) = frac16
- 	p_linear->RangeReference = physicalUnitRef;
-#endif
 }
-

@@ -29,6 +29,7 @@
 */
 /******************************************************************************/
 #ifndef CRITICAL_H
+
 #define CRITICAL_H
 
 #include "Config.h"
@@ -40,7 +41,7 @@
  * Implement per submodule HAL for now
  * 	or implement in parent HAL and include
  */
-#ifdef CONFIG_CRITICAL_MCU_ARM
+#ifdef CONFIG_SYSTEM_MCU_ARM
 
 	#include "External/CMSIS/Core/Include/cmsis_compiler.h"
 	#if defined (__GNUC__)
@@ -64,25 +65,33 @@
 extern int32_t g_InterruptDisableCount;
 extern uint32_t g_RegPrimask;
 
+static inline void Critical_DisableIrq(void)
+{
+	CRITICAL_DISABLE_INTERRUPTS();
+	g_InterruptDisableCount++;
+}
+
+static inline void Critical_EnableIrq(void)
+{
+	if (g_InterruptDisableCount > 0U)
+	{
+		g_InterruptDisableCount--;
+		if (g_InterruptDisableCount <= 0U)
+		{
+			CRITICAL_ENABLE_INTERRUPTS();
+		}
+	}
+}
+
 static inline void Critical_Enter(void)
 {
 	g_RegPrimask = __get_PRIMASK();
 	CRITICAL_DISABLE_INTERRUPTS();
-//	g_InterruptDisableCount++;
 }
 
 static inline void Critical_Exit(void)
 {
 	__set_PRIMASK(g_RegPrimask);
-
-//	if (g_InterruptDisableCount > 0U)
-//	{
-//		g_InterruptDisableCount--;
-//		if (g_InterruptDisableCount <= 0U)
-//		{
-//			CRITICAL_ENABLE_INTERRUPTS();
-//		}
-//	}
 }
 
 
@@ -116,28 +125,28 @@ static inline void Critical_MutexRelease(critical_mutex_t * p_mutex)
 	Critical_Exit();
 }
 
-static inline bool Critical_Enter_Common(critical_mutex_t * p_mutex)
+static inline bool Critical_AquireEnter(critical_mutex_t * p_mutex)
 {
 #if defined(CONFIG_CRITICAL_USE_MUTEX)
 	return Critical_AquireMutex(p_mutex) ? true : false;
 #else
-	EnterCritical();
+	Critical_Enter();
 	return true;
 #endif
 }
 
-static inline void Critical_Exit_Common(critical_mutex_t * p_mutex)
+static inline void Critical_ReleaseExit(critical_mutex_t * p_mutex)
 {
 #if defined(CONFIG_CRITICAL_USE_MUTEX)
 	Critical_ReleaseMutex(p_mutex);
 #else
-	ExitCritical();
+	Critical_Exit();
 #endif
 }
 
 
 /*
- * Todo static inline void Critical_Enter(void * stateData) for other/semaphore implementation
+ * todo static inline void Critical_Enter(void * stateData) for other/semaphore implementation
  */
 //typedef volatile uint32_t critical_semaphore_t;
 //

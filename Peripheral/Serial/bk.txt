@@ -1,4 +1,9 @@
- 
+ #if defined(CONFIG_SERIAL_QUEUE_INTERNAL)
+	volatile uint8_t * const P_TX_BUFFER;
+	volatile uint8_t * const P_RX_BUFFER;
+	const uint32_t TX_BUFFER_SIZE;
+	const uint32_t RX_BUFFER_SIZE;
+#endif
 
 
 //static inline void Serial_TxComplete_ISR(Serial_T * p_serial)
@@ -59,15 +64,271 @@ uint8_t Serial_ReadChar(Serial_T * p_serial)
 	return rxChar;
 }
 
-//#ifdef CONFIG_SERIAL_BUFFER_SIZE_STATIC
-//	#if defined(CONFIG_SERIAL_TX_BUFFER_SIZE) && defined(CONFIG_SERIAL_RX_BUFFER_SIZE)
+//#if defined(CONFIG_SERIAL_QUEUE_INTERNAL)
 //
-//	#else
-//		#define CONFIG_SERIAL_TX_BUFFER_SIZE (100U)
-//		#define CONFIG_SERIAL_RX_BUFFER_SIZE (100U)
-//	#endif
-//#elif defined(CONFIG_SERIAL_BUFFER_SIZE_POINTER)
+//#elif defined(CONFIG_SERIAL_QUEUE_LIBRARY)
 //
 //#else
-//	#define CONFIG_SERIAL_BUFFER_SIZE_POINTER
+//	#define CONFIG_SERIAL_QUEUE_LIBRARY
 //#endif
+
+#elif defined(CONFIG_SERIAL_QUEUE_INTERNAL)
+static inline bool IsTxBufferEmpty(Serial_T * p_serial)	{return (p_serial->TxBufferHead == p_serial->TxBufferTail);};
+static inline bool IsRxBufferFull(Serial_T * p_serial)	{return ((p_serial->RxBufferHead + 1U) % p_serial->CONFIG.RX_BUFFER_SIZE == p_serial->RxBufferTail);};
+
+/*
+ * Rx data reg/fifo full ISR, receive from hw to software buffer
+ */
+static inline void Serial_RxData_ISR(Serial_T * p_serial)
+{
+	uint32_t rxBufferHeadNext;
+
+	while (HAL_Serial_ReadRxRegFull(p_serial->CONFIG.P_HAL_SERIAL))
+	{
+		rxBufferHeadNext = (p_serial->RxBufferHead + 1U) % p_serial->CONFIG.RX_BUFFER_SIZE;
+
+		if (rxBufferHeadNext == p_serial->RxBufferTail) //Rx until software buffer is full
+		{
+			//if buffer stays full, need to disable irq to prevent blocking lower prio threads. user must restart rx irq
+			HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+			break;
+		}
+		else
+		{
+			p_serial->CONFIG.P_RX_BUFFER[p_serial->RxBufferHead] = HAL_Serial_ReadRxChar(p_serial->CONFIG.P_HAL_SERIAL);
+			p_serial->RxBufferHead = rxBufferHeadNext;
+		}
+	}
+}
+
+/*
+ * Tx data reg/fifo empty ISR, transmit from software buffer to hw
+ */
+static inline void Serial_TxData_ISR(Serial_T * p_serial)
+{
+	while (HAL_Serial_ReadTxRegEmpty(p_serial->CONFIG.P_HAL_SERIAL)) //todo empty set to less than fifo size, currently 0, write 1 char only
+	{
+		if (p_serial->TxBufferHead == p_serial->TxBufferTail)  //Tx until software buffer is empty
+		{
+			HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+			break;
+		}
+		else
+		{
+			HAL_Serial_WriteTxChar(p_serial->CONFIG.P_HAL_SERIAL, p_serial->CONFIG.P_TX_BUFFER[p_serial->TxBufferTail]);
+			p_serial->TxBufferTail = (p_serial->TxBufferTail + 1U) % p_serial->CONFIG.TX_BUFFER_SIZE;
+		}
+	}
+}
+
+static inline void Serial_PollRestartRxIsr(const Serial_T * p_serial)
+{
+	if (HAL_Serial_ReadRxRegFull(p_serial->CONFIG.P_HAL_SERIAL) == true) //todo use threshhold, if full is > 0
+	{
+		HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+	}
+}
+
+static inline uint32_t Serial_GetRxFull(Serial_T * p_serial)
+{
+	return (p_serial->CONFIG.RX_BUFFER_SIZE + p_serial->RxBufferHead - p_serial->RxBufferTail) % p_serial->CONFIG.RX_BUFFER_SIZE;
+}
+
+static inline uint32_t Serial_GetTxEmpty(Serial_T * p_serial)
+{
+	if (p_serial->TxBufferHead < p_serial->TxBufferTail)
+	{
+		return p_serial->TxBufferTail - p_serial->TxBufferHead - 1U;
+	}
+	else
+	{
+		return p_serial->CONFIG.TX_BUFFER_SIZE - p_serial->TxBufferHead + p_serial->TxBufferTail;
+	}
+}
+#endif
+
+#elif defined(CONFIG_SERIAL_QUEUE_INTERNAL)
+	volatile uint32_t TxBufferHead; /*!< Write to buffer head. Tx from buffer tail */
+	volatile uint32_t TxBufferTail;
+	volatile uint32_t RxBufferHead; /*!< Rx to buffer head. Read from buffer tail. */
+	volatile uint32_t RxBufferTail;
+#endif
+
+#elif defined(CONFIG_SERIAL_QUEUE_INTERNAL)
+void Serial_Init(Serial_T * p_serial)
+{
+	p_serial->TxBufferHead 	= 0;
+	p_serial->TxBufferTail 	= 0;
+	p_serial->RxBufferHead 	= 0;
+	p_serial->RxBufferTail 	= 0;
+
+	HAL_Serial_Init(p_serial->CONFIG.P_HAL_SERIAL);
+	Serial_EnableRx(p_serial);
+}
+
+bool Serial_SendChar(Serial_T * p_serial, uint8_t txChar)
+{
+	uint32_t txBufferHeadNext;
+	bool isSuccess;
+
+	if (EnterCriticalCommonTx(p_serial))
+	{
+		if (p_serial->TxBufferHead == p_serial->TxBufferTail)
+		{
+			isSuccess = Hw_SendChar(p_serial, txChar);
+		}
+		else
+		{
+			EnterCriticalLocalTx(p_serial);
+			txBufferHeadNext = (p_serial->TxBufferHead + 1U) % p_serial->CONFIG.TX_BUFFER_SIZE;
+
+			if (txBufferHeadNext == p_serial->TxBufferTail)
+			{
+				isSuccess = false;
+			}
+			else
+			{
+				p_serial->CONFIG.P_TX_BUFFER[p_serial->TxBufferHead] = txChar;
+				p_serial->TxBufferHead = txBufferHeadNext;
+				HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+				isSuccess = true;
+			}
+			ExitCriticalLocalTx(p_serial);
+		}
+		ExitCriticalCommonTx(p_serial);
+	}
+
+	return isSuccess;
+}
+
+bool Serial_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
+{
+	bool isSuccess;
+
+	if (p_serial->RxBufferHead == p_serial->RxBufferTail)
+	{
+		isSuccess = Hw_RecvChar(p_serial, p_rxChar);
+	}
+	else
+	{
+		EnterCriticalLocalRx(p_serial);
+		*p_rxChar = p_serial->CONFIG.P_RX_BUFFER[p_serial->RxBufferTail];
+		p_serial->RxBufferTail = (p_serial->RxBufferTail + 1U) % p_serial->CONFIG.RX_BUFFER_SIZE;
+		isSuccess = true;
+		ExitCriticalLocalRx(p_serial);
+	}
+
+	return isSuccess;
+}
+
+//send immediate if fit in hardware fifo
+uint32_t Serial_SendBytes(Serial_T * p_serial, const uint8_t * p_srcBuffer, uint32_t bufferSize)
+{
+	uint32_t charCount;
+	uint32_t txBufferHeadNext;
+
+//	if (p_serial->RxBufferHead == p_serial->RxBufferTail) && bufferSize < get hw empty
+//	{
+//		Hw_Send(p_serial, p_srcBuffer, bufferSize);
+//	}
+//	else
+	{
+		EnterCriticalLocalTx(p_serial);
+		for (charCount = 0U; charCount < bufferSize; charCount++)
+		{
+			txBufferHeadNext = (p_serial->TxBufferHead + 1U) % p_serial->CONFIG.TX_BUFFER_SIZE;
+			if (txBufferHeadNext == p_serial->TxBufferTail)
+			{
+				break;
+			}
+			else
+			{
+				p_serial->CONFIG.P_TX_BUFFER[p_serial->TxBufferHead] = p_srcBuffer[charCount];
+				p_serial->TxBufferHead = txBufferHeadNext;
+			}
+		}
+		HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+		ExitCriticalLocalTx(p_serial);
+	}
+
+	return charCount;
+}
+
+uint32_t Serial_RecvBytes(Serial_T * p_serial, uint8_t * p_destBuffer, uint32_t bufferSize)
+{
+	uint32_t charCount;
+
+	if (p_serial->RxBufferHead == p_serial->RxBufferTail)
+	{
+		charCount = Hw_Recv(p_serial, p_destBuffer, bufferSize);
+	}
+	else
+	{
+		EnterCriticalLocalRx(p_serial);
+		for (charCount = 0U; charCount < bufferSize; charCount++)
+		{
+			if (p_serial->RxBufferHead == p_serial->RxBufferTail)
+			{
+				break;
+			}
+			else
+			{
+				p_destBuffer[charCount] = p_serial->CONFIG.P_RX_BUFFER[p_serial->RxBufferTail];
+				p_serial->RxBufferTail = (p_serial->RxBufferTail + 1U) % p_serial->CONFIG.RX_BUFFER_SIZE;
+			}
+		}
+		ExitCriticalLocalRx(p_serial);
+	}
+
+	return charCount;
+}
+
+bool Serial_SendString(Serial_T * p_serial, const uint8_t * p_srcBuffer, uint32_t length)
+{
+	bool status;
+
+	if (Serial_GetTxEmpty(p_serial) < length)
+	{
+		status = false;
+	}
+	else
+	{
+		EnterCriticalLocalTx(p_serial);
+		for (uint32_t srcBufferIndex = 0U; srcBufferIndex < length; srcBufferIndex++)
+		{
+			p_serial->CONFIG.P_TX_BUFFER[p_serial->TxBufferHead] = p_srcBuffer[srcBufferIndex];
+			p_serial->TxBufferHead = (p_serial->TxBufferHead + 1U) % p_serial->CONFIG.TX_BUFFER_SIZE;
+		}
+		HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+		ExitCriticalLocalTx(p_serial);
+
+		status = true;
+	}
+
+	return status;
+}
+
+bool Serial_RecvString(Serial_T * p_serial, uint8_t * p_destBuffer, uint32_t length)
+{
+	bool status;
+
+	if (Serial_GetRxFull(p_serial) < length)
+	{
+		status = false;
+	}
+	else
+	{
+		EnterCriticalLocalRx(p_serial);
+		for (uint32_t destBufferIndex = 0U; destBufferIndex < length; destBufferIndex++)
+		{
+			p_destBuffer[destBufferIndex] = p_serial->CONFIG.P_RX_BUFFER[p_serial->RxBufferTail];
+			p_serial->RxBufferTail = (p_serial->RxBufferTail + 1U) % p_serial->CONFIG.RX_BUFFER_SIZE;
+		}
+		ExitCriticalLocalRx(p_serial);
+
+		status = true;
+	}
+
+	return status;
+}
+#endif

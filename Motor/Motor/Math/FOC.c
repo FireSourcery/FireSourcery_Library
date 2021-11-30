@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,15 +19,15 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	FOC.c
     @author FireSoucery
     @brief  FOC
     @version V0
 */
-/*******************************************************************************/
+/******************************************************************************/
 #include "FOC.h"
 
 #include "Math/Q/QFrac16.h"
@@ -78,6 +78,9 @@ void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd)
 
 void FOC_SetZero(FOC_T * p_foc)
 {
+//	p_foc->VectorMaxMagnitude = QFRAC16_MAX;
+//	p_foc->VectorMaxD = 0U;
+
 	p_foc->Ia = 0;
 	p_foc->Ib = 0;
 	p_foc->Ic = 0;
@@ -92,9 +95,9 @@ void FOC_SetZero(FOC_T * p_foc)
 //	p_foc->Sine = 0; /* save for inverse park call */
 //	p_foc->Cosine = 0;
 
-	p_foc->DutyA = QFRAC16_1_DIV_2;
-	p_foc->DutyB = QFRAC16_1_DIV_2;
-	p_foc->DutyC = QFRAC16_1_DIV_2;
+	p_foc->DutyA = 65536U/2U;
+	p_foc->DutyB = 65536U/2U;
+	p_foc->DutyC = 65536U/2U;
 
 //	*p_foc->p_PwmA = 0;
 //	*p_foc->p_PwmB = 0;

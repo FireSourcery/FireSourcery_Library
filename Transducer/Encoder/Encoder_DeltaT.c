@@ -37,45 +37,32 @@
 /*!
 	Uses pin ISR, or polling
  */
-void Encoder_DeltaT_Init
-(
-	Encoder_T * p_encoder,
-	HAL_Encoder_T * p_hal_encoder,
-	uint32_t timerCounterMax,
-	uint32_t timerFreq,
-	uint32_t pollingFreq,	/* Polling and InterpolateD */
-	uint32_t encoderDistancePerCount,
-	uint32_t encoderCountsPerRevolution
-//	uint8_t angleDataBits
-)
+void Encoder_DeltaT_Init(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
 {
-	Encoder_Init
+	HAL_Encoder_InitCaptureTime
 	(
-		p_encoder,
-		p_hal_encoder,
-		timerCounterMax,
-		timerFreq,
-		pollingFreq,
-		encoderDistancePerCount,
-		encoderCountsPerRevolution
-//		angleDataBits
+		p_encoder->CONFIG.P_HAL_ENCODER,
+		p_encoder->CONFIG.PIN_PHASE_A.P_HAL_PIN,
+		p_encoder->CONFIG.PIN_PHASE_A.ID,
+		p_encoder->CONFIG.PIN_PHASE_B.P_HAL_PIN,
+		p_encoder->CONFIG.PIN_PHASE_B.ID
 	);
 
-	HAL_Encoder_InitCaptureTime(p_hal_encoder);
-//	HAL_Encoder_WriteTimerCounterMax(p_hal_encoder, timerCounterMax);
-//	HAL_Encoder_WriteTimerCounterFreq(p_hal_encoder, timerFreq);
+//	Pin_Init(&p_encoder->CONFIG.PIN_PHASE_A);
+//	Pin_Init(&p_encoder->CONFIG.PIN_PHASE_B);
+
+	_Encoder_Init(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount, p_encoder->CONFIG.DELTA_T_TIMER_FREQ);
 }
 
 /*
- * extendedTimerFreq should be small, < 65536
+ * p_encoder->CONFIG.EXTENDED_DELTA_TIMER_FREQ should be small, < 65536
+ * //long timer ticks per short timer overflow
  */
-void Encoder_DeltaT_InitExtendedTimer(Encoder_T * p_encoder, const volatile uint32_t * p_extendedTimer, uint16_t extendedTimerFreq, uint16_t effectiveStopTime_Millis)
+void Encoder_DeltaT_InitExtendedTimer(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
 {
-	p_encoder->p_ExtendedDeltaTimer = p_extendedTimer;
-	p_encoder->ExtendedDeltaTimerFreq = extendedTimerFreq;
-	p_encoder->ExtendedDeltaTimerThreshold = (p_encoder->TimerCounterMax + 1U) * extendedTimerFreq / p_encoder->UnitT_Freq; //long timer ticks per short timer overflow
-	p_encoder->ExtendedDeltaTimerEffectiveStopTime = effectiveStopTime_Millis * extendedTimerFreq / 1000U ;
-	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->p_ExtendedDeltaTimer;
+	p_encoder->ExtendedDeltaTimerThreshold = (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_DELTA_TIMER_FREQ / p_encoder->UnitT_Freq;
+	p_encoder->ExtendedDeltaTimerEffectiveStopTime = effectiveStopTime_Millis * p_encoder->CONFIG.EXTENDED_DELTA_TIMER_FREQ / 1000U ;
+	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->CONFIG.P_EXTENDED_DELTA_TIMER;
 }
 
 /*
@@ -84,13 +71,9 @@ void Encoder_DeltaT_InitExtendedTimer(Encoder_T * p_encoder, const volatile uint
 void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder, uint16_t initialRpm)
 {
 	p_encoder->DeltaT = Encoder_ConvertRotationalSpeedToDeltaT_RPM(p_encoder, initialRpm);
-//	if (p_encoder->TimerCounterSaved > )
-	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->p_HAL_Encoder);
-			//- p_encoder->DeltaT; or loop around
-	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->p_ExtendedDeltaTimer;
-//	Encoder_Zero( p_encoder);
+	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->CONFIG.P_EXTENDED_DELTA_TIMER;
 }
-
 
 void Encoder_DeltaT_CalibrateAngularD(Encoder_T * p_encoder)
 {
@@ -106,7 +89,7 @@ void Encoder_DeltaT_CalibrateQuadratureReference(Encoder_T * p_encoder)
 void Encoder_DeltaT_CalibrateQuadratureDirectionPositive(Encoder_T * p_encoder)
 {
 	//deltaT check if phaseB is negative on an edge
-//	if ((HAL_Encoder_ReadPhaseA(p_encoder->p_HAL_Encoder) == true) && (HAL_Encoder_ReadPhaseB(p_encoder->p_HAL_Encoder) == false))
+//	if ((HAL_Encoder_ReadPhaseA(p_encoder->CONFIG.P_HAL_ENCODER) == true) && (HAL_Encoder_ReadPhaseB(p_encoder->CONFIG.P_HAL_ENCODER) == false))
 //	{
 ////		 p_encoder->IsALeadBPositive = true;
 //	}

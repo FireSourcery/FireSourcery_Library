@@ -33,7 +33,7 @@
 
 #include "Motor/Motor/Config.h"
 
-#include "Peripheral/Pin/Debounce.h"
+#include "Transducer/Debounce/Debounce.h"
 #include "Peripheral/Pin/Pin.h"
 
 #include "Math/Linear/Linear_ADC.h"
@@ -42,30 +42,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifdef CONFIG_MOTOR_ADC_8
-	typedef uint8_t adc_t;
-#elif defined(CONFIG_MOTOR_ADC_16)
-	typedef uint16_t adc_t;
-#endif
+//#ifdef CONFIG_MOTOR_ADC_8
+//	typedef uint8_t adc_t;
+//#elif defined(CONFIG_MOTOR_ADC_16)
+//	typedef uint16_t adc_t;
+//#endif
 
 typedef const struct
 {
-	const HAL_Pin_T HAL_PIN_BRAKE;
-	const HAL_Pin_T HAL_PIN_THROTTLE;
-	const HAL_Pin_T HAL_PIN_FORWARD;
-	const HAL_Pin_T HAL_PIN_REVERSE;
-	const HAL_Pin_T HAL_PIN_NEUTRAL;
-	volatile const uint32_t * const P_DEBOUNCE_TIMER;
-	volatile const adc_t * const P_THROTTLE_ADCU;
-	volatile const adc_t * const P_BRAKE_ADCU;
-	const uint32_t LINEAR_V_ADC_VREF;
-	const uint32_t LINEAR_V_ADC_BITS;
+	const uint16_t * const P_THROTTLE_ADCU;
+	const uint16_t * const P_BRAKE_ADCU;
+//	const uint32_t * P_BRAKE_ADC_CALIBRATION; //nvm version
+//	const uint32_t * P_THROTTLE_ADC_CALIBRATION;
 }
 MotAnalogUser_Config_T;
 
 typedef struct
 {
-	MotAnalogUser_Config_T * p_Config;
+	MotAnalogUser_Config_T  CONFIG;
 
 	Linear_T UnitThrottle;
 	Linear_T UnitBrake;
@@ -75,24 +69,36 @@ typedef struct
 	Debounce_T PinForward;
 	Debounce_T PinReverse;
 
-	bool InputSwitchNeutralEnable;
+	bool InputSwitchNeutral;
+	bool IsThrottleRelease;
+
+	uint16_t InputValueThrottle;
+	uint16_t InputValueThrottlePrev;
+	uint16_t InputValueBrake;
+	uint16_t InputValueBrakePrev;
 
 	//input values regs/buffer
-	volatile bool InputSwitchBrake;
-	volatile bool InputSwitchThrottle;
-	volatile bool InputSwitchForward;
-	volatile bool InputSwitchReverse;
-	volatile bool InputSwitchNeutral;
-	volatile bool IsThrottleRelease;
-
-	volatile uint16_t InputValueThrottle;
-	volatile uint16_t InputValueThrottlePrev;
-	volatile uint16_t InputValueBrake;
-	volatile uint16_t InputValueBrakePrev;
+	bool InputSwitchBrake;
+	bool InputSwitchThrottle;
+	bool InputSwitchForward;
+	bool InputSwitchReverse;
 }
 MotAnalogUser_T;
 
-extern void MotAnalogUser_Init(MotAnalogUser_T * p_motorUser, const MotAnalogUser_Config_T * p_config);
+#define MOT_ANALOG_USER_CONFIG(p_Millis, p_Brake_PinHal, Brake_PinId, p_Throttle_PinHal, Throttle_PinId, p_Forward_PinHal, Forward_PinId, p_Reverse_PinHal, Reverse_PinId, p_ThrottleAdcu, p_BrakeAdcu)	\
+{																\
+	.CONFIG =													\
+	{															\
+		.P_THROTTLE_ADCU =		p_ThrottleAdcu,					\
+		.P_BRAKE_ADCU =			p_BrakeAdcu, 					\
+	},															\
+	.PinBrake 		= DEBOUNCE_CONFIG(p_Brake_PinHal, 		Brake_PinId, 		p_Millis),  	\
+	.PinThrottle 	= DEBOUNCE_CONFIG(p_Throttle_PinHal, 	Throttle_PinId, 	p_Millis),  	\
+	.PinForward 	= DEBOUNCE_CONFIG(p_Forward_PinHal, 	Forward_PinId, 		p_Millis),  	\
+	.PinReverse 	= DEBOUNCE_CONFIG(p_Reverse_PinHal, 	Reverse_PinId, 		p_Millis),  	\
+}
+
+extern void MotAnalogUser_Init(MotAnalogUser_T * p_motorUser );
 extern void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_motorUser);
 
 #endif

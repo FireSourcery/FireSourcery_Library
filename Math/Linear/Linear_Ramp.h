@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,8 +19,8 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Linear_Ramp.h
     @author FireSoucery
@@ -29,7 +29,7 @@
 
     @version V0
 */
-/*******************************************************************************/
+/******************************************************************************/
 #ifndef LINEAR_RAMP_H
 #define LINEAR_RAMP_H
 
@@ -37,34 +37,22 @@
 
 #include <stdint.h>
 
+static inline void Linear_Ramp_Init_Acceleration(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t initial, int32_t final, int32_t acceleration_UnitPerSecond)
+{
+	Linear_Init(p_linear, acceleration_UnitPerSecond, updateFreq_Hz, initial, final);
+}
+
+static inline void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t initial, int32_t final, uint32_t peroid_Ms)
+{
+	Linear_Init(p_linear, (final - initial), peroid_Ms * updateFreq_Hz / 1000U, initial, final);
+}
+
 static inline int32_t Linear_Ramp_CalcTarget(Linear_T * p_linear, uint32_t index)
 {
 	return Linear_Function(p_linear, index);
 }
 
-//static inline int16_t Linear_Ramp_CalcTarget_IncIndexOne(Linear_T *p_linear, uint32_t *p_index)
-//{
-//	int32_t target = Linear_Function(p_linear, *p_index);
-//
-//	if (p_linear->SlopeFactor >= 0U) //slope is positive
-//	{
-//		if(target < p_linear->RangeReference)
-//		{
-//			p_index++;
-//		}
-//	}
-//	else //slope is negative
-//	{
-//		if(target > p_linear->RangeReference)
-//		{
-//			p_index++;
-//		}
-//	}
-//
-//	return target;
-//}
-
-static inline int32_t Linear_Ramp_CalcTarget_IncIndex(Linear_T *p_linear, uint32_t *p_index, uint32_t indexIncreament)
+static inline int32_t Linear_Ramp_CalcTargetIncIndex(Linear_T *p_linear, uint32_t *p_index, uint32_t indexIncreament)
 {
 	int32_t rampValue = Linear_Function(p_linear, *p_index);
 
@@ -93,6 +81,28 @@ static inline int32_t Linear_Ramp_CalcTarget_IncIndex(Linear_T *p_linear, uint32
 
 	return rampValue;
 }
+
+//static inline int16_t Linear_Ramp_CalcTarget_IncIndexOne(Linear_T *p_linear, uint32_t *p_index)
+//{
+//	int32_t target = Linear_Function(p_linear, *p_index);
+//
+//	if (p_linear->SlopeFactor >= 0U) //slope is positive
+//	{
+//		if(target < p_linear->RangeReference)
+//		{
+//			p_index++;
+//		}
+//	}
+//	else //slope is negative
+//	{
+//		if(target > p_linear->RangeReference)
+//		{
+//			p_index++;
+//		}
+//	}
+//
+//	return target;
+//}
 
 //uint16_t Linear_Ramp_CalcIndex(Linear_T * p_linear, int16_t rampValue)
 //{

@@ -31,28 +31,30 @@
 #ifndef CONFIG_SERIAL_H
 #define CONFIG_SERIAL_H
 
+#if defined(CONFIG_SERIAL_CRITICAL_ENABLE)
+#elif defined(CONFIG_SERIAL_CRITICAL_PATH)
+#endif
 
+#if  defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
+	#if defined(CONFIG_SERIAL_CRITICAL_ENABLE) || defined(CONFIG_SERIAL_CRITICAL_PATH
 
-#if defined(CONFIG_SERIAL_CRITICAL_LIBRARY_DEFINED)
-
-#elif defined(CONFIG_SERIAL_CRITICAL_USER_DEFINED)
-
-#elif defined(CONFIG_SERIAL_SINGLE_THREADED)
+	#else
+		#error "HAL_Serial "
+	#endif
+#elif defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
 
 #else
-	#define CONFIG_SERIAL_SINGLE_THREADED
+ 	#define CONFIG_SERIAL_SINGLE_THREADED
 #endif
 
-#if defined(CONFIG_SERIAL_QUEUE_INTERNAL)
-
-#elif defined(CONFIG_SERIAL_QUEUE_LIBRARY)
-
+#if defined(CONFIG_SERIAL_HW_FIFO_DISABLE)
 #else
-	#define CONFIG_SERIAL_QUEUE_LIBRARY
 #endif
 
-	//	bool HasTxHarwareFIFO;
-	//	bool HasRxHarwareFIFO;
+//#if defined(CONFIG_HAL_SERIAL_PATH)
+//#elif defined(CONFIG_HAL_PLATFORM)
+//#else
+//	#error "HAL_Serial - UNDEFINED"
+//#endif
 
 #endif
-

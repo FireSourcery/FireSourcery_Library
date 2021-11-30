@@ -31,7 +31,7 @@
 #include "MotAnalogUser.h"
 //#include "MotInterface.h"
 
-#include "Peripheral/Pin/Debounce.h"
+#include "Transducer/Debounce/Debounce.h"
 #include "Peripheral/Pin/Pin.h"
 
 #include "Math/Linear/Linear_ADC.h"

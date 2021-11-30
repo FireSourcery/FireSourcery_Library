@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,23 +19,53 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Linear.c
     @author FireSoucery
     @brief  Linear
     @version V0
 */
-/*******************************************************************************/
+/******************************************************************************/
 #include "Linear.h"
 
+/*
+ * f(in) = ((factor * in) / divisor + intercept)
+ *
+ * f(in:[0 percent]) 	= 0
+ * f(in:[100 percent]) 	= rangeRef
+ */
+#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+void Linear_Init(Linear_T * p_linear, int16_t factor, int16_t divisor, int16_t intercept, int32_t rangeRef)
+{
+	p_linear->SlopeFactor 			= ((int32_t)factor << 16U) / divisor;
+	p_linear->SlopeDivisor_Shift 	= 16U;
+	p_linear->SlopeDivisor 			= ((int32_t)divisor << 16U) / factor; //InvF factor
+	p_linear->SlopeFactor_Shift 	= 16U;
+	p_linear->Intercept 			= intercept << 16U;
+	p_linear->RangeReference 		= rangeRef;
+}
+#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t intercept, int32_t rangeRef)
+{
+	p_linear->SlopeFactor 		= factor;
+	p_linear->SlopeDivisor 		= divisor;
+	p_linear->Intercept 		= intercept;
+	p_linear->RangeReference 	= rangeRef;
+}
+#endif
+
+
+
+
+
+#if defined(CONFIG_LINEAR_SHIFT_DIVIDE)
 /*
  * CONFIG_LINEAR_SHIFT_DIVIDE mode
  * Right shift must retain sign bit,
  * user factor, divisor, input must be less than 16 bits
  */
-
 static inline int32_t MaxLeftShiftDivide(int32_t factor, int32_t divisor, uint8_t leftShift)
 {
 	int32_t result = 0;
@@ -88,48 +118,28 @@ static inline int32_t MaxLeftShiftDivide(int32_t factor, int32_t divisor, uint8_
 
 	return result;
 }
+#endif
+
 
 /*
- * f(in) = ((factor * in) / divisor + offset) =>
+ * f(in) = ((factor * (in - x0)) / divisor)
+ */
+
+/*
+ * option 1
+ * save shifted intercept as shifted
  *
- * 0 percent 	=> f([-offset*divisor/factor]) 	= 0
- * 100 percent 	=> f([(rangeRef - offset)*divisor/factor]) = rangeRef
+ * option 2. full/partial y = m*(x-x0) implementation. reuse procedure of inv functions, + supplement inv frac16 functions
+ *
+ * option 3. equations include 2 offsets. y = m*(x-x0) + y0
  */
-void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset, int32_t rangeRef)
+void Linear_Init_X0(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset_x0, int32_t rangeRef)
 {
-#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
-	p_linear->SlopeFactor 			= (factor << 16U) / divisor;
-	p_linear->SlopeDivisor_Shift 	= 16U;
-	p_linear->SlopeDivisor 			= (divisor << 16U) / factor; //InvF factor
-	p_linear->SlopeFactor_Shift 	= 16U;
-	p_linear->Offset = offset << 16U;
-#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
-	p_linear->SlopeFactor 	= factor;
-	p_linear->SlopeDivisor 	= divisor;
-	p_linear->Offset = offset;
-#endif
-	p_linear->RangeReference = rangeRef;
-}
-
-/*
- * f(in) = ((factor * (in - x0)) / divisor) =>
- */
 #if defined(CONFIG_LINEAR_SHIFT_DIVIDE)
-void Linear_Init_X0(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t offset_x0, int32_t rangeRef)
-{
-	Linear_Init(p_linear, factor, divisor,  0, rangeRef);
-	p_linear->Offset = 0 - MaxLeftShiftDivide(factor * offset_x0, divisor, 16U);
-//	p_linear->Offset = 0 - (offset_x0 * factor << 16U) / divisor;
-}
+	Linear_Init(p_linear, factor, divisor, 0U, rangeRef);
+	p_linear->Intercept = 0 - MaxLeftShiftDivide(factor * offset_x0, divisor, 16U);
+//	p_linear->Intercept = 0 - (offset_x0 * factor << 16U) / divisor;
+#else
+	Linear_Init(p_linear, factor, divisor, (0 - (offset_x0 * factor / divisor)), rangeRef);
 #endif
-
-//#if defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
-//   F  return frac16  efficiently. F16 invalid
-//void Linear_Init_Frac16(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset, int32_t rangeRef)
-//{
-//	p_linear->SlopeFactor 	= factor * 65536;
-//	p_linear->SlopeDivisor 	= divisor * rangeRef;
-//	p_linear->Offset 		= offset * 65536 / yref;
-//	p_linear->RangeReference = rangeRef;
-//}
-//#endif
+}
