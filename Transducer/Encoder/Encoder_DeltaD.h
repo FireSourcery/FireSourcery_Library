@@ -149,8 +149,7 @@ static inline uint32_t Encoder_DeltaD_GetDeltaAngle(Encoder_T * p_encoder)
 
 /******************************************************************************/
 /*!
- * unit converions
-	Capture DeltaD Mode Functions -
+	Unit Conversions -
 	Only for variable DeltaD (DeltaT is fixed, == 1).
 	Meaningless for DeltaT, variable DeltaD (DeltaT is fixed, == 1).
  */

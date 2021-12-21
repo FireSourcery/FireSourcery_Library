@@ -73,10 +73,10 @@ typedef struct
 
 	//processed outputs;
 	/* UI Unit report */
-//	volatile uint16_t VBus_mV;
-//	volatile uint16_t VBemfPeak_mV;
-//	volatile uint16_t VBemfA_mV;
-//	volatile uint16_t IBus_Amp;
+	uint16_t VBus_mV;
+	uint16_t VBemfPeak_mV;
+	uint16_t VBemfA_mV;
+	uint16_t IBus_Amp;
 
 	//	bool SettingEnableOutputUnitsX;
 }

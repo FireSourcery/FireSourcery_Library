@@ -2,32 +2,33 @@
 #define MOT_MEM_MAP_H
 
 #include "Motor/Motor/Motor.h"
-//#include "Motor/MotorController/MotorController_Params.h"
 #include "Motor/Utility/MotAnalogMonitor/MotAnalogMonitor.h"
-#include "Motor/Utility/MotUserOptions/MotUserOptions.h"
+//#include "Motor/Utility/MotUserOptions/MotParameters.h"
 
 #include <stdint.h>
 
 //	const uint8_t Bytes[60]; //CONFIG_MOT_FLASH_ONCE_SIZE
 
 //User Read Only, One-time flash if available
-typedef const volatile struct __attribute__ ((aligned (4U)))
+typedef const struct __attribute__ ((aligned (4U)))
 {
-	const volatile uint8_t NAME[8U];
-	const volatile uint8_t NAME_EXT[8U];
-	const volatile uint8_t MANUFACTURE_DAY;
-	const volatile uint8_t MANUFACTURE_MONTH;
-	const volatile uint8_t MANUFACTURE_YEAR;
-	const volatile uint8_t MANUFACTURE_RESV;
-	const volatile uint32_t SERIAL_NUMBER;
+	const uint8_t NAME[8U];
+	const uint8_t NAME_EXT[8U];
+	const uint8_t MANUFACTURE_DAY;
+	const uint8_t MANUFACTURE_MONTH;
+	const uint8_t MANUFACTURE_YEAR;
+	const uint8_t MANUFACTURE_RESV;
+	const uint32_t SERIAL_NUMBER;
+
+	const uint16_t CONTROLLER_VOLTAGE;
 }
 MotMemMap_Once_T;//, * MotFlash_PtrOnce_T;
 
 #define MOT_MEM_ONCE	((MotMemMap_Once_T *)CONFIG_MOT_MEM_ONCE_ADDRESS)
 
-typedef	const volatile struct __attribute__ ((aligned (4U)))
+typedef	const struct __attribute__ ((aligned (4U)))
 {
-	const volatile uint16_t CONTROLLER_VOLTAGE;
+
 }
 MotMemMap_OnceExt_T;
 
@@ -37,69 +38,38 @@ MotMemMap_OnceExt_T;
 	#define MOT_MEM_ONCE_EXT	((MotMemMap_OnceExt_T *)(CONFIG_MOT_MEM_ONCE_ADDRESS + sizeof(MotMemMap_Once_T)))
 #endif
 
-//User Read Only, flash
-typedef const volatile struct __attribute__ ((aligned (8U)))
+//User Read Only, nonconfigurable flash
+typedef const struct __attribute__ ((aligned (8U)))
 {
-	const volatile uint8_t SOFTWARE_VERSION[4];
-	const volatile uint16_t SENSOR_RATED_I;
-	const volatile uint16_t SENSOR_RATED_AD;
+	const uint8_t SOFTWARE_VERSION[4];
+	const uint16_t SENSOR_RATED_I;
+	const uint16_t SENSOR_RATED_AD;
 }
 MotMemMap_ReadOnly_T;
 
 #define MOT_MEM_READ_ONLY	((MotMemMap_ReadOnly_T *)CONFIG_MOT_MEM_READ_ONLY_ADDRESS)
 
 
-//User nonvolatile Read Write, eeprom if available
-typedef const volatile struct __attribute__ ((aligned (4U)))
+//User Configurable, eeprom if available
+typedef const struct __attribute__ ((aligned (4U)))
 {
-	const volatile Motor_Parameters_T MOTORS[1U]; //#define CONFIG_MOT_FLASH_MOTOR_COUNT 1U
+	const Motor_Parameters_T MOTORS[1U]; //#define CONFIG_MOT_FLASH_MOTOR_COUNT 1U
 
-	const volatile MotAnalogMonitor_Params_T ANALOG_MONITOR;
-//	const volatile MotorController_Parameters_T MC;
+	const MotAnalogMonitor_Params_T ANALOG_MONITOR;
+//	const MotAppParameters_T MOT_APP;
 
-//	MotUserOptions_T USER_OPTIONS;
-
-	const volatile uint8_t APPLICATION_CONFIG;
-	const volatile uint8_t STARTUP_WAIT_TIME;
-//	const volatile uint16_t CONTROLLER_VOLTAGE;
+//	const uint8_t APPLICATION_CONFIG;
+//	const uint8_t STARTUP_WAIT_TIME;
+	//	uint8_t ShellConnectId;
+	//	uint8_t ProtocolDataLinkId[1]; //per protocol
+	//	uint8_t AuxProtocolSpecsId[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT];
+	//	uint8_t MotProtocolSpecsId;
+//		bool IsAnalogUserEnable;
+//		bool IsBuzzerOnReverseEnable;
 }
 MotMemMap_ReadWrite_T;
 
 #define MOT_MEM_READ_WRITE	((MotMemMap_ReadWrite_T *)CONFIG_MOT_MEM_READ_WRITE_ADDRESS)
 
-
-// use 2 bits do differentiate unwritten memory patterns
-typedef enum
-{
-	MOT_MEM_BOOT_IS_VALID = 0b01,
-//	BOOT_IS_VALID = 0b10,
-}
-MotMemMap_Boot_IsValid_T;
-
-typedef union
-{
-	struct
-	{
-		uint32_t IsValid	: 2U;
-		uint32_t FastBoot 	: 1U;
-		uint32_t Beep 		: 1U;
-		uint32_t Blink 		: 1U;
-	};
-	uint32_t Register;
-}
-MotMemMap_Boot_T;
-
-#define MOT_MEM_BOOT	((MotMemMap_Boot_T *)CONFIG_MOT_MEM_BOOT_ADDRESS)
-
-
-
-//typedef const volatile struct __attribute__ ((aligned (4U)))
-//{
-//	MotMemMap_ReadWrite_T * P_READ_WRITE;
-//	MotMemMap_ReadOnly_T * P_READ_ONLY;
-//	MotMemMap_OnceExt_T * P_READ_WRITE;
-//	MotMemMap_Once_T * P_READ_WRITE;
-//}
-//MotMemMap_T;
 
 #endif

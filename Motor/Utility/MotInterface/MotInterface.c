@@ -1,6 +1,7 @@
 
 
 
+
 //Filter acceptable input states
 //limit io scope
 // data members to fit all input / output requirements/peripherals

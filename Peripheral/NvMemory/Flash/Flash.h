@@ -46,21 +46,22 @@ typedef NvMemory_T Flash_T;
 #define FLASH_CONFIG(p_Hal, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
 	NV_MEMORY_CONFIG(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)														\
 
-//todo remap nvm
+/*
+ * Alias for NvMemory Status
+ */
 typedef enum
 {
-	FLASH_STATUS_SUCCESS,
-	FLASH_STATUS_PROCESSING,
-	FLASH_STATUS_START_VERIFY,
-	FLASH_STATUS_ERROR,
-	FLASH_STATUS_ERROR_BUSY,
-	FLASH_STATUS_ERROR_INPUT,		/* op param input */ //split destination, align
-	FLASH_STATUS_ERROR_CMD,			/* flash controller error */
-	FLASH_STATUS_ERROR_VERIFY,		/* Verify cmd*/
-	FLASH_STATUS_ERROR_PROTECTION,
-	FLASH_STATUS_ERROR_CHECKSUM,	/*  */
-}
-Flash_Status_T;
+	FLASH_STATUS_SUCCESS 			= NV_MEMORY_STATUS_SUCCESS,
+	FLASH_STATUS_PROCESSING 		= NV_MEMORY_STATUS_PROCESSING,
+	FLASH_STATUS_START_VERIFY 		= NV_MEMORY_STATUS_START_VERIFY,
+	FLASH_STATUS_ERROR 				= NV_MEMORY_STATUS_ERROR,
+	FLASH_STATUS_ERROR_BUSY 		= NV_MEMORY_STATUS_ERROR_BUSY,
+	FLASH_STATUS_ERROR_INPUT 		= NV_MEMORY_STATUS_ERROR_INPUT, 	/* op param input: address destination, align */
+	FLASH_STATUS_ERROR_CMD 			= NV_MEMORY_STATUS_ERROR_CMD, 		/* flash controller error */
+	FLASH_STATUS_ERROR_VERIFY 		= NV_MEMORY_STATUS_ERROR_VERIFY, 	/* Verify cmd */
+	FLASH_STATUS_ERROR_PROTECTION 	= NV_MEMORY_STATUS_ERROR_PROTECTION,
+	FLASH_STATUS_ERROR_CHECKSUM 	= NV_MEMORY_STATUS_ERROR_CHECKSUM, 	/*  */
+} Flash_Status_T;
 
 typedef enum
 {

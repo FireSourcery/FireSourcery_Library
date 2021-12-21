@@ -38,6 +38,7 @@ void Motor_User_SetThrottle(Motor_T * p_motor, uint16_t throttle)
 	p_motor->IsActiveControl = true;
 }
 
+
 void Motor_User_SetBrake(Motor_T * p_motor, uint16_t brake)
 {
 	if (p_motor->Parameters.BrakeMode == MOTOR_BRAKE_MODE_PASSIVE)
@@ -54,36 +55,31 @@ void Motor_User_SetBrake(Motor_T * p_motor, uint16_t brake)
 
 void Motor_User_Disable(Motor_T * p_motor)
 {
-//	Phase_Float(&p_motor->Phase);
+	Phase_Float(&p_motor->Phase);
 	p_motor->IsActiveControl = false;
 }
 
-////set buffered direction, check on state machine run
+//set buffered direction, check on state machine run
 void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
+//		if (p_motor->Direction != p_motor->InputDirection)//direction reversed
+//		{
+//			Blinky_SetOnTime(&p_Motor->Alarm, 1000)
+//		}
 	p_motor->DirectionInput = direction;
 }
 
-void Motor_User_ProcDirection(Motor_T * p_motor, Motor_Direction_T direction)
+void Motor_User_SetNThrottle(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle)
 {
-		//		 if (p_motor->Direction != p_motor->InputDirection)//direction reversed
-		//		{
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		Motor_User_SetThrottle(&p_motor[iMotor], throttle);
+	}
 }
 
-//static inline bool Motor_SetDirection_ (Motor_T * p_motor)
-//{
-//	//proc direction
-//	//		 if (p_motor->Direction != p_motor->InputDirection)//direction reversed
-//	//		{
-//	//			Blinky_SetOnTime(&p_Motor->Alarm, 1000)
-//	//		}
-//}
-//
-//static inline bool Motor_SetDirection_ (Motor_T * p_motor)
-//{
-//	if (p_motor->Direction != p_motor->DirectionInput)
-//	{
-//		Motor_SetDirection(p_motor->DirectionInput);
-//	}
-//}
+
+
+uint32_t Motor_User_GetBemf_Frac16(Motor_T * p_motor)	{return Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
+uint32_t Motor_User_GetVPos_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_VPOS]);}
+uint32_t Motor_User_GetSpeed_RPM(Motor_T *p_motor)		{return p_motor->Speed_RPM;}
 

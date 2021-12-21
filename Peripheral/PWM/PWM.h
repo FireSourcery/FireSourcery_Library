@@ -202,5 +202,7 @@ static inline void PWM_ActuateSync(const PWM_T * p_pwm)
 //}
 
 extern void PWM_Init(PWM_T * p_pwm);
+extern void PWM_InitChannel(PWM_T * p_pwm);
+extern void PWM_InitModule(PWM_T * p_pwm);
 
 #endif

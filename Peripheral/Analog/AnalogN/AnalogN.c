@@ -119,6 +119,8 @@ static inline void EnqueueConversionCommon(AnalogN_T * p_analogn, const AnalogN_
 					}
 					debug++;
 				}
+
+				//inclue dequeu if need to account for aborted conversions
 			}
 
 			_Analog_ExitCritical(p_analogI);

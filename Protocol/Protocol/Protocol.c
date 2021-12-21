@@ -38,12 +38,12 @@
 
 void Protocol_Init(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs, void * p_transceiver)
 {
-	Protocol_Init_Void(p_protocol);
+	Protocol_InitDefault(p_protocol);
 	Protocol_SetSpecs(p_protocol, p_specs);
 	Protocol_SetPort(p_protocol, p_transceiver);
 }
 
-void Protocol_Init_Void(Protocol_T * p_protocol)
+void Protocol_InitDefault(Protocol_T * p_protocol)
 {
 	p_protocol->RxState 	= PROTOCOL_RX_STATE_WAIT_BYTE_1;
 	p_protocol->ReqState 	= PROTOCOL_REQ_STATE_WAIT_RX_REQ;

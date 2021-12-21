@@ -116,6 +116,10 @@ static inline void HAL_PWM_InitModule(HAL_PWM_T * p_hal)
 	p_hal->MOD 		= FTM_MOD_MOD(2000U); 			// 	todo configurable CPU_FREQ/PWM_FREQ/2
 	p_hal->EXTTRIG 	= FTM_EXTTRIG_INITTRIGEN_MASK;	// 	todo configurable
 	p_hal->SYNC 	= FTM_SYNC_SWSYNC_MASK | FTM_SYNC_CNTMAX_MASK;// | FTM_SYNC_SYNCHOM_MASK;
+
+	/*
+	 *  To use sync with shared channel registers, must use PWM3X HAL to write register channel values simultaneously
+	 */
 //	p_hal->SYNCONF 	= FTM_SYNCONF_SYNCMODE_MASK | FTM_SYNCONF_SWOC_MASK | FTM_SYNCONF_SWINVC_MASK | FTM_SYNCONF_SWOM_MASK | FTM_SYNCONF_SWWRBUF_MASK | FTM_SYNCONF_INVC_MASK | FTM_SYNCONF_SWSOC_MASK;// | FTM_SYNCONF_SWRSTCNT_MASK;
 	p_hal->SYNCONF 	= FTM_SYNCONF_SYNCMODE_MASK | FTM_SYNCONF_SWWRBUF_MASK;
 	p_hal->COMBINE 	= FTM_COMBINE_SYNCEN2_MASK | FTM_COMBINE_SYNCEN3_MASK; //move to channel or set all sync en

@@ -58,7 +58,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 
 static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priority
 {
-
+	Motor_CaptureSpeed(p_motor);
 	Motor_PollStop(p_motor); //todo transition freewheel state
 
 	//high prioirty brake decel
@@ -85,8 +85,7 @@ static inline void Motor_Main_Thread(Motor_T * p_motor)
 {
 	if (Timer_Poll(&p_motor->MillisTimer) == true)
 	{
-		Motor_CaptureSpeed(p_motor);
-		Motor_ProcUnitOutputs(p_motor);
+
 	}
 }
 

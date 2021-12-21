@@ -28,6 +28,7 @@
 	@version V0
  */
 /******************************************************************************/
+#include "Encoder_DeltaT.h"
 #include "Encoder.h"
 #include "HAL_Encoder.h"
 
@@ -70,7 +71,7 @@ void Encoder_DeltaT_InitExtendedTimer(Encoder_T * p_encoder, uint16_t effectiveS
  */
 void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder, uint16_t initialRpm)
 {
-	p_encoder->DeltaT = Encoder_ConvertRotationalSpeedToDeltaT_RPM(p_encoder, initialRpm);
+	p_encoder->DeltaT = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, initialRpm);
 	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
 	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->CONFIG.P_EXTENDED_DELTA_TIMER;
 }

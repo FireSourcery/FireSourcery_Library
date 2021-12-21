@@ -28,6 +28,7 @@
 	@version V0
  */
 /******************************************************************************/
+#include "Encoder_DeltaD.h"
 #include "Encoder.h"
 #include "HAL_Encoder.h"
 

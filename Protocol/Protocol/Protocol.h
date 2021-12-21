@@ -46,7 +46,7 @@
  */
 typedef uint32_t protocolg_reqid_t;
 
-typedef uint32_t (*Protocol_ReqFastReadWrite_T) ( void * p_appInterface,  uint8_t * p_txPacket,  size_t * p_txSize, const  uint8_t * p_rxPacket, size_t rxSize);
+typedef uint32_t (*Protocol_ReqFastReadWrite_T)(void * p_appInterface, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
 
 typedef enum
 {
@@ -111,7 +111,7 @@ typedef const struct
 //	const Protocol_ReqType_T 			TYPE; 				/* pass special options, module cmd code */
 //	const Protocol_ReqFunction_T 	FUNCTION;
 	const Protocol_ReqFastReadWrite_T 	FAST;				/* Handles simple read write */
-	const Protocol_ReqSync_T 			* const P_SYNC;		/* with static ack nack */
+	const Protocol_ReqSync_T 			* const P_SYNC;		/* Static ack nack */
 	const Protocol_ReqExtProcess_T		* const P_EXT;		/* Wait, loop, dynamic ack nack and additional process contest */
 //	const uint32_t TIMEOUT;
 }
@@ -204,7 +204,7 @@ typedef const struct
 	const bool ENCODED;	//encoded data, non encoded use time out only, past first char, no meta chars
 
 //	bool USE_RX_PAUSE_ON_REQ;
-
+	const uint32_t BAUD_RATE_DEFAULT;
 }
 Protocol_Specs_T;
 
@@ -241,17 +241,19 @@ typedef const struct
 	void * const P_APP_INTERFACE;				// user app read write registers
 
 //	Flash_T * const P_FLASH;
-	const union
-	{
-		const struct
-		{
-			const uint32_t BAUD_RATE_DEFAULT;
-		};
-		const struct
-		{
 
-		};
-	};
+	const uint32_t BAUD_RATE_DEFAULT;
+//	const union
+//	{
+//		const struct
+//		{
+//			const uint32_t BAUD_RATE_DEFAULT;
+//		};
+//		const struct
+//		{
+//
+//		};
+//	};
 }
 Protocol_Config_T;
 
@@ -262,31 +264,31 @@ typedef struct Protocol_Tag
 
 	//run time config
 	const Protocol_Specs_T * p_Specs;
-	Serial_T * p_Port;
+	Serial_T * p_Port; //runtime configurable io port or const?
 	Datagram_T Datagram;
 
 	//proc variables
-	 size_t RxIndex;
-	 size_t TxLength;
-//	 volatile bool ReqRxSemaphore;
-	 uint32_t ReqTimeStart;
-	 uint32_t RxTimeStart;
-	 Protocol_RxState_T		RxState;
-	 Protocol_RxCode_T 		RxCode;
-	 Protocol_ReqState_T 	ReqState;
-	 Protocol_ReqCode_T 	ReqCode;
-	 uint8_t RxNackCount;
-	 uint8_t TxNackCount;
-	 protocolg_reqid_t ReqIdActive;
-	 Protocol_ReqEntry_T * p_ReqActive;
+	size_t RxIndex;
+	size_t TxLength;
+	//	 volatile bool ReqRxSemaphore;
+	uint32_t ReqTimeStart;
+	uint32_t RxTimeStart;
+	Protocol_RxState_T		RxState;
+	Protocol_RxCode_T 		RxCode;
+	Protocol_ReqState_T 	ReqState;
+	Protocol_ReqCode_T 		ReqCode;
+	uint8_t RxNackCount;
+	uint8_t TxNackCount;
+	protocolg_reqid_t ReqIdActive;
+	Protocol_ReqEntry_T * p_ReqActive;
 	//	Protocol_Control_T Control;
 }
 Protocol_T;
 
-//extern void Protocol_Init			(Protocol_T * p_protocol);
-extern void Protocol_Init_Void	(Protocol_T * p_protocol);
-extern void Protocol_SetSpecs	(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs);
-extern void Protocol_SetPort	(Protocol_T * p_protocol, void * p_transceiver);
-extern void Protocol_Slave_Proc	(Protocol_T * p_protocol);
+extern void Protocol_Init(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs, void * p_transceiver);
+extern void Protocol_InitDefault	(Protocol_T * p_protocol);
+extern void Protocol_SetSpecs		(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs);
+extern void Protocol_SetPort		(Protocol_T * p_protocol, void * p_transceiver);
+extern void Protocol_Slave_Proc		(Protocol_T * p_protocol);
 
 #endif

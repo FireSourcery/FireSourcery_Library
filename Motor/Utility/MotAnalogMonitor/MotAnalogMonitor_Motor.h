@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/**************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,43 +19,20 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
 /*!
-    @file
+    @file 	MotAnalogUser_Motor.h
     @author FireSoucery
-    @brief
+    @brief  1 instance for all motor, input output control
     @version V0
 */
-/*******************************************************************************/
-#include "MotFlash.h"
+/**************************************************************************/
+#ifndef MOT_ANALOG_USER_MOTOR_H
+#define MOT_ANALOG_USER_MOTOR_H
 
-//#include "Peripheral/Flash/Flash_EEPROM.h"
-#include "Peripheral/Flash/Flash.h"
+#include "Motor/Motor/Motor.h"
 
+void MotAnalogUser_Motor_Write(const MotAnalogUser_T * input, Motor_T * p_motorDest, uint8_t motorCount);
 
-
-//void MotorFlash_Init
-//(
-//	Motor_T * p_motor,
-//	HAL_Flash_T * p_hal_flash
-//)
-//{
-//	Flash_Init
-//	(
-//		&p_motor->MotorFlash,
-//		p_hal_flash,
-//		MotorFlash_OnBlock,
-//		p_motor
-//	);
-//}
-
-// void MotorFlash_InitParition //per motor
-//(
-//	Motor_T * p_motorDest,
-//	const Flash_Partition_T * p_flashParition
-//)
-//{
-////	p_motor->p_MotorFlashParition = p_flashParition;
-//}
-
+#endif

@@ -48,6 +48,9 @@
 //	typedef uint16_t adc_t;
 //#endif
 
+/*
+ * Activate Adc outside module
+ */
 typedef const struct
 {
 	const uint16_t * const P_THROTTLE_ADCU;
@@ -59,6 +62,15 @@ MotAnalogUser_Config_T;
 
 typedef struct
 {
+	//.HAL_PIN_METER 	= {.P_GPIO_BASE = MTR_OUT_PORT,		.GPIO_PIN_MASK = (uint32_t)1U << MTR_OUT_PIN,	},
+	//.HAL_PIN_COIL	 	= {.P_GPIO_BASE = COIL_OUT_PORT,	.GPIO_PIN_MASK = (uint32_t)1U << COIL_OUT_PIN,	},
+	//.HAL_PIN_AUX1	 	= {.P_GPIO_BASE = ECO_IN_PORT,		.GPIO_PIN_MASK = (uint32_t)1U << ECO_IN_PIN,	},
+
+//	const Pin_T PIN_METER;
+//	const Pin_T PIN_COIL;
+//	const Pin_T PIN_DIN; //configurable input
+	Debounce_T PinDIn; //configurable input
+
 	MotAnalogUser_Config_T  CONFIG;
 
 	Linear_T UnitThrottle;
@@ -72,6 +84,9 @@ typedef struct
 	bool InputSwitchNeutral;
 	bool IsThrottleRelease;
 
+	bool InputSwitchDIn;
+
+	//converted to frac16
 	uint16_t InputValueThrottle;
 	uint16_t InputValueThrottlePrev;
 	uint16_t InputValueBrake;
@@ -97,6 +112,9 @@ MotAnalogUser_T;
 	.PinForward 	= DEBOUNCE_CONFIG(p_Forward_PinHal, 	Forward_PinId, 		p_Millis),  	\
 	.PinReverse 	= DEBOUNCE_CONFIG(p_Reverse_PinHal, 	Reverse_PinId, 		p_Millis),  	\
 }
+
+static inline uint16_t MotAnalogUser_GetThrottleValue(MotAnalogUser_T * p_motorUser)	{return p_motorUser->InputValueThrottle;}
+static inline bool MotAnalogUser_GetThrottleSwitch(MotAnalogUser_T * p_motorUser) 		{return p_motorUser->InputSwitchThrottle;}
 
 extern void MotAnalogUser_Init(MotAnalogUser_T * p_motorUser );
 extern void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_motorUser);

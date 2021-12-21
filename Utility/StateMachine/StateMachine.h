@@ -129,4 +129,16 @@ StateMachine_T;
 	}														\
 }
 
+
+extern void StateMachine_Init(StateMachine_T * p_stateMachine);
+extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
+extern void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine);
+extern void StateMachine_Synchronous_SetTransition(StateMachine_T * p_stateMachine, uint8_t input);
+extern void StateMachine_Synchronous_SetOutput(StateMachine_T * p_stateMachine, uint8_t input);
+extern void StateMachine_Asynchronous_ProcTransition(StateMachine_T * p_stateMachine, uint8_t input);
+extern void StateMachine_Asynchronous_ProcOutput(StateMachine_T * p_stateMachine, uint8_t input);
+extern void StateMachine_Semisynchronous_ProcState(StateMachine_T * p_stateMachine);
+extern void StateMachine_Semisynchronous_ProcTransition(StateMachine_T * p_stateMachine, uint8_t input);
+extern void StateMachine_Semisynchronous_ProcOutput(StateMachine_T * p_stateMachine, uint8_t input);
+
 #endif

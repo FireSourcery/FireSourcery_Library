@@ -131,7 +131,7 @@ static inline int32_t MaxLeftShiftDivide(int32_t factor, int32_t divisor, uint8_
  *
  * option 2. full/partial y = m*(x-x0) implementation. reuse procedure of inv functions, + supplement inv frac16 functions
  *
- * option 3. equations include 2 offsets. y = m*(x-x0) + y0
+ * todo option 3. equations include 2 offsets. y = m*(x-x0) + y0
  */
 void Linear_Init_X0(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset_x0, int32_t rangeRef)
 {

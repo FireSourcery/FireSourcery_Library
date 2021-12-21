@@ -37,13 +37,15 @@
 #include "Transducer/Hall/Hall.h"
 #include "Transducer/BEMF/BEMF.h"
 
-//#include "Transducer/Encoder/Encoder_Motor.h"
+#include "Transducer/Encoder/Encoder_Motor.h"
 //#include "Transducer/Encoder/Encoder_DeltaT.h"
 //#include "Transducer/Encoder/Encoder_DeltaD.h"
 //#include "Transducer/Encoder/Encoder.h"
 
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/Timer/Timer.h"
+
+#include "Math/FOC.h"
 
 #include "Math/Linear/Linear_ADC.h"
 #include "Math/Linear/Linear_Voltage.h"
@@ -71,6 +73,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	 * HW Wrappers Init
 	 */
 	Phase_Init(&p_motor->Phase);
+	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
 
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
 	{
@@ -86,19 +89,19 @@ void Motor_InitReboot(Motor_T * p_motor)
 		Encoder_Motor_InitCaptureCount(&p_motor->Encoder, p_motor->Parameters.EncoderCountsPerRevolution, p_motor->Parameters.EncoderDistancePerCount, p_motor->Parameters.PolePairs);
 		Encoder_SetQuadratureMode(&p_motor->Encoder, p_motor->Parameters.EncoderIsQuadratureModeEnabled);
 		Encoder_SetQuadratureDirectionCalibration(&p_motor->Encoder, p_motor->Parameters.EncoderIsALeadBPositive);
+		FOC_Init(&p_motor->Foc);
 	}
 	else
 	{
-		//FOC open loop
+		//FOC sensorless
 	}
 
 	/*
 	 * SW Structs
 	 */
 	BEMF_Init(&p_motor->Bemf);
-	p_motor->p_BemfConversionActive = &p_motor->CONFIG.CONVERSION_BEMF_A;
+//	p_motor->p_BemfConversionActive = &p_motor->CONFIG.CONVERSION_BEMF_A;
 
-//	FOC_Init(&p_motor->Foc);
 
 	/*
 	 * Timer only mode, no function attached
@@ -110,7 +113,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	/*
 	 * Initial runtime config settings
 	 */
-	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
+
 
 	/*
 	 * Run calibration later, default zero to middle adc
@@ -226,6 +229,8 @@ bool Motor_CalibrateAdc(Motor_T *p_motor)
 		Linear_ADC_Init(&p_motor->UnitIb, p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_IB], 4095U, p_motor->Parameters.Imax_Amp);
 		Linear_ADC_Init(&p_motor->UnitIc, p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_IC], 4095U, p_motor->Parameters.Imax_Amp);
 //		Linear_ADC_Init(&p_motor->UnitIc, Filter_MovAvg_GetResult(&p_motor->FilterIc), 4095U, p_motor->Parameters.Imax_Amp);
+
+		Phase_Float(&p_motor->Phase);
 		isComplete = true;
 	}
 	else

@@ -22,16 +22,19 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.h
+    @file 	 .c
     @author FireSoucery
-    @brief
+    @brief  Motor Analog Conversion. Common Virtual component only.
     @version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_PHASE_H
-#define CONFIG_PHASE_H
 
-//#define CONFIG_PHASE_DUTY_MAX (65536U)
+//#include "Motor.h"
+//#include "Motor_SixStep.h"
+//#include "Motor_FOC.h"
+//#include "Peripheral/Analog/AnalogN/AnalogN.h"
+//
+//#include <stdint.h>
+//#include <stdbool.h>
 
-#endif
 

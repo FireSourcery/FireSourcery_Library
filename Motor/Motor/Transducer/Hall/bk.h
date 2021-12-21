@@ -12,7 +12,7 @@ extern bool Hall_CalibrateSensorsTable
 //bool Hall_CalibrateSensorsTable
 //(
 //	Hall_T * p_hall,
-//	void (*activatePhaseABC)(void * p_context, uint16_t pwmA, uint16_t pwmB, uint16_t pwmC),
+//	void (*activateDutyABC)(void * p_context, uint16_t pwmA, uint16_t pwmB, uint16_t pwmC),
 //	void * p_context
 //)
 //{
@@ -23,12 +23,12 @@ extern bool Hall_CalibrateSensorsTable
 //	//offset states for wait
 //	switch (state)
 //	{
-//	case 0U: activatePhaseABC(p_context, pwm, 0, 0); 	Hall_CalibratePhaseA(p_hall);		state++; 	break;
-//	case 1U: activatePhaseABC(p_context, pwm, pwm, 0); 	Hall_CalibratePhaseInvC(p_hall);	state++; 	break;
-//	case 2U: activatePhaseABC(p_context, 0, pwm, 0);	Hall_CalibratePhaseB(p_hall);		state++;	break;
-//	case 3U: activatePhaseABC(p_context, 0, pwm, pwm);	Hall_CalibratePhaseInvA(p_hall);	state++;	break;
-//	case 4U: activatePhaseABC(p_context, 0, 0, pwm);	Hall_CalibratePhaseC(p_hall);		state++; 	break;
-//	case 5U: activatePhaseABC(p_context, pwm, 0, pwm);	Hall_CalibratePhaseInvB(p_hall);	state = 0U;	isComplete = true; break;
+//	case 0U: activateDutyABC(p_context, pwm, 0, 0); 	Hall_CalibratePhaseA(p_hall);		state++; 	break;
+//	case 1U: activateDutyABC(p_context, pwm, pwm, 0); 	Hall_CalibratePhaseInvC(p_hall);	state++; 	break;
+//	case 2U: activateDutyABC(p_context, 0, pwm, 0);	Hall_CalibratePhaseB(p_hall);		state++;	break;
+//	case 3U: activateDutyABC(p_context, 0, pwm, pwm);	Hall_CalibratePhaseInvA(p_hall);	state++;	break;
+//	case 4U: activateDutyABC(p_context, 0, 0, pwm);	Hall_CalibratePhaseC(p_hall);		state++; 	break;
+//	case 5U: activateDutyABC(p_context, pwm, 0, pwm);	Hall_CalibratePhaseInvB(p_hall);	state = 0U;	isComplete = true; break;
 //	default: break;
 //	}
 //

@@ -24,9 +24,7 @@
 /*!
     @file 	BEMF.h
     @author FireSoucery
-    @brief 	Bemf monitor and reporting algorithms
-
-	Implement sensorless 6-step, 2-phase active, algorithm.
+    @brief 	Zcd
 
     @version V0
 */
@@ -51,7 +49,7 @@ typedef enum
 {
 	BEMF_SAMPLE_MODE_PWM_ON,
 	BEMF_SAMPLE_MODE_PWM_OFF,
-	BEMF_SAMPLE_MODE_PWM_MIXED,
+	BEMF_SAMPLE_MODE_PWM_ON_OFF,
 	BEMF_SAMPLE_MODE_PWM_BIPOLAR,
 	BEMF_SAMPLE_MODE_INTEGRAL,
 }
@@ -96,9 +94,9 @@ typedef struct
 	volatile const bemf_t * const P_VPHASEC_ADCU;
 	volatile const bemf_t * const P_VPOS_ADCU;
 
-	const AnalogN_Conversion_T CONVERSION_PHASE_A;
-	const AnalogN_Conversion_T CONVERSION_PHASE_B;
-	const AnalogN_Conversion_T CONVERSION_PHASE_C;
+//	const AnalogN_Conversion_T CONVERSION_PHASE_A;
+//	const AnalogN_Conversion_T CONVERSION_PHASE_B;
+//	const AnalogN_Conversion_T CONVERSION_PHASE_C;
 	AnalogN_T * const P_ANALOG_N;
 }
 BEMF_Config_T;
@@ -170,8 +168,9 @@ extern volatile uint16_t BemfDebugIndex;
 
 /*
  * Call on Commutation
+ * Capture Reference
  */
-static inline void BEMF_StartPhase(BEMF_T * p_bemf)
+static inline void BEMF_StartPhaseReference(BEMF_T * p_bemf)
 {
 	//sw timer version
 //	*p_bemf->CONFIG.P_TIMER = 0U; //if writable timer, overflow precaution
@@ -209,7 +208,7 @@ static inline void BEMF_StartPhase(BEMF_T * p_bemf)
 }
 
 //check estimated time from Zcd
-static inline bool BEMF_PollPhasePeriod(BEMF_T * p_bemf)
+static inline bool BEMF_CheckPhasePeriod(BEMF_T * p_bemf)
 {
 	return (*p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero > p_bemf->TimePhasePeriod);
 }
@@ -220,50 +219,31 @@ static inline void BEMF_CapturePhasePeriod(BEMF_T * p_bemf)
 	p_bemf->TimePhasePeriod = *p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero;
 }
 
-
-//static inline bool BEMF_PollPhase(BEMF_T * p_bemf)
-//{
-//	bool isBoundary;
-//
-//	if (BEMF_PollPhasePeriod(p_bemf))
-//	{
-//		BEMF_StartPhase(p_bemf);
-//		isBoundary = true;
-//	}
-//	else
-//	{
-//		isBoundary = false;
-//	}
-//
-//	return isBoundary;
-//}
-
 /*
  * On every Pwm Period
  */
-static inline bool CheckBemfBlankTime(BEMF_T * p_bemf)
+static inline bool BEMF_CheckBlankTime(BEMF_T * p_bemf)
 {
 	uint32_t timeNew 	= *p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero;
 	return ((timeNew > p_bemf->TimeBlankPeriod) || (p_bemf->Mode == BEMF_MODE_PASSIVE));
 }
 
-static inline void BEMF_ObservePhase(BEMF_T * p_bemf)
-{
-	if(CheckBemfBlankTime(p_bemf) == true)
-	{
-		AnalogN_EnqueueFrontConversion(p_bemf->CONFIG.P_ANALOG_N, p_bemf->p_ConversionPhase);
-	}
-}
-
+//static inline void BEMF_ObservePhase(BEMF_T * p_bemf)
+//{
+//	if(BEMF_CheckBlankTime(p_bemf) == true)
+//	{
+//		AnalogN_EnqueueFrontConversion(p_bemf->CONFIG.P_ANALOG_N, p_bemf->p_ConversionPhase);
+//	}
+//}
 
 
 /*
 	Set from outside, once per commutation
  */
 
-static inline void BEMF_MapPhaseA(BEMF_T * p_bemf){	p_bemf->p_ConversionPhase = &p_bemf->CONFIG.CONVERSION_PHASE_A;}
-static inline void BEMF_MapPhaseB(BEMF_T * p_bemf){	p_bemf->p_ConversionPhase = &p_bemf->CONFIG.CONVERSION_PHASE_B;}
-static inline void BEMF_MapPhaseC(BEMF_T * p_bemf){	p_bemf->p_ConversionPhase = &p_bemf->CONFIG.CONVERSION_PHASE_C;}
+static inline void BEMF_MapPhaseA(BEMF_T * p_bemf){	}//p_bemf->p_ConversionPhase = &p_bemf->CONFIG.CONVERSION_PHASE_A;}
+static inline void BEMF_MapPhaseB(BEMF_T * p_bemf){	}//p_bemf->p_ConversionPhase = &p_bemf->CONFIG.CONVERSION_PHASE_B;}
+static inline void BEMF_MapPhaseC(BEMF_T * p_bemf){	}//p_bemf->p_ConversionPhase = &p_bemf->CONFIG.CONVERSION_PHASE_C;}
 //replace with direction
 //static inline void BEMF_MapBemfRising(BEMF_T * p_bemf){p_bemf->IsBemfRising = true;}
 //static inline void BEMF_MapBemfFalling(BEMF_T * p_bemf){p_bemf->IsBemfRising = false;}
@@ -283,20 +263,20 @@ static inline void BEMF_MapCcwPhaseCB(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf); p
 static inline void BEMF_MapCcwPhaseAB(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p_bemf->IsBemfRising = false;}
 
 /* Matched to motor Id */
-typedef enum
-{
-	BEMF_PHASE_AC = 1U, /* CCW Map B Rising */
-	BEMF_PHASE_BC = 2U,
-	BEMF_PHASE_BA = 3U,
-	BEMF_PHASE_CA = 4U,
-	BEMF_PHASE_CB = 5U,
-	BEMF_PHASE_AB = 6U,
+//typedef enum
+//{
+//	BEMF_PHASE_AC = 1U, /* CCW Map B Rising */
+//	BEMF_PHASE_BC = 2U,
+//	BEMF_PHASE_BA = 3U,
+//	BEMF_PHASE_CA = 4U,
+//	BEMF_PHASE_CB = 5U,
+//	BEMF_PHASE_AB = 6U,
+//
+//	BEMF_CCW_B_RISING = BEMF_PHASE_AC,
+//} BEMF_Phase_T;
 
-	BEMF_CCW_B_RISING = BEMF_PHASE_AC,
-} BEMF_Phase_T;
-
-static inline void Bemf_MapVPhase(BEMF_T * p_bemf, BEMF_Phase_T phase)
-{
+//static inline void Bemf_MapVPhase(BEMF_T * p_bemf, BEMF_Phase_T phase)
+//{
 
 // 	switch (phase)
 //	{
@@ -359,7 +339,7 @@ static inline void Bemf_MapVPhase(BEMF_T * p_bemf, BEMF_Phase_T phase)
 //	{
 //		p_motor->NextSector = (p_motor->CommutationSector - 1U) % 6U;
 //		p_motor->Bemf.IsBemfRising = !p_motor->Bev
-}
+//}
 
 /*
 	ZCD Bemf Capture
@@ -372,7 +352,7 @@ static inline void Bemf_MapVPhase(BEMF_T * p_bemf, BEMF_Phase_T phase)
 	BEMF_SAMPLE_MODE_PWM_OFF -> Must subtract noise or use threshold. no 3/2 factor in this case
 
  */
-static inline void CaptureEmf(BEMF_T * p_bemf, uint32_t vPhaseObserve)
+static inline void Bemf_CaptureVPhase(BEMF_T * p_bemf, uint32_t vPhaseObserve)
 {
 	//TimeEmf Delta should be 50us when using 20khz pwm
 	p_bemf->TimeVPhasePrev 	= p_bemf->TimeVPhase;
@@ -390,11 +370,11 @@ static inline void CaptureEmf(BEMF_T * p_bemf, uint32_t vPhaseObserve)
 
 
 //at begin of every pwm, if not using analog capture peak
-static inline void BEMF_ResetCaptureVPhase(BEMF_T * p_bemf)
-{
-	p_bemf->VPhasePrev_ADCU = 0;
-	p_bemf->VPhase_ADCU = 0;
-}
+//static inline void BEMF_ResetCaptureVPhase(BEMF_T * p_bemf)
+//{
+//	p_bemf->VPhasePrev_ADCU = 0;
+//	p_bemf->VPhase_ADCU = 0;
+//}
 
 
 
@@ -489,7 +469,7 @@ static inline bool BEMF_PollZeroCrossingDetection(BEMF_T * p_bemf)
 
 //			if( p_bemf->ZeroCrossingCounter > 10U)
 //			{
-			//stop here to compate hall captured vs bemf cample difference
+			//stop here to compare hall captured vs bemf cample difference
 				p_bemf->TimePhasePeriod = p_bemf->TimeZeroCrossingPeriod - p_bemf->PhaseAdvanceTime;
 //			}
 
@@ -513,7 +493,7 @@ static inline uint32_t BEMF_GetZeroCrossingCounter(BEMF_T * p_bemf)
 static inline uint16_t BEMF_GetTimePhasePeriod(BEMF_T * p_bemf){return p_bemf->TimePhasePeriod;}
 
 /*
-
+	adcu
  */
 static inline int16_t ConvertVPhaseToVBemf(BEMF_T * p_bemf, uint32_t emf)
 {

@@ -33,9 +33,12 @@
 
 #include "Config.h"
 
-//#include "Motor/Utility/MotShell/MotShell.h"
-//#include "Motor/Utility/MotProtocol/MotProtocol.h"
 #include "Motor/Utility/MotAnalogUser/MotAnalogUser.h"
+#include "Motor/Utility/MotAnalogMonitor/MotAnalogMonitor.h"
+//#include "Motor/Utility/MotProtocol/MotProtocol.h"
+//#include "Motor/Utility/MotShell/MotShell.h"
+#include "Motor/Utility/MotMemMap/MotMemMap.h"
+
 
 #include "Motor/Motor/Motor.h"
 
@@ -80,10 +83,6 @@ MotorController_Parameters_T;
 typedef const struct
 {
 
-//	const Pin_T PIN_METER;
-//	const Pin_T PIN_COIL;
-//	const Pin_T PIN_DIN; //configurable input
-
 	const MotorController_Parameters_T * const P_PARAMETERS;
 
 	Motor_T * const P_MOTORS;
@@ -112,9 +111,10 @@ typedef struct
 	MotorController_Parameters_T Parameters; //ram copy
 
 	MotAnalogUser_T AnalogUser;
+	MotAnalogMonitor_T AnalogMonitor;
 
-	//	Flash_T Flash;
-	//	EEPROM_T Eeprom;
+	Flash_T Flash;
+	EEPROM_T Eeprom;
 	Blinky_T Buzzer;
 
 	Thermistor_T ThermistorPcb;
@@ -145,7 +145,7 @@ typedef struct
 //	MotorController_InputMode_T InputMode;
 //	Shell_T MotShell;
 
- 	//allcoate outside
+ 	//Allocate outside
 //	Motor_T Motors[CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT];
 //	Serial_T Serials[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT]; //simultaneous active serial
 //	Protocol_T	 AuxProtocols[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT]; 	//Simultaneously active protocols
@@ -164,6 +164,9 @@ MotorController_T;
 //			Motor_SetRampDecelerate(p_motor, 0);
 //	}
 //}
+
+static inline Motor_T * MotorController_GetPtrMotor(MotorController_T * p_motorController, uint8_t motorIndex) {return &(p_motorController->CONFIG.P_MOTORS[motorIndex]);}
+
 
 extern void MotorController_Init(MotorController_T * p_controller);
 

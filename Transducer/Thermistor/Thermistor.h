@@ -69,7 +69,7 @@ typedef struct
 	uint32_t TNominal;
 	uint16_t BConstant;
 
-	uint32_t DegreesC;
+	uint32_t DegreesC; //results
 }
 Thermistor_T;
 

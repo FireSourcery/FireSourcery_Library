@@ -38,31 +38,65 @@
 
 
 
- volatile uint16_t BemfDebug[300];
- volatile uint16_t BemfDebugIndex = 0;
+volatile uint16_t BemfDebug[300];
+volatile uint16_t BemfDebugIndex = 0;
+
+//typedef enum
+//{
+//	BEMF_ANALOG_CHANNEL_VA,
+//	BEMF_ANALOG_CHANNEL_VB,
+//	BEMF_ANALOG_CHANNEL_VC,
+//} BemfAnalog_VirtualChannel_T;
+//
+////typedef const struct
+////{
+////	volatile analog_adcdata_t Va_ADCU;
+////	volatile analog_adcdata_t Vb_ADCU;
+////	volatile analog_adcdata_t Vc_ADCU;
+////}
+////MotorAnalog_AdcResultBuffer_T;
+//
+///*
+//	call on adc
+//	capture bemf with time stamp
+//	capture bemf sample only at end of adc
+//	proc zcd next pwm
+//*/
+//static inline void CaptureVPhaseA(BEMF_T * p_bemf)
+//{
+////	CaptureEmf(p_bemf,  &p_bemf->AnalogResults[BEMF_ANALOG_CHANNEL_VA]);
+//}
+//
+//static inline void CaptureVPhaseB(BEMF_T * p_bemf)
+//{
+////	CaptureEmf(p_bemf,  &p_bemf->AnalogResults[BEMF_ANALOG_CHANNEL_VB]);
+//}
+//
+//static inline void CaptureVPhaseC(BEMF_T * p_bemf)
+//{
+////	CaptureEmf(p_bemf,  &p_bemf->AnalogResults[BEMF_ANALOG_CHANNEL_VC]);
+//}
 
 
- /*
- call on adc
- capture bemf with time stamp
-  capture bemf sample only at end of adc
- proc zcd next pwm
-  */
-static inline void CaptureVPhaseA(BEMF_T * p_bemf)
-{
-//	CaptureEmf(p_bemf,  &p_bemf->AnalogResults[BEMF_ANALOG_CHANNEL_VA]);
-}
 
-static inline void CaptureVPhaseB(BEMF_T * p_bemf)
-{
-//	CaptureEmf(p_bemf,  &p_bemf->AnalogResults[BEMF_ANALOG_CHANNEL_VB]);
-}
+/******************************************************************************/
+/*!
+    @brief  Conversion
+*/
+/******************************************************************************/
 
-static inline void CaptureVPhaseC(BEMF_T * p_bemf)
-{
-//	CaptureEmf(p_bemf,  &p_bemf->AnalogResults[BEMF_ANALOG_CHANNEL_VC]);
-}
-
+//static const Analog_ConversionVirtualChannel_T VIRTUAL_CHANNEL_A[] =
+//{
+//	[0U] = {BEMF_ANALOG_CHANNEL_VA, 	(Analog_OnComplete_T)&CaptureVPhaseA},
+//};
+//
+//const Analog_ConversionVirtual_T BEMF_ANALOG_CONVERSION_VIRTUAL_CHANNEL_A =
+//{
+//	.P_CHANNELS 	= CHANNELS_BEMF_A,
+//	.CHANNEL_COUNT 	= sizeof(CHANNELS_BEMF_A)/sizeof(Analog_ConversionVirtualChannel_T),
+//	.ON_COMPLETE 	= 0U,
+//	.OPTIONS =		{ .HwTriggerConversion = 0U, .ContinuousConversion = 1U, .CaptureLocalPeak = 1U },
+//};
 
 //static const Analog_ConversionVirtualChannel_T CHANNELS_BEMF_A_REPEAT[] =
 //{

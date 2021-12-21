@@ -22,16 +22,17 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.h
+    @file 	MotorController_User.h
     @author FireSoucery
-    @brief
+    @brief	User accessor functions, error checking applied
     @version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_PHASE_H
-#define CONFIG_PHASE_H
+#include "MotorController.h"
+#include "Config.h"
 
-//#define CONFIG_PHASE_DUTY_MAX (65536U)
+#include "Motor/Motor/Motor.h"
 
-#endif
+#include <stdint.h>
+
 

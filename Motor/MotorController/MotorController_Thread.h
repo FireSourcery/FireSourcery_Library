@@ -78,10 +78,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 //		}
 
 //		Protocol_Slave_Proc(&p_controller->MotProtocol);
-//		MotProtocol_Motor_WriteInput(&p_controller->MotProtocolInput,  &p_controller->Motors, CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT);  //copy UI input to motor
-//		MotProtocol_Acc_WriteInput(&p_motorController->Interface.Input,  &p_motorController->Motors[iMotor]);  //copy UI input to peripherals
-//		MotProtocol_Motor_ReadOutput(&p_controller->MotProtocolOutput, &p_controller->Motors, CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT);	//copy motor output to UI
-
 
 //		MotorInterface_Input_ProcWriteToMotor(&p_motorController->Interface.Input,  &p_motorController->Motors[iMotor]);  //copy UI input to motor
 //		MotorInterface_Output_ProcReadFromMotor(&p_motorController->Interface.Output, &p_motorController->Motors[iMotor]);	//copy motor output to UI
@@ -92,6 +88,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 	if (Timer_Poll(&p_controller->TimerMillis10) == true) 	//Low Freq, Low Priority 10 ms, Main
 	{
 //		Shell_Proc(&p_controller->MotShell);
+		Blinky_Proc(&p_controller->Buzzer);
 	}
 
 	if (Timer_Poll(&p_controller->TimerSeconds) == true)
@@ -102,8 +99,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 //		{
 //			Serial_PollRestartRxIsr(&p_motorController->Serials[iSerial]);
 //		}
-
-		Blinky_Proc(&p_controller->Buzzer);
 	}
 
 
@@ -114,10 +109,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 	{
 		Motor_Main_Thread(&p_controller->CONFIG.P_MOTORS[iMotor]);
 	}
-
-	//	HAL_Motor_EnqueueConversionUser();
-	//HAL_MotoAnalogr_EnqueueConversionUser();
-	//HAL_MotoAnalogr_EnqueueConversionMonitor();
 
 }
 

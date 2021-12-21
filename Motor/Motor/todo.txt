@@ -1,0 +1,5 @@
+bemf analog sample
+foc
+ets
+foc current feedback
+control var/pid

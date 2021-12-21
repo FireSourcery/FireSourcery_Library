@@ -238,6 +238,6 @@ void StateMachine_Semisynchronous_ProcOutput(StateMachine_T * p_stateMachine, ui
 {
 	if (input < p_stateMachine->CONFIG.P_MACHINE->OUTPUT_TABLE_LENGTH)
 	{
-		ProcOuputInput(p_stateMachine, input);
+		ProcOutputInput(p_stateMachine, input);
 	}
 }

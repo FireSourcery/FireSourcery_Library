@@ -45,7 +45,7 @@ void Hall_Init(Hall_T * p_hall)
 	Pin_Input_Init(&p_hall->CONFIG.PIN_B);
 	Pin_Input_Init(&p_hall->CONFIG.PIN_C);
 	p_hall->Direction = HALL_DIRECTION_CCW;
-	p_hall->SensorsRef = 0U;
+	p_hall->SensorsRef.State = 0U;
 
 //	if (p_hall->CONFIG.P_SENSOR_TABLE != 0U)
 //	{

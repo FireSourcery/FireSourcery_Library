@@ -54,7 +54,10 @@
  */
 static void EepromStartCmdWrite(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units)
 {
-	HAL_EEPROM_StartCmdWriteUnit(p_hal, p_cmdDest, p_cmdData);
+	if(*(uint32_t*)p_cmdDest != (*(uint32_t*)p_cmdData))
+	{
+		HAL_EEPROM_StartCmdWriteUnit(p_hal, p_cmdDest, p_cmdData);
+	}
 }
 
 static inline NvMemory_Status_T EepromFinalizeWrite(EEPROM_T * p_eeprom)

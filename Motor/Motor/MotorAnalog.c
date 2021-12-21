@@ -22,13 +22,12 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	MotorStateMachine.c
+    @file 	MotorAnalog.c
     @author FireSoucery
     @brief  Motor Analog Conversion. Common Virtual component only.
     @version V0
 */
 /******************************************************************************/
-
 #include "MotorAnalog.h"
 #include "Motor.h"
 #include "Motor_SixStep.h"
@@ -56,7 +55,7 @@ static const Analog_ConversionVirtualChannel_T CHANNELS_BEMF_A[] =
 {
 	[0U] = {MOTOR_ANALOG_CHANNEL_VPOS,	0U},
 	[1U] = {MOTOR_ANALOG_CHANNEL_IB, 	(Analog_OnComplete_T)&Motor_CaptureIBusIb},			//capture as bus current
-//	[2U] = {MOTOR_ANALOG_CHANNEL_VA, 	(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfA},	//capture as emf for zcd
+	[2U] = {MOTOR_ANALOG_CHANNEL_VA, 	(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfA},	//capture as emf for zcd
 //	[3] = {MOTOR_ANALOG_CHANNEL_IC,
 //	[4] = {MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS,
 };
@@ -69,18 +68,18 @@ const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_A =
 	.OPTIONS =		{.HwTriggerConversion = 1U },
 };
 
-static const Analog_ConversionVirtualChannel_T CHANNELS_BEMF_A_REPEAT[] =
-{
-	[0U] = {MOTOR_ANALOG_CHANNEL_VA, 	(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfA},
-};
-
-const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_A_REPEAT =
-{
-	.P_CHANNELS 	= CHANNELS_BEMF_A_REPEAT,
-	.CHANNEL_COUNT 	= sizeof(CHANNELS_BEMF_A_REPEAT)/sizeof(Analog_ConversionVirtualChannel_T),
-	.ON_COMPLETE 	= 0U,
-	.OPTIONS =		{.HwTriggerConversion = 0U, .ContinuousConversion = 1U, .CaptureLocalPeak = 1U },
-};
+//static const Analog_ConversionVirtualChannel_T CHANNELS_BEMF_A_REPEAT[] =
+//{
+//	[0U] = {MOTOR_ANALOG_CHANNEL_VA, 	(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfA},
+//};
+//
+//const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_A_REPEAT =
+//{
+//	.P_CHANNELS 	= CHANNELS_BEMF_A_REPEAT,
+//	.CHANNEL_COUNT 	= sizeof(CHANNELS_BEMF_A_REPEAT)/sizeof(Analog_ConversionVirtualChannel_T),
+//	.ON_COMPLETE 	= 0U,
+//	.OPTIONS =		{.HwTriggerConversion = 0U, .ContinuousConversion = 1U, .CaptureLocalPeak = 1U },
+//};
 
 /******************************************************************************/
 /*!
@@ -176,7 +175,7 @@ static const Analog_ConversionVirtualChannel_T CHANNELS_IABC[] =
 	[2U] = {MOTOR_ANALOG_CHANNEL_IC, (Analog_OnComplete_T)&Motor_FOC_CaptureIc},
 };
 
-const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_IABC = //MOTOR_ANALOG_VIRTUAL_IABC
+const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_IABC =
 {
 	.P_CHANNELS = CHANNELS_IABC,
 	.CHANNEL_COUNT = sizeof(CHANNELS_IABC) / sizeof(Analog_ConversionVirtualChannel_T),
@@ -187,6 +186,14 @@ const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_IABC = //MOTOR_ANALOG_VIRT
 //{
 //	AnalogN_LoadConversion(p_motor->CONFIG.P_ANALOG , &CONVERSION_IABC, p_motor->CONFIG.P_ANALOG_MAP);
 //}
+
+const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_IABC_OBSERVE =
+{
+	.P_CHANNELS = CHANNELS_IABC,
+	.CHANNEL_COUNT = sizeof(CHANNELS_IABC) / sizeof(Analog_ConversionVirtualChannel_T),
+	.ON_COMPLETE = 0U,
+};
+
 
 /******************************************************************************/
 /*!

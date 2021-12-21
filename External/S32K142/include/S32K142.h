@@ -1,16 +1,15 @@
 /*
 ** ###################################################################
 **     Processor:           S32K142
-**     Reference manual:    S32K1XXRM Rev. 12.1, 02/2020
-**     Version:             rev. 4.3, 2020-05-14
-**     Build:               b200514
+**     Reference manual:    S32K1XX RM Rev.13
+**     Version:             rev. 4.4, 2021-04-26
+**     Build:               b210426
 **
 **     Abstract:
 **         Peripheral Access Layer for S32K142
 **
-**     Copyright (c) 1997 - 2016 Freescale Semiconductor, Inc.
-**     Copyright 2016-2020 NXP
-**     All rights reserved.
+**     Copyright 1997-2016 Freescale Semiconductor, Inc.
+**     Copyright 2016-2021 NXP
 **
 **     NXP Confidential. This software is owned or controlled by NXP and may only be
 **     used strictly in accordance with the applicable license terms. By expressly
@@ -48,14 +47,20 @@
 **         Updated the header based on S32K1XXRM Rev. 9, 09/2018.
 **     - rev. 4.3 (2020-05-14) - Van Nguyen Nam
 **         Updated the header based on S32K1XXRM Rev. 12.1, 02/2020.
+**     - rev. 4.4 (2021-04-26) - Minh Quan Trinh
+**         Updated the header based on S32K1XXRM Rev. 13, 04/2020.
+**         Modified AIPS Register Layout
+**         Modified LPI2C_MTDR, LPI2C_STDR and LPIT_CLRTEN registers to Write-Only
+**         Modified SIM_FCFG1 registers to Read-Only
+**         Added RCM_PARAM_ECMU_LOC bit field
 **
 ** ###################################################################
 */
 
 /*!
  * @file S32K142.h
- * @version 4.3
- * @date 2020-05-14
+ * @version 4.4
+ * @date 2021-04-26
  * @brief Peripheral Access Layer for S32K142
  *
  * This file contains register definitions and macros for easy access to their
@@ -121,7 +126,7 @@
  * compatible) */
 #define MCU_MEM_MAP_VERSION 0x0400u
 /** Memory map minor version */
-#define MCU_MEM_MAP_VERSION_MINOR 0x0002u
+#define MCU_MEM_MAP_VERSION_MINOR 0x0004u
 
 /* ----------------------------------------------------------------------------
    -- Generic macros
@@ -635,9 +640,12 @@ typedef struct {
 /** AIPS - Register Layout Typedef */
 typedef struct {
   __IO uint32_t MPRA;                              /**< Master Privilege Register A, offset: 0x0 */
-       uint8_t RESERVED_0[28];
-  __IO uint32_t PACR[AIPS_PACR_COUNT];             /**< Peripheral Access Control Register, array offset: 0x20, array step: 0x4 */
-       uint8_t RESERVED_1[16];
+  uint8_t RESERVED_0[28];
+  __IO uint32_t PACRA;                             /**< Peripheral Access Control Register, offset: 0x20 */
+  __IO uint32_t PACRB;                             /**< Peripheral Access Control Register, offset: 0x24 */
+  uint8_t RESERVED_1[4];
+  __IO uint32_t PACRD;                             /**< Peripheral Access Control Register, offset: 0x2C */
+  uint8_t RESERVED_2[16];
   __IO uint32_t OPACR[AIPS_OPACR_COUNT];           /**< Off-Platform Peripheral Access Control Register, array offset: 0x40, array step: 0x4 */
 } AIPS_Type, *AIPS_MemMapPtr;
 
@@ -664,177 +672,295 @@ typedef struct {
  * @{
  */
 
-/* MPRA Bit Fields */
-#define AIPS_MPRA_MPL2_MASK                      0x100000u
-#define AIPS_MPRA_MPL2_SHIFT                     20u
-#define AIPS_MPRA_MPL2_WIDTH                     1u
-#define AIPS_MPRA_MPL2(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_MPRA_MPL2_SHIFT))&AIPS_MPRA_MPL2_MASK)
-#define AIPS_MPRA_MTW2_MASK                      0x200000u
-#define AIPS_MPRA_MTW2_SHIFT                     21u
-#define AIPS_MPRA_MTW2_WIDTH                     1u
-#define AIPS_MPRA_MTW2(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_MPRA_MTW2_SHIFT))&AIPS_MPRA_MTW2_MASK)
-#define AIPS_MPRA_MTR2_MASK                      0x400000u
-#define AIPS_MPRA_MTR2_SHIFT                     22u
-#define AIPS_MPRA_MTR2_WIDTH                     1u
-#define AIPS_MPRA_MTR2(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_MPRA_MTR2_SHIFT))&AIPS_MPRA_MTR2_MASK)
-#define AIPS_MPRA_MPL1_MASK                      0x1000000u
-#define AIPS_MPRA_MPL1_SHIFT                     24u
-#define AIPS_MPRA_MPL1_WIDTH                     1u
-#define AIPS_MPRA_MPL1(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_MPRA_MPL1_SHIFT))&AIPS_MPRA_MPL1_MASK)
-#define AIPS_MPRA_MTW1_MASK                      0x2000000u
-#define AIPS_MPRA_MTW1_SHIFT                     25u
-#define AIPS_MPRA_MTW1_WIDTH                     1u
-#define AIPS_MPRA_MTW1(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_MPRA_MTW1_SHIFT))&AIPS_MPRA_MTW1_MASK)
-#define AIPS_MPRA_MTR1_MASK                      0x4000000u
-#define AIPS_MPRA_MTR1_SHIFT                     26u
-#define AIPS_MPRA_MTR1_WIDTH                     1u
-#define AIPS_MPRA_MTR1(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_MPRA_MTR1_SHIFT))&AIPS_MPRA_MTR1_MASK)
-#define AIPS_MPRA_MPL0_MASK                      0x10000000u
-#define AIPS_MPRA_MPL0_SHIFT                     28u
-#define AIPS_MPRA_MPL0_WIDTH                     1u
-#define AIPS_MPRA_MPL0(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_MPRA_MPL0_SHIFT))&AIPS_MPRA_MPL0_MASK)
-#define AIPS_MPRA_MTW0_MASK                      0x20000000u
-#define AIPS_MPRA_MTW0_SHIFT                     29u
-#define AIPS_MPRA_MTW0_WIDTH                     1u
-#define AIPS_MPRA_MTW0(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_MPRA_MTW0_SHIFT))&AIPS_MPRA_MTW0_MASK)
-#define AIPS_MPRA_MTR0_MASK                      0x40000000u
-#define AIPS_MPRA_MTR0_SHIFT                     30u
-#define AIPS_MPRA_MTR0_WIDTH                     1u
-#define AIPS_MPRA_MTR0(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_MPRA_MTR0_SHIFT))&AIPS_MPRA_MTR0_MASK)
-/* PACR Bit Fields */
-#define AIPS_PACR_TP5_MASK                       0x100u
-#define AIPS_PACR_TP5_SHIFT                      8u
-#define AIPS_PACR_TP5_WIDTH                      1u
-#define AIPS_PACR_TP5(x)                         (((uint32_t)(((uint32_t)(x))<<AIPS_PACR_TP5_SHIFT))&AIPS_PACR_TP5_MASK)
-#define AIPS_PACR_WP5_MASK                       0x200u
-#define AIPS_PACR_WP5_SHIFT                      9u
-#define AIPS_PACR_WP5_WIDTH                      1u
-#define AIPS_PACR_WP5(x)                         (((uint32_t)(((uint32_t)(x))<<AIPS_PACR_WP5_SHIFT))&AIPS_PACR_WP5_MASK)
-#define AIPS_PACR_SP5_MASK                       0x400u
-#define AIPS_PACR_SP5_SHIFT                      10u
-#define AIPS_PACR_SP5_WIDTH                      1u
-#define AIPS_PACR_SP5(x)                         (((uint32_t)(((uint32_t)(x))<<AIPS_PACR_SP5_SHIFT))&AIPS_PACR_SP5_MASK)
-#define AIPS_PACR_TP1_MASK                       0x1000000u
-#define AIPS_PACR_TP1_SHIFT                      24u
-#define AIPS_PACR_TP1_WIDTH                      1u
-#define AIPS_PACR_TP1(x)                         (((uint32_t)(((uint32_t)(x))<<AIPS_PACR_TP1_SHIFT))&AIPS_PACR_TP1_MASK)
-#define AIPS_PACR_WP1_MASK                       0x2000000u
-#define AIPS_PACR_WP1_SHIFT                      25u
-#define AIPS_PACR_WP1_WIDTH                      1u
-#define AIPS_PACR_WP1(x)                         (((uint32_t)(((uint32_t)(x))<<AIPS_PACR_WP1_SHIFT))&AIPS_PACR_WP1_MASK)
-#define AIPS_PACR_SP1_MASK                       0x4000000u
-#define AIPS_PACR_SP1_SHIFT                      26u
-#define AIPS_PACR_SP1_WIDTH                      1u
-#define AIPS_PACR_SP1(x)                         (((uint32_t)(((uint32_t)(x))<<AIPS_PACR_SP1_SHIFT))&AIPS_PACR_SP1_MASK)
-#define AIPS_PACR_TP0_MASK                       0x10000000u
-#define AIPS_PACR_TP0_SHIFT                      28u
-#define AIPS_PACR_TP0_WIDTH                      1u
-#define AIPS_PACR_TP0(x)                         (((uint32_t)(((uint32_t)(x))<<AIPS_PACR_TP0_SHIFT))&AIPS_PACR_TP0_MASK)
-#define AIPS_PACR_WP0_MASK                       0x20000000u
-#define AIPS_PACR_WP0_SHIFT                      29u
-#define AIPS_PACR_WP0_WIDTH                      1u
-#define AIPS_PACR_WP0(x)                         (((uint32_t)(((uint32_t)(x))<<AIPS_PACR_WP0_SHIFT))&AIPS_PACR_WP0_MASK)
-#define AIPS_PACR_SP0_MASK                       0x40000000u
-#define AIPS_PACR_SP0_SHIFT                      30u
-#define AIPS_PACR_SP0_WIDTH                      1u
-#define AIPS_PACR_SP0(x)                         (((uint32_t)(((uint32_t)(x))<<AIPS_PACR_SP0_SHIFT))&AIPS_PACR_SP0_MASK)
-/* OPACR Bit Fields */
-#define AIPS_OPACR_TP7_MASK                      0x1u
-#define AIPS_OPACR_TP7_SHIFT                     0u
-#define AIPS_OPACR_TP7_WIDTH                     1u
-#define AIPS_OPACR_TP7(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_TP7_SHIFT))&AIPS_OPACR_TP7_MASK)
-#define AIPS_OPACR_WP7_MASK                      0x2u
-#define AIPS_OPACR_WP7_SHIFT                     1u
-#define AIPS_OPACR_WP7_WIDTH                     1u
-#define AIPS_OPACR_WP7(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_WP7_SHIFT))&AIPS_OPACR_WP7_MASK)
-#define AIPS_OPACR_SP7_MASK                      0x4u
-#define AIPS_OPACR_SP7_SHIFT                     2u
-#define AIPS_OPACR_SP7_WIDTH                     1u
-#define AIPS_OPACR_SP7(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_SP7_SHIFT))&AIPS_OPACR_SP7_MASK)
-#define AIPS_OPACR_TP6_MASK                      0x10u
-#define AIPS_OPACR_TP6_SHIFT                     4u
-#define AIPS_OPACR_TP6_WIDTH                     1u
-#define AIPS_OPACR_TP6(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_TP6_SHIFT))&AIPS_OPACR_TP6_MASK)
-#define AIPS_OPACR_WP6_MASK                      0x20u
-#define AIPS_OPACR_WP6_SHIFT                     5u
-#define AIPS_OPACR_WP6_WIDTH                     1u
-#define AIPS_OPACR_WP6(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_WP6_SHIFT))&AIPS_OPACR_WP6_MASK)
-#define AIPS_OPACR_SP6_MASK                      0x40u
-#define AIPS_OPACR_SP6_SHIFT                     6u
-#define AIPS_OPACR_SP6_WIDTH                     1u
-#define AIPS_OPACR_SP6(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_SP6_SHIFT))&AIPS_OPACR_SP6_MASK)
-#define AIPS_OPACR_TP5_MASK                      0x100u
-#define AIPS_OPACR_TP5_SHIFT                     8u
-#define AIPS_OPACR_TP5_WIDTH                     1u
-#define AIPS_OPACR_TP5(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_TP5_SHIFT))&AIPS_OPACR_TP5_MASK)
-#define AIPS_OPACR_WP5_MASK                      0x200u
-#define AIPS_OPACR_WP5_SHIFT                     9u
-#define AIPS_OPACR_WP5_WIDTH                     1u
-#define AIPS_OPACR_WP5(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_WP5_SHIFT))&AIPS_OPACR_WP5_MASK)
-#define AIPS_OPACR_SP5_MASK                      0x400u
-#define AIPS_OPACR_SP5_SHIFT                     10u
-#define AIPS_OPACR_SP5_WIDTH                     1u
-#define AIPS_OPACR_SP5(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_SP5_SHIFT))&AIPS_OPACR_SP5_MASK)
-#define AIPS_OPACR_TP4_MASK                      0x1000u
-#define AIPS_OPACR_TP4_SHIFT                     12u
-#define AIPS_OPACR_TP4_WIDTH                     1u
-#define AIPS_OPACR_TP4(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_TP4_SHIFT))&AIPS_OPACR_TP4_MASK)
-#define AIPS_OPACR_WP4_MASK                      0x2000u
-#define AIPS_OPACR_WP4_SHIFT                     13u
-#define AIPS_OPACR_WP4_WIDTH                     1u
-#define AIPS_OPACR_WP4(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_WP4_SHIFT))&AIPS_OPACR_WP4_MASK)
-#define AIPS_OPACR_SP4_MASK                      0x4000u
-#define AIPS_OPACR_SP4_SHIFT                     14u
-#define AIPS_OPACR_SP4_WIDTH                     1u
-#define AIPS_OPACR_SP4(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_SP4_SHIFT))&AIPS_OPACR_SP4_MASK)
-#define AIPS_OPACR_TP3_MASK                      0x10000u
-#define AIPS_OPACR_TP3_SHIFT                     16u
-#define AIPS_OPACR_TP3_WIDTH                     1u
-#define AIPS_OPACR_TP3(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_TP3_SHIFT))&AIPS_OPACR_TP3_MASK)
-#define AIPS_OPACR_WP3_MASK                      0x20000u
-#define AIPS_OPACR_WP3_SHIFT                     17u
-#define AIPS_OPACR_WP3_WIDTH                     1u
-#define AIPS_OPACR_WP3(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_WP3_SHIFT))&AIPS_OPACR_WP3_MASK)
-#define AIPS_OPACR_SP3_MASK                      0x40000u
-#define AIPS_OPACR_SP3_SHIFT                     18u
-#define AIPS_OPACR_SP3_WIDTH                     1u
-#define AIPS_OPACR_SP3(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_SP3_SHIFT))&AIPS_OPACR_SP3_MASK)
-#define AIPS_OPACR_TP2_MASK                      0x100000u
-#define AIPS_OPACR_TP2_SHIFT                     20u
-#define AIPS_OPACR_TP2_WIDTH                     1u
-#define AIPS_OPACR_TP2(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_TP2_SHIFT))&AIPS_OPACR_TP2_MASK)
-#define AIPS_OPACR_WP2_MASK                      0x200000u
-#define AIPS_OPACR_WP2_SHIFT                     21u
-#define AIPS_OPACR_WP2_WIDTH                     1u
-#define AIPS_OPACR_WP2(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_WP2_SHIFT))&AIPS_OPACR_WP2_MASK)
-#define AIPS_OPACR_SP2_MASK                      0x400000u
-#define AIPS_OPACR_SP2_SHIFT                     22u
-#define AIPS_OPACR_SP2_WIDTH                     1u
-#define AIPS_OPACR_SP2(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_SP2_SHIFT))&AIPS_OPACR_SP2_MASK)
-#define AIPS_OPACR_TP1_MASK                      0x1000000u
-#define AIPS_OPACR_TP1_SHIFT                     24u
-#define AIPS_OPACR_TP1_WIDTH                     1u
-#define AIPS_OPACR_TP1(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_TP1_SHIFT))&AIPS_OPACR_TP1_MASK)
-#define AIPS_OPACR_WP1_MASK                      0x2000000u
-#define AIPS_OPACR_WP1_SHIFT                     25u
-#define AIPS_OPACR_WP1_WIDTH                     1u
-#define AIPS_OPACR_WP1(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_WP1_SHIFT))&AIPS_OPACR_WP1_MASK)
-#define AIPS_OPACR_SP1_MASK                      0x4000000u
-#define AIPS_OPACR_SP1_SHIFT                     26u
-#define AIPS_OPACR_SP1_WIDTH                     1u
-#define AIPS_OPACR_SP1(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_SP1_SHIFT))&AIPS_OPACR_SP1_MASK)
-#define AIPS_OPACR_TP0_MASK                      0x10000000u
-#define AIPS_OPACR_TP0_SHIFT                     28u
-#define AIPS_OPACR_TP0_WIDTH                     1u
-#define AIPS_OPACR_TP0(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_TP0_SHIFT))&AIPS_OPACR_TP0_MASK)
-#define AIPS_OPACR_WP0_MASK                      0x20000000u
-#define AIPS_OPACR_WP0_SHIFT                     29u
-#define AIPS_OPACR_WP0_WIDTH                     1u
-#define AIPS_OPACR_WP0(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_WP0_SHIFT))&AIPS_OPACR_WP0_MASK)
-#define AIPS_OPACR_SP0_MASK                      0x40000000u
-#define AIPS_OPACR_SP0_SHIFT                     30u
-#define AIPS_OPACR_SP0_WIDTH                     1u
-#define AIPS_OPACR_SP0(x)                        (((uint32_t)(((uint32_t)(x))<<AIPS_OPACR_SP0_SHIFT))&AIPS_OPACR_SP0_MASK)
+/*! @name MPRA - Master Privilege Register A */
+/*! @{ */
+
+#define AIPS_MPRA_MPL2_MASK                      (0x100000U)
+#define AIPS_MPRA_MPL2_SHIFT                     (20U)
+#define AIPS_MPRA_MPL2_WIDTH                     (1U)
+#define AIPS_MPRA_MPL2(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_MPRA_MPL2_SHIFT)) & AIPS_MPRA_MPL2_MASK)
+
+#define AIPS_MPRA_MTW2_MASK                      (0x200000U)
+#define AIPS_MPRA_MTW2_SHIFT                     (21U)
+#define AIPS_MPRA_MTW2_WIDTH                     (1U)
+#define AIPS_MPRA_MTW2(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_MPRA_MTW2_SHIFT)) & AIPS_MPRA_MTW2_MASK)
+
+#define AIPS_MPRA_MTR2_MASK                      (0x400000U)
+#define AIPS_MPRA_MTR2_SHIFT                     (22U)
+#define AIPS_MPRA_MTR2_WIDTH                     (1U)
+#define AIPS_MPRA_MTR2(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_MPRA_MTR2_SHIFT)) & AIPS_MPRA_MTR2_MASK)
+
+#define AIPS_MPRA_MPL1_MASK                      (0x1000000U)
+#define AIPS_MPRA_MPL1_SHIFT                     (24U)
+#define AIPS_MPRA_MPL1_WIDTH                     (1U)
+#define AIPS_MPRA_MPL1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_MPRA_MPL1_SHIFT)) & AIPS_MPRA_MPL1_MASK)
+
+#define AIPS_MPRA_MTW1_MASK                      (0x2000000U)
+#define AIPS_MPRA_MTW1_SHIFT                     (25U)
+#define AIPS_MPRA_MTW1_WIDTH                     (1U)
+#define AIPS_MPRA_MTW1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_MPRA_MTW1_SHIFT)) & AIPS_MPRA_MTW1_MASK)
+
+#define AIPS_MPRA_MTR1_MASK                      (0x4000000U)
+#define AIPS_MPRA_MTR1_SHIFT                     (26U)
+#define AIPS_MPRA_MTR1_WIDTH                     (1U)
+#define AIPS_MPRA_MTR1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_MPRA_MTR1_SHIFT)) & AIPS_MPRA_MTR1_MASK)
+
+#define AIPS_MPRA_MPL0_MASK                      (0x10000000U)
+#define AIPS_MPRA_MPL0_SHIFT                     (28U)
+#define AIPS_MPRA_MPL0_WIDTH                     (1U)
+#define AIPS_MPRA_MPL0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_MPRA_MPL0_SHIFT)) & AIPS_MPRA_MPL0_MASK)
+
+#define AIPS_MPRA_MTW0_MASK                      (0x20000000U)
+#define AIPS_MPRA_MTW0_SHIFT                     (29U)
+#define AIPS_MPRA_MTW0_WIDTH                     (1U)
+#define AIPS_MPRA_MTW0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_MPRA_MTW0_SHIFT)) & AIPS_MPRA_MTW0_MASK)
+
+#define AIPS_MPRA_MTR0_MASK                      (0x40000000U)
+#define AIPS_MPRA_MTR0_SHIFT                     (30U)
+#define AIPS_MPRA_MTR0_WIDTH                     (1U)
+#define AIPS_MPRA_MTR0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_MPRA_MTR0_SHIFT)) & AIPS_MPRA_MTR0_MASK)
+/*! @} */
+
+/*! @name PACRA - Peripheral Access Control Register */
+/*! @{ */
+
+#define AIPS_PACRA_TP1_MASK                      (0x1000000U)
+#define AIPS_PACRA_TP1_SHIFT                     (24U)
+#define AIPS_PACRA_TP1_WIDTH                     (1U)
+#define AIPS_PACRA_TP1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRA_TP1_SHIFT)) & AIPS_PACRA_TP1_MASK)
+
+#define AIPS_PACRA_WP1_MASK                      (0x2000000U)
+#define AIPS_PACRA_WP1_SHIFT                     (25U)
+#define AIPS_PACRA_WP1_WIDTH                     (1U)
+#define AIPS_PACRA_WP1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRA_WP1_SHIFT)) & AIPS_PACRA_WP1_MASK)
+
+#define AIPS_PACRA_SP1_MASK                      (0x4000000U)
+#define AIPS_PACRA_SP1_SHIFT                     (26U)
+#define AIPS_PACRA_SP1_WIDTH                     (1U)
+#define AIPS_PACRA_SP1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRA_SP1_SHIFT)) & AIPS_PACRA_SP1_MASK)
+
+#define AIPS_PACRA_TP0_MASK                      (0x10000000U)
+#define AIPS_PACRA_TP0_SHIFT                     (28U)
+#define AIPS_PACRA_TP0_WIDTH                     (1U)
+#define AIPS_PACRA_TP0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRA_TP0_SHIFT)) & AIPS_PACRA_TP0_MASK)
+
+#define AIPS_PACRA_WP0_MASK                      (0x20000000U)
+#define AIPS_PACRA_WP0_SHIFT                     (29U)
+#define AIPS_PACRA_WP0_WIDTH                     (1U)
+#define AIPS_PACRA_WP0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRA_WP0_SHIFT)) & AIPS_PACRA_WP0_MASK)
+
+#define AIPS_PACRA_SP0_MASK                      (0x40000000U)
+#define AIPS_PACRA_SP0_SHIFT                     (30U)
+#define AIPS_PACRA_SP0_WIDTH                     (1U)
+#define AIPS_PACRA_SP0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRA_SP0_SHIFT)) & AIPS_PACRA_SP0_MASK)
+/*! @} */
+
+/*! @name PACRB - Peripheral Access Control Register */
+/*! @{ */
+
+#define AIPS_PACRB_TP5_MASK                      (0x100U)
+#define AIPS_PACRB_TP5_SHIFT                     (8U)
+#define AIPS_PACRB_TP5_WIDTH                     (1U)
+#define AIPS_PACRB_TP5(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRB_TP5_SHIFT)) & AIPS_PACRB_TP5_MASK)
+
+#define AIPS_PACRB_WP5_MASK                      (0x200U)
+#define AIPS_PACRB_WP5_SHIFT                     (9U)
+#define AIPS_PACRB_WP5_WIDTH                     (1U)
+#define AIPS_PACRB_WP5(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRB_WP5_SHIFT)) & AIPS_PACRB_WP5_MASK)
+
+#define AIPS_PACRB_SP5_MASK                      (0x400U)
+#define AIPS_PACRB_SP5_SHIFT                     (10U)
+#define AIPS_PACRB_SP5_WIDTH                     (1U)
+#define AIPS_PACRB_SP5(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRB_SP5_SHIFT)) & AIPS_PACRB_SP5_MASK)
+
+#define AIPS_PACRB_TP1_MASK                      (0x1000000U)
+#define AIPS_PACRB_TP1_SHIFT                     (24U)
+#define AIPS_PACRB_TP1_WIDTH                     (1U)
+#define AIPS_PACRB_TP1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRB_TP1_SHIFT)) & AIPS_PACRB_TP1_MASK)
+
+#define AIPS_PACRB_WP1_MASK                      (0x2000000U)
+#define AIPS_PACRB_WP1_SHIFT                     (25U)
+#define AIPS_PACRB_WP1_WIDTH                     (1U)
+#define AIPS_PACRB_WP1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRB_WP1_SHIFT)) & AIPS_PACRB_WP1_MASK)
+
+#define AIPS_PACRB_SP1_MASK                      (0x4000000U)
+#define AIPS_PACRB_SP1_SHIFT                     (26U)
+#define AIPS_PACRB_SP1_WIDTH                     (1U)
+#define AIPS_PACRB_SP1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRB_SP1_SHIFT)) & AIPS_PACRB_SP1_MASK)
+
+#define AIPS_PACRB_TP0_MASK                      (0x10000000U)
+#define AIPS_PACRB_TP0_SHIFT                     (28U)
+#define AIPS_PACRB_TP0_WIDTH                     (1U)
+#define AIPS_PACRB_TP0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRB_TP0_SHIFT)) & AIPS_PACRB_TP0_MASK)
+
+#define AIPS_PACRB_WP0_MASK                      (0x20000000U)
+#define AIPS_PACRB_WP0_SHIFT                     (29U)
+#define AIPS_PACRB_WP0_WIDTH                     (1U)
+#define AIPS_PACRB_WP0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRB_WP0_SHIFT)) & AIPS_PACRB_WP0_MASK)
+
+#define AIPS_PACRB_SP0_MASK                      (0x40000000U)
+#define AIPS_PACRB_SP0_SHIFT                     (30U)
+#define AIPS_PACRB_SP0_WIDTH                     (1U)
+#define AIPS_PACRB_SP0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRB_SP0_SHIFT)) & AIPS_PACRB_SP0_MASK)
+/*! @} */
+
+/*! @name PACRD - Peripheral Access Control Register */
+/*! @{ */
+
+#define AIPS_PACRD_TP1_MASK                      (0x1000000U)
+#define AIPS_PACRD_TP1_SHIFT                     (24U)
+#define AIPS_PACRD_TP1_WIDTH                     (1U)
+#define AIPS_PACRD_TP1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRD_TP1_SHIFT)) & AIPS_PACRD_TP1_MASK)
+
+#define AIPS_PACRD_WP1_MASK                      (0x2000000U)
+#define AIPS_PACRD_WP1_SHIFT                     (25U)
+#define AIPS_PACRD_WP1_WIDTH                     (1U)
+#define AIPS_PACRD_WP1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRD_WP1_SHIFT)) & AIPS_PACRD_WP1_MASK)
+
+#define AIPS_PACRD_SP1_MASK                      (0x4000000U)
+#define AIPS_PACRD_SP1_SHIFT                     (26U)
+#define AIPS_PACRD_SP1_WIDTH                     (1U)
+#define AIPS_PACRD_SP1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRD_SP1_SHIFT)) & AIPS_PACRD_SP1_MASK)
+
+#define AIPS_PACRD_TP0_MASK                      (0x10000000U)
+#define AIPS_PACRD_TP0_SHIFT                     (28U)
+#define AIPS_PACRD_TP0_WIDTH                     (1U)
+#define AIPS_PACRD_TP0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRD_TP0_SHIFT)) & AIPS_PACRD_TP0_MASK)
+
+#define AIPS_PACRD_WP0_MASK                      (0x20000000U)
+#define AIPS_PACRD_WP0_SHIFT                     (29U)
+#define AIPS_PACRD_WP0_WIDTH                     (1U)
+#define AIPS_PACRD_WP0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRD_WP0_SHIFT)) & AIPS_PACRD_WP0_MASK)
+
+#define AIPS_PACRD_SP0_MASK                      (0x40000000U)
+#define AIPS_PACRD_SP0_SHIFT                     (30U)
+#define AIPS_PACRD_SP0_WIDTH                     (1U)
+#define AIPS_PACRD_SP0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_PACRD_SP0_SHIFT)) & AIPS_PACRD_SP0_MASK)
+/*! @} */
+
+/*! @name OPACR - Off-Platform Peripheral Access Control Register */
+/*! @{ */
+
+#define AIPS_OPACR_TP7_MASK                      (0x1U)
+#define AIPS_OPACR_TP7_SHIFT                     (0U)
+#define AIPS_OPACR_TP7_WIDTH                     (1U)
+#define AIPS_OPACR_TP7(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_TP7_SHIFT)) & AIPS_OPACR_TP7_MASK)
+
+#define AIPS_OPACR_WP7_MASK                      (0x2U)
+#define AIPS_OPACR_WP7_SHIFT                     (1U)
+#define AIPS_OPACR_WP7_WIDTH                     (1U)
+#define AIPS_OPACR_WP7(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_WP7_SHIFT)) & AIPS_OPACR_WP7_MASK)
+
+#define AIPS_OPACR_SP7_MASK                      (0x4U)
+#define AIPS_OPACR_SP7_SHIFT                     (2U)
+#define AIPS_OPACR_SP7_WIDTH                     (1U)
+#define AIPS_OPACR_SP7(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_SP7_SHIFT)) & AIPS_OPACR_SP7_MASK)
+
+#define AIPS_OPACR_TP6_MASK                      (0x10U)
+#define AIPS_OPACR_TP6_SHIFT                     (4U)
+#define AIPS_OPACR_TP6_WIDTH                     (1U)
+#define AIPS_OPACR_TP6(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_TP6_SHIFT)) & AIPS_OPACR_TP6_MASK)
+
+#define AIPS_OPACR_WP6_MASK                      (0x20U)
+#define AIPS_OPACR_WP6_SHIFT                     (5U)
+#define AIPS_OPACR_WP6_WIDTH                     (1U)
+#define AIPS_OPACR_WP6(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_WP6_SHIFT)) & AIPS_OPACR_WP6_MASK)
+
+#define AIPS_OPACR_SP6_MASK                      (0x40U)
+#define AIPS_OPACR_SP6_SHIFT                     (6U)
+#define AIPS_OPACR_SP6_WIDTH                     (1U)
+#define AIPS_OPACR_SP6(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_SP6_SHIFT)) & AIPS_OPACR_SP6_MASK)
+
+#define AIPS_OPACR_TP5_MASK                      (0x100U)
+#define AIPS_OPACR_TP5_SHIFT                     (8U)
+#define AIPS_OPACR_TP5_WIDTH                     (1U)
+#define AIPS_OPACR_TP5(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_TP5_SHIFT)) & AIPS_OPACR_TP5_MASK)
+
+#define AIPS_OPACR_WP5_MASK                      (0x200U)
+#define AIPS_OPACR_WP5_SHIFT                     (9U)
+#define AIPS_OPACR_WP5_WIDTH                     (1U)
+#define AIPS_OPACR_WP5(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_WP5_SHIFT)) & AIPS_OPACR_WP5_MASK)
+
+#define AIPS_OPACR_SP5_MASK                      (0x400U)
+#define AIPS_OPACR_SP5_SHIFT                     (10U)
+#define AIPS_OPACR_SP5_WIDTH                     (1U)
+#define AIPS_OPACR_SP5(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_SP5_SHIFT)) & AIPS_OPACR_SP5_MASK)
+
+#define AIPS_OPACR_TP4_MASK                      (0x1000U)
+#define AIPS_OPACR_TP4_SHIFT                     (12U)
+#define AIPS_OPACR_TP4_WIDTH                     (1U)
+#define AIPS_OPACR_TP4(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_TP4_SHIFT)) & AIPS_OPACR_TP4_MASK)
+
+#define AIPS_OPACR_WP4_MASK                      (0x2000U)
+#define AIPS_OPACR_WP4_SHIFT                     (13U)
+#define AIPS_OPACR_WP4_WIDTH                     (1U)
+#define AIPS_OPACR_WP4(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_WP4_SHIFT)) & AIPS_OPACR_WP4_MASK)
+
+#define AIPS_OPACR_SP4_MASK                      (0x4000U)
+#define AIPS_OPACR_SP4_SHIFT                     (14U)
+#define AIPS_OPACR_SP4_WIDTH                     (1U)
+#define AIPS_OPACR_SP4(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_SP4_SHIFT)) & AIPS_OPACR_SP4_MASK)
+
+#define AIPS_OPACR_TP3_MASK                      (0x10000U)
+#define AIPS_OPACR_TP3_SHIFT                     (16U)
+#define AIPS_OPACR_TP3_WIDTH                     (1U)
+#define AIPS_OPACR_TP3(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_TP3_SHIFT)) & AIPS_OPACR_TP3_MASK)
+
+#define AIPS_OPACR_WP3_MASK                      (0x20000U)
+#define AIPS_OPACR_WP3_SHIFT                     (17U)
+#define AIPS_OPACR_WP3_WIDTH                     (1U)
+#define AIPS_OPACR_WP3(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_WP3_SHIFT)) & AIPS_OPACR_WP3_MASK)
+
+#define AIPS_OPACR_SP3_MASK                      (0x40000U)
+#define AIPS_OPACR_SP3_SHIFT                     (18U)
+#define AIPS_OPACR_SP3_WIDTH                     (1U)
+#define AIPS_OPACR_SP3(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_SP3_SHIFT)) & AIPS_OPACR_SP3_MASK)
+
+#define AIPS_OPACR_TP2_MASK                      (0x100000U)
+#define AIPS_OPACR_TP2_SHIFT                     (20U)
+#define AIPS_OPACR_TP2_WIDTH                     (1U)
+#define AIPS_OPACR_TP2(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_TP2_SHIFT)) & AIPS_OPACR_TP2_MASK)
+
+#define AIPS_OPACR_WP2_MASK                      (0x200000U)
+#define AIPS_OPACR_WP2_SHIFT                     (21U)
+#define AIPS_OPACR_WP2_WIDTH                     (1U)
+#define AIPS_OPACR_WP2(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_WP2_SHIFT)) & AIPS_OPACR_WP2_MASK)
+
+#define AIPS_OPACR_SP2_MASK                      (0x400000U)
+#define AIPS_OPACR_SP2_SHIFT                     (22U)
+#define AIPS_OPACR_SP2_WIDTH                     (1U)
+#define AIPS_OPACR_SP2(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_SP2_SHIFT)) & AIPS_OPACR_SP2_MASK)
+
+#define AIPS_OPACR_TP1_MASK                      (0x1000000U)
+#define AIPS_OPACR_TP1_SHIFT                     (24U)
+#define AIPS_OPACR_TP1_WIDTH                     (1U)
+#define AIPS_OPACR_TP1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_TP1_SHIFT)) & AIPS_OPACR_TP1_MASK)
+
+#define AIPS_OPACR_WP1_MASK                      (0x2000000U)
+#define AIPS_OPACR_WP1_SHIFT                     (25U)
+#define AIPS_OPACR_WP1_WIDTH                     (1U)
+#define AIPS_OPACR_WP1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_WP1_SHIFT)) & AIPS_OPACR_WP1_MASK)
+
+#define AIPS_OPACR_SP1_MASK                      (0x4000000U)
+#define AIPS_OPACR_SP1_SHIFT                     (26U)
+#define AIPS_OPACR_SP1_WIDTH                     (1U)
+#define AIPS_OPACR_SP1(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_SP1_SHIFT)) & AIPS_OPACR_SP1_MASK)
+
+#define AIPS_OPACR_TP0_MASK                      (0x10000000U)
+#define AIPS_OPACR_TP0_SHIFT                     (28U)
+#define AIPS_OPACR_TP0_WIDTH                     (1U)
+#define AIPS_OPACR_TP0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_TP0_SHIFT)) & AIPS_OPACR_TP0_MASK)
+
+#define AIPS_OPACR_WP0_MASK                      (0x20000000U)
+#define AIPS_OPACR_WP0_SHIFT                     (29U)
+#define AIPS_OPACR_WP0_WIDTH                     (1U)
+#define AIPS_OPACR_WP0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_WP0_SHIFT)) & AIPS_OPACR_WP0_MASK)
+
+#define AIPS_OPACR_SP0_MASK                      (0x40000000U)
+#define AIPS_OPACR_SP0_SHIFT                     (30U)
+#define AIPS_OPACR_SP0_WIDTH                     (1U)
+#define AIPS_OPACR_SP0(x)                        (((uint32_t)(((uint32_t)(x)) << AIPS_OPACR_SP0_SHIFT)) & AIPS_OPACR_SP0_MASK)
+/*! @} */
 
 /*!
  * @}
@@ -5297,7 +5423,7 @@ typedef struct {
        uint8_t RESERVED_4[4];
   __IO uint32_t MFCR;                              /**< Master FIFO Control Register, offset: 0x58 */
   __I  uint32_t MFSR;                              /**< Master FIFO Status Register, offset: 0x5C */
-  __IO uint32_t MTDR;                              /**< Master Transmit Data Register, offset: 0x60 */
+  __O  uint32_t MTDR;                              /**< Master Transmit Data Register, offset: 0x60 */
        uint8_t RESERVED_5[12];
   __I  uint32_t MRDR;                              /**< Master Receive Data Register, offset: 0x70 */
        uint8_t RESERVED_6[156];
@@ -5314,7 +5440,7 @@ typedef struct {
   __I  uint32_t SASR;                              /**< Slave Address Status Register, offset: 0x150 */
   __IO uint32_t STAR;                              /**< Slave Transmit ACK Register, offset: 0x154 */
        uint8_t RESERVED_10[8];
-  __IO uint32_t STDR;                              /**< Slave Transmit Data Register, offset: 0x160 */
+  __O  uint32_t STDR;                              /**< Slave Transmit Data Register, offset: 0x160 */
        uint8_t RESERVED_11[12];
   __I  uint32_t SRDR;                              /**< Slave Receive Data Register, offset: 0x170 */
 } LPI2C_Type, *LPI2C_MemMapPtr;
@@ -5911,7 +6037,7 @@ typedef struct {
   __IO uint32_t MSR;                               /**< Module Status Register, offset: 0xC */
   __IO uint32_t MIER;                              /**< Module Interrupt Enable Register, offset: 0x10 */
   __IO uint32_t SETTEN;                            /**< Set Timer Enable Register, offset: 0x14 */
-  __IO uint32_t CLRTEN;                            /**< Clear Timer Enable Register, offset: 0x18 */
+  __O  uint32_t CLRTEN;                            /**< Clear Timer Enable Register, offset: 0x18 */
        uint8_t RESERVED_0[4];
   struct {                                         /* offset: 0x20, array step: 0x10 */
     __IO uint32_t TVAL;                              /**< Timer Value Register, array offset: 0x20, array step: 0x10 */
@@ -8723,6 +8849,10 @@ typedef struct {
 #define RCM_PARAM_ELOL_SHIFT                     3u
 #define RCM_PARAM_ELOL_WIDTH                     1u
 #define RCM_PARAM_ELOL(x)                        (((uint32_t)(((uint32_t)(x))<<RCM_PARAM_ELOL_SHIFT))&RCM_PARAM_ELOL_MASK)
+#define RCM_PARAM_ECMU_LOC_MASK                  (0x10U)
+#define RCM_PARAM_ECMU_LOC_SHIFT                 (4U)
+#define RCM_PARAM_ECMU_LOC_WIDTH                 (1U)
+#define RCM_PARAM_ECMU_LOC(x)                    (((uint32_t)(((uint32_t)(x)) << RCM_PARAM_ECMU_LOC_SHIFT)) & RCM_PARAM_ECMU_LOC_MASK)
 #define RCM_PARAM_EWDOG_MASK                     0x20u
 #define RCM_PARAM_EWDOG_SHIFT                    5u
 #define RCM_PARAM_EWDOG_WIDTH                    1u
@@ -11145,7 +11275,7 @@ typedef struct {
        uint8_t RESERVED_3[24];
   __IO uint32_t PLATCGC;                           /**< Platform Clock Gating Control Register, offset: 0x40 */
        uint8_t RESERVED_4[8];
-  __IO uint32_t FCFG1;                             /**< Flash Configuration Register 1, offset: 0x4C */
+  __I  uint32_t FCFG1;                             /**< Flash Configuration Register 1, offset: 0x4C */
        uint8_t RESERVED_5[4];
   __I  uint32_t UIDH;                              /**< Unique Identification Register High, offset: 0x54 */
   __I  uint32_t UIDMH;                             /**< Unique Identification Register Mid-High, offset: 0x58 */

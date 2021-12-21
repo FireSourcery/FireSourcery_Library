@@ -65,10 +65,10 @@ typedef enum
 } MotorAnalog_ChannelMotor_T;
 
 
-typedef enum
-{
-	MOTOR_ANALOG_CONVERSION_BEMF_A_INDEX_VPOS = 0U,
-} MotorAnalog_ConversionBemfAIndex_T;
+//typedef enum
+//{
+//	MOTOR_ANALOG_CONVERSION_BEMF_A_INDEX_VPOS = 0U,
+//} MotorAnalog_ConversionBemfAIndex_T;
 
 
 

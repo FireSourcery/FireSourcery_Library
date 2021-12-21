@@ -51,6 +51,7 @@
 #include "Transducer/Encoder/Encoder_DeltaT.h"
 #include "Transducer/Encoder/Encoder_DeltaD.h"
 #include "Transducer/Encoder/Encoder.h"
+#include "Transducer/Thermistor/Thermistor.h"
 
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/Timer/Timer.h"
@@ -84,12 +85,14 @@ typedef enum
 	MOTOR_SECTOR_ERROR_000 = 0U,
 	MOTOR_SECTOR_ERROR_111 = 7U,
 
+	MOTOR_PHASE_ERROR_0 = 0U,
 	MOTOR_PHASE_AC = 1U,
 	MOTOR_PHASE_BC = 2U,
 	MOTOR_PHASE_BA = 3U,
 	MOTOR_PHASE_CA = 4U,
 	MOTOR_PHASE_CB = 5U,
 	MOTOR_PHASE_AB = 6U,
+	MOTOR_PHASE_ERROR_7 = 7U,
 } Motor_SectorId_T;
 
 /*
@@ -230,7 +233,7 @@ typedef enum
 //	volatile const adc_t * const P_BRAKE_ADCU;
 //}
 //Motor_AdcMapCommon_T;
-//
+
 /*!
 	@brief Motor Parameters
 	Runtime variable configuration
@@ -291,7 +294,7 @@ typedef struct __attribute__ ((aligned (4U)))
 {
 
 }
-Motor_CommonParameters_T;
+Motor_ParametersCommon_T;
 
 typedef struct
 {
@@ -354,7 +357,7 @@ typedef struct
 	BEMF_T Bemf;
 
 //	Blinky_T * p_Buzzer;
-
+	Thermistor_T Thermistor;
 
 	StateMachine_T StateMachine;
 
@@ -428,29 +431,23 @@ typedef struct
 	/*
 	 * Six-Step
 	 */
-	Motor_SectorId_T NextSector;		 //for 6 step openloop/sensorless
-	Motor_SectorId_T CommutationSector;	 //for 6 step openloop/sensorless
+	Motor_SectorId_T NextPhase;		 //for 6 step openloop/sensorless
+	Motor_SectorId_T CommutationPhase;	 //for 6 step openloop/sensorless
 //	Analog_Conversion_T * p_BemfConversionActive;
 
 	//	volatile bool IsStartUp;			//bemf substate
 
-	AnalogN_Conversion_T * p_BemfConversionActive ;
+//	AnalogN_Conversion_T * p_BemfConversionActive ;
 
 
 	Motor_CalibrationState_T CalibrationState; /* Substate, selection for calibration */
 	uint8_t CalibrationSubstateStep;
-	//todo alarm and thermistor
 
 //	uint32_t JogSteps;
 //	uint32_t StepCount;
-
-	/* UI Unit report */
-	uint16_t VBus_mV;
-	uint16_t VBemfPeak_mV;
-	uint16_t VBemfA_mV;
-	uint16_t IBus_Amp;
 }
 Motor_T;
+
 /*******************************************************************************/
 /*!
 	Common
@@ -562,20 +559,6 @@ static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
 //	p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
 	return p_motor->Speed_RPM;
 }
-
-
-static inline uint32_t Motor_GetBemf_Frac16(Motor_T * p_motor)
-{
-	return Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));
-}
-
-//UI
-static inline void Motor_ProcUnitOutputs(Motor_T * p_motor)
-{
-	p_motor->VBus_mV 		= Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_VPOS]);
-	p_motor->VBemfPeak_mV 	= Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));
-}
-
 
 static inline void Motor_Float(Motor_T * p_motor)
 {

@@ -267,7 +267,7 @@ static inline uint32_t Encoder_DeltaT_GetInterpolationFreq(Encoder_T *p_encoder)
 
 /******************************************************************************/
 /*!
-	Capture DeltaT Mode Unit Functions -
+	Unit Conversions -
 	Only for variable DeltaT (DeltaD is fixed, == 1).
 	Meaningless for variable DeltaD (DeltaT is fixed, == 1).
  */

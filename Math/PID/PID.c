@@ -78,7 +78,7 @@ static inline int32_t CalcPID(PID_T * p_pid, int32_t error)
 
 int32_t PID_Calc(PID_T *p_pid, int32_t setpoint, int32_t feedback)
 {
-	return CalcPID(p_pid, feedback-setpoint);
+	return CalcPID(p_pid, feedback - setpoint);
 }
 
 void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor)

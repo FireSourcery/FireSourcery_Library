@@ -37,12 +37,12 @@
 
 #include "Math/Q/QFrac16.h"
 
-typedef enum
-{
-	VECTOR_000 = 0U,
-	VECTOR_001_A = 0b001,
-	VECTOR_011_INV_C = 0b011,
-} FOC_VectorID_T;
+//typedef enum
+//{
+//	VECTOR_000 = 0U,
+//	VECTOR_001_A = 0b001,
+//	VECTOR_011_INV_C = 0b011,
+//} FOC_VectorId_T;
 
 typedef struct
 {
@@ -61,7 +61,7 @@ typedef struct
 	qfrac16_t Ib;
 	qfrac16_t Ic;
 
-	qangle16_t Theta;  // electrical angle
+//	qangle16_t Theta;  // electrical angle
 	qfrac16_t Sine; /* save for inverse park call */
 	qfrac16_t Cosine;
 
@@ -94,10 +94,10 @@ typedef struct
 
 } FOC_T;
 
-static inline void FOC_ProcTheta(FOC_T * p_foc)
-{
-	qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, p_foc->Theta);
-}
+//static inline void FOC_ProcTheta(FOC_T * p_foc)
+//{
+//	qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, p_foc->Theta);
+//}
 
 static inline void FOC_ProcClarkePark(FOC_T *  p_foc)
 {
@@ -115,19 +115,19 @@ static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T *  p_foc)
 	svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
 }
 
-static inline void FOC_ProcDirectThetaSvpwm(FOC_T *  p_foc)
-{
-//	qangle16_t phi = arctan(qfrac16_div(p_foc->Vq, p_foc->Vd));
-//	uint16_t magnitude = mag(p_foc->Vd, p_foc->Vq);
+//static inline void FOC_ProcThetaSvpwm(FOC_T *  p_foc)
+//{
+////	qangle16_t phi = arctan(qfrac16_div(p_foc->Vq, p_foc->Vd));
+////	uint16_t magnitude = mag(p_foc->Vd, p_foc->Vq);
+////
+////	svpwm_unipolar1(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, magnitude, p_foc->Theta, phi);
 //
-//	svpwm_unipolar1(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, magnitude, p_foc->Theta, phi);
-
-	//vq is positive
-//	svpwm_unipolar1(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, (uint16_t)(p_foc->Vq << 1U), p_foc->Theta, QANGLE16_90);
-}
+//	//vq is positive
+////	svpwm_unipolar1(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, (uint16_t)(p_foc->Vq << 1U), p_foc->Theta, QANGLE16_90);
+//}
 
 
-static inline void FOC_SetTheta(FOC_T * p_foc, qangle16_t theta){p_foc->Theta = theta;}
+//static inline void FOC_SetTheta(FOC_T * p_foc, qangle16_t theta){p_foc->Theta = theta;}
 static inline void FOC_SetVector(FOC_T * p_foc, qangle16_t theta){qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, theta);}
 static inline void FOC_SetIa(FOC_T * p_foc, qfrac16_t ia){p_foc->Ia = ia;}
 static inline void FOC_SetIb(FOC_T * p_foc, qfrac16_t ib){p_foc->Ib = ib;}
