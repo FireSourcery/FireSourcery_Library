@@ -32,19 +32,17 @@
 #include "MotAnalogUser.h"
 
 #include "Motor/Motor/Motor.h"
-
-//#include "Peripheral/Pin/Debounce.h"
-//#include "Peripheral/Pin/Pin.h"
-
-//#include "Math/Linear/Linear_ADC.h"
-//#include "Math/Linear/Linear.h"
+#include "Motor/Motor/Motor_User.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
+
+
 void MotAnalogUser_Motor_Write(const MotAnalogUser_T * p_user, Motor_T * p_motorDest, uint8_t motorCount)
 {
 	bool activeControl = false;
+
 
 	if (p_user->InputSwitchNeutral == false)
 	{
@@ -95,6 +93,7 @@ void MotAnalogUser_Motor_Write(const MotAnalogUser_T * p_user, Motor_T * p_motor
 		}
 	}
 }
+
 
 
 void MotAnalogUser_Motor_WriteMotor(const MotAnalogUser_T * input, Motor_T * p_motorDest)

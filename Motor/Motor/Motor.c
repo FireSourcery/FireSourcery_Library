@@ -141,10 +141,36 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 }
 
+#include "Utility/Debug/Debug.h"
 
+/******************************************************************************/
 /*
- * Align State
+ *	Analog Capture
  */
+/******************************************************************************/
+void Motor_CaptureIBusIa(Motor_T * p_motor)
+{
+	//Filter here if needed
+	p_motor->IBus_Frac16 = Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIa,  p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_IA]);
+//	p_motor->IBus_ADCU  Filter_MovAvg(&p_motor->FilterIa, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA]);
+}
+
+void Motor_CaptureIBusIb(Motor_T * p_motor)
+{
+	p_motor->IBus_Frac16 = Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIb, p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_IB]);
+	Debug_CaptureElapsed(2);
+}
+
+void Motor_CaptureIBusIc(Motor_T * p_motor)
+{
+	p_motor->IBus_Frac16 = Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIc, p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_IC]);
+}
+
+/******************************************************************************/
+/*
+ *	Align State
+ */
+/******************************************************************************/
 Motor_AlignMode_T Motor_GetAlignMode(Motor_T *p_motor)
 {
 	Motor_AlignMode_T alignMode;
@@ -194,8 +220,8 @@ bool Motor_ProcAlign(Motor_T * p_motor)
 
 /******************************************************************************/
 /*
- * Calibration State Functions
- * @{
+ * 	Calibration State Functions
+ * 	@{
  */
 /******************************************************************************/
 /*
@@ -260,21 +286,21 @@ bool Motor_CalibrateEncoder(Motor_T * p_motor)
 	{
 		switch (state)
 		{
-		case 0U:
-//			Encoder_DeltaD_CalibrateQuadratureReference(&p_motor->Encoder);
-			Phase_ActuateDuty(&p_motor->Phase, 0U, duty, 0U);
-			state++;
-			break;
+			case 0U:
+	//			Encoder_DeltaD_CalibrateQuadratureReference(&p_motor->Encoder);
+				Phase_ActuateDuty(&p_motor->Phase, 0U, duty, 0U);
+				state++;
+				break;
 
-		case 1U:
-//			Encoder_DeltaD_CalibrateQuadratureDirectionPositive(&p_motor->Encoder);
-			Phase_Float(&p_motor->Phase);
-			state = 0;
-			isComplete = true;
-			break;
+			case 1U:
+	//			Encoder_DeltaD_CalibrateQuadratureDirectionPositive(&p_motor->Encoder);
+				Phase_Float(&p_motor->Phase);
+				state = 0;
+				isComplete = true;
+				break;
 
-		default:
-			break;
+			default:
+				break;
 
 		}
 	}
@@ -342,34 +368,6 @@ bool Motor_CalibrateHall(Motor_T * p_motor)
 			isComplete = true;
 			break;
 
-//		case 7U:
-//			Phase_Polar_Activate(&p_motor->Phase, 1, duty);
-//			state++;
-//			break;
-//		case 8U:
-//			Phase_Polar_Activate(&p_motor->Phase, 2, duty);
-//			state++;
-//			break;
-//		case 9U:
-//			Phase_Polar_Activate(&p_motor->Phase, 3, duty);
-//			state++;
-//			break;
-//		case 10U:
-//			Phase_Polar_Activate(&p_motor->Phase, 4, duty);
-//			state++;
-//			break;
-//		case 11U:
-//			Phase_Polar_Activate(&p_motor->Phase, 5, duty);
-//			state++;
-//			break;
-//		case 12U:
-//			Phase_Polar_Activate(&p_motor->Phase, 6, duty);
-//			state++;
-//			break;
-//		case 13U:
-//			state = 0U;
-//			isComplete = true;
-//			break;
 		default:
 			break;
 		}
@@ -395,22 +393,12 @@ void Motor_SetUserCmd(Motor_T * p_motor, uint16_t userCommand)
 	p_motor->UserCmd = userCommand;
 }
 
-//int32_t Motor_CalcRampIncIndex(Motor_T * p_motor, uint32_t * p_index)
-//{
-//	return Linear_Ramp_CalcTarget_IncIndex(&p_motor->Ramp, p_index, 1U);
-//}
-
 void Motor_ProcRamp(Motor_T * p_motor) // input voltage/speed cmd
 {
 	p_motor->RampCmd = Linear_Ramp_CalcTargetIncIndex(&p_motor->Ramp, &p_motor->RampIndex, 1U);
 }
 
-void Motor_SetRamp(Motor_T * p_motor, int32_t accelerationSigned)
-{
-
-}
-
-void Motor_SetRampThrottle(Motor_T * p_motor, uint16_t acceleration)
+void Motor_SetRampUp(Motor_T * p_motor, uint16_t acceleration)
 {
 //	Motor_SetUserCmd(p_motor, acceration);
 	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE || p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
@@ -440,11 +428,11 @@ void Motor_SetRampThrottle(Motor_T * p_motor, uint16_t acceleration)
 //			Linear_Ramp_Init_Acceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, p_motor->UserCmd, -(int32_t)p_motor->UserCmd);
 //		}
 	}
+
 	p_motor->RampIndex = 0;
 }
 
-//ramp brake
-void Motor_SetRampBrake(Motor_T * p_motor, uint16_t deceleration)
+void Motor_SetRampDown(Motor_T * p_motor, uint16_t deceleration)
 {
 
 
@@ -462,9 +450,14 @@ void Motor_SetRampBrake(Motor_T * p_motor, uint16_t deceleration)
 //		Linear_Ramp_Init_Acceleration(&p_motor->Ramp, 20000U, p_motor->VPwm, 0, -(int32_t)p_motor->UserCmd);
 		Linear_Ramp_Init_Acceleration(&p_motor->Ramp, 20000U, p_motor->RampCmd, 0, -(int32_t)p_motor->UserCmd);
 	}
+
 	p_motor->RampIndex = 0;
 }
 
+void Motor_SetRamp(Motor_T * p_motor, int32_t accelerationSigned)
+{
+
+}
 
 /*
  * Speed PID Feedback Loop
@@ -482,6 +475,46 @@ void Motor_PollSpeedFeedbackLoop(Motor_T * p_motor)
 	{
 		Motor_ProcSpeedFeedbackLoop(p_motor);
 	}
+}
+
+//split motor state version and controvar verions
+void Motor_ProcControlVariable(Motor_T * p_motor)
+{
+	uint32_t debug;
+	switch (p_motor->Parameters.ControlMode)
+	{
+//	case MOTOR_CONTROL_MODE_OPEN_LOOP:
+//		p_motor->VPwm = p_motor->UserCmd / 4U;
+//		break;
+
+	case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:
+		if (p_motor->IBus_Frac16 > (58982U))
+		{
+			p_motor->VPwm = p_motor->VPwm - ((p_motor->IBus_Frac16 - 58982U) * p_motor->VPwm >> 16U);
+			//proc constant current pid, set integral term to vpwm.
+		}
+		else
+		{
+			p_motor->VPwm = p_motor->RampCmd;
+		}
+		break;
+
+	case MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ:
+		//p_motor->VPwm = p_motor->RampCmd * p_motor->Speed_RPM * p_motor->VRpmGain;
+		break;
+
+	case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:
+		Motor_PollSpeedFeedbackLoop(p_motor);
+		break;
+
+	case MOTOR_CONTROL_MODE_CONSTANT_CURRENT:
+
+		break;
+
+	default:
+		break;
+	}
+
 }
 
 //static inline void Motor_SetBrakeRegenOptimal(Motor_T * p_motor)
@@ -536,45 +569,7 @@ void Motor_PollSpeedFeedbackLoop(Motor_T * p_motor)
 //
 //}
 
-//split motor state version and controvar verions
-void Motor_ProcControlVariable(Motor_T * p_motor)
-{
-	uint32_t debug;
-	switch (p_motor->Parameters.ControlMode)
-	{
-//	case MOTOR_CONTROL_MODE_OPEN_LOOP:
-//		p_motor->VPwm = p_motor->UserCmd / 4U;
-//		break;
 
-	case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:
-		if (p_motor->IBus_Frac16 > (58982U))
-		{
-			p_motor->VPwm = p_motor->VPwm - ((p_motor->IBus_Frac16 - 58982U) * p_motor->VPwm >> 16U);
-			//proc constant current pid, set integral term to vpwm.
-		}
-		else
-		{
-			p_motor->VPwm = p_motor->RampCmd;
-		}
-		break;
-
-	case MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ:
-		//p_motor->VPwm = p_motor->RampCmd * p_motor->Speed_RPM * p_motor->VRpmGain;
-		break;
-
-	case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:
-		Motor_PollSpeedFeedbackLoop(p_motor);
-		break;
-
-	case MOTOR_CONTROL_MODE_CONSTANT_CURRENT:
-
-		break;
-
-	default:
-		break;
-	}
-
-}
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

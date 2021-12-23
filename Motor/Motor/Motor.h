@@ -31,15 +31,10 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
-
-
-//#include "HAL_Motor.h"
 #include "Config.h"
 
 #include "MotorAnalog.h"
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
-
-
 
 #include "Transducer/Phase/Phase.h"
 #include "Transducer/Hall/Hall.h"
@@ -55,7 +50,6 @@
 
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/Timer/Timer.h"
-
 
 #include "Math/Q/Q.h"
 #include "Math/Linear/Linear_ADC.h"
@@ -513,41 +507,13 @@ static inline void Motor_CaptureSpeed(Motor_T * p_motor)
 //	}
 }
 
-
 static inline void Motor_PollAnalogStartAll(Motor_T * p_motor)
 {
 	if (Timer_Poll(&p_motor->MillisTimer) == true)
 	{
 //		MotorAnalog_EnqueueIdle(p_motor);
-
-//		HAL_Motor_EnqueueConversionIdle(p_motor);
 	}
 }
-
-
-
-#include "Utility/Debug/Debug.h"
-
-
-static inline void Motor_CaptureIBusIa(Motor_T * p_motor)
-{
-	//Filter here if needed
-	p_motor->IBus_Frac16 = Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIa,  p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_IA]);
-//	p_motor->IBus_ADCU  Filter_MovAvg(&p_motor->FilterIa, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA]);
-}
-
-static inline void Motor_CaptureIBusIb(Motor_T * p_motor)
-{
-	p_motor->IBus_Frac16 = Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIb, p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_IB]);
-	Debug_CaptureElapsed(2);
-}
-
-static inline void Motor_CaptureIBusIc(Motor_T * p_motor)
-{
-	p_motor->IBus_Frac16 = Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIc, p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_IC]);
-}
-
-
 
 /*******************************************************************************/
 /*!
@@ -565,12 +531,20 @@ static inline void Motor_Float(Motor_T * p_motor)
 	Phase_Float(&p_motor->Phase);
 }
 
-
+/*******************************************************************************/
+/*!
+	Extern
+*/
+/*******************************************************************************/
 // todo monitor heat functions
 extern void Motor_Init(Motor_T * p_motor);
 
-//extern void Motor_StartAlign(Motor_T * p_motor);
-//extern void Motor_OnBlock(Motor_T * p_motor);
+/*
+ * Referenced by Analog
+ */
+void Motor_CaptureIBusIa(Motor_T * p_motor);
+void Motor_CaptureIBusIb(Motor_T * p_motor);
+void Motor_CaptureIBusIc(Motor_T * p_motor);
 
 /*
  * Referenced by State Machine
@@ -581,5 +555,7 @@ extern void Motor_SetCalibrationStateEncoder(Motor_T * p_motor);
 extern bool Motor_CalibrateAdc(Motor_T * p_motor);
 extern bool Motor_CalibrateHall(Motor_T * p_motor);
 extern bool Motor_CalibrateEncoder(Motor_T * p_motor);
+
+//extern void Motor_StartAlign(Motor_T * p_motor);
 
 #endif

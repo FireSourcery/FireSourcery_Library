@@ -136,15 +136,15 @@ static inline void MapMotorSixStepBemfPhase(Motor_T * p_motor)
 /*
  *  Once per commutation, control mode only
  */
-static inline void ActivateMotorSixStepPhaseState(Motor_T * p_motor)
+static inline void ActivateMotorSixStepPhaseSwitch(Motor_T * p_motor)
 {
  	switch (p_motor->CommutationPhase)
 	{
 		case MOTOR_PHASE_ERROR_0: 	break;
-		case MOTOR_PHASE_AC: Phase_Polar_ActivateAC(&p_motor->Phase, p_motor->VPwm); break;
+		case MOTOR_PHASE_AC: Phase_Polar_ActivateAC(&p_motor->Phase, p_motor->VPwm); break; //todo chnage to switch only
 		case MOTOR_PHASE_BC: Phase_Polar_ActivateBC(&p_motor->Phase, p_motor->VPwm); break;
 		case MOTOR_PHASE_BA: Phase_Polar_ActivateBA(&p_motor->Phase, p_motor->VPwm); break;
-		case MOTOR_PHASE_CA: Phase_Polar_ActivateBA(&p_motor->Phase, p_motor->VPwm); break;
+		case MOTOR_PHASE_CA: Phase_Polar_ActivateCA(&p_motor->Phase, p_motor->VPwm); break;
 		case MOTOR_PHASE_CB: Phase_Polar_ActivateCB(&p_motor->Phase, p_motor->VPwm); break;
 		case MOTOR_PHASE_AB: Phase_Polar_ActivateAB(&p_motor->Phase, p_motor->VPwm); break;
 		case MOTOR_PHASE_ERROR_7: 	break;
@@ -174,7 +174,7 @@ static inline void ActivateMotorSixStepPhaseDuty(Motor_T * p_motor)
 /*
  * All cases
  */
-static inline void ActivateMotorSixStepPhaseAdc(Motor_T * p_motor)
+static inline void ActivateMotorSixStepAnalog(Motor_T * p_motor)
 {
 	if (BEMF_CheckBlankTime(&p_motor->Bemf) == true)
 	{
@@ -316,10 +316,10 @@ static inline void Motor_SixStep_ProcPhaseControl(Motor_T * p_motor, Motor_Senso
 
 	if (PollMotorSixStepCommutation(p_motor, liveSensorMode) == true)
 	{
-		ActivateMotorSixStepPhaseState(p_motor);
+		ActivateMotorSixStepPhaseSwitch(p_motor);
 	}
 
-	ActivateMotorSixStepPhaseAdc(p_motor);
+//	ActivateMotorSixStepAnalog(p_motor);
 
 	if (liveSensorMode != MOTOR_SENSOR_MODE_OPEN_LOOP)
 	{
@@ -372,7 +372,7 @@ static inline void Motor_SixStep_StartPhaseControl(Motor_T * p_motor, Motor_Sens
 static inline void Motor_SixStep_ProcPhaseObserve(Motor_T * p_motor, Motor_SensorMode_T liveSensorMode)
 {
 	PollMotorSixStepCommutation(p_motor, liveSensorMode);
-	ActivateMotorSixStepPhaseAdc(p_motor);
+	ActivateMotorSixStepAnalog(p_motor);
 }
 
 static inline void Motor_SixStep_StartPhaseObserve(Motor_T * p_motor)

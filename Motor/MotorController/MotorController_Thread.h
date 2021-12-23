@@ -66,7 +66,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 //		if(p_controller->Parameters.AnalogUserEnable == true)
 		{
 			MotAnalogUser_CaptureInput(&p_controller->AnalogUser);
-			MotAnalogUser_Motor_Write(&p_controller->AnalogUser, p_controller->CONFIG.P_MOTORS, p_controller->CONFIG.MOTOR_COUNT);
+			//move to state machine
+//			MotAnalogUser_Motor_Write(&p_controller->AnalogUser, p_controller->CONFIG.P_MOTORS, p_controller->CONFIG.MOTOR_COUNT);
 
 			AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_ANALOG_USER);
 			count++;
@@ -88,7 +89,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 	if (Timer_Poll(&p_controller->TimerMillis10) == true) 	//Low Freq, Low Priority 10 ms, Main
 	{
 //		Shell_Proc(&p_controller->MotShell);
-		Blinky_Proc(&p_controller->Buzzer);
+//		Blinky_Proc(&p_controller->Buzzer);
 	}
 
 	if (Timer_Poll(&p_controller->TimerSeconds) == true)

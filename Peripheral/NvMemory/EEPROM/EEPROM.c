@@ -58,6 +58,8 @@ static void EepromStartCmdWrite(void * p_hal, const uint8_t * p_cmdDest, const u
 	{
 		HAL_EEPROM_StartCmdWriteUnit(p_hal, p_cmdDest, p_cmdData);
 	}
+
+	/* else finalizeOp will return no error and continue to next  */
 }
 
 static inline NvMemory_Status_T EepromFinalizeWrite(EEPROM_T * p_eeprom)
@@ -82,9 +84,9 @@ static inline NvMemory_Status_T EepromFinalizeWrite(EEPROM_T * p_eeprom)
 //			status = NV_MEMORY_STATUS_START_VERIFY;
 //		}
 //		else
-//		{
-//			status = NV_MEMORY_STATUS_SUCCESS;
-//		}
+		{
+			status = NV_MEMORY_STATUS_SUCCESS;
+		}
 	}
 
 	return status;

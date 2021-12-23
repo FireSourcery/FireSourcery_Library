@@ -35,11 +35,58 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
-
-
 volatile uint16_t BemfDebug[300];
 volatile uint16_t BemfDebugIndex = 0;
+
+void BEMF_Init(BEMF_T * p_bemf)
+{
+	p_bemf->PhaseAdvanceTime = 0u;
+	p_bemf->ZeroCrossingThreshold_ADCU = 0u;
+	p_bemf->SampleMode = BEMF_SAMPLE_MODE_PWM_ON;
+//	p_bemf->p_VPhaseObserve_ADCU = p_phaseA;
+//	p_bemf->PhaseObserveId = BEMF_PHASE_A;
+	p_bemf->Mode = BEMF_MODE_PASSIVE;
+}
+
+void BEMF_SetSampleMode(BEMF_T * p_bemf, BEMF_SampleMode_T mode)
+{
+ 	p_bemf->SampleMode = mode;
+
+	switch(p_bemf->SampleMode)
+	{
+	//	case BEMF_SAMPLE_MODE_PWM_BIPOLAR:		break;
+		case BEMF_SAMPLE_MODE_PWM_ON:  p_bemf->ZeroCrossingThreshold_ADCU = 0; break;
+	//	case BEMF_SAMPLE_MODE_PWM_OFF:  		break;
+	//	case BEMF_SAMPLE_MODE_PWM_ON_OFF:  		break;
+		default:	break;
+	}
+}
+
+void BEMF_SetObserveMode(BEMF_T * p_bemf, BEMF_Mode_T mode)
+{
+ 	p_bemf->Mode = mode;
+	p_bemf->ZeroCrossingCounter = 0U; //reset consecutive zcd counter
+}
+
+//calc speed-> calc advance angle
+void BEMF_SetAdvanceAngleTime(BEMF_T * p_bemf, uint16_t angle_frac16)
+{
+//	p_bemf->PhaseAdvanceTime = t*angle_frac16>>15;
+}
+
+//void BEMF_ResetTimer(BEMF_T * p_bemf)
+//{
+//	p_bemf->TimeCommutationStart = 0U;
+//}
+
+//void BEMF_Reset(BEMF_T * p_bemf)
+//{
+////	p_bemf->IsReliable = 0U;
+//	p_bemf->ZeroCrossingCounter = 0U;
+//	//map phase if module maps phase
+//}
+
+
 
 //typedef enum
 //{
@@ -110,51 +157,3 @@ volatile uint16_t BemfDebugIndex = 0;
 //.ON_COMPLETE 	= 0U,
 //.OPTIONS =		{.HwTriggerConversion = 0U, .ContinuousConversion = 1U, .CaptureLocalPeak = 1U },
 //};
-
-void BEMF_Init(BEMF_T * p_bemf)
-{
-	p_bemf->PhaseAdvanceTime = 0u;
-	p_bemf->ZeroCrossingThreshold_ADCU = 0u;
-	p_bemf->SampleMode = BEMF_SAMPLE_MODE_PWM_ON;
-//	p_bemf->p_VPhaseObserve_ADCU = p_phaseA;
-//	p_bemf->PhaseObserveId = BEMF_PHASE_A;
-	p_bemf->Mode = BEMF_MODE_PASSIVE;
-}
-
-void BEMF_SetSampleMode(BEMF_T * p_bemf, BEMF_SampleMode_T mode)
-{
- 	p_bemf->SampleMode = mode;
-
-	switch(p_bemf->SampleMode)
-	{
-//	case BEMF_SAMPLE_MODE_PWM_BIPOLAR:		break;
-	case BEMF_SAMPLE_MODE_PWM_ON:  p_bemf->ZeroCrossingThreshold_ADCU = 0; break;
-//	case BEMF_SAMPLE_MODE_PWM_OFF:  		break;
-//	case BEMF_SAMPLE_MODE_PWM_ON_OFF:  		break;
-	default:	break;
-	}
-}
-
-void BEMF_SetObserveMode(BEMF_T * p_bemf, BEMF_Mode_T mode)
-{
- 	p_bemf->Mode = mode;
-	p_bemf->ZeroCrossingCounter = 0U; //reset consecutive zcd counter
-}
-
-//calc speed-> calc advance angle
-void BEMF_SetAdvanceAngleTime(BEMF_T * p_bemf, uint16_t angle_frac16)
-{
-//	p_bemf->PhaseAdvanceTime = t*angle_frac16>>15;
-}
-
-//void BEMF_ResetTimer(BEMF_T * p_bemf)
-//{
-//	p_bemf->TimeCommutationStart = 0U;
-//}
-
-//void BEMF_Reset(BEMF_T * p_bemf)
-//{
-////	p_bemf->IsReliable = 0U;
-//	p_bemf->ZeroCrossingCounter = 0U;
-//	//map phase if module maps phase
-//}

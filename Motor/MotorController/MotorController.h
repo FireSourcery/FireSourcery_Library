@@ -165,6 +165,20 @@ MotorController_T;
 //	}
 //}
 
+static inline void MotorUser_PollBrake(MotorController_T * p_motorController)
+{
+	p_motorController->CONFIG.P_MOTORS->Direction;
+	p_motorController->CONFIG.P_MOTORS[0].Direction;
+
+
+
+	p_motorController->CONFIG.P_MOTORS[1].Direction;
+
+	(*(p_motorController->CONFIG.P_MOTORS + 1U)).Direction;
+
+	(p_motorController->CONFIG.P_MOTORS + 1U)->Direction;
+}
+
 static inline Motor_T * MotorController_GetPtrMotor(MotorController_T * p_motorController, uint8_t motorIndex) {return &(p_motorController->CONFIG.P_MOTORS[motorIndex]);}
 
 

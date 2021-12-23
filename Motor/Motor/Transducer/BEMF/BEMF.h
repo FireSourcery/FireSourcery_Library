@@ -39,12 +39,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifdef CONFIG_BEMF_ADC_8
-	typedef uint8_t bemf_t;
-#elif defined(CONFIG_BEMF_ADC_16)
-	typedef uint16_t bemf_t;
-#endif
-
 typedef enum
 {
 	BEMF_SAMPLE_MODE_PWM_ON,
@@ -81,23 +75,14 @@ BEMF_PhaseId_T;
 
 typedef struct
 {
-	//	const HAL_BEMF_T * p_HAL_Bemf; //hw timer version
+	//	const HAL_uint16_t * p_HAL_Bemf; //hw timer version
 	//	uin32_t TimerFreq;
 	volatile const uint32_t * const P_TIMER; //sw timer, 59hr overflow using 20khz timer
 
-	//module may need to handle unit conversion if phase bemf and vbus use different resistor values
-	/*
-	 *	Phase-to-ground voltage. Phase voltage PWM On: VPhase == (3/2)VBemf + VPos/2
-	 */
-	volatile const bemf_t * const P_VPHASEA_ADCU;		/// User app provides pointer to ADC results. only valid during its non active phase.
-	volatile const bemf_t * const P_VPHASEB_ADCU;
-	volatile const bemf_t * const P_VPHASEC_ADCU;
-	volatile const bemf_t * const P_VPOS_ADCU;
-
-//	const AnalogN_Conversion_T CONVERSION_PHASE_A;
-//	const AnalogN_Conversion_T CONVERSION_PHASE_B;
-//	const AnalogN_Conversion_T CONVERSION_PHASE_C;
-	AnalogN_T * const P_ANALOG_N;
+	//	module may need to handle unit conversion if phase bemf and vbus use different resistor values
+	//	const AnalogN_Conversion_T CONVERSION_PHASE_A;
+	//	const AnalogN_Conversion_T CONVERSION_PHASE_B;
+	//	const AnalogN_Conversion_T CONVERSION_PHASE_C;
 }
 BEMF_Config_T;
 
@@ -105,30 +90,30 @@ typedef struct
 {
 	const BEMF_Config_T CONFIG;
 
-//	BEMF_Direction_T Direction;
 	BEMF_SampleMode_T SampleMode;
-	bemf_t ZeroCrossingThreshold_ADCU;		/// sensitivity offset
+	uint16_t ZeroCrossingThreshold_ADCU;		/// sensitivity offset
 
 	//uint16_t BlankTimeScalar;
 	//uint16_t UsePWMOnThreshold;			/// for mixed sample mode, use PWM On ZCD when PWM On cycle is above this time.
-	//uin16t_t DiodeDrop; 					//if no complementary pwm vd/2
+	//uin16t_t DiodeDrop; 					//	if no complementary pwm vd/2
 
-	BEMF_Mode_T Mode;						/// UseSensorlessCommutation //substate
+	//	BEMF_Direction_T Direction;
+	BEMF_Mode_T Mode;					/// substate
 	uint32_t TimeReferenceZero;			/// reference start time, commutation start in active mode
 	uint32_t TimeBlankPeriod;			/// Blank time after commutation. aka "demagnetization time".
 
 	const AnalogN_Conversion_T * p_ConversionPhase; /* Set once per commutation */
 
-	//phase sample, track prev for zcd
-	bemf_t VPhase_ADCU;					/// VPhase-to-Ground,Phase voltage PWM On: VPhase == (3/2)VBEMF + VPos/2
-	bemf_t VPhasePrev_ADCU;				///
+	//phase sample - user set from outside module, track prev for zcd
+	uint16_t VPos_ADCU;
+	uint16_t VPhase_ADCU;				/// Phase-to-ground voltage. Phase voltage PWM On: VPhase == (3/2)VBEMF + VPos/2
+	uint16_t VPhasePrev_ADCU;			///
 	uint32_t TimeVPhase;				/// sample time stamp, from TimerReferenceZero
 	uint32_t TimeVPhasePrev;			/// or use constant periodic sample time
 
 	//if save ZCD processed values
 //	volatile int16_t Emf_SignedADCU;				/// VPhase-to-neutral + 1/2 VBemf, ofset for ZCD , PWM On: (3/2)VBemf
 //	volatile int16_t EmfPrev_SignedADCU;			///
-
 
 	//ZCD runtime parameters
 	bool IsZeroCrossingDetectionComplete;
@@ -138,7 +123,8 @@ typedef struct
 	uint32_t TimeZeroCrossingDetect; 		/// Time between commutation and zero crossing, 30 degrees.
 	uint32_t TimeZeroCrossingPeriod; 		/// Time between 2 zero crossings, 60 degrees.
 	uint32_t ZeroCrossingCounter; 		///  consecutive zc
-	bemf_t VZeroCrossing_ADCU;
+//		uint32_t ZeroCrossingMissCounter; 		///  consecutive zc
+	uint16_t VZeroCrossing_ADCU;
 
 	//commutation timer
 	uint32_t TimePhasePeriod;
@@ -150,21 +136,59 @@ typedef struct
 }
 BEMF_T;
 
-#define BEMF_CONFIG(p_Timer, p_VPos_Adcu, p_VPhaseA_Adcu, p_VPhaseB_Adcu, p_VPhaseC_Adcu)	\
+#define BEMF_CONFIG(p_Timer)	\
 {														\
 	.CONFIG = 											\
 	{													\
 		.P_TIMER = p_Timer,								\
-		.P_VPOS_ADCU = p_VPos_Adcu,						\
-		.P_VPHASEA_ADCU = p_VPhaseA_Adcu,				\
-		.P_VPHASEB_ADCU = p_VPhaseB_Adcu,				\
-		.P_VPHASEC_ADCU = p_VPhaseC_Adcu				\
 	}													\
 }
 
 
 extern volatile uint16_t BemfDebug[300];
 extern volatile uint16_t BemfDebugIndex;
+
+/*
+	Set from outside, once per commutation
+ */
+static inline void BEMF_MapPhaseA(BEMF_T * p_bemf){	}//p_bemf->p_ConversionPhase = &p_bemf->CONFIG.CONVERSION_PHASE_A;}
+static inline void BEMF_MapPhaseB(BEMF_T * p_bemf){	}//p_bemf->p_ConversionPhase = &p_bemf->CONFIG.CONVERSION_PHASE_B;}
+static inline void BEMF_MapPhaseC(BEMF_T * p_bemf){	}//p_bemf->p_ConversionPhase = &p_bemf->CONFIG.CONVERSION_PHASE_C;}
+
+static inline void BEMF_MapRising(BEMF_T * p_bemf){p_bemf->IsBemfRising = true;}
+static inline void BEMF_MapFalling(BEMF_T * p_bemf){p_bemf->IsBemfRising = false;}
+
+static inline void BEMF_MapCwPhaseAC(BEMF_T * p_bemf){BEMF_MapPhaseB(p_bemf); p_bemf->IsBemfRising = false;}
+static inline void BEMF_MapCwPhaseBC(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf); p_bemf->IsBemfRising = true;}
+static inline void BEMF_MapCwPhaseBA(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p_bemf->IsBemfRising = false;}
+static inline void BEMF_MapCwPhaseCA(BEMF_T * p_bemf){BEMF_MapPhaseB(p_bemf); p_bemf->IsBemfRising = true;}
+static inline void BEMF_MapCwPhaseCB(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf); p_bemf->IsBemfRising = false;}
+static inline void BEMF_MapCwPhaseAB(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p_bemf->IsBemfRising = true;}
+
+static inline void BEMF_MapCcwPhaseAC(BEMF_T * p_bemf){BEMF_MapPhaseB(p_bemf); p_bemf->IsBemfRising = true;}
+static inline void BEMF_MapCcwPhaseBC(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf); p_bemf->IsBemfRising = false;}
+static inline void BEMF_MapCcwPhaseBA(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p_bemf->IsBemfRising = true;}
+static inline void BEMF_MapCcwPhaseCA(BEMF_T * p_bemf){BEMF_MapPhaseB(p_bemf); p_bemf->IsBemfRising = false;}
+static inline void BEMF_MapCcwPhaseCB(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf); p_bemf->IsBemfRising = true;}
+static inline void BEMF_MapCcwPhaseAB(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p_bemf->IsBemfRising = false;}
+
+/* Matched to motor Id */
+//typedef enum
+//{
+//	BEMF_PHASE_AC = 1U, /* CCW Map B Rising */
+//	BEMF_PHASE_BC = 2U,
+//	BEMF_PHASE_BA = 3U,
+//	BEMF_PHASE_CA = 4U,
+//	BEMF_PHASE_CB = 5U,
+//	BEMF_PHASE_AB = 6U,
+//
+//	BEMF_CCW_B_RISING = BEMF_PHASE_AC,
+//} BEMF_Phase_T;
+
+//static inline void Bemf_MapVPhase(BEMF_T * p_bemf, BEMF_Phase_T phase)
+//{
+
+//}
 
 /*
  * Call on Commutation
@@ -228,7 +252,7 @@ static inline bool BEMF_CheckBlankTime(BEMF_T * p_bemf)
 	return ((timeNew > p_bemf->TimeBlankPeriod) || (p_bemf->Mode == BEMF_MODE_PASSIVE));
 }
 
-//static inline void BEMF_ObservePhase(BEMF_T * p_bemf)
+//static inline void BEMF_PollStartAnalog(BEMF_T * p_bemf)
 //{
 //	if(BEMF_CheckBlankTime(p_bemf) == true)
 //	{
@@ -236,110 +260,6 @@ static inline bool BEMF_CheckBlankTime(BEMF_T * p_bemf)
 //	}
 //}
 
-
-/*
-	Set from outside, once per commutation
- */
-
-static inline void BEMF_MapPhaseA(BEMF_T * p_bemf){	}//p_bemf->p_ConversionPhase = &p_bemf->CONFIG.CONVERSION_PHASE_A;}
-static inline void BEMF_MapPhaseB(BEMF_T * p_bemf){	}//p_bemf->p_ConversionPhase = &p_bemf->CONFIG.CONVERSION_PHASE_B;}
-static inline void BEMF_MapPhaseC(BEMF_T * p_bemf){	}//p_bemf->p_ConversionPhase = &p_bemf->CONFIG.CONVERSION_PHASE_C;}
-//replace with direction
-//static inline void BEMF_MapBemfRising(BEMF_T * p_bemf){p_bemf->IsBemfRising = true;}
-//static inline void BEMF_MapBemfFalling(BEMF_T * p_bemf){p_bemf->IsBemfRising = false;}
-
-static inline void BEMF_MapCwPhaseAC(BEMF_T * p_bemf){BEMF_MapPhaseB(p_bemf); p_bemf->IsBemfRising = false;}
-static inline void BEMF_MapCwPhaseBC(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf); p_bemf->IsBemfRising = true;}
-static inline void BEMF_MapCwPhaseBA(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p_bemf->IsBemfRising = false;}
-static inline void BEMF_MapCwPhaseCA(BEMF_T * p_bemf){BEMF_MapPhaseB(p_bemf); p_bemf->IsBemfRising = true;}
-static inline void BEMF_MapCwPhaseCB(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf); p_bemf->IsBemfRising = false;}
-static inline void BEMF_MapCwPhaseAB(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p_bemf->IsBemfRising = true;}
-
-static inline void BEMF_MapCcwPhaseAC(BEMF_T * p_bemf){BEMF_MapPhaseB(p_bemf); p_bemf->IsBemfRising = true;}
-static inline void BEMF_MapCcwPhaseBC(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf); p_bemf->IsBemfRising = false;}
-static inline void BEMF_MapCcwPhaseBA(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p_bemf->IsBemfRising = true;}
-static inline void BEMF_MapCcwPhaseCA(BEMF_T * p_bemf){BEMF_MapPhaseB(p_bemf); p_bemf->IsBemfRising = false;}
-static inline void BEMF_MapCcwPhaseCB(BEMF_T * p_bemf){BEMF_MapPhaseA(p_bemf); p_bemf->IsBemfRising = true;}
-static inline void BEMF_MapCcwPhaseAB(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p_bemf->IsBemfRising = false;}
-
-/* Matched to motor Id */
-//typedef enum
-//{
-//	BEMF_PHASE_AC = 1U, /* CCW Map B Rising */
-//	BEMF_PHASE_BC = 2U,
-//	BEMF_PHASE_BA = 3U,
-//	BEMF_PHASE_CA = 4U,
-//	BEMF_PHASE_CB = 5U,
-//	BEMF_PHASE_AB = 6U,
-//
-//	BEMF_CCW_B_RISING = BEMF_PHASE_AC,
-//} BEMF_Phase_T;
-
-//static inline void Bemf_MapVPhase(BEMF_T * p_bemf, BEMF_Phase_T phase)
-//{
-
-// 	switch (phase)
-//	{
-//	case BEMF_PHASE_AC: //Phase AC
-//		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_2; BEMF_MapCcwPhaseAC(&p_motor->Bemf);}
-//		else											{p_motor->NextSector = MOTOR_SECTOR_ID_6; BEMF_MapCwPhaseAC(&p_motor->Bemf);}
-//
-//		p_motor->p_BemfConversionActive = &p_motor->CONFIG.CONVERSION_BEMF_B; //sets as conversion set for commutation cycle
-//		break;
-//
-//	case BEMF_PHASE_BC:
-//		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_3; BEMF_MapCcwPhaseBC(&p_motor->Bemf);}
-//		else											{p_motor->NextSector = MOTOR_SECTOR_ID_1; BEMF_MapCwPhaseBC(&p_motor->Bemf);}
-//
-//		p_motor->p_BemfConversionActive = &p_motor->CONFIG.CONVERSION_BEMF_A;
-//		break;
-//
-//	case MOTOR_PHASE_BA:
-//		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_4; BEMF_MapCcwPhaseBA(&p_motor->Bemf);}
-//		else											{p_motor->NextSector = MOTOR_SECTOR_ID_2; BEMF_MapCwPhaseBA(&p_motor->Bemf);}
-//
-//		p_motor->p_BemfConversionActive = &p_motor->CONFIG.CONVERSION_BEMF_C;
-//		break;
-//
-//	case MOTOR_PHASE_CA:
-//		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_5; BEMF_MapCcwPhaseCA(&p_motor->Bemf);}
-//		else											{p_motor->NextSector = MOTOR_SECTOR_ID_3; BEMF_MapCwPhaseCA(&p_motor->Bemf);}
-//
-//		p_motor->p_BemfConversionActive = &p_motor->CONFIG.CONVERSION_BEMF_B;
-//		break;
-//
-//	case MOTOR_PHASE_CB:
-//		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_6; BEMF_MapCcwPhaseCB(&p_motor->Bemf);}
-//		else											{p_motor->NextSector = MOTOR_SECTOR_ID_4; BEMF_MapCwPhaseCB(&p_motor->Bemf);}
-//
-//		p_motor->p_BemfConversionActive = &p_motor->CONFIG.CONVERSION_BEMF_A;
-//		break;
-//
-//	case MOTOR_PHASE_AB:
-//		if (p_motor->Direction == MOTOR_DIRECTION_CCW) 	{p_motor->NextSector = MOTOR_SECTOR_ID_1; BEMF_MapCcwPhaseAB(&p_motor->Bemf);}
-//		else											{p_motor->NextSector = MOTOR_SECTOR_ID_5; BEMF_MapCwPhaseAB(&p_motor->Bemf);}
-//
-//		p_motor->p_BemfConversionActive = &p_motor->CONFIG.CONVERSION_BEMF_C;
-//		break;
-//
-//	case MOTOR_SECTOR_ID_7:
-//		//set error
-//		break;
-//
-//	default:
-//		break;
-//	}
-
-// 	alternatively
-//	if (p_motor->Direction == MOTOR_DIRECTION_CCW)
-//	{
-//		p_motor->NextSector = (p_motor->CommutationSector + 1U) % 6U;
-//	}
-//	else
-//	{
-//		p_motor->NextSector = (p_motor->CommutationSector - 1U) % 6U;
-//		p_motor->Bemf.IsBemfRising = !p_motor->Bev
-//}
 
 /*
 	ZCD Bemf Capture
@@ -350,16 +270,15 @@ static inline void BEMF_MapCcwPhaseAB(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p
 
 	BEMF_SAMPLE_MODE_PWM_ON -> need sufficient duty cycle to determine, 3/2 * bemf + vPos/2
 	BEMF_SAMPLE_MODE_PWM_OFF -> Must subtract noise or use threshold. no 3/2 factor in this case
-
  */
-static inline void Bemf_CaptureVPhase(BEMF_T * p_bemf, uint32_t vPhaseObserve)
+static inline void Bemf_CaptureVPhase(BEMF_T * p_bemf, uint32_t vPhaseObserve_ADCU)
 {
 	//TimeEmf Delta should be 50us when using 20khz pwm
 	p_bemf->TimeVPhasePrev 	= p_bemf->TimeVPhase;
 	p_bemf->TimeVPhase 		= *p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero;
 
 	p_bemf->VPhasePrev_ADCU 	= p_bemf->VPhase_ADCU;
-	p_bemf->VPhase_ADCU 		= (vPhaseObserve + p_bemf->VPhase_ADCU) / 2U;
+	p_bemf->VPhase_ADCU 		= (vPhaseObserve_ADCU + p_bemf->VPhase_ADCU) / 2U;
 
 	BemfDebug[BemfDebugIndex] = p_bemf->VPhase_ADCU;
 	if(BemfDebugIndex < 300)
@@ -368,15 +287,21 @@ static inline void Bemf_CaptureVPhase(BEMF_T * p_bemf, uint32_t vPhaseObserve)
 	}
 }
 
+/*
+ * For case ADC start does not check blank time
+ */
+static inline void Bemf_PollCaptureVPhase(BEMF_T * p_bemf, uint32_t vPhaseObserve_ADCU)
+{
+	if(BEMF_CheckBlankTime(p_bemf) == true)
+	{
+		Bemf_CaptureVPhase(p_bemf, vPhaseObserve_ADCU);
+	}
+}
 
-//at begin of every pwm, if not using analog capture peak
-//static inline void BEMF_ResetCaptureVPhase(BEMF_T * p_bemf)
-//{
-//	p_bemf->VPhasePrev_ADCU = 0;
-//	p_bemf->VPhase_ADCU = 0;
-//}
-
-
+static inline void Bemf_CaptureVPos(BEMF_T * p_bemf, uint32_t vPos_ADCU)
+{
+ 	p_bemf->VPos_ADCU 	= vPos_ADCU;
+}
 
 
 /*
@@ -400,7 +325,7 @@ static inline bool ProcZeroCrossingDetection(BEMF_T * p_bemf)
 		{
 //		case BEMF_SAMPLE_MODE_PWM_BIPOLAR: 	vZero = (int32_t)(*p_bemf->p_VPhaseObserve_ADCU) - ((int32_t)(*p_bemf->CONFIG.P_VPOS_ADCU) / 2); break;
 //		case BEMF_SAMPLE_MODE_PWM_MIXED: 			break;
-		case BEMF_SAMPLE_MODE_PWM_ON: 		vZero = ((int32_t)(*p_bemf->CONFIG.P_VPOS_ADCU) / 2U) + (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
+		case BEMF_SAMPLE_MODE_PWM_ON: 		vZero = ((int32_t)p_bemf->VPos_ADCU / 2U) + (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
 		case BEMF_SAMPLE_MODE_PWM_OFF: 		vZero = (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
 		default: vZero = (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
 		}
@@ -493,7 +418,7 @@ static inline uint32_t BEMF_GetZeroCrossingCounter(BEMF_T * p_bemf)
 static inline uint16_t BEMF_GetTimePhasePeriod(BEMF_T * p_bemf){return p_bemf->TimePhasePeriod;}
 
 /*
-	adcu
+	adcu, convert to phase-to-neutral
  */
 static inline int16_t ConvertVPhaseToVBemf(BEMF_T * p_bemf, uint32_t emf)
 {
@@ -504,7 +429,7 @@ static inline int16_t ConvertVPhaseToVBemf(BEMF_T * p_bemf, uint32_t emf)
 		switch(p_bemf->SampleMode)
 		{
 //			case BEMF_SAMPLE_MODE_PWM_BIPOLAR: 	bemf = emf;				break; //todo
-			case BEMF_SAMPLE_MODE_PWM_ON:  		bemf = emf * 2U / 3U - (*p_bemf->CONFIG.P_VPOS_ADCU) / 2U ; 	break;
+			case BEMF_SAMPLE_MODE_PWM_ON:  		bemf = emf * 2U / 3U - p_bemf->VPos_ADCU / 2U ; 	break;
 			case BEMF_SAMPLE_MODE_PWM_OFF: 		bemf = emf;				break;
 			default:	break;
 		}

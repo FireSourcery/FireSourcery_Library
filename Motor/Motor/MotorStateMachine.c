@@ -45,6 +45,12 @@ static const StateMachine_State_T MOTOR_STATE_FREEWHEEL;
 static const StateMachine_State_T MOTOR_STATE_CALIBRATION;
 static const StateMachine_State_T MOTOR_STATE_FAULT;
 
+//Temp todo
+#include "Motor/MotorController/MotorController.h"
+#include "Motor/Utility/MotAnalogUser/MotAnalogUser.h"
+extern void MotAnalogUser_Motor_Write(const MotAnalogUser_T * p_user, Motor_T * p_motorDest, uint8_t motorCount);
+extern MotorController_T MotorControllerMain;
+
 /******************************************************************************/
 /*!
     @brief
@@ -124,6 +130,11 @@ static void StopEntry(Motor_T * p_motor)
 
 static void StopProc(Motor_T * p_motor)
 {
+	if (Timer_Poll(&p_motor->MillisTimer) == true)
+	{
+		MotAnalogUser_Motor_Write(&MotorControllerMain.AnalogUser, p_motor, 1);
+	}
+
 	if (p_motor->IsActiveControl == true)
 	{
 //		if (Motor_GetAlignMode(p_motor) == MOTOR_ALIGN_MODE_DISABLE)
@@ -330,8 +341,6 @@ static const StateMachine_State_T MOTOR_STATE_OPEN_LOOP =
 /******************************************************************************/
 static void RunEntry(Motor_T * p_motor)
 {
-//	Motor_SetRamp(p_motor);
-
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
 		Motor_FOC_StartAngleControl(p_motor);
@@ -354,6 +363,12 @@ static void RunEntry(Motor_T * p_motor)
 
 static void RunProc(Motor_T * p_motor)
 {
+	if (Timer_Poll(&p_motor->MillisTimer) == true)
+	{
+		MotAnalogUser_Motor_Write(&MotorControllerMain.AnalogUser, p_motor, 1);
+	}
+
+
 	if (p_motor->IsActiveControl == false)
 	{
 		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_FREEWHEEL);
@@ -426,6 +441,11 @@ static void FreewheelEntry(Motor_T * p_motor)
 
 static void FreewheelProc(Motor_T * p_motor)
 {
+	if (Timer_Poll(&p_motor->MillisTimer) == true)
+	{
+		MotAnalogUser_Motor_Write(&MotorControllerMain.AnalogUser, p_motor, 1);
+	}
+
 	if (Motor_GetSpeed(p_motor) == 0U)
 	{
 		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_STOP);

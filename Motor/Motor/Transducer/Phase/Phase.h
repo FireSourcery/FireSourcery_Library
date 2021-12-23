@@ -424,6 +424,19 @@ static inline void Phase_Polar_Activate(Phase_T * p_phase, Phase_Id_T phaseId, u
 //
 //}
 
+//static inline void Phase_ActuateSwitch(const Phase_T * p_phase, Phase_Id_T id){}
+//static inline void Phase_ActuateSwitch(const Phase_T * p_phase, bool a, bool b, bool c)
+//{
+//
+//}
+
+//static inline void Phase_ActuateInvertPolarity(const Phase_T * p_phase, bool isInvA, bool isInvB, bool isInvC)
+//{
+//
+//}
+
+
+
 //activate  pwm only
 //static inline void Phase_Polar_ActivateDuty(Phase_T * p_phase, uint16_t pwmDuty)
 //{

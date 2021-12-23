@@ -22,48 +22,7 @@
 	  uint32_t * HallTimerDelta;
 	  uint32_t ISRCount;
 
-/*
-	Actuate arguments immediately
- */
-/*
-	Duty in ticks
- */
-static inline void ActuateDutyCycle_Ticks(const Phase_T * p_phase, uint32_t pwmDutyA, uint32_t pwmDutyB, uint32_t pwmDutyC)
-{
-//#if  	defined(CONFIG_PHASE_PWM)
-	PWM_WriteDuty(p_phase->p_PwmA, pwmDutyA);	PWM_WriteDuty(p_phase->p_PwmB, pwmDutyB);	PWM_WriteDuty(p_phase->p_PwmC, pwmDutyC);
-//#elif 	defined(CONFIG_PHASE_HAL_PHASE)
-//	HAL_Phase_WriteDuty(p_phase->p_HAL_Phase, pwmDutyA, pwmDutyB, pwmDutyC);
-//#endif
-}
 
-static inline void Phase_ActuateState(const Phase_T * p_phase, Phase_Id_T id)
-static inline void Phase_ActuateState(const Phase_T * p_phase, bool a, bool b, bool c)
-{
-//#if  	defined(CONFIG_PHASE_PWM)
-	PWM_WriteState(p_phase->p_PwmA, a);
-	PWM_WriteState(p_phase->p_PwmB, b);
-	PWM_WriteState(p_phase->p_PwmC, c);
-//	#ifdef CONFIG_PHASE_HAL_EXTERNAL_SWITCH
-		Pin_WriteState(p_phase->p_PinSwitchA, a);
-		Pin_WriteState(p_phase->p_PinSwitchB, b);
-		Pin_WriteState(p_phase->p_PinSwitchC, c);
-//	#endif
-//#elif 	defined(CONFIG_PHASE_HAL_PHASE)
-//	HAL_Phase_WriteState(p_phase->p_HAL_Phase, a, b, c);
-//#endif
-}
-
-static inline void Phase_ActuateInvertPolarity(const Phase_T * p_phase, bool isInvA, bool isInvB, bool isInvC)
-{
-#if  	defined(CONFIG_PHASE_PWM)
-	PWM_WriteInvertPolarity(p_phase->p_PwmA, isInvA);
-	PWM_WriteInvertPolarity(p_phase->p_PwmB, isInvB);
-	PWM_WriteInvertPolarity(p_phase->p_PwmC, isInvC);
-#elif 	defined(CONFIG_PHASE_HAL_PHASE)
-	HAL_Phase_WriteInvertPolarity(p_phase->p_HAL_Phase, isInvA, isInvB, isInvC);
-#endif
-}
 
 /*
 	Actuate buffered data
@@ -87,7 +46,6 @@ static inline void Phase_Actuate(const Phase_T * p_phase)
 	HAL_Phase_WriteState(p_phase->p_HAL_Phase, p_phase->StateA, p_phase->StateB, p_phase->StateC);
 #endif
 }
-
 
 
 /*

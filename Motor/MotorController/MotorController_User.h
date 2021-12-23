@@ -40,7 +40,7 @@
 
 #include <stdint.h>
 
-static inline uint16_t MotorController_User_GetThrottle_Adcu(MotorController_T * p_motorController)	{return p_motorController->AnalogResults[MOTOR_ANALOG_CHANNEL_THROTTLE];}
+static inline uint16_t MotorController_User_GetThrottle_Adcu(MotorController_T * p_motorController)		{return p_motorController->AnalogResults[MOTOR_ANALOG_CHANNEL_THROTTLE];}
 static inline uint16_t MotorController_User_GetThrottle_Adcu8(MotorController_T * p_motorController)	{return MotorController_User_GetThrottle_Adcu(p_motorController) >> (CONFIG_MOTOR_CONTROLLER_ADCU_BITS_N - 8U);}
 static inline uint16_t MotorController_User_GetThrottle_Frac16(MotorController_T * p_motorController)	{return p_motorController->AnalogUser.InputValueThrottle;}
 static inline uint16_t MotorController_User_GetThrottle_Frac8(MotorController_T * p_motorController)	{return MotorController_User_GetThrottle_Frac16(p_motorController) >> 8U;}

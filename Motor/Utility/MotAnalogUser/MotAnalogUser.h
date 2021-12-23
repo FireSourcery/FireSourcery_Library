@@ -62,15 +62,6 @@ MotAnalogUser_Config_T;
 
 typedef struct
 {
-	//.HAL_PIN_METER 	= {.P_GPIO_BASE = MTR_OUT_PORT,		.GPIO_PIN_MASK = (uint32_t)1U << MTR_OUT_PIN,	},
-	//.HAL_PIN_COIL	 	= {.P_GPIO_BASE = COIL_OUT_PORT,	.GPIO_PIN_MASK = (uint32_t)1U << COIL_OUT_PIN,	},
-	//.HAL_PIN_AUX1	 	= {.P_GPIO_BASE = ECO_IN_PORT,		.GPIO_PIN_MASK = (uint32_t)1U << ECO_IN_PIN,	},
-
-//	const Pin_T PIN_METER;
-//	const Pin_T PIN_COIL;
-//	const Pin_T PIN_DIN; //configurable input
-	Debounce_T PinDIn; //configurable input
-
 	MotAnalogUser_Config_T  CONFIG;
 
 	Linear_T UnitThrottle;

@@ -103,7 +103,8 @@ typedef enum
 /*
  * Misra violation
  */
-extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_IABC;
+extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_IABC_FOC;
+extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_IABC_OBSERVE;
 extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_FOC_REMAINDER;
 extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_A;
 extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_A_REPEAT;

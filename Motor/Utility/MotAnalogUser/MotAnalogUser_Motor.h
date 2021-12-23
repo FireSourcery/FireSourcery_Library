@@ -24,7 +24,7 @@
 /*!
     @file 	MotAnalogUser_Motor.h
     @author FireSoucery
-    @brief  1 instance for all motor, input output control
+    @brief
     @version V0
 */
 /**************************************************************************/

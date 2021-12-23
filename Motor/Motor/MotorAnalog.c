@@ -24,7 +24,7 @@
 /*!
     @file 	MotorAnalog.c
     @author FireSoucery
-    @brief  Motor Analog Conversion. Common Virtual component only.
+    @brief  Motor Analog Virtual Conversion. Virtual component only.
     @version V0
 */
 /******************************************************************************/
@@ -40,14 +40,6 @@
 
 /******************************************************************************/
 /*!
-    @brief  Conversions
-*/
-/******************************************************************************/
-
-
-
-/******************************************************************************/
-/*!
     @brief  Conversion
 */
 /******************************************************************************/
@@ -57,7 +49,6 @@ static const Analog_ConversionVirtualChannel_T CHANNELS_BEMF_A[] =
 	[1U] = {MOTOR_ANALOG_CHANNEL_IB, 	(Analog_OnComplete_T)&Motor_CaptureIBusIb},			//capture as bus current
 	[2U] = {MOTOR_ANALOG_CHANNEL_VA, 	(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfA},	//capture as emf for zcd
 //	[3] = {MOTOR_ANALOG_CHANNEL_IC,
-//	[4] = {MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS,
 };
 
 const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_A =
@@ -65,6 +56,48 @@ const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_A =
 	.P_CHANNELS 	= CHANNELS_BEMF_A,
 	.CHANNEL_COUNT 	= sizeof(CHANNELS_BEMF_A)/sizeof(Analog_ConversionVirtualChannel_T),
 	.ON_COMPLETE 	= 0U,
+	.OPTIONS =		{.HwTriggerConversion = 1U },
+};
+
+/******************************************************************************/
+/*!
+    @brief  Conversion
+*/
+/******************************************************************************/
+static const Analog_ConversionVirtualChannel_T CHANNELS_BEMF_B[] =
+{
+	[0U] = {MOTOR_ANALOG_CHANNEL_VPOS, 	0U},
+	[1U] = {MOTOR_ANALOG_CHANNEL_IC, 	(Analog_OnComplete_T)&Motor_CaptureIBusIc},
+	[2U] = {MOTOR_ANALOG_CHANNEL_VB, 	(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfB},
+//	MOTOR_ANALOG_CHANNEL_IA,
+};
+
+const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_B =
+{
+	.P_CHANNELS 	= CHANNELS_BEMF_B,
+	.CHANNEL_COUNT 	= sizeof(CHANNELS_BEMF_B)/sizeof(Analog_ConversionVirtualChannel_T),
+	.ON_COMPLETE 	= 0U,//MotorAnalog_LoadBemfB,
+	.OPTIONS =		{.HwTriggerConversion = 1U },
+};
+
+/******************************************************************************/
+/*!
+    @brief  Conversion
+*/
+/******************************************************************************/
+static const Analog_ConversionVirtualChannel_T CHANNELS_BEMF_C[] =
+{
+	[0U] = {MOTOR_ANALOG_CHANNEL_VPOS, 	0U},
+	[1U] = {MOTOR_ANALOG_CHANNEL_IA, 	(Analog_OnComplete_T)&Motor_CaptureIBusIa},
+	[2U] = {MOTOR_ANALOG_CHANNEL_VC, 	(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfC},
+//	MOTOR_ANALOG_CHANNEL_IB,
+};
+
+const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_C =
+{
+	.P_CHANNELS 	= CHANNELS_BEMF_C,
+	.CHANNEL_COUNT 	= sizeof(CHANNELS_BEMF_C)/sizeof(Analog_ConversionVirtualChannel_T),
+	.ON_COMPLETE 	= 0U,//MotorAnalog_LoadBemfC,
 	.OPTIONS =		{.HwTriggerConversion = 1U },
 };
 
@@ -86,63 +119,8 @@ const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_A =
     @brief  Conversion
 */
 /******************************************************************************/
-static const Analog_ConversionVirtualChannel_T CHANNELS_BEMF_B[] =
-{
-	[0U] = {MOTOR_ANALOG_CHANNEL_VPOS, 	0U},
-	[1U] = {MOTOR_ANALOG_CHANNEL_IC, 	(Analog_OnComplete_T)&Motor_CaptureIBusIc},
-	[2U] = {MOTOR_ANALOG_CHANNEL_VB, 	(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfB},
-//	MOTOR_ANALOG_CHANNEL_IA,
-//	MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS,
-};
-
-const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_B =
-{
-	.P_CHANNELS 	= CHANNELS_BEMF_B,
-	.CHANNEL_COUNT 	= sizeof(CHANNELS_BEMF_B)/sizeof(Analog_ConversionVirtualChannel_T),
-	.ON_COMPLETE 	= 0U,//MotorAnalog_LoadBemfB,
-
-};
-
-//void MotorAnalog_LoadBemfB(Motor_T * p_motor)
-//{
-////	Analog_ActivateConversion(p_motor->CONFIG.P_ANALOG , &CONVERSION_BEMF_B);
-//}
-
-/******************************************************************************/
-/*!
-    @brief  Conversion
-*/
-/******************************************************************************/
-static const Analog_ConversionVirtualChannel_T CHANNELS_BEMF_C[] =
-{
-	[0U] = {MOTOR_ANALOG_CHANNEL_VPOS, 	0U},
-	[1U] = {MOTOR_ANALOG_CHANNEL_IA, 	(Analog_OnComplete_T)&Motor_CaptureIBusIa},
-	[2U] = {MOTOR_ANALOG_CHANNEL_VC, 	(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfC},
-//	MOTOR_ANALOG_CHANNEL_IB,
-//	MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS,
-};
-
-const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_C =
-{
-	.P_CHANNELS 	= CHANNELS_BEMF_C,
-	.CHANNEL_COUNT 	= sizeof(CHANNELS_BEMF_C)/sizeof(Analog_ConversionVirtualChannel_T),
-	.ON_COMPLETE 	= 0U,//MotorAnalog_LoadBemfC,
-};
-
-//void MotorAnalog_LoadBemfC(Motor_T * p_motor)
-//{
-////	Analog_ActivateConversion(p_motor->CONFIG.P_ANALOG , &CONVERSION_BEMF_C);
-//}
-
-
-/******************************************************************************/
-/*!
-    @brief  Conversion
-*/
-/******************************************************************************/
 static const Analog_ConversionVirtualChannel_T CHANNELS_BEMF_REMAINDER[] =
 {
-//	[0U] = {MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS, 	0U},
 	[0U] = {MOTOR_ANALOG_CHANNEL_HEAT_MOTOR, 	0U},
 };
 
@@ -152,10 +130,6 @@ const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_REMAINDER =
 	.CHANNEL_COUNT 	= sizeof(CHANNELS_BEMF_REMAINDER)/sizeof(Analog_ConversionVirtualChannel_T),
 };
 
-//void MotorAnalog_EnqueueBemfRemainder(Motor_T * p_motor)
-//{
-//
-//}
 /******************************************************************************/
 /*!
     @brief  Conversion
@@ -175,17 +149,13 @@ static const Analog_ConversionVirtualChannel_T CHANNELS_IABC[] =
 	[2U] = {MOTOR_ANALOG_CHANNEL_IC, (Analog_OnComplete_T)&Motor_FOC_CaptureIc},
 };
 
-const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_IABC =
+const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_IABC_FOC =
 {
 	.P_CHANNELS = CHANNELS_IABC,
 	.CHANNEL_COUNT = sizeof(CHANNELS_IABC) / sizeof(Analog_ConversionVirtualChannel_T),
 	.ON_COMPLETE = (Analog_OnComplete_T)&Motor_FOC_ProcCurrentFeedback,
+//	.OPTIONS =		{.HwTriggerConversion = 1U },
 };
-
-//void MotorAnalog_ActivateIabc(Motor_T * p_motor)
-//{
-//	AnalogN_LoadConversion(p_motor->CONFIG.P_ANALOG , &CONVERSION_IABC, p_motor->CONFIG.P_ANALOG_MAP);
-//}
 
 const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_IABC_OBSERVE =
 {
@@ -193,7 +163,6 @@ const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_IABC_OBSERVE =
 	.CHANNEL_COUNT = sizeof(CHANNELS_IABC) / sizeof(Analog_ConversionVirtualChannel_T),
 	.ON_COMPLETE = 0U,
 };
-
 
 /******************************************************************************/
 /*!
@@ -206,8 +175,7 @@ static const Analog_ConversionVirtualChannel_T CHANNELS_FOC_REMAINDER[] =
 	[1U] = {MOTOR_ANALOG_CHANNEL_VB, 			0U},
 	[2U] = {MOTOR_ANALOG_CHANNEL_VC, 			0U},
 	[3U] = {MOTOR_ANALOG_CHANNEL_VPOS, 			0U},
-//	[4U] = {MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS, 	0U},
-//	[5U] = {MOTOR_ANALOG_CHANNEL_HEAT_MOTOR, 	0U},
+	[5U] = {MOTOR_ANALOG_CHANNEL_HEAT_MOTOR, 	0U},
 };
 
 const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_FOC_REMAINDER =
@@ -217,11 +185,6 @@ const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_FOC_REMAINDER =
 	.ON_COMPLETE 	= 0U,
 };
 
-//void MotorAnalog_EnqueueFocRemainder(Motor_T * p_motor)
-//{
-//	Analog_EnqueueConversion(p_motor->CONFIG.P_ANALOG , &CONVERSION_FOC_REMAINDER);
-//}
-//
 /******************************************************************************/
 /*!
     @brief  Conversion when motor is stoped
@@ -233,11 +196,9 @@ static const Analog_ConversionVirtualChannel_T CHANNELS_IDLE[] =
 	{MOTOR_ANALOG_CHANNEL_VA, 				(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfA},
 	{MOTOR_ANALOG_CHANNEL_VB, 				(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfB},
 	{MOTOR_ANALOG_CHANNEL_VC, 				(Analog_OnComplete_T)&Motor_SixStep_CaptureBemfC},
-	{MOTOR_ANALOG_CHANNEL_IA, 				(Analog_OnComplete_T)&Motor_FOC_CaptureIa}, //temp //not capture as ibus
-	{MOTOR_ANALOG_CHANNEL_IB, 				(Analog_OnComplete_T)&Motor_FOC_CaptureIb},
-	{MOTOR_ANALOG_CHANNEL_IC, 				(Analog_OnComplete_T)&Motor_FOC_CaptureIc},
-//	{MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS, 	0U},
-//	{MOTOR_ANALOG_CHANNEL_HEAT_PCB, 		0U},
+	{MOTOR_ANALOG_CHANNEL_IA, 				0U},
+	{MOTOR_ANALOG_CHANNEL_IB, 				0U},
+	{MOTOR_ANALOG_CHANNEL_IC, 				0U},
 	{MOTOR_ANALOG_CHANNEL_HEAT_MOTOR, 		0U},
 };
 
@@ -266,7 +227,6 @@ static const Analog_ConversionVirtualChannel_T CHANNELS_MONITOR[] =
 	[1U] = {MOTOR_ANALOG_CHANNEL_HEAT_PCB, 		0U},
 	[2U] = {MOTOR_ANALOG_CHANNEL_VACC,			0U},
 	[3U] = {MOTOR_ANALOG_CHANNEL_VSENSE,		0U},
-	//	[2U] = {MOTOR_ANALOG_CHANNEL_HEAT_MOTOR, 	0U},
 };
 
 const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_MONITOR =
@@ -276,13 +236,6 @@ const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_MONITOR =
 	.ON_COMPLETE 	= 0U,
 };
 
-//void MotorAnalog_EnqueueMonitor(Motor_T * p_motor)
-//{
-////	Analog_Conversion_T * saveConversion = MotorAnalog.p_ActiveConversion;
-////
-////	Analog_ActivateConversion(p_motor->CONFIG.P_ANALOG , &CONVERSION_MONITOR); 	//todo return to load bemf
-////	Analog_EnqueueConversion(p_motor->CONFIG.P_ANALOG , saveConversion); 		//todo return to load bemf
-//}
 
 /******************************************************************************/
 /*!
@@ -293,8 +246,6 @@ static const Analog_ConversionVirtualChannel_T CHANNELS_USER[] =
 {
 	{MOTOR_ANALOG_CHANNEL_BRAKE,		0U},
 	{MOTOR_ANALOG_CHANNEL_THROTTLE,		0U},
-//	{MOTOR_ANALOG_CHANNEL_VACC,			0U},
-//	{MOTOR_ANALOG_CHANNEL_VSENSE,		0U},
 };
 
 const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_USER =
@@ -304,15 +255,10 @@ const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_USER =
 	.ON_COMPLETE 	= 0U,
 };
 
-//void MotorAnalog_EnqueueUser(Motor_T * p_motor)
-//{
-//	Analog_EnqueueConversion(p_motor->CONFIG.P_ANALOG , &CONVERSION_USER);
-////	Analog_DequeueConversion(p_motor->CONFIG.P_ANALOG );	//starts chain if no conversion is currently active
-//}
 
 /******************************************************************************/
 /*!
-    @brief  Conversion when motor is stoped
+    @brief  Conversion when motor is stopped
 */
 /******************************************************************************/
 //static const Analog_ConversionVirtualChannel_T CHANNELS_IDLE[] =
@@ -332,8 +278,49 @@ const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_USER =
 //	.ON_COMPLETE 	= 0U,
 //};
 
+
+/******************************************************************************/
+/*!
+    Start functions, can be called from Motor module
+*/
+/******************************************************************************/
 //void MotorAnalog_EnqueueIdle(Motor_T * p_motor)
 //{
 //	Analog_EnqueueConversion(p_motor->CONFIG.P_ANALOG, &CONVERSION_IDLE);
 ////	Analog_DequeueConversion(p_motor->CONFIG.P_ANALOG );
+//}
+
+//void MotorAnalog_LoadBemfB(Motor_T * p_motor)
+//{
+////	Analog_ActivateConversion(p_motor->CONFIG.P_ANALOG , &CONVERSION_BEMF_B);
+//}
+
+//void MotorAnalog_EnqueueBemfRemainder(Motor_T * p_motor)
+//{
+//
+//}
+
+//void MotorAnalog_EnqueueMonitor(Motor_T * p_motor)
+//{
+////	Analog_Conversion_T * saveConversion = MotorAnalog.p_ActiveConversion;
+////
+////	Analog_ActivateConversion(p_motor->CONFIG.P_ANALOG , &CONVERSION_MONITOR); 	//todo return to load bemf
+////	Analog_EnqueueConversion(p_motor->CONFIG.P_ANALOG , saveConversion); 		//todo return to load bemf
+//}
+
+
+//void MotorAnalog_EnqueueUser(Motor_T * p_motor)
+//{
+//	Analog_EnqueueConversion(p_motor->CONFIG.P_ANALOG , &CONVERSION_USER);
+////	Analog_DequeueConversion(p_motor->CONFIG.P_ANALOG );	//starts chain if no conversion is currently active
+//}
+//void MotorAnalog_EnqueueFocRemainder(Motor_T * p_motor)
+//{
+//	Analog_EnqueueConversion(p_motor->CONFIG.P_ANALOG , &CONVERSION_FOC_REMAINDER);
+//}
+//
+
+//void MotorAnalog_ActivateIabc(Motor_T * p_motor)
+//{
+//	AnalogN_LoadConversion(p_motor->CONFIG.P_ANALOG , &CONVERSION_IABC, p_motor->CONFIG.P_ANALOG_MAP);
 //}

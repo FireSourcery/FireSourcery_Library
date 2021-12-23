@@ -244,8 +244,7 @@ NvMemory_Status_T NvMemory_ProcOpCommon_Blocking(NvMemory_T * p_this)
 					}
 				}
 
-
-//				p_this->FinalizeCmd(p_this->CONFIG.P_HAL);
+//				p_this->FinalizeCmd(p_this->CONFIG.P_HAL); //if need to save read data
 
 //				if(p_this->ReadData)
 //				{
@@ -269,20 +268,14 @@ NvMemory_Status_T NvMemory_ProcOpCommon_Blocking(NvMemory_T * p_this)
 //		}
 //		else
 //		{
-//			status = p_this->FinalizeOp(p_this);
-//
-//			if (status == NV_MEMORY_STATUS_START_VERIFY)
-//			{
-//				status = NvMemory_ProcOpCommon_Blocking(p_this); // misra violation, single recursive call
-//			}
+			status = p_this->FinalizeOp(p_this);
+
+			if (status == NV_MEMORY_STATUS_START_VERIFY)
+			{
+				status = NvMemory_ProcOpCommon_Blocking(p_this); // misra violation, single recursive call
+			}
 //		}
 
-		status = p_this->FinalizeOp(p_this);
-
-		if (status == NV_MEMORY_STATUS_START_VERIFY)
-		{
-			status = NvMemory_ProcOpCommon_Blocking(p_this); // misra violation, single recursive call
-		}
 	}
 	else
 	{
