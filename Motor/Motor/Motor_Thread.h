@@ -29,74 +29,58 @@
     @version V0
 */
 /******************************************************************************/
+#ifndef MOTOR_THREAD_H
+#define MOTOR_THREAD_H
+
 #include "Motor.h"
-//#include "HAL_Motor.h"
-#include "Motor/Motor/Transducer/Phase/Phase.h"
+//#include "Motor/Motor/Transducer/Phase/Phase.h"
 #include "Utility/StateMachine/StateMachine.h"
-//#include "Utility/Thread/Thread.h"
-//#include "Utility/Timer/Timer.h"
+#include "Utility/Timer/Timer.h"
 
-
-/******************************************************************************/
-/*!
-    @name 	MotorThread
-    @brief  Motor module functions must be placed into corresponding user app threads
-    		Most outer functions to call from MCU app
-*/
-/* @{ */
-/******************************************************************************/
 /*
     Default 50us
+    Calling function must clear interrupt flag
  */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase++;
 	StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
 	//	Analog_LoadConversion(p_motor->CONFIG.P_ANALOG , p_motor->p_ConversionActive);
-	Phase_ClearInterrupt(&p_motor->Phase); //proc after, clear interrupt flag that may be set up pwm update
 }
 
 static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priority
 {
 	Motor_CaptureSpeed(p_motor);
-	Motor_PollStop(p_motor); //todo transition freewheel state
-
-	//high prioirty brake decel
-
-//	if (p_motor->Parameters.BrakeMode == MOTOR_BRAKE_MODE_SCALAR)
-//	{
-//
-//	}
-	//Motor_SpeedLoop();
-	//Monitor
-	//		if(Motor_PollFault(p_motor))	{ StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_FAULT);	}
+	Motor_PollStop(p_motor);
 }
-
 
 //Low Freq Main //user/monitor thread 1ms low priority
 static inline void Motor_Main1Ms_Thread(Motor_T * p_motor)
 {
 
-//	HAL_Motor_EnqueueConversionIdle(p_motor); //handle in stop state
 }
 
 //low priotiy, max freq
 static inline void Motor_Main_Thread(Motor_T * p_motor)
 {
-	if (Timer_Poll(&p_motor->MillisTimer) == true)
-	{
-
-	}
+////Low Freq Main //user/monitor thread 1ms low priority
+//	if (Timer_Poll(&p_motor->MillisTimer) == true)
+//	{
+//
+//	}
+//
+//	if (Timer_Poll(&p_motor->SecondsTimer) == true)
+//	{
+//
+//	}
 }
 
-/******************************************************************************/
-/*! @} */
-/******************************************************************************/
+#endif
 ///*
 // * SixStep openloop and sensorless hw timer
 // */
 //static inline void Motor_TimerCommutation_Thread(Motor_T * p_motor)
 //{
-////	BEMF_ProcTimer_IO(&p_motor->Bemf);
+////	BEMF_ProcTimer (&p_motor->Bemf);
 //}
 

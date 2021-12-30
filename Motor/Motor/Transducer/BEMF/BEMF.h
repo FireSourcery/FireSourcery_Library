@@ -51,11 +51,12 @@ BEMF_SampleMode_T; //pwm sample mode
 
 typedef enum
 {
-	BEMF_MODE_PASSIVE, 		// no blank time
-	BEMF_MODE_COMMUTATION,  // phase voltage active
+	BEMF_CYCLE_MODE_PASSIVE, 		// no blank time
+	BEMF_CYCLE_MODE_STARTUP, 		//half zcd zero
+	BEMF_CYCLE_MODE_COMMUTATION,  // phase voltage active
 //	BEMF_MODE_DRIVEN, //module hw timer driven
 }
-BEMF_Mode_T; //phase active/inactive sample mode
+BEMF_CycleMode_T; //phase active/inactive sample mode
 
 //typedef enum
 //{
@@ -65,24 +66,27 @@ BEMF_Mode_T; //phase active/inactive sample mode
 //}
 //BEMF_ZcdStatus_T;
 
-typedef enum
-{
-	BEMF_PHASE_A,
-	BEMF_PHASE_B,
-	BEMF_PHASE_C,
-}
-BEMF_PhaseId_T;
+//typedef enum
+//{
+//	BEMF_PHASE_A,
+//	BEMF_PHASE_B,
+//	BEMF_PHASE_C,
+//}
+//BEMF_PhaseId_T;
 
-typedef struct
+//typedef struct
+//{
+//	BEMF_SampleMode_T SampleMode;
+//	uint16_t ZeroCrossingThreshold_ADCU;		/// sensitivity offset
+//}
+//BEMF_Params_T;
+
+typedef const struct
 {
-	//	const HAL_uint16_t * p_HAL_Bemf; //hw timer version
-	//	uin32_t TimerFreq;
+//	const BEMF_Params_T * const P_PARAMS;
+
 	volatile const uint32_t * const P_TIMER; //sw timer, 59hr overflow using 20khz timer
-
 	//	module may need to handle unit conversion if phase bemf and vbus use different resistor values
-	//	const AnalogN_Conversion_T CONVERSION_PHASE_A;
-	//	const AnalogN_Conversion_T CONVERSION_PHASE_B;
-	//	const AnalogN_Conversion_T CONVERSION_PHASE_C;
 }
 BEMF_Config_T;
 
@@ -98,11 +102,11 @@ typedef struct
 	//uin16t_t DiodeDrop; 					//	if no complementary pwm vd/2
 
 	//	BEMF_Direction_T Direction;
-	BEMF_Mode_T Mode;					/// substate
+	BEMF_CycleMode_T CycleMode;					/// substate
 	uint32_t TimeReferenceZero;			/// reference start time, commutation start in active mode
 	uint32_t TimeBlankPeriod;			/// Blank time after commutation. aka "demagnetization time".
 
-	const AnalogN_Conversion_T * p_ConversionPhase; /* Set once per commutation */
+//	const AnalogN_Conversion_T * p_ConversionPhase; /* Set once per commutation */
 
 	//phase sample - user set from outside module, track prev for zcd
 	uint16_t VPos_ADCU;
@@ -110,6 +114,11 @@ typedef struct
 	uint16_t VPhasePrev_ADCU;			///
 	uint32_t TimeVPhase;				/// sample time stamp, from TimerReferenceZero
 	uint32_t TimeVPhasePrev;			/// or use constant periodic sample time
+
+	uint16_t VPhasePwmOff_ADCU;
+	uint16_t VPhasePrevPwmOff_ADCU;
+
+	uint16_t VPhaseOnOffDiff_ADCU;
 
 	//if save ZCD processed values
 //	volatile int16_t Emf_SignedADCU;				/// VPhase-to-neutral + 1/2 VBemf, ofset for ZCD , PWM On: (3/2)VBemf
@@ -123,7 +132,7 @@ typedef struct
 	uint32_t TimeZeroCrossingDetect; 		/// Time between commutation and zero crossing, 30 degrees.
 	uint32_t TimeZeroCrossingPeriod; 		/// Time between 2 zero crossings, 60 degrees.
 	uint32_t ZeroCrossingCounter; 		///  consecutive zc
-//		uint32_t ZeroCrossingMissCounter; 		///  consecutive zc
+	uint32_t ZeroCrossingMissCounter; 		///  consecutive zc
 	uint16_t VZeroCrossing_ADCU;
 
 	//commutation timer
@@ -190,34 +199,45 @@ static inline void BEMF_MapCcwPhaseAB(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p
 
 //}
 
+//for known period, hall mode compare
+//static inline void BEMF_CapturePhasePeriod(BEMF_T * p_bemf)
+//{
+//	p_bemf->TimePhasePeriod = *p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero;
+//}
+
 /*
  * Call on Commutation
  * Capture Reference
  */
-static inline void BEMF_StartPhaseReference(BEMF_T * p_bemf)
+static inline void BEMF_CapturePhaseReference(BEMF_T * p_bemf)
 {
-	//sw timer version
-//	*p_bemf->CONFIG.P_TIMER = 0U; //if writable timer, overflow precaution
-	p_bemf->TimePhasePeriod = *p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero; //back up time, will be overwritten upon zcd
-	p_bemf->TimeReferenceZero = *p_bemf->CONFIG.P_TIMER;
-
-	p_bemf->TimeBlankPeriod = p_bemf->TimePhasePeriod / 4U; //default case 25% of commutation time, 50% of zct. set 0 for passive mode?
-
 	if (p_bemf->IsZeroCrossingDetectionComplete == false) //commutation occurred before a zcd
 	{
-		p_bemf->ZeroCrossingCounter = 0U;
+//		if (p_bemf->ZeroCrossingMissCounter > 5U)
+//		{
+//			p_bemf->ZeroCrossingCounter = 0U; //also set zero crossing miss
+//			p_bemf->ZeroCrossingMissCounter = 0U;
+//		}
+//		else
+//		{
+//			p_bemf->ZeroCrossingMissCounter++;
+//		}
+
 	}
 	else
 	{
 		p_bemf->IsZeroCrossingDetectionComplete = false;
 	}
 
-	//if polling zcd seprate from sample, skip zcd proc   prior to capture sample
-	//zcd proc occurs once prior to capture sample
-//	p_bemf->TimeEmfPrev 		= 0U;
-//	p_bemf->TimeVPhase	 		= 0U;
-	p_bemf->VPhase_ADCU 		= 0U; //pwm off mode ZeroCrossingThreshold_ADCU cannot be 0
-	p_bemf->VPhasePrev_ADCU  	= 0U;
+	p_bemf->TimePhasePeriod 	= *p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero; //back up time, will be overwritten upon zcd
+	p_bemf->TimeReferenceZero 	= *p_bemf->CONFIG.P_TIMER;
+
+	p_bemf->TimeBlankPeriod = p_bemf->TimePhasePeriod / 8U; //default case 25% of commutation time, 50% of zct. set 0 for passive mode?
+
+	p_bemf->TimeVPhasePrev 		= 0U;
+	p_bemf->TimeVPhase	 		= 0U;
+//	p_bemf->VPhase_ADCU 		= 0U;
+//	p_bemf->VPhasePrev_ADCU  	= 0U;
 
 	BemfDebugIndex = 0;
 
@@ -226,21 +246,6 @@ static inline void BEMF_StartPhaseReference(BEMF_T * p_bemf)
 
 	//hw timer version
 	//HAL_BEMF_StartTimerInterrupt(p_bemf->p_HAL_Bemf, p_bemf->TimeZeroCrossingPeriod);
-	//#ifdef CONFIG_BEMF_COMMUTATION_FUNCTION
-	//	p_bemf->Commutation(p_bemf->p_Data);
-	//#endif
-}
-
-//check estimated time from Zcd
-static inline bool BEMF_CheckPhasePeriod(BEMF_T * p_bemf)
-{
-	return (*p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero > p_bemf->TimePhasePeriod);
-}
-
-//for known period, hall mode
-static inline void BEMF_CapturePhasePeriod(BEMF_T * p_bemf)
-{
-	p_bemf->TimePhasePeriod = *p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero;
 }
 
 /*
@@ -248,8 +253,7 @@ static inline void BEMF_CapturePhasePeriod(BEMF_T * p_bemf)
  */
 static inline bool BEMF_CheckBlankTime(BEMF_T * p_bemf)
 {
-	uint32_t timeNew 	= *p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero;
-	return ((timeNew > p_bemf->TimeBlankPeriod) || (p_bemf->Mode == BEMF_MODE_PASSIVE));
+	return ((*p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero > p_bemf->TimeBlankPeriod) || (p_bemf->CycleMode == BEMF_CYCLE_MODE_PASSIVE));
 }
 
 //static inline void BEMF_PollStartAnalog(BEMF_T * p_bemf)
@@ -260,7 +264,7 @@ static inline bool BEMF_CheckBlankTime(BEMF_T * p_bemf)
 //	}
 //}
 
-
+#include "Utility/Debug/Debug.h"
 /*
 	ZCD Bemf Capture
 	Captures 2 points
@@ -278,13 +282,27 @@ static inline void Bemf_CaptureVPhase(BEMF_T * p_bemf, uint32_t vPhaseObserve_AD
 	p_bemf->TimeVPhase 		= *p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero;
 
 	p_bemf->VPhasePrev_ADCU 	= p_bemf->VPhase_ADCU;
+//	p_bemf->VPhase_ADCU 		= vPhaseObserve_ADCU;
 	p_bemf->VPhase_ADCU 		= (vPhaseObserve_ADCU + p_bemf->VPhase_ADCU) / 2U;
 
-	BemfDebug[BemfDebugIndex] = p_bemf->VPhase_ADCU;
-	if(BemfDebugIndex < 300)
+	Debug_CaptureElapsed(7);
+
+	if (p_bemf->IsBemfRising)
 	{
-		BemfDebugIndex++;
+		if(BemfDebugIndex < 300) //try only capture on bemf risisng
+		{
+			BemfDebug[BemfDebugIndex] 	=  p_bemf->VPhase_ADCU;
+			BemfDebugIndex++;
+		}
 	}
+
+}
+
+static inline void Bemf_CaptureVPhasePwmOff(BEMF_T * p_bemf, uint32_t vPhaseObserve_ADCU)
+{
+	p_bemf->VPhasePrevPwmOff_ADCU 	= p_bemf->VPhase_ADCU;
+	p_bemf->VPhasePwmOff_ADCU 		= vPhaseObserve_ADCU;
+//	p_bemf->VPhase_ADCU 		= (vPhaseObserve_ADCU + p_bemf->VPhase_ADCU) / 2U;
 }
 
 /*
@@ -312,22 +330,36 @@ static inline void Bemf_CaptureVPos(BEMF_T * p_bemf, uint32_t vPos_ADCU)
  */
 static inline bool ProcZeroCrossingDetection(BEMF_T * p_bemf)
 {
+	bool isZcd = false;
+
 	int16_t vEmf;
 	int16_t vEmfPrev;
 	uint32_t timeZeroCrossing; /* new zc time */
-	bool isZcd = false;
-	
-	int16_t vZero;
+	int32_t vZero;
+//	bool isBemfRising;
 
-	if (p_bemf->Mode != BEMF_MODE_PASSIVE)
+	if (p_bemf->CycleMode != BEMF_CYCLE_MODE_PASSIVE)
 	{
 		switch(p_bemf->SampleMode)
 		{
-//		case BEMF_SAMPLE_MODE_PWM_BIPOLAR: 	vZero = (int32_t)(*p_bemf->p_VPhaseObserve_ADCU) - ((int32_t)(*p_bemf->CONFIG.P_VPOS_ADCU) / 2); break;
+			case BEMF_SAMPLE_MODE_PWM_BIPOLAR :
+				vZero = ((int32_t)p_bemf->VPos_ADCU / 2U) + (int32_t)p_bemf->ZeroCrossingThreshold_ADCU;
+				break;
 //		case BEMF_SAMPLE_MODE_PWM_MIXED: 			break;
-		case BEMF_SAMPLE_MODE_PWM_ON: 		vZero = ((int32_t)p_bemf->VPos_ADCU / 2U) + (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
-		case BEMF_SAMPLE_MODE_PWM_OFF: 		vZero = (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
-		default: vZero = (int32_t)p_bemf->ZeroCrossingThreshold_ADCU; break;
+			case BEMF_SAMPLE_MODE_PWM_ON :
+				vZero = ((int32_t)p_bemf->VPos_ADCU / 2U) + (int32_t)p_bemf->ZeroCrossingThreshold_ADCU;
+				break;
+			case BEMF_SAMPLE_MODE_PWM_OFF :
+				vZero = (int32_t)p_bemf->ZeroCrossingThreshold_ADCU;
+				break;
+			default :
+				vZero = (int32_t)p_bemf->ZeroCrossingThreshold_ADCU;
+				break;
+		}
+
+		if (p_bemf->CycleMode  == BEMF_CYCLE_MODE_STARTUP)
+		{
+//			vZero = vZero/2U;
 		}
 	}
 	else
@@ -336,7 +368,7 @@ static inline bool ProcZeroCrossingDetection(BEMF_T * p_bemf)
 	}
 	
 	//(p_bemf->Direction == CCW)
-	if(!p_bemf->IsBemfRising) // invert falling bemf to use same rising zcd routine
+	if(p_bemf->IsBemfRising == false) // invert falling bemf to use same rising zcd routine
 	{
 		vEmf 		= -(int16_t)p_bemf->VPhase_ADCU;
 		vEmfPrev 	= -(int16_t)p_bemf->VPhasePrev_ADCU;
@@ -347,20 +379,18 @@ static inline bool ProcZeroCrossingDetection(BEMF_T * p_bemf)
 		vEmfPrev 	= p_bemf->VPhasePrev_ADCU;
 	}
 
-	if((vEmf - vZero) >= 0) // is zero crossing, calc time of zcb
+	if((vEmf - vZero) >= 0) // is zero crossing, calc time of zcd
 	{
 		// find midpoint to account for error of (TimeBemf - TimeZeroCrossing) past zc time
 		if ((vEmf - vEmfPrev) > (vEmf - vZero)) // zcd falls within 2 samples
 		{
 			timeZeroCrossing = p_bemf->TimeVPhase - (((p_bemf->TimeVPhase - p_bemf->TimeVPhasePrev) * (vEmf - vZero) / (vEmf - vEmfPrev))); //estimate using slope
-
-			p_bemf->ZeroCrossingCounter++;
-
+//			p_bemf->ZeroCrossingCounter++;
 		}
 		else //missed zero crossing, both samples past vZero
 		{
 			timeZeroCrossing = p_bemf->TimeVPhasePrev - ((p_bemf->TimeVPhase - p_bemf->TimeVPhasePrev) / 2U);
-			p_bemf->ZeroCrossingCounter = 0u;
+//			p_bemf->ZeroCrossingCounter = 0U;
 			//or use miss counter
 		}
 
@@ -369,7 +399,6 @@ static inline bool ProcZeroCrossingDetection(BEMF_T * p_bemf)
 		p_bemf->TimeZeroCrossingDetect = timeZeroCrossing;
 		// average zc with last zc
 		p_bemf->TimeZeroCrossingPeriod = (p_bemf->TimeZeroCrossingPeriod + (p_bemf->TimeZeroCrossingDetect + timeZeroCrossing)) / 2U;
-
 
 		p_bemf->VZeroCrossing_ADCU = vEmf;
 
@@ -382,21 +411,22 @@ static inline bool ProcZeroCrossingDetection(BEMF_T * p_bemf)
 
 
 //poll last sample, must skip prev sample
-static inline bool BEMF_PollZeroCrossingDetection(BEMF_T * p_bemf)
+static inline bool BEMF_ProcZeroCrossingDetection(BEMF_T * p_bemf)
 {
 	bool isZcd = false;
 	
-	if(p_bemf->IsZeroCrossingDetectionComplete == false) //at least 1 sample set
+	if((p_bemf->IsZeroCrossingDetectionComplete == false) && (p_bemf->TimeVPhasePrev > 0U)) //at least 2 samples
 	{
 		if (ProcZeroCrossingDetection(p_bemf) == true)
 		{
 			p_bemf->IsZeroCrossingDetectionComplete = true;
 
-//			if( p_bemf->ZeroCrossingCounter > 10U)
-//			{
-			//stop here to compare hall captured vs bemf cample difference
-				p_bemf->TimePhasePeriod = p_bemf->TimeZeroCrossingPeriod - p_bemf->PhaseAdvanceTime;
-//			}
+			p_bemf->ZeroCrossingCounter++;
+
+			//stop here to compare hall captured vs bemf sample difference
+			p_bemf->TimePhasePeriod = (p_bemf->TimePhasePeriod + p_bemf->TimeZeroCrossingPeriod) / 2; //avergae with estimate
+
+//			p_bemf->TimePhasePeriod = p_bemf->TimeZeroCrossingPeriod - p_bemf->PhaseAdvanceTime;
 
 			//HAL_BEMF_StartTimerInterrupt(p_bemf->p_HAL_Bemf, p_bemf->TimePhasePeriod);
 	
@@ -407,15 +437,47 @@ static inline bool BEMF_PollZeroCrossingDetection(BEMF_T * p_bemf)
 	return isZcd;
 }
 
+//check estimated time from Zcd
+static inline bool BEMF_CheckPhasePeriod(BEMF_T * p_bemf)
+{
+	return (*p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero > p_bemf->TimePhasePeriod);
+}
+
 static inline uint32_t BEMF_GetZeroCrossingCounter(BEMF_T * p_bemf)
 {
 	return p_bemf->ZeroCrossingCounter;
 }
 
+static inline bool BEMF_GetIsZeroCrossingDetectionComplete(BEMF_T * p_bemf)
+{
+	return p_bemf->IsZeroCrossingDetectionComplete;
+}
+
+
+static inline bool BEMF_GetIsReliable(BEMF_T * p_bemf)
+{
+	return (p_bemf->ZeroCrossingCounter > 10U);
+}
+
+//static inline bool BEMF_ProcStartUpReliable(BEMF_T * p_bemf, uint32_t measuredTime)
+//{
+//	if (measuredTime >> 4U == p_bemf->TimePhasePeriod >> 4U) //within 15 ticks or 750us at 20khz
+//	{
+//
+//	}
+//	else
+//	{
+//		p_bemf->ZeroCrossingCounter--; //negate count
+//	}
+//
+//	return p_bemf->ZeroCrossingCounter;
+//}
+
+
 //static inline BEMF_PhaseId_T BEMF_GetPhaseId(BEMF_T * p_bemf) {return p_bemf->PhaseObserveId;}
 //static inline uint16_t BEMF_GetTimeZeroCrossingPeriod(BEMF_T * p_bemf){return p_bemf->TimeZeroCrossingPeriod;}
 //static inline uint16_t BEMF_GetTimeZeroCrossingDetect(BEMF_T * p_bemf){return p_bemf->TimeZeroCrossingDetect;}
-static inline uint16_t BEMF_GetTimePhasePeriod(BEMF_T * p_bemf){return p_bemf->TimePhasePeriod;}
+//static inline uint16_t BEMF_GetTimePhasePeriod(BEMF_T * p_bemf){return p_bemf->TimePhasePeriod;}
 
 /*
 	adcu, convert to phase-to-neutral
@@ -424,7 +486,7 @@ static inline int16_t ConvertVPhaseToVBemf(BEMF_T * p_bemf, uint32_t emf)
 {
 	uint16_t bemf;
 
-	if (p_bemf->Mode == BEMF_MODE_COMMUTATION)
+	if (p_bemf->CycleMode == BEMF_CYCLE_MODE_COMMUTATION)
 	{
 		switch(p_bemf->SampleMode)
 		{
@@ -455,18 +517,4 @@ static inline int16_t BEMF_GetVBemfPeak_ADCU(BEMF_T * p_bemf)
 
 #endif
 
-//static inline bool BEMF_ProcStartUpReliable(BEMF_T * p_bemf, uint32_t measuredTime)
-//{
-//
-//	if (measuredTime >> 4U == p_bemf->TimePhasePeriod >> 4U) //within 15 ticks or 750us at 20khz
-//	{
-//
-//	}
-//	else
-//	{
-//		p_bemf->ZeroCrossingCounter--; //negate count
-//	}
-//
-//	return p_bemf->ZeroCrossingCounter;
-//}
 

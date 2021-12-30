@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,21 +19,17 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
-    @file 	MotAnalogUser_Motor.h
+    @file 	Motor_Include.h
     @author FireSoucery
     @brief
     @version V0
 */
-/**************************************************************************/
-#ifndef MOT_ANALOG_USER_MOTOR_H
-#define MOT_ANALOG_USER_MOTOR_H
-
-#include "MotAnalogUser.h"
-#include "Motor/Motor/Motor.h"
-
-void MotAnalogUser_Motor_Write(const MotAnalogUser_T * input, Motor_T * p_motorDest, uint8_t motorCount);
-
-#endif
+/******************************************************************************/
+#include "Motor_User.h"
+#include "Motor_Thread.h"
+#include "Motor_StateMachine.h"
+#include "MotorAnalog_Conversion.h"
+#include "Motor.h"

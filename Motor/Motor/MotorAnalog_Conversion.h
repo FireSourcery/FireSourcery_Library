@@ -22,47 +22,33 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	MotorStateMachine.h
+    @file 	.h
     @author FireSoucery
-    @brief  MotorStateMachine
+    @brief
     @version V0
 */
 /******************************************************************************/
-#ifndef MOTOR_STATE_MACHINE_H
-#define MOTOR_STATE_MACHINE_H
+#ifndef MOTOR_ANALOG_CONVERSION_H
+#define MOTOR_ANALOG_CONVERSION_H
 
-#include "Utility/StateMachine/StateMachine.h"
+#include "Peripheral/Analog/AnalogN/AnalogN.h"
 
-#define MOTOR_STATE_MACHINE_TRANSITION_TABLE_LENGTH 	(10U)
-#define MOTOR_STATE_MACHINE_OUTPUT_TABLE_LENGTH 		(0U)
+//typedef enum
+//{
+//	MOTOR_ANALOG_CONVERSION_BEMF_A_INDEX_VPOS = 0U,
+//} MotorAnalog_ConversionBemfAIndex_T;
 
-typedef enum MotorStateMachine_InputTransition
-{
-	MOTOR_TRANSITION_INIT,
-	MOTOR_TRANSITION_STOP,
-	MOTOR_TRANSITION_ALIGN,
-	MOTOR_TRANSITION_OPEN_LOOP,
-	MOTOR_TRANSITION_RUN,
-	MOTOR_TRANSITION_FREEWHEEL,
-	MOTOR_TRANSITION_FAULT,
-	MOTOR_TRANSITION_CALIBRATE_ADC,
-	MOTOR_TRANSITION_CALIBRATE_HALL,
-	MOTOR_TRANSITION_CALIBRATE_ENCODER,
-} MotorStateMachine_InputTransition_T;
+/*
+ * Misra violation
+ */
 
-typedef enum MotorStateMachine_InputOutput
-{
-	MOTOR_OUTPUT_BUTTON_FORWARD,
-
-	MOTOR_OUTPUT_BUTTON_NEXT,
-	MOTOR_OUTPUT_BUTTON_PREV,
-
-//	MOTOR_STATUS_NO_OP = 0xFFu,
-//	STATE_INPUT_RESERVED_NO_OP = 0xFFu,
-} MotorStateMachine_InputOutput_T;
-
-extern const StateMachine_Machine_T MOTOR_STATE_MACHINE;
-
-#define MOTOR_STATE_MACHINE_CONFIG(p_Motor) STATE_MACHINE_CONFIG(&MOTOR_STATE_MACHINE, p_Motor, false)
+extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_A;
+//extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_A_REPEAT;
+extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_B;
+extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_C;
+extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_BEMF_REMAINDER;
+extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_FOC_IABC;
+extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_FOC_REMAINDER;
+extern const Analog_ConversionVirtual_T MOTOR_ANALOG_VIRTUAL_IDLE;
 
 #endif

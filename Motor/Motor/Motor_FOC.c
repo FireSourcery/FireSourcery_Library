@@ -54,19 +54,19 @@
 void Motor_FOC_CaptureIa(Motor_T *p_motor)
 {
 	//Filter here if needed
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_IA]);
+	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, p_motor->AnalogResults.Ia_ADCU);
 	FOC_SetIa(&p_motor->Foc, i_temp);
 }
 
 void Motor_FOC_CaptureIb(Motor_T *p_motor)
 {
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_IB]);
+	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, p_motor->AnalogResults.Ib_ADCU);
 	FOC_SetIb(&p_motor->Foc, i_temp);
 }
 
 void Motor_FOC_CaptureIc(Motor_T *p_motor)
 {
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_IC]);
+	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, p_motor->AnalogResults.Ic_ADCU);
 	FOC_SetIc(&p_motor->Foc, i_temp);
 }
 
@@ -89,36 +89,28 @@ void Motor_FOC_CaptureIc(Motor_T *p_motor)
  */
 void Motor_FOC_ProcCurrentFeedback(Motor_T * p_motor)
 {
-	switch (p_motor->Parameters.SensorMode)
+	FOC_ProcClarkePark(&p_motor->Foc);
+	p_motor->IMotor_Frac16 = FOC_GetIq(&p_motor->Foc) << 1U;
+
+	if ((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT))
 	{
-		case MOTOR_SENSOR_MODE_BEMF:
-			break;
+		ProcMotorFocAngleControl(p_motor);
 
-		case MOTOR_SENSOR_MODE_ENCODER:
-			Encoder_DeltaD_Capture(&p_motor->Encoder);
-			p_motor->ElectricalAngle = Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);
-			break;
+		//
+		//	if(p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
+		//	{
+		//		Motor_PollSpeedFeedback(p_motor);
+		//	}
+		//	/* else (p_motor->ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) */
 
-		case MOTOR_SENSOR_MODE_HALL:
-			break;
+		//	//	Motor_FOC_ProcCurrentLoop(p_motor);
+		//
+		//	//	PID_Proc (&PIDd);
+		//	//	PID_Proc (&PIDq);
+		Motor_ProcControlVariable(p_motor); //input usercmd rampcmd, set vpwm
+
+		ActivateMotorFocAngle(p_motor); 	//input vpwm, theta
 	}
-//
-//	if(p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
-//	{
-//		Motor_PollSpeedFeedback(p_motor);
-//	}
-//	/* else (p_motor->ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) */
-//
-//	//	Motor_FOC_ProcCurrentLoop(p_motor);
-//	FOC_ProcClarkePark(&p_motor->Foc);
-//	//	PID_Proc (&PIDd);
-//	//	PID_Proc (&PIDq);
-//
-//	// p_motor->VCmd =  get from PID
-//
-	Motor_ProcRamp(p_motor);
-	Motor_ProcControlVariable(p_motor); //input usercmd rampcmd, set vpwm
-	_Motor_FOC_ActivateAngle(p_motor); 	//input vpwm, theta
 }
 
 

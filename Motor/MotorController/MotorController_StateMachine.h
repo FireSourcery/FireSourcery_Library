@@ -22,30 +22,35 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.h
-	@author FireSoucery
-	@brief 	State machine module preprocessor configuration options and defaults.
-	@version V0
+    @file 	MotorStateMachine.h
+    @author FireSoucery
+    @brief  MotorStateMachine
+    @version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_STATE_MACHINE_H
-#define CONFIG_STATE_MACHINE_H
+#ifndef MOTOR_CONTROLLER_STATE_MACHINE_H
+#define MOTOR_CONTROLLER_STATE_MACHINE_H
 
-#ifdef CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED
+#include "Utility/StateMachine/StateMachine.h"
 
-#elif defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
-/*
- * User provide functions
- * void Critical_Enter(void);
- * void Critical_Exit(void);
- */
-#elif defined(CONFIG_STATE_MACHINE_MULTITHREADED_DISABLED)
-/*
- * Default configuration
- */
-#else
-	#define CONFIG_STATE_MACHINE_MULTITHREADED_DISABLED
-#endif
+typedef enum MotorController_StateMachine_Input_Tag
+{
+//	MCSM_TRANSITION_INIT,
+	MCSM_TRANSITION_STOP,
+//	MCSM_TRANSITION_RUN,
+	MCSM_TRANSITION_FAULT,
 
+	MCSM_INPUT_DIRECTION,
+	MCSM_INPUT_ACCELERATE,
+	MCSM_INPUT_DECELERATE,
+	MCSM_INPUT_FLOAT,
+	MCSM_INPUT_CHECK_STOP,
+	MCSM_INPUT_SAVE_PARAMS,
+}
+MotorController_StateMachine_Input_T;
+
+extern const StateMachine_Machine_T MCSM_MACHINE;
+
+#define MOTOR_CONTROLLER_STATE_MACHINE_CONFIG(p_MotorController) STATE_MACHINE_CONFIG(&MCSM_MACHINE, p_MotorController, false)
 
 #endif

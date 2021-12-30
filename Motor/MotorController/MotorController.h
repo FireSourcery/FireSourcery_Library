@@ -33,14 +33,14 @@
 
 #include "Config.h"
 
+#include "Motor/Utility/MotAnalog/MotAnalog.h"
 #include "Motor/Utility/MotAnalogUser/MotAnalogUser.h"
 #include "Motor/Utility/MotAnalogMonitor/MotAnalogMonitor.h"
 //#include "Motor/Utility/MotProtocol/MotProtocol.h"
 //#include "Motor/Utility/MotShell/MotShell.h"
-#include "Motor/Utility/MotMemMap/MotMemMap.h"
-
 
 #include "Motor/Motor/Motor.h"
+#include "Motor/Motor/Motor_User.h"
 
 #include "Transducer/Blinky/Blinky.h"
 #include "Transducer/Thermistor/Thermistor.h"
@@ -54,6 +54,7 @@
 
 //#include "Utility/Shell/Shell.h"
 #include "Utility/Thread/Thread.h"
+#include "Utility/StateMachine/StateMachine.h"
 
 #include <stdint.h>
 
@@ -65,25 +66,33 @@ typedef enum
 }
 MotorController_InputMode_T;
 
-
-typedef  __attribute__ ((aligned (4U))) const volatile struct
+typedef enum
 {
+	MOTOR_CONTROLLER_DIRECTION_FORWARD,
+	MOTOR_CONTROLLER_DIRECTION_REVERSE,
+}
+MotorController_Direction_T;
+
+
+typedef struct __attribute__((aligned (4U)))
+{
+	//	const uint8_t application_config;
+	//	const uint8_t startup_wait_time;
 //	uint8_t ShellConnectId;
 //	uint8_t ProtocolDataLinkId[1]; //per protocol
 //	uint8_t AuxProtocolSpecsId[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT];
-//	uint8_t MotProtocolSpecsId;
-	bool IsAnalogUserEnable;
+	uint8_t MainProtocolSpecsId;
+	MotorController_InputMode_T InputMode;
 	bool IsBuzzerOnReverseEnable;
 }
-MotorController_Parameters_T;
+MotorController_Params_T;
 
 /*
  * allocated memory outside for less CONFIG define redundancy
  */
 typedef const struct
 {
-
-	const MotorController_Parameters_T * const P_PARAMETERS;
+	const MotorController_Params_T * const P_PARAMETERS; //nvm copy
 
 	Motor_T * const P_MOTORS;
 	const uint8_t MOTOR_COUNT;
@@ -98,8 +107,11 @@ typedef const struct
 	//	Protocol_T * const P_AUX_PROTOCOLS; 	//Simultaneously active protocols
 	//	const uint8_t AUX_PROTOCOL_COUNT;
 
-	//	const Protocol_Specs_T * const P_PROTOCOL_SPECS_TABLE;
-	//	const uint8_t PROTOCOL_SPECS_COUNT;
+	const Protocol_Specs_T ** const P_PROTOCOL_SPECS_TABLE;
+	const uint8_t PROTOCOL_SPECS_COUNT;
+
+	const Pin_T PIN_METER;
+	const Pin_T PIN_COIL;
 }
 MotorController_Config_T;
 
@@ -107,16 +119,15 @@ MotorController_Config_T;
 typedef struct
 {
 	const MotorController_Config_T CONFIG;
-
-	MotorController_Parameters_T Parameters; //ram copy
-
-	MotAnalogUser_T AnalogUser;
-	MotAnalogMonitor_T AnalogMonitor;
+	MotorController_Params_T Parameters; //ram copy
+	StateMachine_T StateMachine;
 
 	Flash_T Flash;
 	EEPROM_T Eeprom;
+	MotAnalogUser_T AnalogUser;
+	MotAnalogMonitor_T AnalogMonitor;
 	Blinky_T Buzzer;
-
+	Debounce_T DIn; //configurable input
 	Thermistor_T ThermistorPcb;
 	Thermistor_T ThermistorMosfets;
 
@@ -124,63 +135,105 @@ typedef struct
 	Timer_T TimerMillis10;
 	Timer_T TimerSeconds;
 
-	/*
-		MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS,
-		MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS_HIGH,
-		MOTOR_ANALOG_CHANNEL_HEAT_MOSFETS_LOW,
-		MOTOR_ANALOG_CHANNEL_HEAT_PCB,
-		MOTOR_ANALOG_CHANNEL_VACC,				 V accessories ~12V
-		MOTOR_ANALOG_CHANNEL_VSENSE,			 V analog sensors ~5V
-		MOTOR_ANALOG_CHANNEL_THROTTLE,
-		MOTOR_ANALOG_CHANNEL_BRAKE,
-	*/
-	uint16_t AnalogResults[MOTOR_ANALOG_CHANNEL_COMMON_COUNT];
+	MotAnalog_Map_T AnalogResults;
  	AnalogN_AdcFlags_T SignalBufferAnalogMonitor;
  	AnalogN_AdcFlags_T SignalBufferAnalogUser;
 
-//	Protocol_T				MotProtocol;
-//	MotProtocol_Output_T 	MotProtocolOutput;
-//	MotProtocol_Input_T 	MotProtocolInput;
+	Protocol_T		MainProtocol;
+//	Shell_T 		MotShell;
 
-//	MotorController_InputMode_T InputMode;
-//	Shell_T MotShell;
+ 	MotorController_Direction_T MainDirection;
 
- 	//Allocate outside
-//	Motor_T Motors[CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT];
-//	Serial_T Serials[CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT]; //simultaneous active serial
-//	Protocol_T	 AuxProtocols[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT]; 	//Simultaneously active protocols
+ 	uint16_t UserCmd;
+ 	MotorController_Direction_T UserDirection;
 }
 MotorController_T;
 
-//priority brake thread
-//static inline void MotorUser_PollBrake(MotorUser_T * p_motorUser, Motor_T * p_motor)
-//{
-//	Debounce_CaptureState_IO(p_motorUser->MotorUserAnalog.PinBrake);
-//	p_motorUser->InputSwitchBrake 		= Debounce_GetState(p_motorUser->MotorUserAnalog.PinBrake);
-//
-//	if (p_motorUser->InputSwitchBrake == true)
-//	{
-//			Motor_SetUserCmd(p_motor, (p_motorUser->InputValueBrake + p_motorUser->InputValueBrake) / 2U);
-//			Motor_SetRampDecelerate(p_motor, 0);
-//	}
-//}
-
-static inline void MotorUser_PollBrake(MotorController_T * p_motorController)
-{
-	p_motorController->CONFIG.P_MOTORS->Direction;
-	p_motorController->CONFIG.P_MOTORS[0].Direction;
-
-
-
-	p_motorController->CONFIG.P_MOTORS[1].Direction;
-
-	(*(p_motorController->CONFIG.P_MOTORS + 1U)).Direction;
-
-	(p_motorController->CONFIG.P_MOTORS + 1U)->Direction;
-}
 
 static inline Motor_T * MotorController_GetPtrMotor(MotorController_T * p_motorController, uint8_t motorIndex) {return &(p_motorController->CONFIG.P_MOTORS[motorIndex]);}
 
+static inline void MotorController_ProcSaveParameters_Blocking(MotorController_T * p_motorController)
+{
+	for(uint8_t iMotor = 0U; iMotor < p_motorController->CONFIG.MOTOR_COUNT; iMotor++)
+	{
+		EEPROM_Write_Blocking(&p_motorController->Eeprom, MotorController_GetPtrMotor(p_motorController, iMotor)->CONFIG.P_PARAMETERS, &MotorController_GetPtrMotor(p_motorController, iMotor)->Parameters, sizeof(Motor_Params_T));
+	}
+
+	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->AnalogMonitor.CONFIG.P_PARAMS, &p_motorController->AnalogMonitor.Params, sizeof(MotAnalogMonitor_Params_T));
+//	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->AnalogMonitor.CONFIG.P_PARAMS, &p_motorController->AnalogMonitor.Params, sizeof(MotAnalogMonitor_Params_T));
+}
+
+static inline void MotorController_Beep(MotorController_T * p_motorController)
+{
+	Blinky_Blink(&p_motorController->Buzzer, 500U);
+}
+
+/*
+ * Wrappers for State Machine
+ */
+static inline void MotorController_ProcAlarm(MotorController_T * p_motorController)
+{
+//	Blinky_Blink(&p_motorController->Buzzer, 500U); set alarm type
+}
+
+static inline void MotorController_ProcUserCmdDecelerate(MotorController_T * p_motorController)
+{
+	Motor_UserN_SetCmdDecelerate(p_motorController->CONFIG.P_MOTORS, p_motorController->CONFIG.MOTOR_COUNT, p_motorController->UserCmd);
+}
+
+static inline void MotorController_ProcUserCmdAccelerate(MotorController_T * p_motorController)
+{
+	Motor_UserN_SetCmdAccelerate(p_motorController->CONFIG.P_MOTORS, p_motorController->CONFIG.MOTOR_COUNT, p_motorController->UserCmd);
+}
+
+static inline bool MotorController_ProcDirection(MotorController_T * p_motorController)
+{
+	bool status = true;
+
+	p_motorController->MainDirection = p_motorController->UserDirection;
+
+	if(p_motorController->UserDirection == MOTOR_CONTROLLER_DIRECTION_FORWARD)
+	{
+		for(uint8_t iMotor = 0U; iMotor < p_motorController->CONFIG.MOTOR_COUNT; iMotor++)
+		{
+			if(Motor_User_SetDirectionForward(&p_motorController->CONFIG.P_MOTORS[iMotor]) == false)
+			{
+				Blinky_Blink(&p_motorController->Buzzer, 500U);
+				status = false;
+			}
+		}
+	}
+	else
+	{
+		for(uint8_t iMotor = 0U; iMotor < p_motorController->CONFIG.MOTOR_COUNT; iMotor++)
+		{
+			if(Motor_User_SetDirectionReverse(&p_motorController->CONFIG.P_MOTORS[iMotor]) == false)
+			{
+				Blinky_Blink(&p_motorController->Buzzer, 500U);
+				status = false;
+			}
+
+			Motor_User_ActivateCalibrationHall(&p_motorController->CONFIG.P_MOTORS[iMotor]);
+		}
+	}
+
+	return status;
+}
+
+static inline void MotorController_DisableMotorAll(MotorController_T * p_motorController)
+{
+//	for (uint8_t iMotor = 0U; iMotor < p_motorController->CONFIG.MOTOR_COUNT; iMotor++)
+//	{
+//		Motor_User_Disable(&p_motorController->CONFIG.P_MOTORS[iMotor]);
+//	}
+
+	Motor_UserN_DisableControl(p_motorController->CONFIG.P_MOTORS, p_motorController->CONFIG.MOTOR_COUNT);
+}
+
+static inline bool MotorController_CheckMotorAllStop(MotorController_T * p_motorController)
+{
+	return Motor_UserN_CheckStop(p_motorController->CONFIG.P_MOTORS, p_motorController->CONFIG.MOTOR_COUNT);
+}
 
 extern void MotorController_Init(MotorController_T * p_controller);
 

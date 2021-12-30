@@ -28,8 +28,8 @@
     @version V0
 */
 /******************************************************************************/
-#ifndef PROTOCOL_G_H
-#define PROTOCOL_G_H
+#ifndef PROTOCOL_H
+#define PROTOCOL_H
 
 #include "Datagram.h"
 
@@ -40,13 +40,12 @@
 #include <stdbool.h>
 
 
-
 /*
 	Protocol_Req_T
  */
 typedef uint32_t protocolg_reqid_t;
 
-typedef uint32_t (*Protocol_ReqFastReadWrite_T)(void * p_appInterface, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
+typedef void (*Protocol_ReqFastReadWrite_T)(void * p_appInterface, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
 
 typedef enum
 {
@@ -74,7 +73,8 @@ typedef struct
 }
 Protocol_ReqExtProcessArgs_T;
 
-typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(Protocol_ReqExtProcessArgs_T args); //typedef Protocol_ReqExtCode_T (*Protocol_ReqExtFunction_T)	( void * p_subState,  void * p_appInterface,  uint8_t * p_txPacket,  size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
+typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(Protocol_ReqExtProcessArgs_T args);
+//typedef Protocol_ReqExtCode_T (*Protocol_ReqExtFunction_T)	( void * p_subState,  void * p_appInterface,  uint8_t * p_txPacket,  size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
 
 /*
  * static string sync
@@ -108,8 +108,6 @@ Protocol_ReqExtProcess_T;
 typedef const struct
 {
 	const protocolg_reqid_t 			ID;
-//	const Protocol_ReqType_T 			TYPE; 				/* pass special options, module cmd code */
-//	const Protocol_ReqFunction_T 	FUNCTION;
 	const Protocol_ReqFastReadWrite_T 	FAST;				/* Handles simple read write */
 	const Protocol_ReqSync_T 			* const P_SYNC;		/* Static ack nack */
 	const Protocol_ReqExtProcess_T		* const P_EXT;		/* Wait, loop, dynamic ack nack and additional process contest */
@@ -117,7 +115,7 @@ typedef const struct
 }
 Protocol_ReqEntry_T;
 
-#define PROTOCOL_G_REQ_ENTRY(ReqId, ReqType, ReqFast, p_ReqSync, p_ReqExt) { (.ID = ReqId), (.TYPE = ReqType), (.FAST_READ_WRITE = ReqFast), (.P_SYNC = p_ReqSync), (.P_EXT = p_ReqExt) }
+#define PROTOCOL_REQ_ENTRY(ReqId, ReqType, ReqFast, p_ReqSync, p_ReqExt) { (.ID = ReqId), (.TYPE = ReqType), (.FAST_READ_WRITE = ReqFast), (.P_SYNC = p_ReqSync), (.P_EXT = p_ReqExt) }
 
 
 
@@ -237,35 +235,34 @@ typedef const struct
 	const uint8_t PACKET_BUFFER_LENGTH; // must be greater than RX_LENGTH_MAX
 	uint8_t * const P_RX_PACKET_BUFFER;
 	uint8_t * const P_TX_PACKET_BUFFER;
-	void * const P_SUBSTATE_BUFFER; 	// child protocol control variables
-	void * const P_APP_INTERFACE;				// user app read write registers
+	void * const P_APP_CONTEXT;			// user app context
+	void * const P_SUBSTATE_BUFFER; 	// child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context from specs
 
 //	Flash_T * const P_FLASH;
-
-	const uint32_t BAUD_RATE_DEFAULT;
-//	const union
-//	{
-//		const struct
-//		{
-//			const uint32_t BAUD_RATE_DEFAULT;
-//		};
-//		const struct
-//		{
-//
-//		};
-//	};
 }
 Protocol_Config_T;
+
+#define PROTOCOL_CONFIG(p_Timer, PacketLengthMax, p_RxBuffer, p_TxBuffer, p_AppContext, p_SubstateBuffer)	\
+{																\
+	.CONFIG = 													\
+	{															\
+		.P_TIMER 				= p_Timer,						\
+		.PACKET_BUFFER_LENGTH 	= PacketLengthMax,				\
+		.P_RX_PACKET_BUFFER 	= p_RxBuffer,					\
+		.P_TX_PACKET_BUFFER 	= p_TxBuffer,					\
+		.P_APP_CONTEXT 			= p_AppContext,					\
+		.P_SUBSTATE_BUFFER 		= p_SubstateBuffer,				\
+	}															\
+}
 
 typedef struct Protocol_Tag
 {
 	//compile time consts config
 	const Protocol_Config_T CONFIG;
-
 	//run time config
 	const Protocol_Specs_T * p_Specs;
 	Serial_T * p_Port; //runtime configurable io port or const?
-	Datagram_T Datagram;
+//	Datagram_T Datagram;
 
 	//proc variables
 	size_t RxIndex;

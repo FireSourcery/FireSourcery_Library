@@ -28,17 +28,51 @@
     @version V0
 */
 /******************************************************************************/
-#include "MotAnalogMonitor.h"
-#include "Motor/Utility/MotAnalog/MotAnalog.h"
+#ifndef MOT_ANALOG_H
+#define MOT_ANALOG_H
 
-#include <stdint.h>
+#include "Peripheral/Analog/AnalogN/AnalogN.h"
 
-void MotAnalogMonitor_Init(MotAnalogMonitor_T * p_motorUser)
+#define MOT_ANALOG_CHANNEL_COUNT 	9U
+
+/*!
+	@brief Virtual channel identifiers, index into arrays containing Analog channel
+ */
+typedef enum
 {
-	memcpy(&p_motorUser->Params, p_motorUser->CONFIG.P_PARAMS, sizeof(MotAnalogMonitor_Params_T));
-}
+	MOT_ANALOG_CHANNEL_VPOS, 				/* V battery, V in */
+	MOT_ANALOG_CHANNEL_HEAT_MOSFETS,
+	MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP,
+	MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT,
+	MOT_ANALOG_CHANNEL_HEAT_PCB,
+	MOT_ANALOG_CHANNEL_VACC,				/* V accessories ~12V*/
+	MOT_ANALOG_CHANNEL_VSENSE,				/* V analog sensors ~5V*/
+	MOT_ANALOG_CHANNEL_THROTTLE,
+	MOT_ANALOG_CHANNEL_BRAKE,
 
-void MotAnalogMonitor_SetParams(MotAnalogMonitor_T * p_motorUser, const MotAnalogMonitor_Params_T * p_param)
-{
-	memcpy(&p_motorUser->Params, p_param, sizeof(MotAnalogMonitor_Params_T));
+//	MOT_ANALOG_CHANNEL_MOTOR_1,
+//	MOT_ANALOG_CHANNEL_MOTOR_2,
 }
+MotAnalog_Channel_T;
+
+typedef union
+{
+	struct
+	{
+		analog_adcresult_t VPos_ADCU;
+		analog_adcresult_t HeatMosfets_ADCU;
+		analog_adcresult_t HeatMosfetsTop_ADCU;
+		analog_adcresult_t HeatMosfetsBot_ADCU;
+		analog_adcresult_t HeatPcb_ADCU;
+		analog_adcresult_t VAcc_ADCU;
+		analog_adcresult_t VSense_ADCU;
+		analog_adcresult_t Throttle_ADCU;
+		analog_adcresult_t Brake_ADCU;
+
+//		analog_adcresult_t HeatMotors_ADCU[];
+	};
+	analog_adcresult_t Channels[MOT_ANALOG_CHANNEL_COUNT];
+}
+MotAnalog_Map_T;
+
+#endif

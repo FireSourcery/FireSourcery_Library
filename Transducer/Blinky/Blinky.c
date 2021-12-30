@@ -80,6 +80,13 @@ void Blinky_Blink(Blinky_T * p_blinky, uint32_t duration)
 	Timer_StartPeriod(&p_blinky->Timer, duration);
 }
 
+void Blinky_BlinkOnOff(Blinky_T * p_blinky, uint32_t duration)
+{
+	Blinky_On(p_blinky);
+	Timer_SetOneShot(&p_blinky->Timer);	//use timer state as pattern lockout, or change pattern function?
+	Timer_StartPeriod(&p_blinky->Timer, duration);
+}
+
 //void Blinky_Pattern_PeriodicToggle(Blinky_T * p_blinky)
 //{
 //	if(p_blinky->IsOn == true)

@@ -22,19 +22,36 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	 .c
+    @file 	MotorStateMachine.h
     @author FireSoucery
-    @brief  Motor Analog Conversion. Common Virtual component only.
+    @brief  MotorStateMachine
     @version V0
 */
 /******************************************************************************/
+#ifndef MOTOR_STATE_MACHINE_H
+#define MOTOR_STATE_MACHINE_H
 
-//#include "Motor.h"
-//#include "Motor_SixStep.h"
-//#include "Motor_FOC.h"
-//#include "Peripheral/Analog/AnalogN/AnalogN.h"
-//
-//#include <stdint.h>
-//#include <stdbool.h>
+#include "Utility/StateMachine/StateMachine.h"
 
+typedef enum MotorStateMachine_Input_Tag
+{
+	MSM_TRANSITION_INIT,
+	MSM_TRANSITION_STOP,
+	MSM_TRANSITION_ALIGN,
+	MSM_TRANSITION_OPEN_LOOP,
+	MSM_TRANSITION_RUN,
+	MSM_TRANSITION_FREEWHEEL,
+	MSM_TRANSITION_FAULT,
+	MSM_INPUT_CALIBRATION,
 
+	MSM_INPUT_ACCELERATE,
+	MSM_INPUT_DECELERATE,
+	MSM_INPUT_FLOAT,
+}
+MotorStateMachine_Input_T;
+
+extern const StateMachine_Machine_T MSM_MACHINE;
+
+#define MOTOR_STATE_MACHINE_CONFIG(p_Motor) STATE_MACHINE_CONFIG(&MSM_MACHINE, p_Motor, false)
+
+#endif

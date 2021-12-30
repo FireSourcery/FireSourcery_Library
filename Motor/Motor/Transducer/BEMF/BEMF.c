@@ -30,8 +30,6 @@
 /******************************************************************************/
 #include "BEMF.h"
 
-#include "Peripheral/Analog/AnalogN/AnalogN.h"
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -42,29 +40,46 @@ void BEMF_Init(BEMF_T * p_bemf)
 {
 	p_bemf->PhaseAdvanceTime = 0u;
 	p_bemf->ZeroCrossingThreshold_ADCU = 0u;
-	p_bemf->SampleMode = BEMF_SAMPLE_MODE_PWM_ON;
+	p_bemf->SampleMode = BEMF_SAMPLE_MODE_PWM_BIPOLAR;
+
+
 //	p_bemf->p_VPhaseObserve_ADCU = p_phaseA;
 //	p_bemf->PhaseObserveId = BEMF_PHASE_A;
-	p_bemf->Mode = BEMF_MODE_PASSIVE;
+	p_bemf->CycleMode = BEMF_CYCLE_MODE_PASSIVE;
 }
 
+/*
+ * pwm sample mode
+ */
 void BEMF_SetSampleMode(BEMF_T * p_bemf, BEMF_SampleMode_T mode)
 {
  	p_bemf->SampleMode = mode;
-
-	switch(p_bemf->SampleMode)
-	{
-	//	case BEMF_SAMPLE_MODE_PWM_BIPOLAR:		break;
-		case BEMF_SAMPLE_MODE_PWM_ON:  p_bemf->ZeroCrossingThreshold_ADCU = 0; break;
-	//	case BEMF_SAMPLE_MODE_PWM_OFF:  		break;
-	//	case BEMF_SAMPLE_MODE_PWM_ON_OFF:  		break;
-		default:	break;
-	}
+ 	p_bemf->ZeroCrossingThreshold_ADCU = 0;
+//	switch(mode)
+//	{
+//		case BEMF_SAMPLE_MODE_PWM_BIPOLAR:		break;
+//		case BEMF_SAMPLE_MODE_PWM_ON:   break;
+//	//	case BEMF_SAMPLE_MODE_PWM_OFF:  		break;
+//	//	case BEMF_SAMPLE_MODE_PWM_ON_OFF:  		break;
+//		default:	break;
+//	}
 }
 
-void BEMF_SetObserveMode(BEMF_T * p_bemf, BEMF_Mode_T mode)
+/*
+ * commutation mode
+ */
+void BEMF_SetCycleMode(BEMF_T * p_bemf, BEMF_CycleMode_T mode)
 {
- 	p_bemf->Mode = mode;
+ 	p_bemf->CycleMode = mode;
+
+// 	switch(mode)
+// 	{
+// 		case BEMF_CYCLE_MODE_PASSIVE:
+// 		 	p_bemf->SampleMode = BEMF_SAMPLE_MODE_PWM_OFF;
+// 		 	break;
+//
+// 	}
+
 	p_bemf->ZeroCrossingCounter = 0U; //reset consecutive zcd counter
 }
 
@@ -74,19 +89,16 @@ void BEMF_SetAdvanceAngleTime(BEMF_T * p_bemf, uint16_t angle_frac16)
 //	p_bemf->PhaseAdvanceTime = t*angle_frac16>>15;
 }
 
-//void BEMF_ResetTimer(BEMF_T * p_bemf)
-//{
-//	p_bemf->TimeCommutationStart = 0U;
-//}
-
-//void BEMF_Reset(BEMF_T * p_bemf)
-//{
-////	p_bemf->IsReliable = 0U;
-//	p_bemf->ZeroCrossingCounter = 0U;
-//	//map phase if module maps phase
-//}
 
 
+
+/******************************************************************************/
+/*!
+    @brief  Conversion
+*/
+/******************************************************************************/
+
+//#include "Peripheral/Analog/AnalogN/AnalogN.h"
 
 //typedef enum
 //{
@@ -123,14 +135,6 @@ void BEMF_SetAdvanceAngleTime(BEMF_T * p_bemf, uint16_t angle_frac16)
 //{
 ////	CaptureEmf(p_bemf,  &p_bemf->AnalogResults[BEMF_ANALOG_CHANNEL_VC]);
 //}
-
-
-
-/******************************************************************************/
-/*!
-    @brief  Conversion
-*/
-/******************************************************************************/
 
 //static const Analog_ConversionVirtualChannel_T VIRTUAL_CHANNEL_A[] =
 //{

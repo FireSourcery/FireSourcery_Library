@@ -31,93 +31,175 @@
 #ifndef MOTOR_USER_H
 #define MOTOR_USER_H
 
+#include "Motor_StateMachine.h"
 #include "Motor.h"
-
-
-//#include "Config.h"
-////#include "Default.h"
-//
-//#include "MotorStateMachine.h"
-//
-//#include "Transducer/Phase/Phase.h"
-//#include "Transducer/Hall/Hall.h"
-//#include "Transducer/BEMF/BEMF.h"
-//
-//#include "Transducer/Encoder/Encoder_Motor.h"
-//#include "Transducer/Encoder/Encoder_DeltaT.h"
-//#include "Transducer/Encoder/Encoder_DeltaD.h"
-//#include "Transducer/Encoder/Encoder.h"
-//
-//#include "System/StateMachine/StateMachine.h"
-//#include "System/Thread/Thread.h"
-//
-//#include "Math/Linear/Linear_ADC.h"
-//#include "Math/Linear/Linear_Voltage.h"
-//#include "Math/Linear/Linear.h"
+#include "Utility/StateMachine/StateMachine.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
 
-//void Motor_User_StartControl(Motor_T * p_motor)
-//{
-//	StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MOTOR_TRANSITION_RUN);
-//	p_motor->IsActiveControl = true;
-//}
 
-static inline void Motor_User_SetThrottle(Motor_T * p_motor, uint16_t throttle)
+static inline void Motor_User_EnableControl(Motor_T * p_motor)
 {
- //		if throttle > p_motor->VPwm)
-	Motor_SetUserCmd(p_motor, throttle);
+
+}
+
+/*
+ * Disable control, motor may remain spinning
+ */
+static inline void Motor_User_DisableControl(Motor_T * p_motor)
+{
+	Phase_Float(&p_motor->Phase);
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
+}
+
+static inline void Motor_User_SetCmdAccelerate(Motor_T * p_motor, uint16_t throttle)
+{
 	Motor_SetRampUp(p_motor, throttle);
-	p_motor->IsActiveControl = true;
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
 }
 
 
-static inline void Motor_User_SetBrake(Motor_T * p_motor, uint16_t brake)
+static inline void Motor_User_SetCmdDecelerate(Motor_T * p_motor, uint16_t brake)
 {
 	if (p_motor->Parameters.BrakeMode == MOTOR_BRAKE_MODE_PASSIVE)
 	{
-		p_motor->IsActiveControl = false; //or set state?
+		Motor_User_DisableControl(p_motor);
 	}
 	else
 	{
-		Motor_SetUserCmd(p_motor, brake);
 		Motor_SetRampDown(p_motor, brake);
-		p_motor->IsActiveControl = true;
+		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DECELERATE);
 	}
 }
 
-static inline void Motor_User_Disable(Motor_T * p_motor)
+//or set buffered direction, check on state machine  ?
+static inline bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
-	Phase_Float(&p_motor->Phase);
-	p_motor->IsActiveControl = false;
-}
+	bool isSet = false;
 
-//set buffered direction, check on state machine run
-static inline void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
-{
-//		if (p_motor->Direction != p_motor->InputDirection)//direction reversed
-//		{
-//			Blinky_SetOnTime(&p_Motor->Alarm, 1000)
-//		}
-	p_motor->DirectionInput = direction;
-}
-
-static inline void Motor_User_SetNThrottle(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle)
-{
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+//	if (p_motor->Direction != direction) //direction reversed
+//	{
+	if (p_motor->Speed_RPM == 0U)
 	{
-		Motor_User_SetThrottle(&p_motor[iMotor], throttle);
+		Motor_SetDirection(p_motor, direction);
+//		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MSM_INPUT_DIRECTION);
+		isSet = true;
 	}
+//	}
+
+	return isSet;
 }
 
 
+static inline bool Motor_User_GetDirectionCalibration(Motor_T * p_motor)
+{
+//	return p_motor->Parameters.IsCcwForward;
+	return true;
+}
+
+static inline bool Motor_User_SetDirectionForward(Motor_T * p_motor)
+{
+	bool isSet;
+
+	if(Motor_User_GetDirectionCalibration(p_motor) == true) //ccw is forward
+	{
+		isSet = Motor_User_SetDirection(p_motor, MOTOR_DIRECTION_CCW) ? true : false;
+	}
+	else
+	{
+		isSet = Motor_User_SetDirection(p_motor, MOTOR_DIRECTION_CW) ? true : false;
+	}
+
+	return isSet;
+}
+
+static inline bool Motor_User_SetDirectionReverse(Motor_T * p_motor)
+{
+	bool isSet;
+
+	if(Motor_User_GetDirectionCalibration(p_motor) == false) //ccw is forward
+	{
+		isSet = Motor_User_SetDirection(p_motor, MOTOR_DIRECTION_CCW) ? true : false;
+	}
+	else
+	{
+		isSet = Motor_User_SetDirection(p_motor, MOTOR_DIRECTION_CW) ? true : false;
+	}
+
+	return isSet;
+}
 
 static inline uint32_t Motor_User_GetBemf_Frac16(Motor_T * p_motor)	{return Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
 static inline uint32_t Motor_User_GetBemf_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
 
-static inline uint32_t Motor_User_GetVPos_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults[MOTOR_ANALOG_CHANNEL_VPOS]);}
+static inline uint32_t Motor_User_GetVPos_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults.VPos_ADCU);}
 static inline uint32_t Motor_User_GetSpeed_RPM(Motor_T *p_motor) 	{return p_motor->Speed_RPM;}
+
+/*
+ * Run Calibration functions
+ */
+static inline void Motor_User_ActivateCalibrationHall(Motor_T * p_motor)
+{
+	Motor_SetCalibrationStateHall(p_motor);
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+}
+
+static inline void Motor_User_ActivateCalibrationEncoder(Motor_T * p_motor)
+{
+	Motor_SetCalibrationStateEncoder(p_motor);
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+}
+
+static inline void Motor_User_ActivateCalibrationAdc(Motor_T * p_motor)
+{
+	Motor_SetCalibrationStateAdc(p_motor);
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+}
+
+
+/*
+ * Set Motor Array functions
+ */
+static inline void Motor_UserN_SetCmdAccelerate(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle)
+{
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		Motor_User_SetCmdAccelerate(&p_motor[iMotor], throttle);
+	}
+}
+
+static inline void Motor_UserN_SetCmdDecelerate(Motor_T * p_motor, uint8_t motorCount, uint16_t brake)
+{
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		Motor_User_SetCmdDecelerate(&p_motor[iMotor], brake);
+	}
+}
+
+static inline void Motor_UserN_DisableControl(Motor_T * p_motor, uint8_t motorCount)
+{
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		Motor_User_DisableControl(&p_motor[iMotor]);
+	}
+}
+
+static inline bool Motor_UserN_CheckStop(Motor_T * p_motor, uint8_t motorCount)
+{
+	bool isStop = true;
+
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		if(Motor_User_GetSpeed_RPM(&p_motor[iMotor]) > 0U)
+		{
+			isStop = false;
+			break;
+		}
+	}
+
+	return isStop;
+}
 
 #endif

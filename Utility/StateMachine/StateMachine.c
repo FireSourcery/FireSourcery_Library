@@ -36,10 +36,9 @@
 #ifdef CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED
 	#include "System/Critical/Critical.h"
 #elif defined(ONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
-	extern inline void Critical_AquireMutex(critical_mutex_t);
-	extern inline void Critical_ReleaseMutex(critical_mutex_t);
+	extern inline void Critical_Enter_Common(critical_mutex_t);
+	extern inline void Critical_Exit_Common(critical_mutex_t);
 #endif
-
 
 static inline bool EnterCriticalCommon(StateMachine_T * p_stateMachine)
 {
@@ -58,60 +57,55 @@ static inline void ExitCriticalCommon(StateMachine_T * p_stateMachine)
 }
 
 /*
- * Transition Input
+ * Maps active state to new state
  */
-static inline void ProcTransition(StateMachine_T * p_stateMachine, uint8_t input)
+static inline StateMachine_State_T * TransitionFunction(void * p_context, StateMachine_State_T * p_active, statemachine_input_t input)
 {
-	if (p_stateMachine->p_StateActive->P_TRANSITION_TABLE != 0)
-	{
-		/* proc input function */
-		if (p_stateMachine->p_StateActive->P_TRANSITION_TABLE[input].ON_TRANSITION != 0)
-		{
-			p_stateMachine->p_StateActive->P_TRANSITION_TABLE[input].ON_TRANSITION(p_stateMachine->CONFIG.P_CONTEXT);
-		}
+	return (p_active->P_TRANSITION_TABLE[input] != 0U) ? p_active->P_TRANSITION_TABLE[input](p_context) : 0U;
+}
 
-		/* check new state exists, map new state, else it's a self transition */
-		if (p_stateMachine->p_StateActive->P_TRANSITION_TABLE[input].P_STATE != 0)
-		{
-			p_stateMachine->p_StateActive = p_stateMachine->p_StateActive->P_TRANSITION_TABLE[input].P_STATE;
-		}
+static inline void ProcTransition(StateMachine_T * p_stateMachine, statemachine_input_t input)
+{
+	StateMachine_State_T * p_newState;
 
-		/* proc new state common entry function */
-		if (p_stateMachine->p_StateActive->ON_ENTRY != 0)
+//	if(input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH)
+//	{
+		/* proc input function, check new state exists, map new state, else it's a self transition */
+		p_newState = TransitionFunction(p_stateMachine->CONFIG.P_CONTEXT, p_stateMachine->p_StateActive, input);
+
+		if (p_newState != 0U)
 		{
-			p_stateMachine->p_StateActive->ON_ENTRY(p_stateMachine->CONFIG.P_CONTEXT);
+			p_stateMachine->p_StateActive = p_newState;
+
+			/* proc new state common entry function. Procs if user defines self transition, but not if user function returns 0 */
+			if (p_newState->ON_ENTRY != 0U)
+			{
+				p_newState->ON_ENTRY(p_stateMachine->CONFIG.P_CONTEXT);
+			}
 		}
-	}
+//	}
 }
 
 /*
- * Nontransition (output only) Input, bypass entry
+ * No null pointer check. User must supply empty for no op
  */
-static inline void ProcOutputInput(StateMachine_T * p_stateMachine, uint8_t input)
+static inline void ProcOutput(StateMachine_T * p_stateMachine)
 {
-	if (p_stateMachine->p_StateActive->P_OUTPUT_TABLE != 0)
+	p_stateMachine->p_StateActive->OUTPUT(p_stateMachine->CONFIG.P_CONTEXT);
+}
+
+/*
+ * If multi threaded inputs asynch use cirtical
+ */
+static inline void ProcAsynchronousTransition(StateMachine_T * p_stateMachine, statemachine_input_t input)
+{
+	if (input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH)
 	{
-		if (p_stateMachine->p_StateActive->P_OUTPUT_TABLE[input] != 0)
+		if (EnterCriticalCommon(p_stateMachine))
 		{
-			p_stateMachine->p_StateActive->P_OUTPUT_TABLE[input](p_stateMachine->CONFIG.P_CONTEXT);
+			ProcTransition(p_stateMachine, input);
+			ExitCriticalCommon(p_stateMachine);
 		}
-	}
-}
-
-static inline void ProcOutputSynchronous(StateMachine_T * p_stateMachine)
-{
-	if (p_stateMachine->p_StateActive->OUTPUT_SYNCHRONOUS != 0)
-	{
-		p_stateMachine->p_StateActive->OUTPUT_SYNCHRONOUS(p_stateMachine->CONFIG.P_CONTEXT);
-	}
-}
-
-static inline void ProcAsynchronousTransition(StateMachine_T * p_stateMachine, uint8_t input)
-{
-	if (EnterCriticalCommon(p_stateMachine))
-	{
-		ProcTransition(p_stateMachine, input);
-		ExitCriticalCommon(p_stateMachine);
 	}
 }
 
@@ -120,21 +114,16 @@ static inline void ProcAsynchronousTransition(StateMachine_T * p_stateMachine, u
  */
 void StateMachine_Init(StateMachine_T * p_stateMachine)
 {
-	p_stateMachine->InputTransition = 0U;
-	p_stateMachine->InputOutput = 0U;
-	p_stateMachine->IsSetInputTransition = false;
-	p_stateMachine->IsSetInputOutput = false;
-
+	p_stateMachine->Input  = 0U;
 #ifdef CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED
 	p_stateMachine->Mutex = 1U;
 #endif
-
-	 StateMachine_Reset(p_stateMachine);
+	StateMachine_Reset(p_stateMachine);
 }
 
 void StateMachine_Reset(StateMachine_T * p_stateMachine)
 {
-	if (EnterCriticalCommon(p_stateMachine))
+	if (EnterCriticalCommon(p_stateMachine) == true)
 	{
 		p_stateMachine->p_StateActive = p_stateMachine->CONFIG.P_MACHINE->P_STATE_INITIAL;
 
@@ -147,97 +136,66 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 }
 
 /*
+ * Unconditional Transition, user must ensure
+ */
+void StateMachine_ProcTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState)
+{
+	if (EnterCriticalCommon(p_stateMachine) == true)
+	{
+		p_stateMachine->p_StateActive = p_newState;
+		if (p_newState->ON_ENTRY != 0U)
+		{
+			p_newState->ON_ENTRY(p_stateMachine->CONFIG.P_CONTEXT);
+		}
+		ExitCriticalCommon(p_stateMachine);
+	}
+}
+
+/*
  * Synchronous Machine Process -
  * proc last set input, always single threaded proc
  */
-//void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine, void * p_userContext)
 void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine)
 {
-	if (p_stateMachine->IsSetInputTransition == true)
+	if(p_stateMachine->Input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH)
 	{
-		p_stateMachine->IsSetInputTransition = false;
-
-		if (p_stateMachine->InputTransition < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH)
-		{
-			ProcTransition(p_stateMachine, p_stateMachine->InputTransition);
-		}
+		ProcTransition(p_stateMachine, p_stateMachine->Input);
 	}
-	else if (p_stateMachine->IsSetInputOutput == true)
-	{
-		p_stateMachine->IsSetInputOutput = false;
-
-		if (p_stateMachine->InputOutput < p_stateMachine->CONFIG.P_MACHINE->OUTPUT_TABLE_LENGTH)
-		{
-			ProcOutputInput(p_stateMachine, p_stateMachine->InputOutput);
-		}
-	}
-
-	ProcOutputSynchronous(p_stateMachine);
+	p_stateMachine->Input = 0xFFU; //clear input
+	ProcOutput(p_stateMachine);
 }
 
-void StateMachine_Synchronous_SetTransition(StateMachine_T * p_stateMachine, uint8_t input)
+void StateMachine_Synchronous_SetInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
-	if (input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH)
-	{
-		p_stateMachine->InputTransition 		= input;
-		p_stateMachine->IsSetInputTransition 	= true;
-		p_stateMachine->IsSetInputOutput 		= false;
-	}
-}
-
-void StateMachine_Synchronous_SetOutput(StateMachine_T * p_stateMachine, uint8_t input)
-{
-	if (input < p_stateMachine->CONFIG.P_MACHINE->OUTPUT_TABLE_LENGTH)
-	{
-		p_stateMachine->InputOutput 			= input;
-		p_stateMachine->IsSetInputOutput 		= true;
-		p_stateMachine->IsSetInputTransition 	= false;
-	}
+	p_stateMachine->Input = input;
 }
 
 /*
  * Asynchronous Process
  * Asynchronous Machine has no synchronous periodic output
  */
-void StateMachine_Asynchronous_ProcTransition(StateMachine_T * p_stateMachine, uint8_t input)
+void StateMachine_Asynchronous_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
 	if (input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH)
 	{
 		ProcAsynchronousTransition(p_stateMachine, input);
 	}
-	ProcOutputSynchronous(p_stateMachine);
-}
-
-void StateMachine_Asynchronous_ProcOutput(StateMachine_T * p_stateMachine, uint8_t input)
-{
-	if (input < p_stateMachine->CONFIG.P_MACHINE->OUTPUT_TABLE_LENGTH)
-	{
-		ProcOutputInput(p_stateMachine, input);
-	}
-	ProcOutputSynchronous(p_stateMachine);
+	ProcOutput(p_stateMachine);
 }
 
 /*
- * Semi synchronous
+ * Semisynchronous
  * Synchronous state logic proc, asynchronous input proc
  */
 void StateMachine_Semisynchronous_ProcState(StateMachine_T * p_stateMachine)
 {
-	ProcOutputSynchronous(p_stateMachine);
+	ProcOutput(p_stateMachine);
 }
 
-void StateMachine_Semisynchronous_ProcTransition(StateMachine_T * p_stateMachine, uint8_t input)
+void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
 	if (input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH)
 	{
 		ProcAsynchronousTransition(p_stateMachine, input);
-	}
-}
-
-void StateMachine_Semisynchronous_ProcOutput(StateMachine_T * p_stateMachine, uint8_t input)
-{
-	if (input < p_stateMachine->CONFIG.P_MACHINE->OUTPUT_TABLE_LENGTH)
-	{
-		ProcOutputInput(p_stateMachine, input);
 	}
 }

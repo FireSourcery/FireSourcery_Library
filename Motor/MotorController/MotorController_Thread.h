@@ -32,87 +32,135 @@
 #ifndef MOTOR_CONTROLLER_THREAD_H
 #define MOTOR_CONTROLLER_THREAD_H
 
-#include "Config.h"
 #include "MotorController.h"
+#include "MotorController_User.h"
+#include "MotorController_StateMachine.h"
+#include "Config.h"
 
-//#include "Motor/Utility/MotShell/MotShell.h"
-//#include "Motor/Utility/MotProtocol/MotProtocol.h"
-//#include "Motor/Utility/MotProtocol/MotProtocol_Motor.h"
 #include "Motor/Utility/MotAnalogUser/MotAnalogUser.h"
-#include "Motor/Utility/MotAnalogUser/MotAnalogUser_Motor.h"
+#include "Motor/Utility/MotAnalogMonitor/MotAnalogMonitor.h"
+//#include "Motor/Utility/MotShell/MotShell.h"
 
 #include "Motor/Motor/Motor_Thread.h"
-//#include "Motor/Motor/HAL_Motor.h"
-
-#include "Peripheral/Serial/Serial.h"
-#include "Peripheral/Analog/AnalogN/AnalogN.h"
-//#include "Utility/Shell/Shell.h"
-
-#include "Utility/Timer/Timer.h"
 
 #include "Protocol/Protocol/Protocol.h"
 
-static uint32_t count;
+#include "Peripheral/Analog/AnalogN/AnalogN.h"
+#include "Peripheral/Serial/Serial.h"
+
+//#include "Utility/Shell/Shell.h"
+#include "Utility/StateMachine/StateMachine.h"
+#include "Utility/Timer/Timer.h"
+
+//static uint32_t count;
+
+static inline void MotorControllerAnalogUserThread(MotorController_T * p_controller)
+{
+	MotAnalogUser_Cmd_T 		cmd 		= MotAnalogUser_GetCmd(&p_controller->AnalogUser);
+	MotAnalogUser_Direction_T 	direction 	= MotAnalogUser_PollDirection(&p_controller->AnalogUser);
+
+	MotAnalogUser_CaptureInput(&p_controller->AnalogUser, p_controller->AnalogResults.Throttle_ADCU, p_controller->AnalogResults.Brake_ADCU);
+	AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_ANALOG_USER);
+
+	if (direction == MOT_ANALOG_USER_DIRECTION_NEUTRAL)
+	{
+		StateMachine_Semisynchronous_ProcInput(&p_controller->StateMachine, MCSM_INPUT_CHECK_STOP);
+	}
+	else
+	{
+		switch(direction)
+		{
+			case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: MotorController_User_ProcDisableControl(p_controller); break;
+			case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: MotorController_User_ProcDirection(p_controller, MOTOR_CONTROLLER_DIRECTION_FORWARD); 		break;
+			case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: //MotorController_User_ProcDirection(p_controller, MOTOR_CONTROLLER_DIRECTION_REVERSE); 	break;
+				Motor_User_ActivateCalibrationHall(&p_controller->CONFIG.P_MOTORS[0]);
+				if (p_controller->Parameters.IsBuzzerOnReverseEnable == true) {MotorController_Beep(p_controller);}
+				break;
+			default: break;
+		}
+
+		if ((direction == MOT_ANALOG_USER_DIRECTION_FORWARD) || (direction == MOT_ANALOG_USER_DIRECTION_REVERSE))
+		{
+			switch(cmd)
+			{
+				case MOT_ANALOG_USER_CMD_THROTTLE:			MotorController_User_ProcCmdAccelerate(p_controller, MotAnalogUser_GetThrottle(&p_controller->AnalogUser));	break;
+				case MOT_ANALOG_USER_CMD_BRAKE: 			MotorController_User_ProcCmdDecelerate(p_controller, MotAnalogUser_GetBrake(&p_controller->AnalogUser)); 	break;
+				case MOT_ANALOG_USER_CMD_THROTTLE_RELEASE:
+					//check throttle release param
+					MotorController_User_ProcDisableControl(p_controller); break;
+				case MOT_ANALOG_USER_CMD_THROTTLE_ZERO_EDGE: 	MotorController_User_ProcDisableControl(p_controller); 	break;
+				case MOT_ANALOG_USER_CMD_THROTTLE_ZERO:			StateMachine_Semisynchronous_ProcInput(&p_controller->StateMachine, MCSM_INPUT_CHECK_STOP);		break;
+				default: break;
+			}
+		}
+	}
+}
 
 static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 {
-	if (Timer_Poll(&p_controller->TimerMillis) == true) 	//Med Freq, Low Priority 1 ms, Main
+	//Med Freq -  1 ms, Low Priority - Main
+	if (Timer_Poll(&p_controller->TimerMillis) == true)
 	{
-//		for (uint8_t iMotor = 0U; iMotor < p_controller->CONFIG.MOTOR_COUNT; iMotor++)
+		StateMachine_Semisynchronous_ProcState(&p_controller->StateMachine);
+
+		switch(p_controller->Parameters.InputMode)
+		{
+			case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
+				MotorControllerAnalogUserThread(p_controller);
+				break;
+
+	//		case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
+	//			break;
+	//
+	//		case MOTOR_CONTROLLER_INPUT_MODE_CAN:
+	//			break;
+
+			default :
+				break;
+		}
+
+//		if (MotAnalogMonitor_CheckHeat_ADCU(&p_controller->AnalogMonitor, p_controller->AnalogResults.HeatPcb_ADCU, p_controller->AnalogResults.HeatMosfetsTop_ADCU, p_controller->AnalogResults.HeatMosfetsBot_ADCU) != MOT_ANALOG_MONITOR_OK)
 //		{
-//			Motor_Main1Ms_Thread(&p_controller->CONFIG.P_MOTORS[iMotor]);
+//			StateMachine_Semisynchronous_ProcTransition(&p_controller->StateMachine, MCSM_TRANSITION_FAULT);
 //		}
 
-//		if(p_controller->Parameters.AnalogUserEnable == true)
-		{
-			MotAnalogUser_CaptureInput(&p_controller->AnalogUser);
-			//move to state machine
-//			MotAnalogUser_Motor_Write(&p_controller->AnalogUser, p_controller->CONFIG.P_MOTORS, p_controller->CONFIG.MOTOR_COUNT);
+//		AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_ANALOG_MONITOR);
 
-			AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_ANALOG_USER);
-			count++;
-		}
+//		Protocol_Slave_Proc(&p_controller->MotProtocol);
 
 //		for(uint8_t iProtocol = 0U; iProtocol < CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT; iProtocol++)
 //		{
 //			Protocol_Slave_Proc(&p_controller->AuxProtocols[iProtocol]);
 //		}
-
-//		Protocol_Slave_Proc(&p_controller->MotProtocol);
-
-//		MotorInterface_Input_ProcWriteToMotor(&p_motorController->Interface.Input,  &p_motorController->Motors[iMotor]);  //copy UI input to motor
-//		MotorInterface_Output_ProcReadFromMotor(&p_motorController->Interface.Output, &p_motorController->Motors[iMotor]);	//copy motor output to UI
-//		MotorInterface_Output_WriteTo(&p_motorController->MotorUser); //actuate hw
-
 	}
 
 	if (Timer_Poll(&p_controller->TimerMillis10) == true) 	//Low Freq, Low Priority 10 ms, Main
 	{
 //		Shell_Proc(&p_controller->MotShell);
-//		Blinky_Proc(&p_controller->Buzzer);
+		Blinky_Proc(&p_controller->Buzzer);
 	}
 
 	if (Timer_Poll(&p_controller->TimerSeconds) == true)
 	{
-		count = 0;
-		//Incase of Serial Rx Overflow Timeout
+		//In case of Serial Rx Overflow Timeout
 //		for (uint8_t iSerial = 0U; iSerial < CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT; iSerial++)
 //		{
 //			Serial_PollRestartRxIsr(&p_motorController->Serials[iSerial]);
 //		}
 	}
 
-
 	/*
 	 * High Freq, Low Priority, Main
 	 */
-	for (uint8_t iMotor = 0U; iMotor < p_controller->CONFIG.MOTOR_COUNT; iMotor++)
-	{
-		Motor_Main_Thread(&p_controller->CONFIG.P_MOTORS[iMotor]);
-	}
-
+//	for (uint8_t iMotor = 0U; iMotor < p_controller->CONFIG.MOTOR_COUNT; iMotor++)
+//	{
+//		Motor_Main_Thread(&p_controller->CONFIG.P_MOTORS[iMotor]);
+//	}
 }
 
+/*
+ * Wrappers
+ */
 static inline void MotorController_PWM_Thread(MotorController_T * p_motorController)
 {
 	for (uint8_t iMotor = 0U; iMotor < p_motorController->CONFIG.MOTOR_COUNT; iMotor++)
@@ -124,9 +172,11 @@ static inline void MotorController_PWM_Thread(MotorController_T * p_motorControl
 //Med Freq, High Priority 1 ms
 static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_motorController)
 {
+//	MotorController_PollBrake(p_motorController);
+
 	for (uint8_t iMotor = 0U; iMotor < p_motorController->CONFIG.MOTOR_COUNT; iMotor++)
 	{
-//		Motor_Timer1Ms_Thread(&p_motorController->CONFIG.P_MOTORS[iMotor]);
+		Motor_Timer1Ms_Thread(&p_motorController->CONFIG.P_MOTORS[iMotor]);
 	}
 }
 

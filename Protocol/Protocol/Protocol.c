@@ -364,7 +364,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 	const Protocol_ReqExtProcessArgs_T args =
 	{
 		.p_SubState 		= p_protocol->CONFIG.P_SUBSTATE_BUFFER,
-		.p_AppInterface 	= p_protocol->CONFIG.P_APP_INTERFACE,
+		.p_AppInterface 	= p_protocol->CONFIG.P_APP_CONTEXT,
 		.p_TxPacket 		=  p_protocol->CONFIG.P_TX_PACKET_BUFFER,
 		.p_TxSize 			= &p_protocol->TxLength,
 		.p_RxPacket 		= p_protocol->CONFIG.P_RX_PACKET_BUFFER,
@@ -400,7 +400,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 
 					if (p_protocol->p_ReqActive->FAST != 0U) //does not invoke state machine, no loop / nonblocking wait.
 					{
-						p_protocol->p_ReqActive->FAST(p_protocol->CONFIG.P_APP_INTERFACE, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex);
+						p_protocol->p_ReqActive->FAST(p_protocol->CONFIG.P_APP_CONTEXT, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex);
 						PortTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 					}
 

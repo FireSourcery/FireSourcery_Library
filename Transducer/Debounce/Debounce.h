@@ -50,7 +50,7 @@ typedef struct
 
 	uint16_t TimePrev;
 	bool DebouncedState;
-	bool DebouncedStatePrev;
+	bool DebouncedStatePrev; //for edge read
 	bool RawStatePrev;
 } Debounce_T;
 
@@ -67,7 +67,7 @@ typedef struct
 /*
  * return true if state changed
  */
-static inline bool Debounce_PollCaptureState(Debounce_T * p_debounce)
+static inline bool Debounce_CaptureState(Debounce_T * p_debounce)
 {
     bool pinState = Pin_Input_Read(&p_debounce->CONFIG.PIN);
 
@@ -93,24 +93,24 @@ static inline bool Debounce_PollCaptureState(Debounce_T * p_debounce)
 	return (p_debounce->DebouncedStatePrev ^ p_debounce->DebouncedState);
 }
 
-static inline bool Debounce_GetRawState(Debounce_T *p_debounce)
+static inline bool Debounce_GetRawState(const Debounce_T *p_debounce)
 {
 	return p_debounce->RawStatePrev;
 }
 
-static inline bool Debounce_GetState(Debounce_T *p_debounce)
+static inline bool Debounce_GetState(const Debounce_T *p_debounce)
 {
 	return p_debounce->DebouncedState;
 }
 
-static inline bool Debounce_GetFallingEdge(Debounce_T * p_debounce)
+static inline bool Debounce_PollFallingEdge(Debounce_T * p_debounce)
 {
 	bool isEdge = ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true)) ? true : false;
 	if (isEdge == true) {p_debounce->DebouncedStatePrev = p_debounce->DebouncedState;}
 	return isEdge;
 }
 
-static inline bool Debounce_GetRisingEdge(Debounce_T * p_debounce)
+static inline bool Debounce_PollRisingEdge(Debounce_T * p_debounce)
 {
 	bool isEdge = ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false)) ? true : false;
 	if (isEdge == true) {p_debounce->DebouncedStatePrev = p_debounce->DebouncedState;}

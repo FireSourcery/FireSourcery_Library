@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,25 +19,18 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Config.h
     @author FireSoucery
     @brief  Motor module preprocessor configuration options and defaults
     @version V0
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef CONFIG_MOTOR_H
 #define CONFIG_MOTOR_H
 
-#ifdef CONFIG_MOTOR_ADC_8
-
-#elif defined(CONFIG_MOTOR_ADC_16)
-
-#else
-	#define CONFIG_MOTOR_ADC_16
-#endif
 
 
 #endif

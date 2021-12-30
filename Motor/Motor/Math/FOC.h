@@ -138,17 +138,14 @@ static inline uint16_t FOC_GetDutyA(FOC_T * p_foc){return p_foc->DutyA;}
 static inline uint16_t FOC_GetDutyB(FOC_T * p_foc){return p_foc->DutyB;}
 static inline uint16_t FOC_GetDutyC(FOC_T * p_foc){return p_foc->DutyC;}
 
+
+static inline qfrac16_t FOC_GetId(FOC_T * p_foc){return p_foc->Id;}
+static inline qfrac16_t FOC_GetIq(FOC_T * p_foc){return p_foc->Iq;}
+
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
 extern void FOC_SetZero(FOC_T * p_foc);
 
-//void FOC_SetId(FOC_t * p_foc)
-//{
-//}
-//
-//void FOC_SetIq(FOC_t * p_foc)
-//{
-//}
 
 
 #endif

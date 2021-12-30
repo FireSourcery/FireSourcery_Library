@@ -155,7 +155,7 @@ static inline uint32_t _Encoder_GetExtendedTimerDelta(Encoder_T * p_encoder)
 //
 //209ms to 13743ms for TimerFreq = 312500
 //104ms to 6871ms for TimerFreq = 625000
-static inline void Encoder_DeltaT_ProcExtendedTimer(Encoder_T * p_encoder)
+static inline void Encoder_DeltaT_CaptureExtendedTimer(Encoder_T * p_encoder)
 {
 	uint32_t extendedTimerDelta = _Encoder_GetExtendedTimerDelta(p_encoder);
 	p_encoder->ExtendedDeltaTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_DELTA_TIMER);
@@ -216,7 +216,7 @@ static inline uint32_t Encoder_DeltaT_GetOverflowTime(Encoder_T * p_encoder)
 	return (_Encoder_GetExtendedTimerDelta(p_encoder) - p_encoder->ExtendedDeltaTimerThreshold);
 }
 
-//static inline uint32_t Encoder_GetDeltaTOverflow(Encoder_T * p_encoder)
+//static inline uint32_t Encoder_DeltaT_GetOverflowTime_Units2(Encoder_T * p_encoder)
 //{
 //	uint32_t deltaTime = Encoder_GetExtendedTimerDelta(p_encoder);
 //

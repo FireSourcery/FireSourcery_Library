@@ -64,7 +64,7 @@
 /*
  * ElectricalAngle, VPwm => Phase Duty
  */
-static inline void _Motor_FOC_ActivateAngle(Motor_T * p_motor)
+static inline void ActivateMotorFocAngle(Motor_T * p_motor)
 {
 	FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
 
@@ -83,7 +83,7 @@ static inline void _Motor_FOC_ActivateAngle(Motor_T * p_motor)
 	Phase_ActuateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 }
 
-static inline void _Motor_FOC_ProcAngleControl(Motor_T * p_motor)
+static inline void ProcMotorFocAngleControl(Motor_T * p_motor)
 {
 	uint32_t electricalDelta;
 
@@ -129,7 +129,7 @@ static inline void _Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 			if(Hall_PollCaptureSensors(&p_motor->Hall) == true)
 			{
 				Encoder_DeltaT_Capture(&p_motor->Encoder);
-				Encoder_DeltaT_ProcExtendedTimer(&p_motor->Encoder);
+				Encoder_DeltaT_CaptureExtendedTimer(&p_motor->Encoder);
 				p_motor->HallAngle = (qangle16_t)Hall_GetRotorAngle_Degrees16(&p_motor->Hall);
 				p_motor->InterpolatedAngleIndex = 0U;
 			}
@@ -140,12 +140,12 @@ static inline void _Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 			{
 				electricalDelta = 65536U/6U;
 			}
-			else
-			{
-				electricalDelta = ((int32_t)p_motor->ElectricalDeltaPrev + (int32_t)electricalDelta)/2U;
-			}
-
-			p_motor->ElectricalDeltaPrev = electricalDelta;
+//			else
+//			{
+//				electricalDelta = ((int32_t)p_motor->ElectricalDeltaPrev + (int32_t)electricalDelta)/2U;
+//			}
+//
+//			p_motor->ElectricalDeltaPrev = electricalDelta;
 
 			//todo check index
 
@@ -157,9 +157,7 @@ static inline void _Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 			break;
 	}
 
-	Motor_ProcRamp(p_motor);
-	Motor_ProcControlVariable(p_motor); //input usercmd rampcmd, set vpwm
-	_Motor_FOC_ActivateAngle(p_motor); 	//input vpwm, theta
+
 }
 
 
@@ -170,31 +168,22 @@ static inline void _Motor_FOC_ProcAngleControl(Motor_T * p_motor)
  */
 static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
-	if ((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT))
-	{
-		/* Current Control Mode - Proc angle on ADC return */
-		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_FOC_IABC);
-	}
-	else
+	if (((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)) == false)
 	{
 		/* Voltage Control mode - Proc angle immediately */
-		_Motor_FOC_ProcAngleControl(p_motor);
+		ProcMotorFocAngleControl(p_motor);
+
+		Motor_ProcControlVariable(p_motor); //input usercmd rampcmd, set vpwm
+		ActivateMotorFocAngle(p_motor); 	//input vpwm, theta
 	}
+
+	/* Current Control Mode - Proc angle on ADC return */
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_FOC_IABC);
 }
 
-// from stop only
-static inline void Motor_FOC_InitAngleControl(Motor_T * p_motor)
-{
-//		Encoder_Reset(&p_motor->Encoder); //zero angle?
-	Phase_Ground(&p_motor->Phase); //activates abc
-	FOC_SetZero(&p_motor->Foc);
-	Phase_ActuateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc)); //sets 0 current output
-}
 
-/*
- * prep run state. shared to reduce number of states
- */
-static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
+
+static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 {
 	switch (p_motor->Parameters.SensorMode)
 	{
@@ -214,12 +203,7 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 
 		case MOTOR_SENSOR_MODE_HALL:
 			//or reset hall for next edge
-			Hall_CaptureSensors(&p_motor->Hall);
-			p_motor->HallAngle = (qangle16_t)Hall_GetRotorAngle_Degrees16(&p_motor->Hall);
-			p_motor->ElectricalAngle = p_motor->HallAngle;
-			p_motor->InterpolatedAngleIndex = 0U;
-
-			Encoder_DeltaT_SetInitial(&p_motor->Encoder, Motor_GetSpeed(p_motor));
+			Hall_ResetCapture(&p_motor->Hall);
 			break;
 
 		default:
@@ -246,10 +230,20 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 	}
 }
 
-static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
+/*
+ *	from stop only
+ * prep run state. shared to reduce number of states
+ */
+static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 {
+	Phase_Ground(&p_motor->Phase); //activates abc
+	FOC_SetZero(&p_motor->Foc);
+	Phase_ActuateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc)); //sets 0 current output
+	Encoder_Reset(&p_motor->Encoder); //zero angle? speed?
 
+	Motor_FOC_ResumeAngleControl(p_motor);
 }
+
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

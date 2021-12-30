@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,20 +19,24 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
-    @file 	MotAnalogUser_Motor.h
+    @file 	.h
     @author FireSoucery
-    @brief  1 instance for all motor, input output control
+    @brief
     @version V0
 */
-/**************************************************************************/
-#ifndef MOT_ANALOG_USER_MOTOR_H
-#define MOT_ANALOG_USER_MOTOR_H
+/******************************************************************************/
+#ifndef MOT_ANALOG_CONVERSION_H
+#define MOT_ANALOG_CONVERSION_H
 
-#include "Motor/Motor/Motor.h"
+#include "Peripheral/Analog/AnalogN/AnalogN.h"
 
-void MotAnalogUser_Motor_Write(const MotAnalogUser_T * input, Motor_T * p_motorDest, uint8_t motorCount);
+/*
+ * Misra violation  extern data
+ */
+extern const Analog_ConversionVirtual_T MOT_ANALOG_VIRTUAL_MONITOR;
+extern const Analog_ConversionVirtual_T MOT_ANALOG_VIRTUAL_USER;
 
 #endif

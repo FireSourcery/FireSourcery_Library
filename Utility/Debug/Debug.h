@@ -20,9 +20,11 @@ static inline Debug_CaptureRef()
 	g_Debug.Debug_TimeRef = Micros();
 }
 
-static inline Debug_CaptureElapsed(uint8_t index)
+static uint32_t Debug_CaptureElapsed(uint8_t index)
 {
-	g_Debug.Debug_Delta[index] = Micros() - g_Debug.Debug_TimeRef;
+	uint32_t micros = Micros() - g_Debug.Debug_TimeRef;
+	g_Debug.Debug_Delta[index] = micros;
+	return micros;
 }
 
 static inline Debug_CapturePeriod(uint8_t index)
