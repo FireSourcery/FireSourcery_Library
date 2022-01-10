@@ -54,6 +54,8 @@
  */
 static void EepromStartCmdWrite(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units)
 {
+	(void)units;
+
 	if(*(uint32_t*)p_cmdDest != (*(uint32_t*)p_cmdData))
 	{
 		HAL_EEPROM_StartCmdWriteUnit(p_hal, p_cmdDest, p_cmdData);
@@ -102,15 +104,10 @@ void EEPROM_Init_NonBlocking(EEPROM_T * p_eeprom)
 	HAL_EEPROM_Init_NonBlocking(p_eeprom->CONFIG.P_HAL);
 }
 
-bool EEPROM_ReadComplete(EEPROM_T * p_eeprom)
+bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom)
 {
 	return HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONFIG.P_HAL);
 }
-
-//NvMemory_Status_T EEPROM_SetInitHw(EEPROM_T * p_eeprom) //set init command
-//{
-
-//}
 
 NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const uint8_t * p_dest, const uint8_t * p_source, size_t size)
 {
@@ -132,7 +129,9 @@ NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, uint8_t * p_dest, c
 	return ((EEPROM_SetWrite(p_eeprom, p_dest, p_source, sizeBytes) == NV_MEMORY_STATUS_SUCCESS) ? NvMemory_ProcOpCommon_Blocking(p_eeprom) : NV_MEMORY_STATUS_ERROR_INPUT);
 }
 
-
+/*
+ * Non Blocking
+ */
 bool EEPROM_ProcOp_NonBlocking(EEPROM_T * p_flash)
 {
 	return NvMemory_ProcOp(p_flash);

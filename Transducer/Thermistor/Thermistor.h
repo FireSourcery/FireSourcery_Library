@@ -36,8 +36,24 @@
 #include <stdbool.h>
 #include <math.h>
 
-//#include "Peripheral/Pin/Pin.h"
-//#include "Utility/Timer/Timer.h"
+typedef enum
+{
+	THERMISTOR_THRESHOLD_OK,
+	THERMISTOR_ERROR_LIMIT,
+	THERMISTOR_ERROR_THRESHOLD,
+}
+Thermistor_ThesholdStatus_T;
+
+typedef struct
+{
+	uint32_t RNominal;
+	uint32_t TNominal;
+	uint32_t BConstant;
+
+	uint16_t Limit_ADCU;
+	uint16_t Threshold_ADCU;
+}
+Thermistor_Params_T;
 
 /*
  * 1/T = 1/T0 + (1/B)ln(R/R0))
@@ -47,45 +63,44 @@ typedef struct
 //#ifdef CONFIG_THERMISTOR_ADC_LUT
 //	uint8_t * ADC_LUT; //look up table using adc base, fixed r0 value
 //	uint8_t * R_LUT;
-	uint16_t * P_ADC_VALUE;
-	uint16_t ADC_MAX;
-	uint32_t R_SERIES;
+
+//#ifdef config pointer
+//	uint16_t * P_ADC_VALUE;
+
+	Thermistor_Params_T * P_PARAMS; //nv memory
 
 	uint8_t V_IN;
-	uint8_t ADC_VREF;
-
-	uint32_t R0;
-	uint32_t T0;
-	uint16_t B;
+	uint8_t V_AREF;
+	uint16_t ADC_MAX;
+	uint32_t R_SERIES; 	//pull up
+//	uint32_t R_PARALLEL; //pull down
 }
 Thermistor_Config_T;
 
 typedef struct
 {
 	const Thermistor_Config_T CONFIG;
+	Thermistor_Params_T Params;
 
-	//todo runtime config
-	uint32_t RNominal;
-	uint32_t TNominal;
-	uint16_t BConstant;
-
-	uint32_t DegreesC; //results
+	Thermistor_ThesholdStatus_T Status;
 }
 Thermistor_T;
 
-#define THERMISTOR_CONFIG(p_Adcu, AdcRes, RSeries, Vin, AdcVref, RNominal, TNominal, BConst) 	\
-{												\
-	.CONFIG =									\
-	{											\
-		.P_ADC_VALUE 	= p_Adcu,				\
-		.ADC_MAX 		= AdcRes,				\
-		.R_SERIES 		= RSeries,				\
-		.V_IN 			= Vin,					\
-		.ADC_VREF 		= AdcVref,				\
-		.R0 			= RNominal,				\
-		.T0 			= TNominal,				\
-		.B 				= BConst,				\
-	}											\
-}
+//#define THERMISTOR_CONFIG(AdcMax, RSeries, Vin, Varef, RNominal, TNominal, BConst) 	\
+//{												\
+//	.CONFIG =									\
+//	{											\
+//		.ADC_MAX 		= AdcRes,				\
+//		.R_SERIES 		= RSeries,				\
+//		.V_IN 			= Vin,					\
+//		.V_AREF 		= Varef,				\
+//		.R0 			= RNominal,				\
+//		.T0 			= TNominal,				\
+//		.B 				= BConst,				\
+//	}											\
+//}
 
+extern float Thermistor_ConvertToDegreesC_Float(Thermistor_T * p_thermistor, uint16_t adcu);
+extern uint32_t Thermistor_SetHeatLimit_DegreesC(Thermistor_T * p_thermistor, uint8_t limit_degreesC);
+extern uint32_t Thermistor_SetHeatThreshold_DegreesC(Thermistor_T * p_thermistor, uint8_t threshold_degreesC);
 #endif

@@ -53,6 +53,8 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolut
 //	Pin_Init(&p_encoder->CONFIG.PIN_PHASE_B);
 
 	_Encoder_Init(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount, p_encoder->CONFIG.DELTA_T_TIMER_FREQ);
+
+	p_encoder->DeltaT = UINT32_MAX;
 }
 
 /*

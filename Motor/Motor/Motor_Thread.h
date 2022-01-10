@@ -33,9 +33,8 @@
 #define MOTOR_THREAD_H
 
 #include "Motor.h"
-//#include "Motor/Motor/Transducer/Phase/Phase.h"
 #include "Utility/StateMachine/StateMachine.h"
-#include "Utility/Timer/Timer.h"
+//#include "Utility/Timer/Timer.h"
 
 /*
     Default 50us
@@ -44,14 +43,13 @@
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase++;
-	StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
-	//	Analog_LoadConversion(p_motor->CONFIG.P_ANALOG , p_motor->p_ConversionActive);
+	StateMachine_Semisynchronous_ProcOutput(&p_motor->StateMachine);
 }
 
-static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor) //1ms isr priority
+//1ms isr priority
+static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor)
 {
-	Motor_CaptureSpeed(p_motor);
-	Motor_PollStop(p_motor);
+
 }
 
 //Low Freq Main //user/monitor thread 1ms low priority
@@ -68,19 +66,6 @@ static inline void Motor_Main_Thread(Motor_T * p_motor)
 //	{
 //
 //	}
-//
-//	if (Timer_Poll(&p_motor->SecondsTimer) == true)
-//	{
-//
-//	}
 }
 
 #endif
-///*
-// * SixStep openloop and sensorless hw timer
-// */
-//static inline void Motor_TimerCommutation_Thread(Motor_T * p_motor)
-//{
-////	BEMF_ProcTimer (&p_motor->Bemf);
-//}
-

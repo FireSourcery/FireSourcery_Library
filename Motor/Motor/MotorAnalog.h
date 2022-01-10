@@ -33,7 +33,7 @@
 
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 
-#define MOTOR_ANALOG_CHANNEL_MOTOR_COUNT 	8U
+#define MOTOR_ANALOG_CHANNEL_COUNT 	8U
 
 /*!
 	@brief Virtual channel identifiers, index into arrays containing Analog channel
@@ -44,11 +44,14 @@ typedef enum
 	MOTOR_ANALOG_CHANNEL_VA,
 	MOTOR_ANALOG_CHANNEL_VB,
 	MOTOR_ANALOG_CHANNEL_VC,
+//	MOTOR_ANALOG_CHANNEL_VA_PWM_OFF,
+//	MOTOR_ANALOG_CHANNEL_VB_PWM_OFF,
+//	MOTOR_ANALOG_CHANNEL_VC_PWM_OFF,
 	MOTOR_ANALOG_CHANNEL_IA,
 	MOTOR_ANALOG_CHANNEL_IB,
 	MOTOR_ANALOG_CHANNEL_IC,
-	MOTOR_ANALOG_CHANNEL_HEAT_MOTOR,	/* Temperature */
-} MotorAnalog_ChannelId_T;
+	MOTOR_ANALOG_CHANNEL_HEAT,	/* Temperature */
+} MotorAnalog_Channel_T;
 
 /*
  * Results Buffer
@@ -64,11 +67,11 @@ typedef union
 		analog_adcresult_t Ia_ADCU;
 		analog_adcresult_t Ib_ADCU;
 		analog_adcresult_t Ic_ADCU;
-		analog_adcresult_t HeatMotor_ADCU;
+		analog_adcresult_t Heat_ADCU;
 	};
-	analog_adcresult_t Channels[MOTOR_ANALOG_CHANNEL_MOTOR_COUNT];
+	analog_adcresult_t Channels[MOTOR_ANALOG_CHANNEL_COUNT];
 }
-MotorAnalog_Map_T;
+MotorAnalog_Results_T;
 
 
 #endif

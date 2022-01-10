@@ -40,19 +40,13 @@
 #include "Motor/Utility/MotAnalogUser/MotAnalogUser.h"
 #include "Motor/Utility/MotAnalogMonitor/MotAnalogMonitor.h"
 //#include "Motor/Utility/MotShell/MotShell.h"
-
 #include "Motor/Motor/Motor_Thread.h"
-
 #include "Protocol/Protocol/Protocol.h"
-
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 #include "Peripheral/Serial/Serial.h"
-
-//#include "Utility/Shell/Shell.h"
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/Timer/Timer.h"
-
-//static uint32_t count;
+//#include "Utility/Shell/Shell.h"
 
 static inline void MotorControllerAnalogUserThread(MotorController_T * p_controller)
 {
@@ -60,7 +54,8 @@ static inline void MotorControllerAnalogUserThread(MotorController_T * p_control
 	MotAnalogUser_Direction_T 	direction 	= MotAnalogUser_PollDirection(&p_controller->AnalogUser);
 
 	MotAnalogUser_CaptureInput(&p_controller->AnalogUser, p_controller->AnalogResults.Throttle_ADCU, p_controller->AnalogResults.Brake_ADCU);
-	AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_ANALOG_USER);
+	AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_THROTTLE);
+	AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_BRAKE);
 
 	if (direction == MOT_ANALOG_USER_DIRECTION_NEUTRAL)
 	{
@@ -70,7 +65,7 @@ static inline void MotorControllerAnalogUserThread(MotorController_T * p_control
 	{
 		switch(direction)
 		{
-			case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: MotorController_User_ProcDisableControl(p_controller); break;
+			case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: MotorController_User_DisableControl(p_controller); break;
 			case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: MotorController_User_ProcDirection(p_controller, MOTOR_CONTROLLER_DIRECTION_FORWARD); 		break;
 			case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: //MotorController_User_ProcDirection(p_controller, MOTOR_CONTROLLER_DIRECTION_REVERSE); 	break;
 				Motor_User_ActivateCalibrationHall(&p_controller->CONFIG.P_MOTORS[0]);
@@ -83,12 +78,12 @@ static inline void MotorControllerAnalogUserThread(MotorController_T * p_control
 		{
 			switch(cmd)
 			{
-				case MOT_ANALOG_USER_CMD_THROTTLE:			MotorController_User_ProcCmdAccelerate(p_controller, MotAnalogUser_GetThrottle(&p_controller->AnalogUser));	break;
-				case MOT_ANALOG_USER_CMD_BRAKE: 			MotorController_User_ProcCmdDecelerate(p_controller, MotAnalogUser_GetBrake(&p_controller->AnalogUser)); 	break;
+				case MOT_ANALOG_USER_CMD_THROTTLE:			MotorController_User_ProcCmdThrottle(p_controller, MotAnalogUser_GetThrottle(&p_controller->AnalogUser));	break;
+				case MOT_ANALOG_USER_CMD_BRAKE: 			MotorController_User_ProcCmdBrake(p_controller, MotAnalogUser_GetBrake(&p_controller->AnalogUser)); 	break;
 				case MOT_ANALOG_USER_CMD_THROTTLE_RELEASE:
 					//check throttle release param
-					MotorController_User_ProcDisableControl(p_controller); break;
-				case MOT_ANALOG_USER_CMD_THROTTLE_ZERO_EDGE: 	MotorController_User_ProcDisableControl(p_controller); 	break;
+					MotorController_User_DisableControl(p_controller); break;
+				case MOT_ANALOG_USER_CMD_THROTTLE_ZERO_EDGE: 	MotorController_User_DisableControl(p_controller); 	break;
 				case MOT_ANALOG_USER_CMD_THROTTLE_ZERO:			StateMachine_Semisynchronous_ProcInput(&p_controller->StateMachine, MCSM_INPUT_CHECK_STOP);		break;
 				default: break;
 			}
@@ -101,7 +96,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 	//Med Freq -  1 ms, Low Priority - Main
 	if (Timer_Poll(&p_controller->TimerMillis) == true)
 	{
-		StateMachine_Semisynchronous_ProcState(&p_controller->StateMachine);
+		StateMachine_Semisynchronous_ProcOutput(&p_controller->StateMachine);
 
 		switch(p_controller->Parameters.InputMode)
 		{
@@ -119,19 +114,10 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 				break;
 		}
 
-//		if (MotAnalogMonitor_CheckHeat_ADCU(&p_controller->AnalogMonitor, p_controller->AnalogResults.HeatPcb_ADCU, p_controller->AnalogResults.HeatMosfetsTop_ADCU, p_controller->AnalogResults.HeatMosfetsBot_ADCU) != MOT_ANALOG_MONITOR_OK)
-//		{
-//			StateMachine_Semisynchronous_ProcTransition(&p_controller->StateMachine, MCSM_TRANSITION_FAULT);
-//		}
-
-//		AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_ANALOG_MONITOR);
-
-//		Protocol_Slave_Proc(&p_controller->MotProtocol);
-
-//		for(uint8_t iProtocol = 0U; iProtocol < CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT; iProtocol++)
-//		{
-//			Protocol_Slave_Proc(&p_controller->AuxProtocols[iProtocol]);
-//		}
+		for(uint8_t iProtocol = 0U; iProtocol < p_controller->CONFIG.PROTOCOL_COUNT; iProtocol++)
+		{
+			Protocol_Slave_Proc(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
+		}
 	}
 
 	if (Timer_Poll(&p_controller->TimerMillis10) == true) 	//Low Freq, Low Priority 10 ms, Main
@@ -143,10 +129,31 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 	if (Timer_Poll(&p_controller->TimerSeconds) == true)
 	{
 		//In case of Serial Rx Overflow Timeout
-//		for (uint8_t iSerial = 0U; iSerial < CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT; iSerial++)
+		for (uint8_t iSerial = 0U; iSerial < p_controller->CONFIG.SERIAL_COUNT; iSerial++)
+		{
+			Serial_PollRestartRxIsr(&p_controller->CONFIG.P_SERIALS[iSerial]);
+		}
+
+//		if (MotAnalogMonitor_CheckHeat_ADCU(&p_controller->AnalogMonitor,  p_controller->AnalogResults.HeatMosfetsTop_ADCU, p_controller->AnalogResults.HeatMosfetsBot_ADCU) != MOT_ANALOG_MONITOR_OK)
 //		{
-//			Serial_PollRestartRxIsr(&p_motorController->Serials[iSerial]);
+//
 //		}
+
+//		if (Thermistor_ProcThreshold(&p_controller->ThermistorPcb, p_controller->AnalogResults.HeatPcb_ADCU) != THERMISTOR_THRESHOLD_OK)
+//		{
+//			StateMachine_Semisynchronous_ProcInput(&p_controller->StateMachine, MCSM_INPUT_FAULT);
+//		}
+
+//		AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_HEAT_PCB);
+//		AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_HEAT_MOSFETS_TOP);
+//		AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_HEAT_MOSFETS_BOT);
+//		AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_VACC);
+//		AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_VSENSE);
+
+
+//#ifdef DEBUG
+
+//#endif
 	}
 
 	/*

@@ -177,18 +177,16 @@ bool Queue_EnqueueN(Queue_T * p_queue, const void * p_units, size_t nUnits)
 {
 	bool isSuccess = false;
 
-	if (AquireCritical(p_queue) == true)
+	EnterCritical();
+	if (nUnits <= Queue_GetEmptyCount(p_queue))
 	{
-		if (nUnits <= Queue_GetEmptyCount(p_queue))
+		for(size_t iUnit = 0U; iUnit < nUnits; iUnit++)
 		{
-			for(size_t iUnit = 0U; iUnit < nUnits; iUnit++)
-			{
-				Enqueue(p_queue, p_units + (iUnit * p_queue->CONFIG.UNIT_SIZE));
-			}
-			isSuccess = true;
+			Enqueue(p_queue, p_units + (iUnit * p_queue->CONFIG.UNIT_SIZE));
 		}
-		ReleaseCritical(p_queue);
+		isSuccess = true;
 	}
+	ExitCritical();
 
 	return isSuccess;
 }
@@ -197,18 +195,16 @@ bool Queue_DequeueN(Queue_T * p_queue, void * p_dest, size_t nUnits)
 {
 	bool isSuccess = false;
 
-	if (AquireCritical(p_queue) == true)
+	EnterCritical();
+	if(nUnits <= Queue_GetFullCount(p_queue))
 	{
-		if (nUnits <= Queue_GetFullCount(p_queue))
+		for(size_t iUnit = 0U; iUnit < nUnits; iUnit++)
 		{
-			for(size_t iUnit = 0U; iUnit < nUnits; iUnit++)
-			{
-				Dequeue(p_queue, p_dest + (iUnit * p_queue->CONFIG.UNIT_SIZE));
-			}
-			isSuccess = true;
+			Dequeue(p_queue, p_dest + (iUnit * p_queue->CONFIG.UNIT_SIZE));
 		}
-		ReleaseCritical(p_queue);
+		isSuccess = true;
 	}
+	ExitCritical();
 
 	return isSuccess;
 }
@@ -217,21 +213,19 @@ size_t Queue_EnqueueMax(Queue_T * p_queue, const void * p_units, size_t nUnits)
 {
 	size_t count;
 
-	if (AquireCritical(p_queue) == true)
+	EnterCritical();
+	for(count = 0; count < nUnits; count++)
 	{
-		for (count = 0; count < nUnits; count++)
+		if(Queue_GetIsFull(p_queue) == false)
 		{
-			if (Queue_GetIsFull(p_queue) == false)
-			{
-				Enqueue(p_queue, p_units + (count * p_queue->CONFIG.UNIT_SIZE));
-			}
-			else
-			{
-				break;
-			}
+			Enqueue(p_queue, p_units + (count * p_queue->CONFIG.UNIT_SIZE));
 		}
-		ReleaseCritical(p_queue);
+		else
+		{
+			break;
+		}
 	}
+	ExitCritical();
 
 	return count;
 }
@@ -240,21 +234,19 @@ size_t Queue_DequeueMax(Queue_T * p_queue, void * p_dest, size_t p_destLength)
 {
 	size_t count;
 
-	if (AquireCritical(p_queue) == true)
+	EnterCritical();
+	for(count = 0; count < p_destLength; count++)
 	{
-		for (count = 0; count < p_destLength; count++)
+		if(Queue_GetIsEmpty(p_queue) == false)
 		{
-			if (Queue_GetIsEmpty(p_queue) == false)
-			{
-				Dequeue(p_queue, p_dest + (count * p_queue->CONFIG.UNIT_SIZE));
-			}
-			else
-			{
-				break;
-			}
+			Dequeue(p_queue, p_dest + (count * p_queue->CONFIG.UNIT_SIZE));
 		}
-		ReleaseCritical(p_queue);
+		else
+		{
+			break;
+		}
 	}
+	ExitCritical();
 
 	return count;
 }
@@ -263,7 +255,7 @@ bool Queue_PushFront(Queue_T * p_queue, const void * p_unit)
 {
 	bool isSuccess = false;
 	EnterCritical();
-	if (Queue_GetIsFull(p_queue) == false)
+	if(Queue_GetIsFull(p_queue) == false)
 	{
 		PushFront(p_queue, p_unit);
 		isSuccess = true;
@@ -276,7 +268,7 @@ bool Queue_PopBack(Queue_T * p_queue, void * p_dest)
 {
 	bool isSuccess = false;
 	EnterCritical();
-	if (Queue_GetIsEmpty(p_queue) == false)
+	if(Queue_GetIsEmpty(p_queue) == false)
 	{
 		PopBack(p_queue, p_dest);
 		isSuccess = true;
@@ -289,7 +281,7 @@ bool Queue_PeekFront(Queue_T * p_queue, void * p_dest)
 {
 	bool isSuccess = false;
 	EnterCritical();
-	if (Queue_GetIsEmpty(p_queue) == false)
+	if(Queue_GetIsEmpty(p_queue) == false)
 	{
 		PeekFront(p_queue, p_dest);
 		isSuccess = true;
@@ -302,7 +294,7 @@ bool Queue_PeekBack(Queue_T * p_queue, void * p_dest)
 {
 	bool isSuccess = false;
 	EnterCritical();
-	if (Queue_GetIsEmpty(p_queue) == false)
+	if(Queue_GetIsEmpty(p_queue) == false)
 	{
 		PeekBack(p_queue, p_dest);
 		isSuccess = true;
@@ -315,7 +307,7 @@ bool Queue_PeekIndex(Queue_T * p_queue, void * p_dest, size_t index)
 {
 	bool isSuccess = false;
 	EnterCritical();
-	if (index <= Queue_GetFullCount(p_queue))
+	if(index < Queue_GetFullCount(p_queue))
 	{
 		PeekIndex(p_queue, p_dest, index);
 		isSuccess = true;
@@ -328,9 +320,9 @@ bool Queue_RemoveFront(Queue_T * p_queue, size_t nUnits)
 {
 	bool isSuccess = false;
 	EnterCritical();
-	if (nUnits <= Queue_GetFullCount(p_queue))
+	if(nUnits <= Queue_GetFullCount(p_queue))
 	{
-		RemoveFront(p_queue, 1U);
+		RemoveFront(p_queue, nUnits);
 		isSuccess = true;
 	}
 	ExitCritical();
@@ -341,9 +333,9 @@ bool Queue_RemoveBack(Queue_T * p_queue, size_t nUnits)
 {
 	bool isSuccess = false;
 	EnterCritical();
-	if (nUnits <= Queue_GetFullCount(p_queue))
+	if(nUnits <= Queue_GetFullCount(p_queue))
 	{
-		RemoveBack(p_queue, 1U);
+		RemoveBack(p_queue, nUnits);
 		isSuccess = true;
 	}
 	ExitCritical();
@@ -354,7 +346,7 @@ bool Queue_Seek(Queue_T * p_queue, void * p_dest, size_t index)
 {
 	bool isSuccess = false;
 	EnterCritical();
-	if (index <= Queue_GetFullCount(p_queue))
+	if(index < Queue_GetFullCount(p_queue))
 	{
 		Seek(p_queue, p_dest, index);
 		isSuccess = true;

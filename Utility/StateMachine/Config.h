@@ -47,5 +47,4 @@
 	#define CONFIG_STATE_MACHINE_MULTITHREADED_DISABLED
 #endif
 
-
 #endif

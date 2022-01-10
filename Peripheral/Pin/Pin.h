@@ -52,20 +52,23 @@ Pin_T;
 	.MASK = (1UL << Id)			\
 }
 
+static inline uint32_t GetPinHalArg(const Pin_T * p_pin)
+{
 #ifdef CONFIG_PIN_HAL_USE_MASK
-	#define PIN_ARG_ID p_pin->MASK
+	return p_pin->MASK;
 #elif defined(CONFIG_PIN_HAL_USE_ID)
-	#define PIN_ARG_ID p_pin->ID
+	return p_pin->ID;
 #endif
+}
 
-static inline void Pin_Input_Init(const Pin_T * p_pin) {HAL_Pin_InitInput(p_pin->P_HAL_PIN, PIN_ARG_ID);}
-static inline bool Pin_Input_Read(const Pin_T * p_pin) {return HAL_Pin_ReadInput(p_pin->P_HAL_PIN, PIN_ARG_ID);}
+static inline void Pin_Input_Init(const Pin_T * p_pin) {HAL_Pin_InitInput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin));}
+static inline bool Pin_Input_Read(const Pin_T * p_pin) {return HAL_Pin_ReadInput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin));}
 
-static inline void Pin_Output_Init(const Pin_T * p_pin) 				{HAL_Pin_InitOutput(p_pin->P_HAL_PIN, PIN_ARG_ID); HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, PIN_ARG_ID);}
-static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn) 	{return HAL_Pin_WriteOutput(p_pin->P_HAL_PIN, PIN_ARG_ID, isOn);}
-static inline void Pin_Output_Off(const Pin_T * p_pin) 					{return HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, PIN_ARG_ID);}
-static inline void Pin_Output_On(const Pin_T * p_pin)					{return HAL_Pin_WriteOutputOn(p_pin->P_HAL_PIN, PIN_ARG_ID);}
+static inline void Pin_Output_Init(const Pin_T * p_pin) 				{HAL_Pin_InitOutput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, GetPinHalArg(p_pin));}
+static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn) 	{return HAL_Pin_WriteOutput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin), isOn);}
+static inline void Pin_Output_Off(const Pin_T * p_pin) 					{return HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, GetPinHalArg(p_pin));}
+static inline void Pin_Output_On(const Pin_T * p_pin)					{return HAL_Pin_WriteOutputOn(p_pin->P_HAL_PIN, GetPinHalArg(p_pin));}
 
-static inline void Pin_Deinit(const Pin_T * p_pin) {HAL_Pin_Deinit(p_pin->P_HAL_PIN, PIN_ARG_ID);}
+static inline void Pin_Deinit(const Pin_T * p_pin) {HAL_Pin_Deinit(p_pin->P_HAL_PIN, GetPinHalArg(p_pin));}
 
 #endif

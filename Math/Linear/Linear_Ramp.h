@@ -39,17 +39,26 @@
 
 /*
  * user must account for acceleration sign,
- * if initial < final, acceleration is positive, ramp returns final value
+ * if initial > final, acceleration is positive, ramp returns final value
+ *
+ * slope_UnitPerSecond 32,767 max
  */
-static inline void Linear_Ramp_Init_Acceleration(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t initial, int32_t final, int32_t acceleration_UnitPerSecond)
+static inline void Linear_Ramp_InitSlope(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t initial, int32_t final, int32_t slope_UnitPerSecond)
 {
-	Linear_Init(p_linear, acceleration_UnitPerSecond, updateFreq_Hz, initial, final);
+	Linear_Init(p_linear, slope_UnitPerSecond, updateFreq_Hz, initial, final);
+
+	//	p_linear->SlopeFactor 			= ((int32_t)factor << 16U) / divisor;
+	//	p_linear->SlopeDivisor_Shift 	= 16U;
+	//	p_linear->SlopeDivisor 			= ((int32_t)divisor << 16U) / factor; //InvF factor
+	//	p_linear->SlopeFactor_Shift 	= 16U;
+	//	p_linear->Intercept 			= intercept << 16U;
+	//	p_linear->RangeReference 		= rangeRef;
 }
 
 /*
- *  peroid_Ms * updateFreq_Hz max 32,767
+ *  Overflow: (peroid_Ms * updateFreq_Hz / 1000U) max 32,767
  */
-static inline void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint16_t updateFreq_Hz, int32_t initial, int32_t final, uint16_t peroid_Ms)
+static inline void Linear_Ramp_InitMillis(Linear_T * p_linear, uint16_t updateFreq_Hz, int32_t initial, int32_t final, uint16_t peroid_Ms)
 {
 	Linear_Init(p_linear, (final - initial), (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, initial, final);
 
@@ -72,11 +81,12 @@ static inline int32_t Linear_Ramp_CalcTarget(Linear_T * p_linear, uint32_t index
 	return Linear_Function(p_linear, index);
 }
 
-static inline int32_t Linear_Ramp_CalcTargetIncIndex(Linear_T *p_linear, uint32_t *p_index, uint32_t indexIncreament)
+
+static inline int32_t Linear_Ramp_CalcTargetIncIndex(Linear_T * p_linear, uint32_t * p_index, uint32_t indexIncreament)
 {
 	int32_t rampValue = Linear_Function(p_linear, *p_index);
 
-	if (p_linear->SlopeFactor < (int32_t)0)  //slope is negative, todo fix decel on 0 slope
+	if(p_linear->SlopeFactor < (int32_t)0) /* slope is negative, inc ramp if greater than final */
 	{
 		if(rampValue > p_linear->RangeReference)
 		{
@@ -87,7 +97,7 @@ static inline int32_t Linear_Ramp_CalcTargetIncIndex(Linear_T *p_linear, uint32_
 			rampValue = p_linear->RangeReference;
 		}
 	}
-	else if (p_linear->SlopeFactor > (int32_t)0) //slope is positive
+	else if(p_linear->SlopeFactor > (int32_t)0) /* slope is positive, inc ramp if less than final */
 	{
 		if(rampValue < p_linear->RangeReference)
 		{
@@ -98,35 +108,15 @@ static inline int32_t Linear_Ramp_CalcTargetIncIndex(Linear_T *p_linear, uint32_
 			rampValue = p_linear->RangeReference;
 		}
 	}
-	else //slope is 0 case
-	{
-
-	}
+	/* else slope is 0, continue to return the same value */
 
 	return rampValue;
 }
 
-//static inline int16_t Linear_Ramp_CalcTarget_IncIndexOne(Linear_T *p_linear, uint32_t *p_index)
-//{
-//	int32_t target = Linear_Function(p_linear, *p_index);
-//
-//	if (p_linear->SlopeFactor >= 0U) //slope is positive
-//	{
-//		if(target < p_linear->RangeReference)
-//		{
-//			p_index++;
-//		}
-//	}
-//	else //slope is negative
-//	{
-//		if(target > p_linear->RangeReference)
-//		{
-//			p_index++;
-//		}
-//	}
-//
-//	return target;
-//}
+static inline int32_t Linear_Ramp_Proc(Linear_T * p_linear, uint32_t * p_index)
+{
+	return Linear_Ramp_CalcTargetIncIndex(p_linear, p_index, 1U);
+}
 
 //uint16_t Linear_Ramp_CalcIndex(Linear_T * p_linear, int16_t rampValue)
 //{

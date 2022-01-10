@@ -31,21 +31,9 @@
 #ifndef MOT_SHELL_H
 #define MOT_SHELL_H
 
-//#include "System/Shell/Shell.h"
-#include "System/Shell/Terminal.h"
-#include "System/Shell/Cmd.h"
+#include "Utility/Shell/Shell.h"
 
 #include <stdint.h>
-
-typedef const struct
-{
-	 Terminal_T * const P_CMD_TERMINAL;
-	 void * P_DATA_LINK;
-//	 MotorUser_T * P_CMD_MOTOR_USER;
-//	 Motor_Parameters_T * CMD_MOTOR_PARAMETERS_ARRAY[CONFIG_MOTOR_SHELL_MOTOR_COUNT];// array of pointers
-//	 uint8_t CMD_MOTOR_COUNT;
-//	 MotorInterface_T * const P_MOTOR_INTERFACE;
-} MotShell_Config_T;
 
 typedef enum
 {

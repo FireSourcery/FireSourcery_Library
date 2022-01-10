@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,8 +19,8 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/*******************************************************************************/
-/*******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Linear_Voltage.h
     @author FireSoucery
@@ -29,7 +29,7 @@
 
     @version V0
 */
-/*******************************************************************************/
+/******************************************************************************/
 #ifndef LINEAR_VOLTAGE_H
 #define LINEAR_VOLTAGE_H
 
@@ -37,8 +37,8 @@
 
 #include <stdint.h>
 
-#define LINEAR_VOLTAGE_CONFIG(r1, r2, adcVRef10, adcBits, vInMax) 								\
-{																								\
+#define LINEAR_VOLTAGE_CONFIG(r1, r2, adcVRef10, adcBits, vInMax) 							\
+{																							\
 	.SlopeFactor 				= ((adcVRef10 * (r1 + r2)) << (16U - adcBits)) / r2 / 10U, 	\
 	.SlopeDivisor_Shift 		= 16U,														\
 	.SlopeDivisor 				= ((r2 << 16U) * 10U / (adcVRef10 * (r1 + r2))),			\
@@ -86,7 +86,10 @@ static inline int32_t Linear_Voltage_CalcMilliV(const Linear_T * p_linear, uint1
 	return milliV;
 }
 
-static inline int32_t Linear_Voltage_CalcScaledV(const Linear_T * p_linear, uint16_t adcu, uint16_t scalar)
+/*
+ * Check Overflow range
+ */
+static inline int32_t Linear_Voltage_CalcScalarV(const Linear_T * p_linear, uint16_t adcu, uint16_t scalar)
 {
 	return Linear_Function(p_linear, (uint32_t)adcu * scalar);
 }

@@ -49,9 +49,6 @@ typedef enum
 	MOT_ANALOG_CHANNEL_VSENSE,				/* V analog sensors ~5V*/
 	MOT_ANALOG_CHANNEL_THROTTLE,
 	MOT_ANALOG_CHANNEL_BRAKE,
-
-//	MOT_ANALOG_CHANNEL_MOTOR_1,
-//	MOT_ANALOG_CHANNEL_MOTOR_2,
 }
 MotAnalog_Channel_T;
 
@@ -68,11 +65,9 @@ typedef union
 		analog_adcresult_t VSense_ADCU;
 		analog_adcresult_t Throttle_ADCU;
 		analog_adcresult_t Brake_ADCU;
-
-//		analog_adcresult_t HeatMotors_ADCU[];
 	};
 	analog_adcresult_t Channels[MOT_ANALOG_CHANNEL_COUNT];
 }
-MotAnalog_Map_T;
+MotAnalog_Results_T;
 
 #endif

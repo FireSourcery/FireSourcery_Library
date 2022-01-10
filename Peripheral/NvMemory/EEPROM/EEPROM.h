@@ -45,6 +45,11 @@ typedef NvMemory_T EEPROM_T;
 #define EEPROM_CONFIG(p_Hal, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
 	NV_MEMORY_CONFIG(p_Hal, HAL_EEPROM_ReadCompleteFlag, HAL_EEPROM_ReadErrorFlags, HAL_EEPROM_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)														\
 
+extern void EEPROM_Init_Blocking(EEPROM_T * p_eeprom);
+extern void EEPROM_Init_NonBlocking(EEPROM_T * p_eeprom);
+extern bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom);
+extern NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const uint8_t * p_dest, const uint8_t * p_source, size_t size);
+extern NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, uint8_t * p_dest, const uint8_t * p_source, size_t sizeBytes);
 
 #endif /*   */
 

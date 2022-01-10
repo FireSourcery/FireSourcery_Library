@@ -102,7 +102,7 @@ void Encoder_Motor_InitCaptureTime(Encoder_T * p_encoder, uint32_t encoderCounts
 
 
 //// calculate distance per revolution using components
-//uint32_t Speed_SetUnitGroundSpeed(Speed_T *p_speed, uint32_t wheelDiameter, uint32_t wheeltoMotorGearRatio)
+//uint32_t Speed_SetUnitGroundSpeed(Speed_T *p_speed, uint32_t wheelDiameter, uint32_t wheeltoMotorRatio)
 //{
-//	//p_speed->DistancePerRevolution = wheelDiameter * 314 / 100 / wheeltoMotorGearRatio;
+//	//p_speed->DistancePerRevolution = wheelDiameter * 314 / 100 / wheeltoMotorRatio;
 //}

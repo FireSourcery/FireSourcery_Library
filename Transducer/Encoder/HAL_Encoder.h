@@ -36,11 +36,10 @@
 #define XSTR(String) #String
 #define STR(String) XSTR(String)
 
-#if defined(CONFIG_PATH_HAL_ENCODER)
+#if defined(CONFIG_ENCODER_PATH_HAL_ENCODER)
 	#include STR(CONFIG_PATH_HAL_ENCODER/HAL_Encoder.h)
-
-#elif defined(CONFIG_HAL_PLATFORM)
-	#include STR(HAL/Platform/CONFIG_HAL_PLATFORM/HAL_Encoder.h)
+#elif defined(CONFIG_ENCODER_HAL_PLATFORM)
+	#include STR(HAL/Platform/CONFIG_ENCODER_HAL_PLATFORM/HAL_Encoder.h)
 #endif
 //#else
 

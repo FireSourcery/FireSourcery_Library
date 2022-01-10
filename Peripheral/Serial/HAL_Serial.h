@@ -31,18 +31,16 @@
 #ifndef HAL_SERIAL_H
 #define HAL_SERIAL_H
 
-
-//#define XSTR(String) #String
-//#define STR(String) XSTR(String)
-//
-//#if defined(CONFIG_HAL_SERIAL_PATH)
-//	#include STR(CONFIG_HAL_SERIAL_PATH/HAL_Serial.h)
-//#elif defined(CONFIG_HAL_PLATFORM)
-//	#include STR(Peripheral/HAL/Platform/CONFIG_HAL_PLATFORM/HAL_Serial.h)
-//#endif
-
 #include "Peripheral/HAL/Path.h"
-#include PATH_HAL_PERIPHERAL(HAL_Serial.h)
+
+#if defined(CONFIG_HAL_SERIAL_PATH)
+	#include STR(CONFIG_HAL_SERIAL_PATH/HAL_Serial.h)
+#else
+	#include PATH_HAL_PERIPHERAL(HAL_Serial.h)
+#endif
+
+
+
 
 
 /*

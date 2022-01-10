@@ -36,7 +36,16 @@
 /*
  * Misra violation  extern data
  */
-extern const Analog_ConversionVirtual_T MOT_ANALOG_VIRTUAL_MONITOR;
-extern const Analog_ConversionVirtual_T MOT_ANALOG_VIRTUAL_USER;
+//extern extern const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_MONITOR;
+//extern extern const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_USER;
+
+extern const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_HEAT_PCB;
+extern const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_HEAT_MOSFETS_TOP;
+extern const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_HEAT_MOSFETS_BOT;
+extern const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_VACC;
+extern const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_VSENSE;
+extern const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_THROTTLE;
+extern const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_BRAKE;
+
 
 #endif

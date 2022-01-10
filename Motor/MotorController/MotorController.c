@@ -59,12 +59,16 @@
  */
 void MotorController_Init(MotorController_T * p_controller)
 {
-//	if (p_controller->CONFIG.P_PARAMETERS != 0U)
-//	{
-	memcpy(&p_controller->Parameters, p_controller->CONFIG.P_PARAMETERS, sizeof(MotorController_Params_T));
-//	}
-
 	StateMachine_Init(&p_controller->StateMachine);
+
+	//init reboot
+//	Flash_Init(&p_controller->CONFIG.P_FLASH);
+	EEPROM_Init_Blocking(&p_controller->Eeprom);
+
+	//	if (p_controller->CONFIG.P_PARAMETERS != 0U)
+	//	{
+		memcpy(&p_controller->Parameters, p_controller->CONFIG.P_PARAMETERS, sizeof(MotorController_Params_T));
+	//	}
 
 	for (uint8_t iMotor = 0U; iMotor < p_controller->CONFIG.MOTOR_COUNT; iMotor++)
 	{
@@ -73,15 +77,14 @@ void MotorController_Init(MotorController_T * p_controller)
 
 	for (uint8_t iSerial = 0U; iSerial < p_controller->CONFIG.SERIAL_COUNT; iSerial++)
 	{
-//		Serial_Init(&p_controller->CONFIG.P_SERIALS[iSerial]);
+		Serial_Init(&p_controller->CONFIG.P_SERIALS[iSerial]);
 	}
 
-	//	Flash_Init(&p_controller->Flash);
-	//	EEPROM_Init(&p_controller->Eeprom);
 	MotAnalogUser_Init(&p_controller->AnalogUser);
 	MotAnalogMonitor_Init(&p_controller->AnalogMonitor);
+	Debounce_Init(&p_controller->DIn, 5U);	//5millis
+
 	Blinky_Init(&p_controller->Buzzer);
-	Debounce_Init(&p_controller->DIn, 	5U);	//5millis
 	Pin_Output_Init(&p_controller->CONFIG.PIN_COIL);
 	Pin_Output_Init(&p_controller->CONFIG.PIN_METER);
 
@@ -89,16 +92,13 @@ void MotorController_Init(MotorController_T * p_controller)
 	Timer_InitPeriodic(&p_controller->TimerMillis, 		1U);
 	Timer_InitPeriodic(&p_controller->TimerMillis10, 	10U);
 
-	p_controller->SignalBufferAnalogMonitor.AdcFlags 	= 0U;
-	p_controller->SignalBufferAnalogUser.AdcFlags 		= 0U;
+//	p_controller->SignalBufferAnalogMonitor.AdcFlags 	= 0U;
+//	p_controller->SignalBufferAnalogUser.AdcFlags 		= 0U;
 
-	//	Protocol_Init(&p_controller->MotProtocol);
-
-	//	for (uint8_t iProtocol = 0U; iProtocol < p_controller->CONFIG.AUX_PROTOCOL_COUNT; iProtocol++)
-	//	{
-	//		Protocol_Init(&p_controller->CONFIG.P_AUX_PROTOCOLS[iProtocol]);
-	//		ProtocolG_SetSpecs(&p_motorController->Protocols[iProtocol], p_motorController->p_Constants->P_PROTOCOL_SPECS[p_controller->Parameters.ProtocolSpecsId[iProtocol]]);
-	//	}
+	for (uint8_t iProtocol = 0U; iProtocol < p_controller->CONFIG.PROTOCOL_COUNT; iProtocol++)
+	{
+		Protocol_Init(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
+	}
 
 	//	MotShell_Init(&p_controller->MotShell);
 	p_controller->MainDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;

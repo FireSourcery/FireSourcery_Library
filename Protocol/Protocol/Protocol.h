@@ -226,6 +226,13 @@ typedef enum
 }
 Protocol_ReqState_T;
 
+typedef struct
+{
+	const Protocol_Specs_T * p_Specs;
+	void * p_Port;
+}
+Protocol_Params_T;
+
 /*
 
  */
@@ -237,12 +244,11 @@ typedef const struct
 	uint8_t * const P_TX_PACKET_BUFFER;
 	void * const P_APP_CONTEXT;			// user app context
 	void * const P_SUBSTATE_BUFFER; 	// child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context from specs
-
-//	Flash_T * const P_FLASH;
+	const Protocol_Params_T * const P_PARAMS;
 }
 Protocol_Config_T;
 
-#define PROTOCOL_CONFIG(p_Timer, PacketLengthMax, p_RxBuffer, p_TxBuffer, p_AppContext, p_SubstateBuffer)	\
+#define PROTOCOL_CONFIG(p_Timer, PacketLengthMax, p_RxBuffer, p_TxBuffer, p_AppContext, p_SubstateBuffer, p_Params)	\
 {																\
 	.CONFIG = 													\
 	{															\
@@ -252,6 +258,7 @@ Protocol_Config_T;
 		.P_TX_PACKET_BUFFER 	= p_TxBuffer,					\
 		.P_APP_CONTEXT 			= p_AppContext,					\
 		.P_SUBSTATE_BUFFER 		= p_SubstateBuffer,				\
+		.P_PARAMS 				= p_Params						\
 	}															\
 }
 
@@ -282,10 +289,10 @@ typedef struct Protocol_Tag
 }
 Protocol_T;
 
-extern void Protocol_Init(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs, void * p_transceiver);
-extern void Protocol_InitDefault	(Protocol_T * p_protocol);
+extern void Protocol_Init(Protocol_T * p_protocol);
 extern void Protocol_SetSpecs		(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs);
 extern void Protocol_SetPort		(Protocol_T * p_protocol, void * p_transceiver);
 extern void Protocol_Slave_Proc		(Protocol_T * p_protocol);
-
+extern bool Protocol_Enable(Protocol_T * p_protocol);
+extern void Protocol_Disable(Protocol_T * p_protocol);
 #endif

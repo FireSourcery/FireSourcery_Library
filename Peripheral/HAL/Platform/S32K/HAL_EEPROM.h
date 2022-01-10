@@ -106,7 +106,7 @@ static inline void HAL_EEPROM_ProgramPartition(HAL_EEPROM_T * p_hal)
 static inline void HAL_EEPROM_Init_NonBlocking(HAL_EEPROM_T * p_hal)
 {
 #ifdef CONFIG_HAL_EEPROM_INCLUDE_CONFIG_PARTITION
-/* one time code may not be needed if operation is support by flash tool*/
+	/* one time code may not be needed if operation is support by flash tool*/
 	HAL_EEPROM_ProgramPartition(p_hal);
 
 #endif

@@ -92,12 +92,8 @@ typedef struct
 //	uint16_t *p_PwmB;
 //	uint16_t *p_PwmC;
 
-} FOC_T;
-
-//static inline void FOC_ProcTheta(FOC_T * p_foc)
-//{
-//	qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, p_foc->Theta);
-//}
+}
+FOC_T;
 
 static inline void FOC_ProcClarkePark(FOC_T *  p_foc)
 {
@@ -115,6 +111,27 @@ static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T *  p_foc)
 	svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
 }
 
+//static inline void FOC_SetTheta(FOC_T * p_foc, qangle16_t theta) {p_foc->Theta = theta;}
+static inline void FOC_SetVector(FOC_T * p_foc, qangle16_t theta) {qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, theta);}
+static inline void FOC_SetIa(FOC_T * p_foc, qfrac16_t ia) {p_foc->Ia = ia;}
+static inline void FOC_SetIb(FOC_T * p_foc, qfrac16_t ib) {p_foc->Ib = ib;}
+static inline void FOC_SetIc(FOC_T * p_foc, qfrac16_t ic) {p_foc->Ic = ic;}
+
+static inline qfrac16_t FOC_GetId(FOC_T * p_foc) {return p_foc->Id;}
+static inline qfrac16_t FOC_GetIq(FOC_T * p_foc) {return p_foc->Iq;}
+
+static inline void FOC_SetVd(FOC_T * p_foc, qfrac16_t vd) {p_foc->Vd = vd;}
+static inline void FOC_SetVq(FOC_T * p_foc, qfrac16_t vq) {p_foc->Vq = vq;}
+
+static inline uint16_t FOC_GetDutyA(FOC_T * p_foc) {return p_foc->DutyA;}
+static inline uint16_t FOC_GetDutyB(FOC_T * p_foc) {return p_foc->DutyB;}
+static inline uint16_t FOC_GetDutyC(FOC_T * p_foc) {return p_foc->DutyC;}
+
+extern void FOC_Init(FOC_T * p_foc);
+extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
+extern void FOC_SetZero(FOC_T * p_foc);
+
+#endif
 //static inline void FOC_ProcThetaSvpwm(FOC_T *  p_foc)
 //{
 ////	qangle16_t phi = arctan(qfrac16_div(p_foc->Vq, p_foc->Vd));
@@ -125,27 +142,3 @@ static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T *  p_foc)
 //	//vq is positive
 ////	svpwm_unipolar1(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, (uint16_t)(p_foc->Vq << 1U), p_foc->Theta, QANGLE16_90);
 //}
-
-
-//static inline void FOC_SetTheta(FOC_T * p_foc, qangle16_t theta){p_foc->Theta = theta;}
-static inline void FOC_SetVector(FOC_T * p_foc, qangle16_t theta){qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, theta);}
-static inline void FOC_SetIa(FOC_T * p_foc, qfrac16_t ia){p_foc->Ia = ia;}
-static inline void FOC_SetIb(FOC_T * p_foc, qfrac16_t ib){p_foc->Ib = ib;}
-static inline void FOC_SetIc(FOC_T * p_foc, qfrac16_t ic){p_foc->Ic = ic;}
-static inline void FOC_SetVd(FOC_T * p_foc, qfrac16_t vd){p_foc->Vd = vd;}
-static inline void FOC_SetVq(FOC_T * p_foc, qfrac16_t vq){p_foc->Vq = vq;}
-static inline uint16_t FOC_GetDutyA(FOC_T * p_foc){return p_foc->DutyA;}
-static inline uint16_t FOC_GetDutyB(FOC_T * p_foc){return p_foc->DutyB;}
-static inline uint16_t FOC_GetDutyC(FOC_T * p_foc){return p_foc->DutyC;}
-
-
-static inline qfrac16_t FOC_GetId(FOC_T * p_foc){return p_foc->Id;}
-static inline qfrac16_t FOC_GetIq(FOC_T * p_foc){return p_foc->Iq;}
-
-extern void FOC_Init(FOC_T * p_foc);
-extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
-extern void FOC_SetZero(FOC_T * p_foc);
-
-
-
-#endif

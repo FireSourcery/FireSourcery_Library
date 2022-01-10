@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,16 +19,15 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	Motor_FOC.h
     @author FireSoucery
     @brief  Motor FOC submodule. FOC control functions.
     @version V0
 */
-/**************************************************************************/
-
+/******************************************************************************/
 #include "Motor_FOC.h"
 #include "Motor.h"
 
@@ -48,85 +47,4 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/*
- * Map to Motor Analog Conversions
- */
-void Motor_FOC_CaptureIa(Motor_T *p_motor)
-{
-	//Filter here if needed
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, p_motor->AnalogResults.Ia_ADCU);
-	FOC_SetIa(&p_motor->Foc, i_temp);
-}
 
-void Motor_FOC_CaptureIb(Motor_T *p_motor)
-{
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, p_motor->AnalogResults.Ib_ADCU);
-	FOC_SetIb(&p_motor->Foc, i_temp);
-}
-
-void Motor_FOC_CaptureIc(Motor_T *p_motor)
-{
-	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, p_motor->AnalogResults.Ic_ADCU);
-	FOC_SetIc(&p_motor->Foc, i_temp);
-}
-
-
-/*
- * Current PID Feedback Loop
- *
- *	Input     :
- *	motor->IdReq
- *	motor->IqReq
- *	p_foc->Id
- *	p_foc->Iq
- *
- *	output    :
- *	p_foc->Vd
- *	p_foc->Vq
- */
-/*
- * ADC conversion complete call
- */
-void Motor_FOC_ProcCurrentFeedback(Motor_T * p_motor)
-{
-	FOC_ProcClarkePark(&p_motor->Foc);
-	p_motor->IMotor_Frac16 = FOC_GetIq(&p_motor->Foc) << 1U;
-
-	if ((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT))
-	{
-		ProcMotorFocAngleControl(p_motor);
-
-		//
-		//	if(p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
-		//	{
-		//		Motor_PollSpeedFeedback(p_motor);
-		//	}
-		//	/* else (p_motor->ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) */
-
-		//	//	Motor_FOC_ProcCurrentLoop(p_motor);
-		//
-		//	//	PID_Proc (&PIDd);
-		//	//	PID_Proc (&PIDq);
-		Motor_ProcControlVariable(p_motor); //input usercmd rampcmd, set vpwm
-
-		ActivateMotorFocAngle(p_motor); 	//input vpwm, theta
-	}
-}
-
-
-/*
- * Maps to state machine, move to Motor.c?
- * Calibrate Current ADC
- */
-void Motor_FOC_StartCalibrateAdc(Motor_T * p_motor)
-{
-	Timer_SetPeriod(&p_motor->ControlTimer, 20000U); // Motor.Parameters.AdcCalibrationTime
-	Phase_Ground(&p_motor->Phase); //activates abc
-	FOC_SetZero(&p_motor->Foc);
-	Phase_ActuateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc)); //sets 0 current output
-}
-
-bool Motor_FOC_CalibrateAdc(Motor_T *p_motor)
-{
-	return Motor_CalibrateAdc(p_motor);
-}

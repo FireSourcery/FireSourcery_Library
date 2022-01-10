@@ -268,6 +268,24 @@ bool Serial_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
 	return isSuccess;
 }
 
+
+
+/*
+ * calling function must check to avoid meta data collision
+ */
+uint8_t Serial_ReadChar(Serial_T * p_serial)
+{
+	uint8_t rxChar;
+
+	if(Serial_RecvChar(p_serial, &rxChar) == false)
+	{
+		rxChar = 0xFFU;
+	}
+
+	return rxChar;
+}
+
+
 //send immediate if fits in hardware fifo
 uint32_t Serial_SendBytes(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t srcSize)
 {

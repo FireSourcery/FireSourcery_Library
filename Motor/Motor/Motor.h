@@ -57,6 +57,8 @@
 #include "Math/Linear/Linear_Ramp.h"
 #include "Math/Linear/Linear.h"
 #include "Math/PID/PID.h"
+#include "Math/Filter/Filter_MovAvg.h"
+#include "Math/Filter/Filter.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -137,6 +139,7 @@ typedef enum
 	MOTOR_SENSOR_MODE_ENCODER,
 	MOTOR_SENSOR_MODE_BEMF,
 } Motor_SensorMode_T;
+
 /*
 	Motor run modes
 	Mode			Feedback
@@ -171,11 +174,8 @@ typedef enum
 typedef enum
 {
 	MOTOR_BRAKE_MODE_PASSIVE,
-	//	MOTOR_BRAKE_MODE_ACTIVE,
 	MOTOR_BRAKE_MODE_SCALAR,
-	MOTOR_BRAKE_MODE_REGEN_OPTIMAL,
-	MOTOR_BRAKE_MODE_REGEN_PROPRTIONAL,
-	MOTOR_BRAKE_MODE_REGEN_SCALAR,
+	MOTOR_BRAKE_MODE_PROPRTIONAL,
 } Motor_BrakeMode_T;
 
 /*
@@ -220,15 +220,17 @@ typedef struct __attribute__ ((aligned (4U)))
 	uint16_t OpenLoopSpeedFinal;
 	uint16_t OpenLoopAccel;
 
+	uint16_t SpeedMax_RPM;
 	uint16_t Imax_Amp;
 	uint16_t IaZero_ADCU;
 	uint16_t IbZero_ADCU;
 	uint16_t IcZero_ADCU;
 
+//	uint32_t RampAcceleration; //fraction16
+
 	//todo account for copy to ram twice
 	Phase_Mode_T				PhasePwmMode;
 	BEMF_SampleMode_T			BemfSampleMode;
-	Hall_Id_T SensorsTable[HALL_SENSORS_TABLE_LENGTH];
 	uint32_t EncoderCountsPerRevolution;
 	uint32_t EncoderDistancePerCount;
 	bool EncoderIsQuadratureModeEnabled;
@@ -244,22 +246,49 @@ typedef const struct Motor_Init_Tag
 {
  	const Motor_Params_T * const P_PARAMETERS; //eeprom copy
 
+//#ifdef CONFIG
+// 	const Motor_Params_T * const P_PARAMS_DEFAULT;
+//#endif
+
 	//const using fixed resistor values
 	const Linear_T UNIT_V_POS;
-	const Linear_T UNIT_V_ABC; 	//Bemf V and mV conversion
+	const Linear_T UNIT_V_ABC; 	//Bemf V and mV conversion todo may need zero calibration
 
 	AnalogN_T * const P_ANALOG_N;
+	const AnalogN_Conversion_T CONVERSION_VPOS_PWM_ON;
+	const AnalogN_Conversion_T CONVERSION_VPOS;
+	const AnalogN_Conversion_T CONVERSION_VA;
+	const AnalogN_Conversion_T CONVERSION_VB;
+	const AnalogN_Conversion_T CONVERSION_VC;
+	const AnalogN_Conversion_T CONVERSION_IA;
+	const AnalogN_Conversion_T CONVERSION_IB;
+	const AnalogN_Conversion_T CONVERSION_IC;
+	const AnalogN_Conversion_T CONVERSION_HEAT;
+	const AnalogN_Conversion_T CONVERSION_OPTION_PWM_ON;
+	const AnalogN_Conversion_T CONVERSION_OPTION_RESTORE;
 
-	const AnalogN_Conversion_T CONVERSION_BEMF_A;
-//	const AnalogN_Conversion_T CONVERSION_BEMF_A_REPEAT;
-	const AnalogN_Conversion_T CONVERSION_BEMF_B;
-//	const AnalogN_Conversion_T CONVERSION_BEMF_B_REPEAT;
-	const AnalogN_Conversion_T CONVERSION_BEMF_C;
-//	const AnalogN_Conversion_T CONVERSION_BEMF_C_REPEAT;
-	const AnalogN_Conversion_T CONVERSION_BEMF_REMAINDER;
-	const AnalogN_Conversion_T CONVERSION_FOC_IABC;
-	const AnalogN_Conversion_T CONVERSION_FOC_REMAINDER;
-	const AnalogN_Conversion_T CONVERSION_IDLE;
+	const uint16_t I_MAX_AMP;
+
+//	const AnalogN_Conversion_T CONVERSION_BEMF_A_PWM_OFF;
+//	const AnalogN_Conversion_T CONVERSION_BEMF_B_PWM_OFF;
+//	const AnalogN_Conversion_T CONVERSION_BEMF_C_PWM_OFF;
+
+//const AnalogN_Conversion_T CONVERSION_PHASE_AC_PWM_OFF;
+//const AnalogN_Conversion_T CONVERSION_PHASE_AC_PWM_ON;
+//const AnalogN_Conversion_T CONVERSION_PHASE_BC_PWM_OFF;
+//const AnalogN_Conversion_T CONVERSION_PHASE_BC_PWM_ON;
+//const AnalogN_Conversion_T CONVERSION_PHASE_BA_PWM_OFF;
+//const AnalogN_Conversion_T CONVERSION_PHASE_CA_PWM_ON;
+//const AnalogN_Conversion_T CONVERSION_PHASE_CA_PWM_OFF;
+//const AnalogN_Conversion_T CONVERSION_PHASE_CB_PWM_OFF;
+//const AnalogN_Conversion_T CONVERSION_PHASE_CB_PWM_ON;
+//const AnalogN_Conversion_T CONVERSION_PHASE_AB_PWM_OFF;
+//const AnalogN_Conversion_T CONVERSION_PHASE_AB_PWM_ON;
+//
+//	const AnalogN_Conversion_T CONVERSION_BEMF_REMAINDER;
+//	const AnalogN_Conversion_T CONVERSION_FOC_IABC;
+//	const AnalogN_Conversion_T CONVERSION_FOC_REMAINDER;
+//	const AnalogN_Conversion_T CONVERSION_IDLE;
 }
 Motor_Config_T;
 
@@ -273,56 +302,45 @@ typedef struct
 	Phase_T Phase;
 	Hall_T Hall;
 	BEMF_T Bemf;
-	Thermistor_T 	Thermistor;
+
+	volatile MotorAnalog_Results_T AnalogResults;
+//		AnalogN_AdcFlags_T SignalBufferBemfA;
+//	// 	AnalogN_AdcFlags_T SignalBufferBemfARepeat;
+//		AnalogN_AdcFlags_T SignalBufferBemfB;
+//		AnalogN_AdcFlags_T SignalBufferBemfC;
+//		AnalogN_AdcFlags_T SignalBufferRemainder;
+//		AnalogN_AdcFlags_T SignalBufferFocIabc;
+//		AnalogN_AdcFlags_T SignalBufferFocRemainder;
+//		AnalogN_AdcFlags_T SignalBufferIdle;
+
+	volatile uint32_t ControlTimerBase;	 /*Control Freq ~ 20kHz, calibration, commutation, angle control. overflow at 20Khz, 59 hours*/
+	Timer_T ControlTimer; /*  State Timer  */
+
+	Timer_T MillisTimer; //flag for move to PID, note cannot use for pid and main1msthread
 
 	//not const due to adc calibration
 	Linear_T UnitIa; 	//Frac16 and UserUnits (Amp)
 	Linear_T UnitIb;
 	Linear_T UnitIc;
 
-	/******************************************************************************/
-	/*
-	 * Runtime vars
-	 */
-	/******************************************************************************/
- 	MotorAnalog_Map_T AnalogResults;
- 	AnalogN_AdcFlags_T SignalBufferBemfA;
-// 	AnalogN_AdcFlags_T SignalBufferBemfARepeat;
- 	AnalogN_AdcFlags_T SignalBufferBemfB;
- 	AnalogN_AdcFlags_T SignalBufferBemfC;
- 	AnalogN_AdcFlags_T SignalBufferRemainder;
- 	AnalogN_AdcFlags_T SignalBufferFocIabc;
- 	AnalogN_AdcFlags_T SignalBufferFocRemainder;
- 	AnalogN_AdcFlags_T SignalBufferIdle;
+	Thermistor_T Thermistor;
 
-	volatile uint32_t ControlTimerBase;	 /* Control Freq ~ 20kHz, calibration, commutation, angle control. overflow at 20Khz, 59 hours*/
-	Timer_T ControlTimer;
-
-	Timer_T MillisTimer; //flag for move to PID, note cannot use for pid and main1msthread
-//	Timer_T SecondsTimer;
+	Filter_T FilterA;
+	Filter_T FilterB;
+	Filter_T FilterC;
 
 	Motor_Direction_T Direction; 		//active spin direction
 
-	/* Feedback */
-	uint16_t Speed_RPM;			//Feedback Variable
-//	uint32_t IBus_ADCU; 		//phase positive current
-	uint32_t IMotor_Frac16;		//0-65535
-
-	/*
-	 * Control Variable
-	 */
 //	uint16_t UserCmd; 			//Fraction16 SetPoint pre ramp, VReq/IReq/SpeedReq,  user input throttle or brake,
 //	uint16_t UserCmdPrev;
 	Linear_T Ramp;
 	uint32_t RampIndex;
 	uint16_t RampCmd;			//SetPoint after ramp
-	uint16_t VPwm; 				//Control Variable
 
-	//	PID_T PidSpeed;
-	//	PID_T PidId;
-	//	PID_T PidIq;
-	//	volatile qfrac16_t IdReq; /* PID setpoint */
-	//	volatile qfrac16_t IqReq;
+	/* Feedback */
+	PID_T PidSpeed;
+	uint16_t Speed_RPM;			// Common Feedback Variable
+	uint16_t SpeedControl; 		/* Store results, updated once per millis */
 
 	/*
 	 * Open-loop
@@ -339,18 +357,28 @@ typedef struct
 	 */
 	FOC_T Foc;
 	qangle16_t ElectricalAngle;
-	//	volatile qangle16_t MechanicalAngle;
 
 	/* interpolated angle */
 	qangle16_t HallAngle;
 	qangle16_t ElectricalDeltaPrev;
 	uint32_t InterpolatedAngleIndex;
 
+	PID_T PidId;
+	PID_T PidIq;
+
 	/*
 	 * Six-Step
 	 */
-	Motor_SectorId_T NextPhase;		 //for 6 step openloop/sensorless
+	Motor_SectorId_T NextPhase;		 	//for 6 step openloop/sensorless
 	Motor_SectorId_T CommutationPhase;	 //for 6 step openloop/sensorless
+
+	PID_T PidIBus; //Six Step
+
+//	uint32_t IBus_ADCU; 		//phase positive current
+	uint32_t IBus_Frac16;		//0-65535
+	uint32_t IBusPwmOn_Frac16; //returns 0 if correct
+	uint32_t IBusPwmOff_Frac16; //returns 0 if correct
+	uint16_t VPwm; 				//Control Variable
 
 	//Substates
 	Motor_CalibrationState_T CalibrationState; /* Substate, selection for calibration */
@@ -358,60 +386,24 @@ typedef struct
 
 //	uint32_t JogSteps;
 //	uint32_t StepCount;
+	volatile bool IsPwmOn;
+
+	uint32_t VPos_Debug;
+	uint32_t Va_Debug;
 }
 Motor_T;
 
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	Common
 */
-/*******************************************************************************/
-static inline void Motor_CaptureSpeed(Motor_T * p_motor)
-{
-	if(p_motor->Parameters.SensorMode != MOTOR_SENSOR_MODE_OPEN_LOOP)
-	{
-		p_motor->Speed_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
+/******************************************************************************/
 
-		if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
-		{
-			if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder) == true)
-			{
-				p_motor->Speed_RPM = 0U;
-			}
-		}
-	}
-//	else
-//	{
-//		p_motor->Speed_RPM = p_motor->OpenLoopSpeed_RPM;
-//	}
-}
-
-static inline void Motor_PollStop(Motor_T * p_motor)
-{
-
-//	else if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP)
-//	{
-//		if ((p_motor->UserCmd == 0U)) //no braking/freewheel in openloop
-//		{
-////			if(p_motor->UserCmdPrev > 0U)
-////			{
-////				p_motor->Speed_RPM = 0U;
-////			}
-//		}
-//	}
-//	else //other modes covered by always capture DeltaD
-//	{
-//
-//	}
-}
-
-//static inline void Motor_SetZero(Motor_T * p_motor)
-//{
-////	Encoder_Reset(&p_motor->Encoder);
-//	p_motor->Speed_RPM = 0U;
-//	p_motor->VPwm = 0;
-//}
-
+/******************************************************************************/
+/*!
+	 From user input
+*/
+/******************************************************************************/
 static inline void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
 	p_motor->Direction = direction;
@@ -429,30 +421,131 @@ static inline void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direc
 }
 
 
-/*******************************************************************************/
-/*!
-	Idle Stop State
-*/
-/*******************************************************************************/
-static inline void Motor_StartIdle(Motor_T * p_motor)
+/*
+ * User Input Ramp
+ */
+static inline void Motor_ProcRamp(Motor_T * p_motor)
 {
-	Timer_SetPeriod(&p_motor->ControlTimer, 2000U);
-
-}
-
-static inline void Motor_ProcIdle(Motor_T * p_motor)
-{
-	if (Timer_Poll(&p_motor->ControlTimer) == true)
+	if (p_motor->RampCmd != Linear_Ramp_GetFinal(&p_motor->Ramp))
 	{
-//		MotorAnalog_EnqueueIdle(p_motor);
+		p_motor->RampCmd = Linear_Ramp_Proc(&p_motor->Ramp, &p_motor->RampIndex);
 	}
 }
 
-/*******************************************************************************/
+//void Motor_ResetRampCmd(Motor_T * p_motor)
+//{
+//	p_motor->RampCmd = 0U;
+//}
+
+/*
+ * userCmd is final value, fractional value of control mode unit
+ */
+static inline void Motor_SetRamp(Motor_T * p_motor, uint16_t userCmd)
+{
+	//	if (userCmd != p_motor->RampCmd)
+//	int32_t acceleration = (userCmd >= p_motor->RampCmd) ? p_motor->Parameters.RampAcceleration : -p_motor->Parameters.RampAcceleration; //todo accel param
+//	int32_t acceleration = userCmd - p_motor->RampCmd;
+	Linear_Ramp_InitMillis(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmd, 10U);
+//	Linear_Ramp_SetSlope(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmd, acceleration);
+	//	Linear_Ramp_SetSlope(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmd, userCmd - p_motor->RampCmd);
+	p_motor->RampIndex = 0;
+}
+
+/*
+ * userCmd is acceleration deceleration
+ */
+static inline void Motor_SetRamp_Rate(Motor_T * p_motor, uint16_t userCmdFinal, int16_t userCmdRate_Signed)
+{
+//	if (0U != p_motor->RampCmd)
+	{
+		//Decel by Brake per 1s
+		Linear_Ramp_InitSlope(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmdFinal, (int32_t)userCmdRate_Signed/2);
+//		Linear_Ramp_SetSlope(&p_motor->Ramp, 20000U, p_motor->RampCmd, 0U, -100);
+		p_motor->RampIndex = 0;
+	}
+}
+
+//braking 0% -> pwm 100% of back emf;
+//braking 10% -> pwm 90% of back emf;
+//braking 50% -> pwm 50% of back emf;
+//braking 90% -> pwm 10% of back emf;
+//static inline void Motor_SetBrakeBemfProportional(Motor_T * p_motor, uint16_t intensity)
+//{
+//	uint16_t final = Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf)) * (65535U - intensity) >> 16U;
+//
+//	Motor_SetRamp(p_motor, final);
+//}
+//
+
+/*
+ * Common Speed PID Feedback Loop
+ */
+static inline void Motor_ProcSpeedFeedbackLoop(Motor_T * p_motor)
+{
+//	p_motor->Speed_RPM = (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
+	//speedfrac16
+//		if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
+	{
+		p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, ((int32_t)p_motor->Speed_RPM * (int32_t)65535 / (int32_t)p_motor->Parameters.SpeedMax_RPM));
+	}
+}
+
+static inline bool Motor_PollSpeedFeedback(Motor_T * p_motor)
+{
+	bool captureSpeed = Timer_Poll(&p_motor->MillisTimer);
+
+	if (captureSpeed == true)
+	{
+		p_motor->Speed_RPM = (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
+
+		if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
+		{
+			Motor_ProcSpeedFeedbackLoop(p_motor);
+		}
+	}
+
+	return captureSpeed;
+}
+
+/******************************************************************************/
+/*!
+	Idle Stop State
+*/
+/******************************************************************************/
+static inline void Motor_StartIdle(Motor_T * p_motor)
+{
+	Timer_SetPeriod(&p_motor->ControlTimer, 2000U);
+}
+
+//PollIdleConversion
+static inline void Motor_ProcIdle(Motor_T * p_motor)
+{
+//	if (Timer_Poll(&p_motor->ControlTimer) == true)
+	{
+//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
+//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
+//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
+		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VPOS);
+		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VA);
+		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VB);
+		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VC);
+//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_HEAT);
+	}
+
+	Debug_CaptureElapsed(1);
+
+	p_motor->IBus_Frac16 = Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIb, p_motor->AnalogResults.Ib_ADCU); //debug check conversion
+
+	p_motor->VPos_Debug = Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults.VPos_ADCU);
+	p_motor->Va_Debug = Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, p_motor->AnalogResults.Va_ADCU);
+
+}
+
+/******************************************************************************/
 /*!
 	Wrappers
 */
-/*******************************************************************************/
+/******************************************************************************/
 static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
 {
 //	p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
@@ -469,23 +562,16 @@ static inline void Motor_Stop(Motor_T * p_motor)
 	Motor_Float(p_motor);
 	p_motor->VPwm = 0U;
 	p_motor->ControlTimerBase = 0U; //ok to reset timer
+	//reset pid
 }
 
 
-
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	Extern
 */
-/*******************************************************************************/
+/******************************************************************************/
 extern void Motor_Init(Motor_T * p_motor);
-
-/*
- * Referenced by Analog
- */
-void Motor_CaptureIMotorA(Motor_T * p_motor);
-void Motor_CaptureIMotorB(Motor_T * p_motor);
-void Motor_CaptureIMotorC(Motor_T * p_motor);
 
 /*
  * Referenced by State Machine
@@ -496,7 +582,5 @@ extern void Motor_SetCalibrationStateEncoder(Motor_T * p_motor);
 extern bool Motor_CalibrateAdc(Motor_T * p_motor);
 extern bool Motor_CalibrateHall(Motor_T * p_motor);
 extern bool Motor_CalibrateEncoder(Motor_T * p_motor);
-
-//extern void Motor_StartAlign(Motor_T * p_motor);
 
 #endif

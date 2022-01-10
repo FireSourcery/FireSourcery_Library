@@ -164,7 +164,7 @@ typedef FTFC_Type HAL_Flash_T;
 #define GET_BIT_24_31(value) ((uint8_t)(((uint32_t)(value)) >> 24U))
 
 /*
- * incase functions are not inlined
+ * incase functions are not inlined (and stored in ram with calling function)
  */
 #include "Peripheral/NvMemory/Flash/Config.h"
 static inline bool HAL_Flash_ReadErrorFlags(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;

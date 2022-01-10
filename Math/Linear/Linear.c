@@ -36,7 +36,7 @@
  * f(in:[0 percent]) 	= 0
  * f(in:[100 percent]) 	= rangeRef
  */
-#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
 void Linear_Init(Linear_T * p_linear, int16_t factor, int16_t divisor, int16_t intercept, int32_t rangeRef)
 {
 	p_linear->SlopeFactor 			= ((int32_t)factor << 16U) / divisor;
@@ -46,7 +46,7 @@ void Linear_Init(Linear_T * p_linear, int16_t factor, int16_t divisor, int16_t i
 	p_linear->Intercept 			= intercept << 16U;
 	p_linear->RangeReference 		= rangeRef;
 }
-#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t intercept, int32_t rangeRef)
 {
 	p_linear->SlopeFactor 		= factor;
@@ -60,9 +60,9 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t i
 
 
 
-#if defined(CONFIG_LINEAR_SHIFT_DIVIDE)
+#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
 /*
- * CONFIG_LINEAR_SHIFT_DIVIDE mode
+ * CONFIG_LINEAR_DIVIDE_SHIFT mode
  * Right shift must retain sign bit,
  * user factor, divisor, input must be less than 16 bits
  */
@@ -135,7 +135,7 @@ static inline int32_t MaxLeftShiftDivide(int32_t factor, int32_t divisor, uint8_
  */
 void Linear_Init_X0(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset_x0, int32_t rangeRef)
 {
-#if defined(CONFIG_LINEAR_SHIFT_DIVIDE)
+#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
 	Linear_Init(p_linear, factor, divisor, 0U, rangeRef);
 	p_linear->Intercept = 0 - MaxLeftShiftDivide(factor * offset_x0, divisor, 16U);
 //	p_linear->Intercept = 0 - (offset_x0 * factor << 16U) / divisor;

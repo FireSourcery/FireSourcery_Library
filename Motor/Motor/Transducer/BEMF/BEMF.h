@@ -118,7 +118,7 @@ typedef struct
 	uint16_t VPhasePwmOff_ADCU;
 	uint16_t VPhasePrevPwmOff_ADCU;
 
-	uint16_t VPhaseOnOffDiff_ADCU;
+//	uint16_t VPhaseOnOffDiff_ADCU;
 
 	//if save ZCD processed values
 //	volatile int16_t Emf_SignedADCU;				/// VPhase-to-neutral + 1/2 VBemf, ofset for ZCD , PWM On: (3/2)VBemf
@@ -199,11 +199,6 @@ static inline void BEMF_MapCcwPhaseAB(BEMF_T * p_bemf){BEMF_MapPhaseC(p_bemf); p
 
 //}
 
-//for known period, hall mode compare
-//static inline void BEMF_CapturePhasePeriod(BEMF_T * p_bemf)
-//{
-//	p_bemf->TimePhasePeriod = *p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero;
-//}
 
 /*
  * Call on Commutation
@@ -282,10 +277,10 @@ static inline void Bemf_CaptureVPhase(BEMF_T * p_bemf, uint32_t vPhaseObserve_AD
 	p_bemf->TimeVPhase 		= *p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero;
 
 	p_bemf->VPhasePrev_ADCU 	= p_bemf->VPhase_ADCU;
-//	p_bemf->VPhase_ADCU 		= vPhaseObserve_ADCU;
-	p_bemf->VPhase_ADCU 		= (vPhaseObserve_ADCU + p_bemf->VPhase_ADCU) / 2U;
+	p_bemf->VPhase_ADCU 		= vPhaseObserve_ADCU;
+//	p_bemf->VPhase_ADCU 		= (vPhaseObserve_ADCU + p_bemf->VPhase_ADCU) / 2U;
 
-	Debug_CaptureElapsed(7);
+	Debug_CaptureElapsed(8);
 
 	if (p_bemf->IsBemfRising)
 	{
@@ -300,7 +295,9 @@ static inline void Bemf_CaptureVPhase(BEMF_T * p_bemf, uint32_t vPhaseObserve_AD
 
 static inline void Bemf_CaptureVPhasePwmOff(BEMF_T * p_bemf, uint32_t vPhaseObserve_ADCU)
 {
-	p_bemf->VPhasePrevPwmOff_ADCU 	= p_bemf->VPhase_ADCU;
+	Debug_CaptureElapsed(6);
+
+	p_bemf->VPhasePrevPwmOff_ADCU 	= p_bemf->VPhasePwmOff_ADCU;
 	p_bemf->VPhasePwmOff_ADCU 		= vPhaseObserve_ADCU;
 //	p_bemf->VPhase_ADCU 		= (vPhaseObserve_ADCU + p_bemf->VPhase_ADCU) / 2U;
 }
@@ -310,7 +307,7 @@ static inline void Bemf_CaptureVPhasePwmOff(BEMF_T * p_bemf, uint32_t vPhaseObse
  */
 static inline void Bemf_PollCaptureVPhase(BEMF_T * p_bemf, uint32_t vPhaseObserve_ADCU)
 {
-	if(BEMF_CheckBlankTime(p_bemf) == true)
+//	if(BEMF_CheckBlankTime(p_bemf) == true)
 	{
 		Bemf_CaptureVPhase(p_bemf, vPhaseObserve_ADCU);
 	}
@@ -496,7 +493,7 @@ static inline int16_t ConvertVPhaseToVBemf(BEMF_T * p_bemf, uint32_t emf)
 			default:	break;
 		}
 	}
-	else
+	else if (p_bemf->CycleMode == BEMF_CYCLE_MODE_PASSIVE)
 	{
 		bemf = emf;
 	}

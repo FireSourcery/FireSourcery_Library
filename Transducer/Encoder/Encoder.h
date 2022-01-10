@@ -97,6 +97,22 @@ typedef const struct
 }
 Encoder_Config_T;
 
+typedef struct
+{
+//	uint32_t EncoderResolution;
+//	/* Quadrature Mode - Calibrate for encoder install direction */
+//#ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE //chip peripheral capture ticks up and down
+//	bool IsQuadratureCaptureEnabled;
+//	bool IsALeadBDirectionPositive; //is ALeadB positive angle //combined //user set //HAL must be set so ALeadB is Increasing
+////	bool IsALeadBCounterIncrement; // determined by HAL
+////	bool IsCounterIncrementDirectionPositive; //derived calibration
+//#endif
+//	uint8_t PolePairs; /*! Convert between electrical speed and mechanical speed */
+//	uint32_t ExtendedDeltaTimerThreshold; //short timer overflow time in long timer counts
+//	uint32_t ExtendedDeltaTimerEffectiveStopTime;
+}
+Encoder_Params_T;
+
 /*
 	Overallocation of variable space to allow runtime polymorphism
  */
@@ -127,6 +143,9 @@ typedef struct
 	uint32_t ExtendedDeltaTimerThreshold; //short timer overflow time in long timer counts
 	uint32_t ExtendedDeltaTimerEffectiveStopTime;
 
+	/*
+	 * Init
+	 */
 	bool IsUnitAngularSpeedOverflow; //select  angular speed calculation equation
 
 	/*

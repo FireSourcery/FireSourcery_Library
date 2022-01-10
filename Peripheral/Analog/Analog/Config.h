@@ -42,6 +42,14 @@
 	#define CONFIG_ANALOG_CRITICAL_DISABLE
 #endif
 
+#ifdef CONFIG_ANALOG_MULTITHREADED
+
+#elif defined(CONFIG_ANALOG_SINGLE_THREADED)
+
+#else
+
+#endif
+
 
 /*
  *
@@ -64,6 +72,16 @@
 #else
 	#define CONFIG_ANALOG_ADC_PIN_UINT32
 #endif
+
+
+#ifdef CONFIG_ANALOG_ADC_HW_FIFO_ENABLE
+#ifdef CONFIG_ANALOG_ADC_HW_FIFO_LENGTH
+#endif
+#elif defined(CONFIG_ANALOG_ADC_HW_FIFO_DISABLE)
+#else
+	#define CONFIG_ANALOG_ADC_HW_FIFO_DISABLE
+#endif
+
 
 /*
  *

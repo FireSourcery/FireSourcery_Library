@@ -54,8 +54,7 @@ typedef const struct StateMachine_State_Tag
 	/*
 	 * Pointer to array of functions that return a pointer to the next state
 	 * No null pointer check, user must supply empty table
-	 *
-	 * Nontransition (Output only) Input Map - Mealy machine style outputs return 0
+	 * Nontransition (Output only) Inputs - Mealy machine style outputs, return 0
 	 */
 	const StateMachine_Transition_T * const P_TRANSITION_TABLE;
 
@@ -111,10 +110,11 @@ StateMachine_T;
 
 extern void StateMachine_Init(StateMachine_T * p_stateMachine);
 extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
+extern void StateMachine_ProcTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState);
 extern void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine);
 extern void StateMachine_Synchronous_SetTransition(StateMachine_T * p_stateMachine, uint8_t input);
 extern void StateMachine_Asynchronous_ProcInput(StateMachine_T * p_stateMachine, uint8_t input);
 extern void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, uint8_t input);
-extern void StateMachine_Semisynchronous_ProcState(StateMachine_T * p_stateMachine);
+extern void StateMachine_Semisynchronous_ProcOutput(StateMachine_T * p_stateMachine);
 
 #endif

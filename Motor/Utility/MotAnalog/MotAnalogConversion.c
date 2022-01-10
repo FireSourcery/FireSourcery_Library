@@ -35,41 +35,69 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/******************************************************************************/
-/*!
-    @brief  Conversion
-*/
-/******************************************************************************/
-static const Analog_ConversionVirtualChannel_T CHANNELS_MONITOR[] =
-{
-	[0U] = {MOT_ANALOG_CHANNEL_HEAT_MOSFETS, 	0U},
-	[1U] = {MOT_ANALOG_CHANNEL_HEAT_PCB, 		0U},
-	[2U] = {MOT_ANALOG_CHANNEL_VACC,			0U},
-	[3U] = {MOT_ANALOG_CHANNEL_VSENSE,			0U},
-};
 
-const Analog_ConversionVirtual_T MOT_ANALOG_VIRTUAL_MONITOR =
-{
-	.P_CHANNELS 	= CHANNELS_MONITOR,
-	.CHANNEL_COUNT 	= sizeof(CHANNELS_MONITOR)/sizeof(Analog_ConversionVirtualChannel_T),
-	.ON_COMPLETE 	= 0U,
-};
+
+const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_HEAT_PCB 		= { .CHANNEL = MOT_ANALOG_CHANNEL_HEAT_PCB,			.ON_COMPLETE = 0U, };
+const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_HEAT_MOSFETS_TOP = { .CHANNEL = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP,	.ON_COMPLETE = 0U, };
+const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_HEAT_MOSFETS_BOT = { .CHANNEL = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT,	.ON_COMPLETE = 0U, };
+const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_VACC 			= { .CHANNEL = MOT_ANALOG_CHANNEL_VACC,				.ON_COMPLETE = 0U, };
+const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_VSENSE 			= { .CHANNEL = MOT_ANALOG_CHANNEL_VSENSE,			.ON_COMPLETE = 0U, };
+const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_THROTTLE 		= { .CHANNEL = MOT_ANALOG_CHANNEL_THROTTLE,			.ON_COMPLETE = 0U, };
+const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_BRAKE 			= { .CHANNEL = MOT_ANALOG_CHANNEL_BRAKE,			.ON_COMPLETE = 0U, };
 
 /******************************************************************************/
 /*!
     @brief  Conversion
 */
 /******************************************************************************/
-static const Analog_ConversionVirtualChannel_T CHANNELS_USER[] =
-{
-	{MOT_ANALOG_CHANNEL_BRAKE,			0U},
-	{MOT_ANALOG_CHANNEL_THROTTLE,		0U},
-};
+//static const Analog_ConversionVirtualChannel_T CHANNELS_MONITOR[] =
+//{
+//	[0U] = {MOT_ANALOG_CHANNEL_HEAT_MOSFETS, 	0U},
+//	[1U] = {MOT_ANALOG_CHANNEL_HEAT_PCB, 		0U},
+//	[2U] = {MOT_ANALOG_CHANNEL_VACC,			0U},
+//	[3U] = {MOT_ANALOG_CHANNEL_VSENSE,			0U},
+//};
+//
+//const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_MONITOR =
+//{
+//	.P_CHANNELS 	= CHANNELS_MONITOR,
+//	.CHANNEL_COUNT 	= sizeof(CHANNELS_MONITOR)/sizeof(Analog_ConversionVirtualChannel_T),
+//	.ON_COMPLETE 	= 0U,
+//};
 
-const Analog_ConversionVirtual_T MOT_ANALOG_VIRTUAL_USER =
-{
-	.P_CHANNELS 	= CHANNELS_USER,
-	.CHANNEL_COUNT 	= sizeof(CHANNELS_USER)/sizeof(Analog_ConversionVirtualChannel_T),
-	.ON_COMPLETE 	= 0U,
-};
-
+/******************************************************************************/
+/*!
+    @brief  Conversion
+*/
+/******************************************************************************/
+//static const Analog_ConversionVirtualChannel_T CHANNELS_USER[] =
+//{
+//	{MOT_ANALOG_CHANNEL_BRAKE,			0U},
+//	{MOT_ANALOG_CHANNEL_THROTTLE,		0U},
+//};
+//
+//const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_USER =
+//{
+//	.P_CHANNELS 	= CHANNELS_USER,
+//	.CHANNEL_COUNT 	= sizeof(CHANNELS_USER)/sizeof(Analog_ConversionVirtualChannel_T),
+//	.ON_COMPLETE 	= 0U,
+//};
+//
+///******************************************************************************/
+///*!
+//    @brief  Conversion
+//*/
+///******************************************************************************/
+//static const Analog_ConversionVirtualChannel_T CHANNELS_MOTORS_HEAT[] =
+//{
+////#ifdef MOTOR_COUNT > 1
+//
+////	{MOT_ANALOG_CHANNEL_MOTORS_HEAT_0,		0U},
+//};
+//
+//const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_MOTORS_HEAT =
+//{
+//	.P_CHANNELS 	= CHANNELS_MOTORS_HEAT,
+//	.CHANNEL_COUNT 	= sizeof(CHANNELS_MOTORS_HEAT)/sizeof(Analog_ConversionVirtualChannel_T),
+//	.ON_COMPLETE 	= 0U,
+//};

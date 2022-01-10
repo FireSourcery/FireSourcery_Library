@@ -43,23 +43,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#define FLASH_UNIT_ERASE_SIZE			HAL_FLASH_UNIT_ERASE_SIZE
-#define FLASH_UNIT_WRITE_SIZE			HAL_FLASH_UNIT_WRITE_SIZE
-#define FLASH_UNIT_VERIFY_ERASE_SIZE	HAL_FLASH_UNIT_VERIFY_ERASE_SIZE
-#define FLASH_UNIT_VERIFY_WRITE_SIZE	HAL_FLASH_UNIT_VERIFY_WRITE_SIZE
-#define FLASH_UNIT_WRITE_ONCE_SIZE		HAL_FLASH_UNIT_WRITE_ONCE_SIZE
-#define FLASH_UNIT_READ_ONCE_SIZE		HAL_FLASH_UNIT_READ_ONCE_SIZE
-
-//static inline const uint8_t * CalcOpCmdAddress(const Flash_T * p_flash, const uint8_t * p_dest) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-//static inline const uint8_t * CalcOpCmdAddress(const Flash_T * p_flash, const uint8_t * p_dest)
-//{
-//#ifdef CONFIG_FLASH_HW_OP_ADDRESS_RELATIVE
-//	return (uint8_t *)((uint32_t)p_dest + p_flash->p_OpPartition->OP_ADDRESS_OFFSET);
-//#elif defined(CONFIG_FLASH_HW_OP_ADDRESS_ABSOLUTE)
-//	return p_dest;
-//#endif
-//}
-
 static void StartCmdWritePage 			(HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static void StartCmdEraseSector			(HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static void StartCmdVerifyWriteUnit		(HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
@@ -94,7 +77,6 @@ bool Flash_ReadSecurityFlag(Flash_T * p_flash)
 {
 	return HAL_Flash_ReadSecurityFlag(p_flash->CONFIG.P_HAL);
 }
-
 
 /******************************************************************************/
 /*!

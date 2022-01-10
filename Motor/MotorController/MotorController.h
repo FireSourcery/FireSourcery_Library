@@ -56,6 +56,8 @@
 #include "Utility/Thread/Thread.h"
 #include "Utility/StateMachine/StateMachine.h"
 
+#include "System/MemMapBoot/MemMapBoot.h"
+
 #include <stdint.h>
 
 typedef enum
@@ -73,14 +75,28 @@ typedef enum
 }
 MotorController_Direction_T;
 
+typedef const struct __attribute__((aligned (FLASH_UNIT_WRITE_ONCE_SIZE)))
+{
+	const uint8_t NAME[8U];
+	const uint8_t NAME_EXT[8U];
+	const uint8_t MANUFACTURE_DAY;
+	const uint8_t MANUFACTURE_MONTH;
+	const uint8_t MANUFACTURE_YEAR;
+	const uint8_t MANUFACTURE_RESV;
+	const uint32_t SERIAL_NUMBER;
+}
+MotorController_Once_T;
 
-typedef struct __attribute__((aligned (4U)))
+typedef struct __attribute__((aligned (4U))) //CONFIG_PARAMS_ALIGN_SIZE
 {
 	//	const uint8_t application_config;
 	//	const uint8_t startup_wait_time;
 //	uint8_t ShellConnectId;
 //	uint8_t ProtocolDataLinkId[1]; //per protocol
-//	uint8_t AuxProtocolSpecsId[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT];
+
+	//	uint8_t ProtocolSpecsId[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT];
+
+	uint8_t MainProtocolXcvrId;
 	uint8_t MainProtocolSpecsId;
 	MotorController_InputMode_T InputMode;
 	bool IsBuzzerOnReverseEnable;
@@ -92,7 +108,9 @@ MotorController_Params_T;
  */
 typedef const struct
 {
-	const MotorController_Params_T * const P_PARAMETERS; //nvm copy
+	const MotorController_Params_T 	* const P_PARAMETERS; //nvm copy
+	const MotorController_Once_T 	* const P_ONCE;
+	const MemMapBoot_T 				* const P_MEM_MAP_BOOT;
 
 	Motor_T * const P_MOTORS;
 	const uint8_t MOTOR_COUNT;
@@ -100,18 +118,41 @@ typedef const struct
 	Serial_T * const P_SERIALS; //simultaneous active serial
 	const uint8_t SERIAL_COUNT;
 
+	Flash_T * const P_FLASH; 	/* ensure flash config/params are in RAM */
+
 	AnalogN_T * const P_ANALOG_N;
-	const AnalogN_Conversion_T CONVERSION_ANALOG_USER;
-	const AnalogN_Conversion_T CONVERSION_ANALOG_MONITOR;
+//	const AnalogN_Conversion_T CONVERSION_ANALOG_USER;
+//	const AnalogN_Conversion_T CONVERSION_ANALOG_MONITOR;
+	const AnalogN_Conversion_T CONVERSION_HEAT_PCB;
+	const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS_TOP;
+	const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS_BOT;
+	const AnalogN_Conversion_T CONVERSION_VACC;
+	const AnalogN_Conversion_T CONVERSION_VSENSE;
 
-	//	Protocol_T * const P_AUX_PROTOCOLS; 	//Simultaneously active protocols
-	//	const uint8_t AUX_PROTOCOL_COUNT;
+	const AnalogN_Conversion_T CONVERSION_THROTTLE;
+	const AnalogN_Conversion_T CONVERSION_BRAKE;
 
+	Protocol_T * const P_PROTOCOLS; //Simultaneously active protocols
+	const uint8_t PROTOCOL_COUNT;
+
+	/* set function use only */
+	//todo move to ProtocolN module
 	const Protocol_Specs_T ** const P_PROTOCOL_SPECS_TABLE;
 	const uint8_t PROTOCOL_SPECS_COUNT;
 
+	//move to Xcvr module
+	void ** const P_XCVR_TABLE;
+
 	const Pin_T PIN_METER;
 	const Pin_T PIN_COIL;
+
+	const Linear_T UNIT_VSENSE;
+	const Linear_T UNIT_VACC;
+
+	const uint8_t SOFTWARE_VERSION[4U];
+	const uint16_t CONTROLLER_VOLTAGE;
+	const uint16_t SENSOR_RATED_I;
+//	const uint16_t SENSOR_RATED_AD;
 }
 MotorController_Config_T;
 
@@ -121,27 +162,29 @@ typedef struct
 	const MotorController_Config_T CONFIG;
 	MotorController_Params_T Parameters; //ram copy
 	StateMachine_T StateMachine;
+	volatile MotAnalog_Results_T AnalogResults;
+// 	AnalogN_AdcFlags_T SignalBufferAnalogMonitor;
+// 	AnalogN_AdcFlags_T SignalBufferAnalogUser;
 
-	Flash_T Flash;
+//	Flash_T Flash;
 	EEPROM_T Eeprom;
 	MotAnalogUser_T AnalogUser;
 	MotAnalogMonitor_T AnalogMonitor;
-	Blinky_T Buzzer;
 	Debounce_T DIn; //configurable input
+
+	Blinky_T Buzzer;
+
 	Thermistor_T ThermistorPcb;
-	Thermistor_T ThermistorMosfets;
+	Thermistor_T ThermistorMosfetsTop;
+	Thermistor_T ThermistorMosfetsBot;
 
 	Timer_T TimerMillis;
 	Timer_T TimerMillis10;
 	Timer_T TimerSeconds;
 
-	MotAnalog_Map_T AnalogResults;
- 	AnalogN_AdcFlags_T SignalBufferAnalogMonitor;
- 	AnalogN_AdcFlags_T SignalBufferAnalogUser;
 
-	Protocol_T		MainProtocol;
+
 //	Shell_T 		MotShell;
-
  	MotorController_Direction_T MainDirection;
 
  	uint16_t UserCmd;
@@ -152,7 +195,7 @@ MotorController_T;
 
 static inline Motor_T * MotorController_GetPtrMotor(MotorController_T * p_motorController, uint8_t motorIndex) {return &(p_motorController->CONFIG.P_MOTORS[motorIndex]);}
 
-static inline void MotorController_ProcSaveParameters_Blocking(MotorController_T * p_motorController)
+static inline void MotorController_SaveParameters_Blocking(MotorController_T * p_motorController)
 {
 	for(uint8_t iMotor = 0U; iMotor < p_motorController->CONFIG.MOTOR_COUNT; iMotor++)
 	{
@@ -176,14 +219,14 @@ static inline void MotorController_ProcAlarm(MotorController_T * p_motorControll
 //	Blinky_Blink(&p_motorController->Buzzer, 500U); set alarm type
 }
 
-static inline void MotorController_ProcUserCmdDecelerate(MotorController_T * p_motorController)
+static inline void MotorController_ProcUserCmdBrake(MotorController_T * p_motorController)
 {
-	Motor_UserN_SetCmdDecelerate(p_motorController->CONFIG.P_MOTORS, p_motorController->CONFIG.MOTOR_COUNT, p_motorController->UserCmd);
+	Motor_UserN_SetCmdBrake(p_motorController->CONFIG.P_MOTORS, p_motorController->CONFIG.MOTOR_COUNT, p_motorController->UserCmd);
 }
 
-static inline void MotorController_ProcUserCmdAccelerate(MotorController_T * p_motorController)
+static inline void MotorController_ProcUserCmdThrottle(MotorController_T * p_motorController)
 {
-	Motor_UserN_SetCmdAccelerate(p_motorController->CONFIG.P_MOTORS, p_motorController->CONFIG.MOTOR_COUNT, p_motorController->UserCmd);
+	Motor_UserN_SetCmd(p_motorController->CONFIG.P_MOTORS, p_motorController->CONFIG.MOTOR_COUNT, p_motorController->UserCmd);
 }
 
 static inline bool MotorController_ProcDirection(MotorController_T * p_motorController)

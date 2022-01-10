@@ -33,9 +33,9 @@
 //#include "MotorInterface.h"
 #include "Motor/Motor/Motor.h"
 
-#include "System/Shell/Shell.h"
-#include "System/Shell/Terminal.h"
-#include "System/Shell/Cmd.h"
+#include "Utility/Shell/Shell.h"
+#include "Utility/Shell/Terminal.h"
+#include "Utility/Shell/Cmd.h"
 
 #include <stdint.h>
 #include <string.h>

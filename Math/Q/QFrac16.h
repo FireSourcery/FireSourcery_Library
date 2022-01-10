@@ -294,38 +294,7 @@ static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
  * https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Binary_numeral_system_(base_2)
  */
 //qfrac16_t q_sqrt(qfrac16_t n)
-//{
-//	qfrac16_t x = 0;		// 2ax
-//	uint32_t b = (1 << 30); // a²
-//	n = n << 15;			// (x + a)² - x²
-//
-//	if (n < 0)
-//	{
-//		x = 0;
-//	}
-//	else
-//	{
-//		while (b > n)
-//		{
-//			b = b / 4;
-//		}
-//
-//		while (b > 0x8000)
-//		{
-//			if (n >= x + b) // compare (x + a)² - x² >= 2ax + a²
-//			{
-//				n = n - (x + b);
-//				x = (x / 2) + b;
-//			}
-//			else
-//			{
-//				x = x / 2;
-//			}
-//			b = b / 4;
-//		}
-//	}
-//	return x;
-//}
+
 
 
 

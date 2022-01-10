@@ -36,21 +36,22 @@
 #include <stdbool.h>
 #include <string.h>
 
-void Protocol_Init(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs, void * p_transceiver)
+void Protocol_Init(Protocol_T * p_protocol)
 {
-	Protocol_InitDefault(p_protocol);
-	Protocol_SetSpecs(p_protocol, p_specs);
-	Protocol_SetPort(p_protocol, p_transceiver);
-}
-
-void Protocol_InitDefault(Protocol_T * p_protocol)
-{
-	p_protocol->RxState 	= PROTOCOL_RX_STATE_WAIT_BYTE_1;
-	p_protocol->ReqState 	= PROTOCOL_REQ_STATE_WAIT_RX_REQ;
+	p_protocol->RxState 	= PROTOCOL_RX_STATE_INACTIVE;
+	p_protocol->ReqState 	= PROTOCOL_REQ_STATE_INACTIVE;
 
 	p_protocol->RxIndex 	= 0U;
 	p_protocol->TxLength 	= 0U;
 	p_protocol->p_ReqActive = 0U;
+
+	if(p_protocol->CONFIG.P_PARAMS != 0U)
+	{
+		Protocol_SetSpecs(p_protocol, p_protocol->CONFIG.P_PARAMS->p_Specs);
+		Protocol_SetPort(p_protocol, p_protocol->CONFIG.P_PARAMS->p_Port);
+	}
+
+	Protocol_Enable(p_protocol);
 }
 
 void Protocol_SetSpecs(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs)
@@ -58,6 +59,10 @@ void Protocol_SetSpecs(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs
 	if (p_specs->RX_LENGTH_MAX < p_protocol->CONFIG.PACKET_BUFFER_LENGTH)
 	{
 		p_protocol->p_Specs = p_specs;
+		if (p_protocol->p_Specs->BAUD_RATE_DEFAULT != 0U)
+		{
+			Serial_ConfigBaudRate(p_protocol->p_Port, p_protocol->p_Specs->BAUD_RATE_DEFAULT);
+		}
 	}
 }
 
@@ -66,9 +71,34 @@ void Protocol_SetPort(Protocol_T * p_protocol, void * p_transceiver)
 	p_protocol->p_Port = p_transceiver;
 }
 
+bool Protocol_Enable(Protocol_T * p_protocol)
+{
+	bool isEnable = (p_protocol->p_Port != 0U && p_protocol->p_Specs != 0U);
+
+	if (isEnable == true)
+	{
+		p_protocol->RxState 	= PROTOCOL_RX_STATE_WAIT_BYTE_1;
+		p_protocol->ReqState 	= PROTOCOL_REQ_STATE_WAIT_RX_REQ;
+	}
+
+	return isEnable;
+}
+
+//check need critical
+void Protocol_Disable(Protocol_T * p_protocol)
+{
+	p_protocol->RxState 	= PROTOCOL_RX_STATE_INACTIVE;
+	p_protocol->ReqState 	= PROTOCOL_REQ_STATE_INACTIVE;
+
+	p_protocol->RxIndex 	= 0U;
+	p_protocol->TxLength 	= 0U;
+	p_protocol->p_ReqActive = 0U;
+}
+
 static inline bool PortRxByte(Protocol_T * p_protocol,   uint8_t * p_rxChar)
 {
 	return Serial_RecvChar(p_protocol->p_Port, p_rxChar);
+//		return Xcvr_RecvChar(p_protocol->p_Xcvr, p_rxChar);
 }
 
 static inline bool PortTxString(Protocol_T * p_protocol, const   uint8_t * p_string, uint16_t length)
@@ -76,12 +106,15 @@ static inline bool PortTxString(Protocol_T * p_protocol, const   uint8_t * p_str
 	return (length > 0U) ? Serial_SendString(p_protocol->p_Port, p_string, length) : false;
 }
 
-static inline void PortFlushBuffers(Protocol_T * p_protocol)
-{
-	Serial_FlushBuffers(p_protocol->p_Port);
-}
+//static inline void PortFlushBuffers(Protocol_T * p_protocol)
+//{
+//	Serial_FlushBuffers(p_protocol->p_Port);
+//}
 
-//Receive into buffer and check for completion
+/*
+ * Receive into buffer and check for completion
+ * Packet must be 2 bytes minimum
+ */
 static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 {
 	Protocol_RxCode_T status = PROTOCOL_RX_CODE_WAIT_PACKET;
@@ -117,8 +150,11 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 
 static inline void ProcTxSync(Protocol_T * p_protocol, Protocol_TxSyncId_T txId)
 {
-	p_protocol->p_Specs->BUILD_TX_SYNC(p_protocol->CONFIG.P_SUBSTATE_BUFFER, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, txId);
-	PortTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+	if (p_protocol->p_Specs->BUILD_TX_SYNC != 0U)
+	{
+		p_protocol->p_Specs->BUILD_TX_SYNC(p_protocol->CONFIG.P_SUBSTATE_BUFFER, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, txId);
+		PortTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+	}
 }
 
 //static inline void ProcTimeout(Protocol_T * p_protocol)
@@ -151,7 +187,7 @@ static inline void ProcRxTimeout(Protocol_T * p_protocol)
 {
 	ProcTxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_TIMEOUT);
 	p_protocol->RxState 	= PROTOCOL_RX_STATE_WAIT_BYTE_1;
-	p_protocol->RxCode 	= PROTOCOL_RX_CODE_WAIT_PACKET;
+	p_protocol->RxCode 		= PROTOCOL_RX_CODE_WAIT_PACKET;
 }
 
 //static inline void ProcRxTransitionWaitByte1(Protocol_T * p_protocol)
@@ -179,6 +215,7 @@ static inline void ProcRxTransitionWaitReq(Protocol_T * p_protocol)
 //	}
 }
 /*
+ * Handle protocol control
  * Controls Rx Packet Parser, and Timeout Timer
  * if run inside isr , need sync mechanism
  * Encoded and non encoded checks
@@ -193,7 +230,7 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 				/*
 				 * Use starting byte even if data is unencoded. first char can still be handled in separate state.
 				 */
-				if (((p_protocol->p_Specs->RX_START_ID == 0x00U) || (p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U] == p_protocol->p_Specs->RX_START_ID)) == true)
+				if ((p_protocol->p_Specs->RX_START_ID == 0x00U) || (p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U] == p_protocol->p_Specs->RX_START_ID))
 				{
 					p_protocol->RxIndex = 1U;
 //					ProcRxTransitionWaitPacket(p_protocol);
@@ -225,7 +262,6 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 						break;
 
 //					case PROTOCOL_RX_CODE_REQ_ID:
-//
 //						ProcRxTransitionWaitReq(p_protocol);
 //						break;
 //
@@ -237,9 +273,7 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 //						ProcRxTransitionWaitReq(p_protocol);
 //						break;
 
-//					case PROTOCOL_RX_CODE_VARMAP: break;
 //					case PROTOCOL_RX_CODE_DATAGRAM_SETUP: break;
-//					case PROTOCOL_RX_CODE_CONTEXT_FLASH:
 //					case PROTOCOL_RX_CODE_CONTEXT_DATAGRAM: //pass in context
 					default:
 						ProcRxTransitionWaitReq(p_protocol);
@@ -357,7 +391,9 @@ static inline bool ProcReqWaitRxSyncCommon(Protocol_T * p_protocol)
 }
 
 
-
+/*
+ * Handle user Req/Cmd function
+ */
 static inline void ProcReqState(Protocol_T * p_protocol)
 {
 	//use interface args for easy extension
@@ -365,14 +401,14 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 	{
 		.p_SubState 		= p_protocol->CONFIG.P_SUBSTATE_BUFFER,
 		.p_AppInterface 	= p_protocol->CONFIG.P_APP_CONTEXT,
-		.p_TxPacket 		=  p_protocol->CONFIG.P_TX_PACKET_BUFFER,
+		.p_TxPacket 		= p_protocol->CONFIG.P_TX_PACKET_BUFFER,
 		.p_TxSize 			= &p_protocol->TxLength,
 		.p_RxPacket 		= p_protocol->CONFIG.P_RX_PACKET_BUFFER,
 		.RxSize 			= p_protocol->RxIndex,
 		.Option 			= 0u,
 	};
 
-	if(p_protocol->ReqState != PROTOCOL_REQ_STATE_WAIT_RX_REQ)
+	if((p_protocol->ReqState != PROTOCOL_REQ_STATE_INACTIVE) && (p_protocol->ReqState != PROTOCOL_REQ_STATE_WAIT_RX_REQ))
 	{
 		if(*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->p_Specs->REQ_TIMEOUT)
 		{
@@ -433,7 +469,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 			//handle out of sequence ack
 			break;
 
-			//combine intermit wait?
+			//combine   wait?
 		case PROTOCOL_REQ_STATE_WAIT_RX_DATA:
 			if (p_protocol->RxCode == PROTOCOL_RX_CODE_DATA)
 			{
@@ -472,7 +508,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 //			{
 //				OutOfSequencePacket++
 //			}
-
+//			p_protocol->TxLength = 0U;//in case user doesd not set 0
 			p_protocol->ReqCode = p_protocol->p_ReqActive->P_EXT->PROCESS(args);
 
 			switch(p_protocol->ReqCode)
@@ -537,11 +573,12 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 			}
 			break;
 
-		default:
+		case PROTOCOL_REQ_STATE_INACTIVE:
 			break;
 
-	}
+		default: break;
 
+	}
 }
 
 /*

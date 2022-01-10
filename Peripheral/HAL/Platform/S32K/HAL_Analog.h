@@ -46,15 +46,11 @@ typedef ADC_Type HAL_ADC_T;
 	time adder (5 ADC cycles + 5 bus clock cycles)
 */
 
-static inline void HAL_ADC_Activate(HAL_ADC_T * p_adc)
-{
-
-}
-
-static inline void HAL_ADC_WriteLast(HAL_ADC_T * p_adc, uint32_t pinChannel)
+static inline void HAL_ADC_Activate(HAL_ADC_T * p_adc, uint32_t pinChannel)
 {
 	p_adc->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
 }
+
 
 static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_adc, uint32_t pinChannel)
 {
@@ -65,10 +61,15 @@ static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_adc, uint32_t pinC
 /*
  * cannot support cases where interrupt must be set along with pinChannel
  */
-static inline void HAL_ADC_WritePinSelect(HAL_ADC_T * p_adc, uint32_t pinChannel)
-{
-	p_adc->SC1[0U] = ADC_SC1_ADCH((uint32_t )pinChannel);
-}
+//static inline void HAL_ADC_WritePinSelect(HAL_ADC_T * p_adc, uint32_t pinChannel)
+//{
+//	p_adc->SC1[0U] = ADC_SC1_ADCH((uint32_t )pinChannel);
+//}
+//
+//static inline void HAL_ADC_WriteLast(HAL_ADC_T * p_adc, uint32_t pinChannel)
+//{
+//	p_adc->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
+//}
 
 static inline void HAL_ADC_EnableHwTrigger(HAL_ADC_T * p_adc)
 {
@@ -84,27 +85,27 @@ static inline void HAL_ADC_DisableHwTrigger(HAL_ADC_T * p_adc)
 
 static inline void HAL_ADC_DisableInterrupt(HAL_ADC_T * p_adc)
 {
-	p_adc->SC1[0U] &= ~ADC_SC1_AIEN_MASK;
+//	p_adc->SC1[0U] &= ~ADC_SC1_AIEN_MASK;
 	//may need to switch to nvic interrupt for critical section, with interfering with conversion
-//	switch ((uint32_t)p_adc)
-//	{
-//		case (uint32_t)ADC0: S32_NVIC->ICER[ADC0_IRQn >> 5U] = (1UL << (ADC0_IRQn & 0x1FU)); break;
-//		case (uint32_t)ADC1: S32_NVIC->ICER[ADC1_IRQn >> 5U] = (1UL << (ADC1_IRQn & 0x1FU)); break;
-//		default: break;
-//	}
+	switch ((uint32_t)p_adc)
+	{
+		case (uint32_t)ADC0: S32_NVIC->ICER[ADC0_IRQn >> 5U] = (1UL << (ADC0_IRQn & 0x1FU)); break;
+		case (uint32_t)ADC1: S32_NVIC->ICER[ADC1_IRQn >> 5U] = (1UL << (ADC1_IRQn & 0x1FU)); break;
+		default: break;
+	}
 }
 
 static inline void HAL_ADC_EnableInterrupt(HAL_ADC_T * p_adc)
 {
-	p_adc->SC1[0U] |= ADC_SC1_AIEN_MASK;
+//	p_adc->SC1[0U] |= ADC_SC1_AIEN_MASK;
 
 	//may need to switch to nvic interrupt for critical section, with interfering with conversion
-//	switch ((uint32_t)p_adc)
-//	{
-//		case (uint32_t)ADC0: S32_NVIC->ISER[ADC0_IRQn >> 5U] = (1UL << (ADC0_IRQn & 0x1FU)); break;
-//		case (uint32_t)ADC1: S32_NVIC->ISER[ADC1_IRQn >> 5U] = (1UL << (ADC1_IRQn & 0x1FU)); break;
-//		default: break;
-//	}
+	switch ((uint32_t)p_adc)
+	{
+		case (uint32_t)ADC0: S32_NVIC->ISER[ADC0_IRQn >> 5U] = (1UL << (ADC0_IRQn & 0x1FU)); break;
+		case (uint32_t)ADC1: S32_NVIC->ISER[ADC1_IRQn >> 5U] = (1UL << (ADC1_IRQn & 0x1FU)); break;
+		default: break;
+	}
 }
 
 static inline void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_adc)

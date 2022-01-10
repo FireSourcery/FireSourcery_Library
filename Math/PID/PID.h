@@ -1,4 +1,4 @@
-/**************************************************************************/
+/******************************************************************************/
 /*!
 	@section LICENSE
 
@@ -19,17 +19,15 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-/**************************************************************************/
-/**************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 /*!
     @file 	PID.h
     @author FireSoucery
     @brief
     @version V0
-
-    Created on: Nov 26, 2019
 */
-/**************************************************************************/
+/******************************************************************************/
 #ifndef PID_H
 #define PID_H
 
@@ -38,38 +36,69 @@
 
 typedef enum
 {
-	PID_DIRECTION_DIRECT, PID_DIRECTION_REVERSE,
-} PID_Direction_T;
+	PID_DIRECTION_DIRECT,
+	PID_DIRECTION_REVERSE,
+}
+PID_Direction_T;
+
+typedef enum
+{
+	PID_MODE_PI,
+	PID_MODE_PID,
+}
+PID_Mode_T;
+
+typedef struct PID_Params_Tag
+{
+	uint32_t CalcFreq;
+	PID_Mode_T	  		Mode;
+	PID_Direction_T 	Direction;
+	int32_t KpFactor;
+	int32_t KpDivisor;
+	int32_t KiFactor;
+	int32_t KiDivisor;
+	int32_t KdFactor;
+	int32_t KdDivisor;
+	int32_t OutMin;
+	int32_t OutMax;
+}
+PID_Params_T;
+
+typedef const struct
+{
+	const PID_Params_T * const P_PARAMS;
+//	uint32_t CALC_FREQ;
+}
+PID_Config_T;
 
 typedef struct PID_Tag
 {
+	const PID_Config_T CONFIG;
+	PID_Params_T Params;
+
+//#ifdef CONFIG_PID_MODE_POINTER
+//	volatile int32_t * p_Setpoint;		//Cmd
+//	volatile int32_t * p_Feedback;		//Process Variable
+//	volatile int32_t * p_Control; 		//Control Variable
+//#endif
+
+	//	uint32_t CalcFreq;
 //	PID_Mode_T	  		Mode;
-	PID_Direction_T 	Direction;
+//	PID_Direction_T 	Direction;
+//	int32_t KpFactor;
+//	int32_t KpDivisor;
+//	int32_t KiFactor;
+//	int32_t KiDivisor;
+//	int32_t KdFactor;
+//	int32_t KdDivisor;
+//	int32_t OutMin;
+//	int32_t OutMax;
+//
+	int32_t KiDivisorFreq; 	//calculation frequency adjusted
+	int32_t KdFactorFreq; 	//calculation frequency adjusted
 
-#ifdef CONFIG_PID_MODE_POINTER
-	volatile int32_t * p_Setpoint;
-	volatile int32_t * p_Feedback;		//Process Variable
-	volatile int32_t * p_Control; 		//Control Variable
-#else
-	volatile int32_t Setpoint;
-	volatile int32_t Feedback;	//Process Variable
-	volatile int32_t Control; 	//Control Variable
-#endif
-
-	int32_t KpFactor;		// user input, time base in seconds
-	int32_t KpDivisor;		// user input, time base in seconds
-	int32_t KiFactor;		// user input, time base in seconds
-	int32_t KiDivisor;		// user input, time base in seconds
-	int32_t KdFactor;		// user input, time base in seconds
-	int32_t KdDivisor;		// user input, time base in seconds
-
-	int32_t KiDivisorCalcFreq; 	//calculation frequency adjusted
-	int32_t KdFactorCalcFreq; 	//calculation frequency adjusted
-
-	uint32_t CalcFreq;
-
-	volatile int32_t ErrorSum;
-	volatile int32_t ErrorPrev;
+	int32_t ErrorSum;
+	int32_t ErrorPrev;
 
 //	uint32_t SampleTime; 				// unit in timer ticks
 //	uint32_t TimerFreq;					// convert sample time to standard units
@@ -78,24 +107,29 @@ typedef struct PID_Tag
 
 //	uint32_t TimePrev;
 //	uint32_t InputPrev;
-
-	int32_t OutMin;
-	int32_t OutMax;
 }
 PID_T;
 
+#define PID_CONFIG(p_Params)			\
+{										\
+	.CONFIG = 							\
+	{									\
+		.P_PARAMS = p_Params,			\
+	}									\
+}
+
 extern int32_t PID_Calc(PID_T *p_pid, int32_t setpoint, int32_t feedback);;
 extern void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor);
-extern void PID_SetCalcFreq(PID_T * p_pid, uint32_t calcFreq);
+extern void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq);
 extern void PID_SetOutputLimits(PID_T * p_pid, uint32_t min, uint32_t max);
 extern void PID_SetDirection(PID_T * p_pid, PID_Direction_T direction);
 extern PID_Direction_T PID_GetDirection(PID_T *p_pid);
-extern void PID_Init
+extern void PID_Init_Args
 (
 	PID_T * p_pid,
-#ifdef CONFIG_PID_MODE_POINTER
-	int32_t * p_setpoint, int32_t * p_feedback, int32_t * p_control,
-#endif
+//#ifdef CONFIG_PID_MODE_POINTER
+//	int32_t * p_setpoint, int32_t * p_feedback, int32_t * p_control,
+//#endif
 	int32_t kpFactor, int32_t kpDivisor,
 	int32_t kiFactor, int32_t kiDivisor,
 	int32_t kdFactor, int32_t kdDivisor,

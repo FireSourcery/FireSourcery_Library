@@ -31,14 +31,13 @@
 #ifndef CONFIG_LINEAR_H
 #define CONFIG_LINEAR_H
 
-//#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
-//
-//#elif defined(CONFIG_LINEAR_NUMIRICAL_DIVIDE)
-//
-//#else
-	#define CONFIG_LINEAR_SHIFT_DIVIDE
-//#endif
+#ifdef CONFIG_LINEAR_SHIFT_DIVIDE_SHIFT
 
+#elif defined(CONFIG_LINEAR_DIVIDE_NUMIRICAL)
+
+#else
+	#define CONFIG_LINEAR_DIVIDE_SHIFT
+#endif
 
 // compile time const adc bits for all linear adc instances
 //#ifdef CONFIG_LINEAR_ADC_BITS

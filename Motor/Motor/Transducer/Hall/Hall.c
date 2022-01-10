@@ -47,10 +47,14 @@ void Hall_Init(Hall_T * p_hall)
 	p_hall->Direction = HALL_DIRECTION_CCW;
 	p_hall->SensorsRef.State = 0U;
 
-//	if (p_hall->CONFIG.P_SENSOR_TABLE != 0U)
-//	{
-//		memcpy(&p_hall->SensorsTable, p_hall->CONFIG.P_SENSOR_TABLE, sizeof(p_hall->SensorsTable));
-//	}
+	if (p_hall->CONFIG.P_PARAMS != 0U)
+	{
+		memcpy(&p_hall->SensorsTable[0U], &p_hall->CONFIG.P_PARAMS->SensorsTable[0U], sizeof(Hall_Params_T));
+	}
+	else
+	{
+		Hall_MapSensorsTable_Default(p_hall);
+	}
 }
 
 void Hall_MapSensorsTable

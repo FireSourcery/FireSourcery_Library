@@ -59,38 +59,65 @@ typedef union
 AnalogN_AdcFlags_T;
 
 /*
+ * Pin Oriented - Map Pin to virtual
  * Compile time determine which analogs are used
  * Per conversion instance, pass to activate functions
  * pass map by pointer
- * //conversion map has analog->channellist	//for each analog
- * //thsi way conversion dont need to provide id
  */
+//typedef const struct
+//{
+//	const Analog_ConversionVirtualMap_T MAP;
+////	const Analog_ConversionVirtual_T * const P_VIRTUAL_CONVERSION;
+////	volatile analog_adcresult_t * const P_RESULTS_BUFFER;	 /*!< Persistent ADC results buffer, virtual channel index.  */
+////	void * P_ON_COMPLETE_CONTEXT;
+//	const Analog_ConversionAdc_T * const P_ADC_CONVERSIONS; /* 2D array*/
+//	AnalogN_AdcFlags_T * const P_SIGNAL_BUFFER;			//at least buffer needs to be implemented
+//	const AnalogN_AdcFlags_T ANALOGS_ACTIVE; 			//also on complete state, results map mask
+//}
+//AnalogN_Conversion_T;
+
+//#define ANALOG_N_CONVERSION_CONFIG(p_VirtualConversion, p_Results, p_OnCompleteContext, p_AdcConversions, p_Signal, SignalComplete) \
+//{															\
+//	.MAP =													\
+//	{														\
+//		.P_VIRTUAL_CONVERSION 	= p_VirtualConversion,		\
+//		.P_RESULTS_BUFFER 		= p_Results ,				\
+//		.P_ON_COMPLETE_CONTEXT 	= p_OnCompleteContext,		\
+//	},														\
+//	.P_ADC_CONVERSIONS 			= p_AdcConversions			\
+//	.P_SIGNAL_BUFFER 			= p_Signal					\
+//	.ANALOGS_ACTIVE.AdcFlags 	= SignalComplete			\
+//}
+
+/*
+ * Virtual Channel oriented conversion.
+ * Map virtual to pin
+ * each analog checks if virtual channel is on that analog
+ * simpler compile time defines at possible increase in time complexity.
+ */
+//typedef const struct
+//{
+//	volatile analog_adcresult_t * const P_RESULTS_BUFFER;	 /*!< Persistent ADC results buffer, virtual channel index.  */
+//	void * P_ON_COMPLETE_CONTEXT;
+//	const analog_adcpin_t * const * const PP_PINS;						/*!< Virtual channel index.  */
+//}
+//AnalogN_ConversionAdcMap_T;
+//
+//typedef const struct
+//{
+//	const AnalogN_ConversionAdcMap_T * const P_MAP;
+//	const Analog_ConversionVirtual_T * const P_VIRTUAL;
+//	AnalogN_AdcFlags_T * const P_SIGNAL_BUFFER;			//at least buffer needs to be implemented
+//	const AnalogN_AdcFlags_T ANALOGS_ACTIVE; 			//also on complete state, results map mask
+//}
+//AnalogN_Conversion_T;
+
 typedef const struct
 {
-	const Analog_ConversionMap_T MAP; //change to none pointer?
-	const Analog_ConversionAdc_T * const P_ADC_CONVERSIONS; /* 2D array*/
-	AnalogN_AdcFlags_T * const P_SIGNAL_BUFFER;			//at least buffer needs to be implemented
-	const AnalogN_AdcFlags_T ANALOGS_ACTIVE; 			//also on complete state, results map mask
+	Analog_Conversion_T CONVERSION;
+	Analog_T * P_ANALOG;
 }
 AnalogN_Conversion_T;
-
-//const Analog_ConversionVirtual_T * const P_VIRTUAL_CONVERSION;
-//analog_adcresult_t * const P_RESULTS_BUFFER;	 /*!< Persistent ADC results buffer, virtual channel index.  */
-//void * P_ON_COMPLETE_CONTEXT; //todo isPeakSignalBuffer associate with conversion. for consistion behavior from app. if associate with Analog_T channels on different analoy will continue to run untill the first peak is found for all converision channels on that adc
-
-#define ANALOG_N_CONVERSION_CONFIG(p_VirtualConversion, p_Results, p_OnCompleteContext, p_AdcConversions, p_Signal, SignalComplete) \
-{														\
-	.MAP =												\
-	{													\
-		.P_VIRTUAL_CONVERSION 	= p_VirtualConversion,	\
-		.P_RESULTS_BUFFER 		= p_Results ,			\
-		.P_ON_COMPLETE_CONTEXT 	= p_OnCompleteContext,	\
-	},													\
-	.P_ADC_CONVERSIONS 			= p_AdcConversions		\
-	.P_SIGNAL_BUFFER 			= p_Signal				\
-	.ANALOGS_ACTIVE.AdcFlags 	= SignalComplete		\
-}
-
 
 typedef const struct
 {
@@ -105,8 +132,6 @@ typedef struct
 }
 AnalogN_T;
 
-
-
 /*!
 	@brief	Capture ADC results, when conversion is complete.
 			Run in corresponding ADC ISR
@@ -116,72 +141,141 @@ AnalogN_T;
 static inline void AnalogN_CaptureResults_ISR(AnalogN_T * p_analogn, uint8_t analogId)
 {
 	Analog_T * p_analogI = &p_analogn->CONFIG.P_ANALOGS[analogId];
-	AnalogN_Conversion_T * p_activeConversion = p_analogI->p_ActiveConversion; /* casting void pointer */
+//	AnalogN_Conversion_T * p_activeConversion = p_analogI->p_ActiveConversion; /* casting void pointer */
 //	Queue_PeekFront(&p_analogI->ConversionQueue, &p_activeConversion); //read an address
 
-	const Analog_ConversionAdc_T * p_adcConversion 	= &p_activeConversion->P_ADC_CONVERSIONS[analogId];
-	const Analog_ConversionMap_T * p_map 			= &p_activeConversion->MAP;
-	AnalogN_AdcFlags_T * p_signalComplete 			= p_activeConversion->P_SIGNAL_BUFFER;
-	Analog_ConversionOptions_T options 		 		= p_map->P_VIRTUAL_CONVERSION->OPTIONS;
-	Analog_OnComplete_T onConversionComplete  		= p_map->P_VIRTUAL_CONVERSION->ON_COMPLETE;
-	void * p_onConversionCompleteContext 			= p_map->P_ON_COMPLETE_CONTEXT;
+//	const Analog_ConversionAdc_T * p_adcConversion 	= &p_activeConversion->P_ADC_CONVERSIONS[analogId];
+//	const Analog_ConversionVirtualMap_T * p_map 			= &p_activeConversion->MAP;
+//	AnalogN_AdcFlags_T * p_signalComplete 			= p_activeConversion->P_SIGNAL_BUFFER;
+////	Analog_ConversionOptions_T options 		 		= p_map->P_VIRTUAL_CONVERSION->OPTIONS;
+//	Analog_OnComplete_T onConversionComplete  		= p_map->P_VIRTUAL_CONVERSION->ON_COMPLETE;
+//	void * p_onConversionCompleteContext 			= p_map->P_ON_COMPLETE_CONTEXT;
+
+	static uint32_t debug;
+
+	if((_Analog_GetIsActive(p_analogI) == true)) //debug only
+	{
 
 
-	if (_Analog_CaptureResults(p_analogI, p_adcConversion, p_map) == true) //all channels complete
+	if (_Analog_CaptureResults(p_analogI) == true) //all channels complete
 	{
 		//Do not run if is capture local peak and not peak found
 //		if((((options.CaptureLocalPeak == true) && (p_analogI->IsLocalPeakFound == false)) == false))
-		{
-			p_signalComplete->AdcFlags &= ~(1UL << analogId); //debug only
-
-			if (onConversionComplete != 0U)
-			{
-				// only run oncomplete if conversion has completed on all adcs
-	//			p_signalComplete->AdcFlags &= ~(1UL << analogId);
-				if (p_signalComplete->AdcFlags == 0U)
-				{
-					onConversionComplete(p_onConversionCompleteContext);
-				}
-			}
-		}
+//		{
+//			p_signalComplete->AdcFlags &= ~(1UL << analogId); //debug only
+//
+//			if (onConversionComplete != 0U)
+//			{
+//				// only run oncomplete if conversion has completed on all adcs
+//	//			p_signalComplete->AdcFlags &= ~(1UL << analogId);
+//				if (p_signalComplete->AdcFlags == 0U)
+//				{
+//					onConversionComplete(p_onConversionCompleteContext);
+//				}
+//			}
+//		}
 
 		//todo check repeat function
-		if((options.ContinuousConversion == true) && (((options.CaptureLocalPeak == true) && (p_analogI->IsLocalPeakFound == true)) == false))
-		{
-#if !defined(CONFIG_ANALOG_ADC_HW_BUFFER)
-			if(p_activeConversion->MAP.P_VIRTUAL_CONVERSION->CHANNEL_COUNT > 1U)
-			{
-				_Analog_ActivateConversion(p_analogI, p_adcConversion, p_map);
-			}
-			else
-			{
-				p_analogI->ActiveConversionIndex = 0U; //auto reactivate, still need to reset index
-			}
-#elif defined(CONFIG_ANALOG_SW_CONTINUOUS_CONVERSION)
-			_Analog_ActivateConversion(p_analogI, p_adcConversion, p_map);
-#endif
-		}
-		else
-		{
-			//local peak found
-			if(_Analog_DequeueConversion(p_analogI) == true)
-			{
-				/* p_analogI->p_ActiveConversion updated */
-				p_activeConversion = p_analogI->p_ActiveConversion;
-				_Analog_ActivateConversion(p_analogI, &p_activeConversion->P_ADC_CONVERSIONS[analogId], &p_activeConversion->MAP);
-			}
+//		if((options.ContinuousConversion == true) && (((options.CaptureLocalPeak == true) && (p_analogI->IsLocalPeakFound == true)) == false))
+//		{
+//#if !defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
+//			if(p_activeConversion->MAP.P_VIRTUAL_CONVERSION->CHANNEL_COUNT > 1U)
+//			{
+//				_Analog_ActivateConversion(p_analogI, p_adcConversion, p_map);
+//			}
 //			else
 //			{
-////				Analog_Dectivate(p_analogI);
+//				p_analogI->ActiveConversionIndex = 0U; //auto reactivate, still need to reset index
 //			}
-		}
+//#elif defined(CONFIG_ANALOG_SW_CONTINUOUS_CONVERSION)
+//			_Analog_ActivateConversion(p_analogI, p_adcConversion, p_map);
+//#endif
+//		}
+//		else //local peak found
+//		{
+//
+//			if(_Analog_DequeueConversion(p_analogI) == true)
+//			{
+//				/* p_analogI->p_ActiveConversion updated */
+//				p_activeConversion = p_analogI->p_ActiveConversion;
+//				_Analog_ActivateConversion(p_analogI, &p_activeConversion->P_ADC_CONVERSIONS[analogId], &p_activeConversion->MAP);
+//			}
+//			else
+//			{
+////			Analog_Dectivate(p_analogI);
+//			}
+//		}
+	}
+
+	}
+	else
+	{
+		debug++;
 	}
 }
 
-extern void AnalogN_Init(AnalogN_T * p_analogn);
-extern void AnalogN_EnqueueConversion(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion);
-extern void AnalogN_EnqueueFrontConversion(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion);
-extern void AnalogN_PollDequeueConversion(AnalogN_T * p_analogn);
+/*
+ * Options AnalogN options on all adcs
+ */
+static inline bool AnalogN_EnqueueConversionOptionsAll(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion)
+{
+	bool isSuccess;
+	for (uint8_t iAdc = 0U; iAdc < p_analogn->CONFIG.ANALOG_COUNT; iAdc++)
+	{
+		Analog_EnqueueConversion(&p_analogn->CONFIG.P_ANALOGS[iAdc], &p_conversion->CONVERSION);
+	}
+}
+
+/*
+ */
+//static inline bool AnalogN_ActivateConversion(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion)
+//{
+////	EnqueueConversionCommon(p_analogn, p_conversion, ANALOG_ACTIVATE_MODE_OVERWRITE);
+//	Analog_ActivateConversion(p_conversion->P_ANALOG, &p_conversion->CONVERSION);
+//}
+
+static inline bool AnalogN_EnqueueConversion(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion)
+{
+//	EnqueueConversionCommon(p_analogn, p_conversion, ANALOG_ACTIVATE_MODE_ENQUEUE_BACK);
+	return Analog_EnqueueConversion(p_conversion->P_ANALOG, &p_conversion->CONVERSION);
+}
+
+//static inline bool AnalogN_EnqueueFrontConversion(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion)
+//{
+////	EnqueueConversionCommon(p_analogn, p_conversion, ANALOG_ACTIVATE_MODE_ENQUEUE_FRONT);
+//	Analog_EnqueueFrontConversion(p_conversion->P_ANALOG, &p_conversion->CONVERSION);
+//}
+
+static inline bool AnalogN_EnqueueConversionOptions(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion)
+{
+	return Analog_EnqueueConversionOptions(p_conversion->P_ANALOG, &p_conversion->CONVERSION);
+}
+
+
+static inline void AnalogN_EnterCritical(AnalogN_T * p_analogn)
+{
+//#if  (defined(CONFIG_ANALOG_MULTITHREADED) || defined(CONFIG_ANALOG_CRITICAL_USE_GLOBAL))
+//	Critical_Enter();
+//#elif (defined(CONFIG_ANALOG_SINGLE_THREADED))
+//	for (uint8_t iAdc = 0U; iAdc < p_analogn->CONFIG.ANALOG_COUNT; iAdc++)
+//	{
+//		Analog_DisableInterrupt(&p_analogn->CONFIG.P_ANALOGS[iAdc]);
+//	}
+//#endif
+}
+
+static inline void AnalogN_ExitCritical(AnalogN_T * p_analogn)
+{
+//	for (uint8_t iAdc = 0U; iAdc < p_analogn->CONFIG.ANALOG_COUNT; iAdc++)
+//	{
+		_Analog_ExitCritical(&p_analogn->CONFIG.P_ANALOGS[0]);
+//	}
+}
+
+//extern void AnalogN_Init(AnalogN_T * p_analogn);
+//extern void AnalogN_EnqueueConversion(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion);
+//extern void AnalogN_EnqueueFrontConversion(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion);
+//extern void AnalogN_PollDequeueConversion(AnalogN_T * p_analogn);
 
 #endif
 

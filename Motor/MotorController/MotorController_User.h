@@ -41,18 +41,75 @@
 
 #include <stdint.h>
 
-static inline uint16_t MotorController_User_GetThrottle_Adcu(MotorController_T * p_mc)		{return p_mc->AnalogResults.Throttle_ADCU;}
-static inline uint16_t MotorController_User_GetThrottle_Adcu8(MotorController_T * p_mc)		{return MotorController_User_GetThrottle_Adcu(p_mc) >> (CONFIG_MOTOR_CONTROLLER_ADCU_BITS_N - 8U);}
-static inline uint16_t MotorController_User_GetThrottle_Frac16(MotorController_T * p_mc)	{return MotAnalogUser_GetThrottle(&p_mc->AnalogUser);}
-static inline uint16_t MotorController_User_GetThrottle_Frac8(MotorController_T * p_mc)		{return MotAnalogUser_GetThrottle(&p_mc->AnalogUser) >> 8U;}
-static inline uint16_t MotorController_User_GetThrottleValue(MotorController_T * p_mc)		{return MotAnalogUser_GetThrottle(&p_mc->AnalogUser);}
-static inline bool MotorController_User_GetThrottleSwitch(MotorController_T * p_mc) 		{return MotAnalogUser_GetThrottleSwitch(&p_mc->AnalogUser);}
 
 static inline uint16_t 	MotorController_User_GetCmdValue(MotorController_T * p_mc)	{return p_mc->UserCmd;}
+static inline bool MotorController_User_GetDirection(MotorController_T * p_mc) {return p_mc->MainDirection;}
 
-static inline uint32_t MotorController_User_GetBemf_Frac16(MotorController_T * p_mc, uint8_t motorIndex)	{return Motor_User_GetBemf_Frac16(MotorController_GetPtrMotor(p_mc, motorIndex));}
-static inline uint32_t MotorController_User_GetVPos_MilliV(MotorController_T * p_mc, uint8_t motorIndex)	{return Motor_User_GetVPos_MilliV(MotorController_GetPtrMotor(p_mc, motorIndex));}
-static inline uint32_t MotorController_User_GetSpeed_RPM(MotorController_T * p_mc, uint8_t motorIndex)		{return Motor_User_GetSpeed_RPM(MotorController_GetPtrMotor(p_mc, motorIndex));}
+
+static inline uint16_t MotorController_User_GetAdcu(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel)
+{
+	return p_mc->AnalogResults.Channels[adcChannel];
+}
+
+static inline uint16_t MotorController_User_GetAdcu_Msb8(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel)
+{
+	return MotorController_User_GetAdcu(p_mc, adcChannel) >> (CONFIG_MOTOR_CONTROLLER_ADCU_BITS_N - 8U);
+}
+
+static inline uint16_t MotorController_User_GetMotorAdcu(MotorController_T * p_mc, uint8_t motorIndex, MotorAnalog_Channel_T adcChannel)
+{
+	return p_mc->CONFIG.P_MOTORS[motorIndex].AnalogResults.Channels[adcChannel];
+}
+
+static inline uint16_t MotorController_User_GetMotorAdcu_Msb8(MotorController_T * p_mc, uint8_t motorIndex, MotorAnalog_Channel_T adcChannel)
+{
+	return MotorController_User_GetMotorAdcu(p_mc, motorIndex, adcChannel) >> (CONFIG_MOTOR_CONTROLLER_ADCU_BITS_N - 8U);
+}
+
+/*
+ * Motor Controller Common
+ */
+
+static inline uint8_t MotorController_User_GetThrottle_Frac8(MotorController_T * p_mc)		{return MotAnalogUser_GetThrottle(&p_mc->AnalogUser) >> 8U;}
+static inline uint16_t MotorController_User_GetThrottle(MotorController_T * p_mc)			{return MotAnalogUser_GetThrottle(&p_mc->AnalogUser);}
+static inline bool MotorController_User_GetThrottleSwitch(MotorController_T * p_mc) 		{return MotAnalogUser_GetThrottleSwitch(&p_mc->AnalogUser);}
+
+static inline uint8_t MotorController_User_GetBrake_Frac8(MotorController_T * p_mc)	{return MotAnalogUser_GetBrake(&p_mc->AnalogUser) >> 8U;}
+static inline uint16_t MotorController_User_GetBrake(MotorController_T * p_mc)			{return MotAnalogUser_GetBrake(&p_mc->AnalogUser);}
+static inline bool MotorController_User_GetBrakeSwitch(MotorController_T * p_mc) 		{return MotAnalogUser_GetBrakeSwitch(&p_mc->AnalogUser);}
+
+static inline bool MotorController_User_GetForwardSwitch(MotorController_T * p_mc) 	{return MotAnalogUser_GetForwardSwitch(&p_mc->AnalogUser);}
+static inline bool MotorController_User_GetReverseSwitch(MotorController_T * p_mc) 	{return MotAnalogUser_GetReverseSwitch(&p_mc->AnalogUser);}
+
+static inline bool MotorController_User_GetDInSwitch(MotorController_T * p_user) 		{return Debounce_GetState(&p_user->DIn);}
+
+static inline uint16_t MotorController_User_GetVSense_MilliV(MotorController_T * p_mc)	{return Linear_Voltage_CalcMilliV(&p_mc->CONFIG.UNIT_VSENSE, p_mc->AnalogResults.VSense_ADCU);}
+static inline uint16_t MotorController_User_GetVAcc_MilliV(MotorController_T * p_mc)	{return Linear_Voltage_CalcMilliV(&p_mc->CONFIG.UNIT_VACC, p_mc->AnalogResults.VAcc_ADCU);}
+static inline uint32_t MotorController_User_GetVPos_MilliV(MotorController_T * p_mc)	{return Motor_User_GetVPos_MilliV(MotorController_GetPtrMotor(p_mc, 0U));}
+
+static inline uint16_t MotorController_User_GetHeatPcb_DegCScalar(MotorController_T * p_mc, uint8_t scalar) 		{return Thermistor_ConvertToDegC_Scalar(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_ADCU, scalar);}
+static inline uint16_t MotorController_User_GetHeatMosfetsTop_DegCScalar(MotorController_T * p_mc, uint8_t scalar) 	{return Thermistor_ConvertToDegC_Scalar(&p_mc->ThermistorMosfetsTop, p_mc->AnalogResults.HeatMosfetsTop_ADCU, scalar);}
+static inline uint16_t MotorController_User_GetHeatMosfetsBot_DegCScalar(MotorController_T * p_mc, uint8_t scalar) 	{return Thermistor_ConvertToDegC_Scalar(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_ADCU, scalar);}
+
+static inline uint16_t MotorController_User_GetHeatPcbLimit_DegCScalar(MotorController_T * p_mc, uint16_t scalar) 	{return Thermistor_GetHeatLimit_DegCScalar(&p_mc->ThermistorPcb);}
+
+
+/*
+ * Motor Wrapper
+ */
+
+static inline Hall_Sensors_T MotorController_User_GetHall(MotorController_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(MotorController_GetPtrMotor(p_mc, motorIndex));}
+//static inline bool MotorController_User_GetHallA(MotorController_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(MotorController_GetPtrMotor(p_mc, motorIndex)).A;}
+//static inline bool MotorController_User_GetHallB(MotorController_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(MotorController_GetPtrMotor(p_mc, motorIndex)).B;}
+//static inline bool MotorController_User_GetHallC(MotorController_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(MotorController_GetPtrMotor(p_mc, motorIndex)).C;}
+
+
+static inline Motor_DirectionCalibration_T MotorController_User_GetDirectionCalibration(MotorController_T * p_mc, uint8_t motorIndex) {return Motor_User_GetDirectionCalibration(MotorController_GetPtrMotor(p_mc, motorIndex));}
+static inline bool MotorController_User_GetIsRevMode(MotorController_T * p_mc, uint8_t motorIndex) {return (Motor_User_GetDirectionCalibration(MotorController_GetPtrMotor(p_mc, motorIndex)) ==  MOTOR_FORWARD_IS_CW);}
+
+//static inline uint32_t MotorController_User_GetBemfAvg_MilliV(MotorController_T * p_mc, uint8_t motorIndex)	{return Motor_User_GetBemf_Frac16(MotorController_GetPtrMotor(p_mc, motorIndex));}
+static inline uint16_t MotorController_User_GetSpeed_RPM(MotorController_T * p_mc, uint8_t motorIndex)		{return Motor_User_GetSpeed_RPM(MotorController_GetPtrMotor(p_mc, motorIndex));}
+static inline uint16_t MotorController_User_GetMotorHeat_DegCScalar(MotorController_T * p_mc, uint8_t motorIndex, uint8_t scalar) {return Motor_User_GetHeat_DegCScalar(MotorController_GetPtrMotor(p_mc, motorIndex), scalar);}
 
 //uint16_t MotorController_User_GetIa_Adcu(MotorController_T * p_mc, uint8_t motorIndex)		{return  ;}
 //uint16_t MotorController_User_GetIa_Frac16(MotorController_T * p_mc, uint8_t motorIndex)	{return  ;}
@@ -61,14 +118,15 @@ static inline uint32_t MotorController_User_GetSpeed_RPM(MotorController_T * p_m
 /*
  * Nvm Saved Functions
  */
-//static inline uint8_t MotorController_User_GetNameChar(MotorController_T * p_mc, uint8_t charId) {return MOT_MEM_ONCE->NAME[charId];}
+static inline uint8_t MotorController_User_GetName(MotorController_T * p_mc, uint8_t charIndex) {return p_mc->CONFIG.P_ONCE->NAME[charIndex];}
 
-//static inline uint16_t MotorController_User_GetVLimitUpper(MotorController_T * p_mc) 	{return p_mc->AnalogMonitor.Params.VPosLimitUpper_V;}
-//static inline uint16_t MotorController_User_GetVLimitLower(MotorController_T * p_mc) 	{return p_mc->AnalogMonitor.Params.VPosLimitLower_V;}
-//
-//static inline void MotorController_User_SetVLimitUpper(MotorController_T * p_mc, uint16_t limit) {p_mc->AnalogMonitor.Params.VPosLimitUpper_V = limit;}
-//static inline void MotorController_User_SetVLimitLower(MotorController_T * p_mc, uint16_t limit) {p_mc->AnalogMonitor.Params.VPosLimitLower_V = limit;}
-//
+//todo wrap analog module
+static inline uint16_t MotorController_User_GetVLimitUpper(MotorController_T * p_mc) 	{return p_mc->AnalogMonitor.Params.VPosLimitUpper_ADCU;}
+static inline uint16_t MotorController_User_GetVLimitLower(MotorController_T * p_mc) 	{return p_mc->AnalogMonitor.Params.VPosLimitLower_ADCU;}
+
+static inline void MotorController_User_SetVLimitUpper(MotorController_T * p_mc, uint16_t limit) {p_mc->AnalogMonitor.Params.VPosLimitUpper_ADCU = limit;}
+static inline void MotorController_User_SetVLimitLower(MotorController_T * p_mc, uint16_t limit) {p_mc->AnalogMonitor.Params.VPosLimitLower_ADCU = limit;}
+
 ////can use macro
 //#define SET_VAR16_BYTE_HIGH(var, valueByte) 	(var = (var | 0x0FU) & (valueByte << 8U))
 //#define SET_VAR16_BYTE_LOW(var, valueByte) 		(var = (var | 0xF0U) & valueByte)
@@ -82,11 +140,11 @@ static inline uint32_t MotorController_User_GetSpeed_RPM(MotorController_T * p_m
  * Subject to StateMachine process
  * Need to save to temporary buffer, as StateMachine functions pass 1 context variable only
  */
-static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, uint16_t userCmd) {p_mc->UserCmd = userCmd;}
-static inline void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction) {p_mc->UserDirection = direction;}
+//static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, uint16_t userCmd) {p_mc->UserCmd = userCmd;}
+//static inline void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction) {p_mc->UserDirection = direction;}
 
-static inline void MotorController_User_ProcCmdAccelerate(MotorController_T * p_mc, uint16_t userCmd) {p_mc->UserCmd = userCmd; StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_ACCELERATE);}
-static inline void MotorController_User_ProcCmdDecelerate(MotorController_T * p_mc, uint16_t userCmd) {p_mc->UserCmd = userCmd; StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_DECELERATE);}
+static inline void MotorController_User_ProcCmdThrottle(MotorController_T * p_mc, uint16_t userCmd) 	{p_mc->UserCmd = userCmd; StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE);}
+static inline void MotorController_User_ProcCmdBrake(MotorController_T * p_mc, uint16_t userCmd) 		{p_mc->UserCmd = userCmd; StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE);}
 
 static inline void MotorController_User_ProcDirection(MotorController_T * p_mc, MotorController_Direction_T direction)
 {
@@ -97,7 +155,7 @@ static inline void MotorController_User_ProcDirection(MotorController_T * p_mc, 
 	}
 }
 
-static inline void MotorController_User_ProcDisableControl(MotorController_T * p_mc)
+static inline void MotorController_User_DisableControl(MotorController_T * p_mc)
 {
 //	if(p_mc->UserCmd > 0U)
 //	{
@@ -107,12 +165,14 @@ static inline void MotorController_User_ProcDisableControl(MotorController_T * p
 }
 
 
-static inline void MotorController_User_ProcSaveParameters(MotorController_T * p_mc) { StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);}
+static inline void MotorController_User_SaveParameters_Blocking(MotorController_T * p_mc) { StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);}
 
 static inline MotorController_InputMode_T MotorController_User_GetInputMode(MotorController_T * p_mc) 	{ return p_mc->Parameters.InputMode; }
 
-static inline void MotorController_UserSerial_SetCmdValue(MotorController_T * p_mc, uint16_t userCmd) 	{ if (p_mc->Parameters.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL) {p_mc->UserCmd = userCmd;} }
-static inline void MotorController_UserCanBus_SetCmdValue(MotorController_T * p_mc, uint16_t userCmd) 	{ if (p_mc->Parameters.InputMode == MOTOR_CONTROLLER_INPUT_MODE_CAN) {p_mc->UserCmd = userCmd;} }
+//static inline void MotorController_UserSerial_SetCmdValue(MotorController_T * p_mc, uint16_t userCmd) 	{ if (p_mc->Parameters.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL) {p_mc->UserCmd = userCmd;} }
+//static inline void MotorController_UserCanBus_SetCmdValue(MotorController_T * p_mc, uint16_t userCmd) 	{ if (p_mc->Parameters.InputMode == MOTOR_CONTROLLER_INPUT_MODE_CAN) {p_mc->UserCmd = userCmd;} }
 
+//static inline void MotorController_User_SetMainProtocolXcvr(MotorController_T * p_mc, uint8_t id) 	{  Protocol_SetSpecs(p_mc->MainProtocol, p_mc->CONFIG.P_PROTOCOL_SPECS_TABLE[id]); }
+//static inline void MotorController_User_SetMainProtoclSpecs(MotorController_T * p_mc, uint8_t id) 	{  Protocol_SetPort(p_mc->MainProtocol, p_mc->CONFIG.P_XCVR_TABLE[id]); }
 
 #endif

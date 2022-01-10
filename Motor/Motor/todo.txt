@@ -1,7 +1,0 @@
-bemf analog sample
-ets
-
-heat monitor
-foc
-foc current feedback
-control var/pid

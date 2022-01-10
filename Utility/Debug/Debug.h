@@ -9,8 +9,8 @@
 typedef struct
 {
 	volatile uint32_t Debug_TimeRef;
-	volatile uint32_t Debug_Delta[10U];
-	volatile uint32_t Debug_PeriodRef[10U];
+	volatile uint32_t Debug_Delta[11U];
+	volatile uint32_t Debug_PeriodRef[11U];
 } Debug_T;
 
 extern volatile Debug_T g_Debug;

@@ -22,20 +22,35 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Linear_Ramp.c
+    @file 	.h
     @author FireSoucery
+    @brief
     @version V0
-    @brief  dynamic look up table
-			linear_f(index) = user units
 */
 /******************************************************************************/
-#include "Linear.h"
+#ifndef MOTOR_ANALOG_CONVERSION_H
+#define MOTOR_ANALOG_CONVERSION_H
 
-#include <stdint.h>
+#include "Peripheral/Analog/AnalogN/AnalogN.h"
 
-/******************************************************************************/
-/*!
-	@brief
+
+/*
+ * Misra violation
  */
-/******************************************************************************/
 
+extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_VPOS_PWM_ON;
+extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_VPOS;
+extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_VA;
+extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_VB;
+extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_VC;
+extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_IA;
+extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_IB;
+extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_IC;
+extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_HEAT;
+
+//extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_BEMF_REMAINDER;
+//extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_FOC_IABC;
+//extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_FOC_REMAINDER;
+//extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_IDLE;
+
+#endif

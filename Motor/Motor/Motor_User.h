@@ -39,11 +39,18 @@
 #include <stdbool.h>
 
 
+//static inline uint16_t Motor_User_GetBemf_Frac16(Motor_T * p_motor)	{return Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
+//static inline uint32_t Motor_User_GetBemf_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
+static inline uint32_t Motor_User_GetVPos_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults.VPos_ADCU);}
+static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T *p_motor) 	{return p_motor->Speed_RPM;}
+//static inline float Motor_User_GetHeat_DegCFloat(Motor_T *p_motor)						{return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
+//static inline uint16_t Motor_User_GetHeat_DegCRound(Motor_T *p_motor)					{return Thermistor_ConvertToDegC_Round(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
+//static inline uint16_t Motor_User_GetHeat_DegCNDecimal(Motor_T *p_motor, uint8_t n) 	{return Thermistor_ConvertToDegC_NDecimal(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, n);}
+static inline uint16_t Motor_User_GetHeat_DegCScalar(Motor_T *p_motor, uint16_t scalar) 	{return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, scalar);}
+//static inline uint16_t Motor_User_GetHeat_Fixed32(Motor_T *p_motor) 					{return Thermistor_ConvertToDegC_Fixed32(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
+static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Motor_T *p_motor) 	{return p_motor->Parameters.DirectionCalibration;}
+static inline Hall_Sensors_T Motor_User_GetHall(Motor_T * p_motor) 	{return Hall_GetSensors(&p_motor->Hall);}
 
-static inline void Motor_User_EnableControl(Motor_T * p_motor)
-{
-
-}
 
 /*
  * Disable control, motor may remain spinning
@@ -54,24 +61,31 @@ static inline void Motor_User_DisableControl(Motor_T * p_motor)
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
 }
 
-static inline void Motor_User_SetCmdAccelerate(Motor_T * p_motor, uint16_t throttle)
+static inline void Motor_User_SetCmd(Motor_T * p_motor, uint16_t throttle)
 {
-	Motor_SetRampUp(p_motor, throttle);
+	Motor_SetRamp(p_motor, throttle);
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
 }
 
 
-static inline void Motor_User_SetCmdDecelerate(Motor_T * p_motor, uint16_t brake)
+static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t brake)
 {
-	if (p_motor->Parameters.BrakeMode == MOTOR_BRAKE_MODE_PASSIVE)
+	switch (p_motor->Parameters.BrakeMode)
 	{
-		Motor_User_DisableControl(p_motor);
+		case MOTOR_BRAKE_MODE_PASSIVE :
+			Motor_User_DisableControl(p_motor);
+			break;
+		case MOTOR_BRAKE_MODE_SCALAR :
+			Motor_SetRamp_Rate(p_motor, 0U, -(int32_t)brake / 4U);
+			break;
+		case MOTOR_BRAKE_MODE_PROPRTIONAL :
+//			Motor_SetBrakeBemfProportional(p_motor, brake);
+			break;
+		default :
+			break;
 	}
-	else
-	{
-		Motor_SetRampDown(p_motor, brake);
-		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DECELERATE);
-	}
+
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DECELERATE);
 }
 
 //or set buffered direction, check on state machine  ?
@@ -92,12 +106,6 @@ static inline bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T 
 	return isSet;
 }
 
-
-static inline bool Motor_User_GetDirectionCalibration(Motor_T * p_motor)
-{
-//	return p_motor->Parameters.IsCcwForward;
-	return true;
-}
 
 static inline bool Motor_User_SetDirectionForward(Motor_T * p_motor)
 {
@@ -131,11 +139,7 @@ static inline bool Motor_User_SetDirectionReverse(Motor_T * p_motor)
 	return isSet;
 }
 
-static inline uint32_t Motor_User_GetBemf_Frac16(Motor_T * p_motor)	{return Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
-static inline uint32_t Motor_User_GetBemf_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
 
-static inline uint32_t Motor_User_GetVPos_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults.VPos_ADCU);}
-static inline uint32_t Motor_User_GetSpeed_RPM(Motor_T *p_motor) 	{return p_motor->Speed_RPM;}
 
 /*
  * Run Calibration functions
@@ -162,19 +166,19 @@ static inline void Motor_User_ActivateCalibrationAdc(Motor_T * p_motor)
 /*
  * Set Motor Array functions
  */
-static inline void Motor_UserN_SetCmdAccelerate(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle)
+static inline void Motor_UserN_SetCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle)
 {
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
 	{
-		Motor_User_SetCmdAccelerate(&p_motor[iMotor], throttle);
+		Motor_User_SetCmd(&p_motor[iMotor], throttle);
 	}
 }
 
-static inline void Motor_UserN_SetCmdDecelerate(Motor_T * p_motor, uint8_t motorCount, uint16_t brake)
+static inline void Motor_UserN_SetCmdBrake(Motor_T * p_motor, uint8_t motorCount, uint16_t brake)
 {
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
 	{
-		Motor_User_SetCmdDecelerate(&p_motor[iMotor], brake);
+		Motor_User_SetCmdBrake(&p_motor[iMotor], brake);
 	}
 }
 
@@ -201,5 +205,7 @@ static inline bool Motor_UserN_CheckStop(Motor_T * p_motor, uint8_t motorCount)
 
 	return isStop;
 }
+
+
 
 #endif

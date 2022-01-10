@@ -64,12 +64,12 @@
 /******************************************************************************/
 void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcVRef10, uint8_t adcBits, uint16_t vInMax)
 {
-#ifdef CONFIG_LINEAR_SHIFT_DIVIDE
+#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
 	p_linear->SlopeFactor 			= ((adcVRef10 * (r1 + r2)) << (16U - adcBits)) / r2 / 10U; 		// (VREF*(R1 + R2) << 16)/(ADC_MAX*R2)
 	p_linear->SlopeDivisor_Shift 	= 16U;
 	p_linear->SlopeDivisor 			= ((r2 << 16U) * 10U / (adcVRef10 * (r1 + r2)));				// ((R2) << 16)/(VREF*(R1 + R2))
 	p_linear->SlopeFactor_Shift 	= 16U - adcBits;
-#elif defined (CONFIG_LINEAR_NUMIRICAL_DIVIDE)
+#elif defined (CONFIG_LINEAR_DIVIDE_NUMERICAL)
 
 	//overflow caution
 	//(adcu_max*VREF*(R1+R2) < uint32_max

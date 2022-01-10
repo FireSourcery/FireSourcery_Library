@@ -38,6 +38,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+/*
+ * Partition defines writable ranges. Checked on write cmd.
+ */
 typedef const struct
 {
 	uint8_t * P_START;
