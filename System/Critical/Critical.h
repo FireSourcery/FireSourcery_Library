@@ -43,7 +43,7 @@
  */
 #ifdef CONFIG_SYSTEM_MCU_ARM
 
-	#include "External/CMSIS/Core/Include/cmsis_compiler.h"
+//	#include "External/CMSIS/Core/Include/cmsis_compiler.h"
 	#if defined (__GNUC__)
 		#define CRITICAL_DISABLE_INTERRUPTS() __asm volatile ("cpsid i" : : : "memory");
 		#define CRITICAL_ENABLE_INTERRUPTS() __asm volatile ("cpsie i" : : : "memory");

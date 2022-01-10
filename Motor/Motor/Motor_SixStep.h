@@ -461,7 +461,6 @@ static inline void Motor_SixStep_ProcPhaseControl(Motor_T * p_motor)
 
 		case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE :
 			//on overcurrent set outmax
-
 			if (p_motor->IBus_Frac16 > 58982U)
 			{
 //				p_motor->VPwm = p_motor->VPwm - ((p_motor->IBus_Frac16 - 58982U) * p_motor->VPwm >> 16U)

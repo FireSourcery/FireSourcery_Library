@@ -127,6 +127,11 @@ static inline uint16_t MotorController_User_GetVLimitLower(MotorController_T * p
 static inline void MotorController_User_SetVLimitUpper(MotorController_T * p_mc, uint16_t limit) {p_mc->AnalogMonitor.Params.VPosLimitUpper_ADCU = limit;}
 static inline void MotorController_User_SetVLimitLower(MotorController_T * p_mc, uint16_t limit) {p_mc->AnalogMonitor.Params.VPosLimitLower_ADCU = limit;}
 
+static inline void MotorController_User_SetPidFocIqKp(MotorController_T * p_mc, uint8_t motorIndex, uint16_t kpFactor)
+{
+	p_mc->CONFIG.P_MOTORS[motorIndex].PidIq.Params.KpFactor = kpFactor;
+}
+
 ////can use macro
 //#define SET_VAR16_BYTE_HIGH(var, valueByte) 	(var = (var | 0x0FU) & (valueByte << 8U))
 //#define SET_VAR16_BYTE_LOW(var, valueByte) 		(var = (var | 0xF0U) & valueByte)
