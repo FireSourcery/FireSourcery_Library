@@ -15,7 +15,6 @@ void SetPwmOnFlag(Motor_T * p_motor)
 	p_motor->IsPwmOn = true;
 }
 
-
 /*
  * Sets options only
  */
@@ -31,24 +30,6 @@ void SetPwmOnFlag(Motor_T * p_motor)
 //	.P_VIRTUAL = 0U,
 //	.OPTIONS = {.IsValid = 1U, .HwTriggerConversion = 0U, },
 //};
-
-/******************************************************************************/
-/*!
-    @brief  Conversion Pwm On
-    Common conversion known to return during pwm state
-*/
-/******************************************************************************/
-static void ProcVPosPwmOn(Motor_T * p_motor)
-{
-	p_motor->IsPwmOn = true;
-	Debug_CaptureElapsed(7);
-}
-
-const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_VPOS_PWM_ON =
-{
-	.CHANNEL = MOTOR_ANALOG_CHANNEL_VPOS,
-	.ON_COMPLETE = (Analog_Callback_T)ProcVPosPwmOn,
-};
 
 
 /******************************************************************************/

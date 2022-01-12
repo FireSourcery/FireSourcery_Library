@@ -74,19 +74,30 @@ typedef void (* Analog_Callback_T)(void * p_context);
  */
 typedef struct
 {
-	uint32_t IsValid				:1; /* null pointer check */
-	uint32_t HwTriggerConversion 	:1;
-//	uint32_t ContinuousConversion 	:1;
-//	uint32_t CaptureLocalPeak 		:1;	/* for now, conversion stops on 1 local peak in channel set, user must also set ContinuousConversion */
+	uint32_t IsValid				:1U; /* use options */
+	uint32_t HwTriggerConversion 	:1U;
+//	uint32_t ContinuousConversion 	:1U;
+//	uint32_t CaptureLocalPeak 		:1U;	/* for now, conversion stops on 1 local peak in channel set, user must also set ContinuousConversion */
 
 //	uint32_t HwAveraging
-//	uint32_t HwTriggerChannel 		:1; /* Per Hw buffer complete. Per Channel if both are set*/
-//	uint32_t Interrupt 				:1;
-//	uint32_t Dma 					:1;
+//	uint32_t HwTriggerChannel 		:1U; /* Per Hw buffer complete. Per Channel if both are set*/
+//	uint32_t Interrupt 				:1U;
+//	uint32_t Dma 					:1U;
 
 	//uint8_t Priority
 }
+Analog_OptionsFlags_T;
+
+typedef struct
+{
+	const Analog_OptionsFlags_T 	FLAGS;
+
+	const bool IS_VALID; /* use options */
+	const bool HW_TRIGGER;
+	const Analog_Callback_T ON_OPTIONS;
+}
 Analog_Options_T;
+
 
 //typedef const struct
 //{
@@ -184,7 +195,6 @@ typedef const struct
 	void * const P_CALLBACK_CONTEXT;
 
 	const Analog_Options_T 		OPTIONS;
-	const Analog_Callback_T 	ON_OPTIONS;
 }
 Analog_Conversion_T;
 
@@ -258,7 +268,7 @@ Analog_T;
 }
 
 //extern void _Analog_ActivateAdc(const Analog_T * p_analog, Analog_ConversionChannel_T * p_conversion);
-extern bool _Analog_ProcQueue(Analog_T * p_analog);
+//extern void _Analog_ProcQueue(Analog_T * p_analog);
 
 /******************************************************************************/
 /*!
@@ -364,7 +374,7 @@ static inline bool _Analog_GetIsActive(const Analog_T * p_analog)
 /*!
 	 @brief Private capture results subroutine
  */
-static inline void _Analog_CaptureAdcResults(Analog_T * p_analog)//, const Analog_ConversionAdc_T * p_adcConversion, const Analog_ConversionVirtualMap_T * p_adcMap)
+static inline void _Analog_CaptureAdcResults(Analog_T * p_analog, Analog_Conversion_T * p_activeConversion)	//, const Analog_ConversionAdc_T * p_adcConversion, const Analog_ConversionVirtualMap_T * p_adcMap)
 {
 //	HAL_ADC_T * p_adc				= p_analog->CONFIG.P_HAL_ADC;
 //	uint8_t activeChannelCount 		= GetAnalogActiveAdcChannelCount(p_analog);
@@ -378,7 +388,7 @@ static inline void _Analog_CaptureAdcResults(Analog_T * p_analog)//, const Analo
 	analog_adcpin_t adcPin;
 	uint8_t virtualIndex;
 	analog_virtual_t virtualChannel;
-	Analog_Conversion_T *   p_activeConversion;
+	;
 	/*
 	 * Should not need to boundary check on return. Read in the same way it was pushed
 	 */
@@ -413,11 +423,8 @@ static inline void _Analog_CaptureAdcResults(Analog_T * p_analog)//, const Analo
 			p_resultsBuffer[virtualChannel] 	= HAL_ADC_ReadResult(p_adc, adcPin);
 		}
 #else
-
-		Queue_PeekFront(&p_analog->ConversionQueue, &p_activeConversion);
-
-		virtualChannel 	= p_activeConversion->P_VIRTUAL->CHANNEL;
-		adcPin 			= p_activeConversion->PIN;
+		virtualChannel = p_activeConversion->P_VIRTUAL->CHANNEL;
+		adcPin = p_activeConversion->PIN;
 
 		p_activeConversion->P_RESULTS_BUFFER[virtualChannel] = HAL_ADC_ReadResult(p_analog->CONFIG.P_HAL_ADC, adcPin);
 #endif
@@ -433,7 +440,7 @@ static inline bool _Analog_CaptureResults(Analog_T * p_analog)//, const Analog_C
 	uint8_t remainingChannelCount;
 	Analog_Conversion_T * p_completedConversion;
 	Analog_Conversion_T * p_nextConversion;
-	Queue_PeekFront(&p_analog->ConversionQueue, &p_completedConversion);
+
 //	const Analog_ConversionAdcChannel_T * p_adcChannels 			= p_adcConversion->P_CHANNELS;
 //	const Analog_ConversionVirtualChannel_T * p_virtualChannels 	= p_adcMap->P_VIRTUAL_CONVERSION->P_CHANNELS;
 //	void * p_onCompleteContext 										= p_adcMap->P_CALLBACK_CONTEXT;
@@ -441,8 +448,9 @@ static inline bool _Analog_CaptureResults(Analog_T * p_analog)//, const Analog_C
 
 	bool isAllChannelsComplete;
 
+	HAL_ADC_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);
 
-//		HAL_ADC_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);
+
 //
 //		_Analog_CaptureAdcResults(p_analog); //, p_adcConversion, p_adcMap);
 //		p_analog->ActiveConversionIndex += completeChannelCount;
@@ -481,9 +489,12 @@ static inline bool _Analog_CaptureResults(Analog_T * p_analog)//, const Analog_C
 //
 //		}
 
-		HAL_ADC_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);
+		Queue_Dequeue(&p_analog->ConversionQueue, &p_completedConversion);
 
-		_Analog_CaptureAdcResults(p_analog); //, p_adcConversion, p_adcMap);
+		//sw support continous use peek
+		//		Queue_Peek(&p_analog->ConversionQueue, &p_completedConversion);
+
+		_Analog_CaptureAdcResults(p_analog, p_completedConversion); //, p_adcConversion, p_adcMap);
 //		p_analog->ActiveConversionIndex += 1U;
 
 		/*
@@ -500,7 +511,6 @@ static inline bool _Analog_CaptureResults(Analog_T * p_analog)//, const Analog_C
 //		else
 //		{
 			/*   Dequeue Next Conversion New Options */
-		Queue_RemoveFront(&p_analog->ConversionQueue, 1U);
 		_Analog_ProcQueue(p_analog);
 
 			isAllChannelsComplete = true;

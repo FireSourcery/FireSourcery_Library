@@ -136,7 +136,7 @@ typedef struct
 	uint16_t VZeroCrossing_ADCU;
 
 	//commutation timer
-	uint32_t TimePhasePeriod;
+	volatile uint32_t TimePhasePeriod;
 	uint16_t PhaseAdvanceTime;			/// Commutation delay reduction. phase advance for high freq when voltage leads current. proportional to inductance.
 
 //reliable
@@ -280,23 +280,19 @@ static inline void Bemf_CaptureVPhase(BEMF_T * p_bemf, uint32_t vPhaseObserve_AD
 	p_bemf->VPhase_ADCU 		= vPhaseObserve_ADCU;
 //	p_bemf->VPhase_ADCU 		= (vPhaseObserve_ADCU + p_bemf->VPhase_ADCU) / 2U;
 
-	Debug_CaptureElapsed(8);
-
-	if (p_bemf->IsBemfRising)
-	{
-		if(BemfDebugIndex < 300) //try only capture on bemf risisng
-		{
-			BemfDebug[BemfDebugIndex] 	=  p_bemf->VPhase_ADCU;
-			BemfDebugIndex++;
-		}
-	}
+//	if (p_bemf->IsBemfRising)
+//	{
+//		if(BemfDebugIndex < 300) //try only capture on bemf risisng
+//		{
+//			BemfDebug[BemfDebugIndex] 	=  p_bemf->VPhase_ADCU;
+//			BemfDebugIndex++;
+//		}
+//	}
 
 }
 
 static inline void Bemf_CaptureVPhasePwmOff(BEMF_T * p_bemf, uint32_t vPhaseObserve_ADCU)
 {
-	Debug_CaptureElapsed(6);
-
 	p_bemf->VPhasePrevPwmOff_ADCU 	= p_bemf->VPhasePwmOff_ADCU;
 	p_bemf->VPhasePwmOff_ADCU 		= vPhaseObserve_ADCU;
 //	p_bemf->VPhase_ADCU 		= (vPhaseObserve_ADCU + p_bemf->VPhase_ADCU) / 2U;
@@ -307,7 +303,7 @@ static inline void Bemf_CaptureVPhasePwmOff(BEMF_T * p_bemf, uint32_t vPhaseObse
  */
 static inline void Bemf_PollCaptureVPhase(BEMF_T * p_bemf, uint32_t vPhaseObserve_ADCU)
 {
-//	if(BEMF_CheckBlankTime(p_bemf) == true)
+	if(BEMF_CheckBlankTime(p_bemf) == true)
 	{
 		Bemf_CaptureVPhase(p_bemf, vPhaseObserve_ADCU);
 	}
@@ -421,7 +417,7 @@ static inline bool BEMF_ProcZeroCrossingDetection(BEMF_T * p_bemf)
 			p_bemf->ZeroCrossingCounter++;
 
 			//stop here to compare hall captured vs bemf sample difference
-			p_bemf->TimePhasePeriod = (p_bemf->TimePhasePeriod + p_bemf->TimeZeroCrossingPeriod) / 2; //avergae with estimate
+			p_bemf->TimePhasePeriod = (p_bemf->TimePhasePeriod + p_bemf->TimeZeroCrossingPeriod) / 2U; //avergae with estimate
 
 //			p_bemf->TimePhasePeriod = p_bemf->TimeZeroCrossingPeriod - p_bemf->PhaseAdvanceTime;
 

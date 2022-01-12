@@ -255,7 +255,7 @@ typedef const struct Motor_Init_Tag
 	const Linear_T UNIT_V_ABC; 	//Bemf V and mV conversion todo may need zero calibration
 
 	AnalogN_T * const P_ANALOG_N;
-	const AnalogN_Conversion_T CONVERSION_VPOS_PWM_ON;
+//	const AnalogN_Conversion_T CONVERSION_VPOS_PWM_ON;
 	const AnalogN_Conversion_T CONVERSION_VPOS;
 	const AnalogN_Conversion_T CONVERSION_VA;
 	const AnalogN_Conversion_T CONVERSION_VB;

@@ -194,6 +194,13 @@ static inline void Phase_Ground(const Phase_T * p_phase)
 	EnablePhaseC(p_phase);
 }
 
+static inline void Phase_ActivateSwitchABC(const Phase_T * p_phase)
+{
+	EnablePhaseA(p_phase);
+	EnablePhaseB(p_phase);
+	EnablePhaseC(p_phase);
+}
+
 /******************************************************************************/
 /*!
 	2-Phase Polar PWM

@@ -59,6 +59,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "Utility/Debug/Debug.h"
 
 /******************************************************************************/
 /*!
@@ -215,7 +216,7 @@ static inline void Motor_FOC_ProcCurrentFeedback(Motor_T * p_motor)
 	qfrac16_t iqReq;
 	qfrac16_t idReq;
 
-	ProcMotorFocPositionFeedback(p_motor);
+//	ProcMotorFocPositionFeedback(p_motor);
 
 	iqReq = GetMotorFocQReq(p_motor);
 	idReq = 0; //p_motor->FieldWeakening
@@ -252,7 +253,6 @@ static inline void Motor_FOC_CaptureIc(Motor_T *p_motor)
 	qfrac16_t i_temp = Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, p_motor->AnalogResults.Ic_ADCU);
 	FOC_SetIc(&p_motor->Foc, i_temp);
 
-
 	//todo oncomplete signal flag
 	FOC_ProcClarkePark(&p_motor->Foc);
 
@@ -272,39 +272,55 @@ static inline void Motor_FOC_CaptureIc(Motor_T *p_motor)
  */
 static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
-	bool calcSpeed = Timer_Poll(&p_motor->MillisTimer);
-//	MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ,  MOTOR_CONTROL_MODE_OPEN_LOOP
 	qfrac16_t vqReq;
 	qfrac16_t vdReq;
 
-	if (((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE)) == true)
-	{
-		/* Voltage Control mode - Proc angle immediately */
-		ProcMotorFocPositionFeedback(p_motor);
-
-		if (FOC_GetIq(&p_motor->Foc) > 32768 * 9 / 10)
-		{
-			vqReq = PID_Calc(&p_motor->PidIq, 32768 * 9 / 10, FOC_GetIq(&p_motor->Foc));
-		}
-		else
-		{
-			PID_Calc(&p_motor->PidIq, 32768 * 9 / 10, FOC_GetIq(&p_motor->Foc));
-			vqReq = GetMotorFocQReq(p_motor);
-		}
-
-		vqReq = GetMotorFocQReq(p_motor);
-		vdReq = 0; //p_motor->FieldWeakening
-		ActivateMotorFocAngle(p_motor, vqReq, vdReq);
-	}
-
+	uint16_t magIq;
 	/* Current Control Mode - Proc angle on ADC return */
 	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
 	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
 	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
+	ProcMotorFocPositionFeedback(p_motor);
+
+	if (((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE)) == true)
+	{
+		/* Voltage Control mode - Proc angle immediately */
+//		ProcMotorFocPositionFeedback(p_motor);
+
+		if(FOC_GetIq(&p_motor->Foc) < 0)
+		{
+			magIq = 0 - FOC_GetIq(&p_motor->Foc);
+		}
+		else
+		{
+			magIq = FOC_GetIq(&p_motor->Foc);
+		}
+
+		if (magIq > 32768 * 9 / 10)
+		{
+			vqReq = PID_Calc(&p_motor->PidIq, 32768 * 9 / 10, magIq);
+		}
+		else
+		{
+			PID_Calc(&p_motor->PidIq, 32768 * 9 / 10, magIq);
+			vqReq = GetMotorFocQReq(p_motor);
+		}
+
+		vdReq = 0; //p_motor->FieldWeakening
+		Debug_CaptureElapsed(7);
+		ActivateMotorFocAngle(p_motor, vqReq, vdReq);
+		Debug_CaptureElapsed(8);
+	}
 }
 
 static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 {
+	PID_Reset(&p_motor->PidSpeed);
+	PID_Reset(&p_motor->PidIq);
+	PID_Reset(&p_motor->PidId);
+
+	Phase_ActivateSwitchABC(&p_motor->Phase);
+
 	switch (p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_OPEN_LOOP:
@@ -333,7 +349,7 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 	switch (p_motor->Parameters.ControlMode)
 	{
 //	case MOTOR_CONTROL_MODE_OPEN_LOOP:
-//		//		//Linear_Ramp_Init(&p_motor->Ramp, freq, start, end, accerleration);
+				//Linear_Ramp_Init(&p_motor->Ramp, freq, start, end, accerleration);
 //		Linear_Ramp_InitMillis(&p_motor->Ramp, 0U, 10U, 1000U, 20000U);
 //		p_motor->CommutationPeriodCmd = 0U;
 //		break;
@@ -358,11 +374,13 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 {
 	Encoder_Reset(&p_motor->Encoder); //zero angle speed
 
+	Timer_StartPeriod(&p_motor->MillisTimer, 1U);
+
 	PID_Reset(&p_motor->PidSpeed);
 	PID_Reset(&p_motor->PidIq);
 	PID_Reset(&p_motor->PidId);
 
-	Phase_Ground(&p_motor->Phase); //activates abc
+//	Phase_Ground(&p_motor->Phase); //activates abc
 	FOC_SetZero(&p_motor->Foc);
 	Phase_ActuateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc)); //sets 0 current output
 
@@ -389,21 +407,25 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
  */
 static inline void Motor_FOC_StartCalibrateAdc(Motor_T * p_motor)
 {
-	Timer_SetPeriod(&p_motor->ControlTimer, 20000U); // Motor.Parameters.AdcCalibrationTime
+	Timer_StartPeriod(&p_motor->ControlTimer, 100000U); // Motor.Parameters.AdcCalibrationTime
 	Phase_Ground(&p_motor->Phase); //activates abc
 	FOC_SetZero(&p_motor->Foc);
 	Phase_ActuateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc)); //sets 0 current output
 
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VA);
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VB);
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VC);
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VA);
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VB);
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VC);
 
-	Filter_MovAvg_InitN(&p_motor->FilterA, 2048U, 100U);
-	Filter_MovAvg_InitN(&p_motor->FilterB, 2048U, 100U);
-	Filter_MovAvg_InitN(&p_motor->FilterC, 2048U, 100U);
+	p_motor->AnalogResults.Ia_ADCU = 2000U;
+	p_motor->AnalogResults.Ia_ADCU = 2000U;
+	p_motor->AnalogResults.Ia_ADCU = 2000U;
+
+	Filter_MovAvg_InitN(&p_motor->FilterA, 2000U, 100U);
+	Filter_MovAvg_InitN(&p_motor->FilterB, 2000U, 100U);
+	Filter_MovAvg_InitN(&p_motor->FilterC, 2000U, 32U);
 }
 
 static inline bool Motor_FOC_CalibrateAdc(Motor_T *p_motor)

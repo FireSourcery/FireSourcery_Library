@@ -42,8 +42,7 @@
  * 	or implement in parent HAL and include
  */
 #ifdef CONFIG_SYSTEM_MCU_ARM
-
-//	#include "External/CMSIS/Core/Include/cmsis_compiler.h"
+	#include "External/CMSIS/Core/Include/cmsis_compiler.h"
 	#if defined (__GNUC__)
 		#define CRITICAL_DISABLE_INTERRUPTS() __asm volatile ("cpsid i" : : : "memory");
 		#define CRITICAL_ENABLE_INTERRUPTS() __asm volatile ("cpsie i" : : : "memory");
@@ -53,7 +52,7 @@
 	#endif
 #elif defined(CONFIG_CRITICAL_USER_DEFINED)
 /*
- * user provide
+ * user provider
  * #define DISABLE_INTERRUPTS() {...}
  * #define ENABLE_INTERRUPTS() {...}
  */
