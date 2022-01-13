@@ -217,14 +217,14 @@ static inline void AnalogN_CaptureResults_ISR(AnalogN_T * p_analogn, uint8_t ana
 /*
  * Options AnalogN options on all adcs
  */
-static inline bool AnalogN_EnqueueConversionOptionsAll(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion)
-{
-	bool isSuccess;
-	for (uint8_t iAdc = 0U; iAdc < p_analogn->CONFIG.ANALOG_COUNT; iAdc++)
-	{
-		Analog_EnqueueConversion(&p_analogn->CONFIG.P_ANALOGS[iAdc], &p_conversion->CONVERSION);
-	}
-}
+//static inline bool AnalogN_EnqueueConversionOptions (AnalogN_T * p_analogn, AnalogN_AdcFlags_T activeAdcs)
+//{
+//	bool isSuccess;
+//	for (uint8_t iAdc = 0U; iAdc < p_analogn->CONFIG.ANALOG_COUNT; iAdc++)
+//	{
+//		Analog_EnqueueConversion(&p_analogn->CONFIG.P_ANALOGS[iAdc], &p_conversion->CONVERSION);
+//	}
+//}
 
 /*
  */
@@ -252,24 +252,44 @@ static inline bool AnalogN_EnqueueConversionOptions(AnalogN_T * p_analogn, const
 }
 
 
-static inline void AnalogN_EnterCritical(AnalogN_T * p_analogn)
+static inline bool AnalogN_EnqueueConversionOptions_Group(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion)
 {
-//#if  (defined(CONFIG_ANALOG_MULTITHREADED) || defined(CONFIG_ANALOG_CRITICAL_USE_GLOBAL))
-//	Critical_Enter();
-//#elif (defined(CONFIG_ANALOG_SINGLE_THREADED))
-//	for (uint8_t iAdc = 0U; iAdc < p_analogn->CONFIG.ANALOG_COUNT; iAdc++)
-//	{
-//		Analog_DisableInterrupt(&p_analogn->CONFIG.P_ANALOGS[iAdc]);
-//	}
-//#endif
+	return Analog_EnqueueConversionOptions_Group(p_conversion->P_ANALOG, &p_conversion->CONVERSION);
 }
 
-static inline void AnalogN_ExitCritical(AnalogN_T * p_analogn)
+static inline bool AnalogN_EnqueueConversion_Group(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion)
 {
-//	for (uint8_t iAdc = 0U; iAdc < p_analogn->CONFIG.ANALOG_COUNT; iAdc++)
-//	{
-		_Analog_ExitCritical(&p_analogn->CONFIG.P_ANALOGS[0]);
-//	}
+	return Analog_EnqueueConversion_Group(p_conversion->P_ANALOG, &p_conversion->CONVERSION);
+}
+
+static inline void AnalogN_PauseQueue(AnalogN_T * p_analogn, AnalogN_AdcFlags_T activeAdcs)
+{
+#if  (defined(CONFIG_ANALOG_MULTITHREADED) || defined(CONFIG_ANALOG_CRITICAL_USE_GLOBAL))
+	Critical_Enter();
+#elif (defined(CONFIG_ANALOG_SINGLE_THREADED))
+	for (uint8_t iAdc = 0U; iAdc < p_analogn->CONFIG.ANALOG_COUNT; iAdc++)
+	{
+		if (((1U << iAdc) & activeAdcs) != 0U)
+		{
+			_Analog_EnterCritical(&p_analogn->CONFIG.P_ANALOGS[iAdc]);
+		}
+	}
+#endif
+}
+
+static inline void AnalogN_ResumeQueue(AnalogN_T * p_analogn, AnalogN_AdcFlags_T activeAdcs)
+{
+#if  (defined(CONFIG_ANALOG_MULTITHREADED) || defined(CONFIG_ANALOG_CRITICAL_USE_GLOBAL))
+	Critical_Exit();
+#elif (defined(CONFIG_ANALOG_SINGLE_THREADED))
+	for (uint8_t iAdc = 0U; iAdc < p_analogn->CONFIG.ANALOG_COUNT; iAdc++)
+	{
+		if (((1U << iAdc) & activeAdcs) != 0U)
+		{
+			_Analog_ExitCritical(&p_analogn->CONFIG.P_ANALOGS[iAdc]);
+		}
+	}
+#endif
 }
 
 //extern void AnalogN_Init(AnalogN_T * p_analogn);

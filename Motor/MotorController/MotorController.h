@@ -36,8 +36,6 @@
 #include "Motor/Utility/MotAnalog/MotAnalog.h"
 #include "Motor/Utility/MotAnalogUser/MotAnalogUser.h"
 #include "Motor/Utility/MotAnalogMonitor/MotAnalogMonitor.h"
-//#include "Motor/Utility/MotProtocol/MotProtocol.h"
-//#include "Motor/Utility/MotShell/MotShell.h"
 
 #include "Motor/Motor/Motor.h"
 #include "Motor/Motor/Motor_User.h"
@@ -52,9 +50,9 @@
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 
-//#include "Utility/Shell/Shell.h"
-#include "Utility/Thread/Thread.h"
+#include "Utility/Timer/Timer.h"
 #include "Utility/StateMachine/StateMachine.h"
+#include "Utility/Shell/Shell.h"
 
 #include "System/MemMapBoot/MemMapBoot.h"
 
@@ -128,9 +126,10 @@ typedef const struct
 	const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS_BOT;
 	const AnalogN_Conversion_T CONVERSION_VACC;
 	const AnalogN_Conversion_T CONVERSION_VSENSE;
-
 	const AnalogN_Conversion_T CONVERSION_THROTTLE;
 	const AnalogN_Conversion_T CONVERSION_BRAKE;
+	const AnalogN_AdcFlags_T ADCS_ACTIVE_MAIN_THREAD;
+
 
 	Protocol_T * const P_PROTOCOLS; //Simultaneously active protocols
 	const uint8_t PROTOCOL_COUNT;
@@ -182,9 +181,7 @@ typedef struct
 	Timer_T TimerMillis10;
 	Timer_T TimerSeconds;
 
-
-
-//	Shell_T 		MotShell;
+	Shell_T Shell;
  	MotorController_Direction_T MainDirection;
 
  	uint16_t UserCmd;

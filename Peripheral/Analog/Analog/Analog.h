@@ -307,7 +307,8 @@ static inline void _Analog_ExitCritical(Analog_T * p_analog)
 {
 #if (defined(CONFIG_ANALOG_MULTITHREADED) || defined(CONFIG_ANALOG_CRITICAL_USE_GLOBAL))
 	Critical_Exit();
-#elif  defined(CONFIG_ANALOG_SINGLE_THREADED) 	//interrupts already enabled
+#elif  defined(CONFIG_ANALOG_SINGLE_THREADED)
+	HAL_ADC_EnableInterrupt(p_analog);
 #endif
 }
 

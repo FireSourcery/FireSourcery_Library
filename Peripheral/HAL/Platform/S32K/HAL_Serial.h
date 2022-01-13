@@ -68,10 +68,15 @@ static inline bool HAL_Serial_ReadIsRxRegFull(const HAL_Serial_T * p_uartRegMap)
 	return ((p_uartRegMap->STAT & LPUART_STAT_RDRF_MASK) != 0U) ? true : false;
 }
 
-static inline uint8_t HAL_Serial_ReadTxFifoFull(const HAL_Serial_T * p_uartRegMap)
-{
-	return (p_uartRegMap->WATER & LPUART_WATER_TXCOUNT_MASK) >> LPUART_WATER_TXCOUNT_SHIFT;
-}
+//static inline uint8_t HAL_Serial_ReadTxFifoFull(const HAL_Serial_T * p_uartRegMap)
+//{
+//	return (p_uartRegMap->WATER & LPUART_WATER_TXCOUNT_MASK) >> LPUART_WATER_TXCOUNT_SHIFT;
+//}
+
+//static inline uint8_t HAL_Serial_ReadTxFullCount(const HAL_Serial_T * p_uartRegMap)
+//{
+//	return HAL_Serial_ReadTxFifoFull(p_uartRegMap);
+//}
 
 static inline uint8_t HAL_Serial_ReadTxFifoEmpty(const HAL_Serial_T * p_uartRegMap)
 {
@@ -86,17 +91,14 @@ static inline uint8_t HAL_Serial_ReadRxFifoFull(const HAL_Serial_T * p_uartRegMa
 
 static inline uint8_t HAL_Serial_ReadTxEmptyCount(const HAL_Serial_T * p_uartRegMap)
 {
-	return HAL_Serial_ReadTxFifoEmpty(p_uartRegMap);
-}
-
-static inline uint8_t HAL_Serial_ReadTxFullCount(const HAL_Serial_T * p_uartRegMap)
-{
-	return HAL_Serial_ReadTxFifoFull(p_uartRegMap);
+//	return HAL_Serial_ReadTxFifoEmpty(p_uartRegMap);
+	return HAL_Serial_ReadIsTxRegEmpty(p_uartRegMap);
 }
 
 static inline uint8_t HAL_Serial_ReadRxFullCount(const HAL_Serial_T * p_uartRegMap)
 {
-	return HAL_Serial_ReadRxFifoFull(p_uartRegMap);
+//	return HAL_Serial_ReadRxFifoFull(p_uartRegMap);
+	return HAL_Serial_ReadIsRxRegFull(p_uartRegMap);
 }
 
 static inline bool HAL_Serial_ReadRxOverrun(HAL_Serial_T * p_uartRegMap)
@@ -226,8 +228,8 @@ static inline void HAL_Serial_Init(HAL_Serial_T * p_uartRegMap)
 {
 	p_uartRegMap->STAT = 0xC01FC000U; /* Clear the error/interrupt flags */ //FEATURE_LPUART_STAT_REG_FLAGS_MASK;
 //	p_uartRegMap->CTRL = 0x00000000;   /* Reset all features/interrupts by default */
-	p_uartRegMap->FIFO = 0x0003C000U | LPUART_FIFO_RXFE_MASK | LPUART_FIFO_TXFE_MASK;
-	p_uartRegMap->WATER = LPUART_WATER_RXWATER(0x03U) | LPUART_WATER_TXWATER(0x01U);
+	p_uartRegMap->FIFO = 0x0003C000U;// | LPUART_FIFO_RXFE_MASK | LPUART_FIFO_TXFE_MASK;
+//	p_uartRegMap->WATER = LPUART_WATER_RXWATER(0x03U) | LPUART_WATER_TXWATER(0x01U);
     HAL_Serial_ConfigBaudRate(p_uartRegMap, 9600U);
 }
 

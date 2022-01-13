@@ -52,6 +52,7 @@ typedef struct
 	const Serial_Config_T CONFIG;
 	Queue_T RxQueue;
 	Queue_T TxQueue;
+//	uin32t_t BaudRate;
 
 //#if defined(CONFIG_SERIAL_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_SERIAL_CRITICAL_USER_DEFINED)
 //	uint8_t TxMutex;
@@ -130,19 +131,23 @@ static inline void Serial_TxData_ISR(Serial_T * p_serial)
 }
 
 
-//static inline void Serial_PollRxData(Serial_T * p_serial)
-//{
-//	HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-//	Serial_RxData_ISR(p_serial);
-//	HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-//}
-//
-//static inline void Serial_PollTxData(Serial_T * p_serial)
-//{
-//	HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-//	Serial_TxData_ISR(p_serial);
-//	HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-//}
+static inline void Serial_PollRxData(Serial_T * p_serial)
+{
+	HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+	Serial_RxData_ISR(p_serial);
+	HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+}
+
+static inline void Serial_PollTxData(Serial_T * p_serial)
+{
+	HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+	Serial_TxData_ISR(p_serial);
+
+	if (Queue_GetIsEmpty(&p_serial->TxQueue) == false)
+	{
+		HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+	}
+}
 
 static inline void Serial_PollRestartRxIsr(const Serial_T * p_serial)
 {

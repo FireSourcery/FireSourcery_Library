@@ -258,6 +258,7 @@ static inline void Motor_FOC_CaptureIc(Motor_T *p_motor)
 
 	if (((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)) == true)
 	{
+		//todo disable on observe
 		Motor_FOC_ProcCurrentFeedback(p_motor);
 	}
 }
@@ -277,9 +278,12 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 
 	uint16_t magIq;
 	/* Current Control Mode - Proc angle on ADC return */
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
+	AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
+	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+
 	ProcMotorFocPositionFeedback(p_motor);
 
 	if (((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE)) == true)
@@ -374,7 +378,8 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 {
 	Encoder_Reset(&p_motor->Encoder); //zero angle speed
 
-	Timer_StartPeriod(&p_motor->MillisTimer, 1U);
+//	Timer_StartPeriod(&p_motor->MillisTimer, 1U);
+	Timer_StartPeriod(&p_motor->ControlTimer, 20U);
 
 	PID_Reset(&p_motor->PidSpeed);
 	PID_Reset(&p_motor->PidIq);
@@ -390,8 +395,22 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
+static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
+{
+	qfrac16_t vqReq;
+	qfrac16_t vdReq;
 
+	uint16_t magIq;
+	/* Current Control Mode - Proc angle on ADC return */
+	AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
+	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
 
+	ProcMotorFocPositionFeedback(p_motor);
+
+}
 
 /******************************************************************************/
 /*! @} */

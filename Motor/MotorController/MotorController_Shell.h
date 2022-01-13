@@ -22,51 +22,34 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Motor_Thread.h
+    @file
     @author FireSoucery
-    @brief  Motor module functions must be placed into corresponding user app threads
-    		Most outer functions to call from MCU app
+    @brief
     @version V0
 */
 /******************************************************************************/
-#ifndef MOTOR_THREAD_H
-#define MOTOR_THREAD_H
+#ifndef MOT_SHELL_H
+#define MOT_SHELL_H
 
-#include "Motor.h"
-#include "Utility/StateMachine/StateMachine.h"
-//#include "Utility/Timer/Timer.h"
+#include "Utility/Shell/Shell.h"
 
-/*
-    Default 50us
-    Calling function must clear interrupt flag
- */
-static inline void Motor_PWM_Thread(Motor_T * p_motor)
-{
-	p_motor->ControlTimerBase++;
-	StateMachine_Semisynchronous_ProcOutput(&p_motor->StateMachine);
-//	AnalogN_EnqueueConversionOptions(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_THREAD_SYNC1);
-}
+#include <stdint.h>
 
-//1ms isr priority
-static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor)
-{
+#define MC_SHELL_CMD_COUNT		 	10U
+#define MC_SHELL_CMD_STATUS_COUNT 	1U
+#define MC_SHELL_PERIOD_MILLIS			1000U
 
-}
+//typedef enum
+//{
+//	MOTOR_SHELL_CMD_RETURN_CODE_SUCCESS 		= CMD_RESERVED_RETURN_CODE_SUCCESS,
+//	MOTOR_SHELL_CMD_RETURN_CODE_INVALID_ARGS 	= CMD_RESERVED_RETURN_CODE_INVALID_ARGS,
+//	MOTOR_SHELL_CMD_RETURN_CODE_ERROR_1 		= 1,
+//}
+//MotShell_CmdCode_T;
 
-//Low Freq Main //user/monitor thread 1ms low priority
-static inline void Motor_Main1Ms_Thread(Motor_T * p_motor)
-{
+extern const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT];
+extern const Cmd_Status_T MC_CMD_STATUS_TABLE[MC_SHELL_CMD_STATUS_COUNT];
 
-}
+#define MOTOR_CONTROLLER_SHELL_CONFIG(p_MotorController, p_Timer)  SHELL_CONFIG(MC_CMD_TABLE, MC_SHELL_CMD_COUNT, p_MotorController, MC_CMD_STATUS_TABLE, MC_SHELL_CMD_STATUS_COUNT, p_Timer, MC_SHELL_PERIOD_MILLIS)
 
-//low priotiy, max freq
-static inline void Motor_Main_Thread(Motor_T * p_motor)
-{
-////Low Freq Main //user/monitor thread 1ms low priority
-//	if (Timer_Poll(&p_motor->MillisTimer) == true)
-//	{
-//	AnalogN_EnqueueConversionOptions(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_HEAT);
-//	}
-}
-
-#endif
+#endif /* MOTOR_SHELL_H */

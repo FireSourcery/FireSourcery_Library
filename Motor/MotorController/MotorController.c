@@ -100,6 +100,9 @@ void MotorController_Init(MotorController_T * p_controller)
 		Protocol_Init(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
 	}
 
-	//	MotShell_Init(&p_controller->MotShell);
+	Serial_ConfigBaudRate(&p_controller->CONFIG.P_SERIALS[1U], 9600); //todo config
+	Shell_Init(&p_controller->Shell);
+	Terminal_SetXcvr(&p_controller->Shell.Terminal, &p_controller->CONFIG.P_SERIALS[1U]); //todo config
+
 	p_controller->MainDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
 }

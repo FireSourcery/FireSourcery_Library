@@ -54,8 +54,11 @@ static inline void MotorControllerAnalogUserThread(MotorController_T * p_control
 	MotAnalogUser_Direction_T 	direction 	= MotAnalogUser_PollDirection(&p_controller->AnalogUser);
 
 	MotAnalogUser_CaptureInput(&p_controller->AnalogUser, p_controller->AnalogResults.Throttle_ADCU, p_controller->AnalogResults.Brake_ADCU);
-	AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_THROTTLE);
-	AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_BRAKE);
+
+	AnalogN_PauseQueue(p_controller->CONFIG.P_ANALOG_N, p_controller->CONFIG.ADCS_ACTIVE_MAIN_THREAD);
+	AnalogN_EnqueueConversion_Group(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_THROTTLE);
+	AnalogN_EnqueueConversion_Group(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_BRAKE);
+	AnalogN_ResumeQueue(p_controller->CONFIG.P_ANALOG_N, p_controller->CONFIG.ADCS_ACTIVE_MAIN_THREAD);
 
 	if (direction == MOT_ANALOG_USER_DIRECTION_NEUTRAL)
 	{
@@ -116,13 +119,19 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 
 		for(uint8_t iProtocol = 0U; iProtocol < p_controller->CONFIG.PROTOCOL_COUNT; iProtocol++)
 		{
-			Protocol_Slave_Proc(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
+//			Protocol_Slave_Proc(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
 		}
+
+//		for (uint8_t iSerial = 0U; iSerial < p_controller->CONFIG.SERIAL_COUNT; iSerial++)
+//		{
+//			Serial_PollRxData(&p_controller->CONFIG.P_SERIALS[iSerial]);
+//			Serial_PollTxData(&p_controller->CONFIG.P_SERIALS[iSerial]);
+//		}
 	}
 
 	if (Timer_Poll(&p_controller->TimerMillis10) == true) 	//Low Freq, Low Priority 10 ms, Main
 	{
-//		Shell_Proc(&p_controller->MotShell);
+		Shell_Proc(&p_controller->Shell);
 		Blinky_Proc(&p_controller->Buzzer);
 	}
 
@@ -151,6 +160,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 //		AnalogN_EnqueueConversion(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_VSENSE);
 
 
+		//main thread conversion remainder, motor heat
 //#ifdef DEBUG
 
 //#endif
@@ -174,6 +184,8 @@ static inline void MotorController_PWM_Thread(MotorController_T * p_motorControl
 	{
 		Motor_PWM_Thread(&p_motorController->CONFIG.P_MOTORS[iMotor]);
 	}
+
+	//pwm thread conversions remainder, kls hs temp
 }
 
 //Med Freq, High Priority 1 ms

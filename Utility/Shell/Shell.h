@@ -33,13 +33,10 @@
 
 #include "Cmd.h"
 #include "Terminal.h"
-//#ifdef SHELL_OPTION_USE_LIST
-//#include "List.h"
-//#endif
 
 typedef enum
 {
-	SHELL_STATUS_OK, //todo refine
+	SHELL_STATUS_OK,
 
 //	SHELL_STATUS_TERMINAL_PARSER_FAIL,
 	SHELL_STATUS_CMD_ACCEPTED,
@@ -57,8 +54,8 @@ typedef enum
 {
 	SHELL_STATE_PROMPT,
 	SHELL_STATE_WAIT_INPUT,
-	SHELL_STATE_PARSE_INPUT,
-	SHELL_STATE_SEARCH_CMD,
+//	SHELL_STATE_PARSE_INPUT,
+//	SHELL_STATE_SEARCH_CMD,
 	SHELL_STATE_PROCESS_CMD,
 	SHELL_STATE_PROCESS_CMD_LOOP,
 	SHELL_STATE_INACTIVE,
@@ -70,35 +67,67 @@ Shell_State_T;
 
  */
 /******************************************************************************/
+
 typedef struct
 {
 	//Shell Array Table Mode -Set up Shell to use Array tables defined by the user
-	const Cmd_T * p_CmdTable;
-	uint8_t CmdCount;
-	const Cmd_Return_T * p_CmdReturnTable;
-	uint8_t CmdReturnCount;
+	const Cmd_T * P_CMD_TABLE;
+	uint8_t CMD_COUNT;
+	void * P_CMD_CONTEXT;
+
+	const Cmd_Status_T * P_CMD_STATUS_TABLE;
+	uint8_t CMD_STATUS_COUNT;
+
+	volatile const uint32_t * P_TIMER;
+	uint32_t LOOP_PERIOD;
+}
+Shell_Config_T;
+
+typedef struct
+{
+	//Shell Array Table Mode -Set up Shell to use Array tables defined by the user
+//	const Cmd_T * p_CmdTable;
+//	uint8_t CmdCount;
+//	void * p_CmdContext;
+//
+//	const Cmd_Return_T * p_CmdReturnTable;
+//	uint8_t CmdReturnCount;
+
+	Shell_Config_T CONFIG;
 
 	Terminal_T Terminal;
-//	volatile void * p_TypeData;
-
-//	volatile void ** pp_CmdDataTable; //array of pointers to user data
 
 	//processing
-	volatile Shell_State_T State;
-	volatile Cmd_Function_T CmdFunction; /*!< Cmd retrieved and in process */ //preserve across state change
-	volatile int CmdReturnCode;
+	Shell_State_T State;
+	Cmd_T * p_Cmd; /*!< Cmd retrieved and in process */ //preserve across state change
+	int CmdReturnCode;
 
 	//loop mode
-	uint32_t ProcFreq; //loop mode reference
+//	uint32_t ProcFreq; //loop mode reference
 //	bool IsLoopModeEnable;
 //	volatile uint32_t LoopModePeriod;
-//	volatile uint32_t LoopModeCounter;
+	uint32_t LoopModeTime;
 
 //	bool PrintReturnCode;
 }
 Shell_T;
 
+#define SHELL_CONFIG(p_CmdTable, CmdCount, p_Context, p_CmdStatusTable, CmdStatusCount, p_Timer, LoopPeriod)	\
+{															\
+	.CONFIG = 												\
+	{														\
+		.P_CMD_TABLE 			= p_CmdTable,				\
+		.CMD_COUNT 				= CmdCount,					\
+		.P_CMD_CONTEXT 			= p_Context,				\
+		.P_CMD_STATUS_TABLE 	= p_CmdStatusTable,			\
+		.CMD_STATUS_COUNT 		= CmdStatusCount,			\
+		.P_TIMER 				= p_Timer,					\
+		.LOOP_PERIOD 			= LoopPeriod,				\
+	}														\
+}
+
+
 extern Shell_Status_T Shell_Proc(Shell_T * p_shell);
-//extern void Shell_Init(uint16_t cmdLoopFreq, uint16_t shellProcFreq);
+extern void Shell_Init(Shell_T * p_shell);
 
 #endif

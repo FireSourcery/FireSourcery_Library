@@ -32,90 +32,77 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 const char * const INVALID_RETURN_CODE_STRING = "Invalid Return Code";
 
-static inline int32_t StringCompare(const char * p_str1, const char * p_str2)
-{
-	const char* p_string1 = p_str1;
-	const char* p_string2 = p_str2;
-	int32_t diff = 0;
-
-//	for (uint32_t index = 0; index < length; index++)
+//static inline int32_t StringCompare(const char * p_str1, const char * p_str2)
+//{
+//	const char* p_string1 = p_str1;
+//	const char* p_string2 = p_str2;
+//	int32_t diff = 0;
+//
+////	for (uint32_t index = 0; index < length; index++)
+////	{
+////		if (*p_string1 != *p_string2)
+////		{
+////			diff = (int32_t) *(p_string1) - (int32_t) *(p_string2);
+////		}
+////		p_string1++;
+////		p_string2++;
+////	}
+//
+//	while ((*p_string1 != '\0') && (*p_string2 != '\0')) //set length boundary
 //	{
 //		if (*p_string1 != *p_string2)
 //		{
 //			diff = (int32_t) *(p_string1) - (int32_t) *(p_string2);
+//			break;
 //		}
 //		p_string1++;
 //		p_string2++;
 //	}
+//
+//	return diff;
+//}
 
-	while ((*p_string1 != '\0') && (*p_string2 != '\0')) //set length boundary
-	{
-		if (*p_string1 != *p_string2)
-		{
-			diff = (int32_t) *(p_string1) - (int32_t) *(p_string2);
-			break;
-		}
-		p_string1++;
-		p_string2++;
-	}
-
-	return diff;
-}
-
-Cmd_T* Cmd_Search(const Cmd_T * p_cmdTable, uint8_t tableLength, const char * p_cmdName)
+Cmd_T * Cmd_Search(const Cmd_T * p_cmdTable, uint8_t tableLength, const char * p_cmdName)
 {
-	Cmd_T * p_cmd = 0U; 	// return SHELL_CMD_INVALID;
+	Cmd_T * p_cmd = 0U;
 
-	//#ifdef SHELL_OPTION_USE_ARRAY_TABLE
-	for (uint8_t idx = 0U; idx < tableLength; idx++)
+	if (p_cmdName != '\0')
 	{
-		if (StringCompare(p_cmdName, p_cmdTable[idx].P_NAME) == 0)
+		for (uint8_t idx = 0U; idx < tableLength; idx++)
 		{
-			p_cmd = &p_cmdTable[idx];
-			break;
-			//				return SHELL_CMD_ACCEPTED;
+	//		if (StringCompare(p_cmdName, p_cmdTable[idx].P_NAME) == 0)
+			if (strcmp(p_cmdName, p_cmdTable[idx].P_NAME) == 0)
+			{
+				p_cmd = &p_cmdTable[idx];
+				break;
+			}
 		}
 	}
-	//#endif
-
-	//#ifdef SHELL_OPTION_USE_LIST
-	//    	// ((CMDLINE_ENTRY_HANDLE_T)(listIterator->Data))->CmdName
-	//        node = List_GetHead(&CmdList);
-	//        while (node != NULL)
-	//        {
-	//        	if(!strcmp(Argv[0], GET_CONTAINER_STRUCT_POINTER(node, CMDLINE_ENTRY_T, Link)->CmdName))
-	//        	{
-	//            	CmdFunction = GET_CONTAINER_STRUCT_POINTER(node, CMDLINE_ENTRY_T, Link)->CmdFunction;
-	//            	return SHELL_CMD_ACCEPTED;
-	//            }
-	//            node = List_GetNext(node);
-	//        }
-	//#endif
-
 	return p_cmd;
 }
 
-Cmd_Function_T Cmd_SearchFunction(const Cmd_T * p_cmdTable, uint8_t tableLength, const char * p_cmdName)
-{
-	Cmd_Function_T p_function;
-	Cmd_T * p_cmd = Cmd_Search(p_cmdTable, tableLength, p_cmdName);
+//Cmd_Function_T Cmd_SearchFunction(const Cmd_T * p_cmdTable, uint8_t tableLength, const char * p_cmdName)
+//{
+//	Cmd_Function_T p_function;
+//	Cmd_T * p_cmd = Cmd_Search(p_cmdTable, tableLength, p_cmdName);
+//
+//	if(p_cmd == 0)
+//	{
+//		p_function = 0;
+//	}
+//	else
+//	{
+//		p_function = p_cmd->FUNCTION;
+//	}
+//
+//	return p_function;
+//}
 
-	if(p_cmd == 0)
-	{
-		p_function = 0;
-	}
-	else
-	{
-		p_function = p_cmd->FUNCTION;
-	}
-
-	return p_function;
-}
-
-const char * Cmd_SearchReturnString(const Cmd_Return_T * p_returnTable, uint8_t tableLength, int returnCodeId)
+const char * Cmd_SearchReturnString(const Cmd_Status_T * p_returnTable, uint8_t tableLength, int returnCodeId)
 {
 //#ifdef SHELL_OPTION_USE_ARRAY_TABLE
 
@@ -137,17 +124,6 @@ const char * Cmd_SearchReturnString(const Cmd_Return_T * p_returnTable, uint8_t 
 			p_returnCodeString = p_returnTable[returnCodeId].P_STRING;
 		}
 	}
-//#endif
-
-//#ifdef SHELL_OPTION_USE_LIST
-//	LIST_NODE_HANDLE_T node;
-//	node = List_GetHead(&ReturnCodeList);
-//	while (node != NULL)
-//	{
-//		if( GET_CONTAINER_STRUCT_POINTER(node, RETURN_CODE_ENTRY_T, Link)->ReturnCode == returnCode )
-//			return GET_CONTAINER_STRUCT_POINTER(node, RETURN_CODE_ENTRY_T, Link)->ReturnCodeString;
-//		node = List_GetNext(node);
-//	}
 //#endif
 
 	return p_returnCodeString;

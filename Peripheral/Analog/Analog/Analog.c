@@ -270,6 +270,55 @@ bool Analog_EnqueueConversionOptions(Analog_T * p_analog, const Analog_Conversio
 	return isSuccess;
 }
 
+
+void Analog_PauseQueue(Analog_T * p_analog)
+{
+	_Analog_EnterCritical(p_analog);
+}
+
+void Analog_ResumeQueue(Analog_T * p_analog)
+{
+	_Analog_ExitCritical(p_analog);
+}
+
+bool Analog_EnqueueConversion_Group(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+{
+	bool isSuccess;
+
+	if ((Queue_GetIsEmpty(&p_analog->ConversionQueue) == true))
+	{
+		Queue_Enqueue(&p_analog->ConversionQueue, &p_conversion);
+		_Analog_WriteAdc(p_analog, p_conversion);
+		isSuccess = true;
+	}
+	else
+	{
+		isSuccess = Queue_Enqueue(&p_analog->ConversionQueue, &p_conversion);
+	}
+
+	return isSuccess;
+}
+
+bool Analog_EnqueueConversionOptions_Group(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+{
+	bool isSuccess;
+
+	if ((Queue_GetIsEmpty(&p_analog->ConversionQueue) == true))
+	{
+		_Analog_WriteAdcOptions(p_analog, p_conversion);
+		HAL_ADC_Deactivate(p_analog->CONFIG.P_HAL_ADC);
+		isSuccess = true;
+	}
+	else
+	{
+		isSuccess = Queue_Enqueue(&p_analog->ConversionQueue, &p_conversion);
+	}
+
+	return isSuccess;
+}
+
+
+
 /*
 	can overwrite last item
  */

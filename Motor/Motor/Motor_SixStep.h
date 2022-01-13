@@ -300,19 +300,21 @@ static inline void ActivateMotorSixStepAnalogPhase(Motor_T * p_motor, const Anal
 
 	p_motor->IsPwmOn = false;
 
-	//	AnalogN_EnterCritical(p_motor->CONFIG.P_ANALOG_N);
-	AnalogN_EnqueueConversionOptions(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, p_vPhase);
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, p_iPhase);
+	AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+
+	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_vPhase);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_iPhase);
 
 	//should not start until middle of pwm cycle
-	AnalogN_EnqueueConversionOptions(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_PWM_ON);
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, p_vPhase);
-	AnalogN_EnqueueConversionOptions(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, p_iPhase);
+	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_PWM_ON);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_vPhase);
+	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_iPhase);
 //	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VPOS);
 
-//	AnalogN_ExitCritical(p_motor->CONFIG.P_ANALOG_N);
+	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+
 	Debug_CaptureElapsed(5);
 }
 
@@ -382,7 +384,7 @@ static inline void Motor_SixStep_StartOpenLoop(Motor_T * p_motor)
 
 	p_motor->OpenLoopSpeed_RPM = Linear_Ramp_CalcTargetIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, 0U);
 	p_motor->OpenLoopCommutationPeriod = Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
-	Timer_SetPeriod(&p_motor->ControlTimer, p_motor->OpenLoopCommutationPeriod);
+	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->OpenLoopCommutationPeriod);
 
 	//motor aligned to phase A
 	p_motor->NextPhase = (p_motor->Direction == MOTOR_DIRECTION_CCW) ? MOTOR_PHASE_BC : MOTOR_PHASE_AB;
@@ -625,6 +627,7 @@ static inline void Motor_SixStep_StartPhaseControl(Motor_T * p_motor)
 	Encoder_Reset(&p_motor->Encoder);
 
 //	Encoder_DeltaT_SetInitial(&p_motor->Encoder, 5U);
+	Timer_StartPeriod(&p_motor->ControlTimer, 20U);
 
 	p_motor->Bemf.ZeroCrossingCounter  = 0U;
 

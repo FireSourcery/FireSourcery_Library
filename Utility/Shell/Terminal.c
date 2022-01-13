@@ -1,109 +1,53 @@
-/*
- * Serial text support functions for terminal ui
- */
+/******************************************************************************/
+/*!
+	@section LICENSE
 
+	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+
+	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+	@file  	Terminal.h
+	@author FireSourcery
+	@brief	Serial text support functions for terminal ui
+	@version V0
+ */
+/******************************************************************************/
 #include "Terminal.h"
 
 #include "Peripheral/Serial/Serial.h"
 
 #include <stdio.h>
 
-void Terminal_Init(Terminal_T * p_terminal, void * p_connect)
+void Terminal_Init(Terminal_T * p_terminal )
 {
 	//#ifdef CONFIG_SHELL_USE_SERIAL
-	p_terminal->p_Serial = p_connect;
+//	p_terminal->p_Serial = p_connect;
 	//#endif
-
 	p_terminal->CursorIndex = 0;
 }
 
-bool Terminal_ProcCmdline(Terminal_T * p_terminal) //read from terminal
+void Terminal_SetXcvr(Terminal_T * p_terminal, void * p_connect)
 {
-	bool isComplete = false;
-	char ch;
-
-	if (Terminal_PollKeyPressed(p_terminal))
-	{
-		ch = Terminal_RecvChar(p_terminal);
-
-		if ((ch > 31U && ch < 127U) && (p_terminal->CursorIndex < CMDLINE_CHAR_MAX - 2U)) /* printable char */
-		{
-			Terminal_SendChar(p_terminal, ch);
-			p_terminal->Cmdline[p_terminal->CursorIndex] = ch;
-			p_terminal->CursorIndex++;
-		}
-		else if ((ch == '\b' || ch == KEY_DEL) && (p_terminal->CursorIndex > 0U)) /* backspace key */  //ch == '^H' || ch == '^?'
-		{
-			Terminal_SendString(p_terminal, "\b \b");
-			p_terminal->CursorIndex--;
-		}
-		else if (ch == '\n' || ch == '\r')
-		{
-			Terminal_SendString(p_terminal, "\r\n");
-			p_terminal->Cmdline[p_terminal->CursorIndex] = '\0';
-			p_terminal->CursorIndex = 0;
-			isComplete = true;
-		}
-//		else if (ch == '/0' || ch == 0xFF)
-//		{
-//
-//		}
-//			#ifdef CONFIG_SHELL_ARROW_KEYS_ENABLE
-//			else if (ch == '\e')
-//			{
-//				// Serial_ReadChar(p_terminal->p_Serial,ch);
-//				Shell_ReadChar(&ch);
-//				if (ch == '[')
-//				{
-//					// Serial_ReadChar(p_terminal->p_Serial,ch);
-//					Shell_ReadChar(&ch);
-//					// Serial_ReadChar(p_terminal->p_Serial,ch);
-//				}
-//			}
-//			#endif
-//			else if (ch == '\0')
-//			{
-//
-//			}
-		else
-		{
-			Terminal_SendString(p_terminal, "\a"); //beep
-		}
-	}
-
-	return isComplete;
+	p_terminal->p_Serial = p_connect;
 }
 
-void Terminal_ParseCmdline(Terminal_T * p_terminal)
-{
-    char * p_cmdline = p_terminal->Cmdline;
-    uint8_t argc = 0U;
-	bool isArgv = true; //start each iteration assuming current char is a arg char, check if its not first
 
-	while (*p_cmdline != '\0')
-	{
-		if (*p_cmdline == ' ')
-		{
-			*p_cmdline = '\0';
-			isArgv = true; //next char is Argv or another ' '
-		}
-		else if (isArgv)
-		{
-			if (argc < CMDLINE_ARG_MAX)
-			{
-				p_terminal->ArgV[argc] = p_cmdline;
-				isArgv = false;
-				argc++;
-			}
-			else
-			{
-				//error
-			}
-		}
-		p_cmdline++;
-	}
 
-	p_terminal->ArgC = argc;
-}
 
 
