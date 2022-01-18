@@ -109,7 +109,6 @@ static StateMachine_State_T * Stop_InputCalibration(Motor_T * p_motor)
 	return &MOTOR_STATE_CALIBRATION;
 }
 
-
 static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
 	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
@@ -122,18 +121,18 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABL
 
 static void Stop_Entry(Motor_T * p_motor)
 {
-	Motor_Stop(p_motor);
+	Motor_Float(p_motor);
 	Motor_StartIdle(p_motor);
 }
 
 static void Stop_Proc(Motor_T * p_motor)
 {
-	//poll speedfeedback
-	if(Motor_GetSpeed(p_motor) > 0U)
-	{
-		StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_FREEWHEEL);
-	}
-	else
+	//poll speedfeedback or use bemf
+//	if(Motor_GetSpeed(p_motor) > 0U)
+//	{
+//		StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_FREEWHEEL);
+//	}
+//	else
 	{
 		Motor_ProcIdle(p_motor);
 	}
@@ -205,7 +204,7 @@ static void OpenLoop_Entry(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-//		Motor_FOC_StartOpenLoop(p_motor);
+		Motor_FOC_StartAngleControl(p_motor);
 	}
 	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
@@ -219,11 +218,11 @@ static void OpenLoop_Proc(Motor_T * p_motor)
 
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-//			Motor_FOC_ProcAngleControl(p_motor);
+		Motor_FOC_ProcAngleControl(p_motor);
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		Motor_SixStep_ProcOpenLoop(p_motor);
+		Motor_SixStep_ProcPhaseControl(p_motor);
 
 		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF)
 		{
@@ -277,7 +276,7 @@ static void Run_Entry(Motor_T * p_motor)
 {
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		if(Motor_GetSpeed(p_motor) == 0U)
+		if(Motor_GetSpeed(p_motor) == 0U) //move to module?
 		{
 			Motor_FOC_StartAngleControl(p_motor);
 		}
@@ -294,7 +293,6 @@ static void Run_Entry(Motor_T * p_motor)
 		}
 		else
 		{
-//				Motor_ProcRamp(p_motor); //todo const voltage map ramp to bemf
 			Motor_SixStep_ResumePhaseControl(p_motor);
 		}
 	}
@@ -316,7 +314,7 @@ static void Run_Proc(Motor_T * p_motor)
 		{
 //			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
 //			{
-//			StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_FREEWHEEL);
+//				StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_FREEWHEEL);
 //			}
 		}
 	}
@@ -361,7 +359,7 @@ static void Freewheel_Entry(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-//		Motor_FOC_StartAngleObserve(p_motor);
+		Motor_FOC_StartAngleObserve(p_motor);
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
@@ -419,27 +417,10 @@ static void Calibration_Entry(Motor_T * p_motor)
 {
 	switch (p_motor->CalibrationState)
 	{
-		case MOTOR_CALIBRATION_STATE_ADC:
-			if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-			{
-				Motor_FOC_StartCalibrateAdc(p_motor);
-			}
-			else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-			{
-				Motor_SixStep_StartCalibrateAdc(p_motor);
-			}
-			break;
-
-		case MOTOR_CALIBRATION_STATE_HALL:
-			Motor_StartCalibrateHall(p_motor);
-			break;
-
-		case MOTOR_CALIBRATION_STATE_ENCODER:
-			Motor_StartCalibrateEncoder(p_motor);
-			break;
-
-		default:
-			break;
+		case MOTOR_CALIBRATION_STATE_ADC:		Motor_StartCalibrateAdc(p_motor);		break;
+		case MOTOR_CALIBRATION_STATE_HALL:		Motor_StartCalibrateHall(p_motor);		break;
+		case MOTOR_CALIBRATION_STATE_ENCODER:	Motor_StartCalibrateEncoder(p_motor);	break;
+		default:			break;
 	}
 }
 
@@ -449,17 +430,7 @@ static void Calibration_Proc(Motor_T * p_motor)
 
 	switch (p_motor->CalibrationState)
 	{
-		case MOTOR_CALIBRATION_STATE_ADC :
-			if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-			{
-				isComplete = Motor_FOC_CalibrateAdc(p_motor);
-			}
-			else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-			{
-				isComplete = Motor_SixStep_CalibrateAdc(p_motor);
-			}
-
-			break;
+		case MOTOR_CALIBRATION_STATE_ADC:		isComplete = Motor_CalibrateAdc(p_motor); 		break;
 		case MOTOR_CALIBRATION_STATE_HALL:		isComplete = Motor_CalibrateHall(p_motor); 		break;
 		case MOTOR_CALIBRATION_STATE_ENCODER:	isComplete = Motor_CalibrateEncoder(p_motor); 	break;
 		default: break;

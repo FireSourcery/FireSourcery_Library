@@ -65,10 +65,10 @@ void MotorController_Init(MotorController_T * p_controller)
 //	Flash_Init(&p_controller->CONFIG.P_FLASH);
 	EEPROM_Init_Blocking(&p_controller->Eeprom);
 
-	//	if (p_controller->CONFIG.P_PARAMETERS != 0U)
-	//	{
+	if (p_controller->CONFIG.P_PARAMETERS != 0U)
+	{
 		memcpy(&p_controller->Parameters, p_controller->CONFIG.P_PARAMETERS, sizeof(MotorController_Params_T));
-	//	}
+	}
 
 	for (uint8_t iMotor = 0U; iMotor < p_controller->CONFIG.MOTOR_COUNT; iMotor++)
 	{
@@ -97,10 +97,10 @@ void MotorController_Init(MotorController_T * p_controller)
 
 	for (uint8_t iProtocol = 0U; iProtocol < p_controller->CONFIG.PROTOCOL_COUNT; iProtocol++)
 	{
-		Protocol_Init(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
+//		Protocol_Init(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
 	}
 
-	Serial_ConfigBaudRate(&p_controller->CONFIG.P_SERIALS[1U], 9600); //todo config
+//	Serial_ConfigBaudRate(&p_controller->CONFIG.P_SERIALS[1U], 9600); //todo config
 	Shell_Init(&p_controller->Shell);
 	Terminal_SetXcvr(&p_controller->Shell.Terminal, &p_controller->CONFIG.P_SERIALS[1U]); //todo config
 

@@ -217,14 +217,15 @@ static inline void BEMF_CapturePhaseReference(BEMF_T * p_bemf)
 //		{
 //			p_bemf->ZeroCrossingMissCounter++;
 //		}
-
+		p_bemf->TimeZeroCrossingDetect = 0U;
+		p_bemf->TimeZeroCrossingPeriod = 0U;
 	}
 	else
 	{
 		p_bemf->IsZeroCrossingDetectionComplete = false;
 	}
 
-	p_bemf->TimePhasePeriod 	= *p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero; //back up time, will be overwritten upon zcd
+	p_bemf->TimePhasePeriod 	= (p_bemf->TimePhasePeriod + (*p_bemf->CONFIG.P_TIMER - p_bemf->TimeReferenceZero)) / 2U; //back up time, will be overwritten upon zcd
 	p_bemf->TimeReferenceZero 	= *p_bemf->CONFIG.P_TIMER;
 
 	p_bemf->TimeBlankPeriod = p_bemf->TimePhasePeriod / 8U; //default case 25% of commutation time, 50% of zct. set 0 for passive mode?
@@ -417,7 +418,7 @@ static inline bool BEMF_ProcZeroCrossingDetection(BEMF_T * p_bemf)
 			p_bemf->ZeroCrossingCounter++;
 
 			//stop here to compare hall captured vs bemf sample difference
-			p_bemf->TimePhasePeriod = (p_bemf->TimePhasePeriod + p_bemf->TimeZeroCrossingPeriod) / 2U; //avergae with estimate
+//			p_bemf->TimePhasePeriod = (p_bemf->TimePhasePeriod + p_bemf->TimeZeroCrossingPeriod) / 2U; //avergae with estimate
 
 //			p_bemf->TimePhasePeriod = p_bemf->TimeZeroCrossingPeriod - p_bemf->PhaseAdvanceTime;
 

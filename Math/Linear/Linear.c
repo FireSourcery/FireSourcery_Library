@@ -37,7 +37,7 @@
  * f(in:[100 percent]) 	= rangeRef
  */
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-void Linear_Init(Linear_T * p_linear, int16_t factor, int16_t divisor, int16_t intercept, int32_t rangeRef)
+void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t intercept, int32_t rangeRef)
 {
 	p_linear->SlopeFactor 			= ((int32_t)factor << 16U) / divisor;
 	p_linear->SlopeDivisor_Shift 	= 16U;
@@ -46,6 +46,17 @@ void Linear_Init(Linear_T * p_linear, int16_t factor, int16_t divisor, int16_t i
 	p_linear->Intercept 			= intercept << 16U;
 	p_linear->RangeReference 		= rangeRef;
 }
+
+void Linear_Init_Shift(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t intercept, int32_t rangeRef, uint8_t shift)
+{
+	p_linear->SlopeFactor 			= ((int32_t)factor << shift) / divisor;
+	p_linear->SlopeDivisor_Shift 	= shift;
+	p_linear->SlopeDivisor 			= ((int32_t)divisor << shift) / factor; //InvF factor
+	p_linear->SlopeFactor_Shift 	= shift;
+	p_linear->Intercept 			= intercept << shift;
+	p_linear->RangeReference 		= rangeRef;
+}
+
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t intercept, int32_t rangeRef)
 {

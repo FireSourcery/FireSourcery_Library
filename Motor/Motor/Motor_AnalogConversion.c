@@ -10,7 +10,7 @@
 
 
 
-void SetPwmOnFlag(Motor_T * p_motor)
+void Motor_CapturePwmOnFlag(Motor_T * p_motor)
 {
 	p_motor->IsPwmOn = true;
 }

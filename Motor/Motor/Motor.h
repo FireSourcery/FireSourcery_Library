@@ -174,8 +174,10 @@ typedef enum
 typedef enum
 {
 	MOTOR_BRAKE_MODE_PASSIVE,
-	MOTOR_BRAKE_MODE_SCALAR,
+	MOTOR_BRAKE_MODE_CONSTANT,
 	MOTOR_BRAKE_MODE_PROPRTIONAL,
+	MOTOR_BRAKE_MODE_SCALAR,
+
 } Motor_BrakeMode_T;
 
 /*
@@ -315,7 +317,7 @@ typedef struct
 //		AnalogN_AdcFlags_T SignalBufferIdle;
 
 	volatile uint32_t ControlTimerBase;	 /*Control Freq ~ 20kHz, calibration, commutation, angle control. overflow at 20Khz, 59 hours*/
-	Timer_T ControlTimer; /*  State Timer, openloop, speed  */
+	Timer_T ControlTimer; /*  State Timer, openloop, Bemf  */
 
 	Timer_T MillisTimer; //main millis thread
 
@@ -338,8 +340,9 @@ typedef struct
 
 	/* Feedback */
 	PID_T PidSpeed;
+	Timer_T SpeedTimer;			// SpeedCalc Timer
 	uint16_t Speed_RPM;			// Common Feedback Variable
-	uint16_t SpeedFeedback;
+	uint16_t SpeedFeedback_Frac16;
 	uint16_t SpeedControl; 		/* Store results, updated once per millis */
 
 	/*
@@ -431,11 +434,6 @@ static inline void Motor_ProcRamp(Motor_T * p_motor)
 	}
 }
 
-//void Motor_ResetRampCmd(Motor_T * p_motor)
-//{
-//	p_motor->RampCmd = 0U;
-//}
-
 /*
  * userCmd is final value, fractional value of control mode unit
  */
@@ -445,7 +443,7 @@ static inline void Motor_SetRamp(Motor_T * p_motor, uint16_t userCmd)
 //	int32_t acceleration = (userCmd >= p_motor->RampCmd) ? p_motor->Parameters.RampAcceleration : -p_motor->Parameters.RampAcceleration; //todo accel param
 //	int32_t acceleration = userCmd - p_motor->RampCmd;
 	Linear_Ramp_InitMillis(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmd, 10U);
-//	Linear_Ramp_SetSlope(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmd, acceleration);
+//	Linear_Ramp_SetSlope(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmd, acceleration); //accelparam
 	//	Linear_Ramp_SetSlope(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmd, userCmd - p_motor->RampCmd);
 	p_motor->RampIndex = 0;
 }
@@ -464,36 +462,23 @@ static inline void Motor_SetRamp_Rate(Motor_T * p_motor, uint16_t userCmdFinal, 
 	}
 }
 
-//braking 0% -> pwm 100% of back emf;
-//braking 10% -> pwm 90% of back emf;
-//braking 50% -> pwm 50% of back emf;
-//braking 90% -> pwm 10% of back emf;
-//static inline void Motor_SetBrakeBemfProportional(Motor_T * p_motor, uint16_t intensity)
-//{
-//	uint16_t final = Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf)) * (65535U - intensity) >> 16U;
-//
-//	Motor_SetRamp(p_motor, final);
-//}
-//
 
 /*
  * Common Speed PID Feedback Loop
  */
 static inline void Motor_ProcSpeedFeedbackLoop(Motor_T * p_motor)
 {
-//	p_motor->Speed_RPM = (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
-	//speedfrac16
-	p_motor->SpeedFeedback = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535 / (uint32_t)p_motor->Parameters.SpeedMax_RPM);
-	p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->SpeedFeedback);
+	p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->SpeedFeedback_Frac16);
 }
 
 static inline bool Motor_PollSpeedFeedback(Motor_T * p_motor)
 {
-	bool captureSpeed = Timer_Poll(&p_motor->ControlTimer);
+	bool captureSpeed = Timer_Poll(&p_motor->SpeedTimer);
 
 	if (captureSpeed == true)
 	{
 		p_motor->Speed_RPM = (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
+		p_motor->SpeedFeedback_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedMax_RPM);
 
 		if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
 		{
@@ -504,11 +489,14 @@ static inline bool Motor_PollSpeedFeedback(Motor_T * p_motor)
 	return captureSpeed;
 }
 
-
 static inline bool Motor_ResumeSpeedFeedback(Motor_T * p_motor)
 {
-
-//	p_motor->PidSpeed.ErrorSum =
+	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
+	{
+		PID_SetIntegral(&p_motor->PidSpeed, p_motor->SpeedFeedback_Frac16);
+		p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->SpeedFeedback_Frac16);
+		Timer_Restart(&p_motor->SpeedTimer);
+	}
 }
 
 /******************************************************************************/
@@ -567,10 +555,18 @@ static inline void Motor_Float(Motor_T * p_motor)
 static inline void Motor_Stop(Motor_T * p_motor)
 {
 	Motor_Float(p_motor);
-	p_motor->VPwm = 0U;
 	p_motor->ControlTimerBase = 0U; //ok to reset timer
-	//reset pid
 }
+
+static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
+{
+	if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder) == true) //once per millis
+	{
+		p_motor->Speed_RPM = 0U;
+		p_motor->SpeedFeedback_Frac16 = 0U;
+	}
+}
+
 
 
 /******************************************************************************/

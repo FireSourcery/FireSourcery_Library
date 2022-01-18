@@ -39,14 +39,16 @@
 
 #include "Motor/Utility/MotAnalogUser/MotAnalogUser.h"
 #include "Motor/Utility/MotAnalogMonitor/MotAnalogMonitor.h"
-//#include "Motor/Utility/MotShell/MotShell.h"
 #include "Motor/Motor/Motor_Thread.h"
+
 #include "Protocol/Protocol/Protocol.h"
+
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 #include "Peripheral/Serial/Serial.h"
+
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/Timer/Timer.h"
-//#include "Utility/Shell/Shell.h"
+#include "Utility/Shell/Shell.h"
 
 static inline void MotorControllerAnalogUserThread(MotorController_T * p_controller)
 {
@@ -69,10 +71,10 @@ static inline void MotorControllerAnalogUserThread(MotorController_T * p_control
 		switch(direction)
 		{
 			case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: MotorController_User_DisableControl(p_controller); break;
-			case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: MotorController_User_ProcDirection(p_controller, MOTOR_CONTROLLER_DIRECTION_FORWARD); 		break;
-			case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: //MotorController_User_ProcDirection(p_controller, MOTOR_CONTROLLER_DIRECTION_REVERSE); 	break;
-				Motor_User_ActivateCalibrationHall(&p_controller->CONFIG.P_MOTORS[0]);
-				if (p_controller->Parameters.IsBuzzerOnReverseEnable == true) {MotorController_Beep(p_controller);}
+			case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: MotorController_User_SetDirection(p_controller, MOTOR_CONTROLLER_DIRECTION_FORWARD); 		break;
+			case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:
+				if (p_controller->Parameters.IsBuzzerOnReverseEnable == true) { MotorController_Beep(p_controller); }
+				MotorController_User_SetDirection(p_controller, MOTOR_CONTROLLER_DIRECTION_REVERSE);
 				break;
 			default: break;
 		}
@@ -81,12 +83,10 @@ static inline void MotorControllerAnalogUserThread(MotorController_T * p_control
 		{
 			switch(cmd)
 			{
-				case MOT_ANALOG_USER_CMD_THROTTLE:			MotorController_User_ProcCmdThrottle(p_controller, MotAnalogUser_GetThrottle(&p_controller->AnalogUser));	break;
-				case MOT_ANALOG_USER_CMD_BRAKE: 			MotorController_User_ProcCmdBrake(p_controller, MotAnalogUser_GetBrake(&p_controller->AnalogUser)); 	break;
-				case MOT_ANALOG_USER_CMD_THROTTLE_RELEASE:
-					//check throttle release param
-					MotorController_User_DisableControl(p_controller); break;
-				case MOT_ANALOG_USER_CMD_THROTTLE_ZERO_EDGE: 	MotorController_User_DisableControl(p_controller); 	break;
+				case MOT_ANALOG_USER_CMD_THROTTLE:				MotorController_User_SetCmdThrottle(p_controller, 	MotAnalogUser_GetThrottle(&p_controller->AnalogUser));	break;
+				case MOT_ANALOG_USER_CMD_BRAKE: 				MotorController_User_SetCmdBrake(p_controller, 		MotAnalogUser_GetBrake(&p_controller->AnalogUser)); 	break;
+				case MOT_ANALOG_USER_CMD_THROTTLE_RELEASE: 		MotorController_User_DisableControl(p_controller); break; // todo check throttle release param
+				case MOT_ANALOG_USER_CMD_THROTTLE_ZERO_EDGE: 	MotorController_User_DisableControl(p_controller); break;
 				case MOT_ANALOG_USER_CMD_THROTTLE_ZERO:			StateMachine_Semisynchronous_ProcInput(&p_controller->StateMachine, MCSM_INPUT_CHECK_STOP);		break;
 				default: break;
 			}
@@ -174,6 +174,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 //		Motor_Main_Thread(&p_controller->CONFIG.P_MOTORS[iMotor]);
 //	}
 }
+
+
 
 /*
  * Wrappers

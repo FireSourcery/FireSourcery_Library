@@ -222,7 +222,7 @@ static inline int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_lin
 }
 
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-extern void Linear_Init(Linear_T * p_linear, int16_t factor, int16_t divisor, int16_t intercept, int32_t rangeRef);
+extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t intercept, int32_t rangeRef);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t intercept, int32_t rangeRef);
 #endif

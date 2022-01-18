@@ -47,9 +47,6 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 
 	p_pid->ErrorSum += error;
 
-//	if 		(p_pid->ErrorSum > p_pid->Params.OutMax) {p_pid->ErrorSum = p_pid->Params.OutMax;}
-//	else if (p_pid->ErrorSum < p_pid->Params.OutMin) {p_pid->ErrorSum = p_pid->Params.OutMin;}
-
 	integral = (p_pid->Params.KiFactor * p_pid->ErrorSum / p_pid->KiDivisorFreq);
 
 	if 		(integral > p_pid->Params.OutMax) {integral = p_pid->Params.OutMax;}
@@ -77,6 +74,12 @@ int32_t PID_Calc(PID_T * p_pid, int32_t setpoint, int32_t feedback)
 	return CalcPid(p_pid, setpoint - feedback);
 }
 
+
+void PID_SetIntegral(PID_T * p_pid, int32_t integral)
+{
+	p_pid->ErrorSum = integral * p_pid->KiDivisorFreq / p_pid->Params.KiFactor;
+}
+
 void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq)
 {
    if (calcFreq > 0U)
@@ -87,11 +90,11 @@ void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq)
 
 void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor)
 {
-	p_pid->Params.KpFactor 	= kpFactor;
+	p_pid->Params.KpFactor 		= kpFactor;
 	p_pid->Params.KpDivisor 	= kpDivisor;
-	p_pid->Params.KiFactor 	= kiFactor;
+	p_pid->Params.KiFactor 		= kiFactor;
 	p_pid->Params.KiDivisor 	= kiDivisor;
-	p_pid->Params.KdFactor 	= kdFactor;
+	p_pid->Params.KdFactor 		= kdFactor;
 	p_pid->Params.KdDivisor 	= kdDivisor;
 
 	if (p_pid->Params.Direction == PID_DIRECTION_REVERSE)
@@ -145,6 +148,10 @@ void PID_Reset(PID_T * p_pid)
 //int32_t PID_GetKp_Frac16(PID_T * p_pid) {return  p_pid->Params.Kp;}
 //int32_t PID_GetKi_Frac16(PID_T * p_pid) {return  p_pid->Params.Ki;}
 //int32_t PID_GetKd_Frac16(PID_T * p_pid) {return  p_pid->Params.Kd;}
+
+int32_t PID_GetKp_Int(PID_T * p_pid, uint16_t scalar) {return scalar * p_pid->Params.KpFactor / p_pid->Params.KpDivisor;}
+int32_t PID_GetKi_Int(PID_T * p_pid, uint16_t scalar) {return scalar *  p_pid->Params.KiFactor / p_pid->Params.KiDivisor;}
+int32_t PID_GetKd_Int(PID_T * p_pid, uint16_t scalar) {return scalar *  p_pid->Params.KdFactor / p_pid->Params.KdDivisor;}
 
 PID_Direction_T PID_GetDirection(PID_T *p_pid)
 {

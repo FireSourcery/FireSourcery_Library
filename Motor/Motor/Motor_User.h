@@ -61,28 +61,66 @@ static inline void Motor_User_DisableControl(Motor_T * p_motor)
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
 }
 
+//todo move shared input ramp to motor controller
 static inline void Motor_User_SetCmd(Motor_T * p_motor, uint16_t throttle)
 {
 	Motor_SetRamp(p_motor, throttle);
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
 }
 
-
-static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t brake)
+static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 {
 	switch (p_motor->Parameters.BrakeMode)
 	{
 		case MOTOR_BRAKE_MODE_PASSIVE :
 			Motor_User_DisableControl(p_motor);
 			break;
-		case MOTOR_BRAKE_MODE_SCALAR :
-			Motor_SetRamp_Rate(p_motor, 0U, -(int32_t)brake / 4U);
+
+		case MOTOR_BRAKE_MODE_CONSTANT:
+			Motor_SetRamp(p_motor, p_motor->SpeedFeedback_Frac16/2U);
 			break;
+
 		case MOTOR_BRAKE_MODE_PROPRTIONAL :
-//			Motor_SetBrakeBemfProportional(p_motor, brake);
+			Motor_SetRamp(p_motor, ((uint32_t)p_motor->SpeedFeedback_Frac16 * (65536U - intensity)) >> 16U);
+			//todo offset
+			//braking 0% -> pwm 100% of back emf;
+			//braking 10% -> pwm 90% of back emf;
+			//braking 50% -> pwm 50% of back emf;
+			//braking 90% -> pwm 10% of back emf;
 			break;
+
+		case MOTOR_BRAKE_MODE_SCALAR :
+			//minus 5% for zero
+//			if (p_motor->SpeedFeedback_Frac16 < 65536U/20U)
+//			{
+//				Motor_SetRamp(p_motor, 0U);
+//			}
+//			else
+			{
+	//			p_motor->Parameters.BrakeCoeffcient
+				Motor_SetRamp(p_motor, (uint32_t)((uint32_t)p_motor->SpeedFeedback_Frac16*32768U + (((int32_t)32768 - (int32_t)intensity)*25)/100) >> 16U);
+			}
+
+
+
+			//BrakeCoeffcient = 25 -> fract16(1/4)
+
+			//braking 0% 	-> pwm 62.5% of back emf;
+			//braking 10% 	-> pwm 60% of back emf;
+			//braking 50% 	-> pwm 50% of back emf;
+			//braking 90% 	-> pwm 40% of back emf;
+			//braking 100% 	-> pwm 37.5% of back emf;
+
+			break;
+			//			Motor_SetRamp_Rate(p_motor, 0U, -(int32_t)brake / 4U);
+
 		default :
 			break;
+	}
+
+	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
+	{
+		PID_SetIntegral(&p_motor->PidSpeed, p_motor->SpeedFeedback_Frac16);
 	}
 
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DECELERATE);

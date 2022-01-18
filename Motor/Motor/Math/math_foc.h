@@ -34,7 +34,7 @@
 
 #include "Math/Q/QFrac16.h"
 
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@brief	Transform 3-phase (120 degree) stationary reference frame quantities: Ia, Ib, Ic
 			into 2-axis orthogonal stationary reference frame quantities: Ialpha and Ibeta
@@ -53,7 +53,7 @@
 	Ialpha = Ia
 	Ibeta = (Ib - Ic)/sqrt(3)
  */
-/*******************************************************************************/
+/******************************************************************************/
 static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b, qfrac16_t c)
 {
 	int32_t alpha, beta;
@@ -67,7 +67,7 @@ static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t
 	return;
 }
 
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@brief	2-Phase Version
 
@@ -80,7 +80,7 @@ static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t
 	@param[in] Ib
 	@return  void
   */
-/*******************************************************************************/
+/******************************************************************************/
 static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b)
 {
 	int32_t beta;
@@ -93,7 +93,7 @@ static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac1
 	return;
 }
 
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@brief	Inverse Clark
 
@@ -102,7 +102,7 @@ static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac1
 	C = (-alpha - sqrt3*beta)/2
 
  */
-/*******************************************************************************/
+/******************************************************************************/
 static inline void foc_invclarke(qfrac16_t * p_A, qfrac16_t * p_B, qfrac16_t * p_C, qfrac16_t alpha, qfrac16_t beta)
 {
 	int32_t b, c;
@@ -116,7 +116,7 @@ static inline void foc_invclarke(qfrac16_t * p_A, qfrac16_t * p_B, qfrac16_t * p
 	*p_C = qfrac16_sat(c);
 }
 
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@brief  Transforms 2-axis orthogonal stationary reference frame quantities: Ialpha and Ibeta
 			into 2-axis orthogonal rotor synchronous reference frame quantities: Id and Iq.
@@ -131,7 +131,7 @@ static inline void foc_invclarke(qfrac16_t * p_A, qfrac16_t * p_B, qfrac16_t * p
 	@param[in] theta - rotating frame angle in q1.15 format
 	@return void
   */
-/*******************************************************************************/
+/******************************************************************************/
 static inline void foc_park(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t alpha, qfrac16_t beta, qangle16_t theta)
 {
 	qfrac16_t cos, sin;
@@ -160,14 +160,14 @@ static inline void foc_park_vector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t a
 	*p_q = qfrac16_sat(q);
 }
 
-/*******************************************************************************/
+/******************************************************************************/
 /*!
 	@brief  Inverse Park
 
 	alpha = d*cos(theta) - q*sin(theta)
 	beta = d*sin(theta) + q*cos(theta)
   */
-/*******************************************************************************/
+/******************************************************************************/
 static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t d, qfrac16_t q, qangle16_t theta)
 {
 	qfrac16_t cos, sin;

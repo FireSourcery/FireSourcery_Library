@@ -37,7 +37,7 @@
 
 #define MC_SHELL_CMD_COUNT		 	10U
 #define MC_SHELL_CMD_STATUS_COUNT 	1U
-#define MC_SHELL_PERIOD_MILLIS			1000U
+#define MC_SHELL_PERIOD_MILLIS		5000U
 
 //typedef enum
 //{

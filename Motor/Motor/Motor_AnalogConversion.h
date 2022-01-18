@@ -32,7 +32,7 @@
 #define MOTOR_ANALOG_CONVERSION_H
 
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
-
+#include "Motor.h"
 
 /*
  * Misra violation
@@ -52,5 +52,7 @@ extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_HEAT;
 //extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_FOC_IABC;
 //extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_FOC_REMAINDER;
 //extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_IDLE;
+
+extern void Motor_CapturePwmOnFlag(Motor_T * p_motor);
 
 #endif

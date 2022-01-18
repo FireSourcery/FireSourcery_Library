@@ -126,6 +126,8 @@ MotAnalogUser_T;
 	.PinReverse 	= DEBOUNCE_CONFIG(p_Reverse_PinHal, 	Reverse_PinId, 		p_Millis),  	\
 }
 
+/// todo EnablePin option check on cpature or read
+
 static inline bool MotAnalogUser_GetThrottleSwitch(const MotAnalogUser_T * p_user) 		{return (p_user->Params.EnablePinThrottle 	== true) ? Debounce_GetState(&p_user->PinThrottle) 	: (p_user->Throttle_Frac16 	> 0U);	}
 static inline bool MotAnalogUser_GetBrakeSwitch(const MotAnalogUser_T * p_user) 		{return (p_user->Params.EnablePinBrake 		== true) ? Debounce_GetState(&p_user->PinBrake) 	: (p_user->Brake_Frac16 	> 0U);	}
 
@@ -196,8 +198,8 @@ static inline uint16_t MotAnalogUser_GetThrottleValue(const MotAnalogUser_T * p_
 static inline uint16_t MotAnalogUser_GetBrakeValue(const MotAnalogUser_T * p_user)		{return p_user->Brake_Frac16;}
 static inline bool MotAnalogUser_GetForwardSwitch(const MotAnalogUser_T * p_user) 		{return Debounce_GetState(&p_user->PinForward);}
 static inline bool MotAnalogUser_GetReverseSwitch(const MotAnalogUser_T * p_user) 		{return Debounce_GetState(&p_user->PinReverse);}
-static inline uint16_t MotAnalogUser_GetThrottle(const MotAnalogUser_T * p_user) 	{return (MotAnalogUser_GetThrottleSwitch(p_user) == true) 	? p_user->Throttle_Frac16	: 0U; }
-static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user) 		{return (MotAnalogUser_GetBrakeSwitch(p_user) == true) 		? p_user->Brake_Frac16 		: 0U; }
+static inline uint16_t MotAnalogUser_GetThrottle(const MotAnalogUser_T * p_user) 		{return (MotAnalogUser_GetThrottleSwitch(p_user) == true) 	? p_user->Throttle_Frac16	: 0U; }
+static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user) 			{return (MotAnalogUser_GetBrakeSwitch(p_user) == true) 		? p_user->Brake_Frac16 		: 0U; }
 
 static inline bool MotAnalogUser_CheckThrottleRelease(const MotAnalogUser_T * p_user)
 {

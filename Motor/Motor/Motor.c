@@ -102,9 +102,14 @@ void Motor_InitReboot(Motor_T * p_motor)
 		Encoder_SetQuadratureDirectionCalibration(&p_motor->Encoder, p_motor->Parameters.EncoderIsALeadBPositive);
 		FOC_Init(&p_motor->Foc);
 	}
-	else
+	else //senorless/ openloop
 	{
 		//FOC sensorless
+//		p_motor->Parameters.PolePairs * 6U
+		Encoder_Motor_InitCaptureCount(&p_motor->Encoder, 0, p_motor->Parameters.EncoderDistancePerCount, p_motor->Parameters.PolePairs);
+		Encoder_SetQuadratureMode(&p_motor->Encoder, p_motor->Parameters.EncoderIsQuadratureModeEnabled);
+		Encoder_SetQuadratureDirectionCalibration(&p_motor->Encoder, p_motor->Parameters.EncoderIsALeadBPositive);
+		FOC_Init(&p_motor->Foc);
 	}
 
 	/*
@@ -115,11 +120,11 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 
 	/*
-	 * Timer only mode, no function attached
+	 *
 	 */
 	Timer_InitPeriodic(&p_motor->ControlTimer, 	1U);
 	Timer_InitPeriodic(&p_motor->MillisTimer, 	1U);
-//	Timer_InitPeriodic(&p_motor->SecondsTimer, 	1000U);
+	Timer_InitPeriodic(&p_motor->SpeedTimer, 	1U);
 
 	/*
 	 * Initial runtime config settings
@@ -212,20 +217,160 @@ void Motor_SetCalibrationStateEncoder(Motor_T * p_motor)	{p_motor->CalibrationSt
 static void StartMotorCalibrateCommon(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase = 0U;
-	Phase_Ground(&p_motor->Phase);
+	Phase_Ground(&p_motor->Phase); //activates abc
+	//	p_motor->CalibrationSubstateStep = 0U;
 }
 
-//void Motor_StartCalibrateAdc(Motor_T * p_motor)
+/*
+ * Calibrate Current ADC
+ */
+void Motor_StartCalibrateAdc(Motor_T * p_motor)
+{
+	StartMotorCalibrateCommon(p_motor);
+	Timer_StartPeriod(&p_motor->ControlTimer, 100000U); // Motor.Parameters.AdcCalibrationTime
+//	FOC_SetZero(&p_motor->Foc);
+//	Phase_ActuateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc)); //sets 0 current output
+
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VA);
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VB);
+//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VC);
+
+	p_motor->AnalogResults.Ia_ADCU = 2000U;
+	p_motor->AnalogResults.Ib_ADCU = 2000U;
+	p_motor->AnalogResults.Ic_ADCU = 2000U;
+
+	Filter_MovAvg_InitN(&p_motor->FilterA, 2000U, 100U);
+	Filter_MovAvg_InitN(&p_motor->FilterB, 2000U, 100U);
+	Filter_MovAvg_InitN(&p_motor->FilterC, 2000U, 100U);
+}
+
+bool Motor_CalibrateAdc(Motor_T *p_motor)
+{
+	bool isComplete = Timer_Poll(&p_motor->ControlTimer);
+
+	if (isComplete == true)
+	{
+		Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
+		Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
+		Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
+		Phase_Float(&p_motor->Phase);
+//		save params
+	}
+	else
+	{
+		p_motor->Parameters.IaZero_ADCU = Filter_MovAvg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
+		p_motor->Parameters.IbZero_ADCU = Filter_MovAvg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
+		p_motor->Parameters.IcZero_ADCU = Filter_MovAvg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
+
+		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
+		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
+		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
+	}
+
+	return isComplete;
+}
+/*
+ * Calibrate Current ADC
+ */
+
+//
+//static inline bool Motor_SixStep_CalibrateAdc(Motor_T *p_motor)
 //{
-//	StartMotorCalibrateCommon(p_motor);
-//	Timer_StartPeriod(&p_motor->ControlTimer, 20000U);//Motor.Parameters.AdcCalibrationTime
+////	bool isComplete = false;
 //
+////	 Timer_Poll(&p_motor->ControlTimer);
+//
+////	switch(p_motor->CalibrationSubstateStep)
+////	{
+////		case 0U :
+////			Filter_MovAvg_InitN(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU, 1000U);
+////			Filter_MovAvg_InitN(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU, 1000U);
+////			Filter_MovAvg_InitN(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU, 1000U);
+////			p_motor->CalibrationSubstateStep = 1U;
+////			break;
+////
+////		case 1U:
+////			if (Timer_Poll(&p_motor->ControlTimer) == false)
+////			{
+////				p_motor->Parameters.IaZero_ADCU = Filter_MovAvg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
+////				p_motor->Parameters.IbZero_ADCU = Filter_MovAvg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
+////				p_motor->Parameters.IcZero_ADCU = Filter_MovAvg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
+////
+////				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
+////				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
+////				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
+////			}
+////			else
+////			{
+////				p_motor->CalibrationSubstateStep = 2U;
+////			}
+////			break;
+////
+////		case 2U:
+////
+////			if (Timer_Poll(&p_motor->ControlTimer) == true)
+////			{
+////				Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
+////				Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
+////				Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
+////				p_motor->CalibrationSubstateStep = 4U;
+////			}
+////			else
+////			{
+////				p_motor->Parameters.IaZero_ADCU = Filter_MovAvg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
+////				p_motor->Parameters.IbZero_ADCU = Filter_MovAvg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
+////				p_motor->Parameters.IcZero_ADCU = Filter_MovAvg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
+////
+////				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
+////				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
+////				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
+////			}
+////
+////			//get bemf offset
+//////		case 3U:
+//////			Filter_MovAvg_InitN(&p_motor->FilterA, p_motor->AnalogResults.Va_ADCU, 1000U);
+//////			Filter_MovAvg_InitN(&p_motor->FilterB, p_motor->AnalogResults.Vb_ADCU, 1000U);
+//////			Filter_MovAvg_InitN(&p_motor->FilterC, p_motor->AnalogResults.Vc_ADCU, 1000U);
+////
+////		case 4U:
+////
+////			isComplete = true;
+////
+////
+////		default :
+////			break;
+////	}
+//
+//	bool isComplete = Timer_Poll(&p_motor->ControlTimer);
+//
+//	if (isComplete == true)
+//	{
+//		Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
+//		Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
+//		Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
+//		Phase_Float(&p_motor->Phase);
+////		save params
+//	}
+//	else
+//	{
+//		p_motor->Parameters.IaZero_ADCU = Filter_MovAvg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
+//		p_motor->Parameters.IbZero_ADCU = Filter_MovAvg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
+//		p_motor->Parameters.IcZero_ADCU = Filter_MovAvg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
+//
+//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
+//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
+//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
+//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VA);
+//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VB);
+//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VC);
+//	}
+//
+//	return isComplete;
 //}
-//
-//bool Motor_CalibrateAdc(Motor_T *p_motor)
-//{
-//
-//}
+
 
 void Motor_StartCalibrateEncoder(Motor_T * p_motor)
 {

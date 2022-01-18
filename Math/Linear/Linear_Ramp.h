@@ -46,29 +46,19 @@
 static inline void Linear_Ramp_InitSlope(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t initial, int32_t final, int32_t slope_UnitPerSecond)
 {
 	Linear_Init(p_linear, slope_UnitPerSecond, updateFreq_Hz, initial, final);
-
-	//	p_linear->SlopeFactor 			= ((int32_t)factor << 16U) / divisor;
-	//	p_linear->SlopeDivisor_Shift 	= 16U;
-	//	p_linear->SlopeDivisor 			= ((int32_t)divisor << 16U) / factor; //InvF factor
-	//	p_linear->SlopeFactor_Shift 	= 16U;
-	//	p_linear->Intercept 			= intercept << 16U;
-	//	p_linear->RangeReference 		= rangeRef;
 }
 
 /*
- *  Overflow: (peroid_Ms * updateFreq_Hz / 1000U) max 32,767
+ *  Overflow: (peroid_Ms * updateFreq_Hz ) max 32,767,000
+ *  (peroid_Ms * updateFreq_Hz) max 327,670,000
+ *
+ *  (final - initial)  max 3276
  */
 static inline void Linear_Ramp_InitMillis(Linear_T * p_linear, uint16_t updateFreq_Hz, int32_t initial, int32_t final, uint16_t peroid_Ms)
 {
-	Linear_Init(p_linear, (final - initial), (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, initial, final);
+//	Linear_Init(p_linear, (final - initial)*10U, (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 10000U, initial, final);
 
-	//configurable shift
-//	p_linear->SlopeFactor 			= ((int32_t)factor << 16U) / divisor;
-//	p_linear->SlopeDivisor_Shift 	= 16U;
-//	p_linear->SlopeDivisor 			= ((int32_t)divisor << 16U) / factor; //InvF factor
-//	p_linear->SlopeFactor_Shift 	= 16U;
-//	p_linear->Intercept 			= intercept << 16U;
-//	p_linear->RangeReference 		= rangeRef;
+	Linear_Init_Shift(p_linear, (final - initial) , (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, initial, final, 14U);
 }
 
 static inline int32_t Linear_Ramp_GetFinal(Linear_T * p_linear)
