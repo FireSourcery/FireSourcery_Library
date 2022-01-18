@@ -81,10 +81,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Phase_Init(&p_motor->Phase);
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
 
-	PID_Init(&p_motor->PidSpeed);
-	PID_Init(&p_motor->PidIq);
-	PID_Init(&p_motor->PidId);
-	PID_Init(&p_motor->PidIBus);
 
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
 	{
@@ -116,12 +112,12 @@ void Motor_InitReboot(Motor_T * p_motor)
 	 * SW Structs
 	 */
 	BEMF_Init(&p_motor->Bemf);
-//	p_motor->p_BemfConversionActive = &p_motor->CONFIG.CONVERSION_BEMF_A;
 
+	PID_Init(&p_motor->PidSpeed);
+	PID_Init(&p_motor->PidIq);
+	PID_Init(&p_motor->PidId);
+	PID_Init(&p_motor->PidIBus);
 
-	/*
-	 *
-	 */
 	Timer_InitPeriodic(&p_motor->ControlTimer, 	1U);
 	Timer_InitPeriodic(&p_motor->MillisTimer, 	1U);
 	Timer_InitPeriodic(&p_motor->SpeedTimer, 	1U);
@@ -135,11 +131,9 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp); //scales 4095 to physical units. alternatively use opamp equation
 	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
 	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
-
 	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage
 
 	p_motor->Direction 				= MOTOR_DIRECTION_CCW;
-//	p_motor->DirectionInput 		= MOTOR_DIRECTION_CCW;
 	p_motor->Speed_RPM 				= 0U;
 	p_motor->VPwm 					= 0U;
 	p_motor->ControlTimerBase 		= 0U;

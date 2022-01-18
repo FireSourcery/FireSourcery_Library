@@ -210,7 +210,7 @@ static inline void foc_limitvector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t v
 	}
 }
 
-//prioritize maintaining d
+// prioritize maintaining d
 static inline void foc_limitvector_dmax(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax, qfrac16_t dMax)
 {
 	int32_t vectorMaxSquared = (int32_t)vectorMax * (int32_t)vectorMax; //max 32767*32767;

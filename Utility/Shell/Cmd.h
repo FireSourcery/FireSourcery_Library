@@ -34,7 +34,6 @@
 #include <stdint.h>
 
 typedef int (*Cmd_Function_T)(void * p_context, int argc, char * argv[]);
-
 typedef int (*Cmd_Loop_T)(void * p_context);
 
 typedef const struct
@@ -43,11 +42,9 @@ typedef const struct
     const char * const P_HELP;
     const Cmd_Function_T FUNCTION;
     const Cmd_Loop_T LOOP;
-//    Cmd_Type_T
     // ArgCMax;
 }
 Cmd_T;
-
 
 #define CMD_RESERVED_RETURN_CODE_SUCCESS 		(0U)
 #define CMD_RESERVED_RETURN_CODE_INVALID_ARGS 	(-1) //Must be implement at cmd function level / per cmd function
@@ -68,10 +65,7 @@ typedef const struct
 }
 Cmd_Status_T;
 
-
-//#ifdef SHELL_OPTION_USE_ARRAY_TABLE
 #define CMD_ENTRY(CmdName, CmdHelpString, CmdFunction) { (#CmdName), (CmdHelpString), (CmdFunction) }
 #define CMD_RETURN_ENTRY(ReturnCode) { (ReturnCode), (#ReturnCode) }
-//#endif
 
 #endif

@@ -309,7 +309,7 @@ static void ActivateMotorSixStepAnalogPhase(Motor_T * p_motor, const AnalogN_Con
 	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_vPhase);
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_iPhase);
-//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VPOS);
+//		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VPOS);
 	//should not start until middle of pwm cycle
 	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_PWM_ON);
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_vPhase);
@@ -388,30 +388,6 @@ static inline void Motor_SixStep_StartOpenLoop(Motor_T * p_motor)
 	p_motor->NextPhase = (p_motor->Direction == MOTOR_DIRECTION_CCW) ? MOTOR_PHASE_BC : MOTOR_PHASE_AB;
 }
 
-//static inline void Motor_SixStep_ProcOpenLoop(Motor_T * p_motor)
-//{
-//	p_motor->VPwm = p_motor->RampCmd; //p_motor->Parameters.OpenLoopVPwm_Frac16 +
-//
-//	// bound to 2.5 to 10 percent
-////	if 		(p_motor->VPwm < p_motor->Parameters.OpenLoopVPwmMin)	{ p_motor->VPwm = p_motor->Parameters.OpenLoopVPwmMin;}
-////	else if (p_motor->VPwm > p_motor->Parameters.OpenLoopVPwmMax)	{ p_motor->VPwm = p_motor->Parameters.OpenLoopVPwmMax;}
-//
-//	if(Motor_SixStep_PollOpenLoop(p_motor) == true)
-//	{
-//		p_motor->CommutationPhase = p_motor->NextPhase;
-//
-////		Encoder_DeltaT_Capture(&p_motor->Encoder);
-////		Encoder_DeltaT_CaptureExtendedTimer(&p_motor->Encoder);
-//
-//		MapMotorSixStepBemfPhase(p_motor);
-//		BEMF_CapturePhaseReference(&p_motor->Bemf); //set reference
-//		ActivateMotorSixStepCommutation(p_motor);
-//	}
-//	else
-//	{
-//		BEMF_ProcZeroCrossingDetection(&p_motor->Bemf); //  poll zcd with prev capture
-//	}
-//}
 
 static inline bool Motor_SixStep_GetBemfReliable(Motor_T * p_motor) {return BEMF_GetIsReliable(&p_motor->Bemf);}
 
@@ -422,6 +398,12 @@ static inline bool PollMotorSixStepCommutation(Motor_T * p_motor)
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_OPEN_LOOP :
+			//	p_motor->VPwm = p_motor->RampCmd; //p_motor->Parameters.OpenLoopVPwm_Frac16 +
+			//
+			//	// bound to 2.5 to 10 percent
+			////	if 		(p_motor->VPwm < p_motor->Parameters.OpenLoopVPwmMin)	{ p_motor->VPwm = p_motor->Parameters.OpenLoopVPwmMin;}
+			////	else if (p_motor->VPwm > p_motor->Parameters.OpenLoopVPwmMax)	{ p_motor->VPwm = p_motor->Parameters.OpenLoopVPwmMax;}
+			//
 			if(Motor_SixStep_PollOpenLoop(p_motor) == true)
 			{
 				p_motor->CommutationPhase = p_motor->NextPhase;

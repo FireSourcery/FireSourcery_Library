@@ -38,42 +38,55 @@
 
 void Protocol_Init(Protocol_T * p_protocol)
 {
-	p_protocol->RxState 	= PROTOCOL_RX_STATE_INACTIVE;
-	p_protocol->ReqState 	= PROTOCOL_REQ_STATE_INACTIVE;
+	if(p_protocol->CONFIG.P_PARAMS != 0U)
+	{
+		memcpy(&p_protocol->Params, p_protocol->CONFIG.P_PARAMS, sizeof(Protocol_Params_T));
+	}
+
+	if (p_protocol->Params.p_Specs != 0U)
+	{
+		Protocol_SetSpecs(p_protocol, p_protocol->Params.p_Specs);
+	}
+
+	if (p_protocol->Params.p_Xcvr != 0U)
+	{
+		Protocol_SetXcvr(p_protocol, p_protocol->Params.p_Xcvr);
+	}
+
+	if (p_protocol->Params.IsEnable == true)
+	{
+		Protocol_Enable(p_protocol);
+	}
+	else
+	{
+		Protocol_Disable(p_protocol);
+	}
 
 	p_protocol->RxIndex 	= 0U;
 	p_protocol->TxLength 	= 0U;
 	p_protocol->p_ReqActive = 0U;
-
-	if(p_protocol->CONFIG.P_PARAMS != 0U)
-	{
-		Protocol_SetSpecs(p_protocol, p_protocol->CONFIG.P_PARAMS->p_Specs);
-		Protocol_SetPort(p_protocol, p_protocol->CONFIG.P_PARAMS->p_Port);
-	}
-
-	Protocol_Enable(p_protocol);
 }
 
 void Protocol_SetSpecs(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs)
 {
 	if (p_specs->RX_LENGTH_MAX < p_protocol->CONFIG.PACKET_BUFFER_LENGTH)
 	{
-		p_protocol->p_Specs = p_specs;
-		if (p_protocol->p_Specs->BAUD_RATE_DEFAULT != 0U)
+		p_protocol->Params.p_Specs = p_specs;
+		if (p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT != 0U)
 		{
-			Serial_ConfigBaudRate(p_protocol->p_Port, p_protocol->p_Specs->BAUD_RATE_DEFAULT);
+			Serial_ConfigBaudRate(p_protocol->Params.p_Xcvr, p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT);
 		}
 	}
 }
 
-void Protocol_SetPort(Protocol_T * p_protocol, void * p_transceiver)
+void Protocol_SetXcvr(Protocol_T * p_protocol, void * p_transceiver)
 {
-	p_protocol->p_Port = p_transceiver;
+	p_protocol->Params.p_Xcvr = p_transceiver;
 }
 
 bool Protocol_Enable(Protocol_T * p_protocol)
 {
-	bool isEnable = (p_protocol->p_Port != 0U && p_protocol->p_Specs != 0U);
+	bool isEnable = (p_protocol->Params.p_Xcvr != 0U && p_protocol->Params.p_Specs != 0U);
 
 	if (isEnable == true)
 	{
@@ -97,18 +110,18 @@ void Protocol_Disable(Protocol_T * p_protocol)
 
 static inline bool PortRxByte(Protocol_T * p_protocol,   uint8_t * p_rxChar)
 {
-	return Serial_RecvChar(p_protocol->p_Port, p_rxChar);
+	return Serial_RecvChar(p_protocol->Params.p_Xcvr, p_rxChar);
 //		return Xcvr_RecvChar(p_protocol->p_Xcvr, p_rxChar);
 }
 
 static inline bool PortTxString(Protocol_T * p_protocol, const   uint8_t * p_string, uint16_t length)
 {
-	return (length > 0U) ? Serial_SendString(p_protocol->p_Port, p_string, length) : false;
+	return (length > 0U) ? Serial_SendString(p_protocol->Params.p_Xcvr, p_string, length) : false;
 }
 
 //static inline void PortFlushBuffers(Protocol_T * p_protocol)
 //{
-//	Serial_FlushBuffers(p_protocol->p_Port);
+//	Serial_FlushBuffers(p_protocol->Params.p_Port);
 //}
 
 /*
@@ -124,11 +137,11 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 	{
 		p_protocol->RxIndex++;
 
-		if (p_protocol->RxIndex >= p_protocol->p_Specs->RX_LENGTH_MIN)
+		if (p_protocol->RxIndex >= p_protocol->Params.p_Specs->RX_LENGTH_MIN)
 		{
-			if (p_protocol->RxIndex <= p_protocol->p_Specs->RX_LENGTH_MAX)
+			if (p_protocol->RxIndex <= p_protocol->Params.p_Specs->RX_LENGTH_MAX)
 			{
-				status = p_protocol->p_Specs->PARSE_RX(p_protocol->CONFIG.P_SUBSTATE_BUFFER, &p_protocol->ReqIdActive, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex);
+				status = p_protocol->Params.p_Specs->PARSE_RX(p_protocol->CONFIG.P_SUBSTATE_BUFFER, &p_protocol->ReqIdActive, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex);
 				if (status != PROTOCOL_RX_CODE_WAIT_PACKET)
 				{
 					break;
@@ -150,9 +163,9 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 
 static inline void ProcTxSync(Protocol_T * p_protocol, Protocol_TxSyncId_T txId)
 {
-	if (p_protocol->p_Specs->BUILD_TX_SYNC != 0U)
+	if (p_protocol->Params.p_Specs->BUILD_TX_SYNC != 0U)
 	{
-		p_protocol->p_Specs->BUILD_TX_SYNC(p_protocol->CONFIG.P_SUBSTATE_BUFFER, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, txId);
+		p_protocol->Params.p_Specs->BUILD_TX_SYNC(p_protocol->CONFIG.P_SUBSTATE_BUFFER, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, txId);
 		PortTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 	}
 }
@@ -172,9 +185,9 @@ static inline void ProcTxSync(Protocol_T * p_protocol, Protocol_TxSyncId_T txId)
 //	p_protocol->ReqState 	= PROTOCOL_REQ_STATE_WAIT_RX_REQ;
 //	p_protocol->ReqCode 	= PROTOCOL_REQ_CODE_COMPLETE;
 //
-//	if (p_protocol->p_Specs->RESET_SUBSTATE != 0U)
+//	if (p_protocol->Params.p_Specs->RESET_SUBSTATE != 0U)
 //	{
-//		p_protocol->p_Specs->RESET_SUBSTATE(p_protocol->CONFIG.P_SUBSTATE_BUFFER);
+//		p_protocol->Params.p_Specs->RESET_SUBSTATE(p_protocol->CONFIG.P_SUBSTATE_BUFFER);
 //	}
 //
 //	PortFlushBuffers(p_protocol);
@@ -204,7 +217,7 @@ static inline void ProcRxTimeout(Protocol_T * p_protocol)
 //}
 static inline void ProcRxTransitionWaitReq(Protocol_T * p_protocol)
 {
-//	if (p_protocol->p_Specs->USE_RX_PAUSE_ON_REQ == true)
+//	if (p_protocol->Params.p_Specs->USE_RX_PAUSE_ON_REQ == true)
 //	{
 //		p_protocol->RxTimeStart 	= *(p_protocol->CONFIG.P_TIMER);
 //		p_protocol->RxState 	= PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL;
@@ -230,7 +243,7 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 				/*
 				 * Use starting byte even if data is unencoded. first char can still be handled in separate state.
 				 */
-				if ((p_protocol->p_Specs->RX_START_ID == 0x00U) || (p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U] == p_protocol->p_Specs->RX_START_ID))
+				if ((p_protocol->Params.p_Specs->RX_START_ID == 0x00U) || (p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U] == p_protocol->Params.p_Specs->RX_START_ID))
 				{
 					p_protocol->RxIndex = 1U;
 //					ProcRxTransitionWaitPacket(p_protocol);
@@ -242,7 +255,7 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 			break;
 
 		case PROTOCOL_RX_STATE_WAIT_PACKET: /* nonblocking wait state, timer started */
-			if (*p_protocol->CONFIG.P_TIMER - p_protocol->RxTimeStart < p_protocol->p_Specs->RX_TIMEOUT)  /* no need to check for overflow if using millis */
+			if (*p_protocol->CONFIG.P_TIMER - p_protocol->RxTimeStart < p_protocol->Params.p_Specs->RX_TIMEOUT)  /* no need to check for overflow if using millis */
 			{
 				p_protocol->RxCode = BuildRxPacket(p_protocol);
 
@@ -296,7 +309,7 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 			 * cannot check for cancel without user req signal, persistent wait process
 			 * rx can queue out of sequence. invalid TxRx sequence until timeout buffer flush
 			 */
-//			if (*p_protocol->CONFIG.P_TIMER - p_protocol->TimeStart < p_protocol->p_Specs->REQ_TIMEOUT)
+//			if (*p_protocol->CONFIG.P_TIMER - p_protocol->TimeStart < p_protocol->Params.p_Specs->REQ_TIMEOUT)
 //			{
 //				if (p_protocol->ReqCode == PROTOCOL_REQ_CODE_COMPLETE)
 //			if(p_protocol->ReqCode != PROTOCOL_REQ_CODE_HOLD_RX)
@@ -339,9 +352,9 @@ static inline void ProcReqTimeout(Protocol_T * p_protocol)
 {
 	ProcTxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_TIMEOUT);
 	ProcReqReset(p_protocol);
-	if (p_protocol->p_Specs->RESET_SUBSTATE != 0U)
+	if (p_protocol->Params.p_Specs->RESET_SUBSTATE != 0U)
 	{
-		p_protocol->p_Specs->RESET_SUBSTATE(p_protocol->CONFIG.P_SUBSTATE_BUFFER);
+		p_protocol->Params.p_Specs->RESET_SUBSTATE(p_protocol->CONFIG.P_SUBSTATE_BUFFER);
 	}
 }
 
@@ -410,7 +423,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 
 	if((p_protocol->ReqState != PROTOCOL_REQ_STATE_INACTIVE) && (p_protocol->ReqState != PROTOCOL_REQ_STATE_WAIT_RX_REQ))
 	{
-		if(*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->p_Specs->REQ_TIMEOUT)
+		if(*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.p_Specs->REQ_TIMEOUT)
 		{
 			ProcReqTimeout(p_protocol);
 		}
@@ -425,7 +438,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 		case PROTOCOL_REQ_STATE_WAIT_RX_REQ:
 			if (p_protocol->RxCode == PROTOCOL_RX_CODE_REQ_ID)
 			{
-				p_protocol->p_ReqActive = SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, p_protocol->ReqIdActive);
+				p_protocol->p_ReqActive = SearchReqTable(p_protocol->Params.p_Specs->P_REQ_TABLE, p_protocol->Params.p_Specs->REQ_TABLE_LENGTH, p_protocol->ReqIdActive);
 
 				if (p_protocol->p_ReqActive != 0U)
 				{
@@ -657,7 +670,7 @@ void Protocol_Slave_Proc(Protocol_T * p_protocol)
 //			break;
 //
 //		case PROTOCOL_STATE_CMD_PROCESS:
-//			p_protocol->p_ReqFunction(p_protocol->p_Specs->P_BYTES_BUFFER);
+//			p_protocol->p_ReqFunction(p_protocol->Params.p_Specs->P_BYTES_BUFFER);
 //			p_protocol->State = PROTOCOL_STATE_INACTIVE;
 //			break;
 //

@@ -75,38 +75,10 @@ typedef struct PID_Tag
 {
 	const PID_Config_T CONFIG;
 	PID_Params_T Params;
-
-//#ifdef CONFIG_PID_MODE_POINTER
-//	volatile int32_t * p_Setpoint;		//Cmd
-//	volatile int32_t * p_Feedback;		//Process Variable
-//	volatile int32_t * p_Control; 		//Control Variable
-//#endif
-
-	//	uint32_t CalcFreq;
-//	PID_Mode_T	  		Mode;
-//	PID_Direction_T 	Direction;
-//	int32_t KpFactor;
-//	int32_t KpDivisor;
-//	int32_t KiFactor;
-//	int32_t KiDivisor;
-//	int32_t KdFactor;
-//	int32_t KdDivisor;
-//	int32_t OutMin;
-//	int32_t OutMax;
-//
-	int32_t KiDivisorFreq; 	//calculation frequency adjusted
-	int32_t KdFactorFreq; 	//calculation frequency adjusted
-
+	int32_t KiDivisorFreq; 	//KpDivisor * CalcFreq
+	int32_t KdFactorFreq; 	//KdFactor * CalcFreq
 	int32_t ErrorSum;
 	int32_t ErrorPrev;
-
-//	uint32_t SampleTime; 				// unit in timer ticks
-//	uint32_t TimerFreq;					// convert sample time to standard units
-//	volatile uint32_t CalcPeriod; 	// isr count per compute
-//	volatile uint32_t CalcCounter;
-
-//	uint32_t TimePrev;
-//	uint32_t InputPrev;
 }
 PID_T;
 
@@ -124,16 +96,13 @@ extern void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq);
 extern void PID_SetOutputLimits(PID_T * p_pid, uint32_t min, uint32_t max);
 extern void PID_SetDirection(PID_T * p_pid, PID_Direction_T direction);
 extern PID_Direction_T PID_GetDirection(PID_T *p_pid);
-extern void PID_Init_Args
+extern void PID_Init_Params
 (
 	PID_T * p_pid,
-//#ifdef CONFIG_PID_MODE_POINTER
-//	int32_t * p_setpoint, int32_t * p_feedback, int32_t * p_control,
-//#endif
+	uint32_t calcFreq,
 	int32_t kpFactor, int32_t kpDivisor,
 	int32_t kiFactor, int32_t kiDivisor,
 	int32_t kdFactor, int32_t kdDivisor,
-	uint32_t calcFreq,
 	int32_t outMin, int32_t outMax
 );
 

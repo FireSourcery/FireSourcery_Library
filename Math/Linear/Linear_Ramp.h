@@ -71,7 +71,6 @@ static inline int32_t Linear_Ramp_CalcTarget(Linear_T * p_linear, uint32_t index
 	return Linear_Function(p_linear, index);
 }
 
-
 static inline int32_t Linear_Ramp_CalcTargetIncIndex(Linear_T * p_linear, uint32_t * p_index, uint32_t indexIncreament)
 {
 	int32_t rampValue = Linear_Function(p_linear, *p_index);

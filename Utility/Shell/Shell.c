@@ -37,10 +37,6 @@
 //#include <string.h>
 //#include <stddef.h>
 
-/*! @{ */
-////static const char * const CMD_PROMPT_STRING = "cmd> ";
-/*! @} */
-
 /******************************************************************************/
 /*!
  *  @name ShellState
@@ -185,9 +181,9 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 			}
 			else
 			{
-				if(*p_shell->CONFIG.P_TIMER - p_shell->LoopModeTime > p_shell->CONFIG.LOOP_PERIOD)
+				if(*p_shell->CONFIG.P_TIMER - p_shell->LoopModeTimeRef > p_shell->CONFIG.LOOP_PERIOD)
 				{
-					p_shell->LoopModeTime = *p_shell->CONFIG.P_TIMER;
+					p_shell->LoopModeTimeRef = *p_shell->CONFIG.P_TIMER;
 					p_shell->CmdReturnCode = p_shell->p_Cmd->LOOP(p_shell->CONFIG.P_CMD_CONTEXT);
 				}
 			}
@@ -203,15 +199,46 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 	return status;
 }
 
-void Shell_Init(Shell_T * p_shell)
+void Shell_Disable(Shell_T * p_shell)
+{
+	p_shell->State = SHELL_STATE_INACTIVE;
+}
+
+void Shell_Enable(Shell_T * p_shell)
 {
 	p_shell->State = SHELL_STATE_PROMPT;
 }
 
+void Shell_Init(Shell_T * p_shell)
+{
+	if(p_shell->CONFIG.P_PARAMS != 0U)
+	{
+		memcpy(&p_shell->Params, p_shell->CONFIG.P_PARAMS, sizeof(Shell_Params_T));
+	}
 
-//void Shell_SetCom(Shell_T * p_shell, void * p_terminalConnect)
+	if (p_shell->Params.p_Xcvr != 0U)
+	{
+		Terminal_SetXcvr(&p_shell->Terminal, p_shell->Params.p_Xcvr);
+
+		if (p_shell->Params.BaudRate != 0U)
+		{
+			Serial_ConfigBaudRate(p_shell->Params.p_Xcvr, p_shell->Params.BaudRate);
+		}
+	}
+
+	if (p_shell->Params.IsEnable == true)
+	{
+		Protocol_Enable(p_shell);
+	}
+	else
+	{
+		p_shell->State = SHELL_STATE_INACTIVE;
+	}
+}
+
+//void Shell_SetXcvr(Shell_T * p_shell, void * p_xcvr)
 //{
-//	Terminal_Init(&p_shell->Terminal, p_terminalConnect);
+//	Terminal_SetXcvr(&p_shell->Terminal, p_xcvr);
 //}
 
 

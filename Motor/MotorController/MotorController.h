@@ -96,15 +96,10 @@ MotorController_Once_T;
 
 typedef struct __attribute__((aligned (4U))) //CONFIG_PARAMS_ALIGN_SIZE
 {
-	//	const uint8_t application_config;
-	//	const uint8_t startup_wait_time;
-//	uint8_t ShellConnectId;
-//	uint8_t ProtocolDataLinkId[1]; //per protocol
+	//UI provide id to pointer conversion
+//	bool EnableShell;
+//	Serial_T * p_ShellXcvr;
 
-	//	uint8_t ProtocolSpecsId[CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT];
-
-	uint8_t MainProtocolXcvrId;
-	uint8_t MainProtocolSpecsId;
 	MotorController_InputMode_T InputMode;
 	bool IsBuzzerOnReverseEnable;
 }
@@ -139,7 +134,6 @@ typedef const struct
 	const AnalogN_Conversion_T CONVERSION_BRAKE;
 	const AnalogN_AdcFlags_T ADCS_ACTIVE_MAIN_THREAD;
 
-
 	Protocol_T * const P_PROTOCOLS; //Simultaneously active protocols
 	const uint8_t PROTOCOL_COUNT;
 
@@ -147,9 +141,6 @@ typedef const struct
 	//todo move to ProtocolN module
 	const Protocol_Specs_T ** const P_PROTOCOL_SPECS_TABLE;
 	const uint8_t PROTOCOL_SPECS_COUNT;
-
-	//move to Xcvr module
-	void ** const P_XCVR_TABLE;
 
 	const Pin_T PIN_METER;
 	const Pin_T PIN_COIL;

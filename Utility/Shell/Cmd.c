@@ -85,23 +85,6 @@ Cmd_T * Cmd_Search(const Cmd_T * p_cmdTable, uint8_t tableLength, const char * p
 	return p_cmd;
 }
 
-//Cmd_Function_T Cmd_SearchFunction(const Cmd_T * p_cmdTable, uint8_t tableLength, const char * p_cmdName)
-//{
-//	Cmd_Function_T p_function;
-//	Cmd_T * p_cmd = Cmd_Search(p_cmdTable, tableLength, p_cmdName);
-//
-//	if(p_cmd == 0)
-//	{
-//		p_function = 0;
-//	}
-//	else
-//	{
-//		p_function = p_cmd->FUNCTION;
-//	}
-//
-//	return p_function;
-//}
-
 const char * Cmd_SearchReturnString(const Cmd_Status_T * p_returnTable, uint8_t tableLength, int returnCodeId)
 {
 //#ifdef SHELL_OPTION_USE_ARRAY_TABLE

@@ -34,7 +34,7 @@
 
 #include <stdio.h>
 
-void Terminal_Init(Terminal_T * p_terminal )
+void Terminal_Init(Terminal_T * p_terminal)
 {
 	//#ifdef CONFIG_SHELL_USE_SERIAL
 //	p_terminal->p_Serial = p_connect;
@@ -42,9 +42,9 @@ void Terminal_Init(Terminal_T * p_terminal )
 	p_terminal->CursorIndex = 0;
 }
 
-void Terminal_SetXcvr(Terminal_T * p_terminal, void * p_connect)
+void Terminal_SetXcvr(Terminal_T * p_terminal, void * p_xcvr)
 {
-	p_terminal->p_Serial = p_connect;
+	p_terminal->p_Serial = p_xcvr;
 }
 
 

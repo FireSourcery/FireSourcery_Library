@@ -119,7 +119,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 
 		for(uint8_t iProtocol = 0U; iProtocol < p_controller->CONFIG.PROTOCOL_COUNT; iProtocol++)
 		{
-//			Protocol_Slave_Proc(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
+			Protocol_Slave_Proc(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
 		}
 
 //		for (uint8_t iSerial = 0U; iSerial < p_controller->CONFIG.SERIAL_COUNT; iSerial++)

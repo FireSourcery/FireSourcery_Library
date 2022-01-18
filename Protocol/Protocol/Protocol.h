@@ -228,8 +228,9 @@ Protocol_ReqState_T;
 
 typedef struct
 {
+	void * p_Xcvr;
 	const Protocol_Specs_T * p_Specs;
-	void * p_Port;
+	bool IsEnable;
 }
 Protocol_Params_T;
 
@@ -264,11 +265,8 @@ Protocol_Config_T;
 
 typedef struct Protocol_Tag
 {
-	//compile time consts config
-	const Protocol_Config_T CONFIG;
-	//run time config
-	const Protocol_Specs_T * p_Specs;
-	Serial_T * p_Port; //runtime configurable io port or const?
+	const Protocol_Config_T CONFIG;	//compile time consts config
+	Protocol_Params_T Params;	//run time config
 //	Datagram_T Datagram;
 
 	//proc variables
@@ -291,7 +289,7 @@ Protocol_T;
 
 extern void Protocol_Init(Protocol_T * p_protocol);
 extern void Protocol_SetSpecs		(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs);
-extern void Protocol_SetPort		(Protocol_T * p_protocol, void * p_transceiver);
+extern void Protocol_SetXcvr		(Protocol_T * p_protocol, void * p_transceiver);
 extern void Protocol_Slave_Proc		(Protocol_T * p_protocol);
 extern bool Protocol_Enable(Protocol_T * p_protocol);
 extern void Protocol_Disable(Protocol_T * p_protocol);

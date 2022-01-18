@@ -33,7 +33,6 @@
 
 #include "Motor/Utility/MotAnalogUser/MotAnalogUser.h"
 #include "Motor/Utility/MotAnalogMonitor/MotAnalogMonitor.h"
-//#include "Motor/Utility/MotProtocol/MotProtocol.h"
 
 #include "Motor/Motor/Motor.h"
 #include "Motor/Motor/Motor_User.h"
@@ -47,7 +46,7 @@
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 
-//#include "Utility/Shell/Shell.h"
+#include "Utility/Shell/Shell.h"
 #include "Utility/Timer/Timer.h"
 #include "Utility/StateMachine/StateMachine.h"
 
@@ -82,9 +81,8 @@ void MotorController_Init(MotorController_T * p_controller)
 
 	MotAnalogUser_Init(&p_controller->AnalogUser);
 	MotAnalogMonitor_Init(&p_controller->AnalogMonitor);
-	Debounce_Init(&p_controller->DIn, 5U);	//5millis
-
 	Blinky_Init(&p_controller->Buzzer);
+	Debounce_Init(&p_controller->DIn, 5U);	//5millis
 	Pin_Output_Init(&p_controller->CONFIG.PIN_COIL);
 	Pin_Output_Init(&p_controller->CONFIG.PIN_METER);
 
@@ -92,17 +90,15 @@ void MotorController_Init(MotorController_T * p_controller)
 	Timer_InitPeriodic(&p_controller->TimerMillis, 		1U);
 	Timer_InitPeriodic(&p_controller->TimerMillis10, 	10U);
 
-//	p_controller->SignalBufferAnalogMonitor.AdcFlags 	= 0U;
-//	p_controller->SignalBufferAnalogUser.AdcFlags 		= 0U;
-
 	for (uint8_t iProtocol = 0U; iProtocol < p_controller->CONFIG.PROTOCOL_COUNT; iProtocol++)
 	{
-//		Protocol_Init(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
+		Protocol_Init(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
 	}
 
-//	Serial_ConfigBaudRate(&p_controller->CONFIG.P_SERIALS[1U], 9600); //todo config
 	Shell_Init(&p_controller->Shell);
-	Terminal_SetXcvr(&p_controller->Shell.Terminal, &p_controller->CONFIG.P_SERIALS[1U]); //todo config
 
 	p_controller->MainDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
+
+	//	p_controller->SignalBufferAnalogMonitor.AdcFlags 	= 0U;
+	//	p_controller->SignalBufferAnalogUser.AdcFlags 		= 0U;
 }

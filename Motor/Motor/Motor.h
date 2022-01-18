@@ -232,7 +232,6 @@ typedef struct __attribute__ ((aligned (4U)))
 
 	//todo account for copy to ram twice
 	Phase_Mode_T				PhasePwmMode;
-	BEMF_SampleMode_T			BemfSampleMode;
 	uint32_t EncoderCountsPerRevolution;
 	uint32_t EncoderDistancePerCount;
 	bool EncoderIsQuadratureModeEnabled;
@@ -297,7 +296,7 @@ Motor_Config_T;
 
 typedef struct
 {
- 	const Motor_Config_T CONFIG;	//compile time const, unique per motor
+ 	const Motor_Config_T CONFIG;	// compile time const, unique per motor
  	Motor_Params_T Parameters; 		// load from eeprom
 	StateMachine_T 	StateMachine;
 
@@ -316,10 +315,10 @@ typedef struct
 //		AnalogN_AdcFlags_T SignalBufferFocRemainder;
 //		AnalogN_AdcFlags_T SignalBufferIdle;
 
-	volatile uint32_t ControlTimerBase;	 /*Control Freq ~ 20kHz, calibration, commutation, angle control. overflow at 20Khz, 59 hours*/
-	Timer_T ControlTimer; /*  State Timer, openloop, Bemf  */
+	volatile uint32_t ControlTimerBase;	 	/* Control Freq ~ 20kHz, calibration, commutation, angle control. overflow at 20Khz, 59 hours*/
+	Timer_T ControlTimer; 					/* State Timer, openloop, Bem */
 
-	Timer_T MillisTimer; //main millis thread
+	Timer_T MillisTimer; //  millis thread
 
 	//not const due to adc calibration
 	Linear_T UnitIa; 	//Frac16 and UserUnits (Amp)
@@ -332,13 +331,13 @@ typedef struct
 	Filter_T FilterB;
 	Filter_T FilterC;
 
-	Motor_Direction_T Direction; 		//active spin direction
+	Motor_Direction_T Direction; //active spin direction
 
 	Linear_T Ramp;
 	uint32_t RampIndex;
 	uint16_t RampCmd;			//SetPoint after ramp, VReq/IReq/SpeedReq
 
-	/* Feedback */
+	/* Speed Feedback */
 	PID_T PidSpeed;
 	Timer_T SpeedTimer;			// SpeedCalc Timer
 	uint16_t Speed_RPM;			// Common Feedback Variable
@@ -365,19 +364,18 @@ typedef struct
 
 	/* interpolated angle */
 	qangle16_t HallAngle;
-	qangle16_t ElectricalDeltaPrev;
+//	qangle16_t ElectricalDeltaPrev;
 	uint32_t InterpolatedAngleIndex;
 
 	/*
 	 * Six-Step
 	 */
 	PID_T PidIBus; //Six Step
-	Motor_SectorId_T NextPhase;		 	//for 6 step openloop/sensorless
-	Motor_SectorId_T CommutationPhase;	 //for 6 step openloop/sensorless
-//	uint32_t IBus_ADCU; 		//phase positive current
-	uint32_t IBus_Frac16;		//0-65535
-	uint32_t IBusPwmOn_Frac16; //returns 0 if correct
-	uint32_t IBusPwmOff_Frac16; //returns 0 if correct
+	Motor_SectorId_T NextPhase;		 		//for 6 step openloop/sensorless
+	Motor_SectorId_T CommutationPhase;	 	//for 6 step openloop/sensorless
+	uint32_t IBus_Frac16;
+	uint32_t IBusPwmOn_Frac16;
+	uint32_t IBusPwmOff_Frac16;
 	uint16_t VPwm; 				//Control Variable
 
 	volatile bool IsPwmOn;
@@ -389,21 +387,15 @@ typedef struct
 //	uint32_t JogSteps;
 //	uint32_t StepCount;
 
-
 	uint32_t VPos_Debug;
 	uint32_t Va_Debug;
 }
 Motor_T;
 
-/******************************************************************************/
-/*!
-	Common
-*/
-/******************************************************************************/
 
 /******************************************************************************/
 /*!
-	 From user input
+	 User Input Ramp
 */
 /******************************************************************************/
 static inline void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
@@ -422,10 +414,6 @@ static inline void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direc
 	}
 }
 
-
-/*
- * User Input Ramp
- */
 static inline void Motor_ProcRamp(Motor_T * p_motor)
 {
 	if (p_motor->RampCmd != Linear_Ramp_GetFinal(&p_motor->Ramp))
@@ -462,16 +450,18 @@ static inline void Motor_SetRamp_Rate(Motor_T * p_motor, uint16_t userCmdFinal, 
 	}
 }
 
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 
-/*
- * Common Speed PID Feedback Loop
- */
-static inline void Motor_ProcSpeedFeedbackLoop(Motor_T * p_motor)
-{
-	p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->SpeedFeedback_Frac16);
-}
 
-static inline bool Motor_PollSpeedFeedback(Motor_T * p_motor)
+/******************************************************************************/
+/*!
+	Speed
+*/
+/******************************************************************************/
+static inline bool Motor_PollCaptureSpeed(Motor_T * p_motor)
 {
 	bool captureSpeed = Timer_Poll(&p_motor->SpeedTimer);
 
@@ -479,11 +469,43 @@ static inline bool Motor_PollSpeedFeedback(Motor_T * p_motor)
 	{
 		p_motor->Speed_RPM = (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
 		p_motor->SpeedFeedback_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedMax_RPM);
+	}
 
-		if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
-		{
-			Motor_ProcSpeedFeedbackLoop(p_motor);
-		}
+	return captureSpeed;
+}
+
+static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
+{
+	if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder) == true) //once per millis
+	{
+		p_motor->Speed_RPM = 0U;
+		p_motor->SpeedFeedback_Frac16 = 0U;
+	}
+}
+
+static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
+{
+	return p_motor->Speed_RPM;
+}
+
+/*
+ * Common Speed PID Feedback Loop
+ */
+static inline void Motor_ProcSpeedFeedback(Motor_T * p_motor)
+{
+	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
+	{
+		p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->SpeedFeedback_Frac16);
+	}
+}
+
+static inline bool Motor_PollSpeedFeedback(Motor_T * p_motor)
+{
+	bool captureSpeed = Motor_PollCaptureSpeed(p_motor);
+
+	if (captureSpeed == true)
+	{
+ 		Motor_ProcSpeedFeedback(p_motor);
 	}
 
 	return captureSpeed;
@@ -498,6 +520,10 @@ static inline bool Motor_ResumeSpeedFeedback(Motor_T * p_motor)
 		Timer_Restart(&p_motor->SpeedTimer);
 	}
 }
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 
 /******************************************************************************/
 /*!
@@ -523,7 +549,6 @@ static inline void Motor_ProcIdle(Motor_T * p_motor)
 		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VB);
 		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VC);
 //		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_HEAT);
-
 		AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
 	}
 
@@ -541,12 +566,6 @@ static inline void Motor_ProcIdle(Motor_T * p_motor)
 	Wrappers
 */
 /******************************************************************************/
-static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
-{
-//	p_motor->SpeedFeedback_RPM = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);
-	return p_motor->Speed_RPM;
-}
-
 static inline void Motor_Float(Motor_T * p_motor)
 {
 	Phase_Float(&p_motor->Phase);
@@ -556,15 +575,6 @@ static inline void Motor_Stop(Motor_T * p_motor)
 {
 	Motor_Float(p_motor);
 	p_motor->ControlTimerBase = 0U; //ok to reset timer
-}
-
-static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
-{
-	if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder) == true) //once per millis
-	{
-		p_motor->Speed_RPM = 0U;
-		p_motor->SpeedFeedback_Frac16 = 0U;
-	}
 }
 
 

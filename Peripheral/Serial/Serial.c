@@ -42,28 +42,28 @@
  * if interrupt occurs after checking sw buffer, it will run to completion,
  * sw write occur in between hw read/write
  */
-static inline void EnterCriticalLocalTx(Serial_T * p_serial)
+static inline void EnterCriticalSerialTx(Serial_T * p_serial)
 {
 #if defined(CONFIG_SERIAL_SINGLE_THREADED)
 	HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 #endif
 }
 
-static inline void ExitCriticalLocalTx(Serial_T * p_serial)
+static inline void ExitCriticalSerialTx(Serial_T * p_serial)
 {
 #if defined(CONFIG_SERIAL_SINGLE_THREADED)
 	HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 #endif
 }
 
-static inline void EnterCriticalLocalRx(Serial_T * p_serial)
+static inline void EnterCriticalSerialRx(Serial_T * p_serial)
 {
 #if defined(CONFIG_SERIAL_SINGLE_THREADED)
 	HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 #endif
 }
 
-static inline void ExitCriticalLocalRx(Serial_T * p_serial)
+static inline void ExitCriticalSerialRx(Serial_T * p_serial)
 {
 #if defined(CONFIG_SERIAL_SINGLE_THREADED)
 	HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
@@ -233,13 +233,13 @@ bool Serial_SendChar(Serial_T * p_serial, uint8_t txChar)
 //	}
 //	else
 //	{
-		EnterCriticalLocalTx(p_serial);
+		EnterCriticalSerialTx(p_serial);
 		isSuccess = Queue_Enqueue(&p_serial->TxQueue, &txChar);
 		if (isSuccess == true)
 		{
 			HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 		}
-		ExitCriticalLocalTx(p_serial);
+		ExitCriticalSerialTx(p_serial);
 //	}
 	ExitCriticalGlobal();
 
@@ -253,15 +253,15 @@ bool Serial_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
 	EnterCriticalGlobal();
 //	if (Queue_GetIsEmpty(&p_serial->RxQueue) == true)
 //	{	//if rx interrupt occurs after checking software buffer, it will run to completion.
-//		EnterCriticalLocalRx(p_serial);
+//		EnterCriticalSerialRx(p_serial);
 //		isSuccess = Hw_RecvChar(p_serial, p_rxChar);
-//		ExitCriticalLocalRx(p_serial);
+//		ExitCriticalSerialRx(p_serial);
 //	}
 //	else
 //	{
-		EnterCriticalLocalRx(p_serial);
+		EnterCriticalSerialRx(p_serial);
 		isSuccess = Queue_Dequeue(&p_serial->RxQueue, p_rxChar);
-		ExitCriticalLocalRx(p_serial);
+		ExitCriticalSerialRx(p_serial);
 //	}
 	ExitCriticalGlobal();
 
@@ -300,10 +300,10 @@ uint32_t Serial_SendBytes(Serial_T * p_serial, const uint8_t * p_srcBuffer, size
 
 //		if (charCount < srcSize)
 //		{
-			EnterCriticalLocalTx(p_serial);
+			EnterCriticalSerialTx(p_serial);
 			charCount += Queue_EnqueueMax(&p_serial->RxQueue, p_srcBuffer, srcSize - charCount);
 			HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-			ExitCriticalLocalTx(p_serial);
+			ExitCriticalSerialTx(p_serial);
 //		}
 		ExitCriticalCommonTx(p_serial);
 	}
@@ -319,15 +319,15 @@ uint32_t Serial_RecvBytes(Serial_T * p_serial, uint8_t * p_destBuffer, size_t de
 	{
 //		if (Queue_GetIsEmpty(&p_serial->RxQueue) == true)
 //		{
-//			EnterCriticalLocalRx(p_serial);
+//			EnterCriticalSerialRx(p_serial);
 //			charCount += Hw_Recv(p_serial, p_destBuffer, destSize);
-//			ExitCriticalLocalRx(p_serial);
+//			ExitCriticalSerialRx(p_serial);
 //		}
 //		else
 //		{
-			EnterCriticalLocalRx(p_serial);
+			EnterCriticalSerialRx(p_serial);
 			charCount += Queue_DequeueMax(&p_serial->RxQueue, p_destBuffer, destSize);
-			ExitCriticalLocalRx(p_serial);
+			ExitCriticalSerialRx(p_serial);
 //		}
 		ExitCriticalCommonRx(p_serial);
 	}
@@ -343,10 +343,10 @@ bool Serial_SendString(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t 
 	{
 		if (Queue_GetEmptyCount(&p_serial->TxQueue) >= length)
 		{
-			EnterCriticalLocalTx(p_serial);
+			EnterCriticalSerialTx(p_serial);
 			Queue_EnqueueN(&p_serial->TxQueue, p_srcBuffer, length);
 			HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-			ExitCriticalLocalTx(p_serial);
+			ExitCriticalSerialTx(p_serial);
 			status = true;
 		}
 		ExitCriticalCommonTx(p_serial);
@@ -363,9 +363,9 @@ bool Serial_RecvString(Serial_T * p_serial, uint8_t * p_destBuffer, size_t lengt
 	{
 		if (Queue_GetFullCount(&p_serial->RxQueue) >= length)
 		{
-			EnterCriticalLocalRx(p_serial);
+			EnterCriticalSerialRx(p_serial);
 			Queue_DequeueN(&p_serial->RxQueue, p_destBuffer, length);
-			ExitCriticalLocalRx(p_serial);
+			ExitCriticalSerialRx(p_serial);
 			status = true;
 		}
 		ExitCriticalCommonRx(p_serial);
@@ -374,7 +374,32 @@ bool Serial_RecvString(Serial_T * p_serial, uint8_t * p_destBuffer, size_t lengt
 	return status;
 }
 
+bool Serial_SendCharString(Serial_T * p_serial, const uint8_t * p_srcBuffer)
+{
+	bool status = false;
 
+	const uint8_t * p_char = p_srcBuffer;
+
+	if (EnterCriticalCommonTx(p_serial) == true)
+	{
+		EnterCriticalSerialTx(p_serial);
+		while (*p_char != '\0')
+		{
+			status = Queue_Enqueue(&p_serial->TxQueue, p_char);
+			if (status == false)
+			{
+				break;
+			}
+			p_char++;
+		}
+		HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+		ExitCriticalSerialTx(p_serial);
+
+		ExitCriticalCommonTx(p_serial);
+	}
+
+	return status;
+}
 
 bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
 {

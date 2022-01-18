@@ -94,7 +94,7 @@ Terminal_T;
 
 static inline char Terminal_RecvChar(const Terminal_T * p_terminal)
 {
-	char rxChar = 0;
+	uint8_t rxChar = 0;
 	Serial_RecvChar(p_terminal->p_Serial, &rxChar);
 	return rxChar;
 }
@@ -111,7 +111,7 @@ static inline void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
 
 static inline void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str)
 {
-	const char * p_char = p_str;
+	const uint8_t * p_char = p_str;
 	uint8_t length = 0U;
 
 	while (*p_char != '\0')

@@ -119,10 +119,6 @@ void PID_SetOutputLimits(PID_T * p_pid, uint32_t min, uint32_t max)
 	{
 		p_pid->Params.OutMin = min;
 		p_pid->Params.OutMax = max;
-#ifdef CONFIG_PID_MODE_POINTER
-	   if		(*p_pid->p_Control > p_pid->OutMax) {*p_pid->p_Control = p_pid->OutMax;}
-	   else if	(*p_pid->p_Control < p_pid->OutMin) {*p_pid->p_Control = p_pid->OutMin;}
-#endif
 		if		(p_pid->ErrorSum > p_pid->Params.OutMax) {p_pid->ErrorSum = p_pid->Params.OutMax;}
 		else if	(p_pid->ErrorSum < p_pid->Params.OutMin) {p_pid->ErrorSum = p_pid->Params.OutMin;}
 	}
@@ -172,26 +168,16 @@ void PID_Init(PID_T * p_pid)
 	p_pid->ErrorPrev = 0;
 }
 
-
-void PID_Init_Args
+void PID_Init_Params
 (
 	PID_T * p_pid,
-#ifdef CONFIG_PID_MODE_POINTER
-	int32_t * p_setpoint, int32_t * p_feedback, int32_t * p_control,
-#endif
+	uint32_t calcFreq,
 	int32_t kpFactor, int32_t kpDivisor,
 	int32_t kiFactor, int32_t kiDivisor,
 	int32_t kdFactor, int32_t kdDivisor,
-	uint32_t calcFreq,
 	int32_t outMin, int32_t outMax
 )
 {
-#ifdef CONFIG_PID_MODE_POINTER
-	p_pid->p_Setpoint = p_setPoint;
-	p_pid->p_Output = p_output;
-	p_pid->p_Feedback = p_feedback;
-#endif
-
 	PID_SetCalcFreq(p_pid, calcFreq);
 	PID_SetTunings(p_pid, kpFactor, kpDivisor, kiFactor, kiDivisor, kdFactor, kdDivisor);
 	PID_SetOutputLimits(p_pid, outMin, outMax);
@@ -199,20 +185,3 @@ void PID_Init_Args
 	p_pid->ErrorPrev = 0;
 	p_pid->Params.Direction = PID_DIRECTION_DIRECT;
 }
-
-//bool PID_PollCalc(PID_T *p_pid)
-//{
-//	bool status;
-//	if (p_pid->CalcCounter < p_pid->CalcPeriod)
-//	{
-//		p_pid->CalcCounter++;
-//		status = false;
-//	}
-//	else
-//	{
-//		p_pid->CalcCounter = 0;
-//		p_pid->Control = CalcPID(p_pid, p_pid->Setpoint - p_pid->Feedback);
-//		status = true;
-//	}
-//	return status;
-//}

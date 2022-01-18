@@ -70,6 +70,15 @@ Shell_State_T;
 
 typedef struct
 {
+	Serial_T * p_Xcvr;
+	uint32_t BaudRate;
+	bool IsEnable;
+	//	bool PrintReturnCode;
+}
+Shell_Params_T;
+
+typedef const struct
+{
 	//Shell Array Table Mode -Set up Shell to use Array tables defined by the user
 	const Cmd_T * P_CMD_TABLE;
 	uint8_t CMD_COUNT;
@@ -80,39 +89,24 @@ typedef struct
 
 	volatile const uint32_t * P_TIMER;
 	uint32_t LOOP_PERIOD;
+
+	const Shell_Params_T * const P_PARAMS;
 }
 Shell_Config_T;
 
 typedef struct
 {
-	//Shell Array Table Mode -Set up Shell to use Array tables defined by the user
-//	const Cmd_T * p_CmdTable;
-//	uint8_t CmdCount;
-//	void * p_CmdContext;
-//
-//	const Cmd_Return_T * p_CmdReturnTable;
-//	uint8_t CmdReturnCount;
-
 	Shell_Config_T CONFIG;
-
+	Shell_Params_T Params;
 	Terminal_T Terminal;
-
-	//processing
 	Shell_State_T State;
-	Cmd_T * p_Cmd; /*!< Cmd retrieved and in process */ //preserve across state change
+	Cmd_T * p_Cmd; /*!< Cmd  in process preserve across state change */
 	int CmdReturnCode;
-
-	//loop mode
-//	uint32_t ProcFreq; //loop mode reference
-//	bool IsLoopModeEnable;
-//	volatile uint32_t LoopModePeriod;
-	uint32_t LoopModeTime;
-
-//	bool PrintReturnCode;
+	uint32_t LoopModeTimeRef;
 }
 Shell_T;
 
-#define SHELL_CONFIG(p_CmdTable, CmdCount, p_Context, p_CmdStatusTable, CmdStatusCount, p_Timer, LoopPeriod)	\
+#define SHELL_CONFIG(p_CmdTable, CmdCount, p_Context, p_CmdStatusTable, CmdStatusCount, p_Timer, LoopPeriod, p_Params)	\
 {															\
 	.CONFIG = 												\
 	{														\
@@ -123,6 +117,7 @@ Shell_T;
 		.CMD_STATUS_COUNT 		= CmdStatusCount,			\
 		.P_TIMER 				= p_Timer,					\
 		.LOOP_PERIOD 			= LoopPeriod,				\
+		.P_PARAMS				= p_Params					\
 	}														\
 }
 
