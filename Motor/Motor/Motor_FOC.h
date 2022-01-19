@@ -53,14 +53,12 @@
 #include "Math/Filter/Filter_MovAvg.h"
 #include "Math/Filter/Filter.h"
 
-
 #include "Math/PID/PID.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
 #include "Utility/Debug/Debug.h"
-
 
 
 /******************************************************************************/
@@ -191,73 +189,40 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 /*
  * ElectricalAngle, VPwm => Phase Duty
  */
-static inline void ActivateMotorFocAngle(Motor_T * p_motor, qfrac16_t vqReq, qfrac16_t vdReq)
+static inline void ActivateMotorFocAngle(Motor_T * p_motor)
 {
-	FOC_SetVq(&p_motor->Foc, vqReq);
-	FOC_SetVd(&p_motor->Foc, vdReq);
-
 	FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
 	FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
 	Phase_ActuateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 }
 
-//static inline qfrac16_t GetMotorFocQReq(Motor_T * p_motor)
-//{
-//	qfrac16_t qReq;
-//
-//	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
-//	{
-////		Motor_PollSpeedFeedbackLoop(p_motor);
-//		qReq = p_motor->SpeedControl >> 1U;
-//	}
-//	else /* else (p_motor->ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT / VOLTAGE) */
-//	{
-//		qReq = p_motor->RampCmd >> 1U;
-//	}
-//
-//	if (p_motor->Direction == MOTOR_DIRECTION_CW)
-//	{
-//		qReq = 0 - qReq;
-//	}
-//
-//	return qReq;
-//}
-/*
- * Current feedback angle control
- * ADC conversion complete call
- */
-//static inline void Motor_FOC_ProcCurrentFeedback(Motor_T * p_motor)
-//{
-//	qfrac16_t vqReq;
-//	qfrac16_t vdReq;
-//	qfrac16_t iqReq;
-//	qfrac16_t idReq;
-//
-////	ProcMotorFocPositionFeedback(p_motor);
-//
-//	iqReq = GetMotorFocQReq(p_motor);
-//	idReq = 0; //p_motor->FieldWeakening
-//
-//	vqReq = PID_Calc(&p_motor->PidIq, iqReq, FOC_GetIq(&p_motor->Foc));
-//	vdReq = PID_Calc(&p_motor->PidId, idReq, FOC_GetId(&p_motor->Foc));
-//
-//	ActivateMotorFocAngle(p_motor, vqReq, vdReq);
-//}
+static inline bool PollMotorFocIqOverLimit(Motor_T * p_motor)
+{
+	if (FOC_GetIq(&p_motor->Foc) > p_motor->Parameters.IqLimit)
+	{
+//		p_motor->VPwm = p_motor->VPwm - ((p_motor->IBus_Frac16 - 58982U) * p_motor->VPwm >> 16U)
+		if(p_motor->IOverLimitFlag == false)
+		{
+			p_motor->IOverLimitFlag = true;
+			PID_SetIntegral(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc) * 9 / 10);
+		}
+
+		FOC_SetVq(&p_motor->Foc, PID_Calc(&p_motor->PidIq, p_motor->Parameters.IqLimit, FOC_GetIq(&p_motor->Foc)));
+	}
+
+	return p_motor->IOverLimitFlag;
+}
+
 
 static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)
 {
 	qfrac16_t qReq;
-	qfrac16_t vqReq;
-	qfrac16_t vdReq;
-	qfrac16_t iqReq;
-	qfrac16_t idReq;
-	uint16_t magIq;
+//	qfrac16_t vqReq;
+//	qfrac16_t vdReq;
 
 	//todo change to flags
-
 	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
 	{
-//		Motor_PollSpeedFeedbackLoop(p_motor);
 		qReq = p_motor->SpeedControl >> 1U;
 	}
 	else /* else (p_motor->ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT / VOLTAGE) */
@@ -279,38 +244,22 @@ static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)
 		)
 	{
 		/* Voltage Control mode - use current feedback for over current only */
-
-//		if(FOC_GetIq(&p_motor->Foc) < 0)
-//		{
-//			magIq = 0 - FOC_GetIq(&p_motor->Foc);
-//		}
-//		else
-//		{
-//			magIq = FOC_GetIq(&p_motor->Foc);
-//		}
-
-//		if (magIq > 32768 * 9 / 10)
-//		{
-////			PID_SetIntegral(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc)); set on overcurrent
-//			vqReq = PID_Calc(&p_motor->PidIq, 32768 * 9 / 10, FOC_GetIq(&p_motor->Foc));
-//		}
-//		else
+		if (PollMotorFocIqOverLimit(p_motor) == false)
 		{
-			vqReq = qReq;
-			vdReq = 0; //p_motor->FieldWeakening
+			FOC_SetVq(&p_motor->Foc, qReq);
+			FOC_SetVd(&p_motor->Foc, 0); //p_motor->FieldWeakening
 		}
 	}
 	else if (((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)) == true)
 	{
 		/* Current Control Mode - Proc angle using prev ADC return from prev Pwm */
-		iqReq = qReq;
-		idReq = 0;
-
-		vqReq = PID_Calc(&p_motor->PidIq, iqReq, FOC_GetIq(&p_motor->Foc));
-		vdReq = PID_Calc(&p_motor->PidId, idReq, FOC_GetId(&p_motor->Foc));
+//		vqReq = PID_Calc(&p_motor->PidIq, qReq, FOC_GetIq(&p_motor->Foc));
+//		vdReq = PID_Calc(&p_motor->PidId, 0, FOC_GetId(&p_motor->Foc));
+		FOC_SetVq(&p_motor->Foc, PID_Calc(&p_motor->PidIq, qReq, FOC_GetIq(&p_motor->Foc)));
+		FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, 0, FOC_GetId(&p_motor->Foc)));
 	}
 
-	ActivateMotorFocAngle(p_motor, vqReq, vdReq);
+	ActivateMotorFocAngle(p_motor);
 }
 
 /******************************************************************************/
@@ -337,13 +286,13 @@ static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
 	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
 
-	FOC_ProcClarkePark(&p_motor->Foc);
+	FOC_ProcClarkePark(&p_motor->Foc); //using prev adc reading
 	ProcMotorFocPositionFeedback(p_motor);
 }
 
 static inline void Motor_FOC_StartAngleObserve(Motor_T * p_motor)
 {
-
+	p_motor->IOverLimitFlag = false;
 }
 
 /*
@@ -360,24 +309,35 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 
 static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 {
-	Motor_ResumeSpeedFeedback(p_motor);
-
-	PID_SetIntegral(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc));
-
-	switch (p_motor->Parameters.ControlMode)
+	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
 	{
-//	case MOTOR_CONTROL_MODE_OPEN_LOOP:
-//		break;
+		Motor_ResumeSpeedFeedback(p_motor);
+	}
 
-	case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:
-		break;
+	if (((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)) == true)
+	{
+		PID_SetIntegral(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
+	}
 
-	case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:
-		break;
+	switch (p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_OPEN_LOOP:
 
-	default:
-		break;
+			break;
 
+		case MOTOR_SENSOR_MODE_BEMF:
+			break;
+
+		case MOTOR_SENSOR_MODE_ENCODER:
+
+			break;
+
+		case MOTOR_SENSOR_MODE_HALL:
+			Hall_ResetCapture(&p_motor->Hall);
+			break;
+
+		default:
+			break;
 	}
 }
 
@@ -387,6 +347,14 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
  */
 static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 {
+	Motor_FOC_ResumeAngleControl(p_motor);
+
+	Phase_Ground(&p_motor->Phase); //activates abc
+	FOC_SetZero(&p_motor->Foc);
+	Phase_ActuateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc)); //sets 0 current output
+
+	Encoder_Reset(&p_motor->Encoder); //zero angle speed //reset before Encoder_DeltaT_SetInitial
+
 	switch (p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_OPEN_LOOP:
@@ -404,7 +372,6 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:
-			Hall_ResetCapture(&p_motor->Hall);
 			Encoder_DeltaT_SetInitial(&p_motor->Encoder, 10U);
 			break;
 
@@ -412,13 +379,7 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 			break;
 	}
 
-	Encoder_Reset(&p_motor->Encoder); //zero angle speed
 
-	Phase_Ground(&p_motor->Phase); //activates abc
-	FOC_SetZero(&p_motor->Foc);
-	Phase_ActuateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc)); //sets 0 current output
-
-	Motor_FOC_ResumeAngleControl(p_motor);
 }
 
 /******************************************************************************/

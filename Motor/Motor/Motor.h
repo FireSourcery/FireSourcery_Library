@@ -209,33 +209,36 @@ typedef struct __attribute__ ((aligned (4U)))
 
 	Motor_DirectionCalibration_T DirectionCalibration;
 
-	//	uint16_t OpenLoopZcdTransition;
 	//	uint8_t BrakeCoeffcient;
 	//	uint32_t SpeedControlPeriod;
 	//	qfrac16_t FocOpenLoopVq;
 	//	qfrac16_t FocAlignVd;
-	//	qfrac16_t OpenLoopVHzGain; //vhz scale
 
 	uint16_t OpenLoopVPwmMin;
 	uint16_t OpenLoopVPwmMax;
 	uint16_t OpenLoopSpeedStart;
 	uint16_t OpenLoopSpeedFinal;
 	uint16_t OpenLoopAccel;
+	//	uint16_t OpenLoopVHzGain; //vhz scale
+	//	uint16_t OpenLoopZcdTransition;
 
 	uint16_t SpeedMax_RPM;
 	uint16_t Imax_Amp;
 	uint16_t IaZero_ADCU;
 	uint16_t IbZero_ADCU;
 	uint16_t IcZero_ADCU;
+	uint16_t IaRefMax_ADCU;
+	uint16_t IbRefMax_ADCU;
+	uint16_t IcRefMax_ADCU;
 
+	uint16_t IBusLimit_Frac16;
+	qfrac16_t IqLimit;
+
+//	bool CalibrateHallOnStart;
 //	uint32_t RampAcceleration; //fraction16
 
 	//todo account for copy to ram twice
 	Phase_Mode_T				PhasePwmMode;
-	uint32_t EncoderCountsPerRevolution;
-	uint32_t EncoderDistancePerCount;
-	bool EncoderIsQuadratureModeEnabled;
-	bool EncoderIsALeadBPositive;
 }
 Motor_Params_T;
 
@@ -374,11 +377,11 @@ typedef struct
 	Motor_SectorId_T NextPhase;		 		//for 6 step openloop/sensorless
 	Motor_SectorId_T CommutationPhase;	 	//for 6 step openloop/sensorless
 	uint32_t IBus_Frac16;
-	uint32_t IBusPwmOn_Frac16;
-	uint32_t IBusPwmOff_Frac16;
+//	uint32_t IBusPrev_Frac16;
 	uint16_t VPwm; 				//Control Variable
 
 	volatile bool IsPwmOn;
+	volatile bool IOverLimitFlag;
 
 	//Substates
 	Motor_CalibrationState_T CalibrationState; /* Substate, selection for calibration */

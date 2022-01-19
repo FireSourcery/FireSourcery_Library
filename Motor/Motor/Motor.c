@@ -54,7 +54,7 @@ void Motor_Init(Motor_T * p_motor)
 {
 	if (p_motor->CONFIG.P_PARAMETERS != 0U)
 	{
-		memcpy(&p_motor->Parameters, p_motor->CONFIG.P_PARAMETERS, sizeof(p_motor->Parameters));
+		memcpy(&p_motor->Parameters, p_motor->CONFIG.P_PARAMETERS, sizeof(Motor_Params_T));
 	}
 
 	StateMachine_Init(&p_motor->StateMachine);
@@ -81,30 +81,28 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Phase_Init(&p_motor->Phase);
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
 
-
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
 	{
 		/*
 		 * all sixstep modes and hall foc mode use CaptureTime
 		 * use PolePairs * 6 for count per commutation or PolePairs for count per erotation
 		 */
-		Encoder_Motor_InitCaptureTime(&p_motor->Encoder, p_motor->Parameters.PolePairs * 6U, p_motor->Parameters.EncoderDistancePerCount, p_motor->Parameters.PolePairs);
+		Encoder_Motor_InitCaptureTime(&p_motor->Encoder, p_motor->Parameters.PolePairs * 6U, 0, p_motor->Parameters.PolePairs);
 		Hall_Init(&p_motor->Hall);
 	}
 	else if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_ENCODER)
 	{
-		Encoder_Motor_InitCaptureCount(&p_motor->Encoder, p_motor->Parameters.EncoderCountsPerRevolution, p_motor->Parameters.EncoderDistancePerCount, p_motor->Parameters.PolePairs);
-		Encoder_SetQuadratureMode(&p_motor->Encoder, p_motor->Parameters.EncoderIsQuadratureModeEnabled);
-		Encoder_SetQuadratureDirectionCalibration(&p_motor->Encoder, p_motor->Parameters.EncoderIsALeadBPositive);
+//		Encoder_Motor_InitCaptureCount(&p_motor->Encoder, p_motor->Parameters.EncoderCountsPerRevolution, p_motor->Parameters.EncoderDistancePerCount, p_motor->Parameters.PolePairs);
+//		Encoder_SetQuadratureMode(&p_motor->Encoder, p_motor->Parameters.EncoderIsQuadratureModeEnabled);
+//		Encoder_SetQuadratureDirectionCalibration(&p_motor->Encoder, p_motor->Parameters.EncoderIsALeadBPositive);
 		FOC_Init(&p_motor->Foc);
 	}
 	else //senorless/ openloop
 	{
 		//FOC sensorless
-//		p_motor->Parameters.PolePairs * 6U
-		Encoder_Motor_InitCaptureCount(&p_motor->Encoder, 0, p_motor->Parameters.EncoderDistancePerCount, p_motor->Parameters.PolePairs);
-		Encoder_SetQuadratureMode(&p_motor->Encoder, p_motor->Parameters.EncoderIsQuadratureModeEnabled);
-		Encoder_SetQuadratureDirectionCalibration(&p_motor->Encoder, p_motor->Parameters.EncoderIsALeadBPositive);
+		Encoder_Motor_InitCaptureCount(&p_motor->Encoder, 0, 0, p_motor->Parameters.PolePairs);
+		Encoder_SetQuadratureMode(&p_motor->Encoder, 0);
+		Encoder_SetQuadratureDirectionCalibration(&p_motor->Encoder, 0);
 		FOC_Init(&p_motor->Foc);
 	}
 
@@ -128,9 +126,9 @@ void Motor_InitReboot(Motor_T * p_motor)
 	/*
 	 * Run calibration later, default zero to middle adc
 	 */
-	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp); //scales 4095 to physical units. alternatively use opamp equation
-	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
-	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
+	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZero_ADCU, p_motor->Parameters.IaRefMax_ADCU, p_motor->Parameters.Imax_Amp); //scales 4095 to physical units. alternatively use opamp equation
+	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZero_ADCU, p_motor->Parameters.IbRefMax_ADCU, p_motor->Parameters.Imax_Amp);
+	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, p_motor->Parameters.IcRefMax_ADCU, p_motor->Parameters.Imax_Amp);
 	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage
 
 	p_motor->Direction 				= MOTOR_DIRECTION_CCW;
@@ -145,7 +143,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 //	p_motor->SignalBufferFocIabc.AdcFlags 		= 0U;
 //	p_motor->SignalBufferFocRemainder.AdcFlags 	= 0U;
 //	p_motor->SignalBufferIdle.AdcFlags 			= 0U;
-
 }
 
 
@@ -232,13 +229,13 @@ void Motor_StartCalibrateAdc(Motor_T * p_motor)
 //	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VB);
 //	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VC);
 
-	p_motor->AnalogResults.Ia_ADCU = 2000U;
-	p_motor->AnalogResults.Ib_ADCU = 2000U;
-	p_motor->AnalogResults.Ic_ADCU = 2000U;
+	p_motor->AnalogResults.Ia_ADCU = 2048U;
+	p_motor->AnalogResults.Ib_ADCU = 2048U;
+	p_motor->AnalogResults.Ic_ADCU = 2048U;
 
-	Filter_MovAvg_InitN(&p_motor->FilterA, 2000U, 100U);
-	Filter_MovAvg_InitN(&p_motor->FilterB, 2000U, 100U);
-	Filter_MovAvg_InitN(&p_motor->FilterC, 2000U, 100U);
+	Filter_MovAvg_InitN(&p_motor->FilterA, 2048U, 40U);
+	Filter_MovAvg_InitN(&p_motor->FilterB, 2048U, 40U);
+	Filter_MovAvg_InitN(&p_motor->FilterC, 2048U, 40U);
 }
 
 bool Motor_CalibrateAdc(Motor_T *p_motor)
@@ -266,11 +263,10 @@ bool Motor_CalibrateAdc(Motor_T *p_motor)
 
 	return isComplete;
 }
+
 /*
  * Calibrate Current ADC
  */
-
-//
 //static inline bool Motor_SixStep_CalibrateAdc(Motor_T *p_motor)
 //{
 ////	bool isComplete = false;
@@ -398,7 +394,6 @@ bool Motor_CalibrateEncoder(Motor_T * p_motor)
 
 			default:
 				break;
-
 		}
 	}
 

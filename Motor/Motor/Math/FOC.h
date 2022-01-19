@@ -115,7 +115,8 @@ static inline qfrac16_t FOC_GetIa(FOC_T * p_foc) {return p_foc->Ia;}
 static inline qfrac16_t FOC_GetIb(FOC_T * p_foc) {return p_foc->Ib;}
 static inline qfrac16_t FOC_GetIc(FOC_T * p_foc) {return p_foc->Ic;}
 
-
+static inline qfrac16_t FOC_GetVq(FOC_T * p_foc) {return p_foc->Vd;}
+static inline qfrac16_t FOC_GetVd(FOC_T * p_foc) {return p_foc->Vq;}
 
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);

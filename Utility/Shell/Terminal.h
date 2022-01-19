@@ -111,7 +111,7 @@ static inline void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
 
 static inline void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str)
 {
-	const uint8_t * p_char = p_str;
+	const uint8_t * p_char = (const uint8_t *)p_str;
 	uint8_t length = 0U;
 
 	while (*p_char != '\0')

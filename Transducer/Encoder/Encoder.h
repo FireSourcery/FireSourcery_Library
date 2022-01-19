@@ -106,6 +106,12 @@ typedef struct
 //	bool IsALeadBDirectionPositive; //is ALeadB positive angle //combined //user set //HAL must be set so ALeadB is Increasing
 ////	bool IsALeadBCounterIncrement; // determined by HAL
 ////	bool IsCounterIncrementDirectionPositive; //derived calibration
+
+//	uint32_t CountsPerRevolution;
+//	uint32_t DistancePerCount;
+//	bool IsQuadratureModeEnabled;
+//	bool IsALeadBPositive;
+
 //#endif
 //	uint8_t PolePairs; /*! Convert between electrical speed and mechanical speed */
 //	uint32_t ExtendedDeltaTimerThreshold; //short timer overflow time in long timer counts

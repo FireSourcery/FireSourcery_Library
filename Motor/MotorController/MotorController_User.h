@@ -109,6 +109,7 @@ static inline uint16_t MotorController_User_GetMotorHeat_DegCScalar(MotorControl
 
 //uint16_t MotorController_User_GetIa_Frac16(MotorController_T * p_mc, uint8_t motorIndex)	{return Motor_User_GetIa_RPM(MotorController_GetPtrMotor(p_mc, motorIndex));}
 
+static inline void MotorController_User_CalibrateHall(MotorController_T * p_mc, uint8_t motorIndex) {Motor_User_ActivateCalibrationHall(MotorController_GetPtrMotor(p_mc, motorIndex));}
 
 /*
  * Nvm Saved Variables

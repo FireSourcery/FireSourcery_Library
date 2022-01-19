@@ -61,10 +61,16 @@ static inline void Motor_User_DisableControl(Motor_T * p_motor)
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
 }
 
-//todo move shared input ramp to motor controller
 static inline void Motor_User_SetCmd(Motor_T * p_motor, uint16_t throttle)
 {
 	Motor_SetRamp(p_motor, throttle);
+//	if(p_motor->IOverLimitFlag == true)
+//	{
+//		if (throttle < Motor_GetRampFinal(p_motor))
+//		{
+//			p_motor->IOverLimitFlag = false;
+//		}
+//	}
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
 }
 
@@ -101,8 +107,6 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 				Motor_SetRamp(p_motor, (uint32_t)((uint32_t)p_motor->SpeedFeedback_Frac16*32768U + (((int32_t)32768 - (int32_t)intensity)*25)/100) >> 16U);
 			}
 
-
-
 			//BrakeCoeffcient = 25 -> fract16(1/4)
 
 			//braking 0% 	-> pwm 62.5% of back emf;
@@ -118,10 +122,7 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 			break;
 	}
 
-	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
-	{
-		PID_SetIntegral(&p_motor->PidSpeed, p_motor->SpeedFeedback_Frac16);
-	}
+	Motor_ResumeSpeedFeedback(p_motor);
 
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DECELERATE);
 }
@@ -244,6 +245,20 @@ static inline bool Motor_UserN_CheckStop(Motor_T * p_motor, uint8_t motorCount)
 	return isStop;
 }
 
+static inline bool Motor_UserN_CheckIOverLimit(Motor_T * p_motor, uint8_t motorCount)
+{
+	bool isOverLimit = false;
 
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		if(p_motor[iMotor].IOverLimitFlag == true)
+		{
+			isOverLimit = true;
+			break;
+		}
+	}
+
+	return isOverLimit;
+}
 
 #endif

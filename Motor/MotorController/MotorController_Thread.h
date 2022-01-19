@@ -74,7 +74,8 @@ static inline void MotorControllerAnalogUserThread(MotorController_T * p_control
 			case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: MotorController_User_SetDirection(p_controller, MOTOR_CONTROLLER_DIRECTION_FORWARD); 		break;
 			case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:
 				if (p_controller->Parameters.IsBuzzerOnReverseEnable == true) { MotorController_Beep(p_controller); }
-				MotorController_User_SetDirection(p_controller, MOTOR_CONTROLLER_DIRECTION_REVERSE);
+//				MotorController_User_SetDirection(p_controller, MOTOR_CONTROLLER_DIRECTION_REVERSE);
+				MotorController_User_CalibrateHall(p_controller, 0U);
 				break;
 			default: break;
 		}
@@ -141,6 +142,11 @@ static inline void MotorController_Main_Thread(MotorController_T * p_controller)
 		for (uint8_t iSerial = 0U; iSerial < p_controller->CONFIG.SERIAL_COUNT; iSerial++)
 		{
 			Serial_PollRestartRxIsr(&p_controller->CONFIG.P_SERIALS[iSerial]);
+		}
+
+		if(Motor_UserN_CheckIOverLimit(p_controller->CONFIG.P_MOTORS, p_controller->CONFIG.MOTOR_COUNT) == true)
+		{
+			Blinky_Blink(&p_controller->Buzzer, 500U);
 		}
 
 //		if (MotAnalogMonitor_CheckHeat_ADCU(&p_controller->AnalogMonitor,  p_controller->AnalogResults.HeatMosfetsTop_ADCU, p_controller->AnalogResults.HeatMosfetsBot_ADCU) != MOT_ANALOG_MONITOR_OK)

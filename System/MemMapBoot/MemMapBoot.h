@@ -24,6 +24,28 @@ typedef union
 }
 MemMapBoot_T;
 
-#define MEM_MAP_BOOT ((MemMap_Boot_T *)CONFIG_MEM_MAP_BOOT_ADDRESS)
+#define MEM_MAP_BOOT ((MemMapBoot_T *)CONFIG_MEM_MAP_BOOT_ADDRESS)
+
+static inline bool MemMapBoot_GetIsValid(void)
+{
+	return ((MEM_MAP_BOOT->IsValid == MEM_MAP_BOOT_IS_VALID_01) || (MEM_MAP_BOOT->IsValid == MEM_MAP_BOOT_IS_VALID_10));
+}
+
+/*
+ * No Fastboot by default
+ */
+static inline bool MemMapBoot_GetFastBoot(void)
+{
+	return ((MemMapBoot_GetIsValid() == true) && (MEM_MAP_BOOT->FastBoot == 1U));
+}
+
+/*
+ * Beep by default
+ */
+static inline bool MemMapBoot_GetBeep(void)
+{
+	return ((MemMapBoot_GetIsValid() == false) || (MEM_MAP_BOOT->Beep == 1U));
+}
+
 
 #endif

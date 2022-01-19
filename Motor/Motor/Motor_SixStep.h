@@ -25,7 +25,7 @@
     @file 	Motor_SixStep.h
     @author FireSoucery
     @brief  Motor Six Step submodule.
-    		Six Step commutation strategy. Polar PWM
+    		Six Step Commutation strategy. Polar PWM
 
     		Current design - Only SixStep module tracks phase
 
@@ -53,10 +53,8 @@
 #include "Math/Filter/Filter_MovAvg.h"
 #include "Math/Filter/Filter.h"
 
-
 #include <stdint.h>
 #include <stdbool.h>
-
 
 #include "Utility/Debug/Debug.h"
 
@@ -140,12 +138,10 @@ static inline void Motor_SixStep_CaptureIBusA(Motor_T * p_motor)
 	if (p_motor->IsPwmOn == true)
 	{
 		Debug_CaptureElapsed(10);
-		p_motor->IBusPwmOn_Frac16 = p_motor->IBus_Frac16;
 	}
 	else
 	{
 		Debug_CaptureElapsed(9);
-		p_motor->IBusPwmOff_Frac16 = p_motor->IBus_Frac16;
 	}
 
 //	p_motor->IBus_ADCU  Filter_MovAvg(&p_motor->FilterIa, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA]);
@@ -158,12 +154,10 @@ static inline void Motor_SixStep_CaptureIBusB(Motor_T * p_motor)
 	if (p_motor->IsPwmOn == true)
 	{
 		Debug_CaptureElapsed(10);
-		p_motor->IBusPwmOn_Frac16 = p_motor->IBus_Frac16;
 	}
 	else
 	{
 		Debug_CaptureElapsed(9);
-		p_motor->IBusPwmOff_Frac16 = p_motor->IBus_Frac16;
 	}
 }
 
@@ -174,19 +168,13 @@ static inline void Motor_SixStep_CaptureIBusC(Motor_T * p_motor)
 	if (p_motor->IsPwmOn == true)
 	{
 		Debug_CaptureElapsed(10);
-		p_motor->IBusPwmOn_Frac16 = p_motor->IBus_Frac16;
 	}
 	else
 	{
 		Debug_CaptureElapsed(9);
-		p_motor->IBusPwmOff_Frac16 = p_motor->IBus_Frac16;
 	}
 }
 
-static inline void Motor_SixStep_CaptureIBusOverLimit(Motor_T * p_motor)
-{
-//	 PID_SetIntegral(&p_motor->PidIBus, p_motor->IBus_Frac16); //set on overcurrent
-}
 
 /*
  * Case Observe: Adc
@@ -306,6 +294,7 @@ static void ActivateMotorSixStepAnalogPhase(Motor_T * p_motor, const AnalogN_Con
 	p_motor->IsPwmOn = false;
 
 	AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+
 	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_vPhase);
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_iPhase);
@@ -313,8 +302,6 @@ static void ActivateMotorSixStepAnalogPhase(Motor_T * p_motor, const AnalogN_Con
 	//should not start until middle of pwm cycle
 	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_PWM_ON);
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_vPhase);
-//	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
-//	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_iPhase);
 
 	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
 
@@ -461,41 +448,48 @@ static inline bool PollMotorSixStepCommutation(Motor_T * p_motor)
 	return commutation;
 }
 
+
+static inline bool PollMotorSixStepIBusOverLimit(Motor_T * p_motor)
+{
+	if (p_motor->IBus_Frac16 > p_motor->Parameters.IBusLimit_Frac16)
+	{
+		//			p_motor->VPwm = p_motor->VPwm - ((p_motor->IBus_Frac16 - 58982U) * p_motor->VPwm >> 16U)
+		if(p_motor->IOverLimitFlag == false)
+		{
+			p_motor->IOverLimitFlag = true;
+			PID_SetIntegral(&p_motor->PidIBus, p_motor->VPwm * 9U / 10U);
+		}
+		p_motor->VPwm = PID_Calc(&p_motor->PidIBus, p_motor->Parameters.IBusLimit_Frac16, p_motor->IBus_Frac16);
+	}
+
+	return p_motor->IOverLimitFlag;
+}
+
+
 static inline void ProcMotorSixStepControlFeedback(Motor_T * p_motor)
 {
 	switch(p_motor->Parameters.ControlMode)
 	{
 		case MOTOR_CONTROL_MODE_OPEN_LOOP:
 				p_motor->VPwm = p_motor->RampCmd;
-
-				// bound to 2.5 to 10 percent
+			// bound to 2.5 to 10 percent
 			//	if 		(p_motor->VPwm < p_motor->Parameters.OpenLoopVPwmMin)	{ p_motor->VPwm = p_motor->Parameters.OpenLoopVPwmMin;}
 			//	else if (p_motor->VPwm > p_motor->Parameters.OpenLoopVPwmMax)	{ p_motor->VPwm = p_motor->Parameters.OpenLoopVPwmMax;}
 				break;
 
 		case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE :
-//			if(p_motor->IBus_Frac16 > 58982U)
-//			{
-//////			p_motor->VPwm = p_motor->VPwm - ((p_motor->IBus_Frac16 - 58982U) * p_motor->VPwm >> 16U)
-////				PID_SetIntegral(&p_motor->PidIBus, p_motor->IBus_Frac16); //set on overcurrent
-//				p_motor->VPwm = PID_Calc(&p_motor->PidIBus, 58982U, p_motor->IBus_Frac16);
-//			}
-//			else
+			if (PollMotorSixStepIBusOverLimit(p_motor) == false)
 			{
 				p_motor->VPwm = p_motor->RampCmd;
 			}
 			break;
 
 		case MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ :
-			//p_motor->VPwm = p_motor->RampCmd * p_motor->Speed_RPM * p_motor->VRpmGain;
+			// p_motor->VPwm = p_motor->RampCmd * p_motor->Speed_RPM * p_motor->VRpmGain;
 			break;
 
 		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE :
-//			if (p_motor->IBus_Frac16 > 58982U)
-//			{
-//				p_motor->VPwm = PID_Calc(&p_motor->PidIBus, 58982U, p_motor->IBus_Frac16);
-//			}
-//			else
+			if (PollMotorSixStepIBusOverLimit(p_motor) == false)
 			{
 				p_motor->VPwm = p_motor->SpeedControl;
 			}
@@ -534,6 +528,7 @@ static inline bool Motor_SixStep_ProcPhaseObserve(Motor_T * p_motor)
 
 static inline void Motor_SixStep_StartPhaseObserve(Motor_T * p_motor)
 {
+	p_motor->IOverLimitFlag = false;
 	BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_PASSIVE); //no blank time
 }
 
@@ -557,39 +552,44 @@ static inline void Motor_SixStep_ProcPhaseControl(Motor_T * p_motor)
 	}
 }
 
-static inline void ResumeMotorSixStepPhaseControl(Motor_T * p_motor)
+static inline void Motor_SixStep_ResumePhaseControl(Motor_T * p_motor)
 {
-	Motor_ResumeSpeedFeedback(p_motor);
+	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
+	{
+		Motor_ResumeSpeedFeedback(p_motor);
+	}
 
-//	PID_SetIntegral(&p_motor->PidIBus, p_motor->IBus_Frac16);
+	if (((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)) == true)
+	{
+		PID_SetIntegral(&p_motor->PidIBus, p_motor->VPwm);
+	}
 
 	switch(p_motor->Parameters.SensorMode)
 	{
-//		case MOTOR_SENSOR_MODE_OPEN_LOOP :
-//			break;
+		case MOTOR_SENSOR_MODE_OPEN_LOOP :
+			Motor_SixStep_StartOpenLoop(p_motor);
+			break;
 
 		case MOTOR_SENSOR_MODE_BEMF:
+			//	 bbemf mode must change timer period from openloop rpm to 1 tick
+			//if reliable 	BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_COMMUTATION);
+			BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_STARTUP);
+			Motor_SixStep_StartOpenLoop(p_motor);
+	//		p_motor->IsOpenLoopStartUp = true;
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:
+			BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_COMMUTATION);
 			Hall_ResetCapture(&p_motor->Hall);
 			break;
 
-//	case MOTOR_SENSOR_MODE_ENCODER:
-//		resume =  true;
-//		break;
+	//	case MOTOR_SENSOR_MODE_ENCODER:
+	//		resume =  true;
+	//		break;
 
 		default :
 			break;
 	}
-}
-
-static inline void Motor_SixStep_ResumePhaseControl(Motor_T * p_motor)
-{
-	ResumeMotorSixStepPhaseControl(p_motor);
-	BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_COMMUTATION);
-
-	//	 bbemf mode must change timer period from openloop rpm to
 }
 
 //move to common?
@@ -627,7 +627,7 @@ static inline bool Motor_SixStep_CheckResumePhaseControl(Motor_T * p_motor)
  */
 static inline void Motor_SixStep_StartPhaseControl(Motor_T * p_motor)
 {
-	ResumeMotorSixStepPhaseControl(p_motor);
+	Motor_SixStep_ResumePhaseControl(p_motor);
 	Encoder_Reset(&p_motor->Encoder);
 
 	/* soften start from initial speed calc
@@ -637,28 +637,6 @@ static inline void Motor_SixStep_StartPhaseControl(Motor_T * p_motor)
 
 	p_motor->Bemf.ZeroCrossingCounter  = 0U;
 
-	switch (p_motor->Parameters.SensorMode)
-	{
-	case MOTOR_SENSOR_MODE_OPEN_LOOP:
-		Motor_SixStep_StartOpenLoop(p_motor);
-		break;
-
-	case MOTOR_SENSOR_MODE_BEMF:
-		BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_STARTUP);
-		Motor_SixStep_StartOpenLoop(p_motor);
-//			p_motor->IsOpenLoopStartUp = true;
-		break;
-
-	case MOTOR_SENSOR_MODE_HALL:
-		BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_COMMUTATION);
-		break;
-
-//	case MOTOR_SENSOR_MODE_ENCODER: //encoder always use foc
-//		break;
-
-	default:
-		break;
-	}
 }
 
 //void Motor_SixStep_Jog(Motor_T *p_motor)
