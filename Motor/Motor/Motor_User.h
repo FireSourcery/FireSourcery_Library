@@ -43,6 +43,11 @@
 //static inline uint32_t Motor_User_GetBemf_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
 static inline uint32_t Motor_User_GetVPos_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults.VPos_ADCU);}
 static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T *p_motor) 	{return p_motor->Speed_RPM;}
+
+// Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults.VPos_ADCU);
+// Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, p_motor->AnalogResults.Va_ADCU);
+
+
 //static inline float Motor_User_GetHeat_DegCFloat(Motor_T *p_motor)						{return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
 //static inline uint16_t Motor_User_GetHeat_DegCRound(Motor_T *p_motor)					{return Thermistor_ConvertToDegC_Round(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
 //static inline uint16_t Motor_User_GetHeat_DegCNDecimal(Motor_T *p_motor, uint8_t n) 	{return Thermistor_ConvertToDegC_NDecimal(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, n);}
@@ -61,16 +66,10 @@ static inline void Motor_User_DisableControl(Motor_T * p_motor)
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
 }
 
-static inline void Motor_User_SetCmd(Motor_T * p_motor, uint16_t throttle)
+static inline void Motor_User_SetCmd(Motor_T * p_motor, uint16_t cmd)
 {
-	Motor_SetRamp(p_motor, throttle);
-//	if(p_motor->IOverLimitFlag == true)
-//	{
-//		if (throttle < Motor_GetRampFinal(p_motor))
-//		{
-//			p_motor->IOverLimitFlag = false;
-//		}
-//	}
+	Motor_SetRamp(p_motor, cmd);
+	p_motor->IsBrake = false;
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
 }
 
@@ -82,18 +81,18 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 			Motor_User_DisableControl(p_motor);
 			break;
 
-		case MOTOR_BRAKE_MODE_CONSTANT:
-			Motor_SetRamp(p_motor, p_motor->SpeedFeedback_Frac16/2U);
-			break;
-
-		case MOTOR_BRAKE_MODE_PROPRTIONAL :
-			Motor_SetRamp(p_motor, ((uint32_t)p_motor->SpeedFeedback_Frac16 * (65536U - intensity)) >> 16U);
-			//todo offset
-			//braking 0% -> pwm 100% of back emf;
-			//braking 10% -> pwm 90% of back emf;
-			//braking 50% -> pwm 50% of back emf;
-			//braking 90% -> pwm 10% of back emf;
-			break;
+//		case MOTOR_BRAKE_MODE_CONSTANT:
+//			Motor_SetRamp(p_motor, p_motor->SpeedFeedback_Frac16/2U);
+//			break;
+//
+//		case MOTOR_BRAKE_MODE_PROPRTIONAL :
+//			Motor_SetRamp(p_motor, ((uint32_t)p_motor->SpeedFeedback_Frac16 * (65536U - intensity)) >> 16U);
+//			//todo offset
+//			//braking 0% -> pwm 100% of back emf;
+//			//braking 10% -> pwm 90% of back emf;
+//			//braking 50% -> pwm 50% of back emf;
+//			//braking 90% -> pwm 10% of back emf;
+//			break;
 
 		case MOTOR_BRAKE_MODE_SCALAR :
 			//minus 5% for zero
@@ -104,7 +103,7 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 //			else
 			{
 	//			p_motor->Parameters.BrakeCoeffcient
-				Motor_SetRamp(p_motor, (uint32_t)((uint32_t)p_motor->SpeedFeedback_Frac16*32768U + (((int32_t)32768 - (int32_t)intensity)*25)/100) >> 16U);
+				Motor_SetRamp(p_motor, (p_motor->SpeedFeedback_Frac16/2)); // - (1- intensity*25/100)
 			}
 
 			//BrakeCoeffcient = 25 -> fract16(1/4)
@@ -116,13 +115,16 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 			//braking 100% 	-> pwm 37.5% of back emf;
 
 			break;
-			//			Motor_SetRamp_Rate(p_motor, 0U, -(int32_t)brake / 4U);
 
 		default :
 			break;
 	}
 
-	Motor_ResumeSpeedFeedback(p_motor);
+	if (p_motor->IsBrake == false)
+	{
+		p_motor->IsBrake = true;
+		Motor_ResumeSpeedFeedback(p_motor);
+	}
 
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DECELERATE);
 }
@@ -132,15 +134,12 @@ static inline bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T 
 {
 	bool isSet = false;
 
-//	if (p_motor->Direction != direction) //direction reversed
-//	{
 	if (p_motor->Speed_RPM == 0U)
 	{
 		Motor_SetDirection(p_motor, direction);
 //		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MSM_INPUT_DIRECTION);
 		isSet = true;
 	}
-//	}
 
 	return isSet;
 }

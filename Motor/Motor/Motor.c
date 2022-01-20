@@ -131,10 +131,15 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, p_motor->Parameters.IcRefMax_ADCU, p_motor->Parameters.Imax_Amp);
 	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage
 
+	Linear_Ramp_InitSlope(&p_motor->RampUp, 0U, 65535U, 32);
+	Linear_Ramp_InitSlope(&p_motor->RampDown, 65535U, 0U, -32);
+	p_motor->RampIndex = 0;
+
 	p_motor->Direction 				= MOTOR_DIRECTION_CCW;
 	p_motor->Speed_RPM 				= 0U;
 	p_motor->VPwm 					= 0U;
 	p_motor->ControlTimerBase 		= 0U;
+
 
 // 	p_motor->SignalBufferBemfA.AdcFlags 		= 0U;
 //	p_motor->SignalBufferBemfB.AdcFlags 		= 0U;

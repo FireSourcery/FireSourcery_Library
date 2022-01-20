@@ -337,8 +337,11 @@ typedef struct
 	Motor_Direction_T Direction; //active spin direction
 
 	Linear_T Ramp;
+	Linear_T RampUp;
+	Linear_T RampDown;
 	uint32_t RampIndex;
 	uint16_t RampCmd;			//SetPoint after ramp, VReq/IReq/SpeedReq
+
 
 	/* Speed Feedback */
 	PID_T PidSpeed;
@@ -380,25 +383,24 @@ typedef struct
 //	uint32_t IBusPrev_Frac16;
 	uint16_t VPwm; 				//Control Variable
 
-	volatile bool IsPwmOn;
-	volatile bool IOverLimitFlag;
+
 
 	//Substates
 	Motor_CalibrationState_T CalibrationState; /* Substate, selection for calibration */
 	uint8_t CalibrationSubstateStep;
+	volatile bool IsPwmOn;
+	volatile bool IOverLimitFlag;
+	volatile bool IsBrake;
 
 //	uint32_t JogSteps;
 //	uint32_t StepCount;
-
-	uint32_t VPos_Debug;
-	uint32_t Va_Debug;
 }
 Motor_T;
 
 
 /******************************************************************************/
 /*!
-	 User Input Ramp
+	 User Input
 */
 /******************************************************************************/
 static inline void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
@@ -417,6 +419,11 @@ static inline void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direc
 	}
 }
 
+/******************************************************************************/
+/*!
+	 User Input Ramp
+*/
+/******************************************************************************/
 static inline void Motor_ProcRamp(Motor_T * p_motor)
 {
 	if (p_motor->RampCmd != Linear_Ramp_GetFinal(&p_motor->Ramp))
@@ -425,33 +432,39 @@ static inline void Motor_ProcRamp(Motor_T * p_motor)
 	}
 }
 
-/*
- * userCmd is final value, fractional value of control mode unit
- */
 static inline void Motor_SetRamp(Motor_T * p_motor, uint16_t userCmd)
 {
-	//	if (userCmd != p_motor->RampCmd)
-//	int32_t acceleration = (userCmd >= p_motor->RampCmd) ? p_motor->Parameters.RampAcceleration : -p_motor->Parameters.RampAcceleration; //todo accel param
-//	int32_t acceleration = userCmd - p_motor->RampCmd;
 	Linear_Ramp_InitMillis(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmd, 10U);
-//	Linear_Ramp_SetSlope(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmd, acceleration); //accelparam
-	//	Linear_Ramp_SetSlope(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmd, userCmd - p_motor->RampCmd);
 	p_motor->RampIndex = 0;
 }
 
-/*
- * userCmd is acceleration deceleration
- */
-static inline void Motor_SetRamp_Rate(Motor_T * p_motor, uint16_t userCmdFinal, int16_t userCmdRate_Signed)
-{
-//	if (0U != p_motor->RampCmd)
-	{
-		//Decel by Brake per 1s
-		Linear_Ramp_InitSlope(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmdFinal, (int32_t)userCmdRate_Signed/2);
-//		Linear_Ramp_SetSlope(&p_motor->Ramp, 20000U, p_motor->RampCmd, 0U, -100);
-		p_motor->RampIndex = 0;
-	}
-}
+//static inline void Motor_ProcRamp(Motor_T * p_motor)
+//{
+////	if (p_motor->RampCmd != Linear_Ramp_GetFinal(&p_motor->Ramp))
+////	{
+////		p_motor->RampCmd = Linear_Ramp_Proc(&p_motor->Ramp, &p_motor->RampIndex);
+////	}
+//
+//	if (p_motor->RampCmd < Linear_Ramp_GetFinal(&p_motor->RampUp))
+//	{
+//		p_motor->RampCmd = Linear_Ramp_Proc(&p_motor->RampUp, &p_motor->RampIndex);
+//	}
+//	else if (p_motor->RampCmd > Linear_Ramp_GetFinal(&p_motor->RampDown))
+//	{
+//		p_motor->RampCmd = Linear_Ramp_Proc(&p_motor->RampDown, &p_motor->RampIndex);
+//	}
+//}
+//
+///*
+// * UserCmd is final value
+// */
+//static inline void Motor_SetRamp(Motor_T * p_motor, uint16_t userCmd)
+//{
+//	Linear_Ramp_SetFinal(&p_motor->RampUp, userCmd);
+//	Linear_Ramp_SetFinal(&p_motor->RampDown, userCmd);
+//
+////	Linear_Ramp_SetFinal(p_motor->Ramp, userCmd);
+//}
 
 /******************************************************************************/
 /*!
@@ -518,7 +531,8 @@ static inline bool Motor_ResumeSpeedFeedback(Motor_T * p_motor)
 {
 	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
 	{
-		PID_SetIntegral(&p_motor->PidSpeed, p_motor->SpeedFeedback_Frac16);
+//		PID_SetIntegral(&p_motor->PidSpeed, p_motor->SpeedFeedback_Frac16); //or use vpwm, ibus, vq, iq
+		PID_SetIntegral(&p_motor->PidSpeed, 0); //or use vpwm, ibus, vq, iq
 		p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->SpeedFeedback_Frac16);
 		Timer_Restart(&p_motor->SpeedTimer);
 	}
@@ -533,12 +547,13 @@ static inline bool Motor_ResumeSpeedFeedback(Motor_T * p_motor)
 	Idle Stop State
 */
 /******************************************************************************/
-static inline void Motor_StartIdle(Motor_T * p_motor)
+static inline void Motor_Stop(Motor_T * p_motor)
 {
+	Phase_Float(&p_motor->Phase);
+	p_motor->ControlTimerBase = 0U; //ok to reset timer
 	Timer_SetPeriod(&p_motor->ControlTimer, 2000U);
 }
 
-//PollIdleConversion
 static inline void Motor_ProcIdle(Motor_T * p_motor)
 {
 	if (Timer_Poll(&p_motor->ControlTimer) == true)
@@ -553,15 +568,10 @@ static inline void Motor_ProcIdle(Motor_T * p_motor)
 		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VC);
 //		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_HEAT);
 		AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+
 	}
 
 	Debug_CaptureElapsed(1);
-
-	p_motor->IBus_Frac16 = Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIb, p_motor->AnalogResults.Ib_ADCU); //debug check conversion
-
-	p_motor->VPos_Debug = Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults.VPos_ADCU);
-	p_motor->Va_Debug = Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, p_motor->AnalogResults.Va_ADCU);
-
 }
 
 /******************************************************************************/
@@ -569,16 +579,12 @@ static inline void Motor_ProcIdle(Motor_T * p_motor)
 	Wrappers
 */
 /******************************************************************************/
-static inline void Motor_Float(Motor_T * p_motor)
-{
-	Phase_Float(&p_motor->Phase);
-}
+//static inline void Motor_Float(Motor_T * p_motor)
+//{
+//	Phase_Float(&p_motor->Phase);
+//}
 
-static inline void Motor_Stop(Motor_T * p_motor)
-{
-	Motor_Float(p_motor);
-	p_motor->ControlTimerBase = 0U; //ok to reset timer
-}
+
 
 
 

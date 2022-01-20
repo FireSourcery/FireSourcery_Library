@@ -347,12 +347,12 @@ static inline bool Motor_SixStep_PollOpenLoop(Motor_T * p_motor)
 {
 	bool commutation = Timer_Poll(&p_motor->ControlTimer);
 
-	if (commutation == true)
-	{
-		p_motor->OpenLoopSpeed_RPM = Linear_Ramp_CalcTargetIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopCommutationPeriod);
-		p_motor->OpenLoopCommutationPeriod = Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
-		Timer_StartPeriod(&p_motor->ControlTimer, p_motor->OpenLoopCommutationPeriod);
-	}
+//	if (commutation == true)
+//	{
+//		p_motor->OpenLoopSpeed_RPM = Linear_Ramp_CalcTargetIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopCommutationPeriod);
+//		p_motor->OpenLoopCommutationPeriod = Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
+//		Timer_StartPeriod(&p_motor->ControlTimer, p_motor->OpenLoopCommutationPeriod);
+//	}
 
 	return commutation;
 }
@@ -364,15 +364,15 @@ static inline void Motor_SixStep_StartOpenLoop(Motor_T * p_motor)
 //	Linear_Ramp_InitSlope(&p_motor->OpenLoopRamp, 20000U, p_motor->Parameters.OpenLoopSpeedStart, p_motor->Parameters.OpenLoopSpeedFinal, 100U);
 //	p_motor->OpenLoopRampIndex = 0U;
 
-	Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, 10U, 300U, 2000U);
-	p_motor->OpenLoopRampIndex = 0U;
-
-	p_motor->OpenLoopSpeed_RPM = Linear_Ramp_CalcTargetIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, 0U);
-	p_motor->OpenLoopCommutationPeriod = Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
-	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->OpenLoopCommutationPeriod);
-
-	//motor aligned to phase A
-	p_motor->NextPhase = (p_motor->Direction == MOTOR_DIRECTION_CCW) ? MOTOR_PHASE_BC : MOTOR_PHASE_AB;
+//	Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, 10U, 300U, 2000U);
+//	p_motor->OpenLoopRampIndex = 0U;
+//
+//	p_motor->OpenLoopSpeed_RPM = Linear_Ramp_CalcTargetIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, 0U);
+//	p_motor->OpenLoopCommutationPeriod = Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
+//	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->OpenLoopCommutationPeriod);
+//
+//	//motor aligned to phase A
+//	p_motor->NextPhase = (p_motor->Direction == MOTOR_DIRECTION_CCW) ? MOTOR_PHASE_BC : MOTOR_PHASE_AB;
 }
 
 
@@ -451,18 +451,28 @@ static inline bool PollMotorSixStepCommutation(Motor_T * p_motor)
 
 static inline bool PollMotorSixStepIBusOverLimit(Motor_T * p_motor)
 {
-	if (p_motor->IBus_Frac16 > p_motor->Parameters.IBusLimit_Frac16)
+	uint16_t vPwm = PID_Calc(&p_motor->PidIBus, p_motor->Parameters.IBusLimit_Frac16, p_motor->IBus_Frac16);
+	bool isOverLimit = false;
+
+	if (p_motor->VPwm > vPwm)
 	{
-		//			p_motor->VPwm = p_motor->VPwm - ((p_motor->IBus_Frac16 - 58982U) * p_motor->VPwm >> 16U)
-		if(p_motor->IOverLimitFlag == false)
-		{
-			p_motor->IOverLimitFlag = true;
-			PID_SetIntegral(&p_motor->PidIBus, p_motor->VPwm * 9U / 10U);
-		}
-		p_motor->VPwm = PID_Calc(&p_motor->PidIBus, p_motor->Parameters.IBusLimit_Frac16, p_motor->IBus_Frac16);
+		p_motor->VPwm = vPwm;
+		p_motor->IOverLimitFlag = true;
+		isOverLimit = true;
 	}
 
-	return p_motor->IOverLimitFlag;
+	if (p_motor->IBus_Frac16 > p_motor->Parameters.IBusLimit_Frac16)
+	{
+//		//			p_motor->VPwm = p_motor->VPwm - ((p_motor->IBus_Frac16 - 58982U) * p_motor->VPwm >> 16U)
+//		if(p_motor->IOverLimitFlag == false)
+//		{
+//			p_motor->IOverLimitFlag = true;
+			PID_SetIntegral(&p_motor->PidIBus, p_motor->VPwm * 9U / 10U);
+//		}
+//		p_motor->VPwm = PID_Calc(&p_motor->PidIBus, p_motor->Parameters.IBusLimit_Frac16, p_motor->IBus_Frac16);
+	}
+
+	return isOverLimit;
 }
 
 
@@ -471,7 +481,7 @@ static inline void ProcMotorSixStepControlFeedback(Motor_T * p_motor)
 	switch(p_motor->Parameters.ControlMode)
 	{
 		case MOTOR_CONTROL_MODE_OPEN_LOOP:
-				p_motor->VPwm = p_motor->RampCmd;
+			p_motor->VPwm = p_motor->RampCmd;
 			// bound to 2.5 to 10 percent
 			//	if 		(p_motor->VPwm < p_motor->Parameters.OpenLoopVPwmMin)	{ p_motor->VPwm = p_motor->Parameters.OpenLoopVPwmMin;}
 			//	else if (p_motor->VPwm > p_motor->Parameters.OpenLoopVPwmMax)	{ p_motor->VPwm = p_motor->Parameters.OpenLoopVPwmMax;}
@@ -559,9 +569,9 @@ static inline void Motor_SixStep_ResumePhaseControl(Motor_T * p_motor)
 		Motor_ResumeSpeedFeedback(p_motor);
 	}
 
-	if (((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)) == true)
+	if ((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT))
 	{
-		PID_SetIntegral(&p_motor->PidIBus, p_motor->VPwm);
+		PID_SetIntegral(&p_motor->PidIBus, 0);
 	}
 
 	switch(p_motor->Parameters.SensorMode)
@@ -592,35 +602,35 @@ static inline void Motor_SixStep_ResumePhaseControl(Motor_T * p_motor)
 	}
 }
 
-//move to common?
-static inline bool Motor_SixStep_CheckResumePhaseControl(Motor_T * p_motor)
-{
-	bool resume;
-
-	switch(p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_OPEN_LOOP :
-			resume = false;
+////move to common?
+//static inline bool Motor_SixStep_CheckResumePhaseControl(Motor_T * p_motor)
+//{
+//	bool resume;
+//
+//	switch(p_motor->Parameters.SensorMode)
+//	{
+//		case MOTOR_SENSOR_MODE_OPEN_LOOP :
+//			resume = false;
+////			break;
+//
+//		case MOTOR_SENSOR_MODE_BEMF :
+//			resume = Motor_SixStep_GetBemfReliable(p_motor);
 //			break;
-
-		case MOTOR_SENSOR_MODE_BEMF :
-			resume = Motor_SixStep_GetBemfReliable(p_motor);
-			break;
-
-		case MOTOR_SENSOR_MODE_HALL :
-			resume = true;
-			break;
-
-//	case MOTOR_SENSOR_MODE_ENCODER:
-//		resume =  true;
-//		break;
-
-		default :
-			break;
-	}
-
-	return resume;
-}
+//
+//		case MOTOR_SENSOR_MODE_HALL :
+//			resume = true;
+//			break;
+//
+////	case MOTOR_SENSOR_MODE_ENCODER:
+////		resume =  true;
+////		break;
+//
+//		default :
+//			break;
+//	}
+//
+//	return resume;
+//}
 
 /*
  * From 0 speed always
@@ -629,7 +639,6 @@ static inline void Motor_SixStep_StartPhaseControl(Motor_T * p_motor)
 {
 	Motor_SixStep_ResumePhaseControl(p_motor);
 	Encoder_Reset(&p_motor->Encoder);
-
 	/* soften start from initial speed calc
 	 * 625khz Timer, 0xFFFF counter,  60 polepairs,  9 rpm is lowest read value
 	 */

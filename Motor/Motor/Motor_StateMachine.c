@@ -121,8 +121,7 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABL
 
 static void Stop_Entry(Motor_T * p_motor)
 {
-	Motor_Float(p_motor);
-	Motor_StartIdle(p_motor);
+	Motor_Stop(p_motor);
 }
 
 static void Stop_Proc(Motor_T * p_motor)
@@ -334,7 +333,7 @@ static const StateMachine_State_T MOTOR_STATE_RUN =
 /******************************************************************************/
 static StateMachine_State_T * FreeWheel_InputAccelDecel(Motor_T * p_motor)
 {
-	StateMachine_State_T * p_newState;
+	StateMachine_State_T * p_newState = &MOTOR_STATE_RUN;
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
@@ -342,7 +341,15 @@ static StateMachine_State_T * FreeWheel_InputAccelDecel(Motor_T * p_motor)
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U; //openloop does not resume
+		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF)
+		{
+			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
+			{
+				p_newState = 0U;
+			}
+		}
+
+//		p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U; //openloop does not resume
 	}
 
 	return p_newState;
@@ -420,7 +427,7 @@ static void Calibration_Entry(Motor_T * p_motor)
 		case MOTOR_CALIBRATION_STATE_ADC:		Motor_StartCalibrateAdc(p_motor);		break;
 		case MOTOR_CALIBRATION_STATE_HALL:		Motor_StartCalibrateHall(p_motor);		break;
 		case MOTOR_CALIBRATION_STATE_ENCODER:	Motor_StartCalibrateEncoder(p_motor);	break;
-		default:			break;
+		default: break;
 	}
 }
 
