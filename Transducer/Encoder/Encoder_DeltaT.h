@@ -53,7 +53,9 @@ static inline void CaptureAngularDIncreasing(Encoder_T * p_encoder)
  */
 static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 {
-	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
+	uint32_t deltaT = 0U;
+	_Encoder_CaptureDelta(p_encoder, &deltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
+	p_encoder->DeltaT = (deltaT + p_encoder->DeltaT) / 2U;
 	CaptureAngularDIncreasing(p_encoder);
 
 	//capture integral
@@ -240,9 +242,9 @@ static inline uint32_t Encoder_DeltaT_GetOverflowTime(Encoder_T * p_encoder)
 	Angle index ranges from 0 to ControlResolution
 
 	UnitInterpolateAngle == UnitAngularSpeed / PollingFreq
-	//	UnitInterpolateAngle = [AngleSize[0x10000] * UnitDeltaT_Freq / PollingFreq / CountsPerRevolution]
+	//	UnitInterpolateAngle = [AngleSize[65536] * UnitDeltaT_Freq / PollingFreq / CountsPerRevolution]
 	//	return index * Encoder_GetAngularSpeed(p_encoder) / p_encoder->CONFIG.POLLING_FREQ;
-	//	return pollingIndex * UnitAngularSpeed / PollingFreq / DeltaT; 			// 	UnitAngularSpeed = [AngleSize[0x10000] * UnitDeltaT_Freq / CountsPerRevolution]
+	//	return pollingIndex * UnitAngularSpeed / PollingFreq / DeltaT;
  */
 static inline uint32_t Encoder_DeltaT_InterpolateAngle(Encoder_T * p_encoder, uint32_t pollingIndex)
 {

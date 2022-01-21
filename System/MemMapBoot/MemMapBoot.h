@@ -1,6 +1,10 @@
 #ifndef MEM_MAP_BOOT_H
 #define MEM_MAP_BOOT_H
 
+/*
+ * User ensure calling apps use same endianess
+ */
+
 // use 2 bits do differentiate unwritten memory patterns
 typedef enum
 {

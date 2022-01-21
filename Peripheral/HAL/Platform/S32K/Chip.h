@@ -96,7 +96,7 @@ static inline void Chip_InitLpuart(uint8_t lpuartId, uint8_t clockSource, PORT_T
 		case 1: irqN = LPUART1_RxTx_IRQn; break;
 	}
 
-	Chip_PCC_SetClockSource(clockSource, pccIndex);
+	Chip_PCC_SetClockSource(pccIndex, clockSource);
 	Chip_Port_SetMux(p_port, pinTx, 2U); //mux 2 for alt lpuart function
 	Chip_Port_SetMux(p_port, pinRx, 2U);
 	S32_NVIC->ISER[(irqN) >> 5U] = (1UL << ((irqN) & 0x1FU));

@@ -418,9 +418,9 @@ size_t Flash_GetOpBytesRemaining(Flash_T * p_flash)
 	return NvMemory_GetOpBytesRemaining(p_flash);
 }
 
-bool Flash_GetIsOpComplete(Flash_T * p_flash)
+bool Flash_ReadIsOpComplete(Flash_T * p_flash)
 {
-	return NvMemory_GetIsOpComplete(p_flash);
+	return NvMemory_ReadIsOpComplete(p_flash);
 }
 
 Flash_Status_T Flash_StartWrite_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)

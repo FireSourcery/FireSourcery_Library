@@ -296,7 +296,7 @@ size_t NvMemory_GetOpBytesRemaining(NvMemory_T * p_this)
 	return p_this->OpSize - p_this->OpIndex;
 }
 
-bool NvMemory_GetIsOpComplete(NvMemory_T * p_this)
+bool NvMemory_ReadIsOpComplete(NvMemory_T * p_this)
 {
 	return (p_this->State == NV_MEMORY_STATE_IDLE) && (p_this->CONFIG.READ_COMPLETE_FLAG(p_this->CONFIG.P_HAL) == true);
 }
@@ -373,7 +373,7 @@ bool NvMemory_ProcOp(NvMemory_T * p_this)
 
 NvMemory_Status_T NvMemory_StartOpCommon(NvMemory_T * p_this)
 {
-	if (NvMemory_GetIsOpComplete(p_this) == true)
+	if (NvMemory_ReadIsOpComplete(p_this) == true)
 	{
 		p_this->CONFIG.CLEAR_ERROR_FLAGS(p_this->CONFIG.P_HAL);
 		p_this->State = NV_MEMORY_STATE_ACTIVE;

@@ -8,9 +8,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-//In order to achieve specified w/e cycle
-//endurance, the emulated EEPROM backup size must be at least 16 times the
-//emulated EEPROM partition size in FlexRAM.
 
 #define HAL_EEPROM_START			S32K_FLEX_RAM_START
 #define HAL_EEPROM_END				S32K_FLEX_RAM_END
@@ -26,9 +23,16 @@
 
 typedef FTFC_Type HAL_EEPROM_T;	//Flash/EEPROM use same controller
 
+#include "Peripheral/NvMemory/NvMemory/Config.h"
+static inline void HAL_EEPROM_ProgramPartition(HAL_EEPROM_T * p_hal) 	CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal) 		CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; //do not inline to force RAM copy
+
+static void InitHalEepromBlocking(void) 		CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; //do not inline to force RAM copy
+
+
 static inline bool HAL_EEPROM_ReadCompleteFlag(HAL_EEPROM_T * p_hal)
 {
-	return ((FTFC->FCNFG & FTFC_FCNFG_EEERDY_MASK) != 0) ? true : false;
+	return ((FTFC->FCNFG & FTFC_FCNFG_EEERDY_MASK) != 0U) ? true : false;
 }
 
 static inline bool HAL_EEPROM_ReadErrorFlags(HAL_EEPROM_T * p_hal)
@@ -46,7 +50,7 @@ static inline bool HAL_EEPROM_ReadErrorProtectionFlag(HAL_EEPROM_T * p_hal)
 	return HAL_Flash_ReadErrorProtectionFlag(p_hal);
 }
 
-static inline void HAL_EEPROM_StartCmdWriteUnit(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
+static inline void HAL_EEPROM_StartCmdWriteUnit(HAL_EEPROM_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
 {
 	/*
 	 * cast away const for eeprom case, it is in FlexRam
@@ -67,22 +71,31 @@ static inline void HAL_EEPROM_StartCmdWriteUnit(HAL_Flash_T * p_regs, const uint
 	1000b - 64 Bytes
 	1001b - 32 Bytes
 	1111b - 0 Bytes
+
+	//In order to achieve specified w/e cycle
+	//endurance, the emulated EEPROM backup size must be at least 16 times the
+	//emulated EEPROM partition size in FlexRAM.
 */
+#ifdef CONFIG_EEPROM_ONE_TIME_PROGRAM_PARTITION
+extern void SystemSoftwareReset(void);
+#endif
+
 /*
- * Launch once if not programed
+ * Launch once if not programmed
  */
-static inline void HAL_EEPROM_ProgramPartition(HAL_EEPROM_T * p_hal)
+static inline void  HalEepromProgramPartition(void)
 {
 #define S32K_EEERAMSIZE_CODE 	(0x02U)		//only option for s32k142
 #define CONFIG_HAL_EEPROM_S32K_DEPART_CODE 		(0x08U)	 //Recommenced for max endurance,set once
+
 
 	uint32_t regDEPartitionCode = ((SIM->FCFG1 & SIM_FCFG1_DEPART_MASK) >> SIM_FCFG1_DEPART_SHIFT);
 
 	if (regDEPartitionCode != CONFIG_HAL_EEPROM_S32K_DEPART_CODE)
 	{
-		if (HAL_Flash_ReadCompleteFlag(p_hal) == true)
+		if (HAL_Flash_ReadCompleteFlag(0) == true)
 		{
-			HAL_EEPROM_ClearErrorFlags(p_hal);
+			HAL_Flash_ClearErrorFlags(0);
 
 			FTFx_FCCOB0 = FTFx_PROGRAM_PARTITION;
 			FTFx_FCCOB1 = 0x00U; //	CSEcKeySize;
@@ -90,50 +103,54 @@ static inline void HAL_EEPROM_ProgramPartition(HAL_EEPROM_T * p_hal)
 			FTFx_FCCOB3 = 0x01U; //(uint8_t)(flexRamEnableLoadEEEData ? 0U : 1U);
 			FTFx_FCCOB4 = S32K_EEERAMSIZE_CODE;					//EEEDataSizeCode = 0x02u: EEPROM size = 4 Kbytes
 			FTFx_FCCOB5 = CONFIG_HAL_EEPROM_S32K_DEPART_CODE; 	//DEPartitionCode = 0x08u: EEPROM backup size = 64 Kbytes */
-			HAL_Flash_WriteCmdStart(p_hal);
+			HAL_Flash_WriteCmdStart(0);
 
-			while (HAL_Flash_ReadCompleteFlag(p_hal) == false)
+			while (HAL_Flash_ReadCompleteFlag(0) == false)
 			{
-				if (HAL_EEPROM_ReadErrorFlags(p_hal) == false)
+				if (HAL_Flash_ReadErrorFlags(0) == false)
 				{
 					break;
 				}
+			}
+
+//			SystemSoftwareReset();
+		}
+	}
+}
+
+static void HalEepromInitBlocking(void)
+{
+#ifdef CONFIG_EEPROM_ONE_TIME_PROGRAM_PARTITION
+	/* one time code may not be needed if operation is support by flash tool*/
+	HalEepromProgramPartition( );
+#endif
+
+	if (HAL_EEPROM_ReadCompleteFlag(0) == false)
+	{
+		if (HAL_Flash_ReadCompleteFlag(0) == true)
+		{
+			HAL_Flash_ClearErrorFlags(0);
+
+			FTFx_FCCOB0 = FTFx_SET_EERAM;
+			FTFx_FCCOB1 = (uint8_t)EEE_ENABLE;
+			FTFx_FCCOB4 = (uint8_t)(0x00U);
+			FTFx_FCCOB5 = (uint8_t)(0x00U);
+			HAL_Flash_WriteCmdStart(0);
+		}
+
+		while (HAL_Flash_ReadCompleteFlag(0) == false)
+		{
+			if (HAL_Flash_ReadErrorFlags(0) == false)
+			{
+				break;
 			}
 		}
 	}
 }
 
-static inline void HAL_EEPROM_Init_NonBlocking(HAL_EEPROM_T * p_hal)
-{
-#ifdef CONFIG_HAL_EEPROM_INCLUDE_CONFIG_PARTITION
-	/* one time code may not be needed if operation is support by flash tool*/
-	HAL_EEPROM_ProgramPartition(p_hal);
-
-#endif
-
-    if (HAL_Flash_ReadCompleteFlag(p_hal) == true)
-	{
-    	HAL_EEPROM_ClearErrorFlags(p_hal);
-
-        FTFx_FCCOB0 = FTFx_SET_EERAM;
-        FTFx_FCCOB1 = (uint8_t)EEE_ENABLE;
-        FTFx_FCCOB4 = (uint8_t)(0x00U);
-        FTFx_FCCOB5 = (uint8_t)(0x00U);
-        HAL_Flash_WriteCmdStart(p_hal);
-	}
-}
-
 static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal)
 {
-	HAL_EEPROM_Init_NonBlocking(p_hal);
-
-	while (HAL_Flash_ReadCompleteFlag(p_hal) == false)
-	{
-		if (HAL_EEPROM_ReadErrorFlags(p_hal) == false)
-		{
-			break;
-		}
-	}
+	HalEepromInitBlocking( ) ;
 }
 
 

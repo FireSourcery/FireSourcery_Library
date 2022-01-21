@@ -167,6 +167,9 @@ typedef struct NvMemory_Tag
 	//	  NvMemory_Operation_T OpType;
 } NvMemory_T;
 
+extern void NvMemory_Init(NvMemory_T * p_this);
+extern void NvMemory_SetYield(NvMemory_T * p_this, void (*yield)(void *), void * p_callbackData);
+
 extern NvMemory_Status_T NvMemory_SetOpCommon(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize, size_t unitSize);
 extern void NvMemory_SetOpData(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
 extern void NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd);

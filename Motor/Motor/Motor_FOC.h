@@ -171,15 +171,6 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 				electricalDelta = 65536U/6U;
 			}
 
-//
-//			{
-//				electricalDelta = ((int32_t)p_motor->ElectricalDeltaPrev + (int32_t)electricalDelta)/2U;
-//			}
-//
-//			p_motor->ElectricalDeltaPrev = electricalDelta;
-
-			//todo check index
-
 			p_motor->ElectricalAngle = p_motor->HallAngle + electricalDelta;
 			p_motor->InterpolatedAngleIndex++;
 			break;
@@ -255,7 +246,7 @@ static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)
 		)
 	{
 		/* Voltage Control mode - use current feedback for over current only */
-		if (PollMotorFocIqOverLimit(p_motor) == false)
+//		if (PollMotorFocIqOverLimit(p_motor) == false)
 		{
 			FOC_SetVq(&p_motor->Foc, qReq);
 			FOC_SetVd(&p_motor->Foc, 0); //p_motor->FieldWeakening
@@ -278,11 +269,6 @@ static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)
 */
 /******************************************************************************/
 
-
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/
 
 
 /******************************************************************************/
@@ -359,7 +345,7 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 
 /*
  *	from stop only
- * prep run state. shared to reduce number of states
+ *	prep run state. shared to reduce number of states
  */
 static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 {
@@ -380,7 +366,6 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
-
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:
