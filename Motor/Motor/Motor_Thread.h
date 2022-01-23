@@ -43,6 +43,10 @@
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase++;
+	p_motor->IsPwmOn = false;
+//	p_motor->PwmOnTime = 0;
+//	p_motor->AnalogResults.Va_ADCU = 0;
+//	p_motor->Bemf.VPhase_ADCU = 0;
 	StateMachine_Semisynchronous_ProcOutput(&p_motor->StateMachine);
 //	AnalogN_EnqueueConversionOptions(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_THREAD_SYNC1);
 }

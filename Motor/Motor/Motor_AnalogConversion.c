@@ -9,10 +9,15 @@
 #include <stdbool.h>
 
 
+#include "Utility/Debug/Debug.h"
+
+
 
 void Motor_CapturePwmOnFlag(Motor_T * p_motor)
 {
 	p_motor->IsPwmOn = true;
+//	p_motor->PwmOnTime = Debug_CaptureElapsed(6);
+
 }
 
 /*

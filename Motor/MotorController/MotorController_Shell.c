@@ -79,43 +79,54 @@ static int Cmd_monitor_Loop(const MotorController_T * p_motorController)
 //    		Terminal_SendNum(p_CmdTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBus_mV);
 //    		Terminal_SendString(p_CmdTerminal, " mV\r\n");
 
-
-        	Terminal_SendString(&p_motorController->Shell.Terminal, "Speed 				= ");
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "Speed = ");
     		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Speed_RPM);
     		Terminal_SendString(&p_motorController->Shell.Terminal, " RPM\r\n");
+//
+//			Terminal_SendString(&p_motorController->Shell.Terminal, "RampCmd 			= ");
+//			Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].RampCmd);
+//			Terminal_SendString(&p_motorController->Shell.Terminal, " Frac16\r\n");
+//
+//        	Terminal_SendString(&p_motorController->Shell.Terminal, "SpeedFeedback 			= ");
+//    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].SpeedFeedback_Frac16);
+//    		Terminal_SendString(&p_motorController->Shell.Terminal, " Frac16\r\n");
 
-			Terminal_SendString(&p_motorController->Shell.Terminal, "RampCmd 			= ");
-			Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].RampCmd);
-			Terminal_SendString(&p_motorController->Shell.Terminal, " Frac16\r\n");
 
-        	Terminal_SendString(&p_motorController->Shell.Terminal, "SpeedFeedback 			= ");
-    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].SpeedFeedback_Frac16);
-    		Terminal_SendString(&p_motorController->Shell.Terminal, " Frac16\r\n");
-
-
-        	Terminal_SendString(&p_motorController->Shell.Terminal, "Iq 				= ");
-    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Iq);
-    		Terminal_SendString(&p_motorController->Shell.Terminal, " SignedFrac16\r\n");
+//        	Terminal_SendString(&p_motorController->Shell.Terminal, "Iq 				= ");
+//    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Iq);
+//    		Terminal_SendString(&p_motorController->Shell.Terminal, " SignedFrac16\r\n");
 
 //        	Terminal_SendString(&p_motorController->Shell.Terminal, "Id 				= ");
 //    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].);
 //    		Terminal_SendString(&p_motorController->Shell.Terminal, " SignedFrac16\r\n");
 
-        	Terminal_SendString(&p_motorController->Shell.Terminal, "IBus 				= ");
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "IBus = ");
     		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].IBus_Frac16);
     		Terminal_SendString(&p_motorController->Shell.Terminal, " Frac16\r\n");
 
-        	Terminal_SendString(&p_motorController->Shell.Terminal, "ZC Period			= ");
+//        	Terminal_SendString(&p_motorController->Shell.Terminal, "VBemf_On = ");
+//    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Bemf.VPhase_ADCU);
+//    		Terminal_SendString(&p_motorController->Shell.Terminal, " ADCU\r\n");
+//
+//        	Terminal_SendString(&p_motorController->Shell.Terminal, "VBemf_Off = ");
+//    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Bemf.VPhasePwmOff_ADCU);
+//    		Terminal_SendString(&p_motorController->Shell.Terminal, " ADCU\r\n");
+
+//        	Terminal_SendString(&p_motorController->Shell.Terminal, "PwmOnTime = ");
+//    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].PwmOnTime);
+//    		Terminal_SendString(&p_motorController->Shell.Terminal, " \r\n");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "ZC Period = ");
     		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Bemf.TimeZeroCrossingPeriod);
     		Terminal_SendString(&p_motorController->Shell.Terminal, " 20 kHz\r\n");
 
-        	Terminal_SendString(&p_motorController->Shell.Terminal, "BEMF Capture Time 		= ");
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "Phase Period = ");
     		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Bemf.TimePhasePeriod);
     		Terminal_SendString(&p_motorController->Shell.Terminal, " 20 kHz\r\n");
-
-        	Terminal_SendString(&p_motorController->Shell.Terminal, "Encoder Capture Time 		= ");
-    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Encoder.DeltaT);
-    		Terminal_SendString(&p_motorController->Shell.Terminal, " 625 kHz\r\n");
+//
+//        	Terminal_SendString(&p_motorController->Shell.Terminal, "Encoder Capture Time 		= ");
+//    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Encoder.DeltaT);
+//    		Terminal_SendString(&p_motorController->Shell.Terminal, " 625 kHz\r\n");
 
     		Terminal_SendString(&p_motorController->Shell.Terminal, "\n");
 
@@ -152,6 +163,46 @@ static int Cmd_sixstep(const MotorController_T * p_motorController, int argc, ch
 	return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
+
+static int Cmd_debug(const MotorController_T * p_motorController, int argc, char ** argv)
+{
+//    	for(uint8_t iMotor = 0U; iMotor < CmdMotorCount; iMotor++)
+//    	{
+
+	uint32_t * p_samples = p_motorController->CONFIG.P_MOTORS[0U].VSamplesPwmOn;
+	uint32_t sampleCount = p_motorController->CONFIG.P_MOTORS[0U].DebugCounterEndPwmOn;
+
+	Terminal_SendString(&p_motorController->Shell.Terminal, "PwmOn ");
+	Terminal_SendNum(&p_motorController->Shell.Terminal, sampleCount);
+	Terminal_SendString(&p_motorController->Shell.Terminal, " :\r\n");
+
+	for(uint8_t iSample = 0U; iSample < sampleCount; iSample++)
+	{
+		Terminal_SendNum(&p_motorController->Shell.Terminal, p_samples[iSample]);
+		Terminal_SendString(&p_motorController->Shell.Terminal, ", ");
+	}
+	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+
+
+	p_samples = p_motorController->CONFIG.P_MOTORS[0U].VSamplesPwmOff;
+	sampleCount = p_motorController->CONFIG.P_MOTORS[0U].DebugCounterEndPwmOff;
+
+	Terminal_SendString(&p_motorController->Shell.Terminal, "PwmOff ");
+	Terminal_SendNum(&p_motorController->Shell.Terminal, sampleCount);
+	Terminal_SendString(&p_motorController->Shell.Terminal, " :\r\n");
+
+	for(uint8_t iSample = 0U; iSample < sampleCount; iSample++)
+	{
+		Terminal_SendNum(&p_motorController->Shell.Terminal, p_samples[iSample]);
+		Terminal_SendString(&p_motorController->Shell.Terminal, ", ");
+	}
+	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+
+//    	}
+
+
+	return CMD_RESERVED_RETURN_CODE_SUCCESS;
+}
 
 
 //int Cmd_pwm(const MotorController_T * p_motorController, int argc, char ** argv)
@@ -373,7 +424,7 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"monitor", 	"Display motor info",			Cmd_monitor, 	Cmd_monitor_Loop	},
 	{"foc", 		"Set commutation mode",			Cmd_foc, 		0U	},
 	{"sixstep", 	"Set commutation mode",			Cmd_sixstep, 	0U	},
-
+	{"debug", 		"debug",						Cmd_debug, 		0U	},
 //	{"pwm", 		"Sets pwm value", 				Cmd_pwm		},
 
 //	{"param", 		"Sets motor parameterss",	 	Cmd_param	},

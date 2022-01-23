@@ -192,24 +192,21 @@ static inline void ActivateMotorFocAngle(Motor_T * p_motor)
 
 static inline bool PollMotorFocIqOverLimit(Motor_T * p_motor)
 {
-	qfrac16_t vq = PID_Calc(&p_motor->PidIq, p_motor->Parameters.IqLimit, FOC_GetIq(&p_motor->Foc));
 	bool isOverLimit = false;
-
-	if(FOC_GetVq(&p_motor->Foc) > vq)
-	{
-		FOC_SetVq(&p_motor->Foc, vq);
-		p_motor->IOverLimitFlag = true;
-		isOverLimit = true;
-	}
 
 	if (FOC_GetIq(&p_motor->Foc) > p_motor->Parameters.IqLimit)
 	{
-//		if(p_motor->IOverLimitFlag == false)
-//		{
-//			p_motor->IOverLimitFlag = true;
-			PID_SetIntegral(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc) * 9 / 10);
-//		}
-//		FOC_SetVq(&p_motor->Foc, PID_Calc(&p_motor->PidIq, p_motor->Parameters.IqLimit, FOC_GetIq(&p_motor->Foc)));
+		if(p_motor->IOverLimitFlag == false)
+		{
+			p_motor->IOverLimitFlag = true;
+			PID_SetIntegral(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
+		}
+		FOC_SetVq(&p_motor->Foc, PID_Calc(&p_motor->PidIq, p_motor->Parameters.IqLimit, FOC_GetIq(&p_motor->Foc)));
+		isOverLimit = true;
+	}
+	else
+	{
+		p_motor->IOverLimitFlag = false;
 	}
 
 	return isOverLimit;
@@ -298,10 +295,8 @@ static inline void Motor_FOC_StartAngleObserve(Motor_T * p_motor)
  */
 static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
-	Debug_CaptureElapsed(7);
 	Motor_FOC_ProcAngleObserve(p_motor);
 	ProcMotorFocControlFeedback(p_motor);
-	Debug_CaptureElapsed(8);
 }
 
 static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)

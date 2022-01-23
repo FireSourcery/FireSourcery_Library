@@ -33,8 +33,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-volatile uint16_t BemfDebug[300];
-volatile uint16_t BemfDebugIndex = 0;
 
 void BEMF_Init(BEMF_T * p_bemf)
 {

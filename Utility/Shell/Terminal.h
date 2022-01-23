@@ -138,15 +138,11 @@ static inline bool Terminal_GetIsKeyPressed(const Terminal_T * p_terminal)
 static inline void Terminal_SendNum(const Terminal_T * p_terminal, int32_t number)
 {
 	char str[16U];
-	uint8_t i;
+
 
 	snprintf(str, 16U, "%d", (int)number);
 
-	while (str[i] != '\0')
-	{
-		Terminal_SendChar(p_terminal, str[i]); // check error
-		i++;
-	}
+	Terminal_SendString(p_terminal, str);
 }
 
 static inline void Terminal_SendEsc(const Terminal_T * p_terminal)

@@ -379,7 +379,10 @@ typedef struct
 	PID_T PidIBus; //Six Step
 	Motor_SectorId_T NextPhase;		 		//for 6 step openloop/sensorless
 	Motor_SectorId_T CommutationPhase;	 	//for 6 step openloop/sensorless
+	uint32_t CommutationTimeRef;
 	uint32_t IBus_Frac16;
+	uint32_t IBusSum_Frac16;
+	uint32_t IBusSum_ADCU;
 //	uint32_t IBusPrev_Frac16;
 	uint16_t VPwm; 				//Control Variable
 
@@ -392,6 +395,19 @@ typedef struct
 	volatile bool IOverLimitFlag;
 	volatile bool IsBrake;
 
+	volatile uint32_t MicrosRef; //debug
+
+	volatile uint32_t PwmOnTime; //debug
+
+	volatile uint32_t SampleTimesPwmOn[200]; //debug
+	volatile uint32_t SampleTimesPwmOff[200]; //debug
+	volatile uint32_t VSamplesPwmOn[200]; //debug
+	volatile uint32_t VSamplesPwmOff[200]; //debug
+
+	volatile uint32_t DebugCounterPwmOn;
+	volatile uint32_t DebugCounterPwmOff;
+	volatile uint32_t DebugCounterEndPwmOff;
+	volatile uint32_t DebugCounterEndPwmOn;
 //	uint32_t JogSteps;
 //	uint32_t StepCount;
 }
@@ -571,7 +587,6 @@ static inline void Motor_ProcIdle(Motor_T * p_motor)
 
 	}
 
-	Debug_CaptureElapsed(1);
 }
 
 /******************************************************************************/
@@ -586,7 +601,35 @@ static inline void Motor_ProcIdle(Motor_T * p_motor)
 
 
 
-
+////move to common?
+//static inline bool Motor_SixStep_CheckResumePhaseControl(Motor_T * p_motor)
+//{
+//	bool resume;
+//
+//	switch(p_motor->Parameters.SensorMode)
+//	{
+//		case MOTOR_SENSOR_MODE_OPEN_LOOP :
+//			resume = false;
+////			break;
+//
+//		case MOTOR_SENSOR_MODE_BEMF :
+//			resume = Motor_SixStep_GetBemfReliable(p_motor);
+//			break;
+//
+//		case MOTOR_SENSOR_MODE_HALL :
+//			resume = true;
+//			break;
+//
+////	case MOTOR_SENSOR_MODE_ENCODER:
+////		resume =  true;
+////		break;
+//
+//		default :
+//			break;
+//	}
+//
+//	return resume;
+//}
 
 /******************************************************************************/
 /*!
