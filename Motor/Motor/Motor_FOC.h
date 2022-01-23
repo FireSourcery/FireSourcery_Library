@@ -118,8 +118,8 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			 * 	p_foc->Theta = integral of speed req
 			 */
 			/* integrate speed to angle */
-//			p_motor->OpenLoopSpeed_RPM = Linear_Ramp_Proc(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex);
-//			p_motor->ElectricalAngle += Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
+			p_motor->OpenLoopSpeed_RPM = Linear_Ramp_Proc(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex);
+			p_motor->ElectricalAngle += Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
 			break;
 
 		case MOTOR_SENSOR_MODE_BEMF:
@@ -132,16 +132,6 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			 */
 			Encoder_DeltaD_Capture(&p_motor->Encoder);
 			p_motor->ElectricalAngle = (qangle16_t)Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);
-			//recalibrate when phase a current cross 0
-//			if(debugCounter < 1000)
-//			{
-//				debug[debugCounter] = p_motor->ElectricalAngle;
-//				debugCounter++;
-//			}
-//			else
-//			{
-//				debugCounter = 0;
-//			}
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:
@@ -190,7 +180,7 @@ static inline void ActivateMotorFocAngle(Motor_T * p_motor)
 	Phase_ActuateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 }
 
-static inline bool PollMotorFocIqOverLimit(Motor_T * p_motor)
+static inline bool PollMotorFocIqOverLimit(Motor_T * p_motor) //todo combine with sixstup
 {
 	bool isOverLimit = false;
 
@@ -243,7 +233,7 @@ static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)
 		)
 	{
 		/* Voltage Control mode - use current feedback for over current only */
-//		if (PollMotorFocIqOverLimit(p_motor) == false)
+		if (PollMotorFocIqOverLimit(p_motor) == false)
 		{
 			FOC_SetVq(&p_motor->Foc, qReq);
 			FOC_SetVd(&p_motor->Foc, 0); //p_motor->FieldWeakening
@@ -286,7 +276,7 @@ static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 
 static inline void Motor_FOC_StartAngleObserve(Motor_T * p_motor)
 {
-	p_motor->IOverLimitFlag = false;
+//	p_motor->IOverLimitFlag = false;
 }
 
 /*
@@ -319,18 +309,15 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 	switch (p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_OPEN_LOOP:
-
 			break;
 
 		case MOTOR_SENSOR_MODE_BEMF:
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
-
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:
-
 			break;
 
 		default:
@@ -353,8 +340,8 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 		case MOTOR_SENSOR_MODE_OPEN_LOOP:
 			//from stop only
 			//can start at 0 speed in foc mode for continuous angle displacements
-//			Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, 0U, 300U, 2000U);
-//			p_motor->OpenLoopRampIndex = 0U;
+			Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, 0U, 300U, 2000U);
+			p_motor->OpenLoopRampIndex = 0U;
 			break;
 
 		case MOTOR_SENSOR_MODE_BEMF:

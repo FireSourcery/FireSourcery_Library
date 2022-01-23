@@ -109,7 +109,6 @@ static inline void Motor_SixStep_CaptureBemfB(Motor_T * p_motor)
 	if(BEMF_CheckBlankTime(&p_motor->Bemf) == true)
 	{
 		Bemf_CaptureVPhase(&p_motor->Bemf, p_motor->AnalogResults.Vb_ADCU);
-//
 //		if (p_motor->IsPwmOn == true)
 //		{
 			CaptureDebugPwmOn( p_motor, p_motor->AnalogResults.Vb_ADCU);
@@ -147,7 +146,7 @@ static inline void Motor_SixStep_CaptureBemfC(Motor_T * p_motor)
 static inline void Motor_SixStep_CaptureIBusA(Motor_T * p_motor)
 {
 //	p_motor->IBus_Frac16 = Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIa,  p_motor->AnalogResults.Ia_ADCU);
-	p_motor->IBusSum_Frac16 += Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIc, p_motor->AnalogResults.Ia_ADCU);
+	p_motor->IBusSum_Frac16 += Linear_ADC_CalcFractionUnsigned16_Abs(&p_motor->UnitIc, p_motor->AnalogResults.Ia_ADCU); //todo seperate capture
 	//Filter here if needed
 //	p_motor->IBus_ADCU  Filter_MovAvg(&p_motor->FilterIa, p_motor->AnalogChannelResults[MOTOR_ANALOG_CHANNEL_IA]);
 }
@@ -321,12 +320,12 @@ static inline bool Motor_SixStep_PollOpenLoop(Motor_T * p_motor)
 {
 	bool commutation = Timer_Poll(&p_motor->ControlTimer);
 
-//	if (commutation == true)
-//	{
-//		p_motor->OpenLoopSpeed_RPM = Linear_Ramp_CalcTargetIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopCommutationPeriod);
-//		p_motor->OpenLoopCommutationPeriod = Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
-//		Timer_StartPeriod(&p_motor->ControlTimer, p_motor->OpenLoopCommutationPeriod);
-//	}
+	if (commutation == true)
+	{
+		p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopCommutationPeriod);
+		p_motor->OpenLoopCommutationPeriod = Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
+		Timer_StartPeriod(&p_motor->ControlTimer, p_motor->OpenLoopCommutationPeriod);
+	}
 
 	return commutation;
 }
@@ -335,18 +334,15 @@ static inline void Motor_SixStep_StartOpenLoop(Motor_T * p_motor)
 {
 	// if pwm update is only on commutation cycle, must start at sufficient speed for timer driven fixed angle displacements
 //	Linear_Ramp_Init_Millis(&p_motor->OpenLoopRamp, 20000U, p_motor->Parameters.OpenLoopSpeedStart, p_motor->Parameters.OpenLoopSpeedFinal, 1000U);
-//	Linear_Ramp_InitSlope(&p_motor->OpenLoopRamp, 20000U, p_motor->Parameters.OpenLoopSpeedStart, p_motor->Parameters.OpenLoopSpeedFinal, 100U);
-//	p_motor->OpenLoopRampIndex = 0U;
+	Linear_Ramp_InitAcceleration(&p_motor->OpenLoopRamp, 20000U, p_motor->Parameters.OpenLoopSpeedStart, p_motor->Parameters.OpenLoopSpeedFinal, 100U);
+	p_motor->OpenLoopRampIndex = 0U;
 
-//	Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, 10U, 300U, 2000U);
-//	p_motor->OpenLoopRampIndex = 0U;
-//
-//	p_motor->OpenLoopSpeed_RPM = Linear_Ramp_CalcTargetIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, 0U);
-//	p_motor->OpenLoopCommutationPeriod = Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
-//	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->OpenLoopCommutationPeriod);
-//
-//	//motor aligned to phase A
-//	p_motor->NextPhase = (p_motor->Direction == MOTOR_DIRECTION_CCW) ? MOTOR_PHASE_BC : MOTOR_PHASE_AB;
+	p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, 0U);
+	p_motor->OpenLoopCommutationPeriod = Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
+	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->OpenLoopCommutationPeriod);
+
+	//motor aligned to phase A
+	p_motor->NextPhase = (p_motor->Direction == MOTOR_DIRECTION_CCW) ? MOTOR_PHASE_BC : MOTOR_PHASE_AB;
 }
 
 
@@ -402,6 +398,22 @@ static inline bool PollMotorSixStepCommutation(Motor_T * p_motor)
 			break;
 	}
 
+	return commutation;
+}
+
+static inline bool ProcMotorSixStepSensorFeedback(Motor_T * p_motor)
+{
+	bool commutation = PollMotorSixStepCommutation(p_motor);
+
+	if (Motor_PollSpeedFeedback(p_motor) == true)
+	{
+		if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder) == true) //once per millis
+		{
+			p_motor->Speed_RPM = 0U;
+			p_motor->SpeedFeedback_Frac16 = 0U;
+		}
+	}
+
 	if (commutation == true)
 	{
 		MapMotorSixStepBemfPhase(p_motor);
@@ -414,6 +426,7 @@ static inline bool PollMotorSixStepCommutation(Motor_T * p_motor)
 		p_motor->CommutationTimeRef = p_motor->ControlTimerBase;
 		p_motor->IBusSum_Frac16		= 0U;
 
+		//debug
 		p_motor->MicrosRef = SysTime_GetMicros();
 		p_motor->DebugCounterEndPwmOn = p_motor->DebugCounterPwmOn;
 		p_motor->DebugCounterPwmOn = 0;
@@ -427,6 +440,7 @@ static inline bool PollMotorSixStepCommutation(Motor_T * p_motor)
 
 	return commutation;
 }
+
 
 
 static inline bool PollMotorSixStepIBusOverLimit(Motor_T * p_motor)
@@ -500,22 +514,12 @@ static inline void ProcMotorSixStepControlFeedback(Motor_T * p_motor)
 static inline bool Motor_SixStep_ProcPhaseObserve(Motor_T * p_motor)
 {
 	ActivateMotorSixStepAnalog(p_motor);
-
-	if (Motor_PollSpeedFeedback(p_motor) == true)
-	{
-		if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder) == true) //once per millis
-		{
-			p_motor->Speed_RPM = 0U;
-			p_motor->SpeedFeedback_Frac16 = 0U;
-		}
-	}
-
-	return PollMotorSixStepCommutation(p_motor);
+	return ProcMotorSixStepSensorFeedback(p_motor);
 }
 
 static inline void Motor_SixStep_StartPhaseObserve(Motor_T * p_motor)
 {
-	p_motor->IOverLimitFlag = false;
+//	p_motor->IOverLimitFlag = false;
 	BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_PASSIVE); //no blank time
 }
 

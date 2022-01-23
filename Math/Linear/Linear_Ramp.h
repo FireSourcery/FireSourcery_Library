@@ -49,10 +49,10 @@ static inline void Linear_Ramp_InitSlope(Linear_T * p_linear, int32_t initial, i
  *
  * slope_UnitPerSecond 32,767 max
  */
-//static inline void Linear_Ramp_InitAcceleration(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t initial, int32_t final, int32_t slope_UnitPerSecond)
-//{
-//	Linear_Init(p_linear, slope_UnitPerSecond, updateFreq_Hz, initial, final);
-//}
+static inline void Linear_Ramp_InitAcceleration(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t initial, int32_t final, int32_t slope_UnitPerSecond)
+{
+	Linear_Init(p_linear, slope_UnitPerSecond, updateFreq_Hz, initial, final);
+}
 
 /*
  *  Overflow: (peroid_Ms * updateFreq_Hz ) max 32,767,000
@@ -66,21 +66,21 @@ static inline void Linear_Ramp_InitMillis(Linear_T * p_linear, uint16_t updateFr
 	Linear_Init_Shift(p_linear, (final - initial) , (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, initial, final, 14U);
 }
 
-static inline int32_t Linear_Ramp_CalcUp(Linear_T * p_linear, uint32_t index, int32_t final)
-{
-	int32_t rampValue = Linear_Function(p_linear, index);
-	if(rampValue > final)	{rampValue = final;}
-	return rampValue;
-}
+//static inline int32_t Linear_Ramp_CalcUp(Linear_T * p_linear, uint32_t index, int32_t final)
+//{
+//	int32_t rampValue = Linear_Function(p_linear, index);
+//	if(rampValue > final)	{rampValue = final;}
+//	return rampValue;
+//}
+//
+//static inline int32_t Linear_Ramp_CalcDown(Linear_T * p_linear, uint32_t index, int32_t final)
+//{
+//	int32_t rampValue = Linear_Function(p_linear, index);
+//	if(rampValue < final)	{rampValue = final;}
+//	return rampValue;
+//}
 
-static inline int32_t Linear_Ramp_CalcDown(Linear_T * p_linear, uint32_t index, int32_t final)
-{
-	int32_t rampValue = Linear_Function(p_linear, index);
-	if(rampValue < final)	{rampValue = final;}
-	return rampValue;
-}
-
-static inline int32_t Linear_Ramp_CalcTarget(Linear_T * p_linear, uint32_t index, int32_t final)
+static inline int32_t Linear_Ramp_CalcOutput(Linear_T * p_linear, uint32_t index, int32_t final)
 {
 	int32_t rampValue = Linear_Function(p_linear, index);
 
@@ -97,9 +97,9 @@ static inline int32_t Linear_Ramp_CalcTarget(Linear_T * p_linear, uint32_t index
 	return rampValue;
 }
 
-static inline int32_t Linear_Ramp_ProcTarget(Linear_T * p_linear, uint32_t * p_index, int32_t final)
+static inline int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear, uint32_t * p_index, int32_t final)
 {
-	int32_t rampValue = Linear_Ramp_CalcTarget(p_linear, *p_index, final);
+	int32_t rampValue = Linear_Ramp_CalcOutput(p_linear, *p_index, final);
 
 	if(rampValue != final)
 	{
@@ -109,9 +109,9 @@ static inline int32_t Linear_Ramp_ProcTarget(Linear_T * p_linear, uint32_t * p_i
 	return rampValue;
 }
 
-static inline int32_t Linear_Ramp_ProcTargetIncIndex(Linear_T * p_linear, uint32_t * p_index, uint32_t indexIncreament, int32_t final)
+static inline int32_t Linear_Ramp_ProcOutputIncIndex(Linear_T * p_linear, uint32_t * p_index, uint32_t indexIncreament, int32_t final)
 {
-	int32_t rampValue = Linear_Ramp_CalcTarget(p_linear, *p_index, final);
+	int32_t rampValue = Linear_Ramp_CalcOutput(p_linear, *p_index, final);
 
 	if(rampValue != final)
 	{
@@ -134,7 +134,7 @@ static inline void Linear_Ramp_SetFinal(Linear_T * p_linear,  int32_t final)
 
 static inline int32_t Linear_Ramp_Calc(Linear_T * p_linear, uint32_t index)
 {
-	return Linear_Ramp_CalcTarget(p_linear, index, p_linear->RangeReference);
+	return Linear_Ramp_CalcOutput(p_linear, index, p_linear->RangeReference);
 }
 
 static inline int32_t Linear_Ramp_Proc(Linear_T * p_linear, uint32_t * p_index)
