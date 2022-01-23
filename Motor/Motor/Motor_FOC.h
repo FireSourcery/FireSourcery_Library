@@ -302,8 +302,8 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 
 	if (((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)))
 	{
-//		PID_SetIntegral(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
-		PID_SetIntegral(&p_motor->PidIq, 0);
+		PID_SetIntegral(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc));
+//		PID_SetIntegral(&p_motor->PidIq, 0);
 	}
 
 	switch (p_motor->Parameters.SensorMode)

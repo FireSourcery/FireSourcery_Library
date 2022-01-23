@@ -545,14 +545,28 @@ static inline bool Motor_PollSpeedFeedback(Motor_T * p_motor)
 
 static inline bool Motor_ResumeSpeedFeedback(Motor_T * p_motor)
 {
-	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
-	{
-//		PID_SetIntegral(&p_motor->PidSpeed, p_motor->SpeedFeedback_Frac16); //or use vpwm, ibus, vq, iq
-		PID_SetIntegral(&p_motor->PidSpeed, 0); //or use vpwm, ibus, vq, iq
+//	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
+//	{
+		PID_SetIntegral(&p_motor->PidSpeed, p_motor->SpeedFeedback_Frac16);  //proportional to current speed
+//		PID_SetIntegral(&p_motor->PidSpeed, 0); //or use vpwm, ibus, vq, iq
 		p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->SpeedFeedback_Frac16);
 		Timer_Restart(&p_motor->SpeedTimer);
-	}
+//	}
 }
+
+
+//static inline bool Motor_ResumeControlFeedback(Motor_T * p_motor)
+//{
+//	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
+//	{
+//		PID_SetIntegral(&p_motor->PidSpeed, p_motor->SpeedFeedback_Frac16);  //proportional to current speed
+////		PID_SetIntegral(&p_motor->PidSpeed, 0); //or use vpwm, ibus, vq, iq
+//		p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->SpeedFeedback_Frac16);
+//		Timer_Restart(&p_motor->SpeedTimer);
+//	}
+//
+//}
+
 /******************************************************************************/
 /*!
 */

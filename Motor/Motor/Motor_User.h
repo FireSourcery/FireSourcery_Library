@@ -63,6 +63,7 @@ static inline Hall_Sensors_T Motor_User_GetHall(Motor_T * p_motor) 	{return Hall
 static inline void Motor_User_DisableControl(Motor_T * p_motor)
 {
 	Phase_Float(&p_motor->Phase);
+	p_motor->IsBrake = false;
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
 }
 
@@ -123,7 +124,52 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 	if (p_motor->IsBrake == false)
 	{
 		p_motor->IsBrake = true;
-		Motor_ResumeSpeedFeedback(p_motor);
+
+//		switch(p_motor->Parameters.ControlMode)
+//		{
+//			case MOTOR_CONTROL_MODE_OPEN_LOOP:
+//
+//				break;
+//
+//			case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE :
+//				break;
+//
+//			case MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ :
+//				// p_motor->VPwm = p_motor->RampCmd * p_motor->Speed_RPM * p_motor->VRpmGain;
+//				break;
+//
+//			case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE :
+//				break;
+//
+//			case MOTOR_CONTROL_MODE_CONSTANT_CURRENT :
+//				break;
+//
+//			case MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT :
+//				break;
+//			default :
+//		}
+
+
+//		if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+//		{
+//			if (((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)))
+//			{
+//				PID_SetIntegral(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc));
+//			}
+//		}
+//		else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+//		{
+//			if ((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT))
+//			{
+//				PID_SetIntegral(&p_motor->PidIBus, p_motor->IBus_Frac16); //set vpwm proportional to current ibus
+//			}
+//		}
+
+		if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
+		{
+			Motor_ResumeSpeedFeedback(p_motor);
+		}
+
 	}
 
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DECELERATE);

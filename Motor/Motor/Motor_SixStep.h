@@ -552,26 +552,19 @@ static inline void Motor_SixStep_ResumePhaseControl(Motor_T * p_motor)
 
 	if ((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT))
 	{
-		PID_SetIntegral(&p_motor->PidIBus, 0);
+		PID_SetIntegral(&p_motor->PidIBus, p_motor->IBus_Frac16); //set vpwm proportional to current ibus
 	}
 
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_OPEN_LOOP :
-			Motor_SixStep_StartOpenLoop(p_motor);
 			break;
 
 		case MOTOR_SENSOR_MODE_BEMF:
-			//	 bbemf mode must change timer period from openloop rpm to 1 tick
-			//if reliable 	BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_COMMUTATION);
-			BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_STARTUP);
-			Motor_SixStep_StartOpenLoop(p_motor);
-	//		p_motor->IsOpenLoopStartUp = true;
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:
 			BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_COMMUTATION);
-			Hall_ResetCapture(&p_motor->Hall);
 			break;
 
 	//	case MOTOR_SENSOR_MODE_ENCODER:
@@ -597,6 +590,31 @@ static inline void Motor_SixStep_StartPhaseControl(Motor_T * p_motor)
 
 	p_motor->Bemf.ZeroCrossingCounter  = 0U;
 
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_OPEN_LOOP :
+			Motor_SixStep_StartOpenLoop(p_motor);
+			break;
+
+		case MOTOR_SENSOR_MODE_BEMF:
+			//	 bbemf mode must change timer period from openloop rpm to 1 tick
+			//if reliable 	BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_COMMUTATION);
+//			BEMF_SetCycleMode(&p_motor->Bemf, BEMF_CYCLE_MODE_STARTUP);
+//			Motor_SixStep_StartOpenLoop(p_motor);
+	//		p_motor->IsOpenLoopStartUp = true;
+			break;
+
+		case MOTOR_SENSOR_MODE_HALL:
+			Hall_ResetCapture(&p_motor->Hall);
+			break;
+
+	//	case MOTOR_SENSOR_MODE_ENCODER:
+	//		resume =  true;
+	//		break;
+
+		default :
+			break;
+	}
 }
 
 //void Motor_SixStep_Jog(Motor_T *p_motor)
