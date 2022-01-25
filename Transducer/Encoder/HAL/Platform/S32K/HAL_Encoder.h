@@ -75,7 +75,7 @@ static inline void HAL_Encoder_WriteTimerCounterMax(HAL_Encoder_T * p_encoder, u
 
 static inline bool HAL_Encoder_ReadQuadratureCounterDirection(const HAL_Encoder_T * p_encoder)
 {
-	return (p_encoder->QDCTRL & FTM_QDCTRL_QUADIR_MASK) != 0U ? true : false;
+	return ((p_encoder->QDCTRL & FTM_QDCTRL_QUADIR_MASK) != 0U) ? true : false;
 }
 
 /*
@@ -83,12 +83,12 @@ static inline bool HAL_Encoder_ReadQuadratureCounterDirection(const HAL_Encoder_
  */
 static inline bool HAL_Encoder_ReadQuadratureCounterOverflowIncrement(const HAL_Encoder_T * p_encoder)
 {
-	return (p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) != 0U ? true : false;
+	return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) != 0U) ? true : false;
 }
 
 static inline bool HAL_Encoder_ReadQuadratureCounterOverflowDecrement(const HAL_Encoder_T * p_encoder)
 {
-	return !(p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) != 0U ? true : false;
+	return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) == 0U) ? true : false;
 }
 
 extern void Board_Encoder_InitCaptureTime(void);

@@ -1,4 +1,3 @@
-#include <Motor/Motor/Motor_AnalogConversion.h>
 /******************************************************************************/
 /*!
 	@section LICENSE
@@ -29,6 +28,7 @@
     @version V0
 */
 /******************************************************************************/
+#include "Motor_AnalogConversion.h"
 #include "Motor_User.h"
 #include "Motor_Thread.h"
 #include "Motor_StateMachine.h"

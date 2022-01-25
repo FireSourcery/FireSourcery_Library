@@ -59,7 +59,7 @@ static inline uint32_t Encoder_Motor_GetMechanicalDelta(Encoder_T * p_encoder)
  */
 static inline uint32_t Encoder_Motor_GetElectricalDelta(Encoder_T * p_encoder)
 {
-	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->DeltaD * p_encoder->PolePairs) ;
+	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->DeltaD * p_encoder->Params.MotorPolePairs) ;
 }
 
 //static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToDeltaD(Encoder_T * p_encoder, uint16_t mechRpm)
@@ -87,8 +87,8 @@ static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToMechanicalDelta(Encod
  */
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(Encoder_T * p_encoder, uint16_t mechRpm)
 {
-//	return (mechRpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / 60U * p_encoder->PolePairs / p_encoder->UnitT_Freq;
-	return Encoder_ConvertRotationalSpeedToDeltaAngle_RPM(p_encoder, mechRpm * p_encoder->PolePairs);
+//	return (mechRpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / 60U * p_encoder->Params.MotorPolePairs / p_encoder->UnitT_Freq;
+	return Encoder_ConvertRotationalSpeedToDeltaAngle_RPM(p_encoder, mechRpm * p_encoder->Params.MotorPolePairs);
 }
 
 /*!
@@ -119,13 +119,13 @@ static inline uint32_t Encoder_Motor_InterpolateMechanicalDelta(Encoder_T * p_en
 static inline uint32_t Encoder_Motor_InterpolateElectricalDelta(Encoder_T * p_encoder, uint32_t pollingIndex)
 {
 	//todo check overflow boundaries
-//	if (pollingIndex > UINT32_MAX / (p_encoder->UnitInterpolateAngle * p_encoder->PolePairs))
+//	if (pollingIndex > UINT32_MAX / (p_encoder->UnitInterpolateAngle * p_encoder->Params.MotorPolePairs))
 //	{
-//		return Encoder_InterpolateAngle(p_encoder, pollingIndex) * p_encoder->PolePairs;
+//		return Encoder_InterpolateAngle(p_encoder, pollingIndex) * p_encoder->Params.MotorPolePairs;
 //	}
 //	else
 	{
-		return Encoder_DeltaT_InterpolateAngle(p_encoder, pollingIndex * p_encoder->PolePairs);
+		return Encoder_DeltaT_InterpolateAngle(p_encoder, pollingIndex * p_encoder->Params.MotorPolePairs);
 	}
 }
 
@@ -163,7 +163,7 @@ static inline uint32_t Encoder_Motor_GetMechanicalTheta(Encoder_T * p_encoder)
  */
 static inline uint32_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
 {
-	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->AngularD * p_encoder->PolePairs);
+	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->AngularD * p_encoder->Params.MotorPolePairs);
 }
 
 
@@ -191,17 +191,17 @@ static inline uint32_t Encoder_Motor_GetMechanicalRpm(Encoder_T * p_encoder)
  */
 static inline uint32_t Encoder_Motor_GetElectricalSpeed(Encoder_T * p_encoder)
 {
-	return Encoder_Motor_GetMechanicalSpeed(p_encoder) * p_encoder->PolePairs;
+	return Encoder_Motor_GetMechanicalSpeed(p_encoder) * p_encoder->Params.MotorPolePairs;
 
 	/* Max DeltaD = 2,236, for UnitSpeed = 160000, PolerPairs = 12 */
-	//	return p_encoder->DeltaD * p_encoder->UnitAngularSpeed * p_encoder->PolePairs / p_encoder->DeltaT;
+	//	return p_encoder->DeltaD * p_encoder->UnitAngularSpeed * p_encoder->Params.MotorPolePairs / p_encoder->DeltaT;
 
-	//	return p_encoder->DeltaD * (p_encoder->UnitAngularSpeed  / p_encoder->DeltaT) * p_encoder->PolePairs
+	//	return p_encoder->DeltaD * (p_encoder->UnitAngularSpeed  / p_encoder->DeltaT) * p_encoder->Params.MotorPolePairs
 }
 static inline uint32_t Encoder_Motor_GetElectricalRpm(Encoder_T * p_encoder)
 {
-	return Encoder_Motor_GetMechanicalRpm(p_encoder) * p_encoder->PolePairs;
-//	return ((p_encoder->DeltaD * p_encoder->UnitAngularSpeed * p_encoder->PolePairs >> (32 - p_encoder->UnitAngularD_DivisorShift) - 6U) * 60U >> 6U)/ p_encoder->DeltaT;
+	return Encoder_Motor_GetMechanicalRpm(p_encoder) * p_encoder->Params.MotorPolePairs;
+//	return ((p_encoder->DeltaD * p_encoder->UnitAngularSpeed * p_encoder->Params.MotorPolePairs >> (32 - p_encoder->UnitAngularD_DivisorShift) - 6U) * 60U >> 6U)/ p_encoder->DeltaT;
 }
 
 /*

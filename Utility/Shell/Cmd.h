@@ -34,14 +34,20 @@
 #include <stdint.h>
 
 typedef int (*Cmd_Function_T)(void * p_context, int argc, char * argv[]);
-typedef int (*Cmd_Loop_T)(void * p_context);
+typedef int (*Cmd_ProcessFunction_T)(void * p_context);
+typedef const struct
+{
+    const Cmd_ProcessFunction_T FUNCTION;
+    const uint32_t FREQ;
+}
+Cmd_Process_T;
 
 typedef const struct
 {
     const char * const P_NAME;
     const char * const P_HELP;
     const Cmd_Function_T FUNCTION;
-    const Cmd_Loop_T LOOP;
+    const Cmd_Process_T PROCESS;
     // ArgCMax;
 }
 Cmd_T;

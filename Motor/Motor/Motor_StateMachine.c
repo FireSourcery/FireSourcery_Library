@@ -95,7 +95,7 @@ static const StateMachine_State_T MOTOR_STATE_INIT =
 /******************************************************************************/
 static StateMachine_State_T * Stop_InputAccelerate(Motor_T * p_motor)
 {
-	return	((p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF) || (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP)) ? &MOTOR_STATE_ALIGN : &MOTOR_STATE_RUN;
+	return (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) ? &MOTOR_STATE_RUN : &MOTOR_STATE_ALIGN;
 }
 
 //static StateMachine_State_T * StopTransitionDecelerate(Motor_T * p_motor)

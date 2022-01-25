@@ -197,10 +197,15 @@ static inline void MotorController_SaveParameters_Blocking(MotorController_T * p
 	for(uint8_t iMotor = 0U; iMotor < p_motorController->CONFIG.MOTOR_COUNT; iMotor++)
 	{
 		EEPROM_Write_Blocking(&p_motorController->Eeprom, MotorController_GetPtrMotor(p_motorController, iMotor)->CONFIG.P_PARAMETERS, &MotorController_GetPtrMotor(p_motorController, iMotor)->Parameters, sizeof(Motor_Params_T));
+
+		EEPROM_Write_Blocking(&p_motorController->Eeprom, MotorController_GetPtrMotor(p_motorController, iMotor)->Hall.CONFIG.P_PARAMS, &MotorController_GetPtrMotor(p_motorController, iMotor)->Hall.SensorsTable, sizeof(Hall_Params_T));
+
 	}
 
+	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->CONFIG.P_PARAMETERS, &p_motorController->Parameters, sizeof(MotorController_Params_T));
+
 	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->AnalogMonitor.CONFIG.P_PARAMS, &p_motorController->AnalogMonitor.Params, sizeof(MotAnalogMonitor_Params_T));
-//	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->AnalogMonitor.CONFIG.P_PARAMS, &p_motorController->AnalogMonitor.Params, sizeof(MotAnalogMonitor_Params_T));
+//	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->ThermistorPcb.CONFIG.P_PARAMS, &p_motorController->ThermistorPcb.Params, sizeof(Thermistor_Params_T));
 }
 
 static inline void MotorController_Beep(MotorController_T * p_motorController)
@@ -211,10 +216,10 @@ static inline void MotorController_Beep(MotorController_T * p_motorController)
 /*
  * Wrappers for State Machine
  */
-static inline void MotorController_ProcAlarm(MotorController_T * p_motorController)
-{
-//	Blinky_Blink(&p_motorController->Buzzer, 500U); set alarm type
-}
+//static inline void MotorController_ProcAlarm(MotorController_T * p_motorController)
+//{
+////	Blinky_Blink(&p_motorController->Buzzer, 500U); set alarm type
+//}
 
 static inline void MotorController_ProcUserCmdBrake(MotorController_T * p_motorController)
 {
@@ -252,8 +257,6 @@ static inline bool MotorController_ProcDirection(MotorController_T * p_motorCont
 				Blinky_Blink(&p_motorController->Buzzer, 500U);
 				status = false;
 			}
-
-			Motor_User_ActivateCalibrationHall(&p_motorController->CONFIG.P_MOTORS[iMotor]);
 		}
 	}
 

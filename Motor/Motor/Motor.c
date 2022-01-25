@@ -81,34 +81,32 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Phase_Init(&p_motor->Phase);
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
 
-	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
+	if ((p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP) || (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL))
 	{
 		/*
 		 * all sixstep modes and hall foc mode use CaptureTime
 		 * use PolePairs * 6 for count per commutation or PolePairs for count per erotation
 		 */
-		Encoder_Motor_InitCaptureTime(&p_motor->Encoder, p_motor->Parameters.PolePairs * 6U, 0, p_motor->Parameters.PolePairs);
-		Hall_Init(&p_motor->Hall);
+		Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
 	}
-	else if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_ENCODER)
+	else
 	{
-//		Encoder_Motor_InitCaptureCount(&p_motor->Encoder, p_motor->Parameters.EncoderCountsPerRevolution, p_motor->Parameters.EncoderDistancePerCount, p_motor->Parameters.PolePairs);
-//		Encoder_SetQuadratureMode(&p_motor->Encoder, p_motor->Parameters.EncoderIsQuadratureModeEnabled);
-//		Encoder_SetQuadratureDirectionCalibration(&p_motor->Encoder, p_motor->Parameters.EncoderIsALeadBPositive);
-		FOC_Init(&p_motor->Foc);
+		Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
 	}
-	else //senorless/ openloop
+
+	switch (p_motor->Parameters.SensorMode)
 	{
-		//FOC sensorless
-		Encoder_Motor_InitCaptureCount(&p_motor->Encoder, 0, 0, p_motor->Parameters.PolePairs);
-		Encoder_SetQuadratureMode(&p_motor->Encoder, 0);
-		Encoder_SetQuadratureDirectionCalibration(&p_motor->Encoder, 0);
-		FOC_Init(&p_motor->Foc);
+		case MOTOR_SENSOR_MODE_OPEN_LOOP:	break;
+		case MOTOR_SENSOR_MODE_BEMF:		break;
+		case MOTOR_SENSOR_MODE_ENCODER:		break;
+		case MOTOR_SENSOR_MODE_HALL:	Hall_Init(&p_motor->Hall);		break;
+		default: break;
 	}
 
 	/*
 	 * SW Structs
 	 */
+	FOC_Init(&p_motor->Foc);
 	BEMF_Init(&p_motor->Bemf);
 
 	PID_Init(&p_motor->PidSpeed);
@@ -177,10 +175,9 @@ Motor_AlignMode_T Motor_GetAlignMode(Motor_T *p_motor)
 
 void Motor_StartAlign(Motor_T * p_motor)
 {
-	uint32_t alignVoltage = (65536U/10U/4U); // + (p_motor->UserCmd / 2U); //= (65536U/10U/4U) + (p_motor->VPwm / 2U);
-	Timer_StartPeriod(&p_motor->ControlTimer, 20000U); //Parameter.AlignTime
-	Phase_Ground(&p_motor->Phase);
-	Phase_ActuateDuty(&p_motor->Phase, alignVoltage, 0, 0);
+	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_ControlCycles);
+	Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16, 0U, 0U);
+	Phase_ActivateSwitchABC(&p_motor->Phase);
 }
 
 bool Motor_ProcAlign(Motor_T * p_motor)
@@ -214,7 +211,7 @@ static void StartMotorCalibrateCommon(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase = 0U;
 	Phase_Ground(&p_motor->Phase); //activates abc
-	//	p_motor->CalibrationSubstateStep = 0U;
+	p_motor->CalibrationSubstateStep = 0U;
 }
 
 /*
@@ -371,29 +368,28 @@ void Motor_StartCalibrateEncoder(Motor_T * p_motor)
 {
 	StartMotorCalibrateCommon(p_motor);
 	Timer_StartPeriod(&p_motor->ControlTimer, 20000U);
-	Phase_ActuateDuty(&p_motor->Phase, 6553U/4U, 0, 0); /* Align Phase A 10% pwm */
+	Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16, 0U, 0U); /* Align Phase A 10% pwm */
 }
 
 bool Motor_CalibrateEncoder(Motor_T * p_motor)
 {
-	static uint8_t state = 0; //limits calibration to 1 at a time;
-	const uint16_t duty = 65536/10/4;
 	bool isComplete = false;
 
 	if (Timer_Poll(&p_motor->ControlTimer) == true)
 	{
-		switch (state)
+		switch (p_motor->CalibrationSubstateStep)
 		{
 			case 0U:
-	//			Encoder_DeltaD_CalibrateQuadratureReference(&p_motor->Encoder);
-				Phase_ActuateDuty(&p_motor->Phase, 0U, duty, 0U);
-				state++;
+				Encoder_DeltaD_CalibrateQuadratureReference(&p_motor->Encoder);
+
+				Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16, p_motor->Parameters.AlignVoltage_Frac16, 0U);
+				p_motor->CalibrationSubstateStep = 1U;
 				break;
 
 			case 1U:
-	//			Encoder_DeltaD_CalibrateQuadratureDirectionPositive(&p_motor->Encoder);
+				Encoder_DeltaD_CalibrateQuadraturePositive(&p_motor->Encoder);
 				Phase_Float(&p_motor->Phase);
-				state = 0;
+				p_motor->CalibrationSubstateStep = 0;
 				isComplete = true;
 				break;
 
@@ -423,37 +419,37 @@ bool Motor_CalibrateHall(Motor_T * p_motor)
 		switch (state)
 		{
 		case 0U:
-			Phase_ActuateDuty(&p_motor->Phase, duty, 0U, 0U);
+			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, 0U);
 			state++;
 			break;
 
 		case 1U:
 			Hall_CalibratePhaseA(&p_motor->Hall);
-			Phase_ActuateDuty(&p_motor->Phase, duty, duty, 0U);
+			Phase_ActivateDuty(&p_motor->Phase, duty, duty, 0U);
 			state++;
 			break;
 
 		case 2U:
 			Hall_CalibratePhaseInvC(&p_motor->Hall);
-			Phase_ActuateDuty(&p_motor->Phase, 0U, duty, 0);
+			Phase_ActivateDuty(&p_motor->Phase, 0U, duty, 0);
 			state++;
 			break;
 
 		case 3U:
 			Hall_CalibratePhaseB(&p_motor->Hall);
-			Phase_ActuateDuty(&p_motor->Phase, 0U, duty, duty);
+			Phase_ActivateDuty(&p_motor->Phase, 0U, duty, duty);
 			state++;
 			break;
 
 		case 4U:
 			Hall_CalibratePhaseInvA(&p_motor->Hall);
-			Phase_ActuateDuty(&p_motor->Phase, 0U, 0U, duty);
+			Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, duty);
 			state++;
 			break;
 
 		case 5U:
 			Hall_CalibratePhaseC(&p_motor->Hall);
-			Phase_ActuateDuty(&p_motor->Phase, duty, 0U, duty);
+			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, duty);
 			state++;
 			break;
 

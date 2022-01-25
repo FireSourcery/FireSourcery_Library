@@ -42,10 +42,9 @@
 
 	@param controlFreq_Hz pwm timer freq
  */
-void Encoder_Motor_InitCaptureCount(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount, uint8_t polePairs)
+void Encoder_Motor_InitCaptureCount(Encoder_T * p_encoder)
 {
-	Encoder_DeltaD_Init(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount);
-	p_encoder->PolePairs = polePairs;
+	Encoder_DeltaD_Init(p_encoder);
 
 	/*
 	 * e.g.
@@ -93,16 +92,30 @@ void Encoder_Motor_InitCaptureCount(Encoder_T * p_encoder, uint32_t encoderCount
 
  */
 /**************************************************************************/
-void Encoder_Motor_InitCaptureTime(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount, uint8_t polePairs)
+void Encoder_Motor_InitCaptureTime(Encoder_T * p_encoder)
 {
-	Encoder_DeltaT_Init(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount);
-	Encoder_DeltaT_InitExtendedTimer(p_encoder, 1000U);	//motor must use for stop poll
-	p_encoder->PolePairs = polePairs;
+	HAL_Encoder_InitCaptureTime
+	(
+		p_encoder->CONFIG.P_HAL_ENCODER,
+		p_encoder->CONFIG.PIN_PHASE_A.P_HAL_PIN,
+		p_encoder->CONFIG.PIN_PHASE_A.ID,
+		p_encoder->CONFIG.PIN_PHASE_B.P_HAL_PIN,
+		p_encoder->CONFIG.PIN_PHASE_B.ID
+	);
+
+	if (p_encoder->CONFIG.P_PARAMS != 0U)
+	{
+		memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T));
+	}
+
+	Encoder_DeltaT_SetUnitConversion(p_encoder, p_encoder->Params.MotorPolePairs*6U, p_encoder->Params.DistancePerCount);
+
+//	p_encoder->DeltaT = UINT32_MAX;
 }
 
 
-//// calculate distance per revolution using components
-//uint32_t Speed_SetUnitGroundSpeed(Speed_T *p_speed, uint32_t wheelDiameter, uint32_t wheeltoMotorRatio)
-//{
-//	//p_speed->DistancePerRevolution = wheelDiameter * 314 / 100 / wheeltoMotorRatio;
-//}
+void Encoder_Motor_SetLinearUnits(Encoder_T * p_encoder, uint32_t wheelDiameter, uint32_t wheeltoMotorRatio_Factor, uint32_t wheeltoMotorRatio_Divisor)
+{
+	uint32_t distancePerRevolution = wheelDiameter * wheeltoMotorRatio_Factor * 314 / 100 / wheeltoMotorRatio_Divisor;
+	p_encoder->Params.DistancePerCount = distancePerRevolution / p_encoder->Params.CountsPerRevolution;
+}

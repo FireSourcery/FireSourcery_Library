@@ -38,8 +38,11 @@
 /*!
 	Uses pin ISR, or polling
  */
-void Encoder_DeltaT_Init(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
+void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 {
+	//	Pin_Init(&p_encoder->CONFIG.PIN_PHASE_A);
+	//	Pin_Init(&p_encoder->CONFIG.PIN_PHASE_B);
+
 	HAL_Encoder_InitCaptureTime
 	(
 		p_encoder->CONFIG.P_HAL_ENCODER,
@@ -49,23 +52,49 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolut
 		p_encoder->CONFIG.PIN_PHASE_B.ID
 	);
 
-//	Pin_Init(&p_encoder->CONFIG.PIN_PHASE_A);
-//	Pin_Init(&p_encoder->CONFIG.PIN_PHASE_B);
+	if (p_encoder->CONFIG.P_PARAMS != 0U)
+	{
+		memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T));
+	}
 
-	_Encoder_Init(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount, p_encoder->CONFIG.DELTA_T_TIMER_FREQ);
+	Encoder_DeltaT_SetUnitConversion(p_encoder, p_encoder->Params.CountsPerRevolution, p_encoder->Params.DistancePerCount);
 
 	p_encoder->DeltaT = UINT32_MAX;
 }
 
+//void Encoder_DeltaT_InitParams(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
+//{
+//	//	Pin_Init(&p_encoder->CONFIG.PIN_PHASE_A);
+//	//	Pin_Init(&p_encoder->CONFIG.PIN_PHASE_B);
+//
+//	HAL_Encoder_InitCaptureTime
+//	(
+//		p_encoder->CONFIG.P_HAL_ENCODER,
+//		p_encoder->CONFIG.PIN_PHASE_A.P_HAL_PIN,
+//		p_encoder->CONFIG.PIN_PHASE_A.ID,
+//		p_encoder->CONFIG.PIN_PHASE_B.P_HAL_PIN,
+//		p_encoder->CONFIG.PIN_PHASE_B.ID
+//	);
+//
+//	_Encoder_Init(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount, p_encoder->CONFIG.DELTA_T_TIMER_FREQ);
+//
+//	p_encoder->DeltaT = UINT32_MAX;
+//}
+
+void Encoder_DeltaT_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
+{
+	_Encoder_SetUnitConversion(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount, p_encoder->CONFIG.DELTA_T_TIMER_FREQ);
+}
+
 /*
- * p_encoder->CONFIG.EXTENDED_DELTA_TIMER_FREQ should be small, < 65536
+ * p_encoder->CONFIG.EXTENDED_TIMER_FREQ should be small, < 65536
  * //long timer ticks per short timer overflow
  */
-void Encoder_DeltaT_InitExtendedTimer(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
+void Encoder_DeltaT_SetExtendedTimer(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
 {
-	p_encoder->ExtendedDeltaTimerThreshold = (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_DELTA_TIMER_FREQ / p_encoder->UnitT_Freq;
-	p_encoder->ExtendedDeltaTimerEffectiveStopTime = effectiveStopTime_Millis * p_encoder->CONFIG.EXTENDED_DELTA_TIMER_FREQ / 1000U ;
-	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->CONFIG.P_EXTENDED_DELTA_TIMER;
+//	p_encoder->ExtendedTimerThreshold = (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->UnitT_Freq;
+	p_encoder->Params.ExtendedTimerDeltaTStop = effectiveStopTime_Millis * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / 1000U ;
+	p_encoder->ExtendedTimerSaved = *p_encoder->CONFIG.P_EXTENDED_TIMER;
 }
 
 /*
@@ -75,13 +104,13 @@ void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder, uint16_t initialRpm)
 {
 	p_encoder->DeltaT = 0xFF00U; //minus some delay time before first capture //Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, initialRpm);
 	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER) - p_encoder->DeltaT;
-	p_encoder->ExtendedDeltaTimerSaved = *p_encoder->CONFIG.P_EXTENDED_DELTA_TIMER;
+	p_encoder->ExtendedTimerSaved = *p_encoder->CONFIG.P_EXTENDED_TIMER;
 }
 
-void Encoder_DeltaT_CalibrateAngularD(Encoder_T * p_encoder)
-{
-	p_encoder->AngularD = 0U;
-}
+//void Encoder_DeltaT_CalibrateAngularD(Encoder_T * p_encoder)
+//{
+//	p_encoder->AngularD = 0U;
+//}
 
 void Encoder_DeltaT_CalibrateQuadratureReference(Encoder_T * p_encoder)
 {

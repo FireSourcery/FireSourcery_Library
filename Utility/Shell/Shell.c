@@ -181,10 +181,10 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 			}
 			else
 			{
-				if(*p_shell->CONFIG.P_TIMER - p_shell->LoopModeTimeRef > p_shell->CONFIG.LOOP_PERIOD)
+				if(*p_shell->CONFIG.P_TIMER - p_shell->LoopModeTimeRef > p_shell->CONFIG.TIMER_FREQ / p_shell->p_Cmd->PROCESS.FREQ )
 				{
 					p_shell->LoopModeTimeRef = *p_shell->CONFIG.P_TIMER;
-					p_shell->CmdReturnCode = p_shell->p_Cmd->LOOP(p_shell->CONFIG.P_CMD_CONTEXT);
+					p_shell->CmdReturnCode = p_shell->p_Cmd->PROCESS.FUNCTION(p_shell->CONFIG.P_CMD_CONTEXT);
 				}
 			}
 			break;

@@ -199,7 +199,7 @@ typedef enum
  */
 typedef struct __attribute__ ((aligned (4U)))
 {
-    uint8_t PolePairs;
+//    uint8_t PolePairs;
 
 	Motor_CommutationMode_T 	CommutationMode;
 	Motor_SensorMode_T 			SensorMode;
@@ -208,11 +208,13 @@ typedef struct __attribute__ ((aligned (4U)))
 	Motor_AlignMode_T 			AlignMode;
 
 	Motor_DirectionCalibration_T DirectionCalibration;
+	uint16_t AlignVoltage_Frac16;
+	uint16_t AlignTime_ControlCycles;
+
 
 	//	uint8_t BrakeCoeffcient;
 	//	uint32_t SpeedControlPeriod;
 	//	qfrac16_t FocOpenLoopVq;
-	//	qfrac16_t FocAlignVd;
 
 	uint16_t OpenLoopVPwmMin;
 	uint16_t OpenLoopVPwmMax;
@@ -385,8 +387,6 @@ typedef struct
 	uint32_t IBusSum_ADCU;
 //	uint32_t IBusPrev_Frac16;
 	uint16_t VPwm; 				//Control Variable
-
-
 
 	//Substates
 	Motor_CalibrationState_T CalibrationState; /* Substate, selection for calibration */

@@ -55,7 +55,7 @@ static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uin
 			{
 				result = (factor << maxShift) / divisor;
 
-				if ( result <= (UINT32_MAX >> (targetShift - maxShift)) )
+				if ( result <= (UINT32_MAX >> (targetShift - maxShift)) ) //check overflow
 				{
 					result = result << (targetShift - maxShift);
 				}
@@ -78,13 +78,13 @@ static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uin
 	EncoderResolution, EncoderCounterMax + 1
  */
 
-void _Encoder_Init(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount, uint32_t unitTFreq)
+void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount, uint32_t unitTFreq)
 {
 //	HAL_Encoder_Init(p_encoder->CONFIG.P_HAL_ENCODER);
-	p_encoder->EncoderResolution = encoderCountsPerRevolution;
-	p_encoder->UnitD = encoderDistancePerCount;
+//	p_encoder->EncoderResolution = encoderCountsPerRevolution;
 	p_encoder->UnitT_Freq = unitTFreq;
 
+	p_encoder->UnitLinearD = encoderDistancePerCount;
 	/*
 	 * Possible 32 bit overflow
 	 *
@@ -96,37 +96,37 @@ void _Encoder_Init(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, u
 	 * Max deltaD will be UINT32_MAX / (unitDeltaD * unitDeltaT_Freq)
 	 * deltaD ~14,000, for 300,000 (unitDeltaD * unitDeltaT_Freq)
 	 */
-	p_encoder->UnitSpeed = encoderDistancePerCount * unitTFreq;
+	p_encoder->UnitLinearSpeed = encoderDistancePerCount * unitTFreq;
 
 	/*
 	 * Angle Calc
+	 * Angle = UnitAngle_Factor * DeltaD >> UnitAngle_Divisor
 	 *
-	 * DeltaD_Units = DeltaD * UnitD
 	 * uneven UnitD = unitAngle_DataBits/unitAngle_SensorResolution divide results in loss of precision
-	 * deltaD_Units = UnitAngle_Factor * DeltaD >> UnitAngle_Divisor
 	 */
 	p_encoder->UnitAngularD_Factor = 0xFFFFFFFFU / encoderCountsPerRevolution + 1U;
 
 	/*
-	 * Speed calc
+	 * Angular Speed Calc
 	 *
 	 * ((DeltaD * UnitT_Freq) << unitAngle_DataBits / (unitAngle_SensorResolution * DeltaT)) overflow
 	 *
-	 * 		Speed = (DeltaD * UnitD) / Correction * UnitT_Freq / Delta
-	 * Use: speed = DeltaD * [UnitSpeed] / DeltaT = DeltaD * [UnitD * UnitT_Freq / Correction] / DeltaT
+	 * 		Speed = (DeltaD * UnitD) / ANGLE_DEGREES_BITS * UnitT_Freq / Delta
+	 * Use: speed = DeltaD * [UnitSpeed] / DeltaT = DeltaD * [UnitD * UnitT_Freq / ANGLE_DEGREES_BITS] / DeltaT
 	 *
 	 * most cases: UnitT_Freq > DeltaD
 	 *
 	 * e.g.
-	 * Real: speed 	== DeltaD * UnitD * UnitT_Freq / Correction / DeltaT
-	 * 				== 8000 * 429,497{sensorRes == 10k} * 20000 / 65536 / 1 == 1,048,576,660.16
+	 * Angular Speed =
+	 * Real:   				DeltaD * UnitAngularD_Factor * UnitT_Freq / ANGLE_DEGREES_BITS / DeltaT
+	 * 						8000 * 429,497{encoderRes == 10k} * 20000 / 65536 / 1 == 1,048,576,660.16
 	 *
-	 * speed = (DeltaD * UnitD) / Correction * UnitT_Freq / DeltaT == 1,048,560,000
-	 * speed = DeltaD * [UnitD * UnitT_Freq / Correction] / DeltaT == 1,048,576,000
+	 * Primitive:	  		(DeltaD * UnitAngularD_Factor) / ANGLE_DEGREES_BITS * UnitT_Freq / DeltaT == 1,048,560,000
+	 * UnitAngularSpeed: 	DeltaD * [UnitAngularD_Factor * UnitT_Freq / ANGLE_DEGREES_BITS] / DeltaT == 1,048,576,000
 	 */
 	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(unitTFreq, encoderCountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
 
-	p_encoder->IsUnitAngularSpeedOverflow = !p_encoder->UnitAngularSpeed;
+//	p_encoder->IsUnitAngularSpeedOverflow = !p_encoder->UnitAngularSpeed;
 
 	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitTFreq, p_encoder->CONFIG.POLLING_FREQ * encoderCountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
 
@@ -150,14 +150,14 @@ void Encoder_Reset(Encoder_T * p_encoder)
 
 	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);; /* reset for angularD */
 	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
-
-	p_encoder->ExtendedDeltaTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_DELTA_TIMER);
+	p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
+	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
 }
 
 //must use encoder init first
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)
 {
-	p_encoder->IsQuadratureCaptureEnabled = isEnabled;
+	p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled;
 }
 
 /*!
@@ -166,13 +166,6 @@ void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)
  */
 void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive)
 {
-	p_encoder-> IsALeadBDirectionPositive = isALeadBPositive; //for deltaT mode and UI output
-
-	//	p_encoder->IsCounterIncrementDirectionPositive = !(isALeadBIncrement ^ isALeadBPositive);
-//#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-//	p_encoder->IsCounterIncrementDirectionPositive = isALeadBPositive;
-//#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-//	p_encoder->IsCounterIncrementDirectionPositive = !isALeadBPositive;
-//#endif
+	p_encoder->Params.IsALeadBPositive = isALeadBPositive;
 }
 

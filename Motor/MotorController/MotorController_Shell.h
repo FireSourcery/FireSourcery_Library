@@ -37,7 +37,7 @@
 
 #define MC_SHELL_CMD_COUNT		 	10U
 #define MC_SHELL_CMD_STATUS_COUNT 	1U
-#define MC_SHELL_PERIOD_MILLIS		5000U
+#define MC_SHELL_PERIOD_MILLIS		1000U
 
 //typedef enum
 //{
@@ -50,6 +50,6 @@
 extern const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT];
 extern const Cmd_Status_T MC_CMD_STATUS_TABLE[MC_SHELL_CMD_STATUS_COUNT];
 
-#define MOTOR_CONTROLLER_SHELL_CONFIG(p_MotorController, p_Timer, p_Params)  SHELL_CONFIG(MC_CMD_TABLE, MC_SHELL_CMD_COUNT, p_MotorController, MC_CMD_STATUS_TABLE, MC_SHELL_CMD_STATUS_COUNT, p_Timer, MC_SHELL_PERIOD_MILLIS, p_Params)
+#define MOTOR_CONTROLLER_SHELL_CONFIG(p_MotorController, p_Timer, TimerFreq, p_Params)  SHELL_CONFIG(MC_CMD_TABLE, MC_SHELL_CMD_COUNT, p_MotorController, MC_CMD_STATUS_TABLE, MC_SHELL_CMD_STATUS_COUNT, p_Timer, TimerFreq, p_Params)
 
 #endif /* MOTOR_SHELL_H */

@@ -35,14 +35,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <string.h>
+
 
 /*!
 	Uses periodic timer ISR.
  */
-void Encoder_DeltaD_Init(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
+void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 {
-//	Pin_Deinit(&p_encoder->CONFIG.PIN_PHASE_A);
-//	Pin_Deinit(&p_encoder->CONFIG.PIN_PHASE_B);
+	//	Pin_Deinit(&p_encoder->CONFIG.PIN_PHASE_A);
+	//	Pin_Deinit(&p_encoder->CONFIG.PIN_PHASE_B);
 
 	HAL_Encoder_InitCaptureCount
 	(
@@ -53,31 +55,66 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolut
 		p_encoder->CONFIG.PIN_PHASE_B.ID
 	);
 
-	HAL_Encoder_WriteTimerCounterMax(p_encoder->CONFIG.P_HAL_ENCODER, encoderCountsPerRevolution - 1U);
-	_Encoder_Init(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount, p_encoder->CONFIG.POLLING_FREQ);
+	if (p_encoder->CONFIG.P_PARAMS != 0U)
+	{
+		memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T));
+	}
+
+	HAL_Encoder_WriteTimerCounterMax(p_encoder->CONFIG.P_HAL_ENCODER, p_encoder->Params.CountsPerRevolution - 1U);
+
+//#ifdef CONFIG_ENCODER_HW_QUADRATURE_ENABLE
+
+	if (p_encoder->Params.IsQuadratureCaptureEnabled == true)
+	{
+//		HAL_Encoder_ConfigCaptureQuadrature(p_encoder);
+	}
+	else
+	{
+//		HAL_Encoder_ConfigCaptureDualEdge(p_encoder);
+	}
+
+	Encoder_DeltaD_SetUnitConversion(p_encoder, p_encoder->Params.CountsPerRevolution, p_encoder->Params.DistancePerCount);
 
 #ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
-	p_encoder->IsQuadratureCaptureEnabled = true;
+	p_encoder->Params.IsQuadratureCaptureEnabled = true;
 #endif
 }
 
-void Encoder_DeltaD_InitQuadratureDirection(Encoder_T * p_encoder, bool isALeadBDirectionPositive)
+void Encoder_DeltaD_InitParams(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
 {
-	p_encoder->IsALeadBDirectionPositive = isALeadBDirectionPositive;
+
 }
 
-void Encoder_CalibrateAngularD(Encoder_T * p_encoder)
+void Encoder_DeltaD_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
 {
-	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
-	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+	_Encoder_SetUnitConversion(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount, p_encoder->CONFIG.POLLING_FREQ);
 }
+
+/*!
+
+ */
+//void Encoder_DeltaD_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBDirectionPositive)
+//{
+//
+////#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+////	p_encoder->Params.DirectionCalibration = (isALeadBDirectionPositive) ? ENCODER_DIRECTION_DIRECT : ENCODER_DIRECTION_REVERSE;
+////#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+////	p_encoder->Params.DirectionCalibration = (!isALeadBDirectionPositive) ? ENCODER_DIRECTION_DIRECT : ENCODER_DIRECTION_REVERSE;
+////#endif
+//}
+
+
+//void Encoder_CalibrateAngularD(Encoder_T * p_encoder)
+//{
+//	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
+//	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+//}
 
 /*
  *  Calibration step 1
  */
 void Encoder_DeltaD_CalibrateQuadratureReference(Encoder_T * p_encoder)
 {
-	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, p_encoder->EncoderResolution / 2U);
 	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
 }
 
@@ -87,17 +124,10 @@ void Encoder_DeltaD_CalibrateQuadraturePositive(Encoder_T * p_encoder)
 	uint32_t counterValue = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
 
 #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-	bool isALeadBIncrement = true;
+	p_encoder->Params.IsALeadBPositive = (counterValue > p_encoder->TimerCounterSaved);
 #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-	bool isALeadBIncrement = false;
+	p_encoder->Params.IsALeadBPositive = !(counterValue > p_encoder->TimerCounterSaved);
 #endif
 
-	if (!((counterValue > p_encoder->TimerCounterSaved) ^ isALeadBIncrement))
-	{
-		p_encoder->IsALeadBDirectionPositive = true;
-	}
-	else
-	{
-		p_encoder->IsALeadBDirectionPositive = false;
-	}
+//	Encoder_DeltaD_SetQuadratureDirectionCalibration(p_encoder, (counterValue > p_encoder->TimerCounterSaved));
 }

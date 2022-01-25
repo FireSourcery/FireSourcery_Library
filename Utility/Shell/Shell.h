@@ -88,7 +88,7 @@ typedef const struct
 	uint8_t CMD_STATUS_COUNT;
 
 	volatile const uint32_t * P_TIMER;
-	uint32_t LOOP_PERIOD;
+	uint32_t TIMER_FREQ;
 
 	const Shell_Params_T * const P_PARAMS;
 }
@@ -106,7 +106,7 @@ typedef struct
 }
 Shell_T;
 
-#define SHELL_CONFIG(p_CmdTable, CmdCount, p_Context, p_CmdStatusTable, CmdStatusCount, p_Timer, LoopPeriod, p_Params)	\
+#define SHELL_CONFIG(p_CmdTable, CmdCount, p_Context, p_CmdStatusTable, CmdStatusCount, p_Timer, TimerFreq, p_Params)	\
 {															\
 	.CONFIG = 												\
 	{														\
@@ -116,7 +116,7 @@ Shell_T;
 		.P_CMD_STATUS_TABLE 	= p_CmdStatusTable,			\
 		.CMD_STATUS_COUNT 		= CmdStatusCount,			\
 		.P_TIMER 				= p_Timer,					\
-		.LOOP_PERIOD 			= LoopPeriod,				\
+		.TIMER_FREQ 			= TimerFreq,				\
 		.P_PARAMS				= p_Params					\
 	}														\
 }

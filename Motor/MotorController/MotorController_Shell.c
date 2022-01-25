@@ -32,6 +32,9 @@
 #include "MotorController_Shell.h"
 #include "MotorController.h"
 
+#include "Motor/Motor/Motor_FOC.h"
+//#include "Motor/Motor/Motor_FOC.h"
+
 #include "Utility/Shell/Shell.h"
 #include "Utility/Shell/Terminal.h"
 #include "Utility/Shell/Cmd.h"
@@ -203,6 +206,75 @@ static int Cmd_debug(const MotorController_T * p_motorController, int argc, char
 
 	return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
+
+
+static int Cmd_calibrate(const MotorController_T * p_motorController, int argc, char ** argv)
+{
+	(void)argv;
+
+    if(argc == 1U)
+    {
+    	Motor_User_ActivateCalibrationEncoder(MotorController_GetPtrMotor(p_motorController, 0U));
+    }
+    else if(argc == 2U)
+    {
+    	if(strncmp(argv[1U], "encoder", 8U) == 0U)
+    	{
+    		Motor_User_ActivateCalibrationEncoder(MotorController_GetPtrMotor(p_motorController, 0U));
+    	}
+    	else if(strncmp(argv[1U], "hall", 5U) == 0U)
+    	{
+    		Motor_User_ActivateCalibrationHall(MotorController_GetPtrMotor(p_motorController, 0U));
+    	}
+    	else if(strncmp(argv[1U], "adc", 4U) == 0U)
+    	{
+    		Motor_User_ActivateCalibrationAdc(MotorController_GetPtrMotor(p_motorController, 0U));
+    	}
+    }
+
+	return CMD_RESERVED_RETURN_CODE_SUCCESS;
+}
+
+uint32_t UserAngle;
+
+int Cmd_rev_Loop(MotorController_T * p_motorController)
+{
+
+//	Motor_T * p_motor = MotorController_GetPtrMotor(p_motorController, 0U);
+//
+//	if (UserAngle <=  65536*7)
+//	{
+//		Motor_FOC_ActivateAngle(p_motor, (uint16_t)UserAngle, p_motor->Parameters.AlignVoltage_Frac16);
+//		Encoder_DeltaD_Capture(&p_motor->Encoder);
+//
+//		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->Encoder.AngularD);
+//		Terminal_SendString(&p_motorController->Shell.Terminal, " ");
+//		Terminal_SendNum(&p_motorController->Shell.Terminal, UserAngle);
+//		Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+//
+//		UserAngle += 1024;
+//	}
+//
+//
+//    return CMD_RESERVED_RETURN_CODE_SUCCESS;
+}
+
+
+int Cmd_rev(const MotorController_T * p_motorController, int argc, char ** argv)
+{
+//	(void)argv;
+//	Motor_T * p_motor = MotorController_GetPtrMotor(p_motorController, 0U);
+//
+//	//motor ramp does not proc during off state
+//	Motor_FOC_StartAngleControl(MotorController_GetPtrMotor(p_motorController, 0U));
+//	UserAngle = 0U;
+////	p_motor->RampCmd = p_motor->Parameters.AlignVoltage_Frac16;
+//
+//	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+//
+//    return CMD_RESERVED_RETURN_CODE_LOOP;
+}
+
 
 
 //int Cmd_pwm(const MotorController_T * p_motorController, int argc, char ** argv)
@@ -421,10 +493,14 @@ static int Cmd_debug(const MotorController_T * p_motorController, int argc, char
 
 const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 {
-	{"monitor", 	"Display motor info",			Cmd_monitor, 	Cmd_monitor_Loop	},
-	{"foc", 		"Set commutation mode",			Cmd_foc, 		0U	},
-	{"sixstep", 	"Set commutation mode",			Cmd_sixstep, 	0U	},
-	{"debug", 		"debug",						Cmd_debug, 		0U	},
+	{"monitor", 	"Display motor info",			Cmd_monitor, 	{.FUNCTION = Cmd_monitor_Loop, 	.FREQ = 1U}	},
+	{"foc", 		"Set commutation mode",			Cmd_foc, 		{0U}	},
+	{"sixstep", 	"Set commutation mode",			Cmd_sixstep, 	{0U}	},
+	{"debug", 		"debug",						Cmd_debug, 		{0U}	},
+	{"calibrate", 	"calibrate",					Cmd_calibrate, 	{0U}	},
+
+	{"rev", 		"rev",	 						Cmd_rev, 		{.FUNCTION = Cmd_rev_Loop, 		.FREQ = 10U}	},
+
 //	{"pwm", 		"Sets pwm value", 				Cmd_pwm		},
 
 //	{"param", 		"Sets motor parameterss",	 	Cmd_param	},

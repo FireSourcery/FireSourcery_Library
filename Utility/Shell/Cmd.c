@@ -82,6 +82,7 @@ Cmd_T * Cmd_Search(const Cmd_T * p_cmdTable, uint8_t tableLength, const char * p
 			}
 		}
 	}
+
 	return p_cmd;
 }
 
