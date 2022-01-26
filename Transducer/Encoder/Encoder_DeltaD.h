@@ -61,6 +61,8 @@ static inline void Encoder_DeltaD_CaptureQuadrature(Encoder_T * p_encoder)
 	bool isIncrement;
 	bool isCounterIncrementDirectionPositive;
 
+
+
 	/*
 	 * Unsigned DeltaD capture
 	 */
@@ -137,6 +139,8 @@ static inline uint32_t Encoder_DeltaD_GetDeltaAngle(Encoder_T * p_encoder)
 {
 	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->DeltaD);
 }
+
+
 
 //static inline void Encoder_DeltaD_ReadQuadratureDirection(Encoder_T * p_encoder)
 //{//#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT

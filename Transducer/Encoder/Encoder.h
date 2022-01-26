@@ -526,6 +526,8 @@ static inline uint32_t Encoder_GetSpeed(Encoder_T * p_encoder)
 
 }
 
+
+
 static inline uint32_t Encoder_GetSpeed_UnitsPerMinute(Encoder_T * p_encoder)
 {
 	return p_encoder->DeltaD * p_encoder->UnitLinearSpeed * 60U / p_encoder->DeltaT;
@@ -591,6 +593,16 @@ static inline uint32_t Encoder_GetAngularSpeed(Encoder_T * p_encoder)
 	return Encoder_CalcAngularSpeed(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
 }
 
+static inline uint32_t Encoder_CaptureAvgAngularSpeed(Encoder_T * p_encoder)
+{
+	uint32_t totalD = (p_encoder->TotalD < 0) ? 0 - p_encoder->TotalD : p_encoder->TotalD;
+	uint32_t speed = Encoder_CalcAngularSpeed(p_encoder, totalD, p_encoder->TotalT);
+	p_encoder->TotalD = 0U;
+	p_encoder->TotalT = 0U;
+	return speed;
+}
+
+
 /*!
 	Revolution per Second
 	//	return (p_encoder->DeltaD * p_encoder->UnitT_Freq) / (p_encoder->Params.CountsPerRevolution * p_encoder->DeltaT);
@@ -608,6 +620,12 @@ static inline uint32_t Encoder_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
 {
 	//checkoverflow
 	return Encoder_GetAngularSpeed(p_encoder) * 60U >> CONFIG_ENCODER_ANGLE_DEGREES_BITS;
+}
+
+static inline uint32_t Encoder_GetAvgRotationalSpeed_RPM(Encoder_T * p_encoder)
+{
+	return  ((p_encoder->TotalD * p_encoder->UnitT_Freq / p_encoder->Params.CountsPerRevolution) ) * 60U / p_encoder->TotalT;
+
 }
 
 

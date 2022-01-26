@@ -339,8 +339,8 @@ typedef struct
 	Motor_Direction_T Direction; //active spin direction
 
 	Linear_T Ramp;
-	Linear_T RampUp;
-	Linear_T RampDown;
+//	Linear_T RampUp;
+//	Linear_T RampDown;
 	uint32_t RampIndex;
 	uint16_t RampCmd;			//SetPoint after ramp, VReq/IReq/SpeedReq
 
@@ -499,7 +499,16 @@ static inline bool Motor_PollCaptureSpeed(Motor_T * p_motor)
 
 	if (captureSpeed == true)
 	{
-		p_motor->Speed_RPM = (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
+//		switch (p_motor->Parameters.SensorMode)
+//		{
+//			case MOTOR_SENSOR_MODE_HALL:
+				p_motor->Speed_RPM = (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
+//				break;
+//			case MOTOR_SENSOR_MODE_ENCODER:
+//				p_motor->Speed_RPM = (Encoder_GetAvgRotationalSpeed_RPM(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U; //todo check for ahll
+//				break;
+//		}
+
 		p_motor->SpeedFeedback_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedMax_RPM);
 	}
 

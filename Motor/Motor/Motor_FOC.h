@@ -69,19 +69,19 @@
 static inline void Motor_FOC_CaptureIa(Motor_T *p_motor)
 {
 	qfrac16_t i_temp = (Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, p_motor->AnalogResults.Ia_ADCU) + FOC_GetIa(&p_motor->Foc)) / 2;
-	FOC_SetIa(&p_motor->Foc, i_temp);
+	FOC_SetIa(&p_motor->Foc, -i_temp); //todo update to linear
 }
 
 static inline void Motor_FOC_CaptureIb(Motor_T *p_motor)
 {
 	qfrac16_t i_temp = (Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, p_motor->AnalogResults.Ib_ADCU) + FOC_GetIb(&p_motor->Foc)) / 2;
-	FOC_SetIb(&p_motor->Foc, i_temp);
+	FOC_SetIb(&p_motor->Foc, -i_temp);
 }
 
 static inline void Motor_FOC_CaptureIc(Motor_T *p_motor)
 {
 	qfrac16_t i_temp = (Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, p_motor->AnalogResults.Ic_ADCU) + FOC_GetIc(&p_motor->Foc)) / 2;
-	FOC_SetIc(&p_motor->Foc, i_temp);
+	FOC_SetIc(&p_motor->Foc, -i_temp);
 }
 /******************************************************************************/
 /*!
@@ -128,6 +128,13 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			 */
 			Encoder_DeltaD_Capture(&p_motor->Encoder);
 			p_motor->ElectricalAngle = (qangle16_t)Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);
+
+//			if (captureSpeed == true)
+//			{
+//				p_motor->Speed_RPM = (Encoder_GetAvgRotationalSpeed_RPM(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
+//				p_motor->SpeedFeedback_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedMax_RPM);
+//			}
+
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:

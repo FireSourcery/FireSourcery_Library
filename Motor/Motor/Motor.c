@@ -124,13 +124,16 @@ void Motor_InitReboot(Motor_T * p_motor)
 	/*
 	 * Run calibration later, default zero to middle adc
 	 */
-	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZero_ADCU, p_motor->Parameters.IaRefMax_ADCU, p_motor->Parameters.Imax_Amp); //scales 4095 to physical units. alternatively use opamp equation
-	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZero_ADCU, p_motor->Parameters.IbRefMax_ADCU, p_motor->Parameters.Imax_Amp);
-	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, p_motor->Parameters.IcRefMax_ADCU, p_motor->Parameters.Imax_Amp);
+
+//#if MOTOR_ADC_INVERT_IABC
+
+	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZero_ADCU, p_motor->Parameters.IaRefMax_ADCU,  p_motor->Parameters.Imax_Amp); //scales 4095 to physical units. alternatively use opamp equation
+	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZero_ADCU, p_motor->Parameters.IbRefMax_ADCU,  p_motor->Parameters.Imax_Amp);
+	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, p_motor->Parameters.IcRefMax_ADCU,  p_motor->Parameters.Imax_Amp);
 	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage
 
-	Linear_Ramp_InitSlope(&p_motor->RampUp, 0U, 65535U, 32);
-	Linear_Ramp_InitSlope(&p_motor->RampDown, 65535U, 0U, -32);
+//	Linear_Ramp_InitSlope(&p_motor->RampUp, 0U, 65535U, 32);
+//	Linear_Ramp_InitSlope(&p_motor->RampDown, 65535U, 0U, -32);
 	p_motor->RampIndex = 0;
 
 	p_motor->Direction 				= MOTOR_DIRECTION_CCW;
