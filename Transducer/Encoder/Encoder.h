@@ -122,6 +122,10 @@ typedef const struct
 	const uint32_t POLLING_FREQ;		/*!< InterpolationFreq, Polling D reference Freq, CaptureDeltaT mode need 2nd freq interpolation calculations */
 	const uint32_t DELTA_T_TIMER_FREQ;
 
+
+	const uint32_t DELTA_D_CAPTURE_FREQ;		/*!< InterpolationFreq, Polling D reference Freq, CaptureDeltaT mode need 2nd freq interpolation calculations */
+
+
 	/* Polling DeltaT stop */
 	const volatile uint32_t * const P_EXTENDED_TIMER;
 	const uint32_t EXTENDED_TIMER_FREQ;
@@ -203,12 +207,13 @@ typedef struct
 }
 Encoder_T;
 
-#define ENCODER_CONFIG(p_Hal_Encoder, PollingFreq, DeltaTTimerFreq, p_PinA_Hal, PinAId, p_PinB_Hal, PinBId, p_ExtendedTimer, ExtendedTimerFreq, p_Params)	\
+#define ENCODER_CONFIG(p_Hal_Encoder, PollingFreq, DeltaDCapture, DeltaTTimerFreq, p_PinA_Hal, PinAId, p_PinB_Hal, PinBId, p_ExtendedTimer, ExtendedTimerFreq, p_Params)	\
 {																		\
 	.CONFIG = 															\
 	{																	\
 		.P_HAL_ENCODER 			= p_Hal_Encoder,						\
 		.POLLING_FREQ 			= PollingFreq,							\
+		.DELTA_D_CAPTURE_FREQ 	= DeltaDCapture, 						\
 		.DELTA_T_TIMER_FREQ 	= DeltaTTimerFreq,						\
 		.PIN_PHASE_A 			= PIN_CONFIG(p_PinA_Hal, PinAId),		\
 		.PIN_PHASE_B 			= PIN_CONFIG(p_PinB_Hal, PinBId),		\

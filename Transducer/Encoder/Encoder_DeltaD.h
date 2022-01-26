@@ -140,7 +140,15 @@ static inline uint32_t Encoder_DeltaD_GetDeltaAngle(Encoder_T * p_encoder)
 	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->DeltaD);
 }
 
+static inline uint32_t Encoder_DeltaD_GetAngle(Encoder_T * p_encoder)
+{
+	return Encoder_ConvertCounterDToAngle(p_encoder, HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER));
+}
 
+static inline uint32_t Encoder_DeltaD_CaptureAngularD(Encoder_T * p_encoder)
+{
+	return p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);;
+}
 
 //static inline void Encoder_DeltaD_ReadQuadratureDirection(Encoder_T * p_encoder)
 //{//#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT

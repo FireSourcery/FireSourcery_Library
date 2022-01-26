@@ -87,7 +87,7 @@ void Encoder_DeltaD_InitParams(Encoder_T * p_encoder, uint32_t encoderCountsPerR
 
 void Encoder_DeltaD_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
 {
-	_Encoder_SetUnitConversion(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount, p_encoder->CONFIG.POLLING_FREQ);
+	_Encoder_SetUnitConversion(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount, p_encoder->CONFIG.DELTA_D_CAPTURE_FREQ);
 }
 
 /*!

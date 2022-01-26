@@ -103,7 +103,9 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 //	static volatile uint32_t debug[1000];
 //	static volatile uint32_t debugCounter = 0;
 
-	bool captureSpeed = Motor_PollSpeedFeedback(p_motor);
+//	bool captureSpeed = Motor_PollSpeedFeedback(p_motor);
+
+	bool captureSpeed = Timer_Poll(&p_motor->SpeedTimer);
 
 	switch (p_motor->Parameters.SensorMode)
 	{
@@ -126,15 +128,16 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			/*
 			 * Encoder_Motor_GetElectricalTheta return [0, 65535] maps directly to negative portions of qangle16_t
 			 */
-			Encoder_DeltaD_Capture(&p_motor->Encoder);
+			if (captureSpeed == true)
+			{
+				Encoder_DeltaD_Capture(&p_motor->Encoder);
+			}
+			else
+			{
+				Encoder_DeltaD_CaptureAngularD(&p_motor->Encoder);
+			}
+
 			p_motor->ElectricalAngle = (qangle16_t)Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);
-
-//			if (captureSpeed == true)
-//			{
-//				p_motor->Speed_RPM = (Encoder_GetAvgRotationalSpeed_RPM(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
-//				p_motor->SpeedFeedback_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedMax_RPM);
-//			}
-
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:
@@ -166,6 +169,13 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 		default:
 			break;
 	}
+
+	if (captureSpeed == true)
+	{
+		Motor_CaptureSpeed(p_motor);
+		Motor_ProcSpeedFeedback(p_motor);
+	}
+
 }
 
 /*

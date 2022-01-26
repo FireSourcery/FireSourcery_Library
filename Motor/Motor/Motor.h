@@ -493,6 +493,13 @@ static inline void Motor_SetRamp(Motor_T * p_motor, uint16_t userCmd)
 	Speed
 */
 /******************************************************************************/
+static inline bool Motor_CaptureSpeed(Motor_T * p_motor)
+{
+	p_motor->Speed_RPM = (Encoder_GetRotationalSpeed_RPM(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
+	p_motor->SpeedFeedback_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedMax_RPM);
+}
+
+
 static inline bool Motor_PollCaptureSpeed(Motor_T * p_motor)
 {
 	bool captureSpeed = Timer_Poll(&p_motor->SpeedTimer);
