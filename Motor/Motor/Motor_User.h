@@ -69,9 +69,18 @@ static inline void Motor_User_DisableControl(Motor_T * p_motor)
 
 static inline void Motor_User_SetCmd(Motor_T * p_motor, uint16_t cmd)
 {
+
+	if (p_motor->ControlMode.Brake == 1U)
+	{
+		Critical_Enter();
+		p_motor->ControlMode.Brake = 0U;
+		p_motor->RampCmd = 0U; //match  speed?
+		Critical_Exit();
+	}
+
 	Motor_SetRamp(p_motor, cmd);
-//	p_motor->IsBrake = false;
-	p_motor->ControlMode.Brake = 0U;
+
+
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
 }
 
@@ -84,6 +93,29 @@ static inline void Motor_User_SetCmd(Motor_T * p_motor, uint16_t cmd)
 
 static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 {
+
+
+	if (p_motor->ControlMode.Brake == 0U)
+	{
+		Critical_Enter();
+		p_motor->ControlMode.Brake = 1U;
+
+//				if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+//				{
+//					Motor_SetRamp(p_motor,  FOC_GetIq(&p_motor->Foc));
+//				}
+//				else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+//				{
+//
+//				}
+		p_motor->RampCmd = 0U;
+		Critical_Exit();
+	}
+
+//				Motor_SetRamp(p_motor, intensity);
+	Motor_SetRamp(p_motor, FOC_GetIq(&p_motor->Foc)); //treat iq as positive for now
+
+
 	switch (p_motor->Parameters.BrakeMode)
 	{
 		case MOTOR_BRAKE_MODE_PASSIVE :
@@ -103,24 +135,6 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 
 		case MOTOR_BRAKE_MODE_SCALAR:
 
-
-			if (p_motor->ControlMode.Brake = 0U)
-			{
-				p_motor->ControlMode.Brake = 1U;
-
-//				if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-//				{
-//					Motor_SetRamp(p_motor,  FOC_GetIq(&p_motor->Foc));
-//				}
-//				else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-//				{
-//
-//				}
-				p_motor->RampCmd = 0U;
-			}
-
-				Motor_SetRamp(p_motor, intensity);
-//				Motor_SetRamp(p_motor, FOC_GetIq(&p_motor->Foc)); //treat iq as positive for now
 
 
 
