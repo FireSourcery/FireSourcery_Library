@@ -255,7 +255,7 @@ static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)
 
 	if(p_motor->ControlMode.Brake == true)
 	{
-		qReq = 0 -  p_motor->RampCmd ; //req negative iq, vq will decrease but not past 0
+		qReq = 0 - (p_motor->RampCmd >> 1U) ; //req negative iq, vq will decrease but not past 0
 
 		FOC_SetVq(&p_motor->Foc, PID_Calc(&p_motor->PidIq, qReq, 	FOC_GetIq(&p_motor->Foc))); //vq min 0, no plugging
 		FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, 0, 		FOC_GetId(&p_motor->Foc)));

@@ -119,8 +119,8 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 				p_motor->RampCmd = 0U;
 			}
 
-			Motor_SetRamp(p_motor, FOC_GetIq(&p_motor->Foc)); //treat iq as positive for now
-
+				Motor_SetRamp(p_motor, intensity);
+//				Motor_SetRamp(p_motor, FOC_GetIq(&p_motor->Foc)); //treat iq as positive for now
 
 
 
