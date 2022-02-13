@@ -217,7 +217,7 @@ void Serial_Deinit(Serial_T * p_serial)
 	HAL_Serial_Deinit(p_serial->CONFIG.P_HAL_SERIAL);
 }
 
-void Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate)
+void Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate) //Serial_InitBaudRate
 {
 	HAL_Serial_ConfigBaudRate(p_serial->CONFIG.P_HAL_SERIAL, baudRate);
 }
@@ -374,32 +374,32 @@ bool Serial_RecvString(Serial_T * p_serial, uint8_t * p_destBuffer, size_t lengt
 	return status;
 }
 
-bool Serial_SendCharString(Serial_T * p_serial, const uint8_t * p_srcBuffer)
-{
-	bool status = false;
-
-	const uint8_t * p_char = p_srcBuffer;
-
-	if (EnterCriticalCommonTx(p_serial) == true)
-	{
-		EnterCriticalSerialTx(p_serial);
-		while (*p_char != '\0')
-		{
-			status = Queue_Enqueue(&p_serial->TxQueue, p_char);
-			if (status == false)
-			{
-				break;
-			}
-			p_char++;
-		}
-		HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-		ExitCriticalSerialTx(p_serial);
-
-		ExitCriticalCommonTx(p_serial);
-	}
-
-	return status;
-}
+//bool Serial_SendCharString(Serial_T * p_serial, const uint8_t * p_srcBuffer)
+//{
+//	bool status = false;
+//
+//	const uint8_t * p_char = p_srcBuffer;
+//
+//	if (EnterCriticalCommonTx(p_serial) == true)
+//	{
+//		EnterCriticalSerialTx(p_serial);
+//		while (*p_char != '\0')
+//		{
+//			status = Queue_Enqueue(&p_serial->TxQueue, p_char);
+//			if (status == false)
+//			{
+//				break;
+//			}
+//			p_char++;
+//		}
+//		HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+//		ExitCriticalSerialTx(p_serial);
+//
+//		ExitCriticalCommonTx(p_serial);
+//	}
+//
+//	return status;
+//}
 
 bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
 {

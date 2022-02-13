@@ -86,31 +86,31 @@ static int Cmd_monitor_Loop(const MotorController_T * p_motorController)
     		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Speed_RPM);
     		Terminal_SendString(&p_motorController->Shell.Terminal, " RPM\r\n");
 
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "Speed = ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Speed_Frac16);
+    		Terminal_SendString(&p_motorController->Shell.Terminal, " Frac16\r\n");
+
 			Terminal_SendString(&p_motorController->Shell.Terminal, "RampCmd = ");
 			Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].RampCmd);
 			Terminal_SendString(&p_motorController->Shell.Terminal, " Frac16\r\n");
-
-        	Terminal_SendString(&p_motorController->Shell.Terminal, "SpeedFeedback = ");
-    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].SpeedFeedback_Frac16);
-    		Terminal_SendString(&p_motorController->Shell.Terminal, " Frac16\r\n");
-
 
         	Terminal_SendString(&p_motorController->Shell.Terminal, "Iq = ");
     		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Iq);
     		Terminal_SendString(&p_motorController->Shell.Terminal, " Q1.15\r\n");
 
+			Terminal_SendString(&p_motorController->Shell.Terminal, "Id = ");
+			Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Id);
+			Terminal_SendString(&p_motorController->Shell.Terminal, " Q1.15\r\n");
 
-        	Terminal_SendString(&p_motorController->Shell.Terminal, "Iabc = ");
-    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ia);
-    		Terminal_SendString(&p_motorController->Shell.Terminal, " ");
-       		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ib);
-       		Terminal_SendString(&p_motorController->Shell.Terminal, " ");
-       		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ic);
-    		Terminal_SendString(&p_motorController->Shell.Terminal, " Q1.15\r\n");
+//        	Terminal_SendString(&p_motorController->Shell.Terminal, "Iabc = ");
+//    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ia);
+//    		Terminal_SendString(&p_motorController->Shell.Terminal, " ");
+//       		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ib);
+//       		Terminal_SendString(&p_motorController->Shell.Terminal, " ");
+//       		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ic);
+//    		Terminal_SendString(&p_motorController->Shell.Terminal, " Q1.15\r\n");
 
-//        	Terminal_SendString(&p_motorController->Shell.Terminal, "Id 				= ");
-//    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].);
-//    		Terminal_SendString(&p_motorController->Shell.Terminal, " SignedFrac16\r\n");
+
 
 //        	Terminal_SendString(&p_motorController->Shell.Terminal, "IBus = ");
 //    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].IBus_Frac16);
@@ -140,7 +140,7 @@ static int Cmd_monitor_Loop(const MotorController_T * p_motorController)
 //    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Encoder.DeltaT);
 //    		Terminal_SendString(&p_motorController->Shell.Terminal, " 625 kHz\r\n");
 
-    		Terminal_SendString(&p_motorController->Shell.Terminal, "\n");
+    		Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
 
 
 
@@ -216,7 +216,6 @@ static int Cmd_debug(const MotorController_T * p_motorController, int argc, char
 	return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
-
 static int Cmd_calibrate(const MotorController_T * p_motorController, int argc, char ** argv)
 {
 	(void)argv;
@@ -242,6 +241,13 @@ static int Cmd_calibrate(const MotorController_T * p_motorController, int argc, 
     }
 
 	return CMD_RESERVED_RETURN_CODE_SUCCESS;
+}
+
+int Cmd_save(const MotorController_T * p_motorController, int argc, char ** argv)
+{
+	(void)argv;
+	MotorController_SaveParameters_Blocking(p_motorController);
+    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
 uint32_t UserAngle;

@@ -34,7 +34,7 @@
 
 #include "Transducer/Phase/Phase.h"
 #include "Transducer/Hall/Hall.h"
-#include "Transducer/BEMF/BEMF.h"
+//#include "Transducer/BEMF/BEMF.h"
 #include "Math/FOC.h"
 
 #include "Transducer/Encoder/Encoder_Motor.h"
@@ -52,25 +52,35 @@
 
 void Motor_Init(Motor_T * p_motor)
 {
-	if (p_motor->CONFIG.P_PARAMETERS != 0U)
+	if (p_motor->CONFIG.P_PARAMS_NVM != 0U)
 	{
-		memcpy(&p_motor->Parameters, p_motor->CONFIG.P_PARAMETERS, sizeof(Motor_Params_T));
+		memcpy(&p_motor->Parameters, p_motor->CONFIG.P_PARAMS_NVM, sizeof(Motor_Params_T));
 	}
 
 	StateMachine_Init(&p_motor->StateMachine);
 	Motor_InitReboot(p_motor);
 }
 
-//void Motor_Init_Default(Motor_T * p_motor)
-//{
-//	if (p_motor->CONFIG.P_PARAMS_DEFAULT != 0U)
-//	{
-//		memcpy(&p_motor->Parameters, p_motor->CONFIG.P_PARAMS_DEFAULT, sizeof(p_motor->Parameters));
-//	}
-//
-//	StateMachine_Init(&p_motor->StateMachine);
-//	Motor_InitReboot(p_motor);
-//}
+
+void Motor_LoadDefault(Motor_T * p_motor)
+{
+	if (p_motor->CONFIG.P_PARAMS_DEFAULT != 0U)
+	{
+		memcpy(&p_motor->Parameters, p_motor->CONFIG.P_PARAMS_DEFAULT, sizeof(Motor_Params_T));
+	}
+
+	Hall_LoadDefault(&p_motor->Hall);
+//	Encoder_LoadDefault(&p_motor->Encoder);
+//	PID_LoadDefault(&p_motor->PidSpeed);
+//	PID_LoadDefault(&p_motor->PidIq);
+//	PID_LoadDefault(&p_motor->PidId);
+//	PID_LoadDefault(&p_motor->PidIBus);
+//	Thermistor_LoadDefault(&p_motor->Thermistor);
+
+	Motor_InitReboot(p_motor);
+}
+
+
 
 //todo state machine init-state run
 void Motor_InitReboot(Motor_T * p_motor)
@@ -92,22 +102,19 @@ void Motor_InitReboot(Motor_T * p_motor)
 	else
 	{
 		Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
+		AnalogN_EnqueueConversionOptions(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
 	}
 
-	switch (p_motor->Parameters.SensorMode)
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
 	{
-		case MOTOR_SENSOR_MODE_OPEN_LOOP:	break;
-		case MOTOR_SENSOR_MODE_BEMF:		break;
-		case MOTOR_SENSOR_MODE_ENCODER:		break;
-		case MOTOR_SENSOR_MODE_HALL:	Hall_Init(&p_motor->Hall);		break;
-		default: break;
+		Hall_Init(&p_motor->Hall);
 	}
 
 	/*
 	 * SW Structs
 	 */
 	FOC_Init(&p_motor->Foc);
-	BEMF_Init(&p_motor->Bemf);
+//	BEMF_Init(&p_motor->Bemf);
 
 	PID_Init(&p_motor->PidSpeed);
 	PID_Init(&p_motor->PidIq);
@@ -125,11 +132,16 @@ void Motor_InitReboot(Motor_T * p_motor)
 	 * Run calibration later, default zero to middle adc
 	 */
 
-//#if MOTOR_ADC_INVERT_IABC
+//#ifdef CONFIG_MOTOR_CURRENT_SAMPLE_INVERT
+//	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU, (int32_t)0-p_motor->Parameters.IRefMax_Amp); //scales 4095 to physical units. alternatively use opamp equation
+//	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU, (int32_t)0-p_motor->Parameters.IRefMax_Amp);
+//	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, p_motor->Parameters.IcRefMax_ADCU, (int32_t)0-p_motor->Parameters.IRefMax_Amp);
+//#elif defined(CONFIG_MOTOR_CURRENT_SAMPLE_NONINVERT)
+	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp); //scales 4095 to physical units. alternatively use opamp equation
+	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp);
+	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, p_motor->Parameters.IcRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp);
+//#endif
 
-	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZero_ADCU, p_motor->Parameters.IaRefMax_ADCU,  p_motor->Parameters.Imax_Amp); //scales 4095 to physical units. alternatively use opamp equation
-	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZero_ADCU, p_motor->Parameters.IbRefMax_ADCU,  p_motor->Parameters.Imax_Amp);
-	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, p_motor->Parameters.IcRefMax_ADCU,  p_motor->Parameters.Imax_Amp);
 	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage
 
 //	Linear_Ramp_InitSlope(&p_motor->RampUp, 0U, 65535U, 32);
@@ -140,15 +152,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 	p_motor->Speed_RPM 				= 0U;
 	p_motor->VPwm 					= 0U;
 	p_motor->ControlTimerBase 		= 0U;
-
-
-// 	p_motor->SignalBufferBemfA.AdcFlags 		= 0U;
-//	p_motor->SignalBufferBemfB.AdcFlags 		= 0U;
-//	p_motor->SignalBufferBemfC.AdcFlags 		= 0U;
-//	p_motor->SignalBufferRemainder.AdcFlags 	= 0U;
-//	p_motor->SignalBufferFocIabc.AdcFlags 		= 0U;
-//	p_motor->SignalBufferFocRemainder.AdcFlags 	= 0U;
-//	p_motor->SignalBufferIdle.AdcFlags 			= 0U;
 }
 
 
@@ -249,17 +252,17 @@ bool Motor_CalibrateAdc(Motor_T *p_motor)
 
 	if (isComplete == true)
 	{
-		Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
-		Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
-		Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
+		Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, 4095U, p_motor->Parameters.IRefMax_Amp);
+		Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, 4095U, p_motor->Parameters.IRefMax_Amp);
+		Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, 4095U, p_motor->Parameters.IRefMax_Amp);
 		Phase_Float(&p_motor->Phase);
 //		save params
 	}
 	else
 	{
-		p_motor->Parameters.IaZero_ADCU = Filter_MovAvg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
-		p_motor->Parameters.IbZero_ADCU = Filter_MovAvg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
-		p_motor->Parameters.IcZero_ADCU = Filter_MovAvg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
+		p_motor->Parameters.IaRefZero_ADCU = Filter_MovAvg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
+		p_motor->Parameters.IbRefZero_ADCU = Filter_MovAvg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
+		p_motor->Parameters.IcRefZero_ADCU = Filter_MovAvg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
 
 		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
 		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);

@@ -77,7 +77,7 @@ static inline uint32_t Encoder_Motor_GetElectricalDelta(Encoder_T * p_encoder)
  */
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToMechanicalDelta(Encoder_T * p_encoder, uint16_t mechRpm)
 {
-	return Encoder_ConvertRotationalSpeedToDeltaAngle_RPM(p_encoder, mechRpm);
+	return Encoder_DeltaD_ConvertRotationalSpeedToDeltaAngle_RPM(p_encoder, mechRpm);
 }
 
 /*!
@@ -88,7 +88,7 @@ static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToMechanicalDelta(Encod
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(Encoder_T * p_encoder, uint16_t mechRpm)
 {
 //	return (mechRpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / 60U * p_encoder->Params.MotorPolePairs / p_encoder->UnitT_Freq;
-	return Encoder_ConvertRotationalSpeedToDeltaAngle_RPM(p_encoder, mechRpm * p_encoder->Params.MotorPolePairs);
+	return Encoder_DeltaD_ConvertRotationalSpeedToDeltaAngle_RPM(p_encoder, mechRpm * p_encoder->Params.MotorPolePairs);
 }
 
 /*!
@@ -130,16 +130,16 @@ static inline uint32_t Encoder_Motor_InterpolateElectricalDelta(Encoder_T * p_en
 }
 
 /*
- 	 Control periods per encoder pulse
+ 	 Control periods per encoder pulse, hall phase
  */
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(Encoder_T * p_encoder, uint16_t mechRpm)
 {
-	return Encoder_ConvertRotationalSpeedToInterpolationFreq_RPM(p_encoder, mechRpm);
+	return Encoder_DeltaT_ConvertRotationalSpeedToInterpolationFreq_RPM(p_encoder, mechRpm);
 }
 
 static inline uint32_t Encoder_Motor_ConvertInterpolationFreqToMechanicalRpm(Encoder_T * p_encoder, uint16_t controlPeriods)
 {
-	return Encoder_ConvertInterpolationFreqToRotationalSpeed_RPM(p_encoder, controlPeriods);
+	return Encoder_DeltaT_ConvertInterpolationFreqToRotationalSpeed_RPM(p_encoder, controlPeriods);
 }
 
 static inline uint32_t Encoder_Motor_GetInterpolationFreq(Encoder_T *p_encoder)

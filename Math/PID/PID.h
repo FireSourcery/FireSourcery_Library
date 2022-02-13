@@ -48,7 +48,7 @@ typedef enum
 }
 PID_Mode_T;
 
-typedef struct PID_Params_Tag
+typedef struct __attribute__((aligned (4U))) PID_Params_Tag
 {
 	uint32_t CalcFreq;
 	PID_Mode_T	  		Mode;

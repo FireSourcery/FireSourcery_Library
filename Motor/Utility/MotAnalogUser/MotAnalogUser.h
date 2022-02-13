@@ -73,7 +73,7 @@ typedef struct __attribute__((aligned (4U)))
 	uint16_t UnitBrakeMin_ADCU;
 	uint16_t UnitBrakeMax_ADCU;
 
-	bool EnableModule;
+//	bool EnableModule;
 	bool EnablePinThrottle;
 	bool EnablePinBrake;
 	bool EnablePinNeutral;

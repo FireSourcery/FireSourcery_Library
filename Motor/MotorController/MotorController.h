@@ -66,14 +66,14 @@ typedef enum
 }
 MotorController_InputMode_T;
 
-typedef enum
-{
-	MOTOR_CONTROLLER_BRAKE_MODE_PASSIVE,
-	MOTOR_CONTROLLER_BRAKE_MODE_CONSTANT,
-	MOTOR_CONTROLLER_BRAKE_MODE_PROPRTIONAL,
-	MOTOR_CONTROLLER_BRAKE_MODE_SCALAR,
-
-} MotorController_BrakeMode_T;
+//typedef enum
+//{
+//	MOTOR_CONTROLLER_BRAKE_MODE_PASSIVE,
+//	MOTOR_CONTROLLER_BRAKE_MODE_CONSTANT,
+//	MOTOR_CONTROLLER_BRAKE_MODE_PROPRTIONAL,
+//	MOTOR_CONTROLLER_BRAKE_MODE_SCALAR,
+//}
+//MotorController_BrakeMode_T;
 
 typedef enum
 {
@@ -96,10 +96,6 @@ MotorController_Once_T;
 
 typedef struct __attribute__((aligned (4U))) //CONFIG_PARAMS_ALIGN_SIZE
 {
-	//UI provide id to pointer conversion
-//	bool EnableShell;
-//	Serial_T * p_ShellXcvr;
-
 	MotorController_InputMode_T InputMode;
 	bool IsBuzzerOnReverseEnable;
 }
@@ -110,7 +106,8 @@ MotorController_Params_T;
  */
 typedef const struct
 {
-	const MotorController_Params_T 	* const P_PARAMETERS; //nvm copy
+	const MotorController_Params_T 	* const P_PARAMS_NVM;
+	const MotorController_Params_T 	* const P_PARAMS_DEFAULT;
 	const MotorController_Once_T 	* const P_ONCE;
 	const MemMapBoot_T 				* const P_MEM_MAP_BOOT;
 
@@ -160,6 +157,8 @@ typedef struct
 {
 	const MotorController_Config_T CONFIG;
 	MotorController_Params_T Parameters; //ram copy
+	MemMapBoot_T MemMapBoot; //temp buffer
+
 	StateMachine_T StateMachine;
 	volatile MotAnalog_Results_T AnalogResults;
 // 	AnalogN_AdcFlags_T SignalBufferAnalogMonitor;
@@ -194,18 +193,35 @@ static inline Motor_T * MotorController_GetPtrMotor(MotorController_T * p_motorC
 
 static inline void MotorController_SaveParameters_Blocking(MotorController_T * p_motorController)
 {
+	Motor_T * p_motor;
+	Protocol_T * p_protocol;
+
 	for(uint8_t iMotor = 0U; iMotor < p_motorController->CONFIG.MOTOR_COUNT; iMotor++)
 	{
-		EEPROM_Write_Blocking(&p_motorController->Eeprom, MotorController_GetPtrMotor(p_motorController, iMotor)->CONFIG.P_PARAMETERS, &MotorController_GetPtrMotor(p_motorController, iMotor)->Parameters, sizeof(Motor_Params_T));
-
-		EEPROM_Write_Blocking(&p_motorController->Eeprom, MotorController_GetPtrMotor(p_motorController, iMotor)->Hall.CONFIG.P_PARAMS, &MotorController_GetPtrMotor(p_motorController, iMotor)->Hall.SensorsTable, sizeof(Hall_Params_T));
-
+		p_motor = MotorController_GetPtrMotor(p_motorController, iMotor);
+		EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motor->CONFIG.P_PARAMS_NVM, 			&p_motor->Parameters, 			sizeof(Motor_Params_T));
+		EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motor->Hall.CONFIG.P_PARAMS_NVM, 		&p_motor->Hall.SensorsTable, 	sizeof(Hall_Params_T));
+//		EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motor->Encoder.CONFIG.P_PARAMS, 	&p_motor->Encoder.Params, 		sizeof(Encoder_Params_T));
+//		EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motor->PidSpeed.CONFIG.P_PARAMS, 	&p_motor->PidSpeed.Params, 	sizeof(PID_Params_T));
+//		EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motor->PidIq.CONFIG.P_PARAMS, 		&p_motor->PidIq.Params, 	sizeof(PID_Params_T));
+//		EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motor->PidId.CONFIG.P_PARAMS, 		&p_motor->PidId.Params, 	sizeof(PID_Params_T));
+//		EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motor->PidIBus.CONFIG.P_PARAMS, 	&p_motor->PidIBus.Params, 	sizeof(PID_Params_T));
+		//	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motor->Thermistor .CONFIG.P_PARAMS, &p_motor->Thermistor .Params, sizeof(Thermistor_Params_T));
 	}
 
-	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->CONFIG.P_PARAMETERS, &p_motorController->Parameters, sizeof(MotorController_Params_T));
+	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->CONFIG.P_PARAMS_NVM, &p_motorController->Parameters, sizeof(MotorController_Params_T));
 
-	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->AnalogMonitor.CONFIG.P_PARAMS, &p_motorController->AnalogMonitor.Params, sizeof(MotAnalogMonitor_Params_T));
-//	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->ThermistorPcb.CONFIG.P_PARAMS, &p_motorController->ThermistorPcb.Params, sizeof(Thermistor_Params_T));
+//	for (uint8_t iProtocol = 0U; iProtocol < p_motorController->CONFIG.PROTOCOL_COUNT; iProtocol++)
+//	{
+//		p_protocol = &p_motorController->CONFIG.P_PROTOCOLS[iProtocol] ;
+//		EEPROM_Write_Blocking(&p_motorController->Eeprom, p_protocol->CONFIG.P_PARAMS, &p_protocol->Params, sizeof(Protocol_Params_T));
+//	}
+//	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->Shell.CONFIG.P_PARAMS, 			&p_motorController->Shell.Params, 			sizeof(Shell_Params_T));
+//	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->AnalogUser.CONFIG.P_PARAMS, 		&p_motorController->AnalogUser.Params, 		sizeof(MotAnalogUser_Params_T));
+//	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->AnalogMonitor.CONFIG.P_PARAMS, 	&p_motorController->AnalogMonitor.Params, 	sizeof(MotAnalogMonitor_Params_T));
+////	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->ThermistorPcb.CONFIG.P_PARAMS, &p_motorController->ThermistorPcb.Params, sizeof(Thermistor_Params_T));
+//
+//	EEPROM_Write_Blocking(&p_motorController->Eeprom, p_motorController->CONFIG.P_MEM_MAP_BOOT, &p_motorController->MemMapBoot, sizeof(MemMapBoot_T));
 }
 
 static inline void MotorController_Beep(MotorController_T * p_motorController)

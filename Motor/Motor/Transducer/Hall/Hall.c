@@ -47,13 +47,25 @@ void Hall_Init(Hall_T * p_hall)
 	p_hall->Direction = HALL_DIRECTION_CCW;
 	p_hall->SensorsRef.State = 0U;
 
-	if (p_hall->CONFIG.P_PARAMS != 0U)
+	if (p_hall->CONFIG.P_PARAMS_NVM != 0U)
 	{
-		memcpy(&p_hall->SensorsTable[0U], &p_hall->CONFIG.P_PARAMS->SensorsTable[0U], sizeof(Hall_Params_T));
+		memcpy(&p_hall->SensorsTable[0U], &p_hall->CONFIG.P_PARAMS_NVM->SensorsTable[0U], sizeof(Hall_Params_T));
 	}
 	else
 	{
-		Hall_MapSensorsTable_Default(p_hall);
+		Hall_MapSensorsTableDefault(p_hall);
+	}
+}
+
+void Hall_LoadDefault(Hall_T * p_hall)
+{
+	if (p_hall->CONFIG.P_PARAMS_DEFAULT != 0U)
+	{
+		memcpy(&p_hall->SensorsTable[0U], &p_hall->CONFIG.P_PARAMS_DEFAULT->SensorsTable[0U], sizeof(Hall_Params_T));
+	}
+	else
+	{
+		Hall_MapSensorsTableDefault(p_hall);
 	}
 }
 
@@ -78,7 +90,7 @@ void Hall_MapSensorsTable
 	p_hall->SensorsTable[7U] = 7U;
 }
 
-void Hall_MapSensorsTable_Default(Hall_T * p_hall)
+void Hall_MapSensorsTableDefault(Hall_T * p_hall)
 {
 	Hall_MapSensorsTable
 	(

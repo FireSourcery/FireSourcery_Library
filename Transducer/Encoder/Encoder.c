@@ -108,27 +108,30 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPer
 
 	/*
 	 * Angular Speed Calc
-	 *
-	 * ((DeltaD * UnitT_Freq) << unitAngle_DataBits / (unitAngle_SensorResolution * DeltaT)) overflow
-	 *
-	 * 		Speed = (DeltaD * UnitD) / ANGLE_DEGREES_BITS * UnitT_Freq / Delta
-	 * Use: speed = DeltaD * [UnitSpeed] / DeltaT = DeltaD * [UnitD * UnitT_Freq / ANGLE_DEGREES_BITS] / DeltaT
+	 * Angular Speed = DeltaD * [UnitAngularD_Factor * UnitT_Freq / (32-ANGLE_DEGREES_BITS)] / DeltaT
 	 *
 	 * most cases: UnitT_Freq > DeltaD
 	 *
 	 * e.g.
-	 * Angular Speed =
-	 * Real:   				DeltaD * UnitAngularD_Factor * UnitT_Freq / ANGLE_DEGREES_BITS / DeltaT
-	 * 						8000 * 429,497{encoderRes == 10k} * 20000 / 65536 / 1 == 1,048,576,660.16
+	 * Real:   				8000 * 429,497{encoderRes == 10k} * 20000 / 65536 / 1 == 1,048,576,660.16
 	 *
-	 * Primitive:	  		(DeltaD * UnitAngularD_Factor) / ANGLE_DEGREES_BITS * UnitT_Freq / DeltaT == 1,048,560,000
-	 * UnitAngularSpeed: 	DeltaD * [UnitAngularD_Factor * UnitT_Freq / ANGLE_DEGREES_BITS] / DeltaT == 1,048,576,000
+	 * Primitive:	  		(DeltaD * UnitAngularD_Factor) / (32-ANGLE_DEGREES_BITS) * UnitT_Freq / DeltaT == 1,048,560,000
+	 * UnitAngularSpeed: 	DeltaD * [UnitAngularD_Factor * UnitT_Freq / (32-ANGLE_DEGREES_BITS)] / DeltaT == 1,048,576,000
 	 */
 	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(unitTFreq, encoderCountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
+	//overflow boundary = UINT32_MAX / p_encoder->UnitAngularSpeed
 
-//	p_encoder->IsUnitAngularSpeedOverflow = !p_encoder->UnitAngularSpeed;
+//	if(unitTFreq > (UINT32_MAX >> CONFIG_ENCODER_ANGLE_DEGREES_BITS))
+//	{
+//		p_encoder->UnitAngularSpeed = 0U;
+//	}
+//	else
+//	{
+//		p_encoder->UnitAngularSpeed = (unitTFreq << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / encoderCountsPerRevolution;
+//	}
 
-	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitTFreq, p_encoder->CONFIG.POLLING_FREQ * encoderCountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
+
+	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitTFreq, p_encoder->CONFIG.SAMPLE_FREQ * encoderCountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
 
 	Encoder_Reset(p_encoder);
 }

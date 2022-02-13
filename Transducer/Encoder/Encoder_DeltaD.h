@@ -121,6 +121,11 @@ static inline void Encoder_DeltaD_CaptureQuadrature(Encoder_T * p_encoder)
 
 }
 
+static inline uint32_t Encoder_DeltaD_CaptureAngle(Encoder_T * p_encoder)
+{
+	return p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);;
+}
+
 static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 {
 #ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
@@ -145,10 +150,7 @@ static inline uint32_t Encoder_DeltaD_GetAngle(Encoder_T * p_encoder)
 	return Encoder_ConvertCounterDToAngle(p_encoder, HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER));
 }
 
-static inline uint32_t Encoder_DeltaD_CaptureAngularD(Encoder_T * p_encoder)
-{
-	return p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);;
-}
+
 
 //static inline void Encoder_DeltaD_ReadQuadratureDirection(Encoder_T * p_encoder)
 //{//#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
@@ -169,13 +171,13 @@ static inline uint32_t Encoder_DeltaD_CaptureAngularD(Encoder_T * p_encoder)
 	Meaningless for DeltaT, variable DeltaD (DeltaT is fixed, == 1).
  */
 /******************************************************************************/
-static inline uint32_t Encoder_DeltaD_Get(Encoder_T * p_encoder)				{return p_encoder->DeltaD;}
-static inline uint32_t Encoder_DeltaD_Get_Units(Encoder_T * p_encoder)	{return p_encoder->DeltaD * p_encoder->UnitLinearD;}
-
-static inline uint32_t Encoder_DeltaD_GetSpeed(Encoder_T * p_encoder)
-{
-//	return Encoder_DeltaD_CalcSpeed(p_encoder, p_encoder->DeltaD, 1U);
-}
+static inline uint32_t Encoder_DeltaD_Get(Encoder_T * p_encoder)		{return p_encoder->DeltaD;}
+//static inline uint32_t Encoder_DeltaD_Get_Units(Encoder_T * p_encoder)	{return p_encoder->DeltaD * p_encoder->UnitLinearD;}
+//
+//static inline uint32_t Encoder_DeltaD_GetSpeed(Encoder_T * p_encoder)
+//{
+////	return Encoder_DeltaD_CalcSpeed(p_encoder, p_encoder->DeltaD, 1U);
+//}
 
 /*!
 	Capture DeltaD  only-
@@ -203,7 +205,6 @@ static inline uint32_t Encoder_DeltaD_ConvertToSpeed_UnitsPerMinute(Encoder_T * 
 }
 
 
-
 /*!
 	@return DeltaD is angle in raw timer counter ticks.
 	CaptureDeltaD only, Fixed DeltaT: DeltaD count on fixed time sample.
@@ -218,18 +219,42 @@ static inline uint32_t Encoder_DeltaD_ConvertToAngularSpeed(Encoder_T * p_encode
 	return deltaD_Ticks * p_encoder->UnitAngularSpeed;
 }
 
+/*
+ * Todo fix. functions use polling_SAMPLE_FREQ, polling freq conversion only
+ *
+ * unitsAngularSpeed => DELTA_D_SAMPLE_FREQ 1000Hz
+ * delta angle for speed position integration => p_encoder->CONFIG.SAMPLE_FREQ  2000Hz
+ */
 static inline uint32_t Encoder_DeltaD_ConvertFromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
 {
 	//todo use share anglular speed
 //	return (rpm << (CONFIG_ENCODER_ANGLE_DEGREES_BITS)) / (60 * p_encoder->UnitAngularSpeed);
-	return rpm * p_encoder->Params.CountsPerRevolution / (p_encoder->UnitT_Freq * 60U);
+	return rpm * p_encoder->Params.CountsPerRevolution / (p_encoder->CONFIG.SAMPLE_FREQ * 60U);
 }
 
 static inline uint32_t Encoder_DeltaD_ConvertToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
 {
 //	return Encoder_ConvertDeltaDToAngularSpeed(p_encoder, deltaD_Ticks * 60U) >> CONFIG_ENCODER_ANGLE_DEGREES_BITS;  overflow?
-	return (deltaD_Ticks * p_encoder->UnitT_Freq * 60U) / p_encoder->Params.CountsPerRevolution;
+	return (deltaD_Ticks * p_encoder->CONFIG.SAMPLE_FREQ * 60U) / p_encoder->Params.CountsPerRevolution;
 }
 
+/*
+ */
+static inline uint32_t Encoder_DeltaD_ConvertRotationalSpeedToDeltaAngle_RPM(Encoder_T * p_encoder, uint32_t rpm)
+{
+	if (rpm < (UINT32_MAX >> CONFIG_ENCODER_ANGLE_DEGREES_BITS))
+	{
+		return (rpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / (60U * p_encoder->CONFIG.SAMPLE_FREQ);
+	}
+	else
+	{
+		return (1U << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / 60U * rpm / p_encoder->CONFIG.SAMPLE_FREQ;
+	}
+}
+
+static inline uint32_t Encoder_DeltaD_ConvertDeltaAngleToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t angle_UserDegrees)
+{
+	return (angle_UserDegrees * p_encoder->CONFIG.SAMPLE_FREQ >> CONFIG_ENCODER_ANGLE_DEGREES_BITS) * 60U;
+}
 
 #endif

@@ -35,6 +35,7 @@
 #include "Motor.h"
 #include "Utility/StateMachine/StateMachine.h"
 //#include "Utility/Timer/Timer.h"
+#include "System/SysTime/SysTime.h"
 
 /*
     Default 50us
@@ -42,6 +43,7 @@
  */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
+	p_motor->MicrosRef = SysTime_GetMicros();
 	p_motor->ControlTimerBase++;
 	p_motor->IsPwmOn = false;
 //	p_motor->PwmOnTime = 0;

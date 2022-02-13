@@ -32,7 +32,6 @@
 #define EEPROM_H
 
 #include "HAL_EEPROM.h"
-
 #include "Peripheral/NvMemory/NvMemory/NvMemory.h"
 
 #define EEPROM_START			HAL_EEPROM_START
@@ -48,8 +47,8 @@ typedef NvMemory_T EEPROM_T;
 //extern void EEPROM_Init_Blocking(EEPROM_T * p_eeprom);
 //extern void EEPROM_Init_NonBlocking(EEPROM_T * p_eeprom);
 extern bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom);
-extern NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const uint8_t * p_dest, const uint8_t * p_source, size_t size);
-extern NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, uint8_t * p_dest, const uint8_t * p_source, size_t sizeBytes);
+extern NvMemory_Status_T EEPROM_SetWrite		(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes);
+extern NvMemory_Status_T EEPROM_Write_Blocking	(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes);
 
 #endif /*   */
 

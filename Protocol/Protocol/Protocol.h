@@ -226,7 +226,7 @@ typedef enum
 }
 Protocol_ReqState_T;
 
-typedef struct
+typedef struct __attribute__((aligned (4U)))
 {
 	void * p_Xcvr;
 	const Protocol_Specs_T * p_Specs;

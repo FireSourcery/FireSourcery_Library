@@ -44,7 +44,7 @@ typedef enum
 }
 Thermistor_ThesholdStatus_T;
 
-typedef struct
+typedef struct __attribute__((aligned (4U)))
 {
 	uint32_t RNominal;
 	uint32_t TNominal;

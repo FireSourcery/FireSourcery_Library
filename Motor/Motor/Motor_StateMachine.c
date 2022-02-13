@@ -75,9 +75,9 @@ static void Init_Entry(Motor_T * p_motor)
 
 static void Init_Proc(Motor_T * p_motor)
 {
-//	StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_STOP);
-	Motor_SetCalibrationStateAdc(p_motor);
-	StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION);
+	StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_STOP);
+//	Motor_SetCalibrationStateAdc(p_motor);
+//	StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION);
 }
 
 static const StateMachine_State_T MOTOR_STATE_INIT =
@@ -164,7 +164,7 @@ static void Align_Proc(Motor_T * p_motor)
 {
 	if(Motor_ProcAlign(p_motor) == true)
 	{
-		if((p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF) || (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP))
+		if((p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS) || (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP))
 		{
 			StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_OPEN_LOOP);
 		}
@@ -223,7 +223,7 @@ static void OpenLoop_Proc(Motor_T * p_motor)
 	{
 		Motor_SixStep_ProcPhaseControl(p_motor);
 
-		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF)
+		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
 		{
 			if (Motor_SixStep_GetBemfReliable(p_motor) == true)
 			{
@@ -309,7 +309,7 @@ static void Run_Proc(Motor_T * p_motor)
 	{
 		Motor_SixStep_ProcPhaseControl(p_motor);
 
-		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF)
+		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
 		{
 //			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
 //			{
@@ -341,7 +341,7 @@ static StateMachine_State_T * FreeWheel_InputAccelDecel(Motor_T * p_motor)
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_BEMF)
+		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
 		{
 			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
 			{

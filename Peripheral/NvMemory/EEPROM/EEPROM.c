@@ -52,7 +52,7 @@
 /*
 	match start cmd function signature
  */
-static void EepromStartCmdWrite(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units)
+static void EepromStartCmdWrite(void * p_hal, const void * p_cmdDest, const void * p_cmdData, size_t units)
 {
 	(void)units;
 
@@ -108,22 +108,22 @@ void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 //}
 
 
-NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const uint8_t * p_dest, const uint8_t * p_source, size_t size)
+NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
 {
-	NvMemory_Status_T status = NvMemory_SetOpCommon(p_eeprom, p_dest, size, EEPROM_UNIT_WRITE_SIZE);
+	NvMemory_Status_T status = NvMemory_SetOpCommon(p_eeprom, p_dest, sizeBytes, EEPROM_UNIT_WRITE_SIZE);
 
 	if (status == NV_MEMORY_STATUS_SUCCESS)
 	{
 		p_eeprom->StartCmd 		= EepromStartCmdWrite;
 		p_eeprom->FinalizeOp 	= EepromFinalizeWrite;
 		NvMemory_SetOpCmdSize(p_eeprom, EEPROM_UNIT_WRITE_SIZE, 1U);
-		NvMemory_SetOpData(p_eeprom, p_source, size);
+		NvMemory_SetOpData(p_eeprom, p_source, sizeBytes);
 	}
 
 	return status;
 }
 
-NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, uint8_t * p_dest, const uint8_t * p_source, size_t sizeBytes)
+NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
 {
 	return ((EEPROM_SetWrite(p_eeprom, p_dest, p_source, sizeBytes) == NV_MEMORY_STATUS_SUCCESS) ? NvMemory_ProcOpCommon_Blocking(p_eeprom) : NV_MEMORY_STATUS_ERROR_INPUT);
 }
@@ -141,7 +141,7 @@ bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom)
 	return HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONFIG.P_HAL);
 }
 
-NvMemory_Status_T EEPROM_StartWrite_NonBlocking(EEPROM_T * p_eeprom, uint8_t * p_dest, const uint8_t * p_source, size_t sizeBytes)
+NvMemory_Status_T EEPROM_StartWrite_NonBlocking(EEPROM_T * p_eeprom, void * p_dest, const void * p_source, size_t sizeBytes)
 {
 	return (p_eeprom->Status = (EEPROM_SetWrite(p_eeprom, p_dest, p_source, sizeBytes) == NV_MEMORY_STATUS_SUCCESS ? NvMemory_StartOpCommon(p_eeprom) : NV_MEMORY_STATUS_ERROR_INPUT));
 }

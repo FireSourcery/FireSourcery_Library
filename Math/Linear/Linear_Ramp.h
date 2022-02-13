@@ -37,7 +37,8 @@
 
 #include <stdint.h>
 
-
+//todo optimize remove divisor
+// change linear init to invfunction calculate index
 static inline void Linear_Ramp_InitSlope(Linear_T * p_linear, int32_t initial, int32_t final, int32_t slope_UnitPerTick)
 {
 	Linear_Init(p_linear, slope_UnitPerTick, 1U, initial, final);
