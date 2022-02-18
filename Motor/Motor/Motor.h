@@ -457,6 +457,7 @@ static inline void Motor_ProcRamp(Motor_T * p_motor)
 
 static inline void Motor_SetRamp(Motor_T * p_motor, uint16_t userCmd)
 {
+	//todo change init new ramp
 	Linear_Ramp_InitMillis(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmd, 10U);
 	p_motor->RampIndex = 0;
 }
@@ -576,8 +577,8 @@ static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
 static inline void Motor_Stop(Motor_T * p_motor)
 {
 	Phase_Float(&p_motor->Phase);
-	p_motor->ControlTimerBase = 0U; //ok to reset timer
-	Timer_SetPeriod(&p_motor->ControlTimer, 2000U);
+//	p_motor->ControlTimerBase = 0U; //ok to reset timer
+	Timer_StartPeriod(&p_motor->ControlTimer, 2000U); //100ms
 }
 
 static inline void Motor_ProcIdle(Motor_T * p_motor)

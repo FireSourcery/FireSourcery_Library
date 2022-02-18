@@ -57,7 +57,7 @@ static inline void MotorControllerAnalogUserThread(MotorController_T * p_control
 
 	MotAnalogUser_CaptureInput(&p_controller->AnalogUser, p_controller->AnalogResults.Throttle_ADCU, p_controller->AnalogResults.Brake_ADCU);
 
-	AnalogN_PauseQueue(p_controller->CONFIG.P_ANALOG_N, p_controller->CONFIG.ADCS_ACTIVE_MAIN_THREAD);
+	AnalogN_PauseQueue(p_controller->CONFIG.P_ANALOG_N, p_controller->CONFIG.ADCS_ACTIVE_MAIN_THREAD); //todo disable adc only, or fix critical within critical
 	AnalogN_EnqueueConversion_Group(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_THROTTLE);
 	AnalogN_EnqueueConversion_Group(p_controller->CONFIG.P_ANALOG_N, &p_controller->CONFIG.CONVERSION_BRAKE);
 	AnalogN_ResumeQueue(p_controller->CONFIG.P_ANALOG_N, p_controller->CONFIG.ADCS_ACTIVE_MAIN_THREAD);

@@ -96,10 +96,14 @@ static int Cmd_monitor_Loop(const MotorController_T * p_motorController)
 
         	Terminal_SendString(&p_motorController->Shell.Terminal, "Iq = ");
     		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Iq);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, " Vq = ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Vq);
     		Terminal_SendString(&p_motorController->Shell.Terminal, " Q1.15\r\n");
 
 			Terminal_SendString(&p_motorController->Shell.Terminal, "Id = ");
 			Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Id);
+			Terminal_SendString(&p_motorController->Shell.Terminal, " Vd = ");
+			Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Vd);
 			Terminal_SendString(&p_motorController->Shell.Terminal, " Q1.15\r\n");
 
 //        	Terminal_SendString(&p_motorController->Shell.Terminal, "Iabc = ");

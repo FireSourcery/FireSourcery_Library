@@ -106,6 +106,14 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 	[MCSM_INPUT_THROTTLE]  		= (StateMachine_Transition_T)Stop_InputThrottle,
 	[MCSM_INPUT_DIRECTION] 		= (StateMachine_Transition_T)Stop_InputDirection,
 	[MCSM_INPUT_SAVE_PARAMS] 	= (StateMachine_Transition_T)Stop_InputSaveParams,
+
+//	MCSM_INPUT_FAULT,
+//	MCSM_INPUT_DIRECTION,
+//	MCSM_INPUT_THROTTLE,
+//	MCSM_INPUT_BRAKE,
+//	MCSM_INPUT_FLOAT,
+//	MCSM_INPUT_CHECK_STOP,
+//	MCSM_INPUT_SAVE_PARAMS,
 };
 
 static void Stop_Entry(MotorController_T * p_motorController)

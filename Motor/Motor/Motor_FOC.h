@@ -83,7 +83,7 @@ static inline void Motor_FOC_CaptureIa(Motor_T *p_motor)
 	int32_t i_temp = CorrectISample(Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, p_motor->AnalogResults.Ia_ADCU));
 	FOC_SetIa(&p_motor->Foc, (i_temp + FOC_GetIa(&p_motor->Foc)) / 2);
 
-	p_motor->FocTimeIa = SysTime_GetMicros() - p_motor->MicrosRef;
+	p_motor->FocTimeIa = SysTime_GetMicros();// - p_motor->MicrosRef;
 }
 
 static inline void Motor_FOC_CaptureIb(Motor_T *p_motor)
@@ -91,7 +91,7 @@ static inline void Motor_FOC_CaptureIb(Motor_T *p_motor)
 	int32_t i_temp = CorrectISample(Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, p_motor->AnalogResults.Ib_ADCU));
 	FOC_SetIb(&p_motor->Foc, (i_temp + FOC_GetIb(&p_motor->Foc)) / 2);
 
-	p_motor->FocTimeIb = SysTime_GetMicros() - p_motor->MicrosRef;
+	p_motor->FocTimeIb = SysTime_GetMicros();// - p_motor->MicrosRef;
 }
 
 static inline void Motor_FOC_CaptureIc(Motor_T *p_motor)
@@ -99,7 +99,7 @@ static inline void Motor_FOC_CaptureIc(Motor_T *p_motor)
 	int32_t i_temp = CorrectISample(Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, p_motor->AnalogResults.Ic_ADCU));
 	FOC_SetIc(&p_motor->Foc, (i_temp + FOC_GetIc(&p_motor->Foc)) / 2);
 
-	p_motor->FocTimeIc = SysTime_GetMicros() - p_motor->MicrosRef;
+	p_motor->FocTimeIc = SysTime_GetMicros();// - p_motor->MicrosRef;
 }
 
 //static inline void Motor_FOC_CaptureIa(Motor_T *p_motor)
@@ -249,16 +249,13 @@ static inline bool PollMotorFocIqOverLimit(Motor_T * p_motor) //todo combine wit
 static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)
 {
 	qfrac16_t qReq;
-//	qfrac16_t vqReq;
-//	qfrac16_t vdReq;
-
 
 	if(p_motor->ControlMode.Brake == true)
 	{
 		qReq = 0 - (p_motor->RampCmd >> 1U) ; //req negative iq, vq will decrease but not past 0
 
 		FOC_SetVq(&p_motor->Foc, PID_Calc(&p_motor->PidIq, qReq, 	FOC_GetIq(&p_motor->Foc))); //vq min 0, no plugging
-		FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, 0, 		FOC_GetId(&p_motor->Foc)));
+		FOC_SetVd(&p_motor->Foc, 0);
 	}
 	else
 	{
@@ -325,7 +322,7 @@ static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
 	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
 
-	p_motor->FocTime1 = SysTime_GetMicros() - p_motor->MicrosRef;
+	p_motor->FocTime1 = SysTime_GetMicros();// - p_motor->MicrosRef;
 
 	FOC_ProcClarkePark(&p_motor->Foc); //using prev adc reading
 	ProcMotorFocPositionFeedback(p_motor);
@@ -344,7 +341,7 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
 	Motor_FOC_ProcAngleObserve(p_motor);
 	ProcMotorFocControlFeedback(p_motor);
-	p_motor->FocTime2 = SysTime_GetMicros() - p_motor->MicrosRef;
+	p_motor->FocTime2 = SysTime_GetMicros();// - p_motor->MicrosRef;
 }
 
 static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)

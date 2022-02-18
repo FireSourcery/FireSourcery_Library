@@ -42,7 +42,7 @@
 //static inline uint16_t Motor_User_GetBemf_Frac16(Motor_T * p_motor)	{return Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
 //static inline uint32_t Motor_User_GetBemf_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
 static inline uint32_t Motor_User_GetVPos_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults.VPos_ADCU);}
-static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T *p_motor) 	{return p_motor->Speed_RPM;}
+static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T * p_motor) 	{return p_motor->Speed_RPM;}
 
 // Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults.VPos_ADCU);
 // Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, p_motor->AnalogResults.Va_ADCU);
@@ -51,7 +51,7 @@ static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T *p_motor) 	{return p_moto
 //static inline float Motor_User_GetHeat_DegCFloat(Motor_T *p_motor)						{return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
 //static inline uint16_t Motor_User_GetHeat_DegCRound(Motor_T *p_motor)					{return Thermistor_ConvertToDegC_Round(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
 //static inline uint16_t Motor_User_GetHeat_DegCNDecimal(Motor_T *p_motor, uint8_t n) 	{return Thermistor_ConvertToDegC_NDecimal(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, n);}
-static inline uint16_t Motor_User_GetHeat_DegCScalar(Motor_T *p_motor, uint16_t scalar) 	{return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, scalar);}
+static inline uint16_t Motor_User_GetHeat_DegCScalar(Motor_T * p_motor, uint16_t scalar) 	{return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, scalar);}
 //static inline uint16_t Motor_User_GetHeat_Fixed32(Motor_T *p_motor) 					{return Thermistor_ConvertToDegC_Fixed32(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
 static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Motor_T *p_motor) 	{return p_motor->Parameters.DirectionCalibration;}
 static inline Hall_Sensors_T Motor_User_GetHall(Motor_T * p_motor) 	{return Hall_GetSensors(&p_motor->Hall);}
@@ -63,7 +63,7 @@ static inline Hall_Sensors_T Motor_User_GetHall(Motor_T * p_motor) 	{return Hall
 static inline void Motor_User_DisableControl(Motor_T * p_motor)
 {
 	Phase_Float(&p_motor->Phase);
-//	p_motor->IsBrake = false;
+	p_motor->ControlMode.Brake = 0U;
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
 }
 
@@ -75,6 +75,7 @@ static inline void Motor_User_SetCmd(Motor_T * p_motor, uint16_t cmd)
 		Critical_Enter();
 		p_motor->ControlMode.Brake = 0U;
 		p_motor->RampCmd = 0U; //match  speed?
+//		Motor_ResumeSpeedFeedback(p_motor);
 		Critical_Exit();
 	}
 
@@ -107,13 +108,16 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 //				else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 //				{
 //
-//				}
+//				}//	Motor_SetRamp(p_motor, FOC_GetIq(&p_motor->Foc)); //treat iq as positive for now
+
+		//ssave oon start iq
 		p_motor->RampCmd = 0U;
 		Critical_Exit();
 	}
 
-//				Motor_SetRamp(p_motor, intensity);
-	Motor_SetRamp(p_motor, FOC_GetIq(&p_motor->Foc)); //treat iq as positive for now
+	Motor_SetRamp(p_motor, intensity);
+
+
 
 
 	switch (p_motor->Parameters.BrakeMode)
