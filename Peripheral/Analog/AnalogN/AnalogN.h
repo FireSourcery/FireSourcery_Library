@@ -151,7 +151,7 @@ static inline void AnalogN_CaptureResults_ISR(AnalogN_T * p_analogn, uint8_t ana
 //	Analog_OnComplete_T onConversionComplete  		= p_map->P_VIRTUAL_CONVERSION->ON_COMPLETE;
 //	void * p_onConversionCompleteContext 			= p_map->P_ON_COMPLETE_CONTEXT;
 
-	static uint32_t debug;
+	volatile static uint32_t debug = 0;
 
 	if((_Analog_GetIsActive(p_analogI) == true)) //debug only
 	{

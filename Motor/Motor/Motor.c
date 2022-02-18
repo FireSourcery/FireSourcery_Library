@@ -95,7 +95,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 	{
 		/*
 		 * all sixstep modes and hall foc mode use CaptureTime
-		 * use PolePairs * 6 for count per commutation or PolePairs for count per erotation
 		 */
 		Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
 	}

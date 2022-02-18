@@ -392,8 +392,7 @@ typedef struct
 //	bool IsBrake;
 
 	volatile uint32_t MicrosRef; //debug
-	volatile uint32_t FocTime1;
-	volatile uint32_t FocTime2;
+	volatile uint32_t DebugTime[10];
 
 	volatile uint32_t FocTimeIa;
 	volatile uint32_t FocTimeIb;

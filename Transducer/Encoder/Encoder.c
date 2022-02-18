@@ -78,13 +78,13 @@ static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uin
 	EncoderResolution, EncoderCounterMax + 1
  */
 
-void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount, uint32_t unitTFreq)
+void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolution, uint32_t distancePerCount, uint32_t unitTFreq)
 {
 //	HAL_Encoder_Init(p_encoder->CONFIG.P_HAL_ENCODER);
 //	p_encoder->EncoderResolution = encoderCountsPerRevolution;
 	p_encoder->UnitT_Freq = unitTFreq;
 
-	p_encoder->UnitLinearD = encoderDistancePerCount;
+	p_encoder->UnitLinearD = distancePerCount;
 	/*
 	 * Possible 32 bit overflow
 	 *
@@ -96,7 +96,7 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPer
 	 * Max deltaD will be UINT32_MAX / (unitDeltaD * unitDeltaT_Freq)
 	 * deltaD ~14,000, for 300,000 (unitDeltaD * unitDeltaT_Freq)
 	 */
-	p_encoder->UnitLinearSpeed = encoderDistancePerCount * unitTFreq;
+	p_encoder->UnitLinearSpeed = distancePerCount * unitTFreq;
 
 	/*
 	 * Angle Calc
@@ -104,7 +104,7 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPer
 	 *
 	 * uneven UnitD = unitAngle_DataBits/unitAngle_SensorResolution divide results in loss of precision
 	 */
-	p_encoder->UnitAngularD_Factor = 0xFFFFFFFFU / encoderCountsPerRevolution + 1U;
+	p_encoder->UnitAngularD_Factor = 0xFFFFFFFFU / countsPerRevolution + 1U;
 
 	/*
 	 * Angular Speed Calc
@@ -118,9 +118,10 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPer
 	 * Primitive:	  		(DeltaD * UnitAngularD_Factor) / (32-ANGLE_DEGREES_BITS) * UnitT_Freq / DeltaT == 1,048,560,000
 	 * UnitAngularSpeed: 	DeltaD * [UnitAngularD_Factor * UnitT_Freq / (32-ANGLE_DEGREES_BITS)] / DeltaT == 1,048,576,000
 	 */
-	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(unitTFreq, encoderCountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
-	//overflow boundary = UINT32_MAX / p_encoder->UnitAngularSpeed
+	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(unitTFreq, countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
 
+	//todo overflow boundary
+	//overflow boundary = UINT32_MAX / p_encoder->UnitAngularSpeed
 //	if(unitTFreq > (UINT32_MAX >> CONFIG_ENCODER_ANGLE_DEGREES_BITS))
 //	{
 //		p_encoder->UnitAngularSpeed = 0U;
@@ -130,8 +131,7 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPer
 //		p_encoder->UnitAngularSpeed = (unitTFreq << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / encoderCountsPerRevolution;
 //	}
 
-
-	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitTFreq, p_encoder->CONFIG.SAMPLE_FREQ * encoderCountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
+	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitTFreq, p_encoder->CONFIG.SAMPLE_FREQ * countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
 
 	Encoder_Reset(p_encoder);
 }

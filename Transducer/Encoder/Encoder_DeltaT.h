@@ -241,15 +241,15 @@ static inline bool Encoder_DeltaT_PollWatchStop(Encoder_T * p_encoder)
 
 	Estimate angle each control period in between encoder pulse
 
-	AngleControlIndex / AngleControlPollingFreq * 1(DeltaD) * UnitT_Freq / DeltaT * AngleSize
-	AngleControlIndex * 1(DeltaD) * AngleSize * UnitT_Freq / DeltaT / PollingFreq / EncoderResolution
+	(AngleControlIndex / SAMPLE_FREQ) * (1(DeltaD) * UnitT_Freq / DeltaT) * (AngleSize / EncoderResolution)
+	AngleControlIndex * 1(DeltaD) * AngleSize * UnitT_Freq / DeltaT / SAMPLE_FREQ / EncoderResolution
 
-	Angle index ranges from 0 to ControlResolution
+	AngleControlIndex ranges from 0 to ControlResolution [InterpolationFreq]
 
-	UnitInterpolateAngle == UnitAngularSpeed / PollingFreq
-	//	UnitInterpolateAngle = [AngleSize[65536] * UnitDeltaT_Freq / PollingFreq / CountsPerRevolution]
-	//	return index * Encoder_GetAngularSpeed(p_encoder) / p_encoder->CONFIG.SAMPLE_FREQ;
-	//	return pollingIndex * UnitAngularSpeed / PollingFreq / DeltaT;
+	UnitInterpolateAngle = UnitAngularSpeed / SAMPLE_FREQ
+	UnitInterpolateAngle = [AngleSize[65536] * UnitDeltaT_Freq / SAMPLE_FREQ / CountsPerRevolution]
+	return pollingIndex * Encoder_GetAngularSpeed(p_encoder) / SAMPLE_FREQ;
+	return pollingIndex * [UnitAngularSpeed / SAMPLE_FREQ] / DeltaT;
  */
 static inline uint32_t Encoder_DeltaT_InterpolateAngle(Encoder_T * p_encoder, uint32_t pollingIndex)
 {
@@ -264,8 +264,9 @@ static inline uint32_t Encoder_DeltaT_InterpolateAngleIncIndex(Encoder_T * p_enc
 }
 
 /*
-	CaptureDeltaT only (DeltaD ==1) (DeltaT Mode UnitT_Freq > PollingFreq) -  cannot capture fractional DeltaD
-	PollingFreq/DeltaTFreq = p_encoder->CONFIG.SAMPLE_FREQ / (p_encoder->UnitT_Freq / p_encoder->DeltaT);
+	Samples per DeltaT Capture
+	CaptureDeltaT only (DeltaD ==1) (DeltaT Mode UnitT_Freq > SAMPLE_FREQ) -  cannot capture fractional DeltaD
+	SAMPLE_FREQ/DeltaTCaptureFreq =  SAMPLE_FREQ / (UnitT_Freq / DeltaT);
  */
 static inline uint32_t Encoder_DeltaT_GetInterpolationFreq(Encoder_T *p_encoder)
 {

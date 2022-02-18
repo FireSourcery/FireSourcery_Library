@@ -354,10 +354,10 @@ static inline void _Analog_ExitCritical(Analog_T * p_analog)
 //static inline void Analog_Deactivate(const Analog_T * p_analog)					{HAL_ADC_Deactivate(p_analog->CONFIG.P_HAL_ADC);}
 //static inline void Analog_DisableInterrupt(const Analog_T * p_analog)			{HAL_ADC_DisableInterrupt(p_analog->CONFIG.P_HAL_ADC);}
 //static inline void Analog_ClearConversionComplete(Analog_T * p_analog)			{HAL_ADC_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);}
-static inline bool Analog_ReadConversionComplete(const Analog_T * p_analog)		{return HAL_ADC_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);}
-static inline bool Analog_ReadConversionActive(const Analog_T * p_analog)		{return HAL_ADC_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ADC);}
+static inline bool Analog_ReadIsAdcConversionComplete(const Analog_T * p_analog)		{return HAL_ADC_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);}
+static inline bool Analog_ReadIsAdcConversionActive(const Analog_T * p_analog)		{return HAL_ADC_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ADC);}
 
-static inline bool Analog_ReadActive(const Analog_T * p_analog)		{return ((Analog_ReadConversionActive(p_analog) == true) || (Analog_ReadConversionComplete(p_analog) == true));}
+static inline bool Analog_ReadIsActive(const Analog_T * p_analog)		{return ((Analog_ReadIsAdcConversionComplete(p_analog) == true) || (Analog_ReadIsAdcConversionActive(p_analog) == true));}
 
 
 static inline bool _Analog_GetIsActive(const Analog_T * p_analog)
@@ -365,7 +365,7 @@ static inline bool _Analog_GetIsActive(const Analog_T * p_analog)
 	//case of aborted conversion?
 //	return (p_analog->p_ActiveConversion != 0U);
 //	return (p_analog->ActiveConversionCount > 0U);
-	return (Analog_ReadConversionActive(p_analog) == true) || (Analog_ReadConversionComplete(p_analog) == true);
+	return Analog_ReadIsActive(p_analog);
 }
 
 
@@ -512,7 +512,7 @@ static inline bool _Analog_CaptureResults(Analog_T * p_analog)//, const Analog_C
 //		else
 //		{
 			/*   Dequeue Next Conversion New Options */
-		_Analog_ProcQueue(p_analog);
+			_Analog_ProcQueue(p_analog);
 
 			isAllChannelsComplete = true;
 //		}

@@ -68,6 +68,7 @@ void Encoder_Motor_InitCaptureCount(Encoder_T * p_encoder)
 	Init to CaptureDeltaT Mode
 	e.g.   hall sensors  as speed encoder.
 
+	use PolePairs * 6 for count per commutation or PolePairs for count per erotation
 	Hall => Use CountPerRevolution = polePairs*6. Capture on Commutation Step
 
 	// Capture Pulse Per Hall Cycle, 	PulsePerRevolution = 1 				=> Speed_GetRotationalSpeed_RPM reflects electrical speed

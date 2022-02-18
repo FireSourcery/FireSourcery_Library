@@ -226,7 +226,7 @@ static int Cmd_calibrate(const MotorController_T * p_motorController, int argc, 
 
     if(argc == 1U)
     {
-    	Motor_User_ActivateCalibrationEncoder(MotorController_GetPtrMotor(p_motorController, 0U));
+
     }
     else if(argc == 2U)
     {
