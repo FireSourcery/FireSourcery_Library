@@ -52,46 +52,53 @@
 	Simplified:
 	Ialpha = Ia
 	Ibeta = (Ib - Ic)/sqrt(3)
+
+	//	alpha = a;
+	//	beta = (int32_t)qfrac16_mul(b, QFRAC16_1_DIV_SQRT3) - (int32_t)qfrac16_mul(c, QFRAC16_1_DIV_SQRT3);
+
  */
 /******************************************************************************/
 static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b, qfrac16_t c)
 {
-	int32_t alpha, beta;
+	int32_t alpha, beta, betaTemp;
 
-	alpha = ((int32_t)a*2 - (int32_t)b - (int32_t)c) / 3;
-	beta = (int32_t)qfrac16_mul(b, QFRAC16_1_DIV_SQRT3) - (int32_t)qfrac16_mul(c, QFRAC16_1_DIV_SQRT3); // b - c is > 1 in sector 2 and 5
+	alpha 	= qfrac16_mul((int32_t)a*2 - (int32_t)b - (int32_t)c, QFRAC16_1_DIV_3);
+
+	betaTemp = qfrac16_mul((int32_t)b - (int32_t)c, QFRAC16_SQRT3_MOD_1) + ((int32_t)b - (int32_t)c);
+	beta =  qfrac16_mul(betaTemp, QFRAC16_1_DIV_3);
+
+//	betaTemp = qfrac16_mul((int32_t)b - (int32_t)c, QFRAC16_1_DIV_3);
+//	beta 	= betaTemp + qfrac16_mul(betaTemp, QFRAC16_SQRT3_MOD_1);
 
 	*p_alpha = qfrac16_sat(alpha);
 	*p_beta = qfrac16_sat(beta);
-
-	return;
 }
 
-/******************************************************************************/
-/*!
-	@brief	2-Phase Version
-
-	Ialpha = Ia
-	Ibeta = (Ia + 2*Ib)/sqrt3
-
-	@param[out] p_alpha
-	@param[out] p_beta
-	@param[in] Ia
-	@param[in] Ib
-	@return  void
-  */
-/******************************************************************************/
-static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b)
-{
-	int32_t beta;
-
-	beta = (int32_t)qfrac16_mul(a, QFRAC16_1_DIV_SQRT3) + (int32_t)qfrac16_mul(b, QFRAC16_1_DIV_SQRT3) * (int32_t)2;
-
-	*p_alpha = a;
-	*p_beta = qfrac16_sat(beta);
-
-	return;
-}
+///******************************************************************************/
+///*!
+//	@brief	2-Phase Version
+//
+//	Ialpha = Ia
+//	Ibeta = (Ia + 2*Ib)/sqrt3
+//
+//	@param[out] p_alpha
+//	@param[out] p_beta
+//	@param[in] Ia
+//	@param[in] Ib
+//	@return  void
+//  */
+///******************************************************************************/
+//static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b)
+//{
+//	int32_t beta;
+//
+//	beta = (int32_t)qfrac16_mul(a, QFRAC16_1_DIV_SQRT3) + (int32_t)qfrac16_mul(b, QFRAC16_1_DIV_SQRT3) * (int32_t)2;
+//
+//	*p_alpha = a;
+//	*p_beta = qfrac16_sat(beta);
+//
+//	return;
+//}
 
 /******************************************************************************/
 /*!
@@ -159,6 +166,13 @@ static inline void foc_park_vector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t a
 	*p_d = qfrac16_sat(d);
 	*p_q = qfrac16_sat(q);
 }
+
+
+static inline void foc_park_abc(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t a, qfrac16_t b, qfrac16_t c )
+{
+
+}
+
 
 /******************************************************************************/
 /*!

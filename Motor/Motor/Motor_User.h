@@ -101,6 +101,8 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 		Critical_Enter();
 		p_motor->ControlMode.Brake = 1U;
 
+//		p_motor->BrakeControl =  FOC_GetIq(&p_motor->Foc)
+
 //				if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 //				{
 //					Motor_SetRamp(p_motor,  FOC_GetIq(&p_motor->Foc));

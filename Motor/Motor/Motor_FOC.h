@@ -321,6 +321,7 @@ static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
 	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
 
+	//samples complete when queue resumes.
 	p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 	FOC_ProcClarkePark(&p_motor->Foc); //using prev adc reading

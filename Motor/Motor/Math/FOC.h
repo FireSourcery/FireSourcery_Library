@@ -83,13 +83,13 @@ typedef struct
 }
 FOC_T;
 
-static inline void FOC_ProcClarkePark(FOC_T *  p_foc)
+static inline void FOC_ProcClarkePark(FOC_T * p_foc)
 {
 	foc_clarke(&p_foc->Ialpha, &p_foc->Ibeta, p_foc->Ia, p_foc->Ib, p_foc->Ic);
 	foc_park_vector(&p_foc->Id, &p_foc->Iq, p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
 }
 
-static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T *  p_foc)
+static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 {
 //	foc_limitvector_dmax(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
 	foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
