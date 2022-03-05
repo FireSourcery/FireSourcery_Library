@@ -218,6 +218,7 @@ static inline uint8_t Hall_ReadSensors(const Hall_T * p_hall)
 	return sensors.State ;
 }
 
+
 /*
  *
  */
@@ -225,6 +226,9 @@ static inline void Hall_CaptureSensors(Hall_T * p_hall)
 {
 	p_hall->SensorsRef.State = Hall_ReadSensors(p_hall);
 }
+
+
+
 
 //static inline bool Hall_PollSensorsEdge(Hall_T * p_hall)
 //{
@@ -354,6 +358,20 @@ static inline Hall_Sensors_T Hall_GetSensors(Hall_T * p_hall) {return p_hall->Se
 static inline bool Hall_GetSensorA(Hall_T * p_hall) {return p_hall->SensorsRef.A;}
 static inline bool Hall_GetSensorB(Hall_T * p_hall) {return p_hall->SensorsRef.B;}
 static inline bool Hall_GetSensorC(Hall_T * p_hall) {return p_hall->SensorsRef.C;}
+
+static inline uint8_t Hall_ReadPhysicalSensors(const Hall_T * p_hall)
+{
+	Hall_CaptureSensors(p_hall);
+
+	return p_hall->SensorsRef.State ;
+}
+
+static inline uint8_t Hall_ReadVirtualSensors(const Hall_T * p_hall)
+{
+	Hall_CaptureSensors(p_hall);
+
+	return Hall_GetRotorId( p_hall) ;
+}
 
 /*
 

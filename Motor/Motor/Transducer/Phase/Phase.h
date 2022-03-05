@@ -343,12 +343,12 @@ static inline void Phase_Polar_ActivateCA(const Phase_T * p_phase, uint16_t duty
 static inline void Phase_Polar_ActivateCB(const Phase_T * p_phase, uint16_t duty) {Phase_Polar_ActivateDutyCB(p_phase, duty); Phase_Polar_ActivateSwitchCB(p_phase);}
 static inline void Phase_Polar_ActivateAB(const Phase_T * p_phase, uint16_t duty) {Phase_Polar_ActivateDutyAB(p_phase, duty); Phase_Polar_ActivateSwitchAB(p_phase);}
 
-static inline void Phase_Unipolar_ActivateA(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, duty, 0U, 0U); ActivatePhaseSwitchABC(p_phase);}
-static inline void Phase_Unipolar_ActivateB(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, 0U, duty, 0U); ActivatePhaseSwitchABC(p_phase);}
-static inline void Phase_Unipolar_ActivateC(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, 0U, 0U, duty); ActivatePhaseSwitchABC(p_phase);}
-static inline void Phase_Unipolar_ActivateInvA(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, 0U, duty, duty); ActivatePhaseSwitchABC(p_phase);}
-static inline void Phase_Unipolar_ActivateInvB(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, duty, 0U, duty); ActivatePhaseSwitchABC(p_phase);}
-static inline void Phase_Unipolar_ActivateInvC(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, duty, duty, 0U); ActivatePhaseSwitchABC(p_phase);}
+static inline void Phase_Polar_ActivateA(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, duty, 0U, 0U); ActivatePhaseSwitchABC(p_phase);}
+static inline void Phase_Polar_ActivateB(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, 0U, duty, 0U); ActivatePhaseSwitchABC(p_phase);}
+static inline void Phase_Polar_ActivateC(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, 0U, 0U, duty); ActivatePhaseSwitchABC(p_phase);}
+static inline void Phase_Polar_ActivateInvA(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, 0U, duty, duty); ActivatePhaseSwitchABC(p_phase);}
+static inline void Phase_Polar_ActivateInvB(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, duty, 0U, duty); ActivatePhaseSwitchABC(p_phase);}
+static inline void Phase_Polar_ActivateInvC(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, duty, duty, 0U); ActivatePhaseSwitchABC(p_phase);}
 
 /******************************************************************************/
 /*! @} */

@@ -47,7 +47,7 @@
 	@return  void
 
 	Ialpha = (2*Ia - Ib - Ic)/3
-	Ibeta = sqrt3*(Ib - Ic)/3
+	Ibeta = sqrt3/3*(Ib - Ic) = (Ib - Ic)/sqrt3
 
 	Simplified:
 	Ialpha = Ia
@@ -60,18 +60,13 @@
 /******************************************************************************/
 static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b, qfrac16_t c)
 {
-	int32_t alpha, beta, betaTemp;
+	int32_t alpha, beta;
 
-	alpha 	= qfrac16_mul((int32_t)a*2 - (int32_t)b - (int32_t)c, QFRAC16_1_DIV_3);
+	alpha = qfrac16_mul((int32_t)a*2 - (int32_t)b - (int32_t)c, QFRAC16_1_DIV_3);
+	beta = qfrac16_mul((int32_t)b - (int32_t)c, QFRAC16_1_DIV_SQRT3);
 
-	betaTemp = qfrac16_mul((int32_t)b - (int32_t)c, QFRAC16_SQRT3_MOD_1) + ((int32_t)b - (int32_t)c);
-	beta =  qfrac16_mul(betaTemp, QFRAC16_1_DIV_3);
-
-//	betaTemp = qfrac16_mul((int32_t)b - (int32_t)c, QFRAC16_1_DIV_3);
-//	beta 	= betaTemp + qfrac16_mul(betaTemp, QFRAC16_SQRT3_MOD_1);
-
-	*p_alpha = qfrac16_sat(alpha);
-	*p_beta = qfrac16_sat(beta);
+	*p_alpha = alpha;	// qfrac16_sat(alpha);
+	*p_beta = beta; 	//qfrac16_sat(beta);
 }
 
 ///******************************************************************************/
@@ -113,14 +108,15 @@ static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t
 static inline void foc_invclarke(qfrac16_t * p_A, qfrac16_t * p_B, qfrac16_t * p_C, qfrac16_t alpha, qfrac16_t beta)
 {
 	int32_t b, c;
-	int32_t sqrt3Beta = (int32_t)beta + qfrac16_mul(beta, QFRAC16_SQRT3_MOD_1);
+	int32_t alphaDiv2 		= 0 - qfrac16_mul(alpha, QFRAC16_1_DIV_2);
+	int32_t betaSqrt3Div2 	= qfrac16_mul(beta, QFRAC16_SQRT3_DIV_2);
 
-	b = ((int32_t)0 - (int32_t)alpha + sqrt3Beta) / 2;
-	c = ((int32_t)0 - (int32_t)alpha - sqrt3Beta) / 2;
+	b = alphaDiv2 + betaSqrt3Div2;
+	c = alphaDiv2 - betaSqrt3Div2;
 
 	*p_A = alpha;
-	*p_B = qfrac16_sat(b);
-	*p_C = qfrac16_sat(c);
+	*p_B = b; //qfrac16_sat(b);
+	*p_C = c; //qfrac16_sat(c);
 }
 
 /******************************************************************************/
@@ -167,13 +163,6 @@ static inline void foc_park_vector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t a
 	*p_q = qfrac16_sat(q);
 }
 
-
-static inline void foc_park_abc(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t a, qfrac16_t b, qfrac16_t c )
-{
-
-}
-
-
 /******************************************************************************/
 /*!
 	@brief  Inverse Park
@@ -217,7 +206,7 @@ static inline void foc_limitvector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t v
 
 	if (dqSquared > vectorMaxSquared)
 	{
-		dqSquared = (dqSquared>>15); // normalize to frac after multiplying
+		dqSquared = (dqSquared>>15U); // normalize to frac after multiplying
 		vectorMagnitutde = qfrac16_sqrt(dqSquared);
 		*p_d = (qfrac16_t)((int32_t)(*p_d) * (int32_t)vectorMax / (int32_t)vectorMagnitutde);
 		*p_q = (qfrac16_t)((int32_t)(*p_q) * (int32_t)vectorMax / (int32_t)vectorMagnitutde);

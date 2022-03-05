@@ -48,15 +48,22 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 	/*
 	 * Derives 3 magnitudes (duty cycles) belonging to basic unit vectors.
 	 * The other 3 of 6 are inverse of the 3 derived
-	 * Magnitudes are normalized by a factor of √(3)/2, i.e alpha = 1 => A = .866
+	 * Magnitudes are normalized by a factor of âˆš(3)/2, i.e alpha = 1 => A = .866
 	 *
 	 * X = beta;
 	 * Y = (beta + sqrt3 * alpha) / 2;
 	 * Z = (beta - sqrt3 * alpha) / 2;
 	 */
-	magX = beta * QFRAC16_1_OVERSAT;
-	magY = ((beta * QFRAC16_1_OVERSAT) + (QFRAC16_SQRT3_MOD_1 * alpha) + (alpha * QFRAC16_1_OVERSAT)) / 2;
-	magZ = ((beta * QFRAC16_1_OVERSAT) - (QFRAC16_SQRT3_MOD_1 * alpha) - (alpha * QFRAC16_1_OVERSAT)) / 2;
+//	magX = beta * QFRAC16_1_OVERSAT;
+//	magY = ((beta * QFRAC16_1_OVERSAT) + (QFRAC16_SQRT3_MOD_1 * alpha) + (alpha * QFRAC16_1_OVERSAT)) / 2;
+//	magZ = ((beta * QFRAC16_1_OVERSAT) - (QFRAC16_SQRT3_MOD_1 * alpha) - (alpha * QFRAC16_1_OVERSAT)) / 2;
+
+	int32_t betaDiv2 		= qfrac16_mul(beta, QFRAC16_1_DIV_2);
+	int32_t alphaSqrt3Div2 	= qfrac16_mul(alpha, QFRAC16_SQRT3_DIV_2);
+
+	magX = beta;
+	magY = betaDiv2 + alphaSqrt3Div2;
+	magZ = betaDiv2 - alphaSqrt3Div2;
 
 	if (magX >= 0)
 	{
@@ -80,10 +87,15 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			 * B = (1 + X + Z) / 2;
 			 * C = (1 - X + Z) / 2;
 			 */
-			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT + magX + magZ) / 2;
-			*p_dutyA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
-			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT + magX + magZ) / 2;
+//			*p_dutyA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+
+			z0 = (QFRAC16_1_OVERSAT + magX + magZ) / 2;
+			*p_dutyA = (z0 - magZ);
+			*p_dutyB = z0;
+			*p_dutyC = (z0 - magX);
 		}
 		else if (magY >= 0)
 		{
@@ -102,10 +114,15 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			 * B = z0 + Z;
 			 * C = z0 - Y;
 			 */
-			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT +  magY -  magZ) / 2;
-			*p_dutyA = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
-			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT + magY - magZ) / 2;
+//			*p_dutyA = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+
+			z0 = (QFRAC16_1_OVERSAT + magY - magZ) / 2;
+			*p_dutyA = z0;
+			*p_dutyB = (z0 + magZ);
+			*p_dutyC = (z0 - magY);
 		}
 		else
 		{
@@ -123,10 +140,15 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			 * B = z0 + X;
 			 * C = z0;
 			 */
-			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT -  magX -  magY) / 2;
-			*p_dutyA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-			*p_dutyC = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT - magX - magY) / 2;
+//			*p_dutyA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			*p_dutyC = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
+
+			z0 = (QFRAC16_1_OVERSAT - magX - magY) / 2;
+			*p_dutyA = (z0 + magY);
+			*p_dutyB = (z0 + magX);
+			*p_dutyC = z0;
 		}
 	}
 	else
@@ -147,10 +169,15 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			 * B = z0;
 			 * C = z0 - X;
 			 */
-			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT +  magX +  magZ) / 2;
-			*p_dutyA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
-			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT + magX + magZ) / 2;
+//			*p_dutyA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+
+			z0 = (QFRAC16_1_OVERSAT +  magX + magZ) / 2;
+			*p_dutyA = (z0 - magZ);
+			*p_dutyB = z0;
+			*p_dutyC = (z0 - magX);
 		}
 		else if (magY < 0)
 		{
@@ -168,10 +195,15 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			 * B = z0 + Z;
 			 * C = z0 - Y;
 			 */
-			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT +  magY -  magZ) / 2;
-			*p_dutyA = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
-			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT +  magY -  magZ) / 2;
+//			*p_dutyA = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+
+			z0 = (QFRAC16_1_OVERSAT +  magY -  magZ) / 2;
+			*p_dutyA = z0;
+			*p_dutyB = (z0 + magZ);
+			*p_dutyC = (z0 - magY);
 		}
 		else
 		{
@@ -189,10 +221,15 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			 * B = z0 + X;
 			 * C = z0;
 			 */
-			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT - magX -  magY) / 2;
-			*p_dutyA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-			*p_dutyC = z0			>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT - magX -  magY) / 2;
+//			*p_dutyA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
+//			*p_dutyC = z0			>> QFRAC16_N_FRAC_BITS_MINUS_1;
+
+			z0 = (QFRAC16_1_OVERSAT - magX - magY) / 2;
+			*p_dutyA = (z0 + magY);
+			*p_dutyB = (z0 + magX);
+			*p_dutyC = z0;
 		}
 	}
 }

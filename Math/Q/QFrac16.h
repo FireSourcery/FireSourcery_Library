@@ -52,7 +52,6 @@ static const qfrac16_t QFRAC16_1_DIV_SQRT3 = 0x49E7; /*!< 0.57735026919f */
 static const qfrac16_t QFRAC16_SQRT3_DIV_2 = 0x6EDA;
 static const qfrac16_t QFRAC16_SQRT3_DIV_4 = 0x376D;
 static const qfrac16_t QFRAC16_SQRT2_DIV_2 = 0x5A82;
-static const qfrac16_t QFRAC16_SQRT3_MOD_1 = 0x5DB4; /*!< 0.73205080756f */
 
 static const int32_t QFRAC16_1_OVERSAT = (int32_t)0x00008000; /*!< (32768) */
 

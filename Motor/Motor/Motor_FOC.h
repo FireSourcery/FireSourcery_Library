@@ -321,11 +321,11 @@ static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
 	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
 
-	//samples complete when queue resumes.
-	p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
-
-	FOC_ProcClarkePark(&p_motor->Foc); //using prev adc reading
+	//samples complete when queue resumes, adc isr priority higher than pwm.
 	ProcMotorFocPositionFeedback(p_motor);
+	p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
+	FOC_ProcClarkePark(&p_motor->Foc); //using prev adc reading
+	p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
 }
 
 static inline void Motor_FOC_StartAngleObserve(Motor_T * p_motor)
@@ -341,7 +341,7 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
 	Motor_FOC_ProcAngleObserve(p_motor);
 	ProcMotorFocControlFeedback(p_motor);
-	p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
+	p_motor->DebugTime[3] = SysTime_GetMicros() - p_motor->MicrosRef;
 }
 
 static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)

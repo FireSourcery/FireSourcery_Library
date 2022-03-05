@@ -55,6 +55,15 @@ static inline uint16_t Motor_User_GetHeat_DegCScalar(Motor_T * p_motor, uint16_t
 //static inline uint16_t Motor_User_GetHeat_Fixed32(Motor_T *p_motor) 					{return Thermistor_ConvertToDegC_Fixed32(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
 static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Motor_T *p_motor) 	{return p_motor->Parameters.DirectionCalibration;}
 static inline Hall_Sensors_T Motor_User_GetHall(Motor_T * p_motor) 	{return Hall_GetSensors(&p_motor->Hall);}
+static inline uint16_t Motor_User_GetHallRotorAngle(Motor_T * p_motor) 	{return Hall_GetRotorAngle_Degrees16(&p_motor->Hall);}
+
+
+//static inline void Motor_User_ActivatePhase(Motor_T * p_motor)
+//{
+//
+//}
+
+
 
 
 /*

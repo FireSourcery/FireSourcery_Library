@@ -374,6 +374,7 @@ void Motor_StartCalibrateEncoder(Motor_T * p_motor)
 	StartMotorCalibrateCommon(p_motor);
 	Timer_StartPeriod(&p_motor->ControlTimer, 20000U);
 	Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16, 0U, 0U); /* Align Phase A 10% pwm */
+
 }
 
 bool Motor_CalibrateEncoder(Motor_T * p_motor)
@@ -409,59 +410,57 @@ bool Motor_CalibrateEncoder(Motor_T * p_motor)
 void Motor_StartCalibrateHall(Motor_T * p_motor)
 {
 	StartMotorCalibrateCommon(p_motor);
-	Timer_StartPeriod(&p_motor->ControlTimer, 20000U); //Parameter.HallCalibrationTime
+	Timer_StartPeriod(&p_motor->ControlTimer, 40000U); //Parameter.HallCalibrationTime
 }
 
 //120 degree hall aligned with phase
 bool Motor_CalibrateHall(Motor_T * p_motor)
 {
-	static uint8_t state = 0U; //limits calibration to 1 at a time; todo reuse hall sate
 	const uint16_t duty = 65536U/10U/4U;
 	bool isComplete = false;
 
 	if (Timer_Poll(&p_motor->ControlTimer) == true)
 	{
-		switch (state)
+		switch (p_motor->CalibrationSubstateStep)
 		{
 		case 0U:
 			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, 0U);
-			state++;
+			p_motor->CalibrationSubstateStep = 1U;
 			break;
 
 		case 1U:
 			Hall_CalibratePhaseA(&p_motor->Hall);
 			Phase_ActivateDuty(&p_motor->Phase, duty, duty, 0U);
-			state++;
+			p_motor->CalibrationSubstateStep = 2U;
 			break;
 
 		case 2U:
 			Hall_CalibratePhaseInvC(&p_motor->Hall);
 			Phase_ActivateDuty(&p_motor->Phase, 0U, duty, 0);
-			state++;
+			p_motor->CalibrationSubstateStep = 3U;
 			break;
 
 		case 3U:
 			Hall_CalibratePhaseB(&p_motor->Hall);
 			Phase_ActivateDuty(&p_motor->Phase, 0U, duty, duty);
-			state++;
+			p_motor->CalibrationSubstateStep = 4U;
 			break;
 
 		case 4U:
 			Hall_CalibratePhaseInvA(&p_motor->Hall);
 			Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, duty);
-			state++;
+			p_motor->CalibrationSubstateStep = 5U;
 			break;
 
 		case 5U:
 			Hall_CalibratePhaseC(&p_motor->Hall);
 			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, duty);
-			state++;
+			p_motor->CalibrationSubstateStep = 6U;
 			break;
 
 		case 6U:
 			Hall_CalibratePhaseInvB(&p_motor->Hall);
 			Phase_Float(&p_motor->Phase);
-			state = 0U;
 			isComplete = true;
 			break;
 

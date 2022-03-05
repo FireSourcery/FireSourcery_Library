@@ -33,7 +33,7 @@
 #include "MotorController.h"
 
 #include "Motor/Motor/Motor_FOC.h"
-//#include "Motor/Motor/Motor_FOC.h"
+#include "Motor/Motor/Motor_User.h"
 
 #include "Utility/Shell/Shell.h"
 #include "Utility/Shell/Terminal.h"
@@ -66,21 +66,7 @@ static int Cmd_monitor_Loop(const MotorController_T * p_motorController)
 {
 //    	for(uint8_t iMotor = 0U; iMotor < CmdMotorCount; iMotor++)
 //    	{
-//    		Terminal_SendString(p_CmdTerminal, "\r\nMotor ");
-//     		Terminal_SendNum(p_CmdTerminal, iMotor + 1U);
-//        	Terminal_SendString(p_CmdTerminal, ":\r\n");
 
-//        	Terminal_SendString(p_CmdTerminal, "\r\nBackEMF A 			= ");
-//    		Terminal_SendNum(p_CmdTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBemfA_mV);
-//    		Terminal_SendString(p_CmdTerminal, " mV\r\n");
-//
-//        	Terminal_SendString(p_CmdTerminal, "\r\nBackEMF Peak 		= ");
-//    		Terminal_SendNum(p_CmdTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBemfPeak_mV);
-//    		Terminal_SendString(p_CmdTerminal, " mV\r\n");
-//
-//        	Terminal_SendString(p_CmdTerminal, "\r\nBus Voltage 			= ");
-//    		Terminal_SendNum(p_CmdTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBus_mV);
-//    		Terminal_SendString(p_CmdTerminal, " mV\r\n");
 
         	Terminal_SendString(&p_motorController->Shell.Terminal, "Speed = ");
     		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Speed_RPM);
@@ -106,14 +92,29 @@ static int Cmd_monitor_Loop(const MotorController_T * p_motorController)
 			Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Vd);
 			Terminal_SendString(&p_motorController->Shell.Terminal, " Q1.15\r\n");
 
-//        	Terminal_SendString(&p_motorController->Shell.Terminal, "Iabc = ");
-//    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ia);
-//    		Terminal_SendString(&p_motorController->Shell.Terminal, " ");
-//       		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ib);
-//       		Terminal_SendString(&p_motorController->Shell.Terminal, " ");
-//       		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ic);
-//    		Terminal_SendString(&p_motorController->Shell.Terminal, " Q1.15\r\n");
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "Iabc = ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ia);
+    		Terminal_SendString(&p_motorController->Shell.Terminal, " ");
+       		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ib);
+       		Terminal_SendString(&p_motorController->Shell.Terminal, " ");
+       		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ic);
+    		Terminal_SendString(&p_motorController->Shell.Terminal, " Q1.15\r\n");
 
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "Iclarke = ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ialpha);
+    		Terminal_SendString(&p_motorController->Shell.Terminal, " ");
+       		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Ibeta);
+    		Terminal_SendString(&p_motorController->Shell.Terminal, " Q1.15\r\n");
+
+			Terminal_SendString(&p_motorController->Shell.Terminal, "ElAngle = ");
+			Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].ElectricalAngle);
+			Terminal_SendString(&p_motorController->Shell.Terminal, " Deg16\r\n");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "SinCos = ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Sine);
+    		Terminal_SendString(&p_motorController->Shell.Terminal, " ");
+       		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Foc.Cosine);
+    		Terminal_SendString(&p_motorController->Shell.Terminal, " Q1.15\r\n");
 
 
 //        	Terminal_SendString(&p_motorController->Shell.Terminal, "IBus = ");
@@ -143,6 +144,22 @@ static int Cmd_monitor_Loop(const MotorController_T * p_motorController)
 //        	Terminal_SendString(&p_motorController->Shell.Terminal, "Encoder Capture Time 		= ");
 //    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motorController->CONFIG.P_MOTORS[0U].Encoder.DeltaT);
 //    		Terminal_SendString(&p_motorController->Shell.Terminal, " 625 kHz\r\n");
+
+			//    		Terminal_SendString(p_CmdTerminal, "\r\nMotor ");
+			//     		Terminal_SendNum(p_CmdTerminal, iMotor + 1U);
+			//        	Terminal_SendString(p_CmdTerminal, ":\r\n");
+
+			//        	Terminal_SendString(p_CmdTerminal, "\r\nBackEMF A 			= ");
+			//    		Terminal_SendNum(p_CmdTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBemfA_mV);
+			//    		Terminal_SendString(p_CmdTerminal, " mV\r\n");
+			//
+			//        	Terminal_SendString(p_CmdTerminal, "\r\nBackEMF Peak 		= ");
+			//    		Terminal_SendNum(p_CmdTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBemfPeak_mV);
+			//    		Terminal_SendString(p_CmdTerminal, " mV\r\n");
+			//
+			//        	Terminal_SendString(p_CmdTerminal, "\r\nBus Voltage 			= ");
+			//    		Terminal_SendNum(p_CmdTerminal, p_CmdContextMotorController->p_Constants->P_MOTORS[0].VBus_mV);
+			//    		Terminal_SendString(p_CmdTerminal, " mV\r\n");
 
     		Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
 
@@ -251,6 +268,55 @@ int Cmd_save(const MotorController_T * p_motorController, int argc, char ** argv
 {
 	(void)argv;
 	MotorController_SaveParameters_Blocking(p_motorController);
+    return CMD_RESERVED_RETURN_CODE_SUCCESS;
+}
+
+
+
+int Cmd_phase(const MotorController_T * p_motorController, int argc, char ** argv)
+{
+	Motor_T * p_motor = MotorController_GetPtrMotor(p_motorController, 0U);
+
+    if(argc == 2)
+    {
+    	if 		(argv[1][0] == 'a' && argv[1][1] == 'b') Phase_Polar_ActivateAB(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
+    	else if (argv[1][0] == 'a' && argv[1][1] == 'c') Phase_Polar_ActivateAC(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
+    	else if (argv[1][0] == 'a' && argv[1][1] == '\0') Phase_Polar_ActivateA(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
+    	else if (argv[1][0] == 'a' && argv[1][1] == '-') Phase_Polar_ActivateInvA(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
+    	else if (argv[1][0] == 'b' && argv[1][1] == 'a') Phase_Polar_ActivateBA(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
+    	else if (argv[1][0] == 'b' && argv[1][1] == 'c') Phase_Polar_ActivateBC(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
+    	else if (argv[1][0] == 'b' && argv[1][1] == '\0') Phase_Polar_ActivateB(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
+    	else if (argv[1][0] == 'b' && argv[1][1] == '-') Phase_Polar_ActivateInvB(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
+    	else if (argv[1][0] == 'c' && argv[1][1] == 'a') Phase_Polar_ActivateCA(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
+    	else if (argv[1][0] == 'c' && argv[1][1] == 'b') Phase_Polar_ActivateCB(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
+    	else if (argv[1][0] == 'c' && argv[1][1] == '\0') Phase_Polar_ActivateC(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
+    	else if (argv[1][0] == 'c' && argv[1][1] == '-') Phase_Polar_ActivateInvC(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
+
+    	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+    	Terminal_SendString(&p_motorController->Shell.Terminal, "Hall: ");
+		Terminal_SendNum(&p_motorController->Shell.Terminal, Hall_ReadPhysicalSensors(&p_motor->Hall));
+    	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+    }
+
+    return CMD_RESERVED_RETURN_CODE_SUCCESS;
+}
+
+int Cmd_hall(const MotorController_T * p_motorController, int argc, char ** argv)
+{
+	Motor_T * p_motor = MotorController_GetPtrMotor(p_motorController, 0U);
+
+    if(argc == 1U)
+    {
+    	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+    	Terminal_SendString(&p_motorController->Shell.Terminal, "Hall: ");
+		Terminal_SendNum(&p_motorController->Shell.Terminal, Hall_ReadPhysicalSensors(&p_motor->Hall));
+
+    	Terminal_SendString(&p_motorController->Shell.Terminal, "Electrical Angle: ");
+		Terminal_SendNum(&p_motorController->Shell.Terminal, Motor_User_GetHallRotorAngle(p_motor ));
+
+    	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+    }
+
     return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
@@ -375,7 +441,7 @@ int Cmd_rev(const MotorController_T * p_motorController, int argc, char ** argv)
 //    	Terminal_SendNum(Speed_GetRPM(&Motor1Speed));
 //    	Terminal_SendString("\r\n");
 //    }
-//    return MC_SHELL_CMD_RETURN_CODE_OK;
+//    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 
 //int Cmd_jog(const MotorController_T * p_motorController, int argc, char ** argv)
@@ -386,35 +452,35 @@ int Cmd_rev(const MotorController_T * p_motorController, int argc, char ** argv)
 //
 //	}
 //	else if(argc == 2) Motor_SetJogSteps(&Motor1, strtoul(argv[1], 0, 10));
-//    return MC_SHELL_CMD_RETURN_CODE_OK;
+//    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 
 //int Cmd_run(const MotorController_T * p_motorController, int argc, char ** argv)
 //{
 //	(void)argv;
 //    if(argc == 1) Motor_Start(&Motor1);
-//    return MC_SHELL_CMD_RETURN_CODE_OK;
+//    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 
 //int Cmd_stop(const MotorController_T * p_motorController, int argc, char ** argv)
 //{
 //	(void)argv;
 //    if(argc == 1) Motor_Stop(&Motor1);
-//    return MC_SHELL_CMD_RETURN_CODE_OK;
+//    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 //
 //int Cmd_hold(const MotorController_T * p_motorController, int argc, char ** argv)
 //{
 //	(void)argv;
 //    if(argc == 1) Motor_Hold(&Motor1);
-//    return MC_SHELL_CMD_RETURN_CODE_OK;
+//    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 //
 //int Cmd_release(const MotorController_T * p_motorController, int argc, char ** argv)
 //{
 //	(void)argv;
 //    if(argc == 1) Motor_Release(&Motor1);
-//    return MC_SHELL_CMD_RETURN_CODE_OK;
+//    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 //
 //int Cmd_vbat(const MotorController_T * p_motorController, int argc, char ** argv)
@@ -426,65 +492,11 @@ int Cmd_rev(const MotorController_T * p_motorController, int argc, char ** argv)
 //    	Terminal_SendNum(VoltageDivider_GetVoltage(&DividerCommon, *Motor1.VBat_ADCU));
 //    	Terminal_SendString("\r\n");
 //    }
-//    return MC_SHELL_CMD_RETURN_CODE_OK;
+//    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 //
 //
-//int Cmd_phase(const MotorController_T * p_motorController, int argc, char ** argv)
-//{
-//    if(argc == 2)
-//    {
-//    	if 		(argv[1][0] == 'a' && argv[1][1] == 'b') CommutateMotor1PhaseAB(Motor1.PWM);
-//    	else if (argv[1][0] == 'a' && argv[1][1] == 'c') CommutateMotor1PhaseAC(Motor1.PWM);
-//    	else if (argv[1][0] == 'b' && argv[1][1] == 'a') CommutateMotor1PhaseBA(Motor1.PWM);
-//    	else if (argv[1][0] == 'b' && argv[1][1] == 'c') CommutateMotor1PhaseBC(Motor1.PWM);
-//    	else if (argv[1][0] == 'c' && argv[1][1] == 'a') CommutateMotor1PhaseCA(Motor1.PWM);
-//    	else if (argv[1][0] == 'c' && argv[1][1] == 'b') CommutateMotor1PhaseCB(Motor1.PWM);
-//
-////
-////    	switch(argv[1][0])
-////    	{
-////
-////    	case 'a':
-////    	case 'A':
-////    		switch(argv[1][1])
-////    		{
-////
-////        	case 'b':
-////        	case 'B':
-////
-////        		break;
-////
-////    		case 'c':
-////    		case 'C':
-////
-////    			break;
-////    		}
-////    		break;
-////
-////		case 'b':
-////		case 'B':
-////			switch(argv[1][1])
-////			{
-////
-////			}
-////			break;
-////
-////		case 'c':
-////		case 'C':
-////			switch(argv[1][1])
-////			{
-////
-////			}
-////			break;
-////
-////    	}
-//
-//
-//    }
-//
-//    return MC_SHELL_CMD_RETURN_CODE_OK;
-//}
+
 
 //extern int Cmd_pwm 		(const MotorController_T * p_motorController, int argc, char ** argv);
 //extern int Cmd_rpm 		(const MotorController_T * p_motorController, int argc, char ** argv);
@@ -519,7 +531,8 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"calibrate", 	"calibrate",					Cmd_calibrate, 	{0U}	},
 
 	{"rev", 		"rev",	 						Cmd_rev, 		{.FUNCTION = Cmd_rev_Loop, 		.FREQ = 10U}	},
-
+	{"phase", 		"Set motor phase", 			Cmd_phase	},
+	{"hall", 		"Read hall", 			Cmd_hall	},
 //	{"pwm", 		"Sets pwm value", 				Cmd_pwm		},
 
 //	{"param", 		"Sets motor parameterss",	 	Cmd_param	},
@@ -533,7 +546,7 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 ////	{ "stop", 		"Set motor to idle mode", 	Cmd_stop	},
 ////	{ "float", 		"Float motor", 				Cmd_float	},
 ////	{ "vbat", 		"Display battery voltage", 	Cmd_vbat	},
-////	{ "phase", 		"Set motor phase", 			Cmd_phase	},
+
 ////	{ "hold", 		"hold position", 			Cmd_hold	},
 ////	{ "print", 		"print debug info",			Cmd_print	},
 };
