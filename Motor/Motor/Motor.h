@@ -155,13 +155,17 @@ Motor_ControlMode_T; //Motor_ControlModeUser_T
  */
 typedef struct
 {
-	uint32_t OpenLoop: 		1; 	//0 -> position feedback, 1 -> Openloop, control mode live toggle
-	uint32_t Sensorless: 	1; 	//0 -> encoder/hall, 1 -> Sensorless,
-	uint32_t Speed: 		1;	//0 -> const voltage or current, 1 -> speed feedback
-	uint32_t Current: 		1;	//0 -> voltage, 1-> current
-	uint32_t Brake: 		1; 	// control mode toggle
+	uint32_t OpenLoop		:1; //0 -> position feedback, 1 -> Openloop, control mode live toggle
+	uint32_t Sensorless		:1; //0 -> encoder/hall, 1 -> Sensorless,
+	uint32_t Speed			:1;	//0 -> const voltage or current, 1 -> speed feedback
+	uint32_t Current		:1;	//0 -> voltage, 1-> current
+	uint32_t Brake			:1; // control mode toggle
 }
 Motor_ControlModeFlags_T;
+
+
+
+
 
 typedef enum
 {

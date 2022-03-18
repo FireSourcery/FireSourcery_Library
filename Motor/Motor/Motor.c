@@ -153,6 +153,38 @@ void Motor_InitReboot(Motor_T * p_motor)
 	p_motor->ControlTimerBase 		= 0U;
 }
 
+ void Motor_SetControlMode(Motor_T * p_motor, Motor_ControlMode_T mode)
+{
+	switch(mode)
+	{
+		case MOTOR_CONTROL_MODE_OPEN_LOOP:
+			p_motor->ControlMode.OpenLoop = 1U;
+			p_motor->ControlMode.Current = 0U;
+			break;
+
+		case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:
+			p_motor->ControlMode.Speed = 0U;
+			p_motor->ControlMode.Current = 0U;
+			break;
+
+	//	MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ: break;
+
+		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:
+			p_motor->ControlMode.Speed = 1U;
+			p_motor->ControlMode.Current = 0U;
+			break;
+
+		case MOTOR_CONTROL_MODE_CONSTANT_CURRENT:
+			p_motor->ControlMode.Speed = 0U;
+			p_motor->ControlMode.Current = 1U;
+			break;
+
+		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT:
+			p_motor->ControlMode.Speed = 1U;
+			p_motor->ControlMode.Current = 1U;
+			break;
+	}
+}
 
 
 /******************************************************************************/

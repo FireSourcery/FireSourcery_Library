@@ -51,6 +51,7 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 
 	if 		(integral > p_pid->Params.OutMax) {integral = p_pid->Params.OutMax;}
 	else if (integral < p_pid->Params.OutMin) {integral = p_pid->Params.OutMin;}
+//	else 										{p_pid->ErrorSum += error;} stop accumulating integral is output is past limits
 
 	if(p_pid->Params.Mode == PID_MODE_PID)
 	{

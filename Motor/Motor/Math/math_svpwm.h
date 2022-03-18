@@ -92,7 +92,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 //			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
 //			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
 
-			z0 = (QFRAC16_1_OVERSAT + magX + magZ) / 2;
+			z0 = (0x7FFF + magX + magZ) / 2;
 			*p_dutyA = (z0 - magZ);
 			*p_dutyB = z0;
 			*p_dutyC = (z0 - magX);
@@ -119,7 +119,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 //			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
 //			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
 
-			z0 = (QFRAC16_1_OVERSAT + magY - magZ) / 2;
+			z0 = (0x7FFF + magY - magZ) / 2;
 			*p_dutyA = z0;
 			*p_dutyB = (z0 + magZ);
 			*p_dutyC = (z0 - magY);
@@ -145,7 +145,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 //			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
 //			*p_dutyC = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
 
-			z0 = (QFRAC16_1_OVERSAT - magX - magY) / 2;
+			z0 = (0x7FFF - magX - magY) / 2;
 			*p_dutyA = (z0 + magY);
 			*p_dutyB = (z0 + magX);
 			*p_dutyC = z0;
@@ -174,7 +174,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 //			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
 //			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
 
-			z0 = (QFRAC16_1_OVERSAT +  magX + magZ) / 2;
+			z0 = (0x7FFF +  magX + magZ) / 2;
 			*p_dutyA = (z0 - magZ);
 			*p_dutyB = z0;
 			*p_dutyC = (z0 - magX);
@@ -200,7 +200,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 //			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
 //			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
 
-			z0 = (QFRAC16_1_OVERSAT +  magY -  magZ) / 2;
+			z0 = (0x7FFF +  magY -  magZ) / 2;
 			*p_dutyA = z0;
 			*p_dutyB = (z0 + magZ);
 			*p_dutyC = (z0 - magY);
@@ -226,7 +226,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 //			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
 //			*p_dutyC = z0			>> QFRAC16_N_FRAC_BITS_MINUS_1;
 
-			z0 = (QFRAC16_1_OVERSAT - magX - magY) / 2;
+			z0 = (0x7FFF - magX - magY) / 2;
 			*p_dutyA = (z0 + magY);
 			*p_dutyB = (z0 + magX);
 			*p_dutyC = z0;

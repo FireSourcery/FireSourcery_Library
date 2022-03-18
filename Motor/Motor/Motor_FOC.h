@@ -202,6 +202,7 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 		Motor_ProcSpeedFeedback(p_motor);
 	}
 
+	FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
 }
 
 /*
@@ -209,16 +210,16 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
  */
 static inline void ActivateMotorFocAngle(Motor_T * p_motor)
 {
-	FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
 	FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
 	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 }
 
-///todo combine
+///external call todo combine
 static inline void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, uint16_t vq)
 {
-	p_motor->ElectricalAngle = angle;
+//	p_motor->ElectricalAngle = angle;
 	FOC_SetVq(&p_motor->Foc, vq);
+	FOC_SetVector(&p_motor->Foc, angle);
 	ActivateMotorFocAngle(p_motor);
 }
 
@@ -297,7 +298,7 @@ static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)
 		}
 	}
 
-	ActivateMotorFocAngle(p_motor);
+
 }
 
 /******************************************************************************/
@@ -341,6 +342,7 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
 	Motor_FOC_ProcAngleObserve(p_motor);
 	ProcMotorFocControlFeedback(p_motor);
+	ActivateMotorFocAngle(p_motor);
 	p_motor->DebugTime[3] = SysTime_GetMicros() - p_motor->MicrosRef;
 }
 
