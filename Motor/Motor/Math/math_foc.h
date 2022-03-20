@@ -65,8 +65,8 @@ static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t
 	alpha = qfrac16_mul((int32_t)a*2 - (int32_t)b - (int32_t)c, QFRAC16_1_DIV_3);
 	beta = qfrac16_mul((int32_t)b - (int32_t)c, QFRAC16_1_DIV_SQRT3);
 
-	*p_alpha = alpha;	// qfrac16_sat(alpha);
-	*p_beta = beta; 	//qfrac16_sat(beta);
+	*p_alpha = qfrac16_sat(alpha);
+	*p_beta = qfrac16_sat(beta);
 }
 
 ///******************************************************************************/
@@ -115,8 +115,8 @@ static inline void foc_invclarke(qfrac16_t * p_A, qfrac16_t * p_B, qfrac16_t * p
 	c = alphaDiv2 - betaSqrt3Div2;
 
 	*p_A = alpha;
-	*p_B = b; //qfrac16_sat(b);
-	*p_C = c; //qfrac16_sat(c);
+	*p_B = qfrac16_sat(b);
+	*p_C = qfrac16_sat(c);
 }
 
 /******************************************************************************/
@@ -135,19 +135,6 @@ static inline void foc_invclarke(qfrac16_t * p_A, qfrac16_t * p_B, qfrac16_t * p
 	@return void
   */
 /******************************************************************************/
-static inline void foc_park(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t alpha, qfrac16_t beta, qangle16_t theta)
-{
-	qfrac16_t cos, sin;
-	int32_t d, q;
-
-	qfrac16_vector(&cos, &sin, theta);
-
-	d = (int32_t)qfrac16_mul(alpha, cos) + (int32_t)qfrac16_mul(beta, sin);
-	q = (int32_t)qfrac16_mul(beta, cos) - (int32_t)qfrac16_mul(alpha, sin);
-
-	*p_d = qfrac16_sat(d);
-	*p_q = qfrac16_sat(q);
-}
 
 /*
  * shared sin cos calc
@@ -163,6 +150,15 @@ static inline void foc_park_vector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t a
 	*p_q = qfrac16_sat(q);
 }
 
+static inline void foc_park(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t alpha, qfrac16_t beta, qangle16_t theta)
+{
+	qfrac16_t cos, sin;
+
+	qfrac16_vector(&cos, &sin, theta);
+	foc_park_vector(p_d, p_q, alpha, beta, sin, cos);
+}
+
+
 /******************************************************************************/
 /*!
 	@brief  Inverse Park
@@ -171,20 +167,6 @@ static inline void foc_park_vector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t a
 	beta = d*sin(theta) + q*cos(theta)
   */
 /******************************************************************************/
-static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t d, qfrac16_t q, qangle16_t theta)
-{
-	qfrac16_t cos, sin;
-	int32_t alpha, beta;
-
-	qfrac16_vector(&cos, &sin, theta);
-
-	alpha = (int32_t)qfrac16_mul(d, cos) - (int32_t)qfrac16_mul(q, sin);
-	beta = (int32_t)qfrac16_mul(d, sin) + (int32_t)qfrac16_mul(q, cos);
-
-	*p_alpha = qfrac16_sat(alpha);
-	*p_beta = qfrac16_sat(beta);
-}
-
 static inline void foc_invpark_vector(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t d, qfrac16_t q, qfrac16_t sin, qfrac16_t cos)
 {
 	int32_t alpha, beta;
@@ -195,6 +177,16 @@ static inline void foc_invpark_vector(qfrac16_t * p_alpha, qfrac16_t * p_beta, q
 	*p_alpha = qfrac16_sat(alpha);
 	*p_beta = qfrac16_sat(beta);
 }
+
+
+static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t d, qfrac16_t q, qangle16_t theta)
+{
+	qfrac16_t cos, sin;
+
+	qfrac16_vector(&cos, &sin, theta);
+	foc_invpark_vector(p_alpha, p_beta, d, q, sin, cos);
+}
+
 
 
 // bound q d proportionally

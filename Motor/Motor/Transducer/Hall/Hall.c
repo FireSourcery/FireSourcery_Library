@@ -56,18 +56,18 @@ void Hall_Init(Hall_T * p_hall)
 		Hall_MapSensorsTableDefault(p_hall);
 	}
 }
-
-void Hall_LoadDefault(Hall_T * p_hall)
-{
-	if (p_hall->CONFIG.P_PARAMS_DEFAULT != 0U)
-	{
-		memcpy(&p_hall->SensorsTable[0U], &p_hall->CONFIG.P_PARAMS_DEFAULT->SensorsTable[0U], sizeof(Hall_Params_T));
-	}
-	else
-	{
-		Hall_MapSensorsTableDefault(p_hall);
-	}
-}
+//
+//void Hall_LoadDefault(Hall_T * p_hall)
+//{
+//	if (p_hall->CONFIG.P_PARAMS_DEFAULT != 0U)
+//	{
+//		memcpy(&p_hall->SensorsTable[0U], &p_hall->CONFIG.P_PARAMS_DEFAULT->SensorsTable[0U], sizeof(Hall_Params_T));
+//	}
+//	else
+//	{
+//		Hall_MapSensorsTableDefault(p_hall);
+//	}
+//}
 
 void Hall_MapSensorsTable
 (

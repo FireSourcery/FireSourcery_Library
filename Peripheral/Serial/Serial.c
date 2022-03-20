@@ -29,10 +29,10 @@
 */
 /******************************************************************************/
 #include "Serial.h"
+#include "HAL_Serial.h"
+
 #include "Config.h"
 #include "Utility/Queue/Queue.h"
-
-
 
 #include <stdint.h>
 #include <stdbool.h>

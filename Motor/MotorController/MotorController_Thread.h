@@ -62,12 +62,16 @@ static inline void MotorControllerAnalogUserThread(MotorController_T * p_mc)
 	AnalogN_EnqueueConversion_Group(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.CONVERSION_BRAKE);
 	AnalogN_ResumeQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ADCS_ACTIVE_MAIN_THREAD);
 
-	if ((direction == MOT_ANALOG_USER_DIRECTION_FORWARD) || (direction == MOT_ANALOG_USER_DIRECTION_REVERSE))
+	if (cmd == MOT_ANALOG_USER_CMD_BRAKE)
+	{
+		MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_mc->AnalogUser));
+	}
+	else if ((direction == MOT_ANALOG_USER_DIRECTION_FORWARD) || (direction == MOT_ANALOG_USER_DIRECTION_REVERSE))
 	{
 		switch(cmd)
 		{
+			//			case MOT_ANALOG_USER_CMD_BRAKE: 				MotorController_User_SetCmdBrake	(p_mc, MotAnalogUser_GetBrake(&p_mc->AnalogUser)); 		break;
 			case MOT_ANALOG_USER_CMD_THROTTLE:				MotorController_User_SetCmdThrottle	(p_mc, MotAnalogUser_GetThrottle(&p_mc->AnalogUser));	break;
-			case MOT_ANALOG_USER_CMD_BRAKE: 				MotorController_User_SetCmdBrake	(p_mc, MotAnalogUser_GetBrake(&p_mc->AnalogUser)); 		break;
 			case MOT_ANALOG_USER_CMD_THROTTLE_RELEASE: 		MotorController_User_DisableControl(p_mc); break; // todo check throttle release param
 			case MOT_ANALOG_USER_CMD_THROTTLE_ZERO_EDGE: 	MotorController_User_DisableControl(p_mc); break;
 			case MOT_ANALOG_USER_CMD_THROTTLE_ZERO:			StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CHECK_STOP);		break;
@@ -174,10 +178,10 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 {
 //	MotorController_PollBrake(p_mc);
 
-//	if(Motor_UserN_CheckIOverLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT) == true)
-//	{
-//		Blinky_Blink(&p_mc->Buzzer, 500U);
-//	}
+	if(Motor_UserN_CheckIOverLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT) == true)
+	{
+		Blinky_Blink(&p_mc->Buzzer, 500U);
+	}
 
 //		if (MotAnalogMonitor_CheckHeat_ADCU(&p_mc->AnalogMonitor,  p_mc->AnalogResults.HeatMosfetsTop_ADCU, p_mc->AnalogResults.HeatMosfetsBot_ADCU) != MOT_ANALOG_MONITOR_OK)
 //		{
@@ -195,10 +199,10 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 //		AnalogN_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.CONVERSION_VACC);
 //		AnalogN_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.CONVERSION_VSENSE);
 
-	for (uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
-	{
-		Motor_Timer1Ms_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
-	}
+//	for (uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
+//	{
+//		Motor_Timer1Ms_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
+//	}
 }
 
 //static inline void MotorController_Serial_Thread(MotorController_T * p_mc, uint8_t serialId)

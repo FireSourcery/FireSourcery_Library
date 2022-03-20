@@ -31,20 +31,21 @@
 #include "Motor_FOC.h"
 #include "Motor.h"
 
-#include "Config.h"
+//#include "Config.h"
 //#include "Default.h"
 
 //#include "Transducer/Encoder/Encoder_Motor.h"
 //#include "Transducer/Encoder/Encoder.h"
 
-#include "Transducer/Phase/Phase.h"
+//#include "Transducer/Phase/Phase.h"
 
-#include "Utility/Timer/Timer.h"
+//#include "Utility/Timer/Timer.h"
 
 //#include "Math/Q/QFrac16.h"
-#include "Math/Linear/Linear_ADC.h"
+//#include "Math/Linear/Linear_ADC.h"
 
 #include <stdbool.h>
 #include <stdint.h>
+
 
 

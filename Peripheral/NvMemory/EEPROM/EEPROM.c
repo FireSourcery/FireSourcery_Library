@@ -64,6 +64,22 @@ static void EepromStartCmdWrite(void * p_hal, const void * p_cmdDest, const void
 	/* else finalizeOp will return no error and continue to next  */
 }
 
+//static void EepromStartCmdProgramPartition(void * p_hal, const void * p_cmdDest, const void * p_cmdData, size_t units)
+//{
+//	(void)units;
+//	(void)p_cmdDest;
+//	(void)p_cmdData;
+//	HAL_EEPROM_ProgramPartition(p_hal);
+//}
+//
+//static void EepromStartCmdInitHw(void * p_hal, const void * p_cmdDest, const void * p_cmdData, size_t units)
+//{
+//	(void)units;
+//	(void)p_cmdDest;
+//	(void)p_cmdData;
+//	HAL_EEPROM_InitHw(p_hal);
+//}
+
 static inline NvMemory_Status_T EepromFinalizeWrite(EEPROM_T * p_eeprom)
 {
 	NvMemory_Status_T status;
@@ -94,19 +110,26 @@ static inline NvMemory_Status_T EepromFinalizeWrite(EEPROM_T * p_eeprom)
 	return status;
 }
 
-
 void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 {
+	//todo isfirsttime, use startcmd template
+//	HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL);
+
 	HAL_EEPROM_Init_Blocking(p_eeprom->CONFIG.P_HAL);
 	NvMemory_Init(p_eeprom);
     while (HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONFIG.P_HAL) == false);
+}
+
+
+void EEPROM_ReadIsFirstTime(EEPROM_T * p_eeprom)
+{
+	HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL);
 }
 
 //void EEPROM_Init_NonBlocking(EEPROM_T * p_eeprom)
 //{
 //	HAL_EEPROM_Init_NonBlocking(p_eeprom->CONFIG.P_HAL);
 //}
-
 
 NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
 {

@@ -33,8 +33,8 @@
 
 #include "Math/Q/QFrac16.h"
 
-
 #define QFRAC16_N_FRAC_BITS_MINUS_1 14U
+
 /*
  * Standard SVM calculation method. Inclusive of equivalent reverse Clarke transform.
  * Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
@@ -43,8 +43,6 @@
  */
 static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16_t * p_dutyC, qfrac16_t alpha, qfrac16_t beta)
 {
-	int32_t magX, magY, magZ, z0;
-
 	/*
 	 * Derives 3 magnitudes (duty cycles) belonging to basic unit vectors.
 	 * The other 3 of 6 are inverse of the 3 derived
@@ -61,9 +59,11 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 	int32_t betaDiv2 		= qfrac16_mul(beta, QFRAC16_1_DIV_2);
 	int32_t alphaSqrt3Div2 	= qfrac16_mul(alpha, QFRAC16_SQRT3_DIV_2);
 
-	magX = beta;
-	magY = betaDiv2 + alphaSqrt3Div2;
-	magZ = betaDiv2 - alphaSqrt3Div2;
+	int32_t magX = beta;
+	int32_t magY = betaDiv2 + alphaSqrt3Div2;
+	int32_t magZ = betaDiv2 - alphaSqrt3Div2;
+
+	int32_t z0;
 
 	if (magX >= 0)
 	{

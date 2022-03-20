@@ -55,6 +55,7 @@ typedef struct
 	qfrac16_t Ib;
 	qfrac16_t Ic;
 
+//	qangle16_t Theta;
 	qfrac16_t Sine; /* save for inverse park call */
 	qfrac16_t Cosine;
 
@@ -100,14 +101,17 @@ static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 	p_foc->DutyC = p_foc->DutyC * 2U;
 }
 
+//static inline void FOC_LimitVector(FOC_T * p_foc)
+//{
+////	foc_limitvector_dmax(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
+//}
+
 static inline void FOC_SetVector(FOC_T * p_foc, qangle16_t theta) {qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, theta);}
 static inline void FOC_SetIa(FOC_T * p_foc, qfrac16_t ia) {p_foc->Ia = ia;}
 static inline void FOC_SetIb(FOC_T * p_foc, qfrac16_t ib) {p_foc->Ib = ib;}
 static inline void FOC_SetIc(FOC_T * p_foc, qfrac16_t ic) {p_foc->Ic = ic;}
 
-static inline qfrac16_t FOC_GetId(FOC_T * p_foc) {return p_foc->Id;}
-static inline qfrac16_t FOC_GetIq(FOC_T * p_foc) {return p_foc->Iq;}
-
+static inline void FOC_SetVReq(FOC_T * p_foc, qfrac16_t vq, qfrac16_t vd) {p_foc->Vq = vq; p_foc->Vd = vd;}
 static inline void FOC_SetVd(FOC_T * p_foc, qfrac16_t vd) {p_foc->Vd = vd;}
 static inline void FOC_SetVq(FOC_T * p_foc, qfrac16_t vq) {p_foc->Vq = vq;}
 
@@ -118,6 +122,9 @@ static inline uint16_t FOC_GetDutyC(FOC_T * p_foc) {return p_foc->DutyC;}
 static inline qfrac16_t FOC_GetIa(FOC_T * p_foc) {return p_foc->Ia;}
 static inline qfrac16_t FOC_GetIb(FOC_T * p_foc) {return p_foc->Ib;}
 static inline qfrac16_t FOC_GetIc(FOC_T * p_foc) {return p_foc->Ic;}
+
+static inline qfrac16_t FOC_GetId(FOC_T * p_foc) {return p_foc->Id;}
+static inline qfrac16_t FOC_GetIq(FOC_T * p_foc) {return p_foc->Iq;}
 
 static inline qfrac16_t FOC_GetVq(FOC_T * p_foc) {return p_foc->Vd;}
 static inline qfrac16_t FOC_GetVd(FOC_T * p_foc) {return p_foc->Vq;}

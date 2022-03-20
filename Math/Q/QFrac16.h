@@ -107,7 +107,7 @@ static inline qfrac16_t qfrac16_sat(int32_t qfrac) //sat to -32767?
 	0x8000 casts from 32768 int32_t to -32768 int16_t incorrectly
 	must call sat to convert to correct int16_t value
  */
-static inline int32_t qfrac16_mul(int16_t factor, qfrac16_t frac)
+static inline int32_t qfrac16_mul(int32_t factor, qfrac16_t frac)
 {
 	return (((int32_t)factor * (int32_t)frac) >> QFRAC16_N_FRAC_BITS);
 }
@@ -115,7 +115,7 @@ static inline int32_t qfrac16_mul(int16_t factor, qfrac16_t frac)
 /*!
 	@return [-32767, 32767] as int16_t
  */
-static inline qfrac16_t qfrac16_mul_sat(int16_t factor, qfrac16_t frac)
+static inline qfrac16_t qfrac16_mul_sat(int32_t factor, qfrac16_t frac)
 {
 	int32_t product = qfrac16_mul(factor, frac);
 

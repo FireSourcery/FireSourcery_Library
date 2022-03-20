@@ -162,6 +162,20 @@ static inline int32_t Linear_Ramp_ProcIncIndex(Linear_T * p_linear, uint32_t * p
 	return rampValue;
 }
 
+
+
+//shallow slope use index for more accurate fixed point
+static inline int32_t Linear_Ramp_ProcIndex(Linear_T * p_linear, uint32_t * p_index, uint32_t indexIncreament)
+{
+
+}
+
+//ramp with simple addition of slope
+//static inline int32_t Linear_Ramp_Proc(Linear_T * p_linear, uint32_t * p_index, uint32_t indexIncreament)
+//{
+//
+//}
+
 //static inline int32_t Linear_Ramp_Proc(Linear_T * p_linear, uint32_t value)
 //{
 //	int32_t rampValue = value << 16U + Slope >>16

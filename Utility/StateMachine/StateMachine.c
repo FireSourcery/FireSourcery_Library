@@ -57,13 +57,17 @@ static inline void ExitCriticalCommon(StateMachine_T * p_stateMachine)
 }
 
 /*
- * Maps active state to new state
+ * Proc transition function of input index. If new state exists, returns new state, else it's a self transition, returns 0
  */
 static inline StateMachine_State_T * TransitionFunction(void * p_context, StateMachine_State_T * p_active, statemachine_input_t input)
 {
-	return (p_active->P_TRANSITION_TABLE[input] != 0U) ? p_active->P_TRANSITION_TABLE[input](p_context) : 0U;
+	StateMachine_Transition_T transitionFunction = p_active->P_TRANSITION_TABLE[input];
+	return (transitionFunction != 0U) ? transitionFunction(p_context) : 0U;
 }
 
+/*
+ * Maps active state to new state
+ */
 static inline void ProcTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState)
 {
 	p_stateMachine->p_StateActive = p_newState;
@@ -75,8 +79,8 @@ static inline void ProcTransition(StateMachine_T * p_stateMachine, StateMachine_
 
 static inline void ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
-	StateMachine_State_T * p_newState = TransitionFunction(p_stateMachine->CONFIG.P_CONTEXT, p_stateMachine->p_StateActive, input);
 	/* proc input function, check new state exists, else it's a self transition */
+	StateMachine_State_T * p_newState = TransitionFunction(p_stateMachine->CONFIG.P_CONTEXT, p_stateMachine->p_StateActive, input);
 
 	/* Self transitions - User return 0 to bypass on entry, or return current state to run on entry function */
 	if (p_newState != 0U)

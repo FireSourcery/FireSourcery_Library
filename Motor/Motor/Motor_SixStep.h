@@ -432,14 +432,14 @@ static inline bool ProcMotorSixStepSensorFeedback(Motor_T * p_motor)
 //		BEMF_ProcZeroCrossingDetection(&p_motor->Bemf); //  poll zcd with prev capture
 	}
 
-	if (Motor_PollSpeedFeedback(p_motor) == true)
-	{
-		if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder) == true) //once per millis
-		{
-			p_motor->Speed_RPM = 0U;
-			p_motor->Speed_Frac16 = 0U;
-		}
-	}
+//	if (Motor_PollSpeedFeedback(p_motor) == true)
+//	{
+//		if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder) == true) //once per millis
+//		{
+//			p_motor->Speed_RPM = 0U;
+//			p_motor->Speed_Frac16 = 0U;
+//		}
+//	}
 
 	return commutation;
 }

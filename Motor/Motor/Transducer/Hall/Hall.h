@@ -172,7 +172,6 @@ typedef const struct
 	const Pin_T PIN_B;
 	const Pin_T PIN_C;
 	const Hall_Params_T * const P_PARAMS_NVM;
-	const Hall_Params_T * const P_PARAMS_DEFAULT;
 }
 Hall_Config_T;
 
@@ -190,7 +189,7 @@ typedef struct
 }
 Hall_T;
 
-#define HALL_CONFIG(p_PinA_Hal, PinAId, p_PinB_Hal, PinBId, p_PinC_Hal, PinCId, p_Params, p_ParamsDefault)	\
+#define HALL_CONFIG(p_PinA_Hal, PinAId, p_PinB_Hal, PinBId, p_PinC_Hal, PinCId, p_Params)	\
 {																\
 	.CONFIG = 													\
 	{															\
@@ -198,7 +197,6 @@ Hall_T;
 		.PIN_B = PIN_CONFIG(p_PinB_Hal, PinBId),				\
 		.PIN_C = PIN_CONFIG(p_PinC_Hal, PinCId),				\
 		.P_PARAMS_NVM 		= p_Params, 						\
-		.P_PARAMS_DEFAULT 	= p_ParamsDefault, 					\
 	}															\
 }
 

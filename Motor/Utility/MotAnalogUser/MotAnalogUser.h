@@ -114,11 +114,11 @@ typedef struct
 }
 MotAnalogUser_T;
 
-#define MOT_ANALOG_USER_CONFIG(p_Millis, p_Brake_PinHal, Brake_PinId, p_Throttle_PinHal, Throttle_PinId, p_Forward_PinHal, Forward_PinId, p_Reverse_PinHal, Reverse_PinId, p_Params)	\
+#define MOT_ANALOG_USER_CONFIG(p_Brake_PinHal, Brake_PinId, p_Throttle_PinHal, Throttle_PinId, p_Forward_PinHal, Forward_PinId, p_Reverse_PinHal, Reverse_PinId, p_Millis, p_Params)	\
 {																\
 	.CONFIG =													\
 	{															\
-		.P_PARAMS =		p_Params,					\
+		.P_PARAMS =		p_Params,								\
 	},															\
 	.PinBrake 		= DEBOUNCE_CONFIG(p_Brake_PinHal, 		Brake_PinId, 		p_Millis),  	\
 	.PinThrottle 	= DEBOUNCE_CONFIG(p_Throttle_PinHal, 	Throttle_PinId, 	p_Millis),  	\
@@ -126,10 +126,6 @@ MotAnalogUser_T;
 	.PinReverse 	= DEBOUNCE_CONFIG(p_Reverse_PinHal, 	Reverse_PinId, 		p_Millis),  	\
 }
 
-/// todo EnablePin option check on cpature or read
-
-static inline bool MotAnalogUser_GetThrottleSwitch(const MotAnalogUser_T * p_user) 		{return (p_user->Params.EnablePinThrottle 	== true) ? Debounce_GetState(&p_user->PinThrottle) 	: (p_user->Throttle_Frac16 	> 0U);	}
-static inline bool MotAnalogUser_GetBrakeSwitch(const MotAnalogUser_T * p_user) 		{return (p_user->Params.EnablePinBrake 		== true) ? Debounce_GetState(&p_user->PinBrake) 	: (p_user->Brake_Frac16 	> 0U);	}
 
 /*
  * adcu capture from outside module, or use pointer
@@ -138,29 +134,30 @@ static inline void MotAnalogUser_CaptureThrottleValue(MotAnalogUser_T * p_user, 
 {
 	p_user->ThrottlePrev_Frac16 = p_user->Throttle_Frac16;
 
-	if(MotAnalogUser_GetThrottleSwitch(p_user) == true)
-	{
-		p_user->Throttle_Frac16 = Linear_ADC_CalcFractionUnsigned16(&p_user->UnitThrottle, throttle_ADCU);
-//		p_user->Throttle_Frac16 = (Linear_ADC_CalcFractionUnsigned16(&p_user->UnitThrottle, throttle_ADCU) + p_user->ThrottlePrev_Frac16) / 2U; //or use ma filter
-	}
-	else
+	if((p_user->Params.EnablePinThrottle == true) && (Debounce_GetState(&p_user->PinThrottle) == false))
 	{
 		p_user->Throttle_Frac16 = 0U;
 	}
+	else
+	{
+		p_user->Throttle_Frac16 = Linear_ADC_CalcFractionUnsigned16(&p_user->UnitThrottle, throttle_ADCU);
+		//		p_user->Throttle_Frac16 = (Linear_ADC_CalcFractionUnsigned16(&p_user->UnitThrottle, throttle_ADCU) + p_user->ThrottlePrev_Frac16) / 2U;
+	}
+
 }
 
 static inline void MotAnalogUser_CaptureBrakeValue(MotAnalogUser_T * p_user, uint16_t brake_ADCU)
 {
 	p_user->BrakePrev_Frac16 = p_user->Brake_Frac16;
 
-	if(MotAnalogUser_GetBrakeSwitch(p_user) == true)
+	if((p_user->Params.EnablePinBrake == true) && (Debounce_GetState(&p_user->PinBrake) == false))
 	{
-		p_user->Brake_Frac16 = Linear_ADC_CalcFractionUnsigned16(&p_user->UnitBrake, brake_ADCU);
-//		p_user->Brake_Frac16 = (Linear_ADC_CalcFractionUnsigned16(&p_user->UnitBrake, brake_ADCU) + p_user->BrakePrev_Frac16) / 2U;
+		p_user->Brake_Frac16 = 0U;
 	}
 	else
 	{
-		p_user->Brake_Frac16 = 0U;
+		p_user->Brake_Frac16 = Linear_ADC_CalcFractionUnsigned16(&p_user->UnitBrake, brake_ADCU);
+		//		p_user->Brake_Frac16 = (Linear_ADC_CalcFractionUnsigned16(&p_user->UnitBrake, throttle_ADCU) + p_user->BrakePrev_Frac16) / 2U;
 	}
 }
 
@@ -178,6 +175,9 @@ static inline void MotAnalogUser_CaptureSwitches(MotAnalogUser_T * p_user)
 //#endif
 }
 
+/*
+ * Calling module is responsible for ADC activation and passes complete results
+ */
 static inline void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_user, uint16_t throttle_ADCU, uint16_t brake_ADCU)
 {
 	MotAnalogUser_CaptureSwitches(p_user);
@@ -194,10 +194,14 @@ static inline bool MotAnalogUser_PollBrake(MotAnalogUser_T * p_user)
 	return Debounce_GetState(&p_user->PinBrake);
 }
 
-static inline uint16_t MotAnalogUser_GetThrottleValue(const MotAnalogUser_T * p_user)	{return p_user->Throttle_Frac16;}
-static inline uint16_t MotAnalogUser_GetBrakeValue(const MotAnalogUser_T * p_user)		{return p_user->Brake_Frac16;}
+
 static inline bool MotAnalogUser_GetForwardSwitch(const MotAnalogUser_T * p_user) 		{return Debounce_GetState(&p_user->PinForward);}
 static inline bool MotAnalogUser_GetReverseSwitch(const MotAnalogUser_T * p_user) 		{return Debounce_GetState(&p_user->PinReverse);}
+
+static inline bool MotAnalogUser_GetThrottleSwitch(const MotAnalogUser_T * p_user) 		{return (p_user->Params.EnablePinThrottle 	== true) ? Debounce_GetState(&p_user->PinThrottle) 	: (p_user->Throttle_Frac16 	> 0U);	}
+static inline bool MotAnalogUser_GetBrakeSwitch(const MotAnalogUser_T * p_user) 		{return (p_user->Params.EnablePinBrake 		== true) ? Debounce_GetState(&p_user->PinBrake) 	: (p_user->Brake_Frac16 	> 0U);	}
+static inline uint16_t MotAnalogUser_GetThrottleValue(const MotAnalogUser_T * p_user)	{return p_user->Throttle_Frac16;}
+static inline uint16_t MotAnalogUser_GetBrakeValue(const MotAnalogUser_T * p_user)		{return p_user->Brake_Frac16;}
 static inline uint16_t MotAnalogUser_GetThrottle(const MotAnalogUser_T * p_user) 		{return (MotAnalogUser_GetThrottleSwitch(p_user) == true) 	? p_user->Throttle_Frac16	: 0U; }
 static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user) 			{return (MotAnalogUser_GetBrakeSwitch(p_user) == true) 		? p_user->Brake_Frac16 		: 0U; }
 

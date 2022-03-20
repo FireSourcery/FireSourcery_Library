@@ -105,46 +105,46 @@ void MotorController_Init(MotorController_T * p_controller)
 	//	p_controller->SignalBufferAnalogUser.AdcFlags 		= 0U;
 }
 
-void MotorController_LoadDefault(MotorController_T * p_controller)
-{
-	if (p_controller->CONFIG.P_PARAMS_DEFAULT != 0U)
-	{
-		memcpy(&p_controller->Parameters, p_controller->CONFIG.P_PARAMS_DEFAULT, sizeof(MotorController_Params_T));
-	}
-
-	for (uint8_t iMotor = 0U; iMotor < p_controller->CONFIG.MOTOR_COUNT; iMotor++)
-	{
-		Motor_LoadDefault(&p_controller->CONFIG.P_MOTORS[iMotor]);
-	}
-
-//	for (uint8_t iProtocol = 0U; iProtocol < p_controller->CONFIG.PROTOCOL_COUNT; iProtocol++)
+//void MotorController_LoadDefault(MotorController_T * p_controller)
+//{
+//	if (p_controller->CONFIG.P_PARAMS_DEFAULT != 0U)
 //	{
-//		Protocol_LoadDefault(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
+//		memcpy(&p_controller->Parameters, p_controller->CONFIG.P_PARAMS_DEFAULT, sizeof(MotorController_Params_T));
 //	}
 //
-//	Shell_LoadDefault(&p_controller->Shell);
-//	MotAnalogUser_LoadDefault(&p_controller->AnalogUser);
-//	MotAnalogMonitor_LoadDefault(&p_controller->AnalogMonitor);
-//	Thermistor_LoadDefault(&p_controller->ThermistorPcb);
-//	Thermistor_LoadDefault(&p_controller->ThermistorMosfetsHigh);
-//	Thermistor_LoadDefault(&p_controller->ThermistorMosfetsLow);
-
-
-//	memcpy(Protocols[0].CONFIG.P_PARAMS, &MAIN_PROTOCOL_PARAMS_DEFAULT, sizeof(Protocol_Params_T));
-//
-//	memcpy(MotorControllerMain.CONFIG.P_PARAMS_NVM, 			&MOTOR_CONTROLLER_PARAMS_DEFAULT, sizeof(MotorController_Params_T));
-//	memcpy(MotorControllerMain.AnalogUser.CONFIG.P_PARAMS, 		&MOT_ANALOG_USER_PARAMS_DEFAULT, sizeof(MotAnalogUser_Params_T));
-//	memcpy(MotorControllerMain.AnalogMonitor.CONFIG.P_PARAMS, 	&MOT_ANALOG_MONITOR_PARAMS_DEFAULT, sizeof(MotAnalogMonitor_Params_T));
-//	memcpy(MotorControllerMain.Shell.CONFIG.P_PARAMS, 			&SHELL_PARAMS_DEFAULT, sizeof(Shell_Params_T));
-//
-//	for (uint8_t iMotor = 0U; iMotor < BOARD_MOTOR_COUNT; iMotor++)
+//	for (uint8_t iMotor = 0U; iMotor < p_controller->CONFIG.MOTOR_COUNT; iMotor++)
 //	{
-//		memcpy(Motors[iMotor].CONFIG.P_PARAMS_NVM, &MOTOR_PARAMETERS_DEFAULT, sizeof(Motor_Params_T));
-//		memcpy(Motors[iMotor].Hall.CONFIG.P_PARAMS_NVM, &HALL_DEFAULT, sizeof(Hall_Params_T));
-//		memcpy(Motors[iMotor].Encoder.CONFIG.P_PARAMS, &ENCODER_DEFAULT, sizeof(Encoder_Params_T));
-//
-//		memcpy(Motors[iMotor].PidSpeed.CONFIG.P_PARAMS, &PID_SPEED_DEFAULT, sizeof(PID_Params_T));
+//		Motor_LoadDefault(&p_controller->CONFIG.P_MOTORS[iMotor]);
 //	}
-}
+//
+////	for (uint8_t iProtocol = 0U; iProtocol < p_controller->CONFIG.PROTOCOL_COUNT; iProtocol++)
+////	{
+////		Protocol_LoadDefault(&p_controller->CONFIG.P_PROTOCOLS[iProtocol]);
+////	}
+////
+////	Shell_LoadDefault(&p_controller->Shell);
+////	MotAnalogUser_LoadDefault(&p_controller->AnalogUser);
+////	MotAnalogMonitor_LoadDefault(&p_controller->AnalogMonitor);
+////	Thermistor_LoadDefault(&p_controller->ThermistorPcb);
+////	Thermistor_LoadDefault(&p_controller->ThermistorMosfetsHigh);
+////	Thermistor_LoadDefault(&p_controller->ThermistorMosfetsLow);
+//
+//
+////	memcpy(Protocols[0].CONFIG.P_PARAMS, &MAIN_PROTOCOL_PARAMS_DEFAULT, sizeof(Protocol_Params_T));
+////
+////	memcpy(MotorControllerMain.CONFIG.P_PARAMS_NVM, 			&MOTOR_CONTROLLER_PARAMS_DEFAULT, sizeof(MotorController_Params_T));
+////	memcpy(MotorControllerMain.AnalogUser.CONFIG.P_PARAMS, 		&MOT_ANALOG_USER_PARAMS_DEFAULT, sizeof(MotAnalogUser_Params_T));
+////	memcpy(MotorControllerMain.AnalogMonitor.CONFIG.P_PARAMS, 	&MOT_ANALOG_MONITOR_PARAMS_DEFAULT, sizeof(MotAnalogMonitor_Params_T));
+////	memcpy(MotorControllerMain.Shell.CONFIG.P_PARAMS, 			&SHELL_PARAMS_DEFAULT, sizeof(Shell_Params_T));
+////
+////	for (uint8_t iMotor = 0U; iMotor < BOARD_MOTOR_COUNT; iMotor++)
+////	{
+////		memcpy(Motors[iMotor].CONFIG.P_PARAMS_NVM, &MOTOR_PARAMETERS_DEFAULT, sizeof(Motor_Params_T));
+////		memcpy(Motors[iMotor].Hall.CONFIG.P_PARAMS_NVM, &HALL_DEFAULT, sizeof(Hall_Params_T));
+////		memcpy(Motors[iMotor].Encoder.CONFIG.P_PARAMS, &ENCODER_DEFAULT, sizeof(Encoder_Params_T));
+////
+////		memcpy(Motors[iMotor].PidSpeed.CONFIG.P_PARAMS, &PID_SPEED_DEFAULT, sizeof(PID_Params_T));
+////	}
+//}
 
 

@@ -139,7 +139,7 @@ typedef enum
 	MOTOR_CONTROL_MODE_CONSTANT_CURRENT,
 	MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT,
 }
-Motor_ControlMode_T; //Motor_ControlModeUser_T
+Motor_ControlMode_T; //Motor_ControlModeUser_T FeedbackMode
 
 
 /*
@@ -333,7 +333,9 @@ typedef struct
 	Filter_T FilterB;
 	Filter_T FilterC;
 
+	//Run substate flags
 	Motor_Direction_T Direction; //active spin direction
+	bool Regen; //can change to quadrant to include plugging
 	Motor_ControlModeFlags_T ControlMode;
 
 	Linear_T Ramp;
@@ -523,20 +525,20 @@ static inline void Motor_ProcSpeedFeedback(Motor_T * p_motor)
 	}
 }
 
-static inline bool Motor_PollSpeedFeedback(Motor_T * p_motor)
-{
-	bool captureSpeed = Timer_Poll(&p_motor->SpeedTimer);
+//static inline bool Motor_PollSpeedFeedback(Motor_T * p_motor)
+//{
+//	bool captureSpeed = Timer_Poll(&p_motor->SpeedTimer);
+//
+//	if (captureSpeed == true)
+//	{
+//		Motor_CaptureSpeed(p_motor);
+// 		Motor_ProcSpeedFeedback(p_motor);
+//	}
+//
+//	return captureSpeed;
+//}
 
-	if (captureSpeed == true)
-	{
-		Motor_CaptureSpeed(p_motor);
- 		Motor_ProcSpeedFeedback(p_motor);
-	}
-
-	return captureSpeed;
-}
-
-static inline bool Motor_ResumeSpeedFeedback(Motor_T * p_motor)
+static inline void Motor_ResumeSpeedFeedback(Motor_T * p_motor)
 {
 //	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
 //	{

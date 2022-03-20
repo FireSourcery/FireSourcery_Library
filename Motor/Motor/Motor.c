@@ -442,13 +442,13 @@ bool Motor_CalibrateEncoder(Motor_T * p_motor)
 void Motor_StartCalibrateHall(Motor_T * p_motor)
 {
 	StartMotorCalibrateCommon(p_motor);
-	Timer_StartPeriod(&p_motor->ControlTimer, 40000U); //Parameter.HallCalibrationTime
+	Timer_StartPeriod(&p_motor->ControlTimer, 20000U); //Parameter.HallCalibrationTime
 }
 
 //120 degree hall aligned with phase
 bool Motor_CalibrateHall(Motor_T * p_motor)
 {
-	const uint16_t duty = 65536U/10U/4U;
+	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
 	bool isComplete = false;
 
 	if (Timer_Poll(&p_motor->ControlTimer) == true)

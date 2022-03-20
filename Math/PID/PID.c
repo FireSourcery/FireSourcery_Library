@@ -45,13 +45,13 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 
 	proportional = (p_pid->Params.KpFactor * error / p_pid->Params.KpDivisor);
 
-	p_pid->ErrorSum += error;
+//	p_pid->ErrorSum += error;
 
 	integral = (p_pid->Params.KiFactor * p_pid->ErrorSum / p_pid->KiDivisorFreq);
 
-	if 		(integral > p_pid->Params.OutMax) {integral = p_pid->Params.OutMax;}
-	else if (integral < p_pid->Params.OutMin) {integral = p_pid->Params.OutMin;}
-//	else 										{p_pid->ErrorSum += error;} stop accumulating integral is output is past limits
+	if 		(integral > p_pid->Params.OutMax) 	{integral = p_pid->Params.OutMax;}
+	else if (integral < p_pid->Params.OutMin) 	{integral = p_pid->Params.OutMin;}
+	else 										{p_pid->ErrorSum += error;} //stop accumulating integral if output is past limits
 
 	if(p_pid->Params.Mode == PID_MODE_PID)
 	{
@@ -105,7 +105,7 @@ void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t 
 		p_pid->Params.KdFactor = 0 - kdFactor;
 	}
 
-	p_pid->KiDivisorFreq = p_pid->Params.KpDivisor * p_pid->Params.CalcFreq;
+	p_pid->KiDivisorFreq = p_pid->Params.KiDivisor * p_pid->Params.CalcFreq;
 	p_pid->KdFactorFreq = p_pid->Params.KdFactor * p_pid->Params.CalcFreq;
 }
 
@@ -162,7 +162,7 @@ void PID_Init(PID_T * p_pid)
 		memcpy(&p_pid->Params, p_pid->CONFIG.P_PARAMS, sizeof(PID_Params_T));
 	}
 
-	p_pid->KiDivisorFreq = p_pid->Params.KpDivisor * p_pid->Params.CalcFreq;
+	p_pid->KiDivisorFreq = p_pid->Params.KiDivisor * p_pid->Params.CalcFreq;
 	p_pid->KdFactorFreq = p_pid->Params.KdFactor * p_pid->Params.CalcFreq;
 
 	p_pid->ErrorSum = 0;

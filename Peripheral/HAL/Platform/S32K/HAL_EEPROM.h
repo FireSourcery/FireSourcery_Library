@@ -21,13 +21,16 @@
 #define EEE_COMPLETE_INTERRUPT_QUICK_WRITE      (0xAAU)    /*!< Complete interrupted EEPROM quick write process */
 #define EEE_DISABLE                             (0xFFU)    /*!< Make FlexRAM available as RAM */
 
+#define S32K_EEERAMSIZE_CODE 					(0x02U)		//only option for s32k142
+#define CONFIG_HAL_EEPROM_S32K_DEPART_CODE 		(0x08U)	 //Recommenced for max endurance, set once
+
 typedef FTFC_Type HAL_EEPROM_T;	//Flash/EEPROM use same controller
 
 #include "Peripheral/NvMemory/NvMemory/Config.h"
-static inline void HAL_EEPROM_ProgramPartition(HAL_EEPROM_T * p_hal) 	CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
-static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal) 		CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; //do not inline to force RAM copy
+//static inline void HAL_EEPROM_ProgramPartition(HAL_EEPROM_T * p_hal) 	CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+//static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal) 		CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; //do not inline to force RAM copy
 
-static void InitHalEepromBlocking(void) 		CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; //do not inline to force RAM copy
+static   void HalEepromInitBlocking(void) 		CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; //do not inline to force RAM copy
 
 
 static inline bool HAL_EEPROM_ReadCompleteFlag(HAL_EEPROM_T * p_hal)
@@ -58,6 +61,14 @@ static inline void HAL_EEPROM_StartCmdWriteUnit(HAL_EEPROM_T * p_regs, const uin
 	(*(uint32_t*)p_dest) = (*(uint32_t*)p_data);
 }
 
+
+static inline bool HAL_EEPROM_ReadIsFirstTime(HAL_EEPROM_T * p_hal)
+{
+	uint32_t regDEPartitionCode = ((SIM->FCFG1 & SIM_FCFG1_DEPART_MASK) >> SIM_FCFG1_DEPART_SHIFT);
+	return (regDEPartitionCode != CONFIG_HAL_EEPROM_S32K_DEPART_CODE);
+}
+
+
 /*
 	EEE SRAM data size.
 	0000b - Reserved
@@ -83,12 +94,8 @@ extern void SystemSoftwareReset(void);
 /*
  * Launch once if not programmed
  */
-static inline void  HalEepromProgramPartition(void)
+static inline void HalEepromProgramPartition(void)
 {
-#define S32K_EEERAMSIZE_CODE 	(0x02U)		//only option for s32k142
-#define CONFIG_HAL_EEPROM_S32K_DEPART_CODE 		(0x08U)	 //Recommenced for max endurance,set once
-
-
 	uint32_t regDEPartitionCode = ((SIM->FCFG1 & SIM_FCFG1_DEPART_MASK) >> SIM_FCFG1_DEPART_SHIFT);
 
 	if (regDEPartitionCode != CONFIG_HAL_EEPROM_S32K_DEPART_CODE)
@@ -122,12 +129,12 @@ static void HalEepromInitBlocking(void)
 {
 #ifdef CONFIG_EEPROM_ONE_TIME_PROGRAM_PARTITION
 	/* one time code may not be needed if operation is support by flash tool*/
-	HalEepromProgramPartition( );
+	HalEepromProgramPartition();
 #endif
 
-	if (HAL_EEPROM_ReadCompleteFlag(0) == false)
+	if(HAL_EEPROM_ReadCompleteFlag(0) == false)
 	{
-		if (HAL_Flash_ReadCompleteFlag(0) == true)
+		if(HAL_Flash_ReadCompleteFlag(0) == true)
 		{
 			HAL_Flash_ClearErrorFlags(0);
 
@@ -138,9 +145,9 @@ static void HalEepromInitBlocking(void)
 			HAL_Flash_WriteCmdStart(0);
 		}
 
-		while (HAL_Flash_ReadCompleteFlag(0) == false)
+		while(HAL_Flash_ReadCompleteFlag(0) == false)
 		{
-			if (HAL_Flash_ReadErrorFlags(0) == false)
+			if(HAL_Flash_ReadErrorFlags(0) == false)
 			{
 				break;
 			}
@@ -150,7 +157,7 @@ static void HalEepromInitBlocking(void)
 
 static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal)
 {
-	HalEepromInitBlocking( ) ;
+	HalEepromInitBlocking();
 }
 
 
