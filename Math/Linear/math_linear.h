@@ -99,58 +99,64 @@ static inline int32_t linear_invf_frac16(int32_t m_factor, int32_t m_divisor, in
 }
 
 
-// m_shifted * x must be < INT32_MAX (2,147,483,647)
-static inline int32_t linear_f_shift(int32_t m_shifted, uint8_t shift, int32_t b, int32_t x)
+#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
+
+// m_shifted * (x - x0) must be < INT32_MAX (2,147,483,647)
+static inline int32_t linear_f_shift(int32_t m_shifted, uint8_t shift, int32_t x0, int32_t y0, int32_t x)
 {
-//	return (((m_shifted * x) >> shift) + b);
+	return (((m_shifted * (x - x0)) >> shift) + y0);
 
 	//b is shifted
-	return ((m_shifted * x + b) >> shift);
+//	return ((m_shifted * x + b) >> shift);
 }
 
-static inline int32_t linear_invf_shift(int32_t invm_shifted, uint8_t shift, int32_t b, int32_t y)
+static inline int32_t linear_invf_shift(int32_t invm_shifted, uint8_t shift, int32_t x0, int32_t y0, int32_t y)
 {
-//	return (((y - b) * invm_shifted) >> shift);
+	return ((((y - y0) * invm_shifted) >> shift) + x0);
 
-	//b is shifted
-	return ((((y << shift) - b) >> shift * invm_shifted) >> shift);
+	//b is shifted, y is not shifted
+//	return ((((y << shift) - b) >> shift * invm_shifted) >> shift);
 }
 
-// not shifted b
-	// (65536/yref)*(m*x + b)
-// (((m_shifted * x) >> shift) + b) * 65536 / yref;
-// (((m_shifted * x) >> (shift - 16)) + b * 65536)   / yref;
-static inline int32_t linear_f_frac16_shift(int32_t m_shifted, uint8_t shift, int32_t b, int32_t yref, int32_t x)
+/*
+ * f_frac16(x) = (65536/yref)*f(x)
+ *
+ * b is not shifted
+ * (((m_shifted * x) >> shift) + b) * 65536 / yref;
+ * (((m_shifted * x) >> (shift - 16)) + b * 65536) / yref;
+ */
+static inline int32_t linear_f_frac16_shift(int32_t m_shifted, uint8_t shift, int32_t x0, int32_t y0, int32_t yref, int32_t x)
 {
 	int32_t y;
 
 	if (shift >= 16U)
 	{
- //		y = linear_f_shift(m_shifted, (shift - 16U), b << 16U, x) / yref; 	// = (((m_shifted * x) >> (shift - 16)) + b * 65536) / yref;
+ 		y = linear_f_shift(m_shifted, (shift - 16U), x0, y0 << 16U, x) / yref;
 
 		//b is shifted
-		y = linear_f_shift(m_shifted, (shift - 16U), b, x) / yref; 	// = ((m_shifted * x + b) >> (shift - 16U)) / yref;
+//		y = linear_f_shift(m_shifted, (shift - 16U), b, x) / yref;
 	}
 	else
 	{
-//		y = (((m_shifted * x) << (16U - shift)) + b * 65536) / yref;
+		y = (((m_shifted * (x - x0)) << (16U - shift)) + y0 * 65536) / yref;
 
 		//b is shifted
-		y = ((m_shifted * x + b) << (16U - shift)) / yref;
+//		y = ((m_shifted * x + b) << (16U - shift)) / yref;
 	}
 
 	return y;
 }
 
-//b not shifted
-	// (((y - b) * invm_shifted) >> shift);
-// ((y_frac16 * yref / 65536 - b) * invm_shifted >> shift);
-static inline int32_t linear_invf_frac16_shift(int32_t invm_shifted, uint8_t shift, int32_t b, int32_t yref, int32_t y_frac16)
+/*
+ * invf_frac16(y_frac16) = invf_f(y_frac16*yref/65536)
+ */
+static inline int32_t linear_invf_frac16_shift(int32_t invm_shifted, uint8_t shift, int32_t x0, int32_t y0, int32_t yref, int32_t y_frac16)
 {
-//	return ((y_frac16 * yref / 65536) - b) * invm_shifted >> shift;
+	return linear_invf_shift(invm_shifted, shift, x0, y0, y_frac16*yref/65536); ; //((y_frac16 * yref / 65536) - y0) * invm_shifted >> shift;
 
 	//b is shifted
-	return (((y_frac16 * yref - b) / 65536)) * invm_shifted >> shift;
+//	return (((y_frac16 * yref - b) / 65536)) * invm_shifted >> shift;
 }
+#endif
 
 #endif

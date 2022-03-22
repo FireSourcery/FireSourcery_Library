@@ -323,7 +323,7 @@ static inline bool Motor_SixStep_PollOpenLoop(Motor_T * p_motor)
 
 	if (commutation == true)
 	{
-		p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopCommutationPeriod);
+//		p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopCommutationPeriod);
 		p_motor->OpenLoopCommutationPeriod = Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
 		Timer_StartPeriod(&p_motor->ControlTimer, p_motor->OpenLoopCommutationPeriod);
 	}
@@ -335,10 +335,10 @@ static inline void Motor_SixStep_StartOpenLoop(Motor_T * p_motor)
 {
 	// if pwm update is only on commutation cycle, must start at sufficient speed for timer driven fixed angle displacements
 //	Linear_Ramp_Init_Millis(&p_motor->OpenLoopRamp, 20000U, p_motor->Parameters.OpenLoopSpeedStart, p_motor->Parameters.OpenLoopSpeedFinal, 1000U);
-	Linear_Ramp_InitAcceleration(&p_motor->OpenLoopRamp, 20000U, p_motor->Parameters.OpenLoopSpeedStart, p_motor->Parameters.OpenLoopSpeedFinal, 100U);
+//	Linear_Ramp_InitAcceleration(&p_motor->OpenLoopRamp, 20000U, p_motor->Parameters.OpenLoopSpeedStart, p_motor->Parameters.OpenLoopSpeedFinal, 100U);
 	p_motor->OpenLoopRampIndex = 0U;
 
-	p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, 0U);
+//	p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcIncIndex(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, 0U);
 	p_motor->OpenLoopCommutationPeriod = Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
 	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->OpenLoopCommutationPeriod);
 

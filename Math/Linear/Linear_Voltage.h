@@ -43,8 +43,9 @@
 	.SlopeDivisor_Shift 		= 16U,														\
 	.SlopeDivisor 				= ((r2 << 16U) * 10U / (adcVRef10 * (r1 + r2))),			\
 	.SlopeFactor_Shift 			= 16U - adcBits,											\
-	.Intercept 					= 0U, 														\
-	.RangeReference 			= vInMax - 0U, 												\
+	.YOffset 					= 0U, 														\
+	.XOffset 					= 0U, 														\
+	.YReference 				= vInMax - 0U, 												\
 }
 
 /******************************************************************************/

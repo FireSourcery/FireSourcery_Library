@@ -131,7 +131,7 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolut
 //		p_encoder->UnitAngularSpeed = (unitTFreq << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / encoderCountsPerRevolution;
 //	}
 
-	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitTFreq, p_encoder->CONFIG.SAMPLE_FREQ * countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
+	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitTFreq, p_encoder->CONFIG.POLLING_FREQ * countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
 
 	Encoder_Reset(p_encoder);
 }

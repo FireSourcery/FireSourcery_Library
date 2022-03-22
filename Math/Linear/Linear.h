@@ -46,56 +46,54 @@ typedef struct Linear_Tag
 	uint8_t SlopeDivisor_Shift; // y = x * SlopeFactor >> SlopeDivisor_Shift + Intercept
 	uint8_t SlopeFactor_Shift;  // x = (y - Intercept) * SlopeDivisor >> SlopeFactor_Shift
 #endif
-	int32_t Intercept;			// b, y0
-	//todo
-	int32_t X0;
-	int32_t Y0;
-
-	int32_t RangeReference; 	// [0:RangeReference] => [0:65536]
+	int32_t XOffset;
+	int32_t YOffset;
+	int32_t YReference; 		// in[0:RangeReference] => out_frac16[0:65536]
 } Linear_T;
 
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-#define LINEAR_CONFIG(factor, divisor, intercept, rangeRef)				\
+#define LINEAR_CONFIG(factor, divisor, x0, y0, yref)					\
 {																		\
 	.SlopeFactor 				= ((int32_t)factor << 16U) / divisor;  	\
 	.SlopeDivisor_Shift 		= 16U;									\
 	.SlopeDivisor 				= ((int32_t)divisor << 16U) / factor; 	\
 	.SlopeFactor_Shift 			= 16U;									\
-	.Intercept 					= intercept;							\
- 	.RangeReference 			= rangeRef; 							\
+	.XOffset 					= x0;									\
+	.YOffset 					= y0;									\
+ 	.YReference 				= yref; 								\
 }
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 #define LINEAR_CONFIG(factor, divisor, offset, rangeRef)				\
 {																		\
-	.SlopeFactor 				= ((int32_t)factor << 16U) / divisor;  	\
-	.SlopeDivisor 				= ((int32_t)divisor << 16U) / factor; 	\
-	.Intercept 					= (int32_t)offset << 16U;				\
- 	.RangeReference 			= rangeRef; 							\
+
 }
 #endif
 
+
 /*
+ * ((factor * (x - x0)) / divisor) + y0
+ *
  * Shift divide case overflow caution
- *  x must be < INT32_MAX (2,147,483,647) / SlopeFactor
+ *  (x - x0) must be < INT32_MAX (2,147,483,647) / SlopeFactor
  */
 static inline int32_t Linear_Function(const Linear_T * p_linear, int32_t x)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-	return linear_f_shift(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->Intercept, x);
+	return linear_f_shift(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->XOffset, p_linear->YOffset, x);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-	return linear_f(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->Intercept, x);
+	return linear_f(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, x);
 #endif
 }
 
 /*
- * return ( (y - b) * m_divisor / m_factor );
+ * ((y - y0) * divisor / factor) + x0;
  */
 static inline int32_t Linear_InvFunction(const Linear_T * p_linear, int32_t y)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-	return linear_invf_shift(p_linear->SlopeDivisor,  p_linear->SlopeFactor_Shift, p_linear->Intercept, y);
+	return linear_invf_shift(p_linear->SlopeDivisor,  p_linear->SlopeFactor_Shift, p_linear->XOffset, p_linear->YOffset, y);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-	return linear_invf(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->Intercept, y);
+	return linear_invf(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, y);
 #endif
 }
 
@@ -104,7 +102,7 @@ static inline int32_t Linear_Function_Round(const Linear_T * p_linear, int32_t x
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
 	return Linear_Function(p_linear, x);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-	return linear_f_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->Intercept, x);
+	return linear_f_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, x);
 #endif
 }
 static inline int32_t Linear_InvFunction_Round(const Linear_T * p_linear, int32_t y)
@@ -112,7 +110,7 @@ static inline int32_t Linear_InvFunction_Round(const Linear_T * p_linear, int32_
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
 	return Linear_InvFunction(p_linear, y);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-	return linear_invf_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->Intercept, y);
+	return linear_invf_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, y);
 #endif
 }
 
@@ -132,9 +130,9 @@ static inline int32_t Linear_InvFunction_Round(const Linear_T * p_linear, int32_
 static inline int32_t Linear_Function_Fraction16(const Linear_T * p_linear, int32_t x)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-	return linear_f_frac16_shift(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->Intercept, p_linear->RangeReference, x);
+	return linear_f_frac16_shift(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, x);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-	return linear_f_frac16(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->Intercept, p_linear->RangeReference, x);
+	return linear_f_frac16(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, x);
 #endif
 }
 
@@ -144,9 +142,9 @@ static inline int32_t Linear_Function_Fraction16(const Linear_T * p_linear, int3
 static inline int32_t Linear_InvFunction_Fraction16(const Linear_T * p_linear, int32_t y_frac16)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-	return linear_invf_frac16_shift(p_linear->SlopeDivisor, p_linear->SlopeFactor_Shift, p_linear->Intercept, p_linear->RangeReference, y_frac16);
+	return linear_invf_frac16_shift(p_linear->SlopeDivisor, p_linear->SlopeFactor_Shift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, y_frac16);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-	return linear_invf_frac16(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->Intercept, p_linear->RangeReference, x);
+	return linear_invf_frac16(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, x);
 #endif
 }
 
@@ -221,13 +219,13 @@ static inline int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_lin
 	return Linear_InvFunction_Fraction16(p_linear, y_fracSigned16 * 2);
 }
 
-#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t intercept, int32_t rangeRef);
-#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t intercept, int32_t rangeRef);
-#endif
+//#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
+//extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t intercept, int32_t rangeRef);
+//#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+//extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t intercept, int32_t rangeRef);
+//#endif
 
-extern void Linear_Init_X0(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset_x0, int32_t rangeRef);
+//extern void Linear_Init_X0(Linear_T * p_linear, int16_t factor, int16_t divisor, int32_t offset_x0, int32_t rangeRef);
 
 #endif
 
@@ -238,17 +236,17 @@ extern void Linear_Init_X0(Linear_T * p_linear, int16_t factor, int16_t divisor,
 //static inline int32_t Linear_Function_RangeBound(const Linear_T * p_linear, int32_t x)
 //{
 //#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-//	return linear_f_shift(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->Intercept, x);
+//	return linear_f_shift(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->XOffset, p_linear->YOffset, x);
 //#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-//	return linear_f(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->Intercept, x);
+//	return linear_f(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, x);
 //#endif
 //}
 //
 //static inline int32_t Linear_InvFunction_RangeBound(const Linear_T * p_linear, int32_t y)
 //{
 //#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-//	return linear_invf_shift(p_linear->SlopeDivisor, p_linear->SlopeFactor_Shift, p_linear->Intercept, y);
+//	return linear_invf_shift(p_linear->SlopeDivisor, p_linear->SlopeFactor_Shift, p_linear->XOffset, p_linear->YOffset, y);
 //#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-//	return linear_invf(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->Intercept, y);
+//	return linear_invf(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, y);
 //#endif
 //}

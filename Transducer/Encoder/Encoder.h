@@ -118,9 +118,9 @@ typedef const struct
 	//#ifdef phaseAB use pin or use encoder hal
 	const Pin_T PIN_PHASE_A;
 	const Pin_T PIN_PHASE_B;
-	const uint32_t SAMPLE_FREQ;				/*!<  Polling D reference Freq, CaptureDeltaT mode need 2nd freq interpolation calculations */
+	const uint32_t POLLING_FREQ;				/*!<  Polling D reference Freq, CaptureDeltaT mode need 2nd freq interpolation calculations */
 	const uint32_t DELTA_T_TIMER_FREQ;
-	const uint32_t DELTA_D_SAMPLE_FREQ;
+	const uint32_t DELTA_D_SAMPLE_FREQ; //deltaD mode speed sample
 
 	/* Polling DeltaT stop */
 	const volatile uint32_t * const P_EXTENDED_TIMER;
@@ -185,7 +185,7 @@ Encoder_T;
 	.CONFIG = 															\
 	{																	\
 		.P_HAL_ENCODER 			= p_Hal_Encoder,						\
-		.SAMPLE_FREQ 			= SampleFreq,		 					\
+		.POLLING_FREQ 			= SampleFreq,		 					\
 		.DELTA_D_SAMPLE_FREQ 	= DeltaDSampleFreq, 					\
 		.DELTA_T_TIMER_FREQ 	= DeltaTTimerFreq,						\
 		.PIN_PHASE_A 			= PIN_CONFIG(p_PinA_Hal, PinAId),		\
@@ -558,7 +558,6 @@ static inline uint32_t Encoder_CalcAngularSpeed(Encoder_T * p_encoder, uint32_t 
 
 	/*
 	 * p_encoder->UnitAngularSpeed set to 0U if overflow: UnitAngularSpeed*deltaD_Ticks will allow full rotation minimal
-	 *
 	 */
 	if ((p_encoder->UnitAngularSpeed == 0U) || (deltaD_Ticks > UINT32_MAX / p_encoder->UnitAngularSpeed)) //todo optimize
 	{
@@ -600,7 +599,7 @@ static inline uint32_t Encoder_CaptureAvgAngularSpeed(Encoder_T * p_encoder)
 //{
 //	uint32_t speed;
 //
-//	if ((p_encoder->UnitAngularSpeed == 0U))
+//	if ((p_encoder->UnitAngularSpeed == 0U) || (deltaD_Ticks > UINT32_MAX / p_encoder->UnitAngularSpeed))
 //	{
 //		speed = (deltaD_Ticks * p_encoder->UnitT_Freq) / (p_encoder->Params.CountsPerRevolution * deltaT_Ticks);
 //	}
@@ -614,7 +613,7 @@ static inline uint32_t Encoder_CaptureAvgAngularSpeed(Encoder_T * p_encoder)
 
 /*!
 	Revolution per Second
-	//	return (p_encoder->DeltaD * p_encoder->UnitT_Freq) / (p_encoder->Params.CountsPerRevolution * p_encoder->DeltaT);
+	return (p_encoder->DeltaD * p_encoder->UnitT_Freq) / (p_encoder->Params.CountsPerRevolution * p_encoder->DeltaT);
  */
 static inline uint32_t Encoder_GetRotationalSpeed_RPS(Encoder_T * p_encoder)
 {
@@ -624,25 +623,49 @@ static inline uint32_t Encoder_GetRotationalSpeed_RPS(Encoder_T * p_encoder)
 	return Encoder_GetAngularSpeed(p_encoder) >> CONFIG_ENCODER_ANGLE_DEGREES_BITS;
 }
 
-//	return (p_encoder->DeltaD * p_encoder->UnitT_Freq * 60U) / (p_encoder->Params.CountsPerRevolution * p_encoder->DeltaT);
+/*
+	return (p_encoder->DeltaD * p_encoder->UnitT_Freq * 60U) / (p_encoder->Params.CountsPerRevolution * p_encoder->DeltaT);
+ */
 static inline uint32_t Encoder_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
 {
-	//checkoverflow
 	return Encoder_GetAngularSpeed(p_encoder) * 60U >> CONFIG_ENCODER_ANGLE_DEGREES_BITS;
 }
 
-static inline uint32_t Encoder_GetAvgRotationalSpeed_RPM(Encoder_T * p_encoder)
-{
-	return  ((p_encoder->TotalD * p_encoder->UnitT_Freq / p_encoder->Params.CountsPerRevolution) ) * 60U / p_encoder->TotalT;
-
-}
-
-
-
+//static inline uint32_t Encoder_GetAvgRotationalSpeed_RPM(Encoder_T * p_encoder)
+//{
+//	return  ((p_encoder->TotalD * p_encoder->UnitT_Freq / p_encoder->Params.CountsPerRevolution) ) * 60U / p_encoder->TotalT;
+//
+//}
 
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
+
+/******************************************************************************/
+/*!
+	Integrate Speed to position
+ */
+/******************************************************************************/
+/*
+ * delta angle for speed position integration => p_encoder->CONFIG.POLLING_FREQ  20000Hz
+ */
+static inline uint32_t Encoder_ConvertRotationalSpeedToControlAngle_RPM(Encoder_T * p_encoder, uint32_t rpm)
+{
+	if (rpm < (UINT32_MAX >> CONFIG_ENCODER_ANGLE_DEGREES_BITS))
+	{
+		return (rpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / (60U * p_encoder->CONFIG.POLLING_FREQ);
+	}
+	else
+	{
+		return (1U << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / 60U * rpm / p_encoder->CONFIG.POLLING_FREQ;
+	}
+}
+
+static inline uint32_t Encoder_ConvertControlAngleToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t angle_UserDegrees)
+{
+	return (angle_UserDegrees * p_encoder->CONFIG.POLLING_FREQ >> CONFIG_ENCODER_ANGLE_DEGREES_BITS) * 60U;
+}
+
 
 
 /******************************************************************************/

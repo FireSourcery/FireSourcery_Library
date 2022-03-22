@@ -61,52 +61,27 @@
 
 /******************************************************************************/
 /*!
-
+	Map to Motor Analog Conversions
+	Convert current from ADCU to QFrac
 */
 /******************************************************************************/
-static inline qfrac16_t CorrectISample(qfrac16_t iSample)
-{
-#ifdef CONFIG_MOTOR_CURRENT_SAMPLE_INVERT
-	return 0-iSample;
-#elif defined(CONFIG_MOTOR_CURRENT_SAMPLE_NONINVERT)
-	return iSample;
-#endif
-}
-
-
-/*
- * Map to Motor Analog Conversions
- * 	Convert current from ADCU to QFrac
- * 	todo fix linear for invert adc
- */
 static inline void Motor_FOC_CaptureIa(Motor_T *p_motor)
 {
-	int32_t i_temp = CorrectISample(Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, p_motor->AnalogResults.Ia_ADCU));
-	FOC_SetIa(&p_motor->Foc, (i_temp + FOC_GetIa(&p_motor->Foc)) / 2);
-
-//	p_motor->FocTimeIa = SysTime_GetMicros() - p_motor->MicrosRef;
+	qfrac16_t i_temp = ((int32_t)Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, p_motor->AnalogResults.Ia_ADCU) + (int32_t)FOC_GetIa(&p_motor->Foc)) / 2;
+	FOC_SetIa(&p_motor->Foc, i_temp);
 }
-
 static inline void Motor_FOC_CaptureIb(Motor_T *p_motor)
 {
-	int32_t i_temp = CorrectISample(Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, p_motor->AnalogResults.Ib_ADCU));
-	FOC_SetIb(&p_motor->Foc, (i_temp + FOC_GetIb(&p_motor->Foc)) / 2);
-
-//	p_motor->FocTimeIb = SysTime_GetMicros() - p_motor->MicrosRef;
+	qfrac16_t i_temp = ((int32_t)Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, p_motor->AnalogResults.Ib_ADCU) + (int32_t)FOC_GetIb(&p_motor->Foc)) / 2;
+	FOC_SetIb(&p_motor->Foc, i_temp);
 }
-
 static inline void Motor_FOC_CaptureIc(Motor_T *p_motor)
 {
-	int32_t i_temp = CorrectISample(Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, p_motor->AnalogResults.Ic_ADCU));
-	FOC_SetIc(&p_motor->Foc, (i_temp + FOC_GetIc(&p_motor->Foc)) / 2);
-
-//	p_motor->FocTimeIc = SysTime_GetMicros() - p_motor->MicrosRef;
+	qfrac16_t i_temp = ((int32_t)Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, p_motor->AnalogResults.Ic_ADCU) + (int32_t)FOC_GetIc(&p_motor->Foc)) / 2;
+	FOC_SetIc(&p_motor->Foc, i_temp);
 }
-
-
 /******************************************************************************/
 /*!
-
 */
 /******************************************************************************/
 
@@ -131,7 +106,7 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			 * 	p_foc->Theta = integral of speed req
 			 */
 			/* integrate speed to angle */
-			p_motor->OpenLoopSpeed_RPM = Linear_Ramp_Proc(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex);
+			p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcOutput(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopSpeed_RPM);
 			p_motor->ElectricalAngle += Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
  			break;
 
@@ -278,8 +253,8 @@ static inline void ProcMotorFocCurrentFeedbackLoop(Motor_T * p_motor, qfrac16_t 
 static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)
 {
 	qfrac16_t qReq;
-
-
+	qfrac16_t vqReq;
+	qfrac16_t vdReq;
 	//		if (p_motor->Direction == MOTOR_DIRECTION_CW)
 	//		{
 	//			qReq = 0 - qReq;
@@ -287,24 +262,38 @@ static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)
 
 	if(p_motor->Regen == true)
 	{
-		qReq = 0 - (p_motor->RampCmd >> 1U); //req opposite iq, vq will tend towards 0 but not past 0 as set by pid out min, no plugging
-		ProcMotorFocCurrentFeedbackLoop(p_motor, qReq, 0);
+		//req opposite iq, vq approach towards 0 but not past 0, no plugging
+		if (p_motor->Direction == MOTOR_DIRECTION_CCW)
+		{
+			qReq = (int32_t)0 - (int32_t)(p_motor->RampCmd >> 1U);
+			vqReq = PID_Calc(&p_motor->PidIq, qReq, FOC_GetIq(&p_motor->Foc));
+			(vqReq > 0) ? FOC_SetVq(&p_motor->Foc, vqReq) : FOC_SetVq(&p_motor->Foc, 0);
+			FOC_SetVd(&p_motor->Foc, 0);
+//			FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, 0, FOC_GetId(&p_motor->Foc)));
+		}
+//		else
+//		{
+//			qReq = (p_motor->RampCmd >> 1U);
+//			vqReq = PID_Calc(&p_motor->PidIq, qReq, FOC_GetIq(&p_motor->Foc));
+//			(vqReq < 0) ? FOC_SetVq(&p_motor->Foc, vqReq) : FOC_SetVq(&p_motor->Foc, 0);
+//		}
 	}
 	else
 	{
 		switch(p_motor->Parameters.ControlMode)
 		{
 			case MOTOR_CONTROL_MODE_OPEN_LOOP:
+				qReq = p_motor->RampCmd >> 1U;
+				ProcMotorFocVoltageMode(p_motor, qReq, 0);
 				break;
 
 			case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE: /* Voltage Control mode - use current feedback for over current only */
 				qReq = p_motor->RampCmd >> 1U;
 				ProcMotorFocVoltageMode(p_motor, qReq, 0);
-
 				break;
 
 			case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:
-				qReq = p_motor->SpeedControl >> 1U;
+				qReq = p_motor->SpeedControl  ;
 				ProcMotorFocVoltageMode(p_motor, qReq, 0);
 				break;
 
@@ -314,7 +303,7 @@ static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)
 				break;
 
 			case MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT:
-				qReq = p_motor->SpeedControl >> 1U;
+				qReq = p_motor->SpeedControl ;
 				ProcMotorFocCurrentFeedbackLoop(p_motor, qReq, 0);
 				break;
 
@@ -390,6 +379,9 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 
 static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 {
+	FOC_SetOuputZero(&p_motor->Foc);
+	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
+	Phase_ActivateSwitchABC(&p_motor->Phase); /* Switches Disabled when entering freewheel State */
 
 	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
 	{
@@ -402,23 +394,23 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 //		PID_SetIntegral(&p_motor->PidIq, 0);
 	}
 
-	switch (p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_OPEN_LOOP:
-			break;
-
-		case MOTOR_SENSOR_MODE_SENSORLESS:
-			break;
-
-		case MOTOR_SENSOR_MODE_ENCODER:
-			break;
-
-		case MOTOR_SENSOR_MODE_HALL:
-			break;
-
-		default:
-			break;
-	}
+//	switch (p_motor->Parameters.SensorMode)
+//	{
+//		case MOTOR_SENSOR_MODE_OPEN_LOOP:
+//			break;
+//
+//		case MOTOR_SENSOR_MODE_SENSORLESS:
+//			break;
+//
+//		case MOTOR_SENSOR_MODE_ENCODER:
+//			break;
+//
+//		case MOTOR_SENSOR_MODE_HALL:
+//			break;
+//
+//		default:
+//			break;
+//	}
 }
 
 /*
@@ -429,18 +421,11 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 {
 	Encoder_Reset(&p_motor->Encoder); //zero angle speed //reset before Encoder_DeltaT_SetInitial
 
-	FOC_SetZero(&p_motor->Foc);
-	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
-	Phase_ActivateSwitchABC(&p_motor->Phase);
-
 	Motor_FOC_ResumeAngleControl(p_motor);
 
 	switch (p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_OPEN_LOOP:
-			//from stop only
-			//can start at 0 speed in foc mode for continuous angle displacements
-			Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 20000U, 0U, 300U, 2000U);
 			p_motor->OpenLoopRampIndex = 0U;
 			break;
 
@@ -458,13 +443,37 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 		default:
 			break;
 	}
+
+	if(p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
+	{
+		p_motor->PidSpeed.Params.OutMax = 32767;
+		p_motor->PidSpeed.Params.OutMin = -32767;
+	}
+	else if(p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE)
+	{
+		p_motor->PidSpeed.Params.OutMax = 32767;
+		p_motor->PidSpeed.Params.OutMin = 0; //bound negative voltage here. speed out compensate during direction calc
+	}
 }
 
 
-//static inline void Motor_StopAngleControl(Motor_T * p_motor)
-//{
-//	Motor_Stop(p_motor);
-//}
+static inline void Motor_FOC_EnterRunState(Motor_T * p_motor)
+{
+	if(p_motor->Speed_RPM == 0U)
+	{
+		Motor_FOC_StartAngleControl(p_motor);
+	}
+	else
+	{
+		Motor_FOC_ResumeAngleControl(p_motor);
+	}
+}
+
+
+static inline void Motor_FOC_StopAngleControl(Motor_T * p_motor)
+{
+	Phase_Float(&p_motor->Phase);
+}
 
 /******************************************************************************/
 /*! @} */

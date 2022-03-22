@@ -44,7 +44,7 @@
  	 	 	TimerCounter should loop for correct angular position
  	 	 	TimerCounterMax == EncoderRes -1
  */
-static inline void Encoder_DeltaD_CapturePhase(Encoder_T * p_encoder)
+static inline void Encoder_DeltaD_CaptureSinglePhase(Encoder_T * p_encoder)
 {
 	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaD, p_encoder->Params.CountsPerRevolution - 1U);
 	p_encoder->AngularD = p_encoder->TimerCounterSaved;
@@ -54,14 +54,11 @@ static inline void Encoder_DeltaD_CapturePhase(Encoder_T * p_encoder)
 
 
 // HW Quadrature if counter ticks downs
-// todo overflow both directions, flag in isr
 static inline void Encoder_DeltaD_CaptureQuadrature(Encoder_T * p_encoder)
 {
 	uint32_t counterValue = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
 	bool isIncrement;
 	bool isCounterIncrementDirectionPositive;
-
-
 
 	/*
 	 * Unsigned DeltaD capture
@@ -103,6 +100,16 @@ static inline void Encoder_DeltaD_CaptureQuadrature(Encoder_T * p_encoder)
 	p_encoder->TotalT += 1U;
 
 
+
+	//static inline void Encoder_DeltaD_ReadQuadratureDirection(Encoder_T * p_encoder)
+	//{//#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+	//	//	isCounterIncrementDirectionPositive = p_encoder->IsALeadBDirectionPositive;
+	//	//#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+	//	//	isCounterIncrementDirectionPositive = !p_encoder->IsALeadBDirectionPositive;
+	//	//#endif
+	//	return HAL_Encoder_ReadQuadratureCounterDirection(p_encoder->CONFIG.P_HAL_ENCODER);
+	//}
+
 #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
 	isCounterIncrementDirectionPositive = p_encoder->Params.IsALeadBPositive;
 #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
@@ -123,7 +130,19 @@ static inline void Encoder_DeltaD_CaptureQuadrature(Encoder_T * p_encoder)
 
 static inline uint32_t Encoder_DeltaD_CaptureAngle(Encoder_T * p_encoder)
 {
-	return p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);;
+#ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
+//	if (p_encoder->Params.IsQuadratureCaptureEnabled == true)
+//	{
+		return p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+//	}
+//	else
+//	{
+//
+//	}
+#else
+//	else
+//	return p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+#endif
 }
 
 static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
@@ -136,7 +155,7 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 	else
 #endif
 	{
-		Encoder_DeltaD_CapturePhase(p_encoder);
+		Encoder_DeltaD_CaptureSinglePhase(p_encoder);
 	}
 }
 
@@ -149,20 +168,6 @@ static inline uint32_t Encoder_DeltaD_GetAngle(Encoder_T * p_encoder)
 {
 	return Encoder_ConvertCounterDToAngle(p_encoder, HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER));
 }
-
-
-
-//static inline void Encoder_DeltaD_ReadQuadratureDirection(Encoder_T * p_encoder)
-//{//#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-//	//	isCounterIncrementDirectionPositive = p_encoder->IsALeadBDirectionPositive;
-//	//#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-//	//	isCounterIncrementDirectionPositive = !p_encoder->IsALeadBDirectionPositive;
-//	//#endif
-//	return HAL_Encoder_ReadQuadratureCounterDirection(p_encoder->CONFIG.P_HAL_ENCODER);
-//}
-
-
-
 
 /******************************************************************************/
 /*!
@@ -220,41 +225,23 @@ static inline uint32_t Encoder_DeltaD_ConvertToAngularSpeed(Encoder_T * p_encode
 }
 
 /*
- * Todo fix. functions use polling_SAMPLE_FREQ, polling freq conversion only
+ * Speed to DeltaD conversions use
  *
  * unitsAngularSpeed => DELTA_D_SAMPLE_FREQ 1000Hz
- * delta angle for speed position integration => p_encoder->CONFIG.SAMPLE_FREQ  2000Hz
+ *
  */
 static inline uint32_t Encoder_DeltaD_ConvertFromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
 {
-	//todo use share anglular speed
-//	return (rpm << (CONFIG_ENCODER_ANGLE_DEGREES_BITS)) / (60 * p_encoder->UnitAngularSpeed);
-	return rpm * p_encoder->Params.CountsPerRevolution / (p_encoder->CONFIG.SAMPLE_FREQ * 60U);
+	return (rpm << (CONFIG_ENCODER_ANGLE_DEGREES_BITS)) / (60 * p_encoder->UnitAngularSpeed);
+//	return rpm * p_encoder->Params.CountsPerRevolution / (p_encoder->CONFIG.DELTA_D_SAMPLE_FREQ * 60U);
 }
 
 static inline uint32_t Encoder_DeltaD_ConvertToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
 {
-//	return Encoder_ConvertDeltaDToAngularSpeed(p_encoder, deltaD_Ticks * 60U) >> CONFIG_ENCODER_ANGLE_DEGREES_BITS;  overflow?
-	return (deltaD_Ticks * p_encoder->CONFIG.SAMPLE_FREQ * 60U) / p_encoder->Params.CountsPerRevolution;
+	return Encoder_DeltaD_ConvertDeltaDToAngularSpeed(p_encoder, deltaD_Ticks * 60U) >> CONFIG_ENCODER_ANGLE_DEGREES_BITS; // overflow?
+//	return (deltaD_Ticks * p_encoder->CONFIG.DELTA_D_SAMPLE_FREQ * 60U) / p_encoder->Params.CountsPerRevolution;
 }
 
-/*
- */
-static inline uint32_t Encoder_DeltaD_ConvertRotationalSpeedToDeltaAngle_RPM(Encoder_T * p_encoder, uint32_t rpm)
-{
-	if (rpm < (UINT32_MAX >> CONFIG_ENCODER_ANGLE_DEGREES_BITS))
-	{
-		return (rpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / (60U * p_encoder->CONFIG.SAMPLE_FREQ);
-	}
-	else
-	{
-		return (1U << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / 60U * rpm / p_encoder->CONFIG.SAMPLE_FREQ;
-	}
-}
 
-static inline uint32_t Encoder_DeltaD_ConvertDeltaAngleToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t angle_UserDegrees)
-{
-	return (angle_UserDegrees * p_encoder->CONFIG.SAMPLE_FREQ >> CONFIG_ENCODER_ANGLE_DEGREES_BITS) * 60U;
-}
 
 #endif

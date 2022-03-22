@@ -45,8 +45,6 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 
 	proportional = (p_pid->Params.KpFactor * error / p_pid->Params.KpDivisor);
 
-//	p_pid->ErrorSum += error;
-
 	integral = (p_pid->Params.KiFactor * p_pid->ErrorSum / p_pid->KiDivisorFreq);
 
 	if 		(integral > p_pid->Params.OutMax) 	{integral = p_pid->Params.OutMax;}

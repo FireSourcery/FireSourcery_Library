@@ -59,47 +59,12 @@ static inline uint32_t Encoder_Motor_GetMechanicalDelta(Encoder_T * p_encoder)
  */
 static inline uint32_t Encoder_Motor_GetElectricalDelta(Encoder_T * p_encoder)
 {
-	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->DeltaD * p_encoder->Params.MotorPolePairs) ;
+	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->DeltaD * p_encoder->Params.MotorPolePairs);
 }
 
-//static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToDeltaD(Encoder_T * p_encoder, uint16_t mechRpm)
-//{
-//	return Encoder_ConvertRotationalSpeedToDeltaD_RPM(p_encoder, mechRpm);
-//}
-//
-//static inline uint32_t Encoder_Motor_ConvertDeltaDToMechanicalRpm(Encoder_T * p_encoder, uint16_t deltaD_Ticks)
-//{
-//	return Encoder_ConvertDeltaDToRotationalSpeed_RPM(p_encoder, deltaD_Ticks);
-//}
 
-/*
- * 10k rpm, 20kHz => 546 ~= .83 percent of revolution
- */
-static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToMechanicalDelta(Encoder_T * p_encoder, uint16_t mechRpm)
-{
-	return Encoder_DeltaD_ConvertRotationalSpeedToDeltaAngle_RPM(p_encoder, mechRpm);
-}
 
-/*!
-	Convert Mechanical Angular Speed [Revolutions per Minute] to Electrical Delta [Degree16s Per Control Period]
 
-	Skips conversion through DeltaD
- */
-static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(Encoder_T * p_encoder, uint16_t mechRpm)
-{
-//	return (mechRpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / 60U * p_encoder->Params.MotorPolePairs / p_encoder->UnitT_Freq;
-	return Encoder_DeltaD_ConvertRotationalSpeedToDeltaAngle_RPM(p_encoder, mechRpm * p_encoder->Params.MotorPolePairs);
-}
-
-/*!
-	Integrates speed to position, use ticks
- */
-//handle inside module or outside?
-//static inline void Encoder_Motor_IntegrateSpeed_RPM(Encoder_T * p_encoder, int32_t * p_theta, uint16_t speed_Rpm)
-//{
-//	uint32_t electricalDelta = Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(p_encoder, speed_Rpm);
-//	*p_theta += electricalDelta;
-//}
 
 /******************************************************************************/
 /*!
@@ -150,7 +115,7 @@ static inline uint32_t Encoder_Motor_GetInterpolationFreq(Encoder_T *p_encoder)
 
 /******************************************************************************/
 /*!
-	Both Capture Modes
+	Position - Both Capture Modes
  */
 /******************************************************************************/
 static inline uint32_t Encoder_Motor_GetMechanicalTheta(Encoder_T * p_encoder)
@@ -212,6 +177,47 @@ static inline int32_t Encoder_Motor_GetGroundSpeed(Encoder_T * p_encoder)
 	return Encoder_GetLinearSpeed(p_encoder);
 }
 
+/******************************************************************************/
+/*!
+	Integrate  speed to position, use ticks
+ */
+/******************************************************************************/
+
+/*
+ * 10k rpm, 20kHz => 546 ~= .83 percent of revolution
+ */
+static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToMechanicalDelta(Encoder_T * p_encoder, uint16_t mechRpm)
+{
+	return Encoder_ConvertRotationalSpeedToControlAngle_RPM(p_encoder, mechRpm);
+}
+
+/*!
+	Convert Mechanical Angular Speed [Revolutions per Minute] to Electrical Delta [Degree16s Per Control Period]
+
+	Skips conversion through DeltaD
+ */
+static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(Encoder_T * p_encoder, uint16_t mechRpm)
+{
+//	return (mechRpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / 60U * p_encoder->Params.MotorPolePairs / p_encoder->UnitT_Freq;
+	return Encoder_ConvertRotationalSpeedToControlAngle_RPM(p_encoder, mechRpm * p_encoder->Params.MotorPolePairs);
+}
+
+//handle inside module or outside?
+//static inline void Encoder_Motor_IntegrateMechanicalRpm(Encoder_T * p_encoder, int32_t * p_theta, uint16_t speed_Rpm)
+//{
+//	uint32_t electricalDelta = Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(p_encoder, speed_Rpm);
+//	*p_theta += electricalDelta;
+//}
+
+//static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToDeltaD(Encoder_T * p_encoder, uint16_t mechRpm)
+//{
+//	return Encoder_ConvertRotationalSpeedToDeltaD_RPM(p_encoder, mechRpm);
+//}
+//
+//static inline uint32_t Encoder_Motor_ConvertDeltaDToMechanicalRpm(Encoder_T * p_encoder, uint16_t deltaD_Ticks)
+//{
+//	return Encoder_ConvertDeltaDToRotationalSpeed_RPM(p_encoder, deltaD_Ticks);
+//}
 
 
 #endif

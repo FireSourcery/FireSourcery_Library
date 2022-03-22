@@ -260,6 +260,7 @@ static const StateMachine_State_T MOTOR_STATE_OPEN_LOOP =
 
 static StateMachine_State_T * Run_InputFloat(Motor_T * p_motor)
 {
+//	Motor_FOC_StopAngleControl
 	return &MOTOR_STATE_FREEWHEEL;
 }
 
@@ -275,14 +276,7 @@ static void Run_Entry(Motor_T * p_motor)
 {
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		if(Motor_GetSpeed(p_motor) == 0U) //move to module?
-		{
-			Motor_FOC_StartAngleControl(p_motor);
-		}
-		else
-		{
-			Motor_FOC_ResumeAngleControl(p_motor);
-		}
+		Motor_FOC_EnterRunState(p_motor);
 	}
 	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{

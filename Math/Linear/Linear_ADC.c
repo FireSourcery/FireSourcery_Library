@@ -75,8 +75,8 @@
 	adcuZero 		= 2000
 	adcuRef 		= 4095
 	physicalRef 	= 10000
-	factor 		= 10000
-	divisor 	= 2095
+	factor 			= 10000
+	divisor 		= 2095
 
 	x0 with shifted b
 		m_shiftedFactor 		= 312821
@@ -89,9 +89,11 @@
 /******************************************************************************/
 void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef)
 {
-	Linear_Init_X0(p_linear, physicalRef, (adcuRef - adcuZero), adcuZero, physicalRef);
+	Linear_Init_X0(p_linear, physicalRef, ((int32_t)adcuRef - (int32_t)adcuZero), adcuZero, physicalRef);
+}
 
-	//alternatively set up using InvFunction //	//use InvFunction to calc using offset as X0S
-	//	Linear_Init(p_linear, (adcuRef - adcuZero), physicalRef, adcuZero, physicalRef);
 
+void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef)
+{
+	Linear_Init_X0(p_linear, -physicalRef, ((int32_t)adcuRef - (int32_t)adcuZero), adcuZero, physicalRef);
 }

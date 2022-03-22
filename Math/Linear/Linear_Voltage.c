@@ -35,7 +35,6 @@
 /******************************************************************************/
 /*!
 	@brief Initialize Linear struct using Voltage Divider parameters.
-	Struct contains numerator and denominator of ADC to Vin conversion factor.
 
 	Init as Linear_Function(adcu) = voltage
 	Supports
@@ -77,6 +76,7 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t 
 	p_linear->SlopeDivisor 	= (((uint32_t)1UL << adcBits) - 1U) * r2; 		// (ADC_MAX*R2)
 #endif
 
-	p_linear->Intercept = 0U;
- 	p_linear->RangeReference = vInMax - 0U;
+	p_linear->XOffset = 0;
+	p_linear->YOffset = 0;
+ 	p_linear->YReference = vInMax - 0U;
 }

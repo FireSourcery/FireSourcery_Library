@@ -234,8 +234,6 @@ typedef struct __attribute__ ((aligned (4U)))
 	uint16_t IBusLimit_Frac16; 	/* Six-Step PID */
 	qfrac16_t IqLimit;			/* FOC PID */
 
-
-
 	//todo account for copy to ram twice
 	Phase_Mode_T				PhasePwmMode;
 }
@@ -249,7 +247,7 @@ typedef const struct Motor_Init_Tag
 {
  	const Motor_Params_T * const P_PARAMS_NVM; //eeprom copy
 //#ifdef CONFIG
- 	const Motor_Params_T * const P_PARAMS_DEFAULT;
+// 	const Motor_Params_T * const P_PARAMS_DEFAULT;
 //#endif
 
 	//const using fixed resistor values
@@ -421,16 +419,10 @@ typedef struct
 }
 Motor_T;
 
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-
 
 /******************************************************************************/
 /*!
-	 User Input
+	  Input
 */
 /******************************************************************************/
 static inline void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
@@ -449,51 +441,46 @@ static inline void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direc
 
 /******************************************************************************/
 /*!
-	 User Input Ramp
+	 Ramp
 */
 /******************************************************************************/
+/*
+ * Proc 20000Hz
+ */
 static inline void Motor_ProcRamp(Motor_T * p_motor)
 {
-	if (p_motor->RampCmd != Linear_Ramp_GetFinal(&p_motor->Ramp))
-	{
-		p_motor->RampCmd = Linear_Ramp_Proc(&p_motor->Ramp, &p_motor->RampIndex);
-	}
+	p_motor->RampCmd = Linear_Ramp_ProcOutput(&p_motor->Ramp, &p_motor->RampIndex, p_motor->RampCmd);
 }
 
+/*
+ * Set 1000Hz
+ */
 static inline void Motor_SetRamp(Motor_T * p_motor, uint16_t userCmd)
 {
-	//todo change init new ramp
-	Linear_Ramp_InitMillis(&p_motor->Ramp, 20000U, p_motor->RampCmd, userCmd, 10U);
-	p_motor->RampIndex = 0;
+	Linear_Ramp_SetTarget(&p_motor->Ramp, userCmd);
 }
 
-//static inline void Motor_ProcRamp(Motor_T * p_motor)
-//{
-////	if (p_motor->RampCmd != Linear_Ramp_GetFinal(&p_motor->Ramp))
-////	{
-////		p_motor->RampCmd = Linear_Ramp_Proc(&p_motor->Ramp, &p_motor->RampIndex);
-////	}
-//
-//	if (p_motor->RampCmd < Linear_Ramp_GetFinal(&p_motor->RampUp))
-//	{
-//		p_motor->RampCmd = Linear_Ramp_Proc(&p_motor->RampUp, &p_motor->RampIndex);
-//	}
-//	else if (p_motor->RampCmd > Linear_Ramp_GetFinal(&p_motor->RampDown))
-//	{
-//		p_motor->RampCmd = Linear_Ramp_Proc(&p_motor->RampDown, &p_motor->RampIndex);
-//	}
-//}
-//
-///*
-// * UserCmd is final value
-// */
-//static inline void Motor_SetRamp(Motor_T * p_motor, uint16_t userCmd)
-//{
-//	Linear_Ramp_SetFinal(&p_motor->RampUp, userCmd);
-//	Linear_Ramp_SetFinal(&p_motor->RampDown, userCmd);
-//
-////	Linear_Ramp_SetFinal(p_motor->Ramp, userCmd);
-//}
+static inline void Motor_SetRampIndex(Motor_T * p_motor, uint16_t userCmd)
+{
+	Linear_Ramp_SetIndex(&p_motor->Ramp, &p_motor->RampIndex, userCmd);
+}
+
+static inline void Motor_ResetRamp(Motor_T * p_motor)
+{
+	p_motor->RampCmd = 0U;
+	p_motor->RampIndex = 0U;
+	Linear_Ramp_SetTarget(&p_motor->Ramp, 0);
+}
+
+/*
+ * match proportional to speed
+ */
+static inline void Motor_ResumeRamp(Motor_T * p_motor, uint16_t userCmd)
+{
+//	p_motor->RampCmd = Speed_Frac16;
+	Linear_Ramp_SetTarget(&p_motor->Ramp, userCmd);
+//	Linear_Ramp_SetIndex(&p_motor->Ramp, &p_motor->RampIndex, uint16_t userCmd)  ;
+}
 
 /******************************************************************************/
 /*!
@@ -508,7 +495,7 @@ static inline void Motor_SetRamp(Motor_T * p_motor, uint16_t userCmd)
 /******************************************************************************/
 static inline void Motor_CaptureSpeed(Motor_T * p_motor)
 {
-	p_motor->Speed_RPM = (Encoder_GetRotationalSpeed_RPM(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
+	p_motor->Speed_RPM = (Encoder_GetRotationalSpeed_RPM(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U; //todo optimize encoder get rpmfrac16
 	p_motor->Speed_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedMax_RPM);
 
 //	p_motor->rampcmd_RPM = p_motor->RampCmd * p_motor->Parameters.SpeedMax_RPM / p_motor->Speed_RPM / 65535U;
@@ -582,6 +569,7 @@ static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
 static inline void Motor_Stop(Motor_T * p_motor)
 {
 	Phase_Float(&p_motor->Phase);
+	Motor_ResetRamp(p_motor);
 //	p_motor->ControlTimerBase = 0U; //ok to reset timer
 	Timer_StartPeriod(&p_motor->ControlTimer, 2000U); //100ms
 }

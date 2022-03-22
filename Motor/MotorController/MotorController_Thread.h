@@ -140,9 +140,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 			Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]);
 		}
 
-
-
-
 		//main thread conversion remainder, motor heat
 //#ifdef DEBUG
 

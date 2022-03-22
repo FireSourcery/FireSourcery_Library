@@ -62,23 +62,23 @@ void Motor_Init(Motor_T * p_motor)
 }
 
 
-void Motor_LoadDefault(Motor_T * p_motor)
-{
-	if (p_motor->CONFIG.P_PARAMS_DEFAULT != 0U)
-	{
-		memcpy(&p_motor->Parameters, p_motor->CONFIG.P_PARAMS_DEFAULT, sizeof(Motor_Params_T));
-	}
-
-	Hall_LoadDefault(&p_motor->Hall);
-//	Encoder_LoadDefault(&p_motor->Encoder);
-//	PID_LoadDefault(&p_motor->PidSpeed);
-//	PID_LoadDefault(&p_motor->PidIq);
-//	PID_LoadDefault(&p_motor->PidId);
-//	PID_LoadDefault(&p_motor->PidIBus);
-//	Thermistor_LoadDefault(&p_motor->Thermistor);
-
-	Motor_InitReboot(p_motor);
-}
+//void Motor_LoadDefault(Motor_T * p_motor)
+//{
+//	if (p_motor->CONFIG.P_PARAMS_DEFAULT != 0U)
+//	{
+//		memcpy(&p_motor->Parameters, p_motor->CONFIG.P_PARAMS_DEFAULT, sizeof(Motor_Params_T));
+//	}
+//
+//	Hall_LoadDefault(&p_motor->Hall);
+////	Encoder_LoadDefault(&p_motor->Encoder);
+////	PID_LoadDefault(&p_motor->PidSpeed);
+////	PID_LoadDefault(&p_motor->PidIq);
+////	PID_LoadDefault(&p_motor->PidId);
+////	PID_LoadDefault(&p_motor->PidIBus);
+////	Thermistor_LoadDefault(&p_motor->Thermistor);
+//
+//	Motor_InitReboot(p_motor);
+//}
 
 
 
@@ -116,6 +116,11 @@ void Motor_InitReboot(Motor_T * p_motor)
 //	BEMF_Init(&p_motor->Bemf);
 
 	PID_Init(&p_motor->PidSpeed);
+
+
+
+
+
 	PID_Init(&p_motor->PidIq);
 	PID_Init(&p_motor->PidId);
 	PID_Init(&p_motor->PidIBus);
@@ -130,22 +135,36 @@ void Motor_InitReboot(Motor_T * p_motor)
 	/*
 	 * Run calibration later, default zero to middle adc
 	 */
-
-//#ifdef CONFIG_MOTOR_CURRENT_SAMPLE_INVERT
-//	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU, (int32_t)0-p_motor->Parameters.IRefMax_Amp); //scales 4095 to physical units. alternatively use opamp equation
-//	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU, (int32_t)0-p_motor->Parameters.IRefMax_Amp);
-//	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, p_motor->Parameters.IcRefMax_ADCU, (int32_t)0-p_motor->Parameters.IRefMax_Amp);
-//#elif defined(CONFIG_MOTOR_CURRENT_SAMPLE_NONINVERT)
-	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp); //scales 4095 to physical units. alternatively use opamp equation
+	//scales 4095 to physical units. alternatively use opamp equation
+#ifdef CONFIG_MOTOR_CURRENT_SAMPLE_INVERT
+	Linear_ADC_Init_Inverted(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
+	Linear_ADC_Init_Inverted(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
+	Linear_ADC_Init_Inverted(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, p_motor->Parameters.IcRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
+#elif defined(CONFIG_MOTOR_CURRENT_SAMPLE_NONINVERT)
+	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp);
 	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp);
 	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, p_motor->Parameters.IcRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp);
-//#endif
+#endif
 
 	//Linear_Init(&(p_Motor->VFMap), vPerRPM, 1, vOffset); //f(freq) = voltage
 
-//	Linear_Ramp_InitSlope(&p_motor->RampUp, 0U, 65535U, 32);
-//	Linear_Ramp_InitSlope(&p_motor->RampDown, 65535U, 0U, -32);
+	/*
+	 * Index max is 13,107
+	 */
+	Linear_Ramp_InitMillis(&p_motor->Ramp, 10U, 20000U, 0U, 1000U); /* final value is overwritten, slope is persistent */
+	p_motor->RampCmd = 0;
 	p_motor->RampIndex = 0;
+
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
+	{
+
+	}
+	else
+	{
+		//can start at 0 speed in foc mode for continuous angle displacements
+		Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 2000U, 20000U, 0U, 300U);
+	}
+	p_motor->OpenLoopRampIndex = 0U;
 
 	p_motor->Direction 				= MOTOR_DIRECTION_CCW;
 	p_motor->Speed_RPM 				= 0U;
@@ -153,38 +172,38 @@ void Motor_InitReboot(Motor_T * p_motor)
 	p_motor->ControlTimerBase 		= 0U;
 }
 
- void Motor_SetControlMode(Motor_T * p_motor, Motor_ControlMode_T mode)
-{
-	switch(mode)
-	{
-		case MOTOR_CONTROL_MODE_OPEN_LOOP:
-			p_motor->ControlMode.OpenLoop = 1U;
-			p_motor->ControlMode.Current = 0U;
-			break;
-
-		case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:
-			p_motor->ControlMode.Speed = 0U;
-			p_motor->ControlMode.Current = 0U;
-			break;
-
-	//	MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ: break;
-
-		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:
-			p_motor->ControlMode.Speed = 1U;
-			p_motor->ControlMode.Current = 0U;
-			break;
-
-		case MOTOR_CONTROL_MODE_CONSTANT_CURRENT:
-			p_motor->ControlMode.Speed = 0U;
-			p_motor->ControlMode.Current = 1U;
-			break;
-
-		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT:
-			p_motor->ControlMode.Speed = 1U;
-			p_motor->ControlMode.Current = 1U;
-			break;
-	}
-}
+// void Motor_SetControlMode(Motor_T * p_motor, Motor_ControlMode_T mode)
+//{
+//	switch(mode)
+//	{
+//		case MOTOR_CONTROL_MODE_OPEN_LOOP:
+//			p_motor->ControlMode.OpenLoop = 1U;
+//			p_motor->ControlMode.Current = 0U;
+//			break;
+//
+//		case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:
+//			p_motor->ControlMode.Speed = 0U;
+//			p_motor->ControlMode.Current = 0U;
+//			break;
+//
+//	//	MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ: break;
+//
+//		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:
+//			p_motor->ControlMode.Speed = 1U;
+//			p_motor->ControlMode.Current = 0U;
+//			break;
+//
+//		case MOTOR_CONTROL_MODE_CONSTANT_CURRENT:
+//			p_motor->ControlMode.Speed = 0U;
+//			p_motor->ControlMode.Current = 1U;
+//			break;
+//
+//		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT:
+//			p_motor->ControlMode.Speed = 1U;
+//			p_motor->ControlMode.Current = 1U;
+//			break;
+//	}
+//}
 
 
 /******************************************************************************/

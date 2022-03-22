@@ -39,12 +39,12 @@
 #include <stdbool.h>
 
 
-void Motor_CapturePwmOnFlag(Motor_T * p_motor)
-{
-	p_motor->IsPwmOn = true;
-//	p_motor->PwmOnTime = Debug_CaptureElapsed(6);
-
-}
+//void Motor_CapturePwmOnFlag(Motor_T * p_motor)
+//{
+//	p_motor->IsPwmOn = true;
+////	p_motor->PwmOnTime = Debug_CaptureElapsed(6);
+//
+//}
 
 /*
  * Sets options only

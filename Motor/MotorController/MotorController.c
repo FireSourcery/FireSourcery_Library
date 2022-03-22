@@ -64,8 +64,6 @@ void MotorController_Init(MotorController_T * p_controller)
 //	Flash_Init(&p_controller->CONFIG.P_FLASH);
 	EEPROM_Init_Blocking(&p_controller->Eeprom);
 
-//			MotorController_LoadDefault(&MotorControllerMain); //debug temp
-
 	if (p_controller->CONFIG.P_PARAMS_NVM != 0U)
 	{
 		memcpy(&p_controller->Parameters, p_controller->CONFIG.P_PARAMS_NVM, sizeof(MotorController_Params_T));
