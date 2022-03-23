@@ -39,12 +39,5 @@
 	#define CONFIG_LINEAR_DIVIDE_SHIFT
 #endif
 
-// compile time const adc bits for all linear adc instances
-//#ifdef CONFIG_LINEAR_ADC_BITS
-//
-//#else
-//	#define CONFIG_LINEAR_ADC_BITS 12
-//#endif
-
 
 #endif

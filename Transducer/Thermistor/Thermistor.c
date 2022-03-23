@@ -34,7 +34,7 @@
 #include <string.h>
 #include <math.h>
 
-uint32_t Thermistor_Init(Thermistor_T * p_thermistor)
+void Thermistor_Init(Thermistor_T * p_thermistor)
 {
 	if(p_thermistor->CONFIG.P_PARAMS != 0U)
 	{
@@ -107,7 +107,7 @@ static float ConvertToDegC(Thermistor_T * p_thermistor, uint16_t adcu)
 
 	//switch(topology)
 //	{
-//
+// GetRth_PullUp(  p_thermistor,   adcu)
 //	}
 
 	float tSteinhart = Steinhart(p_thermistor, rThermistor);

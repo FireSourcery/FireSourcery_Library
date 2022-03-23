@@ -145,8 +145,8 @@ void PID_Reset(PID_T * p_pid)
 //int32_t PID_GetKd_Frac16(PID_T * p_pid) {return  p_pid->Params.Kd;}
 
 int32_t PID_GetKp_Int(PID_T * p_pid, uint16_t scalar) {return scalar * p_pid->Params.KpFactor / p_pid->Params.KpDivisor;}
-int32_t PID_GetKi_Int(PID_T * p_pid, uint16_t scalar) {return scalar *  p_pid->Params.KiFactor / p_pid->Params.KiDivisor;}
-int32_t PID_GetKd_Int(PID_T * p_pid, uint16_t scalar) {return scalar *  p_pid->Params.KdFactor / p_pid->Params.KdDivisor;}
+int32_t PID_GetKi_Int(PID_T * p_pid, uint16_t scalar) {return scalar * p_pid->Params.KiFactor / p_pid->Params.KiDivisor;}
+int32_t PID_GetKd_Int(PID_T * p_pid, uint16_t scalar) {return scalar * p_pid->Params.KdFactor / p_pid->Params.KdDivisor;}
 
 PID_Direction_T PID_GetDirection(PID_T *p_pid)
 {

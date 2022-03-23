@@ -36,7 +36,7 @@
 
 #define RAMP_SHIFT 14U
 /*
- * slope must always be positive for index version
+ * slope must always be positive for directional index version
  */
 
 /******************************************************************************/

@@ -56,7 +56,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 //1ms isr priority
 static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor)
 {
-
+//check fault
 }
 
 //Low Freq Main //user/monitor thread 1ms low priority

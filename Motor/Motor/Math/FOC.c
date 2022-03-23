@@ -59,6 +59,12 @@ void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd)
 
 void FOC_SetOuputZero(FOC_T * p_foc)
 {
+	p_foc->DutyA = 65536U/2U;
+	p_foc->DutyB = 65536U/2U;
+	p_foc->DutyC = 65536U/2U;
+}
+
+
 //	p_foc->VectorMaxMagnitude = QFRAC16_MAX;
 //	p_foc->VectorMaxD = 0U;
 
@@ -76,10 +82,6 @@ void FOC_SetOuputZero(FOC_T * p_foc)
 //	p_foc->Sine = 0; /* save for inverse park call */
 //	p_foc->Cosine = 0;
 
-	p_foc->DutyA = 65536U/2U;
-	p_foc->DutyB = 65536U/2U;
-	p_foc->DutyC = 65536U/2U;
-
 //	*p_foc->p_PwmA = 0;
 //	*p_foc->p_PwmB = 0;
 //	*p_foc->p_PwmC = 0;
@@ -89,7 +91,3 @@ void FOC_SetOuputZero(FOC_T * p_foc)
 //
 //	p_foc->dReq = 0;
 //	p_foc->qReq = 0;
-
-}
-
-

@@ -192,7 +192,7 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 //	return isOverLimit;
 //}
 
-static inline void ProcMotorFocVoltageMode(Motor_T * p_motor, qfrac16_t vqReq, qfrac16_t vdReq)
+static  void ProcMotorFocVoltageMode(Motor_T * p_motor, qfrac16_t vqReq, qfrac16_t vdReq)
 {
 //	if (PollMotorFocIqOverLimit(p_motor) == false)
 //	{
@@ -219,7 +219,7 @@ static inline void ProcMotorFocVoltageMode(Motor_T * p_motor, qfrac16_t vqReq, q
 	(vqReq > qReqMax) ? FOC_SetVq(&p_motor->Foc, qReqMax) : FOC_SetVq(&p_motor->Foc, vqReq);
 }
 
-static inline void ProcMotorFocCurrentFeedbackLoop(Motor_T * p_motor, qfrac16_t iqReq, qfrac16_t idReq)
+static  void ProcMotorFocCurrentFeedbackLoop(Motor_T * p_motor, qfrac16_t iqReq, qfrac16_t idReq)
 {
 	if(iqReq > p_motor->Parameters.IqLimit)
 	{

@@ -33,70 +33,70 @@
 
 #include <stdint.h>
 
-static inline int32_t linear_f(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t x)
-{
-	return (x * m_factor / m_divisor + b);
-}
-
-/*
- * y = m*x + b, m in f(x) direction
- */
-static inline int32_t linear_invf(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t y)
-{
-	return ((y - b) * m_divisor / m_factor);
-}
-
-static inline int32_t linear_f_round(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t x)
-{
-	return ((m_factor * x + (m_divisor / 2)) / m_divisor + b); // add (line->SlopeDivisor/2) to round up .5
-}
-
-static inline int32_t linear_invf_round(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t y)
-{
-	return (((y - b) * m_divisor + (m_factor / 2)) / m_factor); // add (line->SlopeFactor/2) to round up .5
-}
-
-/*
- * y = ((x - x0) * m_factor / m_divisor);
- */
-static inline int32_t linear_f_x0(int32_t m_factor, int32_t m_divisor, int32_t x0, int32_t x)
-{
-	return linear_invf(m_divisor, m_factor, x0, x);
-}
-
-/*
- * x = y * m_divisor / m_factor + x0,  m in f(x) direction
- */
-static inline int32_t linear_invf_x0(int32_t m_factor, int32_t m_divisor, int32_t x0, int32_t y)
-{
-	return linear_f(m_divisor, m_factor, x0, y);
-}
-
-/*
- * y_frac16 = (65536/yref)*(x * m_factor / m_divisor + b),
- *
- *
- * = ((m_factor * x * 65536) / (m_divisor * yref) + (b * 65536 / yref));
- * = ((m_factor * x * 65536 / m_divisor) + (b * 65536)) / yref;
- */
-
-static inline int32_t linear_f_frac16(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t yref, int32_t x)
-{
-//	return ((m_factor * x + b * m_divisor) * 65536) / (m_divisor * yref);
-
-	return ((65536 * m_factor / m_divisor * x) + (65536 * b)) / yref; //adjust for overflow
-}
-
-/*
- * m in f(x) direction
- * ((y_frac16 / 65536 * yref - b) * m_divisor / m_factor);
- */
-static inline int32_t linear_invf_frac16(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t yref, int32_t y_frac16)
-{
-//	return (m_divisor * (y_frac16 * yref - b * 65536)) / (m_factor * 65536);
-
-	return linear_invf(m_factor, m_divisor, b, y_frac16 * yref / 65536);
-}
+//static inline int32_t linear_f(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t x)
+//{
+//	return (x * m_factor / m_divisor + b);
+//}
+//
+///*
+// * y = m*x + b, m in f(x) direction
+// */
+//static inline int32_t linear_invf(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t y)
+//{
+//	return ((y - b) * m_divisor / m_factor);
+//}
+//
+//static inline int32_t linear_f_round(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t x)
+//{
+//	return ((m_factor * x + (m_divisor / 2)) / m_divisor + b); // add (line->SlopeDivisor/2) to round up .5
+//}
+//
+//static inline int32_t linear_invf_round(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t y)
+//{
+//	return (((y - b) * m_divisor + (m_factor / 2)) / m_factor); // add (line->SlopeFactor/2) to round up .5
+//}
+//
+///*
+// * y = ((x - x0) * m_factor / m_divisor);
+// */
+//static inline int32_t linear_f_x0(int32_t m_factor, int32_t m_divisor, int32_t x0, int32_t x)
+//{
+//	return linear_invf(m_divisor, m_factor, x0, x);
+//}
+//
+///*
+// * x = y * m_divisor / m_factor + x0,  m in f(x) direction
+// */
+//static inline int32_t linear_invf_x0(int32_t m_factor, int32_t m_divisor, int32_t x0, int32_t y)
+//{
+//	return linear_f(m_divisor, m_factor, x0, y);
+//}
+//
+///*
+// * y_frac16 = (65536/yref)*(x * m_factor / m_divisor + b),
+// *
+// *
+// * = ((m_factor * x * 65536) / (m_divisor * yref) + (b * 65536 / yref));
+// * = ((m_factor * x * 65536 / m_divisor) + (b * 65536)) / yref;
+// */
+//
+//static inline int32_t linear_f_frac16(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t yref, int32_t x)
+//{
+////	return ((m_factor * x + b * m_divisor) * 65536) / (m_divisor * yref);
+//
+//	return ((65536 * m_factor / m_divisor * x) + (65536 * b)) / yref; //adjust for overflow
+//}
+//
+///*
+// * m in f(x) direction
+// * ((y_frac16 / 65536 * yref - b) * m_divisor / m_factor);
+// */
+//static inline int32_t linear_invf_frac16(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t yref, int32_t y_frac16)
+//{
+////	return (m_divisor * (y_frac16 * yref - b * 65536)) / (m_factor * 65536);
+//
+//	return linear_invf(m_factor, m_divisor, b, y_frac16 * yref / 65536);
+//}
 
 
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
@@ -112,7 +112,7 @@ static inline int32_t linear_f_shift(int32_t m_shifted, uint8_t shift, int32_t x
 
 static inline int32_t linear_invf_shift(int32_t invm_shifted, uint8_t shift, int32_t x0, int32_t y0, int32_t y)
 {
-	return ((((y - y0) * invm_shifted) >> shift) + x0);
+	return (((invm_shifted * (y - y0)) >> shift) + x0);
 
 	//b is shifted, y is not shifted
 //	return ((((y << shift) - b) >> shift * invm_shifted) >> shift);
