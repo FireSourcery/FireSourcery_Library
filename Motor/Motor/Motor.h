@@ -334,7 +334,7 @@ typedef struct
 	//Run substate flags
 	Motor_Direction_T Direction; //active spin direction
 	bool Regen; //can change to quadrant to include plugging
-	Motor_ControlModeFlags_T ControlMode;
+//	Motor_ControlModeFlags_T ControlMode;
 
 	Linear_T Ramp;
 //	Linear_T RampUp;
@@ -347,7 +347,7 @@ typedef struct
 	Timer_T SpeedTimer;			// SpeedCalc Timer
 	uint16_t Speed_RPM;			// Common Feedback Variable
 	uint32_t Speed_Frac16; 		/* Can over saturate */
-	uint16_t SpeedControl; 		/* Speed PID output, updated once per millis */
+	int32_t SpeedControl; 		/* Speed PID output, (VPwm, Vq, Iq) updated once per millis */
 
 	/*
 	 * Open-loop
@@ -450,6 +450,7 @@ static inline void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direc
 static inline void Motor_ProcRamp(Motor_T * p_motor)
 {
 	p_motor->RampCmd = Linear_Ramp_ProcOutput(&p_motor->Ramp, &p_motor->RampIndex, p_motor->RampCmd);
+//	p_motor->RampCmd = Linear_Ramp_GetTarget(&p_motor->Ramp); //disables rramp
 }
 
 /*
@@ -475,11 +476,10 @@ static inline void Motor_ResetRamp(Motor_T * p_motor)
 /*
  * match proportional to speed
  */
-static inline void Motor_ResumeRamp(Motor_T * p_motor, uint16_t userCmd)
+static inline void Motor_ResumeRamp(Motor_T * p_motor)
 {
-//	p_motor->RampCmd = Speed_Frac16;
-	Linear_Ramp_SetTarget(&p_motor->Ramp, userCmd);
-//	Linear_Ramp_SetIndex(&p_motor->Ramp, &p_motor->RampIndex, uint16_t userCmd)  ;
+	p_motor->RampCmd = p_motor->Speed_Frac16;
+	Linear_Ramp_SetIndex(&p_motor->Ramp, &p_motor->RampIndex, p_motor->Speed_Frac16);
 }
 
 /******************************************************************************/
@@ -525,16 +525,16 @@ static inline void Motor_ProcSpeedFeedback(Motor_T * p_motor)
 //	return captureSpeed;
 //}
 
-static inline void Motor_ResumeSpeedFeedback(Motor_T * p_motor)
-{
+//static inline void Motor_ResumeSpeedFeedback(Motor_T * p_motor)
+//{
 //	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
 //	{
-		PID_SetIntegral(&p_motor->PidSpeed, p_motor->Speed_Frac16);  //proportional to current speed
-//		PID_SetIntegral(&p_motor->PidSpeed, 0); //or use vpwm, ibus, vq, iq
-		p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->Speed_Frac16);
-		Timer_Restart(&p_motor->SpeedTimer);
+//		PID_SetIntegral(&p_motor->PidSpeed, p_motor->Speed_Frac16);  //proportional to current speed
+////		PID_SetIntegral(&p_motor->PidSpeed, 0); //or use vpwm, ibus, vq, iq
+//		p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->Speed_Frac16);
+//		Timer_Restart(&p_motor->SpeedTimer);
 //	}
-}
+//}
 
 static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
 {

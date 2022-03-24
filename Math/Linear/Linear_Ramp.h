@@ -43,6 +43,11 @@ static inline void Linear_Ramp_SetTarget(Linear_T * p_linear, int32_t target)
 	p_linear->YReference = target;
 }
 
+static inline int32_t Linear_Ramp_GetTarget(Linear_T * p_linear)
+{
+	return p_linear->YReference;
+}
+
 //shallow slope use index for more accurate fixed point
 static inline int32_t Linear_Ramp_ProcOutputIncIndex(Linear_T * p_linear, uint32_t * p_index, uint32_t indexIncreament, int32_t currentRampValue)
 {

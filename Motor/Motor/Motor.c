@@ -117,10 +117,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	PID_Init(&p_motor->PidSpeed);
 
-
-
-
-
 	PID_Init(&p_motor->PidIq);
 	PID_Init(&p_motor->PidId);
 	PID_Init(&p_motor->PidIBus);

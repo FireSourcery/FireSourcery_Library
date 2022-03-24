@@ -55,6 +55,10 @@ typedef const struct StateMachine_State_Tag
 	 * Pointer to array of functions that return a pointer to the next state
 	 * No null pointer check, user must supply empty table
 	 * Nontransition (Output only) Inputs - Mealy machine style outputs, return 0
+	 *
+	 *
+	 * Transition Functions Maybe be self transitions, same input mapped to different output during different states
+	 *
 	 */
 	const StateMachine_Transition_T * const P_TRANSITION_TABLE;
 

@@ -85,24 +85,29 @@ static inline void Motor_User_DisableControl(Motor_T * p_motor)
 //	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
 //}
 
+
+//combined accelerlate and cmd value
+//static inline void Motor_User_SetCmdAccelerate(Motor_T * p_motor, uint16_t cmd)
 static inline void Motor_User_SetCmd(Motor_T * p_motor, uint16_t cmd)
 {
-	if (p_motor->Regen == 1U)
-	{
-		Critical_Enter();
-		p_motor->Regen = 0U;
-		Motor_ResetRamp(p_motor); //start from 0 for now //match resume speed/current?
-//		Motor_ResumeRamp(p_motor);
-//		Motor_ResumeSpeedFeedback(p_motor);
-		Critical_Exit();
-	}
-	else
-	{
-		Motor_SetRamp(p_motor, cmd);
-	}
-
+//	Critical_Enter();
+	Motor_SetRamp(p_motor, cmd);
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
+//	Critical_Exit();
 }
+
+
+//static inline void Motor_User_SetCmdAccelerate(Motor_T * p_motor, uint16_t cmd)
+//{
+//	Motor_SetRamp(p_motor, cmd);
+//	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
+//}
+
+//static inline void Motor_User_SetModeMotoring(Motor_T * p_motor, uint16_t cmd)
+//{
+//	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
+//}
+
 
 //static inline void Motor_User_SetCmdSpeed(Motor_T * p_motor, uint16_t speed)
 //{
@@ -117,34 +122,6 @@ static inline void Motor_User_SetCmd(Motor_T * p_motor, uint16_t cmd)
  */
 static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 {
-	if (p_motor->Regen == 0U)
-	{
-		Critical_Enter();
-		p_motor->Regen = 1U;
-		Motor_ResetRamp(p_motor); //ramp starts at req 0 current for foc mode.
-
-		if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-		{
-//			if (((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)))
-//			{
-				PID_SetIntegral(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc));
-//			}
-		}
-//		else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-//		{
-//			if ((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT))
-//			{
-//				PID_SetIntegral(&p_motor->PidIBus, p_motor->IBus_Frac16); //set vpwm proportional to current ibus
-//			}
-//		}
-
-		Critical_Exit();
-	}
-	else
-	{
-		Motor_SetRamp(p_motor, intensity);
-	}
-
 //	p_motor->ControlMode.Current = 1U;
 
 //	switch (p_motor->Parameters.BrakeMode)
@@ -186,8 +163,10 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 //		default :
 //			break;
 //	}
-
+//	Critical_Enter();
+	Motor_SetRamp(p_motor, intensity);
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DECELERATE);
+//	Critical_Exit();
 }
 
 //or set buffered direction, check on state machine  ?
