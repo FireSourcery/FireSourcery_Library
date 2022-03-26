@@ -398,7 +398,7 @@ typedef struct
 	//	  bool IsIOverLimitError;
 //	bool IsBrake;
 
-	volatile uint32_t HallDebug[10];
+	volatile uint32_t HallDebug[13];
 
 
 	volatile uint32_t MicrosRef; //debug

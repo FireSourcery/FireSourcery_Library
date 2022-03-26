@@ -181,7 +181,7 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 static void ProcMotorFocVoltageMode(Motor_T * p_motor, qfrac16_t vqReq, qfrac16_t vdReq)
 {
 	qfrac16_t vqReqLimit;
-	//use direction or compare both bounds
+
 	if (p_motor->Direction == MOTOR_DIRECTION_CCW)
 	{
 		//match pid output state on overlimit for faster response
@@ -265,7 +265,7 @@ static inline qfrac16_t GetMotorFocSpeedFeedback(Motor_T * p_motor)
 
 /*
  * Sign indicates absolute direction, positive is virtual CCW.
- * B and Beta are  virtual CCW of A/Alpha.
+ * B and Beta are virtual CCW of A/Alpha.
  * Iq sign is relative to rotor direction, NOT Vq direction.
  *
  * CCW +Vq +Iq => Forward Motoring Q1
@@ -363,7 +363,6 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
 //	p_motor->DebugTime[0] = SysTime_GetMicros() - p_motor->MicrosRef;
 	AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
-	//todo set sample order depending on pwm sector
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IA);
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IB);
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_IC);
@@ -375,7 +374,7 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 
 //	p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
 //	FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
-	FOC_ProcClarkePark(&p_motor->Foc); //using prev adc reading
+	FOC_ProcClarkePark(&p_motor->Foc);
 //	p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 	ProcMotorFocControlFeedback(p_motor);
@@ -460,56 +459,7 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 		default:
 			break;
 	}
-
-//	if (p_motor->Direction == MOTOR_DIRECTION_CCW)
-//	{
-//		//output is VqReq
-//		//limit plugging voltage output here or
-//		p_motor->PidIq.Params.OutMax = 32767;
-//		p_motor->PidIq.Params.OutMin = 0;
-//	}
-//	else
-//	{
-//		p_motor->PidIq.Params.OutMax = 0;
-//		p_motor->PidIq.Params.OutMin = -32767;
-//	}
-//
-//	if(p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
-//	{
-//		//output SpeedControl is IqReq
-//		p_motor->PidSpeed.Params.OutMax = 32767;
-//		p_motor->PidSpeed.Params.OutMin = -32767;
-//	}
-//	else if(p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE)
-//	{
-//		//output SpeedControl is VqReq
-//		//bound negative voltage here. speed out compensate during direction calc
-//		if (p_motor->Direction == MOTOR_DIRECTION_CCW)
-//		{
-//			p_motor->PidSpeed.Params.OutMax = 32767;
-//			p_motor->PidSpeed.Params.OutMin = 0;
-//		}
-//		else
-//		{
-//			p_motor->PidSpeed.Params.OutMax = 0;
-//			p_motor->PidSpeed.Params.OutMin = -32767;
-//		}
-//	}
 }
-
-
-//static inline void Motor_FOC_EnterRunState(Motor_T * p_motor)
-//{
-//	if(p_motor->Speed_RPM == 0U)
-//	{
-//		Motor_FOC_StartAngleControl(p_motor);
-//	}
-//	else
-//	{
-//		Motor_FOC_ResumeAngleControl(p_motor);
-//	}
-//}
-
 
 static inline void Motor_FOC_StopAngleControl(Motor_T * p_motor)
 {
@@ -519,9 +469,6 @@ static inline void Motor_FOC_StopAngleControl(Motor_T * p_motor)
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
-
-
-
 
 
 #endif

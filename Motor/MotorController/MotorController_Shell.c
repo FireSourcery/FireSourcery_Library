@@ -241,6 +241,8 @@ static int Cmd_calibrate(const MotorController_T * p_motorController, int argc, 
 {
 	(void)argv;
 
+	Motor_T * p_motor = MotorController_GetPtrMotor(p_motorController, 0U);
+
     if(argc == 1U)
     {
 
@@ -249,15 +251,67 @@ static int Cmd_calibrate(const MotorController_T * p_motorController, int argc, 
     {
     	if(strncmp(argv[1U], "encoder", 8U) == 0U)
     	{
-    		Motor_User_ActivateCalibrationEncoder(MotorController_GetPtrMotor(p_motorController, 0U));
+    		Motor_User_ActivateCalibrationEncoder(p_motor);
     	}
     	else if(strncmp(argv[1U], "hall", 5U) == 0U)
     	{
-    		Motor_User_ActivateCalibrationHall(MotorController_GetPtrMotor(p_motorController, 0U));
+    		Motor_User_ActivateCalibrationHall(p_motor);
     	}
     	else if(strncmp(argv[1U], "adc", 4U) == 0U)
     	{
-    		Motor_User_ActivateCalibrationAdc(MotorController_GetPtrMotor(p_motorController, 0U));
+    		Motor_User_ActivateCalibrationAdc(p_motor);
+    	}
+    	else if(strncmp(argv[1U], "hallprint", 10U) == 0U)
+    	{
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "Phase A: ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->HallDebug[1]);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "	");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "  Phase AC: ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->HallDebug[2]);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "Phase -C: ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->HallDebug[3]);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "	");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "  Phase BC: ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->HallDebug[4]);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "Phase B: ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->HallDebug[5]);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "	");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "  Phase BA: ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->HallDebug[6]);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "Phase -A: ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->HallDebug[7]);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "	");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "  Phase CA: ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->HallDebug[8]);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "Phase C: ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->HallDebug[9]);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "	");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "  Phase CB: ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->HallDebug[10]);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "Phase -B: ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->HallDebug[11]);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "	");
+
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "  Phase AB: ");
+    		Terminal_SendNum(&p_motorController->Shell.Terminal, p_motor->HallDebug[12]);
+        	Terminal_SendString(&p_motorController->Shell.Terminal, "\r\n");
     	}
     }
 

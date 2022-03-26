@@ -469,55 +469,130 @@ bool Motor_CalibrateHall(Motor_T * p_motor)
 	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
 	bool isComplete = false;
 
+//	if (Timer_Poll(&p_motor->ControlTimer) == true)
+//	{
+//		switch (p_motor->CalibrationSubstateStep)
+//		{
+//		case 0U:
+//			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, 0U);
+//			p_motor->CalibrationSubstateStep = 1U;
+//			break;
+//
+//		case 1U:
+//			Hall_CalibratePhaseA(&p_motor->Hall);
+//			Phase_ActivateDuty(&p_motor->Phase, duty, duty, 0U);
+//			p_motor->CalibrationSubstateStep = 2U;
+//			break;
+//
+//		case 2U:
+//			Hall_CalibratePhaseInvC(&p_motor->Hall);
+//			Phase_ActivateDuty(&p_motor->Phase, 0U, duty, 0);
+//			p_motor->CalibrationSubstateStep = 3U;
+//			break;
+//
+//		case 3U:
+//			Hall_CalibratePhaseB(&p_motor->Hall);
+//			Phase_ActivateDuty(&p_motor->Phase, 0U, duty, duty);
+//			p_motor->CalibrationSubstateStep = 4U;
+//			break;
+//
+//		case 4U:
+//			Hall_CalibratePhaseInvA(&p_motor->Hall);
+//			Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, duty);
+//			p_motor->CalibrationSubstateStep = 5U;
+//			break;
+//
+//		case 5U:
+//			Hall_CalibratePhaseC(&p_motor->Hall);
+//			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, duty);
+//			p_motor->CalibrationSubstateStep = 6U;
+//			break;
+//
+//		case 6U:
+//			Hall_CalibratePhaseInvB(&p_motor->Hall);
+//			Phase_Float(&p_motor->Phase);
+//			isComplete = true;
+//			break;
+//
+//		default:
+//			break;
+//		}
+//	}
+
 	if (Timer_Poll(&p_motor->ControlTimer) == true)
 	{
+		p_motor->HallDebug[p_motor->CalibrationSubstateStep] = Hall_ReadSensors(&p_motor->Hall); //PhaseA starts at 1
+
 		switch (p_motor->CalibrationSubstateStep)
 		{
-		case 0U:
-			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, 0U);
-			p_motor->CalibrationSubstateStep = 1U;
-			break;
+			case 0U :
+				Phase_Polar_ActivateA(&p_motor->Phase, duty);
+				break;
 
-		case 1U:
-			Hall_CalibratePhaseA(&p_motor->Hall);
-			Phase_ActivateDuty(&p_motor->Phase, duty, duty, 0U);
-			p_motor->CalibrationSubstateStep = 2U;
-			break;
+			case 1U :
+				Hall_CalibratePhaseA(&p_motor->Hall);
+				Phase_Polar_ActivateAC(&p_motor->Phase, duty);
+				break;
 
-		case 2U:
-			Hall_CalibratePhaseInvC(&p_motor->Hall);
-			Phase_ActivateDuty(&p_motor->Phase, 0U, duty, 0);
-			p_motor->CalibrationSubstateStep = 3U;
-			break;
+			case 2U :
+				Phase_Polar_ActivateInvC(&p_motor->Phase, duty);
+				break;
 
-		case 3U:
-			Hall_CalibratePhaseB(&p_motor->Hall);
-			Phase_ActivateDuty(&p_motor->Phase, 0U, duty, duty);
-			p_motor->CalibrationSubstateStep = 4U;
-			break;
+			case 3U :
+				Hall_CalibratePhaseInvC(&p_motor->Hall);
+				Phase_Polar_ActivateBC(&p_motor->Phase, duty);
+				break;
 
-		case 4U:
-			Hall_CalibratePhaseInvA(&p_motor->Hall);
-			Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, duty);
-			p_motor->CalibrationSubstateStep = 5U;
-			break;
+			case 4U :
+				Phase_Polar_ActivateB(&p_motor->Phase, duty);
+				break;
 
-		case 5U:
-			Hall_CalibratePhaseC(&p_motor->Hall);
-			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, duty);
-			p_motor->CalibrationSubstateStep = 6U;
-			break;
+			case 5U :
+				Hall_CalibratePhaseB(&p_motor->Hall);
+				Phase_Polar_ActivateBA(&p_motor->Phase, duty);
+				break;
 
-		case 6U:
-			Hall_CalibratePhaseInvB(&p_motor->Hall);
-			Phase_Float(&p_motor->Phase);
-			isComplete = true;
-			break;
+			case 6U :
+				Phase_Polar_ActivateInvA(&p_motor->Phase, duty);
+				break;
 
-		default:
-			break;
+			case 7U :
+				Hall_CalibratePhaseInvA(&p_motor->Hall);
+				Phase_Polar_ActivateCA(&p_motor->Phase, duty);
+				break;
+
+			case 8U :
+				Phase_Polar_ActivateC(&p_motor->Phase, duty);
+				break;
+
+			case 9U :
+				Hall_CalibratePhaseC(&p_motor->Hall);
+				Phase_Polar_ActivateCB(&p_motor->Phase, duty);
+				break;
+
+			case 10U :
+				Phase_Polar_ActivateInvB(&p_motor->Phase, duty);
+				break;
+
+			case 11U :
+				Hall_CalibratePhaseInvB(&p_motor->Hall);
+				Phase_Polar_ActivateAB(&p_motor->Phase, duty);
+				break;
+
+			case 12U :
+				Phase_Float(&p_motor->Phase);
+				isComplete = true;
+				break;
+
+			default :
+				break;
 		}
+
+		p_motor->CalibrationSubstateStep++;
 	}
+
+
+
 
 	return isComplete;
 }
