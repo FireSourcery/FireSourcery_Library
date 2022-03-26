@@ -34,8 +34,6 @@
 #include "Motor_SixStep.h"
 #include "Utility/StateMachine/StateMachine.h"
 
-#define MSM_TRANSITION_TABLE_LENGTH 	(11U)
-
 static const StateMachine_State_T MOTOR_STATE_INIT;
 static const StateMachine_State_T MOTOR_STATE_STOP;
 static const StateMachine_State_T MOTOR_STATE_ALIGN;
@@ -115,6 +113,11 @@ static StateMachine_State_T * Stop_InputAccelerate(Motor_T * p_motor)
 		p_nextState = &MOTOR_STATE_ALIGN;
 	}
 
+	if (p_motor->UserDirection != p_motor->Direction)
+	{
+		p_nextState = &MOTOR_STATE_FAULT; //direction should always set while in stop state
+	}
+
 	return p_nextState;
 }
 
@@ -129,11 +132,23 @@ static StateMachine_State_T * Stop_InputCalibration(Motor_T * p_motor)
 	return &MOTOR_STATE_CALIBRATION;
 }
 
+static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor)
+{
+	if (p_motor->Speed_RPM == 0U)
+	{
+		Motor_SetDirection(p_motor, p_motor->UserDirection);
+	}
+
+	return 0U;
+}
+
+
 static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
 	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
 	[MSM_INPUT_ACCELERATE] 		= (StateMachine_Transition_T)Stop_InputAccelerate,
 	[MSM_INPUT_CALIBRATION] 	= (StateMachine_Transition_T)Stop_InputCalibration,
+	[MSM_INPUT_DIRECTION] 		= (StateMachine_Transition_T)Stop_InputDirection,
 
 //	[MSM_INPUT_DETECT_FREEWHEEL] 	= (StateMachine_Transition_T)TransitionFreeWheel,
 //	[MSM_INPUT_DECELERATE] 			= (StateMachine_Transition_T)StopTransitionDecelerate,
@@ -276,15 +291,15 @@ static const StateMachine_State_T MOTOR_STATE_OPEN_LOOP =
 /******************************************************************************/
 static void StartAccelerate(Motor_T * p_motor)
 {
-	p_motor->Regen = 0U;
+	p_motor->Brake = 0U;
 
 	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT)
 	{
-		Motor_ResetRamp(p_motor); //only torque mode start form request 0 torque
+		Motor_ResetRamp(p_motor); //only torque mode req start form request 0 torque
 	}
 	else
 	{
-		Motor_ResumeRamp(p_motor);
+		Motor_ResumeRamp(p_motor); //other modes req start from current speed
 	}
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
@@ -299,7 +314,7 @@ static void StartAccelerate(Motor_T * p_motor)
 
 static void StartDecelerate(Motor_T * p_motor)
 {
-	p_motor->Regen = 1U;
+	p_motor->Brake = 1U;
 
 	Motor_ResetRamp(p_motor); //Brake always set ramp to start request 0 torque
 
@@ -317,10 +332,11 @@ static StateMachine_State_T * Run_InputAccelerate(Motor_T * p_motor)
 {
 	/*
 	 * Implemented Regen is run substate
+	 *
+	 * transition through freewheel first to use shared entry function? or set here?
 	 */
-	if (p_motor->Regen == 1U)
+	if (p_motor->Brake == 1U)
 	{
-		//transition through freewheel first? or matchpid sate
 		StartAccelerate(p_motor);
 	}
 
@@ -329,7 +345,7 @@ static StateMachine_State_T * Run_InputAccelerate(Motor_T * p_motor)
 
 static StateMachine_State_T * Run_InputDecelerate(Motor_T * p_motor)
 {
-	if (p_motor->Regen == 0U)
+	if (p_motor->Brake == 0U)
 	{
 		StartDecelerate(p_motor);
 	}
@@ -428,6 +444,11 @@ static StateMachine_State_T * FreeWheel_TransitionRunAccelerate(Motor_T * p_moto
 //		p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U; //openloop does not resume
 	}
 
+	if (p_motor->UserDirection != p_motor->Direction)
+	{
+		p_newState = 0;
+	}
+
 	return p_newState;
 }
 
@@ -455,6 +476,13 @@ static StateMachine_State_T * FreeWheel_TransitionRunDecelerate(Motor_T * p_moto
 //		p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U; //openloop does not resume
 	}
 
+	//if opt no return to run state, must also proc direction input before throttle
+
+	if (p_motor->UserDirection != p_motor->Direction)
+	{
+		p_newState = 0;
+	}
+
 	return p_newState;
 }
 
@@ -463,6 +491,7 @@ static const StateMachine_Transition_T FREEWHEEL_TRANSITION_TABLE[MSM_TRANSITION
 	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
 	[MSM_INPUT_ACCELERATE] 		= (StateMachine_Transition_T)FreeWheel_TransitionRunAccelerate,
 	[MSM_INPUT_DECELERATE] 		= (StateMachine_Transition_T)FreeWheel_TransitionRunDecelerate,
+	//direction check direction change, do not return to r
 };
 
 static void Freewheel_Entry(Motor_T * p_motor)
@@ -576,7 +605,8 @@ static void Fault_Entry(Motor_T * p_motor)
 
 static void Fault_Proc(Motor_T * p_motor)
 {
-	//if fault clears	StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_STOP);
+	//if fault clears
+	StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_STOP);
 }
 
 static const StateMachine_State_T MOTOR_STATE_FAULT =

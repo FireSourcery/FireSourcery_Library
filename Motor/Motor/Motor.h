@@ -333,8 +333,11 @@ typedef struct
 
 	//Run substate flags
 	Motor_Direction_T Direction; //active spin direction
-	bool Regen; //can change to quadrant to include plugging
+	Motor_Direction_T UserDirection; //Passed to statemachine
+	bool Brake; //can change to quadrant to include plugging
 //	Motor_ControlModeFlags_T ControlMode;
+
+
 
 	Linear_T Ramp;
 //	Linear_T RampUp;
@@ -347,7 +350,7 @@ typedef struct
 	Timer_T SpeedTimer;			// SpeedCalc Timer
 	uint16_t Speed_RPM;			// Common Feedback Variable
 	uint32_t Speed_Frac16; 		/* Can over saturate */
-	int32_t SpeedControl; 		/* Speed PID output, (VPwm, Vq, Iq) updated once per millis */
+	uint32_t SpeedControl; 		/* Speed PID output, (Speed_Frac16 - RampCmd) => (VPwm, Vq, Iq), updated once per millis */
 
 	/*
 	 * Open-loop
@@ -395,14 +398,15 @@ typedef struct
 	//	  bool IsIOverLimitError;
 //	bool IsBrake;
 
+	volatile uint32_t HallDebug[10];
+
+
 	volatile uint32_t MicrosRef; //debug
 	volatile uint32_t DebugTime[10];
 
 	volatile uint32_t FocTimeIa;
 	volatile uint32_t FocTimeIb;
 	volatile uint32_t FocTimeIc;
-
-
 
 	volatile uint32_t PwmOnTime; //debug
 	volatile uint32_t SampleTimesPwmOn[200]; //debug
@@ -425,18 +429,49 @@ Motor_T;
 	  Input
 */
 /******************************************************************************/
+/*
+ * CCW or CW
+ */
 static inline void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
 	p_motor->Direction = direction;
 
-	if (direction == MOTOR_DIRECTION_CW)
+	switch(p_motor->Parameters.SensorMode)
 	{
-		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW);
+		case MOTOR_SENSOR_MODE_OPEN_LOOP:
+			break;
+
+		case MOTOR_SENSOR_MODE_SENSORLESS:
+			break;
+
+		case MOTOR_SENSOR_MODE_ENCODER:
+
+			break;
+
+		case MOTOR_SENSOR_MODE_HALL:
+			if(direction == MOTOR_DIRECTION_CW)	{Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW);}
+			else								{Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW);}
+			break;
+
+		default :
+			break;
 	}
-	else
-	{
-		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW);
-	}
+
+}
+
+/*
+ * Forward/Reverse use calibration param
+ */
+static inline void Motor_SetDirectionForward(Motor_T * p_motor)
+{
+	if (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW)	{Motor_SetDirection(p_motor, MOTOR_DIRECTION_CCW);}
+	else																	{Motor_SetDirection(p_motor, MOTOR_DIRECTION_CW);}
+}
+
+static inline void Motor_SetDirectionReverse(Motor_T * p_motor)
+{
+	if (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW)	{Motor_SetDirection(p_motor, MOTOR_DIRECTION_CW);}
+	else																	{Motor_SetDirection(p_motor, MOTOR_DIRECTION_CCW);}
 }
 
 /******************************************************************************/
@@ -525,16 +560,6 @@ static inline void Motor_ProcSpeedFeedback(Motor_T * p_motor)
 //	return captureSpeed;
 //}
 
-//static inline void Motor_ResumeSpeedFeedback(Motor_T * p_motor)
-//{
-//	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
-//	{
-//		PID_SetIntegral(&p_motor->PidSpeed, p_motor->Speed_Frac16);  //proportional to current speed
-////		PID_SetIntegral(&p_motor->PidSpeed, 0); //or use vpwm, ibus, vq, iq
-//		p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->Speed_Frac16);
-//		Timer_Restart(&p_motor->SpeedTimer);
-//	}
-//}
 
 static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
 {

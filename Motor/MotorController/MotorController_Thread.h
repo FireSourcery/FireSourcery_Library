@@ -66,19 +66,7 @@ static inline void MotorControllerAnalogUserThread(MotorController_T * p_mc)
 	{
 		MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_mc->AnalogUser));
 	}
-	else if ((direction == MOT_ANALOG_USER_DIRECTION_FORWARD) || (direction == MOT_ANALOG_USER_DIRECTION_REVERSE))
-	{
-		switch(cmd)
-		{
-			//			case MOT_ANALOG_USER_CMD_BRAKE: 				MotorController_User_SetCmdBrake	(p_mc, MotAnalogUser_GetBrake(&p_mc->AnalogUser)); 		break;
-			case MOT_ANALOG_USER_CMD_THROTTLE:				MotorController_User_SetCmdThrottle	(p_mc, MotAnalogUser_GetThrottle(&p_mc->AnalogUser));	break;
-			case MOT_ANALOG_USER_CMD_THROTTLE_RELEASE: 		MotorController_User_DisableControl(p_mc); break; // todo check throttle release param
-			case MOT_ANALOG_USER_CMD_THROTTLE_ZERO_EDGE: 	MotorController_User_DisableControl(p_mc); break;
-			case MOT_ANALOG_USER_CMD_THROTTLE_ZERO:			StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CHECK_STOP);		break;
-			default: break;
-		}
-	}
-	else
+	else if ((direction != MOT_ANALOG_USER_DIRECTION_FORWARD) && (direction != MOT_ANALOG_USER_DIRECTION_REVERSE))
 	{
 		switch(direction)
 		{
@@ -89,6 +77,17 @@ static inline void MotorControllerAnalogUserThread(MotorController_T * p_mc)
 			default: break;
 		}
 	}
+	else
+	{
+		switch(cmd)
+		{
+			case MOT_ANALOG_USER_CMD_THROTTLE:				MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottle(&p_mc->AnalogUser));	break;
+			case MOT_ANALOG_USER_CMD_THROTTLE_RELEASE: 		MotorController_User_DisableControl(p_mc); break; // todo check throttle release param
+			case MOT_ANALOG_USER_CMD_THROTTLE_ZERO_EDGE: 	MotorController_User_DisableControl(p_mc); break;
+			case MOT_ANALOG_USER_CMD_THROTTLE_ZERO:			StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CHECK_STOP);		break;
+			default: break;
+		}
+	}
 }
 
 static inline void MotorController_Main_Thread(MotorController_T * p_mc)
@@ -96,7 +95,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 	//Med Freq -  1 ms, Low Priority - Main
 	if (Timer_Poll(&p_mc->TimerMillis) == true)
 	{
-		StateMachine_Semisynchronous_ProcOutput(&p_mc->StateMachine);
+		StateMachine_Semisynchronous_ProcState(&p_mc->StateMachine);
 
 		switch(p_mc->Parameters.InputMode)
 		{

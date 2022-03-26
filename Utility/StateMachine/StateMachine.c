@@ -98,7 +98,7 @@ static inline void ProcOutput(StateMachine_T * p_stateMachine)
 }
 
 /*
- * If multi threaded inputs asynch use cirtical
+ * If multi threaded inputs asynch use critical
  */
 static inline void ProcAsynchronousInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
@@ -150,6 +150,8 @@ void StateMachine_ProcTransition(StateMachine_T * p_stateMachine, StateMachine_S
 /******************************************************************************/
 /*
  * Synchronous Machine
+ *
+ * Does not need Critical Section if Proc thread is higher priority than Input Thread
  */
 /******************************************************************************/
 /*
@@ -160,8 +162,9 @@ void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine)
 	if(p_stateMachine->Input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH)
 	{
 		ProcInput(p_stateMachine, p_stateMachine->Input);
+		p_stateMachine->Input = 0xFFU; //clear input, reserved char
 	}
-	p_stateMachine->Input = 0xFFU; //clear input
+
 	ProcOutput(p_stateMachine);
 }
 
@@ -192,7 +195,7 @@ void StateMachine_Asynchronous_ProcInput(StateMachine_T * p_stateMachine, statem
 /*
  * Synchronous State Output
  */
-void StateMachine_Semisynchronous_ProcOutput(StateMachine_T * p_stateMachine)
+void StateMachine_Semisynchronous_ProcState(StateMachine_T * p_stateMachine)
 {
 	ProcOutput(p_stateMachine);
 }
@@ -204,4 +207,8 @@ void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, sta
 {
 	ProcAsynchronousInput(p_stateMachine, input);
 }
+
+//return if transition was sucessful,   input mode and var
+//StateMachine_Status_T StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputVar)
+
 

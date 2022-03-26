@@ -45,6 +45,8 @@ typedef enum MotorController_StateMachine_Input_Tag
 }
 MotorController_StateMachine_Input_T;
 
+#define MCSM_TRANSITION_TABLE_LENGTH 	(8U)
+
 extern const StateMachine_Machine_T MCSM_MACHINE;
 
 #define MOTOR_CONTROLLER_STATE_MACHINE_CONFIG(p_MotorController) STATE_MACHINE_CONFIG(&MCSM_MACHINE, p_MotorController, false)

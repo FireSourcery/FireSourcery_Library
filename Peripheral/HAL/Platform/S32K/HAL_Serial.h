@@ -73,22 +73,17 @@ static inline bool HAL_Serial_ReadIsRxRegFull(const HAL_Serial_T * p_uartRegMap)
 //	return (p_uartRegMap->WATER & LPUART_WATER_TXCOUNT_MASK) >> LPUART_WATER_TXCOUNT_SHIFT;
 //}
 
-//static inline uint8_t HAL_Serial_ReadTxFullCount(const HAL_Serial_T * p_uartRegMap)
-//{
-//	return HAL_Serial_ReadTxFifoFull(p_uartRegMap);
-//}
-
 static inline uint8_t HAL_Serial_ReadTxFifoEmpty(const HAL_Serial_T * p_uartRegMap)
 {
-	uint32_t count = (p_uartRegMap->WATER & LPUART_WATER_TXCOUNT_MASK) >> LPUART_WATER_TXCOUNT_SHIFT;
-	return (CONFIG_HAL_SERIAL_FIFO_SIZE - count);
+	return (CONFIG_HAL_SERIAL_FIFO_SIZE - ((p_uartRegMap->WATER & LPUART_WATER_TXCOUNT_MASK) >> LPUART_WATER_TXCOUNT_SHIFT));
 }
 
 static inline uint8_t HAL_Serial_ReadRxFifoFull(const HAL_Serial_T * p_uartRegMap)
 {
-	return (p_uartRegMap->WATER & LPUART_WATER_RXCOUNT_MASK) >> LPUART_WATER_RXCOUNT_SHIFT;
+	return ((p_uartRegMap->WATER & LPUART_WATER_RXCOUNT_MASK) >> LPUART_WATER_RXCOUNT_SHIFT);
 }
 
+//todo change back to hw fifo
 static inline uint8_t HAL_Serial_ReadTxEmptyCount(const HAL_Serial_T * p_uartRegMap)
 {
 //	return HAL_Serial_ReadTxFifoEmpty(p_uartRegMap);

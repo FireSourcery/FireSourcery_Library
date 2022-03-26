@@ -38,6 +38,7 @@
 
 struct StateMachine_State_Tag;
 typedef struct StateMachine_State_Tag *  (* StateMachine_Transition_T)(void * p_context);
+//typedef struct StateMachine_State_Tag *  (* StateMachine_Transition_T)(void * p_context, uint32_t inputVar);
 typedef void 							 (* StateMachine_Output_T)(void * p_context);
 typedef uint8_t statemachine_input_t;	/* User may overwrite with enum */
 
@@ -70,6 +71,7 @@ StateMachine_State_T;
 typedef struct StateMachine_Machine_Tag
 {
 	const StateMachine_State_T * const P_STATE_INITIAL;
+//	const StateMachine_State_T * const P_STATE_FAULT;
 	const uint8_t TRANSITION_TABLE_LENGTH;			/* Total input count. Shared table length for all states, i.e. all states allocate for all inputs*/
 }
 StateMachine_Machine_T;
@@ -116,9 +118,9 @@ extern void StateMachine_Init(StateMachine_T * p_stateMachine);
 extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
 extern void StateMachine_ProcTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState);
 extern void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine);
-extern void StateMachine_Synchronous_SetTransition(StateMachine_T * p_stateMachine, uint8_t input);
+extern void StateMachine_Synchronous_SetInput(StateMachine_T * p_stateMachine, uint8_t input);
 extern void StateMachine_Asynchronous_ProcInput(StateMachine_T * p_stateMachine, uint8_t input);
 extern void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, uint8_t input);
-extern void StateMachine_Semisynchronous_ProcOutput(StateMachine_T * p_stateMachine);
+extern void StateMachine_Semisynchronous_ProcState(StateMachine_T * p_stateMachine);
 
 #endif

@@ -162,7 +162,10 @@ void Motor_InitReboot(Motor_T * p_motor)
 	}
 	p_motor->OpenLoopRampIndex = 0U;
 
-	p_motor->Direction 				= MOTOR_DIRECTION_CCW;
+	Motor_SetDirectionForward(p_motor);
+	p_motor->UserDirection = p_motor->Direction;
+//	p_motor->Direction 				= MOTOR_DIRECTION_CCW;
+
 	p_motor->Speed_RPM 				= 0U;
 	p_motor->VPwm 					= 0U;
 	p_motor->ControlTimerBase 		= 0U;

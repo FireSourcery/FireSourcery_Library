@@ -32,8 +32,6 @@
 #include "MotorController.h"
 #include "Utility/StateMachine/StateMachine.h"
 
-#define MCSM_TRANSITION_TABLE_LENGTH 	(8U)
-
 static const StateMachine_State_T MCSM_STATE_INIT;
 static const StateMachine_State_T MCSM_STATE_STOP;
 static const StateMachine_State_T MCSM_STATE_RUN;
@@ -81,7 +79,9 @@ static const StateMachine_State_T MCSM_STATE_INIT =
 
 /******************************************************************************/
 /*!
-    @brief  State
+    @brief  Stop State
+
+    Enters upon all motors reading 0 speed
 */
 /******************************************************************************/
 static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_motorController)
@@ -136,11 +136,19 @@ static const StateMachine_State_T MCSM_STATE_STOP =
 /******************************************************************************/
 /*!
     @brief  State
+
+    During Run State Motor Controller accepts speed inputs
+    motors may be in active control or freewheel
 */
 /******************************************************************************/
 static StateMachine_State_T * Run_InputDirection(MotorController_T * p_motorController)
 {
-	MotorController_Beep(p_motorController);
+	if (p_motorController->MainDirection != p_motorController->UserDirection)
+	{
+		MotorController_Beep(p_motorController);
+	}
+
+	MotorController_ProcDirection(p_motorController); 	// if motor is in freewheel state, sets flag to remain in freewheel state
 	return 0U;
 }
 
@@ -169,6 +177,8 @@ static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MCSM_TRANSITION_TABL
 	[MCSM_INPUT_THROTTLE] 		= (StateMachine_Transition_T)Run_InputThrottle,
 	[MCSM_INPUT_BRAKE]  		= (StateMachine_Transition_T)Run_InputBrake,
 	[MCSM_INPUT_CHECK_STOP] 	= (StateMachine_Transition_T)Run_InputCheckStop,
+
+//	[MCSM_INPUT_FLOAT] 	= (StateMachine_Transition_T)Run_InputFloat,
 };
 
 static void Run_Entry(MotorController_T * p_motorController)
@@ -204,7 +214,9 @@ static void Fault_Entry(MotorController_T * p_motorController)
 
 static void Fault_Proc(MotorController_T * p_motorController)
 {
-	//if fault clears	StateMachine_ProcTransition(&p_motorController->StateMachine, &MCSM_STATE_STOP);
+	MotorController_Beep(p_motorController);
+	//if fault clears
+	StateMachine_ProcTransition(&p_motorController->StateMachine, &MCSM_STATE_STOP);
 }
 
 static const StateMachine_State_T MCSM_STATE_FAULT =

@@ -143,11 +143,8 @@ static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, ui
 
 static inline void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction)
 {
-	if (direction != p_mc->MainDirection)
-	{
-		p_mc->UserDirection = direction;
-		StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION);
-	}
+	p_mc->UserDirection = direction;
+	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION);
 }
 
 static inline void MotorController_User_DisableControl(MotorController_T * p_mc)

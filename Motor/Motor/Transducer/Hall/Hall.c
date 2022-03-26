@@ -49,7 +49,7 @@ void Hall_Init(Hall_T * p_hall)
 
 	if (p_hall->CONFIG.P_PARAMS_NVM != 0U)
 	{
-		memcpy(&p_hall->SensorsTable[0U], &p_hall->CONFIG.P_PARAMS_NVM->SensorsTable[0U], sizeof(Hall_Params_T));
+		memcpy(&p_hall->Params.SensorsTable[0U], &p_hall->CONFIG.P_PARAMS_NVM->SensorsTable[0U], sizeof(Hall_Params_T));
 	}
 	else
 	{
@@ -61,7 +61,7 @@ void Hall_Init(Hall_T * p_hall)
 //{
 //	if (p_hall->CONFIG.P_PARAMS_DEFAULT != 0U)
 //	{
-//		memcpy(&p_hall->SensorsTable[0U], &p_hall->CONFIG.P_PARAMS_DEFAULT->SensorsTable[0U], sizeof(Hall_Params_T));
+//		memcpy(&p_hall->Params.SensorsTable[0U], &p_hall->CONFIG.P_PARAMS_DEFAULT->SensorsTable[0U], sizeof(Hall_Params_T));
 //	}
 //	else
 //	{
@@ -80,14 +80,14 @@ void Hall_MapSensorsTable
 	uint8_t sensorsInvB
 )
 {
-	p_hall->SensorsTable[sensorsA] 		= HALL_VIRTUAL_SENSORS_A;
-	p_hall->SensorsTable[sensorsInvC] 	= HALL_VIRTUAL_SENSORS_INV_C;
-	p_hall->SensorsTable[sensorsB] 		= HALL_VIRTUAL_SENSORS_B;
-	p_hall->SensorsTable[sensorsInvA] 	= HALL_VIRTUAL_SENSORS_INV_A;
-	p_hall->SensorsTable[sensorsC] 		= HALL_VIRTUAL_SENSORS_C;
-	p_hall->SensorsTable[sensorsInvB] 	= HALL_VIRTUAL_SENSORS_INV_B;
-	p_hall->SensorsTable[0U] = 0U;
-	p_hall->SensorsTable[7U] = 7U;
+	p_hall->Params.SensorsTable[sensorsA] 		= HALL_VIRTUAL_SENSORS_A;
+	p_hall->Params.SensorsTable[sensorsInvC] 	= HALL_VIRTUAL_SENSORS_INV_C;
+	p_hall->Params.SensorsTable[sensorsB] 		= HALL_VIRTUAL_SENSORS_B;
+	p_hall->Params.SensorsTable[sensorsInvA] 	= HALL_VIRTUAL_SENSORS_INV_A;
+	p_hall->Params.SensorsTable[sensorsC] 		= HALL_VIRTUAL_SENSORS_C;
+	p_hall->Params.SensorsTable[sensorsInvB] 	= HALL_VIRTUAL_SENSORS_INV_B;
+	p_hall->Params.SensorsTable[0U] = 0U;
+	p_hall->Params.SensorsTable[7U] = 7U;
 }
 
 void Hall_MapSensorsTableDefault(Hall_T * p_hall)
@@ -110,31 +110,31 @@ void Hall_MapSensorsTableDefault(Hall_T * p_hall)
  */
 void Hall_CalibratePhaseA(Hall_T * p_hall)
 {
-	p_hall->SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_A;
+	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_A;
 }
 
 void Hall_CalibratePhaseInvC(Hall_T * p_hall)
 {
-	p_hall->SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_C;
+	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_C;
 }
 
 void Hall_CalibratePhaseB(Hall_T * p_hall)
 {
-	p_hall->SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_B;
+	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_B;
 }
 
 void Hall_CalibratePhaseInvA(Hall_T * p_hall)
 {
-	p_hall->SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_A;
+	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_A;
 }
 
 void Hall_CalibratePhaseC(Hall_T * p_hall)
 {
-	p_hall->SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_C;
+	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_C;
 }
 
 void Hall_CalibratePhaseInvB(Hall_T * p_hall)
 {
-	p_hall->SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_B;
+	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_B;
 }
 

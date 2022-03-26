@@ -613,22 +613,29 @@ static inline uint32_t Encoder_CaptureAvgAngularSpeed(Encoder_T * p_encoder)
 
 /*!
 	Revolution per Second
-	return (p_encoder->DeltaD * p_encoder->UnitT_Freq) / (p_encoder->Params.CountsPerRevolution * p_encoder->DeltaT);
+
  */
 static inline uint32_t Encoder_GetRotationalSpeed_RPS(Encoder_T * p_encoder)
 {
-	/*
-	 * Angle is already highest possible rotation resolution
-	 */
+//	/*
+//	 * Angle is already highest possible rotation resolution
+//	 */
 	return Encoder_GetAngularSpeed(p_encoder) >> CONFIG_ENCODER_ANGLE_DEGREES_BITS;
+
+	/*
+	 * DeltaT Mode at least 1 division
+	 */
+//	return (p_encoder->DeltaD * p_encoder->UnitT_Freq) / (p_encoder->Params.CountsPerRevolution * p_encoder->DeltaT);
 }
 
 /*
-	return (p_encoder->DeltaD * p_encoder->UnitT_Freq * 60U) / (p_encoder->Params.CountsPerRevolution * p_encoder->DeltaT);
+ *
+ *
  */
 static inline uint32_t Encoder_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
 {
-	return Encoder_GetAngularSpeed(p_encoder) * 60U >> CONFIG_ENCODER_ANGLE_DEGREES_BITS;
+	return Encoder_GetAngularSpeed(p_encoder) * 60U >> CONFIG_ENCODER_ANGLE_DEGREES_BITS;  //Overflow : DeltaT mode UnitT_Freq 625000, deltaT_Ticks < 10. => 60000rpm
+//	return (p_encoder->DeltaD * p_encoder->UnitT_Freq * 60U) / (p_encoder->Params.CountsPerRevolution * p_encoder->DeltaT);
 }
 
 //static inline uint32_t Encoder_GetAvgRotationalSpeed_RPM(Encoder_T * p_encoder)

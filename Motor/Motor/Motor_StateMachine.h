@@ -47,8 +47,11 @@ typedef enum MotorStateMachine_Input_Tag
 	MSM_INPUT_ACCELERATE,
 	MSM_INPUT_DECELERATE,
 	MSM_INPUT_FLOAT,
+	MSM_INPUT_DIRECTION,
 }
 MotorStateMachine_Input_T;
+
+#define MSM_TRANSITION_TABLE_LENGTH 	(11U)
 
 extern const StateMachine_Machine_T MSM_MACHINE;
 

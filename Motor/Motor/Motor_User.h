@@ -38,6 +38,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+//disable pwm interrupt of this motor only
+//static inline void Motor_User_EnterCriticalLocal(Motor_T * p_motor)
+//{
+//
+//}
+
 
 //static inline uint16_t Motor_User_GetBemf_Frac16(Motor_T * p_motor)	{return Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
 //static inline uint32_t Motor_User_GetBemf_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
@@ -64,9 +70,15 @@ static inline uint16_t Motor_User_GetHallRotorAngle(Motor_T * p_motor) 	{return 
 //}
 
 /*
- * Should Motor module proc state machine in non Pwm thread?
- * Pwm interrupt proc state StateMachine_Semisynchronous_ProcOutput
- * todo change to synchronous?
+ * Motor State Machine Thread Safety
+ *
+ * SemiSync Mode -
+ * State Proc in PWM thread. User Input in Main Thread. May need critical section during input.
+ * Sync error only occurs in way of running new states function, using false validated function of old state.
+ * Can always recover? Stop to Run transition always at 0 speed.
+ *
+ * Sync Mode
+ * Must check input flags every pwm cycle
  */
 
 
@@ -169,21 +181,17 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 //	Critical_Exit();
 }
 
-//or set buffered direction, check on state machine  ?
+//  set buffered direction, check on state machine
 static inline bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
-	bool isSet = false;
-
-	if (p_motor->Speed_RPM == 0U)
+//	if (p_motor->Direction != direction)
 	{
-		Motor_SetDirection(p_motor, direction);
-		isSet = true;
+		p_motor->UserDirection = direction; //pass to state machine
+		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION);
+//		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction);
 	}
 
-	//or only during stop state
-	//		StateMachine_Semisynchronous_ProcTransition(&p_motor->StateMachine, MSM_INPUT_DIRECTION);
-
-	return isSet;
+	return (p_motor->UserDirection == p_motor->Direction); //return from statemcahine
 }
 
 
@@ -191,7 +199,7 @@ static inline bool Motor_User_SetDirectionForward(Motor_T * p_motor)
 {
 	bool isSet;
 
-	if(Motor_User_GetDirectionCalibration(p_motor) == true) //ccw is forward
+	if(Motor_User_GetDirectionCalibration(p_motor) == MOTOR_FORWARD_IS_CCW)
 	{
 		isSet = Motor_User_SetDirection(p_motor, MOTOR_DIRECTION_CCW) ? true : false;
 	}
@@ -207,19 +215,17 @@ static inline bool Motor_User_SetDirectionReverse(Motor_T * p_motor)
 {
 	bool isSet;
 
-	if(Motor_User_GetDirectionCalibration(p_motor) == false) //ccw is forward
+	if(Motor_User_GetDirectionCalibration(p_motor) == MOTOR_FORWARD_IS_CCW)
 	{
-		isSet = Motor_User_SetDirection(p_motor, MOTOR_DIRECTION_CCW) ? true : false;
+		isSet = Motor_User_SetDirection(p_motor, MOTOR_DIRECTION_CW) ? true : false;
 	}
 	else
 	{
-		isSet = Motor_User_SetDirection(p_motor, MOTOR_DIRECTION_CW) ? true : false;
+		isSet = Motor_User_SetDirection(p_motor, MOTOR_DIRECTION_CCW) ? true : false;
 	}
 
 	return isSet;
 }
-
-
 
 /*
  * Run Calibration functions
@@ -260,6 +266,37 @@ static inline void Motor_UserN_SetCmdBrake(Motor_T * p_motor, uint8_t motorCount
 	{
 		Motor_User_SetCmdBrake(&p_motor[iMotor], brake);
 	}
+}
+
+
+static inline bool Motor_UserN_SetDirectionForward(Motor_T * p_motor, uint8_t motorCount)
+{
+	bool isSet = true;
+
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		if(Motor_User_SetDirectionForward(&p_motor[iMotor]) == false)
+		{
+			isSet = false;
+		}
+	}
+
+	return isSet;
+}
+
+static inline bool Motor_UserN_SetDirectionReverse(Motor_T * p_motor, uint8_t motorCount)
+{
+	bool isSet = true;
+
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		if(Motor_User_SetDirectionReverse(&p_motor[iMotor]) == false)
+		{
+			isSet = false;
+		}
+	}
+
+	return isSet;
 }
 
 static inline void Motor_UserN_DisableControl(Motor_T * p_motor, uint8_t motorCount)
