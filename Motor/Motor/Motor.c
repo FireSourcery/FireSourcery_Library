@@ -61,8 +61,6 @@ void Motor_Init(Motor_T * p_motor)
 	Motor_InitReboot(p_motor);
 }
 
-
-//todo state machine init-state run
 void Motor_InitReboot(Motor_T * p_motor)
 {
 	/*

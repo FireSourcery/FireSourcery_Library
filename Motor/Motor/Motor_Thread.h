@@ -45,23 +45,14 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
 	p_motor->MicrosRef = SysTime_GetMicros();
 	p_motor->ControlTimerBase++;
-	p_motor->IsPwmOn = false;
-//	p_motor->PwmOnTime = 0;
-//	p_motor->AnalogResults.Va_ADCU = 0;
-//	p_motor->Bemf.VPhase_ADCU = 0;
 	StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
-//	AnalogN_EnqueueConversionOptions(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_THREAD_SYNC1);
 }
 
 //1ms isr priority
 static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor)
 {
-//check fault
-}
-
-//Low Freq Main //user/monitor thread 1ms low priority
-static inline void Motor_Main1Ms_Thread(Motor_T * p_motor)
-{
+	//	if (Timer_Poll(&p_motor->Millis100Timer) == true)
+	//	{
 	if(Thermistor_GetIsEnable(&p_motor->Thermistor))
 	{
 		AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
@@ -70,19 +61,11 @@ static inline void Motor_Main1Ms_Thread(Motor_T * p_motor)
 
 		if (Thermistor_ProcThreshold(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU) != THERMISTOR_THRESHOLD_OK)
 		{
+			p_motor->ErrorFlags.OverHeat = 1U;
 			StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
 		}
 	}
-}
-
-//low priotiy, max freq
-static inline void Motor_Main_Thread(Motor_T * p_motor)
-{
-////Low Freq Main //user/monitor thread 1ms low priority
-//	if (Timer_Poll(&p_motor->MillisTimer) == true)
-//	{
-//	AnalogN_EnqueueConversionOptions(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_HEAT);
-//	}
+	//}
 }
 
 #endif

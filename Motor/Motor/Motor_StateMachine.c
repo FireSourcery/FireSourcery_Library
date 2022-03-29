@@ -424,29 +424,31 @@ static StateMachine_State_T * FreeWheel_TransitionRunAccelerate(Motor_T * p_moto
 {
 	StateMachine_State_T * p_newState = 0;
 
-	StartAccelerate(p_motor);
-
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-	{
-		Motor_FOC_ResumeAngleControl(p_motor);
-		p_newState = &MOTOR_STATE_RUN;
-	}
-	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-	{
-//		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
-//		{
-//			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
-//			{
-//				p_newState = 0U;
-//			}
-//		}
-
-//		p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U; //openloop does not resume
-	}
-
 	if (p_motor->UserDirection != p_motor->Direction)
 	{
 		p_newState = 0;
+	}
+	else
+	{
+		StartAccelerate(p_motor);
+
+		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+		{
+			Motor_FOC_ResumeAngleControl(p_motor);
+			p_newState = &MOTOR_STATE_RUN;
+		}
+		else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+		{
+	//		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
+	//		{
+	//			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
+	//			{
+	//				p_newState = 0U;
+	//			}
+	//		}
+
+	//		p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U; //openloop does not resume
+		}
 	}
 
 	return p_newState;
@@ -456,31 +458,31 @@ static StateMachine_State_T * FreeWheel_TransitionRunDecelerate(Motor_T * p_moto
 {
 	StateMachine_State_T * p_newState = 0;
 
-	StartDecelerate(p_motor);
-
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-	{
-		Motor_FOC_ResumeAngleControl(p_motor);
-		p_newState = &MOTOR_STATE_RUN;
-	}
-	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-	{
-//		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
-//		{
-//			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
-//			{
-//				p_newState = 0U;
-//			}
-//		}
-
-//		p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U; //openloop does not resume
-	}
-
-	//if opt no return to run state, must also proc direction input before throttle
-
 	if (p_motor->UserDirection != p_motor->Direction)
 	{
 		p_newState = 0;
+	}
+	else
+	{
+		StartDecelerate(p_motor);
+
+		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+		{
+			Motor_FOC_ResumeAngleControl(p_motor);
+			p_newState = &MOTOR_STATE_RUN;
+		}
+		else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+		{
+	//		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
+	//		{
+	//			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
+	//			{
+	//				p_newState = 0U;
+	//			}
+	//		}
+
+	//		p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U; //openloop does not resume
+		}
 	}
 
 	return p_newState;
@@ -596,6 +598,7 @@ static const StateMachine_State_T MOTOR_STATE_CALIBRATION  =
 /******************************************************************************/
 static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
+
 };
 
 static void Fault_Entry(Motor_T * p_motor)
@@ -605,8 +608,15 @@ static void Fault_Entry(Motor_T * p_motor)
 
 static void Fault_Proc(Motor_T * p_motor)
 {
-	//if fault clears
-	StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_STOP);
+	if (Thermistor_ProcThreshold(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU) == THERMISTOR_THRESHOLD_OK)
+	{
+		p_motor->ErrorFlags.OverHeat = 0U;
+	}
+
+	if (p_motor->ErrorFlags.State == 0U)
+	{
+		StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_STOP);
+	}
 }
 
 static const StateMachine_State_T MOTOR_STATE_FAULT =

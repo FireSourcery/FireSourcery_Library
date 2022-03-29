@@ -51,7 +51,7 @@
  */
 /*! @{ */
 /******************************************************************************/
-static int Cmd_monitor(const MotorController_T * p_mc, int argc, char ** argv)
+static int Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argv;
 
@@ -63,7 +63,7 @@ static int Cmd_monitor(const MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_RESERVED_RETURN_CODE_LOOP;
 }
 
-static int Cmd_monitor_Loop(const MotorController_T * p_mc)
+static int Cmd_monitor_Loop(MotorController_T * p_mc)
 {
 //    	for(uint8_t iMotor = 0U; iMotor < CmdMotorCount; iMotor++)
 //    	{
@@ -173,7 +173,7 @@ static int Cmd_monitor_Loop(const MotorController_T * p_mc)
 }
 
 
-static int Cmd_foc(const MotorController_T * p_mc, int argc, char ** argv)
+static int Cmd_foc(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argv;
 
@@ -185,7 +185,7 @@ static int Cmd_foc(const MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
-static int Cmd_sixstep(const MotorController_T * p_mc, int argc, char ** argv)
+static int Cmd_sixstep(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argv;
 
@@ -198,7 +198,7 @@ static int Cmd_sixstep(const MotorController_T * p_mc, int argc, char ** argv)
 }
 
 
-static int Cmd_debug(const MotorController_T * p_mc, int argc, char ** argv)
+static int Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 {
 //    	for(uint8_t iMotor = 0U; iMotor < CmdMotorCount; iMotor++)
 //    	{
@@ -234,7 +234,7 @@ static int Cmd_debug(const MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
-static int Cmd_calibrate(const MotorController_T * p_mc, int argc, char ** argv)
+static int Cmd_calibrate(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argv;
 
@@ -315,16 +315,16 @@ static int Cmd_calibrate(const MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
-int Cmd_save(const MotorController_T * p_mc, int argc, char ** argv)
+int Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argv;
-	MotorController_SaveParameters_Blocking(p_mc);
+	MotorController_User_SaveParameters_Blocking(p_mc);
     return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
 
 
-int Cmd_phase(const MotorController_T * p_mc, int argc, char ** argv)
+int Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U);
 
@@ -352,7 +352,7 @@ int Cmd_phase(const MotorController_T * p_mc, int argc, char ** argv)
     return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
-int Cmd_hall(const MotorController_T * p_mc, int argc, char ** argv)
+int Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U);
 
@@ -396,7 +396,7 @@ int Cmd_rev_Loop(MotorController_T * p_mc)
 }
 
 
-int Cmd_rev(const MotorController_T * p_mc, int argc, char ** argv)
+int Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
 {
 //	(void)argv;
 //	Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U);
@@ -412,27 +412,64 @@ int Cmd_rev(const MotorController_T * p_mc, int argc, char ** argv)
 }
 
 
-int Cmd_heat(const MotorController_T * p_mc, int argc, char ** argv)
+int Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 {
-	int32_t heat = MotorController_User_GetHeatPcb_DegCInt(p_mc, 1U);
+	int32_t heat 		= MotorController_User_GetHeatPcb_DegCInt(p_mc, 1U);
+	int32_t limit 		= MotorController_User_GetHeatPcbLimit_DegCInt(p_mc, 1U);
+	int32_t threshold 	= MotorController_User_GetHeatPcbThreshold_DegCInt(p_mc, 1U);
 
 	Terminal_SendString(&p_mc->Shell.Terminal, "\r\n");
 	Terminal_SendString(&p_mc->Shell.Terminal, "Pcb: ");
 	Terminal_SendNum(&p_mc->Shell.Terminal, heat);
-	Terminal_SendString(&p_mc->Shell.Terminal, "Celsius");
+	Terminal_SendString(&p_mc->Shell.Terminal, " Celsius");
 	Terminal_SendString(&p_mc->Shell.Terminal, "\r\n");
 
+	Terminal_SendString(&p_mc->Shell.Terminal, "Limit: ");
+	Terminal_SendNum(&p_mc->Shell.Terminal, limit);
+	Terminal_SendString(&p_mc->Shell.Terminal, "\r\n");
 
-//	MotorController_User_SetHeatPcbLimit_DegC(p_mc, 90);
-//	MotorController_User_SetHeatPcbThreshold_DegC(p_mc, heat);
+	Terminal_SendString(&p_mc->Shell.Terminal, "Threshold: ");
+	Terminal_SendNum(&p_mc->Shell.Terminal, threshold);
+	Terminal_SendString(&p_mc->Shell.Terminal, "\r\n");
 
+    return CMD_RESERVED_RETURN_CODE_SUCCESS;
+}
+
+
+int Cmd_vmonitor(MotorController_T * p_mc, int argc, char ** argv)
+{
+	int32_t vSense 		= MotorController_User_GetVSense_MilliV(p_mc);
+	int32_t vAcc 		= MotorController_User_GetVAcc_MilliV(p_mc);
+	int32_t vPos 		= MotorController_User_GetVPos_MilliV(p_mc);
+	int32_t battery 	= MotorController_GetBatteryCharge_Base(p_mc);
+
+	Terminal_SendString(&p_mc->Shell.Terminal, "\r\n");
+	Terminal_SendString(&p_mc->Shell.Terminal, "VSense: ");
+	Terminal_SendNum(&p_mc->Shell.Terminal, vSense);
+	Terminal_SendString(&p_mc->Shell.Terminal, " mV");
+	Terminal_SendString(&p_mc->Shell.Terminal, "\r\n");
+
+	Terminal_SendString(&p_mc->Shell.Terminal, "VAcc: ");
+	Terminal_SendNum(&p_mc->Shell.Terminal, vAcc);
+	Terminal_SendString(&p_mc->Shell.Terminal, " mV");
+	Terminal_SendString(&p_mc->Shell.Terminal, "\r\n");
+
+	Terminal_SendString(&p_mc->Shell.Terminal, "VPos: ");
+	Terminal_SendNum(&p_mc->Shell.Terminal, vPos);
+	Terminal_SendString(&p_mc->Shell.Terminal, " mV");
+	Terminal_SendString(&p_mc->Shell.Terminal, "\r\n");
+
+	Terminal_SendString(&p_mc->Shell.Terminal, "Battery Charge: ");
+	Terminal_SendNum(&p_mc->Shell.Terminal, battery);
+	Terminal_SendString(&p_mc->Shell.Terminal, " Percent10");
+	Terminal_SendString(&p_mc->Shell.Terminal, "\r\n");
 
     return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
 
 
-//int Cmd_pwm(const MotorController_T * p_mc, int argc, char ** argv)
+//int Cmd_pwm(MotorController_T * p_mc, int argc, char ** argv)
 //{
 //	uint16_t pwm;
 ////	uint8_t motorIndex = 0U;
@@ -465,7 +502,7 @@ int Cmd_heat(const MotorController_T * p_mc, int argc, char ** argv)
 ////	.PhasePwmMode		= PHASE_MODE_UNIPOLAR_1,
 //////	.PhasePwmMode		= PHASE_MODE_BIPOLAR,
 ////	.BemfSampleMode 	= BEMF_SAMPLE_MODE_PWM_ON,
-//int Cmd_param(const MotorController_T * p_mc, int argc, char ** argv)
+//int Cmd_param(MotorController_T * p_mc, int argc, char ** argv)
 //{
 //	if (argc == 2U)
 //	{
@@ -497,12 +534,12 @@ int Cmd_heat(const MotorController_T * p_mc, int argc, char ** argv)
 //}
 
 
-//int Cmd_v(const MotorController_T * p_mc, int argc, char ** argv)
+//int Cmd_v(MotorController_T * p_mc, int argc, char ** argv)
 //{
 //
 //}
 
-//int Cmd_rpm(const MotorController_T * p_mc, int argc, char ** argv)
+//int Cmd_rpm(MotorController_T * p_mc, int argc, char ** argv)
 //{
 //	(void)argv;
 //    if(argc == 1)
@@ -514,7 +551,7 @@ int Cmd_heat(const MotorController_T * p_mc, int argc, char ** argv)
 //    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 
-//int Cmd_jog(const MotorController_T * p_mc, int argc, char ** argv)
+//int Cmd_jog(MotorController_T * p_mc, int argc, char ** argv)
 //{
 //	if(argc == 1)
 //	{
@@ -525,35 +562,35 @@ int Cmd_heat(const MotorController_T * p_mc, int argc, char ** argv)
 //    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 
-//int Cmd_run(const MotorController_T * p_mc, int argc, char ** argv)
+//int Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 //{
 //	(void)argv;
 //    if(argc == 1) Motor_Start(&Motor1);
 //    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 
-//int Cmd_stop(const MotorController_T * p_mc, int argc, char ** argv)
+//int Cmd_stop(MotorController_T * p_mc, int argc, char ** argv)
 //{
 //	(void)argv;
 //    if(argc == 1) Motor_Stop(&Motor1);
 //    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 //
-//int Cmd_hold(const MotorController_T * p_mc, int argc, char ** argv)
+//int Cmd_hold(MotorController_T * p_mc, int argc, char ** argv)
 //{
 //	(void)argv;
 //    if(argc == 1) Motor_Hold(&Motor1);
 //    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 //
-//int Cmd_release(const MotorController_T * p_mc, int argc, char ** argv)
+//int Cmd_release(MotorController_T * p_mc, int argc, char ** argv)
 //{
 //	(void)argv;
 //    if(argc == 1) Motor_Release(&Motor1);
 //    return CMD_RESERVED_RETURN_CODE_SUCCESS;
 //}
 //
-//int Cmd_vbat(const MotorController_T * p_mc, int argc, char ** argv)
+//int Cmd_vbat(MotorController_T * p_mc, int argc, char ** argv)
 //{
 //	(void)argv;
 //    if(argc == 1)
@@ -568,17 +605,17 @@ int Cmd_heat(const MotorController_T * p_mc, int argc, char ** argv)
 //
 
 
-//extern int Cmd_pwm 		(const MotorController_T * p_mc, int argc, char ** argv);
-//extern int Cmd_rpm 		(const MotorController_T * p_mc, int argc, char ** argv);
-//extern int Cmd_jog 		(const MotorController_T * p_mc, int argc, char ** argv);
-//extern int Cmd_run 		(const MotorController_T * p_mc, int argc, char ** argv);
-//extern int Cmd_stop		(const MotorController_T * p_mc, int argc, char ** argv);
-//extern int Cmd_release 	(const MotorController_T * p_mc, int argc, char ** argv);
-//extern int Cmd_vbat		(const MotorController_T * p_mc, int argc, char ** argv);
-//extern int Cmd_v			(const MotorController_T * p_mc, int argc, char ** argv);
-//extern int Cmd_phase		(const MotorController_T * p_mc, int argc, char ** argv);
-//extern int Cmd_hold		(const MotorController_T * p_mc, int argc, char ** argv);
-//extern int Cmd_print		(const MotorController_T * p_mc, int argc, char ** argv);
+//extern int Cmd_pwm 		(MotorController_T * p_mc, int argc, char ** argv);
+//extern int Cmd_rpm 		(MotorController_T * p_mc, int argc, char ** argv);
+//extern int Cmd_jog 		(MotorController_T * p_mc, int argc, char ** argv);
+//extern int Cmd_run 		(MotorController_T * p_mc, int argc, char ** argv);
+//extern int Cmd_stop		(MotorController_T * p_mc, int argc, char ** argv);
+//extern int Cmd_release 	(MotorController_T * p_mc, int argc, char ** argv);
+//extern int Cmd_vbat		(MotorController_T * p_mc, int argc, char ** argv);
+//extern int Cmd_v			(MotorController_T * p_mc, int argc, char ** argv);
+//extern int Cmd_phase		(MotorController_T * p_mc, int argc, char ** argv);
+//extern int Cmd_hold		(MotorController_T * p_mc, int argc, char ** argv);
+//extern int Cmd_print		(MotorController_T * p_mc, int argc, char ** argv);
 
 //const Cmd_T CMD_PWM 		=	{ "pwm", 		"Sets pwm value", 			Cmd_pwm		};
 //Cmd_T CMD_V	 		=	{ "v", 			"Sets applied voltage", 	Cmd_v		};
@@ -604,8 +641,8 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"phase", 		"Set motor phase", 			Cmd_phase	},
 	{"hall", 		"Read hall", 			Cmd_hall	},
 
-	{"heat", 		"Display temperature", 			Cmd_heat	},
-
+	{"heat", 		"Display temperature", 			Cmd_heat		},
+	{"vmonitor", 	"Display v", 					Cmd_vmonitor	},
 //	{"pwm", 		"Sets pwm value", 				Cmd_pwm		},
 
 //	{"param", 		"Sets motor parameterss",	 	Cmd_param	},

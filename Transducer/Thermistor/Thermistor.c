@@ -166,10 +166,10 @@ int32_t Thermistor_ConvertToDegC_Int(Thermistor_T * p_thermistor, uint16_t adcu,
 	return (int32_t)(ConvertAdcuToDegC(p_thermistor, adcu) * scalar);
 }
 
-int32_t Thermistor_ConvertToDegC_Fixed32(Thermistor_T * p_thermistor, uint16_t adcu)
-{
-
-}
+//int32_t Thermistor_ConvertToDegC_Fixed32(Thermistor_T * p_thermistor, uint16_t adcu)
+//{
+//
+//}
 
 /*
  * For when conversion processing is less frequent than user output

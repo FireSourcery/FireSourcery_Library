@@ -105,6 +105,11 @@ Thermistor_T;
 	}											\
 }
 
+static inline Thermistor_ThesholdStatus_T Thermistor_GetStatus(Thermistor_T * p_thermistor)
+{
+	return p_thermistor->Status;
+}
+
 static inline bool Thermistor_GetIsEnable(Thermistor_T * p_thermistor)
 {
 	return p_thermistor->Params.IsEnable;

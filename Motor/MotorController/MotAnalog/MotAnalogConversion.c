@@ -35,11 +35,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
+/*
+ * Currently no dependency on Motor Controller Module, since there are no mapped callbacks
+ */
 
 const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_HEAT_PCB 		= { .CHANNEL = MOT_ANALOG_CHANNEL_HEAT_PCB,			.ON_COMPLETE = 0U, };
 const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_HEAT_MOSFETS_TOP = { .CHANNEL = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP,	.ON_COMPLETE = 0U, };
 const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_HEAT_MOSFETS_BOT = { .CHANNEL = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT,	.ON_COMPLETE = 0U, };
+const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_VPOS				= { .CHANNEL = MOT_ANALOG_CHANNEL_VPOS,				.ON_COMPLETE = 0U, };
 const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_VACC 			= { .CHANNEL = MOT_ANALOG_CHANNEL_VACC,				.ON_COMPLETE = 0U, };
 const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_VSENSE 			= { .CHANNEL = MOT_ANALOG_CHANNEL_VSENSE,			.ON_COMPLETE = 0U, };
 const Analog_VirtualConversionChannel_T MOT_ANALOG_VIRTUAL_THROTTLE 		= { .CHANNEL = MOT_ANALOG_CHANNEL_THROTTLE,			.ON_COMPLETE = 0U, };

@@ -207,7 +207,7 @@ static void ProcMotorFocVoltageMode(Motor_T * p_motor, qfrac16_t vqReq, qfrac16_
 	FOC_SetVd(&p_motor->Foc, 0);
 }
 
-static  void ProcMotorFocCurrentFeedbackLoop(Motor_T * p_motor, qfrac16_t iqReq, qfrac16_t idReq)
+static void ProcMotorFocCurrentFeedbackLoop(Motor_T * p_motor, qfrac16_t iqReq, qfrac16_t idReq)
 {
 	qfrac16_t vqReq;
 	qfrac16_t iqReqNew;
@@ -334,7 +334,13 @@ static inline void ActivateMotorFocAngle(Motor_T * p_motor)
 /******************************************************************************/
 static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 {
-	//no current sense during pwm float
+	//no current sense during pwm float, check bemf
+	AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VA);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VB);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VC);
+	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+
 	ProcMotorFocPositionFeedback(p_motor);
 }
 

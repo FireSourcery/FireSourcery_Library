@@ -60,14 +60,14 @@ static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 //	[MCSM_INPUT_TRANSITION_FAULT]		= (StateMachine_Transition_T)TransitionFault,
 };
 
-static void Init_Entry(MotorController_T * p_motorController)
+static void Init_Entry(MotorController_T * p_mc)
 {
-//	MotorController_InitReboot(p_motorController);
+//	MotorController_InitReboot(p_mc);
 }
 
-static void Init_Proc(MotorController_T * p_motorController)
+static void Init_Proc(MotorController_T * p_mc)
 {
-	StateMachine_ProcTransition(&p_motorController->StateMachine, &MCSM_STATE_STOP);
+	StateMachine_ProcTransition(&p_mc->StateMachine, &MCSM_STATE_STOP);
 }
 
 static const StateMachine_State_T MCSM_STATE_INIT =
@@ -84,19 +84,19 @@ static const StateMachine_State_T MCSM_STATE_INIT =
     Enters upon all motors reading 0 speed
 */
 /******************************************************************************/
-static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_motorController)
+static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc)
 {
 	return &MCSM_STATE_RUN;
 }
 
-static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_motorController)
+static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 {
-	return (MotorController_ProcDirection(p_motorController) == true) ? 0U : &MCSM_STATE_FAULT;
+	return (MotorController_ProcDirection(p_mc) == true) ? 0U : &MCSM_STATE_FAULT;
 }
 
-static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_motorController)
+static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc)
 {
-	MotorController_SaveParameters_Blocking(p_motorController);
+	MotorController_SaveParameters_Blocking(p_mc);
 	return 0U;
 }
 
@@ -116,12 +116,12 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 //	MCSM_INPUT_SAVE_PARAMS,
 };
 
-static void Stop_Entry(MotorController_T * p_motorController)
+static void Stop_Entry(MotorController_T * p_mc)
 {
-	MotorController_DisableMotorAll(p_motorController); //disable all motor may be in decel control mode
+	MotorController_DisableMotorAll(p_mc); //disable all motor may be in decel control mode
 }
 
-static void Stop_Proc(MotorController_T * p_motorController)
+static void Stop_Proc(MotorController_T * p_mc)
 {
 
 }
@@ -141,33 +141,33 @@ static const StateMachine_State_T MCSM_STATE_STOP =
     motors may be in active control or freewheel
 */
 /******************************************************************************/
-static StateMachine_State_T * Run_InputDirection(MotorController_T * p_motorController)
+static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc)
 {
-	if (p_motorController->MainDirection != p_motorController->UserDirection)
+	if (p_mc->MainDirection != p_mc->UserDirection)
 	{
-		MotorController_Beep(p_motorController);
+		MotorController_Beep(p_mc);
 	}
 
-	MotorController_ProcDirection(p_motorController); 	// if motor is in freewheel state, sets flag to remain in freewheel state
+	MotorController_ProcDirection(p_mc); 	// if motor is in freewheel state, sets flag to remain in freewheel state
 	return 0U;
 }
 
-static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_motorController)
+static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_mc)
 {
-	MotorController_ProcUserCmdThrottle(p_motorController);
+	MotorController_ProcUserCmdThrottle(p_mc);
 	return 0U;
 }
 
-static StateMachine_State_T * Run_InputBrake(MotorController_T * p_motorController)
+static StateMachine_State_T * Run_InputBrake(MotorController_T * p_mc)
 {
-	MotorController_ProcUserCmdBrake(p_motorController);
-//	return (MotorController_CheckMotorAllStop(p_motorController) == true) ? &MCSM_STATE_STOP : 0U;
+	MotorController_ProcUserCmdBrake(p_mc);
+//	return (MotorController_CheckMotorAllStop(p_mc) == true) ? &MCSM_STATE_STOP : 0U;
 	return 0U;
 }
 
-static StateMachine_State_T * Run_InputCheckStop(MotorController_T * p_motorController)
+static StateMachine_State_T * Run_InputCheckStop(MotorController_T * p_mc)
 {
-	return (MotorController_CheckMotorAllStop(p_motorController) == true) ? &MCSM_STATE_STOP : 0U;
+	return (MotorController_CheckMotorStopAll(p_mc) == true) ? &MCSM_STATE_STOP : 0U;
 }
 
 static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
@@ -181,12 +181,12 @@ static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MCSM_TRANSITION_TABL
 //	[MCSM_INPUT_FLOAT] 	= (StateMachine_Transition_T)Run_InputFloat,
 };
 
-static void Run_Entry(MotorController_T * p_motorController)
+static void Run_Entry(MotorController_T * p_mc)
 {
 
 }
 
-static void Run_Proc(MotorController_T * p_motorController)
+static void Run_Proc(MotorController_T * p_mc)
 {
 
 }
@@ -207,16 +207,52 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TA
 {
 };
 
-static void Fault_Entry(MotorController_T * p_motorController)
+static void Fault_Entry(MotorController_T * p_mc)
 {
-	MotorController_DisableMotorAll(p_motorController);
+	MotorController_DisableMotorAll(p_mc);
+	MotorController_Beep(p_mc);
 }
 
-static void Fault_Proc(MotorController_T * p_motorController)
+static void Fault_Proc(MotorController_T * p_mc)
 {
-	MotorController_Beep(p_motorController);
-	//if fault clears
-	StateMachine_ProcTransition(&p_motorController->StateMachine, &MCSM_STATE_STOP);
+	if(Thermistor_GetStatus(&p_mc->ThermistorPcb) == THERMISTOR_THRESHOLD_OK)
+	{
+		p_mc->ErrorFlags.PcbOverHeat = 0U;
+	}
+
+	if(Thermistor_GetStatus(&p_mc->ThermistorMosfetsTop) == THERMISTOR_THRESHOLD_OK)
+	{
+		p_mc->ErrorFlags.MosfetsTopOverHeat = 0U;
+	}
+
+	if(Thermistor_GetStatus(&p_mc->ThermistorMosfetsBot) == THERMISTOR_THRESHOLD_OK)
+	{
+		p_mc->ErrorFlags.MosfetsBotOverHeat = 0U;
+	}
+
+	if(VMonitor_CheckLimits(&p_mc->VMonitorPos, p_mc->AnalogResults.VPos_ADCU) == VMONITOR_LIMITS_OK)
+	{
+		p_mc->ErrorFlags.VPosLimit = 0U;
+	}
+
+	if(VMonitor_CheckLimits(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_ADCU) == VMONITOR_LIMITS_OK)
+	{
+		p_mc->ErrorFlags.VSenseLimit = 0U;
+	}
+
+	if(VMonitor_CheckLimits(&p_mc->VMonitorAcc, p_mc->AnalogResults.VAcc_ADCU) == VMONITOR_LIMITS_OK)
+	{
+		p_mc->ErrorFlags.VAccLimit = 0U;
+	}
+
+	if (p_mc->ErrorFlags.State == 0U) // and motor error flags
+	{
+		StateMachine_ProcTransition(&p_mc->StateMachine, &MCSM_STATE_STOP);
+	}
+	else
+	{
+//		MotorController_ProcErrorOutput(p_mc); //alarm etc
+	}
 }
 
 static const StateMachine_State_T MCSM_STATE_FAULT =

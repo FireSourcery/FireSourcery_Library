@@ -31,25 +31,26 @@
 #include "MotorController.h"
 #include "Config.h"
 
-#include "MotAnalogUser/MotAnalogUser.h"
+//#include "MotAnalogUser/MotAnalogUser.h"
+//
+//#include "Motor/Motor/Motor.h"
+//#include "Motor/Motor/Motor_User.h"
+//
+//#include "Transducer/Blinky/Blinky.h"
+//#include "Transducer/Thermistor/Thermistor.h"
+//#include "Transducer/VMonitor/VMonitor.h"
+//
+//#include "Protocol/Protocol/Protocol.h"
+//
+//#include "Peripheral/Serial/Serial.h"
+//#include "Peripheral/NvMemory/Flash/Flash.h"
+//#include "Peripheral/NvMemory/EEPROM/EEPROM.h"
+//
+//#include "Utility/Shell/Shell.h"
+//#include "Utility/Timer/Timer.h"
+//#include "Utility/StateMachine/StateMachine.h"
 
-#include "Motor/Motor/Motor.h"
-#include "Motor/Motor/Motor_User.h"
-
-#include "Transducer/Blinky/Blinky.h"
-#include "Transducer/Thermistor/Thermistor.h"
-
-#include "Protocol/Protocol/Protocol.h"
-
-#include "Peripheral/Serial/Serial.h"
-#include "Peripheral/NvMemory/Flash/Flash.h"
-#include "Peripheral/NvMemory/EEPROM/EEPROM.h"
-
-#include "Utility/Shell/Shell.h"
-#include "Utility/Timer/Timer.h"
-#include "Utility/StateMachine/StateMachine.h"
-
-#include <stdint.h>
+//#include <stdint.h>
 #include <string.h>
 
 /*
@@ -67,6 +68,11 @@ void MotorController_Init(MotorController_T * p_mc)
 		memcpy(&p_mc->Parameters, p_mc->CONFIG.P_PARAMS_NVM, sizeof(MotorController_Params_T));
 	}
 
+	if (p_mc->CONFIG.P_MEM_MAP_BOOT != 0U)
+	{
+		p_mc->MemMapBoot.Register = p_mc->CONFIG.P_MEM_MAP_BOOT->Register;
+	}
+
 	for (uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
 	{
 		Motor_Init(&p_mc->CONFIG.P_MOTORS[iMotor]);
@@ -82,6 +88,12 @@ void MotorController_Init(MotorController_T * p_mc)
 	Thermistor_Init(&p_mc->ThermistorPcb);
 	Thermistor_Init(&p_mc->ThermistorMosfetsTop);
 	Thermistor_Init(&p_mc->ThermistorMosfetsBot);
+
+	VMonitor_Init(&p_mc->VMonitorPos);
+	VMonitor_Init(&p_mc->VMonitorSense);
+	VMonitor_Init(&p_mc->VMonitorAcc);
+
+	Linear_ADC_Init(&p_mc->Battery, p_mc->Parameters.BatteryZero_ADCU, p_mc->Parameters.BatteryFull_ADCU, 1000U);
 
 	Blinky_Init(&p_mc->Buzzer);
 

@@ -54,6 +54,8 @@
 	VIN = ADC*VADC_RES/DIV = ADC*(VREF*(R1+R2))/(ADC_MAX*R2)
 	VIN/ADC = VADC_RES/DIV = VREF*(R1 + R2)/(ADC_MAX*R2)
 
+	Overflow: R2 max 65536
+
 	@param[in] line - Struct containing calculated intermediate values
 	@param[in] r1 - R1 value expressed as a whole number
 	@param[in] r2 - R2 value expressed as a whole number
@@ -66,7 +68,7 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t 
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
 	p_linear->SlopeFactor 			= ((adcVRef10 * (r1 + r2)) << (16U - adcBits)) / r2 / 10U; 		// (VREF*(R1 + R2) << 16)/(ADC_MAX*R2)
 	p_linear->SlopeDivisor_Shift 	= 16U;
-	p_linear->SlopeDivisor 			= ((r2 << 16U) * 10U / (adcVRef10 * (r1 + r2)));				// ((R2) << 16)/(VREF*(R1 + R2))
+	p_linear->SlopeDivisor 			= (r2 << 16U) / (adcVRef10 * (r1 + r2)) * 10U;				// ((R2) << 16)/(VREF*(R1 + R2))
 	p_linear->SlopeFactor_Shift 	= 16U - adcBits;
 #elif defined (CONFIG_LINEAR_DIVIDE_NUMERICAL)
 

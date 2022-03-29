@@ -37,11 +37,14 @@
 
 #include <stdint.h>
 
+/*
+ * R2 overflow > 65536
+ */
 #define LINEAR_VOLTAGE_CONFIG(r1, r2, adcVRef10, adcBits, vInMax) 							\
 {																							\
 	.SlopeFactor 				= ((adcVRef10 * (r1 + r2)) << (16U - adcBits)) / r2 / 10U, 	\
 	.SlopeDivisor_Shift 		= 16U,														\
-	.SlopeDivisor 				= ((r2 << 16U) * 10U / (adcVRef10 * (r1 + r2))),			\
+	.SlopeDivisor 				= (r2 << 16U) / (adcVRef10 * (r1 + r2)) * 10U ,			\
 	.SlopeFactor_Shift 			= 16U - adcBits,											\
 	.YOffset 					= 0U, 														\
 	.XOffset 					= 0U, 														\
@@ -140,7 +143,7 @@ static inline uint16_t Linear_Voltage_CalcAdcu_V(const Linear_T * p_linear, uint
 	return (uint16_t)Linear_InvFunction(p_linear, volts);
 }
 
-static inline uint16_t Linear_Voltage_CalcAdcu_MilliV(const Linear_T * p_linear, uint16_t milliV)
+static inline uint16_t Linear_Voltage_CalcAdcu_MilliV(const Linear_T * p_linear, uint32_t milliV)
 {
 	return (uint16_t)(Linear_InvFunction(p_linear, milliV) / 1000U);
 }

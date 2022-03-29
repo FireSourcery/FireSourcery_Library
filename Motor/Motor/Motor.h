@@ -187,11 +187,14 @@ typedef enum
 	MOTOR_STATUS_ERROR_1,
 } Motor_Status_T;
 
-typedef struct
+typedef union
 {
-	uint32_t OverHeat		:1;
-}
-Motor_ErrorFlags_T;
+	struct
+	{
+		uint32_t OverHeat :1;
+	};
+	uint32_t State;
+} Motor_ErrorFlags_T;
 
 /*
  * Calibration Substate Flag
@@ -258,7 +261,7 @@ typedef const struct Motor_Init_Tag
  	const Motor_Params_T * const P_PARAMS_NVM;
 
 	//const using fixed resistor values
-	const Linear_T UNIT_V_POS;
+//	const Linear_T UNIT_V_POS;
 	const Linear_T UNIT_V_ABC; 	//Bemf V and mV conversion
 
 	AnalogN_T * const P_ANALOG_N;
@@ -375,7 +378,7 @@ typedef struct
 //	uint32_t IBusPrev_Frac16;
 	uint16_t VPwm; 				//Control Variable
 
-	volatile uint32_t MicrosRef; //debug
+	uint32_t MicrosRef; //debug
 	volatile uint32_t DebugTime[10];
 	volatile uint32_t HallDebug[13];
 //	uint32_t JogSteps;
@@ -383,10 +386,16 @@ typedef struct
 }
 Motor_T;
 
-
 /******************************************************************************/
 /*!
-	  Input
+ *	Motor Common
+ * 	@{
+ */
+/******************************************************************************/
+
+/******************************************************************************/
+/*
+	Direction
 */
 /******************************************************************************/
 /*
@@ -433,9 +442,10 @@ static inline void Motor_SetDirectionReverse(Motor_T * p_motor)
 	else																	{Motor_SetDirection(p_motor, MOTOR_DIRECTION_CCW);}
 }
 
+
 /******************************************************************************/
-/*!
-	 Ramp
+/*
+	Ramp
 */
 /******************************************************************************/
 /*
@@ -444,7 +454,7 @@ static inline void Motor_SetDirectionReverse(Motor_T * p_motor)
 static inline void Motor_ProcRamp(Motor_T * p_motor)
 {
 	p_motor->RampCmd = Linear_Ramp_ProcOutput(&p_motor->Ramp, &p_motor->RampIndex, p_motor->RampCmd);
-//	p_motor->RampCmd = Linear_Ramp_GetTarget(&p_motor->Ramp); //disables rramp
+//	p_motor->RampCmd = Linear_Ramp_GetTarget(&p_motor->Ramp); //disables ramp
 }
 
 /*
@@ -476,14 +486,9 @@ static inline void Motor_ResumeRamp(Motor_T * p_motor)
 	Linear_Ramp_SetIndex(&p_motor->Ramp, &p_motor->RampIndex, p_motor->Speed_Frac16);
 }
 
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/
-
 
 /******************************************************************************/
-/*!
+/*
 	Speed
 */
 /******************************************************************************/
@@ -525,19 +530,13 @@ static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
 
 
 /******************************************************************************/
-/*!
-*/
-/******************************************************************************/
-
-
-/******************************************************************************/
-/*!
+/*
 	StateMachine Mapped functions
 */
 /******************************************************************************/
 
 /******************************************************************************/
-/*!
+/*
 	Idle Stop State
 */
 /******************************************************************************/
@@ -564,7 +563,7 @@ static inline void Motor_ProcIdle(Motor_T * p_motor)
 
 /******************************************************************************/
 /*
- *	Align State
+	Align State
  */
 /******************************************************************************/
 //Motor_AlignMode_T Motor_GetAlignMode(Motor_T *p_motor)
@@ -608,8 +607,7 @@ static inline bool Motor_ProcAlign(Motor_T * p_motor)
 
 /******************************************************************************/
 /*
- * 	Calibration State Functions
- * 	@{
+	Calibration State Functions
  */
 /******************************************************************************/
 /*
@@ -826,7 +824,6 @@ static inline bool Motor_CalibrateHall(Motor_T * p_motor)
 	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
 	bool isComplete = false;
 
-#define CONFIG_HALL_DEBUG
 #ifndef CONFIG_HALL_DEBUG
 	if (Timer_Poll(&p_motor->ControlTimer) == true)
 	{
@@ -953,20 +950,10 @@ static inline bool Motor_CalibrateHall(Motor_T * p_motor)
 
 	return isComplete;
 }
+
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
-
-
-/******************************************************************************/
-/*!
-	Wrappers
-*/
-/******************************************************************************/
-//static inline void Motor_Float(Motor_T * p_motor)
-//{
-//	Phase_Float(&p_motor->Phase);
-//}
 
 /******************************************************************************/
 /*!
@@ -975,14 +962,5 @@ static inline bool Motor_CalibrateHall(Motor_T * p_motor)
 /******************************************************************************/
 extern void Motor_Init(Motor_T * p_motor);
 extern void Motor_InitReboot(Motor_T * p_motor);
-/*
- * Referenced by State Machine
- */
-//extern void Motor_SetCalibrationStateAdc(Motor_T * p_motor);
-//extern void Motor_SetCalibrationStateHall(Motor_T * p_motor);
-//extern void Motor_SetCalibrationStateEncoder(Motor_T * p_motor);
-//extern bool Motor_CalibrateAdc(Motor_T * p_motor);
-//extern bool Motor_CalibrateHall(Motor_T * p_motor);
-//extern bool Motor_CalibrateEncoder(Motor_T * p_motor);
 
 #endif

@@ -44,15 +44,27 @@
 
 void MotAnalogUser_Init(MotAnalogUser_T * p_user)
 {
-	memcpy(&p_user->Params, p_user->CONFIG.P_PARAMS, sizeof(MotAnalogUser_Params_T));
+	if (p_user->CONFIG.P_PARAMS != 0U)
+	{
+		memcpy(&p_user->Params, p_user->CONFIG.P_PARAMS, sizeof(MotAnalogUser_Params_T));
+		Linear_ADC_Init(&p_user->UnitThrottle, 	p_user->Params.ThrottleZero_ADCU, 	p_user->Params.ThrottleMax_ADCU, 	1000U);
+		Linear_ADC_Init(&p_user->UnitBrake,		p_user->Params.BrakeZero_ADCU, 		p_user->Params.BrakeMax_ADCU, 		1000U);
+	}
+	else
+	{
+		Linear_ADC_Init(&p_user->UnitThrottle, 	0U, 4095U, 1000U);
+		Linear_ADC_Init(&p_user->UnitBrake,		0U, 4095U, 1000U);
+	}
 
 	Debounce_Init(&p_user->PinBrake, 		5U);	//5millis
 	Debounce_Init(&p_user->PinThrottle,		5U);	//5millis
 	Debounce_Init(&p_user->PinForward, 		5U);	//5millis
 	Debounce_Init(&p_user->PinReverse, 		5U);	//5millis
 
-	Linear_ADC_Init(&p_user->UnitThrottle, 	0U, 4095U, 1000U);
-	Linear_ADC_Init(&p_user->UnitBrake,		0U, 4095U, 1000U);
+	p_user->ThrottlePrev_Frac16 = 0U;
+	p_user->Throttle_Frac16 = 0U;
+	p_user->BrakePrev_Frac16 = 0U;
+	p_user->Brake_Frac16 = 0U;
 }
 
 void MotAnalogUser_SetParams(MotAnalogUser_T * p_user, const MotAnalogUser_Params_T * p_param)
@@ -60,32 +72,16 @@ void MotAnalogUser_SetParams(MotAnalogUser_T * p_user, const MotAnalogUser_Param
 	memcpy(&p_user->Params, p_param, sizeof(MotAnalogUser_Params_T));
 }
 
-//void MotAnalogUser_InitDefault(MotAnalogUser_T * p_user)
-//{
-//	Debounce_Init(&p_user->PinBrake, 		5U);	//5millis
-//	Debounce_Init(&p_user->PinThrottle,		5U);	//5millis
-//	Debounce_Init(&p_user->PinForward, 		5U);	//5millis
-//	Debounce_Init(&p_user->PinReverse, 		5U);	//5millis
-//
-//	Linear_ADC_Init(&p_user->UnitThrottle, 	0U, 4095U, 1000U);
-//	Linear_ADC_Init(&p_user->UnitBrake,		0U, 4095U, 1000U);
-//}
-
-void MotAnalogUser_CalibrateBrakeMin(MotAnalogUser_T * p_user, uint8_t min_ADCU)
+void MotAnalogUser_CalibrateBrake(MotAnalogUser_T * p_user, uint16_t zero_ADCU, uint16_t max_ADCU)
 {
-//
-//	Linear_ADC_Init(&p_user->UnitBrake,		0U, 4095U, 1000U);
+	p_user->Params.BrakeZero_ADCU = zero_ADCU;
+	p_user->Params.BrakeMax_ADCU = max_ADCU;
+	Linear_ADC_Init(&p_user->UnitBrake, p_user->Params.BrakeZero_ADCU, p_user->Params.BrakeMax_ADCU, 1000U);
 }
 
-void MotAnalogUser_CalibrateBrakeMax(MotAnalogUser_T * p_user, uint8_t max_ADCU)
+void MotAnalogUser_CalibrateThrottle(MotAnalogUser_T * p_user, uint16_t zero_ADCU, uint16_t max_ADCU)
 {
-//
-//	Linear_ADC_Init(&p_user->UnitBrake,		0U, 4095U, 1000U);
-}
-
-
-void MotAnalogUser_CalibrateUnitThrottle(MotAnalogUser_T * p_user)
-{
-
-//	Linear_ADC_Init(&p_user->UnitThrottle, 	0U, 4095U, 1000U);
+	p_user->Params.ThrottleZero_ADCU = zero_ADCU;
+	p_user->Params.ThrottleMax_ADCU = max_ADCU;
+	Linear_ADC_Init(&p_user->UnitThrottle, p_user->Params.ThrottleZero_ADCU, p_user->Params.ThrottleMax_ADCU, 1000U);
 }
