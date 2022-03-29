@@ -52,6 +52,9 @@ typedef struct __attribute__((aligned (4U)))
 
 	uint16_t Limit_ADCU;
 	uint16_t Threshold_ADCU;
+
+	uint16_t IntScalar;
+	bool IsEnable;
 }
 Thermistor_Params_T;
 
@@ -67,13 +70,14 @@ typedef struct
 //#ifdef config pointer
 //	uint16_t * P_ADC_VALUE;
 
-	Thermistor_Params_T * P_PARAMS; //nv memory
+	const Thermistor_Params_T * P_PARAMS;
+
+	uint8_t ADC_VREF;
+	uint16_t ADC_MAX;
 
 	uint8_t V_IN;
-	uint8_t V_AREF;
-	uint16_t ADC_MAX;
 	uint32_t R_SERIES; 	//pull up
-//	uint32_t R_PARALLEL; //pull down
+	uint32_t R_PARALLEL; // parallel if applicable
 }
 Thermistor_Config_T;
 
@@ -83,24 +87,32 @@ typedef struct
 	Thermistor_Params_T Params;
 
 	Thermistor_ThesholdStatus_T Status;
+	int32_t Heat_DegCInt;
 }
 Thermistor_T;
 
-//#define THERMISTOR_CONFIG(AdcMax, RSeries, Vin, Varef, RNominal, TNominal, BConst) 	\
-//{												\
-//	.CONFIG =									\
-//	{											\
-//		.ADC_MAX 		= AdcRes,				\
-//		.R_SERIES 		= RSeries,				\
-//		.V_IN 			= Vin,					\
-//		.V_AREF 		= Varef,				\
-//		.R0 			= RNominal,				\
-//		.T0 			= TNominal,				\
-//		.B 				= BConst,				\
-//	}											\
-//}
 
-extern float Thermistor_ConvertToDegreesC_Float(Thermistor_T * p_thermistor, uint16_t adcu);
-extern uint32_t Thermistor_SetHeatLimit_DegreesC(Thermistor_T * p_thermistor, uint8_t limit_degreesC);
-extern uint32_t Thermistor_SetHeatThreshold_DegreesC(Thermistor_T * p_thermistor, uint8_t threshold_degreesC);
+#define THERMISTOR_CONFIG(AdcVref, AdcMax, Vin, RSeries, RParallel, p_Params) 	\
+{												\
+	.CONFIG =									\
+	{											\
+		.ADC_VREF 		= AdcVref,				\
+		.ADC_MAX 		= AdcMax,				\
+		.V_IN 			= Vin,					\
+		.R_SERIES 		= RSeries,				\
+		.R_PARALLEL		= RParallel,			\
+		.P_PARAMS		= p_Params,				\
+	}											\
+}
+
+static inline bool Thermistor_GetIsEnable(Thermistor_T * p_thermistor)
+{
+	return p_thermistor->Params.IsEnable;
+}
+
+static inline int32_t Thermistor_GetHeat_DegCInt(Thermistor_T * p_thermistor)
+{
+	return p_thermistor->Heat_DegCInt;
+}
+
 #endif

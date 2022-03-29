@@ -53,6 +53,10 @@ typedef struct
 	volatile bool IsOn;
 
 //	Blinky_Pattern_T * p_PatternActive;
+
+	uint32_t Index;
+	uint32_t Max;
+
 //	uint32_t OnTime;
 //	uint32_t OffTime;
 //	uint32_t OnTimeActive;

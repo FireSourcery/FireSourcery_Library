@@ -60,25 +60,25 @@
 #include "Utility/Debug/Debug.h"
 
 
-static inline void CaptureDebugPwmOn(Motor_T * p_motor, uint16_t adcu)
-{
-	if(p_motor->DebugCounterPwmOn < 200)
-	{
-		p_motor->SampleTimesPwmOn[p_motor->DebugCounterPwmOn] = SysTime_GetMicros() - p_motor->MicrosRef;
-		p_motor->VSamplesPwmOn[p_motor->DebugCounterPwmOn] = adcu;
-		p_motor->DebugCounterPwmOn++;
-	}
-}
-
-static inline void CaptureDebugPwmOff(Motor_T * p_motor, uint16_t adcu)
-{
-	if(p_motor->DebugCounterPwmOff < 200)
-	{
-		p_motor->SampleTimesPwmOff[p_motor->DebugCounterPwmOff] = SysTime_GetMicros() - p_motor->MicrosRef;
-		p_motor->VSamplesPwmOff[p_motor->DebugCounterPwmOff] = adcu;
-		p_motor->DebugCounterPwmOff++;
-	}
-}
+//static inline void CaptureDebugPwmOn(Motor_T * p_motor, uint16_t adcu)
+//{
+//	if(p_motor->DebugCounterPwmOn < 200)
+//	{
+//		p_motor->SampleTimesPwmOn[p_motor->DebugCounterPwmOn] = SysTime_GetMicros() - p_motor->MicrosRef;
+//		p_motor->VSamplesPwmOn[p_motor->DebugCounterPwmOn] = adcu;
+//		p_motor->DebugCounterPwmOn++;
+//	}
+//}
+//
+//static inline void CaptureDebugPwmOff(Motor_T * p_motor, uint16_t adcu)
+//{
+//	if(p_motor->DebugCounterPwmOff < 200)
+//	{
+//		p_motor->SampleTimesPwmOff[p_motor->DebugCounterPwmOff] = SysTime_GetMicros() - p_motor->MicrosRef;
+//		p_motor->VSamplesPwmOff[p_motor->DebugCounterPwmOff] = adcu;
+//		p_motor->DebugCounterPwmOff++;
+//	}
+//}
 
 
 /*
@@ -91,7 +91,7 @@ static inline void Motor_SixStep_CaptureBemfA(Motor_T * p_motor)
 //		Bemf_CaptureVPhase(&p_motor->Bemf, p_motor->AnalogResults.Va_ADCU);
 //		if (p_motor->IsPwmOn == true)
 //		{
-			CaptureDebugPwmOn( p_motor, p_motor->AnalogResults.Va_ADCU);
+//			CaptureDebugPwmOn( p_motor, p_motor->AnalogResults.Va_ADCU);
 //
 //		}
 //		else
@@ -112,7 +112,7 @@ static inline void Motor_SixStep_CaptureBemfB(Motor_T * p_motor)
 //		Bemf_CaptureVPhase(&p_motor->Bemf, p_motor->AnalogResults.Vb_ADCU);
 //		if (p_motor->IsPwmOn == true)
 //		{
-			CaptureDebugPwmOn( p_motor, p_motor->AnalogResults.Vb_ADCU);
+//			CaptureDebugPwmOn( p_motor, p_motor->AnalogResults.Vb_ADCU);
 //		}
 //		else
 //		{
@@ -131,7 +131,7 @@ static inline void Motor_SixStep_CaptureBemfC(Motor_T * p_motor)
 //		Bemf_CaptureVPhase(&p_motor->Bemf, p_motor->AnalogResults.Vc_ADCU);
 //		if (p_motor->IsPwmOn == true)
 //		{
-			CaptureDebugPwmOn(p_motor, p_motor->AnalogResults.Vc_ADCU);
+//			CaptureDebugPwmOn(p_motor, p_motor->AnalogResults.Vc_ADCU);
 //		}
 //		else
 //		{
@@ -422,8 +422,8 @@ static inline bool ProcMotorSixStepSensorFeedback(Motor_T * p_motor)
 
 		//debug
 		p_motor->MicrosRef = SysTime_GetMicros();
-		p_motor->DebugCounterEndPwmOn = p_motor->DebugCounterPwmOn;
-		p_motor->DebugCounterPwmOn = 0;
+//		p_motor->DebugCounterEndPwmOn = p_motor->DebugCounterPwmOn;
+//		p_motor->DebugCounterPwmOn = 0;
 //		p_motor->DebugCounterEndPwmOff = p_motor->DebugCounterPwmOff;
 //		p_motor->DebugCounterPwmOff = 0;
 	}

@@ -151,10 +151,10 @@ static inline void AnalogN_CaptureResults_ISR(AnalogN_T * p_analogn, uint8_t ana
 //	Analog_OnComplete_T onConversionComplete  		= p_map->P_VIRTUAL_CONVERSION->ON_COMPLETE;
 //	void * p_onConversionCompleteContext 			= p_map->P_ON_COMPLETE_CONTEXT;
 
-	volatile static uint32_t debug = 0;
+//	volatile static uint32_t debug = 0;
 
-	if((_Analog_GetIsActive(p_analogI) == true)) //debug only
-	{
+//	if((_Analog_GetIsActive(p_analogI) == true)) //debug only
+//	{
 
 
 	if (_Analog_CaptureResults(p_analogI) == true) //all channels complete
@@ -206,12 +206,12 @@ static inline void AnalogN_CaptureResults_ISR(AnalogN_T * p_analogn, uint8_t ana
 //			}
 //		}
 	}
-
-	}
-	else
-	{
-		debug++;
-	}
+//
+//	}
+//	else
+//	{
+//		debug++;
+//	}
 }
 
 /*
@@ -262,6 +262,13 @@ static inline bool AnalogN_EnqueueConversion_Group(AnalogN_T * p_analogn, const 
 	return Analog_EnqueueConversion_Group(p_conversion->P_ANALOG, &p_conversion->CONVERSION);
 }
 
+/*
+ *  AnalogN_AdcFlags_T activeAdcs:
+ * Single threaded N adc - use
+ * Multi Threaded N adc - not use
+ * Single threaded 1 adc - use for sync, N function preserve same interface
+ * Multi Threaded 1 adc - not use
+ */
 static inline void AnalogN_PauseQueue(AnalogN_T * p_analogn, AnalogN_AdcFlags_T activeAdcs)
 {
 #if  (defined(CONFIG_ANALOG_MULTITHREADED) || defined(CONFIG_ANALOG_CRITICAL_USE_GLOBAL))

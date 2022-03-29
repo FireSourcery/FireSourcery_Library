@@ -34,4 +34,4 @@
 #include "MotorController_Thread.h"
 #include "MotorController.h"
 
-#include "Motor/Utility/MotAnalog/MotAnalogConversion.h"
+#include "MotAnalog/MotAnalogConversion.h"

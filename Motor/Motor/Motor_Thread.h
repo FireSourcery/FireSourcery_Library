@@ -62,7 +62,17 @@ static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor)
 //Low Freq Main //user/monitor thread 1ms low priority
 static inline void Motor_Main1Ms_Thread(Motor_T * p_motor)
 {
+	if(Thermistor_GetIsEnable(&p_motor->Thermistor))
+	{
+		AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_HEAT);
+		AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
 
+		if (Thermistor_ProcThreshold(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU) != THERMISTOR_THRESHOLD_OK)
+		{
+			StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
+		}
+	}
 }
 
 //low priotiy, max freq

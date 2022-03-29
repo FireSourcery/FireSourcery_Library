@@ -69,7 +69,7 @@ static const qangle16_t QANGLE16_240 = 43690; 	/*!  */
 /*! Resolution: 1024 steps per revolution */
 extern const qfrac16_t QFRAC16_SINE_90_TABLE[SINE_90_TABLE_ENTRIES];
 
-#define QFRAC16 ((qfrac16_t) (((x) < 1.0f) ? (((x) >= -1.0f) ? (x*32768.0f) : INT16_MIN) : INT16_MAX))
+#define QFRAC16 ((qfrac16_t) (((x) < 1.0) ? (((x) >= -1.0) ? (x*32768.0) : INT16_MIN) : INT16_MAX))
 
 static inline qfrac16_t qfrac16(int16_t num, int32_t max)
 {

@@ -50,15 +50,22 @@ void Blinky_Proc(Blinky_T * p_blinky)
 		if(Timer_GetIsOneShot(&p_blinky->Timer) == true)
 		{
 			Blinky_Toggle(p_blinky);
-			Timer_SetPeriodic(&p_blinky->Timer); //restore
-			Timer_SetPeriod(&p_blinky->Timer, 0U); //change to set by pattern
+
+			if (p_blinky->Index == p_blinky->Max)
+			{
+				Timer_SetPeriodic(&p_blinky->Timer); //restore
+				Timer_SetPeriod(&p_blinky->Timer, 0U); //change to set by pattern
+			}
+			else
+			{
+				p_blinky->Index++;
+			}
 		}
 		else
 		{
 			//p_blinky->PatternFunction(p_blinky);
 		}
 	}
-
 }
 
 /*!
@@ -71,21 +78,34 @@ void Blinky_Off(Blinky_T * p_blinky)	{p_blinky->IsOn = false;	Pin_Output_Off(&p_
 void Blinky_Toggle(Blinky_T * p_blinky) {(p_blinky->IsOn == true) ? Blinky_Off(p_blinky) : Blinky_On(p_blinky);}
 
 /*
- * User initiated
+ * User initiated one shot
  */
-void Blinky_Blink(Blinky_T * p_blinky, uint32_t duration)
-{
-	Blinky_Toggle(p_blinky);
-	Timer_SetOneShot(&p_blinky->Timer);	//use timer state as pattern lockout, or change pattern function?
-	Timer_StartPeriod(&p_blinky->Timer, duration);
-}
-
-void Blinky_BlinkOnOff(Blinky_T * p_blinky, uint32_t duration)
+void Blinky_Blink_OnOff(Blinky_T * p_blinky, uint32_t duration)
 {
 	Blinky_On(p_blinky);
 	Timer_SetOneShot(&p_blinky->Timer);	//use timer state as pattern lockout, or change pattern function?
 	Timer_StartPeriod(&p_blinky->Timer, duration);
 }
+
+void Blinky_Blink_Toggle(Blinky_T * p_blinky, uint32_t duration)
+{
+	Blinky_On(p_blinky);
+	Timer_SetOneShot(&p_blinky->Timer);	//use timer state as pattern lockout, or change pattern function?
+	Timer_StartPeriod(&p_blinky->Timer, duration);
+}
+
+void Blinky_Blink(Blinky_T * p_blinky, uint32_t duration)
+{
+	Blinky_Blink_OnOff(p_blinky, duration);
+}
+
+void Blinky_BlinkN(Blinky_T * p_blinky, uint32_t duration, uint8_t n)
+{
+	p_blinky->Index = 0;
+	p_blinky->Max = n;
+	Blinky_Blink_OnOff(p_blinky, duration);
+}
+
 
 //void Blinky_Pattern_PeriodicToggle(Blinky_T * p_blinky)
 //{

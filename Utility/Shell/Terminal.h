@@ -159,7 +159,7 @@ static inline void Terminal_SendCrlf(const Terminal_T * p_terminal)
 
 static inline void Terminal_SendClear(const Terminal_T * p_terminal)
 {
-	Terminal_SendCtrl_ESC(p_terminal);
+	Terminal_SendEsc(p_terminal);
 	Terminal_SendChar(p_terminal, 0x32U); /* '2' */
 	Terminal_SendChar(p_terminal, 0x4AU); /* 'J' */
 }

@@ -156,7 +156,7 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABL
 
 static void Stop_Entry(Motor_T * p_motor)
 {
-	Motor_Stop(p_motor);
+	Motor_StartIdle(p_motor);
 }
 
 static void Stop_Proc(Motor_T * p_motor)

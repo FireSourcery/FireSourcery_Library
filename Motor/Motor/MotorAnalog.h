@@ -70,5 +70,25 @@ typedef union
 }
 MotorAnalog_Results_T;
 
+//typedef union
+//{
+//	struct
+//	{
+//		const AnalogN_Conversion_T CONVERSION_VPOS;
+//		const AnalogN_Conversion_T CONVERSION_VA;
+//		const AnalogN_Conversion_T CONVERSION_VB;
+//		const AnalogN_Conversion_T CONVERSION_VC;
+//		const AnalogN_Conversion_T CONVERSION_IA;
+//		const AnalogN_Conversion_T CONVERSION_IB;
+//		const AnalogN_Conversion_T CONVERSION_IC;
+//		const AnalogN_Conversion_T CONVERSION_HEAT;
+//		const AnalogN_Conversion_T CONVERSION_OPTION_PWM_ON;
+//		const AnalogN_Conversion_T CONVERSION_OPTION_RESTORE;
+//	};
+//	AnalogN_Conversion_T CONVERSIONS[MOTOR_ANALOG_CHANNEL_COUNT + 2U];
+//}
+//MotorAnalog_Conversions_T;
+
+
 
 #endif

@@ -232,13 +232,13 @@ static inline uint32_t Encoder_DeltaD_ConvertToAngularSpeed(Encoder_T * p_encode
  */
 static inline uint32_t Encoder_DeltaD_ConvertFromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
 {
-	return (rpm << (CONFIG_ENCODER_ANGLE_DEGREES_BITS)) / (60 * p_encoder->UnitAngularSpeed);
+	return (rpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / (60 * p_encoder->UnitAngularSpeed);
 //	return rpm * p_encoder->Params.CountsPerRevolution / (p_encoder->CONFIG.DELTA_D_SAMPLE_FREQ * 60U);
 }
 
 static inline uint32_t Encoder_DeltaD_ConvertToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
 {
-	return Encoder_DeltaD_ConvertDeltaDToAngularSpeed(p_encoder, deltaD_Ticks * 60U) >> CONFIG_ENCODER_ANGLE_DEGREES_BITS; // overflow?
+	return Encoder_DeltaD_ConvertToAngularSpeed(p_encoder, deltaD_Ticks * 60U) >> CONFIG_ENCODER_ANGLE_DEGREES_BITS; // overflow?
 //	return (deltaD_Ticks * p_encoder->CONFIG.DELTA_D_SAMPLE_FREQ * 60U) / p_encoder->Params.CountsPerRevolution;
 }
 

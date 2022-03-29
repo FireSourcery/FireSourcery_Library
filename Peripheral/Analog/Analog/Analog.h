@@ -294,10 +294,9 @@ static inline void _Analog_EnterCritical(Analog_T * p_analog)
 	/*
 	 * Single threaded calling of Activate.
 	 * Single threaded case, and calling thread is lower priority than ADC ISR, may implement ADC_DisableInterrupt instead of Critical_Enter global disable interrupt
-	 *
 	 * If calling thread is lower priority than ADC ISR, ADC ISR may occur after Conversion setup data is written by lower priority thread.
-	 * In single threaded calling of Activate and calling thread priority is higher than ADC ISR, Activate will run to completion, overwriting the active conversion,
-	 * Disable IRQ is not needed, however ADC ISR will still need Critical_Enter
+	 *
+	 * In single threaded calling of Activate and calling thread priority is higher than ADC ISR, Activate will run to completion, overwriting the active conversion, Disable adc IRQ is not needed, however ADC ISR will still need Critical_Enter
 	 */
 	HAL_ADC_DisableInterrupt(p_analog);
 #endif
@@ -527,12 +526,12 @@ static inline bool _Analog_CaptureResults(Analog_T * p_analog)//, const Analog_C
 
 
 
-///*!
-//	@brief	Capture ADC results, when conversion is complete.
-//			Run in corresponding ADC ISR
-//
-//	ADC ISR should be higher priority than thread calling Analog_Activate()
-// */
+/*!
+	@brief	Capture ADC results, when conversion is complete.
+			Run in corresponding ADC ISR
+
+	ADC ISR should be higher priority than thread calling Analog_Activate()
+ */
 static inline void Analog_CaptureResults_ISR(Analog_T * p_analog)
 {
 //	Analog_Conversion_T * p_activeConversion;

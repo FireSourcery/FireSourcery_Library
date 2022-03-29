@@ -131,7 +131,7 @@ static inline int32_t linear_f_frac16_shift(int32_t m_shifted, uint8_t shift, in
 
 	if (shift >= 16U)
 	{
- 		y = linear_f_shift(m_shifted, (shift - 16U), x0, y0 << 16U, x) / yref;
+ 		y = linear_f_shift(m_shifted, (shift - 16U), x0, y0 * 65536, x) / yref;
 
 		//b is shifted
 //		y = linear_f_shift(m_shifted, (shift - 16U), b, x) / yref;

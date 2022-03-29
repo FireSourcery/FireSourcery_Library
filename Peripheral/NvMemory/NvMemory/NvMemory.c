@@ -272,6 +272,9 @@ NvMemory_Status_T NvMemory_ProcOpCommon_Blocking(NvMemory_T * p_this)
 
 			if (status == NV_MEMORY_STATUS_START_VERIFY)
 			{
+				/*
+				 * FinalizeOp must set Verify Cmd
+				 */
 				status = NvMemory_ProcOpCommon_Blocking(p_this); // misra violation, single recursive call
 			}
 //		}

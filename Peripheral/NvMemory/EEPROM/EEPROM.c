@@ -117,6 +117,8 @@ void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 
 	HAL_EEPROM_Init_Blocking(p_eeprom->CONFIG.P_HAL);
 	NvMemory_Init(p_eeprom);
+	p_eeprom->IsVerifyEnable 	= false;
+	p_eeprom->IsOpBuffered 		= false;
     while (HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONFIG.P_HAL) == false);
 }
 

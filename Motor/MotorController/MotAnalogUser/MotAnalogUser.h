@@ -51,6 +51,11 @@ typedef enum
 	MOT_ANALOG_USER_CMD_THROTTLE_RELEASE,
 	MOT_ANALOG_USER_CMD_THROTTLE_ZERO,
 	MOT_ANALOG_USER_CMD_THROTTLE_ZERO_EDGE,
+
+	MOT_ANALOG_USER_CMD_DIRECTION_EDGE,
+	MOT_ANALOG_USER_CMD_NEUTRAL_EDGE,
+	MOT_ANALOG_USER_CMD_NEUTRAL,
+
 	//	MOT_ANALOG_USER_CMD_THROTTLE_EDGE, //set mode on edge?
 }
 MotAnalogUser_Cmd_T;
@@ -169,6 +174,7 @@ static inline void MotAnalogUser_CaptureSwitches(MotAnalogUser_T * p_user)
 	Debounce_CaptureState(&p_user->PinForward);
 	Debounce_CaptureState(&p_user->PinReverse);
 
+
 //#ifdef CONFIG_MOT_ANALOG_USER_NEUTRAL_HW_SWITCH
 //		p_user->IsDirectionNeutral = Debounce_GetState(p_user->PinNeutral);
 //#else
@@ -182,6 +188,21 @@ static inline void MotAnalogUser_CaptureSwitches(MotAnalogUser_T * p_user)
 static inline void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_user, uint16_t throttle_ADCU, uint16_t brake_ADCU)
 {
 	MotAnalogUser_CaptureSwitches(p_user);
+
+//	if (MotAnalogUser_GetForwardSwitch(p_user) == true)
+//	{
+//		status = Debounce_PollRisingEdge(&p_user->PinForward) ? MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE : MOT_ANALOG_USER_DIRECTION_FORWARD;
+//	}
+//	else if (MotAnalogUser_GetReverseSwitch(p_user) == true)
+//	{
+//		status = Debounce_PollRisingEdge(&p_user->PinReverse) ? MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE : MOT_ANALOG_USER_DIRECTION_REVERSE;
+//	}
+//	else
+//	{
+//		status = ((Debounce_PollFallingEdge(&p_user->PinForward) == true) || (Debounce_PollFallingEdge(&p_user->PinReverse) == true))
+//			? MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE : MOT_ANALOG_USER_DIRECTION_NEUTRAL;
+//	}
+
 	MotAnalogUser_CaptureThrottleValue(p_user, throttle_ADCU);
 	MotAnalogUser_CaptureBrakeValue(p_user, brake_ADCU);
 }
@@ -225,6 +246,8 @@ static inline bool MotAnalogUser_CheckThrottleRelease(const MotAnalogUser_T * p_
 static inline MotAnalogUser_Cmd_T MotAnalogUser_GetCmd(const MotAnalogUser_T * p_user)
 {
 	MotAnalogUser_Cmd_T status;
+
+	//todo move diretion check
 
 	if(MotAnalogUser_GetBrakeSwitch(p_user) == true)
 	{

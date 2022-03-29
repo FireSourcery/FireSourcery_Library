@@ -50,9 +50,9 @@ PID_Mode_T;
 
 typedef struct __attribute__((aligned (4U))) PID_Params_Tag
 {
-	uint32_t CalcFreq;
 	PID_Mode_T	  		Mode;
 	PID_Direction_T 	Direction;
+	uint32_t CalcFreq;
 	int32_t KpFactor;
 	int32_t KpDivisor;
 	int32_t KiFactor;
@@ -90,7 +90,8 @@ PID_T;
 	}									\
 }
 
-extern int32_t PID_Calc(PID_T *p_pid, int32_t setpoint, int32_t feedback);;
+extern int32_t PID_Calc(PID_T *p_pid, int32_t setpoint, int32_t feedback);
+extern void PID_SetIntegral(PID_T * p_pid, int32_t integral);
 extern void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor);
 extern void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq);
 extern void PID_SetOutputLimits(PID_T * p_pid, uint32_t min, uint32_t max);

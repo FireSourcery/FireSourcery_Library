@@ -141,11 +141,7 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			{
 				if (captureSpeed == true) /* Use as indicator for once per millis */
 				{
-					if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder) == true)
-					{
-						p_motor->Speed_RPM = 0U;
-						p_motor->Speed_Frac16 = 0U;
-					}
+					Motor_PollDeltaTStop(p_motor);
 				}
 			}
 
@@ -324,14 +320,6 @@ static inline void ActivateMotorFocAngle(Motor_T * p_motor)
 	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 }
 
-	///external call todo combine
-	static inline void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, uint16_t vq)
-	{
-	//	p_motor->ElectricalAngle = angle;
-		FOC_SetVq(&p_motor->Foc, vq);
-		FOC_SetVector(&p_motor->Foc, angle);
-		ActivateMotorFocAngle(p_motor);
-	}
 
 /******************************************************************************/
 /*!
@@ -471,7 +459,16 @@ static inline void Motor_FOC_StopAngleControl(Motor_T * p_motor)
 /******************************************************************************/
 
 
+/*
+ * Call from user must also set Vector Sine/Cosine, not set during position read
+ */
+static inline void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd)
+{
+//	p_motor->ElectricalAngle = angle;
+	FOC_SetVq(&p_motor->Foc, vq);
+	FOC_SetVector(&p_motor->Foc, angle);
+	ActivateMotorFocAngle(p_motor);
+}
+
 #endif
-
-
 
