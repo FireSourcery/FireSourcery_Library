@@ -71,10 +71,18 @@ MotorController_InputMode_T;
 
 typedef enum
 {
-	MOTOR_CONTROLLER_IDLE_MODE_RELEASE,
-	MOTOR_CONTROLLER_IDLE_MODE_REGEN,
+	MOTOR_CONTROLLER_COAST_MODE_FLOAT,
+	MOTOR_CONTROLLER_COAST_MODE_REGEN,
 }
-MotorController_IdleMode_T;
+MotorController_CoastMode_T;
+
+//typedef enum
+//{
+//	MOTOR_CONTROLLER_STOP_MODE_FLOAT,
+//	MOTOR_CONTROLLER_STOP_MODE_GROUND,
+//}
+//MotorController_StopMode_T;
+
 
 //typedef enum
 //{
@@ -122,8 +130,10 @@ MotorController_Once_T;
 typedef struct __attribute__((aligned (4U))) //CONFIG_PARAMS_ALIGN_SIZE
 {
 	MotorController_InputMode_T InputMode;
-	MotorController_IdleMode_T IdleMode;
+//	MotorController_StopMode_T StopMode;
+	MotorController_CoastMode_T CoastMode;
 	bool IsBuzzerOnReverseEnable;
+	bool IsBootDefaultEnable;
 	uint16_t BatteryZero_ADCU;
 	uint16_t BatteryFull_ADCU;
 }
@@ -223,6 +233,12 @@ static inline void MotorController_DisableMotorAll(MotorController_T * p_mc)
 	Motor_UserN_DisableControl(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
 }
 
+static inline void MotorController_GroundMotorAll(MotorController_T * p_mc)
+{
+	Motor_UserN_Ground(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
+}
+
+
 static inline void MotorController_Beep(MotorController_T * p_mc)
 {
 	Blinky_Blink(&p_mc->Buzzer, 500U);
@@ -257,6 +273,11 @@ static inline void MotorController_ProcUserCmdBrake(MotorController_T * p_mc)
 static inline void MotorController_ProcUserCmdThrottle(MotorController_T * p_mc)
 {
 	Motor_UserN_SetCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
+}
+
+static inline void MotorController_ProcUserCmdRegen(MotorController_T * p_mc)
+{
+	Motor_UserN_SetCmdRegen(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
 }
 
 static inline bool MotorController_ProcDirection(MotorController_T * p_mc)

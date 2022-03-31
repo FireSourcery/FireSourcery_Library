@@ -50,8 +50,8 @@ typedef enum
 	MOT_ANALOG_USER_CMD_PROC_NEUTRAL,
 	MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD,
 	MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE,
-	MOT_ANALOG_USER_CMD_SET_IDLE,
-	MOT_ANALOG_USER_CMD_PROC_IDLE,
+	MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE, /* No input */
+	MOT_ANALOG_USER_CMD_PROC_THROTTLE_RELEASE,
 }
 MotAnalogUser_Cmd_T;
 
@@ -60,9 +60,9 @@ typedef enum
 	MOT_ANALOG_USER_DIRECTION_NEUTRAL,
 	MOT_ANALOG_USER_DIRECTION_FORWARD,
 	MOT_ANALOG_USER_DIRECTION_REVERSE,
-//	MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE,
-//	MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE,
-//	MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE,
+	MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE,
+	MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE,
+	MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE,
 }
 MotAnalogUser_Direction_T;
 
@@ -70,10 +70,9 @@ typedef struct __attribute__((aligned (4U)))
 {
 	uint16_t ThrottleZero_ADCU;
 	uint16_t ThrottleMax_ADCU;
-	uint16_t BrakeZero_ADCU;
+	uint16_t BrakeZero_ADCU; //threshold offset ~500
 	uint16_t BrakeMax_ADCU;
 
-//	bool EnableModule;
 	bool EnablePinThrottle;
 	bool EnablePinBrake;
 	bool EnablePinNeutral;
@@ -108,9 +107,6 @@ typedef struct
 	uint16_t ThrottlePrev_Frac16;
 	uint16_t Brake_Frac16;
 	uint16_t BrakePrev_Frac16;
-
-	//Derived values
-//	bool IsDirectionNeutral;
 }
 MotAnalogUser_T;
 
@@ -188,7 +184,7 @@ static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user) 		
 
 static inline bool MotAnalogUser_CheckThrottleRelease(const MotAnalogUser_T * p_user)
 {
-	return (((int32_t)p_user->ThrottlePrev_Frac16 - (int32_t)p_user->Throttle_Frac16) > (65535/10));;
+	return (((int32_t)p_user->ThrottlePrev_Frac16 - (int32_t)p_user->Throttle_Frac16) > (65535/40));;
 }
 
 static inline bool MotAnalogUser_GetNeutralSwitch(const MotAnalogUser_T * p_user) 		{return Debounce_GetState(&p_user->PinNeutral);}
@@ -197,106 +193,119 @@ static inline bool MotAnalogUser_GetReverseSwitch(const MotAnalogUser_T * p_user
 
 static inline bool MotAnalogUser_GetDirection(const MotAnalogUser_T * p_user)
 {
-	MotAnalogUser_Direction_T status;
+	MotAnalogUser_Direction_T direction;
 
 	if((p_user->Params.EnablePinNeutral == true) && (Debounce_GetState(&p_user->PinNeutral) == true))
 	{
-		status = MOT_ANALOG_USER_DIRECTION_NEUTRAL;
+		direction = MOT_ANALOG_USER_DIRECTION_NEUTRAL;
 	}
-	if(MotAnalogUser_GetForwardSwitch(p_user) == true)
+	else if(MotAnalogUser_GetForwardSwitch(p_user) == true)
 	{
-		status = MOT_ANALOG_USER_DIRECTION_FORWARD;
+		direction = MOT_ANALOG_USER_DIRECTION_FORWARD;
 	}
 	else if(MotAnalogUser_GetReverseSwitch(p_user) == true)
 	{
-		status = MOT_ANALOG_USER_DIRECTION_REVERSE;
+		direction = MOT_ANALOG_USER_DIRECTION_REVERSE;
 	}
 	else
 	{
-		status = MOT_ANALOG_USER_DIRECTION_NEUTRAL;
+		direction = MOT_ANALOG_USER_DIRECTION_NEUTRAL;
 	}
 
-	return status;
+	return direction;
 }
 
-static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(const MotAnalogUser_T * p_user)
+static inline MotAnalogUser_Direction_T MotAnalogUser_PollDirection(MotAnalogUser_T * p_user)
 {
-	MotAnalogUser_Cmd_T status;
+	MotAnalogUser_Direction_T direction;
 
-	/* Check Brake first */
-	if(MotAnalogUser_GetBrakeSwitch(p_user) == true)
+	if((p_user->Params.EnablePinNeutral == true) && (Debounce_GetState(&p_user->PinNeutral) == true))
 	{
-		status = MOT_ANALOG_USER_CMD_SET_BRAKE;
+		direction = Debounce_PollRisingEdge(&p_user->PinNeutral) ? MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE : MOT_ANALOG_USER_DIRECTION_NEUTRAL;
 	}
-	/* Check Direction */
-	else if(MotAnalogUser_GetDirection(p_user) == MOT_ANALOG_USER_DIRECTION_NEUTRAL)
+	else if (Debounce_GetState(&p_user->PinForward) == true)
 	{
-		if((p_user->Params.EnablePinNeutral == true) && (Debounce_PollRisingEdge(&p_user->PinNeutral) == true))
-		{
-			status = MOT_ANALOG_USER_CMD_SET_NEUTRAL;
-		}
-		else if ((Debounce_PollFallingEdge(&p_user->PinForward) == true) || (Debounce_PollFallingEdge(&p_user->PinReverse) == true))
-		{
-			status = MOT_ANALOG_USER_CMD_SET_NEUTRAL;
-		}
-		else
-		{
-			status = MOT_ANALOG_USER_CMD_PROC_NEUTRAL;
-		}
+		direction = Debounce_PollRisingEdge(&p_user->PinForward) ? MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE : MOT_ANALOG_USER_DIRECTION_FORWARD;
 	}
-	else if(Debounce_PollRisingEdge(&p_user->PinForward) == true)
+	else if (Debounce_GetState(&p_user->PinReverse) == true)
 	{
-		status = MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD;
-	}
-	else if(Debounce_PollRisingEdge(&p_user->PinReverse) == true)
-	{
-		status = MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE;
-	}
-	/* Check Throttle. Direction is non edge Forward or Reverse past this point */
-	else if(MotAnalogUser_GetThrottle(p_user) > 10U)
-	{
-		if(MotAnalogUser_CheckThrottleRelease(p_user) == true) /* repeat throttle release is okay for now, otherwise track previous cmd state */
-		{
-			status = MOT_ANALOG_USER_CMD_SET_IDLE;
-		}
-		else
-		{
-			status = MOT_ANALOG_USER_CMD_SET_THROTTLE;
-		}
-	}
-	else if(p_user->ThrottlePrev_Frac16 > 10U)
-	{
-		status = MOT_ANALOG_USER_CMD_SET_IDLE;
+		direction = Debounce_PollRisingEdge(&p_user->PinReverse) ? MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE : MOT_ANALOG_USER_DIRECTION_REVERSE;
 	}
 	else
 	{
-		status = MOT_ANALOG_USER_CMD_PROC_IDLE;
+		direction = ((Debounce_PollFallingEdge(&p_user->PinForward) == true) || (Debounce_PollFallingEdge(&p_user->PinReverse) == true))
+			? MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE : MOT_ANALOG_USER_DIRECTION_NEUTRAL;
 	}
 
-	return status;
+	return direction;
 }
 
+static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user)
+{
+	MotAnalogUser_Direction_T direction = MotAnalogUser_PollDirection(p_user);
+	MotAnalogUser_Cmd_T cmd = MOT_ANALOG_USER_CMD_PROC_THROTTLE_RELEASE;
 
-//static inline MotAnalogUser_Direction_T MotAnalogUser_PollDirection(MotAnalogUser_T * p_user)
-//{
-//	MotAnalogUser_Direction_T status;
-//
-//	if (MotAnalogUser_GetForwardSwitch(p_user) == true)
-//	{
-//		status = Debounce_PollRisingEdge(&p_user->PinForward) ? MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE : MOT_ANALOG_USER_DIRECTION_FORWARD;
-//	}
-//	else if (MotAnalogUser_GetReverseSwitch(p_user) == true)
-//	{
-//		status = Debounce_PollRisingEdge(&p_user->PinReverse) ? MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE : MOT_ANALOG_USER_DIRECTION_REVERSE;
-//	}
-//	else
-//	{
-//		status = ((Debounce_PollFallingEdge(&p_user->PinForward) == true) || (Debounce_PollFallingEdge(&p_user->PinReverse) == true))
-//			? MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE : MOT_ANALOG_USER_DIRECTION_NEUTRAL;
-//	}
-//
-//	return status;
-//}
+	/* Edge functions are instantaneous and can proc before brake, or check in separate function to proc in addition to brake */
+	switch(direction)
+	{
+		case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_NEUTRAL;				break;
+		case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD;	break;
+		case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE;	break;
+//		case MOT_ANALOG_USER_DIRECTION_NEUTRAL:
+//		case MOT_ANALOG_USER_DIRECTION_REVERSE:
+//		case MOT_ANALOG_USER_DIRECTION_FORWARD:
+		default:
+			/* Check Brake first */
+			if(MotAnalogUser_GetBrakeSwitch(p_user) == true)
+			{
+				//need different cmd on brake edge?
+				cmd = MOT_ANALOG_USER_CMD_SET_BRAKE;
+			}
+			/* Check Direction */
+			else if(direction == MOT_ANALOG_USER_DIRECTION_NEUTRAL)
+			{
+				cmd = MOT_ANALOG_USER_CMD_PROC_NEUTRAL;
+			}
+			/* Check Throttle. Direction is non edge Forward or Reverse past this point */
+			else
+			{
+		//		if(MotAnalogUser_GetThrottleSwitch(p_user) == true)
+		//		{
+					if(MotAnalogUser_GetThrottle(p_user) > 0U)
+					{
+						if(MotAnalogUser_CheckThrottleRelease(p_user) == true) /* repeat throttle release is okay for now, otherwise track previous cmd state */
+						{
+							cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE;
+						}
+						else
+						{
+							cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE;
+						}
+					}
+					else
+					{
+						if(p_user->ThrottlePrev_Frac16 > 0U)
+						{
+							cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE;
+						}
+						else
+						{
+							cmd = MOT_ANALOG_USER_CMD_PROC_THROTTLE_RELEASE;
+						}
+					}
+		//		}
+		//			else
+		//			{
+		//				//check throttle fallling edge
+		//			}
+			}
+
+			break;
+	}
+
+	return cmd;
+}
+
 
 extern void MotAnalogUser_Init(MotAnalogUser_T * p_user);
 extern void MotAnalogUser_SetParams(MotAnalogUser_T * p_user, const MotAnalogUser_Params_T * p_param);

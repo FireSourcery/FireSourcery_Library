@@ -24,7 +24,6 @@
 /*!
     @file 	FOC.c
     @author FireSoucery
-    @brief  FOC
     @version V0
 */
 /******************************************************************************/
@@ -37,10 +36,34 @@ void FOC_Init(FOC_T * p_foc)
 	p_foc->VectorMaxMagnitude = QFRAC16_MAX;
 //	p_foc->VectorMaxD = QFRAC16_1_DIV_SQRT3;
 	p_foc->VectorMaxD = 0U;
+
+//	p_foc->Ia = 0;
+//	p_foc->Ib = 0;
+//	p_foc->Ic = 0;
+//	p_foc->Ialpha;
+//	p_foc->Ibeta;
+//
+//	p_foc->Vd;
+//	p_foc->Vq;
+//	p_foc->Valpha;
+//	p_foc->Vbeta;
+
+//	p_foc->Sine = 0;
+//	p_foc->Cosine = 0;
+
+//	*p_foc->p_PwmA = 0;
+//	*p_foc->p_PwmB = 0;
+//	*p_foc->p_PwmC = 0;
+
+//	p_foc->IdReq = 0;
+//	p_foc->IqReq = 0;
+//
+//	p_foc->dReq = 0;
+//	p_foc->qReq = 0;
 }
 
 /*
- * For field weakening
+ *
  */
 void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax)
 {
@@ -65,29 +88,4 @@ void FOC_SetOuputZero(FOC_T * p_foc)
 }
 
 
-//	p_foc->VectorMaxMagnitude = QFRAC16_MAX;
-//	p_foc->VectorMaxD = 0U;
 
-//	p_foc->Ia = 0;
-//	p_foc->Ib = 0;
-//	p_foc->Ic = 0;
-//	p_foc->Ialpha;
-//	p_foc->Ibeta;
-//
-//	p_foc->Vd;
-//	p_foc->Vq;
-//	p_foc->Valpha;
-//	p_foc->Vbeta;
-
-//	p_foc->Sine = 0; /* save for inverse park call */
-//	p_foc->Cosine = 0;
-
-//	*p_foc->p_PwmA = 0;
-//	*p_foc->p_PwmB = 0;
-//	*p_foc->p_PwmC = 0;
-
-//	p_foc->IdReq = 0;
-//	p_foc->IqReq = 0;
-//
-//	p_foc->dReq = 0;
-//	p_foc->qReq = 0;

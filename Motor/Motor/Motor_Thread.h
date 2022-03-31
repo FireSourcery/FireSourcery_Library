@@ -32,9 +32,9 @@
 #ifndef MOTOR_THREAD_H
 #define MOTOR_THREAD_H
 
+#include "Motor_StateMachine.h"
 #include "Motor.h"
-#include "Utility/StateMachine/StateMachine.h"
-//#include "Utility/Timer/Timer.h"
+
 #include "System/SysTime/SysTime.h"
 
 /*

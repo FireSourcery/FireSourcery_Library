@@ -74,6 +74,8 @@ typedef struct
 	Pin_T OnOffB;
 	Pin_T OnOffC;
 	//	#endif
+
+// 	const Phase_Params_T * const P_PARAMS;
 }
 Phase_Config_T;
 

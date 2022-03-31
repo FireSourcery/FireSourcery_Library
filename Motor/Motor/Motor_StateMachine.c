@@ -95,27 +95,29 @@ static StateMachine_State_T * Stop_InputAccelerate(Motor_T * p_motor)
 {
 	StateMachine_State_T * p_nextState;
 
-	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
+	if (p_motor->UserDirection != p_motor->Direction)
 	{
-		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-		{
-			Motor_FOC_StartAngleControl(p_motor);
-		}
-		else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-		{
-
-		}
-
-		p_nextState = &MOTOR_STATE_RUN;
+		p_nextState = 0U; //&MOTOR_STATE_FAULT; //direction should always set while in stop state
 	}
 	else
 	{
-		p_nextState = &MOTOR_STATE_ALIGN;
-	}
+		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
+		{
+			if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+			{
+				Motor_FOC_StartAngleControl(p_motor);
+			}
+			else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+			{
 
-	if (p_motor->UserDirection != p_motor->Direction)
-	{
-		p_nextState = &MOTOR_STATE_FAULT; //direction should always set while in stop state
+			}
+
+			p_nextState = &MOTOR_STATE_RUN;
+		}
+		else
+		{
+			p_nextState = &MOTOR_STATE_ALIGN;
+		}
 	}
 
 	return p_nextState;
@@ -150,7 +152,6 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABL
 	[MSM_INPUT_CALIBRATION] 	= (StateMachine_Transition_T)Stop_InputCalibration,
 	[MSM_INPUT_DIRECTION] 		= (StateMachine_Transition_T)Stop_InputDirection,
 
-//	[MSM_INPUT_DETECT_FREEWHEEL] 	= (StateMachine_Transition_T)TransitionFreeWheel,
 //	[MSM_INPUT_DECELERATE] 			= (StateMachine_Transition_T)StopTransitionDecelerate,
 };
 
@@ -299,7 +300,7 @@ static void StartAccelerate(Motor_T * p_motor)
 	}
 	else
 	{
-		Motor_ResumeRamp(p_motor); //other modes req start from current speed
+		Motor_ResumeRamp(p_motor); //other modes req start from present speed
 	}
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)

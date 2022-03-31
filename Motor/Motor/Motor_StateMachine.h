@@ -47,6 +47,7 @@ typedef enum MotorStateMachine_Input_Tag
 	MSM_INPUT_ACCELERATE,
 	MSM_INPUT_DECELERATE,
 	MSM_INPUT_FLOAT,
+	MSM_INPUT_GROUND,
 	MSM_INPUT_DIRECTION,
 }
 MotorStateMachine_Input_T;

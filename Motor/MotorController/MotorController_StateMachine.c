@@ -89,9 +89,15 @@ static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc)
 	return &MCSM_STATE_RUN;
 }
 
+static StateMachine_State_T * Stop_InputBrake(MotorController_T * p_mc)
+{
+	MotorController_GroundMotorAll(p_mc); //todo change to brake edge
+	return 0U;
+}
+
 static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 {
-	return (MotorController_ProcDirection(p_mc) == true) ? 0U : &MCSM_STATE_FAULT;
+	return (MotorController_ProcDirection(p_mc) == true) ? 0U : &MCSM_STATE_FAULT; /* direction should always set during stop state */
 }
 
 static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc)
@@ -104,9 +110,13 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 {
 	[MCSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
 	[MCSM_INPUT_THROTTLE]  		= (StateMachine_Transition_T)Stop_InputThrottle,
+	[MCSM_INPUT_BRAKE]  		= (StateMachine_Transition_T)Stop_InputBrake,
 	[MCSM_INPUT_DIRECTION] 		= (StateMachine_Transition_T)Stop_InputDirection,
 	[MCSM_INPUT_SAVE_PARAMS] 	= (StateMachine_Transition_T)Stop_InputSaveParams,
 
+
+//	[MCSM_INPUT_START_COAST] 	= (StateMachine_Transition_T) 0,
+//	[MCSM_INPUT_PROC_COAST] 	= (StateMachine_Transition_T) 0,
 //	MCSM_INPUT_FAULT,
 //	MCSM_INPUT_DIRECTION,
 //	MCSM_INPUT_THROTTLE,
@@ -118,7 +128,14 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 
 static void Stop_Entry(MotorController_T * p_mc)
 {
-	MotorController_DisableMotorAll(p_mc); //disable all motor may be in decel control mode
+//	if (p_mc->Parameters.StopMode == MOTOR_CONTROLLER_STOP_MODE_GROUND)
+//	{
+////		MotorController_GroundMotorAll(p_mc);
+//	}
+//	else
+//	{
+		MotorController_DisableMotorAll(p_mc);
+//	}
 }
 
 static void Stop_Proc(MotorController_T * p_mc)
@@ -149,26 +166,65 @@ static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc)
 	}
 
 	MotorController_ProcDirection(p_mc); 	// if motor is in freewheel state, sets flag to remain in freewheel state
+
+//	if (MotorController_ProcDirection(p_mc) == false)
+//	{
+//		MotorController_Beep(p_mc);
+//	}
+
 	return 0U;
 }
 
 static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_mc)
 {
 	MotorController_ProcUserCmdThrottle(p_mc);
+
+	//custom
 	return 0U;
 }
 
 static StateMachine_State_T * Run_InputBrake(MotorController_T * p_mc)
 {
 	MotorController_ProcUserCmdBrake(p_mc);
-//	return (MotorController_CheckMotorAllStop(p_mc) == true) ? &MCSM_STATE_STOP : 0U;
+/*
+ * When brake is released Coast mode will run, and check stop
+ */
 	return 0U;
 }
 
-static StateMachine_State_T * Run_InputCheckStop(MotorController_T * p_mc)
+static StateMachine_State_T * Run_InputNeutral(MotorController_T * p_mc)
 {
 	return (MotorController_CheckMotorStopAll(p_mc) == true) ? &MCSM_STATE_STOP : 0U;
 }
+
+static StateMachine_State_T * Run_InputCoast(MotorController_T * p_mc)
+{
+ 	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
+ 	{
+ 		MotorController_ProcUserCmdRegen(p_mc);
+ 	}
+ 	else
+ 	{
+ 		//motor already disabled
+ 	}
+
+	return (MotorController_CheckMotorStopAll(p_mc) == true) ? &MCSM_STATE_STOP : 0U;
+}
+
+static StateMachine_State_T * Run_InputStartCoast(MotorController_T * p_mc)
+{
+	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
+	{
+		//regen updates on proc
+	}
+	else
+	{
+		MotorController_DisableMotorAll(p_mc);
+	}
+
+	return 0U;
+}
+
 
 static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
@@ -176,8 +232,9 @@ static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MCSM_TRANSITION_TABL
 	[MCSM_INPUT_DIRECTION] 		= (StateMachine_Transition_T)Run_InputDirection,
 	[MCSM_INPUT_THROTTLE] 		= (StateMachine_Transition_T)Run_InputThrottle,
 	[MCSM_INPUT_BRAKE]  		= (StateMachine_Transition_T)Run_InputBrake,
-	[MCSM_INPUT_CHECK_STOP] 	= (StateMachine_Transition_T)Run_InputCheckStop,
-
+	[MCSM_INPUT_START_COAST] 	= (StateMachine_Transition_T)Run_InputStartCoast,
+	[MCSM_INPUT_PROC_COAST] 	= (StateMachine_Transition_T)Run_InputCoast,
+	[MCSM_INPUT_NEUTRAL] 		= (StateMachine_Transition_T)Run_InputNeutral,
 //	[MCSM_INPUT_FLOAT] 	= (StateMachine_Transition_T)Run_InputFloat,
 };
 

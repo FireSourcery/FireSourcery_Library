@@ -120,8 +120,6 @@ static inline void MotorController_User_SetVAccLimitLower_MilliV(MotorController
 //static inline uint16_t MotorController_User_GetVPosLimitUpper_ADCU(MotorController_T * p_mc) 		{return p_mc->Parameters.VPosLimitUpper_ADCU;}
 //static inline uint16_t MotorController_User_GetVPosLimitLower_ADCU(MotorController_T * p_mc) 		{return p_mc->Parameters.VPosLimitLower_ADCU;}
 
-
-
 //static inline void MotorController_User_SetMainProtocolXcvr(MotorController_T * p_mc, uint8_t id) 	{  Protocol_SetSpecs(p_mc->MainProtocol, p_mc->CONFIG.P_PROTOCOL_SPECS_TABLE[id]); }
 //static inline void MotorController_User_SetMainProtoclSpecs(MotorController_T * p_mc, uint8_t id) 	{  Protocol_SetPort(p_mc->MainProtocol, p_mc->CONFIG.P_XCVR_TABLE[id]); }
 
@@ -131,6 +129,9 @@ static inline void MotorController_User_SetVAccLimitLower_MilliV(MotorController
  * Common Input Interface
  * Subject to StateMachine process
  * Need to save to temporary variable, as StateMachine functions pass 1 context variable only
+ *
+ * todo update function to pass through to motor state machine, eliminate redundancy
+ * throttle, brake, direction,
  */
 static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd)
 {
@@ -150,30 +151,32 @@ static inline void MotorController_User_SetDirection(MotorController_T * p_mc, M
 	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION);
 }
 
-static inline void MotorController_User_SetIdle(MotorController_T * p_mc)
+static inline void MotorController_User_StartCoast(MotorController_T * p_mc)
 {
- 	if(p_mc->Parameters.IdleMode == MOTOR_CONTROLLER_IDLE_MODE_REGEN)
- 	{
- 		//set regen
- 	}
- 	else
- 	{
- 		MotorController_DisableMotorAll(p_mc);
- 	}
+	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_START_COAST);
+
+// 	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
+// 	{
+// 		//set regen
+// 	}
+// 	else
+// 	{
+// 		MotorController_DisableMotorAll(p_mc);
+// 	}
 }
 
-static inline void MotorController_User_ProcIdle(MotorController_T * p_mc)
+static inline void MotorController_User_ProcCoast(MotorController_T * p_mc)
 {
- 	if(p_mc->Parameters.IdleMode == MOTOR_CONTROLLER_IDLE_MODE_REGEN)
- 	{
+// 	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
+// 	{
+//
+// 	}
+// 	else
+// 	{
+//
+// 	}
 
- 	}
- 	else
- 	{
-
- 	}
-
- 	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CHECK_STOP);
+ 	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_PROC_COAST);
 }
 
 static inline void MotorController_User_DisableControl(MotorController_T * p_mc)

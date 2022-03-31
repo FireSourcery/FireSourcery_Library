@@ -57,7 +57,7 @@
 #include <stdbool.h>
 
 #include "System/SysTime/SysTime.h"
-#include "Utility/Debug/Debug.h"
+//#include "Utility/Debug/Debug.h"
 
 
 //static inline void CaptureDebugPwmOn(Motor_T * p_motor, uint16_t adcu)

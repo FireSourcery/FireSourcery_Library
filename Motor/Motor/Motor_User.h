@@ -38,17 +38,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-//disable pwm interrupt of this motor only
-//static inline void Motor_User_EnterCriticalLocal(Motor_T * p_motor)
-//{
-//
-//}
-
-
-/*
+/******************************************************************************/
+/*!
  * State Machine Error checked inputs
  */
-
+/******************************************************************************/
 /*
  * Motor State Machine Thread Safety
  *
@@ -61,7 +55,6 @@
  * Must check input flags every pwm cycle
  */
 
-
 /*
  * Disable control, motor may remain spinning
  */
@@ -69,6 +62,12 @@ static inline void Motor_User_DisableControl(Motor_T * p_motor)
 {
 	Phase_Float(&p_motor->Phase);
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
+}
+
+static inline void Motor_User_Ground(Motor_T * p_motor)
+{
+	Phase_Ground(&p_motor->Phase);
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_GROUND);
 }
 
 static inline void Motor_User_SetCmd(Motor_T * p_motor, uint16_t cmd)
@@ -90,6 +89,13 @@ static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
 	Motor_SetRamp(p_motor, intensity);
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DECELERATE);
 //	Critical_Exit();
+}
+
+
+static inline void Motor_User_SetCmdRegen(Motor_T * p_motor)
+{
+	Motor_SetRamp(p_motor, p_motor->Speed_Frac16 / 2U);
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DECELERATE);
 }
 
 //static inline void Motor_User_SetCmdSpeed(Motor_T * p_motor, uint16_t speed)
@@ -164,7 +170,32 @@ static inline void Motor_User_ActivateCalibrationAdc(Motor_T * p_motor)
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
 }
 
+/******************************************************************************/
+/*
+ * Nvm function
+ */
+/******************************************************************************/
 
+static inline void Motor_User_SetILimit_Amp(Motor_T * p_motor, uint16_t limit_Amp)
+{
+	uint16_t limit_Frac16 = (uint32_t)limit_Amp * 65536U /  p_motor->Parameters.IRefMax_Amp;
+
+	if(limit_Frac16 > 65535U)
+	{
+		limit_Frac16 = 65535U;
+	}
+
+	p_motor->Parameters.IBusLimit_Frac16 = limit_Frac16;
+	p_motor->Parameters.IqLimit = limit_Frac16 / 2U;
+}
+
+
+
+/******************************************************************************/
+/*
+ * RAM Variable RW
+ */
+/******************************************************************************/
 /*
  * Conversion Function only called if called by the user. Not called regularly
  */
@@ -186,14 +217,26 @@ static inline uint16_t Motor_User_GetHallRotorAngle(Motor_T * p_motor) 	{return 
 
 static inline Motor_ErrorFlags_T Motor_User_GetErrorFlags(Motor_T * p_motor) 	{return  p_motor->ErrorFlags;}
 
+
 //static inline void Motor_User_ActivatePhase(Motor_T * p_motor)
 //{
 //
 //}
 
+/******************************************************************************/
 /*
- * Set Motor Array functions
+ * N Motor Array functions
  */
+/******************************************************************************/
+//static inline void ProcMotorUserN(Motor_T * p_motor, uint8_t motorCount, uint32_t (*op)(Motor_T*, uint32_t), uint16_t var)
+//{
+//	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+//	{
+//		op(&p_motor[iMotor], var);
+//	}
+//}
+
+
 static inline void Motor_UserN_SetCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle)
 {
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
@@ -209,6 +252,16 @@ static inline void Motor_UserN_SetCmdBrake(Motor_T * p_motor, uint8_t motorCount
 		Motor_User_SetCmdBrake(&p_motor[iMotor], brake);
 	}
 }
+
+static inline void Motor_UserN_SetCmdRegen(Motor_T * p_motor, uint8_t motorCount)
+{
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		Motor_User_SetCmdRegen(&p_motor[iMotor]);
+	}
+}
+
+
 
 
 static inline bool Motor_UserN_SetDirectionForward(Motor_T * p_motor, uint8_t motorCount)
@@ -248,6 +301,16 @@ static inline void Motor_UserN_DisableControl(Motor_T * p_motor, uint8_t motorCo
 		Motor_User_DisableControl(&p_motor[iMotor]);
 	}
 }
+
+
+static inline void Motor_UserN_Ground(Motor_T * p_motor, uint8_t motorCount)
+{
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		Motor_User_Ground(&p_motor[iMotor]);
+	}
+}
+
 
 static inline bool Motor_UserN_CheckStop(Motor_T * p_motor, uint8_t motorCount)
 {

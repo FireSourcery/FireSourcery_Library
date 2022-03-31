@@ -29,25 +29,7 @@
 */
 /******************************************************************************/
 #include "Motor.h"
-#include "Config.h"
-#include "MotorAnalog.h"
 
-#include "Transducer/Phase/Phase.h"
-#include "Transducer/Hall/Hall.h"
-//#include "Transducer/BEMF/BEMF.h"
-#include "Math/FOC.h"
-
-#include "Transducer/Encoder/Encoder_Motor.h"
-
-#include "Utility/StateMachine/StateMachine.h"
-#include "Utility/Timer/Timer.h"
-
-#include "Math/Linear/Linear_ADC.h"
-#include "Math/Linear/Linear_Voltage.h"
-#include "Math/Linear/Linear.h"
-
-#include <stdint.h>
-#include <stdbool.h>
 #include <string.h>
 
 void Motor_Init(Motor_T * p_motor)

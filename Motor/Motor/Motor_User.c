@@ -24,30 +24,10 @@
 /*!
     @file 	Motor_User.h
     @author FireSoucery
-    @brief  User access scope. Functions include error checking.
+    @brief
     @version V0
 */
 /******************************************************************************/
+#include "Motor_User.h"
 #include "Motor.h"
-
-//#include "Config.h"
-////#include "Default.h"
-//
-//#include "MotorStateMachine.h"
-//
-//#include "Transducer/Phase/Phase.h"
-//#include "Transducer/Hall/Hall.h"
-//#include "Transducer/BEMF/BEMF.h"
-//
-//#include "Transducer/Encoder/Encoder_Motor.h"
-//#include "Transducer/Encoder/Encoder_DeltaT.h"
-//#include "Transducer/Encoder/Encoder_DeltaD.h"
-//#include "Transducer/Encoder/Encoder.h"
-//
-//#include "System/StateMachine/StateMachine.h"
-//#include "System/Thread/Thread.h"
-//
-//#include "Math/Linear/Linear_ADC.h"
-//#include "Math/Linear/Linear_Voltage.h"
-//#include "Math/Linear/Linear.h"
 

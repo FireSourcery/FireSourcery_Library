@@ -38,8 +38,6 @@
 
 #include "Transducer/Phase/Phase.h"
 #include "Transducer/Hall/Hall.h"
-//#include "Transducer/BEMF/BEMF.h"
-
 #include "Math/FOC.h"
 
 #include "Transducer/Encoder/Encoder_Motor.h"
@@ -195,6 +193,15 @@ typedef union
 	};
 	uint32_t State;
 } Motor_ErrorFlags_T;
+
+typedef union
+{
+	struct
+	{
+		uint32_t IOverLimit :1;
+	};
+	uint32_t State;
+} Motor_WarningFlags_T;
 
 /*
  * Calibration Substate Flag

@@ -19,10 +19,11 @@ typedef union
 {
 	struct
 	{
-		volatile uint32_t IsValid	: 2U;
-		volatile uint32_t FastBoot 	: 1U;
-		volatile uint32_t Beep 		: 1U;
-		volatile uint32_t Blink  	: 1U;
+		volatile uint32_t IsValid		: 2U;
+		volatile uint32_t FastBoot 		: 1U;
+		volatile uint32_t Beep 			: 1U;
+		volatile uint32_t Blink  		: 1U;
+		volatile uint32_t LoadDefault  	: 1U;
 	};
 	volatile uint32_t Register;
 }
@@ -51,5 +52,11 @@ static inline bool MemMapBoot_GetBeep(void)
 	return ((MemMapBoot_GetIsValid() == false) || (MEM_MAP_BOOT->Beep == 1U));
 }
 
-
+/*
+ * Load Default by default
+ */
+static inline bool MemMapBoot_GetLoadDefault(void)
+{
+	return ((MemMapBoot_GetIsValid() == false) || (MEM_MAP_BOOT->LoadDefault == 1U));
+}
 #endif

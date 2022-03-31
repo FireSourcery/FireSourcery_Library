@@ -25,7 +25,7 @@
     @file 	FOC.h
     @author FireSoucery
     @brief  FOC math functions only. Wrapper for pure math functions.
-    		 Only this modules call math_foc, math_svpwm
+    		 Only this modules calls math_foc, math_svpwm
     @version V0
 */
 /******************************************************************************/
@@ -76,11 +76,9 @@ typedef struct
 	qfrac16_t Vbeta;
 
 	/* dutyA, dutyB, dutyC -> 16 bits, q0.16, always positive */
-	//check 65536 case
 	uint16_t DutyA;
 	uint16_t DutyB;
 	uint16_t DutyC;
-
 }
 FOC_T;
 

@@ -29,28 +29,7 @@
 */
 /******************************************************************************/
 #include "MotorController.h"
-#include "Config.h"
 
-//#include "MotAnalogUser/MotAnalogUser.h"
-//
-//#include "Motor/Motor/Motor.h"
-//#include "Motor/Motor/Motor_User.h"
-//
-//#include "Transducer/Blinky/Blinky.h"
-//#include "Transducer/Thermistor/Thermistor.h"
-//#include "Transducer/VMonitor/VMonitor.h"
-//
-//#include "Protocol/Protocol/Protocol.h"
-//
-//#include "Peripheral/Serial/Serial.h"
-//#include "Peripheral/NvMemory/Flash/Flash.h"
-//#include "Peripheral/NvMemory/EEPROM/EEPROM.h"
-//
-//#include "Utility/Shell/Shell.h"
-//#include "Utility/Timer/Timer.h"
-//#include "Utility/StateMachine/StateMachine.h"
-
-//#include <stdint.h>
 #include <string.h>
 
 /*

@@ -105,6 +105,14 @@ static inline void HAL_PWM_WriteLow(HAL_PWM_T * p_hal, uint32_t channel)
 	p_hal->SWOCTRL &= ~(1UL << (channel + FTM_SWOCTRL_CH0OCV_SHIFT));
 }
 
+//void Board_PWM_Init(void)
+//{
+//	//	ftm_state_t ftmState;
+//	//	FTM_DRV_Init(0U, &flexTimer_pwm_1_InitConfig, &ftmState); 	/* FTM0 module initialized as PWM signals generator */
+//	//	FTM_DRV_InitPwm(0U, &flexTimer_pwm_1_PwmConfig); 			/* FTM0 module PWM initialization */
+//	//	FTM_DRV_MaskOutputChannels(0U, 0xFFU, true); 				/* Mask all FTM0 channels to disable PWM output */
+//}
+
 static inline void HAL_PWM_InitModule(HAL_PWM_T * p_hal)
 {
 	/*

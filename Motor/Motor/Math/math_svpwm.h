@@ -39,7 +39,7 @@
  * Standard SVM calculation method. Inclusive of equivalent reverse Clarke transform.
  * Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
  *
- * dutyA, dutyB, dutyC -> 16 bits, q0.16, always positive
+ * dutyA, dutyB, dutyC -> 16 bits, q1.15, always positive
  */
 static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16_t * p_dutyC, qfrac16_t alpha, qfrac16_t beta)
 {
@@ -52,9 +52,6 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 	 * Y = (beta + sqrt3 * alpha) / 2;
 	 * Z = (beta - sqrt3 * alpha) / 2;
 	 */
-//	magX = beta * QFRAC16_1_OVERSAT;
-//	magY = ((beta * QFRAC16_1_OVERSAT) + (QFRAC16_SQRT3_MOD_1 * alpha) + (alpha * QFRAC16_1_OVERSAT)) / 2;
-//	magZ = ((beta * QFRAC16_1_OVERSAT) - (QFRAC16_SQRT3_MOD_1 * alpha) - (alpha * QFRAC16_1_OVERSAT)) / 2;
 
 	int32_t betaDiv2 		= qfrac16_mul(beta, QFRAC16_1_DIV_2);
 	int32_t alphaSqrt3Div2 	= qfrac16_mul(alpha, QFRAC16_SQRT3_DIV_2);
@@ -87,11 +84,6 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			 * B = (1 + X + Z) / 2;
 			 * C = (1 - X + Z) / 2;
 			 */
-//			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT + magX + magZ) / 2;
-//			*p_dutyA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-//			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
-//			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-
 			z0 = (0x7FFF + magX + magZ) / 2;
 			*p_dutyA = (z0 - magZ);
 			*p_dutyB = z0;
@@ -114,11 +106,6 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			 * B = z0 + Z;
 			 * C = z0 - Y;
 			 */
-//			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT + magY - magZ) / 2;
-//			*p_dutyA = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
-//			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-//			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-
 			z0 = (0x7FFF + magY - magZ) / 2;
 			*p_dutyA = z0;
 			*p_dutyB = (z0 + magZ);
@@ -140,11 +127,6 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			 * B = z0 + X;
 			 * C = z0;
 			 */
-//			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT - magX - magY) / 2;
-//			*p_dutyA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-//			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-//			*p_dutyC = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
-
 			z0 = (0x7FFF - magX - magY) / 2;
 			*p_dutyA = (z0 + magY);
 			*p_dutyB = (z0 + magX);
@@ -169,12 +151,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			 * B = z0;
 			 * C = z0 - X;
 			 */
-//			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT + magX + magZ) / 2;
-//			*p_dutyA = (z0 - magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-//			*p_dutyB = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
-//			*p_dutyC = (z0 - magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-
-			z0 = (0x7FFF +  magX + magZ) / 2;
+			z0 = (0x7FFF + magX + magZ) / 2;
 			*p_dutyA = (z0 - magZ);
 			*p_dutyB = z0;
 			*p_dutyC = (z0 - magX);
@@ -195,12 +172,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			 * B = z0 + Z;
 			 * C = z0 - Y;
 			 */
-//			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT +  magY -  magZ) / 2;
-//			*p_dutyA = z0 			>> QFRAC16_N_FRAC_BITS_MINUS_1;
-//			*p_dutyB = (z0 + magZ) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-//			*p_dutyC = (z0 - magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-
-			z0 = (0x7FFF +  magY -  magZ) / 2;
+			z0 = (0x7FFF + magY - magZ) / 2;
 			*p_dutyA = z0;
 			*p_dutyB = (z0 + magZ);
 			*p_dutyC = (z0 - magY);
@@ -221,11 +193,6 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			 * B = z0 + X;
 			 * C = z0;
 			 */
-//			z0 = (QFRAC16_1_OVERSAT*QFRAC16_1_OVERSAT - magX -  magY) / 2;
-//			*p_dutyA = (z0 + magY) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-//			*p_dutyB = (z0 + magX) 	>> QFRAC16_N_FRAC_BITS_MINUS_1;
-//			*p_dutyC = z0			>> QFRAC16_N_FRAC_BITS_MINUS_1;
-
 			z0 = (0x7FFF - magX - magY) / 2;
 			*p_dutyA = (z0 + magY);
 			*p_dutyB = (z0 + magX);
@@ -233,22 +200,5 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 		}
 	}
 }
-
-//static inline void svpwm_calc2(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t * p_pwmC, uint16_t pwmPeriod, qfrac16_t vA, qfrac16_t vB, qfrac16_t vC)
-//{
-//
-//}
-//
-//static inline void svpwm_calc3(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t * p_pwmC, uint16_t pwmPeriod, qfrac16_t d, qfrac16_t q, qfrac16_t theta)
-//{
-//
-//}
-//
-//static inline void svpwm_calc4(uint16_t * p_pwmA, uint16_t * p_pwmB, uint16_t * p_pwmC, uint16_t pwmPeriod, qfrac16_t magnitude, qfrac16_t theta)
-//{
-//
-//}
-
-
 
 #endif

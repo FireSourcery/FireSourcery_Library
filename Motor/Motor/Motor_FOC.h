@@ -455,15 +455,9 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 	}
 }
 
-static inline void Motor_FOC_StopAngleControl(Motor_T * p_motor)
-{
-	Phase_Float(&p_motor->Phase);
-}
-
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
-
 
 /*
  * Call from user must also set Vector Sine/Cosine, not set during position read

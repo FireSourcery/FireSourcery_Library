@@ -58,12 +58,12 @@ static inline void ProcMotorControllerAnalogUser(MotorController_T * p_mc)
 	{
 		case MOT_ANALOG_USER_CMD_SET_BRAKE:					MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_mc->AnalogUser));			break;
 		case MOT_ANALOG_USER_CMD_SET_THROTTLE:				MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottle(&p_mc->AnalogUser));	break;
-		case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				MotorController_DisableMotorAll(p_mc);;														break;
-		case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CHECK_STOP);			break;
+		case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				MotorController_DisableMotorAll(p_mc);														break;
+		case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_NEUTRAL);			break;
 		case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);				break;
 		case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);	 			break;
-		case MOT_ANALOG_USER_CMD_SET_IDLE:					MotorController_User_SetIdle(p_mc);															break;
-		case MOT_ANALOG_USER_CMD_PROC_IDLE:					MotorController_User_ProcIdle(p_mc);														break;
+		case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_StartCoast(p_mc);														break;
+		case MOT_ANALOG_USER_CMD_PROC_THROTTLE_RELEASE:		MotorController_User_ProcCoast(p_mc);														break;
 		default: break;
 	}
 }
