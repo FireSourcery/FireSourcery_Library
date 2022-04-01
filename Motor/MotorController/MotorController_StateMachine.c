@@ -86,6 +86,7 @@ static const StateMachine_State_T MCSM_STATE_INIT =
 /******************************************************************************/
 static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc)
 {
+	MotorController_ProcUserCmdThrottle(p_mc);
 	return &MCSM_STATE_RUN;
 }
 
@@ -160,17 +161,18 @@ static const StateMachine_State_T MCSM_STATE_STOP =
 /******************************************************************************/
 static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc)
 {
-	if (p_mc->MainDirection != p_mc->UserDirection)
-	{
-		MotorController_Beep(p_mc);
-	}
-
-	MotorController_ProcDirection(p_mc); 	// if motor is in freewheel state, sets flag to remain in freewheel state
-
-//	if (MotorController_ProcDirection(p_mc) == false)
+//	if (p_mc->MainDirection != p_mc->UserDirection)
 //	{
 //		MotorController_Beep(p_mc);
 //	}
+//
+//	MotorController_ProcDirection(p_mc);
+	// if motor is in freewheel state, sets flag to remain in freewheel state
+
+	if (MotorController_ProcDirection(p_mc) == false)
+	{
+		MotorController_Beep(p_mc);
+	}
 
 	return 0U;
 }
@@ -186,9 +188,9 @@ static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_mc)
 static StateMachine_State_T * Run_InputBrake(MotorController_T * p_mc)
 {
 	MotorController_ProcUserCmdBrake(p_mc);
-/*
- * When brake is released Coast mode will run, and check stop
- */
+	/*
+	 * When brake is released Coast mode will run, and check stop
+	 */
 	return 0U;
 }
 

@@ -68,7 +68,7 @@ Shell_State_T;
  */
 /******************************************************************************/
 
-typedef struct
+typedef struct __attribute__((aligned (4U)))
 {
 	Serial_T * p_Xcvr;
 	uint32_t BaudRate;

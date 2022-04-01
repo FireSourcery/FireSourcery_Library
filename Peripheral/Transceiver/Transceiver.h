@@ -37,17 +37,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-typedef const struct
-{
 
-}
-Transceiver_Config_T;
-
-
-
-/*
- *
- */
 typedef const struct
 {
 	void * p_Context;
@@ -59,22 +49,55 @@ typedef const struct
 	bool 		(* SendString)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
 	bool 		(* RecvString)	(void * p_context, uint8_t * p_destBuffer, 			size_t length);
 }
+Transceiver_Interface_T;
+
+typedef const struct
+{
+//	Transceiver_Interface_T Interfaces[];
+	void ** P_TRANSCEIVER_TABLE;
+	uint8_t TRANSCEIVER_COUNT;
+}
+Transceiver_Config_T;
+
+
+
+/*
+ *
+ */
+typedef const struct
+{
+	Transceiver_Config_T CONFIG;
+	void * p_Struct;
+}
 Transceiver_T;
+
+//bool Transceiver_Validate(const Transceiver_T * p_transceiver, void * target)
+//{
+//	for (uint8_t iXcvr = 0; iXcvr < p_transceiver->CONFIG.TRANSCEIVER_COUNT; iXcvr++)
+//	{
+//		if (target == p_transceiver->CONFIG.P_TRANSCEIVER_TABLE[iXcvr])
+//		{
+//			p_transceiver->p_Struct = target;
+//		}
+//	}
+//}
+
+
 
 #define TRANSCEIVER_CONFIG(p_context, Init, SendChar, RecvChar, SendBytes, RecvBytes, SendString, RecvString)		\
 {													\
 	.p_Context	= p_context											\
 }
 
-void Transceiver_Init(const Transceiver_T * p_transceiver)	{p_transceiver->Init(p_transceiver->p_Context);}
-bool Transceiver_SendChar(const Transceiver_T * p_transceiver, uint8_t txChar) 		{return p_transceiver->SendChar(p_transceiver->p_Context, txChar);}
-bool Transceiver_RecvChar(const Transceiver_T * p_transceiver, uint8_t * p_rxChar)	{return p_transceiver->RecvChar(p_transceiver->p_Context, p_rxChar);}
-uint32_t Transceiver_SendBytes(const Transceiver_T * p_transceiver, const uint8_t * p_srcBuffer, size_t srcSize)	{p_transceiver->SendBytes(p_transceiver->p_Context, p_srcBuffer, srcSize);}
-uint32_t Transceiver_RecvBytes(const Transceiver_T * p_transceiver, uint8_t * p_destBuffer, size_t destSize)		{p_transceiver->RecvBytes(p_transceiver->p_Context, p_destBuffer, destSize);}
-bool Transceiver_SendString(const Transceiver_T * p_transceiver, const uint8_t * p_src, size_t length)				{p_transceiver->SendString(p_transceiver->p_Context, p_src, length);}
-bool Transceiver_RecvString(const Transceiver_T * p_transceiver, uint8_t * p_dest, size_t length)					{p_transceiver->RecvString(p_transceiver->p_Context, p_dest, length);}
-bool Transceiver_Send(const Transceiver_T * p_transceiver, const uint8_t * p_srcBuffer, size_t length)		{return Transceiver_SendString(p_transceiver, p_srcBuffer, length);}
-uint32_t Transceiver_Recv(const Transceiver_T * p_transceiver, uint8_t * p_destBuffer, size_t length)		{return Transceiver_RecvBytes(p_transceiver, p_destBuffer, length);}
+//void Transceiver_Init(const Transceiver_T * p_transceiver)	{p_transceiver->Init(p_transceiver->p_Context);}
+//bool Transceiver_SendChar(const Transceiver_T * p_transceiver, uint8_t txChar) 		{return p_transceiver->SendChar(p_transceiver->p_Context, txChar);}
+//bool Transceiver_RecvChar(const Transceiver_T * p_transceiver, uint8_t * p_rxChar)	{return p_transceiver->RecvChar(p_transceiver->p_Context, p_rxChar);}
+//uint32_t Transceiver_SendBytes(const Transceiver_T * p_transceiver, const uint8_t * p_srcBuffer, size_t srcSize)	{p_transceiver->SendBytes(p_transceiver->p_Context, p_srcBuffer, srcSize);}
+//uint32_t Transceiver_RecvBytes(const Transceiver_T * p_transceiver, uint8_t * p_destBuffer, size_t destSize)		{p_transceiver->RecvBytes(p_transceiver->p_Context, p_destBuffer, destSize);}
+//bool Transceiver_SendString(const Transceiver_T * p_transceiver, const uint8_t * p_src, size_t length)				{p_transceiver->SendString(p_transceiver->p_Context, p_src, length);}
+//bool Transceiver_RecvString(const Transceiver_T * p_transceiver, uint8_t * p_dest, size_t length)					{p_transceiver->RecvString(p_transceiver->p_Context, p_dest, length);}
+//bool Transceiver_Send(const Transceiver_T * p_transceiver, const uint8_t * p_srcBuffer, size_t length)		{return Transceiver_SendString(p_transceiver, p_srcBuffer, length);}
+//uint32_t Transceiver_Recv(const Transceiver_T * p_transceiver, uint8_t * p_destBuffer, size_t length)		{return Transceiver_RecvBytes(p_transceiver, p_destBuffer, length);}
 
 //void Transceiver_ConfigBaudRate(const Transceiver_T * p_transceiver, uint32_t baudRate)
 //{

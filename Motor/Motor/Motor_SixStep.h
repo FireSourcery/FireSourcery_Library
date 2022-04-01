@@ -586,6 +586,23 @@ static inline void Motor_SixStep_ResumePhaseControl(Motor_T * p_motor)
 	}
 }
 
+
+static inline bool Motor_SixStep_CheckResumePhaseControl(Motor_T * p_motor)
+{
+	//openloop does not resume, no position data
+
+	//sensorless check bemf
+	//		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
+	//		{
+	//			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
+	//			{
+	//				p_newState = 0U;
+	//			}
+	//		}
+
+}
+
+
 /*
  * From 0 speed always
  */

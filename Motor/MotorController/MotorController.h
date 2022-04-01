@@ -66,6 +66,7 @@ typedef enum
 	MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
 	MOTOR_CONTROLLER_INPUT_MODE_SERIAL,
 	MOTOR_CONTROLLER_INPUT_MODE_CAN,
+//	MOTOR_CONTROLLER_INPUT_MODE_CAN,
 }
 MotorController_InputMode_T;
 
@@ -133,7 +134,6 @@ typedef struct __attribute__((aligned (4U))) //CONFIG_PARAMS_ALIGN_SIZE
 //	MotorController_StopMode_T StopMode;
 	MotorController_CoastMode_T CoastMode;
 	bool IsBuzzerOnReverseEnable;
-	bool IsBootDefaultEnable;
 	uint16_t BatteryZero_ADCU;
 	uint16_t BatteryFull_ADCU;
 }
@@ -338,10 +338,11 @@ static inline void MotorController_SaveParameters_Blocking(MotorController_T * p
 		EEPROM_Write_Blocking(&p_mc->Eeprom, p_protocol->CONFIG.P_PARAMS, &p_protocol->Params, sizeof(Protocol_Params_T));
 	}
 
-	EEPROM_Write_Blocking(&p_mc->Eeprom, p_mc->AnalogUser.CONFIG.P_PARAMS, 		&p_mc->AnalogUser.Params, 		sizeof(MotAnalogUser_Params_T));
+	EEPROM_Write_Blocking(&p_mc->Eeprom, p_mc->AnalogUser.CONFIG.P_PARAMS, 				&p_mc->AnalogUser.Params, 			sizeof(MotAnalogUser_Params_T));
 	EEPROM_Write_Blocking(&p_mc->Eeprom, p_mc->ThermistorPcb.CONFIG.P_PARAMS, 			&p_mc->ThermistorPcb.Params, 		sizeof(Thermistor_Params_T));
 	EEPROM_Write_Blocking(&p_mc->Eeprom, p_mc->ThermistorMosfetsTop.CONFIG.P_PARAMS, 	&p_mc->ThermistorMosfetsTop.Params, sizeof(Thermistor_Params_T));
 	EEPROM_Write_Blocking(&p_mc->Eeprom, p_mc->ThermistorMosfetsBot.CONFIG.P_PARAMS, 	&p_mc->ThermistorMosfetsBot.Params, sizeof(Thermistor_Params_T));
+	//vmonitor
 	EEPROM_Write_Blocking(&p_mc->Eeprom, p_mc->Shell.CONFIG.P_PARAMS, &p_mc->Shell.Params, sizeof(Shell_Params_T));
 
 #endif

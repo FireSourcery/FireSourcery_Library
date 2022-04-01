@@ -182,24 +182,37 @@ static void ProcMotorFocVoltageMode(Motor_T * p_motor, qfrac16_t vqReq, qfrac16_
 	{
 		//match pid output state on overlimit for faster response
 
-		//	if (FOC_GetIq(&p_motor->Foc) > p_motor->Parameters.IqLimit)
-		//	{
-		//		if(p_motor->IOverLimitFlag == false)
-		//		{
-		//			p_motor->IOverLimitFlag = true;
-		//			PID_SetIntegral(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
-		//		}
-		//	}
-		//	else //alternatively remain set until throttle decrease
-		//	{
-		//		p_motor->IOverLimitFlag = false;
-		//	}
+		if (FOC_GetIq(&p_motor->Foc) > p_motor->Parameters.IqLimit)
+		{
+			if(p_motor->WarningFlags.IOverLimit == false)
+			{
+				p_motor->WarningFlags.IOverLimit = true;
+				PID_SetIntegral(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
+			}
+		}
+		else //alternatively remain set until throttle decrease
+		{
+			p_motor->WarningFlags.IOverLimit = false;
+		}
 
 		vqReqLimit = PID_Calc(&p_motor->PidIq, p_motor->Parameters.IqLimit, FOC_GetIq(&p_motor->Foc));
 		(vqReq > vqReqLimit) ? FOC_SetVq(&p_motor->Foc, vqReqLimit) : FOC_SetVq(&p_motor->Foc, vqReq);
 	}
 	else
 	{
+		if (FOC_GetIq(&p_motor->Foc) < (int32_t)0 - (int32_t)p_motor->Parameters.IqLimit)
+		{
+			if(p_motor->WarningFlags.IOverLimit == false)
+			{
+				p_motor->WarningFlags.IOverLimit = true;
+				PID_SetIntegral(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
+			}
+		}
+		else //alternatively remain set until throttle decrease
+		{
+			p_motor->WarningFlags.IOverLimit = false;
+		}
+
 		vqReqLimit = PID_Calc(&p_motor->PidIq, (int32_t)0 - (int32_t)p_motor->Parameters.IqLimit, FOC_GetIq(&p_motor->Foc));
 		(vqReq < vqReqLimit) ? FOC_SetVq(&p_motor->Foc, vqReqLimit) : FOC_SetVq(&p_motor->Foc, vqReq);
 	}
@@ -376,18 +389,17 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 //	p_motor->DebugTime[3] = SysTime_GetMicros() - p_motor->MicrosRef;
 }
 
+static inline void Motor_FOC_ResetOutput(Motor_T * p_motor)
+{
+	PID_SetIntegral(&p_motor->PidIq, 0);
+	PID_SetIntegral(&p_motor->PidId, 0);
+	FOC_SetVq(&p_motor->Foc, 0);
+	FOC_SetVd(&p_motor->Foc, 0);
+}
+
 static inline void Motor_FOC_SetMatchOutput(Motor_T * p_motor)
 {
-	//Speed pid always uses directionless positive value
-	if(p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
-	{
-		PID_SetIntegral(&p_motor->PidSpeed, 0); // output SpeedControl is IqReq
-	}
-	else if(p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE)
-	{
-		PID_SetIntegral(&p_motor->PidSpeed, p_motor->Speed_Frac16); 	// output SpeedControl is VqReq
-	}
-
+	//or use half speed?
 	PID_SetIntegral(&p_motor->PidIq, GetMotorFocSpeedFeedback(p_motor)); //output is VqReq, set proportional to speed to start at 0 torq
 	PID_SetIntegral(&p_motor->PidId, 0);
 	FOC_SetVq(&p_motor->Foc, GetMotorFocSpeedFeedback(p_motor));

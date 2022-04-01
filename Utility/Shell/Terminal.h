@@ -37,7 +37,9 @@
 #include <stdbool.h>
 #include <stdio.h> //for snprintf
 
-//each terminal instance fixed to this max
+/*
+ * All terminal instances will be instantiated to these sizes
+ */
 #ifndef CMDLINE_ARG_MAX
 #define CMDLINE_ARG_MAX		5 //including cmd string
 #endif
@@ -48,13 +50,8 @@
 
 //#ifdef CONFIG_SHELL_TERMINAL_CONNECT_SERIAL
 	#include "Peripheral/Serial/Serial.h"
-//	typedef Serial_T Terminal_Connect_T;
 //#else
-//   typedef void Terminal_Connect_T; // for shell using various connections
-//   typedef enum
-//   {
-//	    TERMINAL_CONNECT_ID_SERIAL,
-//   } Terminal_ConnectId_T;
+//   xcvr
 //#endif
 
 #define KEY_ESC (0x1BU)
@@ -139,7 +136,6 @@ static inline void Terminal_SendNum(const Terminal_T * p_terminal, int32_t numbe
 {
 	char str[16U];
 
-
 	snprintf(str, 16U, "%d", (int)number);
 
 	Terminal_SendString(p_terminal, str);
@@ -174,6 +170,9 @@ static inline bool Terminal_PollCmdlineEsc(const Terminal_T * p_terminal)
 //	return (Terminal_PeekChar(p_terminal) == KEY_ESC) ? true : false;
 //}
 
+/*
+ * Build Cmdline
+ */
 static inline bool Terminal_ProcCmdline(Terminal_T * p_terminal) //read from terminal
 {
 	bool isComplete = false;
@@ -198,7 +197,7 @@ static inline bool Terminal_ProcCmdline(Terminal_T * p_terminal) //read from ter
 		{
 			Terminal_SendString(p_terminal, "\r\n");
 			p_terminal->Cmdline[p_terminal->CursorIndex] = '\0';
-			p_terminal->CursorIndex = 0;
+			p_terminal->CursorIndex = 0U;
 			isComplete = true;
 		}
 //		else if (ch == '/0' || ch == 0xFF)
@@ -231,36 +230,42 @@ static inline bool Terminal_ProcCmdline(Terminal_T * p_terminal) //read from ter
 	return isComplete;
 }
 
-static inline void Terminal_ParseCmdline(Terminal_T * p_terminal)
+static inline Terminal_Status_T Terminal_ParseCmdline(Terminal_T * p_terminal)
 {
     char * p_cmdline = &p_terminal->Cmdline[0U];
     uint8_t argc = 0U;
-	bool isArgv = true; //start each iteration assuming current char is a arg char, check if its not first
+	bool isDelimiter = true; /* at least one delimiter is encountered, can accept next char as argV */
 
-	while (*p_cmdline != '\0')
+	Terminal_Status_T status = TERMINAL_SUCCESS;
+
+	for (uint8_t iChar = 0U; iChar < CMDLINE_CHAR_MAX; iChar++)
 	{
-		if (*p_cmdline == ' ')
+		if (p_cmdline[iChar] != '\0')
 		{
-			*p_cmdline = '\0';
-			isArgv = true; //next char is Argv or another ' '
-		}
-		else if (isArgv)
-		{
-			if (argc < CMDLINE_ARG_MAX)
+			if (p_cmdline[iChar] == ' ')
 			{
-				p_terminal->ArgV[argc] = p_cmdline;
-				isArgv = false;
-				argc++;
+				p_cmdline[iChar] = '\0';
+				isDelimiter = true;
 			}
-			else
+			else if (isDelimiter)
 			{
-				//error
+				if (argc < CMDLINE_ARG_MAX)
+				{
+					p_terminal->ArgV[argc] = &p_cmdline[iChar];
+					isDelimiter = false;
+					argc++;
+				}
+				else
+				{
+					status = TERMINAL_PARSER_FAIL;
+				}
 			}
 		}
-		p_cmdline++;
 	}
 
 	p_terminal->ArgC = argc;
+
+	return status;
 }
 
 
@@ -269,7 +274,7 @@ static inline uint8_t Terminal_GetCmdlineArgC(const Terminal_T * p_terminal) //r
 	return p_terminal->ArgC;
 }
 
-static inline char** Terminal_GetPtrCmdlineArgV(const Terminal_T * p_terminal) //read from terminal
+static inline char** Terminal_GetPtrCmdlineArgV(  Terminal_T * p_terminal) //read from terminal
 {
 	return p_terminal->ArgV;
 }

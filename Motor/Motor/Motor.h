@@ -121,30 +121,17 @@ typedef enum
 	MOTOR_CONTROL_MODE_CONSTANT_CURRENT,
 	MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT,
 }
-Motor_ControlMode_T; //Motor_ControlModeUser_T FeedbackMode
+Motor_ControlMode_T; //Motor_ControlLoopModeUser_T FeedbackMode
 
 
-/*
-
-	Motor run modes
-	Mode			Feedback
-	Openloop		None
-	Voltage			Position
-	Current			Position Current
-	VoltageFreq		Position 					 (Scalar)
-	SpeedVoltage	Position 			Speed
-	SpeedCurrent	Position Current	Speed
-	sensorless..
- */
-//typedef struct
-//{
-//	uint32_t OpenLoop		:1; //0 -> position feedback, 1 -> Openloop, control mode live toggle
-//	uint32_t Sensorless		:1; //0 -> encoder/hall, 1 -> Sensorless,
-//	uint32_t Speed			:1;	//0 -> const voltage or current, 1 -> speed feedback
-//	uint32_t Current		:1;	//0 -> voltage, 1-> current
-//	uint32_t Brake			:1; // control mode toggle
-//}
-//Motor_ControlModeFlags_T;
+typedef struct
+{
+	uint32_t OpenLoop		:1; //0 -> position feedback, 1 -> Openloop, control mode live toggle
+	uint32_t Speed			:1;	//0 -> const voltage or current, 1 -> speed feedback
+	uint32_t Current		:1;	//0 -> voltage, 1-> current
+	uint32_t Brake			:1; //0 -> concurrent direction, 1-> inverse current
+}
+Motor_ControlModeFlags_T;
 
 typedef enum
 {
@@ -153,13 +140,13 @@ typedef enum
 	MOTOR_ALIGN_MODE_HFI,
 } Motor_AlignMode_T;
 
-typedef enum
-{
-	MOTOR_BRAKE_MODE_PASSIVE,
-	MOTOR_BRAKE_MODE_CONSTANT,
-	MOTOR_BRAKE_MODE_PROPRTIONAL,
-	MOTOR_BRAKE_MODE_SCALAR,
-} Motor_BrakeMode_T;
+//typedef enum
+//{
+//	MOTOR_BRAKE_MODE_PASSIVE,
+//	MOTOR_BRAKE_MODE_CONSTANT,
+//	MOTOR_BRAKE_MODE_PROPRTIONAL,
+//	MOTOR_BRAKE_MODE_SCALAR,
+//} Motor_BrakeMode_T;
 
 /*
  *  Direction Run Substate
@@ -225,7 +212,7 @@ typedef struct __attribute__ ((aligned (4U)))
 	Motor_CommutationMode_T 	CommutationMode;
 	Motor_SensorMode_T 			SensorMode;
 	Motor_ControlMode_T 		ControlMode;
-	Motor_BrakeMode_T 			BrakeMode;
+//	Motor_BrakeMode_T 			BrakeMode;
 	Motor_AlignMode_T 			AlignMode;
 
 	Motor_DirectionCalibration_T DirectionCalibration;
@@ -242,7 +229,7 @@ typedef struct __attribute__ ((aligned (4U)))
 	//	uint16_t OpenLoopVHzGain; //vhz scale
 	//	uint16_t OpenLoopZcdTransition;
 
-	uint16_t SpeedMax_RPM;
+	uint16_t SpeedRef_RPM;
 	uint16_t IRefMax_Amp;
 	uint16_t IaRefZero_ADCU;
 	uint16_t IbRefZero_ADCU;
@@ -311,9 +298,10 @@ typedef struct
 	Motor_Direction_T Direction; 		/* Active spin direction */
 	Motor_Direction_T UserDirection; 	/* Passed to StateMachine */
 	bool Brake; //can change to quadrant to include plugging
-//	Motor_ControlModeFlags_T ControlMode;
+	Motor_ControlModeFlags_T ControlModeFlags;
 
 	Motor_ErrorFlags_T ErrorFlags;
+	Motor_WarningFlags_T WarningFlags;
 
 	Motor_CalibrationState_T CalibrationState; /* Substate, selection for calibration */
 	uint8_t CalibrationSubstateStep;
@@ -502,7 +490,7 @@ static inline void Motor_ResumeRamp(Motor_T * p_motor)
 static inline void Motor_CaptureSpeed(Motor_T * p_motor)
 {
 	p_motor->Speed_RPM = (Encoder_GetRotationalSpeed_RPM(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
-	p_motor->Speed_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedMax_RPM);
+	p_motor->Speed_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedRef_RPM);
 }
 
 /*
@@ -515,6 +503,21 @@ static inline void Motor_ProcSpeedFeedback(Motor_T * p_motor)
 		p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->Speed_Frac16);
 	}
 }
+
+static inline void Motor_ResumeSpeedOutput(Motor_T * p_motor)
+{
+	//Speed pid always uses directionless positive value
+	if(p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT)
+	{
+		PID_SetIntegral(&p_motor->PidSpeed, 0); // output SpeedControl is I
+	}
+	else if(p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE)
+	{
+		//alternatively use smaller value to ensure never resuming to higher speed, still better than starting 0
+		PID_SetIntegral(&p_motor->PidSpeed, p_motor->Speed_Frac16); 	// output SpeedControl is V
+	}
+}
+
 
 static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
 {
@@ -551,6 +554,7 @@ static inline void Motor_StartIdle(Motor_T * p_motor)
 {
 	Phase_Float(&p_motor->Phase);
 	Motor_ResetRamp(p_motor);
+	PID_SetIntegral(&p_motor->PidSpeed, 0U);
 //	p_motor->ControlTimerBase = 0U; //ok to reset timer
 	Timer_StartPeriod(&p_motor->ControlTimer, 2000U); //100ms
 }

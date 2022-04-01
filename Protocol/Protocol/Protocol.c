@@ -72,7 +72,7 @@ void Protocol_SetSpecs(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs
 	if (p_specs->RX_LENGTH_MAX < p_protocol->CONFIG.PACKET_BUFFER_LENGTH)
 	{
 		p_protocol->Params.p_Specs = p_specs;
-		if (p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT != 0U)
+		if ((p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT != 0U) && (p_protocol->Params.p_Xcvr != 0U))
 		{
 			Serial_ConfigBaudRate(p_protocol->Params.p_Xcvr, p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT);
 		}
@@ -81,6 +81,7 @@ void Protocol_SetSpecs(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs
 
 void Protocol_SetXcvr(Protocol_T * p_protocol, void * p_transceiver)
 {
+	//need xcvr to validate
 	p_protocol->Params.p_Xcvr = p_transceiver;
 }
 

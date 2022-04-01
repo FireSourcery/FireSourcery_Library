@@ -97,6 +97,15 @@ static StateMachine_State_T * Stop_InputAccelerate(Motor_T * p_motor)
 
 	if (p_motor->UserDirection != p_motor->Direction)
 	{
+		if (p_motor->Speed_RPM == 0U)
+		{
+			Motor_SetDirection(p_motor, p_motor->UserDirection);
+		}
+		else
+		{
+			p_nextState = &MOTOR_STATE_FAULT;
+		}
+
 		p_nextState = 0U; //&MOTOR_STATE_FAULT; //direction should always set while in stop state
 	}
 	else
@@ -158,6 +167,15 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABL
 static void Stop_Entry(Motor_T * p_motor)
 {
 	Motor_StartIdle(p_motor);
+
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+	{
+		Motor_FOC_ResetOutput( p_motor);
+	}
+	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+	{
+
+	}
 }
 
 static void Stop_Proc(Motor_T * p_motor)
@@ -303,6 +321,10 @@ static void StartAccelerate(Motor_T * p_motor)
 		Motor_ResumeRamp(p_motor); //other modes req start from present speed
 	}
 
+	// change within  can match to output voltage instead of speed
+
+	Motor_ResumeSpeedOutput(p_motor);
+
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
 		Motor_FOC_SetMatchOutput(p_motor);
@@ -319,6 +341,8 @@ static void StartDecelerate(Motor_T * p_motor)
 
 	Motor_ResetRamp(p_motor); //Brake always set ramp to start request 0 torque
 
+	Motor_ResumeSpeedOutput(p_motor);
+
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
 		Motor_FOC_SetMatchOutput(p_motor); //set proportional to speed to start at approx 0 torq
@@ -331,17 +355,24 @@ static void StartDecelerate(Motor_T * p_motor)
 
 static StateMachine_State_T * Run_InputAccelerate(Motor_T * p_motor)
 {
+	StateMachine_State_T *p_newState = 0;
 	/*
-	 * Implemented Regen is run substate
+	 * Implemented Brake is run substate
 	 *
 	 * transition through freewheel first to use shared entry function? or set here?
 	 */
+	if (p_motor->UserDirection == p_motor->Direction)
+		{
+
 	if (p_motor->Brake == 1U)
 	{
+
 		StartAccelerate(p_motor);
 	}
 
-	return 0U;
+		}
+
+	return p_newState;
 }
 
 static StateMachine_State_T * Run_InputDecelerate(Motor_T * p_motor)
@@ -350,6 +381,21 @@ static StateMachine_State_T * Run_InputDecelerate(Motor_T * p_motor)
 	{
 		StartDecelerate(p_motor);
 	}
+
+	return 0U;
+}
+
+static StateMachine_State_T * Run_InputCmdChange(Motor_T * p_motor)
+{
+//	if (p_motor->ControlModeFlags.Current == 1U)
+//	{
+//		Motor_ResetRamp(p_motor); //only torque mode req start form request 0 torque
+//	}
+//	else
+//	{
+//		Motor_ResumeRamp(p_motor); //other modes req start from present speed
+//	}
+	// change within  run state need not match output voltage, it is already known
 
 	return 0U;
 }
@@ -440,15 +486,7 @@ static StateMachine_State_T * FreeWheel_TransitionRunAccelerate(Motor_T * p_moto
 		}
 		else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 		{
-	//		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
-	//		{
-	//			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
-	//			{
-	//				p_newState = 0U;
-	//			}
-	//		}
-
-	//		p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U; //openloop does not resume
+			p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U; //openloop does not resume
 		}
 	}
 
@@ -474,17 +512,11 @@ static StateMachine_State_T * FreeWheel_TransitionRunDecelerate(Motor_T * p_moto
 		}
 		else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 		{
-	//		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
-	//		{
-	//			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
-	//			{
-	//				p_newState = 0U;
-	//			}
-	//		}
-
-	//		p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U; //openloop does not resume
+			p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U;
 		}
 	}
+
+	//match ouput voltage
 
 	return p_newState;
 }

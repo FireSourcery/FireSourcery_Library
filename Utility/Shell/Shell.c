@@ -129,6 +129,8 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 			Terminal_ParseCmdline(&p_shell->Terminal);
 			p_shell->p_Cmd = Cmd_Search(p_shell->CONFIG.P_CMD_TABLE, p_shell->CONFIG.CMD_COUNT, Terminal_GetCmdlineArgV(&p_shell->Terminal, 0U));
 
+			p_shell->State = SHELL_STATE_PROMPT;
+
 			if (p_shell->p_Cmd != 0U)
 			{
 				p_shell->CmdReturnCode = p_shell->p_Cmd->FUNCTION(p_shell->CONFIG.P_CMD_CONTEXT, Terminal_GetCmdlineArgC(&p_shell->Terminal), Terminal_GetPtrCmdlineArgV(&p_shell->Terminal));
@@ -151,7 +153,6 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 							PrintCmdReturnCode(p_shell, p_shell->CmdReturnCode);
 							status = SHELL_STATUS_CMD_EXCEPTION;
 						}
-//						status = SHELL_STATUS_CMD_INVALID_ARGS;
 						break;
 
 					case CMD_RESERVED_RETURN_CODE_LOOP:
@@ -216,6 +217,7 @@ void Shell_Init(Shell_T * p_shell)
 		memcpy(&p_shell->Params, p_shell->CONFIG.P_PARAMS, sizeof(Shell_Params_T));
 	}
 
+	//need xcvr module to validate
 	if (p_shell->Params.p_Xcvr != 0U)
 	{
 		Terminal_SetXcvr(&p_shell->Terminal, p_shell->Params.p_Xcvr);

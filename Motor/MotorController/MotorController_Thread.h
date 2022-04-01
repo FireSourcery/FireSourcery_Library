@@ -230,9 +230,13 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 {
 //	MotorController_PollBrake(p_mc);
 
+//	ProcMotorControllerHeatMonitor(p_mc);
+//	ProcMotorControllerVoltageMonitor(p_mc);
+
 	for (uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
 	{
 		Motor_Timer1Ms_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
+		//or check fault state here
 	}
 }
 

@@ -228,7 +228,7 @@ Protocol_ReqState_T;
 
 typedef struct __attribute__((aligned (4U)))
 {
-	void * p_Xcvr;
+	void * p_Xcvr; //set const?
 	const Protocol_Specs_T * p_Specs;
 	bool IsEnable;
 }
