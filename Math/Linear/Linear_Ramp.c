@@ -29,15 +29,16 @@
 			linear_f(index) = user units
 */
 /******************************************************************************/
-#include "Linear.h"
+#include "Linear_Ramp.h"
 
 #include <stdint.h>
 
 
-#define RAMP_SHIFT 14U
+
 /*
- * slope must always be positive for directional index version
+ * slope must always be positive for sequential   version
  */
+
 
 /******************************************************************************/
 /*!
@@ -70,32 +71,5 @@ void Linear_Ramp_InitMillis(Linear_T * p_linear, uint16_t peroid_Ms, uint16_t up
 }
 
 
-void Linear_Ramp_SetSlope(Linear_T * p_linear, uint32_t slope_UnitPerTick, int32_t initial)
-{
-	p_linear->SlopeFactor 	= ((int32_t)slope_UnitPerTick << RAMP_SHIFT);
-	p_linear->YOffset 		= initial;
-}
 
-
-void Linear_Ramp_SetSlopeAcceleration(Linear_T * p_linear, int32_t slope_UnitPerSecond, uint32_t updateFreq_Hz, int32_t initial)
-{
-	p_linear->SlopeFactor 	= ((int32_t)slope_UnitPerSecond << RAMP_SHIFT) / updateFreq_Hz;
-	p_linear->YOffset 		= initial;
-	p_linear->SlopeDivisor 	= ((int32_t)updateFreq_Hz << RAMP_SHIFT) / slope_UnitPerSecond;
-}
-
-/*
- *  Overflow: (peroid_Ms * updateFreq_Hz ) max 32,767,000
- */
-void Linear_Ramp_SetSlopeMillis(Linear_T * p_linear, uint16_t peroid_Ms, uint16_t updateFreq_Hz, int32_t initial, int32_t final)
-{
-	int32_t factor 		= (final - initial);
-	int32_t divisor 	= (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U;
-
-	p_linear->SlopeFactor 	= ((int32_t)factor << RAMP_SHIFT) / divisor;
-	p_linear->YOffset 		= initial;
-	p_linear->YReference 	= final;
-	p_linear->SlopeDivisor 	= ((int32_t)divisor << RAMP_SHIFT) / factor;
-
-}
 

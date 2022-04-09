@@ -28,8 +28,8 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef HAL_SERIAL_S32K_H
-#define HAL_SERIAL_S32K_H
+#ifndef HAL_SERIAL_PLATFORM_H
+#define HAL_SERIAL_PLATFORM_H
 
 #include "External/S32K142/include/S32K142.h"
 //#include "SDK/platform/drivers/inc/interrupt_manager.h"

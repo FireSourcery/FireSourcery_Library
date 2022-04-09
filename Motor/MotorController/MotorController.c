@@ -35,6 +35,15 @@
 /*
 
  */
+
+void MotorController_InitLoadDefaultCheck(MotorController_T * p_mc)
+{
+
+}
+
+
+
+
 void MotorController_Init(MotorController_T * p_mc)
 {
 	StateMachine_Init(&p_mc->StateMachine);
@@ -63,6 +72,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	}
 
 	MotAnalogUser_Init(&p_mc->AnalogUser);
+	Debounce_Init(&p_mc->DIn, 5U);	//5millis
 
 	Thermistor_Init(&p_mc->ThermistorPcb);
 	Thermistor_Init(&p_mc->ThermistorMosfetsTop);
@@ -72,18 +82,29 @@ void MotorController_Init(MotorController_T * p_mc)
 	VMonitor_Init(&p_mc->VMonitorSense);
 	VMonitor_Init(&p_mc->VMonitorAcc);
 
+	/* set values to not enter fault state */
+	p_mc->AnalogResults.HeatPcb_ADCU = p_mc->ThermistorPcb.Params.Threshold_ADCU;
+	p_mc->AnalogResults.HeatMosfetsTop_ADCU = p_mc->ThermistorMosfetsTop.Params.Threshold_ADCU;
+	p_mc->AnalogResults.HeatMosfetsBot_ADCU = p_mc->ThermistorMosfetsBot.Params.Threshold_ADCU;
+
+	p_mc->AnalogResults.VPos_ADCU 		= p_mc->VMonitorPos.Params.LimitLower_ADCU + 1U;
+	p_mc->AnalogResults.VSense_ADCU 	= p_mc->VMonitorSense.Params.LimitLower_ADCU + 1U;
+	p_mc->AnalogResults.VAcc_ADCU 		= p_mc->VMonitorAcc.Params.LimitLower_ADCU + 1U;
+
 	Linear_ADC_Init(&p_mc->Battery, p_mc->Parameters.BatteryZero_ADCU, p_mc->Parameters.BatteryFull_ADCU, 1000U);
 
 	Blinky_Init(&p_mc->Buzzer);
 
-	Debounce_Init(&p_mc->DIn, 5U);	//5millis
+
 	Pin_Output_Init(&p_mc->CONFIG.PIN_COIL);
 	Pin_Output_Init(&p_mc->CONFIG.PIN_METER);
 
 	Timer_InitPeriodic(&p_mc->TimerSeconds,		1000U);
 	Timer_InitPeriodic(&p_mc->TimerMillis, 		1U);
 	Timer_InitPeriodic(&p_mc->TimerMillis10, 	10U);
+	Timer_InitPeriodic(&p_mc->StateTimer,		1000U);
 
+	/* todo invalid xcvr set issues */
 	for (uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++)
 	{
 		Protocol_Init(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]);

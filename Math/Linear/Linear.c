@@ -57,6 +57,9 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x
 	p_linear->YOffset = y0;
 }
 
+/*
+ * todo move division form frac16 calc to physical units calc, as frac16 calc is performed more frequently
+ */
 void Linear_Init_Shift(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t y0, int32_t yRef, uint8_t shift)
 {
 	InitCommon_Shift(p_linear, factor, divisor, yRef, shift);

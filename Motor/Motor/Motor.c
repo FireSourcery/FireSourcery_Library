@@ -106,6 +106,9 @@ void Motor_InitReboot(Motor_T * p_motor)
 	/*
 	 * Index max is 13,107
 	 */
+	/*
+	 * Ramp 0 to 65535 max in 655ms
+	 */
 	Linear_Ramp_InitMillis(&p_motor->Ramp, 10U, 20000U, 0U, 1000U); /* final value is overwritten, slope is persistent */
 	p_motor->RampCmd = 0;
 	p_motor->RampIndex = 0;
@@ -129,40 +132,38 @@ void Motor_InitReboot(Motor_T * p_motor)
 	p_motor->ControlTimerBase 		= 0U;
 }
 
-// void Motor_SetControlMode(Motor_T * p_motor, Motor_ControlMode_T mode)
-//{
-//	switch(mode)
-//	{
-//		case MOTOR_CONTROL_MODE_OPEN_LOOP:
-//			p_motor->ControlMode.OpenLoop = 1U;
-//			p_motor->ControlMode.Current = 0U;
-//			break;
-//
-//		case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:
-//			p_motor->ControlMode.Speed = 0U;
-//			p_motor->ControlMode.Current = 0U;
-//			break;
-//
-//	//	MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ: break;
-//
-//		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:
-//			p_motor->ControlMode.Speed = 1U;
-//			p_motor->ControlMode.Current = 0U;
-//			break;
-//
-//		case MOTOR_CONTROL_MODE_CONSTANT_CURRENT:
-//			p_motor->ControlMode.Speed = 0U;
-//			p_motor->ControlMode.Current = 1U;
-//			break;
-//
-//		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT:
-//			p_motor->ControlMode.Speed = 1U;
-//			p_motor->ControlMode.Current = 1U;
-//			break;
-//	}
-//}
 
+static inline void SetControlModeFlags(Motor_T * p_motor, Motor_ControlModeFlags_T modeFlags)
+{
+	if (p_motor->ControlModeFlags.State != modeFlags.State)
+	{
+		p_motor->ControlModeFlags.State = modeFlags.State;
+		p_motor->ControlModeFlags.Update = 1U;
+	}
+}
 
+/* Voltage Control mode - use current feedback for over current only */
+/* Current Control Mode - Proc angle using ADC return */
+void Motor_SetControlModeFlags(Motor_T * p_motor, Motor_ControlMode_T mode)
+{
+	static const Motor_ControlModeFlags_T MODE_OPEN_LOOP		= {.OpenLoop = 1U, .Speed = 0U, .Current = 0U, .VFreqScalar = 0U, .Update = 0U, };
+	static const Motor_ControlModeFlags_T MODE_VOLTAGE 			= {.OpenLoop = 0U, .Speed = 0U, .Current = 0U, .VFreqScalar = 0U, .Update = 0U, };
+	static const Motor_ControlModeFlags_T MODE_VOLTAGE_FREQ 	= {.OpenLoop = 0U, .Speed = 0U, .Current = 0U, .VFreqScalar = 1U, .Update = 0U, };
+	static const Motor_ControlModeFlags_T MODE_CURRENT 			= {.OpenLoop = 0U, .Speed = 0U, .Current = 1U, .VFreqScalar = 0U, .Update = 0U, };
+	static const Motor_ControlModeFlags_T MODE_SPEED_VOLTAGE 	= {.OpenLoop = 0U, .Speed = 1U, .Current = 0U, .VFreqScalar = 0U, .Update = 0U, };
+	static const Motor_ControlModeFlags_T MODE_SPEED_CURRENT 	= {.OpenLoop = 0U, .Speed = 1U, .Current = 1U, .VFreqScalar = 0U, .Update = 0U, };
+
+	switch(mode)
+	{
+		case MOTOR_CONTROL_MODE_OPEN_LOOP:					SetControlModeFlags(p_motor, MODE_OPEN_LOOP); 		break;
+		case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:			SetControlModeFlags(p_motor, MODE_VOLTAGE); 		break;
+		case MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ:		SetControlModeFlags(p_motor, MODE_VOLTAGE_FREQ); 	break;
+		case MOTOR_CONTROL_MODE_CONSTANT_CURRENT:			SetControlModeFlags(p_motor, MODE_CURRENT); 		break;
+		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:		SetControlModeFlags(p_motor, MODE_SPEED_VOLTAGE); 	break;
+		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT:		SetControlModeFlags(p_motor, MODE_SPEED_CURRENT); 	break;
+		default: break;
+	}
+}
 
 
 

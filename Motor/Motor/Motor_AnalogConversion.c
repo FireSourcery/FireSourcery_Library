@@ -94,6 +94,11 @@ static void CaptureVa(Motor_T * p_motor)
 	{
 
 	}
+
+	if (p_motor->AnalogResults.Va_ADCU > p_motor->VBemfPeakTemp_ADCU)
+	{
+		p_motor->VBemfPeakTemp_ADCU = p_motor->AnalogResults.Va_ADCU;
+	}
 }
 
 const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_VA =
@@ -117,6 +122,11 @@ static void CaptureVb(Motor_T * p_motor)
 	{
 
 	}
+
+	if (p_motor->AnalogResults.Vb_ADCU > p_motor->VBemfPeakTemp_ADCU)
+	{
+		p_motor->VBemfPeakTemp_ADCU = p_motor->AnalogResults.Vb_ADCU;
+	}
 }
 
 const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_VB =
@@ -139,6 +149,11 @@ static void CaptureVc(Motor_T * p_motor)
 	else
 	{
 
+	}
+
+	if (p_motor->AnalogResults.Vc_ADCU > p_motor->VBemfPeakTemp_ADCU)
+	{
+		p_motor->VBemfPeakTemp_ADCU = p_motor->AnalogResults.Vc_ADCU;
 	}
 }
 

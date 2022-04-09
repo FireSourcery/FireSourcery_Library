@@ -45,11 +45,29 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 
 	proportional = (p_pid->Params.KpFactor * error / p_pid->Params.KpDivisor);
 
-	integral = (p_pid->Params.KiFactor * p_pid->ErrorSum / p_pid->KiDivisorFreq);
+	if(p_pid->ErrorSum > INT32_MAX / p_pid->Params.KiFactor)
+	{
+		integral = (p_pid->ErrorSum / p_pid->KiDivisorFreq * p_pid->Params.KiFactor);
+	}
+	else
+	{
+		integral = (p_pid->Params.KiFactor * p_pid->ErrorSum / p_pid->KiDivisorFreq);
+	}
 
-	if 		(integral > p_pid->Params.OutMax) 	{integral = p_pid->Params.OutMax;}
-	else if (integral < p_pid->Params.OutMin) 	{integral = p_pid->Params.OutMin;}
-	else 										{p_pid->ErrorSum += error;} //stop accumulating integral if output is past limits
+	if(integral > p_pid->Params.OutMax)
+	{
+		integral = p_pid->Params.OutMax;
+		if(error < 0) {p_pid->ErrorSum += error;} //if error sum becomes out of sync. add error if error is negative
+	}
+	else if(integral < p_pid->Params.OutMin)
+	{
+		integral = p_pid->Params.OutMin;
+		if(error > 0) {p_pid->ErrorSum += error;} //add error if error is positive
+	}
+	else
+	{
+		p_pid->ErrorSum += error;
+	} //stop accumulating integral if output is past limits
 
 	if(p_pid->Params.Mode == PID_MODE_PID)
 	{

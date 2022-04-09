@@ -107,6 +107,7 @@ void Blinky_BlinkN(Blinky_T * p_blinky, uint32_t duration, uint8_t n)
 }
 
 
+
 //void Blinky_Pattern_PeriodicToggle(Blinky_T * p_blinky)
 //{
 //	if(p_blinky->IsOn == true)

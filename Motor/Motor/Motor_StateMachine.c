@@ -34,14 +34,36 @@
 #include "Motor_SixStep.h"
 #include "Utility/StateMachine/StateMachine.h"
 
-static const StateMachine_State_T MOTOR_STATE_INIT;
-static const StateMachine_State_T MOTOR_STATE_STOP;
-static const StateMachine_State_T MOTOR_STATE_ALIGN;
-static const StateMachine_State_T MOTOR_STATE_OPEN_LOOP;
-static const StateMachine_State_T MOTOR_STATE_RUN;
-static const StateMachine_State_T MOTOR_STATE_FREEWHEEL;
-static const StateMachine_State_T MOTOR_STATE_CALIBRATION;
-static const StateMachine_State_T MOTOR_STATE_FAULT;
+static const StateMachine_State_T STATE_INIT;
+static const StateMachine_State_T STATE_STOP;
+static const StateMachine_State_T STATE_ALIGN;
+static const StateMachine_State_T STATE_OPEN_LOOP;
+static const StateMachine_State_T STATE_RUN;
+static const StateMachine_State_T STATE_FREEWHEEL;
+static const StateMachine_State_T STATE_CALIBRATION;
+static const StateMachine_State_T STATE_FAULT;
+
+//MotorController_StateMachine_StateId_T MotorController_StateMachine_GetStateId(MotorController_T * p_mc)
+//{
+//	MotorController_StateMachine_StateId_T id;
+//	if(p_mc->StateMachine.p_StateActive == &STATE_INIT)
+//	{
+//		id = MCSM_STATE_ID_INIT;
+//	}
+//	else if(p_mc->StateMachine.p_StateActive == &STATE_STOP)
+//	{
+//		id = MCSM_STATE_ID_STOP;
+//	}
+//	else if(p_mc->StateMachine.p_StateActive == &STATE_RUN)
+//	{
+//		id = MCSM_STATE_ID_RUN;
+//	}
+//	else if(p_mc->StateMachine.p_StateActive == &STATE_FAULT)
+//	{
+//		id = MCSM_STATE_ID_FAULT;
+//	}
+//	return id;
+//}
 
 /******************************************************************************/
 /*!
@@ -50,11 +72,11 @@ static const StateMachine_State_T MOTOR_STATE_FAULT;
 /******************************************************************************/
 const StateMachine_Machine_T MSM_MACHINE =
 {
-	.P_STATE_INITIAL 			= &MOTOR_STATE_INIT,
+	.P_STATE_INITIAL 			= &STATE_INIT,
 	.TRANSITION_TABLE_LENGTH 	= MSM_TRANSITION_TABLE_LENGTH,
 };
 
-static StateMachine_State_T * TransitionFault(Motor_T * p_motor) 		{return &MOTOR_STATE_FAULT;}
+static StateMachine_State_T * TransitionFault(Motor_T * p_motor) 		{return &STATE_FAULT;}
 
 /******************************************************************************/
 /*!
@@ -73,12 +95,10 @@ static void Init_Entry(Motor_T * p_motor)
 
 static void Init_Proc(Motor_T * p_motor)
 {
-	StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_STOP);
-//	Motor_SetCalibrationStateAdc(p_motor);
-//	StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION);
+	StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
 }
 
-static const StateMachine_State_T MOTOR_STATE_INIT =
+static const StateMachine_State_T STATE_INIT =
 {
 	.P_TRANSITION_TABLE		= INIT_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)Init_Entry,
@@ -91,22 +111,14 @@ static const StateMachine_State_T MOTOR_STATE_INIT =
     @brief  State
 */
 /******************************************************************************/
-static StateMachine_State_T * Stop_InputAccelerate(Motor_T * p_motor)
+static StateMachine_State_T * Stop_TransitionRun(Motor_T * p_motor)
 {
 	StateMachine_State_T * p_nextState;
 
 	if (p_motor->UserDirection != p_motor->Direction)
 	{
-		if (p_motor->Speed_RPM == 0U)
-		{
-			Motor_SetDirection(p_motor, p_motor->UserDirection);
-		}
-		else
-		{
-			p_nextState = &MOTOR_STATE_FAULT;
-		}
-
-		p_nextState = 0U; //&MOTOR_STATE_FAULT; //direction should always set while in stop state
+//		p_nextState = &STATE_FAULT; //direction set was called during another mode
+		p_nextState = 0U;
 	}
 	else
 	{
@@ -116,63 +128,73 @@ static StateMachine_State_T * Stop_InputAccelerate(Motor_T * p_motor)
 			{
 				Motor_FOC_StartAngleControl(p_motor);
 			}
-			else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+			else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
 			{
 
 			}
 
-			p_nextState = &MOTOR_STATE_RUN;
+			p_nextState = &STATE_RUN;
 		}
 		else
 		{
-			p_nextState = &MOTOR_STATE_ALIGN;
+			p_nextState = &STATE_ALIGN;
 		}
 	}
 
 	return p_nextState;
 }
 
-//static StateMachine_State_T * StopTransitionDecelerate(Motor_T * p_motor)
-//{
-//	out pwm 0 on config
-//	return &MOTOR_STATE_RUN;
-//}
-
 static StateMachine_State_T * Stop_InputCalibration(Motor_T * p_motor)
 {
-	return &MOTOR_STATE_CALIBRATION;
+	return &STATE_CALIBRATION;
 }
 
 static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor)
 {
+	StateMachine_State_T * p_nextState;
+
 	if (p_motor->Speed_RPM == 0U)
 	{
 		Motor_SetDirection(p_motor, p_motor->UserDirection);
+		p_nextState = 0U;
+	}
+	else
+	{
+		p_nextState = &STATE_FAULT;
 	}
 
-	return 0U;
+	return p_nextState;
 }
 
 
 static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
 	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
-	[MSM_INPUT_ACCELERATE] 		= (StateMachine_Transition_T)Stop_InputAccelerate,
+	[MSM_INPUT_CONTROL_MODE] 	= (StateMachine_Transition_T)Stop_TransitionRun,
 	[MSM_INPUT_CALIBRATION] 	= (StateMachine_Transition_T)Stop_InputCalibration,
 	[MSM_INPUT_DIRECTION] 		= (StateMachine_Transition_T)Stop_InputDirection,
-
-//	[MSM_INPUT_DECELERATE] 			= (StateMachine_Transition_T)StopTransitionDecelerate,
+//	[MSM_INPUT_GROUND] 			= (StateMachine_Transition_T)Stop_InputGround, //only ground in stop mode?
 };
 
+/*
+ * Enters upon reaching 0 Speed
+ */
 static void Stop_Entry(Motor_T * p_motor)
 {
-	Motor_StartIdle(p_motor);
+	Motor_EnterStop(p_motor);
+
+	p_motor->ControlModeFlags.Update = 1U; /* This way next cmd call will set to run state, share state input */
+
+	if (p_motor->UserDirection != p_motor->Direction)
+	{
+		StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FAULT); //direction was set during another mode
+	}
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		Motor_FOC_ResetOutput( p_motor);
+//		Motor_FOC_ResetOutput( p_motor); //set on resume transition
 	}
-	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
 	{
 
 	}
@@ -183,15 +205,15 @@ static void Stop_Proc(Motor_T * p_motor)
 	//poll speedfeedback or use bemf
 //	if(Motor_GetSpeed(p_motor) > 0U)
 //	{
-//		StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_FREEWHEEL);
+//		StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
 //	}
 //	else
 	{
-		Motor_ProcIdle(p_motor);
+		Motor_ProcStop(p_motor);
 	}
 }
 
-static const StateMachine_State_T MOTOR_STATE_STOP =
+static const StateMachine_State_T STATE_STOP =
 {
 	.P_TRANSITION_TABLE 	= STOP_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)Stop_Entry,
@@ -204,213 +226,46 @@ static const StateMachine_State_T MOTOR_STATE_STOP =
     @brief  State
 */
 /******************************************************************************/
-static const StateMachine_Transition_T ALIGN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
+/*
+ * run if cmd mode changed
+ * change mode must check state, freewheel to run and run self transition match different output
+ * change during run mode, output voltage is known, match to vq
+ */
+static StateMachine_State_T * Run_TransitionRun(Motor_T * p_motor)
 {
-	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
-};
+	StateMachine_State_T * p_newState = 0;
 
-static void Align_Entry(Motor_T * p_motor)
-{
-	Motor_StartAlign(p_motor);
-}
-
-static void Align_Proc(Motor_T * p_motor)
-{
-	if(Motor_ProcAlign(p_motor) == true)
+//	if (p_motor->UserDirection != p_motor->Direction)
+//	{
+//		p_newState = &STATE_FAULT;
+//	}
+//	else
 	{
-		if((p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS) || (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP))
+		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 		{
-			StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_OPEN_LOOP);
+			Motor_FOC_SetMatchOutputKnown(p_motor);
 		}
-		else
-		{
-			if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-			{
-				Motor_FOC_StartAngleControl(p_motor);
-			}
-			else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-			{
-
-			}
-
-			StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_RUN);
-		}
-	}
-}
-
-static const StateMachine_State_T MOTOR_STATE_ALIGN =
-{
-	.P_TRANSITION_TABLE 	= ALIGN_TRANSITION_TABLE,
-	.ON_ENTRY 				= (StateMachine_Output_T)Align_Entry,
-	.OUTPUT 				= (StateMachine_Output_T)Align_Proc,
-};
-
-/******************************************************************************/
-/*!
-    @brief  State OpenLoop
-*/
-/******************************************************************************/
-static StateMachine_State_T * OpenLoop_InputStop(Motor_T * p_motor)
-{
-	return &MOTOR_STATE_FREEWHEEL; //No resume from OpenLoop, freewheel state check stop
-}
-
-static const StateMachine_Transition_T OPEN_LOOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
-{
-	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
-	[MSM_INPUT_DECELERATE] 		= (StateMachine_Transition_T)OpenLoop_InputStop,
-	[MSM_INPUT_FLOAT] 			= (StateMachine_Transition_T)OpenLoop_InputStop,
-};
-
-static void OpenLoop_Entry(Motor_T * p_motor)
-{
-//	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-//	{
-//		Motor_FOC_StartAngleControl(p_motor);
-//	}
-//	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-//	{
-//		Motor_SixStep_StartPhaseControl(p_motor);
-//	}
-}
-
-static void OpenLoop_Proc(Motor_T * p_motor)
-{
-//	Motor_ProcRamp(p_motor);
-//
-//	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-//	{
-//		Motor_FOC_ProcAngleControl(p_motor);
-//	}
-//	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-//	{
-//		Motor_SixStep_ProcPhaseControl(p_motor);
-//
-//		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
-//		{
-//			if (Motor_SixStep_GetBemfReliable(p_motor) == true)
-//			{
-//				StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_RUN);
-//			}
-//		}
-//	}
-}
-
-static const StateMachine_State_T MOTOR_STATE_OPEN_LOOP =
-{
-	.P_TRANSITION_TABLE 	= OPEN_LOOP_TRANSITION_TABLE,
-	.ON_ENTRY 				= (StateMachine_Output_T)OpenLoop_Entry,
-	.OUTPUT 				= (StateMachine_Output_T)OpenLoop_Proc,
-};
-
-/******************************************************************************/
-/*!
-    @brief  State
-*/
-/******************************************************************************/
-static void StartAccelerate(Motor_T * p_motor)
-{
-	p_motor->Brake = 0U;
-
-	if (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_CURRENT)
-	{
-		Motor_ResetRamp(p_motor); //only torque mode req start form request 0 torque
-	}
-	else
-	{
-		Motor_ResumeRamp(p_motor); //other modes req start from present speed
-	}
-
-	// change within  can match to output voltage instead of speed
-
-	Motor_ResumeSpeedOutput(p_motor);
-
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-	{
-		Motor_FOC_SetMatchOutput(p_motor);
-	}
-	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-	{
-
-	}
-}
-
-static void StartDecelerate(Motor_T * p_motor)
-{
-	p_motor->Brake = 1U;
-
-	Motor_ResetRamp(p_motor); //Brake always set ramp to start request 0 torque
-
-	Motor_ResumeSpeedOutput(p_motor);
-
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-	{
-		Motor_FOC_SetMatchOutput(p_motor); //set proportional to speed to start at approx 0 torq
-	}
-	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-	{
-
-	}
-}
-
-static StateMachine_State_T * Run_InputAccelerate(Motor_T * p_motor)
-{
-	StateMachine_State_T *p_newState = 0;
-	/*
-	 * Implemented Brake is run substate
-	 *
-	 * transition through freewheel first to use shared entry function? or set here?
-	 */
-	if (p_motor->UserDirection == p_motor->Direction)
+		else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
 		{
 
-	if (p_motor->Brake == 1U)
-	{
-
-		StartAccelerate(p_motor);
-	}
-
 		}
+
+//		p_motor->ControlModeFlags.Update = 0U;
+	}
 
 	return p_newState;
 }
 
-static StateMachine_State_T * Run_InputDecelerate(Motor_T * p_motor)
-{
-	if (p_motor->Brake == 0U)
-	{
-		StartDecelerate(p_motor);
-	}
-
-	return 0U;
-}
-
-static StateMachine_State_T * Run_InputCmdChange(Motor_T * p_motor)
-{
-//	if (p_motor->ControlModeFlags.Current == 1U)
-//	{
-//		Motor_ResetRamp(p_motor); //only torque mode req start form request 0 torque
-//	}
-//	else
-//	{
-//		Motor_ResumeRamp(p_motor); //other modes req start from present speed
-//	}
-	// change within  run state need not match output voltage, it is already known
-
-	return 0U;
-}
 
 static StateMachine_State_T * Run_InputFloat(Motor_T * p_motor)
 {
-//	Motor_FOC_StopAngleControl
-	return &MOTOR_STATE_FREEWHEEL;
+	return &STATE_FREEWHEEL;
 }
 
 static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
 	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
-	[MSM_INPUT_ACCELERATE] 		= (StateMachine_Transition_T)Run_InputAccelerate,
-	[MSM_INPUT_DECELERATE] 		= (StateMachine_Transition_T)Run_InputDecelerate,
+	[MSM_INPUT_CONTROL_MODE]	= (StateMachine_Transition_T)Run_TransitionRun,
 	[MSM_INPUT_FLOAT] 			= (StateMachine_Transition_T)Run_InputFloat,
 };
 
@@ -420,7 +275,7 @@ static void Run_Entry(Motor_T * p_motor)
 //	{
 ////		Motor_FOC_EnterRunState(p_motor);
 //	}
-//	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+//	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
 //	{
 //		if(Motor_GetSpeed(p_motor) == 0U)
 //		{
@@ -449,13 +304,13 @@ static void Run_Proc(Motor_T * p_motor)
 		{
 //			if (Motor_SixStep_GetBemfReliable(p_motor) == false)
 //			{
-//				StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_FREEWHEEL);
+//				StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
 //			}
 		}
 	}
 }
 
-static const StateMachine_State_T MOTOR_STATE_RUN =
+static const StateMachine_State_T STATE_RUN =
 {
 	.P_TRANSITION_TABLE 	= RUN_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)Run_Entry,
@@ -467,70 +322,51 @@ static const StateMachine_State_T MOTOR_STATE_RUN =
     @brief  State
 */
 /******************************************************************************/
-static StateMachine_State_T * FreeWheel_TransitionRunAccelerate(Motor_T * p_motor)
+/*
+ * match vq to bemf if available or speed scalar
+ */
+static StateMachine_State_T * FreeWheel_TransitionRun(Motor_T * p_motor)
 {
 	StateMachine_State_T * p_newState = 0;
 
-	if (p_motor->UserDirection != p_motor->Direction)
+//	if (p_motor->UserDirection != p_motor->Direction)
+//	{
+//		p_newState = &STATE_FAULT;
+//	}
+//	else
+	if (p_motor->ControlModeFlags.OpenLoop == 1U)
 	{
-		p_newState = 0;
+		p_newState = 0U; //openloop does not resume
 	}
 	else
 	{
-		StartAccelerate(p_motor);
-
 		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 		{
 			Motor_FOC_ResumeAngleControl(p_motor);
-			p_newState = &MOTOR_STATE_RUN;
 		}
 		else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 		{
-			p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U; //openloop does not resume
+//			Motor_SixStep_ResumePhaseControl(p_motor);
 		}
+
+//		p_motor->ControlModeFlags.Update = 0U;
+		p_newState = &STATE_RUN;
 	}
 
 	return p_newState;
 }
 
-static StateMachine_State_T * FreeWheel_TransitionRunDecelerate(Motor_T * p_motor)
-{
-	StateMachine_State_T * p_newState = 0;
-
-	if (p_motor->UserDirection != p_motor->Direction)
-	{
-		p_newState = 0;
-	}
-	else
-	{
-		StartDecelerate(p_motor);
-
-		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-		{
-			Motor_FOC_ResumeAngleControl(p_motor);
-			p_newState = &MOTOR_STATE_RUN;
-		}
-		else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-		{
-			p_newState = (Motor_SixStep_CheckResumePhaseControl(p_motor) == true) ? &MOTOR_STATE_RUN : 0U;
-		}
-	}
-
-	//match ouput voltage
-
-	return p_newState;
-}
 
 static const StateMachine_Transition_T FREEWHEEL_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
 	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
-	[MSM_INPUT_ACCELERATE] 		= (StateMachine_Transition_T)FreeWheel_TransitionRunAccelerate,
-	[MSM_INPUT_DECELERATE] 		= (StateMachine_Transition_T)FreeWheel_TransitionRunDecelerate,
-	//direction check direction change, do not return to r
+	[MSM_INPUT_CONTROL_MODE]	= (StateMachine_Transition_T)FreeWheel_TransitionRun,
 };
 
 static void Freewheel_Entry(Motor_T * p_motor)
 {
+	p_motor->ControlModeFlags.Update = 1U; //need to update on exit
+
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
 		Motor_FOC_StartAngleObserve(p_motor);
@@ -545,28 +381,132 @@ static void Freewheel_Proc(Motor_T * p_motor)
 {
 	Motor_ProcRamp(p_motor);
 
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+	{
+		Motor_FOC_ProcAngleObserve(p_motor);
+	}
+	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+	{
+		Motor_SixStep_ProcPhaseObserve(p_motor);
+	}
+
+	/* Check after, this way lower priority input cannot proc until stop state  */
 	if(Motor_GetSpeed(p_motor) == 0U)
 	{
-		StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_STOP);
-	}
-	else
-	{
-		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-		{
-			Motor_FOC_ProcAngleObserve(p_motor);
-		}
-		else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-		{
-			Motor_SixStep_ProcPhaseObserve(p_motor);
-		}
+		StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
 	}
 }
 
-static const StateMachine_State_T MOTOR_STATE_FREEWHEEL =
+static const StateMachine_State_T STATE_FREEWHEEL =
 {
 	.P_TRANSITION_TABLE 	= FREEWHEEL_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)Freewheel_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Freewheel_Proc,
+};
+
+
+/******************************************************************************/
+/*!
+    @brief  State Align - todo common start control?
+*/
+/******************************************************************************/
+static const StateMachine_Transition_T ALIGN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
+{
+	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
+};
+
+static void Align_Entry(Motor_T * p_motor)
+{
+	Motor_StartAlign(p_motor);
+}
+
+static void Align_Proc(Motor_T * p_motor)
+{
+	if(Motor_ProcAlign(p_motor) == true)
+	{
+		if((p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS) || (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP))
+		{
+			StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_OPEN_LOOP);
+		}
+		else
+		{
+			if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+			{
+				Motor_FOC_StartAngleControl(p_motor);
+			}
+			else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
+			{
+
+			}
+
+			StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_RUN);
+		}
+	}
+}
+
+static const StateMachine_State_T STATE_ALIGN =
+{
+	.P_TRANSITION_TABLE 	= ALIGN_TRANSITION_TABLE,
+	.ON_ENTRY 				= (StateMachine_Output_T)Align_Entry,
+	.OUTPUT 				= (StateMachine_Output_T)Align_Proc,
+};
+
+/******************************************************************************/
+/*!
+    @brief  State OpenLoop
+*/
+/******************************************************************************/
+static StateMachine_State_T * OpenLoop_InputStop(Motor_T * p_motor)
+{
+	return &STATE_FREEWHEEL; //No resume from OpenLoop, freewheel state check stop
+}
+
+static const StateMachine_Transition_T OPEN_LOOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
+{
+	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
+//	[MSM_INPUT_RUN_CMD] 		= (StateMachine_Transition_T)OpenLoop_InputStop,
+	[MSM_INPUT_FLOAT] 			= (StateMachine_Transition_T)OpenLoop_InputStop,
+};
+
+static void OpenLoop_Entry(Motor_T * p_motor)
+{
+//	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+//	{
+//		Motor_FOC_StartAngleControl(p_motor);
+//	}
+//	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
+//	{
+//		Motor_SixStep_StartPhaseControl(p_motor);
+//	}
+}
+
+static void OpenLoop_Proc(Motor_T * p_motor)
+{
+//	Motor_ProcRamp(p_motor);
+//
+//	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+//	{
+//		Motor_FOC_ProcAngleControl(p_motor);
+//	}
+//	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+//	{
+//		Motor_SixStep_ProcPhaseControl(p_motor);
+//
+//		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
+//		{
+//			if (Motor_SixStep_GetBemfReliable(p_motor) == true)
+//			{
+//				StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_RUN);
+//			}
+//		}
+//	}
+}
+
+static const StateMachine_State_T STATE_OPEN_LOOP =
+{
+	.P_TRANSITION_TABLE 	= OPEN_LOOP_TRANSITION_TABLE,
+	.ON_ENTRY 				= (StateMachine_Output_T)OpenLoop_Entry,
+	.OUTPUT 				= (StateMachine_Output_T)OpenLoop_Proc,
 };
 
 /******************************************************************************/
@@ -576,14 +516,13 @@ static const StateMachine_State_T MOTOR_STATE_FREEWHEEL =
 /******************************************************************************/
 static StateMachine_State_T * Calibration_InputStop(Motor_T * p_motor)
 {
-	return &MOTOR_STATE_STOP;
+	return &STATE_STOP;
 }
 
 static const StateMachine_Transition_T CALIBRATION_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
 	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
-	[MSM_INPUT_ACCELERATE] 		= (StateMachine_Transition_T)TransitionFault,
-	[MSM_INPUT_DECELERATE] 		= (StateMachine_Transition_T)Calibration_InputStop,
+	[MSM_INPUT_CONTROL_MODE]	= (StateMachine_Transition_T)Calibration_InputStop,
 	[MSM_INPUT_FLOAT] 			= (StateMachine_Transition_T)Calibration_InputStop,
 };
 
@@ -612,11 +551,11 @@ static void Calibration_Proc(Motor_T * p_motor)
 
 	if(isComplete == true)
 	{
-		StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_STOP);
+		StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
 	}
 }
 
-static const StateMachine_State_T MOTOR_STATE_CALIBRATION  =
+static const StateMachine_State_T STATE_CALIBRATION  =
 {
 	.P_TRANSITION_TABLE 	= CALIBRATION_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)Calibration_Entry,
@@ -629,9 +568,17 @@ static const StateMachine_State_T MOTOR_STATE_CALIBRATION  =
     @brief  State
 */
 /******************************************************************************/
+/*
+ * Manual Check Fault
+ */
+static StateMachine_State_T * Fault_InputFault(Motor_T * p_motor)
+{
+	return (p_motor->ErrorFlags.State == 0U) ? &STATE_STOP : 0U;
+}
+
 static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-
+	[MSM_INPUT_FAULT] 			= (StateMachine_Transition_T)Fault_InputFault,
 };
 
 static void Fault_Entry(Motor_T * p_motor)
@@ -641,18 +588,25 @@ static void Fault_Entry(Motor_T * p_motor)
 
 static void Fault_Proc(Motor_T * p_motor)
 {
-	if (Thermistor_ProcThreshold(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU) == THERMISTOR_THRESHOLD_OK)
+	bool errorCleared = false; //need?
+	Phase_Float(&p_motor->Phase); /* repeat */
+
+	if (p_motor->ErrorFlags.OverHeat = 1U)
 	{
-		p_motor->ErrorFlags.OverHeat = 0U;
+		if(Thermistor_GetStatus(&p_motor->Thermistor) == THERMISTOR_THRESHOLD_OK)
+		{
+			p_motor->ErrorFlags.OverHeat = 0U;
+			errorCleared = true;
+		}
 	}
 
-	if (p_motor->ErrorFlags.State == 0U)
+	if ((p_motor->ErrorFlags.State == 0U) && (errorCleared == true))
 	{
-		StateMachine_ProcTransition(&p_motor->StateMachine, &MOTOR_STATE_STOP);
+		StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
 	}
 }
 
-static const StateMachine_State_T MOTOR_STATE_FAULT =
+static const StateMachine_State_T STATE_FAULT =
 {
 	.P_TRANSITION_TABLE 	= FAULT_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)Fault_Entry,

@@ -48,8 +48,58 @@ typedef const struct
 	uint32_t 	(* RecvBytes)	(void * p_context, uint8_t * p_destBuffer, 			size_t bufferSize);
 	bool 		(* SendString)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
 	bool 		(* RecvString)	(void * p_context, uint8_t * p_destBuffer, 			size_t length);
+
+
+//	bool (*HAL_CanBus_GetRxBufferFullFlag)(void);
+//	bool (*HAL_CanBus_GetTxBufferEmptyFlag)(void);
+//	void (*HAL_CanBus_EnableTxBufferEmptyInterrupt)(void);
+//	void (*HAL_CanBus_EnableRxBufferFullInterrupt)(void);
+//	void (*HAL_CanBus_DisableTxBufferEmptyInterrupt)(void);
+//	void (*HAL_CanBus_DisableRxBufferFullInterrupt)(void);
+//	void (*HAL_CanBus_ClearRxBufferFullFlag)(void);
+//	void (*HAL_CanBus_ReadRxMessageBuffer)(CAN_Frame_t * p_rxFrame);
+//	void (*HAL_CanBus_WriteTxMessageBuffer)(CAN_Frame_t * p_rxFrame);
+
+//	void (*HAL_CanBus_SetBaudRate)(uint32_t);
+
+	//	void (*HAL_CanBus_RxCompleteCallback)(void);
+	//	void (*HAL_CanBus_TxCompleteCallback)(void);
 }
 Transceiver_Interface_T;
+
+//void CanBus_Init
+//(
+//	CanBus_T * p_can,
+////	bool (*getRxBufferFullFlag)(void),
+////	bool (*getTxBufferEmptyFlag)(void),
+////	void (*enableTxBufferEmptyInterrupt)(void),
+////	void (*enableRxBufferFullInterrupt)(void),
+////	void (*ensableTxBufferEmptyInterrupt)(void),
+////	void (*disableRxBufferFullInterrupt)(void),
+////	void (*clearRxBufferFullFlag)(void),
+////	void (*readRxMessageBuffer)(CAN_Frame_t * p_rxFrame),
+////	void (*writeTxMessageBuffer)(CAN_Frame_t * p_rxFrame),
+////	void (*rxCompleteCallback)(void),
+////	void (*txCompleteCallback)(void),
+////	void (*setBaudRate)(uint32_t),
+////	uint32_t baudRate
+//)
+//{
+////	HAL_CanBus_GetRxBufferFullFlag 				= getRxBufferFullFlag;
+////	HAL_CanBus_GetTxBufferEmptyFlag 			= getTxBufferEmptyFlag;
+////	HAL_CanBus_EnableTxBufferEmptyInterrupt 	= enableTxBufferEmptyInterrupt;
+////	HAL_CanBus_EnableRxBufferFullInterrupt 		= enableRxBufferFullInterrupt;
+////	HAL_CanBus_DisableTxBufferEmptyInterrupt 	= ensableTxBufferEmptyInterrupt;
+////	HAL_CanBus_DisableRxBufferFullInterrupt 	= disableRxBufferFullInterrupt;
+////	HAL_CanBus_ClearRxBufferFullFlag 			= clearRxBufferFullFlag;
+////	HAL_CanBus_ReadRxMessageBuffer 				= readRxMessageBuffer;
+////	HAL_CanBus_WriteTxMessageBuffer 			= writeTxMessageBuffer;
+////	HAL_CanBus_RxCompleteCallback 				= rxCompleteCallback;
+////	HAL_CanBus_TxCompleteCallback 				= txCompleteCallback;
+////	HAL_CanBus_SetBaudRate 						= setBaudRate;
+////
+////	HAL_CanBus_SetBaudRate(baudRate);
+//}
 
 typedef const struct
 {

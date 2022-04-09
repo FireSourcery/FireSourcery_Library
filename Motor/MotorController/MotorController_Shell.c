@@ -73,6 +73,8 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
 
 			Terminal_SendString(p_terminal, "RampCmd = ");
 			Terminal_SendNum(p_terminal, p_motor->RampCmd);
+			Terminal_SendString(p_terminal, ", RampIndex = ");
+			Terminal_SendNum(p_terminal, p_motor->RampIndex);
 			Terminal_SendString(p_terminal, " Frac16\r\n");
 
         	Terminal_SendString(p_terminal, "Iq = ");
@@ -86,6 +88,50 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
 			Terminal_SendString(p_terminal, ",	Vd = ");
 			Terminal_SendNum(p_terminal, p_motor->Foc.Vd);
 			Terminal_SendString(p_terminal, " Q1.15\r\n");
+
+			Terminal_SendString(p_terminal, "AnalogUserCmd = ");
+
+			switch(p_mc->AnalogUserCmd)
+			{
+				case MOT_ANALOG_USER_CMD_SET_BRAKE:					Terminal_SendString(p_terminal, "brake");		break;
+				case MOT_ANALOG_USER_CMD_SET_THROTTLE:				Terminal_SendString(p_terminal, "throttle");		break;
+				case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				Terminal_SendString(p_terminal, "set neutral");		break;
+				case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				Terminal_SendString(p_terminal, "neutral");	break;
+				case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	Terminal_SendString(p_terminal, "set f");	break;
+				case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	Terminal_SendString(p_terminal, "set r");	break;
+				case MOT_ANALOG_USER_CMD_SET_RELEASE:		Terminal_SendString(p_terminal, "set release");	break;
+				case MOT_ANALOG_USER_CMD_PROC_RELEASE:		Terminal_SendString(p_terminal, "release");		break;
+				default: break;
+			}
+
+			Terminal_SendString(p_terminal, "\r\n");
+
+//			Terminal_SendString(p_terminal, "Brake: ");
+//			Terminal_SendNum(p_terminal, p_motor->Brake);
+//			Terminal_SendString(p_terminal, "\r\n");
+
+
+			Terminal_SendString(p_terminal, "Motor Direction: ");
+			Terminal_SendNum(p_terminal, p_motor->Direction);
+			Terminal_SendString(p_terminal, ",	User: ");
+			Terminal_SendNum(p_terminal, p_motor->UserDirection);
+			Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "MC Direction: ");
+			Terminal_SendNum(p_terminal, p_mc->MainDirection);
+			Terminal_SendString(p_terminal, ",	User: ");
+			Terminal_SendNum(p_terminal, p_mc->UserDirection);
+			Terminal_SendString(p_terminal, "\r\n");
+//
+//			Terminal_SendString(p_terminal, "MC State Machine = ");
+//			switch(MotorController_StateMachine_GetStateId(p_mc))
+//			{
+//				case MCSM_STATE_ID_INIT:	Terminal_SendString(p_terminal, "Init");	break;
+//				case MCSM_STATE_ID_STOP:	Terminal_SendString(p_terminal, "Stop");	break;
+//				case MCSM_STATE_ID_RUN:		Terminal_SendString(p_terminal, "Run");		break;
+//				case MCSM_STATE_ID_FAULT:	Terminal_SendString(p_terminal, "Fault");	break;
+//				default: break;
+//			}
+			Terminal_SendString(p_terminal, "\r\n");
 
 //        	Terminal_SendString(p_terminal, "Iabc = ");
 //    		Terminal_SendNum(p_terminal, p_motor->Foc.Ia);
@@ -148,6 +194,9 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
 
 	return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
+
+
+
 
 static int Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 {
@@ -324,7 +373,7 @@ static int Cmd_calibrate(MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
-int Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
+static int Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argc;
 	(void)argv;
@@ -334,7 +383,7 @@ int Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
 
 
 
-int Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
+static int Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
@@ -362,7 +411,7 @@ int Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
-int Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
+static int Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
@@ -385,7 +434,7 @@ int Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 
 
 
-int Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
+static int Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 	int32_t heat 		= MotorController_User_GetHeatPcb_DegCInt(p_mc, 1U);
@@ -408,13 +457,13 @@ int Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 }
 
 
-int Cmd_vmonitor(MotorController_T * p_mc, int argc, char ** argv)
+static int Cmd_vmonitor(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 	int32_t vSense 		= MotorController_User_GetVSense_MilliV(p_mc);
 	int32_t vAcc 		= MotorController_User_GetVAcc_MilliV(p_mc);
 	int32_t vPos 		= MotorController_User_GetVPos_MilliV(p_mc);
-	int32_t battery 	= MotorController_GetBatteryCharge_Base(p_mc);
+	int32_t battery 	= MotorController_GetBatteryCharge_Base10(p_mc);
 
 	Terminal_SendString(p_terminal, "\r\n");
 	Terminal_SendString(p_terminal, "VSense: ");
@@ -438,6 +487,56 @@ int Cmd_vmonitor(MotorController_T * p_mc, int argc, char ** argv)
 	Terminal_SendString(p_terminal, "\r\n");
 
     return CMD_RESERVED_RETURN_CODE_SUCCESS;
+}
+
+
+static int Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
+{
+	(void)argv;
+
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+	int32_t vSense 		= MotorController_User_GetVSenseFault_MilliV(p_mc);
+	int32_t vAcc 		= MotorController_User_GetVAccFault_MilliV(p_mc);
+	int32_t vPos 		= MotorController_User_GetVPosFault_MilliV(p_mc);
+//	int32_t battery 	= MotorController_GetBatteryCharge_Base10(p_mc);
+	int32_t heat 		= MotorController_User_GetHeatPcbFault_DegCInt(p_mc, 1U);
+
+	if(argc == 1U)
+    {
+    	Terminal_SendString(p_terminal, "ErrorFlags [VPos][VAcc][VSense][Pcb][MosfetT][MostfetB]: ");
+    	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VPosLimit);
+    	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VAccLimit);
+    	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VSenseLimit);
+    	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.PcbOverHeat);
+    	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.MosfetsTopOverHeat);
+    	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.MosfetsBotOverHeat);
+    	Terminal_SendString(p_terminal, "\r\n");
+
+    	Terminal_SendString(p_terminal, "Fault: \r\n");
+
+    	Terminal_SendString(p_terminal, "Pcb: ");
+    	Terminal_SendNum(p_terminal, heat);
+    	Terminal_SendString(p_terminal, " C");
+    	Terminal_SendString(p_terminal, "\r\n");
+
+    	Terminal_SendString(p_terminal, "VSense: ");
+    	Terminal_SendNum(p_terminal, vSense);
+    	Terminal_SendString(p_terminal, " mV");
+    	Terminal_SendString(p_terminal, "\r\n");
+
+    	Terminal_SendString(p_terminal, "VAcc: ");
+    	Terminal_SendNum(p_terminal, vAcc);
+    	Terminal_SendString(p_terminal, " mV");
+    	Terminal_SendString(p_terminal, "\r\n");
+
+    	Terminal_SendString(p_terminal, "VPos: ");
+    	Terminal_SendNum(p_terminal, vPos);
+    	Terminal_SendString(p_terminal, " mV");
+    	Terminal_SendString(p_terminal, "\r\n");
+
+    }
+
+	return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
 int Cmd_direction(MotorController_T * p_mc, int argc, char ** argv)
@@ -502,6 +601,7 @@ int Cmd_set(MotorController_T * p_mc, int argc, char ** argv)
 
     return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
+
 
 
 static int Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
@@ -619,16 +719,17 @@ int Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
 
 const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 {
-	{"monitor", 	"Display motor info",				(Cmd_Function_T)Cmd_monitor, 	{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_monitor_Proc, 	.FREQ = 1U}	},
+	{"monitor", 	"Display motor info",				(Cmd_Function_T)Cmd_monitor, 	{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_monitor_Proc, 	.FREQ = 5U}	},
 	{"hall", 		"Read hall", 						(Cmd_Function_T)Cmd_hall, 		{0U}		},
 	{"heat", 		"Display temperatures",				(Cmd_Function_T)Cmd_heat, 		{0U}		},
 	{"vmonitor", 	"Display voltages", 				(Cmd_Function_T)Cmd_vmonitor, 	{0U}		},
+	{"vmonitor", 	"Display fault info", 						(Cmd_Function_T)Cmd_fault, 	{0U}		},
 
 	{"mode", 		"Sets mode using options",			(Cmd_Function_T)Cmd_mode, 		{0U}	},
 
 	{"analoguser", 	"analoguser enable/disable", 		(Cmd_Function_T)Cmd_analoguser, 		{0U}	},
 
-	{"direction", 		"direction",			(Cmd_Function_T)Cmd_direction, 		{0U}	},
+	{"direction", 	"Sets direction",						(Cmd_Function_T)Cmd_direction, 		{0U}	},
 
 
 	{"calibrate", 	"calibrate",						(Cmd_Function_T)Cmd_calibrate, 	{0U}	},

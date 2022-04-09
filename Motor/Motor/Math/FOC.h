@@ -86,6 +86,9 @@ static inline void FOC_ProcClarkePark(FOC_T * p_foc)
 {
 	foc_clarke(&p_foc->Ialpha, &p_foc->Ibeta, p_foc->Ia, p_foc->Ib, p_foc->Ic);
 	foc_park_vector(&p_foc->Id, &p_foc->Iq, p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
+
+	if (p_foc->Iq > -200 && p_foc->Iq < 200 ) {p_foc->Iq = 0;}
+	if (p_foc->Id < -200 && p_foc->Id < 200 ) {p_foc->Id = 0;}
 }
 
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
@@ -124,12 +127,13 @@ static inline qfrac16_t FOC_GetIc(FOC_T * p_foc) {return p_foc->Ic;}
 static inline qfrac16_t FOC_GetId(FOC_T * p_foc) {return p_foc->Id;}
 static inline qfrac16_t FOC_GetIq(FOC_T * p_foc) {return p_foc->Iq;}
 
-static inline qfrac16_t FOC_GetVq(FOC_T * p_foc) {return p_foc->Vd;}
-static inline qfrac16_t FOC_GetVd(FOC_T * p_foc) {return p_foc->Vq;}
+static inline qfrac16_t FOC_GetVd(FOC_T * p_foc) {return p_foc->Vd;}
+static inline qfrac16_t FOC_GetVq(FOC_T * p_foc) {return p_foc->Vq;}
+
 
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
-extern void FOC_SetZero(FOC_T * p_foc);
+extern void FOC_SetOutputZero(FOC_T * p_foc);
 
 #endif
 //static inline void FOC_ProcThetaSvpwm(FOC_T *  p_foc)

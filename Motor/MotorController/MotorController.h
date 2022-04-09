@@ -60,6 +60,7 @@
 #include "Math/Linear/Linear.h"
 
 #include <stdint.h>
+#include <string.h>
 
 typedef enum
 {
@@ -98,6 +99,7 @@ typedef enum
 {
 	MOTOR_CONTROLLER_DIRECTION_FORWARD,
 	MOTOR_CONTROLLER_DIRECTION_REVERSE,
+//	MOTOR_CONTROLLER_DIRECTION_NEUTRAL,
 }
 MotorController_Direction_T;
 
@@ -196,9 +198,11 @@ typedef struct
 	MotorController_ErrorFlags_T ErrorFlags;
 
 	volatile MotAnalog_Results_T AnalogResults;
+	MotAnalog_Results_T FaultAnalogRecord;
 
 	EEPROM_T Eeprom;
 	MotAnalogUser_T AnalogUser;
+	MotAnalogUser_Cmd_T AnalogUserCmd;
 	Debounce_T DIn; //configurable input
 
 	Blinky_T Buzzer;
@@ -216,6 +220,8 @@ typedef struct
 	Timer_T TimerMillis;
 	Timer_T TimerMillis10;
 	Timer_T TimerSeconds;
+
+	Timer_T StateTimer;
 
 	Shell_T Shell;
 
@@ -251,7 +257,7 @@ static inline void MotorController_CalibrateBattery_MilliV(MotorController_T * p
 	Linear_ADC_Init(&p_mc->Battery, p_mc->Parameters.BatteryZero_ADCU, p_mc->Parameters.BatteryFull_ADCU, 1000U);
 }
 
-static inline uint32_t MotorController_GetBatteryCharge_Base(MotorController_T * p_mc)
+static inline uint32_t MotorController_GetBatteryCharge_Base10(MotorController_T * p_mc)
 {
 	return Linear_ADC_CalcPhysical(&p_mc->Battery, p_mc->AnalogResults.VPos_ADCU);
 }
@@ -261,23 +267,27 @@ static inline uint32_t MotorController_GetBatteryCharge_Frac16(MotorController_T
 	return Linear_ADC_CalcFraction16(&p_mc->Battery, p_mc->AnalogResults.VPos_ADCU);
 }
 
+static inline void MotorController_SetFaultRecord(MotorController_T * p_mc)
+{
+	memcpy(&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
+}
 
 /*
  * Mapped to State Machine
  */
 static inline void MotorController_ProcUserCmdBrake(MotorController_T * p_mc)
 {
-	Motor_UserN_SetCmdBrake(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
+	Motor_UserN_SetBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
 }
 
 static inline void MotorController_ProcUserCmdThrottle(MotorController_T * p_mc)
 {
-	Motor_UserN_SetCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
+	Motor_UserN_SetThrottleCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
 }
 
 static inline void MotorController_ProcUserCmdRegen(MotorController_T * p_mc)
 {
-	Motor_UserN_SetCmdRegen(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
+	Motor_UserN_SetRegenCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
 }
 
 static inline bool MotorController_ProcDirection(MotorController_T * p_mc)
@@ -303,6 +313,7 @@ static inline bool MotorController_ProcDirection(MotorController_T * p_mc)
 
 static inline bool MotorController_CheckMotorStopAll(MotorController_T * p_mc)
 {
+	//user stop state instead?
 	return Motor_UserN_CheckStop(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
 }
 

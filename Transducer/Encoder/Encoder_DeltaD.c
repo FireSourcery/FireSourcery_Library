@@ -79,11 +79,11 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 	p_encoder->Params.IsQuadratureCaptureEnabled = true;
 #endif
 }
-
-void Encoder_DeltaD_InitParams(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
-{
-
-}
+//
+//void Encoder_DeltaD_SetParams(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
+//{
+//
+//}
 
 void Encoder_DeltaD_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
 {
@@ -104,11 +104,12 @@ void Encoder_DeltaD_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCou
 //}
 
 
-//void Encoder_CalibrateAngularD(Encoder_T * p_encoder)
-//{
-//	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
-//	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
-//}
+void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder)
+{
+	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
+	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+}
 
 /*
  *  Calibration step 1

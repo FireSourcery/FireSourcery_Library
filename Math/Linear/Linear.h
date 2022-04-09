@@ -85,6 +85,39 @@ static inline int32_t Linear_Function(const Linear_T * p_linear, int32_t x)
 #endif
 }
 
+static inline int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
+{
+//	int32_t result;
+
+#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
+
+//	if(x * p_linear->SlopeFactor < INT32_MAX / scalar) /* scalar is likely to be compile time constant
+
+
+//	if (x * scalar < INT32_MAX / p_linear->SlopeFactor )
+//	{
+//		result = Linear_Function(p_linear, x * scalar);
+//	}
+//	else if (factor < INT32_MAX / 100UL)
+//	{
+//		result = Linear_Function(p_linear, (uint32_t)adcu * 100UL) * 10U;
+//	}
+//	else if (factor < INT32_MAX / 10UL)
+//	{
+//		result = Linear_Function(p_linear, (uint32_t)adcu * 10UL) * 100U;
+//	}
+//	else
+//	{
+//		result = Linear_Function(p_linear, (uint32_t)adcu) * 1000U;
+//	}
+//
+
+	return linear_f_shift(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->XOffset, p_linear->YOffset, x);
+#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+	return linear_f(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, x);
+#endif
+}
+
 /*
  * ((y - y0) * divisor / factor) + x0;
  */

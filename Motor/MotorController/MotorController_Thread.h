@@ -46,7 +46,7 @@
 static inline void ProcMotorControllerAnalogUser(MotorController_T * p_mc)
 {
 	MotAnalogUser_Cmd_T cmd = MotAnalogUser_PollCmd(&p_mc->AnalogUser);
-
+	p_mc->AnalogUserCmd = cmd;
 	MotAnalogUser_CaptureInput(&p_mc->AnalogUser, p_mc->AnalogResults.Throttle_ADCU, p_mc->AnalogResults.Brake_ADCU);
 
 	AnalogN_PauseQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ADCS_ACTIVE_MAIN_THREAD);
@@ -54,16 +54,17 @@ static inline void ProcMotorControllerAnalogUser(MotorController_T * p_mc)
 	AnalogN_EnqueueConversion_Group(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.CONVERSION_BRAKE);
 	AnalogN_ResumeQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ADCS_ACTIVE_MAIN_THREAD);
 
+	/* Assume no input cmd priority level */
 	switch(cmd)
 	{
-		case MOT_ANALOG_USER_CMD_SET_BRAKE:					MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_mc->AnalogUser));			break;
-		case MOT_ANALOG_USER_CMD_SET_THROTTLE:				MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottle(&p_mc->AnalogUser));	break;
-		case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				MotorController_DisableMotorAll(p_mc);														break;
-		case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_NEUTRAL);			break;
+		case MOT_ANALOG_USER_CMD_SET_BRAKE:					MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrakeValue(&p_mc->AnalogUser));			break;
+		case MOT_ANALOG_USER_CMD_SET_THROTTLE:				MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottleValue(&p_mc->AnalogUser));	break;
+		case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				MotorController_User_SetNeutral(p_mc); 														break;
+		case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				MotorController_User_ProcNeutral(p_mc);														break;
 		case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);				break;
 		case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);	 			break;
-		case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_StartCoast(p_mc);														break;
-		case MOT_ANALOG_USER_CMD_PROC_THROTTLE_RELEASE:		MotorController_User_ProcCoast(p_mc);														break;
+		case MOT_ANALOG_USER_CMD_SET_RELEASE:				MotorController_User_StartRelease(p_mc);													break;
+		case MOT_ANALOG_USER_CMD_PROC_RELEASE:				MotorController_User_ProcRelease(p_mc);														break;
 		default: break;
 	}
 }

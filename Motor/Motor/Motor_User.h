@@ -38,6 +38,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/*
+ *
+ * +/- Sign indicates along or against direction selected. NOT absolute CW/CCW
+ */
+
+
 /******************************************************************************/
 /*!
  * State Machine Error checked inputs
@@ -50,7 +56,10 @@
  * State Proc in PWM thread. User Input in Main Thread. May need critical section during input.
  * Sync error only occurs in way of running new states function, using false validated function of old state.
  * Can always recover? Stop to Run transition always at 0 speed.
- *
+
+ * Set async to proc, sync issue can recover?,
+ * control proc may overwrite pid state set, but last to complete is always user input
+
  * Sync Mode
  * Must check input flags every pwm cycle
  */
@@ -64,82 +73,24 @@ static inline void Motor_User_DisableControl(Motor_T * p_motor)
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
 }
 
+static inline void Motor_User_DisableControlForce(Motor_T * p_motor)
+{
+	Phase_Float(&p_motor->Phase);
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
+}
+
 static inline void Motor_User_Ground(Motor_T * p_motor)
 {
 	Phase_Ground(&p_motor->Phase);
-	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_GROUND);
+
+	//alternatively only ground in stop state
+//	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_GROUND);
 }
 
-static inline void Motor_User_SetCmd(Motor_T * p_motor, uint16_t cmd)
-{
-//	Critical_Enter();
-	Motor_SetRamp(p_motor, cmd);
-	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
-//	Critical_Exit();
-}
 
 /*
- * Always request opposite current
+ * set buffered direction, check on state machine
  */
-static inline void Motor_User_SetCmdBrake(Motor_T * p_motor, uint16_t intensity)
-{
-//	p_motor->ControlMode.Current = 1U;
-
-//	Critical_Enter();
-	Motor_SetRamp(p_motor, intensity);
-	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DECELERATE);
-//	Critical_Exit();
-}
-
-
-static inline void Motor_User_SetCmdRegen(Motor_T * p_motor)
-{
-	if (p_motor->Speed_RPM > 20U)
-	{
-		Motor_SetRamp(p_motor, p_motor->Speed_Frac16); //2
-		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DECELERATE);
-	}
-	else
-	{
-		Motor_User_DisableControl(p_motor);
-	}
-}
-
-//static inline void Motor_User_SetCmdSpeed(Motor_T * p_motor, uint16_t speed)
-//{
-//setcontrolmode
-//	Motor_SetRamp(p_motor, cmd);
-//	p_motor->IsBrake = false;
-//	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
-//}
-
-
-//static inline void Motor_User_SetCmdTorque(Motor_T * p_motor, uint16_t speed)
-//{
-//setcontrolmode
-//	Motor_SetRamp(p_motor, cmd);
-//	p_motor->IsBrake = false;
-//	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
-//}
-
-//static inline void Motor_Control_StartTorqueMode(Motor_T * p_motor)
-//{
-//	p_motor->ControlModeFlags.Current = 1U;
-//	Motor_ResetRamp(p_motor);
-//
-//	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-//	{
-//		Motor_FOC_SetMatchOutput(p_motor);
-//	}
-//	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-//	{
-//
-//	}
-////	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_ACCELERATE);
-//}
-
-
-//  set buffered direction, check on state machine
 static inline bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
 	p_motor->UserDirection = direction; //pass to state machine
@@ -148,7 +99,6 @@ static inline bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T 
 
 	return (p_motor->UserDirection == p_motor->Direction);
 }
-
 
 static inline bool Motor_User_SetDirectionForward(Motor_T * p_motor)
 {
@@ -182,6 +132,205 @@ static inline bool Motor_User_SetDirectionReverse(Motor_T * p_motor)
 	return isSet;
 }
 
+
+static inline void SetMotorUserCmdSigned(Motor_T * p_motor, int32_t cmd)
+{
+	int32_t rampTarget;
+
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+	{
+		rampTarget = cmd >> 1U;
+		if(p_motor->Direction == MOTOR_DIRECTION_CW) {rampTarget = 0 - rampTarget;}
+	}
+	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
+	{
+
+	}
+
+	Motor_SetRamp(p_motor, rampTarget);
+}
+
+/*
+ * 	Call regularly to update cmd value
+ *  Cmd Updater called 1/Millis. check direction here.
+ *
+ *  sign indicates along or against set direction
+ *
+ *	Cmd can set without checking state machine
+ *
+ *  input [-65536:65535]
+ */
+static inline void Motor_User_SetCmd(Motor_T * p_motor, int32_t cmd)
+{
+//	Critical_Enter();
+	if(p_motor->ControlModeFlags.Speed == 0U)
+	{
+		SetMotorUserCmdSigned(p_motor, cmd);
+	}
+	else
+	{
+		Motor_SetRamp(p_motor, cmd);
+	}
+//	Critical_Exit();
+}
+
+/******************************************************************************/
+/*!
+ * User control modes, torque/speed/position, above foc/sixstep commutation layer
+ */
+/******************************************************************************/
+static inline void Motor_User_SetControlMode(Motor_T * p_motor, Motor_ControlMode_T mode)
+{
+	Critical_Enter();
+
+	Motor_SetControlModeFlags(p_motor, mode);
+
+	if(p_motor->ControlModeFlags.Update == 1U)
+	{
+		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE);
+		p_motor->ControlModeFlags.Update = 0U;
+	}
+
+	Critical_Exit();
+}
+/*
+ * Start functions sets mode only
+ */
+static inline void Motor_User_StartVoltageMode(Motor_T * p_motor)
+{
+	Motor_User_SetControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE);
+}
+
+/*
+ * Set Cmd functions sets mode and cmd value
+ *
+ * input [-65536:65535]
+ */
+static inline void Motor_User_SetVoltageCmd(Motor_T * p_motor, int32_t voltage)
+{
+	Motor_User_StartVoltageMode(p_motor);
+	SetMotorUserCmdSigned(p_motor, voltage);
+}
+
+static inline void Motor_User_StartTorqueMode(Motor_T * p_motor)
+{
+	Motor_User_SetControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_CURRENT);
+}
+
+/*
+ * Set Cmd functions sets mode and cmd value
+ *
+ * input [-65536:65535]
+ */
+static inline void Motor_User_SetTorqueCmd(Motor_T * p_motor, int32_t torque)
+{
+	Motor_User_StartTorqueMode(p_motor);
+	SetMotorUserCmdSigned(p_motor, torque);
+}
+
+
+/*
+ * Default speed mode is speed torque mode
+ */
+static inline void Motor_User_StartSpeedMode(Motor_T * p_motor)
+{
+	Motor_User_SetControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT);
+}
+
+/*
+ *
+ * input [0:65535]
+ */
+static inline void Motor_User_SetSpeedCmd(Motor_T * p_motor, uint16_t speed)
+{
+	Motor_User_StartSpeedMode(p_motor);
+	Motor_SetRamp(p_motor, speed); /* commutation mode common */
+}
+
+/*
+ *
+ * input [0:65535]
+ */
+//static inline void Motor_User_SetCmdPosition(Motor_T * p_motor, uint16_t angle)
+//{
+////	Motor_SetControlModeFlags(p_motor, MOTOR_CONTROL_MODE_POSITION);
+//	//	Motor_User_SetCmd(p_motor, angle);
+////	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_RUN_CMD);
+//}
+
+static inline void Motor_User_StartThrottleMode(Motor_T * p_motor)
+{
+	Motor_User_SetControlMode(p_motor, p_motor->Parameters.ControlMode);
+}
+
+/*
+ *
+ * input [0:65535]
+ */
+static inline void Motor_User_SetThrottleCmd(Motor_T * p_motor, uint16_t throttle)
+{
+//	Critical_Enter();
+	Motor_User_StartThrottleMode(p_motor);
+	Motor_User_SetCmd(p_motor, throttle);
+//	Critical_Exit();
+}
+
+/*
+	Always request opposite direction current
+	if directly from accelerating to decelerating, unsigned ramp cannot transition through 0 without discontinuity
+	from in-direction torque skips to zero to ramped counter-direction torque
+
+	req opposite iq, vq approach towards 0 but not past 0, no plugging
+
+	input [0:65535]
+
+ */
+static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
+{
+	//use minimal brake to compensate for PID integral, or small values will increase speed as integral dominates proportional
+	int32_t torque = brake;
+
+	if (p_motor->Speed_RPM > 60U)
+	{
+//			Motor_User_SetTorqueCmd(p_motor, (int32_t)0 - (int32_t)brake);
+//		if (torque < 65536/10) {torque = 65536/10;}
+		Motor_User_SetTorqueCmd(p_motor, 0 - torque);
+	}
+	else
+	{
+		Phase_Ground(&p_motor->Phase); //fix repeat
+	}
+}
+
+
+static inline void Motor_User_ProcRegenCmd(Motor_T * p_motor)
+{
+	SetMotorUserCmdSigned(p_motor, p_motor->Speed_Frac16 / 2); /* ramped speed match provides smoother change. alternatively, VFreqMode */
+}
+
+static inline void Motor_User_SetRegenCmd(Motor_T * p_motor)
+{
+	Motor_User_SetVoltageCmd(p_motor, p_motor->Speed_Frac16 / 2);
+
+//	if (p_motor->Speed_RPM > 20U)
+//	{
+//		Motor_User_SetCmd(p_motor, p_motor->Speed_Frac16 / 2); /* ramped speed match provides smoother change */
+//	}
+//	else
+//	{
+//		Motor_User_DisableControl(p_motor);
+//	}
+
+}
+
+/*
+ * Checks exit in fault state, will tranisition to fault state in other states
+ */
+static inline void Motor_User_CheckFault(Motor_T * p_motor)
+{
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
+}
+
 /*
  * Run Calibration functions
  */
@@ -205,10 +354,9 @@ static inline void Motor_User_ActivateCalibrationAdc(Motor_T * p_motor)
 
 /******************************************************************************/
 /*
- * Nvm function
+ * Nvm Param function
  */
 /******************************************************************************/
-
 static inline void Motor_User_SetILimit_Amp(Motor_T * p_motor, uint16_t limit_Amp)
 {
 	uint16_t limit_Frac16 = (uint32_t)limit_Amp * 65536U /  p_motor->Parameters.IRefMax_Amp;
@@ -222,8 +370,13 @@ static inline void Motor_User_SetILimit_Amp(Motor_T * p_motor, uint16_t limit_Am
 	p_motor->Parameters.IqLimit = limit_Frac16 / 2U;
 }
 
-//.SpeedMax_RPM = 5000U, //Speed control mode only
-//
+/*
+ * Must use speed control mode
+ */
+static inline void Motor_User_SetSpeedLimit(Motor_T * p_motor, uint16_t rpm)
+{
+	p_motor->Parameters.SpeedRefMax_RPM = rpm;
+}
 
 //// 250Amp => 4.08V => 3341 ADCU
 //.IRefMax_Amp = 270U,
@@ -234,41 +387,39 @@ static inline void Motor_User_SetILimit_Amp(Motor_T * p_motor, uint16_t limit_Am
 //.IbRefZero_ADCU = 1990U,
 //.IcRefZero_ADCU = 1990U,
 
-static inline void Motor_User_SetSensorMode(Motor_T *p_motor, Motor_SensorMode_T mode) 		{p_motor->Parameters.SensorMode = mode;}
-static inline void Motor_User_SetControlMode(Motor_T *p_motor, Motor_ControlMode_T mode) 	{p_motor->Parameters.ControlMode = mode;}
+static inline void Motor_User_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode) 			{p_motor->Parameters.SensorMode = mode;}
+static inline void Motor_User_SetUserControlMode(Motor_T * p_motor, Motor_ControlMode_T mode) 			{p_motor->Parameters.ControlMode = mode;}
+static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode) 	{p_motor->Parameters.CommutationMode = mode;}
 
-//.CommutationMode 	= MOTOR_COMMUTATION_MODE_FOC,
-////	.CommutationMode 	= MOTOR_COMMUTATION_MODE_SIX_STEP,
-////	.BrakeMode		 	= MOTOR_BRAKE_MODE_PASSIVE,
-////		.BrakeMode		 	= MOTOR_BRAKE_MODE_SCALAR,
-//.AlignMode		 			= MOTOR_ALIGN_MODE_ALIGN,
-//.AlignVoltage_Frac16 		= (65536U/10U/4U),
-//.AlignTime_ControlCycles 	= 20000U,
-//
-//.PhasePwmMode		= PHASE_MODE_UNIPOLAR_1,
-////	.PhasePwmMode		= PHASE_MODE_BIPOLAR,
-//
-//.OpenLoopVPwmMin = 65536U/40U,
-//.OpenLoopVPwmMax = 65536U/16U,
-//.OpenLoopSpeedStart = 20U,
-//.OpenLoopSpeedFinal = 150U,
-////	.OpenLoopAccel  =  000U,
-////300 rpm 12 percent pwm
+static inline void Motor_User_SetIaZero_ADCU(Motor_T * p_motor, uint16_t adcu) {p_motor->Parameters.IaRefZero_ADCU = adcu;}
+static inline void Motor_User_SetIbZero_ADCU(Motor_T * p_motor, uint16_t adcu) {p_motor->Parameters.IbRefZero_ADCU = adcu;}
+static inline void Motor_User_SetIcZero_ADCU(Motor_T * p_motor, uint16_t adcu) {p_motor->Parameters.IcRefZero_ADCU = adcu;}
+static inline void Motor_User_SetIaMax_ADCU(Motor_T * p_motor, uint16_t adcu) {p_motor->Parameters.IaRefMax_ADCU = adcu;}
+static inline void Motor_User_SetIbMax_ADCU(Motor_T * p_motor, uint16_t adcu) {p_motor->Parameters.IbRefMax_ADCU = adcu;}
+static inline void Motor_User_SetIcMax_ADCU(Motor_T * p_motor, uint16_t adcu) {p_motor->Parameters.IcRefMax_ADCU = adcu;}
+static inline void Motor_User_SetIaRef_ADCU(Motor_T * p_motor, uint16_t zero) {p_motor->Parameters.IaRefZero_ADCU = zero;}
+static inline void Motor_User_SetIbRef_ADCU(Motor_T * p_motor, uint16_t zero) {p_motor->Parameters.IbRefZero_ADCU = zero;}
+static inline void Motor_User_SetIcRef_ADCU(Motor_T * p_motor, uint16_t zero) {p_motor->Parameters.IcRefZero_ADCU = zero;}
 
 
-static inline void Motor_User_SetSpeedVoltageRef_Scale(Motor_T *p_motor, uint16_t vSupply, uint16_t vMotor, uint16_t speedVMotor)
+static inline void Motor_User_SetSpeedRefVoltage_Scale(Motor_T * p_motor, uint16_t vSupply, uint16_t vMotor, uint16_t speedVMotor)
 {
-	p_motor->Parameters.SpeedRef_RPM = speedVMotor * vSupply / vMotor;
+	p_motor->Parameters.SpeedRefVoltage_RPM = speedVMotor * vSupply / vMotor;
 }
 
-static inline void Motor_User_SetSpeedVoltageRef(Motor_T *p_motor, uint16_t speedRef)
+static inline void Motor_User_SetSpeedVoltageRef(Motor_T * p_motor, uint16_t speedRef)
 {
-	p_motor->Parameters.SpeedRef_RPM = speedRef;
+	p_motor->Parameters.SpeedRefVoltage_RPM = speedRef;
 }
 
-static inline void Motor_User_SetDirectionCalibration(Motor_T *p_motor, Motor_DirectionCalibration_T calibration) 	{p_motor->Parameters.DirectionCalibration = calibration;}
+static inline void Motor_User_SetDirectionCalibration(Motor_T * p_motor, Motor_DirectionCalibration_T calibration) 	{p_motor->Parameters.DirectionCalibration = calibration;}
 
 static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Motor_T *p_motor) 	{return p_motor->Parameters.DirectionCalibration;}
+
+static inline void Motor_User_SetVSupplyVMotorScale(Motor_T * p_motor, uint16_t vSupply, uint16_t vMotor)
+{
+
+}
 
 /******************************************************************************/
 /*
@@ -314,27 +465,35 @@ static inline Motor_ErrorFlags_T Motor_User_GetErrorFlags(Motor_T * p_motor) 	{r
 //}
 
 
-static inline void Motor_UserN_SetCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle)
+static inline void Motor_UserN_SetCmd(Motor_T * p_motor, uint8_t motorCount, int32_t cmd)
 {
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
 	{
-		Motor_User_SetCmd(&p_motor[iMotor], throttle);
+		Motor_User_SetCmd(&p_motor[iMotor], cmd);
 	}
 }
 
-static inline void Motor_UserN_SetCmdBrake(Motor_T * p_motor, uint8_t motorCount, uint16_t brake)
+static inline void Motor_UserN_SetThrottleCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle)
 {
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
 	{
-		Motor_User_SetCmdBrake(&p_motor[iMotor], brake);
+		Motor_User_SetThrottleCmd(&p_motor[iMotor], throttle);
 	}
 }
 
-static inline void Motor_UserN_SetCmdRegen(Motor_T * p_motor, uint8_t motorCount)
+static inline void Motor_UserN_SetBrakeCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t brake)
 {
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
 	{
-		Motor_User_SetCmdRegen(&p_motor[iMotor]);
+		Motor_User_SetBrakeCmd(&p_motor[iMotor], brake);
+	}
+}
+
+static inline void Motor_UserN_SetRegenCmd(Motor_T * p_motor, uint8_t motorCount)
+{
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		Motor_User_SetRegenCmd(&p_motor[iMotor]);
 	}
 }
 

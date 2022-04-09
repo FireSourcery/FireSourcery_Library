@@ -50,8 +50,8 @@ typedef enum
 	MOT_ANALOG_USER_CMD_PROC_NEUTRAL,
 	MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD,
 	MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE,
-	MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE, /* No input */
-	MOT_ANALOG_USER_CMD_PROC_THROTTLE_RELEASE,
+	MOT_ANALOG_USER_CMD_SET_RELEASE, /* No input */
+	MOT_ANALOG_USER_CMD_PROC_RELEASE,
 }
 MotAnalogUser_Cmd_T;
 
@@ -177,14 +177,28 @@ static inline bool MotAnalogUser_PollBrake(MotAnalogUser_T * p_user)
 
 static inline bool MotAnalogUser_GetThrottleSwitch(const MotAnalogUser_T * p_user) 		{return (p_user->Params.EnablePinThrottle 	== true) ? Debounce_GetState(&p_user->PinThrottle) 	: (p_user->Throttle_Frac16 	> 0U);	}
 static inline bool MotAnalogUser_GetBrakeSwitch(const MotAnalogUser_T * p_user) 		{return (p_user->Params.EnablePinBrake 		== true) ? Debounce_GetState(&p_user->PinBrake) 	: (p_user->Brake_Frac16 	> 0U);	}
+
+static inline bool MotAnalogUser_PollThrottleSwitchFalling(MotAnalogUser_T * p_user)
+{
+	return (p_user->Params.EnablePinThrottle == true) ? Debounce_PollFallingEdge(&p_user->PinThrottle) : ((p_user->Throttle_Frac16 == 0U) && (p_user->ThrottlePrev_Frac16 > 0U));
+}
+
+static inline bool MotAnalogUser_PollBrakeSwitchFalling(MotAnalogUser_T * p_user)
+{
+	return (p_user->Params.EnablePinBrake == true) ? Debounce_PollFallingEdge(&p_user->PinBrake) : ((p_user->Brake_Frac16 == 0U) && (p_user->BrakePrev_Frac16 > 0U));
+}
+
 static inline uint16_t MotAnalogUser_GetThrottleValue(const MotAnalogUser_T * p_user)	{return p_user->Throttle_Frac16;}
 static inline uint16_t MotAnalogUser_GetBrakeValue(const MotAnalogUser_T * p_user)		{return p_user->Brake_Frac16;}
 static inline uint16_t MotAnalogUser_GetThrottle(const MotAnalogUser_T * p_user) 		{return (MotAnalogUser_GetThrottleSwitch(p_user) == true) 	? p_user->Throttle_Frac16	: 0U; }
 static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user) 			{return (MotAnalogUser_GetBrakeSwitch(p_user) == true) 		? p_user->Brake_Frac16 		: 0U; }
 
+/*
+ * Early throttle release detect
+ */
 static inline bool MotAnalogUser_CheckThrottleRelease(const MotAnalogUser_T * p_user)
 {
-	return (((int32_t)p_user->ThrottlePrev_Frac16 - (int32_t)p_user->Throttle_Frac16) > (65535/40));;
+	return (((int32_t)p_user->ThrottlePrev_Frac16 - (int32_t)p_user->Throttle_Frac16) > (65535/100));;
 }
 
 static inline bool MotAnalogUser_GetNeutralSwitch(const MotAnalogUser_T * p_user) 		{return Debounce_GetState(&p_user->PinNeutral);}
@@ -240,12 +254,16 @@ static inline MotAnalogUser_Direction_T MotAnalogUser_PollDirection(MotAnalogUse
 	return direction;
 }
 
+
 static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user)
 {
 	MotAnalogUser_Direction_T direction = MotAnalogUser_PollDirection(p_user);
-	MotAnalogUser_Cmd_T cmd = MOT_ANALOG_USER_CMD_PROC_THROTTLE_RELEASE;
+	MotAnalogUser_Cmd_T cmd = MOT_ANALOG_USER_CMD_PROC_RELEASE;
 
-	/* Edge functions are instantaneous and can proc before brake, or check in separate function to proc in addition to brake */
+	/*
+	 * Edge functions are instantaneous and can proc before brake, or check in separate function to proc in addition to brake
+	 * Need to detect even during braking, for error response
+	 */
 	switch(direction)
 	{
 		case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_NEUTRAL;				break;
@@ -261,43 +279,34 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 				//need different cmd on brake edge?
 				cmd = MOT_ANALOG_USER_CMD_SET_BRAKE;
 			}
+			else if(MotAnalogUser_PollBrakeSwitchFalling(p_user)== true)
+			{
+				cmd = MOT_ANALOG_USER_CMD_SET_RELEASE;
+			}
 			/* Check Direction */
 			else if(direction == MOT_ANALOG_USER_DIRECTION_NEUTRAL)
 			{
 				cmd = MOT_ANALOG_USER_CMD_PROC_NEUTRAL;
 			}
-			/* Check Throttle. Direction is non edge Forward or Reverse past this point */
+			/* Check Throttle. Direction is non edge Forward or Reverse */
+			else if(MotAnalogUser_GetThrottleSwitch(p_user) == true)
+			{
+				if(MotAnalogUser_CheckThrottleRelease(p_user) == true) /* repeat throttle release is okay for now, otherwise track previous cmd state */
+				{
+					cmd = MOT_ANALOG_USER_CMD_SET_RELEASE;
+				}
+				else
+				{
+					cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE;
+				}
+			}
+			else if(MotAnalogUser_PollThrottleSwitchFalling(p_user)== true)
+			{
+				cmd = MOT_ANALOG_USER_CMD_SET_RELEASE;
+			}
 			else
 			{
-		//		if(MotAnalogUser_GetThrottleSwitch(p_user) == true)
-		//		{
-					if(MotAnalogUser_GetThrottle(p_user) > 0U)
-					{
-						if(MotAnalogUser_CheckThrottleRelease(p_user) == true) /* repeat throttle release is okay for now, otherwise track previous cmd state */
-						{
-							cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE;
-						}
-						else
-						{
-							cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE;
-						}
-					}
-					else
-					{
-						if(p_user->ThrottlePrev_Frac16 > 0U)
-						{
-							cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE;
-						}
-						else
-						{
-							cmd = MOT_ANALOG_USER_CMD_PROC_THROTTLE_RELEASE;
-						}
-					}
-		//		}
-		//			else
-		//			{
-		//				//check throttle fallling edge
-		//			}
+				cmd = MOT_ANALOG_USER_CMD_PROC_RELEASE;
 			}
 
 			break;

@@ -38,7 +38,7 @@ typedef int (*Cmd_ProcessFunction_T)(void * p_context);
 typedef const struct
 {
     const Cmd_ProcessFunction_T FUNCTION;
-    const uint32_t FREQ;
+    const uint32_t FREQ; //dHz
 }
 Cmd_Process_T;
 

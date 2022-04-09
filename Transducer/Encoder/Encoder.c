@@ -151,9 +151,6 @@ void Encoder_Reset(Encoder_T * p_encoder)
 	p_encoder->SpeedSaved = 0U;
 	p_encoder->DeltaSpeed = 0U;
 
-	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);; /* reset for angularD */
-	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
-	p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
 	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
 }
 
