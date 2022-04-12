@@ -217,7 +217,7 @@ void Shell_Init(Shell_T * p_shell)
 		memcpy(&p_shell->Params, p_shell->CONFIG.P_PARAMS, sizeof(Shell_Params_T));
 	}
 
-	//need xcvr module to validate
+	//need xcvr module to validate xcvr pointer
 	if (p_shell->Params.p_Xcvr != 0U)
 	{
 		Terminal_SetXcvr(&p_shell->Terminal, p_shell->Params.p_Xcvr);
@@ -226,15 +226,15 @@ void Shell_Init(Shell_T * p_shell)
 		{
 			Serial_ConfigBaudRate(p_shell->Params.p_Xcvr, p_shell->Params.BaudRate);
 		}
-	}
 
-	if (p_shell->Params.IsEnable == true)
-	{
-		Protocol_Enable(p_shell);
-	}
-	else
-	{
-		p_shell->State = SHELL_STATE_INACTIVE;
+		if (p_shell->Params.IsEnable == true)
+		{
+			Shell_Enable(p_shell);
+		}
+		else
+		{
+			p_shell->State = SHELL_STATE_INACTIVE;
+		}
 	}
 }
 

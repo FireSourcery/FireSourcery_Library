@@ -42,6 +42,7 @@ static const StateMachine_State_T STATE_FAULT;
 MotorController_StateMachine_StateId_T MotorController_StateMachine_GetStateId(MotorController_T * p_mc)
 {
 	MotorController_StateMachine_StateId_T id;
+
 	if(p_mc->StateMachine.p_StateActive == &STATE_INIT)
 	{
 		id = MCSM_STATE_ID_INIT;
@@ -58,6 +59,11 @@ MotorController_StateMachine_StateId_T MotorController_StateMachine_GetStateId(M
 	{
 		id = MCSM_STATE_ID_FAULT;
 	}
+	else
+	{
+		id = -1;
+	}
+
 	return id;
 }
 
@@ -91,7 +97,7 @@ static void Init_Entry(MotorController_T * p_mc)
 
 static void Init_Proc(MotorController_T * p_mc)
 {
-	StateMachine_ProcTransition(&p_mc->StateMachine, &STATE_STOP);
+	_StateMachine_ProcTransition(&p_mc->StateMachine, &STATE_STOP);
 }
 
 static const StateMachine_State_T STATE_INIT =
@@ -236,13 +242,12 @@ static StateMachine_State_T * Run_InputNeutralStart(MotorController_T * p_mc)
 
 static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_mc)
 {
-	//separate neutral state to prevent return to throttle state
+	//or use separate neutral state to prevent return to throttle state
 
 	if (p_mc->MainDirection == p_mc->UserDirection)
 	{
 		MotorController_ProcUserCmdThrottle(p_mc);
 	}
-
 
 	return 0U;
 }

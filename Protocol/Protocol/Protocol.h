@@ -47,17 +47,21 @@ typedef uint32_t protocolg_reqid_t;
 
 typedef void (*Protocol_ReqFastReadWrite_T)(void * p_appInterface, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
 
+/*
+ * Common req from child protocol to supported general protocol control
+ */
 typedef enum
 {
-	PROTOCOL_REQ_CODE_WAIT_PROCESS, //wait process
-	PROTOCOL_REQ_CODE_WAIT_PROCESS_PAUSE_RX,
-	PROTOCOL_REQ_CODE_COMPLETE,	//exit nonblocking wait state upon reception
-	PROTOCOL_REQ_CODE_AWAIT_RX_DATA,	//rx new packet
-	PROTOCOL_REQ_CODE_AWAIT_RX_SYNC,	//wait for static ack nack
+	PROTOCOL_REQ_CODE_WAIT_PROCESS, 		//wait process
+//	PROTOCOL_REQ_CODE_WAIT_PROCESS_PAUSE_RX,
+	PROTOCOL_REQ_CODE_COMPLETE,				//exit nonblocking wait state upon reception
+	PROTOCOL_REQ_CODE_AWAIT_RX_DATA,		//rx new packet
+	PROTOCOL_REQ_CODE_AWAIT_RX_SYNC,		//wait for static ack nack
 	PROTOCOL_REQ_CODE_TX_DATA,
 	PROTOCOL_REQ_CODE_TX_ACK,
 	PROTOCOL_REQ_CODE_TX_NACK,
 	PROTOCOL_REQ_CODE_EXTEND_TIMER,
+//	PROTOCOL_REQ_CODE_START_DATAGRAM,
 }
 Protocol_ReqCode_T;
 
@@ -71,10 +75,11 @@ typedef struct
 	size_t RxSize;
 	uint32_t Option; //stop, datagram address
 }
-Protocol_ReqExtProcessArgs_T;
+Protocol_ReqExtArgs_T;
 
-typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(Protocol_ReqExtProcessArgs_T args);
-//typedef Protocol_ReqExtCode_T (*Protocol_ReqExtFunction_T)	( void * p_subState,  void * p_appInterface,  uint8_t * p_txPacket,  size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
+typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(Protocol_ReqExtArgs_T args);
+//typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(void * p_subState,  void * p_appInterface,  uint8_t * p_txPacket,  size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
+//typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(const Protocol_SubConfig_T * args, size_t * p_txSize, size_t rxSize);
 
 /*
  * static string sync
@@ -85,12 +90,12 @@ typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(Protocol_ReqExtProcessA
  */
 typedef const struct
 {
-	const bool USE_TX_ACK_REQ;				// Tx on Rx Req
+	const bool USE_TX_ACK_REQ;				// Tx Ack on Rx Req
 	const bool USE_WAIT_RX_ACK_COMPLETE; 	// Wait on Req Complete
 
 	//do these need to be per req?
-	const uint8_t WAIT_RX_NACK_RETX_REPEAT;
-	const uint8_t TX_NACK_REPEAT;
+	const uint8_t WAIT_RX_NACK_REPEAT;	//repeat tx on rx nack
+	const uint8_t TX_NACK_REPEAT; 		//tx nack on rx error
 }
 Protocol_ReqSync_T;
 
@@ -108,9 +113,9 @@ Protocol_ReqExtProcess_T;
 typedef const struct
 {
 	const protocolg_reqid_t 			ID;
-	const Protocol_ReqFastReadWrite_T 	FAST;				/* Handles simple read write */
-	const Protocol_ReqSync_T 			* const P_SYNC;		/* Static ack nack */
-	const Protocol_ReqExtProcess_T		* const P_EXT;		/* Wait, loop, dynamic ack nack and additional process contest */
+	const Protocol_ReqFastReadWrite_T 	FAST;				/* Stateless req, simple read write */
+	const Protocol_ReqSync_T 			* const P_SYNC;		/* Stateless ack nack */
+	const Protocol_ReqExtProcess_T		* const P_EXT;		/* Extended req, saving state data. - Support wait, loop, dynamic ack/nack and additional processes */
 //	const uint32_t TIMEOUT;
 }
 Protocol_ReqEntry_T;
@@ -177,7 +182,7 @@ typedef const struct
 {
 	/* required to identify rx cmd */
 	const uint32_t RX_TIMEOUT;			//reset if packet is not complete
-//	const uint32_t TIME_OUT_BYTE;		//reset if byte is not received
+//	const uint32_t RX_TIMEOUT_BYTE;		//reset if byte is not received
 	const uint8_t RX_LENGTH_MIN;
 	const uint8_t RX_LENGTH_MAX;
 
@@ -239,13 +244,13 @@ Protocol_Params_T;
  */
 typedef const struct
 {
-	const volatile uint32_t * const P_TIMER;
-	const uint8_t PACKET_BUFFER_LENGTH; // must be greater than RX_LENGTH_MAX
 	uint8_t * const P_RX_PACKET_BUFFER;
 	uint8_t * const P_TX_PACKET_BUFFER;
+	const uint8_t PACKET_BUFFER_LENGTH; // must be greater than RX_LENGTH_MAX
+	const volatile uint32_t * const P_TIMER;
 	void * const P_APP_CONTEXT;			// user app context
 	void * const P_SUBSTATE_BUFFER; 	// child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context from specs
-	const Protocol_Params_T * const P_PARAMS;
+	const Protocol_Params_T * const P_PARAMS; //address of params in nvm
 }
 Protocol_Config_T;
 

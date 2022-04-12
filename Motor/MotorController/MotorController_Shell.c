@@ -38,6 +38,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern void SystemSoftwareReset(void);
+
 /******************************************************************************/
 /*!
 	@brief 	Cmd Functions
@@ -232,6 +234,40 @@ static int Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
     	{
     		Motor_User_SetControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT);
     	}
+    	else if(strncmp(argv[1U], "protocol", 9U) == 0U)
+    	{
+    		p_mc->Shell.Params.IsEnable = false;
+    		p_mc->CONFIG.P_PROTOCOLS[0U].Params.IsEnable = true;
+
+//							.PROTOCOLS[0U] =
+//							{
+//								.p_Xcvr 	= &Serials[1U],
+//								.p_Specs	= &ETS_SPECS,
+//								.IsEnable 	= false,
+//							},
+//
+//							.SHELL =
+//							{
+//								.p_Xcvr 	= &Serials[1U],
+//								.BaudRate 	= 19200U,
+//								.IsEnable 	= true,
+//							},
+    	}
+
+    }
+    else if(argc == 3U)
+    {
+    	if(strncmp(argv[1U], "dircalib", 9U) == 0U)
+		{
+			if(strncmp(argv[2U], "ccw", 4U) == 0U)
+			{
+				Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CCW);
+			}
+			else if(strncmp(argv[2U], "cw", 3U) == 0U)
+			{
+				Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CW);
+			}
+		}
     }
 
 	return CMD_RESERVED_RETURN_CODE_SUCCESS;
@@ -381,7 +417,13 @@ static int Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
-
+static int Cmd_reboot(MotorController_T * p_mc, int argc, char ** argv)
+{
+	(void)argc;
+	(void)argv;
+	SystemSoftwareReset();
+    return CMD_RESERVED_RETURN_CODE_SUCCESS;
+}
 
 static int Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 {
@@ -404,7 +446,7 @@ static int Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 
     	Terminal_SendString(p_terminal, "\r\n");
     	Terminal_SendString(p_terminal, "Hall: ");
-		Terminal_SendNum(p_terminal, Hall_ReadPhysicalSensors(&p_motor->Hall));
+		Terminal_SendNum(p_terminal, Hall_ReadSensors(&p_motor->Hall).State);
     	Terminal_SendString(p_terminal, "\r\n");
     }
 
@@ -420,10 +462,10 @@ static int Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
     {
     	Terminal_SendString(p_terminal, "\r\n");
     	Terminal_SendString(p_terminal, "Hall: ");
-		Terminal_SendNum(p_terminal, Hall_ReadPhysicalSensors(&p_motor->Hall));
+		Terminal_SendNum(p_terminal, Hall_ReadSensors(&p_motor->Hall).State);
 
-    	Terminal_SendString(p_terminal, "Electrical Angle: ");
-		Terminal_SendNum(p_terminal, Motor_User_GetHallRotorAngle(p_motor ));
+//    	Terminal_SendString(p_terminal, "Electrical Angle: ");
+//		Terminal_SendNum(p_terminal, Motor_User_GetHallRotorAngle(p_motor ));
 
     	Terminal_SendString(p_terminal, "\r\n");
     }
@@ -463,7 +505,7 @@ static int Cmd_vmonitor(MotorController_T * p_mc, int argc, char ** argv)
 	int32_t vSense 		= MotorController_User_GetVSense_MilliV(p_mc);
 	int32_t vAcc 		= MotorController_User_GetVAcc_MilliV(p_mc);
 	int32_t vPos 		= MotorController_User_GetVPos_MilliV(p_mc);
-	int32_t battery 	= MotorController_GetBatteryCharge_Base10(p_mc);
+	int32_t battery 	= MotorController_User_GetBatteryCharge_Base10(p_mc);
 
 	Terminal_SendString(p_terminal, "\r\n");
 	Terminal_SendString(p_terminal, "VSense: ");
@@ -602,6 +644,238 @@ int Cmd_set(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_RESERVED_RETURN_CODE_SUCCESS;
 }
 
+static int PrintHeat( )
+{
+
+}
+
+//#define PARAM_STR(PARAM_STR)  #PARAM_STR
+
+
+#define PRINT_PARAM_STR(PARAM_STR)  				\
+	Terminal_SendString(p_terminal, #PARAM_STR); 	\
+	Terminal_SendString(p_terminal, ":	");
+
+
+#define PRINT_PARAM_VAR_MOTOR(PARAM_STR) \
+		PRINT_PARAM_STR(PARAM_STR) \
+		Terminal_SendNum(p_terminal, p_motor->P##arameters.PARAM_STR); 	\
+		Terminal_SendString(p_terminal, "\r\n");
+
+#define PRINT_PARAM_VAR_MC(PARAM_STR) \
+		PRINT_PARAM_STR(PARAM_STR) \
+		Terminal_SendNum(p_terminal, p_mc->P##arameters.PARAM_STR); 	\
+		Terminal_SendString(p_terminal, "\r\n");
+
+static int Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
+{
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+
+	if(argc == 1U)
+	{
+		Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "Motor:\r\n");
+
+		Terminal_SendString(p_terminal, "CommutationMode: ");
+		switch(p_motor->Parameters.CommutationMode)
+		{
+			case MOTOR_COMMUTATION_MODE_SIX_STEP: 	Terminal_SendString(p_terminal, "SIX_STEP"); 	break;
+			case MOTOR_COMMUTATION_MODE_FOC: 		Terminal_SendString(p_terminal, "FOC"); 		break;
+			default : break;
+		}
+		Terminal_SendString(p_terminal, "\r\n");
+
+		Terminal_SendString(p_terminal, "SensorMode: ");
+		switch(p_motor->Parameters.SensorMode)
+		{
+			case MOTOR_SENSOR_MODE_HALL: 			Terminal_SendString(p_terminal, "HALL"); 	break;
+			case MOTOR_SENSOR_MODE_ENCODER: 		Terminal_SendString(p_terminal, "ENCODER"); 		break;
+			default : break;
+		}
+		Terminal_SendString(p_terminal, "\r\n");
+
+		Terminal_SendString(p_terminal, "ControlMode: ");
+		switch(p_motor->Parameters.ControlMode)
+		{
+			case MOTOR_CONTROL_MODE_OPEN_LOOP: 					Terminal_SendString(p_terminal, "OPEN_LOOP"); 		break;
+			case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE: 			Terminal_SendString(p_terminal, "VOLTAGE"); 		break;
+			case MOTOR_CONTROL_MODE_CONSTANT_CURRENT: 			Terminal_SendString(p_terminal, "CURRENT"); 		break;
+			case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE: 	Terminal_SendString(p_terminal, "SPEED_VOLTAGE"); 	break;
+			case MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT: 	Terminal_SendString(p_terminal, "SPEED_CURRENT"); 	break;
+			default : break;
+		}
+		Terminal_SendString(p_terminal, "\r\n");
+
+		Terminal_SendString(p_terminal, "DirectionCalibration: ");
+		switch(p_motor->Parameters.DirectionCalibration)
+		{
+			case MOTOR_FORWARD_IS_CW: 			Terminal_SendString(p_terminal, "CW"); 		break;
+			case MOTOR_FORWARD_IS_CCW: 			Terminal_SendString(p_terminal, "CCW"); 	break;
+			default : break;
+		}
+		Terminal_SendString(p_terminal, "\r\n");
+
+//		Terminal_SendString(p_terminal, "SpeedRefMax_RPM: ");
+//		Terminal_SendNum(p_terminal, p_motor->Parameters.SpeedRefMax_RPM);
+//		Terminal_SendString(p_terminal, "\r\n");
+
+
+		PRINT_PARAM_VAR_MOTOR(SpeedRefMax_RPM)
+		PRINT_PARAM_VAR_MOTOR(SpeedRefVoltage_RPM)
+		PRINT_PARAM_VAR_MOTOR(IBusLimit_Frac16)
+		PRINT_PARAM_VAR_MOTOR(IqLimit)
+		PRINT_PARAM_VAR_MOTOR(IRefMax_Amp)
+		PRINT_PARAM_VAR_MOTOR(IaRefMax_ADCU)
+		PRINT_PARAM_VAR_MOTOR(IbRefMax_ADCU)
+		PRINT_PARAM_VAR_MOTOR(IcRefMax_ADCU)
+		PRINT_PARAM_VAR_MOTOR(IaRefZero_ADCU)
+		PRINT_PARAM_VAR_MOTOR(IbRefZero_ADCU)
+		PRINT_PARAM_VAR_MOTOR(IcRefZero_ADCU)
+		PRINT_PARAM_VAR_MOTOR(AlignVoltage_Frac16)
+		PRINT_PARAM_VAR_MOTOR(AlignTime_ControlCycles)
+//
+//		PRINT_PARAM(p_motor->Encoder.Params, CountsPerRevolution)
+//		PRINT_PARAM(p_motor->Encoder.Params, DistancePerCount)
+//		PRINT_PARAM(p_motor->Encoder.Params, IsQuadratureCaptureEnabled)
+//		PRINT_PARAM(p_motor->Encoder.Params, IsALeadBPositive)
+//		PRINT_PARAM(p_motor->Encoder.Params, ExtendedTimerDeltaTStop)
+//		PRINT_PARAM(p_motor->Encoder.Params, MotorPolePairs)
+//
+
+
+//
+//		PRINT_PARAM(p_mc, Params.MotorPolePairs)
+//		.MOTOR_CONTROLLER =
+//		{
+//
+//			.InputMode 					= MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
+//			.CoastMode 					= MOTOR_CONTROLLER_COAST_MODE_REGEN, //MOTOR_CONTROLLER_COAST_MODE_FLOAT,
+//			.IsBuzzerOnReverseEnable 	= false,
+//			.BatteryZero_ADCU = 1293, //30V
+//			.BatteryFull_ADCU = 1811, //42V
+//		},
+//
+//		.ANALOG_USER =
+//		{
+//			.ThrottleZero_ADCU 	= 0U,
+//			.ThrottleMax_ADCU 	= 4095U,
+//			.BrakeZero_ADCU		= 0U,
+//			.BrakeMax_ADCU		= 4095U,
+//			.EnablePinThrottle 	= true,
+//			.EnablePinBrake		= true,
+//			.EnablePinNeutral 	= false,
+//		},
+//
+//		.PROTOCOLS[0U] =
+//		{
+//			.p_Xcvr 	= &Serials[1U],
+//			.p_Specs	= &ETS_SPECS,
+//			.IsEnable 	= false,
+//		},
+//
+//		.SHELL =
+//		{
+//			.p_Xcvr 	= &Serials[1U],
+//			.BaudRate 	= 19200U,
+//			.IsEnable 	= true,
+//		},
+	}
+
+
+//	/*
+//	 * Input Speed Q0.16
+//	 * Output SpeedControl => VPwm, Vq, Iq,
+//	 */
+//	.PID_SPEED[0U] =
+//	{
+//		.CalcFreq = 1000U,
+//		.Mode = PID_MODE_PI,
+//		.Direction = PID_DIRECTION_DIRECT,
+//
+//		.KpFactor = 1,
+//		.KpDivisor = 2,
+//		.KiFactor = 1,
+//		.KiDivisor = 2,
+//		.KdFactor = 0,
+//		.KdDivisor = 0,
+//
+//		.OutMin = 0,
+//		.OutMax = 65535,
+//	},
+//
+//	/*
+//	 * Input  Iq
+//	 * Output Vq, sign indicates direction
+//	 */
+//	.PID_FOC_IQ[0U] =
+//	{
+//		.CalcFreq = 20000U,
+//		.Mode = PID_MODE_PI,
+//		.Direction = PID_DIRECTION_DIRECT,
+//
+//		.KpFactor = 1,
+//		.KpDivisor = 2,
+//		.KiFactor = 1,
+//		.KiDivisor = 1,
+//		.KdFactor = 0,
+//		.KdDivisor = 0,
+//
+//		.OutMin = -32767,
+//		.OutMax = 32767,
+//	},
+//
+//	.PID_FOC_ID[0U] =
+//	{
+//		.CalcFreq = 20000U,
+//		.Mode = PID_MODE_PI,
+//		.Direction = PID_DIRECTION_DIRECT,
+//
+//		.KpFactor = 1,
+//		.KpDivisor = 2,
+//		.KiFactor = 1,
+//		.KiDivisor = 2,
+//		.KdFactor = 0,
+//		.KdDivisor = 0,
+//
+//		.OutMin = -32768/2,
+//		.OutMax = 32768/2,
+//	},
+//
+//	.PID_SIX_STEP_IBUS[0U] =
+//	{
+//		.CalcFreq = 20000U,
+//		.Mode = PID_MODE_PI,
+//		.Direction = PID_DIRECTION_DIRECT,
+//
+//		.KpFactor = 1,
+//		.KpDivisor = 2,
+//		.KiFactor = 1,
+//		.KiDivisor = 2,
+//		.KdFactor = 0,
+//		.KdDivisor = 0,
+//
+//		.OutMin = 0,
+//		.OutMax = 65535,
+//	},
+//
+//	.THERMISTOR_MOTORS[0U] =
+//	{
+//		.RNominal = 100000U,
+//		.TNominal = 298U,
+//		.BConstant = 3950U,
+//
+//		.Limit_ADCU = 0,
+//		.Threshold_ADCU = 0,
+//
+//		.IntScalar = 1U,
+//		.IsEnable = false,
+//	},
+
+
+
+    return CMD_RESERVED_RETURN_CODE_SUCCESS;
+}
 
 
 static int Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
@@ -723,7 +997,9 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"hall", 		"Read hall", 						(Cmd_Function_T)Cmd_hall, 		{0U}		},
 	{"heat", 		"Display temperatures",				(Cmd_Function_T)Cmd_heat, 		{0U}		},
 	{"vmonitor", 	"Display voltages", 				(Cmd_Function_T)Cmd_vmonitor, 	{0U}		},
-	{"vmonitor", 	"Display fault info", 						(Cmd_Function_T)Cmd_fault, 	{0U}		},
+	{"fault", 	"Display fault info", 						(Cmd_Function_T)Cmd_fault, 	{0U}		},
+
+	{"params", 	" ", 						(Cmd_Function_T)Cmd_params, 	{0U}		},
 
 	{"mode", 		"Sets mode using options",			(Cmd_Function_T)Cmd_mode, 		{0U}	},
 
@@ -737,7 +1013,7 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"stop", 		"Set motor to freewheel mode", 		(Cmd_Function_T)Cmd_stop, 		{0U}	},
 	{"set", 		"Sets motor parameters",	 		(Cmd_Function_T)Cmd_set, 		{0U}	},
 	{"save", 		"Save parameters to nv memory", 	(Cmd_Function_T)Cmd_save, 		{0U}	},
-
+	{"reboot", 		"reboot", 							(Cmd_Function_T)Cmd_reboot, 	{0U}	},
 
 	{"rev", 		"rev",	 							(Cmd_Function_T)Cmd_rev, 		{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_rev_Proc, 		.FREQ = 10U} },
 	{"phase", 		"Sets motor phase", 				(Cmd_Function_T)Cmd_phase, 		{0U}		},

@@ -71,10 +71,7 @@ static inline StateMachine_State_T * TransitionFunction(void * p_context, StateM
 static inline void ProcTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState)
 {
 	p_stateMachine->p_StateActive = p_newState;
-	if (p_newState->ON_ENTRY != 0U)
-	{
-		p_newState->ON_ENTRY(p_stateMachine->CONFIG.P_CONTEXT);
-	}
+	if (p_newState->ON_ENTRY != 0U)	{p_newState->ON_ENTRY(p_stateMachine->CONFIG.P_CONTEXT);}
 }
 
 static inline void ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
@@ -83,10 +80,7 @@ static inline void ProcInput(StateMachine_T * p_stateMachine, statemachine_input
 	StateMachine_State_T * p_newState = TransitionFunction(p_stateMachine->CONFIG.P_CONTEXT, p_stateMachine->p_StateActive, input);
 
 	/* Self transitions - User return 0 to bypass on entry, or return current state to run on entry function */
-	if (p_newState != 0U)
-	{
-		ProcTransition(p_stateMachine, p_newState);
-	}
+	if (p_newState != 0U) {ProcTransition(p_stateMachine, p_newState);}
 }
 
 /*
@@ -110,6 +104,15 @@ static inline void ProcAsynchronousInput(StateMachine_T * p_stateMachine, statem
 			ExitCriticalCommon(p_stateMachine);
 		}
 	}
+}
+
+/*
+ * Protected Function
+ * Unconditional Transition - user must ensure correctness, call from state output function only
+ */
+void _StateMachine_ProcTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState)
+{
+	ProcTransition(p_stateMachine, p_newState);
 }
 
 /*
@@ -137,15 +140,6 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 		ExitCriticalCommon(p_stateMachine);
 	}
 }
-
-/*
- * Unconditional Transition - user must ensure correctness, call from state output function only
- */
-void StateMachine_ProcTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState)
-{
-	ProcTransition(p_stateMachine, p_newState);
-}
-
 
 /******************************************************************************/
 /*
@@ -208,7 +202,36 @@ void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, sta
 	ProcAsynchronousInput(p_stateMachine, input);
 }
 
-//return if transition was sucessful,   input mode and var
-//StateMachine_Status_T StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputVar)
+
+
+
+/*
+ * New
+ */
+
+/* proc input function, check new state exists, else it's a self transition */
+/* Self transitions - User return 0 to bypass on entry, or return current state to run on entry function */
+static inline void ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputVar)
+{
+	StateMachine_TransitionInput_T transitionFunction = p_stateMachine->p_StateActive->TRANSITION_INPUT;
+	StateMachine_State_T * p_newState = (transitionFunction != 0U) ? transitionFunction(p_stateMachine->CONFIG.P_CONTEXT, input, inputVar) : 0U;
+//	StateMachine_State_T * p_currentState = p_stateMachine->p_StateActive;
+
+//	bool status = (p_newState != 0U);
+
+	if (p_newState != 0U) {ProcTransition(p_stateMachine, p_newState);}
+
+//	return status;
+}
+
+//return true if transition was sucessful
+bool StateMachine_Semisynchronous_ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t inputMode, uint32_t inputVar)
+{
+	if (EnterCriticalCommon(p_stateMachine))
+	{
+		ProcTransitionFunction(p_stateMachine, inputMode, inputVar);
+		ExitCriticalCommon(p_stateMachine);
+	}
+}
 
 

@@ -69,7 +69,7 @@ static const qangle16_t QANGLE16_240 = 43690; 	/*!  */
 /*! Resolution: 1024 steps per revolution */
 extern const qfrac16_t QFRAC16_SINE_90_TABLE[SINE_90_TABLE_ENTRIES];
 
-#define QFRAC16 ((qfrac16_t) (((x) < 1.0) ? (((x) >= -1.0) ? (x*32768.0) : INT16_MIN) : INT16_MAX))
+#define QFRAC16(x) ((qfrac16_t) (((x) < 1.0) ? (((x) >= -1.0) ? (x*32768.0) : INT16_MIN) : INT16_MAX))
 
 static inline qfrac16_t qfrac16(int16_t num, int32_t max)
 {
@@ -80,12 +80,6 @@ static inline qfrac16_t qfrac16_convert(int16_t num, int32_t max)
 {
 	return qfrac16(num, max);
 }
-
-//static inline qfrac16_t qfrac16_convert_int32(int32_t num, int32_t max)
-//{
-//	//check max shift
-//	//return qfrac16(num, max);
-//}
 
 static inline qfrac16_t qfrac16_sat(int32_t qfrac) //sat to -32767?
 {
@@ -260,6 +254,41 @@ static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
 	return q_sqrt((int32_t)x << QFRAC16_N_FRAC_BITS);
 }
 
+/*
+ * from libfixmath https://github.com/PetteriAimonen/libfixmath/blob/master/libfixmath/fix16_trig.c
+ */
+static inline qfrac16_t qfrac16_atan2(qfrac16_t sine, qfrac16_t cosine)
+{
+	qfrac16_t abs_inY, mask, angle, r, r_3;
+
+
+//	mask = (inY >> (sizeof(fix16_t)*CHAR_BIT-1));
+//	abs_inY = (inY + mask) ^ mask;
+
+//	abs_inY = sine | 0x7FFF;
+//
+//	if(inX >= 0)
+//	{
+//		r = fix16_div((inX - abs_inY), (inX + abs_inY));
+//		r_3 = fix16_mul(fix16_mul(r, r), r);
+//		angle = fix16_mul(0x00003240, r_3) - fix16_mul(0x0000FB50, r) + PI_DIV_4;
+//	}
+//	else
+//	{
+//		r = fix16_div((inX + abs_inY), (abs_inY - inX));
+//		r_3 = fix16_mul(fix16_mul(r, r), r);
+//		angle = fix16_mul(0x00003240, r_3) - fix16_mul(0x0000FB50, r) + THREE_PI_DIV_4;
+//	}
+//	if(inY < 0)
+//	{
+//		angle = -angle;
+//	}
+
+//	return angle;
+
+	return 0U;
+}
+
 //qfrac16_t qfrac16_sqrt(qfrac16_t x)
 //{
 //	qfrac16_t guess;
@@ -290,12 +319,6 @@ static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
 //
 //	return guess;
 //}
-
-/*
- * https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Binary_numeral_system_(base_2)
- */
-//qfrac16_t q_sqrt(qfrac16_t n)
-
 
 
 

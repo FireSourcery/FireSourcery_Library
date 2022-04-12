@@ -489,6 +489,10 @@ static inline uint32_t Encoder_GetTotalT_Millis(Encoder_T * p_encoder)	{return p
  *	RPM = 1000, 	RPS = 16.667, Angle16Real = 1092266.6667, DeltaD = 136.533 => DeltaD = 136, 	Angle16 = 1088000, 	error 4266.667, 0.06510417175 rps
  *	RPM = 10000, 	RPS = 166.67, Angle16Real = 10922666.667, DeltaD = 1365.33 => DeltaD = 1365, 	Angle16 = 10920000, error 2666.667, 0.04069010925 rps
  */
+
+
+
+
 /*!
 	@brief Linear speed
 	units in units/s
@@ -639,6 +643,23 @@ static inline uint32_t Encoder_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
 //{
 //	return  ((p_encoder->TotalD * p_encoder->UnitT_Freq / p_encoder->Params.CountsPerRevolution) ) * 60U / p_encoder->TotalT;
 //
+//}
+
+
+/*
+ * Capture all speed
+ */
+//static inline void Encoder_CaptureSpeed(Encoder_T * p_encoder)
+//{
+//	p_encoder->Speed_RPM =
+//
+//	//compiler optimize seqential calls?
+//	p_encoder->SpeedAngular_DegS 	= Encoder_GetAngularSpeed( p_encoder);
+//	p_encoder->SpeedAngular_RPM 	= Encoder_GetRotationalSpeed_RPM(p_encoder);
+//
+//	p_encoder->SpeedRatio_Frac16 	= ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_encoder->Params.SpeedRefMax_RPM);
+//
+//	p_encoder->SpeedLinear =
 //}
 
 /******************************************************************************/

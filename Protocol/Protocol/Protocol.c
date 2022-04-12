@@ -53,13 +53,9 @@ void Protocol_Init(Protocol_T * p_protocol)
 		Protocol_SetXcvr(p_protocol, p_protocol->Params.p_Xcvr);
 	}
 
-	if (p_protocol->Params.IsEnable == true)
+	if((p_protocol->Params.p_Xcvr != 0U) && (p_protocol->Params.p_Specs != 0U))
 	{
-		Protocol_Enable(p_protocol);
-	}
-	else
-	{
-		Protocol_Disable(p_protocol);
+		(p_protocol->Params.IsEnable == true) ? Protocol_Enable(p_protocol) : Protocol_Disable(p_protocol);
 	}
 
 	p_protocol->RxIndex 	= 0U;
@@ -154,9 +150,7 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 				break;
 			}
 		}
-
 	}
-
 
 	return status;
 }
@@ -228,6 +222,8 @@ static inline void ProcRxTransitionWaitReq(Protocol_T * p_protocol)
 ////		start  req timer
 //	}
 }
+
+
 /*
  * Handle protocol control
  * Controls Rx Packet Parser, and Timeout Timer
@@ -317,6 +313,7 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 //			{
 				p_protocol->RxCode = PROTOCOL_RX_CODE_WAIT_PACKET;
 				p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+				//restart xcvr rx if needed
 //			}
 //				else if ((p_protocol->ReqCode == PROTOCOL_REQ_CODE_AWAIT_RX_DATA) || (p_protocol->ReqCode == PROTOCOL_REQ_CODE_AWAIT_RX_SYNC))
 //				{
@@ -384,7 +381,7 @@ static inline bool ProcReqWaitRxSyncCommon(Protocol_T * p_protocol)
 	}
 	else if (p_protocol->RxCode == PROTOCOL_RX_CODE_NACK)
 	{
-		if (p_protocol->TxNackCount < p_protocol->p_ReqActive->P_SYNC->WAIT_RX_NACK_RETX_REPEAT)
+		if (p_protocol->TxNackCount < p_protocol->p_ReqActive->P_SYNC->WAIT_RX_NACK_REPEAT)
 		{
 			p_protocol->TxNackCount++; //RxNackCount
 			PortTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
@@ -411,7 +408,7 @@ static inline bool ProcReqWaitRxSyncCommon(Protocol_T * p_protocol)
 static inline void ProcReqState(Protocol_T * p_protocol)
 {
 	//use interface args for easy extension
-	const Protocol_ReqExtProcessArgs_T args =
+	const Protocol_ReqExtArgs_T args =
 	{
 		.p_SubState 		= p_protocol->CONFIG.P_SUBSTATE_BUFFER,
 		.p_AppInterface 	= p_protocol->CONFIG.P_APP_CONTEXT,

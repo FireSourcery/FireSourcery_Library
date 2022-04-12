@@ -70,6 +70,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	}
 
 	Thermistor_Init(&p_motor->Thermistor);
+	p_motor->AnalogResults.Heat_ADCU = p_motor->Thermistor.Params.Threshold_ADCU;
 
 	/*
 	 * SW Structs
@@ -104,12 +105,9 @@ void Motor_InitReboot(Motor_T * p_motor)
 #endif
 
 	/*
-	 * Index max is 13,107
+	 * Ramp 0 to 65535 max in 1s
 	 */
-	/*
-	 * Ramp 0 to 65535 max in 655ms
-	 */
-	Linear_Ramp_InitMillis(&p_motor->Ramp, 10U, 20000U, 0U, 1000U); /* final value is overwritten, slope is persistent */
+	Linear_Ramp_InitMillis(&p_motor->Ramp, 500U, 20000U, 0U, 65535U); /* final value is overwritten, slope is persistent */
 	p_motor->RampCmd = 0;
 	p_motor->RampIndex = 0;
 

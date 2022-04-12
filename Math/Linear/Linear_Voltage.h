@@ -42,19 +42,22 @@
  */
 #define LINEAR_VOLTAGE_CONFIG(r1, r2, adcVRef10, adcBits, vInMax) 							\
 {																							\
-	.SlopeFactor 				= ((adcVRef10 * (r1 + r2)) << (16U - adcBits)) / r2 / 10U, 	\
+	.SlopeFactor 				= (((int32_t)adcVRef10 * (r1 + r2)) << (16U - adcBits)) / r2 / 10U, 	\
 	.SlopeDivisor_Shift 		= 16U,														\
-	.SlopeDivisor 				= (r2 << 16U) / (adcVRef10 * (r1 + r2)) * 10U ,			\
+	.SlopeDivisor 				= ((int32_t)r2 << 16U) / adcVRef10 * 10U / (r1 + r2),				\
 	.SlopeFactor_Shift 			= 16U - adcBits,											\
 	.YOffset 					= 0U, 														\
 	.XOffset 					= 0U, 														\
 	.YReference 				= vInMax - 0U, 												\
 }
 
+//#define LINEAR_VOLTAGE_CONFIG(r1, r2, adcVRef10, adcBits, vInMax) LINEAR_CONFIG(((int32_t)adcVRef10 * (r1 + r2) / 10 / r2), ((int32_t)1 << adcBits), 0, ((int32_t)vInMax * 1000))
+
 /******************************************************************************/
 /*!
 	@brief Calculate voltage from given ADC value
-
+	// (adcu*VREF*(R1+R2))/(ADC_MAX*R2);
+	 *
 	@param[in] p_linear - struct containing calculated intermediate values
 	@param[in] adcu - ADC value
 	@return Calculated voltage
@@ -62,7 +65,7 @@
 /******************************************************************************/
 static inline int32_t Linear_Voltage_CalcV(const Linear_T * p_linear, uint16_t adcu)
 {
-	return Linear_Function(p_linear, adcu); // (adcu*VREF*(R1+R2))/(ADC_MAX*R2);
+	return Linear_Function(p_linear, adcu);
 }
 
 static inline int32_t Linear_Voltage_CalcMilliV(const Linear_T * p_linear, uint16_t adcu)
@@ -70,15 +73,15 @@ static inline int32_t Linear_Voltage_CalcMilliV(const Linear_T * p_linear, uint1
 	int32_t factor = adcu * p_linear->SlopeFactor;
 	int32_t milliV;
 
-	if (factor < INT32_MAX / 1000UL)
+	if(factor < INT32_MAX / 1000UL)
 	{
 		milliV = Linear_Function(p_linear, (uint32_t)adcu * 1000UL);
 	}
-	else if (factor < INT32_MAX / 100UL)
+	else if(factor < INT32_MAX / 100UL)
 	{
 		milliV = Linear_Function(p_linear, (uint32_t)adcu * 100UL) * 10U;
 	}
-	else if (factor < INT32_MAX / 10UL)
+	else if(factor < INT32_MAX / 10UL)
 	{
 		milliV = Linear_Function(p_linear, (uint32_t)adcu * 10UL) * 100U;
 	}
@@ -111,9 +114,11 @@ static inline int32_t Linear_Voltage_CalcFraction16(const Linear_T * p_linear, u
 	return Linear_Function_Fraction16(p_linear, adcu);
 }
 
-/*
- * Saturated to 65535 max
+/******************************************************************************/
+/*!
+	@brief 	results expressed in Q0.16, Saturated to 65535 max
  */
+/******************************************************************************/
 static inline uint16_t Linear_Voltage_CalcFractionUnsigned16(const Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Function_FractionUnsigned16(p_linear, adcu);

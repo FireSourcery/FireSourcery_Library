@@ -36,26 +36,26 @@
 #define MOTOR_SIXSTEP_H
 
 #include "Motor.h"
-#include "Config.h"
-
-#include "Transducer/Hall/Hall.h"
-//#include "Transducer/BEMF/BEMF.h"
-#include "Transducer/Phase/Phase.h"
-
-#include "Transducer/Encoder/Encoder_DeltaT.h"
-#include "Transducer/Encoder/Encoder_Motor.h"
-#include "Transducer/Encoder/Encoder.h"
-
-#include "Peripheral/Analog/AnalogN/AnalogN.h"
-
-#include "Math/Linear/Linear_Ramp.h"
-#include "Math/Linear/Linear.h"
-#include "Math/Filter/Filter_MovAvg.h"
-#include "Math/Filter/Filter.h"
-
-#include <stdint.h>
-#include <stdbool.h>
-
+//#include "Config.h"
+//
+//#include "Transducer/Hall/Hall.h"
+////#include "Transducer/BEMF/BEMF.h"
+//#include "Transducer/Phase/Phase.h"
+//
+//#include "Transducer/Encoder/Encoder_DeltaT.h"
+//#include "Transducer/Encoder/Encoder_Motor.h"
+//#include "Transducer/Encoder/Encoder.h"
+//
+//#include "Peripheral/Analog/AnalogN/AnalogN.h"
+//
+//#include "Math/Linear/Linear_Ramp.h"
+//#include "Math/Linear/Linear.h"
+//#include "Math/Filter/Filter_MovAvg.h"
+//#include "Math/Filter/Filter.h"
+//
+//#include <stdint.h>
+//#include <stdbool.h>
+//
 #include "System/SysTime/SysTime.h"
 //#include "Utility/Debug/Debug.h"
 
@@ -280,17 +280,17 @@ static void ActivateMotorSixStepAnalogPhase(Motor_T * p_motor, const AnalogN_Con
 {
 	AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
 
-	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
-	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VPOS);
+	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_OPTION_RESTORE);
+	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VPOS);
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_iPhase);
 	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_vPhase);
 
 	//should not start until middle of pwm cycle
-//	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_PWM_ON);
+//	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_OPTION_PWM_ON);
 //	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_vPhase);
-//	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
+//	AnalogN_EnqueueConversionOptions_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_OPTION_RESTORE);
 //	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, p_iPhase);
-//	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_VPOS);
+//	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VPOS);
 
 	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
 }
@@ -303,12 +303,12 @@ static inline void ActivateMotorSixStepAnalog(Motor_T * p_motor)
 	switch (p_motor->CommutationPhase)
 	{
 		case MOTOR_PHASE_ERROR_0: break;
-		case MOTOR_PHASE_AC : ActivateMotorSixStepAnalogPhase(p_motor, &p_motor->CONFIG.CONVERSION_VB, &p_motor->CONFIG.CONVERSION_IC); break;
-		case MOTOR_PHASE_BC : ActivateMotorSixStepAnalogPhase(p_motor, &p_motor->CONFIG.CONVERSION_VA, &p_motor->CONFIG.CONVERSION_IC); break;
-		case MOTOR_PHASE_BA : ActivateMotorSixStepAnalogPhase(p_motor, &p_motor->CONFIG.CONVERSION_VC, &p_motor->CONFIG.CONVERSION_IA); break;
-		case MOTOR_PHASE_CA : ActivateMotorSixStepAnalogPhase(p_motor, &p_motor->CONFIG.CONVERSION_VB, &p_motor->CONFIG.CONVERSION_IA); break;
-		case MOTOR_PHASE_CB : ActivateMotorSixStepAnalogPhase(p_motor, &p_motor->CONFIG.CONVERSION_VA, &p_motor->CONFIG.CONVERSION_IB); break;
-		case MOTOR_PHASE_AB : ActivateMotorSixStepAnalogPhase(p_motor, &p_motor->CONFIG.CONVERSION_VC, &p_motor->CONFIG.CONVERSION_IB); break;
+		case MOTOR_PHASE_AC : ActivateMotorSixStepAnalogPhase(p_motor, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC); break;
+		case MOTOR_PHASE_BC : ActivateMotorSixStepAnalogPhase(p_motor, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC); break;
+		case MOTOR_PHASE_BA : ActivateMotorSixStepAnalogPhase(p_motor, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA); break;
+		case MOTOR_PHASE_CA : ActivateMotorSixStepAnalogPhase(p_motor, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA); break;
+		case MOTOR_PHASE_CB : ActivateMotorSixStepAnalogPhase(p_motor, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB); break;
+		case MOTOR_PHASE_AB : ActivateMotorSixStepAnalogPhase(p_motor, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB); break;
 		case MOTOR_PHASE_ERROR_7: break;
 		default: break;
 	}

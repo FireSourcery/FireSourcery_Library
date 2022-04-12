@@ -95,7 +95,7 @@ static void Init_Entry(Motor_T * p_motor)
 
 static void Init_Proc(Motor_T * p_motor)
 {
-	StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
+	_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
 }
 
 static const StateMachine_State_T STATE_INIT =
@@ -187,7 +187,7 @@ static void Stop_Entry(Motor_T * p_motor)
 
 	if (p_motor->UserDirection != p_motor->Direction)
 	{
-		StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FAULT); //direction was set during another mode
+		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FAULT); //direction was set during another mode
 	}
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
@@ -310,9 +310,34 @@ static void Run_Proc(Motor_T * p_motor)
 	}
 }
 
+//static StateMachine_State_T *  Run_TransitionFunction(Motor_T * p_motor, MotorStateMachine_Input_T inputMode, uint32_t var)
+//{
+//	StateMachine_State_T * p_newState = 0U;
+//
+//	//jump table smaller/faster than function pointer?
+//	switch(inputMode)
+//	{
+//		case MSM_INPUT_FAULT:
+//		case MSM_INPUT_CONTROL_MODE:
+//			if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+//			{
+//				Motor_FOC_SetMatchOutputKnown(p_motor);
+//			}
+//			else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
+//			{
+//
+//			}
+//		case MSM_INPUT_FLOAT:
+//		default:			break;
+//	}
+//
+//	return p_newState;
+//}
+
 static const StateMachine_State_T STATE_RUN =
 {
 	.P_TRANSITION_TABLE 	= RUN_TRANSITION_TABLE,
+//	.P_TRANSITION_INPUT 	= (StateMachine_TransitionInput_T)Run_TransitionFunction,
 	.ON_ENTRY 				= (StateMachine_Output_T)Run_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Run_Proc,
 };
@@ -393,7 +418,7 @@ static void Freewheel_Proc(Motor_T * p_motor)
 	/* Check after, this way lower priority input cannot proc until stop state  */
 	if(Motor_GetSpeed(p_motor) == 0U)
 	{
-		StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
+		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
 	}
 }
 
@@ -426,7 +451,7 @@ static void Align_Proc(Motor_T * p_motor)
 	{
 		if((p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS) || (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP))
 		{
-			StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_OPEN_LOOP);
+			_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_OPEN_LOOP);
 		}
 		else
 		{
@@ -439,7 +464,7 @@ static void Align_Proc(Motor_T * p_motor)
 
 			}
 
-			StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_RUN);
+			_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_RUN);
 		}
 	}
 }
@@ -551,7 +576,7 @@ static void Calibration_Proc(Motor_T * p_motor)
 
 	if(isComplete == true)
 	{
-		StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
+		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
 	}
 }
 
@@ -588,22 +613,27 @@ static void Fault_Entry(Motor_T * p_motor)
 
 static void Fault_Proc(Motor_T * p_motor)
 {
-	bool errorCleared = false; //need?
-	Phase_Float(&p_motor->Phase); /* repeat */
+//	bool errorCleared = false; //need?
+	Phase_Float(&p_motor->Phase); /* repeat ok */
 
-	if (p_motor->ErrorFlags.OverHeat = 1U)
+	if(Thermistor_GetStatus(&p_motor->Thermistor) == THERMISTOR_THRESHOLD_OK)
 	{
-		if(Thermistor_GetStatus(&p_motor->Thermistor) == THERMISTOR_THRESHOLD_OK)
-		{
-			p_motor->ErrorFlags.OverHeat = 0U;
-			errorCleared = true;
-		}
+		p_motor->ErrorFlags.OverHeat = 0U;
 	}
 
-	if ((p_motor->ErrorFlags.State == 0U) && (errorCleared == true))
-	{
-		StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
-	}
+//	if (p_motor->ErrorFlags.OverHeat = 1U)
+//	{
+//		if(Thermistor_GetStatus(&p_motor->Thermistor) == THERMISTOR_THRESHOLD_OK)
+//		{
+//			p_motor->ErrorFlags.OverHeat = 0U;
+//			errorCleared = true;
+//		}
+//	}
+
+//	if ((p_motor->ErrorFlags.State == 0U) && (errorCleared == true))
+//	{
+//		StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
+//	}
 }
 
 static const StateMachine_State_T STATE_FAULT =

@@ -58,66 +58,24 @@ typedef union
 }
 AnalogN_AdcFlags_T;
 
-/*
- * Pin Oriented - Map Pin to virtual
- * Compile time determine which analogs are used
- * Per conversion instance, pass to activate functions
- * pass map by pointer
- */
-//typedef const struct
-//{
-//	const Analog_ConversionVirtualMap_T MAP;
-////	const Analog_ConversionVirtual_T * const P_VIRTUAL_CONVERSION;
-////	volatile analog_adcresult_t * const P_RESULTS_BUFFER;	 /*!< Persistent ADC results buffer, virtual channel index.  */
-////	void * P_ON_COMPLETE_CONTEXT;
-//	const Analog_ConversionAdc_T * const P_ADC_CONVERSIONS; /* 2D array*/
-//	AnalogN_AdcFlags_T * const P_SIGNAL_BUFFER;			//at least buffer needs to be implemented
-//	const AnalogN_AdcFlags_T ANALOGS_ACTIVE; 			//also on complete state, results map mask
-//}
-//AnalogN_Conversion_T;
-
-//#define ANALOG_N_CONVERSION_CONFIG(p_VirtualConversion, p_Results, p_OnCompleteContext, p_AdcConversions, p_Signal, SignalComplete) \
-//{															\
-//	.MAP =													\
-//	{														\
-//		.P_VIRTUAL_CONVERSION 	= p_VirtualConversion,		\
-//		.P_RESULTS_BUFFER 		= p_Results ,				\
-//		.P_ON_COMPLETE_CONTEXT 	= p_OnCompleteContext,		\
-//	},														\
-//	.P_ADC_CONVERSIONS 			= p_AdcConversions			\
-//	.P_SIGNAL_BUFFER 			= p_Signal					\
-//	.ANALOGS_ACTIVE.AdcFlags 	= SignalComplete			\
-//}
-
-/*
- * Virtual Channel oriented conversion.
- * Map virtual to pin
- * each analog checks if virtual channel is on that analog
- * simpler compile time defines at possible increase in time complexity.
- */
-//typedef const struct
-//{
-//	volatile analog_adcresult_t * const P_RESULTS_BUFFER;	 /*!< Persistent ADC results buffer, virtual channel index.  */
-//	void * P_ON_COMPLETE_CONTEXT;
-//	const analog_adcpin_t * const * const PP_PINS;						/*!< Virtual channel index.  */
-//}
-//AnalogN_ConversionAdcMap_T;
-//
-//typedef const struct
-//{
-//	const AnalogN_ConversionAdcMap_T * const P_MAP;
-//	const Analog_ConversionVirtual_T * const P_VIRTUAL;
-//	AnalogN_AdcFlags_T * const P_SIGNAL_BUFFER;			//at least buffer needs to be implemented
-//	const AnalogN_AdcFlags_T ANALOGS_ACTIVE; 			//also on complete state, results map mask
-//}
-//AnalogN_Conversion_T;
-
 typedef const struct
 {
 	Analog_Conversion_T CONVERSION;
 	Analog_T * P_ANALOG;
 }
 AnalogN_Conversion_T;
+
+#define CONFIG_ANALOG_N_CONVERSION(p_Virtual, PinId, p_Results, p_CallbackContext, p_AnalogIHost) \
+{															\
+	.CONVERSION =											\
+	{														\
+		.P_VIRTUAL 				= p_Virtual,				\
+		.PIN 					= PinId,					\
+		.P_RESULTS_BUFFER 		= p_Results,				\
+		.P_CALLBACK_CONTEXT 	= p_CallbackContext,		\
+	},														\
+	.P_ANALOG 					= p_AnalogIHost,			\
+}
 
 typedef const struct
 {

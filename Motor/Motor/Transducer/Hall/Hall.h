@@ -38,6 +38,9 @@
 #include <stdint.h>
 
 #if defined(CONFIG_HALL_ID_BASE_PINS_STATE)
+/*
+ * Where ID => 0bCBA
+ */
 	#define	HALL_VIRTUAL_SENSORS_A 		(0b001U)
 	#define	HALL_VIRTUAL_SENSORS_B 		(0b010U)
 	#define	HALL_VIRTUAL_SENSORS_C 		(0b100U)
@@ -58,14 +61,13 @@
 #elif defined(CONFIG_HALL_ID_BASE_COMMUTATION_SECTOR)
 /*
  * Where ID 001 => commutation phase AC
- * 1 previous to commutation
  */
+	#define	HALL_VIRTUAL_SENSORS_INV_B 	(1U)
 	#define	HALL_VIRTUAL_SENSORS_A 		(2U)
 	#define	HALL_VIRTUAL_SENSORS_INV_C 	(3U)
 	#define	HALL_VIRTUAL_SENSORS_B 		(4U)
 	#define	HALL_VIRTUAL_SENSORS_INV_A 	(5U)
 	#define	HALL_VIRTUAL_SENSORS_C 		(6U)
-	#define	HALL_VIRTUAL_SENSORS_INV_B 	(1U)
 #endif
 
 #define	HALL_SENSORS_TABLE_LENGTH 	(8U)
@@ -92,8 +94,8 @@ typedef union
 Hall_Sensors_T;
 
 /*
- * Hall sensor id. id base value reflects 3 bit sensor state, or sequential id
- * if both sequential id, and sensor state is needed, another table must be used
+ * Hall sensor ID. ID base value reflects 3 bit sensor state, or sequential ID
+ * if both sequential ID, and sensor state is needed, another table must be used
  */
 typedef enum
 {
@@ -106,8 +108,10 @@ typedef enum
 	HALL_ANGLE_210_270	= HALL_VIRTUAL_SENSORS_C,
 	HALL_ANGLE_270_330 	= HALL_VIRTUAL_SENSORS_INV_B,
 	HALL_ANGLE_330_30 	= HALL_VIRTUAL_SENSORS_A,
+	HALL_ANGLE_ERROR_0 	= 0U,
+	HALL_ANGLE_ERROR_7 	= 7U,
 
-	/* rotator position Id via boundary from CCW and CW */
+	/* Rotor Angle Id via boundary from CCW and CW */
 	HALL_ANGLE_CCW_30 	= HALL_ANGLE_30_90,
 	HALL_ANGLE_CCW_90 	= HALL_ANGLE_90_150,
 	HALL_ANGLE_CCW_150 	= HALL_ANGLE_150_210,
@@ -126,14 +130,14 @@ typedef enum
  	 	Commutation angle
 		CCW direction, 90 degree
 	 */
-//	HALL_COMMUTATION_PHASE_0 = 0U,
 	HALL_COMMUTATION_PHASE_AC = HALL_VIRTUAL_SENSORS_INV_B,
 	HALL_COMMUTATION_PHASE_BC = HALL_VIRTUAL_SENSORS_A,
 	HALL_COMMUTATION_PHASE_BA = HALL_VIRTUAL_SENSORS_INV_C,
 	HALL_COMMUTATION_PHASE_CA = HALL_VIRTUAL_SENSORS_B,
 	HALL_COMMUTATION_PHASE_CB = HALL_VIRTUAL_SENSORS_INV_A,
 	HALL_COMMUTATION_PHASE_AB = HALL_VIRTUAL_SENSORS_C,
-//	HALL_COMMUTATION_PHASE_7 = 7U,
+	HALL_COMMUTATION_PHASE_ERROR_0 = 0U,
+	HALL_COMMUTATION_PHASE_ERROR_7 = 7U,
 
 	HALL_COMMUTATION_ANGLE_30 = HALL_COMMUTATION_PHASE_AC,
 	HALL_COMMUTATION_ANGLE_90 = HALL_COMMUTATION_PHASE_BC,
@@ -178,7 +182,6 @@ Hall_Config_T;
 typedef struct 
 {
 	const Hall_Config_T CONFIG;
-
 	Hall_Params_T Params;
 	Hall_Direction_T Direction;
 	Hall_Sensors_T SensorsRef; 		/* Save last read */
@@ -205,7 +208,7 @@ Hall_T;
  */
 static inline uint8_t InverseHall(uint8_t hall) {return (~hall & 0x07U);}
 
-static inline uint8_t Hall_ReadSensors(const Hall_T * p_hall)
+static inline Hall_Sensors_T Hall_ReadSensors(const Hall_T * p_hall)
 {
 	Hall_Sensors_T sensors = {.State = 0U};
 
@@ -213,17 +216,17 @@ static inline uint8_t Hall_ReadSensors(const Hall_T * p_hall)
 	sensors.B = Pin_Input_Read(&p_hall->CONFIG.PIN_B);
 	sensors.C = Pin_Input_Read(&p_hall->CONFIG.PIN_C);
 
-	return sensors.State ;
+	return sensors;
 }
 
 
 /*
  *
  */
-static inline void Hall_CaptureSensors(Hall_T * p_hall)
-{
-	p_hall->SensorsRef.State = Hall_ReadSensors(p_hall);
-}
+//static inline void Hall_CaptureSensors(Hall_T * p_hall)
+//{
+//	p_hall->SensorsRef.State = Hall_ReadSensors(p_hall);
+//}
 
 
 //static inline bool Hall_PollSensorsEdge(Hall_T * p_hall)
@@ -237,7 +240,7 @@ static inline void Hall_CaptureSensors(Hall_T * p_hall)
  */
 static inline bool Hall_PollCaptureSensors(Hall_T * p_hall)
 {
-	uint8_t sensorsNew = Hall_ReadSensors(p_hall);
+	uint8_t sensorsNew = Hall_ReadSensors(p_hall).State;
 	bool isEdge = (sensorsNew != p_hall->SensorsRef.State);
 
 	if (isEdge)
@@ -256,13 +259,12 @@ static inline void Hall_ResetCapture(Hall_T * p_hall)
 	p_hall->SensorsRef.State  = 0U;
 }
 
-
 /*
  * return true once per hall cycle
  */
 static inline bool Hall_PollEdgeA(Hall_T * p_hall)
 {
-	return ((((Hall_Sensors_T)Hall_ReadSensors(p_hall)).A == true) && ((p_hall->SensorsRef.A) == false));
+	return ((Hall_ReadSensors(p_hall).A == true) && ((p_hall->SensorsRef.A) == false));
 }
 
 static inline Hall_Id_T Hall_ConvertToRotorId(Hall_T * p_hall, uint8_t physicalSensors)
@@ -349,29 +351,27 @@ static inline void Hall_ToggleDirection(Hall_T * p_hall)
 }
 
 static inline Hall_Sensors_T Hall_GetSensors(Hall_T * p_hall) {return p_hall->SensorsRef;}
-static inline bool Hall_GetSensorA(Hall_T * p_hall) {return p_hall->SensorsRef.A;}
-static inline bool Hall_GetSensorB(Hall_T * p_hall) {return p_hall->SensorsRef.B;}
-static inline bool Hall_GetSensorC(Hall_T * p_hall) {return p_hall->SensorsRef.C;}
+//static inline bool Hall_GetSensorA(Hall_T * p_hall) {return p_hall->SensorsRef.A;}
+//static inline bool Hall_GetSensorB(Hall_T * p_hall) {return p_hall->SensorsRef.B;}
+//static inline bool Hall_GetSensorC(Hall_T * p_hall) {return p_hall->SensorsRef.C;}
 
-static inline uint8_t Hall_ReadPhysicalSensors(Hall_T * p_hall)
-{
-	Hall_CaptureSensors(p_hall);
-	return p_hall->SensorsRef.State;
-}
-
-static inline uint8_t Hall_ReadVirtualSensors(Hall_T * p_hall)
-{
-	Hall_CaptureSensors(p_hall);
-	return Hall_GetRotorId(p_hall);
-}
+//static inline uint8_t Hall_ReadPhysicalSensors(Hall_T * p_hall)
+//{
+//	Hall_CaptureSensors(p_hall);
+//	return p_hall->SensorsRef.State;
+//}
+//
+//static inline uint8_t Hall_ReadVirtualSensors(Hall_T * p_hall)
+//{
+//	Hall_CaptureSensors(p_hall);
+//	return Hall_GetRotorId(p_hall);
+//}
 
 /*
 
  */
 extern void Hall_Init(Hall_T * p_hall);
 extern void Hall_MapSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC, uint8_t sensorsB, uint8_t sensorsInvA, uint8_t sensorsC, uint8_t sensorsInvB);
-extern void Hall_MapSensorsTable_Default(Hall_T * p_hall);
-
 extern void Hall_CalibratePhaseA(Hall_T * p_hall);
 extern void Hall_CalibratePhaseInvC(Hall_T * p_hall);
 extern void Hall_CalibratePhaseB(Hall_T * p_hall);

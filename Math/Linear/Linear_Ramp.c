@@ -47,7 +47,7 @@
 /******************************************************************************/
 void Linear_Ramp_InitSlope(Linear_T * p_linear, int32_t slope_UnitPerTick, int32_t initial, int32_t final)
 {
-	Linear_Init(p_linear, slope_UnitPerTick, 1U, 0, initial, final);
+	Linear_Init(p_linear, slope_UnitPerTick, 1U, initial, final);
 }
 
 /*
@@ -58,7 +58,7 @@ void Linear_Ramp_InitSlope(Linear_T * p_linear, int32_t slope_UnitPerTick, int32
  */
 void Linear_Ramp_InitAcceleration(Linear_T * p_linear, int32_t slope_UnitPerSecond, uint32_t updateFreq_Hz, int32_t initial, int32_t final)
 {
-	Linear_Init(p_linear, slope_UnitPerSecond, updateFreq_Hz, 0, initial, final);
+	Linear_Init(p_linear, slope_UnitPerSecond, updateFreq_Hz, initial, final);
 }
 
 /*
@@ -66,8 +66,8 @@ void Linear_Ramp_InitAcceleration(Linear_T * p_linear, int32_t slope_UnitPerSeco
  */
 void Linear_Ramp_InitMillis(Linear_T * p_linear, uint16_t peroid_Ms, uint16_t updateFreq_Hz, int32_t initial, int32_t final)
 {
-//	Linear_Init(p_linear, (final - initial)*10U, (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 10000U, initial, final);
-	Linear_Init_Shift(p_linear, (final - initial), (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, 0, initial, final, RAMP_SHIFT);
+	Linear_Init(p_linear, (final - initial), (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, initial, final);
+//	Linear_Init_Shift(p_linear, (final - initial), (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, initial, final, RAMP_SHIFT);
 }
 
 

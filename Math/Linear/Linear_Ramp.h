@@ -136,31 +136,31 @@ static inline int32_t Linear_Ramp_CalcNextOutput(Linear_T * p_linear, int32_t cu
 /*
  * Sets slope and initial for dynamically generated ramp
  */
-static inline void Linear_Ramp_SetSlope(Linear_T * p_linear, uint32_t slope_UnitPerTick, int32_t initial)
-{
-	p_linear->SlopeFactor 	= ((int32_t)slope_UnitPerTick << RAMP_SHIFT);
-	p_linear->YOffset 		= initial;
-}
-
-static inline void Linear_Ramp_SetSlopeAcceleration(Linear_T * p_linear, int32_t slope_UnitPerSecond, uint32_t updateFreq_Hz, int32_t initial)
-{
-	p_linear->SlopeFactor 	= ((int32_t)slope_UnitPerSecond << RAMP_SHIFT) / updateFreq_Hz;
-	p_linear->SlopeDivisor 	= ((int32_t)updateFreq_Hz << RAMP_SHIFT) / slope_UnitPerSecond;
-	p_linear->YOffset 		= initial;
-}
-
-/*
- *  Overflow: (peroid_Ms * updateFreq_Hz ) max 32,767,000
- */
-static inline void Linear_Ramp_SetSlopeMillis(Linear_T * p_linear, uint16_t peroid_Ms, uint16_t updateFreq_Hz, int32_t initial, int32_t final)
-{
-	const int32_t factor 	= (final - initial);
-	const int32_t divisor 	= (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U;
-
-	p_linear->SlopeFactor 	= ((int32_t)factor << RAMP_SHIFT) / divisor; /* can compiler optimize to factor * const ?*/
-	p_linear->SlopeDivisor 	= ((int32_t)divisor << RAMP_SHIFT) / factor;
-	p_linear->YOffset 		= initial;
-	p_linear->YReference 	= final;
-}
+//static inline void Linear_Ramp_SetSlope(Linear_T * p_linear, uint32_t slope_UnitPerTick, int32_t initial)
+//{
+//	p_linear->SlopeFactor 	= ((int32_t)slope_UnitPerTick << RAMP_SHIFT);
+//	p_linear->YOffset 		= initial;
+//}
+//
+//static inline void Linear_Ramp_SetSlopeAcceleration(Linear_T * p_linear, int32_t slope_UnitPerSecond, uint32_t updateFreq_Hz, int32_t initial)
+//{
+//	p_linear->SlopeFactor 	= ((int32_t)slope_UnitPerSecond << RAMP_SHIFT) / updateFreq_Hz;
+//	p_linear->SlopeDivisor 	= ((int32_t)updateFreq_Hz << RAMP_SHIFT) / slope_UnitPerSecond;
+//	p_linear->YOffset 		= initial;
+//}
+//
+///*
+// *  Overflow: (peroid_Ms * updateFreq_Hz ) max 32,767,000
+// */
+//static inline void Linear_Ramp_SetSlopeMillis(Linear_T * p_linear, uint16_t peroid_Ms, uint16_t updateFreq_Hz, int32_t initial, int32_t final)
+//{
+//	const int32_t factor 	= (final - initial);
+//	const int32_t divisor 	= (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U;
+//
+//	p_linear->SlopeFactor 	= ((int32_t)factor << RAMP_SHIFT) / divisor; /* can compiler optimize to factor * const ?*/
+//	p_linear->SlopeDivisor 	= ((int32_t)divisor << RAMP_SHIFT) / factor;
+//	p_linear->YOffset 		= initial;
+//	p_linear->YReference 	= final;
+//}
 
 #endif

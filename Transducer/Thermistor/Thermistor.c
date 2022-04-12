@@ -46,6 +46,8 @@ void Thermistor_Init(Thermistor_T * p_thermistor)
 	p_thermistor->Heat_DegCInt = 0;
 }
 
+
+
 /*
 	Thermistor wired as bottom resistor R2
 	R2 = VOUT*R1/(VIN-VOUT)
@@ -76,6 +78,10 @@ static inline uint16_t InvRth_PullUp(uint8_t vIn, uint32_t rSeries, uint32_t rPa
 
 	return adcu;
 }
+
+//#define THERMISTOR_STEINHART(B, T0, R0, R_TH) (log(R_TH / R0) / B) + (1.0F / T0)
+//#define THERMISTOR_ADCU_PULL_UP(B, T0, R0, R_TH)  THERMISTOR_INV_R_TH_PULLUP( , THERMISTOR_INV_STEINHART(B, T0, R0, 1.0F / (DEG_C + 273.15F)))
+
 
 /*
  * return 1/T

@@ -70,7 +70,7 @@ typedef struct __attribute__((aligned (4U)))
 {
 	uint16_t ThrottleZero_ADCU;
 	uint16_t ThrottleMax_ADCU;
-	uint16_t BrakeZero_ADCU; //threshold offset ~500
+	uint16_t BrakeZero_ADCU;
 	uint16_t BrakeMax_ADCU;
 
 	bool EnablePinThrottle;

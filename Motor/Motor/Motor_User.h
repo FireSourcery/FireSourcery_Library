@@ -93,9 +93,10 @@ static inline void Motor_User_Ground(Motor_T * p_motor)
  */
 static inline bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
-	p_motor->UserDirection = direction; //pass to state machine
+	p_motor->UserDirection = direction;
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION);
-//	return StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction);
+
+	//StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction);
 
 	return (p_motor->UserDirection == p_motor->Direction);
 }
@@ -135,18 +136,8 @@ static inline bool Motor_User_SetDirectionReverse(Motor_T * p_motor)
 
 static inline void SetMotorUserCmdSigned(Motor_T * p_motor, int32_t cmd)
 {
-	int32_t rampTarget;
-
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-	{
-		rampTarget = cmd >> 1U;
-		if(p_motor->Direction == MOTOR_DIRECTION_CW) {rampTarget = 0 - rampTarget;}
-	}
-	else //p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
-	{
-
-	}
-
+	int32_t rampTarget = cmd >> 1U;
+	if(p_motor->Direction == MOTOR_DIRECTION_CW) {rampTarget = 0 - rampTarget;}
 	Motor_SetRamp(p_motor, rampTarget);
 }
 
@@ -439,8 +430,36 @@ static inline void Motor_User_SetVSupplyVMotorScale(Motor_T * p_motor, uint16_t 
 //static inline uint16_t Motor_User_GetHeat_DegCNDecimal(Motor_T *p_motor, uint8_t n) 		{return Thermistor_ConvertToDegC_NDecimal(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, n);}
 //static inline uint16_t Motor_User_GetHeat_DegCScalar(Motor_T * p_motor, uint16_t scalar) 	{return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, scalar);}
 //static inline uint16_t Motor_User_GetHeat_Fixed32(Motor_T *p_motor) 						{return Thermistor_ConvertToDegC_Fixed32(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
-
-static inline Hall_Sensors_T Motor_User_GetHall(Motor_T * p_motor) 		{return Hall_GetSensors(&p_motor->Hall);}
+//static inline uint16_t MotorController_User_GetMotorAdcu(MotorController_T * p_mc, uint8_t motorIndex, MotorAnalog_Channel_T adcChannel)
+//{
+//	return p_mc->CONFIG.P_MOTORS[motorIndex].AnalogResults.Channels[adcChannel];
+//}
+//
+//static inline uint16_t MotorController_User_GetMotorAdcu_Msb8(MotorController_T * p_mc, uint8_t motorIndex, MotorAnalog_Channel_T adcChannel)
+//{
+//	return MotorController_User_GetMotorAdcu(p_mc, motorIndex, adcChannel) >> (CONFIG_MOTOR_CONTROLLER_ADCU_BITS_N - 8U);
+//}
+//
+//static inline Hall_Sensors_T MotorController_User_GetHall(MotorController_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(MotorController_GetPtrMotor(p_mc, motorIndex));}
+//static inline bool MotorController_User_GetHallA(MotorController_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(MotorController_GetPtrMotor(p_mc, motorIndex)).A;}
+//static inline bool MotorController_User_GetHallB(MotorController_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(MotorController_GetPtrMotor(p_mc, motorIndex)).B;}
+//static inline bool MotorController_User_GetHallC(MotorController_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(MotorController_GetPtrMotor(p_mc, motorIndex)).C;}
+//
+//
+//static inline Motor_DirectionCalibration_T MotorController_User_GetDirectionCalibration(MotorController_T * p_mc, uint8_t motorIndex) {return Motor_User_GetDirectionCalibration(MotorController_GetPtrMotor(p_mc, motorIndex));}
+//static inline bool MotorController_User_GetIsRevMode(MotorController_T * p_mc, uint8_t motorIndex) {return (Motor_User_GetDirectionCalibration(MotorController_GetPtrMotor(p_mc, motorIndex)) ==  MOTOR_FORWARD_IS_CW);}
+//
+////static inline uint32_t MotorController_User_GetBemfAvg_MilliV(MotorController_T * p_mc, uint8_t motorIndex)	{return Motor_User_GetBemf_Frac16(MotorController_GetPtrMotor(p_mc, motorIndex));}
+//static inline uint16_t MotorController_User_GetSpeed_RPM(MotorController_T * p_mc, uint8_t motorIndex)		{return Motor_User_GetSpeed_RPM(MotorController_GetPtrMotor(p_mc, motorIndex));}
+//static inline uint16_t MotorController_User_GetMotorHeat_DegCScalar(MotorController_T * p_mc, uint8_t motorIndex, uint8_t scalar) {return Motor_User_GetHeat_DegCScalar(MotorController_GetPtrMotor(p_mc, motorIndex), scalar);}
+//
+//static inline void MotorController_User_CalibrateHall(MotorController_T * p_mc, uint8_t motorIndex) {Motor_User_ActivateCalibrationHall(MotorController_GetPtrMotor(p_mc, motorIndex));}
+//
+//static inline void MotorController_User_SetPidIqKp(MotorController_T * p_mc, uint8_t motorIndex, uint16_t kpFactor)
+//{
+//	p_mc->CONFIG.P_MOTORS[motorIndex].PidIq.Params.KpFactor = kpFactor;
+//}
+static inline Hall_Sensors_T Motor_User_ReadHall(Motor_T * p_motor) 		{return Hall_ReadSensors(&p_motor->Hall);}
 static inline uint16_t Motor_User_GetHallRotorAngle(Motor_T * p_motor) 	{return Hall_GetRotorAngle_Degrees16(&p_motor->Hall);}
 static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T * p_motor) 		{return p_motor->Speed_RPM;}
 static inline Motor_ErrorFlags_T Motor_User_GetErrorFlags(Motor_T * p_motor) 	{return  p_motor->ErrorFlags;}

@@ -33,7 +33,7 @@
 
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 
-#define MOTOR_ANALOG_CHANNEL_COUNT 	8U
+#define MOTOR_ANALOG_CHANNEL_COUNT 	10U
 
 /*!
 	@brief Virtual channel identifiers, index into arrays containing Analog channel
@@ -48,6 +48,8 @@ typedef enum
 	MOTOR_ANALOG_CHANNEL_IB,
 	MOTOR_ANALOG_CHANNEL_IC,
 	MOTOR_ANALOG_CHANNEL_HEAT,	/* Temperature */
+	MOTOR_ANALOG_CHANNEL_SIN,
+	MOTOR_ANALOG_CHANNEL_COS,
 } MotorAnalog_Channel_T;
 
 /*
@@ -65,29 +67,34 @@ typedef union
 		analog_adcresult_t Ib_ADCU;
 		analog_adcresult_t Ic_ADCU;
 		analog_adcresult_t Heat_ADCU;
+		analog_adcresult_t Sin_ADCU;
+		analog_adcresult_t Cos_ADCU;
 	};
 	analog_adcresult_t Channels[MOTOR_ANALOG_CHANNEL_COUNT];
 }
 MotorAnalog_Results_T;
 
-//typedef union
-//{
-//	struct
-//	{
-//		const AnalogN_Conversion_T CONVERSION_VPOS;
-//		const AnalogN_Conversion_T CONVERSION_VA;
-//		const AnalogN_Conversion_T CONVERSION_VB;
-//		const AnalogN_Conversion_T CONVERSION_VC;
-//		const AnalogN_Conversion_T CONVERSION_IA;
-//		const AnalogN_Conversion_T CONVERSION_IB;
-//		const AnalogN_Conversion_T CONVERSION_IC;
-//		const AnalogN_Conversion_T CONVERSION_HEAT;
-//		const AnalogN_Conversion_T CONVERSION_OPTION_PWM_ON;
-//		const AnalogN_Conversion_T CONVERSION_OPTION_RESTORE;
-//	};
-//	AnalogN_Conversion_T CONVERSIONS[MOTOR_ANALOG_CHANNEL_COUNT + 2U];
-//}
-//MotorAnalog_Conversions_T;
+typedef union
+{
+	struct
+	{
+		const AnalogN_Conversion_T CONVERSION_VPOS;
+		const AnalogN_Conversion_T CONVERSION_VA;
+		const AnalogN_Conversion_T CONVERSION_VB;
+		const AnalogN_Conversion_T CONVERSION_VC;
+		const AnalogN_Conversion_T CONVERSION_IA;
+		const AnalogN_Conversion_T CONVERSION_IB;
+		const AnalogN_Conversion_T CONVERSION_IC;
+		const AnalogN_Conversion_T CONVERSION_HEAT;
+		const AnalogN_Conversion_T CONVERSION_SIN;
+		const AnalogN_Conversion_T CONVERSION_COS;
+		const AnalogN_Conversion_T CONVERSION_OPTION_PWM_ON;
+		const AnalogN_Conversion_T CONVERSION_OPTION_RESTORE;
+	};
+	AnalogN_Conversion_T CONVERSIONS[MOTOR_ANALOG_CHANNEL_COUNT + 2U];
+}
+MotorAnalog_Conversions_T;
+
 
 
 

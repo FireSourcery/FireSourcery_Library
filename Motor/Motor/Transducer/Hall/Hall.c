@@ -53,21 +53,18 @@ void Hall_Init(Hall_T * p_hall)
 	}
 	else
 	{
-		Hall_MapSensorsTableDefault(p_hall);
+		Hall_MapSensorsTable
+		(
+			p_hall,
+			HALL_VIRTUAL_SENSORS_A,
+			HALL_VIRTUAL_SENSORS_INV_C,
+			HALL_VIRTUAL_SENSORS_B,
+			HALL_VIRTUAL_SENSORS_INV_A,
+			HALL_VIRTUAL_SENSORS_C,
+			HALL_VIRTUAL_SENSORS_INV_B
+		);
 	}
 }
-//
-//void Hall_LoadDefault(Hall_T * p_hall)
-//{
-//	if (p_hall->CONFIG.P_PARAMS_DEFAULT != 0U)
-//	{
-//		memcpy(&p_hall->Params.SensorsTable[0U], &p_hall->CONFIG.P_PARAMS_DEFAULT->SensorsTable[0U], sizeof(Hall_Params_T));
-//	}
-//	else
-//	{
-//		Hall_MapSensorsTableDefault(p_hall);
-//	}
-//}
 
 void Hall_MapSensorsTable
 (
@@ -90,19 +87,6 @@ void Hall_MapSensorsTable
 	p_hall->Params.SensorsTable[7U] = 7U;
 }
 
-void Hall_MapSensorsTableDefault(Hall_T * p_hall)
-{
-	Hall_MapSensorsTable
-	(
-		p_hall,
-		HALL_VIRTUAL_SENSORS_A,
-		HALL_VIRTUAL_SENSORS_INV_C,
-		HALL_VIRTUAL_SENSORS_B,
-		HALL_VIRTUAL_SENSORS_INV_A,
-		HALL_VIRTUAL_SENSORS_C,
-		HALL_VIRTUAL_SENSORS_INV_B
-	);
-}
 
 /*
  * For case where sensors are aligned to motor phase, 0 degree offset.
@@ -110,31 +94,31 @@ void Hall_MapSensorsTableDefault(Hall_T * p_hall)
  */
 void Hall_CalibratePhaseA(Hall_T * p_hall)
 {
-	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_A;
+	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_A;
 }
 
 void Hall_CalibratePhaseInvC(Hall_T * p_hall)
 {
-	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_C;
+	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_C;
 }
 
 void Hall_CalibratePhaseB(Hall_T * p_hall)
 {
-	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_B;
+	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_B;
 }
 
 void Hall_CalibratePhaseInvA(Hall_T * p_hall)
 {
-	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_A;
+	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_A;
 }
 
 void Hall_CalibratePhaseC(Hall_T * p_hall)
 {
-	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_C;
+	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_C;
 }
 
 void Hall_CalibratePhaseInvB(Hall_T * p_hall)
 {
-	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall)] = HALL_VIRTUAL_SENSORS_INV_B;
+	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_B;
 }
 

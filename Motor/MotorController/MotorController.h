@@ -49,6 +49,7 @@
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
+//#include "Peripheral/CanBus/CanBus.h"
 
 #include "Utility/Timer/Timer.h"
 #include "Utility/StateMachine/StateMachine.h"
@@ -196,6 +197,7 @@ typedef struct
 
 	StateMachine_T StateMachine;
 	MotorController_ErrorFlags_T ErrorFlags;
+//nrake/throttle run substate
 
 	volatile MotAnalog_Results_T AnalogResults;
 	MotAnalog_Results_T FaultAnalogRecord;
@@ -250,22 +252,7 @@ static inline void MotorController_Beep(MotorController_T * p_mc)
 	Blinky_Blink(&p_mc->Buzzer, 500U);
 }
 
-static inline void MotorController_CalibrateBattery_MilliV(MotorController_T * p_mc, uint32_t zero_mV, uint32_t max_mV)
-{
-	p_mc->Parameters.BatteryZero_ADCU = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorPos, zero_mV);
-	p_mc->Parameters.BatteryFull_ADCU = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorPos, max_mV);
-	Linear_ADC_Init(&p_mc->Battery, p_mc->Parameters.BatteryZero_ADCU, p_mc->Parameters.BatteryFull_ADCU, 1000U);
-}
 
-static inline uint32_t MotorController_GetBatteryCharge_Base10(MotorController_T * p_mc)
-{
-	return Linear_ADC_CalcPhysical(&p_mc->Battery, p_mc->AnalogResults.VPos_ADCU);
-}
-
-static inline uint32_t MotorController_GetBatteryCharge_Frac16(MotorController_T * p_mc)
-{
-	return Linear_ADC_CalcFraction16(&p_mc->Battery, p_mc->AnalogResults.VPos_ADCU);
-}
 
 static inline void MotorController_SetFaultRecord(MotorController_T * p_mc)
 {

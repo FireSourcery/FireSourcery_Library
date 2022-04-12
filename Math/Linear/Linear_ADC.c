@@ -35,65 +35,76 @@
 
 /******************************************************************************/
 /*!
-	@brief
-
 	f(adcuZero) = 0
 	f(adcuRef) = physicalRef
 
-	@input - physicalRef < 32768, 65536, resolution of initial y offset
-				set > adcuResolution for max res
-
-	e.g
-	adcuZero 		= 2000
-	adcuRef 		= 4095
-	physicalRef 	= 100
-	factor 		= 100
-	divisor 	= 2095
-
-	x0 with shifted b
-		m_shiftedFactor 		= 3128
-		m_shiftedDivisor 		= 1372979
-		Intercept	 			= -95 =>
-		shift back 		-6,225,920 (error 300) (res 32)
-		save shifted 	-6,256,420	=> (error - 4) (res 27)
-
-	e.g
-	adcuZero 		= 2000
-	adcuRef 		= 4095
-	physicalRef 	= 1000
-	factor 		= 1000
-	divisor 	= 2095
-
-	x0 with shifted b
-		m_shiftedFactor 		= 31282
-		m_shiftedDivisor 		= 137297
-		Intercept	 		= -954
-		shift back 	-62,521,344 (error 42)
-		preshift  	-62,564,200 (error 0)
-
-
-	adcuZero 		= 2000
-	adcuRef 		= 4095
-	physicalRef 	= 10000
-	factor 			= 10000
-	divisor 		= 2095
-
-	x0 with shifted b
-		m_shiftedFactor 		= 312821
-		m_shiftedDivisor 		= 13729
-		Intercept	 		= -9546
-		shift back 		-625,606,656 (3) (res 34)
-		save shifted  	-625,642,004 (error0)
-
+	frac16 conversion returns without division, as frac16 calc is performed more frequently
+	division in frac16 to physical units
+	shift 14 to allow frac16 oversaturation [-2:~2] instead of [-1:~1]
  */
 /******************************************************************************/
+
 void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef)
 {
-	Linear_Init_X0(p_linear, physicalRef, ((int32_t)adcuRef - (int32_t)adcuZero), adcuZero, physicalRef);
+	p_linear->SlopeFactor 			= (65536 << 14U) / (adcuRef - adcuZero);
+	p_linear->SlopeDivisor_Shift 	= 14U;
+	p_linear->SlopeDivisor 			= ((adcuRef - adcuZero) << 14U) / 65536;
+	p_linear->SlopeFactor_Shift 	= 14U;
+	p_linear->XOffset 				= adcuZero;
+	p_linear->YOffset 				= 0;
+	p_linear->XReference 			= adcuRef;
+	p_linear->YReference 			= physicalRef;
 }
-
 
 void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef)
 {
-	Linear_Init_X0(p_linear, -physicalRef, ((int32_t)adcuRef - (int32_t)adcuZero), adcuZero, physicalRef);
+	Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalRef);
+	p_linear->SlopeFactor 	= 0 - p_linear->SlopeFactor;
+	p_linear->SlopeDivisor 	= 0 - p_linear->SlopeDivisor;
 }
+
+
+//@input - physicalRef < 32768, 65536, resolution of initial y offset
+//			set > adcuResolution for max res
+//
+//e.g
+//adcuZero 		= 2000
+//adcuRef 		= 4095
+//physicalRef 	= 100
+//factor 		= 100
+//divisor 	= 2095
+//
+//x0 with shifted b
+//	m_shiftedFactor 		= 3128
+//	m_shiftedDivisor 		= 1372979
+//	Intercept	 			= -95 =>
+//	shift back 		-6,225,920 (error 300) (res 32)
+//	save shifted 	-6,256,420	=> (error - 4) (res 27)
+//
+//e.g
+//adcuZero 		= 2000
+//adcuRef 		= 4095
+//physicalRef 	= 1000
+//factor 		= 1000
+//divisor 	= 2095
+//
+//x0 with shifted b
+//	m_shiftedFactor 		= 31282
+//	m_shiftedDivisor 		= 137297
+//	Intercept	 		= -954
+//	shift back 	-62,521,344 (error 42)
+//	preshift  	-62,564,200 (error 0)
+//
+//
+//adcuZero 		= 2000
+//adcuRef 		= 4095
+//physicalRef 	= 10000
+//factor 			= 10000
+//divisor 		= 2095
+//
+//x0 with shifted b
+//	m_shiftedFactor 		= 312821
+//	m_shiftedDivisor 		= 13729
+//	Intercept	 		= -9546
+//	shift back 		-625,606,656 (3) (res 34)
+//	save shifted  	-625,642,004 (error0)

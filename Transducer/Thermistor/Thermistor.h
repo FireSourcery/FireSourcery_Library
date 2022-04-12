@@ -120,4 +120,6 @@ static inline int32_t Thermistor_GetHeat_DegCInt(Thermistor_T * p_thermistor)
 	return p_thermistor->Heat_DegCInt;
 }
 
+extern void Thermistor_Init(Thermistor_T * p_thermistor);
+
 #endif

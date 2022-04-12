@@ -194,14 +194,19 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 			Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]);
 		}
 
-		ProcMotorControllerHeatMonitor(p_mc);
-		ProcMotorControllerVoltageMonitor(p_mc);
+//#define DEBUG_FAULT_OFF
+//		ProcMotorControllerVoltageMonitor(p_mc);
+//		ProcMotorControllerHeatMonitor(p_mc);
+//		for (uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
+//		{
+//			Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
+//		}
 
 		/* Can use low priority check, as motor is already in fault state */
-		if (MotorController_CheckMotorErrorFlagsAll(p_mc) != 0U)
-		{
-			StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
-		}
+//		if (MotorController_CheckMotorErrorFlagsAll(p_mc) != 0U)
+//		{
+//			StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
+//		}
 	}
 
 	/*
@@ -232,12 +237,11 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 //	MotorController_PollBrake(p_mc);
 
 //	ProcMotorControllerHeatMonitor(p_mc);
-//	ProcMotorControllerVoltageMonitor(p_mc);
+//	ProcMotorControllerVoltageMonitor(p_mc); //move vpos here only
 
 	for (uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
 	{
 		Motor_Timer1Ms_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
-		//or check fault state here
 	}
 }
 

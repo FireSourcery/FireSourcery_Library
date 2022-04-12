@@ -51,12 +51,16 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 //1ms isr priority
 static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor)
 {
-	//	if (Timer_Poll(&p_motor->Millis100Timer) == true)
-	//	{
+
+}
+
+
+static inline void Motor_Heat_Thread(Motor_T * p_motor)
+{
 	if(Thermistor_GetIsEnable(&p_motor->Thermistor))
 	{
 		AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
-		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_HEAT);
+		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT );
 		AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
 
 		if (Thermistor_ProcThreshold(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU) != THERMISTOR_THRESHOLD_OK)
@@ -65,7 +69,5 @@ static inline void Motor_Timer1Ms_Thread(Motor_T * p_motor)
 			StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
 		}
 	}
-	//}
 }
-
 #endif

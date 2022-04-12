@@ -244,6 +244,17 @@ const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_HEAT =
 	.ON_COMPLETE = 0U,
 };
 
+const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_SIN =
+{
+	.CHANNEL = MOTOR_ANALOG_CHANNEL_SIN,
+	.ON_COMPLETE = 0U,
+};
+
+const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_COS =
+{
+	.CHANNEL = MOTOR_ANALOG_CHANNEL_COS,
+	.ON_COMPLETE = 0U,
+};
 
 
 

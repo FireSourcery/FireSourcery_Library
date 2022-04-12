@@ -37,32 +37,35 @@
 #include <stdbool.h>
 
 struct StateMachine_State_Tag;
+typedef uint8_t statemachine_input_t;	/* User may overwrite with enum */
+typedef uint8_t statemachine_stateid_t;	/* User may overwrite with enum */
+
+typedef void 							 (* StateMachine_Output_T)(void * p_context);
 typedef struct StateMachine_State_Tag *  (* StateMachine_Transition_T)(void * p_context);
 //typedef struct StateMachine_State_Tag *  (* StateMachine_Transition_T)(void * p_context, uint32_t inputVar);
-typedef void 							 (* StateMachine_Output_T)(void * p_context);
-typedef uint8_t statemachine_input_t;	/* User may overwrite with enum */
+typedef struct StateMachine_State_Tag *  (* StateMachine_TransitionInput_T)(void * p_context, statemachine_input_t inputVarType, uint32_t inputVar);
 
-/*
- *	Array Implementation - 2D input table
- *  Map allocates for all possible transitions/inputs for each state, valid and invalid
- * 	Allocates space for fault transition for invalid inputs
- *  Array index is input, eliminates search, only space efficient when inputs are common across many states.
- *  States belonging to the same state machine must have same size maps
- *  User define const states at compile time.
- */
 typedef const struct StateMachine_State_Tag
 {
+	const statemachine_stateid_t ID;
+
+	/*
+	 *	Array Implementation - 2D input table
+	 *  Map allocates for all possible transitions/inputs for each state, valid and invalid
+	 * 	Allocates space for fault transition for invalid inputs
+	 *  Array index is input, eliminates search, only space efficient when inputs are common across many states.
+	 *  States belonging to the same state machine must have same size maps
+	 *  User define const states at compile time.
+	 */
 	/*
 	 * Pointer to array of functions that return a pointer to the next state
 	 * No null pointer check, user must supply empty table
 	 * Nontransition (Output only) Inputs - Mealy machine style outputs, return 0
 	 *
-	 *
 	 * Transition Functions Maybe be self transitions, same input mapped to different output during different states
-	 *
 	 */
 	const StateMachine_Transition_T * const P_TRANSITION_TABLE;
-
+	const StateMachine_TransitionInput_T TRANSITION_INPUT;	/* Single function, user provide switch case */
 	const StateMachine_Output_T OUTPUT;		/* Synchronous output / Common output to all inputs for asynchronous case. No null pointer check, user must supply empty function */
 	const StateMachine_Output_T ON_ENTRY;	/* common to all transition to current state, including self transition */
 }
@@ -71,7 +74,6 @@ StateMachine_State_T;
 typedef struct StateMachine_Machine_Tag
 {
 	const StateMachine_State_T * const P_STATE_INITIAL;
-//	const StateMachine_State_T * const P_STATE_FAULT;
 	const uint8_t TRANSITION_TABLE_LENGTH;			/* Total input count. Shared table length for all states, i.e. all states allocate for all inputs*/
 }
 StateMachine_Machine_T;
@@ -114,9 +116,10 @@ StateMachine_T;
 	}														\
 }
 
+extern void _StateMachine_ProcTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState);
 extern void StateMachine_Init(StateMachine_T * p_stateMachine);
 extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
-extern void StateMachine_ProcTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState);
+//extern void StateMachine_ProcTransition(StateMachine_T * p_stateMachine, statemachine_input_t inputVarType, uint32_t inputVar);
 extern void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine);
 extern void StateMachine_Synchronous_SetInput(StateMachine_T * p_stateMachine, uint8_t input);
 extern void StateMachine_Asynchronous_ProcInput(StateMachine_T * p_stateMachine, uint8_t input);
