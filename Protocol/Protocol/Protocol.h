@@ -141,17 +141,8 @@ typedef enum
 //	PROTOCOL_RX_CODE_REQ_DATAGRAM,
 //	PROTOCOL_RX_CODE_REQ_FLASH,
 //	PROTOCOL_RX_CODE_REQ_ID_DATA, //continue req
-//	PROTOCOL_REQ_STANDARD,
-//	PROTOCOL_REQ_FAST,
-//	PROTOCOL_REQ_EXT, 		//passes user defined P_PROCESS_CONTEXT
-//	PROTOCOL_REQ_FLASH, 	//passes special control context
-//	PROTOCOL_REQ_DATAGRAM,	//passes special control context
-//	PROTOCOL_REQ_CONFIG,	//passes special control context
-
 }
 Protocol_RxCode_T;
-
-
 
 //typedef struct
 //{
@@ -239,6 +230,18 @@ typedef struct __attribute__((aligned (4U)))
 }
 Protocol_Params_T;
 
+typedef const struct
+{
+	void * const P_APP_CONTEXT;
+	void * const P_SUBSTATE_BUFFER;
+	uint8_t * const P_TX_PACKET_BUFFER;
+	size_t * const P_TX_LENGTH;
+	const uint8_t * const P_RX_PACKET_BUFFER;
+	const size_t * const P_RX_INDEX;
+}
+Protocol_Interface_T;
+
+
 /*
 
  */
@@ -246,10 +249,11 @@ typedef const struct
 {
 	uint8_t * const P_RX_PACKET_BUFFER;
 	uint8_t * const P_TX_PACKET_BUFFER;
-	const uint8_t PACKET_BUFFER_LENGTH; // must be greater than RX_LENGTH_MAX
-	const volatile uint32_t * const P_TIMER;
 	void * const P_APP_CONTEXT;			// user app context
 	void * const P_SUBSTATE_BUFFER; 	// child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context from specs
+
+	const uint8_t PACKET_BUFFER_LENGTH; // must be greater than RX_LENGTH_MAX
+	const volatile uint32_t * const P_TIMER;
 	const Protocol_Params_T * const P_PARAMS; //address of params in nvm
 }
 Protocol_Config_T;

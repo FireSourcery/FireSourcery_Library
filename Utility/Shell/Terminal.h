@@ -118,7 +118,7 @@ static inline void Terminal_SendString(const Terminal_T * p_terminal, const char
 		length++;
 	}
 
-	Serial_SendString(p_terminal->p_Serial, p_str, length);
+	Serial_SendString(p_terminal->p_Serial, (const uint8_t *)p_str, length);
 }
 
 //GetIs

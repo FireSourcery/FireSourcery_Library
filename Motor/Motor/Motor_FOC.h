@@ -376,11 +376,9 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
 
 	//samples complete when queue resumes, adc isr priority higher than pwm.
-
 	ProcMotorFocPositionFeedback(p_motor);
 
 //	p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
-//	FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
 	FOC_ProcClarkePark(&p_motor->Foc);
 //	p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
 

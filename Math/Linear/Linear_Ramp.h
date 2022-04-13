@@ -102,9 +102,8 @@ static inline void Linear_Ramp_SetIndex(Linear_T * p_linear, uint32_t * p_index,
 }
 
 /*
- * Non index version Sequential calculation only
- *
- * assume slope is always positive
+ * Non index version sequential calculation only
+ * always init with positive slope
  */
 static inline int32_t Linear_Ramp_CalcNextOutput(Linear_T * p_linear, int32_t currentRampValue)
 {

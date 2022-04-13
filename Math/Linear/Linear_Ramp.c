@@ -35,11 +35,6 @@
 
 
 
-/*
- * slope must always be positive for sequential   version
- */
-
-
 /******************************************************************************/
 /*!
 	@brief

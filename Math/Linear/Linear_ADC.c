@@ -37,6 +37,7 @@
 /*!
 	f(adcuZero) = 0
 	f(adcuRef) = physicalRef
+	f16(adcuRef) = 65535
 
 	frac16 conversion returns without division, as frac16 calc is performed more frequently
 	division in frac16 to physical units

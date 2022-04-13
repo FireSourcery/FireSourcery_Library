@@ -122,7 +122,7 @@ static StateMachine_State_T * Stop_TransitionRun(Motor_T * p_motor)
 	}
 	else
 	{
-		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
+		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
 		{
 			if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 			{

@@ -46,12 +46,17 @@ static const qfrac16_t QFRAC16_MIN = (int16_t) 0x8000; /*!< (-32768) */
 
 static const qfrac16_t QFRAC16_1_DIV_2 = 0x4000; /*!< 16384 */
 static const qfrac16_t QFRAC16_1_DIV_4 = 0x2000;
+static const qfrac16_t QFRAC16_3_DIV_4 = 0x6000;
 static const qfrac16_t QFRAC16_1_DIV_3 = 0x2AAB;
 static const qfrac16_t QFRAC16_2_DIV_3 = 0x5555;
 static const qfrac16_t QFRAC16_1_DIV_SQRT3 = 0x49E7; /*!< 0.57735026919f */
 static const qfrac16_t QFRAC16_SQRT3_DIV_2 = 0x6EDA;
 static const qfrac16_t QFRAC16_SQRT3_DIV_4 = 0x376D;
 static const qfrac16_t QFRAC16_SQRT2_DIV_2 = 0x5A82;
+
+static const qfrac16_t QFRAC16_PI_DIV_4 = 0x6487;
+static const int32_t QFRAC16_PI = 0x0001921F;			/* Oversaturated */
+static const int32_t QFRAC16_3PI_DIV_4 = 0x00012D97; 	/* Oversaturated */
 
 static const int32_t QFRAC16_1_OVERSAT = (int32_t)0x00008000; /*!< (32768) */
 
@@ -255,38 +260,33 @@ static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
 }
 
 /*
- * from libfixmath https://github.com/PetteriAimonen/libfixmath/blob/master/libfixmath/fix16_trig.c
+ * from libfixmath https://github.com/PetteriAimonen/libfixmath/blob/master/libfixmath/qfrac16_trig.c
  */
-static inline qfrac16_t qfrac16_atan2(qfrac16_t sine, qfrac16_t cosine)
+static inline qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
 {
-	qfrac16_t abs_inY, mask, angle, r, r_3;
+	int32_t mask = (y >> 15U);
+	int32_t yAbs = (y + mask) ^ mask;
+	int32_t r, r_3, angle;
 
+	if(x >= 0)
+	{
+		r = qfrac16_div((x - yAbs), (x + yAbs));
+		r_3 = qfrac16_mul(qfrac16_mul(r, r), r);
+//		angle = qfrac16_mul(0x00003240/2U, r_3) - qfrac16_mul(0x0000FB50/2U, r) + QFRAC16_PI_DIV_4;
+		angle = qfrac16_mul(0x03FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_1_DIV_4;
+	}
+	else
+	{
+		r = qfrac16_div((x + yAbs), (yAbs - x));
+		r_3 = qfrac16_mul(qfrac16_mul(r, r), r); //pi 0x0001921F
+//		angle = qfrac16_mul(0x00003240/2U, r_3) - qfrac16_mul(0x0000FB50/2U, r) + QFRAC16_3PI_DIV_4;
+		angle = qfrac16_mul(0x03FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_3_DIV_4;
+	}
 
-//	mask = (inY >> (sizeof(fix16_t)*CHAR_BIT-1));
-//	abs_inY = (inY + mask) ^ mask;
+	if(y < 0) {angle = -angle;}
 
-//	abs_inY = sine | 0x7FFF;
-//
-//	if(inX >= 0)
-//	{
-//		r = fix16_div((inX - abs_inY), (inX + abs_inY));
-//		r_3 = fix16_mul(fix16_mul(r, r), r);
-//		angle = fix16_mul(0x00003240, r_3) - fix16_mul(0x0000FB50, r) + PI_DIV_4;
-//	}
-//	else
-//	{
-//		r = fix16_div((inX + abs_inY), (abs_inY - inX));
-//		r_3 = fix16_mul(fix16_mul(r, r), r);
-//		angle = fix16_mul(0x00003240, r_3) - fix16_mul(0x0000FB50, r) + THREE_PI_DIV_4;
-//	}
-//	if(inY < 0)
-//	{
-//		angle = -angle;
-//	}
-
-//	return angle;
-
-	return 0U;
+//	angle = (angle << 14U) / (QFRAC16_PI / 2);
+	return angle; /* angle loops, no need to saturate */
 }
 
 //qfrac16_t qfrac16_sqrt(qfrac16_t x)

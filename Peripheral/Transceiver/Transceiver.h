@@ -121,13 +121,13 @@ typedef const struct
 }
 Transceiver_T;
 
-//bool Transceiver_Validate(const Transceiver_T * p_transceiver, void * target)
+//bool Transceiver_Validate(const Transceiver_T * p_xcvr, void * target)
 //{
-//	for (uint8_t iXcvr = 0; iXcvr < p_transceiver->CONFIG.TRANSCEIVER_COUNT; iXcvr++)
+//	for (uint8_t iXcvr = 0; iXcvr < p_xcvr->CONFIG.TRANSCEIVER_COUNT; iXcvr++)
 //	{
-//		if (target == p_transceiver->CONFIG.P_TRANSCEIVER_TABLE[iXcvr])
+//		if (target == p_xcvr->CONFIG.P_TRANSCEIVER_TABLE[iXcvr])
 //		{
-//			p_transceiver->p_Struct = target;
+//			p_xcvr->p_Struct = target;
 //		}
 //	}
 //}
@@ -139,41 +139,61 @@ Transceiver_T;
 	.p_Context	= p_context											\
 }
 
-//void Transceiver_Init(const Transceiver_T * p_transceiver)	{p_transceiver->Init(p_transceiver->p_Context);}
-//bool Transceiver_SendChar(const Transceiver_T * p_transceiver, uint8_t txChar) 		{return p_transceiver->SendChar(p_transceiver->p_Context, txChar);}
-//bool Transceiver_RecvChar(const Transceiver_T * p_transceiver, uint8_t * p_rxChar)	{return p_transceiver->RecvChar(p_transceiver->p_Context, p_rxChar);}
-//uint32_t Transceiver_SendBytes(const Transceiver_T * p_transceiver, const uint8_t * p_srcBuffer, size_t srcSize)	{p_transceiver->SendBytes(p_transceiver->p_Context, p_srcBuffer, srcSize);}
-//uint32_t Transceiver_RecvBytes(const Transceiver_T * p_transceiver, uint8_t * p_destBuffer, size_t destSize)		{p_transceiver->RecvBytes(p_transceiver->p_Context, p_destBuffer, destSize);}
-//bool Transceiver_SendString(const Transceiver_T * p_transceiver, const uint8_t * p_src, size_t length)				{p_transceiver->SendString(p_transceiver->p_Context, p_src, length);}
-//bool Transceiver_RecvString(const Transceiver_T * p_transceiver, uint8_t * p_dest, size_t length)					{p_transceiver->RecvString(p_transceiver->p_Context, p_dest, length);}
-//bool Transceiver_Send(const Transceiver_T * p_transceiver, const uint8_t * p_srcBuffer, size_t length)		{return Transceiver_SendString(p_transceiver, p_srcBuffer, length);}
-//uint32_t Transceiver_Recv(const Transceiver_T * p_transceiver, uint8_t * p_destBuffer, size_t length)		{return Transceiver_RecvBytes(p_transceiver, p_destBuffer, length);}
+//void Transceiver_Init(const Transceiver_T * p_xcvr)	{p_xcvr->Init(p_xcvr->p_Context);}
+//bool Transceiver_SendChar(const Transceiver_T * p_xcvr, uint8_t txChar) 		{return p_xcvr->SendChar(p_xcvr->p_Context, txChar);}
+//bool Transceiver_RecvChar(const Transceiver_T * p_xcvr, uint8_t * p_rxChar)	{return p_xcvr->RecvChar(p_xcvr->p_Context, p_rxChar);}
+//uint32_t Transceiver_SendBytes(const Transceiver_T * p_xcvr, const uint8_t * p_srcBuffer, size_t srcSize)	{p_xcvr->SendBytes(p_xcvr->p_Context, p_srcBuffer, srcSize);}
+//uint32_t Transceiver_RecvBytes(const Transceiver_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)		{p_xcvr->RecvBytes(p_xcvr->p_Context, p_destBuffer, destSize);}
+//
+//bool Transceiver_SendString(const Transceiver_T * p_xcvr, const uint8_t * p_src, size_t length)				{p_xcvr->SendString(p_xcvr->p_Context, p_src, length);}
+//bool Transceiver_RecvString(const Transceiver_T * p_xcvr, uint8_t * p_dest, size_t length)					{p_xcvr->RecvString(p_xcvr->p_Context, p_dest, length);}
 
-//void Transceiver_ConfigBaudRate(const Transceiver_T * p_transceiver, uint32_t baudRate)
+
+//bool Transceiver_Send(const Transceiver_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
 //{
-//	HAL_Transceiver_ConfigBaudRate(p_transceiver->CONFIG.P_HAL_SERIAL, baudRate);
+//	switch(p_xcvr->Type)
+//	{
+//		case XCVR_TYPE_CAN:
+//			CanMessage_Set();
+//			CanBus_SendMessage();
+//	}
+//
+//	return Transceiver_SendString(p_xcvr, p_srcBuffer, length);
 //}
 
-static inline void Transceiver_Poll(const Transceiver_T * p_transceiver)
+
+//uint32_t Transceiver_Recv(const Transceiver_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
+//{
+//	return Transceiver_RecvBytes(p_xcvr, p_destBuffer, length);
+//}
+
+
+
+//void Transceiver_ConfigBaudRate(const Transceiver_T * p_xcvr, uint32_t baudRate)
+//{
+//	HAL_Transceiver_ConfigBaudRate(p_xcvr->CONFIG.P_HAL_SERIAL, baudRate);
+//}
+
+static inline void Transceiver_Poll(const Transceiver_T * p_xcvr)
 {
 //	Transceiver_PollRestartRxIsr(p_Serial)
 
 }
 
-static inline uint32_t Transceiver_GetRxFullCount(const Transceiver_T * p_transceiver)
+static inline uint32_t Transceiver_GetRxFullCount(const Transceiver_T * p_xcvr)
 {
 
 }
 
-static inline uint32_t Transceiver_GetTxEmptyCount(const Transceiver_T * p_transceiver)
+static inline uint32_t Transceiver_GetTxEmptyCount(const Transceiver_T * p_xcvr)
 {
 
 }
 
-static inline void Transceiver_EnableTx(const Transceiver_T * p_transceiver){}
-static inline void Transceiver_DisableTx(const Transceiver_T * p_transceiver){}
-static inline void Transceiver_EnableRx(const Transceiver_T * p_transceiver){}
-static inline void Transceiver_DisableRx(const Transceiver_T * p_transceiver){}
+static inline void Transceiver_EnableTx(const Transceiver_T * p_xcvr){}
+static inline void Transceiver_DisableTx(const Transceiver_T * p_xcvr){}
+static inline void Transceiver_EnableRx(const Transceiver_T * p_xcvr){}
+static inline void Transceiver_DisableRx(const Transceiver_T * p_xcvr){}
 
 #endif
 

@@ -33,14 +33,6 @@
 
 #include <stdint.h>
 
-#ifndef INT16_MAX
-	#define INT16_MAX           (0x7FFF)
-#endif
-
-#ifndef INT16_MIN
-	#define INT16_MIN           (0x8000)
-#endif
-
 static inline int16_t q_sat16(int32_t x)
 {
 	int16_t sat;

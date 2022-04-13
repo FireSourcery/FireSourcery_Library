@@ -45,11 +45,11 @@
 
 #include "Protocol/Protocol/Protocol.h"
 
-#include "Peripheral/Serial/Serial.h"
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
-//#include "Peripheral/CanBus/CanBus.h"
+#include "Peripheral/Serial/Serial.h"
+#include "Peripheral/CanBus/CanBus.h"
 
 #include "Utility/Timer/Timer.h"
 #include "Utility/StateMachine/StateMachine.h"

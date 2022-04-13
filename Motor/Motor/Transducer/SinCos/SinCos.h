@@ -37,15 +37,18 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-
 typedef struct __attribute__((aligned (4U)))
 {
 	uint16_t SinZero_ADCU;
-	uint16_t SinMax_ADCU;
-	uint16_t SinMax_MilliV;
-	uint16_t CosZero_ADCU;
-	uint16_t CosMax_ADCU;
-	uint16_t CosMax_MilliV;
+//	uint16_t SinMax_ADCU;
+//	uint16_t SinMax_MilliV;
+//	uint16_t CosZero_ADCU;
+//	uint16_t CosMax_ADCU;
+//	uint16_t CosMax_MilliV;
+
+	uint16_t Zero_ADCU;
+	uint16_t Max_ADCU;
+	uint16_t Max_MilliV;
 	qangle16_t AngleOffet;
 }
 SinCos_Params_T;
@@ -63,8 +66,9 @@ typedef struct
 {
 	SinCos_Config_T CONFIG;
 	SinCos_Params_T Params;
-	Linear_T UnitSin;
-	Linear_T UnitCos;
+	Linear_T UnitConversion;
+//	Linear_T UnitSin;
+//	Linear_T UnitCos;
 }
 SinCos_T;
 
@@ -78,12 +82,11 @@ SinCos_T;
 
 static inline qangle16_t SinCos_CaptureInput(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
 {
-	qfrac16_t sin = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitSin, sin_ADCU);
-	qfrac16_t cos = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitCos, cos_ADCU);
+	qfrac16_t sin = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitConversion, sin_ADCU);
+	qfrac16_t cos = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitConversion, cos_ADCU);
 
 	return qfrac16_atan2(sin, cos);
 }
-
 
 #endif
 
