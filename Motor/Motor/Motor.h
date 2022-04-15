@@ -543,7 +543,7 @@ static inline void Motor_CaptureSpeed(Motor_T * p_motor)
 //}
 
 //Speed pid always uses directionless positive value [0:65535]
-static inline void Motor_ResumeSpeedOutput(Motor_T * p_motor, uint16_t matchOutput)
+static inline void Motor_ResumeSpeedOutput(Motor_T * p_motor, int32_t matchOutput)
 {
 	Motor_ResumeRampOutput(p_motor, p_motor->Speed_Frac16); // req start from present speed
 	PID_SetIntegral(&p_motor->PidSpeed, matchOutput);

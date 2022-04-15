@@ -234,6 +234,16 @@ void Thermistor_SetHeatThreshold_DegC(Thermistor_T * p_thermistor, uint8_t thres
 	p_thermistor->Params.Threshold_ADCU = ConvertDegCToAdcu(p_thermistor, threshold_degreesC);
 }
 
+void Thermistor_SetParams_DegC(Thermistor_T * p_thermistor, uint32_t r0, uint32_t t0, uint32_t b, uint8_t threshold_degC, uint8_t limit_degC)
+{
+	Thermistor_SetHeatLimit_DegC(p_thermistor, limit_degC);
+	Thermistor_SetHeatThreshold_DegC(p_thermistor, threshold_degC);
+	p_thermistor->Params.RNominal = r0;
+//	p_thermistor->Params.TNominal = t0 + 273;
+	p_thermistor->Params.BConstant = b;
+}
+
+
 int32_t Thermistor_GetHeatLimit_DegCInt(Thermistor_T * p_thermistor, uint16_t scalar)
 {
 	return Thermistor_ConvertToDegC_Int(p_thermistor, p_thermistor->Params.Limit_ADCU, scalar);

@@ -33,7 +33,6 @@
 
 #include "Linear.h"
 
-
 static inline int32_t Linear_Frac16(const Linear_T * p_linear, int32_t x)
 {
 	return linear_f16_m16_shift(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->XOffset, p_linear->YOffset, x);

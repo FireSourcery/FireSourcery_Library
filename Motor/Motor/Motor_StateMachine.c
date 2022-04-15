@@ -181,7 +181,13 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABL
  */
 static void Stop_Entry(Motor_T * p_motor)
 {
-	Motor_EnterStop(p_motor);
+//	Motor_EnterStop(p_motor);
+	Phase_Float(&p_motor->Phase);
+//	Motor_ResetRamp(p_motor);
+//	PID_SetIntegral(&p_motor->PidSpeed, 0U);
+//	p_motor->SpeedControl = 0U;
+//	p_motor->ControlTimerBase = 0U; //ok to reset timer
+	Timer_StartPeriod(&p_motor->ControlTimer, 2000U); //100ms
 
 	p_motor->ControlModeFlags.Update = 1U; /* This way next cmd call will set to run state, share state input */
 
@@ -209,7 +215,16 @@ static void Stop_Proc(Motor_T * p_motor)
 //	}
 //	else
 	{
-		Motor_ProcStop(p_motor);
+//		Motor_ProcStop(p_motor);
+		if (Timer_Poll(&p_motor->ControlTimer) == true)
+		{
+			AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+	//		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VPOS);
+			AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
+			AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
+			AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
+			AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+		}
 	}
 }
 

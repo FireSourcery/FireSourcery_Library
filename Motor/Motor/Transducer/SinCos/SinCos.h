@@ -39,7 +39,7 @@
 
 typedef struct __attribute__((aligned (4U)))
 {
-	uint16_t SinZero_ADCU;
+//	uint16_t SinZero_ADCU;
 //	uint16_t SinMax_ADCU;
 //	uint16_t SinMax_MilliV;
 //	uint16_t CosZero_ADCU;
@@ -80,7 +80,7 @@ SinCos_T;
 	}															\
 }
 
-static inline qangle16_t SinCos_CaptureInput(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
+static inline qangle16_t SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
 {
 	qfrac16_t sin = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitConversion, sin_ADCU);
 	qfrac16_t cos = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitConversion, cos_ADCU);

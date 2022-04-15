@@ -36,6 +36,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 typedef CAN_Type HAL_CanBus_T;
 
@@ -65,7 +66,7 @@ static volatile uint32_t * GetPtrMessageBuffer(HAL_CanBus_T * p_hal, uint32_t ms
 #define CAN_DLC_VALUE_48_BYTES                   14U
 #define CAN_DLC_VALUE_64_BYTES                   15U
 
-static uint8_t GetDataLengthMax(uint8_t dlcValue)
+static uint8_t CalcDataFieldLength(uint8_t dlcValue)
 {
 	uint8_t ret = 0U;
 
@@ -91,7 +92,7 @@ static uint8_t GetDataLengthMax(uint8_t dlcValue)
     return ret;
 }
 
-static uint8_t GetDataLengthCode(uint8_t dataLength)
+static uint8_t CalcDataLengthCode(uint8_t dataLength)
 {
     static const uint8_t DLC[65U] = {
 		0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U,
@@ -130,7 +131,7 @@ static uint8_t GetDataLengthCode(uint8_t dataLength)
     return (uint8_t)ret;
 }
 
-static inline bool HAL_CanBus_CheckTxMessageBufferId(HAL_CanBus_T * p_hal, uint8_t bufferId)
+static inline bool HAL_CanBus_CheckTxMessageBufferId(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
 	//	uint32_t val1, val2 = 1;
 
@@ -157,12 +158,15 @@ static inline bool HAL_CanBus_CheckTxMessageBufferId(HAL_CanBus_T * p_hal, uint8
 //	}
 }
 
-//static inline uint8_t HAL_CanBus_CalcTxMessageBufferIndex(HAL_CanBus_T * p_hal, uint8_t userId)
-//{
-////	if //fifio enabled
-//    return (5U + ((((userId) + 1U) * 8U) / 4U));
-//}
+static inline uint8_t HAL_CanBus_CalcTxMessageBufferIndex(HAL_CanBus_T * p_hal, uint8_t userId)
+{
+	return (((p_hal->MCR & CAN_MCR_RFEN_MASK) >> CAN_MCR_RFEN_SHIFT) != 0U) ? (5U + ((userId + 1U) * 8U / 4U)) : userId;
+}
 
+static inline uint8_t HAL_CanBus_CalcRxMessageBufferIndex(HAL_CanBus_T * p_hal, uint8_t userId)
+{
+	return HAL_CanBus_CalcTxMessageBufferIndex(p_hal, userId);
+}
 
 #define CAN_ID_EXT_MASK                          0x3FFFFu
 #define CAN_ID_EXT_SHIFT                         0
@@ -195,7 +199,6 @@ static inline bool HAL_CanBus_CheckTxMessageBufferId(HAL_CanBus_T * p_hal, uint8
 #define CAN_MB_EDL_MASK                          0x80000000u
 #define CAN_MB_BRS_MASK                          0x40000000u
 
-//uint32_t code;
 /*!< MB code for TX or RX buffers. Defined by flexcan_mb_code_rx_t and flexcan_mb_code_tx_t */
 enum
 {
@@ -219,55 +222,53 @@ enum
 };
 
 
-static inline void HAL_CanBus_WriteTxMessageBufferControl(HAL_CanBus_T * p_hal, const CanMessage_T * p_txMessage, uint8_t bufferId)
+static inline void HAL_CanBus_WriteTxMessageBufferControl(HAL_CanBus_T * p_hal, const CanMessage_T * p_txMessage, uint8_t hwBufferIndex)
 {
 
 }
 
-static inline void HAL_CanBus_WriteTxMessageBufferData(HAL_CanBus_T * p_hal, const uint8_t * p_data, uint8_t dataLength, uint8_t bufferId)
+static inline void HAL_CanBus_WriteTxMessageBufferData(HAL_CanBus_T * p_hal, const uint8_t * p_data, uint8_t dataLength, uint8_t hwBufferIndex)
 {
 
 }
 
-static inline void HAL_CanBus_WriteTxMessageBufferStart(HAL_CanBus_T * p_hal, uint8_t bufferId)
+static inline void HAL_CanBus_WriteTxMessageBufferStart(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
 
 }
 
-
-
-static inline void HAL_CanBus_WriteTxMessageBuffer(HAL_CanBus_T * p_hal, const CanMessage_T * p_txMessage, uint8_t bufferId)
+static inline void HAL_CanBus_WriteTxMessageBuffer(HAL_CanBus_T * p_hal, const CanMessage_T * p_txMessage, uint8_t hwBufferIndex)
 {
-	volatile uint32_t * p_messageBuffer = GetPtrMessageBuffer(p_hal, bufferId);
+	volatile uint32_t * p_messageBuffer = GetPtrMessageBuffer(p_hal, hwBufferIndex);
 	volatile uint32_t * p_bufferHeader = &p_messageBuffer[0U];
 	volatile uint32_t * p_bufferId = &p_messageBuffer[1U];
 	volatile uint8_t * p_bufferData = (volatile uint8_t*)(&p_messageBuffer[2U]);
 	volatile uint32_t * p_bufferData32 = &p_messageBuffer[2U];
 //	const uint32_t * p_messageData = (const uint32_t*)&p_txMessage->Data;
-	uint8_t dlc = GetDataLengthCode(p_txMessage->DataLength);
+	uint8_t dlc = CalcDataLengthCode(p_txMessage->DataLength);
+	uint8_t dataLength = CalcDataFieldLength(dlc);
 	uint32_t messageHeader = 0U;
 //	status_t stat = STATUS_SUCCESS;
 
 	uint32_t txCode;
 
 	{
-	        /* Make sure the BRS bit will not be ignored */
-//	        if (FLEXCAN_IsFDEnabled(base) && cs->enable_brs)
-//	        {
-//	            p_canBus->FDCTRL = (p_canBus->FDCTRL & ~CAN_FDCTRL_FDRATE_MASK) | CAN_FDCTRL_FDRATE(1U);
-//	        }
-
+		if((p_txMessage->EnableBitRateSwitch == true)) //reg_IsFdEnabled() &&
+		{
+			p_hal->FDCTRL = (p_hal->FDCTRL & ~CAN_FDCTRL_FDRATE_MASK) | CAN_FDCTRL_FDRATE(1U);
+		}
 
 		if(p_txMessage->Data != 0U)
 		{
 			//todo 32 bit write
-			//account for endianess during write to buffer
-			for(uint8_t iByte = 0; iByte < p_txMessage->DataLength; iByte++)
-			{
-				p_bufferData[iByte] = p_txMessage->Data[iByte];
-			}
+			//account for endianess during write to sw struct
+			memcpy(&p_bufferData[0U], &p_txMessage->Data[0U], p_txMessage->DataLength);
+//			for(uint8_t iByte = 0; iByte < p_txMessage->DataLength; iByte++)
+//			{
+//				p_bufferData[iByte] = p_txMessage->Data[iByte];
+//			}
 
-			for(uint8_t iByte = p_txMessage->DataLength; iByte < GetDataLengthMax(dlc); iByte++)
+			for(uint8_t iByte = p_txMessage->DataLength; iByte < dataLength; iByte++)
 			{
 				p_bufferData[iByte] = p_txMessage->FlexDataPadding;
 			}
@@ -282,7 +283,7 @@ static inline void HAL_CanBus_WriteTxMessageBuffer(HAL_CanBus_T * p_hal, const C
 		{
 			/* ID [28-0] */
 			*p_bufferId &= ~(CAN_ID_STD_MASK | CAN_ID_EXT_MASK);
-			*p_bufferId |= (p_txMessage->Id & (CAN_ID_STD_MASK | CAN_ID_EXT_MASK));
+			*p_bufferId |= (p_txMessage->Id.Id & (CAN_ID_STD_MASK | CAN_ID_EXT_MASK));
 
 			/* Set IDE */
 			messageHeader |= CAN_CS_IDE_MASK;
@@ -294,7 +295,7 @@ static inline void HAL_CanBus_WriteTxMessageBuffer(HAL_CanBus_T * p_hal, const C
 		{
 			/* ID[28-18] */
 			*p_bufferId &= ~CAN_ID_STD_MASK;
-			*p_bufferId |= (p_txMessage->Id << CAN_ID_STD_SHIFT) & CAN_ID_STD_MASK;
+			*p_bufferId |= (p_txMessage->Id.Id << CAN_ID_STD_SHIFT) & CAN_ID_STD_MASK;
 
 			/* make sure IDE and SRR are not set */
 			messageHeader &= ~(CAN_CS_IDE_MASK | CAN_CS_SRR_MASK);
@@ -323,71 +324,149 @@ static inline void HAL_CanBus_WriteTxMessageBuffer(HAL_CanBus_T * p_hal, const C
 			*p_bufferHeader |= messageHeader;
 		}
 	}
-
 }
 
-static inline CanMessage_Status_T HAL_CanBus_ReadTxBufferStatus(HAL_CanBus_T * p_hal)
+static inline CanMessage_Status_T HAL_CanBus_ReadTxBufferStatus(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
+	volatile uint32_t * p_messageBuffer = GetPtrMessageBuffer(p_hal, hwBufferIndex);
+	volatile uint32_t * p_bufferHeader = &p_messageBuffer[0U];
+	CanMessage_Status_T status;
 
+	switch((*p_bufferHeader & CAN_CS_CODE_MASK) >> CAN_CS_CODE_SHIFT)
+	{
+//		case FLEXCAN_TX_INACTIVE : 	status = CAN_MESSAGE_IDLE; break;
+//		case FLEXCAN_TX_ABORT :		status = CAN_MESSAGE_IDLE; break;
+		case FLEXCAN_TX_DATA :		status = CAN_MESSAGE_TX_DATA; break;
+		case FLEXCAN_TX_REMOTE :	status = CAN_MESSAGE_TX_REMOTE; break;
+//		case FLEXCAN_TX_TANSWER :	status = CAN_MESSAGE_IDLE; break;
+//		case FLEXCAN_TX_NOT_USED :	status = CAN_MESSAGE_IDLE; break;
+		default: status = CAN_MESSAGE_IDLE; break;
+	}
+
+	return status;
 }
 
-static inline bool HAL_CanBus_ReadTxBufferAvailable(HAL_CanBus_T * p_hal)
+static inline bool HAL_CanBus_ReadTxBufferComplete(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
-
+	return (p_hal->IFLAG1 | (1UL << (hwBufferIndex % 32U)));
 }
 
-static inline bool HAL_CanBus_ReadTxBufferComplete(HAL_CanBus_T * p_hal, uint8_t bufferId)
+static inline bool HAL_CanBus_ReadTxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
-	return (p_hal->IFLAG1 | (1UL << (bufferId % 32U)));
+	return (((p_hal->IFLAG1 & p_hal->IMASK1) >> (hwBufferIndex % 32U)) & 1U);
 }
 
-static inline bool HAL_CanBus_ReadTxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t bufferId)
+static inline void HAL_CanBus_ClearTxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
-	return (((p_hal->IFLAG1 & p_hal->IMASK1) >> (bufferId % 32U)) & 1U);
+	p_hal->IFLAG1 = 1UL << (hwBufferIndex % 32U);
 }
 
-static inline void HAL_CanBus_ClearTxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t bufferId)
+static inline void HAL_CanBus_EnableTxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
-	p_hal->IFLAG1 = 1UL << (bufferId % 32U);
+	p_hal->IMASK1 = p_hal->IMASK1 | (1UL << (hwBufferIndex % 32U));
 }
 
-static inline void HAL_CanBus_EnableTxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t bufferId)
+static inline void HAL_CanBus_DisableTxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
-	p_hal->IMASK1 = p_hal->IMASK1 | (1UL << (bufferId % 32U));
+	p_hal->IMASK1 = p_hal->IMASK1 & ~(1UL << (hwBufferIndex % 32U));
 }
 
-static inline void HAL_CanBus_DisableTxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t bufferId)
+static inline void HAL_CanBus_ReadRxMessageBuffer(HAL_CanBus_T * p_hal, CanMessage_T * p_rxMessage, uint8_t hwBufferIndex)
 {
-	p_hal->IMASK1 = p_hal->IMASK1 & ~(1UL << (bufferId % 32U));
+	volatile uint32_t * p_messageBuffer = GetPtrMessageBuffer(p_hal, hwBufferIndex);
+	volatile uint32_t * p_bufferHeader = &p_messageBuffer[0U];
+	volatile uint32_t * p_bufferId = &p_messageBuffer[1U];
+	volatile uint8_t * p_bufferData = (volatile uint8_t*)(&p_messageBuffer[2U]);
+	volatile uint32_t * p_bufferData32 = &p_messageBuffer[2U];
+//	const uint32_t * p_messageData = (const uint32_t*)&p_txMessage->Data;
+	uint8_t dlc = (uint8_t)(((*p_messageBuffer) & CAN_CS_DLC_MASK) >> 16);
+	uint8_t dataLength = CalcDataFieldLength(dlc);
+	uint32_t messageHeader = 0U;
+
+//#if FEATURE_CAN_HAS_FD
+//    if (payload_size > FLEXCAN_GetPayloadSize(base))
+//    {
+//        payload_size = FLEXCAN_GetPayloadSize(base);
+//    }
+//#endif /* FEATURE_CAN_HAS_FD */
+
+    p_rxMessage->DataLength = dataLength;
+	p_rxMessage->Id.Id = ((*p_bufferHeader & CAN_CS_IDE_MASK) != 0U) ?	(*p_bufferId) : (*p_bufferId) >> CAN_ID_STD_SHIFT;
+	memcpy(&p_rxMessage->Data[0U], &p_bufferData[0U], dataLength);
 }
 
-static inline void HAL_CanBus_ReadRxMessageBuffer(HAL_CanBus_T * p_hal, CanMessage_T * p_rxFrame, uint8_t bufferId)
+static inline CanMessage_Status_T HAL_CanBus_ReadRxBufferStatus(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
+	volatile uint32_t * p_messageBuffer = GetPtrMessageBuffer(p_hal, hwBufferIndex);
+	volatile uint32_t * p_bufferHeader = &p_messageBuffer[0U];
+	CanMessage_Status_T status;
 
+	switch((*p_bufferHeader & CAN_CS_CODE_MASK) >> CAN_CS_CODE_SHIFT)
+	{
+		case FLEXCAN_RX_INACTIVE : 	status = CAN_MESSAGE_IDLE; break;
+		case FLEXCAN_RX_BUSY :		status = CAN_MESSAGE_RX_BUSY; break;
+		case FLEXCAN_RX_FULL :		status = CAN_MESSAGE_RX_BUSY; break;
+		case FLEXCAN_RX_EMPTY :		status = CAN_MESSAGE_IDLE; break;
+		case FLEXCAN_RX_OVERRUN :	status = CAN_MESSAGE_IDLE; break;
+		case FLEXCAN_RX_RANSWER :	status = CAN_MESSAGE_IDLE; break;
+		case FLEXCAN_RX_NOT_USED :	status = CAN_MESSAGE_IDLE; break;
+		default: status = CAN_MESSAGE_IDLE; break;
+	}
+
+	return status;
 }
 
-static inline bool HAL_CanBus_GetRxBufferFlag(HAL_CanBus_T * p_hal)
+static inline bool HAL_CanBus_ReadRxBufferComplete(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
-
+	return HAL_CanBus_ReadTxBufferComplete(p_hal, hwBufferIndex);
 }
 
-
-static inline void HAL_CanBus_EnableRxBufferInterrupt(HAL_CanBus_T * p_hal)
+static inline bool HAL_CanBus_ReadRxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
-
+	return HAL_CanBus_ReadTxBufferInterrupt(p_hal, hwBufferIndex);
 }
 
-static inline void HAL_CanBus_DisableRxBufferInterrupt(HAL_CanBus_T * p_hal)
+static inline void HAL_CanBus_ClearRxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
-
+	HAL_CanBus_ClearTxBufferInterrupt(p_hal, hwBufferIndex);
 }
 
-static inline void HAL_CanBus_ClearRxBufferFlag(HAL_CanBus_T * p_hal)
+static inline void HAL_CanBus_EnableRxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
+	HAL_CanBus_EnableTxBufferInterrupt(p_hal, hwBufferIndex);
+}
 
+static inline void HAL_CanBus_DisableRxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
+{
+	HAL_CanBus_DisableTxBufferInterrupt(p_hal, hwBufferIndex);
+}
+
+static inline bool HAL_CanBus_LockRxBuffer(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
+{
+	(void)*GetPtrMessageBuffer(p_hal, hwBufferIndex); /* Lock the mailbox by reading it */
+}
+
+static inline void HAL_CanBus_UnlockRxBuffer(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
+{
+	(void)p_hal->TIMER; /* Unlock the mailbox by reading the free running timer */
+}
+
+static inline bool HAL_CanBus_LockRxFifoBuffer(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
+{
+}
+
+static inline void HAL_CanBus_UnlockRxFifoBuffer(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
+{
 }
 
 
+typedef struct {
+    uint32_t propSeg;         /*!< Propagation segment*/
+    uint32_t phaseSeg1;       /*!< Phase segment 1*/
+    uint32_t phaseSeg2;       /*!< Phase segment 2*/
+    uint32_t preDivider;      /*!< Clock prescaler division factor*/
+    uint32_t rJumpwidth;      /*!< Resync jump width*/
+} flexcan_time_segment_t;
 static inline void HAL_CanBus_ConfigBaudRate(HAL_CanBus_T * p_hal, uint32_t baudRate)
 {
 

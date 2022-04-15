@@ -220,19 +220,19 @@ static int Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
     	}
     	else if(strncmp(argv[1U], "voltage", 8U) == 0U)
     	{
-			Motor_User_SetControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE);
+    		Motor_User_SetThrottleControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE);
     	}
     	else if(strncmp(argv[1U], "current", 8U) == 0U)
     	{
-    		Motor_User_SetControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_CURRENT);
+    		Motor_User_SetThrottleControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_CURRENT);
     	}
     	else if(strncmp(argv[1U], "speedvoltage", 13U) == 0U)
     	{
-    		Motor_User_SetControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE);
+    		Motor_User_SetThrottleControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE);
     	}
     	else if(strncmp(argv[1U], "speedcurrent", 12U) == 0U)
     	{
-    		Motor_User_SetControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT);
+    		Motor_User_SetThrottleControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT);
     	}
     	else if(strncmp(argv[1U], "protocol", 9U) == 0U)
     	{

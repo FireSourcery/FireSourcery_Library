@@ -28,8 +28,8 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef TRANSCEIVER_H
-#define TRANSCEIVER_H
+#ifndef XCVR_H
+#define XCVR_H
 
 #include "Config.h"
 
@@ -104,13 +104,18 @@ Transceiver_Interface_T;
 typedef const struct
 {
 //	Transceiver_Interface_T Interfaces[];
-	void ** P_TRANSCEIVER_TABLE;
-	uint8_t TRANSCEIVER_COUNT;
+	void ** P_XCVR_TABLE;
+	uint8_t XCVR_COUNT;
 }
 Transceiver_Config_T;
 
-
-
+typedef enum
+{
+	XCVR_TYPE_CAN,
+	XCVR_TYPE_SERIAL,
+	XCVR_TYPE_I2C,
+}
+Xcvr_Type_T;
 /*
  *
  */
@@ -118,25 +123,24 @@ typedef const struct
 {
 	Transceiver_Config_T CONFIG;
 	void * p_Struct;
+	Xcvr_Type_T Type;
 }
 Transceiver_T;
 
 //bool Transceiver_Validate(const Transceiver_T * p_xcvr, void * target)
 //{
-//	for (uint8_t iXcvr = 0; iXcvr < p_xcvr->CONFIG.TRANSCEIVER_COUNT; iXcvr++)
+//	for (uint8_t iXcvr = 0; iXcvr < p_xcvr->CONFIG.XCVR_COUNT; iXcvr++)
 //	{
-//		if (target == p_xcvr->CONFIG.P_TRANSCEIVER_TABLE[iXcvr])
+//		if (target == p_xcvr->CONFIG.P_XCVR_TABLE[iXcvr])
 //		{
 //			p_xcvr->p_Struct = target;
 //		}
 //	}
 //}
 
-
-
-#define TRANSCEIVER_CONFIG(p_context, Init, SendChar, RecvChar, SendBytes, RecvBytes, SendString, RecvString)		\
+#define XCVR_CONFIG(p_context, Init, SendChar, RecvChar, SendBytes, RecvBytes, SendString, RecvString)		\
 {													\
-	.p_Context	= p_context											\
+	.p_Context	= p_context							\
 }
 
 //void Transceiver_Init(const Transceiver_T * p_xcvr)	{p_xcvr->Init(p_xcvr->p_Context);}
@@ -146,8 +150,7 @@ Transceiver_T;
 //uint32_t Transceiver_RecvBytes(const Transceiver_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)		{p_xcvr->RecvBytes(p_xcvr->p_Context, p_destBuffer, destSize);}
 //
 //bool Transceiver_SendString(const Transceiver_T * p_xcvr, const uint8_t * p_src, size_t length)				{p_xcvr->SendString(p_xcvr->p_Context, p_src, length);}
-//bool Transceiver_RecvString(const Transceiver_T * p_xcvr, uint8_t * p_dest, size_t length)					{p_xcvr->RecvString(p_xcvr->p_Context, p_dest, length);}
-
+//bool Transceiver_RecvString(const Transceiver_T * p_xcvr, uint8_t * p_dest, size_t length)
 
 //bool Transceiver_Send(const Transceiver_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
 //{
@@ -162,10 +165,23 @@ Transceiver_T;
 //}
 
 
-//uint32_t Transceiver_Recv(const Transceiver_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
-//{
-//	return Transceiver_RecvBytes(p_xcvr, p_destBuffer, length);
-//}
+uint32_t Transceiver_Recv(const Transceiver_T * p_xcvr, uint8_t * p_destBuffer, size_t length, uint16_t param)
+{
+	uint32_t rxSize;
+
+	switch(p_xcvr->Type)
+	{
+		case XCVR_TYPE_CAN:
+//			rxSize = (CanBus_PollRecvMessage(p_xcvr, p_destBuffer, length, param) == true) ? CanBus_GetRxMessageLength(p_xcvr, param) : 0U;
+			break;
+		case XCVR_TYPE_SERIAL:
+			rxSize = Serial_RecvBytes(p_xcvr, p_destBuffer, length);
+			break;
+		default: break;
+	}
+
+	return rxSize;
+}
 
 
 

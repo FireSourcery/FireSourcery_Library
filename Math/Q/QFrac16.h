@@ -166,6 +166,11 @@ static inline qfrac16_t qfrac16_abs(qfrac16_t x)
 	return val;
 }
 
+static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
+{
+	return q_sqrt((int32_t)x << QFRAC16_N_FRAC_BITS);
+}
+
 /*
  * 0b so11 1111 11xx xxxx
  * use 8 most significant digits of 90 degree bound.
@@ -252,11 +257,6 @@ static inline void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16
 	}
 
 	return;
-}
-
-static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
-{
-	return q_sqrt((int32_t)x << QFRAC16_N_FRAC_BITS);
 }
 
 /*

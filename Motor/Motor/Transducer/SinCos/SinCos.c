@@ -46,8 +46,6 @@ void SinCos_Init(SinCos_T * p_sincos)
 	}
 	else
 	{
-//		Linear_ADC_Init(&p_sincos->UnitSin, 2048U, 4095U, 4500U);
-//		Linear_ADC_Init(&p_sincos->UnitCos, 2048U, 4095U, 4500U);
 		Linear_ADC_Init(&p_sincos->UnitConversion, 2048U, 4095U, 5000U);
 	}
 }
@@ -79,6 +77,6 @@ void SinCos_SetParams(SinCos_T * p_sincos, uint16_t zero_ADCU, uint16_t max_ADCU
 
 void SinCos_Calibrate_MilliV(SinCos_T * p_sincos, uint16_t min_MilliV, uint16_t max_MilliV)
 {
-//	SinCos_SetParams(p_sincos, (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / ADC_VREF_MILLIV, (uint32_t)max_MilliV * ADC_MAX / ADC_VREF_MILLIV, max_MilliV);
+	SinCos_SetParams(p_sincos, (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / ADC_VREF_MILLIV, (uint32_t)max_MilliV * ADC_MAX / ADC_VREF_MILLIV, max_MilliV);
 }
 

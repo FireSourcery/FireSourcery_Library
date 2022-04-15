@@ -108,7 +108,6 @@ static inline size_t CalcQueueIndexInc(const Queue_T * p_queue, size_t index, si
 #endif
 }
 
-
 static inline size_t CalcQueueIndexDec(const Queue_T * p_queue, size_t index, size_t dec)
 {
 #if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)

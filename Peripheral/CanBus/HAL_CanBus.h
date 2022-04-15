@@ -22,24 +22,21 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.h
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	HAL_CanBus.h
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_SIN_COS_H
-#define CONFIG_SIN_COS_H
+#ifndef HAL_CAN_BUS_H
+#define HAL_CAN_BUS_H
 
-#if defined(ADC_VREF_MILLIV) && defined(ADC_MAX)
+#include "Peripheral/HAL/Path.h"
 
-#elif defined(CONFIG_SIN_COS_ADC_VREF_MILLIV) && defined(CONFIG_SIN_COS_ADC_MAX)
-	#define ADC_VREF_MILLIV CONFIG_SIN_COS_ADC_VREF_MILLIV
-	#define ADC_MAX CONFIG_SIN_COS_ADC_MAX
+#if defined(CONFIG_HAL_CAN_BUS_PATH)
+	#include STR(CONFIG_HAL_CAN_BUS_PATH/HAL_CanBus.h)
 #else
-	#define ADC_VREF_MILLIV 5000
-	#define ADC_MAX 4096
+	#include PATH_HAL_PERIPHERAL(HAL_CanBus.h)
 #endif
 
 #endif
-

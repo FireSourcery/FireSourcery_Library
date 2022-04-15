@@ -283,6 +283,7 @@ static StateMachine_State_T * Run_InputCoast(MotorController_T * p_mc)
 {
  	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
  	{
+// 		Motor_UserN_SetRegenCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
  		MotorController_ProcUserCmdRegen(p_mc);
  	}
  	else

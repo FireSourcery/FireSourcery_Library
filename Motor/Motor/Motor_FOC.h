@@ -186,7 +186,11 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			break;
 
 		case MOTOR_SENSOR_MODE_SIN_COS:
-			p_motor->ElectricalAngle = SinCos_CaptureInput(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
+			if (captureSpeed == true)
+			{
+
+			}
+			p_motor->ElectricalAngle = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
 			break;
 
 		default:
@@ -200,9 +204,24 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 		if (p_motor->ControlModeFlags.Speed == 1U)
 		{
 			//output SpeedControl is IqReq or VqReq  =>  RampCmd - Speed always positive values direction independent
-			//cannot request negative current on speed decrease
+
 			p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->Speed_Frac16) >> 1U;
 			if (p_motor->Direction == MOTOR_DIRECTION_CW) {p_motor->SpeedControl = 0 - p_motor->SpeedControl;};
+
+			if(p_motor->ControlModeFlags.Current == 0U) //speed control is Vq
+			{
+				if (p_motor->Direction == MOTOR_DIRECTION_CCW)
+				{
+					if (p_motor->SpeedControl < 0) {p_motor->SpeedControl = 0;} //no plugging, when req opposite current
+				}
+				else
+				{
+					if (p_motor->SpeedControl > 0) {p_motor->SpeedControl = 0;}
+				}
+			}
+
+
+
 		}
 	}
 
@@ -293,7 +312,7 @@ static void ProcMotorFocCurrentFeedbackLoop(Motor_T * p_motor, qfrac16_t iqReq, 
 		if (vqReq > 0) {vqReq = 0;}
 	}
 
-	FOC_SetVq(&p_motor->Foc, vqReq);
+	FOC_SetVq(&p_motor->Foc, vqReq); //todoc chekc max vq
 	FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, idReq, idFeedback));
 }
 
@@ -388,41 +407,21 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 }
 
 
-static inline void Motor_FOC_SetMatchOutput(Motor_T * p_motor, int32_t iq, int32_t vq)
+static inline void Motor_FOC_SetMatchOutput(Motor_T * p_motor, int32_t iq, int32_t vq, int32_t vd)
 {
-	int32_t speedMatch;
+	int32_t control = (p_motor->ControlModeFlags.Current == 1U) ? iq : vq;
 
 	if (p_motor->ControlModeFlags.Speed == 1U)
 	{
-		/* Speed PID always uses directionless positive value [0:65535] */
-		if(p_motor->ControlModeFlags.Current == 1U)
-		{
-			speedMatch = iq; //brake directly to throttle discontinuity go directly to 0
-			if (p_motor->Direction == MOTOR_DIRECTION_CCW) //does not support reverse current during speed decrease
-			{
-				if (speedMatch < 0)	{speedMatch = 0;}
-			}
-			else
-			{
-				if (speedMatch > 0)	{speedMatch = 0;}
-			}
-		}
-		else
-		{
-			speedMatch = vq;
-			if (speedMatch < 0)	{speedMatch = 0 - speedMatch;}
-		}
-
-		Motor_ResumeSpeedOutput(p_motor, speedMatch << 1U);
+		Motor_ResumeSpeedOutput(p_motor, control * 2U);  /* Speed PID, SpeedControl, is signed [-65535:65535] */
 	}
 	else /* (p_motor->ControlModeFlags.Speed == 0U) */
 	{
-		if (p_motor->ControlModeFlags.Current == 1U) 	{Motor_ResumeRampOutput(p_motor, iq);}
-		else 											{Motor_ResumeRampOutput(p_motor, vq);}
+		Motor_ResumeRampOutput(p_motor, control);
 	}
 
 	PID_SetIntegral(&p_motor->PidIq, vq);
-	PID_SetIntegral(&p_motor->PidId, 0);
+	PID_SetIntegral(&p_motor->PidId, vd);
 }
 
 /*
@@ -432,7 +431,7 @@ static inline void Motor_FOC_SetMatchOutputKnown(Motor_T * p_motor)
 {
 	/* output is prev VqReq, set to start at 0 change in torque */
 	/* Iq PID output differs between voltage Iq limit mode and Iq control mode. still need to match */
-	Motor_FOC_SetMatchOutput(p_motor, FOC_GetIq(&p_motor->Foc), FOC_GetVq(&p_motor->Foc));
+	Motor_FOC_SetMatchOutput(p_motor, FOC_GetIq(&p_motor->Foc), FOC_GetVq(&p_motor->Foc), FOC_GetVd(&p_motor->Foc));
 }
 
 /*
@@ -453,11 +452,11 @@ static inline void Motor_FOC_SetMatchOutputUnknown(Motor_T * p_motor)
 	// use larger SpeedRefVoltage_RPM for smaller vqReq to ensure never resume to higher speed
 	 vqReq = ((int32_t)p_motor->Speed_RPM * (int32_t)32767 / (int32_t)p_motor->Parameters.SpeedRefVoltage_RPM);
 
-	 //vspeedref greater or overflow
+	 //todo saturate vq if speed ref is speed is greater than speedref
 
 	if (p_motor->Direction == MOTOR_DIRECTION_CW) {vqReq = 0 - vqReq;}
 
-	Motor_FOC_SetMatchOutput(p_motor, 0, vqReq);
+	Motor_FOC_SetMatchOutput(p_motor, 0, vqReq, 0);
 }
 
 
@@ -498,8 +497,14 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 
 	PID_SetIntegral(&p_motor->PidIq, 0);
 	PID_SetIntegral(&p_motor->PidId, 0);
-//	FOC_SetVq(&p_motor->Foc, 0);
-//	FOC_SetVd(&p_motor->Foc, 0);
+	FOC_SetVq(&p_motor->Foc, 0);
+	FOC_SetVd(&p_motor->Foc, 0);
+//	FOC_SetIq(&p_motor->Foc, 0);
+//	FOC_SetId(&p_motor->Foc, 0);
+	p_motor->Foc.Iq = 0;
+	p_motor->Foc.Id = 0;
+
+	Motor_FOC_SetMatchOutputKnown(p_motor);
 
 	FOC_SetOutputZero(&p_motor->Foc);
 	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));

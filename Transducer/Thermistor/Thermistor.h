@@ -67,17 +67,14 @@ typedef struct
 //	uint8_t * ADC_LUT; //look up table using adc base, fixed r0 value
 //	uint8_t * R_LUT;
 
-//#ifdef config pointer
-//	uint16_t * P_ADC_VALUE;
-
 	const Thermistor_Params_T * P_PARAMS;
 
 	uint8_t ADC_VREF;
 	uint16_t ADC_MAX;
 
 	uint8_t V_IN;
-	uint32_t R_SERIES; 	//pull up
-	uint32_t R_PARALLEL; // parallel if applicable
+	uint32_t R_SERIES; 		//pull up
+	uint32_t R_PARALLEL; 	// parallel if applicable
 }
 Thermistor_Config_T;
 
@@ -90,7 +87,6 @@ typedef struct
 	int32_t Heat_DegCInt;
 }
 Thermistor_T;
-
 
 #define THERMISTOR_CONFIG(AdcVref, AdcMax, Vin, RSeries, RParallel, p_Params) 	\
 {												\
@@ -121,5 +117,6 @@ static inline int32_t Thermistor_GetHeat_DegCInt(Thermistor_T * p_thermistor)
 }
 
 extern void Thermistor_Init(Thermistor_T * p_thermistor);
+extern Thermistor_ThesholdStatus_T Thermistor_ProcThreshold(Thermistor_T * p_thermistor, uint16_t adcu);
 
 #endif
