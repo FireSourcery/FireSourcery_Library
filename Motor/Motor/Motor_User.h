@@ -95,7 +95,6 @@ static inline bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T 
 {
 	p_motor->UserDirection = direction;
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION);
-
 	//StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction);
 
 	return (p_motor->UserDirection == p_motor->Direction);

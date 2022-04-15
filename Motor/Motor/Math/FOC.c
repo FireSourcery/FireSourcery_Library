@@ -34,8 +34,7 @@
 void FOC_Init(FOC_T * p_foc)
 {
 	p_foc->VectorMaxMagnitude = QFRAC16_MAX;
-//	p_foc->VectorMaxD = QFRAC16_1_DIV_SQRT3;
-	p_foc->VectorMaxD = 0U;
+	p_foc->VectorMaxD = QFRAC16_1_DIV_SQRT3;
 
 //	p_foc->Ia = 0;
 //	p_foc->Ib = 0;
@@ -80,8 +79,13 @@ void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd)
 	FOC_ProcInvParkInvClarkeSvpwm(p_foc);
 }
 
-void FOC_SetOutputZero(FOC_T * p_foc)
+void FOC_Reset(FOC_T * p_foc)
 {
+	p_foc->Vq = 0;
+	p_foc->Vd = 0;
+	p_foc->Iq = 0;
+	p_foc->Id = 0;
+
 	p_foc->DutyA = 65536U/2U;
 	p_foc->DutyB = 65536U/2U;
 	p_foc->DutyC = 65536U/2U;

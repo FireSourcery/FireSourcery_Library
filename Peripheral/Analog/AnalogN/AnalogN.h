@@ -257,7 +257,7 @@ static inline void AnalogN_ResumeQueue(AnalogN_T * p_analogn, AnalogN_AdcFlags_T
 #endif
 }
 
-//extern void AnalogN_Init(AnalogN_T * p_analogn);
+extern void AnalogN_Init(AnalogN_T * p_analogn);
 //extern void AnalogN_EnqueueConversion(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion);
 //extern void AnalogN_EnqueueFrontConversion(AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion);
 //extern void AnalogN_PollDequeueConversion(AnalogN_T * p_analogn);

@@ -119,10 +119,11 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 	switch (p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_OPEN_LOOP:
-			/* OpenLoop
+			/*
+			 * OpenLoop
 			 * Blind input angle, constant voltage
 			 *
-			 * 	p_foc->Theta = integral of speed req
+			 * p_foc->Theta = integral of speed req
 			 */
 			/* integrate speed to angle */
 			p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcIndexOutput(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopSpeed_RPM);
@@ -212,16 +213,13 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			{
 				if (p_motor->Direction == MOTOR_DIRECTION_CCW)
 				{
-					if (p_motor->SpeedControl < 0) {p_motor->SpeedControl = 0;} //no plugging, when req opposite current
+					if (p_motor->SpeedControl < 0) {p_motor->SpeedControl = 0;} //no plugging
 				}
 				else
 				{
 					if (p_motor->SpeedControl > 0) {p_motor->SpeedControl = 0;}
 				}
 			}
-
-
-
 		}
 	}
 
@@ -489,24 +487,13 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 }
 
 /*
- *	from stop only
+ *	from stop
  */
 static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 {
 	Encoder_Reset(&p_motor->Encoder); //zero angle speed //reset before Encoder_DeltaT_SetInitial
-
-	PID_SetIntegral(&p_motor->PidIq, 0);
-	PID_SetIntegral(&p_motor->PidId, 0);
-	FOC_SetVq(&p_motor->Foc, 0);
-	FOC_SetVd(&p_motor->Foc, 0);
-//	FOC_SetIq(&p_motor->Foc, 0);
-//	FOC_SetId(&p_motor->Foc, 0);
-	p_motor->Foc.Iq = 0;
-	p_motor->Foc.Id = 0;
-
+	FOC_Reset(&p_motor->Foc);
 	Motor_FOC_SetMatchOutputKnown(p_motor);
-
-	FOC_SetOutputZero(&p_motor->Foc);
 	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 	Phase_ActivateSwitchABC(&p_motor->Phase);
 

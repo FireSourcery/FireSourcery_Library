@@ -50,5 +50,7 @@ extern bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom);
 extern NvMemory_Status_T EEPROM_SetWrite		(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes);
 extern NvMemory_Status_T EEPROM_Write_Blocking	(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes);
 
+extern void EEPROM_Init_Blocking(EEPROM_T * p_eeprom);
+
 #endif /*   */
 

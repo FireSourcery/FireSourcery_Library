@@ -348,7 +348,9 @@ static inline CanMessage_Status_T HAL_CanBus_ReadTxBufferStatus(HAL_CanBus_T * p
 
 static inline bool HAL_CanBus_ReadTxBufferComplete(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
-	return (p_hal->IFLAG1 | (1UL << (hwBufferIndex % 32U)));
+//	return (p_hal->IFLAG1 | (1UL << (hwBufferIndex % 32U))); //interrupt is set,
+
+//	return code
 }
 
 static inline bool HAL_CanBus_ReadTxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
@@ -418,7 +420,7 @@ static inline CanMessage_Status_T HAL_CanBus_ReadRxBufferStatus(HAL_CanBus_T * p
 
 static inline bool HAL_CanBus_ReadRxBufferComplete(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
-	return HAL_CanBus_ReadTxBufferComplete(p_hal, hwBufferIndex);
+//	return HAL_CanBus_ReadTxBufferComplete(p_hal, hwBufferIndex);
 }
 
 static inline bool HAL_CanBus_ReadRxBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
@@ -459,6 +461,15 @@ static inline void HAL_CanBus_UnlockRxFifoBuffer(HAL_CanBus_T * p_hal, uint8_t h
 {
 }
 
+static inline bool HAL_CanBus_ReadIsBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
+{
+	return (((p_hal->IFLAG1 & p_hal->IMASK1) >> (hwBufferIndex % 32U)) & 1U);
+}
+
+static inline uint8_t HAL_CanBus_CalcMessageBufferIndex(HAL_CanBus_T * p_hal, uint8_t userId)
+{
+	return (((p_hal->MCR & CAN_MCR_RFEN_MASK) >> CAN_MCR_RFEN_SHIFT) != 0U) ? (5U + ((userId + 1U) * 8U / 4U)) : userId;
+}
 
 typedef struct {
     uint32_t propSeg;         /*!< Propagation segment*/

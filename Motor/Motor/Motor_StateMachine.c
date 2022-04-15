@@ -183,9 +183,6 @@ static void Stop_Entry(Motor_T * p_motor)
 {
 //	Motor_EnterStop(p_motor);
 	Phase_Float(&p_motor->Phase);
-//	Motor_ResetRamp(p_motor);
-//	PID_SetIntegral(&p_motor->PidSpeed, 0U);
-//	p_motor->SpeedControl = 0U;
 //	p_motor->ControlTimerBase = 0U; //ok to reset timer
 	Timer_StartPeriod(&p_motor->ControlTimer, 2000U); //100ms
 
@@ -198,7 +195,7 @@ static void Stop_Entry(Motor_T * p_motor)
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-//		Motor_FOC_ResetOutput( p_motor); //set on resume transition
+
 	}
 	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
 	{
