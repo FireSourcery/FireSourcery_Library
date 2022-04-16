@@ -31,7 +31,7 @@
 #include "Motor/Motor/Motor_AnalogConversion.h"
 #include "MotorAnalog.h"
 #include "Motor.h"
-#include "Motor_SixStep.h"
+//#include "Motor_SixStep.h"
 #include "Motor_FOC.h"
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 
@@ -88,7 +88,7 @@ static void CaptureVa(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
-		Motor_SixStep_CaptureBemfA(p_motor);
+//		Motor_SixStep_CaptureBemfA(p_motor);
 	}
 	else
 	{
@@ -116,7 +116,7 @@ static void CaptureVb(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
-		Motor_SixStep_CaptureBemfB(p_motor);
+//		Motor_SixStep_CaptureBemfB(p_motor);
 	}
 	else
 	{
@@ -144,7 +144,7 @@ static void CaptureVc(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
-		Motor_SixStep_CaptureBemfC(p_motor);
+//		Motor_SixStep_CaptureBemfC(p_motor);
 	}
 	else
 	{
@@ -172,7 +172,7 @@ static void CaptureIa(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
-		Motor_SixStep_CaptureIBusA(p_motor);
+//		Motor_SixStep_CaptureIBusA(p_motor);
 	}
 	else
 	{
@@ -195,7 +195,7 @@ static void CaptureIb(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
-		Motor_SixStep_CaptureIBusB(p_motor);
+//		Motor_SixStep_CaptureIBusB(p_motor);
 	}
 	else
 	{
@@ -219,7 +219,7 @@ static void CaptureIc(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
-		Motor_SixStep_CaptureIBusC(p_motor);
+//		Motor_SixStep_CaptureIBusC(p_motor);
 	}
 	else
 	{

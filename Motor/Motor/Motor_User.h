@@ -460,6 +460,21 @@ static inline uint16_t Motor_User_GetHallRotorAngle(Motor_T * p_motor) 	{return 
 static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T * p_motor) 		{return p_motor->Speed_RPM;}
 static inline Motor_ErrorFlags_T Motor_User_GetErrorFlags(Motor_T * p_motor) 	{return  p_motor->ErrorFlags;}
 
+static inline uint16_t Motor_User_GetIPhase(Motor_T * p_motor)
+{
+	uint16_t iPhase;
+
+	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
+	{
+		iPhase = 0U ; //Motor_FOC_GetIPhase(p_motor);
+	}
+	else
+	{
+
+	}
+
+	return iPhase;
+}
 
 //static inline void Motor_User_ActivatePhase(Motor_T * p_motor)
 //{

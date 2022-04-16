@@ -49,6 +49,7 @@ typedef void (*Protocol_ReqFastReadWrite_T)(void * p_appInterface, uint8_t * p_t
 
 /*
  * Common req from child protocol to supported general protocol control
+ * predefined behaviors
  */
 typedef enum
 {
@@ -61,7 +62,7 @@ typedef enum
 	PROTOCOL_REQ_CODE_TX_ACK,
 	PROTOCOL_REQ_CODE_TX_NACK,
 	PROTOCOL_REQ_CODE_EXTEND_TIMER,
-//	PROTOCOL_REQ_CODE_START_DATAGRAM,
+//	PROTOCOL_REQ_CODE_DATAGRAM_CONFIG,
 }
 Protocol_ReqCode_T;
 
@@ -80,6 +81,10 @@ Protocol_ReqExtArgs_T;
 typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(Protocol_ReqExtArgs_T args);
 //typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(void * p_subState,  void * p_appInterface,  uint8_t * p_txPacket,  size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
 //typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(const Protocol_SubConfig_T * args, size_t * p_txSize, size_t rxSize);
+
+
+//typedef Protocol_ReqCode_T (*Protocol_ReqDatagram_T)	(Datagram_T * p_datagram, uint8_t * p_txPacket,  size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
+
 
 /*
  * static string sync
@@ -130,6 +135,8 @@ Protocol_ReqEntry_T;
 typedef enum
 {
 	PROTOCOL_RX_CODE_WAIT_PACKET,
+//	PROTOCOL_RX_CODE_WAIT_PACKET_LENGTH,
+//	PROTOCOL_RX_CODE_WAIT_PACKET_DATA,
 	PROTOCOL_RX_CODE_REQ_ID,
 	PROTOCOL_RX_CODE_ERROR_PACKET,
 	PROTOCOL_RX_CODE_ERROR_PACKET_ECC,

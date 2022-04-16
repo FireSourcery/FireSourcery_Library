@@ -10,99 +10,175 @@ void CanBus_Init(CanBus_T * p_can)
 
 }
 
-void CanBus_ConfigBaudRate(CanBus_T * p_can, uint32_t baudRate)
+void CanBus_InitServices(CanBus_T * p_can)
 {
-	HAL_CanBus_ConfigBaudRate(p_can->CONFIG.P_HAL_CAN_BUS, baudRate);
+	if(p_can->p_Services->INIT != 0U)
+	{
+		p_can->p_Services->INIT(&p_can->Buffers[0U]);
+	}
+}
+
+void CanBus_ProcServices(CanBus_T * p_can)
+{
+	if(*p_can->CONFIG.P_TIMER > p_can->BroadcastTimeSaved + p_can->p_Services->BROADCAST_PERIOD_MS)
+	{
+		p_can->BroadcastTimeSaved = *p_can->CONFIG.P_TIMER;
+
+//		for(uint8_t iBroad = 0U; i < p_can->p_Services->BROADCASTS_COUNT; i++)
+//		{
+		p_can->p_Services->BROADCAST(p_can->CONFIG.P_APP_CONTEXT, &p_can->Buffers[0U]);
+//		}
+	}
+
+	for(uint8_t iBufferId = 0U; iBufferId < CONFIG_CAN_BUS_MESSAGE_BUFFER_COUNT; iBufferId++)
+	{
+		if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_COMPLETE)
+		{
+			p_can->p_Services->RX_REQ(p_can->CONFIG.P_APP_CONTEXT, &p_can->Buffers[iBufferId]);
+		}
+	}
+
+}
+
+void CanBus_ConfigBitRate(CanBus_T * p_can, uint32_t bitRate)
+{
+	HAL_CanBus_ConfigBitRate(p_can->CONFIG.P_HAL_CAN_BUS, bitRate);
 }
 
 /*
  *
  */
-void CanBus_SendMessage(CanBus_T * p_can, const CanMessage_T * p_message)
+void CanBus_TxMessage(CanBus_T * p_can, uint8_t bufferId)
 {
-//	status_t status;
-	//if (p_can->TxState != CAN_STATE_IDLE) return;
-	uint8_t bufferId = 0U; //get buffer id
+	uint8_t hwbufferId;
 
-//	 HAL_CanBus_CheckTxMessageBufferId(HAL_CanBus_T * p_hal, uint8_t bufferId)
-//	        /* Check if the Payload Size is smaller than the payload configured */
-//	        DEV_ASSERT((uint8_t)cs->dataLen <= FLEXCAN_GetPayloadSize(base));
-
-	if(HAL_CanBus_ReadTxBufferComplete(p_can->CONFIG.P_HAL_CAN_BUS, bufferId) == true)
+	if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_IDLE)
 	{
-		HAL_CanBus_ClearTxBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
-
-	//	if (HAL_CanBus_ReadTxBufferAvailable(p_can->CONFIG.P_HAL_CAN_BUS, bufferId) == true)
-
-//		if (p_message.Type = CAN_FRAME_TYPE_REMOTE)
-//		{
-//			p_can->TxState = CAN_STATE_TX_REMOTE;
-//		}
-//		else
-//		{
-//			p_can->TxState = CAN_STATE_TX_DATA;
-//		}
-		HAL_CanBus_WriteTxMessageBuffer(p_can->CONFIG.P_HAL_CAN_BUS, p_message, bufferId);
-		HAL_CanBus_EnableTxBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
-
+//		HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+		if (p_can->Buffers[bufferId].Type == CAN_FRAME_TYPE_REMOTE)
+		{
+			p_can->Buffers[bufferId].Status = CAN_MESSAGE_TX_REMOTE;
+		}
+		else
+		{
+			p_can->Buffers[bufferId].Status = CAN_MESSAGE_TX_DATA;
+		}
+		hwbufferId = HAL_CanBus_CalcMessageBufferIndex(p_can->CONFIG.P_HAL_CAN_BUS, hwbufferId);
+		HAL_CanBus_WriteTxMessageBuffer(p_can->CONFIG.P_HAL_CAN_BUS, hwbufferId, &p_can->Buffers[bufferId]);
+		HAL_CanBus_EnableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwbufferId);
 //	    p_can->IsTxComplete = false;
 	}
+
 //	return status;
 }
 
-//void CanBus_SendData(CanBus_T * p_can, const uint8_t * p_data, uint8_t dataLength, uint8_t bufferId)
-//{
-////	status_t status;
-//
-//    //if (p_can->TxState != CAN_STATE_IDLE) return;
-//	uint8_t bufferId = 0U;
-//
-//	if (HAL_CanBus_ReadTxBufferComplete(p_can->CONFIG.P_HAL_CAN_BUS) == true)
-//	{
-//		HAL_CanBus_WriteTxMessageBufferData(p_can->CONFIG.P_HAL_CAN_BUS, p_data, dataLength, bufferId);
-//		HAL_CanBus_WriteTxMessageBufferStart(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
-//		HAL_CanBus_EnableTxBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS);
-////	    p_can->IsTxComplete = false;
-//	}
-////	return status;
-//}
 
-
-void CanBus_SetRecvMessage(CanBus_T * p_can, uint8_t messageId, uint8_t bufferId)
+void CanBus_WriteTxMessageControl(CanBus_T * p_can, uint8_t bufferId)
 {
-	//deactiveate, config
+	uint8_t hwbufferId;
 
-		HAL_CanBus_ClearRxBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
-
-}
-
-void CanBus_StartRecvMessage(CanBus_T * p_can, uint8_t bufferId)
-{
-	if(HAL_CanBus_ReadRxBufferComplete(p_can->CONFIG.P_HAL_CAN_BUS, bufferId) == true)
+	if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_IDLE)
 	{
-		HAL_CanBus_EnableRxBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+//		HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+		if (p_can->Buffers[bufferId].Type == CAN_FRAME_TYPE_REMOTE)
+		{
+			p_can->Buffers[bufferId].Status = CAN_MESSAGE_TX_REMOTE;
+		}
+		else
+		{
+			p_can->Buffers[bufferId].Status = CAN_MESSAGE_TX_DATA;
+		}
+		hwbufferId = HAL_CanBus_CalcMessageBufferIndex(p_can->CONFIG.P_HAL_CAN_BUS, hwbufferId);
+		HAL_CanBus_WriteTxMessageBufferControl(p_can->CONFIG.P_HAL_CAN_BUS, hwbufferId, &p_can->Buffers[bufferId]);
+		HAL_CanBus_EnableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwbufferId);
+//	    p_can->IsTxComplete = false;
 	}
 }
 
-const uint8_t * CanBus_GetRxMessageBufferData(const CanBus_T * p_can, uint8_t bufferId)
+void CanBus_StartTxData(CanBus_T * p_can, uint8_t bufferId, const uint8_t * p_data, uint8_t dataLength)
 {
-	return p_can->RxBuffers[bufferId].Data;
+//	CanMessage_Status_T status;
+	uint8_t hwbufferId;
+	if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_IDLE)
+	{
+//		HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+		p_can->Buffers[bufferId].Status = CAN_MESSAGE_TX_DATA;
+		hwbufferId = HAL_CanBus_CalcMessageBufferIndex(p_can->CONFIG.P_HAL_CAN_BUS,  bufferId);
+		HAL_CanBus_WriteMessageBufferData(p_can->CONFIG.P_HAL_CAN_BUS, hwbufferId, p_data, dataLength);
+		HAL_CanBus_WriteMessageBufferStart(p_can->CONFIG.P_HAL_CAN_BUS, hwbufferId);
+		HAL_CanBus_EnableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwbufferId);
+//	    p_can->IsTxComplete = false;
+	}
+
+//	return  p_can->Buffers[bufferId].Status;
 }
 
-void CanBus_GetRxMessageId(CanBus_T * p_can )
+void CanBus_SetRxMessageControl(CanBus_T * p_can, uint8_t bufferId )
 {
+	if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_IDLE)
+	{
+
+	}
+	//deactiveate, config
+//	HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+
+}
+
+/*
+ * config and rx
+ */
+void CanBus_WriteRxMessage(CanBus_T * p_can, uint8_t bufferId )
+{
+	if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_IDLE)
+	{
+
+	}
+	//deactiveate, config
+//	HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+
+}
+
+void CanBus_StartRx(CanBus_T * p_can, uint8_t bufferId)
+{
+	uint8_t hwbufferId;
+
+	if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_IDLE)
+	{
+		p_can->Buffers[bufferId].Status = CAN_MESSAGE_RX_WAIT;
+		hwbufferId = HAL_CanBus_CalcMessageBufferIndex(p_can->CONFIG.P_HAL_CAN_BUS,  bufferId);
+		HAL_CanBus_EnableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwbufferId);
+	}
+}
+
+
+void CanBus_GetRxData(CanBus_T * p_can, uint8_t bufferId)
+{
+	//deactiveate, config
+
+	HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+
+}
+
+void CanBus_GetPtrRxData(CanBus_T * p_can,   uint8_t bufferId)
+{
+	//deactiveate, config
+
+	HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
 
 }
 
 
-
-//void CanBus_StartRxFrame(CanBus_T * p_can)
+//const uint8_t * CanBus_GetRxMessageBufferData(const CanBus_T * p_can, uint8_t bufferId)
 //{
-//    if (p_can->RxState != CAN_STATE_IDLE) return;
-//
-//	p_can->RxState = CAN_STATE_RX_DATA;
-//	HAL_CanBus_EnableRxBufferFullInterrupt();
-//	p_can->IsRxComplete = false;
+//	return p_can->RxBuffers[bufferId].Data;
 //}
+//
+//void CanBus_GetRxMessageId(CanBus_T * p_can )
+//{
+//
+//}
+
+
+
 
 

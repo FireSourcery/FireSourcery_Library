@@ -63,68 +63,72 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 
+	uint32_t throttle = MotorController_User_GetThrottle(p_mc);
+	uint32_t brake = MotorController_User_GetBrake(p_mc);
+
 //    	for(uint8_t iMotor = 0U; iMotor < CmdMotorCount; iMotor++)
 //    	{
-        	Terminal_SendString(p_terminal, "Speed = ");
+        	Terminal_SendString(p_terminal, "Speed: ");
     		Terminal_SendNum(p_terminal, p_motor->Speed_RPM);
-    		Terminal_SendString(p_terminal, " RPM\r\n");
-
-        	Terminal_SendString(p_terminal, "Speed = ");
+    		Terminal_SendString(p_terminal, " RPM ");
     		Terminal_SendNum(p_terminal, p_motor->Speed_Frac16);
     		Terminal_SendString(p_terminal, " Frac16\r\n");
 
-			Terminal_SendString(p_terminal, "RampCmd = ");
-			Terminal_SendNum(p_terminal, p_motor->RampCmd);
-			Terminal_SendString(p_terminal, ", RampIndex = ");
-			Terminal_SendNum(p_terminal, p_motor->RampIndex);
+			Terminal_SendString(p_terminal, "Throttle: ");
+			Terminal_SendNum(p_terminal, throttle);
 			Terminal_SendString(p_terminal, " Frac16\r\n");
 
-        	Terminal_SendString(p_terminal, "Iq = ");
+			Terminal_SendString(p_terminal, "Brake: ");
+			Terminal_SendNum(p_terminal, brake);
+			Terminal_SendString(p_terminal, " Frac16\r\n");
+
+			Terminal_SendString(p_terminal, "RampCmd: ");
+			Terminal_SendNum(p_terminal, p_motor->RampCmd);
+//			Terminal_SendString(p_terminal, ", RampIndex: ");
+//			Terminal_SendNum(p_terminal, p_motor->RampIndex);
+			Terminal_SendString(p_terminal, " Frac16\r\n");
+
+        	Terminal_SendString(p_terminal, "Iq: ");
     		Terminal_SendNum(p_terminal, p_motor->Foc.Iq);
-        	Terminal_SendString(p_terminal, ",	Vq = ");
+        	Terminal_SendString(p_terminal, ",	Vq: ");
     		Terminal_SendNum(p_terminal, p_motor->Foc.Vq);
     		Terminal_SendString(p_terminal, " Q1.15\r\n");
 
-			Terminal_SendString(p_terminal, "Id = ");
+			Terminal_SendString(p_terminal, "Id: ");
 			Terminal_SendNum(p_terminal, p_motor->Foc.Id);
-			Terminal_SendString(p_terminal, ",	Vd = ");
+			Terminal_SendString(p_terminal, ",	Vd: ");
 			Terminal_SendNum(p_terminal, p_motor->Foc.Vd);
 			Terminal_SendString(p_terminal, " Q1.15\r\n");
 
-			Terminal_SendString(p_terminal, "AnalogUserCmd = ");
+			Terminal_SendString(p_terminal, "AnalogUserCmd: ");
 
 			switch(p_mc->AnalogUserCmd)
 			{
-				case MOT_ANALOG_USER_CMD_SET_BRAKE:					Terminal_SendString(p_terminal, "brake");		break;
+				case MOT_ANALOG_USER_CMD_SET_BRAKE:					Terminal_SendString(p_terminal, "brake");			break;
 				case MOT_ANALOG_USER_CMD_SET_THROTTLE:				Terminal_SendString(p_terminal, "throttle");		break;
 				case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				Terminal_SendString(p_terminal, "set neutral");		break;
-				case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				Terminal_SendString(p_terminal, "neutral");	break;
-				case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	Terminal_SendString(p_terminal, "set f");	break;
-				case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	Terminal_SendString(p_terminal, "set r");	break;
-				case MOT_ANALOG_USER_CMD_SET_RELEASE:		Terminal_SendString(p_terminal, "set release");	break;
-				case MOT_ANALOG_USER_CMD_PROC_RELEASE:		Terminal_SendString(p_terminal, "release");		break;
+				case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				Terminal_SendString(p_terminal, "neutral");			break;
+				case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	Terminal_SendString(p_terminal, "set f");			break;
+				case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	Terminal_SendString(p_terminal, "set r");			break;
+				case MOT_ANALOG_USER_CMD_SET_RELEASE:				Terminal_SendString(p_terminal, "set release");		break;
+				case MOT_ANALOG_USER_CMD_PROC_RELEASE:				Terminal_SendString(p_terminal, "release");			break;
 				default: break;
 			}
 
-			Terminal_SendString(p_terminal, "\r\n");
-
-//			Terminal_SendString(p_terminal, "Brake: ");
-//			Terminal_SendNum(p_terminal, p_motor->Brake);
 //			Terminal_SendString(p_terminal, "\r\n");
 
-
-			Terminal_SendString(p_terminal, "Motor Direction: ");
-			Terminal_SendNum(p_terminal, p_motor->Direction);
-			Terminal_SendString(p_terminal, ",	User: ");
-			Terminal_SendNum(p_terminal, p_motor->UserDirection);
-			Terminal_SendString(p_terminal, "\r\n");
-			Terminal_SendString(p_terminal, "MC Direction: ");
-			Terminal_SendNum(p_terminal, p_mc->MainDirection);
-			Terminal_SendString(p_terminal, ",	User: ");
-			Terminal_SendNum(p_terminal, p_mc->UserDirection);
-			Terminal_SendString(p_terminal, "\r\n");
+//			Terminal_SendString(p_terminal, "Motor Direction: ");
+//			Terminal_SendNum(p_terminal, p_motor->Direction);
+//			Terminal_SendString(p_terminal, ",	User: ");
+//			Terminal_SendNum(p_terminal, p_motor->UserDirection);
+//			Terminal_SendString(p_terminal, "\r\n");
+//			Terminal_SendString(p_terminal, "MC Direction: ");
+//			Terminal_SendNum(p_terminal, p_mc->MainDirection);
+//			Terminal_SendString(p_terminal, ",	User: ");
+//			Terminal_SendNum(p_terminal, p_mc->UserDirection);
+//			Terminal_SendString(p_terminal, "\r\n");
 //
-//			Terminal_SendString(p_terminal, "MC State Machine = ");
+//			Terminal_SendString(p_terminal, "MC State Machine: ");
 //			switch(MotorController_StateMachine_GetStateId(p_mc))
 //			{
 //				case MCSM_STATE_ID_INIT:	Terminal_SendString(p_terminal, "Init");	break;
@@ -135,7 +139,7 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
 //			}
 			Terminal_SendString(p_terminal, "\r\n");
 
-//        	Terminal_SendString(p_terminal, "Iabc = ");
+//        	Terminal_SendString(p_terminal, "Iabc: ");
 //    		Terminal_SendNum(p_terminal, p_motor->Foc.Ia);
 //    		Terminal_SendString(p_terminal, " ");
 //       	Terminal_SendNum(p_terminal, p_motor->Foc.Ib);
@@ -143,48 +147,48 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
 //       	Terminal_SendNum(p_terminal, p_motor->Foc.Ic);
 //    		Terminal_SendString(p_terminal, " Q1.15\r\n");
 //
-//        	Terminal_SendString(p_terminal, "Iclarke = ");
+//        	Terminal_SendString(p_terminal, "Iclarke: ");
 //    		Terminal_SendNum(p_terminal, p_motor->Foc.Ialpha);
 //    		Terminal_SendString(p_terminal, " ");
 //       		Terminal_SendNum(p_terminal, p_motor->Foc.Ibeta);
 //    		Terminal_SendString(p_terminal, " Q1.15\r\n");
 //
-//			Terminal_SendString(p_terminal, "ElAngle = ");
+//			Terminal_SendString(p_terminal, "ElAngle: ");
 //			Terminal_SendNum(p_terminal, p_motor->ElectricalAngle);
 //			Terminal_SendString(p_terminal, " Deg16\r\n");
 //
-//        	Terminal_SendString(p_terminal, "SinCos = ");
+//        	Terminal_SendString(p_terminal, "SinCos: ");
 //    		Terminal_SendNum(p_terminal, p_motor->Foc.Sine);
 //    		Terminal_SendString(p_terminal, " ");
 //       		Terminal_SendNum(p_terminal, p_motor->Foc.Cosine);
 //    		Terminal_SendString(p_terminal, " Q1.15\r\n");
 
 
-//        	Terminal_SendString(p_terminal, "IBus = ");
+//        	Terminal_SendString(p_terminal, "IBus: ");
 //    		Terminal_SendNum(p_terminal, p_motor->IBus_Frac16);
 //    		Terminal_SendString(p_terminal, " Frac16\r\n");
 
-//        	Terminal_SendString(p_terminal, "VBemf_On = ");
+//        	Terminal_SendString(p_terminal, "VBemf_On: ");
 //    		Terminal_SendNum(p_terminal, p_motor->Bemf.VPhase_ADCU);
 //    		Terminal_SendString(p_terminal, " ADCU\r\n");
 //
-//        	Terminal_SendString(p_terminal, "VBemf_Off = ");
+//        	Terminal_SendString(p_terminal, "VBemf_Off: ");
 //    		Terminal_SendNum(p_terminal, p_motor->Bemf.VPhasePwmOff_ADCU);
 //    		Terminal_SendString(p_terminal, " ADCU\r\n");
 
-//        	Terminal_SendString(p_terminal, "PwmOnTime = ");
+//        	Terminal_SendString(p_terminal, "PwmOnTime: ");
 //    		Terminal_SendNum(p_terminal, p_motor->PwmOnTime);
 //    		Terminal_SendString(p_terminal, " \r\n");
 
-//        	Terminal_SendString(p_terminal, "ZC Period = ");
+//        	Terminal_SendString(p_terminal, "ZC Period: ");
 //    		Terminal_SendNum(p_terminal, p_motor->Bemf.TimeZeroCrossingPeriod);
 //    		Terminal_SendString(p_terminal, " 20 kHz\r\n");
 //
-//        	Terminal_SendString(p_terminal, "Phase Period = ");
+//        	Terminal_SendString(p_terminal, "Phase Period: ");
 //    		Terminal_SendNum(p_terminal, p_motor->Bemf.TimePhasePeriod);
 //    		Terminal_SendString(p_terminal, " 20 kHz\r\n");
 //
-//        	Terminal_SendString(p_terminal, "Encoder Capture Time 		= ");
+//        	Terminal_SendString(p_terminal, "Encoder Capture Time: ");
 //    		Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaT);
 //    		Terminal_SendString(p_terminal, " 625 kHz\r\n");
 

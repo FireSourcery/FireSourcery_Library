@@ -60,7 +60,7 @@
 /******************************************************************************/
 static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b, qfrac16_t c)
 {
-	int32_t alpha = qfrac16_mul((int32_t)a*2 - (int32_t)b - (int32_t)c, QFRAC16_1_DIV_3);
+	int32_t alpha = qfrac16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, QFRAC16_1_DIV_3);
 	int32_t beta = qfrac16_mul((int32_t)b - (int32_t)c, QFRAC16_1_DIV_SQRT3);
 
 	*p_alpha = qfrac16_sat(alpha);
@@ -81,17 +81,13 @@ static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t
 	@return  void
   */
 /******************************************************************************/
-//static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b)
-//{
-//	int32_t beta;
-//
-//	beta = (int32_t)qfrac16_mul(a, QFRAC16_1_DIV_SQRT3) + (int32_t)qfrac16_mul(b, QFRAC16_1_DIV_SQRT3) * (int32_t)2;
-//
-//	*p_alpha = a;
-//	*p_beta = qfrac16_sat(beta);
-//
-//	return;
-//}
+static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b)
+{
+	int32_t beta = (int32_t)qfrac16_mul((int32_t)a + (int32_t)b * 2, QFRAC16_1_DIV_SQRT3);
+
+	*p_alpha = a;
+	*p_beta = qfrac16_sat(beta);
+}
 
 /******************************************************************************/
 /*!
@@ -176,8 +172,8 @@ static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_
 	foc_invpark_vector(p_alpha, p_beta, d, q, sin, cos);
 }
 
-// bound q d proportionally
-static inline void foc_limitvector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax)
+// unitize, q d proportional
+static inline void foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax)
 {
 	int32_t vectorMaxSquared =  (int32_t)vectorMax * (int32_t)vectorMax;
 	int32_t dqSquared = ((int32_t)(*p_d)*(int32_t)(*p_d)) + ((int32_t)(*p_q)*(int32_t)(*p_q));
@@ -193,8 +189,8 @@ static inline void foc_limitvector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t v
 	}
 }
 
-// prioritize maintaining d
-static inline void foc_limitvector_dmax(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax, qfrac16_t dMax)
+// limit, prioritize maintaining d
+static inline void foc_circlelimit_dmax(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax, qfrac16_t dMax)
 {
 	int32_t vectorMaxSquared = (int32_t)vectorMax * (int32_t)vectorMax;
 	int32_t dSquared = (int32_t)(*p_d) * (int32_t)(*p_d);

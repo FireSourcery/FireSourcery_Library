@@ -82,13 +82,28 @@ typedef enum
 typedef enum
 {
 	CAN_MESSAGE_IDLE,
-	CAN_MESSAGE_RX_BUSY,
+	CAN_MESSAGE_RX_WAIT,
+	CAN_MESSAGE_RX_COMPLETE,
 	CAN_MESSAGE_RX_FIFO_BUSY,
-	CAN_MESSAGE_COMPLETE,
+//	CAN_MESSAGE_COMPLETE,
 	CAN_MESSAGE_TX_DATA,
 	CAN_MESSAGE_TX_REMOTE,
 	CAN_MESSAGE_RX_REMOTE,
 } CanMessage_Status_T;
+
+//typedef enum
+//{
+//	CAN_BUS_MESSAGE_BUFFER_IDLE,
+//	CAN_BUS_MESSAGE_BUFFER_RX_BUSY,
+//	CAN_BUS_MESSAGE_BUFFER_TX_BUSY,
+//	CAN_BUS_MESSAGE_BUFFER_RX_FIFO_BUSY,
+//	CAN_BUS_MESSAGE_BUFFER_COMPLETE,
+//	CAN_BUS_MESSAGE_BUFFER_TX_REMOTE,
+//	CAN_BUS_MESSAGE_BUFFER_RX_REMOTE,
+//#if CONFIG_CAN_BUS_DMA_ENABLE
+//	CAN_BUS_MESSAGE_BUFFER_DMA_ERROR
+//#endif
+//} CanBus_MessageBufferStatus_T;
 
 typedef struct
 {
@@ -96,11 +111,18 @@ typedef struct
 	CanMessage_FrameFormat_T Format; 		/*!< Standard or extended frame */
 	CanMessage_FrameType_T Type;     		/*!< Remote or data frame */
 
-	CanMessage_Status_T Status; //HAL translates to code matching hw
 	uint8_t Priority;                 			/*!< transmit buffer priority */
 	uint16_t TimeStamp;
-
 	uint8_t DataLength;
+	bool EnableBitRateSwitch;
+	bool EnableFlexData;
+	uint8_t FlexDataPadding;
+//	  uint32_t rtr              : 1;
+//	  uint32_t edl              : 1;
+//	  uint32_t brs              : 1;
+//	  uint32_t esi              : 1;
+//	  uint32_t dlc              : 4;
+
 	union
 	{
 		uint8_t Data[8U];
@@ -108,10 +130,8 @@ typedef struct
 	};
 
 	uint16_t Crc;
-
-	bool EnableFlexData;
-	uint8_t FlexDataPadding;
-	bool EnableBitRateSwitch;
+	CanMessage_Status_T Status; //HAL translates to code matching hw
+	//hwbufferid
 
 } CanMessage_T;
 

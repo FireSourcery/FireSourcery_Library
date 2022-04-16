@@ -37,93 +37,54 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+typedef enum
+{
+	XCVR_TYPE_SERIAL,
+	XCVR_TYPE_I2C,
+	XCVR_TYPE_SPI,
+}
+Xcvr_Type_T;
 
 typedef const struct
 {
-	void * p_Context;
+	Xcvr_Type_T Type;
+	void 		* p_Context;
 	void 		(* Init)		(void * p_context);
-	bool 		(* SendChar)	(void * p_context, uint8_t txChar);
-	bool 		(* RecvChar)	(void * p_context, uint8_t * p_rxChar);
-	uint32_t 	(* SendBytes)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t bufferSize);
-	uint32_t 	(* RecvBytes)	(void * p_context, uint8_t * p_destBuffer, 			size_t bufferSize);
-	bool 		(* SendString)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
-	bool 		(* RecvString)	(void * p_context, uint8_t * p_destBuffer, 			size_t length);
+//	bool 		(* SendChar)	(void * p_context, uint8_t txChar);
+//	bool 		(* RecvChar)	(void * p_context, uint8_t * p_rxChar);
+//	uint32_t 	(* SendBytes)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t bufferSize);
+//	uint32_t 	(* RecvBytes)	(void * p_context, uint8_t * p_destBuffer, 			size_t bufferSize);
+//	bool 		(* SendString)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
+//	bool 		(* RecvString)	(void * p_context, uint8_t * p_destBuffer, 			size_t length);
 
-
-//	bool (*HAL_CanBus_GetRxBufferFullFlag)(void);
-//	bool (*HAL_CanBus_GetTxBufferEmptyFlag)(void);
-//	void (*HAL_CanBus_EnableTxBufferEmptyInterrupt)(void);
-//	void (*HAL_CanBus_EnableRxBufferFullInterrupt)(void);
-//	void (*HAL_CanBus_DisableTxBufferEmptyInterrupt)(void);
-//	void (*HAL_CanBus_DisableRxBufferFullInterrupt)(void);
-//	void (*HAL_CanBus_ClearRxBufferFullFlag)(void);
-//	void (*HAL_CanBus_ReadRxMessageBuffer)(CAN_Frame_t * p_rxFrame);
-//	void (*HAL_CanBus_WriteTxMessageBuffer)(CAN_Frame_t * p_rxFrame);
-
-//	void (*HAL_CanBus_SetBaudRate)(uint32_t);
-
-	//	void (*HAL_CanBus_RxCompleteCallback)(void);
-	//	void (*HAL_CanBus_TxCompleteCallback)(void);
+	uint32_t 	(* Recv) (void * p_context, uint8_t * p_destBuffer, 		size_t bufferSize);
+	bool 		(* Send) (void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
 }
 Transceiver_Interface_T;
 
-//void CanBus_Init
-//(
-//	CanBus_T * p_can,
-////	bool (*getRxBufferFullFlag)(void),
-////	bool (*getTxBufferEmptyFlag)(void),
-////	void (*enableTxBufferEmptyInterrupt)(void),
-////	void (*enableRxBufferFullInterrupt)(void),
-////	void (*ensableTxBufferEmptyInterrupt)(void),
-////	void (*disableRxBufferFullInterrupt)(void),
-////	void (*clearRxBufferFullFlag)(void),
-////	void (*readRxMessageBuffer)(CAN_Frame_t * p_rxFrame),
-////	void (*writeTxMessageBuffer)(CAN_Frame_t * p_rxFrame),
-////	void (*rxCompleteCallback)(void),
-////	void (*txCompleteCallback)(void),
-////	void (*setBaudRate)(uint32_t),
-////	uint32_t baudRate
-//)
-//{
-////	HAL_CanBus_GetRxBufferFullFlag 				= getRxBufferFullFlag;
-////	HAL_CanBus_GetTxBufferEmptyFlag 			= getTxBufferEmptyFlag;
-////	HAL_CanBus_EnableTxBufferEmptyInterrupt 	= enableTxBufferEmptyInterrupt;
-////	HAL_CanBus_EnableRxBufferFullInterrupt 		= enableRxBufferFullInterrupt;
-////	HAL_CanBus_DisableTxBufferEmptyInterrupt 	= ensableTxBufferEmptyInterrupt;
-////	HAL_CanBus_DisableRxBufferFullInterrupt 	= disableRxBufferFullInterrupt;
-////	HAL_CanBus_ClearRxBufferFullFlag 			= clearRxBufferFullFlag;
-////	HAL_CanBus_ReadRxMessageBuffer 				= readRxMessageBuffer;
-////	HAL_CanBus_WriteTxMessageBuffer 			= writeTxMessageBuffer;
-////	HAL_CanBus_RxCompleteCallback 				= rxCompleteCallback;
-////	HAL_CanBus_TxCompleteCallback 				= txCompleteCallback;
-////	HAL_CanBus_SetBaudRate 						= setBaudRate;
-////
-////	HAL_CanBus_SetBaudRate(baudRate);
-//}
-
 typedef const struct
 {
+	//todo table
 //	Transceiver_Interface_T Interfaces[];
 	void ** P_XCVR_TABLE;
 	uint8_t XCVR_COUNT;
+
 }
 Transceiver_Config_T;
 
-typedef enum
+typedef const struct
 {
-	XCVR_TYPE_CAN,
-	XCVR_TYPE_SERIAL,
-	XCVR_TYPE_I2C,
 }
-Xcvr_Type_T;
+Transceiver_Table_T;
+
 /*
  *
  */
 typedef const struct
 {
 	Transceiver_Config_T CONFIG;
-	void * p_Struct;
-	Xcvr_Type_T Type;
+//	void * p_Struct;
+//	Xcvr_Type_T Type;
 }
 Transceiver_T;
 
@@ -138,7 +99,7 @@ Transceiver_T;
 //	}
 //}
 
-#define XCVR_CONFIG(p_context, Init, SendChar, RecvChar, SendBytes, RecvBytes, SendString, RecvString)		\
+#define XCVR_CONFIG(p_context, Init, Send, Recv)		\
 {													\
 	.p_Context	= p_context							\
 }
@@ -169,16 +130,16 @@ uint32_t Transceiver_Recv(const Transceiver_T * p_xcvr, uint8_t * p_destBuffer, 
 {
 	uint32_t rxSize;
 
-	switch(p_xcvr->Type)
-	{
-		case XCVR_TYPE_CAN:
-//			rxSize = (CanBus_PollRecvMessage(p_xcvr, p_destBuffer, length, param) == true) ? CanBus_GetRxMessageLength(p_xcvr, param) : 0U;
-			break;
-		case XCVR_TYPE_SERIAL:
-			rxSize = Serial_RecvBytes(p_xcvr, p_destBuffer, length);
-			break;
-		default: break;
-	}
+//	switch(p_xcvr->Type)
+//	{
+//		case XCVR_TYPE_CAN:
+////			rxSize = (CanBus_PollRecvMessage(p_xcvr, p_destBuffer, length, param) == true) ? CanBus_GetRxMessageLength(p_xcvr, param) : 0U;
+//			break;
+//		case XCVR_TYPE_SERIAL:
+//			rxSize = Serial_RecvBytes(p_xcvr, p_destBuffer, length);
+//			break;
+//		default: break;
+//	}
 
 	return rxSize;
 }

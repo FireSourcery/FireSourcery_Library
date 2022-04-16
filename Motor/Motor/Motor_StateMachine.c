@@ -31,7 +31,7 @@
 #include "Motor_StateMachine.h"
 #include "Motor.h"
 #include "Motor_FOC.h"
-#include "Motor_SixStep.h"
+//#include "Motor_SixStep.h"
 #include "Utility/StateMachine/StateMachine.h"
 
 static const StateMachine_State_T STATE_INIT;
@@ -310,7 +310,7 @@ static void Run_Proc(Motor_T * p_motor)
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		Motor_SixStep_ProcPhaseControl(p_motor);
+//		Motor_SixStep_ProcPhaseControl(p_motor);
 
 		if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS)
 		{
@@ -410,7 +410,7 @@ static void Freewheel_Entry(Motor_T * p_motor)
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		Motor_SixStep_StartPhaseObserve(p_motor);
+//		Motor_SixStep_StartPhaseObserve(p_motor);
 	}
 }
 
@@ -424,7 +424,7 @@ static void Freewheel_Proc(Motor_T * p_motor)
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
-		Motor_SixStep_ProcPhaseObserve(p_motor);
+//		Motor_SixStep_ProcPhaseObserve(p_motor);
 	}
 
 	/* Check after, this way lower priority input cannot proc until stop state  */

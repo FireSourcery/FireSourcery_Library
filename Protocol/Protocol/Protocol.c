@@ -111,7 +111,12 @@ static inline bool PortRxByte(Protocol_T * p_protocol,   uint8_t * p_rxChar)
 //		return Xcvr_RecvChar(p_protocol->p_Xcvr, p_rxChar);
 }
 
-static inline bool PortTxString(Protocol_T * p_protocol, const   uint8_t * p_string, uint16_t length)
+//static inline uint32_t PortRx(Protocol_T * p_protocol, uint8_t * p_rxBuffer, uint16_t length)
+//{
+////	return Serial_Recv(p_protocol->Params.p_Xcvr, p_rxBuffer, length);
+//}
+
+static inline bool PortTxString(Protocol_T * p_protocol, const uint8_t * p_string, uint16_t length)
 {
 	return (length > 0U) ? Serial_SendString(p_protocol->Params.p_Xcvr, p_string, length) : false;
 }
@@ -130,6 +135,30 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 	Protocol_RxCode_T status = PROTOCOL_RX_CODE_WAIT_PACKET;
 
 	//todo change to rx max Serial_RecvBytes, when remaining char count is known
+	//use rx length min to determine datalength byte
+//	PortRx(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U], 1U)
+
+//	if (p_protocol->RxIndex < p_protocol->Params.p_Specs->RX_LENGTH_MIN)
+//	{
+//		PortRx(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U], 1U);
+//	}
+//	else
+//	{
+//		if (p_protocol->RxIndex <= p_protocol->Params.p_Specs->RX_LENGTH_MAX)
+//		{
+//			status = p_protocol->Params.p_Specs->PARSE_RX(p_protocol->CONFIG.P_SUBSTATE_BUFFER, &p_protocol->ReqIdActive, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex);
+//			if (status != PROTOCOL_RX_CODE_WAIT_PACKET)
+//			{
+//				break;
+//			}
+//		}
+//		else
+//		{
+//			status = PROTOCOL_RX_CODE_ERROR_PACKET;
+//			break;
+//		}
+//	}
+
 	while (PortRxByte(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex]) == true)
 	{
 		p_protocol->RxIndex++;
@@ -235,6 +264,7 @@ static inline void ProcRxState(Protocol_T * p_protocol)
  	switch (p_protocol->RxState)
 	{
 		case PROTOCOL_RX_STATE_WAIT_BYTE_1: /* nonblocking wait state, no timer */
+//			PortRx(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U], 1U);
 			if (PortRxByte(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U]) == true)
 			{
 				/*

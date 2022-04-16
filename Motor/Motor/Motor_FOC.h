@@ -113,8 +113,9 @@ static inline void Motor_FOC_CaptureIc(Motor_T *p_motor)
 /******************************************************************************/
 static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 {
-	uint32_t electricalDelta;
 	bool captureSpeed = Timer_Poll(&p_motor->SpeedTimer);
+	int32_t speedControl;
+	uint32_t electricalDelta;
 
 	switch (p_motor->Parameters.SensorMode)
 	{
@@ -205,22 +206,23 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 		if (p_motor->ControlModeFlags.Speed == 1U)
 		{
 			//output SpeedControl is IqReq or VqReq  =>  RampCmd - Speed always positive values direction independent
-
-			p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->Speed_Frac16) >> 1U;
-			if (p_motor->Direction == MOTOR_DIRECTION_CW) {p_motor->SpeedControl = 0 - p_motor->SpeedControl;};
+			speedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->Speed_Frac16) >> 1U;
+			if (p_motor->Direction == MOTOR_DIRECTION_CW) {speedControl = 0 - speedControl;};
 
 			if(p_motor->ControlModeFlags.Current == 0U) //speed control is Vq
 			{
 				if (p_motor->Direction == MOTOR_DIRECTION_CCW)
 				{
-					if (p_motor->SpeedControl < 0) {p_motor->SpeedControl = 0;} //no plugging
+					if (speedControl < 0) {speedControl = 0;} //no plugging
 				}
 				else
 				{
-					if (p_motor->SpeedControl > 0) {p_motor->SpeedControl = 0;}
+					if (speedControl > 0) {speedControl = 0;}
 				}
 			}
 		}
+
+		p_motor->SpeedControl = speedControl;
 	}
 
 	FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
@@ -233,7 +235,6 @@ static void ProcMotorFocVoltageMode(Motor_T * p_motor, qfrac16_t vqReq, qfrac16_
 	if (p_motor->Direction == MOTOR_DIRECTION_CCW)
 	{
 		//match pid output state on overlimit for faster response
-
 		if (FOC_GetIq(&p_motor->Foc) > p_motor->Parameters.IqLimit)
 		{
 			if(p_motor->WarningFlags.IOverLimit == false)
@@ -278,28 +279,23 @@ static void ProcMotorFocVoltageMode(Motor_T * p_motor, qfrac16_t vqReq, qfrac16_
 static void ProcMotorFocCurrentFeedbackLoop(Motor_T * p_motor, qfrac16_t iqReq, qfrac16_t idReq)
 {
 	qfrac16_t vqReq;
-	qfrac16_t iqReqLimited;
+	qfrac16_t iqReqNew;
 
-	qfrac16_t iqFeedback;
-	qfrac16_t idFeedback;
-
+	//todo throttle limit, brake limit
 	if(iqReq > p_motor->Parameters.IqLimit)
 	{
-		iqReqLimited = p_motor->Parameters.IqLimit;
+		iqReqNew = p_motor->Parameters.IqLimit;
 	}
 	else if(iqReq < ((int32_t)0 - (int32_t)p_motor->Parameters.IqLimit))
 	{
-		iqReqLimited = ((int32_t)0 - (int32_t)p_motor->Parameters.IqLimit);
+		iqReqNew = ((int32_t)0 - (int32_t)p_motor->Parameters.IqLimit);
 	}
 	else
 	{
-		iqReqLimited = iqReq;
+		iqReqNew = iqReq;
 	}
 
-	iqFeedback = FOC_GetIq(&p_motor->Foc);
-	idFeedback = FOC_GetId(&p_motor->Foc);
-
-	vqReq = PID_Calc(&p_motor->PidIq, iqReqLimited, iqFeedback);
+	vqReq = PID_Calc(&p_motor->PidIq, iqReqNew, FOC_GetIq(&p_motor->Foc));
 
 	if (p_motor->Direction == MOTOR_DIRECTION_CCW)
 	{
@@ -310,8 +306,8 @@ static void ProcMotorFocCurrentFeedbackLoop(Motor_T * p_motor, qfrac16_t iqReq, 
 		if (vqReq > 0) {vqReq = 0;}
 	}
 
-	FOC_SetVq(&p_motor->Foc, vqReq); //todoc chekc max vq
-	FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, idReq, idFeedback));
+	FOC_SetVq(&p_motor->Foc, vqReq); //todo check max vq
+	FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, idReq, FOC_GetId(&p_motor->Foc)));
 }
 
 static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)

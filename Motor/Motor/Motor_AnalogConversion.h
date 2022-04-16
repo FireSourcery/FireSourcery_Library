@@ -55,6 +55,7 @@ extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_COS;
 //extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_FOC_REMAINDER;
 //extern const Analog_VirtualConversionChannel_T MOTOR_ANALOG_VIRTUAL_IDLE;
 
+//todo seperate vitrual
 #define MOTOR_ANALOG_CONVERSIONS_CONFIG(VaPin, p_VaAnalogHost, VbPin, p_VbAnalogHost, VcPin, p_VcAnalogHost, IaPin, p_IaAnalogHost,IbPin, p_IbAnalogHost,IcPin, p_IcAnalogHost,HeatPin, p_HeatAnalogHost,SinPin, p_SinAnalogHost,CosPin, p_CosAnalogHost, p_Motor) \
 {																																						\
 	.CONVERSION_VA =	CONFIG_ANALOG_N_CONVERSION(&MOTOR_ANALOG_VIRTUAL_VA, 	VaPin, 		&((p_Motor)->AnalogResults.Channels[0U]), p_Motor, p_VaAnalogHost), 		\

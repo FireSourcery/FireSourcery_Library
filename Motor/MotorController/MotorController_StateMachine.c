@@ -27,6 +27,8 @@
     @brief  MCStateMachine
     		States for input mode
         	User perspective, input filter
+        	input acceptance using input state and motor state
+        	motor state machine uses only motor state
     @version V0
 */
 /******************************************************************************/
@@ -102,6 +104,7 @@ static void Init_Proc(MotorController_T * p_mc)
 
 static const StateMachine_State_T STATE_INIT =
 {
+//	.ID 					= MCSM_STATE_ID_INIT,
 	.P_TRANSITION_TABLE		= &INIT_TRANSITION_TABLE[0U],
 	.ON_ENTRY 				= (StateMachine_Output_T)Init_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Init_Proc,
