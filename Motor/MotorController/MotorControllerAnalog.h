@@ -28,72 +28,72 @@
     @version V0
 */
 /******************************************************************************/
-#ifndef MOTOR_ANALOG_H
-#define MOTOR_ANALOG_H
+#ifndef MOT_ANALOG_H
+#define MOT_ANALOG_H
 
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 
-#define MOTOR_ANALOG_CHANNEL_COUNT 	10U
+#define MOT_ANALOG_CHANNEL_COUNT 	9U
 
 /*!
 	@brief Virtual channel identifiers, index into arrays containing Analog channel
  */
 typedef enum
 {
-	MOTOR_ANALOG_CHANNEL_VPOS, 			/* Physically shared channel, but save results in contiguous memory */
-	MOTOR_ANALOG_CHANNEL_VA,
-	MOTOR_ANALOG_CHANNEL_VB,
-	MOTOR_ANALOG_CHANNEL_VC,
-	MOTOR_ANALOG_CHANNEL_IA,
-	MOTOR_ANALOG_CHANNEL_IB,
-	MOTOR_ANALOG_CHANNEL_IC,
-	MOTOR_ANALOG_CHANNEL_HEAT,	/* Temperature */
-	MOTOR_ANALOG_CHANNEL_SIN,
-	MOTOR_ANALOG_CHANNEL_COS,
-} MotorAnalog_Channel_T;
+	MOT_ANALOG_CHANNEL_VPOS, 				/* V battery, V in */
+	MOT_ANALOG_CHANNEL_VACC,				/* V accessories ~12V*/
+	MOT_ANALOG_CHANNEL_VSENSE,				/* V analog sensors ~5V*/
+	MOT_ANALOG_CHANNEL_HEAT_PCB,
+	MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP,
+	MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT,
+	MOT_ANALOG_CHANNEL_THROTTLE,
+	MOT_ANALOG_CHANNEL_BRAKE,
+	MOT_ANALOG_CHANNEL_HEAT_MOSFETS = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP,
+}
+MotAnalog_Channel_T;
 
-/*
- * Results Buffer
- */
 typedef union
 {
 	struct
 	{
 		analog_adcresult_t VPos_ADCU;
-		analog_adcresult_t Va_ADCU;
-		analog_adcresult_t Vb_ADCU;
-		analog_adcresult_t Vc_ADCU;
-		analog_adcresult_t Ia_ADCU;
-		analog_adcresult_t Ib_ADCU;
-		analog_adcresult_t Ic_ADCU;
-		analog_adcresult_t Heat_ADCU;
-		analog_adcresult_t Sin_ADCU;
-		analog_adcresult_t Cos_ADCU;
+		analog_adcresult_t VAcc_ADCU;
+		analog_adcresult_t VSense_ADCU;
+		analog_adcresult_t HeatPcb_ADCU;
+		union
+		{
+			analog_adcresult_t HeatMosfets_ADCU;
+			analog_adcresult_t HeatMosfetsTop_ADCU;
+		};
+		analog_adcresult_t HeatMosfetsBot_ADCU;
+		analog_adcresult_t Throttle_ADCU;
+		analog_adcresult_t Brake_ADCU;
 	};
-	analog_adcresult_t Channels[MOTOR_ANALOG_CHANNEL_COUNT];
+	analog_adcresult_t Channels[MOT_ANALOG_CHANNEL_COUNT];
 }
-MotorAnalog_Results_T;
+MotAnalog_Results_T;
 
 typedef union
 {
 	struct
 	{
 		const AnalogN_Conversion_T CONVERSION_VPOS;
-		const AnalogN_Conversion_T CONVERSION_VA;
-		const AnalogN_Conversion_T CONVERSION_VB;
-		const AnalogN_Conversion_T CONVERSION_VC;
-		const AnalogN_Conversion_T CONVERSION_IA;
-		const AnalogN_Conversion_T CONVERSION_IB;
-		const AnalogN_Conversion_T CONVERSION_IC;
-		const AnalogN_Conversion_T CONVERSION_HEAT;
-		const AnalogN_Conversion_T CONVERSION_SIN;
-		const AnalogN_Conversion_T CONVERSION_COS;
-//		const AnalogN_Conversion_T CONVERSION_OPTION_PWM_ON;
-//		const AnalogN_Conversion_T CONVERSION_OPTION_RESTORE;
+		const AnalogN_Conversion_T CONVERSION_VACC;
+		const AnalogN_Conversion_T CONVERSION_VSENSE;
+		const AnalogN_Conversion_T CONVERSION_HEAT_PCB;
+		union
+		{
+			const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS;
+			const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS_TOP;
+		};
+		const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS_BOT;
+		const AnalogN_Conversion_T CONVERSION_THROTTLE;
+		const AnalogN_Conversion_T CONVERSION_BRAKE;
 	};
-	AnalogN_Conversion_T CONVERSIONS[MOTOR_ANALOG_CHANNEL_COUNT + 2U];
+	AnalogN_Conversion_T CONVERSIONS[MOT_ANALOG_CHANNEL_COUNT];
 }
-MotorAnalog_Conversions_T;
+MotAnalog_Conversions_T;
+
 
 
 #endif

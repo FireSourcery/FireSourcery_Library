@@ -75,29 +75,29 @@ void _Analog_WriteAdcOptions(Analog_T * p_analog, const Analog_Conversion_T * p_
 //			HAL_ADC_DisableHwTrigger(p_analog->CONFIG.P_HAL_ADC);
 //		}
 
-	if(p_conversion->OPTIONS.IS_VALID == true)
-	{
-		if(p_conversion->OPTIONS.HW_TRIGGER == true)
-		{
-			HAL_ADC_EnableHwTrigger(p_analog->CONFIG.P_HAL_ADC);
-		}
-		else
-		{
-			HAL_ADC_DisableHwTrigger(p_analog->CONFIG.P_HAL_ADC);
-		}
-
-
-#ifdef CONFIG_ANALOG_HW_CONTINOUS_CONVERSION_ENABLE //else use sw support
-		(options.ContinuousConversion == true) ?
-			HAL_ADC_EnableContinuousConversion(p_analog->CONFIG.P_HAL_ADC) :
-			HAL_ADC_DisableContinuousConversion(p_analog->CONFIG.P_HAL_ADC);
-#endif
-
-		if(p_conversion->OPTIONS.ON_OPTIONS != 0U)
-		{
-			p_conversion->OPTIONS.ON_OPTIONS(p_conversion->P_CALLBACK_CONTEXT);
-		}
-	}
+//	if(p_conversion->OPTIONS.IS_VALID == true)
+//	{
+//		if(p_conversion->OPTIONS.HW_TRIGGER == true)
+//		{
+//			HAL_ADC_EnableHwTrigger(p_analog->CONFIG.P_HAL_ADC);
+//		}
+//		else
+//		{
+//			HAL_ADC_DisableHwTrigger(p_analog->CONFIG.P_HAL_ADC);
+//		}
+//
+//
+//#ifdef CONFIG_ANALOG_HW_CONTINOUS_CONVERSION_ENABLE //else use sw support
+//		(options.ContinuousConversion == true) ?
+//			HAL_ADC_EnableContinuousConversion(p_analog->CONFIG.P_HAL_ADC) :
+//			HAL_ADC_DisableContinuousConversion(p_analog->CONFIG.P_HAL_ADC);
+//#endif
+//
+//		if(p_conversion->OPTIONS.ON_OPTIONS != 0U)
+//		{
+//			p_conversion->OPTIONS.ON_OPTIONS(p_conversion->P_CALLBACK_CONTEXT);
+//		}
+//	}
 }
 
 /*
@@ -162,12 +162,12 @@ void _Analog_ProcQueue(Analog_T * p_analog)
 	{
 		if (Queue_PeekFront(&p_analog->ConversionQueue, &p_nextConversion) == true)
 		{
-			if (p_nextConversion->P_VIRTUAL == 0U) //if options only, its done //ensure empty conversion does not call adc isr
-			{
-				_Analog_WriteAdcOptions(p_analog, p_nextConversion);
-				Queue_RemoveFront(&p_analog->ConversionQueue, 1U);
-			}
-			else
+//			if (p_nextConversion->P_VIRTUAL == 0U) //if options only, its done //ensure empty conversion does not call adc isr
+//			{
+//				_Analog_WriteAdcOptions(p_analog, p_nextConversion);
+//				Queue_RemoveFront(&p_analog->ConversionQueue, 1U);
+//			}
+//			else
 			{
 				_Analog_WriteAdc(p_analog, p_nextConversion); //if activate and wait for isr
 				isEmpty = false;
@@ -281,6 +281,9 @@ void Analog_ResumeQueue(Analog_T * p_analog)
 	_Analog_ExitCritical(p_analog);
 }
 
+/*
+ * Enqueue wthout active for group? remove uneven wait period between first complete and 2nd
+ */
 bool Analog_EnqueueConversion_Group(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
 {
 	bool isSuccess;

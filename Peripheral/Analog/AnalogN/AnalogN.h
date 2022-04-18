@@ -65,16 +65,18 @@ typedef const struct
 }
 AnalogN_Conversion_T;
 
-#define CONFIG_ANALOG_N_CONVERSION(p_Virtual, PinId, p_Results, p_CallbackContext, p_AnalogIHost) \
-{															\
-	.CONVERSION =											\
-	{														\
-		.P_VIRTUAL 				= p_Virtual,				\
-		.PIN 					= PinId,					\
-		.P_RESULTS_BUFFER 		= p_Results,				\
-		.P_CALLBACK_CONTEXT 	= p_CallbackContext,		\
-	},														\
-	.P_ANALOG 					= p_AnalogIHost,			\
+#define CONFIG_ANALOG_N_CONVERSION(Channel, OnComplete, p_CallbackContext, p_Results, PinId, p_AnalogIHost) \
+{																\
+	.CONVERSION =												\
+	{															\
+		.TYPE 					= ANALOG_QUEUE_TYPE_CHANNEL, 	\
+		.CHANNEL 				= Channel,						\
+		.ON_COMPLETE 			= OnComplete,					\
+		.P_CALLBACK_CONTEXT 	= p_CallbackContext,			\
+		.P_RESULTS_BUFFER 		= p_Results,					\
+		.PIN 					= PinId,						\
+	},															\
+	.P_ANALOG 					= p_AnalogIHost,				\
 }
 
 typedef const struct
@@ -221,11 +223,10 @@ static inline bool AnalogN_EnqueueConversion_Group(AnalogN_T * p_analogn, const 
 }
 
 /*
- *  AnalogN_AdcFlags_T activeAdcs:
+ * Multithreaded still need to disable all interrupts
+ * AnalogN_AdcFlags_T activeAdcs:
  * Single threaded N adc - use
  * Multi Threaded N adc - not use
- * Single threaded 1 adc - use for sync, N function preserve same interface
- * Multi Threaded 1 adc - not use
  */
 static inline void AnalogN_PauseQueue(AnalogN_T * p_analogn, AnalogN_AdcFlags_T activeAdcs)
 {

@@ -22,32 +22,21 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Menu.h
-	@author FireSoucery
-	@brief 	Simplified StateMachine
-	@version V0
+    @file 	Linear_Speed.c
+    @author FireSoucery
+    @brief  Linear
+    @version V0
 */
 /******************************************************************************/
-#ifndef MENU_H
-#define MENU_H
+#include "Linear_Speed.h"
 
-#define MENU_FUNCTIONS_COUNT 10
 
-typedef const struct Menu
+void Linear_Speed_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
 {
-	const struct Menu *	NextMenu;
-	const struct Menu *	PrevMenu;
-	void (* const InitFunction)(void);
-	//Can include other menu data here later;
-	void (* const FunctionMap[MENU_FUNCTIONS_COUNT])(void);
-	//void 	(** FunctionMap)(void);
-} Menu_T;
 
-extern Menu_T * Menu_GetMenu(void);
-extern void Menu_SetMenu(Menu_T * target);
-extern void Menu_StartMenu(Menu_T * target);
-extern void Menu_SetNextMenu(void);
-extern void Menu_StartNextMenu(void);
-extern void Menu_DoFunction(uint8_t num);
+}
 
-#endif
+
+
+
+

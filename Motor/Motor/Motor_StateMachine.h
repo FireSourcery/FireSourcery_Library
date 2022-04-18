@@ -33,6 +33,8 @@
 
 #include "Utility/StateMachine/StateMachine.h"
 
+#define MSM_TRANSITION_TABLE_LENGTH 	(11U)
+
 typedef enum MotorStateMachine_Input_Tag
 {
 //	MSM_TRANSITION_INIT,
@@ -51,10 +53,23 @@ typedef enum MotorStateMachine_Input_Tag
 }
 MotorStateMachine_Input_T;
 
-#define MSM_TRANSITION_TABLE_LENGTH 	(11U)
-
 extern const StateMachine_Machine_T MSM_MACHINE;
 
 #define MOTOR_STATE_MACHINE_CONFIG(p_Motor) STATE_MACHINE_CONFIG(&MSM_MACHINE, p_Motor, false)
+
+typedef enum
+{
+	MSM_STATE_ID_INIT,
+	MSM_STATE_ID_STOP,
+	MSM_STATE_ID_ALIGN,
+	MSM_STATE_ID_OPEN_LOOP,
+	MSM_STATE_ID_RUN,
+	MSM_STATE_ID_FREEWHEEL,
+	MSM_STATE_ID_CALIBRATION,
+	MSM_STATE_ID_FAULT,
+}
+Motor_StateMachine_StateId_T;
+
+//extern Motor_StateMachine_StateId_T Motor_StateMachine_GetStateId(Motor_T * p_motor);
 
 #endif

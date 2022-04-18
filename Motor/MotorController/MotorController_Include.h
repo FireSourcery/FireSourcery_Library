@@ -29,9 +29,8 @@
 */
 /******************************************************************************/
 #include "MotorController_User.h"
-#include "MotorController_StateMachine.h"
-#include "MotorController_Shell.h"
 #include "MotorController_Thread.h"
+#include "MotorController_Analog.h"
 #include "MotorController.h"
-
-#include "MotAnalog/MotAnalogConversion.h"
+//#include "MotorController_StateMachine.h"
+#include "MotorController_Shell.h"

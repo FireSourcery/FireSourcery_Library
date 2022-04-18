@@ -25,6 +25,7 @@
     @file 	Motor_User.h
     @author FireSoucery
     @brief  User Interface. Functions include error checking.
+
     @version V0
 */
 /******************************************************************************/
@@ -39,8 +40,10 @@
 #include <stdbool.h>
 
 /*
+ * All other module internal functions should be regarded as private or protected
+ * _Motor notation is not used
  *
- * +/- Sign indicates along or against direction selected. NOT absolute CW/CCW
+ * +/- Sign indicates along or against direction selected. NOT virtual CW/CCW
  */
 
 
@@ -73,11 +76,11 @@ static inline void Motor_User_DisableControl(Motor_T * p_motor)
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
 }
 
-static inline void Motor_User_DisableControlForce(Motor_T * p_motor)
-{
-	Phase_Float(&p_motor->Phase);
-	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
-}
+//static inline void Motor_User_DisableControl_Force(Motor_T * p_motor)
+//{
+//	Phase_Float(&p_motor->Phase);
+//	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
+//}
 
 static inline void Motor_User_Ground(Motor_T * p_motor)
 {
@@ -174,12 +177,8 @@ static inline void Motor_User_SetControlMode(Motor_T * p_motor, Motor_ControlMod
 		Critical_Enter();
 
 		Motor_SetControlMode(p_motor, mode);
-
-//		if(p_motor->ControlModeFlags.Update == 1U)
-//		{
-			StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE);
-			p_motor->ControlModeFlags.Update = 0U;
-//		}
+		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE);
+		p_motor->ControlModeFlags.Update = 0U;
 
 		Critical_Exit();
 	}
@@ -268,31 +267,40 @@ static inline void Motor_User_SetThrottleCmd(Motor_T * p_motor, uint16_t throttl
 
 /*
 	Always request opposite direction current
-	if directly from accelerating to decelerating, unsigned ramp cannot transition through 0 without discontinuity
-	from in-direction torque skips to zero to ramped counter-direction torque
+	req opposite iq, bound vq to 0 for no plugging brake
 
-	req opposite iq, vq approach towards 0 but not past 0, no plugging
+	if directly from accelerating to decelerating, need signed ramp  to transition through 0 without discontinuity
+	from in-direction torque ramped to zero to counter-direction torque
 
 	input [0:65535]
-
  */
 static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 {
 	//use minimal brake to compensate for PID integral, or small values will increase speed as integral dominates proportional
 	int32_t torque = (int32_t)0 - (int32_t)brake;
 
-	if (p_motor->Speed_RPM > 60U)
+//	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+//	{
+//
+//	}
+//	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
+//	{
+//
+//	}
+
+	if(p_motor->ControlModeFlags.Hold == 0U)
 	{
-//			Motor_User_SetTorqueCmd(p_motor, (int32_t)0 - (int32_t)brake);
-//		if (torque < 65536/10) {torque = 65536/10;}
-		Motor_User_SetTorqueCmd(p_motor, torque);
-	}
-	else
-	{
-		Phase_Ground(&p_motor->Phase); //fix repeat
+		if(p_motor->Speed_RPM > 60U)
+		{
+			Motor_User_SetTorqueCmd(p_motor, torque);
+		}
+		else
+		{
+			p_motor->ControlModeFlags.Hold = 1U;  //clears on throttle
+			Phase_Ground(&p_motor->Phase);
+		}
 	}
 }
-
 
 //static inline void Motor_User_ProcRegenCmd(Motor_T * p_motor)
 //{
@@ -301,13 +309,14 @@ static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 
 static inline void Motor_User_SetRegenCmd(Motor_T * p_motor)
 {
-	if (p_motor->Speed_RPM > 60U)
+	if (p_motor->Speed_RPM > 30U)
 	{
 		Motor_User_SetVoltageCmd(p_motor, p_motor->Speed_Frac16 / 2);
 //		Motor_User_SetCmd(p_motor, p_motor->Speed_Frac16 / 2); /* ramped speed match provides smoother change */
 	}
 	else
 	{
+
 		Motor_User_DisableControl(p_motor);   //fix repeat
 	}
 }
@@ -319,6 +328,12 @@ static inline void Motor_User_CheckFault(Motor_T * p_motor)
 {
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
 }
+
+static inline void Motor_SetCalibrationStateAdc(Motor_T * p_motor)			{p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ADC;}
+static inline void Motor_SetCalibrationStateHall(Motor_T * p_motor)			{p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_HALL;}
+static inline void Motor_SetCalibrationStateEncoder(Motor_T * p_motor)		{p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ENCODER;}
+static inline void Motor_SetCalibrationStateSinCos(Motor_T * p_motor)		{p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ADC;}
+
 
 /*
  * Run Calibration functions
@@ -340,6 +355,13 @@ static inline void Motor_User_ActivateCalibrationAdc(Motor_T * p_motor)
 	Motor_SetCalibrationStateAdc(p_motor);
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
 }
+
+
+//static inline void Motor_User_ActivatePhase(Motor_T * p_motor)
+//{
+//
+//}
+
 
 /******************************************************************************/
 /*
@@ -400,13 +422,22 @@ static inline void Motor_User_SetSpeedVoltageRef(Motor_T * p_motor, uint16_t spe
 }
 
 static inline void Motor_User_SetDirectionCalibration(Motor_T * p_motor, Motor_DirectionCalibration_T calibration) 	{p_motor->Parameters.DirectionCalibration = calibration;}
-
 static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Motor_T *p_motor) 	{return p_motor->Parameters.DirectionCalibration;}
 
 static inline void Motor_User_SetVSupplyVMotorScale(Motor_T * p_motor, uint16_t vSupply, uint16_t vMotor)
 {
 
 }
+//static inline void Motor_User_SetPidIqKp(Motor_T * p_mc, uint8_t motorIndex, uint16_t kpFactor)
+//{
+//	p_mc->CONFIG.P_MOTORS[motorIndex].PidIq.Params.KpFactor = kpFactor;
+//}
+//static inline float Motor_User_GetHeat_DegCFloat(Motor_T *p_motor)						{return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
+//static inline uint16_t Motor_User_GetHeat_DegCRound(Motor_T *p_motor)						{return Thermistor_ConvertToDegC_Round(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
+//static inline uint16_t Motor_User_GetHeat_DegCNDecimal(Motor_T *p_motor, uint8_t n) 		{return Thermistor_ConvertToDegC_NDecimal(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, n);}
+//static inline uint16_t Motor_User_GetHeat_DegCScalar(Motor_T * p_motor, uint16_t scalar) 	{return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, scalar);}
+//static inline uint16_t Motor_User_GetHeat_Fixed32(Motor_T *p_motor) 						{return Thermistor_ConvertToDegC_Fixed32(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
+//static inline uint16_t Motor_User_GetMotorHeat_DegCScalar(Motor_T * p_mc, uint8_t motorIndex, uint8_t scalar) {return Motor_User_GetHeat_DegCScalar(Motor_GetPtrMotor(p_mc, motorIndex), scalar);}
 
 /******************************************************************************/
 /*
@@ -416,49 +447,16 @@ static inline void Motor_User_SetVSupplyVMotorScale(Motor_T * p_motor, uint16_t 
 /*
  * Conversion Function only called if called by the user. Not called regularly
  */
-//static inline uint16_t Motor_User_GetBemf_Frac16(Motor_T * p_motor)	{return Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
-//static inline uint32_t Motor_User_GetBemf_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
-//static inline uint32_t Motor_User_GetVPos_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_POS, p_motor->AnalogResults.VPos_ADCU);}
 
-
-//static inline float Motor_User_GetHeat_DegCFloat(Motor_T *p_motor)						{return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
-//static inline uint16_t Motor_User_GetHeat_DegCRound(Motor_T *p_motor)						{return Thermistor_ConvertToDegC_Round(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
-//static inline uint16_t Motor_User_GetHeat_DegCNDecimal(Motor_T *p_motor, uint8_t n) 		{return Thermistor_ConvertToDegC_NDecimal(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, n);}
-//static inline uint16_t Motor_User_GetHeat_DegCScalar(Motor_T * p_motor, uint16_t scalar) 	{return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, scalar);}
-//static inline uint16_t Motor_User_GetHeat_Fixed32(Motor_T *p_motor) 						{return Thermistor_ConvertToDegC_Fixed32(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
-//static inline uint16_t MotorController_User_GetMotorAdcu(MotorController_T * p_mc, uint8_t motorIndex, MotorAnalog_Channel_T adcChannel)
-//{
-//	return p_mc->CONFIG.P_MOTORS[motorIndex].AnalogResults.Channels[adcChannel];
-//}
+static inline Hall_Sensors_T Motor_User_ReadHall(Motor_T * p_motor) 			{return Hall_ReadSensors(&p_motor->Hall);}
+//static inline Hall_Sensors_T Motor_User_GetHall(Motor_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_mc, motorIndex));}
+//static inline bool Motor_User_GetHallA(Motor_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_mc, motorIndex)).A;}
+//static inline bool Motor_User_GetHallB(Motor_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_mc, motorIndex)).B;}
+//static inline bool Motor_User_GetHallC(Motor_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_mc, motorIndex)).C;}
 //
-//static inline uint16_t MotorController_User_GetMotorAdcu_Msb8(MotorController_T * p_mc, uint8_t motorIndex, MotorAnalog_Channel_T adcChannel)
-//{
-//	return MotorController_User_GetMotorAdcu(p_mc, motorIndex, adcChannel) >> (CONFIG_MOTOR_CONTROLLER_ADCU_BITS_N - 8U);
-//}
-//
-//static inline Hall_Sensors_T MotorController_User_GetHall(MotorController_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(MotorController_GetPtrMotor(p_mc, motorIndex));}
-//static inline bool MotorController_User_GetHallA(MotorController_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(MotorController_GetPtrMotor(p_mc, motorIndex)).A;}
-//static inline bool MotorController_User_GetHallB(MotorController_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(MotorController_GetPtrMotor(p_mc, motorIndex)).B;}
-//static inline bool MotorController_User_GetHallC(MotorController_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(MotorController_GetPtrMotor(p_mc, motorIndex)).C;}
-//
-//
-//static inline Motor_DirectionCalibration_T MotorController_User_GetDirectionCalibration(MotorController_T * p_mc, uint8_t motorIndex) {return Motor_User_GetDirectionCalibration(MotorController_GetPtrMotor(p_mc, motorIndex));}
-//static inline bool MotorController_User_GetIsRevMode(MotorController_T * p_mc, uint8_t motorIndex) {return (Motor_User_GetDirectionCalibration(MotorController_GetPtrMotor(p_mc, motorIndex)) ==  MOTOR_FORWARD_IS_CW);}
-//
-////static inline uint32_t MotorController_User_GetBemfAvg_MilliV(MotorController_T * p_mc, uint8_t motorIndex)	{return Motor_User_GetBemf_Frac16(MotorController_GetPtrMotor(p_mc, motorIndex));}
-//static inline uint16_t MotorController_User_GetSpeed_RPM(MotorController_T * p_mc, uint8_t motorIndex)		{return Motor_User_GetSpeed_RPM(MotorController_GetPtrMotor(p_mc, motorIndex));}
-//static inline uint16_t MotorController_User_GetMotorHeat_DegCScalar(MotorController_T * p_mc, uint8_t motorIndex, uint8_t scalar) {return Motor_User_GetHeat_DegCScalar(MotorController_GetPtrMotor(p_mc, motorIndex), scalar);}
-//
-//static inline void MotorController_User_CalibrateHall(MotorController_T * p_mc, uint8_t motorIndex) {Motor_User_ActivateCalibrationHall(MotorController_GetPtrMotor(p_mc, motorIndex));}
-//
-//static inline void MotorController_User_SetPidIqKp(MotorController_T * p_mc, uint8_t motorIndex, uint16_t kpFactor)
-//{
-//	p_mc->CONFIG.P_MOTORS[motorIndex].PidIq.Params.KpFactor = kpFactor;
-//}
-static inline Hall_Sensors_T Motor_User_ReadHall(Motor_T * p_motor) 		{return Hall_ReadSensors(&p_motor->Hall);}
-static inline uint16_t Motor_User_GetHallRotorAngle(Motor_T * p_motor) 	{return Hall_GetRotorAngle_Degrees16(&p_motor->Hall);}
-static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T * p_motor) 		{return p_motor->Speed_RPM;}
-static inline Motor_ErrorFlags_T Motor_User_GetErrorFlags(Motor_T * p_motor) 	{return  p_motor->ErrorFlags;}
+static inline uint16_t Motor_User_GetHallRotorAngle(Motor_T * p_motor) 			{return Hall_GetRotorAngle_Degrees16(&p_motor->Hall);}
+static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T * p_motor) 				{return p_motor->Speed_RPM;}
+static inline Motor_ErrorFlags_T Motor_User_GetErrorFlags(Motor_T * p_motor) 	{return p_motor->ErrorFlags;}
 
 static inline uint16_t Motor_User_GetIPhase(Motor_T * p_motor)
 {
@@ -476,10 +474,26 @@ static inline uint16_t Motor_User_GetIPhase(Motor_T * p_motor)
 	return iPhase;
 }
 
-//static inline void Motor_User_ActivatePhase(Motor_T * p_motor)
+static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(Motor_T * p_mc) {return StateMachine_GetActiveStateId(&p_mc->StateMachine);}
+
+
+//static inline uint16_t Motor_User_GetMotorAdcu(Motor_T * p_mc, uint8_t motorIndex, MotorAnalog_Channel_T adcChannel)
 //{
-//
+//	return p_mc->CONFIG.P_MOTORS[motorIndex].AnalogResults.Channels[adcChannel];
 //}
+//
+//static inline uint16_t Motor_User_GetMotorAdcu_Msb8(Motor_T * p_mc, uint8_t motorIndex, MotorAnalog_Channel_T adcChannel)
+//{
+//	return Motor_User_GetMotorAdcu(p_mc, motorIndex, adcChannel) >> (CONFIG_MOTOR_CONTROLLER_ADCU_BITS_N - 8U);
+//}
+
+
+
+//
+//static inline uint16_t Motor_User_GetBemf_Frac16(Motor_T * p_motor)	{return Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
+//static inline uint32_t Motor_User_GetBemf_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
+
+////static inline uint32_t Motor_User_GetBemfAvg_MilliV(Motor_T * p_mc, uint8_t motorIndex)	{return Motor_User_GetBemf_Frac16(Motor_GetPtrMotor(p_mc, motorIndex));}
 
 /******************************************************************************/
 /*

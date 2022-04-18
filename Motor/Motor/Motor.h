@@ -62,9 +62,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MOTOR_LIB_VERSION_OPT		0xFF
+#define MOTOR_LIB_VERSION_OPT		0
 #define MOTOR_LIB_VERSION_MAJOR 	0
-#define MOTOR_LIB_VERSION_MINOR 	0
+#define MOTOR_LIB_VERSION_MINOR 	1
 #define MOTOR_LIB_VERSION_BUGFIX 	0
 
 /*
@@ -123,7 +123,7 @@ typedef enum
 	MOTOR_CONTROL_MODE_CONSTANT_CURRENT,
 	MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT,
 }
-Motor_ControlMode_T; //Motor_ControlLoopModeUser_T FeedbackMode
+Motor_ControlMode_T; //Motor_ControlFeedbackMode_T FeedbackMode
 
 
 typedef union
@@ -135,11 +135,9 @@ typedef union
 		uint32_t Current 		:1;	//0 -> voltage, 1-> current
 		uint32_t VFreqScalar 	:1; //Use v scalar
 
-//		uint32_t InvertRamp 	:1; //0 -> concurrent direction, 1-> inverse current, alternatively use signed ramp
+		uint32_t Hold			:1;
 //		uint32_t Regen 			:1;
 		uint32_t Update 		:1;
-
-
 //		uint32_t Direction :1;
 	};
 	uint32_t State;
@@ -212,6 +210,7 @@ typedef enum
 	MOTOR_CALIBRATION_STATE_ADC,
 	MOTOR_CALIBRATION_STATE_HALL,
 	MOTOR_CALIBRATION_STATE_ENCODER,
+	MOTOR_CALIBRATION_STATE_SIN_COS,
 } Motor_CalibrationState_T;
 
 /*!
@@ -224,7 +223,7 @@ typedef struct __attribute__ ((aligned (4U)))
 {
 	Motor_CommutationMode_T 	CommutationMode;
 	Motor_SensorMode_T 			SensorMode;
-	Motor_ControlMode_T 		ControlMode;
+	Motor_ControlMode_T 		ControlMode; /* User ControlMode, effective for throttle only */
 //	Motor_BrakeMode_T 			BrakeMode;
 	Motor_AlignMode_T 			AlignMode;
 
@@ -269,33 +268,13 @@ typedef const struct Motor_Init_Tag
 {
  	const Motor_Params_T * const P_PARAMS_NVM;
 
-	//const using fixed resistor values
-//	const Linear_T UNIT_V_POS;
-	const Linear_T UNIT_V_ABC; 	//Bemf V and mV conversion
+	const Linear_T UNIT_V_ABC; 	//Bemf V and mV conversion //const using fixed resistor values
 
 	AnalogN_T * const P_ANALOG_N;
-
-//	const AnalogN_Conversion_T CONVERSION_VPOS_PWM_ON;
-	const AnalogN_AdcFlags_T ADCS_ACTIVE_PWM_THREAD;
-//	const AnalogN_AdcFlags_T ADCS_ACTIVE_TIMER_THREAD;
-	const AnalogN_Conversion_T CONVERSION_OPTION_PWM_ON;
-	const AnalogN_Conversion_T CONVERSION_OPTION_RESTORE;
-
-//	const AnalogN_Conversion_T CONVERSION_VPOS;
-//	const AnalogN_Conversion_T CONVERSION_VA;
-//	const AnalogN_Conversion_T CONVERSION_VB;
-//	const AnalogN_Conversion_T CONVERSION_VC;
-//	const AnalogN_Conversion_T CONVERSION_IA;
-//	const AnalogN_Conversion_T CONVERSION_IB;
-//	const AnalogN_Conversion_T CONVERSION_IC;
-//	const AnalogN_Conversion_T CONVERSION_HEAT;
-//	const AnalogN_Conversion_T CONVERSION_SIN;
-//	const AnalogN_Conversion_T CONVERSION_COS;
-
+	const AnalogN_AdcFlags_T ADCS_ACTIVE_PWM_THREAD; //rename group adc active
 	const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
-
-	const uint16_t I_MAX_AMP;
-
+//	const AnalogN_Conversion_T CONVERSION_OPTION_PWM_ON;
+//	const AnalogN_Conversion_T CONVERSION_OPTION_RESTORE;
 }
 Motor_Config_T;
 
@@ -325,7 +304,7 @@ typedef struct
 	Motor_WarningFlags_T WarningFlags;
 
 	Motor_CalibrationState_T CalibrationState; /* Substate, selection for calibration */
-	uint8_t CalibrationSubstateStep;
+	uint8_t CalibrationStateStep;
 	bool IsPwmOn;
 	bool IOverLimitFlag;
 
@@ -360,6 +339,10 @@ typedef struct
 	uint32_t Speed_Frac16; 		/* Can over saturate */
 	int32_t SpeedControl; 		/* Speed PID output, (Speed_Frac16 - RampCmd) => (VPwm, Vq, Iq), updated once per millis */
 
+
+	uint16_t Speed2_RPM;
+	uint32_t Speed2_Frac16;
+
 	/*
 	 * Open-loop
 	 */
@@ -381,7 +364,8 @@ typedef struct
 	PID_T PidId;
 	PID_T PidIq;
 	qangle16_t ElectricalAngle;
-
+	qangle16_t ElectricalAnglePrev;
+	uint32_t DeltaAngle;
 	/* interpolated angle */
 	qangle16_t HallAngle;
 	uint32_t InterpolatedAngleIndex;
@@ -491,14 +475,16 @@ static inline void Motor_SetRamp(Motor_T * p_motor, int32_t userCmd)
 	 * Constant acceleration ramp
 	 */
 	Linear_Ramp_SetTarget(&p_motor->Ramp, userCmd);
-
-	/*
-	 * dynamically generated Ramp,
-	 * effectively smooth input over control period intervals, when using 1ms period
-	 */
-	//	Linear_Ramp_SetSlopeMillis(&p_motor->Ramp, 1U, 20000U, p_motor->RampCmd, userCmd);
 }
 
+static inline void Motor_SetRampInterpolate(Motor_T * p_motor, int32_t userCmd)
+{
+	/*
+	 * dynamically generated Ramp,
+	 * effectively divide input over control period intervals, when using 1ms period
+	 */
+//	Linear_Ramp_SetSlopeMillis(&p_motor->Ramp, 1U, 20000U, p_motor->RampCmd, userCmd);
+}
 
 static inline void Motor_ResetRamp(Motor_T * p_motor)
 {
@@ -523,24 +509,34 @@ static inline void Motor_ResumeRampOutput(Motor_T * p_motor, int32_t matchOutput
 	Speed
 */
 /******************************************************************************/
-static inline void Motor_CaptureSpeed(Motor_T * p_motor)
+static inline void Motor_CaptureEncoderSpeed(Motor_T * p_motor)
 {
-	p_motor->Speed_RPM = (Encoder_GetRotationalSpeed_RPM(&p_motor->Encoder) + p_motor->Speed_RPM) / 2U;
+	p_motor->Speed_RPM =  (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder));// + p_motor->Speed_RPM) / 2U;
 	p_motor->Speed_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedRefMax_RPM);
 }
 
-/*
- * Common Speed PID Feedback Loop
- */
-//static inline void Motor_ProcSpeedFeedback(Motor_T * p_motor)
-//{
-//	if((p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT) || (p_motor->Parameters.ControlMode == MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE))
+static inline void Motor_CaptureSpeed(Motor_T * p_motor)
+{
+	uint32_t deltaAngle;
+	uint16_t angle = (uint16_t)p_motor->ElectricalAngle;
+	uint16_t anglePrev = (uint16_t)p_motor->ElectricalAnglePrev;
+
+//	if (angle < anglePrev)
 //	{
-//		p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->Speed_Frac16);
+//		deltaAngle = (uint32_t)65535U - anglePrev + angle + 1U;
 //	}
-//
-//
-//}
+//	else /* normal case */
+	{
+		deltaAngle = angle - anglePrev;
+	}
+
+	p_motor->DeltaAngle = deltaAngle;
+	p_motor->ElectricalAnglePrev = angle;
+
+	p_motor->Speed2_RPM = Encoder_ConvertAngleToRotationalSpeed_RPM(0, deltaAngle, 1000U) / p_motor->Encoder.Params.MotorPolePairs; //todo move to linear module
+	p_motor->Speed2_Frac16 = deltaAngle*1000U*60U/((uint32_t)p_motor->Parameters.SpeedRefMax_RPM * p_motor->Encoder.Params.MotorPolePairs);
+
+}
 
 //Speed pid always uses directionless positive value [0:65535]
 static inline void Motor_ResumeSpeedOutput(Motor_T * p_motor, int32_t matchOutput)
@@ -560,450 +556,6 @@ static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
 	}
 }
 
-static inline uint32_t Motor_GetSpeed(Motor_T * p_motor)
-{
-	return p_motor->Speed_RPM;
-}
-
-
-// match ramp and pid
-//static inline uint32_t Motor_SetMatchOutputState(Motor_T * p_motor)
-//{
-//
-//}
-//
-//
-//static inline void Motor_User_SetMatchOutput(Motor_T * p_motor)
-//{
-//
-//}
-
-/******************************************************************************/
-/*
-	StateMachine Mapped functions
-*/
-/******************************************************************************/
-
-/******************************************************************************/
-/*
-	Idle Stop State
-*/
-/******************************************************************************/
-static inline void Motor_EnterStop(Motor_T * p_motor)
-{
-	Phase_Float(&p_motor->Phase);
-	Motor_ResetRamp(p_motor);
-	PID_SetIntegral(&p_motor->PidSpeed, 0U);
-	p_motor->SpeedControl = 0U;
-//	p_motor->ControlTimerBase = 0U; //ok to reset timer
-	Timer_StartPeriod(&p_motor->ControlTimer, 2000U); //100ms
-}
-
-static inline void Motor_ProcStop(Motor_T * p_motor)
-{
-	if (Timer_Poll(&p_motor->ControlTimer) == true)
-	{
-		AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
-//		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VPOS);
-		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
-		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
-		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
-		AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
-	}
-}
-
-/******************************************************************************/
-/*
-	Align State
- */
-/******************************************************************************/
-//Motor_AlignMode_T Motor_GetAlignMode(Motor_T *p_motor)
-//{
-//	Motor_AlignMode_T alignMode;
-//
-//	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
-//	{
-//		alignMode = MOTOR_ALIGN_MODE_DISABLE;
-//	}
-//	else
-//	{
-//		//		if useHFI alignMode= MOTOR_ALIGN_MODE_HFI;
-//		//		else
-//		alignMode = MOTOR_ALIGN_MODE_ALIGN;
-//	}
-//
-//	return alignMode;
-//}
-
-static inline void Motor_StartAlign(Motor_T * p_motor)
-{
-	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_ControlCycles);
-	Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16, 0U, 0U);
-	Phase_ActivateSwitchABC(&p_motor->Phase);
-}
-
-static inline bool Motor_ProcAlign(Motor_T * p_motor)
-{
-	bool status = Timer_Poll(&p_motor->ControlTimer);
-
-	if(status == true)
-	{
-		p_motor->ElectricalAngle = 0U;
-		Encoder_Reset(&p_motor->Encoder); //zero angularD
-//		Motor_Float(&p_motor->Foc);
-	}
-
-	return status;
-}
-
-/******************************************************************************/
-/*
-	Calibration State Functions
- */
-/******************************************************************************/
-/*
- * Nonblocking Calibration State Functions
- */
-static inline void Motor_SetCalibrationStateAdc(Motor_T * p_motor)		{p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ADC;}
-static inline void Motor_SetCalibrationStateHall(Motor_T * p_motor)		{p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_HALL;}
-static inline void Motor_SetCalibrationStateEncoder(Motor_T * p_motor)	{p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ENCODER;}
-
-static void StartMotorCalibrateCommon(Motor_T * p_motor)
-{
-	p_motor->ControlTimerBase = 0U;
-	Phase_Ground(&p_motor->Phase); //activates abc
-	p_motor->CalibrationSubstateStep = 0U;
-}
-
-/*
- * Calibrate Current ADC
- */
-static inline void Motor_StartCalibrateAdc(Motor_T * p_motor)
-{
-	StartMotorCalibrateCommon(p_motor);
-	Timer_StartPeriod(&p_motor->ControlTimer, 100000U); // Motor.Parameters.AdcCalibrationTime
-//	FOC_SetZero(&p_motor->Foc);
-//	Phase_ActuateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc)); //sets 0 current output
-
-//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
-//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
-//	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
-
-	p_motor->AnalogResults.Ia_ADCU = 2048U;
-	p_motor->AnalogResults.Ib_ADCU = 2048U;
-	p_motor->AnalogResults.Ic_ADCU = 2048U;
-
-	Filter_MovAvg_InitN(&p_motor->FilterA, 2048U, 40U);
-	Filter_MovAvg_InitN(&p_motor->FilterB, 2048U, 40U);
-	Filter_MovAvg_InitN(&p_motor->FilterC, 2048U, 40U);
-}
-
-static inline bool Motor_CalibrateAdc(Motor_T *p_motor)
-{
-	bool isComplete = Timer_Poll(&p_motor->ControlTimer);
-
-	if (isComplete == true)
-	{
-		Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, 4095U, p_motor->Parameters.IRefMax_Amp);
-		Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, 4095U, p_motor->Parameters.IRefMax_Amp);
-		Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, 4095U, p_motor->Parameters.IRefMax_Amp);
-		Phase_Float(&p_motor->Phase);
-//		save params
-	}
-	else
-	{
-		p_motor->Parameters.IaRefZero_ADCU = Filter_MovAvg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
-		p_motor->Parameters.IbRefZero_ADCU = Filter_MovAvg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
-		p_motor->Parameters.IcRefZero_ADCU = Filter_MovAvg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
-
-		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-	}
-
-	return isComplete;
-}
-
-/*
- * Calibrate Current ADC
- */
-//static inline bool Motor_SixStep_CalibrateAdc(Motor_T *p_motor)
-//{
-////	bool isComplete = false;
-//
-////	 Timer_Poll(&p_motor->ControlTimer);
-//
-////	switch(p_motor->CalibrationSubstateStep)
-////	{
-////		case 0U :
-////			Filter_MovAvg_InitN(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU, 1000U);
-////			Filter_MovAvg_InitN(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU, 1000U);
-////			Filter_MovAvg_InitN(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU, 1000U);
-////			p_motor->CalibrationSubstateStep = 1U;
-////			break;
-////
-////		case 1U:
-////			if (Timer_Poll(&p_motor->ControlTimer) == false)
-////			{
-////				p_motor->Parameters.IaZero_ADCU = Filter_MovAvg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
-////				p_motor->Parameters.IbZero_ADCU = Filter_MovAvg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
-////				p_motor->Parameters.IcZero_ADCU = Filter_MovAvg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
-////
-////				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-////				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-////				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-////			}
-////			else
-////			{
-////				p_motor->CalibrationSubstateStep = 2U;
-////			}
-////			break;
-////
-////		case 2U:
-////
-////			if (Timer_Poll(&p_motor->ControlTimer) == true)
-////			{
-////				Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
-////				Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
-////				Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
-////				p_motor->CalibrationSubstateStep = 4U;
-////			}
-////			else
-////			{
-////				p_motor->Parameters.IaZero_ADCU = Filter_MovAvg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
-////				p_motor->Parameters.IbZero_ADCU = Filter_MovAvg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
-////				p_motor->Parameters.IcZero_ADCU = Filter_MovAvg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
-////
-////				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-////				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-////				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-////			}
-////
-////			//get bemf offset
-//////		case 3U:
-//////			Filter_MovAvg_InitN(&p_motor->FilterA, p_motor->AnalogResults.Va_ADCU, 1000U);
-//////			Filter_MovAvg_InitN(&p_motor->FilterB, p_motor->AnalogResults.Vb_ADCU, 1000U);
-//////			Filter_MovAvg_InitN(&p_motor->FilterC, p_motor->AnalogResults.Vc_ADCU, 1000U);
-////
-////		case 4U:
-////
-////			isComplete = true;
-////
-////
-////		default :
-////			break;
-////	}
-//
-//	bool isComplete = Timer_Poll(&p_motor->ControlTimer);
-//
-//	if (isComplete == true)
-//	{
-//		Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
-//		Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
-//		Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZero_ADCU, 4095U, p_motor->Parameters.Imax_Amp);
-//		Phase_Float(&p_motor->Phase);
-////		save params
-//	}
-//	else
-//	{
-//		p_motor->Parameters.IaZero_ADCU = Filter_MovAvg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
-//		p_motor->Parameters.IbZero_ADCU = Filter_MovAvg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
-//		p_motor->Parameters.IcZero_ADCU = Filter_MovAvg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
-//
-//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
-//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
-//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
-//	}
-//
-//	return isComplete;
-//}
-
-
-static inline void Motor_StartCalibrateEncoder(Motor_T * p_motor)
-{
-	StartMotorCalibrateCommon(p_motor);
-	Timer_StartPeriod(&p_motor->ControlTimer, 20000U);
-	Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16, 0U, 0U); /* Align Phase A 10% pwm */
-
-}
-
-static inline bool Motor_CalibrateEncoder(Motor_T * p_motor)
-{
-	bool isComplete = false;
-
-	if (Timer_Poll(&p_motor->ControlTimer) == true)
-	{
-		switch (p_motor->CalibrationSubstateStep)
-		{
-			case 0U:
-				Encoder_DeltaD_CalibrateQuadratureReference(&p_motor->Encoder);
-				Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16, p_motor->Parameters.AlignVoltage_Frac16, 0U);
-				p_motor->CalibrationSubstateStep = 1U;
-				break;
-
-			case 1U:
-				Encoder_DeltaD_CalibrateQuadraturePositive(&p_motor->Encoder);
-				Phase_Float(&p_motor->Phase);
-				p_motor->CalibrationSubstateStep = 0;
-				isComplete = true;
-				break;
-
-			default:
-				break;
-		}
-	}
-
-	return isComplete;
-}
-
-static inline void Motor_StartCalibrateHall(Motor_T * p_motor)
-{
-	StartMotorCalibrateCommon(p_motor);
-	Timer_StartPeriod(&p_motor->ControlTimer, 20000U); //Parameter.HallCalibrationTime
-}
-
-//120 degree hall aligned with phase
-static inline bool Motor_CalibrateHall(Motor_T * p_motor)
-{
-	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
-	bool isComplete = false;
-
-#ifndef CONFIG_HALL_DEBUG
-	if (Timer_Poll(&p_motor->ControlTimer) == true)
-	{
-		switch (p_motor->CalibrationSubstateStep)
-		{
-		case 0U:
-			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, 0U);
-			p_motor->CalibrationSubstateStep = 1U;
-			break;
-
-		case 1U:
-			Hall_CalibratePhaseA(&p_motor->Hall);
-			Phase_ActivateDuty(&p_motor->Phase, duty, duty, 0U);
-			p_motor->CalibrationSubstateStep = 2U;
-			break;
-
-		case 2U:
-			Hall_CalibratePhaseInvC(&p_motor->Hall);
-			Phase_ActivateDuty(&p_motor->Phase, 0U, duty, 0);
-			p_motor->CalibrationSubstateStep = 3U;
-			break;
-
-		case 3U:
-			Hall_CalibratePhaseB(&p_motor->Hall);
-			Phase_ActivateDuty(&p_motor->Phase, 0U, duty, duty);
-			p_motor->CalibrationSubstateStep = 4U;
-			break;
-
-		case 4U:
-			Hall_CalibratePhaseInvA(&p_motor->Hall);
-			Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, duty);
-			p_motor->CalibrationSubstateStep = 5U;
-			break;
-
-		case 5U:
-			Hall_CalibratePhaseC(&p_motor->Hall);
-			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, duty);
-			p_motor->CalibrationSubstateStep = 6U;
-			break;
-
-		case 6U:
-			Hall_CalibratePhaseInvB(&p_motor->Hall);
-			Phase_Float(&p_motor->Phase);
-			isComplete = true;
-			break;
-
-		default:
-			break;
-		}
-	}
-#else
-	if (Timer_Poll(&p_motor->ControlTimer) == true)
-	{
-		p_motor->HallDebug[p_motor->CalibrationSubstateStep] = Hall_ReadSensors(&p_motor->Hall); //PhaseA starts at 1
-
-		switch (p_motor->CalibrationSubstateStep)
-		{
-			case 0U :
-				Phase_Polar_ActivateA(&p_motor->Phase, duty);
-				break;
-
-			case 1U :
-				Hall_CalibratePhaseA(&p_motor->Hall);
-				Phase_Polar_ActivateAC(&p_motor->Phase, duty);
-				break;
-
-			case 2U :
-				Phase_Polar_ActivateInvC(&p_motor->Phase, duty);
-				break;
-
-			case 3U :
-				Hall_CalibratePhaseInvC(&p_motor->Hall);
-				Phase_Polar_ActivateBC(&p_motor->Phase, duty);
-				break;
-
-			case 4U :
-				Phase_Polar_ActivateB(&p_motor->Phase, duty);
-				break;
-
-			case 5U :
-				Hall_CalibratePhaseB(&p_motor->Hall);
-				Phase_Polar_ActivateBA(&p_motor->Phase, duty);
-				break;
-
-			case 6U :
-				Phase_Polar_ActivateInvA(&p_motor->Phase, duty);
-				break;
-
-			case 7U :
-				Hall_CalibratePhaseInvA(&p_motor->Hall);
-				Phase_Polar_ActivateCA(&p_motor->Phase, duty);
-				break;
-
-			case 8U :
-				Phase_Polar_ActivateC(&p_motor->Phase, duty);
-				break;
-
-			case 9U :
-				Hall_CalibratePhaseC(&p_motor->Hall);
-				Phase_Polar_ActivateCB(&p_motor->Phase, duty);
-				break;
-
-			case 10U :
-				Phase_Polar_ActivateInvB(&p_motor->Phase, duty);
-				break;
-
-			case 11U :
-				Hall_CalibratePhaseInvB(&p_motor->Hall);
-				Phase_Polar_ActivateAB(&p_motor->Phase, duty);
-				break;
-
-			case 12U :
-				Phase_Float(&p_motor->Phase);
-				isComplete = true;
-				break;
-
-			default :
-				break;
-		}
-
-		p_motor->CalibrationSubstateStep++;
-	}
-#endif
-
-	return isComplete;
-}
-
-/******************************************************************************/
-/*! @} */
-/******************************************************************************/
 
 /******************************************************************************/
 /*!
@@ -1012,5 +564,7 @@ static inline bool Motor_CalibrateHall(Motor_T * p_motor)
 /******************************************************************************/
 extern void Motor_Init(Motor_T * p_motor);
 extern void Motor_InitReboot(Motor_T * p_motor);
+extern bool Motor_CheckControlMode(Motor_T * p_motor, Motor_ControlMode_T mode);
+extern void Motor_SetControlMode(Motor_T * p_motor, Motor_ControlMode_T mode);
 
 #endif

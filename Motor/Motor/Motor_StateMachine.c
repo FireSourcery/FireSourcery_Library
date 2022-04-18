@@ -29,9 +29,10 @@
 */
 /******************************************************************************/
 #include "Motor_StateMachine.h"
-#include "Motor.h"
+#include "Motor_Calibrate.h"
 #include "Motor_FOC.h"
 //#include "Motor_SixStep.h"
+#include "Motor.h"
 #include "Utility/StateMachine/StateMachine.h"
 
 static const StateMachine_State_T STATE_INIT;
@@ -43,27 +44,6 @@ static const StateMachine_State_T STATE_FREEWHEEL;
 static const StateMachine_State_T STATE_CALIBRATION;
 static const StateMachine_State_T STATE_FAULT;
 
-//MotorController_StateMachine_StateId_T MotorController_StateMachine_GetStateId(MotorController_T * p_mc)
-//{
-//	MotorController_StateMachine_StateId_T id;
-//	if(p_mc->StateMachine.p_StateActive == &STATE_INIT)
-//	{
-//		id = MCSM_STATE_ID_INIT;
-//	}
-//	else if(p_mc->StateMachine.p_StateActive == &STATE_STOP)
-//	{
-//		id = MCSM_STATE_ID_STOP;
-//	}
-//	else if(p_mc->StateMachine.p_StateActive == &STATE_RUN)
-//	{
-//		id = MCSM_STATE_ID_RUN;
-//	}
-//	else if(p_mc->StateMachine.p_StateActive == &STATE_FAULT)
-//	{
-//		id = MCSM_STATE_ID_FAULT;
-//	}
-//	return id;
-//}
 
 /******************************************************************************/
 /*!
@@ -100,6 +80,8 @@ static void Init_Proc(Motor_T * p_motor)
 
 static const StateMachine_State_T STATE_INIT =
 {
+
+	.ID						= MSM_STATE_ID_INIT,
 	.P_TRANSITION_TABLE		= INIT_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)Init_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Init_Proc,
@@ -206,7 +188,7 @@ static void Stop_Entry(Motor_T * p_motor)
 static void Stop_Proc(Motor_T * p_motor)
 {
 	//poll speedfeedback or use bemf
-//	if(Motor_GetSpeed(p_motor) > 0U)
+//	if(p_motor->Speed_RPM > 0U)
 //	{
 //		StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
 //	}
@@ -227,6 +209,7 @@ static void Stop_Proc(Motor_T * p_motor)
 
 static const StateMachine_State_T STATE_STOP =
 {
+	.ID						= MSM_STATE_ID_STOP,
 	.P_TRANSITION_TABLE 	= STOP_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)Stop_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Stop_Proc,
@@ -289,7 +272,7 @@ static void Run_Entry(Motor_T * p_motor)
 //	}
 //	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
 //	{
-//		if(Motor_GetSpeed(p_motor) == 0U)
+//		if(p_motor->Speed_RPM == 0U)
 //		{
 //			Motor_SixStep_StartPhaseControl(p_motor);
 //		}
@@ -348,6 +331,7 @@ static void Run_Proc(Motor_T * p_motor)
 
 static const StateMachine_State_T STATE_RUN =
 {
+	.ID						= MSM_STATE_ID_RUN,
 	.P_TRANSITION_TABLE 	= RUN_TRANSITION_TABLE,
 //	.P_TRANSITION_INPUT 	= (StateMachine_TransitionInput_T)Run_TransitionFunction,
 	.ON_ENTRY 				= (StateMachine_Output_T)Run_Entry,
@@ -428,7 +412,7 @@ static void Freewheel_Proc(Motor_T * p_motor)
 	}
 
 	/* Check after, this way lower priority input cannot proc until stop state  */
-	if(Motor_GetSpeed(p_motor) == 0U)
+	if(p_motor->Speed_RPM == 0U)
 	{
 		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
 	}
@@ -436,6 +420,7 @@ static void Freewheel_Proc(Motor_T * p_motor)
 
 static const StateMachine_State_T STATE_FREEWHEEL =
 {
+	.ID						= MSM_STATE_ID_FREEWHEEL,
 	.P_TRANSITION_TABLE 	= FREEWHEEL_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)Freewheel_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Freewheel_Proc,
@@ -447,6 +432,27 @@ static const StateMachine_State_T STATE_FREEWHEEL =
     @brief  State Align - todo common start control?
 */
 /******************************************************************************/
+
+//Motor_AlignMode_T GetAlignMode(Motor_T *p_motor)
+//{
+//	Motor_AlignMode_T alignMode;
+//
+//	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
+//	{
+//		alignMode = MOTOR_ALIGN_MODE_DISABLE;
+//	}
+//	else
+//	{
+//		//		if useHFI alignMode= MOTOR_ALIGN_MODE_HFI;
+//		//		else
+//		alignMode = MOTOR_ALIGN_MODE_ALIGN;
+//	}
+//
+//	return alignMode;
+//}
+
+
+
 static const StateMachine_Transition_T ALIGN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
 	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
@@ -454,13 +460,19 @@ static const StateMachine_Transition_T ALIGN_TRANSITION_TABLE[MSM_TRANSITION_TAB
 
 static void Align_Entry(Motor_T * p_motor)
 {
-	Motor_StartAlign(p_motor);
+	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_ControlCycles);
+	Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16, 0U, 0U);
+	Phase_ActivateSwitchABC(&p_motor->Phase);
 }
 
 static void Align_Proc(Motor_T * p_motor)
 {
-	if(Motor_ProcAlign(p_motor) == true)
+	if(Timer_Poll(&p_motor->ControlTimer) == true)
 	{
+		p_motor->ElectricalAngle = 0U;
+		Encoder_Reset(&p_motor->Encoder); //zero angularD
+//		Motor_Float(&p_motor->Foc);
+
 		if((p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS) || (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP))
 		{
 			_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_OPEN_LOOP);
@@ -483,6 +495,7 @@ static void Align_Proc(Motor_T * p_motor)
 
 static const StateMachine_State_T STATE_ALIGN =
 {
+	.ID						= MSM_STATE_ID_ALIGN,
 	.P_TRANSITION_TABLE 	= ALIGN_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)Align_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Align_Proc,
@@ -541,6 +554,7 @@ static void OpenLoop_Proc(Motor_T * p_motor)
 
 static const StateMachine_State_T STATE_OPEN_LOOP =
 {
+	.ID						= MSM_STATE_ID_OPEN_LOOP,
 	.P_TRANSITION_TABLE 	= OPEN_LOOP_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)OpenLoop_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)OpenLoop_Proc,
@@ -551,6 +565,9 @@ static const StateMachine_State_T STATE_OPEN_LOOP =
     @brief  State shared calibration
 */
 /******************************************************************************/
+
+
+
 static StateMachine_State_T * Calibration_InputStop(Motor_T * p_motor)
 {
 	return &STATE_STOP;
@@ -565,11 +582,16 @@ static const StateMachine_Transition_T CALIBRATION_TRANSITION_TABLE[MSM_TRANSITI
 
 static void Calibration_Entry(Motor_T * p_motor)
 {
+	p_motor->ControlTimerBase = 0U;
+	Phase_Ground(&p_motor->Phase);	//activates abc
+	p_motor->CalibrationStateStep = 0U;
+
 	switch (p_motor->CalibrationState)
 	{
-		case MOTOR_CALIBRATION_STATE_ADC:		Motor_StartCalibrateAdc(p_motor);		break;
-		case MOTOR_CALIBRATION_STATE_HALL:		Motor_StartCalibrateHall(p_motor);		break;
-		case MOTOR_CALIBRATION_STATE_ENCODER:	Motor_StartCalibrateEncoder(p_motor);	break;
+		case MOTOR_CALIBRATION_STATE_ADC:		Motor_Calibrate_StartAdc(p_motor);		break;
+		case MOTOR_CALIBRATION_STATE_HALL:		Motor_Calibrate_StartHall(p_motor);		break;
+		case MOTOR_CALIBRATION_STATE_ENCODER:	Motor_Calibrate_StartEncoder(p_motor);	break;
+		case MOTOR_CALIBRATION_STATE_SIN_COS:	Motor_Calibrate_StartSinCos(p_motor);			break;
 		default: break;
 	}
 }
@@ -580,13 +602,14 @@ static void Calibration_Proc(Motor_T * p_motor)
 
 	switch (p_motor->CalibrationState)
 	{
-		case MOTOR_CALIBRATION_STATE_ADC:		isComplete = Motor_CalibrateAdc(p_motor); 		break;
-		case MOTOR_CALIBRATION_STATE_HALL:		isComplete = Motor_CalibrateHall(p_motor); 		break;
-		case MOTOR_CALIBRATION_STATE_ENCODER:	isComplete = Motor_CalibrateEncoder(p_motor); 	break;
+		case MOTOR_CALIBRATION_STATE_ADC:		isComplete = Motor_Calibrate_Adc(p_motor); 		break;
+		case MOTOR_CALIBRATION_STATE_HALL:		isComplete = Motor_Calibrate_Hall(p_motor); 		break;
+		case MOTOR_CALIBRATION_STATE_ENCODER:	isComplete = Motor_Calibrate_Encoder(p_motor); 	break;
+		case MOTOR_CALIBRATION_STATE_SIN_COS:	isComplete = Motor_Calibrate_ProcSinCos(p_motor);		break;
 		default: break;
 	}
 
-	if(isComplete == true)
+	if (isComplete == true)
 	{
 		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
 	}
@@ -594,6 +617,7 @@ static void Calibration_Proc(Motor_T * p_motor)
 
 static const StateMachine_State_T STATE_CALIBRATION  =
 {
+	.ID						= MSM_STATE_ID_CALIBRATION,
 	.P_TRANSITION_TABLE 	= CALIBRATION_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)Calibration_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Calibration_Proc,
@@ -650,6 +674,7 @@ static void Fault_Proc(Motor_T * p_motor)
 
 static const StateMachine_State_T STATE_FAULT =
 {
+	.ID 					= MSM_STATE_ID_FAULT,
 	.P_TRANSITION_TABLE 	= FAULT_TRANSITION_TABLE,
 	.ON_ENTRY 				= (StateMachine_Output_T)Fault_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Fault_Proc,

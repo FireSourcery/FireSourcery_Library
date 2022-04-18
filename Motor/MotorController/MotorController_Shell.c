@@ -74,6 +74,17 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
     		Terminal_SendNum(p_terminal, p_motor->Speed_Frac16);
     		Terminal_SendString(p_terminal, " Frac16\r\n");
 
+    		Terminal_SendString(p_terminal, "Speed2: ");
+    		Terminal_SendNum(p_terminal, p_motor->Speed2_RPM);
+    		Terminal_SendString(p_terminal, " RPM ");
+    		Terminal_SendNum(p_terminal, p_motor->Speed2_Frac16);
+    		Terminal_SendString(p_terminal, " Frac16\r\n");
+
+    		Terminal_SendString(p_terminal, "DeltaAngle: ");
+    		Terminal_SendNum(p_terminal, p_motor->DeltaAngle);
+    		Terminal_SendString(p_terminal, " Frac16\r\n");
+
+
 			Terminal_SendString(p_terminal, "Throttle: ");
 			Terminal_SendNum(p_terminal, throttle);
 			Terminal_SendString(p_terminal, " Frac16\r\n");
@@ -101,21 +112,20 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
 			Terminal_SendString(p_terminal, " Q1.15\r\n");
 
 			Terminal_SendString(p_terminal, "AnalogUserCmd: ");
-
 			switch(p_mc->AnalogUserCmd)
 			{
 				case MOT_ANALOG_USER_CMD_SET_BRAKE:					Terminal_SendString(p_terminal, "brake");			break;
 				case MOT_ANALOG_USER_CMD_SET_THROTTLE:				Terminal_SendString(p_terminal, "throttle");		break;
+				case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		Terminal_SendString(p_terminal, "brake rel");		break;
+				case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			Terminal_SendString(p_terminal, "throttle rel");	break;
 				case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				Terminal_SendString(p_terminal, "set neutral");		break;
 				case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				Terminal_SendString(p_terminal, "neutral");			break;
-				case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	Terminal_SendString(p_terminal, "set f");			break;
-				case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	Terminal_SendString(p_terminal, "set r");			break;
-				case MOT_ANALOG_USER_CMD_SET_RELEASE:				Terminal_SendString(p_terminal, "set release");		break;
+				case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	Terminal_SendString(p_terminal, "set forward");		break;
+				case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	Terminal_SendString(p_terminal, "set reverse");		break;
 				case MOT_ANALOG_USER_CMD_PROC_RELEASE:				Terminal_SendString(p_terminal, "release");			break;
 				default: break;
 			}
-
-//			Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "\r\n");
 
 //			Terminal_SendString(p_terminal, "Motor Direction: ");
 //			Terminal_SendNum(p_terminal, p_motor->Direction);
@@ -128,15 +138,15 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
 //			Terminal_SendNum(p_terminal, p_mc->UserDirection);
 //			Terminal_SendString(p_terminal, "\r\n");
 //
-//			Terminal_SendString(p_terminal, "MC State Machine: ");
-//			switch(MotorController_StateMachine_GetStateId(p_mc))
-//			{
-//				case MCSM_STATE_ID_INIT:	Terminal_SendString(p_terminal, "Init");	break;
-//				case MCSM_STATE_ID_STOP:	Terminal_SendString(p_terminal, "Stop");	break;
-//				case MCSM_STATE_ID_RUN:		Terminal_SendString(p_terminal, "Run");		break;
-//				case MCSM_STATE_ID_FAULT:	Terminal_SendString(p_terminal, "Fault");	break;
-//				default: break;
-//			}
+			Terminal_SendString(p_terminal, "MC State Machine: ");
+			switch(MotorController_User_GetStateId(p_mc))
+			{
+				case MCSM_STATE_ID_INIT:	Terminal_SendString(p_terminal, "Init");	break;
+				case MCSM_STATE_ID_STOP:	Terminal_SendString(p_terminal, "Stop");	break;
+				case MCSM_STATE_ID_RUN:		Terminal_SendString(p_terminal, "Run");		break;
+				case MCSM_STATE_ID_FAULT:	Terminal_SendString(p_terminal, "Fault");	break;
+				default: break;
+			}
 			Terminal_SendString(p_terminal, "\r\n");
 
 //        	Terminal_SendString(p_terminal, "Iabc: ");

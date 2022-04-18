@@ -35,29 +35,6 @@
 #define MOTOR_FOC_H
 
 #include "Motor.h"
-//#include "Config.h"
-
-//#include "Math/FOC.h"
-//#include "Transducer/Hall/Hall.h"
-//#include "Transducer/Phase/Phase.h"
-//
-//#include "Peripheral/Analog/AnalogN/AnalogN.h"
-
-//#include "Transducer/Encoder/Encoder_DeltaT.h"
-//#include "Transducer/Encoder/Encoder_DeltaD.h"
-//#include "Transducer/Encoder/Encoder_Motor.h"
-//#include "Transducer/Encoder/Encoder.h"
-
-//#include "Math/PID/PID.h"
-//#include "Math/Linear/Linear_ADC.h"
-//#include "Math/Linear/Linear_Ramp.h"
-//#include "Math/Filter/Filter_MovAvg.h"
-//#include "Math/Filter/Filter.h"
-
-//#include "System/SysTime/SysTime.h"
-
-//#include <stdint.h>
-//#include <stdbool.h>
 
 /*
  * +/- Sign indicates absolute direction, CW/CCW. NOT along or against direction selected.
@@ -138,6 +115,7 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			if (captureSpeed == true)
 			{
 				Encoder_DeltaD_Capture(&p_motor->Encoder); /* Capture position and speed */
+				Motor_CaptureEncoderSpeed(p_motor);
 			}
 			else
 			{
@@ -172,27 +150,25 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 				}
 			}
 
-			electricalDelta = Encoder_Motor_InterpolateElectricalDelta(&p_motor->Encoder, p_motor->InterpolatedAngleIndex);
+			if (captureSpeed == true)
+			{
+				Motor_CaptureEncoderSpeed(p_motor);
+			}
+
+			electricalDelta = Encoder_Motor_InterpolateElectricalDelta(&p_motor->Encoder, p_motor->InterpolatedAngleIndex); //todo add boundary, use ref index
 			if (electricalDelta > 65536U/6U) {electricalDelta = 65536U/6U;}
 
-			if (p_motor->Direction == MOTOR_DIRECTION_CCW)
-			{
-				p_motor->ElectricalAngle = p_motor->HallAngle + electricalDelta;
-			}
-			else
-			{
-				p_motor->ElectricalAngle = p_motor->HallAngle - electricalDelta;
-			}
-
+			if (p_motor->Direction == MOTOR_DIRECTION_CW) {electricalDelta = 0 - electricalDelta;};
+			p_motor->ElectricalAngle = p_motor->HallAngle + electricalDelta;
 			p_motor->InterpolatedAngleIndex++;
 			break;
 
 		case MOTOR_SENSOR_MODE_SIN_COS:
+			p_motor->ElectricalAngle = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
 			if (captureSpeed == true)
 			{
-
+				Motor_CaptureSpeed(p_motor);
 			}
-			p_motor->ElectricalAngle = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
 			break;
 
 		default:
@@ -202,11 +178,14 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 	if (captureSpeed == true)
 	{
 		Motor_CaptureSpeed(p_motor);
-
 		if (p_motor->ControlModeFlags.Speed == 1U)
 		{
-			//output SpeedControl is IqReq or VqReq  =>  RampCmd - Speed always positive values direction independent
+			/*
+			 * 	input	RampCmd, Speed, always positive values direction independent
+			 * 	output 	SpeedControl is signed IqReq or VqReq
+			 */
 			speedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->Speed_Frac16) >> 1U;
+
 			if (p_motor->Direction == MOTOR_DIRECTION_CW) {speedControl = 0 - speedControl;};
 
 			if(p_motor->ControlModeFlags.Current == 0U) //speed control is Vq
@@ -220,9 +199,9 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 					if (speedControl > 0) {speedControl = 0;}
 				}
 			}
-		}
 
-		p_motor->SpeedControl = speedControl;
+			p_motor->SpeedControl = speedControl;
+		}
 	}
 
 	FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
@@ -306,7 +285,7 @@ static void ProcMotorFocCurrentFeedbackLoop(Motor_T * p_motor, qfrac16_t iqReq, 
 		if (vqReq > 0) {vqReq = 0;}
 	}
 
-	FOC_SetVq(&p_motor->Foc, vqReq); //todo check max vq
+	FOC_SetVq(&p_motor->Foc, vqReq);
 	FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, idReq, FOC_GetId(&p_motor->Foc)));
 }
 
@@ -316,11 +295,11 @@ static inline void ProcMotorFocControlFeedback(Motor_T * p_motor)
 
 	qReq = (p_motor->ControlModeFlags.Speed == 1U) ? p_motor->SpeedControl : p_motor->RampCmd;
 
-	if(p_motor->ControlModeFlags.Current == 1U)
+	if(p_motor->ControlModeFlags.Current == 1U)		/* Current Control Mode - Proc angle using last adc measured*/
 	{
 		ProcMotorFocCurrentFeedbackLoop(p_motor, qReq, 0);
 	}
-	else
+	else  		/* Voltage Control mode - use current feedback for over current only */
 	{
 //		if (p_motor->ControlModeFlags.VFreqScalar) {qReq = qReq  * p_motor->Speed_RPM* VFreqScalarFactor/  VFreqScalarDivisor;}
 		ProcMotorFocVoltageMode(p_motor, qReq, 0);
@@ -395,8 +374,11 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 	FOC_ProcClarkePark(&p_motor->Foc);
 //	p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
 
-	ProcMotorFocControlFeedback(p_motor);
-	ActivateMotorFocAngle(p_motor);
+	if(p_motor->ControlModeFlags.Hold == 0U)
+	{
+		ProcMotorFocControlFeedback(p_motor);
+		ActivateMotorFocAngle(p_motor);
+	}
 //	p_motor->DebugTime[3] = SysTime_GetMicros() - p_motor->MicrosRef;
 }
 

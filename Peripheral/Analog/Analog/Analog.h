@@ -69,6 +69,34 @@ typedef uint8_t analog_virtual_t;
 
 typedef void (* Analog_Callback_T)(void * p_context);
 
+typedef enum
+{
+	ANALOG_QUEUE_TYPE_CHANNEL,
+	ANALOG_QUEUE_TYPE_OPTIONS,
+}
+Analog_QueueType_T;
+
+typedef const struct
+{
+	Analog_QueueType_T TYPE;
+	const analog_virtual_t 		CHANNEL; 		/* index into results buffer */
+	const Analog_Callback_T 	ON_COMPLETE; 	/* On each channel complete, runs first adc isr, depends on adc hw fifo length */
+
+	void * const P_CALLBACK_CONTEXT;
+	volatile analog_adcresult_t * const P_RESULTS_BUFFER;	 /*!< Persistent ADC results buffer, virtual channel index.  */
+	const analog_adcpin_t PIN;
+}
+Analog_Conversion_T;
+
+#define CONFIG_ANALOG_CONVERSION(Channel, OnComplete, p_CallbackContext, p_Results, PinId) \
+{															\
+	.TYPE 					= ANALOG_QUEUE_TYPE_CHANNEL, 	\
+	.CHANNEL 				= Channel,						\
+	.ON_COMPLETE 			= OnComplete,					\
+	.P_CALLBACK_CONTEXT 	= p_CallbackContext,			\
+	.P_RESULTS_BUFFER 		= p_Results,					\
+	.PIN 					= PinId,						\
+}
 /*
  * Config options
  */
@@ -88,126 +116,35 @@ typedef struct
 }
 Analog_OptionsFlags_T;
 
-typedef struct
+typedef const struct
 {
+	Analog_QueueType_T TYPE;
 	const Analog_OptionsFlags_T 	FLAGS;
-
-	const bool IS_VALID; /* use options */
-	const bool HW_TRIGGER;
-	const Analog_Callback_T ON_OPTIONS;
+	const Analog_Callback_T 		ON_OPTIONS;
 }
-Analog_Options_T;
-
-
-//typedef const struct
-//{
-//	// allow multiple conversion to share 1 result buffer,
-//	// repeat channels to share one result destination
-//	const analog_virtual_t 		CHANNEL; 		/* index into results buffer */
-//	const Analog_OnComplete_T 	ON_COMPLETE; 	/* On each channel complete, runs first adc isr, depends on adc hw fifo length */
-//}
-//Analog_VirtualChannel_T;
-//
-//typedef const struct
-//{
-//	const Analog_VirtualChannel_T * P_CHANNELS; 		/* Virtual Index */
-//	const uint8_t CHANNEL_COUNT;
-//	const Analog_OnComplete_T ON_COMPLETE;				/* On conversion group complete */ //for analogN use if all channel results are needed, otherwise channel onomplete will suffice. set to only run on peak if find peak is active
-//	const Analog_Options_T OPTIONS;
-//}
-//Analog_VirtualConversionGroup_T;
-//
-//
-///* Map pin to virtual */
-////typedef const struct
-////{
-////	const Analog_ConversionVirtual_T * const P_VIRTUAL_CONVERSION;
-////	volatile analog_adcresult_t * const P_RESULTS_BUFFER;	 /*!< Persistent ADC results buffer, virtual channel index.  */
-////	void * P_ON_COMPLETE_CONTEXT;
-////}
-////Analog_ConversionVirtualMap_T;
-//
-//typedef const struct
-//{
-//	const analog_adcpin_t PIN;
-//	uint8_t VIRTUAL_INDEX; /* match to oncomplete functions */
-//}
-//Analog_AdcChannel_T;
-//
-///* iterate through adc channels, known at compile time, faster */
-//typedef const struct
-//{
-//	const Analog_AdcChannel_T * P_CHANNELS;
-//	uint8_t CHANNEL_COUNT;
-//}
-//Analog_AdcConversion_T;
-//
-//typedef const struct
-//{
-////	const Analog_ConversionVirtualMap_T MAP;
-//	const Analog_VirtualConversionGroup_T * const P_VIRTUAL;
-//	analog_adcresult_t * const P_RESULTS_BUFFER;	 /*!< Persistent ADC results buffer, virtual channel index.  */
-//	void * P_ON_COMPLETE_CONTEXT;
-//	const Analog_AdcConversion_T ADC_CONVERSION;
-//}
-//Analog_ConversionGroup_T;
-
-///* Map Virtual to Pin */
-//typedef const struct
-//{
-//	volatile analog_adcresult_t * const P_RESULTS_BUFFER;	 /*!< Persistent ADC results buffer, virtual channel index.  */
-//	void * P_ON_COMPLETE_CONTEXT;
-//	const analog_adcpin_t * P_PINS;					/*!< Virtual channel index.  */
-//}
-//Analog_ConversionMap_T;
-//
-//typedef const struct
-//{
-//	const Analog_ConversionMap_T * P_MAP;
-//	const Analog_ConversionVirtual_T * P_VIRTUAL;
-//}
-//Analog_Conversion_T;
-
+Analog_ConversionOptions_T;
 
 /*
- * Single Channel Conversions
+ * cast to this type to determine which item type first
  */
 typedef const struct
 {
-	const analog_virtual_t 		CHANNEL; 		/* index into results buffer */
-	const Analog_Callback_T 	ON_COMPLETE; 	/* On each channel complete, runs first adc isr, depends on adc hw fifo length */
+	union
+	{
+		Analog_QueueType_T TYPE;
+		const Analog_Conversion_T CONVERISON;
+		const Analog_ConversionOptions_T OPTIONS;
+	};
 }
-Analog_VirtualConversionChannel_T;
+Analog_QueueItem_T;
 
-typedef enum
-{
-	ANALOG_QUEUE_TYPE_CHANNEL,
-	ANALOG_QUEUE_TYPE_OPTIONS,
-}
-Analog_QueueType_T;
-
-typedef const struct
-{
-//	Analog_QueueType_T TYPE;
-	const Analog_VirtualConversionChannel_T * const P_VIRTUAL;
-	const analog_adcpin_t PIN;
-	volatile analog_adcresult_t * const P_RESULTS_BUFFER;	 /*!< Persistent ADC results buffer, virtual channel index.  */
-	void * const P_CALLBACK_CONTEXT;
-
-	const Analog_Options_T 		OPTIONS;
-}
-Analog_Conversion_T;
-
-//typedef const struct
-//{
-////	Analog_QueueType_T TYPE;
-//	const Analog_Options_T OPTIONS;
-//}
-//Analog_ConversionOptions_T;
 
 typedef const struct
 {
 	HAL_ADC_T * const P_HAL_ADC; 	/*!< 1 ADC: pointer to ADC register map base address */
+#ifdef CONFIG_ANALOG_ADC_HW_FIFO_ENABLE
+	uint8_t ADC_FIFO_LENGTH;
+#endif
 }
 Analog_Config_T;
 
@@ -218,11 +155,10 @@ typedef struct
 {
 	const Analog_Config_T CONFIG;
 
-	Queue_T ConversionQueue; /* item type (Analog_Conversion_T *) */
+	Queue_T ConversionQueue; /* item type (Analog_Conversion_T *) or (Analog_ConversionOptions_T *) */
 
 	/*
-	 * 	Save for on ADC complete.
-	 *  Need Active conversion as firsdt conversion or Enqueue Front would need to shift all items in queue
+	 * 	Active conversion as firsdt conversion or Enqueue Front would need to shift all items in queue
 	 *  also use as adc active flag
 	 */
 //	const Analog_ConversionChannel_T * volatile p_ActiveConversion; 	/*! Queue unit type Selected conversion group in process */
@@ -235,8 +171,6 @@ typedef struct
 //	bool IsLocalPeakFound;
 
 //	volatile uint32_t debug;
-
-//	bool UseConversionOptions; //select use conversion options or adc options
 	//common setting for all following conversion
 	//Applicable next conversion, multithread must enter critical before changes
 //	Analog_ConversionOptions_T Options; 	/* Default config when conversion does not specify */
@@ -263,8 +197,8 @@ Analog_T;
 	.CONFIG =												\
 	{														\
 		.P_HAL_ADC = p_HalAdc,								\
-	},															\
-	.ConversionQueue = QUEUE_CONFIG(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_Conversion_T *), 0U),	\
+	},														\
+	.ConversionQueue = QUEUE_CONFIG(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),	\
 }
 
 //extern void _Analog_ActivateAdc(const Analog_T * p_analog, Analog_ConversionChannel_T * p_conversion);
@@ -311,52 +245,6 @@ static inline void _Analog_ExitCritical(Analog_T * p_analog)
 #endif
 }
 
-///*!
-//	@brief 	Get Active channel count called before ActivateConversion()
-// */
-//static inline uint8_t SetAnalogActiveAdcChannelCount(Analog_T * p_analog, uint8_t remainingChannelCount)
-//{
-//#if defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
-//	/* Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel must be in same buffer */
-//	return (remainingChannelCount < p_analog->CONFIG.ADC_BUFFER_LENGTH) ? remainingChannelCount : p_analog->CONFIG.ADC_BUFFER_LENGTH;
-//	p_analog->ActiveAdcChannelCount = remainingChannelCount
-//#else
-//	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
-//	(void) p_analog;
-//	(void) remainingChannelCount;
-//	return 1U;
-//#endif
-//}
-//
-//static inline uint8_t GetAnalogActiveAdcChannelCount(const Analog_T * p_analog)
-//{
-//#if defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
-//	return p_analog->ActiveAdcChannelCount;
-//#else
-//	(void) p_analog;
-//	return 1U;
-//#endif
-//}
-
-//static inline bool GetAnalogIsConversionRepeat(const AnalogN_Conversion_T * p_activeConversion)
-//{
-//#if !defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
-//	if(p_activeConversion->MAP.P_VIRTUAL_CONVERSION->CHANNEL_COUNT > 1U)
-//	{
-//		return true;
-//	}
-//#elif defined(CONFIG_ANALOG_SW_CONTINOUS_CONVERSION)
-//	return true;
-//#endif
-//}
-
-//static inline void Analog_Deactivate(const Analog_T * p_analog)					{HAL_ADC_Deactivate(p_analog->CONFIG.P_HAL_ADC);}
-//static inline void Analog_DisableInterrupt(const Analog_T * p_analog)			{HAL_ADC_DisableInterrupt(p_analog->CONFIG.P_HAL_ADC);}
-//static inline void Analog_ClearConversionComplete(Analog_T * p_analog)			{HAL_ADC_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);}
-static inline bool Analog_ReadIsAdcConversionComplete(const Analog_T * p_analog)		{return HAL_ADC_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);}
-static inline bool Analog_ReadIsAdcConversionActive(const Analog_T * p_analog)		{return HAL_ADC_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ADC);}
-
-static inline bool Analog_ReadIsActive(const Analog_T * p_analog)		{return ((Analog_ReadIsAdcConversionComplete(p_analog) == true) || (Analog_ReadIsAdcConversionActive(p_analog) == true));}
 
 
 static inline bool _Analog_GetIsActive(const Analog_T * p_analog)
@@ -364,12 +252,8 @@ static inline bool _Analog_GetIsActive(const Analog_T * p_analog)
 	//case of aborted conversion?
 //	return (p_analog->p_ActiveConversion != 0U);
 //	return (p_analog->ActiveConversionCount > 0U);
-	return Analog_ReadIsActive(p_analog);
+	return ((HAL_ADC_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC) == true) || (HAL_ADC_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ADC) == true));
 }
-
-
-
-//#include "Utility/Debug/Debug.h"
 
 /*!
 	 @brief Private capture results subroutine
@@ -423,7 +307,7 @@ static inline void _Analog_CaptureAdcResults(Analog_T * p_analog, Analog_Convers
 			p_resultsBuffer[virtualChannel] 	= HAL_ADC_ReadResult(p_adc, adcPin);
 		}
 #else
-		virtualChannel = p_activeConversion->P_VIRTUAL->CHANNEL;
+		virtualChannel = p_activeConversion->CHANNEL;
 		adcPin = p_activeConversion->PIN;
 
 		p_activeConversion->P_RESULTS_BUFFER[virtualChannel] = HAL_ADC_ReadResult(p_analog->CONFIG.P_HAL_ADC, adcPin);
@@ -431,7 +315,6 @@ static inline void _Analog_CaptureAdcResults(Analog_T * p_analog, Analog_Convers
 	}
 
 }
-
 
 static inline bool _Analog_CaptureResults(Analog_T * p_analog)//, const Analog_ConversionAdc_T * p_adcConversion, const Analog_ConversionVirtualMap_T * p_adcMap)
 {
@@ -516,9 +399,9 @@ static inline bool _Analog_CaptureResults(Analog_T * p_analog)//, const Analog_C
 			isAllChannelsComplete = true;
 //		}
 
-		if (p_completedConversion->P_VIRTUAL->ON_COMPLETE != 0U)
+		if (p_completedConversion->ON_COMPLETE != 0U)
 		{
-			p_completedConversion->P_VIRTUAL->ON_COMPLETE(p_completedConversion->P_CALLBACK_CONTEXT);
+			p_completedConversion->ON_COMPLETE(p_completedConversion->P_CALLBACK_CONTEXT);
 		}
 
 	return (isAllChannelsComplete);
@@ -572,6 +455,54 @@ static inline void Analog_CaptureResults_ISR(Analog_T * p_analog)
 //		}
 	}
 }
+
+///*!
+//	@brief 	Get Active channel count called before ActivateConversion()
+// */
+//static inline uint8_t SetAnalogActiveAdcChannelCount(Analog_T * p_analog, uint8_t remainingChannelCount)
+//{
+//#if defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
+//	/* Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel must be in same buffer */
+//	return (remainingChannelCount < p_analog->CONFIG.ADC_BUFFER_LENGTH) ? remainingChannelCount : p_analog->CONFIG.ADC_BUFFER_LENGTH;
+//	p_analog->ActiveAdcChannelCount = remainingChannelCount
+//#else
+//	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
+//	(void) p_analog;
+//	(void) remainingChannelCount;
+//	return 1U;
+//#endif
+//}
+//
+//static inline uint8_t GetAnalogActiveAdcChannelCount(const Analog_T * p_analog)
+//{
+//#if defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
+//	return p_analog->ActiveAdcChannelCount;
+//#else
+//	(void) p_analog;
+//	return 1U;
+//#endif
+//}
+
+//static inline bool GetAnalogIsConversionRepeat(const AnalogN_Conversion_T * p_activeConversion)
+//{
+//#if !defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
+//	if(p_activeConversion->MAP.P_VIRTUAL_CONVERSION->CHANNEL_COUNT > 1U)
+//	{
+//		return true;
+//	}
+//#elif defined(CONFIG_ANALOG_SW_CONTINOUS_CONVERSION)
+//	return true;
+//#endif
+//}
+
+//static inline void Analog_Deactivate(const Analog_T * p_analog)					{HAL_ADC_Deactivate(p_analog->CONFIG.P_HAL_ADC);}
+//static inline void Analog_DisableInterrupt(const Analog_T * p_analog)			{HAL_ADC_DisableInterrupt(p_analog->CONFIG.P_HAL_ADC);}
+//static inline void Analog_ClearConversionComplete(Analog_T * p_analog)			{HAL_ADC_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);}
+static inline bool Analog_ReadIsAdcConversionComplete(const Analog_T * p_analog)		{return HAL_ADC_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);}
+static inline bool Analog_ReadIsAdcConversionActive(const Analog_T * p_analog)		{return HAL_ADC_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ADC);}
+
+static inline bool Analog_ReadIsActive(const Analog_T * p_analog)		{return ((Analog_ReadIsAdcConversionComplete(p_analog) == true) || (Analog_ReadIsAdcConversionActive(p_analog) == true));}
+
 
 extern void Analog_Init(Analog_T * p_analog);
 extern void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion);

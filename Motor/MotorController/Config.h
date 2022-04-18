@@ -47,8 +47,5 @@
 	#define	CONFIG_MOTOR_CONTROLLER_ADCU_BITS_N 12U
 #endif
 
-
-
-
 #endif
 

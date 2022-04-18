@@ -85,7 +85,7 @@ static inline qangle16_t SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_ADCU
 	qfrac16_t sin = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitConversion, sin_ADCU);
 	qfrac16_t cos = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitConversion, cos_ADCU);
 
-	return qfrac16_atan2(sin, cos);
+	return qfrac16_atan2(sin, cos) - p_sincos->Params.AngleOffet;
 }
 
 #endif

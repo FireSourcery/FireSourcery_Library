@@ -46,12 +46,15 @@ typedef enum
 {
 	MOT_ANALOG_USER_CMD_SET_BRAKE,
 	MOT_ANALOG_USER_CMD_SET_THROTTLE,
+	MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE,
+	MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE,
+//	MOT_ANALOG_USER_CMD_SET_BRAKE_START,
+//	MOT_ANALOG_USER_CMD_SET_THROTTLE_START,
 	MOT_ANALOG_USER_CMD_SET_NEUTRAL,
 	MOT_ANALOG_USER_CMD_PROC_NEUTRAL,
 	MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD,
 	MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE,
-	MOT_ANALOG_USER_CMD_SET_RELEASE, /* No input */
-	MOT_ANALOG_USER_CMD_PROC_RELEASE,
+	MOT_ANALOG_USER_CMD_PROC_RELEASE,	/* No input */
 }
 MotAnalogUser_Cmd_T;
 
@@ -263,10 +266,13 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 	/*
 	 * Edge functions are instantaneous and can proc before brake, or check in separate function to proc in addition to brake
 	 * Need to detect even during braking, for error response
+	 *
+	 * Direction should be able to set while brake is set.
+	 * if state filters inputs,
 	 */
 	switch(direction)
 	{
-		case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_NEUTRAL;				break;
+//		case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_NEUTRAL;				break;
 		case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD;	break;
 		case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE;	break;
 //		case MOT_ANALOG_USER_DIRECTION_NEUTRAL:
@@ -281,9 +287,13 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 			}
 			else if(MotAnalogUser_PollBrakeSwitchFalling(p_user)== true)
 			{
-				cmd = MOT_ANALOG_USER_CMD_SET_RELEASE;
+				cmd = MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE;
 			}
 			/* Check Direction */
+			else if(direction == MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE)
+			{
+				cmd = MOT_ANALOG_USER_CMD_SET_NEUTRAL;
+			}
 			else if(direction == MOT_ANALOG_USER_DIRECTION_NEUTRAL)
 			{
 				cmd = MOT_ANALOG_USER_CMD_PROC_NEUTRAL;
@@ -293,7 +303,7 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 			{
 				if(MotAnalogUser_CheckThrottleRelease(p_user) == true) /* repeat throttle release is okay for now, otherwise track previous cmd state */
 				{
-					cmd = MOT_ANALOG_USER_CMD_SET_RELEASE;
+					cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE;
 				}
 				else
 				{
@@ -302,7 +312,7 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 			}
 			else if(MotAnalogUser_PollThrottleSwitchFalling(p_user)== true)
 			{
-				cmd = MOT_ANALOG_USER_CMD_SET_RELEASE;
+				cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE;
 			}
 			else
 			{

@@ -62,24 +62,6 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 	p_encoder->DeltaT = UINT32_MAX;
 }
 
-//void Encoder_DeltaT_InitParams(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
-//{
-//	//	Pin_Init(&p_encoder->CONFIG.PIN_PHASE_A);
-//	//	Pin_Init(&p_encoder->CONFIG.PIN_PHASE_B);
-//
-//	HAL_Encoder_InitCaptureTime
-//	(
-//		p_encoder->CONFIG.P_HAL_ENCODER,
-//		p_encoder->CONFIG.PIN_PHASE_A.P_HAL_PIN,
-//		p_encoder->CONFIG.PIN_PHASE_A.ID,
-//		p_encoder->CONFIG.PIN_PHASE_B.P_HAL_PIN,
-//		p_encoder->CONFIG.PIN_PHASE_B.ID
-//	);
-//
-//	_Encoder_Init(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount, p_encoder->CONFIG.DELTA_T_TIMER_FREQ);
-//
-//	p_encoder->DeltaT = UINT32_MAX;
-//}
 
 void Encoder_DeltaT_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
 {
@@ -87,14 +69,21 @@ void Encoder_DeltaT_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCou
 }
 
 /*
+ * Long timer ticks to determine short timer overflowed or stopped capture
  * p_encoder->CONFIG.EXTENDED_TIMER_FREQ should be small, < 65536
- * //long timer ticks per short timer overflow
+ *
  */
 void Encoder_DeltaT_SetExtendedTimer(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
 {
-//	p_encoder->ExtendedTimerThreshold = (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->UnitT_Freq;
-	p_encoder->Params.ExtendedTimerDeltaTStop = effectiveStopTime_Millis * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / 1000U ;
-	p_encoder->ExtendedTimerSaved = *p_encoder->CONFIG.P_EXTENDED_TIMER;
+	p_encoder->Params.ExtendedTimerDeltaTStop = effectiveStopTime_Millis * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / 1000U;
+}
+
+// Set default as 1s or 1rpm
+void Encoder_DeltaT_SetExtendedTimerDefault(Encoder_T * p_encoder)
+{
+	uint32_t time1Second = p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
+	uint32_t time1Rpm = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->CONFIG.DELTA_T_TIMER_FREQ;
+	p_encoder->Params.ExtendedTimerDeltaTStop = (time1Second < time1Rpm) ? time1Second : time1Rpm;
 }
 
 /*
@@ -110,7 +99,7 @@ void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder, uint16_t initialRpm)
 	p_encoder->ExtendedTimerSaved = *p_encoder->CONFIG.P_EXTENDED_TIMER;
 }
 
-//void Encoder_DeltaT_CalibrateAngularD(Encoder_T * p_encoder)
+//void Encoder_DeltaT_ZeroAngularD(Encoder_T * p_encoder)
 //{
 //	p_encoder->AngularD = 0U;
 //}
@@ -130,6 +119,6 @@ void Encoder_DeltaT_CalibrateQuadratureDirectionPositive(Encoder_T * p_encoder)
 //	}
 //	else
 //	{
-//		//		 p_encoder->IsALeadBPositive = false;
+//		//	p_encoder->IsALeadBPositive = false;
 //	}
 }

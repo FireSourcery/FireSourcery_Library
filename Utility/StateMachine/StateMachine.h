@@ -68,6 +68,11 @@ typedef const struct StateMachine_State_Tag
 	const StateMachine_TransitionInput_T TRANSITION_INPUT;	/* Single function, user provide switch case */
 	const StateMachine_Output_T OUTPUT;		/* Synchronous output / Common output to all inputs for asynchronous case. No null pointer check, user must supply empty function */
 	const StateMachine_Output_T ON_ENTRY;	/* common to all transition to current state, including self transition */
+
+#ifdef CONFIG_STATE_MACHINE_MENU_ENABLE
+	const struct StateMachine_State_Tag * P_NEXT_MENU;
+	const struct StateMachine_State_Tag * P_PREV_MENU;
+#endif
 }
 StateMachine_State_T;
 
@@ -116,10 +121,12 @@ StateMachine_T;
 	}														\
 }
 
+static inline statemachine_stateid_t StateMachine_GetActiveStateId(StateMachine_T * p_stateMachine) {return p_stateMachine->p_StateActive->ID;}
+
 extern void _StateMachine_ProcTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState);
 extern void StateMachine_Init(StateMachine_T * p_stateMachine);
 extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
-//extern void StateMachine_ProcTransition(StateMachine_T * p_stateMachine, statemachine_input_t inputVarType, uint32_t inputVar);
+//extern void StateMachine_ProcTransitionInput(StateMachine_T * p_stateMachine, statemachine_input_t inputVarType, uint32_t inputVar);
 extern void StateMachine_Synchronous_Proc(StateMachine_T * p_stateMachine);
 extern void StateMachine_Synchronous_SetInput(StateMachine_T * p_stateMachine, uint8_t input);
 extern void StateMachine_Asynchronous_ProcInput(StateMachine_T * p_stateMachine, uint8_t input);

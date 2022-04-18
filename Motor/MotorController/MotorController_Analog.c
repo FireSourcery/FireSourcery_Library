@@ -1,3 +1,4 @@
+
 /******************************************************************************/
 /*!
 	@section LICENSE
@@ -22,52 +23,18 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	.h
+    @file
     @author FireSoucery
     @brief
     @version V0
 */
 /******************************************************************************/
-#ifndef MOT_ANALOG_H
-#define MOT_ANALOG_H
-
+#include "MotorController_Analog.h"
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 
-#define MOT_ANALOG_CHANNEL_COUNT 	9U
+#include <stdint.h>
+#include <stdbool.h>
 
-/*!
-	@brief Virtual channel identifiers, index into arrays containing Analog channel
+/*
+ * MotAnalog Callbacks go here
  */
-typedef enum
-{
-	MOT_ANALOG_CHANNEL_VPOS, 				/* V battery, V in */
-	MOT_ANALOG_CHANNEL_HEAT_MOSFETS,
-	MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP,
-	MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT,
-	MOT_ANALOG_CHANNEL_HEAT_PCB,
-	MOT_ANALOG_CHANNEL_VACC,				/* V accessories ~12V*/
-	MOT_ANALOG_CHANNEL_VSENSE,				/* V analog sensors ~5V*/
-	MOT_ANALOG_CHANNEL_THROTTLE,
-	MOT_ANALOG_CHANNEL_BRAKE,
-}
-MotAnalog_Channel_T;
-
-typedef union
-{
-	struct
-	{
-		analog_adcresult_t VPos_ADCU;
-		analog_adcresult_t HeatMosfets_ADCU;
-		analog_adcresult_t HeatMosfetsTop_ADCU;
-		analog_adcresult_t HeatMosfetsBot_ADCU;
-		analog_adcresult_t HeatPcb_ADCU;
-		analog_adcresult_t VAcc_ADCU;
-		analog_adcresult_t VSense_ADCU;
-		analog_adcresult_t Throttle_ADCU;
-		analog_adcresult_t Brake_ADCU;
-	};
-	analog_adcresult_t Channels[MOT_ANALOG_CHANNEL_COUNT];
-}
-MotAnalog_Results_T;
-
-#endif

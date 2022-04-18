@@ -202,7 +202,57 @@ void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, sta
 	ProcAsynchronousInput(p_stateMachine, input);
 }
 
+//void StateMachine_Semisynchronous_ProcTransition(StateMachine_T * p_stateMachine, statemachine_input_t inputTransition)
+//{
+//	ProcAsynchronousInput(p_stateMachine, inputTransition);
+//}
+//
+//void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t inputTransition, uint32_t inputVar)
+//{
+//	ProcAsynchronousInput(p_stateMachine, inputTransition, inputVar);
+//}
 
+
+
+
+#ifdef CONFIG_STATE_MACHINE_MENU_ENABLE
+void StateMachine_Menu_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
+{
+	ProcAsynchronousInput(p_stateMachine, input);
+}
+
+StateMachine_State_T * StateMachine_Menu_GetPtrActive(StateMachine_T * p_stateMachine)
+{
+	return p_stateMachine->p_StateActive;
+}
+
+void StateMachine_Menu_SetMenu(Menu_T * target)
+{
+	p_MenuSelect = target;
+}
+
+void StateMachine_Menu_SetNext() //does not run entry funcion
+{
+	if(p_MenuSelect->NextMenu) p_MenuSelect = p_MenuSelect->NextMenu;
+}
+
+void StateMachine_Menu_StartMenu(Menu_T * target)
+{
+	p_MenuSelect = target;
+	if(p_MenuSelect->InitFunction) p_MenuSelect->InitFunction();
+}
+
+void StateMachine_Menu_StartNext(StateMachine_T * p_stateMachine)
+{
+	//enter cirtical
+	ProcTransition(p_stateMachine, p_stateMachine->p_StateActive->P_NEXT_MENU);
+}
+
+void StateMachine_Menu_ProcFunction(StateMachine_T * p_stateMachine, statemachine_input_t num)
+{
+	ProcOutput(p_stateMachine);
+}
+#endif
 
 
 /*
@@ -211,27 +261,36 @@ void StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, sta
 
 /* proc input function, check new state exists, else it's a self transition */
 /* Self transitions - User return 0 to bypass on entry, or return current state to run on entry function */
-static inline void ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputVar)
-{
-	StateMachine_TransitionInput_T transitionFunction = p_stateMachine->p_StateActive->TRANSITION_INPUT;
-	StateMachine_State_T * p_newState = (transitionFunction != 0U) ? transitionFunction(p_stateMachine->CONFIG.P_CONTEXT, input, inputVar) : 0U;
-//	StateMachine_State_T * p_currentState = p_stateMachine->p_StateActive;
-
-//	bool status = (p_newState != 0U);
-
-	if (p_newState != 0U) {ProcTransition(p_stateMachine, p_newState);}
-
-//	return status;
-}
+//static inline void ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputVar)
+//{
+//	StateMachine_TransitionInput_T transitionFunction = p_stateMachine->p_StateActive->TRANSITION_INPUT;
+//	StateMachine_State_T * p_newState = (transitionFunction != 0U) ? transitionFunction(p_stateMachine->CONFIG.P_CONTEXT, input, inputVar) : 0U;
+////	StateMachine_State_T * p_currentState = p_stateMachine->p_StateActive;
+//
+////	bool status = (p_newState != 0U);
+//
+//	if (p_newState != 0U) {ProcTransition(p_stateMachine, p_newState);}
+//
+////	return status;
+//}
 
 //return true if transition was sucessful
-bool StateMachine_Semisynchronous_ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t inputMode, uint32_t inputVar)
-{
-	if (EnterCriticalCommon(p_stateMachine))
-	{
-		ProcTransitionFunction(p_stateMachine, inputMode, inputVar);
-		ExitCriticalCommon(p_stateMachine);
-	}
-}
+//bool StateMachine_Semisynchronous_ProcTransition(StateMachine_T * p_stateMachine, statemachine_input_t inputTransition)
+//{
+//	if (EnterCriticalCommon(p_stateMachine))
+//	{
+//		ProcTransitionFunction(p_stateMachine, inputMode);
+//		ExitCriticalCommon(p_stateMachine);
+//	}
+//}
+
+//bool StateMachine_Semisynchronous_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t inputTransition, uint32_t inputVar)
+//{
+//	if (EnterCriticalCommon(p_stateMachine))
+//	{
+//		ProcTransitionFunction(p_stateMachine, inputMode, inputVar);
+//		ExitCriticalCommon(p_stateMachine);
+//	}
+//}
 
 

@@ -63,14 +63,14 @@ static inline void Encoder_DeltaD_CaptureQuadrature(Encoder_T * p_encoder)
 	/*
 	 * Unsigned DeltaD capture
 	 */
-	if (HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER))
+	if (HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
 	{
-		if(HAL_Encoder_ReadQuadratureCounterOverflowIncrement(p_encoder->CONFIG.P_HAL_ENCODER))
+		if(HAL_Encoder_ReadQuadratureCounterOverflowIncrement(p_encoder->CONFIG.P_HAL_ENCODER) == true)
 		{
 			p_encoder->DeltaD = p_encoder->Params.CountsPerRevolution - p_encoder->TimerCounterSaved + counterValue;
 			isIncrement = true;
 		}
-		else if (HAL_Encoder_ReadQuadratureCounterOverflowDecrement(p_encoder->CONFIG.P_HAL_ENCODER)) //counter counts down, deltaD is negative
+		else if (HAL_Encoder_ReadQuadratureCounterOverflowDecrement(p_encoder->CONFIG.P_HAL_ENCODER) == true) //counter counts down, deltaD is negative
 		{
 			p_encoder->DeltaD = p_encoder->Params.CountsPerRevolution - counterValue + p_encoder->TimerCounterSaved;
 			isIncrement = false;

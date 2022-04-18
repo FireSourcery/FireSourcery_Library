@@ -34,7 +34,7 @@
 #include "MotorController.h"
 #include "Utility/StateMachine/StateMachine.h"
 
-#define MCSM_TRANSITION_TABLE_LENGTH 	(9U)
+#define MCSM_TRANSITION_TABLE_LENGTH 	(10U)
 
 typedef enum MotorController_StateMachine_Input_Tag
 {
@@ -44,7 +44,8 @@ typedef enum MotorController_StateMachine_Input_Tag
 	MCSM_INPUT_BRAKE,
 //	MCSM_INPUT_FLOAT,
 
-	MCSM_INPUT_RELEASE, /* Release Control */
+	MCSM_INPUT_RELEASE_THROTTLE, /* Release Control */
+	MCSM_INPUT_RELEASE_BRAKE, /* Release Control */
 	MCSM_INPUT_NULL,	/* No Input */
 
 
@@ -54,9 +55,9 @@ typedef enum MotorController_StateMachine_Input_Tag
 }
 MotorController_StateMachine_Input_T;
 
-#define MOTOR_CONTROLLER_STATE_MACHINE_CONFIG(p_MotorController) STATE_MACHINE_CONFIG(&MCSM_MACHINE, p_MotorController, false)
-
 extern const StateMachine_Machine_T MCSM_MACHINE;
+
+#define MOTOR_CONTROLLER_STATE_MACHINE_CONFIG(p_MotorController) STATE_MACHINE_CONFIG(&MCSM_MACHINE, p_MotorController, false)
 
 typedef enum
 {
@@ -67,6 +68,6 @@ typedef enum
 }
 MotorController_StateMachine_StateId_T;
 
-extern MotorController_StateMachine_StateId_T MotorController_StateMachine_GetStateId(MotorController_T * p_mc);
+//extern MotorController_StateMachine_StateId_T MotorController_StateMachine_GetStateId(MotorController_T * p_mc);
 
 #endif

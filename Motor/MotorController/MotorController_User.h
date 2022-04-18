@@ -35,7 +35,6 @@
 #include "MotorController.h"
 #include "Config.h"
 
-
 /*
  * Controller Nvm Variables
  */
@@ -63,6 +62,8 @@ static inline uint32_t MotorController_User_GetBatteryCharge_Frac16(MotorControl
 /*
  * Controller ram variables
  */
+static inline MotorController_StateMachine_StateId_T MotorController_User_GetStateId(MotorController_T * p_mc) {return StateMachine_GetActiveStateId(&p_mc->StateMachine);}
+
 static inline uint16_t MotorController_User_GetAdcu(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel)		{return p_mc->AnalogResults.Channels[adcChannel];}
 static inline uint16_t MotorController_User_GetAdcu_Msb8(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel)	{return MotorController_User_GetAdcu(p_mc, adcChannel) >> (CONFIG_MOTOR_CONTROLLER_ADCU_BITS_N - 8U);}
 
@@ -195,9 +196,14 @@ static inline void MotorController_User_ProcNeutral(MotorController_T * p_mc)
 }
 
 
-static inline void MotorController_User_StartRelease(MotorController_T * p_mc) //set release
+static inline void MotorController_User_StartReleaseThrottle(MotorController_T * p_mc) //set release
 {
-	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_RELEASE);
+	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_RELEASE_BRAKE);
+}
+
+static inline void MotorController_User_StartReleaseBrake(MotorController_T * p_mc) //set release
+{
+	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_RELEASE_THROTTLE);
 }
 
 static inline void MotorController_User_ProcRelease(MotorController_T * p_mc) //proc null

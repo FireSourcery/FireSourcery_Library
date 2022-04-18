@@ -211,12 +211,87 @@ enum
 	FLEXCAN_TX_NOT_USED = 0xF /*!< Not used*/
 };
 
-static inline void HAL_CanBus_WriteTxMessageBufferControl(HAL_CanBus_T * p_hal, const CanMessage_T * p_txMessage, uint8_t hwBufferIndex)
+
+static inline void HAL_CanBus_WriteMessageBufferControl(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex, const CanMessage_T * p_message)
 {
+	volatile uint32_t * p_messageBuffer = GetPtrMessageBuffer(p_hal, hwBufferIndex);
+	volatile uint32_t * p_bufferHeader = &p_messageBuffer[0U];
+	volatile uint32_t * p_bufferId = &p_messageBuffer[1U];
+	uint32_t messageHeader = 0U;
+	uint32_t code;
+	{
+		if((p_message->EnableBitRateSwitch == true)) //reg_IsFdEnabled() &&
+		{
+			p_hal->FDCTRL = (p_hal->FDCTRL & ~CAN_FDCTRL_FDRATE_MASK) | CAN_FDCTRL_FDRATE(1U);
+		}
+
+		/* Clean up the arbitration field area */
+		*p_bufferHeader = 0U;
+		*p_bufferId 	= 0U;
+
+		/* Set the ID according the format structure */
+		if(p_message->Format == CAN_FRAME_FORMAT_EXTEND)
+		{
+			/* ID [28-0] */
+			*p_bufferId &= ~(CAN_ID_STD_MASK | CAN_ID_EXT_MASK);
+			*p_bufferId |= (p_message->Id.Id & (CAN_ID_STD_MASK | CAN_ID_EXT_MASK));
+
+			/* Set IDE */
+			messageHeader |= CAN_CS_IDE_MASK;
+
+			/* Clear SRR bit */
+			messageHeader &= ~CAN_CS_SRR_MASK;
+		}
+		else if(p_message->Format == CAN_FRAME_FORMAT_STANDARD)
+		{
+			/* ID[28-18] */
+			*p_bufferId &= ~CAN_ID_STD_MASK;
+			*p_bufferId |= (p_message->Id.Id << CAN_ID_STD_SHIFT) & CAN_ID_STD_MASK;
+
+			/* make sure IDE and SRR are not set */
+			messageHeader &= ~(CAN_CS_IDE_MASK | CAN_CS_SRR_MASK);
+		}
+
+		/* Set the length of data in bytes */
+//		messageHeader &= ~CAN_CS_DLC_MASK;
+//		messageHeader |= ((uint32_t)dlc << CAN_CS_DLC_SHIFT) & CAN_CS_DLC_MASK;
+
+		/* Set MB CODE */
+//		if(txCode != (uint32_t)FLEXCAN_TX_NOT_USED)
+		{
+
+			switch(p_message->Status)
+			{
+				case CAN_MESSAGE_RX_WAIT: 		code = FLEXCAN_RX_EMPTY;	break;
+				case CAN_MESSAGE_RX_COMPLETE: 	code = FLEXCAN_RX_EMPTY; 	break;
+				case CAN_MESSAGE_RX_INIT: 		code = FLEXCAN_RX_EMPTY; 	break;
+				case CAN_MESSAGE_TX_DATA: 		code = FLEXCAN_TX_DATA;		break;
+				case CAN_MESSAGE_TX_REMOTE: 	code = FLEXCAN_TX_REMOTE;	break;
+				case CAN_MESSAGE_TX_INIT: 		code = FLEXCAN_TX_DATA;		break;
+				default: code =  0U; break;
+			}
+
+			if(p_message->Type == CAN_FRAME_TYPE_REMOTE)
+			{
+				messageHeader |= CAN_CS_RTR_MASK;
+			}
+
+			messageHeader &= ~CAN_CS_CODE_MASK;
+			if(p_message->EnableFlexData)			{messageHeader |= CAN_MB_EDL_MASK;}
+			if(p_message->EnableBitRateSwitch)		{messageHeader |= CAN_MB_BRS_MASK;}
+			messageHeader |= (code << CAN_CS_CODE_SHIFT) & CAN_CS_CODE_MASK;
+			*p_bufferHeader |= messageHeader;
+		}
+	}
+}
+
+static inline void HAL_CanBus_WriteTxMessageBufferControl(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex, const CanMessage_T * p_txMessage)
+{
+
 
 }
 
-static inline void HAL_CanBus_WriteTxMessageBufferData(HAL_CanBus_T * p_hal, const uint8_t * p_data, uint8_t dataLength, uint8_t hwBufferIndex)
+static inline void HAL_CanBus_WriteTxMessageBufferData(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex, const uint8_t * p_data, uint8_t dataLength)
 {
 
 }
@@ -326,7 +401,7 @@ static inline void HAL_CanBus_ReadRxMessageBuffer(HAL_CanBus_T * p_hal, uint8_t 
 //	const uint32_t * p_messageData = (const uint32_t*)&p_txMessage->Data;
 	uint8_t dlc = (uint8_t)(((*p_messageBuffer) & CAN_CS_DLC_MASK) >> 16);
 	uint8_t dataLength = CalcDataFieldLength(dlc);
-	uint32_t messageHeader = 0U;
+//	uint32_t messageHeader = 0U;
 
 //#if FEATURE_CAN_HAS_FD
 //    if (payload_size > FLEXCAN_GetPayloadSize(base))
@@ -396,6 +471,14 @@ static inline bool HAL_CanBus_ReadIsBufferInterrupt(HAL_CanBus_T * p_hal, uint8_
 	return (((p_hal->IFLAG1 & p_hal->IMASK1) >> (hwBufferIndex % 32U)) & 1U);
 }
 
+/*
+ * It must be guaranteed that the CPU clears only the bit causing
+the current interrupt. For this reason, bit manipulation
+instructions (BSET) must not be used to clear interrupt flags.
+These instructions may cause accidental clearing of interrupt
+flags which are set after entering the current interrupt service
+routine.
+ */
 static inline void HAL_CanBus_ClearBufferInterrupt(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
 	p_hal->IFLAG1 = 1UL << (hwBufferIndex % 32U);
@@ -458,6 +541,7 @@ static inline void HAL_CanBus_UnlockRxBuffer(HAL_CanBus_T * p_hal, uint8_t hwBuf
 
 static inline bool HAL_CanBus_LockRxFifoBuffer(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
+	return true;
 }
 
 static inline void HAL_CanBus_UnlockRxFifoBuffer(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
@@ -465,13 +549,24 @@ static inline void HAL_CanBus_UnlockRxFifoBuffer(HAL_CanBus_T * p_hal, uint8_t h
 
 }
 
-typedef struct {
-    uint32_t propSeg;         /*!< Propagation segment*/
-    uint32_t phaseSeg1;       /*!< Phase segment 1*/
-    uint32_t phaseSeg2;       /*!< Phase segment 2*/
-    uint32_t preDivider;      /*!< Clock prescaler division factor*/
-    uint32_t rJumpwidth;      /*!< Resync jump width*/
-} flexcan_time_segment_t;
+#define CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER 88
+
+static inline void HAL_CanBus_DisableInterrupts(HAL_CanBus_T * p_hal)
+{
+//	if(p_hal = CAN1)
+	{
+		S32_NVIC->ICER[(uint32_t)(CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER) >> 5U] = (uint32_t)(1UL << ((uint32_t)(CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER) & (uint32_t)0x1FU));
+	}
+}
+
+static inline void HAL_CanBus_EnableInterrupts(HAL_CanBus_T * p_hal)
+{
+//	if(p_hal = CAN1)
+	{
+		S32_NVIC->ISER[(uint32_t)(CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER) >> 5U] = (uint32_t)(1UL << ((uint32_t)(CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER) & (uint32_t)0x1FU));
+	}
+}
+
 
 static inline void HAL_CanBus_ConfigBitRate(HAL_CanBus_T * p_hal, uint32_t bitRate)
 {

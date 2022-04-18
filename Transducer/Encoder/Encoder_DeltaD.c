@@ -75,6 +75,11 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 
 	Encoder_DeltaD_SetUnitConversion(p_encoder, p_encoder->Params.CountsPerRevolution, p_encoder->Params.DistancePerCount);
 
+//	if(p_encoder->Params.CountsPerRevolution > (UINT32_MAX / p_encoder->UnitAngularSpeed))
+//	{
+//		p_encoder->UnitAngularSpeed = 0U;
+//	}
+
 #ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
 	p_encoder->Params.IsQuadratureCaptureEnabled = true;
 #endif
