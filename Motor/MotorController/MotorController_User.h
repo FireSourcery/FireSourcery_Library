@@ -46,17 +46,17 @@ static inline void MotorController_User_CalibrateBattery_MilliV(MotorController_
 {
 	p_mc->Parameters.BatteryZero_ADCU = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorPos, zero_mV);
 	p_mc->Parameters.BatteryFull_ADCU = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorPos, max_mV);
-	Linear_ADC_Init(&p_mc->Battery, p_mc->Parameters.BatteryZero_ADCU, p_mc->Parameters.BatteryFull_ADCU, 1000U);
+	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_ADCU, p_mc->Parameters.BatteryFull_ADCU, 1000U);
 }
 
 static inline uint32_t MotorController_User_GetBatteryCharge_Base10(MotorController_T * p_mc)
 {
-	return Linear_ADC_CalcPhysical(&p_mc->Battery, p_mc->AnalogResults.VPos_ADCU);
+	return Linear_ADC_CalcPhysical(&p_mc->BatteryLife, p_mc->AnalogResults.VPos_ADCU);
 }
 
 static inline uint32_t MotorController_User_GetBatteryCharge_Frac16(MotorController_T * p_mc)
 {
-	return Linear_ADC_CalcFraction16(&p_mc->Battery, p_mc->AnalogResults.VPos_ADCU);
+	return Linear_ADC_CalcFraction16(&p_mc->BatteryLife, p_mc->AnalogResults.VPos_ADCU);
 }
 
 /*

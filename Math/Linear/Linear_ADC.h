@@ -61,17 +61,17 @@ static inline uint32_t Linear_ADC_CalcFractionUnsigned16_Abs(const Linear_T * p_
 
 static inline uint16_t Linear_ADC_CalcAdcu_Physical(const Linear_T * p_linear, int16_t units)
 {
-	return Linear_InvFrac16_CalcUnits(p_linear, units);
+	return Linear_Frac16_CalcInvUnits(p_linear, units);
 }
 
 static inline uint16_t Linear_ADC_CalcAdcu_FractionSigned16(const Linear_T * p_linear, int32_t signedFrac16)
 {
-	return Linear_InvFrac16_Signed(p_linear, signedFrac16);
+	return Linear_Frac16_InvSigned(p_linear, signedFrac16);
 }
 
 static inline uint16_t Linear_ADC_CalcAdcu_FractionUnsigned16(const Linear_T * p_linear, uint32_t unsignedFrac16)
 {
-	return Linear_InvFrac16_Unsigned(p_linear, unsignedFrac16);
+	return Linear_Frac16_InvUnsigned(p_linear, unsignedFrac16);
 }
 
 extern void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef);

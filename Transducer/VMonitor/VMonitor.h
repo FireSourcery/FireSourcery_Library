@@ -48,12 +48,14 @@ typedef struct __attribute__ ((aligned (4U)))
 {
 	uint16_t LimitUpper_ADCU;
 	uint16_t LimitLower_ADCU;
+	//Vmax
 }
 VMonitor_Params_T;
 
 typedef const struct
 {
 	const VMonitor_Params_T * const P_PARAMS;
+	//R1, R2
 	const Linear_T UNITS;
 }
 VMonitor_Config_T;

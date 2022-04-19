@@ -47,6 +47,8 @@ void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, in
 }
 
 
+void Linear_Frac16_Init_XRef(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t xRef)
+{
 
-
+}
 

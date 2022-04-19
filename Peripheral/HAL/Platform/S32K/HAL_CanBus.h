@@ -262,12 +262,10 @@ static inline void HAL_CanBus_WriteMessageBufferControl(HAL_CanBus_T * p_hal, ui
 
 			switch(p_message->Status)
 			{
-				case CAN_MESSAGE_RX_WAIT: 		code = FLEXCAN_RX_EMPTY;	break;
-				case CAN_MESSAGE_RX_COMPLETE: 	code = FLEXCAN_RX_EMPTY; 	break;
-				case CAN_MESSAGE_RX_INIT: 		code = FLEXCAN_RX_EMPTY; 	break;
-				case CAN_MESSAGE_TX_DATA: 		code = FLEXCAN_TX_DATA;		break;
-				case CAN_MESSAGE_TX_REMOTE: 	code = FLEXCAN_TX_REMOTE;	break;
-				case CAN_MESSAGE_TX_INIT: 		code = FLEXCAN_TX_DATA;		break;
+				case CAN_MESSAGE_RX_WAIT_REMOTE: 	code = FLEXCAN_RX_EMPTY;	break;
+				case CAN_MESSAGE_RX_WAIT_DATA: 		code = FLEXCAN_RX_EMPTY; 	break;
+				case CAN_MESSAGE_TX_DATA: 			code = FLEXCAN_TX_DATA;		break;
+				case CAN_MESSAGE_TX_REMOTE: 		code = FLEXCAN_TX_REMOTE;	break;
 				default: code =  0U; break;
 			}
 
@@ -494,10 +492,17 @@ static inline void HAL_CanBus_DisableBufferInterrupt(HAL_CanBus_T * p_hal, uint8
 	p_hal->IMASK1 = p_hal->IMASK1 & ~(1UL << (hwBufferIndex % 32U));
 }
 
-static inline bool HAL_CanBus_ReadIsBufferWaitRx(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
+static inline bool HAL_CanBus_ReadIsBufferTxRemoteRxEmpty(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
 {
 	return (((GetPtrMessageBuffer(p_hal, hwBufferIndex)[0U] & CAN_CS_CODE_MASK) >> CAN_CS_CODE_SHIFT) == FLEXCAN_RX_EMPTY);
 }
+
+static inline bool HAL_CanBus_ReadIsBufferTxRemoteRxFull(HAL_CanBus_T * p_hal, uint8_t hwBufferIndex)
+{
+
+}
+
+
 
 //static inline uint8_t HAL_CanBus_CalcRxMessageBufferIndex(HAL_CanBus_T * p_hal, uint8_t userId)
 //{
@@ -549,21 +554,30 @@ static inline void HAL_CanBus_UnlockRxFifoBuffer(HAL_CanBus_T * p_hal, uint8_t h
 
 }
 
-#define CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER 88
+#define CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER 88U
+#define CONFIG_HAL_CAN_BUS_0_IRQ_NUMBER 81U
 
 static inline void HAL_CanBus_DisableInterrupts(HAL_CanBus_T * p_hal)
 {
-//	if(p_hal = CAN1)
+	if(p_hal == CAN1)
 	{
 		S32_NVIC->ICER[(uint32_t)(CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER) >> 5U] = (uint32_t)(1UL << ((uint32_t)(CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER) & (uint32_t)0x1FU));
+	}
+	else if(p_hal == CAN0)
+	{
+		S32_NVIC->ICER[(uint32_t)(CONFIG_HAL_CAN_BUS_0_IRQ_NUMBER) >> 5U] = (uint32_t)(1UL << ((uint32_t)(CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER) & (uint32_t)0x1FU));
 	}
 }
 
 static inline void HAL_CanBus_EnableInterrupts(HAL_CanBus_T * p_hal)
 {
-//	if(p_hal = CAN1)
+	if(p_hal == CAN1)
 	{
 		S32_NVIC->ISER[(uint32_t)(CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER) >> 5U] = (uint32_t)(1UL << ((uint32_t)(CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER) & (uint32_t)0x1FU));
+	}
+	else if(p_hal == CAN0)
+	{
+		S32_NVIC->ISER[(uint32_t)(CONFIG_HAL_CAN_BUS_0_IRQ_NUMBER) >> 5U] = (uint32_t)(1UL << ((uint32_t)(CONFIG_HAL_CAN_BUS_0_IRQ_NUMBER) & (uint32_t)0x1FU));
 	}
 }
 

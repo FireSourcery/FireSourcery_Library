@@ -355,6 +355,15 @@ static inline void _Encoder_CaptureDelta(Encoder_T * p_encoder, uint32_t * p_del
 static inline uint32_t Encoder_ConvertCounterDToUnits(Encoder_T * p_encoder, uint32_t counterD_Ticks)	{return counterD_Ticks * p_encoder->UnitLinearD;}
 static inline uint32_t Encoder_ConvertUnitsToCounterD(Encoder_T * p_encoder, uint32_t counterD_Ticks)	{return counterD_Ticks / p_encoder->UnitLinearD;}
 
+/*!
+	Same as integral D
+ */
+static inline uint32_t Encoder_GetTotalD_Units(Encoder_T * p_encoder)	{return p_encoder->TotalD * p_encoder->UnitLinearD;}
+
+//static inline uint32_t Encoder_GetTotalTFreq(Encoder_T * p_encoder)		{return p_encoder->UnitT_Freq / p_encoder->TotalT;}
+static inline uint32_t Encoder_GetTotalT_Millis(Encoder_T * p_encoder)	{return p_encoder->TotalT * 1000U / p_encoder->UnitT_Freq;}
+//static inline uint32_t Encoder_GetTotalT_Micros(Encoder_T * p_encoder)	{return _Encoder_MicrosHelper(p_encoder->TotalT,  p_encoder->UnitT_Freq);}
+
 /******************************************************************************/
 /*!
 	@brief Angle Functions
@@ -392,19 +401,23 @@ static inline uint32_t Encoder_GetAngle(Encoder_T * p_encoder)
 	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->AngularD);
 }
 
-//static inline uint32_t Encoder_GetRevolutions(Encoder_T * p_encoder)
-//{
-//	return p_encoder->TotalD / p_encoder->Params.CountsPerRevolution;
-//}
-
-/*!
-	Same as integral D
+/*
+ * Integral angle
  */
-static inline uint32_t Encoder_GetTotalD_Units(Encoder_T * p_encoder)	{return p_encoder->TotalD * p_encoder->UnitLinearD;}
+static inline uint32_t Encoder_GetTotalRevolutions(Encoder_T * p_encoder)
+{
+	return p_encoder->TotalD / p_encoder->Params.CountsPerRevolution;
+}
 
-//static inline uint32_t Encoder_GetTotalTFreq(Encoder_T * p_encoder)		{return p_encoder->UnitT_Freq / p_encoder->TotalT;}
-static inline uint32_t Encoder_GetTotalT_Millis(Encoder_T * p_encoder)	{return p_encoder->TotalT * 1000U / p_encoder->UnitT_Freq;}
-//static inline uint32_t Encoder_GetTotalT_Micros(Encoder_T * p_encoder)	{return _Encoder_MicrosHelper(p_encoder->TotalT,  p_encoder->UnitT_Freq);}
+static inline uint32_t Encoder_GetTotalAngle(Encoder_T * p_encoder)
+{
+	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->TotalD);
+}
+
+static inline void Encoder_ResetTotalAngle(Encoder_T * p_encoder)
+{
+	p_encoder->TotalD = 0U;
+}
 
 /******************************************************************************/
 /*! @} */

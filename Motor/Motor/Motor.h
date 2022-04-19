@@ -54,6 +54,7 @@
 #include "Math/Linear/Linear_ADC.h"
 #include "Math/Linear/Linear_Voltage.h"
 #include "Math/Linear/Linear_Ramp.h"
+#include "Math/Linear/Linear_Speed.h"
 #include "Math/Linear/Linear.h"
 #include "Math/PID/PID.h"
 #include "Math/Filter/Filter_MovAvg.h"
@@ -244,6 +245,8 @@ typedef struct __attribute__ ((aligned (4U)))
 	uint16_t SpeedRefMax_RPM;
 	uint16_t SpeedRefVoltage_RPM;
 
+	uint16_t VSupply;
+
 	uint16_t IRefMax_Amp;
 	uint16_t IaRefZero_ADCU;
 	uint16_t IbRefZero_ADCU;
@@ -268,7 +271,11 @@ typedef const struct Motor_Init_Tag
 {
  	const Motor_Params_T * const P_PARAMS_NVM;
 
-	const Linear_T UNIT_V_ABC; 	//Bemf V and mV conversion //const using fixed resistor values
+//	const Linear_T UNIT_V_ABC; 	//Bemf V and mV conversion //const using fixed resistor values
+ 	const uint16_t UNIT_VABC_R1;
+ 	const uint16_t UNIT_VABC_R2;
+ 	const uint16_t UNIT_VABC_ADCREF10;
+ 	const uint16_t UNIT_VABC_ADCBITS;
 
 	AnalogN_T * const P_ANALOG_N;
 	const AnalogN_AdcFlags_T ADCS_ACTIVE_PWM_THREAD; //rename group adc active
@@ -316,10 +323,10 @@ typedef struct
 
 	Timer_T SecondsTimer; 			//  Heat thread
 
-	//not const due to adc calibration
 	Linear_T UnitIa; 	//Frac16 and UserUnits (Amp)
 	Linear_T UnitIb;
 	Linear_T UnitIc;
+	Linear_T UnitVabc;
 
 	//Calibration use
 	Filter_T FilterA;
@@ -333,6 +340,7 @@ typedef struct
 	int32_t RampCmd;			//SetPoint after ramp, VReq/IReq/SpeedReq
 
 	/* Speed Feedback */
+	Linear_T UnitAngleRpm;
 	PID_T PidSpeed;
 	Timer_T SpeedTimer;			// SpeedCalc Timer
 	uint16_t Speed_RPM;			// Common Feedback Variable
@@ -340,6 +348,7 @@ typedef struct
 	int32_t SpeedControl; 		/* Speed PID output, (Speed_Frac16 - RampCmd) => (VPwm, Vq, Iq), updated once per millis */
 
 
+	uint32_t DeltaAngle2;
 	uint16_t Speed2_RPM;
 	uint32_t Speed2_Frac16;
 
@@ -448,7 +457,6 @@ static inline void Motor_SetDirectionReverse(Motor_T * p_motor)
 	else																	{Motor_SetDirection(p_motor, MOTOR_DIRECTION_CCW);}
 }
 
-
 /******************************************************************************/
 /*
 	Ramp
@@ -512,29 +520,36 @@ static inline void Motor_ResumeRampOutput(Motor_T * p_motor, int32_t matchOutput
 static inline void Motor_CaptureEncoderSpeed(Motor_T * p_motor)
 {
 	p_motor->Speed_RPM =  (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder));// + p_motor->Speed_RPM) / 2U;
-	p_motor->Speed_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedRefMax_RPM);
+	p_motor->Speed_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedRefMax_RPM); //todo move to encoder module
 }
 
 static inline void Motor_CaptureSpeed(Motor_T * p_motor)
 {
-	uint32_t deltaAngle;
-	uint16_t angle = (uint16_t)p_motor->ElectricalAngle;
-	uint16_t anglePrev = (uint16_t)p_motor->ElectricalAnglePrev;
-
-//	if (angle < anglePrev)
+//	uint32_t deltaAngle;
+//	uint16_t angle = (uint16_t)p_motor->ElectricalAngle;
+//	uint16_t anglePrev = (uint16_t)p_motor->ElectricalAnglePrev;
+//
+////	if (angle < anglePrev)
+////	{
+////		deltaAngle = (uint32_t)65535U - anglePrev + angle + 1U;
+////	}
+////	else /* normal case */
 //	{
-//		deltaAngle = (uint32_t)65535U - anglePrev + angle + 1U;
+//		deltaAngle = angle - anglePrev;
 //	}
-//	else /* normal case */
-	{
-		deltaAngle = angle - anglePrev;
-	}
+//
 
-	p_motor->DeltaAngle = deltaAngle;
-	p_motor->ElectricalAnglePrev = angle;
+	p_motor->DeltaAngle = Encoder_GetTotalAngle(&p_motor->Encoder); //mech angle
+	Encoder_ResetTotalAngle(&p_motor->Encoder);
 
-	p_motor->Speed2_RPM = Encoder_ConvertAngleToRotationalSpeed_RPM(0, deltaAngle, 1000U) / p_motor->Encoder.Params.MotorPolePairs; //todo move to linear module
-	p_motor->Speed2_Frac16 = deltaAngle*1000U*60U/((uint32_t)p_motor->Parameters.SpeedRefMax_RPM * p_motor->Encoder.Params.MotorPolePairs);
+	p_motor->DeltaAngle2 = CalcLinearSpeedDeltaAngle(p_motor->ElectricalAngle, p_motor->ElectricalAnglePrev, p_motor->Direction);
+//	p_motor->ElectricalAnglePrev = angle;
+//
+//	p_motor->Speed2_RPM = Encoder_ConvertAngleToRotationalSpeed_RPM(0, deltaAngle, 1000U) / p_motor->Encoder.Params.MotorPolePairs; //todo move to linear module
+//	p_motor->Speed2_Frac16 = deltaAngle*1000U*60U/((uint32_t)p_motor->Parameters.SpeedRefMax_RPM * p_motor->Encoder.Params.MotorPolePairs);
+
+	p_motor->Speed2_RPM = Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, p_motor->ElectricalAngle, p_motor->ElectricalAnglePrev, p_motor->Direction);
+	p_motor->ElectricalAnglePrev = p_motor->ElectricalAngle;
 
 }
 
@@ -546,7 +561,6 @@ static inline void Motor_ResumeSpeedOutput(Motor_T * p_motor, int32_t matchOutpu
 	p_motor->SpeedControl = matchOutput; // output SpeedControl is V or I
 }
 
-
 static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
 {
 	if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder) == true) //once per millis
@@ -556,6 +570,50 @@ static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
 	}
 }
 
+/******************************************************************************/
+/*
+	Control Mode
+*/
+/******************************************************************************/
+static inline Motor_ControlModeFlags_T Motor_ConvertControlModeFlags(Motor_ControlMode_T mode)
+{
+	static const Motor_ControlModeFlags_T MODE_OPEN_LOOP		= {.OpenLoop = 1U, .Speed = 0U, .Current = 0U, .VFreqScalar = 0U, .Update = 0U, };
+	static const Motor_ControlModeFlags_T MODE_VOLTAGE 			= {.OpenLoop = 0U, .Speed = 0U, .Current = 0U, .VFreqScalar = 0U, .Update = 0U, };
+	static const Motor_ControlModeFlags_T MODE_VOLTAGE_FREQ 	= {.OpenLoop = 0U, .Speed = 0U, .Current = 0U, .VFreqScalar = 1U, .Update = 0U, };
+	static const Motor_ControlModeFlags_T MODE_CURRENT 			= {.OpenLoop = 0U, .Speed = 0U, .Current = 1U, .VFreqScalar = 0U, .Update = 0U, };
+	static const Motor_ControlModeFlags_T MODE_SPEED_VOLTAGE 	= {.OpenLoop = 0U, .Speed = 1U, .Current = 0U, .VFreqScalar = 0U, .Update = 0U, };
+	static const Motor_ControlModeFlags_T MODE_SPEED_CURRENT 	= {.OpenLoop = 0U, .Speed = 1U, .Current = 1U, .VFreqScalar = 0U, .Update = 0U, };
+
+	Motor_ControlModeFlags_T flags;
+
+	switch(mode)
+	{
+		case MOTOR_CONTROL_MODE_OPEN_LOOP:					flags.State = MODE_OPEN_LOOP.State; 	break;
+		case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:			flags.State = MODE_VOLTAGE.State;		break;
+		case MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ:		flags.State = MODE_VOLTAGE_FREQ.State;	break;
+		case MOTOR_CONTROL_MODE_CONSTANT_CURRENT:			flags.State = MODE_CURRENT.State;		break;
+		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:		flags.State = MODE_SPEED_VOLTAGE.State;	break;
+		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT:		flags.State = MODE_SPEED_CURRENT.State;	break;
+		default: flags.State = 0; break;
+	}
+
+	return flags;
+}
+
+static inline bool Motor_CheckControlMode(Motor_T * p_motor, Motor_ControlMode_T mode)
+{
+	if (p_motor->ControlModeFlags.State != Motor_ConvertControlModeFlags(mode).State)
+	{
+		p_motor->ControlModeFlags.Update = 1U;
+	}
+
+	return p_motor->ControlModeFlags.Update;
+}
+
+static inline void Motor_SetControlMode(Motor_T * p_motor, Motor_ControlMode_T mode)
+{
+	p_motor->ControlModeFlags.State = Motor_ConvertControlModeFlags(mode).State;
+}
 
 /******************************************************************************/
 /*!

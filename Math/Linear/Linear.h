@@ -54,16 +54,16 @@ typedef struct Linear_Tag
 
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
 
-#define LINEAR_CONFIG(factor, divisor, y0, yRef)										\
-{																						\
-	.SlopeFactor 				= ((int32_t)65536 << 14U) / ((int32_t)(divisor) * yRef / (factor)),	\
-	.SlopeDivisor_Shift 		= 14U,													\
-	.SlopeDivisor 				= (((int32_t)(divisor) * (yRef) / (factor)) << 14U) / 65536, 	\
-	.SlopeFactor_Shift 			= 14U,													\
-	.XOffset 					= 0,													\
-	.YOffset 					= y0,													\
+#define LINEAR_CONFIG(factor, divisor, y0, yRef)														\
+{																										\
+	.SlopeFactor 				= ((int32_t)65536 << 14U) / ((int32_t)(divisor) * yRef / (factor)),		\
+	.SlopeDivisor_Shift 		= 14U,																	\
+	.SlopeDivisor 				= (((int32_t)(divisor) * (yRef) / (factor)) << 14U) / 65536, 			\
+	.SlopeFactor_Shift 			= 14U,																	\
+	.XOffset 					= 0,																	\
+	.YOffset 					= y0,																	\
  	.XReference 				= ((int32_t)(divisor) * (yRef) / (factor)), 							\
-	.YReference 				= yRef, 												\
+	.YReference 				= yRef, 																\
 }
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 #define LINEAR_CONFIG(factor, divisor, offset, rangeRef)				\

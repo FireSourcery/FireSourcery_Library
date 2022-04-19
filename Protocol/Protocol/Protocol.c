@@ -111,15 +111,23 @@ static inline bool PortRxByte(Protocol_T * p_protocol,   uint8_t * p_rxChar)
 //		return Xcvr_RecvChar(p_protocol->p_Xcvr, p_rxChar);
 }
 
-//static inline uint32_t PortRx(Protocol_T * p_protocol, uint8_t * p_rxBuffer, uint16_t length)
-//{
-////	return Serial_Recv(p_protocol->Params.p_Xcvr, p_rxBuffer, length);
-//}
 
-static inline bool PortTxString(Protocol_T * p_protocol, const uint8_t * p_string, uint16_t length)
+static inline bool PortTxPacket(Protocol_T * p_protocol, const uint8_t * p_string, uint16_t length)
 {
 	return (length > 0U) ? Serial_SendString(p_protocol->Params.p_Xcvr, p_string, length) : false;
 }
+
+
+//static inline bool PortTxPacket(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length)
+//{
+//	return (length > 0U) ? Xcvr_Tx(p_protocol->Params.p_Xcvr, p_txBuffer, length) : false;
+//}
+//
+//static inline uint32_t PortRxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, uint8_t length)
+//{
+//	return Xcvr_Rx(p_protocol->Params.p_Xcvr, p_rxBuffer, length);
+//}
+
 
 //static inline void PortFlushBuffers(Protocol_T * p_protocol)
 //{
@@ -134,30 +142,44 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 {
 	Protocol_RxCode_T status = PROTOCOL_RX_CODE_WAIT_PACKET;
 
+//	uint8_t rxLength;
+
 	//todo change to rx max Serial_RecvBytes, when remaining char count is known
 	//use rx length min to determine datalength byte
-//	PortRx(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U], 1U)
-
-//	if (p_protocol->RxIndex < p_protocol->Params.p_Specs->RX_LENGTH_MIN)
+//	if((p_protocol->RxCode == waitheader) || (p_protocol->RxCode == PROTOCOL_RX_CODE_WAIT_PACKET))
 //	{
-//		PortRx(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U], 1U);
+//		rxLength = 1U;
 //	}
 //	else
 //	{
-//		if (p_protocol->RxIndex <= p_protocol->Params.p_Specs->RX_LENGTH_MAX)
+////		rxLength = count remaining - p_protocol->RxIndex;
+//	}
+
+//	while (PortRxPacket(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], rxLength) > 0U)
+//	{
+//		p_protocol->RxIndex+rxcount;
+//
+//		if (p_protocol->RxIndex >= p_protocol->Params.p_Specs->RX_LENGTH_MIN)
 //		{
-//			status = p_protocol->Params.p_Specs->PARSE_RX(p_protocol->CONFIG.P_SUBSTATE_BUFFER, &p_protocol->ReqIdActive, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex);
-//			if (status != PROTOCOL_RX_CODE_WAIT_PACKET)
+//			if (p_protocol->RxIndex <= p_protocol->Params.p_Specs->RX_LENGTH_MAX)
 //			{
+//				status = p_protocol->Params.p_Specs->PARSE_RX(p_protocol->CONFIG.P_SUBSTATE_BUFFER, &p_protocol->ReqIdActive, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex);
+//
+//				//if wwait data rxLength = count remaining - p_protocol->RxIndex;
+//
+//				if (status != PROTOCOL_RX_CODE_WAIT_PACKET)
+//				{
+//					break;
+//				}
+//			}
+//			else
+//			{
+//				status = PROTOCOL_RX_CODE_ERROR_PACKET;
 //				break;
 //			}
 //		}
-//		else
-//		{
-//			status = PROTOCOL_RX_CODE_ERROR_PACKET;
-//			break;
-//		}
 //	}
+
 
 	while (PortRxByte(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex]) == true)
 	{
@@ -190,7 +212,7 @@ static inline void ProcTxSync(Protocol_T * p_protocol, Protocol_TxSyncId_T txId)
 	if (p_protocol->Params.p_Specs->BUILD_TX_SYNC != 0U)
 	{
 		p_protocol->Params.p_Specs->BUILD_TX_SYNC(p_protocol->CONFIG.P_SUBSTATE_BUFFER, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, txId);
-		PortTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+		PortTxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 	}
 }
 
@@ -414,7 +436,7 @@ static inline bool ProcReqWaitRxSyncCommon(Protocol_T * p_protocol)
 		if (p_protocol->TxNackCount < p_protocol->p_ReqActive->P_SYNC->WAIT_RX_NACK_REPEAT)
 		{
 			p_protocol->TxNackCount++; //RxNackCount
-			PortTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+			PortTxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 			p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER);
 			isAck = false;
 		}
@@ -478,7 +500,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 					if (p_protocol->p_ReqActive->FAST != 0U) //does not invoke state machine, no loop / nonblocking wait.
 					{
 						p_protocol->p_ReqActive->FAST(p_protocol->CONFIG.P_APP_CONTEXT, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex);
-						PortTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+						PortTxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 					}
 
 					if ((p_protocol->p_ReqActive->P_EXT != 0U) && (p_protocol->p_ReqActive->P_EXT->PROCESS != 0U))
@@ -590,7 +612,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 					 * User will will have to manage more states, but will not have to explicitly set txlength to zero.
 					 * must save txlength in case of retransmit
 					 */
-					PortTxString(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+					PortTxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 					break;
 
 				case PROTOCOL_REQ_CODE_TX_ACK:

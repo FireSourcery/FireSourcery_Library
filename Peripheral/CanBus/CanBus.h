@@ -46,9 +46,10 @@
 //Protocol_SerivceCode_T;
 
 typedef void (*CanBus_ServiceInit_T)(CanMessage_T * p_messageBuffers);
-typedef void (*CanBus_BroadcastFunction_T)(void * p_context, CanMessage_T * p_MessageBuffers);
+typedef void (*CanBus_BroadcastFunction_T)(void * p_context, CanMessage_T * p_MessageBufferArray);
 typedef void (*CanBus_RxReqFunction_T)(void * p_context, CanMessage_T * p_rxMessageBuffer);
-//typedef void (*CanBus_ServiceFunction_T)(void * p_context, CanMessage_T ** pp_MessageBuffers);
+
+typedef void (*CanBus_RemoteUpdate_T)(void * p_context, CanMessage_T * p_MessageBufferArray);
 
 //typedef const struct
 //{
@@ -145,7 +146,7 @@ static inline void CanBus_TxRx_ISR(CanBus_T * p_can)
 
 	if(bufferId != -1)
 	{
-		if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_RX_WAIT)
+		if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_RX_WAIT_DATA)
 		{
 			if(HAL_CanBus_LockRxBuffer(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex) == true)
 			{
@@ -153,7 +154,7 @@ static inline void CanBus_TxRx_ISR(CanBus_T * p_can)
 				HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
 				HAL_CanBus_UnlockRxBuffer(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
 
-				p_can->Buffers[bufferId].Status = CAN_MESSAGE_RX_COMPLETE;
+				p_can->Buffers[bufferId].Status = CAN_MESSAGE_RX_WAIT_SERVICE;
 				//rx into buffer then wait for protocol service, double buffering? or call handler directly?
 				//if recv  once,  disable
 			}
@@ -163,34 +164,45 @@ static inline void CanBus_TxRx_ISR(CanBus_T * p_can)
 			}
 
 		}
+		else if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_RX_WAIT_REMOTE)
+		{
+//			if(HAL_CanBus_ReadIsBufferrRxRemoteTxEmpty(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex) == true)
+//			{
+// 				//remote recived
+//			}
+//			else
+//			{
+//
+//			}
+		}
 		else if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_TX_REMOTE)
 		{
-			if(HAL_CanBus_ReadIsBufferWaitRx(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex) == true) //or wait tx remote
+			if(HAL_CanBus_ReadIsBufferTxRemoteRxEmpty(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex) == true) //or wait tx remote, rx empty
 			{
 				//interrupt is from tx complete
 				HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
-				p_can->Buffers[bufferId].Status = CAN_MESSAGE_RX_WAIT;
+				p_can->Buffers[bufferId].Status = CAN_MESSAGE_RX_WAIT_DATA;
 				//ensure rx enabled if not autoset
 //				HAL_CanBus_EnableRxBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
 			}
-			else
+			else //rx full
 			{
 				//interrupt is from tx remote response received
-				p_can->Buffers[bufferId].Status == CAN_MESSAGE_RX_WAIT;
+				p_can->Buffers[bufferId].Status = CAN_MESSAGE_RX_WAIT_DATA;
 			}
 		}
-		else if(p_can->Buffers[bufferId].Status != CAN_MESSAGE_RX_WAIT)
+		else //if(p_can->Buffers[bufferId].Status != CAN_MESSAGE_RX_WAIT)
 		{
 			HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
 			HAL_CanBus_DisableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
 			p_can->Buffers[bufferId].Status = CAN_MESSAGE_IDLE;
 		}
-		else if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_IDLE) //or init
-		{
-			//error  or ISR without message set interrupt
-			HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
-			HAL_CanBus_DisableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
-		}
+//		else if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_IDLE) //or init
+//		{
+//			//error  or ISR without message set interrupt
+//			HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
+//			HAL_CanBus_DisableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
+//		}
 	}
 	else
 	{

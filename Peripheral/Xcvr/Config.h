@@ -22,17 +22,16 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Transceiver.c
+	@file 	Config.h
 	@author FireSoucery
 	@brief
 	@version V0
 */
 /******************************************************************************/
-#include "Transceiver.h"
-#include "Config.h"
-
-#include <stdint.h>
-#include <stdbool.h>
+#ifndef CONFIG_XCVR_H
+#define CONFIG_XCVR_H
 
 
+
+#endif
 

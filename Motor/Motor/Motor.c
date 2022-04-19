@@ -77,6 +77,9 @@ void Motor_InitReboot(Motor_T * p_motor)
 	 */
 	FOC_Init(&p_motor->Foc);
 //	BEMF_Init(&p_motor->Bemf);
+	Linear_Speed_InitAngleRpm(&p_motor->UnitAngleRpm, 1000U , 16U, p_motor->Parameters.SpeedRefMax_RPM); /* final value is overwritten, slope is persistent */
+
+	//* p_motor->Encoder.Params.MotorPolePairs
 
 	PID_Init(&p_motor->PidSpeed);
 	PID_Init(&p_motor->PidIq);
@@ -86,6 +89,8 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Timer_InitPeriodic(&p_motor->ControlTimer, 	1U);
 	Timer_InitPeriodic(&p_motor->MillisTimer, 	1U);
 	Timer_InitPeriodic(&p_motor->SpeedTimer, 	1U);
+
+	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, p_motor->CONFIG.UNIT_VABC_ADCREF10, p_motor->CONFIG.UNIT_VABC_ADCBITS, p_motor->Parameters.VSupply);
 
 	/*
 	 * Initial runtime config settings
@@ -130,45 +135,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 	p_motor->ControlTimerBase 		= 0U;
 }
 
-Motor_ControlModeFlags_T Motor_ConvertControlModeFlags(Motor_ControlMode_T mode)
-{
-	static const Motor_ControlModeFlags_T MODE_OPEN_LOOP		= {.OpenLoop = 1U, .Speed = 0U, .Current = 0U, .VFreqScalar = 0U, .Update = 0U, };
-	static const Motor_ControlModeFlags_T MODE_VOLTAGE 			= {.OpenLoop = 0U, .Speed = 0U, .Current = 0U, .VFreqScalar = 0U, .Update = 0U, };
-	static const Motor_ControlModeFlags_T MODE_VOLTAGE_FREQ 	= {.OpenLoop = 0U, .Speed = 0U, .Current = 0U, .VFreqScalar = 1U, .Update = 0U, };
-	static const Motor_ControlModeFlags_T MODE_CURRENT 			= {.OpenLoop = 0U, .Speed = 0U, .Current = 1U, .VFreqScalar = 0U, .Update = 0U, };
-	static const Motor_ControlModeFlags_T MODE_SPEED_VOLTAGE 	= {.OpenLoop = 0U, .Speed = 1U, .Current = 0U, .VFreqScalar = 0U, .Update = 0U, };
-	static const Motor_ControlModeFlags_T MODE_SPEED_CURRENT 	= {.OpenLoop = 0U, .Speed = 1U, .Current = 1U, .VFreqScalar = 0U, .Update = 0U, };
-
-	Motor_ControlModeFlags_T flags;
-
-	switch(mode)
-	{
-		case MOTOR_CONTROL_MODE_OPEN_LOOP:					flags.State = MODE_OPEN_LOOP.State; 	break;
-		case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE:			flags.State = MODE_VOLTAGE.State;		break;
-		case MOTOR_CONTROL_MODE_SCALAR_VOLTAGE_FREQ:		flags.State = MODE_VOLTAGE_FREQ.State;	break;
-		case MOTOR_CONTROL_MODE_CONSTANT_CURRENT:			flags.State = MODE_CURRENT.State;		break;
-		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE:		flags.State = MODE_SPEED_VOLTAGE.State;	break;
-		case MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT:		flags.State = MODE_SPEED_CURRENT.State;	break;
-		default: flags.State = 0; break;
-	}
-
-	return flags;
-}
-
-bool Motor_CheckControlMode(Motor_T * p_motor, Motor_ControlMode_T mode)
-{
-	if (p_motor->ControlModeFlags.State != Motor_ConvertControlModeFlags(mode).State)
-	{
-		p_motor->ControlModeFlags.Update = 1U;
-	}
-
-	return p_motor->ControlModeFlags.Update;
-}
-
-void Motor_SetControlMode(Motor_T * p_motor, Motor_ControlMode_T mode)
-{
-	p_motor->ControlModeFlags.State = Motor_ConvertControlModeFlags(mode).State;
-}
 
 
 

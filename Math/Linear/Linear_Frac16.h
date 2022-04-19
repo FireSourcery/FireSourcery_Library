@@ -35,22 +35,22 @@
 
 static inline int32_t Linear_Frac16(const Linear_T * p_linear, int32_t x)
 {
-	return linear_f16_m16_shift(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->XOffset, p_linear->YOffset, x);
+	return linear_m16_f16(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->XOffset, p_linear->YOffset, x);
 }
 
-static inline int32_t Linear_InvFrac16(const Linear_T * p_linear, int32_t y_frac16)
+static inline int32_t Linear_Frac16_Inv(const Linear_T * p_linear, int32_t y_frac16)
 {
-	return linear_invf16_invm16_shift(p_linear->SlopeDivisor, p_linear->SlopeFactor_Shift, p_linear->XOffset, p_linear->YOffset, y_frac16);
+	return linear_m16_invf16(p_linear->SlopeDivisor, p_linear->SlopeFactor_Shift, p_linear->XOffset, p_linear->YOffset, y_frac16);
 }
 
 static inline int32_t Linear_Frac16_CalcUnits(const Linear_T * p_linear, int32_t x)
 {
-	return linear_f_m16_shift(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, x);
+	return linear_m16_f(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, x);
 }
 
-static inline int32_t Linear_InvFrac16_CalcUnits(const Linear_T * p_linear, int32_t y)
+static inline int32_t Linear_Frac16_CalcInvUnits(const Linear_T * p_linear, int32_t y)
 {
-	return linear_invf_invm16_shift(p_linear->SlopeDivisor, p_linear->SlopeFactor_Shift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, y);
+	return linear_m16_invf(p_linear->SlopeDivisor, p_linear->SlopeFactor_Shift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, y);
 }
 
 //todo common bound function
@@ -74,9 +74,9 @@ static inline uint16_t Linear_Frac16_Unsigned_Abs(const Linear_T * p_linear, int
 	return (uint16_t)frac16;
 }
 
-static inline int32_t Linear_InvFrac16_Unsigned(const Linear_T * p_linear, uint16_t y_frac16)
+static inline int32_t Linear_Frac16_InvUnsigned(const Linear_T * p_linear, uint16_t y_frac16)
 {
-	return Linear_InvFrac16(p_linear, y_frac16);
+	return Linear_Frac16_Inv(p_linear, y_frac16);
 }
 
 static inline int16_t Linear_Frac16_Signed(const Linear_T * p_linear, int32_t x)
@@ -89,9 +89,9 @@ static inline int16_t Linear_Frac16_Signed(const Linear_T * p_linear, int32_t x)
 	return (int16_t)frac16;
 }
 
-static inline int32_t Linear_InvFrac16_Signed(const Linear_T * p_linear, int16_t y_fracSigned16)
+static inline int32_t Linear_Frac16_InvSigned(const Linear_T * p_linear, int16_t y_fracSigned16)
 {
-	return Linear_InvFrac16(p_linear, y_fracSigned16 * 2);
+	return Linear_Frac16_Inv(p_linear, y_fracSigned16 * 2);
 }
 
 #endif

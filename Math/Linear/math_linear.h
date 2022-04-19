@@ -184,12 +184,12 @@ static inline int32_t linear_invf16_yref_shift(int32_t invm_shifted, uint8_t shi
 	return linear_invf_shift(invm_shifted, shift, x0, y0, y_frac16 * yref >> 16U);
 }
 
-//static inline int32_t linear_invf_b_shift(int32_t invm_shifted, uint8_t shift,  int32_t b_shifted, int32_t y)
+//static inline int32_t linear_invf_b_shift(int32_t invm_shifted, uint8_t shift, int32_t b_shifted, int32_t y)
 //{
 //	return ((((y << shift) - b_shifted) >> shift) * invm_shifted >> shift); //b is shifted same as m but may not be shifted same as invm
 //}
-//
-//static inline int32_t linear_invf16_b_shift(int32_t invm_shifted, uint8_t shift,  int32_t b_shifted, int32_t yref, int32_t y_frac16)
+
+//static inline int32_t linear_invf16_b_shift(int32_t invm_shifted, uint8_t shift, int32_t b_shifted, int32_t yref, int32_t y_frac16)
 //{
 //	return (((y_frac16 * yref - b_shifted) >> 16U)) * invm_shifted >> shift;
 //}
@@ -198,24 +198,24 @@ static inline int32_t linear_invf16_yref_shift(int32_t invm_shifted, uint8_t shi
 /*
  * when slope is set to frac16 conversion, f_m16 returns user units, secondarily
  */
-static inline int32_t linear_f16_m16_shift(int32_t m16_shifted, uint8_t shift, int32_t x0, int32_t y0_frac16, int32_t x)
+static inline int32_t linear_m16_f16(int32_t m16_shifted, uint8_t shift, int32_t x0, int32_t y0_frac16, int32_t x)
 {
 	return linear_f_shift(m16_shifted, shift, x0, y0_frac16, x);
 }
 
-static inline int32_t linear_f_m16_shift(int32_t m16_shifted, uint8_t shift, int32_t x0, int32_t y0_frac16, int32_t yref, int32_t x)
+static inline int32_t linear_m16_f(int32_t m16_shifted, uint8_t shift, int32_t x0, int32_t y0_frac16, int32_t yref, int32_t x)
 {
 	return linear_f_shift(m16_shifted, shift, x0, y0_frac16, x) * yref >> 16U;
 }
 
-/* f16 to adcu */
-static inline int32_t linear_invf16_invm16_shift(int32_t invm16_shifted, uint8_t shift, int32_t x0, int32_t y0_frac16, int32_t y_frac16)
+/* e.g. frac16 to adcu */
+static inline int32_t linear_m16_invf16(int32_t invm16_shifted, uint8_t shift, int32_t x0, int32_t y0_frac16, int32_t y_frac16)
 {
 	return linear_invf_shift(invm16_shifted, shift, x0, y0_frac16, y_frac16);
 }
 
-/* units to adcu */
-static inline int32_t linear_invf_invm16_shift(int32_t invm16_shifted, uint8_t shift, int32_t x0, int32_t y0_frac16, int32_t yref, int32_t y)
+/* e.g. units to adcu */
+static inline int32_t linear_m16_invf(int32_t invm16_shifted, uint8_t shift, int32_t x0, int32_t y0_frac16, int32_t yref, int32_t y)
 {
 	return linear_invf_shift(invm16_shifted, shift, x0, y0_frac16, y << 16U / yref);
 }

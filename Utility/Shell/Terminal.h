@@ -108,17 +108,17 @@ static inline void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
 
 static inline void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str)
 {
-	const uint8_t * p_char = (const uint8_t *)p_str;
-	uint8_t length = 0U;
+//	const uint8_t * p_char = (const uint8_t *)p_str;
+//	uint8_t length = strlen(p_str);
 
-	while (*p_char != '\0')
-	{
-//		Terminal_SendChar(p_terminal, *p_char); //serial Serial_SendString
-		p_char++;
-		length++;
-	}
+//	while (*p_char != '\0')
+//	{
+////		Terminal_SendChar(p_terminal, *p_char); //serial Serial_SendString
+//		p_char++;
+//		length++;
+//	}
 
-	Serial_SendString(p_terminal->p_Serial, (const uint8_t *)p_str, length);
+	Serial_SendString(p_terminal->p_Serial, (const uint8_t *)p_str, strlen(p_str));
 }
 
 //GetIs

@@ -20,22 +20,26 @@ void CanBus_InitServices(CanBus_T * p_can)
 
 		for(uint8_t iBufferId = 0U; iBufferId < CONFIG_CAN_BUS_MESSAGE_BUFFER_COUNT; iBufferId++)
 		{
-			if((p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_INIT) || (p_can->Buffers[iBufferId].Status == CAN_MESSAGE_TX_INIT))
+			if(p_can->Buffers[iBufferId].Status != CAN_MESSAGE_IDLE)
 			{
 				hwBufferIndex = HAL_CanBus_CalcMessageBufferIndex(p_can->CONFIG.P_HAL_CAN_BUS, iBufferId);
 
 				HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
 				HAL_CanBus_WriteMessageBufferControl(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex, &p_can->Buffers[iBufferId]);
 
-				if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_INIT)
+				if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_WAIT_DATA)
 				{
-
-					p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_WAIT;
 					HAL_CanBus_EnableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
 				}
-				else if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_TX_INIT)
+				else if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_WAIT_REMOTE)
 				{
-					p_can->Buffers[iBufferId].Status == CAN_MESSAGE_IDLE;
+//#ifdef CONFIG_CAN_BUS_RX_REMOTE_AUTO
+					HAL_CanBus_EnableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
+//#endif
+				}
+				else //if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_TX )
+				{
+					p_can->Buffers[iBufferId].Status = CAN_MESSAGE_IDLE;
 				}
 			}
 		}
@@ -59,11 +63,22 @@ void CanBus_ProcServices(CanBus_T * p_can)
 //		}
 	}
 
+	/*
+	 * Update Rx remote
+	 */
+
 	for(uint8_t iBufferId = 0U; iBufferId < CONFIG_CAN_BUS_MESSAGE_BUFFER_COUNT; iBufferId++)
 	{
-		if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_COMPLETE)
+		if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_WAIT_SERVICE)
 		{
 			p_can->p_Services->RX_REQ(p_can->CONFIG.P_APP_CONTEXT, &p_can->Buffers[iBufferId]);
+
+//			if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_WAIT_REMOTE)
+//			{
+//				//#ifdef CONFIG_CAN_BUS_RX_REMOTE_MANUAL
+//				 //config tx
+//				//#endif
+//			}
 		}
 
 		//set from broadcast
@@ -77,16 +92,6 @@ void CanBus_ProcServices(CanBus_T * p_can)
 			HAL_CanBus_WriteTxMessageBuffer(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex, &p_can->Buffers[iBufferId]);
 			HAL_CanBus_EnableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
 		}
-//		//todo common fucntion
-//		else if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_INIT)
-//		{
-//			p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_WAIT;
-//			HAL_CanBus_EnableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
-//		}
-//		else if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_TX_INIT)
-//		{
-//			p_can->Buffers[iBufferId].Status == CAN_MESSAGE_IDLE;
-//		}
 	}
 
 	HAL_CanBus_EnableInterrupts(p_can->CONFIG.P_HAL_CAN_BUS);

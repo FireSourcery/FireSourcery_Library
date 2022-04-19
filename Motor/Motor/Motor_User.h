@@ -329,30 +329,30 @@ static inline void Motor_User_CheckFault(Motor_T * p_motor)
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
 }
 
-static inline void Motor_SetCalibrationStateAdc(Motor_T * p_motor)			{p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ADC;}
-static inline void Motor_SetCalibrationStateHall(Motor_T * p_motor)			{p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_HALL;}
-static inline void Motor_SetCalibrationStateEncoder(Motor_T * p_motor)		{p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ENCODER;}
-static inline void Motor_SetCalibrationStateSinCos(Motor_T * p_motor)		{p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ADC;}
-
-
 /*
  * Run Calibration functions
  */
 static inline void Motor_User_ActivateCalibrationHall(Motor_T * p_motor)
 {
-	Motor_SetCalibrationStateHall(p_motor);
+	p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_HALL;
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
 }
 
 static inline void Motor_User_ActivateCalibrationEncoder(Motor_T * p_motor)
 {
-	Motor_SetCalibrationStateEncoder(p_motor);
+	p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ENCODER;
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
 }
 
 static inline void Motor_User_ActivateCalibrationAdc(Motor_T * p_motor)
 {
-	Motor_SetCalibrationStateAdc(p_motor);
+	p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ADC;
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+}
+
+static inline void Motor_User_ActivateCalibrationSinCos(Motor_T * p_motor)
+{
+	p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_SIN_COS;
 	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
 }
 

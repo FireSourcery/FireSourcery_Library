@@ -84,6 +84,9 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
     		Terminal_SendNum(p_terminal, p_motor->DeltaAngle);
     		Terminal_SendString(p_terminal, " Frac16\r\n");
 
+    		Terminal_SendString(p_terminal, "DeltaAngle2: ");
+    		Terminal_SendNum(p_terminal, p_motor->DeltaAngle2);
+    		Terminal_SendString(p_terminal, " Frac16\r\n");
 
 			Terminal_SendString(p_terminal, "Throttle: ");
 			Terminal_SendNum(p_terminal, throttle);

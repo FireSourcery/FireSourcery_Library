@@ -37,7 +37,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct
+typedef const struct
 {
 	HAL_Pin_T * const P_HAL_PIN;
 	const uint32_t ID;

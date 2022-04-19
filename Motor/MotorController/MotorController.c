@@ -81,7 +81,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	VMonitor_Init(&p_mc->VMonitorSense);
 	VMonitor_Init(&p_mc->VMonitorAcc);
 
-	Linear_ADC_Init(&p_mc->Battery, p_mc->Parameters.BatteryZero_ADCU, p_mc->Parameters.BatteryFull_ADCU, 1000U);
+	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_ADCU, p_mc->Parameters.BatteryFull_ADCU, 1000U);
 
 	/* set values to not enter fault state */
 	p_mc->AnalogResults.HeatPcb_ADCU = p_mc->ThermistorPcb.Params.Threshold_ADCU;

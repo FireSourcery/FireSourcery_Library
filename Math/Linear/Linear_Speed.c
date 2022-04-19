@@ -31,9 +31,75 @@
 #include "Linear_Speed.h"
 
 
-void Linear_Speed_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
+static inline uint32_t speed_a16torpm(uint32_t angle16, uint32_t sampleFreq)
 {
+	uint32_t rpm;
 
+	if (angle16 < (UINT32_MAX / sampleFreq * 60U))
+	{
+		rpm =  (angle16 * sampleFreq * 60U >> 16U);
+	}
+	else
+	{
+		rpm =  (angle16 * sampleFreq >> 16U) * 60U;
+	}
+
+	return rpm;
+}
+
+static inline uint32_t speed_rpmtoa16(uint32_t rpm, uint32_t sampleFreq)
+{
+	uint32_t angle;
+
+	if (rpm < (UINT32_MAX >> 16U))
+	{
+		angle =  (rpm << 16U) / (60U * sampleFreq);
+	}
+	else
+	{
+		angle = (1U << 16U) / 60U * rpm / sampleFreq;
+	}
+
+	return angle;
+}
+
+/******************************************************************************/
+/*!
+	f(angle) = rpm
+	f16(angle) = speed_frac16
+
+	f(angleMax) = speedRef_Rpm
+ */
+/******************************************************************************/
+void Linear_Speed_InitAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t angleBits, uint16_t speedRef_Rpm)
+{
+	p_linear->YReference 			= speedRef_Rpm;
+	p_linear->XReference 			= (speedRef_Rpm << angleBits) / (sampleFreq * 60U);
+
+//	(65536 << 14U) / (divisor * yRef / factor);
+
+	p_linear->SlopeFactor 			= sampleFreq * 60U;
+	p_linear->SlopeDivisor_Shift 	= angleBits;
+
+	//todo non iterative
+	while (p_linear->XReference > (INT32_MAX / p_linear->SlopeFactor))
+	{
+		p_linear->SlopeFactor 			= p_linear->SlopeFactor >> 1U;
+		p_linear->SlopeDivisor_Shift 	= p_linear->SlopeDivisor_Shift - 1U;
+	}
+
+	p_linear->SlopeDivisor 			= (1U << angleBits) / (60U * sampleFreq);
+	p_linear->SlopeFactor_Shift 	= 0;
+
+//	while((((p_linear->YReference << angleBits) / (60U * sampleFreq)) << p_linear->SlopeFactor_Shift) < INT32_MAX / 2U)
+	while((p_linear->YReference * p_linear->SlopeDivisor < INT32_MAX / 2U) && (angleBits + p_linear->SlopeFactor_Shift < 16U))
+	{
+		p_linear->SlopeFactor_Shift 	= p_linear->SlopeFactor_Shift + 1U;
+		p_linear->SlopeDivisor 			= (1U << (angleBits + p_linear->SlopeFactor_Shift)) / (60U * sampleFreq);
+	}
+
+	p_linear->XOffset 				= 0;
+	p_linear->YOffset 				= 0;
 }
 
 

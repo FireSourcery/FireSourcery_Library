@@ -205,7 +205,7 @@ typedef struct
 	VMonitor_T VMonitorPos; 	//Controller Supply
 	VMonitor_T VMonitorSense; 	//5V
 	VMonitor_T VMonitorAcc; 	//12V
-	Linear_T Battery; //battery percentage
+	Linear_T BatteryLife; 			//battery Life percentage
 
 	Timer_T TimerMillis;
 	Timer_T TimerMillis10;
