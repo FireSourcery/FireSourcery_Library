@@ -43,8 +43,6 @@
 #include "Transducer/Thermistor/Thermistor.h"
 #include "Transducer/VMonitor/VMonitor.h"
 
-#include "Protocol/Protocol/Protocol.h"
-
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
@@ -53,6 +51,7 @@
 
 #include "Utility/Timer/Timer.h"
 #include "Utility/StateMachine/StateMachine.h"
+#include "Utility/Protocol/Protocol.h"
 #include "Utility/Shell/Shell.h"
 
 #include "System/MemMapBoot/MemMapBoot.h"
@@ -68,7 +67,6 @@ typedef enum
 	MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
 	MOTOR_CONTROLLER_INPUT_MODE_SERIAL,
 	MOTOR_CONTROLLER_INPUT_MODE_CAN,
-//	MOTOR_CONTROLLER_INPUT_MODE_CAN,
 }
 MotorController_InputMode_T;
 
@@ -152,17 +150,15 @@ typedef const struct
 	const MotorController_Once_T 	* const P_ONCE;
 	const MemMapBoot_T 				* const P_MEM_MAP_BOOT;
 
-	Motor_T * const P_MOTORS;
-	const uint8_t MOTOR_COUNT;
-	Serial_T * const P_SERIALS; /* Simultaneous active serial */
-	const uint8_t SERIAL_COUNT;
-	CanBus_T 	* const P_CAN_BUS;
-	Flash_T 	* const P_FLASH; 	/* Flash defined outside module, ensure flash config/params are in RAM */
-	EEPROM_T 	* const P_EEPROM;
+	Motor_T 	* const 	P_MOTORS;
+	const uint8_t 			MOTOR_COUNT;
+	Serial_T 	* const 	P_SERIALS; /* Simultaneous active serial */
+	const uint8_t 			SERIAL_COUNT;
+	CanBus_T 	* const 	P_CAN_BUS;
+	Flash_T 	* const 	P_FLASH; 	/* Flash defined outside module, ensure flash config/params are in RAM */
+	EEPROM_T 	* const 	P_EEPROM;
 
 	AnalogN_T * const P_ANALOG_N;
-
-	const AnalogN_AdcFlags_T ADCS_ACTIVE_MAIN_THREAD;
 	const MotAnalog_Conversions_T ANALOG_CONVERSIONS;
 
 	const Pin_T PIN_METER;
@@ -170,11 +166,6 @@ typedef const struct
 
 	Protocol_T * const P_PROTOCOLS; /* Simultaneously active protocols */
 	const uint8_t PROTOCOL_COUNT;
-
-	/* set function use only */
-	//todo move to ProtocolN module
-//	const Protocol_Specs_T ** const P_PROTOCOL_SPECS_TABLE;
-//	const uint8_t PROTOCOL_SPECS_COUNT;
 
 	const uint8_t SOFTWARE_VERSION[4U];
 	const uint8_t SOFTWARE_VERSION_LIBRARY[4U];
@@ -205,7 +196,7 @@ typedef struct
 	VMonitor_T VMonitorPos; 	//Controller Supply
 	VMonitor_T VMonitorSense; 	//5V
 	VMonitor_T VMonitorAcc; 	//12V
-	Linear_T BatteryLife; 			//battery Life percentage
+	Linear_T BatteryLife; 		//battery Life percentage
 
 	Timer_T TimerMillis;
 	Timer_T TimerMillis10;

@@ -22,31 +22,21 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Phase.c
+	@file 	Config.h
 	@author FireSoucery
-	@brief 	Phase module conventional function definitions
+	@brief
 	@version V0
 */
 /******************************************************************************/
-#include "Phase.h"
+#ifndef CONFIG_PROTOCOL_H
+#define CONFIG_PROTOCOL_H
 
-void Phase_Init(Phase_T * p_phase)
-{
-	PWM_InitModule(&p_phase->PwmA);
-	PWM_InitChannel(&p_phase->PwmA);
-	PWM_InitChannel(&p_phase->PwmB);
-	PWM_InitChannel(&p_phase->PwmC);
-	p_phase->PhaseMode = PHASE_MODE_UNIPOLAR_1;
-}
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 
-void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phaseMode)
-{
-	if(p_phase->PhaseMode == PHASE_MODE_BIPOLAR)
-	{
-		Phase_Float(p_phase);
-		PWM_DisableInvertPolarity(&p_phase->PwmA);
-		PWM_DisableInvertPolarity(&p_phase->PwmB);
-		PWM_DisableInvertPolarity(&p_phase->PwmC);
-	}
-	p_phase->PhaseMode = phaseMode;
-}
+#elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
+
+#else
+
+#endif
+
+#endif

@@ -50,6 +50,7 @@ typedef struct __attribute__((aligned (4U)))
 	uint16_t Max_ADCU;
 	uint16_t Max_MilliV;
 	qangle16_t AngleOffet;
+	bool IsBPositive;		/* CCW is fixed to positive */
 }
 SinCos_Params_T;
 
@@ -66,9 +67,8 @@ typedef struct
 {
 	SinCos_Config_T CONFIG;
 	SinCos_Params_T Params;
-	Linear_T UnitConversion;
-//	Linear_T UnitSin;
-//	Linear_T UnitCos;
+	Linear_T UnitsAngle;
+	bool IsDirectionPositive;
 }
 SinCos_T;
 
@@ -82,11 +82,18 @@ SinCos_T;
 
 static inline qangle16_t SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
 {
-	qfrac16_t sin = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitConversion, sin_ADCU);
-	qfrac16_t cos = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitConversion, cos_ADCU);
+	qfrac16_t sin = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitsAngle, sin_ADCU);
+	qfrac16_t cos = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitsAngle, cos_ADCU);
+	qangle16_t angle = qfrac16_atan2(sin, cos) - p_sincos->Params.AngleOffet;
 
-	return qfrac16_atan2(sin, cos) - p_sincos->Params.AngleOffet;
+	return (p_sincos->IsDirectionPositive) ? angle : 0 - angle;
 }
+
+/*
+ * CCW is positive
+ */
+static inline void SinCos_SetDirectionCcw(SinCos_T * p_sincos) 	{ p_sincos->IsDirectionPositive = p_sincos->Params.IsBPositive; }
+static inline void SinCos_SetDirectionCw(SinCos_T * p_sincos) 	{ p_sincos->IsDirectionPositive = !p_sincos->Params.IsBPositive; }
 
 #endif
 

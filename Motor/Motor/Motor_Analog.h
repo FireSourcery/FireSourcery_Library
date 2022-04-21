@@ -41,17 +41,19 @@ extern void Motor_AnalogCallback_CaptureIa(Motor_T * p_motor);
 extern void Motor_AnalogCallback_CaptureIb(Motor_T * p_motor);
 extern void Motor_AnalogCallback_CaptureIc(Motor_T * p_motor);
 
-#define MOTOR_ANALOG_CONVERSIONS_CONFIG(VaPin, p_VaHost, VbPin, p_VbHost, VcPin, p_VcHost, IaPin, p_IaHost,IbPin, p_IbHost,IcPin, p_IcHost, HeatPin, p_HeatHost, SinPin, p_SinHost,CosPin, p_CosHost, p_Motor) \
-{																																														\
-	.CONVERSION_VA =	CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_VA, (Analog_Callback_T)Motor_AnalogCallback_CaptureVa, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), VaPin, p_VaHost), 		\
-	.CONVERSION_VB =	CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_VB, (Analog_Callback_T)Motor_AnalogCallback_CaptureVb, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), VbPin, p_VbHost), 		\
-	.CONVERSION_VC =	CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_VC, (Analog_Callback_T)Motor_AnalogCallback_CaptureVc, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), VcPin, p_VcHost), 		\
-	.CONVERSION_IA =	CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_IA, (Analog_Callback_T)Motor_AnalogCallback_CaptureIa, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), IaPin, p_IaHost), 		\
-	.CONVERSION_IB =	CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_IB, (Analog_Callback_T)Motor_AnalogCallback_CaptureIb, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), IbPin, p_IbHost), 		\
-	.CONVERSION_IC =	CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_IC, (Analog_Callback_T)Motor_AnalogCallback_CaptureIc, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), IcPin, p_IcHost), 		\
-	.CONVERSION_HEAT =	CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_HEAT, 	0U, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), HeatPin,		p_HeatHost), 						\
-	.CONVERSION_SIN =	CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_SIN, 	0U, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), SinPin, 		p_SinHost), 						\
-	.CONVERSION_COS =	CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_COS, 	0U, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), CosPin, 		p_CosHost), 						\
+#define MOTOR_ANALOG_CONVERSIONS_CONFIG(VaPin, VaHost, VbPin, VbHost, VcPin, VcHost, IaPin, IaHost, IbPin, IbHost, IcPin, IcHost, HeatPin, HeatHost, SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor) 				\
+{																																																						\
+	.CONVERSION_VA 		= CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_VA, (Analog_Callback_T)Motor_AnalogCallback_CaptureVa, 	p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), VaPin, 	&(p_Hosts)[VaHost]), 	\
+	.CONVERSION_VB 		= CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_VB, (Analog_Callback_T)Motor_AnalogCallback_CaptureVb, 	p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), VbPin, 	&(p_Hosts)[VbHost]), 	\
+	.CONVERSION_VC 		= CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_VC, (Analog_Callback_T)Motor_AnalogCallback_CaptureVc, 	p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), VcPin, 	&(p_Hosts)[VcHost]), 	\
+	.CONVERSION_IA 		= CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_IA, (Analog_Callback_T)Motor_AnalogCallback_CaptureIa, 	p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), IaPin, 	&(p_Hosts)[IaHost]), 	\
+	.CONVERSION_IB 		= CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_IB, (Analog_Callback_T)Motor_AnalogCallback_CaptureIb, 	p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), IbPin, 	&(p_Hosts)[IbHost]), 	\
+	.CONVERSION_IC 		= CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_IC, (Analog_Callback_T)Motor_AnalogCallback_CaptureIc, 	p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), IcPin, 	&(p_Hosts)[IcHost]), 	\
+	.CONVERSION_HEAT 	= CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_HEAT, 	0U, 											p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), HeatPin,	&(p_Hosts)[HeatHost]), 	\
+	.CONVERSION_SIN 	= CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_SIN, 		0U, 											p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), SinPin, 	&(p_Hosts)[SinHost]), 	\
+	.CONVERSION_COS 	= CONFIG_ANALOG_N_CONVERSION(MOTOR_ANALOG_CHANNEL_COS, 		0U, 											p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), CosPin, 	&(p_Hosts)[CosHost]), 	\
+	.ADCS_GROUP_I 		= {.Flags = ((1U << IaHost) | (1U << IbHost) | (1U << IcHost) | (1U << SinHost) | (1U << CosHost)), },																																													\
+	.ADCS_GROUP_V 		= {.Flags = ((1U << VaHost) | (1U << VbHost) | (1U << VcHost) | (1U << SinHost) | (1U << CosHost)),	},																																													\
 }
 
 #endif

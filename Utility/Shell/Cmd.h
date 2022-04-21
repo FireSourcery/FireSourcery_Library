@@ -33,11 +33,21 @@
 
 #include <stdint.h>
 
-typedef int (*Cmd_Function_T)(void * p_context, int argc, char * argv[]);
-typedef int (*Cmd_ProcessFunction_T)(void * p_context);
+typedef enum
+{
+	CMD_STATUS_SUCCESS,
+	CMD_STATUS_INVALID_ARGS,
+	CMD_STATUS_PROCESS_LOOP,
+	CMD_STATUS_ERROR,
+}
+Cmd_Status_T;
+
+typedef Cmd_Status_T (*Cmd_Function_T)(void * p_context, int argc, char * argv[]);
+typedef Cmd_Status_T (*Cmd_ProcessFunction_T)(void * p_context);
+
 typedef const struct
 {
-    const Cmd_ProcessFunction_T FUNCTION;
+    const Cmd_ProcessFunction_T FUNCTION; //loop function
     const uint32_t FREQ; //dHz
 }
 Cmd_Process_T;
@@ -52,26 +62,7 @@ typedef const struct
 }
 Cmd_T;
 
-#define CMD_RESERVED_RETURN_CODE_SUCCESS 		(0U)
-#define CMD_RESERVED_RETURN_CODE_INVALID_ARGS 	(-1) //Must be implement at cmd function level / per cmd function
-//#define CMD_RESERVED_RETURN_CODE_ARGS_ERROR		(-2)
-#define CMD_RESERVED_RETURN_CODE_LOOP 			(-3)
-
-//typedef enum
-//{
-//	CMD_RESERVED_RETURN_CODE_SUCCESS = 0,
-//	CMD_RESERVED_RETURN_CODE_INVALID_ARGS = -1,
-//}
-//Cmd_ReservedReturnCode_T;
-
-typedef const struct
-{
-	const int CODE_ID;
-	const char * const P_STRING;
-}
-Cmd_Status_T;
-
 #define CMD_ENTRY(CmdName, CmdHelpString, CmdFunction) { (#CmdName), (CmdHelpString), (CmdFunction) }
-#define CMD_RETURN_ENTRY(ReturnCode) { (ReturnCode), (#ReturnCode) }
 
+extern Cmd_T * Cmd_Search(const Cmd_T * p_cmdTable, uint8_t tableLength, const char * p_cmdName);
 #endif

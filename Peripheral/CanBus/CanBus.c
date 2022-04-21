@@ -7,7 +7,17 @@
 void CanBus_Init(CanBus_T * p_can, const CanBus_Services_T * p_services)
 {
 	p_can->p_Services = p_services;
-	CanBus_InitServices(p_can);
+
+	if (p_services != 0U)
+	{
+		CanBus_InitServices(p_can);
+		//set enable
+	}
+	else
+	{
+//		set idle
+	}
+
 }
 
 void CanBus_InitServices(CanBus_T * p_can)
@@ -52,6 +62,8 @@ void CanBus_ProcServices(CanBus_T * p_can)
 	uint8_t hwBufferIndex;
 
 	HAL_CanBus_DisableInterrupts(p_can->CONFIG.P_HAL_CAN_BUS);
+
+	//check enabled state
 
 	if(*p_can->CONFIG.P_TIMER > p_can->BroadcastTimeSaved + p_can->p_Services->BROADCAST_PERIOD_MS)
 	{

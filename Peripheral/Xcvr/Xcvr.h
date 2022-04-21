@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	HAL_Xcvr.h
+	@file 	Xcvr.h
 	@author FireSoucery
 	@brief
 	@version V0
@@ -32,138 +32,56 @@
 #define XCVR_H
 
 #include "Config.h"
+#include "Peripheral/Serial/Serial.h"
+#include "Utility/Queue/Queue.h"
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stddef.h>
+//#include <stddef.h>
 
-typedef const struct
+typedef enum
 {
-	void * P_XCVRS;
-	uint8_t XCVR_COUNT;
+	XCVR_TYPE_SERIAL,
+	XCVR_TYPE_I2C,
+	XCVR_TYPE_SPI,
+	XCVR_TYPE_VIRTUAL,
 }
-Xcvr_Table_T;
-
-/*
- *
- */
-//typedef enum
-//{
-//	XCVR_TYPE_SERIAL,
-//	XCVR_TYPE_I2C,
-//	XCVR_TYPE_SPI,
-//}
-//Xcvr_Type_T;
-//
-//typedef const struct
-//{
-//	//todo table
-////	Xcvr_Interface_T Interfaces[];
-//	void ** P_XCVR_TABLE;
-//	uint8_t XCVR_COUNT;
-//
-//}
-//Xcvr_Config_T;
-//typedef const struct
-//{
-//	Xcvr_Config_T CONFIG;
-////	void * p_Struct;
-////	Xcvr_Type_T Type;
-//}
-//Xcvr_T;
-
-//typedef   struct
-//{
-//	Xcvr_Interface_T * P_XCVR_TABLE;
-//	uint8_t XCVR_COUNT;
-//	Xcvr_Interface_T * P_XCVR_DEFAULT;
-
-
-//	Xcvr_Interface_T * p_Xcvr;
-//}
-//Xcvr_T;
+Xcvr_Type_T;
 
 typedef const struct
 {
-	void 		* P_CONTEXT;
-	void 		(* INIT)		(void * p_context);
-//	bool 		(* SendChar)	(void * p_context, uint8_t txChar);
-//	bool 		(* RecvChar)	(void * p_context, uint8_t * p_rxChar);
-//	uint32_t 	(* SendBytes)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t bufferSize);
-//	uint32_t 	(* RecvBytes)	(void * p_context, uint8_t * p_destBuffer, 			size_t bufferSize);
-//	bool 		(* SendString)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
-//	bool 		(* RecvString)	(void * p_context, uint8_t * p_destBuffer, 			size_t length);
-	uint32_t 	(* RECV) (void * p_context, uint8_t * p_destBuffer, 		size_t bufferSize);
-	bool 		(* SEND) (void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
+	void * P_XCVR;
+	Xcvr_Type_T TYPE;
+	//string id?
+}
+Xcvr_Entry_T;
+
+typedef const struct
+{
+	const Xcvr_Entry_T * const P_XCVR_TABLE;
+	const uint8_t XCVR_COUNT;
+}
+Xcvr_Config_T;
+
+typedef struct
+{
+	const Xcvr_Config_T CONFIG;
+	void * p_Xcvr;
+	Xcvr_Type_T Type;
+	/* only 1 nvm param is needed, handle by outside module */
 }
 Xcvr_T;
 
-
-#define XCVR_CONFIG(p_Context, Init, Send, Recv)	\
-{													\
-	.P_CONTEXT	= p_context							\
-	.INIT		= Init								\
-	.SEND		= Send								\
-	.RECV		= Recv								\
+#define XCVR_CONFIG(p_XcvrTable, Count)		\
+{											\
+	.CONFIG =								\
+	{  										\
+		.P_XCVR_TABLE	= p_XcvrTable,		\
+		.XCVR_COUNT		= Count,			\
+	},										\
 }
 
-
-
-static inline bool Xcvr_Send(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
-{
-	return p_xcvr->SEND(p_xcvr->P_CONTEXT, p_srcBuffer, length);
-}
-
-static inline uint32_t Xcvr_Recv(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
-{
-	return p_xcvr->RECV(p_xcvr->P_CONTEXT, p_destBuffer, length);
-}
-
-//bool Xcvr_Validate(const Xcvr_T * p_xcvr, void * target)
-//{
-//	for (uint8_t iXcvr = 0; iXcvr < p_xcvr->CONFIG.XCVR_COUNT; iXcvr++)
-//	{
-//		if (target == p_xcvr->CONFIG.P_XCVR_TABLE[iXcvr])
-//		{
-//			p_xcvr->p_Struct = target;
-//		}
-//	}
-//}
-//
-//static inline bool Xcvr_Table_CheckValid(const Xcvr_Table_T * p_table, const Xcvr_T * p_xcvr)
-//{
-//	bool isValid = false;
-//
-//	for (uint8_t iXcvr = 0; iXcvr < p_table->XCVR_COUNT; iXcvr++)
-//	{
-//		if (p_xcvr == p_table->XCVR_COUNT[iXcvr])
-//		{
-//			isValid = true;
-//			break;
-//		}
-//	}
-//}
-
-static inline void Xcvr_Init(const Xcvr_T * p_xcvr)
-{
-//	if (Xcvr_Table_CheckValid(p_table,  p_xcvr))
-//	{
-//		p_xcvr->INIT(p_xcvr->P_CONTEXT);
-//	}
-//	else
-//	{
-//		p_xcvr.p_xcvr = p_table.default
-//		p_xcvr->INIT(p_xcvr->P_CONTEXT);
-//	}
-}
-
-//static inline Xcvr_T * Xcvr_Table_GetPtr(const Xcvr_Table_T * p_table, uint8_t index)
-//{
-//	return (index < p_table->XCVR_COUNT) ? p_table->P_XCVRS[index] : 0U;
-//}
-
-
-
+extern bool Xcvr_SetXcvr(Xcvr_T * p_xcvr, uint8_t xcvrIndex);
 
 //bool Xcvr_SendChar(const Xcvr_T * p_xcvr, uint8_t txChar) 									{return p_xcvr->SendChar(p_xcvr->p_Context, txChar);}
 //bool Xcvr_RecvChar(const Xcvr_T * p_xcvr, uint8_t * p_rxChar)									{return p_xcvr->RecvChar(p_xcvr->p_Context, p_rxChar);}
@@ -172,14 +90,10 @@ static inline void Xcvr_Init(const Xcvr_T * p_xcvr)
 //bool Xcvr_SendString(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length)				{p_xcvr->SendString(p_xcvr->p_Context, p_src, length);}
 //bool Xcvr_RecvString(const Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length)
 
-//void Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
-//{
-//	HAL_Xcvr_ConfigBaudRate(p_xcvr->CONFIG.P_HAL_SERIAL, baudRate);
-//}
 
-//static inline void Xcvr_Poll(const Xcvr_T * p_xcvr)
+
+//static inline void Xcvr_Proc(const Xcvr_T * p_xcvr)
 //{
-////	Xcvr_PollRestartRxIsr(p_Serial)
 //}
 
 //static inline uint32_t Xcvr_GetRxFullCount(const Xcvr_T * p_xcvr)
@@ -198,4 +112,18 @@ static inline void Xcvr_Init(const Xcvr_T * p_xcvr)
 //static inline void Xcvr_DisableRx(const Xcvr_T * p_xcvr){}
 
 #endif
-
+//typedef const struct
+//{
+//	void 		(* INIT)		(void * p_context);
+////	bool 		(* SendChar)	(void * p_context, uint8_t txChar);
+////	bool 		(* RecvChar)	(void * p_context, uint8_t * p_rxChar);
+////	uint32_t 	(* SendBytes)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t bufferSize);
+////	uint32_t 	(* RecvBytes)	(void * p_context, uint8_t * p_destBuffer, 			size_t bufferSize);
+////	bool 		(* SendString)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
+////	bool 		(* RecvString)	(void * p_context, uint8_t * p_destBuffer, 			size_t length);
+//	uint32_t 	(* RECV) (void * p_context, uint8_t * p_destBuffer, 		size_t bufferSize);
+//	bool 		(* SEND) (void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
+//}
+//Xcvr_T;
+//return p_xcvr->RECV(p_xcvr->p_Xcvr, p_destBuffer, length);
+//return p_xcvr->SEND(p_xcvr->p_Xcvr, p_srcBuffer, length);

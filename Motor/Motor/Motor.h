@@ -229,23 +229,12 @@ typedef struct __attribute__ ((aligned (4U)))
 	Motor_AlignMode_T 			AlignMode;
 
 	Motor_DirectionCalibration_T DirectionCalibration;
-	uint16_t AlignVoltage_Frac16;
-	uint16_t AlignTime_ControlCycles;
-	//	uint8_t BrakeCoeffcient;
-	//	uint32_t RampAcceleration;
 
-	uint16_t OpenLoopVPwmMin;
-	uint16_t OpenLoopVPwmMax;
-	uint16_t OpenLoopSpeedStart;
-	uint16_t OpenLoopSpeedFinal;
-	uint16_t OpenLoopAccel;
-	//	uint16_t OpenLoopVHzGain; //vhz scale
-	//	uint16_t OpenLoopZcdTransition;
+	uint8_t PolePairs;
+	uint16_t VSupply;
 
 	uint16_t SpeedRefMax_RPM;
 	uint16_t SpeedRefVoltage_RPM;
-
-	uint16_t VSupply;
 
 	uint16_t IRefMax_Amp;
 	uint16_t IaRefZero_ADCU;
@@ -257,6 +246,19 @@ typedef struct __attribute__ ((aligned (4U)))
 
 	uint16_t IBusLimit_Frac16; 	/* Six-Step   */
 	qfrac16_t IqLimit;			/* FOC   */
+
+	uint16_t AlignVoltage_Frac16;
+	uint16_t AlignTime_ControlCycles;
+
+	//	uint8_t BrakeCoeffcient;
+	//	uint32_t RampAcceleration;
+	uint16_t OpenLoopVPwmMin;
+	uint16_t OpenLoopVPwmMax;
+	uint16_t OpenLoopSpeedStart;
+	uint16_t OpenLoopSpeedFinal;
+	uint16_t OpenLoopAccel;
+	//	uint16_t OpenLoopVHzGain; //vhz scale
+	//	uint16_t OpenLoopZcdTransition;
 
 	//todo account for copy to ram twice
 	Phase_Mode_T				PhasePwmMode;
@@ -278,10 +280,7 @@ typedef const struct Motor_Init_Tag
  	const uint16_t UNIT_VABC_ADCBITS;
 
 	AnalogN_T * const P_ANALOG_N;
-	const AnalogN_AdcFlags_T ADCS_ACTIVE_PWM_THREAD; //rename group adc active
 	const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
-//	const AnalogN_Conversion_T CONVERSION_OPTION_PWM_ON;
-//	const AnalogN_Conversion_T CONVERSION_OPTION_RESTORE;
 }
 Motor_Config_T;
 
@@ -320,7 +319,6 @@ typedef struct
 	uint32_t ControlTimerBase;	 	/* Control Freq ~ 20kHz, calibration, commutation, angle control. overflow at 20Khz, 59 hours*/
 	Timer_T ControlTimer; 			/* State Timer, openloop, Bem */
 	Timer_T MillisTimer; 			//  millis thread
-
 	Timer_T SecondsTimer; 			//  Heat thread
 
 	Linear_T UnitIa; 	//Frac16 and UserUnits (Amp)
@@ -347,25 +345,13 @@ typedef struct
 	uint32_t Speed_Frac16; 		/* Can over saturate */
 	int32_t SpeedControl; 		/* Speed PID output, (Speed_Frac16 - RampCmd) => (VPwm, Vq, Iq), updated once per millis */
 
-
-	uint32_t DeltaAngle2;
 	uint16_t Speed2_RPM;
 	uint32_t Speed2_Frac16;
-
-	/*
-	 * Open-loop
-	 */
-	bool IsOpenLoop;
-	Linear_T OpenLoopRamp;
-	uint32_t OpenLoopRampIndex;
-	uint32_t OpenLoopCommutationPeriod;
-	uint16_t OpenLoopSpeed_RPM;
-	uint16_t OpenLoopVPwm;
-
 
 	uint16_t VBemfPeak_ADCU;
 	uint16_t VBemfPeakTemp_ADCU;
 	uint16_t VFreqScalar;
+
 	/*
 	 * FOC
 	 */
@@ -373,8 +359,8 @@ typedef struct
 	PID_T PidId;
 	PID_T PidIq;
 	qangle16_t ElectricalAngle;
-	qangle16_t ElectricalAnglePrev;
 	uint32_t DeltaAngle;
+
 	/* interpolated angle */
 	qangle16_t HallAngle;
 	uint32_t InterpolatedAngleIndex;
@@ -393,6 +379,16 @@ typedef struct
 //	uint32_t IBusPrev_Frac16;
 	uint16_t VPwm; 				//Control Variable
 
+	/*
+	 * Open-loop
+	 */
+	bool IsOpenLoop;
+	Linear_T OpenLoopRamp;
+	uint32_t OpenLoopRampIndex;
+	uint32_t OpenLoopCommutationPeriod;
+	uint16_t OpenLoopSpeed_RPM;
+	uint16_t OpenLoopVPwm;
+
 	uint32_t MicrosRef; //debug
 	volatile uint32_t DebugTime[10];
 	volatile uint32_t HallDebug[13];
@@ -407,6 +403,9 @@ Motor_T;
  * 	@{
  */
 /******************************************************************************/
+//void MotorAnalog_EnqueueGroupV(Motor_T * p_motor)
+//{
+//}
 
 /******************************************************************************/
 /*
@@ -523,35 +522,6 @@ static inline void Motor_CaptureEncoderSpeed(Motor_T * p_motor)
 	p_motor->Speed_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedRefMax_RPM); //todo move to encoder module
 }
 
-static inline void Motor_CaptureSpeed(Motor_T * p_motor)
-{
-//	uint32_t deltaAngle;
-//	uint16_t angle = (uint16_t)p_motor->ElectricalAngle;
-//	uint16_t anglePrev = (uint16_t)p_motor->ElectricalAnglePrev;
-//
-////	if (angle < anglePrev)
-////	{
-////		deltaAngle = (uint32_t)65535U - anglePrev + angle + 1U;
-////	}
-////	else /* normal case */
-//	{
-//		deltaAngle = angle - anglePrev;
-//	}
-//
-
-	p_motor->DeltaAngle = Encoder_GetTotalAngle(&p_motor->Encoder); //mech angle
-	Encoder_ResetTotalAngle(&p_motor->Encoder);
-
-	p_motor->DeltaAngle2 = CalcLinearSpeedDeltaAngle(p_motor->ElectricalAngle, p_motor->ElectricalAnglePrev, p_motor->Direction);
-//	p_motor->ElectricalAnglePrev = angle;
-//
-//	p_motor->Speed2_RPM = Encoder_ConvertAngleToRotationalSpeed_RPM(0, deltaAngle, 1000U) / p_motor->Encoder.Params.MotorPolePairs; //todo move to linear module
-//	p_motor->Speed2_Frac16 = deltaAngle*1000U*60U/((uint32_t)p_motor->Parameters.SpeedRefMax_RPM * p_motor->Encoder.Params.MotorPolePairs);
-
-	p_motor->Speed2_RPM = Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, p_motor->ElectricalAngle, p_motor->ElectricalAnglePrev, p_motor->Direction);
-	p_motor->ElectricalAnglePrev = p_motor->ElectricalAngle;
-
-}
 
 //Speed pid always uses directionless positive value [0:65535]
 static inline void Motor_ResumeSpeedOutput(Motor_T * p_motor, int32_t matchOutput)

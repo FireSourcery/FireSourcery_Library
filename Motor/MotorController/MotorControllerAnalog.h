@@ -73,24 +73,31 @@ typedef union
 }
 MotAnalog_Results_T;
 
-typedef union
+typedef struct
 {
-	struct
+	union
 	{
-		const AnalogN_Conversion_T CONVERSION_VPOS;
-		const AnalogN_Conversion_T CONVERSION_VACC;
-		const AnalogN_Conversion_T CONVERSION_VSENSE;
-		const AnalogN_Conversion_T CONVERSION_HEAT_PCB;
-		union
+		struct
 		{
-			const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS;
-			const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS_TOP;
+			const AnalogN_Conversion_T CONVERSION_VPOS;
+			const AnalogN_Conversion_T CONVERSION_VACC;
+			const AnalogN_Conversion_T CONVERSION_VSENSE;
+			const AnalogN_Conversion_T CONVERSION_HEAT_PCB;
+			union
+			{
+				const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS;
+				const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS_TOP;
+			};
+			const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS_BOT;
+			const AnalogN_Conversion_T CONVERSION_THROTTLE;
+			const AnalogN_Conversion_T CONVERSION_BRAKE;
 		};
-		const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS_BOT;
-		const AnalogN_Conversion_T CONVERSION_THROTTLE;
-		const AnalogN_Conversion_T CONVERSION_BRAKE;
+		AnalogN_Conversion_T CONVERSIONS[MOT_ANALOG_CHANNEL_COUNT];
 	};
-	AnalogN_Conversion_T CONVERSIONS[MOT_ANALOG_CHANNEL_COUNT];
+
+	const AnalogN_AdcFlags_T ADCS_GROUP_USER;
+	const AnalogN_AdcFlags_T ADCS_GROUP_V;
+	const AnalogN_AdcFlags_T ADCS_GROUP_HEAT;
 }
 MotAnalog_Conversions_T;
 

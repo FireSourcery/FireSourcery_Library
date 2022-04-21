@@ -151,6 +151,8 @@ void Motor_AnalogCallback_CaptureIc(Motor_T * p_motor)
 	}
 }
 
+
+
 /******************************************************************************/
 /*!
     @brief  Conversion

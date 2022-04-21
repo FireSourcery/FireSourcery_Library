@@ -29,10 +29,114 @@
 */
 /******************************************************************************/
 #include "Xcvr.h"
-#include "Config.h"
 
-#include <stdint.h>
-#include <stdbool.h>
+void Xcvr_Init(Xcvr_T * p_xcvr, uint8_t xcvrIndex)
+{
+	if(Xcvr_SetXcvr(p_xcvr, xcvrIndex) != true)
+	{
+		Xcvr_SetXcvr(p_xcvr, 0U);
+	}
 
+//	switch(p_xcvr->Type)
+//	{
+//		case XCVR_TYPE_SERIAL:	Serial_Init(p_xcvr->p_Xcvr);	break;
+//		case XCVR_TYPE_I2C: 		break;
+//		case XCVR_TYPE_SPI: 		break;
+//		case XCVR_TYPE_VIRTUAL: 	break;
+//		default: break;
+//	}
+}
+
+bool Xcvr_SetXcvr(Xcvr_T * p_xcvr, uint8_t xcvrIndex)
+{
+	bool status;
+
+	if (xcvrIndex < p_xcvr->CONFIG.XCVR_COUNT)
+	{
+		p_xcvr->p_Xcvr = p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].P_XCVR;
+		p_xcvr->Type = p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].TYPE;
+		status = true;
+	}
+	else
+	{
+		status = false;
+	}
+
+	return status;
+}
+
+bool Xcvr_SetXcvr_Ptr(Xcvr_T * p_xcvr, void * p_xcvrStruct)
+{
+	bool status;
+
+//	if(Xcvr_CheckValid(p_xcvr, *p_xcvrStruct) != 0xFF) //return id
+//	{
+//		p_xcvr->p_Xcvr = p_xcvrStruct;
+//		p_xcvr->Type = p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].TYPE;
+//	}
+
+	return status;
+}
+
+
+void Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
+{
+	switch(p_xcvr->Type)
+	{
+		case XCVR_TYPE_SERIAL:	Serial_ConfigBaudRate(p_xcvr->p_Xcvr, baudRate);	break;
+		case XCVR_TYPE_I2C: 		break;
+		case XCVR_TYPE_SPI: 		break;
+		case XCVR_TYPE_VIRTUAL: 	break;
+		default: break;
+	}
+}
+
+bool Xcvr_Tx(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
+{
+	bool status;
+
+	switch(p_xcvr->Type)
+	{
+		case XCVR_TYPE_SERIAL:	Serial_Send(p_xcvr->p_Xcvr, p_srcBuffer, length);	break;
+		case XCVR_TYPE_I2C: 		break;
+		case XCVR_TYPE_SPI: 		break;
+		case XCVR_TYPE_VIRTUAL: 	break;
+		default: break;
+	}
+
+	return status;
+}
+
+uint32_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
+{
+	uint32_t rxCount;
+
+	switch(p_xcvr->Type)
+	{
+		case XCVR_TYPE_SERIAL:	Serial_Recv(p_xcvr->p_Xcvr, p_destBuffer, length);	break;
+		case XCVR_TYPE_I2C: 		break;
+		case XCVR_TYPE_SPI: 		break;
+		case XCVR_TYPE_VIRTUAL: 	break;
+		default: break;
+	}
+
+	return rxCount;
+}
+
+bool Xcvr_CheckValid(const Xcvr_T * p_xcvr, void * p_target)
+{
+	bool isValid = false;
+
+	for (uint8_t iXcvr = 0; iXcvr < p_xcvr->CONFIG.XCVR_COUNT; iXcvr++)
+	{
+		if (p_target == p_xcvr->CONFIG.P_XCVR_TABLE[iXcvr].P_XCVR)
+		{
+			isValid = true;
+			break;
+		}
+	}
+
+	return isValid;
+}
 
 

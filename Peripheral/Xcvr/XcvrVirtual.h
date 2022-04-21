@@ -22,31 +22,41 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Phase.c
+	@file 	Xcvr.h
 	@author FireSoucery
-	@brief 	Phase module conventional function definitions
+	@brief
 	@version V0
 */
 /******************************************************************************/
-#include "Phase.h"
+#ifndef XCVR_VIRTUAL_H
+#define XCVR_VIRTUAL_H
 
-void Phase_Init(Phase_T * p_phase)
+#include "Utility/Queue/Queue.h"
+
+typedef struct
 {
-	PWM_InitModule(&p_phase->PwmA);
-	PWM_InitChannel(&p_phase->PwmA);
-	PWM_InitChannel(&p_phase->PwmB);
-	PWM_InitChannel(&p_phase->PwmC);
-	p_phase->PhaseMode = PHASE_MODE_UNIPOLAR_1;
+	Queue_T RxQueue;
+	Queue_T TxQueue;
+}
+XcvrVirtual_T;
+
+#define XCVR_VIRTUAL_CONFIG(p_TxBuffer, p_RxBuffer, QueueSize)	\
+{																\
+	.RxQueue = QUEUE_CONFIG(p_RxBuffer, QueueSize, 1U, 0U),		\
+	.TxQueue = QUEUE_CONFIG(p_TxBuffer, QueueSize, 1U, 0U),		\
 }
 
-void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phaseMode)
+/*
+ * Use critical if multithreaded
+ */
+static inline bool XcvrVirtual_Send(const XcvrVirtual_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
 {
-	if(p_phase->PhaseMode == PHASE_MODE_BIPOLAR)
-	{
-		Phase_Float(p_phase);
-		PWM_DisableInvertPolarity(&p_phase->PwmA);
-		PWM_DisableInvertPolarity(&p_phase->PwmB);
-		PWM_DisableInvertPolarity(&p_phase->PwmC);
-	}
-	p_phase->PhaseMode = phaseMode;
+	return Queue_EnqueueN(&p_xcvr->TxQueue, p_srcBuffer, length);
 }
+
+static inline uint32_t XcvrVirtual_Recv(const XcvrVirtual_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
+{
+	return Queue_DequeueMax(&p_xcvr->TxQueue, p_destBuffer, length);
+}
+
+#endif

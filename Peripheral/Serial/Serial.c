@@ -273,7 +273,7 @@ bool Serial_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
 /*
  * calling function must check to avoid meta data collision
  */
-uint8_t Serial_ReadChar(Serial_T * p_serial)
+uint8_t Serial_GetChar(Serial_T * p_serial)
 {
 	uint8_t rxChar;
 

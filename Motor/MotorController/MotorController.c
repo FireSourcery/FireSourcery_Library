@@ -45,7 +45,7 @@ void MotorController_Init(MotorController_T * p_mc)
 {
 	StateMachine_Init(&p_mc->StateMachine);
 
-//	Flash_Init(&p_mc->CONFIG.P_FLASH);
+	Flash_Init(&p_mc->CONFIG.P_FLASH);
 	EEPROM_Init_Blocking(p_mc->CONFIG.P_EEPROM);
 
 	if (p_mc->CONFIG.P_PARAMS_NVM != 0U)
@@ -84,13 +84,12 @@ void MotorController_Init(MotorController_T * p_mc)
 	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_ADCU, p_mc->Parameters.BatteryFull_ADCU, 1000U);
 
 	/* set values to not enter fault state */
-	p_mc->AnalogResults.HeatPcb_ADCU = p_mc->ThermistorPcb.Params.Threshold_ADCU;
-	p_mc->AnalogResults.HeatMosfetsTop_ADCU = p_mc->ThermistorMosfetsTop.Params.Threshold_ADCU;
-	p_mc->AnalogResults.HeatMosfetsBot_ADCU = p_mc->ThermistorMosfetsBot.Params.Threshold_ADCU;
-
-	p_mc->AnalogResults.VPos_ADCU 		= p_mc->VMonitorPos.Params.LimitLower_ADCU + 1U;
-	p_mc->AnalogResults.VSense_ADCU 	= p_mc->VMonitorSense.Params.LimitLower_ADCU + 1U;
-	p_mc->AnalogResults.VAcc_ADCU 		= p_mc->VMonitorAcc.Params.LimitLower_ADCU + 1U;
+	p_mc->AnalogResults.HeatPcb_ADCU 			= p_mc->ThermistorPcb.Params.Threshold_ADCU;
+	p_mc->AnalogResults.HeatMosfetsTop_ADCU 	= p_mc->ThermistorMosfetsTop.Params.Threshold_ADCU;
+	p_mc->AnalogResults.HeatMosfetsBot_ADCU 	= p_mc->ThermistorMosfetsBot.Params.Threshold_ADCU;
+	p_mc->AnalogResults.VPos_ADCU 				= p_mc->VMonitorPos.Params.LimitLower_ADCU + 1U;
+	p_mc->AnalogResults.VSense_ADCU 			= p_mc->VMonitorSense.Params.LimitLower_ADCU + 1U;
+	p_mc->AnalogResults.VAcc_ADCU 				= p_mc->VMonitorAcc.Params.LimitLower_ADCU + 1U;
 
 	Blinky_Init(&p_mc->Buzzer);
 
@@ -135,14 +134,8 @@ void MotorController_SaveParameters_Blocking(MotorController_T * p_mc)
 		EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_motor->Thermistor.CONFIG.P_PARAMS, 	&p_motor->Thermistor.Params, 	sizeof(Thermistor_Params_T));
 	}
 
-	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->CONFIG.P_PARAMS_NVM, &p_mc->Parameters, sizeof(MotorController_Params_T));
-	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->CONFIG.P_MEM_MAP_BOOT, &p_mc->MemMapBoot, sizeof(MemMapBoot_T));
-	for (uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++)
-	{
-		p_protocol = &p_mc->CONFIG.P_PROTOCOLS[iProtocol];
-		EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_protocol->CONFIG.P_PARAMS, &p_protocol->Params, sizeof(Protocol_Params_T));
-	}
-
+	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->CONFIG.P_PARAMS_NVM, 					&p_mc->Parameters, 					sizeof(MotorController_Params_T));
+	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->CONFIG.P_MEM_MAP_BOOT, 					&p_mc->MemMapBoot, 					sizeof(MemMapBoot_T));
 	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->AnalogUser.CONFIG.P_PARAMS, 				&p_mc->AnalogUser.Params, 			sizeof(MotAnalogUser_Params_T));
 	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->ThermistorPcb.CONFIG.P_PARAMS, 			&p_mc->ThermistorPcb.Params, 		sizeof(Thermistor_Params_T));
 	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->ThermistorMosfetsTop.CONFIG.P_PARAMS, 	&p_mc->ThermistorMosfetsTop.Params, sizeof(Thermistor_Params_T));
@@ -150,6 +143,12 @@ void MotorController_SaveParameters_Blocking(MotorController_T * p_mc)
  	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->VMonitorPos.CONFIG.P_PARAMS, 			&p_mc->VMonitorPos.Params, 			sizeof(VMonitor_Params_T));
 	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->VMonitorAcc.CONFIG.P_PARAMS, 			&p_mc->VMonitorAcc.Params, 			sizeof(VMonitor_Params_T));
 	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->VMonitorSense.CONFIG.P_PARAMS, 			&p_mc->VMonitorSense.Params, 		sizeof(VMonitor_Params_T));
+
+	for (uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++)
+	{
+		p_protocol = &p_mc->CONFIG.P_PROTOCOLS[iProtocol];
+		EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_protocol->CONFIG.P_PARAMS, &p_protocol->Params, sizeof(Protocol_Params_T));
+	}
 
 	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->Shell.CONFIG.P_PARAMS, &p_mc->Shell.Params, sizeof(Shell_Params_T));
 

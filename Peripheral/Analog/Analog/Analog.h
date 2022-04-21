@@ -65,7 +65,7 @@
 	typedef uint32_t analog_adcpin_t;
 #endif
 
-typedef uint8_t analog_virtual_t;
+typedef uint8_t analog_channel_t;
 
 typedef void (* Analog_Callback_T)(void * p_context);
 
@@ -78,8 +78,8 @@ Analog_QueueType_T;
 
 typedef const struct
 {
-	Analog_QueueType_T TYPE;
-	const analog_virtual_t 		CHANNEL; 		/* index into results buffer */
+	Analog_QueueType_T 			TYPE;
+	const analog_channel_t 		CHANNEL; 		/* index into results buffer */
 	const Analog_Callback_T 	ON_COMPLETE; 	/* On each channel complete, runs first adc isr, depends on adc hw fifo length */
 
 	void * const P_CALLBACK_CONTEXT;
@@ -97,6 +97,7 @@ Analog_Conversion_T;
 	.P_RESULTS_BUFFER 		= p_Results,					\
 	.PIN 					= PinId,						\
 }
+
 /*
  * Config options
  */
@@ -122,7 +123,7 @@ typedef const struct
 	const Analog_OptionsFlags_T 	FLAGS;
 	const Analog_Callback_T 		ON_OPTIONS;
 }
-Analog_ConversionOptions_T;
+Analog_Options_T;
 
 /*
  * cast to this type to determine which item type first
@@ -131,13 +132,12 @@ typedef const struct
 {
 	union
 	{
-		Analog_QueueType_T TYPE;
-		const Analog_Conversion_T CONVERISON;
-		const Analog_ConversionOptions_T OPTIONS;
+		const Analog_QueueType_T 	TYPE;
+		const Analog_Conversion_T 	CONVERISON;
+		const Analog_Options_T 		OPTIONS;
 	};
 }
 Analog_QueueItem_T;
-
 
 typedef const struct
 {
@@ -201,60 +201,6 @@ Analog_T;
 	.ConversionQueue = QUEUE_CONFIG(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),	\
 }
 
-//extern void _Analog_ActivateAdc(const Analog_T * p_analog, Analog_ConversionChannel_T * p_conversion);
-//extern void _Analog_ProcQueue(Analog_T * p_analog);
-
-/******************************************************************************/
-/*!
- *
- */
-/******************************************************************************/
-static inline void _Analog_EnterCritical(Analog_T * p_analog)
-{
-#if  (defined(CONFIG_ANALOG_MULTITHREADED) || defined(CONFIG_ANALOG_CRITICAL_USE_GLOBAL))
-	/*
-	 * Multithreaded calling of Activate.
-	 * Must implement Critical_Enter
-	 *
-	 * Higher priority thread may overwrite Conversion setup data before ADC ISR returns.
-	 * e.g. must be implemented if calling from inside interrupts and main.
-	 */
-	Critical_Enter();
-//#if defined(CONFIG_ANALOG_MULTITHREADED_USE_MUTEX)
-//	return Critical_AquireMutex(&p_analog->Mutex);
-//#endif
-
-#elif (defined(CONFIG_ANALOG_SINGLE_THREADED))
-	/*
-	 * Single threaded calling of Activate.
-	 * Single threaded case, and calling thread is lower priority than ADC ISR, may implement ADC_DisableInterrupt instead of Critical_Enter global disable interrupt
-	 * If calling thread is lower priority than ADC ISR, ADC ISR may occur after Conversion setup data is written by lower priority thread.
-	 *
-	 * In single threaded calling of Activate and calling thread priority is higher than ADC ISR, Activate will run to completion, overwriting the active conversion, Disable adc IRQ is not needed, however ADC ISR will still need Critical_Enter
-	 */
-	HAL_ADC_DisableInterrupt(p_analog);
-#endif
-}
-
-static inline void _Analog_ExitCritical(Analog_T * p_analog)
-{
-#if (defined(CONFIG_ANALOG_MULTITHREADED) || defined(CONFIG_ANALOG_CRITICAL_USE_GLOBAL))
-	Critical_Exit();
-#elif  defined(CONFIG_ANALOG_SINGLE_THREADED)
-	HAL_ADC_EnableInterrupt(p_analog);
-#endif
-}
-
-
-
-static inline bool _Analog_GetIsActive(const Analog_T * p_analog)
-{
-	//case of aborted conversion?
-//	return (p_analog->p_ActiveConversion != 0U);
-//	return (p_analog->ActiveConversionCount > 0U);
-	return ((HAL_ADC_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC) == true) || (HAL_ADC_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ADC) == true));
-}
-
 /*!
 	 @brief Private capture results subroutine
  */
@@ -269,10 +215,11 @@ static inline void _Analog_CaptureAdcResults(Analog_T * p_analog, Analog_Convers
 //	analog_adcresult_t * p_resultsBuffer 							= p_adcMap->P_RESULTS_BUFFER;
 //
 //	analog_adcresult_t result;
+
+//	uint8_t virtualIndex;
+	analog_channel_t virtualChannel;
 	analog_adcpin_t adcPin;
-	uint8_t virtualIndex;
-	analog_virtual_t virtualChannel;
-	;
+
 	/*
 	 * Should not need to boundary check on return. Read in the same way it was pushed
 	 */
@@ -334,7 +281,6 @@ static inline bool _Analog_CaptureResults(Analog_T * p_analog)//, const Analog_C
 	HAL_ADC_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);
 
 
-//
 //		_Analog_CaptureAdcResults(p_analog); //, p_adcConversion, p_adcMap);
 //		p_analog->ActiveConversionIndex += completeChannelCount;
 //
@@ -406,8 +352,6 @@ static inline bool _Analog_CaptureResults(Analog_T * p_analog)//, const Analog_C
 
 	return (isAllChannelsComplete);
 }
-
-
 
 /*!
 	@brief	Capture ADC results, when conversion is complete.
@@ -498,13 +442,137 @@ static inline void Analog_CaptureResults_ISR(Analog_T * p_analog)
 //static inline void Analog_Deactivate(const Analog_T * p_analog)					{HAL_ADC_Deactivate(p_analog->CONFIG.P_HAL_ADC);}
 //static inline void Analog_DisableInterrupt(const Analog_T * p_analog)			{HAL_ADC_DisableInterrupt(p_analog->CONFIG.P_HAL_ADC);}
 //static inline void Analog_ClearConversionComplete(Analog_T * p_analog)			{HAL_ADC_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);}
-static inline bool Analog_ReadIsAdcConversionComplete(const Analog_T * p_analog)		{return HAL_ADC_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);}
-static inline bool Analog_ReadIsAdcConversionActive(const Analog_T * p_analog)		{return HAL_ADC_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ADC);}
+//static inline bool Analog_ReadIsAdcConversionComplete(const Analog_T * p_analog)		{return HAL_ADC_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC);}
+//static inline bool Analog_ReadIsAdcConversionActive(const Analog_T * p_analog)		{return HAL_ADC_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ADC);}
+//extern void _Analog_ActivateAdc(const Analog_T * p_analog, Analog_ConversionChannel_T * p_conversion);
+//extern void _Analog_ProcQueue(Analog_T * p_analog);
 
-static inline bool Analog_ReadIsActive(const Analog_T * p_analog)		{return ((Analog_ReadIsAdcConversionComplete(p_analog) == true) || (Analog_ReadIsAdcConversionActive(p_analog) == true));}
+/******************************************************************************/
+/*!
+ *
+ */
+/******************************************************************************/
+static inline void _Analog_EnterCritical(Analog_T * p_analog)
+{
+#if  (defined(CONFIG_ANALOG_MULTITHREADED) || defined(CONFIG_ANALOG_CRITICAL_USE_GLOBAL))
+	/*
+	 * Multithreaded calling of Activate.
+	 * Must implement Critical_Enter
+	 *
+	 * Higher priority thread may overwrite Conversion setup data before ADC ISR returns.
+	 * e.g. must be implemented if calling from inside interrupts and main.
+	 */
+	Critical_Enter();
 
+#elif (defined(CONFIG_ANALOG_SINGLE_THREADED))
+	/*
+	 * Single threaded calling of Activate.
+	 * Single threaded case, and calling thread is lower priority than ADC ISR, may implement ADC_DisableInterrupt instead of Critical_Enter global disable interrupt
+	 * If calling thread is lower priority than ADC ISR, ADC ISR may occur after Conversion setup data is written by lower priority thread.
+	 *
+	 * In single threaded calling of Activate and calling thread priority is higher than ADC ISR, Activate will run to completion, overwriting the active conversion, Disable adc IRQ is not needed, however ADC ISR will still need Critical_Enter
+	 */
+	 //  use global critical if disable adc interrupts aborts active conversion
+	HAL_ADC_DisableInterrupt(p_analog->CONFIG.P_HAL_ADC);
+#endif
+}
+
+static inline void _Analog_ExitCritical(Analog_T * p_analog)
+{
+#if (defined(CONFIG_ANALOG_MULTITHREADED) || defined(CONFIG_ANALOG_CRITICAL_USE_GLOBAL))
+	Critical_Exit();
+#elif  defined(CONFIG_ANALOG_SINGLE_THREADED)
+	HAL_ADC_EnableInterrupt(p_analog->CONFIG.P_HAL_ADC);
+#endif
+}
+
+//static inline bool Analog_ReadIsActive(const Analog_T * p_analog)		{return ((Analog_ReadIsAdcConversionComplete(p_analog) == true) || (Analog_ReadIsAdcConversionActive(p_analog) == true));}
+static inline bool _Analog_ReadIsActive(const Analog_T * p_analog)
+{
+	//case of aborted conversion?
+//	return (p_analog->p_ActiveConversion != 0U);
+//	return (p_analog->ActiveConversionCount > 0U);
+	return ((HAL_ADC_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ADC) == true) || (HAL_ADC_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ADC) == true));
+}
 
 extern void Analog_Init(Analog_T * p_analog);
 extern void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion);
 
 #endif
+
+
+//static inline void AnalogN_CaptureResults_ISR(AnalogN_T * p_analogn, uint8_t analogId)
+//{
+//	Analog_T * p_analogI = &p_analogn->CONFIG.P_ANALOGS[analogId];
+////	AnalogN_Conversion_T * p_activeConversion = p_analogI->p_ActiveConversion; /* casting void pointer */
+////	Queue_PeekFront(&p_analogI->ConversionQueue, &p_activeConversion); //read an address
+//
+////	const Analog_ConversionAdc_T * p_adcConversion 	= &p_activeConversion->P_ADC_CONVERSIONS[analogId];
+////	const Analog_ConversionVirtualMap_T * p_map 			= &p_activeConversion->MAP;
+////	AnalogN_AdcFlags_T * p_signalComplete 			= p_activeConversion->P_SIGNAL_BUFFER;
+//////	Analog_Options_T options 		 		= p_map->P_VIRTUAL_CONVERSION->OPTIONS;
+////	Analog_OnComplete_T onConversionComplete  		= p_map->P_VIRTUAL_CONVERSION->ON_COMPLETE;
+////	void * p_onConversionCompleteContext 			= p_map->P_ON_COMPLETE_CONTEXT;
+//
+////	volatile static uint32_t debug = 0;
+//
+////	if((_Analog_GetIsActive(p_analogI) == true)) //debug only
+////	{
+//
+//
+//	if (_Analog_CaptureResults(p_analogI) == true) //all channels complete
+//	{
+//		//Do not run if is capture local peak and not peak found
+////		if((((options.CaptureLocalPeak == true) && (p_analogI->IsLocalPeakFound == false)) == false))
+////		{
+////			p_signalComplete->AdcFlags &= ~(1UL << analogId); //debug only
+////
+////			if (onConversionComplete != 0U)
+////			{
+////				// only run oncomplete if conversion has completed on all adcs
+////	//			p_signalComplete->AdcFlags &= ~(1UL << analogId);
+////				if (p_signalComplete->AdcFlags == 0U)
+////				{
+////					onConversionComplete(p_onConversionCompleteContext);
+////				}
+////			}
+////		}
+//
+//		//todo check repeat function
+////		if((options.ContinuousConversion == true) && (((options.CaptureLocalPeak == true) && (p_analogI->IsLocalPeakFound == true)) == false))
+////		{
+////#if !defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
+////			if(p_activeConversion->MAP.P_VIRTUAL_CONVERSION->CHANNEL_COUNT > 1U)
+////			{
+////				_Analog_ActivateConversion(p_analogI, p_adcConversion, p_map);
+////			}
+////			else
+////			{
+////				p_analogI->ActiveConversionIndex = 0U; //auto reactivate, still need to reset index
+////			}
+////#elif defined(CONFIG_ANALOG_SW_CONTINUOUS_CONVERSION)
+////			_Analog_ActivateConversion(p_analogI, p_adcConversion, p_map);
+////#endif
+////		}
+////		else //local peak found
+////		{
+////
+////			if(_Analog_DequeueConversion(p_analogI) == true)
+////			{
+////				/* p_analogI->p_ActiveConversion updated */
+////				p_activeConversion = p_analogI->p_ActiveConversion;
+////				_Analog_ActivateConversion(p_analogI, &p_activeConversion->P_ADC_CONVERSIONS[analogId], &p_activeConversion->MAP);
+////			}
+////			else
+////			{
+//////			Analog_Dectivate(p_analogI);
+////			}
+////		}
+//	}
+////
+////	}
+////	else
+////	{
+////		debug++;
+////	}
+//}

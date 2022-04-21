@@ -6,8 +6,6 @@
 //			default: memcpy(p_queue->CONFIG.P_BUFFER, p_unit, p_queue->CONFIG.UNIT_SIZE);  break;
 //		}
 
-
-
 //		switch (p_queue->CONFIG.UNIT_SIZE)
 //		{
 //			case sizeof(uint32_t): *((uint32_t *)p_dest) = ((uint32_t *)p_queue->CONFIG.P_BUFFER)[p_queue->Tail]; break;
@@ -15,46 +13,3 @@
 //			case sizeof(uint8_t) : *((uint8_t *)p_dest)  = ((uint8_t  *)p_queue->CONFIG.P_BUFFER)[p_queue->Tail]; break;
 //			default: memcpy(p_dest, p_queue->CONFIG.P_BUFFER,  p_queue->CONFIG.UNIT_SIZE);  break;
 //		}
-
-
-
-//bool Queue_DequeueBytes(Queue_T * p_queue, void * p_dest, size_t nBytes)
-//{
-//	bool isSucess = false;
-//
-//	AquireMutex(p_queue);
-//
-//	if (nBytes < Queue_GetFullCount(p_queue) * p_queue->CONFIG.UNIT_SIZE) //ideally compiler stores value from inline function
-//	{
-//		memcpy(p_dest, &p_queue->CONFIG.P_BUFFER[p_queue->Tail], nBytes);
-//		p_queue->Tail = CalcQueueIndexInc(p_queue, p_queue->Tail, nBytes / p_queue->CONFIG.UNIT_SIZE);
-//		isSucess = true;
-//	}
-//
-//	ReleaseMutex(p_queue);
-//
-//	return isSucess;
-//}
-//
-//bool Queue_EnqueueBytes(Queue_T * p_queue, const void * p_bytes, size_t nBytes)
-//{
-//	bool isSucess = false;
-//
-//	AquireMutex(p_queue);
-//
-//	if (nBytes < Queue_GetEmptyCount(p_queue) * p_queue->CONFIG.UNIT_SIZE) //ideally compiler stores value from inline function
-//	{
-//#ifdef CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED
-//		memcpy(&p_queue->CONFIG.P_BUFFER[CalcQueueIndexMasked(p_queue, p_queue->Head)], p_bytes, nBytes);
-//		p_queue->Head++;
-//#else
-//		memcpy(&p_queue->CONFIG.P_BUFFER[p_queue->Head], p_bytes, nBytes);
-//		p_queue->Head = CalcQueueIndexInc(p_queue, p_queue->Head, nBytes / p_queue->CONFIG.UNIT_SIZE);
-//#endif
-//		isSucess = true;
-//	}
-//
-//	ReleaseMutex(p_queue);
-//
-//	return isSucess;
-//}

@@ -69,6 +69,8 @@ static inline uint32_t speed_rpmtoa16(uint32_t rpm, uint32_t sampleFreq)
 	f16(angle) = speed_frac16
 
 	f(angleMax) = speedRef_Rpm
+
+	electrical angle to mech rpm multiple sampleFreq by pollpairs
  */
 /******************************************************************************/
 void Linear_Speed_InitAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t angleBits, uint16_t speedRef_Rpm)
@@ -76,26 +78,24 @@ void Linear_Speed_InitAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t
 	p_linear->YReference 			= speedRef_Rpm;
 	p_linear->XReference 			= (speedRef_Rpm << angleBits) / (sampleFreq * 60U);
 
-//	(65536 << 14U) / (divisor * yRef / factor);
-
 	p_linear->SlopeFactor 			= sampleFreq * 60U;
 	p_linear->SlopeDivisor_Shift 	= angleBits;
 
 	//todo non iterative
-	while (p_linear->XReference > (INT32_MAX / p_linear->SlopeFactor))
+	while (p_linear->XReference > INT32_MAX / p_linear->SlopeFactor)
 	{
-		p_linear->SlopeFactor 			= p_linear->SlopeFactor >> 1U;
-		p_linear->SlopeDivisor_Shift 	= p_linear->SlopeDivisor_Shift - 1U;
+		p_linear->SlopeFactor = p_linear->SlopeFactor >> 1U;
+		p_linear->SlopeDivisor_Shift--;
 	}
 
-	p_linear->SlopeDivisor 			= (1U << angleBits) / (60U * sampleFreq);
-	p_linear->SlopeFactor_Shift 	= 0;
+	//todo maxleftshift divide
+	p_linear->SlopeDivisor 			= (1U << (angleBits + (30U - angleBits))) / (60U * sampleFreq);
+	p_linear->SlopeFactor_Shift 	= (30U - angleBits);
 
-//	while((((p_linear->YReference << angleBits) / (60U * sampleFreq)) << p_linear->SlopeFactor_Shift) < INT32_MAX / 2U)
-	while((p_linear->YReference * p_linear->SlopeDivisor < INT32_MAX / 2U) && (angleBits + p_linear->SlopeFactor_Shift < 16U))
+	while(p_linear->YReference > INT32_MAX / p_linear->SlopeDivisor)
 	{
-		p_linear->SlopeFactor_Shift 	= p_linear->SlopeFactor_Shift + 1U;
-		p_linear->SlopeDivisor 			= (1U << (angleBits + p_linear->SlopeFactor_Shift)) / (60U * sampleFreq);
+		p_linear->SlopeDivisor = p_linear->SlopeDivisor >> 1U;
+		p_linear->SlopeFactor_Shift--;
 	}
 
 	p_linear->XOffset 				= 0;
@@ -103,6 +103,9 @@ void Linear_Speed_InitAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t
 }
 
 
+void Linear_Speed_InitElectricalAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t angleBits, uint8_t polePairs, uint16_t speedRef_Rpm)
+{
+	Linear_Speed_InitAngleRpm(p_linear, sampleFreq / polePairs, angleBits, speedRef_Rpm);
+}
 
-
-
+//todo frac16 first

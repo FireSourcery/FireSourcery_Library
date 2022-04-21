@@ -31,21 +31,31 @@
 #ifndef CONFIG_MOTOR_H
 #define CONFIG_MOTOR_H
 
-#ifdef CONFIG_MOTOR_IABC_INVERT
+#ifdef CONFIG_MOTOR_I_SENSORS_NONINVERT
 
-#elif defined(CONFIG_MOTOR_IABC_INVERT)
-
-#else
-	#define	CONFIG_MOTOR_IABC_INVERT
-#endif
-
-#ifdef CONFIG_MOTOR_VABC_ISOLATED
-
-#elif defined(CONFIG_MOTOR_VABC_ADC)
+#elif defined(CONFIG_MOTOR_I_SENSORS_INVERT)
 
 #else
-	#define	CONFIG_MOTOR_VABC_ADC
+	#define	CONFIG_MOTOR_I_SENSORS_INVERT
 #endif
+
+#ifdef CONFIG_MOTOR_V_SENSORS_ISOLATED
+
+#elif defined(CONFIG_MOTOR_V_SENSORS_ADC)
+
+#else
+	#define	CONFIG_MOTOR_V_SENSORS_ADC
+#endif
+
+
+#ifdef CONFIG_MOTOR_I_SENSORS_AB
+
+#elif defined(CONFIG_MOTOR_I_SENSORS_ABC)
+
+#else
+	#define	CONFIG_MOTOR_I_SENSORS_ABC
+#endif
+
 
 #endif
 

@@ -86,9 +86,12 @@ static inline void FOC_ProcClarkePark(FOC_T * p_foc)
 {
 	foc_clarke(&p_foc->Ialpha, &p_foc->Ibeta, p_foc->Ia, p_foc->Ib, p_foc->Ic);
 	foc_park_vector(&p_foc->Id, &p_foc->Iq, p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
+}
 
-//	if (p_foc->Iq > -200 && p_foc->Iq < 200 ) {p_foc->Iq = 0;}
-//	if (p_foc->Id > -200 && p_foc->Id < 200 ) {p_foc->Id = 0;}
+static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
+{
+	foc_clarke_ab(&p_foc->Ialpha, &p_foc->Ibeta, p_foc->Ia, p_foc->Ib);
+	foc_park_vector(&p_foc->Id, &p_foc->Iq, p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
 }
 
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)

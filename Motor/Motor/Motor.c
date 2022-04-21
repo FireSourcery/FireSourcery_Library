@@ -77,7 +77,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	 */
 	FOC_Init(&p_motor->Foc);
 //	BEMF_Init(&p_motor->Bemf);
-	Linear_Speed_InitAngleRpm(&p_motor->UnitAngleRpm, 1000U , 16U, p_motor->Parameters.SpeedRefMax_RPM); /* final value is overwritten, slope is persistent */
+	Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, 20000U, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedRefMax_RPM); /* final value is overwritten, slope is persistent */
 
 	//* p_motor->Encoder.Params.MotorPolePairs
 
@@ -90,7 +90,9 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Timer_InitPeriodic(&p_motor->MillisTimer, 	1U);
 	Timer_InitPeriodic(&p_motor->SpeedTimer, 	1U);
 
+#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) &&  defined(CONFIG_MOTOR_V_SENSORS_ADC)
 	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, p_motor->CONFIG.UNIT_VABC_ADCREF10, p_motor->CONFIG.UNIT_VABC_ADCBITS, p_motor->Parameters.VSupply);
+#endif
 
 	/*
 	 * Initial runtime config settings
@@ -99,18 +101,18 @@ void Motor_InitReboot(Motor_T * p_motor)
 	 * Run calibration later, default zero to middle adc
 	 */
 	//scales 4095 to physical units. alternatively use opamp equation
-#ifdef CONFIG_MOTOR_CURRENT_SAMPLE_INVERT
+#ifdef CONFIG_MOTOR_I_SENSORS_INVERT
 	Linear_ADC_Init_Inverted(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
 	Linear_ADC_Init_Inverted(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
 	Linear_ADC_Init_Inverted(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, p_motor->Parameters.IcRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
-#elif defined(CONFIG_MOTOR_CURRENT_SAMPLE_NONINVERT)
+#elif defined(CONFIG_MOTOR_I_SENSORS_NONINVERT)
 	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp);
 	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp);
 	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, p_motor->Parameters.IcRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp);
 #endif
 
 	/*
-	 * Ramp 0 to 65535 max in 1s
+	 * Ramp 0 to 65535 max in ~500ms
 	 */
 	Linear_Ramp_InitMillis(&p_motor->Ramp, 500U, 20000U, 0U, 65535U); /* final value is overwritten, slope is persistent */
 	p_motor->RampCmd = 0;
@@ -118,8 +120,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		//can start at 0 speed in foc mode for continuous angle displacements
-		Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 2000U, 20000U, 0U, 300U);
+		Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 2000U, 20000U, 0U, 300U);		//can start at 0 speed in foc mode for continuous angle displacements
 	}
 	else
 	{

@@ -88,11 +88,21 @@ static inline void Motor_FOC_CaptureIc(Motor_T *p_motor)
 	@{
 */
 /******************************************************************************/
+
+
+static inline void CaptureMotorFocSpeed(Motor_T * p_motor, uint32_t electricalAngle)
+{
+	uint32_t electricalDelta = electricalAngle - (uint32_t)p_motor->ElectricalAngle; /* loops if no overflow past 1 full cycle */
+	if (p_motor->Direction == MOTOR_DIRECTION_CW) {electricalDelta = 0 - electricalDelta;}
+	p_motor->Speed_RPM = (p_motor->Speed_RPM + Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, (uint32_t)electricalDelta)) / 2U;
+}
+
 static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 {
 	bool captureSpeed = Timer_Poll(&p_motor->SpeedTimer);
 	int32_t speedControl;
 	uint32_t electricalDelta;
+	uint32_t electricalAngle;
 
 	switch (p_motor->Parameters.SensorMode)
 	{
@@ -155,20 +165,31 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 				Motor_CaptureEncoderSpeed(p_motor);
 			}
 
-			electricalDelta = Encoder_Motor_InterpolateElectricalDelta(&p_motor->Encoder, p_motor->InterpolatedAngleIndex); //todo add boundary, use ref index
+			electricalDelta = Encoder_Motor_InterpolateElectricalDelta(&p_motor->Encoder, p_motor->InterpolatedAngleIndex);
 			if (electricalDelta > 65536U/6U) {electricalDelta = 65536U/6U;}
-
 			if (p_motor->Direction == MOTOR_DIRECTION_CW) {electricalDelta = 0 - electricalDelta;};
-			p_motor->ElectricalAngle = p_motor->HallAngle + electricalDelta;
+
+			electricalAngle = p_motor->HallAngle + electricalDelta;
 			p_motor->InterpolatedAngleIndex++;
+
+			/*
+			 * Temp
+			 */
+			electricalDelta = electricalAngle - (uint32_t)p_motor->ElectricalAngle; /* loops if no overflow past 1 full cycle */
+			if (p_motor->Direction == MOTOR_DIRECTION_CW) {electricalDelta = 0 - electricalDelta;}
+			p_motor->Speed2_RPM = (p_motor->Speed2_RPM + Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, (uint32_t)electricalDelta))/2U;
+			p_motor->DeltaAngle  = electricalDelta;
+
+			p_motor->ElectricalAngle = (qangle16_t)electricalAngle;
 			break;
 
 		case MOTOR_SENSOR_MODE_SIN_COS:
-			p_motor->ElectricalAngle = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
-			if (captureSpeed == true)
-			{
-				Motor_CaptureSpeed(p_motor);
-			}
+			electricalAngle = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
+			electricalDelta = electricalAngle - (uint32_t)p_motor->ElectricalAngle; /* loops if no overflow past 1 full cycle */
+			if (p_motor->Direction == MOTOR_DIRECTION_CW) {electricalDelta = 0 - electricalDelta;}
+			p_motor->Speed_RPM = (p_motor->Speed_RPM + Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, (uint32_t)electricalDelta)) /2U;
+			//todo observer
+			p_motor->ElectricalAngle = (qangle16_t)electricalAngle;
 			break;
 
 		default:
@@ -177,7 +198,6 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 
 	if (captureSpeed == true)
 	{
-		Motor_CaptureSpeed(p_motor);
 		if (p_motor->ControlModeFlags.Speed == 1U)
 		{
 			/*
@@ -203,6 +223,7 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			p_motor->SpeedControl = speedControl;
 		}
 	}
+
 
 	FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
 }
@@ -330,16 +351,18 @@ static inline void ActivateMotorFocAngle(Motor_T * p_motor)
 static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 {
 	//no current sense during pwm float, check bemf
-	AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
 	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
 	{
-		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 	}
-	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
-	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
-	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
-	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) &&defined(CONFIG_MOTOR_V_SENSORS_ADC)
+	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
+	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
+	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
+#endif
+	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
 
 	ProcMotorFocPositionFeedback(p_motor);
 }
@@ -356,22 +379,30 @@ static inline void Motor_FOC_StartAngleObserve(Motor_T * p_motor)
 static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
 //	p_motor->DebugTime[0] = SysTime_GetMicros() - p_motor->MicrosRef;
-	AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
 	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
 	{
-		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 	}
-	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-	AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-	AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
+	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
+#if defined(CONFIG_MOTOR_I_SENSORS_ABC) && !defined(CONFIG_MOTOR_I_SENSORS_AB)
+	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
+#endif
+	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
 
 	//samples complete when queue resumes, adc isr priority higher than pwm.
 	ProcMotorFocPositionFeedback(p_motor);
 
 //	p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
+
+#ifdef CONFIG_MOTOR_I_SENSORS_AB
+	FOC_ProcClarkePark_AB(&p_motor->Foc);
+#elif defined(CONFIG_MOTOR_I_SENSORS_ABC)
 	FOC_ProcClarkePark(&p_motor->Foc);
+#endif
+
 //	p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 	if(p_motor->ControlModeFlags.Hold == 0U)

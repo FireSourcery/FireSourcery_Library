@@ -39,12 +39,12 @@
 #ifndef PHASE_H
 #define PHASE_H
 
-#include "Peripheral/PWM/PWM.h"
-#include "Peripheral/Pin/Pin.h"
 #include "Config.h"
 
+#include "Peripheral/PWM/PWM.h"
+#include "Peripheral/Pin/Pin.h"
+
 #include <stdint.h>
-#include <stdbool.h>
 
 typedef enum
 {
@@ -152,21 +152,21 @@ static inline void Phase_ActivateDuty(const Phase_T * p_phase, uint16_t pwmDutyA
 	SyncPhasePwm(p_phase);
 }
 
-//static inline void Phase_ActuateDuty_Frac15(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
-//{
-//	PWM_ActuateDuty_Frac15(&p_phase->PwmA, pwmDutyA);
-//	PWM_ActuateDuty_Frac15(&p_phase->PwmB, pwmDutyB);
-//	PWM_ActuateDuty_Frac15(&p_phase->PwmC, pwmDutyC);
-//	SyncPhasePwm(p_phase);
-//}
-//
-//static inline void Phase_ActuateDuty_Frac16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
-//{
-//	PWM_ActuateDuty_Frac16(&p_phase->PwmA, pwmDutyA);
-//	PWM_ActuateDuty_Frac16(&p_phase->PwmB, pwmDutyB);
-//	PWM_ActuateDuty_Frac16(&p_phase->PwmC, pwmDutyC);
-//	SyncPhasePwm(p_phase);
-//}
+static inline void Phase_ActuateDuty_Frac15(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+{
+	PWM_ActuateDuty_Frac15(&p_phase->PwmA, pwmDutyA);
+	PWM_ActuateDuty_Frac15(&p_phase->PwmB, pwmDutyB);
+	PWM_ActuateDuty_Frac15(&p_phase->PwmC, pwmDutyC);
+	SyncPhasePwm(p_phase);
+}
+
+static inline void Phase_ActuateDuty_Frac16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+{
+	PWM_ActuateDuty_Frac16(&p_phase->PwmA, pwmDutyA);
+	PWM_ActuateDuty_Frac16(&p_phase->PwmB, pwmDutyB);
+	PWM_ActuateDuty_Frac16(&p_phase->PwmC, pwmDutyC);
+	SyncPhasePwm(p_phase);
+}
 
 /*
  *
@@ -345,9 +345,9 @@ static inline void Phase_Polar_ActivateCA(const Phase_T * p_phase, uint16_t duty
 static inline void Phase_Polar_ActivateCB(const Phase_T * p_phase, uint16_t duty) {Phase_Polar_ActivateDutyCB(p_phase, duty); Phase_Polar_ActivateSwitchCB(p_phase);}
 static inline void Phase_Polar_ActivateAB(const Phase_T * p_phase, uint16_t duty) {Phase_Polar_ActivateDutyAB(p_phase, duty); Phase_Polar_ActivateSwitchAB(p_phase);}
 
-static inline void Phase_Polar_ActivateA(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, duty, 0U, 0U); ActivatePhaseSwitchABC(p_phase);}
-static inline void Phase_Polar_ActivateB(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, 0U, duty, 0U); ActivatePhaseSwitchABC(p_phase);}
-static inline void Phase_Polar_ActivateC(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, 0U, 0U, duty); ActivatePhaseSwitchABC(p_phase);}
+static inline void Phase_Polar_ActivateA(const Phase_T * p_phase, uint16_t duty) 		{Phase_ActivateDuty(p_phase, duty, 0U, 0U); ActivatePhaseSwitchABC(p_phase);}
+static inline void Phase_Polar_ActivateB(const Phase_T * p_phase, uint16_t duty) 		{Phase_ActivateDuty(p_phase, 0U, duty, 0U); ActivatePhaseSwitchABC(p_phase);}
+static inline void Phase_Polar_ActivateC(const Phase_T * p_phase, uint16_t duty) 		{Phase_ActivateDuty(p_phase, 0U, 0U, duty); ActivatePhaseSwitchABC(p_phase);}
 static inline void Phase_Polar_ActivateInvA(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, 0U, duty, duty); ActivatePhaseSwitchABC(p_phase);}
 static inline void Phase_Polar_ActivateInvB(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, duty, 0U, duty); ActivatePhaseSwitchABC(p_phase);}
 static inline void Phase_Polar_ActivateInvC(const Phase_T * p_phase, uint16_t duty) 	{Phase_ActivateDuty(p_phase, duty, duty, 0U); ActivatePhaseSwitchABC(p_phase);}
@@ -357,6 +357,8 @@ static inline void Phase_Polar_ActivateInvC(const Phase_T * p_phase, uint16_t du
 /******************************************************************************/
 /*
  * This module handles Phase Id
+ *
+ * switch should be faster than CommutationTable[phaseID][p_phase->PhaseMode]();
  */
 static inline void Phase_Polar_Activate(Phase_T * p_phase, Phase_Id_T phaseId, uint16_t duty)
 {
@@ -372,25 +374,6 @@ static inline void Phase_Polar_Activate(Phase_T * p_phase, Phase_Id_T phaseId, u
 		case PHASE_ID_7: break;
 		default: break;
 	}
-	//	CommutationTable[phaseID][p_phase->PhaseMode]();
-
-	//	if (p_phase->SinusoidalModulation)
-	//	{
-	//
-	//		p_phase->Index = 0;
-	//	switch (phaseId)
-	//	{
-	//	case PHASE_ID_0: break;
-	//	case PHASE_ID_1_AC:	waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
-	//	case PHASE_ID_2_BC: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
-	//	case PHASE_ID_3_BA: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
-	//	case PHASE_ID_4_CA: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
-	//	case PHASE_ID_5_CB: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
-	//	case PHASE_ID_6_AB: waveform->Angle = REFERENCE_ANGLE_PHASE_AC; break;
-	//	case PHASE_ID_7: break;
-	//	default: break;
-	//	}
-	//	}
 }
 
 static inline void Phase_Polar_ActivateDuty(Phase_T * p_phase, Phase_Id_T phaseId, uint16_t duty)

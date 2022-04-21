@@ -35,52 +35,26 @@
 
 #include <stdbool.h>
 
-static inline int32_t CalcLinearSpeedDeltaAngle(int16_t angle, int16_t anglePrev, bool isDirectionPositive)
+
+//static inline int32_t Linear_Speed_CalcAngleRpm(const Linear_T * p_linear, int16_t angle, int16_t anglePrev, bool isDirectionPositive)
+//{
+//	uint16_t deltaAngle = CalcLinearSpeedDeltaAngle(angle, anglePrev, isDirectionPositive);
+//	return Linear_Function(p_linear, deltaAngle);
+//}
+
+static inline int32_t Linear_Speed_CalcAngleRpm(const Linear_T * p_linear, uint16_t angle)
 {
-	uint16_t deltaAngle;
-
-	if(isDirectionPositive)
-	{
-		if(angle < anglePrev) /* overflow on increment */
-		{
-			deltaAngle = (uint32_t)65535U - anglePrev + angle + 1U;
-		}
-		else /* normal case */
-		{
-			deltaAngle = angle - anglePrev;
-		}
-	}
-	else
-	{
-		if(angle > anglePrev) /* overflow on decrement */
-		{
-			deltaAngle = (uint32_t)65535U + anglePrev - angle + 1U;
-		}
-		else /* normal case */
-		{
-			deltaAngle = anglePrev - angle;
-		}
-	}
-
-	return deltaAngle;
+	return Linear_Function(p_linear, angle);
 }
-
-static inline int32_t Linear_Speed_CalcAngleRpm(const Linear_T * p_linear, int16_t angle, int16_t anglePrev, bool isDirectionPositive)
-{
-	uint16_t deltaAngle = CalcLinearSpeedDeltaAngle(angle, anglePrev, isDirectionPositive);
-	return Linear_Function(p_linear, deltaAngle);
-}
-
 
 static inline int32_t Linear_Speed_CalcRpmAngle(const Linear_T * p_linear, uint32_t rpm)
 {
 	return Linear_InvFunction(p_linear, rpm);
 }
 
-static inline int32_t Linear_Speed_CalcAngleRpmFrac16(const Linear_T * p_linear, int16_t angle, int16_t anglePrev, bool isDirectionPositive)
+static inline int32_t Linear_Speed_CalcAngleRpmFrac16(const Linear_T * p_linear, int16_t angle)
 {
-	uint16_t deltaAngle = CalcLinearSpeedDeltaAngle(angle, anglePrev, isDirectionPositive);
-	return Linear_Function_Fraction16(p_linear, deltaAngle);
+	return Linear_Function_Fraction16(p_linear, angle);
 }
 
 static inline int32_t Linear_Speed_CalcRpmFrac16Angle(const Linear_T * p_linear, uint32_t rpm)

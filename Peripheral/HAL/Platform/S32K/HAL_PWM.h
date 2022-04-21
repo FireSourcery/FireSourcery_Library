@@ -80,6 +80,7 @@ static inline void HAL_PWM_EnableInvertPolarity(HAL_PWM_T * p_hal, uint32_t chan
 {
 	p_hal->POL |= (1UL << channel);
 }
+
 static inline void HAL_PWM_DisableInvertPolarity(HAL_PWM_T * p_hal, uint32_t channel)
 {
 	p_hal->POL &= ~(1UL << channel);
@@ -130,7 +131,7 @@ static inline void HAL_PWM_InitModule(HAL_PWM_T * p_hal)
 	 */
 //	p_hal->SYNCONF 	= FTM_SYNCONF_SYNCMODE_MASK | FTM_SYNCONF_SWOC_MASK | FTM_SYNCONF_SWINVC_MASK | FTM_SYNCONF_SWOM_MASK | FTM_SYNCONF_SWWRBUF_MASK | FTM_SYNCONF_INVC_MASK | FTM_SYNCONF_SWSOC_MASK;// | FTM_SYNCONF_SWRSTCNT_MASK;
 	p_hal->SYNCONF 	= FTM_SYNCONF_SYNCMODE_MASK | FTM_SYNCONF_SWWRBUF_MASK;
-	p_hal->COMBINE 	= FTM_COMBINE_SYNCEN2_MASK | FTM_COMBINE_SYNCEN3_MASK; //move to channel or set all sync en
+	p_hal->COMBINE 	= FTM_COMBINE_SYNCEN0_MASK | FTM_COMBINE_SYNCEN1_MASK | FTM_COMBINE_SYNCEN2_MASK | FTM_COMBINE_SYNCEN3_MASK;	/* All channel sync set to enable */
 	p_hal->PWMLOAD 	= FTM_PWMLOAD_LDOK_MASK;
 	p_hal->SC 		= FTM_SC_CLKS(0x01U) | FTM_SC_CPWMS_MASK | FTM_SC_TOIE_MASK; //| FTM_SC_PWMEN5_MASK | FTM_SC_PWMEN6_MASK | FTM_SC_PWMEN7_MASK;
 }

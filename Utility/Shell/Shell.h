@@ -36,9 +36,8 @@
 
 typedef enum
 {
-	SHELL_STATUS_OK,
-
-//	SHELL_STATUS_TERMINAL_PARSER_FAIL,
+	SHELL_STATUS_SUCCESS,
+	SHELL_STATUS_CMDLINE_INVALID,
 	SHELL_STATUS_CMD_ACCEPTED,
 	SHELL_STATUS_CMD_INVALID,
 	SHELL_STATUS_CMD_INVALID_ARGS,
@@ -46,7 +45,6 @@ typedef enum
 	SHELL_STATUS_CMD_EXCEPTION,
 	SHELL_STATUS_CMD_PROCESSING,
 	SHELL_STATUS_CMD_COMPLETE,
-	//	SHELL_STATUS_SUCCESS,
 }
 Shell_Status_T;
 
@@ -54,8 +52,6 @@ typedef enum
 {
 	SHELL_STATE_PROMPT,
 	SHELL_STATE_WAIT_INPUT,
-//	SHELL_STATE_PARSE_INPUT,
-//	SHELL_STATE_SEARCH_CMD,
 	SHELL_STATE_PROCESS_CMD,
 	SHELL_STATE_PROCESS_CMD_LOOP,
 	SHELL_STATE_INACTIVE,
@@ -70,26 +66,24 @@ Shell_State_T;
 
 typedef struct __attribute__((aligned (4U)))
 {
-	Serial_T * p_Xcvr;
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+	uint8_t XcvrId;
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+	Serial_T * p_Serial;
+#endif
 	uint32_t BaudRate;
 	bool IsEnable;
-	//	bool PrintReturnCode;
+	bool EnablePrintStatus;
 }
 Shell_Params_T;
 
 typedef const struct
 {
-	//Shell Array Table Mode -Set up Shell to use Array tables defined by the user
-	const Cmd_T * P_CMD_TABLE;
-	uint8_t CMD_COUNT;
-	void * P_CMD_CONTEXT;
-
-	const Cmd_Status_T * P_CMD_STATUS_TABLE;
-	uint8_t CMD_STATUS_COUNT;
-
-	volatile const uint32_t * P_TIMER;
-	uint32_t TIMER_FREQ;
-
+	const Cmd_T * const P_CMD_TABLE;	/* Cmds table defined by the user */
+	const uint8_t CMD_COUNT;
+	void * const P_CMD_CONTEXT;
+	volatile const uint32_t * const P_TIMER;
+	const uint32_t TIMER_FREQ;
 	const Shell_Params_T * const P_PARAMS;
 }
 Shell_Config_T;
@@ -100,27 +94,34 @@ typedef struct
 	Shell_Params_T Params;
 	Terminal_T Terminal;
 	Shell_State_T State;
-	Cmd_T * p_Cmd; /*!< Cmd  in process preserve across state change */
-	int CmdReturnCode;
+	Cmd_T * p_Cmd; 			/*!< Cmd  in process preserve across state change */
+	Cmd_Status_T CmdReturnCode;
 	uint32_t LoopModeTimeRef;
 }
 Shell_T;
 
-#define SHELL_CONFIG(p_CmdTable, CmdCount, p_Context, p_CmdStatusTable, CmdStatusCount, p_Timer, TimerFreq, p_Params)	\
+#if defined(CONFIG_SHELL_XCVR_ENABLE)
+	#define SHELL_CONFIG_XCVR(p_XcvrTable, TableLength) .Xcvr = XCVR_CONFIG(p_XcvrTable, TableLength)
+#else
+	#define SHELL_CONFIG_XCVR(p_XcvrTable, TableLength)
+#endif
+
+#define SHELL_CONFIG(p_CmdTable, CmdCount, p_Context, p_Timer, TimerFreq, p_Params, p_XcvrTable, TableLength)	\
 {															\
 	.CONFIG = 												\
 	{														\
 		.P_CMD_TABLE 			= p_CmdTable,				\
 		.CMD_COUNT 				= CmdCount,					\
 		.P_CMD_CONTEXT 			= p_Context,				\
-		.P_CMD_STATUS_TABLE 	= p_CmdStatusTable,			\
-		.CMD_STATUS_COUNT 		= CmdStatusCount,			\
 		.P_TIMER 				= p_Timer,					\
 		.TIMER_FREQ 			= TimerFreq,				\
 		.P_PARAMS				= p_Params					\
-	}														\
+	},														\
+	.Terminal =												\
+	{														\
+		SHELL_CONFIG_XCVR(p_XcvrTable, TableLength)	 		\
+	},														\
 }
-
 
 extern Shell_Status_T Shell_Proc(Shell_T * p_shell);
 extern void Shell_Init(Shell_T * p_shell);

@@ -31,8 +31,6 @@
 #include "SinCos.h"
 #include "Config.h"
 
-//#include <stdbool.h>
-//#include <stdint.h>
 #include <string.h>
 
 void SinCos_Init(SinCos_T * p_sincos)
@@ -40,44 +38,25 @@ void SinCos_Init(SinCos_T * p_sincos)
 	if (p_sincos->CONFIG.P_PARAMS != 0U)
 	{
 		memcpy(&p_sincos->Params, p_sincos->CONFIG.P_PARAMS, sizeof(SinCos_Params_T));
-//		Linear_ADC_Init(&p_sincos->UnitSin, p_sincos->Params.SinZero_ADCU, p_sincos->Params.SinMax_ADCU, p_sincos->Params.SinMax_MilliV);
-//		Linear_ADC_Init(&p_sincos->UnitCos, p_sincos->Params.CosZero_ADCU, p_sincos->Params.CosMax_ADCU, p_sincos->Params.CosMax_MilliV);
-		Linear_ADC_Init(&p_sincos->UnitConversion, p_sincos->Params.Zero_ADCU, p_sincos->Params.Max_ADCU, p_sincos->Params.Max_MilliV);
+		Linear_ADC_Init(&p_sincos->UnitsAngle, p_sincos->Params.Zero_ADCU, p_sincos->Params.Max_ADCU, p_sincos->Params.Max_MilliV);
 	}
 	else
 	{
-		Linear_ADC_Init(&p_sincos->UnitConversion, 2048U, 4095U, 5000U);
+		Linear_ADC_Init(&p_sincos->UnitsAngle, 2048U, 4095U, 5000U);
 	}
 }
-
-//void SinCos_CalibrateSin(SinCos_T * p_sincos, uint16_t zero_ADCU, uint16_t max_ADCU, uint16_t max_MilliV)
-//{
-//	p_sincos->Params.SinZero_ADCU = zero_ADCU;
-//	p_sincos->Params.SinMax_ADCU = max_ADCU;
-//	p_sincos->Params.SinMax_MilliV = max_MilliV;
-//	Linear_ADC_Init(&p_sincos->UnitSin, p_sincos->Params.SinZero_ADCU, p_sincos->Params.SinMax_ADCU, p_sincos->Params.SinMax_MilliV);
-//}
-//
-//
-//void SinCos_CalibrateCos(SinCos_T * p_sincos, uint16_t zero_ADCU, uint16_t max_ADCU, uint16_t max_MilliV)
-//{
-//	p_sincos->Params.CosZero_ADCU = zero_ADCU;
-//	p_sincos->Params.CosMax_ADCU = max_ADCU;
-//	p_sincos->Params.CosMax_MilliV = max_MilliV;
-//	Linear_ADC_Init(&p_sincos->UnitCos, p_sincos->Params.CosZero_ADCU, p_sincos->Params.CosMax_ADCU, p_sincos->Params.CosMax_MilliV);
-//}
 
 void SinCos_SetParamsAdc(SinCos_T * p_sincos, uint16_t zero_ADCU, uint16_t max_ADCU, uint16_t max_MilliV)
 {
 	p_sincos->Params.Zero_ADCU = zero_ADCU;
 	p_sincos->Params.Max_ADCU = max_ADCU;
 	p_sincos->Params.Max_MilliV = max_MilliV;
-	Linear_ADC_Init(&p_sincos->UnitConversion, zero_ADCU, max_ADCU, max_MilliV);
+	Linear_ADC_Init(&p_sincos->UnitsAngle, zero_ADCU, max_ADCU, max_MilliV);
 }
 
 void SinCos_SetParamsAdc_MilliV(SinCos_T * p_sincos, uint16_t min_MilliV, uint16_t max_MilliV)
 {
-	SinCos_SetParams(p_sincos, (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / ADC_VREF_MILLIV, (uint32_t)max_MilliV * ADC_MAX / ADC_VREF_MILLIV, max_MilliV);
+	SinCos_SetParamsAdc(p_sincos, (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / ADC_VREF_MILLIV, (uint32_t)max_MilliV * ADC_MAX / ADC_VREF_MILLIV, max_MilliV);
 }
 
 /*
@@ -87,4 +66,23 @@ void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_
 {
 	p_sincos->Params.AngleOffet = 0;
 	p_sincos->Params.AngleOffet = SinCos_CalcAngle(p_sincos, sin_ADCU, cos_ADCU);
+}
+
+/*
+ * Call after angle offset
+ */
+void SinCos_CalibrateCcwPositive(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
+{
+	p_sincos->Params.IsBPositive = (SinCos_CalcAngle(p_sincos, sin_ADCU, cos_ADCU) > 0U) ? true : false;
+}
+
+
+void SinCos_CalibrateA(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
+{
+	SinCos_CalibrateAngleOffset(p_sincos, sin_ADCU, cos_ADCU);
+}
+
+void SinCos_CalibrateB(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
+{
+	SinCos_CalibrateCcwPositive(p_sincos, sin_ADCU, cos_ADCU);
 }

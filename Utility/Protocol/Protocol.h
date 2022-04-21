@@ -29,16 +29,19 @@
 */
 /******************************************************************************/
 #ifndef PROTOCOL_H
+
 #define PROTOCOL_H
 
-#include "Datagram.h"
+//#include "Datagram.h"
 
-#include "Peripheral/Serial/Serial.h"
-//#include "Peripheral/Flash/Flash.h"
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+	#include "Peripheral/Xcvr/Xcvr.h"
+#else
+	#include "Peripheral/Serial/Serial.h"
+#endif
 
 #include <stdint.h>
 #include <stdbool.h>
-
 
 /*
 	Protocol_Req_T
@@ -66,23 +69,8 @@ typedef enum
 }
 Protocol_ReqCode_T;
 
-typedef struct
-{
-	void * p_SubState;
-	void * p_AppInterface;
-	uint8_t * p_TxPacket;
-	size_t * p_TxSize;
-	const  uint8_t * p_RxPacket;
-	size_t RxSize;
-	uint32_t Option; //stop, datagram address
-}
-Protocol_ReqExtArgs_T;
-
-typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(Protocol_ReqExtArgs_T args);
-//typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(void * p_subState,  void * p_appInterface,  uint8_t * p_txPacket,  size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
-//typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(const Protocol_SubConfig_T * args, size_t * p_txSize, size_t rxSize);
-
-
+typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(void * p_subState,  void * p_appInterface,  uint8_t * p_txPacket,  size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
+//typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(const Protocol_Interface_T * args, size_t * p_txSize, size_t rxSize);
 //typedef Protocol_ReqCode_T (*Protocol_ReqDatagram_T)	(Datagram_T * p_datagram, uint8_t * p_txPacket,  size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
 
 
@@ -150,15 +138,6 @@ typedef enum
 //	PROTOCOL_RX_CODE_REQ_ID_DATA, //continue req
 }
 Protocol_RxCode_T;
-
-//typedef struct
-//{
-//	 void * p_ProtocolState;
-//	protocolg_reqid_t * p_ReqId;
-//	const uint8_t * p_RxPacket;
-//	size_t RxCount;
-//}
-//Protocol_ParseRxArgs_T;
 
 typedef enum
 {
@@ -231,23 +210,26 @@ Protocol_ReqState_T;
 
 typedef struct __attribute__((aligned (4U)))
 {
-	void * p_Xcvr; //set const?
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+	uint8_t XcvrId;
+#else
+	Serial_T * p_Serial;
+#endif
 	const Protocol_Specs_T * p_Specs;
-	bool IsEnable;
+	bool IsEnable; 	/* enable on start up */
 }
 Protocol_Params_T;
 
-typedef const struct
-{
-	void * const P_APP_CONTEXT;
-	void * const P_SUBSTATE_BUFFER;
-	uint8_t * const P_TX_PACKET_BUFFER;
-	size_t * const P_TX_LENGTH;
-	const uint8_t * const P_RX_PACKET_BUFFER;
-	const size_t * const P_RX_INDEX;
-}
-Protocol_Interface_T;
-
+//typedef const struct
+//{
+//	void * const P_APP_CONTEXT;
+//	void * const P_SUBSTATE_BUFFER;
+//	uint8_t * const P_TX_PACKET_BUFFER;
+//	size_t * const P_TX_LENGTH;
+//	const uint8_t * const P_RX_PACKET_BUFFER;
+//	const size_t * const P_RX_INDEX;
+//}
+//Protocol_Interface_T;
 
 /*
 
@@ -256,16 +238,26 @@ typedef const struct
 {
 	uint8_t * const P_RX_PACKET_BUFFER;
 	uint8_t * const P_TX_PACKET_BUFFER;
-	void * const P_APP_CONTEXT;			// user app context
-	void * const P_SUBSTATE_BUFFER; 	// child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context from specs
+	void * const P_APP_CONTEXT;				// user app context
+	void * const P_SUBSTATE_BUFFER; 		// child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context from specs
 
-	const uint8_t PACKET_BUFFER_LENGTH; // must be greater than RX_LENGTH_MAX
+	const uint8_t PACKET_BUFFER_LENGTH; 	// must be greater than RX_LENGTH_MAX
 	const volatile uint32_t * const P_TIMER;
+
+	const Protocol_Specs_T * const * const P_SPECS_TABLE; //use to bound specs selection, set to 1 if fixed to 1
+	const uint8_t SPECS_COUNT;
+
 	const Protocol_Params_T * const P_PARAMS; //address of params in nvm
 }
 Protocol_Config_T;
 
-#define PROTOCOL_CONFIG(p_Timer, PacketLengthMax, p_RxBuffer, p_TxBuffer, p_AppContext, p_SubstateBuffer, p_Params)	\
+#if defined(CONFIG_PROTOCOL_XCVR_ENABLE)
+	#define PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength) .Xcvr = XCVR_CONFIG(p_XcvrTable, TableLength)
+#else
+	#define PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength)
+#endif
+
+#define PROTOCOL_CONFIG(p_RxBuffer, p_TxBuffer, PacketLengthMax, p_AppContext, p_SubstateBuffer, p_Timer, p_Params, p_XcvrTable, TableLength)	\
 {																\
 	.CONFIG = 													\
 	{															\
@@ -275,15 +267,20 @@ Protocol_Config_T;
 		.P_TX_PACKET_BUFFER 	= p_TxBuffer,					\
 		.P_APP_CONTEXT 			= p_AppContext,					\
 		.P_SUBSTATE_BUFFER 		= p_SubstateBuffer,				\
-		.P_PARAMS 				= p_Params						\
-	}															\
+		.P_PARAMS 				= p_Params,						\
+	},															\
+	PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength)	 			\
 }
 
 typedef struct Protocol_Tag
 {
-	const Protocol_Config_T CONFIG;	//compile time consts config
-	Protocol_Params_T Params;	//run time config
+	const Protocol_Config_T CONFIG;		//compile time consts config
+	Protocol_Params_T Params;			//run time config
 //	Datagram_T Datagram;
+
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+	Xcvr_T Xcvr;
+#endif
 
 	//proc variables
 	size_t RxIndex;
@@ -304,9 +301,10 @@ typedef struct Protocol_Tag
 Protocol_T;
 
 extern void Protocol_Init(Protocol_T * p_protocol);
-extern void Protocol_SetSpecs		(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs);
-extern void Protocol_SetXcvr		(Protocol_T * p_protocol, void * p_transceiver);
-extern void Protocol_Slave_Proc		(Protocol_T * p_protocol);
+extern void Protocol_SetSpecs(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs);
+extern void Protocol_SetXcvr(Protocol_T * p_protocol, void * p_transceiver);
+extern void Protocol_Slave_Proc(Protocol_T * p_protocol);
 extern bool Protocol_Enable(Protocol_T * p_protocol);
 extern void Protocol_Disable(Protocol_T * p_protocol);
+
 #endif

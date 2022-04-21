@@ -51,17 +51,17 @@
 
 typedef struct __attribute__((aligned (4U)))
 {
-	uint32_t CountsPerRevolution; /*!< Max for looping AngularD, CaptureDeltaT mode need 2nd TimerCounterMax */
-	uint32_t DistancePerCount;
+	uint16_t CountsPerRevolution; /*!< Max for looping AngularD, CaptureDeltaT mode need 2nd TimerCounterMax */
+	uint16_t DistancePerCount;
 
-	uint32_t RpmFrac16Ref; //for speed as fraction 16
-	uint32_t InterpolateAngleLimit;
+	uint16_t SpeedRef_Rpm; //for speed as fraction 16
+//	uint32_t InterpolateAngleLimit;
 
 	/* Quadrature Mode - Calibrate for encoder install direction */
 	bool IsQuadratureCaptureEnabled;
 	bool IsALeadBPositive; /* User runtime calibration, combine with compile time defined QUADRATURE_A_LEAD_B_INCREMENT */
 
-	uint32_t ExtendedTimerDeltaTStop;		//ExtendedTimer time read as deltaT stopped, default as 1s or .5rpm
+	uint16_t ExtendedTimerDeltaTStop;		//ExtendedTimer time read as deltaT stopped, default as 1s or .5rpm
 
 	/* Motor Hall Mode */
 	uint8_t MotorPolePairs; /*! Motor sub type, Convert between electrical speed and mechanical speed */
@@ -160,6 +160,9 @@ typedef struct
 													e.g. UnitAngularSpeed == 160,000 { DEGREES_BITS = 16, UnitT_Freq = 20000, CountsPerRevolution = 8912 } */
 	uint32_t UnitInterpolateAngle; 			/*!< [UnitT_Freq << DEGREES_BITS / POLLING_FREQ / CountsPerRevolution] */
 //	uint32_t UnitInterpolateD_Factor;		/*!< [UnitD * UnitT_Freq] => D = index * DeltaD * UnitInterpolateD_Factor / POLLING_FREQ */
+
+	uint32_t UnitRefSpeed;
+
 
 	/* Motor Encoder */
 //    uint32_t UnitEletricalAngle_Factor;
@@ -579,13 +582,6 @@ static inline uint32_t CalcEncoderRotationalSpeed_RPS(Encoder_T * p_encoder, uin
 	return speed;
 }
 
-/*
- * direct to user max rpm
- */
-//static inline uint32_t CalcEncoderRotationalSpeed_RpmFrac16(Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
-//{
-////	return
-//}
 
 
 
@@ -694,19 +690,15 @@ static inline uint32_t Encoder_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
 
 
 /*
- * Capture all speed
+ * direct to user max rpm
  */
-//static inline void Encoder_CaptureSpeed(Encoder_T * p_encoder)
+//static inline uint32_t CalcEncoderRefSpeed(Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
 //{
-//	p_encoder->Speed_RPM =
-//
-//	//compiler optimize seqential calls?
-//	p_encoder->SpeedAngular_DegS 	= Encoder_GetAngularSpeed( p_encoder);
-//	p_encoder->SpeedAngular_RPM 	= Encoder_GetRotationalSpeed_RPM(p_encoder);
-//
-//	p_encoder->SpeedRatio_Frac16 	= ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_encoder->Params.SpeedRefMax_RPM);
-//
-//	p_encoder->SpeedLinear =
+////	return
+//}
+//static inline uint32_t Encoder_GetFrac16Speed(Encoder_T * p_encoder)
+//{
+//	return deltaD_Ticks * p_encoder->UnitRefSpeed / deltaT_Ticks;
 //}
 
 /******************************************************************************/

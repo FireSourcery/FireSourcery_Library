@@ -30,11 +30,28 @@
 /******************************************************************************/
 #include "Protocol.h"
 
-#include "Peripheral/Serial/Serial.h"
-
-#include <stdint.h>
-#include <stdbool.h>
 #include <string.h>
+
+static inline bool IsXcvrSet(Protocol_T * p_protocol)
+{
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+	return (p_protocol->Xcvr.p_Xcvr != 0U); //todo sub Xcvr.p_Xcvr
+#elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
+	return (p_protocol->Params.p_Serial != 0U);
+#endif
+}
+
+static inline void ConfigSpecsBaudRate(Protocol_T * p_protocol)
+{
+	if (p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT != 0U)
+	{
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+		Xcvr_ConfigBaudRate(p_protocol->Xcvr, p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT);
+#elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
+		Serial_ConfigBaudRate(p_protocol->Params.p_Serial, p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT);
+#endif
+	}
+}
 
 void Protocol_Init(Protocol_T * p_protocol)
 {
@@ -43,19 +60,18 @@ void Protocol_Init(Protocol_T * p_protocol)
 		memcpy(&p_protocol->Params, p_protocol->CONFIG.P_PARAMS, sizeof(Protocol_Params_T));
 	}
 
-	if (p_protocol->Params.p_Specs != 0U)
-	{
-		Protocol_SetSpecs(p_protocol, p_protocol->Params.p_Specs);
-	}
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+	Xcvr_Init(p_protocol->Xcvr, p_protocol->Params.XcvrId);
+#endif
 
-	if (p_protocol->Params.p_Xcvr != 0U)
+	if(IsXcvrSet(p_protocol) && (p_protocol->Params.p_Specs != 0U) && (p_protocol->Params.IsEnable == true))
 	{
-		Protocol_SetXcvr(p_protocol, p_protocol->Params.p_Xcvr);
+		ConfigSpecsBaudRate(p_protocol);
+		Protocol_Enable(p_protocol);
 	}
-
-	if((p_protocol->Params.p_Xcvr != 0U) && (p_protocol->Params.p_Specs != 0U))
+	else
 	{
-		(p_protocol->Params.IsEnable == true) ? Protocol_Enable(p_protocol) : Protocol_Disable(p_protocol);
+		Protocol_Disable(p_protocol);
 	}
 
 	p_protocol->RxIndex 	= 0U;
@@ -63,27 +79,36 @@ void Protocol_Init(Protocol_T * p_protocol)
 	p_protocol->p_ReqActive = 0U;
 }
 
-void Protocol_SetSpecs(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs)
+void Protocol_ConfigSpecsBaudRate(Protocol_T * p_protocol)
 {
-	if (p_specs->RX_LENGTH_MAX < p_protocol->CONFIG.PACKET_BUFFER_LENGTH)
+	if(IsXcvrSet(p_protocol) && (p_protocol->Params.p_Specs != 0U))
+	{
+		ConfigSpecsBaudRate(p_protocol);
+	}
+}
+
+void Protocol_SetSpecs(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs) //validate its on the list
+{
+	if(p_specs->RX_LENGTH_MAX < p_protocol->CONFIG.PACKET_BUFFER_LENGTH)
 	{
 		p_protocol->Params.p_Specs = p_specs;
-		if ((p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT != 0U) && (p_protocol->Params.p_Xcvr != 0U))
-		{
-			Serial_ConfigBaudRate(p_protocol->Params.p_Xcvr, p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT);
-		}
+//		ConfigSpecsBaudRate(p_protocol);
 	}
 }
 
 void Protocol_SetXcvr(Protocol_T * p_protocol, void * p_transceiver)
 {
-	//need xcvr to validate
-	p_protocol->Params.p_Xcvr = p_transceiver;
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+
+#elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
+	// cannot validate pointer without xcvr module
+	p_protocol->Params.p_Serial = p_transceiver;
+#endif
 }
 
 bool Protocol_Enable(Protocol_T * p_protocol)
 {
-	bool isEnable = (p_protocol->Params.p_Xcvr != 0U && p_protocol->Params.p_Specs != 0U);
+	bool isEnable = (IsXcvrSet(p_protocol) && p_protocol->Params.p_Specs != 0U);
 
 	if (isEnable == true)
 	{
@@ -99,34 +124,28 @@ void Protocol_Disable(Protocol_T * p_protocol)
 {
 	p_protocol->RxState 	= PROTOCOL_RX_STATE_INACTIVE;
 	p_protocol->ReqState 	= PROTOCOL_REQ_STATE_INACTIVE;
-
 	p_protocol->RxIndex 	= 0U;
 	p_protocol->TxLength 	= 0U;
 	p_protocol->p_ReqActive = 0U;
 }
 
-static inline bool PortRxByte(Protocol_T * p_protocol,   uint8_t * p_rxChar)
+static inline bool TxPacket(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length)
 {
-	return Serial_RecvChar(p_protocol->Params.p_Xcvr, p_rxChar);
-//		return Xcvr_RecvChar(p_protocol->p_Xcvr, p_rxChar);
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+	return (length > 0U) ? Xcvr_Tx(&p_protocol->Xcvr, p_txBuffer, length) : false;
+#else
+	return (length > 0U) ? Serial_Send(p_protocol->Params.p_Serial, p_txBuffer, length) : false;
+#endif
 }
 
-
-static inline bool PortTxPacket(Protocol_T * p_protocol, const uint8_t * p_string, uint16_t length)
+static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, uint8_t length)
 {
-	return (length > 0U) ? Serial_SendString(p_protocol->Params.p_Xcvr, p_string, length) : false;
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+	return Xcvr_Rx(&p_protocol->Xcvr, p_rxBuffer, length);
+#else
+	return Serial_Recv(p_protocol->Params.p_Serial, p_rxBuffer, length);
+#endif
 }
-
-
-//static inline bool PortTxPacket(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length)
-//{
-//	return (length > 0U) ? Xcvr_Tx(p_protocol->Params.p_Xcvr, p_txBuffer, length) : false;
-//}
-//
-//static inline uint32_t PortRxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, uint8_t length)
-//{
-//	return Xcvr_Rx(p_protocol->Params.p_Xcvr, p_rxBuffer, length);
-//}
 
 
 //static inline void PortFlushBuffers(Protocol_T * p_protocol)
@@ -135,6 +154,7 @@ static inline bool PortTxPacket(Protocol_T * p_protocol, const uint8_t * p_strin
 //}
 
 /*
+ * Parse for length remaining and ReqCode
  * Receive into buffer and check for completion
  * Packet must be 2 bytes minimum
  */
@@ -181,7 +201,7 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 //	}
 
 
-	while (PortRxByte(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex]) == true)
+	while (RxPacket(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], 1U) == true)
 	{
 		p_protocol->RxIndex++;
 
@@ -212,7 +232,7 @@ static inline void ProcTxSync(Protocol_T * p_protocol, Protocol_TxSyncId_T txId)
 	if (p_protocol->Params.p_Specs->BUILD_TX_SYNC != 0U)
 	{
 		p_protocol->Params.p_Specs->BUILD_TX_SYNC(p_protocol->CONFIG.P_SUBSTATE_BUFFER, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, txId);
-		PortTxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+		TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 	}
 }
 
@@ -286,8 +306,7 @@ static inline void ProcRxState(Protocol_T * p_protocol)
  	switch (p_protocol->RxState)
 	{
 		case PROTOCOL_RX_STATE_WAIT_BYTE_1: /* nonblocking wait state, no timer */
-//			PortRx(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U], 1U);
-			if (PortRxByte(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U]) == true)
+			if (RxPacket(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U], 1U) == true)
 			{
 				/*
 				 * Use starting byte even if data is unencoded. first char can still be handled in separate state.
@@ -436,7 +455,7 @@ static inline bool ProcReqWaitRxSyncCommon(Protocol_T * p_protocol)
 		if (p_protocol->TxNackCount < p_protocol->p_ReqActive->P_SYNC->WAIT_RX_NACK_REPEAT)
 		{
 			p_protocol->TxNackCount++; //RxNackCount
-			PortTxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+			TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 			p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER);
 			isAck = false;
 		}
@@ -459,17 +478,6 @@ static inline bool ProcReqWaitRxSyncCommon(Protocol_T * p_protocol)
  */
 static inline void ProcReqState(Protocol_T * p_protocol)
 {
-	//use interface args for easy extension
-	const Protocol_ReqExtArgs_T args =
-	{
-		.p_SubState 		= p_protocol->CONFIG.P_SUBSTATE_BUFFER,
-		.p_AppInterface 	= p_protocol->CONFIG.P_APP_CONTEXT,
-		.p_TxPacket 		= p_protocol->CONFIG.P_TX_PACKET_BUFFER,
-		.p_TxSize 			= &p_protocol->TxLength,
-		.p_RxPacket 		= p_protocol->CONFIG.P_RX_PACKET_BUFFER,
-		.RxSize 			= p_protocol->RxIndex,
-		.Option 			= 0u,
-	};
 
 	if((p_protocol->ReqState != PROTOCOL_REQ_STATE_INACTIVE) && (p_protocol->ReqState != PROTOCOL_REQ_STATE_WAIT_RX_REQ))
 	{
@@ -500,7 +508,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 					if (p_protocol->p_ReqActive->FAST != 0U) //does not invoke state machine, no loop / nonblocking wait.
 					{
 						p_protocol->p_ReqActive->FAST(p_protocol->CONFIG.P_APP_CONTEXT, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex);
-						PortTxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+						TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 					}
 
 					if ((p_protocol->p_ReqActive->P_EXT != 0U) && (p_protocol->p_ReqActive->P_EXT->PROCESS != 0U))
@@ -566,13 +574,21 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 			break;
 
 		case PROTOCOL_REQ_STATE_WAIT_PROCESS:
-
 //			if(p_protocol->RxCode != PROTOCOL_RX_CODE_WAIT_PACKET)
 //			{
 //				OutOfSequencePacket++
 //			}
-//			p_protocol->TxLength = 0U;//in case user doesd not set 0
-			p_protocol->ReqCode = p_protocol->p_ReqActive->P_EXT->PROCESS(args);
+			p_protocol->TxLength = 0U; //in case user does not set 0
+
+			p_protocol->ReqCode = p_protocol->p_ReqActive->P_EXT->PROCESS
+				(
+					p_protocol->CONFIG.P_SUBSTATE_BUFFER,
+					p_protocol->CONFIG.P_APP_CONTEXT,
+					p_protocol->CONFIG.P_TX_PACKET_BUFFER,
+					&p_protocol->TxLength,
+					p_protocol->CONFIG.P_RX_PACKET_BUFFER,
+					p_protocol->RxIndex
+				);
 
 			switch(p_protocol->ReqCode)
 			{
@@ -612,7 +628,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 					 * User will will have to manage more states, but will not have to explicitly set txlength to zero.
 					 * must save txlength in case of retransmit
 					 */
-					PortTxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+					TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 					break;
 
 				case PROTOCOL_REQ_CODE_TX_ACK:

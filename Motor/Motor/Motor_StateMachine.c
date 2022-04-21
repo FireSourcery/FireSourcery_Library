@@ -148,7 +148,6 @@ static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor)
 	return p_nextState;
 }
 
-
 static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
 	[MSM_INPUT_FAULT]			= (StateMachine_Transition_T)TransitionFault,
@@ -163,9 +162,8 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABL
  */
 static void Stop_Entry(Motor_T * p_motor)
 {
-//	Motor_EnterStop(p_motor);
-	Phase_Float(&p_motor->Phase);
 //	p_motor->ControlTimerBase = 0U; //ok to reset timer
+	Phase_Float(&p_motor->Phase);
 	Timer_StartPeriod(&p_motor->ControlTimer, 2000U); //100ms
 
 	p_motor->ControlModeFlags.Update = 1U; /* This way next cmd call will set to run state, share state input */
@@ -187,22 +185,15 @@ static void Stop_Entry(Motor_T * p_motor)
 
 static void Stop_Proc(Motor_T * p_motor)
 {
-	//poll speedfeedback or use bemf
-//	if(p_motor->Speed_RPM > 0U)
-//	{
-//		StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
-//	}
-//	else
+	if(p_motor->Speed_RPM > 0U)  	//poll speedfeedback or use bemf
 	{
-//		Motor_ProcStop(p_motor);
-		if (Timer_Poll(&p_motor->ControlTimer) == true)
+		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
+	}
+	else
+	{
+		if(Timer_Poll(&p_motor->ControlTimer) == true)
 		{
-			AnalogN_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
-	//		AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VPOS);
-			AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
-			AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
-			AnalogN_EnqueueConversion_Group(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
-			AnalogN_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ADCS_ACTIVE_PWM_THREAD);
+			Motor_FOC_ProcAngleObserve(p_motor);
 		}
 	}
 }
@@ -583,15 +574,15 @@ static const StateMachine_Transition_T CALIBRATION_TRANSITION_TABLE[MSM_TRANSITI
 static void Calibration_Entry(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase = 0U;
-	Phase_Ground(&p_motor->Phase);	//activates abc
 	p_motor->CalibrationStateStep = 0U;
+	Phase_Ground(&p_motor->Phase);	//activates abc
 
 	switch (p_motor->CalibrationState)
 	{
 		case MOTOR_CALIBRATION_STATE_ADC:		Motor_Calibrate_StartAdc(p_motor);		break;
 		case MOTOR_CALIBRATION_STATE_HALL:		Motor_Calibrate_StartHall(p_motor);		break;
 		case MOTOR_CALIBRATION_STATE_ENCODER:	Motor_Calibrate_StartEncoder(p_motor);	break;
-		case MOTOR_CALIBRATION_STATE_SIN_COS:	Motor_Calibrate_StartSinCos(p_motor);			break;
+		case MOTOR_CALIBRATION_STATE_SIN_COS:	Motor_Calibrate_StartSinCos(p_motor);	break;
 		default: break;
 	}
 }
@@ -602,10 +593,10 @@ static void Calibration_Proc(Motor_T * p_motor)
 
 	switch (p_motor->CalibrationState)
 	{
-		case MOTOR_CALIBRATION_STATE_ADC:		isComplete = Motor_Calibrate_Adc(p_motor); 		break;
+		case MOTOR_CALIBRATION_STATE_ADC:		isComplete = Motor_Calibrate_Adc(p_motor); 			break;
 		case MOTOR_CALIBRATION_STATE_HALL:		isComplete = Motor_Calibrate_Hall(p_motor); 		break;
-		case MOTOR_CALIBRATION_STATE_ENCODER:	isComplete = Motor_Calibrate_Encoder(p_motor); 	break;
-		case MOTOR_CALIBRATION_STATE_SIN_COS:	isComplete = Motor_Calibrate_ProcSinCos(p_motor);		break;
+		case MOTOR_CALIBRATION_STATE_ENCODER:	isComplete = Motor_Calibrate_Encoder(p_motor); 		break;
+		case MOTOR_CALIBRATION_STATE_SIN_COS:	isComplete = Motor_Calibrate_ProcSinCos(p_motor);	break;
 		default: break;
 	}
 

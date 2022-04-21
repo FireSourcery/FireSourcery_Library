@@ -74,24 +74,31 @@ typedef union
 }
 MotorAnalog_Results_T;
 
-typedef union
+typedef struct
 {
-	struct
+	union
 	{
-		const AnalogN_Conversion_T CONVERSION_VPOS;
-		const AnalogN_Conversion_T CONVERSION_VA;
-		const AnalogN_Conversion_T CONVERSION_VB;
-		const AnalogN_Conversion_T CONVERSION_VC;
-		const AnalogN_Conversion_T CONVERSION_IA;
-		const AnalogN_Conversion_T CONVERSION_IB;
-		const AnalogN_Conversion_T CONVERSION_IC;
-		const AnalogN_Conversion_T CONVERSION_HEAT;
-		const AnalogN_Conversion_T CONVERSION_SIN;
-		const AnalogN_Conversion_T CONVERSION_COS;
-//		const AnalogN_Conversion_T CONVERSION_OPTION_PWM_ON;
-//		const AnalogN_Conversion_T CONVERSION_OPTION_RESTORE;
+		struct
+		{
+			const AnalogN_Conversion_T CONVERSION_VPOS;
+			const AnalogN_Conversion_T CONVERSION_VA;
+			const AnalogN_Conversion_T CONVERSION_VB;
+			const AnalogN_Conversion_T CONVERSION_VC;
+			const AnalogN_Conversion_T CONVERSION_IA;
+			const AnalogN_Conversion_T CONVERSION_IB;
+			const AnalogN_Conversion_T CONVERSION_IC;
+			const AnalogN_Conversion_T CONVERSION_HEAT;
+			const AnalogN_Conversion_T CONVERSION_SIN;
+			const AnalogN_Conversion_T CONVERSION_COS;
+		};
+		AnalogN_Conversion_T CONVERSIONS[MOTOR_ANALOG_CHANNEL_COUNT];
 	};
-	AnalogN_Conversion_T CONVERSIONS[MOTOR_ANALOG_CHANNEL_COUNT + 2U];
+
+	const AnalogN_AdcFlags_T ADCS_GROUP_V;
+	const AnalogN_AdcFlags_T ADCS_GROUP_I;
+
+	//		const AnalogN_Conversion_T CONVERSION_OPTION_PWM_ON;
+	//		const AnalogN_Conversion_T CONVERSION_OPTION_RESTORE;
 }
 MotorAnalog_Conversions_T;
 

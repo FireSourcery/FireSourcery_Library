@@ -142,11 +142,16 @@ void _Analog_WriteAdc(Analog_T * p_analog, const Analog_Conversion_T * p_convers
 //		}
 //	}
 
-	_Analog_WriteAdcOptions(p_analog, p_conversion);
+//	_Analog_WriteAdcOptions(p_analog, p_conversion);
+
+#ifndef CONFIG_ANALOG_ADC_HW_FIFO_ENABLE
+
 	/*
 	 * Activate and wait for return
 	 */
 	HAL_ADC_Activate(p_analog->CONFIG.P_HAL_ADC, p_conversion->PIN);
+#endif
+
 }
 
 
@@ -222,6 +227,8 @@ void Analog_DeactivateConversion(Analog_T * p_analog)
 }
 
 
+
+
 /*
 	cannot overwrite
  */
@@ -229,7 +236,7 @@ bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p
 {
 	bool isSuccess;
 
-	_Analog_EnterCritical(p_analog);  //must use global critical if disable adc interrupts aborts active conversion
+	_Analog_EnterCritical(p_analog);
 
 	if ((Queue_GetIsEmpty(&p_analog->ConversionQueue) == true)) //(_Analog_GetIsActive(p_analog) == false) &&
 	{
@@ -248,7 +255,7 @@ bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p
 	return isSuccess;
 }
 
-bool Analog_EnqueueConversionOptions(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+bool Analog_EnqueueOptions(Analog_T * p_analog, const Analog_Options_T * p_conversion)
 {
 	bool isSuccess;
 
@@ -271,56 +278,40 @@ bool Analog_EnqueueConversionOptions(Analog_T * p_analog, const Analog_Conversio
 }
 
 
-void Analog_PauseQueue(Analog_T * p_analog)
+/******************************************************************************/
+/*!
+	Group
+*/
+/******************************************************************************/
+void _Analog_Group_ResumeQueue(Analog_T * p_analog)
+{
+	if (_Analog_ReadIsActive(p_analog) == false) {_Analog_ProcQueue(p_analog);}
+}
+
+void Analog_Group_PauseQueue(Analog_T * p_analog)
 {
 	_Analog_EnterCritical(p_analog);
 }
 
-void Analog_ResumeQueue(Analog_T * p_analog)
+void Analog_Group_ResumeQueue(Analog_T * p_analog)
 {
+	_Analog_ResumeQueue(p_analog);
 	_Analog_ExitCritical(p_analog);
 }
 
 /*
- * Enqueue wthout active for group? remove uneven wait period between first complete and 2nd
+ * Enqueue without starting conversion of first item until queue resumes
+ * eliminated repeat empty check and uneven wait period between first complete and 2nd
  */
-bool Analog_EnqueueConversion_Group(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+bool Analog_Group_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
 {
-	bool isSuccess;
-
-	if ((Queue_GetIsEmpty(&p_analog->ConversionQueue) == true))
-	{
-		Queue_Enqueue(&p_analog->ConversionQueue, &p_conversion);
-		_Analog_WriteAdc(p_analog, p_conversion);
-		isSuccess = true;
-	}
-	else
-	{
-		isSuccess = Queue_Enqueue(&p_analog->ConversionQueue, &p_conversion);
-	}
-
-	return isSuccess;
+	return Queue_Enqueue(&p_analog->ConversionQueue, &p_conversion);
 }
 
-bool Analog_EnqueueConversionOptions_Group(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+bool Analog_Group_EnqueueOptions(Analog_T * p_analog, const Analog_Options_T * p_conversion)
 {
-	bool isSuccess;
-
-	if ((Queue_GetIsEmpty(&p_analog->ConversionQueue) == true))
-	{
-		_Analog_WriteAdcOptions(p_analog, p_conversion);
-		HAL_ADC_Deactivate(p_analog->CONFIG.P_HAL_ADC);
-		isSuccess = true;
-	}
-	else
-	{
-		isSuccess = Queue_Enqueue(&p_analog->ConversionQueue, &p_conversion);
-	}
-
-	return isSuccess;
+	return Queue_Enqueue(&p_analog->ConversionQueue, &p_conversion);
 }
-
-
 
 /*
 	can overwrite last item

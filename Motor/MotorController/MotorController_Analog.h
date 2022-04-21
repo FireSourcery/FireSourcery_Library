@@ -33,16 +33,19 @@
 
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 
-#define MOT_ANALOG_CONVERSIONS_CONFIG(VPosPin, p_VPosHost, VAccPin, p_VAccHost, VSensePin, p_VSenseHost, HeatPcbPin, p_HeatPcbHost, HeatMosTopPin, p_HeatMosTopHost, HeatMosBotPin, p_HeatMosBotHost, ThrottlePin, p_ThrottleHost, BrakePin, p_BrakeHost, p_Mot) \
-{																																																	\
-	.CONVERSION_VPOS 				=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_VPOS, 				0, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VPosPin, 		p_VPosHost), 		\
-	.CONVERSION_VACC 				=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_VACC, 				0, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VAccPin, 		p_VAccHost), 		\
-	.CONVERSION_VSENSE 				=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_VSENSE, 				0, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VSensePin, 		p_VSenseHost), 		\
-	.CONVERSION_HEAT_PCB 			=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_HEAT_PCB, 			0, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), HeatPcbPin, 		p_HeatPcbHost), 	\
-	.CONVERSION_HEAT_MOSFETS_TOP 	=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP, 	0, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), HeatMosTopPin, 	p_HeatMosTopHost), 	\
-	.CONVERSION_HEAT_MOSFETS_BOT 	=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT, 	0,	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), HeatMosBotPin, 	p_HeatMosBotHost), 	\
-	.CONVERSION_THROTTLE 			=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_THROTTLE, 			0, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), ThrottlePin, 	p_ThrottleHost), 	\
-	.CONVERSION_BRAKE 				=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_BRAKE, 				0, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), BrakePin, 		p_BrakeHost), 		\
+#define MOT_ANALOG_CONVERSIONS_CONFIG(VPosPin, VPosHost, VAccPin, VAccHost, VSensePin, VSenseHost, HeatPcbPin, HeatPcbHost, HeatMosTopPin, HeatMosTopHost, HeatMosBotPin, HeatMosBotHost, ThrottlePin, ThrottleHost, BrakePin, BrakeHost, p_Hosts, p_Mot) \
+{																																																					\
+	.CONVERSION_VPOS 				=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_VPOS, 				0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VPosPin, 		&(p_Hosts)[VPosHost]), 			\
+	.CONVERSION_VACC 				=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_VACC, 				0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VAccPin, 		&(p_Hosts)[VAccHost]), 			\
+	.CONVERSION_VSENSE 				=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_VSENSE, 				0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VSensePin, 		&(p_Hosts)[VSenseHost]), 		\
+	.CONVERSION_HEAT_PCB 			=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_HEAT_PCB, 			0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), HeatPcbPin, 		&(p_Hosts)[HeatPcbHost]), 		\
+	.CONVERSION_HEAT_MOSFETS_TOP 	=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP, 	0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), HeatMosTopPin, 	&(p_Hosts)[HeatMosTopHost]), 	\
+	.CONVERSION_HEAT_MOSFETS_BOT 	=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT, 	0U,		p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), HeatMosBotPin, 	&(p_Hosts)[HeatMosBotHost]), 	\
+	.CONVERSION_THROTTLE 			=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_THROTTLE, 			0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), ThrottlePin, 	&(p_Hosts)[ThrottleHost]), 		\
+	.CONVERSION_BRAKE 				=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_BRAKE, 				0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), BrakePin, 		&(p_Hosts)[BrakeHost]), 		\
+	.ADCS_GROUP_V 					= 	{ .Flags = ((1U << VPosHost) | (1U << VAccHost) | (1U << VSenseHost)),				},																						\
+	.ADCS_GROUP_HEAT 				= 	{ .Flags = ((1U << HeatPcbHost) | (1U << HeatMosTopHost) | (1U << HeatMosBotHost)),	},																						\
+	.ADCS_GROUP_USER 				= 	{ .Flags = ((1U << ThrottleHost) | (1U << BrakeHost)),								},																						\
 }
 
 #endif

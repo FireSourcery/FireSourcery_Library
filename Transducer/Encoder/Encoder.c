@@ -80,8 +80,6 @@ static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uin
 
 void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolution, uint32_t distancePerCount, uint32_t unitTFreq)
 {
-//	HAL_Encoder_Init(p_encoder->CONFIG.P_HAL_ENCODER);
-//	p_encoder->EncoderResolution = encoderCountsPerRevolution;
 	p_encoder->UnitT_Freq = unitTFreq;
 
 	p_encoder->UnitLinearD = distancePerCount;
@@ -103,6 +101,8 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolut
 	 * Angle = UnitAngle_Factor * DeltaD >> UnitAngle_Divisor
 	 *
 	 * uneven UnitD = unitAngle_DataBits/unitAngle_SensorResolution divide results in loss of precision
+	 *
+	 * UnitAngularD_ShiftDivisor == CONFIG_ENCODER_ANGLE_DEGREES_BITS
 	 */
 	p_encoder->UnitAngularD_Factor = 0xFFFFFFFFU / countsPerRevolution + 1U;
 
@@ -132,6 +132,12 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolut
 //	}
 
 	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitTFreq, p_encoder->CONFIG.POLLING_FREQ * countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
+
+//	p_encoder->UnitRefSpeed = p_encoder->UnitT_Freq * 65535U * 60 / p_encoder->Params.CountsPerRevolution / p_encoder->Params.SpeedRef_Rpm;
+//	p_encoder->UnitRefSpeed_ShiftDivisor = 0U;
+//	speed = (deltaD_Ticks * p_encoder->UnitT_Freq * 60) / (p_encoder->Params.CountsPerRevolution * deltaT_Ticks);
+//	Speed_Frac16 = (speed * 65535U / SpeedRefMax_RPM);
+
 
 	Encoder_Reset(p_encoder);
 }

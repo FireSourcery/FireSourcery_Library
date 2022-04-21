@@ -56,7 +56,8 @@ typedef const struct
 {
 	HAL_PWM_T * const P_HAL_PWM;
 	const uint32_t PERIOD_TICKS;
-	const uint32_t CHANNEL_ID;  //can compiler optimize to mask?
+	const uint32_t CHANNEL_ID;
+//	PWM_Module_T * P_MODULE;
 }
 PWM_Config_T;
 
@@ -125,6 +126,9 @@ static inline void PWM_ActuateDuty_Frac15(const PWM_T * p_pwm, uint16_t pwmDuty)
 	PWM_ActuateDuty_Ticks(p_pwm, pwmDuty * p_pwm->CONFIG.PERIOD_TICKS >> 15U);
 }
 
+/*
+ * If multiple pwms share a register. may interfere with sync
+ */
 static inline void PWM_Enable(const PWM_T * p_pwm)
 {
 	HAL_PWM_EnableOutput(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID);
