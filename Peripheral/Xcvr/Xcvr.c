@@ -78,6 +78,11 @@ bool Xcvr_SetXcvr_Ptr(Xcvr_T * p_xcvr, void * p_xcvrStruct)
 	return status;
 }
 
+bool Xcvr_CheckIsSet(const Xcvr_T * p_xcvr, uint8_t xcvrIndex)
+{
+	return ((xcvrIndex < p_xcvr->CONFIG.XCVR_COUNT) && (p_xcvr->p_Xcvr == p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].P_XCVR));
+}
+
 bool Xcvr_CheckValid(const Xcvr_T * p_xcvr, void * p_target)
 {
 	bool isValid = false;

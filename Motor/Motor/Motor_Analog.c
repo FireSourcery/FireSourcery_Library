@@ -34,12 +34,19 @@
 #include "Motor_FOC.h"
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 
+
+/******************************************************************************/
+/*!
+    @brief  Callback functions must be mapped
+*/
+/******************************************************************************/
+
 /******************************************************************************/
 /*!
     @brief  Conversion
 */
 /******************************************************************************/
-void Motor_AnalogCallback_CaptureVa(Motor_T * p_motor)
+void Motor_Analog_CaptureVa(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
@@ -61,7 +68,7 @@ void Motor_AnalogCallback_CaptureVa(Motor_T * p_motor)
     @brief  Conversion
 */
 /******************************************************************************/
-void Motor_AnalogCallback_CaptureVb(Motor_T * p_motor)
+void Motor_Analog_CaptureVb(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
@@ -83,7 +90,7 @@ void Motor_AnalogCallback_CaptureVb(Motor_T * p_motor)
     @brief  Conversion
 */
 /******************************************************************************/
-void Motor_AnalogCallback_CaptureVc(Motor_T * p_motor)
+void Motor_Analog_CaptureVc(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
@@ -105,7 +112,7 @@ void Motor_AnalogCallback_CaptureVc(Motor_T * p_motor)
     @brief  Conversion
 */
 /******************************************************************************/
-void Motor_AnalogCallback_CaptureIa(Motor_T * p_motor)
+void Motor_Analog_CaptureIa(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
@@ -122,7 +129,7 @@ void Motor_AnalogCallback_CaptureIa(Motor_T * p_motor)
     @brief  Conversion
 */
 /******************************************************************************/
-void Motor_AnalogCallback_CaptureIb(Motor_T * p_motor)
+void Motor_Analog_CaptureIb(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
@@ -139,7 +146,7 @@ void Motor_AnalogCallback_CaptureIb(Motor_T * p_motor)
     @brief  Conversion
 */
 /******************************************************************************/
-void Motor_AnalogCallback_CaptureIc(Motor_T * p_motor)
+void Motor_Analog_CaptureIc(Motor_T * p_motor)
 {
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{

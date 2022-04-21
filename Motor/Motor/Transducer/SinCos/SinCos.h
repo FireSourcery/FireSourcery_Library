@@ -39,13 +39,6 @@
 
 typedef struct __attribute__((aligned (4U)))
 {
-//	uint16_t SinZero_ADCU;
-//	uint16_t SinMax_ADCU;
-//	uint16_t SinMax_MilliV;
-//	uint16_t CosZero_ADCU;
-//	uint16_t CosMax_ADCU;
-//	uint16_t CosMax_MilliV;
-
 	uint16_t Zero_ADCU;
 	uint16_t Max_ADCU;
 	uint16_t Max_MilliV;

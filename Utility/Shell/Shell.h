@@ -31,6 +31,7 @@
 #ifndef SHELL_H
 #define SHELL_H
 
+#include "Config.h"
 #include "Cmd.h"
 #include "Terminal.h"
 
@@ -57,12 +58,6 @@ typedef enum
 	SHELL_STATE_INACTIVE,
 }
 Shell_State_T;
-
-/******************************************************************************/
-/*!
-
- */
-/******************************************************************************/
 
 typedef struct __attribute__((aligned (4U)))
 {
@@ -123,7 +118,16 @@ Shell_T;
 	},														\
 }
 
-extern Shell_Status_T Shell_Proc(Shell_T * p_shell);
+static inline void Shell_Disable(Shell_T * p_shell) { p_shell->State = SHELL_STATE_INACTIVE; }
+static inline void Shell_Enable(Shell_T * p_shell) { p_shell->State = SHELL_STATE_PROMPT; }
+
 extern void Shell_Init(Shell_T * p_shell);
+extern Shell_Status_T Shell_Proc(Shell_T * p_shell);
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+extern void Shell_SetXcvrId(Shell_T * p_shell, uint8_t xcvrId);
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+extern void Shell_SetSerial(Shell_T * p_shell, Serial_T * p_serial);
+#endif
+extern void Shell_SetBaudRate(Shell_T * p_shell, uint16_t baudRate);
 
 #endif

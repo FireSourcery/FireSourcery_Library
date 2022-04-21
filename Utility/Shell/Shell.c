@@ -44,63 +44,23 @@ void Shell_Init(Shell_T * p_shell)
 	Terminal_SetSerial(&p_shell->Terminal, p_shell->Params.p_Serial); 	//need xcvr module to validate xcvr pointer
 #endif
 
-	if(p_shell->Params.IsEnable == true) //check if terminal is set
+	if(p_shell->Params.IsEnable == true)
 	{
-		//if xcvr id == p_shell->Params.XcvrId validate before
-		Terminal_ConfigBaudRate(&p_shell->Terminal, p_shell->Params.BaudRate);
-		Shell_Enable(p_shell);
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+		if (Xcvr_CheckIsSet(&p_shell->Terminal.Xcvr, p_shell->Params.XcvrId))
+#elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
+		if (p_protocol->Params.p_Serial != 0U))
+#endif
+		{
+			Terminal_ConfigBaudRate(&p_shell->Terminal, p_shell->Params.BaudRate);
+			p_shell->State = SHELL_STATE_PROMPT;
+		}
 	}
 	else
 	{
-		Shell_Disable(p_shell);
+		p_shell->State = SHELL_STATE_INACTIVE;
 	}
 }
-
-//void Shell_SetXcvr(Shell_T * p_shell, void * p_xcvr)
-//{
-////	Terminal_SetXcvr_Ptr(&p_shell->Terminal, p_xcvr);
-//}
-
-void Shell_SetXcvrId(Shell_T * p_shell, uint8_t xcvrId)
-{
-	p_shell->Params.XcvrId = xcvrId;
-	Terminal_SetXcvr(&p_shell->Terminal, xcvrId);
-}
-
-/******************************************************************************/
-/*!
- *  @name ShellState
- */
-/******************************************************************************/
-/*! @{ */
-//const char * const INVALID_RETURN_CODE_STRING = "Invalid Return Code";
-//static void PrintShellStatus(Shell_T * p_shell, Shell_Status_T status)
-//{
-////if (PrintShellStatusError)
-////{
-//	switch(status)
-//	{
-//			case SHELL_STATUS_CMD_INVALID:
-//				Terminal_SendString(&p_shell->Terminal, "Invalid command\r\n");
-//
-////			case SHELL_STATUS_TERMINAL_PARSER_FAIL:
-////				break;
-//
-//			case SHELL_STATUS_CMD_INVALID:
-//				Terminal_SendString(&p_shell->Terminal, "Invalid command\r\n");
-//				break;
-//
-//			case SHELL_STATUS_CMD_ACCEPTED:
-//				break;
-//
-//			case SHELL_STATUS_CMD_PROCESSING:
-//				break;
-//	}
-//
-////case SHELL_STATUS_CMD_EXCEPTION:
-////	 PrintCmdReturnCode(Shell_T * p_shell, int cmdReturnCode)
-//
-//}
 
 /*
  * non blocking proc
@@ -140,7 +100,7 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 							p_shell->State = SHELL_STATE_PROMPT;
 							break;
 
-						case CMD_STATUS_INVALID_ARGS: //Must be implement at cmd function level / per cmd function
+						case CMD_STATUS_INVALID_ARGS: /* Must be implemented at cmd function level / per cmd function */
 							Terminal_SendString(&p_shell->Terminal, "Invalid args\r\n");
 							p_shell->State = SHELL_STATE_PROMPT;
 //							status = SHELL_STATUS_CMD_INVALID_ARGS;
@@ -150,9 +110,8 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 							p_shell->State = SHELL_STATE_PROCESS_CMD_LOOP;
 //							status = SHELL_STATUS_CMD_PROCESSING;
 							break;
+
 						default:
-//						if(PrintCmdReturnCode)
-//							PrintCmdReturnCode(p_shell, p_shell->CmdReturnCode);
 //							p_shell->State = SHELL_STATE_PROMPT;
 //							status = SHELL_STATUS_CMD_EXCEPTION;
 							break;
@@ -182,10 +141,11 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 			}
 			else
 			{
-				if(*p_shell->CONFIG.P_TIMER - p_shell->LoopModeTimeRef > p_shell->CONFIG.TIMER_FREQ * 10U / p_shell->p_Cmd->PROCESS.FREQ )
+				if (*p_shell->CONFIG.P_TIMER - p_shell->LoopModeTimeRef > p_shell->CONFIG.TIMER_FREQ * 10U / p_shell->p_Cmd->PROCESS.FREQ)
 				{
 					p_shell->LoopModeTimeRef = *p_shell->CONFIG.P_TIMER;
 					p_shell->CmdReturnCode = p_shell->p_Cmd->PROCESS.FUNCTION(p_shell->CONFIG.P_CMD_CONTEXT);
+					if (p_shell->CmdReturnCode == CMD_STATUS_PROCESS_END) { p_shell->State = SHELL_STATE_PROMPT; }
 				}
 			}
 			break;
@@ -200,20 +160,61 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 	return status;
 }
 
-void Shell_Disable(Shell_T * p_shell)
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+void Shell_SetXcvrId(Shell_T * p_shell, uint8_t xcvrId)
 {
-	p_shell->State = SHELL_STATE_INACTIVE;
+	p_shell->Params.XcvrId = xcvrId;
+	Terminal_SetXcvr(&p_shell->Terminal, xcvrId);
+}
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+void Shell_SetSerial(Shell_T * p_shell, Serial_T * p_serial)
+{
+	p_shell->Params.p_Serial = p_serial;
+	Terminal_SetSerial(&p_shell->Terminal, p_serial);
+}
+#endif
+
+void Shell_SetBaudRate(Shell_T * p_shell, uint16_t baudRate)
+{
+	 p_shell->Params.BaudRate = baudRate;
+	Terminal_ConfigBaudRate(&p_shell->Terminal, baudRate);
 }
 
-void Shell_Enable(Shell_T * p_shell)
+void Shell_SetEnableOnStart(Shell_T * p_shell)
 {
-	p_shell->State = SHELL_STATE_PROMPT;
+	p_shell->Params.IsEnable = true;
 }
 
+void Shell_SetDisableOnStart(Shell_T * p_shell)
+{
+	p_shell->Params.IsEnable = false;
+}
 
-/******************************************************************************/
-/*!
- *
- */
-/******************************************************************************/
-
+//const char * const INVALID_RETURN_CODE_STRING = "Invalid Return Code";
+//static void PrintShellStatus(Shell_T * p_shell, Shell_Status_T status)
+//{
+////if (PrintShellStatusError)
+////{
+//	switch(status)
+//	{
+//			case SHELL_STATUS_CMD_INVALID:
+//				Terminal_SendString(&p_shell->Terminal, "Invalid command\r\n");
+//
+////			case SHELL_STATUS_TERMINAL_PARSER_FAIL:
+////				break;
+//
+//			case SHELL_STATUS_CMD_INVALID:
+//				Terminal_SendString(&p_shell->Terminal, "Invalid command\r\n");
+//				break;
+//
+//			case SHELL_STATUS_CMD_ACCEPTED:
+//				break;
+//
+//			case SHELL_STATUS_CMD_PROCESSING:
+//				break;
+//	}
+//
+////case SHELL_STATUS_CMD_EXCEPTION:
+////	 PrintCmdReturnCode(Shell_T * p_shell, int cmdReturnCode)
+//
+//}

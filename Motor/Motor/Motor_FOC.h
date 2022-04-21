@@ -177,8 +177,8 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			 */
 			electricalDelta = electricalAngle - (uint32_t)p_motor->ElectricalAngle; /* loops if no overflow past 1 full cycle */
 			if (p_motor->Direction == MOTOR_DIRECTION_CW) {electricalDelta = 0 - electricalDelta;}
-			p_motor->Speed2_RPM = (p_motor->Speed2_RPM + Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, (uint32_t)electricalDelta))/2U;
-			p_motor->DeltaAngle  = electricalDelta;
+			p_motor->Speed2_RPM = (p_motor->Speed2_RPM + Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, (uint32_t)electricalDelta)) / 2U;
+			p_motor->DeltaAngle = electricalDelta;
 
 			p_motor->ElectricalAngle = (qangle16_t)electricalAngle;
 			break;
@@ -187,7 +187,7 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			electricalAngle = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
 			electricalDelta = electricalAngle - (uint32_t)p_motor->ElectricalAngle; /* loops if no overflow past 1 full cycle */
 			if (p_motor->Direction == MOTOR_DIRECTION_CW) {electricalDelta = 0 - electricalDelta;}
-			p_motor->Speed_RPM = (p_motor->Speed_RPM + Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, (uint32_t)electricalDelta)) /2U;
+			p_motor->Speed_RPM = (p_motor->Speed_RPM + Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, (uint32_t)electricalDelta)) / 2U;
 			//todo observer
 			p_motor->ElectricalAngle = (qangle16_t)electricalAngle;
 			break;
@@ -223,7 +223,6 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			p_motor->SpeedControl = speedControl;
 		}
 	}
-
 
 	FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
 }

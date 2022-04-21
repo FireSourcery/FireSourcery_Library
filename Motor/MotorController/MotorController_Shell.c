@@ -49,12 +49,7 @@ extern void SystemSoftwareReset(void);
 static Cmd_Status_T Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argv;
-
-    if(argc == 1U)
-    {
-
-    }
-
+	(void)argc;
 	return CMD_STATUS_PROCESS_LOOP;
 }
 
@@ -68,47 +63,28 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 
 //    	for(uint8_t iMotor = 0U; iMotor < CmdMotorCount; iMotor++)
 //    	{
-        	Terminal_SendString(p_terminal, "Speed: ");
-    		Terminal_SendNum(p_terminal, p_motor->Speed_RPM);
-    		Terminal_SendString(p_terminal, " RPM ");
-    		Terminal_SendNum(p_terminal, p_motor->Speed_Frac16);
-    		Terminal_SendString(p_terminal, " Frac16\r\n");
+        	Terminal_SendString(p_terminal, "Speed: ");	Terminal_SendNum(p_terminal, p_motor->Speed_RPM); Terminal_SendString(p_terminal, " RPM ");
+			Terminal_SendNum(p_terminal, p_motor->Speed_Frac16); Terminal_SendString(p_terminal, " Frac16\r\n");
 
-    		Terminal_SendString(p_terminal, "Speed2: ");
-    		Terminal_SendNum(p_terminal, p_motor->Speed2_RPM);
-    		Terminal_SendString(p_terminal, " RPM ");
-    		Terminal_SendNum(p_terminal, p_motor->Speed2_Frac16);
-    		Terminal_SendString(p_terminal, " Frac16\r\n");
+    		Terminal_SendString(p_terminal, "Speed2: "); Terminal_SendNum(p_terminal, p_motor->Speed2_RPM); Terminal_SendString(p_terminal, " RPM ");
+    		Terminal_SendNum(p_terminal, p_motor->Speed2_Frac16); Terminal_SendString(p_terminal, " Frac16\r\n");
 
 //    		Terminal_SendString(p_terminal, "DeltaAngle: ");
 //    		Terminal_SendNum(p_terminal, (uint16_t)p_motor->DeltaAngle);
 //    		Terminal_SendString(p_terminal, " Frac16\r\n");
 
-			Terminal_SendString(p_terminal, "Throttle: ");
-			Terminal_SendNum(p_terminal, throttle);
-			Terminal_SendString(p_terminal, " Frac16\r\n");
+			Terminal_SendString(p_terminal, "Throttle: "); Terminal_SendNum(p_terminal, throttle); Terminal_SendString(p_terminal, " Frac16\r\n");
+			Terminal_SendString(p_terminal, "Brake: "); Terminal_SendNum(p_terminal, brake); Terminal_SendString(p_terminal, " Frac16\r\n");
 
-			Terminal_SendString(p_terminal, "Brake: ");
-			Terminal_SendNum(p_terminal, brake);
-			Terminal_SendString(p_terminal, " Frac16\r\n");
-
-			Terminal_SendString(p_terminal, "RampCmd: ");
-			Terminal_SendNum(p_terminal, p_motor->RampCmd);
-			Terminal_SendString(p_terminal, " Frac16\r\n");
+			Terminal_SendString(p_terminal, "RampCmd: "); Terminal_SendNum(p_terminal, p_motor->RampCmd); Terminal_SendString(p_terminal, " Frac16\r\n");
 //			Terminal_SendString(p_terminal, ", RampIndex: ");
 //			Terminal_SendNum(p_terminal, p_motor->RampIndex);
 
-        	Terminal_SendString(p_terminal, "Iq: ");
-    		Terminal_SendNum(p_terminal, p_motor->Foc.Iq);
-        	Terminal_SendString(p_terminal, ",		Vq: ");
-    		Terminal_SendNum(p_terminal, p_motor->Foc.Vq);
-    		Terminal_SendString(p_terminal, " Q1.15\r\n");
+        	Terminal_SendString(p_terminal, "Iq: "); Terminal_SendNum(p_terminal, p_motor->Foc.Iq);
+        	Terminal_SendString(p_terminal, ", Vq: "); Terminal_SendNum(p_terminal, p_motor->Foc.Vq); Terminal_SendString(p_terminal, " Q1.15\r\n");
 
-			Terminal_SendString(p_terminal, "Id: ");
-			Terminal_SendNum(p_terminal, p_motor->Foc.Id);
-			Terminal_SendString(p_terminal, ",		Vd: ");
-			Terminal_SendNum(p_terminal, p_motor->Foc.Vd);
-			Terminal_SendString(p_terminal, " Q1.15\r\n");
+			Terminal_SendString(p_terminal, "Id: "); Terminal_SendNum(p_terminal, p_motor->Foc.Id);
+			Terminal_SendString(p_terminal, ", Vd: "); Terminal_SendNum(p_terminal, p_motor->Foc.Vd); Terminal_SendString(p_terminal, " Q1.15\r\n");
 
 			Terminal_SendString(p_terminal, "AnalogUserCmd: ");
 			switch(p_mc->AnalogUserCmd)
@@ -159,7 +135,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 //        	Terminal_SendString(p_terminal, "Iclarke: ");
 //    		Terminal_SendNum(p_terminal, p_motor->Foc.Ialpha);
 //    		Terminal_SendString(p_terminal, " ");
-//       		Terminal_SendNum(p_terminal, p_motor->Foc.Ibeta);
+//     		Terminal_SendNum(p_terminal, p_motor->Foc.Ibeta);
 //    		Terminal_SendString(p_terminal, " Q1.15\r\n");
 //
 //			Terminal_SendString(p_terminal, "ElAngle: ");
@@ -169,7 +145,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 //        	Terminal_SendString(p_terminal, "SinCos: ");
 //    		Terminal_SendNum(p_terminal, p_motor->Foc.Sine);
 //    		Terminal_SendString(p_terminal, " ");
-//       		Terminal_SendNum(p_terminal, p_motor->Foc.Cosine);
+//      	Terminal_SendNum(p_terminal, p_motor->Foc.Cosine);
 //    		Terminal_SendString(p_terminal, " Q1.15\r\n");
 
 
@@ -203,15 +179,11 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 
 			Terminal_SendString(p_terminal, "\r\n");
     		Terminal_SendString(p_terminal, "\r\n");
-
 //    	}
 
 
 	return CMD_STATUS_SUCCESS;
 }
-
-
-
 
 static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 {
@@ -227,7 +199,7 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
     	{
     		p_motor->Parameters.CommutationMode = MOTOR_COMMUTATION_MODE_FOC;
     	}
-    	else if(strncmp(argv[1U], "sixstep", 5U) == 0U)
+    	else if(strncmp(argv[1U], "sixstep", 8U) == 0U)
     	{
     		p_motor->Parameters.CommutationMode = MOTOR_COMMUTATION_MODE_SIX_STEP;
     	}
@@ -252,22 +224,16 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
     		p_mc->Shell.Params.IsEnable = false;
     		p_mc->CONFIG.P_PROTOCOLS[0U].Params.IsEnable = true;
     	}
-
-    }
-    else if(argc == 3U)
-    {
-    	if(strncmp(argv[1U], "dircalib", 9U) == 0U)
+		else if(strncmp(argv[1U], "forwardisccw", 13U) == 0U)
 		{
-			if(strncmp(argv[2U], "ccw", 4U) == 0U)
-			{
-				Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CCW);
-			}
-			else if(strncmp(argv[2U], "cw", 3U) == 0U)
-			{
-				Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CW);
-			}
+			Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CCW);
+		}
+		else if(strncmp(argv[1U], "forwardiscw", 12U) == 0U)
+		{
+			Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CW);
 		}
     }
+
 
 	return CMD_STATUS_SUCCESS;
 }
@@ -291,17 +257,17 @@ static Cmd_Status_T Cmd_analoguser(MotorController_T * p_mc, int argc, char ** a
 
 static Cmd_Status_T Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 {
-	char * end;
+	char * p_end;
 	uint32_t value;
 
 	if(argc == 2U)
 	{
-		value = strtoul(argv[1U], &end, 10);
+		value = strtoul(argv[1U], &p_end, 10);
 		MotorController_User_SetCmdThrottle(p_mc, value);
 	}
 	if(argc == 3U)
 	{
-		value = strtoul(argv[2U], &end, 10);
+		value = strtoul(argv[2U], &p_end, 10);
 
     	if(strncmp(argv[1U], "throttle", 9U) == 0U)
     	{
@@ -318,98 +284,130 @@ static Cmd_Status_T Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 
 static Cmd_Status_T Cmd_stop(MotorController_T * p_mc, int argc, char ** argv)
 {
-	uint32_t value;
-
-	if(argc == 1U)
-	{
-		MotorController_User_DisableControl(p_mc);
-	}
-
+	MotorController_User_DisableControl(p_mc);
 	return CMD_STATUS_SUCCESS;
 }
 
 
+static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
+{
+	Cmd_Status_T status = CMD_STATUS_PROCESS_LOOP;
+	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+
+	if(Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP)
+	{
+		status = CMD_STATUS_PROCESS_END;
+
+		if (p_motor->CalibrationState == MOTOR_CALIBRATION_STATE_HALL)
+		{
+			Terminal_SendNum(p_terminal, p_motor->Hall.Params.SensorsTable[0U]); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendNum(p_terminal, p_motor->Hall.Params.SensorsTable[1U]); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendNum(p_terminal, p_motor->Hall.Params.SensorsTable[2U]); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendNum(p_terminal, p_motor->Hall.Params.SensorsTable[3U]); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendNum(p_terminal, p_motor->Hall.Params.SensorsTable[4U]); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendNum(p_terminal, p_motor->Hall.Params.SensorsTable[5U]); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendNum(p_terminal, p_motor->Hall.Params.SensorsTable[6U]); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendNum(p_terminal, p_motor->Hall.Params.SensorsTable[7U]); Terminal_SendString(p_terminal, "\r\n");
+
+	//		Terminal_SendString(p_terminal, "\r\n");
+	//		Terminal_SendString(p_terminal, "Phase A: ");
+	//		Terminal_SendNum(p_terminal, p_motor->Debug[1]);
+	//		Terminal_SendString(p_terminal, "	");
+	//
+	//		Terminal_SendString(p_terminal, "  Phase AC: ");
+	//		Terminal_SendNum(p_terminal, p_motor->Debug[2]);
+	//		Terminal_SendString(p_terminal, "\r\n");
+	//
+	//		Terminal_SendString(p_terminal, "Phase -C: ");
+	//		Terminal_SendNum(p_terminal, p_motor->Debug[3]);
+	//		Terminal_SendString(p_terminal, "	");
+	//
+	//		Terminal_SendString(p_terminal, "  Phase BC: ");
+	//		Terminal_SendNum(p_terminal, p_motor->Debug[4]);
+	//		Terminal_SendString(p_terminal, "\r\n");
+	//
+	//		Terminal_SendString(p_terminal, "Phase B: ");
+	//		Terminal_SendNum(p_terminal, p_motor->Debug[5]);
+	//		Terminal_SendString(p_terminal, "	");
+	//
+	//		Terminal_SendString(p_terminal, "  Phase BA: ");
+	//		Terminal_SendNum(p_terminal, p_motor->Debug[6]);
+	//		Terminal_SendString(p_terminal, "\r\n");
+	//
+	//		Terminal_SendString(p_terminal, "Phase -A: ");
+	//		Terminal_SendNum(p_terminal, p_motor->Debug[7]);
+	//		Terminal_SendString(p_terminal, "	");
+	//
+	//		Terminal_SendString(p_terminal, "  Phase CA: ");
+	//		Terminal_SendNum(p_terminal, p_motor->Debug[8]);
+	//		Terminal_SendString(p_terminal, "\r\n");
+	//
+	//		Terminal_SendString(p_terminal, "Phase C: ");
+	//		Terminal_SendNum(p_terminal, p_motor->Debug[9]);
+	//		Terminal_SendString(p_terminal, "	");
+	//
+	//		Terminal_SendString(p_terminal, "  Phase CB: ");
+	//		Terminal_SendNum(p_terminal, p_motor->Debug[10]);
+	//		Terminal_SendString(p_terminal, "\r\n");
+	//
+	//		Terminal_SendString(p_terminal, "Phase -B: ");
+	//		Terminal_SendNum(p_terminal, p_motor->Debug[11]);
+	//		Terminal_SendString(p_terminal, "	");
+	//
+	//		Terminal_SendString(p_terminal, "  Phase AB: ");
+	//		Terminal_SendNum(p_terminal, p_motor->Debug[12]);
+	//		Terminal_SendString(p_terminal, "\r\n");
+		}
+		else if(p_motor->CalibrationState == MOTOR_CALIBRATION_STATE_SIN_COS)
+		{
+			 //todo Motor_User_Wrapper
+			Terminal_SendString(p_terminal, "Zero_ADCU: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Zero_ADCU); 	Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "Max_ADCU: "); 		Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Max_ADCU); 		Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "Max_MilliV: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Max_MilliV); 	Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "AngleOffset: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.AngleOffet); 	Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "IsBPositive: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.IsBPositive); 	Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "Phase A: "); Terminal_SendNum(p_terminal, p_motor->Debug[0U]); Terminal_SendString(p_terminal, "Deg16 \r\n");
+			Terminal_SendString(p_terminal, "Phase B: "); Terminal_SendNum(p_terminal, p_motor->Debug[1U]); Terminal_SendString(p_terminal, "Deg16 \r\n");
+			Terminal_SendString(p_terminal, "Phase C: "); Terminal_SendNum(p_terminal, p_motor->Debug[2U]); Terminal_SendString(p_terminal, "Deg16 \r\n");
+		}
+
+		Terminal_SendString(p_terminal, "\r\n");
+	}
+
+	return status;
+}
+
 static Cmd_Status_T Cmd_calibrate(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	Cmd_Status_T status = CMD_STATUS_INVALID_ARGS;
 
-    if(argc == 1U)
-    {
-
-    }
-    else if(argc == 2U)
+	if(argc == 2U)
     {
     	if(strncmp(argv[1U], "encoder", 8U) == 0U)
     	{
     		Motor_User_ActivateCalibrationEncoder(p_motor);
+    		status = CMD_STATUS_PROCESS_LOOP;
     	}
     	else if(strncmp(argv[1U], "hall", 5U) == 0U)
     	{
     		Motor_User_ActivateCalibrationHall(p_motor);
+    		status = CMD_STATUS_PROCESS_LOOP;
     	}
     	else if(strncmp(argv[1U], "adc", 4U) == 0U)
     	{
     		Motor_User_ActivateCalibrationAdc(p_motor);
+    		status = CMD_STATUS_PROCESS_LOOP;
     	}
-    	else if(strncmp(argv[1U], "sincos", 4U) == 0U)
+    	else if(strncmp(argv[1U], "sincos", 7U) == 0U)
     	{
     		Motor_User_ActivateCalibrationSinCos(p_motor);
+    		status = CMD_STATUS_PROCESS_LOOP;
     	}
-//    	else if(strncmp(argv[1U], "hallprint", 10U) == 0U)
-//    	{
-//
-//        	Terminal_SendString(p_terminal, "\r\n");
-//        	Terminal_SendString(p_terminal, "Phase A: ");
-//    		Terminal_SendNum(p_terminal, p_motor->HallDebug[1]);
-//        	Terminal_SendString(p_terminal, "	");
-//
-//        	Terminal_SendString(p_terminal, "  Phase AC: ");
-//    		Terminal_SendNum(p_terminal, p_motor->HallDebug[2]);
-//        	Terminal_SendString(p_terminal, "\r\n");
-//
-//        	Terminal_SendString(p_terminal, "Phase -C: ");
-//    		Terminal_SendNum(p_terminal, p_motor->HallDebug[3]);
-//        	Terminal_SendString(p_terminal, "	");
-//
-//        	Terminal_SendString(p_terminal, "  Phase BC: ");
-//    		Terminal_SendNum(p_terminal, p_motor->HallDebug[4]);
-//        	Terminal_SendString(p_terminal, "\r\n");
-//
-//        	Terminal_SendString(p_terminal, "Phase B: ");
-//    		Terminal_SendNum(p_terminal, p_motor->HallDebug[5]);
-//        	Terminal_SendString(p_terminal, "	");
-//
-//        	Terminal_SendString(p_terminal, "  Phase BA: ");
-//    		Terminal_SendNum(p_terminal, p_motor->HallDebug[6]);
-//        	Terminal_SendString(p_terminal, "\r\n");
-//
-//        	Terminal_SendString(p_terminal, "Phase -A: ");
-//    		Terminal_SendNum(p_terminal, p_motor->HallDebug[7]);
-//        	Terminal_SendString(p_terminal, "	");
-//
-//        	Terminal_SendString(p_terminal, "  Phase CA: ");
-//    		Terminal_SendNum(p_terminal, p_motor->HallDebug[8]);
-//        	Terminal_SendString(p_terminal, "\r\n");
-//
-//        	Terminal_SendString(p_terminal, "Phase C: ");
-//    		Terminal_SendNum(p_terminal, p_motor->HallDebug[9]);
-//        	Terminal_SendString(p_terminal, "	");
-//
-//        	Terminal_SendString(p_terminal, "  Phase CB: ");
-//    		Terminal_SendNum(p_terminal, p_motor->HallDebug[10]);
-//        	Terminal_SendString(p_terminal, "\r\n");
-//
-//        	Terminal_SendString(p_terminal, "Phase -B: ");
-//    		Terminal_SendNum(p_terminal, p_motor->HallDebug[11]);
-//        	Terminal_SendString(p_terminal, "	");
-//
-//        	Terminal_SendString(p_terminal, "  Phase AB: ");
-//    		Terminal_SendNum(p_terminal, p_motor->HallDebug[12]);
-//        	Terminal_SendString(p_terminal, "\r\n");
-//    	}
     }
 
-	return CMD_STATUS_SUCCESS;
+	return status;
 }
 
 static Cmd_Status_T Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
@@ -447,10 +445,10 @@ static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
     	else if (argv[1][0] == 'c' && argv[1][1] == '\0') Phase_Polar_ActivateC(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
     	else if (argv[1][0] == 'c' && argv[1][1] == '-') Phase_Polar_ActivateInvC(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
 
-    	Terminal_SendString(p_terminal, "\r\n");
-    	Terminal_SendString(p_terminal, "Hall: ");
-		Terminal_SendNum(p_terminal, Hall_ReadSensors(&p_motor->Hall).State);
-    	Terminal_SendString(p_terminal, "\r\n");
+//    	Terminal_SendString(p_terminal, "\r\n");
+//    	Terminal_SendString(p_terminal, "Hall: ");
+//		Terminal_SendNum(p_terminal, Hall_ReadSensors(&p_motor->Hall).State);
+//    	Terminal_SendString(p_terminal, "\r\n");
     }
 
     return CMD_STATUS_SUCCESS;
@@ -627,21 +625,8 @@ int Cmd_set(MotorController_T * p_mc, int argc, char ** argv)
 
 	if(argc == 3U)
 	{
-		if(strncmp(argv[1U], "dircalib", 9U) == 0U)
-		{
-			if(strncmp(argv[2U], "ccw", 4U) == 0U)
-			{
-				Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CCW);
-			}
-			else if(strncmp(argv[2U], "cw", 3U) == 0U)
-			{
-				Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CW);
-			}
-		}
-//		else if()
-//		{
-//
-//		}
+
+
 	}
 
     return CMD_STATUS_SUCCESS;
@@ -877,31 +862,24 @@ int Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
 
 const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 {
-	{"monitor", 	"Display motor info",				(Cmd_Function_T)Cmd_monitor, 	{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_monitor_Proc, 	.FREQ = 5U}	},
+	{"monitor", 	"Display motor info",				(Cmd_Function_T)Cmd_monitor, 	{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_monitor_Proc, 	.FREQ = 5U}		},
 	{"hall", 		"Read hall", 						(Cmd_Function_T)Cmd_hall, 		{0U}		},
 	{"heat", 		"Display temperatures",				(Cmd_Function_T)Cmd_heat, 		{0U}		},
 	{"vmonitor", 	"Display voltages", 				(Cmd_Function_T)Cmd_vmonitor, 	{0U}		},
-	{"fault", 	"Display fault info", 						(Cmd_Function_T)Cmd_fault, 	{0U}		},
-
-	{"params", 	" ", 						(Cmd_Function_T)Cmd_params, 	{0U}		},
-
+	{"fault", 		"Display fault info", 				(Cmd_Function_T)Cmd_fault, 		{0U}		},
+	{"params", 		" ", 								(Cmd_Function_T)Cmd_params, 	{0U}		},
 	{"mode", 		"Sets mode using options",			(Cmd_Function_T)Cmd_mode, 		{0U}	},
-
-	{"analoguser", 	"analoguser enable/disable", 		(Cmd_Function_T)Cmd_analoguser, 		{0U}	},
-
-	{"direction", 	"Sets direction",						(Cmd_Function_T)Cmd_direction, 		{0U}	},
-
-
-	{"calibrate", 	"calibrate",						(Cmd_Function_T)Cmd_calibrate, 	{0U}	},
+	{"analoguser", 	"analoguser enable/disable", 		(Cmd_Function_T)Cmd_analoguser,	{0U}	},
+	{"direction", 	"Sets direction",					(Cmd_Function_T)Cmd_direction,	{0U}	},
+	{"calibrate", 	"calibrate",						(Cmd_Function_T)Cmd_calibrate, 	{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_calibrate_Proc,	.FREQ = 10U}	},
 	{"run", 		"Set motor to run mode", 			(Cmd_Function_T)Cmd_run, 		{0U}	},
 	{"stop", 		"Set motor to freewheel mode", 		(Cmd_Function_T)Cmd_stop, 		{0U}	},
 	{"set", 		"Sets motor parameters",	 		(Cmd_Function_T)Cmd_set, 		{0U}	},
 	{"save", 		"Save parameters to nv memory", 	(Cmd_Function_T)Cmd_save, 		{0U}	},
 	{"reboot", 		"reboot", 							(Cmd_Function_T)Cmd_reboot, 	{0U}	},
-
-	{"rev", 		"rev",	 							(Cmd_Function_T)Cmd_rev, 		{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_rev_Proc, 		.FREQ = 10U} },
+	{"rev", 		"rev",	 							(Cmd_Function_T)Cmd_rev, 		{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_rev_Proc, 		.FREQ = 10U}	},
 	{"phase", 		"Sets motor phase", 				(Cmd_Function_T)Cmd_phase, 		{0U}		},
-	{"debug", 		"debug",							(Cmd_Function_T)Cmd_debug, 		{0U}	},
+	{"debug", 		"debug",							(Cmd_Function_T)Cmd_debug, 		{0U}		},
 ////	{ "jog", 		"Jog motor", 				Cmd_jog		},
 ////	{ "float", 		"Float motor", 				Cmd_float	},
 ////	{ "hold", 		"hold position", 			Cmd_hold	},

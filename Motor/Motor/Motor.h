@@ -218,7 +218,7 @@ typedef enum
 	@brief Motor Parameters
 	Runtime variable configuration
 
-	load from flash
+	load from NvM
  */
 typedef struct __attribute__ ((aligned (4U)))
 {
@@ -227,6 +227,7 @@ typedef struct __attribute__ ((aligned (4U)))
 	Motor_ControlMode_T 		ControlMode; /* User ControlMode, effective for throttle only */
 //	Motor_BrakeMode_T 			BrakeMode;
 	Motor_AlignMode_T 			AlignMode;
+	Phase_Mode_T				PhasePwmMode; /* Only 1 nvm param for phase module. */
 
 	Motor_DirectionCalibration_T DirectionCalibration;
 
@@ -259,9 +260,6 @@ typedef struct __attribute__ ((aligned (4U)))
 	uint16_t OpenLoopAccel;
 	//	uint16_t OpenLoopVHzGain; //vhz scale
 	//	uint16_t OpenLoopZcdTransition;
-
-	//todo account for copy to ram twice
-	Phase_Mode_T				PhasePwmMode;
 }
 Motor_Params_T;
 
@@ -272,13 +270,10 @@ Motor_Params_T;
 typedef const struct Motor_Init_Tag
 {
  	const Motor_Params_T * const P_PARAMS_NVM;
-
-//	const Linear_T UNIT_V_ABC; 	//Bemf V and mV conversion //const using fixed resistor values
  	const uint16_t UNIT_VABC_R1;
  	const uint16_t UNIT_VABC_R2;
  	const uint16_t UNIT_VABC_ADCREF10;
  	const uint16_t UNIT_VABC_ADCBITS;
-
 	AnalogN_T * const P_ANALOG_N;
 	const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
 }
@@ -303,7 +298,6 @@ typedef struct
  	/* Run State */
 	Motor_Direction_T Direction; 		/* Active spin direction */
 	Motor_Direction_T UserDirection; 	/* Passed to StateMachine */
-//	bool Brake; //can change to quadrant to include plugging
 	Motor_ControlModeFlags_T ControlModeFlags;
 
 	Motor_ErrorFlags_T ErrorFlags;
@@ -324,7 +318,7 @@ typedef struct
 	Linear_T UnitIa; 	//Frac16 and UserUnits (Amp)
 	Linear_T UnitIb;
 	Linear_T UnitIc;
-	Linear_T UnitVabc;
+	Linear_T UnitVabc;	//Bemf V and mV conversion
 
 	//Calibration use
 	Filter_T FilterA;
@@ -335,7 +329,7 @@ typedef struct
 //	Linear_T RampUp;
 //	Linear_T RampDown;
 	uint32_t RampIndex;
-	int32_t RampCmd;			//SetPoint after ramp, VReq/IReq/SpeedReq
+	int32_t RampCmd;	//SetPoint after ramp, VReq/IReq/SpeedReq
 
 	/* Speed Feedback */
 	Linear_T UnitAngleRpm;
@@ -390,8 +384,8 @@ typedef struct
 	uint16_t OpenLoopVPwm;
 
 	uint32_t MicrosRef; //debug
-	volatile uint32_t DebugTime[10];
-	volatile uint32_t HallDebug[13];
+	volatile uint32_t DebugTime[10U];
+	volatile uint32_t Debug[20U];
 //	uint32_t JogSteps;
 //	uint32_t StepCount;
 }
@@ -518,10 +512,9 @@ static inline void Motor_ResumeRampOutput(Motor_T * p_motor, int32_t matchOutput
 /******************************************************************************/
 static inline void Motor_CaptureEncoderSpeed(Motor_T * p_motor)
 {
-	p_motor->Speed_RPM =  (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder));// + p_motor->Speed_RPM) / 2U;
+	p_motor->Speed_RPM =  (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder)); // + p_motor->Speed_RPM) / 2U;
 	p_motor->Speed_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedRefMax_RPM); //todo move to encoder module
 }
-
 
 //Speed pid always uses directionless positive value [0:65535]
 static inline void Motor_ResumeSpeedOutput(Motor_T * p_motor, int32_t matchOutput)

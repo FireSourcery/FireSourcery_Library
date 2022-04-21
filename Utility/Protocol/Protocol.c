@@ -35,7 +35,7 @@
 static inline bool IsXcvrSet(Protocol_T * p_protocol)
 {
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
-	return (p_protocol->Xcvr.p_Xcvr != 0U); //todo sub Xcvr.p_Xcvr if validate xcvr id
+	return Xcvr_CheckIsSet(&p_protocol->Xcvr, p_protocol->Params.XcvrId);
 #elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
 	return (p_protocol->Params.p_Serial != 0U);
 #endif

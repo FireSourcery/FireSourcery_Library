@@ -2,10 +2,10 @@
 #define MEM_MAP_BOOT_H
 
 /*
- * User ensure calling apps use same endianess
+ * Calling apps are compiled to the same platform, endianess should be consistent
  */
 
-// use 2 bits do differentiate unwritten memory patterns
+/* use 2 bits do differentiate unwritten memory patterns */
 typedef enum
 {
 	MEM_MAP_BOOT_IS_VALID_01 = 0b01,
@@ -37,7 +37,7 @@ static inline bool MemMapBoot_GetIsValid(void)
 }
 
 /*
- * No Fastboot by default
+ * No FastBoot by default
  */
 static inline bool MemMapBoot_GetFastBoot(void)
 {

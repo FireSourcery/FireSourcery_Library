@@ -442,13 +442,25 @@ static inline void Motor_User_SetVSupplyVMotorScale(Motor_T * p_motor, uint16_t 
  */
 
 static inline Hall_Sensors_T Motor_User_ReadHall(Motor_T * p_motor) 			{return Hall_ReadSensors(&p_motor->Hall);}
-//static inline Hall_Sensors_T Motor_User_GetHall(Motor_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_mc, motorIndex));}
 //static inline bool Motor_User_GetHallA(Motor_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_mc, motorIndex)).A;}
 //static inline bool Motor_User_GetHallB(Motor_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_mc, motorIndex)).B;}
 //static inline bool Motor_User_GetHallC(Motor_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_mc, motorIndex)).C;}
 //
 static inline uint16_t Motor_User_GetHallRotorAngle(Motor_T * p_motor) 			{return Hall_GetRotorAngle_Degrees16(&p_motor->Hall);}
-static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T * p_motor) 				{return p_motor->Speed_RPM;}
+static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T * p_motor)
+{
+	return p_motor->Speed_RPM;
+//	uint16_t rpm;
+//	switch (p_motor->Parameters.SensorMode)
+//	{
+//		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
+//		case MOTOR_SENSOR_MODE_HALL: 		rpm = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);	break;
+//		case MOTOR_SENSOR_MODE_ENCODER: 	rpm = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);	break;
+//		case MOTOR_SENSOR_MODE_SIN_COS: 	 							break;
+//		default: 	break;
+//	}
+//	return rpm;
+}
 static inline Motor_ErrorFlags_T Motor_User_GetErrorFlags(Motor_T * p_motor) 	{return p_motor->ErrorFlags;}
 
 static inline uint16_t Motor_User_GetIPhase(Motor_T * p_motor)

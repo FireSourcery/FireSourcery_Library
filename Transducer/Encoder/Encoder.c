@@ -175,3 +175,8 @@ void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALe
 	p_encoder->Params.IsALeadBPositive = isALeadBPositive;
 }
 
+void Encoder_SetMotorPolePairs(Encoder_T * p_encoder, uint8_t polePairs)
+{
+	p_encoder->Params.MotorPolePairs = polePairs;
+}
+

@@ -38,8 +38,6 @@
 	Calibration State Functions - Mapped to StateMachine, Nonblocking
  */
 /******************************************************************************/
-
-
 static inline void Motor_Calibrate_StartSinCos(Motor_T * p_motor)
 {
 	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_ControlCycles);
@@ -62,7 +60,8 @@ static inline bool Motor_Calibrate_ProcSinCos(Motor_T * p_motor)
 				break;
 
 			case 1U:
-				SinCos_CalibrateA(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU,  p_motor->AnalogResults.Cos_ADCU);
+				SinCos_CalibrateA(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
+				p_motor->Debug[0U] = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
 				Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignVoltage_Frac16, 0U);
 				p_motor->CalibrationStateStep = 2U;
 				break;
@@ -74,7 +73,21 @@ static inline bool Motor_Calibrate_ProcSinCos(Motor_T * p_motor)
 				break;
 
 			case 3U:
-				SinCos_CalibrateB(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU,  p_motor->AnalogResults.Cos_ADCU);
+				SinCos_CalibrateB(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
+				p_motor->Debug[1U] = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
+				Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, p_motor->Parameters.AlignVoltage_Frac16);
+				p_motor->CalibrationStateStep = 4U;
+				break;
+
+			case 4U:
+				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+				p_motor->CalibrationStateStep = 5U;
+				break;
+
+			case 5U:
+				p_motor->Debug[2U] = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
+				p_motor->CalibrationStateStep = 6U;
 				isComplete = true;
 				break;
 		}
@@ -147,7 +160,7 @@ static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
 #else
 	if (Timer_Poll(&p_motor->ControlTimer) == true)
 	{
-		p_motor->HallDebug[p_motor->CalibrationStateStep] = Hall_ReadSensors(&p_motor->Hall); //PhaseA starts at 1
+		p_motor->Debug[p_motor->CalibrationStateStep] = Hall_ReadSensors(&p_motor->Hall); //PhaseA starts at 1
 
 		switch (p_motor->CalibrationStateStep)
 		{

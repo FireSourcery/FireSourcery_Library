@@ -51,48 +51,65 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Phase_Init(&p_motor->Phase);
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
 
-	if ((p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP) || (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL))
+	if ((p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP) )
 	{
 		/*
 		 * all sixstep modes and hall foc mode use CaptureTime
 		 */
 		Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
+		switch (p_motor->Parameters.SensorMode)
+		{
+			case MOTOR_SENSOR_MODE_SENSORLESS: break; //todo
+			case MOTOR_SENSOR_MODE_HALL: 	Hall_Init(&p_motor->Hall); 		break;
+			case MOTOR_SENSOR_MODE_ENCODER: break;
+			case MOTOR_SENSOR_MODE_SIN_COS: break;
+			default: 	break;
+		}
 	}
 	else
 	{
-		Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
-//		AnalogN_EnqueueConversionOptions(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
+		switch(p_motor->Parameters.SensorMode)
+		{
+			case MOTOR_SENSOR_MODE_SENSORLESS :
+				break; //todo
+			case MOTOR_SENSOR_MODE_HALL :
+				Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
+				Hall_Init(&p_motor->Hall);
+				break;
+			case MOTOR_SENSOR_MODE_ENCODER :
+				Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
+				break;
+			case MOTOR_SENSOR_MODE_SIN_COS :
+				SinCos_Init(&p_motor->SinCos);
+				break;
+			default :
+				break;
+		}
 	}
 
-	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
-	{
-		Hall_Init(&p_motor->Hall);
-	}
-	else if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
-	{
-		SinCos_Init(&p_motor->SinCos);
-	}
+//	Encoder_SetMotorPolePairs(&p_motor->Encoder, p_motor->Parameters.PolePairs); /* Set Encoder module individual param consistent to main motor module setting */
 
 	Thermistor_Init(&p_motor->Thermistor);
 	p_motor->AnalogResults.Heat_ADCU = p_motor->Thermistor.Params.Threshold_ADCU;
 
+//		AnalogN_EnqueueConversionOptions(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
+
 	/*
 	 * SW Structs
 	 */
+	Timer_InitPeriodic(&p_motor->ControlTimer, 	1U);
+	Timer_InitPeriodic(&p_motor->MillisTimer, 	1U);
+	Timer_InitPeriodic(&p_motor->SpeedTimer, 	1U);
+
 	FOC_Init(&p_motor->Foc);
 //	BEMF_Init(&p_motor->Bemf);
 	Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, 20000U, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedRefMax_RPM); /* final value is overwritten, slope is persistent */
 
 	//* p_motor->Encoder.Params.MotorPolePairs
-
 	PID_Init(&p_motor->PidSpeed);
 	PID_Init(&p_motor->PidIq);
 	PID_Init(&p_motor->PidId);
 	PID_Init(&p_motor->PidIBus);
-
-	Timer_InitPeriodic(&p_motor->ControlTimer, 	1U);
-	Timer_InitPeriodic(&p_motor->MillisTimer, 	1U);
-	Timer_InitPeriodic(&p_motor->SpeedTimer, 	1U);
 
 #if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) &&  defined(CONFIG_MOTOR_V_SENSORS_ADC)
 	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, p_motor->CONFIG.UNIT_VABC_ADCREF10, p_motor->CONFIG.UNIT_VABC_ADCBITS, p_motor->Parameters.VSupply);
@@ -101,10 +118,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 	/*
 	 * Initial runtime config settings
 	 */
-	/*
-	 * Run calibration later, default zero to middle adc
-	 */
-	//scales 4095 to physical units. alternatively use opamp equation
 #ifdef CONFIG_MOTOR_I_SENSORS_INVERT
 	Linear_ADC_Init_Inverted(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
 	Linear_ADC_Init_Inverted(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
@@ -124,17 +137,17 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 2000U, 20000U, 0U, 300U);		//can start at 0 speed in foc mode for continuous angle displacements
+		Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 2000U, 20000U, 0U, 300U);	//can start at 0 speed in foc mode for continuous angle displacements
 	}
 	else
 	{
 
 	}
+
 	p_motor->OpenLoopRampIndex = 0U;
 
 	Motor_SetDirectionForward(p_motor);
 	p_motor->UserDirection = p_motor->Direction;
-
 	p_motor->Speed_RPM 				= 0U;
 	p_motor->VPwm 					= 0U;
 	p_motor->ControlTimerBase 		= 0U;

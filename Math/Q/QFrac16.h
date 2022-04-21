@@ -39,7 +39,6 @@
 
 typedef int16_t qfrac16_t; 		/*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
 typedef int16_t qangle16_t; 	/*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
-//typedef uint16_t uqfrac16_t; 	/*!< Q0.16    */
 
 static const qfrac16_t QFRAC16_MAX = 0x7FFF; /*!< (32767) */
 static const qfrac16_t QFRAC16_MIN = (int16_t) 0x8000; /*!< (-32768) */

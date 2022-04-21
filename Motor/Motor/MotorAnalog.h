@@ -40,7 +40,7 @@
  */
 typedef enum
 {
-	MOTOR_ANALOG_CHANNEL_VPOS, 			/* Physically shared channel, but save results in contiguous memory */
+//	MOTOR_ANALOG_CHANNEL_VPOS,	/* Physically shared channel, but save results in contiguous memory */
 	MOTOR_ANALOG_CHANNEL_VA,
 	MOTOR_ANALOG_CHANNEL_VB,
 	MOTOR_ANALOG_CHANNEL_VC,
@@ -50,7 +50,8 @@ typedef enum
 	MOTOR_ANALOG_CHANNEL_HEAT,	/* Temperature */
 	MOTOR_ANALOG_CHANNEL_SIN,
 	MOTOR_ANALOG_CHANNEL_COS,
-} MotorAnalog_Channel_T;
+}
+MotorAnalog_Channel_T;
 
 /*
  * Results Buffer
@@ -59,7 +60,7 @@ typedef union
 {
 	struct
 	{
-		analog_adcresult_t VPos_ADCU;
+//		analog_adcresult_t VPos_ADCU;
 		analog_adcresult_t Va_ADCU;
 		analog_adcresult_t Vb_ADCU;
 		analog_adcresult_t Vc_ADCU;
@@ -80,7 +81,7 @@ typedef struct
 	{
 		struct
 		{
-			const AnalogN_Conversion_T CONVERSION_VPOS;
+//			const AnalogN_Conversion_T CONVERSION_VPOS;
 			const AnalogN_Conversion_T CONVERSION_VA;
 			const AnalogN_Conversion_T CONVERSION_VB;
 			const AnalogN_Conversion_T CONVERSION_VC;
@@ -97,8 +98,8 @@ typedef struct
 	const AnalogN_AdcFlags_T ADCS_GROUP_V;
 	const AnalogN_AdcFlags_T ADCS_GROUP_I;
 
-	//		const AnalogN_Conversion_T CONVERSION_OPTION_PWM_ON;
-	//		const AnalogN_Conversion_T CONVERSION_OPTION_RESTORE;
+//	const AnalogN_Options_T OPTIONS_PWM_ON;
+//	const AnalogN_Options_T OPTIONS_RESTORE;
 }
 MotorAnalog_Conversions_T;
 

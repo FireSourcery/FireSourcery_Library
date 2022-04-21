@@ -30,7 +30,6 @@
 /******************************************************************************/
 #include "Linear_Speed.h"
 
-
 static inline uint32_t speed_a16torpm(uint32_t angle16, uint32_t sampleFreq)
 {
 	uint32_t rpm;
@@ -67,10 +66,9 @@ static inline uint32_t speed_rpmtoa16(uint32_t rpm, uint32_t sampleFreq)
 /*!
 	f(angle) = rpm
 	f16(angle) = speed_frac16
-
 	f(angleMax) = speedRef_Rpm
 
-	electrical angle to mech rpm multiple sampleFreq by pollpairs
+	//todo frac16 first
  */
 /******************************************************************************/
 void Linear_Speed_InitAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t angleBits, uint16_t speedRef_Rpm)
@@ -82,7 +80,7 @@ void Linear_Speed_InitAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t
 	p_linear->SlopeDivisor_Shift 	= angleBits;
 
 	//todo non iterative
-	while (p_linear->XReference > INT32_MAX / p_linear->SlopeFactor)
+	while ((p_linear->XReference > INT32_MAX / p_linear->SlopeFactor) && (p_linear->SlopeDivisor_Shift > 0U))
 	{
 		p_linear->SlopeFactor = p_linear->SlopeFactor >> 1U;
 		p_linear->SlopeDivisor_Shift--;
@@ -92,11 +90,11 @@ void Linear_Speed_InitAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t
 	p_linear->SlopeDivisor 			= (1U << (angleBits + (30U - angleBits))) / (60U * sampleFreq);
 	p_linear->SlopeFactor_Shift 	= (30U - angleBits);
 
-//	while(p_linear->YReference > INT32_MAX / p_linear->SlopeDivisor)
-//	{
-//		p_linear->SlopeDivisor = p_linear->SlopeDivisor >> 1U;
-//		p_linear->SlopeFactor_Shift--;
-//	}
+	while ((p_linear->YReference > INT32_MAX / p_linear->SlopeDivisor) && (p_linear->SlopeFactor_Shift > 0U))
+	{
+		p_linear->SlopeDivisor = p_linear->SlopeDivisor >> 1U;
+		p_linear->SlopeFactor_Shift--;
+	}
 
 	p_linear->XOffset 				= 0;
 	p_linear->YOffset 				= 0;
@@ -108,4 +106,3 @@ void Linear_Speed_InitElectricalAngleRpm(Linear_T * p_linear, uint32_t sampleFre
 	Linear_Speed_InitAngleRpm(p_linear, sampleFreq / polePairs, angleBits, speedRef_Rpm);
 }
 
-//todo frac16 first

@@ -35,11 +35,10 @@
 
 typedef struct
 {
-//	uint32_t * Buffer;
-//	uint8_t Index;
+//	uint32_t * p_Buffer;
 //	uint8_t BufferSize;
+//	uint8_t Index;
 //	bool IsBufferFull;
-
 	int32_t Coeffcient;
 	int32_t Accumulator;
 }

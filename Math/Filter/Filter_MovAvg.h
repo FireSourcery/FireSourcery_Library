@@ -36,19 +36,18 @@
 
 #include <stdint.h>
 
-//void Filter_MovAvg_Init(Filter_T * p_filter, int32_t y0, qfrac16_t lambda)
-//{
-//	p_filter->Accumulator = y0;
-//	p_filter->Coeffcient = qfrac16_div(1, lambda);
-//}
-//
-//int32_t Filter_MovAvg(Filter_T * p_filter, int32_t in)
-//{
-//	p_filter->Accumulator = filter_movavg(p_filter->Accumulator, in, p_filter->Coeffcient);
-//
-//	return p_filter->Accumulator;
-//}
+static inline void Filter_MovAvg_Init(Filter_T * p_filter, int32_t y0, qfrac16_t lambda)
+{
+	p_filter->Accumulator = y0;
+	p_filter->Coeffcient = qfrac16_div(1, lambda);
+}
 
+static inline int32_t Filter_MovAvg(Filter_T * p_filter, int32_t in)
+{
+	p_filter->Accumulator = filter_movavg(p_filter->Accumulator, in, p_filter->Coeffcient);
+
+	return p_filter->Accumulator;
+}
 
 static inline void Filter_MovAvg_InitN(Filter_T * p_filter, int32_t y0, uint16_t n)
 {
@@ -56,12 +55,24 @@ static inline void Filter_MovAvg_InitN(Filter_T * p_filter, int32_t y0, uint16_t
 	p_filter->Coeffcient = n;
 }
 
-static inline int32_t Filter_MovAvg(Filter_T * p_filter, int32_t in)
+static inline int32_t Filter_MovAvg_N(Filter_T * p_filter, int32_t in)
 {
 	p_filter->Accumulator = filter_movavgn(p_filter->Accumulator, in, p_filter->Coeffcient);
 
 	return p_filter->Accumulator;
 }
 
+//static inline void Filter_MovAvg_InitAvg(Filter_T * p_filter, int32_t y0, uint16_t n)
+//{
+//	p_filter->Accumulator = y0;
+//	p_filter->Coeffcient = n;
+//}
+//
+//static inline int32_t Filter_MovAvg_Avg(Filter_T * p_filter, int32_t in)
+//{
+//	p_filter->Accumulator += in;
+//
+//	return p_filter->Accumulator;
+//}
 
 #endif
