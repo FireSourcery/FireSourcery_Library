@@ -9,7 +9,7 @@ Independently functional modules. Minimized dependency / coupling of modules.
 Hardware independent structure, using abstraction layers.  
 Generalized reusable C code.  
 OOP principles via encapsulation in C.  
-Following good coding practices, strong naming conventions, minimal code redundancy, design principles/patterns.  
+Following good coding practices, strong naming conventions, minimal code redundancy, design principles/patterns, const correctness.  
 
 ### Directory Contents Overview
 
