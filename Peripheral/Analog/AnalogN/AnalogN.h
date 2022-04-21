@@ -53,7 +53,7 @@ typedef union
 		uint32_t Adc7 : 1U;
 	};
 
-	uint32_t Flags;
+	uint8_t Flags;
 }
 AnalogN_AdcFlags_T;
 

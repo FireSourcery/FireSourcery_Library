@@ -352,8 +352,12 @@ static inline void Motor_User_ActivateCalibrationAdc(Motor_T * p_motor)
 
 static inline void Motor_User_ActivateCalibrationSinCos(Motor_T * p_motor)
 {
-	p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_SIN_COS;
-	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+	//check sincos enable
+	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
+	{
+		p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_SIN_COS;
+		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+	}
 }
 
 

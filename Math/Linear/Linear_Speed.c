@@ -92,11 +92,11 @@ void Linear_Speed_InitAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t
 	p_linear->SlopeDivisor 			= (1U << (angleBits + (30U - angleBits))) / (60U * sampleFreq);
 	p_linear->SlopeFactor_Shift 	= (30U - angleBits);
 
-	while(p_linear->YReference > INT32_MAX / p_linear->SlopeDivisor)
-	{
-		p_linear->SlopeDivisor = p_linear->SlopeDivisor >> 1U;
-		p_linear->SlopeFactor_Shift--;
-	}
+//	while(p_linear->YReference > INT32_MAX / p_linear->SlopeDivisor)
+//	{
+//		p_linear->SlopeDivisor = p_linear->SlopeDivisor >> 1U;
+//		p_linear->SlopeFactor_Shift--;
+//	}
 
 	p_linear->XOffset 				= 0;
 	p_linear->YOffset 				= 0;

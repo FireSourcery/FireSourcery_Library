@@ -96,16 +96,8 @@ extern bool Xcvr_SetXcvr(Xcvr_T * p_xcvr, uint8_t xcvrIndex);
 //{
 //}
 
-//static inline uint32_t Xcvr_GetRxFullCount(const Xcvr_T * p_xcvr)
-//{
-//
-//}
-//
-//static inline uint32_t Xcvr_GetTxEmptyCount(const Xcvr_T * p_xcvr)
-//{
-//
-//}
-//
+
+
 //static inline void Xcvr_EnableTx(const Xcvr_T * p_xcvr){}
 //static inline void Xcvr_DisableTx(const Xcvr_T * p_xcvr){}
 //static inline void Xcvr_EnableRx(const Xcvr_T * p_xcvr){}

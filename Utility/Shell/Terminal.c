@@ -53,7 +53,7 @@ void Terminal_Init(Terminal_T * p_terminal)
 #ifdef CONFIG_SHELL_XCVR_ENABLE
 void Terminal_SetXcvr(Terminal_T * p_terminal, uint8_t xcvrID)
 {
-	Xcvr_Init(p_terminal->Xcvr, xcvrID);
+	Xcvr_Init(&p_terminal->Xcvr, xcvrID);
 }
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
 void Terminal_SetSerial(Terminal_T * p_terminal, void * p_serial)
@@ -70,13 +70,13 @@ void Terminal_ConfigBaudRate(const Terminal_T * p_terminal, uint32_t baudRate)
 	if (baudRate != 0U)
 	{
 #ifdef CONFIG_SHELL_XCVR_ENABLE
+		//validate before
 		Xcvr_ConfigBaudRate(&p_terminal->Xcvr, baudRate);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
 		Serial_ConfigBaudRate(p_terminal->p_Serial, baudRate);
 #endif
 	}
 }
-
 
 char Terminal_RecvChar(const Terminal_T * p_terminal)
 {
@@ -92,7 +92,7 @@ char Terminal_RecvChar(const Terminal_T * p_terminal)
 void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-	Xcvr_Tx(&p_terminal->Xcvr, txChar, 1U);
+	Xcvr_Tx(&p_terminal->Xcvr, &txChar, 1U);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
 	Serial_SendChar(p_terminal->p_Serial, txChar);
 #endif
@@ -119,7 +119,7 @@ void Terminal_SendString_Prefixed(const Terminal_T * p_terminal, const char * p_
 bool Terminal_GetIsKeyPressed(const Terminal_T * p_terminal)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-
+	return ((Xcvr_GetRxFullCount(&p_terminal->Xcvr) == 0U) ? false : true);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
 	return ((Serial_GetRxFullCount(p_terminal->p_Serial) == 0U) ? false : true);
 #endif
@@ -156,19 +156,19 @@ bool Terminal_ProcCmdline(Terminal_T * p_terminal) //read from terminal
 			isComplete = true;
 		}
 //#ifdef CONFIG_SHELL_ARROW_KEYS_ENABLE
-		else if (cmdChar == '\e')
-		{
-			cmdChar =  Terminal_RecvChar(p_terminal);
-			if (cmdChar == '[')
-			{
-				cmdChar = Terminal_RecvChar(p_terminal);
-			}
-		}
+//		else if (cmdChar == '\e')
+//		{
+//			cmdChar =  Terminal_RecvChar(p_terminal);
+//			if (cmdChar == '[')
+//			{
+//				cmdChar = Terminal_RecvChar(p_terminal);
+//			}
+//		}
 //#endif
-		else if(cmdChar == '/0' || cmdChar == 0xFF)
-		{
-			Terminal_SendString(p_terminal, "\a");
-		}
+//		else if(cmdChar == '/0' || cmdChar == 0xFF)
+//		{
+//			Terminal_SendString(p_terminal, "\a");
+//		}
 		else
 		{
 			Terminal_SendString(p_terminal, "\a"); //beep
@@ -218,8 +218,8 @@ Terminal_Status_T Terminal_ParseCmdline(Terminal_T * p_terminal)
 void Terminal_SendNum(const Terminal_T * p_terminal, int32_t number)
 {
 	char numStr[16U];
-	snprintf(numStr, 16U, "%d", number);
-	Terminal_SendString_Prefixed(p_terminal, numStr, 16U);
+	snprintf(numStr, 16U, "%d", (int)number);
+	Terminal_SendString(p_terminal, numStr);
 }
 
 void Terminal_SendEsc(const Terminal_T * p_terminal)

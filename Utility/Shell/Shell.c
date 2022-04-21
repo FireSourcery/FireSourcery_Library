@@ -46,6 +46,7 @@ void Shell_Init(Shell_T * p_shell)
 
 	if(p_shell->Params.IsEnable == true) //check if terminal is set
 	{
+		//if xcvr id == p_shell->Params.XcvrId validate before
 		Terminal_ConfigBaudRate(&p_shell->Terminal, p_shell->Params.BaudRate);
 		Shell_Enable(p_shell);
 	}

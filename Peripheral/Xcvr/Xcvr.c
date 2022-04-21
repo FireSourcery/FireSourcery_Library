@@ -78,6 +78,21 @@ bool Xcvr_SetXcvr_Ptr(Xcvr_T * p_xcvr, void * p_xcvrStruct)
 	return status;
 }
 
+bool Xcvr_CheckValid(const Xcvr_T * p_xcvr, void * p_target)
+{
+	bool isValid = false;
+
+	for (uint8_t iXcvr = 0; iXcvr < p_xcvr->CONFIG.XCVR_COUNT; iXcvr++)
+	{
+		if (p_target == p_xcvr->CONFIG.P_XCVR_TABLE[iXcvr].P_XCVR)
+		{
+			isValid = true;
+			break;
+		}
+	}
+
+	return isValid;
+}
 
 void Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
 {
@@ -97,7 +112,7 @@ bool Xcvr_Tx(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
 
 	switch(p_xcvr->Type)
 	{
-		case XCVR_TYPE_SERIAL:	Serial_Send(p_xcvr->p_Xcvr, p_srcBuffer, length);	break;
+		case XCVR_TYPE_SERIAL:	status = Serial_Send(p_xcvr->p_Xcvr, p_srcBuffer, length);	break;
 		case XCVR_TYPE_I2C: 		break;
 		case XCVR_TYPE_SPI: 		break;
 		case XCVR_TYPE_VIRTUAL: 	break;
@@ -113,7 +128,7 @@ uint32_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
 
 	switch(p_xcvr->Type)
 	{
-		case XCVR_TYPE_SERIAL:	Serial_Recv(p_xcvr->p_Xcvr, p_destBuffer, length);	break;
+		case XCVR_TYPE_SERIAL:	rxCount = Serial_Recv(p_xcvr->p_Xcvr, p_destBuffer, length);	break;
 		case XCVR_TYPE_I2C: 		break;
 		case XCVR_TYPE_SPI: 		break;
 		case XCVR_TYPE_VIRTUAL: 	break;
@@ -123,20 +138,36 @@ uint32_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
 	return rxCount;
 }
 
-bool Xcvr_CheckValid(const Xcvr_T * p_xcvr, void * p_target)
+uint32_t Xcvr_GetRxFullCount(const Xcvr_T * p_xcvr)
 {
-	bool isValid = false;
+	uint32_t count;
 
-	for (uint8_t iXcvr = 0; iXcvr < p_xcvr->CONFIG.XCVR_COUNT; iXcvr++)
+	switch(p_xcvr->Type)
 	{
-		if (p_target == p_xcvr->CONFIG.P_XCVR_TABLE[iXcvr].P_XCVR)
-		{
-			isValid = true;
-			break;
-		}
+		case XCVR_TYPE_SERIAL: 	count = Serial_GetRxFullCount(p_xcvr->p_Xcvr);	break;
+		case XCVR_TYPE_I2C: 		break;
+		case XCVR_TYPE_SPI: 		break;
+		case XCVR_TYPE_VIRTUAL: 	break;
+		default: break;
 	}
 
-	return isValid;
+	return count;
+}
+
+uint32_t Xcvr_GetTxEmptyCount(const Xcvr_T * p_xcvr)
+{
+	uint32_t count;
+
+	switch(p_xcvr->Type)
+	{
+		case XCVR_TYPE_SERIAL: 	count = Serial_GetTxEmptyCount(p_xcvr->p_Xcvr);	break;
+		case XCVR_TYPE_I2C: 		break;
+		case XCVR_TYPE_SPI: 		break;
+		case XCVR_TYPE_VIRTUAL: 	break;
+		default: break;
+	}
+
+	return count;
 }
 
 

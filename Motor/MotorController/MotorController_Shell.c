@@ -46,7 +46,7 @@ extern void SystemSoftwareReset(void);
  */
 /*! @{ */
 /******************************************************************************/
-static int Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argv;
 
@@ -58,7 +58,7 @@ static int Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_STATUS_PROCESS_LOOP;
 }
 
-static int Cmd_monitor_Proc(MotorController_T * p_mc)
+static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
@@ -100,13 +100,13 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
 
         	Terminal_SendString(p_terminal, "Iq: ");
     		Terminal_SendNum(p_terminal, p_motor->Foc.Iq);
-        	Terminal_SendString(p_terminal, ",	Vq: ");
+        	Terminal_SendString(p_terminal, ",		Vq: ");
     		Terminal_SendNum(p_terminal, p_motor->Foc.Vq);
     		Terminal_SendString(p_terminal, " Q1.15\r\n");
 
 			Terminal_SendString(p_terminal, "Id: ");
 			Terminal_SendNum(p_terminal, p_motor->Foc.Id);
-			Terminal_SendString(p_terminal, ",	Vd: ");
+			Terminal_SendString(p_terminal, ",		Vd: ");
 			Terminal_SendNum(p_terminal, p_motor->Foc.Vd);
 			Terminal_SendString(p_terminal, " Q1.15\r\n");
 
@@ -201,7 +201,7 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
 //    		Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaT);
 //    		Terminal_SendString(p_terminal, " 625 kHz\r\n");
 
-
+			Terminal_SendString(p_terminal, "\r\n");
     		Terminal_SendString(p_terminal, "\r\n");
 
 //    	}
@@ -213,7 +213,7 @@ static int Cmd_monitor_Proc(MotorController_T * p_mc)
 
 
 
-static int Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 
@@ -286,7 +286,7 @@ static int Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_STATUS_SUCCESS;
 }
 
-static int Cmd_analoguser(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_analoguser(MotorController_T * p_mc, int argc, char ** argv)
 {
 	if(argc == 2U)
 	{
@@ -303,7 +303,7 @@ static int Cmd_analoguser(MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_STATUS_SUCCESS;
 }
 
-static int Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 {
 	char * end;
 	uint32_t value;
@@ -330,7 +330,7 @@ static int Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_STATUS_SUCCESS;
 }
 
-static int Cmd_stop(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_stop(MotorController_T * p_mc, int argc, char ** argv)
 {
 	uint32_t value;
 
@@ -343,7 +343,7 @@ static int Cmd_stop(MotorController_T * p_mc, int argc, char ** argv)
 }
 
 
-static int Cmd_calibrate(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_calibrate(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 
@@ -426,7 +426,7 @@ static int Cmd_calibrate(MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_STATUS_SUCCESS;
 }
 
-static int Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argc;
 	(void)argv;
@@ -434,7 +434,7 @@ static int Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static int Cmd_reboot(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_reboot(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argc;
 	(void)argv;
@@ -442,7 +442,7 @@ static int Cmd_reboot(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static int Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
@@ -470,7 +470,7 @@ static int Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static int Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
@@ -493,7 +493,7 @@ static int Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 
 
 
-static int Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 	int32_t heat 		= MotorController_User_GetHeatPcb_DegCInt(p_mc, 1U);
@@ -516,7 +516,7 @@ static int Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 }
 
 
-static int Cmd_vmonitor(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_vmonitor(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 	int32_t vSense 		= MotorController_User_GetVSense_MilliV(p_mc);
@@ -549,7 +549,7 @@ static int Cmd_vmonitor(MotorController_T * p_mc, int argc, char ** argv)
 }
 
 
-static int Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argv;
 
@@ -684,7 +684,7 @@ static int PrintHeat( )
 		Terminal_SendNum(p_terminal, p_mc->P##arameters.PARAM_STR); 	\
 		Terminal_SendString(p_terminal, "\r\n");
 
-static int Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
@@ -758,10 +758,6 @@ static int Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
 //		PRINT_PARAM(p_motor->Encoder.Params, IsALeadBPositive)
 //		PRINT_PARAM(p_motor->Encoder.Params, ExtendedTimerDeltaTStop)
 //		PRINT_PARAM(p_motor->Encoder.Params, MotorPolePairs)
-//
-
-
-//
 //		PRINT_PARAM(p_mc, Params.MotorPolePairs)
 //		.MOTOR_CONTROLLER =
 //		{
@@ -773,129 +769,14 @@ static int Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
 //			.BatteryFull_ADCU = 1811, //42V
 //		},
 //
-//		.ANALOG_USER =
-//		{
-//			.ThrottleZero_ADCU 	= 0U,
-//			.ThrottleMax_ADCU 	= 4095U,
-//			.BrakeZero_ADCU		= 0U,
-//			.BrakeMax_ADCU		= 4095U,
-//			.EnablePinThrottle 	= true,
-//			.EnablePinBrake		= true,
-//			.EnablePinNeutral 	= false,
-//		},
-//
-//		.PROTOCOLS[0U] =
-//		{
-//			.p_Xcvr 	= &Serials[1U],
-//			.p_Specs	= &ETS_SPECS,
-//			.IsEnable 	= false,
-//		},
-//
-//		.SHELL =
-//		{
-//			.p_Xcvr 	= &Serials[1U],
-//			.BaudRate 	= 19200U,
-//			.IsEnable 	= true,
-//		},
+		Terminal_SendString(p_terminal, "\r\n");
 	}
-
-
-//	/*
-//	 * Input Speed Q0.16
-//	 * Output SpeedControl => VPwm, Vq, Iq,
-//	 */
-//	.PID_SPEED[0U] =
-//	{
-//		.CalcFreq = 1000U,
-//		.Mode = PID_MODE_PI,
-//		.Direction = PID_DIRECTION_DIRECT,
-//
-//		.KpFactor = 1,
-//		.KpDivisor = 2,
-//		.KiFactor = 1,
-//		.KiDivisor = 2,
-//		.KdFactor = 0,
-//		.KdDivisor = 0,
-//
-//		.OutMin = 0,
-//		.OutMax = 65535,
-//	},
-//
-//	/*
-//	 * Input  Iq
-//	 * Output Vq, sign indicates direction
-//	 */
-//	.PID_FOC_IQ[0U] =
-//	{
-//		.CalcFreq = 20000U,
-//		.Mode = PID_MODE_PI,
-//		.Direction = PID_DIRECTION_DIRECT,
-//
-//		.KpFactor = 1,
-//		.KpDivisor = 2,
-//		.KiFactor = 1,
-//		.KiDivisor = 1,
-//		.KdFactor = 0,
-//		.KdDivisor = 0,
-//
-//		.OutMin = -32767,
-//		.OutMax = 32767,
-//	},
-//
-//	.PID_FOC_ID[0U] =
-//	{
-//		.CalcFreq = 20000U,
-//		.Mode = PID_MODE_PI,
-//		.Direction = PID_DIRECTION_DIRECT,
-//
-//		.KpFactor = 1,
-//		.KpDivisor = 2,
-//		.KiFactor = 1,
-//		.KiDivisor = 2,
-//		.KdFactor = 0,
-//		.KdDivisor = 0,
-//
-//		.OutMin = -32768/2,
-//		.OutMax = 32768/2,
-//	},
-//
-//	.PID_SIX_STEP_IBUS[0U] =
-//	{
-//		.CalcFreq = 20000U,
-//		.Mode = PID_MODE_PI,
-//		.Direction = PID_DIRECTION_DIRECT,
-//
-//		.KpFactor = 1,
-//		.KpDivisor = 2,
-//		.KiFactor = 1,
-//		.KiDivisor = 2,
-//		.KdFactor = 0,
-//		.KdDivisor = 0,
-//
-//		.OutMin = 0,
-//		.OutMax = 65535,
-//	},
-//
-//	.THERMISTOR_MOTORS[0U] =
-//	{
-//		.RNominal = 100000U,
-//		.TNominal = 298U,
-//		.BConstant = 3950U,
-//
-//		.Limit_ADCU = 0,
-//		.Threshold_ADCU = 0,
-//
-//		.IntScalar = 1U,
-//		.IsEnable = false,
-//	},
-
-
 
     return CMD_STATUS_SUCCESS;
 }
 
 
-static int Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 {
 //    	for(uint8_t iMotor = 0U; iMotor < CmdMotorCount; iMotor++)
 //    	{

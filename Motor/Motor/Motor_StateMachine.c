@@ -187,14 +187,14 @@ static void Stop_Proc(Motor_T * p_motor)
 {
 	if(p_motor->Speed_RPM > 0U)  	//poll speedfeedback or use bemf
 	{
-		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
+//		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
 	}
 	else
 	{
-		if(Timer_Poll(&p_motor->ControlTimer) == true)
-		{
-			Motor_FOC_ProcAngleObserve(p_motor);
-		}
+//		if(Timer_Poll(&p_motor->ControlTimer) == true)
+//		{
+//			Motor_FOC_ProcAngleObserve(p_motor);
+//		}
 	}
 }
 

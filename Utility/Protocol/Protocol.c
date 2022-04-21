@@ -35,7 +35,7 @@
 static inline bool IsXcvrSet(Protocol_T * p_protocol)
 {
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
-	return (p_protocol->Xcvr.p_Xcvr != 0U); //todo sub Xcvr.p_Xcvr
+	return (p_protocol->Xcvr.p_Xcvr != 0U); //todo sub Xcvr.p_Xcvr if validate xcvr id
 #elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
 	return (p_protocol->Params.p_Serial != 0U);
 #endif
@@ -46,7 +46,7 @@ static inline void ConfigSpecsBaudRate(Protocol_T * p_protocol)
 	if (p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT != 0U)
 	{
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
-		Xcvr_ConfigBaudRate(p_protocol->Xcvr, p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT);
+		Xcvr_ConfigBaudRate(&p_protocol->Xcvr, p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT);
 #elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
 		Serial_ConfigBaudRate(p_protocol->Params.p_Serial, p_protocol->Params.p_Specs->BAUD_RATE_DEFAULT);
 #endif
@@ -61,7 +61,7 @@ void Protocol_Init(Protocol_T * p_protocol)
 	}
 
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
-	Xcvr_Init(p_protocol->Xcvr, p_protocol->Params.XcvrId);
+	Xcvr_Init(&p_protocol->Xcvr, p_protocol->Params.XcvrId);
 #endif
 
 	if(IsXcvrSet(p_protocol) && (p_protocol->Params.p_Specs != 0U) && (p_protocol->Params.IsEnable == true))
