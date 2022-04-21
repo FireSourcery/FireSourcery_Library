@@ -74,7 +74,7 @@ static inline uint8_t Terminal_GetCmdlineArgC(const Terminal_T * p_terminal)
 	return p_terminal->ArgC;
 }
 
-static inline char ** Terminal_GetCmdlineArgV(const Terminal_T * p_terminal)
+static inline char ** Terminal_GetCmdlineArgV(Terminal_T * p_terminal)
 {
 	return p_terminal->ArgV;
 }

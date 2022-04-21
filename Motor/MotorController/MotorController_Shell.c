@@ -251,20 +251,6 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
     	{
     		p_mc->Shell.Params.IsEnable = false;
     		p_mc->CONFIG.P_PROTOCOLS[0U].Params.IsEnable = true;
-
-//							.PROTOCOLS[0U] =
-//							{
-//								.p_Xcvr 	= &Serials[1U],
-//								.p_Specs	= &ETS_SPECS,
-//								.IsEnable 	= false,
-//							},
-//
-//							.SHELL =
-//							{
-//								.p_Xcvr 	= &Serials[1U],
-//								.BaudRate 	= 19200U,
-//								.IsEnable 	= true,
-//							},
     	}
 
     }

@@ -41,7 +41,7 @@
 //#ifdef CONFIG_SHELL_XCVR_ENABLE
 //	return (p_terminal->Xcvr.p_Xcvr != 0U); //todo sub Xcvr.p_Xcvr
 //#elif defined(CONFIG_SHELL_XCVR_SERIAL)
-//	return (p_terminal->Terminal.p_Serial != 0U);
+
 //#endif
 //}
 
@@ -58,7 +58,7 @@ void Terminal_SetXcvr(Terminal_T * p_terminal, uint8_t xcvrID)
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
 void Terminal_SetSerial(Terminal_T * p_terminal, void * p_serial)
 {
-	if (p_serial != 0U)
+	if(p_terminal->p_Serial != 0U)
 	{
 		p_terminal->p_Serial = p_serial;
 	}
@@ -70,10 +70,13 @@ void Terminal_ConfigBaudRate(const Terminal_T * p_terminal, uint32_t baudRate)
 	if (baudRate != 0U)
 	{
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-		//validate before
+		//if (Xcvr_CheckValid(&p_terminal->Xcvr){}
 		Xcvr_ConfigBaudRate(&p_terminal->Xcvr, baudRate);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
+		if(p_terminal->p_Serial != 0U)
+		{
 		Serial_ConfigBaudRate(p_terminal->p_Serial, baudRate);
+		}
 #endif
 	}
 }

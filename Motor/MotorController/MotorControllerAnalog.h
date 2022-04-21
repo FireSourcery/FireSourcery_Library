@@ -101,6 +101,4 @@ typedef struct
 }
 MotAnalog_Conversions_T;
 
-
-
 #endif

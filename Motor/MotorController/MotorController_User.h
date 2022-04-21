@@ -195,7 +195,6 @@ static inline void MotorController_User_ProcNeutral(MotorController_T * p_mc)
 	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_NEUTRAL);
 }
 
-
 static inline void MotorController_User_StartReleaseThrottle(MotorController_T * p_mc) //set release
 {
 	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_RELEASE_BRAKE);

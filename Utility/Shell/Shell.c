@@ -56,9 +56,15 @@ void Shell_Init(Shell_T * p_shell)
 	}
 }
 
-void Shell_SetXcvr(Shell_T * p_shell, void * p_xcvr)
+//void Shell_SetXcvr(Shell_T * p_shell, void * p_xcvr)
+//{
+////	Terminal_SetXcvr_Ptr(&p_shell->Terminal, p_xcvr);
+//}
+
+void Shell_SetXcvrId(Shell_T * p_shell, uint8_t xcvrId)
 {
-	Terminal_SetXcvr(&p_shell->Terminal, p_xcvr);
+	p_shell->Params.XcvrId = xcvrId;
+	Terminal_SetXcvr(&p_shell->Terminal, xcvrId);
 }
 
 /******************************************************************************/

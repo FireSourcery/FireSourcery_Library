@@ -68,6 +68,10 @@ void Motor_InitReboot(Motor_T * p_motor)
 	{
 		Hall_Init(&p_motor->Hall);
 	}
+	else if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
+	{
+		SinCos_Init(&p_motor->SinCos);
+	}
 
 	Thermistor_Init(&p_motor->Thermistor);
 	p_motor->AnalogResults.Heat_ADCU = p_motor->Thermistor.Params.Threshold_ADCU;

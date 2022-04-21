@@ -46,7 +46,6 @@
  * +/- Sign indicates along or against direction selected. NOT virtual CW/CCW
  */
 
-
 /******************************************************************************/
 /*!
  * State Machine Error checked inputs
@@ -276,17 +275,7 @@ static inline void Motor_User_SetThrottleCmd(Motor_T * p_motor, uint16_t throttl
  */
 static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 {
-	//use minimal brake to compensate for PID integral, or small values will increase speed as integral dominates proportional
 	int32_t torque = (int32_t)0 - (int32_t)brake;
-
-//	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-//	{
-//
-//	}
-//	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
-//	{
-//
-//	}
 
 	if(p_motor->ControlModeFlags.Hold == 0U)
 	{

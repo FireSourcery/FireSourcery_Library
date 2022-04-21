@@ -187,6 +187,10 @@ static const StateMachine_State_T STATE_STOP =
 
     release/edge inputs implicitly tracks previous state.
     or use brake, throttle, neutral states, also accounts for entry function
+
+    while in neutral,
+    brake release detected, throttle release ignore,
+    is implemented via dependency on input priority, may need to change
 */
 /******************************************************************************/
 static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc)
