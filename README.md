@@ -5,23 +5,23 @@ A **General Embedded C Library** and **Motor Control Library**
 ## Overview and Features 
 
 * Modular Design  
- - Independently functional modules. Minimized dependency / coupling of modules.  
- - Hardware independent structure, using abstraction layers.  
- - Generalized reusable C code.  
- - OOP principles via encapsulation in C.  
- - Follows good coding practices: strong naming conventions, minimal code redundancy, design principles/patterns, const correctness.  
+  - Independently functional modules. Minimized dependency / coupling of modules.
+  - Hardware independent structure, using abstraction layers.
+  - Generalized reusable C code.
+  - OOP principles via encapsulation in C.
+  - Follows good coding practices: strong naming conventions, minimal code redundancy, design principles/patterns, const correctness.
 
 * Motor Library Features
- - FOC.
- - Sensors: Hall, Sine Cosine, Quadrature Encoder.
- - Speed and current feedback loop.
- - Hierarchical implementation of control behavior with code reuse.
+  - FOC.
+  - Sensors: Hall, Sine Cosine, Quadrature Encoder.
+  - Speed and current feedback loop.
+  - Hierarchical implementation of control behavior with code reuse.
 
 * TODO
- - Standard protocol for GUI and Arduino interface + GUI + Arduino side library
- - Encoder HFI align
- - Sensorless algorithms
- - Misra compliance
+  - Standard protocol for GUI and Arduino interface + GUI + Arduino side library
+  - Encoder HFI align
+  - Sensorless algorithms
+  - Misra compliance
 
 ### Directory Contents Overview
 
