@@ -38,9 +38,18 @@
 /*
  * Controller Nvm Variables
  */
+//#define MC_SOFTWARE_VERSION_OPT			0
+//#define MC_SOFTWARE_VERSION_MAJOR 		0
+//#define MC_SOFTWARE_VERSION_MINOR 		1
+//#define MC_SOFTWARE_VERSION_BUGFIX 		0
+static inline uint8_t MotorController_User_GetLibraryVersion(MotorController_T * p_mc, uint8_t charIndex) {return p_mc->CONFIG.P_ONCE->NAME[charIndex];}
+
 static inline uint8_t MotorController_User_GetName(MotorController_T * p_mc, uint8_t charIndex) {return p_mc->CONFIG.P_ONCE->NAME[charIndex];}
+
 static inline void MotorController_User_SetFastBoot(MotorController_T * p_mc, bool isEnable)	{p_mc->MemMapBoot.FastBoot = isEnable;}
 static inline void MotorController_User_SetLoadDefault(MotorController_T * p_mc, bool isEnable)	{p_mc->MemMapBoot.LoadDefault = isEnable;}
+
+
 
 static inline void MotorController_User_CalibrateBattery_MilliV(MotorController_T * p_mc, uint32_t zero_mV, uint32_t max_mV)
 {

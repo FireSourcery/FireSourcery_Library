@@ -62,6 +62,11 @@
 #include <stdint.h>
 #include <string.h>
 
+#define MC_SOFTWARE_VERSION_OPT			0
+#define MC_SOFTWARE_VERSION_MAJOR 		0
+#define MC_SOFTWARE_VERSION_MINOR 		1
+#define MC_SOFTWARE_VERSION_BUGFIX 		0
+
 typedef enum
 {
 	MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
