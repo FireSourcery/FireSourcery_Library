@@ -37,12 +37,25 @@ typedef struct
 {
 //	uint32_t * p_Buffer;
 //	uint8_t BufferSize;
-//	uint8_t Index;
+	uint16_t Index;
 //	bool IsBufferFull;
 	int32_t Coeffcient;
 	int32_t Accumulator;
 }
 Filter_T;
+
+static inline void Filter_InitAvg(Filter_T * p_filter)
+{
+	p_filter->Accumulator = 0;
+	p_filter->Index = 0U;
+}
+
+static inline int32_t Filter_Avg(Filter_T * p_filter, int32_t in)
+{
+	p_filter->Accumulator += in;
+	p_filter->Index++;
+	return p_filter->Accumulator / p_filter->Index;
+}
 
 #endif
 

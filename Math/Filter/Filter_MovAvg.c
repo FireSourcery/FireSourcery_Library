@@ -28,9 +28,7 @@
     @version V0
 */
 /******************************************************************************/
-#include "Filter.h"
-#include "math_filter.h"
+#include "Filter_MovAvg.h"
 
-#include "Math/Q/QFrac16.h"
 
 

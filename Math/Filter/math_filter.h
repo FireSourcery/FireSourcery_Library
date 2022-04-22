@@ -47,11 +47,7 @@
  */
 static inline int16_t filter_movavg(int32_t yPrev, int32_t x, qfrac16_t lambda)
 {
-	int16_t y;
-
-	y = ((yPrev * (QFRAC16_1_OVERSAT - lambda)) + (x * lambda)) >> QFRAC16_N_FRAC_BITS;
-
-	return y;
+	return ((yPrev * (QFRAC16_1_OVERSAT - lambda)) + (x * lambda)) >> QFRAC16_N_FRAC_BITS;
 }
 
 /*
@@ -61,11 +57,7 @@ static inline int16_t filter_movavg(int32_t yPrev, int32_t x, qfrac16_t lambda)
  */
 static inline int32_t filter_movavgn(int32_t yPrev, int32_t x, uint16_t n)
 {
-	int32_t y;
-
-	y = (yPrev * (n - 1) + x) / n;
-
-	return y;
+	return (yPrev * (n - 1) + x) / n;
 }
 
 #endif
