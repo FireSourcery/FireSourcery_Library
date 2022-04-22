@@ -46,7 +46,7 @@ static const qfrac16_t QFRAC16_MIN = (int16_t) 0x8000; /*!< (-32768) */
 static const qfrac16_t QFRAC16_1_DIV_2 = 0x4000; /*!< 16384 */
 static const qfrac16_t QFRAC16_1_DIV_4 = 0x2000;
 static const qfrac16_t QFRAC16_3_DIV_4 = 0x6000;
-static const qfrac16_t QFRAC16_1_DIV_3 = 0x2AAB;
+static const qfrac16_t QFRAC16_1_DIV_3 = 0x2AAA;
 static const qfrac16_t QFRAC16_2_DIV_3 = 0x5555;
 static const qfrac16_t QFRAC16_1_DIV_SQRT3 = 0x49E7; /*!< 0.57735026919f */
 static const qfrac16_t QFRAC16_SQRT3_DIV_2 = 0x6EDA;
@@ -64,8 +64,8 @@ static const qangle16_t QANGLE16_180 = 0x8000; /*!< 32768, -32768, 180 == -180 *
 static const qangle16_t QANGLE16_270 = 0xC000; /*!< 49152, -16384, 270 == -90 */
 
 static const qangle16_t QANGLE16_0 = 0; 		/*!  */
-static const qangle16_t QANGLE16_120 = 21845; 	/*!  */
-static const qangle16_t QANGLE16_240 = 43690; 	/*!  */
+static const qangle16_t QANGLE16_120 = 0x5555; 	/*!  */
+static const qangle16_t QANGLE16_240 = 0xAAAA; 	/*!  */
 
 #define SINE_90_TABLE_ENTRIES 	256
 #define SINE_90_TABLE_LSB 		6	/*!< Insignificant bits, shifted away*/
@@ -85,7 +85,7 @@ static inline qfrac16_t qfrac16_convert(int16_t num, int32_t max)
 	return qfrac16(num, max);
 }
 
-static inline qfrac16_t qfrac16_sat(int32_t qfrac) //sat to -32767?
+static inline qfrac16_t qfrac16_sat(int32_t qfrac)
 {
 	qfrac16_t sat;
 
@@ -107,7 +107,7 @@ static inline qfrac16_t qfrac16_sat(int32_t qfrac) //sat to -32767?
 	0x8000 casts from 32768 int32_t to -32768 int16_t incorrectly
 	must call sat to convert to correct int16_t value
  */
-static inline int32_t qfrac16_mul(int32_t factor, qfrac16_t frac)
+static inline int32_t qfrac16_mul(int32_t factor, int32_t frac)
 {
 	return (((int32_t)factor * (int32_t)frac) >> QFRAC16_N_FRAC_BITS);
 }
@@ -115,7 +115,7 @@ static inline int32_t qfrac16_mul(int32_t factor, qfrac16_t frac)
 /*!
 	@return [-32767, 32767] as int16_t
  */
-static inline qfrac16_t qfrac16_mul_sat(int32_t factor, qfrac16_t frac)
+static inline qfrac16_t qfrac16_mul_sat(int32_t factor, int32_t frac)
 {
 	int32_t product = qfrac16_mul(factor, frac);
 
@@ -126,13 +126,13 @@ static inline qfrac16_t qfrac16_mul_sat(int32_t factor, qfrac16_t frac)
 
 /*!
 	@return [-1073741824, 1073709056] as int32_t
-	@return [c0000000, 3fff8000]
+	@return [0XC0000000, 0X3FFF8000]
 	(frac, frac) 		returns frac value
 							when dividend >= divisor, over saturated qfrac16_t. 0x8000 -> over saturated 1
 							when dividend < divisor, within qfrac16_t range
 	(integer, frac) 	returns integer value
 */
-static inline int32_t qfrac16_div(int16_t dividend, qfrac16_t divisor)
+static inline int32_t qfrac16_div(int16_t dividend, int32_t divisor)
 {
 	return (((int32_t)dividend << QFRAC16_N_FRAC_BITS) / (int32_t)divisor);
 }
@@ -140,7 +140,7 @@ static inline int32_t qfrac16_div(int16_t dividend, qfrac16_t divisor)
 /*!
 	@return [-32768, 32767] as int16_t
  */
-static inline qfrac16_t qfrac16_div_sat(int16_t dividend, qfrac16_t divisor)
+static inline qfrac16_t qfrac16_div_sat(int16_t dividend, int32_t divisor)
 {
 	int32_t quotient = qfrac16_div(dividend, divisor);
 	return qfrac16_sat(quotient);
@@ -165,7 +165,7 @@ static inline qfrac16_t qfrac16_abs(qfrac16_t x)
 	return val;
 }
 
-static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
+static inline qfrac16_t qfrac16_sqrt(int32_t x)
 {
 	return q_sqrt((int32_t)x << QFRAC16_N_FRAC_BITS);
 }
@@ -272,14 +272,14 @@ static inline qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
 		r = qfrac16_div((x - yAbs), (x + yAbs));
 		r_3 = qfrac16_mul(qfrac16_mul(r, r), r);
 //		angle = qfrac16_mul(0x00003240/2U, r_3) - qfrac16_mul(0x0000FB50/2U, r) + QFRAC16_PI_DIV_4;
-		angle = qfrac16_mul(0x03FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_1_DIV_4;
+		angle = qfrac16_mul(0x07FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_1_DIV_4;
 	}
 	else
 	{
 		r = qfrac16_div((x + yAbs), (yAbs - x));
-		r_3 = qfrac16_mul(qfrac16_mul(r, r), r); //pi 0x0001921F
+		r_3 = qfrac16_mul(qfrac16_mul(r, r), r);
 //		angle = qfrac16_mul(0x00003240/2U, r_3) - qfrac16_mul(0x0000FB50/2U, r) + QFRAC16_3PI_DIV_4;
-		angle = qfrac16_mul(0x03FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_3_DIV_4;
+		angle = qfrac16_mul(0x07FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_3_DIV_4;
 	}
 
 	if(y < 0) {angle = -angle;}

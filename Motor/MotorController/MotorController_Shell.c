@@ -370,14 +370,14 @@ static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
 			Terminal_SendString(p_terminal, "IsBPositive: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.IsBPositive); 	Terminal_SendString(p_terminal, " \r\n");
 			Terminal_SendString(p_terminal, "Phase 0: "); Terminal_SendNum(p_terminal, p_motor->Debug[9U]); Terminal_SendString(p_terminal, "Deg16 \r\n");
 			Terminal_SendString(p_terminal, "Phase A: "); Terminal_SendNum(p_terminal, p_motor->Debug[0U]); Terminal_SendString(p_terminal, "Deg16 \r\n");
-			Terminal_SendString(p_terminal, "Sin: "); Terminal_SendNum(p_terminal, p_motor->Debug[3U]);
-			Terminal_SendString(p_terminal, "Cos: "); Terminal_SendNum(p_terminal, p_motor->Debug[4U]);  	Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "Sin: "); Terminal_SendNum(p_terminal, p_motor->Debug[3U]);	Terminal_SendString(p_terminal, "Cos: "); Terminal_SendNum(p_terminal, p_motor->Debug[4U]);
+			Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "Phase B: "); Terminal_SendNum(p_terminal, p_motor->Debug[1U]); Terminal_SendString(p_terminal, "Deg16 \r\n");
-			Terminal_SendString(p_terminal, "Sin: "); Terminal_SendNum(p_terminal, p_motor->Debug[5U]);
-			Terminal_SendString(p_terminal, "Cos: "); Terminal_SendNum(p_terminal, p_motor->Debug[6U]);  	Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "Sin: "); Terminal_SendNum(p_terminal, p_motor->Debug[5U]);	Terminal_SendString(p_terminal, "Cos: "); Terminal_SendNum(p_terminal, p_motor->Debug[6U]);
+			Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "Phase C: "); Terminal_SendNum(p_terminal, p_motor->Debug[2U]); Terminal_SendString(p_terminal, "Deg16 \r\n");
-			Terminal_SendString(p_terminal, "Sin: "); Terminal_SendNum(p_terminal, p_motor->Debug[7U]);
-			Terminal_SendString(p_terminal, "Cos: "); Terminal_SendNum(p_terminal, p_motor->Debug[8U]);  	Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "Sin: "); Terminal_SendNum(p_terminal, p_motor->Debug[7U]);	Terminal_SendString(p_terminal, "Cos: "); Terminal_SendNum(p_terminal, p_motor->Debug[8U]);
+			Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "\r\n");
 
 		}
@@ -759,18 +759,18 @@ static Cmd_Status_T Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
 
 static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 {
-
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 	qfrac16_t atan2_0 = qfrac16_atan2(0, 32767);
 	qfrac16_t atan2_90 = qfrac16_atan2(32767, 0);
-	qfrac16_t atan2_270 = qfrac16_atan2(-32767, 0);
 	qfrac16_t atan2_180 = qfrac16_atan2(0, -32767);
+	qfrac16_t atan2_270 = qfrac16_atan2(-32767, 0);
 	qfrac16_t atan2_err = qfrac16_atan2(0, 0);
+
 	Terminal_SendString(p_terminal, "Atan2: "); Terminal_SendString(p_terminal, "\r\n");
 	Terminal_SendNum(p_terminal, atan2_0); Terminal_SendString(p_terminal, "\r\n");
 	Terminal_SendNum(p_terminal, atan2_90); Terminal_SendString(p_terminal, "\r\n");
-	Terminal_SendNum(p_terminal, atan2_270); Terminal_SendString(p_terminal, "\r\n");
 	Terminal_SendNum(p_terminal, atan2_180); Terminal_SendString(p_terminal, "\r\n");
+	Terminal_SendNum(p_terminal, atan2_270); Terminal_SendString(p_terminal, "\r\n");
 	Terminal_SendNum(p_terminal, atan2_err); Terminal_SendString(p_terminal, "\r\n");
 
 //    	for(uint8_t iMotor = 0U; iMotor < CmdMotorCount; iMotor++)
