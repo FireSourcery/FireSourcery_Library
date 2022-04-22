@@ -1,0 +1,31 @@
+digraph G {
+  "Library" -> "Motor" 
+  "Transducer" -> "Motor" 
+
+  "MotorAnalog.h" -> "Motor"
+  "Motor" -> "Motor_FOC"
+  "Motor" -> "Motor_SixStep"
+  "Motor_SixStep" -> "Motor_Analog"
+  "FOC" -> "Motor_FOC"
+  "Motor_FOC" -> "Motor_Analog"
+  "Motor_FOC" -> "Motor_StateMachine"
+  "Motor_SixStep" -> "Motor_StateMachine"
+  "Motor_StateMachine" -> "Motor_Thread"
+  "Motor_StateMachine" -> "Motor_User"
+
+  "Motor_User" -> "MotorController" 
+  "Motor_Thread" -> "MotorController_Thread" 
+}
+
+digraph G {
+  "Motor_User" -> "MotorController"
+  "Motor_Thread" -> "MotorController_Thread"
+  "Library" -> "MotorController"
+  "MotAnalogUser" -> "MotorController"
+  "MotorControllerAnalog.h" -> "MotorController" 
+  "MotorController" -> "MotorController_StateMachine"
+  "MotorController" -> "MotorController_Analog"
+  "MotorController_StateMachine" -> "MotorController_User"
+  "MotorController_User" -> "MotorController_Shell" 
+  "MotorController_User" -> "MotorController_Thread"
+}

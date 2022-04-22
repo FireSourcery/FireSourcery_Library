@@ -94,35 +94,35 @@ static inline uint16_t q_sqrt(int32_t x)
 	return (uint16_t) y;
 }
 
-qfrac16_t qfrac16_sqrt(qfrac16_t x)
-{
-	qfrac16_t guess;
-	qfrac16_t half = QFRAC16_1_DIV_4; //8192; // (1<<13), 1/8
-
-	if (x < 0)
-	{
-		guess = 0;
-	}
-	else
-	{
-		guess = QFRAC16_1_DIV_2; //16384; // (1<<14), .5
-
-		while (half > 0)
-		{
-			if (qfrac16_mul(guess, guess) > x)
-			{
-				guess -= half;
-			}
-			else
-			{
-				guess += half; //larger fraction for smaller x
-			}
-
-			half = half / 2;
-		}
-	}
-
-	return guess;
-}
+//qfrac16_t qfrac16_sqrt(qfrac16_t x)
+//{
+//	qfrac16_t guess;
+//	qfrac16_t half = QFRAC16_1_DIV_4; //8192; // (1<<13), 1/8
+//
+//	if (x < 0)
+//	{
+//		guess = 0;
+//	}
+//	else
+//	{
+//		guess = QFRAC16_1_DIV_2; //16384; // (1<<14), .5
+//
+//		while (half > 0)
+//		{
+//			if (qfrac16_mul(guess, guess) > x)
+//			{
+//				guess -= half;
+//			}
+//			else
+//			{
+//				guess += half; //larger fraction for smaller x
+//			}
+//
+//			half = half / 2;
+//		}
+//	}
+//
+//	return guess;
+//}
 
 #endif
