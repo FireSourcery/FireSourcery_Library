@@ -60,6 +60,14 @@ void SinCos_SetParamsAdc_MilliV(SinCos_T * p_sincos, uint16_t min_MilliV, uint16
 }
 
 /*
+ *
+ */
+void SinCos_SetERotationsPerCycle(SinCos_T * p_sincos, uint16_t polePairs, uint16_t cyclesPerMRotation)
+{
+	p_sincos->Params.ElectricalRotationsPerCycle = polePairs / cyclesPerMRotation;
+}
+
+/*
  * run on measure 0
  */
 void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
@@ -75,7 +83,6 @@ void SinCos_CalibrateCcwPositive(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_
 {
 	p_sincos->Params.IsBPositive = (SinCos_CalcAngle(p_sincos, sin_ADCU, cos_ADCU) > 0U) ? true : false;
 }
-
 
 void SinCos_CalibrateA(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
 {

@@ -72,10 +72,7 @@ static inline int32_t Linear_Ramp_ProcIndexOutputInc(Linear_T * p_linear, uint32
 		}
 		/* else slope is 0, continue to return the same value */
 
-		if(newRampValue != p_linear->YReference)
-		{
-			*p_index += indexIncreament;
-		}
+		if(newRampValue != p_linear->YReference) { *p_index += indexIncreament; }
 	}
 	else
 	{

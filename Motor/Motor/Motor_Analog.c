@@ -169,23 +169,19 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
 //void Motor_CapturePwmOnFlag(Motor_T * p_motor)
 //{
 //	p_motor->IsPwmOn = true;
-////	p_motor->PwmOnTime = Debug_CaptureElapsed(6);
-//
 //}
 
 /*
  * Sets options only
  */
-//const Analog_Conversion_T MOTOR_ANALOG_CONVERSION_OPTION_PWM_ON =
+//const Analog_Options_T MOTOR_ANALOG_OPTIONS_PWM_ON =
 //{
-//	.P_VIRTUAL = 0U,
 //	.OPTIONS = {.IsValid = 1U, .HwTriggerConversion = 1U, },
 //	.ON_OPTIONS = SetPwmOnFlag,
 //};
 //
-//const Analog_Conversion_T MOTOR_ANALOG_CONVERSION_OPTION_RESTORE =
+//const Analog_Options_T MOTOR_ANALOG_OPTIONS_RESTORE =
 //{
-//	.P_VIRTUAL = 0U,
 //	.OPTIONS = {.IsValid = 1U, .HwTriggerConversion = 0U, },
 //};
 

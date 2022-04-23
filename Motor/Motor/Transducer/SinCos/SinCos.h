@@ -42,7 +42,9 @@ typedef struct __attribute__((aligned (4U)))
 	uint16_t Zero_ADCU;
 	uint16_t Max_ADCU;
 	uint16_t Max_MilliV;
-	uint16_t CyclesPerRotation;
+//	uint16_t CyclesPerRotation;
+
+	uint16_t ElectricalRotationsPerCycle;
 	qangle16_t AngleOffet;
 	bool IsBPositive;		/* CCW is fixed to positive */
 }
@@ -78,7 +80,13 @@ static inline qangle16_t SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_ADCU
 {
 	qfrac16_t sin = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitsAngle, sin_ADCU);
 	qfrac16_t cos = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitsAngle, cos_ADCU);
-	qangle16_t angle = qfrac16_atan2(sin, cos) - p_sincos->Params.AngleOffet;
+	qangle16_t angle = qfrac16_atan2(sin, cos);
+
+//	angle = angle * PolePairs / CyclesPerRotation;
+
+	angle = (uint32_t)angle * p_sincos->Params.ElectricalRotationsPerCycle;
+	angle = angle - p_sincos->Params.AngleOffet;
+
 	if (p_sincos->IsDirectionPositive == false) {angle = 0 - angle;};
 	return angle;
 }
@@ -88,6 +96,17 @@ static inline qangle16_t SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_ADCU
  */
 static inline void SinCos_SetDirectionCcw(SinCos_T * p_sincos) 	{ p_sincos->IsDirectionPositive = p_sincos->Params.IsBPositive; }
 static inline void SinCos_SetDirectionCw(SinCos_T * p_sincos) 	{ p_sincos->IsDirectionPositive = !p_sincos->Params.IsBPositive; }
+
+/*
+ * Extern declarations
+ */
+extern void SinCos_Init(SinCos_T * p_sincos);
+extern void SinCos_SetParamsAdc(SinCos_T * p_sincos, uint16_t zero_ADCU, uint16_t max_ADCU, uint16_t max_MilliV);
+extern void SinCos_SetParamsAdc_MilliV(SinCos_T * p_sincos, uint16_t min_MilliV, uint16_t max_MilliV);
+extern void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU);
+extern void SinCos_CalibrateCcwPositive(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU);
+extern void SinCos_CalibrateA(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU);
+extern void SinCos_CalibrateB(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU);
 
 #endif
 

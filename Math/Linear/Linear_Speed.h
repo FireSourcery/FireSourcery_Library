@@ -24,7 +24,7 @@
 /*!
     @file 	Linear_Speed.h
     @author FireSoucery
-    @brief	Linear Frac16 calc without division
+    @brief
     @version V0
 */
 /******************************************************************************/
@@ -32,15 +32,7 @@
 #define LINEAR_SPEED_H
 
 #include "Linear.h"
-
 #include <stdbool.h>
-
-
-//static inline int32_t Linear_Speed_CalcAngleRpm(const Linear_T * p_linear, int16_t angle, int16_t anglePrev, bool isDirectionPositive)
-//{
-//	uint16_t deltaAngle = CalcLinearSpeedDeltaAngle(angle, anglePrev, isDirectionPositive);
-//	return Linear_Function(p_linear, deltaAngle);
-//}
 
 static inline int32_t Linear_Speed_CalcAngleRpm(const Linear_T * p_linear, uint16_t angle)
 {

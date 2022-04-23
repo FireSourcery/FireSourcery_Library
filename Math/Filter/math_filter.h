@@ -40,10 +40,8 @@
  * lambda = 1/N
  *
  * e.g.
- *
  * 0.015625 -> 64 size array
  * 0.03125  -> 32 size array
- *
  */
 static inline int16_t filter_movavg(int32_t yPrev, int32_t x, qfrac16_t lambda)
 {

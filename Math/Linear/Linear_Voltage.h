@@ -24,7 +24,7 @@
 /*!
     @file 	Linear_Voltage.h
     @author FireSoucery
-    @brief 	Voltage to ADC values conversion using voltage divider.
+    @brief 	ADC to Voltage values conversion using voltage divider.
     		Calculates and holds ADCU voltage conversion ratios
 
     @version V0
@@ -56,7 +56,6 @@
 /******************************************************************************/
 /*!
 	@brief Calculate voltage from given ADC value
-	// (adcu*VREF*(R1+R2))/(ADC_MAX*R2);
 	 *
 	@param[in] p_linear - struct containing calculated intermediate values
 	@param[in] adcu - ADC value
@@ -175,5 +174,6 @@ static inline uint16_t Linear_Voltage_CalcAdcu_FractionSigned16(const Linear_T *
 }
 
 extern void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcVRef10, uint8_t adcBits, uint16_t vInMax);
+
 
 #endif

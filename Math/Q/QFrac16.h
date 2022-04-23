@@ -128,8 +128,8 @@ static inline qfrac16_t qfrac16_mul_sat(int32_t factor, int32_t frac)
 	@return [-1073741824, 1073709056] as int32_t
 	@return [0XC0000000, 0X3FFF8000]
 	(frac, frac) 		returns frac value
-							when dividend >= divisor, over saturated qfrac16_t. 0x8000 -> over saturated 1
-							when dividend < divisor, within qfrac16_t range
+		when dividend >= divisor, over saturated qfrac16_t. 0x8000 -> over saturated 1
+		when dividend < divisor, within qfrac16_t range
 	(integer, frac) 	returns integer value
 */
 static inline int32_t qfrac16_div(int16_t dividend, int32_t divisor)
@@ -284,8 +284,5 @@ static inline qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
 
 	return angle; /* angle loops, no need to saturate */
 }
-
-
-
 
 #endif

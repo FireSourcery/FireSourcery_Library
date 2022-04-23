@@ -24,7 +24,7 @@
 /*!
     @file 	Linear_Voltage.c
     @author FireSoucery
-    @brief  Linear_Voltage module conventional function definitions
+    @brief
     @version V0
 */
 /*******************************************************************************/
@@ -36,12 +36,10 @@
 /*!
 	@brief Initialize Linear struct using Voltage Divider parameters.
 
-	Init as Linear_Function(adcu) = voltage
-	Supports
-	adcu -> voltage
-	adcu -> frac16
-	voltage -> adcu
-	frac16 	-> adcu
+	f(adcu) = voltage
+	f16(adcu) = frac16
+	invf(voltage) = adcu
+	invf16(frac16)  = adcu
 
 	VDIV = VIN*(R2/(R1+R2))
 	DIV = (R2/(R1+R2))
@@ -71,7 +69,6 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t 
 	p_linear->SlopeDivisor 			= ((int32_t)r2 << 15U) / adcVRef10 * 10U / (r1 + r2);					// ((R2) << 16)/(VREF*(R1 + R2))
 	p_linear->SlopeFactor_Shift 	= 15U - adcBits;
 #elif defined (CONFIG_LINEAR_DIVIDE_NUMERICAL)
-
 	//overflow caution
 	//(adcu_max*VREF*(R1+R2) < uint32_max
 	p_linear->SlopeFactor 	= adcVRef10 * (r1 + r2) / 10U;					// (VREF*(R1+R2))

@@ -121,7 +121,6 @@ static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
 	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
 	bool isComplete = false;
 
-#ifndef CONFIG_HALL_DEBUG
 	if (Timer_Poll(&p_motor->ControlTimer) == true)
 	{
 		switch (p_motor->CalibrationStateStep)
@@ -171,79 +170,6 @@ static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
 			break;
 		}
 	}
-#else
-	if (Timer_Poll(&p_motor->ControlTimer) == true)
-	{
-		p_motor->Debug[p_motor->CalibrationStateStep] = Hall_ReadSensors(&p_motor->Hall); //PhaseA starts at 1
-
-		switch (p_motor->CalibrationStateStep)
-		{
-			case 0U :
-				Phase_Polar_ActivateA(&p_motor->Phase, duty);
-				break;
-
-			case 1U :
-				Hall_CalibratePhaseA(&p_motor->Hall);
-				Phase_Polar_ActivateAC(&p_motor->Phase, duty);
-				break;
-
-			case 2U :
-				Phase_Polar_ActivateInvC(&p_motor->Phase, duty);
-				break;
-
-			case 3U :
-				Hall_CalibratePhaseInvC(&p_motor->Hall);
-				Phase_Polar_ActivateBC(&p_motor->Phase, duty);
-				break;
-
-			case 4U :
-				Phase_Polar_ActivateB(&p_motor->Phase, duty);
-				break;
-
-			case 5U :
-				Hall_CalibratePhaseB(&p_motor->Hall);
-				Phase_Polar_ActivateBA(&p_motor->Phase, duty);
-				break;
-
-			case 6U :
-				Phase_Polar_ActivateInvA(&p_motor->Phase, duty);
-				break;
-
-			case 7U :
-				Hall_CalibratePhaseInvA(&p_motor->Hall);
-				Phase_Polar_ActivateCA(&p_motor->Phase, duty);
-				break;
-
-			case 8U :
-				Phase_Polar_ActivateC(&p_motor->Phase, duty);
-				break;
-
-			case 9U :
-				Hall_CalibratePhaseC(&p_motor->Hall);
-				Phase_Polar_ActivateCB(&p_motor->Phase, duty);
-				break;
-
-			case 10U :
-				Phase_Polar_ActivateInvB(&p_motor->Phase, duty);
-				break;
-
-			case 11U :
-				Hall_CalibratePhaseInvB(&p_motor->Hall);
-				Phase_Polar_ActivateAB(&p_motor->Phase, duty);
-				break;
-
-			case 12U :
-				Phase_Float(&p_motor->Phase);
-				isComplete = true;
-				break;
-
-			default :
-				break;
-		}
-
-		p_motor->CalibrationStateStep++;
-	}
-#endif
 
 	return isComplete;
 }

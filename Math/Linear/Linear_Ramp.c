@@ -25,8 +25,7 @@
     @file 	Linear_Ramp.c
     @author FireSoucery
     @version V0
-    @brief  dynamic look up table
-			linear_f(index) = user units
+    @brief
 */
 /******************************************************************************/
 #include "Linear_Ramp.h"

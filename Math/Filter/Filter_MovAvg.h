@@ -33,7 +33,6 @@
 
 #include "Filter.h"
 #include "math_filter.h"
-
 #include <stdint.h>
 
 

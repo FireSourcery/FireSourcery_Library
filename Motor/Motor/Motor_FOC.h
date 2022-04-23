@@ -49,9 +49,7 @@
  * CW -Vq -Iq => Reverse Motoring Q2
  * CW -Vq +Iq => Reverse Regen Q3
  * CW +Vq +Iq => Reverse Plugging
- *
  */
-
 
 /******************************************************************************/
 /*!
@@ -88,7 +86,6 @@ static inline void Motor_FOC_CaptureIc(Motor_T *p_motor)
 	@{
 */
 /******************************************************************************/
-
 
 static inline void CaptureMotorFocSpeed(Motor_T * p_motor, uint32_t electricalAngle)
 {

@@ -31,8 +31,7 @@
 #include "Linear_Frac16.h"
 
 /*
- * INT32_MAX == 200%, leave room for oversaturation
- * i.e. overflow at x >= 2*XRef
+ * shift 14 allows oversaturation, 200%. i.e. overflow at x == 2*XRef
  */
 void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
 {

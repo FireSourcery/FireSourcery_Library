@@ -97,9 +97,6 @@ typedef struct
 
 	const AnalogN_AdcFlags_T ADCS_GROUP_V;
 	const AnalogN_AdcFlags_T ADCS_GROUP_I;
-
-//	const AnalogN_Options_T OPTIONS_PWM_ON;
-//	const AnalogN_Options_T OPTIONS_RESTORE;
 }
 MotorAnalog_Conversions_T;
 

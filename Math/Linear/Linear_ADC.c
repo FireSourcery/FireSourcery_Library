@@ -44,7 +44,7 @@
 
 	frac16 conversion returns without division, as frac16 calc is performed more frequently
 	division in frac16 to physical units
-	shift 14 to allow frac16 oversaturation [-2:~2] instead of [-1:~1]
+	shift 14 to allow frac16 oversaturation [-2:~2] of physicalRef without overflow
  */
 /******************************************************************************/
 void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef)
