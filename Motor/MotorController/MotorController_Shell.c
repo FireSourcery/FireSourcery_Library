@@ -675,6 +675,7 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 			case MOTOR_SENSOR_MODE_SIN_COS :
 				Terminal_SendString(p_terminal, "Sin: "); Terminal_SendNum(p_terminal, p_motor->AnalogResults.Sin_ADCU);
 				Terminal_SendString(p_terminal, " Cos: "); Terminal_SendNum(p_terminal, p_motor->AnalogResults.Cos_ADCU);
+				Terminal_SendString(p_terminal, " Angle: "); Terminal_SendNum(p_terminal, SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU));
 				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
 				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 				Terminal_SendString(p_terminal, "\r\n");
