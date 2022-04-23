@@ -1,4 +1,3 @@
-//#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
 /*
  * CONFIG_LINEAR_DIVIDE_SHIFT mode
  * Right shift must retain sign bit,
@@ -56,4 +55,18 @@ static inline int32_t MaxLeftShiftDivide(int32_t factor, int32_t divisor, uint8_
 
 	return result;
 }
-//#endif
+
+/*
+ * Max left shit, while retaining
+ */
+static inline uint8_t CalcMaxLeftShift_Signed(int32_t slope, int32_t xMaxRef)
+{
+	uint8_t shift = 0;
+
+	//todo log2
+
+	while((slope << shift) > INT32_MAX / xMaxRef)
+	{
+		shift++;
+	}
+}

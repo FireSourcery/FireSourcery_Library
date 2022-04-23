@@ -39,5 +39,14 @@
 	#define CONFIG_LINEAR_DIVIDE_SHIFT
 #endif
 
+#if defined(ADC_VREF_MILLIV) && defined(ADC_MAX)
+
+#elif defined(CONFIG_LINEAR_ADC_VREF_MILLIV) && defined(CONFIG_LINEAR_ADC_MAX)
+	#define ADC_VREF_MILLIV CONFIG_SIN_COS_ADC_VREF_MILLIV
+	#define ADC_MAX CONFIG_SIN_COS_ADC_MAX
+#else
+	#define ADC_VREF_MILLIV 5000
+	#define ADC_MAX 4096
+#endif
 
 #endif

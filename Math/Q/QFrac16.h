@@ -263,7 +263,7 @@ static inline void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16
  */
 static inline qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
 {
-	int32_t mask = (y >> 15U);
+	int32_t mask = (y >> QFRAC16_N_FRAC_BITS);
 	int32_t yAbs = (y + mask) ^ mask;
 	int32_t r, r_3, angle;
 
@@ -271,20 +271,17 @@ static inline qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
 	{
 		r = qfrac16_div((x - yAbs), (x + yAbs));
 		r_3 = qfrac16_mul(qfrac16_mul(r, r), r);
-//		angle = qfrac16_mul(0x00003240/2U, r_3) - qfrac16_mul(0x0000FB50/2U, r) + QFRAC16_PI_DIV_4;
 		angle = qfrac16_mul(0x07FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_1_DIV_4;
 	}
 	else
 	{
 		r = qfrac16_div((x + yAbs), (yAbs - x));
 		r_3 = qfrac16_mul(qfrac16_mul(r, r), r);
-//		angle = qfrac16_mul(0x00003240/2U, r_3) - qfrac16_mul(0x0000FB50/2U, r) + QFRAC16_3PI_DIV_4;
 		angle = qfrac16_mul(0x07FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_3_DIV_4;
 	}
 
-	if(y < 0) {angle = -angle;}
+	if (y < 0) {angle = 0 - angle;}
 
-//	angle = (angle << 14U) / (QFRAC16_PI / 2);
 	return angle; /* angle loops, no need to saturate */
 }
 

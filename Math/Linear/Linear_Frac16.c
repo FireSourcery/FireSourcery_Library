@@ -40,15 +40,22 @@ void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, in
 	p_linear->SlopeDivisor_Shift 	= 14U;
 	p_linear->SlopeDivisor 			= ((divisor * yRef / factor) << 14U) / 65536;
 	p_linear->SlopeFactor_Shift 	= 14U;
-	p_linear->YReference 			= yRef;
-	p_linear->XReference 			= (divisor * yRef / factor);
 	p_linear->XOffset 				= 0;
 	p_linear->YOffset 				= y0;
+	p_linear->XReference 			= (divisor * yRef / factor);
+	p_linear->YReference 			= yRef;
 }
 
 
-void Linear_Frac16_Init_XRef(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t xRef)
+void Linear_Frac16_Init_X0(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t yRef)
 {
-
+	p_linear->SlopeFactor 			= (65536 << 14U) / (divisor);
+	p_linear->SlopeDivisor_Shift 	= 14U;
+	p_linear->SlopeDivisor 			= (divisor << 14U) / 65536;
+	p_linear->SlopeFactor_Shift 	= 14U;
+	p_linear->XOffset 				= x0;
+	p_linear->YOffset 				= 0;
+	p_linear->XReference 			= (divisor * yRef / factor);
+	p_linear->YReference 			= yRef;
 }
 

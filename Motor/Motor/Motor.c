@@ -51,43 +51,37 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Phase_Init(&p_motor->Phase);
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
 
-	if ((p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP) )
+	switch(p_motor->Parameters.SensorMode)
 	{
-		/*
-		 * all sixstep modes and hall foc mode use CaptureTime
-		 */
-		Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
-		switch (p_motor->Parameters.SensorMode)
-		{
-			case MOTOR_SENSOR_MODE_SENSORLESS: break; //todo
-			case MOTOR_SENSOR_MODE_HALL: 	Hall_Init(&p_motor->Hall); 		break;
-			case MOTOR_SENSOR_MODE_ENCODER: break;
-			case MOTOR_SENSOR_MODE_SIN_COS: break;
-			default: 	break;
-		}
-	}
-	else
-	{
-		switch(p_motor->Parameters.SensorMode)
-		{
-			case MOTOR_SENSOR_MODE_SENSORLESS :
-				break; //todo
-			case MOTOR_SENSOR_MODE_HALL :
+		case MOTOR_SENSOR_MODE_SENSORLESS :
+			if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
+			{
 				Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
-				Hall_Init(&p_motor->Hall);
-				break;
-			case MOTOR_SENSOR_MODE_ENCODER :
-				Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
-				break;
-			case MOTOR_SENSOR_MODE_SIN_COS :
-				SinCos_Init(&p_motor->SinCos);
-				break;
-			default :
-				break;
-		}
-	}
+			}
+			else
+			{
 
-//	Encoder_SetMotorPolePairs(&p_motor->Encoder, p_motor->Parameters.PolePairs); /* Set Encoder module individual param consistent to main motor module setting */
+			}
+			break;
+		case MOTOR_SENSOR_MODE_HALL :
+			Hall_Init(&p_motor->Hall);
+			Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
+			/* Set Encoder module individual param consistent to main motor module setting */
+			//todo encoder get wrapper
+			if((p_motor->Encoder.Params.MotorPolePairs != p_motor->Parameters.PolePairs) || (p_motor->Encoder.Params.CountsPerRevolution != p_motor->Parameters.PolePairs * 6U))
+			{
+				Encoder_Motor_CaptureTime_SetPolePairs(&p_motor->Encoder, p_motor->Parameters.PolePairs);
+			}
+			break;
+		case MOTOR_SENSOR_MODE_ENCODER :
+			Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
+			break;
+		case MOTOR_SENSOR_MODE_SIN_COS :
+			SinCos_Init(&p_motor->SinCos);
+			break;
+		default :
+			break;
+	}
 
 	Thermistor_Init(&p_motor->Thermistor);
 	p_motor->AnalogResults.Heat_ADCU = p_motor->Thermistor.Params.Threshold_ADCU;
@@ -154,7 +148,69 @@ void Motor_InitReboot(Motor_T * p_motor)
 }
 
 
+void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
+{
+	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
+	uint16_t index = step % 12U;
+	switch(index)
+	{
+		case 0U: Phase_Polar_ActivateA(&p_motor->Phase, duty); break;
+		case 1U: Phase_Polar_ActivateAC(&p_motor->Phase, duty); break;
+		case 2U: Phase_Polar_ActivateInvC(&p_motor->Phase, duty); break;
+		case 3U: Phase_Polar_ActivateBC(&p_motor->Phase, duty); break;
+		case 4U: Phase_Polar_ActivateB(&p_motor->Phase, duty); break;
+		case 5U: Phase_Polar_ActivateBA(&p_motor->Phase, duty); break;
+		case 6U: Phase_Polar_ActivateInvA(&p_motor->Phase, duty); break;
+		case 7U: Phase_Polar_ActivateCA(&p_motor->Phase, duty); break;
+		case 8U: Phase_Polar_ActivateC(&p_motor->Phase, duty); break;
+		case 9U: Phase_Polar_ActivateCB(&p_motor->Phase, duty); break;
+		case 10U: Phase_Polar_ActivateInvB(&p_motor->Phase, duty); break;
+		case 11U: Phase_Polar_ActivateAB(&p_motor->Phase, duty); break;
+		default: break;
+	}
+}
 
+void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
+{
+	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
+	uint16_t index = step % 6U;
+	switch(index)
+	{
+		case 0U: Phase_Polar_ActivateAC(&p_motor->Phase, duty); break;
+		case 1U: Phase_Polar_ActivateBC(&p_motor->Phase, duty); break;
+		case 2U: Phase_Polar_ActivateBA(&p_motor->Phase, duty); break;
+		case 3U: Phase_Polar_ActivateCA(&p_motor->Phase, duty); break;
+		case 4U: Phase_Polar_ActivateCB(&p_motor->Phase, duty); break;
+		case 5U: Phase_Polar_ActivateAB(&p_motor->Phase, duty); break;
+		default: break;
+	}
+}
 
+void Motor_Jog6Step(Motor_T * p_motor, uint8_t step)
+{
+	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
+	uint16_t index = step % 6U;
+	switch(index)
+	{
+		case 0U: Phase_Polar_ActivateA(&p_motor->Phase, duty); break;
+		case 1U: Phase_Polar_ActivateInvC(&p_motor->Phase, duty); break;
+		case 2U: Phase_Polar_ActivateB(&p_motor->Phase, duty); break;
+		case 3U: Phase_Polar_ActivateInvA(&p_motor->Phase, duty); break;
+		case 4U: Phase_Polar_ActivateC(&p_motor->Phase, duty); break;
+		case 5U: Phase_Polar_ActivateInvB(&p_motor->Phase, duty); break;
+		default: break;
+	}
+}
 
+void Motor_Jog6(Motor_T * p_motor)
+{
+	Motor_Jog6Step(p_motor, p_motor->JogIndex);
+	p_motor->JogIndex++;
+}
+
+void Motor_Jog12(Motor_T * p_motor)
+{
+	Motor_Jog12Step(p_motor, p_motor->JogIndex);
+	p_motor->JogIndex++;
+}
 

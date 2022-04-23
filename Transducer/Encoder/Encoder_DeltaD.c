@@ -60,29 +60,38 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 		memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T));
 	}
 
-	HAL_Encoder_WriteTimerCounterMax(p_encoder->CONFIG.P_HAL_ENCODER, p_encoder->Params.CountsPerRevolution - 1U);
-
-//#ifdef CONFIG_ENCODER_HW_QUADRATURE_ENABLE
-
+#ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
 	if (p_encoder->Params.IsQuadratureCaptureEnabled == true)
 	{
 //		HAL_Encoder_ConfigCaptureQuadrature(p_encoder);
 	}
 	else
+#endif
 	{
 //		HAL_Encoder_ConfigCaptureDualEdge(p_encoder);
 	}
 
+	HAL_Encoder_WriteTimerCounterMax(p_encoder->CONFIG.P_HAL_ENCODER, p_encoder->Params.CountsPerRevolution - 1U);
+
+	/*
+		e.g.
+		CountsPerRevolution = 8192
+
+		SampleFreq = 20000
+		UnitAngularSpeed = 160,000 => Max DeltaD = 26,843
+		10k RPM => DeltaD = 10000 / 60 * 8192 / 20000 = 68
+
+		SampleFreq = 1000
+		UnitAngularSpeed = 8,000 => Max DeltaD = 536,870
+		10k RPM => DeltaD = 10000 / 60 * 8192 / 1000 = 1,532
+	*/
+
 	Encoder_DeltaD_SetUnitConversion(p_encoder, p_encoder->Params.CountsPerRevolution, p_encoder->Params.DistancePerCount);
 
-//	if(p_encoder->Params.CountsPerRevolution > (UINT32_MAX / p_encoder->UnitAngularSpeed))
-//	{
-//		p_encoder->UnitAngularSpeed = 0U;
-//	}
-
-#ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
-	p_encoder->Params.IsQuadratureCaptureEnabled = true;
-#endif
+	if(p_encoder->Params.CountsPerRevolution > (UINT32_MAX / p_encoder->UnitAngularSpeed))
+	{
+		p_encoder->UnitAngularSpeed = 0U;
+	}
 }
 //
 //void Encoder_DeltaD_SetParams(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)

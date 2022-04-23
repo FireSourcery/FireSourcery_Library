@@ -382,37 +382,54 @@ static inline void Motor_User_SetSpeedLimit(Motor_T * p_motor, uint16_t rpm)
 	p_motor->Parameters.SpeedRefMax_RPM = rpm;
 }
 
-static inline void Motor_User_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode) 			{p_motor->Parameters.SensorMode = mode;}
-static inline void Motor_User_SetThrottleControlMode(Motor_T * p_motor, Motor_ControlMode_T mode) 	{p_motor->Parameters.ControlMode = mode;}
-static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode) 	{p_motor->Parameters.CommutationMode = mode;}
-//// 250Amp => 4.08V => 3341 ADCU
-//.IRefMax_Amp = 270U,
-//.IaRefMax_ADCU = 3445U,
-//.IbRefMax_ADCU = 3445U,
-//.IcRefMax_ADCU = 3445U,
-//.IaRefZero_ADCU = 1990U,
-//.IbRefZero_ADCU = 1990U,
-//.IcRefZero_ADCU = 1990U,
+
+static inline void Motor_User_SetIRefMax_Amp(Motor_T * p_motor, uint16_t amp)
+{
+	p_motor->Parameters.IRefMax_Amp = amp;
+}
+
+static inline void Motor_User_SetIRefZeroToPeak_ADCU(Motor_T * p_motor, uint16_t adcu)
+{
+	p_motor->Parameters.IRefZeroToPeak_ADCU = adcu;
+}
+
+static inline void Motor_User_SetIRefZeroToPeak_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV)
+{
+	uint16_t adcuZero = (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / ADC_VREF_MILLIV;
+	uint16_t adcuRef = (uint32_t)max_MilliV * ADC_MAX / ADC_VREF_MILLIV;
+
+	p_motor->Parameters.IRefZeroToPeak_ADCU = adcuRef - adcuZero;
+}
+
 static inline void Motor_User_SetIaZero_ADCU(Motor_T * p_motor, uint16_t adcu) {p_motor->Parameters.IaRefZero_ADCU = adcu;}
 static inline void Motor_User_SetIbZero_ADCU(Motor_T * p_motor, uint16_t adcu) {p_motor->Parameters.IbRefZero_ADCU = adcu;}
 static inline void Motor_User_SetIcZero_ADCU(Motor_T * p_motor, uint16_t adcu) {p_motor->Parameters.IcRefZero_ADCU = adcu;}
-static inline void Motor_User_SetIaMax_ADCU(Motor_T * p_motor, uint16_t adcu) {p_motor->Parameters.IaRefMax_ADCU = adcu;}
-static inline void Motor_User_SetIbMax_ADCU(Motor_T * p_motor, uint16_t adcu) {p_motor->Parameters.IbRefMax_ADCU = adcu;}
-static inline void Motor_User_SetIcMax_ADCU(Motor_T * p_motor, uint16_t adcu) {p_motor->Parameters.IcRefMax_ADCU = adcu;}
-static inline void Motor_User_SetIaRef_ADCU(Motor_T * p_motor, uint16_t zero) {p_motor->Parameters.IaRefZero_ADCU = zero;}
-static inline void Motor_User_SetIbRef_ADCU(Motor_T * p_motor, uint16_t zero) {p_motor->Parameters.IbRefZero_ADCU = zero;}
-static inline void Motor_User_SetIcRef_ADCU(Motor_T * p_motor, uint16_t zero) {p_motor->Parameters.IcRefZero_ADCU = zero;}
+static inline void Motor_User_SetIaMax_ADCU(Motor_T * p_motor, uint16_t adcu)
+{
+	p_motor->Parameters.IaRefMax_ADCU = adcu;
+}
+static inline void Motor_User_SetIbMax_ADCU(Motor_T * p_motor, uint16_t adcu)
+{
+	p_motor->Parameters.IbRefMax_ADCU = adcu;
+}
+static inline void Motor_User_SetIcMax_ADCU(Motor_T * p_motor, uint16_t adcu)
+{
+	p_motor->Parameters.IcRefMax_ADCU = adcu;
+}
 
-
-static inline void Motor_User_SetSpeedRefVoltage_Scale(Motor_T * p_motor, uint16_t vSupply, uint16_t vMotor, uint16_t speedVMotor)
+static inline void Motor_User_SetSpeedRefVoltage_VScale(Motor_T * p_motor, uint16_t vSupply, uint16_t vMotor, uint16_t speedVMotor)
 {
 	p_motor->Parameters.SpeedRefVoltage_RPM = speedVMotor * vSupply / vMotor;
 }
 
-static inline void Motor_User_SetSpeedVoltageRef(Motor_T * p_motor, uint16_t speedRef)
+static inline void Motor_User_SetSpeedRefVoltage_RPM(Motor_T * p_motor, uint16_t rpm)
 {
-	p_motor->Parameters.SpeedRefVoltage_RPM = speedRef;
+	p_motor->Parameters.SpeedRefVoltage_RPM = rpm;
 }
+
+static inline void Motor_User_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode) 			{p_motor->Parameters.SensorMode = mode;}
+static inline void Motor_User_SetThrottleControlMode(Motor_T * p_motor, Motor_ControlMode_T mode) 	{p_motor->Parameters.ControlMode = mode;}
+static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode) 	{p_motor->Parameters.CommutationMode = mode;}
 
 static inline void Motor_User_SetDirectionCalibration(Motor_T * p_motor, Motor_DirectionCalibration_T calibration) 	{p_motor->Parameters.DirectionCalibration = calibration;}
 static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Motor_T *p_motor) 	{return p_motor->Parameters.DirectionCalibration;}

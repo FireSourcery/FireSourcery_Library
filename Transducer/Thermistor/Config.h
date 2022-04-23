@@ -37,8 +37,8 @@
 	#define ADC_VREF_MILLIV CONFIG_THERMISTOR_ADC_VREF_MILLIV
 	#define ADC_MAX CONFIG_THERMISTOR_ADC_MAX
 #else
-	#define ADC_VREF_MILLIV 5000
-	#define ADC_MAX 4096
+	#define ADC_VREF 		5U
+	#define ADC_MAX 		4096U
 #endif
 
 #endif

@@ -237,7 +237,9 @@ typedef struct __attribute__ ((aligned (4U)))
 	uint16_t SpeedRefMax_RPM;
 	uint16_t SpeedRefVoltage_RPM;
 
-	uint16_t IRefMax_Amp;
+	uint16_t IRefMax_Amp;			/* known calibration parameter provide by user */
+	uint16_t IRefZeroToPeak_ADCU; 	/* known calibration parameter provide by user */
+
 	uint16_t IaRefZero_ADCU;
 	uint16_t IbRefZero_ADCU;
 	uint16_t IcRefZero_ADCU;
@@ -247,6 +249,7 @@ typedef struct __attribute__ ((aligned (4U)))
 
 	uint16_t IBusLimit_Frac16; 	/* Six-Step   */
 	qfrac16_t IqLimit;			/* FOC   */
+	uint16_t PwmLimit;
 
 	uint16_t AlignVoltage_Frac16;
 	uint16_t AlignTime_ControlCycles;
@@ -270,6 +273,9 @@ Motor_Params_T;
 typedef const struct Motor_Init_Tag
 {
  	const Motor_Params_T * const P_PARAMS_NVM;
+ 	const uint16_t I_MAX_AMP;
+ 	const uint16_t I_MAX_ADCU;
+
  	const uint16_t UNIT_VABC_R1;
  	const uint16_t UNIT_VABC_R2;
  	const uint16_t UNIT_VABC_ADCREF10;
@@ -324,6 +330,9 @@ typedef struct
 	Filter_T FilterA;
 	Filter_T FilterB;
 	Filter_T FilterC;
+	Filter_T FilterA1;
+	Filter_T FilterB1;
+	Filter_T FilterC1;
 
 	Linear_T Ramp;
 //	Linear_T RampUp;
@@ -386,7 +395,7 @@ typedef struct
 	uint32_t MicrosRef; //debug
 	volatile uint32_t DebugTime[10U];
 	volatile uint32_t Debug[20U];
-//	uint32_t JogSteps;
+	uint32_t JogIndex;
 //	uint32_t StepCount;
 }
 Motor_T;
@@ -577,6 +586,14 @@ static inline void Motor_SetControlMode(Motor_T * p_motor, Motor_ControlMode_T m
 {
 	p_motor->ControlModeFlags.State = Motor_ConvertControlModeFlags(mode).State;
 }
+
+
+/******************************************************************************/
+/*
+	Common Sets
+*/
+/******************************************************************************/
+
 
 /******************************************************************************/
 /*!

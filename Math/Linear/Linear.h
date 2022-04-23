@@ -45,6 +45,11 @@ typedef struct Linear_Tag
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
 	uint8_t SlopeDivisor_Shift; // y = x * SlopeFactor >> SlopeDivisor_Shift + Intercept
 	uint8_t SlopeFactor_Shift;  // x = (y - Intercept) * SlopeDivisor >> SlopeFactor_Shift
+
+//	uint8_t Slope;
+//	uint8_t SlopeShift;
+//	uint8_t InvSlope;
+//	uint8_t InvSlopeShift;
 #endif
 	int32_t XOffset;
 	int32_t YOffset;

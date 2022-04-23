@@ -91,10 +91,10 @@ void Encoder_DeltaT_SetExtendedTimerDefault(Encoder_T * p_encoder)
  */
 void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder, uint16_t initialRpm)
 {
-//	p_encoder->DeltaT = 0xFF00U; //minus some delay time before first capture //Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, initialRpm);
+//	p_encoder->DeltaT = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, initialRpm);
 
 	/* Set first capture TIMER_COUNTER_MAX */
-	p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ;
+	p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U;
 	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER) - p_encoder->DeltaT;
 	p_encoder->ExtendedTimerSaved = *p_encoder->CONFIG.P_EXTENDED_TIMER;
 }

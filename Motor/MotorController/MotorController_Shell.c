@@ -295,7 +295,6 @@ static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 
-
 	if(Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP)
 	{
 		status = CMD_STATUS_PROCESS_END;
@@ -436,34 +435,6 @@ static Cmd_Status_T Cmd_reboot(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
-{
-	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
-	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
-    if(argc == 2)
-    {
-    	if 		(argv[1][0] == 'a' && argv[1][1] == 'b') Phase_Polar_ActivateAB(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
-    	else if (argv[1][0] == 'a' && argv[1][1] == 'c') Phase_Polar_ActivateAC(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
-    	else if (argv[1][0] == 'a' && argv[1][1] == '\0') Phase_Polar_ActivateA(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
-    	else if (argv[1][0] == 'a' && argv[1][1] == '-') Phase_Polar_ActivateInvA(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
-    	else if (argv[1][0] == 'b' && argv[1][1] == 'a') Phase_Polar_ActivateBA(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
-    	else if (argv[1][0] == 'b' && argv[1][1] == 'c') Phase_Polar_ActivateBC(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
-    	else if (argv[1][0] == 'b' && argv[1][1] == '\0') Phase_Polar_ActivateB(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
-    	else if (argv[1][0] == 'b' && argv[1][1] == '-') Phase_Polar_ActivateInvB(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
-    	else if (argv[1][0] == 'c' && argv[1][1] == 'a') Phase_Polar_ActivateCA(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
-    	else if (argv[1][0] == 'c' && argv[1][1] == 'b') Phase_Polar_ActivateCB(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
-    	else if (argv[1][0] == 'c' && argv[1][1] == '\0') Phase_Polar_ActivateC(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
-    	else if (argv[1][0] == 'c' && argv[1][1] == '-') Phase_Polar_ActivateInvC(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16);
-
-//    	Terminal_SendString(p_terminal, "\r\n");
-//    	Terminal_SendString(p_terminal, "Hall: ");
-//		Terminal_SendNum(p_terminal, Hall_ReadSensors(&p_motor->Hall).State);
-//    	Terminal_SendString(p_terminal, "\r\n");
-    }
-
-    return CMD_STATUS_SUCCESS;
-}
-
 static Cmd_Status_T Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
@@ -483,8 +454,6 @@ static Cmd_Status_T Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 
     return CMD_STATUS_SUCCESS;
 }
-
-
 
 
 static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
@@ -756,6 +725,133 @@ static Cmd_Status_T Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
+static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
+{
+	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
+
+    if(argc == 2U)
+    {
+    	if 		(argv[1U][0U] == 'a' && argv[1U][1U] == 'b') 	{Phase_Polar_ActivateAB(&p_motor->Phase, duty);}
+    	else if (argv[1U][0U] == 'a' && argv[1U][1U] == 'c') 	{Phase_Polar_ActivateAC(&p_motor->Phase, duty);}
+    	else if (argv[1U][0U] == 'a' && argv[1U][1U] == '\0') 	{Phase_Polar_ActivateA(&p_motor->Phase, duty);}
+    	else if (argv[1U][0U] == 'a' && argv[1U][1U] == '-') 	{Phase_Polar_ActivateInvA(&p_motor->Phase, duty);}
+    	else if (argv[1U][0U] == 'b' && argv[1U][1U] == 'a') 	{Phase_Polar_ActivateBA(&p_motor->Phase, duty);}
+    	else if (argv[1U][0U] == 'b' && argv[1U][1U] == 'c') 	{Phase_Polar_ActivateBC(&p_motor->Phase, duty);}
+    	else if (argv[1U][0U] == 'b' && argv[1U][1U] == '\0') 	{Phase_Polar_ActivateB(&p_motor->Phase, duty);}
+    	else if (argv[1U][0U] == 'b' && argv[1U][1U] == '-') 	{Phase_Polar_ActivateInvB(&p_motor->Phase, duty);}
+    	else if (argv[1U][0U] == 'c' && argv[1U][1U] == 'a') 	{Phase_Polar_ActivateCA(&p_motor->Phase, duty);}
+    	else if (argv[1U][0U] == 'c' && argv[1U][1U] == 'b') 	{Phase_Polar_ActivateCB(&p_motor->Phase, duty);}
+    	else if (argv[1U][0U] == 'c' && argv[1U][1U] == '\0') 	{Phase_Polar_ActivateC(&p_motor->Phase, duty);}
+    	else if (argv[1U][0U] == 'c' && argv[1U][1U] == '-') 	{Phase_Polar_ActivateInvC(&p_motor->Phase, duty);}
+
+    }
+
+    return CMD_STATUS_SUCCESS;
+}
+
+void PrintJog12(Terminal_T * p_terminal, uint8_t step)
+{
+	uint16_t index = step % 12U;
+	switch(index)
+	{
+		case 0U: Terminal_SendString(p_terminal, "Phase A: ");break;
+		case 1U: Terminal_SendString(p_terminal, "Phase AC: "); break;
+		case 2U: Terminal_SendString(p_terminal, "Phase -C: "); break;
+		case 3U: Terminal_SendString(p_terminal, "Phase BC: "); break;
+		case 4U: Terminal_SendString(p_terminal, "Phase B: "); break;
+		case 5U: Terminal_SendString(p_terminal, "Phase BA: "); break;
+		case 6U: Terminal_SendString(p_terminal, "Phase -A: "); break;
+		case 7U: Terminal_SendString(p_terminal, "Phase CA: "); break;
+		case 8U: Terminal_SendString(p_terminal, "Phase C: "); break;
+		case 9U: Terminal_SendString(p_terminal, "Phase CB: "); break;
+		case 10U: Terminal_SendString(p_terminal, "Phase -B: "); break;
+		case 11U: Terminal_SendString(p_terminal, "Phase AB: "); break;
+		default: break;
+	}
+}
+
+static Cmd_Status_T Cmd_jog(MotorController_T * p_mc, int argc, char ** argv)
+{
+	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	Cmd_Status_T status;
+	if(argc == 1U)
+	{
+		Motor_Jog6(p_motor);
+		status = CMD_STATUS_SUCCESS;
+	}
+	else if(argc == 2U)
+	{
+//		Motor_Jog (p_motor, strtoul(argv[1U], 0U, 10));
+//		return CMD_STATUS_PROCESS_LOOP;
+	}
+
+    return status;
+}
+
+static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
+{
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	Cmd_Status_T status;
+
+	if(p_motor->JogIndex < p_motor->Parameters.PolePairs * 6U)
+	{
+//		111,84  //10 rpm at 100 ticks per seconds
+//		Motor_FOC_ActivateAngle(p_motor, (uint16_t)UserAngle, p_motor->Parameters.AlignVoltage_Frac16);
+		switch(p_motor->Parameters.SensorMode)
+		{
+			case MOTOR_SENSOR_MODE_SENSORLESS :
+				break;
+			case MOTOR_SENSOR_MODE_HALL :
+				if(p_motor->JogIndex % 6U == 0U)
+				{
+					Terminal_SendString(p_terminal, "\r\n");
+					Terminal_SendString(p_terminal, "Hall: ");
+				}
+				Terminal_SendNum(p_terminal, Hall_ReadSensors(&p_motor->Hall).State); Terminal_SendString(p_terminal, " ");
+				break;
+			case MOTOR_SENSOR_MODE_ENCODER :
+		//		Encoder_DeltaD_Capture(&p_motor->Encoder);
+//				Terminal_SendNum(p_terminal, p_motor->Encoder.AngularD);
+//				Terminal_SendString(p_terminal, " ");
+				break;
+			case MOTOR_SENSOR_MODE_SIN_COS :
+				Terminal_SendString(p_terminal, "Sin: "); Terminal_SendNum(p_terminal, p_motor->AnalogResults.Sin_ADCU);
+				Terminal_SendString(p_terminal, " Cos: "); Terminal_SendNum(p_terminal, p_motor->AnalogResults.Cos_ADCU);
+				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+				Terminal_SendString(p_terminal, "\r\n");
+				break;
+			default :
+				break;
+		}
+
+		Motor_Jog6(p_motor);
+		status = CMD_STATUS_SUCCESS;
+	}
+	else
+	{
+		MotorController_User_DisableControl(p_mc);
+		status = CMD_STATUS_PROCESS_END;
+	}
+
+    return status;
+}
+
+
+static Cmd_Status_T Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
+{
+	(void)argv;
+	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	p_motor->JogIndex = 0U;
+//	//motor ramp does not proc during off state
+//	Motor_FOC_StartAngleControl(MotorController_User_GetPtrMotor(p_mc, 0U));
+//	p_motor->RampCmd = p_motor->Parameters.AlignVoltage_Frac16;
+
+    return CMD_STATUS_PROCESS_LOOP;
+}
 
 static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 {
@@ -764,7 +860,7 @@ static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 	qfrac16_t atan2_90 = qfrac16_atan2(32767, 0);
 	qfrac16_t atan2_180 = qfrac16_atan2(0, -32767);
 	qfrac16_t atan2_270 = qfrac16_atan2(-32767, 0);
-	qfrac16_t atan2_err = qfrac16_atan2(0, 0);
+	qfrac16_t atan2_err = qfrac16_atan2(32767, 32767);
 
 	Terminal_SendString(p_terminal, "Atan2: "); Terminal_SendString(p_terminal, "\r\n");
 	Terminal_SendNum(p_terminal, atan2_0); Terminal_SendString(p_terminal, "\r\n");
@@ -775,8 +871,6 @@ static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 
 //    	for(uint8_t iMotor = 0U; iMotor < CmdMotorCount; iMotor++)
 //    	{
-
-
 //	Terminal_SendString(p_terminal, "PwmOn ");
 //	Terminal_SendNum(p_terminal, sampleCount);
 //	Terminal_SendString(p_terminal, " :\r\n");
@@ -802,88 +896,8 @@ static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 
 //    	}
 
-
 	return CMD_STATUS_SUCCESS;
 }
-
-
-//
-//
-//int Cmd_configfile(int argc, char **argv)
-//{
-//
-//	return MC_SHELL_CMD_RETURN_CODE_SUCCESS;
-//}
-
-
-
-//int Cmd_jog(MotorController_T * p_mc, int argc, char ** argv)
-//{
-//	if(argc == 1)
-//	{
-//		Motor_SetJogSteps(&Motor1, 1);
-//
-//	}
-//	else if(argc == 2) Motor_SetJogSteps(&Motor1, strtoul(argv[1], 0, 10));
-//    return CMD_STATUS_SUCCESS;
-//}
-
-
-//
-//int Cmd_hold(MotorController_T * p_mc, int argc, char ** argv)
-//{
-//	(void)argv;
-//    if(argc == 1) Motor_Hold(&Motor1);
-//    return CMD_STATUS_SUCCESS;
-//}
-//
-//int Cmd_release(MotorController_T * p_mc, int argc, char ** argv)
-//{
-//	(void)argv;
-//    if(argc == 1) Motor_Release(&Motor1);
-//    return CMD_STATUS_SUCCESS;
-//}
-
-
-int Cmd_rev_Proc(MotorController_T * p_mc)
-{
-
-//	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
-//
-//	if (UserAngle <=  65536*7)
-//	{
-//		Motor_FOC_ActivateAngle(p_motor, (uint16_t)UserAngle, p_motor->Parameters.AlignVoltage_Frac16);
-//		Encoder_DeltaD_Capture(&p_motor->Encoder);
-//
-//		Terminal_SendNum(p_terminal, p_motor->Encoder.AngularD);
-//		Terminal_SendString(p_terminal, " ");
-//		Terminal_SendNum(p_terminal, UserAngle);
-//		Terminal_SendString(p_terminal, "\r\n");
-//
-//		UserAngle += 1024;
-//	}
-//
-//
-//    return CMD_STATUS_SUCCESS;
-}
-
-
-int Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
-{
-//	(void)argv;
-//	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
-//
-//	//motor ramp does not proc during off state
-//	Motor_FOC_StartAngleControl(MotorController_User_GetPtrMotor(p_mc, 0U));
-//	UserAngle = 0U;
-////	p_motor->RampCmd = p_motor->Parameters.AlignVoltage_Frac16;
-//
-//	Terminal_SendString(p_terminal, "\r\n");
-//
-//    return CMD_STATUS_LOOP;
-}
-
-
 const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 {
 	{"monitor", 	"Display motor info",				(Cmd_Function_T)Cmd_monitor, 	{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_monitor_Proc, 	.FREQ = 5U}		},
@@ -901,16 +915,37 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"set", 		"Sets motor parameters",	 		(Cmd_Function_T)Cmd_set, 		{0U}	},
 	{"save", 		"Save parameters to nv memory", 	(Cmd_Function_T)Cmd_save, 		{0U}	},
 	{"reboot", 		"reboot", 							(Cmd_Function_T)Cmd_reboot, 	{0U}	},
-	{"rev", 		"rev",	 							(Cmd_Function_T)Cmd_rev, 		{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_rev_Proc, 		.FREQ = 10U}	},
+
 	{"phase", 		"Sets motor phase", 				(Cmd_Function_T)Cmd_phase, 		{0U}		},
+	{"jog", 		"Jog motor", 						(Cmd_Function_T)Cmd_jog, 		{0U}		},
+	{"rev", 		"Rev motor",	 					(Cmd_Function_T)Cmd_rev, 		{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_rev_Proc, 		.FREQ = 10U}	},
+
 	{"debug", 		"debug",							(Cmd_Function_T)Cmd_debug, 		{0U}		},
-////	{ "jog", 		"Jog motor", 				Cmd_jog		},
+
 ////	{ "float", 		"Float motor", 				Cmd_float	},
 ////	{ "hold", 		"hold position", 			Cmd_hold	},
 ////	{ "print", 		"print debug info",			Cmd_print	},
 };
 
+//int Cmd_configfile(int argc, char **argv)
+//{
+//
+//	return MC_SHELL_CMD_RETURN_CODE_SUCCESS;
+//}
 
+//int Cmd_hold(MotorController_T * p_mc, int argc, char ** argv)
+//{
+//	(void)argv;
+//    if(argc == 1) Motor_Hold(&Motor1);
+//    return CMD_STATUS_SUCCESS;
+//}
+//
+//int Cmd_release(MotorController_T * p_mc, int argc, char ** argv)
+//{
+//	(void)argv;
+//    if(argc == 1) Motor_Release(&Motor1);
+//    return CMD_STATUS_SUCCESS;
+//}
 
 /******************************************************************************/
 /*! @} */

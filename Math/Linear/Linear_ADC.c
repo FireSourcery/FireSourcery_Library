@@ -55,7 +55,7 @@ void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, i
 	p_linear->SlopeFactor_Shift 	= 14U;
 	p_linear->XOffset 				= adcuZero;
 	p_linear->YOffset 				= 0;
-	p_linear->XReference 			= adcuRef;
+	p_linear->XReference 			= adcuRef; //unused
 	p_linear->YReference 			= physicalRef;
 }
 
@@ -66,3 +66,18 @@ void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t a
 	p_linear->SlopeDivisor 	= 0 - p_linear->SlopeDivisor;
 }
 
+void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t min_MilliV, uint16_t max_MilliV, int16_t physicalRef)
+{
+	uint16_t adcuZero = (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / ADC_VREF_MILLIV;
+	uint16_t adcuRef = (uint32_t)max_MilliV * ADC_MAX / ADC_VREF_MILLIV;
+
+	Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalRef);
+}
+
+void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t zero_MilliV, uint16_t max_MilliV, int16_t physicalRef)
+{
+	uint16_t adcuZero = (uint32_t)zero_MilliV * ADC_MAX / ADC_VREF_MILLIV;
+	uint16_t adcuRef = (uint32_t)max_MilliV * ADC_MAX / ADC_VREF_MILLIV;
+
+	Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalRef);
+}

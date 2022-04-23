@@ -49,32 +49,19 @@ typedef struct __attribute__((aligned (4U)))
 	uint32_t RNominal;
 	uint32_t TNominal;
 	uint32_t BConstant;
-
 	uint16_t Limit_ADCU;
 	uint16_t Threshold_ADCU;
-
 	uint16_t IntScalar;
 	bool IsEnable;
 }
 Thermistor_Params_T;
 
-/*
- * 1/T = 1/T0 + (1/B)ln(R/R0))
- */
 typedef struct
 {
-//#ifdef CONFIG_THERMISTOR_ADC_LUT
-//	uint8_t * ADC_LUT; //look up table using adc base, fixed r0 value
-//	uint8_t * R_LUT;
-
 	const Thermistor_Params_T * P_PARAMS;
-
-	uint8_t ADC_VREF;
-	uint16_t ADC_MAX;
-
-	uint8_t V_IN;
-	uint32_t R_SERIES; 		//pull up
-	uint32_t R_PARALLEL; 	// parallel if applicable
+	uint16_t V_IN;
+	uint32_t R_SERIES; 		/* pull up */
+	uint32_t R_PARALLEL; 	/* parallel if applicable */
 }
 Thermistor_Config_T;
 
@@ -88,13 +75,14 @@ typedef struct
 }
 Thermistor_T;
 
-#define THERMISTOR_CONFIG(AdcVref, AdcMax, Vin, RSeries, RParallel, p_Params) 	\
+/*
+ * Set Vin to same decimal precision as ADC_VREF
+ */
+#define THERMISTOR_CONFIG(Vin, RSeries, RParallel, p_Params) 	\
 {												\
 	.CONFIG =									\
 	{											\
-		.ADC_VREF 		= AdcVref,				\
-		.ADC_MAX 		= AdcMax,				\
-		.V_IN 			= Vin,					\
+		.V_IN 			= Vin,				\
 		.R_SERIES 		= RSeries,				\
 		.R_PARALLEL		= RParallel,			\
 		.P_PARAMS		= p_Params,				\
