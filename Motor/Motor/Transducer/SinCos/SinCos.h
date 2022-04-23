@@ -84,7 +84,7 @@ static inline qangle16_t SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_ADCU
 
 //	angle = angle * PolePairs / CyclesPerRotation;
 
-	angle = (uint32_t)angle * p_sincos->Params.ElectricalRotationsPerCycle;
+	angle = (qfrac16_t)((int32_t)angle * p_sincos->Params.ElectricalRotationsPerCycle);
 	angle = angle - p_sincos->Params.AngleOffet;
 
 	if (p_sincos->IsDirectionPositive == false) {angle = 0 - angle;};

@@ -135,6 +135,8 @@ typedef struct __attribute__((aligned (4U))) //CONFIG_PARAMS_ALIGN_SIZE
 	uint16_t BatteryZero_ADCU;
 	uint16_t BatteryFull_ADCU;
 	CanBus_Services_T * p_CanServices;
+
+	uint16_t AdcVRef_MilliV;
 }
 MotorController_Params_T;
 

@@ -519,6 +519,11 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 			Encoder_DeltaT_SetInitial(&p_motor->Encoder, 10U);
 			break;
 
+		case MOTOR_SENSOR_MODE_SIN_COS:
+			AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+			AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+			break;
+
 		default:
 			break;
 	}
