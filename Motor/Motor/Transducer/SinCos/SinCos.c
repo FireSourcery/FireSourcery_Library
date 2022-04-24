@@ -46,17 +46,24 @@ void SinCos_Init(SinCos_T * p_sincos)
 	}
 }
 
-void SinCos_SetParamsAdc(SinCos_T * p_sincos, uint16_t zero_ADCU, uint16_t max_ADCU, uint16_t max_MilliV)
+//void SinCos_Zero(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
+//{
+//	p_sincos->Params.AngleOffet = 0;
+//	p_sincos->Params.AngleOffet = SinCos_CalcAngle(p_sincos, sin_ADCU, cos_ADCU);
+//}
+
+
+void SinCos_SetParamsAdc(SinCos_T * p_sincos, uint16_t zero_ADCU, uint16_t max_ADCU, uint16_t max_mV)
 {
 	p_sincos->Params.Zero_ADCU = zero_ADCU;
 	p_sincos->Params.Max_ADCU = max_ADCU;
-	p_sincos->Params.Max_MilliV = max_MilliV;
-	Linear_ADC_Init(&p_sincos->UnitsAngle, zero_ADCU, max_ADCU, max_MilliV);
+	p_sincos->Params.Max_MilliV = max_mV;
+	Linear_ADC_Init(&p_sincos->UnitsAngle, zero_ADCU, max_ADCU, max_mV);
 }
 
-void SinCos_SetParamsAdc_MilliV(SinCos_T * p_sincos, uint16_t min_MilliV, uint16_t max_MilliV) //todo adcrefmv
+void SinCos_SetParamsAdc_mV(SinCos_T * p_sincos, uint16_t adcVref_mV, uint16_t min_mV, uint16_t max_mV)
 {
-	SinCos_SetParamsAdc(p_sincos, (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / ADC_VREF_MILLIV, (uint32_t)max_MilliV * ADC_MAX / ADC_VREF_MILLIV, max_MilliV);
+	SinCos_SetParamsAdc(p_sincos, (uint32_t)(max_mV + min_mV) * ADC_MAX / 2U / adcVref_mV, (uint32_t)max_mV * ADC_MAX / adcVref_mV, max_mV);
 }
 
 /*

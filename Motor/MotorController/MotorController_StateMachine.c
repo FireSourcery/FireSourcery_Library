@@ -133,7 +133,12 @@ static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 
 static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc)
 {
-	MotorController_SaveParameters_Blocking(p_mc);
+	switch(p_mc->NvmSubstate)
+	{
+		case MOTOR_CONTROLLER_NVM_ALL: MotorController_SaveParameters_Blocking(p_mc); break;
+		case MOTOR_CONTROLLER_NVM_BOOT: MotorController_SaveBootReg_Blocking(p_mc); break;
+		default: break;
+	}
 	return 0U;
 }
 

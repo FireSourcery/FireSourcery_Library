@@ -45,6 +45,8 @@ typedef struct StateMachine_State_Tag *  (* StateMachine_Transition_T)(void * p_
 //typedef struct StateMachine_State_Tag *  (* StateMachine_Transition_T)(void * p_context, uint32_t inputVar);
 typedef struct StateMachine_State_Tag *  (* StateMachine_TransitionInput_T)(void * p_context, statemachine_input_t inputVarType, uint32_t inputVar);
 
+#define STATE_MACHINE_INPUT_NULL 255U
+
 typedef const struct StateMachine_State_Tag
 {
 	const statemachine_stateid_t ID;
@@ -97,7 +99,7 @@ typedef struct StateMachine_Tag
 {
 	const StateMachine_Config_T CONFIG;
 	const StateMachine_State_T * p_StateActive;
-	uint8_t Input; 	/* for Synchronous Machine only */
+	statemachine_input_t Input; 	/* for Synchronous Machine only */
 
 #if defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
 	volatile critical_mutex_t Mutex;

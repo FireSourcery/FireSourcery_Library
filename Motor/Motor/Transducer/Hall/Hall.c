@@ -29,11 +29,7 @@
 */
 /******************************************************************************/
 #include "Hall.h"
-#include "Config.h"
-#include "Peripheral/Pin/Pin.h"
 
-#include <stdbool.h>
-#include <stdint.h>
 #include <string.h>
 
 /*
@@ -87,7 +83,6 @@ void Hall_MapSensorsTable
 	p_hall->Params.SensorsTable[7U] = 7U;
 }
 
-
 /*
  * For case where sensors are aligned to motor phase, 0 degree offset.
  * i.e Motor Phase A measure in between a hall state and not on a transition boundary.
@@ -121,4 +116,3 @@ void Hall_CalibratePhaseInvB(Hall_T * p_hall)
 {
 	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_B;
 }
-

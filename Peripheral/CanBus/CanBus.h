@@ -78,6 +78,8 @@ typedef const struct
 	HAL_CanBus_T * const P_HAL_CAN_BUS;
 	void * P_APP_CONTEXT; //service and call back context
 	const volatile uint32_t * const P_TIMER;
+	const CanBus_Services_T * const * const P_SERVICES_TABLE;
+	const uint8_t SERVICES_TABLE_LENGTH;
 //	uint32_t * const P_TIMER_BUFFERS;
 }
 CanBus_Config_T;
@@ -112,12 +114,14 @@ typedef struct CanBus_Tag
 
 } CanBus_T;
 
-#define CAN_BUS_CONFIG(p_Hal, p_App, p_Timer)		\
+#define CAN_BUS_CONFIG(p_Hal, p_App, p_ServiceTable, TableLength, p_Timer)		\
 {													\
 	.CONFIG = 										\
 	{												\
 		.P_HAL_CAN_BUS = p_Hal, 					\
 		.P_APP_CONTEXT = p_App, 					\
+		.P_SERVICES_TABLE = p_ServiceTable,			\
+		.SERVICES_TABLE_LENGTH = TableLength,		\
 		.P_TIMER = p_Timer, 						\
 	},												\
 }

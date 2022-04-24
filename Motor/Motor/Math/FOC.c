@@ -79,7 +79,7 @@ void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd)
 	FOC_ProcInvParkInvClarkeSvpwm(p_foc);
 }
 
-void FOC_Reset(FOC_T * p_foc)
+void FOC_Zero(FOC_T * p_foc)
 {
 	p_foc->Vq = 0;
 	p_foc->Vd = 0;

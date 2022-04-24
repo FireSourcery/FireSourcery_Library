@@ -243,6 +243,7 @@ static inline void Motor_User_SetSpeedCmd(Motor_T * p_motor, uint16_t speed)
  */
 //static inline void Motor_User_SetCmdPosition(Motor_T * p_motor, uint16_t angle)
 //{
+//todo
 ////	Motor_SetControlModeFlags(p_motor, MOTOR_CONTROL_MODE_POSITION);
 //	//	Motor_User_SetCmd(p_motor, angle);
 ////	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_RUN_CMD);
@@ -300,7 +301,7 @@ static inline void Motor_User_SetRegenCmd(Motor_T * p_motor)
 {
 	if (p_motor->Speed_RPM > 30U)
 	{
-		Motor_User_SetVoltageCmd(p_motor, p_motor->Speed_Frac16 / 2);
+		Motor_User_SetVoltageCmd(p_motor, p_motor->SpeedFeedback_Frac16 / 2);
 //		Motor_User_SetCmd(p_motor, p_motor->Speed_Frac16 / 2); /* ramped speed match provides smoother change */
 	}
 	else
@@ -393,10 +394,10 @@ static inline void Motor_User_SetIRefZeroToPeak_ADCU(Motor_T * p_motor, uint16_t
 	p_motor->Parameters.IRefZeroToPeak_ADCU = adcu;
 }
 
-static inline void Motor_User_SetIRefZeroToPeak_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV)
+static inline void Motor_User_SetIRefZeroToPeak_MilliV(Motor_T * p_motor, uint16_t adcVref_MilliV, uint16_t min_MilliV, uint16_t max_MilliV)
 {
-	uint16_t adcuZero = (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / ADC_VREF_MILLIV;
-	uint16_t adcuRef = (uint32_t)max_MilliV * ADC_MAX / ADC_VREF_MILLIV;
+	uint16_t adcuZero = (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / adcVref_MilliV;
+	uint16_t adcuRef = (uint32_t)max_MilliV * ADC_MAX / adcVref_MilliV;
 
 	p_motor->Parameters.IRefZeroToPeak_ADCU = adcuRef - adcuZero;
 }
@@ -438,16 +439,16 @@ static inline void Motor_User_SetVSupplyVMotorScale(Motor_T * p_motor, uint16_t 
 {
 
 }
-//static inline void Motor_User_SetPidIqKp(Motor_T * p_mc, uint8_t motorIndex, uint16_t kpFactor)
+//static inline void Motor_User_SetPidIqKp(Motor_T * p_motor, uint8_t motorIndex, uint16_t kpFactor)
 //{
-//	p_mc->CONFIG.P_MOTORS[motorIndex].PidIq.Params.KpFactor = kpFactor;
+//	p_motor->CONFIG.P_MOTORS[motorIndex].PidIq.Params.KpFactor = kpFactor;
 //}
 //static inline float Motor_User_GetHeat_DegCFloat(Motor_T *p_motor)						{return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
 //static inline uint16_t Motor_User_GetHeat_DegCRound(Motor_T *p_motor)						{return Thermistor_ConvertToDegC_Round(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
 //static inline uint16_t Motor_User_GetHeat_DegCNDecimal(Motor_T *p_motor, uint8_t n) 		{return Thermistor_ConvertToDegC_NDecimal(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, n);}
 //static inline uint16_t Motor_User_GetHeat_DegCScalar(Motor_T * p_motor, uint16_t scalar) 	{return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU, scalar);}
 //static inline uint16_t Motor_User_GetHeat_Fixed32(Motor_T *p_motor) 						{return Thermistor_ConvertToDegC_Fixed32(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU);}
-//static inline uint16_t Motor_User_GetMotorHeat_DegCScalar(Motor_T * p_mc, uint8_t motorIndex, uint8_t scalar) {return Motor_User_GetHeat_DegCScalar(Motor_GetPtrMotor(p_mc, motorIndex), scalar);}
+//static inline uint16_t Motor_User_GetMotorHeat_DegCScalar(Motor_T * p_motor, uint8_t motorIndex, uint8_t scalar) {return Motor_User_GetHeat_DegCScalar(Motor_GetPtrMotor(p_motor, motorIndex), scalar);}
 
 /******************************************************************************/
 /*
@@ -459,25 +460,43 @@ static inline void Motor_User_SetVSupplyVMotorScale(Motor_T * p_motor, uint16_t 
  */
 
 static inline Hall_Sensors_T Motor_User_ReadHall(Motor_T * p_motor) 			{return Hall_ReadSensors(&p_motor->Hall);}
-//static inline bool Motor_User_GetHallA(Motor_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_mc, motorIndex)).A;}
-//static inline bool Motor_User_GetHallB(Motor_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_mc, motorIndex)).B;}
-//static inline bool Motor_User_GetHallC(Motor_T * p_mc, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_mc, motorIndex)).C;}
+//static inline bool Motor_User_GetHallA(Motor_T * p_motor, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_motor, motorIndex)).A;}
+//static inline bool Motor_User_GetHallB(Motor_T * p_motor, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_motor, motorIndex)).B;}
+//static inline bool Motor_User_GetHallC(Motor_T * p_motor, uint8_t motorIndex) 	{return Motor_User_GetHall(Motor_GetPtrMotor(p_motor, motorIndex)).C;}
 //
 static inline uint16_t Motor_User_GetHallRotorAngle(Motor_T * p_motor) 			{return Hall_GetRotorAngle_Degrees16(&p_motor->Hall);}
 static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T * p_motor)
 {
-	return p_motor->Speed_RPM;
-//	uint16_t rpm;
+	uint16_t rpm;
+
+	switch (p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
+		case MOTOR_SENSOR_MODE_HALL: 		rpm = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);	break;
+		case MOTOR_SENSOR_MODE_ENCODER: 	rpm = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);	break;
+		case MOTOR_SENSOR_MODE_SIN_COS: 	rpm = Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, p_motor->SpeedDelta); 	break;
+		default: 	break;
+	}
+
+	p_motor->Speed2_RPM = (p_motor->Speed2_RPM + Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, p_motor->ElectricalDelta)) / 2U;
+
+	return rpm;
+}
+
+static inline uint16_t Motor_User_GetMechanialAngle_RPM(Motor_T * p_motor)
+{
+//	uint16_t angle;
 //	switch (p_motor->Parameters.SensorMode)
 //	{
 //		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
-//		case MOTOR_SENSOR_MODE_HALL: 		rpm = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);	break;
-//		case MOTOR_SENSOR_MODE_ENCODER: 	rpm = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);	break;
-//		case MOTOR_SENSOR_MODE_SIN_COS: 	 							break;
+//		case MOTOR_SENSOR_MODE_HALL: 		angle = 0;		break;
+//		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalAngle(&p_motor->Encoder);	break;
+//		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 	break;
 //		default: 	break;
 //	}
-//	return rpm;
+//	return angle;
 }
+
 static inline Motor_ErrorFlags_T Motor_User_GetErrorFlags(Motor_T * p_motor) 	{return p_motor->ErrorFlags;}
 
 static inline uint16_t Motor_User_GetIPhase(Motor_T * p_motor)
@@ -496,26 +515,14 @@ static inline uint16_t Motor_User_GetIPhase(Motor_T * p_motor)
 	return iPhase;
 }
 
-static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(Motor_T * p_mc) {return StateMachine_GetActiveStateId(&p_mc->StateMachine);}
+static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(Motor_T * p_motor) 						{return StateMachine_GetActiveStateId(&p_motor->StateMachine);}
+static inline uint16_t Motor_User_GetMotorAdcu(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel) 		{return p_motor->AnalogResults.Channels[adcChannel];}
+static inline uint16_t Motor_User_GetMotorAdcu_Msb8(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel)	{return Motor_User_GetMotorAdcu(p_motor, adcChannel) >> (ADC_BITS - 8U);}
 
-
-//static inline uint16_t Motor_User_GetMotorAdcu(Motor_T * p_mc, uint8_t motorIndex, MotorAnalog_Channel_T adcChannel)
-//{
-//	return p_mc->CONFIG.P_MOTORS[motorIndex].AnalogResults.Channels[adcChannel];
-//}
-//
-//static inline uint16_t Motor_User_GetMotorAdcu_Msb8(Motor_T * p_mc, uint8_t motorIndex, MotorAnalog_Channel_T adcChannel)
-//{
-//	return Motor_User_GetMotorAdcu(p_mc, motorIndex, adcChannel) >> (CONFIG_MOTOR_CONTROLLER_ADCU_BITS_N - 8U);
-//}
-
-
-
-//
 //static inline uint16_t Motor_User_GetBemf_Frac16(Motor_T * p_motor)	{return Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
 //static inline uint32_t Motor_User_GetBemf_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
 
-////static inline uint32_t Motor_User_GetBemfAvg_MilliV(Motor_T * p_mc, uint8_t motorIndex)	{return Motor_User_GetBemf_Frac16(Motor_GetPtrMotor(p_mc, motorIndex));}
+////static inline uint32_t Motor_User_GetBemfAvg_MilliV(Motor_T * p_motor, uint8_t motorIndex)	{return Motor_User_GetBemf_Frac16(Motor_GetPtrMotor(p_motor, motorIndex));}
 
 /******************************************************************************/
 /*

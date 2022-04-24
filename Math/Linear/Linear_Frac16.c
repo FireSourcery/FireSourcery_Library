@@ -32,29 +32,27 @@
 
 /*
  * shift 14 allows oversaturation, 200%. i.e. overflow at x == 2*XRef
+ * scale factor to 65536
+ * scale divisor to xref
  */
 void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
 {
-	p_linear->SlopeFactor 			= (65536 << 14U) / (divisor * yRef / factor); /* scale factor to 65536 */
-	p_linear->SlopeDivisor_Shift 	= 14U;
-	p_linear->SlopeDivisor 			= ((divisor * yRef / factor) << 14U) / 65536;
-	p_linear->SlopeFactor_Shift 	= 14U;
-	p_linear->XOffset 				= 0;
-	p_linear->YOffset 				= y0;
-	p_linear->XReference 			= (divisor * yRef / factor);
-	p_linear->YReference 			= yRef;
+	p_linear->YReference 		= yRef;
+	p_linear->XReference 		= linear_invf(factor, divisor, y0, yRef); // divisor * yRef / factor;
+
+	p_linear->Slope 			= (65536 << 14U) / p_linear->XReference;
+	p_linear->SlopeShift 		= 14U;
+
+	p_linear->InvSlope 			= (p_linear->XReference << 14U) / 65536;
+	p_linear->InvSlopeShift 	= 14U;
+
+	p_linear->XOffset 			= 0;
+	p_linear->YOffset 			= y0;
 }
 
 
 void Linear_Frac16_Init_X0(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t yRef)
 {
-	p_linear->SlopeFactor 			= (65536 << 14U) / (divisor);
-	p_linear->SlopeDivisor_Shift 	= 14U;
-	p_linear->SlopeDivisor 			= (divisor << 14U) / 65536;
-	p_linear->SlopeFactor_Shift 	= 14U;
-	p_linear->XOffset 				= x0;
-	p_linear->YOffset 				= 0;
-	p_linear->XReference 			= (divisor * yRef / factor);
-	p_linear->YReference 			= yRef;
+
 }
 

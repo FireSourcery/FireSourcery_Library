@@ -341,11 +341,10 @@ typedef struct
 	int32_t RampCmd;	//SetPoint after ramp, VReq/IReq/SpeedReq
 
 	/* Speed Feedback */
-	Linear_T UnitAngleRpm;
 	PID_T PidSpeed;
 	Timer_T SpeedTimer;			// SpeedCalc Timer
 	uint16_t Speed_RPM;			// Common Feedback Variable
-	uint32_t Speed_Frac16; 		/* Can over saturate */
+	uint32_t SpeedFeedback_Frac16; 		/* Can over saturate */
 	int32_t SpeedControl; 		/* Speed PID output, (Speed_Frac16 - RampCmd) => (VPwm, Vq, Iq), updated once per millis */
 
 	uint16_t Speed2_RPM;
@@ -362,7 +361,13 @@ typedef struct
 	PID_T PidId;
 	PID_T PidIq;
 	qangle16_t ElectricalAngle;
-	uint32_t DeltaAngle;
+	uint32_t ElectricalDelta;
+	qangle16_t MechanicalAngle;
+	uint32_t MechanicalDelta;
+
+	Linear_T UnitAngleRpm; //non encoder/hall sensor
+	qangle16_t SpeedAngle;
+	uint32_t SpeedDelta;
 
 	/* interpolated angle */
 	qangle16_t HallAngle;
@@ -522,15 +527,15 @@ static inline void Motor_ResumeRampOutput(Motor_T * p_motor, int32_t matchOutput
 static inline void Motor_CaptureEncoderSpeed(Motor_T * p_motor)
 {
 	p_motor->Speed_RPM =  (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder)); // + p_motor->Speed_RPM) / 2U;
-	p_motor->Speed_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedRefMax_RPM); //todo move to encoder module
+	p_motor->SpeedFeedback_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedRefMax_RPM); //todo move to encoder module
 }
 
 //Speed pid always uses directionless positive value [0:65535]
-static inline void Motor_ResumeSpeedOutput(Motor_T * p_motor, int32_t matchOutput)
+static inline void Motor_ResumeSpeedOutput(Motor_T * p_motor, int32_t speedControlMatch)
 {
-	Motor_ResumeRampOutput(p_motor, p_motor->Speed_Frac16); // req start from present speed
-	PID_SetIntegral(&p_motor->PidSpeed, matchOutput);
-	p_motor->SpeedControl = matchOutput; // output SpeedControl is V or I
+	Motor_ResumeRampOutput(p_motor, p_motor->SpeedFeedback_Frac16); // req start from present speed
+	PID_SetIntegral(&p_motor->PidSpeed, speedControlMatch);
+	p_motor->SpeedControl = speedControlMatch; // output SpeedControl is V or I
 }
 
 static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
@@ -538,7 +543,7 @@ static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
 	if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder) == true) //once per millis
 	{
 		p_motor->Speed_RPM = 0U;
-		p_motor->Speed_Frac16 = 0U;
+		p_motor->SpeedFeedback_Frac16 = 0U;
 	}
 }
 

@@ -99,6 +99,14 @@ typedef enum
 }
 MotorController_Direction_T;
 
+typedef enum
+{
+	MOTOR_CONTROLLER_NVM_ALL,
+	MOTOR_CONTROLLER_NVM_BOOT,
+	MOTOR_CONTROLLER_NVM_,
+}
+MotorController_Substate_T;
+
 typedef union
 {
 	struct
@@ -134,8 +142,8 @@ typedef struct __attribute__((aligned (4U))) //CONFIG_PARAMS_ALIGN_SIZE
 	bool IsBuzzerOnReverseEnable;
 	uint16_t BatteryZero_ADCU;
 	uint16_t BatteryFull_ADCU;
-	CanBus_Services_T * p_CanServices;
-
+	uint8_t CanServicesId;
+	bool IsCanEnable;
 	uint16_t AdcVRef_MilliV;
 }
 MotorController_Params_T;
@@ -203,11 +211,15 @@ typedef struct
 	Timer_T StateTimer;
 
 	Shell_T Shell;
+ 	uint16_t ShellSubstate;
 
 	StateMachine_T StateMachine;
 	MotorController_ErrorFlags_T ErrorFlags;
 	MotorController_Direction_T MainDirection;
  	MotorController_Direction_T UserDirection;
+
+ 	MotorController_Substate_T NvmSubstate;
+
  	uint16_t UserCmd;
 }
 MotorController_T;

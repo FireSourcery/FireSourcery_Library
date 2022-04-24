@@ -32,27 +32,55 @@
 
 /*
  * f(in) = ((factor * (in - x0)) / divisor) + y0
+ *
+ * factor > divisor, bound with yref
+ * divisor > factor, bound with xref
  */
 void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-	p_linear->SlopeFactor 			= (factor << 14U) / divisor;
-	p_linear->SlopeDivisor_Shift 	= 14U;
-	p_linear->SlopeDivisor 			= (divisor << 14U) / factor;
-	p_linear->SlopeFactor_Shift 	= 14U;
-	p_linear->YReference 			= yRef;
-	p_linear->XReference 			= divisor * yRef / factor;
-	p_linear->XOffset 				= 0;
-	p_linear->YOffset 				= y0;
+	p_linear->YReference 		= yRef;
+	p_linear->XReference 		= linear_invf(factor, divisor, y0, yRef); // divisor * yRef / factor;
+
+	//todo determine max shift if factor > 65536
+	p_linear->Slope 			= (factor << 14U) / divisor;
+	p_linear->SlopeShift 		= 14U;
+
+	//todo non iterative, log2,
+	while ((p_linear->XReference > INT32_MAX / p_linear->Slope) && (p_linear->SlopeShift > 0U))
+	{
+		p_linear->Slope = p_linear->Slope >> 1U;
+		p_linear->SlopeShift--;
+	}
+
+	//todo maxleftshift divide, if factor > divisor, invslope can be > 14
+	p_linear->InvSlope 			= (divisor << 14U) / factor;
+	p_linear->InvSlopeShift 	= 14U;
+
+	while ((p_linear->YReference - y0 > INT32_MAX / p_linear->InvSlope) && (p_linear->InvSlopeShift > 0U))
+	{
+		p_linear->InvSlope = p_linear->InvSlope >> 1U;
+		p_linear->InvSlopeShift--;
+	}
+
+	p_linear->XOffset 			= 0;
+	p_linear->YOffset 			= y0;
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 	p_linear->SlopeFactor 		= factor;
 	p_linear->SlopeDivisor 		= divisor;
-	p_linear->Intercept 		= intercept;
+	p_linear->YOffset 			= y0;
 	p_linear->YReference 		= yRef;
-	InitCommonXReference(p_linear);
 #endif
 }
 
+
+/*
+ * derive slope
+ */
+void Linear_Init_XRefYRef(Linear_T * p_linear, int32_t x0, int32_t y0, int32_t xRef, int32_t yRef)
+{
+
+}
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
 
 //static void InitCommonXReference(Linear_T * p_linear)

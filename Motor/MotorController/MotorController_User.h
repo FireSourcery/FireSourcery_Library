@@ -49,8 +49,6 @@ static inline uint8_t MotorController_User_GetName(MotorController_T * p_mc, uin
 static inline void MotorController_User_SetFastBoot(MotorController_T * p_mc, bool isEnable)	{p_mc->MemMapBoot.FastBoot = isEnable;}
 static inline void MotorController_User_SetLoadDefault(MotorController_T * p_mc, bool isEnable)	{p_mc->MemMapBoot.LoadDefault = isEnable;}
 
-
-
 static inline void MotorController_User_CalibrateBattery_MilliV(MotorController_T * p_mc, uint32_t zero_mV, uint32_t max_mV)
 {
 	p_mc->Parameters.BatteryZero_ADCU = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorPos, zero_mV);
@@ -226,8 +224,16 @@ static inline void MotorController_User_DisableControl(MotorController_T * p_mc)
 
 static inline void MotorController_User_SaveParameters_Blocking(MotorController_T * p_mc)
 {
+	p_mc->NvmSubstate = MOTOR_CONTROLLER_NVM_ALL;
 	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
 }
+
+static inline void MotorController_User_SaveBootReg_Blocking(MotorController_T * p_mc)
+{
+	p_mc->NvmSubstate = MOTOR_CONTROLLER_NVM_BOOT;
+	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
+}
+
 
 /*
  * Input mode voluntarily call checked function, avoids intermediate buffer

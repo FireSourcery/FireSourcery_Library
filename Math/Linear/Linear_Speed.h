@@ -36,22 +36,26 @@
 
 static inline int32_t Linear_Speed_CalcAngleRpm(const Linear_T * p_linear, uint16_t angle)
 {
-	return Linear_Function(p_linear, angle);
+//	return Linear_Function(p_linear, angle);
+	return Linear_Frac16_CalcUnits(p_linear, angle);
 }
 
 static inline int32_t Linear_Speed_CalcRpmAngle(const Linear_T * p_linear, uint32_t rpm)
 {
-	return Linear_InvFunction(p_linear, rpm);
+//	return Linear_InvFunction(p_linear, rpm);
+	return Linear_Frac16_CalcInvUnits(p_linear, rpm);
 }
 
 static inline int32_t Linear_Speed_CalcAngleRpmFrac16(const Linear_T * p_linear, int16_t angle)
 {
-	return Linear_Function_Fraction16(p_linear, angle);
+//	return Linear_Function_Fraction16(p_linear, angle);
+	return Linear_Frac16(p_linear, angle);
 }
 
 static inline int32_t Linear_Speed_CalcRpmFrac16Angle(const Linear_T * p_linear, uint32_t rpm)
 {
-	return Linear_InvFunction_Fraction16(p_linear, rpm);
+//	return Linear_InvFunction_Fraction16(p_linear, rpm);
+	return Linear_Frac16_Inv(p_linear, rpm);
 }
 
 #endif

@@ -185,15 +185,15 @@ static void Stop_Entry(Motor_T * p_motor)
 
 static void Stop_Proc(Motor_T * p_motor)
 {
-	if(p_motor->Speed_RPM > 0U)  	//poll speedfeedback or use bemf
-	{
-//		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
-	}
-	else
+//	if(p_motor->Speed_RPM > 0U)  	//poll speedfeedback or use bemf
+//	{
+////		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
+//	}
+//	else
 	{
 //		if(Timer_Poll(&p_motor->ControlTimer) == true)
 //		{
-//			Motor_FOC_ProcAngleObserve(p_motor);
+			Motor_FOC_ProcAngleObserve(p_motor);
 //		}
 	}
 }
@@ -229,7 +229,9 @@ static StateMachine_State_T * Run_TransitionRun(Motor_T * p_motor)
 	{
 		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 		{
-			Motor_FOC_SetMatchOutputKnown(p_motor);
+			/* output is prev VqReq, set to start at 0 change in torque */
+			/* Iq PID output differs between voltage Iq limit mode and Iq control mode. still need to match */
+			Motor_FOC_SetMatchOutput(p_motor, FOC_GetIq(&p_motor->Foc), FOC_GetVq(&p_motor->Foc), FOC_GetVd(&p_motor->Foc));
 		}
 		else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
 		{
@@ -461,7 +463,7 @@ static void Align_Proc(Motor_T * p_motor)
 	if(Timer_Poll(&p_motor->ControlTimer) == true)
 	{
 		p_motor->ElectricalAngle = 0U;
-		Encoder_Reset(&p_motor->Encoder); //zero angularD
+		Encoder_Zero(&p_motor->Encoder); //zero angularD
 //		Motor_Float(&p_motor->Foc);
 
 		if((p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS) || (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP))

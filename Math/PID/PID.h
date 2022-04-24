@@ -36,13 +36,6 @@
 
 typedef enum
 {
-	PID_DIRECTION_DIRECT,
-	PID_DIRECTION_REVERSE,
-}
-PID_Direction_T;
-
-typedef enum
-{
 	PID_MODE_PI,
 	PID_MODE_PID,
 }
@@ -50,8 +43,7 @@ PID_Mode_T;
 
 typedef struct __attribute__((aligned (4U))) PID_Params_Tag
 {
-	PID_Mode_T	  		Mode;
-	PID_Direction_T 	Direction;
+	PID_Mode_T Mode;
 	uint32_t CalcFreq;
 	int32_t KpFactor;
 	int32_t KpDivisor;
@@ -67,7 +59,6 @@ PID_Params_T;
 typedef const struct
 {
 	const PID_Params_T * const P_PARAMS;
-//	uint32_t CALC_FREQ;
 }
 PID_Config_T;
 
@@ -75,8 +66,8 @@ typedef struct PID_Tag
 {
 	const PID_Config_T CONFIG;
 	PID_Params_T Params;
-	int32_t KiDivisorFreq; 	//KpDivisor * CalcFreq
-	int32_t KdFactorFreq; 	//KdFactor * CalcFreq
+	int32_t KiDivisorFreq; 	/* KpDivisor * CalcFreq */
+	int32_t KdFactorFreq; 	/* KdFactor * CalcFreq */
 	int32_t ErrorSum;
 	int32_t ErrorPrev;
 }
@@ -95,8 +86,7 @@ extern void PID_SetIntegral(PID_T * p_pid, int32_t integral);
 extern void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor);
 extern void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq);
 extern void PID_SetOutputLimits(PID_T * p_pid, uint32_t min, uint32_t max);
-extern void PID_SetDirection(PID_T * p_pid, PID_Direction_T direction);
-extern PID_Direction_T PID_GetDirection(PID_T *p_pid);
+extern void PID_Init(PID_T * p_pid);
 extern void PID_Init_Params
 (
 	PID_T * p_pid,

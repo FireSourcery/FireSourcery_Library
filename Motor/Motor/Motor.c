@@ -72,12 +72,16 @@ void Motor_InitReboot(Motor_T * p_motor)
 			{
 				Encoder_Motor_CaptureTime_SetPolePairs(&p_motor->Encoder, p_motor->Parameters.PolePairs);
 			}
+
+			//temp
+			Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, 20000U, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedRefMax_RPM);
 			break;
 		case MOTOR_SENSOR_MODE_ENCODER :
 			Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
 			break;
 		case MOTOR_SENSOR_MODE_SIN_COS :
 			SinCos_Init(&p_motor->SinCos);
+			Linear_Speed_InitAngleRpm(&p_motor->UnitAngleRpm, 1000U, 16U, p_motor->Parameters.SpeedRefMax_RPM);
 			break;
 		default :
 			break;
@@ -97,9 +101,9 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	FOC_Init(&p_motor->Foc);
 //	BEMF_Init(&p_motor->Bemf);
-	Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, 20000U, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedRefMax_RPM); /* final value is overwritten, slope is persistent */
 
-	//* p_motor->Encoder.Params.MotorPolePairs
+
+
 	PID_Init(&p_motor->PidSpeed);
 	PID_Init(&p_motor->PidIq);
 	PID_Init(&p_motor->PidId);

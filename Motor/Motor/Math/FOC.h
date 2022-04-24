@@ -127,7 +127,7 @@ static inline qfrac16_t FOC_GetVq(FOC_T * p_foc) {return p_foc->Vq;}
 
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
-extern void FOC_Reset(FOC_T * p_foc);
+extern void FOC_Zero(FOC_T * p_foc);
 
 #endif
 //static inline void FOC_ProcThetaSvpwm(FOC_T *  p_foc)

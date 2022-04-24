@@ -73,36 +73,38 @@ static inline uint32_t speed_rpmtoa16(uint32_t rpm, uint32_t sampleFreq)
 /******************************************************************************/
 void Linear_Speed_InitAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t angleBits, uint16_t speedRef_Rpm)
 {
-	p_linear->YReference 			= speedRef_Rpm;
-	p_linear->XReference 			= (speedRef_Rpm << angleBits) / (sampleFreq * 60U);
+	Linear_Frac16_Init(p_linear, sampleFreq * 60U, (1U << angleBits), 0, speedRef_Rpm);
 
-	p_linear->SlopeFactor 			= sampleFreq * 60U;
-	p_linear->SlopeDivisor_Shift 	= angleBits;
-
-	//todo non iterative
-	while ((p_linear->XReference > INT32_MAX / p_linear->SlopeFactor) && (p_linear->SlopeDivisor_Shift > 0U))
-	{
-		p_linear->SlopeFactor = p_linear->SlopeFactor >> 1U;
-		p_linear->SlopeDivisor_Shift--;
-	}
-
-	//todo maxleftshift divide
-	p_linear->SlopeDivisor 			= (1U << (angleBits + (30U - angleBits))) / (60U * sampleFreq);
-	p_linear->SlopeFactor_Shift 	= (30U - angleBits);
-
-	while ((p_linear->YReference > INT32_MAX / p_linear->SlopeDivisor) && (p_linear->SlopeFactor_Shift > 0U))
-	{
-		p_linear->SlopeDivisor = p_linear->SlopeDivisor >> 1U;
-		p_linear->SlopeFactor_Shift--;
-	}
-
-	p_linear->XOffset 				= 0;
-	p_linear->YOffset 				= 0;
+//	p_linear->YReference 	= speedRef_Rpm;
+//	p_linear->XReference 	= (speedRef_Rpm << angleBits) / (sampleFreq * 60U);
+//
+//	p_linear->Slope 		= sampleFreq * 60U;
+//	p_linear->SlopeShift 	= angleBits;
+//
+//	//todo non iterative
+//	while ((p_linear->XReference > INT32_MAX / p_linear->Slope) && (p_linear->SlopeShift > 0U))
+//	{
+//		p_linear->Slope = p_linear->Slope >> 1U;
+//		p_linear->SlopeShift--;
+//	}
+//
+//	//todo maxleftshift divide
+//	p_linear->InvSlope 			= (1U << (angleBits + (30U - angleBits))) / (60U * sampleFreq);
+//	p_linear->InvSlopeShift 	= (30U - angleBits);
+//
+//	while ((p_linear->YReference > INT32_MAX / p_linear->InvSlope) && (p_linear->InvSlopeShift > 0U))
+//	{
+//		p_linear->InvSlope = p_linear->InvSlope >> 1U;
+//		p_linear->InvSlopeShift--;
+//	}
+//
+//	p_linear->XOffset 				= 0;
+//	p_linear->YOffset 				= 0;
 }
 
 
 void Linear_Speed_InitElectricalAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t angleBits, uint8_t polePairs, uint16_t speedRef_Rpm)
 {
-	Linear_Speed_InitAngleRpm(p_linear, sampleFreq / polePairs, angleBits, speedRef_Rpm);
+	Linear_Frac16_Init(p_linear, sampleFreq * 60U / polePairs, (1U << angleBits), 0, speedRef_Rpm);
 }
 

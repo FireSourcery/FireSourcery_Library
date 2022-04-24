@@ -218,7 +218,7 @@ static inline void Motor_Calibrate_StartAdc(Motor_T * p_motor)
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		FOC_Reset(&p_motor->Foc);
+		FOC_Zero(&p_motor->Foc);
 		Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 	}
 	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */

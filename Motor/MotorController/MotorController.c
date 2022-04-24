@@ -68,7 +68,10 @@ void MotorController_Init(MotorController_T * p_mc)
 		Serial_Init(&p_mc->CONFIG.P_SERIALS[iSerial]);
 	}
 
-	CanBus_Init(p_mc->CONFIG.P_CAN_BUS, p_mc->Parameters.p_CanServices);
+	if(p_mc->Parameters.IsCanEnable == true)
+	{
+		CanBus_Init(p_mc->CONFIG.P_CAN_BUS, p_mc->Parameters.CanServicesId);
+	}
 
 	MotAnalogUser_Init(&p_mc->AnalogUser);
 	Debounce_Init(&p_mc->DIn, 5U);	//5millis
@@ -101,7 +104,6 @@ void MotorController_Init(MotorController_T * p_mc)
 	Timer_InitPeriodic(&p_mc->TimerMillis10, 	10U);
 	Timer_InitPeriodic(&p_mc->StateTimer,		1000U);
 
-	/* todo invalid xcvr set issues */
 	for (uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++)
 	{
 		Protocol_Init(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]);
@@ -111,8 +113,6 @@ void MotorController_Init(MotorController_T * p_mc)
 
 	p_mc->MainDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
 	p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
-	//	p_mc->SignalBufferAnalogMonitor.AdcFlags 	= 0U;
-	//	p_mc->SignalBufferAnalogUser.AdcFlags 		= 0U;
 }
 
 void MotorController_SaveParameters_Blocking(MotorController_T * p_mc)
@@ -152,5 +152,12 @@ void MotorController_SaveParameters_Blocking(MotorController_T * p_mc)
 
 	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->Shell.CONFIG.P_PARAMS, &p_mc->Shell.Params, sizeof(Shell_Params_T));
 
+#endif
+}
+
+void MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
+{
+#ifndef CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH
+	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->CONFIG.P_MEM_MAP_BOOT, &p_mc->MemMapBoot, sizeof(MemMapBoot_T));
 #endif
 }

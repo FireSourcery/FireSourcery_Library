@@ -35,22 +35,22 @@
 
 static inline int32_t Linear_Frac16(const Linear_T * p_linear, int32_t x)
 {
-	return linear_m16_f16(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->XOffset, p_linear->YOffset, x);
+	return linear_m16_f16(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, p_linear->YOffset, x);
 }
 
 static inline int32_t Linear_Frac16_Inv(const Linear_T * p_linear, int32_t y_frac16)
 {
-	return linear_m16_invf16(p_linear->SlopeDivisor, p_linear->SlopeFactor_Shift, p_linear->XOffset, p_linear->YOffset, y_frac16);
+	return linear_m16_invf16(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, p_linear->YOffset, y_frac16);
 }
 
 static inline int32_t Linear_Frac16_CalcUnits(const Linear_T * p_linear, int32_t x)
 {
-	return linear_m16_f(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, x);
+	return linear_m16_f(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, x);
 }
 
 static inline int32_t Linear_Frac16_CalcInvUnits(const Linear_T * p_linear, int32_t y)
 {
-	return linear_m16_invf(p_linear->SlopeDivisor, p_linear->SlopeFactor_Shift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, y);
+	return linear_m16_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, y);
 }
 
 //todo common bound function

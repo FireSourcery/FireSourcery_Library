@@ -139,12 +139,12 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolut
 //	Speed_Frac16 = (speed * 65535U / SpeedRefMax_RPM);
 
 
-	Encoder_Reset(p_encoder);
+	Encoder_Zero(p_encoder);
 }
 
 
 //reset runtime variables
-void Encoder_Reset(Encoder_T * p_encoder)
+void Encoder_Zero(Encoder_T * p_encoder)
 {
 	p_encoder->DeltaD = 1U;
 	p_encoder->DeltaT = 1U;

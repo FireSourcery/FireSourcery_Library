@@ -60,7 +60,7 @@ static inline uint32_t Rth_PullUp(uint8_t vIn, uint32_t rSeries, uint32_t rParal
 
 	if (rParallel != 0U)
 	{
-
+		rThermistor = (rParallel * rThermistor) / (rParallel - rThermistor); /* 1 / (1/rThermistor - 1/rParallel) */
 	}
 
 	return rThermistor;
@@ -78,8 +78,10 @@ static inline uint16_t InvRth_PullUp(uint8_t vIn, uint32_t rSeries, uint32_t rPa
 	return adcu;
 }
 
-//#define THERMISTOR_STEINHART(B, T0, R0, R_TH) (log(R_TH / R0) / B) + (1.0F / T0)
-//#define THERMISTOR_ADCU_PULL_UP(B, T0, R0, R_TH)  THERMISTOR_INV_R_TH_PULLUP( , THERMISTOR_INV_STEINHART(B, T0, R0, 1.0F / (DEG_C + 273.15F)))
+//static inline uint32_t CalcRth_PullDown(Thermistor_T * p_thermistor, uint16_t adcu)
+//{
+//	//	uint32_t rThermistor = p_thermistor->CONFIG.R_SERIES / (((uint32_t)p_thermistor->CONFIG.V_IN * (uint32_t)p_thermistor->CONFIG.ADC_RESOLUTION) / (*p_thermistor->CONFIG.P_ADC_VALUE * p_thermistor->CONFIG.ADC_VREF) - 1U);
+//}
 
 /*
  * 1/T = 1/T0 + (1/B)ln(R/R0))
@@ -97,36 +99,6 @@ static inline float InvSteinhart(double b, double t0, double r0, double heatInv)
 {
 	return exp((heatInv - 1.0F / t0) * b) * r0;
 }
-
-//static inline uint32_t CalcRth_PullUp(Thermistor_T * p_thermistor, uint16_t adcu)
-//{
-//	uint32_t rThermistor = ((uint32_t)adcu * p_thermistor->CONFIG.R_SERIES * (uint32_t)p_thermistor->CONFIG.ADC_VREF) /
-//		 ((uint32_t)p_thermistor->CONFIG.V_IN * (uint32_t)p_thermistor->CONFIG.ADC_MAX - (uint32_t)adcu * (uint32_t)p_thermistor->CONFIG.ADC_VREF);
-//
-//	if (p_thermistor->CONFIG.R_PARALLEL != 0U)
-//	{
-//
-//	}
-//
-//	return rThermistor;
-//}
-
-//static inline uint32_t CalcRth_PullDown(Thermistor_T * p_thermistor, uint16_t adcu)
-//{
-//	//	uint32_t rThermistor = p_thermistor->CONFIG.R_SERIES / (((uint32_t)p_thermistor->CONFIG.V_IN * (uint32_t)p_thermistor->CONFIG.ADC_RESOLUTION) / (*p_thermistor->CONFIG.P_ADC_VALUE * p_thermistor->CONFIG.ADC_VREF) - 1U);
-//}
-
-//static inline float Steinhart(Thermistor_T * p_thermistor, uint16_t rTh)
-//{
-//	return (log((double)rTh / (double)p_thermistor->Params.RNominal) / (double)p_thermistor->Params.BConstant + 1.0F / (double)p_thermistor->Params.TNominal);
-//}
-
-//static inline float InvSteinhart(Thermistor_T * p_thermistor, uint16_t heatInv)
-//{
-//	return exp((heatInv - 1.0F / (double)p_thermistor->Params.TNominal) * (double)p_thermistor->Params.BConstant) * (double)p_thermistor->Params.RNominal;
-//}
-
-
 
 static float ConvertAdcuToDegC(Thermistor_T * p_thermistor, uint16_t adcu)
 {
@@ -170,11 +142,6 @@ int32_t Thermistor_ConvertToDegC_Int(Thermistor_T * p_thermistor, uint16_t adcu,
 {
 	return (int32_t)(ConvertAdcuToDegC(p_thermistor, adcu) * scalar);
 }
-
-//int32_t Thermistor_ConvertToDegC_Fixed32(Thermistor_T * p_thermistor, uint16_t adcu)
-//{
-//
-//}
 
 /*
  * For when conversion processing is less frequent than user output
@@ -233,12 +200,12 @@ void Thermistor_SetHeatThreshold_DegC(Thermistor_T * p_thermistor, uint8_t thres
 	p_thermistor->Params.Threshold_ADCU = ConvertDegCToAdcu(p_thermistor, threshold_degreesC);
 }
 
-void Thermistor_SetParams_DegC(Thermistor_T * p_thermistor, uint32_t r0, uint32_t t0, uint32_t b, uint8_t threshold_degC, uint8_t limit_degC)
+void Thermistor_SetParams_DegC(Thermistor_T * p_thermistor, uint32_t r0, uint32_t t0_degC, uint32_t b, uint8_t threshold_degC, uint8_t limit_degC)
 {
 	Thermistor_SetHeatLimit_DegC(p_thermistor, limit_degC);
 	Thermistor_SetHeatThreshold_DegC(p_thermistor, threshold_degC);
 	p_thermistor->Params.RNominal = r0;
-//	p_thermistor->Params.TNominal = t0 + 273;
+	p_thermistor->Params.TNominal = t0_degC + 273;
 	p_thermistor->Params.BConstant = b;
 }
 
@@ -253,21 +220,21 @@ int32_t Thermistor_GetHeatThreshold_DegCInt(Thermistor_T * p_thermistor, uint16_
 	return Thermistor_ConvertToDegC_Int(p_thermistor, p_thermistor->Params.Threshold_ADCU, scalar);
 }
 
-//int32_t Thermistor_GetHeatLimit_DegC(Thermistor_T * p_thermistor)
-//{
-//	return ConvertAdcuToDegC(p_thermistor, p_thermistor->Params.Limit_ADCU);
-//}
-//int32_t Thermistor_GetHeatThreshold_DegC(Thermistor_T * p_thermistor)
-//{
-//	return ConvertAdcuToDegC(p_thermistor, p_thermistor->Params.Threshold_ADCU);
-//}
+int32_t Thermistor_GetHeatLimit_DegC(Thermistor_T * p_thermistor)
+{
+	return ConvertAdcuToDegC(p_thermistor, p_thermistor->Params.Limit_ADCU);
+}
+int32_t Thermistor_GetHeatThreshold_DegC(Thermistor_T * p_thermistor)
+{
+	return ConvertAdcuToDegC(p_thermistor, p_thermistor->Params.Threshold_ADCU);
+}
 
-//float Thermistor_GetHeatLimit_DegCFloat(Thermistor_T * p_thermistor)
-//{
-//	return ConvertAdcuToDegC(p_thermistor, p_thermistor->Params.Limit_ADCU);
-//}
-//
-//float Thermistor_GetHeatThreshold_DegCFloat(Thermistor_T * p_thermistor, uint16_t scalar)
-//{
-//	return ConvertAdcuToDegC(p_thermistor, p_thermistor->Params.Threshold_ADCU);
-//}
+float Thermistor_GetHeatLimit_DegCFloat(Thermistor_T * p_thermistor)
+{
+	return ConvertAdcuToDegC(p_thermistor, p_thermistor->Params.Limit_ADCU);
+}
+
+float Thermistor_GetHeatThreshold_DegCFloat(Thermistor_T * p_thermistor, uint16_t scalar)
+{
+	return ConvertAdcuToDegC(p_thermistor, p_thermistor->Params.Threshold_ADCU);
+}

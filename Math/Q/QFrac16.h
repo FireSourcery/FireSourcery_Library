@@ -186,10 +186,10 @@ static inline qfrac16_t cos90(qangle16_t theta)
 }
 
 /*
- * [0, 90)		=> [0x0000, 0x3FFF]	=> [0, 0xFF] -> [0, 1)
- * [90, 180)	=> [0x4000, 0x7FFF] => [0xFF, 0] -> (1, 0]
- * [180, 270)	=> [0x8000, 0xBFFF] => [0, 0xFF] -> [0, -1)
- * [270, 360)	=> [0xC000, 0xFFFF] => [0xFF, 0] -> (-1, 0]
+ * [0, 90)		=> [0x0000, 0x3FFF]	=> [0, 0xFF] == [0, 1)
+ * [90, 180)	=> [0x4000, 0x7FFF] => [0xFF, 0] == (1, 0]
+ * [180, 270)	=> [0x8000, 0xBFFF] => [0, 0xFF] == [0, -1)
+ * [270, 360)	=> [0xC000, 0xFFFF] => [0xFF, 0] == (-1, 0]
  *
  *  can also check first 2 bits for branch
  *  #define QFRAC16_SIN_MASK 	0xC000

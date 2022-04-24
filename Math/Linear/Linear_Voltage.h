@@ -42,13 +42,13 @@
  */
 #define LINEAR_VOLTAGE_CONFIG(r1, r2, adcVRef10, adcBits, vInMax) 							\
 {																							\
-	.SlopeFactor 				= (((int32_t)adcVRef10 * (r1 + r2)) << (16U - adcBits)) / r2 / 10U, 	\
-	.SlopeDivisor_Shift 		= 16U,														\
-	.SlopeDivisor 				= ((int32_t)r2 << 16U) / adcVRef10 * 10U / (r1 + r2),				\
-	.SlopeFactor_Shift 			= 16U - adcBits,											\
-	.YOffset 					= 0U, 														\
-	.XOffset 					= 0U, 														\
-	.YReference 				= vInMax - 0U, 												\
+	.Slope 				= (((int32_t)adcVRef10 * (r1 + r2)) << (16U - adcBits)) / r2 / 10U, 	\
+	.SlopeShift 		= 16U,														\
+	.InvSlope  			= ((int32_t)r2 << 16U) / adcVRef10 * 10U / (r1 + r2),				\
+	.InvSlopeShift 		= 16U - adcBits,											\
+	.YOffset 			= 0U, 														\
+	.XOffset 			= 0U, 														\
+	.YReference 		= vInMax - 0U, 												\
 }
 
 //#define LINEAR_VOLTAGE_CONFIG(r1, r2, adcVRef10, adcBits, vInMax) LINEAR_CONFIG(((int32_t)adcVRef10 * (r1 + r2) / 10 / r2), ((int32_t)1 << adcBits), 0, ((int32_t)vInMax * 1000))
@@ -69,7 +69,7 @@ static inline int32_t Linear_Voltage_CalcV(const Linear_T * p_linear, uint16_t a
 
 static inline int32_t Linear_Voltage_CalcMilliV(const Linear_T * p_linear, uint16_t adcu)
 {
-	int32_t factor = adcu * p_linear->SlopeFactor;
+	int32_t factor = adcu * p_linear->Slope;
 	int32_t milliV;
 
 	if(factor < INT32_MAX / 1000UL)

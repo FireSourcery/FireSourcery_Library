@@ -182,7 +182,10 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 			Protocol_Slave_Proc(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]);
 		}
 
-//		CanBus_ProcServices(p_mc->CONFIG.P_CAN_BUS);
+		if(p_mc->Parameters.IsCanEnable == true)
+		{
+			CanBus_ProcServices(p_mc->CONFIG.P_CAN_BUS);
+		}
 	}
 
 	if (Timer_Poll(&p_mc->TimerMillis10) == true) 	//Low Freq, Low Priority 10 ms, Main

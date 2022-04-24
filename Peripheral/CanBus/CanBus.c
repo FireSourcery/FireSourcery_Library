@@ -4,20 +4,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-void CanBus_Init(CanBus_T * p_can, const CanBus_Services_T * p_services)
+void CanBus_Init(CanBus_T * p_can, uint8_t servicesId)
 {
-	p_can->p_Services = p_services;
-
-	if (p_services != 0U)
+	if(servicesId < p_can->CONFIG.SERVICES_TABLE_LENGTH)
 	{
+		p_can->p_Services = p_can->CONFIG.P_SERVICES_TABLE[servicesId];
 		CanBus_InitServices(p_can);
-		//set enable
 	}
-	else
-	{
-//		set idle
-	}
-
 }
 
 void CanBus_InitServices(CanBus_T * p_can)

@@ -40,35 +40,39 @@
 
 typedef struct Linear_Tag
 {
-	int32_t SlopeFactor; 		// m
-	int32_t SlopeDivisor;
-#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-	uint8_t SlopeDivisor_Shift; // y = x * SlopeFactor >> SlopeDivisor_Shift + Intercept
-	uint8_t SlopeFactor_Shift;  // x = (y - Intercept) * SlopeDivisor >> SlopeFactor_Shift
 
-//	uint8_t Slope;
-//	uint8_t SlopeShift;
-//	uint8_t InvSlope;
-//	uint8_t InvSlopeShift;
+#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
+	/*
+	 * y = (x - XOffset) * Slope >> SlopeShift + YOffset
+	 * x = (y - YOffset) * InvSlope >> InvSlopeShift
+	 */
+	int32_t Slope;
+	int32_t InvSlope;
+	uint8_t SlopeShift;
+	uint8_t InvSlopeShift;
+#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+	int32_t SlopeFactor;
+	int32_t SlopeDivisor;
 #endif
 	int32_t XOffset;
 	int32_t YOffset;
-	int32_t XReference; 		// f(x[0:XRef]) => frac16(x)[0:65536]
-	int32_t YReference; 		// f(x)[0:YRef] => frac16(x)[0:65536]
+	/* One Ref is derived */
+	int32_t XReference;		/* f(x[0:XRef]) => frac16(x)[0:65536] */
+	int32_t YReference;		/* f(x)[0:YRef] => frac16(x)[0:65536] */
 } Linear_T;
 
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
 
-#define LINEAR_CONFIG(factor, divisor, y0, yRef)														\
-{																										\
-	.SlopeFactor 				= ((int32_t)65536 << 14U) / ((int32_t)(divisor) * yRef / (factor)),		\
-	.SlopeDivisor_Shift 		= 14U,																	\
-	.SlopeDivisor 				= (((int32_t)(divisor) * (yRef) / (factor)) << 14U) / 65536, 			\
-	.SlopeFactor_Shift 			= 14U,																	\
-	.XOffset 					= 0,																	\
-	.YOffset 					= y0,																	\
- 	.XReference 				= ((int32_t)(divisor) * (yRef) / (factor)), 							\
-	.YReference 				= yRef, 																\
+#define LINEAR_CONFIG(factor, divisor, y0, yRef)												\
+{																								\
+	.Slope 				= ((int32_t)65536 << 14U) / ((int32_t)(divisor) * yRef / (factor)),		\
+	.SlopeShift 		= 14U,																	\
+	.InvSlope 			= (((int32_t)(divisor) * (yRef) / (factor)) << 14U) / 65536, 			\
+	.InvSlopeShift 		= 14U,																	\
+	.XOffset 			= 0,																	\
+	.YOffset 			= y0,																	\
+ 	.XReference 		= ((int32_t)(divisor) * (yRef) / (factor)), 							\
+	.YReference 		= yRef, 																\
 }
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 #define LINEAR_CONFIG(factor, divisor, offset, rangeRef)				\
@@ -84,7 +88,7 @@ typedef struct Linear_Tag
 static inline int32_t Linear_Function(const Linear_T * p_linear, int32_t x)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-	return linear_f_shift(p_linear->SlopeFactor, p_linear->SlopeDivisor_Shift, p_linear->XOffset, p_linear->YOffset, x);
+	return linear_f_shift(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, p_linear->YOffset, x);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 	return linear_f(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, x);
 #endif
@@ -96,7 +100,7 @@ static inline int32_t Linear_Function(const Linear_T * p_linear, int32_t x)
 static inline int32_t Linear_InvFunction(const Linear_T * p_linear, int32_t y)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-	return linear_invf_shift(p_linear->SlopeDivisor, p_linear->SlopeFactor_Shift, p_linear->XOffset, p_linear->YOffset, y);
+	return linear_invf_shift(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, p_linear->YOffset, y);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 	return linear_invf(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, y);
 #endif

@@ -56,6 +56,13 @@
 	#define	CONFIG_MOTOR_I_SENSORS_ABC
 #endif
 
+#if defined(ADC_VREF_MILLIV) && defined(ADC_MAX) && defined(ADC_BITS)
+
+#else
+	#define ADC_VREF 		5U
+	#define ADC_MAX 		4096U
+	#define ADC_BITS 		12U
+#endif
 
 #endif
 

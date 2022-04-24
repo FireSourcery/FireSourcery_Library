@@ -56,7 +56,7 @@ typedef const struct
 {
 	const VMonitor_Params_T * const P_PARAMS;
 	//R1, R2
-	const Linear_T UNITS;
+	const Linear_T UNITS; //todo change to param
 }
 VMonitor_Config_T;
 

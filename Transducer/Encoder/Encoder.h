@@ -688,7 +688,6 @@ static inline uint32_t Encoder_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
 
 
 
-
 /*
  * direct to user max rpm
  */
@@ -765,7 +764,7 @@ static inline uint32_t Encoder_ConvertSampleAngleToRotationalSpeed_RPM(Encoder_T
 /******************************************************************************/
 
 
-extern void Encoder_Reset(Encoder_T * p_encoder);
+extern void Encoder_Zero(Encoder_T * p_encoder);
 extern void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder, uint16_t initialRpm);
 /******************************************************************************/
 /*! @} */

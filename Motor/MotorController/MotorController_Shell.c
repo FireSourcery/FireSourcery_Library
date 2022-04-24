@@ -37,7 +37,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern void SystemSoftwareReset(void);
 
 //todo User_Wrapper functions
 
@@ -52,11 +51,18 @@ static Cmd_Status_T Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv
 	(void)argv;
     if(argc == 1U)
     {
-
+    	p_mc->ShellSubstate = 0U;
     }
     else if(argc == 2U)
     {
-    	//set substate
+    	if(strncmp(argv[1U], "a", 2U) == 0U)
+    	{
+        	p_mc->ShellSubstate = 1U;
+    	}
+    	else if(strncmp(argv[1U], "s", 2U) == 0U)
+    	{
+        	p_mc->ShellSubstate = 2U;
+    	}
     }
 	return CMD_STATUS_PROCESS_LOOP;
 }
@@ -68,13 +74,12 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 
 	uint32_t throttle = MotorController_User_GetThrottle(p_mc);
 	uint32_t brake = MotorController_User_GetBrake(p_mc);
-	uint32_t substate = 0U;
 
-	switch (substate)
+	switch (p_mc->ShellSubstate)
 	{
 		case 0U:
-        	Terminal_SendString(p_terminal, "Speed: ");	Terminal_SendNum(p_terminal, p_motor->Speed_RPM); Terminal_SendString(p_terminal, " RPM ");
-			Terminal_SendNum(p_terminal, p_motor->Speed_Frac16); Terminal_SendString(p_terminal, " Frac16\r\n");
+        	Terminal_SendString(p_terminal, "Speed: ");	Terminal_SendNum(p_terminal, Motor_User_GetSpeed_RPM(p_motor)); Terminal_SendString(p_terminal, " RPM ");
+			Terminal_SendNum(p_terminal, p_motor->SpeedFeedback_Frac16); Terminal_SendString(p_terminal, " Frac16\r\n");
 
     		Terminal_SendString(p_terminal, "Speed2: "); Terminal_SendNum(p_terminal, p_motor->Speed2_RPM); Terminal_SendString(p_terminal, " RPM ");
     		Terminal_SendNum(p_terminal, p_motor->Speed2_Frac16); Terminal_SendString(p_terminal, " Frac16\r\n");
@@ -83,7 +88,6 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 
 			Terminal_SendString(p_terminal, "Throttle: "); 	Terminal_SendNum(p_terminal, throttle); 		Terminal_SendString(p_terminal, " Frac16\r\n");
 			Terminal_SendString(p_terminal, "Brake: "); 	Terminal_SendNum(p_terminal, brake); 			Terminal_SendString(p_terminal, " Frac16\r\n");
-
 			Terminal_SendString(p_terminal, "RampCmd: "); 	Terminal_SendNum(p_terminal, p_motor->RampCmd); Terminal_SendString(p_terminal, " Frac16\r\n");
 //			Terminal_SendString(p_terminal, ", RampIndex: "); Terminal_SendNum(p_terminal, p_motor->RampIndex);
 
@@ -108,6 +112,35 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 				default: break;
 			}
 			Terminal_SendString(p_terminal, "\r\n");
+
+			Terminal_SendString(p_terminal, "MSM: ");
+			switch(Motor_User_GetStateId(p_motor))
+			{
+				case MSM_STATE_ID_INIT:			Terminal_SendString(p_terminal, "Init");	break;
+				case MSM_STATE_ID_STOP:			Terminal_SendString(p_terminal, "Stop");	break;
+				case MSM_STATE_ID_ALIGN:		Terminal_SendString(p_terminal, "Align");		break;
+				case MSM_STATE_ID_OPEN_LOOP:	Terminal_SendString(p_terminal, "OpenLoop");	break;
+				case MSM_STATE_ID_RUN:			Terminal_SendString(p_terminal, "Run");	break;
+				case MSM_STATE_ID_FREEWHEEL:	Terminal_SendString(p_terminal, "Freewheel");	break;
+				case MSM_STATE_ID_CALIBRATION:	Terminal_SendString(p_terminal, "Calib");		break;
+				case MSM_STATE_ID_FAULT:		Terminal_SendString(p_terminal, "Fault");	break;
+				default: break;
+			}
+			Terminal_SendString(p_terminal, "\r\n");
+
+			Terminal_SendString(p_terminal, "MCSM: ");
+			switch(MotorController_User_GetStateId(p_mc))
+			{
+				case MCSM_STATE_ID_INIT:	Terminal_SendString(p_terminal, "Init");	break;
+				case MCSM_STATE_ID_STOP:	Terminal_SendString(p_terminal, "Stop");	break;
+				case MCSM_STATE_ID_RUN:		Terminal_SendString(p_terminal, "Run");		break;
+				case MCSM_STATE_ID_FAULT:	Terminal_SendString(p_terminal, "Fault");	break;
+				default: break;
+			}
+			Terminal_SendString(p_terminal, "\r\n");
+
+			Terminal_SendString(p_terminal, "ElAngle: "); Terminal_SendNum(p_terminal, p_motor->ElectricalAngle); Terminal_SendString(p_terminal, " Deg16\r\n");
+
 			break;
 
 		default: break;
@@ -326,21 +359,6 @@ static Cmd_Status_T Cmd_calibrate(MotorController_T * p_mc, int argc, char ** ar
 	return status;
 }
 
-static Cmd_Status_T Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
-{
-	(void)argc;
-	(void)argv;
-	MotorController_User_SaveParameters_Blocking(p_mc);
-    return CMD_STATUS_SUCCESS;
-}
-
-static Cmd_Status_T Cmd_reboot(MotorController_T * p_mc, int argc, char ** argv)
-{
-	(void)argc;
-	(void)argv;
-	SystemSoftwareReset();
-    return CMD_STATUS_SUCCESS;
-}
 
 static Cmd_Status_T Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 {
@@ -442,7 +460,7 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_STATUS_SUCCESS;
 }
 
-int Cmd_direction(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_direction(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 
@@ -477,19 +495,6 @@ int Cmd_direction(MotorController_T * p_mc, int argc, char ** argv)
 	}
 
     return CMD_STATUS_SUCCESS;
-}
-
-int Cmd_set(MotorController_T * p_mc, int argc, char ** argv)
-{
-//	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
-//
-//	if(argc == 3U)
-//	{
-//
-//
-//	}
-//
-//    return CMD_STATUS_SUCCESS;
 }
 
 
@@ -532,8 +537,8 @@ static Cmd_Status_T Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
 		Terminal_SendString(p_terminal, "SensorMode: ");
 		switch(p_motor->Parameters.SensorMode)
 		{
-			case MOTOR_SENSOR_MODE_HALL: 			Terminal_SendString(p_terminal, "HALL"); 	break;
-			case MOTOR_SENSOR_MODE_ENCODER: 		Terminal_SendString(p_terminal, "ENCODER"); 		break;
+			case MOTOR_SENSOR_MODE_HALL: 			Terminal_SendString(p_terminal, "HALL"); 		break;
+			case MOTOR_SENSOR_MODE_ENCODER: 		Terminal_SendString(p_terminal, "ENCODER");		break;
 			default : break;
 		}
 		Terminal_SendString(p_terminal, "\r\n");
@@ -563,6 +568,7 @@ static Cmd_Status_T Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
 //		Terminal_SendNum(p_terminal, p_motor->Parameters.SpeedRefMax_RPM);
 //		Terminal_SendString(p_terminal, "\r\n");
 
+		PRINT_PARAM_VAR_MOTOR(PolePairs)
 		PRINT_PARAM_VAR_MOTOR(SpeedRefMax_RPM)
 		PRINT_PARAM_VAR_MOTOR(SpeedRefVoltage_RPM)
 		PRINT_PARAM_VAR_MOTOR(IBusLimit_Frac16)
@@ -706,6 +712,42 @@ static Cmd_Status_T Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_PROCESS_LOOP;
 }
 
+static Cmd_Status_T Cmd_set(MotorController_T * p_mc, int argc, char ** argv)
+{
+//	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+
+	if(argc == 2U)
+	{
+		if(strncmp(argv[1U], "default", 8U) == 0U)
+		{
+			MotorController_User_SetLoadDefault(p_mc, true);
+			MotorController_User_SaveBootReg_Blocking(p_mc);
+			Terminal_SendString(p_terminal, "Need to reboot\r\n");
+		}
+	}
+
+    return CMD_STATUS_SUCCESS;
+}
+
+static Cmd_Status_T Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
+{
+	(void)argc;
+	(void)argv;
+	MotorController_User_SaveParameters_Blocking(p_mc);
+    return CMD_STATUS_SUCCESS;
+}
+
+extern void SystemSoftwareReset(void); //todo abstraction layer
+
+static Cmd_Status_T Cmd_reboot(MotorController_T * p_mc, int argc, char ** argv)
+{
+	(void)argc;
+	(void)argv;
+	SystemSoftwareReset();
+    return CMD_STATUS_SUCCESS;
+}
+
 static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
@@ -758,6 +800,7 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"calibrate", 	"calibrate",						(Cmd_Function_T)Cmd_calibrate, 	{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_calibrate_Proc,	.FREQ = 10U}	},
 	{"run", 		"Set motor to run mode", 			(Cmd_Function_T)Cmd_run, 		{0U}	},
 	{"stop", 		"Set motor to freewheel mode", 		(Cmd_Function_T)Cmd_stop, 		{0U}	},
+
 	{"set", 		"Sets motor parameters",	 		(Cmd_Function_T)Cmd_set, 		{0U}	},
 	{"save", 		"Save parameters to nv memory", 	(Cmd_Function_T)Cmd_save, 		{0U}	},
 	{"reboot", 		"reboot", 							(Cmd_Function_T)Cmd_reboot, 	{0U}	},
@@ -773,20 +816,20 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 ////	{ "print", 		"print debug info",			Cmd_print	},
 };
 
-//int Cmd_configfile(int argc, char **argv)
+//static Cmd_Status_T Cmd_configfile(int argc, char **argv)
 //{
 //
 //	return MC_SHELL_CMD_RETURN_CODE_SUCCESS;
 //}
 
-//int Cmd_hold(MotorController_T * p_mc, int argc, char ** argv)
+//static Cmd_Status_T Cmd_hold(MotorController_T * p_mc, int argc, char ** argv)
 //{
 //	(void)argv;
 //    if(argc == 1) Motor_Hold(&Motor1);
 //    return CMD_STATUS_SUCCESS;
 //}
 //
-//int Cmd_release(MotorController_T * p_mc, int argc, char ** argv)
+//static Cmd_Status_T Cmd_release(MotorController_T * p_mc, int argc, char ** argv)
 //{
 //	(void)argv;
 //    if(argc == 1) Motor_Release(&Motor1);

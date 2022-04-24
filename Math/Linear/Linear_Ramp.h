@@ -62,11 +62,11 @@ static inline int32_t Linear_Ramp_ProcIndexOutputInc(Linear_T * p_linear, uint32
 	{
 		newRampValue = Linear_Function(p_linear, *p_index);
 
-		if(p_linear->SlopeFactor > 0) /* slope is positive, inc ramp if less than final */
+		if(p_linear->Slope > 0) /* slope is positive, inc ramp if less than final */
 		{
 			if(newRampValue > p_linear->YReference)	{newRampValue = p_linear->YReference;}
 		}
-		else if(p_linear->SlopeFactor < 0) /* slope is negative, inc ramp if greater than final */
+		else if(p_linear->Slope < 0) /* slope is negative, inc ramp if greater than final */
 		{
 			if(newRampValue < p_linear->YReference)	{newRampValue = p_linear->YReference;}
 		}
@@ -108,13 +108,13 @@ static inline int32_t Linear_Ramp_CalcNextOutput(Linear_T * p_linear, int32_t cu
 
 	if(currentRampValue < p_linear->YReference)
 	{
-		newRampValue = ((currentRampValue << p_linear->SlopeDivisor_Shift) + p_linear->SlopeFactor) >> p_linear->SlopeDivisor_Shift;
+		newRampValue = ((currentRampValue << p_linear->SlopeShift) + p_linear->Slope) >> p_linear->SlopeShift;
 
 		if (newRampValue > p_linear->YReference) {newRampValue = p_linear->YReference;}
 	}
 	else if(currentRampValue > p_linear->YReference)
 	{
-		newRampValue = ((currentRampValue << p_linear->SlopeDivisor_Shift) - p_linear->SlopeFactor) >> p_linear->SlopeDivisor_Shift;
+		newRampValue = ((currentRampValue << p_linear->SlopeShift) - p_linear->Slope) >> p_linear->SlopeShift;
 
 		if (newRampValue < p_linear->YReference) {newRampValue = p_linear->YReference;}
 	}
