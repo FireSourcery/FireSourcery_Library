@@ -33,6 +33,7 @@
 #define MOTOR_THREAD_H
 
 #include "Motor_StateMachine.h"
+#include "Motor_FOC.h"
 #include "Motor.h"
 
 #include "System/SysTime/SysTime.h"
@@ -45,6 +46,16 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
 	p_motor->MicrosRef = SysTime_GetMicros();
 	p_motor->ControlTimerBase++;
+
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+	{
+		Motor_FOC_ProcAngleObserve(p_motor);
+	}
+	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
+	{
+
+	}
+
 	StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
 }
 

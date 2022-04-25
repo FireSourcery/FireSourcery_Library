@@ -658,7 +658,7 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Cmd_Status_T status;
 
-	if(p_motor->JogIndex < p_motor->Parameters.PolePairs * 6U)
+	if(p_motor->JogIndex < p_motor->Parameters.PolePairs * 6U + 1U)
 	{
 		switch(p_motor->Parameters.SensorMode)
 		{
@@ -681,11 +681,11 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 			case MOTOR_SENSOR_MODE_SIN_COS :
 				SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
 
-				Terminal_SendString(p_terminal, "Sin: "); Terminal_SendNum(p_terminal, p_motor->AnalogResults.Sin_ADCU);
-				Terminal_SendString(p_terminal, " Cos: "); Terminal_SendNum(p_terminal, p_motor->AnalogResults.Cos_ADCU);
-				Terminal_SendString(p_terminal, " Angle: "); Terminal_SendNum(p_terminal, SinCos_GetElectricalAngle(&p_motor->SinCos));
-				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+				Terminal_SendString(p_terminal, "Sin: "); 		Terminal_SendNum(p_terminal, p_motor->AnalogResults.Sin_ADCU);
+				Terminal_SendString(p_terminal, " Cos: "); 		Terminal_SendNum(p_terminal, p_motor->AnalogResults.Cos_ADCU);
+				Terminal_SendString(p_terminal, " Angle: "); 	Terminal_SendNum(p_terminal, SinCos_GetElectricalAngle(&p_motor->SinCos));
+//				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+//				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 				Terminal_SendString(p_terminal, "\r\n");
 				break;
 			default :
@@ -711,11 +711,11 @@ static Cmd_Status_T Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
 	(void)argv;
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 
-	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
-	{
-		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
-	}
+//	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
+//	{
+//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+//		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+//	}
 
 	p_motor->JogIndex = 0U;
     return CMD_STATUS_PROCESS_LOOP;
@@ -844,6 +844,4 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 //    if(argc == 1) Motor_Release(&Motor1);
 //    return CMD_STATUS_SUCCESS;
 //}
-
-
 
