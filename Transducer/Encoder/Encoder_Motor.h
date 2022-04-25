@@ -125,12 +125,12 @@ static inline uint32_t Encoder_Motor_GetMechanicalTheta(Encoder_T * p_encoder)
 
 /*!
 	Electrical Theta Angle, position Angle [Degree16s]
+	implied modulus uint16
  */
 static inline uint32_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
 {
 	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->AngularD * p_encoder->Params.MotorPolePairs);
 }
-
 
 /******************************************************************************/
 /*!

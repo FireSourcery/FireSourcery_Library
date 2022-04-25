@@ -92,6 +92,8 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 	{
 		p_encoder->UnitAngularSpeed = 0U;
 	}
+
+	Encoder_Zero(p_encoder);
 }
 //
 //void Encoder_DeltaD_SetParams(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)

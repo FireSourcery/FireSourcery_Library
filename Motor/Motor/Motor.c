@@ -63,6 +63,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 			}
 			break;
+
 		case MOTOR_SENSOR_MODE_HALL :
 			Hall_Init(&p_motor->Hall);
 			Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
@@ -73,11 +74,19 @@ void Motor_InitReboot(Motor_T * p_motor)
 				Encoder_Motor_CaptureTime_SetPolePairs(&p_motor->Encoder, p_motor->Parameters.PolePairs);
 			}
 
+			if(p_motor->Encoder.Params.SpeedRef_Rpm != p_motor->Parameters.SpeedRefMax_RPM)
+			{
+				Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_RPM);
+			}
 			//temp
 			Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, 20000U, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedRefMax_RPM);
 			break;
 		case MOTOR_SENSOR_MODE_ENCODER :
 			Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
+			if(p_motor->Encoder.Params.SpeedRef_Rpm != p_motor->Parameters.SpeedRefMax_RPM)
+			{
+				Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_RPM);
+			}
 			break;
 		case MOTOR_SENSOR_MODE_SIN_COS :
 			SinCos_Init(&p_motor->SinCos);

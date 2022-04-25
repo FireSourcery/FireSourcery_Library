@@ -88,7 +88,7 @@ static inline qangle16_t SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_ADCU
 	angle = (int32_t)angle - p_sincos->Params.AngleOffet;
 //	angle = (qfrac16_t)((int32_t)angle * p_sincos->Params.ElectricalRotationsPerCycle); /* effectively modulus angle max */
 
-	if (p_sincos->IsDirectionPositive == false) {angle = 0 - angle;};
+//	if (p_sincos->IsDirectionPositive == false) {angle = 0 - angle;};
 
 	return angle;
 }

@@ -82,8 +82,7 @@ void Encoder_Motor_InitCaptureTime(Encoder_T * p_encoder)
 void Encoder_Motor_CaptureTime_SetPolePairs(Encoder_T * p_encoder, uint8_t motorPolePairs)
 {
 	p_encoder->Params.MotorPolePairs = motorPolePairs;
-	p_encoder->Params.CountsPerRevolution = motorPolePairs * 6U;
-	Encoder_DeltaT_SetUnitConversion(p_encoder, p_encoder->Params.CountsPerRevolution, p_encoder->Params.DistancePerCount);
+	Encoder_SetCountsPerRevolution(p_encoder, motorPolePairs * 6U);
 }
 
 void Encoder_Motor_SetLinearUnits(Encoder_T * p_encoder, uint32_t wheelDiameter, uint32_t wheeltoMotorRatio_Factor, uint32_t wheeltoMotorRatio_Divisor)

@@ -54,7 +54,7 @@ typedef struct __attribute__((aligned (4U)))
 	uint16_t CountsPerRevolution; /*!< Max for looping AngularD, CaptureDeltaT mode need 2nd TimerCounterMax */
 	uint16_t DistancePerCount;
 
-	uint16_t SpeedRef_Rpm; //for speed as fraction 16
+	uint16_t SpeedRef_Rpm; /* for speed as fraction 16 */
 //	uint32_t InterpolateAngleLimit;
 
 	/* Quadrature Mode - Calibrate for encoder install direction */
@@ -162,12 +162,6 @@ typedef struct
 //	uint32_t UnitInterpolateD_Factor;		/*!< [UnitD * UnitT_Freq] => D = index * DeltaD * UnitInterpolateD_Factor / POLLING_FREQ */
 
 	uint32_t UnitRefSpeed;
-
-
-	/* Motor Encoder */
-//    uint32_t UnitEletricalAngle_Factor;
-//    uint32_t UnitEletricalAngle_DivisorShift;
-//    uint32_t UnitEletricalSpeed;
 
 }
 Encoder_T;
@@ -691,14 +685,15 @@ static inline uint32_t Encoder_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
 /*
  * direct to user max rpm
  */
-//static inline uint32_t CalcEncoderRefSpeed(Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
-//{
-////	return
-//}
-//static inline uint32_t Encoder_GetFrac16Speed(Encoder_T * p_encoder)
-//{
-//	return deltaD_Ticks * p_encoder->UnitRefSpeed / deltaT_Ticks;
-//}
+static inline uint32_t Encoder_CalcRefSpeed(Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
+{
+	return deltaD_Ticks * p_encoder->UnitRefSpeed / deltaT_Ticks;
+}
+
+static inline uint32_t Encoder_GetRefSpeed(Encoder_T * p_encoder)
+{
+	return Encoder_CalcRefSpeed(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
+}
 
 /******************************************************************************/
 /*! @} */

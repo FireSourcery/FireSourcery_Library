@@ -59,6 +59,7 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 
 	Encoder_DeltaT_SetUnitConversion(p_encoder, p_encoder->Params.CountsPerRevolution, p_encoder->Params.DistancePerCount);
 
+	Encoder_Zero(p_encoder);
 	p_encoder->DeltaT = UINT32_MAX;
 }
 

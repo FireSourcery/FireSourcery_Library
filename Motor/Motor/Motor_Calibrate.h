@@ -66,11 +66,7 @@ static inline bool Motor_Calibrate_ProcSinCos(Motor_T * p_motor)
 				break;
 
 			case 2U:
-				p_motor->Debug[9U] = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
 				SinCos_CalibrateA(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
-				p_motor->Debug[0U] = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
-				p_motor->Debug[3U] = p_motor->AnalogResults.Sin_ADCU;
-				p_motor->Debug[4U] = p_motor->AnalogResults.Cos_ADCU;
 				Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignVoltage_Frac16, 0U);
 				p_motor->CalibrationStateStep = 3U;
 				/* wait 1s */
@@ -84,23 +80,15 @@ static inline bool Motor_Calibrate_ProcSinCos(Motor_T * p_motor)
 
 			case 4U:
 				SinCos_CalibrateB(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
-				p_motor->Debug[1U] = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
-				p_motor->Debug[5U] = p_motor->AnalogResults.Sin_ADCU;
-				p_motor->Debug[6U] = p_motor->AnalogResults.Cos_ADCU;
-				Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, p_motor->Parameters.AlignVoltage_Frac16);
+//				Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, p_motor->Parameters.AlignVoltage_Frac16);
 				p_motor->CalibrationStateStep = 5U;
 				break;
 
 			case 5U:
-				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 				p_motor->CalibrationStateStep = 6U;
 				break;
 
 			case 6U:
-				p_motor->Debug[2U] = SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
-				p_motor->Debug[7U] = p_motor->AnalogResults.Sin_ADCU;
-				p_motor->Debug[8U] = p_motor->AnalogResults.Cos_ADCU;
 				p_motor->CalibrationStateStep = 0U;
 				isComplete = true;
 				break;

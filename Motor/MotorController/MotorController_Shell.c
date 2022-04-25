@@ -679,9 +679,11 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 				break;
 
 			case MOTOR_SENSOR_MODE_SIN_COS :
+				SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
+
 				Terminal_SendString(p_terminal, "Sin: "); Terminal_SendNum(p_terminal, p_motor->AnalogResults.Sin_ADCU);
 				Terminal_SendString(p_terminal, " Cos: "); Terminal_SendNum(p_terminal, p_motor->AnalogResults.Cos_ADCU);
-				Terminal_SendString(p_terminal, " Angle: "); Terminal_SendNum(p_terminal, SinCos_CalcAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU));
+				Terminal_SendString(p_terminal, " Angle: "); Terminal_SendNum(p_terminal, SinCos_GetElectricalAngle(&p_motor->SinCos));
 				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
 				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 				Terminal_SendString(p_terminal, "\r\n");
@@ -708,6 +710,13 @@ static Cmd_Status_T Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argv;
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
+	{
+		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+	}
+
 	p_motor->JogIndex = 0U;
     return CMD_STATUS_PROCESS_LOOP;
 }

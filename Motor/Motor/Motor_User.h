@@ -478,24 +478,26 @@ static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T * p_motor)
 		default: 	break;
 	}
 
-	p_motor->Speed2_RPM = (p_motor->Speed2_RPM + Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, p_motor->ElectricalDelta)) / 2U;
-
+//	p_motor->Speed2_RPM = (p_motor->Speed2_RPM + Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, p_motor->ElectricalDelta)) / 2U;
 	return rpm;
 }
 
-static inline uint16_t Motor_User_GetMechanialAngle_RPM(Motor_T * p_motor)
-{
-//	uint16_t angle;
-//	switch (p_motor->Parameters.SensorMode)
-//	{
-//		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
-//		case MOTOR_SENSOR_MODE_HALL: 		angle = 0;		break;
-//		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalAngle(&p_motor->Encoder);	break;
-//		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 	break;
-//		default: 	break;
-//	}
-//	return angle;
-}
+/*
+ * for supported modes only
+ */
+//static inline uint16_t Motor_User_GetMechanialAngle(Motor_T * p_motor)
+//{
+////	uint16_t angle;
+////	switch (p_motor->Parameters.SensorMode)
+////	{
+////		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
+////		case MOTOR_SENSOR_MODE_HALL: 		angle = 0;		break;
+////		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalAngle(&p_motor->Encoder);	break;
+////		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 	break;
+////		default: 	break;
+////	}
+////	return angle;
+//}
 
 static inline Motor_ErrorFlags_T Motor_User_GetErrorFlags(Motor_T * p_motor) 	{return p_motor->ErrorFlags;}
 

@@ -198,11 +198,13 @@ static inline int32_t linear_invf16_yref_shift(int32_t invm_shifted, uint8_t shi
 /*
  * when slope is set to frac16 conversion, f_m16 returns user units, secondarily
  */
+/* e.g. adcu to frac16 */
 static inline int32_t linear_m16_f16(int32_t m16_shifted, uint8_t shift, int32_t x0, int32_t y0_frac16, int32_t x)
 {
 	return linear_f_shift(m16_shifted, shift, x0, y0_frac16, x);
 }
 
+/* e.g. adcu to units */
 static inline int32_t linear_m16_f(int32_t m16_shifted, uint8_t shift, int32_t x0, int32_t y0_frac16, int32_t yref, int32_t x)
 {
 	return linear_f_shift(m16_shifted, shift, x0, y0_frac16, x) * yref >> 16U;

@@ -524,12 +524,6 @@ static inline void Motor_ResumeRampOutput(Motor_T * p_motor, int32_t matchOutput
 	Speed
 */
 /******************************************************************************/
-static inline void Motor_CaptureEncoderSpeed(Motor_T * p_motor)
-{
-	p_motor->Speed_RPM =  (Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder)); // + p_motor->Speed_RPM) / 2U;
-	p_motor->SpeedFeedback_Frac16 = ((uint32_t)p_motor->Speed_RPM * (uint32_t)65535U / (uint32_t)p_motor->Parameters.SpeedRefMax_RPM); //todo move to encoder module
-}
-
 //Speed pid always uses directionless positive value [0:65535]
 static inline void Motor_ResumeSpeedOutput(Motor_T * p_motor, int32_t speedControlMatch)
 {

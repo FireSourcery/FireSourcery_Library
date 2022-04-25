@@ -130,7 +130,7 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			if (procSpeed == true)
 			{
 				Encoder_DeltaD_Capture(&p_motor->Encoder); /* Capture position and speed */
-				Motor_CaptureEncoderSpeed(p_motor);
+				p_motor->SpeedFeedback_Frac16 = Encoder_GetRefSpeed(&p_motor->Encoder);
 			}
 			else
 			{
@@ -167,8 +167,7 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 
 			if (procSpeed == true)
 			{
-				Motor_CaptureEncoderSpeed(p_motor);
-				//p_motor->SpeedFeedback_Frac16 = Encoder_Motor_GetSpeedFrac16(&p_motor->Encoder);
+				p_motor->SpeedFeedback_Frac16 = Encoder_GetRefSpeed(&p_motor->Encoder);
 			}
 
 			electricalDelta = Encoder_Motor_InterpolateElectricalDelta(&p_motor->Encoder, p_motor->InterpolatedAngleIndex);
@@ -181,13 +180,13 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			/*
 			 * Temp
 			 */
-			if(procSpeed == true)
-			{
-				electricalDelta = electricalAngle - (uint32_t)p_motor->ElectricalAngle; /* loops if no overflow past 1 full cycle */
-				if (p_motor->Direction == MOTOR_DIRECTION_CW) {electricalDelta = 0 - electricalDelta;}
-				p_motor->ElectricalDelta = electricalDelta; //save for display and user calc
-				p_motor->Speed2_Frac16 = (p_motor->Speed2_Frac16 + Linear_Speed_CalcAngleRpmFrac16(&p_motor->UnitAngleRpm, electricalDelta)) / 2U;
-			}
+//			if(procSpeed == true)
+//			{
+//				electricalDelta = electricalAngle - (uint32_t)p_motor->ElectricalAngle; /* loops if no overflow past 1 full cycle */
+//				if (p_motor->Direction == MOTOR_DIRECTION_CW) {electricalDelta = 0 - electricalDelta;}
+//				p_motor->ElectricalDelta = electricalDelta; //save for display and user calc
+//				p_motor->Speed2_Frac16 = (p_motor->Speed2_Frac16 + Linear_Speed_CalcAngleRpmFrac16(&p_motor->UnitAngleRpm, electricalDelta)) / 2U;
+//			}
 
 			break;
 
@@ -198,7 +197,6 @@ static inline void ProcMotorFocPositionFeedback(Motor_T * p_motor)
 			if (procSpeed == true)
 			{
 				CaptureMotorFocAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos));
-//				CaptureMotorFocElectricalAngleSpeed(p_motor, electricalAngle);
 			}
 
 			//todo observer
