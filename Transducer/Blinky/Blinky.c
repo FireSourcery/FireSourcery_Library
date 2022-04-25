@@ -58,6 +58,7 @@ void Blinky_Proc(Blinky_T * p_blinky)
 			}
 			else
 			{
+
 				p_blinky->Index++;
 			}
 		}
@@ -101,12 +102,16 @@ void Blinky_Blink(Blinky_T * p_blinky, uint32_t duration)
 
 void Blinky_BlinkN(Blinky_T * p_blinky, uint32_t duration, uint8_t n)
 {
-	p_blinky->Index = 0;
+	p_blinky->Index = 0U;
 	p_blinky->Max = n;
 	Blinky_Blink_OnOff(p_blinky, duration);
 }
 
 
+void Blinky_SetPeriodic(Blinky_T * p_blinky)
+{
+
+}
 
 //void Blinky_Pattern_PeriodicToggle(Blinky_T * p_blinky)
 //{

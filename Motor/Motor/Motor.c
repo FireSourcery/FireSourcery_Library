@@ -68,38 +68,27 @@ void Motor_InitReboot(Motor_T * p_motor)
 			Hall_Init(&p_motor->Hall);
 			Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
 			/* Set Encoder module individual param consistent to main motor module setting */
-			//todo encoder get wrapper
-			if((p_motor->Encoder.Params.MotorPolePairs != p_motor->Parameters.PolePairs) || (p_motor->Encoder.Params.CountsPerRevolution != p_motor->Parameters.PolePairs * 6U))
-			{
-				Encoder_Motor_CaptureTime_SetPolePairs(&p_motor->Encoder, p_motor->Parameters.PolePairs);
-			}
-
-			if(p_motor->Encoder.Params.SpeedRef_Rpm != p_motor->Parameters.SpeedRefMax_RPM)
-			{
-				Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_RPM);
-			}
-			//temp
+			Encoder_Motor_SetHallCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs);
+			Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_RPM);
 			Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, 20000U, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedRefMax_RPM);
 			break;
+
 		case MOTOR_SENSOR_MODE_ENCODER :
 			Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
-			if(p_motor->Encoder.Params.SpeedRef_Rpm != p_motor->Parameters.SpeedRefMax_RPM)
-			{
-				Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_RPM);
-			}
+			Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_RPM);
 			break;
+
 		case MOTOR_SENSOR_MODE_SIN_COS :
 			SinCos_Init(&p_motor->SinCos);
 			Linear_Speed_InitAngleRpm(&p_motor->UnitAngleRpm, 1000U, 16U, p_motor->Parameters.SpeedRefMax_RPM);
 			break;
+
 		default :
 			break;
 	}
 
 	Thermistor_Init(&p_motor->Thermistor);
 	p_motor->AnalogResults.Heat_ADCU = p_motor->Thermistor.Params.Threshold_ADCU;
-
-//		AnalogN_EnqueueConversionOptions(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.CONVERSION_OPTION_RESTORE);
 
 	/*
 	 * SW Structs
@@ -110,8 +99,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	FOC_Init(&p_motor->Foc);
 //	BEMF_Init(&p_motor->Bemf);
-
-
 
 	PID_Init(&p_motor->PidSpeed);
 	PID_Init(&p_motor->PidIq);
@@ -155,7 +142,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	Motor_SetDirectionForward(p_motor);
 	p_motor->UserDirection = p_motor->Direction;
-	p_motor->Speed_RPM 				= 0U;
 	p_motor->VPwm 					= 0U;
 	p_motor->ControlTimerBase 		= 0U;
 }

@@ -70,6 +70,4 @@ typedef enum
 }
 Motor_StateMachine_StateId_T;
 
-//extern Motor_StateMachine_StateId_T Motor_StateMachine_GetStateId(Motor_T * p_motor);
-
 #endif

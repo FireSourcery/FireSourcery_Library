@@ -43,23 +43,23 @@ static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uin
 	uint32_t result = 0;
 	uint32_t shiftedValue = (1U << targetShift);
 
-	if (shiftedValue % divisor == 0U) /* when divisor is a whole number factor of shifted. */
+	if(shiftedValue % divisor == 0U) /* when divisor is a whole number factor of shifted. */
 	{
 		result = factor * (shiftedValue / divisor);
 	}
 	else
 	{
-		for (uint8_t maxShift = targetShift; maxShift > 0U; maxShift--)
+		for(uint8_t maxShift = targetShift; maxShift > 0U; maxShift--)
 		{
-			if ( factor <= (UINT32_MAX >> maxShift) )
+			if(factor <= (UINT32_MAX >> maxShift))
 			{
 				result = (factor << maxShift) / divisor;
 
-				if ( result <= (UINT32_MAX >> (targetShift - maxShift)) ) //check overflow
+				if(result <= (UINT32_MAX >> (targetShift - maxShift)))
 				{
 					result = result << (targetShift - maxShift);
 				}
-				else  /* error, will overflow 32 bit even using ((factor << 0)/divisor) << leftShift */
+				else /* error, will overflow 32 bit even using ((factor << 0)/divisor) << leftShift */
 				{
 					result = 0U;
 				}
@@ -103,6 +103,9 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolut
 	 * UnitAngularD_ShiftDivisor == CONFIG_ENCODER_ANGLE_DEGREES_BITS
 	 */
 	p_encoder->UnitAngularD_Factor = 0xFFFFFFFFU / countsPerRevolution + 1U;
+
+
+	//todo remove wrap repeat Encoder_SetCountsPerRevolution
 
 	/*
 	 * Angular Speed Calc
@@ -174,23 +177,29 @@ void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALe
 	p_encoder->Params.IsALeadBPositive = isALeadBPositive;
 }
 
-//todo remove wrap repeat
+
 void Encoder_SetSpeedRef(Encoder_T * p_encoder, uint8_t speedRef)
 {
-	p_encoder->Params.SpeedRef_Rpm = speedRef;
-	p_encoder->UnitRefSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.SpeedRef_Rpm, 16U);
+	if(speedRef != p_encoder->Params.SpeedRef_Rpm)
+	{
+		p_encoder->Params.SpeedRef_Rpm = speedRef;
+		p_encoder->UnitRefSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.SpeedRef_Rpm, 16U);
+	}
 }
 
 void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint8_t countsPerRevolution)
 {
-	p_encoder->Params.CountsPerRevolution	= countsPerRevolution;
-	p_encoder->UnitAngularD_Factor 			= 0xFFFFFFFFU / countsPerRevolution + 1U;
-	p_encoder->UnitAngularSpeed 			= MaxLeftShiftDivide(p_encoder->UnitT_Freq, countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
-	p_encoder->UnitInterpolateAngle 		= MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->CONFIG.POLLING_FREQ * countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
-	p_encoder->UnitRefSpeed 				= MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, countsPerRevolution * p_encoder->Params.SpeedRef_Rpm, 16U);
+	if(countsPerRevolution != p_encoder->Params.CountsPerRevolution)
+	{
+		p_encoder->Params.CountsPerRevolution	= countsPerRevolution;
+		p_encoder->UnitAngularD_Factor 			= 0xFFFFFFFFU / countsPerRevolution + 1U;
+		p_encoder->UnitAngularSpeed 			= MaxLeftShiftDivide(p_encoder->UnitT_Freq, countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
+		p_encoder->UnitInterpolateAngle 		= MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->CONFIG.POLLING_FREQ * countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
+		p_encoder->UnitRefSpeed 				= MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, countsPerRevolution * p_encoder->Params.SpeedRef_Rpm, 16U);
+	}
 }
 
-void Encoder_ResetUnits(Encoder_T * p_encoder)
-{
-	_Encoder_SetUnitConversion(p_encoder, p_encoder->Params.CountsPerRevolution, p_encoder->UnitLinearD, p_encoder->UnitT_Freq);
-}
+//void Encoder_ResetUnits(Encoder_T * p_encoder)
+//{
+//	_Encoder_SetUnitConversion(p_encoder, p_encoder->Params.CountsPerRevolution, p_encoder->UnitLinearD, p_encoder->UnitT_Freq);
+//}

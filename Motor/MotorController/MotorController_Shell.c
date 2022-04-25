@@ -416,45 +416,19 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 	(void)argv;
 
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
-	int32_t vSense 		= MotorController_User_GetVSenseFault_MilliV(p_mc);
-	int32_t vAcc 		= MotorController_User_GetVAccFault_MilliV(p_mc);
-	int32_t vPos 		= MotorController_User_GetVPosFault_MilliV(p_mc);
-//	int32_t battery 	= MotorController_GetBatteryCharge_Base10(p_mc);
-	int32_t heat 		= MotorController_User_GetHeatPcbFault_DegCInt(p_mc, 1U);
 
 	if(argc == 1U)
     {
-    	Terminal_SendString(p_terminal, "ErrorFlags [VPos][VAcc][VSense][Pcb][MosfetT][MostfetB]: ");
+		MotorController_User_CheckFault(p_mc);
+    	Terminal_SendString(p_terminal, "ErrorFlags [VPos][VAcc][VSense][Pcb][MosTop][MosBot][User]: ");
     	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VPosLimit);
     	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VAccLimit);
     	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VSenseLimit);
     	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.PcbOverHeat);
     	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.MosfetsTopOverHeat);
     	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.MosfetsBotOverHeat);
+//    	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.UserCheck);
     	Terminal_SendString(p_terminal, "\r\n");
-
-    	Terminal_SendString(p_terminal, "Fault: \r\n");
-
-    	Terminal_SendString(p_terminal, "Pcb: ");
-    	Terminal_SendNum(p_terminal, heat);
-    	Terminal_SendString(p_terminal, " C");
-    	Terminal_SendString(p_terminal, "\r\n");
-
-    	Terminal_SendString(p_terminal, "VSense: ");
-    	Terminal_SendNum(p_terminal, vSense);
-    	Terminal_SendString(p_terminal, " mV");
-    	Terminal_SendString(p_terminal, "\r\n");
-
-    	Terminal_SendString(p_terminal, "VAcc: ");
-    	Terminal_SendNum(p_terminal, vAcc);
-    	Terminal_SendString(p_terminal, " mV");
-    	Terminal_SendString(p_terminal, "\r\n");
-
-    	Terminal_SendString(p_terminal, "VPos: ");
-    	Terminal_SendNum(p_terminal, vPos);
-    	Terminal_SendString(p_terminal, " mV");
-    	Terminal_SendString(p_terminal, "\r\n");
-
     }
 
 	return CMD_STATUS_SUCCESS;
@@ -664,6 +638,7 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 		{
 			case MOTOR_SENSOR_MODE_SENSORLESS :
 				break;
+
 			case MOTOR_SENSOR_MODE_HALL :
 				if(p_motor->JogIndex % 6U == 0U)
 				{
@@ -672,6 +647,7 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 				}
 				Terminal_SendNum(p_terminal, Hall_ReadSensors(&p_motor->Hall).State); Terminal_SendString(p_terminal, " ");
 				break;
+
 			case MOTOR_SENSOR_MODE_ENCODER :
 				Encoder_DeltaD_Capture(&p_motor->Encoder);
 				Terminal_SendNum(p_terminal, p_motor->Encoder.AngularD);
@@ -688,6 +664,7 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 //				AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 				Terminal_SendString(p_terminal, "\r\n");
 				break;
+
 			default :
 				break;
 		}

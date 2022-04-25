@@ -234,6 +234,28 @@ static inline void MotorController_User_SaveBootReg_Blocking(MotorController_T *
 	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
 }
 
+static inline void MotorController_User_CheckFault(MotorController_T * p_mc)
+{
+ 	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
+}
+
+//static inline void MotorController_User_ClearFault(MotorController_T * p_mc)
+//{
+//	p_mc->ErrorFlags.State = 0U;
+// 	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
+//}
+//
+//static inline void MotorController_User_SetFault(MotorController_T * p_mc)
+//{
+//	p_mc->ErrorFlags.UserCheck = 1U;
+// 	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
+//}
+//
+//static inline void MotorController_User_ToggleFault(MotorController_T * p_mc)
+//{
+//	p_mc->ErrorFlags.UserCheck ^= 1U;
+// 	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
+//}
 
 /*
  * Input mode voluntarily call checked function, avoids intermediate buffer

@@ -117,6 +117,7 @@ typedef union
 		uint32_t VPosLimit 				:1;
 		uint32_t VSenseLimit 			:1;
 		uint32_t VAccLimit 				:1;
+//		uint32_t UserCheck 				:1;
 	};
 	uint32_t State;
 }

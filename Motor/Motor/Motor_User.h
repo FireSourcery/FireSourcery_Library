@@ -280,7 +280,7 @@ static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 
 	if(p_motor->ControlModeFlags.Hold == 0U)
 	{
-		if(p_motor->Speed_RPM > 60U)
+		if(Motor_GetSpeed_RPM(p_motor) > 60U)
 		{
 			Motor_User_SetTorqueCmd(p_motor, torque);
 		}
@@ -299,7 +299,7 @@ static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 
 static inline void Motor_User_SetRegenCmd(Motor_T * p_motor)
 {
-	if (p_motor->Speed_RPM > 30U)
+	if(Motor_GetSpeed_RPM(p_motor) > 30U)
 	{
 		Motor_User_SetVoltageCmd(p_motor, p_motor->SpeedFeedback_Frac16 / 2);
 //		Motor_User_SetCmd(p_motor, p_motor->Speed_Frac16 / 2); /* ramped speed match provides smoother change */
@@ -311,13 +311,6 @@ static inline void Motor_User_SetRegenCmd(Motor_T * p_motor)
 	}
 }
 
-/*
- * Checks exit in fault state, will tranisition to fault state in other states
- */
-static inline void Motor_User_CheckFault(Motor_T * p_motor)
-{
-	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
-}
 
 /*
  * Run Calibration functions
@@ -350,6 +343,27 @@ static inline void Motor_User_ActivateCalibrationSinCos(Motor_T * p_motor)
 	}
 }
 
+
+/*
+ * Checks exit in fault state, will tranisition to fault state in other states
+ */
+static inline void Motor_User_CheckFault(Motor_T * p_motor)
+{
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
+}
+
+
+//static inline void Motor_User_ClearFault(Motor_T * p_motor)
+//{
+//	p_motor->ErrorFlags.State = 0U;
+//	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
+//}
+
+//static inline void Motor_User_SetFault(Motor_T * p_motor)
+//{
+//	p_motor->ErrorFlags.UserCheck = 1U;
+//	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
+//}
 
 //static inline void Motor_User_ActivatePhase(Motor_T * p_motor)
 //{
@@ -467,19 +481,19 @@ static inline Hall_Sensors_T Motor_User_ReadHall(Motor_T * p_motor) 			{return H
 static inline uint16_t Motor_User_GetHallRotorAngle(Motor_T * p_motor) 			{return Hall_GetRotorAngle_Degrees16(&p_motor->Hall);}
 static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T * p_motor)
 {
-	uint16_t rpm;
-
-	switch (p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		rpm = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);	break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	rpm = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);	break;
-		case MOTOR_SENSOR_MODE_SIN_COS: 	rpm = Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, p_motor->SpeedDelta); 	break;
-		default: 	break;
-	}
+//	uint16_t rpm;
+//
+//	switch (p_motor->Parameters.SensorMode)
+//	{
+//		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
+//		case MOTOR_SENSOR_MODE_HALL: 		rpm = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);	break;
+//		case MOTOR_SENSOR_MODE_ENCODER: 	rpm = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);	break;
+//		case MOTOR_SENSOR_MODE_SIN_COS: 	rpm = Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, p_motor->SpeedDelta); 	break;
+//		default: 	break;
+//	}
 
 //	p_motor->Speed2_RPM = (p_motor->Speed2_RPM + Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, p_motor->ElectricalDelta)) / 2U;
-	return rpm;
+	return p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedRefMax_RPM / 65536U;
 }
 
 /*

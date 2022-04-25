@@ -343,8 +343,8 @@ static const StateMachine_State_T STATE_RUN =
 /*!
     @brief  State
 
-     Active throttle will remain active during
-     Alternatively use extra brake state, or track is neutral set once to avoid repeat
+	Active throttle will remain active during
+	Alternatively use extra brake state, or track is neutral set once to avoid repeat
 */
 /******************************************************************************/
 //static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc)
@@ -444,7 +444,9 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TA
 
 static void Fault_Entry(MotorController_T * p_mc)
 {
-	MotorController_Beep(p_mc); //todo set periodic
+//	p_mc->ErrorFlags.UserCheck = 1U;
+//	MotorController_Beep(p_mc); //todo set periodic
+	Blinky_Blink(&p_mc->Buzzer, 1000U);
 	Timer_StartPeriod(&p_mc->StateTimer, 1000U);
 	MotorController_SetFaultRecord(p_mc);
 }

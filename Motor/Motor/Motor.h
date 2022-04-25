@@ -188,7 +188,8 @@ typedef union
 {
 	struct
 	{
-		uint32_t OverHeat :1;
+		uint32_t OverHeat :1U;
+//		uint32_t UserCheck :1U;
 	};
 	uint32_t State;
 } Motor_ErrorFlags_T;
@@ -197,7 +198,7 @@ typedef union
 {
 	struct
 	{
-		uint32_t IOverLimit :1;
+		uint32_t IOverLimit :1U;
 	};
 	uint32_t State;
 } Motor_WarningFlags_T;
@@ -330,9 +331,6 @@ typedef struct
 	Filter_T FilterA;
 	Filter_T FilterB;
 	Filter_T FilterC;
-	Filter_T FilterA1;
-	Filter_T FilterB1;
-	Filter_T FilterC1;
 
 	Linear_T Ramp;
 //	Linear_T RampUp;
@@ -342,10 +340,10 @@ typedef struct
 
 	/* Speed Feedback */
 	PID_T PidSpeed;
-	Timer_T SpeedTimer;			// SpeedCalc Timer
-	uint16_t Speed_RPM;			// Common Feedback Variable
-	uint32_t SpeedFeedback_Frac16; 		/* Can over saturate */
-	int32_t SpeedControl; 		/* Speed PID output, (Speed_Frac16 - RampCmd) => (VPwm, Vq, Iq), updated once per millis */
+	Timer_T SpeedTimer;			// Speed Calc Timer
+//	uint16_t Speed_RPM;			//
+	uint32_t SpeedFeedback_Frac16; 		/* Common Feedback Variable, Can over saturate */
+	int32_t SpeedControl; 				/* Speed PID output, (Speed_Frac16 - RampCmd) => (VPwm, Vq, Iq), updated once per millis */
 
 	uint16_t Speed2_RPM;
 	uint32_t Speed2_Frac16;
@@ -536,8 +534,43 @@ static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
 {
 	if (Encoder_DeltaT_PollWatchStop(&p_motor->Encoder) == true) //once per millis
 	{
-		p_motor->Speed_RPM = 0U;
+//		p_motor->Speed_RPM = 0U;
 		p_motor->SpeedFeedback_Frac16 = 0U;
+	}
+}
+
+static inline uint16_t Motor_GetSpeed_RPM(Motor_T * p_motor)
+{
+	return p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedRefMax_RPM / 65536U;
+}
+
+static inline void Motor_ProcSpeedFeedback(Motor_T * p_motor)
+{
+	int32_t speedControl;
+
+	if (p_motor->ControlModeFlags.Speed == 1U)
+	{
+		/*
+		 * 	input	RampCmd, Speed, always positive values direction independent
+		 * 	output 	SpeedControl is signed IqReq or VqReq
+		 */
+		speedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, p_motor->SpeedFeedback_Frac16) ; //>> 1U
+
+		if (p_motor->Direction == MOTOR_DIRECTION_CW) {speedControl = 0 - speedControl;};
+
+		if(p_motor->ControlModeFlags.Current == 0U) //speed control is Vq
+		{
+			if (p_motor->Direction == MOTOR_DIRECTION_CCW)
+			{
+				if (speedControl < 0) {speedControl = 0;} //no plugging
+			}
+			else
+			{
+				if (speedControl > 0) {speedControl = 0;}
+			}
+		}
+
+		p_motor->SpeedControl = speedControl;
 	}
 }
 

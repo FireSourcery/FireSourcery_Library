@@ -48,7 +48,6 @@ typedef enum MotorController_StateMachine_Input_Tag
 	MCSM_INPUT_RELEASE_BRAKE, /* Release Control */
 	MCSM_INPUT_NULL,	/* No Input */
 
-
 	MCSM_INPUT_NEUTRAL,
 	MCSM_INPUT_NEUTRAL_START,
 	MCSM_INPUT_SAVE_PARAMS,
@@ -67,7 +66,5 @@ typedef enum
 	MCSM_STATE_ID_FAULT,
 }
 MotorController_StateMachine_StateId_T;
-
-//extern MotorController_StateMachine_StateId_T MotorController_StateMachine_GetStateId(MotorController_T * p_mc);
 
 #endif

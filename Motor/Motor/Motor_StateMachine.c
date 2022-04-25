@@ -135,7 +135,7 @@ static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor)
 {
 	StateMachine_State_T * p_nextState;
 
-	if (p_motor->Speed_RPM == 0U)
+	if (p_motor->SpeedFeedback_Frac16 == 0U)
 	{
 		Motor_SetDirection(p_motor, p_motor->UserDirection);
 		p_nextState = 0U;
@@ -162,11 +162,11 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABL
  */
 static void Stop_Entry(Motor_T * p_motor)
 {
-//	p_motor->ControlTimerBase = 0U; //ok to reset timer
+	p_motor->ControlTimerBase = 0U; //ok to reset timer
 	Phase_Float(&p_motor->Phase);
 	Timer_StartPeriod(&p_motor->ControlTimer, 2000U); //100ms
 
-	p_motor->ControlModeFlags.Update = 1U; /* This way next cmd call will set to run state, share state input */
+	p_motor->ControlModeFlags.Update 	= 1U; /* Next cmd call will set to run state, share state input */
 
 	if (p_motor->UserDirection != p_motor->Direction)
 	{
@@ -386,7 +386,7 @@ static const StateMachine_Transition_T FREEWHEEL_TRANSITION_TABLE[MSM_TRANSITION
 
 static void Freewheel_Entry(Motor_T * p_motor)
 {
-	p_motor->ControlModeFlags.Update = 1U; //need to update on exit
+	p_motor->ControlModeFlags.Update 	= 1U; //need to update on exit
 
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
@@ -400,8 +400,6 @@ static void Freewheel_Entry(Motor_T * p_motor)
 
 static void Freewheel_Proc(Motor_T * p_motor)
 {
-	Motor_ProcRamp(p_motor);
-
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
 //		Motor_FOC_ProcAngleObserve(p_motor);
@@ -412,7 +410,7 @@ static void Freewheel_Proc(Motor_T * p_motor)
 	}
 
 	/* Check after, this way lower priority input cannot proc until stop state  */
-	if(p_motor->Speed_RPM == 0U)
+	if(p_motor->SpeedFeedback_Frac16 == 0U)
 	{
 		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
 	}
@@ -644,7 +642,7 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MSM_TRANSITION_TAB
 
 static void Fault_Entry(Motor_T * p_motor)
 {
-
+//	p_motor->ErrorFlags.UserCheck = 1U;
 }
 
 static void Fault_Proc(Motor_T * p_motor)

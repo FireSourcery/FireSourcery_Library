@@ -68,6 +68,7 @@ typedef struct
 /******************************************************************************/
 static inline void Timer_Restart(Timer_T * p_timer) 	{p_timer->TimeRef = *p_timer->CONFIG.P_BASE;}
 //static inline void Timer_ZeroBase(Timer_T * p_timer) 	{p_timer->TimeRef = *p_timer->CONFIG.P_BASE = 0U;}
+static inline void Timer_Disable(Timer_T * p_timer) 	{p_timer->Period = 0U;}
 
 static inline uint32_t Timer_GetElapsed(Timer_T * p_timer)
 {
@@ -148,6 +149,7 @@ static inline bool Timer_PollPeriodic(Timer_T * p_timer)
 }
 
 static inline void Timer_InitPeriodic		(Timer_T * p_timer, uint32_t ticks) 	{p_timer->IsOneShot = false; p_timer->Period = ticks;}
+
 
 /*
  * OneShot Timer

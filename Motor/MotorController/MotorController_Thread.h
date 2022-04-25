@@ -111,6 +111,7 @@ static inline void ProcMotorControllerHeatMonitor(MotorController_T * p_mc)
 	{
 		StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
 	}
+
 	//if frequent degree c polling request
 //	Thermistor_CaptureUnitConversion(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_ADCU);
 //	Thermistor_CaptureUnitConversion(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_ADCU);
@@ -211,10 +212,10 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 //		}
 
 		/* Can use low priority check, as motor is already in fault state */
-//		if (MotorController_CheckMotorErrorFlagsAll(p_mc) != 0U)
-//		{
-//			StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
-//		}
+		if (MotorController_CheckMotorErrorFlagsAll(p_mc) != 0U)
+		{
+			StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
+		}
 	}
 
 	/*
