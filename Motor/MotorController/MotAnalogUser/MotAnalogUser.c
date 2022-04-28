@@ -31,15 +31,6 @@
 /******************************************************************************/
 #include "MotAnalogUser.h"
 
-#include "Transducer/Debounce/Debounce.h"
-#include "Peripheral/Pin/Pin.h"
-
-#include "Math/Linear/Linear_ADC.h"
-#include "Math/Linear/Linear.h"
-
-#include <stdint.h>
-#include <stdbool.h>
-
 #include <string.h>
 
 void MotAnalogUser_Init(MotAnalogUser_T * p_user)
@@ -72,14 +63,14 @@ void MotAnalogUser_SetParams(MotAnalogUser_T * p_user, const MotAnalogUser_Param
 	memcpy(&p_user->Params, p_param, sizeof(MotAnalogUser_Params_T));
 }
 
-void MotAnalogUser_CalibrateBrake(MotAnalogUser_T * p_user, uint16_t zero_ADCU, uint16_t max_ADCU)
+void MotAnalogUser_SetParamsBrake(MotAnalogUser_T * p_user, uint16_t zero_ADCU, uint16_t max_ADCU)
 {
 	p_user->Params.BrakeZero_ADCU = zero_ADCU;
 	p_user->Params.BrakeMax_ADCU = max_ADCU;
 	Linear_ADC_Init(&p_user->UnitBrake, p_user->Params.BrakeZero_ADCU, p_user->Params.BrakeMax_ADCU, 1000U);
 }
 
-void MotAnalogUser_CalibrateThrottle(MotAnalogUser_T * p_user, uint16_t zero_ADCU, uint16_t max_ADCU)
+void MotAnalogUser_SetParamsThrottle(MotAnalogUser_T * p_user, uint16_t zero_ADCU, uint16_t max_ADCU)
 {
 	p_user->Params.ThrottleZero_ADCU = zero_ADCU;
 	p_user->Params.ThrottleMax_ADCU = max_ADCU;

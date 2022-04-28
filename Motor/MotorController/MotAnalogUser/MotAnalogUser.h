@@ -208,7 +208,7 @@ static inline bool MotAnalogUser_GetNeutralSwitch(const MotAnalogUser_T * p_user
 static inline bool MotAnalogUser_GetForwardSwitch(const MotAnalogUser_T * p_user) 		{return Debounce_GetState(&p_user->PinForward);}
 static inline bool MotAnalogUser_GetReverseSwitch(const MotAnalogUser_T * p_user) 		{return Debounce_GetState(&p_user->PinReverse);}
 
-static inline bool MotAnalogUser_GetDirection(const MotAnalogUser_T * p_user)
+static inline MotAnalogUser_Direction_T MotAnalogUser_GetDirection(const MotAnalogUser_T * p_user)
 {
 	MotAnalogUser_Direction_T direction;
 
@@ -264,17 +264,14 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 	MotAnalogUser_Cmd_T cmd = MOT_ANALOG_USER_CMD_PROC_RELEASE;
 
 	/*
-	 * Edge functions are instantaneous and can proc before brake, or check in separate function to proc in addition to brake
-	 * Need to detect even during braking, for error response
-	 *
-	 * Direction should be able to set while brake is set.
-	 * if state filters inputs,
+	 * If using a single return status. Forward/Reverse must be able to be detected while braking.
+	 * Alternatively, use 2 separate return status, Direction/Cmd.
 	 */
 	switch(direction)
 	{
-//		case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_NEUTRAL;				break;
 		case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD;	break;
 		case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE;	break;
+//		case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_NEUTRAL;				break;
 //		case MOT_ANALOG_USER_DIRECTION_NEUTRAL:
 //		case MOT_ANALOG_USER_DIRECTION_REVERSE:
 //		case MOT_ANALOG_USER_DIRECTION_FORWARD:
@@ -282,7 +279,6 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 			/* Check Brake first */
 			if(MotAnalogUser_GetBrakeSwitch(p_user) == true)
 			{
-				//need different cmd on brake edge?
 				cmd = MOT_ANALOG_USER_CMD_SET_BRAKE;
 			}
 			else if(MotAnalogUser_PollBrakeSwitchFalling(p_user)== true)
@@ -324,7 +320,6 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 
 	return cmd;
 }
-
 
 extern void MotAnalogUser_Init(MotAnalogUser_T * p_user);
 extern void MotAnalogUser_SetParams(MotAnalogUser_T * p_user, const MotAnalogUser_Params_T * p_param);

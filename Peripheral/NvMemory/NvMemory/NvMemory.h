@@ -111,7 +111,7 @@ typedef enum
 	NV_MEMORY_STATUS_START_VERIFY,
 	NV_MEMORY_STATUS_ERROR,
 	NV_MEMORY_STATUS_ERROR_BUSY,
-	NV_MEMORY_STATUS_ERROR_INPUT,		/* op param input */ //todo can parse eroor destination, align
+	NV_MEMORY_STATUS_ERROR_INPUT,		/* op param input */ //todo can parse error destination, align
 	NV_MEMORY_STATUS_ERROR_CMD,			/* flash controller error */
 	NV_MEMORY_STATUS_ERROR_VERIFY,		/* Verify cmd */
 	NV_MEMORY_STATUS_ERROR_PROTECTION,
