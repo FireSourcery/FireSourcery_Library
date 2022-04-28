@@ -216,6 +216,7 @@ typedef struct __attribute__((aligned (4U)))
 	Serial_T * p_Serial;
 #endif
 	const Protocol_Specs_T * p_Specs; //change to id
+	uint8_t SpecsId;
 	bool IsEnable; 	/* enable on start up */
 }
 Protocol_Params_T;

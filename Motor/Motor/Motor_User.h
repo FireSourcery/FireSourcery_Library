@@ -301,12 +301,11 @@ static inline void Motor_User_SetRegenCmd(Motor_T * p_motor)
 {
 	if(Motor_GetSpeed_RPM(p_motor) > 30U)
 	{
-		Motor_User_SetVoltageCmd(p_motor, p_motor->SpeedFeedback_Frac16 / 2);
+		Motor_User_SetVoltageCmd(p_motor, p_motor->SpeedFeedback_Frac16 * 3 / 4);
 //		Motor_User_SetCmd(p_motor, p_motor->Speed_Frac16 / 2); /* ramped speed match provides smoother change */
 	}
 	else
 	{
-
 		Motor_User_DisableControl(p_motor);   //fix repeat
 	}
 }
@@ -481,18 +480,6 @@ static inline Hall_Sensors_T Motor_User_ReadHall(Motor_T * p_motor) 			{return H
 static inline uint16_t Motor_User_GetHallRotorAngle(Motor_T * p_motor) 			{return Hall_GetRotorAngle_Degrees16(&p_motor->Hall);}
 static inline uint16_t Motor_User_GetSpeed_RPM(Motor_T * p_motor)
 {
-//	uint16_t rpm;
-//
-//	switch (p_motor->Parameters.SensorMode)
-//	{
-//		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
-//		case MOTOR_SENSOR_MODE_HALL: 		rpm = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);	break;
-//		case MOTOR_SENSOR_MODE_ENCODER: 	rpm = Encoder_Motor_GetMechanicalRpm(&p_motor->Encoder);	break;
-//		case MOTOR_SENSOR_MODE_SIN_COS: 	rpm = Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, p_motor->SpeedDelta); 	break;
-//		default: 	break;
-//	}
-
-//	p_motor->Speed2_RPM = (p_motor->Speed2_RPM + Linear_Speed_CalcAngleRpm(&p_motor->UnitAngleRpm, p_motor->ElectricalDelta)) / 2U;
 	return p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedRefMax_RPM / 65536U;
 }
 
@@ -537,7 +524,6 @@ static inline uint16_t Motor_User_GetMotorAdcu_Msb8(Motor_T * p_motor, MotorAnal
 
 //static inline uint16_t Motor_User_GetBemf_Frac16(Motor_T * p_motor)	{return Linear_Voltage_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
 //static inline uint32_t Motor_User_GetBemf_MilliV(Motor_T * p_motor)	{return Linear_Voltage_CalcMilliV(&p_motor->CONFIG.UNIT_V_ABC, BEMF_GetVBemfPeak_ADCU(&p_motor->Bemf));}
-
 ////static inline uint32_t Motor_User_GetBemfAvg_MilliV(Motor_T * p_motor, uint8_t motorIndex)	{return Motor_User_GetBemf_Frac16(Motor_GetPtrMotor(p_motor, motorIndex));}
 
 /******************************************************************************/

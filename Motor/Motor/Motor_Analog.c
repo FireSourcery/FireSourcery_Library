@@ -29,13 +29,9 @@
 */
 /******************************************************************************/
 #include "Motor_Analog.h"
-#include "Motor.h"
 //#include "Motor_SixStep.h"
 #include "Motor_FOC.h"
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
-
-
-
 
 /******************************************************************************/
 /*!

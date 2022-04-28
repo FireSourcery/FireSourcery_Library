@@ -320,7 +320,7 @@ typedef struct
 	uint32_t ControlTimerBase;	 	/* Control Freq ~ 20kHz, calibration, commutation, angle control. overflow at 20Khz, 59 hours*/
 	Timer_T ControlTimer; 			/* State Timer, openloop, Bem */
 	Timer_T MillisTimer; 			//  millis thread
-	Timer_T SecondsTimer; 			//  Heat thread
+//	Timer_T SecondsTimer; 			//  Heat thread
 
 	Linear_T UnitIa; 	//Frac16 and UserUnits (Amp)
 	Linear_T UnitIb;
@@ -475,7 +475,6 @@ static inline void Motor_ProcRamp(Motor_T * p_motor)
 	//index mode check negative
 //	p_motor->RampCmd = Linear_Ramp_ProcIndexOutput(&p_motor->Ramp, &p_motor->RampIndex, p_motor->RampCmd);
 //	p_motor->RampCmd = Linear_Ramp_GetTarget(&p_motor->Ramp); //disables ramp
-
 	p_motor->RampCmd = Linear_Ramp_CalcNextOutput(&p_motor->Ramp, p_motor->RampCmd);
 }
 
@@ -490,12 +489,12 @@ static inline void Motor_SetRamp(Motor_T * p_motor, int32_t userCmd)
 	Linear_Ramp_SetTarget(&p_motor->Ramp, userCmd);
 }
 
+/*
+ * dynamically generated Ramp,
+ * divide input over control period intervals, when using 1ms period
+ */
 static inline void Motor_SetRampInterpolate(Motor_T * p_motor, int32_t userCmd)
 {
-	/*
-	 * dynamically generated Ramp,
-	 * effectively divide input over control period intervals, when using 1ms period
-	 */
 //	Linear_Ramp_SetSlopeMillis(&p_motor->Ramp, 1U, 20000U, p_motor->RampCmd, userCmd);
 }
 
