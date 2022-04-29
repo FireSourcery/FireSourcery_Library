@@ -41,7 +41,6 @@ void Hall_Init(Hall_T * p_hall)
 	Pin_Input_Init(&p_hall->CONFIG.PIN_B);
 	Pin_Input_Init(&p_hall->CONFIG.PIN_C);
 	p_hall->Direction = HALL_DIRECTION_CCW;
-	p_hall->SensorsRef.State = 0U;
 
 	if (p_hall->CONFIG.P_PARAMS_NVM != 0U)
 	{
@@ -60,6 +59,8 @@ void Hall_Init(Hall_T * p_hall)
 			HALL_VIRTUAL_SENSORS_INV_B
 		);
 	}
+
+	Hall_CaptureSensors_ISR(p_hall);
 }
 
 void Hall_MapSensorsTable

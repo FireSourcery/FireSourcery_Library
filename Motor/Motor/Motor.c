@@ -126,6 +126,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	 * Ramp 0 to 65535 max in ~500ms
 	 */
 	Linear_Ramp_InitMillis(&p_motor->Ramp, 500U, 20000U, 0U, 65535U); /* final value is overwritten, slope is persistent */
+	Motor_SetRamp(p_motor, 0U);
 	p_motor->RampCmd = 0;
 	p_motor->RampIndex = 0;
 

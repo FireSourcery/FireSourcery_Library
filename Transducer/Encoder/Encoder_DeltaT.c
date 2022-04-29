@@ -60,7 +60,7 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 	Encoder_DeltaT_SetUnitConversion(p_encoder, p_encoder->Params.CountsPerRevolution, p_encoder->Params.DistancePerCount);
 
 	Encoder_Zero(p_encoder);
-	p_encoder->DeltaT = UINT32_MAX;
+	Encoder_DeltaT_SetInitial(p_encoder, 0U);
 }
 
 
@@ -95,8 +95,9 @@ void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder, uint16_t initialRpm)
 //	p_encoder->DeltaT = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, initialRpm);
 
 	/* Set first capture TIMER_COUNTER_MAX */
-	p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U;
-	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER) - p_encoder->DeltaT;
+	p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX;
+//	CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U;
+	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER) - (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U);
 	p_encoder->ExtendedTimerSaved = *p_encoder->CONFIG.P_EXTENDED_TIMER;
 }
 

@@ -390,10 +390,10 @@ static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 	ProcMotorFocPositionFeedback(p_motor);
 }
 
-static inline void Motor_FOC_StartAngleObserve(Motor_T * p_motor)
-{
-//	p_motor->IOverLimitFlag = false;
-}
+//static inline void Motor_FOC_StartAngleObserve(Motor_T * p_motor)
+//{
+////	p_motor->IOverLimitFlag = false;
+//}
 
 /*
 	StateMachine calls each PWM, ~20kHz
@@ -402,25 +402,23 @@ static inline void Motor_FOC_StartAngleObserve(Motor_T * p_motor)
 static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
 
-//	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-////	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
-////	{
-////		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-////		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
-////	}
-//	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-//	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-//#if defined(CONFIG_MOTOR_I_SENSORS_ABC) && !defined(CONFIG_MOTOR_I_SENSORS_AB)
-//	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-//#endif
-
-
-//	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+//	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
+//	{
+//		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+//		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+//	}
+	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
+	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
+#if defined(CONFIG_MOTOR_I_SENSORS_ABC) && !defined(CONFIG_MOTOR_I_SENSORS_AB)
+	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
+#endif
+	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
 
 	p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 	//samples complete when queue resumes, adc isr priority higher than pwm.
-//	ProcMotorFocPositionFeedback(p_motor);
+	ProcMotorFocPositionFeedback(p_motor);
 
 #ifdef CONFIG_MOTOR_I_SENSORS_AB
 	FOC_ProcClarkePark_AB(&p_motor->Foc);
@@ -534,10 +532,13 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 			Encoder_Zero(&p_motor->Encoder); //zero angle speed //reset before Encoder_DeltaT_SetInitial
 			break;
 
-		case MOTOR_SENSOR_MODE_HALL: //move to align for regularity
+		case MOTOR_SENSOR_MODE_HALL: //move to align for regularity?
+			/*
+			 * Set first capture DeltaT = 0xffff
+			 */
 			Encoder_Zero(&p_motor->Encoder); //zero angle speed //reset before Encoder_DeltaT_SetInitial
-			Hall_ResetCapture(&p_motor->Hall);
 			Encoder_DeltaT_SetInitial(&p_motor->Encoder, 10U);
+			Hall_ResetCapture(&p_motor->Hall);
 			break;
 
 		case MOTOR_SENSOR_MODE_SIN_COS:

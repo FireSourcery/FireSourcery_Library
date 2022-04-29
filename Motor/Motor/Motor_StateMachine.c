@@ -76,6 +76,7 @@ static void Init_Entry(Motor_T * p_motor)
 static void Init_Proc(Motor_T * p_motor)
 {
 	_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
+	//optionally capture deltaT and set speed to zero
 }
 
 static const StateMachine_State_T STATE_INIT =
@@ -193,14 +194,17 @@ static void Stop_Proc(Motor_T * p_motor)
 	{
 //		if(Timer_Poll(&p_motor->ControlTimer) == true)
 //		{
-//			if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-//			{
-//				Motor_FOC_ProcAngleObserve(p_motor);
-//			}
-//			else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
-//			{
-//
-//			}
+			if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+			{
+				/*
+				 * Will not update
+				 */
+				Motor_FOC_ProcAngleObserve(p_motor);
+			}
+			else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
+			{
+
+			}
 //		}
 	}
 }
@@ -390,7 +394,7 @@ static void Freewheel_Entry(Motor_T * p_motor)
 
 	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		Motor_FOC_StartAngleObserve(p_motor);
+//		Motor_FOC_StartAngleObserve(p_motor);
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{
@@ -402,7 +406,7 @@ static void Freewheel_Proc(Motor_T * p_motor)
 {
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-//		Motor_FOC_ProcAngleObserve(p_motor);
+		Motor_FOC_ProcAngleObserve(p_motor);
 	}
 	else //p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP
 	{

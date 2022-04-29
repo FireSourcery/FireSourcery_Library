@@ -45,6 +45,7 @@
 static inline uint8_t MotorController_User_GetLibraryVersion(MotorController_T * p_mc, uint8_t charIndex) {return p_mc->CONFIG.P_ONCE->NAME[charIndex];}
 
 static inline uint8_t MotorController_User_GetName(MotorController_T * p_mc, uint8_t charIndex) {return p_mc->CONFIG.P_ONCE->NAME[charIndex];}
+static inline uint8_t MotorController_User_SetName(MotorController_T * p_mc, uint8_t charIndex, uint8_t nameChar) {};
 
 static inline void MotorController_User_SetFastBoot(MotorController_T * p_mc, bool isEnable)	{p_mc->MemMapBoot.FastBoot = isEnable;}
 static inline void MotorController_User_SetLoadDefault(MotorController_T * p_mc, bool isEnable)	{p_mc->MemMapBoot.LoadDefault = isEnable;}
@@ -84,10 +85,10 @@ static inline MotorController_InputMode_T MotorController_User_GetInputMode(Moto
  */
 static inline uint16_t MotorController_User_GetThrottle(MotorController_T * p_mc)		{return MotAnalogUser_GetThrottle(&p_mc->AnalogUser);}
 static inline uint8_t MotorController_User_GetThrottle_Frac8(MotorController_T * p_mc)	{return MotAnalogUser_GetThrottle(&p_mc->AnalogUser) >> 8U;}
-static inline bool MotorController_User_GetThrottleSwitch(MotorController_T * p_mc) 	{return MotAnalogUser_GetThrottleSwitch(&p_mc->AnalogUser);}
+static inline bool MotorController_User_GetThrottleSwitch(MotorController_T * p_mc) 	{return MotAnalogUser_GetIsThrottleOn(&p_mc->AnalogUser);}
 static inline uint16_t MotorController_User_GetBrake(MotorController_T * p_mc)			{return MotAnalogUser_GetBrake(&p_mc->AnalogUser);}
 static inline uint8_t MotorController_User_GetBrake_Frac8(MotorController_T * p_mc)		{return MotAnalogUser_GetBrake(&p_mc->AnalogUser) >> 8U;}
-static inline bool MotorController_User_GetBrakeSwitch(MotorController_T * p_mc) 		{return MotAnalogUser_GetBrakeSwitch(&p_mc->AnalogUser);}
+static inline bool MotorController_User_GetBrakeSwitch(MotorController_T * p_mc) 		{return MotAnalogUser_GetIsBrakeOn(&p_mc->AnalogUser);}
 static inline bool MotorController_User_GetForwardSwitch(MotorController_T * p_mc) 		{return MotAnalogUser_GetForwardSwitch(&p_mc->AnalogUser);}
 static inline bool MotorController_User_GetReverseSwitch(MotorController_T * p_mc) 		{return MotAnalogUser_GetReverseSwitch(&p_mc->AnalogUser);}
 static inline bool MotorController_User_GetDInSwitch(MotorController_T * p_user) 		{return Debounce_GetState(&p_user->DIn);}

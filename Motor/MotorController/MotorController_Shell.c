@@ -75,6 +75,8 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 	uint32_t throttle = MotorController_User_GetThrottle(p_mc);
 	uint32_t brake = MotorController_User_GetBrake(p_mc);
 
+
+
 	switch (p_mc->ShellSubstate)
 	{
 		case 0U:

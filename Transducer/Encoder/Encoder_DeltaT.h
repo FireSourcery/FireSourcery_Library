@@ -225,6 +225,7 @@ static inline bool Encoder_DeltaT_PollWatchStop(Encoder_T * p_encoder)
 	if (isStop == true)
 	{
 		p_encoder->DeltaT = UINT32_MAX;
+		p_encoder->TimerCounterSaved = UINT32_MAX; /* Best chance at returning largest deltaT on next capture , TimerCounter < 32bits */
 		p_encoder->SpeedSaved = 0;
 	}
 

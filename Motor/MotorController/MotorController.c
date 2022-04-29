@@ -115,10 +115,12 @@ void MotorController_Init(MotorController_T * p_mc)
 	p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
 }
 
-void MotorController_SaveParameters_Blocking(MotorController_T * p_mc)
+bool MotorController_SaveParameters_Blocking(MotorController_T * p_mc)
 {
 	Motor_T * p_motor;
 	Protocol_T * p_protocol;
+
+	NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
 
 #ifndef CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH
 	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
@@ -152,6 +154,7 @@ void MotorController_SaveParameters_Blocking(MotorController_T * p_mc)
 
 	EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_mc->Shell.CONFIG.P_PARAMS, &p_mc->Shell.Params, sizeof(Shell_Params_T));
 
+	return (status == NV_MEMORY_STATUS_SUCCESS) ? true : false;
 #endif
 }
 

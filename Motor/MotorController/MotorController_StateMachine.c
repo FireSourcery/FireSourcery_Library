@@ -72,6 +72,7 @@ static void Init_Entry(MotorController_T * p_mc)
 static void Init_Proc(MotorController_T * p_mc)
 {
 	_StateMachine_ProcTransition(&p_mc->StateMachine, &STATE_STOP);
+	//change transition to on edge
 }
 
 static const StateMachine_State_T STATE_INIT =
@@ -89,6 +90,8 @@ static const StateMachine_State_T STATE_INIT =
 
     Enters upon all motors reading 0 speed,
  	 motor may be in run(active brake) or freewheel state
+
+	bug: if power on into run state, while in reverse, will start forward.
 */
 /******************************************************************************/
 static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc)

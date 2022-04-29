@@ -280,7 +280,7 @@ static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 
 	if(p_motor->ControlModeFlags.Hold == 0U)
 	{
-		if(Motor_GetSpeed_RPM(p_motor) > 60U)
+		if(Motor_GetSpeed_RPM(p_motor) > 10U)
 		{
 			Motor_User_SetTorqueCmd(p_motor, torque);
 		}
