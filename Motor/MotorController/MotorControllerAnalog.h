@@ -38,7 +38,7 @@
 /*!
 	@brief Virtual channel identifiers, index into arrays containing Analog channel
  */
-typedef enum
+typedef enum MotAnalog_Channel_Tag
 {
 	MOT_ANALOG_CHANNEL_VPOS, 				/* V battery, V in */
 	MOT_ANALOG_CHANNEL_VACC,				/* V accessories ~12V*/

@@ -477,11 +477,11 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 	 * User sets larger SpeedRefVoltage_RPM for smaller vqReq to ensure never resume to higher speed
 	 * vqReq = Speed_RPM *  32768 /  SpeedRefVoltage_RPM
 	 */
-	 vqReq = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedRefMax_RPM / ((uint32_t)2U * p_motor->Parameters.SpeedRefVoltage_RPM);
+	vqReq = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedRefMax_RPM / ((uint32_t)2U * p_motor->Parameters.SpeedRefVoltage_RPM);
 
-	if (vqReq > 32767) {vqReq = 32767;}
+	if (vqReq > 32767) { vqReq = 32767; }
 
-	if (p_motor->Direction == MOTOR_DIRECTION_CW) {vqReq = 0 - vqReq;}
+	if (p_motor->Direction == MOTOR_DIRECTION_CW) { vqReq = 0 - vqReq; }
 	Motor_FOC_SetMatchOutput(p_motor, 0, vqReq, 0);
 
 	ActivateMotorFocAngle(p_motor);

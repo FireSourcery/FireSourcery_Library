@@ -63,10 +63,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MOTOR_LIB_VERSION_OPT		0
-#define MOTOR_LIB_VERSION_MAJOR 	0
-#define MOTOR_LIB_VERSION_MINOR 	1
-#define MOTOR_LIB_VERSION_BUGFIX 	0
+#define MOTOR_LIB_VERSION_OPT		0U
+#define MOTOR_LIB_VERSION_MAJOR 	0U
+#define MOTOR_LIB_VERSION_MINOR 	1U
+#define MOTOR_LIB_VERSION_BUGFIX 	0U
 
 /*
  * All modules independently conform to same ID
@@ -92,7 +92,8 @@ typedef enum
 	MOTOR_PHASE_CB = 5U,
 	MOTOR_PHASE_AB = 6U,
 	MOTOR_PHASE_ERROR_7 = 7U,
-} Motor_SectorId_T;
+}
+Motor_SectorId_T;
 
 /*
  *
@@ -101,7 +102,8 @@ typedef enum
 {
 	MOTOR_COMMUTATION_MODE_FOC,
 	MOTOR_COMMUTATION_MODE_SIX_STEP,
-} Motor_CommutationMode_T;
+} 
+Motor_CommutationMode_T;
 
 typedef enum
 {
@@ -110,7 +112,8 @@ typedef enum
 	MOTOR_SENSOR_MODE_ENCODER,
 	MOTOR_SENSOR_MODE_SIN_COS,
 	MOTOR_SENSOR_MODE_SENSORLESS,
-} Motor_SensorMode_T;
+} 
+Motor_SensorMode_T;
 
 /*
  * Feedback Control Variable Mode
@@ -150,7 +153,8 @@ typedef enum
 	MOTOR_ALIGN_MODE_DISABLE,
 	MOTOR_ALIGN_MODE_ALIGN,
 	MOTOR_ALIGN_MODE_HFI,
-} Motor_AlignMode_T;
+} 
+Motor_AlignMode_T;
 
 //typedef enum
 //{
@@ -167,13 +171,15 @@ typedef enum
 {
 	MOTOR_DIRECTION_CW = 0U,
 	MOTOR_DIRECTION_CCW = 1U,
-} Motor_Direction_T;
+} 
+Motor_Direction_T;
 
 typedef enum
 {
 	MOTOR_FORWARD_IS_CW,
 	MOTOR_FORWARD_IS_CCW,
-} Motor_DirectionCalibration_T;
+} 
+Motor_DirectionCalibration_T;
 
 /*
  * Fault/Run Substate
@@ -192,7 +198,8 @@ typedef union
 //		uint32_t UserCheck :1U;
 	};
 	uint32_t State;
-} Motor_ErrorFlags_T;
+} 
+Motor_ErrorFlags_T;
 
 typedef union
 {
@@ -201,7 +208,8 @@ typedef union
 		uint32_t IOverLimit :1U;
 	};
 	uint32_t State;
-} Motor_WarningFlags_T;
+} 
+Motor_WarningFlags_T;
 
 /*
  * Calibration Substate Flag
@@ -213,7 +221,8 @@ typedef enum
 	MOTOR_CALIBRATION_STATE_HALL,
 	MOTOR_CALIBRATION_STATE_ENCODER,
 	MOTOR_CALIBRATION_STATE_SIN_COS,
-} Motor_CalibrationState_T;
+} 
+Motor_CalibrationState_T;
 
 /*!
 	@brief Motor Parameters
