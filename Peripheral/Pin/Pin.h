@@ -52,7 +52,7 @@ typedef const struct
 	const uint32_t ID;
 	const uint32_t MASK;
 
-	const Pin_Config_T CONFIG;
+//	const Pin_Config_T CONFIG;
 //	bool IsInvert; /* Use ground state as on */
 }
 Pin_T;
