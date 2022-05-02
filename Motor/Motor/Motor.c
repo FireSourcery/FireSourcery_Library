@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Motor.c
-    @author FireSoucery
-    @brief  Motor module conventional function definitions.
-    @version V0
+	@file 	Motor.c
+	@author FireSoucery
+	@brief  Motor module conventional function definitions.
+	@version V0
 */
 /******************************************************************************/
 #include "Motor.h"
@@ -34,7 +34,7 @@
 
 void Motor_Init(Motor_T * p_motor)
 {
-	if (p_motor->CONFIG.P_PARAMS_NVM != 0U)
+	if(p_motor->CONFIG.P_PARAMS_NVM != 0U)
 	{
 		memcpy(&p_motor->Parameters, p_motor->CONFIG.P_PARAMS_NVM, sizeof(Motor_Params_T));
 	}
@@ -53,7 +53,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	switch(p_motor->Parameters.SensorMode)
 	{
-		case MOTOR_SENSOR_MODE_SENSORLESS :
+		case MOTOR_SENSOR_MODE_SENSORLESS:
 			if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 			{
 				Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
@@ -64,7 +64,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 			}
 			break;
 
-		case MOTOR_SENSOR_MODE_HALL :
+		case MOTOR_SENSOR_MODE_HALL:
 			Hall_Init(&p_motor->Hall);
 			Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
 			/* Set Encoder module individual param consistent to main motor module setting */
@@ -73,17 +73,17 @@ void Motor_InitReboot(Motor_T * p_motor)
 			Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, 20000U, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedRefMax_RPM);
 			break;
 
-		case MOTOR_SENSOR_MODE_ENCODER :
+		case MOTOR_SENSOR_MODE_ENCODER:
 			Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
 			Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_RPM);
 			break;
 
-		case MOTOR_SENSOR_MODE_SIN_COS :
+		case MOTOR_SENSOR_MODE_SIN_COS:
 			SinCos_Init(&p_motor->SinCos);
 			Linear_Speed_InitAngleRpm(&p_motor->UnitAngleRpm, 1000U, 16U, p_motor->Parameters.SpeedRefMax_RPM);
 			break;
 
-		default :
+		default:
 			break;
 	}
 
@@ -93,38 +93,35 @@ void Motor_InitReboot(Motor_T * p_motor)
 	/*
 	 * SW Structs
 	 */
-	Timer_InitPeriodic(&p_motor->ControlTimer, 	1U);
-	Timer_InitPeriodic(&p_motor->MillisTimer, 	1U);
-	Timer_InitPeriodic(&p_motor->SpeedTimer, 	1U);
+	Timer_InitPeriodic(&p_motor->ControlTimer, 1U);
+	Timer_InitPeriodic(&p_motor->MillisTimer, 1U);
+	Timer_InitPeriodic(&p_motor->SpeedTimer, 1U);
 
 	FOC_Init(&p_motor->Foc);
-//	BEMF_Init(&p_motor->Bemf);
+	//	BEMF_Init(&p_motor->Bemf);
 
 	PID_Init(&p_motor->PidSpeed);
 	PID_Init(&p_motor->PidIq);
 	PID_Init(&p_motor->PidId);
 	PID_Init(&p_motor->PidIBus);
-
-#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) &&  defined(CONFIG_MOTOR_V_SENSORS_ADC)
-	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, p_motor->CONFIG.UNIT_VABC_ADCREF10, p_motor->CONFIG.UNIT_VABC_ADCBITS, p_motor->Parameters.VSupply);
+ 
+#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) && defined(CONFIG_MOTOR_V_SENSORS_ADC)
+	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, p_motor->CONFIG.UNIT_VABC_ADC_BITS, p_motor->Parameters.AdcVRef_MilliV, p_motor->Parameters.VSupply);
 #endif
 
-	/*
-	 * Initial runtime config settings
-	 */
 #ifdef CONFIG_MOTOR_I_SENSORS_INVERT
 	Linear_ADC_Init_Inverted(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
 	Linear_ADC_Init_Inverted(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
 	Linear_ADC_Init_Inverted(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, p_motor->Parameters.IcRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
 #elif defined(CONFIG_MOTOR_I_SENSORS_NONINVERT)
-	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp);
-	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp);
-	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, p_motor->Parameters.IcRefMax_ADCU,  p_motor->Parameters.IRefMax_Amp);
+	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
+	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
+	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, p_motor->Parameters.IcRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
 #endif
 
 	/*
-	 * Ramp 0 to 65535 max in ~500ms
-	 */
+		Ramp 0 to 65535 max in ~500ms
+	*/
 	Linear_Ramp_InitMillis(&p_motor->Ramp, 500U, 20000U, 0U, 65535U); /* final value is overwritten, slope is persistent */
 	Motor_SetRamp(p_motor, 0U);
 	p_motor->RampCmd = 0;
@@ -143,10 +140,9 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	Motor_SetDirectionForward(p_motor);
 	p_motor->UserDirection = p_motor->Direction;
-	p_motor->VPwm 					= 0U;
-	p_motor->ControlTimerBase 		= 0U;
-}
-
+	p_motor->VPwm = 0U;
+	p_motor->ControlTimerBase = 0U;
+} 
 
 void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
 {
@@ -186,6 +182,9 @@ void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
 	}
 }
 
+/*
+	Perfered for stability 
+*/
 void Motor_Jog6Step(Motor_T * p_motor, uint8_t step)
 {
 	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;

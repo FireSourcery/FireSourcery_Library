@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
-    @author FireSoucery
-    @brief
-    @version V0
+	@file
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef MATH_FILTER_H
@@ -35,24 +35,24 @@
 #include <stdint.h>
 
 /*
- * y[n] = (1-lambda)*y[n-1] + lambda*x
- *
- * lambda = 1/N
- *
- * e.g.
- * 0.015625 -> 64 size array
- * 0.03125  -> 32 size array
- */
+	y[n] = (1-lambda)*y[n-1] + lambda*x
+
+	lambda = 1/N
+
+	e.g.
+	0.015625 -> 64 size array
+	0.03125  -> 32 size array
+*/
 static inline int16_t filter_movavg(int32_t yPrev, int32_t x, qfrac16_t lambda)
 {
 	return ((yPrev * (QFRAC16_1_OVERSAT - lambda)) + (x * lambda)) >> QFRAC16_N_FRAC_BITS;
 }
 
 /*
- * y[k] = (1-lambda)*y[k-1] + lambda*x
- *
- * lambda = 1/N
- */
+	y[k] = (1-lambda)*y[k-1] + lambda*x
+
+	lambda = 1/N
+*/
 static inline int32_t filter_movavgn(int32_t yPrev, int32_t x, uint16_t n)
 {
 	return (yPrev * (n - 1) + x) / n;

@@ -22,29 +22,27 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Pin.h
-    @author FireSoucery
-    @brief	Uniform Wrapper for HAL_Pin
-    @version V0
+	@file 	Pin.h
+	@author FireSoucery
+	@brief	Uniform Wrapper for HAL_Pin
+	@version V0
 */
 /******************************************************************************/
 #ifndef PIN_H
 #define PIN_H
 
 #include "Config.h"
-#include "HAL_Pin.h"
-
+#include "HAL_Pin.h" 
 #include <stdint.h>
-#include <stdbool.h>
+#include <stdbool.h> 
 
-
-//typedef const struct
-//{
-//	HAL_Pin_T * const P_HAL_PIN;
-//	const uint32_t ID;
-//	const uint32_t MASK;
-//}
-//Pin_Config_T;
+typedef const struct
+{
+	HAL_Pin_T * const P_HAL_PIN;
+	const uint32_t ID;
+	const uint32_t MASK;
+}
+Pin_Config_T;
 
 typedef const struct
 {
@@ -52,8 +50,8 @@ typedef const struct
 	const uint32_t ID;
 	const uint32_t MASK;
 
-//	const Pin_Config_T CONFIG;
-//	bool IsInvert; /* Use ground state as on */
+	const Pin_Config_T CONFIG;
+	bool IsInvert; /* Use ground state as on */
 }
 Pin_T;
 
@@ -73,13 +71,18 @@ static inline uint32_t GetPinHalArg(const Pin_T * p_pin)
 #endif
 }
 
-static inline void Pin_Output_Init(const Pin_T * p_pin) 				{HAL_Pin_InitOutput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, GetPinHalArg(p_pin));}
-static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn) 	{return HAL_Pin_WriteOutput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin), isOn);}
-static inline void Pin_Output_Off(const Pin_T * p_pin) 					{return HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, GetPinHalArg(p_pin));}
-static inline void Pin_Output_On(const Pin_T * p_pin)					{return HAL_Pin_WriteOutputOn(p_pin->P_HAL_PIN, GetPinHalArg(p_pin));}
+static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn) 		{ return HAL_Pin_WriteOutput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin), isOn); }
+static inline void Pin_Output_WritePhysical(const Pin_T * p_pin, bool isOn) { return HAL_Pin_WriteOutput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin), isOn); }
+static inline void Pin_Output_Off(const Pin_T * p_pin) 		{ return HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }
+static inline void Pin_Output_On(const Pin_T * p_pin) 		{ return HAL_Pin_WriteOutputOn(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); } 
+static inline void Pin_Output_Low(const Pin_T * p_pin)		{ return HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }
+static inline void Pin_Output_High(const Pin_T * p_pin) 	{ return HAL_Pin_WriteOutputOn(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }
 
-extern bool Pin_Input_Read(const Pin_T * p_pin);
+static inline bool Pin_Input_Read(const Pin_T * p_pin) 			{ return HAL_Pin_ReadInput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }
+static inline bool Pin_Input_ReadPhysical(const Pin_T * p_pin) 	{ return HAL_Pin_ReadInput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }
+
+extern void Pin_Output_Init(const Pin_T * p_pin);
 extern void Pin_Input_Init(const Pin_T * p_pin);
-extern  void Pin_Deinit(const Pin_T * p_pin);
+extern void Pin_Deinit(const Pin_T * p_pin);
 
 #endif

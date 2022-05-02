@@ -56,7 +56,7 @@ typedef struct __attribute__((aligned (4U))) PID_Params_Tag
 }
 PID_Params_T;
 
-typedef const struct
+typedef const struct PID_Config_Tag
 {
 	const PID_Params_T * const P_PARAMS;
 }
@@ -81,11 +81,6 @@ PID_T;
 	}									\
 }
 
-extern int32_t PID_Calc(PID_T *p_pid, int32_t setpoint, int32_t feedback);
-extern void PID_SetIntegral(PID_T * p_pid, int32_t integral);
-extern void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor);
-extern void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq);
-extern void PID_SetOutputLimits(PID_T * p_pid, uint32_t min, uint32_t max);
 extern void PID_Init(PID_T * p_pid);
 extern void PID_Init_Params
 (
@@ -96,5 +91,11 @@ extern void PID_Init_Params
 	int32_t kdFactor, int32_t kdDivisor,
 	int32_t outMin, int32_t outMax
 );
+extern int32_t PID_Calc(PID_T *p_pid, int32_t setpoint, int32_t feedback);
+extern void PID_Reset(PID_T * p_pid); 
+extern void PID_SetIntegral(PID_T * p_pid, int32_t integral);
+extern void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor);
+extern void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq);
+extern void PID_SetOutputLimits(PID_T * p_pid, uint32_t min, uint32_t max);
 
 #endif /* PID_H */

@@ -22,9 +22,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	FOC.c
-    @author FireSoucery
-    @version V0
+	@file 	FOC.c
+	@author FireSoucery
+	@version V0
 */
 /******************************************************************************/
 #include "FOC.h"
@@ -36,34 +36,21 @@ void FOC_Init(FOC_T * p_foc)
 	p_foc->VectorMaxMagnitude = QFRAC16_MAX;
 	p_foc->VectorMaxD = QFRAC16_1_DIV_SQRT3;
 
-//	p_foc->Ia = 0;
-//	p_foc->Ib = 0;
-//	p_foc->Ic = 0;
-//	p_foc->Ialpha;
-//	p_foc->Ibeta;
-//
-//	p_foc->Vd;
-//	p_foc->Vq;
-//	p_foc->Valpha;
-//	p_foc->Vbeta;
-
-//	p_foc->Sine = 0;
-//	p_foc->Cosine = 0;
-
-//	*p_foc->p_PwmA = 0;
-//	*p_foc->p_PwmB = 0;
-//	*p_foc->p_PwmC = 0;
-
-//	p_foc->IdReq = 0;
-//	p_foc->IqReq = 0;
-//
-//	p_foc->dReq = 0;
-//	p_foc->qReq = 0;
+	p_foc->Ia = 0;
+	p_foc->Ib = 0;
+	p_foc->Ic = 0;
+	p_foc->Ialpha = 0;
+	p_foc->Ibeta = 0;
+	p_foc->Id = 0;
+	p_foc->Iq = 0;
+	p_foc->Vd = 0;
+	p_foc->Vq = 0;
+	p_foc->Valpha = 0;
+	p_foc->Vbeta = 0;
+	p_foc->Sine = 0;
+	p_foc->Cosine = 0; 
 }
 
-/*
- *
- */
 void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax)
 {
 	p_foc->VectorMaxMagnitude = QFRAC16_MAX;
@@ -85,11 +72,7 @@ void FOC_Zero(FOC_T * p_foc)
 	p_foc->Vd = 0;
 	p_foc->Iq = 0;
 	p_foc->Id = 0;
-
-	p_foc->DutyA = 65536U/2U;
-	p_foc->DutyB = 65536U/2U;
-	p_foc->DutyC = 65536U/2U;
+	p_foc->DutyA = 65536U / 2U;
+	p_foc->DutyB = 65536U / 2U;
+	p_foc->DutyC = 65536U / 2U;
 }
-
-
-

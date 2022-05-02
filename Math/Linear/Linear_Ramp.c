@@ -22,49 +22,43 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Linear_Ramp.c
-    @author FireSoucery
-    @version V0
-    @brief
+	@file 	Linear_Ramp.c
+	@author FireSoucery
+	@version V0
+	@brief
 */
 /******************************************************************************/
-#include "Linear_Ramp.h"
-
-#include <stdint.h>
+#include "Linear_Ramp.h" 
 
 
 //todo init frac16 mode
 
 /******************************************************************************/
-/*!
-	@brief
- */
+/*
+
+*/
 /******************************************************************************/
-void Linear_Ramp_InitSlope(Linear_T * p_linear, int32_t slope_UnitPerTick, int32_t initial, int32_t final)
+void Linear_Ramp_Init(Linear_T * p_linear, int32_t slope_UnitPerTick, int32_t initial, int32_t final)
 {
 	Linear_Init(p_linear, slope_UnitPerTick, 1U, initial, final);
 }
 
 /*
- * user must account for acceleration sign,
- * if initial > final, acceleration is positive, ramp returns final value
- *
- * Overflow: slope_UnitPerSecond 32,767 max
- */
+	User must account for acceleration sign,
+	If initial > final AND acceleration is positive, ramp returns final value
+
+	Overflow: slope_UnitPerSecond > 131,071 
+*/
 void Linear_Ramp_InitAcceleration(Linear_T * p_linear, int32_t slope_UnitPerSecond, uint32_t updateFreq_Hz, int32_t initial, int32_t final)
 {
 	Linear_Init(p_linear, slope_UnitPerSecond, updateFreq_Hz, initial, final);
 }
 
 /*
- *  Overflow: (peroid_Ms * updateFreq_Hz ) max 32,767,000
- */
-void Linear_Ramp_InitMillis(Linear_T * p_linear, uint16_t peroid_Ms, uint16_t updateFreq_Hz, int32_t initial, int32_t final)
+	Overflow: 	(peroid_Ms * updateFreq_Hz) > 131,071,000
+				(final - initial) > 131,071 
+*/
+void Linear_Ramp_InitMillis(Linear_T * p_linear, uint16_t peroid_Ms, uint32_t updateFreq_Hz, int32_t initial, int32_t final)
 {
-	Linear_Init(p_linear, (final - initial), (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, initial, final);
-//	Linear_Init_Shift(p_linear, (final - initial), (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, initial, final, RAMP_SHIFT);
+	Linear_Init(p_linear, (final - initial), (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, initial, final); 
 }
-
-
-
-

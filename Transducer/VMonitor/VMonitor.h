@@ -22,41 +22,46 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	 	.h
-    @author 	FireSoucery
-    @brief		Analog Board Sensors, 1 instance per for all motors
-    @version 	V0
+	@file 	 	.h
+	@author 	FireSoucery
+	@brief		Analog Board Sensors, 1 instance per for all motors
+	@version 	V0
 */
 /******************************************************************************/
 #ifndef VMONITOR_H
 #define VMONITOR_H
 
-#include "Math/Linear/Linear_Voltage.h"
+#include "Math/Linear/Linear_Voltage.h"  
+#include <stdint.h> 
 
-#include <stdint.h>
-//#include <stdbool.h>
-
-typedef enum
+typedef enum VMonitor_Status_Tag
 {
-	VMONITOR_LIMITS_OK,
+	VMONITOR_STATUS_OK,
 	VMONITOR_ERROR_UPPER,
 	VMONITOR_ERROR_LOWER,
+	VMONITOR_WARNING_UPPER,
+	VMONITOR_WARNING_LOWER,
 }
 VMonitor_Status_T;
 
-typedef struct __attribute__ ((aligned (4U)))
+typedef struct __attribute__((aligned(4U))) VMonitor_Params_Tag
 {
 	uint16_t LimitUpper_ADCU;
 	uint16_t LimitLower_ADCU;
-	//Vmax
+	uint16_t WarningUpper_ADCU;
+	uint16_t WarningLower_ADCU;
+
+	uint16_t AdcVRef_MilliV; /* static */
+	uint16_t VInRefMax; /* Max as Frac16 */
 }
 VMonitor_Params_T;
 
-typedef const struct
+typedef const struct VMonitor_Config_Tag
 {
+	const uint16_t UNITS_R1;
+	const uint16_t UNITS_R2;
+	const uint16_t UNITS_ADC_BITS;
 	const VMonitor_Params_T * const P_PARAMS;
-	//R1, R2
-	const Linear_T UNITS; //todo change to param
 }
 VMonitor_Config_T;
 
@@ -64,33 +69,48 @@ typedef struct
 {
 	VMonitor_Config_T CONFIG;
 	VMonitor_Params_T Params;
+	Linear_T Units;
 }
 VMonitor_T;
 
-#define VMONITOR_CONFIG(r1, r2, adcVRef10, adcBits, vInMax, p_Params)		\
-{																			\
-	.CONFIG =																\
-	{																		\
-		.UNITS = LINEAR_VOLTAGE_CONFIG(r1, r2, adcVRef10, adcBits, vInMax),	\
-		.P_PARAMS = p_Params,												\
-	},																		\
+#define VMONITOR_CONFIG(r1, r2, adcBits, p_Params)		\
+{														\
+	.CONFIG =											\
+	{													\
+	 	.UNITS_R1 = r1, 								\
+		.UNITS_R2 = r2,									\
+		.UNITS_ADC_BITS = adcBits,						\
+		.P_PARAMS = p_Params,							\
+	},													\
 }
 
 static inline int32_t VMonitor_ConvertToMilliV(VMonitor_T * p_vMonitor, uint16_t adcu)
 {
-	return Linear_Voltage_CalcMilliV(&p_vMonitor->CONFIG.UNITS, adcu);
+	return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, adcu);
 }
 
 static inline int32_t VMonitor_ConvertToFrac16(VMonitor_T * p_vMonitor, uint16_t adcu)
 {
-	return Linear_Voltage_CalcFraction16(&p_vMonitor->CONFIG.UNITS, adcu);
+	return Linear_Voltage_CalcFraction16(&p_vMonitor->Units, adcu);
 }
 
-static inline int32_t VMonitor_ConvertMilliVToAdcu(VMonitor_T * p_vMonitor, uint32_t mv)
+static inline int32_t VMonitor_ConvertMilliVToAdcu(VMonitor_T * p_vMonitor, uint32_t milliV)
 {
-	return Linear_Voltage_CalcAdcu_MilliV(&p_vMonitor->CONFIG.UNITS, mv);
+	return Linear_Voltage_CalcAdcu_MilliV(&p_vMonitor->Units, milliV);
 }
 
 extern void VMonitor_Init(VMonitor_T * p_monitor);
+extern VMonitor_Status_T VMonitor_CheckLimits(VMonitor_T * p_monitor, uint16_t adcu);
+extern VMonitor_Status_T VMonitor_Check(VMonitor_T * p_monitor, uint16_t adcu);
+extern void VMonitor_SetAdcVRef_MilliV(VMonitor_T * p_vMonitor, uint32_t adcVRef_MilliV);
+extern void VMonitor_SetVInRefMax(VMonitor_T * p_vMonitor, uint32_t vInRefMax);
+extern void VMonitor_SetLimitUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV);
+extern void VMonitor_SetLimitLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV);
+extern void VMonitor_SetWarningUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV);
+extern void VMonitor_SetWarningLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV);
+extern int32_t VMonitor_GetLimitUpper_MilliV(VMonitor_T * p_vMonitor);
+extern int32_t VMonitor_GetLimitLower_MilliV(VMonitor_T * p_vMonitor);
+extern int32_t VMonitor_GetWarningUpper_MilliV(VMonitor_T * p_vMonitor);
+extern int32_t VMonitor_GetWarningLower_MilliV(VMonitor_T * p_vMonitor);
 
 #endif

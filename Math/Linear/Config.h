@@ -22,31 +22,25 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.c
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	Config.c
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef CONFIG_LINEAR_H
 #define CONFIG_LINEAR_H
 
-#ifdef CONFIG_LINEAR_SHIFT_DIVIDE_SHIFT
-
-#elif defined(CONFIG_LINEAR_DIVIDE_NUMIRICAL)
-
+#if 	defined(CONFIG_LINEAR_DIVIDE_SHIFT) 
+#elif 	defined(CONFIG_LINEAR_DIVIDE_NUMERICAL) 
 #else
 	#define CONFIG_LINEAR_DIVIDE_SHIFT
 #endif
 
-#if defined(ADC_VREF_MILLIV) && defined(ADC_MAX)
-
-#elif defined(CONFIG_LINEAR_ADC_VREF_MILLIV) && defined(CONFIG_LINEAR_ADC_MAX)
-	#define ADC_VREF_MILLIV CONFIG_SIN_COS_ADC_VREF_MILLIV
-	#define ADC_MAX CONFIG_SIN_COS_ADC_MAX
-#else
-	#define ADC_VREF_MILLIV 5000
-	#define ADC_MAX 4096
-#endif
+// #if 	defined(CONFIG_LINEAR_ADC_MAX) 
+// #elif 	defined(ADC_MAX) 
+// #else 
+// 	#define ADC_MAX 4096U
+// #endif
 
 #endif

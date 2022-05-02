@@ -232,6 +232,8 @@ Motor_CalibrationState_T;
  */
 typedef struct __attribute__ ((aligned (4U)))
 {
+	uint16_t AdcVRef_MilliV; /* Sync with upper layer */
+
 	Motor_CommutationMode_T 	CommutationMode;
 	Motor_SensorMode_T 			SensorMode;
 	Motor_ControlMode_T 		ControlMode; /* User ControlMode, effective for throttle only */
@@ -287,9 +289,9 @@ typedef const struct Motor_Init_Tag
  	const uint16_t I_MAX_ADCU;
 
  	const uint16_t UNIT_VABC_R1;
- 	const uint16_t UNIT_VABC_R2;
- 	const uint16_t UNIT_VABC_ADCREF10;
- 	const uint16_t UNIT_VABC_ADCBITS;
+ 	const uint16_t UNIT_VABC_R2; 
+ 	const uint16_t UNIT_VABC_ADC_BITS;
+
 	AnalogN_T * const P_ANALOG_N;
 	const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
 }

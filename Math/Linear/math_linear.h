@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Linear.c
-    @author FireSoucery
-    @brief  Mathematical linear function.
-    @version V0
+	@file 	Linear.c
+	@author FireSoucery
+	@brief  Mathematical linear function.
+	@version V0
 */
 /******************************************************************************/
 #ifndef MATH_LINEAR_H
@@ -35,30 +35,24 @@
 
 /*
 	f(x) 	= (x - x0) * m + y0
-
 		Using Shift:
- 			= (((m_shifted * (x - x0)) >> shift) + y0)
-
+			= (((m_shifted * (x - x0)) >> shift) + y0)
 		Using f16,yref:
 			= f16(x) * yref >> 16
 
 	f16(x)	=
-
 		Using xref:
 			= 65536 * (x - x0) / (xref - x0)
-
 		Using xref, shift:
 			= ((m16_shifted[65536 / (xref - x0) << shift] * (x - x0)) >> shift) + y0_frac16
-
 		Using f, yref:
 			= (65536 / yref) * f(x)
 			= ((m_factor * x * 65536 / m_divisor) + (y0 * 65536)) / yref;
 			= ((m_factor * x + y0 * m_divisor) * 65536) / (m_divisor * yref); Overflow
-
 		Using f, yref, shift:
 			= ((m_shifted * x >> shift) + y0) * 65536 / yref;
-	 	 	= ((m_shifted * x >> (shift - 16)) + y0 * 65536) / yref;
- */
+			= ((m_shifted * x >> (shift - 16)) + y0 * 65536) / yref;
+*/
 
 static inline int32_t linear_f(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t x)
 {
@@ -106,7 +100,7 @@ static inline int32_t linear_f16_yref_shift(int32_t m_shifted, uint8_t shift, in
 {
 	int32_t yfrac16;
 
-	if (shift >= 16U)
+	if(shift >= 16U)
 	{
 		yfrac16 = linear_f_shift(m_shifted, (shift - 16U), x0, y0 << 16U, x) / yref;
 	}
@@ -122,7 +116,7 @@ static inline int32_t linear_f16_yref_b_shift(int32_t m_shifted, uint8_t shift, 
 {
 	int32_t yfrac16;
 
-	if (shift >= 16U)
+	if(shift >= 16U)
 	{
 		yfrac16 = linear_f_b_shift(m_shifted, (shift - 16U), b_shifted, x) / yref;
 	}
@@ -136,19 +130,17 @@ static inline int32_t linear_f16_yref_b_shift(int32_t m_shifted, uint8_t shift, 
 
 /*
 	invf(y) 	= (y - y0) * (1 / m) + x0, m in f(x) direction
-
 		Using shift:
 				= (((invm_shifted * (y - y0)) >> shift) + x0);
 
-	invf16(y_frac16) = x
-
+	invf16(y_frac16) = x 
 		Using yref:
 				= invf(yref * y_frac16 / 65536)
 				= ((yref * y_frac16 / 65536) - b) * m_divisor / m_factor);
 				= (m_divisor * (y_frac16 * yref - b * 65536)) / (m_factor * 65536); Overflow
-
 		Using xref:
- */
+*/
+
 static inline int32_t linear_invf(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t y)
 {
 	return linear_f_x0(m_divisor, m_factor, b, y);
@@ -194,10 +186,9 @@ static inline int32_t linear_invf16_yref_shift(int32_t invm_shifted, uint8_t shi
 //	return (((y_frac16 * yref - b_shifted) >> 16U)) * invm_shifted >> shift;
 //}
 
-
 /*
- * when slope is set to frac16 conversion, f_m16 returns user units, secondarily
- */
+	when slope is set to frac16 conversion, f_m16 returns user units secondarily
+*/
 /* e.g. adcu to frac16 */
 static inline int32_t linear_m16_f16(int32_t m16_shifted, uint8_t shift, int32_t x0, int32_t y0_frac16, int32_t x)
 {
@@ -221,6 +212,5 @@ static inline int32_t linear_m16_invf(int32_t invm16_shifted, uint8_t shift, int
 {
 	return linear_invf_shift(invm16_shifted, shift, x0, y0_frac16, y << 16U / yref);
 }
-
 
 #endif

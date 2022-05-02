@@ -22,14 +22,14 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Pin.c
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	Pin.c
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #include "Pin.h"
 
-bool Pin_Input_Read(const Pin_T * p_pin) {return HAL_Pin_ReadInput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin));}
-void Pin_Input_Init(const Pin_T * p_pin) {HAL_Pin_InitInput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin));}
-void Pin_Deinit(const Pin_T * p_pin) {HAL_Pin_Deinit(p_pin->P_HAL_PIN, GetPinHalArg(p_pin));}
+void Pin_Output_Init(const Pin_T * p_pin) 	{ HAL_Pin_InitOutput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }
+void Pin_Input_Init(const Pin_T * p_pin) 	{ HAL_Pin_InitInput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }
+void Pin_Deinit(const Pin_T * p_pin) 		{ HAL_Pin_Deinit(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }

@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
-    @author FireSoucery
-    @brief
-    @version V0
+	@file
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef FILTER_MOV_AVG_H
@@ -35,12 +35,12 @@
 #include "math_filter.h"
 #include <stdint.h>
 
-
 /*
- * Sample value must be significantly great than N for sample to impact average
- *
- * e.g. 2000+/-10 / 100 = 20, 2000+/-10 / 10 = 200+/-1
- */
+	Sample value must be significantly great than N for sample to impact average
+
+	e.g. (2000 +/- 10)/100 => 20 +/- 0, (2000 +/- 10)/10 => 200 +/- 1
+*/
+
 static inline void Filter_MovAvg_Init(Filter_T * p_filter, int32_t y0, qfrac16_t lambda)
 {
 	p_filter->Accumulator = y0;

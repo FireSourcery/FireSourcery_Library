@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Linear_Frac16.h
-    @author FireSoucery
-    @brief	Linear Frac16 calc without division
-    @version V0
+	@file 	Linear_Frac16.h
+	@author FireSoucery
+	@brief	Linear Frac16 calc without division
+	@version V0
 */
 /******************************************************************************/
 #ifndef LINEAR_FRAC16_H
@@ -53,25 +53,14 @@ static inline int32_t Linear_Frac16_CalcInvUnits(const Linear_T * p_linear, int3
 	return linear_m16_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, y);
 }
 
-//todo common bound function
 static inline uint16_t Linear_Frac16_Unsigned(const Linear_T * p_linear, int32_t x)
 {
-	int32_t frac16 = Linear_Frac16(p_linear, x);
-
-	if 		(frac16 > 65535)	{frac16 = 65535;}
-	else if (frac16 < 0) 		{frac16 = 0;}
-
-	return (uint16_t)frac16;
+	return _Linear_SatUnsigned16(Linear_Frac16(p_linear, x));
 }
 
 static inline uint16_t Linear_Frac16_Unsigned_Abs(const Linear_T * p_linear, int32_t x)
 {
-	int32_t frac16 = Linear_Frac16(p_linear, x);
-
-	if 		(frac16 < 0)		{frac16 = 0 - frac16;}
-	else if (frac16 > 65535)	{frac16 = 65535;}
-
-	return (uint16_t)frac16;
+	return _Linear_SatUnsigned16_Abs(Linear_Frac16(p_linear, x));
 }
 
 static inline int32_t Linear_Frac16_InvUnsigned(const Linear_T * p_linear, uint16_t y_frac16)
@@ -81,17 +70,14 @@ static inline int32_t Linear_Frac16_InvUnsigned(const Linear_T * p_linear, uint1
 
 static inline int16_t Linear_Frac16_Signed(const Linear_T * p_linear, int32_t x)
 {
-	int32_t frac16 = Linear_Frac16(p_linear, x) / 2;
-
-	if 		(frac16 > 32767)	{frac16 = 32767;}
-	else if (frac16 < -32768) 	{frac16 = -32768;}
-
-	return (int16_t)frac16;
+	return _Linear_SatSigned16(Linear_Frac16(p_linear, x));
 }
 
 static inline int32_t Linear_Frac16_InvSigned(const Linear_T * p_linear, int16_t y_fracSigned16)
 {
 	return Linear_Frac16_Inv(p_linear, y_fracSigned16 * 2);
 }
+
+extern void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef);
 
 #endif

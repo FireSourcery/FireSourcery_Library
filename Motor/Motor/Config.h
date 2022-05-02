@@ -22,47 +22,39 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.h
-    @author FireSoucery
-    @brief  Motor module preprocessor configuration options and defaults
-    @version V0
+	@file 	Config.h
+	@author FireSoucery
+	@brief  Motor module preprocessor configuration options and defaults
+	@version V0
 */
 /******************************************************************************/
 #ifndef CONFIG_MOTOR_H
 #define CONFIG_MOTOR_H
 
-#ifdef CONFIG_MOTOR_I_SENSORS_NONINVERT
-
-#elif defined(CONFIG_MOTOR_I_SENSORS_INVERT)
-
+#ifdef CONFIG_MOTOR_I_SENSORS_NONINVERT 
+#elif defined(CONFIG_MOTOR_I_SENSORS_INVERT) 
 #else
 	#define	CONFIG_MOTOR_I_SENSORS_INVERT
 #endif
 
-#ifdef CONFIG_MOTOR_V_SENSORS_ISOLATED
-
-#elif defined(CONFIG_MOTOR_V_SENSORS_ADC)
-
-#else
-	#define	CONFIG_MOTOR_V_SENSORS_ADC
-#endif
-
-
-#ifdef CONFIG_MOTOR_I_SENSORS_AB
-
-#elif defined(CONFIG_MOTOR_I_SENSORS_ABC)
-
+#ifdef CONFIG_MOTOR_I_SENSORS_AB 
+#elif defined(CONFIG_MOTOR_I_SENSORS_ABC) 
 #else
 	#define	CONFIG_MOTOR_I_SENSORS_ABC
 #endif
 
-#if defined(ADC_VREF_MILLIV) && defined(ADC_MAX) && defined(ADC_BITS)
-
+#ifdef CONFIG_MOTOR_V_SENSORS_ISOLATED 
+#elif defined(CONFIG_MOTOR_V_SENSORS_ADC) 
 #else
-	#define ADC_VREF 		5U
-	#define ADC_MAX 		4096U
-	#define ADC_BITS 		12U
+	#define	CONFIG_MOTOR_V_SENSORS_ADC
 #endif
+ 
+// #if defined(ADC_MAX) && defined(ADC_BITS)
+
+// #else 
+// 	#define ADC_MAX 		4096U
+// 	#define ADC_BITS 		12U
+// #endif
 
 #endif
 

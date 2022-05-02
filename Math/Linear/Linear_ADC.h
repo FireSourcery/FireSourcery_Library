@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Linear_ADC.h
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	Linear_ADC.h
+	@author FireSoucery
+	@brief	Scale ADCU to provided reference value
+	@version V0
 */
 /******************************************************************************/
 #ifndef LINEAR_ADC_H

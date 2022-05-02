@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
-    @author FireSoucery
-    @brief
-    @version V0
+	@file
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef FILTER_H
@@ -33,11 +33,11 @@
 
 #include <stdint.h>
 
-typedef struct
+typedef struct Filter_Tag
 {
-//	uint32_t * p_Buffer;
-//	uint8_t BufferSize;
-//	bool IsBufferFull;
+	// uint32_t * p_Buffer;
+	// uint8_t BufferSize;
+	// bool IsBufferFull;
 	uint16_t Index;
 	int32_t Coeffcient;
 	int32_t Accumulator;

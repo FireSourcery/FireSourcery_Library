@@ -178,7 +178,7 @@ void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALe
 }
 
 
-void Encoder_SetSpeedRef(Encoder_T * p_encoder, uint8_t speedRef)
+void Encoder_SetSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
 {
 	if(speedRef != p_encoder->Params.SpeedRef_Rpm)
 	{
@@ -187,7 +187,7 @@ void Encoder_SetSpeedRef(Encoder_T * p_encoder, uint8_t speedRef)
 	}
 }
 
-void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint8_t countsPerRevolution)
+void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRevolution)
 {
 	if(countsPerRevolution != p_encoder->Params.CountsPerRevolution)
 	{

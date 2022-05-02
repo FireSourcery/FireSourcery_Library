@@ -46,15 +46,15 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 	/*
 	 * Derives 3 magnitudes (duty cycles) belonging to basic unit vectors.
 	 * The other 3 of 6 are inverse of the 3 derived
-	 * Magnitudes are normalized by a factor of âˆš(3)/2, i.e alpha = 1 => A = .866
+	 * Magnitudes are normalized by a factor of sqrt(3)/2, i.e alpha = 1 => A = .866
 	 *
 	 * X = beta;
 	 * Y = (beta + sqrt3 * alpha) / 2;
 	 * Z = (beta - sqrt3 * alpha) / 2;
 	 */
 
-	int32_t betaDiv2 		= qfrac16_mul(beta, QFRAC16_1_DIV_2);
-	int32_t alphaSqrt3Div2 	= qfrac16_mul(alpha, QFRAC16_SQRT3_DIV_2);
+	int32_t betaDiv2 = qfrac16_mul(beta, QFRAC16_1_DIV_2);
+	int32_t alphaSqrt3Div2 = qfrac16_mul(alpha, QFRAC16_SQRT3_DIV_2);
 
 	int32_t magX = beta;
 	int32_t magY = betaDiv2 + alphaSqrt3Div2;
@@ -62,9 +62,9 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 
 	int32_t z0;
 
-	if (magX >= 0)
+	if(magX >= 0)
 	{
-		if (magZ < 0)
+		if(magZ < 0)
 		{
 			/*
 			 * Sector 1: X >= 0 and Z < 0
@@ -89,7 +89,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			*p_dutyB = z0;
 			*p_dutyC = (z0 - magX);
 		}
-		else if (magY >= 0)
+		else if(magY >= 0)
 		{
 			/*
 			 * Sector 2: Y >= 0 and Z >= 0
@@ -135,7 +135,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 	}
 	else
 	{
-		if (magZ >= 0)
+		if(magZ >= 0)
 		{
 			/*
 			 * Sector 4: X < 0 and Z >= 0
@@ -156,7 +156,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 			*p_dutyB = z0;
 			*p_dutyC = (z0 - magX);
 		}
-		else if (magY < 0)
+		else if(magY < 0)
 		{
 			/*
 			 * Sector 5:  Y < 0 and Z < 0

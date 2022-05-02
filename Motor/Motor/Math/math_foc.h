@@ -39,13 +39,6 @@
 	@brief	Transform 3-phase (120 degree) stationary reference frame quantities: Ia, Ib, Ic
 			into 2-axis orthogonal stationary reference frame quantities: Ialpha and Ibeta
 
-	@param[out] p_alpha
-	@param[out] p_beta
-	@param[in] a
-	@param[in] b
-	@param[in] c
-	@return  void
-
 	Ialpha = (2*Ia - Ib - Ic)/3
 	Ibeta = sqrt3/3*(Ib - Ic) = (Ib - Ic)/sqrt3
 
@@ -56,8 +49,14 @@
 	alpha = a;
 	beta = (int32_t)qfrac16_mul(b, QFRAC16_1_DIV_SQRT3) - (int32_t)qfrac16_mul(c, QFRAC16_1_DIV_SQRT3);
 
+	@param[out] p_alpha
+	@param[out] p_beta
+	@param[in] a
+	@param[in] b
+	@param[in] c
+	@return  void
  */
-/******************************************************************************/
+ /******************************************************************************/
 static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b, qfrac16_t c)
 {
 	int32_t alpha = qfrac16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, QFRAC16_1_DIV_3);
@@ -79,7 +78,7 @@ static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t
 	@param[in] Ia
 	@param[in] Ib
 	@return  void
-  */
+*/
 /******************************************************************************/
 static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b)
 {
@@ -96,13 +95,12 @@ static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac1
 	A = alpha;
 	B = (-alpha + sqrt3*beta)/2
 	C = (-alpha - sqrt3*beta)/2
-
- */
+*/
 /******************************************************************************/
 static inline void foc_invclarke(qfrac16_t * p_A, qfrac16_t * p_B, qfrac16_t * p_C, qfrac16_t alpha, qfrac16_t beta)
 {
-	int32_t alphaDiv2 		= 0 - qfrac16_mul(alpha, QFRAC16_1_DIV_2);
-	int32_t betaSqrt3Div2 	= qfrac16_mul(beta, QFRAC16_SQRT3_DIV_2);
+	int32_t alphaDiv2 = 0 - qfrac16_mul(alpha, QFRAC16_1_DIV_2);
+	int32_t betaSqrt3Div2 = qfrac16_mul(beta, QFRAC16_SQRT3_DIV_2);
 
 	int32_t b = alphaDiv2 + betaSqrt3Div2;
 	int32_t c = alphaDiv2 - betaSqrt3Div2;
@@ -126,7 +124,7 @@ static inline void foc_invclarke(qfrac16_t * p_A, qfrac16_t * p_B, qfrac16_t * p
 	@param[in] Ibeta
 	@param[in] theta - rotating frame angle in q1.15 format
 	@return void
-  */
+*/
 /******************************************************************************/
 /* shared sin cos calc */
 static inline void foc_park_vector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t alpha, qfrac16_t beta, qfrac16_t sin, qfrac16_t cos)
@@ -146,19 +144,18 @@ static inline void foc_park(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t alpha, q
 	foc_park_vector(p_d, p_q, alpha, beta, sin, cos);
 }
 
-
 /******************************************************************************/
 /*!
 	@brief  Inverse Park
 
 	alpha = -q*sin(theta) + d*cos(theta)
 	beta = q*cos(theta) + d*sin(theta)
-  */
+*/
 /******************************************************************************/
 static inline void foc_invpark_vector(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t d, qfrac16_t q, qfrac16_t sin, qfrac16_t cos)
 {
-	int32_t alpha 	= (int32_t)qfrac16_mul(d, cos) - (int32_t)qfrac16_mul(q, sin);
-	int32_t beta 	= (int32_t)qfrac16_mul(d, sin) + (int32_t)qfrac16_mul(q, cos);
+	int32_t alpha = (int32_t)qfrac16_mul(d, cos) - (int32_t)qfrac16_mul(q, sin);
+	int32_t beta = (int32_t)qfrac16_mul(d, sin) + (int32_t)qfrac16_mul(q, cos);
 
 	*p_alpha = qfrac16_sat(alpha);
 	*p_beta = qfrac16_sat(beta);
@@ -172,15 +169,15 @@ static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_
 	foc_invpark_vector(p_alpha, p_beta, d, q, sin, cos);
 }
 
-// unitize, q d proportional
+/* unitize, q d proportional */
 static inline void foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax)
 {
-	int32_t vectorMaxSquared =  (int32_t)vectorMax * (int32_t)vectorMax;
-	int32_t dqSquared = ((int32_t)(*p_d)*(int32_t)(*p_d)) + ((int32_t)(*p_q)*(int32_t)(*p_q));
+	int32_t vectorMaxSquared = (int32_t)vectorMax * (int32_t)vectorMax;
+	int32_t dqSquared = ((int32_t)(*p_d) * (int32_t)(*p_d)) + ((int32_t)(*p_q) * (int32_t)(*p_q));
 	qfrac16_t vectorMagnitutde;
 	int32_t ratio;
 
-	if (dqSquared > vectorMaxSquared)
+	if(dqSquared > vectorMaxSquared)
 	{
 		vectorMagnitutde = q_sqrt(dqSquared); // already shifted
 		ratio = qfrac16_div(vectorMax, vectorMagnitutde);
@@ -189,7 +186,7 @@ static inline void foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t v
 	}
 }
 
-// limit, prioritize maintaining d
+/* limit, prioritize maintaining d */
 static inline void foc_circlelimit_dmax(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax, qfrac16_t dMax)
 {
 	int32_t vectorMaxSquared = (int32_t)vectorMax * (int32_t)vectorMax;
@@ -199,12 +196,12 @@ static inline void foc_circlelimit_dmax(qfrac16_t * p_d, qfrac16_t * p_q, qfrac1
 	int32_t qMaxSquared;
 	int32_t qMax;
 
-	if (dqSquared > vectorMaxSquared)
+	if(dqSquared > vectorMaxSquared)
 	{
-		if (qfrac16_abs(*p_d) > dMax)
+		if(qfrac16_abs(*p_d) > dMax)
 		{
 			*p_d = (*p_d < 0) ? 0 - dMax : dMax;
-			qMaxSquared = vectorMaxSquared - (dMax*dMax);
+			qMaxSquared = vectorMaxSquared - (dMax * dMax);
 		}
 		else
 		{

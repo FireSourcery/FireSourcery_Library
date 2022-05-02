@@ -131,19 +131,19 @@ static inline void ProcMotorControllerVoltageMonitor(MotorController_T * p_mc)
 	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VSENSE);
 	AnalogN_Group_ResumeQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
 
-	if(VMonitor_CheckLimits(&p_mc->VMonitorPos, p_mc->AnalogResults.VPos_ADCU) != VMONITOR_LIMITS_OK)
+	if(VMonitor_Check(&p_mc->VMonitorPos, p_mc->AnalogResults.VPos_ADCU) != VMONITOR_STATUS_OK)
 	{
 		p_mc->ErrorFlags.VPosLimit = 1U;
 		isFault = true;
 	}
 
-	if(VMonitor_CheckLimits(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_ADCU) != VMONITOR_LIMITS_OK)
+	if(VMonitor_Check(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_ADCU) != VMONITOR_STATUS_OK)
 	{
 		p_mc->ErrorFlags.VSenseLimit = 1U;
 		isFault = true;
 	}
 
-	if(VMonitor_CheckLimits(&p_mc->VMonitorAcc, p_mc->AnalogResults.VAcc_ADCU) != VMONITOR_LIMITS_OK)
+	if(VMonitor_Check(&p_mc->VMonitorAcc, p_mc->AnalogResults.VAcc_ADCU) != VMONITOR_STATUS_OK)
 	{
 		p_mc->ErrorFlags.VAccLimit = 1U;
 		isFault = true;
