@@ -24,56 +24,56 @@
 /*!
 	@file  	Blinky.h
 	@author FireSourcery
-	@brief 	Pin Indicator
-
+	@brief 	Pin Indicator 
 	@version V0
- */
+*/
 /******************************************************************************/
 #ifndef BLINKY_H
 #define BLINKY_H
 
+#include "Peripheral/Pin/Pin.h"
+#include "Utility/Timer/Timer.h" 
+
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "Peripheral/Pin/Pin.h"
-#include "Utility/Timer/Timer.h"
+// typedef struct
+// {
+// 	void (*Pattern)(void * p_context);
+// 	void * p_Context;
+// } 
+// Blinky_Pattern_T;
 
-
-typedef struct
+typedef struct Blinky_Tag
 {
-	void (*Pattern)(void * p_context);
-	void * p_Context;
-} Blinky_Pattern_T;
-
-typedef struct
-{
-	const Pin_T PIN;
+	Pin_T Pin;
 	Timer_T Timer;
-
-	volatile bool IsOn;
-
-//	Blinky_Pattern_T * p_PatternActive;
-
+	bool IsOn;
 	uint32_t Index;
-	uint32_t Max;
-
+	uint32_t Max; 
 	uint32_t OnTime;
 	uint32_t OffTime;
-//	uint32_t OnTimeActive;
+	void (*PatternFunction)(void * p_this); 
 }
 Blinky_T;
 
-#define BLINKY_CONFIG(p_Pin_Hal, Pin_Id, p_TimerBase, TimerBaseFreq) 	\
-{															\
-	.PIN 	= PIN_CONFIG(p_Pin_Hal, Pin_Id),				\
-	.Timer 	= TIMER_CONFIG(p_TimerBase, TimerBaseFreq)		\
+#define BLINKY_CONFIG(p_PinHal, PinId, p_TimerBase, TimerBaseFreq) 	\
+{																	\
+	.Pin 	= PIN_CONFIG(p_PinHal, PinId),							\
+	.Timer 	= TIMER_CONFIG(p_TimerBase, TimerBaseFreq)				\
 }
 
-extern void Blinky_Init(Blinky_T * p_blinky);
+extern void Blinky_Init(Blinky_T * p_blinky); 
 extern void Blinky_Proc(Blinky_T * p_blinky);
 extern void Blinky_On(Blinky_T * p_blinky);
 extern void Blinky_Off(Blinky_T * p_blinky);
 extern void Blinky_Toggle(Blinky_T * p_blinky);
-extern void Blinky_Blink(Blinky_T * p_blinky, uint32_t duration);
+extern void Blinky_Disable(Blinky_T * p_blinky);
+extern void Blinky_Stop(Blinky_T * p_blinky);
+extern void Blinky_Blink_OnOff(Blinky_T * p_blinky, uint32_t duration);
+extern void Blinky_Blink_Toggle(Blinky_T * p_blinky, uint32_t duration);
+extern void Blinky_Blink(Blinky_T * p_blinky, uint32_t onTime);
+extern void Blinky_BlinkN(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8_t n);
+extern void Blinky_StartPeriodic(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime);
 
 #endif

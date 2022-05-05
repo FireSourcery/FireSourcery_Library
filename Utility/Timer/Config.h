@@ -22,19 +22,17 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.h
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	Config.h
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef CONFIG_TIMER_H
 #define CONFIG_TIMER_H
 
-#ifdef CONFIG_TIMER_OVERFLOW_WRAP
-
-#else
-
+#ifdef CONFIG_TIMER_OVERFLOW_WRAP 
+#else 
 #endif
 
 #endif

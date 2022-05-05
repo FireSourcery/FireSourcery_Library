@@ -44,58 +44,49 @@ typedef const struct
 }
 Serial_Config_T;
 
-/*
- *
- */
 typedef struct
 {
 	const Serial_Config_T CONFIG;
 	Queue_T RxQueue;
 	Queue_T TxQueue;
-//	uin32t_t BaudRate;
-
-//#if defined(CONFIG_SERIAL_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_SERIAL_CRITICAL_USER_DEFINED)
-//	uint8_t TxMutex;
-//	uint8_t RxMutex;
-//#endif
-
-//	volatile bool IsTxBusy;         /*!< True if there is an active transmit. */
-//	volatile bool IsRxBusy;         /*!< True if there is an active receive. */
-//	void (* RxCallback)(void *); 	/*!< Callback on Rx */
-//	void * RxCallbackData; 			/*!< Receive callback parameter pointer.*/
-//	void (* TxCallback)(void *); 	/*!< Callback on Tx */
-//	void * TxCallbackData; 			/*!< Transmit callback parameter pointer.*/
-//  volatile bool RxComplete;
-//  volatile bool TxComplete;
-//  volatile Serial_Status_T TxStatus;		/*!< Status of last driver transmit operation */
-//  volatile Serial_Status_T RxStatus;		/*!< Status of last driver receive operation */
-//  Serial_TransferMode_T TransferMode;		/*!< interrupt/dma mode */
+	//	uin32t_t BaudRate; 
+	//#if defined(CONFIG_SERIAL_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_SERIAL_CRITICAL_USER_DEFINED)
+	//	uint8_t TxMutex;
+	//	uint8_t RxMutex;
+	//#endif 
+	//	void (* RxCallback)(void *); 	/*!< Callback on Rx */
+	//	void * RxCallbackData; 			/*!< Receive callback parameter pointer.*/
+	//	void (* TxCallback)(void *); 	/*!< Callback on Tx */
+	//	void * TxCallbackData; 			/*!< Transmit callback parameter pointer.*/ 
+	//  volatile Serial_Status_T TxStatus;		/*!< Status of last driver transmit operation */
+	//  volatile Serial_Status_T RxStatus;		/*!< Status of last driver receive operation */
+	//  Serial_TransferMode_T TransferMode;		/*!< interrupt/dma mode */
 #if CONFIG_SERIAL_DMA_ENABLE
-    uint8_t RxDMAChannel;                /*!< DMA channel number for DMA-based rx. */
-    uint8_t TxDMAChannel;                /*!< DMA channel number for DMA-based tx. */
+	uint8_t RxDMAChannel;                /*!< DMA channel number for DMA-based rx. */
+	uint8_t TxDMAChannel;                /*!< DMA channel number for DMA-based tx. */
 #endif
 }
 Serial_T;
 
-#define SERIAL_CONFIG(p_Hal, p_TxBuffer, p_RxBuffer, QueueSize)	\
-{																\
-	.CONFIG = {.P_HAL_SERIAL = p_Hal, },						\
-	.RxQueue = QUEUE_CONFIG(p_RxBuffer, QueueSize, 1U, 0U),		\
-	.TxQueue = QUEUE_CONFIG(p_TxBuffer, QueueSize, 1U, 0U),		\
+#define SERIAL_CONFIG(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)	\
+{																	\
+	.CONFIG = {.P_HAL_SERIAL = p_Hal, },							\
+	.TxQueue = QUEUE_CONFIG(p_TxBuffer, TxBufferSize, 1U, 0U),		\
+	.RxQueue = QUEUE_CONFIG(p_RxBuffer, RxBufferSize, 1U, 0U),		\
 }
 
 /*
- * Rx data reg/fifo full ISR, receive from hw to software buffer
- */
+	Rx data reg/fifo full ISR, receive from hw to software buffer
+*/
 static inline void Serial_RxData_ISR(Serial_T * p_serial)
 {
 	uint8_t rxChar;
 
-	while (HAL_Serial_ReadRxFullCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U) //Rx until hw buffer is empty
+	while(HAL_Serial_ReadRxFullCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U) /* Rx until hw buffer is empty */
 	{
-		if (Queue_GetIsFull(&p_serial->RxQueue) == true) //Rx until software buffer is full
+		if(Queue_GetIsFull(&p_serial->RxQueue) == true) /* Rx until software buffer is full */
 		{
-			//if buffer stays full, need to disable irq to prevent blocking lower prio threads. user must restart rx irq
+			/* if buffer stays full, disable irq to prevent blocking lower priority threads. user must restart rx irq */
 			HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 			break;
 		}
@@ -108,16 +99,17 @@ static inline void Serial_RxData_ISR(Serial_T * p_serial)
 }
 
 /*
- * Tx data reg/fifo empty ISR, transmit from software buffer to hw
- */
+	Tx data reg/fifo empty ISR, transmit from software buffer to hw
+	
+	Alternatively, HAL_Serial_ReadTxFullCount < CONFIG_HAL_SERIAL_FIFO_SIZE
+*/
 static inline void Serial_TxData_ISR(Serial_T * p_serial)
 {
 	uint8_t txChar;
 
-	//HAL_Serial_ReadTxFullCount < CONFIG_HAL_SERIAL_FIFO_SIZE
-	while (HAL_Serial_ReadTxEmptyCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U) //Tx until hw buffer is full
+	while(HAL_Serial_ReadTxEmptyCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U) /* Tx until hw buffer is full */
 	{
-		if (Queue_GetIsEmpty(&p_serial->TxQueue) == true)  //Tx until software buffer is empty
+		if(Queue_GetIsEmpty(&p_serial->TxQueue) == true) /* Tx until software buffer is empty */
 		{
 			HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 			break;
@@ -130,6 +122,14 @@ static inline void Serial_TxData_ISR(Serial_T * p_serial)
 	}
 }
 
+static inline void Serial_PollRestartRxIsr(const Serial_T * p_serial)
+{
+	if((HAL_Serial_ReadRxOverrun(p_serial->CONFIG.P_HAL_SERIAL) == true) && (Queue_GetIsFull(&p_serial->RxQueue) == false))
+	{
+		HAL_Serial_ClearRxErrors(p_serial->CONFIG.P_HAL_SERIAL);
+		HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+	}
+}
 
 static inline void Serial_PollRxData(Serial_T * p_serial)
 {
@@ -143,34 +143,24 @@ static inline void Serial_PollTxData(Serial_T * p_serial)
 	HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 	Serial_TxData_ISR(p_serial);
 
-	if (Queue_GetIsEmpty(&p_serial->TxQueue) == false)
+	if(Queue_GetIsEmpty(&p_serial->TxQueue) == false)
 	{
 		HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 	}
-}
+} 
 
-static inline void Serial_PollRestartRxIsr(const Serial_T * p_serial)
+static inline void Serial_FlushBuffers(Serial_T * p_serial)
 {
-	if ((HAL_Serial_ReadRxOverrun(p_serial->CONFIG.P_HAL_SERIAL) == true) && (Queue_GetIsFull(&p_serial->RxQueue) == false))
-	{
-		HAL_Serial_ClearRxErrors(p_serial->CONFIG.P_HAL_SERIAL);
-		HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-	}
+	Queue_Clear(&p_serial->TxQueue);
+	Queue_Clear(&p_serial->RxQueue); 
 }
 
-//static inline void Serial_FlushBuffers(Serial_T * p_serial)
-//{
-//	Queue_Clear(&p_serial->TxQueue);
-//	Queue_Clear(&p_serial->RxQueue);
-//	//todo flush hw buffers
-//}
-
-static inline uint32_t Serial_GetRxFullCount(Serial_T * p_serial)	{return Queue_GetFullCount(&p_serial->RxQueue);}
-static inline uint32_t Serial_GetTxEmptyCount(Serial_T * p_serial)	{return Queue_GetEmptyCount(&p_serial->TxQueue);}
-static inline void Serial_EnableTxIsr(const Serial_T * p_serial)	{HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);}
-static inline void Serial_DisableTxIsr(const Serial_T * p_serial)	{HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);}
-static inline void Serial_EnableRx(const Serial_T * p_serial)		{HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);}
-static inline void Serial_DisableRx(const Serial_T * p_serial)		{HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);}
+static inline uint32_t Serial_GetRxFullCount(Serial_T * p_serial) 	{ return Queue_GetFullCount(&p_serial->RxQueue); }
+static inline uint32_t Serial_GetTxEmptyCount(Serial_T * p_serial) 	{ return Queue_GetEmptyCount(&p_serial->TxQueue); }
+static inline void Serial_EnableTxIsr(const Serial_T * p_serial) 	{ HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+static inline void Serial_DisableTxIsr(const Serial_T * p_serial) 	{ HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+static inline void Serial_EnableRx(const Serial_T * p_serial) 		{ HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+static inline void Serial_DisableRx(const Serial_T * p_serial) 		{ HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
 
 extern bool Serial_SendChar(Serial_T * p_serial, uint8_t txChar);
 extern bool Serial_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar);
@@ -182,5 +172,8 @@ extern bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t
 extern uint32_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
 extern void Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate);
 extern void Serial_Init(Serial_T * p_serial);
+
+extern uint8_t * Serial_AcquireTxBuffer(Serial_T * p_serial);
+extern void Serial_ReleaseTxBuffer(Serial_T * p_serial, size_t writeSize);
 
 #endif

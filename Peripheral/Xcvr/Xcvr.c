@@ -30,28 +30,22 @@
 /******************************************************************************/
 #include "Xcvr.h"
 
+/*
+	Abtraction layer runtime interface. User init outside
+*/
 void Xcvr_Init(Xcvr_T * p_xcvr, uint8_t xcvrIndex)
 {
 	if(Xcvr_SetXcvr(p_xcvr, xcvrIndex) != true)
 	{
 		Xcvr_SetXcvr(p_xcvr, 0U);
 	}
-
-//	switch(p_xcvr->Type)
-//	{
-//		case XCVR_TYPE_SERIAL:	Serial_Init(p_xcvr->p_Xcvr);	break;
-//		case XCVR_TYPE_I2C: 		break;
-//		case XCVR_TYPE_SPI: 		break;
-//		case XCVR_TYPE_VIRTUAL: 	break;
-//		default: break;
-//	}
 }
 
 bool Xcvr_SetXcvr(Xcvr_T * p_xcvr, uint8_t xcvrIndex)
 {
 	bool status;
 
-	if (xcvrIndex < p_xcvr->CONFIG.XCVR_COUNT)
+	if(xcvrIndex < p_xcvr->CONFIG.XCVR_COUNT)
 	{
 		p_xcvr->p_Xcvr = p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].P_XCVR;
 		p_xcvr->Type = p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].TYPE;
@@ -69,11 +63,11 @@ bool Xcvr_SetXcvr_Ptr(Xcvr_T * p_xcvr, void * p_xcvrStruct)
 {
 	bool status;
 
-//	if(Xcvr_CheckValid(p_xcvr, *p_xcvrStruct) != 0xFF) //return id
-//	{
-//		p_xcvr->p_Xcvr = p_xcvrStruct;
-//		p_xcvr->Type = p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].TYPE;
-//	}
+	//	if(Xcvr_CheckValid(p_xcvr, *p_xcvrStruct) != 0xFF) //return id
+	//	{
+	//		p_xcvr->p_Xcvr = p_xcvrStruct;
+	//		p_xcvr->Type = p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].TYPE;
+	//	}
 
 	return status;
 }
@@ -87,9 +81,9 @@ bool Xcvr_CheckValid(const Xcvr_T * p_xcvr, void * p_target)
 {
 	bool isValid = false;
 
-	for (uint8_t iXcvr = 0; iXcvr < p_xcvr->CONFIG.XCVR_COUNT; iXcvr++)
+	for(uint8_t iXcvr = 0; iXcvr < p_xcvr->CONFIG.XCVR_COUNT; iXcvr++)
 	{
-		if (p_target == p_xcvr->CONFIG.P_XCVR_TABLE[iXcvr].P_XCVR)
+		if(p_target == p_xcvr->CONFIG.P_XCVR_TABLE[iXcvr].P_XCVR)
 		{
 			isValid = true;
 			break;
@@ -176,3 +170,30 @@ uint32_t Xcvr_GetTxEmptyCount(const Xcvr_T * p_xcvr)
 }
 
 
+uint8_t * Xcvr_AcquireTxBuffer(const Xcvr_T * p_xcvr)
+{
+	uint8_t * p_buffer;
+
+	switch(p_xcvr->Type)
+	{
+		case XCVR_TYPE_SERIAL: 		p_buffer = Serial_AcquireTxBuffer(p_xcvr->p_Xcvr); break;
+		case XCVR_TYPE_I2C: 		break;
+		case XCVR_TYPE_SPI: 		break;
+		case XCVR_TYPE_VIRTUAL: 	break;
+		default: break;
+	}
+
+	return p_buffer;
+}
+
+void Xcvr_ReleaseTxBuffer(const Xcvr_T * p_xcvr, size_t writeSize)
+{
+	switch(p_xcvr->Type)
+	{
+		case XCVR_TYPE_SERIAL: 		Serial_ReleaseTxBuffer(p_xcvr->p_Xcvr, writeSize); break;
+		case XCVR_TYPE_I2C: 		break;
+		case XCVR_TYPE_SPI: 		break;
+		case XCVR_TYPE_VIRTUAL: 	break;
+		default: break;
+	}
+}

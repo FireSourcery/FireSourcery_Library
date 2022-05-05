@@ -29,55 +29,62 @@
 */
 /******************************************************************************/
 #include "Queue.h"
-#include "Config.h"
 
 #if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED)
-	#include "System/Critical/Critical.h"
+#include "System/Critical/Critical.h"
 #elif defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
-	extern inline void Critical_Enter();
-	extern inline void Critical_Exit();
-	extern inline void Critical_AquireMutex(void * p_mutex);
-	extern inline void Critical_AquireMutex(void * p_mutex);
+extern inline void Critical_Enter();
+extern inline void Critical_Exit();
+extern inline void Critical_AcquireEnter(void * p_mutex);
+extern inline void Critical_ReleaseExit(void * p_mutex);
 #endif
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <string.h>
 
 /******************************************************************************/
 /*!
- * Private
- */
+	Private
+*/
+/******************************************************************************/
+
+/******************************************************************************/
+/*!
+	Critical handled by module. set if not handled by outer module
+*/
 /******************************************************************************/
 static inline void EnterCritical(void)
 {
 #if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
-	if (p_queue.CONFIG.USE_CRITICAL == true) { Critical_Enter(); }
+	if(p_queue.CONFIG.USE_CRITICAL == true) { Critical_Enter(); }
 #endif
 }
 
 static inline void ExitCritical(void)
 {
 #if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
-	if (p_queue.CONFIG.USE_CRITICAL == true) { Critical_Exit(); }
+	if(p_queue.CONFIG.USE_CRITICAL == true) { Critical_Exit(); }
 #endif
 }
 
-static inline bool AquireCritical(Queue_T * p_queue)
+static inline bool AcquireCritical(Queue_T * p_queue)
 {
 #if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
-		return (p_queue.CONFIG.USE_CRITICAL == true) ? Critical_Enter_Common(&p_queue->Mutex) : true;
+	return (p_queue.CONFIG.USE_CRITICAL == true) ? Critical_AcquireEnter(&p_queue->Mutex) : true;
 #else
-		return true;
+	return true;
 #endif
 }
 
 static inline void ReleaseCritical(Queue_T * p_queue)
 {
 #if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
-		if (p_queue.CONFIG.USE_CRITICAL == true) { Critical_Exit_Common(&p_queue->Mutex) };
+	if(p_queue.CONFIG.USE_CRITICAL == true) { Critical_ReleaseExit(&p_queue->Mutex) };
 #endif
 }
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 
 static inline size_t CalcIndexWrap(Queue_T * p_queue, size_t index)
 {
@@ -93,29 +100,30 @@ static inline size_t CalcBufferOffset(Queue_T * p_queue, size_t index)
 	return CalcIndexWrap(p_queue, index) * p_queue->CONFIG.UNIT_SIZE;
 }
 
-static inline void * GetPtrFront(Queue_T * p_queue)								{return ((uint8_t *)p_queue->CONFIG.P_BUFFER + CalcBufferOffset(p_queue, p_queue->Tail));}
-static inline void * GetPtrBack(Queue_T * p_queue)								{return ((uint8_t *)p_queue->CONFIG.P_BUFFER + CalcBufferOffset(p_queue, p_queue->Head));}
-static inline void * GetPtrIndex(Queue_T * p_queue, size_t index)				{return ((uint8_t *)p_queue->CONFIG.P_BUFFER + CalcBufferOffset(p_queue, p_queue->Tail + index));}
-static inline void PeekFront(Queue_T * p_queue, void * p_dest)					{memcpy(p_dest, GetPtrFront(p_queue), p_queue->CONFIG.UNIT_SIZE);}
-static inline void PeekBack(Queue_T * p_queue, void * p_dest)					{memcpy(p_dest, GetPtrBack(p_queue), p_queue->CONFIG.UNIT_SIZE);}
-static inline void PeekIndex(Queue_T * p_queue, void * p_dest, size_t index)	{memcpy(p_dest, GetPtrIndex(p_queue, index), p_queue->CONFIG.UNIT_SIZE);}
-static inline void PlaceFront(Queue_T * p_queue, const void * p_unit)			{memcpy(GetPtrFront(p_queue), p_unit, p_queue->CONFIG.UNIT_SIZE);}
-static inline void PlaceBack(Queue_T * p_queue, const void * p_unit)			{memcpy(GetPtrBack(p_queue), p_unit, p_queue->CONFIG.UNIT_SIZE);} //do compare switch(size) functions
-static inline void RemoveFront(Queue_T * p_queue, size_t nUnits)				{p_queue->Tail = CalcQueueIndexInc(p_queue, p_queue->Tail, nUnits);}
-static inline void RemoveBack(Queue_T * p_queue, size_t nUnits)					{p_queue->Head = CalcQueueIndexDec(p_queue, p_queue->Head, nUnits);}
-static inline void AddFront(Queue_T * p_queue, size_t nUnits)					{p_queue->Tail = CalcQueueIndexDec(p_queue, p_queue->Tail, nUnits);}
-static inline void AddBack(Queue_T * p_queue, size_t nUnits)					{p_queue->Head = CalcQueueIndexInc(p_queue, p_queue->Head, nUnits);}
-static inline void Enqueue(Queue_T * p_queue, const void * p_unit)				{PlaceBack(p_queue, p_unit); AddBack(p_queue, 1U);}
-static inline void Dequeue(Queue_T * p_queue, void * p_dest)					{PeekFront(p_queue, p_dest); RemoveFront(p_queue, 1U);}
-static inline void PushFront(Queue_T * p_queue, const void * p_unit) 			{AddFront(p_queue, 1U); PlaceFront(p_queue, p_unit);}
-static inline void PopBack(Queue_T * p_queue, void * p_dest)					{RemoveBack(p_queue, 1U); PeekBack(p_queue, p_dest);}
-static inline void * SeekPtr(Queue_T * p_queue, size_t index) 					{RemoveFront(p_queue, index); return GetPtrFront(p_queue);}
-static inline void Seek(Queue_T * p_queue, void * p_dest, size_t index)			{RemoveFront(p_queue, index); PeekFront(p_queue, p_dest);}
+static inline void * GetPtrFront(Queue_T * p_queue) 							{ return ((uint8_t *)p_queue->CONFIG.P_BUFFER + CalcBufferOffset(p_queue, p_queue->Tail)); }
+static inline void * GetPtrBack(Queue_T * p_queue) 								{ return ((uint8_t *)p_queue->CONFIG.P_BUFFER + CalcBufferOffset(p_queue, p_queue->Head)); }
+static inline void * GetPtrIndex(Queue_T * p_queue, size_t index) 				{ return ((uint8_t *)p_queue->CONFIG.P_BUFFER + CalcBufferOffset(p_queue, p_queue->Tail + index)); }
+static inline void PeekFront(Queue_T * p_queue, void * p_dest) 					{ memcpy(p_dest, GetPtrFront(p_queue), p_queue->CONFIG.UNIT_SIZE); }
+static inline void PeekBack(Queue_T * p_queue, void * p_dest) 					{ memcpy(p_dest, GetPtrBack(p_queue), p_queue->CONFIG.UNIT_SIZE); }
+static inline void PeekIndex(Queue_T * p_queue, void * p_dest, size_t index) 	{ memcpy(p_dest, GetPtrIndex(p_queue, index), p_queue->CONFIG.UNIT_SIZE); }
+static inline void PlaceFront(Queue_T * p_queue, const void * p_unit) 			{ memcpy(GetPtrFront(p_queue), p_unit, p_queue->CONFIG.UNIT_SIZE); }
+static inline void PlaceBack(Queue_T * p_queue, const void * p_unit) 			{ memcpy(GetPtrBack(p_queue), p_unit, p_queue->CONFIG.UNIT_SIZE); } 
+//todo compare switch(size) functions
+static inline void RemoveFront(Queue_T * p_queue, size_t nUnits) 				{ p_queue->Tail = CalcQueueIndexInc(p_queue, p_queue->Tail, nUnits); }
+static inline void RemoveBack(Queue_T * p_queue, size_t nUnits) 				{ p_queue->Head = CalcQueueIndexDec(p_queue, p_queue->Head, nUnits); }
+static inline void AddFront(Queue_T * p_queue, size_t nUnits) 					{ p_queue->Tail = CalcQueueIndexDec(p_queue, p_queue->Tail, nUnits); }
+static inline void AddBack(Queue_T * p_queue, size_t nUnits) 					{ p_queue->Head = CalcQueueIndexInc(p_queue, p_queue->Head, nUnits); }
+static inline void Enqueue(Queue_T * p_queue, const void * p_unit) 				{ PlaceBack(p_queue, p_unit); AddBack(p_queue, 1U); }
+static inline void Dequeue(Queue_T * p_queue, void * p_dest) 					{ PeekFront(p_queue, p_dest); RemoveFront(p_queue, 1U); }
+static inline void PushFront(Queue_T * p_queue, const void * p_unit) 			{ AddFront(p_queue, 1U); PlaceFront(p_queue, p_unit); }
+static inline void PopBack(Queue_T * p_queue, void * p_dest) 					{ RemoveBack(p_queue, 1U); PeekBack(p_queue, p_dest); }
+static inline void * SeekPtr(Queue_T * p_queue, size_t index) 					{ RemoveFront(p_queue, index); return GetPtrFront(p_queue); }
+static inline void Seek(Queue_T * p_queue, void * p_dest, size_t index) 		{ RemoveFront(p_queue, index); PeekFront(p_queue, p_dest); }
 
 /******************************************************************************/
 /*!
- * Public
- */
+	Public
+*/
 /******************************************************************************/
 void Queue_Init(Queue_T * p_queue)
 {
@@ -128,11 +136,11 @@ Queue_T * Queue_New(size_t unitCount, size_t unitSize)
 	Queue_T * p_queue = malloc(sizeof(Queue_T));
 	void * p_buffer = malloc(unitCount * unitSize);
 
-	if (p_queue != 0U && p_buffer != 0U)
+	if(p_queue != 0U && p_buffer != 0U)
 	{
-		*(void *)&p_queue->CONFIG.P_BUFFER 		= p_buffer;
-		*(size_t)&p_queue->CONFIG.LENGTH 		= unitCount;
-		*(size_t)&p_queue->CONFIG.UNIT_SIZE 	= unitSize;
+		*(void *)&p_queue->CONFIG.P_BUFFER = p_buffer;
+		*(size_t)&p_queue->CONFIG.LENGTH = unitCount;
+		*(size_t)&p_queue->CONFIG.UNIT_SIZE = unitSize;
 
 		Queue_Init(p_queue);
 	}
@@ -151,7 +159,7 @@ bool Queue_Enqueue(Queue_T * p_queue, const void * p_unit)
 {
 	bool isSuccess = false;
 	EnterCritical();
-	if (Queue_GetIsFull(p_queue) == false) //ideally compiler stores value from inline function
+	if(Queue_GetIsFull(p_queue) == false) //ideally compiler stores value from inline function
 	{
 		Enqueue(p_queue, p_unit);
 		isSuccess = true;
@@ -164,7 +172,7 @@ bool Queue_Dequeue(Queue_T * p_queue, void * p_dest)
 {
 	bool isSuccess = false;
 	EnterCritical();
-	if (Queue_GetIsEmpty(p_queue) == false)
+	if(Queue_GetIsEmpty(p_queue) == false)
 	{
 		Dequeue(p_queue, p_dest);
 		isSuccess = true;
@@ -178,7 +186,7 @@ bool Queue_EnqueueN(Queue_T * p_queue, const void * p_units, size_t nUnits)
 	bool isSuccess = false;
 
 	EnterCritical();
-	if (nUnits <= Queue_GetEmptyCount(p_queue))
+	if(nUnits <= Queue_GetEmptyCount(p_queue))
 	{
 		for(size_t iUnit = 0U; iUnit < nUnits; iUnit++)
 		{
@@ -358,8 +366,30 @@ bool Queue_Seek(Queue_T * p_queue, void * p_dest, size_t index)
 /*
 	single threaded use only, buffer may be overwritten
 	result in return value, pointer 0 indicate invalid
- */
-void * Queue_PeekPtrFront(Queue_T * p_queue) 				{return (Queue_GetIsEmpty(p_queue) == false) ? GetPtrFront(p_queue) : 0U;}
-void * Queue_PeekPtrBack(Queue_T * p_queue)					{return (Queue_GetIsEmpty(p_queue) == false) ? GetPtrBack(p_queue) : 0U;}
-void * Queue_PeekPtrIndex(Queue_T * p_queue, size_t index)	{return (index < Queue_GetFullCount(p_queue)) ? GetPtrIndex(p_queue, index) : 0U;}
-void * Queue_SeekPtr(Queue_T * p_queue, size_t index) 		{return (index < Queue_GetFullCount(p_queue)) ? SeekPtr(p_queue, index) : 0U;}
+*/
+void * Queue_PeekPtrFront(Queue_T * p_queue) 				{ return (Queue_GetIsEmpty(p_queue) == false) ? GetPtrFront(p_queue) : 0U; }
+void * Queue_PeekPtrBack(Queue_T * p_queue) 				{ return (Queue_GetIsEmpty(p_queue) == false) ? GetPtrBack(p_queue) : 0U; }
+void * Queue_PeekPtrIndex(Queue_T * p_queue, size_t index) 	{ return (index < Queue_GetFullCount(p_queue)) ? GetPtrIndex(p_queue, index) : 0U; }
+void * Queue_SeekPtr(Queue_T * p_queue, size_t index) 		{ return (index < Queue_GetFullCount(p_queue)) ? SeekPtr(p_queue, index) : 0U; }
+
+/*
+	Give caller exclusive buffer write. Will flush buffer to start from index 0
+*/
+uint8_t * Queue_AcquireBuffer(Queue_T * p_queue)
+{
+	uint8_t * p_buffer = 0U;
+
+	if(AcquireCritical(p_queue) == true)
+	{
+		Queue_Clear(p_queue);
+		p_buffer = p_queue->CONFIG.P_BUFFER;
+	}
+
+	return p_buffer;
+}
+
+void Queue_ReleaseBuffer(Queue_T * p_queue, size_t writeSize)
+{
+	p_queue->Head = writeSize;
+	ReleaseCritical(p_queue);
+}

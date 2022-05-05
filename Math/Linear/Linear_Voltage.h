@@ -67,34 +67,12 @@ static inline int32_t Linear_Voltage_CalcV(const Linear_T * p_linear, uint16_t a
 
 static inline int32_t Linear_Voltage_CalcMilliV(const Linear_T * p_linear, uint16_t adcu)
 {
-	return Linear_Function_Scalar(p_linear, adcu, 1000U);
-
-	// int32_t factor = adcu * p_linear->Slope;
-	// int32_t milliV;
-
-	// if(factor < INT32_MAX / 1000UL)
-	// {
-	// 	milliV = Linear_Function(p_linear, (uint32_t)adcu * 1000UL);
-	// }
-	// else if(factor < INT32_MAX / 100UL)
-	// {
-	// 	milliV = Linear_Function(p_linear, (uint32_t)adcu * 100UL) * 10U;
-	// }
-	// else if(factor < INT32_MAX / 10UL)
-	// {
-	// 	milliV = Linear_Function(p_linear, (uint32_t)adcu * 10UL) * 100U;
-	// }
-	// else
-	// {
-	// 	milliV = Linear_Function(p_linear, (uint32_t)adcu) * 1000U;
-	// }
-
-	// return milliV;
+	return Linear_Function_Scalar(p_linear, adcu, 1000U); 
 }
  
 static inline int32_t Linear_Voltage_CalcScalarV(const Linear_T * p_linear, uint16_t adcu, uint16_t scalar)
 {
-	return Linear_Function(p_linear, (uint32_t)adcu * scalar);
+	return Linear_Function_Scalar(p_linear, adcu, scalar);
 }
 
 /******************************************************************************/
@@ -145,6 +123,12 @@ static inline uint16_t Linear_Voltage_CalcAdcu_MilliV(const Linear_T * p_linear,
 {
 	return (uint16_t)(Linear_InvFunction(p_linear, milliV) / 1000U);
 }
+
+static inline uint16_t Linear_Voltage_CalcAdcu_ScalarV(const Linear_T * p_linear, uint16_t scalarV, uint16_t scalar)
+{
+	// return (uint16_t)Linear_InvFunction_Scalar(p_linear, scalarV, scalar);
+}
+
 
 static inline uint16_t Linear_Voltage_CalcAdcu_Fraction16(const Linear_T * p_linear, int32_t fract16)
 {

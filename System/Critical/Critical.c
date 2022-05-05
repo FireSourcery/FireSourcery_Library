@@ -22,16 +22,13 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Critical.h
-    @author FireSoucery
-    @brief  Implements Critical Section
-    @version V0
+	@file 	Critical.h
+	@author FireSoucery
+	@brief  Implements Critical Section
+	@version V0
 */
 /******************************************************************************/
-#include "Config.h"
+#include "Critical.h"
 
-#include <stdint.h>
-#include <stdbool.h>
-
-int32_t g_InterruptDisableCount = 0U;
-uint32_t g_RegPrimask;
+int32_t _Critical_InterruptDisableCount = 0U;
+uint32_t _Critical_RegPrimask;

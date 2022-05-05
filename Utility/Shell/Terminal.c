@@ -27,23 +27,9 @@
 	@brief	Serial text support functions for terminal ui
 	@version V0
  */
-/******************************************************************************/
+ /******************************************************************************/
 #include "Terminal.h"
-
-#include "Peripheral/Serial/Serial.h"
-
-#include <stdio.h>
-
-
-//
-//static inline bool IsXcvrSet(Terminal_T * p_terminal)
-//{
-//#ifdef CONFIG_SHELL_XCVR_ENABLE
-//	return (p_terminal->Xcvr.p_Xcvr != 0U); //todo sub Xcvr.p_Xcvr
-//#elif defined(CONFIG_SHELL_XCVR_SERIAL)
-
-//#endif
-//}
+#include <stdio.h> 
 
 void Terminal_Init(Terminal_T * p_terminal)
 {
@@ -58,120 +44,67 @@ void Terminal_SetXcvr(Terminal_T * p_terminal, uint8_t xcvrID)
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
 void Terminal_SetSerial(Terminal_T * p_terminal, void * p_serial)
 {
-	if(p_terminal->p_Serial != 0U)
-	{
-		p_terminal->p_Serial = p_serial;
-	}
+	if(p_terminal->p_Serial != 0U) { p_terminal->p_Serial = p_serial; }
 }
 #endif
 
 void Terminal_ConfigBaudRate(const Terminal_T * p_terminal, uint32_t baudRate)
 {
-	if (baudRate != 0U)
+	if(baudRate != 0U)
 	{
 #ifdef CONFIG_SHELL_XCVR_ENABLE
 		//if (Xcvr_CheckValid(&p_terminal->Xcvr){}
 		Xcvr_ConfigBaudRate(&p_terminal->Xcvr, baudRate);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-		if(p_terminal->p_Serial != 0U)
-		{
-		Serial_ConfigBaudRate(p_terminal->p_Serial, baudRate);
-		}
+		if(p_terminal->p_Serial != 0U) { Serial_ConfigBaudRate(p_terminal->p_Serial, baudRate); }
 #endif
 	}
 }
 
-char Terminal_RecvChar(const Terminal_T * p_terminal)
-{
-	uint8_t rxChar = 0U;
-#ifdef CONFIG_SHELL_XCVR_ENABLE
-	Xcvr_Rx(&p_terminal->Xcvr, &rxChar, 1U);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_RecvChar(p_terminal->p_Serial, &rxChar);
-#endif
-	return rxChar;
-}
-
-void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
-{
-#ifdef CONFIG_SHELL_XCVR_ENABLE
-	Xcvr_Tx(&p_terminal->Xcvr, &txChar, 1U);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_SendChar(p_terminal->p_Serial, txChar);
-#endif
-}
-
-void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str)
-{
-#ifdef CONFIG_SHELL_XCVR_ENABLE
-	Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, strlen(p_str));
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_SendString(p_terminal->p_Serial, (const uint8_t *)p_str, strlen(p_str));
-#endif
-}
-
-void Terminal_SendString_Prefixed(const Terminal_T * p_terminal, const char * p_str, uint8_t length)
-{
-#ifdef CONFIG_SHELL_XCVR_ENABLE
-	Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, length);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_SendString(p_terminal->p_Serial, (const uint8_t *)p_str, length);
-#endif
-}
-
-bool Terminal_GetIsKeyPressed(const Terminal_T * p_terminal)
-{
-#ifdef CONFIG_SHELL_XCVR_ENABLE
-	return ((Xcvr_GetRxFullCount(&p_terminal->Xcvr) == 0U) ? false : true);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	return ((Serial_GetRxFullCount(p_terminal->p_Serial) == 0U) ? false : true);
-#endif
-}
-
 /*
- * Build Cmdline
- */
+	Build Cmdline, handle user IO
+*/
 bool Terminal_ProcCmdline(Terminal_T * p_terminal) //read from terminal
 {
 	bool isComplete = false;
 	char cmdChar;
 
-	if (Terminal_GetIsKeyPressed(p_terminal))
+	if(Terminal_GetIsKeyPressed(p_terminal))
 	{
 		cmdChar = Terminal_RecvChar(p_terminal);
 
-		if ((cmdChar > 31U && cmdChar < 127U) && (p_terminal->CursorIndex < CMDLINE_CHAR_MAX - 2U)) /* printable char */
+		if((cmdChar > 31U && cmdChar < 127U) && (p_terminal->CursorIndex < CMDLINE_CHAR_MAX - 2U)) /* printable char */
 		{
 			Terminal_SendChar(p_terminal, cmdChar);
 			p_terminal->Cmdline[p_terminal->CursorIndex] = cmdChar;
 			p_terminal->CursorIndex++;
 		}
-		else if ((cmdChar == '\b' || cmdChar == KEY_DEL) && (p_terminal->CursorIndex > 0U)) /* backspace key */  //ch == '^H' || ch == '^?'
+		else if((cmdChar == '\b' || cmdChar == KEY_DEL) && (p_terminal->CursorIndex > 0U)) /* backspace key */  //ch == '^H' || ch == '^?'
 		{
 			Terminal_SendString(p_terminal, "\b \b");
 			p_terminal->CursorIndex--;
 		}
-		else if (cmdChar == '\n' || cmdChar == '\r')
+		else if(cmdChar == '\n' || cmdChar == '\r')
 		{
 			Terminal_SendString(p_terminal, "\r\n");
 			p_terminal->Cmdline[p_terminal->CursorIndex] = '\0';
 			p_terminal->CursorIndex = 0U;
 			isComplete = true;
 		}
-//#ifdef CONFIG_SHELL_ARROW_KEYS_ENABLE
-//		else if (cmdChar == '\e')
-//		{
-//			cmdChar =  Terminal_RecvChar(p_terminal);
-//			if (cmdChar == '[')
-//			{
-//				cmdChar = Terminal_RecvChar(p_terminal);
-//			}
-//		}
-//#endif
-//		else if(cmdChar == '/0' || cmdChar == 0xFF)
-//		{
-//			Terminal_SendString(p_terminal, "\a");
-//		}
+		//#ifdef CONFIG_SHELL_ARROW_KEYS_ENABLE
+		//		else if (cmdChar == '\e')
+		//		{
+		//			cmdChar =  Terminal_RecvChar(p_terminal);
+		//			if (cmdChar == '[')
+		//			{
+		//				cmdChar = Terminal_RecvChar(p_terminal);
+		//			}
+		//		}
+		//#endif
+		//		else if(cmdChar == '/0' || cmdChar == 0xFF)
+		//		{
+		//			Terminal_SendString(p_terminal, "\a");
+		//		}
 		else
 		{
 			Terminal_SendString(p_terminal, "\a"); //beep
@@ -183,23 +116,23 @@ bool Terminal_ProcCmdline(Terminal_T * p_terminal) //read from terminal
 
 Terminal_Status_T Terminal_ParseCmdline(Terminal_T * p_terminal)
 {
-    char * p_cmdline = &p_terminal->Cmdline[0U];
-    uint8_t argc = 0U;
+	char * p_cmdline = &p_terminal->Cmdline[0U];
+	uint8_t argc = 0U;
 	bool isDelimiter = true; /* at least one delimiter is encountered, can accept next char as argV */
 	Terminal_Status_T status = TERMINAL_SUCCESS;
 
-	for (uint8_t iChar = 0U; iChar < CMDLINE_CHAR_MAX; iChar++)
+	for(uint8_t iChar = 0U; iChar < CMDLINE_CHAR_MAX; iChar++)
 	{
-		if (p_cmdline[iChar] != '\0')
+		if(p_cmdline[iChar] != '\0')
 		{
-			if (p_cmdline[iChar] == ' ')
+			if(p_cmdline[iChar] == ' ')
 			{
 				p_cmdline[iChar] = '\0';
 				isDelimiter = true;
 			}
-			else if (isDelimiter)
+			else if(isDelimiter)
 			{
-				if (argc < CMDLINE_ARG_MAX)
+				if(argc < CMDLINE_ARG_MAX)
 				{
 					p_terminal->ArgV[argc] = &p_cmdline[iChar];
 					isDelimiter = false;

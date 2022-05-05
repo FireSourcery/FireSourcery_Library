@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Hall.c
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	Hall.c
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #include "Hall.h"
@@ -34,15 +34,15 @@
 
 /*
 
- */
+*/
 void Hall_Init(Hall_T * p_hall)
 {
-	Pin_Input_Init(&p_hall->CONFIG.PIN_A);
-	Pin_Input_Init(&p_hall->CONFIG.PIN_B);
-	Pin_Input_Init(&p_hall->CONFIG.PIN_C);
+	Pin_Input_Init(&p_hall->PinA);
+	Pin_Input_Init(&p_hall->PinB);
+	Pin_Input_Init(&p_hall->PinC);
 	p_hall->Direction = HALL_DIRECTION_CCW;
 
-	if (p_hall->CONFIG.P_PARAMS_NVM != 0U)
+	if(p_hall->CONFIG.P_PARAMS_NVM != 0U)
 	{
 		memcpy(&p_hall->Params.SensorsTable[0U], &p_hall->CONFIG.P_PARAMS_NVM->SensorsTable[0U], sizeof(Hall_Params_T));
 	}
@@ -85,9 +85,9 @@ void Hall_MapSensorsTable
 }
 
 /*
- * For case where sensors are aligned to motor phase, 0 degree offset.
- * i.e Motor Phase A measure in between a hall state and not on a transition boundary.
- */
+	Sensors are aligned to motor phase, 0 degree offset.
+	i.e Motor Phase A measure in between a hall state and not on a transition boundary.
+*/
 void Hall_CalibratePhaseA(Hall_T * p_hall)
 {
 	p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_A;

@@ -22,14 +22,13 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Critical.h
-    @author FireSoucery
-    @brief  Implements Critical Section
-    @version V0
+	@file 	Critical.h
+	@author FireSoucery
+	@brief  Implements Critical Section
+	@version V0
 */
 /******************************************************************************/
-#ifndef CRITICAL_H
-
+#ifndef CRITICAL_H 
 #define CRITICAL_H
 
 #include "Config.h"
@@ -38,9 +37,9 @@
 #include <stdbool.h>
 
 /*
- * Implement per submodule HAL for now
- * 	or implement in parent HAL and include
- */
+	Implement per submodule HAL for now
+	or implement in parent HAL and include
+*/
 #ifdef CONFIG_SYSTEM_MCU_ARM
 	#include "External/CMSIS/Core/Include/cmsis_compiler.h"
 	#if defined (__GNUC__)
@@ -52,59 +51,61 @@
 	#endif
 #elif defined(CONFIG_CRITICAL_USER_DEFINED)
 /*
- * user provider
- * #define DISABLE_INTERRUPTS() {...}
- * #define ENABLE_INTERRUPTS() {...}
- */
+	user provider
+	#define DISABLE_INTERRUPTS() {...}
+	#define ENABLE_INTERRUPTS() {...}
+*/
 #elif defined(CONFIG_CRITICAL_DISABLED)
 	#define CRITICAL_DISABLE_INTERRUPTS() {}
 	#define CRITICAL_ENABLE_INTERRUPTS() {}
 #endif
 
-extern int32_t g_InterruptDisableCount;
-extern uint32_t g_RegPrimask;
+extern int32_t _Critical_InterruptDisableCount;
+extern uint32_t _Critical_RegPrimask;
 
 static inline void Critical_DisableIrq(void)
 {
 	CRITICAL_DISABLE_INTERRUPTS();
-	g_InterruptDisableCount++;
+	_Critical_InterruptDisableCount++;
 }
 
 static inline void Critical_EnableIrq(void)
 {
-	if (g_InterruptDisableCount > 0U)
+	if(_Critical_InterruptDisableCount > 0U)
 	{
-		g_InterruptDisableCount--;
-		if (g_InterruptDisableCount <= 0U)
+		_Critical_InterruptDisableCount--;
+		if(_Critical_InterruptDisableCount <= 0U)
 		{
 			CRITICAL_ENABLE_INTERRUPTS();
 		}
 	}
 }
 
+/*
+	No critical within critical
+*/
 static inline void Critical_Enter(void)
 {
-	g_RegPrimask = __get_PRIMASK();
+	_Critical_RegPrimask = __get_PRIMASK();
 	CRITICAL_DISABLE_INTERRUPTS();
 }
 
 static inline void Critical_Exit(void)
 {
-	__set_PRIMASK(g_RegPrimask);
+	__set_PRIMASK(_Critical_RegPrimask);
 }
 
-
 /*
- * Non blocking mutex. must check if process completed
- */
+	Non blocking mutex. must check if process completed
+*/
 typedef volatile uint8_t critical_mutex_t;
 
-static inline bool Critical_MutexAquire(critical_mutex_t * p_mutex)
+static inline bool Critical_Mutex_Aquire(critical_mutex_t * p_mutex)
 {
 	bool status = false;
 
 	Critical_Enter();
-	if (*p_mutex == 1U)
+	if(*p_mutex == 1U)
 	{
 		*p_mutex = 0U;
 		status = true;
@@ -114,10 +115,10 @@ static inline bool Critical_MutexAquire(critical_mutex_t * p_mutex)
 	return status;
 }
 
-static inline void Critical_MutexRelease(critical_mutex_t * p_mutex)
+static inline void Critical_Mutex_Release(critical_mutex_t * p_mutex)
 {
 	Critical_Enter();
-	if (*p_mutex == 0U)
+	if(*p_mutex == 0U)
 	{
 		*p_mutex = 1U;
 	}
@@ -147,27 +148,27 @@ static inline void Critical_ReleaseExit(critical_mutex_t * p_mutex)
 /*
  * todo static inline void Critical_Enter(void * stateData) for other/semaphore implementation
  */
-//typedef volatile uint32_t critical_semaphore_t;
-//
-//static inline void Critical_SemaphorePost(critical_semaphore_t * p_semaphore)
-//{
-//	CRITICAL_DISABLE_INTERRUPTS();
-//	if (*p_semaphore > 0U)
-//	{
-//		*p_semaphore--;
-//	}
-//	CRITICAL_ENABLE_INTERRUPTS();
-//
-//}
-//
-//static inline void Critical_SemaphoreSignal(critical_semaphore_t *p_semaphore)
-//{
-//	CRITICAL_DISABLE_INTERRUPTS();
-//	if (*p_semaphore < 1U)
-//	{
-//		*p_semaphore++;
-//	}
-//	CRITICAL_ENABLE_INTERRUPTS();
-//}
+ //typedef volatile uint32_t critical_semaphore_t;
+ //
+ //static inline void Critical_SemaphorePost(critical_semaphore_t * p_semaphore)
+ //{
+ //	CRITICAL_DISABLE_INTERRUPTS();
+ //	if (*p_semaphore > 0U)
+ //	{
+ //		*p_semaphore--;
+ //	}
+ //	CRITICAL_ENABLE_INTERRUPTS();
+ //
+ //}
+ //
+ //static inline void Critical_SemaphoreSignal(critical_semaphore_t *p_semaphore)
+ //{
+ //	CRITICAL_DISABLE_INTERRUPTS();
+ //	if (*p_semaphore < 1U)
+ //	{
+ //		*p_semaphore++;
+ //	}
+ //	CRITICAL_ENABLE_INTERRUPTS();
+ //}
 
 #endif

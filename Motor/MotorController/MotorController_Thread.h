@@ -22,31 +22,26 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	MotorController_Thread.h
-    @author FireSoucery
-    @brief  MotorController module functions must be placed into corresponding user app threads.
-    		Most outer functions to call from MCU app.
-    @version V0
+	@file 	MotorController_Thread.h
+	@author FireSoucery
+	@brief  MotorController module functions must be placed into corresponding user app threads.
+			Most outer functions to call from MCU app.
+	@version V0
 */
 /******************************************************************************/
 #ifndef MOTOR_CONTROLLER_THREAD_H
 #define MOTOR_CONTROLLER_THREAD_H
-
-#include "MotorController.h"
-#include "MotorController_User.h"
-#include "MotorController_StateMachine.h"
-#include "Config.h"
-
+ 
+#include "MotorController_User.h" 
 #include "Motor/Motor/Motor_Thread.h"
 
 /*
- * Mapped to Thread
- *  - Proc in All States
- */
-static inline void ProcMotorControllerAnalogUser(MotorController_T * p_mc)
+	Mapped to Thread - Proc in All States
+*/
+
+static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 {
-	MotAnalogUser_Cmd_T cmd = MotAnalogUser_PollCmd(&p_mc->AnalogUser);
-	p_mc->AnalogUserCmd = cmd;
+	MotAnalogUser_Cmd_T cmd = MotAnalogUser_PollCmd(&p_mc->AnalogUser); 
 	MotAnalogUser_CaptureInput(&p_mc->AnalogUser, p_mc->AnalogResults.Throttle_ADCU, p_mc->AnalogResults.Brake_ADCU);
 
 	AnalogN_Group_PauseQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_USER);
@@ -59,58 +54,52 @@ static inline void ProcMotorControllerAnalogUser(MotorController_T * p_mc)
 	{
 		case MOT_ANALOG_USER_CMD_SET_BRAKE:					MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrakeValue(&p_mc->AnalogUser));			break;
 		case MOT_ANALOG_USER_CMD_SET_THROTTLE:				MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottleValue(&p_mc->AnalogUser));	break;
-		case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_StartReleaseThrottle(p_mc);	break;
-		case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			MotorController_User_StartReleaseBrake(p_mc);		break;
-		case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				MotorController_User_SetNeutral(p_mc); 														break;
-		case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				MotorController_User_ProcNeutral(p_mc);														break;
-		case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);				break;
-		case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);	 			break;
-		case MOT_ANALOG_USER_CMD_PROC_RELEASE:				MotorController_User_ProcRelease(p_mc);														break;
+		case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_SetReleaseThrottle(p_mc);												break;
+		case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			MotorController_User_SetReleaseBrake(p_mc);													break;
+		case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				MotorController_User_SetNeutral(p_mc); 															break;
+		case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				MotorController_User_ProcNeutral(p_mc);															break;
+		case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);					break;
+		case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);	 				break;
+		case MOT_ANALOG_USER_CMD_PROC_RELEASE:				MotorController_User_ProcRelease(p_mc);															break;
 		default: break;
 	}
 }
 
-static inline void ProcMotorControllerHeatMonitor(MotorController_T * p_mc)
+static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 {
 	bool isFault = false;
 
 	AnalogN_Group_PauseQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_HEAT);
 	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_PCB);
-
 	if(Thermistor_GetIsEnable(&p_mc->ThermistorMosfetsTop))
 	{
 		AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_MOSFETS_TOP);
-	}
-
+	} 
 	if(Thermistor_GetIsEnable(&p_mc->ThermistorMosfetsBot))
 	{
 		AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_MOSFETS_BOT);
 	}
-
 	AnalogN_Group_ResumeQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_HEAT);
 
-	if(Thermistor_ProcThreshold(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_ADCU) != THERMISTOR_THRESHOLD_OK)
-	{
-		p_mc->ErrorFlags.PcbOverHeat = 1U;
-		isFault = true;
-	}
+	// if(Thermistor_ProcThreshold(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_ADCU) != THERMISTOR_STATUS_OK)
+	// {
+	// 	p_mc->ErrorFlags.PcbOverHeat = 1U;
+	// 	isFault = true;
+	// }
 
-	if(Thermistor_ProcThreshold(&p_mc->ThermistorMosfetsTop, p_mc->AnalogResults.HeatMosfetsTop_ADCU) != THERMISTOR_THRESHOLD_OK)
-	{
-		p_mc->ErrorFlags.MosfetsTopOverHeat = 1U;
-		isFault = true;
-	}
+	// if(Thermistor_ProcThreshold(&p_mc->ThermistorMosfetsTop, p_mc->AnalogResults.HeatMosfetsTop_ADCU) != THERMISTOR_STATUS_OK)
+	// {
+	// 	p_mc->ErrorFlags.MosfetsTopOverHeat = 1U;
+	// 	isFault = true;
+	// }
 
-	if(Thermistor_ProcThreshold(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_ADCU) != THERMISTOR_THRESHOLD_OK)
-	{
-		p_mc->ErrorFlags.MosfetsBotOverHeat = 1U;
-		isFault = true;
-	}
+	// if(Thermistor_ProcThreshold(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_ADCU) != THERMISTOR_STATUS_OK)
+	// {
+	// 	p_mc->ErrorFlags.MosfetsBotOverHeat = 1U;
+	// 	isFault = true;
+	// }
 
-	if(isFault == true)
-	{
-		StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
-	}
+	if(isFault == true) { MotorController_SetFault(p_mc); }
 
 	//if frequent degree c polling request
 //	Thermistor_CaptureUnitConversion(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_ADCU);
@@ -119,62 +108,45 @@ static inline void ProcMotorControllerHeatMonitor(MotorController_T * p_mc)
 
 }
 
-static inline void ProcMotorControllerVoltageMonitor(MotorController_T * p_mc)
+static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
 {
 	bool isFault = false;
 
-	AnalogN_Group_PauseQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) && defined(CONFIG_MOTOR_V_SENSORS_ADC)
- 	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VPOS);
-#endif
- 	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VACC);
+	AnalogN_Group_PauseQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V); 
+	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VACC);
 	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VSENSE);
 	AnalogN_Group_ResumeQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
 
-	if(VMonitor_Check(&p_mc->VMonitorPos, p_mc->AnalogResults.VPos_ADCU) != VMONITOR_STATUS_OK)
-	{
-		p_mc->ErrorFlags.VPosLimit = 1U;
-		isFault = true;
-	}
-
-	if(VMonitor_Check(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_ADCU) != VMONITOR_STATUS_OK)
-	{
-		p_mc->ErrorFlags.VSenseLimit = 1U;
-		isFault = true;
-	}
-
-	if(VMonitor_Check(&p_mc->VMonitorAcc, p_mc->AnalogResults.VAcc_ADCU) != VMONITOR_STATUS_OK)
-	{
-		p_mc->ErrorFlags.VAccLimit = 1U;
-		isFault = true;
-	}
-
-	if(isFault == true)
-	{
-		StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
-	}
+	VMonitor_PollStatus(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_ADCU); 
+	VMonitor_PollStatus(&p_mc->VMonitorAcc, p_mc->AnalogResults.VAcc_ADCU);
+	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense) == true) { isFault = true; } 
+	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc) == true) 	{ isFault = true; } 
+	if(isFault == true) { MotorController_SetFault(p_mc); }
 }
 
+/*
+	High Freq, Low Priority, Main
+*/
 static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 {
-	//Med Freq -  1 ms, Low Priority - Main
-	if (Timer_Poll(&p_mc->TimerMillis) == true)
+	/* Med Freq, Low Priority, 1 ms */
+	if(Timer_Poll(&p_mc->TimerMillis) == true)
 	{
 		StateMachine_Semisynchronous_ProcState(&p_mc->StateMachine);
 
 		switch(p_mc->Parameters.InputMode)
 		{
 			case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-				ProcMotorControllerAnalogUser(p_mc);
+				_MotorController_ProcAnalogUser(p_mc);
 				break;
 
-	//		case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-	//			break;
-	//
-	//		case MOTOR_CONTROLLER_INPUT_MODE_CAN:
-	//			break;
+				//		case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
+				//			break;
+				//
+				//		case MOTOR_CONTROLLER_INPUT_MODE_CAN:
+				//			break;
 
-			default :
+			default:
 				break;
 		}
 
@@ -189,67 +161,75 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		}
 	}
 
-	if (Timer_Poll(&p_mc->TimerMillis10) == true) 	//Low Freq, Low Priority 10 ms, Main
+	/* Low Freq, Low Priority, 10ms */
+	if(Timer_Poll(&p_mc->TimerMillis10) == true) 	
 	{
 		Shell_Proc(&p_mc->Shell);
 		Blinky_Proc(&p_mc->Buzzer);
 	}
 
-	if (Timer_Poll(&p_mc->TimerSeconds) == true)
+	/* Low Freq, Low Priority, 1s */
+	if(Timer_Poll(&p_mc->TimerSeconds) == true)
 	{
 		/* In case of Serial Rx Overflow Timeout */
-		for (uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++)
+		for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++)
 		{
 			Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]);
 		}
 
-//#define DEBUG_FAULT_OFF
-//		ProcMotorControllerVoltageMonitor(p_mc);
-//		ProcMotorControllerHeatMonitor(p_mc);
-//		for (uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
-//		{
-//			Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
-//		}
-
 		/* Can use low priority check, as motor is already in fault state */
-		if (MotorController_CheckMotorErrorFlagsAll(p_mc) != 0U)
+		if(MotorController_CheckMotorErrorFlagsAll(p_mc) != 0U)
 		{
-			StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
+			MotorController_SetFault(p_mc);
 		}
-	}
+	} 
+}
 
-	/*
-	 * High Freq, Low Priority, Main
-	 */
-//	for (uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
-//	{
-//		Motor_Main_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
-//	}
+
+/*
+	Med Freq, Med-High Priority
+
+	Thread Safety: Async Fault proc is okay?
+*/ 
+static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
+{ 
+//	BrakeThread(p_mc); 
+#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) && defined(CONFIG_MOTOR_V_SENSORS_ADC)
+	VMonitor_Status_T statusVPos = VMonitor_PollStatus(&p_mc->VMonitorPos, p_mc->AnalogResults.VPos_ADCU);
+
+	AnalogN_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VPOS);
+
+	switch(statusVPos)
+	{	
+		case VMONITOR_ERROR_UPPER: MotorController_User_SetFault(p_mc); break;
+		case VMONITOR_ERROR_LOWER: MotorController_User_SetFault(p_mc); break;
+		case VMONITOR_WARNING_UPPER: 	break; 
+		case VMONITOR_WARNING_LOWER: 	break; //motorNuser set LowV Warning
+		case VMONITOR_STATUS_OK: break;
+		default: break;
+	}
+#endif
+
+	if(Timer_Poll(&p_mc->TimerDividerSeconds) == true)
+	{
+		_MotorController_ProcHeatMonitor(p_mc);
+		_MotorController_ProcVoltageMonitor(p_mc);  
+ 		for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
+		{
+			Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
+		} 
+	}
 }
 
 /*
- * Wrappers
- */
+	High Freq, High Priority
+*/ 
 static inline void MotorController_PWM_Thread(MotorController_T * p_mc)
 {
-	for (uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
+	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
 	{
 		Motor_PWM_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
 	}
-}
-
-//Med Freq, High Priority 1 ms
-static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
-{
-//	MotorController_PollBrake(p_mc);
-
-//	ProcMotorControllerHeatMonitor(p_mc);
-//	ProcMotorControllerVoltageMonitor(p_mc); //move vpos here only
-
-	for (uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
-	{
-		Motor_Timer1Ms_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
-	}
-}
+} 
 
 #endif

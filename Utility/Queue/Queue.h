@@ -52,14 +52,14 @@ typedef const struct
 Queue_Config_T;
 
 /*
- * Empty space detection method. Head always points to empty space. Max usable capacity is length - 1
- */
+	Empty space detection method. Head always points to empty space. Max usable capacity is length - 1
+*/
 typedef struct
 {
 	const Queue_Config_T CONFIG;
-//	bool IsOverwritable;
-	volatile size_t Head;	//write to head
-	volatile size_t Tail;	//read from tail
+	//	bool IsOverwritable;
+	volatile size_t Head;	/* write to head  */
+	volatile size_t Tail;	/* read from tail */
 #if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
 	volatile critical_mutext_t Mutex;
 #endif
@@ -67,15 +67,15 @@ typedef struct
 Queue_T;
 
 #if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
-	#define QUEUE_CONFIG_POW2(Pow2Mask) .POW2_MASK = Pow2Mask,
+#define QUEUE_CONFIG_POW2(Pow2Mask) .POW2_MASK = Pow2Mask,
 #else
-	#define QUEUE_CONFIG_POW2(Pow2Mask)
+#define QUEUE_CONFIG_POW2(Pow2Mask)
 #endif
 
 #if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
-	#define QUEUE_CONFIG_CRITICAL(UseCritical) .USE_CRITICAL = UseCritical,
+#define QUEUE_CONFIG_CRITICAL(UseCritical) .USE_CRITICAL = UseCritical,
 #else
-	#define QUEUE_CONFIG_CRITICAL(UseCritical)
+#define QUEUE_CONFIG_CRITICAL(UseCritical)
 #endif
 
 #define QUEUE_CONFIG(p_Buffer, Length, UnitSize, UseCritical)	\
@@ -121,8 +121,8 @@ static inline size_t CalcQueueIndexDec(const Queue_T * p_queue, size_t index, si
 }
 
 /*
- * later 2 cases: returns max of buffer length - 1, to account for 1 space used for detection
- */
+	later 2 cases: returns max of buffer length - 1, to account for 1 space used for detection
+*/
 static inline size_t Queue_GetFullCount(const Queue_T * p_queue)
 {
 #ifdef CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED
@@ -135,8 +135,8 @@ static inline size_t Queue_GetFullCount(const Queue_T * p_queue)
 }
 
 /*
- * later 2 cases: -1 to account for space used for detection
- */
+	later 2 cases: -1 to account for space used for detection
+*/
 static inline size_t Queue_GetEmptyCount(const Queue_T * p_queue)
 {
 #ifdef CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED
@@ -149,7 +149,7 @@ static inline size_t Queue_GetEmptyCount(const Queue_T * p_queue)
 #endif
 }
 
-static inline bool Queue_GetIsEmpty(const Queue_T *p_queue)
+static inline bool Queue_GetIsEmpty(const Queue_T * p_queue)
 {
 	return (p_queue->Head == p_queue->Tail);
 }
@@ -168,17 +168,17 @@ extern void Queue_Init(Queue_T * p_queue);
 extern Queue_T * Queue_New(size_t unitCount, size_t unitSize);
 #endif
 extern void Queue_Clear(Queue_T * p_queue);
-extern bool Queue_Enqueue	(Queue_T * p_queue, const void * p_unit);
-extern bool Queue_Dequeue	(Queue_T * p_queue, void * p_dest);
-extern bool Queue_EnqueueN	(Queue_T * p_queue, const void * p_unit, size_t nUnits);
-extern bool Queue_DequeueN	(Queue_T * p_queue, void * p_dest, size_t nUnits);
+extern bool Queue_Enqueue(Queue_T * p_queue, const void * p_unit);
+extern bool Queue_Dequeue(Queue_T * p_queue, void * p_dest);
+extern bool Queue_EnqueueN(Queue_T * p_queue, const void * p_unit, size_t nUnits);
+extern bool Queue_DequeueN(Queue_T * p_queue, void * p_dest, size_t nUnits);
 extern size_t Queue_EnqueueMax(Queue_T * p_queue, const void * p_units, size_t nUnits);
 extern size_t Queue_DequeueMax(Queue_T * p_queue, void * p_dest, size_t destLength);
-extern bool Queue_PushFront	(Queue_T * p_queue, const void * p_unit);
-extern bool Queue_PopBack	(Queue_T * p_queue, void * p_dest);
-extern bool Queue_PeekFront	(Queue_T * p_queue, void * p_dest);
-extern bool Queue_PeekBack	(Queue_T * p_queue, void * p_dest);
-extern bool Queue_PeekIndex	(Queue_T * p_queue, void * p_dest, size_t index);
+extern bool Queue_PushFront(Queue_T * p_queue, const void * p_unit);
+extern bool Queue_PopBack(Queue_T * p_queue, void * p_dest);
+extern bool Queue_PeekFront(Queue_T * p_queue, void * p_dest);
+extern bool Queue_PeekBack(Queue_T * p_queue, void * p_dest);
+extern bool Queue_PeekIndex(Queue_T * p_queue, void * p_dest, size_t index);
 extern bool Queue_RemoveFront(Queue_T * p_queue, size_t nUnits);
 extern bool Queue_RemoveBack(Queue_T * p_queue, size_t nUnits);
 extern bool Queue_Seek(Queue_T * p_queue, void * p_dest, size_t index);
@@ -186,5 +186,7 @@ extern void * Queue_PeekPtrFront(Queue_T * p_queue);
 extern void * Queue_PeekPtrBack(Queue_T * p_queue);
 extern void * Queue_PeekPtrIndex(Queue_T * p_queue, size_t index);
 extern void * Queue_SeekPtr(Queue_T * p_queue, size_t index);
+extern uint8_t * Queue_AcquireBuffer(Queue_T * p_queue);
+extern void Queue_ReleaseBuffer(Queue_T * p_queue, size_t writeSize);
 
 #endif

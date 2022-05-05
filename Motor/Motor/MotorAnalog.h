@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	.h
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	.h
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef MOTOR_ANALOG_H
@@ -37,8 +37,8 @@
 
 /*!
 	@brief Virtual channel identifiers, index into arrays containing Analog channel
- */
-typedef enum
+*/
+typedef enum MotorAnalog_Channel_Tag
 {
 //	MOTOR_ANALOG_CHANNEL_VPOS,	/* Physically shared channel, but save results in contiguous memory */
 	MOTOR_ANALOG_CHANNEL_VA,
@@ -53,10 +53,7 @@ typedef enum
 }
 MotorAnalog_Channel_T;
 
-/*
- * Results Buffer
- */
-typedef union
+typedef union MotorAnalog_Results_Tag
 {
 	struct
 	{
@@ -75,13 +72,13 @@ typedef union
 }
 MotorAnalog_Results_T;
 
-typedef struct
+typedef struct MotorAnalog_Conversions_Tag
 {
 	union
 	{
 		struct
 		{
-//			const AnalogN_Conversion_T CONVERSION_VPOS;
+			//			const AnalogN_Conversion_T CONVERSION_VPOS;
 			const AnalogN_Conversion_T CONVERSION_VA;
 			const AnalogN_Conversion_T CONVERSION_VB;
 			const AnalogN_Conversion_T CONVERSION_VC;
@@ -100,6 +97,5 @@ typedef struct
 	const AnalogN_AdcFlags_T ADCS_GROUP_PWM;
 }
 MotorAnalog_Conversions_T;
-
 
 #endif

@@ -32,6 +32,13 @@
 
 #include <string.h>
 
+uint16_t _Motor_AdcVRef_MilliV;  /* Sync with upper layer */
+
+void Motor_InitReference(uint16_t adcVRef_MilliV)
+{
+	_Motor_AdcVRef_MilliV = adcVRef_MilliV;
+}
+
 void Motor_Init(Motor_T * p_motor)
 {
 	if(p_motor->CONFIG.P_PARAMS_NVM != 0U)
@@ -46,8 +53,8 @@ void Motor_Init(Motor_T * p_motor)
 void Motor_InitReboot(Motor_T * p_motor)
 {
 	/*
-	 * HW Wrappers Init
-	 */
+		HW Wrappers Init
+	*/
 	Phase_Init(&p_motor->Phase);
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
 
@@ -91,8 +98,8 @@ void Motor_InitReboot(Motor_T * p_motor)
 	p_motor->AnalogResults.Heat_ADCU = p_motor->Thermistor.Params.Threshold_ADCU;
 
 	/*
-	 * SW Structs
-	 */
+		SW Structs
+	*/
 	Timer_InitPeriodic(&p_motor->ControlTimer, 1U);
 	Timer_InitPeriodic(&p_motor->MillisTimer, 1U);
 	Timer_InitPeriodic(&p_motor->SpeedTimer, 1U);
@@ -106,7 +113,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	PID_Init(&p_motor->PidIBus);
  
 #if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) && defined(CONFIG_MOTOR_V_SENSORS_ADC)
-	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, p_motor->CONFIG.UNIT_VABC_ADC_BITS, p_motor->Parameters.AdcVRef_MilliV, p_motor->Parameters.VSupply);
+	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, ADC_BITS, _Motor_AdcVRef_MilliV, p_motor->Parameters.VSupply);
 #endif
 
 #ifdef CONFIG_MOTOR_I_SENSORS_INVERT
@@ -212,4 +219,5 @@ void Motor_Jog12(Motor_T * p_motor)
 	Motor_Jog12Step(p_motor, p_motor->JogIndex);
 	p_motor->JogIndex++;
 }
-
+ 
+uint16_t _Motor_GetAdcVRef(void) { return _Motor_AdcVRef_MilliV; }

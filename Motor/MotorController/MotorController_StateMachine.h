@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	MotorStateMachine.h
-    @author FireSoucery
-    @brief  MotorStateMachine
-    @version V0
+	@file 	MotorController_StateMachine.h
+	@author FireSoucery
+	@brief  MotorController_StateMachine
+	@version V0
 */
 /******************************************************************************/
 #ifndef MOTOR_CONTROLLER_STATE_MACHINE_H
@@ -42,23 +42,19 @@ typedef enum MotorController_StateMachine_Input_Tag
 	MCSM_INPUT_DIRECTION,
 	MCSM_INPUT_THROTTLE,
 	MCSM_INPUT_BRAKE,
-//	MCSM_INPUT_FLOAT,
+	//	MCSM_INPUT_FLOAT,
 
 	MCSM_INPUT_RELEASE_THROTTLE, /* Release Control */
 	MCSM_INPUT_RELEASE_BRAKE, /* Release Control */
 	MCSM_INPUT_NULL,	/* No Input */
 
 	MCSM_INPUT_NEUTRAL,
-	MCSM_INPUT_NEUTRAL_START,
+	MCSM_INPUT_SET_NEUTRAL,
 	MCSM_INPUT_SAVE_PARAMS,
 }
 MotorController_StateMachine_Input_T;
 
-extern const StateMachine_Machine_T MCSM_MACHINE;
-
-#define MOTOR_CONTROLLER_STATE_MACHINE_CONFIG(p_MotorController) STATE_MACHINE_CONFIG(&MCSM_MACHINE, p_MotorController, false)
-
-typedef enum
+typedef enum MotorController_StateMachine_StateId_Tag
 {
 	MCSM_STATE_ID_INIT,
 	MCSM_STATE_ID_STOP,
@@ -66,5 +62,9 @@ typedef enum
 	MCSM_STATE_ID_FAULT,
 }
 MotorController_StateMachine_StateId_T;
+
+extern const StateMachine_Machine_T MCSM_MACHINE;
+
+#define MOTOR_CONTROLLER_STATE_MACHINE_CONFIG(p_MotorController) STATE_MACHINE_CONFIG(&MCSM_MACHINE, p_MotorController, false)
 
 #endif

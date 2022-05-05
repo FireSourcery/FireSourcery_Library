@@ -56,7 +56,7 @@ void Linear_Ramp_InitAcceleration(Linear_T * p_linear, int32_t slope_UnitPerSeco
 
 /*
 	Overflow: 	(peroid_Ms * updateFreq_Hz) > 131,071,000
-				(final - initial) > 131,071 
+				(final - initial) > 131,071
 */
 void Linear_Ramp_InitMillis(Linear_T * p_linear, uint16_t peroid_Ms, uint32_t updateFreq_Hz, int32_t initial, int32_t final)
 {

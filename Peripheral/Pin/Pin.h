@@ -44,12 +44,8 @@ typedef const struct
 }
 Pin_Config_T;
 
-typedef const struct
+typedef struct
 {
-	HAL_Pin_T * const P_HAL_PIN;
-	const uint32_t ID;
-	const uint32_t MASK;
-
 	const Pin_Config_T CONFIG;
 	bool IsInvert; /* Use ground state as on */
 }
@@ -57,32 +53,61 @@ Pin_T;
 
 #define PIN_CONFIG(p_Hal, Id)	\
 {								\
-	.P_HAL_PIN = p_Hal,			\
-	.ID = Id,					\
-	.MASK = (1UL << Id)			\
+	.CONFIG = 					\
+	{							\
+		.P_HAL_PIN = p_Hal,		\
+		.ID = Id,				\
+		.MASK = (1UL << Id),	\
+	},							\
 }
 
-static inline uint32_t GetPinHalArg(const Pin_T * p_pin)
+static inline uint32_t _Pin_GetHalArg(const Pin_T * p_pin)
 {
 #ifdef CONFIG_PIN_HAL_USE_MASK
-	return p_pin->MASK;
+	return p_pin->CONFIG.MASK;
 #elif defined(CONFIG_PIN_HAL_USE_ID)
-	return p_pin->ID;
+	return p_pin->CONFIG.ID;
 #endif
 }
 
-static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn) 		{ return HAL_Pin_WriteOutput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin), isOn); }
-static inline void Pin_Output_WritePhysical(const Pin_T * p_pin, bool isOn) { return HAL_Pin_WriteOutput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin), isOn); }
-static inline void Pin_Output_Off(const Pin_T * p_pin) 		{ return HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }
-static inline void Pin_Output_On(const Pin_T * p_pin) 		{ return HAL_Pin_WriteOutputOn(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); } 
-static inline void Pin_Output_Low(const Pin_T * p_pin)		{ return HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }
-static inline void Pin_Output_High(const Pin_T * p_pin) 	{ return HAL_Pin_WriteOutputOn(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }
+/* ignore invert check, when handled by upper layer */
+static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn) { HAL_Pin_WriteOutput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin), isOn); }
+static inline void Pin_Output_WritePhysical(const Pin_T * p_pin, bool isOn) { Pin_Output_Write(p_pin, isOn); }
+static inline void Pin_Output_Low(const Pin_T * p_pin)		{ HAL_Pin_WriteOutputOff(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
+static inline void Pin_Output_High(const Pin_T * p_pin) 	{ HAL_Pin_WriteOutputOn(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
 
-static inline bool Pin_Input_Read(const Pin_T * p_pin) 			{ return HAL_Pin_ReadInput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }
-static inline bool Pin_Input_ReadPhysical(const Pin_T * p_pin) 	{ return HAL_Pin_ReadInput(p_pin->P_HAL_PIN, GetPinHalArg(p_pin)); }
+/* check invert */
+static inline void Pin_Output_WriteVirtual(const Pin_T * p_pin, bool isOn)
+{
+	bool writeVal = (p_pin->IsInvert == true) ? !isOn : isOn; 
+	HAL_Pin_WriteOutput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin), writeVal);
+}
+
+static inline void Pin_Output_VirtualOff(const Pin_T * p_pin)
+{
+	(p_pin->IsInvert == true) ? HAL_Pin_WriteOutputOn(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)) : HAL_Pin_WriteOutputOff(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin));
+}
+
+static inline void Pin_Output_VirtualOn(const Pin_T * p_pin)
+{
+	(p_pin->IsInvert == true) ? HAL_Pin_WriteOutputOff(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)) : HAL_Pin_WriteOutputOn(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin));
+}
+
+/* ignore invert check, when handled by upper layer */
+static inline bool Pin_Input_Read(const Pin_T * p_pin) 			{ return HAL_Pin_ReadInput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
+static inline bool Pin_Input_ReadPhysical(const Pin_T * p_pin) 	{ return Pin_Input_ReadPhysical(p_pin); } 
+
+/* check invert */
+static inline bool Pin_Input_ReadVirtual(const Pin_T * p_pin) 			
+{ 
+	bool readVal = HAL_Pin_ReadInput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); 
+	return (p_pin->IsInvert == true) ? !readVal : readVal;  
+}
 
 extern void Pin_Output_Init(const Pin_T * p_pin);
 extern void Pin_Input_Init(const Pin_T * p_pin);
 extern void Pin_Deinit(const Pin_T * p_pin);
+extern void Pin_EnableInvert(Pin_T * p_pin);
+extern void Pin_DisableInvert(Pin_T * p_pin);
 
 #endif

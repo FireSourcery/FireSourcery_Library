@@ -23,14 +23,13 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
-    @author FireSoucery
-    @brief
-    @version V0
+	@file
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
-#include "MotorController_Analog.h"
-#include "Peripheral/Analog/AnalogN/AnalogN.h"
+#include "MotorController_Analog.h" 
 
 #include <stdint.h>
 #include <stdbool.h>

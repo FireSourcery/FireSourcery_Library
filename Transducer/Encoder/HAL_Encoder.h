@@ -24,22 +24,20 @@
 /*!
 	@file  	HAL.h
 	@author FireSourcery
-	@brief 	Encoder module import functions.
-			User must provide HW functions, or configure HAL
+	@brief 	User must provide HW functions, or configure HAL
 	@version V0
  */
 /******************************************************************************/
 #ifndef HAL_ENCODER_H
 #define HAL_ENCODER_H
 
-
 #define XSTR(String) #String
 #define STR(String) XSTR(String)
 
-#if defined(CONFIG_ENCODER_PATH_HAL_ENCODER)
-	#include STR(CONFIG_PATH_HAL_ENCODER/HAL_Encoder.h)
-#elif defined(CONFIG_ENCODER_HAL_PLATFORM)
-	#include STR(HAL/Platform/CONFIG_ENCODER_HAL_PLATFORM/HAL_Encoder.h)
+#if defined(CONFIG_HAL_ENCODER_PATH)
+	#include STR(CONFIG_HAL_ENCODER_PATH/HAL_Encoder.h)
+#elif defined(CONFIG_HAL_ENCODER_PLATFORM)
+	#include STR(HAL/Platform/CONFIG_HAL_ENCODER_PLATFORM/HAL_Encoder.h)
 #endif
 //#else
 

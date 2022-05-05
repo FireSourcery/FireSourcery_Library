@@ -233,9 +233,9 @@ static inline bool Motor_Calibrate_Adc(Motor_T *p_motor)
 		p_motor->Parameters.IaRefZero_ADCU = Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
 		p_motor->Parameters.IbRefZero_ADCU = Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
 		p_motor->Parameters.IcRefZero_ADCU = Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
-		p_motor->Parameters.IaRefMax_ADCU = p_motor->Parameters.IaRefZero_ADCU + p_motor->Parameters.IRefZeroToPeak_ADCU;
-		p_motor->Parameters.IbRefMax_ADCU = p_motor->Parameters.IbRefZero_ADCU + p_motor->Parameters.IRefZeroToPeak_ADCU;
-		p_motor->Parameters.IcRefMax_ADCU = p_motor->Parameters.IcRefZero_ADCU + p_motor->Parameters.IRefZeroToPeak_ADCU;
+		p_motor->Parameters.IaRefMax_ADCU = p_motor->Parameters.IaRefZero_ADCU + p_motor->Parameters.IRefPeak_ADCU;
+		p_motor->Parameters.IbRefMax_ADCU = p_motor->Parameters.IbRefZero_ADCU + p_motor->Parameters.IRefPeak_ADCU;
+		p_motor->Parameters.IcRefMax_ADCU = p_motor->Parameters.IcRefZero_ADCU + p_motor->Parameters.IRefPeak_ADCU;
 		Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
 		Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
 		Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, p_motor->Parameters.IcRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);

@@ -22,29 +22,24 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.h
-    @author FireSoucery
-    @brief  Motor module preprocessor configuration options and defaults
-    @version V0
+	@file 	Config.h
+	@author FireSoucery
+	@brief  Motor module preprocessor configuration options and defaults
+	@version V0
 */
 /******************************************************************************/
 #ifndef CONFIG_MOTOR_CONTROLLER_H
 #define CONFIG_MOTOR_CONTROLLER_H
 
-//#ifndef CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT
-//	#define CONFIG_MOTOR_CONTROLLER_MOTOR_COUNT 1U
-//#endif
-//
-//#ifndef CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT
-//	#define CONFIG_MOTOR_CONTROLLER_SERIAL_COUNT 1U
-//#endif
-//
-//#ifndef CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT
-//	#define	CONFIG_MOTOR_CONTROLLER_AUX_PROTOCOL_COUNT 1U
-//#endif
+#if   	defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM) 
+#elif   defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH) 
+#else  
+	#define CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM
+#endif
 
-#ifndef CONFIG_MOTOR_CONTROLLER_ADCU_BITS_N
-	#define	CONFIG_MOTOR_CONTROLLER_ADCU_BITS_N 12U
+#if   defined(ADC_BITS) 
+#else  
+	#define ADC_BITS 12U
 #endif
 
 #endif

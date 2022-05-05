@@ -103,15 +103,12 @@ static inline int32_t qfrac16_mul(int32_t factor, int32_t frac)
 }
 
 /*!
-	@return int16_t[-32767, 32767] 
+	@return int16_t[-32767, 32767]
 */
 static inline qfrac16_t qfrac16_mul_sat(int32_t factor, int32_t frac)
 {
 	int32_t product = qfrac16_mul(factor, frac);
-
-	if(product == 32768) product = 32767;
-
-	return product;
+	return (product == 32768) ? 32767 : product; 
 }
 
 /*! 
@@ -177,12 +174,12 @@ static inline qfrac16_t cos90(qangle16_t theta)
 	[180, 270)	=> [0x8000, 0xBFFF] => [0, 0xFF] == [0, -1)
 	[270, 360)	=> [0xC000, 0xFFFF] => [0xFF, 0] == (-1, 0]
 
-	alternatively check first 2 bits for branch
+	Alternatively, check first 2 bits for branch
 	#define QFRAC16_SIN_MASK 	0xC000
-	#define QANGLE16_0_90    	0x0000
-	#define QANGLE16_90_180   	0x4000
-	#define QANGLE16_180_270  	0x8000
-	#define QANGLE16_270_360  	0xC000
+	#define QANGLE16_0_90 		QANGLE16_0
+	#define QANGLE16_90_180 	QANGLE16_90
+	#define QANGLE16_180_270 	QANGLE16_180
+	#define QANGLE16_270_360 	QANGLE16_270
 */
 static inline qfrac16_t qfrac16_sin(qangle16_t theta)
 {
@@ -245,7 +242,7 @@ static inline void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16
 }
 
 /*
-	adapted from libfixmath https://github.com/PetteriAimonen/libfixmath/blob/master/libfixmath/qfrac16_trig.c
+	Adapted from libfixmath https://github.com/PetteriAimonen/libfixmath/blob/master/libfixmath/qfrac16_trig.c
 */
 static inline qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
 {

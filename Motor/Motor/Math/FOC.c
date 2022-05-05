@@ -27,9 +27,7 @@
 	@version V0
 */
 /******************************************************************************/
-#include "FOC.h"
-
-#include "Math/Q/QFrac16.h"
+#include "FOC.h" 
 
 void FOC_Init(FOC_T * p_foc)
 {

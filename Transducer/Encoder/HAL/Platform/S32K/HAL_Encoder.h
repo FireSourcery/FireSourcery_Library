@@ -33,8 +33,6 @@
 
 #include "External/S32K142/include/S32K142.h"
 
-#include "Peripheral/HAL/Platform/S32K/Chip.h"
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -67,20 +65,12 @@ static inline void HAL_Encoder_WriteTimerCounterMax(HAL_Encoder_T * p_encoder, u
 	p_encoder->MOD = FTM_MOD_MOD(max);
 }
 
-/*
- * S32K use pin read Phase
- */
-//static inline bool HAL_Encoder_ReadQuadraturePhaseA(const HAL_Encoder_T * p_encoder){(void)p_encoder;}
-//static inline bool HAL_Encoder_ReadQuadraturePhaseB(const HAL_Encoder_T * p_encoder){(void)p_encoder;}
-
 static inline bool HAL_Encoder_ReadQuadratureCounterDirection(const HAL_Encoder_T * p_encoder)
 {
 	return ((p_encoder->QDCTRL & FTM_QDCTRL_QUADIR_MASK) != 0U) ? true : false;
 }
 
-/*
- * Return true if counter over flow on increment
- */
+/* Return true if counter over flow on increment */
 static inline bool HAL_Encoder_ReadQuadratureCounterOverflowIncrement(const HAL_Encoder_T * p_encoder)
 {
 	return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) != 0U) ? true : false;
@@ -91,23 +81,24 @@ static inline bool HAL_Encoder_ReadQuadratureCounterOverflowDecrement(const HAL_
 	return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) == 0U) ? true : false;
 }
 
+/*
+	S32K use pin read Phase
+*/
+// #include "Peripheral/HAL/Platform/S32K/Chip.h"
+//static inline bool HAL_Encoder_ReadQuadraturePhaseA(const HAL_Encoder_T * p_encoder){(void)p_encoder;}
+//static inline bool HAL_Encoder_ReadQuadraturePhaseB(const HAL_Encoder_T * p_encoder){(void)p_encoder;}
+
 extern void Board_Encoder_InitCaptureTime(void);
 extern void Board_Encoder_InitCaptureCount(void);
 
-
-/*
-	Config SW Polling capture mode
-	On S32K Hw capture mode disables gpio pin read
- */
+/* Config SW Polling capture mode. On S32K Hw capture mode disables gpio pin read */
 static inline void HAL_Encoder_InitCaptureTime(HAL_Encoder_T * p_encoder, void * p_phaseAPinHal, uint32_t phaseAPinId, void * p_phaseBPinHal, uint32_t phaseBPinId)
 {
 //	(p_encoder->QDCTRL) &= ~(1UL << FTM_QDCTRL_QUADEN_SHIFT);
 	Board_Encoder_InitCaptureTime();
 }
 
-/*
- * Enocder Res still needs to be configured.
- */
+/* Enocder Res still needs to be configured. */
 static inline void HAL_Encoder_InitCaptureCount(HAL_Encoder_T * p_encoder, void * p_phaseAPinHal, uint32_t phaseAPinId, void * p_phaseBPinHal, uint32_t phaseBPinId)
 {
 //	(p_encoder->QDCTRL) |= (1UL << FTM_QDCTRL_QUADEN_SHIFT);

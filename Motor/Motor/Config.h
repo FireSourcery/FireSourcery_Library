@@ -48,13 +48,11 @@
 #else
 	#define	CONFIG_MOTOR_V_SENSORS_ADC
 #endif
- 
-// #if defined(ADC_MAX) && defined(ADC_BITS)
 
-// #else 
-// 	#define ADC_MAX 		4096U
-// 	#define ADC_BITS 		12U
-// #endif
+#if   defined(ADC_BITS) 
+#else  
+	#define ADC_BITS 		12U
+#endif
 
 #endif
 

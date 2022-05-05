@@ -26,7 +26,7 @@
 	@author FireSourcery
 	@brief 	Encoder module conventional function definitions
 	@version V0
- */
+*/
 /******************************************************************************/
 #include "Encoder_Motor.h"
 #include "Encoder.h"

@@ -22,89 +22,97 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file  	Blinky.h
+	@file  	Thermistor.h
 	@author FireSourcery
-	@brief 	Pin Indicator
-
+	@brief
 	@version V0
- */
+*/
 /******************************************************************************/
 #ifndef THERMISTOR_H
 #define THERMISTOR_H
 
+#include "Config.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include <math.h>
 
-typedef enum
+typedef enum Thermistor_Status_Tag
 {
-	THERMISTOR_THRESHOLD_OK,
-	THERMISTOR_ERROR_LIMIT,
-	THERMISTOR_ERROR_THRESHOLD,
+	THERMISTOR_STATUS_OK,
+	THERMISTOR_OVER_LIMIT_SHUTDOWN,		/* over limit shutdown */
+	THERMISTOR_OVER_LIMIT_THRESHOLD,	/* over limit threshold */
+	THERMISTOR_OVER_WARNING,
 }
-Thermistor_ThesholdStatus_T;
+Thermistor_Status_T;
 
-typedef struct __attribute__((aligned (4U)))
+/*
+	Set Vin to same decimal precision as ADC_VREF
+*/
+typedef struct __attribute__((aligned(4U))) Thermistor_Params_Tag
 {
+	uint16_t VIn_Scalar;
 	uint32_t RNominal;
-	uint32_t TNominal;
+	uint32_t TNominal; /* In Kelvin*/
 	uint32_t BConstant;
 	uint16_t Limit_ADCU;
 	uint16_t Threshold_ADCU;
-	uint16_t IntScalar;
+	uint16_t Warning_ADCU;
+
+	uint16_t CaptureScalar;
 	bool IsEnable;
 }
 Thermistor_Params_T;
 
-typedef struct
+typedef struct Thermistor_Config_Tag
 {
 	const Thermistor_Params_T * P_PARAMS;
-	uint16_t V_IN;
-	uint32_t R_SERIES; 		/* pull up */
-	uint32_t R_PARALLEL; 	/* parallel if applicable */
+	uint32_t R_SERIES; 		/* Pull-up */
+	uint32_t R_PARALLEL; 	/* Parallel pull-down if applicable */
 }
 Thermistor_Config_T;
 
-typedef struct
+typedef struct Thermistor_Tag
 {
 	const Thermistor_Config_T CONFIG;
 	Thermistor_Params_T Params;
 
-	Thermistor_ThesholdStatus_T Status;
-	int32_t Heat_DegCInt;
+	Thermistor_Status_T ThresholdStatus; /* Threshold save state info */
+	int32_t Heat_DegC;
 }
 Thermistor_T;
 
-/*
- * Set Vin to same decimal precision as ADC_VREF
- */
-#define THERMISTOR_CONFIG(Vin, RSeries, RParallel, p_Params) 	\
-{												\
-	.CONFIG =									\
-	{											\
-		.V_IN 			= Vin,				\
-		.R_SERIES 		= RSeries,				\
-		.R_PARALLEL		= RParallel,			\
-		.P_PARAMS		= p_Params,				\
-	}											\
+#define THERMISTOR_CONFIG(RSeries, RParallel, p_Params) 	\
+{													\
+	.CONFIG =										\
+	{												\
+		.R_SERIES 		= RSeries,					\
+		.R_PARALLEL		= RParallel,				\
+		.P_PARAMS		= p_Params,					\
+	}												\
 }
 
-static inline Thermistor_ThesholdStatus_T Thermistor_GetStatus(Thermistor_T * p_thermistor)
-{
-	return p_thermistor->Status;
-}
+static inline int32_t Thermistor_GetHeat_DegC(Thermistor_T * p_therm) { return p_therm->Heat_DegC; }
+static inline bool Thermistor_GetIsEnable(Thermistor_T * p_therm) { return p_therm->Params.IsEnable; } 
 
-static inline bool Thermistor_GetIsEnable(Thermistor_T * p_thermistor)
-{
-	return p_thermistor->Params.IsEnable;
-}
+extern void Thermistor_InitReference(uint16_t adcVRef_MilliV);
+extern void Thermistor_Init(Thermistor_T * p_therm);
+extern Thermistor_Status_T Thermistor_ProcThreshold(Thermistor_T * p_therm, uint16_t adcu);
+extern Thermistor_Status_T Thermistor_ProcStatus(Thermistor_T * p_therm, uint16_t adcu);
+extern void Thermistor_CaptureUnits_DegC(Thermistor_T * p_therm, uint16_t adcu);
+extern float Thermistor_ConvertToDegC_Float(Thermistor_T * p_therm, uint16_t adcu);
+extern int32_t Thermistor_ConvertToDegC_Int(Thermistor_T * p_therm, uint16_t adcu, uint16_t scalar);
+extern void Thermistor_SetRThValues_DegC(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, uint32_t b, uint8_t threshold_degC, uint8_t limit_degC);
+extern void Thermistor_SetVIn_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV);
 
-static inline int32_t Thermistor_GetHeat_DegCInt(Thermistor_T * p_thermistor)
-{
-	return p_thermistor->Heat_DegCInt;
-}
-
-extern void Thermistor_Init(Thermistor_T * p_thermistor);
-extern Thermistor_ThesholdStatus_T Thermistor_ProcThreshold(Thermistor_T * p_thermistor, uint16_t adcu);
-
+extern void Thermistor_SetLimit_DegC(Thermistor_T * p_therm, uint8_t limit_degreesC);
+extern void Thermistor_SetThreshold_DegC(Thermistor_T * p_therm, uint8_t threshold_degreesC);
+extern void Thermistor_SetWarning_DegC(Thermistor_T * p_therm, uint8_t warning_degreesC);
+extern int32_t Thermistor_GetLimit_DegCInt(Thermistor_T * p_therm, uint16_t scalar);
+extern int32_t Thermistor_GetThreshold_DegCInt(Thermistor_T * p_therm, uint16_t scalar);
+extern int32_t Thermistor_GetWarning_DegCInt(Thermistor_T * p_therm, uint16_t scalar);
+extern int32_t Thermistor_GetLimit_DegC(Thermistor_T * p_therm);
+extern int32_t Thermistor_GetThreshold_DegC(Thermistor_T * p_therm);
+extern int32_t Thermistor_GetWarning_DegC(Thermistor_T * p_therm);
+extern float Thermistor_GetLimit_DegCFloat(Thermistor_T * p_therm);
+extern float Thermistor_GetThreshold_DegCFloat(Thermistor_T * p_therm);
+extern float Thermistor_GetWarning_DegCFloat(Thermistor_T * p_therm);
 #endif

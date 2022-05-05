@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	.h
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	.h
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef MOT_ANALOG_H
@@ -37,7 +37,7 @@
 
 /*!
 	@brief Virtual channel identifiers, index into arrays containing Analog channel
- */
+*/
 typedef enum MotAnalog_Channel_Tag
 {
 	MOT_ANALOG_CHANNEL_VPOS, 				/* V battery, V in */
@@ -52,7 +52,7 @@ typedef enum MotAnalog_Channel_Tag
 }
 MotAnalog_Channel_T;
 
-typedef union
+typedef union MotAnalog_Results_Tag
 {
 	struct
 	{
@@ -73,7 +73,7 @@ typedef union
 }
 MotAnalog_Results_T;
 
-typedef struct
+typedef struct MotAnalog_Conversions_Tag
 {
 	union
 	{

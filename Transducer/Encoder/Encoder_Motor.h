@@ -28,7 +28,7 @@
 			Capture DeltaD, fixed DeltaT
 			Angle defined to be  16 bits
 	@version V0
- */
+*/
 /******************************************************************************/
 #ifndef ENCODER_MOTOR_H
 #define ENCODER_MOTOR_H

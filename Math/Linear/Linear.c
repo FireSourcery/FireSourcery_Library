@@ -93,18 +93,107 @@ void Linear_Init_XRefYRef(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t
 {
 
 }
- 
+
+
+/******************************************************************************/
+/*!
+	Saturate to uint16_t, q0.16 [0, 65535]
+	f([-XRef:XRef]) => [0:65536]
+*/
+/******************************************************************************/ 
+uint16_t _Linear_SatUnsigned16(int32_t frac16)
+{
+	uint16_t fracU16;
+
+	if		(frac16 > 65535) 	{ fracU16 = 65535U; }
+	else if	(frac16 < 0) 		{ fracU16 = 0U; }
+	else 						{ fracU16 = (uint16_t)frac16; }
+
+	return fracU16;
+}
+
+/* negative returns zero */
+uint16_t Linear_Function_FractionUnsigned16(const Linear_T * p_linear, int32_t x)
+{
+	return _Linear_SatUnsigned16(Linear_Function_Fraction16(p_linear, x));
+}
+
+uint16_t _Linear_SatUnsigned16_Abs(int32_t frac16)
+{
+	uint16_t fracU16;
+
+	if		(frac16 < 0) 		{ fracU16 = (uint16_t)(0 - frac16); }
+	else if	(frac16 > 65535) 	{ fracU16 = 65535U; }
+	else 						{ fracU16 = (uint16_t)frac16; }
+
+	return fracU16;
+}
+
+/* negative returns abs */
+uint16_t Linear_Function_FractionUnsigned16_Abs(const Linear_T * p_linear, int32_t x)
+{
+	return _Linear_SatUnsigned16_Abs(Linear_Function_Fraction16(p_linear, x));
+}
+
+/* y_frac16 in q0.16 format is handled by q16.16 case */
+int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_linear, uint16_t y_fracU16)
+{
+	return Linear_InvFunction_Fraction16(p_linear, y_fracU16);
+}
+
+/******************************************************************************/
+/*!
+	Saturate to int16_t, q1.15 [-32768, 32767]
+	f([-XRef:XRef]) => [-32768:32767]
+*/
+/******************************************************************************/ 
+int16_t _Linear_SatSigned16(int32_t frac16)
+{
+	int16_t fracS16;
+
+	if		(frac16 > 32767) 	{ fracS16 = 32767; }
+	else if	(frac16 < -32768) 	{ fracS16 = -32768; }
+	else 						{ fracS16 = (int16_t)frac16; }
+
+	return fracS16;
+}
+
+/* */
+int16_t Linear_Function_FractionSigned16(const Linear_T * p_linear, int32_t x)
+{
+	return _Linear_SatSigned16(Linear_Function_Fraction16(p_linear, x) / 2);
+}
+
+/* y_frac16 use q1.15 */
+int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_linear, int16_t y_fracS16)
+{
+	return Linear_InvFunction_Fraction16(p_linear, (int32_t)y_fracS16 * 2);
+}
+
+
+/******************************************************************************/
+/*!
+	Scalar
+*/
+/******************************************************************************/ 
 int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
 {
 	int32_t factor = x * p_linear->Slope;
 	int32_t result = 0U;
 
-	/* scalar is likely to be compile time constant */
-	for(uint16_t iDivisor = 1U; scalar / iDivisor > 0U; iDivisor *= 10U)
+	/* scalar maybe compile time constant, can compiler unroll loop to optimize? */
+
+	/*
+		Loop N = Log_[Divisor*=](scalar)
+		scalar 1000
+			[Divisor*=] == 10 => 4
+			[Divisor*=] == 2 => 10
+	*/
+	for(uint16_t iDivisor = 1U; scalar >= iDivisor; iDivisor *= 4U) 	/* scalar / iDivisor > 0U */
 	{
-		if(factor < INT32_MAX / (scalar / iDivisor)) 
+		if(factor < INT32_MAX / scalar * iDivisor) /* (factor < INT32_MAX / (scalar / iDivisor)) */
 		{ 
-			result = Linear_Function(p_linear, x * (scalar / iDivisor)) * iDivisor; 
+			result = Linear_Function(p_linear, x * scalar / iDivisor) * iDivisor; 
 			break;
 		}
 	}

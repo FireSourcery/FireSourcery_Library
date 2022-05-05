@@ -32,14 +32,14 @@
 #define CONFIG_SHELL_H
 
 /*
- * All terminal instances will be instantiated to these sizes
- */
+	All terminal instances will be instantiated to these sizes
+*/
 #ifndef CMDLINE_ARG_MAX
-#define CMDLINE_ARG_MAX		5 //including cmd string
+#define CMDLINE_ARG_MAX		5U //including cmd string
 #endif
 
 #ifndef CMDLINE_CHAR_MAX
-#define CMDLINE_CHAR_MAX	50
+#define CMDLINE_CHAR_MAX	50U
 #endif
 
 #ifdef CONFIG_SHELL_XCVR_ENABLE

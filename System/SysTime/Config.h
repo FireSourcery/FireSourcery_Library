@@ -31,12 +31,18 @@
 #ifndef CONFIG_SYSTIME_H
 #define CONFIG_SYSTIME_H
 
-#ifdef CONFIG_SYSTIME_CPU_FREQ
-
+#ifdef CONFIG_SYSTIME_SYSTICK
 #endif
 
-#ifdef CONFIG_SYSTIME_SYSTICK
+#if 	defined(CONFIG_SYSTIME_CPU_FREQ)
+	#define CPU_FREQ CONFIG_SYSTIME_CPU_FREQ
+#else 	defined(CPU_FREQ)
+	#error "SysTime - Undefined CONFIG_SYSTIME_CPU_FREQ"
+#endif
 
+#ifdef CONFIG_SYSTIME_SYSTICK_PRIORITY
+#else
+	#define CONFIG_SYSTIME_SYSTICK_PRIORITY 0x80U /* Priority 8 */
 #endif
 
 #endif

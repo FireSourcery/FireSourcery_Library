@@ -22,30 +22,18 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
-    @author FireSoucery
-    @brief
-    @version V0
+	@file
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
-#ifndef MOT_SHELL_H
-#define MOT_SHELL_H
+#ifndef MOTOR_CONTROLLER_SHELL_H
+#define MOTOR_CONTROLLER_SHELL_H
 
-#include "Utility/Shell/Shell.h"
+#include "Utility/Shell/Shell.h" 
 
-#include <stdint.h>
-
-#define MC_SHELL_CMD_COUNT		 	20U
-#define MC_SHELL_CMD_STATUS_COUNT 	1U
-#define MC_SHELL_PERIOD_MILLIS		1000U
-
-//typedef enum
-//{
-//	MOTOR_SHELL_CMD_RETURN_CODE_SUCCESS 		= CMD_RESERVED_RETURN_CODE_SUCCESS,
-//	MOTOR_SHELL_CMD_RETURN_CODE_INVALID_ARGS 	= CMD_RESERVED_RETURN_CODE_INVALID_ARGS,
-//	MOTOR_SHELL_CMD_RETURN_CODE_ERROR_1 		= 1,
-//}
-//McShell_CmdCode_T;
+#define MC_SHELL_CMD_COUNT 20U
 
 extern const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT];
 

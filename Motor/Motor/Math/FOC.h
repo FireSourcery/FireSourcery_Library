@@ -25,7 +25,7 @@
 	@file 	FOC.h
 	@author FireSoucery
 	@brief  FOC math functions only. Wrapper for pure math functions.
-			 Only this modules calls math_foc, math_svpwm
+			Only this modules calls math_foc, math_svpwm
 	@version V0
 */
 /******************************************************************************/
@@ -33,18 +33,10 @@
 #define FOC_H
 
 #include "math_foc.h"
-#include "math_svpwm.h"
-
+#include "math_svpwm.h" 
 #include "Math/Q/QFrac16.h"
-
-//typedef enum
-//{
-//	VECTOR_000 = 0U,
-//	VECTOR_001_A = 0b001,
-//	VECTOR_011_INV_C = 0b011,
-//} FOC_VectorId_T;
-
-typedef struct
+ 
+typedef struct FOC_Tag
 {
 	/* Params */
 	qfrac16_t VectorMaxMagnitude;
@@ -55,20 +47,18 @@ typedef struct
 	qfrac16_t Ib;
 	qfrac16_t Ic;
 
-	//	qangle16_t Theta;
-	qfrac16_t Sine; /* save for inverse park call */
-	qfrac16_t Cosine;
-
-	/* calculated */
 	qfrac16_t Ialpha;
 	qfrac16_t Ibeta;
+
+	/* Theta */
+	qfrac16_t Sine; /* save for inverse park call */
+	qfrac16_t Cosine;
 
 	/* PID process/feedback variable */
 	qfrac16_t Id;
 	qfrac16_t Iq;
 
-	/* PID control variable */
-	/* Intermediate Input, bypass current feedback */
+	/* PID control variable, or intermediate input, bypass current feedback */
 	qfrac16_t Vd;
 	qfrac16_t Vq;
 
@@ -125,18 +115,15 @@ static inline qfrac16_t FOC_GetIq(FOC_T * p_foc) { return p_foc->Iq; }
 static inline qfrac16_t FOC_GetVd(FOC_T * p_foc) { return p_foc->Vd; }
 static inline qfrac16_t FOC_GetVq(FOC_T * p_foc) { return p_foc->Vq; }
 
+static inline qfrac16_t FOC_GetIMagnitude(FOC_T * p_foc) 
+{
+	int32_t dqSquared = ((int32_t)(p_foc->Vd) * (p_foc->Vd)) + ((int32_t)(p_foc->Vq) * (p_foc->Vq));
+	return q_sqrt(dqSquared);
+}
+
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
 extern void FOC_Zero(FOC_T * p_foc);
+extern void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax);
 
 #endif
-//static inline void FOC_ProcThetaSvpwm(FOC_T *  p_foc)
-//{
-////	qangle16_t phi = arctan(qfrac16_div(p_foc->Vq, p_foc->Vd));
-////	uint16_t magnitude = mag(p_foc->Vd, p_foc->Vq);
-////
-////	svpwm_unipolar1(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, magnitude, p_foc->Theta, phi);
-//
-//	//vq is positive
-////	svpwm_unipolar1(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, (uint16_t)(p_foc->Vq << 1U), p_foc->Theta, QANGLE16_90);
-//}

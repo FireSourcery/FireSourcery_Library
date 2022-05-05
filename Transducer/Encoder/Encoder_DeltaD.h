@@ -26,7 +26,7 @@
 	@author FireSourcery
 	@brief 	Capture Delta D Mode, Polling time is fixed
 	@version V0
- */
+*/
 /******************************************************************************/
 #ifndef ENCODER_DELTA_D_H
 #define ENCODER_DELTA_D_H
@@ -171,37 +171,22 @@ static inline uint32_t Encoder_DeltaD_GetAngle(Encoder_T * p_encoder)
 
 /******************************************************************************/
 /*!
-	Unit Conversions -
-	Only for variable DeltaD (DeltaT is fixed, == 1).
-	Meaningless for DeltaT, variable DeltaD (DeltaT is fixed, == 1).
+	Unit Conversions - Variable DeltaD (DeltaT is fixed, == 1).
  */
 /******************************************************************************/
 static inline uint32_t Encoder_DeltaD_Get(Encoder_T * p_encoder)		{return p_encoder->DeltaD;}
 //static inline uint32_t Encoder_DeltaD_Get_Units(Encoder_T * p_encoder)	{return p_encoder->DeltaD * p_encoder->UnitLinearD;}
-//
-//static inline uint32_t Encoder_DeltaD_GetSpeed(Encoder_T * p_encoder)
-//{
-////	return Encoder_DeltaD_CalcSpeed(p_encoder, p_encoder->DeltaD, 1U);
-//}
 
 /*!
 	Capture DeltaD  only-
 	CaptureDeltaD, DeltaT == 1: DeltaD count on fixed time sample.
 	CaptureDeltaT, DeltaD == 1: <= 1, (Number of fixed DeltaD samples, before a DeltaT increment)
+	Overflow: UINT32_MAX / (unitDeltaD * unitDeltaT_Freq)
+	deltaD ~14,000, for 300,000 (unitDeltaD * unitDeltaT_Freq)
 */
-static inline uint32_t Encoder_DeltaD_ConvertFromSpeed(Encoder_T * p_encoder, uint32_t speed_UnitsPerSecond)
-{
-	return speed_UnitsPerSecond / p_encoder->UnitLinearSpeed;
-}
-
 static inline uint32_t Encoder_DeltaD_ConvertToSpeed(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
 {
 	return deltaD_Ticks * p_encoder->UnitLinearSpeed;
-}
-
-static inline uint32_t Encoder_DeltaD_ConvertFromSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t speed_UnitsPerMinute)
-{
-	return speed_UnitsPerMinute * 60U / p_encoder->UnitLinearSpeed;
 }
 
 static inline uint32_t Encoder_DeltaD_ConvertToSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
@@ -209,7 +194,22 @@ static inline uint32_t Encoder_DeltaD_ConvertToSpeed_UnitsPerMinute(Encoder_T * 
 	return deltaD_Ticks * p_encoder->UnitLinearSpeed * 60U;
 }
 
+static inline uint32_t Encoder_DeltaD_ConvertFromSpeed(Encoder_T * p_encoder, uint32_t speed_UnitsPerSecond)
+{
+	return speed_UnitsPerSecond / p_encoder->UnitLinearSpeed;
+}
 
+static inline uint32_t Encoder_DeltaD_ConvertFromSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t speed_UnitsPerMinute)
+{
+	return speed_UnitsPerMinute * 60U / p_encoder->UnitLinearSpeed;
+} 
+
+static inline uint32_t Encoder_DeltaD_GetSpeed(Encoder_T * p_encoder)
+{
+	// return Encoder_CalcSpeed(p_encoder, p_encoder->DeltaD, 1U);
+	return Encoder_DeltaD_ConvertToSpeed(p_encoder, p_encoder->DeltaD);
+}
+ 
 /*!
 	@return DeltaD is angle in raw timer counter ticks.
 	CaptureDeltaD only, Fixed DeltaT: DeltaD count on fixed time sample.

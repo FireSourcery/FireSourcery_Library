@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.h
-    @author FireSoucery
-    @brief	Hall module
-    @version V0
+	@file 	Config.h
+	@author FireSoucery
+	@brief	Hall module
+	@version V0
 */
 /******************************************************************************/
 #ifndef CONFIG_HALL_H
@@ -34,12 +34,9 @@
 #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
 #endif
 
-#if defined(CONFIG_HALL_ID_BASE_PINS_STATE)
-
-#elif defined(CONFIG_HALL_ID_BASE_ROTOR_SECTOR)
-
-#elif defined(CONFIG_HALL_ID_BASE_COMMUTATION_SECTOR)
-
+#if 	defined(CONFIG_HALL_ID_BASE_PINS_STATE) 
+#elif 	defined(CONFIG_HALL_ID_BASE_ROTOR_SECTOR) 
+#elif 	defined(CONFIG_HALL_ID_BASE_COMMUTATION_SECTOR) 
 #else
 	#define CONFIG_HALL_ID_BASE_COMMUTATION_SECTOR
 #endif

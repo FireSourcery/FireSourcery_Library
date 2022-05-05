@@ -22,15 +22,13 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Q.h
+	@file 	Q.c
 	@author FireSoucery
-	@brief 	Math with 16 bit fractions in Q1.15 format
+	@brief 
 	@version V0
 */
 /******************************************************************************/
 #include "QFrac16.h"
-
-#include <stdint.h>
 
 const qfrac16_t QFRAC16_SINE_90_TABLE[SINE_90_TABLE_ENTRIES] =
 {

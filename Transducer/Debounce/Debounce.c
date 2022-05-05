@@ -22,25 +22,49 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
-    @author FireSoucery
-    @brief
-    @version V0
+	@file	Debounce.c
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #include "Debounce.h"
 
-#include "Peripheral/Pin/Pin.h"
-
-#include <stdint.h>
-#include <stdbool.h>
-
 void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime)
 {
-	Pin_Input_Init(&p_debounce->CONFIG.PIN);
-	p_debounce->DebounceTime = debounceTime;
-
-	p_debounce->DebouncedState 		= Pin_Input_Read(&p_debounce->CONFIG.PIN);
+	Pin_Input_Init(&p_debounce->Pin);
+	p_debounce->DebounceTime 		= debounceTime; 
+	p_debounce->DebouncedState 		= Pin_Input_Read(&p_debounce->Pin);
 	p_debounce->DebouncedStatePrev 	= p_debounce->DebouncedState;
 	p_debounce->RawStatePrev 		= p_debounce->DebouncedState;
 }
+
+/*
+	return true if state changed
+*/
+bool Debounce_CaptureState(Debounce_T * p_debounce)
+{
+	bool pinState = Pin_Input_Read(&p_debounce->Pin);
+
+	/*
+		check if state is the same for specified duration,
+		vs preemptive lock out - noise may lock out real input
+	*/
+	if(pinState != p_debounce->RawStatePrev)
+	{
+		p_debounce->TimePrev = *p_debounce->CONFIG.P_TIMER;
+		p_debounce->RawStatePrev = pinState;
+	}
+	else
+	{
+		if(*p_debounce->CONFIG.P_TIMER - p_debounce->TimePrev > p_debounce->DebounceTime)
+		{
+			p_debounce->TimePrev = UINT32_MAX - p_debounce->DebounceTime; /* disable until next change in pin */
+			p_debounce->DebouncedStatePrev = p_debounce->DebouncedState;
+			p_debounce->DebouncedState = pinState;
+		}
+	}
+
+	return (p_debounce->DebouncedStatePrev ^ p_debounce->DebouncedState);
+}
+

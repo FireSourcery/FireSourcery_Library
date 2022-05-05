@@ -37,10 +37,10 @@
 	#define CONFIG_LINEAR_DIVIDE_SHIFT
 #endif
 
-// #if 	defined(CONFIG_LINEAR_ADC_MAX) 
-// #elif 	defined(ADC_MAX) 
-// #else 
-// 	#define ADC_MAX 4096U
-// #endif
+#if 	defined(CONFIG_LINEAR_ADC_MAX) 
+#elif 	defined(ADC_MAX) 
+#else 
+	#define ADC_MAX 4096U
+#endif
 
 #endif

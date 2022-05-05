@@ -26,7 +26,7 @@
 	@author FireSourcery
 	@brief	text io functions for terminal ui
 	@version V0
- */
+*/
 /******************************************************************************/
 #ifndef TERMINAL_H
 #define TERMINAL_H
@@ -34,9 +34,9 @@
 #include "Config.h"
 
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-	#include "Peripheral/Xcvr/Xcvr.h"
+#include "Peripheral/Xcvr/Xcvr.h"
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	#include "Peripheral/Serial/Serial.h"
+#include "Peripheral/Serial/Serial.h"
 #endif
 
 #include <stdint.h>
@@ -69,6 +69,71 @@ typedef struct
 }
 Terminal_T;
 
+static inline char Terminal_RecvChar(const Terminal_T * p_terminal)
+{
+	uint8_t rxChar = 0U;
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+	Xcvr_Rx(&p_terminal->Xcvr, &rxChar, 1U);
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+	Serial_RecvChar(p_terminal->p_Serial, &rxChar);
+#endif
+	return rxChar;
+}
+
+static inline void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
+{
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+	Xcvr_Tx(&p_terminal->Xcvr, &txChar, 1U);
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+	Serial_SendChar(p_terminal->p_Serial, txChar);
+#endif
+}
+
+static inline void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str) // can compiler optimize strlen() of passed string literal?
+{
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+	Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, strlen(p_str));
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+	Serial_SendString(p_terminal->p_Serial, (const uint8_t *)p_str, strlen(p_str));
+#endif
+}
+
+static inline void Terminal_SendString_Len(const Terminal_T * p_terminal, const char * p_str, uint8_t length)
+{
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+	Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, length);
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+	Serial_SendString(p_terminal->p_Serial, (const uint8_t *)p_str, length);
+#endif
+}
+
+static inline bool Terminal_GetIsKeyPressed(const Terminal_T * p_terminal)
+{
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+	return ((Xcvr_GetRxFullCount(&p_terminal->Xcvr) == 0U) ? false : true);
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+	return ((Serial_GetRxFullCount(p_terminal->p_Serial) == 0U) ? false : true);
+#endif
+}
+
+static inline uint8_t * Terminal_AcquireTxBuffer(const Terminal_T * p_terminal)
+{
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+	return Xcvr_AcquireTxBuffer(&p_terminal->Xcvr);
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+	return Serial_AcquireTxBuffer(p_terminal->p_Serial);
+#endif
+}
+
+static inline void Terminal_ReleaseTxBuffer(const Terminal_T * p_terminal, size_t writeSize)
+{
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+	return Xcvr_ReleaseTxBuffer(&p_terminal->Xcvr, writeSize);
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+	return Serial_ReleaseTxBuffer(p_terminal->p_Serial, writeSize);
+#endif
+}
+
 static inline uint8_t Terminal_GetCmdlineArgC(const Terminal_T * p_terminal)
 {
 	return p_terminal->ArgC;
@@ -89,10 +154,10 @@ extern void Terminal_SetXcvr(Terminal_T * p_terminal, uint8_t xcvrID);
 extern void Terminal_SetSerial(Terminal_T * p_terminal, void * p_serial);
 extern void Terminal_ConfigBaudRate(const Terminal_T * p_terminal, uint32_t baudRate);
 
-extern char Terminal_RecvChar(const Terminal_T * p_terminal);
-extern void Terminal_SendChar(const Terminal_T * p_terminal, char txChar);
-extern void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str);
-extern void Terminal_SendString_Prefixed(const Terminal_T * p_terminal, const char * p_str, uint8_t length);
+// extern char Terminal_RecvChar(const Terminal_T * p_terminal);
+// extern void Terminal_SendChar(const Terminal_T * p_terminal, char txChar);
+// extern void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str);
+// extern void Terminal_SendString_Len(const Terminal_T * p_terminal, const char * p_str, uint8_t length);
 extern bool Terminal_GetIsKeyPressed(const Terminal_T * p_terminal);
 extern void Terminal_SendNum(const Terminal_T * p_terminal, int32_t number);
 extern void Terminal_SendEsc(const Terminal_T * p_terminal);

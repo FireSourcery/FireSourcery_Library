@@ -49,12 +49,12 @@ XcvrVirtual_T;
 /*
  * Use critical if multithreaded
  */
-static inline bool XcvrVirtual_Send(const XcvrVirtual_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
+static inline bool XcvrVirtual_Send(XcvrVirtual_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
 {
 	return Queue_EnqueueN(&p_xcvr->TxQueue, p_srcBuffer, length);
 }
 
-static inline uint32_t XcvrVirtual_Recv(const XcvrVirtual_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
+static inline uint32_t XcvrVirtual_Recv(XcvrVirtual_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
 {
 	return Queue_DequeueMax(&p_xcvr->TxQueue, p_destBuffer, length);
 }

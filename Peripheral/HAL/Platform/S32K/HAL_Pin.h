@@ -50,8 +50,8 @@ static inline void HAL_Pin_WriteOutputOff(HAL_Pin_T * p_hal, uint32_t pinId)
 
 static inline void HAL_Pin_WriteOutput(HAL_Pin_T * p_hal, uint32_t pinId, bool isOn)
 {
-//	isOn ? (p_hal->PDOR |= pinId) : (p_hal->PDOR &= ~(pinId));
-	isOn ? HAL_Pin_WriteOutputOn(p_hal, pinId) : HAL_Pin_WriteOutputOff(p_hal, pinId);
+	isOn ? (p_hal->PDOR |= pinId) : (p_hal->PDOR &= ~(pinId));
+	// isOn ? HAL_Pin_WriteOutputOn(p_hal, pinId) : HAL_Pin_WriteOutputOff(p_hal, pinId);
 }
 
 static inline bool HAL_Pin_ReadInput(const HAL_Pin_T * p_hal, uint32_t pinId)

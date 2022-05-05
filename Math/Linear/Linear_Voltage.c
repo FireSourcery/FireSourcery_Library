@@ -29,8 +29,6 @@
 */
 /*******************************************************************************/
 #include "Linear_Voltage.h"
-#include "Linear.h"
-#include <stdint.h>
 
 /******************************************************************************/
 /*!
@@ -53,6 +51,8 @@
 	VPerADCDivisor = ((int32_t)1 << adcBits);
 
 	Overflow: R2 > 65536
+	(uint32_t)adcVRef_MilliV * (r1 + r2)) << (15U - adcBits):
+	 ~ r1, r1 = 10000, adcVRef = 5000, shift = 3
 
 	Shift 15. Divider should not return oversaturated value
 
@@ -66,9 +66,10 @@
 void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcBits, uint16_t adcVRef_MilliV, uint16_t vInMax)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-	p_linear->Slope 			= (((int32_t)adcVRef_MilliV * (r1 + r2)) << (15U - adcBits)) / r2 / 1000U; 	/* (VREF*(R1 + R2) << 16)/(ADC_MAX*R2) */
+	//alternatively call maxleftshift divide
+	p_linear->Slope 			= (((uint32_t)adcVRef_MilliV * (r1 + r2)) << (15U - adcBits)) / r2 / 1000U; 	/* (VREF*(R1 + R2) << 16)/(ADC_MAX*R2) */
 	p_linear->SlopeShift 		= 15U;
-	p_linear->InvSlope 			= ((int32_t)r2 << 15U) / adcVRef_MilliV * 1000U / (r1 + r2);				/* ((R2) << 16)/(VREF*(R1 + R2)) */
+	p_linear->InvSlope 			= ((uint32_t)r2 << 15U) / adcVRef_MilliV * 1000U / (r1 + r2);				/* ((R2) << 16)/(VREF*(R1 + R2)) */
 	p_linear->InvSlopeShift 	= 15U - adcBits;
 #elif defined (CONFIG_LINEAR_DIVIDE_NUMERICAL)
 	p_linear->SlopeFactor 	= adcVRef_MilliV * (r1 + r2) / 1000U;			/* (VREF*(R1+R2)) */
@@ -82,13 +83,18 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t 
 uint16_t Linear_Voltage_CalcAdcu_UserV(const Linear_T * p_linear, uint16_t volts)
 { 
 	uint16_t adcu = Linear_Voltage_CalcAdcu_V(p_linear, volts); 
-	if(Linear_Voltage_CalcV(p_linear, adcu) < volts) { adcu += 1U; }
-	return (uint16_t)Linear_InvFunction(p_linear, volts);
+	while(Linear_Voltage_CalcV(p_linear, adcu) < volts) { adcu += 1U; }
+	return adcu;
 }
 
 uint16_t Linear_Voltage_CalcAdcu_UserMilliV(const Linear_T * p_linear, uint32_t milliV)
 {
-	uint16_t adcu = Linear_Voltage_CalcAdcu_MilliV(p_linear, milliV); 
-	if(Linear_Voltage_CalcMilliV(p_linear, adcu) < milliV) { adcu += 1U; }
+	uint16_t adcu = Linear_Voltage_CalcAdcu_MilliV(p_linear, milliV);
+
+	while((Linear_Voltage_CalcMilliV(p_linear, adcu) < milliV) && (adcu < ADC_MAX)) 
+	{
+		 adcu += 1U; 
+	}
+
 	return adcu; 
 }

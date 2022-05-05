@@ -22,16 +22,17 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.h
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	Config.h
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef CONFIG_PHASE_H
 #define CONFIG_PHASE_H
 
-//#define CONFIG_PHASE_DUTY_MAX (65536U)
+#ifdef CONFIG_PHASE_EXTERNAL_SWITCH
+#endif
 
 #endif
 

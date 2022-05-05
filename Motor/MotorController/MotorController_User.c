@@ -22,18 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	MotorController_User.c
-    @author FireSoucery
-    @brief	User accessor functions, error checking applied
-    @version V0
+	@file 	MotorController_User.c
+	@author FireSoucery
+	@brief	
+	@version V0
 */
 /******************************************************************************/
 #include "MotorController_User.h"
-#include "MotorController.h"
-#include "Config.h"
-
-#include "Motor/Motor/Motor.h"
-
-#include <stdint.h>
-
-

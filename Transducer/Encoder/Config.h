@@ -31,43 +31,29 @@
 #ifndef CONFIG_ENCODER_H
 #define CONFIG_ENCODER_H
 
-/*
- * Compile time define if chip supports quadrature capture. Enables toggle during runtime
- */
-#ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
-
-#elif defined(CONFIG_ENCODER_HW_QUADRATURE_DISABLED)
-
+/* Compile time define if chip supports quadrature capture. Enables toggle during runtime */
+#if 	defined(CONFIG_ENCODER_HW_QUADRATURE_CAPABLE)
+#elif 	defined(CONFIG_ENCODER_HW_QUADRATURE_DISABLED) 
 #else
 	#define CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
 #endif
 
-/*
- * Compile time define for all encoder instances if A Lead B is increment
- */
-#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-
-#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-
+/* Compile time define for all encoder instances if A Lead B is increment */
+#if 	defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT)
+#elif 	defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
 #else
 	#define CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
 #endif
 
-/*
- * Capture DeltaT Mode
- */
-#ifdef CONFIG_ENCODER_HW_TIMER_COUNTER_MAX
-
+/*  Capture DeltaT Mode */
+#if 	defined(CONFIG_ENCODER_HW_TIMER_COUNTER_MAX)
 #else
-	#define CONFIG_ENCODER_HW_TIMER_COUNTER_MAX 0xFFFFU
+		#define CONFIG_ENCODER_HW_TIMER_COUNTER_MAX 0xFFFFU
 #endif
 
-#ifdef CONFIG_ENCODER_ANGLE_DEGREES_BITS
-
+#if 	defined(CONFIG_ENCODER_ANGLE_DEGREES_BITS)
 #else
 	#define CONFIG_ENCODER_ANGLE_DEGREES_BITS 16U
 #endif
-
-
 
 #endif

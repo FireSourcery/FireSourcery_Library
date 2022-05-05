@@ -22,40 +22,39 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	.h
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	.h
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #include "Motor_Analog.h"
 //#include "Motor_SixStep.h"
-#include "Motor_FOC.h"
-#include "Peripheral/Analog/AnalogN/AnalogN.h"
+#include "Motor_FOC.h" 
 
 /******************************************************************************/
 /*!
-    @brief  Callback functions must be mapped
+	@brief  Callback functions must be mapped
 */
 /******************************************************************************/
 
 /******************************************************************************/
 /*!
-    @brief  Conversion
+	@brief  Conversion
 */
 /******************************************************************************/
 void Motor_Analog_CaptureVa(Motor_T * p_motor)
 {
-	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
-//		Motor_SixStep_CaptureBemfA(p_motor);
+		//		Motor_SixStep_CaptureBemfA(p_motor);
 	}
 	else
 	{
 
 	}
 
-	if (p_motor->AnalogResults.Va_ADCU > p_motor->VBemfPeakTemp_ADCU)
+	if(p_motor->AnalogResults.Va_ADCU > p_motor->VBemfPeakTemp_ADCU)
 	{
 		p_motor->VBemfPeakTemp_ADCU = p_motor->AnalogResults.Va_ADCU;
 	}
@@ -63,21 +62,21 @@ void Motor_Analog_CaptureVa(Motor_T * p_motor)
 
 /******************************************************************************/
 /*!
-    @brief  Conversion
+	@brief  Conversion
 */
 /******************************************************************************/
 void Motor_Analog_CaptureVb(Motor_T * p_motor)
 {
-	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
-//		Motor_SixStep_CaptureBemfB(p_motor);
+		//		Motor_SixStep_CaptureBemfB(p_motor);
 	}
 	else
 	{
 
 	}
 
-	if (p_motor->AnalogResults.Vb_ADCU > p_motor->VBemfPeakTemp_ADCU)
+	if(p_motor->AnalogResults.Vb_ADCU > p_motor->VBemfPeakTemp_ADCU)
 	{
 		p_motor->VBemfPeakTemp_ADCU = p_motor->AnalogResults.Vb_ADCU;
 	}
@@ -85,21 +84,21 @@ void Motor_Analog_CaptureVb(Motor_T * p_motor)
 
 /******************************************************************************/
 /*!
-    @brief  Conversion
+	@brief  Conversion
 */
 /******************************************************************************/
 void Motor_Analog_CaptureVc(Motor_T * p_motor)
 {
-	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
-//		Motor_SixStep_CaptureBemfC(p_motor);
+		//		Motor_SixStep_CaptureBemfC(p_motor);
 	}
 	else
 	{
 
 	}
 
-	if (p_motor->AnalogResults.Vc_ADCU > p_motor->VBemfPeakTemp_ADCU)
+	if(p_motor->AnalogResults.Vc_ADCU > p_motor->VBemfPeakTemp_ADCU)
 	{
 		p_motor->VBemfPeakTemp_ADCU = p_motor->AnalogResults.Vc_ADCU;
 	}
@@ -107,14 +106,14 @@ void Motor_Analog_CaptureVc(Motor_T * p_motor)
 
 /******************************************************************************/
 /*!
-    @brief  Conversion
+	@brief  Conversion
 */
 /******************************************************************************/
 void Motor_Analog_CaptureIa(Motor_T * p_motor)
 {
-	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
-//		Motor_SixStep_CaptureIBusA(p_motor);
+		//		Motor_SixStep_CaptureIBusA(p_motor);
 	}
 	else
 	{
@@ -124,14 +123,14 @@ void Motor_Analog_CaptureIa(Motor_T * p_motor)
 
 /******************************************************************************/
 /*!
-    @brief  Conversion
+	@brief  Conversion
 */
 /******************************************************************************/
 void Motor_Analog_CaptureIb(Motor_T * p_motor)
 {
-	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
-//		Motor_SixStep_CaptureIBusB(p_motor);
+		//		Motor_SixStep_CaptureIBusB(p_motor);
 	}
 	else
 	{
@@ -141,14 +140,14 @@ void Motor_Analog_CaptureIb(Motor_T * p_motor)
 
 /******************************************************************************/
 /*!
-    @brief  Conversion
+	@brief  Conversion
 */
 /******************************************************************************/
 void Motor_Analog_CaptureIc(Motor_T * p_motor)
 {
-	if (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{
-//		Motor_SixStep_CaptureIBusC(p_motor);
+		//		Motor_SixStep_CaptureIBusC(p_motor);
 	}
 	else
 	{
@@ -160,7 +159,7 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
 
 /******************************************************************************/
 /*!
-    @brief  Conversion
+	@brief  Conversion
 */
 /******************************************************************************/
 
@@ -172,14 +171,14 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
 /*
  * Sets options only
  */
-//const Analog_Options_T MOTOR_ANALOG_OPTIONS_PWM_ON =
-//{
-//	.OPTIONS = {.IsValid = 1U, .HwTriggerConversion = 1U, },
-//	.ON_OPTIONS = SetPwmOnFlag,
-//};
-//
-//const Analog_Options_T MOTOR_ANALOG_OPTIONS_RESTORE =
-//{
-//	.OPTIONS = {.IsValid = 1U, .HwTriggerConversion = 0U, },
-//};
+ //const Analog_Options_T MOTOR_ANALOG_OPTIONS_PWM_ON =
+ //{
+ //	.OPTIONS = {.IsValid = 1U, .HwTriggerConversion = 1U, },
+ //	.ON_OPTIONS = SetPwmOnFlag,
+ //};
+ //
+ //const Analog_Options_T MOTOR_ANALOG_OPTIONS_RESTORE =
+ //{
+ //	.OPTIONS = {.IsValid = 1U, .HwTriggerConversion = 0U, },
+ //};
 

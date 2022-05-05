@@ -22,23 +22,19 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.h
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	Config.h
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef CONFIG_THERMISTOR_H
 #define CONFIG_THERMISTOR_H
 
-#if defined(ADC_VREF_MILLIV) && defined(ADC_MAX)
-
-#elif defined(CONFIG_THERMISTOR_ADC_VREF_MILLIV) && defined(CONFIG_THERMISTOR_ADC_MAX)
-	#define ADC_VREF_MILLIV CONFIG_THERMISTOR_ADC_VREF_MILLIV
-	#define ADC_MAX CONFIG_THERMISTOR_ADC_MAX
+#if 	defined(CONFIG_THERMISTOR_ADC_MAX)  
+#elif 	defined(ADC_MAX) 
 #else
-	#define ADC_VREF 		5U
-	#define ADC_MAX 		4096U
+	#define ADC_MAX	4096U
 #endif
 
 #endif

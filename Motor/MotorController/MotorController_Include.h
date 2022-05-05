@@ -22,15 +22,14 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	MotorController_Include.h
-    @author FireSoucery
-    @brief	Includes all headers
-    @version V0
+	@file 	MotorController_Include.h
+	@author FireSoucery
+	@brief	Includes all headers
+	@version V0
 */
 /******************************************************************************/
 #include "MotorController_User.h"
 #include "MotorController_Thread.h"
-#include "MotorController_Analog.h"
-#include "MotorController.h"
-//#include "MotorController_StateMachine.h"
+#include "MotorController_Analog.h" 
 #include "MotorController_Shell.h"
+#include "Motor/Motor/Motor_Include.h"

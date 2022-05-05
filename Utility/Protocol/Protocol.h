@@ -22,16 +22,16 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
-    @author FireSoucery
-    @brief
-    @version V0
+	@file	Protocol.h
+	@author FireSoucery
+	@brief	Simple general configurable protocol
+	@version V0
 */
 /******************************************************************************/
-#ifndef PROTOCOL_H
-
+#ifndef PROTOCOL_H 
 #define PROTOCOL_H
 
+#include "Config.h"
 //#include "Datagram.h"
 
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
@@ -58,21 +58,22 @@ typedef enum
 {
 	PROTOCOL_REQ_CODE_WAIT_PROCESS, 		//wait process
 //	PROTOCOL_REQ_CODE_WAIT_PROCESS_PAUSE_RX,
-	PROTOCOL_REQ_CODE_COMPLETE,				//exit nonblocking wait state upon reception
-	PROTOCOL_REQ_CODE_AWAIT_RX_DATA,		//rx new packet
-	PROTOCOL_REQ_CODE_AWAIT_RX_SYNC,		//wait for static ack nack
-	PROTOCOL_REQ_CODE_TX_DATA,
-	PROTOCOL_REQ_CODE_TX_ACK,
-	PROTOCOL_REQ_CODE_TX_NACK,
-	PROTOCOL_REQ_CODE_EXTEND_TIMER,
+PROTOCOL_REQ_CODE_COMPLETE,				//exit nonblocking wait state upon reception
+PROTOCOL_REQ_CODE_AWAIT_RX_DATA,		//rx new packet
+PROTOCOL_REQ_CODE_AWAIT_RX_SYNC,		//wait for static ack nack
+PROTOCOL_REQ_CODE_TX_DATA,
+PROTOCOL_REQ_CODE_TX_ACK,
+PROTOCOL_REQ_CODE_TX_NACK,
+PROTOCOL_REQ_CODE_EXTEND_TIMER,
 //	PROTOCOL_REQ_CODE_DATAGRAM_CONFIG,
 }
 Protocol_ReqCode_T;
 
-typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(void * p_subState,  void * p_appInterface,  uint8_t * p_txPacket,  size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
+typedef Protocol_ReqCode_T(*Protocol_ReqExtFunction_T)	(void * p_subState, void * p_appInterface, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
 //typedef Protocol_ReqCode_T (*Protocol_ReqExtFunction_T)	(const Protocol_Interface_T * args, size_t * p_txSize, size_t rxSize);
 //typedef Protocol_ReqCode_T (*Protocol_ReqDatagram_T)	(Datagram_T * p_datagram, uint8_t * p_txPacket,  size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
 
+typedef void (*Protocol_DatagramInit_T)	(void * p_app, void * p_datagramOptions, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize);
 
 /*
  * static string sync
@@ -99,7 +100,7 @@ Protocol_ReqSync_T;
 typedef const struct
 {
 	const Protocol_ReqExtFunction_T PROCESS;
-//	const uint32_t TIMEOUT;
+	//	const uint32_t TIMEOUT;
 }
 Protocol_ReqExtProcess_T;
 
@@ -107,8 +108,8 @@ typedef const struct
 {
 	const protocolg_reqid_t 			ID;
 	const Protocol_ReqFastReadWrite_T 	FAST;				/* Stateless req, simple read write */
-	const Protocol_ReqSync_T 			* const P_SYNC;		/* Stateless ack nack */
-	const Protocol_ReqExtProcess_T		* const P_EXT;		/* Extended req, saving state data. - Support wait, loop, dynamic ack/nack and additional processes */
+	const Protocol_ReqSync_T * const P_SYNC;		/* Stateless ack nack */
+	const Protocol_ReqExtProcess_T * const P_EXT;		/* Extended req, saving state data. - Support wait, loop, dynamic ack/nack and additional processes */
 //	const uint32_t TIMEOUT;
 }
 Protocol_ReqEntry_T;
@@ -123,8 +124,8 @@ Protocol_ReqEntry_T;
 typedef enum
 {
 	PROTOCOL_RX_CODE_WAIT_PACKET,
-//	PROTOCOL_RX_CODE_WAIT_PACKET_LENGTH,
-//	PROTOCOL_RX_CODE_WAIT_PACKET_DATA,
+	//	PROTOCOL_RX_CODE_WAIT_PACKET_LENGTH,
+	//	PROTOCOL_RX_CODE_WAIT_PACKET_DATA,
 	PROTOCOL_RX_CODE_REQ_ID,
 	PROTOCOL_RX_CODE_ERROR_PACKET,
 	PROTOCOL_RX_CODE_ERROR_PACKET_ECC,
@@ -132,10 +133,10 @@ typedef enum
 	PROTOCOL_RX_CODE_ACK,
 	PROTOCOL_RX_CODE_NACK,
 	PROTOCOL_RX_CODE_ABORT,
-//	PROTOCOL_RX_CODE_REQ_VAR,
-//	PROTOCOL_RX_CODE_REQ_DATAGRAM,
-//	PROTOCOL_RX_CODE_REQ_FLASH,
-//	PROTOCOL_RX_CODE_REQ_ID_DATA, //continue req
+	//	PROTOCOL_RX_CODE_REQ_VAR,
+	//	PROTOCOL_RX_CODE_REQ_DATAGRAM,
+	//	PROTOCOL_RX_CODE_REQ_FLASH,
+	//	PROTOCOL_RX_CODE_REQ_ID_DATA, //continue req
 }
 Protocol_RxCode_T;
 
@@ -166,11 +167,11 @@ typedef const struct
 	/*
 	 * User provide function to determine completion of rx packet. returns reqid upon completion.
 	 */
-	Protocol_RxCode_T 	(*const PARSE_RX)(void * p_subState, protocolg_reqid_t * p_reqId, const void * p_rxPacket, uint8_t rxCount);
-	void 				(*const BUILD_TX_SYNC)(void * p_subState, uint8_t * p_txPacket, size_t * p_txSize, Protocol_TxSyncId_T txId);
-	void 				(*const RESET_SUBSTATE)(void * p_subState);
+	Protocol_RxCode_T(* const PARSE_RX)(void * p_subState, protocolg_reqid_t * p_reqId, const void * p_rxPacket, uint8_t rxCount);
+	void 				(* const BUILD_TX_SYNC)(void * p_subState, uint8_t * p_txPacket, size_t * p_txSize, Protocol_TxSyncId_T txId);
+	void 				(* const RESET_SUBSTATE)(void * p_subState);
 
-//	BuildTx_T * P_BUILD_TX_TABLE;
+	//	BuildTx_T * P_BUILD_TX_TABLE;
 
 	const Protocol_ReqEntry_T * const P_REQ_TABLE;
 	const uint8_t REQ_TABLE_LENGTH;
@@ -179,8 +180,8 @@ typedef const struct
 	/* Optional */
 	const uint32_t RX_START_ID; //set to 0x00 or 0xff by default for bus idle state
 	const uint32_t RX_END_ID;
-//	const uint8_t START_ID_LENGTH; multichar start/end id
-//	const uint8_t END_ID_LENGTH;
+	//	const uint8_t START_ID_LENGTH; multichar start/end id
+	//	const uint8_t END_ID_LENGTH;
 	const bool ENCODED;	//encoded data, non encoded use time out only, past first char, no meta chars
 
 //	bool USE_RX_PAUSE_ON_REQ;
@@ -208,14 +209,13 @@ typedef enum
 }
 Protocol_ReqState_T;
 
-typedef struct __attribute__((aligned (4U)))
+typedef struct __attribute__((aligned(4U)))
 {
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 	uint8_t XcvrId;
 #else
 	Serial_T * p_Serial;
 #endif
-	const Protocol_Specs_T * p_Specs; //change to id
 	uint8_t SpecsId;
 	bool IsEnable; 	/* enable on start up */
 }
@@ -239,38 +239,37 @@ typedef const struct
 {
 	uint8_t * const P_RX_PACKET_BUFFER;
 	uint8_t * const P_TX_PACKET_BUFFER;
+	const uint8_t PACKET_BUFFER_LENGTH; 	// must be greater than RX_LENGTH_MAX
 	void * const P_APP_CONTEXT;				// user app context
 	void * const P_SUBSTATE_BUFFER; 		// child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context from specs
-
-	const uint8_t PACKET_BUFFER_LENGTH; 	// must be greater than RX_LENGTH_MAX
-	const volatile uint32_t * const P_TIMER;
-
-	const Protocol_Specs_T * const * const P_SPECS_TABLE; //use to bound specs selection, set to 1 if fixed to 1
+	const Protocol_Specs_T * const * const P_SPECS_TABLE; /* bound and verify specs selection, set to 1 if fixed to 1 */
 	const uint8_t SPECS_COUNT;
-
+	const volatile uint32_t * const P_TIMER;
 	const Protocol_Params_T * const P_PARAMS; //address of params in nvm
 }
 Protocol_Config_T;
 
 #if defined(CONFIG_PROTOCOL_XCVR_ENABLE)
-	#define PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength) .Xcvr = XCVR_CONFIG(p_XcvrTable, TableLength)
+#define PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength) .Xcvr = XCVR_CONFIG(p_XcvrTable, TableLength)
 #else
-	#define PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength)
+#define PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength)
 #endif
 
-#define PROTOCOL_CONFIG(p_RxBuffer, p_TxBuffer, PacketLengthMax, p_AppContext, p_SubstateBuffer, p_Timer, p_Params, p_XcvrTable, TableLength)	\
+#define PROTOCOL_CONFIG(p_RxBuffer, p_TxBuffer, PacketLengthMax, p_AppContext, p_SubstateBuffer, p_SpecsTable, SpecsCount, p_XcvrTable, TableLength, p_Timer, p_Params)	\
 {																\
 	.CONFIG = 													\
 	{															\
-		.P_TIMER 				= p_Timer,						\
-		.PACKET_BUFFER_LENGTH 	= PacketLengthMax,				\
 		.P_RX_PACKET_BUFFER 	= p_RxBuffer,					\
 		.P_TX_PACKET_BUFFER 	= p_TxBuffer,					\
+		.PACKET_BUFFER_LENGTH 	= PacketLengthMax,				\
 		.P_APP_CONTEXT 			= p_AppContext,					\
 		.P_SUBSTATE_BUFFER 		= p_SubstateBuffer,				\
+		.P_SPECS_TABLE 			= p_SpecsTable,					\
+		.SPECS_COUNT 			= SpecsCount,					\
+		.P_TIMER 				= p_Timer,						\
 		.P_PARAMS 				= p_Params,						\
 	},															\
-	PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength)	 			\
+	PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength),	 			\
 }
 
 typedef struct Protocol_Tag
@@ -282,17 +281,17 @@ typedef struct Protocol_Tag
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 	Xcvr_T Xcvr;
 #endif
-
-	//proc variables
+	const Protocol_Specs_T * p_Specs;
+ 
 	size_t RxIndex;
 	size_t TxLength;
 	//	 volatile bool ReqRxSemaphore;
-	uint32_t ReqTimeStart;
-	uint32_t RxTimeStart;
 	Protocol_RxState_T		RxState;
 	Protocol_RxCode_T 		RxCode;
 	Protocol_ReqState_T 	ReqState;
 	Protocol_ReqCode_T 		ReqCode;
+	uint32_t ReqTimeStart;
+	uint32_t RxTimeStart;
 	uint8_t RxNackCount;
 	uint8_t TxNackCount;
 	protocolg_reqid_t ReqIdActive;
@@ -302,9 +301,12 @@ typedef struct Protocol_Tag
 Protocol_T;
 
 extern void Protocol_Init(Protocol_T * p_protocol);
-extern void Protocol_SetSpecs(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs);
-extern void Protocol_SetXcvr(Protocol_T * p_protocol, void * p_transceiver);
 extern void Protocol_Slave_Proc(Protocol_T * p_protocol);
+extern void Protocol_ConfigBaudRate(Protocol_T * p_protocol, uint32_t baudRate);
+extern void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t specsId);
+extern void Protocol_SetSpecs_Ptr(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs);
+extern void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId);
+extern void Protocol_SetXcvr_Ptr(Protocol_T * p_protocol, void * p_transceiver); 
 extern bool Protocol_Enable(Protocol_T * p_protocol);
 extern void Protocol_Disable(Protocol_T * p_protocol);
 

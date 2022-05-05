@@ -26,7 +26,7 @@
 	@author FireSourcery
 	@brief 	Encoder module conventional function definitions
 	@version V0
- */
+*/
 /******************************************************************************/
 #include "Encoder.h"
 #include "HAL_Encoder.h"
@@ -37,7 +37,7 @@
 
 /*!
 	highest precision (factor << leftShift / divisor) without overflow
- */
+*/
 static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uint8_t targetShift)
 {
 	uint32_t result = 0;
@@ -75,7 +75,9 @@ static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uin
 	@brief Init with provided parameters.
 	Default capture mode. HAL function responsible for all corresponding settings
 	EncoderResolution, EncoderCounterMax + 1
- */
+
+	//todo call set
+*/
 void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolution, uint32_t distancePerCount, uint32_t unitTFreq)
 {
 	p_encoder->UnitT_Freq = unitTFreq;
@@ -127,14 +129,14 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolut
 	/*
 	 * set boundary using 1 revolution minimum
 	 */
-//	if(unitTFreq > (UINT32_MAX >> CONFIG_ENCODER_ANGLE_DEGREES_BITS))
-//	{
-//		p_encoder->UnitAngularSpeed = 0U;
-//	}
-//	else
-//	{
-//		p_encoder->UnitAngularSpeed = (unitTFreq << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / countsPerRevolution;
-//	}
+	 //	if(unitTFreq > (UINT32_MAX >> CONFIG_ENCODER_ANGLE_DEGREES_BITS))
+	 //	{
+	 //		p_encoder->UnitAngularSpeed = 0U;
+	 //	}
+	 //	else
+	 //	{
+	 //		p_encoder->UnitAngularSpeed = (unitTFreq << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / countsPerRevolution;
+	 //	}
 
 	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitTFreq, p_encoder->CONFIG.POLLING_FREQ * countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
 
@@ -153,8 +155,8 @@ void Encoder_Zero(Encoder_T * p_encoder)
 	p_encoder->TotalD = 0U;
 	p_encoder->TotalT = 0U;
 	p_encoder->AngularD = 0U;
-//	p_encoder->UserD 	= 0;
-//	p_encoder->UserT 	= 0;
+	//	p_encoder->UserD 	= 0;
+	//	p_encoder->UserT 	= 0;
 
 	p_encoder->SpeedSaved = 0U;
 	p_encoder->DeltaSpeed = 0U;
@@ -162,25 +164,24 @@ void Encoder_Zero(Encoder_T * p_encoder)
 	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
 }
 
-//must use encoder init first
+ 
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)
 {
 	p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled;
 }
 
 /*!
- * isALeadBIncrement - Match to HAL/unused for deltaT Mode
- * isALeadBPositive - User runtime calibrate
- */
+	isALeadBIncrement - Match to HAL/unused for deltaT Mode
+	isALeadBPositive - User runtime calibrate
+*/
 void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive)
 {
 	p_encoder->Params.IsALeadBPositive = isALeadBPositive;
 }
-
-
+ 
 void Encoder_SetSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
 {
-	if(speedRef != p_encoder->Params.SpeedRef_Rpm)
+	if(speedRef != p_encoder->Params.SpeedRef_Rpm) //todo split to static interal or remove
 	{
 		p_encoder->Params.SpeedRef_Rpm = speedRef;
 		p_encoder->UnitRefSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.SpeedRef_Rpm, 16U);
@@ -198,8 +199,4 @@ void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRev
 		p_encoder->UnitRefSpeed 				= MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, countsPerRevolution * p_encoder->Params.SpeedRef_Rpm, 16U);
 	}
 }
-
-//void Encoder_ResetUnits(Encoder_T * p_encoder)
-//{
-//	_Encoder_SetUnitConversion(p_encoder, p_encoder->Params.CountsPerRevolution, p_encoder->UnitLinearD, p_encoder->UnitT_Freq);
-//}
+ 

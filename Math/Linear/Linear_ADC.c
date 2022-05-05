@@ -29,7 +29,6 @@
 */
 /******************************************************************************/
 #include "Linear_ADC.h" 
-#include <stdint.h>
 
 /******************************************************************************/
 /*!
@@ -41,7 +40,7 @@
 	f16(adcuRef) = 65535
 
 	frac16 conversion returns without division, as frac16 calc is performed more frequently
-	division in frac16 to physical units
+	division in physical to adcu, frac16 to physical units
 	Shift 14 to allow oversaturation f([-2*XRef:2*XRef]) == [-2*YRef:2*YRef] before overflow
 */
 /******************************************************************************/

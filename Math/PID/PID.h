@@ -34,7 +34,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef enum
+typedef enum PID_Mode_Tag
 {
 	PID_MODE_PI,
 	PID_MODE_PID,

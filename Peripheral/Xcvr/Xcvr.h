@@ -52,7 +52,6 @@ typedef const struct
 {
 	void * P_XCVR;
 	Xcvr_Type_T TYPE;
-	//string id?
 }
 Xcvr_Entry_T;
 

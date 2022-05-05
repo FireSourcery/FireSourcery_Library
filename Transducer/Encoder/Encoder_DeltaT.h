@@ -26,7 +26,7 @@
 	@author FireSourcery
 	@brief 	Capture Delta T Mode, displacement is fixed
 	@version V0
- */
+*/
 /******************************************************************************/
 #ifndef ENCODER_DELTA_T_H
 #define ENCODER_DELTA_T_H
@@ -72,9 +72,9 @@ static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
  */
 static inline void Encoder_DeltaT_CaptureQuadrature(Encoder_T * p_encoder)
 {
-//	bool phaseB = Pin_Input_Read(&p_encoder->CONFIG.PIN_PHASE_B);
+//	bool phaseB = Pin_Input_Read(&p_encoder->PhaseB);
 	//#ifdef enocder hal pin read
-//	bool phaseB = HAL_Encoder_ReadPhaseB(&p_encoder->CONFIG.PIN_PHASE_B);
+//	bool phaseB = HAL_Encoder_ReadPhaseB(&p_encoder->PhaseB);
 
 //	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
 //	p_encoder->TotalT += p_encoder->DeltaT;
@@ -141,13 +141,13 @@ static inline bool Encoder_DeltaT_PollReferenceEdgeDual(Encoder_T * p_encoder, b
  */
 static inline bool Encoder_DeltaT_PollPhaseAEdgeRising(Encoder_T * p_encoder)
 {
-	bool reference = Pin_Input_Read(&p_encoder->CONFIG.PIN_PHASE_A);
+	bool reference = Pin_Input_Read(&p_encoder->PhaseA);
 	return Encoder_DeltaT_PollReferenceEdgeRising(p_encoder, reference);
 }
 
 static inline bool Encoder_DeltaT_PollPhaseAEdgeDual(Encoder_T * p_encoder)
 {
-	bool reference = Pin_Input_Read(&p_encoder->CONFIG.PIN_PHASE_A);
+	bool reference = Pin_Input_Read(&p_encoder->PhaseA);
 	return Encoder_DeltaT_PollReferenceEdgeDual(p_encoder, reference);
 }
 
@@ -296,9 +296,7 @@ static inline uint32_t Encoder_DeltaT_GetInterpolationFreq(Encoder_T *p_encoder)
 
 /******************************************************************************/
 /*!
-	Unit Conversions -
-	Only for variable DeltaT (DeltaD is fixed, == 1).
-	Meaningless for variable DeltaD (DeltaT is fixed, == 1).
+	Unit Conversions - Variable DeltaT (DeltaD is fixed, == 1). 
  */
 /******************************************************************************/
 //static inline uint32_t Encoder_ConvertToTime_Millis(Encoder_T * p_encoder, uint32_t deltaT_Ticks)		{return deltaT_Ticks * 1000U / p_encoder->UnitT_Freq;}
@@ -331,21 +329,7 @@ static inline uint32_t Encoder_DeltaT_GetInterpolationFreq(Encoder_T *p_encoder)
 //	@brief DeltaT freq.	unit in cycles per minute
 // */
 //static inline uint32_t Encoder_DeltaT_GetFreq_CPM(Encoder_T * p_encoder)	{return Encoder_ConvertToFreq_CPM(p_encoder, p_encoder->DeltaT);}
-//
-
-//static inline uint32_t Encoder_GetSpeed_FixedDeltaT(Encoder_T * p_encoder)
-//{
-//	uint32_t spd;
-//
-//	/*
-//	 * For case of CaptureDeltaD(), DeltaT == 1: constraint on unitDeltaD, and deltaD
-//	 * Max deltaD will be UINT32_MAX / (unitDeltaD * unitDeltaT_Freq)
-//	 * deltaD ~14,000, for 300,000 (unitDeltaD * unitDeltaT_Freq)
-//	 */
-//	spd = p_encoder->DeltaD * p_encoder->UnitSpeed;
-//
-//	return spd;
-//}
+ 
 
 /*!
 	 Capture DeltaT Only -
@@ -356,14 +340,21 @@ static inline uint32_t Encoder_DeltaT_GetInterpolationFreq(Encoder_T *p_encoder)
 	@param unitsPerSecond
 	@return
  */
-static inline uint32_t Encoder_DeltaT_ConvertFromSpeed(Encoder_T * p_encoder, uint32_t speed_UnitsPerSecond)
-{
-	return (speed_UnitsPerSecond == 0U) ? 0U : p_encoder->UnitLinearSpeed / speed_UnitsPerSecond;
-}
+
 
 static inline uint32_t Encoder_DeltaT_ConvertToSpeed(Encoder_T * p_encoder, uint32_t deltaT_ticks)
 {
 	return Encoder_DeltaT_ConvertFromSpeed(p_encoder, deltaT_ticks); /* Same division */
+}
+
+static inline uint32_t Encoder_DeltaT_ConvertToSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t deltaT_Ticks)
+{
+	return Encoder_DeltaT_ConvertFromSpeed_UnitsPerMinute(p_encoder, deltaT_Ticks); /* Same division */
+}
+
+static inline uint32_t Encoder_DeltaT_ConvertFromSpeed(Encoder_T * p_encoder, uint32_t speed_UnitsPerSecond)
+{
+	return (speed_UnitsPerSecond == 0U) ? 0U : p_encoder->UnitLinearSpeed / speed_UnitsPerSecond;
 }
 
 static inline uint32_t Encoder_DeltaT_ConvertFromSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t speed_UnitsPerMinute)
@@ -371,9 +362,10 @@ static inline uint32_t Encoder_DeltaT_ConvertFromSpeed_UnitsPerMinute(Encoder_T 
 	return (speed_UnitsPerMinute == 0U) ? 0U : p_encoder->UnitLinearSpeed * 60U / speed_UnitsPerMinute;
 }
 
-static inline uint32_t Encoder_DeltaT_ConvertToSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t deltaT_Ticks)
+static inline uint32_t Encoder_DeltaT_GetSpeed(Encoder_T * p_encoder)
 {
-	return Encoder_DeltaT_ConvertFromSpeed_UnitsPerMinute(p_encoder, deltaT_Ticks); /* Same division */
+	// return Encoder_CalcSpeed(p_encoder, 1U, p_encoder->DeltaT);
+	return Encoder_DeltaT_ConvertToSpeed(p_encoder, p_encoder->DeltaT);
 }
 
 /*!

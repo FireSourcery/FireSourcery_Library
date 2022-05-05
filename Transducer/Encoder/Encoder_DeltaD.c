@@ -26,7 +26,7 @@
 	@author FireSourcery
 	@brief
 	@version V0
- */
+*/
 /******************************************************************************/
 #include "Encoder_DeltaD.h"
 #include "Encoder.h"
@@ -43,16 +43,16 @@
  */
 void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 {
-	//	Pin_Deinit(&p_encoder->CONFIG.PIN_PHASE_A);
-	//	Pin_Deinit(&p_encoder->CONFIG.PIN_PHASE_B);
+	//	Pin_Deinit(&p_encoder->PhaseA);
+	//	Pin_Deinit(&p_encoder->PhaseB);
 
 	HAL_Encoder_InitCaptureCount
 	(
 		p_encoder->CONFIG.P_HAL_ENCODER,
-		p_encoder->CONFIG.PIN_PHASE_A.P_HAL_PIN,
-		p_encoder->CONFIG.PIN_PHASE_A.ID,
-		p_encoder->CONFIG.PIN_PHASE_B.P_HAL_PIN,
-		p_encoder->CONFIG.PIN_PHASE_B.ID
+		p_encoder->PhaseA.CONFIG.P_HAL_PIN,
+		p_encoder->PhaseA.CONFIG.ID,
+		p_encoder->PhaseB.CONFIG.P_HAL_PIN,
+		p_encoder->PhaseB.CONFIG.ID
 	);
 
 	if (p_encoder->CONFIG.P_PARAMS != 0U)

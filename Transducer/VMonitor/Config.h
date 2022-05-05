@@ -28,20 +28,14 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_SERIAL_H
-#define CONFIG_SERIAL_H
- 
-#if  	defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX) 
-#elif 	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) 
-#elif 	defined(CONFIG_SERIAL_SINGLE_THREADED) 
+#ifndef CONFIG_VMONITOR_H
+#define CONFIG_VMONITOR_H
+
+#if 	defined(CONFIG_VMONITOR_ADC_BITS)  
+#elif 	defined(ADC_BITS) 
 #else
-	#define CONFIG_SERIAL_SINGLE_THREADED
+	#define ADC_BITS 12U
 #endif
 
-#if 	defined(CONFIG_SERIAL_HW_FIFO_DISABLE)
-#elif 	defined(CONFIG_SERIAL_HW_FIFO_ENABLE) 
-#else
-	#define CONFIG_SERIAL_HW_FIFO_DISABLE
 #endif
- 
-#endif
+
