@@ -32,12 +32,11 @@
 
 #include <string.h>
 
-uint16_t _Motor_AdcVRef_MilliV;  /* Sync with upper layer */
+uint16_t _Motor_AdcVRef_MilliV;  /* Sync with upper layer */ 
 
-void Motor_InitReference(uint16_t adcVRef_MilliV)
-{
-	_Motor_AdcVRef_MilliV = adcVRef_MilliV;
-}
+uint16_t _Motor_GetAdcVRef(void) { return _Motor_AdcVRef_MilliV; }
+
+void Motor_InitReference(uint16_t adcVRef_MilliV) { _Motor_AdcVRef_MilliV = adcVRef_MilliV; }
 
 void Motor_Init(Motor_T * p_motor)
 {
@@ -131,8 +130,8 @@ void Motor_InitReboot(Motor_T * p_motor)
 	*/
 	Linear_Ramp_InitMillis(&p_motor->Ramp, 500U, 20000U, 0U, 65535U); /* final value is overwritten, slope is persistent */
 	Motor_SetRamp(p_motor, 0U);
-	p_motor->RampCmd = 0;
-	p_motor->RampIndex = 0;
+	p_motor->RampCmd = 0U;
+	p_motor->RampIndex = 0U;
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
@@ -141,13 +140,13 @@ void Motor_InitReboot(Motor_T * p_motor)
 	else
 	{
 
-	}
-
+	} 
 	p_motor->OpenLoopRampIndex = 0U;
 
-	Motor_SetDirectionForward(p_motor);
-	p_motor->UserDirection = p_motor->Direction;
-	p_motor->VPwm = 0U;
+	Motor_ResetSpeedLimits(p_motor); 
+	Motor_SetDirectionForward(p_motor); 
+
+	p_motor->UserDirection = p_motor->Direction; 
 	p_motor->ControlTimerBase = 0U;
 } 
 
@@ -220,4 +219,4 @@ void Motor_Jog12(Motor_T * p_motor)
 	p_motor->JogIndex++;
 }
  
-uint16_t _Motor_GetAdcVRef(void) { return _Motor_AdcVRef_MilliV; }
+

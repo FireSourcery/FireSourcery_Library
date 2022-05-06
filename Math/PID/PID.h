@@ -50,9 +50,7 @@ typedef struct __attribute__((aligned (4U))) PID_Params_Tag
 	int32_t KiFactor;
 	int32_t KiDivisor;
 	int32_t KdFactor;
-	int32_t KdDivisor;
-	int32_t OutMin;
-	int32_t OutMax;
+	int32_t KdDivisor; 
 }
 PID_Params_T;
 
@@ -70,6 +68,8 @@ typedef struct PID_Tag
 	int32_t KdFactorFreq; 	/* KdFactor * CalcFreq */
 	int32_t ErrorSum;
 	int32_t ErrorPrev;
+	int32_t OutMin;
+	int32_t OutMax;
 }
 PID_T;
 
@@ -96,6 +96,6 @@ extern void PID_Reset(PID_T * p_pid);
 extern void PID_SetIntegral(PID_T * p_pid, int32_t integral);
 extern void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor);
 extern void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq);
-extern void PID_SetOutputLimits(PID_T * p_pid, uint32_t min, uint32_t max);
+extern void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max);
 
 #endif /* PID_H */

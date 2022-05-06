@@ -11,8 +11,7 @@
                 "UNICODE",
                 "_UNICODE"
             ],
-            "windowsSdkVersion": "10.0.19041.0",
-            "compilerPath": "C:\\Program Files (x86)\\GNU Arm Embedded Toolchain\\10 2021.10\\bin\\arm-none-eabi-gcc",
+            "windowsSdkVersion": "10.0.19041.0", 
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-arm"

@@ -138,7 +138,15 @@ static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor)
 
 	if(p_motor->SpeedFeedback_Frac16 == 0U)
 	{
-		Motor_SetDirection(p_motor, p_motor->UserDirection);
+		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+		{
+			Motor_FOC_SetDirection(p_motor, p_motor->UserDirection);	
+		}
+		else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
+		{
+			Motor_SetDirection(p_motor, p_motor->UserDirection);
+		}
+
 		p_nextState = 0U;
 	}
 	else

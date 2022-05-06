@@ -80,14 +80,14 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 		integral = (p_pid->Params.KiFactor * p_pid->ErrorSum / p_pid->KiDivisorFreq);
 	}
 
-	if(integral > p_pid->Params.OutMax)
+	if(integral > p_pid->OutMax)
 	{
-		integral = p_pid->Params.OutMax;
+		integral = p_pid->OutMax;
 		if(error < 0) { p_pid->ErrorSum += error; } /* if error sum becomes out of sync. add error if error is negative */
 	}
-	else if(integral < p_pid->Params.OutMin)
+	else if(integral < p_pid->OutMin)
 	{
-		integral = p_pid->Params.OutMin;
+		integral = p_pid->OutMin;
 		if(error > 0) { p_pid->ErrorSum += error; } /* if error sum becomes out of sync. add error if error is positive */ 
 	}
 	else
@@ -106,8 +106,8 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 		control = proportional + integral;
 	}
 
-	if		(control > p_pid->Params.OutMax) { control = p_pid->Params.OutMax; }
-	else if	(control < p_pid->Params.OutMin) { control = p_pid->Params.OutMin; }
+	if		(control > p_pid->OutMax) { control = p_pid->OutMax; }
+	else if	(control < p_pid->OutMin) { control = p_pid->OutMin; }
 
 	return control;
 }
@@ -126,6 +126,22 @@ void PID_Reset(PID_T * p_pid)
 void PID_SetIntegral(PID_T * p_pid, int32_t integral)
 {
 	p_pid->ErrorSum = integral * p_pid->KiDivisorFreq / p_pid->Params.KiFactor;
+}
+
+void PID_SetOutputState(PID_T * p_pid, int32_t integral)
+{
+	PID_SetIntegral(p_pid, integral);
+}
+
+void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max)
+{
+	if(max > min)
+	{
+		p_pid->OutMin = min;
+		p_pid->OutMax = max;
+		if		(p_pid->ErrorSum > p_pid->OutMax) { p_pid->ErrorSum = p_pid->OutMax; }
+		else if	(p_pid->ErrorSum < p_pid->OutMin) { p_pid->ErrorSum = p_pid->OutMin; }
+	}
 }
 
 void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq)
@@ -151,17 +167,6 @@ void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t 
 void PID_SetTunings_FractionSigned16(PID_T * p_pid, int32_t kp, int32_t ki, int32_t kd)
 {
 	PID_SetTunings(p_pid, kp, 32768, ki, 32768, kd, 32768);
-}
-
-void PID_SetOutputLimits(PID_T * p_pid, uint32_t min, uint32_t max)
-{
-	if(max > min)
-	{
-		p_pid->Params.OutMin = min;
-		p_pid->Params.OutMax = max;
-		if		(p_pid->ErrorSum > p_pid->Params.OutMax) { p_pid->ErrorSum = p_pid->Params.OutMax; }
-		else if	(p_pid->ErrorSum < p_pid->Params.OutMin) { p_pid->ErrorSum = p_pid->Params.OutMin; }
-	}
 }
 
 int32_t PID_GetKp_FractionSigned16(PID_T * p_pid) { return 32768 * p_pid->Params.KpFactor / p_pid->Params.KpDivisor; }
