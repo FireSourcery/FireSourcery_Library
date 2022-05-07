@@ -67,6 +67,8 @@ typedef struct PID_Tag
 	int32_t KiDivisorFreq; 	/* KpDivisor * CalcFreq */
 	int32_t KdFactorFreq; 	/* KdFactor * CalcFreq */
 	int32_t ErrorSum;
+	int32_t ErrorSumOverflowPos;
+	int32_t ErrorSumOverflowNeg;
 	int32_t ErrorPrev;
 	int32_t OutMin;
 	int32_t OutMax;

@@ -67,6 +67,7 @@ Timer_T;
 static inline void Timer_Disable(Timer_T * p_timer) { p_timer->Period = 0U; }
 static inline void Timer_Restart(Timer_T * p_timer) { p_timer->TimeRef = *p_timer->CONFIG.P_BASE; }
 //static inline void Timer_ZeroBase(Timer_T * p_timer) 	{p_timer->TimeRef = *p_timer->CONFIG.P_BASE = 0U;}
+static inline uint32_t Timer_GetBase(Timer_T * p_timer) { return *p_timer->CONFIG.P_BASE; }
 
 static inline uint32_t Timer_GetElapsed(Timer_T * p_timer)
 {

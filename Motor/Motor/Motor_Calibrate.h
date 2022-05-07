@@ -236,7 +236,7 @@ static inline bool Motor_Calibrate_Adc(Motor_T *p_motor)
 		// p_motor->Parameters.IaRefMax_Adcu = p_motor->Parameters.IaRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu;
 		// p_motor->Parameters.IbRefMax_Adcu = p_motor->Parameters.IbRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu;
 		// p_motor->Parameters.IcRefMax_Adcu = p_motor->Parameters.IcRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu;
-		Motor_ResetIUnits_Adcu(p_motor);
+		Motor_ResetUnitsIabc(p_motor);
 		Phase_Float(&p_motor->Phase);
 	}
 	else

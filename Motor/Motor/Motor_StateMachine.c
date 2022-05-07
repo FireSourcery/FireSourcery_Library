@@ -71,6 +71,8 @@ static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MSM_TRANSITION_TABL
 static void Init_Entry(Motor_T * p_motor)
 {
 	//	Motor_InitReboot(p_motor);
+
+		//fix speed on init
 }
 
 static void Init_Proc(Motor_T * p_motor)

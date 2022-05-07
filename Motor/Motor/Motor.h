@@ -527,10 +527,15 @@ static inline void Motor_SetRampOutput(Motor_T * p_motor, int32_t matchOutput)
 /******************************************************************************/
 static inline void Motor_SetSpeedOutput(Motor_T * p_motor, int32_t speedControlMatch)
 {
-	Motor_SetRampOutput(p_motor, p_motor->SpeedFeedback_Frac16); 	/* RampOut/PidIn always use SpeedFeedback */ 
+	Motor_SetRampOutput(p_motor, p_motor->SpeedFeedback_Frac16 / 2U); 	/* RampOut/PidIn always use SpeedFeedback */ 
 	PID_SetIntegral(&p_motor->PidSpeed, speedControlMatch);  		/* SpeedControl may be V or I */
 	p_motor->SpeedControl = speedControlMatch; 
 }
+
+// static inline void Motor_SetSpeedLimits(Motor_T * p_motor, int32_t limitMin, int32_t limitMax)
+// { 
+// 	PID_SetOutputLimits(&p_motor->PidSpeed, limitMin, limitMax);  
+// }
 
 static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
 {
@@ -622,6 +627,6 @@ extern void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
 extern void Motor_SetDirectionForward(Motor_T * p_motor);
 extern void Motor_SetDirectionReverse(Motor_T * p_motor);
 
-extern void Motor_ResetIUnits_Adcu(Motor_T * p_motor);
+extern void Motor_ResetUnitsIabc(Motor_T * p_motor);
 
 #endif

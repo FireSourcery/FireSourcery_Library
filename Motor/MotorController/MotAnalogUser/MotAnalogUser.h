@@ -242,7 +242,7 @@ static inline bool MotAnalogUser_PollBistateBrakeFallingEdge(MotAnalogUser_T * p
 /* Early throttle release detect */
 static inline bool MotAnalogUser_CheckThrottleRelease(const MotAnalogUser_T * p_user)
 {
-	return (((int32_t)p_user->ThrottlePrev_Frac16 - (int32_t)p_user->Throttle_Frac16) > (65535 / 100));;
+	return (((int32_t)p_user->ThrottlePrev_Frac16 - (int32_t)p_user->Throttle_Frac16) > (65535 / 20));;
 }
 
 static inline MotAnalogUser_Direction_T MotAnalogUser_GetDirection(const MotAnalogUser_T * p_user)

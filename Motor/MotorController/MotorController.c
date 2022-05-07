@@ -90,8 +90,8 @@ void MotorController_Init(MotorController_T * p_mc)
 
 	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_Adcu, p_mc->Parameters.BatteryFull_Adcu, 1000U);
 	
-	p_mc->MainDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
-	p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
+	p_mc->MainDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
+	p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 }
 
 bool MotorController_SaveParameters_Blocking(MotorController_T * p_mc)

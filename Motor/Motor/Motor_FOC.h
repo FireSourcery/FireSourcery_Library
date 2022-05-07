@@ -178,7 +178,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 
 			if(procSpeed == true)
 			{
-				speedFeedback_Frac16 = Encoder_DeltaT_GetUnitSpeed(&p_motor->Encoder);
+				speedFeedback_Frac16 = Encoder_DeltaT_GetUnitSpeed(&p_motor->Encoder); 
 				if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedFeedback_Frac16 = 0 - speedFeedback_Frac16; };
 			}
 
@@ -201,10 +201,10 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 	{
 		/*
 			SpeedControl update 1000Hz, Ramp input 1000Hz, RampCmd output 20000Hz, alternatively use RampIndex += 20?
-			input	RampCmd
-			output 	SpeedControl is signed IqReq or VqReq
+			input	RampCmd[-32767:32767], (speedFeedback_Frac16 / 2)[-32767:32767]
+			output 	SpeedControl[-32767:32767] => IqReq or VqReq
 		*/
-		if(p_motor->ControlModeFlags.Speed == 1U) { p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, speedFeedback_Frac16); }
+		if(p_motor->ControlModeFlags.Speed == 1U) { p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, speedFeedback_Frac16 / 2U); }
 		// else if (p_motor->ControlModeFlags.VFreqScalar == 1U) { _Motor_FOC_ProcVoltageMode(p_motor, p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.VFreqScalar_Frac16 / 65536U);}
 		p_motor->SpeedFeedback_Frac16 = speedFeedback_Frac16;
 	}
@@ -260,14 +260,12 @@ static void _Motor_Foc_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq)
 
 static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 {
-	qfrac16_t qReq;
-
-	qReq = (p_motor->ControlModeFlags.Speed == 1U) ? p_motor->SpeedControl : p_motor->RampCmd;
+	qfrac16_t userOutput = (p_motor->ControlModeFlags.Speed == 1U) ? p_motor->SpeedControl : p_motor->RampCmd;
 
 	if(p_motor->ControlModeFlags.Current == 1U)		/* Current Control Mode - Proc angle using last adc measured*/
 	{
-		FOC_SetVq(&p_motor->Foc, PID_Calc(&p_motor->PidIq, qReq, FOC_GetIq(&p_motor->Foc)));
-		FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, 0U, FOC_GetId(&p_motor->Foc)));
+		FOC_SetVq(&p_motor->Foc, PID_Calc(&p_motor->PidIq, userOutput, 	FOC_GetIq(&p_motor->Foc)));
+		FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, 0U, 			FOC_GetId(&p_motor->Foc)));
 	}
 	else  	//(p_motor->ControlModeFlags.VFreqScalar != 1U)	/* Voltage Control mode - use current feedback for over current only */
 	{ 		
@@ -371,7 +369,7 @@ static inline void Motor_FOC_SetMatchOutput(Motor_T * p_motor, int32_t iq, int32
 
 	if(p_motor->ControlModeFlags.Speed == 1U)
 	{
-		Motor_SetSpeedOutput(p_motor, speedControl * 2U);  /* Speed PID, SpeedControl, is signed [-65535:65535] */
+		Motor_SetSpeedOutput(p_motor, speedControl);  /* Speed PID, SpeedControl, is signed [-65535:65535] */
 	}
 	else /* (p_motor->ControlModeFlags.Speed == 0U) */
 	{

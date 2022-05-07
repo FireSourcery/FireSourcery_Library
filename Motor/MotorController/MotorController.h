@@ -93,9 +93,10 @@ MotorController_CoastMode_T;
 
 typedef enum MotorController_Direction_Tag
 {
+	MOTOR_CONTROLLER_DIRECTION_PARK,
+	MOTOR_CONTROLLER_DIRECTION_NEUTRAL,
 	MOTOR_CONTROLLER_DIRECTION_FORWARD,
 	MOTOR_CONTROLLER_DIRECTION_REVERSE,
-	//	MOTOR_CONTROLLER_DIRECTION_NEUTRAL,
 }
 MotorController_Direction_T;
 
@@ -120,7 +121,8 @@ typedef union MotorController_FaultFlags_Tag
 		// uint32_t VPosLimit : 1;
 		// uint32_t VSenseLimit : 1;
 		// uint32_t VAccLimit : 1; 
-		uint32_t ThrottleOnInit 	: 1U; 
+		uint32_t ThrottleOnInit 	: 1U;
+		uint32_t StopStateSync 			: 1U; 
 		// ThrottleOnBrakeRelease
 	};
 	uint32_t State;
@@ -261,7 +263,8 @@ typedef struct MotorController_Tag
 	uint16_t ShellSubstate;
 
 	StateMachine_T StateMachine;
-	// MotorController_ErrorFlags_T ErrorFlags;
+
+	MotorController_FaultFlags_T FaultFlags;
 	MotorController_Direction_T MainDirection;
 	MotorController_Direction_T UserDirection;
 
@@ -302,7 +305,14 @@ static inline bool MotorController_ProcDirection(MotorController_T * p_mc)
 		Motor_UserN_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT) :
 		Motor_UserN_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
 
-	if(isSucess == true) { p_mc->MainDirection = p_mc->UserDirection; }
+	if(isSucess == true)
+	{
+		p_mc->MainDirection = p_mc->UserDirection;
+		if((p_mc->Parameters.BeepOnReverse == true) && (p_mc->MainDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE))
+		{
+			MotorController_BeepPeriodicType1(p_mc);
+		}
+	}
 
 	return isSucess;
 }

@@ -60,8 +60,9 @@ static StateMachine_State_T * TransitionFault(MotorController_T * p_mc) { return
 */
 /******************************************************************************/
 static StateMachine_State_T * Init_InputDirection(MotorController_T * p_mc)
-{  
-	return &STATE_STOP;
+{
+	//fix speed on init
+	return (MotorController_ProcDirection(p_mc) == true) ? &STATE_STOP : &STATE_FAULT;
 }
 
 static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
@@ -72,15 +73,19 @@ static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 
 static void Init_Entry(MotorController_T * p_mc)
 {
-	//	MotorController_InitReboot(p_mc);
+	//	MotorController_InitReboot(p_mc); 
+	if(Timer_GetBase(&p_mc->TimerMillis) > 50U) 	//wait 50ms for debounce
+	{
+		if((p_mc->Parameters.BeepThrottleOnInit == true) && MotAnalogUser_GetIsThrottleOn(&p_mc->AnalogUser))
+			// if((p_mc->Parameters.BeepThrottleOnInit == true) && (MotAnalogUser_GetThrottleValue(&p_mc->AnalogUser) > 0U))
+		{
+			MotorController_BeepShort(p_mc);
+		}
+	}
 }
 
 static void Init_Proc(MotorController_T * p_mc)
-{
-	if((p_mc->Parameters.BeepThrottleOnInit == true) && MotAnalogUser_GetIsThrottleOn(&p_mc->AnalogUser))
-	{
-		MotorController_BeepShort(p_mc);
-	}
+{ 
 	// _StateMachine_ProcTransition(&p_mc->StateMachine, &STATE_STOP); 
 }
 
@@ -135,29 +140,14 @@ static StateMachine_State_T * Stop_InputRelease(MotorController_T * p_mc)
 static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 {
 	StateMachine_State_T * p_nextState;
-
+	bool isSucess = MotorController_ProcDirection(p_mc); //fix beep stop
 	/*
-	 	Motor Freewheel check stop should be atomic relative to this function
+		Motor Freewheel check stop should be atomic relative to this function
 		this runs before motor freewheel checks speed => goto fault state.
 	*/
-	if(MotorController_ProcDirection(p_mc) == true)
-	{
-		if((p_mc->Parameters.BeepOnReverse == true) && (p_mc->MainDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE))
-		{
-			MotorController_BeepPeriodicType1(p_mc);
-		}
-		p_nextState = 0U;
-	}
-	else
-	{
-		p_nextState = &STATE_FAULT;
-	}
-
-	return p_nextState;
-	// return (MotorController_ProcDirection(p_mc) == true) ? 0U : &STATE_FAULT;
+	if(isSucess == false) { p_mc->FaultFlags.StopStateSync = 1U; } 
+	return (isSucess == true) ? 0U : &STATE_FAULT;
 }
-
-
 
 static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc)
 {
@@ -169,8 +159,6 @@ static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc)
 	}
 	return 0U;
 }
-
-
 
 static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
@@ -230,16 +218,16 @@ static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc)
 {
 	if(p_mc->MainDirection != p_mc->UserDirection)
 	{
-		MotorController_BeepShort(p_mc);
+		MotorController_BeepShort(p_mc); //abstrat not allow direction chagen
 	}
 
 	return 0U;
 }
 
 /*
- * Do not allow for run state including both throttle and brake.
- * Alternatively, need additional brake state. allow for throttle, ignore for brake.
- */
+	Do not allow for run state including both throttle and brake.
+	Alternatively, need additional brake state. allow for throttle, ignore for brake.
+*/
 static StateMachine_State_T * Run_InputNeutral(MotorController_T * p_mc)
 {
 	//	return &STATE_NEUTRAL;
@@ -273,10 +261,10 @@ static StateMachine_State_T * Run_InputThrottleStart(MotorController_T * p_mc)
 }
 
 /*
- * When brake is released Coast mode will run, and check stop
- *
- * or go directly to stop so direction can change
- */
+	When brake is released Coast mode will run, and check stop
+
+	or go directly to stop so direction can change
+*/
 static StateMachine_State_T * Run_InputBrake(MotorController_T * p_mc)
 {
 	MotorController_ProcUserCmdBrake(p_mc);
@@ -307,8 +295,8 @@ static StateMachine_State_T * Run_InputCoast(MotorController_T * p_mc)
 }
 
 /*
- * only release into null/coast
- */
+	only release into null/coast
+*/
 static StateMachine_State_T * Run_InputCoastStart(MotorController_T * p_mc)
 {
 	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
@@ -358,10 +346,10 @@ static void Run_Proc(MotorController_T * p_mc)
 
 static const StateMachine_State_T STATE_RUN =
 {
-	.ID = MCSM_STATE_ID_RUN,
-	.P_TRANSITION_TABLE = &RUN_TRANSITION_TABLE[0U],
-	.ON_ENTRY = (StateMachine_Output_T)Run_Entry,
-	.OUTPUT = (StateMachine_Output_T)Run_Proc,
+	.ID 					= MCSM_STATE_ID_RUN,
+	.P_TRANSITION_TABLE 	= &RUN_TRANSITION_TABLE[0U],
+	.ON_ENTRY 				= (StateMachine_Output_T)Run_Entry,
+	.OUTPUT 				= (StateMachine_Output_T)Run_Proc,
 };
 
 
@@ -458,7 +446,11 @@ static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc)
 	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsTop) == true) 	{ isClear = false; }
 	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsBot) == true) 	{ isClear = false; }
 
-	if(isClear == true) { Blinky_Stop(&p_mc->Buzzer); }
+	if(isClear == true)
+	{
+		Blinky_Stop(&p_mc->Buzzer);
+		p_mc->FaultFlags.State = 0U;
+	}
 
 	return (isClear == true) ? &STATE_STOP : 0U;
 }
