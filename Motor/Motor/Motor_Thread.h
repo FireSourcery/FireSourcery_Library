@@ -68,7 +68,7 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 		switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
 		{
 			case THERMISTOR_STATUS_OK: p_motor->RunStateFlags.HeatWarning = 0U; 		break;
-			case THERMISTOR_LIMIT_SHUTDOWN: Motor_User_SetFault(p_motor); 			break;
+			// case THERMISTOR_LIMIT_SHUTDOWN: Motor_User_SetFault(p_motor); 			break;
 			case THERMISTOR_LIMIT_THRESHOLD: 										break;
 			case THERMISTOR_WARNING:
 				if(p_motor->RunStateFlags.HeatWarning == 0U)

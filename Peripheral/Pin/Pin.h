@@ -95,7 +95,7 @@ static inline void Pin_Output_VirtualOn(const Pin_T * p_pin)
 
 /* ignore invert check, when handled by upper layer */
 static inline bool Pin_Input_Read(const Pin_T * p_pin) 			{ return HAL_Pin_ReadInput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
-static inline bool Pin_Input_ReadPhysical(const Pin_T * p_pin) 	{ return Pin_Input_ReadPhysical(p_pin); } 
+static inline bool Pin_Input_ReadPhysical(const Pin_T * p_pin) 	{ return Pin_Input_Read(p_pin); } 
 
 /* check invert */
 static inline bool Pin_Input_ReadVirtual(const Pin_T * p_pin) 			
@@ -104,8 +104,8 @@ static inline bool Pin_Input_ReadVirtual(const Pin_T * p_pin)
 	return (p_pin->IsInvert == true) ? !readVal : readVal;  
 }
 
-extern void Pin_Output_Init(const Pin_T * p_pin);
-extern void Pin_Input_Init(const Pin_T * p_pin);
+extern void Pin_Output_Init( Pin_T * p_pin);
+extern void Pin_Input_Init( Pin_T * p_pin);
 extern void Pin_Deinit(const Pin_T * p_pin);
 extern void Pin_EnableInvert(Pin_T * p_pin);
 extern void Pin_DisableInvert(Pin_T * p_pin);

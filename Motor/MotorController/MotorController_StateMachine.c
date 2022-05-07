@@ -424,7 +424,7 @@ static const StateMachine_State_T STATE_RUN =
 /******************************************************************************/
 static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc)
 {
-	bool isClear = (Motor_UserN_ClearFault(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT) == false);
+	bool isClear = (Motor_UserN_ClearFault(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT) == true);
 
 	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense) == true) 			{ isClear = false; }
 	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc) == true) 				{ isClear = false; }

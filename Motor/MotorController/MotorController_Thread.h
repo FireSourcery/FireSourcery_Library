@@ -129,7 +129,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 	// 	isFault = true;
 	// }
 
-	if(isFault == true) { MotorController_User_SetFault(p_mc); }
+	// if(isFault == true) { MotorController_User_SetFault(p_mc); }
 
 	//if frequent degree c polling request
 //	Thermistor_CaptureUnitConversion(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu);
@@ -151,7 +151,7 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
 	VMonitor_PollStatus(&p_mc->VMonitorAcc, p_mc->AnalogResults.VAcc_Adcu);
 	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense) == true) { isFault = true; } 
 	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc) == true) 	{ isFault = true; } 
-	if(isFault == true) { MotorController_User_SetFault(p_mc); }
+	// if(isFault == true) { MotorController_User_SetFault(p_mc); }
 }
 
 /*
