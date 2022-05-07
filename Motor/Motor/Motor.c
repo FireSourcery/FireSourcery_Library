@@ -113,7 +113,8 @@ void Motor_InitReboot(Motor_T * p_motor)
 	PID_Init(&p_motor->PidIq);
 	PID_Init(&p_motor->PidId);
 	PID_Init(&p_motor->PidIBus);
-	//temporary
+
+	//temporary //set assuming forward direction
 	// PID_SetOutputLimits(&p_motor->PidSpeed, 0 - p_motor->Parameters.SpeedLimitCw_Frac16, p_motor->Parameters.SpeedLimitCcw_Frac16);
 	// PID_SetOutputLimits(&p_motor->PidIq, 0 - iqOutCw, iqOutCcw); /
 	// PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCcw / 2U, speedIOutCcw / 2U);

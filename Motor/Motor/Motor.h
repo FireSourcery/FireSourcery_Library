@@ -86,9 +86,7 @@ typedef enum Motor_SensorMode_Tag
 Motor_SensorMode_T;
 
 /*
-	Feedback Control Variable Mode
-
-	User set
+	Feedback Control Variable Mode 
 */
 typedef enum Motor_ControlMode_Tag
 {

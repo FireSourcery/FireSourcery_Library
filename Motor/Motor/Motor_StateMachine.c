@@ -74,18 +74,25 @@ static void Init_Entry(Motor_T * p_motor)
 }
 
 static void Init_Proc(Motor_T * p_motor)
-{
-	_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
+{ 
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+	{
+		Motor_FOC_SetDirectionForward(p_motor);
+	}
+	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
+	{
+		Motor_SetDirection(p_motor, p_motor->UserDirection);
+	}
 	//optionally capture deltaT and set speed to zero
+	_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP); 
 }
 
 static const StateMachine_State_T STATE_INIT =
 {
-
-	.ID = MSM_STATE_ID_INIT,
-	.P_TRANSITION_TABLE = INIT_TRANSITION_TABLE,
-	.ON_ENTRY = (StateMachine_Output_T)Init_Entry,
-	.OUTPUT = (StateMachine_Output_T)Init_Proc,
+	.ID 					= MSM_STATE_ID_INIT,
+	.P_TRANSITION_TABLE 	= INIT_TRANSITION_TABLE,
+	.ON_ENTRY 				= (StateMachine_Output_T)Init_Entry,
+	.OUTPUT 				= (StateMachine_Output_T)Init_Proc,
 };
 
 

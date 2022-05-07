@@ -59,9 +59,15 @@ static StateMachine_State_T * TransitionFault(MotorController_T * p_mc) { return
 	@brief  State
 */
 /******************************************************************************/
+static StateMachine_State_T * Init_InputDirection(MotorController_T * p_mc)
+{  
+	return &STATE_STOP;
+}
+
 static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-	//	[MCSM_INPUT_TRANSITION_FAULT]		= (StateMachine_Transition_T)TransitionFault,
+	[MCSM_INPUT_FAULT]		= (StateMachine_Transition_T)TransitionFault,
+	[MCSM_INPUT_DIRECTION] 	= (StateMachine_Transition_T)Init_InputDirection, 
 };
 
 static void Init_Entry(MotorController_T * p_mc)
@@ -71,16 +77,19 @@ static void Init_Entry(MotorController_T * p_mc)
 
 static void Init_Proc(MotorController_T * p_mc)
 {
-	_StateMachine_ProcTransition(&p_mc->StateMachine, &STATE_STOP);
-	//change transition to on edge
+	if((p_mc->Parameters.BeepThrottleOnInit == true) && MotAnalogUser_GetIsThrottleOn(&p_mc->AnalogUser))
+	{
+		MotorController_BeepShort(p_mc);
+	}
+	// _StateMachine_ProcTransition(&p_mc->StateMachine, &STATE_STOP); 
 }
 
 static const StateMachine_State_T STATE_INIT =
 {
-	.ID 				= MCSM_STATE_ID_INIT,
-	.P_TRANSITION_TABLE = &INIT_TRANSITION_TABLE[0U],
-	.ON_ENTRY = (StateMachine_Output_T)Init_Entry,
-	.OUTPUT = (StateMachine_Output_T)Init_Proc,
+	.ID 					= MCSM_STATE_ID_INIT,
+	.P_TRANSITION_TABLE 	= &INIT_TRANSITION_TABLE[0U],
+	.ON_ENTRY 				= (StateMachine_Output_T)Init_Entry,
+	.OUTPUT 				= (StateMachine_Output_T)Init_Proc,
 };
 
 
@@ -125,11 +134,27 @@ static StateMachine_State_T * Stop_InputRelease(MotorController_T * p_mc)
 
 static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 {
+	StateMachine_State_T * p_nextState;
+
 	/*
-	 * Motor Freewheel check stop should be atomic relative to this function
-	 *  this runs before motor freewheel checks speed? goto fault state.
-	 */
-	return (MotorController_ProcDirection(p_mc) == true) ? 0U : &STATE_FAULT;
+	 	Motor Freewheel check stop should be atomic relative to this function
+		this runs before motor freewheel checks speed => goto fault state.
+	*/
+	if(MotorController_ProcDirection(p_mc) == true)
+	{
+		if((p_mc->Parameters.BeepOnReverse == true) && (p_mc->MainDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE))
+		{
+			MotorController_BeepPeriodicType1(p_mc);
+		}
+		p_nextState = 0U;
+	}
+	else
+	{
+		p_nextState = &STATE_FAULT;
+	}
+
+	return p_nextState;
+	// return (MotorController_ProcDirection(p_mc) == true) ? 0U : &STATE_FAULT;
 }
 
 

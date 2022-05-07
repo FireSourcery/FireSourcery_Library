@@ -174,11 +174,12 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 	bool IsCanEnable;
 
 	//todo
-	bool FaultThrottleOnInit;
+	// bool FaultThrottleOnInit;
+	bool BeepThrottleOnInit;
 	// bool FaultThrottleOnBrakeCmd;
 	// bool FaultThrottleOnBrakeRelease;
 	// bool FaultThrottleOnNeutralRelease;
-	// bool BuzzerOnReverse;
+	bool BeepOnReverse;
 	// bool BuzzerOnThrottleOnBrake;
 	// bool BuzzerOnFault; 
 
@@ -273,6 +274,12 @@ MotorController_T;
 static inline Motor_T * MotorController_GetPtrMotor(const MotorController_T * p_mc, uint8_t motorIndex) { return &(p_mc->CONFIG.P_MOTORS[motorIndex]); }
 
 static inline void MotorController_BeepShort(MotorController_T * p_mc) { Blinky_Blink(&p_mc->Buzzer, 500U); }
+
+static inline void MotorController_BeepPeriodicType1(MotorController_T * p_mc)
+{
+	Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U);
+}
+
 
 // static inline void MotorController_BeepType1(MotorController_T * p_mc)
 // {
