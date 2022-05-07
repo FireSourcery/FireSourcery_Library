@@ -113,7 +113,11 @@ void Motor_InitReboot(Motor_T * p_motor)
 	PID_Init(&p_motor->PidIq);
 	PID_Init(&p_motor->PidId);
 	PID_Init(&p_motor->PidIBus);
- 
+	//temporary
+	// PID_SetOutputLimits(&p_motor->PidSpeed, 0 - p_motor->Parameters.SpeedLimitCw_Frac16, p_motor->Parameters.SpeedLimitCcw_Frac16);
+	// PID_SetOutputLimits(&p_motor->PidIq, 0 - iqOutCw, iqOutCcw); /
+	// PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCcw / 2U, speedIOutCcw / 2U);
+
 #if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) && defined(CONFIG_MOTOR_V_SENSORS_ADC)
 	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, ADC_BITS, _Motor_AdcVRef_MilliV, _Motor_VRefSupply_V);
 #endif
@@ -138,7 +142,18 @@ void Motor_InitReboot(Motor_T * p_motor)
 	} 
 	p_motor->OpenLoopRampIndex = 0U;
 
-	Motor_ResetSpeedLimits(p_motor); 
+	Motor_ResetSpeedLimits(p_motor);
+	Motor_ResetILimits(p_motor);
+
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+	{
+		Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 2000U, 20000U, 0U, 300U);	//can start at 0 speed in foc mode for continuous angle displacements
+	}
+	else
+	{
+
+	} 
+
 	Motor_SetDirectionForward(p_motor); 
 
 	p_motor->UserDirection = p_motor->Direction; 

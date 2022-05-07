@@ -490,8 +490,8 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 
 	if(argc == 1U)
 	{
-		MotorController_User_CheckFault(p_mc);
-		Terminal_SendString(p_terminal, "ErrorFlags [VPos][VAcc][VSense][Pcb][MosTop][MosBot]: ");
+		MotorController_User_ToggleFault(p_mc);
+		// Terminal_SendString(p_terminal, "ErrorFlags [VPos][VAcc][VSense][Pcb][MosTop][MosBot]: ");
 		// Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VPosLimit);
 		// Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VAccLimit);
 		// Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VSenseLimit);

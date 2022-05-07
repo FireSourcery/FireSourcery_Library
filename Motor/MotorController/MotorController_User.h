@@ -87,9 +87,9 @@ static inline void MotorController_User_SaveBootReg_Blocking(MotorController_T *
 	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
 }
 
-static inline void MotorController_User_CheckFault(MotorController_T * p_mc)
+static inline bool MotorController_User_CheckFault(MotorController_T * p_mc)
 {
-	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
+	return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_FAULT);
 }
 
 static inline bool MotorController_User_ClearFault(MotorController_T * p_mc)
@@ -108,6 +108,11 @@ static inline void MotorController_User_SetFault(MotorController_T * p_mc)
 	{
 		StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
 	}
+}
+
+static inline void MotorController_User_ToggleFault(MotorController_T * p_mc)
+{
+	StateMachine_Semisynchronous_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
 }
 
 static inline void MotorController_User_BeepN(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime, uint8_t n) { Blinky_BlinkN(&p_mc->Buzzer, onTime, offTime, n); }

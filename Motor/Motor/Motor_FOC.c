@@ -78,3 +78,5 @@ void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
 	(direction == MOTOR_DIRECTION_CCW) ? Motor_FOC_SetDirectionCcw(p_motor) : Motor_FOC_SetDirectionCcw(p_motor);
 }
+
+//set direction initial

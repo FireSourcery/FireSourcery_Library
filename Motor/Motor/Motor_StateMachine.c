@@ -204,9 +204,7 @@ static void Stop_Proc(Motor_T * p_motor)
 		//		{
 		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 		{
-			/*
-			 * Will not update
-			 */
+			/* Will not update  */
 			Motor_FOC_ProcAngleObserve(p_motor);
 		}
 		else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */

@@ -335,7 +335,7 @@ static inline void Motor_User_SetFault(Motor_T * p_motor)
 
 static inline bool Motor_User_CheckFault(Motor_T * p_motor)
 {
-	return (StateMachine_GetActiveStateId(&p_motor->StateMachine) != MSM_STATE_ID_FAULT);
+	return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FAULT);
 }
 
 //static inline void Motor_User_ActivatePhase(Motor_T * p_motor)

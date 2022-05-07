@@ -87,7 +87,7 @@ bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 { 
 	p_motor->UserDirection = direction;
 
-	if(p_motor->Direction != direction)
+	if(p_motor->Direction != direction) //neutral to same direction?
 	{
 		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION);
 		//StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction);
