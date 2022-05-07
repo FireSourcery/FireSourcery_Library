@@ -57,16 +57,16 @@ typedef union MotorAnalog_Results_Tag
 {
 	struct
 	{
-//		analog_adcresult_t VPos_ADCU;
-		analog_adcresult_t Va_ADCU;
-		analog_adcresult_t Vb_ADCU;
-		analog_adcresult_t Vc_ADCU;
-		analog_adcresult_t Ia_ADCU;
-		analog_adcresult_t Ib_ADCU;
-		analog_adcresult_t Ic_ADCU;
-		analog_adcresult_t Heat_ADCU;
-		analog_adcresult_t Sin_ADCU;
-		analog_adcresult_t Cos_ADCU;
+//		analog_adcresult_t VPos_Adcu;
+		analog_adcresult_t Va_Adcu;
+		analog_adcresult_t Vb_Adcu;
+		analog_adcresult_t Vc_Adcu;
+		analog_adcresult_t Ia_Adcu;
+		analog_adcresult_t Ib_Adcu;
+		analog_adcresult_t Ic_Adcu;
+		analog_adcresult_t Heat_Adcu;
+		analog_adcresult_t Sin_Adcu;
+		analog_adcresult_t Cos_Adcu;
 	};
 	analog_adcresult_t Channels[MOTOR_ANALOG_CHANNEL_COUNT];
 }

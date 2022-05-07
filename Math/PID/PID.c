@@ -44,7 +44,7 @@ void PID_Init(PID_T * p_pid)
 	p_pid->ErrorPrev = 0;
 }
 
-void PID_Init_Params
+void PID_Init_Args
 (
 	PID_T * p_pid,
 	uint32_t calcFreq,
@@ -166,7 +166,12 @@ void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t 
 
 void PID_SetTunings_FractionSigned16(PID_T * p_pid, int32_t kp, int32_t ki, int32_t kd)
 {
-	PID_SetTunings(p_pid, kp, 32768, ki, 32768, kd, 32768);
+	/* scale down ki overflow */
+	// int32_t kiFactor = ki >> 12U;
+	// int32_t kiDivisor = 32768 >> 12U; 
+	// while ()
+
+	PID_SetTunings(p_pid, kp, 32768, ki, 32768, kd, 32768); 
 }
 
 int32_t PID_GetKp_FractionSigned16(PID_T * p_pid) { return 32768 * p_pid->Params.KpFactor / p_pid->Params.KpDivisor; }

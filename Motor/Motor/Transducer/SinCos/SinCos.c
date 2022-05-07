@@ -38,7 +38,7 @@ void SinCos_Init(SinCos_T * p_sincos)
 	if (p_sincos->CONFIG.P_PARAMS != 0U)
 	{
 		memcpy(&p_sincos->Params, p_sincos->CONFIG.P_PARAMS, sizeof(SinCos_Params_T));
-		Linear_ADC_Init(&p_sincos->UnitsAngle, p_sincos->Params.Zero_ADCU, p_sincos->Params.Max_ADCU, p_sincos->Params.Max_MilliV);
+		Linear_ADC_Init(&p_sincos->UnitsAngle, p_sincos->Params.Zero_Adcu, p_sincos->Params.Max_Adcu, p_sincos->Params.Max_MilliV);
 	}
 	else
 	{
@@ -46,19 +46,19 @@ void SinCos_Init(SinCos_T * p_sincos)
 	}
 }
 
-//void SinCos_Zero(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
+//void SinCos_Zero(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 //{
 //	p_sincos->Params.AngleOffet = 0;
-//	p_sincos->Params.AngleOffet = SinCos_CalcAngle(p_sincos, sin_ADCU, cos_ADCU);
+//	p_sincos->Params.AngleOffet = SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu);
 //}
 
 
-void SinCos_SetParamsAdc(SinCos_T * p_sincos, uint16_t zero_ADCU, uint16_t max_ADCU, uint16_t max_mV)
+void SinCos_SetParamsAdc(SinCos_T * p_sincos, uint16_t zero_Adcu, uint16_t max_Adcu, uint16_t max_mV)
 {
-	p_sincos->Params.Zero_ADCU = zero_ADCU;
-	p_sincos->Params.Max_ADCU = max_ADCU;
+	p_sincos->Params.Zero_Adcu = zero_Adcu;
+	p_sincos->Params.Max_Adcu = max_Adcu;
 	p_sincos->Params.Max_MilliV = max_mV;
-	Linear_ADC_Init(&p_sincos->UnitsAngle, zero_ADCU, max_ADCU, max_mV);
+	Linear_ADC_Init(&p_sincos->UnitsAngle, zero_Adcu, max_Adcu, max_mV);
 }
 
 void SinCos_SetParamsAdc_mV(SinCos_T * p_sincos, uint16_t adcVref_mV, uint16_t min_mV, uint16_t max_mV)
@@ -77,26 +77,26 @@ void SinCos_SetERotationsPerCycle(SinCos_T * p_sincos, uint16_t polePairs, uint1
 /*
  * run on measure 0
  */
-void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
+void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
 	p_sincos->Params.AngleOffet = 0;
-	p_sincos->Params.AngleOffet = SinCos_CalcAngle(p_sincos, sin_ADCU, cos_ADCU);
+	p_sincos->Params.AngleOffet = SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu);
 }
 
 /*
  * Call after angle offset
  */
-void SinCos_CalibrateCcwPositive(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
+void SinCos_CalibrateCcwPositive(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-	p_sincos->Params.IsBPositive = (SinCos_CalcAngle(p_sincos, sin_ADCU, cos_ADCU) > 0U) ? true : false;
+	p_sincos->Params.IsBPositive = (SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu) > 0U) ? true : false;
 }
 
-void SinCos_CalibrateA(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
+void SinCos_CalibrateA(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-	SinCos_CalibrateAngleOffset(p_sincos, sin_ADCU, cos_ADCU);
+	SinCos_CalibrateAngleOffset(p_sincos, sin_Adcu, cos_Adcu);
 }
 
-void SinCos_CalibrateB(SinCos_T * p_sincos, uint16_t sin_ADCU, uint16_t cos_ADCU)
+void SinCos_CalibrateB(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-	SinCos_CalibrateCcwPositive(p_sincos, sin_ADCU, cos_ADCU);
+	SinCos_CalibrateCcwPositive(p_sincos, sin_Adcu, cos_Adcu);
 }

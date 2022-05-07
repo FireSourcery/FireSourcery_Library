@@ -88,10 +88,10 @@ MotAnalogUser_InvertPins_T;
 
 typedef struct __attribute__((aligned(4U))) MotAnalogUser_Params_Tag
 {
-	uint16_t ThrottleZero_ADCU;
-	uint16_t ThrottleMax_ADCU;
-	uint16_t BrakeZero_ADCU;
-	uint16_t BrakeMax_ADCU;
+	uint16_t ThrottleZero_Adcu;
+	uint16_t ThrottleMax_Adcu;
+	uint16_t BrakeZero_Adcu;
+	uint16_t BrakeMax_Adcu;
 
 	uint16_t BistateBrakeValue_Frac16;
 	bool UseBistateBrake;
@@ -157,23 +157,23 @@ MotAnalogUser_T;
 /*
 	adcu capture from outside module, or use pointer
 */
-static inline void MotAnalogUser_CaptureThrottleValue(MotAnalogUser_T * p_user, uint16_t throttle_ADCU)
+static inline void MotAnalogUser_CaptureThrottleValue(MotAnalogUser_T * p_user, uint16_t throttle_Adcu)
 {
 	if((p_user->Params.UseThrottleEdgePin == false) || (Debounce_GetState(&p_user->ThrottleEdgePin) == true))
 	{
 		p_user->ThrottlePrev_Frac16 = p_user->Throttle_Frac16;
-		p_user->Throttle_Frac16 = Linear_ADC_CalcFractionUnsigned16(&p_user->UnitThrottle, throttle_ADCU);
-		//		p_user->Throttle_Frac16 = (Linear_ADC_CalcFractionUnsigned16(&p_user->UnitThrottle, throttle_ADCU) + p_user->ThrottlePrev_Frac16) / 2U;
+		p_user->Throttle_Frac16 = Linear_ADC_CalcFractionUnsigned16(&p_user->UnitThrottle, throttle_Adcu);
+		//		p_user->Throttle_Frac16 = (Linear_ADC_CalcFractionUnsigned16(&p_user->UnitThrottle, throttle_Adcu) + p_user->ThrottlePrev_Frac16) / 2U;
 	}
 }
 
-static inline void MotAnalogUser_CaptureBrakeValue(MotAnalogUser_T * p_user, uint16_t brake_ADCU)
+static inline void MotAnalogUser_CaptureBrakeValue(MotAnalogUser_T * p_user, uint16_t brake_Adcu)
 {
 	if((p_user->Params.UseBrakeEdgePin == false) || (Debounce_GetState(&p_user->BrakeEdgePin) == true))
 	{
 		p_user->BrakePrev_Frac16 = p_user->Brake_Frac16;
-		p_user->Brake_Frac16 = Linear_ADC_CalcFractionUnsigned16(&p_user->UnitBrake, brake_ADCU);
-		//		p_user->Brake_Frac16 = (Linear_ADC_CalcFractionUnsigned16(&p_user->UnitBrake, throttle_ADCU) + p_user->BrakePrev_Frac16) / 2U;
+		p_user->Brake_Frac16 = Linear_ADC_CalcFractionUnsigned16(&p_user->UnitBrake, brake_Adcu);
+		//		p_user->Brake_Frac16 = (Linear_ADC_CalcFractionUnsigned16(&p_user->UnitBrake, throttle_Adcu) + p_user->BrakePrev_Frac16) / 2U;
 	}
 }
 
@@ -201,11 +201,11 @@ static inline void MotAnalogUser_CaptureBistateBrake(MotAnalogUser_T * p_user)
 /*
 	Calling module is responsible for ADC activation and passes complete results
 */
-static inline void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_user, uint16_t throttle_ADCU, uint16_t brake_ADCU)
+static inline void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_user, uint16_t throttle_Adcu, uint16_t brake_Adcu)
 {
 	MotAnalogUser_CaptureSwitches(p_user);
-	MotAnalogUser_CaptureThrottleValue(p_user, throttle_ADCU);
-	MotAnalogUser_CaptureBrakeValue(p_user, brake_ADCU);
+	MotAnalogUser_CaptureThrottleValue(p_user, throttle_Adcu);
+	MotAnalogUser_CaptureBrakeValue(p_user, brake_Adcu);
 	MotAnalogUser_CaptureBistateBrake(p_user);
 }
 
@@ -353,10 +353,10 @@ static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user) 		
 
 extern void MotAnalogUser_Init(MotAnalogUser_T * p_user);
 extern void MotAnalogUser_SetParams(MotAnalogUser_T * p_user, const MotAnalogUser_Params_T * p_param);
-extern void MotAnalogUser_SetBrakeUnits(MotAnalogUser_T * p_user, uint16_t zero_ADCU, uint16_t max_ADCU);
-extern void MotAnalogUser_SetThrottleUnits(MotAnalogUser_T * p_user, uint16_t zero_ADCU, uint16_t max_ADCU);
-extern void MotAnalogUser_SetBrakeAdc(MotAnalogUser_T * p_user, uint16_t zero_ADCU, uint16_t max_ADCU, bool useBrakeEdgePin);
-extern void MotAnalogUser_SetThrottleAdc(MotAnalogUser_T * p_user, uint16_t zero_ADCU, uint16_t max_ADCU, bool useThrottleEdgePin);
+extern void MotAnalogUser_SetBrakeUnits(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu);
+extern void MotAnalogUser_SetThrottleUnits(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu);
+extern void MotAnalogUser_SetBrakeAdc(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useBrakeEdgePin);
+extern void MotAnalogUser_SetThrottleAdc(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useThrottleEdgePin);
 extern void MotAnalogUser_SetBistateBrake(MotAnalogUser_T * p_user, bool useBistateBrake, uint16_t bistateBrakeIntensity_Frac16);
 extern void MotAnalogUser_SetDirectionPins(MotAnalogUser_T * p_user, MotAnalogUser_DirectionPins_T pins);
 extern void MotAnalogUser_SetPinInvert(MotAnalogUser_T * p_user, MotAnalogUser_InvertPins_T invertPins);

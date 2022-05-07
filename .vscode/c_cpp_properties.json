@@ -4,8 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**"  
-            ],
-            "forcedInclude": ["UserConfig.h"], 
+            ], 
             "defines": [
                 "_DEBUG",
                 "UNICODE",

@@ -30,6 +30,21 @@
 /******************************************************************************/
 #include "Motor_FOC.h" 
 
+			// if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedControl = 0 - speedControl; };
+
+			// if(p_motor->ControlModeFlags.Current == 0U) //speed control is Vq
+			// {
+			// 	if(p_motor->Direction == MOTOR_DIRECTION_CCW)
+			// 	{
+			// 		if(speedControl < 0) { speedControl = 0; } //no plugging
+			// 	}
+			// 	else
+			// 	{
+			// 		if(speedControl > 0) { speedControl = 0; }
+			// 	}
+			// }
+
+
 static void SetOutputLimits(Motor_T * p_motor, uint16_t speedIOutCcw, uint16_t speedIOutCw, uint16_t speedVOutCcw, uint16_t speedVOutCw, uint16_t iqOutCcw, uint16_t iqOutCw)
 {
 	if(p_motor->ControlModeFlags.Speed == 1U)
@@ -56,17 +71,8 @@ void Motor_FOC_SetOutputLimitsCw(Motor_T * p_motor)
 	SetOutputLimits(p_motor, p_motor->ILimitGenerating_Frac16 / 2U, p_motor->ILimitMotoring_Frac16 / 2U, p_motor->ILimitMotoring_Frac16 / 2U, 0, 0, 32767);
 }
 
-void Motor_FOC_SetDirectionCcw(Motor_T * p_motor)
-{
-	Motor_SetDirectionCcw(p_motor);
-	Motor_FOC_SetOutputLimitsCw(p_motor);
-}
-
-void Motor_FOC_SetDirectionCw(Motor_T * p_motor)
-{
-	Motor_SetDirectionCw(p_motor);
-	Motor_FOC_SetOutputLimitsCw(p_motor);
-}
+void Motor_FOC_SetDirectionCcw(Motor_T * p_motor) { Motor_SetDirectionCcw(p_motor); Motor_FOC_SetOutputLimitsCw(p_motor); } 
+void Motor_FOC_SetDirectionCw(Motor_T * p_motor) { Motor_SetDirectionCw(p_motor); Motor_FOC_SetOutputLimitsCw(p_motor); }
 
 void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {

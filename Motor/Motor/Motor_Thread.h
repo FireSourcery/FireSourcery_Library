@@ -65,14 +65,18 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 	{
 		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT);
 
-		switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_ADCU))
+		switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
 		{
 			case THERMISTOR_STATUS_OK: p_motor->RunStateFlags.HeatWarning = 0U; 		break;
-			case THERMISTOR_OVER_LIMIT_SHUTDOWN: Motor_User_SetFault(p_motor); 			break;
-			case THERMISTOR_OVER_LIMIT_THRESHOLD: 										break;
-			case THERMISTOR_OVER_WARNING: 
-				p_motor->RunStateFlags.HeatWarning = 1U;  
-				p_motor->RunStateFlags.IWarningActive = 1U; 	
+			case THERMISTOR_LIMIT_SHUTDOWN: Motor_User_SetFault(p_motor); 			break;
+			case THERMISTOR_LIMIT_THRESHOLD: 										break;
+			case THERMISTOR_WARNING:
+				if(p_motor->RunStateFlags.HeatWarning == 0U)
+				{
+					p_motor->RunStateFlags.HeatWarning = 1U;
+					p_motor->RunStateFlags.IWarningActive = 1U;
+					Motor_User_SetILimitActive_Scalar(p_motor, p_motor->Parameters.ILimitHeat_ScalarFrac16);
+				}
 				break;
 			default: break;
 		}

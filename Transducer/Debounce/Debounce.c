@@ -39,8 +39,8 @@ void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime)
 	p_debounce->RawStatePrev 		= p_debounce->DebouncedState;
 }
 
-/*
-	return true if state changed
+/*!
+	@return true if state changed
 */
 bool Debounce_CaptureState(Debounce_T * p_debounce)
 {

@@ -54,9 +54,9 @@ void Motor_Analog_CaptureVa(Motor_T * p_motor)
 
 	}
 
-	if(p_motor->AnalogResults.Va_ADCU > p_motor->VBemfPeakTemp_ADCU)
+	if(p_motor->AnalogResults.Va_Adcu > p_motor->VBemfPeakTemp_Adcu)
 	{
-		p_motor->VBemfPeakTemp_ADCU = p_motor->AnalogResults.Va_ADCU;
+		p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Va_Adcu;
 	}
 }
 
@@ -76,9 +76,9 @@ void Motor_Analog_CaptureVb(Motor_T * p_motor)
 
 	}
 
-	if(p_motor->AnalogResults.Vb_ADCU > p_motor->VBemfPeakTemp_ADCU)
+	if(p_motor->AnalogResults.Vb_Adcu > p_motor->VBemfPeakTemp_Adcu)
 	{
-		p_motor->VBemfPeakTemp_ADCU = p_motor->AnalogResults.Vb_ADCU;
+		p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Vb_Adcu;
 	}
 }
 
@@ -98,9 +98,9 @@ void Motor_Analog_CaptureVc(Motor_T * p_motor)
 
 	}
 
-	if(p_motor->AnalogResults.Vc_ADCU > p_motor->VBemfPeakTemp_ADCU)
+	if(p_motor->AnalogResults.Vc_Adcu > p_motor->VBemfPeakTemp_Adcu)
 	{
-		p_motor->VBemfPeakTemp_ADCU = p_motor->AnalogResults.Vc_ADCU;
+		p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Vc_Adcu;
 	}
 }
 

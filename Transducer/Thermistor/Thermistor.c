@@ -37,7 +37,7 @@ static uint16_t Thermistor_AdcVRef_Scalar; /* Shared by all instances. */
 /*
 	Set Vin to same decimal precision as AdcVRef
 */
-void Thermistor_InitReference(uint16_t adcVRef_MilliV)
+void Thermistor_InitAdcVRef_Scalar(uint16_t adcVRef_MilliV)
 {
 	Thermistor_AdcVRef_Scalar = adcVRef_MilliV / 10U;
 }
@@ -54,101 +54,101 @@ void Thermistor_Init(Thermistor_T * p_therm)
 }
 
 /*
-	Smaller adcu is high
+	Smaller adcu is higher heat
 */
-Thermistor_Status_T Thermistor_PollLimitThesholdMonitor(Thermistor_T * p_therm, uint16_t adcu)
+// Thermistor_Status_T Thermistor_PollLimitThesholdMonitor(Thermistor_T * p_therm, uint16_t adcu)
+// {
+	// if(p_therm->Params.IsEnable)
+	// {
+	// 		if		(adcu < p_therm->Params.Limit_Adcu) 		{ p_therm->ThresholdStatus = THERMISTOR_LIMIT_SHUTDOWN; } 		/* crossing shutdown */
+
+	// 	if(p_therm->ThresholdStatus == THERMISTOR_STATUS_OK)	/* current state is ok, check limit only */
+	// 	{ 
+	// 	}
+	// 	else	/* current state is not ok, check threshold and limit */
+	// 	{
+
+	// 		else if	(adcu < p_therm->Params.Threshold_Adcu) 	{ p_therm->ThresholdStatus = THERMISTOR_LIMIT_THRESHOLD; } 	/* still over threshold  */
+	// 		else 												{ p_therm->ThresholdStatus = THERMISTOR_STATUS_OK; }
+	// 	}
+
+	// 	if(adcu < p_therm->Params.Limit_Adcu) { p_therm->ThresholdStatus = THERMISTOR_LIMIT_SHUTDOWN; }	 
+
+	// 	else if(p_therm->ThresholdStatus == THERMISTOR_LIMIT_THRESHOLD)	 
+	// 	{
+	// 		if(adcu > p_therm->Params.Threshold_Adcu) //under therhold 
+	// 		{
+	// 			p_therm->ThresholdStatus = THERMISTOR_LIMIT_THRESHOLD; 
+	// 		} 	/* still over threshold  */
+
+	// 		else { p_therm->ThresholdStatus = THERMISTOR_STATUS_OK; }
+	// 	}
+	// 	else
+	// 	{
+	// 			//check  warning
+	// 	}
+
+	// 	if(adcu < p_therm->Params.Limit_Adcu) { p_therm->ThresholdStatus = THERMISTOR_LIMIT_SHUTDOWN; }	/* crossing shutdown */
+	// 	{		
+
+	// 	}
+	// 	else if(p_therm->ThresholdStatus == THERMISTOR_STATUS_OK)	/* current state is ok, check limit only */
+	// 	{
+	// 		// chck waring
+	// 		if	(adcu < p_therm->Params.Threshold_Adcu) 	{ p_therm->ThresholdStatus = THERMISTOR_LIMIT_THRESHOLD; } 	/* still over threshold  */
+	// 		else 											{ p_therm->ThresholdStatus = THERMISTOR_STATUS_OK; }
+	// 	}
+	// 	else	//threhold, check threshold,
+	// 	{
+	// 		if		(adcu < p_therm->Params.Limit_Adcu) 		{ p_therm->ThresholdStatus = THERMISTOR_LIMIT_SHUTDOWN; } 		/* crossing shutdown */
+	// 		else if	(adcu < p_therm->Params.Threshold_Adcu) 	{ p_therm->ThresholdStatus = THERMISTOR_LIMIT_THRESHOLD; } 	/* still over threshold  */
+	// 		else 												{ p_therm->ThresholdStatus = THERMISTOR_STATUS_OK; }
+	// 	}
+
+	// }
+
+// 	return p_therm->ThresholdStatus;
+// }
+
+// Thermistor_Status_T Thermistor_ProcStatus(Thermistor_T * p_therm, uint16_t adcu)
+// {
+// 	Thermistor_Status_T status = Thermistor_ProcThreshold(p_therm, adcu);
+
+// 	if(p_therm->Params.IsEnable)
+// 	{
+// 		if((status == THERMISTOR_STATUS_OK) && (adcu < p_therm->Params.Warning_Adcu))
+// 		{
+// 			status = THERMISTOR_WARNING;
+// 		}
+// 	}
+
+// 	return status;
+// }
+
+
+Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t adcu)
 {
-	if(p_therm->Params.IsEnable)
-	{
-			if		(adcu < p_therm->Params.Limit_ADCU) 		{ p_therm->ThresholdStatus = THERMISTOR_OVER_LIMIT_SHUTDOWN; } 		/* crossing shutdown */
 
-		if(p_therm->ThresholdStatus == THERMISTOR_STATUS_OK)	/* current state is ok, check limit only */
-		{ 
-		}
-		else	/* current state is not ok, check threshold and limit */
-		{
-
-			else if	(adcu < p_therm->Params.Threshold_ADCU) 	{ p_therm->ThresholdStatus = THERMISTOR_OVER_LIMIT_THRESHOLD; } 	/* still over threshold  */
-			else 												{ p_therm->ThresholdStatus = THERMISTOR_STATUS_OK; }
-		}
-
-		if(adcu < p_therm->Params.Limit_ADCU) { p_therm->ThresholdStatus = THERMISTOR_OVER_LIMIT_SHUTDOWN; }	 
-
-		else if(p_therm->ThresholdStatus == THERMISTOR_OVER_LIMIT_THRESHOLD)	 
-		{
-			if(adcu > p_therm->Params.Threshold_ADCU) //under therhold 
-			{
-				p_therm->ThresholdStatus = THERMISTOR_OVER_LIMIT_THRESHOLD; 
-			} 	/* still over threshold  */
-
-			else { p_therm->ThresholdStatus = THERMISTOR_STATUS_OK; }
-		}
-		else
-		{
-				//check  warning
-		}
-
-		if(adcu < p_therm->Params.Limit_ADCU) { p_therm->ThresholdStatus = THERMISTOR_OVER_LIMIT_SHUTDOWN; }	/* crossing shutdown */
-		{		
-
-		}
-		else if(p_therm->ThresholdStatus == THERMISTOR_STATUS_OK)	/* current state is ok, check limit only */
-		{
-			// chck waring
-			if	(adcu < p_therm->Params.Threshold_ADCU) 	{ p_therm->ThresholdStatus = THERMISTOR_OVER_LIMIT_THRESHOLD; } 	/* still over threshold  */
-			else 											{ p_therm->ThresholdStatus = THERMISTOR_STATUS_OK; }
-		}
-		else	//threhold, check threshold,
-		{
-			if		(adcu < p_therm->Params.Limit_ADCU) 		{ p_therm->ThresholdStatus = THERMISTOR_OVER_LIMIT_SHUTDOWN; } 		/* crossing shutdown */
-			else if	(adcu < p_therm->Params.Threshold_ADCU) 	{ p_therm->ThresholdStatus = THERMISTOR_OVER_LIMIT_THRESHOLD; } 	/* still over threshold  */
-			else 												{ p_therm->ThresholdStatus = THERMISTOR_STATUS_OK; }
-		}
-
-	}
-
-	return p_therm->ThresholdStatus;
 }
 
-Thermistor_Status_T Thermistor_ProcStatus(Thermistor_T * p_therm, uint16_t adcu)
-{
-	Thermistor_Status_T status = Thermistor_ProcThreshold(p_therm, adcu);
+// Thermistor_Status_T Thermistor_GetWarningStatus(Thermistor_T * p_therm)
+// {
+// 	// return (adcu < p_therm->Params.Warning_Adcu) ? THERMISTOR_WARNING : THERMISTOR_STATUS_OK;
+// }
 
-	if(p_therm->Params.IsEnable)
-	{
-		if((status == THERMISTOR_STATUS_OK) && (adcu < p_therm->Params.Warning_ADCU))
-		{
-			status = THERMISTOR_OVER_WARNING;
-		}
-	}
+// Thermistor_Status_T Thermistor_GetStatus(Thermistor_T * p_therm)
+// {
+// 	// Thermistor_Status_T status = p_therm->ThresholdStatus;
 
-	return status;
-}
+// 	// if((status == THERMISTOR_STATUS_OK) && (adcu < p_therm->Params.Warning_Adcu))
+// 	// {
+// 	// 	status = THERMISTOR_WARNING;
+// 	// }
 
+// 	// return status;
 
-Thermistor_Status_T Thermistor_GetLimitStatus(Thermistor_T * p_therm)
-{ 
-	return p_therm->ThresholdStatus;
-}
-
-Thermistor_Status_T Thermistor_GetWarningStatus(Thermistor_T * p_therm)
-{
-	return (adcu < p_therm->Params.Warning_ADCU) ? THERMISTOR_OVER_WARNING : THERMISTOR_STATUS_OK;
-}
-
-Thermistor_Status_T Thermistor_GetStatus(Thermistor_T * p_therm)
-{
-	Thermistor_Status_T status = p_therm->ThresholdStatus;
-
-	if((status == THERMISTOR_STATUS_OK) && (adcu < p_therm->Params.Warning_ADCU))
-	{
-		status = THERMISTOR_OVER_WARNING;
-	}
-
-	return status;
-
-		return (p_therm->ThresholdStatus == THERMISTOR_STATUS_OK) : ;
-}
+// 	// 	return (p_therm->ThresholdStatus == THERMISTOR_STATUS_OK) : ;
+// }
 
 /*
 	For when conversion processing is less frequent than user output
@@ -277,18 +277,18 @@ static uint16_t ConvertDegCToAdcu_SetUser(Thermistor_T * p_therm, uint8_t degree
 	return adcu;
 }
 
-void Thermistor_SetLimit_DegC(Thermistor_T * p_therm, uint8_t limit_degreesC) 			{ p_therm->Params.Limit_ADCU = ConvertDegCToAdcu_SetUser(p_therm, limit_degreesC); }
-void Thermistor_SetThreshold_DegC(Thermistor_T * p_therm, uint8_t threshold_degreesC) 	{ p_therm->Params.Threshold_ADCU = ConvertDegCToAdcu_SetUser(p_therm, threshold_degreesC); }
-void Thermistor_SetWarning_DegC(Thermistor_T * p_therm, uint8_t warning_degreesC) 		{ p_therm->Params.Warning_ADCU = ConvertDegCToAdcu_SetUser(p_therm, warning_degreesC); }
+void Thermistor_SetLimit_DegC(Thermistor_T * p_therm, uint8_t limit_degreesC) 			{ p_therm->Params.Limit_Adcu = ConvertDegCToAdcu_SetUser(p_therm, limit_degreesC); }
+void Thermistor_SetThreshold_DegC(Thermistor_T * p_therm, uint8_t threshold_degreesC) 	{ p_therm->Params.Threshold_Adcu = ConvertDegCToAdcu_SetUser(p_therm, threshold_degreesC); }
+void Thermistor_SetWarning_DegC(Thermistor_T * p_therm, uint8_t warning_degreesC) 		{ p_therm->Params.Warning_Adcu = ConvertDegCToAdcu_SetUser(p_therm, warning_degreesC); }
 
-int32_t Thermistor_GetLimit_DegC(Thermistor_T * p_therm) 		{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Limit_ADCU); }
-int32_t Thermistor_GetThreshold_DegC(Thermistor_T * p_therm) 	{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Threshold_ADCU); }
-int32_t Thermistor_GetWarning_DegC(Thermistor_T * p_therm) 		{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Warning_ADCU); }
+int32_t Thermistor_GetLimit_DegC(Thermistor_T * p_therm) 		{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Limit_Adcu); }
+int32_t Thermistor_GetThreshold_DegC(Thermistor_T * p_therm) 	{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Threshold_Adcu); }
+int32_t Thermistor_GetWarning_DegC(Thermistor_T * p_therm) 		{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Warning_Adcu); }
 
-int32_t Thermistor_GetLimit_DegCInt(Thermistor_T * p_therm, uint16_t scalar) 		{ return Thermistor_ConvertToDegC_Int(p_therm, p_therm->Params.Limit_ADCU, scalar); }
-int32_t Thermistor_GetThreshold_DegCInt(Thermistor_T * p_therm, uint16_t scalar) 	{ return Thermistor_ConvertToDegC_Int(p_therm, p_therm->Params.Threshold_ADCU, scalar); }
-int32_t Thermistor_GetWarning_DegCInt(Thermistor_T * p_therm, uint16_t scalar) 		{ return Thermistor_ConvertToDegC_Int(p_therm, p_therm->Params.Warning_ADCU, scalar); }
+int32_t Thermistor_GetLimit_DegCInt(Thermistor_T * p_therm, uint16_t scalar) 		{ return Thermistor_ConvertToDegC_Int(p_therm, p_therm->Params.Limit_Adcu, scalar); }
+int32_t Thermistor_GetThreshold_DegCInt(Thermistor_T * p_therm, uint16_t scalar) 	{ return Thermistor_ConvertToDegC_Int(p_therm, p_therm->Params.Threshold_Adcu, scalar); }
+int32_t Thermistor_GetWarning_DegCInt(Thermistor_T * p_therm, uint16_t scalar) 		{ return Thermistor_ConvertToDegC_Int(p_therm, p_therm->Params.Warning_Adcu, scalar); }
 
-float Thermistor_GetLimit_DegCFloat(Thermistor_T * p_therm) 		{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Limit_ADCU); }
-float Thermistor_GetThreshold_DegCFloat(Thermistor_T * p_therm) 	{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Threshold_ADCU); }
-float Thermistor_GetWarning_DegCFloat(Thermistor_T * p_therm) 		{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Warning_ADCU); }
+float Thermistor_GetLimit_DegCFloat(Thermistor_T * p_therm) 		{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Limit_Adcu); }
+float Thermistor_GetThreshold_DegCFloat(Thermistor_T * p_therm) 	{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Threshold_Adcu); }
+float Thermistor_GetWarning_DegCFloat(Thermistor_T * p_therm) 		{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Warning_Adcu); }

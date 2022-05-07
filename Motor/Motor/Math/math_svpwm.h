@@ -36,22 +36,22 @@
 #define QFRAC16_N_FRAC_BITS_MINUS_1 14U
 
 /*
- * Standard SVM calculation method. Inclusive of equivalent reverse Clarke transform.
- * Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
- *
- * dutyA, dutyB, dutyC -> 16 bits, q1.15, always positive
- */
+	Standard SVM calculation method. Inclusive of equivalent reverse Clarke transform.
+	Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
+	
+	dutyA, dutyB, dutyC -> 16 bits, q1.15, always positive
+*/
 static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16_t * p_dutyC, qfrac16_t alpha, qfrac16_t beta)
 {
 	/*
-	 * Derives 3 magnitudes (duty cycles) belonging to basic unit vectors.
-	 * The other 3 of 6 are inverse of the 3 derived
-	 * Magnitudes are normalized by a factor of sqrt(3)/2, i.e alpha = 1 => A = .866
-	 *
-	 * X = beta;
-	 * Y = (beta + sqrt3 * alpha) / 2;
-	 * Z = (beta - sqrt3 * alpha) / 2;
-	 */
+		The other 3 of 6 are inverse of the 3 derived
+		Magnitudes are normalized by a factor of sqrt(3)/2, i.e alpha = 1 => A = .866
+		Derives 3 magnitudes (duty cycles) belonging to basic unit vectors.
+		
+		X = beta;
+		Y = (beta + sqrt3 * alpha) / 2;
+		Z = (beta - sqrt3 * alpha) / 2;
+	*/
 
 	int32_t betaDiv2 = qfrac16_mul(beta, QFRAC16_1_DIV_2);
 	int32_t alphaSqrt3Div2 = qfrac16_mul(alpha, QFRAC16_SQRT3_DIV_2);
@@ -67,23 +67,23 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 		if(magZ < 0)
 		{
 			/*
-			 * Sector 1: X >= 0 and Z < 0
-			 *
-			 * Duty Cycle:
-			 * A:		|v100| = (sqrt3 * alpha - beta) / 2 = -Z;
-			 * invC:	|v110| = beta = X;
-			 *
-			 * SVPWM:
-			 * A -> Max, B -> Mid, C -> Min
-			 * z0 = (1/2) - (max + min)/2 = (1 - (-Z - X))/2
-			 * A = z0 - Z;
-			 * B = z0;
-			 * C = z0 - X;
-			 *
-			 * A = (1 + X - Z) / 2;
-			 * B = (1 + X + Z) / 2;
-			 * C = (1 - X + Z) / 2;
-			 */
+				Sector 1: X >= 0 and Z < 0
+
+				Duty Cycle:
+				A:		|v100| = (sqrt3 * alpha - beta) / 2 = -Z;
+				invC:	|v110| = beta = X;
+
+				SVPWM:
+				A -> Max, B -> Mid, C -> Min
+				z0 = (1/2) - (max + min)/2 = (1 - (-Z - X))/2
+				A = z0 - Z;
+				B = z0;
+				C = z0 - X;
+
+				A = (1 + X - Z) / 2;
+				B = (1 + X + Z) / 2;
+				C = (1 - X + Z) / 2;
+			*/
 			z0 = (0x7FFF + magX + magZ) / 2;
 			*p_dutyA = (z0 - magZ);
 			*p_dutyB = z0;
@@ -92,20 +92,20 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 		else if(magY >= 0)
 		{
 			/*
-			 * Sector 2: Y >= 0 and Z >= 0
-			 *
-			 *
-			 * Duty Cycle:
-			 * invC: 	|v110| = 1 * (beta + sqrt3 * alpha) / 2 = Y;
-			 * B:	 	|v010| = 1 * (beta - sqrt3 * alpha) / 2 = Z;
-			 *
-			 * SVPWM:
-			 * A -> Mid, B -> Max, C -> Min
-			 * z0 = (1/2) - (max + min)/2 = (1 - (Z - Y))/2
-			 * A = z0;
-			 * B = z0 + Z;
-			 * C = z0 - Y;
-			 */
+				Sector 2: Y >= 0 and Z >= 0
+
+
+				Duty Cycle:
+				invC: 	|v110| = 1 * (beta + sqrt3 * alpha) / 2 = Y;
+				B:	 	|v010| = 1 * (beta - sqrt3 * alpha) / 2 = Z;
+
+				SVPWM:
+				A -> Mid, B -> Max, C -> Min
+				z0 = (1/2) - (max + min)/2 = (1 - (Z - Y))/2
+				A = z0;
+				B = z0 + Z;
+				C = z0 - Y;
+			*/
 			z0 = (0x7FFF + magY - magZ) / 2;
 			*p_dutyA = z0;
 			*p_dutyB = (z0 + magZ);
@@ -114,19 +114,19 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 		else
 		{
 			/*
-			 * Sector 3: X >= 0 and Y < 0
-			 *
-			 * Duty Cycle:
-			 * B: 		|v010| = X;
-			 * invA:	|v011| = -Y;
-			 *
-			 * SVPWM:
-			 * A -> Min, B -> Max, C -> Mid
-			 * z0 = (1 - (X + Y))/2
-			 * A = z0 + Y;
-			 * B = z0 + X;
-			 * C = z0;
-			 */
+				Sector 3: X >= 0 and Y < 0
+				
+				Duty Cycle:
+				B: 		|v010| = X;
+				invA:	|v011| = -Y;
+				
+				SVPWM:
+				A -> Min, B -> Max, C -> Mid
+				z0 = (1 - (X + Y))/2
+				A = z0 + Y;
+				B = z0 + X;
+				C = z0;
+			*/
 			z0 = (0x7FFF - magX - magY) / 2;
 			*p_dutyA = (z0 + magY);
 			*p_dutyB = (z0 + magX);
@@ -138,19 +138,19 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 		if(magZ >= 0)
 		{
 			/*
-			 * Sector 4: X < 0 and Z >= 0
-			 *
-			 * Duty Cycle:
-			 * invA: 	|v011| = Z;
-			 * C:		|v001| = -X;
-			 *
-			 * SVPWM:
-			 * A -> Min, B -> Mid, C -> Max
-			 * z0 = (1 - (-X - Z))/2
-			 * A = z0 - Z;
-			 * B = z0;
-			 * C = z0 - X;
-			 */
+				Sector 4: X < 0 and Z >= 0
+			
+				Duty Cycle:
+				invA: 	|v011| = Z;
+				C:		|v001| = -X;
+			
+				SVPWM:
+				A -> Min, B -> Mid, C -> Max
+				z0 = (1 - (-X - Z))/2
+				A = z0 - Z;
+				B = z0;
+				C = z0 - X;
+			*/
 			z0 = (0x7FFF + magX + magZ) / 2;
 			*p_dutyA = (z0 - magZ);
 			*p_dutyB = z0;
@@ -159,19 +159,19 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 		else if(magY < 0)
 		{
 			/*
-			 * Sector 5:  Y < 0 and Z < 0
-			 *
-			 * Duty Cycle:
-			 * C: 		|v001| = -Y;
-			 * invB:	|v101| = -Z;
-			 *
-			 * SVPWM:
-			 * A -> Mid, B -> Min, C -> Max
-			 * z0 = (1 - (-Y + Z))/2
-			 * A = z0;
-			 * B = z0 + Z;
-			 * C = z0 - Y;
-			 */
+				Sector 5:  Y < 0 and Z < 0
+
+				Duty Cycle:
+				C: 		|v001| = -Y;
+				invB:	|v101| = -Z;
+
+				SVPWM:
+				A -> Mid, B -> Min, C -> Max
+				z0 = (1 - (-Y + Z))/2
+				A = z0;
+				B = z0 + Z;
+				C = z0 - Y;
+			*/
 			z0 = (0x7FFF + magY - magZ) / 2;
 			*p_dutyA = z0;
 			*p_dutyB = (z0 + magZ);
@@ -180,19 +180,19 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 		else
 		{
 			/*
-			 * Sector 6: X < 0 and Y >= 0
-			 *
-			 * Duty Cycle:
-			 * invB: 	|v101| = -X;
-			 * A:		|v100| = Y;
-			 *
-			 * SVPWM:
-			 * A -> Max, B -> Min, C -> Mid
-			 * z0 = (1 - (X + Y))/2
-			 * A = z0 + Y;
-			 * B = z0 + X;
-			 * C = z0;
-			 */
+				Sector 6: X < 0 and Y >= 0
+
+				Duty Cycle:
+				invB: 	|v101| = -X;
+				A:		|v100| = Y;
+
+				SVPWM:
+				A -> Max, B -> Min, C -> Mid
+				z0 = (1 - (X + Y))/2
+				A = z0 + Y;
+				B = z0 + X;
+				C = z0;
+			*/
 			z0 = (0x7FFF - magX - magY) / 2;
 			*p_dutyA = (z0 + magY);
 			*p_dutyB = (z0 + magX);

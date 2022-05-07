@@ -243,5 +243,11 @@ static inline uint32_t Encoder_DeltaD_ConvertToRotationalSpeed_RPM(Encoder_T * p
 }
 
 
+static inline uint32_t Encoder_DeltaD_GetUnitSpeed(Encoder_T * p_encoder)
+{
+	return Encoder_CalcUnitSpeed(p_encoder, p_encoder->DeltaD, 1U);
+}
+
+
 
 #endif

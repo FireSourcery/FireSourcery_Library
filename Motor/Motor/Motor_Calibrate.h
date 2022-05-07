@@ -66,7 +66,7 @@ static inline bool Motor_Calibrate_ProcSinCos(Motor_T * p_motor)
 				break;
 
 			case 2U:
-				SinCos_CalibrateA(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
+				SinCos_CalibrateA(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
 				Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignVoltage_Frac16, 0U);
 				p_motor->CalibrationStateStep = 3U;
 				/* wait 1s */
@@ -79,7 +79,7 @@ static inline bool Motor_Calibrate_ProcSinCos(Motor_T * p_motor)
 				break;
 
 			case 4U:
-				SinCos_CalibrateB(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
+				SinCos_CalibrateB(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
 //				Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, p_motor->Parameters.AlignVoltage_Frac16);
 //				p_motor->CalibrationStateStep = 5U;
 				isComplete = true;
@@ -216,9 +216,9 @@ static inline void Motor_Calibrate_StartAdc(Motor_T * p_motor)
 		Phase_Ground(&p_motor->Phase);
 	}
 
-	p_motor->AnalogResults.Ia_ADCU = 2048U;
-	p_motor->AnalogResults.Ib_ADCU = 2048U;
-	p_motor->AnalogResults.Ic_ADCU = 2048U;
+	p_motor->AnalogResults.Ia_Adcu = 2048U;
+	p_motor->AnalogResults.Ib_Adcu = 2048U;
+	p_motor->AnalogResults.Ic_Adcu = 2048U;
 
 	Filter_InitAvg(&p_motor->FilterA);
 	Filter_InitAvg(&p_motor->FilterB);
@@ -230,22 +230,20 @@ static inline bool Motor_Calibrate_Adc(Motor_T *p_motor)
 	bool isComplete = Timer_Poll(&p_motor->ControlTimer);
 	if (isComplete == true)
 	{
-		p_motor->Parameters.IaRefZero_ADCU = Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
-		p_motor->Parameters.IbRefZero_ADCU = Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
-		p_motor->Parameters.IcRefZero_ADCU = Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
-		p_motor->Parameters.IaRefMax_ADCU = p_motor->Parameters.IaRefZero_ADCU + p_motor->Parameters.IRefPeak_ADCU;
-		p_motor->Parameters.IbRefMax_ADCU = p_motor->Parameters.IbRefZero_ADCU + p_motor->Parameters.IRefPeak_ADCU;
-		p_motor->Parameters.IcRefMax_ADCU = p_motor->Parameters.IcRefZero_ADCU + p_motor->Parameters.IRefPeak_ADCU;
-		Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_ADCU, p_motor->Parameters.IaRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
-		Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_ADCU, p_motor->Parameters.IbRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
-		Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_ADCU, p_motor->Parameters.IcRefMax_ADCU, p_motor->Parameters.IRefMax_Amp);
+		p_motor->Parameters.IaRefZero_Adcu = Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu);
+		p_motor->Parameters.IbRefZero_Adcu = Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_Adcu);
+		p_motor->Parameters.IcRefZero_Adcu = Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_Adcu);
+		// p_motor->Parameters.IaRefMax_Adcu = p_motor->Parameters.IaRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu;
+		// p_motor->Parameters.IbRefMax_Adcu = p_motor->Parameters.IbRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu;
+		// p_motor->Parameters.IcRefMax_Adcu = p_motor->Parameters.IcRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu;
+		Motor_ResetIUnits_Adcu(p_motor);
 		Phase_Float(&p_motor->Phase);
 	}
 	else
 	{
-		Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_ADCU);
-		Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_ADCU);
-		Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_ADCU);
+		Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu);
+		Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_Adcu);
+		Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_Adcu);
 		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
 		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
 		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);

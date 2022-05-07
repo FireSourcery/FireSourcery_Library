@@ -56,18 +56,18 @@ typedef union MotAnalog_Results_Tag
 {
 	struct
 	{
-		analog_adcresult_t VPos_ADCU;
-		analog_adcresult_t VAcc_ADCU;
-		analog_adcresult_t VSense_ADCU;
-		analog_adcresult_t HeatPcb_ADCU;
+		analog_adcresult_t VPos_Adcu;
+		analog_adcresult_t VAcc_Adcu;
+		analog_adcresult_t VSense_Adcu;
+		analog_adcresult_t HeatPcb_Adcu;
 		union
 		{
-			analog_adcresult_t HeatMosfets_ADCU;
-			analog_adcresult_t HeatMosfetsTop_ADCU;
+			analog_adcresult_t HeatMosfets_Adcu;
+			analog_adcresult_t HeatMosfetsTop_Adcu;
 		};
-		analog_adcresult_t HeatMosfetsBot_ADCU;
-		analog_adcresult_t Throttle_ADCU;
-		analog_adcresult_t Brake_ADCU;
+		analog_adcresult_t HeatMosfetsBot_Adcu;
+		analog_adcresult_t Throttle_Adcu;
+		analog_adcresult_t Brake_Adcu;
 	};
 	analog_adcresult_t Channels[MOT_ANALOG_CHANNEL_COUNT];
 }

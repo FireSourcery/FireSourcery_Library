@@ -82,7 +82,7 @@ PID_T;
 }
 
 extern void PID_Init(PID_T * p_pid);
-extern void PID_Init_Params
+extern void PID_Init_Args
 (
 	PID_T * p_pid,
 	uint32_t calcFreq,

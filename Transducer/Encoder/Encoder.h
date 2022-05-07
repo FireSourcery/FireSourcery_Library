@@ -668,15 +668,15 @@ static inline uint32_t Encoder_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
 	direct to user max rpm
 	(Encoder_CalcAngularSpeed(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT) * 60U >> (16U - CONFIG_ENCODER_ANGLE_DEGREES_BITS)) / p_encoder->Params.SpeedRef_Rpm; // if angle bits < 16
 */
-static inline uint32_t Encoder_CalcRefSpeed(Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
+static inline uint32_t Encoder_CalcUnitSpeed(Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
 {
 	return deltaD_Ticks * p_encoder->UnitRefSpeed / deltaT_Ticks;
 }
 
-static inline uint32_t Encoder_GetRefSpeed(Encoder_T * p_encoder)
-{
-	return Encoder_CalcRefSpeed(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
-}
+// static inline uint32_t Encoder_GetUnitSpeed(Encoder_T * p_encoder)
+// {
+// 	return Encoder_CalcUnitSpeed(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
+// }
 
 /******************************************************************************/
 /*! @} */

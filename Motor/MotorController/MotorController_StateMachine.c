@@ -270,8 +270,7 @@ static StateMachine_State_T * Run_InputBrakeStart(MotorController_T * p_mc)
 static StateMachine_State_T * Run_InputCoast(MotorController_T * p_mc)
 {
 	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
-	{
-		// 		Motor_UserN_SetVoltageBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
+	{ 
 		MotorController_ProcUserCmdVoltageBrake(p_mc);
 	}
 	else

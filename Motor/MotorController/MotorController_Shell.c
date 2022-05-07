@@ -76,7 +76,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 	switch(p_mc->ShellSubstate)
 	{
 		case 0U:
-			Terminal_SendString(p_terminal, "Speed: ");		Terminal_SendNum(p_terminal, Motor_User_GetSpeed_RPM(p_motor)); Terminal_SendString(p_terminal, " RPM ");
+			Terminal_SendString(p_terminal, "Speed: ");		Terminal_SendNum(p_terminal, Motor_User_GetSpeed_Rpm(p_motor)); Terminal_SendString(p_terminal, " RPM ");
 															Terminal_SendNum(p_terminal, p_motor->SpeedFeedback_Frac16); 	Terminal_SendString(p_terminal, " Frac16\r\n");
 
 			// Terminal_SendString(p_terminal, "Speed2: "); Terminal_SendNum(p_terminal, p_motor->Speed2_RPM); Terminal_SendString(p_terminal, " RPM ");
@@ -172,19 +172,19 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 		}
 		else if(strncmp(argv[1U], "voltage", 8U) == 0U)
 		{
-			Motor_User_SetThrottleControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE);
+			Motor_User_SetControlModeParam(p_motor, MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE);
 		}
 		else if(strncmp(argv[1U], "current", 8U) == 0U)
 		{
-			Motor_User_SetThrottleControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_CURRENT);
+			Motor_User_SetControlModeParam(p_motor, MOTOR_CONTROL_MODE_CONSTANT_CURRENT);
 		}
 		else if(strncmp(argv[1U], "speedvoltage", 13U) == 0U)
 		{
-			Motor_User_SetThrottleControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE);
+			Motor_User_SetControlModeParam(p_motor, MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE);
 		}
 		else if(strncmp(argv[1U], "speedcurrent", 12U) == 0U)
 		{
-			Motor_User_SetThrottleControlMode(p_motor, MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT);
+			Motor_User_SetControlModeParam(p_motor, MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT);
 		}
 		else if(strncmp(argv[1U], "protocol", 9U) == 0U)
 		{
@@ -303,8 +303,8 @@ static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
 			Terminal_SendString(p_terminal, "AngleOffset: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.AngleOffet); 	Terminal_SendString(p_terminal, " \r\n");
 			Terminal_SendString(p_terminal, "IsBPositive: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.IsBPositive); 	Terminal_SendString(p_terminal, " \r\n");
 
-			//			Terminal_SendString(p_terminal, "Zero_ADCU: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Zero_ADCU); 	Terminal_SendString(p_terminal, " \r\n");
-			//			Terminal_SendString(p_terminal, "Max_ADCU: "); 		Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Max_ADCU); 		Terminal_SendString(p_terminal, " \r\n");
+			//			Terminal_SendString(p_terminal, "Zero_Adcu: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Zero_Adcu); 	Terminal_SendString(p_terminal, " \r\n");
+			//			Terminal_SendString(p_terminal, "Max_Adcu: "); 		Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Max_Adcu); 		Terminal_SendString(p_terminal, " \r\n");
 			//			Terminal_SendString(p_terminal, "Max_MilliV: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Max_MilliV); 	Terminal_SendString(p_terminal, " \r\n");
 			//			Terminal_SendString(p_terminal, "Phase 0: "); Terminal_SendNum(p_terminal, p_motor->Debug[9U]); Terminal_SendString(p_terminal, "Deg16 \r\n");
 			//			Terminal_SendString(p_terminal, "Phase A: "); Terminal_SendNum(p_terminal, p_motor->Debug[0U]); Terminal_SendString(p_terminal, "Deg16 \r\n");
@@ -394,7 +394,7 @@ static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 		Terminal_SendString(p_terminal, "MOSFETs Top: "); 	Terminal_SendNum(p_terminal, heatMosfetsTop); 	Terminal_SendString(p_terminal, " C\r\n"); 
 		Terminal_SendString(p_terminal, "MOSFETs Bot: "); 	Terminal_SendNum(p_terminal, heatMosfetsBot); 	Terminal_SendString(p_terminal, " C\r\n"); 
 		Terminal_SendString(p_terminal, "Motor0: "); 		Terminal_SendNum(p_terminal, heatMotor0); 		Terminal_SendString(p_terminal, " C\r\n");
-		Terminal_SendString(p_terminal, "Motor0: "); 		Terminal_SendNum(p_terminal, p_motor->AnalogResults.Heat_ADCU); 		Terminal_SendString(p_terminal, " Adcu\r\n");
+		Terminal_SendString(p_terminal, "Motor0: "); 		Terminal_SendNum(p_terminal, p_motor->AnalogResults.Heat_Adcu); 		Terminal_SendString(p_terminal, " Adcu\r\n");
 		
 	}
 	else if(argc == 2U)
@@ -597,22 +597,20 @@ static Cmd_Status_T Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
 		}
 		Terminal_SendString(p_terminal, "\r\n");
 
-		//		Terminal_SendString(p_terminal, "SpeedRefMax_RPM: ");
-		//		Terminal_SendNum(p_terminal, p_motor->Parameters.SpeedRefMax_RPM);
+		//		Terminal_SendString(p_terminal, "SpeedRefMax_Rpm: ");
+		//		Terminal_SendNum(p_terminal, p_motor->Parameters.SpeedRefMax_Rpm);
 		//		Terminal_SendString(p_terminal, "\r\n");
 
 		PRINT_PARAM_VAR_MOTOR(PolePairs)
-			PRINT_PARAM_VAR_MOTOR(SpeedRefMax_RPM)
-			PRINT_PARAM_VAR_MOTOR(SpeedRefVoltage_RPM)
-			// PRINT_PARAM_VAR_MOTOR(IBusLimit_Frac16)
-			// PRINT_PARAM_VAR_MOTOR(IqLimit)
-			PRINT_PARAM_VAR_MOTOR(IRefMax_Amp)
-			PRINT_PARAM_VAR_MOTOR(IaRefMax_ADCU)
-			PRINT_PARAM_VAR_MOTOR(IbRefMax_ADCU)
-			PRINT_PARAM_VAR_MOTOR(IcRefMax_ADCU)
-			PRINT_PARAM_VAR_MOTOR(IaRefZero_ADCU)
-			PRINT_PARAM_VAR_MOTOR(IbRefZero_ADCU)
-			PRINT_PARAM_VAR_MOTOR(IcRefZero_ADCU)
+			PRINT_PARAM_VAR_MOTOR(SpeedRefMax_Rpm)
+			PRINT_PARAM_VAR_MOTOR(SpeedRefVBemf_Rpm) 
+			// PRINT_PARAM_VAR_MOTOR(IRefMax_Amp)
+			// PRINT_PARAM_VAR_MOTOR(IaRefMax_Adcu)
+			// PRINT_PARAM_VAR_MOTOR(IbRefMax_Adcu)
+			// PRINT_PARAM_VAR_MOTOR(IcRefMax_Adcu)
+			PRINT_PARAM_VAR_MOTOR(IaRefZero_Adcu)
+			PRINT_PARAM_VAR_MOTOR(IbRefZero_Adcu)
+			PRINT_PARAM_VAR_MOTOR(IcRefZero_Adcu)
 			PRINT_PARAM_VAR_MOTOR(AlignVoltage_Frac16)
 			PRINT_PARAM_VAR_MOTOR(AlignTime_ControlCycles)
 			//
@@ -629,8 +627,8 @@ static Cmd_Status_T Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
 			//			.InputMode 					= MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
 			//			.CoastMode 					= MOTOR_CONTROLLER_COAST_MODE_REGEN, //MOTOR_CONTROLLER_COAST_MODE_FLOAT,
 			//			.BuzzerOnReverse 	= false,
-			//			.BatteryZero_ADCU = 1293, //30V
-			//			.BatteryFull_ADCU = 1811, //42V
+			//			.BatteryZero_Adcu = 1293, //30V
+			//			.BatteryFull_Adcu = 1811, //42V
 			//		},
 			//
 			Terminal_SendString(p_terminal, "\r\n");
@@ -714,10 +712,10 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 				break;
 
 			case MOTOR_SENSOR_MODE_SIN_COS:
-				SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_ADCU, p_motor->AnalogResults.Cos_ADCU);
+				SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
 
-				Terminal_SendString(p_terminal, "Sin: "); 		Terminal_SendNum(p_terminal, p_motor->AnalogResults.Sin_ADCU);
-				Terminal_SendString(p_terminal, " Cos: "); 		Terminal_SendNum(p_terminal, p_motor->AnalogResults.Cos_ADCU);
+				Terminal_SendString(p_terminal, "Sin: "); 		Terminal_SendNum(p_terminal, p_motor->AnalogResults.Sin_Adcu);
+				Terminal_SendString(p_terminal, " Cos: "); 		Terminal_SendNum(p_terminal, p_motor->AnalogResults.Cos_Adcu);
 				Terminal_SendString(p_terminal, " Angle: "); 	Terminal_SendNum(p_terminal, SinCos_GetElectricalAngle(&p_motor->SinCos)); 
 				Terminal_SendString(p_terminal, "\r\n");
 				break;
