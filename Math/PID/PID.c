@@ -158,10 +158,7 @@ void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max)
 
 void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq)
 {
-	if(calcFreq > 0U)
-	{
-		p_pid->Params.CalcFreq = calcFreq;
-	}
+	if(calcFreq > 0U) { p_pid->Params.CalcFreq = calcFreq; }
 }
 
 void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor)
