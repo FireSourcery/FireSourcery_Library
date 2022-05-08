@@ -70,10 +70,9 @@ void Encoder_DeltaT_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCou
 }
 
 /*
- * Long timer ticks to determine short timer overflowed or stopped capture
- * p_encoder->CONFIG.EXTENDED_TIMER_FREQ should be small, < 65536
- *
- */
+	Long timer ticks to determine short timer overflowed or stopped capture
+	p_encoder->CONFIG.EXTENDED_TIMER_FREQ should be small, < 65536 
+*/
 void Encoder_DeltaT_SetExtendedTimer(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
 {
 	p_encoder->Params.ExtendedTimerDeltaTStop = effectiveStopTime_Millis * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / 1000U;

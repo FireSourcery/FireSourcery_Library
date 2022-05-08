@@ -178,7 +178,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 
 			if(procSpeed == true)
 			{
-				speedFeedback_Frac16 = Encoder_DeltaT_GetUnitSpeed(&p_motor->Encoder); 
+				speedFeedback_Frac16 = (p_motor->SpeedFeedback_Frac16 + Encoder_DeltaT_GetUnitSpeed(&p_motor->Encoder)) / 2U;
 				if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedFeedback_Frac16 = 0 - speedFeedback_Frac16; };
 			}
 
@@ -369,7 +369,7 @@ static inline void Motor_FOC_SetMatchOutput(Motor_T * p_motor, int32_t iq, int32
 
 	if(p_motor->ControlModeFlags.Speed == 1U)
 	{
-		Motor_SetSpeedOutput(p_motor, speedControl);  /* Speed PID, SpeedControl, is signed [-65535:65535] */
+		Motor_SetSpeedOutput(p_motor, speedControl); 
 	}
 	else /* (p_motor->ControlModeFlags.Speed == 0U) */
 	{
@@ -389,25 +389,26 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 	int32_t vqReq;
 
 	/*
-	 * From FreeWheel State, match to speed/bemf
-	 */
+		From FreeWheel State, match to speed/bemf
+	*/
 	 /*
-	  * Match to Bemf //todo check bemf capture available.
-	  * Captured VBemfPeak always positive
-	  */
+		Match to Bemf //todo check bemf capture available.
+		Captured VBemfPeak always positive
+	*/
 	  //	vqReq = Linear_ADC_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, p_motor->VBemfPeak_Adcu) >> 1U;
 
 	/*
-	* Match to Speed
-	* User sets larger SpeedRefVBemf_Rpm for smaller vqReq to ensure never resume to higher speed
-	* vqReq = Speed_RPM *  32768 /  SpeedRefVBemf_Rpm
+		Match to Speed
+		User sets larger SpeedRefVBemf_Rpm for smaller vqReq to ensure never resume to higher speed
+		vqReq = Speed_RPM * 32768 / SpeedRefVBemf_Rpm
+
+		SpeedFeedback_Frac16 = Speed_RPM * 65536 /  SpeedRefMax_Rpm, todo account for SpeedRefVBemf_Rpm
 	*/
-	vqReq = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedRefMax_Rpm / ((uint32_t)2U * p_motor->Parameters.SpeedRefVBemf_Rpm);
-
-	if(vqReq > 32767) { vqReq = 32767; }
-
-	if(p_motor->Direction == MOTOR_DIRECTION_CW) { vqReq = 0 - vqReq; }
-	Motor_FOC_SetMatchOutput(p_motor, 0, vqReq, 0);
+	// vqReq = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedRefMax_Rpm / p_motor->Parameters.SpeedRefVBemf_Rpm / 2U; 
+	// if(vqReq > 32767) { vqReq = 32767; }
+	// else if(vqReq < -32767) { vqReq = -32767; }
+	 
+	Motor_FOC_SetMatchOutput(p_motor, 0, p_motor->SpeedFeedback_Frac16 / 2U, 0);
 
 	_Motor_FOC_ActivateAngle(p_motor);
 	Phase_ActivateSwitchABC(&p_motor->Phase); /* Switches Disabled when entering freewheel State */

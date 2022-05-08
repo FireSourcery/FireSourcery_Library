@@ -352,15 +352,15 @@ typedef struct Motor_Tag
 	*/
 	Linear_T Ramp; //	Linear_T RampUp; //	Linear_T RampDown;
 	uint32_t RampIndex;
-	int32_t RampCmd;	//[-65536:65536] SetPoint after ram => SpeedReq/IReq/VReq
+	int32_t RampCmd;		/* [-32767:32767] SetPoint after ramp => SpeedReq, IReq, VReq */
 
 	/*
 		Speed Feedback
 	*/
 	PID_T PidSpeed;						/* Input SpeedFeedback_Frac16 Q0.16, Output SpeedControl => VPwm, Vq, Iq,  */
 	Timer_T SpeedTimer;					/* Speed Calc Timer */
-	int32_t SpeedFeedback_Frac16; 		/* Feedback Variable, can over saturate */
-	int32_t SpeedControl; 				/* Speed PID output, (SpeedFeedback_Frac16 - RampCmd) => (VPwm, Vq, Iq), updated once per millis */
+	int32_t SpeedFeedback_Frac16; 		/* [-65535:65535] Feedback Variable, can over saturate */
+	int32_t SpeedControl; 				/* [-32767:32767] Speed PID output, (SpeedFeedback_Frac16/2 - RampCmd) => VPwm, Vq, Iq, updated once per millis */
 		// uint16_t Speed_RPM;			
 		// uint16_t Speed2_RPM;
 		// uint32_t Speed2_Frac16;

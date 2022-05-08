@@ -122,7 +122,7 @@ typedef union MotorController_FaultFlags_Tag
 		// uint32_t VSenseLimit : 1;
 		// uint32_t VAccLimit : 1; 
 		uint32_t ThrottleOnInit 	: 1U;
-		uint32_t StopStateSync 			: 1U; 
+		uint32_t StopStateSync 		: 1U; 
 		// ThrottleOnBrakeRelease
 	};
 	uint32_t State;

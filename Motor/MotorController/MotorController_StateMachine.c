@@ -77,7 +77,6 @@ static void Init_Entry(MotorController_T * p_mc)
 	if(Timer_GetBase(&p_mc->TimerMillis) > 50U) 	//wait 50ms for debounce
 	{
 		if((p_mc->Parameters.BeepThrottleOnInit == true) && MotAnalogUser_GetIsThrottleOn(&p_mc->AnalogUser))
-			// if((p_mc->Parameters.BeepThrottleOnInit == true) && (MotAnalogUser_GetThrottleValue(&p_mc->AnalogUser) > 0U))
 		{
 			MotorController_BeepShort(p_mc);
 		}

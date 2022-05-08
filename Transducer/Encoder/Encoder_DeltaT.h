@@ -53,9 +53,11 @@ static inline void CaptureAngularDIncreasing(Encoder_T * p_encoder)
  */
 static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 {
-	uint32_t deltaT = 0U;
-	_Encoder_CaptureDelta(p_encoder, &deltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
-	p_encoder->DeltaT = (deltaT + p_encoder->DeltaT) / 2U; //move to outside?
+	// uint32_t deltaT = 0U;
+	// _Encoder_CaptureDelta(p_encoder, &deltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
+	// p_encoder->DeltaT = (deltaT + p_encoder->DeltaT) / 2U; //move to outside?
+	
+	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
 	CaptureAngularDIncreasing(p_encoder);
 
 	//capture integral

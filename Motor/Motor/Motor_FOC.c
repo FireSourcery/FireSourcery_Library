@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "Motor_FOC.h" 
 
-static void SetOutputLimits(Motor_T * p_motor, uint16_t speedIOutCcw, uint16_t speedIOutCw, uint16_t speedVOutCcw, uint16_t speedVOutCw, uint16_t iqOutCcw, uint16_t iqOutCw)
+static void SetOutputLimits(Motor_T * p_motor, int16_t speedIOutCcw, int16_t speedIOutCw, int16_t speedVOutCcw, int16_t speedVOutCw, int16_t iqOutCcw, int16_t iqOutCw)
 {
 	if(p_motor->ControlModeFlags.Speed == 1U)
 	{
