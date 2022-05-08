@@ -168,10 +168,10 @@ static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor)
 
 static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-	[MSM_INPUT_FAULT] = (StateMachine_Transition_T)TransitionFault,
-	[MSM_INPUT_CONTROL_MODE] = (StateMachine_Transition_T)Stop_TransitionRun,
-	[MSM_INPUT_CALIBRATION] = (StateMachine_Transition_T)Stop_InputCalibration,
-	[MSM_INPUT_DIRECTION] = (StateMachine_Transition_T)Stop_InputDirection,
+	[MSM_INPUT_FAULT] 			= (StateMachine_Transition_T)TransitionFault,
+	[MSM_INPUT_CONTROL_MODE] 	= (StateMachine_Transition_T)Stop_TransitionRun,
+	[MSM_INPUT_CALIBRATION] 	= (StateMachine_Transition_T)Stop_InputCalibration,
+	[MSM_INPUT_DIRECTION] 		= (StateMachine_Transition_T)Stop_InputDirection,
 	//	[MSM_INPUT_GROUND] 			= (StateMachine_Transition_T)Stop_InputGround, //only ground in stop mode?
 };
 
@@ -184,7 +184,7 @@ static void Stop_Entry(Motor_T * p_motor)
 	Phase_Float(&p_motor->Phase);
 	Timer_StartPeriod(&p_motor->ControlTimer, 2000U); //100ms
 
-	p_motor->ControlModeFlags.Update = 1U; /* Next cmd call will set to run state, share state input */
+	p_motor->FeedbackModeFlags.Update = 1U; /* Next cmd call will set to run state, share state input */
 
 	if(p_motor->UserDirection != p_motor->Direction)
 	{
@@ -264,7 +264,7 @@ static StateMachine_State_T * Run_TransitionRun(Motor_T * p_motor)
 
 		}
 
-		//		p_motor->ControlModeFlags.Update = 0U;
+		//		p_motor->FeedbackModeFlags.Update = 0U;
 	}
 
 	return p_newState;
@@ -278,9 +278,9 @@ static StateMachine_State_T * Run_InputFloat(Motor_T * p_motor)
 
 static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-	[MSM_INPUT_FAULT] = (StateMachine_Transition_T)TransitionFault,
-	[MSM_INPUT_CONTROL_MODE] = (StateMachine_Transition_T)Run_TransitionRun,
-	[MSM_INPUT_FLOAT] = (StateMachine_Transition_T)Run_InputFloat,
+	[MSM_INPUT_FAULT] 			= (StateMachine_Transition_T)TransitionFault,
+	[MSM_INPUT_CONTROL_MODE] 	= (StateMachine_Transition_T)Run_TransitionRun,
+	[MSM_INPUT_FLOAT] 			= (StateMachine_Transition_T)Run_InputFloat,
 };
 
 static void Run_Entry(Motor_T * p_motor)
@@ -353,8 +353,8 @@ static const StateMachine_State_T STATE_RUN =
 	.ID 					= MSM_STATE_ID_RUN,
 	.P_TRANSITION_TABLE 	= RUN_TRANSITION_TABLE,
 	//	.P_TRANSITION_INPUT 	= (StateMachine_TransitionInput_T)Run_TransitionInput,
-	.ON_ENTRY 			= (StateMachine_Output_T)Run_Entry,
-	.OUTPUT 			= (StateMachine_Output_T)Run_Proc,
+	.ON_ENTRY 				= (StateMachine_Output_T)Run_Entry,
+	.OUTPUT 				= (StateMachine_Output_T)Run_Proc,
 };
 
 /******************************************************************************/
@@ -367,14 +367,14 @@ static const StateMachine_State_T STATE_RUN =
  */
 static StateMachine_State_T * FreeWheel_TransitionRun(Motor_T * p_motor)
 {
-	StateMachine_State_T * p_newState = 0;
+	StateMachine_State_T * p_newState = 0U;
 
 	//	if (p_motor->UserDirection != p_motor->Direction)
 	//	{
 	//		p_newState = &STATE_FAULT;
 	//	}
 	//	else
-	if(p_motor->ControlModeFlags.OpenLoop == 1U)
+	if(p_motor->FeedbackModeFlags.OpenLoop == 1U)
 	{
 		p_newState = 0U; //openloop does not resume
 	}
@@ -389,7 +389,7 @@ static StateMachine_State_T * FreeWheel_TransitionRun(Motor_T * p_motor)
 			//			Motor_SixStep_ResumePhaseControl(p_motor);
 		}
 
-		//		p_motor->ControlModeFlags.Update = 0U;
+		//		p_motor->FeedbackModeFlags.Update = 0U;
 		p_newState = &STATE_RUN;
 	}
 
@@ -399,13 +399,13 @@ static StateMachine_State_T * FreeWheel_TransitionRun(Motor_T * p_motor)
 
 static const StateMachine_Transition_T FREEWHEEL_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-	[MSM_INPUT_FAULT] = (StateMachine_Transition_T)TransitionFault,
-	[MSM_INPUT_CONTROL_MODE] = (StateMachine_Transition_T)FreeWheel_TransitionRun,
+	[MSM_INPUT_FAULT] 			= (StateMachine_Transition_T)TransitionFault,
+	[MSM_INPUT_CONTROL_MODE] 	= (StateMachine_Transition_T)FreeWheel_TransitionRun,
 };
 
 static void Freewheel_Entry(Motor_T * p_motor)
 {
-	p_motor->ControlModeFlags.Update = 1U; //need to update on exit
+	p_motor->FeedbackModeFlags.Update = 1U; //need to update on exit
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
@@ -437,10 +437,10 @@ static void Freewheel_Proc(Motor_T * p_motor)
 
 static const StateMachine_State_T STATE_FREEWHEEL =
 {
-	.ID = MSM_STATE_ID_FREEWHEEL,
-	.P_TRANSITION_TABLE = FREEWHEEL_TRANSITION_TABLE,
-	.ON_ENTRY = (StateMachine_Output_T)Freewheel_Entry,
-	.OUTPUT = (StateMachine_Output_T)Freewheel_Proc,
+	.ID 					= MSM_STATE_ID_FREEWHEEL,
+	.P_TRANSITION_TABLE 	= FREEWHEEL_TRANSITION_TABLE,
+	.ON_ENTRY 				= (StateMachine_Output_T)Freewheel_Entry,
+	.OUTPUT 				= (StateMachine_Output_T)Freewheel_Proc,
 };
 
 
@@ -512,10 +512,10 @@ static void Align_Proc(Motor_T * p_motor)
 
 static const StateMachine_State_T STATE_ALIGN =
 {
-	.ID = MSM_STATE_ID_ALIGN,
-	.P_TRANSITION_TABLE = ALIGN_TRANSITION_TABLE,
-	.ON_ENTRY = (StateMachine_Output_T)Align_Entry,
-	.OUTPUT = (StateMachine_Output_T)Align_Proc,
+	.ID 					= MSM_STATE_ID_ALIGN,
+	.P_TRANSITION_TABLE 	= ALIGN_TRANSITION_TABLE,
+	.ON_ENTRY 				= (StateMachine_Output_T)Align_Entry,
+	.OUTPUT 				= (StateMachine_Output_T)Align_Proc,
 };
 
 /******************************************************************************/
@@ -590,14 +590,13 @@ static StateMachine_State_T * Calibration_InputStop(Motor_T * p_motor)
 static const StateMachine_Transition_T CALIBRATION_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
 	[MSM_INPUT_FAULT] 			= (StateMachine_Transition_T)TransitionFault,
-	[MSM_INPUT_CONTROL_MODE] 	= (StateMachine_Transition_T)Calibration_InputStop,
 	[MSM_INPUT_FLOAT] 			= (StateMachine_Transition_T)Calibration_InputStop,
 };
 
 static void Calibration_Entry(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase = 0U;
-	p_motor->CalibrationStateStep = 0U;
+	p_motor->CalibrationStateIndex = 0U;
 	Phase_Ground(&p_motor->Phase);
 
 	switch(p_motor->CalibrationState)

@@ -69,7 +69,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 		SW Structs
 	*/
 	Timer_InitPeriodic(&p_motor->ControlTimer, 1U);
-	Timer_InitPeriodic(&p_motor->MillisTimer, 1U);
+	// Timer_InitPeriodic(&p_motor->MillisTimer, 1U);
 	Timer_InitPeriodic(&p_motor->SpeedTimer, 1U);
 
 	FOC_Init(&p_motor->Foc);
@@ -94,7 +94,12 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Linear_Ramp_InitMillis(&p_motor->Ramp, 500U, 20000U, 0U, 32767U); /* final value is overwritten, slope is persistent */
 	Motor_SetRamp(p_motor, 0U);
 	p_motor->RampCmd = 0U;
-	p_motor->RampIndex = 0U;
+	p_motor->RampIndex = 0U; 
+ 
+	Motor_ResetSpeedLimits(p_motor);
+	Motor_ResetILimits(p_motor); 
+
+	Motor_SetDirectionForward(p_motor); 
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
@@ -106,21 +111,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	} 
 	p_motor->OpenLoopRampIndex = 0U;
 
-	Motor_ResetSpeedLimits(p_motor);
-	Motor_ResetILimits(p_motor);
-
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-	{
-		Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 2000U, 20000U, 0U, 300U);	//can start at 0 speed in foc mode for continuous angle displacements
-	}
-	else
-	{
-
-	} 
-
-	Motor_SetDirectionForward(p_motor); 
-
-	Motor_SetControlMode(p_motor, p_motor->Parameters.ControlMode); //set user control mode so pids set to initial state.
+	Motor_SetFeedbackMode(p_motor, p_motor->Parameters.FeedbackMode); //set user control mode so pids set to initial state.
 	p_motor->UserDirection = p_motor->Direction; 
 	p_motor->ControlTimerBase = 0U;
 } 

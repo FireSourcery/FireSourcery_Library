@@ -205,13 +205,13 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			input	RampCmd[-32767:32767], (speedFeedback_Frac16 / 2)[-32767:32767]
 			output 	SpeedControl[-32767:32767] => IqReq or VqReq
 		*/
-		if(p_motor->ControlModeFlags.Speed == 1U) { p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, speedFeedback_Frac16 / 2); }
-		// else if (p_motor->ControlModeFlags.VFreqScalar == 1U) { _Motor_FOC_ProcVoltageMode(p_motor, p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.VFreqScalar_Frac16 / 65536U);}
+		if(p_motor->FeedbackModeFlags.Speed == 1U) { p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, speedFeedback_Frac16 / 2); }
+		// else if (p_motor->FeedbackModeFlags.VFreqScalar == 1U) { _Motor_FOC_ProcVoltageMode(p_motor, p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.VFreqScalar_Frac16 / 65536U);}
 		p_motor->SpeedFeedback_Frac16 = speedFeedback_Frac16;
 	}
 
 	FOC_SetVector(&p_motor->Foc, electricalAngle);
-	p_motor->ElectricalAngle = (qangle16_t)electricalAngle; //save for display and user calc
+	p_motor->ElectricalAngle = (qangle16_t)electricalAngle; /* Save for UI output */
 }
 
 static void _Motor_Foc_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq)
@@ -259,24 +259,23 @@ static void _Motor_Foc_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq)
 	FOC_SetVd(&p_motor->Foc, 0);
 }
 
+
+
 static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 {
-	qfrac16_t userOutput = (p_motor->ControlModeFlags.Speed == 1U) ? p_motor->SpeedControl : p_motor->RampCmd;
+	qfrac16_t userOutput = (p_motor->FeedbackModeFlags.Speed == 1U) ? p_motor->SpeedControl : p_motor->RampCmd;
 
-	if(p_motor->ControlModeFlags.Current == 1U)		/* Current Control Mode - Proc angle using last adc measured*/
+	if(p_motor->FeedbackModeFlags.Current == 1U)		/* Current Control mode - proc using last adc measure */
 	{
 		FOC_SetVq(&p_motor->Foc, PID_Calc(&p_motor->PidIq, userOutput, 	FOC_GetIq(&p_motor->Foc)));
 		FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, 0U, 			FOC_GetId(&p_motor->Foc)));
 	}
-	else  	//(p_motor->ControlModeFlags.VFreqScalar != 1U)	/* Voltage Control mode - use current feedback for over current only */
+	else  	//(p_motor->FeedbackModeFlags.VFreqScalar != 1U)	/* Voltage Control mode - use current feedback for overcurrent only */
 	{ 		
-		// _Motor_Foc_ProcVoltageMode(p_motor, qReq);
+		// _Motor_Foc_ProcVoltageMode(p_motor, userOutput);
 	}
 }
 
-/*
- * ElectricalAngle, VPwm => Phase Duty
- */
 static inline void _Motor_FOC_ActivateAngle(Motor_T * p_motor)
 {
 	FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
@@ -354,7 +353,7 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 
 	p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
 
-	if(p_motor->ControlModeFlags.Hold == 0U)
+	// if(p_motor->RunStateFlags.Hold == 0U)
 	{
 		_Motor_FOC_ProcFeedbackLoop(p_motor);
 		_Motor_FOC_ActivateAngle(p_motor);
@@ -366,13 +365,13 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 
 static inline void Motor_FOC_SetMatchOutput(Motor_T * p_motor, int32_t iq, int32_t vq, int32_t vd)
 {
-	int32_t speedControl = (p_motor->ControlModeFlags.Current == 1U) ? iq : vq;
+	int32_t speedControl = (p_motor->FeedbackModeFlags.Current == 1U) ? iq : vq;
 
-	if(p_motor->ControlModeFlags.Speed == 1U)
+	if(p_motor->FeedbackModeFlags.Speed == 1U)
 	{
 		Motor_SetSpeedOutput(p_motor, speedControl); 
 	}
-	else /* (p_motor->ControlModeFlags.Speed == 0U) */
+	else /* (p_motor->FeedbackModeFlags.Speed == 0U) */
 	{
 		Motor_SetRampOutput(p_motor, speedControl);
 	}

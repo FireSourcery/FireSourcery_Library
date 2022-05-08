@@ -49,17 +49,17 @@
 */
 
 /*
-	Change Feedback mode, match Ramp and PID state to output
+	Change Feedback mode, match Ramp and PID state to output, depending on freewheel or run state
 */
-void _Motor_User_SetControlMode(Motor_T * p_motor, Motor_ControlMode_T mode)
+void _Motor_User_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-	if(Motor_CheckControlMode(p_motor, mode) == true)
+	if(Motor_CheckFeedbackMode(p_motor, mode) == true)
 	{
 		Critical_Enter();
 
-		Motor_SetControlMode(p_motor, mode);
+		Motor_SetFeedbackMode(p_motor, mode);
 		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE);
-		p_motor->ControlModeFlags.Update = 0U;
+		p_motor->FeedbackModeFlags.Update = 0U;
 
 		Critical_Exit();
 	}
@@ -110,6 +110,36 @@ bool Motor_User_SetDirectionReverse(Motor_T * p_motor)
 		MOTOR_DIRECTION_CW : MOTOR_DIRECTION_CCW;
 
 	return Motor_User_SetDirection(p_motor, direction);
+}
+
+/*
+	Calibration State - Run Calibration functions
+*/
+void Motor_User_ActivateCalibrationHall(Motor_T * p_motor)
+{
+	p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_HALL;
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+}
+
+void Motor_User_ActivateCalibrationEncoder(Motor_T * p_motor)
+{
+	p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ENCODER;
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+}
+
+void Motor_User_ActivateCalibrationAdc(Motor_T * p_motor)
+{
+	p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ADC;
+	StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+}
+
+void Motor_User_ActivateCalibrationSinCos(Motor_T * p_motor)
+{
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
+	{
+		p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_SIN_COS;
+		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+	}
 }
 
 /* 
@@ -216,9 +246,11 @@ uint16_t Motor_User_GetMechanialAngle(Motor_T * p_motor)
 /******************************************************************************/ 
  
 /******************************************************************************/
-/* Calibration */
+/* Reference/Calibration */
+//propagate units on ref set?
 /******************************************************************************/ 
-/* SpeedRefMax_Rpm => speed at VRefSupply */  
+/* SpeedRefMax_Rpm => speed at VRefSupply */
+
 void Motor_User_SetSpeedRefMax_Rpm(Motor_T * p_motor, uint16_t rpm) 		{ p_motor->Parameters.SpeedRefMax_Rpm = rpm; }
 void Motor_User_SetSpeedRefMax_VRpm(Motor_T * p_motor, uint16_t vMotor, uint16_t vMotorSpeed_Rpm) 
 {
@@ -232,13 +264,11 @@ void Motor_User_SetSpeedRefMax_VRpm(Motor_T * p_motor, uint16_t vMotor, uint16_t
 // 	p_motor->Parameters.SpeedRefVBemf_Rpm = vMotorSpeed_Rpm * _Motor_GetVRefSupply( ) / vMotor; 
 // }
 
-//should this be const?
-// void Motor_User_SetIRefMax_Amp(Motor_T * p_motor, uint16_t amp) { p_motor->Parameters.IRefMax_Amp = amp; }
 void Motor_User_SetIRefPeak_Adcu(Motor_T * p_motor, uint16_t adcu)
 {
 	p_motor->Parameters.IRefPeak_Adcu = (adcu > p_motor->CONFIG.I_SENSOR_PEAK_LIMIT_ADCU) ? p_motor->CONFIG.I_SENSOR_PEAK_LIMIT_ADCU : adcu;
 
-	Motor_ResetUnitsIabc(p_motor);
+	// Motor_ResetUnitsIabc(p_motor);
 }
 
 void Motor_User_SetIRefPeak_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV)
@@ -247,12 +277,6 @@ void Motor_User_SetIRefPeak_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint1
 	uint16_t adcuMax = (uint32_t)max_MilliV * ADC_MAX / _Motor_GetAdcVRef(); 
 	Motor_User_SetIRefPeak_Adcu(p_motor, adcuMax - adcuZero);
 }
-
-// void Motor_User_SetIRefs_Sensor(Motor_T * p_motor, uint16_t sensorMin_MilliV, uint16_t sensorMax_MilliV, uint16_t max_amp)
-// {
-// 	// Motor_User_SetIRefMax_Amp(p_motor, max_amp);
-// 	Motor_User_SetIRefPeak_MilliV(p_motor, sensorMin_MilliV, sensorMax_MilliV); 
-// }
 
 void Motor_User_SetIaIbIcZero_Adcu(Motor_T * p_motor, uint16_t ia_adcu, uint16_t ib_adcu, uint16_t ic_adcu)
 {
@@ -343,11 +367,6 @@ void Motor_User_SetILimitParam_Amp(Motor_T * p_motor, uint16_t motoring_Amp, uin
 #endif		
 }
 
-
-
-
-
-
 /******************************************************************************/
 /*
 	N Motor Array functions
@@ -361,6 +380,7 @@ void Motor_User_SetILimitParam_Amp(Motor_T * p_motor, uint16_t motoring_Amp, uin
 //	}
 //}
 
+//alternatively use check stop state?
 bool Motor_UserN_CheckStop(Motor_T * p_motor, uint8_t motorCount)
 {
 	bool isStop = true;

@@ -51,7 +51,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_BRAKE);
 	AnalogN_Group_ResumeQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_USER);
 
-	/* Assume no input cmd priority level */
+	/* Assume no input cmd priority level, althought implmented */
 	switch(cmd)
 	{
 		case MOT_ANALOG_USER_CMD_SET_BRAKE:					MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrakeValue(&p_mc->AnalogUser));			break;
@@ -90,8 +90,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 					default: break;
 				}
 			}
-		}
-
+		} 
 	}
 }
 

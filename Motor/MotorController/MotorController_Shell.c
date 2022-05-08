@@ -172,19 +172,19 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 		}
 		else if(strncmp(argv[1U], "voltage", 8U) == 0U)
 		{
-			Motor_User_SetControlModeParam(p_motor, MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE);
+			Motor_User_SetFeedbackModeParam(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE);
 		}
 		else if(strncmp(argv[1U], "current", 8U) == 0U)
 		{
-			Motor_User_SetControlModeParam(p_motor, MOTOR_CONTROL_MODE_CONSTANT_CURRENT);
+			Motor_User_SetFeedbackModeParam(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT);
 		}
 		else if(strncmp(argv[1U], "speedvoltage", 13U) == 0U)
 		{
-			Motor_User_SetControlModeParam(p_motor, MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE);
+			Motor_User_SetFeedbackModeParam(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_VOLTAGE);
 		}
 		else if(strncmp(argv[1U], "speedcurrent", 12U) == 0U)
 		{
-			Motor_User_SetControlModeParam(p_motor, MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT);
+			Motor_User_SetFeedbackModeParam(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT);
 		}
 		else if(strncmp(argv[1U], "protocol", 9U) == 0U)
 		{
@@ -576,14 +576,14 @@ static Cmd_Status_T Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
 		}
 		Terminal_SendString(p_terminal, "\r\n");
 
-		Terminal_SendString(p_terminal, "ControlMode: ");
-		switch(p_motor->Parameters.ControlMode)
+		Terminal_SendString(p_terminal, "FeedbackMode: ");
+		switch(p_motor->Parameters.FeedbackMode)
 		{
-			case MOTOR_CONTROL_MODE_OPEN_LOOP: 					Terminal_SendString(p_terminal, "OPEN_LOOP"); 		break;
-			case MOTOR_CONTROL_MODE_CONSTANT_VOLTAGE: 			Terminal_SendString(p_terminal, "VOLTAGE"); 		break;
-			case MOTOR_CONTROL_MODE_CONSTANT_CURRENT: 			Terminal_SendString(p_terminal, "CURRENT"); 		break;
-			case MOTOR_CONTROL_MODE_CONSTANT_SPEED_VOLTAGE: 	Terminal_SendString(p_terminal, "SPEED_VOLTAGE"); 	break;
-			case MOTOR_CONTROL_MODE_CONSTANT_SPEED_CURRENT: 	Terminal_SendString(p_terminal, "SPEED_CURRENT"); 	break;
+			case MOTOR_FEEDBACK_MODE_OPEN_LOOP: 					Terminal_SendString(p_terminal, "OPEN_LOOP"); 		break;
+			case MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE: 			Terminal_SendString(p_terminal, "VOLTAGE"); 		break;
+			case MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT: 			Terminal_SendString(p_terminal, "CURRENT"); 		break;
+			case MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_VOLTAGE: 	Terminal_SendString(p_terminal, "SPEED_VOLTAGE"); 	break;
+			case MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT: 	Terminal_SendString(p_terminal, "SPEED_CURRENT"); 	break;
 			default: break;
 		}
 		Terminal_SendString(p_terminal, "\r\n");
@@ -603,7 +603,7 @@ static Cmd_Status_T Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
 
 		PRINT_PARAM_VAR_MOTOR(PolePairs)
 			PRINT_PARAM_VAR_MOTOR(SpeedRefMax_Rpm)
-			PRINT_PARAM_VAR_MOTOR(SpeedRefVBemf_Rpm) 
+			// PRINT_PARAM_VAR_MOTOR(SpeedRefVBemf_Rpm) 
 			// PRINT_PARAM_VAR_MOTOR(IRefMax_Amp)
 			// PRINT_PARAM_VAR_MOTOR(IaRefMax_Adcu)
 			// PRINT_PARAM_VAR_MOTOR(IbRefMax_Adcu)
