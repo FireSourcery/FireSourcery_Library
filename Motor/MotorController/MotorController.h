@@ -31,7 +31,7 @@
 #ifndef MOTOR_CONTROLLER_H
 #define MOTOR_CONTROLLER_H
 
-#include "Config.h" 
+#include "Config.h"
 #include "MotorControllerAnalog.h"
 #include "MotAnalogUser/MotAnalogUser.h"
 
@@ -120,9 +120,9 @@ typedef union MotorController_FaultFlags_Tag
 		// uint32_t MosfetsBotOverHeat : 1;
 		// uint32_t VPosLimit : 1;
 		// uint32_t VSenseLimit : 1;
-		// uint32_t VAccLimit : 1; 
+		// uint32_t VAccLimit : 1;
 		uint32_t ThrottleOnInit 	: 1U;
-		uint32_t StopStateSync 		: 1U; 
+		uint32_t StopStateSync 		: 1U;
 		// ThrottleOnBrakeRelease
 	};
 	uint32_t State;
@@ -133,9 +133,9 @@ MotorController_FaultFlags_T;
 // {
 // 	struct
 // 	{
-// 		uint32_t OverHeat : 1; 
+// 		uint32_t OverHeat : 1;
 // 		uint32_t OverV	: 1;
-// 		uint32_t UnderV : 1; 
+// 		uint32_t UnderV : 1;
 // 	};
 // 	uint32_t State;
 // }
@@ -159,17 +159,18 @@ MotorController_Once_T;
 
 typedef enum OptDinFunction_Tag
 {
- 	OPT_DIN_FUNCTION_SPEED_LIMIT,
+	MOTOR_CONTROLLER_OPT_DIN_DISABLE,
+ 	MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT,
 }
-OptDinFunction_T;
+MotorController_OptDinFunction_T;
 
 
 typedef union MotorController_BuzzerFlags_Tag
 {
 	struct
 	{
-		uint32_t BeepThrottleOnInit 	: 1U; 
-		uint32_t BeepOnReverse			: 1U; 
+		uint32_t BeepThrottleOnInit 	: 1U;
+		uint32_t BeepOnReverse			: 1U;
 	};
 	uint32_t State;
 }
@@ -195,12 +196,11 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 	// bool FaultThrottleOnNeutralRelease;
 	bool BeepOnReverse;
 	// bool BuzzerOnThrottleOnBrake;
-	// bool BuzzerOnFault; 
+	// bool BuzzerOnFault;
 
 	MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
 
-	bool UseOptDin;
-	OptDinFunction_T OptDinFunction;
+	MotorController_OptDinFunction_T OptDinFunction;
 	uint16_t OptDinSpeedLimit_Frac16;
 
 
@@ -223,11 +223,11 @@ typedef const struct MotorController_Config_Tag
 
 	Motor_T * const 	P_MOTORS;
 	const uint8_t 		MOTOR_COUNT;
-	Serial_T * const 	P_SERIALS; /* Simultaneous active serial */
+	Serial_T * const 	P_SERIALS; 	/* Simultaneous active serial */
 	const uint8_t 		SERIAL_COUNT;
 	CanBus_T * const 	P_CAN_BUS;
 	Flash_T * const 	P_FLASH; 	/* Flash defined outside module, ensure flash config/params are in RAM */
-	EEPROM_T * const 	P_EEPROM;
+	EEPROM_T * const 	P_EEPROM;	/* defined outside for regularity */
 
 	AnalogN_T * const P_ANALOG_N;
 	const MotAnalog_Conversions_T ANALOG_CONVERSIONS;
@@ -236,12 +236,12 @@ typedef const struct MotorController_Config_Tag
 	const uint8_t PROTOCOL_COUNT;
 
 	const uint16_t V_MAX;
-	const uint16_t I_MAX; 
+	const uint16_t I_MAX;
 
 	const uint16_t ADC_VREF_MAX_MILLIV;
 	const uint16_t ADC_VREF_MIN_MILLIV;
 
-	const uint8_t SOFTWARE_VERSION[4U]; 
+	const uint8_t SOFTWARE_VERSION[4U];
 }
 MotorController_Config_T;
 
@@ -255,12 +255,12 @@ typedef struct MotorController_Tag
 	volatile MotAnalog_Results_T AnalogResults;
 	MotAnalog_Results_T FaultAnalogRecord;
 
-	MotAnalogUser_T AnalogUser; 
+	MotAnalogUser_T AnalogUser;
 
 	Blinky_T Buzzer;
 	MotorController_BuzzerFlags_T BuzzerFlagsActive; /* active conditions requesting buzzer */
 
-	Debounce_T OptDin; 	/* Configurable input */ 
+	Debounce_T OptDin; 	/* Configurable input */
 	Pin_T Meter;
 	Pin_T Relay;
 
@@ -270,7 +270,7 @@ typedef struct MotorController_Tag
 	VMonitor_T VMonitorPos; 	//Controller Supply
 	VMonitor_T VMonitorSense; 	//5V
 	VMonitor_T VMonitorAcc; 	//12V
-	Linear_T BatteryLife; 		//battery Life percentage
+	Linear_T BatteryLife; 		//Battery Life percentage
 
 	Timer_T TimerMillis;
 	Timer_T TimerMillis10;
@@ -328,7 +328,7 @@ static inline bool MotorController_ProcDirection(MotorController_T * p_mc)
 	// 	Motor_UserN_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
 
 	switch (p_mc->UserDirection)
-	{ 
+	{
 		// case MOTOR_CONTROLLER_DIRECTION_PARK: isSucess = true; break;
 		// case MOTOR_CONTROLLER_DIRECTION_NEUTRAL: isSucess = true; break; //disable?
 		case MOTOR_CONTROLLER_DIRECTION_FORWARD: isSucess = Motor_UserN_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
@@ -366,7 +366,7 @@ static inline void MotorController_SetMotorSpeedLimitAll(MotorController_T * p_m
 static inline void MotorController_ClearMotorSpeedLimitAll(MotorController_T * p_mc) 						{ Motor_UserN_ClearSpeedLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 static inline void MotorController_User_SetMotorILimitAll(MotorController_T * p_mc, uint16_t limit_frac16) 	{ Motor_UserN_SetILimitActiveScalar_Overwrite(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, limit_frac16); }
 static inline void MotorController_ClearMotorILimitAll(MotorController_T * p_mc) 							{ Motor_UserN_ClearILimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
- 
+
 extern void MotorController_Init(MotorController_T * p_controller);
 extern bool MotorController_SaveParameters_Blocking(MotorController_T * p_mc);
 extern void MotorController_SaveBootReg_Blocking(MotorController_T * p_mc);

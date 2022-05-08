@@ -53,11 +53,17 @@ typedef const struct
 	void * P_XCVR;
 	Xcvr_Type_T TYPE;
 }
-Xcvr_Entry_T;
+Xcvr_Xcvr_T;
+
+#define XCVR_XCVR_CONFIG(p_Xcvr, Type)		\
+{											\
+	.P_XCVR 	= (void *) p_Xcvr, 			\
+	.TYPE 		= Type,						\
+}
 
 typedef const struct
 {
-	const Xcvr_Entry_T * const P_XCVR_TABLE;
+	const Xcvr_Xcvr_T * const P_XCVR_TABLE;
 	const uint8_t XCVR_COUNT;
 }
 Xcvr_Config_T;

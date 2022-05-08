@@ -24,14 +24,14 @@
 /*!
 	@file  	Timer.h
 	@author FireSourcery
-	@brief 	Elapsed time 
+	@brief 	Elapsed time
 	@version V0
 */
 /******************************************************************************/
 #ifndef TIMER_H
 #define TIMER_H
 
-#include "Config.h" 
+#include "Config.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -39,19 +39,19 @@ typedef struct Timer_Config_Tag
 {
 	const volatile uint32_t * const P_BASE; /* Base Timer */
 	const uint32_t BASE_FREQ;
-} 
+}
 Timer_Config_T;
 
 typedef struct Timer_Tag
 {
 	const Timer_Config_T CONFIG;
 	uint32_t Period;				/* In Base Freq Ticks, 0 is Disable */
-	bool IsOneShot; 
-	uint32_t TimeRef; 
+	bool IsOneShot;
+	uint32_t TimeRef;
 	//	 uint32_t OneShotCount;
 	//	 uint32_t PeriodN;			/* In Base Freq Ticks, 0 is Loop infinite */
 	//	 uint32_t PeriodNCounter;	/* In Base Freq Ticks, 0 is Disable */
-} 
+}
 Timer_T;
 
 #define TIMER_CONFIG(p_Base, BaseFreq)						\
@@ -89,7 +89,7 @@ static inline uint32_t Timer_GetElapsed(Timer_T * p_timer)
 static inline uint32_t Timer_GetElapsed_Ticks(Timer_T * p_timer) 	{ return Timer_GetElapsed(p_timer); }
 static inline uint32_t Timer_GetElapsed_Seconds(Timer_T * p_timer) 	{ return Timer_GetElapsed_Ticks(p_timer) / p_timer->CONFIG.BASE_FREQ; }
 /* 1 hour for overflow if timer is millis, 3 min for 20khz */
-static inline uint32_t Timer_GetElapsed_Millis(Timer_T * p_timer) 	{ return Timer_GetElapsed_Ticks(p_timer) * 1000U / p_timer->CONFIG.BASE_FREQ; } 
+static inline uint32_t Timer_GetElapsed_Millis(Timer_T * p_timer) 	{ return Timer_GetElapsed_Ticks(p_timer) * 1000U / p_timer->CONFIG.BASE_FREQ; }
 
 static inline uint32_t Timer_GetElapsed_Micros(Timer_T * p_timer)
 {
@@ -122,7 +122,7 @@ static inline void Timer_SetPeriod_Millis(Timer_T * p_timer, uint32_t millis) 		
 static inline void Timer_StartPeriod(Timer_T * p_timer, uint32_t ticks) 			{ Timer_SetPeriod(p_timer, ticks); Timer_Restart(p_timer); }
 static inline void Timer_StartPeriod_Ticks(Timer_T * p_timer, uint32_t ticks) 		{ Timer_StartPeriod(p_timer, ticks); }
 static inline void Timer_StartPeriod_Millis(Timer_T * p_timer, uint32_t millis) 	{ Timer_SetPeriod_Millis(p_timer, millis); Timer_Restart(p_timer); }
- 
+
 /******************************************************************************/
 /*!
 	Periodic Timer
@@ -130,8 +130,8 @@ static inline void Timer_StartPeriod_Millis(Timer_T * p_timer, uint32_t millis) 
 /******************************************************************************/
 static inline bool Timer_PollPeriodic(Timer_T * p_timer)
 {
-	bool isComplete = Timer_CheckComplete(p_timer); 
-	if(isComplete == true) { Timer_Restart(p_timer); } 
+	bool isComplete = Timer_CheckComplete(p_timer);
+	if(isComplete == true) { Timer_Restart(p_timer); }
 	return isComplete;
 }
 
@@ -144,8 +144,8 @@ static inline void Timer_InitPeriodic(Timer_T * p_timer, uint32_t ticks) 	{ p_ti
 /******************************************************************************/
 static inline bool Timer_PollOneShot(Timer_T * p_timer)
 {
-	bool isComplete = (p_timer->Period > 0U) && (Timer_CheckComplete(p_timer) == true); 
-	if(isComplete == true) { p_timer->Period = 0U; } 
+	bool isComplete = (p_timer->Period > 0U) && (Timer_CheckComplete(p_timer) == true);
+	if(isComplete == true) { p_timer->Period = 0U; }
 	return isComplete;
 }
 

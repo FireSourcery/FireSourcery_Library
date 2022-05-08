@@ -134,26 +134,13 @@ static inline void Terminal_ReleaseTxBuffer(const Terminal_T * p_terminal, size_
 #endif
 }
 
-static inline uint8_t Terminal_GetCmdlineArgC(const Terminal_T * p_terminal)
-{
-	return p_terminal->ArgC;
-}
+static inline uint8_t Terminal_GetCmdlineArgC(const Terminal_T * p_terminal) { return p_terminal->ArgC; }
+static inline char ** Terminal_GetCmdlineArgV(Terminal_T * p_terminal) { return p_terminal->ArgV; }
+static inline char * Terminal_GetCmdlineVar(const Terminal_T * p_terminal, uint8_t varIndex) { return p_terminal->ArgV[varIndex]; }
+static inline void Terminal_Init(Terminal_T * p_terminal) { p_terminal->CursorIndex = 0; }
 
-static inline char ** Terminal_GetCmdlineArgV(Terminal_T * p_terminal)
-{
-	return p_terminal->ArgV;
-}
 
-static inline char * Terminal_GetCmdlineVar(const Terminal_T * p_terminal, uint8_t varIndex)
-{
-	return p_terminal->ArgV[varIndex];
-}
-
-extern void Terminal_Init(Terminal_T * p_terminal);
-extern void Terminal_SetXcvr(Terminal_T * p_terminal, uint8_t xcvrID);
-extern void Terminal_SetSerial(Terminal_T * p_terminal, void * p_serial);
-extern void Terminal_ConfigBaudRate(const Terminal_T * p_terminal, uint32_t baudRate);
-
+// extern void Terminal_Init(Terminal_T * p_terminal);
 // extern char Terminal_RecvChar(const Terminal_T * p_terminal);
 // extern void Terminal_SendChar(const Terminal_T * p_terminal, char txChar);
 // extern void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str);
@@ -166,5 +153,10 @@ extern void Terminal_SendClear(const Terminal_T * p_terminal);
 extern bool Terminal_PollEsc(const Terminal_T * p_terminal);
 extern bool Terminal_ProcCmdline(Terminal_T * p_terminal);
 extern Terminal_Status_T Terminal_ParseCmdline(Terminal_T * p_terminal);
+
+
+extern bool Terminal_SetXcvr(Terminal_T * p_terminal, uint8_t xcvrID);
+extern void Terminal_SetSerial(Terminal_T * p_terminal, void * p_serial);
+extern void Terminal_ConfigBaudRate(const Terminal_T * p_terminal, uint32_t baudRate);
 
 #endif

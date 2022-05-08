@@ -37,24 +37,17 @@ void Shell_Init(Shell_T * p_shell)
 		memcpy(&p_shell->Params, p_shell->CONFIG.P_PARAMS, sizeof(Shell_Params_T));
 	}
 
-	Terminal_Init(&p_shell->Terminal);
+	// Terminal_Init(&p_shell->Terminal);
 #ifdef CONFIG_SHELL_XCVR_ENABLE
 	Terminal_SetXcvr(&p_shell->Terminal, p_shell->Params.XcvrId);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Terminal_SetSerial(&p_shell->Terminal, p_shell->Params.p_Serial); 	//need xcvr module to validate xcvr pointer
+	Terminal_SetSerial(&p_shell->Terminal, p_shell->Params.p_Serial); 	/* need xcvr module to validate xcvr pointer */
 #endif
 
 	if(p_shell->Params.IsEnableOnInit == true)
 	{
-#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
-		if (Xcvr_CheckIsSet(&p_shell->Terminal.Xcvr, p_shell->Params.XcvrId))
-#elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
-		if (p_protocol->Params.p_Serial != 0U))
-#endif
-		{
-			Terminal_ConfigBaudRate(&p_shell->Terminal, p_shell->Params.BaudRate);
-			p_shell->State = SHELL_STATE_PROMPT;
-		}
+		Shell_ResetBaudRate(p_shell);
+		p_shell->State = SHELL_STATE_PROMPT;
 	}
 	else
 	{
@@ -63,8 +56,8 @@ void Shell_Init(Shell_T * p_shell)
 }
 
 /*
- * non blocking proc
- */
+	non blocking proc
+*/
 Shell_Status_T Shell_Proc(Shell_T * p_shell)
 {
 	Shell_Status_T status = 0U;
@@ -161,10 +154,11 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 }
 
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-void Shell_SetXcvrId(Shell_T * p_shell, uint8_t xcvrId)
+bool Shell_SetXcvr(Shell_T * p_shell, uint8_t xcvrId)
 {
-	p_shell->Params.XcvrId = xcvrId;
-	Terminal_SetXcvr(&p_shell->Terminal, xcvrId);
+	bool isSucess = Terminal_SetXcvr(&p_shell->Terminal, xcvrId);
+	if(isSucess == true) { p_shell->Params.XcvrId = xcvrId; }
+	return isSucess;
 }
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
 void Shell_SetSerial(Shell_T * p_shell, Serial_T * p_serial)
@@ -174,13 +168,23 @@ void Shell_SetSerial(Shell_T * p_shell, Serial_T * p_serial)
 }
 #endif
 
-void Shell_SetBaudRate(Shell_T * p_shell, uint16_t baudRate)
+void Shell_ConfigBaudRate(Shell_T * p_shell, uint16_t baudRate)
 {
-	 p_shell->Params.BaudRate = baudRate;
-	Terminal_ConfigBaudRate(&p_shell->Terminal, baudRate);
+	p_shell->Params.BaudRate = baudRate;
+	Shell_ResetBaudRate(p_shell);
 }
 
-
+void Shell_ResetBaudRate(Shell_T * p_shell)
+{
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+	if(Xcvr_CheckIsSet(&p_shell->Terminal.Xcvr, p_shell->Params.XcvrId))
+#elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
+	if(p_protocol->Params.p_Serial != 0U))
+#endif
+	{
+		Terminal_ConfigBaudRate(&p_shell->Terminal, p_shell->Params.BaudRate);
+	}
+}
 
 //const char * const INVALID_RETURN_CODE_STRING = "Invalid Return Code";
 //static void PrintShellStatus(Shell_T * p_shell, Shell_Status_T status)

@@ -25,4 +25,5 @@
     "C_Cpp.vcFormat.indent.preprocessor": "oneLeft",
     "C_Cpp.vcFormat.space.beforeInitializerListOpenBrace": true,
     "explorer.copyRelativePathSeparator": "/",
+    "files.trimTrailingWhitespace": true,
 } 

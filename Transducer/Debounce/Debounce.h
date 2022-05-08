@@ -62,26 +62,6 @@ Debounce_T;
 	.Pin = PIN_CONFIG(p_PinHal, PinId),				\
 }
 
-static inline bool Debounce_PollFallingEdge(Debounce_T * p_debounce)
-{
-	bool isEdge = ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true)) ? true : false;
-	if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
-	return isEdge;
-}
-
-static inline bool Debounce_PollRisingEdge(Debounce_T * p_debounce)
-{
-	bool isEdge = ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false)) ? true : false;
-	if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
-	return isEdge;
-}
-
-static inline bool Debounce_PollEdge(Debounce_T * p_debounce)
-{
-	bool isEdge = ((p_debounce->DebouncedState ^ p_debounce->DebouncedStatePrev) == false) ? true : false;
-	if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
-	return isEdge;
-}
 
 static inline bool Debounce_GetState(const Debounce_T * p_debounce) 	{ return p_debounce->DebouncedState;}
 static inline bool Debounce_GetRawState(const Debounce_T * p_debounce) 	{ return p_debounce->RawStatePrev; }
@@ -92,6 +72,9 @@ static inline void Debounce_DisableInvert(Debounce_T * p_debounce) { Pin_Disable
 
 extern void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime);
 extern bool Debounce_CaptureState(Debounce_T * p_debounce);
+extern bool Debounce_PollFallingEdge(Debounce_T * p_debounce);
+extern bool Debounce_PollRisingEdge(Debounce_T * p_debounce);
+extern bool Debounce_PollEdge(Debounce_T * p_debounce);
 
 //static inline uint16_t Debounce_GetStateTime()   { }
 //static inline bool Debounce_GetLongPress(Debounce_T * p_debounce){}

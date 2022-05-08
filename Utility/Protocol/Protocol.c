@@ -28,7 +28,7 @@
 	@version V0
 */
 /******************************************************************************/
-#include "Protocol.h" 
+#include "Protocol.h"
 #include <string.h>
 
 static inline bool IsXcvrSet(Protocol_T * p_protocol)
@@ -39,7 +39,7 @@ static inline bool IsXcvrSet(Protocol_T * p_protocol)
 	return (p_protocol->Params.p_Serial != 0U); /*cannot check against corrupt memory */
 #endif
 }
- 
+
 void Protocol_Init(Protocol_T * p_protocol)
 {
 	if(p_protocol->CONFIG.P_PARAMS != 0U)
@@ -59,8 +59,8 @@ void Protocol_Init(Protocol_T * p_protocol)
 	else
 	{
 		Protocol_Disable(p_protocol);
-	} 
-} 
+	}
+}
 
 static inline bool TxPacket(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length)
 {
@@ -79,8 +79,8 @@ static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, u
 	return Serial_Recv(p_protocol->Params.p_Serial, p_rxBuffer, length);
 #endif
 }
- 
-//static inline void PortFlushBuffers(Protocol_T * p_protocol)
+
+//static inline void XcvrFlushBuffers(Protocol_T * p_protocol)
 //{
 //	Serial_FlushBuffers(p_protocol->Params.p_Port);
 //}
@@ -722,7 +722,7 @@ void Protocol_SetXcvr_Ptr(Protocol_T * p_protocol, void * p_transceiver)
 {
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 
-#elif defined(CONFIG_PROTOCOL_XCVR_SERIAL) 
+#elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
 	p_protocol->Params.p_Serial = p_transceiver; 	// cannot validate pointer without xcvr module
 #endif
 }
@@ -733,7 +733,7 @@ void Protocol_ConfigBaudRate(Protocol_T * p_protocol, uint32_t baudRate)
 	{
 		Xcvr_ConfigBaudRate(&p_protocol->Xcvr, baudRate);
 	}
-} 
+}
 
 bool Protocol_Enable(Protocol_T * p_protocol)
 {
@@ -755,8 +755,8 @@ bool Protocol_Enable(Protocol_T * p_protocol)
 void Protocol_Disable(Protocol_T * p_protocol)
 {
 	p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
-	p_protocol->ReqState = PROTOCOL_REQ_STATE_INACTIVE; 
+	p_protocol->ReqState = PROTOCOL_REQ_STATE_INACTIVE;
 }
- 
-void Protocol_EnableOnInit(Protocol_T * p_protocol) { p_protocol->Params.IsEnableOnInit = true; } 
+
+void Protocol_EnableOnInit(Protocol_T * p_protocol) { p_protocol->Params.IsEnableOnInit = true; }
 void Protocol_DisableOnInit(Protocol_T * p_protocol) { p_protocol->Params.IsEnableOnInit = false; }

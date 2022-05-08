@@ -29,37 +29,12 @@
  */
  /******************************************************************************/
 #include "Terminal.h"
-#include <stdio.h> 
+#include <stdio.h>
 
-void Terminal_Init(Terminal_T * p_terminal)
-{
-	p_terminal->CursorIndex = 0;
-}
-
-#ifdef CONFIG_SHELL_XCVR_ENABLE
-void Terminal_SetXcvr(Terminal_T * p_terminal, uint8_t xcvrID)
-{
-	Xcvr_Init(&p_terminal->Xcvr, xcvrID);
-}
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
-void Terminal_SetSerial(Terminal_T * p_terminal, void * p_serial)
-{
-	if(p_terminal->p_Serial != 0U) { p_terminal->p_Serial = p_serial; }
-}
-#endif
-
-void Terminal_ConfigBaudRate(const Terminal_T * p_terminal, uint32_t baudRate)
-{
-	if(baudRate != 0U)
-	{
-#ifdef CONFIG_SHELL_XCVR_ENABLE
-		//if (Xcvr_CheckValid(&p_terminal->Xcvr){}
-		Xcvr_ConfigBaudRate(&p_terminal->Xcvr, baudRate);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
-		if(p_terminal->p_Serial != 0U) { Serial_ConfigBaudRate(p_terminal->p_Serial, baudRate); }
-#endif
-	}
-}
+// void Terminal_Init(Terminal_T * p_terminal)
+// {
+// 	p_terminal->CursorIndex = 0;
+// }
 
 /*
 	Build Cmdline, handle user IO
@@ -186,3 +161,30 @@ bool Terminal_PollEsc(const Terminal_T * p_terminal)
 //{
 //	return (Terminal_PeekChar(p_terminal) == KEY_ESC) ? true : false;
 //}
+
+/*
+	Terminal layer passthrough xcvr settings. Params stored in upper Shell layer
+*/
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+bool Terminal_SetXcvr(Terminal_T * p_terminal, uint8_t xcvrID)
+{
+	return Xcvr_SetXcvr(&p_terminal->Xcvr, xcvrID);
+}
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+void Terminal_SetSerial(Terminal_T * p_terminal, void * p_serial)
+{
+	if(p_terminal->p_Serial != 0U) { p_terminal->p_Serial = p_serial; }
+}
+#endif
+
+void Terminal_ConfigBaudRate(const Terminal_T * p_terminal, uint32_t baudRate)
+{
+	if(baudRate != 0U)
+	{
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+		Xcvr_ConfigBaudRate(&p_terminal->Xcvr, baudRate);
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+		if(p_terminal->p_Serial != 0U) { Serial_ConfigBaudRate(p_terminal->p_Serial, baudRate); }
+#endif
+	}
+}

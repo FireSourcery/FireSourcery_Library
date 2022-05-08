@@ -119,18 +119,18 @@ Shell_T;
 }
 
 static inline void Shell_Disable(Shell_T * p_shell) { p_shell->State = SHELL_STATE_INACTIVE; }
-static inline void Shell_Enable(Shell_T * p_shell) { p_shell->State = SHELL_STATE_PROMPT; }
-
-static inline void Shell_EnableOnInit(Shell_T * p_shell) { p_shell->Params.IsEnableOnInit = true; } 
+static inline void Shell_Enable(Shell_T * p_shell) { p_shell->State = SHELL_STATE_PROMPT; Terminal_Reset(&p_shell->Terminal);}
+static inline void Shell_EnableOnInit(Shell_T * p_shell) { p_shell->Params.IsEnableOnInit = true; }
 static inline void Shell_DisableOnInit(Shell_T * p_shell) { p_shell->Params.IsEnableOnInit = false; }
 
 extern void Shell_Init(Shell_T * p_shell);
 extern Shell_Status_T Shell_Proc(Shell_T * p_shell);
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-extern void Shell_SetXcvrId(Shell_T * p_shell, uint8_t xcvrId);
+extern bool Shell_SetXcvr(Shell_T * p_shell, uint8_t xcvrId);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
 extern void Shell_SetSerial(Shell_T * p_shell, Serial_T * p_serial);
 #endif
-extern void Shell_SetBaudRate(Shell_T * p_shell, uint16_t baudRate);
+extern void Shell_ConfigBaudRate(Shell_T * p_shell, uint16_t baudRate);
+extern void Shell_ResetBaudRate(Shell_T * p_shell);
 
 #endif

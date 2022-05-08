@@ -93,7 +93,7 @@ Thermistor_T;
 
 /* Using capture conversion only */
 static inline int32_t Thermistor_GetHeat_DegC(Thermistor_T * p_therm) { return p_therm->Heat_DegC; }
-static inline bool Thermistor_GetIsEnable(Thermistor_T * p_therm) { return p_therm->Params.IsEnableOnInit; } 
+static inline bool Thermistor_GetIsEnable(Thermistor_T * p_therm) { return p_therm->Params.IsEnableOnInit; }
 
 static inline bool Thermistor_GetIsStatusLimit(Thermistor_T * p_therm) { return ((p_therm->Status == THERMISTOR_LIMIT_SHUTDOWN) || (p_therm->Status == THERMISTOR_LIMIT_THRESHOLD)); }
 static inline bool Thermistor_GetIsStatusWarning(Thermistor_T * p_therm) { return (p_therm->Status == THERMISTOR_WARNING); }
@@ -109,13 +109,13 @@ extern void Thermistor_InitAdcVRef_Scalar(uint16_t adcVRef_MilliV);
 extern void Thermistor_Init(Thermistor_T * p_therm);
 
 // extern Thermistor_Status_T Thermistor_ProcThreshold(Thermistor_T * p_therm, uint16_t adcu);
-extern Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t adcu); 
+extern Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t adcu);
 
 extern void Thermistor_CaptureUnits_DegC(Thermistor_T * p_therm, uint16_t adcu);
 extern float Thermistor_ConvertToDegC_Float(Thermistor_T * p_therm, uint16_t adcu);
 extern int32_t Thermistor_ConvertToDegC_Int(Thermistor_T * p_therm, uint16_t adcu, uint16_t scalar);
 extern void Thermistor_SetCoeffcients_DegC(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, uint32_t b);
-extern void Thermistor_SetVIn_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV);
+extern void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV);
 
 extern void Thermistor_SetLimitShutdown_DegC(Thermistor_T * p_therm, uint8_t shutdown_degC);
 extern void Thermistor_SetLimitThreshold_DegC(Thermistor_T * p_therm, uint8_t threshold_degC);

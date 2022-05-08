@@ -128,7 +128,7 @@ static inline void HalEepromProgramPartition(void)
 static void HalEepromInitBlocking(void)
 {
 #ifdef CONFIG_EEPROM_ONE_TIME_PROGRAM_PARTITION
-	/* one time code may not be needed if operation is support by flash tool*/
+	/* one time code may not be needed if operation is support by flash tool */
 	HalEepromProgramPartition();
 #endif
 
