@@ -42,8 +42,8 @@ static void SetOutputLimits(Motor_T * p_motor, int16_t speedIOutCcw, int16_t spe
 	PID_SetOutputLimits(&p_motor->PidIq, 0 - iqOutCw, iqOutCcw); /* Iq/Id PID always Vq/Vd, full range, no Vq plugging. Voltage during limit active only */
 
 	(speedIOutCcw > speedIOutCw) ?
-		PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCcw / 2U, speedIOutCcw / 2U) :
-		PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCw / 2U, speedIOutCw / 2U);
+		PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCcw / 2, speedIOutCcw / 2) :
+		PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCw / 2, speedIOutCw / 2);
 }
 
 void Motor_FOC_SetOutputLimitsCcw(Motor_T * p_motor)

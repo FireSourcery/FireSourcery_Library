@@ -120,7 +120,7 @@ static inline void HalEepromProgramPartition(void)
 				}
 			}
 
-//			SystemSoftwareReset();
+			SystemSoftwareReset();
 		}
 	}
 }

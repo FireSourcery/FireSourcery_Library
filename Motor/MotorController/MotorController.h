@@ -163,6 +163,18 @@ typedef enum OptDinFunction_Tag
 }
 OptDinFunction_T;
 
+
+typedef union MotorController_BuzzerFlags_Tag
+{
+	struct
+	{
+		uint32_t BeepThrottleOnInit 	: 1U; 
+		uint32_t BeepOnReverse			: 1U; 
+	};
+	uint32_t State;
+}
+MotorController_BuzzerFlags_T;
+
 typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 {
 	uint16_t AdcVRef_MilliV;
@@ -184,6 +196,8 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 	bool BeepOnReverse;
 	// bool BuzzerOnThrottleOnBrake;
 	// bool BuzzerOnFault; 
+
+	MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
 
 	bool UseOptDin;
 	OptDinFunction_T OptDinFunction;
@@ -241,7 +255,9 @@ typedef struct MotorController_Tag
 	MotAnalogUser_T AnalogUser; 
 
 	Blinky_T Buzzer;
-	Debounce_T OptDin; //configurable input //OptIn
+	MotorController_BuzzerFlags_T BuzzerFlagsActive; /* active conditions requesting buzzer */
+
+	Debounce_T OptDin; 	/* Configurable input */ 
 	Pin_T Meter;
 	Pin_T Relay;
 
@@ -299,19 +315,33 @@ static inline void MotorController_SetFaultRecord(MotorController_T * p_mc)
 	On check by StateMachine
 */
 /******************************************************************************/
+
+/* only forward reverse is state machine protected */
 static inline bool MotorController_ProcDirection(MotorController_T * p_mc)
 {
-	bool isSucess = (p_mc->UserDirection == MOTOR_CONTROLLER_DIRECTION_FORWARD) ?
-		Motor_UserN_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT) :
-		Motor_UserN_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
+	bool isSucess;
+	//  = (p_mc->UserDirection == MOTOR_CONTROLLER_DIRECTION_FORWARD) ?
+	// 	Motor_UserN_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT) :
+	// 	Motor_UserN_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
+
+	switch (p_mc->UserDirection)
+	{ 
+		// case MOTOR_CONTROLLER_DIRECTION_PARK: isSucess = true; break;
+		// case MOTOR_CONTROLLER_DIRECTION_NEUTRAL: isSucess = true; break; //disable?
+		case MOTOR_CONTROLLER_DIRECTION_FORWARD: isSucess = Motor_UserN_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
+		case MOTOR_CONTROLLER_DIRECTION_REVERSE: isSucess = Motor_UserN_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
+		default: isSucess = true; break;
+	}
+
+// BuzzerFlagsActive
 
 	if(isSucess == true)
 	{
 		p_mc->MainDirection = p_mc->UserDirection;
-		if((p_mc->Parameters.BeepOnReverse == true) && (p_mc->MainDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE))
-		{
-			MotorController_BeepPeriodicType1(p_mc);
-		}
+		// if((p_mc->Parameters.BeepOnReverse == true) && (p_mc->MainDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE))
+		// {
+		// 	MotorController_BeepPeriodicType1(p_mc);
+		// }
 	}
 
 	return isSucess;

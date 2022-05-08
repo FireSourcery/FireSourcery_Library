@@ -74,13 +74,13 @@ static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 static void Init_Entry(MotorController_T * p_mc)
 {
 	//	MotorController_InitReboot(p_mc); 
-	if(Timer_GetBase(&p_mc->TimerMillis) > 50U) 	//wait 50ms for debounce
-	{
-		if((p_mc->Parameters.BeepThrottleOnInit == true) && MotAnalogUser_GetIsThrottleOn(&p_mc->AnalogUser))
-		{
-			MotorController_BeepShort(p_mc);
-		}
-	}
+	// if(Timer_GetBase(&p_mc->TimerMillis) > 50U) 	//wait 50ms for debounce, may need preinit
+	// {
+	// 	if((p_mc->Parameters.BeepThrottleOnInit == true) && MotAnalogUser_GetIsThrottleOn(&p_mc->AnalogUser))
+	// 	{
+	// 		MotorController_BeepShort(p_mc);
+	// 	}
+	// }
 }
 
 static void Init_Proc(MotorController_T * p_mc)

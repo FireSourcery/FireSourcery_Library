@@ -178,8 +178,9 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 
 			if(procSpeed == true)
 			{
-				speedFeedback_Frac16 = (p_motor->SpeedFeedback_Frac16 + Encoder_DeltaT_GetUnitSpeed(&p_motor->Encoder)) / 2U;
-				if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedFeedback_Frac16 = 0 - speedFeedback_Frac16; };
+				speedFeedback_Frac16 = Encoder_DeltaT_GetUnitSpeed(&p_motor->Encoder);
+				if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedFeedback_Frac16 = 0 - speedFeedback_Frac16; }; 
+				speedFeedback_Frac16 = (speedFeedback_Frac16 + p_motor->SpeedFeedback_Frac16) / 2; 
 			}
 
 			break;
@@ -204,7 +205,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			input	RampCmd[-32767:32767], (speedFeedback_Frac16 / 2)[-32767:32767]
 			output 	SpeedControl[-32767:32767] => IqReq or VqReq
 		*/
-		if(p_motor->ControlModeFlags.Speed == 1U) { p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, speedFeedback_Frac16 / 2U); }
+		if(p_motor->ControlModeFlags.Speed == 1U) { p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, speedFeedback_Frac16 / 2); }
 		// else if (p_motor->ControlModeFlags.VFreqScalar == 1U) { _Motor_FOC_ProcVoltageMode(p_motor, p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.VFreqScalar_Frac16 / 65536U);}
 		p_motor->SpeedFeedback_Frac16 = speedFeedback_Frac16;
 	}
