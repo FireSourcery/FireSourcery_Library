@@ -70,6 +70,8 @@ void MotAnalogUser_SetBrakeUnits(MotAnalogUser_T * p_user, uint16_t zero_Adcu, u
 	Linear_ADC_Init(&p_user->UnitBrake, p_user->Params.BrakeZero_Adcu, p_user->Params.BrakeMax_Adcu, 1000U);
 }
 
+
+
 void MotAnalogUser_SetThrottleUnits(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
 {
 	p_user->Params.ThrottleZero_Adcu = zero_Adcu;
@@ -77,25 +79,21 @@ void MotAnalogUser_SetThrottleUnits(MotAnalogUser_T * p_user, uint16_t zero_Adcu
 	Linear_ADC_Init(&p_user->UnitThrottle, p_user->Params.ThrottleZero_Adcu, p_user->Params.ThrottleMax_Adcu, 1000U);
 }
 
-void MotAnalogUser_SetBrakeAdc(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useBrakeEdgePin)
+void MotAnalogUser_SetBrakeAdc(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useBrakeEdgePin) //range error
 {
 	MotAnalogUser_SetBrakeUnits(p_user, zero_Adcu, max_Adcu);
 	p_user->Params.UseBrakeEdgePin = useBrakeEdgePin;
 }
 
-void MotAnalogUser_SetThrottleAdc(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useThrottleEdgePin)
+void MotAnalogUser_SetThrottleAdc(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useThrottleEdgePin) //range error
 {
 	MotAnalogUser_SetThrottleUnits(p_user, zero_Adcu, max_Adcu);
 	p_user->Params.UseThrottleEdgePin = useThrottleEdgePin;
 }
 
-//user call on prompt
-// void MotAnalogUser_CalibrateThrottleZero(MotAnalogUser_T * p_user, uint16_t zero_Adcu)
-// {
-// 	p_user->Params.ThrottleZero_Adcu = zero_Adcu; 
-// }
-
-
+// void MotAnalogUser_SetBrakeUnits_Frac16(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
+// void MotAnalogUser_SetThrottleUnits_Frac16(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
+ 
 void MotAnalogUser_SetBistateBrake(MotAnalogUser_T * p_user, bool useBistateBrake, uint16_t bistateBrakeIntensity_Frac16)
 {
 	p_user->Params.UseBistateBrake = useBistateBrake;
@@ -138,3 +136,4 @@ void MotAnalogUser_SetPinInvert(MotAnalogUser_T * p_user, MotAnalogUser_InvertPi
 		(invertPins.ThrottleEdge == true) ? Debounce_EnableInvert(&p_user->ThrottleEdgePin) : Debounce_DisableInvert(&p_user->ThrottleEdgePin);
 	}
 }
+

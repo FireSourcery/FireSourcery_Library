@@ -181,7 +181,7 @@ void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALe
  
 void Encoder_SetSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
 {
-	if(speedRef != p_encoder->Params.SpeedRef_Rpm) //todo split to static interal or remove
+	// if(speedRef != p_encoder->Params.SpeedRef_Rpm) //todo split to static interal or remove
 	{
 		p_encoder->Params.SpeedRef_Rpm = speedRef;
 		p_encoder->UnitRefSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.SpeedRef_Rpm, 16U);
@@ -190,7 +190,7 @@ void Encoder_SetSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
 
 void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRevolution)
 {
-	if(countsPerRevolution != p_encoder->Params.CountsPerRevolution)
+	// if(countsPerRevolution != p_encoder->Params.CountsPerRevolution)
 	{
 		p_encoder->Params.CountsPerRevolution	= countsPerRevolution;
 		p_encoder->UnitAngularD_Factor 			= 0xFFFFFFFFU / countsPerRevolution + 1U;

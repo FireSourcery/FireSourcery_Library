@@ -35,9 +35,9 @@
 //#include "Datagram.h"
 
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
-	#include "Peripheral/Xcvr/Xcvr.h"
+#include "Peripheral/Xcvr/Xcvr.h"
 #else
-	#include "Peripheral/Serial/Serial.h"
+#include "Peripheral/Serial/Serial.h"
 #endif
 
 #include <stdint.h>
@@ -217,7 +217,7 @@ typedef struct __attribute__((aligned(4U)))
 	Serial_T * p_Serial;
 #endif
 	uint8_t SpecsId;
-	bool IsEnable; 	/* enable on start up */
+	bool IsEnableOnInit; 	/* enable on start up */
 }
 Protocol_Params_T;
 
@@ -250,7 +250,7 @@ typedef const struct
 Protocol_Config_T;
 
 #if defined(CONFIG_PROTOCOL_XCVR_ENABLE)
-#define PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength) .Xcvr = XCVR_CONFIG(p_XcvrTable, TableLength)
+#define PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength) .Xcvr = XCVR_CONFIG(p_XcvrTable, TableLength),
 #else
 #define PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength)
 #endif
@@ -269,23 +269,22 @@ Protocol_Config_T;
 		.P_TIMER 				= p_Timer,						\
 		.P_PARAMS 				= p_Params,						\
 	},															\
-	PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength),	 			\
+	PROTOCOL_CONFIG_XCVR(p_XcvrTable, TableLength)	 			\
 }
 
 typedef struct Protocol_Tag
 {
-	const Protocol_Config_T CONFIG;		//compile time consts config
-	Protocol_Params_T Params;			//run time config
-//	Datagram_T Datagram;
+	const Protocol_Config_T CONFIG;
+	Protocol_Params_T Params;
+	//	Datagram_T Datagram;
 
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
-	Xcvr_T Xcvr;
+		Xcvr_T Xcvr;
 #endif
 	const Protocol_Specs_T * p_Specs;
- 
+
 	size_t RxIndex;
 	size_t TxLength;
-	//	 volatile bool ReqRxSemaphore;
 	Protocol_RxState_T		RxState;
 	Protocol_RxCode_T 		RxCode;
 	Protocol_ReqState_T 	ReqState;
@@ -296,6 +295,7 @@ typedef struct Protocol_Tag
 	uint8_t TxNackCount;
 	protocolg_reqid_t ReqIdActive;
 	Protocol_ReqEntry_T * p_ReqActive;
+	//	 volatile bool ReqRxSemaphore;
 	//	Protocol_Control_T Control;
 }
 Protocol_T;
@@ -306,8 +306,10 @@ extern void Protocol_ConfigBaudRate(Protocol_T * p_protocol, uint32_t baudRate);
 extern void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t specsId);
 extern void Protocol_SetSpecs_Ptr(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs);
 extern void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId);
-extern void Protocol_SetXcvr_Ptr(Protocol_T * p_protocol, void * p_transceiver); 
+extern void Protocol_SetXcvr_Ptr(Protocol_T * p_protocol, void * p_transceiver);
 extern bool Protocol_Enable(Protocol_T * p_protocol);
 extern void Protocol_Disable(Protocol_T * p_protocol);
+extern void Protocol_EnableOnInit(Protocol_T * p_protocol);
+extern void Protocol_DisableOnInit(Protocol_T * p_protocol);
 
 #endif

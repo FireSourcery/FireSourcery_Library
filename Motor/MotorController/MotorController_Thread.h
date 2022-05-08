@@ -98,6 +98,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 {
 	bool isFault = false;
+	bool isWarning = false;
 
 	AnalogN_Group_PauseQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_HEAT);
 	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_PCB);
@@ -111,31 +112,25 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 	}
 	AnalogN_Group_ResumeQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_HEAT);
 
-	// if(Thermistor_ProcThreshold(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu) != THERMISTOR_STATUS_OK)
-	// {
-	// 	p_mc->ErrorFlags.PcbOverHeat = 1U;
-	// 	isFault = true;
-	// }
+	Thermistor_PollMonitor(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu);
+	Thermistor_PollMonitor(&p_mc->ThermistorMosfetsTop, p_mc->AnalogResults.HeatMosfetsTop_Adcu);
+	Thermistor_PollMonitor(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_Adcu);
 
-	// if(Thermistor_ProcThreshold(&p_mc->ThermistorMosfetsTop, p_mc->AnalogResults.HeatMosfetsTop_Adcu) != THERMISTOR_STATUS_OK)
-	// {
-	// 	p_mc->ErrorFlags.MosfetsTopOverHeat = 1U;
-	// 	isFault = true;
-	// }
+	isFault = Thermistor_GetIsStatusLimit(&p_mc->ThermistorPcb) || Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsTop) || Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsBot);
 
-	// if(Thermistor_ProcThreshold(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_Adcu) != THERMISTOR_STATUS_OK)
-	// {
-	// 	p_mc->ErrorFlags.MosfetsBotOverHeat = 1U;
-	// 	isFault = true;
-	// }
+	if(isFault == true) 
+	{ 
+		MotorController_User_SetFault(p_mc); 
+	}
+	else
+	{
+		isWarning = Thermistor_GetIsStatusWarning(&p_mc->ThermistorPcb) || Thermistor_GetIsStatusWarning(&p_mc->ThermistorMosfetsTop) || Thermistor_GetIsStatusWarning(&p_mc->ThermistorMosfetsBot);
 
-	// if(isFault == true) { MotorController_User_SetFault(p_mc); }
-
-	//if frequent degree c polling request
-//	Thermistor_CaptureUnitConversion(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu);
-//	Thermistor_CaptureUnitConversion(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_Adcu);
-//	Thermistor_CaptureUnitConversion(&p_mc->ThermistorMosfetsTop, p_mc->AnalogResults.HeatMosfetsTop_Adcu);
-
+		if(isWarning == true)
+		{
+			MotorController_User_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnHeat_Frac16);
+		}
+	}
 }
 
 static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
@@ -150,8 +145,9 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
 	VMonitor_PollStatus(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu); 
 	VMonitor_PollStatus(&p_mc->VMonitorAcc, p_mc->AnalogResults.VAcc_Adcu);
 	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense) == true) { isFault = true; } 
-	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc) == true) 	{ isFault = true; } 
-	// if(isFault == true) { MotorController_User_SetFault(p_mc); }
+	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc) == true) 	{ isFault = true; }
+
+	if(isFault == true) { MotorController_User_SetFault(p_mc); }	/* Sensors checks fault only */
 }
 
 /*
@@ -212,6 +208,11 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		{
 			MotorController_User_SetFault(p_mc);
 		}
+
+		//if frequent degree c polling request
+		//	Thermistor_CaptureUnitConversion(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu);
+		//	Thermistor_CaptureUnitConversion(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_Adcu);
+		//	Thermistor_CaptureUnitConversion(&p_mc->ThermistorMosfetsTop, p_mc->AnalogResults.HeatMosfetsTop_Adcu);
 	} 
 }
 
@@ -234,7 +235,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 		case VMONITOR_LIMIT_UPPER: MotorController_User_SetFault(p_mc); break;
 		case VMONITOR_LIMIT_LOWER: MotorController_User_SetFault(p_mc); break;
 		case VMONITOR_WARNING_UPPER: 	break; 
-		case VMONITOR_WARNING_LOWER: 	break; //motorNuser set LowV Warning
+		case VMONITOR_WARNING_LOWER: MotorController_User_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16);	break; 
 		case VMONITOR_STATUS_OK: break;
 		default: break;
 	}

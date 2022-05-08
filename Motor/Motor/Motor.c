@@ -60,41 +60,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Phase_Init(&p_motor->Phase);
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
 
-	switch(p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_SENSORLESS:
-			if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
-			{
-				Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
-			}
-			else
-			{
-
-			}
-			break;
-
-		case MOTOR_SENSOR_MODE_HALL:
-			Hall_Init(&p_motor->Hall);
-			Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
-			/* Set Encoder module individual param consistent to main motor module setting */
-			Encoder_Motor_SetHallCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs);
-			Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_Rpm);
-			Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, 20000U, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedRefMax_Rpm);
-			break;
-
-		case MOTOR_SENSOR_MODE_ENCODER:
-			Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
-			Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_Rpm);
-			break;
-
-		case MOTOR_SENSOR_MODE_SIN_COS:
-			SinCos_Init(&p_motor->SinCos);
-			Linear_Speed_InitAngleRpm(&p_motor->UnitAngleRpm, 1000U, 16U, p_motor->Parameters.SpeedRefMax_Rpm);
-			break;
-
-		default:
-			break;
-	}
+	Motor_ResetSensorMode(p_motor);
 
 	Thermistor_Init(&p_motor->Thermistor);
 	p_motor->AnalogResults.Heat_Adcu = p_motor->Thermistor.Params.Threshold_Adcu;
@@ -303,4 +269,42 @@ void Motor_ResetUnitsIabc(Motor_T * p_motor)
 	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_Adcu, p_motor->Parameters.IcRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
 #endif
 }
- 
+
+void Motor_ResetSensorMode(Motor_T * p_motor)
+{
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_SENSORLESS:
+			if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
+			{
+				Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
+			}
+			else
+			{
+
+			}
+			break;
+
+		case MOTOR_SENSOR_MODE_HALL:
+			Hall_Init(&p_motor->Hall);
+			Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
+			/* Set Encoder module individual param consistent to main motor module setting */
+			Encoder_Motor_SetHallCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs);
+			Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_Rpm);
+			// Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, 20000U, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedRefMax_Rpm);
+			break;
+
+		case MOTOR_SENSOR_MODE_ENCODER:
+			Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
+			Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_Rpm);
+			break;
+
+		case MOTOR_SENSOR_MODE_SIN_COS:
+			SinCos_Init(&p_motor->SinCos);
+			Linear_Speed_InitAngleRpm(&p_motor->UnitAngleRpm, 1000U, 16U, p_motor->Parameters.SpeedRefMax_Rpm);
+			break;
+
+		default:
+			break;
+	}
+}

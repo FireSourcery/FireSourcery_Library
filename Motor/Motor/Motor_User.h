@@ -264,7 +264,7 @@ static inline void Motor_User_SetVoltageBrakeCmd(Motor_T * p_motor)
 {
 	// if(Motor_GetSpeed_RPM(p_motor) > 30U)
 	// {
-	Motor_User_SetVoltageModeCmd(p_motor, p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.VoltageBrakeScalar_Frac16 / 65536U);
+	Motor_User_SetVoltageModeCmd(p_motor, p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.VoltageBrakeScalar_InvFrac16 / 65536U);
 	// Motor_User_SetVFreqModeCmd( p_motor,  voltage);
 	
 	// }
@@ -341,9 +341,6 @@ static inline bool Motor_User_CheckFault(Motor_T * p_motor)
 //
 //} 
 
- 
-
-
 /******************************************************************************/
 /*
 	RAM Variable RW
@@ -368,9 +365,9 @@ typedef union Motor_User_StatusFlags_T
 {
 	struct
 	{
-		uint32_t ILimitFault 		: 1U;
-		uint32_t ILimitActive 		: 1U;
-		uint32_t IWarning 			: 1U;
+		// uint32_t ILimitFault 		: 1U;
+		// uint32_t ILimitActive 		: 1U;
+		// uint32_t IWarning 			: 1U;
 		// uint32_t HeatOverLimit 		: 1U;
 		// uint32_t HeatOverThreshold 	: 1U;
 		// uint32_t HeatOverWarning 	: 1U;
@@ -385,9 +382,9 @@ static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags(Motor_T * p_mot
 {
 	Motor_User_StatusFlags_T status ;
 
-	status.HeatStatus = Thermistor_GetStatus(&p_motor->Thermistor);  
-	status.IWarning = p_motor->RunStateFlags.IWarningActive;
-	status.ILimitActive = p_motor->RunStateFlags.ILimitActive;
+	status.HeatStatus 		= Thermistor_GetStatus(&p_motor->Thermistor);  
+	// status.IWarning 		= p_motor->RunStateFlags.ILimitScalarActive;
+	// status.ILimitActive 	= p_motor->RunStateFlags.ILimitActive;
 	
 	// status.ILimitFault = p_motor->RunStateFlags.ILimitActive;
 
@@ -431,52 +428,10 @@ static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor)
 	Nvm Param function
 */
 /******************************************************************************/
+static inline Motor_CommutationMode_T Motor_User_GetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode) 	{ return p_motor->Parameters.CommutationMode; }
+static inline Motor_SensorMode_T Motor_User_GetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode) 					{ return p_motor->Parameters.SensorMode; }
+static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Motor_T * p_motor) 						{ return p_motor->Parameters.DirectionCalibration; }
 
- 
-/* SpeedRefMax_Rpm => speed at VRefSupply */  
-static inline void Motor_User_SetSpeedRefMax_Rpm(Motor_T * p_motor, uint16_t rpm) 		{ p_motor->Parameters.SpeedRefMax_Rpm = rpm; }
-static inline void Motor_User_SetSpeedRefMax_VRpm(Motor_T * p_motor, uint16_t vMotor, uint16_t vMotorSpeed_Rpm) 
-{
-	p_motor->Parameters.SpeedRefMax_Rpm = vMotorSpeed_Rpm * _Motor_GetVRefSupply() / vMotor;
-}
-
-//change to frac
-// static inline void Motor_User_SetSpeedRefVBemf_Rpm(Motor_T * p_motor, uint16_t rpm) 	{ p_motor->Parameters.SpeedRefVBemf_Rpm = rpm; }
-// static inline void Motor_User_SetSpeedRefVBemf_VRpm(Motor_T * p_motor, uint16_t vMotor, uint16_t vMotorSpeed_Rpm)
-// {
-// 	p_motor->Parameters.SpeedRefVBemf_Rpm = vMotorSpeed_Rpm * _Motor_GetVRefSupply( ) / vMotor; 
-// }
-
-//should this be const?
-// static inline void Motor_User_SetIRefMax_Amp(Motor_T * p_motor, uint16_t amp) { p_motor->Parameters.IRefMax_Amp = amp; }
-static inline void Motor_User_SetIRefPeak_Adcu(Motor_T * p_motor, uint16_t adcu)
-{
-	p_motor->Parameters.IRefPeak_Adcu = (adcu > p_motor->CONFIG.I_SENSOR_PEAK_LIMIT_ADCU) ? p_motor->CONFIG.I_SENSOR_PEAK_LIMIT_ADCU : adcu;
-
-	Motor_ResetUnitsIabc(p_motor);
-}
-
-static inline void Motor_User_SetIRefPeak_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV)
-{
-	uint16_t adcuZero = (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / _Motor_GetAdcVRef();
-	uint16_t adcuMax = (uint32_t)max_MilliV * ADC_MAX / _Motor_GetAdcVRef(); 
-	Motor_User_SetIRefPeak_Adcu(p_motor, adcuMax - adcuZero);
-}
-
-static inline void Motor_User_SetIRefs_Sensor(Motor_T * p_motor, uint16_t sensorMin_MilliV, uint16_t sensorMax_MilliV, uint16_t max_amp)
-{
-	// Motor_User_SetIRefMax_Amp(p_motor, max_amp);
-	Motor_User_SetIRefPeak_MilliV(p_motor, sensorMin_MilliV, sensorMax_MilliV); 
-}
-
-static inline void Motor_User_SetIaIbIcZero_Adcu(Motor_T * p_motor, uint16_t ia_adcu, uint16_t ib_adcu, uint16_t ic_adcu)
-{
-	p_motor->Parameters.IaRefZero_Adcu = ia_adcu;
-	p_motor->Parameters.IbRefZero_Adcu = ib_adcu;
-	p_motor->Parameters.IcRefZero_Adcu = ic_adcu;
-	Motor_ResetUnitsIabc(p_motor);
-}
-	
 static inline void Motor_User_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Parameters.IaRefZero_Adcu = adcu; }
 static inline void Motor_User_SetIbZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Parameters.IbRefZero_Adcu = adcu; }
 static inline void Motor_User_SetIcZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Parameters.IcRefZero_Adcu = adcu; }
@@ -485,18 +440,21 @@ static inline void Motor_User_SetIcZero_Adcu(Motor_T * p_motor, uint16_t adcu) {
 // static inline void Motor_User_SetIaMax_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Parameters.IaRefMax_Adcu = adcu; }
 // static inline void Motor_User_SetIbMax_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Parameters.IbRefMax_Adcu = adcu; }
 // static inline void Motor_User_SetIcMax_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Parameters.IcRefMax_Adcu = adcu; }
- 
 
 /* Persistent Control Mode */
-static inline void Motor_User_SetControlModeParam(Motor_T * p_motor, Motor_ControlMode_T mode) { p_motor->Parameters.ControlMode = mode; }
+static inline void Motor_User_SetControlModeParam(Motor_T * p_motor, Motor_ControlMode_T mode) { p_motor->Parameters.ControlMode = mode; } 
+static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode)  { p_motor->Parameters.CommutationMode = mode; }
+static inline void Motor_User_SetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode) { p_motor->Parameters.AlignMode = mode; }
 
-static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode) 						{ p_motor->Parameters.CommutationMode = mode; }
-static inline void Motor_User_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode) 								{ p_motor->Parameters.SensorMode = mode; }
-
-static inline Motor_CommutationMode_T Motor_User_GetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode) 	{ return p_motor->Parameters.CommutationMode; }
-static inline Motor_SensorMode_T Motor_User_GetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode) 					{ return p_motor->Parameters.SensorMode; }
-static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Motor_T * p_motor) 						{ return p_motor->Parameters.DirectionCalibration; }
+static inline void Motor_User_SetAlignVoltage(Motor_T * p_motor, uint16_t v_frac16) 			{ p_motor->Parameters.AlignVoltage_Frac16 = (v_frac16 > CONFIG_MOTOR_ALIGN_VOLTAGE_MAX) ? CONFIG_MOTOR_ALIGN_VOLTAGE_MAX : v_frac16; }
+static inline void Motor_User_SetAlignTime_Millis(Motor_T * p_motor, uint16_t millis) 			{ p_motor->Parameters.AlignTime_ControlCycles = millis * (20000U/1000U) ; } //todo define pwm freq
+static inline void Motor_User_SetILimitOnHeatParam(Motor_T * p_motor, uint16_t scalar_Frac16) 	{ p_motor->Parameters.ILimitScalarHeat_Frac16 = scalar_Frac16; } 
  
+static inline void Motor_User_VoltageBrakeScalar_Frac16(Motor_T * p_motor, uint16_t scalar_Frac16) { p_motor->Parameters.VoltageBrakeScalar_InvFrac16 = 65535U - scalar_Frac16; }
+
+static inline void Motor_User_SetPhaseModeParam(Motor_T * p_motor, Phase_Mode_T mode) { p_motor->Parameters.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->Phase, mode); }
+
+
 /******************************************************************************/
 /*
 	Additional module wrapper
@@ -519,11 +477,18 @@ extern bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T directi
 extern bool Motor_User_SetDirectionForward(Motor_T * p_motor);
 extern bool Motor_User_SetDirectionReverse(Motor_T * p_motor);
 
-extern void Motor_User_SetSpeedLimitActive_Scalar(Motor_T * p_motor, uint16_t scalar_frac16); 
+extern void Motor_User_SetSpeedLimitActiveScalar(Motor_T * p_motor, uint16_t scalar_frac16); 
 extern void Motor_User_ClearSpeedLimitActive(Motor_T * p_motor );
-extern void Motor_User_SetILimitActive_Scalar(Motor_T * p_motor, uint16_t scalar_frac16); 
+extern void Motor_User_SetILimitActiveScalar(Motor_T * p_motor, uint16_t scalar_frac16); 
 extern void Motor_User_ClearILimitActive(Motor_T * p_motor); 
 extern uint16_t Motor_User_GetMechanialAngle(Motor_T * p_motor);
+
+
+extern void Motor_User_SetSpeedRefMax_Rpm(Motor_T * p_motor, uint16_t rpm);
+extern void Motor_User_SetSpeedRefMax_VRpm(Motor_T * p_motor, uint16_t vMotor, uint16_t vMotorSpeed_Rpm) ;
+extern void Motor_User_SetIRefPeak_Adcu(Motor_T * p_motor, uint16_t adcu);
+extern void Motor_User_SetIRefPeak_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV);
+extern void Motor_User_SetIaIbIcZero_Adcu(Motor_T * p_motor, uint16_t ia_adcu, uint16_t ib_adcu, uint16_t ic_adcu);
 
 extern void Motor_User_SetILimitParam_Amp(Motor_T * p_motor, uint16_t motoring_Amp, uint16_t generating_Amp);
 extern void Motor_User_SetSpeedLimitParam_Rpm(Motor_T * p_motor, uint16_t forward_Rpm, uint16_t reverse_Rpm);

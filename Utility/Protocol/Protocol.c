@@ -51,7 +51,7 @@ void Protocol_Init(Protocol_T * p_protocol)
 	Xcvr_Init(&p_protocol->Xcvr, p_protocol->Params.XcvrId);
 #endif
 
-	if((IsXcvrSet(p_protocol) == true) && (p_protocol->Params.IsEnable == true))
+	if((IsXcvrSet(p_protocol) == true) && (p_protocol->Params.IsEnableOnInit == true))
 	{
 		Protocol_SetSpecs(p_protocol, p_protocol->Params.SpecsId);
 		Protocol_Enable(p_protocol);
@@ -59,11 +59,7 @@ void Protocol_Init(Protocol_T * p_protocol)
 	else
 	{
 		Protocol_Disable(p_protocol);
-	}
-
-	p_protocol->RxIndex = 0U;
-	p_protocol->TxLength = 0U;
-	p_protocol->p_ReqActive = 0U;
+	} 
 } 
 
 static inline bool TxPacket(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length)
@@ -747,6 +743,9 @@ bool Protocol_Enable(Protocol_T * p_protocol)
 	{
 		p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
 		p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_REQ;
+		p_protocol->RxIndex = 0U;
+		p_protocol->TxLength = 0U;
+		p_protocol->p_ReqActive = 0U;
 	}
 
 	return isEnable;
@@ -756,8 +755,8 @@ bool Protocol_Enable(Protocol_T * p_protocol)
 void Protocol_Disable(Protocol_T * p_protocol)
 {
 	p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
-	p_protocol->ReqState = PROTOCOL_REQ_STATE_INACTIVE;
-	p_protocol->RxIndex = 0U;
-	p_protocol->TxLength = 0U;
-	p_protocol->p_ReqActive = 0U;
+	p_protocol->ReqState = PROTOCOL_REQ_STATE_INACTIVE; 
 }
+ 
+void Protocol_EnableOnInit(Protocol_T * p_protocol) { p_protocol->Params.IsEnableOnInit = true; } 
+void Protocol_DisableOnInit(Protocol_T * p_protocol) { p_protocol->Params.IsEnableOnInit = false; }

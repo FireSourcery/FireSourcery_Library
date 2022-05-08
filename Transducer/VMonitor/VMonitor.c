@@ -64,7 +64,7 @@ VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
 {
 	VMonitor_Status_T status = VMONITOR_STATUS_OK;
 
-	if(p_vMonitor->Params.IsEnable == true)
+	if(p_vMonitor->Params.IsEnableOnInit == true)
 	{
 		if		(adcu > p_vMonitor->Params.LimitUpper_Adcu) { status = VMONITOR_LIMIT_UPPER; }
 		else if	(adcu < p_vMonitor->Params.LimitLower_Adcu) { status = VMONITOR_LIMIT_LOWER; } 
@@ -92,6 +92,17 @@ void VMonitor_SetLimitUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) {
 void VMonitor_SetLimitLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.LimitLower_Adcu = Linear_Voltage_CalcAdcu_UserMilliV(&p_vMonitor->Units, limit_mV); }
 void VMonitor_SetWarningUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.WarningUpper_Adcu = Linear_Voltage_CalcAdcu_UserMilliV(&p_vMonitor->Units, limit_mV); }
 void VMonitor_SetWarningLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.WarningLower_Adcu = Linear_Voltage_CalcAdcu_UserMilliV(&p_vMonitor->Units, limit_mV); }
+
+
+void VMonitor_SetLimits_MilliV(VMonitor_T * p_vMonitor, uint32_t limitLower, uint32_t limitUpper, uint32_t warningLower, uint32_t warningUpper)
+{
+	VMonitor_SetLimitLower_MilliV(p_vMonitor, limitLower);
+	VMonitor_SetLimitUpper_MilliV(p_vMonitor, limitUpper);
+	VMonitor_SetWarningLower_MilliV(p_vMonitor, warningLower);
+	VMonitor_SetWarningUpper_MilliV(p_vMonitor, warningUpper);
+}
+
+
 
 uint16_t VMonitor_GetVInRefMax(VMonitor_T * p_vMonitor) { return p_vMonitor->Params.VInRefMax; }
 uint32_t VMonitor_GetLimitUpper_V(VMonitor_T * p_vMonitor, uint16_t vScalar) { return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitUpper_Adcu, vScalar); }

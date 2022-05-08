@@ -67,7 +67,7 @@ typedef struct __attribute__((aligned (4U)))
 	Serial_T * p_Serial;
 #endif
 	uint32_t BaudRate;
-	bool IsEnable;
+	bool IsEnableOnInit;
 	bool EnablePrintStatus;
 }
 Shell_Params_T;
@@ -120,6 +120,9 @@ Shell_T;
 
 static inline void Shell_Disable(Shell_T * p_shell) { p_shell->State = SHELL_STATE_INACTIVE; }
 static inline void Shell_Enable(Shell_T * p_shell) { p_shell->State = SHELL_STATE_PROMPT; }
+
+static inline void Shell_EnableOnInit(Shell_T * p_shell) { p_shell->Params.IsEnableOnInit = true; } 
+static inline void Shell_DisableOnInit(Shell_T * p_shell) { p_shell->Params.IsEnableOnInit = false; }
 
 extern void Shell_Init(Shell_T * p_shell);
 extern Shell_Status_T Shell_Proc(Shell_T * p_shell);

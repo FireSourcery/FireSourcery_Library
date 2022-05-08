@@ -48,7 +48,7 @@ void Hall_Init(Hall_T * p_hall)
 	}
 	else
 	{
-		Hall_MapSensorsTable
+		Hall_SetSensorsTable
 		(
 			p_hall,
 			HALL_VIRTUAL_SENSORS_A,
@@ -63,7 +63,7 @@ void Hall_Init(Hall_T * p_hall)
 	Hall_CaptureSensors_ISR(p_hall);
 }
 
-void Hall_MapSensorsTable
+void Hall_SetSensorsTable
 (
 	Hall_T * p_hall,
 	uint8_t sensorsA,

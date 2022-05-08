@@ -52,7 +52,7 @@ typedef struct __attribute__((aligned(4U))) VMonitor_Params_Tag
 	uint16_t WarningUpper_Adcu;
 	uint16_t WarningLower_Adcu; 
 	uint16_t VInRefMax; /* VIn 100% */
-	bool IsEnable;
+	bool IsEnableOnInit;
 }
 VMonitor_Params_T;
 
@@ -87,12 +87,14 @@ static inline int32_t VMonitor_ConvertToV(VMonitor_T * p_vMonitor, uint16_t adcu
 static inline int32_t VMonitor_ConvertToFrac16(VMonitor_T * p_vMonitor, uint16_t adcu) { return Linear_Voltage_CalcFraction16(&p_vMonitor->Units, adcu); }
 
 // static inline int32_t VMonitor_ConvertToMilliV(VMonitor_T * p_vMonitor, uint16_t adcu) { return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, adcu); }
-// static inline int32_t VMonitor_ConvertMilliVToAdcu(VMonitor_T * p_vMonitor, uint32_t milliV) { return Linear_Voltage_CalcAdcu_MilliV(&p_vMonitor->Units, milliV); }
+static inline int32_t VMonitor_ConvertMilliVToAdcu(VMonitor_T * p_vMonitor, uint32_t milliV) { return Linear_Voltage_CalcAdcu_MilliV(&p_vMonitor->Units, milliV); }
 
 static inline bool VMonitor_GetIsStatusLimit(VMonitor_T * p_vMonitor) { return ((p_vMonitor->Status == VMONITOR_LIMIT_UPPER) || (p_vMonitor->Status == VMONITOR_LIMIT_LOWER)); }
 static inline bool VMonitor_GetIsStatusWarning(VMonitor_T * p_vMonitor) { return ((p_vMonitor->Status == VMONITOR_WARNING_UPPER) || (p_vMonitor->Status == VMONITOR_WARNING_LOWER)); }
 static inline VMonitor_Status_T VMonitor_GetStatus(VMonitor_T * p_vMonitor) { return  (p_vMonitor->Status); }
 
+static inline void VMonitor_Enable(VMonitor_T * p_vMonitor) { p_vMonitor->Params.IsEnableOnInit = true; }
+static inline void VMonitor_Disable(VMonitor_T * p_vMonitor) { p_vMonitor->Params.IsEnableOnInit = false; }
 
 extern void VMonitor_InitAdcVRef_MilliV(uint16_t adcVRef_MilliV);
 extern void VMonitor_Init(VMonitor_T * p_vMonitor);
@@ -104,9 +106,9 @@ extern void VMonitor_SetLimitUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limi
 extern void VMonitor_SetLimitLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV);
 extern void VMonitor_SetWarningUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV);
 extern void VMonitor_SetWarningLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV);
+extern void VMonitor_SetLimits_MilliV(VMonitor_T * p_vMonitor, uint32_t limitLower, uint32_t limitUpper, uint32_t warningLower, uint32_t warningUpper);
 
 extern uint16_t VMonitor_GetVInRefMax(VMonitor_T * p_vMonitor);
-
 extern uint32_t VMonitor_GetLimitUpper_V(VMonitor_T * p_vMonitor, uint16_t vScalar);
 extern uint32_t VMonitor_GetLimitLower_V(VMonitor_T * p_vMonitor, uint16_t vScalar);
 extern uint32_t VMonitor_GetWarningUpper_V(VMonitor_T * p_vMonitor, uint16_t vScalar); 

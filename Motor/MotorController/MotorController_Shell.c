@@ -188,8 +188,8 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 		}
 		else if(strncmp(argv[1U], "protocol", 9U) == 0U)
 		{
-			p_mc->Shell.Params.IsEnable = false;
-			p_mc->CONFIG.P_PROTOCOLS[0U].Params.IsEnable = true;
+			p_mc->Shell.Params.IsEnableOnInit = false;
+			p_mc->CONFIG.P_PROTOCOLS[0U].Params.IsEnableOnInit = true;
 		}
 		else if(strncmp(argv[1U], "forwardisccw", 13U) == 0U)
 		{
@@ -402,14 +402,14 @@ static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 		if(strncmp(argv[1U], "limits", 7U) == 0U)
 		{  
 			Terminal_SendString(p_terminal, "PCB: ");		
-			Terminal_SendString(p_terminal, " Limit: "); 		Terminal_SendNum(p_terminal, Thermistor_GetLimit_DegCInt(&p_mc->ThermistorPcb, 1U));
-			Terminal_SendString(p_terminal, " Threshold: "); 	Terminal_SendNum(p_terminal, Thermistor_GetThreshold_DegCInt(&p_mc->ThermistorPcb, 1U));
+			Terminal_SendString(p_terminal, " Limit: "); 		Terminal_SendNum(p_terminal, Thermistor_GetLimitShutdown_DegCInt(&p_mc->ThermistorPcb, 1U));
+			Terminal_SendString(p_terminal, " Threshold: "); 	Terminal_SendNum(p_terminal, Thermistor_GetLimitThreshold_DegCInt(&p_mc->ThermistorPcb, 1U));
 			Terminal_SendString(p_terminal, " Warning: "); 		Terminal_SendNum(p_terminal, Thermistor_GetWarning_DegCInt(&p_mc->ThermistorPcb, 1U)); 
 			Terminal_SendString(p_terminal, " C\r\n");
 
 			Terminal_SendString(p_terminal, "MOSFETs Top: ");
-			Terminal_SendString(p_terminal, " Limit: "); 		Terminal_SendNum(p_terminal, Thermistor_GetLimit_DegCInt(&p_mc->ThermistorMosfetsTop, 1U));
-			Terminal_SendString(p_terminal, " Threshold: "); 	Terminal_SendNum(p_terminal, Thermistor_GetThreshold_DegCInt(&p_mc->ThermistorMosfetsTop, 1U));
+			Terminal_SendString(p_terminal, " Limit: "); 		Terminal_SendNum(p_terminal, Thermistor_GetLimitShutdown_DegCInt(&p_mc->ThermistorMosfetsTop, 1U));
+			Terminal_SendString(p_terminal, " Threshold: "); 	Terminal_SendNum(p_terminal, Thermistor_GetLimitThreshold_DegCInt(&p_mc->ThermistorMosfetsTop, 1U));
 			Terminal_SendString(p_terminal, " Warning: "); 		Terminal_SendNum(p_terminal, Thermistor_GetWarning_DegCInt(&p_mc->ThermistorMosfetsTop, 1U)); 
 			Terminal_SendString(p_terminal, " C\r\n");
 

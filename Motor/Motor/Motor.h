@@ -124,12 +124,12 @@ typedef union Motor_RunStateFlags_Tag
 {
 	struct
 	{
-		uint32_t Hold 				: 1U;
-		uint32_t ILimitActive 		: 1U;
-		uint32_t IWarningActive 	: 1U; /* Set approx 1/s, check 1/ms */
-		uint32_t HeatWarning 		: 1U;
-		uint32_t VWarning 			: 1U;
-		uint32_t FieldWeakening 	: 1U; //todo
+		// uint32_t Hold 						: 1U;
+		uint32_t SpeedLimitScalarActive 	: 1U;
+		uint32_t ILimitScalarActive 		: 1U; /* Set approx 1/s, check 1/ms */
+		uint32_t HeatWarning 				: 1U;
+		// uint32_t VWarning 					: 1U;
+		uint32_t FieldWeakening 			: 1U; //todo
 	};
 	uint32_t State;
 }
@@ -252,6 +252,7 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	Motor_AlignMode_T 			AlignMode; 
 
 	Motor_DirectionCalibration_T DirectionCalibration;
+	Motor_ControlMode_T ControlMode; 	/* User ControlMode, UserControlModeCmd, and ThrottleCmd */
 
 	uint8_t PolePairs;
  
@@ -275,15 +276,14 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	uint16_t AlignVoltage_Frac16;
 	uint16_t AlignTime_ControlCycles;
 
-	Motor_ControlMode_T ControlMode; 	/* User ControlMode, effective for throttle only */
+	
  	uint16_t SpeedLimitCcw_Frac16;		/* Fraction of SpeedRefMax_Rpm */
 	uint16_t SpeedLimitCw_Frac16;
-	uint16_t ILimitMotoring_Frac16;	/* User ILimit  */
+	uint16_t ILimitMotoring_Frac16;		/* User Param ILimit. Frac16 of RefMax   */
 	uint16_t ILimitGenerating_Frac16;
-	uint16_t ILimitHeat_ScalarFrac16;	 //absolute or ratio?
-	// uint16_t ILimitLowV_Frac16;
+	uint16_t ILimitScalarHeat_Frac16;	 /* Frac16 of active limit */ 
 
-	uint16_t VoltageBrakeScalar_Frac16; /* [0:65535], 0 is highest intensity */
+	uint16_t VoltageBrakeScalar_InvFrac16; /* [0:65535], 0 is highest intensity */
 
 	//	uint8_t BrakeCoeffcient;
 	//	uint32_t RampAcceleration;
@@ -295,7 +295,7 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	//	uint16_t OpenLoopVHzGain; //vhz scale
 	//	uint16_t OpenLoopZcdTransition;
 
-	Phase_Mode_T				PhasePwmMode; /* Only 1 nvm param for phase module. */
+	Phase_Mode_T PhasePwmMode; /* Only 1 nvm param for phase module. */
 }
 Motor_Params_T;
 

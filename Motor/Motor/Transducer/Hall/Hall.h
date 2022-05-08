@@ -338,7 +338,7 @@ static inline bool Hall_GetSensorC(Hall_T * p_hall) { return p_hall->SensorsRef.
 
 */
 extern void Hall_Init(Hall_T * p_hall);
-extern void Hall_MapSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC, uint8_t sensorsB, uint8_t sensorsInvA, uint8_t sensorsC, uint8_t sensorsInvB);
+extern void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC, uint8_t sensorsB, uint8_t sensorsInvA, uint8_t sensorsC, uint8_t sensorsInvB);
 extern void Hall_CalibratePhaseA(Hall_T * p_hall);
 extern void Hall_CalibratePhaseInvC(Hall_T * p_hall);
 extern void Hall_CalibratePhaseB(Hall_T * p_hall);

@@ -44,7 +44,7 @@ void Shell_Init(Shell_T * p_shell)
 	Terminal_SetSerial(&p_shell->Terminal, p_shell->Params.p_Serial); 	//need xcvr module to validate xcvr pointer
 #endif
 
-	if(p_shell->Params.IsEnable == true)
+	if(p_shell->Params.IsEnableOnInit == true)
 	{
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 		if (Xcvr_CheckIsSet(&p_shell->Terminal.Xcvr, p_shell->Params.XcvrId))
@@ -180,15 +180,7 @@ void Shell_SetBaudRate(Shell_T * p_shell, uint16_t baudRate)
 	Terminal_ConfigBaudRate(&p_shell->Terminal, baudRate);
 }
 
-void Shell_SetEnableOnStart(Shell_T * p_shell)
-{
-	p_shell->Params.IsEnable = true;
-}
 
-void Shell_SetDisableOnStart(Shell_T * p_shell)
-{
-	p_shell->Params.IsEnable = false;
-}
 
 //const char * const INVALID_RETURN_CODE_STRING = "Invalid Return Code";
 //static void PrintShellStatus(Shell_T * p_shell, Shell_Status_T status)

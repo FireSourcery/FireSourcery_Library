@@ -24,8 +24,21 @@
 /*!
 	@file 	MotorController_User.c
 	@author FireSoucery
-	@brief	
+	@brief
 	@version V0
 */
 /******************************************************************************/
 #include "MotorController_User.h"
+
+void MotorController_User_SetAdcVRef(MotorController_T * p_mc, uint16_t adcVRef_MilliV)
+{
+	if		(adcVRef_MilliV > p_mc->CONFIG.ADC_VREF_MAX_MILLIV) { p_mc->Parameters.AdcVRef_MilliV = p_mc->CONFIG.ADC_VREF_MIN_MILLIV; }
+	else if	(adcVRef_MilliV < p_mc->CONFIG.ADC_VREF_MIN_MILLIV) { p_mc->Parameters.AdcVRef_MilliV = p_mc->CONFIG.ADC_VREF_MIN_MILLIV; }
+	else 														{ p_mc->Parameters.AdcVRef_MilliV = adcVRef_MilliV; }
+
+	VMonitor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV); 
+	Motor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV); 
+	Thermistor_InitAdcVRef_Scalar(p_mc->Parameters.AdcVRef_MilliV); 
+
+	//must reset to propagate set
+}
