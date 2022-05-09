@@ -326,6 +326,8 @@ static inline float Motor_User_GetHeat_DegCFloat(Motor_T * p_motor) 				{ return
 // static inline uint16_t Motor_User_GetBemf_Frac16(Motor_T * p_motor)		{ return Linear_Voltage_CalcFractionUnsigned16(&p_motor->UnitVabc, BEMF_GetVBemfPeak_Adcu(&p_motor->Bemf)); }
 // static inline uint32_t Motor_User_GetBemf_V(Motor_T * p_motor)			{ return Linear_Voltage_CalcV(&p_motor->UnitVabc, BEMF_GetVBemfPeak_Adcu(&p_motor->Bemf)); }
 
+uint16_t Motor_User_GetElectricalAngle(Motor_T * p_motor) { return p_motor->ElectricalAngle; }
+
 static inline int32_t Motor_User_GetIPhase_Frac16(Motor_T * p_motor)
 {
 	uint16_t iPhase;
@@ -454,7 +456,7 @@ extern void Motor_User_SetSpeedLimitActiveScalar(Motor_T * p_motor, uint16_t sca
 extern void Motor_User_ClearSpeedLimitActive(Motor_T * p_motor );
 extern void Motor_User_SetILimitActiveScalar(Motor_T * p_motor, uint16_t scalar_frac16);
 extern void Motor_User_ClearILimitActive(Motor_T * p_motor);
-extern uint16_t Motor_User_GetMechanialAngle(Motor_T * p_motor);
+extern uint16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor);
 
 extern void Motor_User_SetSpeedRefMax_Rpm(Motor_T * p_motor, uint16_t rpm);
 extern void Motor_User_SetSpeedRefMax_VRpm(Motor_T * p_motor, uint16_t vMotor, uint16_t vMotorSpeed_Rpm) ;

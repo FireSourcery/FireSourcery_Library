@@ -83,7 +83,7 @@ static void Init_Proc(Motor_T * p_motor)
 	}
 	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
 	{
-		Motor_SetDirection(p_motor, p_motor->UserDirection);
+		// Motor_SetDirectionForward(p_motor);
 	}
 	//optionally capture deltaT and set speed to zero
 	_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
@@ -182,7 +182,7 @@ static void Stop_Entry(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase = 0U; //ok to reset timer
 	Phase_Float(&p_motor->Phase);
-	Timer_StartPeriod(&p_motor->ControlTimer, 2000U); //100ms
+	// Timer_StartPeriod(&p_motor->ControlTimer, 2000U); //100ms
 
 	p_motor->FeedbackModeFlags.Update = 1U; /* Next cmd call will set to run state, share state input */
 
@@ -226,10 +226,10 @@ static void Stop_Proc(Motor_T * p_motor)
 
 static const StateMachine_State_T STATE_STOP =
 {
-	.ID = MSM_STATE_ID_STOP,
-	.P_TRANSITION_TABLE = STOP_TRANSITION_TABLE,
-	.ON_ENTRY = (StateMachine_Output_T)Stop_Entry,
-	.OUTPUT = (StateMachine_Output_T)Stop_Proc,
+	.ID 					= MSM_STATE_ID_STOP,
+	.P_TRANSITION_TABLE 	= STOP_TRANSITION_TABLE,
+	.ON_ENTRY 				= (StateMachine_Output_T)Stop_Entry,
+	.OUTPUT 				= (StateMachine_Output_T)Stop_Proc,
 };
 
 
@@ -239,10 +239,10 @@ static const StateMachine_State_T STATE_STOP =
 */
 /******************************************************************************/
 /*
- * run if cmd mode changed
- * change mode must check state, freewheel to run and run self transition match different output
- * change during run mode, output voltage is known, match to vq
- */
+	run if cmd mode changed
+	change mode must check state, freewheel to run and run self transition match different output
+	change during run mode, output voltage is known, match to vq
+*/
 static StateMachine_State_T * Run_TransitionRun(Motor_T * p_motor)
 {
 	StateMachine_State_T * p_newState = 0;
@@ -269,7 +269,6 @@ static StateMachine_State_T * Run_TransitionRun(Motor_T * p_motor)
 
 	return p_newState;
 }
-
 
 static StateMachine_State_T * Run_InputFloat(Motor_T * p_motor)
 {

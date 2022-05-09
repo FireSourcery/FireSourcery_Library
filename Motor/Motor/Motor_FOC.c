@@ -28,7 +28,7 @@
 	@version V0
 */
 /******************************************************************************/
-#include "Motor_FOC.h" 
+#include "Motor_FOC.h"
 
 static void SetOutputLimits(Motor_T * p_motor, int16_t speedIOutCcw, int16_t speedIOutCw, int16_t speedVOutCcw, int16_t speedVOutCw, int16_t iqOutCcw, int16_t iqOutCw)
 {
@@ -56,7 +56,7 @@ void Motor_FOC_SetOutputLimitsCw(Motor_T * p_motor)
 	SetOutputLimits(p_motor, p_motor->ILimitGenerating_Frac16 / 2U, p_motor->ILimitMotoring_Frac16 / 2U, p_motor->ILimitMotoring_Frac16 / 2U, 0, 0, 32767);
 }
 
-void Motor_FOC_SetDirectionCcw(Motor_T * p_motor) 	{ Motor_SetDirectionCcw(p_motor); Motor_FOC_SetOutputLimitsCcw(p_motor); } 
+void Motor_FOC_SetDirectionCcw(Motor_T * p_motor) 	{ Motor_SetDirectionCcw(p_motor); Motor_FOC_SetOutputLimitsCcw(p_motor); }
 void Motor_FOC_SetDirectionCw(Motor_T * p_motor) 	{ Motor_SetDirectionCw(p_motor); Motor_FOC_SetOutputLimitsCw(p_motor); }
 
 void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)

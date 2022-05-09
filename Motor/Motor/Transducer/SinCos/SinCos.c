@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	SinCos.h
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	SinCos.h
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #include "SinCos.h"
@@ -35,7 +35,7 @@
 
 void SinCos_Init(SinCos_T * p_sincos)
 {
-	if (p_sincos->CONFIG.P_PARAMS != 0U)
+	if(p_sincos->CONFIG.P_PARAMS != 0U)
 	{
 		memcpy(&p_sincos->Params, p_sincos->CONFIG.P_PARAMS, sizeof(SinCos_Params_T));
 		Linear_ADC_Init(&p_sincos->UnitsAngle, p_sincos->Params.Zero_Adcu, p_sincos->Params.Max_Adcu, p_sincos->Params.Max_MilliV);
@@ -52,7 +52,6 @@ void SinCos_Init(SinCos_T * p_sincos)
 //	p_sincos->Params.AngleOffet = SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu);
 //}
 
-
 void SinCos_SetParamsAdc(SinCos_T * p_sincos, uint16_t zero_Adcu, uint16_t max_Adcu, uint16_t max_mV)
 {
 	p_sincos->Params.Zero_Adcu = zero_Adcu;
@@ -66,17 +65,13 @@ void SinCos_SetParamsAdc_mV(SinCos_T * p_sincos, uint16_t adcVref_mV, uint16_t m
 	SinCos_SetParamsAdc(p_sincos, (uint32_t)(max_mV + min_mV) * ADC_MAX / 2U / adcVref_mV, (uint32_t)max_mV * ADC_MAX / adcVref_mV, max_mV);
 }
 
-/*
- *
- */
+
 void SinCos_SetERotationsPerCycle(SinCos_T * p_sincos, uint16_t polePairs, uint16_t cyclesPerMRotation)
 {
 	p_sincos->Params.ElectricalRotationsPerCycle = polePairs / cyclesPerMRotation;
 }
 
-/*
- * run on measure 0
- */
+
 void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
 	p_sincos->Params.AngleOffet = 0;
@@ -84,8 +79,8 @@ void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_
 }
 
 /*
- * Call after angle offset
- */
+	Call after angle offset
+*/
 void SinCos_CalibrateCcwPositive(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
 	p_sincos->Params.IsBPositive = (SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu) > 0U) ? true : false;

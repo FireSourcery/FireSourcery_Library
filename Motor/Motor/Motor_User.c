@@ -177,7 +177,6 @@ void Motor_User_SetSpeedLimitActiveScalar_Overwrite(Motor_T * p_motor, uint16_t 
 	}
 }
 
-
 void Motor_User_ClearSpeedLimitActive(Motor_T * p_motor)
 {
 	Motor_ResetSpeedLimits(p_motor);
@@ -223,7 +222,7 @@ void Motor_User_ClearILimitActive(Motor_T * p_motor)
 	}
 }
 
-uint16_t Motor_User_GetMechanialAngle(Motor_T * p_motor)
+uint16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor)
 {
 	uint16_t angle;
 

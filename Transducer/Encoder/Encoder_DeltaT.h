@@ -56,7 +56,7 @@ static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 	// uint32_t deltaT = 0U;
 	// _Encoder_CaptureDelta(p_encoder, &deltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
 	// p_encoder->DeltaT = (deltaT + p_encoder->DeltaT) / 2U; //move to outside?
-	
+
 	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
 	CaptureAngularDIncreasing(p_encoder);
 
@@ -298,7 +298,7 @@ static inline uint32_t Encoder_DeltaT_GetInterpolationFreq(Encoder_T *p_encoder)
 
 /******************************************************************************/
 /*!
-	Unit Conversions - Variable DeltaT (DeltaD is fixed, == 1). 
+	Unit Conversions - Variable DeltaT (DeltaD is fixed, == 1).
  */
 /******************************************************************************/
 //static inline uint32_t Encoder_ConvertToTime_Millis(Encoder_T * p_encoder, uint32_t deltaT_Ticks)		{return deltaT_Ticks * 1000U / p_encoder->UnitT_Freq;}
@@ -331,7 +331,7 @@ static inline uint32_t Encoder_DeltaT_GetInterpolationFreq(Encoder_T *p_encoder)
 //	@brief DeltaT freq.	unit in cycles per minute
 // */
 //static inline uint32_t Encoder_DeltaT_GetFreq_CPM(Encoder_T * p_encoder)	{return Encoder_ConvertToFreq_CPM(p_encoder, p_encoder->DeltaT);}
- 
+
 
 /*!
 	 Capture DeltaT Only -
@@ -382,7 +382,7 @@ static inline uint32_t Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(Encoder_T *
 static inline uint32_t Encoder_DeltaT_ConvertToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaT_ticks)
 {
 	return p_encoder->UnitT_Freq * 60U / (p_encoder->Params.CountsPerRevolution * deltaT_ticks);
-} 
+}
 
 
 static inline uint32_t Encoder_DeltaT_GetUnitSpeed(Encoder_T * p_encoder)
