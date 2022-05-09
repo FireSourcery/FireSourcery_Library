@@ -227,8 +227,8 @@ void Thermistor_SetWarning_DegC(Thermistor_T * p_therm, uint8_t warning_degC) 		
 
 void Thermistor_SetLimits_DegC(Thermistor_T * p_therm, uint8_t shutdown_degC, uint8_t threshold_degC, uint8_t warning_degC)
 {
-	Thermistor_SetLimitShutdown_DegC(p_therm, warning_degC);
-	Thermistor_SetLimitThreshold_DegC(p_therm, warning_degC);
+	Thermistor_SetLimitShutdown_DegC(p_therm, shutdown_degC);
+	Thermistor_SetLimitThreshold_DegC(p_therm, threshold_degC);
 	Thermistor_SetWarning_DegC(p_therm, warning_degC);
 }
 

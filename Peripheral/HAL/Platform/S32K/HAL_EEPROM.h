@@ -87,13 +87,9 @@ static inline bool HAL_EEPROM_ReadIsFirstTime(HAL_EEPROM_T * p_hal)
 	//endurance, the emulated EEPROM backup size must be at least 16 times the
 	//emulated EEPROM partition size in FlexRAM.
 */
-#ifdef CONFIG_EEPROM_ONE_TIME_PROGRAM_PARTITION
-extern void SystemSoftwareReset(void);
-#endif
-
 /*
- * Launch once if not programmed
- */
+	Launch once if not programmed
+*/
 static inline void HalEepromProgramPartition(void)
 {
 	uint32_t regDEPartitionCode = ((SIM->FCFG1 & SIM_FCFG1_DEPART_MASK) >> SIM_FCFG1_DEPART_SHIFT);
@@ -119,8 +115,6 @@ static inline void HalEepromProgramPartition(void)
 					break;
 				}
 			}
-
-			SystemSoftwareReset();
 		}
 	}
 }

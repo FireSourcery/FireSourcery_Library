@@ -115,6 +115,8 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Motor_SetFeedbackMode(p_motor, p_motor->Parameters.FeedbackMode); //set user control mode so pids set to initial state.
 	p_motor->UserDirection = p_motor->Direction;
 	p_motor->ControlTimerBase = 0U;
+
+	p_motor->AnalogResults.Heat_Adcu = p_motor->Thermistor.Params.Threshold_Adcu;
 }
 
 void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
