@@ -159,25 +159,10 @@ static inline int32_t MotorController_User_GetFaultHeatMosfetsBot_DegC(MotorCont
 /*
 	Controller NvM Variables
 */
-
-
 static inline uint16_t MotorController_User_GetAdcVRef(MotorController_T * p_mc)  { return p_mc->Parameters.AdcVRef_MilliV; }
+static inline uint16_t MotorController_User_GetVSupply(MotorController_T * p_mc)  { return p_mc->Parameters.VSupply; } /* VSupply   */
 
-/* VSupply   */
-static inline uint16_t MotorController_User_GetVSupply(MotorController_T * p_mc)  { return VMonitor_GetVInRefMax(&p_mc->VMonitorPos); }
-static inline void MotorController_User_SetVSupply(MotorController_T * p_mc, uint16_t volts)
-{
-	(volts > p_mc->CONFIG.V_MAX) ? VMonitor_SetVInRefMax(&p_mc->VMonitorPos, p_mc->CONFIG.V_MAX) : VMonitor_SetVInRefMax(&p_mc->VMonitorPos, volts*1000U);
 
-	//propagate paarams?
-}
-
-static inline void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32_t zero_mV, uint32_t max_mV)
-{
-	p_mc->Parameters.BatteryZero_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorPos, zero_mV);
-	p_mc->Parameters.BatteryFull_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorPos, max_mV);
-	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_Adcu, p_mc->Parameters.BatteryFull_Adcu, 1000U);
-}
 
 static inline void MotorController_User_SetFastBoot(MotorController_T * p_mc, bool isEnable) 		{ p_mc->MemMapBoot.FastBoot = isEnable; }
 static inline void MotorController_User_SetLoadDefault(MotorController_T * p_mc, bool isEnable) 	{ p_mc->MemMapBoot.LoadDefault = isEnable; }
@@ -260,4 +245,8 @@ static inline void MotorController_User_SetVAccLimitLower_MilliV(MotorController
 static inline void MotorController_User_SetMainProtocolXcvr(MotorController_T * p_mc, uint8_t id) { Protocol_SetSpecs(&p_mc->CONFIG.P_PROTOCOLS[0U], id); }
 static inline void MotorController_User_SetMainProtoclSpecs(MotorController_T * p_mc, uint8_t id) { Protocol_SetXcvr(&p_mc->CONFIG.P_PROTOCOLS[0U], id); }
 
+
+void MotorController_User_SetAdcVRef(MotorController_T * p_mc, uint16_t adcVRef_MilliV);
+void MotorController_User_SetVSupply(MotorController_T * p_mc, uint16_t volts);
+void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32_t zero_mV, uint32_t max_mV);
 #endif

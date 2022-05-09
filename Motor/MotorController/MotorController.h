@@ -178,6 +178,7 @@ MotorController_BuzzerFlags_T;
 typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 {
 	uint16_t AdcVRef_MilliV;
+	uint16_t VSupply;
 	MotorController_InputMode_T InputMode;
 	//	MotorController_StopMode_T StopMode;
 	MotorController_CoastMode_T CoastMode;

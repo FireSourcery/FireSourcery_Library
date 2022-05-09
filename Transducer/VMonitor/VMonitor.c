@@ -35,18 +35,12 @@
 
 static uint16_t _VMonitor_AdcVRef_MilliV; /* Shared by all instances */
 
-static inline void SetUnitConversion(VMonitor_T * p_vMonitor)
+/* User Init module static reference before VMonitor_Init.Outside module handle boundaries */
+void VMonitor_InitAdcVRef_MilliV(uint16_t adcVRef_MilliV) { _VMonitor_AdcVRef_MilliV = adcVRef_MilliV; }
+
+static inline void SetUnitConversion(VMonitor_T * p_vMonitor) //public reset?
 {
 	Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONFIG.UNITS_R1, p_vMonitor->CONFIG.UNITS_R2, ADC_BITS, _VMonitor_AdcVRef_MilliV, p_vMonitor->Params.VInRefMax);
-}
-
-/*
-	User Init module static reference before VMonitor_Init
-	Outside modular handle boundaries
-*/
-void VMonitor_InitAdcVRef_MilliV(uint16_t adcVRef_MilliV)
-{
-	_VMonitor_AdcVRef_MilliV = adcVRef_MilliV;
 }
 
 void VMonitor_Init(VMonitor_T * p_vMonitor)
@@ -79,14 +73,17 @@ VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
 	return status;
 }
 
-void VMonitor_SetVInRefMax(VMonitor_T * p_vMonitor, uint32_t vInRefMax)
-{
-	if(p_vMonitor->Params.VInRefMax != vInRefMax)
-	{
-		p_vMonitor->Params.VInRefMax = vInRefMax;
-		SetUnitConversion(p_vMonitor);
-	}
-}
+// Frac16 only
+// void VMonitor_SetVInRefMax(VMonitor_T * p_vMonitor, uint32_t vInRefMax)
+// {
+// 	if(p_vMonitor->Params.VInRefMax != vInRefMax)
+// 	{
+// 		p_vMonitor->Params.VInRefMax = vInRefMax;
+// 		SetUnitConversion(p_vMonitor);
+// 	}
+// }
+
+// uint16_t VMonitor_GetVInRefMax(VMonitor_T * p_vMonitor) { return p_vMonitor->Params.VInRefMax; }
 
 void VMonitor_SetLimitUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.LimitUpper_Adcu = Linear_Voltage_CalcAdcu_UserMilliV(&p_vMonitor->Units, limit_mV); }
 void VMonitor_SetLimitLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.LimitLower_Adcu = Linear_Voltage_CalcAdcu_UserMilliV(&p_vMonitor->Units, limit_mV); }
@@ -101,15 +98,14 @@ void VMonitor_SetLimits_MilliV(VMonitor_T * p_vMonitor, uint32_t limitLower, uin
 	VMonitor_SetWarningUpper_MilliV(p_vMonitor, warningUpper);
 }
 
-uint16_t VMonitor_GetVInRefMax(VMonitor_T * p_vMonitor) { return p_vMonitor->Params.VInRefMax; }
-uint32_t VMonitor_GetLimitUpper_V(VMonitor_T * p_vMonitor, uint16_t vScalar) { return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitUpper_Adcu, vScalar); }
-uint32_t VMonitor_GetLimitLower_V(VMonitor_T * p_vMonitor, uint16_t vScalar) { return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitLower_Adcu, vScalar); }
-uint32_t VMonitor_GetWarningUpper_V(VMonitor_T * p_vMonitor, uint16_t vScalar) { return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningUpper_Adcu, vScalar); }
-uint32_t VMonitor_GetWarningLower_V(VMonitor_T * p_vMonitor, uint16_t vScalar) { return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningLower_Adcu, vScalar); }
-uint32_t VMonitor_GetLimitUpper_MilliV(VMonitor_T * p_vMonitor) { return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.LimitUpper_Adcu); }
-uint32_t VMonitor_GetLimitLower_MilliV(VMonitor_T * p_vMonitor) { return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.LimitLower_Adcu); }
-uint32_t VMonitor_GetWarningUpper_MilliV(VMonitor_T * p_vMonitor) { return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.WarningUpper_Adcu); }
-uint32_t VMonitor_GetWarningLower_MilliV(VMonitor_T * p_vMonitor) { return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.WarningLower_Adcu); }
+uint32_t VMonitor_GetLimitUpper_V(VMonitor_T * p_vMonitor, uint16_t vScalar) 	{ return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitUpper_Adcu, vScalar); }
+uint32_t VMonitor_GetLimitLower_V(VMonitor_T * p_vMonitor, uint16_t vScalar) 	{ return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitLower_Adcu, vScalar); }
+uint32_t VMonitor_GetWarningUpper_V(VMonitor_T * p_vMonitor, uint16_t vScalar) 	{ return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningUpper_Adcu, vScalar); }
+uint32_t VMonitor_GetWarningLower_V(VMonitor_T * p_vMonitor, uint16_t vScalar) 	{ return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningLower_Adcu, vScalar); }
+uint32_t VMonitor_GetLimitUpper_MilliV(VMonitor_T * p_vMonitor) 	{ return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.LimitUpper_Adcu); }
+uint32_t VMonitor_GetLimitLower_MilliV(VMonitor_T * p_vMonitor) 	{ return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.LimitLower_Adcu); }
+uint32_t VMonitor_GetWarningUpper_MilliV(VMonitor_T * p_vMonitor) 	{ return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.WarningUpper_Adcu); }
+uint32_t VMonitor_GetWarningLower_MilliV(VMonitor_T * p_vMonitor) 	{ return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.WarningLower_Adcu); }
 
 
 #define VMONITOR_STRING_FUNCTIONS

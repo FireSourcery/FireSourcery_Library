@@ -96,13 +96,13 @@ static inline void Motor_FOC_CaptureIc(Motor_T * p_motor)
 //	p_motor->SpeedFeedback_Frac16 = (p_motor->SpeedFeedback_Frac16 + Linear_Speed_CalcAngleRpmFrac16(&p_motor->UnitAngleRpm, electricalDelta)) / 2U;
 //}
 
-static inline int32_t _Motor_FOC_CaptureAngleSpeed(Motor_T * p_motor, uint32_t speedAngle)
+static inline int32_t _Motor_FOC_CaptureAngleSpeed(Motor_T * p_motor, qangle16_t speedAngle)
 {
-	// int32_t speedFeedback_Frac16;
-	// uint32_t speedDelta = speedAngle - (uint32_t)p_motor->MechanicalAngle; /* loops if no overflow past 1 full cycle */
-	// if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedDelta = 0 - speedDelta; } //already signed?
-	// p_motor->SpeedFeedback_Frac16 = (p_motor->SpeedFeedback_Frac16 + Linear_Speed_CalcAngleRpmFrac16(&p_motor->UnitAngleRpm, speedDelta)) / 2U;
-	// p_motor->MechanicalAngle = speedAngle; /*mechanical angle */
+	int32_t speedFeedback_Frac16;
+	int32_t speedDelta = speedAngle - p_motor->MechanicalAngle; /* loops if no overflow past 1 full cycle */
+	if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedDelta = 0 - speedDelta; }
+	speedFeedback_Frac16 = (p_motor->SpeedFeedback_Frac16 + Linear_Speed_CalcAngleRpmFrac16(&p_motor->UnitAngleRpm, speedDelta)) / 2;
+	p_motor->MechanicalAngle = speedAngle; /* mechanical angle */
 }
 
 static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
@@ -144,7 +144,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			}
 			/* Encoder_Motor_GetElectricalTheta return [0, 65535] maps directly to negative portions of qangle16_t */
 			electricalAngle = (qangle16_t)Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);
-			
+
 			//reset peakbemf
 			break;
 
@@ -179,8 +179,8 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			if(procSpeed == true)
 			{
 				speedFeedback_Frac16 = Encoder_DeltaT_GetUnitSpeed(&p_motor->Encoder);
-				if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedFeedback_Frac16 = 0 - speedFeedback_Frac16; }; 
-				speedFeedback_Frac16 = (speedFeedback_Frac16 + p_motor->SpeedFeedback_Frac16) / 2; 
+				if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedFeedback_Frac16 = 0 - speedFeedback_Frac16; };
+				speedFeedback_Frac16 = (speedFeedback_Frac16 + p_motor->SpeedFeedback_Frac16) / 2;
 			}
 
 			break;
@@ -271,7 +271,7 @@ static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 		FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, 0U, 			FOC_GetId(&p_motor->Foc)));
 	}
 	else  	//(p_motor->FeedbackModeFlags.VFreqScalar != 1U)	/* Voltage Control mode - use current feedback for overcurrent only */
-	{ 		
+	{
 		// _Motor_Foc_ProcVoltageMode(p_motor, userOutput);
 	}
 }
@@ -369,7 +369,7 @@ static inline void Motor_FOC_SetMatchOutput(Motor_T * p_motor, int32_t iq, int32
 
 	if(p_motor->FeedbackModeFlags.Speed == 1U)
 	{
-		Motor_SetSpeedOutput(p_motor, speedControl); 
+		Motor_SetSpeedOutput(p_motor, speedControl);
 	}
 	else /* (p_motor->FeedbackModeFlags.Speed == 0U) */
 	{
@@ -404,10 +404,10 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 
 		SpeedFeedback_Frac16 = Speed_RPM * 65536 /  SpeedRefMax_Rpm, todo account for SpeedRefVBemf_Rpm
 	*/
-	// vqReq = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedRefMax_Rpm / p_motor->Parameters.SpeedRefVBemf_Rpm / 2U; 
+	// vqReq = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedRefMax_Rpm / p_motor->Parameters.SpeedRefVBemf_Rpm / 2U;
 	// if(vqReq > 32767) { vqReq = 32767; }
 	// else if(vqReq < -32767) { vqReq = -32767; }
-	 
+
 	Motor_FOC_SetMatchOutput(p_motor, 0, p_motor->SpeedFeedback_Frac16 / 2U, 0);
 
 	_Motor_FOC_ActivateAngle(p_motor);
@@ -424,7 +424,7 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 	Phase_ActivateSwitchABC(&p_motor->Phase);
 
-	//move to align for regularity? 
+	//move to align for regularity?
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_OPEN_LOOP:
@@ -435,10 +435,10 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
-			Encoder_Zero(&p_motor->Encoder); 
+			Encoder_Zero(&p_motor->Encoder);
 			break;
 
-		case MOTOR_SENSOR_MODE_HALL: 
+		case MOTOR_SENSOR_MODE_HALL:
 			Encoder_Zero(&p_motor->Encoder); //zero angle speed //reset before Encoder_DeltaT_SetInitial
 			Encoder_DeltaT_SetInitial(&p_motor->Encoder, 10U); /* Set first capture DeltaT = 0xffff */
 			Hall_ResetCapture(&p_motor->Hall);

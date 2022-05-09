@@ -65,7 +65,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	if(Thermistor_GetIsEnable(&p_mc->ThermistorMosfetsBot)) { p_mc->AnalogResults.HeatMosfetsBot_Adcu = p_mc->ThermistorMosfetsBot.Params.Threshold_Adcu; }
 
 	Motor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
-	Motor_InitVRefSupply_V(VMonitor_GetVInRefMax(&p_mc->VMonitorPos));
+	Motor_InitVRefSupply_V(p_mc->Parameters.VSupply);
 	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Init(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 
 	Blinky_Init(&p_mc->Buzzer);
@@ -89,8 +89,6 @@ void MotorController_Init(MotorController_T * p_mc)
 	p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 
 	StateMachine_Init(&p_mc->StateMachine);
-
-	//
 }
 
 bool MotorController_SaveParameters_Blocking(MotorController_T * p_mc)

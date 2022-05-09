@@ -36,9 +36,22 @@ void MotorController_User_SetAdcVRef(MotorController_T * p_mc, uint16_t adcVRef_
 	else if	(adcVRef_MilliV < p_mc->CONFIG.ADC_VREF_MIN_MILLIV) { p_mc->Parameters.AdcVRef_MilliV = p_mc->CONFIG.ADC_VREF_MIN_MILLIV; }
 	else 														{ p_mc->Parameters.AdcVRef_MilliV = adcVRef_MilliV; }
 
-	VMonitor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV); 
-	Motor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV); 
-	Thermistor_InitAdcVRef_Scalar(p_mc->Parameters.AdcVRef_MilliV); 
+	VMonitor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
+	Motor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
+	Thermistor_InitAdcVRef_Scalar(p_mc->Parameters.AdcVRef_MilliV);
 
-	//must reset to propagate set
+	//must reset to propagate additional set
+}
+
+void MotorController_User_SetVSupply(MotorController_T * p_mc, uint16_t volts)
+{
+	p_mc->Parameters.VSupply = (volts > p_mc->CONFIG.V_MAX) ? p_mc->CONFIG.V_MAX : volts;
+	Motor_InitVRefSupply_V(p_mc->Parameters.VSupply);
+}
+
+void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32_t zero_mV, uint32_t max_mV)
+{
+	p_mc->Parameters.BatteryZero_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorPos, zero_mV);
+	p_mc->Parameters.BatteryFull_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorPos, max_mV);
+	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_Adcu, p_mc->Parameters.BatteryFull_Adcu, 1000U);
 }
