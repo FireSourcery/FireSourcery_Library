@@ -108,7 +108,6 @@ static inline int32_t _Motor_FOC_CaptureAngleSpeed(Motor_T * p_motor, qangle16_t
 static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 {
 	bool procSpeed = Timer_Poll(&p_motor->SpeedTimer);
-	int32_t speedControl;
 	uint32_t electricalDelta;
 	uint32_t electricalAngle;
 	int32_t speedFeedback_Frac16;
