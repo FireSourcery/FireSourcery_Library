@@ -61,31 +61,48 @@ static StateMachine_State_T * TransitionFault(MotorController_T * p_mc) { return
 /******************************************************************************/
 static StateMachine_State_T * Init_InputDirection(MotorController_T * p_mc)
 {
-	//fix speed on init
 	return (MotorController_ProcDirection(p_mc) == true) ? &STATE_STOP : &STATE_FAULT;
+}
+
+static StateMachine_State_T * Init_InputReleaseThrottle(MotorController_T * p_mc)
+{
+	if(p_mc->Parameters.BuzzerFlagsEnable.BeepThrottleOnInit == true) { MotorController_BeepShort(p_mc); }
+	return &STATE_STOP;
+}
+
+static StateMachine_State_T * Init_InputThrottle(MotorController_T * p_mc)
+{
+	bool isThrottleOn;
+
+	if((p_mc->Parameters.BuzzerFlagsEnable.BeepThrottleOnInit == true) && (p_mc->BuzzerFlagsActive.BeepThrottleOnInit == 0U))
+	{
+		p_mc->BuzzerFlagsActive.BeepThrottleOnInit = 1U;
+		MotorController_BeepShort(p_mc);
+	}
+
+	return 0U;
 }
 
 static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-	[MCSM_INPUT_FAULT]		= (StateMachine_Transition_T)TransitionFault,
-	[MCSM_INPUT_DIRECTION] 	= (StateMachine_Transition_T)Init_InputDirection, 
+	[MCSM_INPUT_FAULT]				= (StateMachine_Transition_T)TransitionFault,
+	[MCSM_INPUT_DIRECTION] 			= (StateMachine_Transition_T)Init_InputDirection,
+	[MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)Init_InputReleaseThrottle,
+	[MCSM_INPUT_THROTTLE] 			= (StateMachine_Transition_T)Init_InputThrottle,
 };
 
 static void Init_Entry(MotorController_T * p_mc)
 {
-	//	MotorController_InitReboot(p_mc); 
-	// if(Timer_GetBase(&p_mc->TimerMillis) > 50U) 	//wait 50ms for debounce, may need preinit
-	// {
-	// 	if((p_mc->Parameters.BeepThrottleOnInit == true) && MotAnalogUser_GetIsThrottleOn(&p_mc->AnalogUser))
-	// 	{
-	// 		MotorController_BeepShort(p_mc);
-	// 	}
-	// }
+
 }
 
 static void Init_Proc(MotorController_T * p_mc)
-{ 
-	// _StateMachine_ProcTransition(&p_mc->StateMachine, &STATE_STOP); 
+{
+// _StateMachine_ProcTransition(&p_mc->StateMachine, &STATE_STOP);
+// if(Timer_GetBase(&p_mc->TimerMillis) > 50U) 	//wait 50ms for debounce, may need preinit
+// {
+
+// }
 }
 
 static const StateMachine_State_T STATE_INIT =
@@ -144,7 +161,7 @@ static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 		Motor Freewheel check stop should be atomic relative to this function
 		this runs before motor freewheel checks speed => goto fault state.
 	*/
-	if(isSucess == false) { p_mc->FaultFlags.StopStateSync = 1U; } 
+	if(isSucess == false) { p_mc->FaultFlags.StopStateSync = 1U; }
 	return (isSucess == true) ? 0U : &STATE_FAULT;
 }
 
@@ -170,7 +187,7 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 	[MCSM_INPUT_NULL] 				= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_NEUTRAL] 			= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_SET_NEUTRAL] 		= (StateMachine_Transition_T)0U,
-	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)Stop_InputSaveParams,//todo share with calibration
+	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)Stop_InputSaveParams, //todo share with calibration
 };
 
 static void Stop_Entry(MotorController_T * p_mc)
@@ -282,7 +299,7 @@ static StateMachine_State_T * Run_InputBrakeStart(MotorController_T * p_mc)
 static StateMachine_State_T * Run_InputCoast(MotorController_T * p_mc)
 {
 	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
-	{ 
+	{
 		MotorController_ProcUserCmdVoltageBrake(p_mc);
 	}
 	else
@@ -300,7 +317,7 @@ static StateMachine_State_T * Run_InputCoastStart(MotorController_T * p_mc)
 {
 	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
 	{
-		//		MotorController_StartRegenMode(p_mc); //if using 2 part set/proc 
+		//		MotorController_StartRegenMode(p_mc); //if using 2 part set/proc
 	}
 	else
 	{
@@ -440,7 +457,7 @@ static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc)
 
 	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense) == true) 			{ isClear = false; }
 	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc) == true) 				{ isClear = false; }
-	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorPos) == true) 				{ isClear = false; } 
+	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorPos) == true) 				{ isClear = false; }
 	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorPcb) == true) 			{ isClear = false; }
 	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsTop) == true) 	{ isClear = false; }
 	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsBot) == true) 	{ isClear = false; }
@@ -472,7 +489,7 @@ static void Fault_Entry(MotorController_T * p_mc)
 {
 	MotorController_DisableMotorAll(p_mc);
 	MotorController_SetFaultRecord(p_mc);
-	Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U); 
+	Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U);
 }
 
 static void Fault_Proc(MotorController_T * p_mc)
