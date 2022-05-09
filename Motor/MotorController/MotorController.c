@@ -33,8 +33,6 @@
 
 void MotorController_Init(MotorController_T * p_mc)
 {
-	StateMachine_Init(&p_mc->StateMachine);
-
 	Flash_Init(p_mc->CONFIG.P_FLASH);
 	EEPROM_Init_Blocking(p_mc->CONFIG.P_EEPROM);
 
@@ -78,7 +76,8 @@ void MotorController_Init(MotorController_T * p_mc)
 	Timer_InitPeriodic(&p_mc->TimerSeconds, 		1000U);
 	Timer_InitPeriodic(&p_mc->TimerMillis, 			1U);
 	Timer_InitPeriodic(&p_mc->TimerMillis10, 		10U);
-	Timer_InitPeriodic(&p_mc->TimerDividerSeconds, 	1000U);
+	Timer_InitPeriodic(&p_mc->TimerIsrDividerSeconds, 	1000U);
+	Timer_Init(&p_mc->TimerState);
 
 	for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++) { Protocol_Init(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]); }
 
@@ -88,6 +87,10 @@ void MotorController_Init(MotorController_T * p_mc)
 
 	p_mc->MainDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
+
+	StateMachine_Init(&p_mc->StateMachine);
+
+	//
 }
 
 bool MotorController_SaveParameters_Blocking(MotorController_T * p_mc)

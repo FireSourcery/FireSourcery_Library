@@ -72,11 +72,11 @@ static void Init_Entry(Motor_T * p_motor)
 {
 	//	Motor_InitReboot(p_motor);
 
-		//fix speed on init
+		//check speed  read on init
 }
 
 static void Init_Proc(Motor_T * p_motor)
-{ 
+{
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
 		Motor_FOC_SetDirectionForward(p_motor);
@@ -86,7 +86,7 @@ static void Init_Proc(Motor_T * p_motor)
 		Motor_SetDirection(p_motor, p_motor->UserDirection);
 	}
 	//optionally capture deltaT and set speed to zero
-	_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP); 
+	_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
 }
 
 static const StateMachine_State_T STATE_INIT =
@@ -149,7 +149,7 @@ static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor)
 	{
 		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 		{
-			Motor_FOC_SetDirection(p_motor, p_motor->UserDirection);	
+			Motor_FOC_SetDirection(p_motor, p_motor->UserDirection);
 		}
 		else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
 		{
@@ -581,7 +581,7 @@ static const StateMachine_State_T STATE_OPEN_LOOP =
 /*!
 	@brief  State Calibration
 */
-/******************************************************************************/ 
+/******************************************************************************/
 static StateMachine_State_T * Calibration_InputStop(Motor_T * p_motor)
 {
 	return &STATE_STOP;
@@ -666,7 +666,7 @@ static void Fault_Entry(Motor_T * p_motor)
 }
 
 static void Fault_Proc(Motor_T * p_motor)
-{ 
+{
 	Phase_Float(&p_motor->Phase); /* repeat ok */
 }
 

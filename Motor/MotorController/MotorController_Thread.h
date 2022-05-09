@@ -161,18 +161,10 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 
 		switch(p_mc->Parameters.InputMode)
 		{
-			case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-				_MotorController_ProcAnalogUser(p_mc);
-				break;
-
-				//		case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-				//			break;
-				//
-				//		case MOTOR_CONTROLLER_INPUT_MODE_CAN:
-				//			break;
-
-			default:
-				break;
+			case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_mc);	break;
+				//		case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: break;
+				//		case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
+			default: break;
 		}
 
 		for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++)
@@ -180,10 +172,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 			Protocol_Slave_Proc(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]);
 		}
 
-		if(p_mc->Parameters.IsCanEnable == true)
-		{
-			CanBus_ProcServices(p_mc->CONFIG.P_CAN_BUS);
-		}
+		if(p_mc->Parameters.IsCanEnable == true) { CanBus_ProcServices(p_mc->CONFIG.P_CAN_BUS); }
 	}
 
 	/* Low Freq, Low Priority, 10ms */
@@ -240,7 +229,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 	}
 #endif
 
-	if(Timer_Poll(&p_mc->TimerDividerSeconds) == true)
+	if(Timer_Poll(&p_mc->TimerIsrDividerSeconds) == true)
 	{
 		_MotorController_ProcHeatMonitor(p_mc);
 		_MotorController_ProcVoltageMonitor(p_mc);

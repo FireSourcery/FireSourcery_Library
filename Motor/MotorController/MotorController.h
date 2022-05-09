@@ -121,7 +121,7 @@ typedef union MotorController_FaultFlags_Tag
 		// uint32_t VPosLimit : 1;
 		// uint32_t VSenseLimit : 1;
 		// uint32_t VAccLimit : 1;
-		uint32_t ThrottleOnInit 	: 1U;
+		// uint32_t ThrottleOnInit 	: 1U;
 		uint32_t StopStateSync 		: 1U;
 		// ThrottleOnBrakeRelease
 	};
@@ -164,7 +164,6 @@ typedef enum OptDinFunction_Tag
 }
 MotorController_OptDinFunction_T;
 
-
 typedef union MotorController_BuzzerFlags_Tag
 {
 	struct
@@ -187,22 +186,16 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 	uint16_t BatteryFull_Adcu;
 	uint8_t CanServicesId;
 	bool IsCanEnable;
-
 	//todo
 	// bool FaultThrottleOnInit;
-	bool BeepThrottleOnInit;
 	// bool FaultThrottleOnBrakeCmd;
 	// bool FaultThrottleOnBrakeRelease;
 	// bool FaultThrottleOnNeutralRelease;
-	bool BeepOnReverse;
-	// bool BuzzerOnThrottleOnBrake;
-	// bool BuzzerOnFault;
 
 	MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
 
 	MotorController_OptDinFunction_T OptDinFunction;
 	uint16_t OptDinSpeedLimit_Frac16;
-
 
 	uint16_t ILimitScalarOnLowV_Frac16;
 	uint16_t ILimitScalarOnHeat_Frac16;
@@ -275,8 +268,8 @@ typedef struct MotorController_Tag
 	Timer_T TimerMillis;
 	Timer_T TimerMillis10;
 	Timer_T TimerSeconds;
-	Timer_T TimerDividerSeconds;
-	// Timer_T StateTimer;
+	Timer_T TimerIsrDividerSeconds;
+	Timer_T TimerState;
 
 	Shell_T Shell;
 	uint16_t ShellSubstate;
@@ -319,36 +312,56 @@ static inline void MotorController_SetFaultRecord(MotorController_T * p_mc)
 */
 /******************************************************************************/
 
-/* only forward reverse is state machine protected */
+// static inline bool MotorController_ProcMotorDirectionAll(MotorController_T * p_mc)
+// {
+// 	bool isSucess;
+
+// 	if(p_mc->UserDirection == MOTOR_CONTROLLER_DIRECTION_FORWARD)
+// 	{
+// 		isSucess = Motor_UserN_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
+// 	}
+// 	else if(p_mc->UserDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE)
+// 	{
+// 		isSucess = Motor_UserN_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
+// 	}
+
+// 	return isSucess;
+// }
+
+/*
+	Assume edge type input
+*/
 static inline bool MotorController_ProcDirection(MotorController_T * p_mc)
 {
 	bool isSucess;
-	//  = (p_mc->UserDirection == MOTOR_CONTROLLER_DIRECTION_FORWARD) ?
-	// 	Motor_UserN_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT) :
-	// 	Motor_UserN_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
 
-	switch (p_mc->UserDirection)
+	switch(p_mc->UserDirection)
 	{
-		// case MOTOR_CONTROLLER_DIRECTION_PARK: isSucess = true; break;
-		// case MOTOR_CONTROLLER_DIRECTION_NEUTRAL: isSucess = true; break; //disable?
-		case MOTOR_CONTROLLER_DIRECTION_FORWARD: isSucess = Motor_UserN_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
-		case MOTOR_CONTROLLER_DIRECTION_REVERSE: isSucess = Motor_UserN_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
+		case MOTOR_CONTROLLER_DIRECTION_PARK: 		isSucess = true; break;
+		case MOTOR_CONTROLLER_DIRECTION_NEUTRAL: 	isSucess = true; break;
+		case MOTOR_CONTROLLER_DIRECTION_FORWARD: 	isSucess = Motor_UserN_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
+		case MOTOR_CONTROLLER_DIRECTION_REVERSE: 	isSucess = Motor_UserN_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
 		default: isSucess = true; break;
 	}
 
-// BuzzerFlagsActive
+	if(isSucess == true) { p_mc->MainDirection = p_mc->UserDirection; }
 
-	if(isSucess == true)
+	if((p_mc->Parameters.BuzzerFlagsEnable.BeepOnReverse == true) && isSucess)
 	{
-		p_mc->MainDirection = p_mc->UserDirection;
-		// if((p_mc->Parameters.BeepOnReverse == true) && (p_mc->MainDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE))
-		// {
-		// 	MotorController_BeepPeriodicType1(p_mc);
-		// }
+		if(p_mc->MainDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE)
+		{
+			MotorController_BeepPeriodicType1(p_mc);
+		}
+		else
+		{
+			Blinky_Stop(&p_mc->Buzzer);
+		}
 	}
+
 
 	return isSucess;
 }
+
 
 static inline void MotorController_DisableMotorAll(MotorController_T * p_mc) { Motor_UserN_DisableControl(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 static inline void MotorController_GroundMotorAll(MotorController_T * p_mc) { Motor_UserN_Ground(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
