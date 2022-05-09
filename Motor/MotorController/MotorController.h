@@ -346,18 +346,17 @@ static inline bool MotorController_ProcDirection(MotorController_T * p_mc)
 
 	if(isSucess == true) { p_mc->MainDirection = p_mc->UserDirection; }
 
-	if((p_mc->Parameters.BuzzerFlagsEnable.BeepOnReverse == true) && isSucess)
-	{
-		if(p_mc->MainDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE)
-		{
-			MotorController_BeepPeriodicType1(p_mc);
-		}
-		else
-		{
-			Blinky_Stop(&p_mc->Buzzer);
-		}
-	}
-
+	// if((p_mc->Parameters.BuzzerFlagsEnable.BeepOnReverse == true) && isSucess)
+	// {
+	// 	if(p_mc->MainDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE)
+	// 	{
+	// 		MotorController_BeepPeriodicType1(p_mc);
+	// 	}
+	// 	else
+	// 	{
+	// 		Blinky_Stop(&p_mc->Buzzer);
+	// 	}
+	// }
 
 	return isSucess;
 }
