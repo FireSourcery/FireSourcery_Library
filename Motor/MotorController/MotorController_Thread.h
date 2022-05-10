@@ -62,7 +62,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 		case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				MotorController_User_ProcNeutral(p_mc);															break;
 		case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);					break;
 		case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);	 				break;
-		case MOT_ANALOG_USER_CMD_PROC_RELEASE:				MotorController_User_ProcRelease(p_mc);															break;
+		case MOT_ANALOG_USER_CMD_PROC_NO_INPUT:				MotorController_User_ProcRelease(p_mc);															break;
 		default: break;
 	}
 
@@ -160,7 +160,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 	/* Med Freq, Low Priority, 1 ms */
 	if(Timer_Poll(&p_mc->TimerMillis) == true)
 	{
-		StateMachine_Semisynchronous_ProcState(&p_mc->StateMachine);
+		StateMachine_Semi_ProcOutput(&p_mc->StateMachine);
 
 		switch(p_mc->Parameters.InputMode)
 		{

@@ -28,7 +28,7 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef PROTOCOL_H 
+#ifndef PROTOCOL_H
 #define PROTOCOL_H
 
 #include "Config.h"
@@ -57,15 +57,15 @@ typedef void (*Protocol_ReqFastReadWrite_T)(void * p_appInterface, uint8_t * p_t
 typedef enum
 {
 	PROTOCOL_REQ_CODE_WAIT_PROCESS, 		//wait process
-//	PROTOCOL_REQ_CODE_WAIT_PROCESS_PAUSE_RX,
-PROTOCOL_REQ_CODE_COMPLETE,				//exit nonblocking wait state upon reception
-PROTOCOL_REQ_CODE_AWAIT_RX_DATA,		//rx new packet
-PROTOCOL_REQ_CODE_AWAIT_RX_SYNC,		//wait for static ack nack
-PROTOCOL_REQ_CODE_TX_DATA,
-PROTOCOL_REQ_CODE_TX_ACK,
-PROTOCOL_REQ_CODE_TX_NACK,
-PROTOCOL_REQ_CODE_EXTEND_TIMER,
-//	PROTOCOL_REQ_CODE_DATAGRAM_CONFIG,
+	//	PROTOCOL_REQ_CODE_WAIT_PROCESS_PAUSE_RX,
+	PROTOCOL_REQ_CODE_COMPLETE,				//exit nonblocking wait state upon reception
+	PROTOCOL_REQ_CODE_AWAIT_RX_DATA,		//rx new packet
+	PROTOCOL_REQ_CODE_AWAIT_RX_SYNC,		//wait for static ack nack
+	PROTOCOL_REQ_CODE_TX_DATA,
+	PROTOCOL_REQ_CODE_TX_ACK,
+	PROTOCOL_REQ_CODE_TX_NACK,
+	PROTOCOL_REQ_CODE_EXTEND_TIMER,
+	//	PROTOCOL_REQ_CODE_DATAGRAM_CONFIG,
 }
 Protocol_ReqCode_T;
 
@@ -102,17 +102,17 @@ typedef const struct
 	const Protocol_ReqExtFunction_T PROCESS;
 	//	const uint32_t TIMEOUT;
 }
-Protocol_ReqExtProcess_T;
+Protocol_ReqExt_T;
 
 typedef const struct
 {
 	const protocolg_reqid_t 			ID;
-	const Protocol_ReqFastReadWrite_T 	FAST;				/* Stateless req, simple read write */
+	const Protocol_ReqFastReadWrite_T 	FAST;		/* Stateless req, simple read write */
 	const Protocol_ReqSync_T * const P_SYNC;		/* Stateless ack nack */
-	const Protocol_ReqExtProcess_T * const P_EXT;		/* Extended req, saving state data. - Support wait, loop, dynamic ack/nack and additional processes */
+	const Protocol_ReqExt_T * const P_EXT;	/* Extended req, saving state data. - Support wait, loop, dynamic ack/nack and additional processes */
 //	const uint32_t TIMEOUT;
 }
-Protocol_ReqEntry_T;
+Protocol_Req_T;
 
 #define PROTOCOL_REQ_ENTRY(ReqId, ReqType, ReqFast, p_ReqSync, p_ReqExt) { (.ID = ReqId), (.TYPE = ReqType), (.FAST_READ_WRITE = ReqFast), (.P_SYNC = p_ReqSync), (.P_EXT = p_ReqExt) }
 
@@ -173,7 +173,7 @@ typedef const struct
 
 	//	BuildTx_T * P_BUILD_TX_TABLE;
 
-	const Protocol_ReqEntry_T * const P_REQ_TABLE;
+	const Protocol_Req_T * const P_REQ_TABLE;
 	const uint8_t REQ_TABLE_LENGTH;
 	const uint32_t REQ_TIMEOUT; //per function loop.
 
@@ -294,7 +294,7 @@ typedef struct Protocol_Tag
 	uint8_t RxNackCount;
 	uint8_t TxNackCount;
 	protocolg_reqid_t ReqIdActive;
-	Protocol_ReqEntry_T * p_ReqActive;
+	Protocol_Req_T * p_ReqActive;
 	//	 volatile bool ReqRxSemaphore;
 	//	Protocol_Control_T Control;
 }

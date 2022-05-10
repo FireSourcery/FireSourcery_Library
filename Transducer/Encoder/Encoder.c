@@ -164,7 +164,7 @@ void Encoder_Zero(Encoder_T * p_encoder)
 	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
 }
 
- 
+
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)
 {
 	p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled;
@@ -178,7 +178,10 @@ void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALe
 {
 	p_encoder->Params.IsALeadBPositive = isALeadBPositive;
 }
- 
+
+/*
+	Frac16 Ref
+*/
 void Encoder_SetSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
 {
 	// if(speedRef != p_encoder->Params.SpeedRef_Rpm) //todo split to static interal or remove
@@ -199,4 +202,3 @@ void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRev
 		p_encoder->UnitRefSpeed 				= MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, countsPerRevolution * p_encoder->Params.SpeedRef_Rpm, 16U);
 	}
 }
- 

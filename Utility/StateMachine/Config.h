@@ -31,18 +31,9 @@
 #ifndef CONFIG_STATE_MACHINE_H
 #define CONFIG_STATE_MACHINE_H
 
-#ifdef CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED
-
-#elif defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
-/*
- * User provide functions
- * void Critical_Enter(void);
- * void Critical_Exit(void);
- */
-#elif defined(CONFIG_STATE_MACHINE_MULTITHREADED_DISABLED)
-/*
- * Default configuration
- */
+#if		defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED)
+#elif 	defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED) /* User provide functions void Critical_Enter(void); void Critical_Exit(void);*/
+#elif 	defined(CONFIG_STATE_MACHINE_MULTITHREADED_DISABLED)
 #else
 	#define CONFIG_STATE_MACHINE_MULTITHREADED_DISABLED
 #endif

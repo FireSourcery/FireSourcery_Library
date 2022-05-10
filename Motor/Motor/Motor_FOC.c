@@ -48,10 +48,6 @@ static void SetOutputLimits(Motor_T * p_motor, int16_t speedIOutCcw, int16_t spe
 	*/
 	PID_SetOutputLimits(&p_motor->PidIq, 0 - vOutCw, vOutCcw);
 	PID_SetOutputLimits(&p_motor->PidId, 0 - p_motor->ILimitMotoring_Frac16 / 2, p_motor->ILimitMotoring_Frac16 / 2); /* Id use 50% of Iq Motoring) */
-
-	// (speedIOutCcw > speedIOutCw) ?
-	// 	PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCcw / 2, speedIOutCcw / 2) :
-	// 	PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCw / 2, speedIOutCw / 2);
 }
 
 void Motor_FOC_SetOutputLimitsCcw(Motor_T * p_motor)

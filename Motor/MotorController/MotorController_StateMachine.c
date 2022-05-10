@@ -34,6 +34,7 @@
 /******************************************************************************/
 #include "MotorController_StateMachine.h"
 #include "Utility/StateMachine/StateMachine.h"
+#include <string.h>
 
 static const StateMachine_State_T STATE_INIT;
 static const StateMachine_State_T STATE_STOP;
@@ -98,7 +99,7 @@ static void Init_Entry(MotorController_T * p_mc)
 
 static void Init_Proc(MotorController_T * p_mc)
 {
-// _StateMachine_ProcTransition(&p_mc->StateMachine, &STATE_STOP);
+// _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP);
 // if(Timer_GetBase(&p_mc->TimerMillis) > 50U) 	//wait 50ms for debounce, may need preinit
 // {
 
@@ -300,7 +301,7 @@ static StateMachine_State_T * Run_InputCoast(MotorController_T * p_mc)
 {
 	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
 	{
-		MotorController_ProcUserCmdVoltageBrake(p_mc);
+		// MotorController_ProcUserCmdVoltageBrake(p_mc);
 	}
 	else
 	{
@@ -488,7 +489,7 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TA
 static void Fault_Entry(MotorController_T * p_mc)
 {
 	MotorController_DisableMotorAll(p_mc);
-	MotorController_SetFaultRecord(p_mc);
+	memcpy(&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
 	Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U);
 }
 

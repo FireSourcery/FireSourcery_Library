@@ -180,6 +180,10 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			break;
 
 		case MOTOR_SENSOR_MODE_SIN_COS:
+			//todo analog cmd start begin loop
+			AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+			AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+
 			SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
 			electricalAngle = SinCos_GetElectricalAngle(&p_motor->SinCos);
 			if(procSpeed == true) { speedFeedback_Frac16 = _Motor_FOC_CaptureAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos)); }
@@ -210,37 +214,27 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 
 static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq)
 {
-	bool isOverLimit = (p_motor->Direction == MOTOR_DIRECTION_CCW) ?
-		(FOC_GetIq(&p_motor->Foc) > p_motor->ILimitVoltageMode) :
-		(FOC_GetIq(&p_motor->Foc) < p_motor->ILimitVoltageMode);
-
+	bool isOverLimit;
 	qfrac16_t vqReqOut;
 
-	if((isOverLimit == true) && (p_motor->RunStateFlags.ILimitVoltageModeActive == false))
+	/* VoltageModeILimit set to torque direction. Alternatively, use limits stored in SpeedPid  */
+	if		((p_motor->VoltageModeILimit > 0) == true) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) > p_motor->VoltageModeILimit); }
+	else if	((p_motor->VoltageModeILimit < 0) == true) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) < p_motor->VoltageModeILimit); }
+	else 												{ isOverLimit = true; } /* should not occur */
+
+	if((isOverLimit == true) && (p_motor->RunStateFlags.VoltageModeILimitActive == false))
 	{
-		p_motor->RunStateFlags.ILimitVoltageModeActive = true;
+		p_motor->RunStateFlags.VoltageModeILimitActive = true;
 		PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
 	}
-	else //alternatively remain set until throttle decrease
+	else /* alternatively remain set until manual reset */
 	{
-		p_motor->RunStateFlags.ILimitVoltageModeActive = false;
+		p_motor->RunStateFlags.VoltageModeILimitActive = false;
 	}
 
-	vqReqOut = (p_motor->RunStateFlags.ILimitVoltageModeActive == true) ?
-		PID_Calc(&p_motor->PidIq, p_motor->ILimitVoltageMode, FOC_GetIq(&p_motor->Foc)) :
+	vqReqOut = (p_motor->RunStateFlags.VoltageModeILimitActive == true) ?
+		PID_Calc(&p_motor->PidIq, p_motor->VoltageModeILimit, FOC_GetIq(&p_motor->Foc)) :
 		vqReq;
-
-	// if(p_motor->Direction == MOTOR_DIRECTION_CCW)
-	// {
-	// // 	if(vqReq < vqReqOut) { vqReqOut = vqReq; }
-	// // 	// vqReqLimit = (vqReq > vqReqLimit) ? FOC_SetVq(&p_motor->Foc, vqReqLimit) : FOC_SetVq(&p_motor->Foc, vqReq);
-	// // }
-	// {
-	// else
-	// {
-	// // 	if(vqReq > vqReqOut) { vqReqOut = vqReq; }
-	// // 	// (vqReq < vqReqLimit) ? FOC_SetVq(&p_motor->Foc, vqReqLimit) : FOC_SetVq(&p_motor->Foc, vqReq);
-	// }
 
 	FOC_SetVq(&p_motor->Foc, vqReqOut);
 	FOC_SetVd(&p_motor->Foc, 0);
@@ -263,7 +257,9 @@ static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 		*/
 		if(p_motor->FeedbackModeFlags.VFreqScalar == 1U) { userOutput = p_motor->RampCmd * (p_motor->SpeedFeedback_Frac16 / 2) / 65536; } //seletable SpeedControl?
 		_Motor_FOC_ProcVoltageMode(p_motor, userOutput);
-		// if(p_motor->RunStateFlags.ILimitVoltageModeActive == true) { userOutput = PID_Calc(&p_motor->PidIq, p_motor->ILimitVoltageMode_Frac16, FOC_GetIq(&p_motor->Foc)); }
+
+		// _Motor_FOC_ProcVoltageModeILimit(p_motor, userOutput);
+		// if(p_motor->RunStateFlags.VoltageModeILimitActive == true) { userOutput = PID_Calc(&p_motor->PidIq, p_motor->ILimitVoltageMode_Frac16, FOC_GetIq(&p_motor->Foc)); }
 		// FOC_SetVq(&p_motor->Foc, vqReqOut);
 		// FOC_SetVd(&p_motor->Foc, 0);
 	}
@@ -316,16 +312,17 @@ static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 /*
 	StateMachine calls each PWM, ~20kHz
 	shared function -> less states
- */
+*/
 static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
 
 	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-	//	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
-	//	{
-	//		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-	//		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
-	//	}
+	// 	//todo analog cmd start begin loop
+	// if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
+	// {
+	// 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+	// 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+	// }
 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
 #if defined(CONFIG_MOTOR_I_SENSORS_ABC) && !defined(CONFIG_MOTOR_I_SENSORS_AB)
@@ -333,16 +330,14 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 #endif
 	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
 
-	/* ~10us */
-	// p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
+	/* ~10us */ // p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
 
-	//samples complete when queue resumes, adc isr priority higher than pwm.
+	/* samples chain complete shortly after queue resumes. adc isr priority higher than pwm. */
 	_Motor_FOC_ProcPositionFeedback(p_motor);
 
 	/* Ic complete ~29 us */
 
-	/* ~29 us */
-	// p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
+	/* ~29 us */ // p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 #ifdef CONFIG_MOTOR_I_SENSORS_AB
 	FOC_ProcClarkePark_AB(&p_motor->Foc);
@@ -350,8 +345,7 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 	FOC_ProcClarkePark(&p_motor->Foc);
 #endif
 
-	/* ~30us */
-	// p_motor->DebugTime[3] = SysTime_GetMicros() - p_motor->MicrosRef;
+	/* ~30us */ // p_motor->DebugTime[3] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 	// if(p_motor->RunStateFlags.Hold == 0U)
 	{
@@ -359,8 +353,7 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 		_Motor_FOC_ActivateAngle(p_motor);
 	}
 
-	/* ~37us */
-	// p_motor->DebugTime[4] = SysTime_GetMicros() - p_motor->MicrosRef;
+	/* ~37us */ // p_motor->DebugTime[4] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 }
 
@@ -408,9 +401,7 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 
 		SpeedFeedback_Frac16 = Speed_RPM * 65536 /  SpeedRefMax_Rpm, todo account for SpeedRefVBemf_Rpm
 	*/
-	// vqReq = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedRefMax_Rpm / p_motor->Parameters.SpeedRefVBemf_Rpm / 2U;
-	// if(vqReq > 32767) { vqReq = 32767; }
-	// else if(vqReq < -32767) { vqReq = -32767; }
+	// vqReq = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedRefMax_Rpm / p_motor->Parameters.SpeedRefVBemf_Rpm / 2;
 
 	Motor_FOC_SetMatchOutput(p_motor, 0, p_motor->SpeedFeedback_Frac16 / 2, 0);
 
@@ -468,16 +459,16 @@ static inline uint16_t Motor_FOC_GetIMagnitude_Frac16(Motor_T * p_motor)
 }
 
 /*
- * Call from user must also set Vector Sine/Cosine, not set during position read
- */
- //static inline void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd)
- //{
- ////	p_motor->ElectricalAngle = angle;
- //	FOC_SetVq(&p_motor->Foc, vq);
- //	FOC_SetVd(&p_motor->Foc, vd);
- //	FOC_SetVector(&p_motor->Foc, angle); //angle -90
- //	_Motor_FOC_ActivateAngle(p_motor);
- //}
+	Call from user must also set Vector Sine/Cosine, not set during position read
+*/
+//static inline void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd)
+//{
+////	p_motor->ElectricalAngle = angle;
+//	FOC_SetVq(&p_motor->Foc, vq);
+//	FOC_SetVd(&p_motor->Foc, vd);
+//	FOC_SetVector(&p_motor->Foc, angle); //angle -90
+//	_Motor_FOC_ActivateAngle(p_motor);
+//}
 
 extern void Motor_FOC_SetOutputLimitsCcw(Motor_T * p_motor);
 extern void Motor_FOC_SetOutputLimitsCw(Motor_T * p_motor);

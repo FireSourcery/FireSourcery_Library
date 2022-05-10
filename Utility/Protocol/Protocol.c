@@ -359,9 +359,9 @@ static inline void ProcReqTimeout(Protocol_T * p_protocol)
 	}
 }
 
-static inline Protocol_ReqEntry_T * SearchReqTable(Protocol_ReqEntry_T * p_reqTable, size_t tableLength, uint32_t id)
+static inline Protocol_Req_T * SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, uint32_t id)
 {
-	Protocol_ReqEntry_T * p_response = 0U;
+	Protocol_Req_T * p_response = 0U;
 
 	for(uint8_t iChar = 0U; iChar < tableLength; iChar++)
 	{
@@ -758,5 +758,8 @@ void Protocol_Disable(Protocol_T * p_protocol)
 	p_protocol->ReqState = PROTOCOL_REQ_STATE_INACTIVE;
 }
 
+/*
+	User must reset. Do not propagate set, so current settings remain active until reboot.
+*/
 void Protocol_EnableOnInit(Protocol_T * p_protocol) { p_protocol->Params.IsEnableOnInit = true; }
 void Protocol_DisableOnInit(Protocol_T * p_protocol) { p_protocol->Params.IsEnableOnInit = false; }

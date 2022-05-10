@@ -31,8 +31,8 @@
 #ifndef MOT_ANALOG_USER_H
 #define MOT_ANALOG_USER_H
 
-#include "Transducer/Debounce/Debounce.h"  
-#include "Math/Linear/Linear_ADC.h"  
+#include "Transducer/Debounce/Debounce.h"
+#include "Math/Linear/Linear_ADC.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -48,7 +48,7 @@ typedef enum MotAnalogUser_Cmd_Tag
 	MOT_ANALOG_USER_CMD_PROC_NEUTRAL,
 	MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD,
 	MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE,
-	MOT_ANALOG_USER_CMD_PROC_RELEASE,	/* No input */
+	MOT_ANALOG_USER_CMD_PROC_NO_INPUT,	/* No input */
 }
 MotAnalogUser_Cmd_T;
 
@@ -102,7 +102,7 @@ typedef struct __attribute__((aligned(4U))) MotAnalogUser_Params_Tag
 	bool UseNeutralPin;
 	bool UseForwardPin;
 
-	bool UseErrorAdcuRange; 
+	bool UseErrorAdcuRange;
 
 	MotAnalogUser_InvertPins_T InvertPins;
 }
@@ -122,12 +122,12 @@ typedef struct MotAnalogUser_Tag
 	MotAnalogUser_Config_T CONFIG;
 	MotAnalogUser_Params_T Params;
 
-	Debounce_T ReversePin; 
+	Debounce_T ReversePin;
 	Debounce_T ForwardPin;
-	Debounce_T NeutralPin; 
-	Debounce_T BrakeEdgePin;  
-	Debounce_T ThrottleEdgePin; 
-	Debounce_T BistateBrake; 
+	Debounce_T NeutralPin;
+	Debounce_T BrakeEdgePin;
+	Debounce_T ThrottleEdgePin;
+	Debounce_T BistateBrake;
 	Linear_T UnitThrottle;
 	Linear_T UnitBrake;
 
@@ -216,13 +216,12 @@ static inline bool MotAnalogUser_PollBrake(MotAnalogUser_T * p_user)
 	return Debounce_GetState(&p_user->BrakeEdgePin);
 }
 
+static inline bool _MotAnalogUser_GetIsNeutralOn(const MotAnalogUser_T * p_user) 		{ return (p_user->Params.UseNeutralPin == true) && (Debounce_GetState(&p_user->NeutralPin) == true); }
+static inline bool MotAnalogUser_GetIsForwardOn(const MotAnalogUser_T * p_user) 		{ return (p_user->Params.UseForwardPin == true) ? Debounce_GetState(&p_user->ForwardPin) : !Debounce_GetState(&p_user->ReversePin); }
+static inline bool MotAnalogUser_GetIsReverseOn(const MotAnalogUser_T * p_user) 		{ return Debounce_GetState(&p_user->ReversePin); }
 static inline bool MotAnalogUser_GetIsThrottleOn(const MotAnalogUser_T * p_user) 		{ return (p_user->Params.UseThrottleEdgePin == true) 	? Debounce_GetState(&p_user->ThrottleEdgePin) 	: (p_user->Throttle_Frac16 > 0U); }
 static inline bool MotAnalogUser_GetIsBrakeOn(const MotAnalogUser_T * p_user) 			{ return (p_user->Params.UseBrakeEdgePin == true) 		? Debounce_GetState(&p_user->BrakeEdgePin) 		: (p_user->Brake_Frac16 > 0U); }
 static inline bool MotAnalogUser_GetIsBistateBrakeOn(const MotAnalogUser_T * p_user) 	{ return ((p_user->Params.UseBistateBrake == true) && (Debounce_GetState(&p_user->BistateBrake) == true)); }
-
-static inline bool _MotAnalogUser_GetIsNeutralOn(const MotAnalogUser_T * p_user) 		{ return (p_user->Params.UseNeutralPin == true) && (Debounce_GetState(&p_user->NeutralPin) == true); }
-static inline bool MotAnalogUser_GetIsForwardOn(const MotAnalogUser_T * p_user) 		{ return (p_user->Params.UseForwardPin == true) ? Debounce_GetState(&p_user->ForwardPin) : !Debounce_GetState(&p_user->ReversePin); }
-static inline bool MotAnalogUser_GetIsReverseOn(const MotAnalogUser_T * p_user) 		{ return Debounce_GetState(&p_user->ReversePin); } 
 
 static inline bool MotAnalogUser_PollThrottleFallingEdge(MotAnalogUser_T * p_user)
 {
@@ -237,7 +236,7 @@ static inline bool MotAnalogUser_PollBrakeFallingEdge(MotAnalogUser_T * p_user)
 static inline bool MotAnalogUser_PollBistateBrakeFallingEdge(MotAnalogUser_T * p_user)
 {
 	return ((p_user->Params.UseBistateBrake == true) && Debounce_PollFallingEdge(&p_user->BrakeEdgePin));
-} 
+}
 
 /* Early throttle release detect */
 static inline bool MotAnalogUser_CheckThrottleRelease(const MotAnalogUser_T * p_user)
@@ -275,27 +274,29 @@ static inline MotAnalogUser_Direction_T MotAnalogUser_PollDirection(MotAnalogUse
 	}
 	else
 	{
-		direction = ((Debounce_PollFallingEdge(&p_user->ForwardPin) == true) || (Debounce_PollFallingEdge(&p_user->ReversePin) == true)) ? 
+		direction = ((Debounce_PollFallingEdge(&p_user->ForwardPin) == true) || (Debounce_PollFallingEdge(&p_user->ReversePin) == true)) ?
 			MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE : MOT_ANALOG_USER_DIRECTION_NEUTRAL;
 	}
 
 	return direction;
 }
 
+/*
+	If using a single return status. Forward/Reverse must be able to be detected while braking.
+	Alternatively, use 2 separate return status, Direction/Cmd.
+
+	No throttle release detect while in neutral
+*/
 static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user)
 {
 	MotAnalogUser_Direction_T direction = MotAnalogUser_PollDirection(p_user);
-	MotAnalogUser_Cmd_T cmd = MOT_ANALOG_USER_CMD_PROC_RELEASE;
+	MotAnalogUser_Cmd_T cmd = MOT_ANALOG_USER_CMD_PROC_NO_INPUT;
 
-	/*
-		If using a single return status. Forward/Reverse must be able to be detected while braking.
-		Alternatively, use 2 separate return status, Direction/Cmd.
-	*/
 	switch(direction)
 	{
 		case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD;	break;
 		case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE;	break;
-		// case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  
+		// case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:
 		// case MOT_ANALOG_USER_DIRECTION_NEUTRAL:
 		// case MOT_ANALOG_USER_DIRECTION_REVERSE:
 		// case MOT_ANALOG_USER_DIRECTION_FORWARD:
@@ -336,8 +337,8 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 			}
 			else
 			{
-				cmd = MOT_ANALOG_USER_CMD_PROC_RELEASE;
-			} 
+				cmd = MOT_ANALOG_USER_CMD_PROC_NO_INPUT;
+			}
 			break;
 	}
 

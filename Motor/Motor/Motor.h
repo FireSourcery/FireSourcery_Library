@@ -117,7 +117,7 @@ typedef union Motor_FeedbackModeFlags_Tag
 Motor_FeedbackModeFlags_T;
 
 /*
-	Effectively sync mailbox for calculation results performed at different frequencies
+	Effectively sync mailbox for async calculations
 */
 typedef union Motor_RunStateFlags_Tag
 {
@@ -127,7 +127,7 @@ typedef union Motor_RunStateFlags_Tag
 		uint32_t SpeedLimitScalarActive 	: 1U;
 		uint32_t ILimitScalarActive 		: 1U; /* Set approx 1/s, check 1/ms */
 		uint32_t HeatWarning 				: 1U;
-		uint32_t ILimitVoltageModeActive 	: 1U;
+		uint32_t VoltageModeILimitActive 	: 1U;
 			// uint32_t UpdateMode 		: 1U;
 
 		// uint32_t FieldWeakening 			: 1U; //todo
@@ -238,9 +238,9 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	uint16_t SpeedLimitCw_Frac16;
 	uint16_t ILimitMotoring_Frac16;		/* Persistent User Param. Frac16 of RefMax I_MAX_AMP */
 	uint16_t ILimitGenerating_Frac16;
-	uint16_t ILimitScalarHeat_Frac16; 	/* Active onn thermistor warning. Frac16 of active limit */
+	uint16_t ILimitScalarHeat_Frac16; 	/* Active onn thermistor warning. Frac16 scalar on active limit */
 
-	uint16_t VoltageBrakeScalar_InvFrac16; /* [0:65535], 0 is highest intensity */
+	// uint16_t VoltageBrakeScalar_InvFrac16; /* [0:65535], 0 is highest intensity */
 
 	uint16_t AlignVoltage_Frac16;
 	uint16_t AlignTime_ControlCycles;
@@ -305,6 +305,12 @@ typedef struct Motor_Tag
 	Motor_FeedbackModeFlags_T FeedbackModeFlags;
 	Motor_RunStateFlags_T RunStateFlags; /* Run Substate */
 	// Motor_TorqueDirection_T TorqueDirection;
+	uint16_t SpeedLimitCcw_Frac16; 		/* Active SpeedLimit, Frac16 of SpeedRefMax Param */
+	uint16_t SpeedLimitCw_Frac16;
+	uint16_t SpeedLimit_Frac16; 		/* Active SpeedLimit, optionally reduce 1 check of direction */
+	uint16_t ILimitMotoring_Frac16;		/* Active ILimit */
+	uint16_t ILimitGenerating_Frac16;
+	int16_t VoltageModeILimit; 			/* [-32767:32767] */
 
 	/* Calibration Substate */
 	Motor_CalibrationState_T CalibrationState; 	/* Substate, selection for calibration */
@@ -319,7 +325,6 @@ typedef struct Motor_Tag
 
 	// int32_t VFreqCmd_Frac16;
 
-
 	/*
 		Speed Feedback
 	*/
@@ -330,16 +335,6 @@ typedef struct Motor_Tag
 	// uint16_t Speed_RPM;
 	// uint16_t Speed2_RPM;
 	// uint32_t Speed2_Frac16;
-
-	uint16_t SpeedLimitCcw_Frac16; 		/* Active SpeedLimit, Frac16 of SpeedRefMax Param */
-	uint16_t SpeedLimitCw_Frac16;
-	uint16_t SpeedLimit_Frac16; 		/* Active SpeedLimit, optionally reduce 1 check of direction */
-	uint16_t ILimitMotoring_Frac16;		/* Active ILimit */
-	uint16_t ILimitGenerating_Frac16;
-	int16_t ILimitVoltageMode;
-
-
-
 	uint16_t VBemfPeak_Adcu;
 	uint16_t VBemfPeakTemp_Adcu;
 

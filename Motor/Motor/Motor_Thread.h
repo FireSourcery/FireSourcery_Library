@@ -41,12 +41,12 @@
 */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-	p_motor->MicrosRef = SysTime_GetMicros();
+	// p_motor->MicrosRef = SysTime_GetMicros();
 	p_motor->ControlTimerBase++;
 
-	p_motor->DebugTime[0] = SysTime_GetMicros() - p_motor->MicrosRef;
+	// p_motor->DebugTime[0] = SysTime_GetMicros() - p_motor->MicrosRef;
 
-	//  Motor_Analog_Thread( p_motor);
+	//  _Motor_Analog_Thread( p_motor);
 	//	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	//	{
 	//		Motor_FOC_ProcAngleObserve(p_motor);
@@ -56,19 +56,23 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 	//
 	//	}
 
-	StateMachine_Semisynchronous_ProcState(&p_motor->StateMachine);
+	StateMachine_Semi_ProcOutput(&p_motor->StateMachine);
 }
 
 static inline void Motor_Heat_Thread(Motor_T * p_motor)
 {
-	if(Thermistor_GetIsEnable(&p_motor->Thermistor))
+	if(Thermistor_GetIsEnable(&p_motor->Thermistor) == true)
 	{
 		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT);
 
 		switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
 		{
 			case THERMISTOR_STATUS_OK:
-				if(p_motor->RunStateFlags.HeatWarning == 1U) { p_motor->RunStateFlags.HeatWarning = 0U; }
+				if(p_motor->RunStateFlags.HeatWarning == 1U)
+				{
+					p_motor->RunStateFlags.HeatWarning = 0U;
+					Motor_User_ClearILimitActive(p_motor); //todo union for fast clear
+				}
 				break;
 			case THERMISTOR_LIMIT_SHUTDOWN:
 				Motor_User_SetFault(p_motor);
@@ -89,37 +93,4 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 
 #endif
 
-//static inline void Motor_Analog_Thread(Motor_T * p_motor)
-//{
-//	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_PWM);
-//
-//	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
-//	{
-//		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-//		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
-//	}
-//
-////	switch(p_motor->AnalogCmd)
-////	{
-////		case FOC_I_ABC :
-////			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-////			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-////#if defined(CONFIG_MOTOR_I_SENSORS_ABC) && !defined(CONFIG_MOTOR_I_SENSORS_AB)
-////			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-////#endif
-////			break;
-////
-////		case FOC_BEMF :
-////#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) &&defined(CONFIG_MOTOR_V_SENSORS_ADC)
-////			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
-////			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
-////			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
-////#endif
-////			break;
-////
-////		default :
-////			break;
-////	}
-//
-//	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_PWM);
-//}
+

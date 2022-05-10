@@ -72,7 +72,7 @@ static void Init_Entry(Motor_T * p_motor)
 {
 	//	Motor_InitReboot(p_motor);
 
-		//check speed  read on init
+		//check speed read on init
 }
 
 static void Init_Proc(Motor_T * p_motor)
@@ -86,7 +86,7 @@ static void Init_Proc(Motor_T * p_motor)
 		// Motor_SetDirectionForward(p_motor);
 	}
 	//optionally capture deltaT and set speed to zero
-	_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
+	_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP);
 }
 
 static const StateMachine_State_T STATE_INIT =
@@ -166,6 +166,31 @@ static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor)
 	return p_nextState;
 }
 
+// static StateMachine_State_T * Stop_InputDirectionExt(Motor_T * p_motor, Motor_Direction_T userDirection)
+// {
+// 	StateMachine_State_T * p_nextState;
+
+// 	if(p_motor->SpeedFeedback_Frac16 == 0U)
+// 	{
+// 		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+// 		{
+// 			Motor_FOC_SetDirection(p_motor, userDirection);
+// 		}
+// 		else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
+// 		{
+// 			Motor_SetDirection(p_motor, userDirection);
+// 		}
+
+// 		p_nextState = 0U;
+// 	}
+// 	else
+// 	{
+// 		p_nextState = &STATE_FAULT;
+// 	}
+
+// 	return p_nextState;
+// }
+
 static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
 	[MSM_INPUT_FAULT] 			= (StateMachine_Transition_T)TransitionFault,
@@ -176,8 +201,8 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABL
 };
 
 /*
- * Enters upon reaching 0 Speed
- */
+	Enters upon reaching 0 Speed
+*/
 static void Stop_Entry(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase = 0U; //ok to reset timer
@@ -188,7 +213,7 @@ static void Stop_Entry(Motor_T * p_motor)
 
 	if(p_motor->UserDirection != p_motor->Direction)
 	{
-		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FAULT); //direction was set during another mode
+		_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FAULT); //direction was set during another mode
 	}
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
@@ -205,7 +230,7 @@ static void Stop_Proc(Motor_T * p_motor)
 {
 	//	if(p_motor->Speed_RPM > 0U)  	//poll speedfeedback or use bemf
 	//	{
-	////		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
+	////		_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
 	//	}
 	//	else
 	{
@@ -430,7 +455,7 @@ static void Freewheel_Proc(Motor_T * p_motor)
 	/* Check after, this way lower priority input cannot proc until stop state  */
 	if(p_motor->SpeedFeedback_Frac16 == 0U)
 	{
-		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
+		_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP);
 	}
 }
 
@@ -491,7 +516,7 @@ static void Align_Proc(Motor_T * p_motor)
 
 		if((p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SENSORLESS) || (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_OPEN_LOOP))
 		{
-			_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_OPEN_LOOP);
+			_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_OPEN_LOOP);
 		}
 		else
 		{
@@ -504,7 +529,7 @@ static void Align_Proc(Motor_T * p_motor)
 
 			}
 
-			_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_RUN);
+			_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN);
 		}
 	}
 }
@@ -623,7 +648,7 @@ static void Calibration_Proc(Motor_T * p_motor)
 
 	if(isComplete == true)
 	{
-		_StateMachine_ProcTransition(&p_motor->StateMachine, &STATE_STOP);
+		_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP);
 	}
 }
 

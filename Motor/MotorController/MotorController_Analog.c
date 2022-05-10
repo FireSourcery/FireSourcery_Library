@@ -29,11 +29,11 @@
 	@version V0
 */
 /******************************************************************************/
-#include "MotorController_Analog.h" 
+#include "MotorController_Analog.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
 /*
- * MotAnalog Callbacks go here
- */
+	MotAnalog Callbacks go here
+*/

@@ -36,7 +36,7 @@
 /******************************************************************************/
 /*
 	Calibration State Functions - Mapped to StateMachine, Nonblocking
- */
+*/
 /******************************************************************************/
 static inline void Motor_Calibrate_StartSinCos(Motor_T * p_motor)
 {
@@ -200,8 +200,8 @@ static inline bool Motor_Calibrate_Encoder(Motor_T * p_motor)
 }
 
 /*
- * Calibrate Current ADC
- */
+	Calibrate Current ADC
+*/
 static inline void Motor_Calibrate_StartAdc(Motor_T * p_motor)
 {
 	Timer_StartPeriod(&p_motor->ControlTimer, 20000U); // Motor.Parameters.AdcCalibrationTime

@@ -48,6 +48,11 @@ static inline int32_t Linear_Frac16_CalcUnits(const Linear_T * p_linear, int32_t
 	return linear_m16_f(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, x);
 }
 
+static inline int32_t Linear_Frac16_CalcUnits_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
+{
+	// return
+}
+
 static inline int32_t Linear_Frac16_CalcInvUnits(const Linear_T * p_linear, int32_t y)
 {
 	return linear_m16_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, y);
