@@ -507,14 +507,14 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 	if(argc == 1U)
 	{
 		MotorController_User_ToggleFault(p_mc);
-		Terminal_SendString(p_terminal, "ErrorFlags [VPos][VAcc][VSense][Pcb][MosTop][MosBot]: ");
-		Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VPosLimit);
-		Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VAccLimit);
-		Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VSenseLimit);
-		Terminal_SendNum(p_terminal, p_mc->ErrorFlags.PcbOverHeat);
-		Terminal_SendNum(p_terminal, p_mc->ErrorFlags.MosfetsTopOverHeat);
-		Terminal_SendNum(p_terminal, p_mc->ErrorFlags.MosfetsBotOverHeat);
-		   	// Terminal_SendNum(p_terminal, p_mc->ErrorFlags.UserCheck);
+		Terminal_SendString(p_terminal, "FaultFlags [VPos][VAcc][VSense][Pcb][MosTop][MosBot]: ");
+		Terminal_SendNum(p_terminal, p_mc->FaultFlags.VPosLimit);
+		Terminal_SendNum(p_terminal, p_mc->FaultFlags.VAccLimit);
+		Terminal_SendNum(p_terminal, p_mc->FaultFlags.VSenseLimit);
+		Terminal_SendNum(p_terminal, p_mc->FaultFlags.PcbOverHeat);
+		Terminal_SendNum(p_terminal, p_mc->FaultFlags.MosfetsTopOverHeat);
+		Terminal_SendNum(p_terminal, p_mc->FaultFlags.MosfetsBotOverHeat);
+		   	// Terminal_SendNum(p_terminal, p_mc->FaultFlags.UserCheck);
 		Terminal_SendString(p_terminal, "\r\n");
 	}
 

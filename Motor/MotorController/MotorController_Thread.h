@@ -115,7 +115,9 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 	Thermistor_PollMonitor(&p_mc->ThermistorMosfetsTop, p_mc->AnalogResults.HeatMosfetsTop_Adcu);
 	Thermistor_PollMonitor(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_Adcu);
 
-	isFault = Thermistor_GetIsStatusLimit(&p_mc->ThermistorPcb) || Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsTop) || Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsBot);
+	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorPcb) == true) 			{ p_mc->FaultFlags.PcbOverHeat = 1U; isFault = true; }
+	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsTop) == true) 	{ p_mc->FaultFlags.MosfetsTopOverHeat = 1U; isFault = true; }
+	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsBot) == true) 	{ p_mc->FaultFlags.MosfetsBotOverHeat = 1U; isFault = true; }
 
 	if(isFault == true)
 	{
@@ -127,7 +129,8 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 
 		if(isWarning == true)
 		{
-			MotorController_User_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnHeat_Frac16);
+			//todo check ilimits satee flag
+			MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnHeat_Frac16);
 		}
 	}
 }
@@ -143,8 +146,8 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
 
 	VMonitor_PollStatus(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu);
 	VMonitor_PollStatus(&p_mc->VMonitorAcc, p_mc->AnalogResults.VAcc_Adcu);
-	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense) == true) { isFault = true; }
-	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc) == true) 	{ isFault = true; }
+	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense) == true) { p_mc->FaultFlags.VSenseLimit = 1U; isFault = true; }
+	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc) == true) 	{ p_mc->FaultFlags.VAccLimit = 1U; isFault = true; }
 
 	if(isFault == true) { MotorController_User_SetFault(p_mc); }	/* Sensors checks fault only */
 }
@@ -226,14 +229,15 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 		case VMONITOR_WARNING_LOWER:
 			// if(p_mc->WarningFlags.VPos == 0U)
 			// {
-			// 	MotorController_User_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16);
+				//todo check ilimits satee flag
+			// 	MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16);
 			// 	p_mc->WarningFlags.VPos = 1U;
 			// }
 			break;
 		case VMONITOR_STATUS_OK:
 			// if(p_mc->WarningFlags.VPos == 1U)
 			// {
-			// 	MotorController_ClearMotorILimitAll(p_mc);	break;
+			// 	MotorController_ClearMotorILimitAll(p_mc);
 			// 	p_mc->WarningFlags.VPos = 0U;
 			// }
 			break;
