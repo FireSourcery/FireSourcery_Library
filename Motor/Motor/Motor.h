@@ -127,6 +127,7 @@ typedef union Motor_RunStateFlags_Tag
 		uint32_t SpeedLimitScalarActive 	: 1U;
 		uint32_t ILimitScalarActive 		: 1U; /* Set approx 1/s, check 1/ms */
 		uint32_t HeatWarning 				: 1U;
+		uint32_t ILimitVoltageModeActive 	: 1U;
 			// uint32_t UpdateMode 		: 1U;
 
 		// uint32_t FieldWeakening 			: 1U; //todo
@@ -316,6 +317,9 @@ typedef struct Motor_Tag
 	int32_t RampCmd;		/* [-32767:32767] SetPoint after ramp => SpeedReq, IReq, VReq */
 	uint32_t RampIndex;		/* Index mode only */
 
+	// int32_t VFreqCmd_Frac16;
+
+
 	/*
 		Speed Feedback
 	*/
@@ -327,11 +331,14 @@ typedef struct Motor_Tag
 	// uint16_t Speed2_RPM;
 	// uint32_t Speed2_Frac16;
 
-	uint16_t SpeedLimitCcw_Frac16; 	/* Active SpeedLimit, Frac16 of SpeedRefMax Param */
+	uint16_t SpeedLimitCcw_Frac16; 		/* Active SpeedLimit, Frac16 of SpeedRefMax Param */
 	uint16_t SpeedLimitCw_Frac16;
-	uint16_t SpeedLimit_Frac16; 	/* Active SpeedLimit, optionally reduce 1 check of direction */
-	uint16_t ILimitMotoring_Frac16;	/* Active ILimit */
+	uint16_t SpeedLimit_Frac16; 		/* Active SpeedLimit, optionally reduce 1 check of direction */
+	uint16_t ILimitMotoring_Frac16;		/* Active ILimit */
 	uint16_t ILimitGenerating_Frac16;
+	int16_t ILimitVoltageMode;
+
+
 
 	uint16_t VBemfPeak_Adcu;
 	uint16_t VBemfPeakTemp_Adcu;
@@ -358,12 +365,12 @@ typedef struct Motor_Tag
 	*/
 	PID_T PidIBus;
 //	BEMF_T Bemf;
-	Motor_SectorId_T NextPhase;
-	Motor_SectorId_T CommutationPhase;
-	uint32_t CommutationTimeRef;
-	uint32_t IBus_Frac16;
-	uint32_t IBusSum_Frac16;
-	uint16_t VPwm; 	/* Six-Step Control Variable */
+	// Motor_SectorId_T NextPhase;
+	// Motor_SectorId_T CommutationPhase;
+	// uint32_t CommutationTimeRef;
+	// uint32_t IBus_Frac16;
+	// uint32_t IBusSum_Frac16;
+	// uint16_t VPwm; 	/* Six-Step Control Variable */
 
 	/*
 		Open-loop
@@ -535,7 +542,7 @@ static inline bool Motor_CheckFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode
 	Sets flags only
 	Motor_User_SetControlMode() applys flags to run state
 */
-static inline void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+static inline void Motor_SetFeedbackModeFlags(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
 	p_motor->FeedbackModeFlags.State = Motor_ConvertFeedbackModeFlags(mode).State;
 }

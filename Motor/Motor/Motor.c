@@ -112,7 +112,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	}
 	p_motor->OpenLoopRampIndex = 0U;
 
-	Motor_SetFeedbackMode(p_motor, p_motor->Parameters.FeedbackMode); //set user control mode so pids set to initial state.
+	Motor_SetFeedbackModeFlags(p_motor, p_motor->Parameters.FeedbackMode); //set user control mode so pids set to initial state.
 	p_motor->UserDirection = p_motor->Direction;
 	p_motor->ControlTimerBase = 0U;
 

@@ -30,30 +30,38 @@
 /******************************************************************************/
 #include "Motor_FOC.h"
 
-static void SetOutputLimits(Motor_T * p_motor, int16_t speedIOutCcw, int16_t speedIOutCw, int16_t speedVOutCcw, int16_t speedVOutCw, int16_t iqOutCcw, int16_t iqOutCw)
+/*!
+	@param[in] all [0:32767]
+*/
+static void SetOutputLimits(Motor_T * p_motor, int16_t speedIOutCcw, int16_t speedIOutCw, int16_t vOutCcw, int16_t vOutCw)
 {
 	if(p_motor->FeedbackModeFlags.Speed == 1U)
 	{
 		(p_motor->FeedbackModeFlags.Current == 1U) ?
 			PID_SetOutputLimits(&p_motor->PidSpeed, 0 - speedIOutCw, speedIOutCcw) :  	/* Speed PID is Iq */
-			PID_SetOutputLimits(&p_motor->PidSpeed, 0 - speedVOutCw, speedVOutCcw);  	/* Speed PID is Vq, VLimit output proptional to ILimit */
+			PID_SetOutputLimits(&p_motor->PidSpeed, 0 - vOutCw, vOutCcw);  	/* Speed PID is Vq, VLimit output proptional to ILimit */
 	}
 
-	PID_SetOutputLimits(&p_motor->PidIq, 0 - iqOutCw, iqOutCcw); /* Iq/Id PID always Vq/Vd, full range, no Vq plugging. Voltage during limit active only */
+	/*
+		Iq/Id PID always Vq/Vd, full range, no plugging.
+		Voltage Feedback Mode active during over current only
+	*/
+	PID_SetOutputLimits(&p_motor->PidIq, 0 - vOutCw, vOutCcw);
+	PID_SetOutputLimits(&p_motor->PidId, 0 - p_motor->ILimitMotoring_Frac16 / 2, p_motor->ILimitMotoring_Frac16 / 2); /* Id use 50% of Iq Motoring) */
 
-	(speedIOutCcw > speedIOutCw) ?
-		PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCcw / 2, speedIOutCcw / 2) :
-		PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCw / 2, speedIOutCw / 2);
+	// (speedIOutCcw > speedIOutCw) ?
+	// 	PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCcw / 2, speedIOutCcw / 2) :
+	// 	PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCw / 2, speedIOutCw / 2);
 }
 
 void Motor_FOC_SetOutputLimitsCcw(Motor_T * p_motor)
 {
-	SetOutputLimits(p_motor, p_motor->ILimitMotoring_Frac16 / 2U, p_motor->ILimitGenerating_Frac16 / 2U, 0, p_motor->ILimitMotoring_Frac16 / 2U, 32767, 0);
+	SetOutputLimits(p_motor, p_motor->ILimitMotoring_Frac16 / 2U, p_motor->ILimitGenerating_Frac16 / 2U, 32767, 0);
 }
 
 void Motor_FOC_SetOutputLimitsCw(Motor_T * p_motor)
 {
-	SetOutputLimits(p_motor, p_motor->ILimitGenerating_Frac16 / 2U, p_motor->ILimitMotoring_Frac16 / 2U, p_motor->ILimitMotoring_Frac16 / 2U, 0, 0, 32767);
+	SetOutputLimits(p_motor, p_motor->ILimitGenerating_Frac16 / 2U, p_motor->ILimitMotoring_Frac16 / 2U, 0, 32767);
 }
 
 void Motor_FOC_SetDirectionCcw(Motor_T * p_motor) 	{ Motor_SetDirectionCcw(p_motor); Motor_FOC_SetOutputLimitsCcw(p_motor); }

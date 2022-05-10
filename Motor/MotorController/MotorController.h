@@ -82,14 +82,13 @@ typedef enum MotorController_CoastMode_Tag
 }
 MotorController_CoastMode_T;
 
-//typedef enum
-//{
-//	MOTOR_CONTROLLER_BRAKE_MODE_PASSIVE,
-//	MOTOR_CONTROLLER_BRAKE_MODE_CONSTANT,
-//	MOTOR_CONTROLLER_BRAKE_MODE_PROPRTIONAL,
-//	MOTOR_CONTROLLER_BRAKE_MODE_SCALAR,
-//}
-//MotorController_BrakeMode_T;
+typedef enum
+{
+	MOTOR_CONTROLLER_BRAKE_MODE_PASSIVE,
+	MOTOR_CONTROLLER_BRAKE_MODE_TORQUE,
+	MOTOR_CONTROLLER_BRAKE_MODE_VFREQ_SCALAR,
+}
+MotorController_BrakeMode_T;
 
 typedef enum MotorController_Direction_Tag
 {
@@ -180,7 +179,7 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 	uint16_t AdcVRef_MilliV;
 	uint16_t VSupply;
 	MotorController_InputMode_T InputMode;
-	//	MotorController_StopMode_T StopMode;
+	MotorController_BrakeMode_T BrakeMode;
 	MotorController_CoastMode_T CoastMode;
 
 	uint16_t BatteryZero_Adcu;
@@ -365,8 +364,20 @@ static inline bool MotorController_ProcDirection(MotorController_T * p_mc)
 
 static inline void MotorController_DisableMotorAll(MotorController_T * p_mc) { Motor_UserN_DisableControl(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 static inline void MotorController_GroundMotorAll(MotorController_T * p_mc) { Motor_UserN_Ground(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
-static inline void MotorController_ProcUserCmdBrake(MotorController_T * p_mc) { Motor_UserN_SetBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd); }
 static inline void MotorController_ProcUserCmdThrottle(MotorController_T * p_mc) { Motor_UserN_SetThrottleCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd); }
+
+static inline void MotorController_ProcUserCmdBrake(MotorController_T * p_mc)
+{
+	if(p_mc->Parameters.BrakeMode == MOTOR_CONTROLLER_BRAKE_MODE_TORQUE)
+	{
+		Motor_UserN_SetRegenCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
+	}
+	else if(p_mc->Parameters.BrakeMode == MOTOR_CONTROLLER_BRAKE_MODE_VFREQ_SCALAR)
+	{
+		Motor_UserN_SetBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
+	}
+}
+
 static inline void MotorController_ProcUserCmdVoltageBrake(MotorController_T * p_mc) { Motor_UserN_SetVoltageBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 
 

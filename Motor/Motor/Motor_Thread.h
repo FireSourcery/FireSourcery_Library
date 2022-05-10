@@ -32,7 +32,7 @@
 #ifndef MOTOR_THREAD_H
 #define MOTOR_THREAD_H
 
-#include "Motor_StateMachine.h"  
+#include "Motor_StateMachine.h"
 #include "System/SysTime/SysTime.h"
 
 /*
@@ -45,7 +45,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 	p_motor->ControlTimerBase++;
 
 	p_motor->DebugTime[0] = SysTime_GetMicros() - p_motor->MicrosRef;
- 
+
 	//  Motor_Analog_Thread( p_motor);
 	//	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	//	{

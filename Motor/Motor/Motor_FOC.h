@@ -199,8 +199,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			input	RampCmd[-32767:32767], (speedFeedback_Frac16 / 2)[-32767:32767]
 			output 	SpeedControl[-32767:32767] => IqReq or VqReq
 		*/
-		if(p_motor->FeedbackModeFlags.Speed == 1U) { p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, speedFeedback_Frac16 / 2); }
-		// else if (p_motor->FeedbackModeFlags.VFreqScalar == 1U) { _Motor_FOC_ProcVoltageMode(p_motor, p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.VFreqScalar_Frac16 / 65536U);}
+		if(p_motor->FeedbackModeFlags.Speed == 1U) { p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, speedFeedback_Frac16 / 2); };
 		p_motor->SpeedFeedback_Frac16 = speedFeedback_Frac16;
 	}
 
@@ -208,62 +207,65 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 	p_motor->ElectricalAngle = (qangle16_t)electricalAngle; /* Save for UI output */
 }
 
-static void _Motor_Foc_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq)
+
+static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq)
 {
-	qfrac16_t vqReqLimit = PID_Calc(&p_motor->PidIq, vqReq, FOC_GetIq(&p_motor->Foc));
+	bool isOverLimit = (p_motor->Direction == MOTOR_DIRECTION_CCW) ?
+		(FOC_GetIq(&p_motor->Foc) > p_motor->ILimitVoltageMode) :
+		(FOC_GetIq(&p_motor->Foc) < p_motor->ILimitVoltageMode);
 
-	if(p_motor->Direction == MOTOR_DIRECTION_CCW)
+	qfrac16_t vqReqOut;
+
+	if((isOverLimit == true) && (p_motor->RunStateFlags.ILimitVoltageModeActive == false))
 	{
-		// if(FOC_GetIq(&p_motor->Foc) > vqReqLimit)
-		// {
-		// 	if(p_motor->RunStateFlags.ILimitActive == false)
-		// 	{
-		// 		p_motor->RunStateFlags.ILimitActive = true;
-		// 		PID_SetIntegral(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
-		// 	}
-		// }
-		// else //alternatively remain set until throttle decrease
-		// {
-		// 	p_motor->RunStateFlags.ILimitActive = false;
-		// }
-
-		(vqReq > vqReqLimit) ? FOC_SetVq(&p_motor->Foc, vqReqLimit) : FOC_SetVq(&p_motor->Foc, vqReq);
+		p_motor->RunStateFlags.ILimitVoltageModeActive = true;
+		PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
 	}
-	else
+	else //alternatively remain set until throttle decrease
 	{
-		// if(FOC_GetIq(&p_motor->Foc) < vqReqLimit)
-		// {
-		// 	if(p_motor->RunStateFlags.ILimitActive == false)
-		// 	{
-		// 		p_motor->RunStateFlags.ILimitActive = true;
-		// 		PID_SetIntegral(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
-		// 	}
-		// }
-		// else //alternatively remain set until throttle decrease
-		// {
-		// 	p_motor->RunStateFlags.ILimitActive = false;
-		// }
-
-		(vqReq < vqReqLimit) ? FOC_SetVq(&p_motor->Foc, vqReqLimit) : FOC_SetVq(&p_motor->Foc, vqReq);
+		p_motor->RunStateFlags.ILimitVoltageModeActive = false;
 	}
 
+	vqReqOut = (p_motor->RunStateFlags.ILimitVoltageModeActive == true) ?
+		PID_Calc(&p_motor->PidIq, p_motor->ILimitVoltageMode, FOC_GetIq(&p_motor->Foc)) :
+		vqReq;
+
+	// if(p_motor->Direction == MOTOR_DIRECTION_CCW)
+	// {
+	// // 	if(vqReq < vqReqOut) { vqReqOut = vqReq; }
+	// // 	// vqReqLimit = (vqReq > vqReqLimit) ? FOC_SetVq(&p_motor->Foc, vqReqLimit) : FOC_SetVq(&p_motor->Foc, vqReq);
+	// // }
+	// {
+	// else
+	// {
+	// // 	if(vqReq > vqReqOut) { vqReqOut = vqReq; }
+	// // 	// (vqReq < vqReqLimit) ? FOC_SetVq(&p_motor->Foc, vqReqLimit) : FOC_SetVq(&p_motor->Foc, vqReq);
+	// }
+
+	FOC_SetVq(&p_motor->Foc, vqReqOut);
 	FOC_SetVd(&p_motor->Foc, 0);
 }
-
-
 
 static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 {
 	qfrac16_t userOutput = (p_motor->FeedbackModeFlags.Speed == 1U) ? p_motor->SpeedControl : p_motor->RampCmd;
 
-	if(p_motor->FeedbackModeFlags.Current == 1U)		/* Current Control mode - proc using last adc measure */
+	if(p_motor->FeedbackModeFlags.Current == 1U) /* Current Control mode - proc using last adc measure */
 	{
 		FOC_SetVq(&p_motor->Foc, PID_Calc(&p_motor->PidIq, userOutput, 	FOC_GetIq(&p_motor->Foc)));
 		FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, 0U, 			FOC_GetId(&p_motor->Foc)));
 	}
-	else  	//(p_motor->FeedbackModeFlags.VFreqScalar != 1U)	/* Voltage Control mode - use current feedback for overcurrent only */
+	else /* Voltage Control mode - use current feedback for over current only */
 	{
-		// _Motor_Foc_ProcVoltageMode(p_motor, userOutput);
+		/*
+			input	RampCmd[-65535:65535], (speedFeedback_Frac16 / 2)[-32767:32767]
+			output 	VFreqCmd_Frac16[-32767:32767] => VqReq
+		*/
+		if(p_motor->FeedbackModeFlags.VFreqScalar == 1U) { userOutput = p_motor->RampCmd * (p_motor->SpeedFeedback_Frac16 / 2) / 65536; } //seletable SpeedControl?
+		_Motor_FOC_ProcVoltageMode(p_motor, userOutput);
+		// if(p_motor->RunStateFlags.ILimitVoltageModeActive == true) { userOutput = PID_Calc(&p_motor->PidIq, p_motor->ILimitVoltageMode_Frac16, FOC_GetIq(&p_motor->Foc)); }
+		// FOC_SetVq(&p_motor->Foc, vqReqOut);
+		// FOC_SetVd(&p_motor->Foc, 0);
 	}
 }
 
@@ -331,10 +333,14 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 #endif
 	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
 
+	/* ~10us */
 	p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 	//samples complete when queue resumes, adc isr priority higher than pwm.
 	_Motor_FOC_ProcPositionFeedback(p_motor);
+
+	/* ~20 us */
+	p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 #ifdef CONFIG_MOTOR_I_SENSORS_AB
 	FOC_ProcClarkePark_AB(&p_motor->Foc);
@@ -342,7 +348,8 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 	FOC_ProcClarkePark(&p_motor->Foc);
 #endif
 
-	p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
+	/* ~30us */
+	p_motor->DebugTime[3] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 	// if(p_motor->RunStateFlags.Hold == 0U)
 	{
@@ -350,7 +357,8 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 		_Motor_FOC_ActivateAngle(p_motor);
 	}
 
-	//	p_motor->DebugTime[3] = SysTime_GetMicros() - p_motor->MicrosRef;
+	/* ~ us */
+	p_motor->DebugTime[4] = SysTime_GetMicros() - p_motor->MicrosRef;
 }
 
 

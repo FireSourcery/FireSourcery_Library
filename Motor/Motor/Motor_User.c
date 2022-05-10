@@ -57,8 +57,9 @@ void _Motor_User_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 	{
 		Critical_Enter();
 
-		Motor_SetFeedbackMode(p_motor, mode);
-		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE);
+		Motor_SetFeedbackModeFlags(p_motor, mode);
+		/* Match ouput state, accounting for FeedbackMode and State */
+		StateMachine_Semisynchronous_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE); // FEEDBACK_MODE + RUN_MODE shared
 		p_motor->FeedbackModeFlags.Update = 0U;
 
 		Critical_Exit();
@@ -229,8 +230,8 @@ uint16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor)
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_SENSORLESS: 	angle = 0; 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		angle = Encoder_Motor_GetMechanicalAngle(&p_motor->Encoder);	break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalAngle(&p_motor->Encoder);	break;
+		case MOTOR_SENSOR_MODE_HALL: 		angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
+		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
 		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 			break;
 		default: 	break;
 	}
@@ -451,6 +452,15 @@ void Motor_UserN_SetVoltageBrakeCmd(Motor_T * p_motor, uint8_t motorCount)
 		Motor_User_SetVoltageBrakeCmd(&p_motor[iMotor]);
 	}
 }
+
+void Motor_UserN_SetRegenCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t brake)
+{
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		Motor_User_SetRegenCmd(&p_motor[iMotor], brake);
+	}
+}
+
 
 void Motor_UserN_SetSpeedLimitActiveScalar_Overwrite(Motor_T * p_motor, uint8_t motorCount, uint16_t limit_frac16)
 {
