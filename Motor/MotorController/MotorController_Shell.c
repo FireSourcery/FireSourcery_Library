@@ -246,8 +246,8 @@ static Cmd_Status_T Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 	if(argc == 3U) /* run [throttle/brake] [num] */
 	{
 		value = strtoul(argv[2U], &p_end, 10);
-		if(strncmp(argv[1U], "throttle", 9U) == 0U) { MotorController_User_SetCmdThrottle(p_mc, value); }
-		else if(strncmp(argv[1U], "brake", 6U) == 0U) { MotorController_User_SetCmdBrake(p_mc, value); }
+		if(strncmp(argv[1U], "throttle", 9U) == 0U) 	{ MotorController_User_SetCmdThrottle(p_mc, value); }
+		else if(strncmp(argv[1U], "brake", 6U) == 0U) 	{ MotorController_User_SetCmdBrake(p_mc, value); }
 	}
 
 	return CMD_STATUS_SUCCESS;
@@ -306,7 +306,6 @@ static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
 		{
 			Terminal_SendString(p_terminal, "AngleOffset: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.AngleOffet); 	Terminal_SendString(p_terminal, " \r\n");
 			Terminal_SendString(p_terminal, "IsBPositive: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.IsBPositive); 	Terminal_SendString(p_terminal, " \r\n");
-
 			//			Terminal_SendString(p_terminal, "Zero_Adcu: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Zero_Adcu); 	Terminal_SendString(p_terminal, " \r\n");
 			//			Terminal_SendString(p_terminal, "Max_Adcu: "); 		Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Max_Adcu); 		Terminal_SendString(p_terminal, " \r\n");
 			//			Terminal_SendString(p_terminal, "Max_MilliV: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Max_MilliV); 	Terminal_SendString(p_terminal, " \r\n");
@@ -474,7 +473,6 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 
 	if(argc == 1U)
 	{
-		MotorController_User_ToggleFault(p_mc);
 		Terminal_SendString(p_terminal, "FaultFlags [VPos][VAcc][VSense][Pcb][MosTop][MosBot]: ");
 		Terminal_SendNum(p_terminal, p_mc->FaultFlags.VPosLimit);
 		Terminal_SendNum(p_terminal, p_mc->FaultFlags.VAccLimit);
@@ -482,6 +480,7 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 		Terminal_SendNum(p_terminal, p_mc->FaultFlags.PcbOverHeat);
 		Terminal_SendNum(p_terminal, p_mc->FaultFlags.MosfetsTopOverHeat);
 		Terminal_SendNum(p_terminal, p_mc->FaultFlags.MosfetsBotOverHeat);
+		MotorController_User_ToggleFault(p_mc);
 		Terminal_SendString(p_terminal, "\r\n");
 	}
 
