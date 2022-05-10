@@ -33,9 +33,9 @@
 #define FOC_H
 
 #include "math_foc.h"
-#include "math_svpwm.h" 
+#include "math_svpwm.h"
 #include "Math/Q/QFrac16.h"
- 
+
 typedef struct FOC_Tag
 {
 	/* Params */
@@ -115,7 +115,7 @@ static inline qfrac16_t FOC_GetIq(FOC_T * p_foc) { return p_foc->Iq; }
 static inline qfrac16_t FOC_GetVd(FOC_T * p_foc) { return p_foc->Vd; }
 static inline qfrac16_t FOC_GetVq(FOC_T * p_foc) { return p_foc->Vq; }
 
-static inline qfrac16_t FOC_GetIMagnitude(FOC_T * p_foc) 
+static inline qfrac16_t FOC_GetIMagnitude(FOC_T * p_foc)
 {
 	int32_t dqSquared = ((int32_t)(p_foc->Vd) * (p_foc->Vd)) + ((int32_t)(p_foc->Vq) * (p_foc->Vq));
 	return q_sqrt(dqSquared);

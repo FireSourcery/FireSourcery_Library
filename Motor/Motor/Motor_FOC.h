@@ -75,7 +75,7 @@ static inline void Motor_FOC_CaptureIc(Motor_T * p_motor)
 	qfrac16_t i_temp = ((int32_t)Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, p_motor->AnalogResults.Ic_Adcu) + (int32_t)FOC_GetIc(&p_motor->Foc)) / 2;
 	FOC_SetIc(&p_motor->Foc, i_temp);
 
-	p_motor->DebugTime[9] = SysTime_GetMicros() - p_motor->MicrosRef;
+	// p_motor->DebugTime[9] = SysTime_GetMicros() - p_motor->MicrosRef;
 }
 /******************************************************************************/
 /*!
@@ -258,8 +258,8 @@ static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 	else /* Voltage Control mode - use current feedback for over current only */
 	{
 		/*
-			input	RampCmd[-65535:65535], (speedFeedback_Frac16 / 2)[-32767:32767]
-			output 	VFreqCmd_Frac16[-32767:32767] => VqReq
+			input	RampCmd[0:65535], (speedFeedback_Frac16 / 2)[-32767:32767]
+			output 	[-32767:32767] => VqReq
 		*/
 		if(p_motor->FeedbackModeFlags.VFreqScalar == 1U) { userOutput = p_motor->RampCmd * (p_motor->SpeedFeedback_Frac16 / 2) / 65536; } //seletable SpeedControl?
 		_Motor_FOC_ProcVoltageMode(p_motor, userOutput);
@@ -334,13 +334,15 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
 
 	/* ~10us */
-	p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
+	// p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 	//samples complete when queue resumes, adc isr priority higher than pwm.
 	_Motor_FOC_ProcPositionFeedback(p_motor);
 
-	/* ~20 us */
-	p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
+	/* Ic complete ~29 us */
+
+	/* ~29 us */
+	// p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 #ifdef CONFIG_MOTOR_I_SENSORS_AB
 	FOC_ProcClarkePark_AB(&p_motor->Foc);
@@ -349,7 +351,7 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 #endif
 
 	/* ~30us */
-	p_motor->DebugTime[3] = SysTime_GetMicros() - p_motor->MicrosRef;
+	// p_motor->DebugTime[3] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 	// if(p_motor->RunStateFlags.Hold == 0U)
 	{
@@ -357,8 +359,8 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 		_Motor_FOC_ActivateAngle(p_motor);
 	}
 
-	/* ~ us */
-	p_motor->DebugTime[4] = SysTime_GetMicros() - p_motor->MicrosRef;
+	/* ~37us */
+	// p_motor->DebugTime[4] = SysTime_GetMicros() - p_motor->MicrosRef;
 
 }
 
@@ -367,9 +369,16 @@ static inline void Motor_FOC_SetMatchOutput(Motor_T * p_motor, int32_t iq, int32
 {
 	int32_t speedControl = (p_motor->FeedbackModeFlags.Current == 1U) ? iq : vq;
 
-	(p_motor->FeedbackModeFlags.Speed == 1U) ?
-		Motor_SetSpeedOutput(p_motor, speedControl) :
-		Motor_SetRampOutput(p_motor, speedControl);
+	if(p_motor->FeedbackModeFlags.VFreqScalar != 1U)
+	{
+		(p_motor->FeedbackModeFlags.Speed == 1U) ?
+			Motor_SetSpeedOutput(p_motor, speedControl) :
+			Motor_SetRampOutput(p_motor, speedControl);
+	}
+	else
+	{
+		Motor_SetRampOutput(p_motor, 65536); //start from scalar of 1, output speed
+	}
 
 	PID_SetIntegral(&p_motor->PidIq, vq);
 	PID_SetIntegral(&p_motor->PidId, vd);
@@ -455,7 +464,7 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 /******************************************************************************/
 static inline uint16_t Motor_FOC_GetIMagnitude_Frac16(Motor_T * p_motor)
 {
-	return FOC_GetIMagnitude(&p_motor->Foc) * 2U;
+	return FOC_GetIMagnitude(&p_motor->Foc) * 2;
 }
 
 /*

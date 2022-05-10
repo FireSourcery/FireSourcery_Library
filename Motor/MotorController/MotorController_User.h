@@ -131,6 +131,9 @@ static inline void MotorController_User_BeepStop(MotorController_T * p_mc) { Bli
 static inline MotorController_StateMachine_StateId_T MotorController_User_GetStateId(MotorController_T * p_mc) { return StateMachine_GetActiveStateId(&p_mc->StateMachine); }
 static inline MotorController_Direction_T MotorController_User_GetDirection(MotorController_T * p_mc) { return p_mc->MainDirection; }
 static inline MotorController_InputMode_T MotorController_User_GetInputMode(MotorController_T * p_mc) { return p_mc->Parameters.InputMode; }
+static inline void MotorController_User_SetBrakeMode(MotorController_T * p_mc, MotorController_BrakeMode_T brakeMode) { p_mc->Parameters.BrakeMode = brakeMode; }
+
+
 static inline uint16_t MotorController_User_GetAdcu(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return p_mc->AnalogResults.Channels[adcChannel]; }
 static inline uint16_t MotorController_User_GetAdcu_Msb8(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return MotorController_User_GetAdcu(p_mc, adcChannel) >> (ADC_BITS - 8U); }
 static inline uint16_t MotorController_User_GetFaultAdcu(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return p_mc->FaultAnalogRecord.Channels[adcChannel]; }

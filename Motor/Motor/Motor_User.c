@@ -213,6 +213,7 @@ void Motor_User_SetILimitActiveScalar_Overwrite(Motor_T * p_motor, uint16_t scal
 	}
 }
 
+//check active sources flags
 void Motor_User_ClearILimitActive(Motor_T * p_motor)
 {
 	Motor_ResetILimits(p_motor);

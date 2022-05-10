@@ -114,31 +114,18 @@ typedef union MotorController_FaultFlags_Tag
 {
 	struct
 	{
-		// uint32_t PcbOverHeat : 1;
-		// uint32_t MosfetsTopOverHeat : 1;
-		// uint32_t MosfetsBotOverHeat : 1;
-		// uint32_t VPosLimit : 1;
-		// uint32_t VSenseLimit : 1;
-		// uint32_t VAccLimit : 1;
-		// uint32_t ThrottleOnInit 	: 1U;
+		uint32_t PcbOverHeat 		: 1U;
+		uint32_t MosfetsTopOverHeat : 1U;
+		uint32_t MosfetsBotOverHeat : 1U;
+		uint32_t VPosLimit 			: 1U;
+		uint32_t VSenseLimit 		: 1U;
+		uint32_t VAccLimit 			: 1U;
 		uint32_t StopStateSync 		: 1U;
-		// ThrottleOnBrakeRelease
+		// uint32_t ThrottleOnInit 	: 1U;
 	};
 	uint32_t State;
 }
 MotorController_FaultFlags_T;
-
-// typedef union MotorController_WarningFlags_Tag
-// {
-// 	struct
-// 	{
-// 		uint32_t OverHeat : 1;
-// 		uint32_t OverV	: 1;
-// 		uint32_t UnderV : 1;
-// 	};
-// 	uint32_t State;
-// }
-// MotorController_WarningFlags_T;
 
 typedef const struct __attribute__((aligned(FLASH_UNIT_WRITE_ONCE_SIZE))) MotorController_Once_Tag
 {
@@ -247,6 +234,7 @@ typedef struct MotorController_Tag
 
 	volatile MotAnalog_Results_T AnalogResults;
 	MotAnalog_Results_T FaultAnalogRecord;
+	MotorController_FaultFlags_T FaultFlags;
 
 	MotAnalogUser_T AnalogUser;
 
@@ -370,11 +358,11 @@ static inline void MotorController_ProcUserCmdBrake(MotorController_T * p_mc)
 {
 	if(p_mc->Parameters.BrakeMode == MOTOR_CONTROLLER_BRAKE_MODE_TORQUE)
 	{
-		Motor_UserN_SetRegenCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
+		Motor_UserN_SetBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
 	}
 	else if(p_mc->Parameters.BrakeMode == MOTOR_CONTROLLER_BRAKE_MODE_VFREQ_SCALAR)
 	{
-		Motor_UserN_SetBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
+		Motor_UserN_SetRegenCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
 	}
 }
 

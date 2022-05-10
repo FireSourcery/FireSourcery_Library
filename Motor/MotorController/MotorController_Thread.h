@@ -220,11 +220,23 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 
 	switch(statusVPos)
 	{
-		case VMONITOR_LIMIT_UPPER: MotorController_User_SetFault(p_mc); break;
-		case VMONITOR_LIMIT_LOWER: MotorController_User_SetFault(p_mc); break;
+		case VMONITOR_LIMIT_UPPER: p_mc->FaultFlags.VPosLimit = 1U; MotorController_User_SetFault(p_mc); break;
+		case VMONITOR_LIMIT_LOWER: p_mc->FaultFlags.VPosLimit = 1U;	MotorController_User_SetFault(p_mc); break;
 		case VMONITOR_WARNING_UPPER: 	break;
-		case VMONITOR_WARNING_LOWER: MotorController_User_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16);	break;
-		case VMONITOR_STATUS_OK: break;
+		case VMONITOR_WARNING_LOWER:
+			// if(p_mc->WarningFlags.VPos == 0U)
+			// {
+			// 	MotorController_User_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16);
+			// 	p_mc->WarningFlags.VPos = 1U;
+			// }
+			break;
+		case VMONITOR_STATUS_OK:
+			// if(p_mc->WarningFlags.VPos == 1U)
+			// {
+			// 	MotorController_ClearMotorILimitAll(p_mc);	break;
+			// 	p_mc->WarningFlags.VPos = 0U;
+			// }
+			break;
 		default: break;
 	}
 #endif

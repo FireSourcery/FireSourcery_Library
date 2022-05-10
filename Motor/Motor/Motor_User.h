@@ -123,10 +123,10 @@ static inline void Motor_User_SetVFreqCmdValue(Motor_T * p_motor, uint32_t scala
 	Motor_SetRamp(p_motor, scalar);
 }
 
-static inline void Motor_User_SetVFreqModeCmd(Motor_T * p_motor, int16_t voltage)
+static inline void Motor_User_SetVFreqModeCmd(Motor_T * p_motor, uint32_t scalar)
 {
 	Motor_User_SetVFreqMode(p_motor);
-	Motor_User_SetVFreqCmdValue(p_motor, voltage);
+	Motor_User_SetVFreqCmdValue(p_motor, scalar);
 }
 
 
@@ -278,7 +278,7 @@ static inline void Motor_User_SetVoltageBrakeCmd(Motor_T * p_motor)
 {
 	// if(Motor_GetSpeed_RPM(p_motor) > 30U)
 	// {
-	Motor_User_SetVoltageModeCmd(p_motor, p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.VoltageBrakeScalar_InvFrac16 / 65536U);
+	// Motor_User_SetVoltageModeCmd(p_motor, p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.VoltageBrakeScalar_InvFrac16 / 65536U);
 	// Motor_User_SetVoltageModeCmd(p_motor, p_motor->SpeedFeedback_Frac16 * voltage / 65536U);
 
 	// }

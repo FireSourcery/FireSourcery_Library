@@ -95,19 +95,19 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			Terminal_SendString(p_terminal, "Id: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Id);
 			Terminal_SendString(p_terminal, ", Vd: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Vd); Terminal_SendString(p_terminal, " Q1.15\r\n");
 
-        	Terminal_SendString(p_terminal, "IPhase: "); Terminal_SendNum(p_terminal, Motor_User_GetIPhase_Frac16(p_motor)); Terminal_SendString(p_terminal, " Frac16\r\n");
+        	Terminal_SendString(p_terminal, "IPhase: "); Terminal_SendNum(p_terminal, Motor_User_GetIPhase_Amp(p_motor)); Terminal_SendString(p_terminal, " Amp\r\n");
 
 			Terminal_SendString(p_terminal, "AnalogUserCmd: ");
 			switch(p_mc->AnalogUser.Cmd)
 			{
 				case MOT_ANALOG_USER_CMD_SET_BRAKE:					Terminal_SendString(p_terminal, "brake");			break;
 				case MOT_ANALOG_USER_CMD_SET_THROTTLE:				Terminal_SendString(p_terminal, "throttle");		break;
-				case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		Terminal_SendString(p_terminal, "brake rel");		break;
-				case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			Terminal_SendString(p_terminal, "throttle rel");	break;
-				case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				Terminal_SendString(p_terminal, "set neutral");		break;
+				// case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		Terminal_SendString(p_terminal, "brake rel");		break;
+				// case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			Terminal_SendString(p_terminal, "throttle rel");	break;
+				// case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				Terminal_SendString(p_terminal, "set neutral");		break;
 				case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				Terminal_SendString(p_terminal, "neutral");			break;
-				case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	Terminal_SendString(p_terminal, "set forward");		break;
-				case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	Terminal_SendString(p_terminal, "set reverse");		break;
+				// case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	Terminal_SendString(p_terminal, "set forward");		break;
+				// case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	Terminal_SendString(p_terminal, "set reverse");		break;
 				case MOT_ANALOG_USER_CMD_PROC_RELEASE:				Terminal_SendString(p_terminal, "release");			break;
 				default: break;
 			}
@@ -139,8 +139,13 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			}
 			Terminal_SendString(p_terminal, "\r\n");
 
-			Terminal_SendString(p_terminal, "ElecAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetElectricalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
-			Terminal_SendString(p_terminal, "MechAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetMechanicalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
+
+			Terminal_SendString(p_terminal, "Voltage Mode ILimit: "); Terminal_SendNum(p_terminal, p_motor->RunStateFlags.ILimitVoltageModeActive); Terminal_SendString(p_terminal, "\r\n");
+
+
+
+			// Terminal_SendString(p_terminal, "ElecAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetElectricalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
+			// Terminal_SendString(p_terminal, "MechAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetMechanicalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
 
 			break;
 
@@ -155,6 +160,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 
 	if(argc == 1U)
 	{
@@ -198,6 +204,16 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 		else if(strncmp(argv[1U], "forwardiscw", 12U) == 0U)
 		{
 			Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CW);
+		}
+		else if(strncmp(argv[1U], "brakevf", 7U) == 0U)
+		{
+			MotorController_User_SetBrakeMode(p_mc, MOTOR_CONTROLLER_BRAKE_MODE_VFREQ_SCALAR);
+			Terminal_SendString(p_terminal, "VFreq Brake\r\n");
+		}
+		else if(strncmp(argv[1U], "brakei", 7U) == 0U)
+		{
+			MotorController_User_SetBrakeMode(p_mc, MOTOR_CONTROLLER_BRAKE_MODE_TORQUE);
+			Terminal_SendString(p_terminal, "Torque Brake\r\n");
 		}
 	}
 
@@ -491,14 +507,14 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 	if(argc == 1U)
 	{
 		MotorController_User_ToggleFault(p_mc);
-		// Terminal_SendString(p_terminal, "ErrorFlags [VPos][VAcc][VSense][Pcb][MosTop][MosBot]: ");
-		// Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VPosLimit);
-		// Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VAccLimit);
-		// Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VSenseLimit);
-		// Terminal_SendNum(p_terminal, p_mc->ErrorFlags.PcbOverHeat);
-		// Terminal_SendNum(p_terminal, p_mc->ErrorFlags.MosfetsTopOverHeat);
-		// Terminal_SendNum(p_terminal, p_mc->ErrorFlags.MosfetsBotOverHeat);
-		//    	Terminal_SendNum(p_terminal, p_mc->ErrorFlags.UserCheck);
+		Terminal_SendString(p_terminal, "ErrorFlags [VPos][VAcc][VSense][Pcb][MosTop][MosBot]: ");
+		Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VPosLimit);
+		Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VAccLimit);
+		Terminal_SendNum(p_terminal, p_mc->ErrorFlags.VSenseLimit);
+		Terminal_SendNum(p_terminal, p_mc->ErrorFlags.PcbOverHeat);
+		Terminal_SendNum(p_terminal, p_mc->ErrorFlags.MosfetsTopOverHeat);
+		Terminal_SendNum(p_terminal, p_mc->ErrorFlags.MosfetsBotOverHeat);
+		   	// Terminal_SendNum(p_terminal, p_mc->ErrorFlags.UserCheck);
 		Terminal_SendString(p_terminal, "\r\n");
 	}
 

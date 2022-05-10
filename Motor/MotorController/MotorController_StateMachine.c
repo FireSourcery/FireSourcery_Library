@@ -85,7 +85,7 @@ static StateMachine_State_T * Init_InputThrottle(MotorController_T * p_mc)
 
 static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-	[MCSM_INPUT_FAULT]				= (StateMachine_Transition_T)TransitionFault,
+	// [MCSM_INPUT_FAULT]				= (StateMachine_Transition_T)TransitionFault,
 	[MCSM_INPUT_DIRECTION] 			= (StateMachine_Transition_T)Init_InputDirection,
 	[MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)Init_InputReleaseThrottle,
 	[MCSM_INPUT_THROTTLE] 			= (StateMachine_Transition_T)Init_InputThrottle,
