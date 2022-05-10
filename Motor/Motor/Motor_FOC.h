@@ -359,6 +359,7 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 
 	/* ~ us */
 	p_motor->DebugTime[4] = SysTime_GetMicros() - p_motor->MicrosRef;
+
 }
 
 

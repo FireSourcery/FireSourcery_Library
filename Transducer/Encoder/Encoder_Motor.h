@@ -94,6 +94,12 @@ static inline uint32_t Encoder_Motor_InterpolateElectricalDelta(Encoder_T * p_en
 	}
 }
 
+static inline uint32_t Encoder_Motor_InterpolateHallDelta(Encoder_T * p_encoder, uint32_t pollingIndex)
+{
+
+}
+
+
 /*
  	 Control periods per encoder pulse, hall phase
  */
