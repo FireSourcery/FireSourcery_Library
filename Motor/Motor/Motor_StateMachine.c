@@ -85,7 +85,7 @@ static void Init_Proc(Motor_T * p_motor)
 	{
 		// Motor_SetDirectionForward(p_motor);
 	}
-	//optionally capture deltaT and set speed to zero
+	//  capture deltaT and set speed to zero?
 	_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP);
 }
 

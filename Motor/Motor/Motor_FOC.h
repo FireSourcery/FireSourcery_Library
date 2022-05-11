@@ -50,7 +50,6 @@
 	CW -Vq +Iq => Reverse Regen Q3
 	CW +Vq +Iq => Reverse Plugging
 */
-#include "System/SysTime/SysTime.h"
 
 /******************************************************************************/
 /*!
@@ -74,8 +73,6 @@ static inline void Motor_FOC_CaptureIc(Motor_T * p_motor)
 {
 	qfrac16_t i_temp = ((int32_t)Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, p_motor->AnalogResults.Ic_Adcu) + (int32_t)FOC_GetIc(&p_motor->Foc)) / 2;
 	FOC_SetIc(&p_motor->Foc, i_temp);
-
-	// p_motor->DebugTime[9] = SysTime_GetMicros() - p_motor->MicrosRef;
 }
 /******************************************************************************/
 /*!
@@ -98,6 +95,7 @@ static inline int32_t _Motor_FOC_CaptureAngleSpeed(Motor_T * p_motor, qangle16_t
 	p_motor->SpeedAngle = speedAngle; /* mechanical angle */
 }
 
+			//todo observer
 static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 {
 	bool procSpeed = Timer_Poll(&p_motor->SpeedTimer);
@@ -187,8 +185,6 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
 			electricalAngle = SinCos_GetElectricalAngle(&p_motor->SinCos);
 			if(procSpeed == true) { speedFeedback_Frac16 = _Motor_FOC_CaptureAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos)); }
-
-			//todo observer
 			break;
 
 		default:
