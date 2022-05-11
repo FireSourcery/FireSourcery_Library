@@ -75,7 +75,7 @@ static inline int32_t _Motor_User_CalcDirectionalCmd(Motor_T * p_motor, int32_t 
 static inline void _Motor_User_SetVoltageModeILimit(Motor_T * p_motor, bool isMotoring)
 {
 	int32_t iLimit = (isMotoring == true) ? (p_motor->ILimitMotoring_Frac16 / 2) : (0 - p_motor->ILimitGenerating_Frac16 / 2);
-	p_motor->VoltageModeILimit = _Motor_User_CalcDirectionalCmd(p_motor, iLimit); 	/* determine limit input into IPid */
+	p_motor->VoltageModeILimit = _Motor_User_CalcDirectionalCmd(p_motor, iLimit); 	/* determine limit input into IxPid */
 }
 
 
@@ -116,7 +116,7 @@ static inline void Motor_User_SetVFreqMode(Motor_T * p_motor)
 */
 static inline void Motor_User_SetVFreqCmdValue(Motor_T * p_motor, uint32_t scalar)
 {
-	bool isMotoring = (scalar > 65536U);
+	bool isMotoring = (scalar > 65535U);
 	_Motor_User_SetVoltageModeILimit(p_motor, isMotoring);
 	Motor_SetRamp(p_motor, scalar);
 }
@@ -143,7 +143,7 @@ static inline void Motor_User_SetTorqueMode(Motor_T * p_motor)
 */
 static inline void Motor_User_SetTorqueCmdValue(Motor_T * p_motor, int16_t torque)
 {
-	int32_t input = (torque > 0) ? (int32_t)torque * p_motor->ILimitMotoring_Frac16 / 65536 : (int32_t)torque * p_motor->ILimitGenerating_Frac16 / 65536;
+	int32_t input = (torque > 0) ? ((int32_t)torque * p_motor->ILimitMotoring_Frac16 / 65536) : ((int32_t)torque * p_motor->ILimitGenerating_Frac16 / 65536);
 	Motor_SetRamp(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, input));
 }
 
@@ -259,7 +259,7 @@ static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 	// {
 	// 	if(Motor_GetSpeed_RPM(p_motor) > 10U)
 	// 	{
-	Motor_User_SetTorqueModeCmd(p_motor, 0 - (int32_t)brake / 2);
+	Motor_User_SetTorqueModeCmd(p_motor, (int32_t)0 - (int32_t)brake / 2);
 	// 	}
 	// 	else
 	// 	{
