@@ -194,7 +194,8 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 	if(procSpeed == true)
 	{
 		/*
-			SpeedControl update 1000Hz, Ramp input 1000Hz, RampCmd output 20000Hz, alternatively use RampIndex += 20?
+			Speed Feedback Loop
+				SpeedControl update 1000Hz, Ramp input 1000Hz, RampCmd output 20000Hz, alternatively use RampIndex += 20?
 			input	RampCmd[-32767:32767], (speedFeedback_Frac16 / 2)[-32767:32767]
 			output 	SpeedControl[-32767:32767] => IqReq or VqReq
 		*/
@@ -212,10 +213,10 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 	bool isOverLimit;
 	qfrac16_t vqReqOut;
 
-	/* VoltageModeILimit set to torque direction. Alternatively, use limits stored in SpeedPid  */
-	if		((p_motor->VoltageModeILimit > 0) == true) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) > p_motor->VoltageModeILimit); }
-	else if	((p_motor->VoltageModeILimit < 0) == true) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) < p_motor->VoltageModeILimit); }
-	else 												{ isOverLimit = true; } /* should not occur */
+	/* VoltageModeILimit_QFracS16 set to torque direction. Alternatively, use limits stored in SpeedPid  */
+	if		((p_motor->VoltageModeILimit_QFracS16 > 0) == true) { isOverLimit = (FOC_GetIq(&p_motor->Foc) > p_motor->VoltageModeILimit_QFracS16); }
+	else if	((p_motor->VoltageModeILimit_QFracS16 < 0) == true) { isOverLimit = (FOC_GetIq(&p_motor->Foc) < p_motor->VoltageModeILimit_QFracS16); }
+	else 														{ isOverLimit = false; } /* should not occur */
 
 	if((isOverLimit == true) && (p_motor->RunStateFlags.VoltageModeILimitActive == false))
 	{
@@ -228,7 +229,7 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 	}
 
 	vqReqOut = (p_motor->RunStateFlags.VoltageModeILimitActive == true) ?
-		PID_Calc(&p_motor->PidIq, p_motor->VoltageModeILimit, FOC_GetIq(&p_motor->Foc)) :
+		PID_Calc(&p_motor->PidIq, p_motor->VoltageModeILimit_QFracS16, FOC_GetIq(&p_motor->Foc)) :
 		vqReq;
 
 	vqReqOut = vqReq;
@@ -249,10 +250,20 @@ static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 	else /* Voltage Control mode - use current feedback for over current only */
 	{
 		/*
-			input	RampCmd[0:65535], (speedFeedback_Frac16 / 2)[-32767:32767]
-			output 	[-32767:32767] => VqReq
+			VFreq Mode
+			input	RampCmd[0:65535] == VFreqScalar
+			  =>	[-32767:32767] => VqReq
+
+			SpeedVMatchRatio = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / p_motor->Parameters.SpeedVMatchRef_Rpm / 2;
+			SpeedVMatchRatio = Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16) / 2;
+			vqReq = p_motor->RampCmd * SpeedVMatchRatio / 65536;
 		*/
-		if(p_motor->FeedbackModeFlags.VFreqScalar == 1U) { userOutput = p_motor->RampCmd * (p_motor->SpeedFeedback_Frac16 / 2) / 65536; } //seletable SpeedControl?
+		/*
+			Constant Voltage Mode
+			input	RampCmd[-32767:32767]
+		*/
+		if(p_motor->FeedbackModeFlags.VFreqScalar == 1U) { userOutput = p_motor->RampCmd * (Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16) / 2) / 65536; }
+		// { userOutput = p_motor->RampCmd * (p_motor->SpeedFeedback_Frac16 / 2) / 65536; } //seletable SpeedControl?
 		_Motor_FOC_ProcVoltageMode(p_motor, userOutput);
 
 		// _Motor_FOC_ProcVoltageModeILimit(p_motor, userOutput);
@@ -386,21 +397,21 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 		From FreeWheel State, match to speed/bemf
 	*/
 	 /*
-		Match to Bemf //todo check bemf capture available.
+		Match to Bemf
 		Captured VBemfPeak always positive
+		//todo check bemf capture available.
 	*/
-	  //	vqReq = Linear_ADC_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, p_motor->VBemfPeak_Adcu) >> 1U;
+	// vqReq = Linear_ADC_CalcFractionUnsigned16(&p_motor->CONFIG.UNIT_V_ABC, p_motor->VBemfPeak_Adcu) >> 1U;
 
 	/*
 		Match to Speed
-		User sets larger SpeedRefVBemf_Rpm for smaller vqReq to ensure never resume to higher speed
-		vqReq = Speed_RPM * 32768 / SpeedRefVBemf_Rpm
-
-		SpeedFeedback_Frac16 = Speed_RPM * 65536 /  SpeedRefMax_Rpm, todo account for SpeedRefVBemf_Rpm
+		User sets larger SpeedVMatchRef_Rpm to ensure not resume to higher speed
+		vqReq = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / p_motor->Parameters.SpeedVMatchRef_Rpm / 2;
+		SpeedVMatch_Factor = SpeedFeedbackRef_Rpm << 14 / SpeedVMatchRef_Rpm
+		vqReq = (p_motor->SpeedFeedback_Frac16 * SpeedVMatch_Factor >> 14) / 2
 	*/
-	// vqReq = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedRefMax_Rpm / p_motor->Parameters.SpeedRefVBemf_Rpm / 2;
-
-	Motor_FOC_SetMatchOutput(p_motor, 0, p_motor->SpeedFeedback_Frac16 / 2, 0);
+	vqReq = Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16) / 2;	// vqReq = p_motor->SpeedFeedback_Frac16 / 2;
+	Motor_FOC_SetMatchOutput(p_motor, 0, vqReq, 0);
 
 	_Motor_FOC_ActivateAngle(p_motor);
 	Phase_ActivateSwitchABC(&p_motor->Phase); /* Switches Disabled when entering freewheel State */

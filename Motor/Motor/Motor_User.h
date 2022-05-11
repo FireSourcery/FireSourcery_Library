@@ -75,7 +75,7 @@ static inline int32_t _Motor_User_CalcDirectionalCmd(Motor_T * p_motor, int32_t 
 static inline void _Motor_User_SetVoltageModeILimit(Motor_T * p_motor, bool isMotoring)
 {
 	int32_t iLimit = (isMotoring == true) ? (p_motor->ILimitMotoring_Frac16 / 2) : (0 - p_motor->ILimitGenerating_Frac16 / 2);
-	p_motor->VoltageModeILimit = _Motor_User_CalcDirectionalCmd(p_motor, iLimit); 	/* determine limit input into IxPid */
+	p_motor->VoltageModeILimit_QFracS16 = _Motor_User_CalcDirectionalCmd(p_motor, iLimit); 	/* determine limit input into IxPid */
 }
 
 
@@ -477,8 +477,8 @@ extern void Motor_User_SetILimitActiveScalar(Motor_T * p_motor, uint16_t scalar_
 extern void Motor_User_ClearILimitActive(Motor_T * p_motor);
 extern uint16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor);
 
-extern void Motor_User_SetSpeedRefMax_Rpm(Motor_T * p_motor, uint16_t rpm);
-extern void Motor_User_SetSpeedRefMax_VRpm(Motor_T * p_motor, uint16_t vMotor, uint16_t vMotorSpeed_Rpm) ;
+extern void Motor_User_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm);
+extern void Motor_User_SetSpeedFeedbackRef_VRpm(Motor_T * p_motor, uint16_t vMotor, uint16_t vMotorSpeed_Rpm) ;
 extern void Motor_User_SetIRefPeak_Adcu(Motor_T * p_motor, uint16_t adcu);
 extern void Motor_User_SetIRefPeak_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV);
 extern void Motor_User_SetIaIbIcZero_Adcu(Motor_T * p_motor, uint16_t ia_adcu, uint16_t ib_adcu, uint16_t ic_adcu);

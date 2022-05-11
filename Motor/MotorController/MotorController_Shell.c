@@ -830,13 +830,13 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 // 	{
 
 
-// 		//		Terminal_SendString(p_terminal, "SpeedRefMax_Rpm: ");
-// 		//		Terminal_SendNum(p_terminal, p_motor->Parameters.SpeedRefMax_Rpm);
+// 		//		Terminal_SendString(p_terminal, "SpeedFeedbackRef_Rpm: ");
+// 		//		Terminal_SendNum(p_terminal, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 // 		//		Terminal_SendString(p_terminal, "\r\n");
 
 // 		PRINT_PARAM_VAR_MOTOR(PolePairs)
-// 			PRINT_PARAM_VAR_MOTOR(SpeedRefMax_Rpm)
-// 			// PRINT_PARAM_VAR_MOTOR(SpeedRefVBemf_Rpm)
+// 			PRINT_PARAM_VAR_MOTOR(SpeedFeedbackRef_Rpm)
+// 			// PRINT_PARAM_VAR_MOTOR(SpeedVMatchRef_Rpm)
 // 			// PRINT_PARAM_VAR_MOTOR(IRefMax_Amp)
 // 			// PRINT_PARAM_VAR_MOTOR(IaRefMax_Adcu)
 // 			// PRINT_PARAM_VAR_MOTOR(IbRefMax_Adcu)

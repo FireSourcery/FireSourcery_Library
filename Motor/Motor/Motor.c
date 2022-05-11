@@ -97,6 +97,9 @@ void Motor_InitReboot(Motor_T * p_motor)
 	p_motor->RampCmd = 0U;
 	p_motor->RampIndex = 0U;
 
+	//todo propagete on speedref set
+	Linear_Init(&p_motor->SpeedVMatchRatio, p_motor->Parameters.SpeedFeedbackRef_Rpm, p_motor->Parameters.SpeedVMatchRef_Rpm, 0, 65535);
+
 	Motor_ResetSpeedLimits(p_motor);
 	Motor_ResetILimits(p_motor);
 
@@ -180,33 +183,6 @@ void Motor_SetDirectionReverse(Motor_T * p_motor)
 	Propage param values
 */
 /******************************************************************************/
-void Motor_ResetUnitsVabc(Motor_T * p_motor)
-{
-#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) && defined(CONFIG_MOTOR_V_SENSORS_ADC)
-	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, ADC_BITS, _Motor_AdcVRef_MilliV, _Motor_VRefSupply_V);
-#endif
-}
-
-void Motor_ResetUnitsIabc(Motor_T * p_motor)
-{
-#ifdef CONFIG_MOTOR_I_SENSORS_INVERT
-	Linear_ADC_Init_Inverted(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_Adcu, p_motor->Parameters.IaRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
-	Linear_ADC_Init_Inverted(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_Adcu, p_motor->Parameters.IbRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
-	Linear_ADC_Init_Inverted(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_Adcu, p_motor->Parameters.IcRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
-#elif defined(CONFIG_MOTOR_I_SENSORS_NONINVERT)
-	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_Adcu, p_motor->Parameters.IaRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
-	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_Adcu, p_motor->Parameters.IbRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
-	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_Adcu, p_motor->Parameters.IcRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
-#endif
-}
-
-void Motor_ResetUnitsHall(Motor_T * p_motor)
-{
-	Encoder_Motor_SetHallCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs); //check repeat set here or lower layer?
-	Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_Rpm);
-	Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, 20000U, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedRefMax_Rpm); /* Alt speed calc */
-}
-
 void Motor_ResetSensorMode(Motor_T * p_motor)
 {
 	switch(p_motor->Parameters.SensorMode)
@@ -231,18 +207,50 @@ void Motor_ResetSensorMode(Motor_T * p_motor)
 
 		case MOTOR_SENSOR_MODE_ENCODER:
 			Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
-			Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedRefMax_Rpm);
+			Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 			break;
 
 		case MOTOR_SENSOR_MODE_SIN_COS:
 			SinCos_Init(&p_motor->SinCos);
 			// SinCos_SetERotationsPerCycle(&p_motor->SinCos, p_motor->Parameters.PolePairs, 1U);
-			Linear_Speed_InitAngleRpm(&p_motor->UnitAngleRpm, 1000U, 16U, p_motor->Parameters.SpeedRefMax_Rpm);
+			Linear_Speed_InitAngleRpm(&p_motor->UnitAngleRpm, 1000U, 16U, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 			break;
 
 		default:
 			break;
 	}
+}
+
+void Motor_ResetUnitsVabc(Motor_T * p_motor)
+{
+#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) && defined(CONFIG_MOTOR_V_SENSORS_ADC)
+	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, ADC_BITS, _Motor_AdcVRef_MilliV, _Motor_VRefSupply_V);
+#endif
+}
+
+void Motor_ResetUnitsIabc(Motor_T * p_motor)
+{
+#ifdef CONFIG_MOTOR_I_SENSORS_INVERT
+	Linear_ADC_Init_Inverted(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_Adcu, p_motor->Parameters.IaRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
+	Linear_ADC_Init_Inverted(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_Adcu, p_motor->Parameters.IbRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
+	Linear_ADC_Init_Inverted(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_Adcu, p_motor->Parameters.IcRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
+#elif defined(CONFIG_MOTOR_I_SENSORS_NONINVERT)
+	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaRefZero_Adcu, p_motor->Parameters.IaRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
+	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbRefZero_Adcu, p_motor->Parameters.IbRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
+	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcRefZero_Adcu, p_motor->Parameters.IcRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu, p_motor->CONFIG.I_MAX_AMP);
+#endif
+}
+
+void Motor_ResetUnitsHall(Motor_T * p_motor)
+{
+	Encoder_Motor_SetHallCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs); //check repeat set here or lower layer?
+	Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
+	Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, 20000U, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedFeedbackRef_Rpm); /* Alt speed calc */
+}
+
+void Motor_ResetSpeedVMatchRatio(Motor_T * p_motor)
+{
+	Linear_Init(&p_motor->SpeedVMatchRatio, p_motor->Parameters.SpeedFeedbackRef_Rpm, p_motor->Parameters.SpeedVMatchRef_Rpm, 0, 65535);
 }
 
 /******************************************************************************/
