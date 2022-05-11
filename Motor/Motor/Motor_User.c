@@ -214,7 +214,7 @@ void Motor_User_SetILimitActiveScalar_Overwrite(Motor_T * p_motor, uint16_t scal
 	}
 }
 
-///todo sources
+///todo check sources
 void Motor_User_ClearILimitActive(Motor_T * p_motor)
 {
 	p_motor->RunStateFlags.ILimitScalarActive = 0U;

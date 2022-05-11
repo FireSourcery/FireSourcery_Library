@@ -694,6 +694,25 @@ static Cmd_Status_T Cmd_version(MotorController_T * p_mc, int argc, char ** argv
 	return CMD_STATUS_SUCCESS;
 }
 
+
+static Cmd_Status_T Cmd_vmatch(MotorController_T * p_mc, int argc, char ** argv)
+{
+	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+	uint16_t rpm;
+
+	if(argc == 2U)
+	{
+		rpm = strtoul(argv[1U], 0U, 10);
+		Motor_User_SetSpeedVMatchRef_Rpm(p_motor, rpm);
+		Terminal_SendString(p_terminal, "\r\nRPM 100 percent: ");
+		Terminal_SendNum(p_terminal, Linear_Function(&p_motor->SpeedVMatchRatio, 65535));
+		Terminal_SendString(p_terminal, " PWM Frac16\r\n");
+	}
+
+	return CMD_STATUS_SUCCESS;
+}
+
 static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
@@ -755,6 +774,7 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"jog", 		"Jog motor", 						(Cmd_Function_T)Cmd_jog, 		{0U}	},
 	{"rev", 		"Rev motor",	 					(Cmd_Function_T)Cmd_rev, 		{.FUNCTION = (Cmd_ProcessFunction_T)Cmd_rev_Proc, 		.FREQ = 10U}	},
 	{"beep", 		"beep",								(Cmd_Function_T)Cmd_beep, 		{0U}	},
+	{"vmatch", 		"vmatch",							(Cmd_Function_T)Cmd_vmatch, 	{0U}	},
 
 	{"version", 	"version",							(Cmd_Function_T)Cmd_version, 	{0U}	},
 	{"debug", 		"debug",							(Cmd_Function_T)Cmd_debug, 		{0U}	},
