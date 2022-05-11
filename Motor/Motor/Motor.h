@@ -223,7 +223,7 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
  	/*
 		Ref values, known calibration parameter provide by user
 	*/
-	uint16_t SpeedRefMax_Rpm;	 /* Motor Speed at VSupply. Unit conversion, feedback/limits ref, encoder ref, UI. */
+	uint16_t SpeedRefMax_Rpm; 	/* Motor Speed at VSupply. Unit conversion, feedback/limits ref, encoder ref, UI. */
 	// uint16_t SpeedRefVBemf_Rpm; 	/* Use for bemf matching */
 	uint16_t IRefPeak_Adcu; 	/* Zero-To-Peak, derived from sensor hardware */
 	uint16_t IaRefZero_Adcu;
@@ -238,7 +238,7 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	uint16_t SpeedLimitCw_Frac16;
 	uint16_t ILimitMotoring_Frac16;		/* Persistent User Param. Frac16 of RefMax I_MAX_AMP */
 	uint16_t ILimitGenerating_Frac16;
-	uint16_t ILimitScalarHeat_Frac16; 	/* Active onn thermistor warning. Frac16 scalar on active limit */
+	uint16_t ILimitScalarHeat_Frac16; 	/* Active on thermistor warning. Frac16 scalar on active limit */
 
 	// uint16_t VoltageBrakeScalar_InvFrac16; /* [0:65535], 0 is highest intensity */
 
@@ -310,7 +310,7 @@ typedef struct Motor_Tag
 	uint16_t SpeedLimit_Frac16; 		/* Active SpeedLimit, optionally reduce 1 check of direction */
 	uint16_t ILimitMotoring_Frac16;		/* Active ILimit */
 	uint16_t ILimitGenerating_Frac16;
-	int16_t VoltageModeILimit; 			/* [-32767:32767] */
+	int16_t VoltageModeILimit; 			/* _QFracS16 [-32767:32767] */
 
 	/* Calibration Substate */
 	Motor_CalibrationState_T CalibrationState; 	/* Substate, selection for calibration */

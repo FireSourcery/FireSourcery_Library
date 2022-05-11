@@ -120,7 +120,7 @@ static const StateMachine_State_T STATE_INIT =
 	@brief  Stop State
 
 	Enters upon all motors reading 0 speed,
-	 motor may be in run(active brake) or freewheel state
+		motor may be in run(active brake) or freewheel state
 
 	bug: if power on into run state, while in reverse, will start forward.
 */

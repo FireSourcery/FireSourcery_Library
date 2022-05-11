@@ -130,7 +130,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 		if(isWarning == true)
 		{
 			//todo check ilimits satee flag
-			MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnHeat_Frac16);
+			// MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnHeat_Frac16);
 		}
 	}
 }

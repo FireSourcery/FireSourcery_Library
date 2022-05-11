@@ -82,8 +82,8 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 			case THERMISTOR_WARNING:
 				if(p_motor->RunStateFlags.HeatWarning == 0U)
 				{
-					Motor_User_SetILimitActiveScalar_Overwrite(p_motor, p_motor->Parameters.ILimitScalarHeat_Frac16);
-					p_motor->RunStateFlags.HeatWarning = 1U;
+					// Motor_User_SetILimitActiveScalar_Overwrite(p_motor, p_motor->Parameters.ILimitScalarHeat_Frac16);
+					// p_motor->RunStateFlags.HeatWarning = 1U;
 				}
 				break;
 			default: break;

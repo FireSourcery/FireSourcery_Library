@@ -25,7 +25,6 @@
 	@file 	Motor_FOC.h
 	@author FireSoucery
 	@brief  Motor FOC submodule. FOC control functions.
-
 			FOC mode State Machine mapping
 			defined as inline for StateMachine wrapper functions
 	@version V0
@@ -231,6 +230,8 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 	vqReqOut = (p_motor->RunStateFlags.VoltageModeILimitActive == true) ?
 		PID_Calc(&p_motor->PidIq, p_motor->VoltageModeILimit, FOC_GetIq(&p_motor->Foc)) :
 		vqReq;
+
+	vqReqOut = vqReq;
 
 	FOC_SetVq(&p_motor->Foc, vqReqOut);
 	FOC_SetVd(&p_motor->Foc, 0);
