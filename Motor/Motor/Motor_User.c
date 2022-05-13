@@ -330,8 +330,8 @@ void Motor_User_SetSpeedFeedbackRef_VRpm(Motor_T * p_motor, uint16_t vMotor_V, u
 
 void Motor_User_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
-	uint32_t min = p_motor->Parameters.SpeedFeedbackRef_Rpm / 2;
-	uint32_t max = p_motor->Parameters.SpeedFeedbackRef_Rpm * 2;
+	uint32_t min = p_motor->Parameters.SpeedFeedbackRef_Rpm * 3 / 4;
+	uint32_t max = p_motor->Parameters.SpeedFeedbackRef_Rpm * 5 / 4;
 
 	if		(rpm > max) { p_motor->Parameters.SpeedVMatchRef_Rpm = max; }
 	else if	(rpm < min) { p_motor->Parameters.SpeedVMatchRef_Rpm = min; }

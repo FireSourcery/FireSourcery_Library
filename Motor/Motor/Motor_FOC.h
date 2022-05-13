@@ -256,6 +256,7 @@ static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 			vqReq = p_motor->RampCmd * SpeedVMatchRatio / 65536;
 
 			Linear_Function(&p_motor->SpeedVMatchRatio) input range [-65535:65535], SpeedFeedback_Frac16 unsaturated
+			Overflow: VMatchRef == 3/4FeedbackRef: 65535*3/2
 		*/
 		if(p_motor->FeedbackModeFlags.VFreqScalar == 1U)
 		{

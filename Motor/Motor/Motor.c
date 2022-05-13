@@ -98,6 +98,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Motor_ResetSpeedVMatchRatio(p_motor);
 	Motor_ResetSpeedLimits(p_motor);
 	Motor_ResetILimits(p_motor);
+	p_motor->ILimitActiveScalar = 0xFFFF; //wrap reset
 
 	Motor_SetDirectionForward(p_motor);
 

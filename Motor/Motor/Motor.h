@@ -339,7 +339,7 @@ typedef struct Motor_Tag
 
 	// Motor_SpeedLimitActiveId_T SpeedLimitActiveId;
 	Motor_ILimitActiveId_T ILimitActiveId;
-	uint16_t SpeedLimitActiveScalar; 	/* Store for comparison */
+	// uint16_t SpeedLimitActiveScalar; 	/* Store for comparison */
 	uint16_t ILimitActiveScalar;		/*  */
 
 	/* Calibration Substate */
