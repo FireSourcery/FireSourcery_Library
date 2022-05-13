@@ -41,7 +41,7 @@ static inline int32_t Linear_ADC_CalcPhysical(const Linear_T * p_linear, uint16_
 
 static inline int32_t Linear_ADC_CalcPhysical_Scalar(const Linear_T * p_linear, uint16_t adcu, uint16_t scalar)
 {
-	// return Linear_Frac16_CalcUnits_Scalar(p_linear, adcu);
+	return Linear_Frac16_CalcUnits_Scalar(p_linear, adcu, scalar);
 }
 
 static inline int32_t Linear_ADC_CalcFraction16(const Linear_T * p_linear, uint16_t adcu)

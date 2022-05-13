@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
-    @author FireSoucery
-    @brief
-    @version V0
+	@file
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef FLASH_H
@@ -54,8 +54,8 @@ typedef NvMemory_T Flash_T;
 	NV_MEMORY_CONFIG(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)														\
 
 /*
- * Alias for NvMemory Status
- */
+	Alias for NvMemory Status
+*/
 typedef enum
 {
 	FLASH_STATUS_SUCCESS 			= NV_MEMORY_STATUS_SUCCESS,
@@ -80,6 +80,36 @@ typedef enum
 	FLASH_OPERATION_READ_ONCE,
 }
 Flash_Operation_T;
+
+extern void Flash_Init(Flash_T * p_flash);
+extern void Flash_SetYield(Flash_T * p_flash, void (*yield)(void *), void * p_callbackData);
+extern bool Flash_ReadSecurityFlag(Flash_T * p_flash);
+
+extern Flash_Status_T Flash_SetVerifyWrite(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
+extern Flash_Status_T Flash_SetVerifyErase(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
+extern Flash_Status_T Flash_SetWriteOnce(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
+extern Flash_Status_T Flash_SetReadOnce(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size); //option to provide buffer?
+extern Flash_Status_T Flash_SetOp(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, Flash_Operation_T opType);
+extern void Flash_GetReadOnce(const Flash_T * p_flash, uint8_t * p_result);
+
+extern Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
+extern Flash_Status_T Flash_ContinueWrite_Blocking(Flash_T * p_flash, const uint8_t * p_source, size_t size);
+extern Flash_Status_T Flash_Erase_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
+extern Flash_Status_T Flash_VerifyWrite_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
+extern Flash_Status_T Flash_VerifyErase_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
+extern Flash_Status_T Flash_WriteOnce_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
+extern Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
+extern Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, Flash_Operation_T opType);
+
+extern bool Flash_ProcOp(Flash_T * p_flash);
+extern size_t Flash_GetOpBytesRemaining(Flash_T * p_flash);
+// extern bool Flash_ReadIsOpComplete(Flash_T * p_flash);
+extern Flash_Status_T Flash_StartWrite_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
+extern Flash_Status_T Flash_StartErase_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
+extern Flash_Status_T Flash_StartVerifyWrite_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
+extern Flash_Status_T Flash_StartVerifyErase_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
+extern Flash_Status_T Flash_StartWriteOnce_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
+extern Flash_Status_T Flash_StartReadOnce_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
 
 #endif /* FLASH_H */
 

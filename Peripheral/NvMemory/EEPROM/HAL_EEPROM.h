@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
-    @author FireSoucery
-    @brief
-    @version V0
+	@file
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef HAL_EEPROM_H
@@ -33,10 +33,5 @@
 
 #include "Peripheral/HAL/Path.h"
 #include PATH_HAL_PERIPHERAL(HAL_EEPROM.h)
-
-//#if defined(CONFIG_HAL_PLATFORM)
-//	#include STR(Peripheral/HAL/Platform/CONFIG_HAL_PLATFORM/HAL_EEPROM.h)
-//#endif
-
 
 #endif /* HAL_EEPROM_H */

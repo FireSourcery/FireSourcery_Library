@@ -1,0 +1,344 @@
+//fifo support
+
+/*!
+	@brief 	Get Active channel count called before ActivateConversion()
+*/
+static inline uint8_t SetAnalogActiveAdcChannelCount(Analog_T * p_analog, uint8_t remainingChannelCount)
+{
+#if defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
+	/* Case 1 ADC M Buffer: ActiveChannelCount <= M_Buffer Length, all active channel must be in same buffer */
+	return (remainingChannelCount < p_analog->CONFIG.ADC_BUFFER_LENGTH) ? remainingChannelCount : p_analog->CONFIG.ADC_BUFFER_LENGTH;
+	p_analog->ActiveAdcChannelCount = remainingChannelCount
+#else
+	/* Case 1 ADC 1 Buffer: ActiveChannelCount Always == 1 */
+	(void) p_analog;
+	(void) remainingChannelCount;
+	return 1U;
+#endif
+}
+
+static inline uint8_t GetAnalogActiveAdcChannelCount(const Analog_T * p_analog)
+{
+#if defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
+	return p_analog->ActiveAdcChannelCount;
+#else
+	(void) p_analog;
+	return 1U;
+#endif
+}
+
+static inline bool GetAnalogIsConversionRepeat(const AnalogN_Conversion_T * p_activeConversion)
+{
+#if !defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
+	if(p_activeConversion->MAP.P_VIRTUAL_CONVERSION->CHANNEL_COUNT > 1U)
+	{
+		return true;
+	}
+#elif defined(CONFIG_ANALOG_SW_CONTINOUS_CONVERSION)
+	return true;
+#endif
+}
+
+static inline void _Analog_CaptureAdcResults(Analog_T * p_analog, Analog_Conversion_T * p_activeConversion)
+{
+	if (options.CaptureLocalPeak == true)
+	{
+		for (uint8_t iConversionIndex = p_analog->ActiveAdcChannelIndex; iConversionIndex < p_analog->ActiveAdcChannelIndex + activeChannelCount; iConversionIndex++) // 1U literal should optimize away for loop
+		{
+			adcPin 								= p_adcChannels[iConversionIndex].PIN;
+			virtualIndex 						= p_adcChannels[iConversionIndex].VIRTUAL_INDEX;
+			virtualChannel 						= p_virtualChannels[virtualIndex].CHANNEL;
+
+			result = HAL_Analog_ReadResult(p_adc, adcPin);
+
+			if (result > p_resultsBuffer[virtualChannel])
+			{
+				p_resultsBuffer[virtualChannel] = result;
+			}
+			else
+			{
+				p_analog->IsLocalPeakFound = true;
+			}
+		}
+	}
+	else
+
+#ifdef CONFIG_ANALOG_ADC_HW_FIFO_LENGTH
+	HAL_Analog_T * p_adc				= p_analog->CONFIG.P_HAL_ANALOG;
+	uint8_t activeChannelCount 		= GetAnalogActiveAdcChannelCount(p_analog);
+
+	const Analog_ConversionAdcChannel_T * p_adcChannels 			= p_adcConversion->P_CHANNELS;
+	const Analog_ConversionVirtualChannel_T * p_virtualChannels 	= p_adcMap->P_VIRTUAL_CONVERSION->P_CHANNELS;
+	Analog_Options_T options 								= p_adcMap->P_VIRTUAL_CONVERSION->OPTIONS;
+	analog_adcresult_t * p_resultsBuffer 							= p_adcMap->P_RESULTS_BUFFER;
+
+	analog_adcresult_t result;
+
+	analog_channel_t virtualChannel;
+	analog_adcpin_t adcPin;
+
+	/*
+		Should not need to boundary check on return. Read in the same way it was pushed
+	*/
+	for(uint8_t iConversionIndex = p_analog->ActiveAdcChannelIndex; iConversionIndex < p_analog->ActiveAdcChannelIndex + activeChannelCount; iConversionIndex++) // 1U literal should optimize away for loop
+	{
+		adcPin = p_adcChannels[iConversionIndex].PIN;
+		virtualIndex = p_adcChannels[iConversionIndex].VIRTUAL_INDEX;
+		virtualChannel = p_virtualChannels[virtualIndex].CHANNEL;
+		p_resultsBuffer[virtualChannel] = HAL_Analog_ReadResult(p_adc, adcPin);
+	}
+#else
+	p_activeConversion->P_RESULTS_BUFFER[p_activeConversion->CHANNEL] = HAL_Analog_ReadResult(p_analog->CONFIG.P_HAL_ANALOG, p_activeConversion->PIN);
+#endif
+}
+
+
+
+static inline bool _Analog_CaptureResults(Analog_T * p_analog)
+{
+#ifdef CONFIG_ANALOG_ADC_HW_FIFO_LENGTH
+uint8_t remainingChannelCount;
+	uint8_t completeChannelStartIndex 	= p_analog->ActiveAdcChannelIndex;
+	uint8_t completeChannelCount 		= GetAnalogActiveAdcChannelCount(p_analog);
+
+	const Analog_ConversionAdcChannel_T * p_adcChannels 			= p_adcConversion->P_CHANNELS;
+	const Analog_ConversionVirtualChannel_T * p_virtualChannels 	= p_adcMap->P_VIRTUAL_CONVERSION->P_CHANNELS;
+	void * p_onCompleteContext 										= p_adcMap->P_CALLBACK_CONTEXT;
+	uint8_t virtualIndex;
+
+		_Analog_CaptureAdcResults(p_analog); //, p_adcConversion, p_adcMap);
+		p_analog->ActiveAdcChannelIndex += completeChannelCount;
+
+		/*
+		 * Set up next conversion
+		 */
+		remainingChannelCount = p_analog->ActiveConversionCount - p_analog->ActiveAdcChannelIndex;
+
+		if (remainingChannelCount > 0U)
+		{
+//			SetAnalogActiveAdcChannelCount(p_analog, remainingChannelCount);
+			/* Index updated, Start next group of channels in ActiveConversion  */
+			_Analog_ActivateAdc(p_analog);//, p_adcConversion, p_adcMap);
+			isAllChannelsComplete = false;
+		}
+		else
+		{
+			isAllChannelsComplete = true;
+//			Analog_Deactivate(p_analog); do not deactivate here in case of continuous conversion
+		}
+
+		/*
+		 * _Analog_ProcChannelOnCompletes(p_analog);
+		 *  OnComplete functions run after starting next set of channel to pipeline adc run
+		 *  if the next conversion completes before OnComplete functions return, ADC ISR should queue, but cannot(should not) interrupt the on going ISR
+		 */
+		for (uint8_t iConversionIndex = completeChannelStartIndex; iConversionIndex < completeChannelStartIndex + completeChannelCount; iConversionIndex++)
+		{
+//			virtualIndex = p_adcChannels[iConversionIndex].VIRTUAL_INDEX;
+//			if (p_virtualChannels[virtualIndex].ON_COMPLETE != 0U)
+//			{
+//				p_virtualChannels[virtualIndex].ON_COMPLETE(p_onCompleteContext);
+//			}
+
+
+		}
+
+		p_analog->ActiveAdcChannelIndex += 1U;
+
+		/*
+		 * Set up next conversion
+		 */
+		remainingChannelCount = p_analog->ActiveConversionCount - p_analog->ActiveAdcChannelIndex;
+
+		if (remainingChannelCount > 0U)
+		{
+			/* Index updated, Start next group of channels in ActiveConversion - shared options  */
+			_Analog_ActivateAdc(p_analog);//, p_adcConversion, p_adcMap);
+			isAllChannelsComplete = false;
+		}
+		else
+		{
+			/*   Dequeue Next Conversion New Options */
+			_Analog_ProcQueue(p_analog);
+
+			isAllChannelsComplete = true;
+		}
+
+	if(p_completedConversion->ON_COMPLETE != 0U) { p_completedConversion->ON_COMPLETE(p_completedConversion->P_CALLBACK_CONTEXT); }
+
+	return (isAllChannelsComplete);
+#endif
+}
+
+static inline void Analog_OnComplete_ISR(Analog_T * p_analog)
+{
+	_Analog_CaptureResults(p_analog);
+
+	Analog_Conversion_T * p_activeConversion;
+	Queue_PeekFront(&p_analog->ConversionQueue, &p_activeConversion); //read an address
+
+	const Analog_ConversionAdc_T * p_adcConversion 	= &p_activeConversion->ADC_CONVERSION;
+	const Analog_ConversionMap_T * p_adcMap 		= &p_activeConversion->MAP;
+	Analog_ConversionOptions_T options 		 		= p_adcMap->P_VIRTUAL_CONVERSION->OPTIONS;
+
+	Analog_OnComplete_T onConversionComplete  		= p_activeConversion->MAP.P_VIRTUAL_CONVERSION->ON_COMPLETE;
+	void * p_onConversionCompleteContext 			= p_activeConversion->MAP.P_CALLBACK_CONTEXT;
+
+	if (_Analog_CaptureResults(p_analog) == true) //all channels complete
+	{
+		if (onConversionComplete != 0U)
+		{
+			onConversionComplete(p_onConversionCompleteContext);
+		}
+
+		if (options.ContinuousConversion == false)
+		{
+			p_activeConversion = _Analog_ProcQueue(p_analog);
+			if(p_activeConversion != 0U)
+			{
+				_Analog_ActivateAdc(p_analog, &p_activeConversion->ADC_CONVERSION, &p_activeConversion->MAP);
+			}
+		}
+		else
+		{
+#if defined(CONFIG_ANALOG_ADC_HW_FIFO_DISABLE)
+
+#elif defined(CONFIG_ANALOG_SW_CONTINOUS_CONVERSION)
+			p_analog->ActiveAdcChannelIndex = 0U;
+			_Analog_ActivateAdc(p_analog, &p_activeConversion->ADC_CONVERSION, &p_activeConversion->MAP);
+#endif
+		}
+	}
+}
+
+
+
+
+.c
+
+#ifdef CONFIG_ANALOG_ADC_HW_FIFO_ENABLE
+static inline void WriteAdcFifo(const Analog_T * p_analog)
+{
+	Analog_Conversion_T * p_conversion;
+	uint8_t iConversionIndex;
+
+	for (iConversionIndex = p_analog->ActiveConversionIndex; iConversionIndex < p_analog->ActiveConversionIndex + p_analog->ActiveAdcFifoChannelCount - 1U; iConversionIndex++)
+	{
+		Queue_PeekIndex(&p_analog->ConversionQueue, p_conversion, iConversionIndex);
+		HAL_Analog_WritePinSelect(p_analog->CONFIG.P_HAL_ANALOG, p_conversion->PIN);
+	}
+
+	Queue_PeekIndex(&p_analog->ConversionQueue, p_conversion, iConversionIndex);
+	HAL_Analog_WriteLast(p_analog->CONFIG.P_HAL_ANALOG, p_conversion->PIN);
+}
+#endif
+
+
+//capture peak
+void _Analog_WriteAdc (Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+{
+	analog_adcresult_t * p_resultsBuffer 							= p_adcMap->P_RESULTS_BUFFER;
+	const Analog_ConversionVirtualChannel_T * p_virtualChannels 	= p_adcMap->P_VIRTUAL_CONVERSION->P_CHANNELS;
+	uint8_t virtualChannelCount 									= p_adcMap->P_VIRTUAL_CONVERSION->CHANNEL_COUNT;
+	Analog_ConversionOptions_T options 								= p_adcMap->P_VIRTUAL_CONVERSION->OPTIONS;
+	analog_virtual_t virtualChannel;
+
+	if (options.CaptureLocalPeak == true)
+	{
+		for (uint8_t iVirtualIndex = 0U; iVirtualIndex < virtualChannelCount; iVirtualIndex++)
+		{
+			virtualChannel 						= p_virtualChannels[iVirtualIndex].CHANNEL;
+			p_resultsBuffer[virtualChannel] 	= 0U; //does buffer need to be volatile
+		}
+
+		p_analog->IsLocalPeakFound = false;
+//		p_analog->count = 0;
+	}
+	Analog_ConversionChannel_T * p_queueConversion;
+	/*
+	 * Get conversions in queue with same options
+	 */
+	p_analog->ActiveConversionCount = 1U; //may optimize with channel count queue
+	for (uint8_t iEntry = 1U; iEntry < Queue_GetFullCount(&p_analog->ConversionQueue); iEntry++)
+	{
+		if (Queue_PeekIndex(&p_analog->ConversionQueue, &p_queueConversion, 0U) != 0)
+		{
+			if (p_queueConversion->P_VIRTUAL->OPTIONS ==  p_conversion->P_VIRTUAL->OPTIONS)
+			{
+				p_analog->ActiveConversionCount++;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	_Analog_WriteAdcOptions(p_analog, p_conversion);
+
+#ifndef CONFIG_ANALOG_ADC_HW_FIFO_ENABLE
+
+	/*
+	 * Activate and wait for return
+	 */
+	HAL_Analog_Activate(p_analog->CONFIG.P_HAL_ANALOG, p_conversion->PIN);
+#endif
+
+}
+
+/*
+	can overwrite last item
+
+	switch foir priority queues?
+*/
+bool Analog_EnqueueFrontConversion(Analog_T * p_analog, const Analog_ConversionChannel_T * p_conversion)
+{
+//	bool isSuccess = false; //todo
+	_Analog_EnterCritical(p_analog);
+
+	if (_Analog_GetIsActive(p_analog) == false)
+	{
+//		p_analog->p_ActiveConversion = p_conversion;
+		_Analog_ActivateConversion(p_analog, p_conversion);//, &p_conversion->ADC_CONVERSION, &p_conversion->MAP);
+	}
+	else
+	{
+		if (Queue_GetIsFull(&p_analog->ConversionQueue) == true)
+		{
+			Queue_RemoveBack(&p_analog->ConversionQueue, 1U);
+		}
+		Queue_PushFront(&p_analog->ConversionQueue, &p_conversion);
+		p_analog->ActiveConversionCount = 0U;
+		p_analog->ActiveConversionIndex = 0U;
+		//Active conversion will end and deqeue this conversion.
+		//the following conversion will restore options as the intial conversion
+	}
+
+	_Analog_ExitCritical(p_analog);
+
+	return true;
+}
+
+
+
+
+/*
+	Dequeue if no conversions are active. If Active conversion automatically dequeue next conversion is out of sync
+*/
+bool Analog_PollQueue(Analog_T * p_analog)
+{
+	bool isSuccess = false;
+	const Analog_Conversion_T * p_conversion;
+
+	_Analog_EnterCritical(p_analog);
+	if (Queue_PeekFront(&p_analog->ConversionQueue, &p_conversion) == true)
+	{
+		_Analog_ActivateConversion(p_analog, p_conversion);
+		isSuccess = true;
+	}
+	_Analog_ExitCritical(p_analog);
+
+	return isSuccess;
+}
+
+

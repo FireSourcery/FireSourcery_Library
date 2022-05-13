@@ -102,6 +102,7 @@ static inline size_t CalcQueueIndexMasked(const Queue_T * p_queue, size_t index)
 static inline size_t CalcQueueIndexInc(const Queue_T * p_queue, size_t index, size_t inc)
 {
 #if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
+	(void)p_queue;
 	return index + inc;
 #else
 	return CalcQueueIndexMasked(p_queue, index + inc);
@@ -111,6 +112,7 @@ static inline size_t CalcQueueIndexInc(const Queue_T * p_queue, size_t index, si
 static inline size_t CalcQueueIndexDec(const Queue_T * p_queue, size_t index, size_t dec)
 {
 #if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
+	(void)p_queue;
 	return index - dec;
 #elif defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED)
 	return CalcQueueIndexMasked(p_queue, index - dec);

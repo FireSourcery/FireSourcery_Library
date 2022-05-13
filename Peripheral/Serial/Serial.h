@@ -38,26 +38,26 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct
+typedef const struct Serial_Config_Tag
 {
 	HAL_Serial_T * const P_HAL_SERIAL;
 }
 Serial_Config_T;
 
-typedef struct
+typedef struct Serial_Tag
 {
 	const Serial_Config_T CONFIG;
 	Queue_T RxQueue;
 	Queue_T TxQueue;
-	//	uin32t_t BaudRate; 
+	//	uin32t_t BaudRate;
 	//#if defined(CONFIG_SERIAL_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_SERIAL_CRITICAL_USER_DEFINED)
 	//	uint8_t TxMutex;
 	//	uint8_t RxMutex;
-	//#endif 
+	//#endif
 	//	void (* RxCallback)(void *); 	/*!< Callback on Rx */
 	//	void * RxCallbackData; 			/*!< Receive callback parameter pointer.*/
 	//	void (* TxCallback)(void *); 	/*!< Callback on Tx */
-	//	void * TxCallbackData; 			/*!< Transmit callback parameter pointer.*/ 
+	//	void * TxCallbackData; 			/*!< Transmit callback parameter pointer.*/
 	//  volatile Serial_Status_T TxStatus;		/*!< Status of last driver transmit operation */
 	//  volatile Serial_Status_T RxStatus;		/*!< Status of last driver receive operation */
 	//  Serial_TransferMode_T TransferMode;		/*!< interrupt/dma mode */
@@ -100,7 +100,7 @@ static inline void Serial_RxData_ISR(Serial_T * p_serial)
 
 /*
 	Tx data reg/fifo empty ISR, transmit from software buffer to hw
-	
+
 	Alternatively, HAL_Serial_ReadTxFullCount < CONFIG_HAL_SERIAL_FIFO_SIZE
 */
 static inline void Serial_TxData_ISR(Serial_T * p_serial)
@@ -147,12 +147,12 @@ static inline void Serial_PollTxData(Serial_T * p_serial)
 	{
 		HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 	}
-} 
+}
 
 static inline void Serial_FlushBuffers(Serial_T * p_serial)
 {
 	Queue_Clear(&p_serial->TxQueue);
-	Queue_Clear(&p_serial->RxQueue); 
+	Queue_Clear(&p_serial->RxQueue);
 }
 
 static inline uint32_t Serial_GetRxFullCount(Serial_T * p_serial) 	{ return Queue_GetFullCount(&p_serial->RxQueue); }
@@ -162,6 +162,8 @@ static inline void Serial_DisableTxIsr(const Serial_T * p_serial) 	{ HAL_Serial_
 static inline void Serial_EnableRx(const Serial_T * p_serial) 		{ HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
 static inline void Serial_DisableRx(const Serial_T * p_serial) 		{ HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
 
+extern void Serial_Init(Serial_T * p_serial);
+extern void Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate);
 extern bool Serial_SendChar(Serial_T * p_serial, uint8_t txChar);
 extern bool Serial_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar);
 extern uint32_t Serial_SendBuffer(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t bufferSize);
@@ -170,9 +172,6 @@ extern bool Serial_SendString(Serial_T * p_serial, const uint8_t * p_srcBuffer, 
 extern bool Serial_RecvString(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
 extern bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
 extern uint32_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
-extern void Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate);
-extern void Serial_Init(Serial_T * p_serial);
-
 extern uint8_t * Serial_AcquireTxBuffer(Serial_T * p_serial);
 extern void Serial_ReleaseTxBuffer(Serial_T * p_serial, size_t writeSize);
 

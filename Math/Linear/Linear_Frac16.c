@@ -48,10 +48,10 @@ void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, in
 
 	p_linear->XOffset = 0;
 	p_linear->YOffset = y0;
-} 
-
-void Linear_Frac16_Init_X0(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t yRef)
-{
-
 }
+
+// void Linear_Frac16_Init_X0(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t yRef)
+// {
+
+// }
 

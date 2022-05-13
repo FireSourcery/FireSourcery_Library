@@ -47,8 +47,8 @@ XcvrVirtual_T;
 }
 
 /*
- * Use critical if multithreaded
- */
+	Use critical if multithreaded
+*/
 static inline bool XcvrVirtual_Send(XcvrVirtual_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
 {
 	return Queue_EnqueueN(&p_xcvr->TxQueue, p_srcBuffer, length);

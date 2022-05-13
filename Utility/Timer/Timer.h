@@ -61,7 +61,7 @@ Timer_T;
 
 /******************************************************************************/
 /*!
-	@brief	Timer
+	@brief	Timer Common
 */
 /******************************************************************************/
 static inline void Timer_Disable(Timer_T * p_timer) { p_timer->Period = 0U; }
@@ -105,14 +105,7 @@ static inline uint32_t Timer_GetElapsed_Micros(Timer_T * p_timer)
 static inline bool Timer_GetIsComplete(Timer_T * p_timer) { return (Timer_GetElapsed_Ticks(p_timer) >= p_timer->Period) ? true : false; }
 static inline bool Timer_CheckComplete(Timer_T * p_timer) { return Timer_GetIsComplete(p_timer); }
 
-//static inline uint32_t Timer_ConvertMillisToTicks(Timer_T * p_timer, uint32_t ms) {return (p_timer->CONFIG.BASE_FREQ * ms / 1000U);}
-//static inline uint32_t Timer_GetFreq(Timer_T * p_timer) {return p_timer->CONFIG.BASE_FREQ / p_timer->Period;}
-
-/*
-	freq != 0U
-	freq < Base Freq
-	periodic mode only, unless support Nshot timer
-*/
+/* freq != 0U, freq < Base Freq */
 static inline void Timer_SetFreq(Timer_T * p_timer, uint16_t freq) { p_timer->Period = p_timer->CONFIG.BASE_FREQ / freq; }
 
 static inline void Timer_SetPeriod(Timer_T * p_timer, uint32_t ticks) 				{ p_timer->Period = ticks; }
@@ -125,55 +118,53 @@ static inline void Timer_StartPeriod_Millis(Timer_T * p_timer, uint32_t millis) 
 
 /******************************************************************************/
 /*!
-	Periodic Timer
-*/
-/******************************************************************************/
-static inline bool Timer_PollPeriodic(Timer_T * p_timer)
-{
-	bool isComplete = Timer_CheckComplete(p_timer);
-	if(isComplete == true) { Timer_Restart(p_timer); }
-	return isComplete;
-}
-
-static inline void Timer_InitPeriodic(Timer_T * p_timer, uint32_t ticks) 	{ p_timer->IsOneShot = false; p_timer->Period = ticks; }
-
-/******************************************************************************/
-/*!
-	OneShot Timer
-*/
-/******************************************************************************/
-static inline bool Timer_PollOneShot(Timer_T * p_timer)
-{
-	bool isComplete = (p_timer->Period > 0U) && (Timer_CheckComplete(p_timer) == true);
-	if(isComplete == true) { p_timer->Period = 0U; }
-	return isComplete;
-}
-
-static inline void Timer_InitOneShot(Timer_T * p_timer) 					{ p_timer->IsOneShot = true; p_timer->Period = 0U; }
-
-/******************************************************************************/
-/*!
-	Flex Timer
+	Timer Both Modes
 */
 /******************************************************************************/
 static inline bool Timer_Poll(Timer_T * p_timer)
 {
 	bool isComplete = (p_timer->Period > 0U) && (Timer_CheckComplete(p_timer) == true);
-
-	if(isComplete == true)
-	{
-		(p_timer->IsOneShot == true) ? p_timer->Period = 0U : Timer_Restart(p_timer);
-	}
-
+	if(isComplete == true) { (p_timer->IsOneShot == true) ? p_timer->Period = 0U : Timer_Restart(p_timer); }
 	return isComplete;
 }
 
-static inline void Timer_Init(Timer_T * p_timer) 			{ p_timer->IsOneShot = false;	p_timer->Period = 0U; }
+static inline void Timer_Init(Timer_T * p_timer) 			{ p_timer->IsOneShot = false; p_timer->Period = 0U; }
+static inline void Timer_InitPeriodic(Timer_T * p_timer, uint32_t ticks) 	{ p_timer->IsOneShot = false; p_timer->Period = ticks; }
+static inline void Timer_InitOneShot(Timer_T * p_timer) 					{ p_timer->IsOneShot = true; p_timer->Period = 0U; }
 static inline void Timer_SetPeriodic(Timer_T * p_timer) 	{ p_timer->IsOneShot = false; }
 static inline void Timer_SetOneShot(Timer_T * p_timer) 		{ p_timer->IsOneShot = true; }
 static inline void Timer_StartOneShot(Timer_T * p_timer, uint32_t ticks) 	{ p_timer->IsOneShot = true; Timer_StartPeriod(p_timer, ticks); }
 static inline void Timer_StartPeriodic(Timer_T * p_timer, uint32_t ticks) 	{ p_timer->IsOneShot = false; Timer_StartPeriod(p_timer, ticks); }
 static inline bool Timer_GetIsOneShot(Timer_T * p_timer) 	{ return p_timer->IsOneShot; }
 static inline bool Timer_GetIsPeriodic(Timer_T * p_timer) 	{ return !p_timer->IsOneShot; }
+
+/******************************************************************************/
+/*!
+	Periodic Only Timer
+*/
+/******************************************************************************/
+static inline bool Timer_Periodic_Poll(Timer_T * p_timer)
+{
+	bool isComplete = Timer_CheckComplete(p_timer);
+	if(isComplete == true) { Timer_Restart(p_timer); }
+	return isComplete;
+}
+
+static inline void Timer_Periodic_Init(Timer_T * p_timer, uint32_t ticks) { p_timer->IsOneShot = false; p_timer->Period = ticks; }
+
+/******************************************************************************/
+/*!
+	OneShot Only Timer
+*/
+/******************************************************************************/
+static inline bool Timer_OneShot_Poll(Timer_T * p_timer)
+{
+	bool isComplete = (p_timer->Period > 0U) && (Timer_CheckComplete(p_timer) == true);
+	if(isComplete == true) { p_timer->Period = 0U; }
+	return isComplete;
+}
+
+static inline void Timer_OneShot_Init(Timer_T * p_timer) { p_timer->IsOneShot = true; p_timer->Period = 0U; }
+
 
 #endif /* TIMER_H */

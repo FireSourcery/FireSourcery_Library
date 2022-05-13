@@ -51,7 +51,7 @@
 //}
 //PWM_Channel_T;
 
-typedef const struct
+typedef const struct PWM_Config_Tag
 {
 	HAL_PWM_T * const P_HAL_PWM;
 	const uint32_t CHANNEL_ID;
@@ -60,15 +60,15 @@ typedef const struct
 }
 PWM_Config_T;
 
-typedef struct
+typedef struct PWM_Tag
 {
 	const PWM_Config_T CONFIG;
 	/*
-	 * Buffered data
-	 */
-	 //	uint32_t Duty_Ticks;
-	 //	bool IsOn;
-	 //	bool IsInvertPolarity;
+		Buffered data
+	*/
+	//	uint32_t Duty_Ticks;
+	//	bool IsOn;
+	//	bool IsInvertPolarity;
 }
 PWM_T;
 
@@ -153,6 +153,12 @@ static inline void PWM_ActuateSync(const PWM_T * p_pwm)
 	HAL_PWM_Sync(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID);
 }
 
+extern void PWM_Init(PWM_T * p_pwm);
+extern void PWM_InitChannel(PWM_T * p_pwm);
+extern void PWM_InitModule(PWM_T * p_pwm);
+
+#endif
+
 /*
 	Use buffered data
 */
@@ -203,9 +209,3 @@ static inline void PWM_ActuateSync(const PWM_T * p_pwm)
  //	PWM_ActuateInvertPolarityThis(p_pwm);
  //	PWM_ActuateSync(p_pwm); //user call sync in other cases
  //}
-
-extern void PWM_Init(PWM_T * p_pwm);
-extern void PWM_InitChannel(PWM_T * p_pwm);
-extern void PWM_InitModule(PWM_T * p_pwm);
-
-#endif

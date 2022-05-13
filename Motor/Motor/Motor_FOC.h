@@ -109,9 +109,8 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 				OpenLoop
 				Blind input angle, constant voltage
 
-				p_foc->Theta = integral of speed req
+				p_foc->Theta = integrate speed to angle
 			*/
-			/* integrate speed to angle */
 			p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcIndexOutput(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopSpeed_RPM);
 			electricalAngle = p_motor->ElectricalAngle + Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
 			break;
@@ -177,10 +176,6 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			break;
 
 		case MOTOR_SENSOR_MODE_SIN_COS:
-			//todo analog cmd start begin loop
-			AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-			AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
-
 			SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
 			electricalAngle = SinCos_GetElectricalAngle(&p_motor->SinCos);
 			if(procSpeed == true) { speedFeedback_Frac16 = _Motor_FOC_CaptureAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos)); }
@@ -196,7 +191,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 		/*
 			Speed Feedback Loop
 				SpeedControl update 1000Hz, Ramp input 1000Hz, RampCmd output 20000Hz, alternatively use RampIndex += 20?
-			input	RampCmd[-32767:32767], (speedFeedback_Frac16 / 2)[-32767:32767]
+			input	RampCmd[-32767:32767] - (speedFeedback_Frac16 / 2)[-32767:32767]
 			output 	SpeedControl[-32767:32767] => IqReq or VqReq
 		*/
 		if(p_motor->FeedbackModeFlags.Speed == 1U) { p_motor->SpeedControl = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, speedFeedback_Frac16 / 2); };
@@ -214,9 +209,9 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 	qfrac16_t vqReqOut;
 
 	/* VoltageModeILimit_QFracS16 set to torque direction. Alternatively, use limits stored in SpeedPid  */
-	if		((p_motor->VoltageModeILimit_QFracS16 > 0) == true) { isOverLimit = (FOC_GetIq(&p_motor->Foc) > p_motor->VoltageModeILimit_QFracS16); }
-	else if	((p_motor->VoltageModeILimit_QFracS16 < 0) == true) { isOverLimit = (FOC_GetIq(&p_motor->Foc) < p_motor->VoltageModeILimit_QFracS16); }
-	else 														{ isOverLimit = false; } /* should not occur */
+	if		(p_motor->VoltageModeILimit_QFracS16 > 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) > p_motor->VoltageModeILimit_QFracS16); }
+	else if	(p_motor->VoltageModeILimit_QFracS16 < 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) < p_motor->VoltageModeILimit_QFracS16); }
+	else 												{ isOverLimit = false; } /* should not occur */
 
 	if((isOverLimit == true) && (p_motor->RunStateFlags.VoltageModeILimitActive == false))
 	{
@@ -229,10 +224,7 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 	}
 
 	vqReqOut = (p_motor->RunStateFlags.VoltageModeILimitActive == true) ?
-		PID_Calc(&p_motor->PidIq, p_motor->VoltageModeILimit_QFracS16, FOC_GetIq(&p_motor->Foc)) :
-		vqReq;
-
-	vqReqOut = vqReq;
+		PID_Calc(&p_motor->PidIq, p_motor->VoltageModeILimit_QFracS16, FOC_GetIq(&p_motor->Foc)) : vqReq;
 
 	FOC_SetVq(&p_motor->Foc, vqReqOut);
 	FOC_SetVd(&p_motor->Foc, 0);
@@ -240,7 +232,7 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 
 static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 {
-	qfrac16_t userOutput = (p_motor->FeedbackModeFlags.Speed == 1U) ? p_motor->SpeedControl : p_motor->RampCmd;
+	int32_t userOutput = (p_motor->FeedbackModeFlags.Speed == 1U) ? p_motor->SpeedControl : p_motor->RampCmd;
 
 	if(p_motor->FeedbackModeFlags.Current == 1U) /* Current Control mode - proc using last adc measure */
 	{
@@ -250,20 +242,29 @@ static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 	else /* Voltage Control mode - use current feedback for over current only */
 	{
 		/*
+			Constant Voltage Mode
+			input	RampCmd[-32767:32767]
+			output	VqReq[-32767:32767] => RampCmd
+		*/
+		/*
 			VFreq Mode
 			input	RampCmd[0:65535] == VFreqScalar
-			  =>	[-32767:32767] => VqReq
+			output	VqReq[-32767:32767] => VFreqScalar * SpeedFeedback
 
 			SpeedVMatchRatio = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / p_motor->Parameters.SpeedVMatchRef_Rpm / 2;
 			SpeedVMatchRatio = Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16) / 2;
 			vqReq = p_motor->RampCmd * SpeedVMatchRatio / 65536;
+
+			Linear_Function(&p_motor->SpeedVMatchRatio) input range [-65535:65535], SpeedFeedback_Frac16 unsaturated
 		*/
-		/*
-			Constant Voltage Mode
-			input	RampCmd[-32767:32767]
-		*/
-		if(p_motor->FeedbackModeFlags.VFreqScalar == 1U) { userOutput = p_motor->RampCmd * (Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16) / 2) / 65536; }
-		// { userOutput = p_motor->RampCmd * (p_motor->SpeedFeedback_Frac16 / 2) / 65536; } //seletable SpeedControl?
+		if(p_motor->FeedbackModeFlags.VFreqScalar == 1U)
+		{
+			userOutput = p_motor->RampCmd * (Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16 / 2)) / 65536;   //seletable SpeedControl?
+
+			if(userOutput > 32767) { userOutput = 32767; }
+			else if(userOutput < -32767) { userOutput = -32767; }
+		}
+
 		_Motor_FOC_ProcVoltageMode(p_motor, userOutput);
 
 		// _Motor_FOC_ProcVoltageModeILimit(p_motor, userOutput);
@@ -326,11 +327,6 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 
 	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
 	// 	//todo analog cmd start begin loop
-	// if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
-	// {
-	// 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-	// 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
-	// }
 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
 #if defined(CONFIG_MOTOR_I_SENSORS_ABC) && !defined(CONFIG_MOTOR_I_SENSORS_AB)
@@ -396,7 +392,7 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 	/*
 		From FreeWheel State, match to speed/bemf
 	*/
-	 /*
+	/*
 		Match to Bemf
 		Captured VBemfPeak always positive
 		//todo check bemf capture available.

@@ -22,24 +22,25 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.h
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	Config.h
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef CONFIG_NV_MEMORY_H
 #define CONFIG_NV_MEMORY_H
 
-#ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE
-
-#elif defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE)
-
+#if 	defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE)
+#elif 	defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE)
 #else
 	#define CONFIG_NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE
 #endif
 
-//if use internal flash
-#define CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION __attribute__((section (".code_ram")))
+/* For placing functions into ram section */
+#if 	defined(CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION)
+#else
+	#define CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION __attribute__((section (".code_ram")))
+#endif
 
 #endif

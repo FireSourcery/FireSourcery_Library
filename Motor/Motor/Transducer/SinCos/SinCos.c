@@ -83,7 +83,7 @@ void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_
 */
 void SinCos_CalibrateCcwPositive(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-	p_sincos->Params.IsBPositive = (SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu) > 0U) ? true : false;
+	p_sincos->Params.IsBPositive = (SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu) > 0);
 }
 
 void SinCos_CalibrateA(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)

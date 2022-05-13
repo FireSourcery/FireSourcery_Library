@@ -124,8 +124,8 @@ typedef union Motor_RunStateFlags_Tag
 	struct
 	{
 		uint32_t Hold 						: 1U;
-		uint32_t SpeedLimitScalarActive 	: 1U;
-		uint32_t ILimitScalarActive 		: 1U; /* Set approx 1/s, check 1/ms */
+		// uint32_t SpeedLimitScalarActive 	: 1U;
+		// uint32_t ILimitScalarActive 		: 1U; /* Set approx 1/s, check 1/ms */
 		uint32_t HeatWarning 				: 1U;
 		uint32_t VoltageModeILimitActive 	: 1U;
 			// uint32_t UpdateMode 		: 1U;
@@ -135,6 +135,23 @@ typedef union Motor_RunStateFlags_Tag
 	uint32_t State;
 }
 Motor_RunStateFlags_T;
+
+// typedef enum Motor_SpeedLimitActiveId_Tag
+// {
+// 	MOTOR_SPEED_LIMIT_ACTIVE_DISABLE = 0U,
+// 	MOTOR_SPEED_LIMIT_ACTIVE_SYSTEM = 1U, /* From parent class */
+// 	MOTOR_SPEED_LIMIT_ACTIVE_USER = 2U,
+// }
+// Motor_SpeedLimitActiveId_T;
+
+typedef enum Motor_ILimitActiveId_Tag
+{
+	MOTOR_I_LIMIT_ACTIVE_DISABLE = 0U,
+	MOTOR_I_LIMIT_ACTIVE_HEAT = 1U,
+	MOTOR_I_LIMIT_ACTIVE_SYSTEM = 20U,  /* From parent class */
+	MOTOR_I_LIMIT_ACTIVE_USER = 30U,
+}
+Motor_ILimitActiveId_T;
 
 typedef enum Motor_TorqueMode_Tag
 {
@@ -244,15 +261,11 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	uint16_t SpeedLimitCw_Frac16;
 	uint16_t ILimitMotoring_Frac16;		/* Persistent User Param. Frac16 of RefMax I_MAX_AMP */
 	uint16_t ILimitGenerating_Frac16;
-
-	/* Scalar Limits */
-	uint16_t ILimitScalarHeat_Frac16; 	/* Active on thermistor warning. Frac16 scalar on active limit */
-
-	// uint16_t VoltageBrakeScalar_InvFrac16; /* [0:65535], 0 is highest intensity */
+	uint16_t ILimitScalarHeat_Frac16; 	/*  Preset Scalar Limit , active on thermistor warning. Frac16 scalar on active limit */
 
 	uint16_t AlignVoltage_Frac16;
 	uint16_t AlignTime_ControlCycles;
-
+	// uint16_t VoltageBrakeScalar_InvFrac16; /* [0:65535], 0 is highest intensity */
 	//	uint8_t BrakeCoeffcient;
 	//	uint32_t RampAcceleration;
 
@@ -313,16 +326,31 @@ typedef struct Motor_Tag
 	Motor_FeedbackModeFlags_T FeedbackModeFlags;
 	Motor_RunStateFlags_T RunStateFlags; /* Run Substate */
 	// Motor_TorqueDirection_T TorqueDirection;
+
+	/*
+		Limits
+	*/
 	uint16_t SpeedLimitCcw_Frac16; 		/* Active SpeedLimit, Frac16 of SpeedRefMax Param */
 	uint16_t SpeedLimitCw_Frac16;
-	uint16_t SpeedLimit_Frac16; 		/* Active SpeedLimit, optionally reduce 1 check of direction */
+	uint16_t SpeedLimit_Frac16; 		/* Active SpeedLimit, optionally reduce 1 check of direction during User_SetFeedbackCmd */
 	uint16_t ILimitMotoring_Frac16;		/* Active ILimit */
 	uint16_t ILimitGenerating_Frac16;
-	int16_t VoltageModeILimit_QFracS16; /* [-32767:32767] */
+	int16_t VoltageModeILimit_QFracS16; /* [-32767:32767] directional input into pid */
+
+	// Motor_SpeedLimitActiveId_T SpeedLimitActiveId;
+	Motor_ILimitActiveId_T ILimitActiveId;
+	uint16_t SpeedLimitActiveScalar; 	/* Store for comparison */
+	uint16_t ILimitActiveScalar;		/*  */
 
 	/* Calibration Substate */
 	Motor_CalibrationState_T CalibrationState; 	/* Substate, selection for calibration */
 	uint8_t CalibrationStateIndex;
+
+	/* Jog */
+	uint32_t JogIndex;
+
+	uint16_t VBemfPeak_Adcu; //todo
+	uint16_t VBemfPeakTemp_Adcu;
 
 	/*
 		UserCmd Input => Ramp
@@ -338,26 +366,19 @@ typedef struct Motor_Tag
 	Timer_T SpeedTimer;					/* Speed Calc Timer */
 	int32_t SpeedFeedback_Frac16; 		/* [-65535:65535] Speed Feedback Variable. Can over saturate */
 	int32_t SpeedControl; 				/* [-32767:32767] Speed Control Variable. (SpeedFeedback_Frac16 / 2 - RampCmd) => VPwm, Vq, Iq. updated once per millis */
-	// uint16_t Speed_RPM;
-	// uint16_t Speed2_RPM;
 	// uint32_t Speed2_Frac16;
-
-	Linear_T SpeedVMatchRatio;				/* SpeedVMatch_Factor = SpeedFeedbackRef_Rpm << 14 / SpeedVMatchRef_Rpm */
-
-	uint16_t VBemfPeak_Adcu;
-	uint16_t VBemfPeakTemp_Adcu;
 
 	/*
 		FOC
 	*/
 	FOC_T Foc;
-	PID_T PidIq;					/* Input Iq, Output Vq, sign indicates direction */
+	PID_T PidIq;					/* Input (IqReq - IqFeedback), Output Vq. Sign indicates ccw/cw direction */
 	PID_T PidId;
-	qangle16_t ElectricalAngle;		/* Save for UI use */
+	qangle16_t ElectricalAngle;		/* Save for user output */
 	// uint32_t ElectricalDelta;
 
-	Linear_T UnitAngleRpm; 			//non encoder/hall sensor
-	qangle16_t SpeedAngle; 	/* Save for reference */
+	Linear_T UnitAngleRpm; 			/* Non Encoder/Hall sensor */
+	qangle16_t SpeedAngle; 			/* Save for reference */
 	// uint32_t MechanicalDelta;
 
 	/* Interpolated angle */
@@ -379,7 +400,7 @@ typedef struct Motor_Tag
 	/*
 		Open-loop
 	*/
-	bool IsOpenLoop;
+	// bool IsOpenLoop;
 	Linear_T OpenLoopRamp;
 	uint32_t OpenLoopRampIndex;
 	uint32_t OpenLoopCommutationPeriod;
@@ -389,7 +410,6 @@ typedef struct Motor_Tag
 	uint32_t MicrosRef; //debug
 	volatile uint32_t DebugTime[10U];
 	volatile uint32_t Debug[20U];
-	uint32_t JogIndex;
 
 	/*
 		Unit Conversions
@@ -398,37 +418,13 @@ typedef struct Motor_Tag
 	Linear_T UnitIb;
 	Linear_T UnitIc;
 	Linear_T UnitVabc;	//Bemf V and mV conversion
+	Linear_T SpeedVMatchRatio; 	/* SpeedVMatch_Factor = SpeedFeedbackRef_Rpm << 14 / SpeedVMatchRef_Rpm */
 
 	Filter_T FilterA; 	//Calibration use
 	Filter_T FilterB;
 	Filter_T FilterC;
 }
 Motor_T;
-
-/******************************************************************************/
-/*!
-	Motor Common
-	@{
-*/
-/******************************************************************************/
-
-static inline int32_t Motor_ConvertToSpeedFrac16(Motor_T * p_motor, int32_t speed_rpm) { return speed_rpm * 65535 / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
-static inline int16_t Motor_ConvertToSpeedRpm(Motor_T * p_motor, int32_t speed_frac16) { return speed_frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / 65536; }
-
-static inline int32_t Motor_ConvertToIFrac16(Motor_T * p_motor, int32_t i_amp) { return i_amp * 65535 / p_motor->CONFIG.I_MAX_AMP; }
-static inline int16_t Motor_ConvertToIAmp(Motor_T * p_motor, int32_t i_frac16) { return i_frac16 * p_motor->CONFIG.I_MAX_AMP / 65536; }
-
-static inline void Motor_ResetSpeedLimits(Motor_T * p_motor)
-{
-	p_motor->SpeedLimitCcw_Frac16 = p_motor->Parameters.SpeedLimitCcw_Frac16;
-	p_motor->SpeedLimitCw_Frac16 = p_motor->Parameters.SpeedLimitCw_Frac16;
-}
-
-static inline void Motor_ResetILimits(Motor_T * p_motor)
-{
-	p_motor->ILimitMotoring_Frac16 = p_motor->Parameters.ILimitMotoring_Frac16;
-	p_motor->ILimitGenerating_Frac16 = p_motor->Parameters.ILimitGenerating_Frac16;
-}
 
 /******************************************************************************/
 /*
@@ -451,10 +447,7 @@ static inline void Motor_ProcRamp(Motor_T * p_motor)
 */
 static inline void Motor_SetRamp(Motor_T * p_motor, int32_t userCmd)
 {
-	/*
-		Constant acceleration ramp
-	*/
-	Linear_Ramp_SetTarget(&p_motor->Ramp, userCmd);
+	Linear_Ramp_SetTarget(&p_motor->Ramp, userCmd); 	/* Constant acceleration ramp */
 }
 
 /*
@@ -475,7 +468,7 @@ static inline void Motor_ResetRamp(Motor_T * p_motor)
 }
 
 /*
-	match ramp output
+	Match ramp output
 */
 static inline void Motor_SetRampOutput(Motor_T * p_motor, int32_t matchOutput)
 {
@@ -557,7 +550,22 @@ static inline void Motor_SetFeedbackModeFlags(Motor_T * p_motor, Motor_FeedbackM
 	Common Sets
 */
 /******************************************************************************/
+static inline int32_t Motor_ConvertToSpeedFrac16(Motor_T * p_motor, int32_t speed_rpm) { return speed_rpm * 65535 / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
+static inline int16_t Motor_ConvertToSpeedRpm(Motor_T * p_motor, int32_t speed_frac16) { return speed_frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / 65536; }
+static inline int32_t Motor_ConvertToIFrac16(Motor_T * p_motor, int32_t i_amp) { return i_amp * 65535 / p_motor->CONFIG.I_MAX_AMP; }
+static inline int16_t Motor_ConvertToIAmp(Motor_T * p_motor, int32_t i_frac16) { return i_frac16 * p_motor->CONFIG.I_MAX_AMP / 65536; }
 
+static inline void Motor_ResetSpeedLimits(Motor_T * p_motor)
+{
+	p_motor->SpeedLimitCcw_Frac16 = p_motor->Parameters.SpeedLimitCcw_Frac16;
+	p_motor->SpeedLimitCw_Frac16 = p_motor->Parameters.SpeedLimitCw_Frac16;
+}
+
+static inline void Motor_ResetILimits(Motor_T * p_motor)
+{
+	p_motor->ILimitMotoring_Frac16 = p_motor->Parameters.ILimitMotoring_Frac16;
+	p_motor->ILimitGenerating_Frac16 = p_motor->Parameters.ILimitGenerating_Frac16;
+}
 
 /******************************************************************************/
 /*!
@@ -572,9 +580,6 @@ extern void Motor_InitVRefSupply_V(uint16_t vRefSupply);
 extern void Motor_Init(Motor_T * p_motor);
 extern void Motor_InitReboot(Motor_T * p_motor);
 
-// extern bool Motor_CheckFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
-// extern void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
-
 extern void Motor_Jog12Step(Motor_T * p_motor, uint8_t step);
 extern void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step);
 extern void Motor_Jog6Step(Motor_T * p_motor, uint8_t step);
@@ -587,6 +592,10 @@ extern void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
 extern void Motor_SetDirectionForward(Motor_T * p_motor);
 extern void Motor_SetDirectionReverse(Motor_T * p_motor);
 
+extern void Motor_ResetSensorMode(Motor_T * p_motor);
+extern void Motor_ResetUnitsVabc(Motor_T * p_motor);
 extern void Motor_ResetUnitsIabc(Motor_T * p_motor);
+extern void Motor_ResetUnitsHall(Motor_T * p_motor);
+extern void Motor_ResetSpeedVMatchRatio(Motor_T * p_motor);
 
 #endif

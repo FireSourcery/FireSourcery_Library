@@ -80,13 +80,13 @@ static inline void MotorController_User_SetDirection(MotorController_T * p_mc, M
 
 static inline void MotorController_User_SaveParameters_Blocking(MotorController_T * p_mc)
 {
-	p_mc->NvmSubstate = MOTOR_CONTROLLER_NVM_ALL;
+	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_ALL;
 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
 }
 
 static inline void MotorController_User_SaveBootReg_Blocking(MotorController_T * p_mc)
 {
-	p_mc->NvmSubstate = MOTOR_CONTROLLER_NVM_BOOT;
+	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_BOOT;
 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
 }
 
@@ -224,7 +224,7 @@ static inline Motor_T * MotorController_User_GetPtrProtocol(const MotorControlle
 }
 
 /*
-	Wrappers for MainProtocol protocol[0]
+	Wrappers for MainProtocol aka Protocol[0]
 */
 static inline void MotorController_User_SetMainProtocolXcvr(MotorController_T * p_mc, uint8_t id) { Protocol_SetSpecs(&p_mc->CONFIG.P_PROTOCOLS[0U], id); }
 static inline void MotorController_User_SetMainProtoclSpecs(MotorController_T * p_mc, uint8_t id) { Protocol_SetXcvr(&p_mc->CONFIG.P_PROTOCOLS[0U], id); }

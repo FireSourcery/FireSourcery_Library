@@ -100,8 +100,10 @@ static inline bool AcquireCriticalGlobalTx(Serial_T * p_serial)
 #if		defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
 	return Critical_AquireMutex(&p_serial->TxMutex);
 #elif 	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
+	(void)p_serial;
 	Critical_Enter(); 	return true;
 #elif 	defined(CONFIG_SERIAL_SINGLE_THREADED)
+	(void)p_serial;
 	return true;
 #endif
 }
@@ -111,8 +113,10 @@ static inline void ReleaseCriticalGlobalTx(Serial_T * p_serial)
 #if		defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
 	Critical_ReleaseMutex(&p_serial->TxMutex);
 #elif 	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
+	(void)p_serial;
 	Critical_Exit();
 #elif 	defined(CONFIG_SERIAL_SINGLE_THREADED)
+	(void)p_serial;
 #endif
 }
 
@@ -121,8 +125,10 @@ static inline bool AcquireCriticalGlobalRx(Serial_T * p_serial)
 #if		defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
 	return Critical_AquireMutex(&p_serial->RxMutex);
 #elif 	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
+	(void)p_serial;
 	Critical_Enter(); 	return true;
 #elif 	defined(CONFIG_SERIAL_SINGLE_THREADED)
+	(void)p_serial;
 	return true;
 #endif
 }
@@ -132,8 +138,10 @@ static inline void ReleaseCriticalGlobalRx(Serial_T * p_serial)
 #if		defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
 	Critical_ReleaseMutex(&p_serial->RxMutex);
 #elif	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
+	(void)p_serial;
 	Critical_Exit();
-#elif 	defined(CONFIG_SERIAL_SINGLE_THREADED)	
+#elif 	defined(CONFIG_SERIAL_SINGLE_THREADED)
+	(void)p_serial;
 #endif
 }
 
@@ -176,6 +184,7 @@ static inline bool Hw_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
 static inline uint8_t Hw_GetLoopCount(size_t length)
 {
 #ifdef CONFIG_SERIAL_HW_FIFO_DISABLE
+	(void)length;
 	return 1U;
 #else
 	return length;
@@ -403,7 +412,7 @@ uint32_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
 }
 
 /*
-	Passes buffer to upper layer to avoid double buffer write. 
+	Passes buffer to upper layer to avoid double buffer write.
 	Must flush buffer to start at 0 index.
 */
 uint8_t * Serial_AcquireTxBuffer(Serial_T * p_serial)
@@ -413,7 +422,7 @@ uint8_t * Serial_AcquireTxBuffer(Serial_T * p_serial)
 	if(AcquireCriticalGlobalTx(p_serial) == true)
 	{
 		EnterCriticalSerialTx(p_serial);
-		p_buffer = Queue_AcquireBuffer(&p_serial->TxQueue); 
+		p_buffer = Queue_AcquireBuffer(&p_serial->TxQueue);
 	}
 
 	return p_buffer;

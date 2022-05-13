@@ -182,9 +182,9 @@ Hall_Config_T;
 typedef struct Hall_Tag
 {
 	const Hall_Config_T CONFIG;
-	const Pin_T PinA;
-	const Pin_T PinB;
-	const Pin_T PinC;
+	Pin_T PinA;
+	Pin_T PinB;
+	Pin_T PinC;
 	Hall_Params_T Params;
 	Hall_Direction_T Direction;
 	Hall_Sensors_T SensorsRef; 		/* Save last read */
@@ -221,7 +221,7 @@ static inline Hall_Sensors_T Hall_ReadSensors(const Hall_T * p_hall)
 }
 
 /*
-	
+
 */
 static inline void Hall_CaptureSensors_ISR(Hall_T * p_hall)
 {

@@ -125,32 +125,32 @@ size_t VMonitor_ToString_Verbose(VMonitor_T * p_vMonitor, char * p_stringBuffer,
 	int32_t num;
 	char numStr[16U];
 
-	p_stringDest = strncpy(p_stringDest, STR_LIMIT, strlen(STR_LIMIT)) + strlen(STR_LIMIT);
+	memcpy(p_stringDest, STR_LIMIT, strlen(STR_LIMIT)); p_stringDest += strlen(STR_LIMIT);
 
-	p_stringDest = strncpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)) + strlen(STR_UPPER);
+	memcpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)); p_stringDest += strlen(STR_UPPER);
 	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitUpper_Adcu, unitVScalar);
 	snprintf(numStr, 16U, "%d", (int)num);
-	p_stringDest = strncpy(p_stringDest, numStr, strlen(numStr)) + strlen(numStr);
+	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
 	*p_stringDest = ' '; p_stringDest++;
 
-	p_stringDest = strncpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)) + strlen(STR_LOWER);
+	memcpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)); p_stringDest += strlen(STR_LOWER);
 	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitLower_Adcu, unitVScalar);
 	snprintf(numStr, 16U, "%d", (int)num);
-	p_stringDest = strncpy(p_stringDest, numStr, strlen(numStr)) + strlen(numStr);
+	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
 	*p_stringDest = ' '; p_stringDest++;
 
-	p_stringDest = strncpy(p_stringDest, STR_WARNING, strlen(STR_WARNING)) + strlen(STR_WARNING);
+	memcpy(p_stringDest, STR_WARNING, strlen(STR_WARNING)); p_stringDest += strlen(STR_WARNING);
 
-	p_stringDest = strncpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)) + strlen(STR_UPPER);
+	memcpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)); p_stringDest += strlen(STR_UPPER);
 	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningUpper_Adcu, unitVScalar);
 	snprintf(numStr, 16U, "%d", (int)num);
-	p_stringDest = strncpy(p_stringDest, numStr, strlen(numStr)) + strlen(numStr);
+	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
 	*p_stringDest = ' '; p_stringDest++;
 
-	p_stringDest = strncpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)) + strlen(STR_LOWER);
+	memcpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)); p_stringDest += strlen(STR_LOWER);
 	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningLower_Adcu, unitVScalar);
 	snprintf(numStr, 16U, "%d", (int)num);
-	p_stringDest = strncpy(p_stringDest, numStr, strlen(numStr)) + strlen(numStr);
+	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
 	*p_stringDest = ' '; p_stringDest++;
 
 	return p_stringDest - p_stringBuffer;
@@ -161,9 +161,9 @@ size_t VMonitor_ToString_Verbose(VMonitor_T * p_vMonitor, char * p_stringBuffer,
 
 // }
 
-void VMonitor_PrintString_Verbose(VMonitor_T * p_vMonitor, void(*print)(void * p_context, char * p_string, size_t length), void * p_context)
-{
-	print(p_context, STR_UPPER, strlen(STR_UPPER));
-}
+// void VMonitor_PrintString_Verbose(VMonitor_T * p_vMonitor, void(*print)(void * p_context, const char * p_string, size_t length), void * p_context)
+// {
+// 	print(p_context, STR_UPPER, strlen(STR_UPPER));
+// }
 
 #endif

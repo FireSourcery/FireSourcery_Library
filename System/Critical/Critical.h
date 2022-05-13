@@ -28,7 +28,7 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef CRITICAL_H 
+#ifndef CRITICAL_H
 #define CRITICAL_H
 
 #include "Config.h"
@@ -37,8 +37,8 @@
 #include <stdbool.h>
 
 /*
-	Implement per submodule HAL for now
-	or implement in parent HAL and include
+	HAL implement within module.
+	Alternatively, implement in parent HAL and include.
 */
 #ifdef CONFIG_SYSTEM_MCU_ARM
 	#include "External/CMSIS/Core/Include/cmsis_compiler.h"
@@ -60,7 +60,7 @@
 	#define CRITICAL_ENABLE_INTERRUPTS() {}
 #endif
 
-extern int32_t _Critical_InterruptDisableCount;
+extern uint32_t _Critical_InterruptDisableCount;
 extern uint32_t _Critical_RegPrimask;
 
 static inline void Critical_DisableIrq(void)
@@ -82,7 +82,7 @@ static inline void Critical_EnableIrq(void)
 }
 
 /*
-	No critical within critical
+	No nesting Critical within Critical
 */
 static inline void Critical_Enter(void)
 {
@@ -130,6 +130,7 @@ static inline bool Critical_AquireEnter(critical_mutex_t * p_mutex)
 #if defined(CONFIG_CRITICAL_USE_MUTEX)
 	return Critical_AquireMutex(p_mutex) ? true : false;
 #else
+	(void)p_mutex;
 	Critical_Enter();
 	return true;
 #endif
@@ -140,6 +141,7 @@ static inline void Critical_ReleaseExit(critical_mutex_t * p_mutex)
 #if defined(CONFIG_CRITICAL_USE_MUTEX)
 	Critical_ReleaseMutex(p_mutex);
 #else
+	(void)p_mutex;
 	Critical_Exit();
 #endif
 }

@@ -64,13 +64,11 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Motor_ResetSensorMode(p_motor);
 
 	Thermistor_Init(&p_motor->Thermistor);
-	p_motor->AnalogResults.Heat_Adcu = p_motor->Thermistor.Params.Threshold_Adcu;
 
 	/*
 		SW Structs
 	*/
 	Timer_InitPeriodic(&p_motor->ControlTimer, 1U);
-	// Timer_InitPeriodic(&p_motor->MillisTimer, 1U);
 	Timer_InitPeriodic(&p_motor->SpeedTimer, 1U);
 
 	FOC_Init(&p_motor->Foc);
@@ -86,9 +84,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 	// PID_SetOutputLimits(&p_motor->PidIq, 0 - iqOutCw, iqOutCcw); /
 	// PID_SetOutputLimits(&p_motor->PidId, 0 - speedIOutCcw / 2U, speedIOutCcw / 2U);
 
-	Motor_ResetUnitsVabc(p_motor);
-	Motor_ResetUnitsIabc(p_motor);
-
 	/*
 		Ramp 0 to 32767 max in ~500ms
 	*/
@@ -97,9 +92,10 @@ void Motor_InitReboot(Motor_T * p_motor)
 	p_motor->RampCmd = 0U;
 	p_motor->RampIndex = 0U;
 
-	//todo propagete on speedref set
-	Linear_Init(&p_motor->SpeedVMatchRatio, p_motor->Parameters.SpeedFeedbackRef_Rpm, p_motor->Parameters.SpeedVMatchRef_Rpm, 0, 65535);
+	Motor_ResetUnitsVabc(p_motor);
+	Motor_ResetUnitsIabc(p_motor);
 
+	Motor_ResetSpeedVMatchRatio(p_motor);
 	Motor_ResetSpeedLimits(p_motor);
 	Motor_ResetILimits(p_motor);
 
@@ -116,10 +112,11 @@ void Motor_InitReboot(Motor_T * p_motor)
 	p_motor->OpenLoopRampIndex = 0U;
 
 	Motor_SetFeedbackModeFlags(p_motor, p_motor->Parameters.FeedbackMode); //set user control mode so pids set to initial state.
-	p_motor->UserDirection = p_motor->Direction;
-	p_motor->ControlTimerBase = 0U;
 
-	p_motor->AnalogResults.Heat_Adcu = p_motor->Thermistor.Params.Threshold_Adcu;
+	p_motor->ControlTimerBase = 0U;
+	p_motor->UserDirection = p_motor->Direction;
+	// p_motor->SpeedLimitActiveId = MOTOR_SPEED_LIMIT_ACTIVE_DISABLE;
+	p_motor->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 }
 
 /******************************************************************************/
@@ -250,7 +247,8 @@ void Motor_ResetUnitsHall(Motor_T * p_motor)
 
 void Motor_ResetSpeedVMatchRatio(Motor_T * p_motor)
 {
-	Linear_Init(&p_motor->SpeedVMatchRatio, p_motor->Parameters.SpeedFeedbackRef_Rpm, p_motor->Parameters.SpeedVMatchRef_Rpm, 0, 65535);
+	//check overflow SpeedFeedback_Frac16 = 65536+,  SpeedVMatchRef_Rpm = min
+	Linear_Init(&p_motor->SpeedVMatchRatio, p_motor->Parameters.SpeedFeedbackRef_Rpm, p_motor->Parameters.SpeedVMatchRef_Rpm, 0, 65535*2);
 }
 
 /******************************************************************************/

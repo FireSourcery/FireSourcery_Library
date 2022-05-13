@@ -37,9 +37,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-//#include <stddef.h>
 
-typedef enum
+typedef enum Xcvr_Type_Tag
 {
 	XCVR_TYPE_SERIAL,
 	XCVR_TYPE_I2C,
@@ -48,7 +47,7 @@ typedef enum
 }
 Xcvr_Type_T;
 
-typedef const struct
+typedef const struct Xcvr_Xcvr_Tag
 {
 	void * P_XCVR;
 	Xcvr_Type_T TYPE;
@@ -61,19 +60,18 @@ Xcvr_Xcvr_T;
 	.TYPE 		= Type,						\
 }
 
-typedef const struct
+typedef const struct Xcvr_Config_Tag
 {
 	const Xcvr_Xcvr_T * const P_XCVR_TABLE;
 	const uint8_t XCVR_COUNT;
 }
 Xcvr_Config_T;
 
-typedef struct
+typedef struct Xcvr_Tag
 {
 	const Xcvr_Config_T CONFIG;
 	void * p_Xcvr;
-	Xcvr_Type_T Type;
-	/* only 1 nvm param is needed, handle by outside module */
+	Xcvr_Type_T Type; /* NvM param handle by outside module */
 }
 Xcvr_T;
 
@@ -86,29 +84,21 @@ Xcvr_T;
 	},										\
 }
 
+extern void Xcvr_Init(Xcvr_T * p_xcvr, uint8_t xcvrIndex);
 extern bool Xcvr_SetXcvr(Xcvr_T * p_xcvr, uint8_t xcvrIndex);
-
-//bool Xcvr_SendChar(const Xcvr_T * p_xcvr, uint8_t txChar) 									{return p_xcvr->SendChar(p_xcvr->p_Context, txChar);}
-//bool Xcvr_RecvChar(const Xcvr_T * p_xcvr, uint8_t * p_rxChar)									{return p_xcvr->RecvChar(p_xcvr->p_Context, p_rxChar);}
-//uint32_t Xcvr_SendBytes(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t srcSize)	{p_xcvr->SendBytes(p_xcvr->p_Context, p_srcBuffer, srcSize);}
-//uint32_t Xcvr_RecvBytes(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)		{p_xcvr->RecvBytes(p_xcvr->p_Context, p_destBuffer, destSize);}
-//bool Xcvr_SendString(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length)				{p_xcvr->SendString(p_xcvr->p_Context, p_src, length);}
-//bool Xcvr_RecvString(const Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length)
-
-
-
-//static inline void Xcvr_Proc(const Xcvr_T * p_xcvr)
-//{
-//}
-
-
-
-//static inline void Xcvr_EnableTx(const Xcvr_T * p_xcvr){}
-//static inline void Xcvr_DisableTx(const Xcvr_T * p_xcvr){}
-//static inline void Xcvr_EnableRx(const Xcvr_T * p_xcvr){}
-//static inline void Xcvr_DisableRx(const Xcvr_T * p_xcvr){}
+// extern bool Xcvr_SetXcvr_Ptr(Xcvr_T * p_xcvr, void * p_xcvrStruct);
+extern bool Xcvr_CheckIsSet(const Xcvr_T * p_xcvr, uint8_t xcvrIndex);
+extern bool Xcvr_CheckValid(const Xcvr_T * p_xcvr, void * p_target);
+extern void Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate);
+extern bool Xcvr_Tx(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length);
+extern uint32_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t length);
+extern uint32_t Xcvr_GetRxFullCount(const Xcvr_T * p_xcvr);
+extern uint32_t Xcvr_GetTxEmptyCount(const Xcvr_T * p_xcvr);
+extern uint8_t * Xcvr_AcquireTxBuffer(const Xcvr_T * p_xcvr);
+extern void Xcvr_ReleaseTxBuffer(const Xcvr_T * p_xcvr, size_t writeSize);
 
 #endif
+
 //typedef const struct
 //{
 //	void 		(* INIT)		(void * p_context);
@@ -122,5 +112,14 @@ extern bool Xcvr_SetXcvr(Xcvr_T * p_xcvr, uint8_t xcvrIndex);
 //	bool 		(* SEND) (void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
 //}
 //Xcvr_T;
-//return p_xcvr->RECV(p_xcvr->p_Xcvr, p_destBuffer, length);
-//return p_xcvr->SEND(p_xcvr->p_Xcvr, p_srcBuffer, length);
+
+//bool Xcvr_SendChar(const Xcvr_T * p_xcvr, uint8_t txChar) 									{return p_xcvr->SendChar(p_xcvr->p_Context, txChar);}
+//bool Xcvr_RecvChar(const Xcvr_T * p_xcvr, uint8_t * p_rxChar)									{return p_xcvr->RecvChar(p_xcvr->p_Context, p_rxChar);}
+//uint32_t Xcvr_SendBytes(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t srcSize)	{p_xcvr->SendBytes(p_xcvr->p_Context, p_srcBuffer, srcSize);}
+//uint32_t Xcvr_RecvBytes(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)		{p_xcvr->RecvBytes(p_xcvr->p_Context, p_destBuffer, destSize);}
+//bool Xcvr_SendString(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length)				{p_xcvr->SendString(p_xcvr->p_Context, p_src, length);}
+//bool Xcvr_RecvString(const Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length)
+//static inline void Xcvr_EnableTx(const Xcvr_T * p_xcvr){}
+//static inline void Xcvr_DisableTx(const Xcvr_T * p_xcvr){}
+//static inline void Xcvr_EnableRx(const Xcvr_T * p_xcvr){}
+//static inline void Xcvr_DisableRx(const Xcvr_T * p_xcvr){}

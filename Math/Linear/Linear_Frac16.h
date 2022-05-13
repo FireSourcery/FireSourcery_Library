@@ -50,7 +50,10 @@ static inline int32_t Linear_Frac16_CalcUnits(const Linear_T * p_linear, int32_t
 
 static inline int32_t Linear_Frac16_CalcUnits_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
 {
-	// return
+	(void)p_linear;
+	(void)x;
+	(void)scalar;
+	return 0U; //todo
 }
 
 static inline int32_t Linear_Frac16_CalcInvUnits(const Linear_T * p_linear, int32_t y)

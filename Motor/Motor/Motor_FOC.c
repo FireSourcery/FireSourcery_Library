@@ -68,6 +68,11 @@ void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 	(direction == MOTOR_DIRECTION_CCW) ? Motor_FOC_SetDirectionCcw(p_motor) : Motor_FOC_SetDirectionCw(p_motor);
 }
 
+void Motor_FOC_ResetOutputLimits(Motor_T * p_motor)
+{
+	(p_motor->Direction == MOTOR_DIRECTION_CCW) ? Motor_FOC_SetOutputLimitsCcw(p_motor) : Motor_FOC_SetOutputLimitsCw(p_motor);
+}
+
 void Motor_FOC_SetDirectionForward(Motor_T * p_motor)
 {
 	(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? Motor_FOC_SetDirectionCcw(p_motor) : Motor_FOC_SetDirectionCw(p_motor);

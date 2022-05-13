@@ -56,11 +56,6 @@ void MotorController_Init(MotorController_T * p_mc)
 	Thermistor_Init(&p_mc->ThermistorMosfetsTop);
 	Thermistor_Init(&p_mc->ThermistorMosfetsBot);
 
-	/* set values to not enter fault state */
-	p_mc->AnalogResults.VPos_Adcu 		= p_mc->VMonitorPos.Params.LimitLower_Adcu + 1U;
-	p_mc->AnalogResults.VSense_Adcu 	= p_mc->VMonitorSense.Params.LimitLower_Adcu + 1U;
-	p_mc->AnalogResults.VAcc_Adcu 		= p_mc->VMonitorAcc.Params.LimitLower_Adcu + 1U;
-	p_mc->AnalogResults.HeatPcb_Adcu 	= p_mc->ThermistorPcb.Params.Threshold_Adcu; //todo wrap
 	if(Thermistor_GetIsEnable(&p_mc->ThermistorMosfetsTop)) { p_mc->AnalogResults.HeatMosfetsTop_Adcu = p_mc->ThermistorMosfetsTop.Params.Threshold_Adcu; }
 	if(Thermistor_GetIsEnable(&p_mc->ThermistorMosfetsBot)) { p_mc->AnalogResults.HeatMosfetsBot_Adcu = p_mc->ThermistorMosfetsBot.Params.Threshold_Adcu; }
 
@@ -87,6 +82,8 @@ void MotorController_Init(MotorController_T * p_mc)
 
 	p_mc->MainDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
+	// p_mc->SpeedLimitActiveId = MOTOR_SPEED_LIMIT_ACTIVE_DISABLE;
+	p_mc->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 
 	StateMachine_Init(&p_mc->StateMachine);
 }

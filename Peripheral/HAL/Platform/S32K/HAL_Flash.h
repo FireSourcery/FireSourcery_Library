@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
-    @author FireSoucery
-    @brief
-    @version V0
+	@file
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef HAL_FLASH_PLATFORM_H
@@ -41,7 +41,7 @@
 	0000_0000	0003_FFFF	 	Program / code flash
 	1000_0000	1000_FFFF	 	FlexNVM / code flash
 	1400_0000	1400_0FFF		FlexRAM
- */
+*/
 
 #define S32K_PROGRAM_FLASH_START	0x00000000	/* */
 #define S32K_PROGRAM_FLASH_END		0x0003FFFF	/* */
@@ -91,8 +91,8 @@
 #define S32K_FLASH_RESERVED_FSEC				0x040C
 
 /*
- * Map to upper software layer
- */
+	Map to upper software layer
+*/
 #define HAL_FLASH_UNIT_ERASE_SIZE			S32K_FLASH_SECTOR_SIZE
 #define HAL_FLASH_UNIT_WRITE_SIZE			S32K_FLASH_PHRASE_SIZE /* 8 byte aligned */
 #define HAL_FLASH_ERASE_SECTOR_SIZE			HAL_FLASH_UNIT_ERASE_SIZE /* alias */
@@ -103,36 +103,36 @@
 #define HAL_FLASH_UNIT_READ_ONCE_SIZE		S32K_FLASH_PHRASE_SIZE
 
 /*
- * S32K  FLASH/EEPROM use same controller, same HAL
- * only 1 flash controller, unused
- */
+	 S32K  FLASH/EEPROM use same controller, same HAL
+	only 1 flash controller, unused
+*/
 typedef FTFC_Type HAL_Flash_T;
 
 /* Register rename */
-#define FTFx_BASE                               FTFC_BASE
-#define FTFC_FSTAT                              FTFC->FSTAT
-#define FTFx_FCNFG                              FTFC->FCNFG
-#define FTFx_FSEC                               FTFC->FSEC
-#define FTFx_FOPT                               FTFC->FOPT
-#define FTFx_FCCOB3                             FTFC->FCCOB[0]
-#define FTFx_FCCOB2                             FTFC->FCCOB[1]
-#define FTFx_FCCOB1                             FTFC->FCCOB[2]
-#define FTFx_FCCOB0                             FTFC->FCCOB[3]
-#define FTFx_FCCOB7                             FTFC->FCCOB[4]
-#define FTFx_FCCOB6                             FTFC->FCCOB[5]
-#define FTFx_FCCOB5                             FTFC->FCCOB[6]
-#define FTFx_FCCOB4                             FTFC->FCCOB[7]
-#define FTFx_FCCOBB                             FTFC->FCCOB[8]
-#define FTFx_FCCOBA                             FTFC->FCCOB[9]
-#define FTFx_FCCOB9                             FTFC->FCCOB[10]
-#define FTFx_FCCOB8                             FTFC->FCCOB[11]
-#define FTFx_FPROT3                             FTFC->FPROT[0]
-#define FTFx_FPROT2                             FTFC->FPROT[1]
-#define FTFx_FPROT1                             FTFC->FPROT[2]
-#define FTFx_FPROT0                             FTFC->FPROT[3]
-#define FTFx_FEPROT                             FTFC->FEPROT
-#define FTFx_FDPROT                             FTFC->FDPROT
-#define FTFx_FCSESTAT                           FTFC->FCSESTAT
+#define FTFx_BASE      FTFC_BASE
+#define FTFC_FSTAT     FTFC->FSTAT
+#define FTFx_FCNFG     FTFC->FCNFG
+#define FTFx_FSEC      FTFC->FSEC
+#define FTFx_FOPT      FTFC->FOPT
+#define FTFx_FCCOB3    FTFC->FCCOB[0]
+#define FTFx_FCCOB2    FTFC->FCCOB[1]
+#define FTFx_FCCOB1    FTFC->FCCOB[2]
+#define FTFx_FCCOB0    FTFC->FCCOB[3]
+#define FTFx_FCCOB7    FTFC->FCCOB[4]
+#define FTFx_FCCOB6    FTFC->FCCOB[5]
+#define FTFx_FCCOB5    FTFC->FCCOB[6]
+#define FTFx_FCCOB4    FTFC->FCCOB[7]
+#define FTFx_FCCOBB    FTFC->FCCOB[8]
+#define FTFx_FCCOBA    FTFC->FCCOB[9]
+#define FTFx_FCCOB9    FTFC->FCCOB[10]
+#define FTFx_FCCOB8    FTFC->FCCOB[11]
+#define FTFx_FPROT3    FTFC->FPROT[0]
+#define FTFx_FPROT2    FTFC->FPROT[1]
+#define FTFx_FPROT1    FTFC->FPROT[2]
+#define FTFx_FPROT0    FTFC->FPROT[3]
+#define FTFx_FEPROT    FTFC->FEPROT
+#define FTFx_FDPROT    FTFC->FDPROT
+#define FTFx_FCSESTAT  FTFC->FCSESTAT
 
 #define FTFx_VERIFY_BLOCK             0x00U
 #define FTFx_VERIFY_SECTION           0x01U
@@ -164,75 +164,77 @@ typedef FTFC_Type HAL_Flash_T;
 #define GET_BIT_24_31(value) ((uint8_t)(((uint32_t)(value)) >> 24U))
 
 /*
- * incase functions are not inlined (and stored in ram with calling function)
- */
+	Use CONFIG_FLASH_ATTRIBUTE_RAM_SECTION incase functions are not inlined (and stored in ram with calling function)
+*/
 #include "Peripheral/NvMemory/Flash/Config.h"
-static inline bool HAL_Flash_ReadErrorFlags(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-//static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static inline bool HAL_Flash_ReadCompleteFlag(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-//static inline bool HAL_Flash_ReadErrorVerifyFlag(HAL_Flash_T *p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static inline void HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 
 /*
- *   module helper
- */
-static inline void HAL_Flash_WriteCmdDest(HAL_Flash_T * p_regs, const uint8_t * p_dest)
+	module helper
+*/
+static inline void _HAL_Flash_WriteCmdDest(HAL_Flash_T * p_regs, const uint8_t * p_dest)
 {
-    FTFx_FCCOB1 = GET_BIT_16_23(p_dest);
-    FTFx_FCCOB2 = GET_BIT_8_15(p_dest);
-    FTFx_FCCOB3 = GET_BIT_0_7(p_dest);
+	(void)p_regs;
+	FTFx_FCCOB1 = GET_BIT_16_23(p_dest);
+	FTFx_FCCOB2 = GET_BIT_8_15(p_dest);
+	FTFx_FCCOB3 = GET_BIT_0_7(p_dest);
 }
 
-
-static inline void HAL_Flash_WriteCmdWriteData(HAL_Flash_T * p_regs, const uint8_t * p_data)
+static inline void _HAL_Flash_WriteCmdWriteData(HAL_Flash_T * p_regs, const uint8_t * p_data)
 {
-	for (uint8_t iByte = 0U; iByte < HAL_FLASH_UNIT_WRITE_SIZE; iByte++)
+	for(uint8_t iByte = 0U; iByte < HAL_FLASH_UNIT_WRITE_SIZE; iByte++)
 	{
-		((uint8_t*)FTFx_BASE)[iByte + 0x08U] = p_data[iByte];
+		// ((uint8_t *)FTFx_BASE)[iByte + 0x08U] = p_data[iByte];
+		p_regs->FCCOB[iByte + 0x04U] = p_data[iByte];
 	}
 }
 
-static inline void HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs)
+static inline void _HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static inline void _HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs)
 {
-	 FTFC_FSTAT |= FTFC_FSTAT_CCIF_MASK;
+	(void)p_regs;
+	FTFC_FSTAT |= FTFC_FSTAT_CCIF_MASK;
 }
 
-static inline bool HAL_Flash_ReadErrorFlagShared(HAL_Flash_T * p_regs)
+static inline bool _HAL_Flash_ReadErrorFlagShared(HAL_Flash_T * p_regs)
 {
+	(void)p_regs;
 	return ((FTFC_FSTAT & (FTFC_FSTAT_MGSTAT0_MASK)) != 0U) ? true : false;
 }
 
 /*
- * API
- */
-/*
- *   Common
- */
+	API Common
+*/
+static inline bool HAL_Flash_ReadCompleteFlag(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static inline bool HAL_Flash_ReadCompleteFlag(HAL_Flash_T * p_regs)
 {
 	(void)p_regs;
 	return ((FTFC_FSTAT & FTFC_FSTAT_CCIF_MASK) != 0U) ? true : false;
 }
 
+static inline bool HAL_Flash_ReadErrorFlags(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static inline bool HAL_Flash_ReadErrorFlags(HAL_Flash_T * p_regs)
 {
 	(void)p_regs;
 	return ((FTFC_FSTAT & (FTFC_FSTAT_MGSTAT0_MASK | FTFC_FSTAT_FPVIOL_MASK | FTFC_FSTAT_ACCERR_MASK | FTFC_FSTAT_RDCOLERR_MASK)) != 0U) ? true : false;
 }
 
-static inline bool HAL_Flash_ReadErrorVerifyFlag(HAL_Flash_T *p_regs)
-{
-	return HAL_Flash_ReadErrorFlagShared(p_regs);
-}
-
-static inline bool HAL_Flash_ReadErrorProtectionFlag(HAL_Flash_T *p_regs)
-{
-	return (FTFC_FSTAT & (FTFC_FSTAT_MGSTAT0_MASK | FTFC_FSTAT_FPVIOL_MASK));
-}
-
+//static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs)
 {
+	(void)p_regs;
 	FTFC_FSTAT = (uint8_t)(FTFC_FSTAT_FPVIOL_MASK | FTFC_FSTAT_ACCERR_MASK | FTFC_FSTAT_RDCOLERR_MASK);
+}
+
+//static inline bool HAL_Flash_ReadErrorVerifyFlag(HAL_Flash_T *p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static inline bool HAL_Flash_ReadErrorVerifyFlag(HAL_Flash_T * p_regs)
+{
+	return _HAL_Flash_ReadErrorFlagShared(p_regs);
+}
+
+static inline bool HAL_Flash_ReadErrorProtectionFlag(HAL_Flash_T * p_regs)
+{
+	(void)p_regs;
+	return (FTFC_FSTAT & (FTFC_FSTAT_MGSTAT0_MASK | FTFC_FSTAT_FPVIOL_MASK));
 }
 
 static inline bool HAL_Flash_ReadSecurityFlag(HAL_Flash_T * p_regs)
@@ -241,71 +243,71 @@ static inline bool HAL_Flash_ReadSecurityFlag(HAL_Flash_T * p_regs)
 	return ((FTFx_FSEC & FTFC_FSEC_SEC_MASK) != FTFC_FSEC_SEC(0x02U)) ? true : false;
 }
 
-
 /*
- * Cmd Functions
- */
+	Cmd Functions
+*/
 static inline void HAL_Flash_StartCmdWritePage(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
 {
-    FTFx_FCCOB0 = FTFx_PROGRAM_PHRASE;
-    HAL_Flash_WriteCmdDest(p_regs, p_dest);
-    HAL_Flash_WriteCmdWriteData(p_regs, p_data);
-	HAL_Flash_WriteCmdStart(p_regs);
+	FTFx_FCCOB0 = FTFx_PROGRAM_PHRASE;
+	_HAL_Flash_WriteCmdDest(p_regs, p_dest);
+	_HAL_Flash_WriteCmdWriteData(p_regs, p_data);
+	_HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdEraseSector(HAL_Flash_T * p_regs, const uint8_t * p_dest)
 {
 	FTFx_FCCOB0 = FTFx_ERASE_SECTOR;
-    HAL_Flash_WriteCmdDest(p_regs, p_dest);
-	HAL_Flash_WriteCmdStart(p_regs);
+	_HAL_Flash_WriteCmdDest(p_regs, p_dest);
+	_HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdVerifyWriteUnit(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
 {
 	FTFx_FCCOB0 = FTFx_PROGRAM_CHECK;
-    HAL_Flash_WriteCmdDest(p_regs, p_dest);
-    FTFx_FCCOB4  = 1U; //CONFIG_HAL_FLASH_MARGIN_LEVEL
+	_HAL_Flash_WriteCmdDest(p_regs, p_dest);
+	FTFx_FCCOB4 = 1U; //CONFIG_HAL_FLASH_MARGIN_LEVEL
 
-    for (uint8_t iByte = 0U; iByte < HAL_FLASH_UNIT_VERIFY_WRITE_SIZE; iByte++)
-    {
-		((uint8_t*)FTFx_BASE)[iByte + 0x0CU] = p_data[iByte];
-    }
+	for(uint8_t iByte = 0U; iByte < HAL_FLASH_UNIT_VERIFY_WRITE_SIZE; iByte++)
+	{
+		// ((uint8_t *)FTFx_BASE)[iByte + 0x0CU] = p_data[iByte];
+		p_regs->FCCOB[iByte + 0x08U] = p_data[iByte];
+	}
 
-	HAL_Flash_WriteCmdStart(p_regs);
+	_HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdVerifyEraseUnit(HAL_Flash_T * p_regs, const uint8_t * p_dest)
 {
 	FTFx_FCCOB0 = FTFx_VERIFY_SECTION;
-    HAL_Flash_WriteCmdDest(p_regs, p_dest);
+	_HAL_Flash_WriteCmdDest(p_regs, p_dest);
 	FTFx_FCCOB4 = GET_BIT_8_15(0U);
 	FTFx_FCCOB5 = GET_BIT_0_7(1U);
 	FTFx_FCCOB6 = 1U; //CONFIG_HAL_FLASH_MARGIN_LEVEL
-	HAL_Flash_WriteCmdStart(p_regs);
+	_HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, const uint8_t * p_dest, uint16_t units)
 {
 	FTFx_FCCOB0 = FTFx_VERIFY_SECTION;
-    HAL_Flash_WriteCmdDest(p_regs, p_dest);
+	_HAL_Flash_WriteCmdDest(p_regs, p_dest);
 	FTFx_FCCOB4 = GET_BIT_8_15(units);
 	FTFx_FCCOB5 = GET_BIT_0_7(units);
 	FTFx_FCCOB6 = 1U; //CONFIG_HAL_FLASH_MARGIN_LEVEL
-	HAL_Flash_WriteCmdStart(p_regs);
+	_HAL_Flash_WriteCmdStart(p_regs);
 }
 
 /*
- * Calling module ensures alignment
- * 0x03C0 => 0
- * 0x03C8 => 1
- */
+	Calling module ensures alignment
+	0x03C0 => 0
+	0x03C8 => 1
+*/
 static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
 {
 	uint8_t recordIndex = p_dest - (uint8_t *)S32K_FLASH_USER_PROGRAM_ONCE_START;
 	FTFx_FCCOB0 = FTFx_PROGRAM_ONCE;
 	FTFx_FCCOB1 = recordIndex;
-	HAL_Flash_WriteCmdWriteData(p_regs, p_data);
-	HAL_Flash_WriteCmdStart(p_regs);
+	_HAL_Flash_WriteCmdWriteData(p_regs, p_data);
+	_HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, const uint8_t * p_dest)
@@ -313,25 +315,21 @@ static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, const uint8_
 	uint8_t recordIndex = p_dest - (uint8_t *)S32K_FLASH_USER_PROGRAM_ONCE_START;
 	FTFx_FCCOB0 = FTFx_READ_ONCE;
 	FTFx_FCCOB1 = recordIndex;
-	HAL_Flash_WriteCmdStart(p_regs);
+	_HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_ReadOnceData(HAL_Flash_T * p_regs, uint8_t * p_result)
 {
-	for (uint8_t iByte = 0U; iByte < HAL_FLASH_UNIT_READ_ONCE_SIZE; iByte++)
+	for(uint8_t iByte = 0U; iByte < HAL_FLASH_UNIT_READ_ONCE_SIZE; iByte++)
 	{
-        p_result[iByte] = ((uint8_t *)FTFx_BASE)[iByte + 0x08U];
-    }
+		// p_result[iByte] = ((uint8_t *)FTFx_BASE)[iByte + 0x08U];
+		p_result[iByte] = p_regs->FCCOB[iByte + 0x04U];
+	}
 }
 
 static inline void HAL_Flash_Init(HAL_Flash_T * p_regs)
 {
-
+	(void)p_regs;
 }
 
-
-
-
 #endif /* HAL_FLASH_H */
-
-

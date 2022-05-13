@@ -1,18 +1,43 @@
+/******************************************************************************/
+/*!
+	@section LICENSE
+
+	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+
+	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+	@file
+	@author FireSoucery
+	@brief
+	@version V0
+*/
+/******************************************************************************/
 #ifndef HAL_EEPROM_PLATFORM_H
 #define HAL_EEPROM_PLATFORM_H
 
-#include "HAL_Flash.h"
+#include "HAL_Flash.h" /* Includes common defs */
+#include "Peripheral/NvMemory/NvMemory/Config.h"
 
 #include "External/S32K142/include/S32K142.h"
 
 #include <stdint.h>
 #include <stdbool.h>
-
-
-#define HAL_EEPROM_START			S32K_FLEX_RAM_START
-#define HAL_EEPROM_END				S32K_FLEX_RAM_END
-#define HAL_EEPROM_SIZE				S32K_FLEX_RAM_SIZE
-#define HAL_EEPROM_UNIT_WRITE_SIZE	4U
 
 // flash_flexRam_function_control_code
 #define EEE_ENABLE                              (0x00U)    /*!< Make FlexRAM available for emulated EEPROM */
@@ -24,17 +49,16 @@
 #define S32K_EEERAMSIZE_CODE 					(0x02U)		//only option for s32k142
 #define CONFIG_HAL_EEPROM_S32K_DEPART_CODE 		(0x08U)	 //Recommenced for max endurance, set once
 
+#define HAL_EEPROM_START			S32K_FLEX_RAM_START
+#define HAL_EEPROM_END				S32K_FLEX_RAM_END
+#define HAL_EEPROM_SIZE				S32K_FLEX_RAM_SIZE
+#define HAL_EEPROM_UNIT_WRITE_SIZE	4U
+
 typedef FTFC_Type HAL_EEPROM_T;	//Flash/EEPROM use same controller
-
-#include "Peripheral/NvMemory/NvMemory/Config.h"
-//static inline void HAL_EEPROM_ProgramPartition(HAL_EEPROM_T * p_hal) 	CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
-//static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal) 		CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; //do not inline to force RAM copy
-
-static   void HalEepromInitBlocking(void) 		CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; //do not inline to force RAM copy
-
 
 static inline bool HAL_EEPROM_ReadCompleteFlag(HAL_EEPROM_T * p_hal)
 {
+	(void)p_hal;
 	return ((FTFC->FCNFG & FTFC_FCNFG_EEERDY_MASK) != 0U) ? true : false;
 }
 
@@ -53,21 +77,18 @@ static inline bool HAL_EEPROM_ReadErrorProtectionFlag(HAL_EEPROM_T * p_hal)
 	return HAL_Flash_ReadErrorProtectionFlag(p_hal);
 }
 
-static inline void HAL_EEPROM_StartCmdWriteUnit(HAL_EEPROM_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
+static inline void HAL_EEPROM_StartCmdWriteUnit(HAL_EEPROM_T * p_hal, const uint8_t * p_dest, const uint8_t * p_data)
 {
-	/*
-	 * cast away const for eeprom case, it is in FlexRam
-	 */
-	(*(uint32_t*)p_dest) = (*(uint32_t*)p_data);
+	(void)p_hal;
+	(*(uint32_t *)p_dest) = (*(uint32_t *)p_data); 	/*  cast away const for eeprom case, it is in FlexRam */
 }
-
 
 static inline bool HAL_EEPROM_ReadIsFirstTime(HAL_EEPROM_T * p_hal)
 {
+	(void)p_hal;
 	uint32_t regDEPartitionCode = ((SIM->FCFG1 & SIM_FCFG1_DEPART_MASK) >> SIM_FCFG1_DEPART_SHIFT);
 	return (regDEPartitionCode != CONFIG_HAL_EEPROM_S32K_DEPART_CODE);
 }
-
 
 /*
 	EEE SRAM data size.
@@ -83,20 +104,21 @@ static inline bool HAL_EEPROM_ReadIsFirstTime(HAL_EEPROM_T * p_hal)
 	1001b - 32 Bytes
 	1111b - 0 Bytes
 
-	//In order to achieve specified w/e cycle
-	//endurance, the emulated EEPROM backup size must be at least 16 times the
-	//emulated EEPROM partition size in FlexRAM.
+	In order to achieve specified w/e cycle endurance,
+	the emulated EEPROM backup size must be at least 16 times the
+	emulated EEPROM partition size in FlexRAM.
 */
 /*
 	Launch once if not programmed
 */
+//static inline void HAL_EEPROM_ProgramPartition(HAL_EEPROM_T * p_hal) 	CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 static inline void HalEepromProgramPartition(void)
 {
 	uint32_t regDEPartitionCode = ((SIM->FCFG1 & SIM_FCFG1_DEPART_MASK) >> SIM_FCFG1_DEPART_SHIFT);
 
-	if (regDEPartitionCode != CONFIG_HAL_EEPROM_S32K_DEPART_CODE)
+	if(regDEPartitionCode != CONFIG_HAL_EEPROM_S32K_DEPART_CODE)
 	{
-		if (HAL_Flash_ReadCompleteFlag(0) == true)
+		if(HAL_Flash_ReadCompleteFlag(0) == true)
 		{
 			HAL_Flash_ClearErrorFlags(0);
 
@@ -106,11 +128,11 @@ static inline void HalEepromProgramPartition(void)
 			FTFx_FCCOB3 = 0x01U; //(uint8_t)(flexRamEnableLoadEEEData ? 0U : 1U);
 			FTFx_FCCOB4 = S32K_EEERAMSIZE_CODE;					//EEEDataSizeCode = 0x02u: EEPROM size = 4 Kbytes
 			FTFx_FCCOB5 = CONFIG_HAL_EEPROM_S32K_DEPART_CODE; 	//DEPartitionCode = 0x08u: EEPROM backup size = 64 Kbytes */
-			HAL_Flash_WriteCmdStart(0);
+			_HAL_Flash_WriteCmdStart(0);
 
-			while (HAL_Flash_ReadCompleteFlag(0) == false)
+			while(HAL_Flash_ReadCompleteFlag(0) == false)
 			{
-				if (HAL_Flash_ReadErrorFlags(0) == false)
+				if(HAL_Flash_ReadErrorFlags(0) == false)
 				{
 					break;
 				}
@@ -119,6 +141,7 @@ static inline void HalEepromProgramPartition(void)
 	}
 }
 
+static void HalEepromInitBlocking(void) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; //do not inline to force RAM copy
 static void HalEepromInitBlocking(void)
 {
 #ifdef CONFIG_EEPROM_ONE_TIME_PROGRAM_PARTITION
@@ -126,6 +149,7 @@ static void HalEepromInitBlocking(void)
 	HalEepromProgramPartition();
 #endif
 
+	/* Config FlexRam as emulated EEPROM */
 	if(HAL_EEPROM_ReadCompleteFlag(0) == false)
 	{
 		if(HAL_Flash_ReadCompleteFlag(0) == true)
@@ -136,7 +160,7 @@ static void HalEepromInitBlocking(void)
 			FTFx_FCCOB1 = (uint8_t)EEE_ENABLE;
 			FTFx_FCCOB4 = (uint8_t)(0x00U);
 			FTFx_FCCOB5 = (uint8_t)(0x00U);
-			HAL_Flash_WriteCmdStart(0);
+			_HAL_Flash_WriteCmdStart(0);
 		}
 
 		while(HAL_Flash_ReadCompleteFlag(0) == false)
@@ -149,10 +173,11 @@ static void HalEepromInitBlocking(void)
 	}
 }
 
+//static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal) 		CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal)
 {
+	(void)p_hal;
 	HalEepromInitBlocking();
 }
-
 
 #endif

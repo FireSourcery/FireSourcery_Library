@@ -83,7 +83,7 @@ static inline char Terminal_RecvChar(const Terminal_T * p_terminal)
 static inline void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-	Xcvr_Tx(&p_terminal->Xcvr, &txChar, 1U);
+	Xcvr_Tx(&p_terminal->Xcvr, (uint8_t *)(&txChar), 1U);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
 	Serial_SendChar(p_terminal->p_Serial, txChar);
 #endif
@@ -134,26 +134,27 @@ static inline void Terminal_ReleaseTxBuffer(const Terminal_T * p_terminal, size_
 #endif
 }
 
+static inline void Terminal_Init(Terminal_T * p_terminal) { p_terminal->CursorIndex = 0; }
+static inline void Terminal_Reset(Terminal_T * p_terminal) { p_terminal->CursorIndex = 0; }
 static inline uint8_t Terminal_GetCmdlineArgC(const Terminal_T * p_terminal) { return p_terminal->ArgC; }
 static inline char ** Terminal_GetCmdlineArgV(Terminal_T * p_terminal) { return p_terminal->ArgV; }
 static inline char * Terminal_GetCmdlineVar(const Terminal_T * p_terminal, uint8_t varIndex) { return p_terminal->ArgV[varIndex]; }
-static inline void Terminal_Init(Terminal_T * p_terminal) { p_terminal->CursorIndex = 0; }
-
 
 // extern void Terminal_Init(Terminal_T * p_terminal);
 // extern char Terminal_RecvChar(const Terminal_T * p_terminal);
 // extern void Terminal_SendChar(const Terminal_T * p_terminal, char txChar);
 // extern void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str);
 // extern void Terminal_SendString_Len(const Terminal_T * p_terminal, const char * p_str, uint8_t length);
-extern bool Terminal_GetIsKeyPressed(const Terminal_T * p_terminal);
+// extern bool Terminal_GetIsKeyPressed(const Terminal_T * p_terminal);
+
+extern bool Terminal_ProcCmdline(Terminal_T * p_terminal);
+extern Terminal_Status_T Terminal_ParseCmdline(Terminal_T * p_terminal);
+
 extern void Terminal_SendNum(const Terminal_T * p_terminal, int32_t number);
 extern void Terminal_SendEsc(const Terminal_T * p_terminal);
 extern void Terminal_SendCrlf(const Terminal_T * p_terminal);
 extern void Terminal_SendClear(const Terminal_T * p_terminal);
 extern bool Terminal_PollEsc(const Terminal_T * p_terminal);
-extern bool Terminal_ProcCmdline(Terminal_T * p_terminal);
-extern Terminal_Status_T Terminal_ParseCmdline(Terminal_T * p_terminal);
-
 
 extern bool Terminal_SetXcvr(Terminal_T * p_terminal, uint8_t xcvrID);
 extern void Terminal_SetSerial(Terminal_T * p_terminal, void * p_serial);

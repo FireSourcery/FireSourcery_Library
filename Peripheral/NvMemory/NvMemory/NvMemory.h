@@ -22,52 +22,77 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
-    @author FireSoucery
-	@brief	Non Volatile Memory Write
-    		Abstract Base Class Template Pattern
-    @version V0
+	@file
+	@author FireSoucery
+	@brief	Non Volatile Memory Operations. Abstract Base Class. Template Pattern.
+	@version V0
 */
 /******************************************************************************/
 #ifndef NV_MEMORY_H
 #define NV_MEMORY_H
 
 #include "Config.h"
-
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 
+struct NvMemory_Tag;
+
+typedef enum NvMemory_Status_Tag
+{
+	NV_MEMORY_STATUS_SUCCESS,
+	NV_MEMORY_STATUS_PROCESSING,
+	NV_MEMORY_STATUS_START_VERIFY,
+	NV_MEMORY_STATUS_ERROR,
+	NV_MEMORY_STATUS_ERROR_BUSY,
+	NV_MEMORY_STATUS_ERROR_INPUT,		/* op param input */ //todo   parse error destination, align
+	NV_MEMORY_STATUS_ERROR_CMD,			/* flash controller error */
+	NV_MEMORY_STATUS_ERROR_VERIFY,		/* Verify cmd */
+	NV_MEMORY_STATUS_ERROR_PROTECTION,
+	NV_MEMORY_STATUS_ERROR_CHECKSUM,	/*  */
+}
+NvMemory_Status_T;
+
+typedef enum NvMemory_State_Tag
+{
+	NV_MEMORY_STATE_IDLE,
+	NV_MEMORY_STATE_ACTIVE,
+	NV_MEMORY_STATE_WRITE,
+	NV_MEMORY_STATE_VERIFY,
+}
+NvMemory_State_T;
+
 /*
- * Partition defines writable ranges. Checked on write cmd.
- */
-typedef const struct
+	Partition defines writable ranges. Checked on op cmd.
+*/
+typedef const struct NvMemory_Partition_Tag
 {
 	uint8_t * P_START;
 	size_t SIZE;
-#ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE
+#ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE /* or HAL functions handle offset */
 	int32_t OP_ADDRESS_OFFSET;
 #endif
-//	uint8_t Alignment;
+	//	uint8_t Alignment;
 }
 NvMemory_Partition_T;
 
-#define NV_MEMORY_PARTITION(p_Start, Size)	\
-{											\
-	.P_START 	= p_Start,  				\
-	.SIZE 		= Size, 					\
+#define NV_MEMORY_PARTITION(p_Start, SizeBytes)	\
+{												\
+	.P_START 	= p_Start,  					\
+	.SIZE 		= SizeBytes, 					\
 }
 
-typedef bool (*const NvMemory_HalReadFlags_T) (const void * p_hal);
-typedef void (*const NvMemory_HalClearFlags_T) (void * p_hal);
+typedef bool (* const HAL_NvMemory_ReadFlags_T) (const void * p_hal);
+typedef void (* const HAL_NvMemory_ClearFlags_T) (void * p_hal);
 
-typedef const struct
+typedef const struct NvMemory_Config_Tag
 {
 	void * P_HAL;
+
 	/* template functions provided by concrete child class */
-	bool (*const READ_COMPLETE_FLAG)(const void * p_hal);
-	bool (*const READ_ERROR_FLAGS)(const void * p_hal);
-	void (*const CLEAR_ERROR_FLAGS)(void * p_hal);
+	HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;
+	HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;
+	HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
 
 	NvMemory_Partition_T * P_PARTITIONS;
 	const uint8_t PARTITION_COUNT;
@@ -77,14 +102,54 @@ typedef const struct
 }
 NvMemory_Config_T;
 
+
+typedef void (*NvMemory_StartCmd_T)(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
+typedef NvMemory_Status_T (*FinalizeOp_T)(struct NvMemory_Tag * p_this);
+
 /*
- * Alternatively template the calling function
- */
+	NvMemory controller
+*/
+typedef struct NvMemory_Tag
+{
+	NvMemory_Config_T CONFIG;
+	//	Queue_T Queue; //job queue for nonblocking operation
+
+	bool IsVerifyEnable;
+	bool IsOpBuffered; 	/* copy to buffer first or use pointer to source */
+	//	bool IsForceAlignEnable;
+
+	/* */
+	const uint8_t * p_OpDest;
+	const uint8_t * p_OpData;
+	size_t OpSize; 			/* Total bytes at start */
+	size_t BytesPerCmd; 	/* Used by Erase */
+	size_t UnitsPerCmd;
+
+	const NvMemory_Partition_T * p_OpPartition; /* Op Dest */
+
+	NvMemory_StartCmd_T StartCmd;
+	FinalizeOp_T FinalizeOp;
+	//	NvMemory_Status_T (*ParseErrorCode)(void * p_this);
+
+	void * p_CallbackData;
+	//	void (*OnComplete)(void * p_callbackData); /*!< OnComplete */
+	void (*Yield)(void * p_callbackData); /*!<  On Block*/
+//    void (* Callback)(void *);    	/*!<  Union*/
+
+	/* Nonblocking use only */
+	NvMemory_State_T State;
+	NvMemory_Status_T Status;
+	size_t OpIndex; 	/* in pages/phrases */
+} NvMemory_T;
+
+/*
+	Alternatively template the calling function
+*/
 #define NV_MEMORY_CONFIG_HAL(p_Hal, ReadCompleteFlag, ReadErrorFlags, ClearErrorFlags)	\
-	.P_HAL 		= p_Hal,  																\
-	.READ_COMPLETE_FLAG 	= (NvMemory_HalReadFlags_T)ReadCompleteFlag,				\
-	.READ_ERROR_FLAGS 		= (NvMemory_HalReadFlags_T)ReadErrorFlags,					\
-	.CLEAR_ERROR_FLAGS 		= (NvMemory_HalClearFlags_T)ClearErrorFlags,
+	.P_HAL = p_Hal,  																\
+	.READ_COMPLETE_FLAG 	= (HAL_NvMemory_ReadFlags_T)ReadCompleteFlag,				\
+	.READ_ERROR_FLAGS 		= (HAL_NvMemory_ReadFlags_T)ReadErrorFlags,					\
+	.CLEAR_ERROR_FLAGS 		= (HAL_NvMemory_ClearFlags_T)ClearErrorFlags,
 
 #define NV_MEMORY_CONFIG_PARTITIONS(p_partitions, partitionCount)	\
 	.P_PARTITIONS 		= p_partitions,  							\
@@ -104,79 +169,25 @@ NvMemory_Config_T;
 	}																																\
 }
 
-typedef enum
-{
-	NV_MEMORY_STATUS_SUCCESS,
-	NV_MEMORY_STATUS_PROCESSING,
-	NV_MEMORY_STATUS_START_VERIFY,
-	NV_MEMORY_STATUS_ERROR,
-	NV_MEMORY_STATUS_ERROR_BUSY,
-	NV_MEMORY_STATUS_ERROR_INPUT,		/* op param input */ //todo can parse error destination, align
-	NV_MEMORY_STATUS_ERROR_CMD,			/* flash controller error */
-	NV_MEMORY_STATUS_ERROR_VERIFY,		/* Verify cmd */
-	NV_MEMORY_STATUS_ERROR_PROTECTION,
-	NV_MEMORY_STATUS_ERROR_CHECKSUM,	/*  */
-}
-NvMemory_Status_T;
-
-typedef enum
-{
-	NV_MEMORY_STATE_IDLE,
-	NV_MEMORY_STATE_ACTIVE,
-	NV_MEMORY_STATE_WRITE,
-	NV_MEMORY_STATE_VERIFY,
-}
-NvMemory_State_T;
-
-typedef void (*NvMemory_StartCmd_T)(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
-
-/*
- * NvMemory controller
- */
-typedef struct NvMemory_Tag
-{
-	NvMemory_Config_T CONFIG;
-//	Queue_T Queue; //job queue for nonblocking operation
-
-	bool IsVerifyEnable;
-	bool IsOpBuffered; //copy to buffer first or use pointer
-	//	bool IsForceAlignEnable;
-
-	/* */
-	const uint8_t * p_OpDest;
-	const uint8_t * p_OpData;
-	size_t OpSize; 			//total bytes at start
-	size_t BytesPerCmd; 	//only for erase
-	size_t UnitsPerCmd;
-
-	const NvMemory_Partition_T * p_OpPartition; //op dest
-
-	void (*StartCmd)(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
-	NvMemory_Status_T (*FinalizeOp)(struct NvMemory_Tag * p_this);
-//	NvMemory_Status_T (*ParseErrorCode)(void * p_this);
-
-	void * p_CallbackData;
-//	void (*OnComplete)(void * p_callbackData); /*!< OnComplete */
-	void (*Yield)(void * p_callbackData); /*!<  On Block*/
-//    void (* Callback)(void *);    	/*!<  Union*/
-
-	//Nonblocking use only
-	NvMemory_State_T State;
-	NvMemory_Status_T Status;
-	size_t OpIndex; 	//in page/phrase
-	//	  NvMemory_Operation_T OpType;
-} NvMemory_T;
-
 extern void NvMemory_Init(NvMemory_T * p_this);
 extern void NvMemory_SetYield(NvMemory_T * p_this, void (*yield)(void *), void * p_callbackData);
-
-extern NvMemory_Status_T NvMemory_SetOpCommon(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize, size_t unitSize);
+extern NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize, size_t unitSize);
 extern void NvMemory_SetOpData(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
 extern void NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd);
-extern NvMemory_Status_T NvMemory_ProcOpCommon_Blocking(NvMemory_T * p_this);
+extern void NvMemory_SetOpFunctions(NvMemory_T * p_this, NvMemory_StartCmd_T startCmd, FinalizeOp_T finalizeOp);
+extern bool NvMemory_ChecksumOp(const NvMemory_T * p_this);
 
+/*
+	Blocking
+*/
+extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+
+/*
+	Non Blocking
+*/
+extern size_t NvMemory_GetOpBytesRemaining(NvMemory_T * p_this);
 extern bool NvMemory_ProcOp(NvMemory_T * p_this);
-extern NvMemory_Status_T NvMemory_StartOpCommon(NvMemory_T * p_this);
+extern NvMemory_Status_T NvMemory_StartOp(NvMemory_T * p_this);
 
 #endif /* NV_MEMORY_H */
 

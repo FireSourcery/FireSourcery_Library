@@ -55,6 +55,7 @@ static inline void HAL_PWM_ClearInterrupt(HAL_PWM_T * p_hal)
  */
 static inline void HAL_PWM_Sync(HAL_PWM_T * p_hal, uint32_t channel)
 {
+	(void)channel;
 	p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK;
 }
 

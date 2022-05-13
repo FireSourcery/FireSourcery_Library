@@ -31,73 +31,37 @@
 #ifndef CONFIG_ANALOG_H
 #define CONFIG_ANALOG_H
 
-
-#ifdef CONFIG_ANALOG_CRITICAL_LIBRARY_ENABLE
-
-#elif defined(CONFIG_ANALOG_CRITICAL_USER_ENABLE)
-
-#elif defined(CONFIG_ANALOG_CRITICAL_DISABLE)
-
+#if 	defined(CONFIG_ANALOG_CRITICAL_LIBRARY_ENABLE)
+#elif 	defined(CONFIG_ANALOG_CRITICAL_USER_ENABLE)
+#elif 	defined(CONFIG_ANALOG_CRITICAL_DISABLE)
 #else
 	#define CONFIG_ANALOG_CRITICAL_DISABLE
 #endif
 
-#ifdef CONFIG_ANALOG_MULTITHREADED
-
-#elif defined(CONFIG_ANALOG_SINGLE_THREADED)
-
+#if 	defined(CONFIG_ANALOG_MULTITHREADED)
+#elif 	defined(CONFIG_ANALOG_SINGLE_THREADED)
 #else
-
+	#define CONFIG_ANALOG_SINGLE_THREADED
 #endif
 
-
-/*
- *
- */
-#ifdef CONFIG_ANALOG_ADC_RESULT_UINT8
-
+#if 	defined(CONFIG_ANALOG_ADC_RESULT_UINT8)
 #elif defined(CONFIG_ANALOG_ADC_RESULT_UINT16)
-/* Default case */
 #else
 	#define CONFIG_ANALOG_ADC_RESULT_UINT16
 #endif
 
-
-#ifdef CONFIG_ANALOG_ADC_PINUINT8
-
-#elif defined(CONFIG_ANALOG_ADC_PIN_UINT16)
-
-#elif defined(CONFIG_ANALOG_ADC_PIN_UINT32)
-
+#if 	defined(CONFIG_ANALOG_ADC_PIN_UINT8)
+#elif 	defined(CONFIG_ANALOG_ADC_PIN_UINT16)
+#elif 	defined(CONFIG_ANALOG_ADC_PIN_UINT32)
 #else
 	#define CONFIG_ANALOG_ADC_PIN_UINT32
 #endif
 
-
-#ifdef CONFIG_ANALOG_ADC_HW_FIFO_ENABLE
-#ifdef CONFIG_ANALOG_ADC_HW_FIFO_LENGTH
-#endif
-#elif defined(CONFIG_ANALOG_ADC_HW_FIFO_DISABLE)
+#if 	defined(CONFIG_ANALOG_ADC_HW_FIFO_DISABLE)
+#elif 	defined(CONFIG_ANALOG_ADC_HW_FIFO_LENGTH) /* Defined to same length for all instances */
 #else
 	#define CONFIG_ANALOG_ADC_HW_FIFO_DISABLE
 #endif
-
-
-/*
- *
- */
-//#ifdef CONFIG_ANALOG_VIRUTAL_CHANNEL_ENUM_USER_DEFINED
-///*
-// * User must provide enum typedef
-// */
-//#elif defined(CONFIG_ANALOG_VIRUTAL_CHANNEL_UINT8)
-///* Default case */
-//#else
-//	#define CONFIG_ANALOG_VIRUTAL_CHANNEL_UINT8
-//#endif
-
-
-
 
 #endif
 

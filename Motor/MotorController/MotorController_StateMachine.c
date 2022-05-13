@@ -62,7 +62,7 @@ static StateMachine_State_T * TransitionFault(MotorController_T * p_mc) { return
 /******************************************************************************/
 static StateMachine_State_T * Init_InputDirection(MotorController_T * p_mc)
 {
-	return (MotorController_ProcDirection(p_mc) == true) ? &STATE_STOP : &STATE_FAULT;
+	return (MotorController_ProcDirection(p_mc) == true) ? &STATE_STOP : &STATE_FAULT; //check and isthrottle off
 }
 
 static StateMachine_State_T * Init_InputReleaseThrottle(MotorController_T * p_mc)
@@ -168,7 +168,7 @@ static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 
 static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc)
 {
-	switch(p_mc->NvmSubstate)
+	switch(p_mc->StopSubstate)
 	{
 		case MOTOR_CONTROLLER_NVM_ALL: MotorController_SaveParameters_Blocking(p_mc); break;
 		case MOTOR_CONTROLLER_NVM_BOOT: MotorController_SaveBootReg_Blocking(p_mc); break;

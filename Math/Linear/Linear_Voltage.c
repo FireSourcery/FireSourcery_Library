@@ -83,7 +83,7 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t 
 uint16_t Linear_Voltage_CalcAdcu_UserV(const Linear_T * p_linear, uint16_t volts)
 {
 	uint16_t adcu = Linear_Voltage_CalcAdcu_V(p_linear, volts);
-	while(Linear_Voltage_CalcV(p_linear, adcu) < volts) { adcu += 1U; }
+	while((uint16_t)Linear_Voltage_CalcV(p_linear, adcu) < volts) { adcu += 1U; }
 	return adcu;
 }
 
@@ -91,7 +91,7 @@ uint16_t Linear_Voltage_CalcAdcu_UserMilliV(const Linear_T * p_linear, uint32_t 
 {
 	uint16_t adcu = Linear_Voltage_CalcAdcu_MilliV(p_linear, milliV);
 
-	while((Linear_Voltage_CalcMilliV(p_linear, adcu) < milliV) && (adcu < ADC_MAX))
+	while(((uint32_t)Linear_Voltage_CalcMilliV(p_linear, adcu) < milliV) && (adcu < ADC_MAX))
 	{
 		 adcu += 1U;
 	}

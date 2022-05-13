@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	HAL.h
+	@file 	HAL_Analog.h
 	@author FireSoucery
 	@brief 	Analog module import functions.
 			User must provide HW functions, or configure peripheral HAL
@@ -32,9 +32,7 @@
 #ifndef HAL_ANALOG_H
 #define HAL_ANALOG_H
 
-
 #include "Peripheral/HAL/Path.h"
 #include PATH_HAL_PERIPHERAL(HAL_Analog.h)
-
 
 #endif

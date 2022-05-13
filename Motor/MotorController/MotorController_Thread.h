@@ -65,11 +65,13 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 		case MOT_ANALOG_USER_CMD_PROC_NO_INPUT:				MotorController_User_ProcRelease(p_mc);															break;
 		default: break;
 	}
+}
 
-	/*
-		Optional Din
-	*/
-
+/*
+	Optional Din
+*/
+static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
+{
 	if(p_mc->Parameters.OptDinFunction != MOTOR_CONTROLLER_OPT_DIN_DISABLE)
 	{
 		if(Debounce_CaptureState(&p_mc->OptDin) == true)
@@ -129,8 +131,11 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 
 		if(isWarning == true)
 		{
-			//todo check ilimits satee flag
-			// MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnHeat_Frac16);
+			MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnHeat_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT);
+		}
+		else
+		{
+			MotorController_ClearMotorILimitAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT);
 		}
 	}
 }
@@ -200,6 +205,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 			MotorController_User_SetFault(p_mc);
 		}
 
+		_MotorController_ProcOptDin(p_mc);
 		//if frequent degree c polling request
 		//	Thermistor_CaptureUnitConversion(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu);
 		//	Thermistor_CaptureUnitConversion(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_Adcu);
@@ -227,19 +233,10 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 		case VMONITOR_LIMIT_LOWER: p_mc->FaultFlags.VPosLimit = 1U;	MotorController_User_SetFault(p_mc); break;
 		case VMONITOR_WARNING_UPPER: 	break;
 		case VMONITOR_WARNING_LOWER:
-			// if(p_mc->WarningFlags.VPos == 0U)
-			// {
-				//todo check ilimits satee flag
-			// 	MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16);
-			// 	p_mc->WarningFlags.VPos = 1U;
-			// }
+			MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
 			break;
 		case VMONITOR_STATUS_OK:
-			// if(p_mc->WarningFlags.VPos == 1U)
-			// {
-			// 	MotorController_ClearMotorILimitAll(p_mc);
-			// 	p_mc->WarningFlags.VPos = 0U;
-			// }
+			MotorController_ClearMotorILimitAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
 			break;
 		default: break;
 	}

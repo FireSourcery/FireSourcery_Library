@@ -22,31 +22,30 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.h
-    @author FireSoucery
-    @brief
-    @version V0
+	@file 	Config.h
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef CONFIG_FLASH_H
 #define CONFIG_FLASH_H
 
-//#ifdef CONFIG_FLASH_HW_OP_ADDRESS_RELATIVE
-//
-//#elif defined(CONFIG_FLASH_HW_OP_ADDRESS_ABSOLUTE)
-//
-//#else
-//	#define CONFIG_FLASH_HW_OP_ADDRESS_ABSOLUTE
-//#endif
+#if 	defined(CONFIG_FLASH_HW_OP_ADDRESS_RELATIVE)
+#elif 	defined(CONFIG_FLASH_HW_OP_ADDRESS_ABSOLUTE)
+#else
+	#define CONFIG_FLASH_HW_OP_ADDRESS_ABSOLUTE
+#endif
 
-#ifdef CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
-
-#elif defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
-
+#if 	defined(CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS)
+#elif 	defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
 #else
 	#define CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
 #endif
 
-#define CONFIG_FLASH_ATTRIBUTE_RAM_SECTION __attribute__((section (".code_ram")))
+#if 	defined(CONFIG_FLASH_ATTRIBUTE_RAM_SECTION)
+#else
+	#define CONFIG_FLASH_ATTRIBUTE_RAM_SECTION __attribute__((section (".code_ram")))
+#endif
 
 #endif

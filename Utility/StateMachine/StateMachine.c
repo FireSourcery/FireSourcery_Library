@@ -45,6 +45,7 @@ static inline bool EnterCritical(StateMachine_T * p_stateMachine)
 #if defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
 	return (p_stateMachine.CONFIG.USE_CRITICAL == true) ? Critical_AcquiireEnter(&p_stateMachine->Mutex) : true;
 #else
+	(void)p_stateMachine;
 	return true;
 #endif
 }
@@ -53,6 +54,8 @@ static inline void ExitCritical(StateMachine_T * p_stateMachine)
 {
 #if defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
 	if(p_stateMachine.CONFIG.USE_CRITICAL == true) { Critical_ReleaseExit(&p_stateMachine->Mutex) };
+#else
+	(void)p_stateMachine;
 #endif
 }
 
@@ -211,8 +214,9 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 /******************************************************************************/
 bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
-	ProcAsyncInput(p_stateMachine, input);
+	bool isAccept = ProcAsyncInput(p_stateMachine, input);
 	ProcOutput(p_stateMachine);
+	return isAccept;
 }
 
 /******************************************************************************/

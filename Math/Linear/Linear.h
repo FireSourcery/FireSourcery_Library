@@ -32,8 +32,8 @@
 #ifndef LINEAR_H
 #define LINEAR_H
 
-#include "Config.h" 
-#include "math_linear.h" 
+#include "Config.h"
+#include "math_linear.h"
 #include <stdint.h>
 
 typedef struct Linear_Tag
@@ -56,7 +56,6 @@ typedef struct Linear_Tag
 Linear_T;
 
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
-
 #define LINEAR_CONFIG(factor, divisor, y0, yRef)												\
 {																								\
 	.Slope 				= ((int32_t)65536 << 14U) / ((int32_t)(divisor) * yRef / (factor)),		\
@@ -72,7 +71,7 @@ Linear_T;
 #define LINEAR_CONFIG(factor, divisor, offset, rangeRef)				\
 {																		\
 																		\
-}	
+}
 #endif
 
 
@@ -85,7 +84,7 @@ Linear_T;
 
 /******************************************************************************/
 /*!
-	@brief  
+	@brief
 */
 /******************************************************************************/
 /*
@@ -113,7 +112,7 @@ static inline int32_t Linear_InvFunction(const Linear_T * p_linear, int32_t y)
 	return linear_invf(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, y);
 #endif
 }
- 
+
 /******************************************************************************/
 /*!
 	@brief Fraction16
@@ -159,7 +158,7 @@ static inline int32_t Linear_InvFunction_Round(const Linear_T * p_linear, int32_
 #endif
 }
 
-extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef); 
+extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef);
 extern uint16_t _Linear_SatUnsigned16(int32_t frac16);
 extern uint16_t Linear_Function_FractionUnsigned16(const Linear_T * p_linear, int32_t x);
 extern uint16_t _Linear_SatUnsigned16_Abs(int32_t frac16);
@@ -168,6 +167,8 @@ extern int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_linear, 
 extern int16_t _Linear_SatSigned16(int32_t frac16);
 extern int16_t Linear_Function_FractionSigned16(const Linear_T * p_linear, int32_t x);
 extern int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_linear, int16_t y_fracS16);
+
 extern int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar);
+extern int32_t Linear_InvFunction_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar);
 
 #endif

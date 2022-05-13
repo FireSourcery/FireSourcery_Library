@@ -44,7 +44,12 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 	// p_motor->MicrosRef = SysTime_GetMicros();
 	p_motor->ControlTimerBase++;
 
-	// p_motor->DebugTime[0] = SysTime_GetMicros() - p_motor->MicrosRef;
+	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
+	{
+		//todo group
+		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+	}
 
 	//  _Motor_Analog_Thread( p_motor);
 	//	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
@@ -68,11 +73,7 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 		switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
 		{
 			case THERMISTOR_STATUS_OK:
-				if(p_motor->RunStateFlags.HeatWarning == 1U)
-				{
-					p_motor->RunStateFlags.HeatWarning = 0U;
-					Motor_User_ClearILimitActive(p_motor); //todo union for fast clear
-				}
+				Motor_User_ClearILimitActive(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT);
 				break;
 			case THERMISTOR_LIMIT_SHUTDOWN:
 				Motor_User_SetFault(p_motor);
@@ -80,11 +81,8 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 			case THERMISTOR_LIMIT_THRESHOLD:
 				break;
 			case THERMISTOR_WARNING:
-				if(p_motor->RunStateFlags.HeatWarning == 0U)
-				{
-					// Motor_User_SetILimitActiveScalar_Overwrite(p_motor, p_motor->Parameters.ILimitScalarHeat_Frac16);
-					// p_motor->RunStateFlags.HeatWarning = 1U;
-				}
+				/* repeatedly check if heat is a lower ILimit when another ILimit is active */
+				Motor_User_SetILimitActive(p_motor, p_motor->Parameters.ILimitScalarHeat_Frac16, MOTOR_I_LIMIT_ACTIVE_HEAT);
 				break;
 			default: break;
 		}

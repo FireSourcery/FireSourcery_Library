@@ -24,7 +24,7 @@
 /*!
 	@file  	Blinky.h
 	@author FireSourcery
-	@brief 	Pin Indicator 
+	@brief 	Pin Indicator
 	@version V0
 */
 /******************************************************************************/
@@ -32,7 +32,7 @@
 #define BLINKY_H
 
 #include "Peripheral/Pin/Pin.h"
-#include "Utility/Timer/Timer.h" 
+#include "Utility/Timer/Timer.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -41,7 +41,7 @@
 // {
 // 	void (*Pattern)(void * p_context);
 // 	void * p_Context;
-// } 
+// }
 // Blinky_Pattern_T;
 
 typedef struct Blinky_Tag
@@ -50,10 +50,10 @@ typedef struct Blinky_Tag
 	Timer_T Timer;
 	bool IsOn;
 	uint32_t Index;
-	uint32_t Max; 
+	uint32_t Max;
 	uint32_t OnTime;
 	uint32_t OffTime;
-	void (*PatternFunction)(void * p_this); 
+	void (*PatternFunction)(struct Blinky_Tag * p_this);
 }
 Blinky_T;
 
@@ -63,7 +63,7 @@ Blinky_T;
 	.Timer 	= TIMER_CONFIG(p_TimerBase, TimerBaseFreq)				\
 }
 
-extern void Blinky_Init(Blinky_T * p_blinky); 
+extern void Blinky_Init(Blinky_T * p_blinky);
 extern void Blinky_Proc(Blinky_T * p_blinky);
 extern void Blinky_On(Blinky_T * p_blinky);
 extern void Blinky_Off(Blinky_T * p_blinky);

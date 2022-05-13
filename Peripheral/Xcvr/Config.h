@@ -31,7 +31,4 @@
 #ifndef CONFIG_XCVR_H
 #define CONFIG_XCVR_H
 
-
-
 #endif
-

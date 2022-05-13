@@ -71,6 +71,7 @@ static inline bool AcquireCritical(Queue_T * p_queue)
 #if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
 	return (p_queue.CONFIG.USE_CRITICAL == true) ? Critical_AcquireEnter(&p_queue->Mutex) : true;
 #else
+	(void)p_queue;
 	return true;
 #endif
 }
@@ -79,6 +80,8 @@ static inline void ReleaseCritical(Queue_T * p_queue)
 {
 #if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
 	if(p_queue.CONFIG.USE_CRITICAL == true) { Critical_ReleaseExit(&p_queue->Mutex) };
+#else
+	(void)p_queue;
 #endif
 }
 /******************************************************************************/
@@ -107,7 +110,7 @@ static inline void PeekFront(Queue_T * p_queue, void * p_dest) 					{ memcpy(p_d
 static inline void PeekBack(Queue_T * p_queue, void * p_dest) 					{ memcpy(p_dest, GetPtrBack(p_queue), p_queue->CONFIG.UNIT_SIZE); }
 static inline void PeekIndex(Queue_T * p_queue, void * p_dest, size_t index) 	{ memcpy(p_dest, GetPtrIndex(p_queue, index), p_queue->CONFIG.UNIT_SIZE); }
 static inline void PlaceFront(Queue_T * p_queue, const void * p_unit) 			{ memcpy(GetPtrFront(p_queue), p_unit, p_queue->CONFIG.UNIT_SIZE); }
-static inline void PlaceBack(Queue_T * p_queue, const void * p_unit) 			{ memcpy(GetPtrBack(p_queue), p_unit, p_queue->CONFIG.UNIT_SIZE); } 
+static inline void PlaceBack(Queue_T * p_queue, const void * p_unit) 			{ memcpy(GetPtrBack(p_queue), p_unit, p_queue->CONFIG.UNIT_SIZE); }
 //todo compare switch(size) functions
 static inline void RemoveFront(Queue_T * p_queue, size_t nUnits) 				{ p_queue->Tail = CalcQueueIndexInc(p_queue, p_queue->Tail, nUnits); }
 static inline void RemoveBack(Queue_T * p_queue, size_t nUnits) 				{ p_queue->Head = CalcQueueIndexDec(p_queue, p_queue->Head, nUnits); }

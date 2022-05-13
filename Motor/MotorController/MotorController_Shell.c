@@ -354,9 +354,10 @@ static Cmd_Status_T Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 
 	if(argc == 1U)
 	{
+		Hall_CaptureSensors_ISR(&p_motor->Hall);
 		Terminal_SendString(p_terminal, "\r\n");
-		Terminal_SendString(p_terminal, "Hall Sensors: "); Terminal_SendNum(p_terminal, Hall_ReadSensors(&p_motor->Hall).State); Terminal_SendString(p_terminal, "\r\n");
-		Terminal_SendString(p_terminal, "Electrical Angle: "); Terminal_SendNum(p_terminal, Motor_User_GetHallRotorAngle(p_motor)); Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "Hall Sensors: "); Terminal_SendNum(p_terminal, Hall_GetSensorsId(&p_motor->Hall)); Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "Electrical Angle: "); Terminal_SendNum(p_terminal, Hall_GetRotorAngle_Degrees16(&p_motor->Hall)); Terminal_SendString(p_terminal, "\r\n");
 		Terminal_SendString(p_terminal, "\r\n");
 	}
 	// else if(argc == 2U)

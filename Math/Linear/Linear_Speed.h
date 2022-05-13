@@ -31,7 +31,7 @@
 #ifndef LINEAR_SPEED_H
 #define LINEAR_SPEED_H
 
-#include "Linear.h"
+#include "Linear_Frac16.h"
 #include <stdbool.h>
 
 static inline int32_t Linear_Speed_CalcAngleRpm(const Linear_T * p_linear, uint16_t angle)

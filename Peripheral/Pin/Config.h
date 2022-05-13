@@ -31,8 +31,8 @@
 #ifndef CONFIG_PIN_H
 #define CONFIG_PIN_H
 
-#ifdef CONFIG_PIN_HAL_USE_MASK
-#elif defined(CONFIG_PIN_HAL_USE_ID)
+#if 	defined(CONFIG_PIN_HAL_USE_MASK)
+#elif 	defined(CONFIG_PIN_HAL_USE_ID)
 #else
 	#define CONFIG_PIN_HAL_USE_MASK
 #endif

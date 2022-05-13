@@ -54,7 +54,7 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 	p_linear->Slope = (factor << 14U) / divisor;
 	p_linear->SlopeShift = 14U;
 
-	//todo non iterative, log2 
+	//todo non iterative, log2
 	while((p_linear->XReference > INT32_MAX / p_linear->Slope) && (p_linear->SlopeShift > 0U))
 	{
 		p_linear->Slope = p_linear->Slope >> 1U;
@@ -81,18 +81,18 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 #endif
 }
 
-void Linear_Init_X0(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t yRef)
-{
+// void Linear_Init_X0(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t yRef)
+// {
 
-}
+// }
 
 /*
 	derive slope
 */
-void Linear_Init_XRefYRef(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t yRef)
-{
+// void Linear_Init_XRefYRef(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t yRef)
+// {
 
-}
+// }
 
 
 /******************************************************************************/
@@ -100,7 +100,7 @@ void Linear_Init_XRefYRef(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t
 	Saturate to uint16_t, q0.16 [0, 65535]
 	f([-XRef:XRef]) => [0:65536]
 */
-/******************************************************************************/ 
+/******************************************************************************/
 uint16_t _Linear_SatUnsigned16(int32_t frac16)
 {
 	uint16_t fracU16;
@@ -146,7 +146,7 @@ int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_linear, uint16_
 	Saturate to int16_t, q1.15 [-32768, 32767]
 	f([-XRef:XRef]) => [-32768:32767]
 */
-/******************************************************************************/ 
+/******************************************************************************/
 int16_t _Linear_SatSigned16(int32_t frac16)
 {
 	int16_t fracS16;
@@ -175,7 +175,7 @@ int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_linear, int16_t y
 /*!
 	Scalar
 */
-/******************************************************************************/ 
+/******************************************************************************/
 int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
 {
 	int32_t factor = x * p_linear->Slope;
@@ -192,19 +192,24 @@ int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t sc
 	for(uint16_t iDivisor = 1U; scalar >= iDivisor; iDivisor *= 4U) 	/* scalar / iDivisor > 0U */
 	{
 		if(factor < INT32_MAX / scalar * iDivisor) /* (factor < INT32_MAX / (scalar / iDivisor)) */
-		{ 
-			result = Linear_Function(p_linear, x * scalar / iDivisor) * iDivisor; 
+		{
+			result = Linear_Function(p_linear, x * scalar / iDivisor) * iDivisor;
 			break;
 		}
 	}
 
-	if(result == 0) { result = Linear_Function(p_linear, x) * scalar; } 
+	if(result == 0) { result = Linear_Function(p_linear, x) * scalar; }
 
 	return result;
 }
- 
 
-
+int32_t Linear_InvFunction_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar)
+{
+	(void)p_linear;
+	(void)y;
+	(void)scalar;
+	return 0; //todo
+}
 
 
 

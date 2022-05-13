@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
-    @author FireSoucery
-    @brief
-    @version V0
+	@file
+	@author FireSoucery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef EEPROM_H
@@ -44,13 +44,15 @@ typedef NvMemory_T EEPROM_T;
 #define EEPROM_CONFIG(p_Hal, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
 	NV_MEMORY_CONFIG(p_Hal, HAL_EEPROM_ReadCompleteFlag, HAL_EEPROM_ReadErrorFlags, HAL_EEPROM_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)														\
 
-//extern void EEPROM_Init_Blocking(EEPROM_T * p_eeprom);
-//extern void EEPROM_Init_NonBlocking(EEPROM_T * p_eeprom);
-extern bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom);
+// extern bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom);
 extern NvMemory_Status_T EEPROM_SetWrite		(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes);
-extern NvMemory_Status_T EEPROM_Write_Blocking	(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes);
 
 extern void EEPROM_Init_Blocking(EEPROM_T * p_eeprom);
+extern NvMemory_Status_T EEPROM_Write_Blocking	(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes);
+
+// extern void EEPROM_Init_NonBlocking(EEPROM_T * p_eeprom);
+extern bool EEPROM_ProcOp_NonBlocking(EEPROM_T * p_flash);
+extern NvMemory_Status_T EEPROM_StartWrite_NonBlocking(EEPROM_T * p_eeprom, void * p_dest, const void * p_source, size_t sizeBytes);
 
 #endif /*   */
 

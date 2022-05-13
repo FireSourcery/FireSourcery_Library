@@ -25,7 +25,7 @@
 	@file 	Linear_Voltage.h
 	@author FireSoucery
 	@brief 	ADC to Voltage values conversion using voltage divider.
-			Calculates and holds ADCU voltage conversion ratios. 
+			Calculates and holds ADCU voltage conversion ratios.
 			Flexible voltage units.
 			Frac16 init fixes precision to 1 voltage unit.
 	@version V0
@@ -34,22 +34,22 @@
 #ifndef LINEAR_VOLTAGE_H
 #define LINEAR_VOLTAGE_H
 
-#include "Linear.h" 
+#include "Linear.h"
 #include <stdint.h>
 
 /*
 	Overflow: R2 > 65536
  */
-// #define LINEAR_VOLTAGE_CONFIG(r1, r2, adcBits, adcVRef_MilliV, vInMax) 									\
-// {																										\
-// 	.Slope 				= (((int32_t) adcVRef_MilliV * (r1 + r2)) << (16U - adcBits)) / r2 / 1000U, 	\
-// 	.SlopeShift 		= 16U,																			\
-// 	.InvSlope  			= ((int32_t)r2 << 16U) / adcVRef_MilliV * 1000U / (r1 + r2),					\
-// 	.InvSlopeShift 		= 16U - adcBits,																\
-// 	.YOffset 			= 0U, 																			\
-// 	.XOffset 			= 0U, 																			\
-// 	.YReference 		= vInMax, 																		\
-// }
+#define LINEAR_VOLTAGE_CONFIG(r1, r2, adcBits, adcVRef_MilliV, vInMax) 									\
+{																										\
+	.Slope 				= (((int32_t)adcVRef_MilliV * (r1 + r2)) << (15U - adcBits)) / r2 / 1000U, 	\
+	.SlopeShift 		= 15U,																			\
+	.InvSlope  			= ((int32_t)r2 << 15U) / adcVRef_MilliV * 1000U / (r1 + r2),					\
+	.InvSlopeShift 		= 15U - adcBits,																\
+	.YOffset 			= 0U, 																			\
+	.XOffset 			= 0U, 																			\
+	.YReference 		= vInMax, 																		\
+}
 
  /******************************************************************************/
  /*!
@@ -67,9 +67,9 @@ static inline int32_t Linear_Voltage_CalcV(const Linear_T * p_linear, uint16_t a
 
 static inline int32_t Linear_Voltage_CalcMilliV(const Linear_T * p_linear, uint16_t adcu)
 {
-	return Linear_Function_Scalar(p_linear, adcu, 1000U); 
+	return Linear_Function_Scalar(p_linear, adcu, 1000U);
 }
- 
+
 static inline int32_t Linear_Voltage_CalcScalarV(const Linear_T * p_linear, uint16_t adcu, uint16_t scalar)
 {
 	return Linear_Function_Scalar(p_linear, adcu, scalar);
@@ -79,7 +79,7 @@ static inline int32_t Linear_Voltage_CalcScalarV(const Linear_T * p_linear, uint
 /*!
 	@brief 	results expressed in Q16.16, where 65356 => 100% of vInMax
 */
-/******************************************************************************/ 
+/******************************************************************************/
 static inline int32_t Linear_Voltage_CalcFraction16(const Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Function_Fraction16(p_linear, adcu);
@@ -126,9 +126,8 @@ static inline uint16_t Linear_Voltage_CalcAdcu_MilliV(const Linear_T * p_linear,
 
 static inline uint16_t Linear_Voltage_CalcAdcu_ScalarV(const Linear_T * p_linear, uint16_t scalarV, uint16_t scalar)
 {
-	// return (uint16_t)Linear_InvFunction_Scalar(p_linear, scalarV, scalar);
+	return (uint16_t)Linear_InvFunction_Scalar(p_linear, scalarV, scalar); //todo
 }
-
 
 static inline uint16_t Linear_Voltage_CalcAdcu_Fraction16(const Linear_T * p_linear, int32_t fract16)
 {
@@ -147,7 +146,7 @@ static inline uint16_t Linear_Voltage_CalcAdcu_FractionSigned16(const Linear_T *
 	return (uint16_t)Linear_InvFunction_FractionSigned16(p_linear, fract16);
 }
 
-extern void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcBits, uint16_t adcVRef_MilliV, uint16_t vInMax); 
+extern void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcBits, uint16_t adcVRef_MilliV, uint16_t vInMax);
 extern uint16_t Linear_Voltage_CalcAdcu_UserV(const Linear_T * p_linear, uint16_t volts);
 extern uint16_t Linear_Voltage_CalcAdcu_UserMilliV(const Linear_T * p_linear, uint32_t milliV);
 
