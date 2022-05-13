@@ -337,7 +337,6 @@ void Motor_User_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 	else if	(rpm < min) { p_motor->Parameters.SpeedVMatchRef_Rpm = min; }
 	else 				{ p_motor->Parameters.SpeedVMatchRef_Rpm = rpm; };
 
-	p_motor->Parameters.SpeedVMatchRef_Rpm = rpm;
 #ifndef CONFIG_MOTOR_PROPOGATE_SET_PARAM_DISABLE
 	Motor_ResetSpeedVMatchRatio(p_motor);
 #endif

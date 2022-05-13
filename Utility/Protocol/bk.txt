@@ -1,34 +1,34 @@
 encoded with start and end id
 
-	//		if ((p_protocol->p_Specs->ENCODED == true) && (p_protocol->p_Specs->RX_START_ID != 0U))
-	//		{
-	//			if (p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex - 1U] == p_protocol->p_Specs->RX_START_ID) //Received starting char before packet complete
-	//			{
-	//				p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U] = p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex];
-	//				p_protocol->RxIndex = 1U;
-	//			}
-	//		}
-//	if ((p_protocol->p_Specs->ENCODED == true) && (p_protocol->p_Specs->END_ID != 0U))
-//	{
-//		while (PortRxByte(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex]) == true) //skip checking sw buffer
-//		{
-//			p_protocol->RxIndex++;
-//
-//			if (p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex - 1U] == p_protocol->p_Specs->END_ID)
-//			{
-//				(p_protocol->p_Specs->CHECK_RX_COMPLETE(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex)
-//				{
-//					isComplete = true;
-//				}
-//			}
-//			else if (p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex - 1U] == p_protocol->p_Specs->START_ID) //Received starting char before packet complete
-//			{
-//				p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U] = p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex];
-//				p_protocol->RxIndex = 1U;
-//			}
-//		}
-//	}
-//	else
-//	{
-//
-//	}
+			if ((p_protocol->p_Specs->ENCODED == true) && (p_protocol->p_Specs->RX_START_ID != 0U))
+			{
+				if (p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex - 1U] == p_protocol->p_Specs->RX_START_ID) //Received starting char before packet complete
+				{
+					p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U] = p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex];
+					p_protocol->RxIndex = 1U;
+				}
+			}
+	if ((p_protocol->p_Specs->ENCODED == true) && (p_protocol->p_Specs->END_ID != 0U))
+	{
+		while (PortRxByte(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex]) == true) //skip checking sw buffer
+		{
+			p_protocol->RxIndex++;
+
+			if (p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex - 1U] == p_protocol->p_Specs->END_ID)
+			{
+				(p_protocol->p_Specs->CHECK_RX_COMPLETE(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex)
+				{
+					isComplete = true;
+				}
+			}
+			else if (p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex - 1U] == p_protocol->p_Specs->START_ID) //Received starting char before packet complete
+			{
+				p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U] = p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex];
+				p_protocol->RxIndex = 1U;
+			}
+		}
+	}
+	else
+	{
+
+	}

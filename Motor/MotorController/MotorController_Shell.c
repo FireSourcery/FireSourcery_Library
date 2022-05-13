@@ -706,9 +706,27 @@ static Cmd_Status_T Cmd_vmatch(MotorController_T * p_mc, int argc, char ** argv)
 	{
 		rpm = strtoul(argv[1U], 0U, 10);
 		Motor_User_SetSpeedVMatchRef_Rpm(p_motor, rpm);
-		Terminal_SendString(p_terminal, "\r\nRPM 100 percent: ");
-		Terminal_SendNum(p_terminal, Linear_Function(&p_motor->SpeedVMatchRatio, 65535));
-		Terminal_SendString(p_terminal, " PWM Frac16\r\n");
+		rpm = Motor_User_GetSpeedVMatchRef_Rpm(p_motor);
+
+		Terminal_SendString(p_terminal, "\r\nSpeedVMatch_Rpm: "); Terminal_SendNum(p_terminal, rpm);
+		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToVMatchFrac16(p_motor, rpm));
+		Terminal_SendString(p_terminal, " Frac16\r\n");
+
+		Terminal_SendString(p_terminal, "RPM: "); Terminal_SendNum(p_terminal, rpm/2U);
+		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToVMatchFrac16(p_motor, rpm/2U));
+		Terminal_SendString(p_terminal, " Frac16\r\n");
+
+		Terminal_SendString(p_terminal, "RPM: "); Terminal_SendNum(p_terminal, rpm*2U);
+		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToVMatchFrac16(p_motor, rpm*2U));
+		Terminal_SendString(p_terminal, " Frac16\r\n");
+
+ 		Terminal_SendString(p_terminal, "RPM: "); Terminal_SendNum(p_terminal, rpm*2U/3U);
+		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToVMatchFrac16(p_motor, rpm*2U/3U));
+		Terminal_SendString(p_terminal, " Frac16\r\n");
+
+		Terminal_SendString(p_terminal, "RPM: "); Terminal_SendNum(p_terminal, rpm*3U/2U);
+		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToVMatchFrac16(p_motor, rpm*3U/2U));
+		Terminal_SendString(p_terminal, " Frac16\r\n");
 	}
 
 	return CMD_STATUS_SUCCESS;
