@@ -424,6 +424,11 @@ static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(Motor_T * p_motor)
 static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Motor_T * p_motor) 	{ return p_motor->Parameters.DirectionCalibration; }
 static inline uint8_t Motor_User_GetPolePairs(Motor_T * p_motor) 									{ return p_motor->Parameters.PolePairs; }
 
+static inline uint16_t Motor_User_GetSpeedFeedbackRef_Rpm(Motor_T * p_motor) { return p_motor->Parameters.SpeedFeedbackRef_Rpm; }
+static inline uint16_t Motor_User_GetSpeedVMatchRef_Rpm(Motor_T * p_motor) { return p_motor->Parameters.SpeedVMatchRef_Rpm; }
+static inline uint32_t Motor_User_ConvertToVMatchFrac16(Motor_T * p_motor, uint16_t rpm) { return Linear_Function(&p_motor->SpeedVMatchRatio, Motor_ConvertToSpeedFrac16(p_motor, rpm)); }
+//todo change back to 16 after test
+
 // static inline void Motor_User_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Parameters.IaRefZero_Adcu = adcu; }
 // static inline void Motor_User_SetIbZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Parameters.IbRefZero_Adcu = adcu; }
 // static inline void Motor_User_SetIcZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Parameters.IcRefZero_Adcu = adcu; }
