@@ -183,27 +183,27 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 	proc last set input, always single threaded proc
 */
 /******************************************************************************/
-// void StateMachine_Sync_Proc(StateMachine_T * p_stateMachine)
-// {
-// 	ProcInput(p_stateMachine, p_stateMachine->SyncInput);
-// 	p_stateMachine->SyncInput = STATE_MACHINE_INPUT_NULL; /* clear input, reserved char */
-// 	p_stateMachine->SyncInputExt = STATE_MACHINE_INPUT_NULL;
-// 	ProcOutput(p_stateMachine);
-// }
+void StateMachine_Sync_Proc(StateMachine_T * p_stateMachine)
+{
+	ProcInput(p_stateMachine, p_stateMachine->SyncInput);
+	p_stateMachine->SyncInput = STATE_MACHINE_INPUT_NULL; /* clear input, reserved char */
+	p_stateMachine->SyncInputExt = STATE_MACHINE_INPUT_NULL;
+	ProcOutput(p_stateMachine);
+}
 
-// bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
-// {
-// 	bool isAccept = (p_stateMachine->SyncInput < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
-// 	if(isAccept == true) { p_stateMachine->SyncInput = input; }
-// 	return isAccept;
-// }
+bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
+{
+	bool isAccept = (p_stateMachine->SyncInput < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
+	if(isAccept == true) { p_stateMachine->SyncInput = input; }
+	return isAccept;
+}
 
-// bool StateMachine_Sync_SetInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
-// {
-// 	bool isAccept = (p_stateMachine->SyncInput < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
-// 	if(isAccept == true) { p_stateMachine->SyncInput = input; p_stateMachine->SyncInputExt = inputExt;}
-// 	return isAccept;
-// }
+bool StateMachine_Sync_SetInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
+{
+	bool isAccept = (p_stateMachine->SyncInput < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
+	if(isAccept == true) { p_stateMachine->SyncInput = input; p_stateMachine->SyncInputExt = inputExt;}
+	return isAccept;
+}
 
 
 /******************************************************************************/
@@ -215,6 +215,13 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
 	bool isAccept = ProcAsyncInput(p_stateMachine, input);
+	ProcOutput(p_stateMachine);
+	return isAccept;
+}
+
+bool StateMachine_Async_ProcInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
+{
+	bool isAccept = ProcAsyncInputExt(p_stateMachine, input, inputExt);
 	ProcOutput(p_stateMachine);
 	return isAccept;
 }

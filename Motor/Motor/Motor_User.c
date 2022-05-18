@@ -40,7 +40,7 @@ uint16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor)
 		case MOTOR_SENSOR_MODE_HALL: 		angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
 		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
 		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 			break;
-		default: 	break;
+		default: 							angle = 0; 	break;
 	}
 
 	return angle;
@@ -71,7 +71,7 @@ void _Motor_User_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
 	if(Motor_CheckFeedbackMode(p_motor, mode) == true)
 	{
-		Critical_Enter();
+		Critical_Enter(); // can remove with sync state machine
 
 		Motor_SetFeedbackModeFlags(p_motor, mode);
 		/* Match ouput state, accounting for FeedbackMode and State */
@@ -432,7 +432,7 @@ bool Motor_UserN_CheckStop(Motor_T * p_motor, uint8_t motorCount)
 
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
 	{
-		if(p_motor->SpeedFeedback_Frac16 > 0U) { isStop = false; break; }
+		if(p_motor->SpeedFeedback_Frac16 > 0) { isStop = false; break; }
 	}
 
 	return isStop;
@@ -502,11 +502,11 @@ bool Motor_UserN_ClearFault(Motor_T * p_motor, uint8_t motorCount)
 	return isClear;
 }
 
-void Motor_UserN_SetUserControlCmd(Motor_T * p_motor, uint8_t motorCount, int32_t cmd)
+void Motor_UserN_SetUserFeedbackModeCmd(Motor_T * p_motor, uint8_t motorCount, int32_t cmd)
 {
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
 	{
-		Motor_User_SetUserControlCmd(&p_motor[iMotor], cmd);
+		Motor_User_SetUserFeedbackModeCmd(&p_motor[iMotor], cmd);
 	}
 }
 
@@ -526,13 +526,13 @@ void Motor_UserN_SetBrakeCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t bra
 	}
 }
 
-void Motor_UserN_SetVoltageBrakeCmd(Motor_T * p_motor, uint8_t motorCount)
-{
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		Motor_User_SetVoltageBrakeCmd(&p_motor[iMotor]);
-	}
-}
+// void Motor_UserN_SetVoltageBrakeCmd(Motor_T * p_motor, uint8_t motorCount)
+// {
+// 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+// 	{
+// 		Motor_User_SetVoltageBrakeCmd(&p_motor[iMotor]);
+// 	}
+// }
 
 void Motor_UserN_SetRegenCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t brake)
 {

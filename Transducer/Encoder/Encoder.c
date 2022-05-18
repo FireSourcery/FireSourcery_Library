@@ -29,16 +29,11 @@
 */
 /******************************************************************************/
 #include "Encoder.h"
-#include "HAL_Encoder.h"
-#include "Config.h"
-
-#include <stdint.h>
-#include <stdbool.h>
 
 /*!
 	highest precision (factor << leftShift / divisor) without overflow
 */
-static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uint8_t targetShift)
+static uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uint8_t targetShift)
 {
 	uint32_t result = 0;
 	uint32_t shiftedValue = (1U << targetShift);
@@ -71,31 +66,8 @@ static inline uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uin
 	return result;
 }
 
-/*!
-	@brief Init with provided parameters.
-	Default capture mode. HAL function responsible for all corresponding settings
-	EncoderResolution, EncoderCounterMax + 1
-
-	//todo call set
-*/
-void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolution, uint32_t distancePerCount, uint32_t unitTFreq)
+void _Encoder_ResetUnitsAngular(Encoder_T * p_encoder)
 {
-	p_encoder->UnitT_Freq = unitTFreq;
-
-	p_encoder->UnitLinearD = distancePerCount;
-	/*
-	 * Possible 32 bit overflow
-	 *
-	 * For case of CaptureDeltaT(), DeltaD == 1: unitDeltaT_Freq will be large, constraint on unitDeltaD
-	 * Max unitDeltaD will be UINT32_MAX / (unitDeltaT_Freq)
-	 * unitDeltaD ~14,000, for 300,000 unitDeltaT_Freq
-	 *
-	 * For case of CaptureDeltaD(), DeltaT == 1: constraint on unitDeltaD, and deltaD
-	 * Max deltaD will be UINT32_MAX / (unitDeltaD * unitDeltaT_Freq)
-	 * deltaD ~14,000, for 300,000 (unitDeltaD * unitDeltaT_Freq)
-	 */
-	p_encoder->UnitLinearSpeed = distancePerCount * unitTFreq;
-
 	/*
 	 * Angle Calc
 	 * Angle = UnitAngle_Factor * DeltaD >> UnitAngle_Divisor
@@ -104,10 +76,7 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolut
 	 *
 	 * UnitAngularD_ShiftDivisor == CONFIG_ENCODER_ANGLE_DEGREES_BITS
 	 */
-	p_encoder->UnitAngularD_Factor = 0xFFFFFFFFU / countsPerRevolution + 1U;
-
-
-	//todo remove wrap repeat Encoder_SetCountsPerRevolution
+	p_encoder->UnitAngularD_Factor = 0xFFFFFFFFU / p_encoder->Params.CountsPerRevolution + 1U;
 
 	/*
 	 * Angular Speed Calc
@@ -121,7 +90,7 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolut
 	 * Primitive:	  		(DeltaD * UnitAngularD_Factor) / (32-ANGLE_DEGREES_BITS) * UnitT_Freq / DeltaT == 1,048,560,000
 	 * UnitAngularSpeed: 	DeltaD * [UnitAngularD_Factor * UnitT_Freq / (32-ANGLE_DEGREES_BITS)] / DeltaT == 1,048,576,000
 	 */
-	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(unitTFreq, countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
+	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->Params.CountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
 
 	//	//set boundary using speed ref
 	//	if(p_encoder->UnitAngularSpeed > UINT32_MAX / ref)	{p_encoder->UnitAngularSpeed = 0U;}
@@ -138,16 +107,47 @@ void _Encoder_SetUnitConversion(Encoder_T * p_encoder, uint32_t countsPerRevolut
 	 //		p_encoder->UnitAngularSpeed = (unitTFreq << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / countsPerRevolution;
 	 //	}
 
-	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(unitTFreq, p_encoder->CONFIG.POLLING_FREQ * countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
+	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->CONFIG.POLLING_FREQ * p_encoder->Params.CountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
 
 	/*
-	 *  UnitRefSpeed = unitTFreq * 65535U * 60U / CountsPerRevolution / SpeedRef_Rpm;
+	 *  UnitScalarSpeed = unitTFreq * 65535U * 60U / CountsPerRevolution / ScalarSpeedRef_Rpm;
 	 */
-	p_encoder->UnitRefSpeed = MaxLeftShiftDivide(unitTFreq * 60U, countsPerRevolution * p_encoder->Params.SpeedRef_Rpm, 16U);
+	p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm, 16U);
 	// e.g. no truncate = 16,384,000
 }
 
-//reset runtime variables
+void _Encoder_ResetUnitsLinear(Encoder_T * p_encoder)
+{
+	p_encoder->UnitLinearD = p_encoder->Params.DistancePerCount;
+	/*
+		Overflow Caution
+
+		DeltaT Mode, DeltaD == 1:  largeunitDeltaT_Freq, constraint on unitDeltaD
+		Max unitDeltaD => UINT32_MAX / (unitDeltaT_Freq)
+		e.g. unitDeltaD ~14,000, for 300,000 unitDeltaT_Freq
+
+		DeltaD Mode, DeltaT == 1: constraint on unitDeltaD, and deltaD
+		Max deltaD => UINT32_MAX / (unitDeltaD * unitDeltaT_Freq)
+		e.g. deltaD ~14,000, for 300,000 (unitDeltaD * unitDeltaT_Freq)
+	*/
+	p_encoder->UnitLinearSpeed = p_encoder->Params.DistancePerCount * p_encoder->UnitT_Freq;
+}
+
+void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
+{
+	/*
+		UnitScalarSpeed = unitTFreq * 65535U * 60U / CountsPerRevolution / ScalarSpeedRef_Rpm;
+
+		e.g.  unitTFreq = 625000, CountsPerRevolution = 60, ScalarSpeedRef_Rpm =
+		 = 16,384,000 (no truncate)
+	*/
+	p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm, 16U);
+}
+
+/*
+	reset runtime variables
+	todo check nessescity, split t/d mode
+*/
 void Encoder_Zero(Encoder_T * p_encoder)
 {
 	p_encoder->DeltaD = 1U;
@@ -157,13 +157,11 @@ void Encoder_Zero(Encoder_T * p_encoder)
 	p_encoder->AngularD = 0U;
 	//	p_encoder->UserD 	= 0;
 	//	p_encoder->UserT 	= 0;
-
 	p_encoder->SpeedSaved = 0U;
 	p_encoder->DeltaSpeed = 0U;
 
 	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
 }
-
 
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)
 {
@@ -171,7 +169,6 @@ void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)
 }
 
 /*!
-	isALeadBIncrement - Match to HAL/unused for deltaT Mode
 	isALeadBPositive - User runtime calibrate
 */
 void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive)
@@ -179,26 +176,20 @@ void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALe
 	p_encoder->Params.IsALeadBPositive = isALeadBPositive;
 }
 
-/*
-	Frac16 Ref
-*/
-void Encoder_SetSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
-{
-	// if(speedRef != p_encoder->Params.SpeedRef_Rpm) //todo split to static interal or remove
-	{
-		p_encoder->Params.SpeedRef_Rpm = speedRef;
-		p_encoder->UnitRefSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.SpeedRef_Rpm, 16U);
-	}
-}
-
 void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRevolution)
 {
-	// if(countsPerRevolution != p_encoder->Params.CountsPerRevolution)
-	{
-		p_encoder->Params.CountsPerRevolution	= countsPerRevolution;
-		p_encoder->UnitAngularD_Factor 			= 0xFFFFFFFFU / countsPerRevolution + 1U;
-		p_encoder->UnitAngularSpeed 			= MaxLeftShiftDivide(p_encoder->UnitT_Freq, countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
-		p_encoder->UnitInterpolateAngle 		= MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->CONFIG.POLLING_FREQ * countsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
-		p_encoder->UnitRefSpeed 				= MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, countsPerRevolution * p_encoder->Params.SpeedRef_Rpm, 16U);
-	}
+	p_encoder->Params.CountsPerRevolution = countsPerRevolution;
+	_Encoder_ResetUnitsAngular(p_encoder);
+}
+
+void Encoder_SetDistancePerCount(Encoder_T * p_encoder, uint16_t distancePerCount)
+{
+	p_encoder->Params.DistancePerCount = distancePerCount;
+	_Encoder_ResetUnitsLinear(p_encoder);
+}
+
+void Encoder_SetScalarSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
+{
+	p_encoder->Params.ScalarSpeedRef_Rpm = speedRef;
+	_Encoder_ResetUnitsScalarSpeed(p_encoder);
 }

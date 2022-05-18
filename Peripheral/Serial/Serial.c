@@ -310,7 +310,7 @@ uint8_t Serial_GetChar(Serial_T * p_serial)
 /*
 	Send max available, if > than buffer size. May clip.
 */
-uint32_t Serial_SendBytes(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t srcSize)
+uint32_t Serial_SendMax(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t srcSize)
 {
 	uint32_t charCount = 0U;
 
@@ -335,7 +335,7 @@ uint32_t Serial_SendBytes(Serial_T * p_serial, const uint8_t * p_srcBuffer, size
 	return charCount;
 }
 
-uint32_t Serial_RecvBytes(Serial_T * p_serial, uint8_t * p_destBuffer, size_t destSize)
+uint32_t Serial_RecvMax(Serial_T * p_serial, uint8_t * p_destBuffer, size_t destSize)
 {
 	uint32_t charCount = 0U;
 
@@ -359,7 +359,7 @@ uint32_t Serial_RecvBytes(Serial_T * p_serial, uint8_t * p_destBuffer, size_t de
 	return charCount;
 }
 
-bool Serial_SendString(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
+bool Serial_SendN(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
 {
 	bool status = false;
 
@@ -382,7 +382,7 @@ bool Serial_SendString(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t 
 /*
 	Rx only if length had been reached
 */
-bool Serial_RecvString(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
+bool Serial_RecvN(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
 {
 	bool status = false;
 
@@ -403,12 +403,12 @@ bool Serial_RecvString(Serial_T * p_serial, uint8_t * p_destBuffer, size_t lengt
 
 bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
 {
-	return Serial_SendString(p_serial, p_srcBuffer, length);
+	return Serial_SendN(p_serial, p_srcBuffer, length);
 }
 
 uint32_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
 {
-	return Serial_RecvBytes(p_serial, p_destBuffer, length);
+	return Serial_RecvMax(p_serial, p_destBuffer, length);
 }
 
 /*

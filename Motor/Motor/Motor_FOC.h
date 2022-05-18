@@ -92,6 +92,7 @@ static inline int32_t _Motor_FOC_CaptureAngleSpeed(Motor_T * p_motor, qangle16_t
 	int32_t speedFeedback_Frac16 = (p_motor->SpeedFeedback_Frac16 + Linear_Speed_CalcAngleRpmFrac16(&p_motor->UnitAngleRpm, speedDelta)) / 2;
 		// if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedDelta = 0 - speedDelta; } //alraedy signed?
 	p_motor->SpeedAngle = speedAngle; /* mechanical angle */
+	return speedFeedback_Frac16;
 }
 
 			//todo observer
@@ -113,10 +114,12 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			*/
 			p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcIndexOutput(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopSpeed_RPM);
 			electricalAngle = p_motor->ElectricalAngle + Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
+			speedFeedback_Frac16 = 0U;
 			break;
 
 		case MOTOR_SENSOR_MODE_SENSORLESS:
 			electricalAngle = 0U;
+			speedFeedback_Frac16 = 0U;
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
@@ -183,6 +186,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 
 		default:
 			electricalAngle = 0U;
+			speedFeedback_Frac16 = 0U;
 			break;
 	}
 
@@ -251,19 +255,21 @@ static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 			input	RampCmd[0:65535] == VFreqScalar
 			output	VqReq[-32767:32767] => VFreqScalar * SpeedFeedback
 
-			SpeedVMatchRatio = p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / p_motor->Parameters.SpeedVMatchRef_Rpm / 2;
+			SpeedVMatchRatio = SpeedFeedback_Frac16 * SpeedFeedbackRef_Rpm / SpeedVMatchRef_Rpm / 2;
 			SpeedVMatchRatio = Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16) / 2;
-			vqReq = p_motor->RampCmd * SpeedVMatchRatio / 65536;
+			vqReq = RampCmd * SpeedVMatchRatio / 65536;
 
-			Linear_Function(&p_motor->SpeedVMatchRatio) input range [-65535:65535], SpeedFeedback_Frac16 unsaturated
-			Overflow: VMatchRef == 3/4FeedbackRef: 65535*3/2
+			SpeedFeedback_Frac16 unsaturated ~[-65535:65535]
+
+			Overflow caution:
+			Linear_Function(&p_motor->SpeedVMatchRatio) input range [-65535*3/2:65535*3/2], when VMatchRef == FeedbackRef * 3 / 4
 		*/
 		if(p_motor->FeedbackModeFlags.VFreqScalar == 1U)
 		{
 			userOutput = p_motor->RampCmd * (Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16 / 2)) / 65536;   //seletable SpeedControl?
 
-			if(userOutput > 32767) { userOutput = 32767; }
-			else if(userOutput < -32767) { userOutput = -32767; }
+			if		(userOutput > 32767) 	{ userOutput = 32767; }
+			else if	(userOutput < -32767) 	{ userOutput = -32767; }
 		}
 
 		_Motor_FOC_ProcVoltageMode(p_motor, userOutput);
@@ -480,5 +486,7 @@ extern void Motor_FOC_SetOutputLimitsCw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirectionCcw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirectionCw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
+extern void Motor_FOC_ResetOutputLimits(Motor_T * p_motor);
+extern void Motor_FOC_SetDirectionForward(Motor_T * p_motor);
 
 #endif

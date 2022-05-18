@@ -199,13 +199,13 @@ void Motor_ResetSensorMode(Motor_T * p_motor)
 		case MOTOR_SENSOR_MODE_HALL:
 			Hall_Init(&p_motor->Hall);
 			Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
-			/* Set Encoder module individual param consistent to main motor module setting */
+			/* Encoder module contains independent params, sync to main motor module setting */
 			Motor_ResetUnitsHall(p_motor);
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
 			Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
-			Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
+			Encoder_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 			break;
 
 		case MOTOR_SENSOR_MODE_SIN_COS:
@@ -241,14 +241,22 @@ void Motor_ResetUnitsIabc(Motor_T * p_motor)
 
 void Motor_ResetUnitsHall(Motor_T * p_motor)
 {
-	Encoder_Motor_SetHallCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs); //check repeat set here or lower layer?
-	Encoder_SetSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
+	if((p_motor->Parameters.PolePairs != p_motor->Encoder.Params.MotorPolePairs) || (p_motor->Parameters.PolePairs * 6U != p_motor->Encoder.Params.CountsPerRevolution))
+	{
+		Encoder_Motor_SetHallCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs);
+	}
+
+	if(p_motor->Parameters.SpeedFeedbackRef_Rpm != p_motor->Encoder.Params.ScalarSpeedRef_Rpm)
+	{
+		Encoder_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
+	}
+
 	Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, 20000U, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedFeedbackRef_Rpm); /* Alt speed calc */
 }
 
 void Motor_ResetSpeedVMatchRatio(Motor_T * p_motor)
 {
-	//check overflow SpeedFeedback_Frac16 = 65536+,  SpeedVMatchRef_Rpm = min
+	//todo xref
 	Linear_Init(&p_motor->SpeedVMatchRatio, p_motor->Parameters.SpeedFeedbackRef_Rpm, p_motor->Parameters.SpeedVMatchRef_Rpm, 0, 65535*2);
 }
 

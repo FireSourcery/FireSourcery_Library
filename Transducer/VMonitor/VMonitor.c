@@ -29,7 +29,7 @@
 */
 /******************************************************************************/
 #include "VMonitor.h"
-#include "Config.h"
+
 #include <string.h>
 #include <stdio.h>
 
@@ -108,9 +108,8 @@ uint32_t VMonitor_GetWarningUpper_MilliV(VMonitor_T * p_vMonitor) 	{ return Line
 uint32_t VMonitor_GetWarningLower_MilliV(VMonitor_T * p_vMonitor) 	{ return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.WarningLower_Adcu); }
 
 
-#define VMONITOR_STRING_FUNCTIONS
 
-#ifdef VMONITOR_STRING_FUNCTIONS
+#ifdef CONFIG_VMONITOR_STRING_FUNCTIONS_ENABLE
 static const char * STR_LIMIT 		= "Limit: ";
 static const char * STR_WARNING 	= "Warning: ";
 static const char * STR_UPPER 		= "Upper: ";

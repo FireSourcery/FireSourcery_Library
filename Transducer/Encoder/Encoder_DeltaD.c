@@ -29,18 +29,11 @@
 */
 /******************************************************************************/
 #include "Encoder_DeltaD.h"
-#include "Encoder.h"
-#include "HAL_Encoder.h"
-
-#include <stdint.h>
-#include <stdbool.h>
-
 #include <string.h>
-
 
 /*!
 	Uses periodic timer ISR.
- */
+*/
 void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 {
 	//	Pin_Deinit(&p_encoder->PhaseA);
@@ -60,16 +53,17 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 		memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T));
 	}
 
-#ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
-	if (p_encoder->Params.IsQuadratureCaptureEnabled == true)
-	{
-//		HAL_Encoder_ConfigCaptureQuadrature(p_encoder);
-	}
-	else
-#endif
-	{
-//		HAL_Encoder_ConfigCaptureDualEdge(p_encoder);
-	}
+//todo
+// #ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
+// 	if (p_encoder->Params.IsQuadratureCaptureEnabled == true)
+// 	{
+// //		HAL_Encoder_ConfigCaptureQuadrature(p_encoder);
+// 	}
+// 	else
+// #endif
+// 	{
+// //		HAL_Encoder_ConfigCaptureDualEdge(p_encoder);
+// 	}
 
 	HAL_Encoder_WriteTimerCounterMax(p_encoder->CONFIG.P_HAL_ENCODER, p_encoder->Params.CountsPerRevolution - 1U);
 
@@ -85,8 +79,10 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 		UnitAngularSpeed = 8,000 => Max DeltaD = 536,870
 		10k RPM => DeltaD = 10000 / 60 * 8192 / 1000 = 1,532
 	*/
-
-	Encoder_DeltaD_SetUnitConversion(p_encoder, p_encoder->Params.CountsPerRevolution, p_encoder->Params.DistancePerCount);
+	p_encoder->UnitT_Freq = p_encoder->CONFIG.DELTA_D_SAMPLE_FREQ;
+	_Encoder_ResetUnitsAngular(p_encoder);
+	_Encoder_ResetUnitsLinear(p_encoder);
+	_Encoder_ResetUnitsScalarSpeed(p_encoder);
 
 	if(p_encoder->Params.CountsPerRevolution > (UINT32_MAX / p_encoder->UnitAngularSpeed))
 	{
@@ -95,30 +91,6 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 
 	Encoder_Zero(p_encoder);
 }
-//
-//void Encoder_DeltaD_SetParams(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
-//{
-//
-//}
-
-void Encoder_DeltaD_SetUnitConversion(Encoder_T * p_encoder, uint32_t encoderCountsPerRevolution, uint32_t encoderDistancePerCount)
-{
-	_Encoder_SetUnitConversion(p_encoder, encoderCountsPerRevolution, encoderDistancePerCount, p_encoder->CONFIG.DELTA_D_SAMPLE_FREQ);
-}
-
-/*!
-
- */
-//void Encoder_DeltaD_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBDirectionPositive)
-//{
-//
-////#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-////	p_encoder->Params.DirectionCalibration = (isALeadBDirectionPositive) ? ENCODER_DIRECTION_DIRECT : ENCODER_DIRECTION_REVERSE;
-////#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-////	p_encoder->Params.DirectionCalibration = (!isALeadBDirectionPositive) ? ENCODER_DIRECTION_DIRECT : ENCODER_DIRECTION_REVERSE;
-////#endif
-//}
-
 
 void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder)
 {
@@ -128,8 +100,8 @@ void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder)
 }
 
 /*
- *  Calibration step 1
- */
+	Run on calibration routine
+*/
 void Encoder_DeltaD_CalibrateQuadratureReference(Encoder_T * p_encoder)
 {
 	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
@@ -148,3 +120,12 @@ void Encoder_DeltaD_CalibrateQuadraturePositive(Encoder_T * p_encoder)
 
 //	Encoder_DeltaD_SetQuadratureDirectionCalibration(p_encoder, (counterValue > p_encoder->TimerCounterSaved));
 }
+
+// void Encoder_DeltaD_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBDirectionPositive)
+// {
+// #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+// 	p_encoder->Params.DirectionCalibration = (isALeadBDirectionPositive) ? ENCODER_DIRECTION_DIRECT : ENCODER_DIRECTION_REVERSE;
+// #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+// 	p_encoder->Params.DirectionCalibration = (!isALeadBDirectionPositive) ? ENCODER_DIRECTION_DIRECT : ENCODER_DIRECTION_REVERSE;
+// #endif
+// }

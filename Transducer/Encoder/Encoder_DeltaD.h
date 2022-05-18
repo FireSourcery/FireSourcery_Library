@@ -32,101 +32,97 @@
 #define ENCODER_DELTA_D_H
 
 #include "Encoder.h"
-#include "HAL_Encoder.h"
-
-#include <stdint.h>
-#include <stdbool.h>
 
 /*!
 	@brief 	Capture DeltaD, per fixed changed in time, via timer periodic interrupt
 			Looping Angle Capture
-
  	 	 	TimerCounter should loop for correct angular position
  	 	 	TimerCounterMax == EncoderRes -1
  */
 static inline void Encoder_DeltaD_CaptureSinglePhase(Encoder_T * p_encoder)
 {
-	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaD, p_encoder->Params.CountsPerRevolution - 1U);
+	uint32_t deltaD;
+	_Encoder_CaptureDelta(p_encoder, &deltaD, p_encoder->Params.CountsPerRevolution - 1U);
+	p_encoder->DeltaD = deltaD;
 	p_encoder->AngularD = p_encoder->TimerCounterSaved;
 	p_encoder->TotalD += p_encoder->DeltaD;
 	p_encoder->TotalT += 1;
 }
 
 
-// HW Quadrature if counter ticks downs
-static inline void Encoder_DeltaD_CaptureQuadrature(Encoder_T * p_encoder)
-{
-	uint32_t counterValue = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
-	bool isIncrement;
-	bool isCounterIncrementDirectionPositive;
+// // HW Quadrature if counter ticks downs
+// static inline void Encoder_DeltaD_CaptureQuadrature(Encoder_T * p_encoder)
+// {
+// 	uint32_t counterValue = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+// 	bool isIncrement;
+// 	// bool isCounterIncrementDirectionPositive;
 
-	/*
-	 * Unsigned DeltaD capture
-	 */
-	if (HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
-	{
-		if(HAL_Encoder_ReadQuadratureCounterOverflowIncrement(p_encoder->CONFIG.P_HAL_ENCODER) == true)
-		{
-			p_encoder->DeltaD = p_encoder->Params.CountsPerRevolution - p_encoder->TimerCounterSaved + counterValue;
-			isIncrement = true;
-		}
-		else if (HAL_Encoder_ReadQuadratureCounterOverflowDecrement(p_encoder->CONFIG.P_HAL_ENCODER) == true) //counter counts down, deltaD is negative
-		{
-			p_encoder->DeltaD = p_encoder->Params.CountsPerRevolution - counterValue + p_encoder->TimerCounterSaved;
-			isIncrement = false;
-		}
+// 	/*
+// 		Unsigned DeltaD capture
+// 	*/
+// 	if (HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
+// 	{
+// 		if(HAL_Encoder_ReadQuadratureCounterOverflowIncrement(p_encoder->CONFIG.P_HAL_ENCODER) == true)
+// 		{
+// 			p_encoder->DeltaD = p_encoder->Params.CountsPerRevolution - p_encoder->TimerCounterSaved + counterValue;
+// 			isIncrement = true;
+// 		}
+// 		else if (HAL_Encoder_ReadQuadratureCounterOverflowDecrement(p_encoder->CONFIG.P_HAL_ENCODER) == true) //counter counts down, deltaD is negative
+// 		{
+// 			p_encoder->DeltaD = p_encoder->Params.CountsPerRevolution - counterValue + p_encoder->TimerCounterSaved;
+// 			isIncrement = false;
+// 		}
 
-		HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
-	}
-	else
-	{
-		if (counterValue > p_encoder->TimerCounterSaved)
-		{
-			p_encoder->DeltaD = counterValue - p_encoder->TimerCounterSaved;
-			isIncrement = true;
-		}
-		else //counter counts down, deltaD is negative
-		{
-			p_encoder->DeltaD = p_encoder->TimerCounterSaved - counterValue;
-			isIncrement = false;
-		}
+// 		HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
+// 	}
+// 	else
+// 	{
+// 		if (counterValue > p_encoder->TimerCounterSaved)
+// 		{
+// 			p_encoder->DeltaD = counterValue - p_encoder->TimerCounterSaved;
+// 			isIncrement = true;
+// 		}
+// 		else //counter counts down, deltaD is negative
+// 		{
+// 			p_encoder->DeltaD = p_encoder->TimerCounterSaved - counterValue;
+// 			isIncrement = false;
+// 		}
 
-		//signed capture
-//		p_encoder->DeltaD = counterValue - p_encoder->TimerCounterSaved;
-	}
+// 		//signed capture
+// //		p_encoder->DeltaD = counterValue - p_encoder->TimerCounterSaved;
+// 	}
 
-	p_encoder->TimerCounterSaved = counterValue;
-	p_encoder->AngularD = counterValue;
-	p_encoder->TotalT += 1U;
+// 	p_encoder->TimerCounterSaved = counterValue;
+// 	p_encoder->AngularD = counterValue;
+// 	p_encoder->TotalT += 1U;
 
 
 
-	//static inline void Encoder_DeltaD_ReadQuadratureDirection(Encoder_T * p_encoder)
-	//{//#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-	//	//	isCounterIncrementDirectionPositive = p_encoder->IsALeadBDirectionPositive;
-	//	//#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-	//	//	isCounterIncrementDirectionPositive = !p_encoder->IsALeadBDirectionPositive;
-	//	//#endif
-	//	return HAL_Encoder_ReadQuadratureCounterDirection(p_encoder->CONFIG.P_HAL_ENCODER);
-	//}
+// 	//static inline void Encoder_DeltaD_ReadQuadratureDirection(Encoder_T * p_encoder)
+// 	//{//#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+// 	//	//	isCounterIncrementDirectionPositive = p_encoder->IsALeadBDirectionPositive;
+// 	//	//#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+// 	//	//	isCounterIncrementDirectionPositive = !p_encoder->IsALeadBDirectionPositive;
+// 	//	//#endif
+// 	//	return HAL_Encoder_ReadQuadratureCounterDirection(p_encoder->CONFIG.P_HAL_ENCODER);
+// 	//}
 
-#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-	isCounterIncrementDirectionPositive = p_encoder->Params.IsALeadBPositive;
-#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-	isCounterIncrementDirectionPositive = !p_encoder->Params.IsALeadBPositive;
-#endif
+// // #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+// // 	isCounterIncrementDirectionPositive = p_encoder->Params.IsALeadBPositive;
+// // #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+// // 	isCounterIncrementDirectionPositive = !p_encoder->Params.IsALeadBPositive;
+// // #endif
 
-	if ((isCounterIncrementDirectionPositive) && (isIncrement == true))
-//	if ((p_encoder->Params.DirectionCalibration == ENCODER_DIRECTION_DIRECT) && (isIncrement == true)) //Positive DeltaD is positive direction
-	{
-		p_encoder->TotalD += p_encoder->DeltaD;
-	}
-	else
-	{
-		p_encoder->TotalD -= p_encoder->DeltaD;	//  deltaD is negative
-	}
-
-}
+// // 	if ((isCounterIncrementDirectionPositive) && (isIncrement == true))
+// // //	if ((p_encoder->Params.DirectionCalibration == ENCODER_DIRECTION_DIRECT) && (isIncrement == true)) //Positive DeltaD is positive direction
+// // 	{
+// // 		p_encoder->TotalD += p_encoder->DeltaD;
+// // 	}
+// // 	else
+// // 	{
+// // 		p_encoder->TotalD -= p_encoder->DeltaD;	//  deltaD is negative
+// // 	}
+// }
 
 static inline uint32_t Encoder_DeltaD_CaptureAngle(Encoder_T * p_encoder)
 {
@@ -150,7 +146,7 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 #ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
 	if (p_encoder->Params.IsQuadratureCaptureEnabled == true)
 	{
-		Encoder_DeltaD_CaptureQuadrature(p_encoder);
+		// Encoder_DeltaD_CaptureQuadrature(p_encoder);
 	}
 	else
 #endif
@@ -202,14 +198,14 @@ static inline uint32_t Encoder_DeltaD_ConvertFromSpeed(Encoder_T * p_encoder, ui
 static inline uint32_t Encoder_DeltaD_ConvertFromSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t speed_UnitsPerMinute)
 {
 	return speed_UnitsPerMinute * 60U / p_encoder->UnitLinearSpeed;
-} 
+}
 
 static inline uint32_t Encoder_DeltaD_GetSpeed(Encoder_T * p_encoder)
 {
 	// return Encoder_CalcSpeed(p_encoder, p_encoder->DeltaD, 1U);
 	return Encoder_DeltaD_ConvertToSpeed(p_encoder, p_encoder->DeltaD);
 }
- 
+
 /*!
 	@return DeltaD is angle in raw timer counter ticks.
 	CaptureDeltaD only, Fixed DeltaT: DeltaD count on fixed time sample.
@@ -242,12 +238,24 @@ static inline uint32_t Encoder_DeltaD_ConvertToRotationalSpeed_RPM(Encoder_T * p
 //	return (deltaD_Ticks * p_encoder->CONFIG.DELTA_D_SAMPLE_FREQ * 60U) / p_encoder->Params.CountsPerRevolution;
 }
 
-
 static inline uint32_t Encoder_DeltaD_GetUnitSpeed(Encoder_T * p_encoder)
 {
 	return Encoder_CalcUnitSpeed(p_encoder, p_encoder->DeltaD, 1U);
 }
 
 
+/******************************************************************************/
+/*!
+	@brief 	Extern Declarations
+*/
+/*! @{ */
+/******************************************************************************/
+extern void Encoder_DeltaD_Init(Encoder_T * p_encoder);
+extern void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder);
+extern void Encoder_DeltaD_CalibrateQuadratureReference(Encoder_T * p_encoder);
+extern void Encoder_DeltaD_CalibrateQuadraturePositive(Encoder_T * p_encoder);
+/******************************************************************************/
+/*! @} */
+/******************************************************************************/
 
 #endif

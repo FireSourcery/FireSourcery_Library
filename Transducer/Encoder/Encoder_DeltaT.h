@@ -32,12 +32,6 @@
 #define ENCODER_DELTA_T_H
 
 #include "Encoder.h"
-#include "HAL_Encoder.h"
-
-#include "Peripheral/Pin/Pin.h"
-
-#include <stdint.h>
-#include <stdbool.h>
 
 static inline void CaptureAngularDIncreasing(Encoder_T * p_encoder)
 {
@@ -53,18 +47,11 @@ static inline void CaptureAngularDIncreasing(Encoder_T * p_encoder)
  */
 static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 {
-	// uint32_t deltaT = 0U;
-	// _Encoder_CaptureDelta(p_encoder, &deltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
-	// p_encoder->DeltaT = (deltaT + p_encoder->DeltaT) / 2U; //move to outside?
-
 	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
 	CaptureAngularDIncreasing(p_encoder);
-
-	//capture integral
-	p_encoder->TotalD += 1U;
+	p_encoder->TotalD += 1U; 	/* Capture integral */
 	p_encoder->TotalT += p_encoder->DeltaT;
 }
-
 
 
 /*
@@ -72,28 +59,28 @@ static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
  *
  * only when capturing single phase (of 2 phase quadrature mode) 180 degree offset, not for 3 phase 120 degree offset
  */
-static inline void Encoder_DeltaT_CaptureQuadrature(Encoder_T * p_encoder)
-{
-//	bool phaseB = Pin_Input_Read(&p_encoder->PhaseB);
-	//#ifdef enocder hal pin read
-//	bool phaseB = HAL_Encoder_ReadPhaseB(&p_encoder->PhaseB);
+// static inline void Encoder_DeltaT_CaptureQuadrature(Encoder_T * p_encoder)
+// {
+// //	bool phaseB = Pin_Input_Read(&p_encoder->PhaseB);
+// 	//#ifdef enocder hal pin read
+// //	bool phaseB = HAL_Encoder_ReadPhaseB(&p_encoder->PhaseB);
 
-//	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
-//	p_encoder->TotalT += p_encoder->DeltaT;
-//
-//	if (!phaseB ^ p_encoder->Params.IsALeadBPositive)
-//	{
-//		//		p_encoder->DeltaD = 1; or set quadrature read direction
-//		CaptureAngularDIncreasing(p_encoder);
-//		if(p_encoder->TotalD < INT32_MAX) {p_encoder->TotalD += 1U;}
-//	}
-//	else
-//	{
-//		//		p_encoder->DeltaD = -1; or set quadrature read direction
-//		p_encoder->AngularD = (p_encoder->AngularD > 0U) ? p_encoder->AngularD - 1U : p_encoder->Params.CountsPerRevolution - 1U;
-//		if(p_encoder->TotalD > INT32_MIN) {p_encoder->TotalD -= 1;}
-//	}
-}
+// //	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
+// //	p_encoder->TotalT += p_encoder->DeltaT;
+// //
+// //	if (!phaseB ^ p_encoder->Params.IsALeadBPositive)
+// //	{
+// //		//		p_encoder->DeltaD = 1; or set quadrature read direction
+// //		CaptureAngularDIncreasing(p_encoder);
+// //		if(p_encoder->TotalD < INT32_MAX) {p_encoder->TotalD += 1U;}
+// //	}
+// //	else
+// //	{
+// //		//		p_encoder->DeltaD = -1; or set quadrature read direction
+// //		p_encoder->AngularD = (p_encoder->AngularD > 0U) ? p_encoder->AngularD - 1U : p_encoder->Params.CountsPerRevolution - 1U;
+// //		if(p_encoder->TotalD > INT32_MIN) {p_encoder->TotalD -= 1;}
+// //	}
+// }
 
 //static inline uint32_t Encoder_DeltaT_CaptureAngularSpeedAverage(Encoder_T * p_encoder)
 //{
@@ -103,18 +90,18 @@ static inline void Encoder_DeltaT_CaptureQuadrature(Encoder_T * p_encoder)
 //	return speed;
 //}
 //
-static inline uint32_t Encoder_DeltaT_PollRotationalSpeedAverage_RPM(Encoder_T * p_encoder)
-{
-//	uint32_t speed;
-//
+// static inline uint32_t Encoder_DeltaT_PollRotationalSpeedAverage_RPM(Encoder_T * p_encoder)
+// {
+// //	uint32_t speed;
+// //
 
-//	speed = Encoder_CalcRotationalSpeed_RPM(p_encoder, p_encoder->TotalD + 1, p_encoder->TotalT + p_encoder->DeltaT);
+// //	speed = Encoder_CalcRotationalSpeed_RPM(p_encoder, p_encoder->TotalD + 1, p_encoder->TotalT + p_encoder->DeltaT);
 
-//
-//	p_encoder->TotalD = 0U;
-//	p_encoder->TotalT = 1U;
-//	return speed;
-}
+// //
+// //	p_encoder->TotalD = 0U;
+// //	p_encoder->TotalT = 1U;
+// //	return speed;
+// }
 
 /* rising edge detect */
 static inline bool Encoder_DeltaT_PollReferenceEdgeRising(Encoder_T * p_encoder, bool reference)
@@ -125,7 +112,7 @@ static inline bool Encoder_DeltaT_PollReferenceEdgeRising(Encoder_T * p_encoder,
 	return status;
 }
 
-/* both edge detect*/
+/* both edge detect */
 static inline bool Encoder_DeltaT_PollReferenceEdgeDual(Encoder_T * p_encoder, bool reference)
 {
 	bool status = (reference ^ p_encoder->PulseReferenceSaved);
@@ -140,7 +127,7 @@ static inline bool Encoder_DeltaT_PollReferenceEdgeDual(Encoder_T * p_encoder, b
 	e.g. use 1 hall edge for reference
 	polling frequency must be > signal freq, at least 2x to satisfy Nyquist theorem
 	2000ppr encoder, 20000hz sample => 300rpm max
- */
+*/
 static inline bool Encoder_DeltaT_PollPhaseAEdgeRising(Encoder_T * p_encoder)
 {
 	bool reference = Pin_Input_Read(&p_encoder->PhaseA);
@@ -155,9 +142,9 @@ static inline bool Encoder_DeltaT_PollPhaseAEdgeDual(Encoder_T * p_encoder)
 
 /******************************************************************************/
 /*!
- * @brief	Extend base timer using millis timer.
- * 			32-bit timer for 3.2us intervals is 3.8 hours
- */
+	@brief 	Extend base timer using millis timer.
+	 		32-bit timer for 3.2us intervals is 3.8 hours
+*/
 /******************************************************************************/
 static inline uint32_t GetEncoderExtendedTimerDelta(Encoder_T * p_encoder)
 {
@@ -384,7 +371,6 @@ static inline uint32_t Encoder_DeltaT_ConvertToRotationalSpeed_RPM(Encoder_T * p
 	return p_encoder->UnitT_Freq * 60U / (p_encoder->Params.CountsPerRevolution * deltaT_ticks);
 }
 
-
 static inline uint32_t Encoder_DeltaT_GetUnitSpeed(Encoder_T * p_encoder)
 {
 	return Encoder_CalcUnitSpeed(p_encoder, 1U, p_encoder->DeltaT);
@@ -465,6 +451,24 @@ static inline uint32_t Encoder_DeltaT_ConvertInterpolationFreqToRotationalSpeed_
 //
 ////	index * Encoder_GetAcceleration(p_encoder) / interpolationFreq;
 //}
+/******************************************************************************/
+/*! @} */
+/******************************************************************************/
+
+
+
+/******************************************************************************/
+/*!
+	@brief 	Extern Declarations
+*/
+/*! @{ */
+/******************************************************************************/
+extern void Encoder_DeltaT_Init(Encoder_T * p_encoder);
+extern void Encoder_DeltaT_SetExtendedTimer(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis);
+extern void Encoder_DeltaT_SetExtendedTimerDefault(Encoder_T * p_encoder);
+extern void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder, uint16_t initialRpm);
+// extern void Encoder_DeltaT_CalibrateQuadratureReference(Encoder_T * p_encoder);
+// extern void Encoder_DeltaT_CalibrateQuadraturePositive(Encoder_T * p_encoder);
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

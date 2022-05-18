@@ -22,38 +22,19 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.h
+	@file 	MotProtocol.h
 	@author FireSoucery
-	@brief 	Encoder module preprocessor configuration options and defaults.
+	@brief
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_ENCODER_H
-#define CONFIG_ENCODER_H
+#ifndef MOT_MOT_PROTOCOL_H
+#define MOT_MOT_PROTOCOL_H
 
-/* Compile time define if chip supports quadrature capture. Enables toggle during runtime */
-#if 	defined(CONFIG_ENCODER_HW_QUADRATURE_CAPABLE)
-#elif 	defined(CONFIG_ENCODER_HW_QUADRATURE_DISABLED)
-#else
-	#define CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
-#endif
+#include "MotProtocol.h"
+#include "Utility/Protocol/Protocol_Cmdr.h"
 
-/* Compile time define for all encoder instances if A Lead B is increment */
-#if 	defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT)
-#elif 	defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-#else
-	#define CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-#endif
-
-/*  Capture DeltaT Mode */
-#if 	defined(CONFIG_ENCODER_HW_TIMER_COUNTER_MAX)
-#else
-		#define CONFIG_ENCODER_HW_TIMER_COUNTER_MAX 0xFFFFU
-#endif
-
-#if 	defined(CONFIG_ENCODER_ANGLE_DEGREES_BITS)
-#else
-	#define CONFIG_ENCODER_ANGLE_DEGREES_BITS 16U
-#endif
+extern const Protocol_Specs_T MOT_PROTOCOL_CTRLR_SPECS;
+extern const Protocol_Specs_T MOT_PROTOCOL_CMDR_SPECS;
 
 #endif

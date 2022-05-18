@@ -29,23 +29,18 @@
 */
 /******************************************************************************/
 #include "Encoder_Motor.h"
-#include "Encoder.h"
-
-#include <stdint.h>
-#include <stdbool.h>
 
 /*!
 	Init to CaptureDeltaD Mode
 
 	UnitAngularD set to reflect mechanical angle => set for electrical angle to be derived value.
 	Allow TotalD of at least CountsPerRevolution
- */
+*/
 void Encoder_Motor_InitCaptureCount(Encoder_T * p_encoder)
 {
 	Encoder_DeltaD_Init(p_encoder);
 }
 
-/******************************************************************************/
 /*!
 	Init to CaptureDeltaT Mode
 	e.g.   hall sensors as speed encoder.
@@ -71,26 +66,21 @@ void Encoder_Motor_InitCaptureCount(Encoder_T * p_encoder)
 	MRPM 		= ERPM/PolePairs
 	MRPM 		= 1[Delta]*60[s]*TimerFreq[Hz]/PolePairs/Delta[Ticks]
 
- */
-/******************************************************************************/
+*/
 void Encoder_Motor_InitCaptureTime(Encoder_T * p_encoder)
 {
 	Encoder_DeltaT_Init(p_encoder);
-	Encoder_DeltaT_SetUnitConversion(p_encoder, p_encoder->Params.CountsPerRevolution, p_encoder->Params.DistancePerCount);
 }
 
 void Encoder_Motor_SetHallCountsPerRevolution(Encoder_T * p_encoder, uint8_t motorPolePairs)
 {
-	if((motorPolePairs != p_encoder->Params.MotorPolePairs) || (motorPolePairs * 6U != p_encoder->Params.CountsPerRevolution))
-	{
-		p_encoder->Params.MotorPolePairs = motorPolePairs;
-		Encoder_SetCountsPerRevolution(p_encoder, motorPolePairs * 6U);
-	}
+	p_encoder->Params.MotorPolePairs = motorPolePairs;
+	Encoder_SetCountsPerRevolution(p_encoder, motorPolePairs * 6U);
 }
 
-void Encoder_Motor_SetLinearUnits(Encoder_T * p_encoder, uint32_t wheelDiameter, uint32_t wheeltoMotorRatio_Factor, uint32_t wheeltoMotorRatio_Divisor)
-{
-//	uint32_t distancePerRevolution = wheelDiameter * wheeltoMotorRatio_Factor * 314 / 100 / wheeltoMotorRatio_Divisor;
-//	p_encoder->Params.DistancePerCount = distancePerRevolution / p_encoder->Params.CountsPerRevolution;
-////	Encoder_SetDistancePerCount(p_encoder, distancePerRevolution / p_encoder->Params.CountsPerRevolution);
-}
+// void Encoder_Motor_SetLinearUnits(Encoder_T * p_encoder, uint32_t wheelDiameter, uint32_t wheeltoMotorRatio_Factor, uint32_t wheeltoMotorRatio_Divisor)
+// {
+// //	uint32_t distancePerRevolution = wheelDiameter * wheeltoMotorRatio_Factor * 314 / 100 / wheeltoMotorRatio_Divisor;
+// //	p_encoder->Params.DistancePerCount = distancePerRevolution / p_encoder->Params.CountsPerRevolution;
+// ////	Encoder_SetDistancePerCount(p_encoder, distancePerRevolution / p_encoder->Params.CountsPerRevolution);
+// }

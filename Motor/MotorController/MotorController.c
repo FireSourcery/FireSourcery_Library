@@ -83,7 +83,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	p_mc->MainDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	// p_mc->SpeedLimitActiveId = MOTOR_SPEED_LIMIT_ACTIVE_DISABLE;
-	p_mc->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
+	// p_mc->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 
 	StateMachine_Init(&p_mc->StateMachine);
 }

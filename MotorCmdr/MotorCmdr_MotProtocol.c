@@ -1,3 +1,4 @@
+
 /******************************************************************************/
 /*!
 	@section LICENSE
@@ -22,38 +23,36 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.h
+	@file 	MotProtocol.c
 	@author FireSoucery
-	@brief 	Encoder module preprocessor configuration options and defaults.
+	@brief
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_ENCODER_H
-#define CONFIG_ENCODER_H
+#include "MotorCmdr.h"
+#include "Utility/Protocol/Concrete/MotProtocol/MotProtocol.h"
 
-/* Compile time define if chip supports quadrature capture. Enables toggle during runtime */
-#if 	defined(CONFIG_ENCODER_HW_QUADRATURE_CAPABLE)
-#elif 	defined(CONFIG_ENCODER_HW_QUADRATURE_DISABLED)
-#else
-	#define CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
-#endif
+/*
+	Composition, app uses its own structure
+*/
+// static void BuildReq_Control(MotProtocol_ReqPacket_Control_T * p_reqPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
+// {
+// 	/* App uses its own structure */
+//     switch(p_app->ReqActive)
+//     {
+//         case MOTOR_CMDR_WRITE_THROTTLE:
+// 			*p_txLength = MotProtocol_ReqPacket_Control_BuildThrottle(p_reqPacket, p_app->Throttle);
+// 			*p_respLength = MotProtocol_GetControlRespLength(MOTPROTOCOL_CONTROL_THROTTLE);
+//             break;
+//     }
+// }
 
-/* Compile time define for all encoder instances if A Lead B is increment */
-#if 	defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT)
-#elif 	defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-#else
-	#define CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-#endif
+// static void ParseResp(MotorCmdr_T * p_app, const uint8_t * p_rxPacket)
+// {
 
-/*  Capture DeltaT Mode */
-#if 	defined(CONFIG_ENCODER_HW_TIMER_COUNTER_MAX)
-#else
-		#define CONFIG_ENCODER_HW_TIMER_COUNTER_MAX 0xFFFFU
-#endif
+// }
 
-#if 	defined(CONFIG_ENCODER_ANGLE_DEGREES_BITS)
-#else
-	#define CONFIG_ENCODER_ANGLE_DEGREES_BITS 16U
-#endif
 
-#endif
+/* App implements interface - config protocol with p_app->Interface */
+/*  */
+// Mot_Protocol_Cmdr_BuildReq_Control(p_reqPacket, p_txLength, p_respLength, p_app->Interface);

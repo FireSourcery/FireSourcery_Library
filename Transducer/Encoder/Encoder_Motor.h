@@ -35,17 +35,13 @@
 
 #include "Encoder_DeltaT.h"
 #include "Encoder_DeltaD.h"
-#include "Encoder.h"
-
-#include <stdint.h>
-#include <stdbool.h>
 
 /******************************************************************************/
 /*!
 	Capture DeltaD Mode
 	CounterD Angle Functions
 	DeltaD measures mechanical angle
- */
+*/
 /******************************************************************************/
 static inline uint32_t Encoder_Motor_GetMechanicalDelta(Encoder_T * p_encoder)
 {
@@ -56,7 +52,7 @@ static inline uint32_t Encoder_Motor_GetMechanicalDelta(Encoder_T * p_encoder)
 	Electrical Delta Angle, change in Angle [Degree16s] per Control Period.
 	MechanicalDelta * PolePairs
 	Overflow threshold > 1 electrical cycle
- */
+*/
 static inline uint32_t Encoder_Motor_GetElectricalDelta(Encoder_T * p_encoder)
 {
 	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->DeltaD * p_encoder->Params.MotorPolePairs);
@@ -71,11 +67,11 @@ static inline uint32_t Encoder_Motor_GetElectricalDelta(Encoder_T * p_encoder)
 	Capture DeltaT Mode
 	Control Periods / Encoder Pulse > 1
 	Interpolate Delta Angle
- */
+*/
 /******************************************************************************/
 /*!
 	Hall => Use CountPerRevolution = polePairs*6. Capture on Commutation Step
- */
+*/
 static inline uint32_t Encoder_Motor_InterpolateMechanicalDelta(Encoder_T * p_encoder, uint32_t pollingIndex)
 {
 	return Encoder_DeltaT_InterpolateAngle(p_encoder, pollingIndex);
@@ -94,15 +90,15 @@ static inline uint32_t Encoder_Motor_InterpolateElectricalDelta(Encoder_T * p_en
 	}
 }
 
-static inline uint32_t Encoder_Motor_InterpolateHallDelta(Encoder_T * p_encoder, uint32_t pollingIndex)
-{
-
-}
+// static inline uint32_t Encoder_Motor_InterpolateHallDelta(Encoder_T * p_encoder, uint32_t pollingIndex)
+// {
+// 	//todo with saturation?
+// }
 
 
 /*
- 	 Control periods per encoder pulse, hall phase
- */
+	Control periods per encoder pulse, hall phase
+*/
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(Encoder_T * p_encoder, uint16_t mechRpm)
 {
 	return Encoder_DeltaT_ConvertRotationalSpeedToInterpolationFreq_RPM(p_encoder, mechRpm);
@@ -122,7 +118,7 @@ static inline uint32_t Encoder_Motor_GetInterpolationFreq(Encoder_T *p_encoder)
 /******************************************************************************/
 /*!
 	Position - Both Capture Modes
- */
+*/
 /******************************************************************************/
 static inline uint32_t Encoder_Motor_GetMechanicalTheta(Encoder_T * p_encoder)
 {
@@ -141,7 +137,7 @@ static inline uint32_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
 /******************************************************************************/
 /*!
 	Speed
- */
+*/
 /******************************************************************************/
 /*!
 	Get Mechanical Angular Speed [Degree16s Per Second]
@@ -186,12 +182,12 @@ static inline int32_t Encoder_Motor_GetGroundSpeed(Encoder_T * p_encoder)
 /******************************************************************************/
 /*!
 	Integrate  speed to position, use ticks
- */
+*/
 /******************************************************************************/
 
 /*
- * 10k rpm, 20kHz => 546 ~= .83 percent of revolution
- */
+	10k rpm, 20kHz => 546 ~= .83 percent of revolution
+*/
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToMechanicalDelta(Encoder_T * p_encoder, uint16_t mechRpm)
 {
 	return Encoder_ConvertRotationalSpeedToControlAngle_RPM(p_encoder, mechRpm);
@@ -201,7 +197,7 @@ static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToMechanicalDelta(Encod
 	Convert Mechanical Angular Speed [Revolutions per Minute] to Electrical Delta [Degree16s Per Control Period]
 
 	Skips conversion through DeltaD
- */
+*/
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(Encoder_T * p_encoder, uint16_t mechRpm)
 {
 //	return (mechRpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / 60U * p_encoder->Params.MotorPolePairs / p_encoder->UnitT_Freq;
@@ -226,4 +222,18 @@ static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(Encod
 //}
 
 
+
+/******************************************************************************/
+/*!
+	@brief 	Extern Declarations
+*/
+/*! @{ */
+/******************************************************************************/
+extern void Encoder_Motor_InitCaptureCount(Encoder_T * p_encoder);
+extern void Encoder_Motor_InitCaptureTime(Encoder_T * p_encoder);
+extern void Encoder_Motor_SetHallCountsPerRevolution(Encoder_T * p_encoder, uint8_t motorPolePairs);
+// extern void Encoder_Motor_SetLinearUnits(Encoder_T * p_encoder, uint32_t wheelDiameter, uint32_t wheeltoMotorRatio_Factor, uint32_t wheeltoMotorRatio_Divisor);
+/******************************************************************************/
+/*! @} */
+/******************************************************************************/
 #endif

@@ -145,7 +145,9 @@ extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
 
 extern void StateMachine_Sync_Proc(StateMachine_T * p_stateMachine);
 extern bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, uint8_t input);
+extern bool StateMachine_Sync_SetInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt);
 extern bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, uint8_t input);
+extern bool StateMachine_Async_ProcInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt);
 extern void StateMachine_Semi_ProcOutput(StateMachine_T * p_stateMachine);
 extern bool StateMachine_Semi_ProcInput(StateMachine_T * p_stateMachine, uint8_t input);
 extern bool StateMachine_Semi_ProcInputExt(StateMachine_T * p_stateMachine, uint8_t input, uint32_t inputExt);

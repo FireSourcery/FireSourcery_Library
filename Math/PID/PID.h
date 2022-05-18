@@ -50,7 +50,7 @@ typedef struct __attribute__((aligned (4U))) PID_Params_Tag
 	int32_t KiFactor;
 	int32_t KiDivisor;
 	int32_t KdFactor;
-	int32_t KdDivisor; 
+	int32_t KdDivisor;
 }
 PID_Params_T;
 
@@ -94,10 +94,18 @@ extern void PID_Init_Args
 	int32_t outMin, int32_t outMax
 );
 extern int32_t PID_Calc(PID_T *p_pid, int32_t setpoint, int32_t feedback);
-extern void PID_Reset(PID_T * p_pid); 
+extern void PID_Reset(PID_T * p_pid);
 extern void PID_SetIntegral(PID_T * p_pid, int32_t integral);
-extern void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor);
-extern void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq);
+extern void PID_SetOutputState(PID_T * p_pid, int32_t integral);
 extern void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max);
+extern void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq);
+extern void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor);
+extern void PID_SetTunings_FractionSigned16(PID_T * p_pid, int32_t kp, int32_t ki, int32_t kd);
+extern int32_t PID_GetKp_FractionSigned16(PID_T * p_pid);
+extern int32_t PID_GetKi_FractionSigned16(PID_T * p_pid);
+extern int32_t PID_GetKd_FractionSigned16(PID_T * p_pid);
+extern int32_t PID_GetKp_Int(PID_T * p_pid, uint16_t scalar);
+extern int32_t PID_GetKi_Int(PID_T * p_pid, uint16_t scalar);
+extern int32_t PID_GetKd_Int(PID_T * p_pid, uint16_t scalar);
 
 #endif /* PID_H */

@@ -162,7 +162,7 @@ bool Queue_Enqueue(Queue_T * p_queue, const void * p_unit)
 {
 	bool isSuccess = false;
 	EnterCritical();
-	if(Queue_GetIsFull(p_queue) == false) //ideally compiler stores value from inline function
+	if(Queue_GetIsFull(p_queue) == false)
 	{
 		Enqueue(p_queue, p_unit);
 		isSuccess = true;
@@ -189,7 +189,7 @@ bool Queue_EnqueueN(Queue_T * p_queue, const void * p_units, size_t nUnits)
 	bool isSuccess = false;
 
 	EnterCritical();
-	if(nUnits <= Queue_GetEmptyCount(p_queue))
+	if(nUnits <= Queue_GetEmptyCount(p_queue))  //ideally compiler stores value from inline function
 	{
 		for(size_t iUnit = 0U; iUnit < nUnits; iUnit++)
 		{

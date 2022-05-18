@@ -137,7 +137,7 @@ static inline MotorController_InputMode_T MotorController_User_GetInputMode(Moto
 static inline void MotorController_User_SetBrakeMode(MotorController_T * p_mc, MotorController_BrakeMode_T brakeMode) { p_mc->Parameters.BrakeMode = brakeMode; }
 
 static inline uint16_t MotorController_User_GetAdcu(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return p_mc->AnalogResults.Channels[adcChannel]; }
-static inline uint16_t MotorController_User_GetAdcu_Msb8(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return MotorController_User_GetAdcu(p_mc, adcChannel) >> (ADC_BITS - 8U); }
+static inline uint8_t MotorController_User_GetAdcu_Msb8(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return MotorController_User_GetAdcu(p_mc, adcChannel) >> (ADC_BITS - 8U); }
 static inline uint16_t MotorController_User_GetFaultAdcu(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return p_mc->FaultAnalogRecord.Channels[adcChannel]; }
 static inline uint16_t MotorController_User_GetCmdValue(MotorController_T * p_mc) { return p_mc->UserCmd; }
 
@@ -178,8 +178,8 @@ static inline uint32_t MotorController_User_GetBatteryCharge_Frac16(MotorControl
 /*
 	ReadOnly
 */
-static inline uint32_t MotorController_User_GetLibraryVersion(MotorController_T * p_mc) { return MOT_SOFTWARE_VERSION_ID; }
-static inline uint8_t MotorController_User_GetLibraryVersionIndex(MotorController_T * p_mc, uint8_t charIndex)
+static inline uint32_t MotorController_User_GetLibraryVersion(void) { return MOT_SOFTWARE_VERSION_ID; }
+static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIndex)
 {
 	uint8_t versionChar;
 	switch(charIndex)
@@ -204,11 +204,11 @@ static inline uint32_t MotorController_User_GetIMax(MotorController_T * p_mc) { 
 	WriteOnce Variables, manufacture use, no state machine error check
 */
 static inline uint8_t MotorController_User_GetName(MotorController_T * p_mc, uint8_t charIndex) { return p_mc->CONFIG.P_ONCE->NAME[charIndex]; }
-static inline uint8_t MotorController_User_WriteName_Blocking(MotorController_T * p_mc, uint8_t charIndex, uint8_t nameChar) {};
-static inline void MotorController_WriteSerialNumber_Blocking(MotorController_T * p_mc, uint32_t serialNumber)
-{
-	// Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, p_mc->CONFIG.P_ONCE, &serialNumber, 4U);
-}
+// static inline uint8_t MotorController_User_WriteName_Blocking(MotorController_T * p_mc, uint8_t charIndex, uint8_t nameChar) {};
+// static inline void MotorController_WriteSerialNumber_Blocking(MotorController_T * p_mc, uint32_t serialNumber)
+// {
+// 	// Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, p_mc->CONFIG.P_ONCE, &serialNumber, 4U);
+// }
 
 /*
 	Motor Wrapper, no implementation of motor wrappers
@@ -218,7 +218,7 @@ static inline Motor_T * MotorController_User_GetPtrMotor(const MotorController_T
 	return (motorIndex < p_mc->CONFIG.MOTOR_COUNT) ? MotorController_GetPtrMotor(p_mc, motorIndex) : MotorController_GetPtrMotor(p_mc, 0U);
 }
 
-static inline Motor_T * MotorController_User_GetPtrProtocol(const MotorController_T * p_mc, uint8_t protocolIndex)
+static inline Protocol_T * MotorController_User_GetPtrProtocol(const MotorController_T * p_mc, uint8_t protocolIndex)
 {
 	return (protocolIndex < p_mc->CONFIG.PROTOCOL_COUNT) ? &p_mc->CONFIG.P_PROTOCOLS[0U] : &p_mc->CONFIG.P_PROTOCOLS[protocolIndex];
 }

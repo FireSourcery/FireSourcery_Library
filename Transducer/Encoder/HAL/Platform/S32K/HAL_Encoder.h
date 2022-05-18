@@ -95,6 +95,7 @@ extern void Board_Encoder_InitCaptureCount(void);
 static inline void HAL_Encoder_InitCaptureTime(HAL_Encoder_T * p_encoder, void * p_phaseAPinHal, uint32_t phaseAPinId, void * p_phaseBPinHal, uint32_t phaseBPinId)
 {
 //	(p_encoder->QDCTRL) &= ~(1UL << FTM_QDCTRL_QUADEN_SHIFT);
+	(void)p_encoder; (void)p_phaseAPinHal; (void)phaseAPinId; (void)p_phaseBPinHal; (void)phaseBPinId;
 	Board_Encoder_InitCaptureTime();
 }
 
@@ -102,12 +103,13 @@ static inline void HAL_Encoder_InitCaptureTime(HAL_Encoder_T * p_encoder, void *
 static inline void HAL_Encoder_InitCaptureCount(HAL_Encoder_T * p_encoder, void * p_phaseAPinHal, uint32_t phaseAPinId, void * p_phaseBPinHal, uint32_t phaseBPinId)
 {
 //	(p_encoder->QDCTRL) |= (1UL << FTM_QDCTRL_QUADEN_SHIFT);
+	(void)p_encoder; (void)p_phaseAPinHal; (void)phaseAPinId; (void)p_phaseBPinHal; (void)phaseBPinId;
 	Board_Encoder_InitCaptureCount();
 }
 
 static inline void HAL_Encoder_Init(HAL_Encoder_T * p_encoder)
 {
-
+	(void)p_encoder;
 }
 
 #endif

@@ -81,6 +81,20 @@ typedef struct Thermistor_Tag
 }
 Thermistor_T;
 
+#define THERMISTOR_CONFIG_CONFIG(RSeries, RParallel, p_Params) 	\
+{												\
+	.R_SERIES 		= RSeries,					\
+	.R_PARALLEL		= RParallel,				\
+	.P_PARAMS		= p_Params,					\
+}												\
+
+#define THERMISTOR_CONFIG_PARAMS_NTC(R0, T0_DegC, B) 	\
+{											\
+	.RNominal 		= R0,					\
+	.TNominal		= T0_DegC,				\
+	.BConstant		= B,					\
+}											\
+
 #define THERMISTOR_CONFIG(RSeries, RParallel, p_Params) 	\
 {													\
 	.CONFIG =										\
@@ -114,7 +128,7 @@ extern Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16
 extern void Thermistor_CaptureUnits_DegC(Thermistor_T * p_therm, uint16_t adcu);
 extern float Thermistor_ConvertToDegC_Float(Thermistor_T * p_therm, uint16_t adcu);
 extern int32_t Thermistor_ConvertToDegC_Int(Thermistor_T * p_therm, uint16_t adcu, uint16_t scalar);
-extern void Thermistor_SetCoeffcients_DegC(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, uint32_t b);
+extern void Thermistor_SetNtc_DegC(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, uint32_t b);
 extern void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV);
 
 extern void Thermistor_SetLimitShutdown_DegC(Thermistor_T * p_therm, uint8_t shutdown_degC);

@@ -455,10 +455,10 @@ static inline void Motor_SetRamp(Motor_T * p_motor, int32_t userCmd)
 	divide input over control period intervals, when using 1ms period
 	acceleration proportional to change in userCmd
 */
-static inline void Motor_SetRampInterpolate(Motor_T * p_motor, int32_t userCmd)
-{
-	// Linear_Ramp_SetSlopeMillis(&p_motor->Ramp, 1U, 20000U, p_motor->RampCmd, userCmd);
-}
+// static inline void Motor_SetRampInterpolate(Motor_T * p_motor, int32_t userCmd)
+// {
+// 	// Linear_Ramp_SetSlopeMillis(&p_motor->Ramp, 1U, 20000U, p_motor->RampCmd, userCmd);
+// }
 
 static inline void Motor_ResetRamp(Motor_T * p_motor)
 {

@@ -43,9 +43,9 @@
 	.CONVERSION_HEAT_MOSFETS_BOT 	=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT, 	0U,		p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), HeatMosBotPin, 	&(p_Hosts)[HeatMosBotHost]), 	\
 	.CONVERSION_THROTTLE 			=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_THROTTLE, 			0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), ThrottlePin, 	&(p_Hosts)[ThrottleHost]), 		\
 	.CONVERSION_BRAKE 				=	CONFIG_ANALOG_N_CONVERSION(MOT_ANALOG_CHANNEL_BRAKE, 				0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), BrakePin, 		&(p_Hosts)[BrakeHost]), 		\
-	.ADCS_GROUP_V 					= 	{ .Flags = ((1U << VAccHost) | (1U << VSenseHost)),									},																						\
-	.ADCS_GROUP_HEAT 				= 	{ .Flags = ((1U << HeatPcbHost) | (1U << HeatMosTopHost) | (1U << HeatMosBotHost)),	},																						\
-	.ADCS_GROUP_USER 				= 	{ .Flags = ((1U << ThrottleHost) | (1U << BrakeHost)),								},																						\
+	.ADCS_GROUP_V 					= 	{ .Flags = (uint8_t)((1U << VAccHost) | (1U << VSenseHost)),									},																						\
+	.ADCS_GROUP_HEAT 				= 	{ .Flags = (uint8_t)((1U << HeatPcbHost) | (1U << HeatMosTopHost) | (1U << HeatMosBotHost)),	},																						\
+	.ADCS_GROUP_USER 				= 	{ .Flags = (uint8_t)((1U << ThrottleHost) | (1U << BrakeHost)),									},																						\
 }
 
 #endif

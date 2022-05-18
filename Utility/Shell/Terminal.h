@@ -94,7 +94,7 @@ static inline void Terminal_SendString(const Terminal_T * p_terminal, const char
 #ifdef CONFIG_SHELL_XCVR_ENABLE
 	Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, strlen(p_str));
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_SendString(p_terminal->p_Serial, (const uint8_t *)p_str, strlen(p_str));
+	Serial_SendN(p_terminal->p_Serial, (const uint8_t *)p_str, strlen(p_str));
 #endif
 }
 
@@ -103,7 +103,7 @@ static inline void Terminal_SendString_Len(const Terminal_T * p_terminal, const 
 #ifdef CONFIG_SHELL_XCVR_ENABLE
 	Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, length);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_SendString(p_terminal->p_Serial, (const uint8_t *)p_str, length);
+	Serial_SendN(p_terminal->p_Serial, (const uint8_t *)p_str, length);
 #endif
 }
 

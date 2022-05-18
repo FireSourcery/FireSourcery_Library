@@ -64,7 +64,7 @@ void CanBus_ProcServices(CanBus_T * p_can)
 
 //		for(uint8_t iBroad = 0U; i < p_can->p_Services->BROADCASTS_COUNT; i++)
 //		{
-		p_can->p_Services->BROADCAST(p_can->CONFIG.P_APP_CONTEXT, &p_can->Buffers[0U]);
+		p_can->p_Services->BROADCAST(p_can->CONFIG.P_APP_INTERFACE, &p_can->Buffers[0U]);
 //		}
 	}
 
@@ -76,7 +76,7 @@ void CanBus_ProcServices(CanBus_T * p_can)
 	{
 		if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_WAIT_SERVICE)
 		{
-			p_can->p_Services->RX_REQ(p_can->CONFIG.P_APP_CONTEXT, &p_can->Buffers[iBufferId]);
+			p_can->p_Services->RX_REQ(p_can->CONFIG.P_APP_INTERFACE, &p_can->Buffers[iBufferId]);
 
 //			if(p_can->Buffers[iBufferId].Status == CAN_MESSAGE_RX_WAIT_REMOTE)
 //			{

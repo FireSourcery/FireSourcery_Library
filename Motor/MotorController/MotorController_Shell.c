@@ -255,6 +255,8 @@ static Cmd_Status_T Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 
 static Cmd_Status_T Cmd_stop(MotorController_T * p_mc, int argc, char ** argv)
 {
+	(void)argc;
+	(void)argv;
 	MotorController_User_DisableControl(p_mc);
 	return CMD_STATUS_SUCCESS;
 }
@@ -349,6 +351,7 @@ static Cmd_Status_T Cmd_calibrate(MotorController_T * p_mc, int argc, char ** ar
 
 static Cmd_Status_T Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 {
+	(void)argv;
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 
@@ -416,20 +419,18 @@ static const char * STR_VACC 		= "V Accessories: \r\n";
 static size_t MotorController_ToString_VMonitorsLimits(MotorController_T * p_mc, char * p_stringBuffer)
 {
 	char * p_stringDest = p_stringBuffer;
-	int32_t num;
-	char numStr[16U];
 
-	p_stringDest = strncpy(p_stringDest, STR_VPOS, strlen(STR_VPOS)) + strlen(STR_VPOS);
+	memcpy(p_stringDest, STR_VPOS, strlen(STR_VPOS)); 		p_stringDest += strlen(STR_VPOS);
 	p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorPos, p_stringDest, 1000U);
-	p_stringDest = strncpy(p_stringDest, "\r\n", 2U) + 2U;
+	memcpy(p_stringDest, "\r\n", 2U); 	p_stringDest += 2U;
 
-	p_stringDest = strncpy(p_stringDest, STR_VSENSE, strlen(STR_VSENSE)) + strlen(STR_VSENSE);
+	memcpy(p_stringDest, STR_VSENSE, strlen(STR_VSENSE)); 	p_stringDest += strlen(STR_VSENSE);
 	p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorSense, p_stringDest, 1000U);
-	p_stringDest = strncpy(p_stringDest, "\r\n", 2U) + 2U;
+	memcpy(p_stringDest, "\r\n", 2U); 	p_stringDest += 2U;
 
-	p_stringDest = strncpy(p_stringDest, STR_VACC, strlen(STR_VACC)) + strlen(STR_VACC);
- 	p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorAcc, p_stringDest, 1000U);
-	p_stringDest = strncpy(p_stringDest, "\r\n", 2U) + 2U;
+	memcpy(p_stringDest, STR_VACC, strlen(STR_VACC)); 		p_stringDest += strlen(STR_VACC);
+	p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorAcc, p_stringDest, 1000U);
+	memcpy(p_stringDest, "\r\n", 2U); 	p_stringDest += 2U;
 
 	return p_stringDest - p_stringBuffer;
 }
@@ -458,7 +459,7 @@ static Cmd_Status_T Cmd_v(MotorController_T * p_mc, int argc, char ** argv)
 	{
 		if(strncmp(argv[1U], "limits", 7U) == 0U)
 		{
-			p_txString = Terminal_AcquireTxBuffer(p_terminal);
+			p_txString = (char *)Terminal_AcquireTxBuffer(p_terminal);
 			txSize = MotorController_ToString_VMonitorsLimits(p_mc, p_txString);
 			Terminal_ReleaseTxBuffer(p_terminal, txSize);
 		}
@@ -539,6 +540,7 @@ static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 
 static Cmd_Status_T Cmd_jog(MotorController_T * p_mc, int argc, char ** argv)
 {
+	(void)argv;
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Cmd_Status_T status;
 	if(argc == 1U)
@@ -612,6 +614,7 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 
 static Cmd_Status_T Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
 {
+	(void)argc;
 	(void)argv;
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	p_motor->JogIndex = 0U;
@@ -648,6 +651,7 @@ extern void SystemSoftwareReset(void); //todo abstraction layer
 
 static Cmd_Status_T Cmd_reboot(MotorController_T * p_mc, int argc, char ** argv)
 {
+	(void)p_mc;
 	(void)argc;
 	(void)argv;
 	SystemSoftwareReset();
@@ -678,6 +682,8 @@ static Cmd_Status_T Cmd_beep(MotorController_T * p_mc, int argc, char ** argv)
 
 static Cmd_Status_T Cmd_version(MotorController_T * p_mc, int argc, char ** argv)
 {
+	(void)argc;
+	(void)argv;
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 
 	// Terminal_SendString(p_terminal, "Library: ");
@@ -730,6 +736,8 @@ static Cmd_Status_T Cmd_vmatch(MotorController_T * p_mc, int argc, char ** argv)
 
 static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 {
+	(void)argc;
+	(void)argv;
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 
 	// qfrac16_t atan2_0 = qfrac16_atan2(0, 32767);
@@ -792,12 +800,9 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"vmatch", 		"vmatch",							(Cmd_Function_T)Cmd_vmatch, 	{0U}	},
 
 	{"version", 	"version",							(Cmd_Function_T)Cmd_version, 	{0U}	},
-	{"debug", 		"debug",							(Cmd_Function_T)Cmd_debug, 		{0U}	},
+	{"debug", 		"print debug info",							(Cmd_Function_T)Cmd_debug, 		{0U}	},
 
 	// {"analoguser", 	"analoguser enable/disable", 		(Cmd_Function_T)Cmd_analoguser,	{0U}	},
-	////	{ "float", 		"Float motor", 				Cmd_float	},
-	////	{ "hold", 		"hold position", 			Cmd_hold	},
-	////	{ "print", 		"print debug info",			Cmd_print	},
 };
 
 
@@ -824,73 +829,3 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 //
 //	return MC_SHELL_CMD_RETURN_CODE_SUCCESS;
 //}
-
-//static Cmd_Status_T Cmd_hold(MotorController_T * p_mc, int argc, char ** argv)
-//{
-//	(void)argv;
-//    if(argc == 1) Motor_Hold(&Motor1);
-//    return CMD_STATUS_SUCCESS;
-//}
-//
-//static Cmd_Status_T Cmd_release(MotorController_T * p_mc, int argc, char ** argv)
-//{
-//	(void)argv;
-//    if(argc == 1) Motor_Release(&Motor1);
-//    return CMD_STATUS_SUCCESS;
-//}
-
-//#define PARAM_STR(PARAM_STR)  #PARAM_STR
-
-// #define PRINT_PARAM_STR(PARAM_STR)  				\
-// 	Terminal_SendString(p_terminal, #PARAM_STR); 	\
-// 	Terminal_SendString(p_terminal, ":	");
-
-
-// #define PRINT_PARAM_VAR_MOTOR(PARAM_STR) \
-// 		PRINT_PARAM_STR(PARAM_STR) \
-// 		Terminal_SendNum(p_terminal, p_motor->P##arameters.PARAM_STR); 	\
-// 		Terminal_SendString(p_terminal, "\r\n");
-
-// #define PRINT_PARAM_VAR_MC(PARAM_STR) \
-// 		PRINT_PARAM_STR(PARAM_STR) \
-// 		Terminal_SendNum(p_terminal, p_mc->P##arameters.PARAM_STR); 	\
-// 		Terminal_SendString(p_terminal, "\r\n");
-
-// static Cmd_Status_T Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
-// {
-// 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
-// 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
-
-// 	if(argc == 1U)
-// 	{
-
-
-// 		//		Terminal_SendString(p_terminal, "SpeedFeedbackRef_Rpm: ");
-// 		//		Terminal_SendNum(p_terminal, p_motor->Parameters.SpeedFeedbackRef_Rpm);
-// 		//		Terminal_SendString(p_terminal, "\r\n");
-
-// 		PRINT_PARAM_VAR_MOTOR(PolePairs)
-// 			PRINT_PARAM_VAR_MOTOR(SpeedFeedbackRef_Rpm)
-// 			// PRINT_PARAM_VAR_MOTOR(SpeedVMatchRef_Rpm)
-// 			// PRINT_PARAM_VAR_MOTOR(IRefMax_Amp)
-// 			// PRINT_PARAM_VAR_MOTOR(IaRefMax_Adcu)
-// 			// PRINT_PARAM_VAR_MOTOR(IbRefMax_Adcu)
-// 			// PRINT_PARAM_VAR_MOTOR(IcRefMax_Adcu)
-// 			PRINT_PARAM_VAR_MOTOR(IaRefZero_Adcu)
-// 			PRINT_PARAM_VAR_MOTOR(IbRefZero_Adcu)
-// 			PRINT_PARAM_VAR_MOTOR(IcRefZero_Adcu)
-// 			PRINT_PARAM_VAR_MOTOR(AlignVoltage_Frac16)
-// 			PRINT_PARAM_VAR_MOTOR(AlignTime_ControlCycles)
-// 			//
-// 			//		PRINT_PARAM(p_motor->Encoder.Params, CountsPerRevolution)
-// 			//		PRINT_PARAM(p_motor->Encoder.Params, DistancePerCount)
-// 			//		PRINT_PARAM(p_motor->Encoder.Params, IsQuadratureCaptureEnabled)
-// 			//		PRINT_PARAM(p_motor->Encoder.Params, IsALeadBPositive)
-// 			//		PRINT_PARAM(p_motor->Encoder.Params, ExtendedTimerDeltaTStop)
-// 			//		PRINT_PARAM(p_motor->Encoder.Params, MotorPolePairs)
-// 			//		PRINT_PARAM(p_mc, Params.MotorPolePairs)
-// 			Terminal_SendString(p_terminal, "\r\n");
-// 	}
-
-// 	return CMD_STATUS_SUCCESS;
-// }

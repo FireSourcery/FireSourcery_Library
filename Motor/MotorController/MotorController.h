@@ -284,9 +284,9 @@ typedef struct MotorController_Tag
 
 	uint16_t UserCmd;
 	// MotorController_SpeedLimitActiveId_T SpeedLimitActiveId;
-	MotorController_ILimitActiveId_T ILimitActiveId;
+	// MotorController_ILimitActiveId_T ILimitActiveId;
 }
-MotorController_T;
+MotorController_T; // Motor_Ctrlr_T;
 
 static inline Motor_T * MotorController_GetPtrMotor(const MotorController_T * p_mc, uint8_t motorIndex) { return &(p_mc->CONFIG.P_MOTORS[motorIndex]); }
 

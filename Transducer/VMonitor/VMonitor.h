@@ -31,9 +31,11 @@
 #ifndef VMONITOR_H
 #define VMONITOR_H
 
+#include "Config.h"
 #include "Math/Linear/Linear_Voltage.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef enum VMonitor_Status_Tag
 {
@@ -51,7 +53,7 @@ typedef struct __attribute__((aligned(4U))) VMonitor_Params_Tag
 	uint16_t LimitLower_Adcu;
 	uint16_t WarningUpper_Adcu;
 	uint16_t WarningLower_Adcu;
-	uint16_t VInRefMax; /* VIn 100%, frac16 ref only */
+	uint16_t VInRefMax; /* VIn 100%, frac16 ref only, not used */
 	bool IsEnableOnInit;
 }
 VMonitor_Params_T;
@@ -118,7 +120,7 @@ extern uint32_t VMonitor_GetLimitLower_MilliV(VMonitor_T * p_vMonitor);
 extern uint32_t VMonitor_GetWarningUpper_MilliV(VMonitor_T * p_vMonitor);
 extern uint32_t VMonitor_GetWarningLower_MilliV(VMonitor_T * p_vMonitor);
 
-#ifdef VMONITOR_STRING_FUNCTIONS
+#ifdef CONFIG_VMONITOR_STRING_FUNCTIONS_ENABLE
 extern size_t VMonitor_ToString_Verbose(VMonitor_T * p_vMonitor, char * p_stringBuffer, uint16_t unitVScalar);
 extern  bool VMonitor_ToString_Data(VMonitor_T * p_vMonitor, char * p_stringDest);
 #endif

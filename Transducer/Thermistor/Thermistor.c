@@ -192,7 +192,7 @@ uint16_t Thermistor_ConvertToAdcu_DegC(Thermistor_T * p_therm, uint16_t degC)
 	Set Params
 */
 /******************************************************************************/
-void Thermistor_SetCoeffcients_DegC(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, uint32_t b)
+void Thermistor_SetNtc_DegC(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, uint32_t b)
 {
 	p_therm->Params.RNominal = r0;
 	p_therm->Params.TNominal = t0_degC + 273;
