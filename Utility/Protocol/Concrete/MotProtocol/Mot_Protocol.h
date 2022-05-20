@@ -31,7 +31,6 @@
 #ifndef MOT_MOT_PROTOCOL_H
 #define MOT_MOT_PROTOCOL_H
 
-#include "MotProtocol.h"
 #include "Utility/Protocol/Protocol_Cmdr.h"
 
 extern const Protocol_Specs_T MOT_PROTOCOL_CTRLR_SPECS;

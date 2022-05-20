@@ -28,8 +28,8 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef TIMER_FIRE_SOURCER_H
+#define TIMER_FIRE_SOURCER_H
 
 #include "Config.h"
 #include <stdbool.h>
@@ -124,7 +124,11 @@ static inline void Timer_StartPeriod_Millis(Timer_T * p_timer, uint32_t millis) 
 static inline bool Timer_Poll(Timer_T * p_timer)
 {
 	bool isComplete = (p_timer->Period > 0U) && (Timer_CheckComplete(p_timer) == true);
-	if(isComplete == true) { (p_timer->IsOneShot == true) ? p_timer->Period = 0U : Timer_Restart(p_timer); }
+	if(isComplete == true)
+	{
+		if(p_timer->IsOneShot == true) 	{ p_timer->Period = 0U; }
+		else 							{ Timer_Restart(p_timer); }
+	}
 	return isComplete;
 }
 

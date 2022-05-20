@@ -35,8 +35,8 @@ static inline bool IsXcvrSet(Protocol_T * p_protocol)
 {
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 	return Xcvr_CheckIsSet(&p_protocol->Xcvr, p_protocol->Params.XcvrId);
-#elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
-	return (p_protocol->Params.p_Serial != 0U); /*cannot check against corrupt memory */
+#else
+	return false;
 #endif
 }
 
@@ -46,37 +46,31 @@ void Protocol_Init(Protocol_T * p_protocol)
 	{
 		memcpy(&p_protocol->Params, p_protocol->CONFIG.P_PARAMS, sizeof(Protocol_Params_T));
 	}
+	else
+	{
+		p_protocol->Params.SpecsId = 0U;
+		p_protocol->Params.IsEnableOnInit = 0U;
+	}
 
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 	Xcvr_Init(&p_protocol->Xcvr, p_protocol->Params.XcvrId);
 #endif
+	Protocol_SetSpecs(p_protocol, p_protocol->Params.SpecsId);
 
-	if((IsXcvrSet(p_protocol) == true) && (p_protocol->Params.IsEnableOnInit == true))
-	{
-		Protocol_SetSpecs(p_protocol, p_protocol->Params.SpecsId);
-		Protocol_Enable(p_protocol);
-	}
-	else
-	{
-		Protocol_Disable(p_protocol);
-	}
+	if(p_protocol->Params.IsEnableOnInit == true)	{ Protocol_Enable(p_protocol); }
+	else											{ Protocol_Disable(p_protocol); }
 }
 
-static inline bool TxPacket(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length)
+bool _Protocol_TxPacket(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length)
 {
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 	return (length > 0U) ? Xcvr_Tx(&p_protocol->Xcvr, p_txBuffer, length) : false;
-#else
-	return (length > 0U) ? Serial_Send(p_protocol->Params.p_Serial, p_txBuffer, length) : false;
 #endif
 }
-
-static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, uint8_t length)
+uint32_t _Protocol_RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, uint8_t length)
 {
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 	return Xcvr_Rx(&p_protocol->Xcvr, p_rxBuffer, length);
-#else
-	return Serial_Recv(p_protocol->Params.p_Serial, p_rxBuffer, length);
 #endif
 }
 
@@ -84,6 +78,19 @@ static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, u
 //{
 //	Serial_FlushBuffers(p_protocol->Params.p_Port);
 //}
+
+// /* return pointer to Req */
+const void * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, protocol_reqid_t id)
+{
+	const void * p_response = 0U;
+
+	for(uint8_t iChar = 0U; iChar < tableLength; iChar++)
+	{
+		if(p_reqTable[iChar].ID == id) { p_response = &p_reqTable[iChar]; }
+	}
+
+	return p_response;
+}
 
 // /*
 // 	Parse for length remaining and ReqCode
@@ -114,9 +121,9 @@ static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, u
 // 			rxLimit = p_protocol->RxRemaining;
 // 		}
 
-// 		rxLength = RxPacket(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], rxLimit);
+// 		rxLength = _Protocol_RxPacket(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], rxLimit);
 
-// 		if(rxLength > 0U) /* Loop RxPacket if rxLength is 1 */
+// 		if(rxLength > 0U) /* Loop _Protocol_RxPacket if rxLength is 1 */
 // 		{
 // 			p_protocol->RxIndex += rxLength;
 
@@ -177,7 +184,7 @@ static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, u
 // 		// }
 // 		// while(> 0U);
 
-// 	while(RxPacket(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], 1U) == true)
+// 	while(_Protocol_RxPacket(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], 1U) == true)
 // 	{
 // 		p_protocol->RxIndex++;
 
@@ -208,7 +215,7 @@ static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, u
 // 	if(p_protocol->p_Specs->BUILD_TX_SYNC != 0U)
 // 	{
 // 		p_protocol->p_Specs->BUILD_TX_SYNC(p_protocol->CONFIG.P_SUBSTATE_BUFFER, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, txId);
-// 		TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+// 		_Protocol_TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 // 	}
 // }
 
@@ -282,7 +289,7 @@ static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, u
 // 	switch(p_protocol->RxState)
 // 	{
 // 		case PROTOCOL_RX_STATE_WAIT_BYTE_1: /* nonblocking wait state, no timer */
-// 			if(RxPacket(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U], 1U) == true)
+// 			if(_Protocol_RxPacket(p_protocol, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U], 1U) == true)
 // 			{
 // 				/*
 // 					Use starting byte even if data is unencoded. first char can still be handled in separate state.
@@ -400,18 +407,7 @@ static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, u
 // 	}
 // }
 
-// /* return pointer to Req */
-// static inline void * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, uint32_t id)
-// {
-// 	void * p_response = 0U;
 
-// 	for(uint8_t iChar = 0U; iChar < tableLength; iChar++)
-// 	{
-// 		if(p_reqTable[iChar].ID == id) { p_response = &p_reqTable[iChar]; }
-// 	}
-
-// 	return p_response;
-// }
 
 // static inline bool ProcReqWaitRxSyncCommon(Protocol_T * p_protocol)
 // {
@@ -426,7 +422,7 @@ static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, u
 // 		if(p_protocol->TxNackCount < p_protocol->p_ReqActive->SYNC.RX_NACK_REPEAT)
 // 		{
 // 			p_protocol->TxNackCount++; //RxNackCount
-// 			TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+// 			_Protocol_TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 // 			p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER);
 // 			isAck = false;
 // 		}
@@ -479,7 +475,7 @@ static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, u
 // 					if(p_protocol->p_ReqActive->FAST != 0U) //does not invoke state machine, no loop / nonblocking wait.
 // 					{
 // 						p_protocol->p_ReqActive->FAST(p_protocol->CONFIG.P_APP_INTERFACE, p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex);
-// 						TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+// 						_Protocol_TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 // 					}
 
 // 					if(p_protocol->p_ReqActive->EXT != 0U)
@@ -599,7 +595,7 @@ static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, u
 // 					 * User will will have to manage more states, but will not have to explicitly set txlength to zero.
 // 					 * must save txlength in case of retransmit
 // 					 */
-// 					TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+// 					_Protocol_TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 // 					break;
 
 // 				case PROTOCOL_REQ_CODE_TX_ACK:
@@ -636,7 +632,7 @@ static inline uint32_t RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, u
 // 	Non blocking
 // 	Single threaded only, RxIndex not protected
 // */
-void Protocol_Slave_Proc(Protocol_T * p_protocol)
+void Protocol_Proc(Protocol_T * p_protocol)
 {
 	(void)p_protocol;
 	// ProcRxState(p_protocol);
@@ -648,7 +644,7 @@ void Protocol_Slave_Proc(Protocol_T * p_protocol)
 }
 
 
-//void Protocol_Datagram_Proc(Protocol_T * p_protocol)
+//static void ProcDatagram(Protocol_T * p_protocol)
 //{
 //	//* save room for 1 req packet
 //	if (Port_GetTxEmpty() > Datagram_GetPacketSize(&p_protocol->Datagram) +  p_protocol->CONFIG.PACKET_BUFFER_LENGTH)
@@ -667,18 +663,21 @@ void Protocol_Slave_Proc(Protocol_T * p_protocol)
 //		//	}
 //}
 
-
-static inline void ConfigSpecsBaudRate(Protocol_T * p_protocol)
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId)
 {
-	if(p_protocol->p_Specs->BAUD_RATE_DEFAULT != 0U)
+	p_protocol->Params.XcvrId = xcvrId;
+	Xcvr_Init(&p_protocol->Xcvr, p_protocol->Params.XcvrId);
+}
+
+void Protocol_ConfigXcvrBaudRate(Protocol_T * p_protocol, uint32_t baudRate)
+{
+	if(IsXcvrSet(p_protocol) == true)
 	{
-#if defined(CONFIG_PROTOCOL_XCVR_ENABLE)
-		Xcvr_ConfigBaudRate(&p_protocol->Xcvr, p_protocol->p_Specs->BAUD_RATE_DEFAULT);
-#elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
-		Serial_ConfigBaudRate(p_protocol->Params.p_Serial, p_protocol->p_Specs->BAUD_RATE_DEFAULT);
-#endif
+		Xcvr_ConfigBaudRate(&p_protocol->Xcvr, baudRate); //todo check valid baudrate
 	}
 }
+#endif
 
 void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t p_specsId)
 {
@@ -687,43 +686,12 @@ void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t p_specsId)
 	if(p_specs != 0U && p_specs->RX_LENGTH_MAX < p_protocol->CONFIG.PACKET_BUFFER_LENGTH)
 	{
 		p_protocol->p_Specs = p_specs;
-		ConfigSpecsBaudRate(p_protocol);
-	}
-}
-
-void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId)
-{
-#if 	defined(CONFIG_PROTOCOL_XCVR_ENABLE)
-	p_protocol->Params.XcvrId = xcvrId;
-	Xcvr_Init(&p_protocol->Xcvr, p_protocol->Params.XcvrId);
-#elif 	defined(CONFIG_PROTOCOL_XCVR_SERIAL)
-
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
+		if(p_protocol->p_Specs->BAUD_RATE_DEFAULT != 0U)
+		{
+			Protocol_ConfigXcvrBaudRate(p_protocol, p_protocol->p_Specs->BAUD_RATE_DEFAULT);
+		}
 #endif
-}
-
-// void Protocol_SetSpecs_Ptr(Protocol_T * p_protocol, const Protocol_Specs_T * p_specs) //validate its on the list, loop through list todo
-// {
-// 	if(p_specs->RX_LENGTH_MAX < p_protocol->CONFIG.PACKET_BUFFER_LENGTH)
-// 	{
-// 		p_protocol->p_Specs = p_specs;
-// 		ConfigSpecsBaudRate(p_protocol);
-// 	}
-// }
-
-// void Protocol_SetXcvr_Ptr(Protocol_T * p_protocol, void * p_transceiver)
-// {
-// #if 	defined(CONFIG_PROTOCOL_XCVR_ENABLE)
-
-// #elif 	defined(CONFIG_PROTOCOL_XCVR_SERIAL)
-// 	p_protocol->Params.p_Serial = p_transceiver; 	// cannot validate pointer without xcvr module
-// #endif
-// }
-
-void Protocol_ConfigBaudRate(Protocol_T * p_protocol, uint32_t baudRate)
-{
-	if(IsXcvrSet(p_protocol) && (p_protocol->p_Specs != 0U))
-	{
-		Xcvr_ConfigBaudRate(&p_protocol->Xcvr, baudRate);
 	}
 }
 

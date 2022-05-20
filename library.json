@@ -1,0 +1,34 @@
+{
+    "name": "FireSourcery_Library",
+    "version": "0.0.1",
+    "description": "Embedded C Library, Motor Control, Peripheral Abstration Layer",
+    "keywords": "motor, foc, hal",
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com/FireSourcery/FireSourcery_Library.git"
+    },
+    "authors":
+    [
+      {
+        "name": "FireSourcery",
+        "email": "scott@thefirebrandforge.com"
+      }
+    ],
+    "license": "GNU",
+    "homepage": "https://github.com/FireSourcery/FireSourcery_Library",
+    "dependencies": {    },
+    "frameworks": "*",
+    "platforms": "*",
+    "build": {
+        "srcFilter": [
+            "-<*>",
+            "+<Arduino/KellyController/KellyController.cpp>",
+            "+<MotorCmdr/MotorCmdr.c>",
+            "+<Utility/Protocol/Concrete/MotProtocol/Mot_Protocol.c>",
+            "+<Utility/Protocol/Concrete/MotProtocol/MotProtocol.c>",
+            "+<Utility/Protocol/Protocol_Cmdr.c>",
+            "+<Utility/Protocol/Protocol.c>"
+        ]
+    }
+}

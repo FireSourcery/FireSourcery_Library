@@ -32,11 +32,14 @@
 #define XCVR_H
 
 #include "Config.h"
+
+// #if defined(XCVR_SERIAL_ENABLE)
 #include "Peripheral/Serial/Serial.h"
-#include "Utility/Queue/Queue.h"
+// #endif
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef enum Xcvr_Type_Tag
 {
@@ -54,7 +57,7 @@ typedef const struct Xcvr_Xcvr_Tag
 }
 Xcvr_Xcvr_T;
 
-#define XCVR_XCVR_CONFIG(p_Xcvr, Type)		\
+#define XCVR_XCVR_DEFINE(p_Xcvr, Type)		\
 {											\
 	.P_XCVR 	= (void *) p_Xcvr, 			\
 	.TYPE 		= Type,						\
@@ -75,7 +78,7 @@ typedef struct Xcvr_Tag
 }
 Xcvr_T;
 
-#define XCVR_CONFIG(p_XcvrTable, Count)		\
+#define XCVR_DEFINE(p_XcvrTable, Count)		\
 {											\
 	.CONFIG =								\
 	{  										\

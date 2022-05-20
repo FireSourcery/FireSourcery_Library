@@ -31,48 +31,39 @@
 #ifndef KELLY_CONTROLLER_H
 #define KELLY_CONTROLLER_H
 
-#include "MotorCmdr/MotorCmdr.h"
+extern "C"
+{
+	#include "MotorCmdr/MotorCmdr.h"
+};
 
-// #include <Arduino.h>
-#include <stdint.h>
+#include "HardwareSerial.h"
+#include <Arduino.h>
+#include <cstdint>
 
 #define PROTOCOL_PACKET_BUFFER_SIZE 64U
 
 class KellyController
 {
-	private:
+private:
+	static uint32_t millisTimer;
 	// Stream * p_serialStream;
 	HardwareSerial * p_serial;
-
-	uint8_t protocolId;
 	uint8_t txPacket[PROTOCOL_PACKET_BUFFER_SIZE];
 	uint8_t rxPacket[PROTOCOL_PACKET_BUFFER_SIZE];
-	int32_t Speed_Frac16;
+	MotorCmdr_T motorCmdr = MOTOR_CMDR_DEFINE(&motorCmdr, rxPacket, txPacket, 0U, 0U, &millisTimer);
 
-	MotorCmdr_T motorCmdr;
-
-	MotorCmdr_T motorCmdr =
-	{
-		.Protocol.CONFIG = PROTOCOL_CONFIG
-		(
-			rxPacket, txPacket, PROTOCOL_PACKET_BUFFER_SIZE,
-			&motorCmdr.Interface, 0U,
-			&MOT_PROTOCOL_CMDR_SPECS, 1U,
-			0U, 0U,
-			&arduinoMillis, 0U
-		),
-	};
-
-
-
-	public:
-	KellyController(HardwareSerial & port);
-	virtual ~KellyController();
-	void begin(uint32_t baudRate);
+public:
+	KellyController(HardwareSerial & serial);
+	virtual ~KellyController(void);
+	void begin(void);
 	void end(void);
+	// void update(void);
 
-	void update(void);
+	bool pollRx(void);
 	void writeThrottle(uint16_t throttle);
+
+	uint8_t * getTxPacket(void) { return txPacket; }
+
 };
 
 #endif

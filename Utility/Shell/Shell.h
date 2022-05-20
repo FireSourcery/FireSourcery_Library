@@ -96,7 +96,7 @@ typedef struct
 Shell_T;
 
 #if defined(CONFIG_SHELL_XCVR_ENABLE)
-	#define SHELL_CONFIG_XCVR(p_XcvrTable, TableLength) .Xcvr = XCVR_CONFIG(p_XcvrTable, TableLength)
+	#define SHELL_CONFIG_XCVR(p_XcvrTable, TableLength) .Xcvr = XCVR_DEFINE(p_XcvrTable, TableLength)
 #else
 	#define SHELL_CONFIG_XCVR(p_XcvrTable, TableLength)
 #endif

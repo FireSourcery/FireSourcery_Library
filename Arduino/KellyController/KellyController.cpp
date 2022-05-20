@@ -1,7 +1,36 @@
+/******************************************************************************/
+/*!
+	@section LICENSE
+
+	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+
+	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+	@file 	KellyController.cpp
+	@author FireSoucery
+	@brief
+	@version V0
+*/
+/******************************************************************************/
 #include "KellyController.h"
 
-
-#include "MotorCmdr/MotorCmdr.h"
+uint32_t KellyController::millisTimer;
 
 /******************************************************************************/
 /*!
@@ -10,8 +39,10 @@
 /******************************************************************************/
 KellyController::KellyController(HardwareSerial & serial)
 {
+	millisTimer = millis();
 	// p_serialStream = &serial;
 	p_serial = &serial;
+	MotorCmdr_Init(&motorCmdr);
 }
 
 
@@ -41,10 +72,10 @@ void KellyController::begin()
 	@brief Call regularly
 */
 /******************************************************************************/
-void KellyController::Proc( )
-{
+// void KellyController::Proc( )
+// {
 
-}
+// }
 
 /******************************************************************************/
 /*!
@@ -57,18 +88,19 @@ void KellyController::end(void)
 }
 
 
-/******************************************************************************/
-/*!
-	@brief
-*/
-/******************************************************************************/
+// /******************************************************************************/
+// /*!
+// 	@brief
+// */
+// /******************************************************************************/
 bool KellyController::pollRx(void)
 {
+	this->millisTimer = millis();
 	if(p_serial->available() >= _MotorCmdr_GetRespLength(&motorCmdr))
 	{
 		p_serial->readBytes(rxPacket, _MotorCmdr_GetRespLength(&motorCmdr));
 
-		_MotorCmdr_ParseResp(&motorCmdr); /* new data is ready */
+		_MotorCmdr_CaptureResp(&motorCmdr); /* new data is ready, returns false if crc error */
 		return true;
 	}
 	else
@@ -80,20 +112,24 @@ bool KellyController::pollRx(void)
 void KellyController::writeThrottle(uint16_t throttle)
 {
 	_MotorCmdr_WriteThrottle(&motorCmdr, throttle);
+	txPacket[0] = 'S';
 	p_serial->write(txPacket, _MotorCmdr_GetReqLength(&motorCmdr));
 }
 
-void KellyController::getReadSpeed(void) { return MotorCmdr_GetReadSpeed(&motorCmdr); }
 
 
-void KellyController::startReadMonitor( )
-{
-}
+
+// void KellyController::getReadSpeed(void) { return MotorCmdr_GetReadSpeed(&motorCmdr); }
 
 
-void KellyController::getReadMonitor( )
-{
-}
+// void KellyController::startReadMonitor( )
+// {
+// }
+
+
+// void KellyController::getReadMonitor( )
+// {
+// }
 
 
 // /******************************************************************************/

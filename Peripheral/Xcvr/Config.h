@@ -31,4 +31,10 @@
 #ifndef CONFIG_XCVR_H
 #define CONFIG_XCVR_H
 
+#if defined(CONFIG_XCVR_SERIAL_ENABLE)
+#else
+	#define CONFIG_XCVR_SERIAL_DISABLE
+#endif
+
+
 #endif

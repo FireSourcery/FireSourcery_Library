@@ -32,9 +32,9 @@
 #define CONFIG_PROTOCOL_H
 
 #if 	defined(CONFIG_PROTOCOL_XCVR_ENABLE)
-#elif 	defined(CONFIG_PROTOCOL_XCVR_SERIAL) 
+#elif 	defined(CONFIG_PROTOCOL_XCVR_SERIAL)
 #else
-	#define CONFIG_PROTOCOL_XCVR_ENABLE
+	// #define CONFIG_PROTOCOL_XCVR_ENABLE
 #endif
 
 #endif

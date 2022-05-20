@@ -35,8 +35,10 @@
 
 #if defined(CONFIG_HAL_SERIAL_PATH)
 	#include STR(CONFIG_HAL_SERIAL_PATH/HAL_Serial.h)
-#else
+#elif defined(CONFIG_PATH_HAL_PERIPHERAL) || defined(CONFIG_PATH_HAL_PERIPHERAL_PLATFORM)
 	#include PATH_HAL_PERIPHERAL(HAL_Serial.h)
+#else
+	#error "HAL_Serial included but undefined."
 #endif
 
 #endif

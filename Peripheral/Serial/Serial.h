@@ -68,11 +68,11 @@ typedef struct Serial_Tag
 }
 Serial_T;
 
-#define SERIAL_CONFIG(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)	\
+#define SERIAL_DEFINE(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)	\
 {																	\
 	.CONFIG = {.P_HAL_SERIAL = p_Hal, },							\
-	.TxQueue = QUEUE_CONFIG(p_TxBuffer, TxBufferSize, 1U, 0U),		\
-	.RxQueue = QUEUE_CONFIG(p_RxBuffer, RxBufferSize, 1U, 0U),		\
+	.TxQueue = QUEUE_DEFINE(p_TxBuffer, TxBufferSize, 1U, 0U),		\
+	.RxQueue = QUEUE_DEFINE(p_RxBuffer, RxBufferSize, 1U, 0U),		\
 }
 
 /*

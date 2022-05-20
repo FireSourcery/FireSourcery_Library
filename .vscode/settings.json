@@ -22,8 +22,9 @@
     "C_Cpp.vcFormat.space.withinLambdaBrackets": false,
     "C_Cpp.vcFormat.space.afterKeywordsInControlFlowStatements": false,
     "C_Cpp.vcFormat.indent.preserveWithinParentheses": false,
-    "C_Cpp.vcFormat.indent.preprocessor": "oneLeft",
+    // "C_Cpp.vcFormat.indent.preprocessor": "oneLeft",
     "C_Cpp.vcFormat.space.beforeInitializerListOpenBrace": true,
     "explorer.copyRelativePathSeparator": "/",
     "files.trimTrailingWhitespace": true,
-} 
+    "cmake.configureOnOpen": false,
+}

@@ -177,7 +177,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 
 		for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++)
 		{
-			Protocol_Slave_Proc(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]);
+			Protocol_Proc(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]);
 		}
 
 		if(p_mc->Parameters.IsCanEnable == true) { CanBus_ProcServices(p_mc->CONFIG.P_CAN_BUS); }

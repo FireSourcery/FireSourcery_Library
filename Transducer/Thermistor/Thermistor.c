@@ -66,7 +66,7 @@ Thermistor_Status_T PollTheshold(Thermistor_T * p_therm, uint16_t adcu)
 	else  /* (p_therm->ThresholdStatus == THERMISTOR_LIMIT_THRESHOLD) || (p_therm->ThresholdStatus == THERMISTOR_LIMIT_SHUTDOWN)*/
 	{
 		//in case if heat out of sync. heat < shutdown, status == shutdown
-		if(adcu < p_therm->Params.Shutdown_Adcu) 			{ p_therm->ThresholdStatus = THERMISTOR_LIMIT_SHUTDOWN; }	/* crossing shutdown */
+		if(adcu < p_therm->Params.Shutdown_Adcu) 		{ p_therm->ThresholdStatus = THERMISTOR_LIMIT_SHUTDOWN; }	/* crossing shutdown */
 		else if(adcu < p_therm->Params.Threshold_Adcu) 	{ p_therm->ThresholdStatus = THERMISTOR_LIMIT_THRESHOLD; } 	/* still over threshold  */
 		else 											{ p_therm->ThresholdStatus = THERMISTOR_STATUS_OK; }
 	}
@@ -76,6 +76,7 @@ Thermistor_Status_T PollTheshold(Thermistor_T * p_therm, uint16_t adcu)
 
 Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t adcu)
 {
+	//filter adcu
 	Thermistor_Status_T status = THERMISTOR_STATUS_OK;
 
 	if(p_therm->Params.IsEnableOnInit == true)

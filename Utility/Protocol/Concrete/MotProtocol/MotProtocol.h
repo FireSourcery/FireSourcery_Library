@@ -31,10 +31,8 @@
 #ifndef MOTPROTOCOL_H
 #define MOTPROTOCOL_H
 
-#include "MotProtocolVarId.h"
-
-#include "Utility/Protocol/Protocol.h"
-
+#include "MotVarId.h"
+// #include "Utility/Protocol/Protocol.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -47,15 +45,18 @@
 #define MOTPROTOCOL_PACKET_PAYLOAD_MAX		(32U)
 #define MOTPROTOCOL_PACKET_LENGTH_MIN 		(2U)
 #define MOTPROTOCOL_PACKET_LENGTH_MAX 		(MOTPROTOCOL_PACKET_PAYLOAD_MAX + MOTPROTOCOL_PACKET_HEADER_LENGTH)
+
 #define MOTPROTOCOL_BAUD_RATE_DEFAULT		(19200U)
 #define MOTPROTOCOL_TIMEOUT_MS				(2000U) 	/* Timeout packet */
 #define MOTPROTOCOL_START_BYTE				(0xA5U)
+
+//rename MotPacket
 
 /*
 	Packet and Correspondence type. Per unique packet structure, parsing/processing pattern
 	Limited 8-bit value allocated. May directly include cmd, or extended packet type
 */
-typedef enum
+typedef enum MotProtocol_HeaderId_Tag
 {
 	/* 2 Byte Packet */
 	MOTPROTOCOL_STOP_MOTOR = 0x00,	 /* if first char after stop is 0x00 */
@@ -103,21 +104,21 @@ typedef enum
 }
 MotProtocol_HeaderId_T;
 
-typedef enum
+typedef enum MotProtocol_Status_Tag
 {
 	MOTPROTOCOL_STATUS_OK = 0x00,
  	MOTPROTOCOL_STATUS_RESERVED = 0xFF,
 }
 MotProtocol_Status_T;
 
-typedef struct
+typedef struct MotProtocol_SyncPacket_Tag
 {
 	uint8_t Start;
 	uint8_t SyncId; /* MotProtocol_HeaderId_T */
 }
 MotProtocol_SyncPacket_T;
 
-typedef struct
+typedef struct MotProtocol_Header_Tag
 {
 	uint8_t Start;
 	uint8_t TypeId; /* MotProtocol_HeaderId_T - Cmd / Descriptor of packet contents */
@@ -127,7 +128,7 @@ typedef struct
 }
 MotProtocol_Header_T;
 
-typedef union
+typedef union MotProtocol_Registers_Tag
 {
 	uint16_t U16s[16U];
 	uint32_t U32s[8U];
@@ -138,7 +139,7 @@ typedef union
 }
 MotProtocol_Registers_T;
 
-typedef union
+typedef union MotProtocol_Packet_Tag
 {
 	struct
 	{
@@ -156,8 +157,8 @@ MotProtocol_Packet_T;
 /*
 	Common Status Response
 */
-typedef struct { uint16_t Status; } MotProtocol_RespPayload_Status_T;
-typedef struct { MotProtocol_Header_T Header; MotProtocol_RespPayload_Status_T Response; } MotProtocol_RespPacket_Status_T;
+typedef struct MotProtocol_RespPayload_Status_Tag { uint16_t Status; } MotProtocol_RespPayload_Status_T;
+typedef struct MotProtocol_RespPacket_Status_Tag { MotProtocol_Header_T Header; MotProtocol_RespPayload_Status_T Response; } MotProtocol_RespPacket_Status_T;
 
 /******************************************************************************/
 /*!
@@ -168,55 +169,45 @@ typedef struct { MotProtocol_Header_T Header; MotProtocol_RespPayload_Status_T R
 /******************************************************************************/
 /*!	Read Immediate by Id */
 /******************************************************************************/
-typedef struct { uint16_t VarId; } 																	MotProtocol_ReqPayload_ReadImmediate_T;
-typedef struct { uint32_t Value; uint16_t Status; } 												MotProtocol_RespPayload_ReadImmediate_T;
-typedef struct { MotProtocol_Header_T Header; MotProtocol_ReqPayload_ReadImmediate_T CmdRead; } 	MotProtocol_ReqPacket_ReadImmediate_T;
-typedef struct { MotProtocol_Header_T Header; MotProtocol_RespPayload_ReadImmediate_T ReadVar; } 	MotProtocol_RespPacket_ReadImmediate_T;
+typedef struct MotProtocol_ReqPayload_ReadImmediate_Tag { uint16_t VarId; } 																MotProtocol_ReqPayload_ReadImmediate_T;
+typedef struct MotProtocol_RespPayload_ReadImmediate_Tag { uint32_t Value; uint16_t Status; } 												MotProtocol_RespPayload_ReadImmediate_T;
+typedef struct MotProtocol_ReqPacket_ReadImmediate_Tag { MotProtocol_Header_T Header; MotProtocol_ReqPayload_ReadImmediate_T CmdRead; } 	MotProtocol_ReqPacket_ReadImmediate_T;
+typedef struct MotProtocol_RespPacket_ReadImmediate_Tag { MotProtocol_Header_T Header; MotProtocol_RespPayload_ReadImmediate_T ReadVar; } 	MotProtocol_RespPacket_ReadImmediate_T;
 
 /******************************************************************************/
 /*!	Write Immediate Var by Id */
 /******************************************************************************/
-typedef struct { uint16_t VarId; uint32_t Value; } 													MotProtocol_ReqPayload_WriteImmediate_T;
+typedef struct MotProtocol_ReqPayload_WriteImmediate_Tag { uint16_t VarId; uint32_t Value; } 		MotProtocol_ReqPayload_WriteImmediate_T;
 typedef MotProtocol_RespPayload_Status_T 															MotProtocol_RespPayload_WriteImmediate_T;	/* one 16-bit optional status reponse */
-typedef struct { MotProtocol_Header_T Header; MotProtocol_ReqPayload_WriteImmediate_T CmdWrite; } 	MotProtocol_ReqPacket_WriteImmediate_T;
-typedef MotProtocol_RespPacket_Status_T 															MotProtocol_RespPacket_WriteImmediate_T;
+typedef struct MotProtocol_ReqPacket_WriteImmediate_Tag { MotProtocol_Header_T Header; MotProtocol_ReqPayload_WriteImmediate_T CmdWrite; } 	MotProtocol_ReqPacket_WriteImmediate_T;
+typedef MotProtocol_RespPacket_Status_T 																									MotProtocol_RespPacket_WriteImmediate_T;
 
 /******************************************************************************/
 /*!
 	Read Multiple Vars
-	MotProtocolVarId_T is type uint16_t
+	MotVarId_T is type uint16_t
 
 	Only 8 Ids should be used for uint32_t read
 	Id 0xFFFF for null
 */
 /******************************************************************************/
-// typedef struct { uint8_t VarSize; uint8_t VarCount; MotProtocolVarId_T VarIds[15U]; } 				MotProtocol_Payload_ReadVars_T;
-// typedef struct { MotProtocol_Header_T Header; MotProtocol_Payload_ReadVars_T CmdReadVars; } 			MotProtocol_Packet_ReadVars_T;
-// typedef struct { union { uint32_t Value32[7U]; uint16_t Value16[15U];  }; } 							MotProtocol_Payload_ReadVars_Response_T;
-// typedef struct { MotProtocol_Header_T Header; MotProtocol_Payload_ReadVars_Response_T Response; } 	MotProtocol_Packet_ReadVars_Response_T;
-
-typedef struct { uint16_t VarIds[16U]; } 															MotProtocol_RespPayload_ReadVar16_T;
-typedef struct { union { uint16_t Value16[16U]; uint32_t Value32[8U]; }; } 							MotProtocol_RespPayload_ReadVar16_T;
-typedef struct { MotProtocol_Header_T Header; MotProtocol_RespPayload_ReadVar16_T CmdReadVar16; } 	MotProtocol_RespPacket_ReadVar16_T;
-typedef struct { MotProtocol_Header_T Header; MotProtocol_RespPayload_ReadVar16_T Vars; } 			MotProtocol_RespPacket_ReadVar16_T;
+typedef struct MotProtocol_ReqPayload_ReadVar16_Tag { uint16_t VarIds[16U]; } 															MotProtocol_ReqPayload_ReadVar16_T;
+typedef struct MotProtocol_RespPayload_ReadVar16_Tag { union { uint16_t Value16[16U]; uint32_t Value32[8U]; }; } 							MotProtocol_RespPayload_ReadVar16_T;
+typedef struct MotProtocol_ReqPacket_ReadVar16_Tag { MotProtocol_Header_T Header; MotProtocol_RespPayload_ReadVar16_T CmdReadVar16; } 	MotProtocol_ReqPacket_ReadVar16_T;
+typedef struct MotProtocol_RespPacket_ReadVar16_Tag { MotProtocol_Header_T Header; MotProtocol_RespPayload_ReadVar16_T Vars; } 			MotProtocol_RespPacket_ReadVar16_T;
 
 /******************************************************************************/
 /*!
 	Write Multiple Vars
-	MotProtocolVarId_T is type uint16_t
+	MotVarId_T is type uint16_t
 
 	VarCount range [0:8]
 */
 /******************************************************************************/
-// typedef struct { uint8_t VarSize; uint8_t VarCount; MotProtocolVarId_T VarIds[7U]; } 				MotProtocol_Payload_ReadVars_T;
-// typedef struct { MotProtocol_Header_T Header; MotProtocol_Payload_ReadVars_T CmdReadVars; } 			MotProtocol_Packet_ReadVars_T;
-// typedef struct { union { uint32_t Value32[8U]; uint16_t Value16[16U]; uint8_t Value8[32U]; }; } 		MotProtocol_Payload_ReadVars_Response_T;
-// typedef struct { MotProtocol_Header_T Header; MotProtocol_Payload_ReadVars_Response_T Response; } 	MotProtocol_Packet_ReadVars_Response_T;
-
-typedef struct { uint16_t VarIds[8U]; union { uint16_t Value16[8U]; uint32_t Value32[4U]; }; } 		MotProtocol_ReqPayload_WriteVar16_T;
-typedef struct { uint16_t MainStatus; uint16_t Status[8U]; } 										MotProtocol_RespPayload_WriteVar16_T;
-typedef struct { MotProtocol_Header_T Header; MotProtocol_ReqPayload_WriteVar16_T CmdWriteVar16; } 	MotProtocol_ReqPacket_WriteVar16_T;
-typedef struct { MotProtocol_Header_T Header; MotProtocol_RespPayload_WriteVar16_T Status; } 		MotProtocol_RespPacket_WriteVar16_T;
+typedef struct MotProtocol_ReqPayload_WriteVar16_Tag { uint16_t VarIds[8U]; union { uint16_t Value16[8U]; uint32_t Value32[4U]; }; } 		MotProtocol_ReqPayload_WriteVar16_T;
+typedef struct MotProtocol_RespPayload_WriteVar16_Tag { uint16_t MainStatus; uint16_t Status[8U]; } 										MotProtocol_RespPayload_WriteVar16_T;
+typedef struct MotProtocol_ReqPacket_WriteVar16_Tag { MotProtocol_Header_T Header; MotProtocol_ReqPayload_WriteVar16_T CmdWriteVar16; } 	MotProtocol_ReqPacket_WriteVar16_T;
+typedef struct MotProtocol_RespPacket_WriteVar16_Tag { MotProtocol_Header_T Header; MotProtocol_RespPayload_WriteVar16_T Status; } 		MotProtocol_RespPacket_WriteVar16_T;
 
 /******************************************************************************/
 /*!
@@ -230,7 +221,7 @@ typedef struct { MotProtocol_Header_T Header; MotProtocol_RespPayload_WriteVar16
 /*
 	Default units in the client motor controller native format
 */
-typedef enum
+typedef enum MotProtocol_ControlId_Tag
 {
 	MOTPROTOCOL_CONTROL_STOP = 0x00U,
 	MOTPROTOCOL_CONTROL_THROTTLE = 0x01U,	/* 0:65536 */
@@ -260,40 +251,20 @@ MotProtocol_ControlId_T;
 
 	Up to 15 parameters, determined by MotProtocol_ControlId_T
 */
-typedef struct { uint8_t ControlId; uint8_t RsvrExt; union { int16_t ValueS16s[15U]; uint16_t ValueU16s[15U]; }; } 			MotProtocol_ReqPayload_Control_T;
-typedef struct { uint16_t MainStatus; uint16_t OptStatus[15U]; } 															MotProtocol_RespPayload_Control_T;
-typedef struct { MotProtocol_Header_T Header; MotProtocol_ReqPayload_Control_T CmdControl; } 								MotProtocol_ReqPacket_Control_T;
-typedef struct { MotProtocol_Header_T Header; MotProtocol_RespPayload_Control_T Status; } 									MotProtocol_RespPacket_Control_T;
+typedef struct MotProtocol_ReqPayload_Control_Tag { uint8_t ControlId; uint8_t RsvrExt; union { int16_t ValueS16s[15U]; uint16_t ValueU16s[15U]; }; } 		MotProtocol_ReqPayload_Control_T;
+typedef struct MotProtocol_RespPayload_Control_Tag { uint16_t MainStatus; uint16_t OptStatus[15U]; } 														MotProtocol_RespPayload_Control_T;
+typedef struct MotProtocol_ReqPacket_Control_Tag { MotProtocol_Header_T Header; MotProtocol_ReqPayload_Control_T CmdControl; } 								MotProtocol_ReqPacket_Control_T;
+typedef struct MotProtocol_RespPacket_Control_Tag { MotProtocol_Header_T Header; MotProtocol_RespPayload_Control_T Status; } 								MotProtocol_RespPacket_Control_T;
 
-// typedef struct { MotProtocol_ControlId_T Id; } MotProtocol_Payload_ControlType0_T;
-// typedef struct { MotProtocol_Header_T Header; MotProtocol_Payload_ControlType0_T Control; } MotProtocol_Packet_ControlType0_T;
-// typedef MotProtocol_RespPayload_Status_T 	MotProtocol_Payload_ControlType0_Response_T;
-// typedef MotProtocol_RespPacket_Status_T 	MotProtocol_Packet_ControlType0_Response_T;
-
-// /* Control Type 1 */
-// typedef struct { MotProtocol_ControlId_T Id; uint8_t IdExt; union { int16_t Signed; uint16_t Unsigned; }; } MotProtocol_Payload_ControlType1_T;
-// typedef struct { MotProtocol_Header_T Header; MotProtocol_Payload_ControlType1_T Control; } MotProtocol_Packet_ControlType1_T;
-// typedef MotProtocol_RespPayload_Status_T 	MotProtocol_Payload_ControlType1_Response_T;
-// typedef MotProtocol_RespPacket_Status_T 	MotProtocol_Packet_ControlType1_Response_T;
-
-// typedef struct { uint16_t Value; } MotProtocol_Payload_ControlThrottle_T;
-// typedef struct { MotProtocol_Header_T Header; MotProtocol_Payload_ControlThrottle_T Throttle; } MotProtocol_Packet_ControlThrottle_T;
-// typedef MotProtocol_RespPayload_Status_T MotProtocol_Payload_ControlThrottle_Response_T;
-// typedef MotProtocol_RespPacket_Status_T MotProtocol_Packet_ControlThrottle_Response_T;
-
-// typedef struct { uint16_t Value; } MotProtocol_Payload_ControlBrake_T;
-// typedef struct { MotProtocol_Header_T Header; MotProtocol_Payload_ControlBrake_T Brake; } MotProtocol_Packet_ControlBrake_T;
-// typedef MotProtocol_RespPayload_Status_T MotProtocol_Payload_ControlBrake_Response_T;
-// typedef MotProtocol_RespPacket_Status_T MotProtocol_Packet_ControlBrake_Response_T;
-typedef struct { uint8_t ControlId; uint8_t RsvrExt; uint16_t ThrottleValue; } 		MotProtocol_ReqPayload_Control_Throttle_T;
-typedef struct { uint16_t Status; } 												MotProtocol_RespPayload_Control_Throttle_T;
-typedef struct { uint8_t ControlId; uint8_t RsvrExt; uint16_t BrakeValue; } 		MotProtocol_ReqPayload_Control_Brake_T;
-typedef struct { uint16_t Status; } 												MotProtocol_RespPayload_Control_Brake_T;
+typedef struct MotProtocol_ReqPayload_Control_Throttle_Tag { uint8_t ControlId; uint8_t RsvrExt; uint16_t ThrottleValue; } 	MotProtocol_ReqPayload_Control_Throttle_T;
+typedef MotProtocol_RespPayload_Status_T																					MotProtocol_RespPayload_Control_Throttle_T;
+typedef struct MotProtocol_ReqPayload_Control_Brake_Tag { uint8_t ControlId; uint8_t RsvrExt; uint16_t BrakeValue; } 	MotProtocol_ReqPayload_Control_Brake_T;
+typedef MotProtocol_RespPayload_Status_T																				MotProtocol_RespPayload_Control_Brake_T;
 
 /******************************************************************************/
 /*!	Monitor */
 /******************************************************************************/
-typedef enum
+typedef enum MotProtocol_MonitorId_Tag
 {
 	MOTPROTOCOL_MONITOR_SPEED = 0x01U,		/* Speed in Q1.15 */
 	MOTPROTOCOL_MONITOR_I_PHASES = 0x02U,	/* Iabc in Q1.15 */
@@ -326,22 +297,15 @@ typedef enum
 }
 MotProtocol_MonitorId_T;
 
-typedef struct { uint8_t MonitorId; } 															MotProtocol_ReqPayload_Monitor_T;
-typedef MotProtocol_Registers_T 																MotProtocol_RespPayload_Monitor_T;
-typedef struct { MotProtocol_Header_T Header; MotProtocol_ReqPayload_Monitor_T CmdMonitor; } 	MotProtocol_ReqPacket_Monitor_T;
-typedef struct { MotProtocol_Header_T Header; MotProtocol_RespPayload_Monitor_T Values; } 		MotProtocol_RespPacket_Monitor_T;
+typedef struct MotProtocol_ReqPayload_Monitor_Tag { uint8_t MonitorId; } 														MotProtocol_ReqPayload_Monitor_T;
+typedef MotProtocol_Registers_T 																								MotProtocol_RespPayload_Monitor_T;
+typedef struct MotProtocol_ReqPacket_Monitor_Tag { MotProtocol_Header_T Header; MotProtocol_ReqPayload_Monitor_T CmdMonitor; } 	MotProtocol_ReqPacket_Monitor_T;
+typedef struct MotProtocol_RespPacket_Monitor_Tag { MotProtocol_Header_T Header; MotProtocol_RespPayload_Monitor_T Values; } 	MotProtocol_RespPacket_Monitor_T;
 
-// typedef struct { MotProtocol_MonitorId_T Id; } 														MotProtocol_Payload_MonitorPhases_T;
-// typedef struct { MotProtocol_Header_T Header; MotProtocol_Payload_MonitorPhases_T Phases; } 			MotProtocol_Packet_MonitorPhases_T;
-// typedef struct { MotProtocol_MonitorId_T Id; } 														MotProtocol_Payload_Monitor1_T;
-// typedef struct { MotProtocol_Header_T Header; MotProtocol_Payload_Monitor1_T Monitor; } 				MotProtocol_Packet_Monitor1_T;
-// typedef struct { union { int16_t Signed; uint16_t Unsigned; }; } 									MotProtocol_Payload_Monitor1_Response_T;
-// typedef struct { MotProtocol_Header_T Header; MotProtocol_Payload_Monitor1_Response_T Response; }  	MotProtocol_Packet_Monitor1_Response_T;
+typedef struct MotProtocol_RespPayload_Monitor_IPhases_Tag { int16_t PhaseA; int16_t PhaseB; int16_t PhaseC; } 		MotProtocol_RespPayload_Monitor_IPhases_T;
+typedef struct MotProtocol_RespPayload_Monitor_Speed_Tag { int32_t Speed; } 										MotProtocol_RespPayload_Monitor_Speed_T;
 
-typedef struct{	int16_t PhaseA; int16_t PhaseB; int16_t PhaseC; } 		MotProtocol_RespPayload_Monitor_IPhases_T;
-typedef struct{	int32_t Speed; } 										MotProtocol_RespPayload_Monitor_Speed_T;
-
-typedef struct
+typedef struct MotProtocol_Interface_Tag
 {
  	union
 	{
@@ -390,9 +354,9 @@ MotProtocol_Interface_T;
 /******************************************************************************/
 extern uint8_t _MotProtocol_SyncPacket_Build(MotProtocol_SyncPacket_T * p_txPacket, MotProtocol_HeaderId_T syncId);
 extern uint8_t MotProtocol_SyncPacket_Build(MotProtocol_SyncPacket_T * p_txPacket, MotProtocol_HeaderId_T syncId);
-// extern uint8_t MotProtocol_GetControlRespLength(MotProtocol_ControlId_T controlId);
-// extern uint8_t MotProtocol_GetMonitorRespLength(MotProtocol_MonitorId_T id);
-// extern uint8_t MotProtocol_GetRespLength(const MotProtocol_Interface_T * p_interface, MotProtocol_HeaderId_T id);
+extern uint8_t MotProtocol_GetControlRespLength(MotProtocol_ControlId_T controlId);
+extern uint8_t MotProtocol_GetMonitorRespLength(MotProtocol_MonitorId_T id);
+extern uint8_t MotProtocol_GetRespLength(const MotProtocol_Interface_T * p_interface, MotProtocol_HeaderId_T id);
 
 /******************************************************************************/
 /*!	Cmdr side */

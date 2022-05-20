@@ -32,7 +32,7 @@
 
 #if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED)
 #include "System/Critical/Critical.h"
-#elif defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+#elif defined(CONFIG_QUEUE_CRITICAL_EXTERN_DEFINED)
 extern inline void Critical_Enter();
 extern inline void Critical_Exit();
 extern inline void Critical_AcquireEnter(void * p_mutex);
@@ -54,21 +54,21 @@ extern inline void Critical_ReleaseExit(void * p_mutex);
 /******************************************************************************/
 static inline void EnterCritical(void)
 {
-#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_EXTERN_DEFINED)
 	if(p_queue.CONFIG.USE_CRITICAL == true) { Critical_Enter(); }
 #endif
 }
 
 static inline void ExitCritical(void)
 {
-#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_EXTERN_DEFINED)
 	if(p_queue.CONFIG.USE_CRITICAL == true) { Critical_Exit(); }
 #endif
 }
 
 static inline bool AcquireCritical(Queue_T * p_queue)
 {
-#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_EXTERN_DEFINED)
 	return (p_queue.CONFIG.USE_CRITICAL == true) ? Critical_AcquireEnter(&p_queue->Mutex) : true;
 #else
 	(void)p_queue;
@@ -78,7 +78,7 @@ static inline bool AcquireCritical(Queue_T * p_queue)
 
 static inline void ReleaseCritical(Queue_T * p_queue)
 {
-#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_EXTERN_DEFINED)
 	if(p_queue.CONFIG.USE_CRITICAL == true) { Critical_ReleaseExit(&p_queue->Mutex) };
 #else
 	(void)p_queue;

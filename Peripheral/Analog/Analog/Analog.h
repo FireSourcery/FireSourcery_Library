@@ -167,7 +167,7 @@ Analog_T;
 	{														\
 		.P_HAL_ANALOG = p_HalAnalog,						\
 	},														\
-	.ConversionQueue = QUEUE_CONFIG(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),	\
+	.ConversionQueue = QUEUE_DEFINE(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),	\
 }
 
 extern void _Analog_ProcQueue(Analog_T * p_analog);

@@ -29,9 +29,8 @@
 */
 /******************************************************************************/
 #include "MotProtocol.h"
-#include <stddef.h>
 #include <string.h>
-
+#include <stddef.h>
 /* MotProtocol_Packet */
 
 /******************************************************************************/
@@ -86,7 +85,6 @@ uint8_t MotProtocol_SyncPacket_Build(MotProtocol_SyncPacket_T * p_txPacket, MotP
 	return ((syncId == MOTPROTOCOL_STOP_MOTOR) || (syncId == MOTPROTOCOL_PING) || (syncId == MOTPROTOCOL_SYNC_ACK) || (syncId == MOTPROTOCOL_SYNC_NACK) || (syncId == MOTPROTOCOL_SYNC_ABORT)) ?
 		_MotProtocol_SyncPacket_Build(p_txPacket, syncId) : 0U;
 }
-
 
 uint8_t MotProtocol_GetControlRespLength(MotProtocol_ControlId_T controlId)
 {
@@ -147,7 +145,6 @@ uint8_t MotProtocol_GetRespLength(const MotProtocol_Interface_T * p_interface, M
 	Build Packet Functions
 	Optionally map directly to Protocol Table,
 	@return size of Packet (TxLength),
-			althought map to size_t, calling function in context to read return as int8_t
 */
 /******************************************************************************/
 
@@ -211,7 +208,23 @@ uint8_t MotProtocol_ReqPacket_Monitor_Build(MotProtocol_ReqPacket_Monitor_T * p_
 }
 
 
+/* One function handle all cases, alternatively use function table */
+uint8_t MotProtocol_ReqPacket_Build(MotProtocol_ReqPacket_Monitor_T * p_reqPacket, const MotProtocol_Interface_T * p_interface, MotProtocol_HeaderId_T typeId)
+{
+	uint8_t txLength = MotProtocol_SyncPacket_Build(p_reqPacket, typeId);
 
+	if(txLength == 0U)
+	{
+		switch(typeId)
+		{
+			case MOTPROTOCOL_CMD_MONITOR_TYPE: 	txLength = MotProtocol_ReqPacket_Monitor_Build(p_reqPacket, p_interface);	break;
+			case MOTPROTOCOL_CMD_CONTROL_TYPE: 	txLength = MotProtocol_ReqPacket_Control_Build(p_reqPacket, p_interface);	break;
+			default: break;
+		}
+	}
+
+	return txLength;
+}
 
 /******************************************************************************/
 /*!	Parse Response */

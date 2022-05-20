@@ -36,7 +36,7 @@ bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 	bool isSucess = false;
 	Protocol_Req_T * p_req;
 
-	if(p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE)
+	if(p_protocol->RxState == PROTOCOL_RX_STATE_INACTIVE)
 	{
 		p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
 		p_protocol->ReqIdActive = cmdId;
@@ -64,26 +64,6 @@ bool _Protocol_Cmdr_StartReq_Resp(Protocol_T * p_protocol, protocol_reqid_t cmdI
 	if(isSucess == true) { p_protocol->RxRemaining = respLength; }
 	return isSucess;
 }
-
-/*
-	No overwrite existing
-*/
-void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
-{
-	if(_Protocol_Cmdr_StartReq( p_protocol, cmdId) == true)
-	{
-		TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
-	}
-}
-
-void Protocol_Cmdr_StartReq_Resp(Protocol_T * p_protocol, protocol_reqid_t cmdId, size_t respLength)
-{
-	if(_Protocol_Cmdr_StartReq_Resp( p_protocol, cmdId, respLength) == true)
-	{
-		TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
-	}
-}
-
 /* return true if time out */
 bool _Protocol_Cmdr_CheckTimeout(Protocol_T * p_protocol)
 {
@@ -103,9 +83,9 @@ Protocol_RxCode_T _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 	Master Mode, sequential Cmd/Rx
 	non blocking, single threaded only,
 */
-Protocol_RxCode_T Protocol_Cmdr_ProcRx(Protocol_T * p_protocol)
+void Protocol_Cmdr_ProcRx(Protocol_T * p_protocol)
 {
-	Protocol_RxCode_T rxStatus = 0U ;
+	// Protocol_RxCode_T rxStatus = 0U ;
 
 	switch(p_protocol->RxState)
 	{
@@ -123,10 +103,10 @@ Protocol_RxCode_T Protocol_Cmdr_ProcRx(Protocol_T * p_protocol)
 					// p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL;
 
 					//stateless can proc right away
-				if(_Protocol_Cmdr_ParseResp(p_protocol) == PROTOCOL_RX_CODE_ERROR_PACKET_DATA)
-				{
-					// if use nack resend
-				}
+					// if(_Protocol_Cmdr_ParseResp(p_protocol) == PROTOCOL_RX_CODE_ERROR_PACKET_DATA)
+					// {
+					// 	// if use nack resend
+					// }
 				// }
 			}
 			else
@@ -151,3 +131,21 @@ Protocol_RxCode_T Protocol_Cmdr_ProcRx(Protocol_T * p_protocol)
 
 }
 
+/*
+	No overwrite existing
+*/
+void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+{
+	if(_Protocol_Cmdr_StartReq( p_protocol, cmdId) == true)
+	{
+		_Protocol_TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+	}
+}
+
+void Protocol_Cmdr_StartReq_Resp(Protocol_T * p_protocol, protocol_reqid_t cmdId, size_t respLength)
+{
+	if(_Protocol_Cmdr_StartReq_Resp( p_protocol, cmdId, respLength) == true)
+	{
+		_Protocol_TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+	}
+}

@@ -28,8 +28,8 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef QUEUE_H
-#define QUEUE_H
+#ifndef QUEUE_FIRE_SOURCERY_H
+#define QUEUE_FIRE_SOURCERY_H
 
 #include "Config.h"
 
@@ -37,56 +37,58 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-typedef const struct
+typedef const struct Queue_Config_Tag
 {
 	void * const P_BUFFER;
+	uint8_t test;
 	const size_t LENGTH; 	/* in unit counts */
 	const size_t UNIT_SIZE;
 #if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
 	const uint32_t POW2_MASK;
 #endif
-#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_EXTERN_DEFINED)
 	const bool USE_CRITICAL;
 #endif
 }
 Queue_Config_T;
 
 /*
+	Except for CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED
 	Empty space detection method. Head always points to empty space. Max usable capacity is length - 1
 */
-typedef struct
+typedef struct Queue_Tag
 {
 	const Queue_Config_T CONFIG;
 	//	bool IsOverwritable;
 	volatile size_t Head;	/* write to head  */
 	volatile size_t Tail;	/* read from tail */
-#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_EXTERN_DEFINED)
 	volatile critical_mutext_t Mutex;
 #endif
 }
 Queue_T;
 
 #if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
-#define QUEUE_CONFIG_POW2(Pow2Mask) .POW2_MASK = Pow2Mask,
+#define QUEUE_DEFINE_POW2(Pow2Mask) .POW2_MASK = Pow2Mask,
 #else
-#define QUEUE_CONFIG_POW2(Pow2Mask)
+#define QUEUE_DEFINE_POW2(Pow2Mask)
 #endif
 
-#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_USER_DEFINED)
-#define QUEUE_CONFIG_CRITICAL(UseCritical) .USE_CRITICAL = UseCritical,
+#if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_EXTERN_DEFINED)
+#define QUEUE_DEFINE_CRITICAL(UseCritical) .USE_CRITICAL = UseCritical,
 #else
-#define QUEUE_CONFIG_CRITICAL(UseCritical)
+#define QUEUE_DEFINE_CRITICAL(UseCritical)
 #endif
 
-#define QUEUE_CONFIG(p_Buffer, Length, UnitSize, UseCritical)	\
+#define QUEUE_DEFINE(p_Buffer, Length, UnitSize, UseCritical)	\
 {														\
 	.CONFIG =											\
 	{                                               	\
 		.P_BUFFER			= p_Buffer,					\
 		.LENGTH				= Length,					\
 		.UNIT_SIZE			= UnitSize,					\
-		QUEUE_CONFIG_POW2(Length - 1U)					\
-		QUEUE_CONFIG_CRITICAL(UseCritical)				\
+		QUEUE_DEFINE_POW2(Length - 1U)					\
+		QUEUE_DEFINE_CRITICAL(UseCritical)				\
 	},													\
 }
 

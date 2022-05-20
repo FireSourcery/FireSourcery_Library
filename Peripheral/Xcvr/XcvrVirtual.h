@@ -40,10 +40,10 @@ typedef struct
 }
 XcvrVirtual_T;
 
-#define XCVR_VIRTUAL_CONFIG(p_TxBuffer, p_RxBuffer, QueueSize)	\
+#define XCVR_VIRTUAL_DEFINE(p_TxBuffer, p_RxBuffer, QueueSize)	\
 {																\
-	.RxQueue = QUEUE_CONFIG(p_RxBuffer, QueueSize, 1U, 0U),		\
-	.TxQueue = QUEUE_CONFIG(p_TxBuffer, QueueSize, 1U, 0U),		\
+	.RxQueue = QUEUE_DEFINE(p_RxBuffer, QueueSize, 1U, 0U),		\
+	.TxQueue = QUEUE_DEFINE(p_TxBuffer, QueueSize, 1U, 0U),		\
 }
 
 /*

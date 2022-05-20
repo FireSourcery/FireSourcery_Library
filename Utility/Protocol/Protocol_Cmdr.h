@@ -37,7 +37,7 @@
 /*
 	User provide functions to convert between packet format and appInterface format
 */
-/* If RxPacket contains length */
+/* If _Protocol_RxPacket contains length */
 // typedef void (*Protocol_Cmdr_BuildReq_T)(uint8_t * p_txPacket, size_t * p_txLength, size_t * p_rxRemainig, const void * p_appInterface);
 // typedef size_t (*Protocol_Cmdr_BuildReq_T)(uint8_t * p_txPacket, const void * p_appInterface);
 // typedef void (*Protocol_Cmdr_GetRespLength_T)(const void * p_appInterface, protocol_reqid_t id); //skip checking resp packet, if available, return 255 for variable return length?
@@ -50,10 +50,7 @@
 /*
 	Tx Packet using Protocol Xcvr
 */
-static inline void _Protocol_Cmdr_TxPacket(Protocol_T * p_protocol)
-{
 
-}
 
 /*
 	User app handle Tx
@@ -71,7 +68,7 @@ extern bool _Protocol_Cmdr_StartReq_Resp(Protocol_T * p_protocol, protocol_reqid
 extern void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId);
 extern void Protocol_Cmdr_StartReq_Resp(Protocol_T * p_protocol, protocol_reqid_t cmdId, size_t respLength);
 extern Protocol_RxCode_T _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol);
-extern Protocol_RxCode_T Protocol_Cmdr_ProcRx(Protocol_T * p_protocol);
+extern void Protocol_Cmdr_ProcRx(Protocol_T * p_protocol);
 
 #endif
 

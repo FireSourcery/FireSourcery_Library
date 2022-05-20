@@ -93,6 +93,7 @@ bool Xcvr_CheckValid(const Xcvr_T * p_xcvr, void * p_target)
 	return isValid;
 }
 
+//switch to functin pointer over preprocessor macro?
 void Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
 {
 	switch(p_xcvr->Type)

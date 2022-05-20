@@ -31,7 +31,7 @@
 #ifndef MOT_VAR_ID_H
 #define MOT_VAR_ID_H
 
-typedef enum
+typedef enum MotProtocolVarId_Tag
 {
 	/*
 		Motor 1 by default
@@ -237,9 +237,9 @@ typedef enum
 	// MOT_VAR_ISENABLEONINIT ,
 	// ,
 
-	MOT_VAR_RESERVED_65535 = 0xFFFF,
+	MOT_VAR_RESERVED_65535 = 0xFFFFU,
 }
-MotProtocolVarId_T
+MotVarId_T;
 
 
 
