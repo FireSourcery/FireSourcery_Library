@@ -33,37 +33,44 @@
 
 extern "C"
 {
-	#include "MotorCmdr/MotorCmdr.h"
+	#include "Motor/MotorCmdr/MotorCmdr.h"
 };
 
 #include "HardwareSerial.h"
 #include <Arduino.h>
 #include <cstdint>
 
-#define PROTOCOL_PACKET_BUFFER_SIZE 64U
 
 class KellyController
 {
-private:
+// private:
+public:
 	static uint32_t millisTimer;
 	// Stream * p_serialStream;
 	HardwareSerial * p_serial;
-	uint8_t txPacket[PROTOCOL_PACKET_BUFFER_SIZE];
-	uint8_t rxPacket[PROTOCOL_PACKET_BUFFER_SIZE];
-	MotorCmdr_T motorCmdr = MOTOR_CMDR_DEFINE(&motorCmdr, rxPacket, txPacket, 0U, 0U, &millisTimer);
+	MotorCmdr_T motorCmdr = MOTOR_CMDR_DEFINE(&motorCmdr, 0U, 0U, &millisTimer);
 
-public:
+// public:
 	KellyController(HardwareSerial & serial);
 	virtual ~KellyController(void);
 	void begin(void);
 	void end(void);
 	// void update(void);
 
-	bool pollRx(void);
+
+
+	bool pollResponse(void);
+	void ping(void);
+	void writeStop(void);
 	void writeThrottle(uint16_t throttle);
 
-	uint8_t * getTxPacket(void) { return txPacket; }
+	int32_t getReadSpeed(void);
 
+	// Debuging use
+	uint8_t getTxLength(void) { return _MotorCmdr_GetReqLength(&motorCmdr); }
+	uint8_t * getPtrTxPacket(void) { return motorCmdr.TxPacket; }
+	uint8_t getRxLength(void) { return _MotorCmdr_GetRespLength(&motorCmdr); }
+	uint8_t * getPtrRxPacket(void) { return motorCmdr.RxPacket; }
 };
 
 #endif

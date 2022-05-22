@@ -93,15 +93,22 @@ void KellyController::end(void)
 // 	@brief
 // */
 // /******************************************************************************/
-bool KellyController::pollRx(void)
+bool KellyController::pollResponse(void)
 {
 	this->millisTimer = millis();
-	if(p_serial->available() >= _MotorCmdr_GetRespLength(&motorCmdr))
-	{
-		p_serial->readBytes(rxPacket, _MotorCmdr_GetRespLength(&motorCmdr));
 
-		_MotorCmdr_CaptureResp(&motorCmdr); /* new data is ready, returns false if crc error */
-		return true;
+	if(_MotorCmdr_PollTimeout(&motorCmdr) == false)
+	{
+		if(p_serial->available() >= _MotorCmdr_GetRespLength(&motorCmdr))
+		{
+			p_serial->readBytes(_MotorCmdr_GetPtrRxPacket(&motorCmdr), _MotorCmdr_GetRespLength(&motorCmdr));
+			_MotorCmdr_CaptureResp(&motorCmdr); /* new data is ready, returns false if crc error */
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 	else
 	{
@@ -109,21 +116,31 @@ bool KellyController::pollRx(void)
 	}
 }
 
+void KellyController::ping()
+{
+	_MotorCmdr_Ping(&motorCmdr);
+	p_serial->write(_MotorCmdr_GetPtrTxPacket(&motorCmdr), _MotorCmdr_GetReqLength(&motorCmdr));
+}
+
+void KellyController::writeStop()
+{
+	_MotorCmdr_StopMotors(&motorCmdr);
+	p_serial->write(_MotorCmdr_GetPtrTxPacket(&motorCmdr), _MotorCmdr_GetReqLength(&motorCmdr));
+}
+
 void KellyController::writeThrottle(uint16_t throttle)
 {
 	_MotorCmdr_WriteThrottle(&motorCmdr, throttle);
-	txPacket[0] = 'S';
-	p_serial->write(txPacket, _MotorCmdr_GetReqLength(&motorCmdr));
+	p_serial->write(_MotorCmdr_GetPtrTxPacket(&motorCmdr), _MotorCmdr_GetReqLength(&motorCmdr));
 }
 
 
+// int32_t KellyController::getReadSpeed(void) { return MotorCmdr_GetReadSpeed(&motorCmdr); }
 
 
-// void KellyController::getReadSpeed(void) { return MotorCmdr_GetReadSpeed(&motorCmdr); }
-
-
-// void KellyController::startReadMonitor( )
+// void KellyController::startReadMonitor(MotPacket_MonitorId_T monitorId)
 // {
+
 // }
 
 

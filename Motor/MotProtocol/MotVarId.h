@@ -31,8 +31,10 @@
 #ifndef MOT_VAR_ID_H
 #define MOT_VAR_ID_H
 
-typedef enum MotProtocolVarId_Tag
+typedef enum MotVarId_Tag
 {
+	MOT_VAR_NULL = 0u,
+
 	/*
 		Motor 1 by default
 	*/

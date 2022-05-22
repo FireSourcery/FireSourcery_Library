@@ -30,6 +30,7 @@
 /******************************************************************************/
 #include "MotorController_User.h"
 #include "MotorController_Thread.h"
-#include "MotorController_Analog.h" 
+#include "MotorController_Analog.h"
 #include "MotorController_Shell.h"
+#include "MotorController_MotProtocol.h"
 #include "Motor/Motor/Motor_Include.h"

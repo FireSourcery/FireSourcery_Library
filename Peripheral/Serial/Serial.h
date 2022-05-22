@@ -131,6 +131,7 @@ static inline void Serial_PollRestartRxIsr(const Serial_T * p_serial)
 	}
 }
 
+//todo hw fifo buffer
 static inline void Serial_PollRxData(Serial_T * p_serial)
 {
 	HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);

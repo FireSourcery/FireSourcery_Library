@@ -1,0 +1,9 @@
+#ifndef CONFIG_MOTOR_CMDR_H
+#define CONFIG_MOTOR_CMDR_H
+
+#if defined(CONFIG_MOTOR_CMDR_MOTOR_COUNT)
+#else
+    #define CONFIG_MOTOR_CMDR_MOTOR_COUNT 1U
+#endif
+
+#endif

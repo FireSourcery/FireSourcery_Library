@@ -22,18 +22,17 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	MotorController_MotProtocol.h
+	@file 	MotProtocol.h
 	@author FireSoucery
 	@brief
 	@version V0
 */
 /******************************************************************************/
-#ifndef MOTOR_CONTROLLER_PROTCOL_H
-#define MOTOR_CONTROLLER_PROTCOL_H
+#ifndef MOTOR_CMDR_MOT_PROTOCOL_H
+#define MOTOR_CMDR_MOT_PROTOCOL_H
 
-#include "Utility/Protocol/Protocol.h"
+#include "Utility/Protocol/Protocol_Cmdr.h"
 
-/* MISRA violation */
-extern const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS;
+extern const Protocol_Specs_T MOTOR_CMDR_MOT_PROTOCOL_SPECS;
 
 #endif

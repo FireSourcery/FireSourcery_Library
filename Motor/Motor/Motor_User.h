@@ -371,7 +371,7 @@ static inline int16_t Motor_User_GetIPhase_Amp(Motor_T * p_motor)
 /*!
 	@return speed forward as positive. reverse as negative.
 */
-static inline int32_t Motor_User_GetSpeed_Frac16(Motor_T * p_motor)
+static inline int32_t Motor_User_GetSpeed_Fixed32(Motor_T * p_motor)
 {
 	return (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? p_motor->SpeedFeedback_Frac16 : 0 - p_motor->SpeedFeedback_Frac16;
 }
@@ -381,7 +381,7 @@ static inline int32_t Motor_User_GetSpeed_Frac16(Motor_T * p_motor)
 */
 static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor)
 {
-	return Motor_ConvertToSpeedRpm(p_motor, Motor_User_GetSpeed_Frac16(p_motor));
+	return Motor_ConvertToSpeedRpm(p_motor, Motor_User_GetSpeed_Fixed32(p_motor));
 }
 
 /*

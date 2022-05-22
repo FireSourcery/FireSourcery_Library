@@ -31,9 +31,36 @@
 #ifndef MOT_MOT_PROTOCOL_H
 #define MOT_MOT_PROTOCOL_H
 
+#include "MotPacket.h"
 #include "Utility/Protocol/Protocol_Cmdr.h"
 
-extern const Protocol_Specs_T MOT_PROTOCOL_CTRLR_SPECS;
-extern const Protocol_Specs_T MOT_PROTOCOL_CMDR_SPECS;
+#define MOTPROTOCOL_BAUD_RATE_DEFAULT		(19200U)
+#define MOTPROTOCOL_TIMEOUT_MS				(2000U) 	/* Timeout packet */
+
+typedef struct MotProtocol_Substate_Tag
+{
+	uint8_t StateId;
+}
+MotProtocol_Substate_T;
+
+extern void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, Protocol_TxSyncId_T txId);
+extern void MotProtocol_ResetExt(MotProtocol_Substate_T * p_subState);
+
+/******************************************************************************/
+/*!
+	Cmdr side
+*/
+/******************************************************************************/
+extern Protocol_RxCode_T MotProtocol_CheckPacket(const MotPacket_T * p_rxPacket);
+
+/******************************************************************************/
+/*!
+	Ctrlr side only
+*/
+/******************************************************************************/
+extern Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p_rxRemaining, const MotPacket_T * p_rxPacket, size_t rxCount);
+
+// extern const Protocol_Specs_T MOT_PROTOCOL_CTRLR_SPECS;
+// extern const Protocol_Specs_T MOT_PROTOCOL_CMDR_SPECS;
 
 #endif

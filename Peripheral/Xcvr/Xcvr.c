@@ -122,6 +122,12 @@ bool Xcvr_Tx(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
 	return status;
 }
 
+// bool Xcvr_TxPacket(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
+// {
+// 	return (length > 0U) ? Xcvr_Tx(p_xcvr, p_srcBuffer, length) : false;
+// }
+
+
 uint32_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
 {
 	uint32_t rxCount;

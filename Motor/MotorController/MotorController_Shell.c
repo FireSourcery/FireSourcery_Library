@@ -77,7 +77,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 	{
 		case 0U:
 			Terminal_SendString(p_terminal, "Speed: ");	Terminal_SendNum(p_terminal, Motor_User_GetSpeed_Rpm(p_motor)); Terminal_SendString(p_terminal, " RPM ");
-			Terminal_SendNum(p_terminal, Motor_User_GetSpeed_Frac16(p_motor)); Terminal_SendString(p_terminal, " Frac16\r\n");
+			Terminal_SendNum(p_terminal, Motor_User_GetSpeed_Fixed32(p_motor)); Terminal_SendString(p_terminal, " Frac16\r\n");
 
 			// Terminal_SendString(p_terminal, "Speed2: "); Terminal_SendNum(p_terminal, p_motor->Speed2_RPM); Terminal_SendString(p_terminal, " RPM ");
 			// Terminal_SendNum(p_terminal, p_motor->Speed2_Frac16); Terminal_SendString(p_terminal, " Frac16\r\n");
