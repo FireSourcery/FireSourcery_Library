@@ -140,9 +140,9 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 			// if(Xcvr_RxPacket(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], p_protocol->RxRemaining) == true)
 			//get id
 		}
-
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 		rxLength = Xcvr_Rx(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], rxLimit); /* Rx Upto rxLimit */
-
+#endif
 		if(rxLength > 0U) /* Loop _Protocol_RxPacket if rxLength is 1 */
 		{
 			p_protocol->RxIndex += rxLength;
@@ -195,7 +195,9 @@ static void ProcTxSync(Protocol_T * p_protocol, Protocol_TxSyncId_T txId)
 	if(p_protocol->p_Specs->BUILD_TX_SYNC != 0U)
 	{
 		p_protocol->p_Specs->BUILD_TX_SYNC(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, txId);
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 		Xcvr_Tx(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+#endif
 	}
 }
 
@@ -284,6 +286,7 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 	switch(p_protocol->RxState)
 	{
 		case PROTOCOL_RX_STATE_WAIT_BYTE_1: /* nonblocking wait state, no timer */
+#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 			if(Xcvr_Rx(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U], 1U) == true)
 			{
 				/*
@@ -298,6 +301,7 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 					p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
 				}
 			}
+#endif
 			break;
 
 		case PROTOCOL_RX_STATE_WAIT_PACKET: /* nonblocking wait state, timer started */
