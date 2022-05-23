@@ -75,10 +75,10 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 {
 	Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_WAIT_PACKET;
 
-	if(*p_rxRemaining == 0U) // if(rxCount >= 3U) && (rxCount >= p_rxPacket->Header.Length + sizeof(MotPacket_Header_T))
+	if(rxCount >= p_rxPacket->Header.Length + sizeof(MotPacket_Header_T)) // if(rxCount >= 3U) && (rxCount >= p_rxPacket->Header.Length + sizeof(MotPacket_Header_T))
 	{
 		*p_reqId = p_rxPacket->Header.TypeId;
-		rxCode = (MotPacket_CheckChecksum(p_rxPacket)) ? PROTOCOL_RX_CODE_REQ_ID_SUCCESS : PROTOCOL_RX_CODE_ERROR_PACKET_DATA;
+		rxCode = (MotPacket_CheckChecksum(p_rxPacket)) ? PROTOCOL_RX_CODE_COMPLETE : PROTOCOL_RX_CODE_ERROR;
 
 		// optionally further refine cmd
 		// if(rxCount >= p_rxPacket->Header.Length + sizeof(MotPacket_Header_T))
@@ -102,8 +102,8 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 	{
 		switch(p_rxPacket->Header.TypeId)
 		{
-			case MOTPROTOCOL_STOP_MOTORS:	rxCode = PROTOCOL_RX_CODE_REQ_ID_SUCCESS; *p_reqId = MOTPROTOCOL_STOP_MOTORS;	break;
-			case MOTPROTOCOL_PING:			rxCode = PROTOCOL_RX_CODE_REQ_ID_SUCCESS; *p_reqId = MOTPROTOCOL_PING;			break;
+			case MOTPROTOCOL_STOP_MOTORS:	rxCode = PROTOCOL_RX_CODE_COMPLETE; *p_reqId = MOTPROTOCOL_STOP_MOTORS;		break;
+			case MOTPROTOCOL_PING:			rxCode = PROTOCOL_RX_CODE_COMPLETE; *p_reqId = MOTPROTOCOL_PING;			break;
 			case MOTPROTOCOL_SYNC_ACK:		rxCode = PROTOCOL_RX_CODE_ACK; 				break;
 			case MOTPROTOCOL_SYNC_NACK:		rxCode = PROTOCOL_RX_CODE_NACK; 			break;
 			case MOTPROTOCOL_SYNC_ABORT:	rxCode = PROTOCOL_RX_CODE_ABORT; 			break;
@@ -131,7 +131,7 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 //cmdr side uses PROTOCOL_RX_CODE_RESP_DATA_SUCCESS
 Protocol_RxCode_T MotProtocol_CheckPacket(const MotPacket_T * p_rxPacket) //general version might need include rxlength
 {
-	return (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_RESP_DATA_SUCCESS : PROTOCOL_RX_CODE_ERROR_PACKET_DATA;
+	return (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_COMPLETE : PROTOCOL_RX_CODE_ERROR;
 }
 
 

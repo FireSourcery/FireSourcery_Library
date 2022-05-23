@@ -182,6 +182,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		// 	Serial_PollTxData(&p_mc->CONFIG.P_SERIALS[iSerial]);
 		// }
 
+		//todo check commuinication lost
 		for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++)
 		{
 			Protocol_Proc(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]);

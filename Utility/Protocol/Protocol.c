@@ -312,14 +312,15 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 				switch(p_protocol->RxCode)
 				{
 					case PROTOCOL_RX_CODE_WAIT_PACKET: break;
-					case PROTOCOL_RX_CODE_REQ_ID_SUCCESS: 	p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL; break;
+					case PROTOCOL_RX_CODE_COMPLETE: 	p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL; break;
 					case PROTOCOL_RX_CODE_ACK: 				p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL; break;
 					case PROTOCOL_RX_CODE_NACK: 			p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL; break;
 					case PROTOCOL_RX_CODE_ABORT: 			p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL; break;
-					case PROTOCOL_RX_CODE_ERROR_PACKET_DATA:
+					case PROTOCOL_RX_CODE_ERROR:
 						//cehck proc nack
 						ProcTxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_PACKET_ERROR);
 						p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+						p_protocol->RxCode = PROTOCOL_RX_CODE_WAIT_PACKET;
 						break;
 						// case PROTOCOL_RX_CODE_DATAGRAM_SETUP: break;
 					default:
@@ -335,6 +336,8 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 			break;
 
 		case PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL:
+			p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+			p_protocol->RxCode = PROTOCOL_RX_CODE_WAIT_PACKET;
 			/*
 				pause build new RX packets  req processing, incoming packet bytes wait in queue.
 				cannot miss packets (unless overflow)
@@ -504,7 +507,8 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 					ProcTxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_REQ_ID);
 				}
 
-				p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+				// p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+				// p_protocol->RxCode = PROTOCOL_RX_CODE_WAIT_PACKET;
 			}
 			else
 			{

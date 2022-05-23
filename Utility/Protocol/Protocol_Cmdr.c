@@ -90,7 +90,7 @@ Protocol_RxCode_T _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 
 	// return rxStatus;
 	p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
-	return PROTOCOL_RX_CODE_RESP_DATA_SUCCESS;
+	return PROTOCOL_RX_CODE_COMPLETE;
 }
 
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
@@ -115,7 +115,7 @@ void Protocol_Cmdr_ProcRx(Protocol_T * p_protocol)
 				if(Xcvr_RxPacket(&p_protocol->Xcvr, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxRemaining) == true)
 				{
 					//stateless proc immediately
-					if(_Protocol_Cmdr_ParseResp(p_protocol) == PROTOCOL_RX_CODE_ERROR_PACKET_DATA)
+					if(_Protocol_Cmdr_ParseResp(p_protocol) == PROTOCOL_RX_CODE_ERROR)
 					{
 						// if use nack resend
 					}
