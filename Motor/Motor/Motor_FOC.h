@@ -213,8 +213,12 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 	qfrac16_t vqReqOut;
 
 	/* VoltageModeILimit_QFracS16 set to torque direction. Alternatively, use limits stored in SpeedPid  */
-	if		(p_motor->VoltageModeILimit_QFracS16 > 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) > p_motor->VoltageModeILimit_QFracS16); }
-	else if	(p_motor->VoltageModeILimit_QFracS16 < 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) < p_motor->VoltageModeILimit_QFracS16); }
+	// if		(p_motor->VoltageModeILimit_QFracS16 > 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) > p_motor->VoltageModeILimit_QFracS16); }
+	// else if	(p_motor->VoltageModeILimit_QFracS16 < 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) < p_motor->VoltageModeILimit_QFracS16); }
+	// else 												{ isOverLimit = false; } /* should not occur */
+
+	if		(p_motor->VoltageModeILimit_QFracS16 > 0) 	{ isOverLimit = (FOC_GetIMagnitude(&p_motor->Foc) > p_motor->VoltageModeILimit_QFracS16); }
+	else if	(p_motor->VoltageModeILimit_QFracS16 < 0) 	{ isOverLimit = (FOC_GetIMagnitude(&p_motor->Foc) > 0 - p_motor->VoltageModeILimit_QFracS16); }
 	else 												{ isOverLimit = false; } /* should not occur */
 
 	if((isOverLimit == true) && (p_motor->RunStateFlags.VoltageModeILimitActive == false))
@@ -266,7 +270,7 @@ static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 		*/
 		if(p_motor->FeedbackModeFlags.VFreqScalar == 1U)
 		{
-			userOutput = p_motor->RampCmd * (Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16 / 2)) / 65536;   //seletable SpeedControl?
+			userOutput = p_motor->RampCmd * (Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16 / 2)) / 65536;
 
 			if		(userOutput > 32767) 	{ userOutput = 32767; }
 			else if	(userOutput < -32767) 	{ userOutput = -32767; }
@@ -346,7 +350,7 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 	/* samples chain complete shortly after queue resumes. adc isr priority higher than pwm. */
 	_Motor_FOC_ProcPositionFeedback(p_motor);
 
-	/* Ic complete ~29 us */
+	/* Ic complete? ~29 us */
 
 	/* ~29 us */ // p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
 

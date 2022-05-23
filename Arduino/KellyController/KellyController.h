@@ -57,8 +57,6 @@ public:
 	void end(void);
 	// void update(void);
 
-
-
 	bool pollResponse(void);
 	void ping(void);
 	void writeStop(void);

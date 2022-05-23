@@ -33,7 +33,7 @@
 #include <string.h>
 
 uint16_t _Motor_AdcVRef_MilliV;  /* Sync with upper layer */
-uint16_t _Motor_VRefSupply_V;	/* Battery/Supply voltage. Sync with upper layer */
+uint16_t _Motor_VRefSupply_V; /* Battery/Supply voltage. Sync with upper layer */
 
 uint16_t _Motor_GetAdcVRef(void) { return _Motor_AdcVRef_MilliV; }
 uint16_t _Motor_GetVRefSupply(void) { return _Motor_VRefSupply_V; }
@@ -305,7 +305,7 @@ void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
 }
 
 /*
-	Perfered for stability
+	Preferred for stability
 */
 void Motor_Jog6Step(Motor_T * p_motor, uint8_t step)
 {

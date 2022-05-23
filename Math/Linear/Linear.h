@@ -116,24 +116,27 @@ static inline int32_t Linear_InvFunction(const Linear_T * p_linear, int32_t y)
 /******************************************************************************/
 /*!
 	@brief Fraction16
-
 	Fraction in q16.16 [-2,147,483,648, 2,147,483,647]
 	f([-XRef:XRef]) => [-65536:65536] <= [-YRef:YRef], Can oversaturate 1
 
+	@param[in] x overflow limit ~q1.16
 	@{
 */
 /******************************************************************************/
 
 /*  */
-static inline int32_t Linear_Function_Fraction16(const Linear_T * p_linear, int32_t x)
+static inline int32_t Linear_Function_Fixed32(const Linear_T * p_linear, int32_t x)
 {
 	return linear_f16(p_linear->XOffset, p_linear->XReference, x);
 }
 
-/* y_frac16 in q16.16 format */
-static inline int32_t Linear_InvFunction_Fraction16(const Linear_T * p_linear, int32_t y_frac16)
+/*!
+	y_fixed32 in q16.16 format
+	@param[in] y_fixed32 overflow limit ~q1.16
+*/
+static inline int32_t Linear_InvFunction_Fixed32(const Linear_T * p_linear, int32_t y_fixed32)
 {
-	return linear_invf16(p_linear->XOffset, p_linear->XReference, y_frac16);
+	return linear_invf16(p_linear->XOffset, p_linear->XReference, y_fixed32);
 }
 
 /******************************************************************************/

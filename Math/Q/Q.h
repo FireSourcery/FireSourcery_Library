@@ -37,9 +37,9 @@ static inline int16_t q_sat16(int32_t x)
 {
 	int16_t sat;
 
-	if(x > (int32_t)INT16_MAX) { sat = INT16_MAX; }
-	else if(x < (int32_t)INT16_MIN) { sat = INT16_MIN; }
-	else { sat = (int16_t)x; }
+	if		(x > (int32_t)INT16_MAX) 	{ sat = INT16_MAX; }
+	else if	(x < (int32_t)INT16_MIN) 	{ sat = INT16_MIN; }
+	else 								{ sat = (int16_t)x; }
 
 	return sat;
 }

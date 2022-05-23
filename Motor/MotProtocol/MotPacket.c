@@ -127,12 +127,7 @@ uint8_t MotPacket_GetMonitorRespLength(MotPacket_MonitorId_T monitorId)
 
 /******************************************************************************/
 /*!
-	Cmdr side function
-	Use Build Packet Functions directly as inheritance
-
-	Interface vesrion - directly map to Protocol module Table for compositiion
-		when app uses same interface type included in MotPacket,
-		alternatively, app provide function to map to alternate app interface
+	Cmdr side
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -242,7 +237,7 @@ void MotPacket_MonitorResp_IPhases_Parse(int16_t * p_ia_FracS16, int16_t * p_ib_
 
 /******************************************************************************/
 /*!
-	Ctrlr side Req function
+	Ctrlr side
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -257,10 +252,10 @@ uint8_t MotPacket_PingResp_Build(MotPacket_T * p_respPacket)
 
 	return Packet_BuildHeader(p_respPacket, MOT_PROTOCOL_PING, 4U);
 }
+
 /******************************************************************************/
 /*!	Control Type */
 /******************************************************************************/
-
 uint8_t MotPacket_ControlResp_MainStatus_Build(MotPacket_ControlResp_T * p_respPacket, MotPacket_StatusResp_Id_T status)
 {
 	p_respPacket->Status.MainStatus = status;
@@ -294,7 +289,9 @@ void MotPacket_MonitorResp_ParseId(MotPacket_MonitorId_T * p_monitorId, const Mo
 
 /******************************************************************************/
 /*!
-	Interface verion
+	Interface verion - directly map to Protocol module Table for compositiion
+		when app uses same interface type included in MotPacket,
+		alternatively, app provide function to map to alternate app interface
 */
 /******************************************************************************/
 

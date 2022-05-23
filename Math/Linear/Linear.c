@@ -105,9 +105,9 @@ uint16_t _Linear_SatUnsigned16(int32_t frac16)
 {
 	uint16_t fracU16;
 
-	if		(frac16 > 65535) 	{ fracU16 = 65535U; }
-	else if	(frac16 < 0) 		{ fracU16 = 0U; }
-	else 						{ fracU16 = (uint16_t)frac16; }
+	if		(frac16 > UINT16_MAX) 	{ fracU16 = UINT16_MAX; }
+	else if	(frac16 < 0) 			{ fracU16 = 0U; }
+	else 							{ fracU16 = (uint16_t)frac16; }
 
 	return fracU16;
 }
@@ -115,16 +115,16 @@ uint16_t _Linear_SatUnsigned16(int32_t frac16)
 /* negative returns zero */
 uint16_t Linear_Function_FractionUnsigned16(const Linear_T * p_linear, int32_t x)
 {
-	return _Linear_SatUnsigned16(Linear_Function_Fraction16(p_linear, x));
+	return _Linear_SatUnsigned16(Linear_Function_Fixed32(p_linear, x));
 }
 
 uint16_t _Linear_SatUnsigned16_Abs(int32_t frac16)
 {
 	uint16_t fracU16;
 
-	if		(frac16 < 0) 		{ fracU16 = (uint16_t)(0 - frac16); }
-	else if	(frac16 > 65535) 	{ fracU16 = 65535U; }
-	else 						{ fracU16 = (uint16_t)frac16; }
+	if		(frac16 < 0) 			{ fracU16 = (uint16_t)(0 - frac16); }
+	else if	(frac16 > UINT16_MAX) 	{ fracU16 = UINT16_MAX; }
+	else 							{ fracU16 = (uint16_t)frac16; }
 
 	return fracU16;
 }
@@ -132,13 +132,13 @@ uint16_t _Linear_SatUnsigned16_Abs(int32_t frac16)
 /* negative returns abs */
 uint16_t Linear_Function_FractionUnsigned16_Abs(const Linear_T * p_linear, int32_t x)
 {
-	return _Linear_SatUnsigned16_Abs(Linear_Function_Fraction16(p_linear, x));
+	return _Linear_SatUnsigned16_Abs(Linear_Function_Fixed32(p_linear, x));
 }
 
 /* y_frac16 in q0.16 format is handled by q16.16 case */
 int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_linear, uint16_t y_fracU16)
 {
-	return Linear_InvFunction_Fraction16(p_linear, y_fracU16);
+	return Linear_InvFunction_Fixed32(p_linear, y_fracU16);
 }
 
 /******************************************************************************/
@@ -147,27 +147,27 @@ int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_linear, uint16_
 	f([-XRef:XRef]) => [-32768:32767]
 */
 /******************************************************************************/
-int16_t _Linear_SatSigned16(int32_t frac16)
+int16_t _Linear_SatSigned16(int32_t fracS16)
 {
-	int16_t fracS16;
+	int16_t sat;
 
-	if		(frac16 > 32767) 	{ fracS16 = 32767; }
-	else if	(frac16 < -32768) 	{ fracS16 = -32768; }
-	else 						{ fracS16 = (int16_t)frac16; }
+	if		(fracS16 > INT16_MAX) 	{ sat = INT16_MAX; }
+	else if	(fracS16 < -INT16_MIN) 	{ sat = -INT16_MIN; }
+	else 							{ sat = (int16_t)fracS16; }
 
-	return fracS16;
+	return sat;
 }
 
 /* */
 int16_t Linear_Function_FractionSigned16(const Linear_T * p_linear, int32_t x)
 {
-	return _Linear_SatSigned16(Linear_Function_Fraction16(p_linear, x) / 2);
+	return _Linear_SatSigned16(Linear_Function_Fixed32(p_linear, x) / 2);
 }
 
 /* y_frac16 use q1.15 */
 int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_linear, int16_t y_fracS16)
 {
-	return Linear_InvFunction_Fraction16(p_linear, (int32_t)y_fracS16 * 2);
+	return Linear_InvFunction_Fixed32(p_linear, (int32_t)y_fracS16 * 2);
 }
 
 
@@ -181,7 +181,7 @@ int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t sc
 	int32_t factor = x * p_linear->Slope;
 	int32_t result = 0U;
 
-	/* scalar maybe compile time constant, can compiler unroll loop to optimize? */
+	/* scalar may be compile time constant, can compiler unroll loop to optimize? */
 
 	/*
 		Loop N = Log_[Divisor*=](scalar)

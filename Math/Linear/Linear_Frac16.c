@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Linear_Frac16.c
+	@file 	Linear_Frac16_Fixed32.c
 	@author FireSoucery
 	@brief  Linear
 	@version V0
@@ -31,6 +31,7 @@
 #include "Linear_Frac16.h"
 
 /*
+	Sets max input, x, as f(x_max) == yRef
 	Shift 14 to allow oversaturation f([-2*XRef:2*XRef]) == [-2*YRef:2*YRef] before overflow
 	Scales factor to 65536
 	Scales divisor to xref
