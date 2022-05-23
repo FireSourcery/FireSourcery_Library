@@ -81,7 +81,7 @@ static inline size_t Protocol_Cmdr_GetRespRemaining(Protocol_T * p_protocol) { r
 */
 extern bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId);
 extern bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol);
-extern Protocol_RxCode_T _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol);
+extern bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol);
 
 extern void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId);
 extern void Protocol_Cmdr_ProcRx(Protocol_T * p_protocol);

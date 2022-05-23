@@ -75,8 +75,6 @@ typedef enum Protocol_RxCode_Tag
 	// Controller side
 	// PROTOCOL_RX_CODE_RESP_DATA_SUCCESS,
 
-
-
 	/* Sync */
 	PROTOCOL_RX_CODE_ACK,
 	PROTOCOL_RX_CODE_NACK,

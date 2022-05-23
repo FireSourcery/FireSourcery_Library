@@ -78,7 +78,7 @@ bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol)
 /*!
 	@return Protocol_RxCode_T PROTOCOL_RX_CODE_RESP_DATA_SUCCESS or PROTOCOL_RX_CODE_ERROR_PACKET
 */
-Protocol_RxCode_T _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
+bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 {
 	// Protocol_RxCode_T rxStatus = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER);
 

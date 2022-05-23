@@ -28,14 +28,14 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef MOT_MOT_PROTOCOL_H
-#define MOT_MOT_PROTOCOL_H
+#ifndef MOT_PROTOCOL_H
+#define MOT_PROTOCOL_H
 
 #include "MotPacket.h"
 #include "Utility/Protocol/Protocol_Cmdr.h"
 
-#define MOTPROTOCOL_BAUD_RATE_DEFAULT		(19200U)
-#define MOTPROTOCOL_TIMEOUT_MS				(2000U) 	/* Timeout packet */
+#define MOT_PROTOCOL_BAUD_RATE_DEFAULT		(19200U)
+#define MOT_PROTOCOL_TIMEOUT_MS				(2000U) 	/* Timeout packet / req */
 
 typedef struct MotProtocol_Substate_Tag
 {
@@ -48,7 +48,7 @@ extern void MotProtocol_ResetExt(MotProtocol_Substate_T * p_subState);
 
 /******************************************************************************/
 /*!
-	Cmdr side
+	Cmdr side only
 */
 /******************************************************************************/
 extern Protocol_RxCode_T MotProtocol_CheckPacket(const MotPacket_T * p_rxPacket);
@@ -59,8 +59,5 @@ extern Protocol_RxCode_T MotProtocol_CheckPacket(const MotPacket_T * p_rxPacket)
 */
 /******************************************************************************/
 extern Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p_rxRemaining, const MotPacket_T * p_rxPacket, size_t rxCount);
-
-// extern const Protocol_Specs_T MOT_PROTOCOL_CTRLR_SPECS;
-// extern const Protocol_Specs_T MOT_PROTOCOL_CMDR_SPECS;
 
 #endif

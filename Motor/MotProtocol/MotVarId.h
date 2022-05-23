@@ -4,27 +4,27 @@
 
 	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://githubMOT_VAR_com/FireSourcery/FireSourcery_Library)MOT_VAR_
+	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later versionMOT_VAR_
+	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSEMOT_VAR_  See the
-	GNU General Public License for more detailsMOT_VAR_
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this programMOT_VAR_  If not, see <https://wwwMOT_VAR_gnuMOT_VAR_org/licenses/>MOT_VAR_
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file
+	@file 	MotProtocol.h
 	@author FireSoucery
-	@brief	Facade Wrapper
+	@brief
 	@version V0
 */
 /******************************************************************************/
@@ -55,14 +55,14 @@ typedef enum MotVarId_Tag
 	MOT_VAR_I_LIMIT_MOTORING_FRAC16,
 	MOT_VAR_I_LIMIT_GENERATING_FRAC16,
 	MOT_VAR_I_LIMIT_SCALAR_HEAT_FRAC16,
-	MOT_VAR_DIRECTIONCALIBRATION,
-	MOT_VAR_COMMUTATIONMODE,
-	MOT_VAR_SENSORMODE,
-	MOT_VAR_FEEDBACKMODE,
-	MOT_VAR_ALIGNMODE,
-	MOT_VAR_ALIGNVOLTAGE_FRAC16,
-	MOT_VAR_ALIGNTIME_CONTROLCYCLES,
-	MOT_VAR_PHASEPWMMODE,
+	MOT_VAR_DIRECTION_CALIBRATION,
+	MOT_VAR_COMMUTATION_MODE,
+	MOT_VAR_SENSOR_MODE,
+	MOT_VAR_FEEDBACK_MODE,
+	MOT_VAR_ALIGN_MODE,
+	MOT_VAR_ALIGN_VOLTAGE_FRAC16,
+	MOT_VAR_ALIGN_TIME_CONTROLCYCLES,
+	MOT_VAR_PHASE_PWM_MODE,
 
 	// MOT_VAR_OPENLOOPVPWMMIN,
 	// MOT_VAR_OPENLOOPVPWMMAX,
