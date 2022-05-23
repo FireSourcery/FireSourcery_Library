@@ -481,8 +481,18 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 		Terminal_SendNum(p_terminal, p_mc->FaultFlags.PcbOverHeat);
 		Terminal_SendNum(p_terminal, p_mc->FaultFlags.MosfetsTopOverHeat);
 		Terminal_SendNum(p_terminal, p_mc->FaultFlags.MosfetsBotOverHeat);
-		MotorController_User_ToggleFault(p_mc);
 		Terminal_SendString(p_terminal, "\r\n");
+
+		Terminal_SendString(p_terminal, "FaultAdcu:\r\n");
+		Terminal_SendString(p_terminal, "VPos: "); Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VPos_Adcu); Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "VAcc: "); Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VAcc_Adcu); Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "VSense: "); Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VSense_Adcu); Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "Pcb: "); Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatPcb_Adcu); Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "MosTop: "); Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatMosfetsTop_Adcu); Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "MosBot: "); Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatMosfetsBot_Adcu); Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "\r\n");
+
+		MotorController_User_ToggleFault(p_mc);
 	}
 
 	return CMD_STATUS_SUCCESS;
