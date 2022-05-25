@@ -277,8 +277,8 @@ typedef struct MotorController_Tag
 	uint16_t ShellSubstate;
 
 	StateMachine_T StateMachine;
-	MotAnalog_Results_T FaultAnalogRecord;
-	MotorController_FaultFlags_T FaultFlags; /* Fault Substate*/
+	volatile MotAnalog_Results_T FaultAnalogRecord;
+	volatile MotorController_FaultFlags_T FaultFlags; /* Fault Substate*/
 	MotorController_Direction_T MainDirection;
 	MotorController_Direction_T UserDirection;
 	MotorController_Substate_T StopSubstate;

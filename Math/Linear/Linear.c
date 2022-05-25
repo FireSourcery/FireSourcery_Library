@@ -104,11 +104,9 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 uint16_t _Linear_SatUnsigned16(int32_t frac16)
 {
 	uint16_t fracU16;
-
-	if		(frac16 > UINT16_MAX) 	{ fracU16 = UINT16_MAX; }
-	else if	(frac16 < 0) 			{ fracU16 = 0U; }
+	if		(frac16 < 0) 			{ fracU16 = 0U; }
+	else if	(frac16 > UINT16_MAX) 	{ fracU16 = UINT16_MAX; }
 	else 							{ fracU16 = (uint16_t)frac16; }
-
 	return fracU16;
 }
 
@@ -121,11 +119,9 @@ uint16_t Linear_Function_FractionUnsigned16(const Linear_T * p_linear, int32_t x
 uint16_t _Linear_SatUnsigned16_Abs(int32_t frac16)
 {
 	uint16_t fracU16;
-
 	if		(frac16 < 0) 			{ fracU16 = (uint16_t)(0 - frac16); }
 	else if	(frac16 > UINT16_MAX) 	{ fracU16 = UINT16_MAX; }
 	else 							{ fracU16 = (uint16_t)frac16; }
-
 	return fracU16;
 }
 
@@ -150,11 +146,9 @@ int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_linear, uint16_
 int16_t _Linear_SatSigned16(int32_t fracS16)
 {
 	int16_t sat;
-
 	if		(fracS16 > INT16_MAX) 	{ sat = INT16_MAX; }
-	else if	(fracS16 < -INT16_MIN) 	{ sat = -INT16_MIN; }
+	else if	(fracS16 < INT16_MIN) 	{ sat = INT16_MIN; }
 	else 							{ sat = (int16_t)fracS16; }
-
 	return sat;
 }
 

@@ -94,7 +94,8 @@ static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 
 static void Init_Entry(MotorController_T * p_mc)
 {
-	(void)p_mc;
+	// (void)p_mc;
+	Blinky_Blink(&p_mc->Buzzer, 200U);
 }
 
 static void Init_Proc(MotorController_T * p_mc)
@@ -489,7 +490,7 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TA
 static void Fault_Entry(MotorController_T * p_mc)
 {
 	MotorController_DisableMotorAll(p_mc);
-	memcpy(&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
+	memcpy((void *)&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
 	Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U);
 }
 
