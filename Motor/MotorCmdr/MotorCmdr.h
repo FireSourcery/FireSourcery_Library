@@ -54,22 +54,19 @@ MotorCmdr_Units_T;
 
 typedef struct MotorCmdr_Tag
 {
+	uint8_t TxPacket[MOT_PACKET_LENGTH_MAX];
+	uint8_t RxPacket[MOT_PACKET_LENGTH_MAX];
 	Protocol_T Protocol;
-
 	MotProtocol_Substate_T Substate; /* Stateful Protocol Substate */
 
 	/* Req Interface */
-	// MotPacket_HeaderId_T ReqActive;
 	uint16_t RespStatus;
 	MotPacket_ControlId_T ControlIdActive;
 	MotPacket_MonitorId_T MonitorIdActive;
-	uint16_t MotorCmdValue;	/*  */
+	uint16_t MotorCmdValue;				/*  */
 
-	uint8_t TxPacket[MOT_PACKET_LENGTH_MAX];
-	uint8_t RxPacket[MOT_PACKET_LENGTH_MAX];
-
-	// MotorController_T MotorControllerVars;					/* Use for definations only. */
-	// Motor_T MotorsVars[CONFIG_MOTOR_CMDR_MOTOR_COUNT];		/* Use for definations only. */
+	uint16_t MotorReadWriteVarId;		/*  */
+	uint32_t MotorReadWriteVarValue;	/*  */
 
 	/* Resp Interface */
 	MotorCmdr_Units_T Units;
@@ -82,6 +79,9 @@ typedef struct MotorCmdr_Tag
 	int16_t Ibeta;
 	int16_t Id;
 	int16_t Iq;
+
+	// MotorController_T MotorControllerVars;					/* Use for definations only. */
+	// Motor_T MotorsVars[CONFIG_MOTOR_CMDR_MOTOR_COUNT];		/* Use for definations only. */
 
 	/* Alternatively, app implements MotProtocol Interface */
 	// MotPacket_Interface_T Interface;
@@ -130,8 +130,7 @@ static inline int16_t _MotorCmdr_ConvertToSpeedRpm(MotorCmdr_T * p_motorCmdr, in
 static inline int32_t _MotorCmdr_ConvertToIFrac16(MotorCmdr_T * p_motorCmdr, int32_t i_amp) { return i_amp * 65535 / p_motorCmdr->Units.IMaxRef_Amp; }
 static inline int16_t _MotorCmdr_ConvertToIAmp(MotorCmdr_T * p_motorCmdr, int32_t i_frac16) { return i_frac16 * p_motorCmdr->Units.IMaxRef_Amp / 65536; }
 
-// static inline int16_t MotorCmdr_GetReadSpeed_Rpm(MotorCmdr_T *p_motorCmdr) { return _MotorCmdr_ConvertToSpeedRpm(p_motorCmdr, p_motorCmdr-> .Speed.Speed); }
-
+static inline int16_t MotorCmdr_GetReadSpeed_Rpm(MotorCmdr_T * p_motorCmdr) { return _MotorCmdr_ConvertToSpeedRpm(p_motorCmdr, p_motorCmdr->Speed); }
 
 /*
 	Protocol module handle TxRx, CheckAvailable
@@ -158,6 +157,8 @@ extern uint8_t _MotorCmdr_Ping(MotorCmdr_T * p_motorCmdr);
 extern uint8_t _MotorCmdr_StopMotors(MotorCmdr_T * p_motorCmdr);
 extern uint8_t _MotorCmdr_SaveNvm(MotorCmdr_T * p_motorCmdr);
 extern uint8_t _MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr);
+extern uint8_t _MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId, uint32_t value);
+extern uint8_t _MotorCmdr_StartReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId);
 extern uint8_t _MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle);
 extern uint8_t _MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake);
 extern uint8_t _MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr);

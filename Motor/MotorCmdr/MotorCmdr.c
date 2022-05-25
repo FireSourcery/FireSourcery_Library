@@ -49,7 +49,6 @@ void MotorCmdr_Init(MotorCmdr_T * p_motorCmdr)
 {
 	Protocol_Init(&p_motorCmdr->Protocol);
 	p_motorCmdr->Protocol.Params.RxLostTime = 500U;
-	// p_motorCmdr->ReqActive = 0xFF;
 }
 
 //todo stateful req
@@ -63,6 +62,7 @@ void MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr) { _Protocol_Cmdr_BuildTxReq(
 /******************************************************************************/
 void _MotorCmdr_ProcTxIdle(MotorCmdr_T * p_motorCmdr)
 {
+	//todo overwrite active ping
 	if(Protocol_Cmdr_CheckTxIdle(&p_motorCmdr->Protocol) == true) { _MotorCmdr_Ping(p_motorCmdr); }
 }
 
@@ -70,6 +70,20 @@ uint8_t _MotorCmdr_Ping(MotorCmdr_T * p_motorCmdr) 			{ return _Protocol_Cmdr_Bu
 uint8_t _MotorCmdr_StopMotors(MotorCmdr_T * p_motorCmdr) 	{ return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_STOP_ALL); }
 uint8_t _MotorCmdr_SaveNvm(MotorCmdr_T * p_motorCmdr) 		{ return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_SAVE_NVM); }
 uint8_t _MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr) 	{ return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_INIT_UNITS); }
+
+
+uint8_t _MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId, uint32_t value)
+{
+	p_motorCmdr->MotorReadWriteVarId = motVarId;
+	p_motorCmdr->MotorReadWriteVarValue = value;
+	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_WRITE_IMMEDIATE);
+}
+
+uint8_t _MotorCmdr_StartReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId)
+{
+	p_motorCmdr->MotorReadWriteVarId = motVarId;
+	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_READ_IMMEDIATE);
+}
 
 uint8_t _MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle)
 {
@@ -109,19 +123,6 @@ uint8_t _MotorCmdr_WriteDirectionNeutral(MotorCmdr_T * p_motorCmdr)
 	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
 }
 
-// uint8_t _MotorCmdr_WriteStopMotorId(MotorCmdr_T * p_motorCmdr, uint8_t motorId)
-// {
-// 	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol,  );
-//
-// }
-
-/* User sets Interface as MOT_PROTOCOL_ReqPayload_Control_T */
-// uint8_t _MotorCmdr_WriteControlType(MotorCmdr_T * p_motorCmdr, 15 regs)
-// {
-// 	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
-//
-// }
-
 uint8_t _MotorCmdr_StartReadSpeed(MotorCmdr_T * p_motorCmdr)
 {
 	p_motorCmdr->MonitorIdActive = MOT_PROTOCOL_MONITOR_SPEED;
@@ -134,10 +135,6 @@ uint8_t _MotorCmdr_StartReadIFoc(MotorCmdr_T * p_motorCmdr)
 	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_MONITOR_TYPE);
 }
 
-// void _MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, uint32_t var)
-// {
-
-// }
 
 
 /******************************************************************************/

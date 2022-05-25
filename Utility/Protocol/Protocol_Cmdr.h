@@ -35,8 +35,6 @@
 
 /*
 	User provide functions to convert between packet format and appInterface format
-*/
-/*
 	variable length reponse?
 */
 typedef void (*Protocol_Cmdr_BuildReq_T)(uint8_t * p_txPacket, size_t * p_txLength, size_t * p_rxRespLength, const void * p_appInterface);

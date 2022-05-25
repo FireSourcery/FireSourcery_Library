@@ -59,8 +59,7 @@ void Protocol_Init(Protocol_T * p_protocol)
 #define RX_REMAINING_MAX (65535U)
 
 /*
-	Parse for length remaining and ReqCode
-	Receive into buffer and check for completion
+	Receive into P_RX_PACKET_BUFFER and run PARSE_RX_META for RxRemaining and ReqCode / Rx completion
 */
 static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 {
@@ -80,7 +79,7 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 			rxLimit = p_protocol->RxRemaining;
 		}
 
-		rxLength = Xcvr_Rx(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], rxLimit); /* Rx Upto rxLimit */
+		rxLength = Xcvr_Rx(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], rxLimit); /* Rx up to rxLimit */
 
 		if(rxLength > 0U)
 		{
@@ -94,7 +93,6 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 					p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex
 				);
 				if(rxStatus != PROTOCOL_RX_CODE_WAIT_PACKET) { break; } /* Packet is complete, Req, ReqExt or Sync */
-				//|| (rxStatus == PROTOCOL_RX_CODE_WAIT_PACKET_REMAINING)
 			}
 		}
 		else /*  Rx Buffer empty, wait for Xcvr_Rx */
@@ -274,12 +272,7 @@ static inline Protocol_RxCode_T ProcReqWaitRxSync(Protocol_T * p_protocol)
 static const Protocol_Req_T * SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, protocol_reqid_t id)
 {
 	const Protocol_Req_T * p_req = 0U;
-
-	for(uint8_t iChar = 0U; iChar < tableLength; iChar++)
-	{
-		if(p_reqTable[iChar].ID == id) { p_req = &p_reqTable[iChar]; }
-	}
-
+	for(uint8_t iChar = 0U; iChar < tableLength; iChar++) { if(p_reqTable[iChar].ID == id) { p_req = &p_reqTable[iChar]; } }
 	return p_req;
 }
 
@@ -451,27 +444,6 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 	}
 }
 
-/*
-	Controller Side, sequential rx req, proc, tx response
-	Non blocking
-	Single threaded only, RxIndex not protected
-*/
-void Protocol_Proc(Protocol_T * p_protocol)
-{
-	ProcRxState(p_protocol);
-	ProcReqState(p_protocol);
-//	if (p_protocol->State != PROTOCOL_STATE_INACTIVE) /* Enqueue Datagram for processing in parallel */
-//	{
-//		Protocol_Datagram_Proc(p_protocol);
-//	}
-}
-
-/*! @return return true if unsucessful time reached */
-bool Protocol_CheckRxLost(Protocol_T * p_protocol)
-{
-	return (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.RxLostTime);
-}
-
 //static void ProcDatagram(Protocol_T * p_protocol)
 //{
 //	//* save room for 1 req packet
@@ -490,6 +462,27 @@ bool Protocol_CheckRxLost(Protocol_T * p_protocol)
 //				}
 //		//	}
 //}
+
+/*
+	Controller Side, sequential rx req, proc, tx response
+	Non blocking
+	Single threaded only, RxIndex not protected
+*/
+void Protocol_Proc(Protocol_T * p_protocol)
+{
+	ProcRxState(p_protocol);
+	ProcReqState(p_protocol);
+//	if (p_protocol->State != PROTOCOL_STATE_INACTIVE) /* Enqueue Datagram for processing in parallel */
+//	{
+//		Protocol_Datagram_Proc(p_protocol);
+//	}
+}
+
+/*! @return true if RxLostTime reached, a sucessful Req has not occured */
+bool Protocol_CheckRxLost(Protocol_T * p_protocol)
+{
+	return (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.RxLostTime);
+}
 
 void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId)
 {
@@ -557,7 +550,7 @@ void Protocol_Disable(Protocol_T * p_protocol)
 }
 
 /*
-	User must reset. Does propagate set, so current settings remain active until reboot.
+	User must reset. Does propagate set. Current settings remain active until reboot.
 */
 void Protocol_EnableOnInit(Protocol_T * p_protocol) { p_protocol->Params.IsEnableOnInit = true; }
 void Protocol_DisableOnInit(Protocol_T * p_protocol) { p_protocol->Params.IsEnableOnInit = false; }
