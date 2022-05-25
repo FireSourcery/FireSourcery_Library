@@ -254,8 +254,7 @@ static StateMachine_State_T * Run_InputNeutral(MotorController_T * p_mc)
 
 static StateMachine_State_T * Run_InputNeutralStart(MotorController_T * p_mc)
 {
-	MotorController_DisableMotorAll(p_mc);
-	//will cause discontinuity during brake, todo brake flag or state
+	MotorController_DisableMotorAll(p_mc); /* will cause discontinuity during brake, todo brake flag or state */
 	return 0U;
 }
 
@@ -329,8 +328,8 @@ static StateMachine_State_T * Run_InputCoastStart(MotorController_T * p_mc)
 }
 
 /*
- * release into neutral, release into throttle/coast satisfy
- */
+	release into neutral, release into throttle/coast satisfy? todo neutral state
+*/
 static StateMachine_State_T * Run_InputReleaseBrake(MotorController_T * p_mc)
 {
 	MotorController_DisableMotorAll(p_mc);
@@ -462,6 +461,7 @@ static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc)
 	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorPcb) == true) 			{ isClear = false; }
 	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsTop) == true) 	{ isClear = false; }
 	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsBot) == true) 	{ isClear = false; }
+	if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]) == true) 		{ isClear = false; }
 
 	if(isClear == true)
 	{

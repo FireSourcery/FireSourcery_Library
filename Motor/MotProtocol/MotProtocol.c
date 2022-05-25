@@ -44,12 +44,14 @@ void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, P
 
 	switch(txId)
 	{
-		case PROTOCOL_TX_SYNC_ACK_REQ_ID:			syncId = MOT_PROTOCOL_SYNC_ACK; 		break;
-		case PROTOCOL_TX_SYNC_NACK_PACKET_ERROR:	syncId = MOT_PROTOCOL_SYNC_NACK;		break;
-		case PROTOCOL_TX_SYNC_NACK_REQ_ID:			syncId = MOT_PROTOCOL_SYNC_NACK;		break;
-		case PROTOCOL_TX_SYNC_ACK_DATA:				syncId = MOT_PROTOCOL_SYNC_ACK;			break;
-		case PROTOCOL_TX_SYNC_NACK_DATA:			syncId = MOT_PROTOCOL_SYNC_NACK;		break;
-		case PROTOCOL_TX_SYNC_ABORT:				syncId = MOT_PROTOCOL_SYNC_ABORT;		break;
+		case PROTOCOL_TX_SYNC_ACK_REQ_ID:			syncId = MOT_PROTOCOL_SYNC_ACK; 	break;
+		case PROTOCOL_TX_SYNC_NACK_REQ_ID:			syncId = MOT_PROTOCOL_SYNC_NACK;	break;
+		case PROTOCOL_TX_SYNC_NACK_PACKET_ERROR:	syncId = MOT_PROTOCOL_SYNC_NACK;	break;
+		case PROTOCOL_TX_SYNC_NACK_REQ_TIMEOUT:		syncId = MOT_PROTOCOL_SYNC_NACK;	break;
+		case PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT:		syncId = MOT_PROTOCOL_SYNC_NACK;	break;
+		case PROTOCOL_TX_SYNC_ACK_REQ_EXT:			syncId = MOT_PROTOCOL_SYNC_ACK;		break;
+		case PROTOCOL_TX_SYNC_NACK_REQ_EXT:			syncId = MOT_PROTOCOL_SYNC_NACK;	break;
+		case PROTOCOL_TX_SYNC_ABORT:				syncId = MOT_PROTOCOL_SYNC_ABORT;	break;
 		default: *p_txSize = 0U; syncId = 0xFFU; break;
 	}
 
@@ -89,13 +91,13 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 	else if(rxCount >= 3U) /* Move this to protocol module handle, if header length defined */
 	{
 		*p_rxRemaining = p_rxPacket->Header.Length + sizeof(MotPacket_Header_T) - rxCount;
-		rxCode = PROTOCOL_RX_CODE_WAIT_PACKET_REMAINING;
+		// rxCode = PROTOCOL_RX_CODE_WAIT_PACKET_REMAINING;
 	}
 	else if(rxCount >= MOT_PACKET_LENGTH_MIN)
 	{
 		switch(p_rxPacket->Header.TypeId)
 		{
-			case MOT_PROTOCOL_STOP_MOTORS:	rxCode = PROTOCOL_RX_CODE_COMPLETE; *p_reqId = MOT_PROTOCOL_STOP_MOTORS;		break;
+			case MOT_PROTOCOL_STOP_ALL:	rxCode = PROTOCOL_RX_CODE_COMPLETE; *p_reqId = MOT_PROTOCOL_STOP_ALL;	break;
 			case MOT_PROTOCOL_PING:			rxCode = PROTOCOL_RX_CODE_COMPLETE; *p_reqId = MOT_PROTOCOL_PING;			break;
 			case MOT_PROTOCOL_SYNC_ACK:		rxCode = PROTOCOL_RX_CODE_ACK; 				break;
 			case MOT_PROTOCOL_SYNC_NACK:	rxCode = PROTOCOL_RX_CODE_NACK; 			break;

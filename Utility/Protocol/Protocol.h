@@ -59,15 +59,15 @@ typedef enum Protocol_RxCode_Tag
 {
 	/* Wait */
 	PROTOCOL_RX_CODE_WAIT_PACKET,
-	PROTOCOL_RX_CODE_WAIT_PACKET_REMAINING,  /* Wait once RxRemaining is known */
+	// PROTOCOL_RX_CODE_WAIT_PACKET_REMAINING,  /* Wait once RxRemaining is known */
 
 	/* Error */
-	PROTOCOL_RX_CODE_ERROR,
+	PROTOCOL_RX_CODE_ERROR, /* Req Packet Checksum/CRC Error */
 	// PROTOCOL_RX_CODE_ERROR_PACKET,
 	// PROTOCOL_RX_CODE_ERROR_PACKET_DATA = PROTOCOL_RX_CODE_ERROR_PACKET,
 
 	/* Packet Complete Success - combine? */
-	PROTOCOL_RX_CODE_COMPLETE, //req packet
+	PROTOCOL_RX_CODE_COMPLETE, //req packet complete
 	// PROTOCOL_RX_CODE_REQ_ID_SUCCESS,
 	// PROTOCOL_RX_CODE_COMPLETE_PACKET = PROTOCOL_RX_CODE_REQ_ID_SUCCESS,
 	// PROTOCOL_RX_CODE_DATA_SUCCESS,
@@ -125,12 +125,12 @@ typedef enum Protocol_ReqCode_Tag
 	PROTOCOL_REQ_CODE_WAIT_PROCESS, 		//wait process
 	//	PROTOCOL_REQ_CODE_WAIT_PROCESS_PAUSE_RX,
 	PROTOCOL_REQ_CODE_COMPLETE,				//exit nonblocking wait state upon reception
-	PROTOCOL_REQ_CODE_AWAIT_RX_DATA,		//rx new packet
+	PROTOCOL_REQ_CODE_AWAIT_RX_REQ_EXT,		//rx new packet
 	PROTOCOL_REQ_CODE_AWAIT_RX_SYNC,		//wait for static ack nack
 	PROTOCOL_REQ_CODE_TX_DATA,
 	PROTOCOL_REQ_CODE_TX_ACK,
 	PROTOCOL_REQ_CODE_TX_NACK,
-	PROTOCOL_REQ_CODE_EXTEND_TIMER,
+	PROTOCOL_REQ_CODE_WAIT_PROCESS_EXTEND_TIMER,
 	//	PROTOCOL_REQ_CODE_DATAGRAM_CONFIG,
 }
 Protocol_ReqCode_T;
@@ -194,14 +194,16 @@ Protocol_Req_T;
 /******************************************************************************/
 typedef enum Protocol_TxSyncId_Tag
 {
+	// PROTOCOL_TX_SYNC_ACK,
+	// PROTOCOL_TX_SYNC_NACK,
 	PROTOCOL_TX_SYNC_ACK_REQ_ID,
 	PROTOCOL_TX_SYNC_NACK_REQ_ID,
-	PROTOCOL_TX_SYNC_NACK_TIMEOUT,
-	PROTOCOL_TX_SYNC_NACK_PACKET_ERROR,
-	// PROTOCOL_TX_SYNC_NACK_PACKET_ECC_ERROR,
-	PROTOCOL_TX_SYNC_ACK_DATA,
-	PROTOCOL_TX_SYNC_NACK_DATA,
 	PROTOCOL_TX_SYNC_ABORT,
+	PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT,
+	PROTOCOL_TX_SYNC_NACK_REQ_TIMEOUT,
+	PROTOCOL_TX_SYNC_NACK_PACKET_ERROR,
+	PROTOCOL_TX_SYNC_ACK_REQ_EXT,
+	PROTOCOL_TX_SYNC_NACK_REQ_EXT,
 }
 Protocol_TxSyncId_T;
 
@@ -238,7 +240,7 @@ typedef const struct Protocol_Specs_Tag
 	const uint32_t RX_END_ID;
 	const bool ENCODED;	/* TODO Encoded data, non encoded use TIMEOUT only. No meta chars past first char. */
 	const uint32_t BAUD_RATE_DEFAULT;
-	// Protocol_ReqSync_T SYNC; //default statless sync / timeout nack
+	Protocol_ReqSync_T SYNC;  /* Rx Packet Nack, default statless sync, timeout nack */
 }
 Protocol_Specs_T;
 
@@ -254,8 +256,8 @@ Protocol_RxState_T;
 typedef enum Protocol_ReqState_Tag
 {
 	PROTOCOL_REQ_STATE_INACTIVE,
-	PROTOCOL_REQ_STATE_WAIT_RX_SIGNAL,
-	PROTOCOL_REQ_STATE_WAIT_RX_DATA, //wait rx continue
+	PROTOCOL_REQ_STATE_WAIT_RX_REQ_ID,
+	PROTOCOL_REQ_STATE_WAIT_RX_REQ_EXT, //wait rx continue
 	PROTOCOL_REQ_STATE_WAIT_RX_SYNC,
 	PROTOCOL_REQ_STATE_WAIT_RX_SYNC_FINAL,
 	PROTOCOL_REQ_STATE_WAIT_PROCESS,
@@ -268,8 +270,8 @@ typedef struct __attribute__((aligned(4U))) Protocol_Params_Tag
 	uint8_t XcvrId;
 #endif
 	uint8_t SpecsId;
+	uint32_t RxLostTime;
 	bool IsEnableOnInit; 	/* enable on start up */
-	//default baudrate
 }
 Protocol_Params_T;
 
@@ -336,38 +338,34 @@ typedef struct Protocol_Tag
 #endif
 	const Protocol_Specs_T * p_Specs;
 
-	size_t RxIndex; //rxcount
-	size_t RxRemaining; // total rxpacket length
-	// protocol_reqid_t RxReqId;
-
-	size_t TxLength;
-	Protocol_RxState_T		RxState;
-	Protocol_RxCode_T 		RxCode;		/* RxCode also hanles Sync Packets */
-	Protocol_ReqState_T 	ReqState;
-	// Protocol_ReqCode_T 		ReqCode;
-	uint32_t ReqTimeStart;
+	size_t RxIndex; 				/* AKA RxCount */
+	size_t RxRemaining; 			/* Alternatively use parse for total rxpacket length */
+	Protocol_RxCode_T RxCode;		/* Save RxCode as it contrains Sync Ids, handles Sync Packets */
+	Protocol_RxState_T RxState;
 	uint32_t RxTimeStart;
 
-	uint8_t RxNackCount; //todo combine
-	uint8_t TxNackCount;
-	uint8_t NackCount;
-
+	Protocol_ReqState_T ReqState;
 	protocol_reqid_t ReqIdActive;
 	Protocol_Req_T * p_ReqActive;
+	uint32_t ReqTimeStart;
+
+	// uint32_t RxReqCompleteTime; /* Does not include Sync packets, (Where as ReqTimeStart Does.) */
+
+	size_t TxLength;
+	uint8_t NackCount;
 	// volatile bool ReqRxSemaphore;
 	// Protocol_Interface_T Interface;
 }
 Protocol_T;
 
 extern void Protocol_Init(Protocol_T * p_protocol);
-extern void Protocol_Proc(Protocol_T * p_protocol);
 
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
-// extern bool TxPacket(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length);
-// extern uint32_t _Protocol_RxPacket(Protocol_T * p_protocol, uint8_t * p_rxBuffer, uint8_t length);
+extern void Protocol_Proc(Protocol_T * p_protocol);
 extern void Protocol_ConfigXcvrBaudRate(Protocol_T * p_protocol, uint32_t baudRate);
 extern void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId);
 #endif
+extern bool Protocol_CheckRxLost(Protocol_T * p_protocol);
 
 extern void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t specsId);
 extern bool Protocol_Enable(Protocol_T * p_protocol);

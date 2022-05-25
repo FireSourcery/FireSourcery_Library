@@ -50,8 +50,8 @@ bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 	{
 		p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
 		p_protocol->ReqIdActive = cmdId;
-		p_protocol->RxTimeStart = *p_protocol->CONFIG.P_TIMER;
-		p_protocol->p_ReqActive = SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, cmdId);
+		p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
+		p_protocol->p_ReqActive = (void *)SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, cmdId); //todo
 
 		if(p_protocol->p_ReqActive != 0U)
 		{
@@ -60,6 +60,7 @@ bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 			//alternatively
 			// p_protocol->TxLength = p_req->BUILD_REQ(p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->CONFIG.P_APP_INTERFACE);
 			// p_protocol->RxRemaining = p_req->GET_RESP_LENGTH(p_protocol->CONFIG.P_APP_INTERFACE, cmdId);
+
 			isSucess = true;
 		}
 	}
@@ -67,11 +68,21 @@ bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 	return isSucess;
 }
 
+size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+{
+	return (_Protocol_Cmdr_StartReq(p_protocol, cmdId) == true) ? p_protocol->TxLength : 0U;
+}
+
+
 /* return true if time out */
 bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol)
 {
-	bool isTimeout = (*p_protocol->CONFIG.P_TIMER - p_protocol->RxTimeStart < p_protocol->p_Specs->RX_TIMEOUT);
-	if(isTimeout == true) { p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE; }
+	bool isTimeout = (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart < p_protocol->p_Specs->REQ_TIMEOUT);
+	if(isTimeout == true)
+	{
+		p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
+		// p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
+	}
 	return isTimeout;
 }
 
@@ -80,18 +91,23 @@ bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol)
 */
 bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 {
-	// Protocol_RxCode_T rxStatus = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER);
+	Protocol_RxCode_T rxStatus = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER);
 
-	// if(rxStatus == PROTOCOL_RX_CODE_RESP_DATA_SUCCESS)
-	// {
-	// 	((Protocol_Cmdr_Req_T *)p_protocol->p_ReqActive)->PARSE_RESP(p_protocol->CONFIG.P_APP_INTERFACE, p_protocol->CONFIG.P_RX_PACKET_BUFFER);
-	// 	p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
-	// }
+	if(rxStatus == PROTOCOL_RX_CODE_COMPLETE)
+	{
+		((Protocol_Cmdr_Req_T *)p_protocol->p_ReqActive)->PARSE_RESP(p_protocol->CONFIG.P_APP_INTERFACE, p_protocol->CONFIG.P_RX_PACKET_BUFFER);
+		p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
+		p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
+	}
+	else if(rxStatus == PROTOCOL_RX_CODE_ERROR)
+	{
+		p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
+	}
 
-	// return rxStatus;
-	p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
-	return PROTOCOL_RX_CODE_COMPLETE;
+	return (rxStatus == PROTOCOL_RX_CODE_COMPLETE);
 }
+
+
 
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 /*
@@ -128,6 +144,7 @@ void Protocol_Cmdr_ProcRx(Protocol_T * p_protocol)
 			else
 			{
 				//send txtimeout
+				// ProcTxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_REQ_ID);
 			}
 
 			break;
@@ -153,18 +170,7 @@ void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 
 #endif
 
-
-// bool _Protocol_Cmdr_StartReq_Resp(Protocol_T * p_protocol, protocol_reqid_t cmdId, size_t respLength)
-// {
-// 	bool isSucess = _Protocol_Cmdr_StartReq(p_protocol, cmdId);
-// 	if(isSucess == true) { p_protocol->RxRemaining = respLength; }
-// 	return isSucess;
-// }
-
-// void Protocol_Cmdr_StartReq_Resp(Protocol_T * p_protocol, protocol_reqid_t cmdId, size_t respLength)
-// {
-// 	if(_Protocol_Cmdr_StartReq_Resp(p_protocol, cmdId, respLength) == true)
-// 	{
-// 		_Protocol_TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
-// 	}
-// }
+bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
+{
+	return (p_protocol->RxState == PROTOCOL_RX_STATE_INACTIVE) && (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.RxLostTime);
+}

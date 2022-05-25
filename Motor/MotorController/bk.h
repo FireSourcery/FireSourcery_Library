@@ -29,7 +29,7 @@ static Cmd_Status_T Cmd_params(MotorController_T * p_mc, int argc, char ** argv)
 		//		Terminal_SendNum(p_terminal, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 		//		Terminal_SendString(p_terminal, "\r\n");
 
-		PRINT_PARAM_VAR_MOTOR(PolePairs)
+			PRINT_PARAM_VAR_MOTOR(PolePairs)
 			PRINT_PARAM_VAR_MOTOR(SpeedFeedbackRef_Rpm)
 			// PRINT_PARAM_VAR_MOTOR(SpeedVMatchRef_Rpm)
 			// PRINT_PARAM_VAR_MOTOR(IRefMax_Amp)

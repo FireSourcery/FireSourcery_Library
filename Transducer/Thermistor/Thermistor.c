@@ -205,12 +205,6 @@ void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV)
 	p_therm->Params.VIn_Scalar = vIn_MilliV / 10U;
 }
 
-uint32_t Thermistor_GetR0(Thermistor_T * p_therm) { return p_therm->Params.RNominal; }
-uint32_t Thermistor_GetT0(Thermistor_T * p_therm) { return p_therm->Params.TNominal; }
-uint32_t Thermistor_GetT0_DegC(Thermistor_T * p_therm) { return p_therm->Params.TNominal - 273; }
-uint32_t Thermistor_GetB(Thermistor_T * p_therm) { return p_therm->Params.BConstant; }
-uint32_t Thermistor_GetVIn(Thermistor_T * p_therm) { return p_therm->Params.VIn_Scalar; }
-
 static uint16_t ConvertDegCToAdcu_SetUser(Thermistor_T * p_therm, uint8_t degC)
 {
 	uint16_t adcu = ConvertDegCToAdcu(p_therm, degC);

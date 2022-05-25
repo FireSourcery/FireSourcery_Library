@@ -122,6 +122,7 @@ typedef union MotorController_FaultFlags_Tag
 		uint32_t VAccLimit 			: 1U;
 		uint32_t StopStateSync 		: 1U;
 		// uint32_t ThrottleOnInit 	: 1U;
+		uint32_t RxLost 			: 1U;
 	};
 	uint32_t State;
 }
@@ -281,8 +282,10 @@ typedef struct MotorController_Tag
 	MotorController_Direction_T MainDirection;
 	MotorController_Direction_T UserDirection;
 	MotorController_Substate_T StopSubstate;
+	NvMemory_Status_T NvmStatus;
 
 	uint16_t UserCmd;
+
 	// MotorController_SpeedLimitActiveId_T SpeedLimitActiveId;
 	// MotorController_ILimitActiveId_T ILimitActiveId;
 }

@@ -48,27 +48,12 @@ const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U] =
 void MotorCmdr_Init(MotorCmdr_T * p_motorCmdr)
 {
 	Protocol_Init(&p_motorCmdr->Protocol);
+	p_motorCmdr->Protocol.Params.RxLostTime = 500U;
+	// p_motorCmdr->ReqActive = 0xFF;
 }
 
-void MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr)
-{
-	//todo stateful req
-
-	// p_motorCmdr->Interface.ReqReadImmediate.VarId = MOT_VAR_SPEED_FEEDBACK_REF_RPM;
-	// _Protocol_Cmdr_EnqueueReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_READ_IMMEDIATE);
-
-	// p_motorCmdr->Interface.ReqReadImmediate.VarId = MOT_VAR_I_MAX_REF_AMP;
-	// _Protocol_Cmdr_EnqueueReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_READ_IMMEDIATE);
-}
-
-void MotorCmdr_InitUnits_Blocking(MotorCmdr_T * p_motorCmdr)
-{
-	// p_motorCmdr->Interface.ReqReadImmediate.VarId = MOT_VAR_SPEED_FEEDBACK_REF_RPM;
-	// _Protocol_Cmdr_EnqueueReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_READ_IMMEDIATE);
-
-	// p_motorCmdr->Interface.ReqReadImmediate.VarId = MOT_VAR_I_MAX_REF_AMP;
-	// _Protocol_Cmdr_EnqueueReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_READ_IMMEDIATE);
-}
+//todo stateful req
+void MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr) { _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_INIT_UNITS); }
 
 /******************************************************************************/
 /*!
@@ -76,53 +61,83 @@ void MotorCmdr_InitUnits_Blocking(MotorCmdr_T * p_motorCmdr)
 	@return length of full packet
 */
 /******************************************************************************/
-uint8_t _MotorCmdr_StopMotors(MotorCmdr_T * p_motorCmdr)
+void _MotorCmdr_ProcTxIdle(MotorCmdr_T * p_motorCmdr)
 {
-	p_motorCmdr->test = 1U;
-	_Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_STOP_MOTORS);
-	return Protocol_Cmdr_GetReqLength(&p_motorCmdr->Protocol);
+	if(Protocol_Cmdr_CheckTxIdle(&p_motorCmdr->Protocol) == true) { _MotorCmdr_Ping(p_motorCmdr); }
 }
 
-uint8_t _MotorCmdr_Ping(MotorCmdr_T * p_motorCmdr)
-{
-	p_motorCmdr->test = 2U;
-	_Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_PING);
-	return Protocol_Cmdr_GetReqLength(&p_motorCmdr->Protocol);
-}
+uint8_t _MotorCmdr_Ping(MotorCmdr_T * p_motorCmdr) 			{ return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_PING); }
+uint8_t _MotorCmdr_StopMotors(MotorCmdr_T * p_motorCmdr) 	{ return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_STOP_ALL); }
+uint8_t _MotorCmdr_SaveNvm(MotorCmdr_T * p_motorCmdr) 		{ return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_SAVE_NVM); }
+uint8_t _MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr) 	{ return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_INIT_UNITS); }
 
 uint8_t _MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle)
 {
-	p_motorCmdr->test = 3U;
 	p_motorCmdr->ControlIdActive = MOT_PROTOCOL_CONTROL_THROTTLE;
 	p_motorCmdr->MotorCmdValue = throttle;
-	_Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
-	return Protocol_Cmdr_GetReqLength(&p_motorCmdr->Protocol);
+	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
+}
+
+uint8_t _MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake)
+{
+	p_motorCmdr->ControlIdActive = MOT_PROTOCOL_CONTROL_BRAKE;
+	p_motorCmdr->MotorCmdValue = brake;
+	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
+}
+
+uint8_t _MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr)
+{
+	p_motorCmdr->ControlIdActive = MOT_PROTOCOL_CONTROL_RELEASE;
+	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
+}
+
+uint8_t _MotorCmdr_WriteDirectionForward(MotorCmdr_T * p_motorCmdr)
+{
+	p_motorCmdr->ControlIdActive = MOT_PROTOCOL_CONTROL_DIRECTION_FORWARD;
+	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
+}
+
+uint8_t _MotorCmdr_WriteDirectionReverse(MotorCmdr_T * p_motorCmdr)
+{
+	p_motorCmdr->ControlIdActive = MOT_PROTOCOL_CONTROL_DIRECTION_REVERSE;
+	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
+}
+
+uint8_t _MotorCmdr_WriteDirectionNeutral(MotorCmdr_T * p_motorCmdr)
+{
+	p_motorCmdr->ControlIdActive = MOT_PROTOCOL_CONTROL_DIRECTION_NEUTRAL;
+	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
 }
 
 // uint8_t _MotorCmdr_WriteStopMotorId(MotorCmdr_T * p_motorCmdr, uint8_t motorId)
 // {
-// 	_Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_STOP_MOTORS);
-// 	return Protocol_Cmdr_GetReqLength(&p_motorCmdr->Protocol);
+// 	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol,  );
+//
 // }
 
 /* User sets Interface as MOT_PROTOCOL_ReqPayload_Control_T */
 // uint8_t _MotorCmdr_WriteControlType(MotorCmdr_T * p_motorCmdr, 15 regs)
 // {
-// 	_Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
-// 	return Protocol_Cmdr_GetReqLength(&p_motorCmdr->Protocol);
+// 	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
+//
 // }
 
 uint8_t _MotorCmdr_StartReadSpeed(MotorCmdr_T * p_motorCmdr)
 {
 	p_motorCmdr->MonitorIdActive = MOT_PROTOCOL_MONITOR_SPEED;
-	_Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_MONITOR_TYPE);
-	return Protocol_Cmdr_GetReqLength(&p_motorCmdr->Protocol);
+	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_MONITOR_TYPE);
 }
 
-void _MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, uint32_t var)
+uint8_t _MotorCmdr_StartReadIFoc(MotorCmdr_T * p_motorCmdr)
 {
-
+	p_motorCmdr->MonitorIdActive = MOT_PROTOCOL_MONITOR_I_FOC;
+	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_MONITOR_TYPE);
 }
+
+// void _MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, uint32_t var)
+// {
+
+// }
 
 
 /******************************************************************************/
@@ -130,9 +145,9 @@ void _MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, uint32_t var)
 	Public Functions - Protocol module handle TxRX
 */
 /******************************************************************************/
-void MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle)
-{
-	p_motorCmdr->ControlIdActive = MOT_PROTOCOL_CONTROL_THROTTLE;
-	p_motorCmdr->MotorCmdValue = throttle;
-	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
-}
+// void MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle)
+// {
+// 	p_motorCmdr->ControlIdActive = MOT_PROTOCOL_CONTROL_THROTTLE;
+// 	p_motorCmdr->MotorCmdValue = throttle;
+// 	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
+// }

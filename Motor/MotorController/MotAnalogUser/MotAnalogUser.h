@@ -210,10 +210,15 @@ static inline void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_user, uint16_t
 }
 
 /* Optional separate Brake polling */
-static inline bool MotAnalogUser_PollBrake(MotAnalogUser_T * p_user)
+static inline bool MotAnalogUser_PollBrakePin(MotAnalogUser_T * p_user)
 {
 	Debounce_CaptureState(&p_user->BrakeEdgePin);
 	return Debounce_GetState(&p_user->BrakeEdgePin);
+}
+
+static inline bool MotAnalogUser_PollBrakePinRisingEdge(MotAnalogUser_T * p_user)
+{
+	return ((Debounce_CaptureState(&p_user->BrakeEdgePin) &&  Debounce_GetState(&p_user->BrakeEdgePin)) == true);
 }
 
 static inline bool _MotAnalogUser_GetIsNeutralOn(const MotAnalogUser_T * p_user) 		{ return (p_user->Params.UseNeutralPin == true) && (Debounce_GetState(&p_user->NeutralPin) == true); }

@@ -42,16 +42,24 @@ typedef struct MotorCmdr_Units_Tag
 {
 	uint16_t SpeedFeedbackRef_Rpm;
 	uint16_t IMaxRef_Amp;
+	uint16_t VSupplyRef_Volts;
+	uint16_t VSupply_R1;
+	uint16_t VSupply_R2;
+	uint16_t VSense_R1;
+	uint16_t VSense_R2;
+	uint16_t VAcc_R1;
+	uint16_t VAcc_R2;
 }
 MotorCmdr_Units_T;
 
 typedef struct MotorCmdr_Tag
 {
 	Protocol_T Protocol;
-	MotorCmdr_Units_T Units;
+
 	MotProtocol_Substate_T Substate; /* Stateful Protocol Substate */
 
 	/* Req Interface */
+	// MotPacket_HeaderId_T ReqActive;
 	uint16_t RespStatus;
 	MotPacket_ControlId_T ControlIdActive;
 	MotPacket_MonitorId_T MonitorIdActive;
@@ -60,11 +68,20 @@ typedef struct MotorCmdr_Tag
 	uint8_t TxPacket[MOT_PACKET_LENGTH_MAX];
 	uint8_t RxPacket[MOT_PACKET_LENGTH_MAX];
 
-	uint8_t test;
-
 	// MotorController_T MotorControllerVars;					/* Use for definations only. */
 	// Motor_T MotorsVars[CONFIG_MOTOR_CMDR_MOTOR_COUNT];		/* Use for definations only. */
-	// int32_t Speed;
+
+	/* Resp Interface */
+	MotorCmdr_Units_T Units;
+	uint8_t Version[4U];
+	int32_t Speed;
+	int16_t Ia;
+	int16_t Ib;
+	int16_t Ic;
+	int16_t Ialpha;
+	int16_t Ibeta;
+	int16_t Id;
+	int16_t Iq;
 
 	/* Alternatively, app implements MotProtocol Interface */
 	// MotPacket_Interface_T Interface;
@@ -77,7 +94,7 @@ extern const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U];
 {																												\
 	.Protocol = PROTOCOL_DEFINE 																				\
 	(																											\
-		&((p_ThisMotorCmdr)->RxPacket[0U]), &((p_ThisMotorCmdr)->TxPacket[0U]), MOT_PROTOCOL_PACKET_LENGTH_MAX, 	\
+		&((p_ThisMotorCmdr)->RxPacket[0U]), &((p_ThisMotorCmdr)->TxPacket[0U]), MOT_PACKET_LENGTH_MAX, 			\
 		(p_ThisMotorCmdr), &((p_ThisMotorCmdr)->Substate), 														\
 		_MOTOR_CMDR_PROTOCOL_SPECS_TABLE, 1U, 																	\
 		p_XcvrTable, XcvrCount, 																				\
@@ -96,12 +113,24 @@ static inline uint8_t _MotorCmdr_GetRespLength(MotorCmdr_T * p_motorCmdr) { retu
 static inline uint8_t * _MotorCmdr_GetPtrTxPacket(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->TxPacket; }
 static inline uint8_t * _MotorCmdr_GetPtrRxPacket(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->RxPacket; }
 
+static inline int32_t MotorCmdr_GetReadSpeed(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Speed; }
+static inline int16_t MotorCmdr_GetReadIa(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ia; }
+static inline int16_t MotorCmdr_GetReadIb(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ib; }
+static inline int16_t MotorCmdr_GetReadIc(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ic; }
+static inline int16_t MotorCmdr_GetReadIalpha(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ialpha; }
+static inline int16_t MotorCmdr_GetReadIbeta(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ibeta; }
+static inline int16_t MotorCmdr_GetReadId(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Id; }
+static inline int16_t MotorCmdr_GetReadIq(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Iq; }
 
-//capture to interface
-// static inline int32_t _MotorCmdr_CaptureReadSpeed(MotorCmdr_T * p_motorCmdr) { return /* parse RxPacket */; }
+/*
+	For Cmdr side handling of unit conversion
+*/
+static inline int32_t _MotorCmdr_ConvertToSpeedFrac16(MotorCmdr_T * p_motorCmdr, int32_t speed_rpm) { return speed_rpm * 65535 / p_motorCmdr->Units.SpeedFeedbackRef_Rpm; }
+static inline int16_t _MotorCmdr_ConvertToSpeedRpm(MotorCmdr_T * p_motorCmdr, int32_t speed_frac16) { return speed_frac16 * p_motorCmdr->Units.SpeedFeedbackRef_Rpm / 65536; }
+static inline int32_t _MotorCmdr_ConvertToIFrac16(MotorCmdr_T * p_motorCmdr, int32_t i_amp) { return i_amp * 65535 / p_motorCmdr->Units.IMaxRef_Amp; }
+static inline int16_t _MotorCmdr_ConvertToIAmp(MotorCmdr_T * p_motorCmdr, int32_t i_frac16) { return i_frac16 * p_motorCmdr->Units.IMaxRef_Amp / 65536; }
 
-//get from packet
-// static inline int32_t MotorCmdr_GetReadSpeed(MotorCmdr_T *p_motorCmdr) { return p_motorCmdr->Motor.; }
+// static inline int16_t MotorCmdr_GetReadSpeed_Rpm(MotorCmdr_T *p_motorCmdr) { return _MotorCmdr_ConvertToSpeedRpm(p_motorCmdr, p_motorCmdr-> .Speed.Speed); }
 
 
 /*
@@ -115,17 +144,6 @@ static inline uint8_t * _MotorCmdr_GetPtrRxPacket(MotorCmdr_T * p_motorCmdr) { r
 // 	}
 // }
 
-/*
-	For Cmdr side handling of unit conversion
-*/
-static inline int32_t _MotorCmdr_ConvertToSpeedFrac16(MotorCmdr_T * p_motorCmdr, int32_t speed_rpm) { return speed_rpm * 65535 / p_motorCmdr->Units.SpeedFeedbackRef_Rpm; }
-static inline int16_t _MotorCmdr_ConvertToSpeedRpm(MotorCmdr_T * p_motorCmdr, int32_t speed_frac16) { return speed_frac16 * p_motorCmdr->Units.SpeedFeedbackRef_Rpm / 65536; }
-static inline int32_t _MotorCmdr_ConvertToIFrac16(MotorCmdr_T * p_motorCmdr, int32_t i_amp) { return i_amp * 65535 / p_motorCmdr->Units.IMaxRef_Amp; }
-static inline int16_t _MotorCmdr_ConvertToIAmp(MotorCmdr_T * p_motorCmdr, int32_t i_frac16) { return i_frac16 * p_motorCmdr->Units.IMaxRef_Amp / 65536; }
-
-// static inline int16_t MotorCmdr_GetReadSpeed_Rpm(MotorCmdr_T *p_motorCmdr) { return _MotorCmdr_ConvertToSpeedRpm(p_motorCmdr, p_motorCmdr-> .Speed.Speed); }
-
-
 /******************************************************************************/
 /*!
 	Extern
@@ -134,12 +152,21 @@ static inline int16_t _MotorCmdr_ConvertToIAmp(MotorCmdr_T * p_motorCmdr, int32_
 extern void MotorCmdr_Init(MotorCmdr_T * p_motorCmdr);
 extern void MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr);
 
+extern void _MotorCmdr_ProcTxIdle(MotorCmdr_T * p_motorCmdr);
+
 extern uint8_t _MotorCmdr_Ping(MotorCmdr_T * p_motorCmdr);
 extern uint8_t _MotorCmdr_StopMotors(MotorCmdr_T * p_motorCmdr);
+extern uint8_t _MotorCmdr_SaveNvm(MotorCmdr_T * p_motorCmdr);
+extern uint8_t _MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr);
 extern uint8_t _MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle);
-extern uint8_t _MotorCmdr_WriteControlType(MotorCmdr_T * p_motorCmdr);
+extern uint8_t _MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake);
+extern uint8_t _MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr);
+extern uint8_t _MotorCmdr_WriteDirectionForward(MotorCmdr_T * p_motorCmdr);
+extern uint8_t _MotorCmdr_WriteDirectionReverse(MotorCmdr_T * p_motorCmdr);
+extern uint8_t _MotorCmdr_WriteDirectionNeutral(MotorCmdr_T * p_motorCmdr);
 extern uint8_t _MotorCmdr_StartReadSpeed(MotorCmdr_T * p_motorCmdr);
-extern void _MotorCmdr_WriteVar16(MotorCmdr_T * p_motorCmdr, uint16_t var16);
+extern uint8_t _MotorCmdr_StartReadIFoc(MotorCmdr_T * p_motorCmdr);
 
-extern void MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle);
+// extern void MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle);
+
 #endif

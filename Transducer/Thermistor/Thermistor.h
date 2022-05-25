@@ -49,15 +49,18 @@ Thermistor_Status_T;
 */
 typedef struct __attribute__((aligned(4U))) Thermistor_Params_Tag
 {
-	uint16_t VIn_Scalar;
+	/* Unit Conversion */
 	uint32_t RNominal;
-	uint32_t TNominal; /* In Kelvin*/
-	uint32_t BConstant;
+	uint16_t TNominal; /* In Kelvin*/
+	uint16_t BConstant;
+	uint16_t VIn_Scalar; /* Vin Set to match Vref units */
+
+	/* Limits */
 	uint16_t Shutdown_Adcu;
 	uint16_t Threshold_Adcu;
 	uint16_t Warning_Adcu;
 
-	uint16_t CaptureScalar;
+	uint16_t CaptureScalar; //remove?
 	bool IsEnableOnInit;
 }
 Thermistor_Params_T;
@@ -113,10 +116,15 @@ static inline bool Thermistor_GetIsStatusLimit(Thermistor_T * p_therm) { return 
 static inline bool Thermistor_GetIsStatusWarning(Thermistor_T * p_therm) { return (p_therm->Status == THERMISTOR_WARNING); }
 static inline Thermistor_Status_T Thermistor_GetStatus(Thermistor_T * p_therm) { return (p_therm->Status); }
 
-
 static inline void Thermistor_Enable(Thermistor_T * p_therm) {  p_therm->Params.IsEnableOnInit = true; }
 static inline void Thermistor_Disable(Thermistor_T * p_therm) {  p_therm->Params.IsEnableOnInit = false; }
 static inline void Thermistor_SetEnable(Thermistor_T * p_therm, bool isEnable) {  p_therm->Params.IsEnableOnInit = isEnable; }
+
+static inline uint32_t Thermistor_GetR0(Thermistor_T * p_therm) { return p_therm->Params.RNominal; }
+static inline uint16_t Thermistor_GetT0(Thermistor_T * p_therm) { return p_therm->Params.TNominal; }
+static inline uint16_t Thermistor_GetT0_DegC(Thermistor_T * p_therm) { return p_therm->Params.TNominal - 273; }
+static inline uint16_t Thermistor_GetB(Thermistor_T * p_therm) { return p_therm->Params.BConstant; }
+static inline uint16_t Thermistor_GetVIn(Thermistor_T * p_therm) { return p_therm->Params.VIn_Scalar; }
 
 
 extern void Thermistor_InitAdcVRef_Scalar(uint16_t adcVRef_MilliV);

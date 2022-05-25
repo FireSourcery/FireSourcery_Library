@@ -170,9 +170,12 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		switch(p_mc->Parameters.InputMode)
 		{
 			case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_mc);	break;
-				//		case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: break;
-				//		case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
-			default: break;
+			// case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: break;
+			// case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
+			default: //all other protocol modes?
+				if(MotAnalogUser_PollBrakePinRisingEdge(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
+				if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U])) { MotorController_User_SetFault(p_mc); p_mc->FaultFlags.RxLost = 1U; }
+				break;
 		}
 
 		/* Bypass Isr */
@@ -214,10 +217,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		}
 
 		_MotorController_ProcOptDin(p_mc);
-		//if frequent degree c polling request
-		//	Thermistor_CaptureUnitConversion(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu);
-		//	Thermistor_CaptureUnitConversion(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_Adcu);
-		//	Thermistor_CaptureUnitConversion(&p_mc->ThermistorMosfetsTop, p_mc->AnalogResults.HeatMosfetsTop_Adcu);
 	}
 }
 

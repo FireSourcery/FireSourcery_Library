@@ -40,7 +40,6 @@ extern "C"
 #include <Arduino.h>
 #include <cstdint>
 
-
 class KellyController
 {
 // private:
@@ -55,14 +54,29 @@ public:
 	virtual ~KellyController(void);
 	void begin(void);
 	void end(void);
-	// void update(void);
 
-	bool pollResponse(void);
+	bool poll(void);
 	void ping(void);
-	void writeStop(void);
+	void writeStopAll(void);
+	void writeInitUnits(void);
 	void writeThrottle(uint16_t throttle);
+	void writeBrake(uint16_t brake);
+	void writeSaveNvm(void);
+	void writeRelease(void);
+	void writeDirectionForward(void);
+	void writeDirectionReverse(void);
+	void writeDirectionNeutral(void);
+	void readSpeed(void);
+	void readIFoc(void);
 
-	int32_t getReadSpeed(void);
+	int32_t getReadSpeed(void) { return MotorCmdr_GetReadSpeed(&motorCmdr); }
+	int16_t getReadIa(void) { return MotorCmdr_GetReadIa(&motorCmdr); }
+	int16_t getReadIb(void) { return MotorCmdr_GetReadIb(&motorCmdr); }
+	int16_t getReadIc(void) { return MotorCmdr_GetReadIc(&motorCmdr); }
+	int16_t getReadIalpha(void) { return MotorCmdr_GetReadIalpha(&motorCmdr); }
+	int16_t getReadIbeta(void) { return MotorCmdr_GetReadIbeta(&motorCmdr); }
+	int16_t getReadId(void) { return MotorCmdr_GetReadId(&motorCmdr); }
+	int16_t getReadIq(void) { return MotorCmdr_GetReadIq(&motorCmdr); }
 
 	// Debuging use
 	uint8_t getTxLength(void) { return _MotorCmdr_GetReqLength(&motorCmdr); }

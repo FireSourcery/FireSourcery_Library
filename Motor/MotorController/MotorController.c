@@ -129,6 +129,8 @@ bool MotorController_SaveParameters_Blocking(MotorController_T * p_mc)
 
 #endif
 
+	p_mc->NvmStatus = status;
+
 	return (status == NV_MEMORY_STATUS_SUCCESS) ? true : false;
 }
 
