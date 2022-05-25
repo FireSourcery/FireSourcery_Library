@@ -116,6 +116,7 @@ void MotPacket_PingResp_Parse(uint8_t * p_version, const MotPacket_PingResp_T * 
 /******************************************************************************/
 uint8_t MotPacket_StopReq_Build(MotPacket_StopReq_T * p_reqPacket) { return _MotPacket_Sync_Build((MotPacket_Sync_T *)p_reqPacket, MOT_PROTOCOL_STOP_ALL); }
 uint8_t MotPacket_StopReq_GetRespLength(void) { return sizeof(MotPacket_StopResp_T); }
+
 // void MotPacket_StopResp_Parse(MotPacket_StatusResp_Id_T * p_status, const MotPacket_StopResp_T * p_respPacket)
 // {
 // 	*p_status = p_respPacket->Status.Id;
@@ -129,7 +130,13 @@ uint8_t MotPacket_SaveNvmReq_Build(MotPacket_SaveNvmReq_T * p_reqPacket)
 {
 	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_SAVE_NVM, 0U, MOT_PROTOCOL_HEADER_STATUS_OK);
 }
+
 uint8_t MotPacket_SaveNvmReq_GetRespLength(void) { return sizeof(MotPacket_SaveNvmResp_T); }
+
+// MotPacket_HeaderStatus_T MotPacket_SaveNvmResp_Parse(const MotPacket_SaveNvmResp_T * p_respPacket)
+// {
+// 	return p_respPacket->Header.Status;
+// }
 
 /******************************************************************************/
 /*!	Init Units */
@@ -194,16 +201,14 @@ uint8_t MotPacket_WriteImmediateReq_Build(MotPacket_WriteImmediateReq_T * p_reqP
 	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_WRITE_IMMEDIATE, sizeof(MotPacket_WriteImmediateReq_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
 }
 
+uint8_t MotPacket_WriteImmediateReq_GetRespLength(void) { return sizeof(MotPacket_WriteImmediateReq_T); }
+
 // MotPacket_HeaderStatus_T MotPacket_WriteImmediateResp_Parse(const MotPacket_WriteImmediateResp_T * p_respPacket)
 // {
 // 	// *p_status = p_respPacket->WriteResp.Status;
 // 	return p_respPacket->Header.Status;
 // }
 
-// MotPacket_HeaderStatus_T MotPacket_SaveNvmResp_Parse(const MotPacket_SaveNvmResp_T * p_respPacket)
-// {
-// 	return p_respPacket->Header.Status;
-// }
 
 /******************************************************************************/
 /*!	Control Type */
@@ -268,9 +273,9 @@ uint8_t MotPacket_ControlReq_GetRespLength(MotPacket_ControlId_T controlId)
 	/* Per Var Status */
 	// switch(p_interface->ReqControl.ControlId)
 	// {
-	// 	case MOT_PROTOCOL_CONTROL_STOP: 		*p_respLength = 1U; 												break;
-	// 	case MOT_PROTOCOL_CONTROL_THROTTLE: 	*p_respLength = sizeof(MotPacket_ControlReq_Throttle_Payload_T); 	break;
-	// 	case MOT_PROTOCOL_CONTROL_BRAKE: 	*p_respLength = sizeof(MotPacket_ControlReq_Brake_Payload_T); 		break;
+	// 	case MOT_PROTOCOL_CONTROL_STOP: 		 1U; 												break;
+	// 	case MOT_PROTOCOL_CONTROL_THROTTLE: 	 sizeof(MotPacket_ControlReq_Throttle_Payload_T); 	break;
+	// 	case MOT_PROTOCOL_CONTROL_BRAKE: 	 sizeof(MotPacket_ControlReq_Brake_Payload_T); 		break;
 	// 	default: break;
 	// }
 }

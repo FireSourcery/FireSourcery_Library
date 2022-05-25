@@ -65,7 +65,7 @@ static void StopAll_BuildReq(MotPacket_StopReq_T * p_txPacket, size_t * p_txLeng
 
 static void StopAll_ParseResp(MotorCmdr_T * p_app, const MotPacket_StopResp_T * p_rxPacket)
 {
-	// MotPacket_StopResp_Parse(&p_app->RespStatus, p_rxPacket);
+	// p_app->RespStatus = MotPacket_StopResp_Parse(p_rxPacket);
 }
 
 /******************************************************************************/
@@ -117,9 +117,9 @@ static void Control_BuildReq(MotPacket_ControlReq_T * p_txPacket, size_t * p_txL
 		case MOT_PROTOCOL_CONTROL_THROTTLE:				*p_txLength = MotPacket_ControlReq_Throttle_Build(p_txPacket, p_app->MotorCmdValue); 	break;
 		case MOT_PROTOCOL_CONTROL_BRAKE: 				*p_txLength = MotPacket_ControlReq_Brake_Build(p_txPacket, p_app->MotorCmdValue); 		break;
 		case MOT_PROTOCOL_CONTROL_RELEASE: 				*p_txLength = MotPacket_ControlReq_Release_Build(p_txPacket); 							break;
-		case MOT_PROTOCOL_CONTROL_DIRECTION_FORWARD: 	*p_txLength = MotPacket_ControlReq_DirectionForward_Build(p_txPacket); 				break;
-		case MOT_PROTOCOL_CONTROL_DIRECTION_REVERSE: 	*p_txLength = MotPacket_ControlReq_DirectionReverse_Build(p_txPacket); 				break;
-		case MOT_PROTOCOL_CONTROL_DIRECTION_NEUTRAL: 	*p_txLength = MotPacket_ControlReq_DirectionNeutral_Build(p_txPacket); 				break;
+		case MOT_PROTOCOL_CONTROL_DIRECTION_FORWARD: 	*p_txLength = MotPacket_ControlReq_DirectionForward_Build(p_txPacket); 					break;
+		case MOT_PROTOCOL_CONTROL_DIRECTION_REVERSE: 	*p_txLength = MotPacket_ControlReq_DirectionReverse_Build(p_txPacket); 					break;
+		case MOT_PROTOCOL_CONTROL_DIRECTION_NEUTRAL: 	*p_txLength = MotPacket_ControlReq_DirectionNeutral_Build(p_txPacket); 					break;
 		default: break;
 	}
 
@@ -128,12 +128,12 @@ static void Control_BuildReq(MotPacket_ControlReq_T * p_txPacket, size_t * p_txL
 
 static void Control_ParseResp(MotorCmdr_T * p_app, const MotPacket_ControlResp_T * p_rxPacket)
 {
-	p_app->RespStatus = p_rxPacket->Header.Status;
+	// p_app->RespStatus = p_rxPacket->Header.Status;
 }
 
-// /******************************************************************************/
-// /*!	Monitor */
-// /******************************************************************************/
+/******************************************************************************/
+/*!	Monitor */
+/******************************************************************************/
 static void Monitor_BuildReq(MotPacket_MonitorReq_T * p_txPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
 {
 	*p_txLength = MotPacket_MonitorReq_Build(p_txPacket, p_app->MonitorIdActive);
@@ -151,6 +151,36 @@ static void Monitor_ParseResp(MotorCmdr_T * p_app, const MotPacket_MonitorResp_T
 			break;
 		default: break;
 	}
+}
+
+/******************************************************************************/
+/*!	Write Immediate Var */
+/******************************************************************************/
+static void WriteImmediate_BuildReq(MotPacket_WriteImmediateReq_T * p_txPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
+{
+	*p_txLength = MotPacket_WriteImmediateReq_Build(p_txPacket, p_app->MotorReadWriteVarId, );
+	*p_respLength = MotPacket_WriteImmediateReq_GetRespLength();
+}
+
+static void WriteImmediate_ParseResp(MotorCmdr_T * p_app, const MotPacket_WriteImmediateResp_T * p_rxPacket)
+{
+	// p_app->RespStatus = p_rxPacket->Header.Status;
+}
+
+/******************************************************************************/
+/*!	Read Immediate Var */
+/******************************************************************************/
+static void ReadImmediate_BuildReq(MotPacket_ReadImmediateReq_T * p_txPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
+{
+	*p_txLength = MotPacket_ReadImmediateReq_Build(p_txPacket, p_app->MotorReadWriteVarId);
+	*p_respLength = MotPacket_ReadImmediateReq_GetRespLength();
+}
+
+static void ReadImmediate_ParseResp(MotorCmdr_T * p_app, const MotPacket_ReadImmediateResp_T * p_rxPacket)
+{
+	// p_app->RespStatus = p_rxPacket->Header.Status;
+	MotPacket_ReadImmediateResp_Parse(&p_app->MotorReadWriteVarValue, p_rxPacket);
+	//pass in to more buffer?
 }
 
 /*

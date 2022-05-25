@@ -368,14 +368,20 @@ extern void MotPacket_PingResp_Parse(uint8_t * p_version, const MotPacket_PingRe
 
 extern uint8_t MotPacket_StopReq_Build(MotPacket_StopReq_T * p_reqPacket);
 extern uint8_t MotPacket_StopReq_GetRespLength(void);
+// extern void MotPacket_StopResp_Parse(MotPacket_StatusResp_Id_T * p_status, const MotPacket_StopResp_T * p_respPacket);
 
 extern uint8_t MotPacket_ReadImmediateReq_Build(MotPacket_ReadImmediateReq_T * p_reqPacket, MotVarId_T motVarId);
+extern uint8_t MotPacket_ReadImmediateReq_GetRespLength(void);
 extern void MotPacket_ReadImmediateResp_Parse(uint32_t * p_value, const MotPacket_ReadImmediateResp_T * p_respPacket);
+
 extern uint8_t MotPacket_WriteImmediateReq_Build(MotPacket_WriteImmediateReq_T * p_reqPacket, MotVarId_T motVarId, uint32_t value);
+extern uint8_t MotPacket_WriteImmediateReq_GetRespLength(void);
 // extern void MotPacket_WriteImmediateResp_Parse(const MotPacket_WriteImmediateResp_T * p_respPacket);
+
 extern uint8_t MotPacket_SaveNvmReq_Build(MotPacket_SaveNvmReq_T * p_reqPacket);
 extern uint8_t MotPacket_SaveNvmReq_GetRespLength(void);
 // extern void MotPacket_SaveNvmReq_Parse(const MotPacket_SaveNvmReq_T * p_respPacket);
+
 extern uint8_t MotPacket_InitUnitsReq_Build(MotPacket_InitUnitsReq_T * p_reqPacket);
 extern uint8_t MotPacket_InitUnitsReq_GetRespLength(void);
 extern void MotPacket_InitUnitsResp_Parse

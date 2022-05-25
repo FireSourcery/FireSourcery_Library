@@ -33,12 +33,7 @@
 static const Protocol_Cmdr_Req_T * SearchReqTable(Protocol_Cmdr_Req_T * p_reqTable, size_t tableLength, protocol_reqid_t id)
 {
 	const Protocol_Cmdr_Req_T * p_req = 0U;
-
-	for(uint8_t iChar = 0U; iChar < tableLength; iChar++)
-	{
-		if(p_reqTable[iChar].ID == id) { p_req = &p_reqTable[iChar]; }
-	}
-
+	for(uint8_t iChar = 0U; iChar < tableLength; iChar++) { if(p_reqTable[iChar].ID == id) { p_req = &p_reqTable[iChar]; } }
 	return p_req;
 }
 
@@ -51,16 +46,15 @@ bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 		p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
 		p_protocol->ReqIdActive = cmdId;
 		p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
-		p_protocol->p_ReqActive = (void *)SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, cmdId); //todo
+		/* todo pointer type */
+		p_protocol->p_ReqActive = (void *)SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, cmdId);
 
 		if(p_protocol->p_ReqActive != 0U)
 		{
-			((Protocol_Cmdr_Req_T *)p_protocol->p_ReqActive)->BUILD_REQ(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, &p_protocol->RxRemaining, p_protocol->CONFIG.P_APP_INTERFACE);
-
-			//alternatively
-			// p_protocol->TxLength = p_req->BUILD_REQ(p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->CONFIG.P_APP_INTERFACE);
-			// p_protocol->RxRemaining = p_req->GET_RESP_LENGTH(p_protocol->CONFIG.P_APP_INTERFACE, cmdId);
-
+			((Protocol_Cmdr_Req_T *)p_protocol->p_ReqActive)->BUILD_REQ
+			(
+				p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, &p_protocol->RxRemaining, p_protocol->CONFIG.P_APP_INTERFACE
+			);
 			isSucess = true;
 		}
 	}
@@ -73,8 +67,9 @@ size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_reqid_t cmdId
 	return (_Protocol_Cmdr_StartReq(p_protocol, cmdId) == true) ? p_protocol->TxLength : 0U;
 }
 
-
-/* return true if time out */
+/*!
+	@return true if time out
+*/
 bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol)
 {
 	bool isTimeout = (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart < p_protocol->p_Specs->REQ_TIMEOUT);
@@ -108,7 +103,6 @@ bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 }
 
 
-
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 /*
 	Master Mode, sequential Cmd/Rx
@@ -130,14 +124,14 @@ void Protocol_Cmdr_ProcRx(Protocol_T * p_protocol)
 
 				if(Xcvr_RxPacket(&p_protocol->Xcvr, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxRemaining) == true)
 				{
-					//stateless proc immediately
+					/* Stateless proc immediately */
 					if(_Protocol_Cmdr_ParseResp(p_protocol) == PROTOCOL_RX_CODE_ERROR)
 					{
 						// if use nack resend
 					}
 				}
 
-				//stateful wait use Req States
+				/* Stateful wait use Req States */
 				// p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL;
 
 			}
