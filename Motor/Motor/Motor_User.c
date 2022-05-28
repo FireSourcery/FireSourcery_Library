@@ -218,22 +218,12 @@ void Motor_User_ClearSpeedLimitActive(Motor_T * p_motor)
 	Scalar2 = 6553 => LimitActive = 3276
 	Scalar3 = 32768 => LimitActive = 3276
 */
-bool _Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16)
+void _Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16)
 {
-	/* if scalar active is < previously set scalar, only need to check one direction */
-	// bool isSet = ((uint32_t)scalar_frac16 * p_motor->Parameters.ILimitMotoring_Frac16 / 65536U) < p_motor->ILimitMotoring_Frac16;
-	bool isSet = scalar_frac16 < p_motor->ILimitActiveScalar;
-
-	if(isSet == true)
-	{
-		p_motor->ILimitActiveScalar = scalar_frac16;
-		p_motor->ILimitMotoring_Frac16 = (uint32_t)scalar_frac16 * p_motor->Parameters.ILimitMotoring_Frac16 / 65536U;
-		p_motor->ILimitGenerating_Frac16 = (uint32_t)scalar_frac16 * p_motor->Parameters.ILimitGenerating_Frac16 / 65536U;
-
-		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetOutputLimits(p_motor); }
-	}
-
-	return isSet;
+	p_motor->ILimitActiveScalar = scalar_frac16;
+	p_motor->ILimitMotoring_Frac16 = (uint32_t)scalar_frac16 * p_motor->Parameters.ILimitMotoring_Frac16 / 65536U;
+	p_motor->ILimitGenerating_Frac16 = (uint32_t)scalar_frac16 * p_motor->Parameters.ILimitGenerating_Frac16 / 65536U;
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetOutputLimits(p_motor); }
 }
 
 void _Motor_User_ClearILimitActive(Motor_T * p_motor)
@@ -244,20 +234,33 @@ void _Motor_User_ClearILimitActive(Motor_T * p_motor)
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetOutputLimits(p_motor); }
 }
 
+/*! @return true if set */
 bool Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16, Motor_ILimitActiveId_T id)
 {
-	bool isSet = _Motor_User_SetILimitActive(p_motor, scalar_frac16);
-	if(isSet == true) { p_motor->ILimitActiveId = id; }
+	bool isSet = (scalar_frac16 < p_motor->ILimitActiveScalar);
+	if(isSet == true)
+	{
+		_Motor_User_SetILimitActive(p_motor, scalar_frac16);
+		p_motor->ILimitActiveId = id;
+	}
 	return isSet;
 }
 
-void Motor_User_ClearILimitActive(Motor_T * p_motor, Motor_ILimitActiveId_T id)
+/*! @return true if cleared */
+bool Motor_User_ClearILimitActive(Motor_T * p_motor, Motor_ILimitActiveId_T id)
 {
-	if(p_motor->ILimitActiveId == id)
+	bool isClear = (p_motor->ILimitActiveId == id);
+	if(isClear == true)
 	{
 		_Motor_User_ClearILimitActive(p_motor);
 		p_motor->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 	}
+	return isClear;
+}
+
+Motor_ILimitActiveId_T Motor_User_GetILimitActive(Motor_T * p_motor)
+{
+	return p_motor->ILimitActiveId;
 }
 
 /******************************************************************************/
@@ -558,18 +561,28 @@ void Motor_UserN_ClearSpeedLimit(Motor_T * p_motor, uint8_t motorCount)
 	}
 }
 
-void Motor_UserN_SetILimitActive(Motor_T * p_motor, uint8_t motorCount, uint16_t limit_frac16, Motor_ILimitActiveId_T id)
+/*! @return true if at least one is set */
+bool Motor_UserN_SetILimitActive(Motor_T * p_motor, uint8_t motorCount, uint16_t limit_frac16, Motor_ILimitActiveId_T id)
 {
+	bool isSet = false;
+
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
 	{
-		Motor_User_SetILimitActive(&p_motor[iMotor], limit_frac16, id);
+		if(Motor_User_SetILimitActive(&p_motor[iMotor], limit_frac16, id) == true) { isSet = true; };
 	}
+
+	return isSet;
 }
 
-void Motor_UserN_ClearILimit(Motor_T * p_motor, uint8_t motorCount, Motor_ILimitActiveId_T id)
+/*! @return true if all are cleared */
+bool Motor_UserN_ClearILimit(Motor_T * p_motor, uint8_t motorCount, Motor_ILimitActiveId_T id)
 {
+	bool isClear = true;
+
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
 	{
-		Motor_User_ClearILimitActive(&p_motor[iMotor], id);
+		if(Motor_User_ClearILimitActive(&p_motor[iMotor], id) == false) { isClear = false; };
 	}
+
+	return isClear;
 }
