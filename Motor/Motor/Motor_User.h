@@ -74,7 +74,7 @@ static inline int32_t _Motor_User_CalcDirectionalCmd(Motor_T * p_motor, int32_t 
 /******************************************************************************/
 static inline void _Motor_User_SetVoltageModeILimit(Motor_T * p_motor, bool isMotoring)
 {
-	int32_t iLimit = (isMotoring == true) ? (p_motor->ILimitMotoring_Frac16 / 2) : (0 - p_motor->ILimitGenerating_Frac16 / 2);
+	int32_t iLimit = (isMotoring == true) ? (p_motor->ILimitMotoring_Frac16 / 3) : (0 - p_motor->ILimitGenerating_Frac16 / 3); /* temp /3, todo account for id */
 	p_motor->VoltageModeILimit_QFracS16 = _Motor_User_CalcDirectionalCmd(p_motor, iLimit); 	/* determine limit input into IxPid */
 }
 
@@ -447,7 +447,7 @@ static inline void Motor_User_SetAlignTime_Millis(Motor_T * p_motor, uint16_t mi
 // static inline void Motor_User_SetVoltageBrakeScalar_Frac16(Motor_T * p_motor, uint16_t scalar_Frac16) 	{ p_motor->Parameters.VoltageBrakeScalar_InvFrac16 = 65535U - scalar_Frac16; }
 
 /* Persistent Control Mode */
-static inline void Motor_User_SetFeedbackModeParam(Motor_T * p_motor, Motor_FeedbackMode_T mode) 	{ p_motor->Parameters.FeedbackMode = mode; }
+static inline void Motor_User_SetFeedbackModeParam(Motor_T * p_motor, Motor_FeedbackMode_T mode) 	{ p_motor->Parameters.FeedbackMode = mode; p_motor->FeedbackModeFlags.Update = 1U; }
 static inline void Motor_User_SetPhaseModeParam(Motor_T * p_motor, Phase_Mode_T mode) 				{ p_motor->Parameters.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->Phase, mode); }
 static inline void Motor_User_SetILimitOnHeatParam(Motor_T * p_motor, uint16_t scalar_Frac16) 		{ p_motor->Parameters.ILimitScalarHeat_Frac16 = scalar_Frac16; }
 
