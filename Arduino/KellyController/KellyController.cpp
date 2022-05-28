@@ -109,7 +109,7 @@ bool KellyController::poll(void)
 		isCapture = false;
 	}
 
-	_MotorCmdr_ProcTxIdle(&motorCmdr);
+	// _MotorCmdr_ProcTxIdle(&motorCmdr);
 
 	return isCapture;
 }

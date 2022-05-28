@@ -70,7 +70,7 @@
 typedef enum MotorController_InputMode_Tag
 {
 	MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
-	MOTOR_CONTROLLER_INPUT_MODE_SERIAL,
+	MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL,
 	MOTOR_CONTROLLER_INPUT_MODE_CAN,
 }
 MotorController_InputMode_T;
@@ -385,14 +385,14 @@ static inline bool MotorController_CheckMotorFaultAll(MotorController_T * p_mc) 
 static inline void MotorController_SetMotorSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_frac16) 	{ Motor_UserN_SetSpeedLimitActive(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, limit_frac16); }
 static inline void MotorController_ClearMotorSpeedLimitAll(MotorController_T * p_mc) 						{ Motor_UserN_ClearSpeedLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 
-static inline void MotorController_SetMotorILimitAll(MotorController_T * p_mc, uint16_t limit_frac16, MotorController_ILimitActiveId_T id)
+static inline bool MotorController_SetMotorILimitAll(MotorController_T * p_mc, uint16_t limit_frac16, MotorController_ILimitActiveId_T id)
 {
-	Motor_UserN_SetILimitActive(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, limit_frac16, (id + MOTOR_I_LIMIT_ACTIVE_SYSTEM));
+	return Motor_UserN_SetILimitActive(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, limit_frac16, (id + MOTOR_I_LIMIT_ACTIVE_SYSTEM));
 }
 
-static inline void MotorController_ClearMotorILimitAll(MotorController_T * p_mc, MotorController_ILimitActiveId_T id)
+static inline bool MotorController_ClearMotorILimitAll(MotorController_T * p_mc, MotorController_ILimitActiveId_T id)
 {
-	Motor_UserN_ClearILimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, (id + MOTOR_I_LIMIT_ACTIVE_SYSTEM));
+	return Motor_UserN_ClearILimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, (id + MOTOR_I_LIMIT_ACTIVE_SYSTEM));
 }
 
 /*

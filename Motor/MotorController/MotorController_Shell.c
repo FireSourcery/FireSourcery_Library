@@ -474,6 +474,8 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 
 	if(argc == 1U)
 	{
+		MotorController_User_ToggleFault(p_mc);
+
 		Terminal_SendString(p_terminal, "FaultFlags [VPos][VAcc][VSense][Pcb][MosTop][MosBot]: ");
 		Terminal_SendNum(p_terminal, p_mc->FaultFlags.VPosLimit);
 		Terminal_SendNum(p_terminal, p_mc->FaultFlags.VAccLimit);
@@ -484,18 +486,18 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 		Terminal_SendString(p_terminal, "\r\n");
 
 		Terminal_SendString(p_terminal, "FaultAdcu:\r\n");
-		Terminal_SendString(p_terminal, "VPos: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VPos_Adcu); 	Terminal_SendString(p_terminal, "\r\n");
-		Terminal_SendString(p_terminal, "VAcc: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VAcc_Adcu); 	Terminal_SendString(p_terminal, "\r\n");
-		Terminal_SendString(p_terminal, "VSense: "); 	Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VSense_Adcu); 	Terminal_SendString(p_terminal, "\r\n");
-		Terminal_SendString(p_terminal, "Pcb: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatPcb_Adcu); 		Terminal_SendString(p_terminal, "Adcu\r\n");
-		Terminal_SendString(p_terminal, "MosTop: "); 	Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatMosfetsTop_Adcu); 	Terminal_SendString(p_terminal, "Adcu\r\n");
-		Terminal_SendString(p_terminal, "MosBot: "); 	Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatMosfetsBot_Adcu); 	Terminal_SendString(p_terminal, "Adcu\r\n");
-		Terminal_SendString(p_terminal, "Pcb: "); 		Terminal_SendNum(p_terminal, Thermistor_ConvertToDegC_Int(&p_mc->ThermistorPcb, p_mc->FaultAnalogRecord.HeatPcb_Adcu, 1U)); 				Terminal_SendString(p_terminal, "DegC\r\n");
-		Terminal_SendString(p_terminal, "MosTop: "); 	Terminal_SendNum(p_terminal, Thermistor_ConvertToDegC_Int(&p_mc->ThermistorMosfetsTop, p_mc->FaultAnalogRecord.HeatMosfetsTop_Adcu, 1U)); 	Terminal_SendString(p_terminal, "DegC\r\n");
-		Terminal_SendString(p_terminal, "MosBot: "); 	Terminal_SendNum(p_terminal, Thermistor_ConvertToDegC_Int(&p_mc->ThermistorMosfetsBot, p_mc->FaultAnalogRecord.HeatMosfetsBot_Adcu, 1U)); 	Terminal_SendString(p_terminal, "DegC\r\n");
-		Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "VPos: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VPos_Adcu); 			Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "VAcc: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VAcc_Adcu); 			Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "VSense: "); 	Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VSense_Adcu); 			Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "Pcb: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatPcb_Adcu); 		Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "MosTop: "); 	Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatMosfetsTop_Adcu); 	Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "MosBot: "); 	Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatMosfetsBot_Adcu); 	Terminal_SendString(p_terminal, "\r\n");
 
-		MotorController_User_ToggleFault(p_mc);
+		Terminal_SendString(p_terminal, "Fault DegC:\r\n");
+		Terminal_SendString(p_terminal, "Pcb: "); 		Terminal_SendNum(p_terminal, Thermistor_ConvertToDegC_Int(&p_mc->ThermistorPcb, p_mc->FaultAnalogRecord.HeatPcb_Adcu, 1U)); 				Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "MosTop: "); 	Terminal_SendNum(p_terminal, Thermistor_ConvertToDegC_Int(&p_mc->ThermistorMosfetsTop, p_mc->FaultAnalogRecord.HeatMosfetsTop_Adcu, 1U)); 	Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "MosBot: "); 	Terminal_SendNum(p_terminal, Thermistor_ConvertToDegC_Int(&p_mc->ThermistorMosfetsBot, p_mc->FaultAnalogRecord.HeatMosfetsBot_Adcu, 1U)); 	Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "\r\n");
 	}
 
 	return CMD_STATUS_SUCCESS;
@@ -825,7 +827,7 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 // 	{
 // 		if(strncmp(argv[1U], "disable", 8U) == 0U)
 // 		{
-// 			p_mc->Parameters.InputMode = MOTOR_CONTROLLER_INPUT_MODE_SERIAL; //tdo
+// 			p_mc->Parameters.InputMode = MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL; //tdo
 // 		}
 // 		else if(strncmp(argv[1U], "enable", 7U) == 0U)
 // 		{

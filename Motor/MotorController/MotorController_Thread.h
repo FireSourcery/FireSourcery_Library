@@ -127,11 +127,16 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 	}
 	else
 	{
-		isWarning = Thermistor_GetIsStatusWarning(&p_mc->ThermistorPcb) || Thermistor_GetIsStatusWarning(&p_mc->ThermistorMosfetsTop) || Thermistor_GetIsStatusWarning(&p_mc->ThermistorMosfetsBot);
+		isWarning = Thermistor_GetIsStatusWarning(&p_mc->ThermistorPcb) ||
+			Thermistor_GetIsStatusWarning(&p_mc->ThermistorMosfetsTop) ||
+			Thermistor_GetIsStatusWarning(&p_mc->ThermistorMosfetsBot);
 
 		if(isWarning == true)
 		{
-			MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnHeat_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT);
+			if(MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnHeat_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT) == true)
+			{
+				Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U);
+			}
 		}
 		else
 		{
@@ -170,12 +175,13 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		switch(p_mc->Parameters.InputMode)
 		{
 			case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_mc);	break;
-			// case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: break;
-			// case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
-			default: //all other protocol modes?
+			case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL:
 				if(MotAnalogUser_PollBrakePinRisingEdge(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
 				if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U])) { MotorController_User_SetFault(p_mc); p_mc->FaultFlags.RxLost = 1U; }
 				break;
+
+			case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
+			default:  break;
 		}
 
 		/* Bypass Isr */
@@ -185,12 +191,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		// 	Serial_PollTxData(&p_mc->CONFIG.P_SERIALS[iSerial]);
 		// }
 
-		//todo check commuinication lost, arbitrate analog user
-		for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++)
-		{
-			Protocol_Proc(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]);
-		}
-
+		for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]); }
 		if(p_mc->Parameters.IsCanEnable == true) { CanBus_ProcServices(p_mc->CONFIG.P_CAN_BUS); }
 	}
 
@@ -205,16 +206,10 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 	if(Timer_Poll(&p_mc->TimerSeconds) == true)
 	{
 		/* In case of Serial Rx Overflow Timeout */
-		for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++)
-		{
-			Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]);
-		}
+		for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]); }
 
 		/* Can use low priority check, as motor is already in fault state */
-		if(MotorController_CheckMotorFaultAll(p_mc) != 0U)
-		{
-			MotorController_User_SetFault(p_mc);
-		}
+		if(MotorController_CheckMotorFaultAll(p_mc) != 0U) { MotorController_User_SetFault(p_mc); }
 
 		_MotorController_ProcOptDin(p_mc);
 	}
@@ -238,9 +233,12 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 	{
 		case VMONITOR_LIMIT_UPPER: p_mc->FaultFlags.VPosLimit = 1U; MotorController_User_SetFault(p_mc); break;
 		case VMONITOR_LIMIT_LOWER: p_mc->FaultFlags.VPosLimit = 1U;	MotorController_User_SetFault(p_mc); break;
-		case VMONITOR_WARNING_UPPER: 	break;
+		case VMONITOR_WARNING_UPPER: break;
 		case VMONITOR_WARNING_LOWER:
-			MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
+			if(MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V) == true)
+			{
+				Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U);
+			}
 			break;
 		case VMONITOR_STATUS_OK:
 			MotorController_ClearMotorILimitAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
@@ -253,10 +251,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 	{
 		_MotorController_ProcHeatMonitor(p_mc);
 		_MotorController_ProcVoltageMonitor(p_mc);
- 		for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
-		{
-			Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
-		}
+ 		for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) {	Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 	}
 }
 
@@ -265,10 +260,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 */
 static inline void MotorController_PWM_Thread(MotorController_T * p_mc)
 {
-	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
-	{
-		Motor_PWM_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
-	}
+	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_PWM_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 }
 
 #endif

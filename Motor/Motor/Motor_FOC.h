@@ -417,7 +417,7 @@ static inline void Motor_FOC_ResumeAngleControl(Motor_T * p_motor)
 		SpeedVMatch_Factor = SpeedFeedbackRef_Rpm << 14 / SpeedVMatchRef_Rpm
 		vqReq = (p_motor->SpeedFeedback_Frac16 * SpeedVMatch_Factor >> 14) / 2
 	*/
-	vqReq = Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16) / 2;	// vqReq = p_motor->SpeedFeedback_Frac16 / 2;
+	vqReq = Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16 / 2);	// vqReq = p_motor->SpeedFeedback_Frac16 / 2;
 	Motor_FOC_SetMatchOutput(p_motor, 0, vqReq, 0);
 
 	_Motor_FOC_ActivateAngle(p_motor);

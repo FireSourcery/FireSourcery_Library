@@ -351,9 +351,9 @@ static inline int32_t Motor_User_GetIPhase_Frac16(Motor_T * p_motor)
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		// iPhase = Motor_FOC_GetIMagnitude_Frac16(p_motor);  //or use iq?
+		iPhase = Motor_FOC_GetIMagnitude_Frac16(p_motor);  //or use iq?
 		// if(p_motor->Direction == MOTOR_DIRECTION_CW) { iPhase = 0 - iPhase; }
-		iPhase = FOC_GetIq(&p_motor->Foc) * 2;
+		// iPhase = FOC_GetIq(&p_motor->Foc) * 2;
 	}
 	else
 	{
@@ -483,10 +483,10 @@ extern void Motor_User_SetSpeedLimitActive(Motor_T * p_motor, uint16_t scalar_fr
 extern void Motor_User_ClearSpeedLimitActive(Motor_T * p_motor);
 // extern bool Motor_User_SetSpeedLimitActive_Id(Motor_T * p_motor, uint16_t scalar_frac16, Motor_SpeedLimitActiveId_T id);
 // extern void Motor_User_ClearSpeedLimitActive_Id(Motor_T * p_motor, Motor_SpeedLimitActiveId_T id);
-extern bool _Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16);
+extern void _Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16);
 extern void _Motor_User_ClearLimitActive(Motor_T * p_motor);
 extern bool Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16, Motor_ILimitActiveId_T id);
-extern void Motor_User_ClearILimitActive(Motor_T * p_motor, Motor_ILimitActiveId_T id);
+extern bool Motor_User_ClearILimitActive(Motor_T * p_motor, Motor_ILimitActiveId_T id);
 
 extern void Motor_User_SetILimitParam_Amp(Motor_T * p_motor, uint16_t motoring_Amp, uint16_t generating_Amp);
 extern void Motor_User_SetSpeedLimitParam_Rpm(Motor_T * p_motor, uint16_t forward_Rpm, uint16_t reverse_Rpm);
@@ -519,7 +519,7 @@ extern void Motor_UserN_SetRegenCmd(Motor_T * p_motor, uint8_t motorCount, uint1
 
 extern void Motor_UserN_SetSpeedLimitActive(Motor_T * p_motor, uint8_t motorCount, uint16_t limit_frac16);
 extern void Motor_UserN_ClearSpeedLimit(Motor_T * p_motor, uint8_t motorCount);
-extern void Motor_UserN_SetILimitActive(Motor_T * p_motor, uint8_t motorCount, uint16_t limit_frac16, Motor_ILimitActiveId_T id);
-extern void Motor_UserN_ClearILimit(Motor_T * p_motor, uint8_t motorCount, Motor_ILimitActiveId_T id);
+extern bool Motor_UserN_SetILimitActive(Motor_T * p_motor, uint8_t motorCount, uint16_t limit_frac16, Motor_ILimitActiveId_T id);
+extern bool Motor_UserN_ClearILimit(Motor_T * p_motor, uint8_t motorCount, Motor_ILimitActiveId_T id);
 
 #endif

@@ -83,10 +83,8 @@ Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t adcu
 	{
 		status = PollTheshold(p_therm, adcu);
 
-		if((status == THERMISTOR_STATUS_OK) && (adcu < p_therm->Params.Warning_Adcu))
-		{
-			status = THERMISTOR_WARNING;
-		}
+		/* adcu over warning */
+		if((status == THERMISTOR_STATUS_OK) && (adcu < p_therm->Params.Warning_Adcu)) { status = THERMISTOR_WARNING; }
 	}
 
 	p_therm->Status = status;
