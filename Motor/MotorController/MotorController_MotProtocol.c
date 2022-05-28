@@ -128,7 +128,7 @@ static void Req_Monitor(MotorController_T * p_mc, MotPacket_MonitorResp_T * p_tx
 
 	switch(p_rxPacket->MonitorReq.MonitorId)
 	{
-		case MOT_PROTOCOL_MONITOR_SPEED: *p_txSize = MotPacket_MonitorResp_Speed_Build(p_txPacket, Motor_User_GetSpeed_Fixed32(p_motor)); 												break;
+		case MOT_PROTOCOL_MONITOR_SPEED: *p_txSize = MotPacket_MonitorResp_Speed_Build(p_txPacket, Motor_User_GetSpeed_Frac16(p_motor)); 												break;
 		case MOT_PROTOCOL_MONITOR_I_FOC:
 			*p_txSize = MotPacket_MonitorResp_IFoc_Build
 			(
