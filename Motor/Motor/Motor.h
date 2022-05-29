@@ -290,7 +290,7 @@ typedef const struct Motor_Init_Tag
 	const uint16_t UNIT_VABC_R2;
 
 	const uint16_t I_MAX_AMP; /*  Motor I controller rating. pass to Linear_ADC.  Unit conversion, ui output and param set. static across instances */
-	const uint16_t I_SENSOR_PEAK_LIMIT_ADCU;
+	const uint16_t I_SENSOR_PEAK_ADCU;
 
 	AnalogN_T * const P_ANALOG_N;
 	const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;

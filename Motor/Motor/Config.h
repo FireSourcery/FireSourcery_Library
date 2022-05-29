@@ -37,25 +37,30 @@
 #endif
 
 #if 	defined(CONFIG_MOTOR_I_SENSORS_NONINVERT)
-#elif 	defined(CONFIG_MOTOR_I_SENSORS_INVERT) 
+#elif 	defined(CONFIG_MOTOR_I_SENSORS_INVERT)
 #else
 	#define	CONFIG_MOTOR_I_SENSORS_INVERT
 #endif
 
 #if 	defined(CONFIG_MOTOR_I_SENSORS_AB)
-#elif 	defined(CONFIG_MOTOR_I_SENSORS_ABC) 
+#elif 	defined(CONFIG_MOTOR_I_SENSORS_ABC)
 #else
 	#define	CONFIG_MOTOR_I_SENSORS_ABC
 #endif
 
-#if 	defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) 
-#elif 	defined(CONFIG_MOTOR_V_SENSORS_ADC) 
+// #if 	defined(CONFIG_MOTOR_I_SENSORS_REF_PEAK_ADCU)
+// #else
+// 	#error "MOTOR: undefined CONFIG_MOTOR_I_SENSORS_REF_PEAK_ADCU"
+// #endif
+
+#if 	defined(CONFIG_MOTOR_V_SENSORS_ISOLATED)
+#elif 	defined(CONFIG_MOTOR_V_SENSORS_ADC)
 #else
 	#define	CONFIG_MOTOR_V_SENSORS_ADC
 #endif
 
-#if   defined(ADC_BITS) 
-#else  
+#if   defined(ADC_BITS)
+#else
 	#define ADC_BITS 		12U
 #endif
 

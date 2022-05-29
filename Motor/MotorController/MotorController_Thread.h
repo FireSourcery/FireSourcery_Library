@@ -177,7 +177,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 			case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_mc);	break;
 			case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL:
 				if(MotAnalogUser_PollBrakePinRisingEdge(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
-				if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U])) { MotorController_User_SetFault(p_mc); p_mc->FaultFlags.RxLost = 1U; }
+				// if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U])) { MotorController_User_SetFault(p_mc); p_mc->FaultFlags.RxLost = 1U; }
 				break;
 
 			case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
@@ -209,7 +209,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]); }
 
 		/* Can use low priority check, as motor is already in fault state */
-		if(MotorController_CheckMotorFaultAll(p_mc) != 0U) { MotorController_User_SetFault(p_mc); }
+		if(MotorController_CheckMotorFaultAll(p_mc) != 0U) {  p_mc->FaultFlags.Motors = 1U; MotorController_User_SetFault(p_mc); }
 
 		_MotorController_ProcOptDin(p_mc);
 	}

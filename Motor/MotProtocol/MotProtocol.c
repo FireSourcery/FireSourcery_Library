@@ -114,7 +114,7 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 	Cmdr side only
 */
 /******************************************************************************/
-Protocol_RxCode_T MotProtocol_CheckPacket(const MotPacket_T * p_rxPacket) //general version might need include rxlength
+Protocol_RxCode_T MotProtocol_CheckRxPacket(const MotPacket_T * p_rxPacket) //general version might need include rxlength
 {
 	return (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_COMPLETE : PROTOCOL_RX_CODE_ERROR;
 }

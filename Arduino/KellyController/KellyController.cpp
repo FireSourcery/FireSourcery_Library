@@ -105,7 +105,7 @@ bool KellyController::poll(void)
 	}
 	else
 	{
-		p_serial->flush();
+		// p_serial->flush();
 		isCapture = false;
 	}
 

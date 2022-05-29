@@ -70,6 +70,7 @@ typedef struct Thermistor_Config_Tag
 	const Thermistor_Params_T * P_PARAMS;
 	uint32_t R_SERIES; 		/* Pull-up */
 	uint32_t R_PARALLEL; 	/* Parallel pull-down if applicable */
+	//bool IS_FIXED
 }
 Thermistor_Config_T;
 

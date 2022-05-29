@@ -58,6 +58,8 @@ static StateMachine_State_T * TransitionFault(MotorController_T * p_mc) { (void)
 /******************************************************************************/
 /*!
 	@brief  State
+
+	Initially Fault flags are set by adc, but init does not tranisition to fault
 */
 /******************************************************************************/
 static StateMachine_State_T * Init_InputDirection(MotorController_T * p_mc)
@@ -102,7 +104,7 @@ static void Init_Proc(MotorController_T * p_mc)
 {
 	(void)p_mc;
 // _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP);
-// if(Timer_GetBase(&p_mc->TimerMillis) > 50U) 	//wait 50ms for debounce, may need preinit
+// if(Timer_GetBase(&p_mc->TimerMillis) > 50U) 	//wait 50ms for adc , may need preinit
 // {
 
 // }
@@ -452,23 +454,22 @@ static const StateMachine_State_T STATE_RUN =
 	@brief  State
 */
 /******************************************************************************/
+
+/* Sensor faults only clear on user input */
 static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc)
 {
-	bool isClear = (Motor_UserN_ClearFault(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT) == true);
+	bool isClear;
 
-	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense) == true) 			{ isClear = false; }
-	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc) == true) 				{ isClear = false; }
-	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorPos) == true) 				{ isClear = false; }
-	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorPcb) == true) 			{ isClear = false; }
-	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsTop) == true) 	{ isClear = false; }
-	if(Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsBot) == true) 	{ isClear = false; }
-	if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]) == true) 		{ isClear = false; }
+	p_mc->FaultFlags.Motors 				= (Motor_UserN_ClearFault(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT) == false);
+	p_mc->FaultFlags.VSenseLimit 			= VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense);
+	p_mc->FaultFlags.VAccLimit 				= VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc);
+	p_mc->FaultFlags.VPosLimit 				= VMonitor_GetIsStatusLimit(&p_mc->VMonitorPos);
+	p_mc->FaultFlags.PcbOverHeat 			= Thermistor_GetIsStatusLimit(&p_mc->ThermistorPcb);
+	p_mc->FaultFlags.MosfetsTopOverHeat 	= Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsTop);
+	p_mc->FaultFlags.MosfetsBotOverHeat 	= Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsBot);
 
-	if(isClear == true)
-	{
-		Blinky_Stop(&p_mc->Buzzer);
-		p_mc->FaultFlags.State = 0U;
-	}
+	if(p_mc->FaultFlags.State != 0U) { isClear = false; }
+	if(isClear == true) { Blinky_Stop(&p_mc->Buzzer); }
 
 	return (isClear == true) ? &STATE_STOP : 0U;
 }
@@ -496,7 +497,19 @@ static void Fault_Entry(MotorController_T * p_mc)
 
 static void Fault_Proc(MotorController_T * p_mc)
 {
+	// static const MotorController_FaultFlags_T RX_LOST_FLAG = { .RxLost = 1U, };
 	MotorController_DisableMotorAll(p_mc);
+
+	switch(p_mc->Parameters.InputMode)
+	{
+		case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL:
+			p_mc->FaultFlags.RxLost = Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]); 	/* Protocol Rx Lost use auto recover, without user input */
+			break;
+		case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
+		default:  break;
+	}
+
+	if(p_mc->FaultFlags.State != 0U) { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP); }
 }
 
 static const StateMachine_State_T STATE_FAULT =

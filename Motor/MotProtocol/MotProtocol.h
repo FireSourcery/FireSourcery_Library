@@ -51,7 +51,7 @@ extern void MotProtocol_ResetExt(MotProtocol_Substate_T * p_subState);
 	Cmdr side only
 */
 /******************************************************************************/
-extern Protocol_RxCode_T MotProtocol_CheckPacket(const MotPacket_T * p_rxPacket);
+extern Protocol_RxCode_T MotProtocol_CheckRxPacket(const MotPacket_T * p_rxPacket);
 
 /******************************************************************************/
 /*!

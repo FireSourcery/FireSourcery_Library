@@ -158,7 +158,7 @@ static void Monitor_ParseResp(MotorCmdr_T * p_app, const MotPacket_MonitorResp_T
 /******************************************************************************/
 static void WriteImmediate_BuildReq(MotPacket_WriteImmediateReq_T * p_txPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
 {
-	*p_txLength = MotPacket_WriteImmediateReq_Build(p_txPacket, p_app->MotorReadWriteVarId, );
+	*p_txLength = MotPacket_WriteImmediateReq_Build(p_txPacket, p_app->MotorReadWriteVarId, p_app->MotorReadWriteVarValue);
 	*p_respLength = MotPacket_WriteImmediateReq_GetRespLength();
 }
 
@@ -188,14 +188,14 @@ static void ReadImmediate_ParseResp(MotorCmdr_T * p_app, const MotPacket_ReadImm
 */
 static const Protocol_Cmdr_Req_T CMDR_REQ_TABLE[] =
 {
-	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_STOP_ALL, 			StopAll_BuildReq, 		StopAll_ParseResp, 		PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_PING, 				Ping_BuildReq, 			Ping_ParseResp, 		PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_CMD_CONTROL_TYPE, 	Control_BuildReq, 		Control_ParseResp, 		PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_CMD_MONITOR_TYPE, 	Monitor_BuildReq, 		Monitor_ParseResp, 		PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_CMD_INIT_UNITS, 		InitUnits_BuildReq, 	InitUnits_ParseResp, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_CMD_SAVE_NVM, 		SaveNvm_BuildReq, 		SaveNvm_ParseResp, 		PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_CMD_WRITE_IMMEDIATE, 	0U, 					0U, 					PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_CMD_READ_IMMEDIATE, 	0U, 					0U, 					PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_STOP_ALL, 			StopAll_BuildReq, 			StopAll_ParseResp, 			PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_PING, 				Ping_BuildReq, 				Ping_ParseResp, 			PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_CMD_CONTROL_TYPE, 	Control_BuildReq, 			Control_ParseResp, 			PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_CMD_MONITOR_TYPE, 	Monitor_BuildReq, 			Monitor_ParseResp, 			PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_CMD_INIT_UNITS, 		InitUnits_BuildReq, 		InitUnits_ParseResp, 		PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_CMD_SAVE_NVM, 		SaveNvm_BuildReq, 			SaveNvm_ParseResp, 			PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_CMD_WRITE_IMMEDIATE, 	WriteImmediate_BuildReq, 	WriteImmediate_ParseResp, 	PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_CMDR_REQ_DEFINE(MOT_PROTOCOL_CMD_READ_IMMEDIATE, 	ReadImmediate_BuildReq, 	ReadImmediate_ParseResp, 	PROTOCOL_SYNC_ID_DISABLE),
 
 };
 
@@ -203,9 +203,9 @@ const Protocol_Specs_T MOTOR_CMDR_MOT_PROTOCOL_SPECS =
 {
 	.RX_LENGTH_MIN 	= MOT_PACKET_LENGTH_MIN,
 	.RX_LENGTH_MAX 	= MOT_PACKET_LENGTH_MAX,
-	.RX_TIMEOUT 	= MOT_PROTOCOL_TIMEOUT_MS,
+	// .RX_TIMEOUT 	= MOT_PROTOCOL_TIMEOUT_MS,
 	//.RX_TIMEOUT_BYTE =  ,
-	.CHECK_PACKET 	= (Protocol_CheckPacket_T)MotProtocol_CheckPacket, //todo check
+	.CHECK_PACKET 	= (Protocol_CheckPacket_T)MotProtocol_CheckRxPacket, //todo check
 
 	.P_REQ_TABLE 		= &CMDR_REQ_TABLE[0U],
 	.REQ_TABLE_LENGTH 	= sizeof(CMDR_REQ_TABLE)/sizeof(Protocol_Cmdr_Req_T),

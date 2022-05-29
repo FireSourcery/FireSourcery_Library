@@ -233,7 +233,6 @@ static void ResetReqState(Protocol_T * p_protocol)
 	p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_REQ_ID;
 	if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_SUBSTATE_BUFFER); }
 	p_protocol->NackCount = 0U;
-	p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER); /* reset timer for RxLost  */
 }
 
 static bool TxPacket(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length)
@@ -287,6 +286,7 @@ static const Protocol_Req_T * SearchReqTable(Protocol_Req_T * p_reqTable, size_t
 
 /*
 	Handle user Req/Cmd function
+	ReqTimeStart resets for all expected behaviors
 */
 static inline void ProcReqState(Protocol_T * p_protocol)
 {
@@ -302,12 +302,12 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 		}
 		else if(p_protocol->RxCode == PROTOCOL_RX_CODE_ABORT)
 		{
+			p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER); /* reset timer for RxLost  */
 			ResetReqState(p_protocol);
 		}
 		else if(p_protocol->RxCode == PROTOCOL_RX_CODE_COMPLETE)
 		{
 			p_protocol->NackCount = 0U;
-			// p_protocol->RxReqCompleteTime = *p_protocol->CONFIG.P_TIMER;
 		}
 	}
 
@@ -338,7 +338,6 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 					if(p_protocol->p_ReqActive->PROC_EXT != 0U)
 					{
 						if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_SUBSTATE_BUFFER); }
-						// p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER); /* Reset timer on packet reception */
 						p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_PROCESS;
 					}
 					else if(p_protocol->p_ReqActive->SYNC.RX_ACK == true)
@@ -384,6 +383,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 		case PROTOCOL_REQ_STATE_WAIT_RX_SYNC_FINAL:
 			if(ProcReqWaitRxSync(p_protocol) == PROTOCOL_RX_CODE_ACK)
 			{
+				p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER);
 				ResetReqState(p_protocol);
 			}
 			break;
@@ -401,9 +401,11 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 				p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex
 			);
 
+			if(reqStatus != PROTOCOL_REQ_CODE_WAIT_PROCESS) { p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER); }
 			switch(reqStatus)
 			{
 				case PROTOCOL_REQ_CODE_WAIT_PROCESS: break;			/* Timer ticking */
+				case PROTOCOL_REQ_CODE_WAIT_PROCESS_EXTEND_TIMER: p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER); break;
 				case PROTOCOL_REQ_CODE_COMPLETE:
 					if(p_protocol->p_ReqActive->SYNC.RX_ACK == true) { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC_FINAL; }
 					else { ResetReqState(p_protocol); }
@@ -411,7 +413,6 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 
 				case PROTOCOL_REQ_CODE_AWAIT_RX_SYNC:				p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC;					break;
 				case PROTOCOL_REQ_CODE_AWAIT_RX_REQ_EXT:			p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_REQ_EXT;				break;
-				case PROTOCOL_REQ_CODE_WAIT_PROCESS_EXTEND_TIMER:	p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER);				break;
 
 				/*
 					Separate tx data state vs tx on user return txlength > 0
@@ -441,6 +442,11 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 
 		default: break;
 
+	}
+
+	if((p_protocol->ReqState != PROTOCOL_REQ_STATE_INACTIVE))
+	{
+		p_protocol->RxCode = PROTOCOL_RX_CODE_WAIT_PACKET;
 	}
 }
 
@@ -481,7 +487,8 @@ void Protocol_Proc(Protocol_T * p_protocol)
 /*! @return true if RxLostTime reached, a sucessful Req has not occured */
 bool Protocol_CheckRxLost(Protocol_T * p_protocol)
 {
-	return (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.RxLostTime);
+	/* Check one, RxState or ReqState == STATE_INACTIVE */
+	return (p_protocol->ReqState != PROTOCOL_REQ_STATE_INACTIVE) ? (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.RxLostTime) : false;
 }
 
 void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId)
