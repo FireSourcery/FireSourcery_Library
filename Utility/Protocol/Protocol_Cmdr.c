@@ -72,7 +72,7 @@ size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_reqid_t cmdId
 */
 bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol)
 {
-	bool isTimeout = (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart < p_protocol->p_Specs->REQ_TIMEOUT);
+	bool isTimeout = (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->p_Specs->REQ_TIMEOUT);
 	if(isTimeout == true)
 	{
 		p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
@@ -86,7 +86,7 @@ bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol)
 */
 bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 {
-	Protocol_RxCode_T rxStatus = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER);
+	Protocol_RxCode_T rxStatus = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->ReqIdActive);
 
 	if(rxStatus == PROTOCOL_RX_CODE_COMPLETE)
 	{
@@ -96,7 +96,14 @@ bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 	}
 	else if(rxStatus == PROTOCOL_RX_CODE_ERROR)
 	{
-		p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
+		// if (p_protocol->NackCount < p_protocol->p_Specs->SYNC.NACK_REPEAT)
+		// {
+		// 	p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
+		// }
+		// else
+		{
+			p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
+		}
 	}
 
 	return (rxStatus == PROTOCOL_RX_CODE_COMPLETE);

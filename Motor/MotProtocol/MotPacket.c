@@ -64,7 +64,7 @@ bool MotPacket_CheckChecksum(const MotPacket_T * p_packet)
 static uint8_t Packet_BuildHeader(MotPacket_T * p_packet, MotPacket_HeaderId_T headerId, uint8_t payloadLength, uint8_t status)
 {
 	p_packet->Header.Start = MOT_PACKET_START_BYTE;
-	p_packet->Header.TypeId = headerId;
+	p_packet->Header.HeaderId = headerId;
 	p_packet->Header.Length = payloadLength;
 	p_packet->Header.Status = status;
 	p_packet->Header.Crc = Packet_CalcChecksum(p_packet);

@@ -82,7 +82,7 @@ typedef Protocol_RxCode_T(*Protocol_ParseRxMeta_T)(protocol_reqid_t * p_reqId, s
 	Cmdr side check packet only
 */
 /******************************************************************************/
-typedef Protocol_RxCode_T(*Protocol_CheckPacket_T)(const uint8_t * p_rxPacket);
+typedef Protocol_RxCode_T(*Protocol_CheckPacket_T)(const uint8_t * p_rxPacket, protocol_reqid_t activeReqId);
 
 /******************************************************************************/
 /*!

@@ -74,17 +74,17 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 
 	if(rxCount >= p_rxPacket->Header.Length + sizeof(MotPacket_Header_T)) // if(rxCount >= 3U) && (rxCount >= p_rxPacket->Header.Length + sizeof(MotPacket_Header_T))
 	{
-		*p_reqId = p_rxPacket->Header.TypeId;
+		*p_reqId = p_rxPacket->Header.HeaderId;
 		rxCode = (MotPacket_CheckChecksum(p_rxPacket)) ? PROTOCOL_RX_CODE_COMPLETE : PROTOCOL_RX_CODE_ERROR;
 
 		// optionally further refine cmd
 		// if(rxCount >= p_rxPacket->Header.Length + sizeof(MotPacket_Header_T))
 		// {
-		// 	switch(p_rxPacket->Header.TypeId)
+		// 	switch(p_rxPacket->Header.HeaderId)
 		// 	{
 		// 		case MOT_PROTOCOL_CMD_MONITOR_TYPE: *p_reqId =; break;
 		// 		case MOT_PROTOCOL_CMD_CONTROL_TYPE: *p_reqId =; break;
-		// 		default: *p_reqId = p_rxPacket->Header.TypeId; break;
+		// 		default: *p_reqId = p_rxPacket->Header.HeaderId; break;
 		// 	}
 		// }
 	}
@@ -95,9 +95,9 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 	}
 	else if(rxCount >= MOT_PACKET_LENGTH_MIN)
 	{
-		switch(p_rxPacket->Header.TypeId)
+		switch(p_rxPacket->Header.HeaderId)
 		{
-			case MOT_PROTOCOL_STOP_ALL:	rxCode = PROTOCOL_RX_CODE_COMPLETE; *p_reqId = MOT_PROTOCOL_STOP_ALL;	break;
+			case MOT_PROTOCOL_STOP_ALL:		rxCode = PROTOCOL_RX_CODE_COMPLETE; *p_reqId = MOT_PROTOCOL_STOP_ALL;	break;
 			case MOT_PROTOCOL_PING:			rxCode = PROTOCOL_RX_CODE_COMPLETE; *p_reqId = MOT_PROTOCOL_PING;			break;
 			case MOT_PROTOCOL_SYNC_ACK:		rxCode = PROTOCOL_RX_CODE_ACK; 				break;
 			case MOT_PROTOCOL_SYNC_NACK:	rxCode = PROTOCOL_RX_CODE_NACK; 			break;
@@ -114,7 +114,7 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 	Cmdr side only
 */
 /******************************************************************************/
-Protocol_RxCode_T MotProtocol_CheckRxPacket(const MotPacket_T * p_rxPacket) //general version might need include rxlength
+Protocol_RxCode_T MotProtocol_CheckRxPacket(const MotPacket_T * p_rxPacket, protocol_reqid_t activeReqId) //general version might need include rxlength
 {
-	return (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_COMPLETE : PROTOCOL_RX_CODE_ERROR;
+	return ((MotPacket_CheckChecksum(p_rxPacket) == true) && (p_rxPacket->Header.HeaderId  == activeReqId)) ? PROTOCOL_RX_CODE_COMPLETE : PROTOCOL_RX_CODE_ERROR;
 }

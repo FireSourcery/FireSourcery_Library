@@ -48,16 +48,18 @@ extern void MotProtocol_ResetExt(MotProtocol_Substate_T * p_subState);
 
 /******************************************************************************/
 /*!
-	Cmdr side only
-*/
-/******************************************************************************/
-extern Protocol_RxCode_T MotProtocol_CheckRxPacket(const MotPacket_T * p_rxPacket);
-
-/******************************************************************************/
-/*!
 	Ctrlr side only
 */
 /******************************************************************************/
 extern Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p_rxRemaining, const MotPacket_T * p_rxPacket, size_t rxCount);
+
+/******************************************************************************/
+/*!
+	Cmdr side only
+*/
+/******************************************************************************/
+extern Protocol_RxCode_T MotProtocol_CheckRxPacket(const MotPacket_T * p_rxPacket, protocol_reqid_t activeReqId);
+
+
 
 #endif

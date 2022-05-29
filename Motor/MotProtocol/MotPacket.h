@@ -108,7 +108,7 @@ MotPacket_HeaderStatus_T;
 typedef struct MotPacket_Header_Tag
 {
 	uint8_t Start;
-	uint8_t TypeId; /* MotPacket_HeaderId_T - Cmd / Descriptor of packet contents */
+	uint8_t HeaderId; /* MotPacket_HeaderId_T - Cmd / Descriptor of packet contents */
 	uint8_t Length; /* Payload Length */
 	uint8_t Status; /* Optional Status */
 	uint16_t Crc;

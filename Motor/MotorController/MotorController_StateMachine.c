@@ -458,8 +458,6 @@ static const StateMachine_State_T STATE_RUN =
 /* Sensor faults only clear on user input */
 static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc)
 {
-	bool isClear;
-
 	p_mc->FaultFlags.Motors 				= (Motor_UserN_ClearFault(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT) == false);
 	p_mc->FaultFlags.VSenseLimit 			= VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense);
 	p_mc->FaultFlags.VAccLimit 				= VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc);
@@ -468,10 +466,10 @@ static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc)
 	p_mc->FaultFlags.MosfetsTopOverHeat 	= Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsTop);
 	p_mc->FaultFlags.MosfetsBotOverHeat 	= Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsBot);
 
-	if(p_mc->FaultFlags.State != 0U) { isClear = false; }
-	if(isClear == true) { Blinky_Stop(&p_mc->Buzzer); }
+	if(p_mc->FaultFlags.State == 0U) { Blinky_Stop(&p_mc->Buzzer); }
+	// return (p_mc->FaultFlags.State != 0U) ? &STATE_STOP : 0U;
 
-	return (isClear == true) ? &STATE_STOP : 0U;
+	return 0U;
 }
 
 static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
@@ -509,7 +507,7 @@ static void Fault_Proc(MotorController_T * p_mc)
 		default:  break;
 	}
 
-	if(p_mc->FaultFlags.State != 0U) { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP); }
+	if(p_mc->FaultFlags.State == 0U) { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP); }
 }
 
 static const StateMachine_State_T STATE_FAULT =
