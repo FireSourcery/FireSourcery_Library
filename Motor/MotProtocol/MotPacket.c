@@ -268,7 +268,7 @@ uint8_t MotPacket_ControlReq_GetRespLength(MotPacket_ControlId_T controlId)
 {
 	/* Status response only */
 	(void)controlId;
-	return 2U;
+	return 2U + sizeof(MotPacket_Header_T);
 
 	/* Per Var Status */
 	// switch(p_interface->ReqControl.ControlId)
@@ -307,7 +307,7 @@ uint8_t MotPacket_MonitorReq_GetRespLength(MotPacket_MonitorId_T monitorId)
 		default: respPayloadLength = 0U; break;
 	}
 
-	return respPayloadLength;
+	return respPayloadLength + sizeof(MotPacket_Header_T);
 }
 
 /*!

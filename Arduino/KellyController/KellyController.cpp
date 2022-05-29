@@ -97,6 +97,7 @@ bool KellyController::poll(void)
 		{
 			p_serial->readBytes(_MotorCmdr_GetPtrRxPacket(&motorCmdr), _MotorCmdr_GetRespLength(&motorCmdr));
 			isCapture =_MotorCmdr_CaptureResp(&motorCmdr); /* new data is ready, returns false if crc error */
+			// isCapture = true;
 		}
 		else
 		{

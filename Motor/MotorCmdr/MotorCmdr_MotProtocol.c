@@ -143,7 +143,7 @@ static void Monitor_BuildReq(MotPacket_MonitorReq_T * p_txPacket, size_t * p_txL
 static void Monitor_ParseResp(MotorCmdr_T * p_app, const MotPacket_MonitorResp_T * p_rxPacket)
 {
 	// p_app->RespStatus =
-	switch(p_app->MonitorIdActive) /* todo check monitor req must be active req */
+	switch(p_app->MonitorIdActive)
 	{
 		case MOT_PROTOCOL_MONITOR_SPEED: MotPacket_MonitorResp_Speed_Parse(&p_app->Speed, p_rxPacket); 		break;
 		case MOT_PROTOCOL_MONITOR_I_FOC:
@@ -205,7 +205,7 @@ const Protocol_Specs_T MOTOR_CMDR_MOT_PROTOCOL_SPECS =
 	.RX_LENGTH_MAX 	= MOT_PACKET_LENGTH_MAX,
 	// .RX_TIMEOUT 	= MOT_PROTOCOL_TIMEOUT_MS,
 	//.RX_TIMEOUT_BYTE =  ,
-	.CHECK_PACKET 	= (Protocol_CheckPacket_T)MotProtocol_CheckRxPacket, //todo check
+	.CHECK_PACKET 	= (Protocol_CheckPacket_T)MotProtocol_CheckRxPacket,
 
 	.P_REQ_TABLE 		= &CMDR_REQ_TABLE[0U],
 	.REQ_TABLE_LENGTH 	= sizeof(CMDR_REQ_TABLE)/sizeof(Protocol_Cmdr_Req_T),
