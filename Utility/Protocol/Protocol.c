@@ -65,38 +65,40 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 {
 	Protocol_RxCode_T rxStatus = PROTOCOL_RX_CODE_WAIT_PACKET;
 	uint8_t rxLength;
-	uint8_t rxLimit;
+	uint8_t rxLimit; /* Check packet after this number is recieved */
 
-	while(p_protocol->RxIndex < p_protocol->p_Specs->RX_LENGTH_MAX)
+	while(p_protocol->RxIndex < p_protocol->p_Specs->RX_LENGTH_MAX) /* p_Specs->RX_LENGTH_MAX < CONFIG.PACKET_BUFFER_LENGTH */
 	{
-		/* Set rxLimit to check completion before reading byte from following packet */
-		if(p_protocol->RxRemaining == RX_REMAINING_MAX) /* Check 1 byte (or upto RX_LENGTH_MIN at a time) until Length remaining is known */
+		/* Set rxLimit for check completion. Prevent reading byte from following packet */
+		if(p_protocol->RxRemaining == RX_REMAINING_MAX) /* RxRemaining unknown - Check 1 byte or upto RX_LENGTH_MIN at a time, until RxRemaining is known */
 		{
 			rxLimit = (p_protocol->RxIndex < p_protocol->p_Specs->RX_LENGTH_MIN) ? p_protocol->p_Specs->RX_LENGTH_MIN - p_protocol->RxIndex : 1U;
 		}
-		else /* Check RxRemaining */
+		else /*  RxRemaining known - Check RxRemaining */
 		{
 			rxLimit = p_protocol->RxRemaining;
 		}
 
 		rxLength = Xcvr_Rx(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], rxLimit); /* Rx up to rxLimit */
 
-		if(rxLength > 0U)
-		{
-			p_protocol->RxIndex += rxLength;
+		p_protocol->RxIndex += rxLength;
 
-			if(p_protocol->RxIndex >= p_protocol->p_Specs->RX_LENGTH_MIN)
+		if(rxLength == rxLimit)
+		{
+			// if(p_protocol->RxIndex >= p_protocol->p_Specs->RX_LENGTH_MIN)
 			{
-				rxStatus = p_protocol->p_Specs->PARSE_RX_META
-				(
-					&p_protocol->ReqIdActive, &p_protocol->RxRemaining,
-					p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex
-				);
-				if(rxStatus != PROTOCOL_RX_CODE_WAIT_PACKET) { break; } /* Packet is complete, Req, ReqExt or Sync */
+			rxStatus = p_protocol->p_Specs->PARSE_RX_META
+			(
+				&p_protocol->ReqIdActive, &p_protocol->RxRemaining,
+				p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex
+			);
+
+			if(rxStatus != PROTOCOL_RX_CODE_WAIT_PACKET) { break; } /* Packet is complete => Req, ReqExt or Sync, or Error */
 			}
 		}
-		else /*  Rx Buffer empty, wait for Xcvr_Rx */
+		else /*  rxLength < rxLimit, Rx Buffer empty, wait for Xcvr_Rx */
 		{
+			if(p_protocol->RxRemaining != RX_REMAINING_MAX) { p_protocol->RxRemaining -= rxLength; } /* If RxRemaining is known */
 			break;
 		}
 	}
@@ -132,12 +134,13 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 					Use starting byte even if data is unencoded. first char can still be handled in separate state.
 					Unencoded still discards Rx chars until starting ID
 				*/
-				if((p_protocol->p_Specs->RX_START_ID == 0x00U) || (p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U] == p_protocol->p_Specs->RX_START_ID))
+				if((p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U] == p_protocol->p_Specs->RX_START_ID) || (p_protocol->p_Specs->RX_START_ID == 0x00U))
 				{
 					p_protocol->RxIndex = 1U;
 					p_protocol->RxRemaining = RX_REMAINING_MAX;
 					p_protocol->RxTimeStart = *(p_protocol->CONFIG.P_TIMER);
 					p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
+					p_protocol->RxCode = PROTOCOL_RX_CODE_WAIT_PACKET; /* Should already be set */
 				}
 			}
 			break;
@@ -148,10 +151,11 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 				p_protocol->RxCode = BuildRxPacket(p_protocol);
 
 				/*
-					Continue BuildRxPacket while Req is processsing
+					Continue BuildRxPacket during ReqExt processsing
 					Rx can queue out of sequence. Invalid Rx sequence until timeout buffer flush
+					Rx Buffer will be overwritten, Req ensure packet data is processed, or set Rx to wait signal
 
-					Alternatively, pause BuildRxPacket during Req processing
+					Alternatively, pause BuildRxPacket during ReqExt processing
 					Incoming packet bytes wait in queue. Cannot miss packets (unless overflow)
 					Cannot check for Abort without user signal, persistent wait process
 				*/
@@ -168,11 +172,9 @@ static inline void ProcRxState(Protocol_T * p_protocol)
 						p_protocol->NackCount++;
 						p_protocol->RxTimeStart = *(p_protocol->CONFIG.P_TIMER);
 					}
-					else
+					else /* wait for timeout */
 					{
-						p_protocol->NackCount = 0U;
 						//pass error to req?
-						//wait for timeout
 					}
 				}
 
@@ -235,7 +237,7 @@ static void ResetReqState(Protocol_T * p_protocol)
 	p_protocol->NackCount = 0U;
 }
 
-static bool TxPacket(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length)
+static inline bool TxPacket(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length)
 {
 	return (length > 0U) ? Xcvr_Tx(&p_protocol->Xcvr, p_txBuffer, length) : false;
 }
@@ -286,7 +288,7 @@ static const Protocol_Req_T * SearchReqTable(Protocol_Req_T * p_reqTable, size_t
 
 /*
 	Handle user Req/Cmd function
-	ReqTimeStart resets for all expected behaviors
+	ReqTimeStart resets for all expected behaviors, in sequence packets
 */
 static inline void ProcReqState(Protocol_T * p_protocol)
 {
@@ -302,12 +304,8 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 		}
 		else if(p_protocol->RxCode == PROTOCOL_RX_CODE_ABORT)
 		{
-			p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER); /* reset timer for RxLost  */
+			p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER); /* reset timer for feed RxLost Timer */
 			ResetReqState(p_protocol);
-		}
-		else if(p_protocol->RxCode == PROTOCOL_RX_CODE_COMPLETE)
-		{
-			p_protocol->NackCount = 0U;
 		}
 	}
 
@@ -320,7 +318,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 
 				if(p_protocol->p_ReqActive != 0U)
 				{
-					p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER); /* Reset timer on all non error packets,  */
+					p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER); /* Reset timer on all non error packets, feed RxLost Timer */
 
 					if(p_protocol->p_ReqActive->SYNC.TX_ACK == true) { ProcTxSync(p_protocol, PROTOCOL_TX_SYNC_ACK_REQ_ID); }
 
@@ -405,22 +403,20 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 			switch(reqStatus)
 			{
 				case PROTOCOL_REQ_CODE_WAIT_PROCESS: break;			/* Timer ticking */
-				case PROTOCOL_REQ_CODE_WAIT_PROCESS_EXTEND_TIMER: p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER); break;
+				case PROTOCOL_REQ_CODE_WAIT_PROCESS_EXTEND_TIMER: p_protocol->ReqTimeStart = *(p_protocol->CONFIG.P_TIMER); break; //alternatively use error
 				case PROTOCOL_REQ_CODE_COMPLETE:
 					if(p_protocol->p_ReqActive->SYNC.RX_ACK == true) { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC_FINAL; }
 					else { ResetReqState(p_protocol); }
 					break;
-
 				case PROTOCOL_REQ_CODE_AWAIT_RX_SYNC:				p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC;					break;
 				case PROTOCOL_REQ_CODE_AWAIT_RX_REQ_EXT:			p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_REQ_EXT;				break;
-
 				/*
 					Separate tx data state vs tx on user return txlength > 0
 					User will will have to manage more return codes, but will not have to explicitly set txlength to zero.
 					must save txlength in case of retransmit
 				*/
-				case PROTOCOL_REQ_CODE_TX_DATA: 	TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);	break;
-				case PROTOCOL_REQ_CODE_TX_ACK:		ProcTxSync(p_protocol, PROTOCOL_TX_SYNC_ACK_REQ_EXT);								break;
+				case PROTOCOL_REQ_CODE_TX_RESPONSE: 	TxPacket(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);	break;
+				case PROTOCOL_REQ_CODE_TX_ACK:			ProcTxSync(p_protocol, PROTOCOL_TX_SYNC_ACK_REQ_EXT);								break;
 				case PROTOCOL_REQ_CODE_TX_NACK: /* Shared Nack */
 					if(p_protocol->NackCount < p_protocol->p_ReqActive->SYNC.NACK_REPEAT)
 					{
@@ -444,10 +440,7 @@ static inline void ProcReqState(Protocol_T * p_protocol)
 
 	}
 
-	if((p_protocol->ReqState != PROTOCOL_REQ_STATE_INACTIVE))
-	{
-		p_protocol->RxCode = PROTOCOL_RX_CODE_WAIT_PACKET;
-	}
+	if(p_protocol->ReqState != PROTOCOL_REQ_STATE_INACTIVE) { p_protocol->RxCode = PROTOCOL_RX_CODE_WAIT_PACKET; } /* Clear RxCode after it is processed */
 }
 
 //static void ProcDatagram(Protocol_T * p_protocol)

@@ -56,11 +56,11 @@ typedef uint8_t protocol_reqid_t; /* Index into Req Function Table P_REQ_TABLE *
 */
 typedef enum Protocol_RxCode_Tag
 {
-	PROTOCOL_RX_CODE_WAIT_PACKET, 	/* Wait Build Rx */
+	PROTOCOL_RX_CODE_WAIT_PACKET, 	/* Wait BuildRxPacket */
 	PROTOCOL_RX_CODE_ERROR, 		/* Error Req Packet Checksum/CRC */
-	PROTOCOL_RX_CODE_COMPLETE, 		/* Req/ReqExt Packet Complete Success*/
+	PROTOCOL_RX_CODE_COMPLETE, 		/* Success Complete Req/ReqExt/Data Packet */
 
-	/* Sync */
+	/* Sync packets allocated RxCode   */
 	PROTOCOL_RX_CODE_ACK,
 	PROTOCOL_RX_CODE_NACK,
 	PROTOCOL_RX_CODE_ABORT,
@@ -106,7 +106,7 @@ typedef enum Protocol_ReqCode_Tag
 	PROTOCOL_REQ_CODE_COMPLETE,				/* Exit nonblocking wait processing state upon reception */
 	PROTOCOL_REQ_CODE_AWAIT_RX_REQ_EXT,		/* Expecting Rx new packet */
 	PROTOCOL_REQ_CODE_AWAIT_RX_SYNC,		/* Expecting static ack nack */
-	PROTOCOL_REQ_CODE_TX_DATA,
+	PROTOCOL_REQ_CODE_TX_RESPONSE,
 	PROTOCOL_REQ_CODE_TX_ACK,
 	PROTOCOL_REQ_CODE_TX_NACK,
 	PROTOCOL_REQ_CODE_WAIT_PROCESS_EXTEND_TIMER,
@@ -201,7 +201,7 @@ typedef const struct Protocol_Specs_Tag
 	const Protocol_CheckPacket_T CHECK_PACKET;
 
 	/* Optional */
-	const uint32_t RX_START_ID; 	/* set to 0x00 or 0xff by default for bus idle state */
+	const uint32_t RX_START_ID; 	/* set to 0x00 for not applicable */
 	const uint32_t RX_END_ID;
 	const bool ENCODED;				/* TODO Encoded data, non encoded use TIMEOUT only. No meta chars past first char. */
 	const uint32_t BAUD_RATE_DEFAULT;
