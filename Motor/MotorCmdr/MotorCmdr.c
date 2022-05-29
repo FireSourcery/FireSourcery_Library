@@ -63,7 +63,7 @@ void MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr) { _Protocol_Cmdr_BuildTxReq(
 void _MotorCmdr_ProcTxIdle(MotorCmdr_T * p_motorCmdr)
 {
 	//todo overwrite active ping
-	if(Protocol_Cmdr_CheckTxIdle(&p_motorCmdr->Protocol) == true) { _MotorCmdr_Ping(p_motorCmdr); }
+	if(Protocol_Cmdr_CheckTxIdle(&p_motorCmdr->Protocol) == true) { /* _MotorCmdr_Ping(p_motorCmdr); */ }
 }
 
 uint8_t _MotorCmdr_Ping(MotorCmdr_T * p_motorCmdr) 			{ return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_PING); }
