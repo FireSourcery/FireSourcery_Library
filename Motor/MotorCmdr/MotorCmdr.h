@@ -105,7 +105,7 @@ extern const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U];
 /*
 	Outside module handle TxRx, CheckAvailable
 */
-static inline bool _MotorCmdr_CaptureResp(MotorCmdr_T * p_motorCmdr) { return _Protocol_Cmdr_ParseResp(&p_motorCmdr->Protocol); }
+static inline bool _MotorCmdr_ParseResp(MotorCmdr_T * p_motorCmdr) { return _Protocol_Cmdr_ParseResp(&p_motorCmdr->Protocol); }
 static inline bool _MotorCmdr_PollTimeout(MotorCmdr_T * p_motorCmdr) { return _Protocol_Cmdr_PollTimeout(&p_motorCmdr->Protocol); }
 
 static inline uint8_t _MotorCmdr_GetReqLength(MotorCmdr_T * p_motorCmdr) { return Protocol_Cmdr_GetReqLength(&p_motorCmdr->Protocol); }

@@ -66,11 +66,10 @@ void _MotorCmdr_ProcTxIdle(MotorCmdr_T * p_motorCmdr)
 	if(Protocol_Cmdr_CheckTxIdle(&p_motorCmdr->Protocol) == true) { /* _MotorCmdr_Ping(p_motorCmdr); */ }
 }
 
+uint8_t _MotorCmdr_StopMotors(MotorCmdr_T * p_motorCmdr) 	{ return _Protocol_Cmdr_BuildTxReq_Overwrite(&p_motorCmdr->Protocol, MOT_PROTOCOL_STOP_ALL); }
 uint8_t _MotorCmdr_Ping(MotorCmdr_T * p_motorCmdr) 			{ return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_PING); }
-uint8_t _MotorCmdr_StopMotors(MotorCmdr_T * p_motorCmdr) 	{ return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_STOP_ALL); }
 uint8_t _MotorCmdr_SaveNvm(MotorCmdr_T * p_motorCmdr) 		{ return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_SAVE_NVM); }
 uint8_t _MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr) 	{ return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_INIT_UNITS); }
-
 
 uint8_t _MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId, uint32_t value)
 {
@@ -92,17 +91,19 @@ uint8_t _MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle)
 	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
 }
 
+/* Overwrite existing Req */
 uint8_t _MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake)
 {
 	p_motorCmdr->ControlIdActive = MOT_PROTOCOL_CONTROL_BRAKE;
 	p_motorCmdr->MotorCmdValue = brake;
-	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
+	return _Protocol_Cmdr_BuildTxReq_Overwrite(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
 }
 
+/* Overwrite existing Req */
 uint8_t _MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr)
 {
 	p_motorCmdr->ControlIdActive = MOT_PROTOCOL_CONTROL_RELEASE;
-	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
+	return _Protocol_Cmdr_BuildTxReq_Overwrite(&p_motorCmdr->Protocol, MOT_PROTOCOL_CMD_CONTROL_TYPE);
 }
 
 uint8_t _MotorCmdr_WriteDirectionForward(MotorCmdr_T * p_motorCmdr)

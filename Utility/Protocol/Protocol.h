@@ -236,7 +236,7 @@ typedef struct __attribute__((aligned(4U))) Protocol_Params_Tag
 	uint8_t XcvrId;
 #endif
 	uint8_t SpecsId;
-	uint32_t RxLostTime;
+	uint32_t RxLostTime;	//Watchdog Time
 	bool IsEnableOnInit; 	/* enable on start up */
 }
 Protocol_Params_T;

@@ -37,35 +37,53 @@ static const Protocol_Cmdr_Req_T * SearchReqTable(Protocol_Cmdr_Req_T * p_reqTab
 	return p_req;
 }
 
-bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 {
 	bool isSucess = false;
-	// Protocol_Cmdr_Req_T * p_reqActive;
+	// Protocol_Cmdr_Req_T * p_reqActive;	/* todo pointer type */
+	p_protocol->p_ReqActive = (void *)SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, cmdId);
 
-	if(p_protocol->RxState == PROTOCOL_RX_STATE_INACTIVE)
+	if(p_protocol->p_ReqActive != 0U)
 	{
+		((Protocol_Cmdr_Req_T *)p_protocol->p_ReqActive)->BUILD_REQ
+		(
+			p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, &p_protocol->RxRemaining, p_protocol->CONFIG.P_APP_INTERFACE
+		);
+
+		//todo if p_protocol->RxRemaining > 0U || p_ReqActive.SYNC
 		p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
 		p_protocol->ReqIdActive = cmdId;
 		p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
-		/* todo pointer type */
-		p_protocol->p_ReqActive = (void *)SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, cmdId);
 
-		if(p_protocol->p_ReqActive != 0U)
-		{
-			((Protocol_Cmdr_Req_T *)p_protocol->p_ReqActive)->BUILD_REQ
-			(
-				p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, &p_protocol->RxRemaining, p_protocol->CONFIG.P_APP_INTERFACE
-			);
-			isSucess = true;
-		}
+		isSucess = true;
 	}
 
 	return isSucess;
 }
 
+bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+{
+	return (p_protocol->RxState == PROTOCOL_RX_STATE_INACTIVE) ? StartReq(p_protocol, cmdId) : false;
+}
+
 size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 {
 	return (_Protocol_Cmdr_StartReq(p_protocol, cmdId) == true) ? p_protocol->TxLength : 0U;
+}
+
+/*
+	Tx new Req before Rx Reponse to previous Req
+	Prioir Resp will be discarded
+*/
+//todo move overwrite to req table?
+bool _Protocol_Cmdr_StartReq_Overwrite(Protocol_T *p_protocol, protocol_reqid_t cmdId)
+{
+	return StartReq(p_protocol, cmdId);
+}
+
+size_t _Protocol_Cmdr_BuildTxReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+{
+	return (StartReq(p_protocol, cmdId) == true) ? p_protocol->TxLength : 0U;
 }
 
 /*!
@@ -83,13 +101,13 @@ bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol)
 */
 bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 {
-	Protocol_RxCode_T rxStatus = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->ReqIdActive);
+	Protocol_RxCode_T rxStatus = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->ReqIdActive); //change to crc only?
 	bool isSuccess = false;
 
 	if(rxStatus == PROTOCOL_RX_CODE_COMPLETE)
 	{
-		((Protocol_Cmdr_Req_T *)p_protocol->p_ReqActive)->PARSE_RESP(p_protocol->CONFIG.P_APP_INTERFACE, p_protocol->CONFIG.P_RX_PACKET_BUFFER);
-		// p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
+		((Protocol_Cmdr_Req_T *)p_protocol->p_ReqActive)->PARSE_RESP(p_protocol->CONFIG.P_APP_INTERFACE, p_protocol->CONFIG.P_RX_PACKET_BUFFER); // parse packet may need to check packet seqeunce correctness p_protocol->ReqIdActive
+		// p_protocol->TimeStart = *p_protocol->CONFIG.P_TIMER; //restart watch tx idle
 		p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
 		isSuccess = true;
 	}

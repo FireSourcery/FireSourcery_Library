@@ -86,33 +86,45 @@ void KellyController::end(void)
 	@return true when new data is available
 */
 /******************************************************************************/
-bool KellyController::poll(void)
+KellyController_Status_T KellyController::poll(void)
 {
 	this->millisTimer = millis();
-	bool isCapture;
+	KellyController_Status_T status;
 
 	if(_MotorCmdr_PollTimeout(&motorCmdr) == false)
 	{
-		if(p_serial->available() >= _MotorCmdr_GetRespLength(&motorCmdr))
+		if (p_serial->available() >= _MotorCmdr_GetRespLength(&motorCmdr))
 		{
-			p_serial->readBytes(_MotorCmdr_GetPtrRxPacket(&motorCmdr), _MotorCmdr_GetRespLength(&motorCmdr));
-			isCapture =_MotorCmdr_CaptureResp(&motorCmdr); /* new data is ready, returns false if crc error */
-			// isCapture = true;
+			if (p_serial->peek() != MOT_PACKET_START_BYTE)  /* Serial Rx out of sync */
+			{
+				for (uint8_t iChar = 0U; iChar < p_serial->available(); iChar++)
+				{
+					if (p_serial->peek() != MOT_PACKET_START_BYTE)
+					{
+						_MotorCmdr_GetPtrRxPacket(&motorCmdr)[iChar] = p_serial->read();
+					}
+				}
+				status = KELLY_CONTROLLER_RX_ERROR;
+			}
+			else
+			{
+				p_serial->readBytes(_MotorCmdr_GetPtrRxPacket(&motorCmdr), _MotorCmdr_GetRespLength(&motorCmdr));
+				status = _MotorCmdr_ParseResp(&motorCmdr) ? KELLY_CONTROLLER_RX_SUCCESS : KELLY_CONTROLLER_RX_ERROR;		/* new data is ready, returns false if crc error */
+			}
 		}
 		else
 		{
-			isCapture = false;
+			status = KELLY_CONTROLLER_RX_WAITING;
 		}
 	}
 	else
 	{
-		// p_serial->flush();
-		isCapture = false;
+		status = KELLY_CONTROLLER_RX_TIMEOUT;
 	}
 
 	// _MotorCmdr_ProcTxIdle(&motorCmdr);
 
-	return isCapture;
+	return status;
 }
 
 /******************************************************************************/

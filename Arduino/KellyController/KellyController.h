@@ -40,6 +40,16 @@ extern "C"
 #include <Arduino.h>
 #include <cstdint>
 
+typedef enum
+{
+	KELLY_CONTROLLER_RX_WAITING,
+	KELLY_CONTROLLER_RX_SUCCESS,
+	KELLY_CONTROLLER_RX_ERROR,
+	// KELLY_CONTROLLER_RX_ERROR_SYNC,
+	KELLY_CONTROLLER_RX_TIMEOUT,
+}
+KellyController_Status_T;
+
 class KellyController
 {
 // private:
@@ -55,7 +65,7 @@ public:
 	void begin(void);
 	void end(void);
 
-	bool poll(void);
+	KellyController_Status_T poll(void);
 	void ping(void);
 	void writeStopAll(void);
 	void writeInitUnits(void);

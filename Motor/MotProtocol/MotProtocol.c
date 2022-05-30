@@ -115,5 +115,13 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 /******************************************************************************/
 Protocol_RxCode_T MotProtocol_CheckRxPacket(const MotPacket_T * p_rxPacket, protocol_reqid_t activeReqId) //general version might need include rxlength
 {
+	// check squence correctness here? or additionally during parsing?
+	// 	switch(p_rxPacket->Header.HeaderId)
+	// 	{
+	// 		case MOT_PROTOCOL_CMD_MONITOR_TYPE:  =; break;
+	// 		case MOT_PROTOCOL_CMD_CONTROL_TYPE: ; break;
+	// 		default:  break;
+	// 	}
+
 	return ((p_rxPacket->Header.HeaderId == activeReqId) && (MotPacket_CheckChecksum(p_rxPacket) == true)) ? PROTOCOL_RX_CODE_COMPLETE : PROTOCOL_RX_CODE_ERROR;
 }
