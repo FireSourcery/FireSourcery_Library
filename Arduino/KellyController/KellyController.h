@@ -52,14 +52,15 @@ KellyController_Status_T;
 
 class KellyController
 {
-// private:
-public:
+private:
+// public:
 	static uint32_t millisTimer;
 	// Stream * p_serialStream;
 	HardwareSerial * p_serial;
 	MotorCmdr_T motorCmdr = MOTOR_CMDR_DEFINE(&motorCmdr, 0U, 0U, &millisTimer);
+	uint8_t errorLength;
 
-// public:
+public:
 	KellyController(HardwareSerial & serial);
 	virtual ~KellyController(void);
 	void begin(void);
@@ -93,6 +94,8 @@ public:
 	uint8_t * getPtrTxPacket(void) { return motorCmdr.TxPacket; }
 	uint8_t getRxLength(void) { return _MotorCmdr_GetRespLength(&motorCmdr); }
 	uint8_t * getPtrRxPacket(void) { return motorCmdr.RxPacket; }
+
+	uint8_t getErrorRxLength(void) { return errorLength; }
 };
 
 #endif

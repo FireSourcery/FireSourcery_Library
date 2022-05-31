@@ -128,6 +128,10 @@ static void Control_BuildReq(MotPacket_ControlReq_T * p_txPacket, size_t * p_txL
 
 static void Control_ParseResp(MotorCmdr_T * p_app, const MotPacket_ControlResp_T * p_rxPacket)
 {
+	//may need to check correctness comparing ControlIdActive, control resp does not contain control id
+
+
+
 	// p_app->RespStatus = p_rxPacket->Header.Status;
 }
 
@@ -180,7 +184,11 @@ static void ReadImmediate_ParseResp(MotorCmdr_T * p_app, const MotPacket_ReadImm
 {
 	// p_app->RespStatus = p_rxPacket->Header.Status;
 	MotPacket_ReadImmediateResp_Parse(&p_app->MotorReadWriteVarValue, p_rxPacket);
-	//pass in to more buffer?
+
+	// switch(p_app->MotorReadWriteVarId)
+	// {
+
+	// }
 }
 
 /*

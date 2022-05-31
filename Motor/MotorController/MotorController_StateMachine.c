@@ -62,17 +62,39 @@ static StateMachine_State_T * TransitionFault(MotorController_T * p_mc) { (void)
 	Initially Fault flags are set by adc, but init does not tranisition to fault
 */
 /******************************************************************************/
+static void Init_ExitCommon(MotorController_T * p_mc)
+{
+	p_mc->FaultFlags.State = 0U; /* Clear initial ADC readings */
+}
+
 static StateMachine_State_T * Init_InputDirection(MotorController_T * p_mc)
 {
-	// bool isThrottleOn; todo?
+	StateMachine_State_T * p_nextState;
 
-	return (MotorController_ProcDirection(p_mc) == true) ? &STATE_STOP : &STATE_FAULT; //check and isthrottle off
+	if(MotorController_ProcDirection(p_mc) == true)
+	{
+		Init_ExitCommon(p_mc);
+		// bool isThrottleOn; //check and isthrottle off
+		p_nextState = &STATE_STOP;
+	}
+	else
+	{
+		p_nextState = &STATE_FAULT;
+	}
+
+	return p_nextState;
 }
 
 static StateMachine_State_T * Init_InputReleaseThrottle(MotorController_T * p_mc)
 {
-	if(p_mc->Parameters.BuzzerFlagsEnable.BeepThrottleOnInit == true) { MotorController_BeepShort(p_mc); }
-	return &STATE_STOP;
+	StateMachine_State_T * p_nextState = 0U;
+	if(p_mc->Parameters.BuzzerFlagsEnable.BeepThrottleOnInit == true)
+	{
+		MotorController_BeepShort(p_mc);
+		Init_ExitCommon(p_mc);
+		p_nextState = &STATE_STOP; //check direction is not forwrad or rev
+	}
+	return p_nextState;
 }
 
 static StateMachine_State_T * Init_InputThrottle(MotorController_T * p_mc)
@@ -252,7 +274,7 @@ static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc)
 static StateMachine_State_T * Run_InputNeutral(MotorController_T * p_mc)
 {
 	//	return &STATE_NEUTRAL;
-	return (MotorController_CheckMotorStopAll(p_mc) == true) ? &STATE_STOP : 0U;
+	return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
 }
 
 static StateMachine_State_T * Run_InputNeutralStart(MotorController_T * p_mc)
@@ -287,7 +309,7 @@ static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_mc)
 static StateMachine_State_T * Run_InputBrake(MotorController_T * p_mc)
 {
 	MotorController_ProcUserCmdBrake(p_mc);
-	return (MotorController_CheckMotorStopAll(p_mc) == true) ? &STATE_STOP : 0U;
+	return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
 }
 
 //if using 2 part set/proc
@@ -310,7 +332,7 @@ static StateMachine_State_T * Run_InputCoast(MotorController_T * p_mc)
 		//motor already disabled
 	}
 
-	return (MotorController_CheckMotorStopAll(p_mc) == true) ? &STATE_STOP : 0U;
+	return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
 }
 
 /*
@@ -435,7 +457,7 @@ static const StateMachine_State_T STATE_RUN =
 //
 //static void Neutral_Proc(MotorController_T * p_mc)
 //{
-//	if(MotorController_CheckMotorStopAll(p_mc) == true)
+//	if(MotorController_CheckStopMotorAll(p_mc) == true)
 //	{
 //		StateMachine_ProcTransition(&p_mc->StateMachine, &STATE_STOP);
 //	}
@@ -465,10 +487,6 @@ static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc)
 	p_mc->FaultFlags.PcbOverHeat 			= Thermistor_GetIsStatusLimit(&p_mc->ThermistorPcb);
 	p_mc->FaultFlags.MosfetsTopOverHeat 	= Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsTop);
 	p_mc->FaultFlags.MosfetsBotOverHeat 	= Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsBot);
-
-	// if(p_mc->FaultFlags.State == 0U) { Blinky_Stop(&p_mc->Buzzer); }
-	// return (p_mc->FaultFlags.State != 0U) ? &STATE_STOP : 0U;
-
 	return 0U;
 }
 
@@ -499,14 +517,18 @@ static void Fault_Proc(MotorController_T * p_mc)
 
 	switch(p_mc->Parameters.InputMode)
 	{
-		case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL:
-			p_mc->FaultFlags.RxLost = Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]); 	/* Protocol Rx Lost use auto recover, without user input */
+		case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL: /* Protocol Rx Lost use auto recover, without user input */
+			p_mc->FaultFlags.RxLost = Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]);
 			break;
 		case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
 		default:  break;
 	}
 
-	if(p_mc->FaultFlags.State == 0U) { Blinky_Stop(&p_mc->Buzzer); _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP); }
+	if(p_mc->FaultFlags.State == 0U)
+	{
+		Blinky_Stop(&p_mc->Buzzer);
+		_StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP);
+	}
 }
 
 static const StateMachine_State_T STATE_FAULT =

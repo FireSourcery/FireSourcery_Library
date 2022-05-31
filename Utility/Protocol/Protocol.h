@@ -102,14 +102,14 @@ typedef void (*Protocol_ProcReqResp_T)(void * p_appInterface, uint8_t * p_txPack
 /* Common Req from child protocol to supported general protocol control, predefined behaviors */
 typedef enum Protocol_ReqCode_Tag
 {
-	PROTOCOL_REQ_CODE_WAIT_PROCESS, 		/* Wait ReqExt processing */
-	PROTOCOL_REQ_CODE_COMPLETE,				/* Exit nonblocking wait processing state upon reception */
-	PROTOCOL_REQ_CODE_AWAIT_RX_REQ_EXT,		/* Expecting Rx new packet */
-	PROTOCOL_REQ_CODE_AWAIT_RX_SYNC,		/* Expecting static ack nack */
+	PROTOCOL_REQ_CODE_WAIT_PROCESS, 				/* Wait ReqExt processing */
+	PROTOCOL_REQ_CODE_WAIT_PROCESS_EXTEND_TIMER, 	/* Extend timer for RxLost and Timeout */
+	PROTOCOL_REQ_CODE_COMPLETE,						/* Exit nonblocking wait processing state upon reception */
+	PROTOCOL_REQ_CODE_AWAIT_RX_REQ_EXT,				/* Expecting Rx new packet */
+	PROTOCOL_REQ_CODE_AWAIT_RX_SYNC,				/* Expecting static ack nack */
 	PROTOCOL_REQ_CODE_TX_RESPONSE,
 	PROTOCOL_REQ_CODE_TX_ACK,
 	PROTOCOL_REQ_CODE_TX_NACK,
-	PROTOCOL_REQ_CODE_WAIT_PROCESS_EXTEND_TIMER,
 	//	PROTOCOL_REQ_CODE_DATAGRAM_CONFIG,
 }
 Protocol_ReqCode_T;
@@ -148,6 +148,7 @@ typedef const struct Protocol_Req_Tag
 	const Protocol_ReqSync_T  			SYNC;		/* Stateless ack nack */
 	// Protocol_Cmdr_GetRespLength_T?
 //	const uint32_t 	TIMEOUT; /* overwrite common timeout */
+	//void * CMDR_BUILD_REQ;
 }
 Protocol_Req_T;
 
@@ -236,7 +237,7 @@ typedef struct __attribute__((aligned(4U))) Protocol_Params_Tag
 	uint8_t XcvrId;
 #endif
 	uint8_t SpecsId;
-	uint32_t RxLostTime;	//Watchdog Time
+	uint32_t WatchdogTime;	//Watchdog Time
 	bool IsEnableOnInit; 	/* enable on start up */
 }
 Protocol_Params_T;
@@ -299,12 +300,16 @@ typedef struct Protocol_Tag
 	uint32_t RxTimeStart;
 
 	Protocol_ReqState_T ReqState;
-	protocol_reqid_t ReqIdActive;
+	protocol_reqid_t ReqIdActive;	/* protocol_reqid_t values defined by child module */
 	Protocol_Req_T * p_ReqActive;	/* Protocol_Req_T or Protocol_Cmdr_Req_T */
 	uint32_t ReqTimeStart;			/* Set on Req Start and Complete */
 
 	size_t TxLength;
 	uint8_t NackCount;
+
+
+	uint32_t CmdrRxState;
+	void * p_CmdrReqActive;
 }
 Protocol_T;
 

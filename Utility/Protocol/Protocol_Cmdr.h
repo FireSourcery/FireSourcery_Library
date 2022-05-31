@@ -52,11 +52,21 @@ typedef const struct Protocol_Cmdr_Req_Tag
 {
 	const protocol_reqid_t 				ID;
 	const Protocol_Cmdr_BuildReq_T 		BUILD_REQ;
+
 	const Protocol_Cmdr_ParseResp_T 	PARSE_RESP;
+
 	const Protocol_ReqSync_T  			SYNC;	/* Stateless ack nack */
 //	const uint32_t 	TIMEOUT; /* overwrite common timeout */
 }
 Protocol_Cmdr_Req_T;
+
+
+// typedef const struct Protocol_Cmdr_Req_Tag
+// {
+// 	Protocol_Req_T	REQ_RESP;
+// 	const Protocol_Cmdr_BuildReq_T 		BUILD_REQ;
+// }
+// Protocol_Cmdr_Req_T;
 
 #define PROTOCOL_CMDR_REQ_DEFINE(ReqId, BuildReq, ParseResp, ReqSyncId) { .ID = (protocol_reqid_t)ReqId, .BUILD_REQ = (Protocol_Cmdr_BuildReq_T)BuildReq, .PARSE_RESP = (Protocol_Cmdr_ParseResp_T)ParseResp, .SYNC = { .ID = ReqSyncId, }, }
 

@@ -80,7 +80,7 @@ static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
 			{
 				switch(p_mc->Parameters.OptDinFunction)
 				{
-					case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT: MotorController_SetMotorSpeedLimitAll(p_mc, p_mc->Parameters.OptDinSpeedLimit_Frac16); break;
+					case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT: MotorController_SetSpeedLimitMotorAll(p_mc, p_mc->Parameters.OptDinSpeedLimit_Frac16); break;
 					default: break;
 				}
 			}
@@ -88,7 +88,7 @@ static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
 			{
 				switch(p_mc->Parameters.OptDinFunction)
 				{
-					case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT: MotorController_ClearMotorSpeedLimitAll(p_mc); break;
+					case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT: MotorController_ClearSpeedLimitMotorAll(p_mc); break;
 					default: break;
 				}
 			}
@@ -129,20 +129,21 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 	}
 	else
 	{
-		isWarning = Thermistor_GetIsStatusWarning(&p_mc->ThermistorPcb) ||
+		isWarning =
+			Thermistor_GetIsStatusWarning(&p_mc->ThermistorPcb) ||
 			Thermistor_GetIsStatusWarning(&p_mc->ThermistorMosfetsTop) ||
 			Thermistor_GetIsStatusWarning(&p_mc->ThermistorMosfetsBot);
 
 		if(isWarning == true)
 		{
-			if(MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnHeat_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT) == true)
+			if(MotorController_SetILimitMotorAll(p_mc, p_mc->Parameters.ILimitScalarOnHeat_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT) == true)
 			{
 				Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U);
 			}
 		}
 		else
 		{
-			MotorController_ClearMotorILimitAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT);
+			MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT);
 		}
 	}
 }
@@ -211,7 +212,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]); }
 
 		/* Can use low priority check, as motor is already in fault state */
-		if(MotorController_CheckMotorFaultAll(p_mc) != 0U) {  p_mc->FaultFlags.Motors = 1U; MotorController_User_SetFault(p_mc); }
+		if(MotorController_CheckFaultMotorAll(p_mc) != 0U) {  p_mc->FaultFlags.Motors = 1U; MotorController_User_SetFault(p_mc); }
 
 		_MotorController_ProcOptDin(p_mc);
 	}
@@ -237,13 +238,13 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 		case VMONITOR_LIMIT_LOWER: p_mc->FaultFlags.VPosLimit = 1U;	MotorController_User_SetFault(p_mc); break;
 		case VMONITOR_WARNING_UPPER: break;
 		case VMONITOR_WARNING_LOWER:
-			if(MotorController_SetMotorILimitAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V) == true)
+			if(MotorController_SetILimitMotorAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V) == true)
 			{
 				Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U);
 			}
 			break;
 		case VMONITOR_STATUS_OK:
-			MotorController_ClearMotorILimitAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
+			MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
 			break;
 		default: break;
 	}

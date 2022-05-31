@@ -290,7 +290,7 @@ typedef struct MotorController_Tag
 	// MotorController_SpeedLimitActiveId_T SpeedLimitActiveId;
 	// MotorController_ILimitActiveId_T ILimitActiveId;
 }
-MotorController_T; // Motor_Ctrlr_T;
+MotorController_T; // MotorCtrlr_T;
 
 static inline Motor_T * MotorController_GetPtrMotor(const MotorController_T * p_mc, uint8_t motorIndex) { return &(p_mc->CONFIG.P_MOTORS[motorIndex]); }
 
@@ -380,18 +380,18 @@ static inline void MotorController_DisableMotorAll(MotorController_T * p_mc) 			
 static inline void MotorController_GroundMotorAll(MotorController_T * p_mc) 			{ Motor_UserN_Ground(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 static inline void MotorController_ProcUserCmdThrottle(MotorController_T * p_mc) 		{ Motor_UserN_SetThrottleCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd); }
 // static inline void MotorController_ProcUserCmdVoltageBrake(MotorController_T * p_mc) 	{ Motor_UserN_SetVoltageBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
-static inline bool MotorController_CheckMotorStopAll(MotorController_T * p_mc) 			{ return Motor_UserN_CheckStop(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); } /* Checks 0 speed. alternatively check stop state. */
-static inline bool MotorController_CheckMotorFaultAll(MotorController_T * p_mc) 		{ return Motor_UserN_CheckFault(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
+static inline bool MotorController_CheckStopMotorAll(MotorController_T * p_mc) 			{ return Motor_UserN_CheckStop(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); } /* Checks 0 speed. alternatively check stop state. */
+static inline bool MotorController_CheckFaultMotorAll(MotorController_T * p_mc) 		{ return Motor_UserN_CheckFault(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 
-static inline void MotorController_SetMotorSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_frac16) 	{ Motor_UserN_SetSpeedLimitActive(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, limit_frac16); }
-static inline void MotorController_ClearMotorSpeedLimitAll(MotorController_T * p_mc) 						{ Motor_UserN_ClearSpeedLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
+static inline void MotorController_SetSpeedLimitMotorAll(MotorController_T * p_mc, uint16_t limit_frac16) 	{ Motor_UserN_SetSpeedLimitActive(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, limit_frac16); }
+static inline void MotorController_ClearSpeedLimitMotorAll(MotorController_T * p_mc) 						{ Motor_UserN_ClearSpeedLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 
-static inline bool MotorController_SetMotorILimitAll(MotorController_T * p_mc, uint16_t limit_frac16, MotorController_ILimitActiveId_T id)
+static inline bool MotorController_SetILimitMotorAll(MotorController_T * p_mc, uint16_t limit_frac16, MotorController_ILimitActiveId_T id)
 {
 	return Motor_UserN_SetILimitActive(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, limit_frac16, (id + MOTOR_I_LIMIT_ACTIVE_SYSTEM));
 }
 
-static inline bool MotorController_ClearMotorILimitAll(MotorController_T * p_mc, MotorController_ILimitActiveId_T id)
+static inline bool MotorController_ClearILimitMotorAll(MotorController_T * p_mc, MotorController_ILimitActiveId_T id)
 {
 	return Motor_UserN_ClearILimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, (id + MOTOR_I_LIMIT_ACTIVE_SYSTEM));
 }

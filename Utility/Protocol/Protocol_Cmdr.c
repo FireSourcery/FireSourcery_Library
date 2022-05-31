@@ -50,9 +50,20 @@ static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 			p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, &p_protocol->RxRemaining, p_protocol->CONFIG.P_APP_INTERFACE
 		);
 
-		//todo if p_protocol->RxRemaining > 0U || p_ReqActive.SYNC
-		p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
-		p_protocol->ReqIdActive = cmdId;
+		//sync reqs wait for resp, overwrite with _Protocol_Cmdr_StartReq_Overwrite
+		//no sync reqs, handle RespPacket idependently
+		if(((Protocol_Cmdr_Req_T *)p_protocol->p_ReqActive)->SYNC.ID != 0U)
+		{
+			p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_REQ_ID; //cmdr req states? //PROTOCOL_REQ_STATE_WAIT_RX_REQ_EXT
+			p_protocol->ReqIdActive = cmdId;
+
+			//todo set p_protocol->RxRemaining == resp or ack or 0?
+		}
+		else
+		{
+			p_protocol->ReqState = PROTOCOL_REQ_STATE_INACTIVE; //PROTOCOL_REQ_STATE_WAIT_RX_REQ_ID
+		}
+
 		p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
 
 		isSucess = true;
@@ -61,9 +72,10 @@ static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 	return isSucess;
 }
 
+/* Does not start state if sync is active */
 bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 {
-	return (p_protocol->RxState == PROTOCOL_RX_STATE_INACTIVE) ? StartReq(p_protocol, cmdId) : false;
+	return (p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) ? StartReq(p_protocol, cmdId) : false; //PROTOCOL_REQ_STATE_WAIT_RX_REQ_ID
 }
 
 size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
@@ -71,11 +83,14 @@ size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_reqid_t cmdId
 	return (_Protocol_Cmdr_StartReq(p_protocol, cmdId) == true) ? p_protocol->TxLength : 0U;
 }
 
+
+// tod resp Queue or priority overwrite status? overwrite status still invalidate active req response
+
 /*
+	overwrite sync wait
 	Tx new Req before Rx Reponse to previous Req
 	Prioir Resp will be discarded
 */
-//todo move overwrite to req table?
 bool _Protocol_Cmdr_StartReq_Overwrite(Protocol_T *p_protocol, protocol_reqid_t cmdId)
 {
 	return StartReq(p_protocol, cmdId);
@@ -92,26 +107,44 @@ size_t _Protocol_Cmdr_BuildTxReq_Overwrite(Protocol_T * p_protocol, protocol_req
 bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol)
 {
 	bool isTimeout = (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->p_Specs->REQ_TIMEOUT);
-	if(isTimeout == true) { p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE; }
+	if(isTimeout == true) { p_protocol->ReqState = PROTOCOL_REQ_STATE_INACTIVE; }
 	return isTimeout;
 }
 
 /*!
 	@return true if CRC/Checksum matches
+	Using known resp length.
+
+	Alternatively,
+		BuildRxPacket(p_protocol), handles out of sequence packets
+		Resp queue
 */
 bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 {
-	Protocol_RxCode_T rxStatus = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->ReqIdActive); //change to crc only?
+	p_protocol->RxCode = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->ReqIdActive);
+	//change to handle with build
+	// BuildRxPacket(p_protocol);
+	// if Req return == ReqIdActive,
 	bool isSuccess = false;
 
-	if(rxStatus == PROTOCOL_RX_CODE_COMPLETE)
+	if(p_protocol->RxCode == PROTOCOL_RX_CODE_COMPLETE)
 	{
-		((Protocol_Cmdr_Req_T *)p_protocol->p_ReqActive)->PARSE_RESP(p_protocol->CONFIG.P_APP_INTERFACE, p_protocol->CONFIG.P_RX_PACKET_BUFFER); // parse packet may need to check packet seqeunce correctness p_protocol->ReqIdActive
+		((Protocol_Cmdr_Req_T *)p_protocol->p_ReqActive)->PARSE_RESP(p_protocol->CONFIG.P_APP_INTERFACE, p_protocol->CONFIG.P_RX_PACKET_BUFFER);
+		// parse packet may need to check packet seqeunce correctness p_protocol->ReqIdActive
+
+		// Proc ReqResp
+		// p_protocol->p_ReqActive->PROC
+		// (
+		// 	p_protocol->CONFIG.P_APP_INTERFACE,
+		// 	p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength,
+		// 	p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex
+		// );
+
 		// p_protocol->TimeStart = *p_protocol->CONFIG.P_TIMER; //restart watch tx idle
-		p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
+		p_protocol->ReqState = PROTOCOL_REQ_STATE_INACTIVE;
 		isSuccess = true;
 	}
-	else if(rxStatus == PROTOCOL_RX_CODE_ERROR)
+	else if(p_protocol->RxCode == PROTOCOL_RX_CODE_ERROR)
 	{
 		//todo nack
 		// if (p_protocol->NackCount < p_protocol->p_Specs->SYNC.NACK_REPEAT)
@@ -120,7 +153,7 @@ bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 		// }
 		// else
 		{
-			p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
+			p_protocol->ReqState = PROTOCOL_REQ_STATE_INACTIVE;
 		}
 	}
 
@@ -132,48 +165,18 @@ bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 /*
 	Master Mode, sequential Cmd/Rx
 	non blocking, single threaded only
+
+	Resp handled independent of Req if Sync is not used.
+	i.e. Resp recieved with no prior Req, or out of sequence Req, will be parsed using contents of Resp packet
 */
 void Protocol_Cmdr_ProcRx(Protocol_T * p_protocol)
 {
-	// Protocol_RxCode_T rxStatus = 0U ;
-
-	switch(p_protocol->RxState)
-	{
-		case PROTOCOL_RX_STATE_INACTIVE: break;
-
-		// case PROTOCOL_STATE_SEND_CMD: break;
-
-		case PROTOCOL_RX_STATE_WAIT_PACKET:
-			if(_Protocol_Cmdr_CheckTimeout(p_protocol) == false)  /* No need to check for overflow if using millis */
-			{
-
-				if(Xcvr_RxPacket(&p_protocol->Xcvr, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxRemaining) == true)
-				{
-					/* Stateless proc immediately */
-					if(_Protocol_Cmdr_ParseResp(p_protocol) == PROTOCOL_RX_CODE_ERROR)
-					{
-						// if use nack resend
-					}
-				}
-
-				/* Stateful wait use Req States */
-				// p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL;
-
-			}
-			else
-			{
-				//send txtimeout
-				// ProcTxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_REQ_ID);
-			}
-
-			break;
-
-		// case PROTOCOL_STATE_CMD_RESPONSE:
-		case PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL: break;
-		default: break;
-	}
-
-	// switch(p_protocol->ReqState) //todo stateful
+	// _Protocol_ProcRxState(p_protocol);
+	// _Protocol_ProcReqState(p_protocol);
+	// if SYNC.respId == true
+	// if  PARSE_RX_META Req return CmdrReqRespId == ReqIdActive,
+	//proc parse resp
+	// proc resp indepedent of activereq
 }
 
 /*
@@ -191,5 +194,5 @@ void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 
 bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
 {
-	return (p_protocol->RxState == PROTOCOL_RX_STATE_INACTIVE) && (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.RxLostTime);
+	return (p_protocol->RxState == PROTOCOL_RX_STATE_INACTIVE) && (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.WatchdogTime);
 }
