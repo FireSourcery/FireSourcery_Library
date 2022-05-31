@@ -124,6 +124,7 @@ typedef union MotorController_FaultFlags_Tag
 		uint32_t StopStateSync 		: 1U;
 		// uint32_t ThrottleOnInit 	: 1U;
 		uint32_t RxLost 			: 1U;
+		uint32_t User 				: 1U;
 	};
 	uint32_t State;
 }

@@ -487,6 +487,7 @@ static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc)
 	p_mc->FaultFlags.PcbOverHeat 			= Thermistor_GetIsStatusLimit(&p_mc->ThermistorPcb);
 	p_mc->FaultFlags.MosfetsTopOverHeat 	= Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsTop);
 	p_mc->FaultFlags.MosfetsBotOverHeat 	= Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsBot);
+	p_mc->FaultFlags.User 					= 0U;
 	return 0U;
 }
 

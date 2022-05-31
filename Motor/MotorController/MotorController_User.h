@@ -109,12 +109,14 @@ static inline void MotorController_User_SetFault(MotorController_T * p_mc)
 {
 	if(StateMachine_GetActiveStateId(&p_mc->StateMachine) != MCSM_STATE_ID_FAULT)
 	{
+		p_mc->FaultFlags.User = 1U;
 		StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
 	}
 }
 
 static inline void MotorController_User_ToggleFault(MotorController_T * p_mc)
 {
+	p_mc->FaultFlags.User = 1U;
 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
 }
 
