@@ -78,6 +78,7 @@ void KellyController::end(void)
 	if(p_serial != 0U) { p_serial->end(); }
 }
 
+//wrap serial or virtual buffeR?
 
 /******************************************************************************/
 /*!
@@ -120,7 +121,7 @@ KellyController_Status_T KellyController::poll(void)
 		status = KELLY_CONTROLLER_RX_TIMEOUT;
 	}
 
-	// _MotorCmdr_ProcTxIdle(&motorCmdr);
+	_MotorCmdr_ProcTxIdle(&motorCmdr);
 
 	return status;
 }
