@@ -118,7 +118,7 @@ static inline qfrac16_t FOC_GetIc(FOC_T * p_foc) { return p_foc->Ic; }
 static inline qfrac16_t FOC_GetIalpha(FOC_T * p_foc) { return p_foc->Ialpha; }
 static inline qfrac16_t FOC_GetIbeta(FOC_T * p_foc) { return p_foc->Ibeta; }
 
-static inline qfrac16_t FOC_GetIMagnitude(FOC_T * p_foc)
+static inline uint16_t FOC_GetIMagnitude(FOC_T * p_foc)
 {
 	int32_t dqSquared = ((int32_t)(p_foc->Vd) * (p_foc->Vd)) + ((int32_t)(p_foc->Vq) * (p_foc->Vq));
 	return q_sqrt(dqSquared);

@@ -470,7 +470,7 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 /******************************************************************************/
 static inline uint16_t Motor_FOC_GetIMagnitude_Frac16(Motor_T * p_motor)
 {
-	return FOC_GetIMagnitude(&p_motor->Foc) * 2;
+	return FOC_GetIMagnitude(&p_motor->Foc) * 2U;
 }
 
 /*
