@@ -56,9 +56,6 @@ void MotorController_Init(MotorController_T * p_mc)
 	Thermistor_Init(&p_mc->ThermistorMosfetsTop);
 	Thermistor_Init(&p_mc->ThermistorMosfetsBot);
 
-	// if(Thermistor_GetIsMonitorEnable(&p_mc->ThermistorMosfetsTop)) { p_mc->AnalogResults.HeatMosfetsTop_Adcu = p_mc->ThermistorMosfetsTop.Params.Threshold_Adcu; }
-	// if(Thermistor_GetIsMonitorEnable(&p_mc->ThermistorMosfetsBot)) { p_mc->AnalogResults.HeatMosfetsBot_Adcu = p_mc->ThermistorMosfetsBot.Params.Threshold_Adcu; }
-
 	Motor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
 	Motor_InitVRefSupply_V(p_mc->Parameters.VSupply);
 	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Init(&p_mc->CONFIG.P_MOTORS[iMotor]); }
@@ -68,9 +65,9 @@ void MotorController_Init(MotorController_T * p_mc)
 	Pin_Output_Init(&p_mc->Meter);
 	Debounce_Init(&p_mc->OptDin, 5U);
 
-	Timer_InitPeriodic(&p_mc->TimerSeconds, 		1000U);
-	Timer_InitPeriodic(&p_mc->TimerMillis, 			1U);
-	Timer_InitPeriodic(&p_mc->TimerMillis10, 		10U);
+	Timer_InitPeriodic(&p_mc->TimerSeconds, 			1000U);
+	Timer_InitPeriodic(&p_mc->TimerMillis, 				1U);
+	Timer_InitPeriodic(&p_mc->TimerMillis10, 			10U);
 	Timer_InitPeriodic(&p_mc->TimerIsrDividerSeconds, 	1000U);
 	Timer_Init(&p_mc->TimerState);
 
