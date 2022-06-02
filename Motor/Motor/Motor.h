@@ -426,6 +426,9 @@ typedef struct Motor_Tag
 }
 Motor_T;
 
+static inline void Motor_DisablePwm(Motor_T * p_motor){	Phase_DisableInterrupt(&p_motor->Phase);}
+static inline void Motor_EnablePwm(Motor_T * p_motor) { Phase_EnableInterrupt(&p_motor->Phase); }
+
 /******************************************************************************/
 /*
 	Ramp

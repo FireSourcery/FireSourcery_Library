@@ -37,9 +37,9 @@
 #ifndef PHASE_H
 #define PHASE_H
 
-#include "Config.h" 
+#include "Config.h"
 #include "Peripheral/PWM/PWM.h"
-#include "Peripheral/Pin/Pin.h" 
+#include "Peripheral/Pin/Pin.h"
 #include <stdint.h>
 
 typedef enum Phase_Mode_Tag
@@ -90,10 +90,9 @@ Phase_T;
 	.SwitchC = PIN_CONFIG(p_SwitchCHal, SwitchCId),					\
 }
 
-static inline void Phase_ClearInterrupt(const Phase_T * p_phase)
-{
-	PWM_ClearInterrupt(&p_phase->PwmA);
-}
+static inline void Phase_ClearInterrupt(const Phase_T * p_phase) { PWM_ClearInterrupt(&p_phase->PwmA); }
+static inline void Phase_DisableInterrupt(const Phase_T * p_phase) { PWM_DisableInterrupt(&p_phase->PwmA); } //todo
+static inline void Phase_EnableInterrupt(const Phase_T * p_phase) { PWM_EnableInterrupt(&p_phase->PwmA); }
 
 static inline void _Phase_SyncPwm(const Phase_T * p_phase)
 {

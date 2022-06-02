@@ -47,19 +47,35 @@ typedef enum Xcvr_Type_Tag
 	XCVR_TYPE_I2C,
 	XCVR_TYPE_SPI,
 	XCVR_TYPE_VIRTUAL,
+	XCVR_TYPE_INTERFACE,
 }
 Xcvr_Type_T;
 
+typedef const struct Xcvr_Interface_Tag
+{
+	void 		(* INIT)		(void * p_context);
+	bool 		(* SEND_BYTE)	(void * p_context, uint8_t txChar);
+	bool 		(* RECV_BYTE)	(void * p_context, uint8_t * p_rxChar);
+	uint32_t 	(* SEND_MAX)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t bufferSize);
+	uint32_t 	(* RECV_MAX)	(void * p_context, uint8_t * p_destBuffer, 			size_t bufferSize);
+	bool 		(* SEND_N)		(void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
+	bool 		(* RECV_N)		(void * p_context, uint8_t * p_destBuffer, 			size_t length);
+	// uint32_t 	(* RECV) (void * p_context, uint8_t * p_destBuffer, 		size_t bufferSize);
+	// bool 		(* SEND) (void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
+}
+Xcvr_Interface_T;
+
 typedef const struct Xcvr_Xcvr_Tag
 {
-	void * P_XCVR;
+	void * P_XCVR; /* Xcvr context or hal */
 	Xcvr_Type_T TYPE;
+	Xcvr_Interface_T * P_INTERFACE; /* if applicable */
 }
 Xcvr_Xcvr_T;
 
 #define XCVR_XCVR_DEFINE(p_Xcvr, Type)		\
 {											\
-	.P_XCVR 	= (void *) p_Xcvr, 			\
+	.P_XCVR 	= (void *)p_Xcvr, 			\
 	.TYPE 		= Type,						\
 }
 
@@ -73,8 +89,10 @@ Xcvr_Config_T;
 typedef struct Xcvr_Tag
 {
 	const Xcvr_Config_T CONFIG;
+// Xcvr_Xcvr_T * p_Xcvr;
+
 	void * p_Xcvr;
-	Xcvr_Type_T Type; /* NvM param handle by outside module */
+	Xcvr_Type_T Type; /* NvM XcvrId param handle by outside module */
 }
 Xcvr_T;
 
@@ -89,7 +107,6 @@ Xcvr_T;
 
 extern void Xcvr_Init(Xcvr_T * p_xcvr, uint8_t xcvrIndex);
 extern bool Xcvr_SetXcvr(Xcvr_T * p_xcvr, uint8_t xcvrIndex);
-// extern bool Xcvr_SetXcvr_Ptr(Xcvr_T * p_xcvr, void * p_xcvrStruct);
 extern bool Xcvr_CheckIsSet(const Xcvr_T * p_xcvr, uint8_t xcvrIndex);
 extern bool Xcvr_CheckValid(const Xcvr_T * p_xcvr, void * p_target);
 extern void Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate);
@@ -102,27 +119,5 @@ extern void Xcvr_ReleaseTxBuffer(const Xcvr_T * p_xcvr, size_t writeSize);
 
 #endif
 
-//typedef const struct
-//{
-//	void 		(* INIT)		(void * p_context);
-////	bool 		(* SendChar)	(void * p_context, uint8_t txChar);
-////	bool 		(* RecvChar)	(void * p_context, uint8_t * p_rxChar);
-////	uint32_t 	(* SendBytes)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t bufferSize);
-////	uint32_t 	(* RecvBytes)	(void * p_context, uint8_t * p_destBuffer, 			size_t bufferSize);
-////	bool 		(* SendString)	(void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
-////	bool 		(* RecvString)	(void * p_context, uint8_t * p_destBuffer, 			size_t length);
-//	uint32_t 	(* RECV) (void * p_context, uint8_t * p_destBuffer, 		size_t bufferSize);
-//	bool 		(* SEND) (void * p_context, const uint8_t * p_srcBuffer, 	size_t length);
-//}
-//Xcvr_T;
 
-//bool Xcvr_SendChar(const Xcvr_T * p_xcvr, uint8_t txChar) 									{return p_xcvr->SendChar(p_xcvr->p_Context, txChar);}
-//bool Xcvr_RecvChar(const Xcvr_T * p_xcvr, uint8_t * p_rxChar)									{return p_xcvr->RecvChar(p_xcvr->p_Context, p_rxChar);}
-//uint32_t Xcvr_SendBytes(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t srcSize)	{p_xcvr->SendBytes(p_xcvr->p_Context, p_srcBuffer, srcSize);}
-//uint32_t Xcvr_RecvBytes(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)		{p_xcvr->RecvBytes(p_xcvr->p_Context, p_destBuffer, destSize);}
-//bool Xcvr_SendString(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length)				{p_xcvr->SendString(p_xcvr->p_Context, p_src, length);}
-//bool Xcvr_RecvString(const Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length)
-//static inline void Xcvr_EnableTx(const Xcvr_T * p_xcvr){}
-//static inline void Xcvr_DisableTx(const Xcvr_T * p_xcvr){}
-//static inline void Xcvr_EnableRx(const Xcvr_T * p_xcvr){}
-//static inline void Xcvr_DisableRx(const Xcvr_T * p_xcvr){}
+

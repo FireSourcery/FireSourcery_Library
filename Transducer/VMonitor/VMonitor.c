@@ -58,7 +58,7 @@ VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
 {
 	VMonitor_Status_T status = VMONITOR_STATUS_OK;
 
-	if(p_vMonitor->Params.IsEnableOnInit == true)
+	if(p_vMonitor->Params.IsMonitorEnable == true)
 	{
 		if		(adcu > p_vMonitor->Params.LimitUpper_Adcu) { status = VMONITOR_LIMIT_UPPER; }
 		else if	(adcu < p_vMonitor->Params.LimitLower_Adcu) { status = VMONITOR_LIMIT_LOWER; }

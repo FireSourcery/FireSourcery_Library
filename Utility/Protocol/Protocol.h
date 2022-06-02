@@ -249,10 +249,10 @@ typedef const struct Protocol_Config_Tag
 {
 	uint8_t * const P_RX_PACKET_BUFFER;
 	uint8_t * const P_TX_PACKET_BUFFER;
-	const uint8_t PACKET_BUFFER_LENGTH; 		/* Must be greater than Specs RX_LENGTH_MAX */
-	void * const P_APP_INTERFACE;			 	/* User app context for packet processing */
-	void * const P_SUBSTATE_BUFFER; 			/* Child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context from specs */
-	const Protocol_Specs_T * const * const PP_SPECS_TABLE; 	/* bound and verify specs selection */
+	const uint8_t PACKET_BUFFER_LENGTH; 						/* Must be greater than Specs RX_LENGTH_MAX */
+	void * const P_APP_INTERFACE;			 					/* User app context for packet processing */
+	void * const P_SUBSTATE_BUFFER; 							/* Child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context referred by specs */
+	const Protocol_Specs_T * const * const PP_SPECS_TABLE; 		/* Bound and verify specs selection. Pointer to pointer, Specs not necessarily in a contiguous array */
 	const uint8_t SPECS_COUNT;
 	const volatile uint32_t * const P_TIMER;
 	const Protocol_Params_T * const P_PARAMS;

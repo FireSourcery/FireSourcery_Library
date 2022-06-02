@@ -33,7 +33,7 @@
 #define MOTOR_THREAD_H
 
 #include "Motor_StateMachine.h"
-#include "System/SysTime/SysTime.h"
+// #include "System/SysTime/SysTime.h"
 
 /*
 	Default 50us
@@ -51,7 +51,8 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 	}
 
-	//  _Motor_Analog_Thread( p_motor);
+	//  _Motor_Analog_Thread( p_motor); use analog select mode to implement prefered order
+
 	//	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	//	{
 	//		Motor_FOC_ProcAngleObserve(p_motor);
@@ -66,7 +67,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 
 static inline void Motor_Heat_Thread(Motor_T * p_motor)
 {
-	if(Thermistor_GetIsEnable(&p_motor->Thermistor) == true)
+	if(Thermistor_GetIsMonitorEnable(&p_motor->Thermistor) == true)
 	{
 		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT);
 

@@ -189,7 +189,6 @@ void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 		Xcvr_TxPacket(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
 	}
 }
-
 #endif
 
 bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)

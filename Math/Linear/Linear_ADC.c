@@ -28,7 +28,7 @@
 	@version V0
 */
 /******************************************************************************/
-#include "Linear_ADC.h" 
+#include "Linear_ADC.h"
 
 /******************************************************************************/
 /*!
@@ -40,6 +40,7 @@
 	f16(adcuRef) = 65535
 
 	frac16 conversion returns without division, as frac16 calc is performed more frequently
+	adcu to physical(user yref) returns without division
 	division in physical to adcu, frac16 to physical units
 	Shift 14 to allow oversaturation f([-2*XRef:2*XRef]) == [-2*YRef:2*YRef] before overflow
 */
@@ -56,6 +57,17 @@ void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, i
 	p_linear->YReference = physicalRef;
 }
 
+
+/******************************************************************************/
+/*!
+	Inverted pivot on 0
+	f(adcuZero) = 0
+	f(adcuRef) = -physicalRef
+	f16(adcuRef) = -65535
+	f(adcuZero - (adcuRef - adcuZero)) = physicalRef
+	f16(adcuZero - (adcuRef - adcuZero)) = 65535
+*/
+/******************************************************************************/
 void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef)
 {
 	Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalRef);

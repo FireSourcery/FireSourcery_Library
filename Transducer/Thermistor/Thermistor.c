@@ -49,45 +49,51 @@ void Thermistor_Init(Thermistor_T * p_therm)
 		memcpy(&p_therm->Params, p_therm->CONFIG.P_PARAMS, sizeof(Thermistor_Params_T));
 	}
 
-	p_therm->ThresholdStatus = THERMISTOR_STATUS_OK;
+	p_therm->LimitThresholdStatus = THERMISTOR_STATUS_OK;
 	p_therm->Heat_DegC = 0;
+
+	if((p_therm->Params.Shutdown_Adcu == 0U) || (p_therm->Params.Threshold_Adcu == 0U) || (p_therm->Params.Warning_Adcu == 0U))
+	{
+		p_therm->Params.IsMonitorEnable = false;
+	}
 }
 
 /*
-	Smaller adcu is higher heat
+	Lower adcu is higher heat
 */
-Thermistor_Status_T PollTheshold(Thermistor_T * p_therm, uint16_t adcu)
+Thermistor_Status_T PollLimitTheshold(Thermistor_T * p_therm, uint16_t adcu)
 {
-	/* ThresholdStatus does not include warning */
-	if(p_therm->ThresholdStatus == THERMISTOR_STATUS_OK)
+	/* LimitThresholdStatus does not include warning */
+	if(p_therm->LimitThresholdStatus == THERMISTOR_STATUS_OK)
 	{
-		if(adcu < p_therm->Params.Shutdown_Adcu) { p_therm->ThresholdStatus = THERMISTOR_LIMIT_SHUTDOWN; }	/* crossing shutdown */
+		if(adcu < p_therm->Params.Shutdown_Adcu) { p_therm->LimitThresholdStatus = THERMISTOR_LIMIT_SHUTDOWN; }	/* crossing shutdown */
 	}
-	else  /* (p_therm->ThresholdStatus == THERMISTOR_LIMIT_THRESHOLD) || (p_therm->ThresholdStatus == THERMISTOR_LIMIT_SHUTDOWN)*/
+	else  /* (p_therm->LimitThresholdStatus == THERMISTOR_LIMIT_THRESHOLD) || (p_therm->LimitThresholdStatus == THERMISTOR_LIMIT_SHUTDOWN)*/
 	{
-		//in case if heat out of sync. heat < shutdown, status == shutdown
-		if(adcu < p_therm->Params.Shutdown_Adcu) 		{ p_therm->ThresholdStatus = THERMISTOR_LIMIT_SHUTDOWN; }	/* crossing shutdown */
-		else if(adcu < p_therm->Params.Threshold_Adcu) 	{ p_therm->ThresholdStatus = THERMISTOR_LIMIT_THRESHOLD; } 	/* still over threshold  */
-		else 											{ p_therm->ThresholdStatus = THERMISTOR_STATUS_OK; }
+		//in case if heat sample out of sync, repeat shutdown check
+		if		(adcu < p_therm->Params.Shutdown_Adcu) 		{ p_therm->LimitThresholdStatus = THERMISTOR_LIMIT_SHUTDOWN; }		/* crossing shutdown */
+		else if	(adcu < p_therm->Params.Threshold_Adcu) 	{ p_therm->LimitThresholdStatus = THERMISTOR_LIMIT_THRESHOLD; } 	/* still over threshold  */
+		else 												{ p_therm->LimitThresholdStatus = THERMISTOR_STATUS_OK; }
 	}
 
-	return p_therm->ThresholdStatus;
+	return p_therm->LimitThresholdStatus;
 }
 
 Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t adcu)
 {
-	//filter adcu
 	Thermistor_Status_T status = THERMISTOR_STATUS_OK;
+	uint16_t adcuNew;
 
-	if(p_therm->Params.IsEnableOnInit == true)
+	if(p_therm->Params.IsMonitorEnable == true)
 	{
-		status = PollTheshold(p_therm, adcu);
+		adcuNew = (adcu + p_therm->AdcuPrev) / 2U;
+		status = PollLimitTheshold(p_therm, adcuNew);
 
-		/* adcu over warning */
-		if((status == THERMISTOR_STATUS_OK) && (adcu < p_therm->Params.Warning_Adcu)) { status = THERMISTOR_WARNING; }
+		/* heat over warning */
+		if((status == THERMISTOR_STATUS_OK) && (adcuNew < p_therm->Params.Warning_Adcu)) { status = THERMISTOR_WARNING; }
+		p_therm->AdcuPrev = adcu;
+		p_therm->Status = status;
 	}
-
-	p_therm->Status = status;
 
 	return status;
 }
@@ -95,13 +101,10 @@ Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t adcu
 /*
 	For when conversion processing is less frequent than user output
 */
-void Thermistor_CaptureUnits_DegC(Thermistor_T * p_therm, uint16_t adcu)
-{
-	if(p_therm->Params.IsEnableOnInit)
-	{
-		p_therm->Heat_DegC = Thermistor_ConvertToDegC_Int(p_therm, adcu, p_therm->Params.CaptureScalar);
-	}
-}
+// void Thermistor_CaptureUnits_DegC(Thermistor_T * p_therm, uint16_t adcu)
+// {
+// 		p_therm->Heat_DegC = Thermistor_ConvertToDegC_Int(p_therm, adcu, p_therm->Params.CaptureScalar);
+// }
 
 /*
 	Thermistor wired as pull-down resistor R2

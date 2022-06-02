@@ -61,7 +61,7 @@ typedef struct __attribute__((aligned(4U))) Thermistor_Params_Tag
 	uint16_t Warning_Adcu;
 
 	uint16_t CaptureScalar; //remove?
-	bool IsEnableOnInit;
+	bool IsMonitorEnable;
 }
 Thermistor_Params_T;
 
@@ -79,9 +79,12 @@ typedef struct Thermistor_Tag
 	const Thermistor_Config_T CONFIG;
 	Thermistor_Params_T Params;
 
-	Thermistor_Status_T ThresholdStatus; /* Threshold save state info */
+	Thermistor_Status_T LimitThresholdStatus; /* Threshold save state info */
 	Thermistor_Status_T Status;
-	int32_t Heat_DegC;
+	uint16_t AdcuPrev;
+
+
+	int32_t Heat_DegC; //remove?
 }
 Thermistor_T;
 
@@ -111,15 +114,17 @@ Thermistor_T;
 
 /* Using capture conversion only */
 static inline int32_t Thermistor_GetHeat_DegC(Thermistor_T * p_therm) { return p_therm->Heat_DegC; }
-static inline bool Thermistor_GetIsEnable(Thermistor_T * p_therm) { return p_therm->Params.IsEnableOnInit; }
 
+/* Monitor */
 static inline bool Thermistor_GetIsStatusLimit(Thermistor_T * p_therm) { return ((p_therm->Status == THERMISTOR_LIMIT_SHUTDOWN) || (p_therm->Status == THERMISTOR_LIMIT_THRESHOLD)); }
 static inline bool Thermistor_GetIsStatusWarning(Thermistor_T * p_therm) { return (p_therm->Status == THERMISTOR_WARNING); }
 static inline Thermistor_Status_T Thermistor_GetStatus(Thermistor_T * p_therm) { return (p_therm->Status); }
 
-static inline void Thermistor_Enable(Thermistor_T * p_therm) {  p_therm->Params.IsEnableOnInit = true; }
-static inline void Thermistor_Disable(Thermistor_T * p_therm) {  p_therm->Params.IsEnableOnInit = false; }
-static inline void Thermistor_SetEnable(Thermistor_T * p_therm, bool isEnable) {  p_therm->Params.IsEnableOnInit = isEnable; }
+/* Monitor */
+static inline bool Thermistor_GetIsMonitorEnable(Thermistor_T * p_therm) { return p_therm->Params.IsMonitorEnable; }
+static inline void Thermistor_EnableMonitor(Thermistor_T * p_therm) {  p_therm->Params.IsMonitorEnable = true; }
+static inline void Thermistor_DisableMonitor(Thermistor_T * p_therm) {  p_therm->Params.IsMonitorEnable = false; }
+static inline void Thermistor_SetMonitorEnable(Thermistor_T * p_therm, bool isEnable) {  p_therm->Params.IsMonitorEnable = isEnable; }
 
 static inline uint32_t Thermistor_GetR0(Thermistor_T * p_therm) { return p_therm->Params.RNominal; }
 static inline uint16_t Thermistor_GetT0(Thermistor_T * p_therm) { return p_therm->Params.TNominal; }
@@ -127,11 +132,9 @@ static inline uint16_t Thermistor_GetT0_DegC(Thermistor_T * p_therm) { return p_
 static inline uint16_t Thermistor_GetB(Thermistor_T * p_therm) { return p_therm->Params.BConstant; }
 static inline uint16_t Thermistor_GetVIn(Thermistor_T * p_therm) { return p_therm->Params.VIn_Scalar; }
 
-
 extern void Thermistor_InitAdcVRef_Scalar(uint16_t adcVRef_MilliV);
 extern void Thermistor_Init(Thermistor_T * p_therm);
 
-// extern Thermistor_Status_T Thermistor_ProcThreshold(Thermistor_T * p_therm, uint16_t adcu);
 extern Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t adcu);
 
 extern void Thermistor_CaptureUnits_DegC(Thermistor_T * p_therm, uint16_t adcu);

@@ -54,6 +54,7 @@ typedef struct Blinky_Tag
 	uint32_t OnTime;
 	uint32_t OffTime;
 	void (*PatternFunction)(struct Blinky_Tag * p_this);
+	// uint8_t ActiveSourceId;
 }
 Blinky_T;
 

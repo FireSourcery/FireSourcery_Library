@@ -63,12 +63,6 @@ PWM_Config_T;
 typedef struct PWM_Tag
 {
 	const PWM_Config_T CONFIG;
-	/*
-		Buffered data
-	*/
-	//	uint32_t Duty_Ticks;
-	//	bool IsOn;
-	//	bool IsInvertPolarity;
 }
 PWM_T;
 
@@ -77,31 +71,20 @@ PWM_T;
 	.CONFIG = {.P_HAL_PWM = p_Hal, .PERIOD_TICKS = Peroid_Ticks, .CHANNEL_ID = Channel},		\
 }
 
-static inline void PWM_ClearInterrupt(const PWM_T * p_pwm)
-{
-	HAL_PWM_ClearInterrupt(p_pwm->CONFIG.P_HAL_PWM);
-}
+static inline void PWM_ClearInterrupt(const PWM_T * p_pwm) { HAL_PWM_ClearInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
+static inline void PWM_DisableInterrupt(const PWM_T * p_pwm) { HAL_PWM_DisableInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
+static inline void PWM_EnableInterrupt(const PWM_T * p_pwm) { HAL_PWM_EnableInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
 
-static inline uint32_t CalcPwmDutyTicks(const PWM_T * p_pwm, uint32_t duty)
-{
-	return p_pwm->CONFIG.PERIOD_TICKS * duty / CONFIG_PWM_DUTY_MAX;
-}
+static inline uint32_t CalcPwmDutyTicks(const PWM_T * p_pwm, uint32_t duty) { return p_pwm->CONFIG.PERIOD_TICKS * duty / CONFIG_PWM_DUTY_MAX; }
 
 /*
 	Actuate arguments immediately
 */
-static inline void PWM_ActuateDuty_Ticks(const PWM_T * p_pwm, uint32_t pwmDuty_Ticks)
-{
-	HAL_PWM_WriteDuty(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID, pwmDuty_Ticks);
-}
 
-/*
-	where PWM_DUTY_CYCLE_MAX is 100% duty
-*/
-static inline void PWM_ActuateDuty(const PWM_T * p_pwm, uint32_t pwmDuty)
-{
-	PWM_ActuateDuty_Ticks(p_pwm, CalcPwmDutyTicks(p_pwm, pwmDuty));
-}
+static inline void PWM_ActuateDuty_Ticks(const PWM_T * p_pwm, uint32_t pwmDuty_Ticks) { HAL_PWM_WriteDuty(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID, pwmDuty_Ticks); }
+
+/* where PWM_DUTY_CYCLE_MAX is 100% duty */
+static inline void PWM_ActuateDuty(const PWM_T * p_pwm, uint32_t pwmDuty) { PWM_ActuateDuty_Ticks(p_pwm, CalcPwmDutyTicks(p_pwm, pwmDuty)); }
 
 static inline void PWM_ActuateDutyMidPlus(const PWM_T * p_pwm, uint32_t pwmDuty)
 {
@@ -115,43 +98,17 @@ static inline void PWM_ActuateDutyMidMinus(const PWM_T * p_pwm, uint32_t pwmDuty
 	PWM_ActuateDuty_Ticks(p_pwm, ticks);
 }
 
-static inline void PWM_ActuateDuty_Frac16(const PWM_T * p_pwm, uint16_t pwmDuty)
-{
-	PWM_ActuateDuty_Ticks(p_pwm, pwmDuty * p_pwm->CONFIG.PERIOD_TICKS >> 16U);
-}
-
-static inline void PWM_ActuateDuty_Frac15(const PWM_T * p_pwm, uint16_t pwmDuty)
-{
-	PWM_ActuateDuty_Ticks(p_pwm, pwmDuty * p_pwm->CONFIG.PERIOD_TICKS >> 15U);
-}
+static inline void PWM_ActuateDuty_Frac16(const PWM_T * p_pwm, uint16_t pwmDuty) { PWM_ActuateDuty_Ticks(p_pwm, (uint32_t)pwmDuty * p_pwm->CONFIG.PERIOD_TICKS >> 16U); }
+static inline void PWM_ActuateDuty_Frac15(const PWM_T * p_pwm, uint16_t pwmDuty) { PWM_ActuateDuty_Ticks(p_pwm, (uint32_t)pwmDuty * p_pwm->CONFIG.PERIOD_TICKS >> 15U); }
 
 /*
 	If multiple pwms share a register. may interfere with sync
 */
-static inline void PWM_Enable(const PWM_T * p_pwm)
-{
-	HAL_PWM_EnableOutput(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID);
-}
-
-static inline void PWM_Disable(const PWM_T * p_pwm)
-{
-	HAL_PWM_DisableOutput(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID);
-}
-
-static inline void PWM_EnableInvertPolarity(const PWM_T * p_pwm)
-{
-	HAL_PWM_EnableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID);
-}
-
-static inline void PWM_DisableInvertPolarity(const PWM_T * p_pwm)
-{
-	HAL_PWM_DisableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID);
-}
-
-static inline void PWM_ActuateSync(const PWM_T * p_pwm)
-{
-	HAL_PWM_Sync(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID);
-}
+static inline void PWM_Enable(const PWM_T * p_pwm) { HAL_PWM_EnableOutput(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
+static inline void PWM_Disable(const PWM_T * p_pwm) { HAL_PWM_DisableOutput(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
+static inline void PWM_EnableInvertPolarity(const PWM_T * p_pwm) { HAL_PWM_EnableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
+static inline void PWM_DisableInvertPolarity(const PWM_T * p_pwm) { HAL_PWM_DisableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
+static inline void PWM_ActuateSync(const PWM_T * p_pwm) { HAL_PWM_Sync(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
 
 extern void PWM_Init(PWM_T * p_pwm);
 extern void PWM_InitChannel(PWM_T * p_pwm);
@@ -162,6 +119,14 @@ extern void PWM_InitModule(PWM_T * p_pwm);
 /*
 	Use buffered data
 */
+
+	/*
+		Buffered data
+	*/
+	//	uint32_t Duty_Ticks;
+	//	bool IsOn;
+	//	bool IsInvertPolarity;
+
  //static inline void PWM_SetDuty(PWM_T * p_pwm, uint32_t pwmDuty)
  //{
  //	p_pwm->Duty_Ticks = CalcPwmDutyTicks(p_pwm, pwmDuty);

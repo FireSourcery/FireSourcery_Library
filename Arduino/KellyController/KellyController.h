@@ -50,21 +50,27 @@ typedef enum
 }
 KellyController_Status_T;
 
+#define XCVR_COUNT
+
+extern const Xcvr_Xcvr_T XCVR_TABLE[];
+
 class KellyController
 {
 private:
 // public:
 	static uint32_t millisTimer;
 	// Stream * p_serialStream;
-	HardwareSerial * p_serial;
 	MotorCmdr_T motorCmdr = MOTOR_CMDR_DEFINE(&motorCmdr, 0U, 0U, &millisTimer);
 	uint8_t errorLength;
 
 public:
+	HardwareSerial * p_serial; /* Must be public for wrapper access */
+
 	KellyController(HardwareSerial & serial);
 	virtual ~KellyController(void);
 	void begin(void);
 	void end(void);
+
 
 	KellyController_Status_T poll(void);
 	void ping(void);
@@ -97,5 +103,7 @@ public:
 
 	uint8_t getErrorRxLength(void) { return errorLength; }
 };
+
+
 
 #endif

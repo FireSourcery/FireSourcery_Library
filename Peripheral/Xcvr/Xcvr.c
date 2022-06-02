@@ -59,18 +59,6 @@ bool Xcvr_SetXcvr(Xcvr_T * p_xcvr, uint8_t xcvrIndex)
 	return status;
 }
 
-// bool Xcvr_SetXcvr_Ptr(Xcvr_T * p_xcvr, void * p_xcvrStruct)
-// {
-// 	bool status;
-
-// 	//	if(Xcvr_CheckValid(p_xcvr, *p_xcvrStruct) != 0xFF) //return id
-// 	//	{
-// 	//		p_xcvr->p_Xcvr = p_xcvrStruct;
-// 	//		p_xcvr->Type = p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].TYPE;
-// 	//	}
-
-// 	return status;
-// }
 
 bool Xcvr_CheckIsSet(const Xcvr_T * p_xcvr, uint8_t xcvrIndex)
 {
@@ -92,6 +80,31 @@ bool Xcvr_CheckValid(const Xcvr_T * p_xcvr, void * p_target)
 
 	return isValid;
 }
+
+// bool Xcvr_SetXcvr_Ptr(Xcvr_T * p_xcvr, void * p_xcvrStruct)
+// {
+// 	bool status;
+
+// 	//	if(Xcvr_CheckValid(p_xcvr, *p_xcvrStruct) != 0xFF) //return id
+// 	//	{
+// 	//		p_xcvr->p_Xcvr = p_xcvrStruct;
+// 	//		p_xcvr->Type = p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].TYPE;
+// 	//	}
+
+// 	return status;
+// }
+
+
+//bool Xcvr_SendChar(const Xcvr_T * p_xcvr, uint8_t txChar) 									{return p_xcvr->SendChar(p_xcvr->p_Context, txChar);}
+//bool Xcvr_RecvChar(const Xcvr_T * p_xcvr, uint8_t * p_rxChar)									{return p_xcvr->RecvChar(p_xcvr->p_Context, p_rxChar);}
+//uint32_t Xcvr_SendBytes(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t srcSize)	{p_xcvr->SendBytes(p_xcvr->p_Context, p_srcBuffer, srcSize);}
+//uint32_t Xcvr_RecvBytes(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)		{p_xcvr->RecvBytes(p_xcvr->p_Context, p_destBuffer, destSize);}
+//bool Xcvr_SendString(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length)				{p_xcvr->SendString(p_xcvr->p_Context, p_src, length);}
+//bool Xcvr_RecvString(const Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length)
+//static inline void Xcvr_EnableTx(const Xcvr_T * p_xcvr){}
+//static inline void Xcvr_DisableTx(const Xcvr_T * p_xcvr){}
+//static inline void Xcvr_EnableRx(const Xcvr_T * p_xcvr){}
+//static inline void Xcvr_DisableRx(const Xcvr_T * p_xcvr){}
 
 //switch to functin pointer over preprocessor macro?
 void Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
@@ -121,12 +134,6 @@ bool Xcvr_Tx(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
 
 	return status;
 }
-
-// bool Xcvr_TxPacket(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
-// {
-// 	return (length > 0U) ? Xcvr_Tx(p_xcvr, p_srcBuffer, length) : false;
-// }
-
 
 uint32_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
 {
@@ -204,3 +211,4 @@ void Xcvr_ReleaseTxBuffer(const Xcvr_T * p_xcvr, size_t writeSize)
 		default: break;
 	}
 }
+

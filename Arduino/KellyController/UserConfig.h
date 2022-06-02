@@ -28,8 +28,9 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_KELLY_CONTROLLER_H
-#define CONFIG_KELLY_CONTROLLER_H
+#ifndef USER_CONFIG_KELLY_CONTROLLER_H
+#define USER_CONFIG_KELLY_CONTROLLER_H
 
+// #define CONFIG_PROTOCOL_XCVR_ENABLE
 
 #endif

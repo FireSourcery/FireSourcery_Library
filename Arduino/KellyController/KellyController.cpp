@@ -32,6 +32,27 @@
 
 uint32_t KellyController::millisTimer;
 
+
+/* Wrappers */
+static void TxString(HardwareSerial * p_context, const uint8_t * p_srcBuffer, size_t length)
+{
+	p_context->write(p_srcBuffer, length);
+}
+
+
+const Xcvr_Interface_T XCVR_INTERFACE_ARDUINO_SERIAL =
+{
+	.SEND_N = TxString,
+}
+
+const Xcvr_Xcvr_T XCVR_TABLE[1U] =
+{
+	XCVR_XCVR_DEFINE(&Serial1, XCVR_TYPE_INTERFACE, &XCVR_INTERFACE_ARDUINO_SERIAL),
+};
+
+
+
+
 /******************************************************************************/
 /*!
 	@brief Class Constructor

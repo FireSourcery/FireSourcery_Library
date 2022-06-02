@@ -161,12 +161,9 @@ Analog_T;
 /*
 	Queue buffer length in units
 */
-#define ANALOG_CONFIG(p_HalAnalog, p_ConversionBuffer, ConversionQueueLength) \
-{															\
-	.CONFIG =												\
-	{														\
-		.P_HAL_ANALOG = p_HalAnalog,						\
-	},														\
+#define ANALOG_DEFINE(p_HalAnalog, p_ConversionBuffer, ConversionQueueLength) 										\
+{																													\
+	.CONFIG = { .P_HAL_ANALOG = p_HalAnalog, },																		\
 	.ConversionQueue = QUEUE_DEFINE(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),	\
 }
 

@@ -54,7 +54,7 @@ typedef struct __attribute__((aligned(4U))) VMonitor_Params_Tag
 	uint16_t WarningUpper_Adcu;
 	uint16_t WarningLower_Adcu;
 	uint16_t VInRefMax; /* VIn 100%, frac16 ref only, not used */
-	bool IsEnableOnInit;
+	bool IsMonitorEnable;
 }
 VMonitor_Params_T;
 
@@ -95,8 +95,8 @@ static inline bool VMonitor_GetIsStatusLimit(VMonitor_T * p_vMonitor) { return (
 static inline bool VMonitor_GetIsStatusWarning(VMonitor_T * p_vMonitor) { return ((p_vMonitor->Status == VMONITOR_WARNING_UPPER) || (p_vMonitor->Status == VMONITOR_WARNING_LOWER)); }
 static inline VMonitor_Status_T VMonitor_GetStatus(VMonitor_T * p_vMonitor) { return  (p_vMonitor->Status); }
 
-static inline void VMonitor_Enable(VMonitor_T * p_vMonitor) { p_vMonitor->Params.IsEnableOnInit = true; }
-static inline void VMonitor_Disable(VMonitor_T * p_vMonitor) { p_vMonitor->Params.IsEnableOnInit = false; }
+static inline void VMonitor_Enable(VMonitor_T * p_vMonitor) { p_vMonitor->Params.IsMonitorEnable = true; }
+static inline void VMonitor_Disable(VMonitor_T * p_vMonitor) { p_vMonitor->Params.IsMonitorEnable = false; }
 
 extern void VMonitor_InitAdcVRef_MilliV(uint16_t adcVRef_MilliV);
 extern void VMonitor_Init(VMonitor_T * p_vMonitor);

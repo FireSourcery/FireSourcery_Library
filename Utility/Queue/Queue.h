@@ -81,15 +81,15 @@ Queue_T;
 #endif
 
 #define QUEUE_DEFINE(p_Buffer, Length, UnitSize, UseCritical)	\
-{														\
-	.CONFIG =											\
-	{                                               	\
-		.P_BUFFER			= p_Buffer,					\
-		.LENGTH				= Length,					\
-		.UNIT_SIZE			= UnitSize,					\
-		QUEUE_DEFINE_POW2(Length - 1U)					\
-		QUEUE_DEFINE_CRITICAL(UseCritical)				\
-	},													\
+{																\
+	.CONFIG =													\
+	{                                               			\
+		.P_BUFFER			= p_Buffer,							\
+		.LENGTH				= Length,							\
+		.UNIT_SIZE			= UnitSize,							\
+		QUEUE_DEFINE_POW2(Length - 1U)							\
+		QUEUE_DEFINE_CRITICAL(UseCritical)						\
+	},															\
 }
 
 static inline size_t CalcQueueIndexMasked(const Queue_T * p_queue, size_t index)

@@ -50,6 +50,17 @@ static inline void HAL_PWM_ClearInterrupt(HAL_PWM_T * p_hal)
 	p_hal->SC;	/* Read-after-write sequence to guarantee required serialization of memory operations */
 }
 
+
+static inline void HAL_PWM_DisableInterrupt(HAL_PWM_T * p_hal)
+{
+	(void)p_hal; //todo
+}
+
+static inline void HAL_PWM_EnableInterrupt(HAL_PWM_T * p_hal)
+{
+	(void)p_hal; //todo
+}
+
 /*
  * Common Sync, may split for polarity and CV
  */

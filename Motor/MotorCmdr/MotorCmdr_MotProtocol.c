@@ -50,7 +50,7 @@ static void Ping_BuildReq(MotPacket_PingReq_T * p_txPacket, size_t * p_txLength,
 
 static void Ping_ParseResp(MotorCmdr_T * p_app, const MotPacket_PingResp_T * p_rxPacket)
 {
-	MotPacket_PingResp_Parse(&p_app->Version[0], p_rxPacket);
+	MotPacket_PingResp_Parse(&p_app->Version[0U], p_rxPacket);
 }
 
 /******************************************************************************/

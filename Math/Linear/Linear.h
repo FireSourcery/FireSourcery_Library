@@ -162,6 +162,8 @@ static inline int32_t Linear_InvFunction_Round(const Linear_T * p_linear, int32_
 }
 
 extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef);
+extern void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t y0, int32_t xRef, int32_t yRef);
+
 extern uint16_t _Linear_SatUnsigned16(int32_t frac16);
 extern uint16_t Linear_Function_FractionUnsigned16(const Linear_T * p_linear, int32_t x);
 extern uint16_t _Linear_SatUnsigned16_Abs(int32_t frac16);

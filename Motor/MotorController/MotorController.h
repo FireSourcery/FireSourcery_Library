@@ -109,6 +109,7 @@ MotorController_Substate_T; //calibration/stop substate
 
 /*
 	Fault substate flags
+	Faults flags with exception of RxLost retain set state until user clears
 */
 typedef union MotorController_FaultFlags_Tag
 {
@@ -129,6 +130,21 @@ typedef union MotorController_FaultFlags_Tag
 	uint32_t State;
 }
 MotorController_FaultFlags_T;
+
+/*
+	Warning flags retain prev state for edge detection
+*/
+typedef union MotorController_WarningFlags_Tag
+{
+	struct
+	{
+		uint32_t Heat 	: 1U;
+		uint32_t LowV 	: 1U;
+	};
+	uint32_t State;
+}
+MotorController_WarningFlags_T;
+
 
 typedef const struct __attribute__((aligned(FLASH_UNIT_WRITE_ONCE_SIZE))) MotorController_Once_Tag
 {
@@ -203,7 +219,7 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 	uint16_t OptDinSpeedLimit_Frac16;
 
 	uint16_t ILimitScalarOnLowV_Frac16;
-	uint16_t ILimitScalarOnHeat_Frac16;
+	uint16_t ILimitScalarOnHeat_Frac16; /* Final ILimit at HeatLimit. Proportionally effective beginning at HeatWarning */
 	//battery max current
 
 	// bool IsFixedFreqUserOutput; /* limits conversion freq regardless of polling freq */
@@ -268,6 +284,7 @@ typedef struct MotorController_Tag
 	VMonitor_T VMonitorSense; 	//5V
 	VMonitor_T VMonitorAcc; 	//12V
 	Linear_T BatteryLife; 		//Battery Life percentage
+	Linear_T HeatILimitRate;
 
 	Timer_T TimerMillis;
 	Timer_T TimerMillis10;
@@ -279,8 +296,9 @@ typedef struct MotorController_Tag
 	uint16_t ShellSubstate;
 
 	StateMachine_T StateMachine;
-	volatile MotAnalog_Results_T FaultAnalogRecord;
-	volatile MotorController_FaultFlags_T FaultFlags; /* Fault Substate*/
+	MotAnalog_Results_T FaultAnalogRecord;
+	MotorController_FaultFlags_T FaultFlags; /* Fault Substate*/
+	MotorController_WarningFlags_T WarningFlags;
 	MotorController_Direction_T MainDirection;
 	MotorController_Direction_T UserDirection;
 	MotorController_Substate_T StopSubstate;

@@ -105,11 +105,11 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 
 	AnalogN_Group_PauseQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_HEAT);
 	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_PCB);
-	if(Thermistor_GetIsEnable(&p_mc->ThermistorMosfetsTop))
+	if(Thermistor_GetIsMonitorEnable(&p_mc->ThermistorMosfetsTop))
 	{
 		AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_MOSFETS_TOP);
 	}
-	if(Thermistor_GetIsEnable(&p_mc->ThermistorMosfetsBot))
+	if(Thermistor_GetIsMonitorEnable(&p_mc->ThermistorMosfetsBot))
 	{
 		AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_MOSFETS_BOT);
 	}
@@ -136,14 +136,24 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 
 		if(isWarning == true)
 		{
-			if(MotorController_SetILimitMotorAll(p_mc, p_mc->Parameters.ILimitScalarOnHeat_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT) == true)
-			{
-				Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U);
-			}
+			/*
+				Thermistor Adcu is roughly linear in Warning region
+				Assume HeatMostfetTop as highest heat
+			*/
+			MotorController_SetILimitMotorAll
+			(
+				p_mc,
+				Linear_Function(&p_mc->HeatILimitRate, p_mc->AnalogResults.HeatMosfetsTop_Adcu),
+				MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT
+			);
+
+			if(p_mc->WarningFlags.Heat == false) { Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U); }
+			p_mc->WarningFlags.Heat = true;
 		}
 		else
 		{
-			MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT);
+			if(p_mc->WarningFlags.Heat == true) { MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT); }
+			p_mc->WarningFlags.Heat = false;
 		}
 	}
 }
@@ -162,7 +172,7 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
 	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense) == true) { p_mc->FaultFlags.VSenseLimit = 1U; isFault = true; }
 	if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc) == true) 	{ p_mc->FaultFlags.VAccLimit = 1U; isFault = true; }
 
-	if(isFault == true) { MotorController_User_SetFault(p_mc); }	/* Sensors checks fault only */
+	if(isFault == true) { MotorController_User_SetFault(p_mc); } 	/* Sensors checks fault only */
 }
 
 /*
@@ -238,13 +248,15 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 		case VMONITOR_LIMIT_LOWER: p_mc->FaultFlags.VPosLimit = 1U;	MotorController_User_SetFault(p_mc); break;
 		case VMONITOR_WARNING_UPPER: break;
 		case VMONITOR_WARNING_LOWER:
-			if(MotorController_SetILimitMotorAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V) == true)
+			if(p_mc->WarningFlags.LowV == false)
 			{
+				MotorController_SetILimitMotorAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
 				Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U);
+				p_mc->WarningFlags.LowV = true;
 			}
 			break;
 		case VMONITOR_STATUS_OK:
-			MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
+			if(p_mc->WarningFlags.LowV == true) { MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V); }
 			break;
 		default: break;
 	}

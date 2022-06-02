@@ -183,7 +183,7 @@ static StateMachine_State_T * Stop_InputRelease(MotorController_T * p_mc)
 static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 {
 	// StateMachine_State_T * p_nextState;
-	bool isSucess = MotorController_ProcDirection(p_mc); //fix beep stop
+	bool isSucess = MotorController_ProcDirection(p_mc); //fix need beep source
 	/*
 		Motor Freewheel check stop should be atomic relative to this function
 		this runs before motor freewheel checks speed => goto fault state.
@@ -194,12 +194,18 @@ static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 
 static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc)
 {
+	/* Disable PWM interrupt to disable Motor_StateMachine */
+	Motor_DisablePwm(&p_mc->CONFIG.P_MOTORS[0U]);
+
 	switch(p_mc->StopSubstate)
 	{
 		case MOTOR_CONTROLLER_NVM_ALL: MotorController_SaveParameters_Blocking(p_mc); break;
 		case MOTOR_CONTROLLER_NVM_BOOT: MotorController_SaveBootReg_Blocking(p_mc); break;
 		default: break;
 	}
+
+	Motor_EnablePwm(&p_mc->CONFIG.P_MOTORS[0U]);
+
 	return 0U;
 }
 
@@ -210,7 +216,7 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 	[MCSM_INPUT_THROTTLE] 			= (StateMachine_Transition_T)Stop_InputThrottle,
 	[MCSM_INPUT_BRAKE] 				= (StateMachine_Transition_T)Stop_InputBrake,
 	[MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)Stop_InputRelease,
-	[MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)0U, //release into neutral, different from release into null
+	[MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)0U, //release into neutral, different from release into no input
 	[MCSM_INPUT_NULL] 				= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_NEUTRAL] 			= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_SET_NEUTRAL] 		= (StateMachine_Transition_T)0U,

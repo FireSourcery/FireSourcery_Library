@@ -81,7 +81,7 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 #endif
 }
 
-// void Linear_Init_X0(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t yRef)
+// void Linear_Init_X0(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t xRef)
 // {
 
 // }
@@ -89,10 +89,22 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 /*
 	derive slope
 */
-// void Linear_Init_XRefYRef(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t yRef)
-// {
+void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t y0, int32_t xRef, int32_t yRef)
+{
+#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
+	p_linear->YReference = yRef;
+	p_linear->XReference = xRef;
 
-// }
+	p_linear->Slope = ((yRef - y0) << 14U) / (xRef - x0);
+	p_linear->SlopeShift = 14U;
+
+	p_linear->InvSlope = ((xRef - x0) << 14U) / (yRef - y0);
+	p_linear->InvSlopeShift = 14U;
+
+	p_linear->XOffset = x0;
+	p_linear->YOffset = y0;
+#endif
+}
 
 
 /******************************************************************************/

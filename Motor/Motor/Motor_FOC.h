@@ -95,7 +95,6 @@ static inline int32_t _Motor_FOC_CaptureAngleSpeed(Motor_T * p_motor, qangle16_t
 	return speedFeedback_Frac16;
 }
 
-			//todo observer
 static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 {
 	bool procSpeed = Timer_Poll(&p_motor->SpeedTimer);
@@ -118,6 +117,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			break;
 
 		case MOTOR_SENSOR_MODE_SENSORLESS:
+			//todo observer
 			electricalAngle = 0U;
 			speedFeedback_Frac16 = 0U;
 			break;
