@@ -147,13 +147,19 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 				MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT
 			);
 
-			if(p_mc->WarningFlags.Heat == false) { Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U); }
-			p_mc->WarningFlags.Heat = true;
+			if(p_mc->WarningFlags.Heat == false)
+			{
+				Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U);
+				p_mc->WarningFlags.Heat = true;
+			}
 		}
 		else
 		{
-			if(p_mc->WarningFlags.Heat == true) { MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT); }
-			p_mc->WarningFlags.Heat = false;
+			if(p_mc->WarningFlags.Heat == true)
+			{
+				MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT);
+				p_mc->WarningFlags.Heat = false;
+			}
 		}
 	}
 }
@@ -190,7 +196,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 			case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_mc);	break;
 			case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL:
 				if(MotAnalogUser_PollBrakePinRisingEdge(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
-				if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U])) { MotorController_User_DisableControl(p_mc); } //MotorController_User_SetFault(p_mc); p_mc->FaultFlags.RxLost = 1U;
+				if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U])) { MotorController_User_DisableControl(p_mc); }
+				//MotorController_User_SetFault(p_mc); p_mc->FaultFlags.RxLost = 1U;
 				break;
 
 			case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
@@ -256,7 +263,11 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 			}
 			break;
 		case VMONITOR_STATUS_OK:
-			if(p_mc->WarningFlags.LowV == true) { MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V); }
+			if(p_mc->WarningFlags.LowV == true)
+			{
+				MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
+				p_mc->WarningFlags.LowV = false;
+			}
 			break;
 		default: break;
 	}
