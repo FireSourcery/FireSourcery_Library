@@ -333,14 +333,14 @@ typedef struct Motor_Tag
 	uint16_t SpeedLimitCcw_Frac16; 		/* Active SpeedLimit, Frac16 of SpeedRefMax Param */
 	uint16_t SpeedLimitCw_Frac16;
 	uint16_t SpeedLimit_Frac16; 		/* Active SpeedLimit, optionally reduce 1 check of direction during User_SetFeedbackCmd */
+	// Motor_SpeedLimitActiveId_T SpeedLimitActiveId;
+	// uint16_t SpeedLimitActiveScalar;
+
 	uint16_t ILimitMotoring_Frac16;		/* Active ILimit */
 	uint16_t ILimitGenerating_Frac16;
-	int16_t VoltageModeILimit_QFracS16; /* [-32767:32767] directional input into pid */
-
-	// Motor_SpeedLimitActiveId_T SpeedLimitActiveId;
 	Motor_ILimitActiveId_T ILimitActiveId;
-	// uint16_t SpeedLimitActiveScalar; 	/* Store for comparison */
-	uint16_t ILimitActiveScalar;		/*  */
+	uint16_t ILimitActiveScalar;		/* Store for comparison */
+	int16_t VoltageModeILimit_QFracS16; /* [-32767:32767] directional input into pid */
 
 	/* Calibration Substate */
 	Motor_CalibrationState_T CalibrationState; 	/* Substate, selection for calibration */

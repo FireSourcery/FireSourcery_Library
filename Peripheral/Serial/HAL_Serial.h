@@ -31,12 +31,12 @@
 #ifndef HAL_SERIAL_H
 #define HAL_SERIAL_H
 
-#include "Peripheral/HAL/Path.h"
+#include "Peripheral/HAL/HAL_Peripheral.h"
 
 #if defined(CONFIG_HAL_SERIAL_PATH)
 	#include STR(CONFIG_HAL_SERIAL_PATH/HAL_Serial.h)
-#elif defined(CONFIG_PATH_HAL_PERIPHERAL) || defined(CONFIG_PATH_HAL_PERIPHERAL_PLATFORM)
-	#include PATH_HAL_PERIPHERAL(HAL_Serial.h)
+#elif defined(CONFIG_HAL_PERIPHERAL_PATH) || defined(CONFIG_HAL_PERIPHERAL_PLATFORM)
+	#include HAL_PERIPHERAL_PATH(HAL_Serial.h)
 #else
 	#error "HAL_Serial included but undefined."
 #endif

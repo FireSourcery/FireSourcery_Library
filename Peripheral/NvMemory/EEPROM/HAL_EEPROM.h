@@ -31,7 +31,7 @@
 #ifndef HAL_EEPROM_H
 #define HAL_EEPROM_H
 
-#include "Peripheral/HAL/Path.h"
-#include PATH_HAL_PERIPHERAL(HAL_EEPROM.h)
+#include "Peripheral/HAL/HAL_Peripheral.h"
+#include HAL_PERIPHERAL_PATH(HAL_EEPROM.h)
 
 #endif /* HAL_EEPROM_H */

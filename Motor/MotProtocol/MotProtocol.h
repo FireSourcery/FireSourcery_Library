@@ -45,12 +45,6 @@ MotProtocol_Substate_T;
 
 extern void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, Protocol_TxSyncId_T txId);
 extern void MotProtocol_ResetExt(MotProtocol_Substate_T * p_subState);
-
-/******************************************************************************/
-/*!
-	Ctrlr side only
-*/
-/******************************************************************************/
 extern Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p_rxRemaining, const MotPacket_T * p_rxPacket, size_t rxCount);
 
 /******************************************************************************/
@@ -58,8 +52,6 @@ extern Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, siz
 	Cmdr side only
 */
 /******************************************************************************/
-extern Protocol_RxCode_T MotProtocol_CheckRxPacket(const MotPacket_T * p_rxPacket, protocol_reqid_t activeReqId);
-
-
+// extern Protocol_RxCode_T MotProtocol_CheckRxPacket(const MotPacket_T * p_rxPacket, protocol_reqid_t activeReqId);
 
 #endif

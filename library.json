@@ -31,7 +31,8 @@
       "+<Motor/MotProtocol/MotProtocol.c>",
       "+<Motor/MotProtocol/MotPacket.c>",
       "+<Utility/Protocol/Protocol_Cmdr.c>",
-      "+<Utility/Protocol/Protocol.c>"
+      "+<Utility/Protocol/Protocol.c>",
+      "+<Peripheral/Xcvr/Xcvr.c>"
     ]
   }
 }

@@ -63,10 +63,12 @@ typedef struct MotorCmdr_Tag
 	uint16_t RespStatus;
 	MotPacket_ControlId_T ControlIdActive;
 	MotPacket_MonitorId_T MonitorIdActive;
-	uint16_t MotorCmdValue;				/*  */
+	uint16_t MotorCmdValue;			/*  */
 
-	uint16_t MotorReadWriteVarId;		/*  */
-	uint32_t MotorReadWriteVarValue;	/*  */
+	uint16_t MotorWriteVarId;		/*  */
+	uint32_t MotorWriteVarValue;	/*  */
+	uint16_t MotorReadVarId;		/*  */
+	uint32_t MotorReadVarValue;		/*  */
 
 	/* Resp Interface */
 	MotorCmdr_Units_T Units;
@@ -90,37 +92,29 @@ MotorCmdr_T;
 
 extern const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U];
 
-#define MOTOR_CMDR_DEFINE(p_ThisMotorCmdr, p_XcvrTable, XcvrCount, p_Timer)  									\
-{																												\
-	.Protocol = PROTOCOL_DEFINE 																				\
-	(																											\
-		&((p_ThisMotorCmdr)->RxPacket[0U]), &((p_ThisMotorCmdr)->TxPacket[0U]), MOT_PACKET_LENGTH_MAX, 			\
-		(p_ThisMotorCmdr), &((p_ThisMotorCmdr)->Substate), 														\
-		_MOTOR_CMDR_PROTOCOL_SPECS_TABLE, 1U, 																	\
-		p_XcvrTable, XcvrCount, 																				\
-		p_Timer, 0U																								\
-	),																											\
+/*
+	No Non-Volatile memory params by default
+*/
+#define MOTOR_CMDR_DEFINE(p_ThisMotorCmdr, p_XcvrTable, XcvrCount, p_Timer)  							\
+{																										\
+	.Protocol = PROTOCOL_DEFINE 																		\
+	(																									\
+		&((p_ThisMotorCmdr)->RxPacket[0U]), &((p_ThisMotorCmdr)->TxPacket[0U]), MOT_PACKET_LENGTH_MAX, 	\
+		(p_ThisMotorCmdr), &((p_ThisMotorCmdr)->Substate), 												\
+		_MOTOR_CMDR_PROTOCOL_SPECS_TABLE, 1U, 															\
+		p_XcvrTable, XcvrCount, 																		\
+		p_Timer, 0U																						\
+	),																									\
 }
 
 /*
-	Outside module handle TxRx, CheckAvailable
+	Protocol module handle TxRx, CheckAvailable
 */
-static inline bool _MotorCmdr_ParseResp(MotorCmdr_T * p_motorCmdr) { return _Protocol_Cmdr_ParseResp(&p_motorCmdr->Protocol); }
-static inline bool _MotorCmdr_PollTimeout(MotorCmdr_T * p_motorCmdr) { return _Protocol_Cmdr_PollTimeout(&p_motorCmdr->Protocol); }
-
-static inline uint8_t _MotorCmdr_GetReqLength(MotorCmdr_T * p_motorCmdr) { return Protocol_Cmdr_GetReqLength(&p_motorCmdr->Protocol); }
-static inline uint8_t _MotorCmdr_GetRespLength(MotorCmdr_T * p_motorCmdr) { return Protocol_Cmdr_GetRespRemaining(&p_motorCmdr->Protocol); }
-static inline uint8_t * _MotorCmdr_GetPtrTxPacket(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->TxPacket; }
-static inline uint8_t * _MotorCmdr_GetPtrRxPacket(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->RxPacket; }
-
-static inline int32_t MotorCmdr_GetReadSpeed(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Speed; }
-static inline int16_t MotorCmdr_GetReadIa(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ia; }
-static inline int16_t MotorCmdr_GetReadIb(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ib; }
-static inline int16_t MotorCmdr_GetReadIc(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ic; }
-static inline int16_t MotorCmdr_GetReadIalpha(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ialpha; }
-static inline int16_t MotorCmdr_GetReadIbeta(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ibeta; }
-static inline int16_t MotorCmdr_GetReadId(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Id; }
-static inline int16_t MotorCmdr_GetReadIq(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Iq; }
+static inline void MotorCmdr_Proc_Thread(MotorCmdr_T * p_motorCmdr)
+{
+	Protocol_Proc(&p_motorCmdr->Protocol);
+	// if(Protocol_Cmdr_CheckTxIdle(&p_motorCmdr->Protocol) == true) { MotorCmdr_Ping(p_motorCmdr); }
+}
 
 /*
 	For Cmdr side handling of unit conversion
@@ -132,16 +126,14 @@ static inline int16_t _MotorCmdr_ConvertToIAmp(MotorCmdr_T * p_motorCmdr, int32_
 
 static inline int16_t MotorCmdr_GetReadSpeed_Rpm(MotorCmdr_T * p_motorCmdr) { return _MotorCmdr_ConvertToSpeedRpm(p_motorCmdr, p_motorCmdr->Speed); }
 
-/*
-	Protocol module handle TxRx, CheckAvailable
-*/
-// static inline void MotorCmdr_Proc_Thread(MotorCmdr_T * p_motorCmdr)
-// {
-// 	// if(Timer_Poll(&p_motorCmdr->TimerMillis) == true)
-// 	{
-// 		Protocol_Cmdr_ProcRx(&p_motorCmdr->Protocol);
-// 	}
-// }
+static inline int32_t MotorCmdr_GetReadSpeed(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Speed; }
+static inline int16_t MotorCmdr_GetReadIa(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ia; }
+static inline int16_t MotorCmdr_GetReadIb(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ib; }
+static inline int16_t MotorCmdr_GetReadIc(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ic; }
+static inline int16_t MotorCmdr_GetReadIalpha(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ialpha; }
+static inline int16_t MotorCmdr_GetReadIbeta(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Ibeta; }
+static inline int16_t MotorCmdr_GetReadId(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Id; }
+static inline int16_t MotorCmdr_GetReadIq(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Iq; }
 
 /******************************************************************************/
 /*!
@@ -151,23 +143,48 @@ static inline int16_t MotorCmdr_GetReadSpeed_Rpm(MotorCmdr_T * p_motorCmdr) { re
 extern void MotorCmdr_Init(MotorCmdr_T * p_motorCmdr);
 extern void MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr);
 
-extern void _MotorCmdr_ProcTxIdle(MotorCmdr_T * p_motorCmdr);
+extern void MotorCmdr_Ping(MotorCmdr_T * p_motorCmdr);
+extern void MotorCmdr_StopMotors(MotorCmdr_T * p_motorCmdr);
+extern void MotorCmdr_SaveNvm(MotorCmdr_T * p_motorCmdr);
+extern void MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr);
+extern void MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId, uint32_t value);
+extern void MotorCmdr_StartReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId);
+extern void MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle);
+extern void MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake);
+extern void MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr);
+extern void MotorCmdr_WriteDirectionForward(MotorCmdr_T * p_motorCmdr);
+extern void MotorCmdr_WriteDirectionReverse(MotorCmdr_T * p_motorCmdr);
+extern void MotorCmdr_WriteDirectionNeutral(MotorCmdr_T * p_motorCmdr);
+extern void MotorCmdr_StartReadSpeed(MotorCmdr_T * p_motorCmdr);
+extern void MotorCmdr_StartReadIFoc(MotorCmdr_T * p_motorCmdr);
 
-extern uint8_t _MotorCmdr_Ping(MotorCmdr_T * p_motorCmdr);
-extern uint8_t _MotorCmdr_StopMotors(MotorCmdr_T * p_motorCmdr);
-extern uint8_t _MotorCmdr_SaveNvm(MotorCmdr_T * p_motorCmdr);
-extern uint8_t _MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr);
-extern uint8_t _MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId, uint32_t value);
-extern uint8_t _MotorCmdr_StartReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId);
-extern uint8_t _MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle);
-extern uint8_t _MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake);
-extern uint8_t _MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr);
-extern uint8_t _MotorCmdr_WriteDirectionForward(MotorCmdr_T * p_motorCmdr);
-extern uint8_t _MotorCmdr_WriteDirectionReverse(MotorCmdr_T * p_motorCmdr);
-extern uint8_t _MotorCmdr_WriteDirectionNeutral(MotorCmdr_T * p_motorCmdr);
-extern uint8_t _MotorCmdr_StartReadSpeed(MotorCmdr_T * p_motorCmdr);
-extern uint8_t _MotorCmdr_StartReadIFoc(MotorCmdr_T * p_motorCmdr);
 
-// extern void MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle);
+/*
+	Outside module handle TxRx, CheckAvailable
+*/
+// static inline bool _MotorCmdr_ParseResp(MotorCmdr_T * p_motorCmdr) { return _Protocol_Cmdr_ParseResp(&p_motorCmdr->Protocol); }
+// static inline bool _MotorCmdr_PollTimeout(MotorCmdr_T * p_motorCmdr) { return _Protocol_Cmdr_PollTimeout(&p_motorCmdr->Protocol); }
+
+// static inline uint8_t _MotorCmdr_GetReqLength(MotorCmdr_T * p_motorCmdr) { return Protocol_Cmdr_GetReqLength(&p_motorCmdr->Protocol); }
+// static inline uint8_t _MotorCmdr_GetRespLength(MotorCmdr_T * p_motorCmdr) { return Protocol_Cmdr_GetRespRemaining(&p_motorCmdr->Protocol); }
+// static inline uint8_t * _MotorCmdr_GetPtrTxPacket(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->TxPacket; }
+// static inline uint8_t * _MotorCmdr_GetPtrRxPacket(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->RxPacket; }
+
+// extern void _MotorCmdr_ProcTxIdle(MotorCmdr_T * p_motorCmdr);
+
+// extern uint8_t _MotorCmdr_Ping(MotorCmdr_T * p_motorCmdr);
+// extern uint8_t _MotorCmdr_StopMotors(MotorCmdr_T * p_motorCmdr);
+// extern uint8_t _MotorCmdr_SaveNvm(MotorCmdr_T * p_motorCmdr);
+// extern uint8_t _MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr);
+// extern uint8_t _MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId, uint32_t value);
+// extern uint8_t _MotorCmdr_StartReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId);
+// extern uint8_t _MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle);
+// extern uint8_t _MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake);
+// extern uint8_t _MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr);
+// extern uint8_t _MotorCmdr_WriteDirectionForward(MotorCmdr_T * p_motorCmdr);
+// extern uint8_t _MotorCmdr_WriteDirectionReverse(MotorCmdr_T * p_motorCmdr);
+// extern uint8_t _MotorCmdr_WriteDirectionNeutral(MotorCmdr_T * p_motorCmdr);
+// extern uint8_t _MotorCmdr_StartReadSpeed(MotorCmdr_T * p_motorCmdr);
+// extern uint8_t _MotorCmdr_StartReadIFoc(MotorCmdr_T * p_motorCmdr);
 
 #endif

@@ -31,7 +31,7 @@
 #ifndef HAL_PWM_H
 #define HAL_PWM_H
 
-#include "Peripheral/HAL/Path.h"
-#include PATH_HAL_PERIPHERAL(HAL_PWM.h)
+#include "Peripheral/HAL/HAL_Peripheral.h"
+#include HAL_PERIPHERAL_PATH(HAL_PWM.h)
 
 #endif

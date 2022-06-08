@@ -81,7 +81,7 @@ uint8_t _MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_HeaderId_
 
 uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_HeaderId_T syncId)
 {
-	return ((syncId == MOT_PROTOCOL_STOP_ALL) || (syncId == MOT_PROTOCOL_PING) || (syncId == MOT_PROTOCOL_SYNC_ACK) || (syncId == MOT_PROTOCOL_SYNC_NACK) || (syncId == MOT_PROTOCOL_SYNC_ABORT)) ?
+	return ((syncId == MOT_PACKET_STOP_ALL) || (syncId == MOT_PACKET_PING) || (syncId == MOT_PACKET_SYNC_ACK) || (syncId == MOT_PACKET_SYNC_NACK) || (syncId == MOT_PACKET_SYNC_ABORT)) ?
 		_MotPacket_Sync_Build(p_txPacket, syncId) : 0U;
 }
 
@@ -103,7 +103,7 @@ uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_HeaderId_T
 /******************************************************************************/
 /*!	Ping */
 /******************************************************************************/
-uint8_t MotPacket_PingReq_Build(MotPacket_PingReq_T * p_reqPacket) { return _MotPacket_Sync_Build((MotPacket_Sync_T *)p_reqPacket, MOT_PROTOCOL_PING); }
+uint8_t MotPacket_PingReq_Build(MotPacket_PingReq_T * p_reqPacket) { return _MotPacket_Sync_Build((MotPacket_Sync_T *)p_reqPacket, MOT_PACKET_PING); }
 uint8_t MotPacket_PingReq_GetRespLength(void) { return sizeof(MotPacket_PingResp_T); }
 void MotPacket_PingResp_Parse(uint8_t * p_version, const MotPacket_PingResp_T * p_respPacket)
 {
@@ -114,7 +114,7 @@ void MotPacket_PingResp_Parse(uint8_t * p_version, const MotPacket_PingResp_T * 
 /******************************************************************************/
 /*!	Stop All */
 /******************************************************************************/
-uint8_t MotPacket_StopReq_Build(MotPacket_StopReq_T * p_reqPacket) { return _MotPacket_Sync_Build((MotPacket_Sync_T *)p_reqPacket, MOT_PROTOCOL_STOP_ALL); }
+uint8_t MotPacket_StopReq_Build(MotPacket_StopReq_T * p_reqPacket) { return _MotPacket_Sync_Build((MotPacket_Sync_T *)p_reqPacket, MOT_PACKET_STOP_ALL); }
 uint8_t MotPacket_StopReq_GetRespLength(void) { return sizeof(MotPacket_StopResp_T); }
 
 // void MotPacket_StopResp_Parse(MotPacket_StatusResp_Id_T * p_status, const MotPacket_StopResp_T * p_respPacket)
@@ -128,7 +128,7 @@ uint8_t MotPacket_StopReq_GetRespLength(void) { return sizeof(MotPacket_StopResp
 /******************************************************************************/
 uint8_t MotPacket_SaveNvmReq_Build(MotPacket_SaveNvmReq_T * p_reqPacket)
 {
-	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_SAVE_NVM, 0U, MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_CMD_SAVE_NVM, 0U, MOT_PACKET_HEADER_STATUS_OK);
 }
 
 uint8_t MotPacket_SaveNvmReq_GetRespLength(void) { return sizeof(MotPacket_SaveNvmResp_T); }
@@ -143,7 +143,7 @@ uint8_t MotPacket_SaveNvmReq_GetRespLength(void) { return sizeof(MotPacket_SaveN
 /******************************************************************************/
 uint8_t MotPacket_InitUnitsReq_Build(MotPacket_InitUnitsReq_T * p_reqPacket)
 {
-	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_INIT_UNITS, 0U, MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_CMD_INIT_UNITS, 0U, MOT_PACKET_HEADER_STATUS_OK);
 }
 
 uint8_t MotPacket_InitUnitsReq_GetRespLength(void) { return sizeof(MotPacket_InitUnitsResp_T); }
@@ -171,20 +171,20 @@ void MotPacket_InitUnitsResp_Parse
 }
 
 /******************************************************************************/
-/*!	Read Immediate */
+/*!	Read Var */
 /******************************************************************************/
-uint8_t MotPacket_ReadImmediateReq_Build(MotPacket_ReadImmediateReq_T * p_reqPacket, MotVarId_T motVarId)
+uint8_t MotPacket_ReadVarReq_Build(MotPacket_ReadVarReq_T * p_reqPacket, MotVarId_T motVarId)
 {
 	p_reqPacket->ReadReq.MotVarId = (uint16_t)motVarId;
-	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_READ_IMMEDIATE, sizeof(MotPacket_ReadImmediateReq_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_CMD_READ_VAR, sizeof(MotPacket_ReadVarReq_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
-uint8_t MotPacket_ReadImmediateReq_GetRespLength(void) { return sizeof(MotPacket_ReadImmediateResp_T); }
+uint8_t MotPacket_ReadVarReq_GetRespLength(void) { return sizeof(MotPacket_ReadVarResp_T); }
 
 /*!
 	@param[out] p_value 4-byte value uint32_t or int32_t
 */
-void MotPacket_ReadImmediateResp_Parse(uint32_t * p_value, const MotPacket_ReadImmediateResp_T * p_respPacket)
+void MotPacket_ReadVarResp_Parse(uint32_t * p_value, const MotPacket_ReadVarResp_T * p_respPacket)
 {
 	*p_value = p_respPacket->ReadResp.Value;
 	// *p_status = p_respPacket->ReadResp.Status;
@@ -192,18 +192,18 @@ void MotPacket_ReadImmediateResp_Parse(uint32_t * p_value, const MotPacket_ReadI
 }
 
 /******************************************************************************/
-/*!	Write Immediate */
+/*!	Write Var */
 /******************************************************************************/
-uint8_t MotPacket_WriteImmediateReq_Build(MotPacket_WriteImmediateReq_T * p_reqPacket, MotVarId_T motVarId, uint32_t value)
+uint8_t MotPacket_WriteVarReq_Build(MotPacket_WriteVarReq_T * p_reqPacket, MotVarId_T motVarId, uint32_t value)
 {
 	p_reqPacket->WriteReq.MotVarId = (uint16_t)motVarId;
 	p_reqPacket->WriteReq.Value = value;
-	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_WRITE_IMMEDIATE, sizeof(MotPacket_WriteImmediateReq_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_CMD_WRITE_VAR, sizeof(MotPacket_WriteVarReq_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
-uint8_t MotPacket_WriteImmediateReq_GetRespLength(void) { return sizeof(MotPacket_WriteImmediateReq_T); }
+uint8_t MotPacket_WriteVarReq_GetRespLength(void) { return sizeof(MotPacket_WriteVarReq_T); }
 
-// MotPacket_HeaderStatus_T MotPacket_WriteImmediateResp_Parse(const MotPacket_WriteImmediateResp_T * p_respPacket)
+// MotPacket_HeaderStatus_T MotPacket_WriteVarResp_Parse(const MotPacket_WriteVarResp_T * p_respPacket)
 // {
 // 	// *p_status = p_respPacket->WriteResp.Status;
 // 	return p_respPacket->Header.Status;
@@ -215,40 +215,40 @@ uint8_t MotPacket_WriteImmediateReq_GetRespLength(void) { return sizeof(MotPacke
 /******************************************************************************/
 uint8_t MotPacket_ControlReq_Release_Build(MotPacket_ControlReq_T * p_reqPacket)
 {
-	p_reqPacket->ControlReq.ControlId = MOT_PROTOCOL_CONTROL_RELEASE;
-	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_CONTROL_TYPE, sizeof(MotPacket_ControlReq_Release_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+	p_reqPacket->ControlReq.ControlId = MOT_PACKET_CONTROL_RELEASE;
+	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_CMD_CONTROL_TYPE, sizeof(MotPacket_ControlReq_Release_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 uint8_t MotPacket_ControlReq_DirectionForward_Build(MotPacket_ControlReq_T * p_reqPacket)
 {
-	p_reqPacket->ControlReq.ControlId = MOT_PROTOCOL_CONTROL_DIRECTION_FORWARD;
-	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_CONTROL_TYPE, sizeof(MotPacket_ControlReq_Direction_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+	p_reqPacket->ControlReq.ControlId = MOT_PACKET_CONTROL_DIRECTION_FORWARD;
+	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_CMD_CONTROL_TYPE, sizeof(MotPacket_ControlReq_Direction_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 uint8_t MotPacket_ControlReq_DirectionReverse_Build(MotPacket_ControlReq_T * p_reqPacket)
 {
-	p_reqPacket->ControlReq.ControlId = MOT_PROTOCOL_CONTROL_DIRECTION_REVERSE;
-	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_CONTROL_TYPE, sizeof(MotPacket_ControlReq_Direction_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+	p_reqPacket->ControlReq.ControlId = MOT_PACKET_CONTROL_DIRECTION_REVERSE;
+	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_CMD_CONTROL_TYPE, sizeof(MotPacket_ControlReq_Direction_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 uint8_t MotPacket_ControlReq_DirectionNeutral_Build(MotPacket_ControlReq_T * p_reqPacket)
 {
-	p_reqPacket->ControlReq.ControlId = MOT_PROTOCOL_CONTROL_DIRECTION_NEUTRAL;
-	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_CONTROL_TYPE, sizeof(MotPacket_ControlReq_Direction_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+	p_reqPacket->ControlReq.ControlId = MOT_PACKET_CONTROL_DIRECTION_NEUTRAL;
+	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_CMD_CONTROL_TYPE, sizeof(MotPacket_ControlReq_Direction_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 uint8_t MotPacket_ControlReq_Throttle_Build(MotPacket_ControlReq_T * p_reqPacket, uint16_t throttleValue)
 {
-	p_reqPacket->ControlReq.ControlId = MOT_PROTOCOL_CONTROL_THROTTLE;
+	p_reqPacket->ControlReq.ControlId = MOT_PACKET_CONTROL_THROTTLE;
 	p_reqPacket->ControlReq.ValueU16s[0U] = throttleValue;
-	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_CONTROL_TYPE, sizeof(MotPacket_ControlReq_Throttle_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_CMD_CONTROL_TYPE, sizeof(MotPacket_ControlReq_Throttle_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 uint8_t MotPacket_ControlReq_Brake_Build(MotPacket_ControlReq_T * p_reqPacket, uint16_t brakeValue)
 {
-	p_reqPacket->ControlReq.ControlId = MOT_PROTOCOL_CONTROL_BRAKE;
+	p_reqPacket->ControlReq.ControlId = MOT_PACKET_CONTROL_BRAKE;
 	p_reqPacket->ControlReq.ValueU16s[0U] = brakeValue;
-	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_CONTROL_TYPE, sizeof(MotPacket_ControlReq_Brake_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_CMD_CONTROL_TYPE, sizeof(MotPacket_ControlReq_Brake_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 // uint8_t MotPacket_ControlReq_Build(MotPacket_ControlReq_T * p_reqPacket, MotPacket_ControlId_T controlId, 15regs)
@@ -256,9 +256,9 @@ uint8_t MotPacket_ControlReq_Brake_Build(MotPacket_ControlReq_T * p_reqPacket, u
 // 	uint8_t packetLength;
 // 	switch(controlId)
 // 	{
-// 		case MOT_PROTOCOL_CONTROL_STOP: 		packetLength = 7U; 																		break;
-// 		case MOT_PROTOCOL_CONTROL_THROTTLE: 	packetLength = MotPacket_ControlReq_Throttle_Build(p_reqPacket, p_req->ValueU16s[0U]); 	break;
-// 		case MOT_PROTOCOL_CONTROL_BRAKE: 	packetLength = MotPacket_ControlReq_Brake_Build(p_reqPacket, p_req->ValueU16s[0U])		break;
+// 		case MOT_PACKET_CONTROL_STOP: 		packetLength = 7U; 																		break;
+// 		case MOT_PACKET_CONTROL_THROTTLE: 	packetLength = MotPacket_ControlReq_Throttle_Build(p_reqPacket, p_req->ValueU16s[0U]); 	break;
+// 		case MOT_PACKET_CONTROL_BRAKE: 	packetLength = MotPacket_ControlReq_Brake_Build(p_reqPacket, p_req->ValueU16s[0U])		break;
 // 		default: packetLength = 0U; break;
 // 	}
 // 	return packetLength;
@@ -273,9 +273,9 @@ uint8_t MotPacket_ControlReq_GetRespLength(MotPacket_ControlId_T controlId)
 	/* Per Var Status */
 	// switch(p_interface->ReqControl.ControlId)
 	// {
-	// 	case MOT_PROTOCOL_CONTROL_STOP: 		 1U; 												break;
-	// 	case MOT_PROTOCOL_CONTROL_THROTTLE: 	 sizeof(MotPacket_ControlReq_Throttle_Payload_T); 	break;
-	// 	case MOT_PROTOCOL_CONTROL_BRAKE: 	 sizeof(MotPacket_ControlReq_Brake_Payload_T); 		break;
+	// 	case MOT_PACKET_CONTROL_STOP: 		 1U; 												break;
+	// 	case MOT_PACKET_CONTROL_THROTTLE: 	 sizeof(MotPacket_ControlReq_Throttle_Payload_T); 	break;
+	// 	case MOT_PACKET_CONTROL_BRAKE: 	 sizeof(MotPacket_ControlReq_Brake_Payload_T); 		break;
 	// 	default: break;
 	// }
 }
@@ -286,13 +286,13 @@ uint8_t MotPacket_ControlReq_GetRespLength(MotPacket_ControlId_T controlId)
 uint8_t MotPacket_MonitorReq_Build(MotPacket_MonitorReq_T * p_reqPacket, MotPacket_MonitorId_T monitorId)
 {
 	p_reqPacket->MonitorReq.MonitorId = monitorId;
-	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_MONITOR_TYPE, sizeof(MotPacket_MonitorReq_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_CMD_MONITOR_TYPE, sizeof(MotPacket_MonitorReq_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 // uint8_t MotPacket_MonitorReq_Speed_Build(MotPacket_MonitorReq_T * p_reqPacket)
 // {
-// 	p_reqPacket->MonitorReq.MonitorId = MOT_PROTOCOL_MONITOR_SPEED;
-// 	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PROTOCOL_CMD_MONITOR_TYPE, sizeof(MotPacket_MonitorReq_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+// 	p_reqPacket->MonitorReq.MonitorId = MOT_PACKET_MONITOR_SPEED;
+// 	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_CMD_MONITOR_TYPE, sizeof(MotPacket_MonitorReq_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 // }
 
 uint8_t MotPacket_MonitorReq_GetRespLength(MotPacket_MonitorId_T monitorId)
@@ -301,9 +301,9 @@ uint8_t MotPacket_MonitorReq_GetRespLength(MotPacket_MonitorId_T monitorId)
 
 	switch(monitorId)
 	{
-		case MOT_PROTOCOL_MONITOR_SPEED: 			respPayloadLength = sizeof(MotPacket_MonitorResp_Speed_Payload_T); 		break;
-		case MOT_PROTOCOL_MONITOR_I_FOC: 			respPayloadLength = sizeof(MotPacket_MonitorResp_IFoc_Payload_T); 		break;
-		// case MOT_PROTOCOL_MONITOR_ADC_BATCH_MSB: 	respPayloadLength = 16U; 	break;
+		case MOT_PACKET_MONITOR_SPEED: 			respPayloadLength = sizeof(MotPacket_MonitorResp_Speed_Payload_T); 		break;
+		case MOT_PACKET_MONITOR_I_FOC: 			respPayloadLength = sizeof(MotPacket_MonitorResp_IFoc_Payload_T); 		break;
+		// case MOT_PACKET_MONITOR_ADC_BATCH_MSB: 	respPayloadLength = 16U; 	break;
 		default: respPayloadLength = 0U; break;
 	}
 
@@ -349,14 +349,15 @@ void MotPacket_MonitorResp_IFoc_Parse
 /******************************************************************************/
 /*!	Ping Type */
 /******************************************************************************/
+//alternatively resp time stamp
 uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket)
 {
-	p_respPacket->PingResp.Version[0U] = MOT_PROTOCOL_VERSION_BUGFIX;
-	p_respPacket->PingResp.Version[1U] = MOT_PROTOCOL_VERSION_MINOR;
-	p_respPacket->PingResp.Version[2U] = MOT_PROTOCOL_VERSION_MAJOR;
-	p_respPacket->PingResp.Version[3U] = MOT_PROTOCOL_VERSION_OPT;
+	p_respPacket->PingResp.Version[0U] = MOT_PACKET_VERSION_BUGFIX;
+	p_respPacket->PingResp.Version[1U] = MOT_PACKET_VERSION_MINOR;
+	p_respPacket->PingResp.Version[2U] = MOT_PACKET_VERSION_MAJOR;
+	p_respPacket->PingResp.Version[3U] = MOT_PACKET_VERSION_OPT;
 
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PROTOCOL_PING, 4U, MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_PING, 4U, MOT_PACKET_HEADER_STATUS_OK);
 }
 
 /******************************************************************************/
@@ -364,7 +365,7 @@ uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket)
 /******************************************************************************/
 uint8_t MotPacket_StopResp_Build(MotPacket_StopResp_T * p_respPacket)
 {
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PROTOCOL_PING, 0U, MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_PING, 0U, MOT_PACKET_HEADER_STATUS_OK);
 }
 
 /******************************************************************************/
@@ -372,24 +373,24 @@ uint8_t MotPacket_StopResp_Build(MotPacket_StopResp_T * p_respPacket)
 /******************************************************************************/
 uint8_t MotPacket_SaveNvmResp_Build(MotPacket_SaveNvmResp_T * p_respPacket, uint8_t status)
 {
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PROTOCOL_CMD_SAVE_NVM, 0U, status);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_CMD_SAVE_NVM, 0U, status);
 }
 
 /******************************************************************************/
-/*!	Read Immediate */
+/*!	Read Var */
 /******************************************************************************/
-uint8_t MotPacket_ReadImmediateResp_Build(MotPacket_ReadImmediateResp_T * p_respPacket, uint32_t value)
+uint8_t MotPacket_ReadVarResp_Build(MotPacket_ReadVarResp_T * p_respPacket, uint32_t value)
 {
 	p_respPacket->ReadResp.Value = value;
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PROTOCOL_CMD_READ_IMMEDIATE, sizeof(MotPacket_ReadImmediateReq_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_CMD_READ_VAR, sizeof(MotPacket_ReadVarReq_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 /******************************************************************************/
-/*!	Write Immediate */
+/*!	Write Var */
 /******************************************************************************/
-uint8_t MotPacket_WriteImmediateResp_Build(MotPacket_WriteImmediateResp_T * p_respPacket, uint8_t status)
+uint8_t MotPacket_WriteVarResp_Build(MotPacket_WriteVarResp_T * p_respPacket, uint8_t status)
 {
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PROTOCOL_CMD_WRITE_IMMEDIATE, sizeof(MotPacket_WriteImmediateReq_Payload_T), status);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_CMD_WRITE_VAR, sizeof(MotPacket_WriteVarReq_Payload_T), status);
 }
 
 /******************************************************************************/
@@ -398,7 +399,7 @@ uint8_t MotPacket_WriteImmediateResp_Build(MotPacket_WriteImmediateResp_T * p_re
 uint8_t MotPacket_ControlResp_MainStatus_Build(MotPacket_ControlResp_T * p_respPacket, uint16_t status)
 {
 	p_respPacket->ControlResp.MainStatus = status;
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PROTOCOL_CMD_CONTROL_TYPE, sizeof(uint16_t), MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_CMD_CONTROL_TYPE, sizeof(uint16_t), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 /******************************************************************************/
@@ -407,7 +408,7 @@ uint8_t MotPacket_ControlResp_MainStatus_Build(MotPacket_ControlResp_T * p_respP
 uint8_t MotPacket_MonitorResp_Speed_Build(MotPacket_MonitorResp_T * p_respPacket, int32_t speed)
 {
 	((MotPacket_MonitorResp_Speed_Payload_T *)&p_respPacket->MonitorResp)->Speed = speed;
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PROTOCOL_CMD_MONITOR_TYPE, sizeof(MotPacket_MonitorResp_Speed_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_CMD_MONITOR_TYPE, sizeof(MotPacket_MonitorResp_Speed_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 // uint8_t MotPacket_MonitorResp_IPhases_Build(MotPacket_MonitorResp_T * p_respPacket, int16_t ia, int16_t ib, int16_t ic)
@@ -416,7 +417,7 @@ uint8_t MotPacket_MonitorResp_Speed_Build(MotPacket_MonitorResp_T * p_respPacket
 // 	p_payload->PhaseA = ia;
 // 	p_payload->PhaseB = ib;
 // 	p_payload->PhaseC = ic;
-// 	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PROTOCOL_CMD_MONITOR_TYPE, sizeof(MotPacket_MonitorResp_Speed_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+// 	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_CMD_MONITOR_TYPE, sizeof(MotPacket_MonitorResp_Speed_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 // }
 
 uint8_t MotPacket_MonitorResp_IFoc_Build
@@ -431,7 +432,7 @@ uint8_t MotPacket_MonitorResp_IFoc_Build
 	p_payload->Ia = ia;	p_payload->Ib = ib;	p_payload->Ic = ic;
 	p_payload->Ialpha = ialpha;	p_payload->Ibeta = ibeta;
 	p_payload->Id = id;	p_payload->Iq = iq;
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PROTOCOL_CMD_MONITOR_TYPE, sizeof(MotPacket_MonitorResp_IFoc_Payload_T), MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_CMD_MONITOR_TYPE, sizeof(MotPacket_MonitorResp_IFoc_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 MotPacket_MonitorId_T MotPacket_MonitorReq_GetId(const MotPacket_MonitorReq_T * p_reqPacket)
@@ -468,7 +469,7 @@ uint8_t MotPacket_InitUnitsResp_Build
 	p_respPacket->InitUnitsResp.U16s[0U] = vAcc_R1;
 	p_respPacket->InitUnitsResp.U16s[0U] = vAcc_R2;
 
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PROTOCOL_CMD_INIT_UNITS, 18U, MOT_PROTOCOL_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_CMD_INIT_UNITS, 18U, MOT_PACKET_HEADER_STATUS_OK);
 }
 
 // uint8_t MotPacket_InitUnitsResp_Build0();

@@ -31,10 +31,14 @@
 #ifndef CONFIG_XCVR_H
 #define CONFIG_XCVR_H
 
-#if defined(CONFIG_XCVR_SERIAL_ENABLE)
+#if defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
+	#if defined(CONFIG_XCVR_SERIAL_ENABLE)
+	#endif
+	#if defined(CONFIG_XCVR_INTERFACE_POINTER)
+	#endif
+#elif defined(CONFIG_XCVR_INTERFACE_POINTER_ONLY)
 #else
-	#define CONFIG_XCVR_SERIAL_DISABLE
-#endif
 
+#endif
 
 #endif

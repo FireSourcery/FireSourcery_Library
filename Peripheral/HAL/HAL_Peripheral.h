@@ -22,16 +22,22 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	HAL.h
+	@file 	HAL_Peripheral.h
 	@author FireSoucery
-	@brief
+	@brief	Define configurable HAL Peripheral path
 	@version V0
 */
 /******************************************************************************/
-#ifndef HAL_PIN_H
-#define HAL_PIN_H
+#ifndef HAL_PERIPHERAL_H
+#define HAL_PERIPHERAL_H
 
-#include "Peripheral/HAL/HAL_Peripheral.h"
-#include HAL_PERIPHERAL_PATH(HAL_Pin.h)
+#define XSTR(String) #String
+#define STR(String) XSTR(String)
+
+#if 	defined(CONFIG_HAL_PERIPHERAL_PATH) 		/* External directory */
+	#define HAL_PERIPHERAL_PATH(File) STR(CONFIG_HAL_PERIPHERAL_PATH/File)
+#elif 	defined(CONFIG_HAL_PERIPHERAL_PLATFORM)		/* Library platform directory */
+	#define HAL_PERIPHERAL_PATH(File) STR(Peripheral/HAL/Platform/CONFIG_HAL_PERIPHERAL_PLATFORM/File)
+#endif
 
 #endif

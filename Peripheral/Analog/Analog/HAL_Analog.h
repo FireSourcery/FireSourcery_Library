@@ -32,7 +32,7 @@
 #ifndef HAL_ANALOG_H
 #define HAL_ANALOG_H
 
-#include "Peripheral/HAL/Path.h"
-#include PATH_HAL_PERIPHERAL(HAL_Analog.h)
+#include "Peripheral/HAL/HAL_Peripheral.h"
+#include HAL_PERIPHERAL_PATH(HAL_Analog.h)
 
 #endif

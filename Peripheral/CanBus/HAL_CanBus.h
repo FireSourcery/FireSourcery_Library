@@ -31,12 +31,12 @@
 #ifndef HAL_CAN_BUS_H
 #define HAL_CAN_BUS_H
 
-#include "Peripheral/HAL/Path.h"
+#include "Peripheral/HAL/HAL_Peripheral.h"
 
 #if defined(CONFIG_HAL_CAN_BUS_PATH)
 	#include STR(CONFIG_HAL_CAN_BUS_PATH/HAL_CanBus.h)
 #else
-	#include PATH_HAL_PERIPHERAL(HAL_CanBus.h)
+	#include HAL_PERIPHERAL_PATH(HAL_CanBus.h)
 #endif
 
 #endif

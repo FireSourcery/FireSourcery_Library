@@ -75,7 +75,7 @@ static inline char Terminal_RecvChar(const Terminal_T * p_terminal)
 #ifdef CONFIG_SHELL_XCVR_ENABLE
 	Xcvr_Rx(&p_terminal->Xcvr, &rxChar, 1U);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_RecvChar(p_terminal->p_Serial, &rxChar);
+	Serial_RecvByte(p_terminal->p_Serial, &rxChar);
 #endif
 	return rxChar;
 }
@@ -85,7 +85,7 @@ static inline void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
 #ifdef CONFIG_SHELL_XCVR_ENABLE
 	Xcvr_Tx(&p_terminal->Xcvr, (uint8_t *)(&txChar), 1U);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_SendChar(p_terminal->p_Serial, txChar);
+	Serial_SendByte(p_terminal->p_Serial, txChar);
 #endif
 }
 

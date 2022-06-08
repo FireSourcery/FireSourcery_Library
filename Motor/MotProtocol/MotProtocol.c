@@ -35,23 +35,24 @@
 
 /******************************************************************************/
 /*!
-	Common functions mapping directly to Protocol Specs
+	Common functions, not requiring appInterface, mapping directly to Protocol Specs
 */
 /******************************************************************************/
+
 void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, Protocol_TxSyncId_T txId)
 {
 	MotPacket_HeaderId_T syncId;
 
 	switch(txId)
 	{
-		case PROTOCOL_TX_SYNC_ACK_REQ_ID:			syncId = MOT_PROTOCOL_SYNC_ACK; 	break;
-		case PROTOCOL_TX_SYNC_NACK_REQ_ID:			syncId = MOT_PROTOCOL_SYNC_NACK;	break;
-		case PROTOCOL_TX_SYNC_NACK_PACKET_ERROR:	syncId = MOT_PROTOCOL_SYNC_NACK;	break;
-		case PROTOCOL_TX_SYNC_NACK_REQ_TIMEOUT:		syncId = MOT_PROTOCOL_SYNC_NACK;	break;
-		case PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT:		syncId = MOT_PROTOCOL_SYNC_NACK;	break;
-		case PROTOCOL_TX_SYNC_ACK_REQ_EXT:			syncId = MOT_PROTOCOL_SYNC_ACK;		break;
-		case PROTOCOL_TX_SYNC_NACK_REQ_EXT:			syncId = MOT_PROTOCOL_SYNC_NACK;	break;
-		case PROTOCOL_TX_SYNC_ABORT:				syncId = MOT_PROTOCOL_SYNC_ABORT;	break;
+		case PROTOCOL_TX_SYNC_ACK_REQ_ID:			syncId = MOT_PACKET_SYNC_ACK; 		break;
+		case PROTOCOL_TX_SYNC_NACK_REQ_ID:			syncId = MOT_PACKET_SYNC_NACK; 		break;
+		case PROTOCOL_TX_SYNC_NACK_PACKET_ERROR:	syncId = MOT_PACKET_SYNC_NACK; 		break;
+		case PROTOCOL_TX_SYNC_NACK_REQ_TIMEOUT:		syncId = MOT_PACKET_SYNC_NACK; 		break;
+		case PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT:		syncId = MOT_PACKET_SYNC_NACK; 		break;
+		case PROTOCOL_TX_SYNC_ACK_REQ_EXT:			syncId = MOT_PACKET_SYNC_ACK; 		break;
+		case PROTOCOL_TX_SYNC_NACK_REQ_EXT:			syncId = MOT_PACKET_SYNC_NACK; 		break;
+		case PROTOCOL_TX_SYNC_ABORT:				syncId = MOT_PACKET_SYNC_ABORT; 	break;
 		default: *p_txSize = 0U; syncId = 0xFFU; break;
 	}
 
@@ -63,11 +64,6 @@ void MotProtocol_ResetExt(MotProtocol_Substate_T * p_subState)
 	p_subState->StateId = 0U;
 }
 
-/******************************************************************************/
-/*!
-	Ctrl side only
-*/
-/******************************************************************************/
 Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p_rxRemaining, const MotPacket_T * p_rxPacket, size_t rxCount)
 {
 	Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_WAIT_PACKET;
@@ -75,15 +71,15 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 	if((rxCount >= 3U) && (rxCount >= p_rxPacket->Header.Length + sizeof(MotPacket_Header_T)))
 	{
 		*p_reqId = p_rxPacket->Header.HeaderId;
-		rxCode = (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_COMPLETE : PROTOCOL_RX_CODE_ERROR;
+		rxCode = (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_PACKET_ERROR;
 
 		// optionally further refine cmd
 		// if(rxCount >= p_rxPacket->Header.Length + sizeof(MotPacket_Header_T))
 		// {
 		// 	switch(p_rxPacket->Header.HeaderId)
 		// 	{
-		// 		case MOT_PROTOCOL_CMD_MONITOR_TYPE: *p_reqId =; break;
-		// 		case MOT_PROTOCOL_CMD_CONTROL_TYPE: *p_reqId =; break;
+		// 		case MOT_PACKET_CMD_MONITOR_TYPE: *p_reqId =; break;
+		// 		case MOT_PACKET_CMD_CONTROL_TYPE: *p_reqId =; break;
 		// 		default: *p_reqId = p_rxPacket->Header.HeaderId; break;
 		// 	}
 		// }
@@ -96,11 +92,11 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 	{
 		switch(p_rxPacket->Header.HeaderId)
 		{
-			case MOT_PROTOCOL_STOP_ALL:		rxCode = PROTOCOL_RX_CODE_COMPLETE; *p_reqId = MOT_PROTOCOL_STOP_ALL;	break;
-			case MOT_PROTOCOL_PING:			rxCode = PROTOCOL_RX_CODE_COMPLETE; *p_reqId = MOT_PROTOCOL_PING;		break;
-			case MOT_PROTOCOL_SYNC_ACK:		rxCode = PROTOCOL_RX_CODE_ACK; 				break;
-			case MOT_PROTOCOL_SYNC_NACK:	rxCode = PROTOCOL_RX_CODE_NACK; 			break;
-			case MOT_PROTOCOL_SYNC_ABORT:	rxCode = PROTOCOL_RX_CODE_ABORT; 			break;
+			case MOT_PACKET_STOP_ALL:		rxCode = PROTOCOL_RX_CODE_PACKET_COMPLETE; *p_reqId = MOT_PACKET_STOP_ALL;	break;
+			case MOT_PACKET_PING:			rxCode = PROTOCOL_RX_CODE_PACKET_COMPLETE; *p_reqId = MOT_PACKET_PING;		break;
+			case MOT_PACKET_SYNC_ACK:		rxCode = PROTOCOL_RX_CODE_ACK; 				break;
+			case MOT_PACKET_SYNC_NACK:		rxCode = PROTOCOL_RX_CODE_NACK; 			break;
+			case MOT_PACKET_SYNC_ABORT:		rxCode = PROTOCOL_RX_CODE_ABORT; 			break;
 			default: break;
 		}
 	}
@@ -108,20 +104,16 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 	return rxCode;
 }
 
-/******************************************************************************/
-/*!
-	Cmdr side only
-*/
-/******************************************************************************/
-Protocol_RxCode_T MotProtocol_CheckRxPacket(const MotPacket_T * p_rxPacket, protocol_reqid_t activeReqId) //general version might need include rxlength
-{
-	// check squence correctness here? or additionally during parsing?
-	// 	switch(p_rxPacket->Header.HeaderId)
-	// 	{
-	// 		case MOT_PROTOCOL_CMD_MONITOR_TYPE:  =; break;
-	// 		case MOT_PROTOCOL_CMD_CONTROL_TYPE: ; break;
-	// 		default:  break;
-	// 	}
 
-	return ((p_rxPacket->Header.HeaderId == activeReqId) && (MotPacket_CheckChecksum(p_rxPacket) == true)) ? PROTOCOL_RX_CODE_COMPLETE : PROTOCOL_RX_CODE_ERROR;
-}
+// Protocol_RxCode_T MotProtocol_CheckRxPacket(const MotPacket_T * p_rxPacket, protocol_reqid_t activeReqId) //general version might need include rxlength
+// {
+// 	// check squence correctness here? or additionally during parsing?
+// 	// 	switch(p_rxPacket->Header.HeaderId)
+// 	// 	{
+// 	// 		case MOT_PACKET_CMD_MONITOR_TYPE:  =; break;
+// 	// 		case MOT_PACKET_CMD_CONTROL_TYPE: ; break;
+// 	// 		default:  break;
+// 	// 	}
+
+// 	return ((p_rxPacket->Header.HeaderId == activeReqId) && (MotPacket_CheckChecksum(p_rxPacket) == true)) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_PACKET_ERROR;
+// }

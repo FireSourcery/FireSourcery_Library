@@ -31,7 +31,7 @@
 #ifndef HAL_FLASH_H
 #define HAL_FLASH_H
 
-#include "Peripheral/HAL/Path.h"
-#include PATH_HAL_PERIPHERAL(HAL_Flash.h)
+#include "Peripheral/HAL/HAL_Peripheral.h"
+#include HAL_PERIPHERAL_PATH(HAL_Flash.h)
 
 #endif /* HAL_FLASH_H */

@@ -34,25 +34,27 @@
 extern "C"
 {
 	#include "Motor/MotorCmdr/MotorCmdr.h"
+	#include "Peripheral/Xcvr/Xcvr.h"
 };
 
 #include "HardwareSerial.h"
 #include <Arduino.h>
 #include <cstdint>
 
-typedef enum
-{
-	KELLY_CONTROLLER_RX_WAITING,
-	KELLY_CONTROLLER_RX_SUCCESS,
-	KELLY_CONTROLLER_RX_ERROR,
-	// KELLY_CONTROLLER_RX_ERROR_SYNC,
-	KELLY_CONTROLLER_RX_TIMEOUT,
-}
-KellyController_Status_T;
+#define KELLY_XCVR_COUNT (1U)
 
-#define XCVR_COUNT
+extern const Xcvr_Xcvr_T XCVR_TABLE[KELLY_XCVR_COUNT];
 
-extern const Xcvr_Xcvr_T XCVR_TABLE[];
+// typedef enum
+// {
+// 	KELLY_CONTROLLER_RX_WAITING,
+// 	KELLY_CONTROLLER_RX_SUCCESS,
+// 	KELLY_CONTROLLER_RX_ERROR,
+// 	// KELLY_CONTROLLER_RX_ERROR_SYNC,
+// 	KELLY_CONTROLLER_RX_TIMEOUT,
+// }
+// KellyController_Status_T;
+
 
 class KellyController
 {
@@ -60,7 +62,7 @@ private:
 // public:
 	static uint32_t millisTimer;
 	// Stream * p_serialStream;
-	MotorCmdr_T motorCmdr = MOTOR_CMDR_DEFINE(&motorCmdr, 0U, 0U, &millisTimer);
+	MotorCmdr_T motorCmdr = MOTOR_CMDR_DEFINE(&motorCmdr, XCVR_TABLE, KELLY_XCVR_COUNT, &millisTimer);
 	uint8_t errorLength;
 
 public:
@@ -71,20 +73,25 @@ public:
 	void begin(void);
 	void end(void);
 
+	Protocol_RxCode_T procRxReqTxResp(void)
+	{
+		millisTimer = millis();
+		MotorCmdr_Proc_Thread(&motorCmdr);
+		return Protocol_GetRxStatus(&motorCmdr.Protocol);
+	};
 
-	KellyController_Status_T poll(void);
-	void ping(void);
-	void writeStopAll(void);
-	void writeInitUnits(void);
-	void writeThrottle(uint16_t throttle);
-	void writeBrake(uint16_t brake);
-	void writeSaveNvm(void);
-	void writeRelease(void);
-	void writeDirectionForward(void);
-	void writeDirectionReverse(void);
-	void writeDirectionNeutral(void);
-	void readSpeed(void);
-	void readIFoc(void);
+	void ping(void) 						{ MotorCmdr_Ping(&motorCmdr); };
+	void writeStopAll(void) 				{ MotorCmdr_StopMotors(&motorCmdr); };
+	void writeInitUnits(void) 				{ MotorCmdr_InitUnits(&motorCmdr); };
+	void writeThrottle(uint16_t throttle) 	{ MotorCmdr_WriteThrottle(&motorCmdr, throttle); };
+	void writeBrake(uint16_t brake) 		{ MotorCmdr_WriteBrake(&motorCmdr, brake); };
+	void writeSaveNvm(void) 				{ MotorCmdr_SaveNvm(&motorCmdr); };
+	void writeRelease(void) 				{ MotorCmdr_WriteRelease(&motorCmdr); };
+	void writeDirectionForward(void) 		{ MotorCmdr_WriteDirectionForward(&motorCmdr); };
+	void writeDirectionReverse(void) 		{ MotorCmdr_WriteDirectionReverse(&motorCmdr); };
+	void writeDirectionNeutral(void) 		{ MotorCmdr_WriteDirectionNeutral(&motorCmdr); };
+	void readSpeed(void) 					{ MotorCmdr_StartReadSpeed(&motorCmdr); };
+	void readIFoc(void) 					{ MotorCmdr_StartReadIFoc(&motorCmdr); };
 
 	int32_t getReadSpeed(void) { return MotorCmdr_GetReadSpeed(&motorCmdr); }
 	int16_t getReadIa(void) { return MotorCmdr_GetReadIa(&motorCmdr); }
@@ -96,9 +103,9 @@ public:
 	int16_t getReadIq(void) { return MotorCmdr_GetReadIq(&motorCmdr); }
 
 	// Debuging use
-	uint8_t getTxLength(void) { return _MotorCmdr_GetReqLength(&motorCmdr); }
+	uint8_t getTxLength(void) { return motorCmdr.Protocol.TxLength; }
 	uint8_t * getPtrTxPacket(void) { return motorCmdr.TxPacket; }
-	uint8_t getRxLength(void) { return _MotorCmdr_GetRespLength(&motorCmdr); }
+	uint8_t getRxLength(void) { return motorCmdr.Protocol.RxIndex; }
 	uint8_t * getPtrRxPacket(void) { return motorCmdr.RxPacket; }
 
 	uint8_t getErrorRxLength(void) { return errorLength; }

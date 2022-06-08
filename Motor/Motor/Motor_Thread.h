@@ -82,7 +82,8 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 			case THERMISTOR_LIMIT_THRESHOLD:
 				break;
 			case THERMISTOR_WARNING:
-				/* repeatedly check if heat is a lower ILimit when another ILimit is active */
+				/* repeatedly checks if heat is a lower ILimit when another ILimit is active */
+				//todo linear
 				Motor_User_SetILimitActive(p_motor, p_motor->Parameters.ILimitScalarHeat_Frac16, MOTOR_I_LIMIT_ACTIVE_HEAT);
 				break;
 			default: break;
