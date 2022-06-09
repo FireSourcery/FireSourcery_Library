@@ -142,8 +142,11 @@ extern bool Xcvr_CheckValid(const Xcvr_T * p_xcvr, void * p_target);
 extern void Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate);
 extern size_t Xcvr_GetRxFullCount(const Xcvr_T * p_xcvr);
 extern size_t Xcvr_GetTxEmptyCount(const Xcvr_T * p_xcvr);
+
+#if defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
 extern uint8_t * Xcvr_AcquireTxBuffer(const Xcvr_T * p_xcvr);
 extern void Xcvr_ReleaseTxBuffer(const Xcvr_T * p_xcvr, size_t writeSize);
+#endif
 
 #endif
 

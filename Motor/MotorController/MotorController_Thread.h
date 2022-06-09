@@ -196,8 +196,12 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 			case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_mc);	break;
 			case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL:
 				if(MotAnalogUser_PollBrakePinRisingEdge(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
-				if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U])) { MotorController_User_DisableControl(p_mc); }
-				//MotorController_User_SetFault(p_mc); p_mc->FaultFlags.RxLost = 1U;
+				if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]) == true)
+				{
+					MotorController_User_DisableControl(p_mc);
+					MotorController_User_SetFault(p_mc);
+					p_mc->FaultFlags.RxLost = 1U;
+				}
 				break;
 
 			case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;

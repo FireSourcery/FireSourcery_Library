@@ -33,13 +33,15 @@
 
 #include "Protocol.h"
 
+/*
+	Tx Packet using Protocol Xcvr
+*/
+extern void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId);
+extern void Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId);
 
-// /*
-// 	User app handle Tx
-// */
-// static inline size_t Protocol_Cmdr_GetReqLength(Protocol_T * p_protocol) { return p_protocol->TxLength; }
-// static inline size_t Protocol_Cmdr_GetRespRemaining(Protocol_T * p_protocol) { return p_protocol->RespLength; }
+extern bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol);
 
+#endif
 
 /*
 	extern
@@ -50,15 +52,3 @@
 // extern size_t _Protocol_Cmdr_BuildTxReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId);
 // extern bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol);
 // extern bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol);
-
-
-/*
-	Tx Packet using Protocol Xcvr
-*/
-extern void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId);
-extern void Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId);
-// extern void Protocol_Cmdr_ProcRx(Protocol_T * p_protocol);
-
-extern bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol);
-
-#endif

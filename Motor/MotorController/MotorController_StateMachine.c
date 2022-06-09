@@ -141,6 +141,9 @@ static const StateMachine_State_T STATE_INIT =
 };
 
 
+//TODO SYnc protocol direction
+
+
 /******************************************************************************/
 /*!
 	@brief  Stop State

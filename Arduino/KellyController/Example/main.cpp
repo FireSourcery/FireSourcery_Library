@@ -14,7 +14,7 @@
 BLEDfu bledfu; // OTA DFU service
 BLEUart bleuart; // Uart over BLE service
 
-KellyController kellyController(Serial1);
+KellyController kellyController;
 
 static void startAdv(void);
 // Function prototypes for packetparser.cpp
@@ -80,6 +80,19 @@ void startAdv(void)
   Bluefruit.Advertising.start(0);                // 0 = Don't stop advertising after n seconds
 }
 
+void printTx(void)
+{
+  Serial.print("Tx: ");
+  Serial.printBuffer(kellyController.getPtrTxPacket(), kellyController.getTxLength());
+  Serial.print("\n\r");
+}
+
+void printRx(void)
+{
+  Serial.printBuffer(kellyController.getPtrRxPacket(), kellyController.getRxLength());
+  Serial.print("\n\r");
+}
+
 /**************************************************************************/
 /*!
     @brief  Constantly poll for new command or response data
@@ -87,12 +100,23 @@ void startAdv(void)
 /**************************************************************************/
 void loop(void)
 {
-  if(kellyController.poll() == true)
+  Protocol_RxCode_T status = kellyController.procRxReqTxResp();
+
+  switch (status)
   {
-    //#if defined(debug)
-    Serial.print("Rx: ");
-    Serial.printBuffer(kellyController.getPtrRxPacket(), kellyController.getRxLength());
-    Serial.print("\n\r");
+  case PROTOCOL_RX_CODE_PACKET_TIMEOUT:
+    Serial.print("Rx Timeout: ");
+    break; // timeout during rx, to timeout tx idle
+  case PROTOCOL_RX_CODE_PACKET_COMPLETE:
+    Serial.print("Rx Success: ");
+    printRx();
+    break;
+  case PROTOCOL_RX_CODE_PACKET_ERROR:
+    Serial.print("Rx Error: ");
+    printRx();
+    break;
+  default:
+    break;
   }
 
   // Wait for new data to arrive
@@ -128,29 +152,24 @@ void loop(void)
     switch(buttnum)
     {
       case 1U:
-        if(pressed) { kellyController.ping(); }
+        if(pressed) { kellyController.ping(); printTx();}
         break;
       case 2U:
-        if(pressed) { kellyController.writeStopAll(); }
+        if(pressed) { kellyController.writeStopAll(); printTx();}
         break;
       case 3U:
-        if(pressed) { kellyController.readSpeed(); }
+        if(pressed) { kellyController.readSpeed(); printTx();}
         break;
       case 5U:
-        if(pressed) { kellyController.writeThrottle(65535); }
-        else { kellyController.writeRelease(); }
+        if(pressed) { kellyController.writeThrottle(65535); printTx();}
+        else { kellyController.writeRelease(); printTx();}
         break;
       case 6U:
-        if(pressed) { kellyController.writeBrake(65535); }
-        else { kellyController.writeRelease(); }
-        //if check stop
+        if(pressed) { kellyController.writeBrake(65535); printTx();}
+        else { kellyController.writeRelease(); printTx();} 
         break;
       default: break;
-    }
-
-    Serial.print("Tx: ");
-    Serial.printBuffer(kellyController.getPtrTxPacket(), kellyController.getTxLength());
-    Serial.print("\n\r");
+    } 
   }
 }
 

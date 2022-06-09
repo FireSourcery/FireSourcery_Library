@@ -357,7 +357,7 @@ uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket)
 	p_respPacket->PingResp.Version[2U] = MOT_PACKET_VERSION_MAJOR;
 	p_respPacket->PingResp.Version[3U] = MOT_PACKET_VERSION_OPT;
 
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_PING, 4U, MOT_PACKET_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, sizeof(MotPacket_PingResp_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 /******************************************************************************/
@@ -365,7 +365,7 @@ uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket)
 /******************************************************************************/
 uint8_t MotPacket_StopResp_Build(MotPacket_StopResp_T * p_respPacket)
 {
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_PING, 0U, MOT_PACKET_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_STATUS, 0U, MOT_PACKET_HEADER_STATUS_OK);
 }
 
 /******************************************************************************/

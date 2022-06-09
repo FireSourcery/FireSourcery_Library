@@ -53,11 +53,14 @@
 typedef enum MotPacket_HeaderId_Tag
 {
 	/* 2 Byte Packets */
-	MOT_PACKET_STOP_ALL = 0x00U,	 /* if first char after stop is 0x00 */
-	MOT_PACKET_PING = 0x11U,
+	MOT_PACKET_STOP_ALL = 0x00U,	/* If first char after Start Byte is 0x00. RespPacket use different Id */
+	MOT_PACKET_PING = 0x11U,		/* RespPacket use different Id */
 	MOT_PACKET_SYNC_ACK = 0x12U,
 	MOT_PACKET_SYNC_NACK = 0x13U,
 	MOT_PACKET_SYNC_ABORT = 0x14U,
+
+	MOT_PACKET_STATUS = 0x20U,		/* Header Status Only */
+	MOT_PACKET_VERSION = 0x21U,
 
 	/* Extended Types. Additional Cmd Id */
 	MOT_PACKET_CMD_MONITOR_TYPE = 0xA1U,
@@ -79,7 +82,7 @@ typedef enum MotPacket_HeaderId_Tag
 
 	MOT_PACKET_CMD_DATA_MODE_READ = 0xDAU, 	/* Stateful NvMemory Read using Address */
 	MOT_PACKET_CMD_DATA_MODE_WRITE = 0xDBU, 	/* Stateful NvMemory Write using Address */
-	MOT_PACKET_DATA_MODE_TYPE = 0xDDU,
+	MOT_PACKET_DATA_MODE_TYPE = 0xDDU, /* Data Mode Data */
 
 	MOT_PACKET_CMD_SAVE_NVM = 0xDFU,
 
@@ -163,13 +166,17 @@ MotPacket_T;
 	General Cmds
 */
 /******************************************************************************/
+typedef struct MotPacket_StatusResp_Tag { MotPacket_Header_T Header; } 	MotPacket_StatusResp_T;
+
+typedef struct MotPacket_VersionResp_Payload_Tag { uint8_t Version[4U]; } 											MotPacket_VersionResp_Payload_T;
+typedef struct MotPacket_VersionResp_Tag { MotPacket_Header_T Header; MotPacket_VersionResp_Payload_T PingResp; } 	MotPacket_VersionResp_T;
 
 /******************************************************************************/
 /*!	Ping */
 /******************************************************************************/
-typedef MotPacket_Sync_T 																						MotPacket_PingReq_T;
-typedef struct MotPacket_PingResp_Payload_Tag { uint8_t Version[4U]; } 											MotPacket_PingResp_Payload_T;
-typedef struct MotPacket_PingResp_Tag { MotPacket_Header_T Header; MotPacket_PingResp_Payload_T PingResp; } 	MotPacket_PingResp_T;
+typedef MotPacket_Sync_T 					MotPacket_PingReq_T;
+typedef MotPacket_VersionResp_Payload_T 	MotPacket_PingResp_Payload_T;
+typedef MotPacket_VersionResp_T			 	MotPacket_PingResp_T;
 
 /******************************************************************************/
 /*!	Stop */

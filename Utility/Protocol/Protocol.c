@@ -47,9 +47,9 @@ void Protocol_Init(Protocol_T * p_protocol)
 	}
 	else
 	{
+		p_protocol->Params.XcvrId = 0U;
 		p_protocol->Params.SpecsId = 0U;
 		p_protocol->Params.IsEnableOnInit = 0U;
-		p_protocol->Params.XcvrId = 0U;
 		p_protocol->Params.WatchdogTime = 0U;
 	}
 	Xcvr_Init(&p_protocol->Xcvr, p_protocol->Params.XcvrId);
@@ -83,6 +83,11 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 
 		rxLength = Xcvr_RxMax(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], rxLimit); /* Rx up to rxLimit */
 		p_protocol->RxIndex += rxLength;
+		if (p_protocol->RxIndex > p_protocol->p_Specs->RX_LENGTH_MAX)
+		{
+			rxStatus = PROTOCOL_RX_CODE_PACKET_ERROR;
+			break;
+		}
 
 		if(rxLength == rxLimit) /* Implicitly (p_protocol->RxIndex >= p_protocol->p_Specs->RX_LENGTH_MIN) */
 		{
@@ -95,7 +100,7 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 			break;
 		}
 	}
-	// if(p_protocol->RxIndex > p_protocol->p_Specs->RX_LENGTH_MAX) { rxStatus = PROTOCOL_RX_CODE_PACKET_ERROR; }
+
 
 	return rxStatus;
 }
@@ -165,7 +170,10 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
 					}
 					else /* wait for timeout */
 					{
-
+						// TxSync(p_protocol, PROTOCOL_TX_SYNC_ERROR_RESYNC);
+						p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+						// rxStatus = PROTOCOL_RX_CODE_ERROR_RESYNC;
+						p_protocol->NackCount = 0U;
 					}
 				}
 				else

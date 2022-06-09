@@ -32,7 +32,7 @@
 
 uint32_t KellyController::millisTimer;
 
-/* Wrappers */
+// /* Wrappers */
 static size_t HardwareSerial_ReadBytes(HardwareSerial * p_context, uint8_t * p_destBuffer, size_t length) { return p_context->readBytes(p_destBuffer, length); }
 static bool HardwareSerial_Write(HardwareSerial * p_context, const uint8_t * p_srcBuffer, size_t length) { return (p_context->write(p_srcBuffer, length) > 0U); }
 //ideally write checks buffer available first
@@ -48,18 +48,36 @@ const Xcvr_Xcvr_T XCVR_TABLE[KELLY_XCVR_COUNT] =
 	XCVR_XCVR_DEFINE_INTERFACE(&Serial1, &XCVR_INTERFACE_ARDUINO_SERIAL),
 };
 
+// /* Wrappers */
+// static size_t ReadBytes(KellyController *p_context, uint8_t *p_destBuffer, size_t length) { return p_context->p_serial->readBytes(p_destBuffer, length); }
+// static bool Write(KellyController *p_context, const uint8_t *p_srcBuffer, size_t length) { return (p_context->p_serial->write(p_srcBuffer, length) > 0U); }
+// // ideally write checks buffer available first
+
+// const Xcvr_Interface_T XCVR_INTERFACE_ARDUINO_SERIAL =
+// {
+// 	.RX_MAX = (Xcvr_Interface_RxMax_T)ReadBytes,
+// 	.TX_N = (Xcvr_Interface_TxN_T)Write,
+// };
+
+// const Xcvr_Xcvr_T XCVR_TABLE[KELLY_XCVR_COUNT] =
+// {
+// 	XCVR_XCVR_DEFINE_INTERFACE(&Serial1, &XCVR_INTERFACE_ARDUINO_SERIAL),
+// };
 
 /******************************************************************************/
 /*!
 	@brief Class Constructor
 */
 /******************************************************************************/
-KellyController::KellyController(HardwareSerial & serial)
+KellyController::KellyController(void)
 {
 	millisTimer = millis();
 	// p_serialStream = &serial;
-	p_serial = &serial;
+	// p_serial = &serial;
+	// p_serial = XCVR_TABLE[0].P_CONTEXT;
 	MotorCmdr_Init(&motorCmdr);
+	p_serial = (HardwareSerial *)motorCmdr.Protocol.Xcvr.p_Xcvr->P_CONTEXT;
+	// p_serial = &Serial1;
 }
 
 
@@ -68,7 +86,7 @@ KellyController::KellyController(HardwareSerial & serial)
 	@brief Class Destructor
 */
 /******************************************************************************/
-KellyController::~KellyController()
+KellyController::~KellyController(void)
 {
 	end();
 }
@@ -78,11 +96,14 @@ KellyController::~KellyController()
 	@brief Init Arduino Serial
 */
 /******************************************************************************/
-void KellyController::begin()
+void KellyController::begin(void)
 {
 	if(p_serial != 0U) { p_serial->begin(motorCmdr.Protocol.p_Specs->BAUD_RATE_DEFAULT); }
+
+	// ((HardwareSerial *)XCVR_TABLE[0].P_CONTEXT)->begin(motorCmdr.Protocol.p_Specs->BAUD_RATE_DEFAULT);
+
 	//delay?
-	MotorCmdr_InitUnits(&motorCmdr);
+	// MotorCmdr_InitUnits(&motorCmdr);
 }
 
 /******************************************************************************/

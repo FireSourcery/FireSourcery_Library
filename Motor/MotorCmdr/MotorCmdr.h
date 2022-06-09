@@ -107,14 +107,7 @@ extern const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U];
 	),																									\
 }
 
-/*
-	Protocol module handle TxRx, CheckAvailable
-*/
-static inline void MotorCmdr_Proc_Thread(MotorCmdr_T * p_motorCmdr)
-{
-	Protocol_Proc(&p_motorCmdr->Protocol);
-	// if(Protocol_Cmdr_CheckTxIdle(&p_motorCmdr->Protocol) == true) { MotorCmdr_Ping(p_motorCmdr); }
-}
+
 
 /*
 	For Cmdr side handling of unit conversion
@@ -140,6 +133,8 @@ static inline int16_t MotorCmdr_GetReadIq(MotorCmdr_T * p_motorCmdr) { return p_
 	Extern
 */
 /******************************************************************************/
+extern void MotorCmdr_Proc(MotorCmdr_T * p_motorCmdr);
+
 extern void MotorCmdr_Init(MotorCmdr_T * p_motorCmdr);
 extern void MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr);
 

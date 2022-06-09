@@ -55,27 +55,27 @@ static void InitUnits_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_
 }
 
 //todo stateful req
-static void InitUnits_ProcReqRespExt(MotProtocol_Substate_T * p_substate, MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize)
-{
- 	(void)rxSize;
-	switch(p_substate->StateId)
-	{
-		case 0U:
-			MotPacket_InitUnitsResp_Parse
-			(
-				&p_app->Units.SpeedFeedbackRef_Rpm, &p_app->Units.IMaxRef_Amp, &p_app->Units.VSupplyRef_Volts,
-				&p_app->Units.VSupply_R1, &p_app->Units.VSupply_R2,
-				&p_app->Units.VSense_R1, &p_app->Units.VSense_R2,
-				&p_app->Units.VAcc_R1, &p_app->Units.VAcc_R2,
-				(const MotPacket_InitUnitsResp_T *)p_rxPacket
-			);
-			break;
+// static void InitUnits_ProcReqRespExt(MotProtocol_Substate_T * p_substate, MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize)
+// {
+//  	(void)rxSize;
+// 	switch(p_substate->StateId)
+// 	{
+// 		case 0U:
+// 			MotPacket_InitUnitsResp_Parse
+// 			(
+// 				&p_app->Units.SpeedFeedbackRef_Rpm, &p_app->Units.IMaxRef_Amp, &p_app->Units.VSupplyRef_Volts,
+// 				&p_app->Units.VSupply_R1, &p_app->Units.VSupply_R2,
+// 				&p_app->Units.VSense_R1, &p_app->Units.VSense_R2,
+// 				&p_app->Units.VAcc_R1, &p_app->Units.VAcc_R2,
+// 				(const MotPacket_InitUnitsResp_T *)p_rxPacket
+// 			);
+// 			break;
 
-		default:
-			break;
-	}
-	// p_app->RespStatus =
-}
+// 		default:
+// 			break;
+// 	}
+// 	// p_app->RespStatus =
+// }
 
 /******************************************************************************/
 /*!	Ping */
@@ -173,7 +173,7 @@ void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_
 		case MOT_PACKET_CMD_CONTROL_TYPE:
 			switch(p_app->ControlIdActive)
 			{
-				case MOT_PACKET_CONTROL_THROTTLE:			*p_txLength = MotPacket_ControlReq_Throttle_Build((MotPacket_ControlReq_T *)p_txPacket, p_app->MotorCmdValue); 	break;
+				case MOT_PACKET_CONTROL_THROTTLE:			*p_txLength = MotPacket_ControlReq_Throttle_Build((MotPacket_ControlReq_T *)p_txPacket, p_app->MotorCmdValue); 		break;
 				case MOT_PACKET_CONTROL_BRAKE: 				*p_txLength = MotPacket_ControlReq_Brake_Build((MotPacket_ControlReq_T *)p_txPacket, p_app->MotorCmdValue); 		break;
 				case MOT_PACKET_CONTROL_RELEASE: 			*p_txLength = MotPacket_ControlReq_Release_Build((MotPacket_ControlReq_T *)p_txPacket); 							break;
 				case MOT_PACKET_CONTROL_DIRECTION_FORWARD: 	*p_txLength = MotPacket_ControlReq_DirectionForward_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;

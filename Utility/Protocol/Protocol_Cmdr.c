@@ -45,7 +45,6 @@
 
 	alternatively, resp Queue, match RespLength
 */
-
 static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 {
 	Protocol_Req_T * p_req = _Protocol_SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, cmdId);
@@ -103,6 +102,39 @@ bool _Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t
 {
 	return StartReq(p_protocol, cmdId);
 }
+
+/*
+	No overwrite existing
+*/
+void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+{
+	if(_Protocol_Cmdr_StartReq(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
+}
+
+void Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+{
+	if(_Protocol_Cmdr_StartReq_Overwrite(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
+}
+
+bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
+{
+	return (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.WatchdogTime); //(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) &&
+}
+
+
+// /*
+// 	Commander Mode, sequential Cmd/Rx
+// 	non blocking, single threaded only
+
+// 	Resp handled independent of Req if Sync is not used.
+// 	i.e. Resp recieved with no prior Req, or out of sequence Req, will be parsed using contents of Resp packet
+// */
+// void Protocol_Cmdr_Proc(Protocol_T * p_protocol)
+// {
+// 	Protocol_Proc(p_protocol);
+
+// 	//optionally, match txreq count vs rx proc count to determine inactive
+// }
 
 // size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 // {
@@ -172,35 +204,3 @@ bool _Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t
 
 // 	return isSuccess;
 // }
-
-/*
-	Commander Mode, sequential Cmd/Rx
-	non blocking, single threaded only
-
-	Resp handled independent of Req if Sync is not used.
-	i.e. Resp recieved with no prior Req, or out of sequence Req, will be parsed using contents of Resp packet
-*/
-void Protocol_Cmdr_Proc(Protocol_T * p_protocol)
-{
-	Protocol_Proc(p_protocol);
-
-	//optionally, match txreq count vs rx proc count to determine inactive
-}
-
-/*
-	No overwrite existing
-*/
-void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
-{
-	if(_Protocol_Cmdr_StartReq(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
-}
-
-void Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId)
-{
-	if(_Protocol_Cmdr_StartReq_Overwrite(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
-}
-
-bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
-{
-	return (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.WatchdogTime); //(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) &&
-}

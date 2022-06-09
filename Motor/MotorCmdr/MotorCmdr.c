@@ -48,7 +48,8 @@ const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U] =
 void MotorCmdr_Init(MotorCmdr_T * p_motorCmdr)
 {
 	Protocol_Init(&p_motorCmdr->Protocol);
-	p_motorCmdr->Protocol.Params.WatchdogTime = 500U;
+	Protocol_Enable(&p_motorCmdr->Protocol);
+	p_motorCmdr->Protocol.Params.WatchdogTime = 250U;
 	// MotorCmdr_InitUnits(p_motorCmdr);
 }
 
@@ -61,6 +62,16 @@ void MotorCmdr_Init(MotorCmdr_T * p_motorCmdr)
 		Xcvr_Interface_TxN_T 		TX_N;
 */
 /******************************************************************************/
+/*
+	Protocol module handle TxRx, CheckAvailable
+*/
+void MotorCmdr_Proc(MotorCmdr_T * p_motorCmdr)
+{
+	Protocol_Proc(&p_motorCmdr->Protocol);
+	if(Protocol_Cmdr_CheckTxIdle(&p_motorCmdr->Protocol) == true) { MotorCmdr_Ping(p_motorCmdr); }
+}
+
+
 //todo stateful req
 void MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr) { Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CMD_INIT_UNITS); }
 

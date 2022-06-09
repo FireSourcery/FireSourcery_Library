@@ -68,7 +68,7 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 {
 	Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_WAIT_PACKET;
 
-	if((rxCount >= 3U) && (rxCount >= p_rxPacket->Header.Length + sizeof(MotPacket_Header_T)))
+	if((rxCount >= 3U) && (rxCount == p_rxPacket->Header.Length + sizeof(MotPacket_Header_T)))
 	{
 		*p_reqId = p_rxPacket->Header.HeaderId;
 		rxCode = (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_PACKET_ERROR;

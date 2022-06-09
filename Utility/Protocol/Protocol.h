@@ -61,7 +61,7 @@ typedef enum Protocol_RxCode_Tag
 	PROTOCOL_RX_CODE_PACKET_ERROR, 		/* Error Req Packet Checksum/CRC */
 	PROTOCOL_RX_CODE_PACKET_TIMEOUT, 	/* Error Timeout */
 
-	/* Sync packets allocated RxCode   */
+	/* Sync packets allocated RxCode */
 	PROTOCOL_RX_CODE_ACK,
 	PROTOCOL_RX_CODE_NACK,
 	PROTOCOL_RX_CODE_ABORT,
