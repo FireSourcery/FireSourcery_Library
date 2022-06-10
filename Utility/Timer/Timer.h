@@ -54,10 +54,7 @@ typedef struct Timer_Tag
 }
 Timer_T;
 
-#define TIMER_CONFIG(p_Base, BaseFreq)						\
-{															\
-	.CONFIG = {.P_BASE = p_Base, .BASE_FREQ = BaseFreq, },	\
-}
+#define TIMER_DEFINE(p_Base, BaseFreq)	{ .CONFIG = {.P_BASE = p_Base, .BASE_FREQ = BaseFreq, }, }
 
 /******************************************************************************/
 /*!
@@ -66,8 +63,14 @@ Timer_T;
 /******************************************************************************/
 static inline void Timer_Disable(Timer_T * p_timer) { p_timer->Period = 0U; }
 static inline void Timer_Restart(Timer_T * p_timer) { p_timer->TimeRef = *p_timer->CONFIG.P_BASE; }
-//static inline void Timer_ZeroBase(Timer_T * p_timer) 	{p_timer->TimeRef = *p_timer->CONFIG.P_BASE = 0U;}
 static inline uint32_t Timer_GetBase(Timer_T * p_timer) { return *p_timer->CONFIG.P_BASE; }
+
+/* Only this functions casts away P_BASE const. Use with caution */
+static inline void Timer_ZeroBase(Timer_T * p_timer)
+{
+	*((volatile uint32_t *)p_timer->CONFIG.P_BASE) = 0U;
+	p_timer->TimeRef = *p_timer->CONFIG.P_BASE;
+}
 
 static inline uint32_t Timer_GetElapsed(Timer_T * p_timer)
 {
@@ -79,9 +82,8 @@ static inline uint32_t Timer_GetElapsed(Timer_T * p_timer)
 		ticks = UINT32_MAX - p_timer->TimeRef + *p_timer->CONFIG.P_BASE
 	}
 	else
-#else
-	{ ticks = *p_timer->CONFIG.P_BASE - p_timer->TimeRef; }
 #endif
+	{ ticks = *p_timer->CONFIG.P_BASE - p_timer->TimeRef; }
 
 	return ticks;
 }

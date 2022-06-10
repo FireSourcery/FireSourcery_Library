@@ -61,7 +61,7 @@ Blinky_T;
 #define BLINKY_CONFIG(p_PinHal, PinId, p_TimerBase, TimerBaseFreq) 	\
 {																	\
 	.Pin 	= PIN_CONFIG(p_PinHal, PinId),							\
-	.Timer 	= TIMER_CONFIG(p_TimerBase, TimerBaseFreq)				\
+	.Timer 	= TIMER_DEFINE(p_TimerBase, TimerBaseFreq)				\
 }
 
 extern void Blinky_Init(Blinky_T * p_blinky);
