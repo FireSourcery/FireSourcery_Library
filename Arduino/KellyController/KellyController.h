@@ -42,17 +42,15 @@ extern "C"
 
 #define KELLY_XCVR_COUNT (1U)
 
-extern const Xcvr_Xcvr_T XCVR_TABLE[KELLY_XCVR_COUNT];
+extern const Xcvr_Xcvr_T KELLY_XCVR_TABLE[KELLY_XCVR_COUNT];
 
 class KellyController
 {
 private:
-// public:
 	static uint32_t millisTimer;
+	MotorCmdr_T motorCmdr = MOTOR_CMDR_DEFINE(&motorCmdr, KELLY_XCVR_TABLE, KELLY_XCVR_COUNT, &millisTimer);
+	HardwareSerial * p_serial; /* Must be public for wrapper access. Handle used for setup only. */
 	// Stream * p_serialStream;
-	MotorCmdr_T motorCmdr = MOTOR_CMDR_DEFINE(&motorCmdr, XCVR_TABLE, KELLY_XCVR_COUNT, &millisTimer);
-	// uint8_t errorLength;
-	HardwareSerial * p_serial; /* Must be public for wrapper access */
 
 public:
 	KellyController(void);
@@ -62,9 +60,16 @@ public:
 
 	Protocol_RxCode_T procRxReqTxResp(void)
 	{
-		millisTimer = millis();
-		MotorCmdr_Proc(&motorCmdr);
-		return Protocol_GetRxStatus(&motorCmdr.Protocol);
+		if(millis() > millisTimer)
+		{
+			millisTimer = millis();
+			MotorCmdr_Proc(&motorCmdr);
+			return Protocol_GetRxStatus(&motorCmdr.Protocol);
+		}
+		else
+		{
+			return PROTOCOL_RX_CODE_WAIT_PACKET;
+		}
 	};
 
 	void ping(void) 						{ MotorCmdr_Ping(&motorCmdr); };
@@ -94,8 +99,6 @@ public:
 	uint8_t * getPtrTxPacket(void) { return motorCmdr.TxPacket; }
 	uint8_t getRxLength(void) { return motorCmdr.Protocol.RxIndex; }
 	uint8_t * getPtrRxPacket(void) { return motorCmdr.RxPacket; }
-
-	// uint8_t getErrorRxLength(void) { return errorLength; }
 };
 
 

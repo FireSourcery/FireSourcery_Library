@@ -70,7 +70,6 @@ static void InitUnits_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_
 // 				(const MotPacket_InitUnitsResp_T *)p_rxPacket
 // 			);
 // 			break;
-
 // 		default:
 // 			break;
 // 	}

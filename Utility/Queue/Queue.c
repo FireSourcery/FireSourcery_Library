@@ -106,12 +106,12 @@ static inline size_t CalcBufferOffset(Queue_T * p_queue, size_t index)
 static inline void * GetPtrFront(Queue_T * p_queue) 							{ return ((uint8_t *)p_queue->CONFIG.P_BUFFER + CalcBufferOffset(p_queue, p_queue->Tail)); }
 static inline void * GetPtrBack(Queue_T * p_queue) 								{ return ((uint8_t *)p_queue->CONFIG.P_BUFFER + CalcBufferOffset(p_queue, p_queue->Head)); }
 static inline void * GetPtrIndex(Queue_T * p_queue, size_t index) 				{ return ((uint8_t *)p_queue->CONFIG.P_BUFFER + CalcBufferOffset(p_queue, p_queue->Tail + index)); }
+//todo compare switch(size) functions in addition to memcpy
 static inline void PeekFront(Queue_T * p_queue, void * p_dest) 					{ memcpy(p_dest, GetPtrFront(p_queue), p_queue->CONFIG.UNIT_SIZE); }
 static inline void PeekBack(Queue_T * p_queue, void * p_dest) 					{ memcpy(p_dest, GetPtrBack(p_queue), p_queue->CONFIG.UNIT_SIZE); }
 static inline void PeekIndex(Queue_T * p_queue, void * p_dest, size_t index) 	{ memcpy(p_dest, GetPtrIndex(p_queue, index), p_queue->CONFIG.UNIT_SIZE); }
 static inline void PlaceFront(Queue_T * p_queue, const void * p_unit) 			{ memcpy(GetPtrFront(p_queue), p_unit, p_queue->CONFIG.UNIT_SIZE); }
 static inline void PlaceBack(Queue_T * p_queue, const void * p_unit) 			{ memcpy(GetPtrBack(p_queue), p_unit, p_queue->CONFIG.UNIT_SIZE); }
-//todo compare switch(size) functions
 static inline void RemoveFront(Queue_T * p_queue, size_t nUnits) 				{ p_queue->Tail = CalcQueueIndexInc(p_queue, p_queue->Tail, nUnits); }
 static inline void RemoveBack(Queue_T * p_queue, size_t nUnits) 				{ p_queue->Head = CalcQueueIndexDec(p_queue, p_queue->Head, nUnits); }
 static inline void AddFront(Queue_T * p_queue, size_t nUnits) 					{ p_queue->Tail = CalcQueueIndexDec(p_queue, p_queue->Tail, nUnits); }

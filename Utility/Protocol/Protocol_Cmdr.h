@@ -34,17 +34,16 @@
 #include "Protocol.h"
 
 /*
-	Tx Packet using Protocol Xcvr
+	Extern
 */
 extern void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId);
 extern void Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId);
-
 extern bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol);
 
 #endif
 
 /*
-	extern
+
 */
 // extern bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId);
 // extern bool _Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId);

@@ -69,8 +69,8 @@ typedef struct Thermistor_Config_Tag
 {
 	const Thermistor_Params_T * P_PARAMS;
 	uint32_t R_SERIES; 		/* Pull-up */
-	uint32_t R_PARALLEL; 	/* Parallel pull-down if applicable */
-	//bool IS_FIXED
+	uint32_t R_PARALLEL; 	/* Parallel pull-down if applicable. 0 for Disable */
+	//bool IS_NTC_FIXED;		/* Disable NTC set functions */
 }
 Thermistor_Config_T;
 
@@ -82,38 +82,36 @@ typedef struct Thermistor_Tag
 	Thermistor_Status_T LimitThresholdStatus; /* Threshold save state info */
 	Thermistor_Status_T Status;
 	uint16_t AdcuPrev;
-
-
-	int32_t Heat_DegC; //remove?
 }
 Thermistor_T;
 
-#define THERMISTOR_CONFIG_CONFIG(RSeries, RParallel, p_Params) 	\
-{												\
-	.R_SERIES 		= RSeries,					\
-	.R_PARALLEL		= RParallel,				\
-	.P_PARAMS		= p_Params,					\
-}												\
+#define THERMISTOR_DEFINE_CONFIG(RSeries, RParallel, p_Params) 	\
+{																\
+	.R_SERIES 		= RSeries,									\
+	.R_PARALLEL		= RParallel,								\
+	.P_PARAMS		= p_Params,									\
+}
 
-#define THERMISTOR_CONFIG_PARAMS_NTC(R0, T0_DegC, B) 	\
-{											\
-	.RNominal 		= R0,					\
-	.TNominal		= T0_DegC,				\
-	.BConstant		= B,					\
-}											\
+#define THERMISTOR_DEFINE_PARAMS_NTC(R0, T0_Kelvin, B) 	\
+{														\
+	.RNominal 		= R0,								\
+	.TNominal		= T0_Kelvin,						\
+	.BConstant		= B,								\
+}														\
 
-#define THERMISTOR_CONFIG(RSeries, RParallel, p_Params) 	\
-{													\
-	.CONFIG =										\
-	{												\
-		.R_SERIES 		= RSeries,					\
-		.R_PARALLEL		= RParallel,				\
-		.P_PARAMS		= p_Params,					\
-	}												\
+#define THERMISTOR_DEFINE(RSeries, RParallel, p_Params) 				\
+{																		\
+	.CONFIG = THERMISTOR_DEFINE_CONFIG(RSeries, RParallel, p_Params), 	\
+}
+
+#define THERMISTOR_DEFINE_WITH_NTC(RSeries, RParallel, p_Params, NtcR0, NtcT0_Kelvin, NtcB) 	\
+{																								\
+	.CONFIG = THERMISTOR_DEFINE_CONFIG(RSeries, RParallel, p_Params),							\
+	.Params = THERMISTOR_DEFINE_PARAMS_NTC(NtcR0, NtcT0_Kelvin, NtcB),							\
 }
 
 /* Using capture conversion only */
-static inline int32_t Thermistor_GetHeat_DegC(Thermistor_T * p_therm) { return p_therm->Heat_DegC; }
+// static inline int32_t Thermistor_GetHeat_DegC(Thermistor_T * p_therm) { return p_therm->Heat_DegC; }
 
 /* Monitor */
 static inline bool Thermistor_GetIsStatusLimit(Thermistor_T * p_therm) { return ((p_therm->Status == THERMISTOR_LIMIT_SHUTDOWN) || (p_therm->Status == THERMISTOR_LIMIT_THRESHOLD)); }

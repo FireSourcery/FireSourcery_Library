@@ -107,8 +107,6 @@ extern const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U];
 	),																									\
 }
 
-
-
 /*
 	For Cmdr side handling of unit conversion
 */

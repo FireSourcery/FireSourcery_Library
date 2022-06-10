@@ -24,7 +24,7 @@
 /*!
 	@file 	Queue.h
 	@author FireSoucery
-	@brief
+	@brief	Improved efficiency using POW2_MASK over modulus
 	@version V0
 */
 /******************************************************************************/
@@ -40,9 +40,8 @@
 typedef const struct Queue_Config_Tag
 {
 	void * const P_BUFFER;
-	uint8_t test;
-	const size_t LENGTH; 	/* in unit counts */
 	const size_t UNIT_SIZE;
+	const size_t LENGTH; 	/* In UNIT_SIZE counts (NOT bytes) */
 #if defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED)
 	const uint32_t POW2_MASK;
 #endif
@@ -53,15 +52,17 @@ typedef const struct Queue_Config_Tag
 Queue_Config_T;
 
 /*
-	Except for CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED
+	CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED
+	Max usable capacity is length
+
+	CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED, CONFIG_QUEUE_LENGTH_ANY
 	Empty space detection method. Head always points to empty space. Max usable capacity is length - 1
 */
 typedef struct Queue_Tag
 {
 	const Queue_Config_T CONFIG;
-	//	bool IsOverwritable;
-	volatile size_t Head;	/* write to head  */
-	volatile size_t Tail;	/* read from tail */
+	volatile size_t Head;	/* Write to head  */
+	volatile size_t Tail;	/* Read from tail */
 #if defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_QUEUE_CRITICAL_EXTERN_DEFINED)
 	volatile critical_mutext_t Mutex;
 #endif

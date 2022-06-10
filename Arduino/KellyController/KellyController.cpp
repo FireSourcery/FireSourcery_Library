@@ -32,10 +32,9 @@
 
 uint32_t KellyController::millisTimer;
 
-// /* Wrappers */
-static size_t HardwareSerial_ReadBytes(HardwareSerial * p_context, uint8_t * p_destBuffer, size_t length) { return p_context->readBytes(p_destBuffer, length); }
-static bool HardwareSerial_Write(HardwareSerial * p_context, const uint8_t * p_srcBuffer, size_t length) { return (p_context->write(p_srcBuffer, length) > 0U); }
-//ideally write checks buffer available first
+/* Wrappers */
+static size_t HardwareSerial_ReadBytes(HardwareSerial * p_context, uint8_t * p_destBuffer, size_t max) { return p_context->readBytes(p_destBuffer, max); }
+static bool HardwareSerial_Write(HardwareSerial * p_context, const uint8_t * p_src, size_t length) { return (p_context->write(p_src, length) == length); } // no error handling on write success return
 
 const Xcvr_Interface_T XCVR_INTERFACE_ARDUINO_SERIAL =
 {
@@ -43,26 +42,10 @@ const Xcvr_Interface_T XCVR_INTERFACE_ARDUINO_SERIAL =
 	.TX_N = (Xcvr_Interface_TxN_T)HardwareSerial_Write,
 };
 
-const Xcvr_Xcvr_T XCVR_TABLE[KELLY_XCVR_COUNT] =
+const Xcvr_Xcvr_T KELLY_XCVR_TABLE[KELLY_XCVR_COUNT] =
 {
 	XCVR_XCVR_DEFINE_INTERFACE(&Serial1, &XCVR_INTERFACE_ARDUINO_SERIAL),
 };
-
-// /* Wrappers */
-// static size_t ReadBytes(KellyController *p_context, uint8_t *p_destBuffer, size_t length) { return p_context->p_serial->readBytes(p_destBuffer, length); }
-// static bool Write(KellyController *p_context, const uint8_t *p_srcBuffer, size_t length) { return (p_context->p_serial->write(p_srcBuffer, length) > 0U); }
-// // ideally write checks buffer available first
-
-// const Xcvr_Interface_T XCVR_INTERFACE_ARDUINO_SERIAL =
-// {
-// 	.RX_MAX = (Xcvr_Interface_RxMax_T)ReadBytes,
-// 	.TX_N = (Xcvr_Interface_TxN_T)Write,
-// };
-
-// const Xcvr_Xcvr_T XCVR_TABLE[KELLY_XCVR_COUNT] =
-// {
-// 	XCVR_XCVR_DEFINE_INTERFACE(&Serial1, &XCVR_INTERFACE_ARDUINO_SERIAL),
-// };
 
 /******************************************************************************/
 /*!
@@ -71,13 +54,10 @@ const Xcvr_Xcvr_T XCVR_TABLE[KELLY_XCVR_COUNT] =
 /******************************************************************************/
 KellyController::KellyController(void)
 {
-	millisTimer = millis();
-	// p_serialStream = &serial;
-	// p_serial = &serial;
-	// p_serial = XCVR_TABLE[0].P_CONTEXT;
 	MotorCmdr_Init(&motorCmdr);
 	p_serial = (HardwareSerial *)motorCmdr.Protocol.Xcvr.p_Xcvr->P_CONTEXT;
-	// p_serial = &Serial1;
+	p_serial->setTimeout(0);
+	millisTimer = millis();
 }
 
 

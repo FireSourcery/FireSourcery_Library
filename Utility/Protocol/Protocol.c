@@ -81,20 +81,24 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 			rxLimit = p_protocol->RxRemaining;
 		}
 
-		rxLength = Xcvr_RxMax(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], rxLimit); /* Rx up to rxLimit */
-		p_protocol->RxIndex += rxLength;
-		if (p_protocol->RxIndex > p_protocol->p_Specs->RX_LENGTH_MAX)
+		if(p_protocol->RxIndex + rxLimit > p_protocol->p_Specs->RX_LENGTH_MAX) /* RxRemaining Set Error */
 		{
 			rxStatus = PROTOCOL_RX_CODE_PACKET_ERROR;
+			p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
 			break;
 		}
+		else
+		{
+			rxLength = Xcvr_RxMax(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], rxLimit); /* Rx up to rxLimit */
+			p_protocol->RxIndex += rxLength;
+		}
 
-		if(rxLength == rxLimit) /* Implicitly (p_protocol->RxIndex >= p_protocol->p_Specs->RX_LENGTH_MIN) */
+		if(rxLength == rxLimit) /* Implicitly (p_protocol->RxIndex >= p_protocol->p_Specs->RX_LENGTH_MIN), rxLength != 0 */
 		{
 			rxStatus = p_protocol->p_Specs->PARSE_RX_META(&p_protocol->ReqIdActive, &p_protocol->RxRemaining, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex);
 			if(rxStatus != PROTOCOL_RX_CODE_WAIT_PACKET) { break; } /* Packet is complete => Req, ReqExt or Sync, or Error */
 		}
-		else /* rxLength < rxLimit, Rx Buffer empty, wait for Xcvr_RxMax */
+		else /* rxLength < rxLimit, Xcvr Rx Buffer empty, wait for Xcvr */
 		{
 			if(p_protocol->RxRemaining != RX_REMAINING_MAX) { p_protocol->RxRemaining -= rxLength; } /* If RxRemaining is known */
 			break;
@@ -173,6 +177,7 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
 						// TxSync(p_protocol, PROTOCOL_TX_SYNC_ERROR_RESYNC);
 						p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
 						// rxStatus = PROTOCOL_RX_CODE_ERROR_RESYNC;
+						rxStatus = PROTOCOL_RX_CODE_PACKET_TIMEOUT;
 						p_protocol->NackCount = 0U;
 					}
 				}
@@ -205,7 +210,10 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
 	return rxStatus;
 }
 
-/* ReqExtResp return 0, skip tx */
+/*
+	ReqExtResp return 0, skip tx
+	Error handle Xcvr TxBuffer full?
+*/
 static inline bool TxReqResp(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length)
 {
 	return (length > 0U) ? Xcvr_TxN(&p_protocol->Xcvr, p_txBuffer, length) : false;

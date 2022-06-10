@@ -50,7 +50,6 @@ void Thermistor_Init(Thermistor_T * p_therm)
 	}
 
 	p_therm->LimitThresholdStatus = THERMISTOR_STATUS_OK;
-	p_therm->Heat_DegC = 0;
 
 	if((p_therm->Params.Shutdown_Adcu == 0U) || (p_therm->Params.Threshold_Adcu == 0U) || (p_therm->Params.Warning_Adcu == 0U))
 	{
