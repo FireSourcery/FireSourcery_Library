@@ -65,14 +65,14 @@ void _Analog_ProcQueue(Analog_T * p_analog)
 	bool isEmpty = true;
 	Analog_QueueItem_T * p_next;
 
-	for(uint8_t iConversion = 0U; iConversion < Queue_GetFullCount(&p_analog->ConversionQueue) + 1U; iConversion++) /* Let compiler optimize away */
+	for(uint8_t iConversion = 0U; iConversion < Ring_GetFullCount(&p_analog->ConversionQueue) + 1U; iConversion++) /* Let compiler optimize away */
 	{
-		if(Queue_PeekFront(&p_analog->ConversionQueue, &p_next) == true)
+		if(Ring_PeekFront(&p_analog->ConversionQueue, &p_next) == true)
 		{
 			if(p_next->TYPE == ANALOG_QUEUE_TYPE_OPTIONS) /* Write and complete. Ensure not to write empty conversion that calls ISR */
 			{
 				WriteAdcOptions(p_analog, (Analog_Options_T *)p_next);
-				Queue_RemoveFront(&p_analog->ConversionQueue, 1U);
+				Ring_RemoveFront(&p_analog->ConversionQueue, 1U);
 			}
 			else if(p_next->TYPE == ANALOG_QUEUE_TYPE_CHANNEL)  /* Activate and wait for ISR */
 			{
@@ -99,7 +99,7 @@ void Analog_Init(Analog_T * p_analog)
 {
 	HAL_Analog_Init(p_analog->CONFIG.P_HAL_ANALOG);
 	HAL_Analog_Deactivate(p_analog->CONFIG.P_HAL_ANALOG);
-	Queue_Init(&p_analog->ConversionQueue);
+	Ring_Init(&p_analog->ConversionQueue);
 }
 
 /*
@@ -111,8 +111,8 @@ bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p
 
 	_Analog_EnterCritical(p_analog);
 
-	if(Queue_GetIsEmpty(&p_analog->ConversionQueue) == true) { WriteAdcChannel(p_analog, p_conversion); }
-	isSuccess = Queue_Enqueue(&p_analog->ConversionQueue, &p_conversion);
+	if(Ring_GetIsEmpty(&p_analog->ConversionQueue) == true) { WriteAdcChannel(p_analog, p_conversion); }
+	isSuccess = Ring_Enqueue(&p_analog->ConversionQueue, &p_conversion);
 
 	_Analog_ExitCritical(p_analog);
 
@@ -125,7 +125,7 @@ bool Analog_EnqueueOptions(Analog_T * p_analog, const Analog_Options_T * p_optio
 
 	_Analog_EnterCritical(p_analog);
 
-	if(Queue_GetIsEmpty(&p_analog->ConversionQueue) == true)
+	if(Ring_GetIsEmpty(&p_analog->ConversionQueue) == true)
 	{
 		WriteAdcOptions(p_analog, p_options);
 		HAL_Analog_Deactivate(p_analog->CONFIG.P_HAL_ANALOG);
@@ -133,7 +133,7 @@ bool Analog_EnqueueOptions(Analog_T * p_analog, const Analog_Options_T * p_optio
 	}
 	else
 	{
-		isSuccess = Queue_Enqueue(&p_analog->ConversionQueue, &p_options);
+		isSuccess = Ring_Enqueue(&p_analog->ConversionQueue, &p_options);
 	}
 
 	_Analog_ExitCritical(p_analog);
@@ -150,7 +150,7 @@ void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * 
 {
 	_Analog_EnterCritical(p_analog);
 	//	p_analog->p_ActiveConversion = p_conversion;
-	Queue_RemoveFront(&p_analog->ConversionQueue, 1U); /* Removes only if available */
+	Ring_RemoveFront(&p_analog->ConversionQueue, 1U); /* Removes only if available */
 	WriteAdcChannel(p_analog, p_conversion);
 	_Analog_ExitCritical(p_analog);
 }
@@ -189,12 +189,12 @@ void Analog_Group_ResumeQueue(Analog_T * p_analog)
 */
 bool Analog_Group_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
 {
-	return Queue_Enqueue(&p_analog->ConversionQueue, &p_conversion);
+	return Ring_Enqueue(&p_analog->ConversionQueue, &p_conversion);
 }
 
 bool Analog_Group_EnqueueOptions(Analog_T * p_analog, const Analog_Options_T * p_options)
 {
-	return Queue_Enqueue(&p_analog->ConversionQueue, &p_options);
+	return Ring_Enqueue(&p_analog->ConversionQueue, &p_options);
 }
 
 

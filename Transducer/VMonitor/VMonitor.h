@@ -75,7 +75,7 @@ typedef struct
 }
 VMonitor_T;
 
-#define VMONITOR_CONFIG(r1, r2, p_Params)	\
+#define VMONITOR_INIT(r1, r2, p_Params)	\
 {											\
 	.CONFIG =								\
 	{										\

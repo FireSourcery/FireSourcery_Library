@@ -66,7 +66,7 @@ typedef struct PWM_Tag
 }
 PWM_T;
 
-#define PWM_CONFIG(p_Hal, Peroid_Ticks, Channel) 												\
+#define PWM_INIT(p_Hal, Peroid_Ticks, Channel) 												\
 {																								\
 	.CONFIG = {.P_HAL_PWM = p_Hal, .PERIOD_TICKS = Peroid_Ticks, .CHANNEL_ID = Channel},		\
 }

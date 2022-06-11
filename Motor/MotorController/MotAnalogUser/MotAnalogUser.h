@@ -141,16 +141,16 @@ typedef struct MotAnalogUser_Tag
 }
 MotAnalogUser_T;
 
-#define MOT_ANALOG_USER_CONFIG(p_BrakePinHal, BrakePinId, p_ThrottlePinHal, ThrottlePinId, p_ForwardPinHal, ForwardPinId, p_ReversePinHal, ReversePinId, p_BistateBrakePinHal, BistateBrakePinId, p_ThrottleSafetyPinHal, ThrottleSafetyPinId, p_Millis, p_Params)	\
+#define MOT_ANALOG_USER_INIT(p_BrakePinHal, BrakePinId, p_ThrottlePinHal, ThrottlePinId, p_ForwardPinHal, ForwardPinId, p_ReversePinHal, ReversePinId, p_BistateBrakePinHal, BistateBrakePinId, p_ThrottleSafetyPinHal, ThrottleSafetyPinId, p_Millis, p_Params)	\
 {																											\
 	.CONFIG 				= { .P_PARAMS = p_Params, },													\
-	.BrakeEdgePin 			= DEBOUNCE_CONFIG(p_BrakePinHal, 			BrakePinId, 			p_Millis), 	\
-	.ThrottleEdgePin 		= DEBOUNCE_CONFIG(p_ThrottlePinHal, 		ThrottlePinId, 			p_Millis), 	\
-	.ForwardPin 			= DEBOUNCE_CONFIG(p_ForwardPinHal, 			ForwardPinId, 			p_Millis), 	\
-	.ReversePin 			= DEBOUNCE_CONFIG(p_ReversePinHal, 			ReversePinId, 			p_Millis), 	\
-	.BistateBrakePin		= DEBOUNCE_CONFIG(p_BistateBrakePinHal, 	BistateBrakePinId, 		p_Millis), 	\
-	.ThrottleSafetyPin 		= DEBOUNCE_CONFIG(p_ThrottleSafetyPinHal, 	ThrottleSafetyPinId, 	p_Millis), 	\
-	.NeutralPin 			= DEBOUNCE_CONFIG(0, 0, 0),  													\
+	.BrakeEdgePin 			= DEBOUNCE_INIT(p_BrakePinHal, 			BrakePinId, 			p_Millis), 	\
+	.ThrottleEdgePin 		= DEBOUNCE_INIT(p_ThrottlePinHal, 		ThrottlePinId, 			p_Millis), 	\
+	.ForwardPin 			= DEBOUNCE_INIT(p_ForwardPinHal, 			ForwardPinId, 			p_Millis), 	\
+	.ReversePin 			= DEBOUNCE_INIT(p_ReversePinHal, 			ReversePinId, 			p_Millis), 	\
+	.BistateBrakePin		= DEBOUNCE_INIT(p_BistateBrakePinHal, 	BistateBrakePinId, 		p_Millis), 	\
+	.ThrottleSafetyPin 		= DEBOUNCE_INIT(p_ThrottleSafetyPinHal, 	ThrottleSafetyPinId, 	p_Millis), 	\
+	.NeutralPin 			= DEBOUNCE_INIT(0, 0, 0),  													\
 }
 
 /*

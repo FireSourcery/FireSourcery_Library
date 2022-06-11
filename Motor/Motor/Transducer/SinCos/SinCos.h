@@ -71,7 +71,7 @@ typedef struct
 }
 SinCos_T;
 
-#define SIN_COS_CONFIG(p_Params){ .CONFIG = { .P_PARAMS = p_Params, } }
+#define SIN_COS_INIT(p_Params) { .CONFIG = { .P_PARAMS = p_Params, } }
 
 static inline qangle16_t SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {

@@ -37,7 +37,7 @@
 
 extern const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT];
 
-#define MOTOR_CONTROLLER_SHELL_CONFIG(p_MotorController, p_Timer, TimerFreq, p_Params, p_XcvrTable, TableLength)  \
-	SHELL_CONFIG(MC_CMD_TABLE, MC_SHELL_CMD_COUNT, p_MotorController, p_Timer, TimerFreq, p_Params, p_XcvrTable, TableLength)
+#define MOTOR_CONTROLLER_SHELL_INIT(p_MotorController, p_Timer, TimerFreq, p_Params, p_XcvrTable, TableLength)  \
+	SHELL_INIT(MC_CMD_TABLE, MC_SHELL_CMD_COUNT, p_MotorController, p_Timer, TimerFreq, p_Params, p_XcvrTable, TableLength)
 
 #endif /* MOTOR_SHELL_H */

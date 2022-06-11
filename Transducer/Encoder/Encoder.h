@@ -142,7 +142,7 @@ typedef struct Encoder_Tag
 }
 Encoder_T;
 
-#define ENCODER_CONFIG(p_Hal_Encoder, p_PinA_Hal, PinAId, p_PinB_Hal, PinBId, PollingFreq, DeltaDSampleFreq, DeltaTTimerFreq, p_ExtendedTimer, ExtendedTimerFreq, p_Params)	\
+#define ENCODER_INIT(p_Hal_Encoder, p_PinA_Hal, PinAId, p_PinB_Hal, PinBId, PollingFreq, DeltaDSampleFreq, DeltaTTimerFreq, p_ExtendedTimer, ExtendedTimerFreq, p_Params)	\
 {																		\
 	.CONFIG = 															\
 	{																	\
@@ -154,8 +154,8 @@ Encoder_T;
 		.EXTENDED_TIMER_FREQ 	= ExtendedTimerFreq,					\
 		.P_PARAMS 				= p_Params,								\
 	},																	\
-	.PhaseA = PIN_CONFIG(p_PinA_Hal, PinAId),							\
-	.PhaseB = PIN_CONFIG(p_PinB_Hal, PinBId),							\
+	.PhaseA = PIN_INIT(p_PinA_Hal, PinAId),							\
+	.PhaseB = PIN_INIT(p_PinB_Hal, PinBId),							\
 }
 
 /******************************************************************************/

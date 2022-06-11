@@ -107,29 +107,29 @@ typedef struct Thermistor_Tag
 }
 Thermistor_T;
 
-#define THERMISTOR_DEFINE_CONFIG(RSeries, RParallel, p_Params) 	\
+#define _THERMISTOR_INIT_CONFIG(RSeries, RParallel, p_Params) 	\
 {																\
 	.R_SERIES 		= RSeries,									\
 	.R_PARALLEL		= RParallel,								\
 	.P_PARAMS		= p_Params,									\
 }
 
-#define THERMISTOR_DEFINE_PARAMS_NTC(R0, T0_Kelvin, B) 	\
+#define _THERMISTOR_INIT_PARAMS_NTC(R0, T0_Kelvin, B) 	\
 {														\
 	.RNominal 		= R0,								\
 	.TNominal		= T0_Kelvin,						\
 	.BConstant		= B,								\
 }														\
 
-#define THERMISTOR_DEFINE(RSeries, RParallel, p_Params) 				\
+#define THERMISTOR_INIT(RSeries, RParallel, p_Params) 					\
 {																		\
-	.CONFIG = THERMISTOR_DEFINE_CONFIG(RSeries, RParallel, p_Params), 	\
+	.CONFIG = _THERMISTOR_INIT_CONFIG(RSeries, RParallel, p_Params), 	\
 }
 
-#define THERMISTOR_DEFINE_WITH_NTC(RSeries, RParallel, p_Params, NtcR0, NtcT0_Kelvin, NtcB) 	\
-{																								\
-	.CONFIG = THERMISTOR_DEFINE_CONFIG(RSeries, RParallel, p_Params),							\
-	.Params = THERMISTOR_DEFINE_PARAMS_NTC(NtcR0, NtcT0_Kelvin, NtcB),							\
+#define THERMISTOR_INIT_WITH_NTC(RSeries, RParallel, p_Params, NtcR0, NtcT0_Kelvin, NtcB) 	\
+{																							\
+	.CONFIG = _THERMISTOR_INIT_CONFIG(RSeries, RParallel, p_Params),						\
+	.Params = _THERMISTOR_INIT_PARAMS_NTC(NtcR0, NtcT0_Kelvin, NtcB),						\
 }
 
 /* Using capture conversion only */

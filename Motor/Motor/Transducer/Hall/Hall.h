@@ -195,15 +195,15 @@ typedef struct Hall_Tag
 }
 Hall_T;
 
-#define HALL_CONFIG(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_Params)	\
+#define HALL_INIT(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_Params)	\
 {																\
 	.CONFIG = 													\
 	{															\
 		.P_PARAMS_NVM = p_Params, 								\
 	},															\
-	.PinA = PIN_CONFIG(p_PinAHal, PinAId),						\
-	.PinB = PIN_CONFIG(p_PinBHal, PinBId),						\
-	.PinC = PIN_CONFIG(p_PinCHal, PinCId),						\
+	.PinA = PIN_INIT(p_PinAHal, PinAId),						\
+	.PinB = PIN_INIT(p_PinBHal, PinBId),						\
+	.PinC = PIN_INIT(p_PinCHal, PinCId),						\
 }
 
 /* +180 degrees */

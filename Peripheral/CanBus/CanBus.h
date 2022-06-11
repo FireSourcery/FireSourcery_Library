@@ -114,16 +114,16 @@ typedef struct CanBus_Tag
 
 } CanBus_T;
 
-#define CAN_BUS_CONFIG(p_Hal, p_App, p_ServiceTable, TableLength, p_Timer)		\
-{													\
-	.CONFIG = 										\
-	{												\
-		.P_HAL_CAN_BUS = p_Hal, 					\
-		.P_APP_INTERFACE = p_App, 					\
-		.P_SERVICES_TABLE = p_ServiceTable,			\
-		.SERVICES_TABLE_LENGTH = TableLength,		\
-		.P_TIMER = p_Timer, 						\
-	},												\
+#define CAN_BUS_INIT(p_Hal, p_App, p_ServiceTable, TableLength, p_Timer)	\
+{																			\
+	.CONFIG = 																\
+	{																		\
+		.P_HAL_CAN_BUS = p_Hal, 											\
+		.P_APP_INTERFACE = p_App, 											\
+		.P_SERVICES_TABLE = p_ServiceTable,									\
+		.SERVICES_TABLE_LENGTH = TableLength,								\
+		.P_TIMER = p_Timer, 												\
+	},																		\
 }
 
 

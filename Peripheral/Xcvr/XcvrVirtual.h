@@ -42,8 +42,8 @@ XcvrVirtual_T;
 
 #define XCVR_VIRTUAL_DEFINE(p_TxBuffer, p_RxBuffer, QueueSize)	\
 {																\
-	.RxQueue = QUEUE_DEFINE(p_RxBuffer, QueueSize, 1U, 0U),		\
-	.TxQueue = QUEUE_DEFINE(p_TxBuffer, QueueSize, 1U, 0U),		\
+	.RxQueue = ANALOG_INIT(p_RxBuffer, QueueSize, 1U, 0U),		\
+	.TxQueue = ANALOG_INIT(p_TxBuffer, QueueSize, 1U, 0U),		\
 }
 
 /*

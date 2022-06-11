@@ -28,21 +28,21 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_QUEUE_H
-#define CONFIG_QUEUE_H
+#ifndef CONFIG_RING_H
+#define CONFIG_RING_H
 
-#if 	defined(CONFIG_QUEUE_CRITICAL_LIBRARY_DEFINED)
-#elif 	defined(CONFIG_QUEUE_CRITICAL_EXTERN_DEFINED)
-#elif 	defined(CONFIG_QUEUE_SINGLE_THREADED)
+#if 	defined(CONFIG_RING_CRITICAL_LIBRARY_DEFINED)
+#elif 	defined(CONFIG_RING_CRITICAL_EXTERN_DEFINED)
+#elif 	defined(CONFIG_RING_SINGLE_THREADED)
 #else
-	#define CONFIG_QUEUE_SINGLE_THREADED
+	#define CONFIG_RING_SINGLE_THREADED
 #endif
 
-#if 	defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_UNBOUNDED) 	/* Power 2 length only, interger overflow wrap only */
-#elif  	defined(CONFIG_QUEUE_LENGTH_POW2_INDEX_WRAPPED)		/* Power 2 length only. Does not need interger overflow wrap */
-#elif  	defined(CONFIG_QUEUE_LENGTH_ANY)
+#if 	defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) 	/* Power 2 length only, interger overflow wrap only */
+#elif  	defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)		/* Power 2 length only. Does not need interger overflow wrap */
+#elif  	defined(CONFIG_RING_LENGTH_ANY)
 #else
-	#define CONFIG_QUEUE_LENGTH_ANY
+	#define CONFIG_RING_LENGTH_ANY
 #endif
 
 #endif

@@ -285,12 +285,12 @@ typedef const struct Protocol_Config_Tag
 Protocol_Config_T;
 
 // #if defined(CONFIG_PROTOCOL_XCVR_ENABLE)
-#define _PROTOCOL_XCVR_DEFINE(p_XcvrTable, TableLength) .Xcvr = XCVR_DEFINE(p_XcvrTable, TableLength),
+#define _PROTOCOL_XCVR_INIT(p_XcvrTable, TableLength) .Xcvr = XCVR_INIT(p_XcvrTable, TableLength),
 // #else
-// #define _PROTOCOL_XCVR_DEFINE(p_XcvrTable, TableLength)
+// #define _PROTOCOL_XCVR_INIT(p_XcvrTable, TableLength)
 // #endif
 
-#define PROTOCOL_DEFINE(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubstateBuffer, p_SpecsTable, SpecsCount, p_XcvrTable, XcvrCount, p_Timer, p_Params)	\
+#define PROTOCOL_INIT(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubstateBuffer, p_SpecsTable, SpecsCount, p_XcvrTable, XcvrCount, p_Timer, p_Params)	\
 {																\
 	.CONFIG = 													\
 	{															\
@@ -304,7 +304,7 @@ Protocol_Config_T;
 		.P_TIMER 				= p_Timer,						\
 		.P_PARAMS 				= p_Params,						\
 	},															\
-	_PROTOCOL_XCVR_DEFINE(p_XcvrTable, XcvrCount)	 			\
+	_PROTOCOL_XCVR_INIT(p_XcvrTable, XcvrCount)	 					\
 }
 
 typedef struct Protocol_Tag

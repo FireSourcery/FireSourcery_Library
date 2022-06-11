@@ -145,27 +145,27 @@ typedef struct NvMemory_Tag
 /*
 	Alternatively template the calling function
 */
-#define NV_MEMORY_CONFIG_HAL(p_Hal, ReadCompleteFlag, ReadErrorFlags, ClearErrorFlags)	\
+#define NV_MEMORY_INIT_HAL(p_Hal, ReadCompleteFlag, ReadErrorFlags, ClearErrorFlags)	\
 	.P_HAL = p_Hal,  																\
 	.READ_COMPLETE_FLAG 	= (HAL_NvMemory_ReadFlags_T)ReadCompleteFlag,				\
 	.READ_ERROR_FLAGS 		= (HAL_NvMemory_ReadFlags_T)ReadErrorFlags,					\
 	.CLEAR_ERROR_FLAGS 		= (HAL_NvMemory_ClearFlags_T)ClearErrorFlags,
 
-#define NV_MEMORY_CONFIG_PARTITIONS(p_partitions, partitionCount)	\
+#define NV_MEMORY_INIT_PARTITIONS(p_partitions, partitionCount)	\
 	.P_PARTITIONS 		= p_partitions,  							\
 	.PARTITION_COUNT 	= partitionCount, 							\
 
-#define NV_MEMORY_CONFIG_BUFFER(p_Buffer, BufferSize)	\
+#define NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)	\
 	.P_BUFFER 		= p_Buffer,  						\
 	.BUFFER_SIZE 	= BufferSize, 						\
 
-#define NV_MEMORY_CONFIG(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)	\
+#define NV_MEMORY_INIT(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)	\
 {																																	\
 	.CONFIG = 																														\
 	{																																\
-		NV_MEMORY_CONFIG_HAL(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags)  							\
-		NV_MEMORY_CONFIG_PARTITIONS(p_Partitions, PartitionCount) 																	\
-		NV_MEMORY_CONFIG_BUFFER(p_Buffer, BufferSize)			 																	\
+		NV_MEMORY_INIT_HAL(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags)  							\
+		NV_MEMORY_INIT_PARTITIONS(p_Partitions, PartitionCount) 																	\
+		NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)			 																	\
 	}																																\
 }
 

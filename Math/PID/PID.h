@@ -75,7 +75,7 @@ typedef struct PID_Tag
 }
 PID_T;
 
-#define PID_CONFIG(p_Params)			\
+#define PID_INIT(p_Params)			\
 {										\
 	.CONFIG = 							\
 	{									\

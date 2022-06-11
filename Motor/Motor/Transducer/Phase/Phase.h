@@ -80,14 +80,14 @@ typedef struct Phase_Tag
 }
 Phase_T;
 
-#define PHASE_CONFIG(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel, p_SwitchAHal, SwitchAId, p_SwitchBHal, SwitchBId, p_SwitchCHal, SwitchCId)	\
+#define PHASE_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel, p_SwitchAHal, SwitchAId, p_SwitchBHal, SwitchBId, p_SwitchCHal, SwitchCId)	\
 {																	\
-	.PwmA = PWM_CONFIG(p_PwmHal, PwmPeriodTicks, PwmAChannel),		\
-	.PwmB = PWM_CONFIG(p_PwmHal, PwmPeriodTicks, PwmBChannel),		\
-	.PwmC = PWM_CONFIG(p_PwmHal, PwmPeriodTicks, PwmCChannel),		\
-	.SwitchA = PIN_CONFIG(p_SwitchAHal, SwitchAId),					\
-	.SwitchB = PIN_CONFIG(p_SwitchBHal, SwitchBId),					\
-	.SwitchC = PIN_CONFIG(p_SwitchCHal, SwitchCId),					\
+	.PwmA = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel),		\
+	.PwmB = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmBChannel),		\
+	.PwmC = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmCChannel),		\
+	.SwitchA = PIN_INIT(p_SwitchAHal, SwitchAId),					\
+	.SwitchB = PIN_INIT(p_SwitchBHal, SwitchBId),					\
+	.SwitchC = PIN_INIT(p_SwitchCHal, SwitchCId),					\
 }
 
 static inline void Phase_ClearInterrupt(const Phase_T * p_phase) { PWM_ClearInterrupt(&p_phase->PwmA); }

@@ -51,7 +51,7 @@ typedef struct Pin_Tag
 }
 Pin_T;
 
-#define PIN_CONFIG(p_Hal, Id)	\
+#define PIN_INIT(p_Hal, Id)		\
 {								\
 	.CONFIG = 					\
 	{							\

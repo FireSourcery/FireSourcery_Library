@@ -33,7 +33,7 @@
 
 #include "HAL_Serial.h"
 #include "Config.h"
-#include "Utility/Queue/Queue.h"
+#include "Utility/Ring/Ring.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -47,8 +47,8 @@ Serial_Config_T;
 typedef struct Serial_Tag
 {
 	const Serial_Config_T CONFIG;
-	Queue_T RxQueue;
-	Queue_T TxQueue;
+	Ring_T RxRing;
+	Ring_T TxRing;
 	//  volatile Serial_Status_T TxStatus;		/*!< Status of last driver transmit operation */
 	//  volatile Serial_Status_T RxStatus;		/*!< Status of last driver receive operation */
 	//  Serial_TransferMode_T TransferMode;		/*!< interrupt/dma mode */
@@ -59,11 +59,11 @@ typedef struct Serial_Tag
 }
 Serial_T;
 
-#define SERIAL_DEFINE(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)	\
+#define SERIAL_INIT(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)		\
 {																					\
 	.CONFIG = {.P_HAL_SERIAL = p_Hal, },											\
-	.TxQueue = QUEUE_DEFINE(p_TxBuffer, TxBufferSize, 1U, 0U),						\
-	.RxQueue = QUEUE_DEFINE(p_RxBuffer, RxBufferSize, 1U, 0U),						\
+	.TxRing = RING_INIT(p_TxBuffer, TxBufferSize, 1U, 0U),							\
+	.RxRing = RING_INIT(p_RxBuffer, RxBufferSize, 1U, 0U),							\
 }
 
 /*
@@ -75,7 +75,7 @@ static inline void Serial_RxData_ISR(Serial_T * p_serial)
 
 	while(HAL_Serial_ReadRxFullCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U) /* Rx until hw buffer is empty */
 	{
-		if(Queue_GetIsFull(&p_serial->RxQueue) == true) /* Rx until software buffer is full */
+		if(Ring_GetIsFull(&p_serial->RxRing) == true) /* Rx until software buffer is full */
 		{
 			/* if buffer stays full, disable irq to prevent blocking lower priority threads. user must restart rx irq */
 			HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
@@ -84,7 +84,7 @@ static inline void Serial_RxData_ISR(Serial_T * p_serial)
 		else
 		{
 			rxChar = HAL_Serial_ReadRxChar(p_serial->CONFIG.P_HAL_SERIAL);
-			Queue_Enqueue(&p_serial->RxQueue, &rxChar);
+			Ring_Enqueue(&p_serial->RxRing, &rxChar);
 		}
 	}
 }
@@ -99,14 +99,14 @@ static inline void Serial_TxData_ISR(Serial_T * p_serial)
 
 	while(HAL_Serial_ReadTxEmptyCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U) /* Tx until hw buffer is full */
 	{
-		if(Queue_GetIsEmpty(&p_serial->TxQueue) == true) /* Tx until software buffer is empty */
+		if(Ring_GetIsEmpty(&p_serial->TxRing) == true) /* Tx until software buffer is empty */
 		{
 			HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 			break;
 		}
 		else
 		{
-			Queue_Dequeue(&p_serial->TxQueue, &txChar);
+			Ring_Dequeue(&p_serial->TxRing, &txChar);
 			HAL_Serial_WriteTxChar(p_serial->CONFIG.P_HAL_SERIAL, txChar);
 		}
 	}
@@ -114,7 +114,7 @@ static inline void Serial_TxData_ISR(Serial_T * p_serial)
 
 static inline void Serial_PollRestartRxIsr(const Serial_T * p_serial)
 {
-	if((HAL_Serial_ReadRxOverrun(p_serial->CONFIG.P_HAL_SERIAL) == true) && (Queue_GetIsFull(&p_serial->RxQueue) == false))
+	if((HAL_Serial_ReadRxOverrun(p_serial->CONFIG.P_HAL_SERIAL) == true) && (Ring_GetIsFull(&p_serial->RxRing) == false))
 	{
 		HAL_Serial_ClearRxErrors(p_serial->CONFIG.P_HAL_SERIAL);
 		HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
@@ -135,7 +135,7 @@ static inline void Serial_PollTxData(Serial_T * p_serial)
 	HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 	Serial_TxData_ISR(p_serial);
 
-	if(Queue_GetIsEmpty(&p_serial->TxQueue) == false)
+	if(Ring_GetIsEmpty(&p_serial->TxRing) == false)
 	{
 		HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 	}
@@ -143,12 +143,12 @@ static inline void Serial_PollTxData(Serial_T * p_serial)
 
 static inline void Serial_FlushBuffers(Serial_T * p_serial)
 {
-	Queue_Clear(&p_serial->TxQueue);
-	Queue_Clear(&p_serial->RxQueue);
+	Ring_Clear(&p_serial->TxRing);
+	Ring_Clear(&p_serial->RxRing);
 }
 
-static inline size_t Serial_GetRxFullCount(Serial_T * p_serial) 	{ return Queue_GetFullCount(&p_serial->RxQueue); }
-static inline size_t Serial_GetTxEmptyCount(Serial_T * p_serial) 	{ return Queue_GetEmptyCount(&p_serial->TxQueue); }
+static inline size_t Serial_GetRxFullCount(Serial_T * p_serial) 	{ return Ring_GetFullCount(&p_serial->RxRing); }
+static inline size_t Serial_GetTxEmptyCount(Serial_T * p_serial) 	{ return Ring_GetEmptyCount(&p_serial->TxRing); }
 static inline void Serial_EnableTxIsr(const Serial_T * p_serial) 	{ HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
 static inline void Serial_DisableTxIsr(const Serial_T * p_serial) 	{ HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
 static inline void Serial_EnableRx(const Serial_T * p_serial) 		{ HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }

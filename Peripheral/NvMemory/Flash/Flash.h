@@ -50,8 +50,8 @@
 typedef NvMemory_Partition_T Flash_Partition_T;
 typedef NvMemory_T Flash_T;
 
-#define FLASH_CONFIG(p_Hal, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
-	NV_MEMORY_CONFIG(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)														\
+#define FLASH_INIT(p_Hal, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
+	NV_MEMORY_INIT(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)														\
 
 /*
 	Alias for NvMemory Status

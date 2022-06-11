@@ -122,18 +122,18 @@ typedef struct StateMachine_Tag
 StateMachine_T;
 
 #if defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
-#define STATE_MACHINE_CONFIG_CRITICAL(IsMultithreaded) .USE_CRITICAL = IsMultithreaded,
+#define _STATE_MACHINE_INIT_CRITICAL(IsMultithreaded) .USE_CRITICAL = IsMultithreaded,
 #else
-#define STATE_MACHINE_CONFIG_CRITICAL(IsMultithreaded)
+#define _STATE_MACHINE_INIT_CRITICAL(IsMultithreaded)
 #endif
 
-#define STATE_MACHINE_CONFIG(p_Machine, p_Context, IsMultithreaded)	\
+#define STATE_MACHINE_INIT(p_Machine, p_Context, IsMultithreaded)	\
 {															\
 	.CONFIG = 												\
 	{														\
 		.P_MACHINE = p_Machine,								\
 		.P_CONTEXT = p_Context,								\
-		STATE_MACHINE_CONFIG_CRITICAL(IsMultithreaded)		\
+		_STATE_MACHINE_INIT_CRITICAL(IsMultithreaded)		\
 	}														\
 }
 

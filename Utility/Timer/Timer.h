@@ -54,7 +54,7 @@ typedef struct Timer_Tag
 }
 Timer_T;
 
-#define TIMER_DEFINE(p_Base, BaseFreq)	{ .CONFIG = {.P_BASE = p_Base, .BASE_FREQ = BaseFreq, }, }
+#define TIMER_INIT(p_Base, BaseFreq)	{ .CONFIG = {.P_BASE = p_Base, .BASE_FREQ = BaseFreq, }, }
 
 /******************************************************************************/
 /*!

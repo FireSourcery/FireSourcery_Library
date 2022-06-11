@@ -95,9 +95,9 @@ extern const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U];
 /*
 	No Non-Volatile memory params by default
 */
-#define MOTOR_CMDR_DEFINE(p_ThisMotorCmdr, p_XcvrTable, XcvrCount, p_Timer)  							\
+#define MOTOR_CMDR_INIT(p_ThisMotorCmdr, p_XcvrTable, XcvrCount, p_Timer)  								\
 {																										\
-	.Protocol = PROTOCOL_DEFINE 																		\
+	.Protocol = PROTOCOL_INIT 																			\
 	(																									\
 		&((p_ThisMotorCmdr)->RxPacket[0U]), &((p_ThisMotorCmdr)->TxPacket[0U]), MOT_PACKET_LENGTH_MAX, 	\
 		(p_ThisMotorCmdr), &((p_ThisMotorCmdr)->Substate), 												\

@@ -48,7 +48,7 @@ class KellyController
 {
 private:
 	static uint32_t millisTimer;
-	MotorCmdr_T motorCmdr = MOTOR_CMDR_DEFINE(&motorCmdr, KELLY_XCVR_TABLE, KELLY_XCVR_COUNT, &millisTimer);
+	MotorCmdr_T motorCmdr = MOTOR_CMDR_INIT(&motorCmdr, KELLY_XCVR_TABLE, KELLY_XCVR_COUNT, &millisTimer);
 	HardwareSerial * p_serial; /* Must be public for wrapper access. Handle used for setup only. */
 	// Stream * p_serialStream;
 

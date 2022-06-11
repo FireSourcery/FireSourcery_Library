@@ -53,10 +53,10 @@ typedef struct Debounce_Tag
 }
 Debounce_T;
 
-#define DEBOUNCE_CONFIG(p_PinHal, PinId, p_Timer) 	\
+#define DEBOUNCE_INIT(p_PinHal, PinId, p_Timer) 	\
 {													\
 	.CONFIG =  { .P_TIMER = p_Timer, },				\
-	.Pin = PIN_CONFIG(p_PinHal, PinId),				\
+	.Pin = PIN_INIT(p_PinHal, PinId),				\
 }
 
 static inline bool Debounce_GetState(const Debounce_T * p_debounce) 	{ return p_debounce->DebouncedState;}

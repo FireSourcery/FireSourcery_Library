@@ -63,6 +63,6 @@ MotorController_StateMachine_StateId_T;
 
 extern const StateMachine_Machine_T MCSM_MACHINE;
 
-#define MOTOR_CONTROLLER_STATE_MACHINE_CONFIG(p_MotorController) STATE_MACHINE_CONFIG(&MCSM_MACHINE, p_MotorController, false)
+#define MOTOR_CONTROLLER_STATE_MACHINE_INIT(p_MotorController) STATE_MACHINE_INIT(&MCSM_MACHINE, p_MotorController, false)
 
 #endif

@@ -34,7 +34,7 @@
 #include "HAL_Analog.h"
 #include "Config.h"
 
-#include "Utility/Queue/Queue.h"
+#include "Utility/Ring/Ring.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -55,8 +55,6 @@ typedef volatile uint16_t analog_adcresult_t;
 /* ADC Pin Channel - May or may not need 32 bits */
 #ifdef CONFIG_ANALOG_ADC_PIN_UINT8
 typedef uint8_t analog_adcpin_t;
-#elif defined(CONFIG_ANALOG_ADC_PIN_UINT16)
-typedef uint16_t analog_adcpin_t;
 #elif defined(CONFIG_ANALOG_ADC_PIN_UINT32)
 typedef uint32_t analog_adcpin_t;
 #endif
@@ -86,19 +84,18 @@ typedef const struct Analog_Conversion_Tag
 }
 Analog_Conversion_T;
 
-#define CONFIG_ANALOG_CONVERSION(Channel, OnComplete, p_CallbackContext, p_Results, PinId) \
-{															\
-	.TYPE 					= ANALOG_QUEUE_TYPE_CHANNEL, 	\
-	.CHANNEL 				= Channel,						\
-	.ON_COMPLETE 			= OnComplete,					\
-	.P_CALLBACK_CONTEXT 	= p_CallbackContext,			\
-	.P_RESULTS_BUFFER 		= p_Results,					\
-	.PIN 					= PinId,						\
+#define ANALOG_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId) 	\
+{																							\
+	.TYPE 					= ANALOG_QUEUE_TYPE_CHANNEL, 									\
+	.CHANNEL 				= Channel,														\
+	.ON_COMPLETE 			= OnComplete,													\
+	.P_CALLBACK_CONTEXT 	= p_CallbackContext,											\
+	.P_RESULTS_BUFFER 		= p_Results,													\
+	.PIN 					= PinId,														\
 }
 
 typedef struct Analog_OptionsFlags_Tag
 {
-	// uint32_t IsValid				:1U	/* use options */
 	uint32_t HwTriggerConversion : 1U;
 	//	uint32_t ContinuousConversion 	:1U;
 	//	uint32_t CaptureLocalPeak 		:1U; /* for now, conversion stops on 1 local peak in channel set, user must also set ContinuousConversion */
@@ -142,7 +139,7 @@ Analog_Config_T;
 typedef struct Analog_Tag
 {
 	const Analog_Config_T CONFIG;
-	Queue_T ConversionQueue;	/* Item type (Analog_QueueItem_T *), (Analog_Conversion_T *) or (Analog_Options_T *) */
+	Ring_T ConversionQueue;	/* Item type (Analog_QueueItem_T *), (Analog_Conversion_T *) or (Analog_Options_T *) */
 #ifdef CONFIG_ANALOG_ADC_HW_FIFO_LENGTH
 	uint8_t ActiveChannelCount; /*! Hw fifo only. Number of active channels being processed by ADC */
 	uint8_t ActiveChannelIndex; /*! Index into active conversion group */
@@ -161,10 +158,10 @@ Analog_T;
 /*
 	Queue buffer length in units
 */
-#define ANALOG_DEFINE(p_HalAnalog, p_ConversionBuffer, ConversionQueueLength) 										\
+#define ANALOG_INIT(p_HalAnalog, p_ConversionBuffer, ConversionQueueLength) 										\
 {																													\
 	.CONFIG = { .P_HAL_ANALOG = p_HalAnalog, },																		\
-	.ConversionQueue = QUEUE_DEFINE(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),	\
+	.ConversionQueue = RING_INIT(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),	\
 }
 
 extern void _Analog_ProcQueue(Analog_T * p_analog);
@@ -220,7 +217,7 @@ static inline bool _Analog_CaptureResults(Analog_T * p_analog)
 	bool isAllChannelsComplete;
 
 	HAL_Analog_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ANALOG);
-	Queue_Dequeue(&p_analog->ConversionQueue, &p_completedConversion);
+	Ring_Dequeue(&p_analog->ConversionQueue, &p_completedConversion);
 	_Analog_CaptureAdcResults(p_analog, p_completedConversion);
 
 	_Analog_ProcQueue(p_analog);

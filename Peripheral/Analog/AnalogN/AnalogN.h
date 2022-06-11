@@ -34,7 +34,7 @@
 #include "../Analog/Analog.h"
 #include "../Analog/Config.h"
 
-#include "Utility/Queue/Queue.h"
+#include "Utility/Ring/Ring.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -63,18 +63,10 @@ typedef const struct AnalogN_Conversion_Tag
 }
 AnalogN_Conversion_T;
 
-#define CONFIG_ANALOG_N_CONVERSION(Channel, OnComplete, p_CallbackContext, p_Results, PinId, p_AnalogIHost) \
-{																\
-	.CONVERSION =												\
-	{															\
-		.TYPE 					= ANALOG_QUEUE_TYPE_CHANNEL, 	\
-		.CHANNEL 				= Channel,						\
-		.ON_COMPLETE 			= OnComplete,					\
-		.P_CALLBACK_CONTEXT 	= p_CallbackContext,			\
-		.P_RESULTS_BUFFER 		= p_Results,					\
-		.PIN 					= PinId,						\
-	},															\
-	.P_ANALOG 					= p_AnalogIHost,				\
+#define ANALOG_N_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId, p_AnalogIHost) 		\
+{																												\
+	.CONVERSION 	= ANALOG_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId), 		\
+	.P_ANALOG 		= p_AnalogIHost,																			\
 }
 
 //todo

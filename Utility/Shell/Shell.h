@@ -96,12 +96,12 @@ typedef struct
 Shell_T;
 
 #if defined(CONFIG_SHELL_XCVR_ENABLE)
-	#define SHELL_CONFIG_XCVR(p_XcvrTable, TableLength) .Xcvr = XCVR_DEFINE(p_XcvrTable, TableLength)
+	#define _SHELL_INIT_XCVR(p_XcvrTable, TableLength) .Xcvr = XCVR_INIT(p_XcvrTable, TableLength)
 #else
-	#define SHELL_CONFIG_XCVR(p_XcvrTable, TableLength)
+	#define _SHELL_INIT_XCVR(p_XcvrTable, TableLength)
 #endif
 
-#define SHELL_CONFIG(p_CmdTable, CmdCount, p_Context, p_Timer, TimerFreq, p_Params, p_XcvrTable, TableLength)	\
+#define SHELL_INIT(p_CmdTable, CmdCount, p_Context, p_Timer, TimerFreq, p_Params, p_XcvrTable, TableLength)	\
 {															\
 	.CONFIG = 												\
 	{														\
@@ -114,7 +114,7 @@ Shell_T;
 	},														\
 	.Terminal =												\
 	{														\
-		SHELL_CONFIG_XCVR(p_XcvrTable, TableLength)	 		\
+		_SHELL_INIT_XCVR(p_XcvrTable, TableLength)	 		\
 	},														\
 }
 
