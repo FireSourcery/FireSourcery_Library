@@ -121,7 +121,8 @@ typedef union MotorController_FaultFlags_Tag
 		uint32_t VPosLimit 			: 1U;
 		uint32_t VSenseLimit 		: 1U;
 		uint32_t VAccLimit 			: 1U;
-		uint32_t Motors 			: 1U;
+		uint32_t Motors				: 1U;
+		uint32_t MotorOverHeat		: 1U; /* At least 1 motor overheat. */
 		uint32_t StopStateSync 		: 1U;
 		// uint32_t ThrottleOnInit 	: 1U;
 		uint32_t RxLost 			: 1U;

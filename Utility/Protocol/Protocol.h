@@ -73,13 +73,13 @@ typedef enum Protocol_RxCode_Tag
 }
 Protocol_RxCode_T;
 
-typedef Protocol_RxCode_T(*Protocol_ParseRxMeta_T)(protocol_reqid_t * p_reqId, size_t * p_rxRemaining, const void * p_rxPacket, size_t rxCount);
+typedef Protocol_RxCode_T(*Protocol_ParseRxMeta_T)(protocol_reqid_t * p_reqId, size_t * p_packetLength, const void * p_rxPacket, size_t rxCount);
 // seperate?
-// typedef Protocol_RxCode_T(*Protocol_ParseRxLength_T)(size_t * p_rxRemaining, const void * p_rxPacket, size_t rxCount);
+// typedef Protocol_RxCode_T(*Protocol_ParseRxLength_T)(size_t * p_packetLength, const void * p_rxPacket, size_t rxCount);
 // typedef Protocol_RxCode_T(*Protocol_ParseRxId_T)(protocol_reqid_t * p_reqId, const void * p_rxPacket, size_t rxCount);
 
 //use stateful to parse respid mismatch or wait till req proc?
-// typedef Protocol_RxCode_T(*Protocol_ParseRxMeta_T)(void * p_subState, protocol_reqid_t * p_reqId, size_t * p_rxRemaining, const void * p_rxPacket, size_t rxCount);
+// typedef Protocol_RxCode_T(*Protocol_ParseRxMeta_T)(void * p_subState, protocol_reqid_t * p_reqId, size_t * p_packetLength, const void * p_rxPacket, size_t rxCount);
 
 /******************************************************************************/
 /*!
@@ -225,7 +225,11 @@ typedef const struct Protocol_Specs_Tag
 	const uint32_t REQ_TIMEOUT; 			/* checked for stateful Req only */
 
 	const bool ENCODED;						/* TODO Encoded data, non encoded use TIMEOUT only. No meta chars past first char. */
-	// const uint32_t RX_HEADER_LENGTH; fixed header length known to include contain data length value
+	// const size_t RX_HEADER_LENGTH; 	fixed header length known to include contain data length value
+
+	// alternative to PARSE_RX_META
+	// const size_t RX_REQ_ID_INDEX;	65535 to disable, check RxIndex < RX_REQ_ID_INDEX
+	// const size_t RX_LENGTH_INDEX;
 }
 Protocol_Specs_T;
 
@@ -315,23 +319,19 @@ typedef struct Protocol_Tag
 	const Protocol_Specs_T * p_Specs;
 
 	Protocol_RxState_T RxState;
-	Protocol_RxCode_T RxStatus;		/* Transient Status, return to caller */
+	Protocol_RxCode_T RxStatus;		/* Returned from child function, also return to caller. updated per proc */
 	size_t RxIndex; 				/* AKA RxCount */
-	size_t RxRemaining; 			/* Alternatively use parse for total rxpacket length */
+	size_t RxLength; 				/* Rx Packet Total Length. Parse with PARSE_RX_META */
 	uint32_t RxTimeStart;
 
 	Protocol_ReqState_T ReqState;
-	Protocol_ReqCode_T ReqStatus;	/* Transient Status, return to caller */
-	protocol_reqid_t ReqIdActive;	/* protocol_reqid_t values defined by child module */
-	Protocol_Req_T * p_ReqActive;	/* Protocol_Req_T or Protocol_Cmdr_Req_T */
+	Protocol_ReqCode_T ReqStatus;	/* Returned from child function, also return to caller. updated per proc */
+	protocol_reqid_t ReqIdActive;	/* protocol_reqid_t values defined by child module. Index in P_REQ_TABLE, Parse with PARSE_RX_META  */
+	Protocol_Req_T * p_ReqActive;	/* */
 	uint32_t ReqTimeStart;			/* Set on Req Start and Complete */
 
 	size_t TxLength;
 	uint8_t NackCount;
-
-	// size_t RespLength;
-	// uint32_t CmdrRxState;
-	// void * p_CmdrReqActive;
 }
 Protocol_T;
 

@@ -64,29 +64,18 @@ void MotProtocol_ResetExt(MotProtocol_Substate_T * p_subState)
 	p_subState->StateId = 0U;
 }
 
-Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p_rxRemaining, const MotPacket_T * p_rxPacket, size_t rxCount)
+Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p_packetLength, const MotPacket_T * p_rxPacket, size_t rxCount)
 {
 	Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_WAIT_PACKET;
 
-	if((rxCount >= 3U) && (rxCount == p_rxPacket->Header.Length + sizeof(MotPacket_Header_T)))
+	if((rxCount >= MOT_PACKET_LENGTH_BYTE_INDEX) && (rxCount == p_rxPacket->Header.TotalLength))
 	{
 		*p_reqId = p_rxPacket->Header.HeaderId;
 		rxCode = (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_PACKET_ERROR;
-
-		// optionally further refine cmd
-		// if(rxCount >= p_rxPacket->Header.Length + sizeof(MotPacket_Header_T))
-		// {
-		// 	switch(p_rxPacket->Header.HeaderId)
-		// 	{
-		// 		case MOT_PACKET_CMD_MONITOR_TYPE: *p_reqId =; break;
-		// 		case MOT_PACKET_CMD_CONTROL_TYPE: *p_reqId =; break;
-		// 		default: *p_reqId = p_rxPacket->Header.HeaderId; break;
-		// 	}
-		// }
 	}
-	else if(rxCount >= 3U) /* Move this to protocol module handle, if header length defined */
+	else if(rxCount >= MOT_PACKET_LENGTH_BYTE_INDEX) /* Move this to protocol module handle, if header length index defined */
 	{
-		*p_rxRemaining = p_rxPacket->Header.Length + sizeof(MotPacket_Header_T) - rxCount;
+		*p_packetLength = p_rxPacket->Header.TotalLength;
 	}
 	else if(rxCount >= MOT_PACKET_LENGTH_MIN)
 	{
@@ -100,20 +89,10 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 			default: break;
 		}
 	}
+	// else /* ParseMeta should not have been called */
+	// {
+	// 	rxCode = PROTOCOL_RX_CODE_ERROR;
+	// }
 
 	return rxCode;
 }
-
-
-// Protocol_RxCode_T MotProtocol_CheckRxPacket(const MotPacket_T * p_rxPacket, protocol_reqid_t activeReqId) //general version might need include rxlength
-// {
-// 	// check squence correctness here? or additionally during parsing?
-// 	// 	switch(p_rxPacket->Header.HeaderId)
-// 	// 	{
-// 	// 		case MOT_PACKET_CMD_MONITOR_TYPE:  =; break;
-// 	// 		case MOT_PACKET_CMD_CONTROL_TYPE: ; break;
-// 	// 		default:  break;
-// 	// 	}
-
-// 	return ((p_rxPacket->Header.HeaderId == activeReqId) && (MotPacket_CheckChecksum(p_rxPacket) == true)) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_PACKET_ERROR;
-// }

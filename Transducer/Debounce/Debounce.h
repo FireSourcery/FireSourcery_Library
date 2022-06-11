@@ -50,18 +50,14 @@ typedef struct Debounce_Tag
 	bool DebouncedState;
 	bool DebouncedStatePrev; /* for edge read */
 	bool RawStatePrev;
-} 
+}
 Debounce_T;
 
-#define DEBOUNCE_CONFIG(p_PinHal, PinId, p_Timer) \
+#define DEBOUNCE_CONFIG(p_PinHal, PinId, p_Timer) 	\
 {													\
-	.CONFIG = 										\
-	{												\
-		.P_TIMER = p_Timer,							\
-	},												\
+	.CONFIG =  { .P_TIMER = p_Timer, },				\
 	.Pin = PIN_CONFIG(p_PinHal, PinId),				\
 }
-
 
 static inline bool Debounce_GetState(const Debounce_T * p_debounce) 	{ return p_debounce->DebouncedState;}
 static inline bool Debounce_GetRawState(const Debounce_T * p_debounce) 	{ return p_debounce->RawStatePrev; }
@@ -79,6 +75,6 @@ extern bool Debounce_PollEdge(Debounce_T * p_debounce);
 //static inline uint16_t Debounce_GetStateTime()   { }
 //static inline bool Debounce_GetLongPress(Debounce_T * p_debounce){}
 //todo capturetime for long and short press
-//static inline bool Debounce_GetShortPress(Debounce_T * p_debounce){} 
+//static inline bool Debounce_GetShortPress(Debounce_T * p_debounce){}
 
 #endif /* DEBOUNCE_H */

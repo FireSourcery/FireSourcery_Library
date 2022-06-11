@@ -165,11 +165,11 @@ void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_
 	{
 		case MOT_PACKET_STOP_ALL: 					*p_txLength = MotPacket_StopReq_Build((MotPacket_StopReq_T *)p_txPacket); 			break;
 		case MOT_PACKET_PING: 						*p_txLength = MotPacket_PingReq_Build((MotPacket_PingReq_T *)p_txPacket); 			break;
-		case MOT_PACKET_CMD_INIT_UNITS: 			*p_txLength = MotPacket_InitUnitsReq_Build((MotPacket_InitUnitsReq_T *)p_txPacket);		break;
-		case MOT_PACKET_CMD_SAVE_NVM: 				*p_txLength = MotPacket_SaveNvmReq_Build((MotPacket_SaveNvmReq_T *)p_txPacket);		break;
+		case MOT_PACKET_INIT_UNITS: 			*p_txLength = MotPacket_InitUnitsReq_Build((MotPacket_InitUnitsReq_T *)p_txPacket);		break;
+		case MOT_PACKET_SAVE_NVM: 				*p_txLength = MotPacket_SaveNvmReq_Build((MotPacket_SaveNvmReq_T *)p_txPacket);		break;
 
-		case MOT_PACKET_CMD_MONITOR_TYPE: 			*p_txLength = MotPacket_MonitorReq_Build((MotPacket_MonitorReq_T *)p_txPacket, p_app->MonitorIdActive);		break;
-		case MOT_PACKET_CMD_CONTROL_TYPE:
+		case MOT_PACKET_MONITOR_TYPE: 			*p_txLength = MotPacket_MonitorReq_Build((MotPacket_MonitorReq_T *)p_txPacket, p_app->MonitorIdActive);		break;
+		case MOT_PACKET_CONTROL_TYPE:
 			switch(p_app->ControlIdActive)
 			{
 				case MOT_PACKET_CONTROL_THROTTLE:			*p_txLength = MotPacket_ControlReq_Throttle_Build((MotPacket_ControlReq_T *)p_txPacket, p_app->MotorCmdValue); 		break;
@@ -181,16 +181,16 @@ void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_
 				default: break;
 			}
 			break;
-		case MOT_PACKET_CMD_READ_VAR: 	 	*p_txLength = MotPacket_ReadVarReq_Build((MotPacket_ReadVarReq_T *)p_txPacket, p_app->MotorReadVarId); break;
-		case MOT_PACKET_CMD_WRITE_VAR: 		*p_txLength = MotPacket_WriteVarReq_Build((MotPacket_WriteVarReq_T *)p_txPacket, p_app->MotorWriteVarId, p_app->MotorWriteVarValue); break;
-		case MOT_PACKET_CMD_REBOOT: 						break;
-		case MOT_PACKET_CMD_CALL: 							break;
-		case MOT_PACKET_CMD_READ_VAR16: 					break;
-		case MOT_PACKET_CMD_WRITE_VAR16: 					break;
-		case MOT_PACKET_CMD_READ_MEMORY: 					break;
-		case MOT_PACKET_CMD_WRITE_MEMORY: 					break;
-		case MOT_PACKET_CMD_DATA_MODE_READ: 				break;
-		case MOT_PACKET_CMD_DATA_MODE_WRITE: 				break;
+		case MOT_PACKET_READ_VAR: 	 	*p_txLength = MotPacket_ReadVarReq_Build((MotPacket_ReadVarReq_T *)p_txPacket, p_app->MotorReadVarId); break;
+		case MOT_PACKET_WRITE_VAR: 		*p_txLength = MotPacket_WriteVarReq_Build((MotPacket_WriteVarReq_T *)p_txPacket, p_app->MotorWriteVarId, p_app->MotorWriteVarValue); break;
+		case MOT_PACKET_REBOOT: 						break;
+		case MOT_PACKET_CALL: 							break;
+		case MOT_PACKET_READ_VAR16: 					break;
+		case MOT_PACKET_WRITE_VAR16: 					break;
+		case MOT_PACKET_READ_MEMORY: 					break;
+		case MOT_PACKET_WRITE_MEMORY: 					break;
+		case MOT_PACKET_DATA_MODE_READ: 				break;
+		case MOT_PACKET_DATA_MODE_WRITE: 				break;
 		case MOT_PACKET_DATA_MODE_TYPE: 					break;
 		case MOT_PACKET_EXT_CMD: 							break;
 		case MOT_PACKET_EXT_RSVR2: 							break;
@@ -204,17 +204,17 @@ void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_
 */
 static const Protocol_Req_T REQ_TABLE[] =
 {
-	// PROTOCOL_REQ_DEFINE(MOT_PACKET_CMD_INIT_UNITS, 			0U, 	InitUnits_ProcReqRespExt, 	PROTOCOL_SYNC_ID_DISABLE), /todo statful
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_CMD_INIT_UNITS, 			InitUnits_ParseResp, 	0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	// PROTOCOL_REQ_DEFINE(MOT_PACKET_INIT_UNITS, 			0U, 	InitUnits_ProcReqRespExt, 	PROTOCOL_SYNC_ID_DISABLE), /todo statful
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_INIT_UNITS, 			InitUnits_ParseResp, 	0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_STOP_ALL, 				StopAll_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),  //todo sync set wait for ack, retx if resp is nack
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_PING, 					Ping_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_CMD_CONTROL_TYPE, 		Control_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_CMD_MONITOR_TYPE, 		Monitor_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_CMD_SAVE_NVM, 			SaveNvm_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_CMD_WRITE_VAR, 			WriteVar_ParseResp, 	0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_CMD_READ_VAR, 			ReadVar_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	// PROTOCOL_REQ_DEFINE(MOT_PACKET_CMD_DATA_MODE_WRITE, 		0U, 			WriteData, 	PROTOCOL_SYNC_ID ),
-	// PROTOCOL_REQ_DEFINE(MOT_PACKET_CMD_DATA_MODE_READ, 		0U, 			ReadData, 	PROTOCOL_SYNC_ID ),
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_CONTROL_TYPE, 		Control_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_MONITOR_TYPE, 		Monitor_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_SAVE_NVM, 			SaveNvm_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VAR, 			WriteVar_ParseResp, 	0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_READ_VAR, 			ReadVar_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	// PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_WRITE, 		0U, 			WriteData, 	PROTOCOL_SYNC_ID ),
+	// PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_READ, 		0U, 			ReadData, 	PROTOCOL_SYNC_ID ),
 };
 
 const Protocol_Specs_T MOTOR_CMDR_MOT_PROTOCOL_SPECS =

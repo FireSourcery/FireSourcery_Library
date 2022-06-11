@@ -379,9 +379,7 @@ static inline void Motor_FOC_SetMatchOutput(Motor_T * p_motor, int32_t iq, int32
 
 	if(p_motor->FeedbackModeFlags.VFreqScalar != 1U)
 	{
-		(p_motor->FeedbackModeFlags.Speed == 1U) ?
-			Motor_SetSpeedOutput(p_motor, speedControl) :
-			Motor_SetRampOutput(p_motor, speedControl);
+		(p_motor->FeedbackModeFlags.Speed == 1U) ? Motor_SetSpeedOutput(p_motor, speedControl) : Motor_SetRampOutput(p_motor, speedControl);
 	}
 	else
 	{
@@ -468,7 +466,7 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
-static inline uint16_t Motor_FOC_GetIMagnitude_Frac16(Motor_T * p_motor)
+static inline uint32_t Motor_FOC_GetIMagnitude_Frac16(Motor_T * p_motor)
 {
 	return FOC_GetIMagnitude(&p_motor->Foc) * 2U;
 }

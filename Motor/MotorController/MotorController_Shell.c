@@ -138,7 +138,9 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			}
 			Terminal_SendString(p_terminal, "\r\n");
 
-			Terminal_SendString(p_terminal, "VoltageModeILimitActive: "); Terminal_SendNum(p_terminal, p_motor->RunStateFlags.VoltageModeILimitActive); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "ILimitActiveId: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveId); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "ILimitActiveScalar: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveScalar); Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "VoltageModeILimitActive: "); Terminal_SendNum(p_terminal, p_motor->RunStateFlags.VoltageModeILimitActive); Terminal_SendString(p_terminal, "\r\n");
 
 			// Terminal_SendString(p_terminal, "ElecAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetElectricalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
 			Terminal_SendString(p_terminal, "MechAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetMechanicalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
@@ -389,14 +391,14 @@ static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 		if(strncmp(argv[1U], "limits", 7U) == 0U)
 		{
 			Terminal_SendString(p_terminal, "PCB: ");
-			Terminal_SendString(p_terminal, " Shutdown: "); 	Terminal_SendNum(p_terminal, Thermistor_GetLimitShutdown_DegCInt(&p_mc->ThermistorPcb, 1U));
-			Terminal_SendString(p_terminal, " Threshold: "); 	Terminal_SendNum(p_terminal, Thermistor_GetLimitThreshold_DegCInt(&p_mc->ThermistorPcb, 1U));
+			Terminal_SendString(p_terminal, " Shutdown: "); 	Terminal_SendNum(p_terminal, Thermistor_GetShutdown_DegCInt(&p_mc->ThermistorPcb, 1U));
+			Terminal_SendString(p_terminal, " Threshold: "); 	Terminal_SendNum(p_terminal, Thermistor_GetShutdownThreshold_DegCInt(&p_mc->ThermistorPcb, 1U));
 			Terminal_SendString(p_terminal, " Warning: "); 		Terminal_SendNum(p_terminal, Thermistor_GetWarning_DegCInt(&p_mc->ThermistorPcb, 1U));
 			Terminal_SendString(p_terminal, " C\r\n");
 
 			Terminal_SendString(p_terminal, "MOSFETs Top: ");
-			Terminal_SendString(p_terminal, " Shutdown: "); 	Terminal_SendNum(p_terminal, Thermistor_GetLimitShutdown_DegCInt(&p_mc->ThermistorMosfetsTop, 1U));
-			Terminal_SendString(p_terminal, " Threshold: "); 	Terminal_SendNum(p_terminal, Thermistor_GetLimitThreshold_DegCInt(&p_mc->ThermistorMosfetsTop, 1U));
+			Terminal_SendString(p_terminal, " Shutdown: "); 	Terminal_SendNum(p_terminal, Thermistor_GetShutdown_DegCInt(&p_mc->ThermistorMosfetsTop, 1U));
+			Terminal_SendString(p_terminal, " Threshold: "); 	Terminal_SendNum(p_terminal, Thermistor_GetShutdownThreshold_DegCInt(&p_mc->ThermistorMosfetsTop, 1U));
 			Terminal_SendString(p_terminal, " Warning: "); 		Terminal_SendNum(p_terminal, Thermistor_GetWarning_DegCInt(&p_mc->ThermistorMosfetsTop, 1U));
 			Terminal_SendString(p_terminal, " C\r\n");
 

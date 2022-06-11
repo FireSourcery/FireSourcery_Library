@@ -665,7 +665,7 @@ static StateMachine_State_T * Fault_InputFault(Motor_T * p_motor)
 {
 	bool isClear = true;
 
-	if(Thermistor_GetIsStatusLimit(&p_motor->Thermistor) == true) { isClear = false; }
+	if(Thermistor_GetIsShutdown(&p_motor->Thermistor) == true) { isClear = false; }
 
 	return (isClear == true) ? &STATE_STOP : 0U;
 }

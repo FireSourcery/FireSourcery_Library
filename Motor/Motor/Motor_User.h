@@ -75,7 +75,7 @@ static inline int32_t _Motor_User_CalcDirectionalCmd(Motor_T * p_motor, int32_t 
 static inline void _Motor_User_SetVoltageModeILimit(Motor_T * p_motor, bool isMotoring)
 {
 	int32_t iLimit = (isMotoring == true) ? (p_motor->ILimitMotoring_Frac16 / 3) : (0 - p_motor->ILimitGenerating_Frac16 / 3); /* temp /3, todo account for id */
-	p_motor->VoltageModeILimit_QFracS16 = _Motor_User_CalcDirectionalCmd(p_motor, iLimit); 	/* determine limit input into IxPid */
+	p_motor->VoltageModeILimit_QFracS16 = _Motor_User_CalcDirectionalCmd(p_motor, iLimit); 	/* determine limit input into IPid */
 }
 
 
@@ -217,9 +217,7 @@ static inline void Motor_User_SetUserFeedbackCmdValue(Motor_T * p_motor, int16_t
 	}
 	else
 	{
-		(p_motor->FeedbackModeFlags.Current == 1U) ?
-			Motor_User_SetTorqueCmdValue(p_motor, userCmd) :
-			Motor_User_SetVoltageCmdValue(p_motor, userCmd);
+		(p_motor->FeedbackModeFlags.Current == 1U) ? Motor_User_SetTorqueCmdValue(p_motor, userCmd) : Motor_User_SetVoltageCmdValue(p_motor, userCmd);
 	}
 }
 
@@ -343,7 +341,9 @@ static inline float Motor_User_GetHeat_DegCFloat(Motor_T * p_motor) 				{ return
 // static inline uint32_t Motor_User_GetBemf_V(Motor_T * p_motor)			{ return Linear_Voltage_CalcV(&p_motor->UnitVabc, BEMF_GetVBemfPeak_Adcu(&p_motor->Bemf)); }
 
 /*!
-	@return iPhase motoring as positive. generating as negative.
+	@return I zero to peak.
+
+	iPhase motoring as positive. generating as negative.
 */
 static inline int32_t Motor_User_GetIPhase_Frac16(Motor_T * p_motor)
 {
@@ -398,7 +398,7 @@ typedef union Motor_User_StatusFlags_T
 		// uint32_t HeatOverThreshold 	: 1U;
 		// uint32_t HeatOverWarning 	: 1U;
 
-		Thermistor_Status_T HeatStatus 	: 2U;
+		Thermistor_Status_T HeatStatus 	: 4U;
 	};
 	uint32_t State;
 }

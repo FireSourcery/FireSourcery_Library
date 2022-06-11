@@ -493,10 +493,11 @@ static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc)
 	p_mc->FaultFlags.VSenseLimit 			= VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense);
 	p_mc->FaultFlags.VAccLimit 				= VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc);
 	p_mc->FaultFlags.VPosLimit 				= VMonitor_GetIsStatusLimit(&p_mc->VMonitorPos);
-	p_mc->FaultFlags.PcbOverHeat 			= Thermistor_GetIsStatusLimit(&p_mc->ThermistorPcb);
-	p_mc->FaultFlags.MosfetsTopOverHeat 	= Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsTop);
-	p_mc->FaultFlags.MosfetsBotOverHeat 	= Thermistor_GetIsStatusLimit(&p_mc->ThermistorMosfetsBot);
+	p_mc->FaultFlags.PcbOverHeat 			= Thermistor_GetIsShutdown(&p_mc->ThermistorPcb);
+	p_mc->FaultFlags.MosfetsTopOverHeat 	= Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsTop);
+	p_mc->FaultFlags.MosfetsBotOverHeat 	= Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsBot);
 	p_mc->FaultFlags.User 					= 0U;
+	if(p_mc->FaultFlags.Motors == 0U) {p_mc->FaultFlags.MotorOverHeat = 0U;}
 	return 0U;
 }
 

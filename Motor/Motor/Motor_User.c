@@ -402,7 +402,7 @@ void Motor_User_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode)
 
 /******************************************************************************/
 /*
-	N Motor Array functions
+	N Motor Array functions todo move
 */
 /******************************************************************************/
 //void ProcN(Motor_T * p_motor, uint8_t motorCount, uint32_t (*op)(Motor_T*, uint32_t), uint16_t var)

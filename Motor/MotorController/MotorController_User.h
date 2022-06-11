@@ -245,9 +245,9 @@ static inline void MotorController_User_SetMainProtoclSpecs(MotorController_T * 
 // static inline bool MotorController_User_GetReverseSwitch(MotorController_T * p_mc) 		{return MotAnalogUser_GetReverseSwitch(&p_mc->AnalogUser);}
 // static inline bool MotorController_User_GetOptDinSwitch(MotorController_T * p_user) 	{ return Debounce_GetState(&p_user->OptDin); }
 
-// static inline uint16_t MotorController_User_GetHeatPcbLimit_DegC(MotorController_T * p_mc, uint16_t scalar) 			{ return Thermistor_GetLimitShutdown_DegCInt(&p_mc->ThermistorPcb, scalar); }
-// static inline uint16_t MotorController_User_GetHeatPcbThreshold_DegC(MotorController_T * p_mc, uint16_t scalar) 		{ return Thermistor_GetLimitThreshold_DegCInt(&p_mc->ThermistorPcb, scalar); }
-// static inline void MotorController_User_SetHeatPcbLimit_DegC(MotorController_T * p_mc, uint8_t limit_degreesC) 			{ Thermistor_SetLimitShutdown_DegC(&p_mc->ThermistorPcb, limit_degreesC); }
+// static inline uint16_t MotorController_User_GetHeatPcbLimit_DegC(MotorController_T * p_mc, uint16_t scalar) 			{ return Thermistor_GetShutdown_DegCInt(&p_mc->ThermistorPcb, scalar); }
+// static inline uint16_t MotorController_User_GetHeatPcbThreshold_DegC(MotorController_T * p_mc, uint16_t scalar) 		{ return Thermistor_GetShutdownThreshold_DegCInt(&p_mc->ThermistorPcb, scalar); }
+// static inline void MotorController_User_SetHeatPcbLimit_DegC(MotorController_T * p_mc, uint8_t limit_degreesC) 			{ Thermistor_SetShutdown_DegC(&p_mc->ThermistorPcb, limit_degreesC); }
 // static inline void MotorController_User_SetHeatPcbThreshold_DegC(MotorController_T * p_mc, uint8_t threshold_degreesC) 	{ Thermistor_SetLimitThreshold_DegC(&p_mc->ThermistorPcb, threshold_degreesC); }
 
 // static inline void MotorController_User_SetVPosLimitUpper_MilliV(MotorController_T * p_mc, uint32_t limit) { VMonitor_SetLimitUpper_MilliV(&p_mc->VMonitorPos, limit); }

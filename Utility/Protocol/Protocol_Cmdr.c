@@ -156,14 +156,14 @@ bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
 // 	return isTimeout;
 // }
 
-/*!
-	@return true if CRC/Checksum matches
-	Using known resp length.
+// /*!
+// 	@return true if CRC/Checksum matches
+// 	Using known resp length.
 
-	Alternatively,
-		BuildRxPacket(p_protocol), handles out of sequence packets
-		Resp queue
-*/
+// 	Alternatively,
+// 		BuildRxPacket(p_protocol), handles out of sequence packets
+// 		Resp queue
+// */
 // bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 // {
 // 	// p_protocol->RxCode = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->ReqIdActive);

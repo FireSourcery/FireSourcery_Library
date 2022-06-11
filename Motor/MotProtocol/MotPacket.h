@@ -35,16 +35,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MOT_PACKET_VERSION_OPT 		(254U)
-#define MOT_PACKET_VERSION_MAJOR 	(0U)
-#define MOT_PACKET_VERSION_MINOR 	(5U)
-#define MOT_PACKET_VERSION_BUGFIX 	(29U)
+#define MOT_PACKET_VERSION_OPT 			(254U)
+#define MOT_PACKET_VERSION_MAJOR 		(0U)
+#define MOT_PACKET_VERSION_MINOR 		(6U)
+#define MOT_PACKET_VERSION_BUGFIX 		(10U)
 
-#define MOT_PACKET_HEADER_LENGTH	(6U)
-#define MOT_PACKET_PAYLOAD_MAX		(32U)
-#define MOT_PACKET_LENGTH_MIN 		(2U)
-#define MOT_PACKET_LENGTH_MAX 		(MOT_PACKET_PAYLOAD_MAX + MOT_PACKET_HEADER_LENGTH)
-#define MOT_PACKET_START_BYTE		(0xA5U)
+#define MOT_PACKET_HEADER_LENGTH		(8U)
+#define MOT_PACKET_PAYLOAD_MAX			(32U)
+#define MOT_PACKET_LENGTH_MIN 			(2U)
+#define MOT_PACKET_LENGTH_MAX 			(MOT_PACKET_PAYLOAD_MAX + MOT_PACKET_HEADER_LENGTH)
+#define MOT_PACKET_START_BYTE			(0xA5U)
+#define MOT_PACKET_LENGTH_BYTE_INDEX 	(3U)
 
 /*
 	Packet and Correspondence type. Per unique packet structure, parsing/processing pattern
@@ -52,7 +53,7 @@
 */
 typedef enum MotPacket_HeaderId_Tag
 {
-	/* 2 Byte Packets */
+	/* 2 Byte Packets - Response Packet must use different ID */
 	MOT_PACKET_STOP_ALL = 0x00U,	/* If first char after Start Byte is 0x00. RespPacket use different Id */
 	MOT_PACKET_PING = 0x11U,		/* RespPacket use different Id */
 	MOT_PACKET_SYNC_ACK = 0x12U,
@@ -63,28 +64,27 @@ typedef enum MotPacket_HeaderId_Tag
 	MOT_PACKET_VERSION = 0x21U,
 
 	/* Extended Types. Additional Cmd Id */
-	MOT_PACKET_CMD_MONITOR_TYPE = 0xA1U,
-	MOT_PACKET_CMD_CONTROL_TYPE = 0xA2U,
-	MOT_PACKET_CMD_INIT_UNITS = 0xA3U,
+	MOT_PACKET_MONITOR_TYPE = 0xA1U,
+	MOT_PACKET_CONTROL_TYPE = 0xA2U,
+	MOT_PACKET_INIT_UNITS = 0xA3U,
 
-	MOT_PACKET_CMD_REBOOT = 0xC1U,
-	MOT_PACKET_CMD_CALL = 0xC2U,
+	MOT_PACKET_REBOOT = 0xC1U,
+	MOT_PACKET_CALL = 0xC2U,
 
 	/* General Data */
-	MOT_PACKET_CMD_READ_VAR = 0xD1U, 			/* Read Single Var */
-	MOT_PACKET_CMD_WRITE_VAR = 0xD2U, 		/* Write Single Var */
+	MOT_PACKET_READ_VAR = 0xD1U, 		/* Read Single Var */
+	MOT_PACKET_WRITE_VAR = 0xD2U, 		/* Write Single Var */
+	MOT_PACKET_READ_VAR16 = 0xD3U, 		/* Up to 16 Ids, for 16 uint16_t values, or 8 uint32_t values */
+	MOT_PACKET_WRITE_VAR16 = 0xD4U, 	/* Up to 8 Ids, for 8 uint16_t values, or 4 uint32_t values */
 
-	MOT_PACKET_CMD_READ_VAR16 = 0xD3U, 		/* Up to 16 Ids, for 16 uint16_t values, or 8 uint32_t values */
-	MOT_PACKET_CMD_WRITE_VAR16 = 0xD4U, 		/* Up to 8 Ids, for 8 uint16_t values, or 4 uint32_t values */
+	MOT_PACKET_READ_MEMORY = 0xD5U, 		/* Read Var Address */
+	MOT_PACKET_WRITE_MEMORY = 0xD6U, 		/* Write Var Address */
 
-	MOT_PACKET_CMD_READ_MEMORY = 0xD5U, 		/* Read Var Address */
-	MOT_PACKET_CMD_WRITE_MEMORY = 0xD6U, 		/* Write Var Address */
+	MOT_PACKET_DATA_MODE_READ = 0xDAU, 	/* Stateful NvMemory Read using Address */
+	MOT_PACKET_DATA_MODE_WRITE = 0xDBU, /* Stateful NvMemory Write using Address */
+	MOT_PACKET_DATA_MODE_TYPE = 0xDDU, 	/* Data Mode Data */
 
-	MOT_PACKET_CMD_DATA_MODE_READ = 0xDAU, 	/* Stateful NvMemory Read using Address */
-	MOT_PACKET_CMD_DATA_MODE_WRITE = 0xDBU, 	/* Stateful NvMemory Write using Address */
-	MOT_PACKET_DATA_MODE_TYPE = 0xDDU, /* Data Mode Data */
-
-	MOT_PACKET_CMD_SAVE_NVM = 0xDFU,
+	MOT_PACKET_SAVE_NVM = 0xDFU,
 
 	MOT_PACKET_EXT_CMD = 0xE1U,	/* Extended Header Modes */
 	MOT_PACKET_EXT_RSVR2 = 0xE2U,
@@ -92,6 +92,7 @@ typedef enum MotPacket_HeaderId_Tag
 }
 MotPacket_HeaderId_T;
 
+/* 2-Byte Sync Packet */
 typedef struct MotPacket_Sync_Tag
 {
 	uint8_t Start;
@@ -111,9 +112,10 @@ MotPacket_HeaderStatus_T;
 typedef struct MotPacket_Header_Tag
 {
 	uint8_t Start;
-	uint8_t HeaderId; 	/* MotPacket_HeaderId_T - Cmd / Descriptor of packet contents */
-	uint8_t Length; 	/* Payload Length */
-	uint8_t Status; 	/* MotPacket_HeaderStatus_T - Optional Status */
+	uint8_t HeaderId; 		/* MotPacket_HeaderId_T - Cmd / Descriptor of packet contents */
+	uint8_t TotalLength; 	/* Packet TotalLength */
+	uint8_t Status; 		/* MotPacket_HeaderStatus_T - Optional Status */
+	uint16_t Reserved;
 	uint16_t Crc;
 }
 MotPacket_Header_T;
@@ -148,6 +150,11 @@ typedef union MotPacket_Packet_Tag
 }
 MotPacket_T;
 
+/******************************************************************************/
+/*!
+	Common Packets
+*/
+/******************************************************************************/
 // /*
 // 	Ext Status Response - one 16-bit optional status reponse
 // */
@@ -161,15 +168,10 @@ MotPacket_T;
 // typedef struct MotPacket_StatusResp_Payload_Tag { uint16_t Id; } 												MotPacket_StatusResp_Payload_T;
 // typedef struct MotPacket_StatusResp_Tag { MotPacket_Header_T Header; MotPacket_StatusResp_Payload_T Status; } 	MotPacket_StatusResp_T;
 
-/******************************************************************************/
-/*!
-	General Cmds
-*/
-/******************************************************************************/
 typedef struct MotPacket_StatusResp_Tag { MotPacket_Header_T Header; } 	MotPacket_StatusResp_T;
 
-typedef struct MotPacket_VersionResp_Payload_Tag { uint8_t Version[4U]; } 											MotPacket_VersionResp_Payload_T;
-typedef struct MotPacket_VersionResp_Tag { MotPacket_Header_T Header; MotPacket_VersionResp_Payload_T PingResp; } 	MotPacket_VersionResp_T;
+typedef struct MotPacket_VersionResp_Payload_Tag { uint8_t Version[4U]; } 												MotPacket_VersionResp_Payload_T;
+typedef struct MotPacket_VersionResp_Tag { MotPacket_Header_T Header; MotPacket_VersionResp_Payload_T VersionResp; } 	MotPacket_VersionResp_T;
 
 /******************************************************************************/
 /*!	Ping */

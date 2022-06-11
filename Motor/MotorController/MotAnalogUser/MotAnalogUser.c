@@ -45,10 +45,13 @@ void MotAnalogUser_Init(MotAnalogUser_T * p_user)
 		Linear_ADC_Init(&p_user->UnitBrake, 0U, 4095U, 1000U);
 	}
 
-	Debounce_Init(&p_user->BrakeEdgePin, 5U);
-	Debounce_Init(&p_user->ThrottleEdgePin, 5U);
-	Debounce_Init(&p_user->ForwardPin, 5U);
 	Debounce_Init(&p_user->ReversePin, 5U);
+	if(p_user->Params.UseForwardPin == true) 			{ Debounce_Init(&p_user->ForwardPin, 5U); }
+	if(p_user->Params.UseNeutralPin == true) 			{ Debounce_Init(&p_user->NeutralPin, 5U); }
+	if(p_user->Params.UseThrottleEdgePin == true) 		{ Debounce_Init(&p_user->ThrottleEdgePin, 5U); }
+	if(p_user->Params.UseBrakeEdgePin == true) 			{ Debounce_Init(&p_user->BrakeEdgePin, 5U); }
+	if(p_user->Params.UseBistateBrakePin == true) 		{ Debounce_Init(&p_user->BistateBrakePin, 5U); }
+	if(p_user->Params.UseThrottleSafetyPin == true) 	{ Debounce_Init(&p_user->ThrottleSafetyPin, 5U); }
 
 	MotAnalogUser_SetPinInvert(p_user, p_user->Params.InvertPins);
 
@@ -63,39 +66,48 @@ void MotAnalogUser_SetParams(MotAnalogUser_T * p_user, const MotAnalogUser_Param
 	memcpy(&p_user->Params, p_param, sizeof(MotAnalogUser_Params_T));
 }
 
-void MotAnalogUser_SetBrakeUnits(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
+void MotAnalogUser_SetBrakeRange(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
 {
 	p_user->Params.BrakeZero_Adcu = zero_Adcu;
 	p_user->Params.BrakeMax_Adcu = max_Adcu;
 	Linear_ADC_Init(&p_user->UnitBrake, p_user->Params.BrakeZero_Adcu, p_user->Params.BrakeMax_Adcu, 1000U);
 }
 
-void MotAnalogUser_SetThrottleUnits(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
+void MotAnalogUser_SetThrottleRange(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
 {
 	p_user->Params.ThrottleZero_Adcu = zero_Adcu;
 	p_user->Params.ThrottleMax_Adcu = max_Adcu;
 	Linear_ADC_Init(&p_user->UnitThrottle, p_user->Params.ThrottleZero_Adcu, p_user->Params.ThrottleMax_Adcu, 1000U);
 }
 
+/*
+	Non Propagating set. Reboot for Pin HAL config to take effect.
+	todo prevent set if P_HAL_PIN == 0U
+*/
 void MotAnalogUser_SetBrakeAdc(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useBrakeEdgePin) //range error
 {
-	MotAnalogUser_SetBrakeUnits(p_user, zero_Adcu, max_Adcu);
+	MotAnalogUser_SetBrakeRange(p_user, zero_Adcu, max_Adcu);
 	p_user->Params.UseBrakeEdgePin = useBrakeEdgePin;
 }
 
 void MotAnalogUser_SetThrottleAdc(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useThrottleEdgePin) //range error
 {
-	MotAnalogUser_SetThrottleUnits(p_user, zero_Adcu, max_Adcu);
+	MotAnalogUser_SetThrottleRange(p_user, zero_Adcu, max_Adcu);
 	p_user->Params.UseThrottleEdgePin = useThrottleEdgePin;
 }
 
-// void MotAnalogUser_SetBrakeUnits_Frac16(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
-// void MotAnalogUser_SetThrottleUnits_Frac16(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
+// void MotAnalogUser_SetBrakeUnits_Frac16(MotAnalogUser_T * p_user, uint16_t zero_ , uint16_t max_ )
+// void MotAnalogUser_SetThrottleUnits_Frac16(MotAnalogUser_T * p_user, uint16_t zero_ , uint16_t max_ )
 
 void MotAnalogUser_SetBistateBrake(MotAnalogUser_T * p_user, bool useBistateBrake, uint16_t bistateBrakeIntensity_Frac16)
 {
-	p_user->Params.UseBistateBrake = useBistateBrake;
+	p_user->Params.UseBistateBrakePin = useBistateBrake;
 	p_user->Params.BistateBrakeValue_Frac16 = bistateBrakeIntensity_Frac16;
+}
+
+void MotAnalogUser_SetThrottleSafety(MotAnalogUser_T * p_user, bool useThrottleSafety)
+{
+	p_user->Params.UseThrottleSafetyPin = useThrottleSafety;
 }
 
 void MotAnalogUser_SetDirectionPins(MotAnalogUser_T * p_user, MotAnalogUser_DirectionPins_T pins)
@@ -126,7 +138,7 @@ void MotAnalogUser_SetPinInvert(MotAnalogUser_T * p_user, MotAnalogUser_InvertPi
 	if(p_user->Params.InvertPins.State != invertPins.State)
 	{
 		p_user->Params.InvertPins.State = invertPins.State;
-		(invertPins.BistateBrake == true) ? Debounce_EnableInvert(&p_user->BistateBrake) : Debounce_DisableInvert(&p_user->BistateBrake);
+		(invertPins.BistateBrake == true) ? Debounce_EnableInvert(&p_user->BistateBrakePin) : Debounce_DisableInvert(&p_user->BistateBrakePin);
 		(invertPins.Reverse == true) ? Debounce_EnableInvert(&p_user->ReversePin) : Debounce_DisableInvert(&p_user->ReversePin);
 		(invertPins.Forward == true) ? Debounce_EnableInvert(&p_user->ForwardPin) : Debounce_DisableInvert(&p_user->ForwardPin);
 		(invertPins.Neutral == true) ? Debounce_EnableInvert(&p_user->NeutralPin) : Debounce_DisableInvert(&p_user->NeutralPin);
