@@ -33,4 +33,6 @@
 
 #define CONFIG_XCVR_INTERFACE_POINTER_ONLY
 
+#define SERIAL_BUFFER_SIZE 256 /* Arduino Serial buffer length increase from default */
+
 #endif

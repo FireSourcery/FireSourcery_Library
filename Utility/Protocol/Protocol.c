@@ -96,7 +96,7 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 				/* Implicitly checks if(xcvrRxLimit == 0U), p_protocol->RxLength - p_protocol->RxIndex */
 				if((p_protocol->RxLength > p_protocol->p_Specs->RX_LENGTH_MAX) || (p_protocol->RxIndex >= p_protocol->RxLength))
 				{
-					rxStatus = PROTOCOL_RX_CODE_PACKET_ERROR;
+					rxStatus = PROTOCOL_RX_CODE_SYNC_ERROR;
 					p_protocol->RxState = PROTOCOL_RX_STATE_INACTIVE;
 					break;
 				}
@@ -169,18 +169,18 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
 				if(rxStatus == PROTOCOL_RX_CODE_PACKET_ERROR)
 				{
 					//pass error to req?
-					if(p_protocol->NackCount < p_protocol->p_Specs->SYNC.NACK_REPEAT) //todo change nack repeat struct
-					{
-						TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_PACKET_ERROR);
-						p_protocol->NackCount++;
-						p_protocol->RxTimeStart = *p_protocol->CONFIG.P_TIMER;
-					}
-					else /* wait for timeout */
+					// if(p_protocol->NackCount < p_protocol->p_Specs->SYNC.NACK_REPEAT) //todo change nack repeat struct
+					// {
+					// 	TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_PACKET_ERROR);
+					// 	p_protocol->NackCount++;
+					// 	p_protocol->RxTimeStart = *p_protocol->CONFIG.P_TIMER;
+					// 	rxStatus = PROTOCOL_RX_CODE_PACKET_ERROR;
+					// }
+					// else /* wait for timeout */
 					{
 						// TxSync(p_protocol, PROTOCOL_TX_SYNC_ERROR_RESYNC);
-						p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
 						// rxStatus = PROTOCOL_RX_CODE_ERROR_RESYNC;
-						rxStatus = PROTOCOL_RX_CODE_PACKET_TIMEOUT;
+						rxStatus = PROTOCOL_RX_CODE_PACKET_ERROR;
 						p_protocol->NackCount = 0U;
 					}
 				}
@@ -192,7 +192,6 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
 			else
 			{
 				TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT);
-				p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
 				rxStatus = PROTOCOL_RX_CODE_PACKET_TIMEOUT;
 				p_protocol->NackCount = 0U;
 			}

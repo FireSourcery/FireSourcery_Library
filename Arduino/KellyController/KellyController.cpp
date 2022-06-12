@@ -44,7 +44,7 @@ const Xcvr_Interface_T XCVR_INTERFACE_ARDUINO_SERIAL =
 
 const Xcvr_Xcvr_T KELLY_XCVR_TABLE[KELLY_XCVR_COUNT] =
 {
-	XCVR_XCVR_DEFINE_INTERFACE(&Serial1, &XCVR_INTERFACE_ARDUINO_SERIAL),
+	[0] = XCVR_XCVR_INIT_INTERFACE(&Serial1, &XCVR_INTERFACE_ARDUINO_SERIAL),
 };
 
 /******************************************************************************/

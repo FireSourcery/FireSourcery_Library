@@ -356,12 +356,21 @@ void MotPacket_MonitorResp_IFoc_Parse
 //alternatively resp time stamp
 uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket)
 {
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, 0U, MOT_PACKET_HEADER_STATUS_OK);
+}
+
+
+/******************************************************************************/
+/*!	Version Type */
+/******************************************************************************/
+uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket)
+{
 	p_respPacket->VersionResp.Version[0U] = MOT_PACKET_VERSION_BUGFIX;
 	p_respPacket->VersionResp.Version[1U] = MOT_PACKET_VERSION_MINOR;
 	p_respPacket->VersionResp.Version[2U] = MOT_PACKET_VERSION_MAJOR;
 	p_respPacket->VersionResp.Version[3U] = MOT_PACKET_VERSION_OPT;
 
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, sizeof(MotPacket_PingResp_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, sizeof(MotPacket_VersionResp_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 /******************************************************************************/

@@ -84,7 +84,7 @@ static void Req_Control(MotorController_T * p_mc, MotPacket_ControlResp_T * p_tx
 
 	switch(p_rxPacket->ControlReq.ControlId) 	// MotPacket_ControlReq_ParseId(p_monitorId, p_rxPacket);
 	{
-		case MOT_PACKET_CONTROL_RELEASE: 				MotorController_User_SetReleaseThrottle(p_mc); 									break;
+		case MOT_PACKET_CONTROL_RELEASE: 			MotorController_User_SetReleaseThrottle(p_mc); 									break;
 		case MOT_PACKET_CONTROL_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);	break;
 		case MOT_PACKET_CONTROL_DIRECTION_REVERSE: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);	break;
 		case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	MotorController_User_SetNeutral(p_mc); 		  									break;
@@ -212,8 +212,8 @@ static void Req_InitUnits(MotorController_T * p_mc, MotPacket_InitUnitsResp_T * 
 /******************************************************************************/
 static const Protocol_Req_T REQ_TABLE[] =
 {
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_PING, 					Req_Ping, 				0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_STOP_ALL, 				Req_StopAll, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_PING, 				Req_Ping, 				0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_STOP_ALL, 			Req_StopAll, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_INIT_UNITS, 			Req_InitUnits, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_SAVE_NVM, 			Req_SaveNvm_Blocking, 	0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VAR, 			Req_WriteVar, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),

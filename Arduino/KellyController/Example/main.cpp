@@ -104,20 +104,11 @@ void loop(void)
 
   switch (status)
   {
-    case PROTOCOL_RX_CODE_PACKET_TIMEOUT:
-      Serial.print("Rx Timeout: ");
-      printRx();
-      break; // timeout during rx, to timeout tx idle
-    case PROTOCOL_RX_CODE_PACKET_COMPLETE:
-      Serial.print("Rx Success: ");
-      printRx();
-      break;
-    case PROTOCOL_RX_CODE_PACKET_ERROR:
-      Serial.print("Rx Error: ");
-      printRx();
-      break;
-    default:
-      break;
+    case PROTOCOL_RX_CODE_PACKET_TIMEOUT:   Serial.print("Rx Timeout: ");       printRx();      break;
+    case PROTOCOL_RX_CODE_PACKET_COMPLETE:  Serial.print("Rx Success: ");       printRx();      break;
+    case PROTOCOL_RX_CODE_PACKET_ERROR:     Serial.print("Rx Packet Error: ");  printRx();      break;
+    case PROTOCOL_RX_CODE_SYNC_ERROR:       Serial.print("Rx Sync Error: ");    printRx();      break;
+    default:  break;
   }
 
   // Wait for new data to arrive
@@ -167,10 +158,10 @@ void loop(void)
         break;
       case 6U:
         if(pressed) { kellyController.writeBrake(65535); printTx();}
-        else { kellyController.writeRelease(); printTx();} 
+        else { kellyController.writeRelease(); printTx();}
         break;
       default: break;
-    } 
+    }
   }
 }
 

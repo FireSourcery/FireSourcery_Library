@@ -49,7 +49,7 @@ void MotorCmdr_Init(MotorCmdr_T * p_motorCmdr)
 {
 	Protocol_Init(&p_motorCmdr->Protocol);
 	Protocol_Enable(&p_motorCmdr->Protocol);
-	p_motorCmdr->Protocol.Params.WatchdogTime = 250U;
+	p_motorCmdr->Protocol.Params.WatchdogTime = 500U;
 	// MotorCmdr_InitUnits(p_motorCmdr);
 }
 
