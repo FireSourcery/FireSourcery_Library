@@ -24,7 +24,7 @@
 /*!
 	@file 	Ring.h
 	@author FireSoucery
-	@brief	Improved efficiency using POW2_MASK over modulus
+	@brief	Ring Buffer. Improved efficiency using POW2_MASK over modulus
 	@version V0
 */
 /******************************************************************************/
@@ -81,7 +81,7 @@ Ring_T;
 #define _RING_INIT_CRITICAL(UseCritical)
 #endif
 
-#define RING_INIT(p_Buffer, Length, UnitSize, UseCritical)		\
+#define RING_INIT(p_Buffer, Length, UnitSize, UseCritical) 		\
 {																\
 	.CONFIG =													\
 	{                                               			\
@@ -178,7 +178,7 @@ extern bool Ring_Dequeue(Ring_T * p_queue, void * p_dest);
 extern bool Ring_EnqueueN(Ring_T * p_queue, const void * p_unit, size_t nUnits);
 extern bool Ring_DequeueN(Ring_T * p_queue, void * p_dest, size_t nUnits);
 extern size_t Ring_EnqueueMax(Ring_T * p_queue, const void * p_units, size_t nUnits);
-extern size_t Ring_DequeueMax(Ring_T * p_queue, void * p_dest, size_t destLength);
+extern size_t Ring_DequeueMax(Ring_T * p_queue, void * p_dest, size_t nUnits);
 extern bool Ring_PushFront(Ring_T * p_queue, const void * p_unit);
 extern bool Ring_PopBack(Ring_T * p_queue, void * p_dest);
 extern bool Ring_PeekFront(Ring_T * p_queue, void * p_dest);

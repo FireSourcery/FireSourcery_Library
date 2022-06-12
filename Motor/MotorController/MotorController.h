@@ -252,10 +252,8 @@ typedef const struct MotorController_Config_Tag
 
 	const uint16_t V_MAX;
 	const uint16_t I_MAX;
-
 	const uint16_t ADC_VREF_MAX_MILLIV;
 	const uint16_t ADC_VREF_MIN_MILLIV;
-
 	const uint8_t SOFTWARE_VERSION[4U];
 }
 MotorController_Config_T;

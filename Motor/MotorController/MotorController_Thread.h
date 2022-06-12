@@ -118,30 +118,29 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
 	{
 		Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
-		if		(Thermistor_GetIsShutdown(&p_mc->CONFIG.P_MOTORS[iMotor].Thermistor) == true) 	{ p_mc->FaultFlags.MotorOverHeat = 1U; isFault = true; }
-		else if	(Thermistor_GetIsWarning(&p_mc->CONFIG.P_MOTORS[iMotor].Thermistor) == true) 	{ isWarning = true; }
+		// if		(Thermistor_GetIsShutdown(&p_mc->CONFIG.P_MOTORS[iMotor].Thermistor) == true) 	{ p_mc->FaultFlags.MotorOverHeat = 1U; isFault = true; }
+		// else if	(Thermistor_GetIsWarning(&p_mc->CONFIG.P_MOTORS[iMotor].Thermistor) == true) 	{ isWarning = true; }
 	}
 
 	Thermistor_PollMonitor(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu);
 	Thermistor_PollMonitor(&p_mc->ThermistorMosfetsTop, p_mc->AnalogResults.HeatMosfetsTop_Adcu);
 	Thermistor_PollMonitor(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_Adcu);
 
-	/* Shutdown repeat set ok */
 	if(Thermistor_GetIsShutdown(&p_mc->ThermistorPcb) == true) 			{ p_mc->FaultFlags.PcbOverHeat = 1U; isFault = true; }
 	if(Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsTop) == true) 	{ p_mc->FaultFlags.MosfetsTopOverHeat = 1U; isFault = true; }
 	if(Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsBot) == true) 	{ p_mc->FaultFlags.MosfetsBotOverHeat = 1U; isFault = true; }
 
 	if(isFault == true)
 	{
+		/* Shutdown repeat set ok */
 		MotorController_User_SetFault(p_mc);
 	}
 	else
 	{
 		/* Warning behaviors edge triggered */
-		isWarning =
-			Thermistor_GetIsWarning(&p_mc->ThermistorPcb) ||
-			Thermistor_GetIsWarning(&p_mc->ThermistorMosfetsTop) ||
-			Thermistor_GetIsWarning(&p_mc->ThermistorMosfetsBot);
+		isWarning |= Thermistor_GetIsWarning(&p_mc->ThermistorPcb);
+		isWarning |= Thermistor_GetIsWarning(&p_mc->ThermistorMosfetsTop);
+		isWarning |= Thermistor_GetIsWarning(&p_mc->ThermistorMosfetsBot);
 
 		if(isWarning == true)
 		{
@@ -149,6 +148,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 				Thermistor Adcu is roughly linear in Warning region
 				Assume HeatMostfetTop as highest heat
 				constantly compares lowest active limit, alternatively, check and restore prev on clear limit
+				Increasing Limit only, reset on warning clear.
 			*/
 			MotorController_SetILimitMotorAll
 			(
@@ -157,14 +157,16 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 				MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT
 			);
 
+			// Thermistor_PollWarningRisingEdge(&p_mc->ThermistorMosfetsTop);
 			if(p_mc->WarningFlags.Heat == false)
 			{
-				Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U);
+				Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 2U);
 				p_mc->WarningFlags.Heat = true;
 			}
 		}
 		else
 		{
+			// Thermistor_PollWarningFallingEdge(&p_mc->ThermistorMosfetsTop);
 			if(p_mc->WarningFlags.Heat == true)
 			{
 				MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT);

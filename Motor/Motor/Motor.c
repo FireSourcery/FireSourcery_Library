@@ -58,11 +58,9 @@ void Motor_InitReboot(Motor_T * p_motor)
 	/*
 		HW Wrappers Init
 	*/
+	Motor_ResetSensorMode(p_motor);
 	Phase_Init(&p_motor->Phase);
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
-
-	Motor_ResetSensorMode(p_motor);
-
 	Thermistor_Init(&p_motor->Thermistor);
 
 	/*

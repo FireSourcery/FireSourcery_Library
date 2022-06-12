@@ -87,6 +87,8 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 // }
 
 /*
+	Interpolate from x0, y0 to xRef, yRef
+	User input yRef > y0, XRef > x0
 	derive slope
 */
 void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t y0, int32_t xRef, int32_t yRef)

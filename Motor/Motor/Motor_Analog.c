@@ -54,10 +54,7 @@ void Motor_Analog_CaptureVa(Motor_T * p_motor)
 
 	}
 
-	if(p_motor->AnalogResults.Va_Adcu > p_motor->VBemfPeakTemp_Adcu)
-	{
-		p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Va_Adcu;
-	}
+	if(p_motor->AnalogResults.Va_Adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Va_Adcu; }
 }
 
 /******************************************************************************/
@@ -76,10 +73,7 @@ void Motor_Analog_CaptureVb(Motor_T * p_motor)
 
 	}
 
-	if(p_motor->AnalogResults.Vb_Adcu > p_motor->VBemfPeakTemp_Adcu)
-	{
-		p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Vb_Adcu;
-	}
+	if(p_motor->AnalogResults.Vb_Adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Vb_Adcu; }
 }
 
 /******************************************************************************/
@@ -98,10 +92,18 @@ void Motor_Analog_CaptureVc(Motor_T * p_motor)
 
 	}
 
-	if(p_motor->AnalogResults.Vc_Adcu > p_motor->VBemfPeakTemp_Adcu)
-	{
-		p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Vc_Adcu;
-	}
+	if(p_motor->AnalogResults.Vc_Adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Vc_Adcu; }
+}
+
+/******************************************************************************/
+/*!
+	@brief  Common
+*/
+/******************************************************************************/
+static inline void CaptureIZeroToPeak(Motor_T * p_motor, int32_t adcu)
+{
+	uint16_t zeroToPeak = (adcu > 0) ? adcu : 0 - adcu;
+	if(zeroToPeak > p_motor->IPhasePeakTemp_Adcu) { p_motor->IPhasePeakTemp_Adcu = zeroToPeak; }
 }
 
 /******************************************************************************/
@@ -119,6 +121,8 @@ void Motor_Analog_CaptureIa(Motor_T * p_motor)
 	{
 		Motor_FOC_CaptureIa(p_motor);
 	}
+
+	CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ia_Adcu - p_motor->UnitIa.XOffset);
 }
 
 /******************************************************************************/
@@ -136,6 +140,8 @@ void Motor_Analog_CaptureIb(Motor_T * p_motor)
 	{
 		Motor_FOC_CaptureIb(p_motor);
 	}
+
+	CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ib_Adcu - p_motor->UnitIb.XOffset);
 }
 
 /******************************************************************************/
@@ -153,13 +159,15 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
 	{
 		Motor_FOC_CaptureIc(p_motor);
 	}
+
+	CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ic_Adcu - p_motor->UnitIc.XOffset);
 }
 
 
 
 /******************************************************************************/
 /*!
-	@brief  Conversion
+	@brief
 */
 /******************************************************************************/
 
@@ -182,17 +190,17 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
  //	.OPTIONS = {.IsValid = 1U, .HwTriggerConversion = 0U, },
  //};
 
-//static inline void Motor_FOC_ReadBemf(Motor_T * p_motor)
-//{
-//	//no current sense during pwm float, check bemf
-//#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) &&defined(CONFIG_MOTOR_V_SENSORS_ADC)
-//	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-//	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
-//	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
-//	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
-//	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-//#endif
-//}
+static inline void EnqueueVabc(Motor_T * p_motor)
+{
+	//no current sense during pwm float, check bemf
+#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) && defined(CONFIG_MOTOR_V_SENSORS_ADC)
+	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
+	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
+	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
+	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+#endif
+}
 
 //static inline void Motor_Analog_Thread(Motor_T * p_motor)
 //{

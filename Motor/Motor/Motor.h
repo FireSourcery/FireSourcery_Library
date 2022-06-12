@@ -245,9 +245,9 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 		Motor Refs use Speed at VSupply.
 	*/
 	uint16_t SpeedFeedbackRef_Rpm; 	/* Feedback / PID Regulator, Limits Ref. User IO units conversion, Encoder speed calc ref. */
-	uint16_t SpeedVMatchRef_Rpm; 	/* Votlage Match Ref. VF Mode, Freewheel to Run. Use higher value to bias speed matching to begin at lower speed.  */
+	uint16_t SpeedVMatchRef_Rpm; 	/* Votlage Match Ref. VF Mode, Freewheel to Run. Use higher value to bias speed matching to begin at lower speed. */
 
-	uint16_t IRefPeak_Adcu; 	/* Zero-To-Peak, derived from sensor hardware */
+	uint16_t IRefPeak_Adcu; 		/* Zero-To-Peak, derived from sensor hardware */
 	uint16_t IaRefZero_Adcu;
 	uint16_t IbRefZero_Adcu;
 	uint16_t IcRefZero_Adcu;
@@ -288,10 +288,8 @@ typedef const struct Motor_Init_Tag
 {
 	const uint16_t UNIT_VABC_R1;
 	const uint16_t UNIT_VABC_R2;
-
-	const uint16_t I_MAX_AMP; /*  Motor I controller rating. pass to Linear_ADC.  Unit conversion, ui output and param set. static across instances */
-	const uint16_t I_SENSOR_PEAK_ADCU;
-
+	const uint16_t I_MAX_AMP; 				/* Motor I controller rating. pass to Linear_ADC. Unit conversion, ui output and param set. */
+	const uint16_t I_ZERO_TO_PEAK_ADCU; 	/* Sensor calibration */
 	AnalogN_T * const P_ANALOG_N;
 	const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
 	const Motor_Params_T * const P_PARAMS_NVM;
@@ -317,14 +315,13 @@ typedef struct Motor_Tag
 	StateMachine_T StateMachine;
 
 	uint32_t ControlTimerBase;	 	/* Control Freq ~ 20kHz, calibration, commutation, angle control. overflow at 20Khz, 59 hours*/
-	Timer_T ControlTimer; 			/* State Timer, openloop, Bem */
-	// Timer_T MillisTimer;
+	Timer_T ControlTimer; 			/* State Timer, openloop, Bemf */
 
 	/* Run Substate */
-	Motor_Direction_T Direction; 		/* Active spin direction */
-	Motor_Direction_T UserDirection; 	/* Passed to StateMachine */
+	Motor_Direction_T Direction; 			/* Active spin direction */
+	Motor_Direction_T UserDirection; 		/* Passed to StateMachine */
 	Motor_FeedbackModeFlags_T FeedbackModeFlags;
-	Motor_RunStateFlags_T RunStateFlags; /* Run Substate */
+	Motor_RunStateFlags_T RunStateFlags; 	/* Run Substate */
 	// Motor_TorqueDirection_T TorqueDirection;
 
 	/*
@@ -351,6 +348,8 @@ typedef struct Motor_Tag
 
 	uint16_t VBemfPeak_Adcu; //todo
 	uint16_t VBemfPeakTemp_Adcu;
+	uint16_t IPhasePeak_Adcu;
+	uint16_t IPhasePeakTemp_Adcu;
 
 	/*
 		UserCmd Input => Ramp
@@ -362,10 +361,10 @@ typedef struct Motor_Tag
 	/*
 		Speed Feedback
 	*/
-	PID_T PidSpeed;						/* Input SpeedFeedback_Frac16 Q16.16, Output SpeedControl => VPwm, Vq, Iq */
-	Timer_T SpeedTimer;					/* Speed Calc Timer */
-	int32_t SpeedFeedback_Frac16; 		/* [~-65535*2:~65535*2] Speed Feedback Variable. Can over saturate */
-	int32_t SpeedControl; 				/* [-32767:32767] Speed Control Variable. (SpeedFeedback_Frac16 / 2 - RampCmd) => VPwm, Vq, Iq. updated once per millis */
+	PID_T PidSpeed;					/* Input SpeedFeedback_Frac16 Q16.16, Output SpeedControl => VPwm, Vq, Iq */
+	Timer_T SpeedTimer;				/* Speed Calc Timer */
+	int32_t SpeedFeedback_Frac16; 	/* [~-65535*2:~65535*2] Speed Feedback Variable. Can over saturate */
+	int32_t SpeedControl; 			/* [-32767:32767] Speed Control Variable. (SpeedFeedback_Frac16 / 2 - RampCmd) => VPwm, Vq, Iq. updated once per millis */
 	// uint32_t Speed2_Frac16;
 
 	/*

@@ -127,7 +127,6 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			{
 				Encoder_DeltaD_Capture(&p_motor->Encoder); /* Capture position and speed */
 				speedFeedback_Frac16 = Encoder_DeltaD_GetUnitSpeed(&p_motor->Encoder);
-				if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedFeedback_Frac16 = 0 - speedFeedback_Frac16; };
 			}
 			else
 			{
@@ -150,6 +149,9 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 				{
 					p_motor->VBemfPeak_Adcu = p_motor->VBemfPeakTemp_Adcu;
 					p_motor->VBemfPeakTemp_Adcu = 0U;
+
+					p_motor->IPhasePeak_Adcu = p_motor->IPhasePeakTemp_Adcu;
+					p_motor->IPhasePeakTemp_Adcu = 0U;
 				}
 
 				electricalAngle = p_motor->HallAngle;
@@ -167,14 +169,8 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 				if(procSpeed == true) { Motor_PollDeltaTStop(p_motor); } /* Use as indicator for once per millis */
 			}
 
-			if(procSpeed == true)
-			{
-				speedFeedback_Frac16 = Encoder_DeltaT_GetUnitSpeed(&p_motor->Encoder);
-				if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedFeedback_Frac16 = 0 - speedFeedback_Frac16; };
-				speedFeedback_Frac16 = (speedFeedback_Frac16 + p_motor->SpeedFeedback_Frac16) / 2;
-
-				// speedFeedback_Frac16 = _Motor_FOC_CaptureAngleSpeed(p_motor, electricalAngle);
-			}
+			if(procSpeed == true) { speedFeedback_Frac16 = Encoder_DeltaT_GetUnitSpeed(&p_motor->Encoder); }
+			// speedFeedback_Frac16 = _Motor_FOC_CaptureAngleSpeed(p_motor, electricalAngle);
 
 			break;
 
@@ -192,6 +188,8 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 
 	if(procSpeed == true)
 	{
+		if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedFeedback_Frac16 = 0 - speedFeedback_Frac16; };
+		speedFeedback_Frac16 = (speedFeedback_Frac16 + p_motor->SpeedFeedback_Frac16) / 2;
 		/*
 			Speed Feedback Loop
 				SpeedControl update 1000Hz, Ramp input 1000Hz, RampCmd output 20000Hz, alternatively use RampIndex += 20?
@@ -335,7 +333,6 @@ static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 */
 static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
-
 	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
 	// 	//todo analog cmd start begin loop
 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
@@ -468,7 +465,7 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 /******************************************************************************/
 static inline uint32_t Motor_FOC_GetIMagnitude_Frac16(Motor_T * p_motor)
 {
-	return FOC_GetIMagnitude(&p_motor->Foc) * 2U;
+	return (uint32_t)FOC_GetIMagnitude(&p_motor->Foc) * 2U;
 }
 
 /*

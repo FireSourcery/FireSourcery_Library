@@ -96,54 +96,55 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 
         	Terminal_SendString(p_terminal, "IPhase: "); Terminal_SendNum(p_terminal, Motor_User_GetIPhase_Amp(p_motor)); Terminal_SendString(p_terminal, " Amp\r\n");
 
-			Terminal_SendString(p_terminal, "AnalogUserCmd: ");
-			switch(p_mc->AnalogUser.Cmd)
-			{
-				case MOT_ANALOG_USER_CMD_SET_BRAKE:					Terminal_SendString(p_terminal, "brake");			break;
-				case MOT_ANALOG_USER_CMD_SET_THROTTLE:				Terminal_SendString(p_terminal, "throttle");		break;
-				// case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		Terminal_SendString(p_terminal, "brake rel");		break;
-				// case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			Terminal_SendString(p_terminal, "throttle rel");	break;
-				// case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				Terminal_SendString(p_terminal, "set neutral");		break;
-				case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				Terminal_SendString(p_terminal, "neutral");			break;
-				// case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	Terminal_SendString(p_terminal, "set forward");		break;
-				// case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	Terminal_SendString(p_terminal, "set reverse");		break;
-				case MOT_ANALOG_USER_CMD_PROC_NO_INPUT:				Terminal_SendString(p_terminal, "release");			break;
-				default: break;
-			}
-			Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "AnalogUserCmd: ");
+			// switch(p_mc->AnalogUser.Cmd)
+			// {
+			// 	case MOT_ANALOG_USER_CMD_SET_BRAKE:					Terminal_SendString(p_terminal, "brake");			break;
+			// 	case MOT_ANALOG_USER_CMD_SET_THROTTLE:				Terminal_SendString(p_terminal, "throttle");		break;
+			// 	// case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		Terminal_SendString(p_terminal, "brake rel");		break;
+			// 	// case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			Terminal_SendString(p_terminal, "throttle rel");	break;
+			// 	// case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				Terminal_SendString(p_terminal, "set neutral");		break;
+			// 	case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				Terminal_SendString(p_terminal, "neutral");			break;
+			// 	// case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	Terminal_SendString(p_terminal, "set forward");		break;
+			// 	// case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	Terminal_SendString(p_terminal, "set reverse");		break;
+			// 	case MOT_ANALOG_USER_CMD_PROC_NO_INPUT:				Terminal_SendString(p_terminal, "release");			break;
+			// 	default: break;
+			// }
+			// Terminal_SendString(p_terminal, "\r\n");
 
-			Terminal_SendString(p_terminal, "MSM: ");
-			switch(Motor_User_GetStateId(p_motor))
-			{
-				case MSM_STATE_ID_INIT:			Terminal_SendString(p_terminal, "Init");		break;
-				case MSM_STATE_ID_STOP:			Terminal_SendString(p_terminal, "Stop");		break;
-				case MSM_STATE_ID_ALIGN:		Terminal_SendString(p_terminal, "Align");		break;
-				case MSM_STATE_ID_OPEN_LOOP:	Terminal_SendString(p_terminal, "OpenLoop");	break;
-				case MSM_STATE_ID_RUN:			Terminal_SendString(p_terminal, "Run");			break;
-				case MSM_STATE_ID_FREEWHEEL:	Terminal_SendString(p_terminal, "Freewheel");	break;
-				case MSM_STATE_ID_CALIBRATION:	Terminal_SendString(p_terminal, "Calib");		break;
-				case MSM_STATE_ID_FAULT:		Terminal_SendString(p_terminal, "Fault");		break;
-				default: break;
-			}
-			Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "MSM: ");
+			// switch(Motor_User_GetStateId(p_motor))
+			// {
+			// 	case MSM_STATE_ID_INIT:			Terminal_SendString(p_terminal, "Init");		break;
+			// 	case MSM_STATE_ID_STOP:			Terminal_SendString(p_terminal, "Stop");		break;
+			// 	case MSM_STATE_ID_ALIGN:		Terminal_SendString(p_terminal, "Align");		break;
+			// 	case MSM_STATE_ID_OPEN_LOOP:	Terminal_SendString(p_terminal, "OpenLoop");	break;
+			// 	case MSM_STATE_ID_RUN:			Terminal_SendString(p_terminal, "Run");			break;
+			// 	case MSM_STATE_ID_FREEWHEEL:	Terminal_SendString(p_terminal, "Freewheel");	break;
+			// 	case MSM_STATE_ID_CALIBRATION:	Terminal_SendString(p_terminal, "Calib");		break;
+			// 	case MSM_STATE_ID_FAULT:		Terminal_SendString(p_terminal, "Fault");		break;
+			// 	default: break;
+			// }
+			// Terminal_SendString(p_terminal, "\r\n");
 
-			Terminal_SendString(p_terminal, "MCSM: ");
-			switch(MotorController_User_GetStateId(p_mc))
-			{
-				case MCSM_STATE_ID_INIT:	Terminal_SendString(p_terminal, "Init");	break;
-				case MCSM_STATE_ID_STOP:	Terminal_SendString(p_terminal, "Stop");	break;
-				case MCSM_STATE_ID_RUN:		Terminal_SendString(p_terminal, "Run");		break;
-				case MCSM_STATE_ID_FAULT:	Terminal_SendString(p_terminal, "Fault");	break;
-				default: break;
-			}
-			Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "MCSM: ");
+			// switch(MotorController_User_GetStateId(p_mc))
+			// {
+			// 	case MCSM_STATE_ID_INIT:	Terminal_SendString(p_terminal, "Init");	break;
+			// 	case MCSM_STATE_ID_STOP:	Terminal_SendString(p_terminal, "Stop");	break;
+			// 	case MCSM_STATE_ID_RUN:		Terminal_SendString(p_terminal, "Run");		break;
+			// 	case MCSM_STATE_ID_FAULT:	Terminal_SendString(p_terminal, "Fault");	break;
+			// 	default: break;
+			// }
+			// Terminal_SendString(p_terminal, "\r\n");
 
-			Terminal_SendString(p_terminal, "ILimitActiveId: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveId); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "IPhasePeak_Adcu: "); Terminal_SendNum(p_terminal, p_motor->IPhasePeak_Adcu); Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "ILimitActiveId: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveId); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "ILimitActiveScalar: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveScalar); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "VoltageModeILimitActive: "); Terminal_SendNum(p_terminal, p_motor->RunStateFlags.VoltageModeILimitActive); Terminal_SendString(p_terminal, "\r\n");
 
 			// Terminal_SendString(p_terminal, "ElecAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetElectricalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
-			Terminal_SendString(p_terminal, "MechAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetMechanicalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
+			// Terminal_SendString(p_terminal, "MechAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetMechanicalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
 
 			break;
 

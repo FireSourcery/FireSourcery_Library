@@ -32,14 +32,14 @@
 #include <string.h>
 #include <math.h>
 
-static uint16_t Thermistor_AdcVRef_Scalar; /* Shared by all instances. */
+static uint16_t _AdcVRef_Scalar; /* Shared by all instances. */
 
 /*
 	Set Vin to same decimal precision as AdcVRef
 */
 void Thermistor_InitAdcVRef_Scalar(uint16_t adcVRef_MilliV)
 {
-	Thermistor_AdcVRef_Scalar = adcVRef_MilliV / 10U;
+	_AdcVRef_Scalar = adcVRef_MilliV / 10U;
 }
 
 void Thermistor_Init(Thermistor_T * p_therm)
@@ -60,6 +60,11 @@ void Thermistor_Init(Thermistor_T * p_therm)
 	}
 }
 
+/******************************************************************************/
+/*!
+	Limits Monitor
+*/
+/******************************************************************************/
 /* Public version pass new adcu for Async/Multi-Threaded */
 // static inline bool Thermistor_PollWarningRisingEdge(Thermistor_T * p_therm, uint16_t adcu)
 
@@ -87,7 +92,7 @@ Thermistor_ThresholdStatus_T PollThreshold(Thermistor_ThresholdStatus_T status, 
 	{
 		if(adcu < limit) { status = THERMISTOR_THRESHOLD_LIMIT; } /* crossing limit */
 	}
-	else /* if(p_therm->ShutdownThreshold == THERMISTOR_SHUTDOWN) || THERMISTOR_SHUTDOWN_THRESHOLD */
+	else /* if(p_therm->ShutdownThreshold == THERMISTOR_STATUS_SHUTDOWN) || THERMISTOR_SHUTDOWN_THRESHOLD */
 	{
 		/* in case if heat sample out of sync, repeat check */
 		if		(adcu < limit) 			{ status = THERMISTOR_THRESHOLD_LIMIT; } 	/* crossing limit */
@@ -107,17 +112,42 @@ Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t capt
 	{
 		p_therm->Adcu = (captureAdcu + p_therm->Adcu) / 2U;
 		p_therm->ShutdownThreshold = PollThreshold(p_therm->ShutdownThreshold, p_therm->Params.Shutdown_Adcu, p_therm->Params.ShutdownThreshold_Adcu, p_therm->Adcu);
-		p_therm->Status = (p_therm->ShutdownThreshold == THERMISTOR_THRESHOLD_OK) ? THERMISTOR_STATUS_OK : THERMISTOR_SHUTDOWN;
+		p_therm->Status = (p_therm->ShutdownThreshold == THERMISTOR_THRESHOLD_OK) ? THERMISTOR_STATUS_OK : THERMISTOR_STATUS_SHUTDOWN;
 
 		if(p_therm->Status == THERMISTOR_STATUS_OK)
 		{
 			p_therm->WarningThreshold = PollThreshold(p_therm->WarningThreshold, p_therm->Params.Warning_Adcu, p_therm->Params.WarningThreshold_Adcu, p_therm->Adcu);
-			p_therm->Status = (p_therm->WarningThreshold == THERMISTOR_THRESHOLD_OK) ? THERMISTOR_STATUS_OK : THERMISTOR_WARNING;
+			p_therm->Status = (p_therm->WarningThreshold == THERMISTOR_THRESHOLD_OK) ? THERMISTOR_STATUS_OK : THERMISTOR_STATUS_WARNING;
 		}
 	}
 
 	return p_therm->Status;
 }
+
+/******************************************************************************/
+/*!
+	Set Params
+*/
+/******************************************************************************/
+void Thermistor_SetNtc(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, uint32_t b)
+{
+	p_therm->Params.RNominal = r0;
+	p_therm->Params.TNominal = t0_degC + 273;
+	p_therm->Params.BConstant = b;
+}
+
+void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV)
+{
+	p_therm->Params.VIn_Scalar = vIn_MilliV / 10U;
+}
+
+
+/******************************************************************************/
+/*!
+	Unit Conversion
+*/
+/******************************************************************************/
+// #ifndef HOST_SIDE_UNIT_CONVERSION
 
 /*
 	For when conversion processing is less frequent than user output
@@ -180,7 +210,7 @@ static inline float invsteinhart(double b, double t0, double r0, double Inv)
 
 static float ConvertAdcuToDegC(Thermistor_T * p_therm, uint16_t adcu)
 {
-	uint32_t rNet = r_pulldown_adcu(p_therm->CONFIG.R_SERIES/100U, p_therm->Params.VIn_Scalar, ADC_MAX, Thermistor_AdcVRef_Scalar, adcu) * 100U;
+	uint32_t rNet = r_pulldown_adcu(p_therm->CONFIG.R_SERIES/100U, p_therm->Params.VIn_Scalar, ADC_MAX, _AdcVRef_Scalar, adcu) * 100U;
 	uint32_t rTh = (p_therm->CONFIG.R_PARALLEL != 0U) ? r_parallel(rNet, p_therm->CONFIG.R_PARALLEL) : rNet;
 	double Inv = steinhart(p_therm->Params.BConstant, p_therm->Params.TNominal, p_therm->Params.RNominal, rTh);
 	return (1.0F / Inv - 273.15F);
@@ -191,7 +221,7 @@ static uint16_t ConvertDegCToAdcu(Thermistor_T * p_therm, uint16_t degC)
 	double Inv = (double)1.0F / (degC + 273.15F);
 	uint32_t rTh = invsteinhart(p_therm->Params.BConstant, p_therm->Params.TNominal, p_therm->Params.RNominal, Inv);
 	uint32_t rNet = (p_therm->CONFIG.R_PARALLEL != 0U) ? r_net(p_therm->CONFIG.R_PARALLEL, rTh) : rTh;
-	return adcu_r(ADC_MAX, Thermistor_AdcVRef_Scalar, p_therm->Params.VIn_Scalar, p_therm->CONFIG.R_SERIES, rNet);
+	return adcu_r(ADC_MAX, _AdcVRef_Scalar, p_therm->Params.VIn_Scalar, p_therm->CONFIG.R_SERIES, rNet);
 }
 
 float Thermistor_ConvertToDegC_Float(Thermistor_T * p_therm, uint16_t adcu)
@@ -209,24 +239,11 @@ uint16_t Thermistor_ConvertToAdcu_DegC(Thermistor_T * p_therm, uint16_t degC)
 	return ConvertDegCToAdcu(p_therm, degC);
 }
 
-
 /******************************************************************************/
 /*!
 	Set Params
 */
 /******************************************************************************/
-void Thermistor_SetNtc_DegC(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, uint32_t b)
-{
-	p_therm->Params.RNominal = r0;
-	p_therm->Params.TNominal = t0_degC + 273;
-	p_therm->Params.BConstant = b;
-}
-
-void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV)
-{
-	p_therm->Params.VIn_Scalar = vIn_MilliV / 10U;
-}
-
 static uint16_t ConvertDegCToAdcu_SetUser(Thermistor_T * p_therm, uint8_t degC)
 {
 	uint16_t adcu = ConvertDegCToAdcu(p_therm, degC);
@@ -234,7 +251,6 @@ static uint16_t ConvertDegCToAdcu_SetUser(Thermistor_T * p_therm, uint8_t degC)
 	{
 		adcu += 1U;
 	}
-	//while(ConvertAdcuToDegC(p_therm, adcu) < degC) { adcu -= 1U; }
 	return adcu;
 }
 
@@ -242,7 +258,6 @@ void Thermistor_SetShutdown_DegC(Thermistor_T * p_therm, uint8_t shutdown_degC, 
 {
 	p_therm->Params.Shutdown_Adcu = ConvertDegCToAdcu_SetUser(p_therm, shutdown_degC);
 	p_therm->Params.ShutdownThreshold_Adcu = ConvertDegCToAdcu_SetUser(p_therm, shutdownThreshold_degC);
-
 }
 
 void Thermistor_SetWarning_DegC(Thermistor_T * p_therm, uint8_t warning_degC, uint8_t warningThreshold_degC)
@@ -265,7 +280,9 @@ int32_t Thermistor_GetWarningThreshold_DegC(Thermistor_T * p_therm) 	{ return Co
 int32_t Thermistor_GetShutdown_DegCInt(Thermistor_T * p_therm, uint16_t scalar) 			{ return Thermistor_ConvertToDegC_Int(p_therm, p_therm->Params.Shutdown_Adcu, scalar); }
 int32_t Thermistor_GetShutdownThreshold_DegCInt(Thermistor_T * p_therm, uint16_t scalar) 	{ return Thermistor_ConvertToDegC_Int(p_therm, p_therm->Params.ShutdownThreshold_Adcu, scalar); }
 int32_t Thermistor_GetWarning_DegCInt(Thermistor_T * p_therm, uint16_t scalar) 				{ return Thermistor_ConvertToDegC_Int(p_therm, p_therm->Params.Warning_Adcu, scalar); }
+int32_t Thermistor_GetWarningThreshold_DegCInt(Thermistor_T * p_therm, uint16_t scalar) 	{ return Thermistor_ConvertToDegC_Int(p_therm, p_therm->Params.WarningThreshold_Adcu, scalar); }
 
 float Thermistor_GetShutdown_DegCFloat(Thermistor_T * p_therm) 				{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Shutdown_Adcu); }
 float Thermistor_GetShutdownThreshold_DegCFloat(Thermistor_T * p_therm) 	{ return ConvertAdcuToDegC(p_therm, p_therm->Params.ShutdownThreshold_Adcu); }
 float Thermistor_GetWarning_DegCFloat(Thermistor_T * p_therm) 				{ return ConvertAdcuToDegC(p_therm, p_therm->Params.Warning_Adcu); }
+float Thermistor_GetWarningThreshold_DegCFloat(Thermistor_T * p_therm) 		{ return ConvertAdcuToDegC(p_therm, p_therm->Params.WarningThreshold_Adcu); }

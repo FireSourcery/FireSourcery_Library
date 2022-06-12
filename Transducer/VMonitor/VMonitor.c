@@ -33,14 +33,14 @@
 #include <string.h>
 #include <stdio.h>
 
-static uint16_t _VMonitor_AdcVRef_MilliV; /* Shared by all instances */
+static uint16_t _AdcVRef_MilliV; /* Shared by all instances */
 
 /* User Init module static reference before VMonitor_Init.Outside module handle boundaries */
-void VMonitor_InitAdcVRef_MilliV(uint16_t adcVRef_MilliV) { _VMonitor_AdcVRef_MilliV = adcVRef_MilliV; }
+void VMonitor_InitAdcVRef_MilliV(uint16_t adcVRef_MilliV) { _AdcVRef_MilliV = adcVRef_MilliV; }
 
 static inline void SetUnitConversion(VMonitor_T * p_vMonitor) //public reset?
 {
-	Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONFIG.UNITS_R1, p_vMonitor->CONFIG.UNITS_R2, ADC_BITS, _VMonitor_AdcVRef_MilliV, p_vMonitor->Params.VInRefMax);
+	Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONFIG.UNITS_R1, p_vMonitor->CONFIG.UNITS_R2, ADC_BITS, _AdcVRef_MilliV, p_vMonitor->Params.VInRefMax);
 }
 
 void VMonitor_Init(VMonitor_T * p_vMonitor)
