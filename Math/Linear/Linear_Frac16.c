@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Linear_Frac16_Fixed32.c
+	@file 	Linear_Frac16.c
 	@author FireSoucery
 	@brief  Linear
 	@version V0
@@ -30,8 +30,21 @@
 /******************************************************************************/
 #include "Linear_Frac16.h"
 
+/******************************************************************************/
+/*!
+	Linear with
+
+	frac16 conversion returns without division, as frac16 calc is performed more frequently
+	adcu to physical(user yref) returns without division
+	division in physical to adcu, frac16 to physical units
+	Shift 14 to allow oversaturation f([-2*XRef:2*XRef]) == [-2*YRef:2*YRef] before overflow
+*/
+/******************************************************************************/
+
 /*
-	Sets max input, x, as f(x_max) == yRef
+	Init using slope, y. Derive XRef
+	Sets 100% input, x, as f(xRef) == yRef
+	f(x>2XRef) will overflow
 	Shift 14 to allow oversaturation f([-2*XRef:2*XRef]) == [-2*YRef:2*YRef] before overflow
 	Scales factor to 65536
 	Scales divisor to xref
@@ -39,19 +52,31 @@
 void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
 {
 	p_linear->YReference = yRef;
-	p_linear->XReference = linear_invf(factor, divisor, y0, yRef); /* = divisor*yRef/factor */
-
-	p_linear->Slope = (65536 << 14U) / p_linear->XReference;
+	p_linear->XReference = linear_invf(factor, divisor, y0, yRef); /* yRef*divisor/factor */
+	p_linear->Slope = (65536 << 14U) / p_linear->XReference; /* x0 == 0 */
 	p_linear->SlopeShift = 14U;
-
 	p_linear->InvSlope = (p_linear->XReference << 14U) / 65536;
 	p_linear->InvSlopeShift = 14U;
-
 	p_linear->XOffset = 0;
 	p_linear->YOffset = y0;
 }
 
-// void Linear_Frac16_Init_X0(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t yRef)
+/*
+	Init using (x0, y0), (xref, yref). Derive slope
+*/
+void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, int32_t yRef)
+{
+	p_linear->Slope = (65536 << 14U) / (xRef - x0);
+	p_linear->SlopeShift = 14U;
+	p_linear->InvSlope = ((xRef - x0) << 14U) / 65536;
+	p_linear->InvSlopeShift = 14U;
+	p_linear->XOffset = x0;
+	p_linear->YOffset = y0;
+	p_linear->XReference = xRef; /* User info only, unused */
+	p_linear->YReference = yRef;
+}
+
+// void Linear_Frac16_Init_X0XRef(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t xRef)
 // {
 
 // }

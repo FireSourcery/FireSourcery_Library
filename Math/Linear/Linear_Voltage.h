@@ -42,7 +42,7 @@
  */
 #define LINEAR_VOLTAGE_CONFIG(r1, r2, adcBits, adcVRef_MilliV, vInMax) 									\
 {																										\
-	.Slope 				= (((int32_t)adcVRef_MilliV * (r1 + r2)) << (15U - adcBits)) / r2 / 1000U, 	\
+	.Slope 				= (((int32_t)adcVRef_MilliV * (r1 + r2)) << (15U - adcBits)) / r2 / 1000U, 		\
 	.SlopeShift 		= 15U,																			\
 	.InvSlope  			= ((int32_t)r2 << 15U) / adcVRef_MilliV * 1000U / (r1 + r2),					\
 	.InvSlopeShift 		= 15U - adcBits,																\
@@ -82,7 +82,7 @@ static inline int32_t Linear_Voltage_CalcScalarV(const Linear_T * p_linear, uint
 /******************************************************************************/
 static inline int32_t Linear_Voltage_CalcFraction16(const Linear_T * p_linear, uint16_t adcu)
 {
-	return Linear_Function_Fixed32(p_linear, adcu);
+	return Linear_Function_Frac16(p_linear, adcu);
 }
 
 /******************************************************************************/
@@ -131,7 +131,7 @@ static inline uint16_t Linear_Voltage_CalcAdcu_ScalarV(const Linear_T * p_linear
 
 static inline uint16_t Linear_Voltage_CalcAdcu_Fraction16(const Linear_T * p_linear, int32_t fract16)
 {
-	return (uint16_t)Linear_InvFunction_Fixed32(p_linear, fract16);
+	return (uint16_t)Linear_InvFunction_Frac16(p_linear, fract16);
 }
 
 /* Same as general Linear_Voltage_CalcAdcu_Fraction16 */

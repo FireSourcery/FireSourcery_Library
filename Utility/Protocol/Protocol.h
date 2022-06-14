@@ -306,7 +306,7 @@ Protocol_Config_T;
 		.P_TIMER 				= p_Timer,						\
 		.P_PARAMS 				= p_Params,						\
 	},															\
-	_PROTOCOL_XCVR_INIT(p_XcvrTable, XcvrCount)	 					\
+	_PROTOCOL_XCVR_INIT(p_XcvrTable, XcvrCount)	 				\
 }
 
 typedef struct Protocol_Tag

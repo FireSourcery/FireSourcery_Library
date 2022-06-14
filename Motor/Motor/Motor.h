@@ -364,7 +364,7 @@ typedef struct Motor_Tag
 	PID_T PidSpeed;					/* Input SpeedFeedback_Frac16 Q16.16, Output SpeedControl => VPwm, Vq, Iq */
 	Timer_T SpeedTimer;				/* Speed Calc Timer */
 	int32_t SpeedFeedback_Frac16; 	/* [~-65535*2:~65535*2] Speed Feedback Variable. Can over saturate */
-	int32_t SpeedControl; 			/* [-32767:32767] Speed Control Variable. (SpeedFeedback_Frac16 / 2 - RampCmd) => VPwm, Vq, Iq. updated once per millis */
+	int32_t SpeedControl; 			/* [~-32767:~32767] Speed Control Variable. PidSpeed(RampCmd - SpeedFeedback_Frac16 / 2) => VPwm, Vq, Iq. Updated once per millis */
 	// uint32_t Speed2_Frac16;
 
 	/*

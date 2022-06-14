@@ -95,7 +95,7 @@ static inline qfrac16_t qfrac16_sat(int32_t qfrac)
 	0x8000 casts from 32768 int32_t to -32768 int16_t incorrectly
 	must call sat to convert to correct int16_t value
 
-	@return int32_t[-32767, 32768] 
+	@return int32_t[-32767, 32768]
 */
 static inline int32_t qfrac16_mul(int32_t factor, int32_t frac)
 {
@@ -108,10 +108,10 @@ static inline int32_t qfrac16_mul(int32_t factor, int32_t frac)
 static inline qfrac16_t qfrac16_mul_sat(int32_t factor, int32_t frac)
 {
 	int32_t product = qfrac16_mul(factor, frac);
-	return (product == 32768) ? 32767 : product; 
+	return (product == 32768) ? 32767 : product; /*  */
 }
 
-/*! 
+/*!
 	@brief Unsaturated divide
 
 	qfrac16_div(frac, frac) 	returns frac value
@@ -127,7 +127,7 @@ static inline int32_t qfrac16_div(int16_t dividend, int32_t divisor)
 }
 
 /*!
-	@return int16_t[-32768, 32767] 
+	@return int16_t[-32768, 32767]
 */
 static inline qfrac16_t qfrac16_div_sat(int16_t dividend, int32_t divisor)
 {

@@ -37,16 +37,14 @@ static void ResetRuntime(PID_T * p_pid)
 	p_pid->KiDivisorFreq 	= p_pid->Params.KiDivisor * p_pid->Params.CalcFreq;
 	p_pid->KdFactorFreq 	= p_pid->Params.KdFactor * p_pid->Params.CalcFreq;
 	p_pid->ErrorSumOverflowPos = INT32_MAX / p_pid->Params.KiFactor;
-	p_pid->ErrorSumOverflowNeg = 0 - INT32_MAX / p_pid->Params.KiFactor; 
+	p_pid->ErrorSumOverflowNeg = 0 - INT32_MAX / p_pid->Params.KiFactor;
 }
 
 void PID_Init(PID_T * p_pid)
 {
-	if(p_pid->CONFIG.P_PARAMS != 0U)
-	{
-		memcpy(&p_pid->Params, p_pid->CONFIG.P_PARAMS, sizeof(PID_Params_T));
-	}
-
+	if(p_pid->CONFIG.P_PARAMS != 0U) { memcpy(&p_pid->Params, p_pid->CONFIG.P_PARAMS, sizeof(PID_Params_T)); }
+	// p_pid->OutMin = -65535;
+	// p_pid->OutMax = 65535;
 	ResetRuntime(p_pid);
 	PID_Reset(p_pid);
 }
@@ -95,17 +93,17 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 	if(integral > p_pid->OutMax)
 	{
 		integral = p_pid->OutMax;
-		if(error < 0) { p_pid->ErrorSum += error; } /* if error sum becomes out of sync do not add. add error if error is negative */
+		if(error < 0) { p_pid->ErrorSum += error; } /* if error sum becomes out of sync, only add error if error is negative */
 	}
 	else if(integral < p_pid->OutMin)
 	{
 		integral = p_pid->OutMin;
-		if(error > 0) { p_pid->ErrorSum += error; } /* if error sum becomes out of sync do not add. add error if error is positive */ 
+		if(error > 0) { p_pid->ErrorSum += error; } /* if error sum becomes out of sync, only  add error if error is positive */
 	}
 	else
-	{ 
+	{
 		p_pid->ErrorSum += error; /* stops accumulating integral if output is past limits */
-	} 
+	}
 
 	if(p_pid->Params.Mode == PID_MODE_PID)
 	{
@@ -153,6 +151,8 @@ void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max)
 		p_pid->OutMax = max;
 		if		(p_pid->ErrorSum > p_pid->OutMax) { p_pid->ErrorSum = p_pid->OutMax; }
 		else if	(p_pid->ErrorSum < p_pid->OutMin) { p_pid->ErrorSum = p_pid->OutMin; }
+		// if		(integral > p_pid->OutMax) { PID_SetIntegral(p_pid, p_pid->OutMax); }
+		// else if	(integral < p_pid->OutMin) { PID_SetIntegral(p_pid, p_pid->OutMin); }
 	}
 }
 
@@ -168,20 +168,20 @@ void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t 
 	p_pid->Params.KiFactor 		= kiFactor;
 	p_pid->Params.KiDivisor 	= kiDivisor;
 	p_pid->Params.KdFactor 		= kdFactor;
-	p_pid->Params.KdDivisor 	= kdDivisor; 
-	ResetRuntime(p_pid); 
+	p_pid->Params.KdDivisor 	= kdDivisor;
+	ResetRuntime(p_pid);
 }
 
 void PID_SetTunings_FractionSigned16(PID_T * p_pid, int32_t kp, int32_t ki, int32_t kd)
 {
 	/* scale down ki overflow */
 	// int32_t kiFactor = ki >> 12U;
-	// int32_t kiDivisor = 32768 >> 12U; 
+	// int32_t kiDivisor = 32768 >> 12U;
 	// while ()
 
-	PID_SetTunings(p_pid, kp, 32768, ki, 32768, kd, 32768); 
+	PID_SetTunings(p_pid, kp, 32768, ki, 32768, kd, 32768);
 }
- 
+
 int32_t PID_GetKp_FractionSigned16(PID_T * p_pid) { return 32768 * p_pid->Params.KpFactor / p_pid->Params.KpDivisor; }
 int32_t PID_GetKi_FractionSigned16(PID_T * p_pid) { return 32768 * p_pid->Params.KiFactor / p_pid->Params.KiDivisor; }
 int32_t PID_GetKd_FractionSigned16(PID_T * p_pid) { return 32768 * p_pid->Params.KdFactor / p_pid->Params.KdDivisor; }

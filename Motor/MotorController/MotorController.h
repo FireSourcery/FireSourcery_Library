@@ -219,8 +219,8 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 	MotorController_OptDinFunction_T OptDinFunction;
 	uint16_t OptDinSpeedLimit_Frac16;
 
-	uint16_t ILimitScalarOnLowV_Frac16;
-	uint16_t ILimitScalarOnHeat_Frac16; /* Final ILimit at HeatLimit. Proportionally effective beginning at HeatWarning */
+	uint16_t ILimitLowV_Frac16;
+	uint16_t ILimitHeat_Frac16; /* Final ILimit at HeatLimit. Proportionally effective beginning at HeatWarning */
 	//battery max current
 
 	// bool IsFixedFreqUserOutput; /* limits conversion freq regardless of polling freq */
@@ -283,7 +283,7 @@ typedef struct MotorController_Tag
 	VMonitor_T VMonitorSense; 	//5V
 	VMonitor_T VMonitorAcc; 	//12V
 	Linear_T BatteryLife; 		//Battery Life percentage
-	Linear_T HeatILimitRate;
+	Linear_T ILimitHeatRate;
 
 	Timer_T TimerMillis;
 	Timer_T TimerMillis10;

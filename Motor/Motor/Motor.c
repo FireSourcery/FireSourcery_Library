@@ -85,7 +85,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	/*
 		Ramp 0 to 32767 max in ~500ms
 	*/
-	Linear_Ramp_InitMillis(&p_motor->Ramp, 500U, 20000U, 0U, 32767U); /* final value is overwritten, slope is persistent */
+	Linear_Ramp_Init_Millis(&p_motor->Ramp, 500U, 20000U, 0U, 32767U); /* final value is overwritten, slope is persistent */
 	Motor_SetRamp(p_motor, 0U);
 	p_motor->RampCmd = 0U;
 	p_motor->RampIndex = 0U;
@@ -102,7 +102,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		Linear_Ramp_InitMillis(&p_motor->OpenLoopRamp, 2000U, 20000U, 0U, 300U);	//can start at 0 speed in foc mode for continuous angle displacements
+		Linear_Ramp_Init_Millis(&p_motor->OpenLoopRamp, 2000U, 20000U, 0U, 300U);	//can start at 0 speed in foc mode for continuous angle displacements
 	}
 	else
 	{

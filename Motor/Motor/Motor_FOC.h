@@ -35,6 +35,7 @@
 
 #include "Motor.h"
 
+/******************************************************************************/
 /*
 	+/- Sign indicates absolute direction, CW/CCW. NOT along or against direction selected.
 	Positive is virtual CCW.
@@ -49,6 +50,7 @@
 	CW -Vq +Iq => Reverse Regen Q3
 	CW +Vq +Iq => Reverse Plugging
 */
+/******************************************************************************/
 
 /******************************************************************************/
 /*!
@@ -231,6 +233,9 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 
 	vqReqOut = (p_motor->RunStateFlags.VoltageModeILimitActive == true) ?
 		PID_Calc(&p_motor->PidIq, p_motor->VoltageModeILimit_QFracS16, FOC_GetIq(&p_motor->Foc)) : vqReq;
+
+	// vqReqOut = PID_Calc(&p_motor->PidIq, p_motor->VoltageModeILimit_QFracS16, FOC_GetIq(&p_motor->Foc));
+	// if(vqReq < vqReqOut) { vqReqOut = vqReq; }
 
 	FOC_SetVq(&p_motor->Foc, vqReqOut);
 	FOC_SetVd(&p_motor->Foc, 0);

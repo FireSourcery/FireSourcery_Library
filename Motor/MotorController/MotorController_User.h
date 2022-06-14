@@ -170,8 +170,8 @@ static inline void MotorController_User_SetLoadDefault(MotorController_T * p_mc,
 static inline void MotorController_User_SetOptDinSpeedLimit(MotorController_T * p_mc, uint16_t scalar_Frac16) 	{ p_mc->Parameters.OptDinFunction = MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT; p_mc->Parameters.OptDinSpeedLimit_Frac16 = scalar_Frac16; }
 static inline void MotorController_User_DisableOptDin(MotorController_T * p_mc) 								{ p_mc->Parameters.OptDinFunction = MOTOR_CONTROLLER_OPT_DIN_DISABLE; }
 
-static inline void MotorController_User_SetILimitOnLowVParam(MotorController_T * p_mc, uint16_t scalar_Frac16) 	{ p_mc->Parameters.ILimitScalarOnLowV_Frac16 = scalar_Frac16; }
-static inline void MotorController_User_SetILimitOnHeatParam(MotorController_T * p_mc, uint16_t scalar_Frac16) 	{ p_mc->Parameters.ILimitScalarOnHeat_Frac16 = scalar_Frac16; }
+static inline void MotorController_User_SetILimitOnLowVParam(MotorController_T * p_mc, uint16_t scalar_Frac16) 	{ p_mc->Parameters.ILimitLowV_Frac16 = scalar_Frac16; }
+static inline void MotorController_User_SetILimitOnHeatParam(MotorController_T * p_mc, uint16_t scalar_Frac16) 	{ p_mc->Parameters.ILimitHeat_Frac16 = scalar_Frac16; }
 
 // change to Linear_Init flexible scalar output
 // static inline uint32_t MotorController_User_GetBatteryCharge_Base10(MotorController_T * p_mc, uint8_t scalar) 	{ return Linear_ADC_CalcPhysical(&p_mc->BatteryLife, p_mc->AnalogResults.VPos_Adcu); }

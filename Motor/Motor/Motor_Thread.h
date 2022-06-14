@@ -82,7 +82,7 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 				(
 					p_motor,
 					p_motor->Parameters.ILimitScalarHeat_Frac16,
-					// Linear_Function(&p_motor->HeatILimitRate, p_motor->AnalogResults.Heat_Adcu), //todo
+					// Linear_Function(&p_motor->ILimitHeatRate, p_motor->AnalogResults.Heat_Adcu), //todo
 					MOTOR_I_LIMIT_ACTIVE_HEAT
 				);
 			break;

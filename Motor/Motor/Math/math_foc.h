@@ -172,16 +172,16 @@ static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_
 /* unitize, q d proportional */
 static inline void foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax)
 {
-	int32_t vectorMaxSquared = (int32_t)vectorMax * (int32_t)vectorMax;
-	int32_t dqSquared = ((int32_t)(*p_d) * (int32_t)(*p_d)) + ((int32_t)(*p_q) * (int32_t)(*p_q));
-	qfrac16_t vectorMagnitutde;
-	int32_t ratio;
+	uint32_t vectorMaxSquared = (int32_t)vectorMax * (int32_t)vectorMax;
+	uint32_t dqSquared = ((int32_t)(*p_d) * (int32_t)(*p_d)) + ((int32_t)(*p_q) * (int32_t)(*p_q));
+	uint16_t vectorMagnitutde;
+	qfrac16_t ratio; /* where 32767 q1.15 = 1 */
 
 	if(dqSquared > vectorMaxSquared)
 	{
-		vectorMagnitutde = q_sqrt(dqSquared); // already shifted
+		vectorMagnitutde = q_sqrt(dqSquared);
 		ratio = qfrac16_div(vectorMax, vectorMagnitutde);
-		*p_d = (qfrac16_t)qfrac16_mul(*p_d, ratio);
+		*p_d = (qfrac16_t)qfrac16_mul(*p_d, ratio); /* no saturation needed, ratio < 1 */
 		*p_q = (qfrac16_t)qfrac16_mul(*p_q, ratio);
 	}
 }
@@ -189,12 +189,12 @@ static inline void foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t v
 /* limit, prioritize maintaining d */
 static inline void foc_circlelimit_dmax(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax, qfrac16_t dMax)
 {
-	int32_t vectorMaxSquared = (int32_t)vectorMax * (int32_t)vectorMax;
-	int32_t dSquared = (int32_t)(*p_d) * (int32_t)(*p_d);
-	int32_t qSquared = (int32_t)(*p_q) * (int32_t)(*p_q);
-	int32_t dqSquared = dSquared + qSquared;
-	int32_t qMaxSquared;
-	int32_t qMax;
+	uint32_t vectorMaxSquared = (int32_t)vectorMax * (int32_t)vectorMax;
+	uint32_t dSquared = (int32_t)(*p_d) * (int32_t)(*p_d);
+	uint32_t qSquared = (int32_t)(*p_q) * (int32_t)(*p_q);
+	uint32_t dqSquared = dSquared + qSquared;
+	uint32_t qMaxSquared;
+	uint32_t qMax;
 
 	if(dqSquared > vectorMaxSquared)
 	{

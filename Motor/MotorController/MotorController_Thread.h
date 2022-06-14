@@ -153,14 +153,14 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 			MotorController_SetILimitMotorAll
 			(
 				p_mc,
-				Linear_Function(&p_mc->HeatILimitRate, p_mc->AnalogResults.HeatMosfetsTop_Adcu),
+				Linear_Function(&p_mc->ILimitHeatRate, p_mc->AnalogResults.HeatMosfetsTop_Adcu),
 				MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT
 			);
 
 			// Thermistor_PollWarningRisingEdge(&p_mc->ThermistorMosfetsTop);
 			if(p_mc->WarningFlags.Heat == false)
 			{
-				Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 2U);
+				Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 1U);
 				p_mc->WarningFlags.Heat = true;
 			}
 		}
@@ -273,7 +273,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 		case VMONITOR_WARNING_LOWER:
 			if(p_mc->WarningFlags.LowV == false)
 			{
-				MotorController_SetILimitMotorAll(p_mc, p_mc->Parameters.ILimitScalarOnLowV_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
+				MotorController_SetILimitMotorAll(p_mc, p_mc->Parameters.ILimitLowV_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
 				Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U);
 				p_mc->WarningFlags.LowV = true;
 			}

@@ -33,7 +33,7 @@
 #ifndef LINEAR_RAMP_H
 #define LINEAR_RAMP_H
 
-#include "Linear.h" 
+#include "Linear.h"
 #include <stdint.h>
 
 static inline void Linear_Ramp_SetTarget(Linear_T * p_linear, int32_t target)
@@ -131,6 +131,7 @@ static inline int32_t Linear_Ramp_CalcNextOutput(const Linear_T * p_linear, int3
 static inline void Linear_Ramp_SetSlope(Linear_T * p_linear, int32_t slope_UnitPerTick, int32_t initial)
 {
 	p_linear->Slope = slope_UnitPerTick << RAMP_SHIFT;
+	p_linear->InvSlope = (1UL << RAMP_SHIFT) / slope_UnitPerTick;
 	p_linear->YOffset = initial;
 }
 
@@ -150,10 +151,10 @@ static inline void Linear_Ramp_SetSlopeMillis(Linear_T * p_linear, uint16_t pero
 	p_linear->InvSlope = (divisor << RAMP_SHIFT) / factor;
 	p_linear->YOffset = initial;
 	p_linear->YReference = final;
-} 
+}
 
 extern void Linear_Ramp_Init(Linear_T * p_linear, int32_t slope_UnitPerTick, int32_t initial, int32_t final);
-extern void Linear_Ramp_InitAcceleration(Linear_T * p_linear, int32_t slope_UnitPerSecond, uint32_t updateFreq_Hz, int32_t initial, int32_t final);
-extern void Linear_Ramp_InitMillis(Linear_T * p_linear, uint16_t peroid_Ms, uint32_t updateFreq_Hz, int32_t initial, int32_t final);
+extern void Linear_Ramp_Init_Acceleration(Linear_T * p_linear, int32_t slope_UnitPerSecond, uint32_t updateFreq_Hz, int32_t initial, int32_t final);
+extern void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint16_t peroid_Ms, uint32_t updateFreq_Hz, int32_t initial, int32_t final);
 
 #endif

@@ -33,12 +33,12 @@
 /*!
 	@param[in] all [0:32767]
 */
-static void SetOutputLimits(Motor_T * p_motor, int16_t speedIOutCcw, int16_t speedIOutCw, int16_t vOutCcw, int16_t vOutCw)
+static void SetOutputLimits(Motor_T * p_motor, uint16_t speedIOutCcw, uint16_t speedIOutCw, uint16_t vOutCcw, uint16_t vOutCw)
 {
 	if(p_motor->FeedbackModeFlags.Speed == 1U)
 	{
-		if(p_motor->FeedbackModeFlags.Current == 1U) { PID_SetOutputLimits(&p_motor->PidSpeed, 0 - speedIOutCw, speedIOutCcw); } /* Speed PID is Iq */
-		else { PID_SetOutputLimits(&p_motor->PidSpeed, 0 - vOutCw, vOutCcw); } /* Speed PID is Vq */
+		if(p_motor->FeedbackModeFlags.Current == 1U) 	{ PID_SetOutputLimits(&p_motor->PidSpeed, 0 - speedIOutCw, speedIOutCcw); } /* Speed PID is Iq */
+		else 											{ PID_SetOutputLimits(&p_motor->PidSpeed, 0 - vOutCw, vOutCcw); } 			/* Speed PID is Vq */
 	}
 
 	/*

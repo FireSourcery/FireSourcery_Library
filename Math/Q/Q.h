@@ -62,34 +62,24 @@ static inline uint16_t q_sqrt(int32_t x)
 	{
 		/*
 			Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
-		*/
-		if((uint32_t)x > (uint32_t)1048576U) /* (1 << 20) */
-		{
-			yPrev = (uint32_t)8192U; /* 8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations */
-		}
-		else
-		{
-			yPrev = (uint32_t)128U; /* 128*128 == (1 << 14), solve < 1048576 */
-		}
 
+			8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
+			128*128 == (1 << 14), solve < 1048576
+			1048576U == (1 << 20)
+		*/
+		yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
 		do
 		{
-			y = (yPrev + ((uint32_t)x / yPrev)) / (uint32_t)2U;
-
-			if(y == yPrev)
-			{
-				break;
-			}
-
-			iteration++;
+			y = (yPrev + ((uint32_t)x / yPrev)) / 2U;
+			if(y == yPrev) { break; }
 			yPrev = y;
-
+			iteration++;
 		}
 		while(iteration < 6U);
 	}
 	else
 	{
-		y = (uint32_t)0U;
+		y = 0U;
 	}
 
 	return (uint16_t)y;

@@ -125,18 +125,18 @@ static inline int32_t Linear_InvFunction(const Linear_T * p_linear, int32_t y)
 /******************************************************************************/
 
 /*  */
-static inline int32_t Linear_Function_Fixed32(const Linear_T * p_linear, int32_t x)
+static inline int32_t Linear_Function_Frac16(const Linear_T * p_linear, int32_t x)
 {
 	return linear_f16(p_linear->XOffset, p_linear->XReference, x);
 }
 
 /*!
-	y_fixed32 in q16.16 format
-	@param[in] y_fixed32 overflow limit ~q1.16
+	y_frac16 in q16.16 format
+	@param[in] y_frac16 overflow limit ~q1.16
 */
-static inline int32_t Linear_InvFunction_Fixed32(const Linear_T * p_linear, int32_t y_fixed32)
+static inline int32_t Linear_InvFunction_Frac16(const Linear_T * p_linear, int32_t y_frac16)
 {
-	return linear_invf16(p_linear->XOffset, p_linear->XReference, y_fixed32);
+	return linear_invf16(p_linear->XOffset, p_linear->XReference, y_frac16);
 }
 
 /******************************************************************************/
@@ -162,17 +162,17 @@ static inline int32_t Linear_InvFunction_Round(const Linear_T * p_linear, int32_
 }
 
 extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef);
-extern void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t y0, int32_t xRef, int32_t yRef);
+extern void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, int32_t yRef);
 
 extern uint16_t _Linear_SatUnsigned16(int32_t frac16);
-extern uint16_t Linear_Function_FractionUnsigned16(const Linear_T * p_linear, int32_t x);
 extern uint16_t _Linear_SatUnsigned16_Abs(int32_t frac16);
+extern int16_t _Linear_SatSigned16(int32_t frac16);
+
+extern uint16_t Linear_Function_FractionUnsigned16(const Linear_T * p_linear, int32_t x);
 extern uint16_t Linear_Function_FractionUnsigned16_Abs(const Linear_T * p_linear, int32_t x);
 extern int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_linear, uint16_t y_fracU16);
-extern int16_t _Linear_SatSigned16(int32_t frac16);
 extern int16_t Linear_Function_FractionSigned16(const Linear_T * p_linear, int32_t x);
 extern int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_linear, int16_t y_fracS16);
-
 extern int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar);
 extern int32_t Linear_InvFunction_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar);
 

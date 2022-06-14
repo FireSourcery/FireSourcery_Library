@@ -28,7 +28,7 @@
 	@brief
 */
 /******************************************************************************/
-#include "Linear_Ramp.h" 
+#include "Linear_Ramp.h"
 
 
 //todo init frac16 mode
@@ -47,9 +47,9 @@ void Linear_Ramp_Init(Linear_T * p_linear, int32_t slope_UnitPerTick, int32_t in
 	User must account for acceleration sign,
 	If initial > final AND acceleration is positive, ramp returns final value
 
-	Overflow: slope_UnitPerSecond > 131,071 
+	Overflow: slope_UnitPerSecond > 131,071
 */
-void Linear_Ramp_InitAcceleration(Linear_T * p_linear, int32_t slope_UnitPerSecond, uint32_t updateFreq_Hz, int32_t initial, int32_t final)
+void Linear_Ramp_Init_Acceleration(Linear_T * p_linear, int32_t slope_UnitPerSecond, uint32_t updateFreq_Hz, int32_t initial, int32_t final)
 {
 	Linear_Init(p_linear, slope_UnitPerSecond, updateFreq_Hz, initial, final);
 }
@@ -58,7 +58,7 @@ void Linear_Ramp_InitAcceleration(Linear_T * p_linear, int32_t slope_UnitPerSeco
 	Overflow: 	(peroid_Ms * updateFreq_Hz) > 131,071,000
 				(final - initial) > 131,071
 */
-void Linear_Ramp_InitMillis(Linear_T * p_linear, uint16_t peroid_Ms, uint32_t updateFreq_Hz, int32_t initial, int32_t final)
+void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint16_t peroid_Ms, uint32_t updateFreq_Hz, int32_t initial, int32_t final)
 {
-	Linear_Init(p_linear, (final - initial), (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, initial, final); 
+	Linear_Init(p_linear, (final - initial), (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, initial, final);
 }

@@ -120,7 +120,7 @@ static inline qfrac16_t FOC_GetIbeta(FOC_T * p_foc) { return p_foc->Ibeta; }
 
 static inline uint16_t FOC_GetIMagnitude(FOC_T * p_foc)
 {
-	return q_sqrt(((int32_t)p_foc->Vd * p_foc->Vd) + ((int32_t)p_foc->Vq * p_foc->Vq));
+	return q_sqrt(((int32_t)p_foc->Id * p_foc->Id) + ((int32_t)p_foc->Iq * p_foc->Iq));
 }
 
 extern void FOC_Init(FOC_T * p_foc);

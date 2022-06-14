@@ -47,14 +47,7 @@
 /******************************************************************************/
 void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef)
 {
-	p_linear->Slope = (65536 << 14U) / (adcuRef - adcuZero);
-	p_linear->SlopeShift = 14U;
-	p_linear->InvSlope = ((adcuRef - adcuZero) << 14U) / 65536;
-	p_linear->InvSlopeShift = 14U;
-	p_linear->XOffset = adcuZero;
-	p_linear->YOffset = 0;
-	p_linear->XReference = adcuRef; /* User info only, unused */
-	p_linear->YReference = physicalRef;
+	Linear_Frac16_Init_Map(p_linear, adcuZero, adcuRef, 0, physicalRef);
 }
 
 

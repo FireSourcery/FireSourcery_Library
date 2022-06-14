@@ -38,7 +38,7 @@
 /*
 	Standard SVM calculation method. Inclusive of equivalent reverse Clarke transform.
 	Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
-	
+
 	dutyA, dutyB, dutyC -> 16 bits, q1.15, always positive
 */
 static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16_t * p_dutyC, qfrac16_t alpha, qfrac16_t beta)
@@ -47,7 +47,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 		The other 3 of 6 are inverse of the 3 derived
 		Magnitudes are normalized by a factor of sqrt(3)/2, i.e alpha = 1 => A = .866
 		Derives 3 magnitudes (duty cycles) belonging to basic unit vectors.
-		
+
 		X = beta;
 		Y = (beta + sqrt3 * alpha) / 2;
 		Z = (beta - sqrt3 * alpha) / 2;
@@ -115,11 +115,11 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 		{
 			/*
 				Sector 3: X >= 0 and Y < 0
-				
+
 				Duty Cycle:
 				B: 		|v010| = X;
 				invA:	|v011| = -Y;
-				
+
 				SVPWM:
 				A -> Min, B -> Max, C -> Mid
 				z0 = (1 - (X + Y))/2
@@ -139,11 +139,11 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 		{
 			/*
 				Sector 4: X < 0 and Z >= 0
-			
+
 				Duty Cycle:
 				invA: 	|v011| = Z;
 				C:		|v001| = -X;
-			
+
 				SVPWM:
 				A -> Min, B -> Mid, C -> Max
 				z0 = (1 - (-X - Z))/2
@@ -200,6 +200,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 		}
 	}
 
+//remove
 	*p_dutyA = qfrac16_sat(*p_dutyA);
 	*p_dutyB = qfrac16_sat(*p_dutyB);
 	*p_dutyC = qfrac16_sat(*p_dutyC);

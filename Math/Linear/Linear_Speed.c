@@ -30,35 +30,19 @@
 /******************************************************************************/
 #include "Linear_Speed.h"
 
-static inline uint32_t speed_a16torpm(uint32_t angle16, uint32_t sampleFreq)
+static inline uint32_t speed_angle16torpm(uint32_t angle16, uint32_t sampleFreq)
 {
 	uint32_t rpm;
-
-	if(angle16 < (UINT32_MAX / sampleFreq * 60U))
-	{
-		rpm = (angle16 * sampleFreq * 60U >> 16U);
-	}
-	else
-	{
-		rpm = (angle16 * sampleFreq >> 16U) * 60U;
-	}
-
+	if(angle16 < (UINT32_MAX / sampleFreq * 60U)) 	{ rpm = (angle16 * sampleFreq * 60U >> 16U); }
+	else 											{ rpm = (angle16 * sampleFreq >> 16U) * 60U; }
 	return rpm;
 }
 
-static inline uint32_t speed_rpmtoa16(uint32_t rpm, uint32_t sampleFreq)
+static inline uint32_t speed_rpmtoangle16(uint32_t rpm, uint32_t sampleFreq)
 {
 	uint32_t angle;
-
-	if(rpm < (UINT32_MAX >> 16U))
-	{
-		angle = (rpm << 16U) / (60U * sampleFreq);
-	}
-	else
-	{
-		angle = (1U << 16U) / 60U * rpm / sampleFreq;
-	}
-
+	if(rpm < (UINT32_MAX >> 16U)) 	{ angle = (rpm << 16U) / (60U * sampleFreq); }
+	else 							{ angle = (1U << 16U) / 60U * rpm / sampleFreq; }
 	return angle;
 }
 

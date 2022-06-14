@@ -78,16 +78,18 @@ void MotorController_Init(MotorController_T * p_mc)
 	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_Adcu, p_mc->Parameters.BatteryFull_Adcu, 1000U);
 
 	/*
-		Shutdown_Adcu = 2176U, => ILimitScalarOnHeat_Frac16
+		Shutdown_Adcu = 2176U, => ILimitHeat_Frac16
 		Warning_Adcu = 2800U,  => 65535
 		slope = 860,343
 		Heat_Adcu Lower is higher heat
 	*/
 	Linear_Init_Map
 	(
-		&p_mc->HeatILimitRate,
-		p_mc->ThermistorMosfetsTop.Params.Shutdown_Adcu,	p_mc->Parameters.ILimitScalarOnHeat_Frac16,
-		p_mc->ThermistorMosfetsTop.Params.Warning_Adcu,		65535U
+		&p_mc->ILimitHeatRate,
+		p_mc->ThermistorMosfetsTop.Params.Shutdown_Adcu,
+		p_mc->ThermistorMosfetsTop.Params.Warning_Adcu,
+		p_mc->Parameters.ILimitHeat_Frac16,
+		65535U
 	);
 
 	p_mc->MainDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
