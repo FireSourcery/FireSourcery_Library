@@ -251,7 +251,6 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	uint16_t IaRefZero_Adcu;
 	uint16_t IbRefZero_Adcu;
 	uint16_t IcRefZero_Adcu;
-
 	// uint16_t IaRefMax_Adcu;
 	// uint16_t IbRefMax_Adcu;
 	// uint16_t IcRefMax_Adcu;
@@ -464,7 +463,7 @@ static inline void Motor_SetRamp(Motor_T * p_motor, int32_t userCmd)
 
 static inline void Motor_ResetRamp(Motor_T * p_motor)
 {
-	p_motor->RampCmd = 0U;
+	p_motor->RampCmd = 0;
 	//	p_motor->RampIndex = 0U;
 	Linear_Ramp_SetTarget(&p_motor->Ramp, 0);
 }
@@ -487,7 +486,7 @@ static inline void Motor_SetRampOutput(Motor_T * p_motor, int32_t matchOutput)
 static inline void Motor_SetSpeedOutput(Motor_T * p_motor, int32_t speedControlMatch)
 {
 	Motor_SetRampOutput(p_motor, p_motor->SpeedFeedback_Frac16 / 2U); 	/* RampOut/PidIn always use SpeedFeedback */
-	PID_SetIntegral(&p_motor->PidSpeed, speedControlMatch);  		/* SpeedControl may be V or I */
+	PID_SetIntegral(&p_motor->PidSpeed, speedControlMatch);  			/* SpeedControl may be V or I */
 	p_motor->SpeedControl = speedControlMatch;
 }
 
@@ -552,10 +551,10 @@ static inline void Motor_SetFeedbackModeFlags(Motor_T * p_motor, Motor_FeedbackM
 	Common Sets
 */
 /******************************************************************************/
-static inline int32_t Motor_ConvertToSpeedFrac16(Motor_T * p_motor, int32_t speed_rpm) { return speed_rpm * 65535 / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
-static inline int16_t Motor_ConvertToSpeedRpm(Motor_T * p_motor, int32_t speed_frac16) { return speed_frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / 65536; }
-static inline int32_t Motor_ConvertToIFrac16(Motor_T * p_motor, int32_t i_amp) { return i_amp * 65535 / p_motor->CONFIG.I_MAX_AMP; }
-static inline int16_t Motor_ConvertToIAmp(Motor_T * p_motor, int32_t i_frac16) { return i_frac16 * p_motor->CONFIG.I_MAX_AMP / 65536; }
+static inline int32_t Motor_ConvertToSpeedFrac16(Motor_T * p_motor, int32_t speed_rpm) 	{ return speed_rpm * 65535 / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
+static inline int16_t Motor_ConvertToSpeedRpm(Motor_T * p_motor, int32_t speed_frac16) 	{ return speed_frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / 65536; }
+static inline int32_t Motor_ConvertToIFrac16(Motor_T * p_motor, int32_t i_amp) 			{ return i_amp * 65535 / p_motor->CONFIG.I_MAX_AMP; }
+static inline int16_t Motor_ConvertToIAmp(Motor_T * p_motor, int32_t i_frac16) 			{ return i_frac16 * p_motor->CONFIG.I_MAX_AMP / 65536; }
 
 static inline void Motor_ResetSpeedLimits(Motor_T * p_motor)
 {
