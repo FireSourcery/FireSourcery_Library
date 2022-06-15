@@ -87,7 +87,6 @@ static inline void Motor_FOC_CaptureIc(Motor_T * p_motor)
 	@{
 */
 /******************************************************************************/
-
 static inline int32_t _Motor_FOC_CaptureAngleSpeed(Motor_T * p_motor, qangle16_t speedAngle)
 {
 	int32_t speedDelta = speedAngle - p_motor->SpeedAngle; /* loops if no overflow past 1 full cycle */
@@ -146,6 +145,8 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 				Encoder_DeltaT_Capture(&p_motor->Encoder);
 				Encoder_DeltaT_CaptureExtendedTimer(&p_motor->Encoder);
 				p_motor->HallAngle = (qangle16_t)Hall_GetRotorAngle_Degrees16(&p_motor->Hall);
+				electricalAngle = p_motor->HallAngle;
+				p_motor->InterpolatedAngleIndex = 1U;
 
 				if(Hall_GetSensorsId(&p_motor->Hall) == 1U)
 				{
@@ -155,9 +156,6 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 					p_motor->IPhasePeak_Adcu = p_motor->IPhasePeakTemp_Adcu;
 					p_motor->IPhasePeakTemp_Adcu = 0U;
 				}
-
-				electricalAngle = p_motor->HallAngle;
-				p_motor->InterpolatedAngleIndex = 1U;
 			}
 			else
 			{
@@ -213,13 +211,13 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 	qfrac16_t vqReqOut;
 
 	/* VoltageModeILimit_QFracS16 set to torque direction. Alternatively, use limits stored in SpeedPid  */
-	// if		(p_motor->VoltageModeILimit_QFracS16 > 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) > p_motor->VoltageModeILimit_QFracS16); }
-	// else if	(p_motor->VoltageModeILimit_QFracS16 < 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) < p_motor->VoltageModeILimit_QFracS16); }
-	// else 												{ isOverLimit = false; } /* should not occur */
-
-	if		(p_motor->VoltageModeILimit_QFracS16 > 0) 	{ isOverLimit = (FOC_GetIMagnitude(&p_motor->Foc) > p_motor->VoltageModeILimit_QFracS16); }
-	else if	(p_motor->VoltageModeILimit_QFracS16 < 0) 	{ isOverLimit = (FOC_GetIMagnitude(&p_motor->Foc) > 0 - p_motor->VoltageModeILimit_QFracS16); }
+	if		(p_motor->VoltageModeILimit_QFracS16 > 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) > p_motor->VoltageModeILimit_QFracS16); }
+	else if	(p_motor->VoltageModeILimit_QFracS16 < 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) < p_motor->VoltageModeILimit_QFracS16); }
 	else 												{ isOverLimit = false; } /* should not occur */
+
+	// if		(p_motor->VoltageModeILimit_QFracS16 > 0) 	{ isOverLimit = (FOC_GetIMagnitude(&p_motor->Foc) > p_motor->VoltageModeILimit_QFracS16); }
+	// else if	(p_motor->VoltageModeILimit_QFracS16 < 0) 	{ isOverLimit = (FOC_GetIMagnitude(&p_motor->Foc) > 0 - p_motor->VoltageModeILimit_QFracS16); }
+	// else 												{ isOverLimit = false; } /* should not occur */
 
 	if((isOverLimit == true) && (p_motor->RunStateFlags.VoltageModeILimitActive == false))
 	{
@@ -338,8 +336,8 @@ static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 */
 static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
+	//todo analog cmd start
 	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-	// 	//todo analog cmd start begin loop
 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
 #if defined(CONFIG_MOTOR_I_SENSORS_ABC) && !defined(CONFIG_MOTOR_I_SENSORS_AB)
@@ -366,8 +364,8 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 
 	// if(p_motor->RunStateFlags.Hold == 0U)
 	{
-		_Motor_FOC_ProcFeedbackLoop(p_motor);
-		_Motor_FOC_ActivateAngle(p_motor);
+	_Motor_FOC_ProcFeedbackLoop(p_motor);
+	_Motor_FOC_ActivateAngle(p_motor);
 	}
 
 	/* ~37us */ // p_motor->DebugTime[4] = SysTime_GetMicros() - p_motor->MicrosRef;

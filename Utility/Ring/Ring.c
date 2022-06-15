@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "Ring.h"
 
-#if defined(CONFIG_RING_CRITICAL_LIBRARY_DEFINED)
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
 #include "System/Critical/Critical.h"
 #endif
 
@@ -44,26 +44,45 @@
 
 /******************************************************************************/
 /*!
-	Critical handled by module. set if not handled by outer module
+	Optionally implement Critical at Buffer isntace level.
 */
 /******************************************************************************/
 static inline void EnterCritical(void)
 {
-#if defined(CONFIG_RING_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_RING_CRITICAL_EXTERN_DEFINED)
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
 	if(p_queue.CONFIG.USE_CRITICAL == true) { Critical_Enter(); }
 #endif
 }
 
 static inline void ExitCritical(void)
 {
-#if defined(CONFIG_RING_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_RING_CRITICAL_EXTERN_DEFINED)
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
 	if(p_queue.CONFIG.USE_CRITICAL == true) { Critical_Exit(); }
+#endif
+}
+
+static inline bool AcquireMutex(Ring_T * p_queue)
+{
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
+	return (p_queue.CONFIG.USE_CRITICAL == true) ? Critical_AcquireMutex(&p_queue->Mutex) : true;
+#else
+	(void)p_queue;
+	return true;
+#endif
+}
+
+static inline void ReleaseMutex(Ring_T * p_queue)
+{
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
+	if(p_queue.CONFIG.USE_CRITICAL == true) { Critical_ReleaseMutex(&p_queue->Mutex) };
+#else
+	(void)p_queue;
 #endif
 }
 
 static inline bool AcquireCritical(Ring_T * p_queue)
 {
-#if defined(CONFIG_RING_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_RING_CRITICAL_EXTERN_DEFINED)
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
 	return (p_queue.CONFIG.USE_CRITICAL == true) ? Critical_AcquireEnter(&p_queue->Mutex) : true;
 #else
 	(void)p_queue;
@@ -73,7 +92,7 @@ static inline bool AcquireCritical(Ring_T * p_queue)
 
 static inline void ReleaseCritical(Ring_T * p_queue)
 {
-#if defined(CONFIG_RING_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_RING_CRITICAL_EXTERN_DEFINED)
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
 	if(p_queue.CONFIG.USE_CRITICAL == true) { Critical_ReleaseExit(&p_queue->Mutex) };
 #else
 	(void)p_queue;
@@ -174,13 +193,14 @@ bool Ring_Dequeue(Ring_T * p_queue, void * p_dest)
 bool Ring_EnqueueN(Ring_T * p_queue, const void * p_units, size_t nUnits)
 {
 	bool isSuccess = false;
-	EnterCritical();
+	EnterCritical(); //if(AcquireCritical(p_queue) == true) {
 	if(nUnits <= Ring_GetEmptyCount(p_queue))
 	{
 		for(size_t iUnit = 0U; iUnit < nUnits; iUnit++) { Enqueue(p_queue, p_units + (iUnit * p_queue->CONFIG.UNIT_SIZE)); }
 		isSuccess = true;
 	}
 	ExitCritical();
+	// ReleaseCritical(p_queue); }
 	return isSuccess;
 }
 
@@ -324,7 +344,7 @@ bool Ring_Seek(Ring_T * p_queue, void * p_dest, size_t index)
 }
 
 /*
-	single threaded use only, buffer may be overwritten
+	single threaded use only, buffer may be overwritten, alternatively use mutex
 	result in return value, pointer 0 indicate invalid
 */
 void * Ring_PeekPtrFront(Ring_T * p_queue) 					{ return (Ring_GetIsEmpty(p_queue) == false) ? GetPtrFront(p_queue) : 0U; }
@@ -339,7 +359,7 @@ uint8_t * Ring_AcquireBuffer(Ring_T * p_queue)
 {
 	uint8_t * p_buffer = 0U;
 
-	if(AcquireCritical(p_queue) == true)
+	if(AcquireMutex(p_queue) == true)
 	{
 		Ring_Clear(p_queue);
 		p_buffer = p_queue->CONFIG.P_BUFFER;
@@ -351,5 +371,5 @@ uint8_t * Ring_AcquireBuffer(Ring_T * p_queue)
 void Ring_ReleaseBuffer(Ring_T * p_queue, size_t writeSize)
 {
 	p_queue->Head = writeSize;
-	ReleaseCritical(p_queue);
+	ReleaseMutex(p_queue);
 }

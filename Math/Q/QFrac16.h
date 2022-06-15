@@ -43,8 +43,8 @@ typedef int16_t qangle16_t; 	/*!< [-pi, pi) signed or [0, 2pi) unsigned, angle l
 #define SINE_90_TABLE_LSB 		(6U)	/*!< Insignificant bits, shifted away*/
 extern const qfrac16_t QFRAC16_SINE_90_TABLE[SINE_90_TABLE_ENTRIES];	/*! Resolution: 1024 steps per revolution */
 
-static const qfrac16_t QFRAC16_MAX = 0x7FFF; /*!< (32767) */
-static const qfrac16_t QFRAC16_MIN = (int16_t)0x8000; /*!< (-32768) */
+static const qfrac16_t QFRAC16_MAX = INT16_MAX; /*!< (32767) */
+static const qfrac16_t QFRAC16_MIN = INT16_MIN; /*!< (-32768) */
 
 static const qfrac16_t QFRAC16_1_DIV_2 = 0x4000; /*!< 16384 */
 static const qfrac16_t QFRAC16_1_DIV_4 = 0x2000;
@@ -57,11 +57,11 @@ static const qfrac16_t QFRAC16_SQRT3_DIV_4 = 0x376D;
 static const qfrac16_t QFRAC16_SQRT2_DIV_2 = 0x5A82;
 static const qfrac16_t QFRAC16_PI_DIV_4 = 0x6487;
 
-static const int32_t QFRAC16_1_OVERSAT = (int32_t)0x00008000; /*!< (32768) */
-static const int32_t QFRAC16_PI = (int32_t)0x0001921F;			/* Oversaturated */
-static const int32_t QFRAC16_3PI_DIV_4 = (int32_t)0x00012D97; 	/* Oversaturated */
+static const int32_t QFRAC16_1_OVERSAT 	= (int32_t)0x00008000; /*!< (32768) */
+static const int32_t QFRAC16_PI 		= (int32_t)0x0001921F; /* Oversaturated */
+static const int32_t QFRAC16_3PI_DIV_4 	= (int32_t)0x00012D97; /* Oversaturated */
 
-static const qangle16_t QANGLE16_0 = 0; 		/*!  */
+static const qangle16_t QANGLE16_0 = 0; 		/*! 0 */
 static const qangle16_t QANGLE16_90 = 0x4000; 	/*! 16384 */
 static const qangle16_t QANGLE16_120 = 0x5555;	/*! 21845 */
 static const qangle16_t QANGLE16_180 = 0x8000;	/*! 32768, -32768, 180 == -180 */
@@ -76,11 +76,9 @@ static inline qfrac16_t qfrac16_convert(int16_t num, int32_t max) { return qfrac
 static inline qfrac16_t qfrac16_sat(int32_t qfrac)
 {
 	qfrac16_t sat;
-
 	if		(qfrac > (int32_t)QFRAC16_MAX) 	{ sat = QFRAC16_MAX; }
 	else if	(qfrac < (int32_t)QFRAC16_MIN) 	{ sat = QFRAC16_MIN; }
 	else 									{ sat = (qfrac16_t)qfrac; }
-
 	return sat;
 }
 
@@ -137,14 +135,9 @@ static inline qfrac16_t qfrac16_div_sat(int16_t dividend, int32_t divisor)
 
 static inline qfrac16_t qfrac16_abs(qfrac16_t x)
 {
-	qfrac16_t val = x;
-
-	if(val < 0)
-	{
-		if(val == -32768) 	{ val = 32767; }
-		else 				{ val = -val; }
-	}
-
+	qfrac16_t val;
+	if(x < 0) 	{ val = (x == -32768) ? 32767 : 0 - x; }
+	else 		{ val = x; }
 	return val;
 }
 
@@ -183,30 +176,34 @@ static inline qfrac16_t cos90(qangle16_t theta)
 */
 static inline qfrac16_t qfrac16_sin(qangle16_t theta)
 {
+	qfrac16_t sine;
 	if((uint16_t)theta < (uint16_t)QANGLE16_180)
 	{
-		if((uint16_t)theta < (uint16_t)QANGLE16_90)		return sin90(theta);
-		else											return sin90(QANGLE16_180 - 1 - theta);
+		if((uint16_t)theta < (uint16_t)QANGLE16_90)		{ sine = sin90(theta); }
+		else											{ sine = sin90(QANGLE16_180 - 1 - theta); }
 	}
 	else
 	{
-		if((uint16_t)theta < (uint16_t)QANGLE16_270) 	return (0 - sin90(theta));
-		else											return (0 - sin90(QANGLE16_180 - 1 - theta));
+		if((uint16_t)theta < (uint16_t)QANGLE16_270) 	{ sine = 0 - sin90(theta); }
+		else											{ sine = 0 - sin90(QANGLE16_180 - 1 - theta); }
 	}
+	return sine;
 }
 
 static inline qfrac16_t qfrac16_cos(qangle16_t theta)
 {
+	qfrac16_t cosine;
 	if((uint16_t)theta < (uint16_t)QANGLE16_180)
 	{
-		if((uint16_t)theta < (uint16_t)QANGLE16_90)		return sin90(QANGLE16_180 - 1 - theta);
-		else											return (0 - sin90(theta));
+		if((uint16_t)theta < (uint16_t)QANGLE16_90)		{ cosine = sin90(QANGLE16_180 - 1 - theta); }
+		else											{ cosine = 0 - sin90(theta); }
 	}
 	else
 	{
-		if((uint16_t)theta < (uint16_t)QANGLE16_270) 	return (0 - sin90(QANGLE16_180 - 1 - theta));
-		else											return sin90(theta);
+		if((uint16_t)theta < (uint16_t)QANGLE16_270) 	{ cosine = 0 - sin90(QANGLE16_180 - 1 - theta); }
+		else											{ cosine = sin90(theta); }
 	}
+	return cosine;
 }
 
 static inline void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16_t theta)

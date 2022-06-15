@@ -44,9 +44,9 @@
 			reuse procedure inv functions, + supplement inv frac16 functions
 */
 /******************************************************************************/
-
 /*
 
+	x0 = 0
 */
 void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
 {
@@ -55,6 +55,7 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 	/* if factor > divisor, bound with yref. */
 	p_linear->YReference = yRef;
 	p_linear->XReference = linear_invf(factor, divisor, y0, yRef); /* yRef*divisor/factor */
+	//else ensure invfunctino does not overflow
 
 	//todo determine max shift if factor > 65536
 	p_linear->Slope = (factor << 14U) / divisor;
@@ -96,6 +97,21 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 #endif
 }
 
+// void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t xRef)
+// {
+
+// }
+
+// void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t y0, int32_t yRef)
+// {
+
+// }
+
+// void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t y0, int32_t xRef)
+// {
+
+// }
+
 /*
 	Map [x0:xRef] to [y0:yRef]. Interpolate from (x0, y0) to (xRef, yRef).
 	Derive slope
@@ -121,31 +137,71 @@ void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 	Protected
 */
 /******************************************************************************/
-uint16_t _Linear_SatUnsigned16(int32_t frac16)
+int32_t _Linear_Sat(int32_t min, int32_t max, int32_t value)
 {
-	uint16_t fracU16;
-	if		(frac16 < 0) 			{ fracU16 = 0U; }
-	else if	(frac16 > UINT16_MAX) 	{ fracU16 = UINT16_MAX; }
-	else 							{ fracU16 = (uint16_t)frac16; }
-	return fracU16;
+	int32_t saturated;
+	if		(value > max) 	{ saturated = max; }
+	else if	(value < min) 	{ saturated = min; }
+	else 					{ saturated = (int16_t)value; }
+	return saturated;
 }
 
-uint16_t _Linear_SatUnsigned16_Abs(int32_t frac16)
+
+/******************************************************************************/
+/*!
+	bound user input
+*/
+/******************************************************************************/
+/* Saturating input implicitly saturates out and avoids overflow */
+int32_t Linear_Function_Sat(const Linear_T * p_linear, int32_t x)
 {
-	uint16_t fracU16;
-	if		(frac16 < 0) 			{ fracU16 = (uint16_t)(0 - frac16); }
-	else if	(frac16 > UINT16_MAX) 	{ fracU16 = UINT16_MAX; }
-	else 							{ fracU16 = (uint16_t)frac16; }
-	return fracU16;
+	int32_t xSaturated = _Linear_Sat(0 - p_linear->XReference, p_linear->XReference, x);
+	return Linear_Function(p_linear, xSaturated);
 }
 
-int16_t _Linear_SatSigned16(int32_t frac16)
+int32_t Linear_InvFunction_Sat(const Linear_T * p_linear, int32_t y)
 {
-	int16_t fracS16;
-	if		(frac16 > INT16_MAX) 	{ fracS16 = INT16_MAX; }
-	else if	(frac16 < INT16_MIN) 	{ fracS16 = INT16_MIN; }
-	else 							{ fracS16 = (int16_t)frac16; }
-	return fracS16;
+	int32_t ySaturated = _Linear_Sat(0 - p_linear->YReference, p_linear->YReference, y);
+	return Linear_InvFunction(p_linear, ySaturated);
+}
+
+/******************************************************************************/
+/*!
+	Scalar
+*/
+/******************************************************************************/
+/* scalar may be compile time constant, can compiler unroll loop to optimize? */
+int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
+{
+	int32_t factor = x * p_linear->Slope;
+	int32_t result = 0U;
+
+	/*
+		Loop N = Log_[Divisor*=](scalar)
+		scalar 1000
+			[Divisor*=] == 10 => 4
+			[Divisor*=] == 2 => 10
+	*/
+	for(uint16_t iDivisor = 1U; scalar >= iDivisor; iDivisor *= 4U) 	/* scalar / iDivisor > 0U */
+	{
+		if(factor < INT32_MAX / scalar * iDivisor) /* (factor < INT32_MAX / (scalar / iDivisor)) */
+		{
+			result = Linear_Function(p_linear, x * scalar / iDivisor) * iDivisor;
+			break;
+		}
+	}
+
+	if(result == 0) { result = Linear_Function(p_linear, x) * scalar; }
+
+	return result;
+}
+
+int32_t Linear_InvFunction_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar)
+{
+	(void)p_linear;
+	(void)y;
+	(void)scalar;
+	return 0; //todo
 }
 
 /******************************************************************************/
@@ -189,46 +245,3 @@ int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_linear, int16_t y
 {
 	return Linear_InvFunction_Frac16(p_linear, (int32_t)y_fracS16 * 2);
 }
-
-
-/******************************************************************************/
-/*!
-	Scalar
-*/
-/******************************************************************************/
-/* scalar may be compile time constant, can compiler unroll loop to optimize? */
-int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
-{
-	int32_t factor = x * p_linear->Slope;
-	int32_t result = 0U;
-
-	/*
-		Loop N = Log_[Divisor*=](scalar)
-		scalar 1000
-			[Divisor*=] == 10 => 4
-			[Divisor*=] == 2 => 10
-	*/
-	for(uint16_t iDivisor = 1U; scalar >= iDivisor; iDivisor *= 4U) 	/* scalar / iDivisor > 0U */
-	{
-		if(factor < INT32_MAX / scalar * iDivisor) /* (factor < INT32_MAX / (scalar / iDivisor)) */
-		{
-			result = Linear_Function(p_linear, x * scalar / iDivisor) * iDivisor;
-			break;
-		}
-	}
-
-	if(result == 0) { result = Linear_Function(p_linear, x) * scalar; }
-
-	return result;
-}
-
-int32_t Linear_InvFunction_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar)
-{
-	(void)p_linear;
-	(void)y;
-	(void)scalar;
-	return 0; //todo
-}
-
-
-

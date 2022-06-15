@@ -100,16 +100,13 @@ static inline void FOC_SetVector(FOC_T * p_foc, qangle16_t theta) { qfrac16_vect
 static inline void FOC_SetIa(FOC_T * p_foc, qfrac16_t ia) { p_foc->Ia = ia; }
 static inline void FOC_SetIb(FOC_T * p_foc, qfrac16_t ib) { p_foc->Ib = ib; }
 static inline void FOC_SetIc(FOC_T * p_foc, qfrac16_t ic) { p_foc->Ic = ic; }
-// static inline void FOC_SetVReq(FOC_T * p_foc, qfrac16_t vq, qfrac16_t vd) { p_foc->Vq = vq; p_foc->Vd = vd; }
 static inline void FOC_SetVd(FOC_T * p_foc, qfrac16_t vd) { p_foc->Vd = vd; }
 static inline void FOC_SetVq(FOC_T * p_foc, qfrac16_t vq) { p_foc->Vq = vq; }
-
 static inline uint16_t FOC_GetDutyA(FOC_T * p_foc) { return p_foc->DutyA; }
 static inline uint16_t FOC_GetDutyB(FOC_T * p_foc) { return p_foc->DutyB; }
 static inline uint16_t FOC_GetDutyC(FOC_T * p_foc) { return p_foc->DutyC; }
 static inline qfrac16_t FOC_GetId(FOC_T * p_foc) { return p_foc->Id; }
 static inline qfrac16_t FOC_GetIq(FOC_T * p_foc) { return p_foc->Iq; }
-
 static inline qfrac16_t FOC_GetVd(FOC_T * p_foc) { return p_foc->Vd; }
 static inline qfrac16_t FOC_GetVq(FOC_T * p_foc) { return p_foc->Vq; }
 static inline qfrac16_t FOC_GetIa(FOC_T * p_foc) { return p_foc->Ia; }
@@ -117,15 +114,11 @@ static inline qfrac16_t FOC_GetIb(FOC_T * p_foc) { return p_foc->Ib; }
 static inline qfrac16_t FOC_GetIc(FOC_T * p_foc) { return p_foc->Ic; }
 static inline qfrac16_t FOC_GetIalpha(FOC_T * p_foc) { return p_foc->Ialpha; }
 static inline qfrac16_t FOC_GetIbeta(FOC_T * p_foc) { return p_foc->Ibeta; }
-
-static inline uint16_t FOC_GetIMagnitude(FOC_T * p_foc)
-{
-	return q_sqrt(((int32_t)p_foc->Id * p_foc->Id) + ((int32_t)p_foc->Iq * p_foc->Iq));
-}
+static inline uint16_t FOC_GetIMagnitude(FOC_T * p_foc) { return q_sqrt(((int32_t)p_foc->Id * p_foc->Id) + ((int32_t)p_foc->Iq * p_foc->Iq)); }
 
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
 extern void FOC_Zero(FOC_T * p_foc);
-extern void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax);
+// extern void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax);
 
 #endif

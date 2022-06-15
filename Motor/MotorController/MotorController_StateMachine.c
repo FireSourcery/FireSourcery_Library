@@ -40,6 +40,8 @@ static const StateMachine_State_T STATE_INIT;
 static const StateMachine_State_T STATE_STOP;
 static const StateMachine_State_T STATE_RUN;
 // static const StateMachine_State_T STATE_NEUTRAL;
+// static const StateMachine_State_T STATE_BRAKING;
+// static const StateMachine_State_T STATE_MOTORTING;
 static const StateMachine_State_T STATE_FAULT;
 
 /******************************************************************************/
@@ -122,6 +124,11 @@ static void Init_Entry(MotorController_T * p_mc)
 	Blinky_Blink(&p_mc->Buzzer, 200U);
 }
 
+static void Init_Exit(MotorController_T * p_mc)
+{
+	p_mc->FaultFlags.State = 0U; /* Clear initial ADC readings */
+}
+
 static void Init_Proc(MotorController_T * p_mc)
 {
 	(void)p_mc;
@@ -136,7 +143,8 @@ static const StateMachine_State_T STATE_INIT =
 {
 	.ID 					= MCSM_STATE_ID_INIT,
 	.P_TRANSITION_TABLE 	= &INIT_TRANSITION_TABLE[0U],
-	.ON_ENTRY 				= (StateMachine_Output_T)Init_Entry,
+	.ENTRY 					= (StateMachine_Output_T)Init_Entry,
+	.EXIT 					= (StateMachine_Output_T)Init_Exit,
 	.OUTPUT 				= (StateMachine_Output_T)Init_Proc,
 };
 
@@ -247,7 +255,7 @@ static const StateMachine_State_T STATE_STOP =
 {
 	.ID 					= MCSM_STATE_ID_STOP,
 	.P_TRANSITION_TABLE 	= &STOP_TRANSITION_TABLE[0U],
-	.ON_ENTRY 				= (StateMachine_Output_T)Stop_Entry,
+	.ENTRY 				= (StateMachine_Output_T)Stop_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Stop_Proc,
 };
 
@@ -398,7 +406,7 @@ static const StateMachine_State_T STATE_RUN =
 {
 	.ID 					= MCSM_STATE_ID_RUN,
 	.P_TRANSITION_TABLE 	= &RUN_TRANSITION_TABLE[0U],
-	.ON_ENTRY 				= (StateMachine_Output_T)Run_Entry,
+	.ENTRY 				= (StateMachine_Output_T)Run_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Run_Proc,
 };
 
@@ -475,7 +483,7 @@ static const StateMachine_State_T STATE_RUN =
 //static const StateMachine_State_T STATE_NEUTRAL =
 //{
 //	.P_TRANSITION_TABLE 	= &NEUTRAL_TRANSITION_TABLE[0U],
-//	.ON_ENTRY 				= (StateMachine_Output_T)Neutral_Entry,
+//	.ENTRY 				= (StateMachine_Output_T)Neutral_Entry,
 //	.OUTPUT 				= (StateMachine_Output_T)Neutral_Proc,
 //};
 
@@ -489,7 +497,7 @@ static const StateMachine_State_T STATE_RUN =
 /* Sensor faults only clear on user input */
 static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc)
 {
-	p_mc->FaultFlags.Motors 				= (Motor_UserN_ClearFault(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT) == false);
+	p_mc->FaultFlags.Motors 				= (MotorController_ClearFaultMotorAll(p_mc) == false);
 	p_mc->FaultFlags.VSenseLimit 			= VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense);
 	p_mc->FaultFlags.VAccLimit 				= VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc);
 	p_mc->FaultFlags.VPosLimit 				= VMonitor_GetIsStatusLimit(&p_mc->VMonitorPos);
@@ -546,6 +554,6 @@ static const StateMachine_State_T STATE_FAULT =
 {
 	.ID 					= MCSM_STATE_ID_FAULT,
 	.P_TRANSITION_TABLE 	= &FAULT_TRANSITION_TABLE[0U],
-	.ON_ENTRY 				= (StateMachine_Output_T)Fault_Entry,
+	.ENTRY 				= (StateMachine_Output_T)Fault_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Fault_Proc,
 };

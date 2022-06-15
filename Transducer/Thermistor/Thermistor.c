@@ -111,6 +111,7 @@ Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t capt
 	if(p_therm->Params.IsMonitorEnable == true)
 	{
 		p_therm->Adcu = (captureAdcu + p_therm->Adcu) / 2U;
+		// p_therm->Adcu = captureAdcu;
 		p_therm->ShutdownThreshold = PollThreshold(p_therm->ShutdownThreshold, p_therm->Params.Shutdown_Adcu, p_therm->Params.ShutdownThreshold_Adcu, p_therm->Adcu);
 		p_therm->Status = (p_therm->ShutdownThreshold == THERMISTOR_THRESHOLD_OK) ? THERMISTOR_STATUS_OK : THERMISTOR_STATUS_SHUTDOWN;
 

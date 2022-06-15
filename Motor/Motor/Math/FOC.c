@@ -27,7 +27,7 @@
 	@version V0
 */
 /******************************************************************************/
-#include "FOC.h" 
+#include "FOC.h"
 
 void FOC_Init(FOC_T * p_foc)
 {
@@ -46,14 +46,14 @@ void FOC_Init(FOC_T * p_foc)
 	p_foc->Valpha = 0;
 	p_foc->Vbeta = 0;
 	p_foc->Sine = 0;
-	p_foc->Cosine = 0; 
+	p_foc->Cosine = 0;
 }
 
-void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax)
-{
-	p_foc->VectorMaxMagnitude = QFRAC16_MAX;
-	p_foc->VectorMaxD = dMax;
-}
+// void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax)
+// {
+// 	p_foc->VectorMaxMagnitude = QFRAC16_MAX;
+// 	p_foc->VectorMaxD = dMax;
+// }
 
 void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd)
 {

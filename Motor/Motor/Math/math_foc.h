@@ -194,20 +194,16 @@ static inline void foc_circlelimit_dmax(qfrac16_t * p_d, qfrac16_t * p_q, qfrac1
 	uint32_t qSquared = (int32_t)(*p_q) * (int32_t)(*p_q);
 	uint32_t dqSquared = dSquared + qSquared;
 	uint32_t qMaxSquared;
-	uint32_t qMax;
+	uint16_t qMax;
 
 	if(dqSquared > vectorMaxSquared)
 	{
 		if(qfrac16_abs(*p_d) > dMax)
 		{
 			*p_d = (*p_d < 0) ? 0 - dMax : dMax;
-			qMaxSquared = vectorMaxSquared - (dMax * dMax);
+			dSquared = dMax * dMax;
 		}
-		else
-		{
-			qMaxSquared = vectorMaxSquared - dSquared;
-		}
-
+		qMaxSquared = vectorMaxSquared - dSquared;
 		qMax = q_sqrt(qMaxSquared);
 		*p_q = (*p_q < 0) ? 0 - qMax : qMax;
 	}

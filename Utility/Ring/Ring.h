@@ -45,7 +45,7 @@ typedef const struct Ring_Config_Tag
 #if defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
 	const uint32_t POW2_MASK;
 #endif
-#if defined(CONFIG_RING_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_RING_CRITICAL_EXTERN_DEFINED)
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
 	const bool USE_CRITICAL;
 #endif
 }
@@ -63,7 +63,7 @@ typedef struct Ring_Tag
 	const Ring_Config_T CONFIG;
 	volatile size_t Head;	/* Write to head  */
 	volatile size_t Tail;	/* Read from tail */
-#if defined(CONFIG_RING_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_RING_CRITICAL_EXTERN_DEFINED)
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
 	volatile critical_mutext_t Mutex;
 #endif
 }
@@ -75,7 +75,7 @@ Ring_T;
 #define _RING_INIT_POW2(Pow2Mask)
 #endif
 
-#if defined(CONFIG_RING_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_RING_CRITICAL_EXTERN_DEFINED)
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
 #define _RING_INIT_CRITICAL(UseCritical) .USE_CRITICAL = UseCritical,
 #else
 #define _RING_INIT_CRITICAL(UseCritical)
@@ -92,6 +92,9 @@ Ring_T;
 		_RING_INIT_CRITICAL(UseCritical)						\
 	},															\
 }
+
+// #define RING_INIT(p_Buffer, Length, UnitSize)
+// #define RING_INIT_MULTITHREADED(p_Buffer, Length, UnitSize, UseCritical)
 
 static inline size_t _Ring_CalcIndexMasked(const Ring_T * p_queue, size_t index)
 {

@@ -33,7 +33,12 @@
 
 #include "Linear.h"
 
-/*! @return q1.16 */
+
+
+/*!
+	65535 => 1.0f
+	@return q1.16 [-65536*2:65535*2]
+*/
 static inline int32_t Linear_Frac16(const Linear_T * p_linear, int32_t x)
 {
 	return linear_m16_f16(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, p_linear->YOffset, x);
@@ -51,6 +56,7 @@ static inline int32_t Linear_Frac16_Units(const Linear_T * p_linear, int32_t x)
 	return linear_m16_f(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, x);
 }
 
+/* Division limited to this function only */
 static inline int32_t Linear_Frac16_InvUnits(const Linear_T * p_linear, int32_t y)
 {
 	return linear_m16_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, p_linear->YOffset, p_linear->YReference, y);
@@ -65,6 +71,13 @@ static inline int32_t Linear_Frac16_Units_Scalar(const Linear_T * p_linear, int3
 	return 0U; //todo
 }
 
+
+/******************************************************************************/
+/*!
+	Saturate to uint16_t, q0.16 [0:65535]
+	65535 => 1.0f
+*/
+/******************************************************************************/
 static inline uint16_t Linear_Frac16_Unsigned(const Linear_T * p_linear, int32_t x)
 {
 	return _Linear_SatUnsigned16(Linear_Frac16(p_linear, x));
@@ -80,6 +93,12 @@ static inline int32_t Linear_Frac16_InvUnsigned(const Linear_T * p_linear, uint1
 	return Linear_Frac16_Inv(p_linear, y_fracU16);
 }
 
+/******************************************************************************/
+/*!
+	Convert and Saturate to int16_t, q1.15 [-32768:32767]
+	32767 => 1.0f
+*/
+/******************************************************************************/
 static inline int16_t Linear_Frac16_Signed(const Linear_T * p_linear, int32_t x)
 {
 	return _Linear_SatSigned16(Linear_Frac16(p_linear, x) / 2);
@@ -90,7 +109,7 @@ static inline int32_t Linear_Frac16_InvSigned(const Linear_T * p_linear, int16_t
 	return Linear_Frac16_Inv(p_linear, (int32_t)y_fracS16 * 2);
 }
 
-extern void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef);
-extern void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, int32_t yRef);
+extern void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0_Frac16, int32_t yRef);
+extern void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0_Frac16, int32_t yRef);
 
 #endif

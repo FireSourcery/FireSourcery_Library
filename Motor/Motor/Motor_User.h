@@ -503,23 +503,4 @@ extern void Motor_User_SetDirectionCalibration(Motor_T * p_motor, Motor_Directio
 extern void Motor_User_SetPolePairs(Motor_T * p_motor, uint8_t polePairs);
 extern void Motor_User_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode);
 
-extern bool Motor_UserN_CheckStop(Motor_T * p_motor, uint8_t motorCount);
-extern void Motor_UserN_DisableControl(Motor_T * p_motor, uint8_t motorCount);
-extern void Motor_UserN_Ground(Motor_T * p_motor, uint8_t motorCount);
-extern bool Motor_UserN_SetDirectionForward(Motor_T * p_motor, uint8_t motorCount);
-extern bool Motor_UserN_SetDirectionReverse(Motor_T * p_motor, uint8_t motorCount);
-
-extern bool Motor_UserN_CheckFault(Motor_T * p_motor, uint8_t motorCount);
-extern bool Motor_UserN_ClearFault(Motor_T * p_motor, uint8_t motorCount);
-extern void Motor_UserN_SetUserControlCmd(Motor_T * p_motor, uint8_t motorCount, int32_t cmd);
-extern void Motor_UserN_SetThrottleCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle);
-extern void Motor_UserN_SetBrakeCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t brake);
-// extern void Motor_UserN_SetVoltageBrakeCmd(Motor_T * p_motor, uint8_t motorCount);
-extern void Motor_UserN_SetRegenCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t brake);
-
-extern void Motor_UserN_SetSpeedLimitActive(Motor_T * p_motor, uint8_t motorCount, uint16_t limit_frac16);
-extern void Motor_UserN_ClearSpeedLimit(Motor_T * p_motor, uint8_t motorCount);
-extern bool Motor_UserN_SetILimitActive(Motor_T * p_motor, uint8_t motorCount, uint16_t limit_frac16, Motor_ILimitActiveId_T id);
-extern bool Motor_UserN_ClearILimit(Motor_T * p_motor, uint8_t motorCount, Motor_ILimitActiveId_T id);
-
 #endif

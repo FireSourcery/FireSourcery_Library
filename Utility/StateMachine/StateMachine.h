@@ -37,6 +37,7 @@
 #include <stdbool.h>
 
 struct StateMachine_State_Tag;
+#define STATE_MACHINE_INPUT_NULL (0xFFU)
 typedef uint8_t statemachine_input_t;	/* Input ID. Index into transition table. User may overwrite with enum */
 typedef uint8_t statemachine_state_t;	/* State ID. User may overwrite with enum */
 
@@ -56,34 +57,31 @@ typedef struct StateMachine_State_Tag * (* StateMachine_TransitionExt_T)(void * 
 
 /*!
 	user implement case switch calls _StateMachine_ProcStateTransition
-	return user status
+	@return user status
 */
-typedef bool (*StateMachine_TransitionFunction_T)(void * p_context, statemachine_input_t inputType, uint32_t inputExt);
+typedef bool (*StateMachine_TransitionFunction_T)(void * p_context, statemachine_input_t inputId, uint32_t inputExt);
 
-#define STATE_MACHINE_INPUT_NULL (0xFFU)
+/*
+	Array Implementation - 2D input table
+	Map allocates for all possible transitions/inputs for each state, valid and invalid
+	Allocates space for fault transition for invalid inputs
+	Array index is input, eliminates search, only space efficient when inputs are common across many states.
+	States belonging to the same state machine must have same size maps
 
+	Pointer to array of functions that return a pointer to the next state (No null pointer check, user must supply empty table)
+	Not accept input => define null pointer.
+	Nontransition (Output only / Mealy machine style outputs), does not proc entry function => function return 0
+	Selftransition, proc entry function => function return pointer to self
+*/
 typedef const struct StateMachine_State_Tag
 {
 	const statemachine_state_t ID;
-
-	/*
-		Array Implementation - 2D input table
-		Map allocates for all possible transitions/inputs for each state, valid and invalid
-		Allocates space for fault transition for invalid inputs
-		Array index is input, eliminates search, only space efficient when inputs are common across many states.
-		States belonging to the same state machine must have same size maps
-
-		Pointer to array of functions that return a pointer to the next state (No null pointer check, user must supply empty table)
-		Not accept input => define null pointer.
-		Nontransition (Output only / Mealy machine style outputs), does not proc entry function => function return 0
-		Selftransition, proc entry function => function return pointer to self
-	*/
 	const StateMachine_Transition_T * const P_TRANSITION_TABLE;
 	const StateMachine_TransitionExt_T * const P_TRANSITION_EXT_TABLE; 	/* extended inputs */
 	const StateMachine_TransitionFunction_T TRANSITION_FUNCTION;		/* Single function, user provide switch case */
 	const StateMachine_Output_T OUTPUT;		/* Synchronous output. Asynchronous case, proc on input only. No null pointer check, user must supply empty function */
-	const StateMachine_Output_T ON_ENTRY;	/* Common to all transition to current state, including self transition */
-
+	const StateMachine_Output_T ENTRY;		/* Common to all transition to current state, including self transition */
+	const StateMachine_Output_T EXIT; 		//todo
 #ifdef CONFIG_STATE_MACHINE_MENU_ENABLE
 	const struct StateMachine_State_Tag * P_NEXT_MENU;
 	const struct StateMachine_State_Tag * P_PREV_MENU;
@@ -102,7 +100,7 @@ typedef const struct StateMachine_Config_Tag
 {
 	const StateMachine_Machine_T * const P_MACHINE; 	/* Const definition of state transition behaviors */
 	void * const P_CONTEXT;								/* Mutable state information per state machine */
-#if defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
+#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
 	const bool USE_CRITICAL;
 #endif
 }
@@ -114,27 +112,26 @@ typedef struct StateMachine_Tag
 	const StateMachine_State_T * p_StateActive;
 	statemachine_input_t SyncInput;
 	uint32_t SyncInputExt;
-
-#if defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
+#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
 	volatile critical_mutex_t Mutex;
 #endif
 }
 StateMachine_T;
 
-#if defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
-#define _STATE_MACHINE_INIT_CRITICAL(IsMultithreaded) .USE_CRITICAL = IsMultithreaded,
+#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
+#define _STATE_MACHINE_INIT_CRITICAL(UseCritical) .USE_CRITICAL = UseCritical,
 #else
-#define _STATE_MACHINE_INIT_CRITICAL(IsMultithreaded)
+#define _STATE_MACHINE_INIT_CRITICAL(UseCritical)
 #endif
 
-#define STATE_MACHINE_INIT(p_Machine, p_Context, IsMultithreaded)	\
-{															\
-	.CONFIG = 												\
-	{														\
-		.P_MACHINE = p_Machine,								\
-		.P_CONTEXT = p_Context,								\
-		_STATE_MACHINE_INIT_CRITICAL(IsMultithreaded)		\
-	}														\
+#define STATE_MACHINE_INIT(p_Machine, p_Context, UseCritical)	\
+{																\
+	.CONFIG = 													\
+	{															\
+		.P_MACHINE = p_Machine,									\
+		.P_CONTEXT = p_Context,									\
+		_STATE_MACHINE_INIT_CRITICAL(UseCritical)				\
+	}															\
 }
 
 static inline statemachine_state_t StateMachine_GetActiveStateId(StateMachine_T * p_stateMachine) { return p_stateMachine->p_StateActive->ID; }
@@ -142,7 +139,6 @@ static inline statemachine_state_t StateMachine_GetActiveStateId(StateMachine_T 
 extern void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState);
 extern void StateMachine_Init(StateMachine_T * p_stateMachine);
 extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
-
 extern void StateMachine_Sync_Proc(StateMachine_T * p_stateMachine);
 extern bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, uint8_t input);
 extern bool StateMachine_Sync_SetInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt);

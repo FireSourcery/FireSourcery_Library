@@ -54,7 +54,6 @@ static inline int16_t q_sat16(int32_t x)
 */
 static inline uint16_t q_sqrt(int32_t x)
 {
-	uint8_t iteration = 0;
 	uint32_t yPrev;
 	uint32_t y;
 
@@ -68,14 +67,12 @@ static inline uint16_t q_sqrt(int32_t x)
 			1048576U == (1 << 20)
 		*/
 		yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
-		do
+		for(uint8_t iteration = 0U; iteration < 6U; iteration++)
 		{
-			y = (yPrev + ((uint32_t)x / yPrev)) / 2U;
+			y = (yPrev + (x / yPrev)) / 2U;
 			if(y == yPrev) { break; }
 			yPrev = y;
-			iteration++;
 		}
-		while(iteration < 6U);
 	}
 	else
 	{

@@ -94,7 +94,7 @@ static const StateMachine_State_T STATE_INIT =
 {
 	.ID 					= MSM_STATE_ID_INIT,
 	.P_TRANSITION_TABLE 	= INIT_TRANSITION_TABLE,
-	.ON_ENTRY 				= (StateMachine_Output_T)Init_Entry,
+	.ENTRY 				= (StateMachine_Output_T)Init_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Init_Proc,
 };
 
@@ -251,7 +251,7 @@ static const StateMachine_State_T STATE_STOP =
 {
 	.ID 					= MSM_STATE_ID_STOP,
 	.P_TRANSITION_TABLE 	= STOP_TRANSITION_TABLE,
-	.ON_ENTRY 				= (StateMachine_Output_T)Stop_Entry,
+	.ENTRY 				= (StateMachine_Output_T)Stop_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Stop_Proc,
 };
 
@@ -375,7 +375,7 @@ static const StateMachine_State_T STATE_RUN =
 	.ID 					= MSM_STATE_ID_RUN,
 	.P_TRANSITION_TABLE 	= RUN_TRANSITION_TABLE,
 	//	.P_TRANSITION_INPUT 	= (StateMachine_TransitionInput_T)Run_TransitionInput,
-	.ON_ENTRY 				= (StateMachine_Output_T)Run_Entry,
+	.ENTRY 				= (StateMachine_Output_T)Run_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Run_Proc,
 };
 
@@ -456,7 +456,7 @@ static const StateMachine_State_T STATE_FREEWHEEL =
 {
 	.ID 					= MSM_STATE_ID_FREEWHEEL,
 	.P_TRANSITION_TABLE 	= FREEWHEEL_TRANSITION_TABLE,
-	.ON_ENTRY 				= (StateMachine_Output_T)Freewheel_Entry,
+	.ENTRY 				= (StateMachine_Output_T)Freewheel_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Freewheel_Proc,
 };
 
@@ -531,7 +531,7 @@ static const StateMachine_State_T STATE_FREEWHEEL =
 // {
 // 	// .ID 					= MSM_STATE_ID_ALIGN,
 // 	// .P_TRANSITION_TABLE 	= ALIGN_TRANSITION_TABLE,
-// 	// .ON_ENTRY 				= (StateMachine_Output_T)Align_Entry,
+// 	// .ENTRY 				= (StateMachine_Output_T)Align_Entry,
 // 	// .OUTPUT 				= (StateMachine_Output_T)Align_Proc,
 // };
 
@@ -591,7 +591,7 @@ static const StateMachine_State_T STATE_FREEWHEEL =
 // {
 // 	.ID 					= MSM_STATE_ID_OPEN_LOOP,
 // 	.P_TRANSITION_TABLE 	= OPEN_LOOP_TRANSITION_TABLE,
-// 	.ON_ENTRY 				= (StateMachine_Output_T)OpenLoop_Entry,
+// 	.ENTRY 				= (StateMachine_Output_T)OpenLoop_Entry,
 // 	.OUTPUT 				= (StateMachine_Output_T)OpenLoop_Proc,
 // };
 
@@ -651,7 +651,7 @@ static const StateMachine_State_T STATE_CALIBRATION =
 {
 	.ID 					= MSM_STATE_ID_CALIBRATION,
 	.P_TRANSITION_TABLE 	= CALIBRATION_TRANSITION_TABLE,
-	.ON_ENTRY 				= (StateMachine_Output_T)Calibration_Entry,
+	.ENTRY 				= (StateMachine_Output_T)Calibration_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Calibration_Proc,
 };
 
@@ -693,6 +693,6 @@ static const StateMachine_State_T STATE_FAULT =
 {
 	.ID 					= MSM_STATE_ID_FAULT,
 	.P_TRANSITION_TABLE 	= FAULT_TRANSITION_TABLE,
-	.ON_ENTRY 				= (StateMachine_Output_T)Fault_Entry,
+	.ENTRY 				= (StateMachine_Output_T)Fault_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Fault_Proc,
 };

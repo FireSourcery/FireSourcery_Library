@@ -111,7 +111,7 @@ typedef const struct Analog_Options_Tag
 {
 	const Analog_QueueType_T TYPE;
 	const Analog_OptionsFlags_T FLAGS;
-	const Analog_Callback_T ON_OPTIONS; // on set
+	const Analog_Callback_T ON_OPTIONS; /* On options set */
 	void * const P_CALLBACK_CONTEXT;
 }
 Analog_Options_T;
@@ -161,7 +161,7 @@ Analog_T;
 #define ANALOG_INIT(p_HalAnalog, p_ConversionBuffer, ConversionQueueLength) 										\
 {																													\
 	.CONFIG = { .P_HAL_ANALOG = p_HalAnalog, },																		\
-	.ConversionQueue = RING_INIT(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),	\
+	.ConversionQueue = RING_INIT(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),		\
 }
 
 extern void _Analog_ProcQueue(Analog_T * p_analog);
@@ -211,10 +211,10 @@ static inline void _Analog_CaptureAdcResults(Analog_T * p_analog, Analog_Convers
 	p_activeConversion->P_RESULTS_BUFFER[p_activeConversion->CHANNEL] = HAL_Analog_ReadResult(p_analog->CONFIG.P_HAL_ANALOG, p_activeConversion->PIN);
 }
 
-static inline bool _Analog_CaptureResults(Analog_T * p_analog)
+static inline void _Analog_CaptureResults(Analog_T * p_analog)
 {
 	Analog_Conversion_T * p_completedConversion;
-	bool isAllChannelsComplete;
+	// bool isAllChannelsComplete;
 
 	HAL_Analog_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ANALOG);
 	Ring_Dequeue(&p_analog->ConversionQueue, &p_completedConversion);
@@ -222,11 +222,11 @@ static inline bool _Analog_CaptureResults(Analog_T * p_analog)
 
 	_Analog_ProcQueue(p_analog);
 
-	isAllChannelsComplete = true;
+	// isAllChannelsComplete = true;
 
 	if(p_completedConversion->ON_COMPLETE != 0U) { p_completedConversion->ON_COMPLETE(p_completedConversion->P_CALLBACK_CONTEXT); }
 
-	return (isAllChannelsComplete);
+	// return (isAllChannelsComplete);
 }
 
 /*!
@@ -259,7 +259,11 @@ static inline void Analog_PollComplete(Analog_T * p_analog)
 */
 static inline bool _Analog_ReadIsActive(const Analog_T * p_analog)
 {
-	return ((HAL_Analog_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ANALOG) == true) || (HAL_Analog_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ANALOG) == true));
+	return
+	(
+		(HAL_Analog_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ANALOG) == true) ||
+		(HAL_Analog_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ANALOG) == true)
+	);
 }
 
 /*

@@ -30,20 +30,22 @@
 /******************************************************************************/
 #include "StateMachine.h"
 
+#ifdef  CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE
+#include "System/Critical/Critical.h"
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifdef CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED
-#include "System/Critical/Critical.h"
-#elif defined(ONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
-extern inline void Critical_AcquiireEnter(critical_mutex_t);
-extern inline void Critical_ReleaseExit(critical_mutex_t);
-#endif
-
+/******************************************************************************/
+/*!
+	Private Functions
+*/
+/******************************************************************************/
 static inline bool EnterCritical(StateMachine_T * p_stateMachine)
 {
-#if defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
-	return (p_stateMachine.CONFIG.USE_CRITICAL == true) ? Critical_AcquiireEnter(&p_stateMachine->Mutex) : true;
+#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
+	return (p_stateMachine.CONFIG.USE_CRITICAL == true) ? Critical_AcquireEnter(&p_stateMachine->Mutex) : true;
 #else
 	(void)p_stateMachine;
 	return true;
@@ -52,18 +54,28 @@ static inline bool EnterCritical(StateMachine_T * p_stateMachine)
 
 static inline void ExitCritical(StateMachine_T * p_stateMachine)
 {
-#if defined(CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED) || defined(CONFIG_STATE_MACHINE_CRITICAL_USER_DEFINED)
+#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
 	if(p_stateMachine.CONFIG.USE_CRITICAL == true) { Critical_ReleaseExit(&p_stateMachine->Mutex) };
 #else
 	(void)p_stateMachine;
 #endif
 }
 
+/*
+	No null pointer check. User must supply empty for no op
+*/
+static inline void ProcOutput(StateMachine_T * p_stateMachine)
+{
+	p_stateMachine->p_StateActive->OUTPUT(p_stateMachine->CONFIG.P_CONTEXT);
+}
 
+/******************************************************************************/
+/* Input Id - Input is passed via context */
+/******************************************************************************/
 /*!
 	TransitionFunction defined via P_TRANSITION_TABLE
-	@param[out] pp_newReturn - returns pointer to new state, if it exists. 0 indicates user defined non transition, bypass entry function.
-								return present state to run on entry function
+	@param[out] pp_newReturn - 	returns pointer to new state, if it exists. 0 indicates user defined non transition, bypass entry function.
+									return present state to run on entry function
 	@return 0 indicates not accepted input, transition does not exist, pp_newReturn is not set.
 */
 static inline bool TransitionFunction(void * p_context, StateMachine_State_T ** pp_newReturn, StateMachine_State_T * p_active, statemachine_input_t input)
@@ -71,14 +83,6 @@ static inline bool TransitionFunction(void * p_context, StateMachine_State_T ** 
 	StateMachine_Transition_T transition = p_active->P_TRANSITION_TABLE[input];
 	bool isAccept = (transition != 0U);
 	if(isAccept == true) { *pp_newReturn = transition(p_context); };
-	return isAccept;
-}
-
-static inline bool TransitionFunctionExt(void * p_context, StateMachine_State_T ** pp_newReturn, StateMachine_State_T * p_active, statemachine_input_t input, uint32_t inputExt)
-{
-	StateMachine_TransitionExt_T transition = p_active->P_TRANSITION_EXT_TABLE[input];
-	bool isAccept = (transition != 0U);
-	if(isAccept == true) { *pp_newReturn = transition(p_context, inputExt); };
 	return isAccept;
 }
 
@@ -95,23 +99,6 @@ static inline bool ProcInput(StateMachine_T * p_stateMachine, statemachine_input
 	return isAccept;
 }
 
-static inline bool ProcInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
-{
-	bool isAccept = (input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
-	StateMachine_State_T * p_newState;
-	if(isAccept == true) { isAccept = TransitionFunctionExt(p_stateMachine->CONFIG.P_CONTEXT, &p_newState, p_stateMachine->p_StateActive, input, inputExt); }
-	if(isAccept == true) { if(p_newState != 0U) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); } }
-	return isAccept;
-}
-
-/*
-	No null pointer check. User must supply empty for no op
-*/
-static inline void ProcOutput(StateMachine_T * p_stateMachine)
-{
-	p_stateMachine->p_StateActive->OUTPUT(p_stateMachine->CONFIG.P_CONTEXT);
-}
-
 /*
 	If multi threaded inputs asynch use critical
 */
@@ -126,6 +113,27 @@ static inline bool ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_
 	return isAccept;
 }
 
+/******************************************************************************/
+/* Input Ext - Additional input passed as argument  */
+/******************************************************************************/
+static inline bool TransitionFunctionExt(void * p_context, StateMachine_State_T ** pp_newReturn, StateMachine_State_T * p_active, statemachine_input_t input, uint32_t inputExt)
+{
+	StateMachine_TransitionExt_T transition = p_active->P_TRANSITION_EXT_TABLE[input];
+	bool isAccept = (transition != 0U);
+	if(isAccept == true) { *pp_newReturn = transition(p_context, inputExt); };
+	return isAccept;
+}
+
+static inline bool ProcInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
+{
+	bool isAccept = (input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
+	StateMachine_State_T * p_newState;
+	if(isAccept == true) { isAccept = TransitionFunctionExt(p_stateMachine->CONFIG.P_CONTEXT, &p_newState, p_stateMachine->p_StateActive, input, inputExt); }
+	if(isAccept == true) { if(p_newState != 0U) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); } }
+	return isAccept;
+}
+
+
 static inline bool ProcAsyncInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
 {
 	bool isAccept;
@@ -137,17 +145,27 @@ static inline bool ProcAsyncInputExt(StateMachine_T * p_stateMachine, statemachi
 	return isAccept;
 }
 
+/******************************************************************************/
+/*!
+	Protected Functions
+*/
+/******************************************************************************/
 /*
-	Protected Function
 	Unconditional Transition -	Maps active state to new state, input assumed error checked
 	user must ensure correctness, call from state machine / output function only
 */
 void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState)
 {
+	if(p_stateMachine->p_StateActive->EXIT != 0U) { p_stateMachine->p_StateActive->EXIT(p_stateMachine->CONFIG.P_CONTEXT); }
 	p_stateMachine->p_StateActive = p_newState;
-	if(p_newState->ON_ENTRY != 0U) { p_newState->ON_ENTRY(p_stateMachine->CONFIG.P_CONTEXT); }
+	if(p_newState->ENTRY != 0U) { p_newState->ENTRY(p_stateMachine->CONFIG.P_CONTEXT); }
 }
 
+/******************************************************************************/
+/*!
+	Public Functions
+*/
+/******************************************************************************/
 /*
 	States const strut should be compile time def
 */
@@ -155,7 +173,7 @@ void StateMachine_Init(StateMachine_T * p_stateMachine)
 {
 	p_stateMachine->SyncInput = STATE_MACHINE_INPUT_NULL;
 	p_stateMachine->SyncInputExt = STATE_MACHINE_INPUT_NULL;
-#ifdef CONFIG_STATE_MACHINE_CRITICAL_LIBRARY_DEFINED
+#ifdef  CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE
 	p_stateMachine->Mutex = 1U;
 #endif
 	StateMachine_Reset(p_stateMachine);
@@ -167,9 +185,9 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 	{
 		p_stateMachine->p_StateActive = p_stateMachine->CONFIG.P_MACHINE->P_STATE_INITIAL;
 
-		if(p_stateMachine->p_StateActive->ON_ENTRY != 0)
+		if(p_stateMachine->p_StateActive->ENTRY != 0U)
 		{
-			p_stateMachine->p_StateActive->ON_ENTRY(p_stateMachine->CONFIG.P_CONTEXT);
+			p_stateMachine->p_StateActive->ENTRY(p_stateMachine->CONFIG.P_CONTEXT);
 		}
 		ExitCritical(p_stateMachine);
 	}
@@ -178,7 +196,6 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 /******************************************************************************/
 /*
 	Synchronous Machine
-
 	Does not need Critical Section if Proc thread is higher priority than Input Thread
 	proc last set input, always single threaded proc
 */
@@ -204,7 +221,6 @@ bool StateMachine_Sync_SetInputExt(StateMachine_T * p_stateMachine, statemachine
 	if(isAccept == true) { p_stateMachine->SyncInput = input; p_stateMachine->SyncInputExt = inputExt;}
 	return isAccept;
 }
-
 
 /******************************************************************************/
 /*
@@ -259,7 +275,7 @@ bool StateMachine_Semi_ProcTransitionFunction(StateMachine_T * p_stateMachine, s
 {
 	bool isAccept = false;
 
-	if (p_stateMachine->p_StateActive->TRANSITION_FUNCTION != 0U)
+	if(p_stateMachine->p_StateActive->TRANSITION_FUNCTION != 0U)
 	{
 		isAccept = p_stateMachine->p_StateActive->TRANSITION_FUNCTION(p_stateMachine->CONFIG.P_CONTEXT, input, inputExt);
 	}
@@ -267,7 +283,11 @@ bool StateMachine_Semi_ProcTransitionFunction(StateMachine_T * p_stateMachine, s
 	return isAccept;
 }
 
-
+/******************************************************************************/
+/*
+	Simple Menu
+*/
+/******************************************************************************/
 #ifdef CONFIG_STATE_MACHINE_MENU_ENABLE
 void StateMachine_Menu_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {

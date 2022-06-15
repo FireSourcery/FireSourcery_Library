@@ -78,7 +78,6 @@ void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_Mill
 {
 	uint16_t adcuZero = ((uint32_t)max_MilliV + min_MilliV) * adcMax / 2U / adcVRef_MilliV;
 	uint16_t adcuRef = (uint32_t)max_MilliV * adcMax / adcVRef_MilliV;
-
 	Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalRef);
 }
 
@@ -86,6 +85,5 @@ void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_Mill
 {
 	uint16_t adcuZero = (uint32_t)zero_MilliV * adcMax / adcVRef_MilliV;
 	uint16_t adcuRef = (uint32_t)max_MilliV * adcMax / adcVRef_MilliV;
-
 	Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalRef);
 }

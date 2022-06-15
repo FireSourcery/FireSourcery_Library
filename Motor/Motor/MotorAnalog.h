@@ -40,7 +40,6 @@
 */
 typedef enum MotorAnalog_Channel_Tag
 {
-//	MOTOR_ANALOG_CHANNEL_VPOS,	/* Physically shared channel, but save results in contiguous memory */
 	MOTOR_ANALOG_CHANNEL_VA,
 	MOTOR_ANALOG_CHANNEL_VB,
 	MOTOR_ANALOG_CHANNEL_VC,
@@ -57,7 +56,6 @@ typedef union MotorAnalog_Results_Tag
 {
 	struct
 	{
-//		analog_adcresult_t VPos_Adcu;
 		analog_adcresult_t Va_Adcu;
 		analog_adcresult_t Vb_Adcu;
 		analog_adcresult_t Vc_Adcu;
@@ -78,7 +76,6 @@ typedef struct MotorAnalog_Conversions_Tag
 	{
 		struct
 		{
-			//			const AnalogN_Conversion_T CONVERSION_VPOS;
 			const AnalogN_Conversion_T CONVERSION_VA;
 			const AnalogN_Conversion_T CONVERSION_VB;
 			const AnalogN_Conversion_T CONVERSION_VC;
