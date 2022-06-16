@@ -33,7 +33,7 @@
 
 #include "Utility/Shell/Shell.h"
 
-#define MC_SHELL_CMD_COUNT 20U
+#define MC_SHELL_CMD_COUNT 30U
 
 extern const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT];
 

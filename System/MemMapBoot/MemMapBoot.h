@@ -54,6 +54,7 @@ typedef union
 		volatile uint32_t Beep 			: 1U;
 		volatile uint32_t Blink 		: 1U;
 		volatile uint32_t LoadDefault 	: 1U;
+		volatile uint32_t ProtocolId 	: 1U;
 	};
 	volatile uint32_t Register;
 }

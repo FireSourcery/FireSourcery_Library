@@ -362,12 +362,15 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
 			// 	OutOfSequencePacket++
 			// }
 			p_protocol->TxLength = 0U; /* in case user does not set 0 */
+
 			reqStatus = p_protocol->p_ReqActive->PROC_EXT
 			(
 				p_protocol->CONFIG.P_SUBSTATE_BUFFER, p_protocol->CONFIG.P_APP_INTERFACE,
 				p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength,
 				p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex
 			);
+
+			TxReqResp(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength); /* always tx resp if TxLength > 0 */
 
 			switch(reqStatus)
 			{
@@ -380,12 +383,12 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
 				case PROTOCOL_REQ_CODE_AWAIT_RX_SYNC:		p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC;				break;
 				case PROTOCOL_REQ_CODE_AWAIT_RX_REQ_EXT:	p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_COMPLETE_EXT;		break;
 				/*
-					Separate tx data state vs tx on user return txlength > 0
-					User will will have to manage more return codes, but will not have to explicitly set txlength to zero.
-					must save txlength in case of retransmit
+					Separate tx resp state vs always proc tx on user return txlength > 0
+					User will will have to manage more return codes
+					?must save txlength in case of retransmit on nack?
 				*/
-				case PROTOCOL_REQ_CODE_TX_RESPONSE: 	TxReqResp(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);	break;
-				case PROTOCOL_REQ_CODE_TX_ACK:			TxSync(p_protocol, PROTOCOL_TX_SYNC_ACK_REQ_EXT);									break;
+				// case PROTOCOL_REQ_CODE_TX_RESPONSE: 	TxReqResp(p_protocol, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);		break;
+				case PROTOCOL_REQ_CODE_TX_ACK:			TxSync(p_protocol, PROTOCOL_TX_SYNC_ACK_REQ_EXT);										break;
 				case PROTOCOL_REQ_CODE_TX_NACK: /* Shared Nack */
 					if(p_protocol->NackCount < p_protocol->p_ReqActive->SYNC.NACK_REPEAT)
 					{

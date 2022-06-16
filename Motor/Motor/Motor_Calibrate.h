@@ -230,12 +230,12 @@ static inline bool Motor_Calibrate_Adc(Motor_T *p_motor)
 	bool isComplete = Timer_Poll(&p_motor->ControlTimer);
 	if (isComplete == true)
 	{
-		p_motor->Parameters.IaRefZero_Adcu = Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu);
-		p_motor->Parameters.IbRefZero_Adcu = Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_Adcu);
-		p_motor->Parameters.IcRefZero_Adcu = Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_Adcu);
-		// p_motor->Parameters.IaRefMax_Adcu = p_motor->Parameters.IaRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu;
-		// p_motor->Parameters.IbRefMax_Adcu = p_motor->Parameters.IbRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu;
-		// p_motor->Parameters.IcRefMax_Adcu = p_motor->Parameters.IcRefZero_Adcu + p_motor->Parameters.IRefPeak_Adcu;
+		p_motor->Parameters.IaZeroRef_Adcu = Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu);
+		p_motor->Parameters.IbZeroRef_Adcu = Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_Adcu);
+		p_motor->Parameters.IcZeroRef_Adcu = Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_Adcu);
+		// p_motor->Parameters.IaRefMax_Adcu = p_motor->Parameters.IaZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
+		// p_motor->Parameters.IbRefMax_Adcu = p_motor->Parameters.IbZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
+		// p_motor->Parameters.IcRefMax_Adcu = p_motor->Parameters.IcZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
 		Motor_ResetUnitsIabc(p_motor);
 		Phase_Float(&p_motor->Phase);
 	}

@@ -35,8 +35,8 @@
 #endif
 
 #if 	defined(CONFIG_SYSTIME_CPU_FREQ)
-	#define CPU_FREQ CONFIG_SYSTIME_CPU_FREQ
-#elif 	defined(CPU_FREQ)
+// 	#define CPU_FREQ CONFIG_SYSTIME_CPU_FREQ
+// #elif 	defined(CPU_FREQ)
 #else
 	#error "SysTime - Undefined CONFIG_SYSTIME_CPU_FREQ"
 #endif

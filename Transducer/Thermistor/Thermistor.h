@@ -98,6 +98,7 @@ typedef struct Thermistor_Tag
 {
 	const Thermistor_Config_T CONFIG;
 	Thermistor_Params_T Params;
+	// Linear_T WarningShutdownInterpolation; /* return value [Warning:Shutdown] as [65535:paramVar] */
 	Thermistor_ThresholdStatus_T ShutdownThreshold;
 	Thermistor_ThresholdStatus_T WarningThreshold; /* Threshold save state info */
 	Thermistor_Status_T Status;

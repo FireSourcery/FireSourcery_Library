@@ -64,18 +64,12 @@ static StateMachine_State_T * TransitionFault(MotorController_T * p_mc) { (void)
 	Initially Fault flags are set by adc, but init does not tranisition to fault
 */
 /******************************************************************************/
-static void Init_ExitCommon(MotorController_T * p_mc)
-{
-	p_mc->FaultFlags.State = 0U; /* Clear initial ADC readings */
-}
-
 static StateMachine_State_T * Init_InputDirection(MotorController_T * p_mc)
 {
 	StateMachine_State_T * p_nextState;
 
 	if(MotorController_ProcDirection(p_mc) == true)
 	{
-		Init_ExitCommon(p_mc);
 		// bool isThrottleOn; //check and isthrottle off
 		p_nextState = &STATE_STOP;
 	}
@@ -93,7 +87,6 @@ static StateMachine_State_T * Init_InputReleaseThrottle(MotorController_T * p_mc
 	if(p_mc->Parameters.BuzzerFlagsEnable.BeepThrottleOnInit == true)
 	{
 		MotorController_BeepShort(p_mc);
-		Init_ExitCommon(p_mc);
 		p_nextState = &STATE_STOP; //check direction is not forwrad or rev
 	}
 	return p_nextState;

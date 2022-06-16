@@ -247,20 +247,17 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	uint16_t SpeedFeedbackRef_Rpm; 	/* Feedback / PID Regulator, Limits Ref. User IO units conversion, Encoder speed calc ref. */
 	uint16_t SpeedVMatchRef_Rpm; 	/* Votlage Match Ref. VF Mode, Freewheel to Run. Use higher value to bias speed matching to begin at lower speed. */
 
-	uint16_t IRefPeak_Adcu; 		/* Zero-To-Peak, derived from sensor hardware */
-	uint16_t IaRefZero_Adcu;
-	uint16_t IbRefZero_Adcu;
-	uint16_t IcRefZero_Adcu;
-	// uint16_t IaRefMax_Adcu;
-	// uint16_t IbRefMax_Adcu;
-	// uint16_t IcRefMax_Adcu;
+	uint16_t IPeakRef_Adcu; 		/* Zero-To-Peak, derived from sensor hardware */
+	uint16_t IaZeroRef_Adcu;
+	uint16_t IbZeroRef_Adcu;
+	uint16_t IcZeroRef_Adcu;
 
 	/* "Root" Limits */
  	uint16_t SpeedLimitCcw_Frac16;		/* Persistent User Param. Frac16 of SpeedFeedbackRef_Rpm */
 	uint16_t SpeedLimitCw_Frac16;
 	uint16_t ILimitMotoring_Frac16;		/* Persistent User Param. Frac16 of RefMax I_MAX_AMP */
 	uint16_t ILimitGenerating_Frac16;
-	uint16_t ILimitScalarHeat_Frac16; 	/*  Preset Scalar Limit , active on thermistor warning. Frac16 scalar on active limit */
+	uint16_t ILimitHeat_Frac16; 	/*  Preset Scalar Limit , active on thermistor warning. Frac16 scalar on active limit */
 
 	uint16_t AlignVoltage_Frac16;
 	uint16_t AlignTime_ControlCycles;

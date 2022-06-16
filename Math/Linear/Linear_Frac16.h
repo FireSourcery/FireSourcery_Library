@@ -109,7 +109,7 @@ static inline int32_t Linear_Frac16_InvSigned(const Linear_T * p_linear, int16_t
 	return Linear_Frac16_Inv(p_linear, (int32_t)y_fracS16 * 2);
 }
 
-extern void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0_Frac16, int32_t yRef);
-extern void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0_Frac16, int32_t yRef);
+extern void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0_Frac16, int32_t yRef_Units);
+extern void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0_Frac16, int32_t yRef_Units);
 
 #endif

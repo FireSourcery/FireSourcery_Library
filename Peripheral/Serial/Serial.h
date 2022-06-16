@@ -155,6 +155,7 @@ static inline void Serial_EnableRx(const Serial_T * p_serial) 		{ HAL_Serial_Ena
 static inline void Serial_DisableRx(const Serial_T * p_serial) 		{ HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
 
 extern void Serial_Init(Serial_T * p_serial);
+extern void Serial_Deinit(Serial_T * p_serial);
 extern void Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate);
 extern bool Serial_SendByte(Serial_T * p_serial, uint8_t txChar);
 extern bool Serial_RecvByte(Serial_T * p_serial, uint8_t * p_rxChar);

@@ -284,7 +284,7 @@ Flash_Status_T Flash_SetOp(Flash_T * p_flash, const uint8_t * p_destFlash, const
 		case FLASH_OPERATION_VERIFY_ERASE:	status = Flash_SetVerifyErase(p_flash, p_destFlash, size); 				break;
 		case FLASH_OPERATION_WRITE_ONCE:	status = Flash_SetWriteOnce(p_flash, p_destFlash, p_source, size); 		break;
 		case FLASH_OPERATION_READ_ONCE:		status = Flash_SetReadOnce(p_flash, p_destFlash, size); 				break;
-		default:  							status = FLASH_STATUS_ERROR; 											break;
+		default:  							status = FLASH_STATUS_ERROR_INVALID_OP; 								break;
 	}
 
 	return status;

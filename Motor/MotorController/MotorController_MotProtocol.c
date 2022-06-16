@@ -205,11 +205,151 @@ static void Req_InitUnits(MotorController_T * p_mc, MotPacket_InitUnitsResp_T * 
 	);
 }
 
+/******************************************************************************/
+/*! Stateful Read Data */
+/******************************************************************************/
+static Protocol_ReqCode_T Req_ReadData
+(
+	MotProtocol_Substate_T * p_subState, void * p_appInterface,
+	MotPacket_T * p_txPacket, size_t * p_txSize,
+	const MotPacket_T * p_rxPacket, size_t rxSize
+)
+{
+	(void)rxSize;
+	(void)p_appInterface;
+	Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_WAIT_PROCESS;
+	// MotPacket_HeaderStatus_T headerStatus = MOT_PACKET_HEADER_STATUS_OK;
+	uint16_t readSize;
 
+	switch(p_subState->StateId)
+	{
+		case 0U: /* Tx Ack handled by common Sync */
+			// p_respPayload = (MotPacket_ReadDataResp_Payload_T *)p_rxPacket->Payload;
+			// p_subState->p_DataModeAddress = (uint8_t *)p_rxPacket->ReadDataReq.AddressStart;
+			// p_subState->DataModeSize = p_rxPacket->ReadDataReq.SizeBytes;
+			MotPacket_ReadDataReq_Parse(&p_subState->DataModeAddress, &p_subState->DataModeSize, (MotPacket_ReadDataReq_T *)p_rxPacket);
+			p_subState->StateId = 1U;
+			*p_txSize = MotPacket_ReadDataResp_Build((MotPacket_ReadDataResp_T *)p_txPacket, MOT_PACKET_HEADER_STATUS_OK);
+			reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_SYNC;
+			break;
+
+		case 1U: /* Tx Data */
+			if(p_subState->DataModeSize > 0U)
+			{
+				//sequenceid*32 == data
+				readSize = (p_subState->DataModeSize > 32U) ? 32U : p_subState->DataModeSize;
+				*p_txSize = MotPacket_DataType_Build((MotPacket_DataType_T *)p_txPacket, (uint8_t *)p_subState->DataModeAddress, readSize);
+				p_subState->DataModeSize -= readSize;
+				p_subState->DataModeAddress += readSize;
+				reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_SYNC;
+			}
+			else /* (p_subState->DataModeSize == 0U) */
+			{
+				*p_txSize = MotPacket_ReadDataResp_Build((MotPacket_ReadDataResp_T *)p_txPacket, MOT_PACKET_HEADER_STATUS_OK);
+				reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+			}
+
+		default:
+			break;
+	}
+
+	return reqCode;
+}
+
+/******************************************************************************/
+/*! Stateful Write Data */
+/******************************************************************************/
+static Protocol_ReqCode_T Req_WriteData_Blocking
+(
+	MotProtocol_Substate_T * p_subState, MotorController_T * p_appInterface,
+	MotPacket_WriteDataResp_T * p_txPacket, size_t * p_txSize,
+	const MotPacket_WriteDataReq_T * p_rxPacket, size_t rxSize
+)
+{
+	(void)rxSize;
+	Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_WAIT_PROCESS;
+	Flash_T * p_flash = p_appInterface->CONFIG.P_FLASH;
+	Flash_Status_T flashStatus;
+	MotPacket_HeaderStatus_T headerStatus;
+	const uint8_t * p_writeData; /* DataPacket Payload */
+	uint8_t writeSize; /* DataPacket Size */
+
+	switch(p_subState->StateId)
+	{
+		case 0U: /* Tx Ack handled by Common Req Sync */
+			MotPacket_WriteDataReq_Parse(&p_subState->DataModeAddress, &p_subState->DataModeSize, (MotPacket_WriteDataReq_T *)p_rxPacket);
+			flashStatus = Flash_SetWrite(p_flash, (uint8_t *)p_subState->DataModeAddress, 0U, p_subState->DataModeSize);  //use full set to check boundaries. bytecount will be overwritten
+			headerStatus = (flashStatus == FLASH_STATUS_SUCCESS) ? MOT_PACKET_HEADER_STATUS_OK : MOT_PACKET_HEADER_STATUS_ERROR;
+			// motPacketStatus = RemapFlashStatus(flashStatus);
+			// p_subState->DataModeSize = p_rxPacket->WriteDataReq.SizeBytes;
+			// p_subState->IsDataModeActive = true;
+			p_subState->StateId = 1U;
+			*p_txSize = MotPacket_WriteDataResp_Build((MotPacket_WriteDataResp_T *)p_txPacket, headerStatus);
+			reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_SYNC;
+			break;
+
+		case 1U: /* Await Data */
+			p_subState->StateId = 2U;
+			reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_REQ_EXT;
+			break;
+
+		case 2U: /* Write Data - rxPacket is DataType */
+			// writeSize = MotPacket_DataType_ParseDataLength((MotPacket_DataType_T *)p_rxPacket);
+			MotPacket_DataType_Parse(&p_writeData, &writeSize, (const MotPacket_DataType_T *)p_rxPacket);
+			if(p_subState->DataModeSize >= writeSize)
+			{
+				Critical_Enter();
+				flashStatus = Flash_ContinueWrite_Blocking(p_flash, p_writeData, writeSize);
+				Critical_Exit();
+
+				if(flashStatus == FLASH_STATUS_SUCCESS)
+				{
+					p_subState->DataModeSize -= writeSize;
+					if(p_subState->DataModeSize > 0U)
+					{
+						p_subState->StateId = 1U;
+					}
+					else
+					{
+						p_subState->StateId = 3U;
+						p_subState->WriteModeStatus = MOT_PACKET_HEADER_STATUS_OK;
+					}
+					reqCode = PROTOCOL_REQ_CODE_TX_ACK;
+				}
+				else
+				{
+					p_subState->StateId = 3U;
+					p_subState->WriteModeStatus = MOT_PACKET_HEADER_STATUS_ERROR;
+					// reqCode = PROTOCOL_REQ_CODE_TX_NACK;
+					// p_subState->StateId = 2U;
+				}
+			}
+			else
+			{
+				// reqCode = PROTOCOL_REQ_CODE_WAIT_PROCESS; // error
+				p_subState->StateId = 3U;
+				p_subState->WriteModeStatus = MOT_PACKET_HEADER_STATUS_ERROR; //out of sync
+			}
+			break;
+
+		case 3U: /* Tx Final Response */ /* Rx Ack handled by Common Req Sync */
+			// p_subState->IsDataModeActive = false;
+			*p_txSize = MotPacket_WriteDataResp_Build((MotPacket_WriteDataResp_T *)p_txPacket, p_subState->WriteModeStatus);
+			reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+			break;
+
+		default:
+			break;
+	}
+
+	return reqCode;
+}
 
 /******************************************************************************/
 /*! Req Table */
 /******************************************************************************/
+#define REQ_SYNC_DEFAULT PROTOCOL_SYNC_ID_DEFINE(1U, 1U, 3U)
+
 static const Protocol_Req_T REQ_TABLE[] =
 {
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_PING, 				Req_Ping, 				0U, 	PROTOCOL_SYNC_ID_DISABLE),
@@ -218,8 +358,15 @@ static const Protocol_Req_T REQ_TABLE[] =
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_SAVE_NVM, 			Req_SaveNvm_Blocking, 	0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VAR, 			Req_WriteVar, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_READ_VAR, 			Req_ReadVar, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
+
+	// PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VARS_8, 		Req_WriteVars8, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	// PROTOCOL_REQ_DEFINE(MOT_PACKET_READ_VARS_16, 		Req_ReadVars16, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
+
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_MONITOR_TYPE, 		Req_Monitor, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_CONTROL_TYPE, 		Req_Control, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
+
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_READ, 		0U, 	Req_ReadData, 				REQ_SYNC_DEFAULT),
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_WRITE, 	0U, 	Req_WriteData_Blocking, 	REQ_SYNC_DEFAULT),
 };
 
 

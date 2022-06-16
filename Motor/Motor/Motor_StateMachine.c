@@ -78,13 +78,13 @@ static void Init_Entry(Motor_T * p_motor)
 	}
 	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
 	{
-		// Motor_SetDirectionForward(p_motor);
+		// Motor_SixStep_SetDirectionForward(p_motor);
 	}
 }
 
 static void Init_Proc(Motor_T * p_motor)
 {
-	if(Timer_GetElapsed_Millis(&p_motor->ControlTimer) > 1U) /* Wait for thermistor Adc */
+	if(Timer_GetElapsed_Millis(&p_motor->ControlTimer) > 5U) /* Wait for thermistor Adc */
 	{
 		_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP);
 	}
@@ -94,7 +94,7 @@ static const StateMachine_State_T STATE_INIT =
 {
 	.ID 					= MSM_STATE_ID_INIT,
 	.P_TRANSITION_TABLE 	= INIT_TRANSITION_TABLE,
-	.ENTRY 				= (StateMachine_Output_T)Init_Entry,
+	.ENTRY 					= (StateMachine_Output_T)Init_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Init_Proc,
 };
 

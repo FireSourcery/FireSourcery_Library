@@ -78,14 +78,9 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 			case THERMISTOR_STATUS_OK: 			Motor_User_ClearILimitActive(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT); 	break;
 			case THERMISTOR_STATUS_SHUTDOWN: 	Motor_User_SetFault(p_motor); 										break;
 			case THERMISTOR_STATUS_WARNING: 	/* repeatedly checks if heat is a lower ILimit when another ILimit is active */
-				Motor_User_SetILimitActive
-				(
-					p_motor,
-					p_motor->Parameters.ILimitScalarHeat_Frac16,
-					// Linear_Function(&p_motor->ILimitHeatRate, p_motor->AnalogResults.Heat_Adcu), //todo
-					MOTOR_I_LIMIT_ACTIVE_HEAT
-				);
-			break;
+				Motor_User_SetILimitActive(p_motor, p_motor->Parameters.ILimitHeat_Frac16, MOTOR_I_LIMIT_ACTIVE_HEAT);
+				// Linear_Function(&p_motor->ILimitHeatRate, p_motor->AnalogResults.Heat_Adcu), //todo
+				break;
 			default: break;
 		}
 	}

@@ -61,13 +61,14 @@ typedef enum
 	FLASH_STATUS_SUCCESS 			= NV_MEMORY_STATUS_SUCCESS,
 	FLASH_STATUS_PROCESSING 		= NV_MEMORY_STATUS_PROCESSING,
 	FLASH_STATUS_START_VERIFY 		= NV_MEMORY_STATUS_START_VERIFY,
-	FLASH_STATUS_ERROR 				= NV_MEMORY_STATUS_ERROR,
+	// FLASH_STATUS_ERROR 				= NV_MEMORY_STATUS_ERROR,
 	FLASH_STATUS_ERROR_BUSY 		= NV_MEMORY_STATUS_ERROR_BUSY,
 	FLASH_STATUS_ERROR_INPUT 		= NV_MEMORY_STATUS_ERROR_INPUT, 	/* op param input: address destination, align */
 	FLASH_STATUS_ERROR_CMD 			= NV_MEMORY_STATUS_ERROR_CMD, 		/* flash controller error */
 	FLASH_STATUS_ERROR_VERIFY 		= NV_MEMORY_STATUS_ERROR_VERIFY, 	/* Verify cmd */
 	FLASH_STATUS_ERROR_PROTECTION 	= NV_MEMORY_STATUS_ERROR_PROTECTION,
 	FLASH_STATUS_ERROR_CHECKSUM 	= NV_MEMORY_STATUS_ERROR_CHECKSUM, 	/*  */
+	FLASH_STATUS_ERROR_INVALID_OP 	= NV_MEMORY_STATUS_ERROR_INVALID_OP, 	/*  */
 } Flash_Status_T;
 
 typedef enum
@@ -85,6 +86,8 @@ extern void Flash_Init(Flash_T * p_flash);
 extern void Flash_SetYield(Flash_T * p_flash, void (*yield)(void *), void * p_callbackData);
 extern bool Flash_ReadSecurityFlag(Flash_T * p_flash);
 
+extern Flash_Status_T Flash_SetWrite(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
+extern Flash_Status_T Flash_SetErase(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
 extern Flash_Status_T Flash_SetVerifyWrite(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
 extern Flash_Status_T Flash_SetVerifyErase(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
 extern Flash_Status_T Flash_SetWriteOnce(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);

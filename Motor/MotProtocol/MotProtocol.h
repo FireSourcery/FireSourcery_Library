@@ -40,6 +40,10 @@
 typedef struct MotProtocol_Substate_Tag
 {
 	uint8_t StateId;
+	uint32_t DataModeAddress;
+	uint16_t DataModeSize;
+	bool IsDataModeActive;
+	MotPacket_HeaderStatus_T WriteModeStatus;
 }
 MotProtocol_Substate_T;
 

@@ -108,6 +108,7 @@ static inline size_t CalcIndexWrap(Ring_T * p_queue, size_t index)
 #if defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
 	return _Ring_CalcIndexMasked(p_queue, index);
 #else
+	(void)p_queue;
 	return index;
 #endif
 }

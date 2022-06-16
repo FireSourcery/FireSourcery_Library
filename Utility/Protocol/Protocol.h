@@ -76,6 +76,7 @@ typedef enum Protocol_RxCode_Tag
 Protocol_RxCode_T;
 
 typedef Protocol_RxCode_T(*Protocol_ParseRxMeta_T)(protocol_reqid_t * p_reqId, size_t * p_packetLength, const void * p_rxPacket, size_t rxCount);
+// typedef protocol_reqid_t(*Protocol_ParseRxMetaExt_T)(void * p_subState, protocol_reqid_t reqId, const void * p_rxPacket, size_t rxCount);
 // seperate?
 // typedef Protocol_RxCode_T(*Protocol_ParseRxLength_T)(size_t * p_packetLength, const void * p_rxPacket, size_t rxCount);
 // typedef Protocol_RxCode_T(*Protocol_ParseRxId_T)(protocol_reqid_t * p_reqId, const void * p_rxPacket, size_t rxCount);
@@ -112,8 +113,8 @@ typedef void (*Protocol_ProcReqResp_T)(void * p_appInterface, uint8_t * p_txPack
 /* Common Req from child protocol to supported general protocol control, predefined behaviors */
 typedef enum Protocol_ReqCode_Tag
 {
-	PROTOCOL_REQ_CODE_WAIT_PROCESS, 				/* Wait ReqExt processing */
-	PROTOCOL_REQ_CODE_WAIT_PROCESS_EXTEND_TIMER, 	/* Extend timer for RxLost and Timeout */
+	PROTOCOL_REQ_CODE_WAIT_PROCESS, 				/* Child Protocol NonBlocking Wait ReqExt processing */
+	PROTOCOL_REQ_CODE_WAIT_PROCESS_EXTEND_TIMER, 	/* Child Protocol NonBlocking Wait, Extend timer for RxLost and Timeout */
 	PROTOCOL_REQ_CODE_PROCESS_COMPLETE,				/* Exit nonblocking wait processing state upon reception */
 	PROTOCOL_REQ_CODE_AWAIT_RX_REQ_EXT,				/* Expecting Rx new packet */
 	PROTOCOL_REQ_CODE_AWAIT_RX_SYNC,				/* Expecting static ack nack */
@@ -141,6 +142,8 @@ typedef const union Protocol_ReqSync_Tag
 	{
 		uint32_t TX_ACK 		: 1U; 	/* Tx Ack on Rx Req Success, PROTOCOL_RX_CODE_PACKET_COMPLETE */
 		uint32_t RX_ACK 		: 1U; 	/* Wait for Ack on Req Complete, Tx Response */
+		// uint32_t TX_ACK_EXT 	: 1U; 	/* Use for All Stateful Ext Packets  */
+		// uint32_t RX_ACK_EXT 	: 1U;
 		uint32_t NACK_REPEAT 	: 3U; 	/* Number of repeat TxPacket on Rx Nack, Tx Nack on RxPacket error */
 	};
 	uint32_t ID;
@@ -148,7 +151,7 @@ typedef const union Protocol_ReqSync_Tag
 Protocol_ReqSync_T;
 
 #define PROTOCOL_SYNC_ID_DISABLE (0U)
-#define PROTOCOL_SYNC_ID_DEFINE(UseTxAck, UseRxAck, NackRepeat) { (NackRepeat << 2U) | (UseRxAck << 1U) | (UseTxAck) }
+#define PROTOCOL_SYNC_ID_DEFINE(UseTxAck, UseRxAck, NackRepeat) ( (NackRepeat << 2U) | (UseRxAck << 1U) | (UseTxAck) )
 
 /* Protocol_Req_T */
 typedef const struct Protocol_Req_Tag

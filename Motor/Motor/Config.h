@@ -31,9 +31,15 @@
 #ifndef CONFIG_MOTOR_H
 #define CONFIG_MOTOR_H
 
+
+#if   defined(ADC_BITS)
+#else
+	#define ADC_BITS 		12U
+#endif
+
 #if 	defined(CONFIG_MOTOR_ALIGN_VOLTAGE_MAX)
 #else
-	#define CONFIG_MOTOR_ALIGN_VOLTAGE_MAX (65536U /10U)
+	#define CONFIG_MOTOR_ALIGN_VOLTAGE_MAX 	(65536U /10U)
 #endif
 
 #if 	defined(CONFIG_MOTOR_I_SENSORS_NONINVERT)
@@ -48,20 +54,16 @@
 	#define	CONFIG_MOTOR_I_SENSORS_ABC
 #endif
 
-// #if 	defined(CONFIG_MOTOR_I_SENSORS_REF_PEAK_ADCU)
-// #else
-// 	#error "MOTOR: undefined CONFIG_MOTOR_I_SENSORS_REF_PEAK_ADCU"
-// #endif
-
 #if 	defined(CONFIG_MOTOR_V_SENSORS_ISOLATED)
 #elif 	defined(CONFIG_MOTOR_V_SENSORS_ADC)
 #else
 	#define	CONFIG_MOTOR_V_SENSORS_ADC
 #endif
 
-#if   defined(ADC_BITS)
+/* must reboot for params to take effect when disabled */
+#if   defined(CONFIG_MOTOR_PROPOGATE_SET_PARAM_DISABLE)
 #else
-	#define ADC_BITS 		12U
+
 #endif
 
 #endif

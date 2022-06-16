@@ -36,19 +36,31 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+extern uint32_t _Critical_InterruptDisableCount;
+extern uint32_t _Critical_RegPrimask;
+
 /*
 	HAL implement within module.
 	Alternatively, implement in parent HAL and include.
 */
 #ifdef CONFIG_SYSTEM_MCU_ARM
-	#include "External/CMSIS/Core/Include/cmsis_compiler.h"
-	#if defined (__GNUC__)
-		#define CRITICAL_DISABLE_INTERRUPTS() __asm volatile ("cpsid i" : : : "memory");
-		#define CRITICAL_ENABLE_INTERRUPTS() __asm volatile ("cpsie i" : : : "memory");
-	#else
-		#define CRITICAL_DISABLE_INTERRUPTS() __asm("cpsid i")
-		#define CRITICAL_ENABLE_INTERRUPTS() __asm("cpsie i")
-	#endif
+
+#include "External/CMSIS/Core/Include/cmsis_compiler.h"
+
+#if defined(__GNUC__)
+#define CRITICAL_DISABLE_INTERRUPTS() __asm volatile ("cpsid i" : : : "memory");
+#define CRITICAL_ENABLE_INTERRUPTS() __asm volatile ("cpsie i" : : : "memory");
+#else
+#define CRITICAL_DISABLE_INTERRUPTS() __asm("cpsid i")
+#define CRITICAL_ENABLE_INTERRUPTS() __asm("cpsie i")
+#endif
+
+/*
+	No nesting Critical within Critical
+*/
+static inline void Critical_Enter(void) { _Critical_RegPrimask = __get_PRIMASK(); CRITICAL_DISABLE_INTERRUPTS(); }
+static inline void Critical_Exit(void) 	{ __set_PRIMASK(_Critical_RegPrimask); }
+
 #elif defined(CONFIG_CRITICAL_USER_DEFINED)
 /*
 	user provider
@@ -56,12 +68,13 @@
 	#define ENABLE_INTERRUPTS() {...}
 */
 #elif defined(CONFIG_CRITICAL_DISABLED)
-	#define CRITICAL_DISABLE_INTERRUPTS() {}
-	#define CRITICAL_ENABLE_INTERRUPTS() {}
+#define CRITICAL_DISABLE_INTERRUPTS()
+#define CRITICAL_ENABLE_INTERRUPTS()
+static inline void Critical_Enter(void) {}
+static inline void Critical_Exit(void) {}
 #endif
 
-extern uint32_t _Critical_InterruptDisableCount;
-extern uint32_t _Critical_RegPrimask;
+
 
 static inline void Critical_DisableIrq(void)
 {
@@ -82,25 +95,11 @@ static inline void Critical_EnableIrq(void)
 }
 
 /*
-	No nesting Critical within Critical
-*/
-static inline void Critical_Enter(void)
-{
-	_Critical_RegPrimask = __get_PRIMASK();
-	CRITICAL_DISABLE_INTERRUPTS();
-}
-
-static inline void Critical_Exit(void)
-{
-	__set_PRIMASK(_Critical_RegPrimask);
-}
-
-/*
 	Non blocking mutex. must check if process completed
 */
 typedef volatile uint8_t critical_mutex_t;
 
-static inline bool Critical_Mutex_Aquire(critical_mutex_t * p_mutex)
+static inline bool Critical_AquireMutex(critical_mutex_t * p_mutex)
 {
 	bool status = false;
 
@@ -115,7 +114,7 @@ static inline bool Critical_Mutex_Aquire(critical_mutex_t * p_mutex)
 	return status;
 }
 
-static inline void Critical_Mutex_Release(critical_mutex_t * p_mutex)
+static inline void Critical_ReleaseMutex(critical_mutex_t * p_mutex)
 {
 	Critical_Enter();
 	if(*p_mutex == 0U)
@@ -148,8 +147,8 @@ static inline void Critical_ReleaseExit(critical_mutex_t * p_mutex)
 
 
 /*
- * todo static inline void Critical_Enter(void * stateData) for other/semaphore implementation
- */
+	todo static inline void Critical_Enter(void * stateData) for other/semaphore implementation
+*/
  //typedef volatile uint32_t critical_semaphore_t;
  //
  //static inline void Critical_SemaphorePost(critical_semaphore_t * p_semaphore)

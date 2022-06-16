@@ -38,7 +38,6 @@
 	Common functions, not requiring appInterface, mapping directly to Protocol Specs
 */
 /******************************************************************************/
-
 void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, Protocol_TxSyncId_T txId)
 {
 	MotPacket_HeaderId_T syncId;
@@ -46,11 +45,11 @@ void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, P
 	switch(txId)
 	{
 		case PROTOCOL_TX_SYNC_ACK_REQ_ID:			syncId = MOT_PACKET_SYNC_ACK; 		break;
+		case PROTOCOL_TX_SYNC_ACK_REQ_EXT:			syncId = MOT_PACKET_SYNC_ACK; 		break;
 		case PROTOCOL_TX_SYNC_NACK_REQ_ID:			syncId = MOT_PACKET_SYNC_NACK; 		break;
 		case PROTOCOL_TX_SYNC_NACK_PACKET_ERROR:	syncId = MOT_PACKET_SYNC_NACK; 		break;
 		case PROTOCOL_TX_SYNC_NACK_REQ_TIMEOUT:		syncId = MOT_PACKET_SYNC_NACK; 		break;
 		case PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT:		syncId = MOT_PACKET_SYNC_NACK; 		break;
-		case PROTOCOL_TX_SYNC_ACK_REQ_EXT:			syncId = MOT_PACKET_SYNC_ACK; 		break;
 		case PROTOCOL_TX_SYNC_NACK_REQ_EXT:			syncId = MOT_PACKET_SYNC_NACK; 		break;
 		case PROTOCOL_TX_SYNC_ABORT:				syncId = MOT_PACKET_SYNC_ABORT; 	break;
 		default: *p_txSize = 0U; syncId = 0xFFU; break;
@@ -96,3 +95,11 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 
 	return rxCode;
 }
+
+
+/******************************************************************************/
+/*!
+	Ctrlr Side Functions
+	Memory Access Functions Does not require
+*/
+/******************************************************************************/

@@ -245,7 +245,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]); }
 
 		/* Can use low priority check, as motor is already in fault state */
-		if(MotorController_CheckFaultMotorAll(p_mc) != 0U) {  p_mc->FaultFlags.Motors = 1U; MotorController_User_SetFault(p_mc); }
+		if(MotorController_CheckFaultMotorAll(p_mc) != 0U) { p_mc->FaultFlags.Motors = 1U; MotorController_User_SetFault(p_mc); }
 
 		_MotorController_ProcOptDin(p_mc);
 	}

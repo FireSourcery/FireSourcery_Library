@@ -43,13 +43,14 @@ typedef enum NvMemory_Status_Tag
 	NV_MEMORY_STATUS_SUCCESS,
 	NV_MEMORY_STATUS_PROCESSING,
 	NV_MEMORY_STATUS_START_VERIFY,
-	NV_MEMORY_STATUS_ERROR,
+	// NV_MEMORY_STATUS_ERROR,
 	NV_MEMORY_STATUS_ERROR_BUSY,
 	NV_MEMORY_STATUS_ERROR_INPUT,		/* op param input */ //todo   parse error destination, align
 	NV_MEMORY_STATUS_ERROR_CMD,			/* flash controller error */
 	NV_MEMORY_STATUS_ERROR_VERIFY,		/* Verify cmd */
 	NV_MEMORY_STATUS_ERROR_PROTECTION,
 	NV_MEMORY_STATUS_ERROR_CHECKSUM,	/*  */
+	NV_MEMORY_STATUS_ERROR_INVALID_OP,
 }
 NvMemory_Status_T;
 
@@ -76,10 +77,17 @@ typedef const struct NvMemory_Partition_Tag
 }
 NvMemory_Partition_T;
 
-#define NV_MEMORY_PARTITION(p_Start, SizeBytes)	\
-{												\
-	.P_START 	= p_Start,  					\
-	.SIZE 		= SizeBytes, 					\
+#if defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE)
+#define _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset) .OP_ADDRESS_OFFSET = OpAddressOffset,
+#else
+#define _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)
+#endif
+
+#define NV_MEMORY_INIT_PARTITION(p_Start, SizeBytes, OpAddressOffset)	\
+{																		\
+	.P_START 	= (void *)p_Start,  									\
+	.SIZE 		= SizeBytes, 											\
+	_NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)					\
 }
 
 typedef bool (* const HAL_NvMemory_ReadFlags_T) (const void * p_hal);
@@ -87,18 +95,17 @@ typedef void (* const HAL_NvMemory_ClearFlags_T) (void * p_hal);
 
 typedef const struct NvMemory_Config_Tag
 {
-	void * P_HAL;
-
+	void * const P_HAL;
 	/* template functions provided by concrete child class */
-	HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;
-	HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;
-	HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
-
-	NvMemory_Partition_T * P_PARTITIONS;
+	const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;
+	const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;
+	const HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
+	NvMemory_Partition_T * const P_PARTITIONS;
 	const uint8_t PARTITION_COUNT;
-
-	uint8_t * P_BUFFER;
-	size_t BUFFER_SIZE;
+	uint8_t * const P_BUFFER;
+	const size_t BUFFER_SIZE;
+	// const uint32_t ERASE_SIZE;
+	// const uint32_t WRITE_SIZE;
 }
 NvMemory_Config_T;
 
@@ -145,28 +152,28 @@ typedef struct NvMemory_Tag
 /*
 	Alternatively template the calling function
 */
-#define NV_MEMORY_INIT_HAL(p_Hal, ReadCompleteFlag, ReadErrorFlags, ClearErrorFlags)	\
-	.P_HAL = p_Hal,  																\
+#define _NV_MEMORY_INIT_HAL(p_Hal, ReadCompleteFlag, ReadErrorFlags, ClearErrorFlags)	\
+	.P_HAL = p_Hal,  																	\
 	.READ_COMPLETE_FLAG 	= (HAL_NvMemory_ReadFlags_T)ReadCompleteFlag,				\
 	.READ_ERROR_FLAGS 		= (HAL_NvMemory_ReadFlags_T)ReadErrorFlags,					\
 	.CLEAR_ERROR_FLAGS 		= (HAL_NvMemory_ClearFlags_T)ClearErrorFlags,
 
-#define NV_MEMORY_INIT_PARTITIONS(p_partitions, partitionCount)	\
-	.P_PARTITIONS 		= p_partitions,  							\
-	.PARTITION_COUNT 	= partitionCount, 							\
+#define _NV_MEMORY_INIT_PARTITIONS(p_Partitions, PartitionsCount)	\
+	.P_PARTITIONS 		= p_Partitions,  							\
+	.PARTITION_COUNT 	= PartitionsCount, 							\
 
-#define NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)	\
+#define _NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)	\
 	.P_BUFFER 		= p_Buffer,  						\
 	.BUFFER_SIZE 	= BufferSize, 						\
 
-#define NV_MEMORY_INIT(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)	\
-{																																	\
-	.CONFIG = 																														\
-	{																																\
-		NV_MEMORY_INIT_HAL(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags)  							\
-		NV_MEMORY_INIT_PARTITIONS(p_Partitions, PartitionCount) 																	\
-		NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)			 																	\
-	}																																\
+#define NV_MEMORY_INIT(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags, p_Partitions, PartitionsCount, p_Buffer, BufferSize)	\
+{																																						\
+	.CONFIG = 																																			\
+	{																																					\
+		_NV_MEMORY_INIT_HAL(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags)  												\
+		_NV_MEMORY_INIT_PARTITIONS(p_Partitions, PartitionsCount) 																						\
+		_NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)			 																						\
+	}																																					\
 }
 
 extern void NvMemory_Init(NvMemory_T * p_this);

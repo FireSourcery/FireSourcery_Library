@@ -141,6 +141,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			Terminal_SendString(p_terminal, "IPhasePeak_Adcu: "); Terminal_SendNum(p_terminal, p_motor->IPhasePeak_Adcu); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ILimitActiveId: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveId); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "ILimitActiveScalar: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveScalar); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "ILimitMotoring_Frac16: "); Terminal_SendNum(p_terminal, p_motor->ILimitMotoring_Frac16); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "VoltageModeILimitActive: "); Terminal_SendNum(p_terminal, p_motor->RunStateFlags.VoltageModeILimitActive); Terminal_SendString(p_terminal, "\r\n");
 
 			// Terminal_SendString(p_terminal, "ElecAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetElectricalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
@@ -161,7 +162,7 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 
-	if(argc == 1U)
+	if(argc == 1U) /* display modes */
 	{
 		Terminal_SendString(p_terminal, "\r\n");
 		Terminal_SendString(p_terminal, "Motor:\r\n");
@@ -205,7 +206,7 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 		}
 		Terminal_SendString(p_terminal, "\r\n");
 	}
-	else if(argc == 2U)
+	else if(argc == 2U) /* sets mode */
 	{
 		if(strncmp(argv[1U], "foc", 4U) == 0U) { Motor_User_SetCommutationMode(p_motor, MOTOR_COMMUTATION_MODE_FOC); }
 		else if(strncmp(argv[1U], "sixstep", 8U) == 0U) { Motor_User_SetCommutationMode(p_motor, MOTOR_COMMUTATION_MODE_SIX_STEP); }
@@ -699,28 +700,6 @@ static Cmd_Status_T Cmd_beep(MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_version(MotorController_T * p_mc, int argc, char ** argv)
-{
-	(void)argc;
-	(void)argv;
-	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
-
-	// Terminal_SendString(p_terminal, "Library: ");
-	// Terminal_SendNum(p_terminal, MotorController_User_GetLibraryVersionIndex(p_mc, 3U)); Terminal_SendString(p_terminal, " ");
-	// Terminal_SendNum(p_terminal, MotorController_User_GetLibraryVersionIndex(p_mc, 2U)); Terminal_SendString(p_terminal, " ");
-	// Terminal_SendNum(p_terminal, MotorController_User_GetLibraryVersionIndex(p_mc, 1U)); Terminal_SendString(p_terminal, " ");
-	// Terminal_SendNum(p_terminal, MotorController_User_GetLibraryVersionIndex(p_mc, 0U)); Terminal_SendString(p_terminal, "\r\n");
-
-	Terminal_SendString(p_terminal, "Version: ");
-	Terminal_SendNum(p_terminal, MotorController_User_GetMainVersionIndex(p_mc, 3U)); Terminal_SendString(p_terminal, " ");
-	Terminal_SendNum(p_terminal, MotorController_User_GetMainVersionIndex(p_mc, 2U)); Terminal_SendString(p_terminal, " ");
-	Terminal_SendNum(p_terminal, MotorController_User_GetMainVersionIndex(p_mc, 1U)); Terminal_SendString(p_terminal, " ");
-	Terminal_SendNum(p_terminal, MotorController_User_GetMainVersionIndex(p_mc, 0U)); Terminal_SendString(p_terminal, "\r\n");
-
-	return CMD_STATUS_SUCCESS;
-}
-
-
 static Cmd_Status_T Cmd_vmatch(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
@@ -749,6 +728,99 @@ static Cmd_Status_T Cmd_vmatch(MotorController_T * p_mc, int argc, char ** argv)
 		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToVMatchFrac16(p_motor, rpm*1U/4U));
 		Terminal_SendString(p_terminal, " Frac16\r\n");
 	}
+
+	return CMD_STATUS_SUCCESS;
+}
+
+static void PrintIPeak(Terminal_T * p_terminal, uint16_t min_Adcu, uint16_t min_Frac16, uint16_t max_Adcu, uint16_t max_Frac16)
+{
+	Terminal_SendString(p_terminal, "Min: "); Terminal_SendNum(p_terminal, min_Adcu); Terminal_SendString(p_terminal, "ADCU: ");
+	Terminal_SendNum(p_terminal, min_Frac16); Terminal_SendString(p_terminal, " Frac16 ");
+	Terminal_SendString(p_terminal, "Max: "); Terminal_SendNum(p_terminal, max_Adcu); Terminal_SendString(p_terminal, "ADCU: ");
+	Terminal_SendNum(p_terminal, max_Frac16); Terminal_SendString(p_terminal, " Frac16\r\n");
+}
+
+static Cmd_Status_T Cmd_ipeak(MotorController_T * p_mc, int argc, char ** argv)
+{
+	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+	uint16_t zeroToPeak_Adcu;
+	uint16_t min_Adcu;
+	uint16_t max_Adcu;
+
+	if(argc == 2U)
+	{
+		zeroToPeak_Adcu = strtoul(argv[1U], 0U, 10);
+		Motor_User_SetIPeakRef_Adcu(p_motor, zeroToPeak_Adcu);
+
+		Terminal_SendString(p_terminal, "Phase A:\r\n");
+		min_Adcu = p_motor->Parameters.IPeakRef_Adcu - p_motor->Parameters.IaZeroRef_Adcu;
+		max_Adcu = p_motor->Parameters.IPeakRef_Adcu + p_motor->Parameters.IaZeroRef_Adcu;
+		PrintIPeak(p_terminal, min_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, min_Adcu), max_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, max_Adcu));
+
+		Terminal_SendString(p_terminal, "Phase B:\r\n");
+		min_Adcu = p_motor->Parameters.IPeakRef_Adcu - p_motor->Parameters.IbZeroRef_Adcu;
+		max_Adcu = p_motor->Parameters.IPeakRef_Adcu + p_motor->Parameters.IbZeroRef_Adcu;
+		PrintIPeak(p_terminal, min_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, min_Adcu), max_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, max_Adcu));
+
+		Terminal_SendString(p_terminal, "Phase C:\r\n");
+		min_Adcu = p_motor->Parameters.IPeakRef_Adcu - p_motor->Parameters.IcZeroRef_Adcu;
+		max_Adcu = p_motor->Parameters.IPeakRef_Adcu + p_motor->Parameters.IcZeroRef_Adcu;
+		PrintIPeak(p_terminal, min_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, min_Adcu), max_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, max_Adcu));
+
+		Terminal_SendString(p_terminal, "\r\n");
+	}
+
+	return CMD_STATUS_SUCCESS;
+}
+
+static Cmd_Status_T Cmd_ilimit(MotorController_T * p_mc, int argc, char ** argv)
+{
+	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+	uint16_t ilimit_Frac16;
+
+	if(argc == 2U)
+	{
+		ilimit_Frac16 = strtoul(argv[1U], 0U, 10);
+		Motor_User_SetILimitParam_Frac16(p_motor, ilimit_Frac16, ilimit_Frac16);
+		Terminal_SendString(p_terminal, "ILimitMotoringParam: "); Terminal_SendNum(p_terminal, p_motor->Parameters.ILimitMotoring_Frac16);
+		Terminal_SendString(p_terminal, " ILimitMotoringActive: "); Terminal_SendNum(p_terminal, p_motor->ILimitMotoring_Frac16);
+		Terminal_SendString(p_terminal, "\r\n");
+
+		Terminal_SendString(p_terminal, "PidSpeed Min, Max: ");
+		Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutMin);
+		Terminal_SendString(p_terminal, " ");
+		Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutMax);
+		Terminal_SendString(p_terminal, "\r\n");
+
+		Terminal_SendString(p_terminal, "PidIq Min, Max: ");
+		Terminal_SendNum(p_terminal, p_motor->PidIq.OutMin);
+		Terminal_SendString(p_terminal, " ");
+		Terminal_SendNum(p_terminal, p_motor->PidIq.OutMax);
+		Terminal_SendString(p_terminal, "\r\n");
+	}
+
+	return CMD_STATUS_SUCCESS;
+}
+
+static Cmd_Status_T Cmd_version(MotorController_T * p_mc, int argc, char ** argv)
+{
+	(void)argc;
+	(void)argv;
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+
+	Terminal_SendString(p_terminal, "Library: ");
+	Terminal_SendNum(p_terminal, MotorController_User_GetLibraryVersionIndex(3U)); Terminal_SendString(p_terminal, " ");
+	Terminal_SendNum(p_terminal, MotorController_User_GetLibraryVersionIndex(2U)); Terminal_SendString(p_terminal, " ");
+	Terminal_SendNum(p_terminal, MotorController_User_GetLibraryVersionIndex(1U)); Terminal_SendString(p_terminal, " ");
+	Terminal_SendNum(p_terminal, MotorController_User_GetLibraryVersionIndex(0U)); Terminal_SendString(p_terminal, "\r\n");
+
+	Terminal_SendString(p_terminal, "Firmware: ");
+	Terminal_SendNum(p_terminal, MotorController_User_GetMainVersionIndex(p_mc, 3U)); Terminal_SendString(p_terminal, " ");
+	Terminal_SendNum(p_terminal, MotorController_User_GetMainVersionIndex(p_mc, 2U)); Terminal_SendString(p_terminal, " ");
+	Terminal_SendNum(p_terminal, MotorController_User_GetMainVersionIndex(p_mc, 1U)); Terminal_SendString(p_terminal, " ");
+	Terminal_SendNum(p_terminal, MotorController_User_GetMainVersionIndex(p_mc, 0U)); Terminal_SendString(p_terminal, "\r\n");
 
 	return CMD_STATUS_SUCCESS;
 }
@@ -818,8 +890,11 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"beep", 		"beep",								(Cmd_Function_T)Cmd_beep, 		{0U}	},
 	{"vmatch", 		"vmatch",							(Cmd_Function_T)Cmd_vmatch, 	{0U}	},
 
+	{"ipeak", 		"ipeak",							(Cmd_Function_T)Cmd_ipeak, 		{0U}	},
+	{"ilimit", 		"ilimit",							(Cmd_Function_T)Cmd_ilimit, 	{0U}	},
+
 	{"version", 	"version",							(Cmd_Function_T)Cmd_version, 	{0U}	},
-	{"debug", 		"print debug info",							(Cmd_Function_T)Cmd_debug, 		{0U}	},
+	{"debug", 		"print debug info",					(Cmd_Function_T)Cmd_debug, 		{0U}	},
 
 	// {"analoguser", 	"analoguser enable/disable", 		(Cmd_Function_T)Cmd_analoguser,	{0U}	},
 };
