@@ -201,9 +201,9 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 	}
 
 //remove
-	*p_dutyA = qfrac16_sat(*p_dutyA);
-	*p_dutyB = qfrac16_sat(*p_dutyB);
-	*p_dutyC = qfrac16_sat(*p_dutyC);
+	// *p_dutyA = qfrac16_sat(*p_dutyA);
+	// *p_dutyB = qfrac16_sat(*p_dutyB);
+	// *p_dutyC = qfrac16_sat(*p_dutyC);
 }
 
 #endif

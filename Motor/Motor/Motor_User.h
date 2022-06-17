@@ -331,12 +331,12 @@ static inline bool Motor_User_CheckFault(Motor_T * p_motor)
 	Conversion functions only on user call. Not called regularly
 */
 /******************************************************************************/
-static inline uint16_t Motor_User_GetElectricalAngle(Motor_T * p_motor) { return p_motor->ElectricalAngle; }
+static inline uint16_t Motor_User_GetElectricalAngle(Motor_T * p_motor) 									{ return p_motor->ElectricalAngle; }
 static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(Motor_T * p_motor) 						{ return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
 static inline uint16_t Motor_User_GetMotorAdcu(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel) 		{ return p_motor->AnalogResults.Channels[adcChannel]; }
 static inline uint8_t Motor_User_GetMotorAdcu_Msb8(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel) 	{ return Motor_User_GetMotorAdcu(p_motor, adcChannel) >> (ADC_BITS - 8U); }
-static inline int32_t Motor_User_GetHeat_DegC(Motor_T * p_motor, uint16_t scalar) 	{ return Thermistor_ConvertToDegC_Int(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
-static inline float Motor_User_GetHeat_DegCFloat(Motor_T * p_motor) 				{ return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
+static inline int32_t Motor_User_GetHeat_DegC(Motor_T * p_motor, uint16_t scalar) 							{ return Thermistor_ConvertToDegC_Int(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
+static inline float Motor_User_GetHeat_DegCFloat(Motor_T * p_motor) 										{ return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 // static inline uint16_t Motor_User_GetBemf_Frac16(Motor_T * p_motor)		{ return Linear_Voltage_CalcFractionUnsigned16(&p_motor->UnitVabc, BEMF_GetVBemfPeak_Adcu(&p_motor->Bemf)); }
 // static inline uint32_t Motor_User_GetBemf_V(Motor_T * p_motor)			{ return Linear_Voltage_CalcV(&p_motor->UnitVabc, BEMF_GetVBemfPeak_Adcu(&p_motor->Bemf)); }
 
@@ -351,7 +351,10 @@ static inline int32_t Motor_User_GetIPhase_Frac16(Motor_T * p_motor)
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		iPhase = Motor_FOC_GetIMagnitude_Frac16(p_motor);
+		// iPhase = Motor_FOC_GetIMagnitude_Frac16(p_motor);
+
+		iPhase = p_motor->IPhasePeak_Adcu * p_motor->UnitIb.Slope >> p_motor->UnitIb.SlopeShift;
+
 		//sign = sign of iq, account direction
 		// iPhase = FOC_GetIq(&p_motor->Foc) * 2;
 		// if(p_motor->Direction == MOTOR_DIRECTION_CW) { iPhase = 0 - iPhase; }
