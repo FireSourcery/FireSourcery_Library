@@ -137,6 +137,7 @@ static inline void HalEepromProgramPartition(void)
 					break;
 				}
 			}
+			//auto reboot?
 		}
 	}
 }

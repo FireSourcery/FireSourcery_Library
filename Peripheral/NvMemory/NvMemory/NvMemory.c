@@ -60,47 +60,46 @@ static inline bool StartOpCmd(const NvMemory_T * p_this, size_t opIndex)
 	return (p_this->CONFIG.READ_ERROR_FLAGS(p_this->CONFIG.P_HAL) == false);
 }
 
-static inline uint32_t CalcAlignDown(uint32_t value, uint8_t align) { return ((value) & -(align)); }
-static inline uint32_t CalcAlignUp(uint32_t value, uint8_t align) { return (-(-(value) & -(align))); }
-static inline bool CheckIsAligned(uint32_t value, uint8_t align) { return ((value & (align - 1U)) == 0U); } /* align unit always power of 2 */
+/*!
+	@param[in] address - address or size
+	@param[in] align - unit always power of 2
+*/
+static inline uint32_t CalcAlignDown(uint32_t address, uint32_t align) { return ((address) & -(align)); }
+static inline uint32_t CalcAlignUp(uint32_t address, uint32_t align) { return (-(-(address) & -(align))); }
+static inline bool CheckAligned(uint32_t address, uint32_t align) { return ((address & (align - 1U)) == 0U); }
 
-static inline bool CheckDestIsAligned(const uint8_t * p_dest, size_t size, uint8_t align)
+static inline bool CheckDestAligned(const uint8_t * p_dest, size_t size, size_t align)
 {
-	return (CheckIsAligned((uint32_t)p_dest, align) && CheckIsAligned(size, align));
+	return (CheckAligned((uint32_t)p_dest, align) && CheckAligned(size, align));
 }
 
-static inline bool CheckIsBounded(uint32_t targetStart, size_t targetSize, uint32_t boundaryStart, size_t boundarySize)
+static inline bool CheckTargetBoundary(uint32_t targetStart, size_t targetSize, uint32_t boundaryStart, size_t boundarySize)
 {
 	return ((targetStart >= boundaryStart) && ((targetStart + targetSize) <= (boundaryStart + boundarySize)));
 }
 
-static inline bool CheckDestIsBoundedPartition(const uint8_t * p_dest, size_t size, NvMemory_Partition_T * p_partition)
+static inline bool CheckDestPartitionBoundary(const uint8_t * p_dest, size_t size, NvMemory_Partition_T * p_partition)
 {
-	return CheckIsBounded((uint32_t)p_dest, size, (uint32_t)p_partition->P_START, p_partition->SIZE);
+	return CheckTargetBoundary((uint32_t)p_dest, size, (uint32_t)p_partition->P_START, p_partition->SIZE);
 }
 
-static inline NvMemory_Partition_T * SearchParition(const NvMemory_Partition_T * p_partitionTable, uint8_t partitionCount, const uint8_t * p_dest, size_t size)
+static inline NvMemory_Partition_T * SearchPartitionTable(const NvMemory_Partition_T * p_partitionTable, uint8_t partitionCount, const uint8_t * p_dest, size_t size)
 {
 	NvMemory_Partition_T * p_partition = 0U;
 
 	for(uint8_t iPartition = 0U; iPartition < partitionCount; iPartition++)
 	{
-		if(CheckDestIsBoundedPartition(p_dest, size, &p_partitionTable[iPartition]) == true) { p_partition = &p_partitionTable[iPartition]; }
+		if(CheckDestPartitionBoundary(p_dest, size, &p_partitionTable[iPartition]) == true) { p_partition = &p_partitionTable[iPartition]; }
 	}
 
 	return p_partition;
 }
 
-static inline bool ProcSearchParition(NvMemory_T * p_this, const uint8_t * p_dest, size_t size)
+static inline bool SearchOpPartition(NvMemory_T * p_this, const uint8_t * p_dest, size_t size)
 {
-	p_this->p_OpPartition = SearchParition(p_this->CONFIG.P_PARTITIONS, p_this->CONFIG.PARTITION_COUNT, p_dest, size);
+	p_this->p_OpPartition = SearchPartitionTable(p_this->CONFIG.P_PARTITIONS, p_this->CONFIG.PARTITION_COUNT, p_dest, size);
 	return ((p_this->p_OpPartition != 0U) ? true : false);
 }
-
-//static inline bool CheckOpParameters(NvMemory_T * p_this, const uint8_t * p_dest, size_t size, unitSize)
-//{
-//	return (ProcSearchParition(p_this, p_dest, size) == true) && (CheckDestIsAligned(p_dest, size, unitSize) == true);
-//}
 
 static inline uint32_t CalcChecksum(const uint8_t * p_data, size_t size)
 {
@@ -122,7 +121,7 @@ static inline void SetOpDataPtr(NvMemory_T * p_this, const uint8_t * p_source, s
 
 static inline void SetOpDataBuffer(NvMemory_T * p_this, const uint8_t * p_source, size_t size)
 {
-	if(p_source != 0U) { memcpy(p_this->CONFIG.P_BUFFER, p_source, size); }
+	if((p_source != 0U) && (size <= p_this->CONFIG.BUFFER_SIZE)) { memcpy(p_this->CONFIG.P_BUFFER, p_source, size); } //todo return error status
 	SetOpDataPtr(p_this, p_this->CONFIG.P_BUFFER, size);
 }
 
@@ -154,7 +153,7 @@ NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest
 {
 	NvMemory_Status_T status;
 
-	if((ProcSearchParition(p_this, p_dest, opSize) == true) && (CheckDestIsAligned(p_dest, opSize, unitSize) == true))
+	if((SearchOpPartition(p_this, p_dest, opSize) == true) && (CheckDestAligned(p_dest, opSize, unitSize) == true))
 	{
 		p_this->p_OpDest = p_dest;
 		status = NV_MEMORY_STATUS_SUCCESS;
@@ -178,17 +177,19 @@ void NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPe
 	p_this->BytesPerCmd = unitsPerCmd * unitSize;
 }
 
-void NvMemory_SetOpFunctions(NvMemory_T * p_this, NvMemory_StartCmd_T startCmd, FinalizeOp_T finalizeOp)
+void NvMemory_SetOpFunctions(NvMemory_T * p_this, NvMemory_StartCmd_T startCmd, NvMemory_FinalizeOp_T finalizeOp)
 {
 	p_this->StartCmd = startCmd;
 	p_this->FinalizeOp = finalizeOp;
 }
 
-
-/* return true if correct */
-bool NvMemory_ChecksumOp(const NvMemory_T * p_this)
+/*
+	return true if correct
+	Non buffered must maintain source data pointed by p_OpData
+*/
+bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this)
 {
-	return (CalcChecksum(&p_this->p_OpDest[0U], p_this->OpSize) == CalcChecksum(p_this->CONFIG.P_BUFFER, p_this->OpSize));
+	return (CalcChecksum(&p_this->p_OpDest[0U], p_this->OpSize) == CalcChecksum(p_this->p_OpData, p_this->OpSize));
 }
 
 /******************************************************************************/
@@ -367,12 +368,9 @@ NvMemory_Status_T NvMemory_StartOp(NvMemory_T * p_this)
 
 /******************************************************************************/
 /*!
-	Virtual
+	Virtual - creates copy of flash in buffer
 */
 /******************************************************************************/
-/*
- * creates copy of flash in buffer
- */
  //void Flash_OpenVirtual(Flash_T * p_flash, const uint8_t * p_physical, size_t size)
  //{
  //	memcpy(&p_flash->Buffer[0U], p_physical, size);

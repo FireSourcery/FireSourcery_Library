@@ -732,11 +732,13 @@ static Cmd_Status_T Cmd_vmatch(MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_STATUS_SUCCESS;
 }
 
-static void PrintIPeak(Terminal_T * p_terminal, uint16_t min_Adcu, uint16_t min_Frac16, uint16_t max_Adcu, uint16_t max_Frac16)
+static void PrintIPeak(Terminal_T * p_terminal, uint16_t min_Adcu, int32_t min_Frac16, uint16_t max_Adcu, int32_t max_Frac16)
 {
-	Terminal_SendString(p_terminal, "Min: "); Terminal_SendNum(p_terminal, min_Adcu); Terminal_SendString(p_terminal, "ADCU: ");
+	Terminal_SendString(p_terminal, "Min: ");
+	Terminal_SendNum(p_terminal, min_Adcu); Terminal_SendString(p_terminal, " ADCU ");
 	Terminal_SendNum(p_terminal, min_Frac16); Terminal_SendString(p_terminal, " Frac16 ");
-	Terminal_SendString(p_terminal, "Max: "); Terminal_SendNum(p_terminal, max_Adcu); Terminal_SendString(p_terminal, "ADCU: ");
+	Terminal_SendString(p_terminal, "Max: ");
+	Terminal_SendNum(p_terminal, max_Adcu); Terminal_SendString(p_terminal, " ADCU ");
 	Terminal_SendNum(p_terminal, max_Frac16); Terminal_SendString(p_terminal, " Frac16\r\n");
 }
 
@@ -754,18 +756,18 @@ static Cmd_Status_T Cmd_ipeak(MotorController_T * p_mc, int argc, char ** argv)
 		Motor_User_SetIPeakRef_Adcu(p_motor, zeroToPeak_Adcu);
 
 		Terminal_SendString(p_terminal, "Phase A:\r\n");
-		min_Adcu = p_motor->Parameters.IPeakRef_Adcu - p_motor->Parameters.IaZeroRef_Adcu;
-		max_Adcu = p_motor->Parameters.IPeakRef_Adcu + p_motor->Parameters.IaZeroRef_Adcu;
+		min_Adcu = p_motor->Parameters.IaZeroRef_Adcu - p_motor->Parameters.IPeakRef_Adcu;
+		max_Adcu = p_motor->Parameters.IaZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
 		PrintIPeak(p_terminal, min_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, min_Adcu), max_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, max_Adcu));
 
 		Terminal_SendString(p_terminal, "Phase B:\r\n");
-		min_Adcu = p_motor->Parameters.IPeakRef_Adcu - p_motor->Parameters.IbZeroRef_Adcu;
-		max_Adcu = p_motor->Parameters.IPeakRef_Adcu + p_motor->Parameters.IbZeroRef_Adcu;
+		min_Adcu = p_motor->Parameters.IbZeroRef_Adcu - p_motor->Parameters.IPeakRef_Adcu;
+		max_Adcu = p_motor->Parameters.IbZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
 		PrintIPeak(p_terminal, min_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, min_Adcu), max_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, max_Adcu));
 
 		Terminal_SendString(p_terminal, "Phase C:\r\n");
-		min_Adcu = p_motor->Parameters.IPeakRef_Adcu - p_motor->Parameters.IcZeroRef_Adcu;
-		max_Adcu = p_motor->Parameters.IPeakRef_Adcu + p_motor->Parameters.IcZeroRef_Adcu;
+		min_Adcu = p_motor->Parameters.IcZeroRef_Adcu - p_motor->Parameters.IPeakRef_Adcu;
+		max_Adcu = p_motor->Parameters.IcZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
 		PrintIPeak(p_terminal, min_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, min_Adcu), max_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, max_Adcu));
 
 		Terminal_SendString(p_terminal, "\r\n");
@@ -789,16 +791,12 @@ static Cmd_Status_T Cmd_ilimit(MotorController_T * p_mc, int argc, char ** argv)
 		Terminal_SendString(p_terminal, "\r\n");
 
 		Terminal_SendString(p_terminal, "PidSpeed Min, Max: ");
-		Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutMin);
-		Terminal_SendString(p_terminal, " ");
-		Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutMax);
-		Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutMin);		Terminal_SendString(p_terminal, " ");
+		Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutMax);		Terminal_SendString(p_terminal, "\r\n");
 
 		Terminal_SendString(p_terminal, "PidIq Min, Max: ");
-		Terminal_SendNum(p_terminal, p_motor->PidIq.OutMin);
-		Terminal_SendString(p_terminal, " ");
-		Terminal_SendNum(p_terminal, p_motor->PidIq.OutMax);
-		Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendNum(p_terminal, p_motor->PidIq.OutMin);		Terminal_SendString(p_terminal, " ");
+		Terminal_SendNum(p_terminal, p_motor->PidIq.OutMax);		Terminal_SendString(p_terminal, "\r\n");
 	}
 
 	return CMD_STATUS_SUCCESS;
