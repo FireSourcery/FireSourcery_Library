@@ -217,7 +217,8 @@ typedef const struct Protocol_Specs_Tag
 	/* Cmdr side only */
 	const Protocol_Cmdr_BuildTxReq_T CMDR_BUILD_TX_REQ; /* Alternatively, function table */
 
-	const Protocol_ReqSync_T SYNC;  		/* todo streamline/remove. Rx Packet checksum Nack only , default statless sync, timeout nack */
+
+	// const Protocol_ReqSync_T SYNC;  		/* todo streamline/remove. Rx Packet checksum Nack only , default statless sync, timeout nack */
 
 	/* Optional */
 	const uint32_t RX_START_ID; 			/* set to 0x00 for not applicable */
@@ -228,7 +229,7 @@ typedef const struct Protocol_Specs_Tag
 	const uint32_t RX_TIMEOUT;				/* Reset cumulative per packet, until user reset RX_TIMEOUT_PACKET */ //move to optional/ param?
 	// const uint32_t RX_TIMEOUT_BYTE;	 	/* Reset per byte */
 	const uint32_t REQ_TIMEOUT; 			/* checked for stateful Req only */
-
+	const uint8_t NACK_COUNT;
 	const bool ENCODED;						/* TODO Encoded data, non encoded use TIMEOUT only. No meta chars past first char. */
 	// const size_t RX_HEADER_LENGTH; 	fixed header length known to include contain data length value
 

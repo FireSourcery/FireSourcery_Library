@@ -106,7 +106,7 @@ NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, cons
 
 	if(status == NV_MEMORY_STATUS_SUCCESS)
 	{
-		NvMemory_SetOpFunctions(p_eeprom, (NvMemory_StartCmd_T)StartCmdWrite, (FinalizeOp_T)FinalizeWrite);
+		NvMemory_SetOpFunctions(p_eeprom, (NvMemory_StartCmd_T)StartCmdWrite, (NvMemory_FinalizeOp_T)FinalizeWrite);
 		NvMemory_SetOpCmdSize(p_eeprom, EEPROM_UNIT_WRITE_SIZE, 1U);
 		NvMemory_SetOpData(p_eeprom, p_source, sizeBytes);
 	}

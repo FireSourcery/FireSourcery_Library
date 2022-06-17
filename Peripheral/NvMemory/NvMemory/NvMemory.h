@@ -109,10 +109,9 @@ typedef const struct NvMemory_Config_Tag
 }
 NvMemory_Config_T;
 
-
 typedef void (*NvMemory_StartCmd_T)(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
-typedef NvMemory_Status_T (*FinalizeOp_T)(struct NvMemory_Tag * p_this);
-
+typedef NvMemory_Status_T (*NvMemory_FinalizeOp_T)(struct NvMemory_Tag * p_this);
+typedef void (*NvMemory_Callback_T)(void * p_callbackData);
 /*
 	NvMemory controller
 */
@@ -129,19 +128,18 @@ typedef struct NvMemory_Tag
 	const uint8_t * p_OpDest;
 	const uint8_t * p_OpData;
 	size_t OpSize; 			/* Total bytes at start */
-	size_t BytesPerCmd; 	/* Used by Erase */
+	size_t BytesPerCmd; 	/* Used by Erase for now */
 	size_t UnitsPerCmd;
 
 	const NvMemory_Partition_T * p_OpPartition; /* Op Dest */
 
 	NvMemory_StartCmd_T StartCmd;
-	FinalizeOp_T FinalizeOp;
+	NvMemory_FinalizeOp_T FinalizeOp;
 	//	NvMemory_Status_T (*ParseErrorCode)(void * p_this);
 
 	void * p_CallbackData;
 	//	void (*OnComplete)(void * p_callbackData); /*!< OnComplete */
 	void (*Yield)(void * p_callbackData); /*!<  On Block*/
-//    void (* Callback)(void *);    	/*!<  Union*/
 
 	/* Nonblocking use only */
 	NvMemory_State_T State;
@@ -181,8 +179,8 @@ extern void NvMemory_SetYield(NvMemory_T * p_this, void (*yield)(void *), void *
 extern NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize, size_t unitSize);
 extern void NvMemory_SetOpData(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
 extern void NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd);
-extern void NvMemory_SetOpFunctions(NvMemory_T * p_this, NvMemory_StartCmd_T startCmd, FinalizeOp_T finalizeOp);
-extern bool NvMemory_ChecksumOp(const NvMemory_T * p_this);
+extern void NvMemory_SetOpFunctions(NvMemory_T * p_this, NvMemory_StartCmd_T startCmd, NvMemory_FinalizeOp_T finalizeOp);
+extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this);
 
 /*
 	Blocking
