@@ -360,20 +360,6 @@ void Motor_User_SetSpeedVMatchRef_VRpm(Motor_T * p_motor, uint16_t vMotor_V, uin
 	Motor_User_SetSpeedVMatchRef_Rpm(p_motor, vMotorSpeed_Rpm * _Motor_GetVRefSupply() / vMotor_V);
 }
 
-
-void Motor_User_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
-{
-	p_motor->Parameters.IPeakRef_Adcu = adcu;
-#ifndef CONFIG_MOTOR_PROPOGATE_SET_PARAM_DISABLE
-	Motor_ResetUnitsIabc(p_motor);
-#endif
-}
-
-// void Motor_User_SetIPeakRef_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV)
-// {
-
-// }
-
 void Motor_User_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu)
 {
 	p_motor->Parameters.IaZeroRef_Adcu = adcu;
@@ -443,3 +429,26 @@ void Motor_User_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode)
 /******************************************************************************/
 /*   */
 /******************************************************************************/
+
+void Motor_User_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
+{
+	p_motor->Parameters.IPeakRef_Adcu = adcu;
+#ifndef CONFIG_MOTOR_PROPOGATE_SET_PARAM_DISABLE
+	Motor_ResetUnitsIabc(p_motor);
+#endif
+}
+
+// void Motor_User_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
+// {
+// 	p_motor->Parameters.IPeakRef_Adcu = (adcu > p_motor->CONFIG.I_SENSOR_PEAK_ADCU) ? p_motor->CONFIG.I_SENSOR_PEAK_ADCU : adcu;
+// #ifndef CONFIG_MOTOR_PROPOGATE_SET_PARAM_DISABLE
+// 	Motor_ResetUnitsIabc(p_motor);
+// #endif
+// }
+
+void Motor_User_SetIPeakRef_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV)
+{
+	uint16_t adcuZero = (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / _Motor_GetAdcVRef();
+	uint16_t adcuMax = (uint32_t)max_MilliV * ADC_MAX / _Motor_GetAdcVRef();
+	Motor_User_SetIPeakRef_Adcu(p_motor, adcuMax - adcuZero);
+}

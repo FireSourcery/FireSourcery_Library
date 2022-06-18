@@ -122,7 +122,7 @@ void Motor_Analog_CaptureIa(Motor_T * p_motor)
 		Motor_FOC_CaptureIa(p_motor);
 	}
 
-	CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ia_Adcu - p_motor->UnitIa.XOffset);
+	CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ia_Adcu - p_motor->Parameters.IaZeroRef_Adcu);
 }
 
 /******************************************************************************/
@@ -141,7 +141,7 @@ void Motor_Analog_CaptureIb(Motor_T * p_motor)
 		Motor_FOC_CaptureIb(p_motor);
 	}
 
-	CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ib_Adcu - p_motor->UnitIb.XOffset);
+	CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ib_Adcu - p_motor->Parameters.IbZeroRef_Adcu);
 }
 
 /******************************************************************************/
@@ -160,7 +160,7 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
 		Motor_FOC_CaptureIc(p_motor);
 	}
 
-	CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ic_Adcu - p_motor->UnitIc.XOffset);
+	CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ic_Adcu - p_motor->Parameters.IcZeroRef_Adcu);
 }
 
 

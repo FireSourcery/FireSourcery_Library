@@ -346,6 +346,7 @@ typedef struct Motor_Tag
 	uint16_t VBemfPeakTemp_Adcu;
 	uint16_t IPhasePeak_Adcu;
 	uint16_t IPhasePeakTemp_Adcu;
+	uint16_t IPhasePeak2_Adcu;
 
 	/*
 		UserCmd Input => Ramp
