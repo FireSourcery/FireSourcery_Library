@@ -52,9 +52,9 @@ extern void Motor_Analog_CaptureIc(Motor_T * p_motor);
 	.CONVERSION_HEAT 	= ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_HEAT, 	0U, 									p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), HeatPin,	&(p_Hosts)[HeatHost]), 	\
 	.CONVERSION_SIN 	= ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_SIN, 	0U, 									p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), SinPin, 	&(p_Hosts)[SinHost]), 	\
 	.CONVERSION_COS 	= ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_COS, 	0U, 									p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), CosPin, 	&(p_Hosts)[CosHost]), 	\
-	.ADCS_GROUP_I 		= {.Flags = (uint8_t)((1U << IaHost) | (1U << IbHost) | (1U << IcHost) | (1U << SinHost) | (1U << CosHost)), },																		\
-	.ADCS_GROUP_V 		= {.Flags = (uint8_t)((1U << VaHost) | (1U << VbHost) | (1U << VcHost) | (1U << SinHost) | (1U << CosHost)), },																		\
-	.ADCS_GROUP_PWM 	= {.Flags = (uint8_t)((1U << VaHost) | (1U << VbHost) | (1U << VcHost) | (1U << IaHost) | (1U << IbHost) | (1U << IcHost)| (1U << SinHost) | (1U << CosHost)), },					\
+	.ADCS_GROUP_I 		= { .Flags = (uint8_t)((1U << IaHost) | (1U << IbHost) | (1U << IcHost) | (1U << SinHost) | (1U << CosHost)), },																	\
+	.ADCS_GROUP_V 		= { .Flags = (uint8_t)((1U << VaHost) | (1U << VbHost) | (1U << VcHost) | (1U << SinHost) | (1U << CosHost)), },																	\
+	.ADCS_GROUP_PWM 	= { .Flags = (uint8_t)((1U << VaHost) | (1U << VbHost) | (1U << VcHost) | (1U << IaHost) | (1U << IbHost) | (1U << IcHost)| (1U << SinHost) | (1U << CosHost)), },					\
 }
 
 #endif

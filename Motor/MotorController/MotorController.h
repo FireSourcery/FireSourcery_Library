@@ -304,6 +304,7 @@ typedef struct MotorController_Tag
 	NvMemory_Status_T NvmStatus;
 
 	uint16_t UserCmd;
+	MotorController_Once_T OnceBuffer; //temp
 
 	// MotorController_SpeedLimitActiveId_T SpeedLimitActiveId;
 	// MotorController_ILimitActiveId_T ILimitActiveId;
