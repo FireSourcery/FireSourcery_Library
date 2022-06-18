@@ -103,7 +103,7 @@
 #define HAL_FLASH_UNIT_READ_ONCE_SIZE		S32K_FLASH_PHRASE_SIZE
 
 /*
-	 S32K  FLASH/EEPROM use same controller, same HAL
+	S32K  FLASH/EEPROM use same controller, same HAL
 	only 1 flash controller, unused
 */
 typedef FTFC_Type HAL_Flash_T;
@@ -298,12 +298,16 @@ static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, cons
 
 /*
 	Calling module ensures alignment
+	56 Bytes 7 Units available. 8th unit is config
+
+	Index
 	0x03C0 => 0
 	0x03C8 => 1
+	0x03D0 => 2
 */
 static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
 {
-	uint8_t recordIndex = p_dest - (uint8_t *)S32K_FLASH_USER_PROGRAM_ONCE_START;
+	uint8_t recordIndex = (p_dest - (uint8_t *)S32K_FLASH_USER_PROGRAM_ONCE_START) / S32K_FLASH_PHRASE_SIZE;
 	FTFx_FCCOB0 = FTFx_PROGRAM_ONCE;
 	FTFx_FCCOB1 = recordIndex;
 	_HAL_Flash_WriteCmdWriteData(p_regs, p_data);
@@ -312,7 +316,7 @@ static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, const uint8
 
 static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, const uint8_t * p_dest)
 {
-	uint8_t recordIndex = p_dest - (uint8_t *)S32K_FLASH_USER_PROGRAM_ONCE_START;
+	uint8_t recordIndex = (p_dest - (uint8_t *)S32K_FLASH_USER_PROGRAM_ONCE_START) / S32K_FLASH_PHRASE_SIZE;
 	FTFx_FCCOB0 = FTFx_READ_ONCE;
 	FTFx_FCCOB1 = recordIndex;
 	_HAL_Flash_WriteCmdStart(p_regs);

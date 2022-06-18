@@ -2,12 +2,13 @@
 
 
 // or use uniform function pointer/wrapper
-bool StartOpCmd(const Flash_T * p_flash, size_t opIndex)
-{
-	//HAL_Flash_ClearErrorFlags(p_flash->CONFIG.P_HAL_FLASH);
-	const uint8_t * p_cmdDest = CalcOpCmdAddress(p_flash, &p_flash->p_OpDest[opIndex]);
 
-	switch(p_flash->OpType)
+//pass params through struct
+typedef void (*NvMemory_StartCmd_T)(void * p_this);
+
+bool StartOpCmd(const Flash_T * p_flash)
+{
+	switch(p_flash->OpId)
 	{
 		case FLASH_OPERATION_WRITE: 		HAL_Flash_StartCmdWritePage			(p_flash->CONFIG.P_HAL_FLASH, p_cmdDest, &p_flash->p_OpData[opIndex]);	break;
 		case FLASH_OPERATION_ERASE:			HAL_Flash_StartCmdEraseSector		(p_flash->CONFIG.P_HAL_FLASH, p_cmdDest); 								break;
@@ -17,6 +18,4 @@ bool StartOpCmd(const Flash_T * p_flash, size_t opIndex)
 		case FLASH_OPERATION_READ_ONCE:		HAL_Flash_StartCmdReadOnce			(p_flash->CONFIG.P_HAL_FLASH, p_cmdDest); 								break;
 		default: break;
 	}
-
-	return (HAL_Flash_ReadErrorFlags(p_flash->CONFIG.P_HAL_FLASH) == false) ? true : false;
 }

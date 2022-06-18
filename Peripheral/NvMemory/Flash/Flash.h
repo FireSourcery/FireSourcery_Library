@@ -47,11 +47,8 @@
 #define FLASH_UNIT_WRITE_ONCE_SIZE		HAL_FLASH_UNIT_WRITE_ONCE_SIZE
 #define FLASH_UNIT_READ_ONCE_SIZE		HAL_FLASH_UNIT_READ_ONCE_SIZE
 
-typedef NvMemory_Partition_T Flash_Partition_T;
-typedef NvMemory_T Flash_T;
-
 #define FLASH_INIT(p_Hal, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
-	NV_MEMORY_INIT(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)														\
+	NV_MEMORY_INIT(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)
 
 /*
 	Alias for NvMemory Status
@@ -59,17 +56,21 @@ typedef NvMemory_T Flash_T;
 typedef enum
 {
 	FLASH_STATUS_SUCCESS 			= NV_MEMORY_STATUS_SUCCESS,
-	FLASH_STATUS_PROCESSING 		= NV_MEMORY_STATUS_PROCESSING,
-	FLASH_STATUS_START_VERIFY 		= NV_MEMORY_STATUS_START_VERIFY,
+	// FLASH_STATUS_PROCESSING 		= NV_MEMORY_STATUS_PROCESSING,
+	FLASH_STATUS_START_VERIFY 		= NV_MEMORY_STATUS_START_VERIFY, /* Follow up Op after complete */
 	// FLASH_STATUS_ERROR 				= NV_MEMORY_STATUS_ERROR,
 	FLASH_STATUS_ERROR_BUSY 		= NV_MEMORY_STATUS_ERROR_BUSY,
 	FLASH_STATUS_ERROR_INPUT 		= NV_MEMORY_STATUS_ERROR_INPUT, 	/* op param input: address destination, align */
-	FLASH_STATUS_ERROR_CMD 			= NV_MEMORY_STATUS_ERROR_CMD, 		/* flash controller error */
+	FLASH_STATUS_ERROR_CMD 			= NV_MEMORY_STATUS_ERROR_CMD, 		/* Unparsed Error */
 	FLASH_STATUS_ERROR_VERIFY 		= NV_MEMORY_STATUS_ERROR_VERIFY, 	/* Verify cmd */
 	FLASH_STATUS_ERROR_PROTECTION 	= NV_MEMORY_STATUS_ERROR_PROTECTION,
 	FLASH_STATUS_ERROR_CHECKSUM 	= NV_MEMORY_STATUS_ERROR_CHECKSUM, 	/*  */
 	FLASH_STATUS_ERROR_INVALID_OP 	= NV_MEMORY_STATUS_ERROR_INVALID_OP, 	/*  */
-} Flash_Status_T;
+}
+Flash_Status_T;
+
+typedef NvMemory_Partition_T Flash_Partition_T;
+typedef NvMemory_T Flash_T;
 
 typedef enum
 {
@@ -92,7 +93,7 @@ extern Flash_Status_T Flash_SetVerifyWrite(Flash_T * p_flash, const uint8_t * p_
 extern Flash_Status_T Flash_SetVerifyErase(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
 extern Flash_Status_T Flash_SetWriteOnce(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
 extern Flash_Status_T Flash_SetReadOnce(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size); //option to provide buffer?
-extern Flash_Status_T Flash_SetOp(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, Flash_Operation_T opType);
+extern Flash_Status_T Flash_SetOp(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, Flash_Operation_T opId);
 extern void Flash_GetReadOnce(const Flash_T * p_flash, uint8_t * p_result);
 
 extern Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
@@ -102,7 +103,7 @@ extern Flash_Status_T Flash_VerifyWrite_Blocking(Flash_T * p_flash, const uint8_
 extern Flash_Status_T Flash_VerifyErase_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
 extern Flash_Status_T Flash_WriteOnce_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
 extern Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
-extern Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, Flash_Operation_T opType);
+extern Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, Flash_Operation_T opId);
 
 extern bool Flash_ProcOp(Flash_T * p_flash);
 extern size_t Flash_GetOpBytesRemaining(Flash_T * p_flash);
