@@ -206,7 +206,31 @@ static inline uint32_t MotorController_User_GetIMax(MotorController_T * p_mc) { 
 /*
 	WriteOnce Variables, manufacture use, no state machine error check
 */
-static inline uint8_t MotorController_User_GetName(MotorController_T * p_mc, uint8_t charIndex) { return p_mc->CONFIG.P_ONCE->NAME[charIndex]; }
+// static inline uint8_t MotorController_User_GetName(MotorController_T * p_mc, uint8_t charIndex)
+// {
+// // #if defined(CONFIG_MOTOR_CONTROLLER_ONCE_USE_FLASH)
+// // 	return p_mc->CONFIG.P_ONCE->NAME[charIndex];
+// // #elif defined(CONFIG_MOTOR_CONTROLLER_ONCE_USE_ONCE)
+// 	Flash_ReadOnceData (p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_ONCE->NAME[charIndex], 8U);
+// 	Flash_GetReadOnce();
+// // #endif
+// }
+
+static inline Flash_Status_T MotorController_User_ReadName_Blocking(MotorController_T * p_mc, uint8_t charIndex)
+{
+	//set read once, goto statemachine
+// #if defined(CONFIG_MOTOR_CONTROLLER_ONCE_USE_FLASH)
+// 	return p_mc->CONFIG.P_ONCE->NAME[charIndex];
+// #elif defined(CONFIG_MOTOR_CONTROLLER_ONCE_USE_ONCE)
+	return Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_ONCE->NAME[charIndex], 8U);
+// #endif
+}
+
+static inline Flash_Status_T MotorController_User_WriteName_Blocking(MotorController_T * p_mc, const uint8_t * p_nameString)
+{
+	return Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_ONCE->NAME[0U], p_nameString, 8U);
+};
+
 // static inline uint8_t MotorController_User_WriteName_Blocking(MotorController_T * p_mc, uint8_t charIndex, uint8_t nameChar) {};
 // static inline void MotorController_WriteSerialNumber_Blocking(MotorController_T * p_mc, uint32_t serialNumber)
 // {

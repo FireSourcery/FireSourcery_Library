@@ -155,3 +155,8 @@ void MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
 #endif
 }
 
+// void MotorController_SaveOnce_Blocking(MotorController_T * p_mc)
+// {
+
+// }
+

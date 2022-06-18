@@ -67,48 +67,22 @@ static void StartCmdWrite(void * p_hal, const void * p_cmdDest, const void * p_c
 //	HAL_EEPROM_InitHw(p_hal);
 //}
 
-static inline NvMemory_Status_T FinalizeWrite(EEPROM_T * p_eeprom)
+static inline NvMemory_Status_T ParseCmdErrorWrite(EEPROM_T * p_eeprom)
 {
 	NvMemory_Status_T status;
-
-	if(HAL_EEPROM_ReadErrorFlags(p_eeprom->CONFIG.P_HAL) == true)
-	{
-		if(HAL_EEPROM_ReadErrorProtectionFlag(p_eeprom->CONFIG.P_HAL) == true)
-		{
-			status = NV_MEMORY_STATUS_ERROR_PROTECTION;
-		}
-		else
-		{
-			status = NV_MEMORY_STATUS_ERROR_CMD;
-		}
-	}
-	else
-	{
-		/*
-			Verify not implemented for EEPROM
-			if (p_eeprom->IsVerifyEnable == true)
-			{
-				status = NV_MEMORY_STATUS_START_VERIFY;
-			}
-		*/
-
-		status = NV_MEMORY_STATUS_SUCCESS;
-	}
-
+	if(HAL_EEPROM_ReadErrorProtectionFlag(p_eeprom->CONFIG.P_HAL) == true) { status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
+	else { status = NV_MEMORY_STATUS_ERROR_CMD; }
 	return status;
 }
 
-// void EEPROM_ReadIsFirstTime(EEPROM_T * p_eeprom) { HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL); }
-// bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom) { return HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONFIG.P_HAL); }
-NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
+static inline NvMemory_Status_T FinalizeWrite(EEPROM_T * p_eeprom)
 {
-	NvMemory_Status_T status = NvMemory_SetOpDest(p_eeprom, p_dest, sizeBytes, EEPROM_UNIT_WRITE_SIZE);
+	NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
 
-	if(status == NV_MEMORY_STATUS_SUCCESS)
+	/* Checksum Verify only */
+	if(p_eeprom->IsVerifyEnable == true)
 	{
-		NvMemory_SetOpFunctions(p_eeprom, (NvMemory_StartCmd_T)StartCmdWrite, (NvMemory_FinalizeOp_T)FinalizeWrite);
-		NvMemory_SetOpCmdSize(p_eeprom, EEPROM_UNIT_WRITE_SIZE, 1U);
-		NvMemory_SetOpData(p_eeprom, p_source, sizeBytes);
+		if(NvMemory_CheckOpChecksum(p_eeprom) == false) { status = NV_MEMORY_STATUS_ERROR_CHECKSUM; }
 	}
 
 	return status;
@@ -129,6 +103,22 @@ void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 	while(HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONFIG.P_HAL) == false);
 }
 
+// void EEPROM_ReadIsFirstTime(EEPROM_T * p_eeprom) { HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL); }
+
+NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
+{
+	NvMemory_Status_T status = NvMemory_SetOpDest(p_eeprom, p_dest, sizeBytes, EEPROM_UNIT_WRITE_SIZE);
+
+	if(status == NV_MEMORY_STATUS_SUCCESS)
+	{
+		NvMemory_SetOpFunctions(p_eeprom, (NvMemory_StartCmd_T)StartCmdWrite, (NvMemory_Process_T)FinalizeWrite, (NvMemory_Process_T)ParseCmdErrorWrite);
+		NvMemory_SetOpCmdSize(p_eeprom, EEPROM_UNIT_WRITE_SIZE, 1U);
+		NvMemory_SetOpSourceData(p_eeprom, p_source, sizeBytes);
+	}
+
+	return status;
+}
+
 NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
 {
 	return ((EEPROM_SetWrite(p_eeprom, p_dest, p_source, sizeBytes) == NV_MEMORY_STATUS_SUCCESS) ? NvMemory_ProcOp_Blocking(p_eeprom) : NV_MEMORY_STATUS_ERROR_INPUT);
@@ -138,11 +128,11 @@ NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, const void * p_dest
 	Non Blocking - UNTESTED
 */
 // void EEPROM_Init_NonBlocking(EEPROM_T * p_eeprom) { HAL_EEPROM_Init_NonBlocking(p_eeprom->CONFIG.P_HAL); }
-bool EEPROM_ProcOp_NonBlocking(EEPROM_T * p_flash) { return NvMemory_ProcOp(p_flash); }
-
-NvMemory_Status_T EEPROM_StartWrite_NonBlocking(EEPROM_T * p_eeprom, void * p_dest, const void * p_source, size_t sizeBytes)
-{
-	return (p_eeprom->Status = (EEPROM_SetWrite(p_eeprom, p_dest, p_source, sizeBytes) == NV_MEMORY_STATUS_SUCCESS ? NvMemory_StartOp(p_eeprom) : NV_MEMORY_STATUS_ERROR_INPUT));
-}
+// bool EEPROM_ProcOp_NonBlocking(EEPROM_T * p_flash) { return NvMemory_ProcOp(p_flash); }
+// bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom) { return HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONFIG.P_HAL); }
+// NvMemory_Status_T EEPROM_StartWrite_NonBlocking(EEPROM_T * p_eeprom, void * p_dest, const void * p_source, size_t sizeBytes)
+// {
+// 	return (p_eeprom->Status = (EEPROM_SetWrite(p_eeprom, p_dest, p_source, sizeBytes) == NV_MEMORY_STATUS_SUCCESS ? NvMemory_StartOp(p_eeprom) : NV_MEMORY_STATUS_ERROR_INPUT));
+// }
 
 

@@ -36,32 +36,23 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-struct NvMemory_Tag;
-
 typedef enum NvMemory_Status_Tag
 {
 	NV_MEMORY_STATUS_SUCCESS,
-	NV_MEMORY_STATUS_PROCESSING,
-	NV_MEMORY_STATUS_START_VERIFY,
+	NV_MEMORY_STATUS_PROCESSING, 		/* NonBlocking Only */
+	NV_MEMORY_STATUS_START_VERIFY,		 /* Follow up Op after complete */
 	// NV_MEMORY_STATUS_ERROR,
 	NV_MEMORY_STATUS_ERROR_BUSY,
-	NV_MEMORY_STATUS_ERROR_INPUT,		/* op param input */ //todo   parse error destination, align
-	NV_MEMORY_STATUS_ERROR_CMD,			/* flash controller error */
+	NV_MEMORY_STATUS_ERROR_INPUT,		/* op params, dest address or size */ //todo   parse error destination, align
+	NV_MEMORY_STATUS_ERROR_BOUNDARY,
+	NV_MEMORY_STATUS_ERROR_ALIGNMENT,
+	NV_MEMORY_STATUS_ERROR_CMD,			/* Unparsed Error */
 	NV_MEMORY_STATUS_ERROR_VERIFY,		/* Verify cmd */
 	NV_MEMORY_STATUS_ERROR_PROTECTION,
 	NV_MEMORY_STATUS_ERROR_CHECKSUM,	/*  */
 	NV_MEMORY_STATUS_ERROR_INVALID_OP,
 }
 NvMemory_Status_T;
-
-typedef enum NvMemory_State_Tag
-{
-	NV_MEMORY_STATE_IDLE,
-	NV_MEMORY_STATE_ACTIVE,
-	NV_MEMORY_STATE_WRITE,
-	NV_MEMORY_STATE_VERIFY,
-}
-NvMemory_State_T;
 
 /*
 	Partition defines writable ranges. Checked on op cmd.
@@ -104,27 +95,37 @@ typedef const struct NvMemory_Config_Tag
 	const uint8_t PARTITION_COUNT;
 	uint8_t * const P_BUFFER;
 	const size_t BUFFER_SIZE;
-	// const uint32_t ERASE_SIZE;
-	// const uint32_t WRITE_SIZE;
 }
 NvMemory_Config_T;
 
 typedef void (*NvMemory_StartCmd_T)(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
-typedef NvMemory_Status_T (*NvMemory_FinalizeOp_T)(struct NvMemory_Tag * p_this);
 typedef void (*NvMemory_Callback_T)(void * p_callbackData);
+
+
+struct NvMemory_Tag;
+typedef NvMemory_Status_T(*NvMemory_Process_T)(struct NvMemory_Tag * p_this);
+typedef NvMemory_Status_T(*NvMemory_FinalizeCmd_T)(struct NvMemory_Tag * p_this, size_t opIndex);
+
+typedef enum NvMemory_State_Tag
+{
+	NV_MEMORY_STATE_IDLE,
+	NV_MEMORY_STATE_ACTIVE,
+	NV_MEMORY_STATE_WRITE,
+	NV_MEMORY_STATE_VERIFY,
+}
+NvMemory_State_T;
+
 /*
 	NvMemory controller
 */
 typedef struct NvMemory_Tag
 {
 	NvMemory_Config_T CONFIG;
-	//	Queue_T Queue; //job queue for nonblocking operation
 
 	bool IsVerifyEnable;
 	bool IsOpBuffered; 	/* copy to buffer first or use pointer to source */
 	//	bool IsForceAlignEnable;
 
-	/* */
 	const uint8_t * p_OpDest;
 	const uint8_t * p_OpData;
 	size_t OpSize; 			/* Total bytes at start */
@@ -134,17 +135,18 @@ typedef struct NvMemory_Tag
 	const NvMemory_Partition_T * p_OpPartition; /* Op Dest */
 
 	NvMemory_StartCmd_T StartCmd;
-	NvMemory_FinalizeOp_T FinalizeOp;
-	//	NvMemory_Status_T (*ParseErrorCode)(void * p_this);
+	NvMemory_FinalizeCmd_T FinalizeCmd;
+	NvMemory_Process_T ParseCmdError;
+	NvMemory_Process_T FinalizeOp;
 
 	void * p_CallbackData;
-	//	void (*OnComplete)(void * p_callbackData); /*!< OnComplete */
-	void (*Yield)(void * p_callbackData); /*!<  On Block*/
+	NvMemory_Callback_T Yield; 			/*!< On Block */
+	// NvMemory_Callback_T OnComplete; 	/*!< OnComplete */
 
 	/* Nonblocking use only */
 	NvMemory_State_T State;
 	NvMemory_Status_T Status;
-	size_t OpIndex; 	/* in pages/phrases */
+	size_t OpIndex; 	/* in bytes */
 } NvMemory_T;
 
 /*
@@ -177,9 +179,9 @@ typedef struct NvMemory_Tag
 extern void NvMemory_Init(NvMemory_T * p_this);
 extern void NvMemory_SetYield(NvMemory_T * p_this, void (*yield)(void *), void * p_callbackData);
 extern NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize, size_t unitSize);
-extern void NvMemory_SetOpData(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
+extern void NvMemory_SetOpSourceData(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
 extern void NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd);
-extern void NvMemory_SetOpFunctions(NvMemory_T * p_this, NvMemory_StartCmd_T startCmd, NvMemory_FinalizeOp_T finalizeOp);
+extern void NvMemory_SetOpFunctions(NvMemory_T * p_this, NvMemory_StartCmd_T startCmd, NvMemory_Process_T finalizeOp, NvMemory_Process_T parseCmdError);
 extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this);
 
 /*

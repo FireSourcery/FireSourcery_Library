@@ -214,10 +214,11 @@ typedef const struct __attribute__((aligned(FLASH_UNIT_WRITE_ONCE_SIZE))) MotorC
 {
 	const uint8_t NAME[8U];
 	const uint8_t NAME_EXT[8U];
-	const uint8_t MANUFACTURE_DAY;
-	const uint8_t MANUFACTURE_MONTH;
-	const uint8_t MANUFACTURE_YEAR;
-	const uint8_t MANUFACTURE_RESV;
+	union
+	{
+		struct { const uint8_t MANUFACTURE_DAY; const uint8_t MANUFACTURE_MONTH; const uint8_t MANUFACTURE_YEAR; const uint8_t MANUFACTURE_RESV; };
+		const uint32_t MANUFACTURE_REG;
+	};
 	union
 	{
 		const uint8_t SERIAL_NUMBER[4U];
