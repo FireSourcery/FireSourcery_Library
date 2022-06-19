@@ -86,17 +86,17 @@ typedef const struct Xcvr_Xcvr_Tag
 }
 Xcvr_Xcvr_T;
 
-#define XCVR_XCVR_INIT(p_Xcvr, Type)		\
-{											\
-	.P_CONTEXT 	= (void *)p_Xcvr, 			\
-	.TYPE 		= Type,						\
+#define XCVR_XCVR_INIT(p_Xcvr, Type)	\
+{										\
+	.P_CONTEXT 	= (void *)p_Xcvr, 		\
+	.TYPE 		= Type,					\
 }
 
-#define XCVR_XCVR_INIT_INTERFACE(p_Xcvr, p_Interface)		\
-{															\
-	.P_CONTEXT 		= (void *)p_Xcvr, 						\
-	.TYPE 			= XCVR_TYPE_INTERFACE,					\
-	.P_INTERFACE 	= p_Interface,							\
+#define XCVR_XCVR_INIT_INTERFACE(p_Xcvr, p_Interface)	\
+{														\
+	.P_CONTEXT 		= (void *)p_Xcvr, 					\
+	.TYPE 			= XCVR_TYPE_INTERFACE,				\
+	.P_INTERFACE 	= p_Interface,						\
 }
 
 typedef const struct Xcvr_Config_Tag

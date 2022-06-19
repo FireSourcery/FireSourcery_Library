@@ -146,7 +146,7 @@ static Flash_Status_T ParseCmdErrorVerify(Flash_T * p_flash)
 static Flash_Status_T ParseCmdErrorWriteOnce(Flash_T * p_flash)
 {
 	(void)p_flash;
-	return FLASH_STATUS_ERROR_CMD;
+	return FLASH_STATUS_ERROR_CMD; /* Cmd failed */
 }
 
 static Flash_Status_T ParseCmdErrorReadOnce(Flash_T * p_flash)

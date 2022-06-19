@@ -305,30 +305,23 @@ static Protocol_ReqCode_T Req_WriteData_Blocking
 				if(flashStatus == FLASH_STATUS_SUCCESS)
 				{
 					p_subState->DataModeSize -= writeSize;
-					if(p_subState->DataModeSize > 0U)
-					{
-						p_subState->StateId = 1U;
-					}
-					else
-					{
-						p_subState->StateId = 3U;
-						p_subState->WriteModeStatus = MOT_PACKET_HEADER_STATUS_OK;
-					}
-					reqCode = PROTOCOL_REQ_CODE_TX_ACK;
+					// p_subState->DataPhaseBytes -= p_rxPacket->framingPacket.length;
+					// if(p_subState->DataPhaseBytes > 0U) { p_subState->StateIndex = 1U; }
+					// else { p_subState->StateIndex = 3U; }
+					reqCode = PROTOCOL_REQ_CODE_TX_ACK; /* need seperate state for tx response after tx ack */
 				}
 				else
 				{
-					p_subState->StateId = 3U;
-					p_subState->WriteModeStatus = MOT_PACKET_HEADER_STATUS_ERROR;
-					// reqCode = PROTOCOL_REQ_CODE_TX_NACK;
-					// p_subState->StateId = 2U;
+					// *p_txSize = NxpBootPacket_BuildGenericResponse(p_txPacket, RemapFlashStatus(flashStatus), kCommandTag_WriteMemory);
+					// *p_txSize += NxpBootPacket_BuildFraming(p_txPacket, kFramingPacketType_Command, *p_txSize);
+					reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
 				}
 			}
 			else
 			{
-				// reqCode = PROTOCOL_REQ_CODE_WAIT_PROCESS; // error
-				p_subState->StateId = 3U;
-				p_subState->WriteModeStatus = MOT_PACKET_HEADER_STATUS_ERROR; //out of sync
+				// *p_txSize = NxpBootPacket_BuildGenericResponse(p_txPacket, kStatus_MemoryWriteFailed, kCommandTag_WriteMemory);
+				// *p_txSize += NxpBootPacket_BuildFraming(p_txPacket, kFramingPacketType_Command, *p_txSize);
+				reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
 			}
 			break;
 
@@ -336,6 +329,9 @@ static Protocol_ReqCode_T Req_WriteData_Blocking
 			// p_subState->IsDataModeActive = false;
 			*p_txSize = MotPacket_WriteDataResp_Build((MotPacket_WriteDataResp_T *)p_txPacket, p_subState->WriteModeStatus);
 			reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+			// *p_txSize = NxpBootPacket_BuildGenericResponse(p_txPacket, kStatus_Success, kCommandTag_WriteMemory);
+			// *p_txSize += NxpBootPacket_BuildFraming(p_txPacket, kFramingPacketType_Command, *p_txSize);
+			// reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
 			break;
 
 		default:

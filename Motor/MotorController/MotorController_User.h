@@ -78,23 +78,12 @@ static inline void MotorController_User_SetDirection(MotorController_T * p_mc, M
 	//if StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SET_NEUTRAL);
 }
 
-static inline void MotorController_User_SaveParameters_Blocking(MotorController_T * p_mc)
-{
-	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_ALL;
-	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
-}
-
-static inline void MotorController_User_SaveBootReg_Blocking(MotorController_T * p_mc)
-{
-	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_BOOT;
-	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
-}
-
 static inline bool MotorController_User_CheckFault(MotorController_T * p_mc)
 {
 	return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_FAULT);
 }
 
+/* returns true if no fault active at the end of function */
 static inline bool MotorController_User_ClearFault(MotorController_T * p_mc)
 {
 	if(StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_FAULT) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT); }
@@ -106,19 +95,31 @@ static inline void MotorController_User_SetFault(MotorController_T * p_mc)
 	if(StateMachine_GetActiveStateId(&p_mc->StateMachine) != MCSM_STATE_ID_FAULT) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT); }
 }
 
-static inline void MotorController_User_SetUserFault(MotorController_T * p_mc)
-{
-	if(StateMachine_GetActiveStateId(&p_mc->StateMachine) != MCSM_STATE_ID_FAULT)
-	{
-		p_mc->FaultFlags.User = 1U;
-		StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
-	}
-}
+static inline void MotorController_User_SetUserFault(MotorController_T * p_mc) { p_mc->FaultFlags.User = 1U; MotorController_User_SetFault(p_mc); }
+static inline bool MotorController_User_ClearUserFault(MotorController_T * p_mc) { p_mc->FaultFlags.User = 0U; return MotorController_User_ClearFault(p_mc); }
 
 static inline void MotorController_User_ToggleUserFault(MotorController_T * p_mc)
 {
-	p_mc->FaultFlags.User = 1U;
-	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT);
+	if(p_mc->FaultFlags.User == 1U) { MotorController_User_SetUserFault(p_mc); }
+	else { MotorController_User_ClearUserFault(p_mc); }
+}
+
+static inline void MotorController_User_SaveParameters_Blocking(MotorController_T * p_mc)
+{
+	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_PARAMS_ALL;
+	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
+}
+
+static inline void MotorController_User_SaveBootReg_Blocking(MotorController_T * p_mc)
+{
+	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_BOOT;
+	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
+}
+
+static inline void MotorController_User_SaveOnce_Blocking(MotorController_T * p_mc)
+{
+	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_ONCE;
+	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
 }
 
 static inline void MotorController_User_BeepN(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime, uint8_t n) { Blinky_BlinkN(&p_mc->Buzzer, onTime, offTime, n); }
@@ -204,38 +205,41 @@ static inline uint32_t MotorController_User_GetVMax(MotorController_T * p_mc) { 
 static inline uint32_t MotorController_User_GetIMax(MotorController_T * p_mc) { return p_mc->CONFIG.I_MAX; }
 
 /*
-	WriteOnce Variables, manufacture use, no state machine error check
+	WriteOnce Variables
 */
-// static inline uint8_t MotorController_User_GetName(MotorController_T * p_mc, uint8_t charIndex)
+static inline void MotorController_User_GetName(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->OnceBuffer.NAME[0U], 8U); }
+static inline char * MotorController_User_GetPtrName(MotorController_T * p_mc ) {return &p_mc->OnceBuffer.NAME[0U];}
+static inline char MotorController_User_GetNameIndex(MotorController_T * p_mc, uint8_t charIndex) { return p_mc->OnceBuffer.NAME[charIndex]; }
+
+// static inline uint32_t MotorController_User_GetSerialNumber(MotorController_T * p_mc) { return p_mc->OnceBuffer.SERIAL_NUMBER_REG; }
+// static inline uint32_t MotorController_User_GetManufactureNumber(MotorController_T * p_mc) { return p_mc->OnceBuffer.MANUFACTURE_NUMBER_REG; }
+// static inline void MotorController_User_GetIdExt(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->OnceBuffer.ID_EXT[0U], 8U); }
+
+static inline void MotorController_User_GetManufacture(MotorController_T * p_mc, MotorController_Manufacture_T * p_dest) { memcpy(p_dest, &p_mc->OnceBuffer, sizeof(MotorController_Manufacture_T)); }
+
+// static inline void MotorController_User_SetManufacture(MotorController_T * p_mc, const MotorController_Manufacture_T * p_dest) { memcpy(&p_mc->OnceBuffer, p_string, sizeof(MotorController_Manufacture_T)); }
+
+static inline void MotorController_User_WriteManufacture(MotorController_T * p_mc, const MotorController_Manufacture_T * p_dest)
+{
+	memcpy(&p_mc->OnceBuffer, p_dest, sizeof(MotorController_Manufacture_T));
+	MotorController_User_SaveOnce_Blocking(p_mc);
+}
+
+
+// static inline Flash_Status_T MotorController_User_ReadName_Blocking(MotorController_T * p_mc, uint8_t charIndex)
 // {
+// 	//set read once, goto statemachine
 // // #if defined(CONFIG_MOTOR_CONTROLLER_ONCE_USE_FLASH)
 // // 	return p_mc->CONFIG.P_ONCE->NAME[charIndex];
 // // #elif defined(CONFIG_MOTOR_CONTROLLER_ONCE_USE_ONCE)
-// 	Flash_ReadOnceData (p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_ONCE->NAME[charIndex], 8U);
-// 	Flash_GetReadOnce();
+// 	return Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_ONCE->NAME[charIndex], 8U);
 // // #endif
 // }
 
-static inline Flash_Status_T MotorController_User_ReadName_Blocking(MotorController_T * p_mc, uint8_t charIndex)
-{
-	//set read once, goto statemachine
-// #if defined(CONFIG_MOTOR_CONTROLLER_ONCE_USE_FLASH)
-// 	return p_mc->CONFIG.P_ONCE->NAME[charIndex];
-// #elif defined(CONFIG_MOTOR_CONTROLLER_ONCE_USE_ONCE)
-	return Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_ONCE->NAME[charIndex], 8U);
-// #endif
-}
-
-static inline Flash_Status_T MotorController_User_WriteName_Blocking(MotorController_T * p_mc, const uint8_t * p_nameString)
-{
-	return Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_ONCE->NAME[0U], p_nameString, 8U);
-};
-
-// static inline uint8_t MotorController_User_WriteName_Blocking(MotorController_T * p_mc, uint8_t charIndex, uint8_t nameChar) {};
-// static inline void MotorController_WriteSerialNumber_Blocking(MotorController_T * p_mc, uint32_t serialNumber)
+// static inline Flash_Status_T MotorController_User_WriteName_Blocking(MotorController_T * p_mc, const uint8_t * p_nameString)
 // {
-// 	// Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, p_mc->CONFIG.P_ONCE, &serialNumber, 4U);
-// }
+// 	return Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_ONCE->NAME[0U], p_nameString, 8U);
+// };
 
 /*
 	Motor Wrapper, no implementation of motor wrappers

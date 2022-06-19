@@ -46,7 +46,7 @@ typedef enum NvMemory_Status_Tag
 	NV_MEMORY_STATUS_ERROR_INPUT,		/* op params, dest address or size */ //todo   parse error destination, align
 	NV_MEMORY_STATUS_ERROR_BOUNDARY,
 	NV_MEMORY_STATUS_ERROR_ALIGNMENT,
-	NV_MEMORY_STATUS_ERROR_CMD,			/* Unparsed Error */
+	NV_MEMORY_STATUS_ERROR_CMD,			/* Cmd Failed. Unparsed Error */
 	NV_MEMORY_STATUS_ERROR_VERIFY,		/* Verify cmd */
 	NV_MEMORY_STATUS_ERROR_PROTECTION,
 	NV_MEMORY_STATUS_ERROR_CHECKSUM,	/*  */
@@ -101,7 +101,6 @@ NvMemory_Config_T;
 typedef void (*NvMemory_StartCmd_T)(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
 typedef void (*NvMemory_Callback_T)(void * p_callbackData);
 
-
 struct NvMemory_Tag;
 typedef NvMemory_Status_T(*NvMemory_Process_T)(struct NvMemory_Tag * p_this);
 typedef NvMemory_Status_T(*NvMemory_FinalizeCmd_T)(struct NvMemory_Tag * p_this, size_t opIndex);
@@ -135,9 +134,9 @@ typedef struct NvMemory_Tag
 	const NvMemory_Partition_T * p_OpPartition; /* Op Dest */
 
 	NvMemory_StartCmd_T StartCmd;
-	NvMemory_FinalizeCmd_T FinalizeCmd;
-	NvMemory_Process_T ParseCmdError;
-	NvMemory_Process_T FinalizeOp;
+	NvMemory_FinalizeCmd_T FinalizeCmd; /* On end per Cmd iteration */
+	NvMemory_Process_T ParseCmdError;	/* On end all Cmd iteration, Op Complete Error */
+	NvMemory_Process_T FinalizeOp;		/* On end all Cmd iteration, Op Complete Sucess */
 
 	void * p_CallbackData;
 	NvMemory_Callback_T Yield; 			/*!< On Block */
@@ -160,11 +159,11 @@ typedef struct NvMemory_Tag
 
 #define _NV_MEMORY_INIT_PARTITIONS(p_Partitions, PartitionsCount)	\
 	.P_PARTITIONS 		= p_Partitions,  							\
-	.PARTITION_COUNT 	= PartitionsCount, 							\
+	.PARTITION_COUNT 	= PartitionsCount,
 
 #define _NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)	\
 	.P_BUFFER 		= p_Buffer,  						\
-	.BUFFER_SIZE 	= BufferSize, 						\
+	.BUFFER_SIZE 	= BufferSize,
 
 #define NV_MEMORY_INIT(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags, p_Partitions, PartitionsCount, p_Buffer, BufferSize)	\
 {																																						\

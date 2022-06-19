@@ -203,8 +203,9 @@ static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc)
 
 	switch(p_mc->StopSubstate)
 	{
-		case MOTOR_CONTROLLER_NVM_ALL: MotorController_SaveParameters_Blocking(p_mc); break;
-		case MOTOR_CONTROLLER_NVM_BOOT: MotorController_SaveBootReg_Blocking(p_mc); break;
+		case MOTOR_CONTROLLER_NVM_PARAMS_ALL: p_mc->NvmStatus = MotorController_SaveParameters_Blocking(p_mc); break;
+		case MOTOR_CONTROLLER_NVM_BOOT: p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc); break;
+		case MOTOR_CONTROLLER_NVM_ONCE: p_mc->NvmStatus = MotorController_SaveOnce_Blocking(p_mc); break;
 		default: break;
 	}
 

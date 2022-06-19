@@ -829,6 +829,39 @@ static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 	(void)argv;
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 
+	const MotorController_Manufacture_T TEST =
+	{
+		.NAME = {'a', 'b', 'c', 'd'},
+		.MANUFACTURE_NUMBER_REG = 123U,
+	};
+
+	const MotorController_Manufacture_T TEST1 =
+	{
+		.NAME = {'x', 'y', 'z', 'z'},
+		.MANUFACTURE_NUMBER_REG = 9877U,
+	};
+
+	MotorController_Manufacture_T TestRead;
+	MotorController_User_GetManufacture(p_mc, &TestRead);
+
+	Terminal_SendString(p_terminal, "Manufacture:\r\n");
+	Terminal_SendString_Len(p_terminal, TestRead.NAME, 8U); Terminal_SendString(p_terminal, " \r\n");
+	Terminal_SendNum(p_terminal, TestRead.MANUFACTURE_NUMBER_REG); Terminal_SendString(p_terminal, " \r\n");
+
+	MotorController_User_WriteManufacture(p_mc, &TEST);
+	MotorController_ReadOnce_Blocking(p_mc);
+	MotorController_User_GetManufacture(p_mc, &TestRead);
+	Terminal_SendString(p_terminal, "write1:\r\n");
+	Terminal_SendString_Len(p_terminal, TestRead.NAME, 8U); Terminal_SendString(p_terminal, " \r\n");
+	Terminal_SendNum(p_terminal, TestRead.MANUFACTURE_NUMBER_REG); Terminal_SendString(p_terminal, " \r\n");
+
+	MotorController_User_WriteManufacture(p_mc, &TEST1);
+	MotorController_ReadOnce_Blocking(p_mc);
+	MotorController_User_GetManufacture(p_mc, &TestRead);
+	Terminal_SendString(p_terminal, "write2:\r\n");
+	Terminal_SendString_Len(p_terminal, TestRead.NAME, 8U); Terminal_SendString(p_terminal, " \r\n");
+	Terminal_SendNum(p_terminal, TestRead.MANUFACTURE_NUMBER_REG); Terminal_SendString(p_terminal, " \r\n");
+
 	// qfrac16_t atan2_0 = qfrac16_atan2(0, 32767);
 	// qfrac16_t atan2_90 = qfrac16_atan2(32767, 0);
 	// qfrac16_t atan2_180 = qfrac16_atan2(0, -32767);

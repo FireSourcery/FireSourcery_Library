@@ -89,7 +89,9 @@ static inline void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
 #endif
 }
 
-static inline void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str) // can compiler optimize strlen() of passed string literal?
+/* Null Terminated */
+/* compiler optimize strlen() of passed string literal? */
+static inline void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE
 	Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, strlen(p_str));
@@ -98,6 +100,7 @@ static inline void Terminal_SendString(const Terminal_T * p_terminal, const char
 #endif
 }
 
+/* Length-Prefixed */
 static inline void Terminal_SendString_Len(const Terminal_T * p_terminal, const char * p_str, uint8_t length)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE

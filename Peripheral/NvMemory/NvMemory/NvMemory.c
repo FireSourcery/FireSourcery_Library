@@ -84,7 +84,7 @@ static inline bool CheckTargetBoundary(uint32_t targetStart, size_t targetSize, 
 	return ((targetStart >= boundaryStart) && ((targetStart + targetSize) <= (boundaryStart + boundarySize)));
 }
 
-static inline bool CheckDestPartitionBoundary(const uint8_t * p_dest, size_t size, NvMemory_Partition_T * p_partition)
+static inline bool CheckPartitionBoundary(const NvMemory_Partition_T * p_partition, const uint8_t * p_dest, size_t size)
 {
 	return CheckTargetBoundary((uint32_t)p_dest, size, (uint32_t)p_partition->P_START, p_partition->SIZE);
 }
@@ -95,7 +95,7 @@ static inline NvMemory_Partition_T * SearchPartitionTable(const NvMemory_Partiti
 
 	for(uint8_t iPartition = 0U; iPartition < partitionCount; iPartition++)
 	{
-		if(CheckDestPartitionBoundary(p_dest, size, &p_partitionTable[iPartition]) == true) { p_partition = &p_partitionTable[iPartition]; }
+		if(CheckPartitionBoundary(&p_partitionTable[iPartition], p_dest, size) == true) { p_partition = &p_partitionTable[iPartition]; }
 	}
 
 	return p_partition;
@@ -196,6 +196,7 @@ void NvMemory_SetOpFunctions(NvMemory_T * p_this, NvMemory_StartCmd_T startCmd, 
 	p_this->StartCmd = startCmd;
 	p_this->FinalizeOp = finalizeOp;
 	p_this->ParseCmdError = parseCmdError;
+	p_this->FinalizeCmd = 0U; /* Temp. only readonce use. */
 }
 
 /*
@@ -247,8 +248,7 @@ NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
 		{
 			status = (p_this->ParseCmdError != 0U) ? p_this->ParseCmdError(p_this) : NV_MEMORY_STATUS_ERROR_CMD;
 		}
-		else
-		// if (p_this->CONFIG.READ_ERROR_FLAGS(p_this->CONFIG.P_HAL) == false)
+		else  /* if (p_this->CONFIG.READ_ERROR_FLAGS(p_this->CONFIG.P_HAL) == false) */
 		{
 			status = p_this->FinalizeOp(p_this);
 

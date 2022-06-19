@@ -31,7 +31,8 @@
 #include "Xcvr.h"
 
 /*
-	Abtraction layer runtime interface. User init outside
+	Abtraction layer runtime interface.
+	Outside module handle Xcvr_Xcvr_T hardware init
 */
 void Xcvr_Init(Xcvr_T * p_xcvr, uint8_t xcvrDefaultIndex)
 {
@@ -70,7 +71,7 @@ void Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate) //todo check 
 		case XCVR_TYPE_INTERFACE:
 			if(p_xcvr->p_Xcvr->P_INTERFACE->CONFIG_BAUD_RATE != 0U) { p_xcvr->p_Xcvr->P_INTERFACE->CONFIG_BAUD_RATE(p_xcvr->p_Xcvr->P_CONTEXT, baudRate); }
 		break;
-		case XCVR_TYPE_SERIAL:		Serial_ConfigBaudRate(p_xcvr->p_Xcvr->P_CONTEXT, baudRate);	break;
+		case XCVR_TYPE_SERIAL: 		Serial_ConfigBaudRate(p_xcvr->p_Xcvr->P_CONTEXT, baudRate);	break;
 		case XCVR_TYPE_I2C: 		break;
 		case XCVR_TYPE_SPI: 		break;
 		case XCVR_TYPE_VIRTUAL: 	break;
@@ -132,10 +133,10 @@ size_t Xcvr_RxMax(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize
 	{
 		case XCVR_TYPE_INTERFACE: 	rxCount = p_xcvr->p_Xcvr->P_INTERFACE->RX_MAX(p_xcvr->p_Xcvr->P_CONTEXT, p_destBuffer, destSize); break;
 		case XCVR_TYPE_SERIAL:		rxCount = Serial_RecvMax(p_xcvr->p_Xcvr->P_CONTEXT, p_destBuffer, destSize); break;
-		case XCVR_TYPE_I2C: 		rxCount = 0U;	break;
-		case XCVR_TYPE_SPI: 		rxCount = 0U;	break;
-		case XCVR_TYPE_VIRTUAL: 	rxCount = 0U;	break;
-		default: 					rxCount = 0U; 	break;
+		case XCVR_TYPE_I2C: 		rxCount = 0U; break;
+		case XCVR_TYPE_SPI: 		rxCount = 0U; break;
+		case XCVR_TYPE_VIRTUAL: 	rxCount = 0U; break;
+		default: 					rxCount = 0U; break;
 	}
 #elif 	defined(CONFIG_XCVR_INTERFACE_POINTER_ONLY)
 	rxCount = p_xcvr->p_Xcvr->P_INTERFACE->RX_MAX(p_xcvr->p_Xcvr->P_CONTEXT, p_destBuffer, destSize);

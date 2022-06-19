@@ -101,8 +101,9 @@ MotorController_Direction_T;
 
 typedef enum MotorController_Substate_Tag
 {
-	MOTOR_CONTROLLER_NVM_ALL,
+	MOTOR_CONTROLLER_NVM_PARAMS_ALL,
 	MOTOR_CONTROLLER_NVM_BOOT,
+	MOTOR_CONTROLLER_NVM_ONCE,
 	MOTOR_CONTROLLER_CALIBRATION,
 }
 MotorController_Substate_T; //calibration/stop substate
@@ -210,23 +211,20 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 }
 MotorController_Params_T;
 
-typedef const struct __attribute__((aligned(FLASH_UNIT_WRITE_ONCE_SIZE))) MotorController_Once_Tag
+typedef struct __attribute__((aligned(FLASH_UNIT_WRITE_ONCE_SIZE))) MotorController_Manufacture_Tag
 {
-	const uint8_t NAME[8U];
-	const uint8_t NAME_EXT[8U];
+	char NAME[8U];
+	union { uint8_t SERIAL_NUMBER[4U];   uint32_t SERIAL_NUMBER_REG; };
 	union
 	{
-		struct { const uint8_t MANUFACTURE_DAY; const uint8_t MANUFACTURE_MONTH; const uint8_t MANUFACTURE_YEAR; const uint8_t MANUFACTURE_RESV; };
-		const uint32_t MANUFACTURE_REG;
+		uint8_t MANUFACTURE_NUMBER[4U];
+		uint32_t MANUFACTURE_NUMBER_REG;
+		struct { uint8_t MANUFACTURE_DAY;  uint8_t MANUFACTURE_MONTH;  uint8_t MANUFACTURE_YEAR;  uint8_t MANUFACTURE_RESV; };
 	};
-	union
-	{
-		const uint8_t SERIAL_NUMBER[4U];
-		const uint32_t SERIAL_NUMBER_FULL;
-	};
-	const uint8_t HARDWARE_VERSION[4U];
+	union { uint8_t HARDWARE_VERSION[4U];	 uint32_t HARDWARE_VERSION_REG; };
+	uint8_t ID_EXT[8U];
 }
-MotorController_Once_T;
+MotorController_Manufacture_T;
 
 /*
 	allocated memory outside for less CONFIG define redundancy
@@ -234,7 +232,7 @@ MotorController_Once_T;
 typedef const struct MotorController_Config_Tag
 {
 	const MotorController_Params_T * const P_PARAMS_NVM;
-	const MotorController_Once_T * const P_ONCE;
+	const MotorController_Manufacture_T * const P_ONCE;
 	const MemMapBoot_T * const P_MEM_MAP_BOOT;
 
 	Motor_T * const 	P_MOTORS;
@@ -271,7 +269,7 @@ typedef struct MotorController_Tag
 	MotAnalogUser_T AnalogUser;
 
 	Blinky_T Buzzer;
-	MotorController_BuzzerFlags_T BuzzerFlagsActive; /* active conditions requesting buzzer */
+	MotorController_BuzzerFlags_T BuzzerFlagsActive; /* Active conditions requesting buzzer */
 
 	Debounce_T OptDin; 	/* Configurable input */
 	Pin_T Meter;
@@ -305,7 +303,7 @@ typedef struct MotorController_Tag
 	NvMemory_Status_T NvmStatus;
 
 	uint16_t UserCmd;
-	MotorController_Once_T OnceBuffer; //temp
+	MotorController_Manufacture_T OnceBuffer; //temp
 
 	// MotorController_SpeedLimitActiveId_T SpeedLimitActiveId;
 	// MotorController_ILimitActiveId_T ILimitActiveId;
@@ -425,7 +423,9 @@ static inline bool MotorController_ClearILimitMotorAll(MotorController_T * p_mc,
 	Extern
 */
 extern void MotorController_Init(MotorController_T * p_controller);
-extern bool MotorController_SaveParameters_Blocking(MotorController_T * p_mc);
-extern void MotorController_SaveBootReg_Blocking(MotorController_T * p_mc);
+extern NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_mc);
+extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc);
+extern NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc);
+extern NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc);
 
 #endif

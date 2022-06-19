@@ -31,32 +31,32 @@
 #ifndef XCVR_VIRTUAL_H
 #define XCVR_VIRTUAL_H
 
-#include "Utility/Queue/Queue.h"
+#include "Utility/Ring/Ring.h"
 
 typedef struct
 {
-	Queue_T RxQueue;
-	Queue_T TxQueue;
+	Ring_T RxRing;
+	Ring_T TxRing;
 }
 XcvrVirtual_T;
 
-#define XCVR_VIRTUAL_DEFINE(p_TxBuffer, p_RxBuffer, QueueSize)	\
+#define XCVR_VIRTUAL_DEFINE(p_TxBuffer, p_RxBuffer, RingSize)	\
 {																\
-	.RxQueue = ANALOG_INIT(p_RxBuffer, QueueSize, 1U, 0U),		\
-	.TxQueue = ANALOG_INIT(p_TxBuffer, QueueSize, 1U, 0U),		\
+	.RxRing = ANALOG_INIT(p_RxBuffer, RingSize, 1U, 0U),		\
+	.TxRing = ANALOG_INIT(p_TxBuffer, RingSize, 1U, 0U),		\
 }
 
 /*
 	Use critical if multithreaded
 */
-static inline bool XcvrVirtual_Send(XcvrVirtual_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
+static inline bool XcvrVirtual_Tx(XcvrVirtual_T * p_xcvr, const uint8_t * p_srcBuffer, size_t length)
 {
-	return Queue_EnqueueN(&p_xcvr->TxQueue, p_srcBuffer, length);
+	return Ring_EnqueueN(&p_xcvr->TxRing, p_srcBuffer, length);
 }
 
-static inline uint32_t XcvrVirtual_Recv(XcvrVirtual_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
+static inline uint32_t XcvrVirtual_Rx(XcvrVirtual_T * p_xcvr, uint8_t * p_destBuffer, size_t length)
 {
-	return Queue_DequeueMax(&p_xcvr->TxQueue, p_destBuffer, length);
+	return Ring_DequeueMax(&p_xcvr->TxRing, p_destBuffer, length);
 }
 
 #endif
