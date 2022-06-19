@@ -57,9 +57,10 @@
 #define S32K_FLEX_RAM_END		0x14000FFF	/* */
 #define S32K_FLEX_RAM_SIZE		0x00001000
 
-#define S32K_FLASH_USER_PROGRAM_ONCE_START	0x03C0
-#define S32K_FLASH_USER_PROGRAM_ONCE_END	0x03FB
-#define S32K_FLASH_USER_PROGRAM_ONCE_SIZE	0x003C	/* 60 Bytes. 0x03FD, 0x03FC reserved for config */
+/* Program Flash IFR */
+#define S32K_FLASH_PROGRAM_ONCE_START	0x03C0
+#define S32K_FLASH_PROGRAM_ONCE_END		0x03FF
+#define S32K_FLASH_PROGRAM_ONCE_SIZE	0x0040	/* 64 Bytes. */
 
 #define S32K_FLASH_SECTOR_SIZE				0x00000800U	/* 2KB */
 #define S32K_FLASH_PHRASE_SIZE				0x00000008U	/* 64-bits */
@@ -67,16 +68,13 @@
 #define S32K_FLASH_EEPROM_UNIT_ERASE_SIZE	0x01
 #define S32K_FLASH_EEPROM_UNIT_WRITE_SIZE	0x01
 
+/* Program Flash */
 #define S32K_FLASH_RESERVED_START	0x0000	/* */
 #define S32K_FLASH_RESERVED_END		0x040F	/* */
 
+/* Program Flash IFR */
 #define S32K_FLASH_RESERVED_IFR_START			0x0000	/* */
 #define S32K_FLASH_RESERVED_IFR_END				0x03FF	/* */
-#define S32K_FLASH_RESERVED_PROGRAM_ONCE_START	0x03C0
-#define S32K_FLASH_RESERVED_PROGRAM_ONCE_END	0x03FF
-#define S32K_FLASH_RESERVED_EEPROM_SIZE			0x03FD
-#define S32K_FLASH_RESERVED_FLEX_NVM_CODE		0x03FC
-
 #define S32K_FLASH_RESERVED_CONFIG_START		0x0400	/* */
 #define S32K_FLASH_RESERVED_CONFIG_END			0x040F	/* */
 #define S32K_FLASH_RESERVED_BACKDOOR_KEY_START	0x0400	//8 bytes
@@ -90,6 +88,13 @@
 #define S32K_FLASH_RESERVED_FOPT				0x040D
 #define S32K_FLASH_RESERVED_FSEC				0x040C
 
+/* Data(FlexNvM) Flash */
+// #define S32K_FLASH_RESERVED_START	0x0000	/* */
+// #define S32K_FLASH_RESERVED_END		0x0400	/* */
+
+/* Data(FlexNvM) Flash IFR */
+#define S32K_FLASH_RESERVED_EEPROM_SIZE			0x03FD
+#define S32K_FLASH_RESERVED_FLEX_NVM_CODE		0x03FC
 /*
 	Map to upper software layer
 */
@@ -307,7 +312,7 @@ static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, cons
 */
 static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
 {
-	uint8_t recordIndex = (p_dest - (uint8_t *)S32K_FLASH_USER_PROGRAM_ONCE_START) / S32K_FLASH_PHRASE_SIZE;
+	uint8_t recordIndex = (p_dest - (uint8_t *)S32K_FLASH_PROGRAM_ONCE_START) / S32K_FLASH_PHRASE_SIZE;
 	FTFx_FCCOB0 = FTFx_PROGRAM_ONCE;
 	FTFx_FCCOB1 = recordIndex;
 	_HAL_Flash_WriteCmdWriteData(p_regs, p_data);
@@ -316,7 +321,7 @@ static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, const uint8
 
 static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, const uint8_t * p_dest)
 {
-	uint8_t recordIndex = (p_dest - (uint8_t *)S32K_FLASH_USER_PROGRAM_ONCE_START) / S32K_FLASH_PHRASE_SIZE;
+	uint8_t recordIndex = (p_dest - (uint8_t *)S32K_FLASH_PROGRAM_ONCE_START) / S32K_FLASH_PHRASE_SIZE;
 	FTFx_FCCOB0 = FTFx_READ_ONCE;
 	FTFx_FCCOB1 = recordIndex;
 	_HAL_Flash_WriteCmdStart(p_regs);
@@ -329,6 +334,12 @@ static inline void HAL_Flash_ReadOnceData(HAL_Flash_T * p_regs, uint8_t * p_resu
 		// p_result[iByte] = ((uint8_t *)FTFx_BASE)[iByte + 0x08U];
 		p_result[iByte] = p_regs->FCCOB[iByte + 0x04U];
 	}
+}
+
+static inline void HAL_Flash_StartCmdEraseAll(HAL_Flash_T * p_regs)
+{
+	FTFx_FCCOB0 = FTFx_ERASE_ALL_BLOCK;
+	_HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_Init(HAL_Flash_T * p_regs)

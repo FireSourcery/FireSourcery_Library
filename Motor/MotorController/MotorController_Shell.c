@@ -831,7 +831,7 @@ static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 
 	const MotorController_Manufacture_T TEST =
 	{
-		.NAME = {'a', 'b', 'c', 'd'},
+		.NAME = {'q', 'b', 'c', 'd'},
 		.MANUFACTURE_NUMBER_REG = 123U,
 	};
 
@@ -841,24 +841,26 @@ static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 		.MANUFACTURE_NUMBER_REG = 9877U,
 	};
 
-	MotorController_Manufacture_T TestRead;
-	MotorController_User_GetManufacture(p_mc, &TestRead);
+	MotorController_Manufacture_T TestRead = {0};
 
 	Terminal_SendString(p_terminal, "Manufacture:\r\n");
+	MotorController_User_GetManufacture(p_mc, &TestRead);
 	Terminal_SendString_Len(p_terminal, TestRead.NAME, 8U); Terminal_SendString(p_terminal, " \r\n");
 	Terminal_SendNum(p_terminal, TestRead.MANUFACTURE_NUMBER_REG); Terminal_SendString(p_terminal, " \r\n");
 
-	MotorController_User_WriteManufacture(p_mc, &TEST);
-	MotorController_ReadOnce_Blocking(p_mc);
-	MotorController_User_GetManufacture(p_mc, &TestRead);
 	Terminal_SendString(p_terminal, "write1:\r\n");
+	MotorController_User_WriteManufacture(p_mc, &TEST);
+	Terminal_SendNum(p_terminal, p_mc->NvmStatus);Terminal_SendString(p_terminal, " \r\n");
+	MotorController_ReadOnce_Blocking(p_mc);
+	MotorController_User_GetManufacture(p_mc, &TestRead);
 	Terminal_SendString_Len(p_terminal, TestRead.NAME, 8U); Terminal_SendString(p_terminal, " \r\n");
 	Terminal_SendNum(p_terminal, TestRead.MANUFACTURE_NUMBER_REG); Terminal_SendString(p_terminal, " \r\n");
 
+	Terminal_SendString(p_terminal, "write2:\r\n");
 	MotorController_User_WriteManufacture(p_mc, &TEST1);
+	Terminal_SendNum(p_terminal, p_mc->NvmStatus);Terminal_SendString(p_terminal, " \r\n");
 	MotorController_ReadOnce_Blocking(p_mc);
 	MotorController_User_GetManufacture(p_mc, &TestRead);
-	Terminal_SendString(p_terminal, "write2:\r\n");
 	Terminal_SendString_Len(p_terminal, TestRead.NAME, 8U); Terminal_SendString(p_terminal, " \r\n");
 	Terminal_SendNum(p_terminal, TestRead.MANUFACTURE_NUMBER_REG); Terminal_SendString(p_terminal, " \r\n");
 

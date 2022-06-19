@@ -298,10 +298,7 @@ static Protocol_ReqCode_T Req_WriteData_Blocking
 			MotPacket_DataType_Parse(&p_writeData, &writeSize, (const MotPacket_DataType_T *)p_rxPacket);
 			if(p_subState->DataModeSize >= writeSize)
 			{
-				Critical_Enter();
 				flashStatus = Flash_ContinueWrite_Blocking(p_flash, p_writeData, writeSize);
-				Critical_Exit();
-
 				if(flashStatus == FLASH_STATUS_SUCCESS)
 				{
 					p_subState->DataModeSize -= writeSize;

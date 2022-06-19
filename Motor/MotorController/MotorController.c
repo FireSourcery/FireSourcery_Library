@@ -161,13 +161,21 @@ NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
 
 NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc)
 {
+// #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
 	NvMemory_Status_T status = (NvMemory_Status_T)Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_ONCE, sizeof(MotorController_Manufacture_T));
 	Flash_GetReadOnce(p_mc->CONFIG.P_FLASH, (uint8_t *)&p_mc->OnceBuffer);
 	return status;
+// #elif defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
+// (void) p_mc;
+// #endif
 }
 
 NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc)
 {
+// #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
 	return (NvMemory_Status_T)Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_ONCE, (uint8_t *)&p_mc->OnceBuffer, sizeof(MotorController_Manufacture_T));
+// #elif defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
+
+// #endif
 }
 

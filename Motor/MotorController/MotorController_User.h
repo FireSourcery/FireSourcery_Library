@@ -107,18 +107,21 @@ static inline void MotorController_User_ToggleUserFault(MotorController_T * p_mc
 static inline void MotorController_User_SaveParameters_Blocking(MotorController_T * p_mc)
 {
 	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_PARAMS_ALL;
+	p_mc->NvmStatus = 0xFFU;
 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
 }
 
 static inline void MotorController_User_SaveBootReg_Blocking(MotorController_T * p_mc)
 {
 	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_BOOT;
+	p_mc->NvmStatus = 0xFFU;
 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
 }
 
 static inline void MotorController_User_SaveOnce_Blocking(MotorController_T * p_mc)
 {
 	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_ONCE;
+	p_mc->NvmStatus = 0xFFU;
 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
 }
 
@@ -219,6 +222,7 @@ static inline void MotorController_User_GetManufacture(MotorController_T * p_mc,
 
 // static inline void MotorController_User_SetManufacture(MotorController_T * p_mc, const MotorController_Manufacture_T * p_dest) { memcpy(&p_mc->OnceBuffer, p_string, sizeof(MotorController_Manufacture_T)); }
 
+/* Save Once does not need state machine */
 static inline void MotorController_User_WriteManufacture(MotorController_T * p_mc, const MotorController_Manufacture_T * p_dest)
 {
 	memcpy(&p_mc->OnceBuffer, p_dest, sizeof(MotorController_Manufacture_T));

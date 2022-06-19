@@ -249,7 +249,7 @@ static const StateMachine_State_T STATE_STOP =
 {
 	.ID 					= MCSM_STATE_ID_STOP,
 	.P_TRANSITION_TABLE 	= &STOP_TRANSITION_TABLE[0U],
-	.ENTRY 				= (StateMachine_Output_T)Stop_Entry,
+	.ENTRY 					= (StateMachine_Output_T)Stop_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Stop_Proc,
 };
 
@@ -400,7 +400,7 @@ static const StateMachine_State_T STATE_RUN =
 {
 	.ID 					= MCSM_STATE_ID_RUN,
 	.P_TRANSITION_TABLE 	= &RUN_TRANSITION_TABLE[0U],
-	.ENTRY 				= (StateMachine_Output_T)Run_Entry,
+	.ENTRY 					= (StateMachine_Output_T)Run_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Run_Proc,
 };
 

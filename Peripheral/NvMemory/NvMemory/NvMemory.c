@@ -240,7 +240,7 @@ NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
 			}
 			else
 			{
-				break;
+				break; /* status = NV_MEMORY_STATUS_ERROR_CMD; */
 			}
 		}
 
