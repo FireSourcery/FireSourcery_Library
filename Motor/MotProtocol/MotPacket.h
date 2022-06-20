@@ -115,11 +115,12 @@ typedef struct MotPacket_Header_Tag
 	uint8_t HeaderId; 		/* MotPacket_HeaderId_T - Cmd / Descriptor of packet contents */
 	uint8_t TotalLength; 	/* Packet TotalLength */
 	uint8_t Status; 		/* MotPacket_HeaderStatus_T - Optional Status */
+	uint16_t Crc;
 	union
 	{
-		uint16_t Overload;
+		uint16_t Reserved;
+		uint8_t Overload[2U];
 	};
-	uint16_t Crc;
 }
 MotPacket_Header_T;
 
@@ -149,6 +150,7 @@ typedef union MotPacket_Packet_Tag
 	struct
 	{
 		MotPacket_Header_T Header;
+		// uint16_t HeaderOverload;
 		union
 		{
 			uint8_t Payload[MOT_PACKET_PAYLOAD_MAX];
@@ -201,7 +203,7 @@ typedef struct MotPacket_StopResp_Tag { MotPacket_Header_T Header; } 	MotPacket_
 /******************************************************************************/
 typedef struct MotPacket_ReadVarReq_Payload_Tag { uint16_t MotVarId; } 													MotPacket_ReadVarReq_Payload_T;
 typedef struct MotPacket_ReadVarReq_Tag { MotPacket_Header_T Header; MotPacket_ReadVarReq_Payload_T ReadReq; } 			MotPacket_ReadVarReq_T;
-typedef struct MotPacket_ReadVarResp_Payload_Tag { uint32_t Value; uint16_t Status; } 									MotPacket_ReadVarResp_Payload_T;
+typedef struct MotPacket_ReadVarResp_Payload_Tag { uint32_t Value; } 													MotPacket_ReadVarResp_Payload_T;
 typedef struct MotPacket_ReadVarResp_Tag { MotPacket_Header_T Header; MotPacket_ReadVarResp_Payload_T ReadResp; } 		MotPacket_ReadVarResp_T;
 
 /******************************************************************************/
@@ -391,7 +393,7 @@ typedef struct MotPacket_WriteDataResp_Tag { MotPacket_Header_T Header; MotPacke
 /*!	Data Mode Common */
 /******************************************************************************/
 typedef struct MotPacket_DataType_Payload_Tag { uint8_t Data[MOT_PACKET_PAYLOAD_MAX]; } 						MotPacket_DataType_Payload_T;
-typedef struct MotPacket_DataType_Tag { MotPacket_Header_T Header; MotPacket_DataType_Payload_T DataType; } 	MotPacket_DataType_T;
+typedef struct MotPacket_DataType_Tag { MotPacket_Header_T Header; /* uint16_t HeaderOverload */ MotPacket_DataType_Payload_T DataType; } 	MotPacket_DataType_T;
 
 /******************************************************************************/
 /*!	Extern */

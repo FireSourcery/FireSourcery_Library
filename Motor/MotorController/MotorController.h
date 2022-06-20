@@ -263,6 +263,7 @@ typedef struct MotorController_Tag
 	const MotorController_Config_T CONFIG;
 	MotorController_Params_T Parameters; //ram copy
 	MemMapBoot_T MemMapBoot; //temp buffer
+	MotorController_Manufacture_T OnceBuffer;
 
 	volatile MotAnalog_Results_T AnalogResults;
 
@@ -303,7 +304,6 @@ typedef struct MotorController_Tag
 	NvMemory_Status_T NvmStatus;
 
 	uint16_t UserCmd;
-	MotorController_Manufacture_T OnceBuffer; //temp
 
 	// MotorController_SpeedLimitActiveId_T SpeedLimitActiveId;
 	// MotorController_ILimitActiveId_T ILimitActiveId;

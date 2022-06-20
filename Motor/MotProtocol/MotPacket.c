@@ -47,7 +47,8 @@ static uint16_t CalcChecksum(const uint8_t * p_src, uint8_t bytes)
 static uint16_t Packet_CalcChecksum(const MotPacket_T * p_packet)
 {
 	uint16_t checkSum = 0U;
-	checkSum += CalcChecksum((const uint8_t *)&p_packet->Header, sizeof(MotPacket_Header_T) - sizeof(uint16_t));
+	checkSum += CalcChecksum((const uint8_t *)&p_packet->Header, sizeof(MotPacket_Header_T) - sizeof(uint16_t) - sizeof(uint16_t));
+	checkSum += CalcChecksum((const uint8_t *)&p_packet->Header.Overload, sizeof(uint16_t));
 	checkSum += CalcChecksum(&p_packet->Payload[0U], p_packet->Header.TotalLength - sizeof(MotPacket_Header_T));
 	return checkSum;
 }
@@ -67,7 +68,7 @@ static uint8_t Packet_BuildHeader(MotPacket_T * p_packet, MotPacket_HeaderId_T h
 	p_packet->Header.HeaderId = headerId;
 	p_packet->Header.TotalLength = payloadLength + sizeof(MotPacket_Header_T);
 	p_packet->Header.Status = status;
-	p_packet->Header.Overload = 0U;
+	p_packet->Header.Reserved = 0U;
 	p_packet->Header.Crc = Packet_CalcChecksum(p_packet);
 
 	return p_packet->Header.TotalLength;
