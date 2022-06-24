@@ -77,12 +77,13 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 	  		RxLength unknown => Check 1 byte or upto RX_LENGTH_MIN at a time, until RxLength is known
 			RxLength known => Check Rx remaining
 		*/
-		if(p_protocol->RxIndex < p_protocol->p_Specs->RX_LENGTH_MIN) { xcvrRxLimit = p_protocol->p_Specs->RX_LENGTH_MIN - p_protocol->RxIndex; }
-		else if(p_protocol->RxLength == 0U) { xcvrRxLimit = 1U; } 	// if(p_protocol->RxIndex < p_protocol->p_Specs->RX_LENGTH_INDEX)
-		else { xcvrRxLimit = p_protocol->RxLength - p_protocol->RxIndex; }
+		if(p_protocol->RxIndex < p_protocol->p_Specs->RX_LENGTH_MIN) 	{ xcvrRxLimit = p_protocol->p_Specs->RX_LENGTH_MIN - p_protocol->RxIndex; }
+		else if(p_protocol->RxLength == 0U) 							{ xcvrRxLimit = 1U; }
+		// if(p_protocol->RxIndex < p_protocol->p_Specs->RX_LENGTH_INDEX)
+		else 															{ xcvrRxLimit = p_protocol->RxLength - p_protocol->RxIndex; }
 
 		xcvrRxLength = Xcvr_RxMax(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxIndex], xcvrRxLimit); /* Rx up to xcvrRxLimit */
-		p_protocol->RxIndex += xcvrRxLength;
+		p_protocol->RxIndex += xcvrRxLength; /* Always update state, used for error checking */
 
 		if(xcvrRxLength == xcvrRxLimit) /* Implicitly (p_protocol->RxIndex >= p_protocol->p_Specs->RX_LENGTH_MIN) && (xcvrRxLength != 0). xcvrRxLimit will not be 0U */
 		{

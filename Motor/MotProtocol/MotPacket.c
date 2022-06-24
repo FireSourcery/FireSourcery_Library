@@ -47,8 +47,8 @@ static uint16_t CalcChecksum(const uint8_t * p_src, uint8_t bytes)
 static uint16_t Packet_CalcChecksum(const MotPacket_T * p_packet)
 {
 	uint16_t checkSum = 0U;
-	checkSum += CalcChecksum((const uint8_t *)&p_packet->Header, sizeof(MotPacket_Header_T) - sizeof(uint16_t) - sizeof(uint16_t));
-	checkSum += CalcChecksum((const uint8_t *)&p_packet->Header.Overload, sizeof(uint16_t));
+	checkSum += CalcChecksum((const uint8_t *)&p_packet->Header, sizeof(MotPacket_Header_T) - sizeof(uint16_t)/*  - sizeof(uint16_t) */);
+	// checkSum += CalcChecksum((const uint8_t *)&p_packet->Header.Overload, sizeof(uint16_t));
 	checkSum += CalcChecksum(&p_packet->Payload[0U], p_packet->Header.TotalLength - sizeof(MotPacket_Header_T));
 	return checkSum;
 }
@@ -62,13 +62,14 @@ bool MotPacket_CheckChecksum(const MotPacket_T * p_packet)
 	@brief 	Set header and perform checksum. Common Req, Resp
 	@return size of full packet. Header + Payload
 */
-static uint8_t Packet_BuildHeader(MotPacket_T * p_packet, MotPacket_HeaderId_T headerId, uint8_t payloadLength, uint8_t status)
+static uint8_t Packet_BuildHeader(MotPacket_T * p_packet, MotPacket_HeaderId_T headerId, uint8_t payloadLength, uint8_t status) //, uint8_t Opt[2U])
 {
 	p_packet->Header.Start = MOT_PACKET_START_BYTE;
 	p_packet->Header.HeaderId = headerId;
 	p_packet->Header.TotalLength = payloadLength + sizeof(MotPacket_Header_T);
 	p_packet->Header.Status = status;
-	p_packet->Header.Reserved = 0U;
+	p_packet->Header.Opt[0U] = 0U;
+	p_packet->Header.Opt[1U] = 0U;
 	p_packet->Header.Crc = Packet_CalcChecksum(p_packet);
 
 	return p_packet->Header.TotalLength;
@@ -161,15 +162,15 @@ void MotPacket_InitUnitsResp_Parse
 	const MotPacket_InitUnitsResp_T * p_respPacket
 )
 {
-	*p_speedRef_Rpm = p_respPacket->InitUnitsResp.U16s[0U];
-	*p_iRef_Amp = p_respPacket->InitUnitsResp.U16s[0U];
-	*p_vRef_Volts = p_respPacket->InitUnitsResp.U16s[0U];
-	*p_vSupply_R1 = p_respPacket->InitUnitsResp.U16s[0U];
-	*p_vSupply_R2 = p_respPacket->InitUnitsResp.U16s[0U];
-	*p_vSense_R1 = p_respPacket->InitUnitsResp.U16s[0U];
-	*p_vSense_R2 = p_respPacket->InitUnitsResp.U16s[0U];
-	*p_vAcc_R1 = p_respPacket->InitUnitsResp.U16s[0U];
-	*p_vAcc_R2 = p_respPacket->InitUnitsResp.U16s[0U];
+	*p_speedRef_Rpm = p_respPacket->InitUnitsResp.DataU16s[0U];
+	*p_iRef_Amp = p_respPacket->InitUnitsResp.DataU16s[0U];
+	*p_vRef_Volts = p_respPacket->InitUnitsResp.DataU16s[0U];
+	*p_vSupply_R1 = p_respPacket->InitUnitsResp.DataU16s[0U];
+	*p_vSupply_R2 = p_respPacket->InitUnitsResp.DataU16s[0U];
+	*p_vSense_R1 = p_respPacket->InitUnitsResp.DataU16s[0U];
+	*p_vSense_R2 = p_respPacket->InitUnitsResp.DataU16s[0U];
+	*p_vAcc_R1 = p_respPacket->InitUnitsResp.DataU16s[0U];
+	*p_vAcc_R2 = p_respPacket->InitUnitsResp.DataU16s[0U];
 
 	// return p_respPacket->Header.Status;
 }
@@ -489,15 +490,15 @@ uint8_t MotPacket_InitUnitsResp_Build
 	uint16_t vAcc_R1, uint16_t vAcc_R2
 )
 {
-	p_respPacket->InitUnitsResp.U16s[0U] = speedRef_Rpm;
-	p_respPacket->InitUnitsResp.U16s[0U] = iRef_Amp;
-	p_respPacket->InitUnitsResp.U16s[0U] = vRef_Volts;
-	p_respPacket->InitUnitsResp.U16s[0U] = vSupply_R1;
-	p_respPacket->InitUnitsResp.U16s[0U] = vSupply_R2;
-	p_respPacket->InitUnitsResp.U16s[0U] = vSense_R1;
-	p_respPacket->InitUnitsResp.U16s[0U] = vSense_R2;
-	p_respPacket->InitUnitsResp.U16s[0U] = vAcc_R1;
-	p_respPacket->InitUnitsResp.U16s[0U] = vAcc_R2;
+	p_respPacket->InitUnitsResp.DataU16s[0U] = speedRef_Rpm;
+	p_respPacket->InitUnitsResp.DataU16s[0U] = iRef_Amp;
+	p_respPacket->InitUnitsResp.DataU16s[0U] = vRef_Volts;
+	p_respPacket->InitUnitsResp.DataU16s[0U] = vSupply_R1;
+	p_respPacket->InitUnitsResp.DataU16s[0U] = vSupply_R2;
+	p_respPacket->InitUnitsResp.DataU16s[0U] = vSense_R1;
+	p_respPacket->InitUnitsResp.DataU16s[0U] = vSense_R2;
+	p_respPacket->InitUnitsResp.DataU16s[0U] = vAcc_R1;
+	p_respPacket->InitUnitsResp.DataU16s[0U] = vAcc_R2;
 
 	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_INIT_UNITS, 18U, MOT_PACKET_HEADER_STATUS_OK);
 }

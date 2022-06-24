@@ -283,7 +283,7 @@ Flash_Status_T Flash_SetWriteOnce(Flash_T * p_flash, const uint8_t * p_destFlash
 	return status;
 }
 
- //option to provide buffer?
+//option to provide buffer?
 Flash_Status_T Flash_SetReadOnce(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
 {
 	Flash_Status_T status = (Flash_Status_T)NvMemory_SetOpDest(p_flash, p_destFlash, size, FLASH_UNIT_READ_ONCE_SIZE);

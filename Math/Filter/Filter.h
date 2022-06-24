@@ -58,4 +58,3 @@ static inline int32_t Filter_Avg(Filter_T * p_filter, int32_t in)
 }
 
 #endif
-

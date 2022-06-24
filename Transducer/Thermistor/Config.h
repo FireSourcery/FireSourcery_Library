@@ -31,8 +31,7 @@
 #ifndef CONFIG_THERMISTOR_H
 #define CONFIG_THERMISTOR_H
 
-#if 	defined(CONFIG_THERMISTOR_ADC_MAX)  
-#elif 	defined(ADC_MAX) 
+#if defined(ADC_MAX)
 #else
 	#define ADC_MAX	4096U
 #endif

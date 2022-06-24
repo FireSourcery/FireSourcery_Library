@@ -80,7 +80,13 @@ static inline bool HAL_EEPROM_ReadErrorProtectionFlag(HAL_EEPROM_T * p_hal)
 static inline void HAL_EEPROM_StartCmdWriteUnit(HAL_EEPROM_T * p_hal, const uint8_t * p_dest, const uint8_t * p_data)
 {
 	(void)p_hal;
+#if (HAL_EEPROM_UNIT_WRITE_SIZE == 4U)
 	(*(uint32_t *)p_dest) = (*(uint32_t *)p_data); 	/*  cast away const for eeprom case, it is in FlexRam */
+#elif (HAL_EEPROM_UNIT_WRITE_SIZE == 2U)
+	(*(uint16_t*)p_dest) = (*(uint16_t*)p_data);
+#elif (HAL_EEPROM_UNIT_WRITE_SIZE == 1U)
+	(*(uint8_t*)p_dest) = (*(uint8_t*)p_data);
+#endif
 }
 
 static inline bool HAL_EEPROM_ReadIsFirstTime(HAL_EEPROM_T * p_hal)

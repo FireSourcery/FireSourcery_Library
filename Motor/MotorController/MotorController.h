@@ -214,15 +214,16 @@ MotorController_Params_T;
 typedef struct __attribute__((aligned(FLASH_UNIT_WRITE_ONCE_SIZE))) MotorController_Manufacture_Tag
 {
 	char NAME[8U];
-	union { uint8_t SERIAL_NUMBER[4U];   uint32_t SERIAL_NUMBER_REG; };
+	union { uint8_t SERIAL_NUMBER[4U]; uint32_t SERIAL_NUMBER_REG; };
 	union
 	{
 		uint8_t MANUFACTURE_NUMBER[4U];
 		uint32_t MANUFACTURE_NUMBER_REG;
-		struct { uint8_t MANUFACTURE_DAY;  uint8_t MANUFACTURE_MONTH;  uint8_t MANUFACTURE_YEAR;  uint8_t MANUFACTURE_RESV; };
+		struct { uint8_t MANUFACTURE_DAY; uint8_t MANUFACTURE_MONTH; uint8_t MANUFACTURE_YEAR; uint8_t MANUFACTURE_RESV; };
 	};
-	union { uint8_t HARDWARE_VERSION[4U];	 uint32_t HARDWARE_VERSION_REG; };
-	uint8_t ID_EXT[8U];
+	union { uint8_t HARDWARE_VERSION[4U]; uint32_t HARDWARE_VERSION_REG; };
+	uint8_t ID_EXT[4U];
+	uint8_t RESERVED[8U];
 }
 MotorController_Manufacture_T;
 

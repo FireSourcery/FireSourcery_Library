@@ -31,8 +31,8 @@
 #ifndef CONFIG_PID_H
 #define CONFIG_PID_H
 
-#if defined(CONFIG_PID_K_INT) 
-#elif defined(CONFIG_PID_K_FLOAT) 
+#if 	defined(CONFIG_PID_K_INT)
+#elif 	defined(CONFIG_PID_K_FLOAT)
 #else
 	#define CONFIG_PID_K_INT
 #endif

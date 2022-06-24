@@ -140,7 +140,7 @@ typedef struct Analog_Tag
 {
 	const Analog_Config_T CONFIG;
 	Ring_T ConversionQueue;	/* Item type (Analog_QueueItem_T *), (Analog_Conversion_T *) or (Analog_Options_T *) */
-#ifdef CONFIG_ANALOG_ADC_HW_FIFO_LENGTH
+#ifdef CONFIG_ANALOG_ADC_HW_FIFO_ENABLE
 	uint8_t ActiveChannelCount; /*! Hw fifo only. Number of active channels being processed by ADC */
 	uint8_t ActiveChannelIndex; /*! Index into active conversion group */
 #endif
@@ -150,6 +150,7 @@ typedef struct Analog_Tag
 		Also use as ADC active flag.
 	*/
 	//	const Analog_QueueItem_T * p_ActiveConversion; 	/*! Queue unit type selected conversion group in process */
+
 	// todo prioity queue?
 	//	bool IsLocalPeakFound;
 }

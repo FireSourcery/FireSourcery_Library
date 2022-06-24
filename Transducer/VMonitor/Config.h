@@ -31,8 +31,7 @@
 #ifndef CONFIG_VMONITOR_H
 #define CONFIG_VMONITOR_H
 
-#if 	defined(CONFIG_VMONITOR_ADC_BITS)
-#elif 	defined(ADC_BITS)
+#if defined(ADC_BITS)
 #else
 	#define ADC_BITS 12U
 #endif

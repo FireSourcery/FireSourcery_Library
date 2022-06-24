@@ -31,14 +31,12 @@
 #ifndef CONFIG_SYSTIME_H
 #define CONFIG_SYSTIME_H
 
-#ifdef CONFIG_SYSTIME_SYSTICK
+#if defined(CPU_FREQ)
+#else
+	#error "SysTime - Undefined CPU_FREQ"
 #endif
 
-#if 	defined(CONFIG_SYSTIME_CPU_FREQ)
-// 	#define CPU_FREQ CONFIG_SYSTIME_CPU_FREQ
-// #elif 	defined(CPU_FREQ)
-#else
-	#error "SysTime - Undefined CONFIG_SYSTIME_CPU_FREQ"
+#ifdef CONFIG_SYSTIME_SYSTICK
 #endif
 
 #ifdef CONFIG_SYSTIME_SYSTICK_PRIORITY

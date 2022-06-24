@@ -76,11 +76,6 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 
 	proportional = (p_pid->Params.KpFactor * error / p_pid->Params.KpDivisor);
 
-	// if	(
-	// 		(p_pid->ErrorSum > 0) && (p_pid->ErrorSum > p_pid->ErrorSumOverflow) ||
-	// 		(p_pid->ErrorSum < 0) && (p_pid->ErrorSum < p_pid->ErrorSumOverflow)
-	// 	)
-
 	if((p_pid->ErrorSum < p_pid->ErrorSumOverflowNeg) || (p_pid->ErrorSum > p_pid->ErrorSumOverflowPos))
 	{
 		integral = (p_pid->ErrorSum / p_pid->KiDivisorFreq * p_pid->Params.KiFactor);
@@ -98,7 +93,7 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 	else if(integral < p_pid->OutMin)
 	{
 		integral = p_pid->OutMin;
-		if(error > 0) { p_pid->ErrorSum += error; } /* if error sum becomes out of sync, only  add error if error is positive */
+		if(error > 0) { p_pid->ErrorSum += error; } /* if error sum becomes out of sync, only add error if error is positive */
 	}
 	else
 	{

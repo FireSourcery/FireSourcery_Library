@@ -80,7 +80,7 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t 
  	p_linear->YReference = vInMax; /* Frac16 refernce only */
 }
 
-uint16_t Linear_Voltage_CalcAdcu_UserV(const Linear_T * p_linear, uint16_t volts) //, max
+uint16_t Linear_Voltage_CalcAdcu_UserV(const Linear_T * p_linear, uint16_t volts) //, adcMax
 {
 	uint16_t adcu = Linear_Voltage_CalcAdcu_V(p_linear, volts);
 	while(((uint16_t)Linear_Voltage_CalcV(p_linear, adcu) < volts) && (adcu < ADC_MAX)) { adcu += 1U; }

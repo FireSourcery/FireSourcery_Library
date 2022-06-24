@@ -31,6 +31,7 @@
 #include "MotAnalogUser.h"
 #include <string.h>
 
+//todo handle pin config collision
 void MotAnalogUser_Init(MotAnalogUser_T * p_user)
 {
 	if(p_user->CONFIG.P_PARAMS != 0U)

@@ -29,13 +29,6 @@
 */
 /******************************************************************************/
 #include "Serial.h"
-#include "HAL_Serial.h"
-
-#include "Config.h"
-#include "Utility/Ring/Ring.h"
-
-#include <stdint.h>
-#include <stdbool.h>
 
 /*
 	Single threaded buffer read/write only need disable channel ISR
@@ -101,7 +94,8 @@ static inline bool AcquireCriticalGlobalTx(Serial_T * p_serial)
 	return Critical_AquireMutex(&p_serial->TxMutex);
 #elif 	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
 	(void)p_serial;
-	Critical_Enter(); 	return true;
+	Critical_Enter();
+	return true;
 #elif 	defined(CONFIG_SERIAL_SINGLE_THREADED)
 	(void)p_serial;
 	return true;
@@ -126,7 +120,8 @@ static inline bool AcquireCriticalGlobalRx(Serial_T * p_serial)
 	return Critical_AquireMutex(&p_serial->RxMutex);
 #elif 	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
 	(void)p_serial;
-	Critical_Enter(); 	return true;
+	Critical_Enter();
+	return true;
 #elif 	defined(CONFIG_SERIAL_SINGLE_THREADED)
 	(void)p_serial;
 	return true;

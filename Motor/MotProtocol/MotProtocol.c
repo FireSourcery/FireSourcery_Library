@@ -66,13 +66,15 @@ void MotProtocol_ResetExt(MotProtocol_Substate_T * p_subState)
 Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p_packetLength, const MotPacket_T * p_rxPacket, size_t rxCount)
 {
 	Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_WAIT_PACKET;
+	//uint8_t totalLength = p_rxPacket->Header.PayloadLength + sizeof(MotPacket_Header_T);
 
+ 	/* Move PACKET_LENGTH_INDEX to protocol module handle, for cases where header length index defined */
 	if((rxCount >= MOT_PACKET_LENGTH_BYTE_INDEX) && (rxCount == p_rxPacket->Header.TotalLength))
 	{
 		*p_reqId = p_rxPacket->Header.HeaderId;
 		rxCode = (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_PACKET_ERROR;
 	}
-	else if(rxCount >= MOT_PACKET_LENGTH_BYTE_INDEX) /* Move this to protocol module handle, if header length index defined */
+	else if(rxCount >= MOT_PACKET_LENGTH_BYTE_INDEX)
 	{
 		*p_packetLength = p_rxPacket->Header.TotalLength;
 	}

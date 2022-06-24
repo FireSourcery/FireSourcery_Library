@@ -32,7 +32,6 @@
 #define CONFIG_ANALOG_H
 
 #if 	defined(CONFIG_ANALOG_CRITICAL_LIBRARY_ENABLE)
-#elif 	defined(CONFIG_ANALOG_CRITICAL_USER_ENABLE)
 #elif 	defined(CONFIG_ANALOG_CRITICAL_DISABLE)
 #else
 	#define CONFIG_ANALOG_CRITICAL_DISABLE
@@ -57,9 +56,18 @@
 #endif
 
 #if 	defined(CONFIG_ANALOG_ADC_HW_FIFO_DISABLE)
-#elif 	defined(CONFIG_ANALOG_ADC_HW_FIFO_LENGTH) /* Defined to same length for all instances */
+#elif 	defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE) 	/* Defined to same length for all instances */
+	#ifndef ADC_HW_FIFO_LENGTH
+		#error "Undefined: ADC_HW_FIFO_LENGTH"
+	#endif
 #else
 	#define CONFIG_ANALOG_ADC_HW_FIFO_DISABLE
+#endif
+
+#if 	defined(CONFIG_ANALOG_HW_CONTINOUS_CONVERSION_ENABLE)
+#elif 	defined(CONFIG_ANALOG_HW_CONTINOUS_CONVERSION_DISABLE)
+#else
+	#define CONFIG_ANALOG_HW_CONTINOUS_CONVERSION_DISABLE
 #endif
 
 #endif

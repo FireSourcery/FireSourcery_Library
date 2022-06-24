@@ -30,48 +30,30 @@
 /******************************************************************************/
 #include "EEPROM.h"
 
-//static inline WriteUnit( uint8_t * p_destEeprom, const uint8_t * p_source)
-//{
-//#if (EEPROM_UNIT_WRITE_SIZE == 4U)
-//	(*(uint32_t*)p_destEeprom) = (*(uint32_t*)p_source);
-//#elif (EEPROM_UNIT_WRITE_SIZE == 2U)
-//	(*(uint16_t*)p_destEeprom) = (*(uint16_t*)p_source);
-//#elif (EEPROM_UNIT_WRITE_SIZE == 1U)
-//	(*(uint8_t*)p_destEeprom) = (*(uint8_t*)p_source);
-//#endif
-//}
-
 /*
-	match start cmd function signature
+	NvMemory_StartCmd_T
 */
 static void StartCmdWrite(void * p_hal, const void * p_cmdDest, const void * p_cmdData, size_t units)
 {
 	(void)units;
-	if(*(uint32_t *)p_cmdDest != (*(uint32_t *)p_cmdData)) { HAL_EEPROM_StartCmdWriteUnit(p_hal, p_cmdDest, p_cmdData); }
+#if (EEPROM_UNIT_WRITE_SIZE == 4U)
+	if(*(uint32_t *)p_cmdDest != (*(uint32_t *)p_cmdData))
+#elif (EEPROM_UNIT_WRITE_SIZE == 2U)
+	if(*(uint16_t *)p_cmdDest != (*(uint16_t *)p_cmdData))
+#elif (EEPROM_UNIT_WRITE_SIZE == 1U)
+	if(*(uint8_t *)p_cmdDest != (*(uint8_t *)p_cmdData))
+#endif
+	{
+		HAL_EEPROM_StartCmdWriteUnit(p_hal, p_cmdDest, p_cmdData);
+	}
 	/* else finalizeOp will return no error and continue to next  */
 }
-
-//static void StartCmdProgramPartition(void * p_hal, const void * p_cmdDest, const void * p_cmdData, size_t units)
-//{
-//	(void)units;
-//	(void)p_cmdDest;
-//	(void)p_cmdData;
-//	HAL_EEPROM_ProgramPartition(p_hal);
-//}
-//
-//static void StartCmdInitHw(void * p_hal, const void * p_cmdDest, const void * p_cmdData, size_t units)
-//{
-//	(void)units;
-//	(void)p_cmdDest;
-//	(void)p_cmdData;
-//	HAL_EEPROM_InitHw(p_hal);
-//}
 
 static inline NvMemory_Status_T ParseCmdErrorWrite(EEPROM_T * p_eeprom)
 {
 	NvMemory_Status_T status;
-	if(HAL_EEPROM_ReadErrorProtectionFlag(p_eeprom->CONFIG.P_HAL) == true) { status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
-	else { status = NV_MEMORY_STATUS_ERROR_CMD; }
+	if(HAL_EEPROM_ReadErrorProtectionFlag(p_eeprom->CONFIG.P_HAL) == true) 	{ status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
+	else 																	{ status = NV_MEMORY_STATUS_ERROR_CMD; }
 	return status;
 }
 
@@ -94,7 +76,12 @@ static inline NvMemory_Status_T FinalizeWrite(EEPROM_T * p_eeprom)
 void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 {
 	//todo isfirsttime, use startcmd template
-	// if(HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL))	{	}
+	// if(HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL))	{ EEPROM_ProgramPartition_Blocking(p_eeprom); }
+
+	// NvMemory_Status_T status = EEPROM_SetInit(p_eeprom);
+	// if(status == NV_MEMORY_STATUS_SUCCESS)
+	// {
+	// 	status = NvMemory_ProcOp_Blocking(p_eeprom);
 
 	HAL_EEPROM_Init_Blocking(p_eeprom->CONFIG.P_HAL);
 	NvMemory_Init(p_eeprom);
@@ -121,7 +108,8 @@ NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, cons
 
 NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
 {
-	return ((EEPROM_SetWrite(p_eeprom, p_dest, p_source, sizeBytes) == NV_MEMORY_STATUS_SUCCESS) ? NvMemory_ProcOp_Blocking(p_eeprom) : NV_MEMORY_STATUS_ERROR_INPUT);
+	NvMemory_Status_T status = EEPROM_SetWrite(p_eeprom, p_dest, p_source, sizeBytes);
+	return (status == NV_MEMORY_STATUS_SUCCESS) ? NvMemory_ProcOp_Blocking(p_eeprom) : status;
 }
 
 /*
@@ -136,3 +124,11 @@ NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, const void * p_dest
 // }
 
 
+
+//static void StartCmdProgramPartition(void * p_hal, const void * p_cmdDest, const void * p_cmdData, size_t units)
+//{
+//	(void)units;
+//	(void)p_cmdDest;
+//	(void)p_cmdData;
+//	HAL_EEPROM_ProgramPartition(p_hal);
+//}

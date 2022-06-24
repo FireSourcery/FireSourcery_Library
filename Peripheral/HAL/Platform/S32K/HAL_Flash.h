@@ -188,8 +188,7 @@ static inline void _HAL_Flash_WriteCmdWriteData(HAL_Flash_T * p_regs, const uint
 {
 	for(uint8_t iByte = 0U; iByte < HAL_FLASH_UNIT_WRITE_SIZE; iByte++)
 	{
-		// ((uint8_t *)FTFx_BASE)[iByte + 0x08U] = p_data[iByte];
-		p_regs->FCCOB[iByte + 0x04U] = p_data[iByte];
+		p_regs->FCCOB[iByte + 0x04U] = p_data[iByte];		// ((uint8_t *)FTFx_BASE)[iByte + 0x08U] = p_data[iByte];
 	}
 }
 
@@ -198,12 +197,6 @@ static inline void _HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs)
 {
 	(void)p_regs;
 	FTFC_FSTAT |= FTFC_FSTAT_CCIF_MASK;
-}
-
-static inline bool _HAL_Flash_ReadErrorFlagShared(HAL_Flash_T * p_regs)
-{
-	(void)p_regs;
-	return ((FTFC_FSTAT & (FTFC_FSTAT_MGSTAT0_MASK)) != 0U) ? true : false;
 }
 
 /*
@@ -233,7 +226,8 @@ static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs)
 //static inline bool HAL_Flash_ReadErrorVerifyFlag(HAL_Flash_T *p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static inline bool HAL_Flash_ReadErrorVerifyFlag(HAL_Flash_T * p_regs)
 {
-	return _HAL_Flash_ReadErrorFlagShared(p_regs);
+	(void)p_regs;
+	return ((FTFC_FSTAT & (FTFC_FSTAT_MGSTAT0_MASK)) != 0U) ? true : false;
 }
 
 static inline bool HAL_Flash_ReadErrorProtectionFlag(HAL_Flash_T * p_regs)
@@ -271,13 +265,10 @@ static inline void HAL_Flash_StartCmdVerifyWriteUnit(HAL_Flash_T * p_regs, const
 	FTFx_FCCOB0 = FTFx_PROGRAM_CHECK;
 	_HAL_Flash_WriteCmdDest(p_regs, p_dest);
 	FTFx_FCCOB4 = 1U; //CONFIG_HAL_FLASH_MARGIN_LEVEL
-
 	for(uint8_t iByte = 0U; iByte < HAL_FLASH_UNIT_VERIFY_WRITE_SIZE; iByte++)
 	{
-		// ((uint8_t *)FTFx_BASE)[iByte + 0x0CU] = p_data[iByte];
-		p_regs->FCCOB[iByte + 0x08U] = p_data[iByte];
+		p_regs->FCCOB[iByte + 0x08U] = p_data[iByte]; // ((uint8_t *)FTFx_BASE)[iByte + 0x0CU] = p_data[iByte];
 	}
-
 	_HAL_Flash_WriteCmdStart(p_regs);
 }
 
@@ -303,7 +294,6 @@ static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, cons
 
 /*
 	Calling module ensures alignment
-	56 Bytes 7 Units available. 8th unit is config
 
 	Index
 	0x03C0 => 0
@@ -331,8 +321,7 @@ static inline void HAL_Flash_ReadOnceData(HAL_Flash_T * p_regs, uint8_t * p_resu
 {
 	for(uint8_t iByte = 0U; iByte < HAL_FLASH_UNIT_READ_ONCE_SIZE; iByte++)
 	{
-		// p_result[iByte] = ((uint8_t *)FTFx_BASE)[iByte + 0x08U];
-		p_result[iByte] = p_regs->FCCOB[iByte + 0x04U];
+		p_result[iByte] = p_regs->FCCOB[iByte + 0x04U]; 		// p_result[iByte] = ((uint8_t *)FTFx_BASE)[iByte + 0x08U];
 	}
 }
 

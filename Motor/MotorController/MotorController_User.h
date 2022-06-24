@@ -100,8 +100,8 @@ static inline bool MotorController_User_ClearUserFault(MotorController_T * p_mc)
 
 static inline void MotorController_User_ToggleUserFault(MotorController_T * p_mc)
 {
-	if(p_mc->FaultFlags.User == 1U) { MotorController_User_SetUserFault(p_mc); }
-	else { MotorController_User_ClearUserFault(p_mc); }
+	if(p_mc->FaultFlags.User == 1U) 	{ MotorController_User_SetUserFault(p_mc); }
+	else 								{ MotorController_User_ClearUserFault(p_mc); }
 }
 
 static inline void MotorController_User_SaveParameters_Blocking(MotorController_T * p_mc)
@@ -211,14 +211,13 @@ static inline uint32_t MotorController_User_GetIMax(MotorController_T * p_mc) { 
 	WriteOnce Variables
 */
 static inline void MotorController_User_GetName(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->OnceBuffer.NAME[0U], 8U); }
-static inline char * MotorController_User_GetPtrName(MotorController_T * p_mc ) {return &p_mc->OnceBuffer.NAME[0U];}
+static inline char * MotorController_User_GetPtrName(MotorController_T * p_mc) { return &p_mc->OnceBuffer.NAME[0U]; }
 static inline char MotorController_User_GetNameIndex(MotorController_T * p_mc, uint8_t charIndex) { return p_mc->OnceBuffer.NAME[charIndex]; }
 
+static inline void MotorController_User_GetManufacture(MotorController_T * p_mc, MotorController_Manufacture_T * p_dest) { memcpy(p_dest, &p_mc->OnceBuffer, sizeof(MotorController_Manufacture_T)); }
 // static inline uint32_t MotorController_User_GetSerialNumber(MotorController_T * p_mc) { return p_mc->OnceBuffer.SERIAL_NUMBER_REG; }
 // static inline uint32_t MotorController_User_GetManufactureNumber(MotorController_T * p_mc) { return p_mc->OnceBuffer.MANUFACTURE_NUMBER_REG; }
 // static inline void MotorController_User_GetIdExt(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->OnceBuffer.ID_EXT[0U], 8U); }
-
-static inline void MotorController_User_GetManufacture(MotorController_T * p_mc, MotorController_Manufacture_T * p_dest) { memcpy(p_dest, &p_mc->OnceBuffer, sizeof(MotorController_Manufacture_T)); }
 
 // static inline void MotorController_User_SetManufacture(MotorController_T * p_mc, const MotorController_Manufacture_T * p_dest) { memcpy(&p_mc->OnceBuffer, p_string, sizeof(MotorController_Manufacture_T)); }
 

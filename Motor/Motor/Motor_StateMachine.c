@@ -456,7 +456,7 @@ static const StateMachine_State_T STATE_FREEWHEEL =
 {
 	.ID 					= MSM_STATE_ID_FREEWHEEL,
 	.P_TRANSITION_TABLE 	= FREEWHEEL_TRANSITION_TABLE,
-	.ENTRY 				= (StateMachine_Output_T)Freewheel_Entry,
+	.ENTRY 					= (StateMachine_Output_T)Freewheel_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Freewheel_Proc,
 };
 

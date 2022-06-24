@@ -20,8 +20,6 @@
 // 		MotPacket_MonitorResp_Speed_Payload_T Speed;
 // 		MotPacket_MonitorResp_IPhases_Payload_T IPhases;
 // 	};
-
-
 // }
 // MotPacket_Interface_T;
 

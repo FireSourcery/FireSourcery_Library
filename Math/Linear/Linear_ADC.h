@@ -64,7 +64,7 @@ static inline uint32_t Linear_ADC_CalcFractionUnsigned16_Abs(const Linear_T * p_
 	return Linear_Frac16_Unsigned_Abs(p_linear, adcu);
 }
 
-/* only division */
+/* Division in this function only */
 static inline uint16_t Linear_ADC_CalcAdcu_Physical(const Linear_T * p_linear, int16_t units)
 {
 	return Linear_Frac16_InvUnits(p_linear, units);

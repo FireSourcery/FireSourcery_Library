@@ -115,13 +115,6 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 	}
 	AnalogN_Group_ResumeQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_HEAT);
 
-	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
-	{
-		Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]);
-		// if		(Thermistor_GetIsShutdown(&p_mc->CONFIG.P_MOTORS[iMotor].Thermistor) == true) 	{ p_mc->FaultFlags.MotorOverHeat = 1U; isFault = true; }
-		// else if	(Thermistor_GetIsWarning(&p_mc->CONFIG.P_MOTORS[iMotor].Thermistor) == true) 	{ isWarning = true; }
-	}
-
 	Thermistor_PollMonitor(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu);
 	Thermistor_PollMonitor(&p_mc->ThermistorMosfetsTop, p_mc->AnalogResults.HeatMosfetsTop_Adcu);
 	Thermistor_PollMonitor(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_Adcu);
@@ -132,8 +125,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 
 	if(isFault == true)
 	{
-		/* Shutdown repeat set ok */
-		MotorController_User_SetFault(p_mc);
+		MotorController_User_SetFault(p_mc); 		/* Shutdown repeat set ok */
 	}
 	else
 	{
@@ -251,7 +243,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 	}
 }
 
-
 /*
 	Med Freq, Med-High Priority
 
@@ -260,7 +251,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 {
 //	BrakeThread(p_mc);
-#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) && defined(CONFIG_MOTOR_V_SENSORS_ADC)
+#if defined(CONFIG_MOTOR_V_SENSORS_ADC) /* && !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) */
 	VMonitor_Status_T statusVPos = VMonitor_PollStatus(&p_mc->VMonitorPos, p_mc->AnalogResults.VPos_Adcu);
 
 	AnalogN_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VPOS);
@@ -291,8 +282,9 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 
 	if(Timer_Poll(&p_mc->TimerIsrDividerSeconds) == true)
 	{
-		_MotorController_ProcHeatMonitor(p_mc);
 		_MotorController_ProcVoltageMonitor(p_mc);
+		_MotorController_ProcHeatMonitor(p_mc);
+		for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 	}
 }
 
