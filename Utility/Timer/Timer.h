@@ -75,16 +75,11 @@ static inline void Timer_ZeroBase(Timer_T * p_timer)
 static inline uint32_t Timer_GetElapsed(Timer_T * p_timer)
 {
 	uint32_t ticks;
-
 #ifdef CONFIG_TIMER_OVERFLOW_WRAP /* Not necessarily needed if overflow time is in days. e.g using millis */
-	if(*p_timer->CONFIG.P_BASE < p_timer->TimeRef)
-	{
-		ticks = UINT32_MAX - p_timer->TimeRef + *p_timer->CONFIG.P_BASE
-	}
+	if(*p_timer->CONFIG.P_BASE < p_timer->TimeRef) { ticks = UINT32_MAX - p_timer->TimeRef + *p_timer->CONFIG.P_BASE }
 	else
 #endif
 	{ ticks = *p_timer->CONFIG.P_BASE - p_timer->TimeRef; }
-
 	return ticks;
 }
 
