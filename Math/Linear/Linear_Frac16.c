@@ -65,6 +65,7 @@ void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, in
 }
 
 /*!
+	Map [x0, xRef] to [y0, 65535]
 	Init using (x0, y0), (xref, yref). Derive slope
 	@param[in] y0_Frac16 frac16 offset
 	@param[in] yRef user units equivalent to 65536, 100%

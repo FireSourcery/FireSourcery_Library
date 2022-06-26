@@ -423,7 +423,8 @@ static inline bool MotorController_ClearILimitMotorAll(MotorController_T * p_mc,
 /*
 	Extern
 */
-extern void MotorController_Init(MotorController_T * p_controller);
+extern void MotorController_Init(MotorController_T * p_mc);
+extern void MotorController_InitDefault(MotorController_T * p_mc);
 extern NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_mc);
 extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc);
 extern NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc);

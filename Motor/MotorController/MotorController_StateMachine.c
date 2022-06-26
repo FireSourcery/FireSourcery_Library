@@ -548,6 +548,6 @@ static const StateMachine_State_T STATE_FAULT =
 {
 	.ID 					= MCSM_STATE_ID_FAULT,
 	.P_TRANSITION_TABLE 	= &FAULT_TRANSITION_TABLE[0U],
-	.ENTRY 				= (StateMachine_Output_T)Fault_Entry,
+	.ENTRY 					= (StateMachine_Output_T)Fault_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Fault_Proc,
 };

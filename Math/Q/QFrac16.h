@@ -85,15 +85,13 @@ static inline qfrac16_t qfrac16_sat(int32_t qfrac)
 /*!
 	@brief Unsaturated multiply
 
+	input max without overflow factor1 * factor2 < INT32_MAX (2,147,483,647)
+	e.g. (32,767, 65,535), (131,071, 16,383)
+
 	qfrac16_mul(frac, frac) 	returns frac value, 0x8000 -> over saturated 1
-	qfrac16_mul(integer, frac) 	returns integer value, 0x8000 -> positive 32768
+	qfrac16_mul(int, frac) 		returns int value, 0x8000 -> positive 32768
 
-	0x8000 casts from -32768 int16_t to -32768 int32_t correctly
-	0x8000 [-32768] * 0x8000 [-32768] returns as positive int32_t 0x00008000
-	0x8000 casts from 32768 int32_t to -32768 int16_t incorrectly
-	must call sat to convert to correct int16_t value
-
-	@return int32_t[-32767, 32768]
+	@return int32_t[-65536, 65535]
 */
 static inline int32_t qfrac16_mul(int32_t factor, int32_t frac)
 {
@@ -101,12 +99,20 @@ static inline int32_t qfrac16_mul(int32_t factor, int32_t frac)
 }
 
 /*!
-	@return int16_t[-32767, 32767]
+	Alternatively, qfrac16_mul_sat(qfrac16_t, qfrac16_t):
+	still must check saturation for qfrac16_mul_sat(-32768, -32768), casting 0x8000
+
+	0x8000 [-32768] * 0x8000 [-32768] returns as positive int32_t 0x8000 [32768]
+	0x8000 casts from 32768 int32_t to -32768 int16_t incorrectly
+	must call sat to convert to correct int16_t value
+	(product == 32768) ? 32767 : product;
+
+	@return int16_t[-32768, 32767]
 */
 static inline qfrac16_t qfrac16_mul_sat(int32_t factor, int32_t frac)
 {
 	int32_t product = qfrac16_mul(factor, frac);
-	return (product == 32768) ? 32767 : product; /*  */
+	return qfrac16_sat(product);
 }
 
 /*!
@@ -115,9 +121,10 @@ static inline qfrac16_t qfrac16_mul_sat(int32_t factor, int32_t frac)
 	qfrac16_div(frac, frac) 	returns frac value
 		when dividend >= divisor, over saturated qfrac16_t. 0x8000 -> over saturated 1
 		when dividend < divisor, within qfrac16_t range
-	qfrac16_div(integer, frac) 	returns integer value
 
-	@return int32_t[-1073741824, 1073709056] == [0XC0000000, 0X3FFF8000]
+	qfrac16_div(int, frac) 		returns int value
+
+	@return int32_t[-1073741824, 1073709056], [0XC0000000, 0X3FFF8000]
 */
 static inline int32_t qfrac16_div(int16_t dividend, int32_t divisor)
 {

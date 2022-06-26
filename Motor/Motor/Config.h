@@ -61,9 +61,10 @@
 #endif
 
 /* must reboot for params to take effect when disabled */
-#if   defined(CONFIG_MOTOR_PROPOGATE_SET_PARAM_DISABLE)
+#if   	defined(CONFIG_MOTOR_PROPOGATE_SET_PARAM_DISABLE)
+#elif   defined(CONFIG_MOTOR_PROPOGATE_SET_PARAM_ENABLE)
 #else
-
+	#define	CONFIG_MOTOR_PROPOGATE_SET_PARAM_ENABLE
 #endif
 
 #endif

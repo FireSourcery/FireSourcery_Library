@@ -33,8 +33,6 @@
 
 #include "Math/Q/QFrac16.h"
 
-#define QFRAC16_N_FRAC_BITS_MINUS_1 14U
-
 /*
 	Standard SVM calculation method. Inclusive of equivalent reverse Clarke transform.
 	Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
@@ -84,7 +82,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 				B = (1 + X + Z) / 2;
 				C = (1 - X + Z) / 2;
 			*/
-			z0 = (0x7FFF + magX + magZ) / 2;
+			z0 = (QFRAC16_MAX + magX + magZ) / 2;
 			*p_dutyA = (z0 - magZ);
 			*p_dutyB = z0;
 			*p_dutyC = (z0 - magX);
@@ -106,7 +104,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 				B = z0 + Z;
 				C = z0 - Y;
 			*/
-			z0 = (0x7FFF + magY - magZ) / 2;
+			z0 = (QFRAC16_MAX + magY - magZ) / 2;
 			*p_dutyA = z0;
 			*p_dutyB = (z0 + magZ);
 			*p_dutyC = (z0 - magY);
@@ -127,7 +125,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 				B = z0 + X;
 				C = z0;
 			*/
-			z0 = (0x7FFF - magX - magY) / 2;
+			z0 = (QFRAC16_MAX - magX - magY) / 2;
 			*p_dutyA = (z0 + magY);
 			*p_dutyB = (z0 + magX);
 			*p_dutyC = z0;
@@ -151,7 +149,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 				B = z0;
 				C = z0 - X;
 			*/
-			z0 = (0x7FFF + magX + magZ) / 2;
+			z0 = (QFRAC16_MAX + magX + magZ) / 2;
 			*p_dutyA = (z0 - magZ);
 			*p_dutyB = z0;
 			*p_dutyC = (z0 - magX);
@@ -172,7 +170,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 				B = z0 + Z;
 				C = z0 - Y;
 			*/
-			z0 = (0x7FFF + magY - magZ) / 2;
+			z0 = (QFRAC16_MAX + magY - magZ) / 2;
 			*p_dutyA = z0;
 			*p_dutyB = (z0 + magZ);
 			*p_dutyC = (z0 - magY);
@@ -193,17 +191,16 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 				B = z0 + X;
 				C = z0;
 			*/
-			z0 = (0x7FFF - magX - magY) / 2;
+			z0 = (QFRAC16_MAX - magX - magY) / 2;
 			*p_dutyA = (z0 + magY);
 			*p_dutyB = (z0 + magX);
 			*p_dutyC = z0;
 		}
 	}
 
-//remove
-	// *p_dutyA = qfrac16_sat(*p_dutyA);
-	// *p_dutyB = qfrac16_sat(*p_dutyB);
-	// *p_dutyC = qfrac16_sat(*p_dutyC);
+	*p_dutyA = qfrac16_sat(*p_dutyA);
+	*p_dutyB = qfrac16_sat(*p_dutyB);
+	*p_dutyC = qfrac16_sat(*p_dutyC);
 }
 
 #endif
