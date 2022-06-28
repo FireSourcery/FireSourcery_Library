@@ -81,12 +81,12 @@ Linear_T;
 /******************************************************************************/
 extern int32_t _Linear_Sat(int32_t min, int32_t max, int32_t value);
 
-static inline int16_t _Linear_SatSigned16(int32_t frac16) { return _Linear_Sat(INT16_MIN, INT16_MAX, frac16); }
-static inline uint16_t _Linear_SatUnsigned16(int32_t frac16) { return _Linear_Sat(0, UINT16_MAX, frac16); }
+static inline int16_t _Linear_SatSigned16(int32_t frac16) { return (int16_t)_Linear_Sat(INT16_MIN, INT16_MAX, frac16); }
+static inline uint16_t _Linear_SatUnsigned16(int32_t frac16) { return (uint16_t)_Linear_Sat(0, UINT16_MAX, frac16); }
 static inline uint16_t _Linear_SatUnsigned16_Abs(int32_t frac16)
 {
 	int32_t sat = _Linear_Sat(0 - (int32_t)UINT16_MAX, UINT16_MAX, frac16);
-	return (sat < 0) ? 0 - sat: sat;
+	return (sat < 0) ? (uint16_t)(0 - sat): (uint16_t)sat;
 }
 
 

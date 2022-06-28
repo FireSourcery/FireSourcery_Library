@@ -62,7 +62,7 @@ extern void _Motor_User_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T 
 	@param[in] userCmd [-32768:32767]
 	@return int32_t[-32767:32767]
 */
-static inline int32_t _Motor_User_CalcDirectionalCmd(Motor_T * p_motor, int32_t userCmd)
+static inline int32_t _Motor_User_CalcDirectionalCmd(Motor_T * p_motor, int32_t userCmd) //int16_t?
 {
 	return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? userCmd : 0 - userCmd;
 }

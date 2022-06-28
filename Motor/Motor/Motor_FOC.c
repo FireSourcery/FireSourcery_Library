@@ -33,34 +33,81 @@
 /*!
 	@param[in] all [0:32767]
 */
-static void SetOutputLimits(Motor_T * p_motor, uint16_t speedIOutCcw, uint16_t speedIOutCw, uint16_t vOutCcw, uint16_t vOutCw)
+// static void SetOutputLimits(Motor_T * p_motor, uint16_t iOutCcw, uint16_t iOutCw, uint16_t vOutCcw, uint16_t vOutCw)
+// {
+// 	if(p_motor->FeedbackModeFlags.Speed == 1U)
+// 	{
+// 		if(p_motor->FeedbackModeFlags.Current == 1U) 	{ PID_SetOutputLimits(&p_motor->PidSpeed, 0 - iOutCw, iOutCcw); } /* Speed PID Output is Iq */
+// 		else 											{ PID_SetOutputLimits(&p_motor->PidSpeed, 0 - vOutCw, vOutCcw); } /* Speed PID Output is Vq */
+// 	}
+// }
+
+static void ResetSpeedPidOutputLimitsCcw(Motor_T * p_motor)
 {
+	// SetOutputLimits(p_motor, p_motor->ILimitMotoring_Frac16 / 2U, p_motor->ILimitGenerating_Frac16 / 2U, INT16_MAX, 0);
+	PID_SetOutputLimits(&p_motor->PidSpeed, 0 - p_motor->ILimitGenerating_Frac16 / 2, p_motor->ILimitMotoring_Frac16 / 2);
+}
+
+static void ResetSpeedPidOutputLimitsCw(Motor_T * p_motor)
+{
+	// SetOutputLimits(p_motor, p_motor->ILimitGenerating_Frac16 / 2U, p_motor->ILimitMotoring_Frac16 / 2U, 0, INT16_MAX);
+	PID_SetOutputLimits(&p_motor->PidSpeed, 0 - p_motor->ILimitMotoring_Frac16 / 2, p_motor->ILimitGenerating_Frac16 / 2);
+}
+
+/* Set on Limits change */
+void Motor_FOC_ResetSpeedPidOutputLimits(Motor_T * p_motor)
+{
+	if((p_motor->FeedbackModeFlags.Speed == 1U) && (p_motor->FeedbackModeFlags.Current == 1U)) /* Speed PID Output is Iq */
+	{
+		(p_motor->Direction == MOTOR_DIRECTION_CCW) ? ResetSpeedPidOutputLimitsCcw(p_motor) : ResetSpeedPidOutputLimitsCw(p_motor);
+	}
+}
+
+// static void SetDirectionCcw(Motor_T * p_motor)
+// {
+// 	ResetSpeedPidOutputLimitsCcw(p_motor);
+// 	// SetOutputLimits(p_motor, p_motor->ILimitMotoring_Frac16 / 2U, p_motor->ILimitGenerating_Frac16 / 2U, INT16_MAX, 0);
+// 	/*
+// 		Iq/Id PID always Vq/Vd, clip opposite user direction range, no plugging.
+// 		Voltage Feedback Mode active during over current only.
+// 	*/
+// 	PID_SetOutputLimits(&p_motor->PidIq, 0, INT16_MAX);
+// 	PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
+// }
+
+// static void SetDirectionCw(Motor_T * p_motor)
+// {
+// 	ResetSpeedPidOutputLimitsCw(p_motor);
+// 	// SetOutputLimits(p_motor, p_motor->ILimitGenerating_Frac16 / 2U, p_motor->ILimitMotoring_Frac16 / 2U, 0, INT16_MAX);
+// 	PID_SetOutputLimits(&p_motor->PidIq, INT16_MIN, 0);
+// 	PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
+// }
+
+void Motor_FOC_SetDirectionCcw(Motor_T * p_motor)
+{
+	Motor_SetDirectionCcw(p_motor);
+	// SetDirectionCcw(p_motor);
 	if(p_motor->FeedbackModeFlags.Speed == 1U)
 	{
-		if(p_motor->FeedbackModeFlags.Current == 1U) 	{ PID_SetOutputLimits(&p_motor->PidSpeed, 0 - speedIOutCw, speedIOutCcw); } /* Speed PID is Iq */
-		else 											{ PID_SetOutputLimits(&p_motor->PidSpeed, 0 - vOutCw, vOutCcw); } 			/* Speed PID is Vq */
+		if(p_motor->FeedbackModeFlags.Current == 1U) 	{ ResetSpeedPidOutputLimitsCcw(p_motor); }					/* Speed PID Output is Iq */
+		else 											{ PID_SetOutputLimits(&p_motor->PidSpeed, 0, INT16_MAX); } 	/* Speed PID Output is Vq */
 	}
-
-	/*
-		Iq/Id PID always Vq/Vd, clip opposite user direction range, no plugging.
-		Voltage Feedback Mode active during over current only
-	*/
-	PID_SetOutputLimits(&p_motor->PidIq, 0 - vOutCw, vOutCcw);
-	PID_SetOutputLimits(&p_motor->PidId, 0 - p_motor->ILimitMotoring_Frac16 / 2, p_motor->ILimitMotoring_Frac16 / 2); /* Id use 50% of Iq Motoring */
+	PID_SetOutputLimits(&p_motor->PidIq, 0, INT16_MAX);
+	PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
 }
 
-void Motor_FOC_SetOutputLimitsCcw(Motor_T * p_motor)
+void Motor_FOC_SetDirectionCw(Motor_T * p_motor)
 {
-	SetOutputLimits(p_motor, p_motor->ILimitMotoring_Frac16 / 2U, p_motor->ILimitGenerating_Frac16 / 2U, INT16_MAX, 0);
+	Motor_SetDirectionCw(p_motor);
+	// SetDirectionCw(p_motor);
+	if(p_motor->FeedbackModeFlags.Speed == 1U)
+	{
+		if(p_motor->FeedbackModeFlags.Current == 1U) 	{ ResetSpeedPidOutputLimitsCw(p_motor); }					/* Speed PID Output is Iq */
+		else 											{ PID_SetOutputLimits(&p_motor->PidSpeed, INT16_MIN, 0); } 	/* Speed PID Output is Vq */
+	}
+	PID_SetOutputLimits(&p_motor->PidIq, INT16_MIN, 0);
+	PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
 }
-
-void Motor_FOC_SetOutputLimitsCw(Motor_T * p_motor)
-{
-	SetOutputLimits(p_motor, p_motor->ILimitGenerating_Frac16 / 2U, p_motor->ILimitMotoring_Frac16 / 2U, 0, INT16_MAX);
-}
-
-void Motor_FOC_SetDirectionCcw(Motor_T * p_motor) 	{ Motor_SetDirectionCcw(p_motor); Motor_FOC_SetOutputLimitsCcw(p_motor); }
-void Motor_FOC_SetDirectionCw(Motor_T * p_motor) 	{ Motor_SetDirectionCw(p_motor); Motor_FOC_SetOutputLimitsCw(p_motor); }
 
 /* Set on Direction change */
 void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
@@ -68,13 +115,8 @@ void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 	(direction == MOTOR_DIRECTION_CCW) ? Motor_FOC_SetDirectionCcw(p_motor) : Motor_FOC_SetDirectionCw(p_motor);
 }
 
-/* Set on Limits change */
-void Motor_FOC_ResetOutputLimits(Motor_T * p_motor)
-{
-	(p_motor->Direction == MOTOR_DIRECTION_CCW) ? Motor_FOC_SetOutputLimitsCcw(p_motor) : Motor_FOC_SetOutputLimitsCw(p_motor);
-}
-
 void Motor_FOC_SetDirectionForward(Motor_T * p_motor)
 {
 	(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? Motor_FOC_SetDirectionCcw(p_motor) : Motor_FOC_SetDirectionCw(p_motor);
 }
+

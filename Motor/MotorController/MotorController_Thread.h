@@ -149,7 +149,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 				MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT
 			);
 
-			// Thermistor_PollWarningRisingEdge(&p_mc->ThermistorMosfetsTo4p);
+			// Thermistor_PollWarningRisingEdge(&p_mc->ThermistorMosfetsTop);
 			if(p_mc->WarningFlags.Heat == false)
 			{
 				Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 1U);

@@ -219,15 +219,17 @@ void _Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16)
 	p_motor->ILimitActiveScalar = scalar_frac16;
 	p_motor->ILimitMotoring_Frac16 = (uint32_t)scalar_frac16 * p_motor->Parameters.ILimitMotoring_Frac16 / 65536U;
 	p_motor->ILimitGenerating_Frac16 = (uint32_t)scalar_frac16 * p_motor->Parameters.ILimitGenerating_Frac16 / 65536U;
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetOutputLimits(p_motor); }
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetSpeedPidOutputLimits(p_motor); }
 }
 
 void _Motor_User_ClearILimitActive(Motor_T * p_motor)
 {
 	p_motor->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 	p_motor->ILimitActiveScalar = 0xFFFFU;
-	Motor_ResetILimits(p_motor);
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetOutputLimits(p_motor); }
+	// Motor_ResetILimits(p_motor);
+	p_motor->ILimitMotoring_Frac16 = p_motor->Parameters.ILimitMotoring_Frac16;
+	p_motor->ILimitGenerating_Frac16 = p_motor->Parameters.ILimitGenerating_Frac16;
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetSpeedPidOutputLimits(p_motor); }
 }
 
 //todo may need list

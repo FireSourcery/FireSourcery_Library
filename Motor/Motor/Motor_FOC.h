@@ -488,7 +488,7 @@ extern void Motor_FOC_SetOutputLimitsCw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirectionCcw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirectionCw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
-extern void Motor_FOC_ResetOutputLimits(Motor_T * p_motor);
+extern void Motor_FOC_ResetSpeedPidOutputLimits(Motor_T * p_motor);
 extern void Motor_FOC_SetDirectionForward(Motor_T * p_motor);
 
 #endif

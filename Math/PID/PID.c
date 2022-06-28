@@ -36,15 +36,14 @@ static void ResetRuntime(PID_T * p_pid)
 {
 	p_pid->KiDivisorFreq 	= p_pid->Params.KiDivisor * p_pid->Params.CalcFreq;
 	p_pid->KdFactorFreq 	= p_pid->Params.KdFactor * p_pid->Params.CalcFreq;
-	p_pid->ErrorSumOverflowPos = INT32_MAX / p_pid->Params.KiFactor;
-	p_pid->ErrorSumOverflowNeg = 0 - INT32_MAX / p_pid->Params.KiFactor;
+	p_pid->ErrorSumOverflow = INT32_MAX / p_pid->Params.KiFactor;
 }
 
 void PID_Init(PID_T * p_pid)
 {
 	if(p_pid->CONFIG.P_PARAMS != 0U) { memcpy(&p_pid->Params, p_pid->CONFIG.P_PARAMS, sizeof(PID_Params_T)); }
-	// p_pid->OutMin = -65535;
-	// p_pid->OutMax = 65535;
+	p_pid->OutputMin = -65535;
+	p_pid->OutputMax = 65535;
 	ResetRuntime(p_pid);
 	PID_Reset(p_pid);
 }
@@ -66,6 +65,38 @@ void PID_Init_Args
 	PID_Reset(p_pid);
 }
 
+
+static int32_t GetIntegral(PID_T * p_pid)
+{
+	int32_t integral;
+
+	if((p_pid->ErrorSum > p_pid->ErrorSumOverflow) || (p_pid->ErrorSum < 0 - p_pid->ErrorSumOverflow))
+	{
+		integral = p_pid->ErrorSum / p_pid->KiDivisorFreq * p_pid->Params.KiFactor;
+	}
+	else
+	{
+		integral = p_pid->Params.KiFactor * p_pid->ErrorSum / p_pid->KiDivisorFreq;
+	}
+
+	return integral;
+}
+
+static void SetIntegral(PID_T * p_pid, int32_t integral)
+{
+	int32_t integralOverflow = INT32_MAX / p_pid->KiDivisorFreq;
+
+	if((integral > integralOverflow) || (integral < 0 - integralOverflow))
+	{
+		p_pid->ErrorSum = integral / p_pid->Params.KiFactor * p_pid->KiDivisorFreq;
+	}
+	else
+	{
+		p_pid->ErrorSum = integral * p_pid->KiDivisorFreq / p_pid->Params.KiFactor;
+	}
+}
+
+
 /*
 	Standard PID calculation
 	control = (Kp * error) + (Ki * ErrorSum * SampleTime) + (Kd * (error - ErrorPrev) / SampleTime)
@@ -76,24 +107,17 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 
 	proportional = (p_pid->Params.KpFactor * error / p_pid->Params.KpDivisor);
 
-	if((p_pid->ErrorSum < p_pid->ErrorSumOverflowNeg) || (p_pid->ErrorSum > p_pid->ErrorSumOverflowPos))
-	{
-		integral = (p_pid->ErrorSum / p_pid->KiDivisorFreq * p_pid->Params.KiFactor);
-	}
-	else
-	{
-		integral = (p_pid->Params.KiFactor * p_pid->ErrorSum / p_pid->KiDivisorFreq);
-	}
+	integral = GetIntegral(p_pid);
 
-	if(integral > p_pid->OutMax)
+	if(integral > p_pid->OutputMax)
 	{
-		integral = p_pid->OutMax;
-		if(error < 0) { p_pid->ErrorSum += error; } /* if error sum becomes out of sync, only add error if error is negative */
+		integral = p_pid->OutputMax;
+		if(error < 0) { p_pid->ErrorSum += error; } /* only if error sum becomes out of sync, add error if error is negative */ //may need p_pid->OutputMax > 0
 	}
-	else if(integral < p_pid->OutMin)
+	else if(integral < p_pid->OutputMin)
 	{
-		integral = p_pid->OutMin;
-		if(error > 0) { p_pid->ErrorSum += error; } /* if error sum becomes out of sync, only add error if error is positive */
+		integral = p_pid->OutputMin;
+		if(error > 0) { p_pid->ErrorSum += error; } /* only if error sum becomes out of sync, add error if error is positive */
 	}
 	else
 	{
@@ -111,8 +135,8 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 		control = proportional + integral;
 	}
 
-	if		(control > p_pid->OutMax) { control = p_pid->OutMax; }
-	else if	(control < p_pid->OutMin) { control = p_pid->OutMin; }
+	if		(control > p_pid->OutputMax) { control = p_pid->OutputMax; }
+	else if	(control < p_pid->OutputMin) { control = p_pid->OutputMin; }
 
 	return control;
 }
@@ -122,6 +146,9 @@ int32_t PID_Calc(PID_T * p_pid, int32_t setpoint, int32_t feedback)
 	return CalcPid(p_pid, setpoint - feedback);
 }
 
+/*
+	Compute Time variables Set
+*/
 void PID_Reset(PID_T * p_pid)
 {
 	p_pid->ErrorSum = 0;
@@ -130,7 +157,9 @@ void PID_Reset(PID_T * p_pid)
 
 void PID_SetIntegral(PID_T * p_pid, int32_t integral)
 {
-	p_pid->ErrorSum = integral * p_pid->KiDivisorFreq / p_pid->Params.KiFactor;
+	if		(integral > p_pid->OutputMax) 	{ SetIntegral(p_pid, p_pid->OutputMax); }
+	else if	(integral < p_pid->OutputMin) 	{ SetIntegral(p_pid, p_pid->OutputMin); }
+	else 									{ SetIntegral(p_pid, integral);}
 }
 
 void PID_SetOutputState(PID_T * p_pid, int32_t integral)
@@ -140,17 +169,21 @@ void PID_SetOutputState(PID_T * p_pid, int32_t integral)
 
 void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max)
 {
+	int32_t integral;
+
 	if(max > min)
 	{
-		p_pid->OutMin = min;
-		p_pid->OutMax = max;
-		if		(p_pid->ErrorSum > p_pid->OutMax) { p_pid->ErrorSum = p_pid->OutMax; }
-		else if	(p_pid->ErrorSum < p_pid->OutMin) { p_pid->ErrorSum = p_pid->OutMin; }
-		// if		(integral > p_pid->OutMax) { PID_SetIntegral(p_pid, p_pid->OutMax); }
-		// else if	(integral < p_pid->OutMin) { PID_SetIntegral(p_pid, p_pid->OutMin); }
+		p_pid->OutputMin = min;
+		p_pid->OutputMax = max;
+		integral = GetIntegral(p_pid); /* Reset integral with limits */
+		if		(integral > p_pid->OutputMax) { SetIntegral(p_pid, p_pid->OutputMax); }
+		else if	(integral < p_pid->OutputMin) { SetIntegral(p_pid, p_pid->OutputMin); }
 	}
 }
 
+/*
+	Persistent Params Set
+*/
 void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq)
 {
 	if(calcFreq > 0U) { p_pid->Params.CalcFreq = calcFreq; }

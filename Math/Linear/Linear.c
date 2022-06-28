@@ -142,7 +142,7 @@ int32_t _Linear_Sat(int32_t min, int32_t max, int32_t value)
 	int32_t saturated;
 	if		(value > max) 	{ saturated = max; }
 	else if	(value < min) 	{ saturated = min; }
-	else 					{ saturated = (int16_t)value; }
+	else 					{ saturated = value; }
 	return saturated;
 }
 

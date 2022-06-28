@@ -73,10 +73,10 @@ static StateMachine_State_T * Init_InputDirection(MotorController_T * p_mc)
 		// bool isThrottleOn; //check and isthrottle off
 		p_nextState = &STATE_STOP;
 	}
-	else
-	{
-		p_nextState = &STATE_FAULT;
-	}
+	// else
+	// {
+	// 	p_nextState = &STATE_FAULT;
+	// }
 
 	return p_nextState;
 }
@@ -114,7 +114,7 @@ static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 static void Init_Entry(MotorController_T * p_mc)
 {
 	// (void)p_mc;
-	Blinky_Blink(&p_mc->Buzzer, 200U);
+	// Blinky_Blink(&p_mc->Buzzer, 200U);
 }
 
 static void Init_Exit(MotorController_T * p_mc)

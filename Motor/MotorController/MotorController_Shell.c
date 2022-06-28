@@ -141,9 +141,10 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			Terminal_SendString(p_terminal, "IPhasePeak_Adcu: "); Terminal_SendNum(p_terminal, p_motor->IPhasePeak_Adcu); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ILimitActiveId: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveId); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "ILimitActiveScalar: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveScalar); Terminal_SendString(p_terminal, "\r\n");
-			Terminal_SendString(p_terminal, "ILimitMotoring_Frac16: "); Terminal_SendNum(p_terminal, p_motor->ILimitMotoring_Frac16); Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "ILimitMotoring_Frac16: "); Terminal_SendNum(p_terminal, p_motor->ILimitMotoring_Frac16); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "VoltageModeILimitActive: "); Terminal_SendNum(p_terminal, p_motor->RunStateFlags.VoltageModeILimitActive); Terminal_SendString(p_terminal, "\r\n");
 
+			Terminal_SendString(p_terminal, "SpeedPid Limit: "); Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutputMax); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ElecAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetElectricalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
 			// Terminal_SendString(p_terminal, "MechAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetMechanicalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
 
@@ -791,12 +792,12 @@ static Cmd_Status_T Cmd_ilimit(MotorController_T * p_mc, int argc, char ** argv)
 		Terminal_SendString(p_terminal, "\r\n");
 
 		Terminal_SendString(p_terminal, "PidSpeed Min, Max: ");
-		Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutMin);		Terminal_SendString(p_terminal, " ");
-		Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutMax);		Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutputMin);		Terminal_SendString(p_terminal, " ");
+		Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutputMax);		Terminal_SendString(p_terminal, "\r\n");
 
 		Terminal_SendString(p_terminal, "PidIq Min, Max: ");
-		Terminal_SendNum(p_terminal, p_motor->PidIq.OutMin);		Terminal_SendString(p_terminal, " ");
-		Terminal_SendNum(p_terminal, p_motor->PidIq.OutMax);		Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendNum(p_terminal, p_motor->PidIq.OutputMin);		Terminal_SendString(p_terminal, " ");
+		Terminal_SendNum(p_terminal, p_motor->PidIq.OutputMax);		Terminal_SendString(p_terminal, "\r\n");
 	}
 
 	return CMD_STATUS_SUCCESS;
