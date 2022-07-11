@@ -50,7 +50,9 @@ bool MotorN_User_CheckStop(Motor_T * p_motor, uint8_t motorCount)
 
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
 	{
-		if(p_motor->SpeedFeedback_Frac16 > 0) { isStop = false; break; }
+		// if(p_motor[iMotor].SpeedFeedback_Frac16 > 0) { isStop = false; break; } // + check direction
+
+		if(Motor_User_GetStateId(&p_motor[iMotor]) != MSM_STATE_ID_STOP) { isStop = false; break; } // + check direction
 	}
 
 	return isStop;

@@ -365,7 +365,7 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 			}
 			else
 			{
-				cmd = MOT_ANALOG_USER_CMD_PROC_NO_INPUT;
+				cmd = MOT_ANALOG_USER_CMD_PROC_NO_INPUT; /* Direction is Forward or Reverse, no throttle or brake value */
 			}
 			break;
 	}

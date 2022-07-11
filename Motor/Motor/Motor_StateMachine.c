@@ -111,12 +111,12 @@ static StateMachine_State_T * Stop_InputControl(Motor_T * p_motor)
 {
 	StateMachine_State_T * p_nextState;
 
-	if(p_motor->UserDirection != p_motor->Direction)
-	{
-		//		p_nextState = &STATE_FAULT; //direction set was called during another mode
-		p_nextState = 0U;
-	}
-	else
+	// if(p_motor->UserDirection != p_motor->Direction)
+	// {
+	// 	//		p_nextState = &STATE_FAULT; //direction set was called during another mode
+	// 	p_nextState = 0U;
+	// }
+	// else
 	{
 		// if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
 		// {
@@ -257,13 +257,13 @@ static const StateMachine_State_T STATE_STOP =
 */
 static StateMachine_State_T * Run_InputControl(Motor_T * p_motor)
 {
-	StateMachine_State_T * p_newState = 0;
+	StateMachine_State_T * p_newState = 0U;
 
-	if (p_motor->UserDirection != p_motor->Direction)
-	{
-		p_newState = &STATE_FAULT;
-	}
-	else
+	// if (p_motor->UserDirection != p_motor->Direction)
+	// {
+	// 	p_newState = &STATE_FAULT;
+	// }
+	// else
 	{
 		if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 		{
@@ -377,11 +377,12 @@ static StateMachine_State_T * FreeWheel_InputControl(Motor_T * p_motor)
 {
 	StateMachine_State_T * p_newState = 0U;
 
-	if (p_motor->UserDirection != p_motor->Direction)
-	{
-		p_newState = &STATE_FAULT;
-	}
-	else if(p_motor->FeedbackModeFlags.OpenLoop == 1U)
+	// if (p_motor->UserDirection != p_motor->Direction)
+	// {
+	// 	p_newState = &STATE_FAULT;
+	// }
+	// else
+	if(p_motor->FeedbackModeFlags.OpenLoop == 1U)
 	{
 		p_newState = 0U; /* openloop does not resume */
 	}
@@ -437,7 +438,7 @@ static void Freewheel_Proc(Motor_T * p_motor)
 		//		Motor_SixStep_ProcPhaseObserve(p_motor);
 	}
 
-	/* Check after capture speed, this way lower priority input cannot proc in between capture and check  */
+	/* Check after capture speed, this way lower priority input cannot proc in between capture and check */
 	if(p_motor->SpeedFeedback_Frac16 == 0U)
 	{
 		_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP);

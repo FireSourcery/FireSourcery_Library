@@ -39,7 +39,7 @@
 static const StateMachine_State_T STATE_INIT;
 static const StateMachine_State_T STATE_STOP;
 static const StateMachine_State_T STATE_RUN;
-// static const StateMachine_State_T STATE_NEUTRAL;
+static const StateMachine_State_T STATE_NEUTRAL;
 // static const StateMachine_State_T STATE_BRAKING;
 // static const StateMachine_State_T STATE_MOTORTING;
 static const StateMachine_State_T STATE_FAULT;
@@ -56,6 +56,7 @@ const StateMachine_Machine_T MCSM_MACHINE =
 };
 
 static StateMachine_State_T * TransitionFault(MotorController_T * p_mc) { (void)p_mc; return &STATE_FAULT; }
+static StateMachine_State_T * TransitionStop(MotorController_T * p_mc) { (void)p_mc; return &STATE_STOP; }
 
 /******************************************************************************/
 /*!
@@ -66,31 +67,33 @@ static StateMachine_State_T * TransitionFault(MotorController_T * p_mc) { (void)
 /******************************************************************************/
 static StateMachine_State_T * Init_InputDirection(MotorController_T * p_mc)
 {
-	StateMachine_State_T * p_nextState;
+	MotorController_ProcDirection(p_mc);
+	return 0U;
+	// StateMachine_State_T * p_nextState;
 
-	if(MotorController_ProcDirection(p_mc) == true)
-	{
-		// bool isThrottleOn; //check and isthrottle off
-		p_nextState = &STATE_STOP;
-	}
+	// if(MotorController_ProcDirection(p_mc) == true)
+	// {
+	// 	// bool isThrottleOn; //check and isthrottle off
+	// 	p_nextState = &STATE_STOP;
+	// }
 	// else
 	// {
 	// 	p_nextState = &STATE_FAULT;
 	// }
 
-	return p_nextState;
+// 	return p_nextState;
 }
 
-static StateMachine_State_T * Init_InputReleaseThrottle(MotorController_T * p_mc)
-{
-	StateMachine_State_T * p_nextState = 0U;
-	if(p_mc->Parameters.BuzzerFlagsEnable.BeepThrottleOnInit == true)
-	{
-		MotorController_BeepShort(p_mc);
-		p_nextState = &STATE_STOP; //check direction is not forwrad or rev
-	}
-	return p_nextState;
-}
+// static StateMachine_State_T * Init_InputReleaseThrottle(MotorController_T * p_mc)
+// {
+// 	// StateMachine_State_T * p_nextState = 0U;
+// 	if(p_mc->Parameters.BuzzerFlagsEnable.BeepThrottleOnInit == true)
+// 	{
+// 		MotorController_BeepShort(p_mc);
+// 		// p_nextState = &STATE_STOP; //check direction is not forwrad or rev
+// 	}
+// 	return 0U;
+// }
 
 static StateMachine_State_T * Init_InputThrottle(MotorController_T * p_mc)
 {
@@ -99,7 +102,6 @@ static StateMachine_State_T * Init_InputThrottle(MotorController_T * p_mc)
 		p_mc->BuzzerFlagsActive.BeepThrottleOnInit = 1U;
 		MotorController_BeepShort(p_mc);
 	}
-
 	return 0U;
 }
 
@@ -107,25 +109,38 @@ static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 {
 	// [MCSM_INPUT_FAULT]				= (StateMachine_Transition_T)TransitionFault,
 	[MCSM_INPUT_DIRECTION] 			= (StateMachine_Transition_T)Init_InputDirection,
-	[MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)Init_InputReleaseThrottle,
+	// [MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)Init_InputReleaseThrottle,
+
+	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)TransitionStop,
 	[MCSM_INPUT_THROTTLE] 			= (StateMachine_Transition_T)Init_InputThrottle,
 };
 
 static void Init_Entry(MotorController_T * p_mc)
 {
-	// (void)p_mc;
-	Blinky_Blink(&p_mc->Buzzer, 200U);
+	(void)p_mc;
+	// Blinky_Blink(&p_mc->Buzzer, 200U);
 }
 
 static void Init_Exit(MotorController_T * p_mc)
 {
 	p_mc->FaultFlags.State = 0U; /* Clear initial ADC readings */
+	Blinky_Blink(&p_mc->Buzzer, 200U);
 }
 
 static void Init_Proc(MotorController_T * p_mc)
 {
-	(void)p_mc;
-// _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP);
+		(void)p_mc;
+	// bool isInit = false;
+
+	// switch(p_mc->Parameters.InputMode)
+	// {
+	// 	case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: break;
+	// 	case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL: break;
+	// 	case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
+	// 	default:  break;
+	// }
+
+	// if (isInit == true) { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP); }
 // if(Timer_GetBase(&p_mc->TimerMillis) > 50U) 	//wait 50ms for adc , may need preinit
 // {
 
@@ -222,7 +237,7 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 	[MCSM_INPUT_BRAKE] 				= (StateMachine_Transition_T)Stop_InputBrake,
 	[MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)Stop_InputRelease,
 	[MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)0U, //release into neutral, different from release into no input
-	[MCSM_INPUT_NULL] 				= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_NEUTRAL] 			= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_SET_NEUTRAL] 		= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)Stop_InputSaveParams, //todo share with calibration
@@ -236,7 +251,7 @@ static void Stop_Entry(MotorController_T * p_mc)
 	//	}
 	//	else
 	//	{
-	MotorController_DisableMotorAll(p_mc); //entry on brake
+	MotorController_DisableMotorAll(p_mc);
 //	}
 }
 
@@ -265,40 +280,44 @@ static const StateMachine_State_T STATE_STOP =
 
 	while in neutral,
 	brake release detected, throttle release ignore,
-	is implemented via dependency on input priority, may need to change
 */
 /******************************************************************************/
+
+/* Not applicable for AnalogUser if transisition through neutral state */
 static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc)
 {
 	if(p_mc->MainDirection != p_mc->UserDirection)
 	{
-		MotorController_BeepShort(p_mc); //abstrat not allow direction chagen
+		MotorController_BeepShort(p_mc);
 	}
 
 	return 0U;
 }
 
 /*
-	Do not allow for run state including both throttle and brake.
-	Alternatively, need additional brake state. allow for throttle, ignore for brake.
+
+	ignore for brake.
 */
 static StateMachine_State_T * Run_InputNeutral(MotorController_T * p_mc)
 {
-	//	return &STATE_NEUTRAL;
-	return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
+	(void)p_mc;
+	return &STATE_NEUTRAL;
+	// return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
 }
 
-static StateMachine_State_T * Run_InputNeutralStart(MotorController_T * p_mc)
-{
-	MotorController_DisableMotorAll(p_mc); /* will cause discontinuity during brake, todo brake flag or state */
-	return 0U;
-}
+// static StateMachine_State_T * Run_InputSetNeutral(MotorController_T * p_mc)
+// {
+// 	(void)p_mc;
+// 	return &STATE_NEUTRAL;
+// 	// MotorController_DisableMotorAll(p_mc); /* will cause discontinuity during brake, todo brake flag or state */ //analog set will not occur while braking
+// 	// return 0U;
+// }
 
 static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_mc)
 {
 	//or use separate neutral state to prevent return to throttle state
 
-	if(p_mc->MainDirection == p_mc->UserDirection)
+	// if(p_mc->MainDirection == p_mc->UserDirection)
 	{
 		MotorController_ProcUserCmdThrottle(p_mc);
 	}
@@ -349,7 +368,7 @@ static StateMachine_State_T * Run_InputCoast(MotorController_T * p_mc)
 /*
 	only release into null/coast
 */
-static StateMachine_State_T * Run_InputCoastStart(MotorController_T * p_mc)
+static StateMachine_State_T * Run_InputSetCoast(MotorController_T * p_mc)
 {
 	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
 	{
@@ -363,26 +382,17 @@ static StateMachine_State_T * Run_InputCoastStart(MotorController_T * p_mc)
 	return 0U;
 }
 
-/*
-	release into neutral, release into throttle/coast satisfy? todo neutral state
-*/
-static StateMachine_State_T * Run_InputReleaseBrake(MotorController_T * p_mc)
-{
-	MotorController_DisableMotorAll(p_mc);
-	return 0U;
-}
-
 static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
 	[MCSM_INPUT_FAULT] 				= (StateMachine_Transition_T)TransitionFault,
 	[MCSM_INPUT_DIRECTION] 			= (StateMachine_Transition_T)Run_InputDirection,
 	[MCSM_INPUT_THROTTLE] 			= (StateMachine_Transition_T)Run_InputThrottle,
 	[MCSM_INPUT_BRAKE] 				= (StateMachine_Transition_T)Run_InputBrake,
-	[MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)Run_InputCoastStart,
-	[MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)Run_InputReleaseBrake,
-	[MCSM_INPUT_NULL] 				= (StateMachine_Transition_T)Run_InputCoast,
+	[MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)Run_InputSetCoast,
+	[MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)Run_InputSetCoast,
+	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)Run_InputCoast,
 	[MCSM_INPUT_NEUTRAL] 			= (StateMachine_Transition_T)Run_InputNeutral,
-	[MCSM_INPUT_SET_NEUTRAL] 		= (StateMachine_Transition_T)Run_InputNeutralStart,
+	[MCSM_INPUT_SET_NEUTRAL] 		= (StateMachine_Transition_T)Run_InputNeutral,
 	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,
 };
 
@@ -408,78 +418,75 @@ static const StateMachine_State_T STATE_RUN =
 /******************************************************************************/
 /*!
 	@brief  State
+	in neutral state, Motor not stopped yet
+	Neutral state - brake effective, throttle no effect.
 
 	Active throttle will remain active during
 	Alternatively use extra brake state, or track is neutral set once to avoid repeat
 */
 /******************************************************************************/
-//static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc)
-//{
-//	StateMachine_State_T * p_nextState;
-//	/* in neutral state, Motor not stopped yet */
-//	if(p_mc->MainDirection != p_mc->UserDirection)
-//	{
-////		MotorController_Beep(p_mc);
-//		p_nextState = 0U;
-//	}
-//	else
-//	{
-//		/* fault is transition to the same direction fails */
-////		p_nextState = (MotorController_ProcDirection(p_mc) == true) ? &STATE_RUN : &STATE_FAULT;
-//		p_nextState = &STATE_RUN;
-//	}
-//
-//	return p_nextState;
-//}
-//
-//static StateMachine_State_T * Neutral_InputBrake(MotorController_T * p_mc)
-//{
-//	MotorController_ProcUserCmdBrake(p_mc);
-//	return 0U;
-//	/*
-//	 * When brake is released, will enter neutral mode again
-//	 */
-//	//	return &STATE_RUN;
-//}
-//
-//
-//static StateMachine_State_T * Neutral_InputRelease(MotorController_T * p_mc)
-//{
-//	MotorController_DisableMotorAll(p_mc);
-//	return 0U;
-//}
-//
-//static const StateMachine_Transition_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
-//{
-//	[MCSM_INPUT_FAULT] 			= (StateMachine_Transition_T)TransitionFault,
-//	[MCSM_INPUT_DIRECTION] 		= (StateMachine_Transition_T)Neutral_InputDirection,
-//	[MCSM_INPUT_THROTTLE] 		= (StateMachine_Transition_T)0U,
-//	[MCSM_INPUT_BRAKE]  		= (StateMachine_Transition_T)Neutral_InputBrake,
-//	[MCSM_INPUT_RELEASE] 		= (StateMachine_Transition_T)Neutral_InputRelease,
-//	[MCSM_INPUT_NULL] 			= (StateMachine_Transition_T)0U,
-//	[MCSM_INPUT_NEUTRAL] 		= (StateMachine_Transition_T)0U,
-//	[MCSM_INPUT_SAVE_PARAMS] 	= (StateMachine_Transition_T)0U,
-//};
-//
-//static void Neutral_Entry(MotorController_T * p_mc)
-//{
-//	MotorController_DisableMotorAll(p_mc); // entry while braking, will experience discontinuity
-//}
-//
-//static void Neutral_Proc(MotorController_T * p_mc)
-//{
-//	if(MotorController_CheckStopMotorAll(p_mc) == true)
-//	{
-//		StateMachine_ProcTransition(&p_mc->StateMachine, &STATE_STOP);
-//	}
-//}
-//
-//static const StateMachine_State_T STATE_NEUTRAL =
-//{
-//	.P_TRANSITION_TABLE 	= &NEUTRAL_TRANSITION_TABLE[0U],
-//	.ENTRY 				= (StateMachine_Output_T)Neutral_Entry,
-//	.OUTPUT 				= (StateMachine_Output_T)Neutral_Proc,
-//};
+static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc)
+{
+	StateMachine_State_T * p_nextState;
+
+	if(p_mc->MainDirection != p_mc->UserDirection)
+	{
+		MotorController_BeepShort(p_mc);
+		p_nextState = 0U;
+	}
+	else
+	{
+		p_nextState = &STATE_RUN;
+	}
+
+	return p_nextState;
+}
+
+static StateMachine_State_T * Neutral_InputBrake(MotorController_T * p_mc)
+{
+	MotorController_ProcUserCmdBrake(p_mc);
+	return 0U;
+}
+
+
+static StateMachine_State_T * Neutral_InputRelease(MotorController_T * p_mc)
+{
+	MotorController_DisableMotorAll(p_mc);
+	return 0U;
+}
+
+static const StateMachine_Transition_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+{
+	[MCSM_INPUT_FAULT] 				= (StateMachine_Transition_T)TransitionFault,
+	[MCSM_INPUT_DIRECTION] 			= (StateMachine_Transition_T)Neutral_InputDirection,
+	[MCSM_INPUT_BRAKE]  			= (StateMachine_Transition_T)Neutral_InputBrake,
+	[MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)Neutral_InputRelease,
+	[MCSM_INPUT_THROTTLE] 			= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_NEUTRAL] 			= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,
+};
+
+static void Neutral_Entry(MotorController_T * p_mc)
+{
+	MotorController_DisableMotorAll(p_mc); // entry while braking, will experience discontinuity
+}
+
+static void Neutral_Proc(MotorController_T * p_mc)
+{
+	if(MotorController_CheckStopMotorAll(p_mc) == true)
+	{
+		_StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP);
+	}
+}
+
+static const StateMachine_State_T STATE_NEUTRAL =
+{
+	.P_TRANSITION_TABLE 	= &NEUTRAL_TRANSITION_TABLE[0U],
+	.ENTRY 					= (StateMachine_Output_T)Neutral_Entry,
+	.OUTPUT 				= (StateMachine_Output_T)Neutral_Proc,
+};
 
 
 /******************************************************************************/
@@ -511,7 +518,7 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TA
 	[MCSM_INPUT_BRAKE] 				= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)0U,
-	[MCSM_INPUT_NULL] 				= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_NEUTRAL] 			= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_SET_NEUTRAL] 		= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,

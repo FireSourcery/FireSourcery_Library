@@ -49,7 +49,7 @@ static inline void MotorController_User_SetNeutral(MotorController_T * p_mc) 			
 static inline void MotorController_User_ProcNeutral(MotorController_T * p_mc) 			{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_NEUTRAL); }
 static inline void MotorController_User_SetReleaseThrottle(MotorController_T * p_mc) 	{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_RELEASE_THROTTLE); }
 static inline void MotorController_User_SetReleaseBrake(MotorController_T * p_mc) 		{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_RELEASE_BRAKE); }
-static inline void MotorController_User_ProcRelease(MotorController_T * p_mc) 			{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_NULL); }
+static inline void MotorController_User_SetCmdZero(MotorController_T * p_mc) 			{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_ZERO); }
 
 static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd)
 {
@@ -72,10 +72,7 @@ static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, ui
 static inline void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction)
 {
 	p_mc->UserDirection = direction;
-	if(p_mc->MainDirection != direction) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION); }
-
-	// switch(direction)
-	//if StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SET_NEUTRAL);
+	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION);
 }
 
 static inline bool MotorController_User_CheckFault(MotorController_T * p_mc)

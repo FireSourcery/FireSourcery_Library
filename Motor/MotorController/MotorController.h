@@ -92,8 +92,8 @@ MotorController_BrakeMode_T;
 
 typedef enum MotorController_Direction_Tag
 {
-	MOTOR_CONTROLLER_DIRECTION_PARK,
-	MOTOR_CONTROLLER_DIRECTION_NEUTRAL,
+	// MOTOR_CONTROLLER_DIRECTION_PARK,
+	// MOTOR_CONTROLLER_DIRECTION_NEUTRAL,
 	MOTOR_CONTROLLER_DIRECTION_FORWARD,
 	MOTOR_CONTROLLER_DIRECTION_REVERSE,
 }
@@ -340,8 +340,8 @@ static inline bool MotorController_ProcDirection(MotorController_T * p_mc)
 
 	switch(p_mc->UserDirection)
 	{
-		case MOTOR_CONTROLLER_DIRECTION_PARK: 		isSucess = true; break;
-		case MOTOR_CONTROLLER_DIRECTION_NEUTRAL: 	isSucess = true; break;
+		// case MOTOR_CONTROLLER_DIRECTION_PARK: 		isSucess = true; break;
+		// case MOTOR_CONTROLLER_DIRECTION_NEUTRAL: 	isSucess = true; break;
 		case MOTOR_CONTROLLER_DIRECTION_FORWARD: 	isSucess = MotorN_User_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
 		case MOTOR_CONTROLLER_DIRECTION_REVERSE: 	isSucess = MotorN_User_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
 		default: isSucess = true; break;

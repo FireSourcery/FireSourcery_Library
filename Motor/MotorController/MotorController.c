@@ -95,10 +95,26 @@ void MotorController_Init(MotorController_T * p_mc)
 		0U /* Param not used */
 	);
 
-	p_mc->MainDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
-	p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
+	// p_mc->MainDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
+	// p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	// p_mc->SpeedLimitActiveId = MOTOR_SPEED_LIMIT_ACTIVE_DISABLE;
 	// p_mc->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
+
+	p_mc->ThermistorPcb.Adcu = p_mc->ThermistorPcb.Params.WarningThreshold_Adcu + 1U;
+	p_mc->ThermistorMosfetsTop.Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
+	p_mc->ThermistorMosfetsBot.Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
+
+	p_mc->AnalogResults.VPos_Adcu = p_mc->VMonitorPos.Params.WarningLower_Adcu + 1U;
+	p_mc->AnalogResults.VAcc_Adcu = p_mc->VMonitorAcc.Params.WarningLower_Adcu + 1U;
+	p_mc->AnalogResults.VSense_Adcu = p_mc->VMonitorSense.Params.WarningLower_Adcu + 1U;
+
+	p_mc->AnalogResults.HeatPcb_Adcu = p_mc->ThermistorPcb.Params.WarningThreshold_Adcu + 1U;
+	p_mc->AnalogResults.HeatMosfetsTop_Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
+	p_mc->AnalogResults.HeatMosfetsBot_Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
+
+	p_mc->AnalogResults.VPos_Adcu = p_mc->VMonitorPos.Params.WarningLower_Adcu + 1U;
+	p_mc->AnalogResults.VAcc_Adcu = p_mc->VMonitorAcc.Params.WarningLower_Adcu + 1U;
+	p_mc->AnalogResults.VSense_Adcu = p_mc->VMonitorSense.Params.WarningLower_Adcu + 1U;
 
 	StateMachine_Init(&p_mc->StateMachine);
 }
