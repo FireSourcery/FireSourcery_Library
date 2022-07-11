@@ -383,7 +383,7 @@ static inline void Motor_FOC_SetMatchOutput(Motor_T * p_motor, int32_t iq, int32
 	}
 	else
 	{
-		Motor_SetRampOutput(p_motor, 65536); //start from scalar of 1, output speed
+		Motor_SetRampOutput(p_motor, 65535U); //start from scalar of 1, output speed
 	}
 
 	PID_SetIntegral(&p_motor->PidIq, vq);

@@ -112,31 +112,31 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			// }
 			// Terminal_SendString(p_terminal, "\r\n");
 
-			// Terminal_SendString(p_terminal, "MSM: ");
-			// switch(Motor_User_GetStateId(p_motor))
-			// {
-			// 	case MSM_STATE_ID_INIT:			Terminal_SendString(p_terminal, "Init");		break;
-			// 	case MSM_STATE_ID_STOP:			Terminal_SendString(p_terminal, "Stop");		break;
-			// 	case MSM_STATE_ID_ALIGN:		Terminal_SendString(p_terminal, "Align");		break;
-			// 	case MSM_STATE_ID_OPEN_LOOP:	Terminal_SendString(p_terminal, "OpenLoop");	break;
-			// 	case MSM_STATE_ID_RUN:			Terminal_SendString(p_terminal, "Run");			break;
-			// 	case MSM_STATE_ID_FREEWHEEL:	Terminal_SendString(p_terminal, "Freewheel");	break;
-			// 	case MSM_STATE_ID_CALIBRATION:	Terminal_SendString(p_terminal, "Calib");		break;
-			// 	case MSM_STATE_ID_FAULT:		Terminal_SendString(p_terminal, "Fault");		break;
-			// 	default: break;
-			// }
-			// Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "MSM: ");
+			switch(Motor_User_GetStateId(p_motor))
+			{
+				case MSM_STATE_ID_INIT:			Terminal_SendString(p_terminal, "Init");		break;
+				case MSM_STATE_ID_STOP:			Terminal_SendString(p_terminal, "Stop");		break;
+				case MSM_STATE_ID_ALIGN:		Terminal_SendString(p_terminal, "Align");		break;
+				case MSM_STATE_ID_OPEN_LOOP:	Terminal_SendString(p_terminal, "OpenLoop");	break;
+				case MSM_STATE_ID_RUN:			Terminal_SendString(p_terminal, "Run");			break;
+				case MSM_STATE_ID_FREEWHEEL:	Terminal_SendString(p_terminal, "Freewheel");	break;
+				case MSM_STATE_ID_CALIBRATION:	Terminal_SendString(p_terminal, "Calib");		break;
+				case MSM_STATE_ID_FAULT:		Terminal_SendString(p_terminal, "Fault");		break;
+				default: break;
+			}
+			Terminal_SendString(p_terminal, "\r\n");
 
-			// Terminal_SendString(p_terminal, "MCSM: ");
-			// switch(MotorController_User_GetStateId(p_mc))
-			// {
-			// 	case MCSM_STATE_ID_INIT:	Terminal_SendString(p_terminal, "Init");	break;
-			// 	case MCSM_STATE_ID_STOP:	Terminal_SendString(p_terminal, "Stop");	break;
-			// 	case MCSM_STATE_ID_RUN:		Terminal_SendString(p_terminal, "Run");		break;
-			// 	case MCSM_STATE_ID_FAULT:	Terminal_SendString(p_terminal, "Fault");	break;
-			// 	default: break;
-			// }
-			// Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "MCSM: ");
+			switch(MotorController_User_GetStateId(p_mc))
+			{
+				case MCSM_STATE_ID_INIT:	Terminal_SendString(p_terminal, "Init");	break;
+				case MCSM_STATE_ID_STOP:	Terminal_SendString(p_terminal, "Stop");	break;
+				case MCSM_STATE_ID_RUN:		Terminal_SendString(p_terminal, "Run");		break;
+				case MCSM_STATE_ID_FAULT:	Terminal_SendString(p_terminal, "Fault");	break;
+				default: break;
+			}
+			Terminal_SendString(p_terminal, "\r\n");
 
 			Terminal_SendString(p_terminal, "IPhasePeak_Adcu: "); Terminal_SendNum(p_terminal, p_motor->IPhasePeak_Adcu); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ILimitActiveId: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveId); Terminal_SendString(p_terminal, "\r\n");

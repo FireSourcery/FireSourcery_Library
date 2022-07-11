@@ -70,7 +70,7 @@ static inline void ProcOutput(StateMachine_T * p_stateMachine)
 }
 
 /******************************************************************************/
-/* Input Id - Input is passed via context */
+/* Input Id - Additional inputs is passed via context */
 /******************************************************************************/
 /*!
 	TransitionFunction defined via P_TRANSITION_TABLE
@@ -114,7 +114,7 @@ static inline bool ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_
 }
 
 /******************************************************************************/
-/* Input Ext - Additional input passed as argument  */
+/* Input Ext - 1 additional input passed as argument  */
 /******************************************************************************/
 static inline bool TransitionFunctionExt(void * p_context, StateMachine_State_T ** pp_newReturn, StateMachine_State_T * p_active, statemachine_input_t input, uint32_t inputExt)
 {

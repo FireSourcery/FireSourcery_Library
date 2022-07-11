@@ -75,7 +75,7 @@ void _Motor_User_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 
 		Motor_SetFeedbackModeFlags(p_motor, mode);
 		/* Match ouput state, accounting for FeedbackMode and State */
-		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE); // FEEDBACK_MODE + RUN_MODE shared
+		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL); // FEEDBACK_MODE + RUN_MODE shared
 		p_motor->FeedbackModeFlags.Update = 0U;
 
 		Critical_Exit();

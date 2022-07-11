@@ -351,9 +351,9 @@ static inline int32_t Motor_User_GetIPhase_Frac16(Motor_T * p_motor)
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		// iPhase = Motor_FOC_GetIMagnitude_Frac16(p_motor);
+		iPhase = Motor_FOC_GetIMagnitude_Frac16(p_motor);
 
-		iPhase = p_motor->IPhasePeak_Adcu * p_motor->UnitIb.Slope >> p_motor->UnitIb.SlopeShift;
+		// iPhase = p_motor->IPhasePeak_Adcu * p_motor->UnitIb.Slope >> p_motor->UnitIb.SlopeShift;
 
 		//sign = sign of iq, account direction
 		// iPhase = FOC_GetIq(&p_motor->Foc) * 2;

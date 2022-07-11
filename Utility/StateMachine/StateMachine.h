@@ -81,7 +81,7 @@ typedef const struct StateMachine_State_Tag
 	const StateMachine_TransitionFunction_T TRANSITION_FUNCTION;		/* Single function, user provide switch case */
 	const StateMachine_Output_T OUTPUT;		/* Synchronous output. Asynchronous case, proc on input only. No null pointer check, user must supply empty function */
 	const StateMachine_Output_T ENTRY;		/* Common to all transition to current state, including self transition */
-	const StateMachine_Output_T EXIT; 		//todo
+	const StateMachine_Output_T EXIT;
 #ifdef CONFIG_STATE_MACHINE_MENU_ENABLE
 	const struct StateMachine_State_Tag * P_NEXT_MENU;
 	const struct StateMachine_State_Tag * P_PREV_MENU;
