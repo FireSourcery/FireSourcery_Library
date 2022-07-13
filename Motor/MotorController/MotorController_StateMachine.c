@@ -125,7 +125,6 @@ static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc)
 
 	if(p_mc->ActiveDirection == p_mc->UserDirection) /* True if prior InputDirection completed successfully */
 	{
-		// MotorController_ProcUserCmdThrottle(p_mc);//need?
 		p_nextState = &STATE_RUN;
 	}
 	else
@@ -143,12 +142,6 @@ static StateMachine_State_T * Stop_InputBrake(MotorController_T * p_mc) //change
 	MotorController_GroundMotorAll(p_mc); /* repeat set is okay for brake */
 	return 0U;
 }
-
-// static StateMachine_State_T * Stop_InputRelease(MotorController_T * p_mc) //possible?
-// {
-// 	MotorController_DisableMotorAll(p_mc);
-// 	return 0U;
-// }
 
 static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 {
@@ -171,12 +164,6 @@ static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 
 	return p_nextState;
 }
-
-// static StateMachine_State_T * Stop_InputNeutral(MotorController_T * p_mc)
-// {
-// 	(void)p_mc;
-// 	return &STATE_NEUTRAL;
-// }
 
 static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc)
 {
@@ -263,15 +250,6 @@ static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc)
 
 	return p_nextState;
 }
-
-/*
-	Brake read occurs at higher prioirty, ignored during brake.
-*/
-// static StateMachine_State_T * Run_InputNeutral(MotorController_T * p_mc)
-// {
-// 	(void)p_mc;
-// 	return &STATE_NEUTRAL;
-// }
 
 static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_mc)
 {
@@ -374,8 +352,8 @@ static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc)
 
 	if(MotorController_ProcUserDirection(p_mc) == true)
 	{
-		if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL)		{			p_nextState = 0U;		}
-		else		{			p_nextState = &STATE_RUN;		}
+		if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = 0U; }
+		else { p_nextState = &STATE_RUN; }
 	}
 	else
 	{
@@ -390,7 +368,6 @@ static StateMachine_State_T * Neutral_InputBrake(MotorController_T * p_mc)
 {
 	MotorController_ProcUserCmdBrake(p_mc);
 	return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
-	// return 0U;
 }
 
 
@@ -399,7 +376,6 @@ static StateMachine_State_T * Neutral_InputRelease(MotorController_T * p_mc)
 	MotorController_DisableMotorAll(p_mc);
 	// if neutral mode coast v follow
 	return 0U;
-	// return &STATE_NEUTRAL
 }
 
 // static StateMachine_State_T * Neutral_InputZero(MotorController_T * p_mc)
@@ -413,12 +389,12 @@ static const StateMachine_Transition_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_
 	[MCSM_INPUT_SET_DIRECTION] 		= (StateMachine_Transition_T)Neutral_InputDirection,
 	[MCSM_INPUT_BRAKE]  			= (StateMachine_Transition_T)Neutral_InputBrake,
 	[MCSM_INPUT_SET_ZERO] 			= (StateMachine_Transition_T)Neutral_InputRelease,
+	[MCSM_INPUT_THROTTLE] 			= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)Neutral_InputZero,
 	// [MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)Neutral_InputRelease,
 	// [MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)0U,
-	[MCSM_INPUT_THROTTLE] 			= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_NEUTRAL] 			= (StateMachine_Transition_T)0U,
-	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,
 };
 
 /* If entry while braking, will experience brief discontinuity */
@@ -467,12 +443,12 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TA
 	[MCSM_INPUT_SET_DIRECTION] 		= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_THROTTLE] 			= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_BRAKE] 				= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)0U,
-	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_NEUTRAL] 			= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_SET_NEUTRAL] 		= (StateMachine_Transition_T)0U,
-	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,
 };
 
 static void Fault_Entry(MotorController_T * p_mc)
