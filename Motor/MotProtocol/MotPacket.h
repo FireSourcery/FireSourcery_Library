@@ -324,7 +324,7 @@ typedef enum MotPacket_MonitorId_Tag
 	MOT_PACKET_MONITOR_SIN_COS = 0x12U,
 	MOT_PACKET_MONITOR_ENCODER = 0x13U,
 
-	MOT_PACKET_MONITOR_V_SENSORS = 0x21U, 	/* VSupply, ~5V, ~12V */
+	MOT_PACKET_MONITOR_V_SENSORS = 0x21U, 	/* VSource, ~5V, ~12V */
 	MOT_PACKET_MONITOR_HEAT = 0x22U,			/* In ADCU, Lower is higher */
 
 	MOT_PACKET_MONITOR_METERS = 0x31U, /* Speed, Angles */

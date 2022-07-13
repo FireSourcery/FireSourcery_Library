@@ -56,11 +56,14 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 	{
 		case MOT_ANALOG_USER_CMD_SET_BRAKE:					MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrakeValue(&p_mc->AnalogUser));			break;
 		case MOT_ANALOG_USER_CMD_SET_THROTTLE:				MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottleValue(&p_mc->AnalogUser));	break;
-		case MOT_ANALOG_USER_CMD_PROC_NO_INPUT:				MotorController_User_SetCmdZero(p_mc);															break;
-		case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_SetReleaseThrottle(p_mc);													break;
-		case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			MotorController_User_SetReleaseBrake(p_mc);														break;
-		case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				MotorController_User_SetNeutral(p_mc); 															break;
-		case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				MotorController_User_ProcNeutral(p_mc);															break;
+		case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			MotorController_User_SetCmdZero(p_mc);															break;
+		case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_SetCmdZero(p_mc);															break;
+		case MOT_ANALOG_USER_CMD_PROC_ZERO:					MotorController_User_ProcCmdZero(p_mc);															break;
+		// case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			MotorController_User_SetReleaseBrake(p_mc);														break;
+		// case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_SetReleaseThrottle(p_mc);													break;
+		// case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				MotorController_User_ProcNeutral(p_mc);															break;
+		// case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				MotorController_User_SetNeutral(p_mc); 															break;
+		case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);					break;
 		case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);					break;
 		case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);	 				break;
 		default: break;
@@ -282,7 +285,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 
 	if(Timer_Poll(&p_mc->TimerIsrDividerSeconds) == true)
 	{
-		_MotorController_ProcVoltageMonitor(p_mc);
+		_MotorController_ProcVoltageMonitor(p_mc); /* Except voltage supply */
 		_MotorController_ProcHeatMonitor(p_mc);
 		for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 	}

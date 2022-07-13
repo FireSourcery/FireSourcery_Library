@@ -118,7 +118,8 @@ static inline uint16_t FOC_GetIMagnitude(FOC_T * p_foc) { return q_sqrt(((int32_
 
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
-extern void FOC_Zero(FOC_T * p_foc);
+// extern void FOC_Zero(FOC_T * p_foc);
+extern void FOC_SetDutyZero(FOC_T * p_foc);
 // extern void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax);
 
 #endif

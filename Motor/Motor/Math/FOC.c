@@ -64,12 +64,19 @@ void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd)
 	FOC_ProcInvParkInvClarkeSvpwm(p_foc);
 }
 
-void FOC_Zero(FOC_T * p_foc)
+// void FOC_Zero(FOC_T * p_foc)
+// {
+// 	p_foc->Vq = 0;
+// 	p_foc->Vd = 0;
+// 	p_foc->Iq = 0;
+// 	p_foc->Id = 0;
+// 	p_foc->DutyA = 65536U / 2U;
+// 	p_foc->DutyB = 65536U / 2U;
+// 	p_foc->DutyC = 65536U / 2U;
+// }
+
+void FOC_SetDutyZero(FOC_T * p_foc)
 {
-	p_foc->Vq = 0;
-	p_foc->Vd = 0;
-	p_foc->Iq = 0;
-	p_foc->Id = 0;
 	p_foc->DutyA = 65536U / 2U;
 	p_foc->DutyB = 65536U / 2U;
 	p_foc->DutyC = 65536U / 2U;

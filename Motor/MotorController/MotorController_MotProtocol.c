@@ -84,10 +84,12 @@ static void Req_Control(MotorController_T * p_mc, MotPacket_ControlResp_T * p_tx
 
 	switch(p_rxPacket->ControlReq.ControlId) 	// MotPacket_ControlReq_ParseId(p_monitorId, p_rxPacket);
 	{
-		case MOT_PACKET_CONTROL_RELEASE: 			MotorController_User_SetReleaseThrottle(p_mc); 									break;
+		// case MOT_PACKET_CONTROL_RELEASE: 			MotorController_User_SetReleaseThrottle(p_mc); 									break;
+		case MOT_PACKET_CONTROL_RELEASE: 			MotorController_User_SetCmdZero(p_mc); 											break;
 		case MOT_PACKET_CONTROL_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);	break;
 		case MOT_PACKET_CONTROL_DIRECTION_REVERSE: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);	break;
-		case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	MotorController_User_SetNeutral(p_mc); 		  									break;
+		case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);	break;
+		// case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	MotorController_User_SetNeutral(p_mc); 											break;
 		case MOT_PACKET_CONTROL_THROTTLE: 			Motor_User_SetThrottleCmd(p_motor, p_rxPacket->ControlReq.ValueU16s[0U]); 		break;
 		case MOT_PACKET_CONTROL_BRAKE: 				Motor_User_SetBrakeCmd(p_motor, p_rxPacket->ControlReq.ValueU16s[0U]); 			break;
 		default: break;
@@ -198,7 +200,7 @@ static void Req_InitUnits(MotorController_T * p_mc, MotPacket_InitUnitsResp_T * 
 	*p_txSize = MotPacket_InitUnitsResp_Build
 	(
 		p_txPacket,
-		Motor_User_GetSpeedFeedbackRef_Rpm(p_motor), MotorController_User_GetIMax(p_mc), MotorController_User_GetVSupply(p_mc), /* Frac16 conversions */
+		Motor_User_GetSpeedFeedbackRef_Rpm(p_motor), MotorController_User_GetIMax(p_mc), MotorController_User_GetVSource(p_mc), /* Frac16 conversions */
 		p_mc->VMonitorPos.CONFIG.UNITS_R1, p_mc->VMonitorPos.CONFIG.UNITS_R2,	/* Adcu <-> Volts conversions */
 		p_mc->VMonitorSense.CONFIG.UNITS_R1, p_mc->VMonitorSense.CONFIG.UNITS_R2,
 		p_mc->VMonitorAcc.CONFIG.UNITS_R1, p_mc->VMonitorAcc.CONFIG.UNITS_R2

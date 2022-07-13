@@ -107,14 +107,27 @@ typedef union Motor_FeedbackModeFlags_Tag
 	struct
 	{
 		uint32_t OpenLoop 		: 1U; 	/* 0 -> Position feedback, 1 -> Openloop*/
-		uint32_t Speed 			: 1U;	/* 0 -> Voltage or Current, 1 -> Speed feedback */
+		uint32_t Speed 			: 1U;	/* 0 -> Voltage or Current only, 1 -> Speed feedback */
 		uint32_t Current 		: 1U;	/* 0 -> Voltage, 1-> Current */
 		uint32_t VFreqScalar 	: 1U; 	/* 1-> Use VFreqScalar  */
-		uint32_t Update 		: 1U;
+		uint32_t Update 		: 1U;	/* Control Mode Update, shared */
 	};
 	uint32_t State;
 }
 Motor_FeedbackModeFlags_T;
+
+//move control mode update
+// typedef union Motor_ControlFlags_Tag
+// {
+// 	struct
+// 	{
+// 		Motor_FeedbackModeFlags_T FeedbackModeFlags;
+// 		uint32_t Active 			: 1U;
+// 		uint32_t FieldWeakening 	: 1U;
+// 	};
+// 	uint32_t State;
+// }
+// Motor_ControlFlags_T;
 
 /*
 	Effectively sync mailbox for async calculations
@@ -123,13 +136,10 @@ typedef union Motor_RunStateFlags_Tag
 {
 	struct
 	{
-		uint32_t Hold 						: 1U;
-		// uint32_t SpeedLimitScalarActive 	: 1U;
-		// uint32_t ILimitScalarActive 		: 1U; /* Set approx 1/s, check 1/ms */
 		uint32_t HeatWarning 				: 1U;
 		uint32_t VoltageModeILimitActive 	: 1U;
-			// uint32_t UpdateMode 		: 1U;
-
+		// uint32_t SpeedLimitScalarActive 	: 1U;
+		// uint32_t ILimitScalarActive 		: 1U; /* Set approx 1/s */
 		// uint32_t FieldWeakening 			: 1U; //todo
 	};
 	uint32_t State;
@@ -139,7 +149,7 @@ Motor_RunStateFlags_T;
 // typedef enum Motor_SpeedLimitActiveId_Tag
 // {
 // 	MOTOR_SPEED_LIMIT_ACTIVE_DISABLE = 0U,
-// 	MOTOR_SPEED_LIMIT_ACTIVE_SYSTEM = 1U, /* From parent class */
+// 	MOTOR_SPEED_LIMIT_ACTIVE_SYSTEM = 1U, /* From upper module */
 // 	MOTOR_SPEED_LIMIT_ACTIVE_USER = 2U,
 // }
 // Motor_SpeedLimitActiveId_T;
@@ -148,7 +158,7 @@ typedef enum Motor_ILimitActiveId_Tag
 {
 	MOTOR_I_LIMIT_ACTIVE_DISABLE = 0U,
 	MOTOR_I_LIMIT_ACTIVE_HEAT = 1U,
-	MOTOR_I_LIMIT_ACTIVE_SYSTEM = 20U,  /* From parent class */
+	MOTOR_I_LIMIT_ACTIVE_SYSTEM = 20U,  /* From upper module */
 	MOTOR_I_LIMIT_ACTIVE_USER = 30U,
 }
 Motor_ILimitActiveId_T;
@@ -242,7 +252,7 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	*/
 
 	/*
-		Motor Refs use Speed at VSupply.
+		Motor Refs use Speed at VSource.
 	*/
 	uint16_t SpeedFeedbackRef_Rpm; 	/* Feedback / PID Regulator, Limits Ref. User IO units conversion, Encoder speed calc ref. */
 	uint16_t SpeedVMatchRef_Rpm; 	/* Votlage Match Ref. VF Mode, Freewheel to Run. Use higher value to bias speed matching to begin at lower speed. */
@@ -257,7 +267,7 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	uint16_t SpeedLimitCw_Frac16;
 	uint16_t ILimitMotoring_Frac16;		/* Persistent User Param. Frac16 of RefMax I_MAX_AMP */
 	uint16_t ILimitGenerating_Frac16;
-	uint16_t ILimitHeat_Frac16; 	/*  Preset Scalar Limit , active on thermistor warning. Frac16 scalar on active limit */
+	uint16_t ILimitHeat_Frac16; 		/* Base Heat Limit. Active on thermistor warning. Frac16 scalar on active limit */
 
 	uint16_t AlignVoltage_Frac16;
 	uint16_t AlignTime_ControlCycles;
@@ -334,6 +344,7 @@ typedef struct Motor_Tag
 	Motor_ILimitActiveId_T ILimitActiveId;
 	uint16_t ILimitActiveScalar;		/* Store for comparison */
 	int16_t VoltageModeILimit_QFracS16; /* [-32767:32767] directional input into pid */
+	Linear_T ILimitHeatRate;
 
 	/* Calibration Substate */
 	Motor_CalibrationState_T CalibrationState; 	/* Substate, selection for calibration */
@@ -370,7 +381,7 @@ typedef struct Motor_Tag
 	FOC_T Foc;
 	PID_T PidIq;					/* Input (IqReq - IqFeedback), Output Vq. Sign indicates ccw/cw direction */
 	PID_T PidId;
-	qangle16_t ElectricalAngle;		/* Save for user output */
+	qangle16_t ElectricalAngle;		/* Save for user output, can remove later */
 	// uint32_t ElectricalDelta;
 
 	Linear_T UnitAngleRpm; 			/* Non Encoder/Hall sensor */
@@ -422,7 +433,7 @@ typedef struct Motor_Tag
 }
 Motor_T;
 
-static inline void Motor_DisablePwm(Motor_T * p_motor){	Phase_DisableInterrupt(&p_motor->Phase);}
+static inline void Motor_DisablePwm(Motor_T * p_motor) { Phase_DisableInterrupt(&p_motor->Phase); }
 static inline void Motor_EnablePwm(Motor_T * p_motor) { Phase_EnableInterrupt(&p_motor->Phase); }
 
 /******************************************************************************/
@@ -495,6 +506,40 @@ static inline void Motor_PollDeltaTStop(Motor_T * p_motor)
 
 /******************************************************************************/
 /*
+	Reset Sensors/Align
+*/
+/******************************************************************************/
+static inline void Motor_ZeroSensor(Motor_T * p_motor)
+{
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_OPEN_LOOP:
+			p_motor->OpenLoopRampIndex = 0U;
+			break;
+
+		case MOTOR_SENSOR_MODE_SENSORLESS:
+			break;
+
+		case MOTOR_SENSOR_MODE_ENCODER:
+			Encoder_Zero(&p_motor->Encoder);
+			break;
+
+		case MOTOR_SENSOR_MODE_HALL:
+			Encoder_Zero(&p_motor->Encoder); //zero angle speed //reset before Encoder_DeltaT_SetInitial
+			Encoder_DeltaT_SetInitial(&p_motor->Encoder, 10U); /* Set first capture DeltaT = 0xffff */
+			Hall_ResetCapture(&p_motor->Hall);
+			break;
+
+		case MOTOR_SENSOR_MODE_SIN_COS:
+			break;
+
+		default:
+			break;
+	}
+}
+
+/******************************************************************************/
+/*
 	Feedback Mode
 */
 /******************************************************************************/
@@ -523,15 +568,17 @@ static inline Motor_FeedbackModeFlags_T Motor_ConvertFeedbackModeFlags(Motor_Fee
 	return flags;
 }
 
-/*! @return true if needs update */
-static inline bool Motor_CheckFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+/*!
+	check feedback mode change and controlmode inactive
+	@return true if needs update
+*/
+static inline bool Motor_CheckControlUpdate(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-	if(p_motor->FeedbackModeFlags.State != Motor_ConvertFeedbackModeFlags(mode).State)
-	{
-		p_motor->FeedbackModeFlags.Update = 1U;
-	}
+	// ControlFlags_T controlFlags;
+	// controlFlags.FeedbackModeFlags.State = Motor_ConvertFeedbackModeFlags(mode).State;
+	// return (p_motor->ControlFlags.State != controlFlags);
 
-	return p_motor->FeedbackModeFlags.Update;
+	return (p_motor->FeedbackModeFlags.State != Motor_ConvertFeedbackModeFlags(mode).State);
 }
 
 /*
@@ -572,10 +619,10 @@ static inline void Motor_ResetILimits(Motor_T * p_motor)
 */
 /******************************************************************************/
 extern uint16_t _Motor_GetAdcVRef(void);
-extern uint16_t _Motor_GetVRefSupply(void);
-
+extern uint16_t _Motor_GetVSourceRef(void);
 extern void Motor_InitAdcVRef_MilliV(uint16_t adcVRef_MilliV);
-extern void Motor_InitVRefSupply_V(uint16_t vRefSupply);
+extern void Motor_InitVSourceRef_V(uint16_t vRefSupply);
+
 extern void Motor_Init(Motor_T * p_motor);
 extern void Motor_InitReboot(Motor_T * p_motor);
 

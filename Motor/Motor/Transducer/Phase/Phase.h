@@ -103,6 +103,8 @@ static inline void _Phase_EnableExternalSwitch(const Pin_T * p_pin)
 {
 #ifdef CONFIG_PHASE_EXTERNAL_SWITCH
 	Pin_Output_High(p_pin);
+#else
+	(void)p_pin;
 #endif
 }
 
@@ -110,6 +112,8 @@ static inline void _Phase_DisableExternalSwitch(const Pin_T * p_pin)
 {
 #ifdef CONFIG_PHASE_EXTERNAL_SWITCH
 	Pin_Output_Low(p_pin);
+#else
+	(void)p_pin;
 #endif
 }
 

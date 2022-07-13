@@ -31,7 +31,6 @@
 #include "MotorController.h"
 #include <string.h>
 
-
 void MotorController_Init(MotorController_T * p_mc)
 {
 	Flash_Init(p_mc->CONFIG.P_FLASH);
@@ -60,7 +59,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	Thermistor_Init(&p_mc->ThermistorMosfetsBot);
 
 	Motor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
-	Motor_InitVRefSupply_V(p_mc->Parameters.VSupply);
+	Motor_InitVSourceRef_V(p_mc->Parameters.VSource);
 	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Init(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 
 	Blinky_Init(&p_mc->Buzzer);
@@ -95,7 +94,7 @@ void MotorController_Init(MotorController_T * p_mc)
 		0U /* Param not used */
 	);
 
-	// p_mc->MainDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
+	// p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	// p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	// p_mc->SpeedLimitActiveId = MOTOR_SPEED_LIMIT_ACTIVE_DISABLE;
 	// p_mc->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
@@ -129,11 +128,11 @@ void MotorController_Init(MotorController_T * p_mc)
 // 	MotAnalogUser_InvertPins_T invertPins = { .State = 0U };
 
 // 	MotorController_User_SetAdcVRef(p_mc, ADC_VREF_DEFAULT);
-// 	MotorController_User_SetVSupply(p_mc, 42U);
-// 	// MotorController_User_SetVSupply(p_mc, p_mc->CONFIG.V_MAX);
+// 	MotorController_User_SetVSource(p_mc, 42U);
+// 	// MotorController_User_SetVSource(p_mc, p_mc->CONFIG.V_MAX);
 
 // 	//  MotorController_User_SetInputMode(p_mc, MOTOR_CONTROLLER_INPUT_MODE_ANALOG);
-// 	//  MotorController_User_SetCoastMode(p_mc, MOTOR_CONTROLLER_COAST_MODE_FLOAT);
+// 	//  MotorController_User_SetCoastMode(p_mc, MOTOR_CONTROLLER_COAST_MODE_COAST);
 // 	// MotorController_User_SetCanBusServicesId(p_mc, 0U);
 // 	//  MotorController_User_DisableCanBusId(p_mc, 0U);
 
@@ -275,16 +274,18 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_mc->VMonitorSense.CONFIG.P_PARAMS, 		&p_mc->VMonitorSense.Params, 			sizeof(VMonitor_Params_T)); };
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_mc->Shell.CONFIG.P_PARAMS, 				&p_mc->Shell.Params, 					sizeof(Shell_Params_T)); };
 
-	for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++)
+	if (status == NV_MEMORY_STATUS_SUCCESS)
 	{
-		p_protocol = &p_mc->CONFIG.P_PROTOCOLS[iProtocol];
-		status = EEPROM_Write_Blocking(p_eeprom, p_protocol->CONFIG.P_PARAMS, &p_protocol->Params, sizeof(Protocol_Params_T));
-		if (status != NV_MEMORY_STATUS_SUCCESS) { break; }
+		for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++)
+		{
+			p_protocol = &p_mc->CONFIG.P_PROTOCOLS[iProtocol];
+			status = EEPROM_Write_Blocking(p_eeprom, p_protocol->CONFIG.P_PARAMS, &p_protocol->Params, sizeof(Protocol_Params_T));
+			if (status != NV_MEMORY_STATUS_SUCCESS) { break; }
+		}
 	}
 #elif defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
 
 #endif
-	// p_mc->NvmStatus = status;
 	return status;
 }
 
@@ -299,21 +300,21 @@ NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
 
 NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc)
 {
-// #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
+#if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
 	NvMemory_Status_T status = (NvMemory_Status_T)Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_ONCE, sizeof(MotorController_Manufacture_T));
 	Flash_GetReadOnce(p_mc->CONFIG.P_FLASH, (uint8_t *)&p_mc->OnceBuffer);
 	return status;
-// #elif defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
-// (void) p_mc;
-// #endif
+#elif defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
+
+#endif
 }
 
 NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc)
 {
-// #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
+#if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
 	return (NvMemory_Status_T)Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_ONCE, (uint8_t *)&p_mc->OnceBuffer, sizeof(MotorController_Manufacture_T));
-// #elif defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
+#elif defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
 
-// #endif
+#endif
 }
 

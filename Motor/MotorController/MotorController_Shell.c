@@ -107,7 +107,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			// 	case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				Terminal_SendString(p_terminal, "neutral");			break;
 			// 	// case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	Terminal_SendString(p_terminal, "set forward");		break;
 			// 	// case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	Terminal_SendString(p_terminal, "set reverse");		break;
-			// 	case MOT_ANALOG_USER_CMD_PROC_NO_INPUT:				Terminal_SendString(p_terminal, "release");			break;
+			// 	case MOT_ANALOG_USER_CMD_PROC_ZERO:				Terminal_SendString(p_terminal, "release");			break;
 			// 	default: break;
 			// }
 			// Terminal_SendString(p_terminal, "\r\n");

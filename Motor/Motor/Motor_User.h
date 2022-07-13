@@ -39,7 +39,7 @@
 #include <stdbool.h>
 
 
-extern void _Motor_User_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
+extern void _Motor_User_SetControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 
 /******************************************************************************/
 /*!
@@ -81,7 +81,7 @@ static inline void _Motor_User_SetVoltageModeILimit(Motor_T * p_motor, bool isMo
 
 static inline void Motor_User_SetVoltageMode(Motor_T * p_motor)
 {
-	_Motor_User_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE);
+	_Motor_User_SetControlMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE);
 }
 
 /*!
@@ -108,7 +108,7 @@ static inline void Motor_User_SetVoltageModeCmd(Motor_T * p_motor, int16_t volta
 /******************************************************************************/
 static inline void Motor_User_SetVFreqMode(Motor_T * p_motor)
 {
-	_Motor_User_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE_FREQ_SCALAR);
+	_Motor_User_SetControlMode(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE_FREQ_SCALAR);
 }
 
 /*!
@@ -135,7 +135,7 @@ static inline void Motor_User_SetVFreqModeCmd(Motor_T * p_motor, uint32_t scalar
 /******************************************************************************/
 static inline void Motor_User_SetTorqueMode(Motor_T * p_motor)
 {
-	_Motor_User_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT);
+	_Motor_User_SetControlMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT);
 }
 
 /*!
@@ -164,7 +164,7 @@ static inline void Motor_User_SetTorqueModeCmd(Motor_T * p_motor, int16_t torque
  */
 static inline void Motor_User_SetSpeedMode(Motor_T * p_motor)
 {
-	_Motor_User_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT);
+	_Motor_User_SetControlMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT);
 }
 
 /*!
@@ -195,7 +195,7 @@ static inline void Motor_User_SetSpeedModeCmd(Motor_T * p_motor, int16_t speed)
 */
 // static inline void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle)
 // {
-//	_Motor_User_SetFeedbackMode(p_motor, MOTOR_CONTROL_MODE_POSITION);
+//	_Motor_User_SetControlMode(p_motor, MOTOR_CONTROL_MODE_POSITION);
 //	Motor_User_SetCmd(p_motor, angle);
 // }
 
@@ -206,7 +206,7 @@ static inline void Motor_User_SetSpeedModeCmd(Motor_T * p_motor, int16_t speed)
 /******************************************************************************/
 static inline void Motor_User_SetUserFeedbackMode(Motor_T * p_motor)
 {
-	_Motor_User_SetFeedbackMode(p_motor, p_motor->Parameters.FeedbackMode);
+	_Motor_User_SetControlMode(p_motor, p_motor->Parameters.FeedbackMode);
 }
 
 static inline void Motor_User_SetUserFeedbackCmdValue(Motor_T * p_motor, int16_t userCmd)
@@ -233,7 +233,7 @@ static inline void Motor_User_SetUserFeedbackModeCmd(Motor_T * p_motor, int16_t 
 */
 /******************************************************************************/
 /*!
-	@param[in] throttle [0:65535] trhottle percentage, 65535 => speed limit
+	@param[in] throttle [0:65535] throttle percentage, 65535 => speed limit
 */
 static inline void Motor_User_SetThrottleCmd(Motor_T * p_motor, uint16_t throttle)
 {
@@ -267,6 +267,7 @@ static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 	// }
 }
 
+
 /*
 	alternatively, V/F mode
 */
@@ -285,7 +286,12 @@ static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 
 static inline void Motor_User_SetRegenCmd(Motor_T * p_motor, uint16_t brake)
 {
-	Motor_User_SetVFreqModeCmd(p_motor, (65536U - brake)); /* Higher brake => lower voltage */
+	Motor_User_SetVFreqModeCmd(p_motor, (65535U - brake)); /* Higher brake => lower voltage */
+}
+
+static inline void Motor_User_SetCoast(Motor_T * p_motor)
+{
+	Motor_User_SetTorqueModeCmd(p_motor, 0U);
 }
 
 /******************************************************************************/
@@ -455,7 +461,7 @@ static inline void Motor_User_SetILimitHeatParam(Motor_T * p_motor, uint16_t sca
 	extern
 */
 /******************************************************************************/
-extern uint16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor);
+extern qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor);
 
 extern void Motor_User_DisableControl(Motor_T * p_motor);
 extern void Motor_User_Ground(Motor_T * p_motor);

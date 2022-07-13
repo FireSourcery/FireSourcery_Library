@@ -32,14 +32,14 @@
 
 #include <string.h>
 
-uint16_t _Motor_AdcVRef_MilliV;  /* Sync with upper layer */
-uint16_t _Motor_VRefSupply_V; /* Battery/Supply voltage. Sync with upper layer */
+static uint16_t _Motor_AdcVRef_MilliV;  	/* Sync with upper layer */
+static uint16_t _Motor_VSourceRef_V; 		/* Battery/Supply voltage. Sync with upper layer */
 
-uint16_t _Motor_GetAdcVRef(void) { return _Motor_AdcVRef_MilliV; }
-uint16_t _Motor_GetVRefSupply(void) { return _Motor_VRefSupply_V; }
+uint16_t _Motor_GetAdcVRef(void) 		{ return _Motor_AdcVRef_MilliV; }
+uint16_t _Motor_GetVSourceRef(void) 	{ return _Motor_VSourceRef_V; }
 
 void Motor_InitAdcVRef_MilliV(uint16_t adcVRef_MilliV) 	{ _Motor_AdcVRef_MilliV = adcVRef_MilliV; }
-void Motor_InitVRefSupply_V(uint16_t vRefSupply) 		{ _Motor_VRefSupply_V = vRefSupply; }
+void Motor_InitVSourceRef_V(uint16_t vSourceRef_V) 		{ _Motor_VSourceRef_V = vSourceRef_V; }
 
 void Motor_Init(Motor_T * p_motor)
 {
@@ -97,6 +97,16 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Motor_ResetSpeedLimits(p_motor);
 	Motor_ResetILimits(p_motor);
 	p_motor->ILimitActiveScalar = 0xFFFF; //wrap reset
+
+	Linear_Frac16_Init_Map
+	(
+		&p_motor->ILimitHeatRate,
+		p_motor->Thermistor.Params.Shutdown_Adcu,
+		p_motor->Thermistor.Params.Warning_Adcu,
+		p_motor->Parameters.ILimitHeat_Frac16,
+		0U /* Param not used */
+	);
+
 
 	Motor_SetDirectionForward(p_motor);
 
@@ -220,7 +230,7 @@ void Motor_ResetSensorMode(Motor_T * p_motor)
 void Motor_ResetUnitsVabc(Motor_T * p_motor)
 {
 #if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) && defined(CONFIG_MOTOR_V_SENSORS_ADC)
-	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, ADC_BITS, _Motor_AdcVRef_MilliV, _Motor_VRefSupply_V);
+	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, ADC_BITS, _Motor_AdcVRef_MilliV, _Motor_VSourceRef_V);
 #else
 	(void)p_motor;
 #endif

@@ -48,7 +48,7 @@ typedef enum MotAnalogUser_Cmd_Tag
 	MOT_ANALOG_USER_CMD_PROC_NEUTRAL,
 	MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD,
 	MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE,
-	MOT_ANALOG_USER_CMD_PROC_NO_INPUT,	/* No input */
+	MOT_ANALOG_USER_CMD_PROC_ZERO,	/* No input */
 }
 MotAnalogUser_Cmd_T;
 
@@ -306,13 +306,13 @@ static inline MotAnalogUser_Direction_T MotAnalogUser_PollDirection(MotAnalogUse
 static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user)
 {
 	MotAnalogUser_Direction_T direction = MotAnalogUser_PollDirection(p_user);
-	MotAnalogUser_Cmd_T cmd = MOT_ANALOG_USER_CMD_PROC_NO_INPUT;
+	MotAnalogUser_Cmd_T cmd = MOT_ANALOG_USER_CMD_PROC_ZERO;
 
 	switch(direction)
 	{
 		case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD;	break;
 		case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE;	break;
-		// case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:
+		case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: cmd = MOT_ANALOG_USER_CMD_SET_NEUTRAL; 			break;
 		// case MOT_ANALOG_USER_DIRECTION_NEUTRAL:
 		// case MOT_ANALOG_USER_DIRECTION_REVERSE:
 		// case MOT_ANALOG_USER_DIRECTION_FORWARD:
@@ -323,15 +323,14 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 				cmd = MOT_ANALOG_USER_CMD_SET_BRAKE;
 			}
 			else if((_MotAnalogUser_PollBrakeFallingEdge(p_user) == true) || (MotAnalogUser_PollBistateBrakeFallingEdge(p_user) == true))
-			//todo remove ||,  release check other  brake
 			{
 				cmd = MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE;
 			}
 			/* Check Direction */
-			else if(direction == MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE)
-			{
-				cmd = MOT_ANALOG_USER_CMD_SET_NEUTRAL;
-			}
+			// else if(direction == MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE)
+			// {
+			// 	cmd = MOT_ANALOG_USER_CMD_SET_NEUTRAL;
+			// }
 			else if(direction == MOT_ANALOG_USER_DIRECTION_NEUTRAL)
 			{
 				cmd = MOT_ANALOG_USER_CMD_PROC_NEUTRAL;
@@ -341,11 +340,11 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 			{
 				if(MotAnalogUser_GetIsThrottleOn(p_user) == true)
 				{
-					if(MotAnalogUser_CheckThrottleValueRelease(p_user) == true) /* repeat throttle release is okay for now, otherwise track previous cmd state */
-					{
-						cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE;
-					}
-					else
+					// if(MotAnalogUser_CheckThrottleValueRelease(p_user) == true) /* repeat throttle release is okay for now, otherwise track previous cmd state */
+					// {
+					// 	cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE;
+					// }
+					// else
 					{
 						cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE;
 					}
@@ -356,7 +355,7 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 				}
 				else
 				{
-					cmd = MOT_ANALOG_USER_CMD_PROC_NO_INPUT;
+					cmd = MOT_ANALOG_USER_CMD_PROC_ZERO;
 				}
 			}
 			else if(MotAnalogUser_PollThrottleSafetyFallingEdge(p_user) == true)
@@ -365,7 +364,7 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 			}
 			else
 			{
-				cmd = MOT_ANALOG_USER_CMD_PROC_NO_INPUT; /* Direction is Forward or Reverse, no throttle or brake value */
+				cmd = MOT_ANALOG_USER_CMD_PROC_ZERO; /* Direction is Forward or Reverse, no throttle or brake value */
 			}
 			break;
 	}

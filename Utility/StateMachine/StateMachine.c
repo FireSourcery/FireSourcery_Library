@@ -74,11 +74,13 @@ static inline void ProcOutput(StateMachine_T * p_stateMachine)
 /******************************************************************************/
 /*!
 	TransitionFunction defined via P_TRANSITION_TABLE
-	@param[out] pp_newReturn - 	returns pointer to new state, if it exists. 0 indicates user defined non transition, bypass entry function.
-									return present state to run on entry function
-	@return 0 indicates not accepted input, transition does not exist, pp_newReturn is not set.
+	@param[out] pp_newReturn - 	returns pointer to new state, if it exists.
+	@return false indicates not accepted input, transition does not exist, pp_newReturn is not set.
+			true
+				pp_newReturn == 0  no transition,  bypass exist and entry, indicates user defined non transition
+				pp_newReturn != 0  transition, perform exist and entry. User may return same state
 */
-static inline bool TransitionFunction(void * p_context, StateMachine_State_T ** pp_newReturn, StateMachine_State_T * p_active, statemachine_input_t input)
+static inline bool TransitionFunction(StateMachine_State_T ** pp_newReturn, StateMachine_State_T * p_active, void * p_context, statemachine_input_t input)
 {
 	StateMachine_Transition_T transition = p_active->P_TRANSITION_TABLE[input];
 	bool isAccept = (transition != 0U);
@@ -87,15 +89,14 @@ static inline bool TransitionFunction(void * p_context, StateMachine_State_T ** 
 }
 
 /*!
-
-	@return 0 indicates not accepted input, transition does not exist. when isAccept == 0
+	@return 0 indicates not accepted input, transition does not exist.
 */
 static inline bool ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
 	bool isAccept = (input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
 	StateMachine_State_T * p_newState;
-	if(isAccept == true) { isAccept = TransitionFunction(p_stateMachine->CONFIG.P_CONTEXT, &p_newState, p_stateMachine->p_StateActive, input); }
-	if(isAccept == true) { if(p_newState != 0U) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); } } /* (isAccept and p_newState == 0) => Self transitions, bypass entry*/
+	if(isAccept == true) { isAccept = TransitionFunction(&p_newState, p_stateMachine->p_StateActive, p_stateMachine->CONFIG.P_CONTEXT, input); }
+	if(isAccept == true) { if(p_newState != 0U) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); } }
 	return isAccept;
 }
 
@@ -116,7 +117,7 @@ static inline bool ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_
 /******************************************************************************/
 /* Input Ext - 1 additional input passed as argument  */
 /******************************************************************************/
-static inline bool TransitionFunctionExt(void * p_context, StateMachine_State_T ** pp_newReturn, StateMachine_State_T * p_active, statemachine_input_t input, uint32_t inputExt)
+static inline bool TransitionFunctionExt(StateMachine_State_T ** pp_newReturn, StateMachine_State_T * p_active, void * p_context, statemachine_input_t input, uint32_t inputExt)
 {
 	StateMachine_TransitionExt_T transition = p_active->P_TRANSITION_EXT_TABLE[input];
 	bool isAccept = (transition != 0U);
@@ -128,7 +129,7 @@ static inline bool ProcInputExt(StateMachine_T * p_stateMachine, statemachine_in
 {
 	bool isAccept = (input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
 	StateMachine_State_T * p_newState;
-	if(isAccept == true) { isAccept = TransitionFunctionExt(p_stateMachine->CONFIG.P_CONTEXT, &p_newState, p_stateMachine->p_StateActive, input, inputExt); }
+	if(isAccept == true) { isAccept = TransitionFunctionExt(&p_newState, p_stateMachine->p_StateActive, p_stateMachine->CONFIG.P_CONTEXT, input, inputExt); }
 	if(isAccept == true) { if(p_newState != 0U) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); } }
 	return isAccept;
 }

@@ -43,10 +43,10 @@ void MotorController_User_SetAdcVRef(MotorController_T * p_mc, uint16_t adcVRef_
 	//must reset to propagate additional set
 }
 
-void MotorController_User_SetVSupply(MotorController_T * p_mc, uint16_t volts)
+void MotorController_User_SetVSource(MotorController_T * p_mc, uint16_t volts)
 {
-	p_mc->Parameters.VSupply = (volts > p_mc->CONFIG.V_MAX) ? p_mc->CONFIG.V_MAX : volts;
-	Motor_InitVRefSupply_V(p_mc->Parameters.VSupply);
+	p_mc->Parameters.VSource = (volts > p_mc->CONFIG.V_MAX) ? p_mc->CONFIG.V_MAX : volts;
+	Motor_InitVSourceRef_V(p_mc->Parameters.VSource);
 }
 
 void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32_t zero_mV, uint32_t max_mV)

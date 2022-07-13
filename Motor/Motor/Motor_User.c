@@ -30,9 +30,9 @@
 /******************************************************************************/
 #include "Motor_User.h"
 
-uint16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor)
+qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor)
 {
-	uint16_t angle;
+	qangle16_t angle;
 
 	switch(p_motor->Parameters.SensorMode)
 	{
@@ -55,40 +55,41 @@ uint16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor)
 	Motor State Machine Thread Safety
 
 	SemiSync Mode -
-	State Proc in PWM thread. User Input in Main Thread. May need critical section during input.
+	State Proc in PWM thread. User Input in Main Thread. Need critical section during input.
 
 	Set async to proc, sync issue can recover?,
-	control proc may overwrite pid state set, but last to complete is always user input
+	control proc may overwrite pid state set, but last to complete is always user input?
 
 	Sync Mode
 	Must check input flags every pwm cycle
 */
 
 /*
-	Change Feedback mode, match Ramp and PID state to output, depending on freewheel or run state
+	Feedback mode update, match Ramp and PID state to output
+	Transition to Run/Control State
+
+	Motor_User_Set[Control]ModeCmd must alway check feedback flags,
+	addtionall include update/active flag optimize state transition check
 */
-void _Motor_User_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+void _Motor_User_SetControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-	if(Motor_CheckFeedbackMode(p_motor, mode) == true)
+	if(Motor_CheckControlUpdate(p_motor, mode) == true)
 	{
-		Critical_Enter(); // can remove with sync state machine
-
+		Critical_Enter();
 		Motor_SetFeedbackModeFlags(p_motor, mode);
-		/* Match ouput state, accounting for FeedbackMode and State */
-		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL); // FEEDBACK_MODE + RUN_MODE shared
-		p_motor->FeedbackModeFlags.Update = 0U;
-
+		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL);
 		Critical_Exit();
 	}
 }
+
 
 /*
 	Disable control, motor may remain spinning
 */
 void Motor_User_DisableControl(Motor_T * p_motor)
 {
-	Phase_Float(&p_motor->Phase);
-	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT);
+	Phase_Float(&p_motor->Phase); //move to state machine for field weakening
+	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT); /* no critical for transition, only 1 transiition in run state? cannot conflict? */
 }
 
 void Motor_User_Ground(Motor_T * p_motor)
@@ -219,17 +220,15 @@ void _Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16)
 	p_motor->ILimitActiveScalar = scalar_frac16;
 	p_motor->ILimitMotoring_Frac16 = (uint32_t)scalar_frac16 * p_motor->Parameters.ILimitMotoring_Frac16 / 65536U;
 	p_motor->ILimitGenerating_Frac16 = (uint32_t)scalar_frac16 * p_motor->Parameters.ILimitGenerating_Frac16 / 65536U;
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetSpeedPidOutputLimits(p_motor); }
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetSpeedPidILimits(p_motor); }
 }
 
 void _Motor_User_ClearILimitActive(Motor_T * p_motor)
 {
-	p_motor->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 	p_motor->ILimitActiveScalar = 0xFFFFU;
-	// Motor_ResetILimits(p_motor);
 	p_motor->ILimitMotoring_Frac16 = p_motor->Parameters.ILimitMotoring_Frac16;
 	p_motor->ILimitGenerating_Frac16 = p_motor->Parameters.ILimitGenerating_Frac16;
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetSpeedPidOutputLimits(p_motor); }
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetSpeedPidILimits(p_motor); }
 }
 
 //todo may need list
@@ -252,6 +251,7 @@ bool Motor_User_ClearILimitActive(Motor_T * p_motor, Motor_ILimitActiveId_T id)
 	if(isClear == true)
 	{
 		_Motor_User_ClearILimitActive(p_motor);
+		p_motor->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 	}
 	return isClear;
 }
@@ -314,8 +314,8 @@ void Motor_User_SetILimitParam_Amp(Motor_T * p_motor, uint16_t motoring_Amp, uin
 	int32_t motoring_Frac16 	= Motor_ConvertToIFrac16(p_motor, motoring_Amp);
 	int32_t generating_Frac16 	= Motor_ConvertToIFrac16(p_motor, generating_Amp);
 
-	motoring_Frac16 = (motoring_Frac16 > UINT16_MAX) ? UINT16_MAX : motoring_Frac16;
-	generating_Frac16 = (generating_Frac16 > UINT16_MAX) ? UINT16_MAX : generating_Frac16;
+	motoring_Frac16 	= (motoring_Frac16 > UINT16_MAX) ? UINT16_MAX : motoring_Frac16;
+	generating_Frac16 	= (generating_Frac16 > UINT16_MAX) ? UINT16_MAX : generating_Frac16;
 
 	Motor_User_SetILimitParam_Frac16(p_motor, motoring_Frac16, generating_Frac16);
 }
@@ -340,7 +340,7 @@ void Motor_User_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 
 void Motor_User_SetSpeedFeedbackRef_VRpm(Motor_T * p_motor, uint16_t vMotor_V, uint16_t vMotorSpeed_Rpm)
 {
-	Motor_User_SetSpeedFeedbackRef_Rpm(p_motor, vMotorSpeed_Rpm * _Motor_GetVRefSupply() / vMotor_V);
+	Motor_User_SetSpeedFeedbackRef_Rpm(p_motor, vMotorSpeed_Rpm * _Motor_GetVSourceRef() / vMotor_V);
 }
 
 void Motor_User_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm)
@@ -359,7 +359,7 @@ void Motor_User_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 
 void Motor_User_SetSpeedVMatchRef_VRpm(Motor_T * p_motor, uint16_t vMotor_V, uint16_t vMotorSpeed_Rpm)
 {
-	Motor_User_SetSpeedVMatchRef_Rpm(p_motor, vMotorSpeed_Rpm * _Motor_GetVRefSupply() / vMotor_V);
+	Motor_User_SetSpeedVMatchRef_Rpm(p_motor, vMotorSpeed_Rpm * _Motor_GetVSourceRef() / vMotor_V);
 }
 
 void Motor_User_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu)

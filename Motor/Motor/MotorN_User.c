@@ -146,6 +146,14 @@ void MotorN_User_SetBrakeCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t bra
 	}
 }
 
+void MotorN_User_SetCoast(Motor_T * p_motor, uint8_t motorCount)
+{
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
+	{
+		Motor_User_SetCoast(&p_motor[iMotor]);
+	}
+}
+
 // void MotorN_User_SetVoltageBrakeCmd(Motor_T * p_motor, uint8_t motorCount)
 // {
 // 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)

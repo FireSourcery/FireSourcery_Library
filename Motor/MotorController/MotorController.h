@@ -77,7 +77,7 @@ MotorController_InputMode_T;
 
 typedef enum MotorController_CoastMode_Tag
 {
-	MOTOR_CONTROLLER_COAST_MODE_FLOAT,
+	MOTOR_CONTROLLER_COAST_MODE_COAST,
 	MOTOR_CONTROLLER_COAST_MODE_REGEN,
 }
 MotorController_CoastMode_T;
@@ -93,9 +93,9 @@ MotorController_BrakeMode_T;
 typedef enum MotorController_Direction_Tag
 {
 	// MOTOR_CONTROLLER_DIRECTION_PARK,
-	// MOTOR_CONTROLLER_DIRECTION_NEUTRAL,
-	MOTOR_CONTROLLER_DIRECTION_FORWARD,
+	MOTOR_CONTROLLER_DIRECTION_NEUTRAL,
 	MOTOR_CONTROLLER_DIRECTION_REVERSE,
+	MOTOR_CONTROLLER_DIRECTION_FORWARD,
 }
 MotorController_Direction_T;
 
@@ -145,8 +145,8 @@ typedef union MotorController_FaultFlags_Tag
 		uint32_t VSenseLimit 		: 1U;
 		uint32_t VAccLimit 			: 1U;
 		uint32_t Motors				: 1U;
-		uint32_t MotorOverHeat		: 1U; /* At least 1 motor overheat. */
-		uint32_t StopStateSync 		: 1U;
+		// uint32_t MotorOverHeat		: 1U; /* At least 1 motor overheat. */
+		uint32_t DirectionSync 		: 1U;
 		// uint32_t ThrottleOnInit 	: 1U;
 		uint32_t RxLost 			: 1U;
 		uint32_t User 				: 1U;
@@ -183,7 +183,7 @@ MotorController_BuzzerFlags_T;
 typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 {
 	uint16_t AdcVRef_MilliV;
-	uint16_t VSupply;
+	uint16_t VSource;
 	MotorController_InputMode_T InputMode;
 	MotorController_BrakeMode_T BrakeMode;
 	MotorController_CoastMode_T CoastMode;
@@ -299,7 +299,7 @@ typedef struct MotorController_Tag
 	MotAnalog_Results_T FaultAnalogRecord;
 	MotorController_FaultFlags_T FaultFlags; /* Fault Substate*/
 	MotorController_WarningFlags_T WarningFlags;
-	MotorController_Direction_T MainDirection;
+	MotorController_Direction_T ActiveDirection;
 	MotorController_Direction_T UserDirection;
 	MotorController_Substate_T StopSubstate;
 	NvMemory_Status_T NvmStatus;
@@ -331,27 +331,46 @@ static inline void MotorController_BeepPeriodicType1(MotorController_T * p_mc)
 */
 /******************************************************************************/
 
-/*
-	Assume edge type input. todo inputs into staemachine
-*/
-static inline bool MotorController_ProcDirection(MotorController_T * p_mc)
+static inline bool MotorController_ProcDirectionMotorAll(MotorController_T * p_mc)
 {
-	bool isSucess;
+	bool isSuccess;
 
 	switch(p_mc->UserDirection)
 	{
-		// case MOTOR_CONTROLLER_DIRECTION_PARK: 		isSucess = true; break;
-		// case MOTOR_CONTROLLER_DIRECTION_NEUTRAL: 	isSucess = true; break;
-		case MOTOR_CONTROLLER_DIRECTION_FORWARD: 	isSucess = MotorN_User_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
-		case MOTOR_CONTROLLER_DIRECTION_REVERSE: 	isSucess = MotorN_User_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
-		default: isSucess = true; break;
+		// case MOTOR_CONTROLLER_DIRECTION_PARK: 		isSuccess = true; break;
+		// case MOTOR_CONTROLLER_DIRECTION_NEUTRAL: 	isSuccess = true; break;
+		case MOTOR_CONTROLLER_DIRECTION_FORWARD: 	isSuccess = MotorN_User_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
+		case MOTOR_CONTROLLER_DIRECTION_REVERSE: 	isSuccess = MotorN_User_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
+		default: isSuccess = false; break;
 	}
 
-	if(isSucess == true) { p_mc->MainDirection = p_mc->UserDirection; }
+	// if(isSuccess == true) { p_mc->ActiveDirection = p_mc->UserDirection; }
 
-	// if((p_mc->Parameters.BuzzerFlagsEnable.BeepOnReverse == true) && isSucess)
+	return isSuccess;
+}
+
+//
+/*
+	Assume edge type input.
+*/
+static inline bool MotorController_ProcUserDirection(MotorController_T * p_mc)
+{
+	bool isSuccess;
+
+	switch(p_mc->UserDirection)
+	{
+		// case MOTOR_CONTROLLER_DIRECTION_PARK: 		isSuccess = true; break;
+		case MOTOR_CONTROLLER_DIRECTION_NEUTRAL: 	isSuccess = true; break;
+		case MOTOR_CONTROLLER_DIRECTION_FORWARD: 	isSuccess = MotorController_ProcDirectionMotorAll(p_mc); break;
+		case MOTOR_CONTROLLER_DIRECTION_REVERSE: 	isSuccess = MotorController_ProcDirectionMotorAll(p_mc); break;
+		default: isSuccess = true; break;
+	}
+
+	if(isSuccess == true) { p_mc->ActiveDirection = p_mc->UserDirection; }
+
+	// if((p_mc->Parameters.BuzzerFlagsEnable.BeepOnReverse == true))
 	// {
-	// 	if(p_mc->MainDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE)
+	// 	if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE)
 	// 	{
 	// 		MotorController_BeepPeriodicType1(p_mc);
 	// 	}
@@ -361,42 +380,20 @@ static inline bool MotorController_ProcDirection(MotorController_T * p_mc)
 	// 	}
 	// }
 
-	return isSucess;
+	return isSuccess;
 }
 
 
 static inline void MotorController_ProcUserCmdBrake(MotorController_T * p_mc)
 {
-	if(p_mc->Parameters.BrakeMode == MOTOR_CONTROLLER_BRAKE_MODE_TORQUE)
-	{
-		MotorN_User_SetBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
-	}
-	else if(p_mc->Parameters.BrakeMode == MOTOR_CONTROLLER_BRAKE_MODE_VFREQ_SCALAR)
-	{
-		MotorN_User_SetRegenCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd);
-	}
+	if		(p_mc->Parameters.BrakeMode == MOTOR_CONTROLLER_BRAKE_MODE_TORQUE) 			{ MotorN_User_SetBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd); }
+	else if	(p_mc->Parameters.BrakeMode == MOTOR_CONTROLLER_BRAKE_MODE_VFREQ_SCALAR) 	{ MotorN_User_SetRegenCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd); }
 }
 
 static inline void MotorController_ProcUserCmdThrottle(MotorController_T * p_mc) 		{ MotorN_User_SetThrottleCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->UserCmd); }
 // static inline void MotorController_ProcUserCmdVoltageBrake(MotorController_T * p_mc) 	{ MotorN_User_SetVoltageBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 
-static inline bool MotorController_ProcDirectionMotorAll(MotorController_T * p_mc)
-{
-	bool isSucess;
-
-	if(p_mc->UserDirection == MOTOR_CONTROLLER_DIRECTION_FORWARD)
-	{
-		isSucess = MotorN_User_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
-	}
-	else if(p_mc->UserDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE)
-	{
-		isSucess = MotorN_User_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT);
-	}
-
-	if(isSucess == true) { p_mc->MainDirection = p_mc->UserDirection; }
-
-	return isSucess;
-}
+static inline void MotorController_SetCoastMotorAll(MotorController_T * p_mc) 			{ MotorN_User_SetCoast(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 
 static inline void MotorController_DisableMotorAll(MotorController_T * p_mc) 			{ MotorN_User_DisableControl(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 static inline void MotorController_GroundMotorAll(MotorController_T * p_mc) 			{ MotorN_User_Ground(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
