@@ -57,7 +57,13 @@ static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc,
 static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd) 	{ p_mc->UserCmd = userCmd; StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE); }
 static inline uint16_t MotorController_User_GetCmdValue(MotorController_T * p_mc) 					{ return p_mc->UserCmd; }
 // static inline void MotorController_User_SetCmdBrakeAlt(MotorController_T * p_mc, uint16_t userCmd) { p_mc->UserCmd = userCmd; 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE_ALT); }
-static inline void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction) { p_mc->UserDirection = direction; StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SET_DIRECTION); }
+
+static inline void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction)
+{
+	p_mc->UserDirection = direction;
+	if(p_mc->ActiveDirection != direction) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SET_DIRECTION); }
+}
+
 static inline MotorController_Direction_T MotorController_User_GetDirection(MotorController_T * p_mc) { return p_mc->ActiveDirection; }
 
 static inline bool MotorController_User_CheckFault(MotorController_T * p_mc)

@@ -165,9 +165,6 @@ static void Stop_Entry(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase = 0U; /* ok to reset timer */
 	Phase_Float(&p_motor->Phase);
-	/* Direction was set during another mode. Should not occur */
-	if(p_motor->UserDirection != p_motor->Direction) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FAULT); }
-
 	p_motor->FeedbackModeFlags.Update = 1U; /* Next Motor_User_SetCmdMode call will proc MSM_INPUT_CONTROL to run state. shared state input */
 }
 

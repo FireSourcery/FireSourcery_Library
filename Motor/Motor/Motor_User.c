@@ -104,13 +104,8 @@ void Motor_User_Ground(Motor_T * p_motor)
 bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
 	p_motor->UserDirection = direction;
-
-	if(p_motor->Direction != direction)
-	{
-		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION);
-		//StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction);
-	}
-
+	if(p_motor->Direction != direction) { StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION); }
+	//StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction);
 	return (p_motor->UserDirection == p_motor->Direction);
 }
 

@@ -130,7 +130,7 @@ static inline bool Timer_Poll(Timer_T * p_timer)
 }
 
 static inline void Timer_Init(Timer_T * p_timer) 							{ p_timer->IsOneShot = false; p_timer->Period = 0U; }
-static inline void Timer_InitPeriodic(Timer_T * p_timer, uint32_t ticks) 	{ p_timer->IsOneShot = false; p_timer->Period = ticks; }
+static inline void Timer_InitPeriodic(Timer_T * p_timer, uint32_t ticks) 	{ p_timer->IsOneShot = false; p_timer->Period = ticks;}
 static inline void Timer_InitOneShot(Timer_T * p_timer) 					{ p_timer->IsOneShot = true; p_timer->Period = 0U; }
 static inline void Timer_SetPeriodic(Timer_T * p_timer) 					{ p_timer->IsOneShot = false; }
 static inline void Timer_SetOneShot(Timer_T * p_timer) 						{ p_timer->IsOneShot = true; }
