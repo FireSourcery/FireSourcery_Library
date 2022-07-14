@@ -126,8 +126,8 @@ static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc)
 
 	if(p_mc->ActiveDirection == p_mc->UserDirection) /* True if prior InputDirection completed successfully */
 	{
-		if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = 0U; }
-		else { p_nextState = &STATE_RUN; }
+		if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = &STATE_NEUTRAL; }
+		else 															{ p_nextState = &STATE_RUN; }
 	}
 	else
 	{
@@ -156,7 +156,7 @@ static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 	if(MotorController_ProcUserDirection(p_mc) == true)
 	{
 		if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = &STATE_NEUTRAL; }
-		else { p_nextState = 0U; }
+		else 															{ p_nextState = 0U; }
 	}
 	else
 	{
@@ -203,14 +203,14 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 static void Stop_Entry(MotorController_T * p_mc)
 {
 	(void)p_mc;
-	//	if (p_mc->Parameters.StopMode == MOTOR_CONTROLLER_STOP_MODE_GROUND)
-	//	{
-			// MotorController_GroundMotorAll(p_mc);
-	//	}
-	//	else
-	//	{
-	// MotorController_DisableMotorAll(p_mc);
-	//	}
+	// if (p_mc->Parameters.StopMode == MOTOR_CONTROLLER_STOP_MODE_GROUND)
+	// {
+	// 	MotorController_GroundMotorAll(p_mc);
+	// }
+	// else
+	// {
+	// 	MotorController_DisableMotorAll(p_mc);
+	// }
 }
 
 static void Stop_Proc(MotorController_T * p_mc)
@@ -311,11 +311,11 @@ static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MCSM_TRANSITION_TABL
 	[MCSM_INPUT_BRAKE] 				= (StateMachine_Transition_T)Run_InputBrake,
 	[MCSM_INPUT_SET_ZERO] 			= (StateMachine_Transition_T)Run_InputSetCoast,
 	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)Run_InputCoast,
+	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)Run_InputSetCoast,
 	// [MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)Run_InputSetCoast,
 	// [MCSM_INPUT_NEUTRAL] 			= (StateMachine_Transition_T)Run_InputNeutral, /* Proc Neutral lower prioity than brake */
 	// [MCSM_INPUT_SET_NEUTRAL] 		= (StateMachine_Transition_T)0U, /* Set Neutral higher prioity than brake */
-	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,
 };
 
 static void Run_Entry(MotorController_T * p_mc)
@@ -354,7 +354,7 @@ static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc)
 	if(MotorController_ProcUserDirection(p_mc) == true)
 	{
 		if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = 0U; } /* Not applicable for AnalogUser */
-		else { p_nextState = &STATE_RUN; }
+		else 															{ p_nextState = &STATE_RUN; }
 	}
 	else
 	{
@@ -368,7 +368,7 @@ static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc)
 static StateMachine_State_T * Neutral_InputBrake(MotorController_T * p_mc)
 {
 	MotorController_ProcUserCmdBrake(p_mc);
-	return 0U;
+	return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
 }
 
 
@@ -376,7 +376,7 @@ static StateMachine_State_T * Neutral_InputRelease(MotorController_T * p_mc)
 {
 	MotorController_DisableMotorAll(p_mc);
 	// if neutral mode coast v follow
-	return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
+	return 0U;
 }
 
 // static StateMachine_State_T * Neutral_InputZero(MotorController_T * p_mc)
