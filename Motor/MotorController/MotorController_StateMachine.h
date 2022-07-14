@@ -34,7 +34,7 @@
 #include "MotorController.h"
 #include "Utility/StateMachine/StateMachine.h"
 
-#define MCSM_TRANSITION_TABLE_LENGTH 	(10U)
+#define MCSM_TRANSITION_TABLE_LENGTH 	(7U)
 
 typedef enum MotorController_StateMachine_Input_Tag
 {
@@ -42,7 +42,7 @@ typedef enum MotorController_StateMachine_Input_Tag
 	MCSM_INPUT_SET_DIRECTION, 		/* Edge */
 	MCSM_INPUT_THROTTLE,
 	MCSM_INPUT_BRAKE,
-	MCSM_INPUT_ZERO,				/* Zero Throttle/Brake Input. In Direction */
+	MCSM_INPUT_ZERO,				/* Zero Throttle/Brake Input. In Direction Fwd/Rev */
 	MCSM_INPUT_SET_ZERO,		 	/* Release Control */
 	MCSM_INPUT_SAVE_PARAMS,
 	// MCSM_INPUT_RELEASE_THROTTLE, 	/* Release Control */

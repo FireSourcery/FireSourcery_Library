@@ -33,7 +33,7 @@
 
 #include "Utility/StateMachine/StateMachine.h"
 
-#define MSM_TRANSITION_TABLE_LENGTH 	(11U)
+#define MSM_TRANSITION_TABLE_LENGTH 	(5U)
 
 typedef enum MotorStateMachine_Input_Tag
 {

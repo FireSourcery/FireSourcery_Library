@@ -90,9 +90,9 @@ Phase_T;
 	.SwitchC = PIN_INIT(p_SwitchCHal, SwitchCId),					\
 }
 
-static inline void Phase_ClearInterrupt(const Phase_T * p_phase) { PWM_ClearInterrupt(&p_phase->PwmA); }
-static inline void Phase_DisableInterrupt(const Phase_T * p_phase) { PWM_DisableInterrupt(&p_phase->PwmA); } //todo
-static inline void Phase_EnableInterrupt(const Phase_T * p_phase) { PWM_EnableInterrupt(&p_phase->PwmA); }
+static inline void Phase_ClearInterrupt(const Phase_T * p_phase) 	{ PWM_ClearInterrupt(&p_phase->PwmA); }
+static inline void Phase_DisableInterrupt(const Phase_T * p_phase) 	{ PWM_DisableInterrupt(&p_phase->PwmA); }
+static inline void Phase_EnableInterrupt(const Phase_T * p_phase) 	{ PWM_EnableInterrupt(&p_phase->PwmA); }
 
 static inline void _Phase_SyncPwm(const Phase_T * p_phase)
 {

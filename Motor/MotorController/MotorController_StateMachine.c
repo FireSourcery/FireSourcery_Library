@@ -116,7 +116,7 @@ static const StateMachine_State_T STATE_INIT =
 /*!
 	@brief  Stop State
 
-	Enters upon all motors enter motor stop state
+	Motor in Stop State. Enters upon all motors enter motor stop state
 */
 /******************************************************************************/
 static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc)
@@ -125,7 +125,8 @@ static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc)
 
 	if(p_mc->ActiveDirection == p_mc->UserDirection) /* True if prior InputDirection completed successfully */
 	{
-		p_nextState = &STATE_RUN;
+		if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = 0U; }
+		else { p_nextState = &STATE_RUN; }
 	}
 	else
 	{
@@ -168,7 +169,7 @@ static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc)
 static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc)
 {
 	/* Disable PWM interrupt to disable Motor_StateMachine */
-	Motor_DisablePwm(&p_mc->CONFIG.P_MOTORS[0U]);
+	Motor_DisablePwm(&p_mc->CONFIG.P_MOTORS[0U]); //todo
 
 	switch(p_mc->StopSubstate)
 	{
@@ -178,7 +179,7 @@ static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc)
 		default: break;
 	}
 
-	Motor_EnablePwm(&p_mc->CONFIG.P_MOTORS[0U]);
+	Motor_EnablePwm(&p_mc->CONFIG.P_MOTORS[0U]); //todo
 
 	return 0U;
 }
@@ -227,9 +228,10 @@ static const StateMachine_State_T STATE_STOP =
 /*!
 	@brief  State
 
-	motors may be in Run or freewheel
-	accepts speed inputs
+	Accepts both Throttle/Brake inputs.
 	release/edge inputs implicitly tracks previous state.
+
+	Motors may be in Run or Freewheel.
 */
 /******************************************************************************/
 
@@ -242,9 +244,9 @@ static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc)
 		p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;
 		p_nextState = &STATE_NEUTRAL;
 	}
-	else
+	else /* Not applicable for AnalogUser, when transisition through neutral state */
 	{
-		MotorController_BeepShort(p_mc); /* Not applicable for AnalogUser if transisition through neutral state */
+		MotorController_BeepShort(p_mc);
 		p_nextState = 0U;
 	}
 
@@ -272,11 +274,11 @@ static StateMachine_State_T * Run_InputBrake(MotorController_T * p_mc)
 */
 static StateMachine_State_T * Run_InputCoast(MotorController_T * p_mc)
 {
-	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
+	if(p_mc->Parameters.ZeroCmdMode == MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN)
 	{
 		// MotorController_ProcRegenMotorAll(p_mc);
 	}
-	else if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_COAST)
+	else if(p_mc->Parameters.ZeroCmdMode == MOTOR_CONTROLLER_ZERO_CMD_MODE_COAST)
 	{
 		//motor already disabled
 	}
@@ -289,11 +291,11 @@ static StateMachine_State_T * Run_InputCoast(MotorController_T * p_mc)
 */
 static StateMachine_State_T * Run_InputSetCoast(MotorController_T * p_mc)
 {
-	if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_REGEN)
+	if(p_mc->Parameters.ZeroCmdMode == MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN)
 	{
 		//		MotorController_StartRegenMotorAll(p_mc); //if using 2 part set/proc
 	}
-	else if(p_mc->Parameters.CoastMode == MOTOR_CONTROLLER_COAST_MODE_COAST)
+	else if(p_mc->Parameters.ZeroCmdMode == MOTOR_CONTROLLER_ZERO_CMD_MODE_COAST)
 	{
 		MotorController_SetCoastMotorAll(p_mc);
 	}
@@ -339,11 +341,10 @@ static const StateMachine_State_T STATE_RUN =
 /*!
 	@brief  State
 
-	Neutral is seperate state - Brake effective, throttle no effect.
-	Motor in Freewheel or Stop state, or run when braking
-
+	Neutral - Brake effective, throttle no effect.
+	Motors in Freewheel or Stop state, or Run when braking.
 	Motor may transition between Motor Freewheel and Stop, on 0 speed
-	but MCSM Neutral remains in neutral state, motor floating
+	but MCSM remains in Neutral state, motor floating
 */
 /******************************************************************************/
 static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc)
@@ -352,7 +353,7 @@ static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc)
 
 	if(MotorController_ProcUserDirection(p_mc) == true)
 	{
-		if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = 0U; }
+		if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = 0U; } /* Not applicable for AnalogUser */
 		else { p_nextState = &STATE_RUN; }
 	}
 	else

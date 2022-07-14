@@ -54,7 +54,7 @@ void Motor_Analog_CaptureVa(Motor_T * p_motor)
 
 	}
 
-	if(p_motor->AnalogResults.Va_Adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Va_Adcu; }
+	// if(p_motor->AnalogResults.Va_Adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Va_Adcu; }
 }
 
 /******************************************************************************/
@@ -73,7 +73,7 @@ void Motor_Analog_CaptureVb(Motor_T * p_motor)
 
 	}
 
-	if(p_motor->AnalogResults.Vb_Adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Vb_Adcu; }
+	// if(p_motor->AnalogResults.Vb_Adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Vb_Adcu; }
 }
 
 /******************************************************************************/
@@ -92,7 +92,7 @@ void Motor_Analog_CaptureVc(Motor_T * p_motor)
 
 	}
 
-	if(p_motor->AnalogResults.Vc_Adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Vc_Adcu; }
+	// if(p_motor->AnalogResults.Vc_Adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Vc_Adcu; }
 }
 
 /******************************************************************************/
@@ -122,7 +122,7 @@ void Motor_Analog_CaptureIa(Motor_T * p_motor)
 		Motor_FOC_CaptureIa(p_motor);
 	}
 
-	CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ia_Adcu - p_motor->Parameters.IaZeroRef_Adcu);
+	// CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ia_Adcu - p_motor->Parameters.IaZeroRef_Adcu);
 }
 
 /******************************************************************************/
@@ -141,7 +141,7 @@ void Motor_Analog_CaptureIb(Motor_T * p_motor)
 		Motor_FOC_CaptureIb(p_motor);
 	}
 
-	CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ib_Adcu - p_motor->Parameters.IbZeroRef_Adcu);
+	// CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ib_Adcu - p_motor->Parameters.IbZeroRef_Adcu);
 }
 
 /******************************************************************************/
@@ -160,7 +160,7 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
 		Motor_FOC_CaptureIc(p_motor);
 	}
 
-	CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ic_Adcu - p_motor->Parameters.IcZeroRef_Adcu);
+	// CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ic_Adcu - p_motor->Parameters.IcZeroRef_Adcu);
 }
 
 
@@ -193,12 +193,14 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
 static inline void EnqueueVabc(Motor_T * p_motor)
 {
 	//no current sense during pwm float, check bemf
-#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) && defined(CONFIG_MOTOR_V_SENSORS_ADC)
+#if  defined(CONFIG_MOTOR_V_SENSORS_ADC) && !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED)
 	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
 	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+#else
+	(void)p_motor;
 #endif
 }
 

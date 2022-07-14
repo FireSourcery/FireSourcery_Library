@@ -82,18 +82,24 @@ static inline bool Motor_Calibrate_ProcSinCos(Motor_T * p_motor)
 			case 4U:
 				SinCos_CalibrateB(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
 //				Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, p_motor->Parameters.AlignVoltage_Frac16);
-//				p_motor->CalibrationStateStep = 5U;
+				p_motor->CalibrationStateIndex = 5U;
+				// isComplete = true;
+				Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignVoltage_Frac16, 0U, 0U);
+				break;
+
+			case 5U:
+				p_motor->SinCos.DebugAPostMech = SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
+				p_motor->SinCos.DebugAPostElec = SinCos_GetElectricalAngle(&p_motor->SinCos);
+				Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignVoltage_Frac16, 0U);
+				p_motor->CalibrationStateIndex = 6U;
+				break;
+
+			case 6U:
+				p_motor->SinCos.DebugBPostMech = SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
+				p_motor->SinCos.DebugBPostElec = SinCos_GetElectricalAngle(&p_motor->SinCos);
+				p_motor->CalibrationStateIndex = 0U;
 				isComplete = true;
 				break;
-//
-//			case 5U:
-//				p_motor->CalibrationStateStep = 6U;
-//				break;
-//
-//			case 6U:
-//				p_motor->CalibrationStateStep = 0U;
-//				isComplete = true;
-//				break;
 			default: break;
 		}
 	}

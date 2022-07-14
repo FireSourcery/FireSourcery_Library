@@ -53,7 +53,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 
 	//  todo _Motor_Analog_Thread( p_motor); use analog select mode to implement prefered order
 
-	//always check angle or stop and run mode only?
+	//always check angle or stop / run / freewheel mode only?
 	//	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	//	{
 	//		Motor_FOC_ProcAngleObserve(p_motor);

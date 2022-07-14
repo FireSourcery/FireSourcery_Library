@@ -43,6 +43,7 @@ static void ResetSpeedPidILimitsCw(Motor_T * p_motor)
 
 /*
 	Set on Limits change
+	SpeedPid - Speed In, I Out, only
 	SPEED_VOLTAGE_MODE only change with direction
 */
 void Motor_FOC_ResetSpeedPidILimits(Motor_T * p_motor)
@@ -53,6 +54,9 @@ void Motor_FOC_ResetSpeedPidILimits(Motor_T * p_motor)
 	}
 }
 
+/*
+	Set on Direction change
+*/
 void Motor_FOC_SetDirectionCcw(Motor_T * p_motor)
 {
 	Motor_SetDirectionCcw(p_motor);
@@ -67,7 +71,7 @@ void Motor_FOC_SetDirectionCcw(Motor_T * p_motor)
 		Voltage Feedback Mode active during over current only.
 	*/
 	PID_SetOutputLimits(&p_motor->PidIq, 0, INT16_MAX);
-	PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
+	PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2); /* Symetrical for now */
 }
 
 void Motor_FOC_SetDirectionCw(Motor_T * p_motor)
@@ -82,7 +86,6 @@ void Motor_FOC_SetDirectionCw(Motor_T * p_motor)
 	PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
 }
 
-/* Set on Direction change */
 void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
 	(direction == MOTOR_DIRECTION_CCW) ? Motor_FOC_SetDirectionCcw(p_motor) : Motor_FOC_SetDirectionCw(p_motor);

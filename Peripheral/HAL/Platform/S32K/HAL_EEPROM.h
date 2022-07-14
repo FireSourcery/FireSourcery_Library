@@ -39,22 +39,22 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// flash_flexRam_function_control_code
+/* flash_flexRam_function_control_code */
 #define EEE_ENABLE                              (0x00U)    /*!< Make FlexRAM available for emulated EEPROM */
 #define EEE_QUICK_WRITE                         (0x55U)    /*!< Make FlexRAM available for EEPROM quick writes */
 #define EEE_STATUS_QUERY                        (0x77U)    /*!< EEPROM quick write status query */
 #define EEE_COMPLETE_INTERRUPT_QUICK_WRITE      (0xAAU)    /*!< Complete interrupted EEPROM quick write process */
 #define EEE_DISABLE                             (0xFFU)    /*!< Make FlexRAM available as RAM */
 
-#define S32K_EEERAMSIZE_CODE 					(0x02U)		//only option for s32k142
-#define CONFIG_HAL_EEPROM_S32K_DEPART_CODE 		(0x08U)	 //Recommenced for max endurance, set once
+#define S32K_EEERAMSIZE_CODE 					(0x02U) 	/* Only option for S32K142 */
+#define CONFIG_HAL_EEPROM_S32K_DEPART_CODE 		(0x08U) 	/* Recommenced for max endurance, set once */
 
 #define HAL_EEPROM_START			S32K_FLEX_RAM_START
 #define HAL_EEPROM_END				S32K_FLEX_RAM_END
 #define HAL_EEPROM_SIZE				S32K_FLEX_RAM_SIZE
 #define HAL_EEPROM_UNIT_WRITE_SIZE	4U
 
-typedef FTFC_Type HAL_EEPROM_T;	//Flash/EEPROM use same controller
+typedef FTFC_Type HAL_EEPROM_T;	 /* Flash/EEPROM use same controller */
 
 static inline bool HAL_EEPROM_ReadCompleteFlag(HAL_EEPROM_T * p_hal)
 {

@@ -132,7 +132,7 @@ void MotorController_Init(MotorController_T * p_mc)
 // 	// MotorController_User_SetVSource(p_mc, p_mc->CONFIG.V_MAX);
 
 // 	//  MotorController_User_SetInputMode(p_mc, MOTOR_CONTROLLER_INPUT_MODE_ANALOG);
-// 	//  MotorController_User_SetCoastMode(p_mc, MOTOR_CONTROLLER_COAST_MODE_COAST);
+// 	//  MotorController_User_SetCoastMode(p_mc, MOTOR_CONTROLLER_ZERO_CMD_MODE_COAST);
 // 	// MotorController_User_SetCanBusServicesId(p_mc, 0U);
 // 	//  MotorController_User_DisableCanBusId(p_mc, 0U);
 

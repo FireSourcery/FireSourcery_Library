@@ -310,8 +310,16 @@ static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
 		}
 		else if(p_motor->CalibrationState == MOTOR_CALIBRATION_STATE_SIN_COS)
 		{
-			Terminal_SendString(p_terminal, "AngleOffset: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.AngleOffet); 	Terminal_SendString(p_terminal, " \r\n");
-			Terminal_SendString(p_terminal, "IsBPositive: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.IsBPositive); 	Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "AngleOffset: "); 		Terminal_SendNum(p_terminal, p_motor->SinCos.Params.AngleOffet); 		Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "IsCcwPositive: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.IsCcwPositive); 	Terminal_SendString(p_terminal, " \r\n");
+
+			Terminal_SendString(p_terminal, "DebugAPreMech: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.DebugAPre); 		Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "DebugBPreMech: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.DebugBPre); 		Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "DebugAPostMech: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.DebugAPostMech); 	Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "DebugBPostMech: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.DebugBPostMech); 	Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "DebugAPostElec: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.DebugAPostElec); 	Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "DebugBPostElec: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.DebugBPostElec); 	Terminal_SendString(p_terminal, " \r\n");
+
 			//			Terminal_SendString(p_terminal, "Zero_Adcu: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Zero_Adcu); 	Terminal_SendString(p_terminal, " \r\n");
 			//			Terminal_SendString(p_terminal, "Max_Adcu: "); 		Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Max_Adcu); 		Terminal_SendString(p_terminal, " \r\n");
 			//			Terminal_SendString(p_terminal, "Max_MilliV: "); 	Terminal_SendNum(p_terminal, p_motor->SinCos.Params.Max_MilliV); 	Terminal_SendString(p_terminal, " \r\n");

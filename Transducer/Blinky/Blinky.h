@@ -53,6 +53,7 @@ typedef struct Blinky_Tag
 	uint32_t Max;
 	uint32_t OnTime;
 	uint32_t OffTime;
+	// uint32_t OffTimeDefault; unchanged between activation types
 	void (*PatternFunction)(struct Blinky_Tag * p_this);
 	// uint8_t ActiveSourceId;
 }
