@@ -116,7 +116,8 @@ static const StateMachine_State_T STATE_INIT =
 /*!
 	@brief  Stop State
 
-	Motor in Stop State. Enters upon all motors enter motor stop state
+	Motors in Stop State. Enters upon all motors enter motor stop state
+	May enter from Neutral State or Run State
 */
 /******************************************************************************/
 static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc)
@@ -201,14 +202,15 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 
 static void Stop_Entry(MotorController_T * p_mc)
 {
+	(void)p_mc;
 	//	if (p_mc->Parameters.StopMode == MOTOR_CONTROLLER_STOP_MODE_GROUND)
 	//	{
-			MotorController_GroundMotorAll(p_mc);
+			// MotorController_GroundMotorAll(p_mc);
 	//	}
 	//	else
 	//	{
 	// MotorController_DisableMotorAll(p_mc);
-//	}
+	//	}
 }
 
 static void Stop_Proc(MotorController_T * p_mc)
@@ -270,34 +272,32 @@ static StateMachine_State_T * Run_InputBrake(MotorController_T * p_mc)
 }
 
 /*
-	input release
+
 */
 static StateMachine_State_T * Run_InputCoast(MotorController_T * p_mc)
 {
-	if(p_mc->Parameters.ZeroCmdMode == MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN)
+	switch(p_mc->Parameters.ZeroCmdMode)
 	{
-		// MotorController_ProcRegenMotorAll(p_mc);
-	}
-	else if(p_mc->Parameters.ZeroCmdMode == MOTOR_CONTROLLER_ZERO_CMD_MODE_COAST)
-	{
-		//motor already disabled
+		case MOTOR_CONTROLLER_ZERO_CMD_MODE_FLOAT: break;
+		case MOTOR_CONTROLLER_ZERO_CMD_MODE_COAST: break;
+		// case MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN: MotorController_ProcRegenMotorAll(p_mc); break;
+		default: break;
 	}
 
 	return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
 }
 
 /*
-	only release into null/coast
+
 */
 static StateMachine_State_T * Run_InputSetCoast(MotorController_T * p_mc)
 {
-	if(p_mc->Parameters.ZeroCmdMode == MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN)
+	switch(p_mc->Parameters.ZeroCmdMode)
 	{
-		//		MotorController_StartRegenMotorAll(p_mc); //if using 2 part set/proc
-	}
-	else if(p_mc->Parameters.ZeroCmdMode == MOTOR_CONTROLLER_ZERO_CMD_MODE_COAST)
-	{
-		MotorController_SetCoastMotorAll(p_mc);
+		case MOTOR_CONTROLLER_ZERO_CMD_MODE_FLOAT: MotorController_DisableMotorAll(p_mc); break;
+		case MOTOR_CONTROLLER_ZERO_CMD_MODE_COAST: MotorController_SetCoastMotorAll(p_mc); break;
+		case MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN: break;
+		default: break;
 	}
 
 	return 0U;
@@ -368,7 +368,7 @@ static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc)
 static StateMachine_State_T * Neutral_InputBrake(MotorController_T * p_mc)
 {
 	MotorController_ProcUserCmdBrake(p_mc);
-	return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
+	return 0U;
 }
 
 
@@ -376,7 +376,7 @@ static StateMachine_State_T * Neutral_InputRelease(MotorController_T * p_mc)
 {
 	MotorController_DisableMotorAll(p_mc);
 	// if neutral mode coast v follow
-	return 0U;
+	return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
 }
 
 // static StateMachine_State_T * Neutral_InputZero(MotorController_T * p_mc)
