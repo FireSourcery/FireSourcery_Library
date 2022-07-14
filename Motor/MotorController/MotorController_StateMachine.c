@@ -70,9 +70,9 @@ static StateMachine_State_T * Init_InputDirection(MotorController_T * p_mc)
 
 static StateMachine_State_T * Init_InputThrottle(MotorController_T * p_mc)
 {
-	if((p_mc->Parameters.BuzzerFlagsEnable.BeepThrottleOnInit == true) && (p_mc->BuzzerFlagsActive.BeepThrottleOnInit == 0U))
+	if((p_mc->Parameters.BuzzerFlagsEnable.ThrottleOnInit == true) && (p_mc->BuzzerFlagsActive.ThrottleOnInit == 0U))
 	{
-		p_mc->BuzzerFlagsActive.BeepThrottleOnInit = 1U;
+		p_mc->BuzzerFlagsActive.ThrottleOnInit = 1U;
 		MotorController_BeepShort(p_mc);
 	}
 	return 0U;
@@ -132,14 +132,12 @@ static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc)
 	else
 	{
 		p_nextState = 0U;
-		// p_mc->FaultFlags.DirectionSync = 1U;
-		// p_nextState = &STATE_FAULT;
 	}
 
 	return p_nextState;
 }
 
-static StateMachine_State_T * Stop_InputBrake(MotorController_T * p_mc) //change to brake edge
+static StateMachine_State_T * Stop_InputBrake(MotorController_T * p_mc)
 {
 	MotorController_GroundMotorAll(p_mc); /* repeat set is okay for brake */
 	return 0U;
@@ -445,6 +443,7 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TA
 	[MCSM_INPUT_THROTTLE] 			= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_BRAKE] 				= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_SET_ZERO] 			= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)0U,

@@ -172,8 +172,11 @@ typedef union MotorController_BuzzerFlags_Tag
 {
 	struct
 	{
-		uint32_t BeepThrottleOnInit 	: 1U;
-		uint32_t BeepOnReverse			: 1U;
+		uint32_t ThrottleOnInit 	: 1U;
+		uint32_t OnReverse			: 2U; /* 0: Off, 1: Short Beep, 2: Continous */
+		// uint32_t ThrottleOnBrakeCmd;
+		// uint32_t ThrottleOnBrakeRelease;
+		// uint32_t ThrottleOnNeutralRelease;
 	};
 	uint32_t State;
 }
@@ -191,11 +194,6 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 	uint16_t BatteryFull_Adcu;
 	uint8_t CanServicesId;
 	bool IsCanEnable;
-	//todo
-	// bool FaultThrottleOnInit;
-	// bool FaultThrottleOnBrakeCmd;
-	// bool FaultThrottleOnBrakeRelease;
-	// bool FaultThrottleOnNeutralRelease;
 
 	MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
 
@@ -204,9 +202,7 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 
 	uint16_t ILimitLowV_Frac16;
 	uint16_t ILimitHeat_Frac16; /* Final ILimit at HeatLimit. Proportionally effective beginning at HeatWarning */
-	//battery max current
-
-	// bool IsFixedFreqUserOutput; /* limits conversion freq regardless of polling freq */
+	// uint16_t ILimit_Frac16;	//battery max current, sset function passes to motor module
 }
 MotorController_Params_T;
 
@@ -345,7 +341,7 @@ static inline bool MotorController_ProcUserDirection(MotorController_T * p_mc)
 
 	if(isSuccess == true) { p_mc->ActiveDirection = p_mc->UserDirection; }
 
-	// if((p_mc->Parameters.BuzzerFlagsEnable.BeepOnReverse == true))
+	// if((p_mc->Parameters.BuzzerFlagsEnable.OnReverse == true))
 	// {
 	// 	if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE)
 	// 	{
