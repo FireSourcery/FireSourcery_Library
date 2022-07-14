@@ -77,9 +77,9 @@ MotorController_InputMode_T;
 
 typedef enum MotorController_ZeroCmdMode_Tag
 {
+	MOTOR_CONTROLLER_ZERO_CMD_MODE_FLOAT,	/* MOSFETS non conducting. Same as neutral. */
 	MOTOR_CONTROLLER_ZERO_CMD_MODE_COAST,	/* Voltage following, Zero currrent/torque */
 	MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN, 	/* Regen */
-	MOTOR_CONTROLLER_ZERO_CMD_MODE_FLOAT,	/* MOSFETS non conducting. Same as neutral. */
 }
 MotorController_ZeroCmdMode_T;
 
