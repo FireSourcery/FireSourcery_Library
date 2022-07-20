@@ -65,24 +65,6 @@ void Thermistor_Init(Thermistor_T * p_therm)
 	Limits Monitor
 */
 /******************************************************************************/
-/* Public version pass new adcu for Async/Multi-Threaded */
-// static inline bool Thermistor_PollWarningRisingEdge(Thermistor_T * p_therm, uint16_t adcu)
-
-// static inline bool PollWarningRisingEdge(Thermistor_T * p_therm)
-// {
-// 	bool isRisingEdge = (p_therm->WarningThreshold == THERMISTOR_STATUS_OK) && (p_therm->Adcu < p_therm->Params.Warning_Adcu);
-// 	if(isRisingEdge == true) { p_therm->WarningThreshold = THERMISTOR_WARNING_LIMIT; }
-// 	return isRisingEdge;
-// }
-
-// /* Alternatively, (p_therm->Status == THERMISTOR_STATUS_OK || != IsWarning */
-// static inline bool PollShutdownRisingEdge(Thermistor_T * p_therm)
-// {
-// 	bool isRisingEdge = (p_therm->ShutdownThreshold == THERMISTOR_STATUS_OK) && (p_therm->Adcu < p_therm->Params.Shutdown_Adcu);
-// 	if(isRisingEdge == true) { p_therm->ShutdownThreshold = THERMISTOR_SHUTDOWN_LIMIT; }
-// 	return isRisingEdge;
-// }
-
 /*
 	Lower adcu is higher heat
 */
@@ -110,8 +92,8 @@ Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t capt
 {
 	if(p_therm->Params.IsMonitorEnable == true)
 	{
-		// p_therm->Adcu = (captureAdcu + p_therm->Adcu) / 2U;
-		p_therm->Adcu = captureAdcu;
+		p_therm->Adcu = (captureAdcu + p_therm->Adcu) / 2U;
+		// p_therm->Adcu = captureAdcu;
 		p_therm->ShutdownThreshold = PollThreshold(p_therm->ShutdownThreshold, p_therm->Params.Shutdown_Adcu, p_therm->Params.ShutdownThreshold_Adcu, p_therm->Adcu);
 		p_therm->Status = (p_therm->ShutdownThreshold == THERMISTOR_THRESHOLD_OK) ? THERMISTOR_STATUS_OK : THERMISTOR_STATUS_SHUTDOWN;
 
@@ -177,6 +159,7 @@ static inline uint32_t r_pullup_adcu(uint32_t rPullDown, uint16_t vIn, uint16_t 
 	return rPullDown * (((double)vIn * adcMax) / (adcVRef * adcu) - 1U);
 }
 
+/* Convert Resistence [Ohm] to ADCU */
 static inline uint16_t adcu_r(uint16_t adcMax, uint16_t adcVRef, uint16_t vIn, uint32_t rPullUp, uint32_t rPullDown)
 {
 	return ((double)vIn * adcMax * rPullDown) / ((double)adcVRef * (rPullUp + rPullDown));
@@ -204,24 +187,46 @@ static inline float steinhart(double b, double t0, double r0, double rTh)
 /*
 	return RTh
 */
-static inline float invsteinhart(double b, double t0, double r0, double Inv)
+static inline float invsteinhart(double b, double t0, double r0, double invKelvin)
 {
-	return exp((Inv - 1.0F / t0) * b) * r0;
+	return exp((invKelvin - 1.0F / t0) * b) * r0;
 }
 
 static float ConvertAdcuToDegC(Thermistor_T * p_therm, uint16_t adcu)
 {
 	uint32_t rNet = r_pulldown_adcu(p_therm->CONFIG.R_SERIES/100U, p_therm->Params.VIn_Scalar, ADC_MAX, _AdcVRef_Scalar, adcu) * 100U;
 	uint32_t rTh = (p_therm->CONFIG.R_PARALLEL != 0U) ? r_parallel(rNet, p_therm->CONFIG.R_PARALLEL) : rNet;
-	double Inv = steinhart(p_therm->Params.BConstant, p_therm->Params.TNominal, p_therm->Params.RNominal, rTh);
-	return (1.0F / Inv - 273.15F);
+	double invKelvin = steinhart(p_therm->Params.BConstant, p_therm->Params.TNominal, p_therm->Params.RNominal, rTh);
+	return (1.0F / invKelvin - 273.15F);
 }
 
 static uint16_t ConvertDegCToAdcu(Thermistor_T * p_therm, uint16_t degC)
 {
-	double Inv = (double)1.0F / (degC + 273.15F);
-	uint32_t rTh = invsteinhart(p_therm->Params.BConstant, p_therm->Params.TNominal, p_therm->Params.RNominal, Inv);
-	uint32_t rNet = (p_therm->CONFIG.R_PARALLEL != 0U) ? r_net(p_therm->CONFIG.R_PARALLEL, rTh) : rTh;
+	double invKelvin;
+	uint32_t rTh;
+	uint32_t rNet;
+
+	switch(p_therm->Params.Type)
+	{
+		case THERMISTOR_TYPE_NTC:
+			invKelvin = (double)1.0F / (degC + 273.15F);
+			rTh = invsteinhart(p_therm->Params.BConstant, p_therm->Params.TNominal, p_therm->Params.RNominal, invKelvin);
+			rNet = (p_therm->CONFIG.R_PARALLEL != 0U) ? r_net(p_therm->CONFIG.R_PARALLEL, rTh) : rTh;
+			break;
+		case THERMISTOR_TYPE_LINEAR:
+			invKelvin = 0;
+			rTh = 0;
+			rNet = 0;
+			break;
+		default:
+			invKelvin = 0;
+			rTh = 0;
+			rNet = 0;
+			break;
+	}
+
+
+
 	return adcu_r(ADC_MAX, _AdcVRef_Scalar, p_therm->Params.VIn_Scalar, p_therm->CONFIG.R_SERIES, rNet);
 }
 

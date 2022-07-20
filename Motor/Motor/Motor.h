@@ -257,7 +257,7 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	uint16_t SpeedFeedbackRef_Rpm; 	/* Feedback / PID Regulator, Limits Ref. User IO units conversion, Encoder speed calc ref. */
 	uint16_t SpeedVMatchRef_Rpm; 	/* Votlage Match Ref. VF Mode, Freewheel to Run. Use higher value to bias speed matching to begin at lower speed. */
 
-	uint16_t IPeakRef_Adcu; 		/* Zero-To-Peak, derived from sensor hardware */
+	uint16_t IPeakRef_Adcu; 		/* Zero-To-Peak, derived from sensor hardware */ //todo change to I_ZERO_TO_PEAK_ADCU
 	uint16_t IaZeroRef_Adcu;
 	uint16_t IbZeroRef_Adcu;
 	uint16_t IcZeroRef_Adcu;

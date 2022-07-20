@@ -24,10 +24,9 @@
 /*!
 	@file 	MotorController_StateMachine.c
 	@author FireSoucery
-	@brief  MotorController_StateMachine
+	@brief  MotorController StateMachine
 			States for input mode, User perspective
-			input acceptance using input state and motor state
-			motor state machine uses only motor state
+			Input acceptance using MotorController input and Motor_StateMachine
 	@version V0
 */
 /******************************************************************************/

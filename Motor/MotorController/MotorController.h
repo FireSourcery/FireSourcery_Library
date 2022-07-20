@@ -257,9 +257,9 @@ MotorController_Config_T;
 typedef struct MotorController_Tag
 {
 	const MotorController_Config_T CONFIG;
-	MotorController_Params_T Parameters; //ram copy
-	MemMapBoot_T MemMapBoot; //temp buffer
-	MotorController_Manufacture_T OnceBuffer;
+	MotorController_Params_T Parameters; 		/* ram copy */
+	MotorController_Manufacture_T Manufacture;  /* ram copy */
+	MemMapBoot_T MemMapBoot;  					/* ram copy */
 
 	volatile MotAnalog_Results_T AnalogResults;
 

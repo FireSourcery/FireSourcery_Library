@@ -118,7 +118,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	StateMachine_Init(&p_mc->StateMachine);
 }
 
-// void MotorController_InitDefault(MotorController_T * p_mc)
+// void MotorController_LoadDefault(MotorController_T * p_mc)
 // {
 // #define SPEED_MAX_DEFAULT 	2000U
 // #define ADC_VREF_DEFAULT 	5100U
@@ -152,7 +152,7 @@ void MotorController_Init(MotorController_T * p_mc)
 
 // 	VMonitor_SetLimits_MilliV(&p_mc->VMonitorPos, 30000U, 45000U, 35000U, 43000U);
 // 	VMonitor_Enable(&p_mc->VMonitorPos);
-// 	MotorController_User_SetBatteryLife_MilliV(p_mc, 30000U, 42000U); //need to set vmonitor for conversion
+// 	// MotorController_User_SetBatteryLife_MilliV(p_mc, 30000U, 42000U); //need to set vmonitor for conversion
 
 // 	VMonitor_SetLimits_MilliV(&p_mc->VMonitorSense, 4500U, 5500U, 4800U, 5200U);
 // 	VMonitor_Enable(&p_mc->VMonitorSense);
@@ -160,20 +160,20 @@ void MotorController_Init(MotorController_T * p_mc)
 // 	VMonitor_SetLimits_MilliV(&p_mc->VMonitorAcc, 10000U, 14000U, 11000U, 13000U);
 // 	VMonitor_Enable(&p_mc->VMonitorAcc);
 
-// 	Thermistor_SetNtc(&p_mc->ThermistorPcb, BOARD_THERM_PCB_R0, BOARD_THERM_PCB_T0_DEG_C, BOARD_THERM_PCB_B);
+// 	// Thermistor_SetNtc(&p_mc->ThermistorPcb, BOARD_THERM_PCB_R0, BOARD_THERM_PCB_T0_DEG_C, BOARD_THERM_PCB_B);
 // 	Thermistor_SetVInRef_MilliV(&p_mc->ThermistorPcb, ADC_VREF_DEFAULT);
 // 	Thermistor_SetLimits_DegC(&p_mc->ThermistorPcb, 100U, 90U, 80U, 78U);
-// 	Thermistor_SetMonitorEnable(&p_mc->ThermistorPcb, BOARD_THERM_PCB_PRESENT);
+// 	// Thermistor_SetMonitorEnable(&p_mc->ThermistorPcb, BOARD_THERM_PCB_PRESENT);
 
-// 	Thermistor_SetNtc(&p_mc->ThermistorMosfetsTop, BOARD_THERM_MOSFETS_TOP_R0, BOARD_THERM_MOSFETS_TOP_T0_DEG_C, BOARD_THERM_MOSFETS_TOP_B);
+// 	// Thermistor_SetNtc(&p_mc->ThermistorMosfetsTop, BOARD_THERM_MOSFETS_TOP_R0, BOARD_THERM_MOSFETS_TOP_T0_DEG_C, BOARD_THERM_MOSFETS_TOP_B);
 // 	Thermistor_SetVInRef_MilliV(&p_mc->ThermistorMosfetsTop, ADC_VREF_DEFAULT); /* Same as adc by default, but may be different */
 // 	Thermistor_SetLimits_DegC(&p_mc->ThermistorMosfetsTop, 100U, 90U, 80U, 78U);
-// 	Thermistor_SetMonitorEnable(&p_mc->ThermistorMosfetsTop, BOARD_THERM_MOSFETS_TOP_PRESENT);
+// 	// Thermistor_SetMonitorEnable(&p_mc->ThermistorMosfetsTop, BOARD_THERM_MOSFETS_TOP_PRESENT);
 
-// 	Thermistor_SetNtc(&p_mc->ThermistorMosfetsBot, BOARD_THERM_MOSFETS_BOT_R0, BOARD_THERM_MOSFETS_BOT_T0_DEG_C, BOARD_THERM_MOSFETS_BOT_B);
+// 	// Thermistor_SetNtc(&p_mc->ThermistorMosfetsBot, BOARD_THERM_MOSFETS_BOT_R0, BOARD_THERM_MOSFETS_BOT_T0_DEG_C, BOARD_THERM_MOSFETS_BOT_B);
 // 	Thermistor_SetVInRef_MilliV(&p_mc->ThermistorMosfetsBot, ADC_VREF_DEFAULT);
 // 	Thermistor_SetLimits_DegC(&p_mc->ThermistorMosfetsBot, 100U, 90U, 80U, 78U);
-// 	Thermistor_SetMonitorEnable(&p_mc->ThermistorMosfetsBot, BOARD_THERM_MOSFETS_BOT_PRESENT);
+// 	// Thermistor_SetMonitorEnable(&p_mc->ThermistorMosfetsBot, BOARD_THERM_MOSFETS_BOT_PRESENT);
 
 // 	Thermistor_SetNtc(&p_motor->Thermistor, 0U, 0U, 0U);
 // 	Thermistor_SetVInRef_MilliV(&p_motor->Thermistor, ADC_VREF_DEFAULT);
@@ -302,7 +302,7 @@ NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc)
 {
 #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
 	NvMemory_Status_T status = (NvMemory_Status_T)Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_ONCE, sizeof(MotorController_Manufacture_T));
-	Flash_GetReadOnce(p_mc->CONFIG.P_FLASH, (uint8_t *)&p_mc->OnceBuffer);
+	Flash_GetReadOnce(p_mc->CONFIG.P_FLASH, (uint8_t *)&p_mc->Manufacture);
 	return status;
 #elif defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
 
@@ -312,7 +312,7 @@ NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc)
 NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc)
 {
 #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
-	return (NvMemory_Status_T)Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_ONCE, (uint8_t *)&p_mc->OnceBuffer, sizeof(MotorController_Manufacture_T));
+	return (NvMemory_Status_T)Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_ONCE, (uint8_t *)&p_mc->Manufacture, sizeof(MotorController_Manufacture_T));
 #elif defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
 
 #endif

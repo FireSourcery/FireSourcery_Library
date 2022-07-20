@@ -36,7 +36,7 @@
 #include <stdint.h>
 
 /*
-	Sample value must be significantly great than N for sample to impact average
+	Sample value must be significantly greater than N for sample to impact average
 
 	e.g. (2000 +/- 10)/100 => 20 +/- 0, (2000 +/- 10)/10 => 200 +/- 1
 */

@@ -63,16 +63,27 @@ typedef enum Thermistor_ThresholdStatus_Tag
 }
 Thermistor_ThresholdStatus_T;
 
+/* Calculation */
+typedef enum Thermistor_Type_Tag
+{
+	THERMISTOR_TYPE_NTC,
+	THERMISTOR_TYPE_LINEAR,
+	// THERMISTOR_TYPE_LUT,
+}
+Thermistor_Type_T;
+
 /*
 	Set Vin to same decimal precision as ADC_VREF
 */
 typedef struct __attribute__((aligned(4U))) Thermistor_Params_Tag
 {
-	/* Unit Conversion */
+	Thermistor_Type_T Type;
+	uint16_t VIn_Scalar; /* Vin Set to match Vref units */
+
+	/* NTC Unit Conversion */
 	uint32_t RNominal;
 	uint16_t TNominal; /* In Kelvin*/
 	uint16_t BConstant;
-	uint16_t VIn_Scalar; /* Vin Set to match Vref units */
 
 	/* Monitor Limits */
 	uint16_t Shutdown_Adcu;
@@ -136,7 +147,7 @@ Thermistor_T;
 
 /* Monitor */
 static inline Thermistor_Status_T Thermistor_GetStatus(Thermistor_T * p_therm) { return (p_therm->Status); }
-static inline bool Thermistor_GetIsShutdown(Thermistor_T * p_therm) { return p_therm->Status == THERMISTOR_STATUS_SHUTDOWN; }
+static inline bool Thermistor_GetIsShutdown(Thermistor_T * p_therm) { return p_therm->Status == THERMISTOR_STATUS_SHUTDOWN; } //||THERMISTOR_SHUTDOWN_RISING_EDGE
 static inline bool Thermistor_GetIsWarning(Thermistor_T * p_therm) { return p_therm->Status == THERMISTOR_STATUS_WARNING; }
 static inline bool Thermistor_GetIsMonitorEnable(Thermistor_T * p_therm) { return p_therm->Params.IsMonitorEnable; }
 

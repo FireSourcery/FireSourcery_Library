@@ -100,11 +100,11 @@ void Motor_Analog_CaptureVc(Motor_T * p_motor)
 	@brief  Common
 */
 /******************************************************************************/
-static inline void CaptureIZeroToPeak(Motor_T * p_motor, int32_t adcu)
-{
-	uint16_t zeroToPeak = (adcu > 0) ? adcu : 0 - adcu;
-	if(zeroToPeak > p_motor->IPhasePeakTemp_Adcu) { p_motor->IPhasePeakTemp_Adcu = zeroToPeak; }
-}
+// static inline void CaptureIZeroToPeak(Motor_T * p_motor, int32_t adcu)
+// {
+// 	uint16_t zeroToPeak = (adcu > 0) ? adcu : 0 - adcu;
+// 	if(zeroToPeak > p_motor->IPhasePeakTemp_Adcu) { p_motor->IPhasePeakTemp_Adcu = zeroToPeak; }
+// }
 
 /******************************************************************************/
 /*!
@@ -204,7 +204,7 @@ static inline void EnqueueVabc(Motor_T * p_motor)
 #endif
 }
 
-//static inline void Motor_Analog_Thread(Motor_T * p_motor)
+//static inline void Motor_Analog_Proc(Motor_T * p_motor)
 //{
 //	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_PWM);
 //

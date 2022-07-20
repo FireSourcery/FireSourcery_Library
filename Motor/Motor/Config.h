@@ -31,10 +31,9 @@
 #ifndef CONFIG_MOTOR_H
 #define CONFIG_MOTOR_H
 
-
 #if   defined(ADC_BITS)
 #else
-	#define ADC_BITS 		12U
+	#define ADC_BITS 12U
 #endif
 
 #if 	defined(CONFIG_MOTOR_ALIGN_VOLTAGE_MAX)

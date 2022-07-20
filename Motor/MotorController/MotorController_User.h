@@ -40,7 +40,7 @@
 	Subject to StateMachine process
 
 	Need to save to temporary variable, as StateMachine functions pass 1 context variable only
-	Alternatively,
+	Alternatively, StateMachine_InputExt
 */
 /******************************************************************************/
 static inline void MotorController_User_DisableControl(MotorController_T * p_mc) 		{ MotorController_DisableMotorAll(p_mc); }
@@ -187,7 +187,6 @@ static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIn
 		case 3U: versionChar = MOT_SOFTWARE_VERSION_OPT; 	break;
 		default: versionChar = 0U; break;
 	}
-
 	return versionChar;
 }
 
@@ -200,21 +199,21 @@ static inline uint32_t MotorController_User_GetIMax(MotorController_T * p_mc) { 
 /*
 	WriteOnce Variables
 */
-static inline void MotorController_User_GetName(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->OnceBuffer.NAME[0U], 8U); }
-static inline char * MotorController_User_GetPtrName(MotorController_T * p_mc) { return &p_mc->OnceBuffer.NAME[0U]; }
-static inline char MotorController_User_GetNameIndex(MotorController_T * p_mc, uint8_t charIndex) { return p_mc->OnceBuffer.NAME[charIndex]; }
+static inline void MotorController_User_GetName(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.NAME[0U], 8U); }
+static inline char * MotorController_User_GetPtrName(MotorController_T * p_mc) { return &p_mc->Manufacture.NAME[0U]; }
+static inline char MotorController_User_GetNameIndex(MotorController_T * p_mc, uint8_t charIndex) { return p_mc->Manufacture.NAME[charIndex]; }
 
-static inline void MotorController_User_GetManufacture(MotorController_T * p_mc, MotorController_Manufacture_T * p_dest) { memcpy(p_dest, &p_mc->OnceBuffer, sizeof(MotorController_Manufacture_T)); }
-// static inline uint32_t MotorController_User_GetSerialNumber(MotorController_T * p_mc) { return p_mc->OnceBuffer.SERIAL_NUMBER_REG; }
-// static inline uint32_t MotorController_User_GetManufactureNumber(MotorController_T * p_mc) { return p_mc->OnceBuffer.MANUFACTURE_NUMBER_REG; }
-// static inline void MotorController_User_GetIdExt(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->OnceBuffer.ID_EXT[0U], 8U); }
+static inline void MotorController_User_GetManufacture(MotorController_T * p_mc, MotorController_Manufacture_T * p_dest) { memcpy(p_dest, &p_mc->Manufacture, sizeof(MotorController_Manufacture_T)); }
+// static inline uint32_t MotorController_User_GetSerialNumber(MotorController_T * p_mc) { return p_mc->Manufacture.SERIAL_NUMBER_REG; }
+// static inline uint32_t MotorController_User_GetManufactureNumber(MotorController_T * p_mc) { return p_mc->Manufacture.MANUFACTURE_NUMBER_REG; }
+// static inline void MotorController_User_GetIdExt(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.ID_EXT[0U], 8U); }
 
-// static inline void MotorController_User_SetManufacture(MotorController_T * p_mc, const MotorController_Manufacture_T * p_dest) { memcpy(&p_mc->OnceBuffer, p_string, sizeof(MotorController_Manufacture_T)); }
+// static inline void MotorController_User_SetManufacture(MotorController_T * p_mc, const MotorController_Manufacture_T * p_dest) { memcpy(&p_mc->Manufacture, p_string, sizeof(MotorController_Manufacture_T)); }
 
 /* Save Once does not need state machine */
 static inline void MotorController_User_WriteManufacture(MotorController_T * p_mc, const MotorController_Manufacture_T * p_dest)
 {
-	memcpy(&p_mc->OnceBuffer, p_dest, sizeof(MotorController_Manufacture_T));
+	memcpy(&p_mc->Manufacture, p_dest, sizeof(MotorController_Manufacture_T));
 	MotorController_User_SaveOnce_Blocking(p_mc);
 }
 

@@ -220,9 +220,8 @@ void _Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16)
 
 void _Motor_User_ClearILimitActive(Motor_T * p_motor)
 {
-	p_motor->ILimitActiveScalar = 0xFFFFU;
-	p_motor->ILimitMotoring_Frac16 = p_motor->Parameters.ILimitMotoring_Frac16;
-	p_motor->ILimitGenerating_Frac16 = p_motor->Parameters.ILimitGenerating_Frac16;
+	p_motor->ILimitActiveScalar = 0xFFFFU; /* Use for comparison on set */
+	Motor_ResetILimits(p_motor);
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetSpeedPidILimits(p_motor); }
 }
 
@@ -426,7 +425,6 @@ void Motor_User_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode)
 /******************************************************************************/
 /*   */
 /******************************************************************************/
-
 void Motor_User_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
 {
 	p_motor->Parameters.IPeakRef_Adcu = (adcu > p_motor->CONFIG.I_ZERO_TO_PEAK_ADCU) ? p_motor->CONFIG.I_ZERO_TO_PEAK_ADCU : adcu;
