@@ -25,7 +25,5 @@
     "C_Cpp.vcFormat.space.beforeInitializerListOpenBrace": true,
     "files.trimTrailingWhitespace": true,
     "cmake.configureOnOpen": false,
-    // "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
-
     "explorer.copyRelativePathSeparator": "/",
 }
