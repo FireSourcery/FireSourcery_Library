@@ -95,25 +95,10 @@
 /* Data(FlexNvM) Flash IFR */
 #define S32K_FLASH_RESERVED_EEPROM_SIZE			0x03FD
 #define S32K_FLASH_RESERVED_FLEX_NVM_CODE		0x03FC
-/*
-	Map to upper software layer
-*/
-#define HAL_FLASH_UNIT_ERASE_SIZE			S32K_FLASH_SECTOR_SIZE
-#define HAL_FLASH_UNIT_WRITE_SIZE			S32K_FLASH_PHRASE_SIZE /* 8 byte aligned */
-#define HAL_FLASH_ERASE_SECTOR_SIZE			HAL_FLASH_UNIT_ERASE_SIZE /* alias */
-#define HAL_FLASH_WRITE_PAGE_SIZE			HAL_FLASH_UNIT_WRITE_SIZE
-#define HAL_FLASH_UNIT_VERIFY_ERASE_SIZE	S32K_FLASH_SECTOR_SIZE
-#define HAL_FLASH_UNIT_VERIFY_WRITE_SIZE	4U
-#define HAL_FLASH_UNIT_WRITE_ONCE_SIZE		S32K_FLASH_PHRASE_SIZE
-#define HAL_FLASH_UNIT_READ_ONCE_SIZE		S32K_FLASH_PHRASE_SIZE
 
 /*
-	S32K  FLASH/EEPROM use same controller, same HAL
-	only 1 flash controller, unused
+	Register rename
 */
-typedef FTFC_Type HAL_Flash_T;
-
-/* Register rename */
 #define FTFx_BASE      FTFC_BASE
 #define FTFC_FSTAT     FTFC->FSTAT
 #define FTFx_FCNFG     FTFC->FCNFG
@@ -167,6 +152,25 @@ typedef FTFC_Type HAL_Flash_T;
 #define GET_BIT_8_15(value)  ((uint8_t)((((uint32_t)(value)) >> 8U) & 0xFFU))
 #define GET_BIT_16_23(value) ((uint8_t)((((uint32_t)(value)) >> 16U) & 0xFFU))
 #define GET_BIT_24_31(value) ((uint8_t)(((uint32_t)(value)) >> 24U))
+
+
+/*
+	Map to upper software layer
+*/
+#define HAL_FLASH_UNIT_ERASE_SIZE			S32K_FLASH_SECTOR_SIZE
+#define HAL_FLASH_UNIT_WRITE_SIZE			S32K_FLASH_PHRASE_SIZE /* 8 byte aligned */
+#define HAL_FLASH_ERASE_SECTOR_SIZE			HAL_FLASH_UNIT_ERASE_SIZE /* alias */
+#define HAL_FLASH_WRITE_PAGE_SIZE			HAL_FLASH_UNIT_WRITE_SIZE
+#define HAL_FLASH_UNIT_VERIFY_ERASE_SIZE	S32K_FLASH_SECTOR_SIZE
+#define HAL_FLASH_UNIT_VERIFY_WRITE_SIZE	4U /* Chip min is 1 */
+#define HAL_FLASH_UNIT_WRITE_ONCE_SIZE		S32K_FLASH_PHRASE_SIZE
+#define HAL_FLASH_UNIT_READ_ONCE_SIZE		S32K_FLASH_PHRASE_SIZE
+
+/*
+	S32K  FLASH/EEPROM use same controller, same HAL
+	only 1 flash controller, unused
+*/
+typedef FTFC_Type HAL_Flash_T;
 
 /*
 	Use CONFIG_FLASH_ATTRIBUTE_RAM_SECTION incase functions are not inlined (and stored in ram with calling function)
