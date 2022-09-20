@@ -28,8 +28,8 @@
 	@version V0
 */
 /******************************************************************************/
-#ifndef RING_FIRE_SOURCERY_H
-#define RING_FIRE_SOURCERY_H
+#ifndef RING_UTILITY_H
+#define RING_UTILITY_H
 
 #include "Config.h"
 
@@ -96,105 +96,105 @@ Ring_T;
 // #define RING_INIT(p_Buffer, Length, UnitSize)
 // #define RING_INIT_MULTITHREADED(p_Buffer, Length, UnitSize, UseCritical)
 
-static inline size_t _Ring_CalcIndexMasked(const Ring_T * p_queue, size_t index)
+static inline size_t _Ring_CalcIndexMasked(const Ring_T * p_ring, size_t index)
 {
 #if defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) || defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
-	return (index & p_queue->CONFIG.POW2_MASK);
+	return (index & p_ring->CONFIG.POW2_MASK);
 #else
-	return (index % p_queue->CONFIG.LENGTH);
+	return (index % p_ring->CONFIG.LENGTH);
 #endif
 }
 
-static inline size_t _Ring_CalcIndexInc(const Ring_T * p_queue, size_t index, size_t inc)
+static inline size_t _Ring_CalcIndexInc(const Ring_T * p_ring, size_t index, size_t inc)
 {
 #if defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
-	(void)p_queue;
+	(void)p_ring;
 	return index + inc;
 #else
-	return _Ring_CalcIndexMasked(p_queue, index + inc);
+	return _Ring_CalcIndexMasked(p_ring, index + inc);
 #endif
 }
 
-static inline size_t _Ring_CalcIndexDec(const Ring_T * p_queue, size_t index, size_t dec)
+static inline size_t _Ring_CalcIndexDec(const Ring_T * p_ring, size_t index, size_t dec)
 {
 #if defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
-	(void)p_queue;
+	(void)p_ring;
 	return index - dec;
 #elif defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
-	return _Ring_CalcIndexMasked(p_queue, index - dec);
+	return _Ring_CalcIndexMasked(p_ring, index - dec);
 #else
-	return _Ring_CalcIndexMasked(p_queue, p_queue->CONFIG.LENGTH + index - dec);
-	//(index < 1U) ? index = p_unit, p_queue->CONFIG.LENGTH - 1U : index--;
+	return _Ring_CalcIndexMasked(p_ring, p_ring->CONFIG.LENGTH + index - dec);
+	//(index < 1U) ? index = p_unit, p_ring->CONFIG.LENGTH - 1U : index--;
 #endif
 }
 
 /*
 	later 2 cases: returns max of buffer length - 1, to account for 1 space used for detection
 */
-static inline size_t Ring_GetFullCount(const Ring_T * p_queue)
+static inline size_t Ring_GetFullCount(const Ring_T * p_ring)
 {
 #ifdef CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED
-	return (p_queue->Head - p_queue->Tail);
+	return (p_ring->Head - p_ring->Tail);
 #elif defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
-	return _Ring_CalcIndexMasked(p_queue, p_queue->Head - p_queue->Tail);
+	return _Ring_CalcIndexMasked(p_ring, p_ring->Head - p_ring->Tail);
 #else
-	return _Ring_CalcIndexMasked(p_queue, p_queue->CONFIG.LENGTH + p_queue->Head - p_queue->Tail);
+	return _Ring_CalcIndexMasked(p_ring, p_ring->CONFIG.LENGTH + p_ring->Head - p_ring->Tail);
 #endif
 }
 
 /*
 	later 2 cases: -1 to account for space used for detection
 */
-static inline size_t Ring_GetEmptyCount(const Ring_T * p_queue)
+static inline size_t Ring_GetEmptyCount(const Ring_T * p_ring)
 {
 #ifdef CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED
-	return p_queue->CONFIG.LENGTH + p_queue->Tail - p_queue->Head;
+	return p_ring->CONFIG.LENGTH + p_ring->Tail - p_ring->Head;
 #elif defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
-	return _Ring_CalcIndexMasked(p_queue, p_queue->CONFIG.LENGTH + p_queue->Tail - p_queue->Head - 1U);
+	return _Ring_CalcIndexMasked(p_ring, p_ring->CONFIG.LENGTH + p_ring->Tail - p_ring->Head - 1U);
 #else
-	return _Ring_CalcIndexMasked(p_queue, p_queue->CONFIG.LENGTH + p_queue->Tail - p_queue->Head - 1U);
-	//	return (p_queue->Tail > p_queue->Head) ? (p_queue->Tail - p_queue->Head - 1U) : (p_queue->CONFIG.LENGTH - p_queue->Head + p_queue->Tail - 1U);
+	return _Ring_CalcIndexMasked(p_ring, p_ring->CONFIG.LENGTH + p_ring->Tail - p_ring->Head - 1U);
+	//	return (p_ring->Tail > p_ring->Head) ? (p_ring->Tail - p_ring->Head - 1U) : (p_ring->CONFIG.LENGTH - p_ring->Head + p_ring->Tail - 1U);
 #endif
 }
 
-static inline bool Ring_GetIsEmpty(const Ring_T * p_queue)
+static inline bool Ring_GetIsEmpty(const Ring_T * p_ring)
 {
-	return (p_queue->Head == p_queue->Tail);
+	return (p_ring->Head == p_ring->Tail);
 }
 
-static inline bool Ring_GetIsFull(const Ring_T * p_queue)
+static inline bool Ring_GetIsFull(const Ring_T * p_ring)
 {
 #ifdef CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED
-	return (Ring_GetFullCount(p_queue) == p_queue->CONFIG.LENGTH);
+	return (Ring_GetFullCount(p_ring) == p_ring->CONFIG.LENGTH);
 #else
-	return (_Ring_CalcIndexInc(p_queue, p_queue->Head, 1U) == p_queue->Tail);
+	return (_Ring_CalcIndexInc(p_ring, p_ring->Head, 1U) == p_ring->Tail);
 #endif
 }
 
-extern void Ring_Init(Ring_T * p_queue);
+extern void Ring_Init(Ring_T * p_ring);
 #ifdef CONFIG_RING_DYNAMIC_MEMORY_ALLOCATION
 extern Ring_T * Ring_New(size_t unitCount, size_t unitSize);
 #endif
-extern void Ring_Clear(Ring_T * p_queue);
-extern bool Ring_Enqueue(Ring_T * p_queue, const void * p_unit);
-extern bool Ring_Dequeue(Ring_T * p_queue, void * p_dest);
-extern bool Ring_EnqueueN(Ring_T * p_queue, const void * p_unit, size_t nUnits);
-extern bool Ring_DequeueN(Ring_T * p_queue, void * p_dest, size_t nUnits);
-extern size_t Ring_EnqueueMax(Ring_T * p_queue, const void * p_units, size_t nUnits);
-extern size_t Ring_DequeueMax(Ring_T * p_queue, void * p_dest, size_t nUnits);
-extern bool Ring_PushFront(Ring_T * p_queue, const void * p_unit);
-extern bool Ring_PopBack(Ring_T * p_queue, void * p_dest);
-extern bool Ring_PeekFront(Ring_T * p_queue, void * p_dest);
-extern bool Ring_PeekBack(Ring_T * p_queue, void * p_dest);
-extern bool Ring_PeekIndex(Ring_T * p_queue, void * p_dest, size_t index);
-extern bool Ring_RemoveFront(Ring_T * p_queue, size_t nUnits);
-extern bool Ring_RemoveBack(Ring_T * p_queue, size_t nUnits);
-extern bool Ring_Seek(Ring_T * p_queue, void * p_dest, size_t index);
-extern void * Ring_PeekPtrFront(Ring_T * p_queue);
-extern void * Ring_PeekPtrBack(Ring_T * p_queue);
-extern void * Ring_PeekPtrIndex(Ring_T * p_queue, size_t index);
-extern void * Ring_SeekPtr(Ring_T * p_queue, size_t index);
-extern uint8_t * Ring_AcquireBuffer(Ring_T * p_queue);
-extern void Ring_ReleaseBuffer(Ring_T * p_queue, size_t writeSize);
+extern void Ring_Clear(Ring_T * p_ring);
+extern bool Ring_Enqueue(Ring_T * p_ring, const void * p_unit);
+extern bool Ring_Dequeue(Ring_T * p_ring, void * p_dest);
+extern bool Ring_EnqueueN(Ring_T * p_ring, const void * p_unit, size_t nUnits);
+extern bool Ring_DequeueN(Ring_T * p_ring, void * p_dest, size_t nUnits);
+extern size_t Ring_EnqueueMax(Ring_T * p_ring, const void * p_units, size_t nUnits);
+extern size_t Ring_DequeueMax(Ring_T * p_ring, void * p_dest, size_t nUnits);
+extern bool Ring_PushFront(Ring_T * p_ring, const void * p_unit);
+extern bool Ring_PopBack(Ring_T * p_ring, void * p_dest);
+extern bool Ring_PeekFront(Ring_T * p_ring, void * p_dest);
+extern bool Ring_PeekBack(Ring_T * p_ring, void * p_dest);
+extern bool Ring_PeekIndex(Ring_T * p_ring, void * p_dest, size_t index);
+extern bool Ring_RemoveFront(Ring_T * p_ring, size_t nUnits);
+extern bool Ring_RemoveBack(Ring_T * p_ring, size_t nUnits);
+extern bool Ring_Seek(Ring_T * p_ring, void * p_dest, size_t index);
+extern void * Ring_PeekPtrFront(Ring_T * p_ring);
+extern void * Ring_PeekPtrBack(Ring_T * p_ring);
+extern void * Ring_PeekPtrIndex(Ring_T * p_ring, size_t index);
+extern void * Ring_SeekPtr(Ring_T * p_ring, size_t index);
+extern uint8_t * Ring_AcquireBuffer(Ring_T * p_ring);
+extern void Ring_ReleaseBuffer(Ring_T * p_ring, size_t writeSize);
 
 #endif
