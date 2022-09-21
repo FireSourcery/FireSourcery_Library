@@ -37,7 +37,7 @@
 	#define CONFIG_RING_SINGLE_THREADED
 #endif
 
-#if 	defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) 	/* Power 2 length only, interger overflow wrap only */
+#if 	defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) 	/* Power 2 length only. Interger overflow wrap only */
 #elif  	defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)		/* Power 2 length only. Does not need interger overflow wrap */
 #elif  	defined(CONFIG_RING_LENGTH_ANY)
 #else
