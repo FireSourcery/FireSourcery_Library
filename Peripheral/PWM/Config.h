@@ -32,6 +32,7 @@
 #define CONFIG_PWM_H
 
 #ifdef CONFIG_PWM_DUTY_MAX
+
 #else
 	#define CONFIG_PWM_DUTY_MAX (65536U)
 #endif

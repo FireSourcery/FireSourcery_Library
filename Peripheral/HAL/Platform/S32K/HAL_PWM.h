@@ -44,22 +44,15 @@ static inline void HAL_PWM_ClearInterrupt(HAL_PWM_T * p_hal)
 	p_hal->SC;	/* Read-after-write sequence to guarantee required serialization of memory operations */
 }
 
-static inline void HAL_PWM_DisableInterrupt(HAL_PWM_T * p_hal)
-{
-	(void)p_hal; //todo FTM_SC_TOIE_MASK
-}
-
-static inline void HAL_PWM_EnableInterrupt(HAL_PWM_T * p_hal)
-{
-	(void)p_hal; //todo
-}
+static inline void HAL_PWM_DisableInterrupt(HAL_PWM_T * p_hal) { p_hal->SC &= ~FTM_SC_TOIE_MASK; }
+static inline void HAL_PWM_EnableInterrupt(HAL_PWM_T * p_hal) { p_hal->SC |= FTM_SC_TOIE_MASK; }
 
 /*
 	Common Sync, may split for polarity and CV
 	S32K syncs module. e.g CnV sync, partial, per channel, register write, not supported.
 */
-static inline void HAL_PWM_Sync(HAL_PWM_T * p_hal, uint32_t channel){	(void)channel;	p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK;}
-static inline void HAL_PWM_WriteDuty(HAL_PWM_T * p_hal, uint32_t channel, uint32_t pwm){	p_hal->CONTROLS[channel].CnV = pwm;}
+static inline void HAL_PWM_Sync(HAL_PWM_T * p_hal, uint32_t channel) { (void)channel; p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK; }
+static inline void HAL_PWM_WriteDuty(HAL_PWM_T * p_hal, uint32_t channel, uint32_t pwm) { p_hal->CONTROLS[channel].CnV = pwm; }
 static inline void HAL_PWM_EnableOutput(HAL_PWM_T * p_hal, uint32_t channel) { p_hal->OUTMASK &= ~(1UL << channel); } /* Mask to disable output */
 static inline void HAL_PWM_DisableOutput(HAL_PWM_T * p_hal, uint32_t channel) { p_hal->OUTMASK |= (1UL << channel); }
 static inline void HAL_PWM_EnableInvertPolarity(HAL_PWM_T * p_hal, uint32_t channel) { p_hal->POL |= (1UL << channel); }

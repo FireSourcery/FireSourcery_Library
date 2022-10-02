@@ -124,6 +124,8 @@ static inline void Critical_ReleaseMutex(critical_mutex_t * p_mutex)
 	Critical_Exit();
 }
 
+/* When thread sleep is not support, configure to global interrupt disable */
+
 static inline bool Critical_AquireEnter(critical_mutex_t * p_mutex)
 {
 #if defined(CONFIG_CRITICAL_USE_MUTEX)

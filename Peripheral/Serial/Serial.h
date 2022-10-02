@@ -121,7 +121,7 @@ static inline void Serial_PollRestartRxIsr(const Serial_T * p_serial)
 	}
 }
 
-//todo hw fifo buffer
+//todo polling via hw fifo buffer
 /* UNTESTED */
 static inline void Serial_PollRxData(Serial_T * p_serial)
 {
@@ -134,11 +134,7 @@ static inline void Serial_PollTxData(Serial_T * p_serial)
 {
 	HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 	Serial_TxData_ISR(p_serial);
-
-	if(Ring_GetIsEmpty(&p_serial->TxRing) == false)
-	{
-		HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-	}
+	if(Ring_GetIsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
 }
 
 static inline void Serial_FlushBuffers(Serial_T * p_serial)
@@ -154,6 +150,9 @@ static inline void Serial_DisableTxIsr(const Serial_T * p_serial) 	{ HAL_Serial_
 static inline void Serial_EnableRx(const Serial_T * p_serial) 		{ HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
 static inline void Serial_DisableRx(const Serial_T * p_serial) 		{ HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
 
+/*
+	extern
+*/
 extern void Serial_Init(Serial_T * p_serial);
 extern void Serial_Deinit(Serial_T * p_serial);
 extern void Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate);
@@ -163,8 +162,9 @@ extern size_t Serial_SendMax(Serial_T * p_serial, const uint8_t * p_srcBuffer, s
 extern size_t Serial_RecvMax(Serial_T * p_serial, uint8_t * p_destBuffer, size_t bufferSize);
 extern bool Serial_SendN(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
 extern bool Serial_RecvN(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
-	extern bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
-	extern size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
+
+extern bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
+extern size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
 extern uint8_t * Serial_AcquireTxBuffer(Serial_T * p_serial);
 extern void Serial_ReleaseTxBuffer(Serial_T * p_serial, size_t writeSize);
 

@@ -41,6 +41,7 @@ typedef const struct Pin_Config_Tag
 	HAL_Pin_T * const P_HAL_PIN;
 	const uint32_t ID;
 	const uint32_t MASK;
+	const bool IS_INVERT; /* Use ground state as on */
 }
 Pin_Config_T;
 

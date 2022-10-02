@@ -38,10 +38,7 @@
 
 typedef FTM_Type HAL_Encoder_T;
 
-static inline bool HAL_Encoder_ReadTimerCounterOverflow(const HAL_Encoder_T * p_encoder)
-{
-	return p_encoder->SC & FTM_SC_TOF_MASK;
-}
+static inline bool HAL_Encoder_ReadTimerCounterOverflow(const HAL_Encoder_T * p_encoder) { return p_encoder->SC & FTM_SC_TOF_MASK; }
 
 /* Clear interrupt */
 static inline void HAL_Encoder_ClearTimerCounterOverflow(HAL_Encoder_T * p_encoder)
@@ -50,36 +47,14 @@ static inline void HAL_Encoder_ClearTimerCounterOverflow(HAL_Encoder_T * p_encod
 	p_encoder->SC;	/* Read-after-write sequence to guarantee required serialization of memory operations */
 }
 
-static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder)
-{
-	return p_encoder->CNT;
-}
-
-static inline void HAL_Encoder_WriteTimerCounter(HAL_Encoder_T * p_encoder, uint32_t count)
-{
-	p_encoder->CNT = FTM_CNT_COUNT(count);
-}
-
-static inline void HAL_Encoder_WriteTimerCounterMax(HAL_Encoder_T * p_encoder, uint32_t max)
-{
-	p_encoder->MOD = FTM_MOD_MOD(max);
-}
-
-static inline bool HAL_Encoder_ReadQuadratureCounterDirection(const HAL_Encoder_T * p_encoder)
-{
-	return ((p_encoder->QDCTRL & FTM_QDCTRL_QUADIR_MASK) != 0U) ? true : false;
-}
-
+static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder) { return p_encoder->CNT; }
+static inline void HAL_Encoder_WriteTimerCounter(HAL_Encoder_T * p_encoder, uint32_t count) { p_encoder->CNT = FTM_CNT_COUNT(count); }
+static inline void HAL_Encoder_WriteTimerCounterMax(HAL_Encoder_T * p_encoder, uint32_t max) { p_encoder->MOD = FTM_MOD_MOD(max); }
+static inline bool HAL_Encoder_ReadQuadratureCounterDirection(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_QUADIR_MASK) != 0U); }
 /* Return true if counter over flow on increment */
-static inline bool HAL_Encoder_ReadQuadratureCounterOverflowIncrement(const HAL_Encoder_T * p_encoder)
-{
-	return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) != 0U) ? true : false;
-}
-
-static inline bool HAL_Encoder_ReadQuadratureCounterOverflowDecrement(const HAL_Encoder_T * p_encoder)
-{
-	return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) == 0U) ? true : false;
-}
+static inline bool HAL_Encoder_ReadQuadratureCounterOverflowIncrement(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) != 0U); }
+/* Return true if counter over flow on decrement */
+static inline bool HAL_Encoder_ReadQuadratureCounterOverflowDecrement(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) == 0U); }
 
 /*
 	S32K use pin read Phase

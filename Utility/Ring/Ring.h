@@ -45,8 +45,8 @@ typedef const struct Ring_Config_Tag
 #if defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) || defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
 	const uint32_t POW2_MASK;
 #endif
-#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
-	const bool USE_CRITICAL;
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE) /* Ring layer enable */
+	const bool USE_CRITICAL;	/* Per instance enable */
 #endif
 }
 Ring_Config_T;

@@ -35,8 +35,8 @@
 	Mode = 24 ADC Cycles, 12-bit Mode = 28 ADC Cycles) + Single or First continuous
 	time adder (5 ADC cycles + 5 bus clock cycles)
 */
-#ifndef HAL_Analog_PLATFORM_H
-#define HAL_Analog_PLATFORM_H
+#ifndef HAL_ANALOG_PLATFORM_H
+#define HAL_ANALOG_PLATFORM_H
 
 #include "External/S32K142/include/S32K142.h" /* use drivers or direct register access */
 

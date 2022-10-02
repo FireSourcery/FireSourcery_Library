@@ -200,48 +200,56 @@ bool Ring_Dequeue(Ring_T * p_ring, void * p_dest)
 bool Ring_EnqueueN(Ring_T * p_ring, const void * p_units, size_t nUnits)
 {
 	bool isSuccess = false;
-	EnterCritical(p_ring); // if(AcquireCritical(p_ring) == true) {
-	if(nUnits <= Ring_GetEmptyCount(p_ring))
+	if(AcquireCritical(p_ring) == true)
 	{
-		for(size_t iUnit = 0U; iUnit < nUnits; iUnit++) { Enqueue(p_ring, CalcPtrUnit(p_units, p_ring->CONFIG.UNIT_SIZE, iUnit)); }
-		isSuccess = true;
+		if(nUnits <= Ring_GetEmptyCount(p_ring))
+		{
+			for(size_t iUnit = 0U; iUnit < nUnits; iUnit++) { Enqueue(p_ring, CalcPtrUnit(p_units, p_ring->CONFIG.UNIT_SIZE, iUnit)); }
+			isSuccess = true;
+		}
+		ReleaseCritical(p_ring);
 	}
-	ExitCritical(p_ring); // ReleaseCritical(p_ring); }
 	return isSuccess;
 }
 
 bool Ring_DequeueN(Ring_T * p_ring, void * p_dest, size_t nUnits)
 {
 	bool isSuccess = false;
-	EnterCritical(p_ring);
-	if(nUnits <= Ring_GetFullCount(p_ring))
+	if(AcquireCritical(p_ring) == true)
 	{
-		for(size_t iUnit = 0U; iUnit < nUnits; iUnit++) { Dequeue(p_ring, CalcPtrUnit(p_dest, p_ring->CONFIG.UNIT_SIZE, iUnit)); }
-		isSuccess = true;
+		if(nUnits <= Ring_GetFullCount(p_ring))
+		{
+			for(size_t iUnit = 0U; iUnit < nUnits; iUnit++) { Dequeue(p_ring, CalcPtrUnit(p_dest, p_ring->CONFIG.UNIT_SIZE, iUnit)); }
+			isSuccess = true;
+		}
+		ReleaseCritical(p_ring);
 	}
-	ExitCritical(p_ring);
 	return isSuccess;
 }
 
 size_t Ring_EnqueueMax(Ring_T * p_ring, const void * p_units, size_t nUnits)
 {
-	size_t count;
-	EnterCritical(p_ring);
-	count = Ring_GetEmptyCount(p_ring);
-	if(count > nUnits) { count = nUnits; }
-	for(size_t iCount = 0U; iCount < count; iCount++) { Enqueue(p_ring, CalcPtrUnit(p_units, p_ring->CONFIG.UNIT_SIZE, iCount)); }
-	ExitCritical(p_ring);
+	size_t count = 0U;
+	if(AcquireCritical(p_ring) == true)
+	{
+		count = Ring_GetEmptyCount(p_ring);
+		if(count > nUnits) { count = nUnits; }
+		for(size_t iCount = 0U; iCount < count; iCount++) { Enqueue(p_ring, CalcPtrUnit(p_units, p_ring->CONFIG.UNIT_SIZE, iCount)); }
+		ReleaseCritical(p_ring);
+	}
 	return count;
 }
 
 size_t Ring_DequeueMax(Ring_T * p_ring, void * p_dest, size_t nUnits)
 {
-	size_t count;
-	EnterCritical(p_ring);
-	count = Ring_GetFullCount(p_ring);
-	if(count < nUnits) { count = nUnits; }
-	for(size_t iCount = 0U; iCount < count; iCount++) { Dequeue(p_ring, CalcPtrUnit(p_dest, p_ring->CONFIG.UNIT_SIZE, iCount)); }
-	ExitCritical(p_ring);
+	size_t count = 0U;
+	if(AcquireCritical(p_ring) == true)
+	{
+		count = Ring_GetFullCount(p_ring);
+		if(count < nUnits) { count = nUnits; }
+		for(size_t iCount = 0U; iCount < count; iCount++) { Dequeue(p_ring, CalcPtrUnit(p_dest, p_ring->CONFIG.UNIT_SIZE, iCount)); }
+		ReleaseCritical(p_ring);
+	}
 	return count;
 }
 
