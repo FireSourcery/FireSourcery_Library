@@ -83,12 +83,11 @@ static inline void ExitCriticalRx(Serial_T * p_serial)
 
 /*
 	Flexible selection between mutex and critical
-	UNTESTED
 */
 static inline bool AcquireCriticalTx(Serial_T * p_serial)
 {
 #if		defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-	return Critical_AquireMutex(&p_serial->TxMutex);
+	return Critical_AquireMutex(&p_serial->TxMutex); //	UNTESTED
 #elif 	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
 	(void)p_serial;
 	Critical_Enter();
@@ -102,7 +101,7 @@ static inline bool AcquireCriticalTx(Serial_T * p_serial)
 static inline void ReleaseCriticalTx(Serial_T * p_serial)
 {
 #if		defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-	Critical_ReleaseMutex(&p_serial->TxMutex);
+	Critical_ReleaseMutex(&p_serial->TxMutex); // UNTESTED
 #elif 	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
 	(void)p_serial;
 	Critical_Exit();
@@ -115,7 +114,7 @@ static inline void ReleaseCriticalTx(Serial_T * p_serial)
 static inline bool AcquireCriticalRx(Serial_T * p_serial)
 {
 #if		defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-	return Critical_AquireMutex(&p_serial->RxMutex);
+	return Critical_AquireMutex(&p_serial->RxMutex); // UNTESTED
 #elif 	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
 	(void)p_serial;
 	Critical_Enter();
@@ -129,7 +128,7 @@ static inline bool AcquireCriticalRx(Serial_T * p_serial)
 static inline void ReleaseCriticalRx(Serial_T * p_serial)
 {
 #if		defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-	Critical_ReleaseMutex(&p_serial->RxMutex);
+	Critical_ReleaseMutex(&p_serial->RxMutex); // UNTESTED
 #elif	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
 	(void)p_serial;
 	Critical_Exit();
@@ -140,7 +139,7 @@ static inline void ReleaseCriticalRx(Serial_T * p_serial)
 }
 
 /*
-	?Tx need not disable interrupt after checking empty, hw buffer can only decrease.
+
 */
 static inline bool Hw_SendChar(Serial_T * p_serial, const uint8_t txchar)
 {
@@ -150,7 +149,7 @@ static inline bool Hw_SendChar(Serial_T * p_serial, const uint8_t txchar)
 }
 
 /*
-	?Rx must prevent interrupt after checking full, hw buffer can increase.
+
 */
 static inline bool Hw_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
 {
@@ -219,7 +218,7 @@ bool Serial_SendByte(Serial_T * p_serial, uint8_t txChar)
 	EnterCriticalTx(p_serial);
 	//write directly to hw fifo/reg todo
 	//	if (Ring_GetIsEmpty(&p_serial->TxRing) == true) && HAL_Serial_GetIsActive == false
-	//	{
+	//	{?Tx need not disable interrupt after checking empty, hw buffer can only decrease.
 	//		isSuccess = Hw_SendChar(p_serial, txChar);
 	//	}
 	//	else
@@ -238,7 +237,7 @@ bool Serial_RecvByte(Serial_T * p_serial, uint8_t * p_rxChar)
 
 	EnterCriticalRx(p_serial);
 	//	if (Ring_GetIsEmpty(&p_serial->RxRing) == true)
-	//	{
+	//	{?Rx must prevent interrupt after checking full, hw buffer can increase.
 	//		isSuccess = Hw_RecvChar(p_serial, p_rxChar);
 	//	}
 	//	else

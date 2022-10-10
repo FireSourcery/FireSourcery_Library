@@ -44,7 +44,8 @@
 
 /******************************************************************************/
 /*!
-	Optionally implement Critical at Buffer instace level.
+	Optionally implement Critical at Ring Buffer instace level.
+	Alternatively, Critical can be implement in upper layer.
 */
 /******************************************************************************/
 static inline void EnterCritical(const Ring_T * p_ring)
@@ -118,11 +119,6 @@ static inline size_t GetIndex(const Ring_T * p_ring, size_t index)
 	return index;
 #endif
 }
-
-// static inline size_t CalcIndexOffset(const Ring_T * p_ring, size_t index) 			{ return GetIndex(p_ring, index) * p_ring->CONFIG.UNIT_SIZE; }
-// static inline void * GetPtrFront(const Ring_T * p_ring) 								{ return ((uint8_t *)p_ring->CONFIG.P_BUFFER + CalcIndexOffset(p_ring, p_ring->Tail)); }
-// static inline void * GetPtrBack(const Ring_T * p_ring) 								{ return ((uint8_t *)p_ring->CONFIG.P_BUFFER + CalcIndexOffset(p_ring, p_ring->Head)); }
-// static inline void * GetPtrIndex(const Ring_T * p_ring, size_t index) 				{ return ((uint8_t *)p_ring->CONFIG.P_BUFFER + CalcIndexOffset(p_ring, p_ring->Tail + index)); }
 
 static inline void * GetPtrFront(const Ring_T * p_ring) 							{ return CalcPtrUnit(p_ring->CONFIG.P_BUFFER, p_ring->CONFIG.UNIT_SIZE, GetIndex(p_ring, p_ring->Tail)); }
 static inline void * GetPtrBack(const Ring_T * p_ring) 								{ return CalcPtrUnit(p_ring->CONFIG.P_BUFFER, p_ring->CONFIG.UNIT_SIZE, GetIndex(p_ring, p_ring->Head)); }
