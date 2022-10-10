@@ -151,7 +151,7 @@ static inline bool Hw_SendChar(Serial_T * p_serial, const uint8_t txchar)
 
 /*
 	?Rx must prevent interrupt after checking full, hw buffer can increase.
- */
+*/
 static inline bool Hw_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
 {
 	bool isSuccess = (HAL_Serial_ReadRxFullCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U);
@@ -172,24 +172,20 @@ static inline uint8_t Hw_GetLoopCount(size_t length)
 static inline size_t Hw_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
 {
 	size_t charCount;
-
 	for(charCount = 0U; charCount < Hw_GetLoopCount(length); charCount++)
 	{
 		if(Hw_SendChar(p_serial, p_srcBuffer[charCount]) == false) { break; }
 	}
-
 	return charCount;
 }
 
 static inline size_t Hw_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
 {
 	size_t charCount;
-
 	for(charCount = 0U; charCount < Hw_GetLoopCount(length); charCount++)
 	{
 		if(Hw_RecvChar(p_serial, &p_destBuffer[charCount]) == false) { break; }
 	}
-
 	return charCount;
 }
 
