@@ -136,6 +136,9 @@ StateMachine_T;
 
 static inline statemachine_state_t StateMachine_GetActiveStateId(StateMachine_T * p_stateMachine) { return p_stateMachine->p_StateActive->ID; }
 
+/*
+	extern
+*/
 extern void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState);
 extern void StateMachine_Init(StateMachine_T * p_stateMachine);
 extern void StateMachine_Reset(StateMachine_T * p_stateMachine);

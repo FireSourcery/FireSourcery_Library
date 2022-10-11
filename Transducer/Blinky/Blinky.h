@@ -75,7 +75,7 @@ extern void Blinky_Stop(Blinky_T * p_blinky);
 extern void Blinky_Blink_OnOff(Blinky_T * p_blinky, uint32_t duration);
 extern void Blinky_Blink_Toggle(Blinky_T * p_blinky, uint32_t duration);
 extern void Blinky_Blink(Blinky_T * p_blinky, uint32_t onTime);
-extern void Blinky_BlinkN(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8_t n);
+extern void Blinky_BlinkN(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8_t nRepeat);
 extern void Blinky_StartPeriodic(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime);
 
 #endif

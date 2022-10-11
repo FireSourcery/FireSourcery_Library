@@ -58,11 +58,11 @@ void Blinky_Proc(Blinky_T * p_blinky)
 			if (p_blinky->Index < p_blinky->Max)
 			{
 				Pattern_PeriodicToggle(p_blinky);
-				Timer_Restart(&p_blinky->Timer); 
+				Timer_Restart(&p_blinky->Timer);
 				p_blinky->Index++;
 			}
 			else
-			{ 
+			{
 				Blinky_Toggle(p_blinky);
 				Timer_StartPeriodic(&p_blinky->Timer, p_blinky->OffTime);  /* Restore Periodic */
 			}
@@ -77,13 +77,13 @@ void Blinky_Proc(Blinky_T * p_blinky)
 void Blinky_On(Blinky_T * p_blinky)			{p_blinky->IsOn = true;		Pin_Output_High(&p_blinky->Pin);}
 void Blinky_Off(Blinky_T * p_blinky)		{p_blinky->IsOn = false;	Pin_Output_Low(&p_blinky->Pin);}
 void Blinky_Toggle(Blinky_T * p_blinky) 	{(p_blinky->IsOn == true) ? Blinky_Off(p_blinky) : Blinky_On(p_blinky);}
-void Blinky_Disable(Blinky_T * p_blinky) 	{ Blinky_Off(p_blinky); Timer_Disable(&p_blinky->Timer); p_blinky->PatternFunction = Blinky_Disable;} 
-void Blinky_Stop(Blinky_T * p_blinky) 		{ Blinky_Disable(p_blinky);} 
+void Blinky_Disable(Blinky_T * p_blinky) 	{ Blinky_Off(p_blinky); Timer_Disable(&p_blinky->Timer); p_blinky->PatternFunction = Blinky_Disable;}
+void Blinky_Stop(Blinky_T * p_blinky) 		{ Blinky_Disable(p_blinky);}
 
 /* Always on first */
 void Blinky_Blink_OnOff(Blinky_T * p_blinky, uint32_t duration)
 {
-	Blinky_On(p_blinky); 
+	Blinky_On(p_blinky);
 	Timer_StartOneShot(&p_blinky->Timer, duration);
 }
 
@@ -91,7 +91,7 @@ void Blinky_Blink_OnOff(Blinky_T * p_blinky, uint32_t duration)
 void Blinky_Blink_Toggle(Blinky_T * p_blinky, uint32_t duration)
 {
 	Blinky_Toggle(p_blinky);
-	Timer_StartOneShot(&p_blinky->Timer, duration); 
+	Timer_StartOneShot(&p_blinky->Timer, duration);
 }
 
 void Blinky_Blink(Blinky_T * p_blinky, uint32_t onTime)
@@ -101,10 +101,10 @@ void Blinky_Blink(Blinky_T * p_blinky, uint32_t onTime)
 	Blinky_Blink_OnOff(p_blinky, onTime);
 }
 
-void Blinky_BlinkN(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8_t n)
+void Blinky_BlinkN(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8_t nRepeat)
 {
 	p_blinky->Index = 0U;
-	p_blinky->Max = n * 2U - 2U;
+	p_blinky->Max = nRepeat * 2U - 2U;
 	p_blinky->OnTime = onTime;
 	p_blinky->OffTime = offTime;
 	Blinky_Blink_OnOff(p_blinky, onTime);
@@ -113,7 +113,7 @@ void Blinky_BlinkN(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8
 void Blinky_StartPeriodic(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime)
 {
 	p_blinky->OnTime = onTime;
-	p_blinky->OffTime = offTime; 
+	p_blinky->OffTime = offTime;
 	p_blinky->PatternFunction = Pattern_PeriodicToggle;
 	Timer_StartPeriodic(&p_blinky->Timer, offTime);
 }
