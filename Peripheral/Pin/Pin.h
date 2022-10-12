@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,7 +23,7 @@
 /******************************************************************************/
 /*!
 	@file 	Pin.h
-	@author FireSoucery
+	@author FireSourcery
 	@brief	Uniform Wrapper for HAL_Pin
 	@version V0
 */

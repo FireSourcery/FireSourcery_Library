@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,7 +23,7 @@
 /******************************************************************************/
 /*!
 	@file 	FOC.h
-	@author FireSoucery
+	@author FireSourcery
 	@brief  FOC math functions only. Wrapper for pure math functions.
 			Only this modules calls math_foc, math_svpwm
 	@version V0

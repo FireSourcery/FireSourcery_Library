@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,7 +23,7 @@
 /******************************************************************************/
 /*!
 	@file 	Linear.h
-	@author FireSoucery
+	@author FireSourcery
 	@brief  Mathematical linear function.
 			e.g. Dynamic look up table, unit/ADC conversion using factor and divisor.
 	@version V0

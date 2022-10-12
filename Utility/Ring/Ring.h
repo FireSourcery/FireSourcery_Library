@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,7 +23,7 @@
 /******************************************************************************/
 /*!
 	@file 	Ring.h
-	@author FireSoucery
+	@author FireSourcery
 	@brief	Ring Buffer. Improved efficiency using POW2_MASK over modulus
 	@version V0
 */
@@ -40,13 +40,13 @@
 typedef const struct Ring_Config_Tag
 {
 	void * const P_BUFFER;
-	const size_t UNIT_SIZE;
-	const size_t LENGTH; 	/* In UNIT_SIZE counts (NOT bytes) */
+	const size_t UNIT_SIZE;		/* Bytes */
+	const size_t LENGTH; 		/* In UNIT_SIZE counts (NOT bytes) */
 #if defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) || defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
 	const uint32_t POW2_MASK;
 #endif
-#if defined(CONFIG_RING_MULTITHREADED_ENABLE) /* Ring layer enable */
-	const bool USE_CRITICAL;	/* Per instance enable */
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE) 	/* Ring layer enable */
+	const bool USE_CRITICAL;					/* Per instance enable */
 #endif
 }
 Ring_Config_T;
@@ -64,7 +64,7 @@ typedef struct Ring_Tag
 	volatile size_t Head;	/* Write to head  */
 	volatile size_t Tail;	/* Read from tail */
 #if defined(CONFIG_RING_MULTITHREADED_ENABLE)
-	volatile critical_mutext_t Mutex;
+	volatile critical_mutex_t Mutex;
 #endif
 }
 Ring_T;
@@ -154,7 +154,7 @@ static inline size_t Ring_GetFullCount(const Ring_T * p_ring)
 }
 
 /*
-	later 2 cases: -1 to account for space used for detection
+	later 2 cases: -1 to account for 1 space used for detection
 */
 static inline size_t Ring_GetEmptyCount(const Ring_T * p_ring)
 {
@@ -188,9 +188,6 @@ static inline bool Ring_GetIsFull(const Ring_T * p_ring)
 */
 /******************************************************************************/
 extern void Ring_Init(Ring_T * p_ring);
-#ifdef CONFIG_RING_DYNAMIC_MEMORY_ALLOCATION
-extern Ring_T * Ring_New(size_t unitCount, size_t unitSize);
-#endif
 extern void Ring_Clear(Ring_T * p_ring);
 extern bool Ring_Enqueue(Ring_T * p_ring, const void * p_unit);
 extern bool Ring_Dequeue(Ring_T * p_ring, void * p_dest);
@@ -203,14 +200,24 @@ extern bool Ring_PopBack(Ring_T * p_ring, void * p_dest);
 extern bool Ring_PeekFront(Ring_T * p_ring, void * p_dest);
 extern bool Ring_PeekBack(Ring_T * p_ring, void * p_dest);
 extern bool Ring_PeekIndex(Ring_T * p_ring, void * p_dest, size_t index);
+extern bool Ring_Seek(Ring_T * p_ring, void * p_dest, size_t index);
 extern bool Ring_RemoveFront(Ring_T * p_ring, size_t nUnits);
 extern bool Ring_RemoveBack(Ring_T * p_ring, size_t nUnits);
-extern bool Ring_Seek(Ring_T * p_ring, void * p_dest, size_t index);
+
+/******************************************************************************/
+/*!
+	Experimental
+*/
+/******************************************************************************/
+#ifdef CONFIG_RING_DYNAMIC_MEMORY_ALLOCATION
+extern Ring_T * Ring_New(size_t unitCount, size_t unitSize);
+extern void Ring_Free(Ring_T * p_ring);
+#endif
 extern void * Ring_PeekPtrFront(Ring_T * p_ring);
 extern void * Ring_PeekPtrBack(Ring_T * p_ring);
 extern void * Ring_PeekPtrIndex(Ring_T * p_ring, size_t index);
 extern void * Ring_SeekPtr(Ring_T * p_ring, size_t index);
-extern uint8_t * Ring_AcquireBuffer(Ring_T * p_ring);
+extern void * Ring_AcquireBuffer(Ring_T * p_ring);
 extern void Ring_ReleaseBuffer(Ring_T * p_ring, size_t writeSize);
 
 #endif

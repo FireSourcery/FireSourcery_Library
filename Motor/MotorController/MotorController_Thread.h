@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,7 +23,7 @@
 /******************************************************************************/
 /*!
 	@file 	MotorController_Thread.h
-	@author FireSoucery
+	@author FireSourcery
 	@brief  MotorController module functions must be placed into corresponding user app threads.
 			Most outer functions to call from MCU app.
 	@version V0

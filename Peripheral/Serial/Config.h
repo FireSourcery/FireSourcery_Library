@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,25 +23,25 @@
 /******************************************************************************/
 /*!
 	@file 	Config.h
-	@author FireSoucery
+	@author FireSourcery
 	@brief
 	@version V0
 */
 /******************************************************************************/
 #ifndef CONFIG_SERIAL_H
 #define CONFIG_SERIAL_H
- 
-#if  	defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX) 
-#elif 	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) 
-#elif 	defined(CONFIG_SERIAL_SINGLE_THREADED) 
+
+#if  	defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
+#elif 	defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
+#elif 	defined(CONFIG_SERIAL_SINGLE_THREADED)
 #else
 	#define CONFIG_SERIAL_SINGLE_THREADED
 #endif
 
 #if 	defined(CONFIG_SERIAL_HW_FIFO_DISABLE)
-#elif 	defined(CONFIG_SERIAL_HW_FIFO_ENABLE) 
+#elif 	defined(CONFIG_SERIAL_HW_FIFO_ENABLE)
 #else
 	#define CONFIG_SERIAL_HW_FIFO_DISABLE
 #endif
- 
+
 #endif

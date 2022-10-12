@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,7 +23,7 @@
 /******************************************************************************/
 /*!
 	@file 	Config.h
-	@author FireSoucery
+	@author FireSourcery
 	@brief	Hall module
 	@version V0
 */
@@ -34,9 +34,9 @@
 #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
 #endif
 
-#if 	defined(CONFIG_HALL_ID_BASE_PINS_STATE) 
-#elif 	defined(CONFIG_HALL_ID_BASE_ROTOR_SECTOR) 
-#elif 	defined(CONFIG_HALL_ID_BASE_COMMUTATION_SECTOR) 
+#if 	defined(CONFIG_HALL_ID_BASE_PINS_STATE)
+#elif 	defined(CONFIG_HALL_ID_BASE_ROTOR_SECTOR)
+#elif 	defined(CONFIG_HALL_ID_BASE_COMMUTATION_SECTOR)
 #else
 	#define CONFIG_HALL_ID_BASE_COMMUTATION_SECTOR
 #endif

@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,7 +23,7 @@
 /******************************************************************************/
 /*!
 	@file 	StateMachine.c
-	@author FireSoucery
+	@author FireSourcery
 	@brief 	StateMachine module
 	@version V0
 */
@@ -37,8 +37,8 @@
 #include <stdbool.h>
 
 struct StateMachine_State_Tag;
-#define STATE_MACHINE_INPUT_NULL (0xFFU)
-typedef uint8_t statemachine_input_t;	/* Input ID. Index into transition table. User may overwrite with enum */
+#define STATE_MACHINE_INPUT_NULL 		(0xFFU)
+typedef uint8_t statemachine_input_t;	/* Input ID/Category. Index into transition table. User may overwrite with enum. */
 typedef uint8_t statemachine_state_t;	/* State ID. User may overwrite with enum */
 
 typedef void (*StateMachine_Output_T)(void * p_context); /* Synchronous State Output */
@@ -136,9 +136,11 @@ StateMachine_T;
 
 static inline statemachine_state_t StateMachine_GetActiveStateId(StateMachine_T * p_stateMachine) { return p_stateMachine->p_StateActive->ID; }
 
+/******************************************************************************/
 /*
-	extern
+	Extern
 */
+/******************************************************************************/
 extern void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState);
 extern void StateMachine_Init(StateMachine_T * p_stateMachine);
 extern void StateMachine_Reset(StateMachine_T * p_stateMachine);

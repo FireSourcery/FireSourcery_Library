@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,7 +23,7 @@
 /******************************************************************************/
 /*!
 	@file	Debounce.c
-	@author FireSoucery
+	@author FireSourcery
 	@brief
 	@version V0
 */
@@ -33,7 +33,7 @@
 void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime)
 {
 	Pin_Input_Init(&p_debounce->Pin);
-	p_debounce->DebounceTime 		= debounceTime; 
+	p_debounce->DebounceTime 		= debounceTime;
 	p_debounce->DebouncedState 		= Pin_Input_Read(&p_debounce->Pin);
 	p_debounce->DebouncedStatePrev 	= p_debounce->DebouncedState;
 	p_debounce->RawStatePrev 		= p_debounce->DebouncedState;

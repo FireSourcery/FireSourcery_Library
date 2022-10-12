@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / Kelly Controls Inc
+	Copyright (C) 2021 FireSourcery / Kelly Controls Inc
 
 	This file is part of Arduino_KellyController (https://github.com/FireSourcery/Arduino_KellyController).
 
@@ -23,7 +23,7 @@
 /******************************************************************************/
 /*!
 	@file 	KellyController.h
-	@author FireSoucery
+	@author FireSourcery
 	@brief
 	@version V0
 */

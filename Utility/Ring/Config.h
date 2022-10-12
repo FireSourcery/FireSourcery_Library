@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,7 +23,7 @@
 /******************************************************************************/
 /*!
 	@file 	Config.h
-	@author FireSoucery
+	@author FireSourcery
 	@brief
 	@version V0
 */
@@ -38,8 +38,8 @@
 	#define CONFIG_RING_SINGLE_THREADED
 #endif
 
-#if 	defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) 	/* Power 2 length only. Interger overflow wrap only */
-#elif  	defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)		/* Power 2 length only. Does not need interger overflow wrap */
+#if 	defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) 	/* Power 2 length only. Integer overflow wrap only */
+#elif  	defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)		/* Power 2 length only. Does not need integer overflow wrap */
 #elif  	defined(CONFIG_RING_LENGTH_ANY)
 #else
 	#define CONFIG_RING_LENGTH_ANY

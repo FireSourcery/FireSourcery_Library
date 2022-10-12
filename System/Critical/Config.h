@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,7 +23,7 @@
 /******************************************************************************/
 /*!
 	@file 	Config.h
-	@author FireSoucery
+	@author FireSourcery
 	@brief  Critical module preprocessor configuration options and defaults
 	@version V0
 */
@@ -31,9 +31,9 @@
 #ifndef CONFIG_CRITICAL_H
 #define CONFIG_CRITICAL_H
 
-#if 	defined(CONFIG_CRITICAL_MCU_ARM) 
-#elif 	defined(CONFIG_CRITICAL_USER_DEFINED) 
-#elif 	defined(CONFIG_CRITICAL_DISABLED) 
+#if 	defined(CONFIG_CRITICAL_MCU_ARM)
+#elif 	defined(CONFIG_CRITICAL_USER_DEFINED)
+#elif 	defined(CONFIG_CRITICAL_DISABLED)
 #else
 	#define CONFIG_CRITICAL_DISABLED
 #endif
