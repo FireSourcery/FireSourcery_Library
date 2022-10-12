@@ -2,7 +2,7 @@
 /*!
 	@section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
 	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,7 +23,7 @@
 /******************************************************************************/
 /*!
 	@file 	StateMachine.c
-	@author FireSoucery
+	@author FireSourcery
 	@brief 	StateMachine
 	@version V0
 */
@@ -70,16 +70,12 @@ static inline void ProcOutput(StateMachine_T * p_stateMachine)
 }
 
 /******************************************************************************/
-/* Input Id - Additional inputs is passed via context */
-/******************************************************************************/
-/*!
-	TransitionFunction defined via P_TRANSITION_TABLE
-	@param[out] pp_newReturn - 	returns pointer to new state, if it exists.
-	@return false indicates not accepted input, transition does not exist, pp_newReturn is not set.
-			true
-				pp_newReturn == 0  no transition,  bypass exist and entry, indicates user defined non transition
-				pp_newReturn != 0  transition, perform exist and entry. User may return same state
+/*
+	Input Id - Additional inputs is passed via context
+	todo remove in favor of Ext
 */
+/******************************************************************************/
+
 static inline bool TransitionFunction(StateMachine_State_T ** pp_newReturn, StateMachine_State_T * p_active, void * p_context, statemachine_input_t input)
 {
 	StateMachine_Transition_T transition = p_active->P_TRANSITION_TABLE[input];
@@ -88,9 +84,6 @@ static inline bool TransitionFunction(StateMachine_State_T ** pp_newReturn, Stat
 	return isAccept;
 }
 
-/*!
-	@return 0 indicates not accepted input, transition does not exist.
-*/
 static inline bool ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
 	bool isAccept = (input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
@@ -100,24 +93,23 @@ static inline bool ProcInput(StateMachine_T * p_stateMachine, statemachine_input
 	return isAccept;
 }
 
-/*
-	If multi threaded inputs asynch use critical
-*/
-static inline bool ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
-{
-	bool isAccept;
-	if(EnterCritical(p_stateMachine))
-	{
-		isAccept = ProcInput(p_stateMachine, input);
-		ExitCritical(p_stateMachine);
-	}
-	return isAccept;
-}
 
 /******************************************************************************/
-/* Input Ext - 1 additional input passed as argument  */
+/*
+	Input Ext - 1 additional input passed as argument
+*/
 /******************************************************************************/
+/*!
+	TransitionFunction defined via P_TRANSITION_TABLE
+	@param[out] pp_newReturn - 	returns pointer to new state, if it exists.
+	@return false
+				indicates not accepted input, transition does not exist, pp_newReturn is not set.
+			true
+				pp_newReturn == 0  no transition,  bypass exit and entry, indicates user defined non transition
+				pp_newReturn != 0  transition, perform exist and entry. User may return same state, for self transition, proc exit and entry
+*/
 static inline bool TransitionFunctionExt(StateMachine_State_T ** pp_newReturn, StateMachine_State_T * p_active, void * p_context, statemachine_input_t input, uint32_t inputExt)
+// static inline StateMachine_State_T * TransitionFunction(StateMachine_State_T * p_active, void * p_context, statemachine_input_t input, uint32_t inputExt)
 {
 	StateMachine_TransitionExt_T transition = p_active->P_TRANSITION_EXT_TABLE[input];
 	bool isAccept = (transition != 0U);
@@ -125,7 +117,12 @@ static inline bool TransitionFunctionExt(StateMachine_State_T ** pp_newReturn, S
 	return isAccept;
 }
 
+/*!
+	@return false indicates not accepted input, transition does not exist.
+			true indicates accepted input, state may transition or self transition.
+*/
 static inline bool ProcInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
+// static inline bool ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
 {
 	bool isAccept = (input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
 	StateMachine_State_T * p_newState;
@@ -135,16 +132,23 @@ static inline bool ProcInputExt(StateMachine_T * p_stateMachine, statemachine_in
 }
 
 
-static inline bool ProcAsyncInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
-{
-	bool isAccept;
-	if(EnterCritical(p_stateMachine))
-	{
-		isAccept = ProcInputExt(p_stateMachine, input, inputExt);
-		ExitCritical(p_stateMachine);
-	}
-	return isAccept;
-}
+// static inline StateMachine_State_T * TransitionFunction(void * p_context, StateMachine_State_T * p_active, statemachine_input_t inputId, uint32_t inputExt)
+// {
+// 	return p_active->P_TRANSITION_EXT_TABLE[inputId](p_context, inputExt);
+// }
+
+// static inline bool ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t inputId, uint32_t inputExt)
+// {
+// 	bool isAccept = (inputId < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
+// 	StateMachine_State_T * p_newState;
+// 	if(isAccept == true) { isAccept = (p_stateMachine->p_StateActive->P_TRANSITION_EXT_TABLE[inputId] != 0U); }
+// 	if(isAccept == true)
+// 	{
+// 		p_newState = TransitionFunction(p_stateMachine->CONFIG.P_CONTEXT, p_stateMachine->p_StateActive, inputId, inputExt);
+// 		if(p_newState != 0U) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); }
+// 	}
+// 	return isAccept;
+// }
 
 /******************************************************************************/
 /*!
@@ -204,8 +208,8 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 void StateMachine_Sync_Proc(StateMachine_T * p_stateMachine)
 {
 	ProcInput(p_stateMachine, p_stateMachine->SyncInput);
+	// ProcInputExt(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputExt);
 	p_stateMachine->SyncInput = STATE_MACHINE_INPUT_NULL; /* clear input, reserved char */
-	p_stateMachine->SyncInputExt = STATE_MACHINE_INPUT_NULL;
 	ProcOutput(p_stateMachine);
 }
 
@@ -231,15 +235,25 @@ bool StateMachine_Sync_SetInputExt(StateMachine_T * p_stateMachine, statemachine
 /******************************************************************************/
 bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
-	bool isAccept = ProcAsyncInput(p_stateMachine, input);
-	ProcOutput(p_stateMachine);
+	bool isAccept = false;
+	if(EnterCritical(p_stateMachine))
+	{
+		isAccept = ProcInput(p_stateMachine, input);
+		if(isAccept == true) { ProcOutput(p_stateMachine); }
+		ExitCritical(p_stateMachine);
+	}
 	return isAccept;
 }
 
-bool StateMachine_Async_ProcInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
+bool StateMachine_Async_ProcInputExt(StateMachine_T * p_stateMachine, statemachine_input_t inputId, uint32_t inputExt)
 {
-	bool isAccept = ProcAsyncInputExt(p_stateMachine, input, inputExt);
-	ProcOutput(p_stateMachine);
+	bool isAccept = false;
+	if(EnterCritical(p_stateMachine))
+	{
+		isAccept = ProcInputExt(p_stateMachine, inputId, inputExt);
+		if(isAccept == true) { ProcOutput(p_stateMachine); }
+		ExitCritical(p_stateMachine);
+	}
 	return isAccept;
 }
 
@@ -250,6 +264,9 @@ bool StateMachine_Async_ProcInputExt(StateMachine_T * p_stateMachine, statemachi
 	Asynchronous Input
 */
 /******************************************************************************/
+/*!
+	Synchronous periodic output
+*/
 void StateMachine_Semi_ProcOutput(StateMachine_T * p_stateMachine)
 {
 	ProcOutput(p_stateMachine); //todo return user status
@@ -257,30 +274,41 @@ void StateMachine_Semi_ProcOutput(StateMachine_T * p_stateMachine)
 
 /*!
 	proc user defined transition function via pointer table
+	If multi threaded inputs asynch use critical
 	@return true if transition was accepted
 */
 bool StateMachine_Semi_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
-	return ProcAsyncInput(p_stateMachine, input);
+	bool isAccept = false;
+	if(EnterCritical(p_stateMachine))
+	{
+		isAccept = ProcInput(p_stateMachine, input);
+		ExitCritical(p_stateMachine);
+	}
+	return isAccept;
 }
 
-bool StateMachine_Semi_ProcInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
+bool StateMachine_Semi_ProcInputExt(StateMachine_T * p_stateMachine, statemachine_input_t inputId, uint32_t inputExt)
 {
-	return ProcAsyncInputExt(p_stateMachine, input, inputExt);
+	bool isAccept = false;
+	if(EnterCritical(p_stateMachine))
+	{
+		isAccept = ProcInputExt(p_stateMachine, inputId, inputExt);
+		ExitCritical(p_stateMachine);
+	}
+	return isAccept;
 }
 
 /*
-	full user defined transition function
+	Full user defined transition function
 */
-bool StateMachine_Semi_ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
+bool StateMachine_Semi_ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t inputId, uint32_t inputExt)
 {
 	bool isAccept = false;
-
 	if(p_stateMachine->p_StateActive->TRANSITION_FUNCTION != 0U)
 	{
-		isAccept = p_stateMachine->p_StateActive->TRANSITION_FUNCTION(p_stateMachine->CONFIG.P_CONTEXT, input, inputExt);
+		isAccept = p_stateMachine->p_StateActive->TRANSITION_FUNCTION(p_stateMachine->CONFIG.P_CONTEXT, inputId, inputExt);
 	}
-
 	return isAccept;
 }
 
