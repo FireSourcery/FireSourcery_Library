@@ -133,7 +133,6 @@ static inline void ReleaseCriticalRx(Serial_T * p_serial)
 	(void)p_serial;
 	Critical_Exit();
 #elif 	defined(CONFIG_SERIAL_SINGLE_THREADED)
-	(void)p_serial;
 	HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
 #endif
 }
