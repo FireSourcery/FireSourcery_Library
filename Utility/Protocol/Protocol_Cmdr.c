@@ -32,6 +32,8 @@
 
 
 /*
+	Begin Req, then wait for process in Protocol_Proc
+
 	3 Implied priority levels
 
 	cannot distinguish StartReq_Background 	begins only if PROTOCOL_REQ_STATE_INACTIVE
@@ -48,9 +50,9 @@
 static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 {
 	Protocol_Req_T * p_req = _Protocol_SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, cmdId);
-	bool isSucess = p_req != 0U;
+	bool isSuccess = (p_req != 0U);
 
-	if(isSucess == true)
+	if(isSuccess == true)
 	{
 		p_protocol->p_Specs->CMDR_BUILD_TX_REQ(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_APP_INTERFACE, cmdId);
 
@@ -73,11 +75,11 @@ static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 		else if(p_req->SYNC.RX_ACK == true) 	{ p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC_FINAL; }
 		else 									{ p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_COMPLETE_ID; }
 
-		//set inactive or wait id, cannot distinguish, without queue count. only ditinguish sync wait and non sync
+		//set inactive or wait id, cannot distinguish, without queue count. only distinguish sync wait and non sync
 		p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
 	}
 
-	return isSucess;
+	return isSuccess;
 }
 
 /* Does not start state if sync is active */
@@ -89,7 +91,7 @@ static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 // /* Does not start if ReqState WAIT_SYNC WAIT_EXT */
 bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 {
-	return ((p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_COMPLETE_ID)) ? StartReq(p_protocol, cmdId) : false;
+	return (p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_COMPLETE_ID) ? StartReq(p_protocol, cmdId) : false;
 	//(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) ||
 }
 
@@ -133,7 +135,7 @@ bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
 // {
 // 	Protocol_Proc(p_protocol);
 
-// 	//optionally, match txreq count vs rx proc count to determine inactive
+// 	//optionally, match txreq count vs rx proc count to determine wait
 // }
 
 // size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)

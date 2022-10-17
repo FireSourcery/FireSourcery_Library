@@ -96,7 +96,13 @@ void KellyController::end(void)
 	if(p_serial != 0U) { p_serial->end(); }
 }
 
-//wrap serial or virtual buffeR?
+
+
+/******************************************************************************/
+/*!
+	Upper layer control TxRx
+*/
+/******************************************************************************/
 
 /******************************************************************************/
 /*!
@@ -213,65 +219,14 @@ void KellyController::end(void)
 
 // void KellyController::readSpeed(void)
 // {
-// 	_MotorCmdr_StartReadSpeed(&motorCmdr);
+// 	_MotorCmdr_ReadSpeed(&motorCmdr);
 // 	p_serial->write(_MotorCmdr_GetPtrTxPacket(&motorCmdr), _MotorCmdr_GetReqLength(&motorCmdr));
 // }
 
 // void KellyController::readIFoc(void)
 // {
-// 	_MotorCmdr_StartReadIFoc(&motorCmdr);
+// 	_MotorCmdr_ReadIFoc(&motorCmdr);
 // 	p_serial->write(_MotorCmdr_GetPtrTxPacket(&motorCmdr), _MotorCmdr_GetReqLength(&motorCmdr));
 // }
 
 
-
-// /******************************************************************************/
-// /*!
-// 	@brief
-// */
-// /******************************************************************************/
-// size_t KellyController::write(uint8_t c)
-// {
-// 	return p_serial->write(c);
-// }
-
-// /******************************************************************************/
-// /*!
-// 	@brief
-// */
-// /******************************************************************************/
-// int KellyController::available(void)
-// {
-// 	return p_serial->available();
-// }
-
-// /******************************************************************************/
-// /*!
-// 	@brief
-// */
-// /******************************************************************************/
-// int KellyController::read(void)
-// {
-// 	int c = p_serial->read();
-// 	return c;
-// }
-
-// /******************************************************************************/
-// /*!
-// 	@brief
-// */
-// /******************************************************************************/
-// int KellyController::peek(void)
-// {
-// 	return p_serial->peek();
-// }
-
-// /******************************************************************************/
-// /*!
-// 	@brief
-// */
-// /******************************************************************************/
-// void KellyController::flush(void)
-// {
-// 	p_serial->flush();
-// }

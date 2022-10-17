@@ -176,3 +176,12 @@
 // 	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PROTOCOL_CMD_MONITOR_TYPE, payloadLength);
 // }
 
+
+// uint8_t MotProtocol_ReadVarResp_Build(MotPacket_MonitorResp_T * p_respPacket, const void * p_interface  )
+// {
+
+
+
+// 	return Packet_BuildHeader((MotPacket_T *)p_respPacket,  , 1);
+// }
+

@@ -243,29 +243,13 @@ static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc)
 		p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;
 		p_nextState = &STATE_NEUTRAL;
 	}
-	else /* Not applicable for AnalogUser, when transisition through neutral state */
+	else /* Not applicable for AnalogUser, when transistion through neutral state */
 	{
 		MotorController_BeepShort(p_mc);
 		p_nextState = 0U;
 	}
 
 	return p_nextState;
-}
-
-static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_mc)
-{
-	MotorController_ProcUserCmdThrottle(p_mc);
-	return 0U;
-}
-
-/*
-	When brake is released Coast mode will run, and check stop
-	or go directly to stop so direction can change
-*/
-static StateMachine_State_T * Run_InputBrake(MotorController_T * p_mc)
-{
-	MotorController_ProcUserCmdBrake(p_mc);
-	return 0U;
 }
 
 /*
@@ -282,6 +266,23 @@ static StateMachine_State_T * Run_InputCoast(MotorController_T * p_mc)
 	}
 
 	return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
+}
+
+static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_mc)
+{
+	//if (p_mc->UserCmd == 0) Run_InputCoast(p_mc); //handle throttle falling edge here
+	MotorController_ProcUserCmdThrottle(p_mc);
+	return 0U;
+}
+
+/*
+	When brake is released Coast mode will run, and check stop
+	or go directly to stop so direction can change
+*/
+static StateMachine_State_T * Run_InputBrake(MotorController_T * p_mc)
+{
+	MotorController_ProcUserCmdBrake(p_mc);
+	return 0U;
 }
 
 /*

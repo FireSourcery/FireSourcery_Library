@@ -47,8 +47,7 @@ static uint16_t CalcChecksum(const uint8_t * p_src, uint8_t bytes)
 static uint16_t Packet_CalcChecksum(const MotPacket_T * p_packet)
 {
 	uint16_t checkSum = 0U;
-	checkSum += CalcChecksum((const uint8_t *)&p_packet->Header, sizeof(MotPacket_Header_T) - sizeof(uint16_t)/*  - sizeof(uint16_t) */);
-	// checkSum += CalcChecksum((const uint8_t *)&p_packet->Header.Overload, sizeof(uint16_t));
+	checkSum += CalcChecksum((const uint8_t *)&p_packet->Header, sizeof(MotPacket_Header_T) - sizeof(uint16_t));
 	checkSum += CalcChecksum(&p_packet->Payload[0U], p_packet->Header.TotalLength - sizeof(MotPacket_Header_T));
 	return checkSum;
 }
@@ -146,34 +145,34 @@ MotPacket_HeaderStatus_T MotPacket_SaveNvmResp_Parse(const MotPacket_SaveNvmResp
 /******************************************************************************/
 /*!	Init Units */
 /******************************************************************************/
-uint8_t MotPacket_InitUnitsReq_Build(MotPacket_InitUnitsReq_T * p_reqPacket)
-{
-	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_INIT_UNITS, 0U, MOT_PACKET_HEADER_STATUS_OK);
-}
+// uint8_t MotPacket_InitUnitsReq_Build(MotPacket_InitUnitsReq_T * p_reqPacket)
+// {
+// 	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_INIT_UNITS, 0U, MOT_PACKET_HEADER_STATUS_OK);
+// }
 
-// uint8_t MotPacket_InitUnitsReq_GetRespLength(void) { return sizeof(MotPacket_InitUnitsResp_T); }
+// // uint8_t MotPacket_InitUnitsReq_GetRespLength(void) { return sizeof(MotPacket_InitUnitsResp_T); }
 
-void MotPacket_InitUnitsResp_Parse
-(
-	uint16_t * p_speedRef_Rpm, uint16_t * p_iRef_Amp, uint16_t * p_vRef_Volts, /* Frac16 conversions */
-	uint16_t * p_vSupply_R1, uint16_t * p_vSupply_R2,	/* Adcu <-> Volts conversions */
-	uint16_t * p_vSense_R1, uint16_t * p_vSense_R2,
-	uint16_t * p_vAcc_R1, uint16_t * p_vAcc_R2,
-	const MotPacket_InitUnitsResp_T * p_respPacket
-)
-{
-	*p_speedRef_Rpm = p_respPacket->InitUnitsResp.DataU16s[0U];
-	*p_iRef_Amp = p_respPacket->InitUnitsResp.DataU16s[0U];
-	*p_vRef_Volts = p_respPacket->InitUnitsResp.DataU16s[0U];
-	*p_vSupply_R1 = p_respPacket->InitUnitsResp.DataU16s[0U];
-	*p_vSupply_R2 = p_respPacket->InitUnitsResp.DataU16s[0U];
-	*p_vSense_R1 = p_respPacket->InitUnitsResp.DataU16s[0U];
-	*p_vSense_R2 = p_respPacket->InitUnitsResp.DataU16s[0U];
-	*p_vAcc_R1 = p_respPacket->InitUnitsResp.DataU16s[0U];
-	*p_vAcc_R2 = p_respPacket->InitUnitsResp.DataU16s[0U];
+// void MotPacket_InitUnitsResp_Parse
+// (
+// 	uint16_t * p_speedRef_Rpm, uint16_t * p_iRef_Amp, uint16_t * p_vRef_Volts, /* Frac16 conversions */
+// 	uint16_t * p_vSupply_R1, uint16_t * p_vSupply_R2,	/* Adcu <-> Volts conversions */
+// 	uint16_t * p_vSense_R1, uint16_t * p_vSense_R2,
+// 	uint16_t * p_vAcc_R1, uint16_t * p_vAcc_R2,
+// 	const MotPacket_InitUnitsResp_T * p_respPacket
+// )
+// {
+// 	// *p_speedRef_Rpm = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_iRef_Amp = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vRef_Volts = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vSupply_R1 = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vSupply_R2 = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vSense_R1 = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vSense_R2 = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vAcc_R1 = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vAcc_R2 = p_respPacket->InitUnitsResp.Data16s[0U];
 
-	// return p_respPacket->Header.Status;
-}
+// 	// return p_respPacket->Header.Status;
+// }
 
 /******************************************************************************/
 /*!	Read Var */
@@ -189,11 +188,10 @@ uint8_t MotPacket_ReadVarReq_Build(MotPacket_ReadVarReq_T * p_reqPacket, MotVarI
 /*!
 	@param[out] p_value 4-byte value uint32_t or int32_t
 */
-void MotPacket_ReadVarResp_Parse(uint32_t * p_value, const MotPacket_ReadVarResp_T * p_respPacket)
+MotPacket_HeaderStatus_T MotPacket_ReadVarResp_Parse(uint32_t * p_value, const MotPacket_ReadVarResp_T * p_respPacket)
 {
 	*p_value = p_respPacket->ReadResp.Value;
-	// *p_status = p_respPacket->ReadResp.Status;
-	// return p_respPacket->Header.Status;
+	return p_respPacket->Header.Status;	// *p_status = p_respPacket->ReadResp.Status;
 }
 
 /******************************************************************************/
@@ -208,12 +206,32 @@ uint8_t MotPacket_WriteVarReq_Build(MotPacket_WriteVarReq_T * p_reqPacket, MotVa
 
 // uint8_t MotPacket_WriteVarReq_GetRespLength(void) { return sizeof(MotPacket_WriteVarReq_T); }
 
-// MotPacket_HeaderStatus_T MotPacket_WriteVarResp_Parse(const MotPacket_WriteVarResp_T * p_respPacket)
+MotPacket_HeaderStatus_T MotPacket_WriteVarResp_Parse(const MotPacket_WriteVarResp_T * p_respPacket)
+{
+	return p_respPacket->Header.Status;	// *p_status = p_respPacket->WriteResp.Status;
+}
+
+// /******************************************************************************/
+// /*!	Read Var 16 */
+// /******************************************************************************/
+// uint8_t MotPacket_ReadVars16Req_Build
+// (
+// 	MotPacket_ReadVars16Req_T * p_respPacket,
+	// void (* p_ReadVar)(void*),
+// 	MotVarId_T motVarId, uint32_t value
+// 	)
 // {
-// 	// *p_status = p_respPacket->WriteResp.Status;
-// 	return p_respPacket->Header.Status;
+// 	p_respPacket->ReadResp.Value = value;
+// 	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_READ_VAR, sizeof(MotPacket_ReadVars16Req_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 // }
 
+// /******************************************************************************/
+// /*!	Write Var 8 */
+// /******************************************************************************/
+// uint8_t MotPacket_WriteVars8Req_Build(MotPacket_WriteVars8Req_T * p_respPacket,  )
+// {
+// 	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_WRITE_VAR, sizeof(MotPacket_WriteVars8Req_Payload_T), status);
+// }
 
 /******************************************************************************/
 /*!	Control Type */
@@ -490,15 +508,15 @@ uint8_t MotPacket_InitUnitsResp_Build
 	uint16_t vAcc_R1, uint16_t vAcc_R2
 )
 {
-	p_respPacket->InitUnitsResp.DataU16s[0U] = speedRef_Rpm;
-	p_respPacket->InitUnitsResp.DataU16s[0U] = iRef_Amp;
-	p_respPacket->InitUnitsResp.DataU16s[0U] = vRef_Volts;
-	p_respPacket->InitUnitsResp.DataU16s[0U] = vSupply_R1;
-	p_respPacket->InitUnitsResp.DataU16s[0U] = vSupply_R2;
-	p_respPacket->InitUnitsResp.DataU16s[0U] = vSense_R1;
-	p_respPacket->InitUnitsResp.DataU16s[0U] = vSense_R2;
-	p_respPacket->InitUnitsResp.DataU16s[0U] = vAcc_R1;
-	p_respPacket->InitUnitsResp.DataU16s[0U] = vAcc_R2;
+	p_respPacket->InitUnitsResp.U16s[0U] = speedRef_Rpm;
+	p_respPacket->InitUnitsResp.U16s[0U] = iRef_Amp;
+	p_respPacket->InitUnitsResp.U16s[0U] = vRef_Volts;
+	p_respPacket->InitUnitsResp.U16s[0U] = vSupply_R1;
+	p_respPacket->InitUnitsResp.U16s[0U] = vSupply_R2;
+	p_respPacket->InitUnitsResp.U16s[0U] = vSense_R1;
+	p_respPacket->InitUnitsResp.U16s[0U] = vSense_R2;
+	p_respPacket->InitUnitsResp.U16s[0U] = vAcc_R1;
+	p_respPacket->InitUnitsResp.U16s[0U] = vAcc_R2;
 
 	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_INIT_UNITS, 18U, MOT_PACKET_HEADER_STATUS_OK);
 }
@@ -561,13 +579,13 @@ uint8_t MotPacket_WriteDataResp_Build(MotPacket_WriteDataResp_T * p_respPacket, 
 /******************************************************************************/
 uint8_t MotPacket_DataType_Build(MotPacket_DataType_T * p_dataPacket, uint8_t * p_address, uint8_t sizeData)
 {
-	memcpy(&p_dataPacket->DataType.Data[0U], p_address, sizeData);
+	memcpy(&p_dataPacket->Data.Bytes[0U], p_address, sizeData);
 	return Packet_BuildHeader((MotPacket_T *)p_dataPacket, MOT_PACKET_DATA_MODE_TYPE, sizeof(MotPacket_DataType_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 MotPacket_HeaderStatus_T MotPacket_DataType_Parse(const uint8_t ** pp_data, uint8_t * p_dataSize, const MotPacket_DataType_T * p_dataPacket)
 {
-	*pp_data = &p_dataPacket->DataType.Data[0U];
+	*pp_data = &p_dataPacket->Data.Bytes[0U];
 	*p_dataSize = p_dataPacket->Header.TotalLength - sizeof(MotPacket_Header_T);
 	return p_dataPacket->Header.Status;
 }

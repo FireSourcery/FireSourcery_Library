@@ -33,6 +33,109 @@
 #include <stddef.h>
 #include <string.h>
 
+
+/******************************************************************************/
+/*!	Ping */
+/******************************************************************************/
+static void Ping_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_PingResp_T * p_rxPacket, size_t rxSize)
+{
+	(void)p_txPacket; (void)p_txSize; (void)rxSize;
+	// p_app->RespStatus =
+	MotPacket_PingResp_Parse(&p_app->Version[0U], p_rxPacket);
+}
+
+/******************************************************************************/
+/*!	Stop */
+/******************************************************************************/
+static void StopAll_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_StopResp_T * p_rxPacket, size_t rxSize)
+{
+	(void)p_txPacket; (void)p_txSize; (void)rxSize;
+	// p_app->RespStatus = MotPacket_StopResp_Parse(p_rxPacket);
+}
+
+/******************************************************************************/
+/*!	Save NvMemory */
+/******************************************************************************/
+static void SaveNvm_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_SaveNvmResp_T * p_rxPacket, size_t rxSize)
+{
+	(void)p_txPacket; (void)p_txSize; (void)rxSize;
+	p_app->RespStatus = p_rxPacket->Header.Status;
+}
+
+
+/******************************************************************************/
+/*!	Write Var */
+/******************************************************************************/
+static void WriteVar_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_WriteVarResp_T * p_rxPacket, size_t rxSize)
+{
+	(void)p_txPacket; (void)p_txSize; (void)rxSize;
+	p_app->RespStatus = p_rxPacket->Header.Status;
+}
+
+/******************************************************************************/
+/*!	Read Var */
+/******************************************************************************/
+static void ReadVar_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_ReadVarResp_T * p_rxPacket, size_t rxSize)
+{
+	(void)p_txPacket; (void)p_txSize; (void)rxSize;
+
+	p_app->RespStatus = MotPacket_ReadVarResp_Parse(&p_app->MotorReadVarValue, p_rxPacket);
+
+	// switch(p_app->MotorReadVarId)
+	// {
+	// 	case MOT_VAR_THROTTLE:		p_app->Throttle break;					/* Value 16-bit */
+	// 	case MOT_VAR_BRAKE:			  break;					/* Value 16-bit */
+	// 	case MOT_VAR_DIRECTION:		  break;				/* Value 0: Neutral, 1: Reverse, 2: Forward */
+
+	// 	case MOT_VAR_SPEED_RPM:		 	break;
+	// 	case MOT_VAR_ERROR_CODE:	 	break;
+	// 	case MOT_VAR_MC_STATE:		  	break;
+	// 	// case MOT_VAR_I_PEAK_AMP:		Motor_User_GetIPhase_Amp(MotorController_User_GetPtrMotor(p_mc, 0U)); 	break;
+	// 	// case MOT_VAR_SPEED_GROUND_KMH:	Motor_User_GetSpeed_Rpm(MotorController_User_GetPtrMotor(p_mc, 0U)); 	break;
+	// 	// case MOT_VAR_HEAT_PCB_DEG_C:	MotorController_User_GetHeatPcb_DegC(p_mc, 1U); 			break;
+	// 	// case MOT_VAR_FOC_IQ:			MotorController_User_GetPtrMotor(p_mc, 0U)->Foc.Iq; 		break;
+
+	// 	case MOT_VAR_PARAM_TEST_BEGIN:	break;					/*  */
+	// 	case MOT_VAR_PARAM_TEST_1:		break;						/* Value 16-bit */
+	// 	case MOT_VAR_PARAM_TEST_2:		break;						/* Value 32-bit */
+	// 	case MOT_VAR_PARAM_TEST_3:		break;						/* Value 0, 1 */
+	// 	case MOT_VAR_PARAM_TEST_4:		break;						/* Value enum: 0:White, 1:Black, 2:Red, */
+	// 	// case MOT_VAR_PARAM_TEST_5:	value = p_mc->Parameters.Test[4U];	break;						/*   */
+
+	// 	case MOT_VAR_POLE_PAIRS:  				  	break;
+	// 	case MOT_VAR_SPEED_FEEDBACK_REF_RPM:	break;
+	// 	case MOT_VAR_I_MAX_REF_AMP: 		  break;
+	// 	default: break;
+	// }
+}
+
+/******************************************************************************/
+/*!	Control */
+/******************************************************************************/
+static void Control_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_ControlResp_T * p_rxPacket, size_t rxSize)
+{
+	(void)p_txPacket; (void)p_txSize; (void)rxSize;
+	//may need to check correctness comparing ControlIdActive, control resp does not contain control id
+
+	// p_app->RespStatus = p_rxPacket->Header.Status;
+}
+
+/******************************************************************************/
+/*!	Monitor */
+/******************************************************************************/
+static void Monitor_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_MonitorResp_T * p_rxPacket, size_t rxSize)
+{
+	(void)p_txPacket; (void)p_txSize; (void)rxSize;
+	// p_app->RespStatus =
+	switch(p_app->MonitorIdActive)
+	{
+		case MOT_PACKET_MONITOR_SPEED: MotPacket_MonitorResp_Speed_Parse(&p_app->Speed, p_rxPacket); 		break;
+		case MOT_PACKET_MONITOR_I_FOC:
+			MotPacket_MonitorResp_IFoc_Parse(&p_app->Ia, &p_app->Ib, &p_app->Ic, &p_app->Ialpha, &p_app->Ibeta, &p_app->Id, &p_app->Iq, p_rxPacket);
+			break;
+		default: break;
+	}
+}
 /*
 	App Protocol Packet Interface
 	Parse to App structure
@@ -76,129 +179,6 @@ static void InitUnits_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_
 // 	// p_app->RespStatus =
 // }
 
-/******************************************************************************/
-/*!	Ping */
-/******************************************************************************/
-static void Ping_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_PingResp_T * p_rxPacket, size_t rxSize)
-{
-	(void)p_txPacket; (void)p_txSize; (void)rxSize;
-	// p_app->RespStatus =
-	MotPacket_PingResp_Parse(&p_app->Version[0U], p_rxPacket);
-}
-
-/******************************************************************************/
-/*!	Stop */
-/******************************************************************************/
-static void StopAll_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_StopResp_T * p_rxPacket, size_t rxSize)
-{
-	(void)p_txPacket; (void)p_txSize; (void)rxSize;
-	// p_app->RespStatus = MotPacket_StopResp_Parse(p_rxPacket);
-}
-
-/******************************************************************************/
-/*!	Save NvMemory */
-/******************************************************************************/
-static void SaveNvm_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_SaveNvmResp_T * p_rxPacket, size_t rxSize)
-{
-	(void)p_txPacket; (void)p_txSize; (void)rxSize;
-	p_app->RespStatus = p_rxPacket->Header.Status;
-}
-
-/******************************************************************************/
-/*!	Control */
-/******************************************************************************/
-static void Control_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_ControlResp_T * p_rxPacket, size_t rxSize)
-{
-	(void)p_txPacket; (void)p_txSize; (void)rxSize;
-	//may need to check correctness comparing ControlIdActive, control resp does not contain control id
-
-	// p_app->RespStatus = p_rxPacket->Header.Status;
-}
-
-/******************************************************************************/
-/*!	Monitor */
-/******************************************************************************/
-static void Monitor_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_MonitorResp_T * p_rxPacket, size_t rxSize)
-{
-	(void)p_txPacket; (void)p_txSize; (void)rxSize;
-	// p_app->RespStatus =
-	switch(p_app->MonitorIdActive)
-	{
-		case MOT_PACKET_MONITOR_SPEED: MotPacket_MonitorResp_Speed_Parse(&p_app->Speed, p_rxPacket); 		break;
-		case MOT_PACKET_MONITOR_I_FOC:
-			MotPacket_MonitorResp_IFoc_Parse(&p_app->Ia, &p_app->Ib, &p_app->Ic, &p_app->Ialpha, &p_app->Ibeta, &p_app->Id, &p_app->Iq, p_rxPacket);
-			break;
-		default: break;
-	}
-}
-
-/******************************************************************************/
-/*!	Write Var */
-/******************************************************************************/
-static void WriteVar_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_WriteVarResp_T * p_rxPacket, size_t rxSize)
-{
-	(void)p_txPacket; (void)p_txSize; (void)rxSize;
-	// p_app->RespStatus = p_rxPacket->Header.Status;
-}
-
-/******************************************************************************/
-/*!	Read Var */
-/******************************************************************************/
-static void ReadVar_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_ReadVarResp_T * p_rxPacket, size_t rxSize)
-{
-	(void)p_txPacket; (void)p_txSize; (void)rxSize;
-	// p_app->RespStatus = p_rxPacket->Header.Status;
-	MotPacket_ReadVarResp_Parse(&p_app->MotorReadVarValue, p_rxPacket);
-
-	// switch(p_app->MotorReadWriteVarId)
-	// {
-
-	// }
-}
-
-/******************************************************************************/
-/*! BuildTxReq */
-/******************************************************************************/
-void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_T * p_app, protocol_reqid_t reqId)
-{
-	switch(reqId)
-	{
-		case MOT_PACKET_STOP_ALL: 					*p_txLength = MotPacket_StopReq_Build((MotPacket_StopReq_T *)p_txPacket); 			break;
-		case MOT_PACKET_PING: 						*p_txLength = MotPacket_PingReq_Build((MotPacket_PingReq_T *)p_txPacket); 			break;
-		case MOT_PACKET_INIT_UNITS: 			*p_txLength = MotPacket_InitUnitsReq_Build((MotPacket_InitUnitsReq_T *)p_txPacket);		break;
-		case MOT_PACKET_SAVE_NVM: 				*p_txLength = MotPacket_SaveNvmReq_Build((MotPacket_SaveNvmReq_T *)p_txPacket);		break;
-
-		case MOT_PACKET_MONITOR_TYPE: 			*p_txLength = MotPacket_MonitorReq_Build((MotPacket_MonitorReq_T *)p_txPacket, p_app->MonitorIdActive);		break;
-		case MOT_PACKET_CONTROL_TYPE:
-			switch(p_app->ControlIdActive)
-			{
-				case MOT_PACKET_CONTROL_THROTTLE:			*p_txLength = MotPacket_ControlReq_Throttle_Build((MotPacket_ControlReq_T *)p_txPacket, p_app->MotorCmdValue); 		break;
-				case MOT_PACKET_CONTROL_BRAKE: 				*p_txLength = MotPacket_ControlReq_Brake_Build((MotPacket_ControlReq_T *)p_txPacket, p_app->MotorCmdValue); 		break;
-				case MOT_PACKET_CONTROL_RELEASE: 			*p_txLength = MotPacket_ControlReq_Release_Build((MotPacket_ControlReq_T *)p_txPacket); 							break;
-				case MOT_PACKET_CONTROL_DIRECTION_FORWARD: 	*p_txLength = MotPacket_ControlReq_DirectionForward_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;
-				case MOT_PACKET_CONTROL_DIRECTION_REVERSE: 	*p_txLength = MotPacket_ControlReq_DirectionReverse_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;
-				case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	*p_txLength = MotPacket_ControlReq_DirectionNeutral_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;
-				default: break;
-			}
-			break;
-		case MOT_PACKET_READ_VAR: 	 	*p_txLength = MotPacket_ReadVarReq_Build((MotPacket_ReadVarReq_T *)p_txPacket, p_app->MotorReadVarId); break;
-		case MOT_PACKET_WRITE_VAR: 		*p_txLength = MotPacket_WriteVarReq_Build((MotPacket_WriteVarReq_T *)p_txPacket, p_app->MotorWriteVarId, p_app->MotorWriteVarValue); break;
-		case MOT_PACKET_REBOOT: 						break;
-		case MOT_PACKET_CALL: 							break;
-		case MOT_PACKET_READ_VAR16: 					break;
-		case MOT_PACKET_WRITE_VAR16: 					break;
-		case MOT_PACKET_READ_MEMORY: 					break;
-		case MOT_PACKET_WRITE_MEMORY: 					break;
-		case MOT_PACKET_DATA_MODE_READ: 				break;
-		case MOT_PACKET_DATA_MODE_WRITE: 				break;
-		case MOT_PACKET_DATA_MODE_TYPE: 					break;
-		case MOT_PACKET_EXT_CMD: 							break;
-		case MOT_PACKET_EXT_RSVR2: 							break;
-		case MOT_PACKET_ID_RESERVED_255: 					break;
-		default: break;
-	}
-}
-
 /*
 
 */
@@ -216,6 +196,50 @@ static const Protocol_Req_T REQ_TABLE[] =
 	// PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_WRITE, 		0U, 			WriteData, 	PROTOCOL_SYNC_ID ),
 	// PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_READ, 		0U, 			ReadData, 	PROTOCOL_SYNC_ID ),
 };
+
+/******************************************************************************/
+/*! BuildTxReq */
+/******************************************************************************/
+void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_T * p_app, protocol_reqid_t reqId)
+{
+	switch(reqId)
+	{
+		case MOT_PACKET_STOP_ALL: 					*p_txLength = MotPacket_StopReq_Build((MotPacket_StopReq_T *)p_txPacket); 			break;
+		case MOT_PACKET_PING: 						*p_txLength = MotPacket_PingReq_Build((MotPacket_PingReq_T *)p_txPacket); 			break;
+		case MOT_PACKET_INIT_UNITS: 			*p_txLength = MotPacket_InitUnitsReq_Build((MotPacket_InitUnitsReq_T *)p_txPacket);		break;
+		case MOT_PACKET_SAVE_NVM: 				*p_txLength = MotPacket_SaveNvmReq_Build((MotPacket_SaveNvmReq_T *)p_txPacket);		break;
+
+		case MOT_PACKET_REBOOT: 						break;
+		case MOT_PACKET_CALL: 							break;
+		case MOT_PACKET_READ_VAR: 	 	*p_txLength = MotPacket_ReadVarReq_Build((MotPacket_ReadVarReq_T *)p_txPacket, p_app->MotorReadVarId); break;
+		case MOT_PACKET_WRITE_VAR: 		*p_txLength = MotPacket_WriteVarReq_Build((MotPacket_WriteVarReq_T *)p_txPacket, p_app->MotorWriteVarId, p_app->MotorWriteVarValue); break;
+		// case MOT_PACKET_READ_VAR16: 					break;
+		// case MOT_PACKET_WRITE_VAR16: 					break;
+		case MOT_PACKET_READ_MEMORY: 					break;
+		case MOT_PACKET_WRITE_MEMORY: 					break;
+		case MOT_PACKET_DATA_MODE_READ: 				break;
+		case MOT_PACKET_DATA_MODE_WRITE: 				break;
+		case MOT_PACKET_DATA_MODE_TYPE: 					break;
+
+		case MOT_PACKET_MONITOR_TYPE: 			*p_txLength = MotPacket_MonitorReq_Build((MotPacket_MonitorReq_T *)p_txPacket, p_app->MonitorIdActive);		break;
+		case MOT_PACKET_CONTROL_TYPE:
+			switch(p_app->ControlIdActive)
+			{
+				case MOT_PACKET_CONTROL_THROTTLE:			*p_txLength = MotPacket_ControlReq_Throttle_Build((MotPacket_ControlReq_T *)p_txPacket, p_app->MotorCmdValue); 		break;
+				case MOT_PACKET_CONTROL_BRAKE: 				*p_txLength = MotPacket_ControlReq_Brake_Build((MotPacket_ControlReq_T *)p_txPacket, p_app->MotorCmdValue); 		break;
+				case MOT_PACKET_CONTROL_RELEASE: 			*p_txLength = MotPacket_ControlReq_Release_Build((MotPacket_ControlReq_T *)p_txPacket); 							break;
+				case MOT_PACKET_CONTROL_DIRECTION_FORWARD: 	*p_txLength = MotPacket_ControlReq_DirectionForward_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;
+				case MOT_PACKET_CONTROL_DIRECTION_REVERSE: 	*p_txLength = MotPacket_ControlReq_DirectionReverse_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;
+				case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	*p_txLength = MotPacket_ControlReq_DirectionNeutral_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;
+				default: break;
+			}
+			break;
+		case MOT_PACKET_EXT_CMD: 							break;
+		case MOT_PACKET_EXT_RSVR2: 							break;
+		case MOT_PACKET_ID_RESERVED_255: 					break;
+		default: break;
+	}
+}
 
 const Protocol_Specs_T MOTOR_CMDR_MOT_PROTOCOL_SPECS =
 {
@@ -240,66 +264,3 @@ const Protocol_Specs_T MOTOR_CMDR_MOT_PROTOCOL_SPECS =
 };
 
 
-// StopAll_BuildReq,
-// Ping_BuildReq,
-// InitUnits_BuildReq,
-// SaveNvm_BuildReq,
-// WriteVar_BuildReq,
-// ReadVar_BuildReq,
-// Control_BuildReq,
-// Monitor_BuildReq,
-
-// static void Ping_BuildReq(MotPacket_PingReq_T * p_txPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
-// {
-// 	(void)p_app;
-// 	*p_txLength = MotPacket_PingReq_Build(p_txPacket);
-// 	*p_respLength = MotPacket_PingReq_GetRespLength();
-// }
-// static void StopAll_BuildReq(MotPacket_StopReq_T * p_txPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
-// {
-// 	(void)p_app;
-// 	*p_txLength = MotPacket_StopReq_Build(p_txPacket);
-// 	*p_respLength = MotPacket_StopReq_GetRespLength();
-// }
-// static void SaveNvm_BuildReq(MotPacket_SaveNvmReq_T * p_txPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
-// {
-// 	(void)p_app;
-// 	*p_txLength = MotPacket_SaveNvmReq_Build(p_txPacket);
-// 	*p_respLength = MotPacket_SaveNvmReq_GetRespLength();
-// }
-// static void InitUnits_BuildReq(MotPacket_InitUnitsReq_T * p_txPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
-// {
-// 	(void)p_app;
-// 	*p_txLength = MotPacket_InitUnitsReq_Build(p_txPacket);
-// 	*p_respLength = MotPacket_InitUnitsReq_GetRespLength();
-// }
-
-// static void Control_BuildReq(MotPacket_ControlReq_T * p_txPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
-// {
-// 	switch(p_app->ControlIdActive)
-// 	{
-// 		case MOT_PACKET_CONTROL_THROTTLE:				*p_txLength = MotPacket_ControlReq_Throttle_Build(p_txPacket, p_app->MotorCmdValue); 	break;
-// 		case MOT_PACKET_CONTROL_BRAKE: 				*p_txLength = MotPacket_ControlReq_Brake_Build(p_txPacket, p_app->MotorCmdValue); 		break;
-// 		case MOT_PACKET_CONTROL_RELEASE: 				*p_txLength = MotPacket_ControlReq_Release_Build(p_txPacket); 							break;
-// 		case MOT_PACKET_CONTROL_DIRECTION_FORWARD: 	*p_txLength = MotPacket_ControlReq_DirectionForward_Build(p_txPacket); 					break;
-// 		case MOT_PACKET_CONTROL_DIRECTION_REVERSE: 	*p_txLength = MotPacket_ControlReq_DirectionReverse_Build(p_txPacket); 					break;
-// 		case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	*p_txLength = MotPacket_ControlReq_DirectionNeutral_Build(p_txPacket); 					break;
-// 		default: break;
-// 	}
-// 	*p_respLength = MotPacket_ControlReq_GetRespLength(p_app->ControlIdActive);
-// }
-// static void Monitor_BuildReq(MotPacket_MonitorReq_T * p_txPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
-// {
-// 	*p_txLength = MotPacket_MonitorReq_Build(p_txPacket, p_app->MonitorIdActive);
-// 	*p_respLength = MotPacket_MonitorReq_GetRespLength(p_app->MonitorIdActive);
-// }
-// static void WriteVar_BuildReq(MotPacket_WriteVarReq_T * p_txPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
-// {
-// 	*p_txLength = MotPacket_WriteVarReq_Build(p_txPacket, p_app->MotorReadWriteVarId, p_app->MotorReadWriteVarValue);
-// 	*p_respLength = MotPacket_WriteVarReq_GetRespLength();
-// }
-// static void ReadVar_BuildReq(MotPacket_ReadVarReq_T * p_txPacket, size_t * p_txLength, size_t * p_respLength, const MotorCmdr_T * p_app)
-// {
-// 	*p_txLength = MotPacket_ReadVarReq_Build(p_txPacket, p_app->MotorReadWriteVarId);
-// 	*p_respLength = MotPacket_ReadVarReq_GetRespLength();
-// }

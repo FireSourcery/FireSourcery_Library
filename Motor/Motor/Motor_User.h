@@ -229,7 +229,7 @@ static inline void Motor_User_SetUserFeedbackModeCmd(Motor_T * p_motor, int16_t 
 
 /******************************************************************************/
 /*!
-	Throttle
+	Throttle - UserCmd value in configured UserFeedbackMode
 */
 /******************************************************************************/
 /*!

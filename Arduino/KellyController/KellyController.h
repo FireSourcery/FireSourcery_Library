@@ -57,6 +57,7 @@ public:
 	virtual ~KellyController(void);
 	void begin(void);
 	void end(void);
+	void flush(void) { p_serial->flush(); }
 
 	Protocol_RxCode_T procRxReqTxResp(void)
 	{
@@ -72,18 +73,19 @@ public:
 		}
 	};
 
-	void ping(void) 						{ MotorCmdr_Ping(&motorCmdr); };
-	void writeStopAll(void) 				{ MotorCmdr_StopMotors(&motorCmdr); };
-	void writeInitUnits(void) 				{ MotorCmdr_InitUnits(&motorCmdr); };
-	void writeThrottle(uint16_t throttle) 	{ MotorCmdr_WriteThrottle(&motorCmdr, throttle); };
-	void writeBrake(uint16_t brake) 		{ MotorCmdr_WriteBrake(&motorCmdr, brake); };
-	void writeSaveNvm(void) 				{ MotorCmdr_SaveNvm(&motorCmdr); };
-	void writeRelease(void) 				{ MotorCmdr_WriteRelease(&motorCmdr); };
-	void writeDirectionForward(void) 		{ MotorCmdr_WriteDirectionForward(&motorCmdr); };
-	void writeDirectionReverse(void) 		{ MotorCmdr_WriteDirectionReverse(&motorCmdr); };
-	void writeDirectionNeutral(void) 		{ MotorCmdr_WriteDirectionNeutral(&motorCmdr); };
-	void readSpeed(void) 					{ MotorCmdr_StartReadSpeed(&motorCmdr); };
-	void readIFoc(void) 					{ MotorCmdr_StartReadIFoc(&motorCmdr); };
+	void ping(void) 								{ MotorCmdr_Ping(&motorCmdr); };
+	void writeStopAll(void) 						{ MotorCmdr_StopMotors(&motorCmdr); };
+	void writeInitUnits(void) 						{ MotorCmdr_InitUnits(&motorCmdr); };
+	void writeThrottle(uint16_t throttle) 			{ MotorCmdr_WriteThrottle(&motorCmdr, throttle); };
+	void writeBrake(uint16_t brake) 				{ MotorCmdr_WriteBrake(&motorCmdr, brake); };
+	void writeVar(MotVarId_T id, uint32_t value) 	{ MotorCmdr_WriteVar(&motorCmdr, id, value); };
+	void writeSaveNvm(void) 						{ MotorCmdr_SaveNvm(&motorCmdr); };
+	void writeRelease(void) 						{ MotorCmdr_WriteRelease(&motorCmdr); };
+	void writeDirectionForward(void) 				{ MotorCmdr_WriteDirectionForward(&motorCmdr); };
+	void writeDirectionReverse(void) 				{ MotorCmdr_WriteDirectionReverse(&motorCmdr); };
+	void writeDirectionNeutral(void) 				{ MotorCmdr_WriteDirectionNeutral(&motorCmdr); };
+	void readSpeed(void) 							{ MotorCmdr_ReadSpeed(&motorCmdr); };
+	void readIFoc(void) 							{ MotorCmdr_ReadIFoc(&motorCmdr); };
 
 	int32_t getReadSpeed(void) { return MotorCmdr_GetReadSpeed(&motorCmdr); }
 	int16_t getReadIa(void) { return MotorCmdr_GetReadIa(&motorCmdr); }
@@ -99,6 +101,8 @@ public:
 	uint8_t * getPtrTxPacket(void) { return motorCmdr.TxPacket; }
 	uint8_t getRxLength(void) { return motorCmdr.Protocol.RxIndex; }
 	uint8_t * getPtrRxPacket(void) { return motorCmdr.RxPacket; }
+
+
 };
 
 

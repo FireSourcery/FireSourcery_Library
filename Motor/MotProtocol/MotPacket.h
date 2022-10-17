@@ -63,7 +63,8 @@ typedef enum MotPacket_HeaderId_Tag
 	MOT_PACKET_STATUS = 0x20U,		/* Header Status Only */
 	MOT_PACKET_VERSION = 0x21U,
 
-	/* Extended Types. Additional Cmd Id */
+	/* Extended Types. Additional Cmd Id  TODO Combine */
+	// MOT_PACKET_BATCH = 0xA1U,
 	MOT_PACKET_MONITOR_TYPE = 0xA1U,
 	MOT_PACKET_CONTROL_TYPE = 0xA2U,
 	MOT_PACKET_INIT_UNITS = 0xA3U,
@@ -72,14 +73,14 @@ typedef enum MotPacket_HeaderId_Tag
 	MOT_PACKET_CALL = 0xC2U,
 
 	/* General Data */
-	MOT_PACKET_READ_VAR = 0xD1U, 		/* Read Single Var */
-	MOT_PACKET_WRITE_VAR = 0xD2U, 		/* Write Single Var */
+	MOT_PACKET_READ_VAR = 0xD1U, 			/* Read Single Var */
+	MOT_PACKET_WRITE_VAR = 0xD2U, 			/* Write Single Var */
 	MOT_PACKET_READ_VARS_16 = 0xD3U, 		/* Up to 16 Ids, for 16 uint16_t values, or 8 uint32_t values */
 	MOT_PACKET_WRITE_VARS_8 = 0xD4U, 		/* Up to 8 Ids, for 8 uint16_t values, or 4 uint32_t values */
 
-	MOT_PACKET_READ_MEMORY = 0xD5U, 		/* Read Var Address */
-	MOT_PACKET_WRITE_MEMORY = 0xD6U, 		/* Write Var Address */
-	MOT_PACKET_SAVE_NVM = 0xD7U,
+	MOT_PACKET_READ_MEMORY = 0xD5U, 		/* Read Address */
+	MOT_PACKET_WRITE_MEMORY = 0xD6U, 		/* Write Address */
+	MOT_PACKET_SAVE_NVM = 0xD7U,			/* Save Non-volatile Vars, (Parameters). Must run after write. */
 
 	MOT_PACKET_DATA_MODE_READ = 0xDAU, 	/* Stateful NvMemory Read using Address */
 	MOT_PACKET_DATA_MODE_WRITE = 0xDBU, /* Stateful NvMemory Write using Address */
@@ -126,13 +127,10 @@ MotPacket_Header_T;
 
 typedef union MotPacket_Data_Tag
 {
-	uint8_t Data[32U];
-	uint16_t DataU16s[16U];
-	uint32_t DataU32s[8U];
-	uint8_t DataU8s[32U];
-	int16_t DataS16s[16U];
-	int32_t DataS32s[8U];
-	int8_t DataS8s[32U];
+	uint8_t Bytes[32U];
+	uint8_t U8s[32U]; 	int8_t S8s[32U];
+	uint16_t U16s[16U];	int16_t S16s[16U];
+	uint32_t U32s[8U];	int32_t S32s[8U];
 }
 MotPacket_Data_T;
 
@@ -141,7 +139,6 @@ typedef union MotPacket_Packet_Tag
 	struct
 	{
 		MotPacket_Header_T Header;
-		// uint16_t HeaderOverload;
 		union
 		{
 			uint8_t Payload[MOT_PACKET_PAYLOAD_MAX];
@@ -158,7 +155,7 @@ MotPacket_T;
 */
 /******************************************************************************/
 // /*
-// 	Ext Status Response - one 16-bit optional status reponse
+// 	Ext Status Response - one 16-bit optional status response
 // */
 // typedef enum MotPacket_StatusResp_Id_Tag
 // {
@@ -204,6 +201,8 @@ typedef struct MotPacket_WriteVarReq_Payload_Tag { uint16_t MotVarId; uint32_t V
 typedef struct MotPacket_WriteVarReq_Tag { MotPacket_Header_T Header; MotPacket_WriteVarReq_Payload_T WriteReq; } 		MotPacket_WriteVarReq_T;
 typedef struct MotPacket_WriteVarResp_Payload_Tag { uint16_t Status; } 													MotPacket_WriteVarResp_Payload_T;
 typedef struct MotPacket_WriteVarResp_Tag { MotPacket_Header_T Header; MotPacket_WriteVarResp_Payload_T WriteResp; } 	MotPacket_WriteVarResp_T;
+// typedef struct MotPacket_WriteVarResp_Payload_Tag { (void); } 														MotPacket_WriteVarResp_Payload_T;
+// typedef MotPacket_Header_T  																							MotPacket_WriteVarResp_T;
 
 /******************************************************************************/
 /*!
@@ -248,7 +247,7 @@ typedef struct MotPacket_SaveNvmResp_Tag { MotPacket_Header_T Header; }		MotPack
 /******************************************************************************/
 // typedef struct MotPacket_InitUnitsReq_Payload_Tag {uint8_t InitUnitsId; uint8_t RsvrByte;} 								MotPacket_InitUnitsReq_Payload_T;
 typedef struct MotPacket_InitUnitsReq_Tag { MotPacket_Header_T Header; } 													MotPacket_InitUnitsReq_T;
-typedef MotPacket_Data_T																								MotPacket_InitUnitsResp_Payload_T;
+typedef MotPacket_Data_T																									MotPacket_InitUnitsResp_Payload_T;
 typedef struct MotPacket_InitUnitsResp_Tag { MotPacket_Header_T Header; MotPacket_InitUnitsResp_Payload_T InitUnitsResp; } 	MotPacket_InitUnitsResp_T;
 
 
@@ -266,6 +265,8 @@ typedef struct MotPacket_InitUnitsResp_Tag { MotPacket_Header_T Header; MotPacke
 */
 typedef enum MotPacket_ControlId_Tag
 {
+	// MOT_PACKET_BATCH_INIT_UNITS = 0x00U,
+
 	MOT_PACKET_CONTROL_RELEASE = 0x00U,
 	MOT_PACKET_CONTROL_DIRECTION_FORWARD = 0x01U,		/* Main direction */
 	MOT_PACKET_CONTROL_DIRECTION_REVERSE = 0x02U,		/* Main direction */
@@ -306,6 +307,19 @@ typedef struct MotPacket_ControlReq_Brake_Payload_Tag { uint8_t ControlId; uint8
 typedef struct MotPacket_ControlReq_Direction_Payload_Tag { uint8_t ControlId; uint8_t RsvrByte;} 							MotPacket_ControlReq_Direction_Payload_T;
 typedef struct MotPacket_ControlReq_Release_Payload_Tag { uint8_t ControlId; uint8_t RsvrByte;} 							MotPacket_ControlReq_Release_Payload_T;
 
+
+// typedef struct MotPacket_BatchReq_InitUnits_Payload_Tag
+// {
+// 	speedRef_Rpm;
+// 	iRef_Amp;
+// 	vRef_Volts;
+// 	vSupply_R1;
+// 	vSupply_R2;
+// 	vSense_R1;
+// 	vSense_R2;
+// 	vAcc_R1;
+// 	vAcc_R2;
+// } 	MotPacket_BatchReq_InitUnits_Payload_T;
 
 /******************************************************************************/
 /*!	Monitor - Pre-Assigned Batch Read */
@@ -368,7 +382,7 @@ MotPacket_MonitorResp_IFoc_Payload_T;
 /******************************************************************************/
 /*!	Data Mode Read */
 /******************************************************************************/
-typedef struct MotPacket_ReadDataReq_Payload_Tag { uint32_t AddressStart; uint16_t SizeBytes; } 							MotPacket_ReadDataReq_Payload_T;
+typedef struct MotPacket_ReadDataReq_Payload_Tag { uint32_t AddressStart; uint32_t SizeBytes; } 							MotPacket_ReadDataReq_Payload_T;
 typedef struct MotPacket_ReadDataReq_Tag { MotPacket_Header_T Header; MotPacket_ReadDataReq_Payload_T ReadDataReq; } 		MotPacket_ReadDataReq_T;
 typedef struct MotPacket_ReadDataResp_Payload_Tag { uint16_t Status; } 														MotPacket_ReadDataResp_Payload_T;
 typedef struct MotPacket_ReadDataResp_Tag { MotPacket_Header_T Header; MotPacket_ReadDataResp_Payload_T ReadDataResp; }		MotPacket_ReadDataResp_T;
@@ -376,7 +390,7 @@ typedef struct MotPacket_ReadDataResp_Tag { MotPacket_Header_T Header; MotPacket
 /******************************************************************************/
 /*!	Data Mode Write */
 /******************************************************************************/
-typedef struct MotPacket_WriteDataReq_Payload_Tag { uint32_t AddressStart; uint16_t SizeBytes; } 							MotPacket_WriteDataReq_Payload_T;
+typedef struct MotPacket_WriteDataReq_Payload_Tag { uint32_t AddressStart; uint32_t SizeBytes; } 							MotPacket_WriteDataReq_Payload_T;
 typedef struct MotPacket_WriteDataReq_Tag { MotPacket_Header_T Header; MotPacket_WriteDataReq_Payload_T WriteDataReq; } 	MotPacket_WriteDataReq_T;
 typedef struct MotPacket_WriteDataResp_Payload_Tag { uint16_t NvmStatus; } 													MotPacket_WriteDataResp_Payload_T;
 typedef struct MotPacket_WriteDataResp_Tag { MotPacket_Header_T Header; MotPacket_WriteDataResp_Payload_T WriteDataResp; } 	MotPacket_WriteDataResp_T;
@@ -384,8 +398,9 @@ typedef struct MotPacket_WriteDataResp_Tag { MotPacket_Header_T Header; MotPacke
 /******************************************************************************/
 /*!	Data Mode Common */
 /******************************************************************************/
-typedef struct MotPacket_DataType_Payload_Tag { uint8_t Data[MOT_PACKET_PAYLOAD_MAX]; } 						MotPacket_DataType_Payload_T;
-typedef struct MotPacket_DataType_Tag { MotPacket_Header_T Header; /* uint16_t HeaderOverload */ MotPacket_DataType_Payload_T DataType; } 	MotPacket_DataType_T;
+// typedef struct MotPacket_DataType_Payload_Tag { uint8_t Data[MOT_PACKET_PAYLOAD_MAX]; } 		MotPacket_DataType_Payload_T;
+typedef MotPacket_Data_T 																		MotPacket_DataType_Payload_T;
+typedef struct MotPacket_DataType_Tag { MotPacket_Header_T Header; MotPacket_Data_T Data; } 	MotPacket_DataType_T;
 
 /******************************************************************************/
 /*!	Extern */
@@ -413,11 +428,11 @@ extern uint8_t MotPacket_StopReq_GetRespLength(void);
 
 extern uint8_t MotPacket_ReadVarReq_Build(MotPacket_ReadVarReq_T * p_reqPacket, MotVarId_T motVarId);
 extern uint8_t MotPacket_ReadVarReq_GetRespLength(void);
-extern void MotPacket_ReadVarResp_Parse(uint32_t * p_value, const MotPacket_ReadVarResp_T * p_respPacket);
+extern MotPacket_HeaderStatus_T MotPacket_ReadVarResp_Parse(uint32_t * p_value, const MotPacket_ReadVarResp_T * p_respPacket);
 
 extern uint8_t MotPacket_WriteVarReq_Build(MotPacket_WriteVarReq_T * p_reqPacket, MotVarId_T motVarId, uint32_t value);
 extern uint8_t MotPacket_WriteVarReq_GetRespLength(void);
-// extern void MotPacket_WriteVarResp_Parse(const MotPacket_WriteVarResp_T * p_respPacket);
+extern MotPacket_HeaderStatus_T MotPacket_WriteVarResp_Parse(const MotPacket_WriteVarResp_T * p_respPacket);
 
 extern uint8_t MotPacket_SaveNvmReq_Build(MotPacket_SaveNvmReq_T * p_reqPacket);
 extern uint8_t MotPacket_SaveNvmReq_GetRespLength(void);

@@ -33,10 +33,42 @@
 
 typedef enum MotVarId_Tag
 {
-	MOT_VAR_NULL = 0u,
+	MOT_VAR_NULL = 0U,
 
 	/*
-		Motor 1 by default
+		Demo Group 0-255 0b1111
+	*/
+	MOT_VAR_THROTTLE = 1U, 		/* Value 16-bit */
+	MOT_VAR_BRAKE = 2U,			/* Value 16-bit */
+	MOT_VAR_DIRECTION = 3U,		/* Value 0: Neutral, 1: Reverse, 2: Forward */
+	MOT_VAR_BEEP = 4U,			/* Beep */
+
+	MOT_VAR_SPEED_RPM = 129U,				/* Value 16-bit */
+	MOT_VAR_ERROR_CODE = 130U,				/* Value Bitfield 16-bit */
+	MOT_VAR_MC_STATE = 131U,				/* Value enum: 0:INIT, 1:STOP ,2:RUN 3:FAULT*/
+
+	// MOT_VAR_HEAT_PCB_DEG_C = 133U,			/* Value 16-bit */
+	// MOT_VAR_FOC_IQ = 134U,					/* Value 16-bit */
+	// MOT_VAR_I_PEAK_AMP = 130U, 				/* Value 16-bit */
+	// MOT_VAR_SPEED_GROUND_KMH = 131U,		/* Value 16-bit */
+
+	MOT_VAR_PARAM_TEST_BEGIN = 256U,	/*  */
+	MOT_VAR_USER_INPUT_MODE = 257U,		/* Value enum: 0:Analog, 1:Protocol */
+	MOT_VAR_PARAM_TEST_1 = 258U,		/* Value 16-bit */
+	MOT_VAR_PARAM_TEST_2 = 259U,		/* Value 32-bit */
+	MOT_VAR_PARAM_TEST_3 = 260U,		/* Value 0, 1 */
+	MOT_VAR_PARAM_TEST_4 = 261U,		/* Value 16-bit Read-Only */
+
+	/*
+		Real Time Monitor Vars
+	*/
+
+	/*
+		Parameter Vars
+	*/
+
+	/*
+		Motor[0] by default
 	*/
 	MOT_VAR_I_MAX_REF_AMP,
 

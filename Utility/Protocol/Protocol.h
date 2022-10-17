@@ -215,7 +215,7 @@ typedef const struct Protocol_Specs_Tag
 	const Protocol_ResetExt_T REQ_EXT_RESET; 		/* Alternatively, handle in req by user */
 
 	/* Cmdr side only */
-	const Protocol_Cmdr_BuildTxReq_T CMDR_BUILD_TX_REQ; /* Alternatively, function table */
+	const Protocol_Cmdr_BuildTxReq_T CMDR_BUILD_TX_REQ; /* Single build function is suffcient. Rx Share Protocol_Proc() and P_REQ_TABLE. Alternatively, function table */
 
 
 	// const Protocol_ReqSync_T SYNC;  		/* todo streamline/remove. Rx Packet checksum Nack only , default statless sync, timeout nack */
@@ -255,18 +255,15 @@ typedef enum Protocol_ReqState_Tag
 	PROTOCOL_REQ_STATE_WAIT_RX_COMPLETE_EXT, /* Wait for next ReqExt packet in stateful routine */
 	PROTOCOL_REQ_STATE_WAIT_RX_SYNC,
 	PROTOCOL_REQ_STATE_WAIT_RX_SYNC_FINAL,
-	PROTOCOL_REQ_STATE_WAIT_PROCESS,
+	PROTOCOL_REQ_STATE_WAIT_PROCESS,		/* Wait for ReqExt process */
 }
 Protocol_ReqState_T;
 
 typedef struct __attribute__((aligned(4U))) Protocol_Params_Tag
 {
-// #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 	uint8_t XcvrId;
-// #endif
 	uint8_t SpecsId;
 	uint32_t WatchdogTime;	//Watchdog Time
-
 	//RxTimeOutPacket
 	//RxTimeOutByte
 	bool IsEnableOnInit; 	/* enable on start up */
@@ -283,18 +280,14 @@ typedef const struct Protocol_Config_Tag
 	const uint8_t PACKET_BUFFER_LENGTH; 						/* Must be greater than Specs RX_LENGTH_MAX */
 	void * const P_APP_INTERFACE;			 					/* User app context for packet processing */
 	void * const P_SUBSTATE_BUFFER; 							/* Child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context referred by specs */
-	const Protocol_Specs_T * const * const PP_SPECS_TABLE; 		/* Bound and verify specs selection. Pointer to pointer, Specs not necessarily in a contiguous array */
+	const Protocol_Specs_T * const * const PP_SPECS_TABLE; 		/* Bound and verify specs selection. Pointer to table of pointers to Specs, Specs not necessarily in a contiguous array */
 	const uint8_t SPECS_COUNT;
 	const volatile uint32_t * const P_TIMER;
 	const Protocol_Params_T * const P_PARAMS;
 }
 Protocol_Config_T;
 
-// #if defined(CONFIG_PROTOCOL_XCVR_ENABLE)
 #define _PROTOCOL_XCVR_INIT(p_XcvrTable, TableLength) .Xcvr = XCVR_INIT(p_XcvrTable, TableLength),
-// #else
-// #define _PROTOCOL_XCVR_INIT(p_XcvrTable, TableLength)
-// #endif
 
 #define PROTOCOL_INIT(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubstateBuffer, p_SpecsTable, SpecsCount, p_XcvrTable, XcvrCount, p_Timer, p_Params)	\
 {																\
@@ -317,12 +310,9 @@ typedef struct Protocol_Tag
 {
 	const Protocol_Config_T CONFIG;
 	Protocol_Params_T Params;
-	//	Datagram_T Datagram; //configurable broadcast
-
-// #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
 	Xcvr_T Xcvr;
-// #endif
 	const Protocol_Specs_T * p_Specs;
+	//	Datagram_T Datagram; //configurable broadcast
 
 	Protocol_RxState_T RxState;
 	Protocol_RxCode_T RxStatus;		/* Returned from child function, also return to caller. updated per proc */

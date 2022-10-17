@@ -33,13 +33,13 @@
 
 /*
 	Composition - access uniform Protocol Module functions,
-	Implmented dependency on Protocol module for StartReq, ReqTable,
+	Implemented dependency on Protocol module for StartReq, ReqTable,
 	Optionally handle TxRx, req/resp wait
 */
 
-extern const Protocol_Specs_T MOTOR_CMDR_MOT_PROTOCOL_SPECS;  //todo fix circular extern
+extern const Protocol_Specs_T MOTOR_CMDR_MOT_PROTOCOL_SPECS;  /* circular extern defined in MotorCmdr_MotProtocol */
 
-/* MotorCmdr supports Mot_Protocol only */
+/* MotorCmdr supports MotorCmdr_MotProtocol only */
 const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U] =
 {
 	[0U] = &MOTOR_CMDR_MOT_PROTOCOL_SPECS,
@@ -63,7 +63,9 @@ void MotorCmdr_Init(MotorCmdr_T * p_motorCmdr)
 */
 /******************************************************************************/
 /*
-	Protocol module handle TxRx, CheckAvailable
+	Protocol module handle TxRx via Xcvr
+
+	Check Available Rx Req, Tx Resp
 */
 void MotorCmdr_Proc(MotorCmdr_T * p_motorCmdr)
 {
@@ -89,23 +91,24 @@ void MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId, uint32_t
 	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_WRITE_VAR);
 }
 
-void MotorCmdr_StartReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId)
+void MotorCmdr_ReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId)
 {
 	p_motorCmdr->MotorReadVarId = motVarId;
 	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_READ_VAR);
 }
 
-void MotorCmdr_StartReadSpeed(MotorCmdr_T * p_motorCmdr)
-{
-	p_motorCmdr->MonitorIdActive = MOT_PACKET_MONITOR_SPEED;
-	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_MONITOR_TYPE);
-}
+/* Read speed back including:  */
+// void MotorCmdr_ReadSpeed(MotorCmdr_T * p_motorCmdr)
+// {
+// 	p_motorCmdr->MonitorIdActive = MOT_PACKET_MONITOR_SPEED;
+// 	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_MONITOR_TYPE);
+// }
 
-void MotorCmdr_StartReadIFoc(MotorCmdr_T * p_motorCmdr)
-{
-	p_motorCmdr->MonitorIdActive = MOT_PACKET_MONITOR_I_FOC;
-	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_MONITOR_TYPE);
-}
+// void MotorCmdr_ReadIFoc(MotorCmdr_T * p_motorCmdr)
+// {
+// 	p_motorCmdr->MonitorIdActive = MOT_PACKET_MONITOR_I_FOC;
+// 	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_MONITOR_TYPE);
+// }
 
 /* Overwrites */
 void MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake)
@@ -117,9 +120,11 @@ void MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake)
 
 void MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle)
 {
-	p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_THROTTLE;
-	p_motorCmdr->MotorCmdValue = throttle;
-	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
+	// p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_THROTTLE;
+	// p_motorCmdr->MotorCmdValue = throttle;
+	// Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
+
+	MotorCmdr_WriteVar(p_motorCmdr, MOT_VAR_THROTTLE, throttle);
 }
 
 void MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr)
@@ -172,19 +177,19 @@ void MotorCmdr_WriteDirectionNeutral(MotorCmdr_T * p_motorCmdr)
 // 	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PACKET_WRITE_VAR);
 // }
 
-// uint8_t _MotorCmdr_StartReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId)
+// uint8_t _MotorCmdr_ReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId)
 // {
 // 	p_motorCmdr->MotorReadVarId = motVarId;
 // 	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PACKET_READ_VAR);
 // }
 
-// uint8_t _MotorCmdr_StartReadSpeed(MotorCmdr_T * p_motorCmdr)
+// uint8_t _MotorCmdr_ReadSpeed(MotorCmdr_T * p_motorCmdr)
 // {
 // 	p_motorCmdr->MonitorIdActive = MOT_PACKET_MONITOR_SPEED;
 // 	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PACKET_MONITOR_TYPE);
 // }
 
-// uint8_t _MotorCmdr_StartReadIFoc(MotorCmdr_T * p_motorCmdr)
+// uint8_t _MotorCmdr_ReadIFoc(MotorCmdr_T * p_motorCmdr)
 // {
 // 	p_motorCmdr->MonitorIdActive = MOT_PACKET_MONITOR_I_FOC;
 // 	return _Protocol_Cmdr_BuildTxReq(&p_motorCmdr->Protocol, MOT_PACKET_MONITOR_TYPE);

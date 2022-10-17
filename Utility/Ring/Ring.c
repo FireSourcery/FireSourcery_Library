@@ -41,7 +41,6 @@
 	Private
 */
 /******************************************************************************/
-
 /******************************************************************************/
 /*!
 	Optionally implement Critical at Ring Buffer instance level.
@@ -138,8 +137,8 @@ static inline void Enqueue(Ring_T * p_ring, const void * p_unit) 					{ PlaceBac
 static inline void Dequeue(Ring_T * p_ring, void * p_dest) 							{ PeekFront(p_ring, p_dest); RemoveFront(p_ring, 1U); }
 static inline void PushFront(Ring_T * p_ring, const void * p_unit) 					{ AddFront(p_ring, 1U); PlaceFront(p_ring, p_unit); }
 static inline void PopBack(Ring_T * p_ring, void * p_dest) 							{ RemoveBack(p_ring, 1U); PeekBack(p_ring, p_dest); }
-static inline void * SeekPtr(Ring_T * p_ring, size_t index) 						{ RemoveFront(p_ring, index); return GetPtrFront(p_ring); }
 static inline void Seek(Ring_T * p_ring, void * p_dest, size_t index) 				{ RemoveFront(p_ring, index); PeekFront(p_ring, p_dest); }
+static inline void * SeekPtr(Ring_T * p_ring, size_t index) 						{ RemoveFront(p_ring, index); return GetPtrFront(p_ring); }
 
 /******************************************************************************/
 /*!

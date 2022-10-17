@@ -62,7 +62,7 @@ static inline void ExitCritical(StateMachine_T * p_stateMachine)
 }
 
 /*
-	No null pointer check. User must supply empty for no op
+	No null pointer check. User ensure p_stateMachine->p_StateActive->OUTPUT is defined when using this interface. supply empty for no op
 */
 static inline void ProcOutput(StateMachine_T * p_stateMachine)
 {
@@ -75,24 +75,21 @@ static inline void ProcOutput(StateMachine_T * p_stateMachine)
 	todo remove in favor of Ext
 */
 /******************************************************************************/
-
-static inline bool TransitionFunction(StateMachine_State_T ** pp_newReturn, StateMachine_State_T * p_active, void * p_context, statemachine_input_t input)
+static inline bool CheckInput(StateMachine_T * p_stateMachine, statemachine_input_t inputId)
 {
-	StateMachine_Transition_T transition = p_active->P_TRANSITION_TABLE[input];
-	bool isAccept = (transition != 0U);
-	if(isAccept == true) { *pp_newReturn = transition(p_context); };
-	return isAccept;
+	return ((inputId < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH) && (p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId] != 0U));
 }
 
-static inline bool ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
+static inline StateMachine_State_T * TransitionFunction(void * p_context, StateMachine_State_T * p_active, statemachine_input_t inputId)
 {
-	bool isAccept = (input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
-	StateMachine_State_T * p_newState;
-	if(isAccept == true) { isAccept = TransitionFunction(&p_newState, p_stateMachine->p_StateActive, p_stateMachine->CONFIG.P_CONTEXT, input); }
-	if(isAccept == true) { if(p_newState != 0U) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); } }
-	return isAccept;
+	return p_active->P_TRANSITION_TABLE[inputId](p_context);
 }
 
+static inline void ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
+{
+	StateMachine_State_T * p_newState = TransitionFunction(p_stateMachine->CONFIG.P_CONTEXT, p_stateMachine->p_StateActive, input);
+	if(p_newState != 0U) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); }
+}
 
 /******************************************************************************/
 /*
@@ -100,55 +97,30 @@ static inline bool ProcInput(StateMachine_T * p_stateMachine, statemachine_input
 */
 /******************************************************************************/
 /*!
-	TransitionFunction defined via P_TRANSITION_TABLE
-	@param[out] pp_newReturn - 	returns pointer to new state, if it exists.
-	@return false
-				indicates not accepted input, transition does not exist, pp_newReturn is not set.
-			true
-				pp_newReturn == 0  no transition,  bypass exit and entry, indicates user defined non transition
-				pp_newReturn != 0  transition, perform exist and entry. User may return same state, for self transition, proc exit and entry
+	@return false indicates not accepted input, transition does not exist.
+			true indicates accepted input, state may transition or self transition (with or without entry and exit function).
 */
-static inline bool TransitionFunctionExt(StateMachine_State_T ** pp_newReturn, StateMachine_State_T * p_active, void * p_context, statemachine_input_t input, uint32_t inputExt)
-// static inline StateMachine_State_T * TransitionFunction(StateMachine_State_T * p_active, void * p_context, statemachine_input_t input, uint32_t inputExt)
+static inline bool CheckInputExt(StateMachine_T * p_stateMachine, statemachine_input_t inputId)
 {
-	StateMachine_TransitionExt_T transition = p_active->P_TRANSITION_EXT_TABLE[input];
-	bool isAccept = (transition != 0U);
-	if(isAccept == true) { *pp_newReturn = transition(p_context, inputExt); };
-	return isAccept;
+	return ((inputId < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH) && (p_stateMachine->p_StateActive->P_TRANSITION_EXT_TABLE[inputId] != 0U));
 }
 
 /*!
-	@return false indicates not accepted input, transition does not exist.
-			true indicates accepted input, state may transition or self transition.
+
 */
-static inline bool ProcInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
-// static inline bool ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
+static inline StateMachine_State_T * TransitionFunctionExt(void * p_context, StateMachine_State_T * p_active, statemachine_input_t inputId, uint32_t inputExt)
 {
-	bool isAccept = (input < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
-	StateMachine_State_T * p_newState;
-	if(isAccept == true) { isAccept = TransitionFunctionExt(&p_newState, p_stateMachine->p_StateActive, p_stateMachine->CONFIG.P_CONTEXT, input, inputExt); }
-	if(isAccept == true) { if(p_newState != 0U) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); } }
-	return isAccept;
+	return p_active->P_TRANSITION_EXT_TABLE[inputId](p_context, inputExt);
 }
 
-
-// static inline StateMachine_State_T * TransitionFunction(void * p_context, StateMachine_State_T * p_active, statemachine_input_t inputId, uint32_t inputExt)
-// {
-// 	return p_active->P_TRANSITION_EXT_TABLE[inputId](p_context, inputExt);
-// }
-
-// static inline bool ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t inputId, uint32_t inputExt)
-// {
-// 	bool isAccept = (inputId < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
-// 	StateMachine_State_T * p_newState;
-// 	if(isAccept == true) { isAccept = (p_stateMachine->p_StateActive->P_TRANSITION_EXT_TABLE[inputId] != 0U); }
-// 	if(isAccept == true)
-// 	{
-// 		p_newState = TransitionFunction(p_stateMachine->CONFIG.P_CONTEXT, p_stateMachine->p_StateActive, inputId, inputExt);
-// 		if(p_newState != 0U) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); }
-// 	}
-// 	return isAccept;
-// }
+/*!
+	private procInput helper without input error checking
+*/
+static inline void ProcInputExt(StateMachine_T * p_stateMachine, statemachine_input_t inputId, uint32_t inputExt)
+{
+	StateMachine_State_T * p_newState = TransitionFunctionExt(p_stateMachine->CONFIG.P_CONTEXT, p_stateMachine->p_StateActive, inputId, inputExt);
+	if(p_newState != 0U) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); }
+}
 
 /******************************************************************************/
 /*!
@@ -177,7 +149,7 @@ void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, StateMac
 void StateMachine_Init(StateMachine_T * p_stateMachine)
 {
 	p_stateMachine->SyncInput = STATE_MACHINE_INPUT_NULL;
-	p_stateMachine->SyncInputExt = STATE_MACHINE_INPUT_NULL;
+	p_stateMachine->SyncInputExt = 0U;
 #ifdef  CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE
 	p_stateMachine->Mutex = 1U;
 #endif
@@ -189,11 +161,7 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 	if(EnterCritical(p_stateMachine) == true)
 	{
 		p_stateMachine->p_StateActive = p_stateMachine->CONFIG.P_MACHINE->P_STATE_INITIAL;
-
-		if(p_stateMachine->p_StateActive->ENTRY != 0U)
-		{
-			p_stateMachine->p_StateActive->ENTRY(p_stateMachine->CONFIG.P_CONTEXT);
-		}
+		if(p_stateMachine->p_StateActive->ENTRY != 0U) { p_stateMachine->p_StateActive->ENTRY(p_stateMachine->CONFIG.P_CONTEXT); }
 		ExitCritical(p_stateMachine);
 	}
 }
@@ -207,22 +175,21 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 /******************************************************************************/
 void StateMachine_Sync_Proc(StateMachine_T * p_stateMachine)
 {
-	ProcInput(p_stateMachine, p_stateMachine->SyncInput);
-	// ProcInputExt(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputExt);
+	ProcInputExt(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputExt);
 	p_stateMachine->SyncInput = STATE_MACHINE_INPUT_NULL; /* clear input, reserved char */
 	ProcOutput(p_stateMachine);
 }
 
 bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
-	bool isAccept = (p_stateMachine->SyncInput < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
+	bool isAccept = CheckInput(p_stateMachine, input);
 	if(isAccept == true) { p_stateMachine->SyncInput = input; }
 	return isAccept;
 }
 
 bool StateMachine_Sync_SetInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt)
 {
-	bool isAccept = (p_stateMachine->SyncInput < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH);
+	bool isAccept = CheckInputExt(p_stateMachine, input);
 	if(isAccept == true) { p_stateMachine->SyncInput = input; p_stateMachine->SyncInputExt = inputExt;}
 	return isAccept;
 }
@@ -238,8 +205,12 @@ bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_
 	bool isAccept = false;
 	if(EnterCritical(p_stateMachine))
 	{
-		isAccept = ProcInput(p_stateMachine, input);
-		if(isAccept == true) { ProcOutput(p_stateMachine); }
+		if(CheckInput(p_stateMachine, input) == true)
+		{
+			ProcInput(p_stateMachine, input);
+			ProcOutput(p_stateMachine);
+			isAccept = true;
+		}
 		ExitCritical(p_stateMachine);
 	}
 	return isAccept;
@@ -250,8 +221,12 @@ bool StateMachine_Async_ProcInputExt(StateMachine_T * p_stateMachine, statemachi
 	bool isAccept = false;
 	if(EnterCritical(p_stateMachine))
 	{
-		isAccept = ProcInputExt(p_stateMachine, inputId, inputExt);
-		if(isAccept == true) { ProcOutput(p_stateMachine); }
+		if(CheckInputExt(p_stateMachine, inputId) == true)
+		{
+			ProcInputExt(p_stateMachine, inputId, inputExt);
+			ProcOutput(p_stateMachine);
+			isAccept = true;
+		}
 		ExitCritical(p_stateMachine);
 	}
 	return isAccept;
@@ -259,7 +234,7 @@ bool StateMachine_Async_ProcInputExt(StateMachine_T * p_stateMachine, statemachi
 
 /******************************************************************************/
 /*
-	Semisynchronous Machine
+	Semi-synchronous Machine
 	Synchronous periodic output
 	Asynchronous Input
 */
@@ -282,7 +257,7 @@ bool StateMachine_Semi_ProcInput(StateMachine_T * p_stateMachine, statemachine_i
 	bool isAccept = false;
 	if(EnterCritical(p_stateMachine))
 	{
-		isAccept = ProcInput(p_stateMachine, input);
+		if(CheckInput(p_stateMachine, input) == true) { ProcInput(p_stateMachine, input); isAccept = true;}
 		ExitCritical(p_stateMachine);
 	}
 	return isAccept;
@@ -293,7 +268,7 @@ bool StateMachine_Semi_ProcInputExt(StateMachine_T * p_stateMachine, statemachin
 	bool isAccept = false;
 	if(EnterCritical(p_stateMachine))
 	{
-		isAccept = ProcInputExt(p_stateMachine, inputId, inputExt);
+		if(CheckInputExt(p_stateMachine, inputId) == true) { ProcInputExt(p_stateMachine, inputId, inputExt); isAccept = true;}
 		ExitCritical(p_stateMachine);
 	}
 	return isAccept;
@@ -301,13 +276,15 @@ bool StateMachine_Semi_ProcInputExt(StateMachine_T * p_stateMachine, statemachin
 
 /*
 	Full user defined transition function
+	No null pointer check. user ensure p_stateMachine->p_StateActive->TRANSITION_FUNCTION is defined when using this interface
 */
 bool StateMachine_Semi_ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t inputId, uint32_t inputExt)
 {
 	bool isAccept = false;
-	if(p_stateMachine->p_StateActive->TRANSITION_FUNCTION != 0U)
+	if(EnterCritical(p_stateMachine))
 	{
 		isAccept = p_stateMachine->p_StateActive->TRANSITION_FUNCTION(p_stateMachine->CONFIG.P_CONTEXT, inputId, inputExt);
+		ExitCritical(p_stateMachine);
 	}
 	return isAccept;
 }
@@ -320,7 +297,7 @@ bool StateMachine_Semi_ProcTransitionFunction(StateMachine_T * p_stateMachine, s
 #ifdef CONFIG_STATE_MACHINE_MENU_ENABLE
 void StateMachine_Menu_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
-	ProcAsyncInput(p_stateMachine, input);
+	StateMachine_Semi_ProcInput(p_stateMachine, input);
 }
 
 StateMachine_State_T * StateMachine_Menu_GetPtrActive(StateMachine_T * p_stateMachine)
@@ -328,30 +305,35 @@ StateMachine_State_T * StateMachine_Menu_GetPtrActive(StateMachine_T * p_stateMa
 	return p_stateMachine->p_StateActive;
 }
 
-void StateMachine_Menu_SetMenu(StateMachine_T * p_stateMachine, uint8_t menuId)
+void StateMachine_Menu_SetMenu(StateMachine_T * p_stateMachine, StateMachine_State_T * p_targetMenu)
 {
-	p_MenuSelect = target;
+	p_stateMachine->p_StateActive = p_targetMenu;
 }
 
-void StateMachine_Menu_SetNext() //does not run entry funcion
+void StateMachine_Menu_StartMenu(StateMachine_T * p_stateMachine, StateMachine_State_T * p_targetMenu)
 {
-	if(p_MenuSelect->NextMenu) p_MenuSelect = p_MenuSelect->NextMenu;
+	_StateMachine_ProcStateTransition(p_stateMachine, p_targetMenu);
 }
 
-void StateMachine_Menu_StartMenu(Menu_T * target)
+// does not run entry function
+void StateMachine_Menu_SetNext(StateMachine_T * p_stateMachine)
 {
-	p_MenuSelect = target;
-	if(p_MenuSelect->InitFunction) p_MenuSelect->InitFunction();
+	if(p_stateMachine->p_StateActive->P_NEXT_MENU != 0U) { StateMachine_Menu_SetMenu(p_stateMachine, p_stateMachine->p_StateActive->P_NEXT_MENU); }
 }
 
+// run entry function
 void StateMachine_Menu_StartNext(StateMachine_T * p_stateMachine)
 {
-	//enter cirtical
-	_StateMachine_ProcStateTransition(p_stateMachine, p_stateMachine->p_StateActive->P_NEXT_MENU);
+	if(p_stateMachine->p_StateActive->P_NEXT_MENU != 0U) { StateMachine_Menu_StartMenu(p_stateMachine, p_stateMachine->p_StateActive->P_NEXT_MENU); }
 }
 
-void StateMachine_Menu_ProcFunction(StateMachine_T * p_stateMachine, statemachine_input_t num)
+void StateMachine_Menu_ProcFunction(StateMachine_T * p_stateMachine, statemachine_input_t input)
 {
-	ProcOutput(p_stateMachine);
+	StateMachine_Semi_ProcInput(p_stateMachine, input);
+}
+
+void StateMachine_Menu_ProcLoop(StateMachine_T * p_stateMachine)
+{
+	StateMachine_Semi_ProcOutput(p_stateMachine);
 }
 #endif

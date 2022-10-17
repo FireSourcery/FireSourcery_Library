@@ -49,9 +49,11 @@ typedef void (*StateMachine_Output_T)(void * p_context); /* Synchronous State Ou
 typedef struct StateMachine_State_Tag * (* StateMachine_Transition_T)(void * p_context);
 
 /*!
+	TransitionFunction defined via P_TRANSITION_EXT_TABLE
 	Additional input passed as arguments
-
-	@return pointer to new state. 0 for self transition skipping entry function
+	@return returns pointer to new state, if it exists.
+			0 - no transition, bypass exit and entry, indicates user defined non transition
+			!0 - transition, perform exist and entry. User may return same state, for self transition, proc exit and entry
 */
 typedef struct StateMachine_State_Tag * (* StateMachine_TransitionExt_T)(void * p_context, uint32_t inputExt);
 
@@ -70,8 +72,8 @@ typedef bool (*StateMachine_TransitionFunction_T)(void * p_context, statemachine
 
 	Pointer to array of functions that return a pointer to the next state (No null pointer check, user must supply empty table)
 	Not accept input => define null pointer.
-	Nontransition (Output only / Mealy machine style outputs), does not proc entry function => function return 0
-	Selftransition, proc entry function => function return pointer to self
+	Non-transition (Output only / Mealy machine style outputs), does not proc entry function => function return 0
+	Self-transition, proc entry function => function return pointer to self
 */
 typedef const struct StateMachine_State_Tag
 {

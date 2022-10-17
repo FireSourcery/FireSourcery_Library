@@ -65,9 +65,9 @@ typedef struct MotorCmdr_Tag
 	MotPacket_MonitorId_T MonitorIdActive;
 	uint16_t MotorCmdValue;			/*  */
 
-	uint16_t MotorWriteVarId;		/*  */
+	MotVarId_T MotorWriteVarId;		/*  */
 	uint32_t MotorWriteVarValue;	/*  */
-	uint16_t MotorReadVarId;		/*  */
+	MotVarId_T MotorReadVarId;		/*  */
 	uint32_t MotorReadVarValue;		/*  */
 
 	/* Resp Interface */
@@ -126,6 +126,8 @@ static inline int16_t MotorCmdr_GetReadIbeta(MotorCmdr_T * p_motorCmdr) { return
 static inline int16_t MotorCmdr_GetReadId(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Id; }
 static inline int16_t MotorCmdr_GetReadIq(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->Iq; }
 
+static inline int16_t MotorCmdr_GetRespStatus(MotorCmdr_T * p_motorCmdr) { return p_motorCmdr->RespStatus; }
+
 /******************************************************************************/
 /*!
 	Extern
@@ -141,15 +143,15 @@ extern void MotorCmdr_StopMotors(MotorCmdr_T * p_motorCmdr);
 extern void MotorCmdr_SaveNvm(MotorCmdr_T * p_motorCmdr);
 extern void MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr);
 extern void MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId, uint32_t value);
-extern void MotorCmdr_StartReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId);
+extern void MotorCmdr_ReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId);
 extern void MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle);
 extern void MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake);
 extern void MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr);
 extern void MotorCmdr_WriteDirectionForward(MotorCmdr_T * p_motorCmdr);
 extern void MotorCmdr_WriteDirectionReverse(MotorCmdr_T * p_motorCmdr);
 extern void MotorCmdr_WriteDirectionNeutral(MotorCmdr_T * p_motorCmdr);
-extern void MotorCmdr_StartReadSpeed(MotorCmdr_T * p_motorCmdr);
-extern void MotorCmdr_StartReadIFoc(MotorCmdr_T * p_motorCmdr);
+extern void MotorCmdr_ReadSpeed(MotorCmdr_T * p_motorCmdr);
+extern void MotorCmdr_ReadIFoc(MotorCmdr_T * p_motorCmdr);
 
 
 /*
@@ -170,14 +172,14 @@ extern void MotorCmdr_StartReadIFoc(MotorCmdr_T * p_motorCmdr);
 // extern uint8_t _MotorCmdr_SaveNvm(MotorCmdr_T * p_motorCmdr);
 // extern uint8_t _MotorCmdr_InitUnits(MotorCmdr_T * p_motorCmdr);
 // extern uint8_t _MotorCmdr_WriteVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId, uint32_t value);
-// extern uint8_t _MotorCmdr_StartReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId);
+// extern uint8_t _MotorCmdr_ReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId);
 // extern uint8_t _MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle);
 // extern uint8_t _MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake);
 // extern uint8_t _MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr);
 // extern uint8_t _MotorCmdr_WriteDirectionForward(MotorCmdr_T * p_motorCmdr);
 // extern uint8_t _MotorCmdr_WriteDirectionReverse(MotorCmdr_T * p_motorCmdr);
 // extern uint8_t _MotorCmdr_WriteDirectionNeutral(MotorCmdr_T * p_motorCmdr);
-// extern uint8_t _MotorCmdr_StartReadSpeed(MotorCmdr_T * p_motorCmdr);
-// extern uint8_t _MotorCmdr_StartReadIFoc(MotorCmdr_T * p_motorCmdr);
+// extern uint8_t _MotorCmdr_ReadSpeed(MotorCmdr_T * p_motorCmdr);
+// extern uint8_t _MotorCmdr_ReadIFoc(MotorCmdr_T * p_motorCmdr);
 
 #endif

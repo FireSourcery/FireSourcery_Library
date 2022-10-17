@@ -124,12 +124,19 @@ typedef enum MotorController_ILimitActiveId_Tag
 }
 MotorController_ILimitActiveId_T;
 
-typedef enum OptDinFunction_Tag
+typedef enum MotorController_OptDinFunction_Tag
 {
 	MOTOR_CONTROLLER_OPT_DIN_DISABLE,
  	MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT,
 }
 MotorController_OptDinFunction_T;
+
+/* Set function interface */
+typedef enum MotorController_FaultId_Tag
+{
+	MOTOR_CONTROLLER_FAULT_PCB_OVERHEAT,
+}
+MotorController_FaultId_T;
 
 /*
 	Fault substate flags
@@ -203,6 +210,8 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 	uint16_t ILimitLowV_Frac16;
 	uint16_t ILimitHeat_Frac16; /* Final ILimit at HeatLimit. Proportionally effective beginning at HeatWarning */
 	// uint16_t ILimit_Frac16;	//battery max current, sset function passes to motor module
+
+	uint32_t Test[4U];
 }
 MotorController_Params_T;
 

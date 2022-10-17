@@ -100,9 +100,8 @@ void printRx(void)
 /**************************************************************************/
 void loop(void)
 {
-  Protocol_RxCode_T status = kellyController.procRxReqTxResp();
 
-  switch (status)
+  switch (kellyController.procRxReqTxResp())
   {
     case PROTOCOL_RX_CODE_PACKET_TIMEOUT:   Serial.print("Rx Timeout: ");       printRx();      break;
     case PROTOCOL_RX_CODE_PACKET_COMPLETE:  Serial.print("Rx Success: ");       printRx();      break;
@@ -152,6 +151,10 @@ void loop(void)
       case 3U:
         if(pressed) { kellyController.readSpeed(); printTx();}
         break;
+      case 4U:
+        if(pressed) { kellyController.writeVar(MOT_VAR_USER_INPUT_MODE, 1U); printTx();}
+        break;
+
       case 5U:
         if(pressed) { kellyController.writeThrottle(65535); printTx();}
         else { kellyController.writeRelease(); printTx();}
