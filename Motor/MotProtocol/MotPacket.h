@@ -64,7 +64,7 @@ typedef enum MotPacket_HeaderId_Tag
 	MOT_PACKET_VERSION = 0x21U,
 
 	/* Extended Types. Additional Cmd Id  TODO Combine */
-	// MOT_PACKET_BATCH = 0xA1U,
+	MOT_PACKET_CONTROL = 0xA1U,
 	MOT_PACKET_MONITOR_TYPE = 0xA1U,
 	MOT_PACKET_CONTROL_TYPE = 0xA2U,
 	MOT_PACKET_INIT_UNITS = 0xA3U,
@@ -120,6 +120,9 @@ typedef struct MotPacket_Header_Tag
 	uint16_t Crc;
 }
 MotPacket_Header_T;
+
+
+
 
 // typedef union { uint32_t U32; int32_t S32; } mot32_t;
 // typedef union { uint32_t U16; int32_t S16; } mot16_t;
@@ -196,6 +199,7 @@ typedef struct MotPacket_ReadVarResp_Tag { MotPacket_Header_T Header; MotPacket_
 
 /******************************************************************************/
 /*!	Write Var by Id */
+//[0xA5U][0xD2U][16][0][0][0][Checksum_L][Checksum_H] [VarId_L = 0x01][VarId_H = 0x00][Value_LL = 0x00][Value_LH = 0x00][Value_HL = 0x00][Value_HH = 0x00]
 /******************************************************************************/
 typedef struct MotPacket_WriteVarReq_Payload_Tag { uint16_t MotVarId; uint32_t Value; } 								MotPacket_WriteVarReq_Payload_T;
 typedef struct MotPacket_WriteVarReq_Tag { MotPacket_Header_T Header; MotPacket_WriteVarReq_Payload_T WriteReq; } 		MotPacket_WriteVarReq_T;
@@ -203,6 +207,8 @@ typedef struct MotPacket_WriteVarResp_Payload_Tag { uint16_t Status; } 									
 typedef struct MotPacket_WriteVarResp_Tag { MotPacket_Header_T Header; MotPacket_WriteVarResp_Payload_T WriteResp; } 	MotPacket_WriteVarResp_T;
 // typedef struct MotPacket_WriteVarResp_Payload_Tag { (void); } 														MotPacket_WriteVarResp_Payload_T;
 // typedef MotPacket_Header_T  																							MotPacket_WriteVarResp_T;
+
+
 
 /******************************************************************************/
 /*!
@@ -258,7 +264,7 @@ typedef struct MotPacket_InitUnitsResp_Tag { MotPacket_Header_T Header; MotPacke
 /******************************************************************************/
 
 /******************************************************************************/
-/*!	Control - Pre-Assigned Batch Write */
+/*!	Control - Pre-Assigned Batch Read/Write, Monitor, Sequence, */
 /******************************************************************************/
 /*
 	Default units in the client motor controller native format
@@ -279,13 +285,17 @@ typedef enum MotPacket_ControlId_Tag
 	MOT_PACKET_CONTROL_SPEED = 0x15U,		/* Value [-32768:32767] */
 	MOT_PACKET_CONTROL_ANGLE = 0x16U,		/*   */
 
+	MOT_PACKET_CONTROL_BUZZER = 0x21U,		/* 2 Var params  */
+
+	MOT_PACKET_CONTROL_MONITOR = 0x51U,		/*   */
+
 	// MOT_PACKET_CONTROL_VOLTAGE_VPWM = 0x83U, /* DutyCycle 65536 */
 	// MOT_PACKET_CONTROL_VOLTAGE_VOLTS = 0x83U,
 	// MOT_PACKET_CONTROL_CURRENT_AMPS = 0x84U,
 	// MOT_PACKET_CONTROL_SPEED_RPM = 0x85U,
 	// MOT_PACKET_CONTROL_ANGLE = 0x85U,
 
-	MOT_PACKET_CONTROL_BATCH_1 = 0x71U,
+	MOT_PACKET_CONTROL_BATCH_1 = 0x71U, /* Rx Throttle, Brake, Direction. Tx: Speed, IPhase, Battery, Error,  */
 	MOT_PACKET_CONTROL_MODE_RESERVED = 0xFFU,
 }
 MotPacket_ControlId_T;
@@ -396,11 +406,11 @@ typedef struct MotPacket_WriteDataResp_Payload_Tag { uint16_t NvmStatus; } 					
 typedef struct MotPacket_WriteDataResp_Tag { MotPacket_Header_T Header; MotPacket_WriteDataResp_Payload_T WriteDataResp; } 	MotPacket_WriteDataResp_T;
 
 /******************************************************************************/
-/*!	Data Mode Common */
+/*!	Data Mode Raw Data Packet */
 /******************************************************************************/
-// typedef struct MotPacket_DataType_Payload_Tag { uint8_t Data[MOT_PACKET_PAYLOAD_MAX]; } 		MotPacket_DataType_Payload_T;
-typedef MotPacket_Data_T 																		MotPacket_DataType_Payload_T;
-typedef struct MotPacket_DataType_Tag { MotPacket_Header_T Header; MotPacket_Data_T Data; } 	MotPacket_DataType_T;
+// typedef struct MotPacket_DataPacket_Payload_Tag { uint8_t Data[MOT_PACKET_PAYLOAD_MAX]; } 		MotPacket_DataPacket_Payload_T;
+typedef MotPacket_Data_T 																		MotPacket_DataPacket_Payload_T;
+typedef struct MotPacket_DataPacket_Tag { MotPacket_Header_T Header; MotPacket_Data_T Data; } 	MotPacket_DataPacket_T;
 
 /******************************************************************************/
 /*!	Extern */
@@ -502,7 +512,7 @@ extern MotPacket_HeaderStatus_T MotPacket_ReadDataReq_Parse(uint32_t * p_address
 extern uint8_t MotPacket_ReadDataResp_Build(MotPacket_ReadDataResp_T * p_respPacket, MotPacket_HeaderStatus_T status);
 extern MotPacket_HeaderStatus_T MotPacket_WriteDataReq_Parse(uint32_t * p_addressStart, uint16_t * p_sizeBytes, const MotPacket_WriteDataReq_T * p_reqPacket);
 extern uint8_t MotPacket_WriteDataResp_Build(MotPacket_WriteDataResp_T * p_respPacket, MotPacket_HeaderStatus_T status);
-extern uint8_t MotPacket_DataType_Build(MotPacket_DataType_T * p_dataPacket, uint8_t * p_address, uint8_t sizeData);
-extern MotPacket_HeaderStatus_T MotPacket_DataType_Parse(const uint8_t ** pp_data, uint8_t * p_dataSize, const MotPacket_DataType_T * p_dataPacket);
+extern uint8_t MotPacket_DataPacket_Build(MotPacket_DataPacket_T * p_dataPacket, uint8_t * p_address, uint8_t sizeData);
+extern MotPacket_HeaderStatus_T MotPacket_DataPacket_Parse(const uint8_t ** pp_data, uint8_t * p_dataSize, const MotPacket_DataPacket_T * p_dataPacket);
 
 #endif

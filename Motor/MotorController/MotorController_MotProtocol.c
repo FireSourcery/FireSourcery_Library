@@ -330,7 +330,7 @@ static Protocol_ReqCode_T Req_ReadData
 			{
 				//sequenceid*32 == data
 				readSize = (p_subState->DataModeSize > 32U) ? 32U : p_subState->DataModeSize;
-				*p_txSize = MotPacket_DataType_Build((MotPacket_DataType_T *)p_txPacket, (uint8_t *)p_subState->DataModeAddress, readSize);
+				*p_txSize = MotPacket_DataPacket_Build((MotPacket_DataPacket_T *)p_txPacket, (uint8_t *)p_subState->DataModeAddress, readSize);
 				p_subState->DataModeSize -= readSize;
 				p_subState->DataModeAddress += readSize;
 				reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_SYNC;
@@ -385,9 +385,9 @@ static Protocol_ReqCode_T Req_WriteData_Blocking
 			reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_REQ_EXT;
 			break;
 
-		case 2U: /* Write Data - rxPacket is DataType */
-			// writeSize = MotPacket_DataType_ParseDataLength((MotPacket_DataType_T *)p_rxPacket);
-			MotPacket_DataType_Parse(&p_writeData, &writeSize, (const MotPacket_DataType_T *)p_rxPacket);
+		case 2U: /* Write Data - rxPacket is DataPacket */
+			// writeSize = MotPacket_DataPacket_ParseDataLength((MotPacket_DataPacket_T *)p_rxPacket);
+			MotPacket_DataPacket_Parse(&p_writeData, &writeSize, (const MotPacket_DataPacket_T *)p_rxPacket);
 			if(p_subState->DataModeSize >= writeSize)
 			{
 				flashStatus = Flash_ContinueWrite_Blocking(p_flash, p_writeData, writeSize);

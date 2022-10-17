@@ -143,38 +143,6 @@ MotPacket_HeaderStatus_T MotPacket_SaveNvmResp_Parse(const MotPacket_SaveNvmResp
 }
 
 /******************************************************************************/
-/*!	Init Units */
-/******************************************************************************/
-// uint8_t MotPacket_InitUnitsReq_Build(MotPacket_InitUnitsReq_T * p_reqPacket)
-// {
-// 	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_INIT_UNITS, 0U, MOT_PACKET_HEADER_STATUS_OK);
-// }
-
-// // uint8_t MotPacket_InitUnitsReq_GetRespLength(void) { return sizeof(MotPacket_InitUnitsResp_T); }
-
-// void MotPacket_InitUnitsResp_Parse
-// (
-// 	uint16_t * p_speedRef_Rpm, uint16_t * p_iRef_Amp, uint16_t * p_vRef_Volts, /* Frac16 conversions */
-// 	uint16_t * p_vSupply_R1, uint16_t * p_vSupply_R2,	/* Adcu <-> Volts conversions */
-// 	uint16_t * p_vSense_R1, uint16_t * p_vSense_R2,
-// 	uint16_t * p_vAcc_R1, uint16_t * p_vAcc_R2,
-// 	const MotPacket_InitUnitsResp_T * p_respPacket
-// )
-// {
-// 	// *p_speedRef_Rpm = p_respPacket->InitUnitsResp.Data16s[0U];
-// 	// *p_iRef_Amp = p_respPacket->InitUnitsResp.Data16s[0U];
-// 	// *p_vRef_Volts = p_respPacket->InitUnitsResp.Data16s[0U];
-// 	// *p_vSupply_R1 = p_respPacket->InitUnitsResp.Data16s[0U];
-// 	// *p_vSupply_R2 = p_respPacket->InitUnitsResp.Data16s[0U];
-// 	// *p_vSense_R1 = p_respPacket->InitUnitsResp.Data16s[0U];
-// 	// *p_vSense_R2 = p_respPacket->InitUnitsResp.Data16s[0U];
-// 	// *p_vAcc_R1 = p_respPacket->InitUnitsResp.Data16s[0U];
-// 	// *p_vAcc_R2 = p_respPacket->InitUnitsResp.Data16s[0U];
-
-// 	// return p_respPacket->Header.Status;
-// }
-
-/******************************************************************************/
 /*!	Read Var */
 /******************************************************************************/
 uint8_t MotPacket_ReadVarReq_Build(MotPacket_ReadVarReq_T * p_reqPacket, MotVarId_T motVarId)
@@ -232,6 +200,39 @@ MotPacket_HeaderStatus_T MotPacket_WriteVarResp_Parse(const MotPacket_WriteVarRe
 // {
 // 	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_WRITE_VAR, sizeof(MotPacket_WriteVars8Req_Payload_T), status);
 // }
+
+/******************************************************************************/
+/*!	Init Units */
+/******************************************************************************/
+// uint8_t MotPacket_InitUnitsReq_Build(MotPacket_InitUnitsReq_T * p_reqPacket)
+// {
+// 	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_INIT_UNITS, 0U, MOT_PACKET_HEADER_STATUS_OK);
+// }
+
+// // uint8_t MotPacket_InitUnitsReq_GetRespLength(void) { return sizeof(MotPacket_InitUnitsResp_T); }
+
+// void MotPacket_InitUnitsResp_Parse
+// (
+// 	uint16_t * p_speedRef_Rpm, uint16_t * p_iRef_Amp, uint16_t * p_vRef_Volts, /* Frac16 conversions */
+// 	uint16_t * p_vSupply_R1, uint16_t * p_vSupply_R2,	/* Adcu <-> Volts conversions */
+// 	uint16_t * p_vSense_R1, uint16_t * p_vSense_R2,
+// 	uint16_t * p_vAcc_R1, uint16_t * p_vAcc_R2,
+// 	const MotPacket_InitUnitsResp_T * p_respPacket
+// )
+// {
+// 	// *p_speedRef_Rpm = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_iRef_Amp = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vRef_Volts = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vSupply_R1 = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vSupply_R2 = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vSense_R1 = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vSense_R2 = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vAcc_R1 = p_respPacket->InitUnitsResp.Data16s[0U];
+// 	// *p_vAcc_R2 = p_respPacket->InitUnitsResp.Data16s[0U];
+
+// 	// return p_respPacket->Header.Status;
+// }
+
 
 /******************************************************************************/
 /*!	Control Type */
@@ -577,20 +578,20 @@ uint8_t MotPacket_WriteDataResp_Build(MotPacket_WriteDataResp_T * p_respPacket, 
 /******************************************************************************/
 /*!	Data */
 /******************************************************************************/
-uint8_t MotPacket_DataType_Build(MotPacket_DataType_T * p_dataPacket, uint8_t * p_address, uint8_t sizeData)
+uint8_t MotPacket_DataPacket_Build(MotPacket_DataPacket_T * p_dataPacket, uint8_t * p_address, uint8_t sizeData)
 {
 	memcpy(&p_dataPacket->Data.Bytes[0U], p_address, sizeData);
-	return Packet_BuildHeader((MotPacket_T *)p_dataPacket, MOT_PACKET_DATA_MODE_TYPE, sizeof(MotPacket_DataType_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_dataPacket, MOT_PACKET_DATA_MODE_TYPE, sizeof(MotPacket_DataPacket_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
-MotPacket_HeaderStatus_T MotPacket_DataType_Parse(const uint8_t ** pp_data, uint8_t * p_dataSize, const MotPacket_DataType_T * p_dataPacket)
+MotPacket_HeaderStatus_T MotPacket_DataPacket_Parse(const uint8_t ** pp_data, uint8_t * p_dataSize, const MotPacket_DataPacket_T * p_dataPacket)
 {
 	*pp_data = &p_dataPacket->Data.Bytes[0U];
 	*p_dataSize = p_dataPacket->Header.TotalLength - sizeof(MotPacket_Header_T);
 	return p_dataPacket->Header.Status;
 }
 
-// uint8_t MotPacket_DataType_ParseDataLength(const MotPacket_DataType_T * p_dataPacket)
+// uint8_t MotPacket_DataPacket_ParseDataLength(const MotPacket_DataPacket_T * p_dataPacket)
 // {
 // 	return p_dataPacket->Header.TotalLength - sizeof(MotPacket_Header_T);
 // }
