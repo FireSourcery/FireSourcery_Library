@@ -94,7 +94,7 @@ static void Init_Entry(MotorController_T * p_mc)
 static void Init_Exit(MotorController_T * p_mc)
 {
 	p_mc->FaultFlags.State = 0U; /* Clear initial ADC readings */
-	Blinky_Blink(&p_mc->Buzzer, 200U);
+	Blinky_BlinkN(&p_mc->Buzzer, 200U, 500U, 2U);
 }
 
 static void Init_Proc(MotorController_T * p_mc)
