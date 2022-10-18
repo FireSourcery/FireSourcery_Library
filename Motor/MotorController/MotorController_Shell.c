@@ -949,11 +949,11 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 // 	{
 // 		if(strncmp(argv[1U], "disable", 8U) == 0U)
 // 		{
-// 			p_mc->Parameters.InputMode = MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL; //tdo
+// 			p_mc->Parameters.UserInputMode = MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL; //tdo
 // 		}
 // 		else if(strncmp(argv[1U], "enable", 7U) == 0U)
 // 		{
-// 			p_mc->Parameters.InputMode = MOTOR_CONTROLLER_INPUT_MODE_ANALOG;
+// 			p_mc->Parameters.UserInputMode = MOTOR_CONTROLLER_INPUT_MODE_ANALOG;
 // 		}
 // 	}
 

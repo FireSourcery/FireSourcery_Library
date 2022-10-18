@@ -36,6 +36,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/*
+	Input state/variation combined into single status
+*/
 typedef enum MotAnalogUser_Cmd_Tag
 {
 	MOT_ANALOG_USER_CMD_SET_BRAKE,
@@ -44,11 +47,11 @@ typedef enum MotAnalogUser_Cmd_Tag
 	MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE,
 	//	MOT_ANALOG_USER_CMD_SET_BRAKE_START,
 	//	MOT_ANALOG_USER_CMD_SET_THROTTLE_START,
+	MOT_ANALOG_USER_CMD_PROC_ZERO,	/* No Brake/Throttle input */
 	MOT_ANALOG_USER_CMD_SET_NEUTRAL,
 	MOT_ANALOG_USER_CMD_PROC_NEUTRAL,
 	MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD,
 	MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE,
-	MOT_ANALOG_USER_CMD_PROC_ZERO,	/* No input */
 }
 MotAnalogUser_Cmd_T;
 
@@ -125,13 +128,15 @@ typedef struct MotAnalogUser_Tag
 	Debounce_T ReversePin;
 	Debounce_T ForwardPin;
 	Debounce_T NeutralPin;
-	Debounce_T BrakeEdgePin;
-	Debounce_T ThrottleEdgePin;
+
 	Debounce_T BistateBrakePin;
 	Debounce_T ThrottleSafetyPin;
+
+	/* todo sub AnalogInput struct */
+	Debounce_T BrakeEdgePin;
+	Debounce_T ThrottleEdgePin;
 	Linear_T UnitThrottle;
 	Linear_T UnitBrake;
-
 	uint16_t Throttle_Frac16;
 	uint16_t ThrottlePrev_Frac16;
 	uint16_t Brake_Frac16;
@@ -144,17 +149,17 @@ MotAnalogUser_T;
 #define MOT_ANALOG_USER_INIT(p_BrakePinHal, BrakePinId, p_ThrottlePinHal, ThrottlePinId, p_ForwardPinHal, ForwardPinId, p_ReversePinHal, ReversePinId, p_BistateBrakePinHal, BistateBrakePinId, p_ThrottleSafetyPinHal, ThrottleSafetyPinId, p_Millis, p_Params)	\
 {																											\
 	.CONFIG 				= { .P_PARAMS = p_Params, },													\
-	.BrakeEdgePin 			= DEBOUNCE_INIT(p_BrakePinHal, 			BrakePinId, 			p_Millis), 	\
-	.ThrottleEdgePin 		= DEBOUNCE_INIT(p_ThrottlePinHal, 		ThrottlePinId, 			p_Millis), 	\
+	.BrakeEdgePin 			= DEBOUNCE_INIT(p_BrakePinHal, 				BrakePinId, 			p_Millis), 	\
+	.ThrottleEdgePin 		= DEBOUNCE_INIT(p_ThrottlePinHal, 			ThrottlePinId, 			p_Millis), 	\
 	.ForwardPin 			= DEBOUNCE_INIT(p_ForwardPinHal, 			ForwardPinId, 			p_Millis), 	\
 	.ReversePin 			= DEBOUNCE_INIT(p_ReversePinHal, 			ReversePinId, 			p_Millis), 	\
-	.BistateBrakePin		= DEBOUNCE_INIT(p_BistateBrakePinHal, 	BistateBrakePinId, 		p_Millis), 	\
+	.BistateBrakePin		= DEBOUNCE_INIT(p_BistateBrakePinHal, 		BistateBrakePinId, 		p_Millis), 	\
 	.ThrottleSafetyPin 		= DEBOUNCE_INIT(p_ThrottleSafetyPinHal, 	ThrottleSafetyPinId, 	p_Millis), 	\
-	.NeutralPin 			= DEBOUNCE_INIT(0, 0, 0),  													\
+	.NeutralPin 			= DEBOUNCE_INIT(0, 0, 0),  														\
 }
 
 /*
-	adcu capture from outside module, or use pointer
+	adcu capture from outside module. Alternatively, map pointer
 */
 static inline void MotAnalogUser_CaptureThrottleValue(MotAnalogUser_T * p_user, uint16_t throttle_Adcu)
 {
@@ -210,16 +215,17 @@ static inline void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_user, uint16_t
 }
 
 /* Optional separate Brake polling */
-static inline bool MotAnalogUser_PollBrakePin(MotAnalogUser_T * p_user)
+static inline bool MotAnalogUser_PollBrakePins(MotAnalogUser_T * p_user)
 {
 	Debounce_CaptureState(&p_user->BrakeEdgePin);
-	return Debounce_GetState(&p_user->BrakeEdgePin);
+	Debounce_CaptureState(&p_user->BistateBrakePin);
+	return ((Debounce_GetState(&p_user->BrakeEdgePin) == true) || (Debounce_GetState(&p_user->BistateBrakePin) == true)) ;
 }
 
-static inline bool MotAnalogUser_PollBrakePinRisingEdge(MotAnalogUser_T * p_user)
-{
-	return ((Debounce_CaptureState(&p_user->BrakeEdgePin) && Debounce_GetState(&p_user->BrakeEdgePin)) == true);
-}
+// static inline bool MotAnalogUser_PollBrakePinRisingEdge(MotAnalogUser_T * p_user)
+// {
+// 	return ((Debounce_CaptureState(&p_user->BrakeEdgePin) && Debounce_GetState(&p_user->BrakeEdgePin)) == true);
+// }
 
 static inline bool _MotAnalogUser_GetIsNeutralOn(const MotAnalogUser_T * p_user) 		{ return (p_user->Params.UseNeutralPin == true) && (Debounce_GetState(&p_user->NeutralPin) == true); }
 static inline bool MotAnalogUser_GetIsForwardOn(const MotAnalogUser_T * p_user) 		{ return (p_user->Params.UseForwardPin == true) ? Debounce_GetState(&p_user->ForwardPin) : !Debounce_GetState(&p_user->ReversePin); }
@@ -323,7 +329,7 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 				cmd = MOT_ANALOG_USER_CMD_SET_BRAKE;
 			}
 			else if((_MotAnalogUser_PollBrakeFallingEdge(p_user) == true) || (MotAnalogUser_PollBistateBrakeFallingEdge(p_user) == true))
-			{
+			{	//todo fix logic, not release if one is on
 				cmd = MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE;
 			}
 			/* Check Direction */

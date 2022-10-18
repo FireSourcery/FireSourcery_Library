@@ -40,16 +40,16 @@ typedef enum MotorController_StateMachine_Input_Tag
 {
 	MCSM_INPUT_FAULT,
 	MCSM_INPUT_SET_DIRECTION, 		/* Edge */
+
+	/* Determined by calling function, using UserCmdValue */
 	MCSM_INPUT_THROTTLE,
 	MCSM_INPUT_BRAKE,
-	MCSM_INPUT_ZERO,				/* Zero Throttle/Brake Input. In Direction Fwd/Rev */
+	MCSM_INPUT_PROC_ZERO,				/* Zero Throttle/Brake Input. In Direction Fwd/Rev */
 	MCSM_INPUT_SET_ZERO,		 	/* Release Control */
+
 	MCSM_INPUT_SAVE_PARAMS,
 	// MCSM_INPUT_RELEASE_THROTTLE, 	/* Release Control */
 	// MCSM_INPUT_RELEASE_BRAKE, 		/* Release Control */
-	// MCSM_INPUT_NEUTRAL,
-	// MCSM_INPUT_SET_NEUTRAL,
-	// MCSM_INPUT_READY, transition init to stop, alternatively, check in init state using input type
 }
 MotorController_StateMachine_Input_T;
 

@@ -1,7 +1,7 @@
 
 
-
-// or use uniform function pointer/wrapper
+// select hal cmd by id
+// or use uniform hal function pointer/wrapper
 
 //pass params through struct
 typedef void (*NvMemory_StartCmd_T)(void * p_this);

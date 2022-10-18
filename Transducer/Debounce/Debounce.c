@@ -70,21 +70,21 @@ bool Debounce_CaptureState(Debounce_T * p_debounce)
 
 bool Debounce_PollFallingEdge(Debounce_T * p_debounce)
 {
-	bool isEdge = ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true)) ? true : false;
+	bool isEdge = ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true)) ;
 	if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
 	return isEdge;
 }
 
 bool Debounce_PollRisingEdge(Debounce_T * p_debounce)
 {
-	bool isEdge = ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false)) ? true : false;
+	bool isEdge = ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false)) ;
 	if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
 	return isEdge;
 }
 
 bool Debounce_PollEdge(Debounce_T * p_debounce)
 {
-	bool isEdge = ((p_debounce->DebouncedState ^ p_debounce->DebouncedStatePrev) == false) ? true : false;
+	bool isEdge = ((p_debounce->DebouncedState ^ p_debounce->DebouncedStatePrev) == false);
 	if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
 	return isEdge;
 }

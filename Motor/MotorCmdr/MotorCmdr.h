@@ -61,8 +61,8 @@ typedef struct MotorCmdr_Tag
 
 	/* Req Interface */
 	uint16_t RespStatus;
-	MotPacket_ControlId_T ControlIdActive;
-	MotPacket_MonitorId_T MonitorIdActive;
+	MotPacket_ExtId_T ControlIdActive;
+	MotPacket_ExtId_T MonitorIdActive;
 	uint16_t MotorCmdValue;			/*  */
 
 	MotVarId_T MotorWriteVarId;		/*  */

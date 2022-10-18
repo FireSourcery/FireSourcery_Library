@@ -31,7 +31,7 @@
 #include "EEPROM.h"
 
 /*
-	NvMemory_StartCmd_T
+	HAL_NvMemory_StartCmd_T
 */
 static void StartCmdWrite(void * p_hal, const void * p_cmdDest, const void * p_cmdData, size_t units)
 {
@@ -98,7 +98,7 @@ NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, cons
 
 	if(status == NV_MEMORY_STATUS_SUCCESS)
 	{
-		NvMemory_SetOpFunctions(p_eeprom, (NvMemory_StartCmd_T)StartCmdWrite, (NvMemory_Process_T)FinalizeWrite, (NvMemory_Process_T)ParseCmdErrorWrite);
+		NvMemory_SetOpFunctions(p_eeprom, (HAL_NvMemory_StartCmd_T)StartCmdWrite, (NvMemory_Process_T)FinalizeWrite, (NvMemory_Process_T)ParseCmdErrorWrite);
 		NvMemory_SetOpCmdSize(p_eeprom, EEPROM_UNIT_WRITE_SIZE, 1U);
 		NvMemory_SetOpSourceData(p_eeprom, p_source, sizeBytes);
 	}

@@ -191,7 +191,7 @@ void NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPe
 	p_this->BytesPerCmd = unitsPerCmd * unitSize;
 }
 
-void NvMemory_SetOpFunctions(NvMemory_T * p_this, NvMemory_StartCmd_T startCmd, NvMemory_Process_T finalizeOp, NvMemory_Process_T parseCmdError)
+void NvMemory_SetOpFunctions(NvMemory_T * p_this, HAL_NvMemory_StartCmd_T startCmd, NvMemory_Process_T finalizeOp, NvMemory_Process_T parseCmdError)
 {
 	p_this->StartCmd = startCmd;
 	p_this->FinalizeOp = finalizeOp;
@@ -255,11 +255,10 @@ NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
 			if(status == NV_MEMORY_STATUS_START_VERIFY)
 			{
 				/* FinalizeOp must set Verify Cmd */
-				/* MISRA violation. single recursive call. Known to terminate after a single call. */
+				/* MISRA violation. single recursive call. Rationale: Known to terminate after a single call. */
 				status = NvMemory_ProcOp_Blocking(p_this);
 			}
 		}
-
 	}
 	else
 	{

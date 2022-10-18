@@ -36,6 +36,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+/*
+	Common return status by public module functions
+*/
 typedef enum NvMemory_Status_Tag
 {
 	NV_MEMORY_STATUS_SUCCESS,
@@ -55,6 +58,7 @@ typedef enum NvMemory_Status_Tag
 NvMemory_Status_T;
 
 /*
+	Partition Group
 	Partition defines writable ranges. Checked on op cmd.
 */
 typedef const struct NvMemory_Partition_Tag
@@ -81,8 +85,26 @@ NvMemory_Partition_T;
 	_NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)					\
 }
 
-typedef bool (* const HAL_NvMemory_ReadFlags_T) (const void * p_hal);
-typedef void (* const HAL_NvMemory_ClearFlags_T) (void * p_hal);
+/*
+	NvMemory typedefs
+*/
+typedef bool (* const HAL_NvMemory_ReadFlags_T)(const void * p_hal);
+typedef void (* const HAL_NvMemory_ClearFlags_T)(void * p_hal);
+typedef void (*HAL_NvMemory_StartCmd_T)(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
+
+struct NvMemory_Tag;
+typedef NvMemory_Status_T(*NvMemory_Process_T)(struct NvMemory_Tag * p_this);
+typedef NvMemory_Status_T(*NvMemory_FinalizeCmd_T)(struct NvMemory_Tag * p_this, size_t opIndex);
+typedef void (*NvMemory_Callback_T)(void * p_callbackData);
+
+typedef enum NvMemory_State_Tag
+{
+	NV_MEMORY_STATE_IDLE,
+	NV_MEMORY_STATE_ACTIVE,
+	NV_MEMORY_STATE_WRITE,
+	NV_MEMORY_STATE_VERIFY,
+}
+NvMemory_State_T;
 
 typedef const struct NvMemory_Config_Tag
 {
@@ -97,22 +119,6 @@ typedef const struct NvMemory_Config_Tag
 	const size_t BUFFER_SIZE;
 }
 NvMemory_Config_T;
-
-typedef void (*NvMemory_StartCmd_T)(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
-typedef void (*NvMemory_Callback_T)(void * p_callbackData);
-
-struct NvMemory_Tag;
-typedef NvMemory_Status_T(*NvMemory_Process_T)(struct NvMemory_Tag * p_this);
-typedef NvMemory_Status_T(*NvMemory_FinalizeCmd_T)(struct NvMemory_Tag * p_this, size_t opIndex);
-
-typedef enum NvMemory_State_Tag
-{
-	NV_MEMORY_STATE_IDLE,
-	NV_MEMORY_STATE_ACTIVE,
-	NV_MEMORY_STATE_WRITE,
-	NV_MEMORY_STATE_VERIFY,
-}
-NvMemory_State_T;
 
 /*
 	NvMemory controller
@@ -133,10 +139,10 @@ typedef struct NvMemory_Tag
 
 	const NvMemory_Partition_T * p_OpPartition; /* Op Dest */
 
-	NvMemory_StartCmd_T StartCmd;
-	NvMemory_FinalizeCmd_T FinalizeCmd; /* On end per Cmd iteration */
-	NvMemory_Process_T ParseCmdError;	/* On end all Cmd iteration, Op Complete Error */
-	NvMemory_Process_T FinalizeOp;		/* On end all Cmd iteration, Op Complete Sucess */
+	HAL_NvMemory_StartCmd_T StartCmd;		/* Start HAL Cmd, many iterations per Op */
+	NvMemory_FinalizeCmd_T FinalizeCmd; 	/* On end per Cmd iteration */
+	NvMemory_Process_T ParseCmdError;		/* On end all Cmd iteration, Op Complete Error */
+	NvMemory_Process_T FinalizeOp;			/* On end all Cmd iteration, Op Complete Sucess */
 
 	void * p_CallbackData;
 	NvMemory_Callback_T Yield; 			/*!< On Block */
@@ -180,7 +186,7 @@ extern void NvMemory_SetYield(NvMemory_T * p_this, void (*yield)(void *), void *
 extern NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize, size_t unitSize);
 extern void NvMemory_SetOpSourceData(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
 extern void NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd);
-extern void NvMemory_SetOpFunctions(NvMemory_T * p_this, NvMemory_StartCmd_T startCmd, NvMemory_Process_T finalizeOp, NvMemory_Process_T parseCmdError);
+extern void NvMemory_SetOpFunctions(NvMemory_T * p_this, HAL_NvMemory_StartCmd_T startCmd, NvMemory_Process_T finalizeOp, NvMemory_Process_T parseCmdError);
 extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this);
 
 /*

@@ -51,7 +51,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_BRAKE);
 	AnalogN_Group_ResumeQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_USER);
 
-	/* Assume no input cmd priority level, although implmented */
+	/* Assume no input cmd priority level (although implemented) */
 	switch(cmd)
 	{
 		case MOT_ANALOG_USER_CMD_SET_BRAKE:					MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrakeValue(&p_mc->AnalogUser));			break;
@@ -59,10 +59,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 		case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			MotorController_User_SetCmdZero(p_mc);															break;
 		case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_SetCmdZero(p_mc);															break;
 		case MOT_ANALOG_USER_CMD_PROC_ZERO:					MotorController_User_ProcCmdZero(p_mc);															break;
-		// case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			MotorController_User_SetReleaseBrake(p_mc);														break;
-		// case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_SetReleaseThrottle(p_mc);													break;
 		// case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				MotorController_User_ProcNeutral(p_mc);															break;
-		// case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				MotorController_User_SetNeutral(p_mc); 															break;
 		case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);					break;
 		case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);					break;
 		case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);	 				break;
@@ -70,58 +67,38 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 	}
 }
 
-// static inline void _MotorController_InputUserCmdMiniState(MotorController_T * p_mc, uint16_t userCmdValue)
-// {
-// 	/* Assume no input cmd priority level, although implmented */
-// 	switch(state)
-// 	{
-// 		case USER_CMD_SET_BRAKE:					MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrakeValue(&p_mc->AnalogUser));			break;
-// 		case USER_CMD_SET_THROTTLE:				MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottleValue(&p_mc->AnalogUser));	break;
-// 		case USER_CMD_SET_BRAKE_RELEASE:			MotorController_User_SetCmdZero(p_mc);															break;
-// 		case USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_SetCmdZero(p_mc);															break;
-// 		case USER_CMD_PROC_ZERO:					MotorController_User_ProcCmdZero(p_mc);															break;
-// 		// case USER_CMD_SET_BRAKE_RELEASE:			MotorController_User_SetReleaseBrake(p_mc);														break;
-// 		// case USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_SetReleaseThrottle(p_mc);													break;
-// 		// case USER_CMD_PROC_NEUTRAL:				MotorController_User_ProcNeutral(p_mc);															break;
-// 		// case USER_CMD_SET_NEUTRAL:				MotorController_User_SetNeutral(p_mc); 															break;
-// 		case USER_CMD_SET_NEUTRAL:				MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);					break;
-// 		case USER_CMD_SET_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);					break;
-// 		case USER_CMD_SET_DIRECTION_REVERSE: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);	 				break;
-// 		default: break;
-// 	}
-// }
-
-
 /*
 	Optional Din
 */
 static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
 {
+	uint8_t dinStatus = 0U;
+
 	if(p_mc->Parameters.OptDinFunction != MOTOR_CONTROLLER_OPT_DIN_DISABLE)
 	{
 		if(Debounce_CaptureState(&p_mc->OptDin) == true)
 		{
-			if(Debounce_PollRisingEdge(&p_mc->OptDin) == true) /* Compiler optimize to Debounce_GetState */
-			{
-				switch(p_mc->Parameters.OptDinFunction)
+			/* Compiler optimize to Debounce_GetState */
+			if(Debounce_PollRisingEdge(&p_mc->OptDin) == true) { dinStatus = 1U; }
+			else if(Debounce_PollFallingEdge(&p_mc->OptDin) == true) { dinStatus = 2U; }
+		}
+
+		switch(p_mc->Parameters.OptDinFunction)
+		{
+			case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
+				switch(dinStatus)
 				{
-					case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT: MotorController_SetSpeedLimitMotorAll(p_mc, p_mc->Parameters.OptDinSpeedLimit_Frac16); break;
+					case 1U: MotorController_SetSpeedLimitMotorAll(p_mc, p_mc->Parameters.OptDinSpeedLimit_Frac16); break;
+					case 2U: MotorController_ClearSpeedLimitMotorAll(p_mc); break;
 					default: break;
 				}
-			}
-			else if(Debounce_PollFallingEdge(&p_mc->OptDin) == true)
-			{
-				switch(p_mc->Parameters.OptDinFunction)
-				{
-					case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT: MotorController_ClearSpeedLimitMotorAll(p_mc); break;
-					default: break;
-				}
-			}
+				break;
+			default: break;
 		}
 	}
 }
 
-/* Monitor Threads only set fault flags. Do not clear until user input */
+/* Monitor Threads only set fault flags. Do not clear until user input clear */
 
 static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 {
@@ -220,11 +197,12 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 	{
 		StateMachine_Semi_ProcOutput(&p_mc->StateMachine);
 
-		switch(p_mc->Parameters.InputMode)
+		/* Real-Time, continuous polling, inputs require arbitration */
+		switch(p_mc->Parameters.UserInputMode)
 		{
 			case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_mc);	break;
-			case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL:
-				if(MotAnalogUser_PollBrakePinRisingEdge(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
+			case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL: /* No disabling Protocol Throttle/Brake Inputs for now, Protocol mode selection only disables Analog  */
+				if(MotAnalogUser_PollBrakePins(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
 				if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]) == true)
 				{
 					// MotorController_User_DisableControl(p_mc);

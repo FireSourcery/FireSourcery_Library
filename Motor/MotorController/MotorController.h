@@ -193,7 +193,7 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 {
 	uint16_t AdcVRef_MilliV;
 	uint16_t VSource;
-	MotorController_InputMode_T InputMode;
+	MotorController_InputMode_T UserInputMode;
 	MotorController_BrakeMode_T BrakeMode;
 	MotorController_ZeroCmdMode_T ZeroCmdMode;
 
@@ -301,13 +301,12 @@ typedef struct MotorController_Tag
 
 	StateMachine_T StateMachine;
 	MotAnalog_Results_T FaultAnalogRecord;
-	MotorController_FaultFlags_T FaultFlags; /* Fault Substate*/
+	MotorController_FaultFlags_T FaultFlags; /* Fault Substate */
 	MotorController_WarningFlags_T WarningFlags;
 	MotorController_Direction_T ActiveDirection;
 	MotorController_Direction_T UserDirection;
 	MotorController_Substate_T StopSubstate;
 	NvMemory_Status_T NvmStatus;
-
 	uint16_t UserCmd;
 
 	// MotorController_SpeedLimitActiveId_T SpeedLimitActiveId;
@@ -328,11 +327,12 @@ static inline void MotorController_BeepPeriodicType1(MotorController_T * p_mc) {
 
 /******************************************************************************/
 /*
-	On check by StateMachine
+	On check by StateMachine - propagate to motors
 */
 /******************************************************************************/
 
 /*
+	Full direction proc, during stop only
 	Assume edge type input.
 */
 static inline bool MotorController_ProcUserDirection(MotorController_T * p_mc)

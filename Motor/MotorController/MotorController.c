@@ -94,11 +94,14 @@ void MotorController_Init(MotorController_T * p_mc)
 		0U /* Param not used */
 	);
 
+	p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
+	p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
 	// p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	// p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	// p_mc->SpeedLimitActiveId = MOTOR_SPEED_LIMIT_ACTIVE_DISABLE;
 	// p_mc->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 
+	/* Set none fault sample value, or wait in Init State  */
 	p_mc->ThermistorPcb.Adcu = p_mc->ThermistorPcb.Params.WarningThreshold_Adcu + 1U;
 	p_mc->ThermistorMosfetsTop.Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
 	p_mc->ThermistorMosfetsBot.Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
@@ -239,6 +242,27 @@ void MotorController_Init(MotorController_T * p_mc)
 // 	// Shell_EnableOnInit(&p_mc->Shell);
 // 	// Shell_DisableOnInit(&p_mc->Shell);
 // }
+
+///save segment ID
+// MOTORS[0];
+// ENCODER[0];
+// HALL[0];
+// SIN_COS[0];
+// PID_SPEED[0];
+// PID_FOC_IQ[0];
+// PID_FOC_ID[0];
+// PID_SIX_STEP_IBUS[0];
+// THERMISTOR_MOTORS[0];
+// THERMISTOR_PCB;
+// THERMISTOR_MOSFETS_TOP;
+// THERMISTOR_MOSFETS_BOT;
+// VMONITOR_VPOS;
+// VMONITOR_VSENSE;
+// VMONITOR_VACC;
+// MOTOR_CONTROLLER;
+// ANALOG_USER;
+// PROTOCOLS[BOARD_PROTOCOL_COUNT];
+// SHELL;
 
 NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_mc)
 {

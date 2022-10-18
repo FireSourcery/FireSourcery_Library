@@ -79,22 +79,25 @@ static void Req_SaveNvm_Blocking(MotorController_T * p_mc, MotPacket_SaveNvmResp
 	*p_txSize = MotPacket_SaveNvmResp_Build(p_txPacket, status);
 }
 
+/*!
+	@return 	Variable length in uint16 counts.
+				0 - Error, 1 - 2-Bytes, 2 - 4-Bytes
+
+*/
 static uint8_t WriteVar(MotorController_T * p_mc, MotVarId_T varId, uint32_t varValue)
 {
-	uint8_t writeSize = 0U; //0 is error
-	//bool, enum = 2
-	//uint32_t = 4
+	uint8_t writeCount = 0U;
 
 	switch(varId)
 	{
-		case MOT_VAR_THROTTLE:		MotorController_User_SetCmdThrottle(p_mc, (uint16_t)varValue); 						break;	//todo mc statemachine handle
-		case MOT_VAR_BRAKE:			MotorController_User_SetCmdBrake(p_mc, (uint16_t)varValue); 						break;
-		case MOT_VAR_DIRECTION:		MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)varValue); 	break; 	/* Value 0: Neutral, 1: Reverse, 2: Forward */
+		case MOT_VAR_THROTTLE:		MotorController_User_SetCmdThrottle(p_mc, (uint16_t)varValue); 						writeCount = 1U;	break;	//todo mc statemachine handle
+		case MOT_VAR_BRAKE:			MotorController_User_SetCmdBrake(p_mc, (uint16_t)varValue); 						writeCount = 1U;	break;
+		case MOT_VAR_DIRECTION:		MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)varValue); 	writeCount = 1U;	break; 	/* Value 0: Neutral, 1: Reverse, 2: Forward */
 
 		case MOT_VAR_SPEED_RPM:			  	break;
 		case MOT_VAR_MC_STATE:				break;
 		case MOT_VAR_ERROR_CODE:		  	break;
-		case MOT_VAR_BEEP:		  	MotorController_User_BeepN(p_mc, varValue, 1000U, 1U);	break;
+		case MOT_VAR_BEEP:		  	MotorController_User_BeepN(p_mc, varValue, 1000U, 1U);								writeCount = 1U; 	break;
 
 
 		// case MOT_VAR_I_PEAK_AMP:		  	break;
@@ -103,19 +106,19 @@ static uint8_t WriteVar(MotorController_T * p_mc, MotVarId_T varId, uint32_t var
 		// case MOT_VAR_FOC_IQ:			 	break;
 
 		case MOT_VAR_PARAM_TEST_BEGIN:		break;					/*  */
-		case MOT_VAR_PARAM_TEST_1: 			p_mc->Parameters.Test[0U] = varValue;	break;						/* Value 16-bit */
-		case MOT_VAR_PARAM_TEST_2: 			p_mc->Parameters.Test[1U] = varValue;	break;						/* Value 32-bit */
-		case MOT_VAR_PARAM_TEST_3: 			p_mc->Parameters.Test[2U] = varValue;	break;						/* Value 0, 1 */
+		case MOT_VAR_PARAM_TEST_1: 			p_mc->Parameters.Test[0U] = varValue;	writeCount = 1U; 	break;						/* Value 16-bit */
+		case MOT_VAR_PARAM_TEST_2: 			p_mc->Parameters.Test[1U] = varValue;	writeCount = 2U; 	break;						/* Value 32-bit */
+		case MOT_VAR_PARAM_TEST_3: 			p_mc->Parameters.Test[2U] = varValue;	writeCount = 1U; 	break;						/* Value 0, 1 */
 		case MOT_VAR_PARAM_TEST_4: 			break;
 
-		case MOT_VAR_POLE_PAIRS:  			Motor_User_SetPolePairs(MotorController_User_GetPtrMotor(p_mc, 0U), varValue); writeSize = 4U;	break;
+		case MOT_VAR_POLE_PAIRS:  			Motor_User_SetPolePairs(MotorController_User_GetPtrMotor(p_mc, 0U), varValue); writeCount = 1U;	break;
 		// case MOT_VAR_SPEED_RPM:	  	break;
-		case MOT_VAR_SPEED_FEEDBACK_REF_RPM:	writeSize = 0U; 	break;
-		case MOT_VAR_I_MAX_REF_AMP: 			writeSize = 0U; 	break;
-		default: break;
+		case MOT_VAR_SPEED_FEEDBACK_REF_RPM:	writeCount = 0U; 	break;
+		case MOT_VAR_I_MAX_REF_AMP: 			writeCount = 0U; 	break;
+		default: writeCount = 0U; break;
 	}
 
-	return writeSize;
+	return writeCount;
 }
 
 /******************************************************************************/
@@ -137,7 +140,7 @@ static uint32_t GetVar(MotorController_T * p_mc, MotVarId_T varId)
 	switch(varId)
 	{
 		case MOT_VAR_THROTTLE:		value = MotAnalogUser_GetThrottle(&p_mc->AnalogUser); break;					/* Value 16-bit */
-		case MOT_VAR_BRAKE:			value = MotAnalogUser_GetBrake(&p_mc->AnalogUser); break;					/* Value 16-bit */
+		case MOT_VAR_BRAKE:			value = MotAnalogUser_GetBrake(&p_mc->AnalogUser); break;						/* Value 16-bit */
 		case MOT_VAR_DIRECTION:		value = (uint32_t)MotorController_User_GetDirection(p_mc); break;				/* Value 0: Neutral, 1: Reverse, 2: Forward */
 
 		case MOT_VAR_SPEED_RPM:		value = Motor_User_GetSpeed_Rpm(MotorController_User_GetPtrMotor(p_mc, 0U)); 	break;
@@ -147,6 +150,7 @@ static uint32_t GetVar(MotorController_T * p_mc, MotVarId_T varId)
 		// case MOT_VAR_SPEED_GROUND_KMH:	Motor_User_GetSpeed_Rpm(MotorController_User_GetPtrMotor(p_mc, 0U)); 	break;
 		// case MOT_VAR_HEAT_PCB_DEG_C:	MotorController_User_GetHeatPcb_DegC(p_mc, 1U); 			break;
 		// case MOT_VAR_FOC_IQ:			MotorController_User_GetPtrMotor(p_mc, 0U)->Foc.Iq; 		break;
+		case MOT_VAR_BEEP:		  	  	break;
 
 		case MOT_VAR_PARAM_TEST_BEGIN:	break;					/*  */
 		case MOT_VAR_PARAM_TEST_1:	value = p_mc->Parameters.Test[0U];	break;						/* Value 16-bit */
@@ -206,32 +210,9 @@ static void Req_ReadVar(MotorController_T * p_mc, MotPacket_ReadVarResp_T * p_tx
 // }
 
 /******************************************************************************/
-/*! Control */
+/*! Control - Batch Operation by ExtId Single TxRx Sequence */
 /******************************************************************************/
-static void Req_Control(MotorController_T * p_mc, MotPacket_ControlResp_T * p_txPacket, size_t * p_txSize, const MotPacket_ControlReq_T * p_rxPacket, size_t rxSize)
-{
-	(void)rxSize;
-	Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U);
 
-	switch(p_rxPacket->ControlReq.ControlId) 	// MotPacket_ControlReq_ParseId(p_monitorId, p_rxPacket);
-	{
-		// case MOT_PACKET_CONTROL_RELEASE: 			MotorController_User_SetReleaseThrottle(p_mc); 									break;
-		case MOT_PACKET_CONTROL_RELEASE: 			MotorController_User_SetCmdZero(p_mc); 											break;
-		case MOT_PACKET_CONTROL_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);	break;
-		case MOT_PACKET_CONTROL_DIRECTION_REVERSE: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);	break;
-		case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);	break;
-		// case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	MotorController_User_SetNeutral(p_mc); 											break;
-		case MOT_PACKET_CONTROL_THROTTLE: 			Motor_User_SetThrottleCmd(p_motor, p_rxPacket->ControlReq.ValueU16s[0U]); 		break;
-		case MOT_PACKET_CONTROL_BRAKE: 				Motor_User_SetBrakeCmd(p_motor, p_rxPacket->ControlReq.ValueU16s[0U]); 			break;
-		default: break;
-	}
-
-	*p_txSize = MotPacket_ControlResp_MainStatus_Build(p_txPacket, 0U);
-}
-
-/******************************************************************************/
-/*! Monitor */
-/******************************************************************************/
 // static void TxPacket_BuildMonitorAdcBatchMsb(MotorController_T * p_mc, MotPacket_MonitorResp_T * p_txPacket)
 // {
 // 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
@@ -254,48 +235,52 @@ static void Req_Control(MotorController_T * p_mc, MotPacket_ControlResp_T * p_tx
 // 	p_txPacket->Monitor.ValueU8s[16U] = Motor_User_GetAdcu_Msb8(p_motor, MOTOR_ANALOG_CHANNEL_COS);
 // }
 
-static void Req_Monitor(MotorController_T * p_mc, MotPacket_MonitorResp_T * p_txPacket, size_t * p_txSize, const MotPacket_MonitorReq_T * p_rxPacket, size_t rxSize)
+static void Req_Control(MotorController_T * p_mc, MotPacket_ControlResp_T * p_txPacket, size_t * p_txSize, const MotPacket_ControlReq_T * p_rxPacket, size_t rxSize)
 {
 	(void)rxSize;
-	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U);
 
-	switch(p_rxPacket->MonitorReq.MonitorId)
+	switch(p_rxPacket->ControlReq.ExtId) 	// MotPacket_ControlReq_ParseId(p_monitorId, p_rxPacket);
 	{
-		case MOT_PACKET_MONITOR_SPEED: *p_txSize = MotPacket_MonitorResp_Speed_Build(p_txPacket, Motor_User_GetSpeed_Frac16(p_motor)); 												break;
-		case MOT_PACKET_MONITOR_I_FOC:
-			*p_txSize = MotPacket_MonitorResp_IFoc_Build
-			(
-				p_txPacket, FOC_GetIa(&p_motor->Foc), FOC_GetIb(&p_motor->Foc), FOC_GetIc(&p_motor->Foc),
-				FOC_GetIalpha(&p_motor->Foc), FOC_GetIbeta(&p_motor->Foc),
-				FOC_GetId(&p_motor->Foc), FOC_GetIq(&p_motor->Foc)
-			);
-			break;
+		// case MOT_PACKET_CONTROL_RELEASE: 			MotorController_User_SetReleaseThrottle(p_mc); 									break;
+		case MOT_PACKET_CONTROL_RELEASE: 			MotorController_User_SetCmdZero(p_mc); 											break;
+		case MOT_PACKET_CONTROL_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);	break;
+		case MOT_PACKET_CONTROL_DIRECTION_REVERSE: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);	break;
+		case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);	break;
+		// case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	MotorController_User_SetNeutral(p_mc); 											break;
+		case MOT_PACKET_CONTROL_THROTTLE: 			Motor_User_SetThrottleCmd(p_motor, p_rxPacket->ControlReq.ValueU16s[0U]); 		break;
+		case MOT_PACKET_CONTROL_BRAKE: 				Motor_User_SetBrakeCmd(p_motor, p_rxPacket->ControlReq.ValueU16s[0U]); 			break;
+
+		// case MOT_PACKET_MONITOR_SPEED: *p_txSize = MotPacket_MonitorResp_Speed_Build(p_txPacket, Motor_User_GetSpeed_Frac16(p_motor)); 												break;
+		// case MOT_PACKET_MONITOR_I_FOC:
+		// 	*p_txSize = MotPacket_MonitorResp_IFoc_Build
+		// 	(
+		// 		p_txPacket, FOC_GetIa(&p_motor->Foc), FOC_GetIb(&p_motor->Foc), FOC_GetIc(&p_motor->Foc),
+		// 		FOC_GetIalpha(&p_motor->Foc), FOC_GetIbeta(&p_motor->Foc),
+		// 		FOC_GetId(&p_motor->Foc), FOC_GetIq(&p_motor->Foc)
+		// 	);
+		// 	break;
 		// case MOT_PACKET_MONITOR_ADC_BATCH_MSB:
 		// 	TxPacket_BuildMonitorAdcBatchMsb(p_mc, p_txPacket);
 		// 	*p_txSize = MotPacket_BuildHeader(p_txPacket, MOT_PACKET_MONITOR_ADC_BATCH_MSB, 16U);
 		// 	break;
+
+	// *p_txSize = MotPacket_InitUnitsResp_Build
+	// (
+	// 	p_txPacket,
+	// 	Motor_User_GetSpeedFeedbackRef_Rpm(p_motor), MotorController_User_GetIMax(p_mc), MotorController_User_GetVSource(p_mc), /* Frac16 conversions */
+	// 	p_mc->VMonitorPos.CONFIG.UNITS_R1, p_mc->VMonitorPos.CONFIG.UNITS_R2,	/* Adcu <-> Volts conversions */
+	// 	p_mc->VMonitorSense.CONFIG.UNITS_R1, p_mc->VMonitorSense.CONFIG.UNITS_R2,
+	// 	p_mc->VMonitorAcc.CONFIG.UNITS_R1, p_mc->VMonitorAcc.CONFIG.UNITS_R2
+	// );
+
 		default: break;
 	}
+
+	*p_txSize = MotPacket_ControlResp_MainStatus_Build(p_txPacket, 0U);
 }
 
-/******************************************************************************/
-/*! Init Units */
-/******************************************************************************/
-static void Req_InitUnits(MotorController_T * p_mc, MotPacket_InitUnitsResp_T * p_txPacket, size_t * p_txSize, const MotPacket_InitUnitsReq_T * p_rxPacket, size_t rxSize)
-{
-	(void)rxSize;
-	(void)p_rxPacket;
-	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 
-	*p_txSize = MotPacket_InitUnitsResp_Build
-	(
-		p_txPacket,
-		Motor_User_GetSpeedFeedbackRef_Rpm(p_motor), MotorController_User_GetIMax(p_mc), MotorController_User_GetVSource(p_mc), /* Frac16 conversions */
-		p_mc->VMonitorPos.CONFIG.UNITS_R1, p_mc->VMonitorPos.CONFIG.UNITS_R2,	/* Adcu <-> Volts conversions */
-		p_mc->VMonitorSense.CONFIG.UNITS_R1, p_mc->VMonitorSense.CONFIG.UNITS_R2,
-		p_mc->VMonitorAcc.CONFIG.UNITS_R1, p_mc->VMonitorAcc.CONFIG.UNITS_R2
-	);
-}
 
 /******************************************************************************/
 /*! Stateful Read Data */
@@ -439,13 +424,11 @@ static const Protocol_Req_T REQ_TABLE[] =
 {
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_PING, 				Req_Ping, 				0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_STOP_ALL, 			Req_StopAll, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_INIT_UNITS, 			Req_InitUnits, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_SAVE_NVM, 			Req_SaveNvm_Blocking, 	0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VAR, 			Req_WriteVar, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_READ_VAR, 			Req_ReadVar, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	// PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VARS_8, 		Req_WriteVars8, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	// PROTOCOL_REQ_DEFINE(MOT_PACKET_READ_VARS_16, 		Req_ReadVars16, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_MONITOR_TYPE, 		Req_Monitor, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_CONTROL_TYPE, 		Req_Control, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_READ, 		0U, 	Req_ReadData, 				REQ_SYNC_DEFAULT),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_WRITE, 	0U, 	Req_WriteData_Blocking, 	REQ_SYNC_DEFAULT),
