@@ -82,7 +82,6 @@ static void Req_SaveNvm_Blocking(MotorController_T * p_mc, MotPacket_SaveNvmResp
 /*!
 	@return 	Variable length in uint16 counts.
 				0 - Error, 1 - 2-Bytes, 2 - 4-Bytes
-
 */
 static uint8_t WriteVar(MotorController_T * p_mc, MotVarId_T varId, uint32_t varValue)
 {
@@ -97,7 +96,7 @@ static uint8_t WriteVar(MotorController_T * p_mc, MotVarId_T varId, uint32_t var
 		case MOT_VAR_SPEED_RPM:			  	break;
 		case MOT_VAR_MC_STATE:				break;
 		case MOT_VAR_ERROR_CODE:		  	break;
-		case MOT_VAR_BEEP:		  	MotorController_User_BeepN(p_mc, varValue, 1000U, 1U);								writeCount = 1U; 	break;
+		case MOT_VAR_BEEP:		  	MotorController_User_BeepN(p_mc, 500U, 500U, varValue);								writeCount = 1U; 	break;
 
 
 		// case MOT_VAR_I_PEAK_AMP:		  	break;
@@ -127,7 +126,7 @@ static uint8_t WriteVar(MotorController_T * p_mc, MotVarId_T varId, uint32_t var
 static void Req_WriteVar(MotorController_T * p_mc, MotPacket_WriteVarResp_T * p_txPacket, size_t * p_txSize, const MotPacket_WriteVarReq_T * p_rxPacket, size_t rxSize)
 {
 	(void)rxSize;
-	MotPacket_HeaderStatus_T status = (WriteVar(p_mc, p_rxPacket->WriteReq.MotVarId, p_rxPacket->WriteReq.Value) == 0U) ?
+	MotPacket_HeaderStatus_T status = (WriteVar(p_mc, p_rxPacket->WriteReq.MotVarId, p_rxPacket->WriteReq.Value32) == 0U) ?
 		MOT_PACKET_HEADER_STATUS_ERROR : MOT_PACKET_HEADER_STATUS_OK;
 
 	*p_txSize = MotPacket_WriteVarResp_Build(p_txPacket, status);

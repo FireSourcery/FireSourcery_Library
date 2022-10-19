@@ -205,7 +205,7 @@ typedef struct MotPacket_StopResp_Tag { MotPacket_Header_T Header; } 	MotPacket_
 /******************************************************************************/
 typedef struct MotPacket_ReadVarReq_Payload_Tag { uint16_t MotVarId; } 													MotPacket_ReadVarReq_Payload_T;
 typedef struct MotPacket_ReadVarReq_Tag { MotPacket_Header_T Header; MotPacket_ReadVarReq_Payload_T ReadReq; } 			MotPacket_ReadVarReq_T;
-typedef struct MotPacket_ReadVarResp_Payload_Tag { uint32_t Value; } 													MotPacket_ReadVarResp_Payload_T;
+typedef struct MotPacket_ReadVarResp_Payload_Tag { union { uint16_t Value16; uint32_t Value32; }; } 						MotPacket_ReadVarResp_Payload_T;
 typedef struct MotPacket_ReadVarResp_Tag { MotPacket_Header_T Header; MotPacket_ReadVarResp_Payload_T ReadResp; } 		MotPacket_ReadVarResp_T;
 
 /******************************************************************************/
@@ -219,7 +219,9 @@ typedef struct MotPacket_ReadVarResp_Tag { MotPacket_Header_T Header; MotPacket_
 //[0xA5U][0xD2U][0E][0][0][0][Checksum_L][Checksum_H] [VarId_L = 0x04][VarId_H = 0x00][Value_LL = 0xE8][Value_LH = 0x03][Value_HL = 0x00][Value_HH = 0x00]
 
 /******************************************************************************/
-typedef struct MotPacket_WriteVarReq_Payload_Tag { uint16_t MotVarId; uint32_t Value; } 									MotPacket_WriteVarReq_Payload_T;
+// 01 05 01 00, read 01 00, as 256
+/* union also packs data */
+typedef struct MotPacket_WriteVarReq_Payload_Tag { uint16_t MotVarId; union { uint16_t Value16; uint32_t Value32; }; } 		MotPacket_WriteVarReq_Payload_T;
 typedef struct MotPacket_WriteVarReq_Tag { MotPacket_Header_T Header; MotPacket_WriteVarReq_Payload_T WriteReq; } 			MotPacket_WriteVarReq_T;
 // typedef struct MotPacket_WriteVarResp_Payload_Tag { uint16_t Status; } 													MotPacket_WriteVarResp_Payload_T;
 typedef struct MotPacket_WriteVarResp_Tag { MotPacket_Header_T Header; /* MotPacket_WriteVarResp_Payload_T WriteResp; */ } 	MotPacket_WriteVarResp_T;

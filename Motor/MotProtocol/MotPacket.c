@@ -147,7 +147,7 @@ uint8_t MotPacket_SaveNvmResp_Build(MotPacket_SaveNvmResp_T * p_respPacket, uint
 /******************************************************************************/
 uint8_t MotPacket_ReadVarResp_Build(MotPacket_ReadVarResp_T * p_respPacket, uint32_t value)
 {
-	p_respPacket->ReadResp.Value = value; /* Upper 2-Bytes is written 0, if uint16 value. */ // todo select 6 or 8 payload by id?
+	p_respPacket->ReadResp.Value32 = value; /* Upper 2-Bytes is written 0, if uint16 value. */ // todo select 6 or 8 payload by id?
 	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_READ_VAR, sizeof(MotPacket_ReadVarReq_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
@@ -378,7 +378,7 @@ uint8_t MotPacket_ReadVarReq_Build(MotPacket_ReadVarReq_T * p_reqPacket, MotVarI
 */
 MotPacket_HeaderStatus_T MotPacket_ReadVarResp_Parse(uint32_t * p_value, const MotPacket_ReadVarResp_T * p_respPacket)
 {
-	*p_value = p_respPacket->ReadResp.Value;
+	*p_value = p_respPacket->ReadResp.Value32;
 	return p_respPacket->Header.Status;	// *p_status = p_respPacket->ReadResp.Status;
 }
 
@@ -388,7 +388,7 @@ MotPacket_HeaderStatus_T MotPacket_ReadVarResp_Parse(uint32_t * p_value, const M
 uint8_t MotPacket_WriteVarReq_Build(MotPacket_WriteVarReq_T * p_reqPacket, MotVarId_T motVarId, uint32_t value)
 {
 	p_reqPacket->WriteReq.MotVarId = (uint16_t)motVarId;
-	p_reqPacket->WriteReq.Value = value;
+	p_reqPacket->WriteReq.Value32 = value;
 	return Packet_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_WRITE_VAR, sizeof(MotPacket_WriteVarReq_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 

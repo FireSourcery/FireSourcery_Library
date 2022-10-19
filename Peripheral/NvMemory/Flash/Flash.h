@@ -86,6 +86,8 @@ Flash_Operation_T;
 extern void Flash_Init(Flash_T * p_flash);
 extern void Flash_SetYield(Flash_T * p_flash, void (*yield)(void *), void * p_callbackData);
 extern bool Flash_ReadSecurityFlag(Flash_T * p_flash);
+extern void Flash_EnableForceAlign(Flash_T * p_flash);
+extern void Flash_DisableForceAlign(Flash_T * p_flash);
 
 extern Flash_Status_T Flash_SetWrite(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
 extern Flash_Status_T Flash_SetErase(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);

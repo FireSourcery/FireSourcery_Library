@@ -47,11 +47,12 @@ typedef enum NvMemory_Status_Tag
 	// NV_MEMORY_STATUS_ERROR,
 	NV_MEMORY_STATUS_ERROR_BUSY,
 	NV_MEMORY_STATUS_ERROR_INPUT,		/* op params, dest address or size */ //todo   parse error destination, align
-	NV_MEMORY_STATUS_ERROR_BOUNDARY,
-	NV_MEMORY_STATUS_ERROR_ALIGNMENT,
+	NV_MEMORY_STATUS_ERROR_BOUNDARY,	/* Dest, size, larger than partition */
+	NV_MEMORY_STATUS_ERROR_ALIGNMENT,	/* dest, size, not aligned */
 	NV_MEMORY_STATUS_ERROR_CMD,			/* Cmd Failed. Unparsed Error */
 	NV_MEMORY_STATUS_ERROR_VERIFY,		/* Verify cmd */
 	NV_MEMORY_STATUS_ERROR_PROTECTION,
+	NV_MEMORY_STATUS_ERROR_BUFFER,		/* Virtual buffer */
 	NV_MEMORY_STATUS_ERROR_CHECKSUM,	/*  */
 	NV_MEMORY_STATUS_ERROR_INVALID_OP,
 }
@@ -120,6 +121,16 @@ typedef const struct NvMemory_Config_Tag
 }
 NvMemory_Config_T;
 
+// typedef const struct NvMemory_OpControl_Tag
+// {
+// 	HAL_NvMemory_StartCmd_T Start_Cmd;
+// 	NvMemory_FinalizeCmd_T Finalize_Cmd;
+// 	NvMemory_Process_T Parse_Cmd_Error;
+// 	NvMemory_Process_T Finalize_Op;
+// 	size_t Units_Per_Cmd;
+// }
+// NvMemory_OpControl_T;
+
 /*
 	NvMemory controller
 */
@@ -129,13 +140,14 @@ typedef struct NvMemory_Tag
 
 	bool IsVerifyEnable;
 	bool IsOpBuffered; 	/* copy to buffer first or use pointer to source */
-	//	bool IsForceAlignEnable;
+	bool IsForceAlignEnable;
 
 	const uint8_t * p_OpDest;
 	const uint8_t * p_OpData;
 	size_t OpSize; 			/* Total bytes at start */
 	size_t BytesPerCmd; 	/* Used by Erase for now */
 	size_t UnitsPerCmd;
+	size_t ForceAlignPadding;
 
 	const NvMemory_Partition_T * p_OpPartition; /* Op Dest */
 
@@ -152,7 +164,8 @@ typedef struct NvMemory_Tag
 	NvMemory_State_T State;
 	NvMemory_Status_T Status;
 	size_t OpIndex; 	/* in bytes */
-} NvMemory_T;
+}
+NvMemory_T;
 
 /*
 	Alternatively template the calling function
@@ -183,8 +196,11 @@ typedef struct NvMemory_Tag
 
 extern void NvMemory_Init(NvMemory_T * p_this);
 extern void NvMemory_SetYield(NvMemory_T * p_this, void (*yield)(void *), void * p_callbackData);
+extern void NvMemory_EnableForceAlign(NvMemory_T * p_this);
+extern void NvMemory_DisableForceAlign(NvMemory_T * p_this);
+
 extern NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize, size_t unitSize);
-extern void NvMemory_SetOpSourceData(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpSourceData(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
 extern void NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd);
 extern void NvMemory_SetOpFunctions(NvMemory_T * p_this, HAL_NvMemory_StartCmd_T startCmd, NvMemory_Process_T finalizeOp, NvMemory_Process_T parseCmdError);
 extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this);
