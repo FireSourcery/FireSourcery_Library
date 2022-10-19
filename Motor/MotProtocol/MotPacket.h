@@ -221,7 +221,7 @@ typedef struct MotPacket_ReadVarResp_Tag { MotPacket_Header_T Header; MotPacket_
 /******************************************************************************/
 // 01 05 01 00, read 01 00, as 256
 /* union also packs data */
-typedef struct MotPacket_WriteVarReq_Payload_Tag { uint16_t MotVarId; union { uint16_t Value16; uint32_t Value32; }; } 		MotPacket_WriteVarReq_Payload_T;
+typedef struct __attribute__((packed)) MotPacket_WriteVarReq_Payload_Tag { uint16_t MotVarId; union { uint16_t Value16; uint32_t Value32; }; } 		MotPacket_WriteVarReq_Payload_T;
 typedef struct MotPacket_WriteVarReq_Tag { MotPacket_Header_T Header; MotPacket_WriteVarReq_Payload_T WriteReq; } 			MotPacket_WriteVarReq_T;
 // typedef struct MotPacket_WriteVarResp_Payload_Tag { uint16_t Status; } 													MotPacket_WriteVarResp_Payload_T;
 typedef struct MotPacket_WriteVarResp_Tag { MotPacket_Header_T Header; /* MotPacket_WriteVarResp_Payload_T WriteResp; */ } 	MotPacket_WriteVarResp_T;

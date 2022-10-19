@@ -146,7 +146,7 @@ NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest
 	{
 		if(p_this->IsForceAlignEnable == true)
 		{
-			p_this->p_OpDest = p_dest; /*temp cannot force align over boundary this way, todo arrange boundary check */
+			p_this->p_OpDest = p_dest; /* temp cannot force align over boundary this way, todo arrange boundary check */
 			p_this->OpSize = CalcAlignUp(opSize, unitSize);
 			p_this->ForceAlignPadding = p_this->OpSize - unitSize;
 			status = NV_MEMORY_STATUS_SUCCESS;
@@ -193,10 +193,18 @@ NvMemory_Status_T NvMemory_SetOpSourceData(NvMemory_T * p_this, const uint8_t * 
 		{
 			status = SetOpDataBuffer(p_this, p_source, size);
 			p_this->p_OpData = p_this->CONFIG.P_BUFFER;
+			if(p_this->IsForceAlignEnable == true)
+			{
+
+			}
 		}
 		else
 		{
 			p_this->p_OpData = p_source;
+			if(p_this->IsForceAlignEnable == true)
+			{
+
+			}
 		}
 	}
 

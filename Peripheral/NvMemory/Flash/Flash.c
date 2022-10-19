@@ -352,12 +352,6 @@ static inline Flash_Status_T ProcOpReturn_Blocking(Flash_T * p_flash, Flash_Stat
 	return (status == FLASH_STATUS_SUCCESS) ? Flash_ProcThisOp_Blocking(p_flash) : status;
 }
 
-Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
-{
-	Flash_Status_T status = Flash_SetWrite(p_flash, p_destFlash, p_source, size);
-	return ProcOpReturn_Blocking(p_flash, status);
-}
-
 /*
 	Append Write Operation
 */
@@ -374,6 +368,12 @@ Flash_Status_T Flash_ContinueWrite_Blocking(Flash_T * p_flash, const uint8_t * p
 	}
 
 	return status;
+}
+
+Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
+{
+	Flash_Status_T status = Flash_SetWrite(p_flash, p_destFlash, p_source, size);
+	return ProcOpReturn_Blocking(p_flash, status);
 }
 
 Flash_Status_T Flash_Erase_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
@@ -422,8 +422,6 @@ Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, const uint8_t * p_destFl
 	Flash_Status_T status = Flash_SetOp(p_flash, p_destFlash, p_source, size, opId);
 	return ProcOpReturn_Blocking(p_flash, status);
 }
-
-
 
 /*
 
