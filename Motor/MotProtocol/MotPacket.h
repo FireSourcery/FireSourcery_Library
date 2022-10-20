@@ -300,11 +300,11 @@ typedef enum MotPacket_ExtId_Tag
 	// MOT_PACKET_CONTROL_SPEED_RPM = 0x85U,
 	// MOT_PACKET_CONTROL_ANGLE = 0x85U,
 
-	MOT_PACKET_CONTROL_BATCH_1 = 0x71U, /* Rx Throttle, Brake, Direction. Tx: Speed, IPhase, Battery, Error,  */
+	MOT_PACKET_CONTROL_BATCH_1 = 0x71U, 		/* Rx Throttle, Brake, Direction. Tx: Speed, IPhase, Battery, Error,  */
 	MOT_PACKET_CONTROL_MODE_RESERVED = 0xFFU,
 
-	MOT_PACKET_MONITOR_SPEED = 0x01U,		/* Speed in Q1.15 */
-	// MOT_PACKET_MONITOR_I_PHASES = 0x02U,	/* Iabc in Q1.15 */
+	MOT_PACKET_MONITOR_SPEED = 0x01U,			/* Speed in Q1.15 */
+	// MOT_PACKET_MONITOR_I_PHASES = 0x02U,		/* Iabc in Q1.15 */
 	// MOT_PACKET_MONITOR_I_FOC = 0x03U,		/* Idq, Ialphabeta in Q1.15 */
 	// MOT_PACKET_MONITOR_V_PHASES = 0x04U,
 	// MOT_PACKET_MONITOR_ANGLES = 0x05U,
@@ -315,12 +315,12 @@ typedef enum MotPacket_ExtId_Tag
 	MOT_PACKET_MONITOR_SIN_COS = 0x12U,
 	MOT_PACKET_MONITOR_ENCODER = 0x13U,
 
-	MOT_PACKET_MONITOR_V_SENSORS = 0x21U, 	/* VSource, ~5V, ~12V */
+	MOT_PACKET_MONITOR_V_SENSORS = 0x21U, 		/* VSource, ~5V, ~12V */
 	MOT_PACKET_MONITOR_HEAT = 0x22U,			/* In ADCU, Lower is higher */
 
-	MOT_PACKET_MONITOR_METERS = 0x31U, /* Speed, Angles */
+	MOT_PACKET_MONITOR_METERS = 0x31U, 			/* Speed, Angles */
 
-	MOT_PACKET_MONITOR_I_FOC = 0x03U,		/* Iabc, Ialphabeta, Idq in Q1.15 */
+	MOT_PACKET_MONITOR_I_FOC = 0x03U,			/* Iabc, Ialphabeta, Idq in Q1.15 */
 
 	// MOT_PACKET_MONITOR_SPEED_RPM = 0x81U,	/* Speed in RPM */
 

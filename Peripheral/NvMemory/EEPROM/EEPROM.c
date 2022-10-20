@@ -87,6 +87,7 @@ void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 	NvMemory_Init(p_eeprom);
 	p_eeprom->IsVerifyEnable = false;
 	p_eeprom->IsOpBuffered = false;
+	p_eeprom->IsForceAlignEnable = false;
 	while(HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONFIG.P_HAL) == false);
 }
 
@@ -95,14 +96,13 @@ void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
 {
 	NvMemory_Status_T status = NvMemory_SetOpDest(p_eeprom, p_dest, sizeBytes, EEPROM_UNIT_WRITE_SIZE);
-
+	if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSizeNoAlign(p_eeprom, sizeBytes, EEPROM_UNIT_WRITE_SIZE); }
+	if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSourceData(p_eeprom, p_source, sizeBytes); }
 	if(status == NV_MEMORY_STATUS_SUCCESS)
 	{
 		NvMemory_SetOpFunctions(p_eeprom, (HAL_NvMemory_StartCmd_T)StartCmdWrite, (NvMemory_Process_T)FinalizeWrite, (NvMemory_Process_T)ParseCmdErrorWrite);
 		NvMemory_SetOpCmdSize(p_eeprom, EEPROM_UNIT_WRITE_SIZE, 1U);
-		NvMemory_SetOpSourceData(p_eeprom, p_source, sizeBytes);
 	}
-
 	return status;
 }
 

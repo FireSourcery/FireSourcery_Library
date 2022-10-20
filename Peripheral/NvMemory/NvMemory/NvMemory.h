@@ -116,7 +116,7 @@ typedef const struct NvMemory_Config_Tag
 	const HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
 	NvMemory_Partition_T * const P_PARTITIONS;
 	const uint8_t PARTITION_COUNT;
-	uint8_t * const P_BUFFER;
+	uint8_t * const P_BUFFER; /* IsForceAlignEnable need buffer of UNIT_WRITE_SIZE for fill with erase pattern. (Even if IsOpBuffered is not used ) */
 	const size_t BUFFER_SIZE;
 }
 NvMemory_Config_T;
@@ -147,7 +147,7 @@ typedef struct NvMemory_Tag
 	size_t OpSize; 			/* Total bytes at start */
 	size_t BytesPerCmd; 	/* Used by Erase for now */
 	size_t UnitsPerCmd;
-	size_t ForceAlignPadding;
+	size_t ForceAlignBytes;
 
 	const NvMemory_Partition_T * p_OpPartition; /* Op Dest */
 
@@ -194,27 +194,33 @@ NvMemory_T;
 	}																																					\
 }
 
+
 extern void NvMemory_Init(NvMemory_T * p_this);
 extern void NvMemory_SetYield(NvMemory_T * p_this, void (*yield)(void *), void * p_callbackData);
 extern void NvMemory_EnableForceAlign(NvMemory_T * p_this);
 extern void NvMemory_DisableForceAlign(NvMemory_T * p_this);
 
-extern NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize, size_t unitSize);
-extern NvMemory_Status_T NvMemory_SetOpSourceData(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
 extern void NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd);
 extern void NvMemory_SetOpFunctions(NvMemory_T * p_this, HAL_NvMemory_StartCmd_T startCmd, NvMemory_Process_T finalizeOp, NvMemory_Process_T parseCmdError);
 extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this);
 
+extern NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize, size_t unitSize);
+extern NvMemory_Status_T NvMemory_SetOpSourceData(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpSizeNoAlign(NvMemory_T * p_this, size_t opSize, size_t unitSize);
+extern NvMemory_Status_T NvMemory_SetOpSizeAlignDown(NvMemory_T * p_this, size_t opSize, size_t unitSize);
+extern NvMemory_Status_T NvMemory_SetOpSizeAlignUp(NvMemory_T * p_this, size_t opSize, size_t unitSize);
+
 /*
 	Blocking
 */
+/* Store in RAM for case of Flash */
 extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 
 /*
 	Non Blocking
 */
 extern size_t NvMemory_GetOpBytesRemaining(NvMemory_T * p_this);
-extern bool NvMemory_ProcOp(NvMemory_T * p_this);
+extern bool NvMemory_ProcOp(NvMemory_T * p_this) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 extern NvMemory_Status_T NvMemory_StartOp(NvMemory_T * p_this);
 
 #endif /* NV_MEMORY_H */

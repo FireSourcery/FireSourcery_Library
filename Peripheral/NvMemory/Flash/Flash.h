@@ -47,9 +47,6 @@
 #define FLASH_UNIT_WRITE_ONCE_SIZE		HAL_FLASH_UNIT_WRITE_ONCE_SIZE
 #define FLASH_UNIT_READ_ONCE_SIZE		HAL_FLASH_UNIT_READ_ONCE_SIZE
 
-#define FLASH_INIT(p_Hal, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
-	NV_MEMORY_INIT(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)
-
 /*
 	Alias for NvMemory Status
 */
@@ -69,9 +66,6 @@ typedef enum
 }
 Flash_Status_T;
 
-typedef NvMemory_Partition_T Flash_Partition_T;
-typedef NvMemory_T Flash_T;
-
 typedef enum
 {
 	FLASH_OPERATION_WRITE,
@@ -83,6 +77,15 @@ typedef enum
 }
 Flash_Operation_T;
 
+typedef NvMemory_Partition_T Flash_Partition_T;
+typedef NvMemory_T Flash_T; /* Flash struct must reside in RAM */
+
+#define FLASH_INIT(p_Hal, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
+	NV_MEMORY_INIT(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)
+
+/*
+
+*/
 extern void Flash_Init(Flash_T * p_flash);
 extern void Flash_SetYield(Flash_T * p_flash, void (*yield)(void *), void * p_callbackData);
 extern bool Flash_ReadSecurityFlag(Flash_T * p_flash);
@@ -99,7 +102,8 @@ extern Flash_Status_T Flash_SetEraseAll(Flash_T * p_flash);
 extern Flash_Status_T Flash_SetOp(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, Flash_Operation_T opId);
 extern void Flash_GetReadOnce(const Flash_T * p_flash, uint8_t * p_result);
 
-extern Flash_Status_T Flash_ProcThisOp_Blocking(Flash_T * p_flash);
+extern Flash_Status_T Flash_ProcThisOp_Blocking(Flash_T * p_flash); //CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+
 extern Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size);
 extern Flash_Status_T Flash_ContinueWrite_Blocking(Flash_T * p_flash, const uint8_t * p_source, size_t size);
 extern Flash_Status_T Flash_Erase_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
