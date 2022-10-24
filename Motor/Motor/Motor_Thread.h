@@ -44,12 +44,15 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 	// p_motor->MicrosRef = SysTime_GetMicros();
 	p_motor->ControlTimerBase++;
 
+#if 	defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
 	{
 		//todo group
 		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
 		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 	}
+#endif
+
 
 	//  todo _Motor_Analog_Thread( p_motor); use analog select mode to implement prefered order
 

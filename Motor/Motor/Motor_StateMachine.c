@@ -478,7 +478,9 @@ static void Calibration_Entry(Motor_T * p_motor)
 		case MOTOR_CALIBRATION_STATE_ADC:		Motor_Calibrate_StartAdc(p_motor);		break;
 		case MOTOR_CALIBRATION_STATE_HALL:		Motor_Calibrate_StartHall(p_motor);		break;
 		case MOTOR_CALIBRATION_STATE_ENCODER:	Motor_Calibrate_StartEncoder(p_motor);	break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_CALIBRATION_STATE_SIN_COS:	Motor_Calibrate_StartSinCos(p_motor);	break;
+#endif
 		default: break;
 	}
 }
@@ -492,7 +494,9 @@ static void Calibration_Proc(Motor_T * p_motor)
 		case MOTOR_CALIBRATION_STATE_ADC:		isComplete = Motor_Calibrate_Adc(p_motor); 			break;
 		case MOTOR_CALIBRATION_STATE_HALL:		isComplete = Motor_Calibrate_Hall(p_motor); 		break;
 		case MOTOR_CALIBRATION_STATE_ENCODER:	isComplete = Motor_Calibrate_Encoder(p_motor); 		break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_CALIBRATION_STATE_SIN_COS:	isComplete = Motor_Calibrate_SinCos(p_motor);		break;
+#endif
 		default: break;
 	}
 

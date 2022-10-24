@@ -39,6 +39,8 @@
 	Calibration State Functions - Mapped to StateMachine, Nonblocking
 */
 /******************************************************************************/
+
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 static inline void Motor_Calibrate_StartSinCos(Motor_T * p_motor)
 {
 	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_ControlCycles);
@@ -106,6 +108,7 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
 
 	return isComplete;
 }
+#endif
 
 static inline void Motor_Calibrate_StartHall(Motor_T * p_motor)
 {

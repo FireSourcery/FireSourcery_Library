@@ -31,6 +31,8 @@
 #ifndef MOTOR_CONTROLLER_SHELL_H
 #define MOTOR_CONTROLLER_SHELL_H
 
+#ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
+
 #include "Utility/Shell/Shell.h"
 
 #define MC_SHELL_CMD_COUNT 30U
@@ -39,5 +41,7 @@ extern const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT];
 
 #define MOTOR_CONTROLLER_SHELL_INIT(p_MotorController, p_Timer, TimerFreq, p_Params, p_XcvrTable, TableLength)  \
 	SHELL_INIT(MC_CMD_TABLE, MC_SHELL_CMD_COUNT, p_MotorController, p_Timer, TimerFreq, p_Params, p_XcvrTable, TableLength)
+
+#endif
 
 #endif /* MOTOR_SHELL_H */

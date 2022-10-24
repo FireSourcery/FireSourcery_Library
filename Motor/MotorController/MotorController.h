@@ -46,7 +46,9 @@
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 #include "Peripheral/Serial/Serial.h"
+#if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
 #include "Peripheral/CanBus/CanBus.h"
+#endif
 
 #include "Utility/Timer/Timer.h"
 #include "Utility/StateMachine/StateMachine.h"
@@ -104,7 +106,8 @@ typedef enum MotorController_SubId_Tag
 {
 	MOTOR_CONTROLLER_NVM_PARAMS_ALL,
 	MOTOR_CONTROLLER_NVM_BOOT,
-	MOTOR_CONTROLLER_NVM_ONCE,
+	MOTOR_CONTROLLER_NVM_WRITE_ONCE,
+	MOTOR_CONTROLLER_NVM_READ_ONCE,
 	MOTOR_CONTROLLER_CALIBRATION,
 }
 MotorController_SubId_T;
@@ -189,7 +192,7 @@ typedef union MotorController_BuzzerFlags_Tag
 }
 MotorController_BuzzerFlags_T;
 
-typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
+typedef struct __attribute__((aligned(2U))) MotorController_Params_Tag
 {
 	uint16_t AdcVRef_MilliV;
 	uint16_t VSource;
@@ -199,8 +202,10 @@ typedef struct __attribute__((aligned(4U))) MotorController_Params_Tag
 
 	uint16_t BatteryZero_Adcu;
 	uint16_t BatteryFull_Adcu;
+#if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
 	uint8_t CanServicesId;
 	bool IsCanEnable;
+#endif
 
 	MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
 
@@ -244,8 +249,14 @@ typedef const struct MotorController_Config_Tag
 	const uint8_t 		MOTOR_COUNT;
 	Serial_T * const 	P_SERIALS; 	/* Simultaneous active serial */
 	const uint8_t 		SERIAL_COUNT;
+
+#if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
 	CanBus_T * const 	P_CAN_BUS;
+#endif
+
+#if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 	Flash_T * const 	P_FLASH; 	/* Flash defined outside module, ensure flash config/params are in RAM */
+#endif
 	EEPROM_T * const 	P_EEPROM;	/* defined outside for regularity */
 
 	AnalogN_T * const P_ANALOG_N;
@@ -267,8 +278,10 @@ typedef struct MotorController_Tag
 {
 	const MotorController_Config_T CONFIG;
 	MotorController_Params_T Parameters; 		/* ram copy */
-	MotorController_Manufacture_T Manufacture;  /* ram copy */
-	MemMapBoot_T MemMapBoot;  					/* ram copy */
+	MemMapBoot_T MemMapBoot;
+#if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_COPY_ENABLE)
+	MotorController_Manufacture_T Manufacture;
+#endif
 
 	volatile MotAnalog_Results_T AnalogResults;
 
@@ -294,17 +307,19 @@ typedef struct MotorController_Tag
 	Timer_T TimerMillis10;
 	Timer_T TimerSeconds;
 	Timer_T TimerIsrDividerSeconds;
-	Timer_T TimerState;
+	// Timer_T TimerState;
 
+#ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
 	Shell_T Shell;
 	uint16_t ShellSubstate;
+#endif
 
 	StateMachine_T StateMachine;
 	MotorController_FaultFlags_T FaultFlags; /* Fault Substate */
 	MotorController_WarningFlags_T WarningFlags;
-	MotAnalog_Results_T FaultAnalogRecord;
+	// MotAnalog_Results_T FaultAnalogRecord;
 
-	MotorController_Direction_T UserDirection;
+	// MotorController_Direction_T UserDirection;
 	/* Set by stateMachine only */
 	MotorController_Direction_T ActiveDirection;
 	MotorController_SubId_T SubState;

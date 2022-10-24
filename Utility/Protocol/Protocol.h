@@ -259,7 +259,7 @@ typedef enum Protocol_ReqState_Tag
 }
 Protocol_ReqState_T;
 
-typedef struct __attribute__((aligned(4U))) Protocol_Params_Tag
+typedef struct __attribute__((aligned(2U))) Protocol_Params_Tag
 {
 	uint8_t XcvrId;
 	uint8_t SpecsId;

@@ -109,6 +109,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	Motor_SetDirectionForward(p_motor);
 
+#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
 		Linear_Ramp_Init_Millis(&p_motor->OpenLoopRamp, 2000U, 20000U, 0U, 300U);	//can start at 0 speed in foc mode for continuous angle displacements
@@ -118,11 +119,12 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	}
 	p_motor->OpenLoopRampIndex = 0U;
+#endif
 
 	Motor_SetFeedbackModeFlags(p_motor, p_motor->Parameters.FeedbackMode); //set user control mode so pids set to initial state.
 
 	p_motor->ControlTimerBase = 0U;
-	p_motor->UserDirection = p_motor->Direction;
+	// p_motor->UserDirection = p_motor->Direction;
 	// p_motor->SpeedLimitActiveId = MOTOR_SPEED_LIMIT_ACTIVE_DISABLE;
 	p_motor->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 }
@@ -215,12 +217,13 @@ void Motor_ResetSensorMode(Motor_T * p_motor)
 			Encoder_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 			break;
 
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_SENSOR_MODE_SIN_COS:
 			SinCos_Init(&p_motor->SinCos);
 			// SinCos_SetERotationsPerCycle(&p_motor->SinCos, p_motor->Parameters.PolePairs, 1U);
 			Linear_Speed_InitAngleRpm(&p_motor->UnitAngleRpm, 1000U, 16U, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 			break;
-
+#endif
 		default:
 			break;
 	}

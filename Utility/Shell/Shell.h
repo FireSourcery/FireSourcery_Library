@@ -59,7 +59,7 @@ typedef enum
 }
 Shell_State_T;
 
-typedef struct __attribute__((aligned (4U)))
+typedef struct __attribute__((aligned(2U)))
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE
 	uint8_t XcvrId;

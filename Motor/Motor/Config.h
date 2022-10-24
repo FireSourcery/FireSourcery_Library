@@ -54,9 +54,21 @@
 #endif
 
 #if 	defined(CONFIG_MOTOR_V_SENSORS_ISOLATED)
-#elif 	defined(CONFIG_MOTOR_V_SENSORS_ADC)
+#elif 	defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
 #else
-	#define	CONFIG_MOTOR_V_SENSORS_ADC
+	#define	CONFIG_MOTOR_V_SENSORS_ANALOG
+#endif
+
+#if 	defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+#elif 	defined(CONFIG_MOTOR_SENSORS_SIN_COS_DISABLE)
+#else
+	#define	CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE
+#endif
+
+#if 	defined(CONFIG_MOTOR_SENSORS_OPEN_LOOP_ENABLE)
+#elif 	defined(CONFIG_MOTOR_SENSORS_OPEN_LOOP_DISABLE)
+#else
+	#define	CONFIG_MOTOR_SENSORS_OPEN_LOOP_ENABLE
 #endif
 
 /* must reboot for params to take effect when disabled */

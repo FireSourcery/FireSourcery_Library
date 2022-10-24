@@ -176,7 +176,10 @@ static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc, uin
 	{
 		case MOTOR_CONTROLLER_NVM_PARAMS_ALL: 	p_mc->NvmStatus = MotorController_SaveParameters_Blocking(p_mc); 	break;
 		case MOTOR_CONTROLLER_NVM_BOOT: 		p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc); 		break;
-		case MOTOR_CONTROLLER_NVM_ONCE: 		p_mc->NvmStatus = MotorController_SaveOnce_Blocking(p_mc); 			break;
+#if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
+		case MOTOR_CONTROLLER_NVM_WRITE_ONCE: 		p_mc->NvmStatus = MotorController_SaveOnce_Blocking(p_mc); 			break;
+#endif
+
 		default: break;
 	}
 	Motor_EnablePwm(&p_mc->CONFIG.P_MOTORS[0U]);
@@ -193,7 +196,7 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 	// [MCSM_INPUT_SET_ZERO] 			= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_PROC_ZERO] 			= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)0U,
-	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)Stop_InputSaveParams, //todo share with calibration
+	[MCSM_INPUT_CALIBRATION] 		= (StateMachine_Transition_T)Stop_InputSaveParams, //todo share with calibration
 	// [MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)Stop_InputRelease,
 	// [MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)0U,
 };
@@ -320,7 +323,7 @@ static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MCSM_TRANSITION_TABL
 	// [MCSM_INPUT_SET_ZERO] 			= (StateMachine_Transition_T)Run_InputSetZero,
 	// [MCSM_INPUT_PROC_ZERO] 			= (StateMachine_Transition_T)Run_InputProcZero,
 	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)Run_InputZero,
-	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_CALIBRATION] 		= (StateMachine_Transition_T)0U,
 };
 
 static void Run_Entry(MotorController_T * p_mc)
@@ -407,7 +410,7 @@ static const StateMachine_Transition_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_
 	[MCSM_INPUT_BRAKE]  			= (StateMachine_Transition_T)Neutral_InputBrake,
 	[MCSM_INPUT_THROTTLE] 			= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)Neutral_InputZero,
-	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_CALIBRATION] 		= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_SET_ZERO] 			= (StateMachine_Transition_T)Neutral_InputSetZero,
 	// [MCSM_INPUT_PROC_ZERO] 			= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)Neutral_InputRelease,
@@ -464,7 +467,7 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TA
 	[MCSM_INPUT_BRAKE] 				= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_PROC_ZERO] 			= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_SET_ZERO] 			= (StateMachine_Transition_T)0U,
-	[MCSM_INPUT_SAVE_PARAMS] 		= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_CALIBRATION] 		= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)0U,
 };
@@ -472,7 +475,7 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TA
 static void Fault_Entry(MotorController_T * p_mc)
 {
 	MotorController_DisableMotorAll(p_mc);
-	memcpy((void *)&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
+	// memcpy((void *)&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
 	Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U);
 }
 

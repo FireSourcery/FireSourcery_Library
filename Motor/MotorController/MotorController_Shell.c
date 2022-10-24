@@ -29,6 +29,7 @@
 	@version V0
 */
 /******************************************************************************/
+#ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
 #include "MotorController_Shell.h"
 #include "MotorController_User.h"
 
@@ -424,28 +425,28 @@ static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 }
 
 //MotorController_String.c
-static const char * STR_VPOS 		= "V Supply: \r\n";
-static const char * STR_VSENSE 		= "V Sensor: \r\n";
-static const char * STR_VACC 		= "V Accessories: \r\n";
+// static const char * STR_VPOS 		= "V Supply: \r\n";
+// static const char * STR_VSENSE 		= "V Sensor: \r\n";
+// static const char * STR_VACC 		= "V Accessories: \r\n";
 
-static size_t MotorController_ToString_VMonitorsLimits(MotorController_T * p_mc, char * p_stringBuffer)
-{
-	char * p_stringDest = p_stringBuffer;
+// static size_t MotorController_ToString_VMonitorsLimits(MotorController_T * p_mc, char * p_stringBuffer)
+// {
+// 	char * p_stringDest = p_stringBuffer;
 
-	memcpy(p_stringDest, STR_VPOS, strlen(STR_VPOS)); 		p_stringDest += strlen(STR_VPOS);
-	p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorPos, p_stringDest, 1000U);
-	memcpy(p_stringDest, "\r\n", 2U); 	p_stringDest += 2U;
+// 	memcpy(p_stringDest, STR_VPOS, strlen(STR_VPOS)); 		p_stringDest += strlen(STR_VPOS);
+// 	p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorPos, p_stringDest, 1000U);
+// 	memcpy(p_stringDest, "\r\n", 2U); 	p_stringDest += 2U;
 
-	memcpy(p_stringDest, STR_VSENSE, strlen(STR_VSENSE)); 	p_stringDest += strlen(STR_VSENSE);
-	p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorSense, p_stringDest, 1000U);
-	memcpy(p_stringDest, "\r\n", 2U); 	p_stringDest += 2U;
+// 	memcpy(p_stringDest, STR_VSENSE, strlen(STR_VSENSE)); 	p_stringDest += strlen(STR_VSENSE);
+// 	p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorSense, p_stringDest, 1000U);
+// 	memcpy(p_stringDest, "\r\n", 2U); 	p_stringDest += 2U;
 
-	memcpy(p_stringDest, STR_VACC, strlen(STR_VACC)); 		p_stringDest += strlen(STR_VACC);
-	p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorAcc, p_stringDest, 1000U);
-	memcpy(p_stringDest, "\r\n", 2U); 	p_stringDest += 2U;
+// 	memcpy(p_stringDest, STR_VACC, strlen(STR_VACC)); 		p_stringDest += strlen(STR_VACC);
+// 	p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorAcc, p_stringDest, 1000U);
+// 	memcpy(p_stringDest, "\r\n", 2U); 	p_stringDest += 2U;
 
-	return p_stringDest - p_stringBuffer;
-}
+// 	return p_stringDest - p_stringBuffer;
+// }
 
 static Cmd_Status_T Cmd_v(MotorController_T * p_mc, int argc, char ** argv)
 {
@@ -469,12 +470,12 @@ static Cmd_Status_T Cmd_v(MotorController_T * p_mc, int argc, char ** argv)
 	}
 	else if(argc == 2U)
 	{
-		if(strncmp(argv[1U], "limits", 7U) == 0U)
-		{
-			p_txString = (char *)Terminal_AcquireTxBuffer(p_terminal);
-			txSize = MotorController_ToString_VMonitorsLimits(p_mc, p_txString);
-			Terminal_ReleaseTxBuffer(p_terminal, txSize);
-		}
+		// if(strncmp(argv[1U], "limits", 7U) == 0U)
+		// {
+		// 	p_txString = (char *)Terminal_AcquireTxBuffer(p_terminal);
+		// 	txSize = MotorController_ToString_VMonitorsLimits(p_mc, p_txString);
+		// 	Terminal_ReleaseTxBuffer(p_terminal, txSize);
+		// }
 	}
 
 	return CMD_STATUS_SUCCESS;
@@ -942,7 +943,7 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	// {"analoguser", 	"analoguser enable/disable", 		(Cmd_Function_T)Cmd_analoguser,	{0U}	},
 };
 
-
+#endif
 
 // static Cmd_Status_T Cmd_analoguser(MotorController_T * p_mc, int argc, char ** argv)
 // {

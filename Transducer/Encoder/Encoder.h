@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct __attribute__((aligned(4U))) Encoder_Params_Tag
+typedef struct __attribute__((aligned(2U))) Encoder_Params_Tag
 {
 	uint16_t CountsPerRevolution; 		/* Derive Angular Speed. Max for counting AngularD, CaptureDeltaT mode need 2nd TimerCounterMax */
 	uint16_t DistancePerCount;			/* Derive Linear Speed. */
@@ -73,9 +73,10 @@ typedef struct Encoder_Tag
 {
 	const Encoder_Config_T CONFIG;
 	Encoder_Params_T Params;
-
+// #if defined(CONFIG_ENCODER_HW_QUADRATURE_DISABLED)
 	Pin_T PhaseA;
 	Pin_T PhaseB;
+// #endif
 
 	/*
 		Runtime Variables
@@ -154,8 +155,8 @@ Encoder_T;
 		.EXTENDED_TIMER_FREQ 	= ExtendedTimerFreq,					\
 		.P_PARAMS 				= p_Params,								\
 	},																	\
-	.PhaseA = PIN_INIT(p_PinA_Hal, PinAId),							\
-	.PhaseB = PIN_INIT(p_PinB_Hal, PinBId),							\
+	.PhaseA = PIN_INIT(p_PinA_Hal, PinAId),								\
+	.PhaseB = PIN_INIT(p_PinB_Hal, PinBId),								\
 }
 
 /******************************************************************************/

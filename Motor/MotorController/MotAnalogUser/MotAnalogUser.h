@@ -90,20 +90,29 @@ typedef union MotAnalogUser_InvertPins_Tag
 }
 MotAnalogUser_InvertPins_T;
 
-typedef struct __attribute__((aligned(4U))) MotAnalogUser_Params_Tag
+typedef struct __attribute__((aligned(2U))) MotAnalogUser_Params_Tag
 {
 	uint16_t ThrottleZero_Adcu;
 	uint16_t ThrottleMax_Adcu;
 	uint16_t BrakeZero_Adcu;
 	uint16_t BrakeMax_Adcu;
 
-	bool UseThrottleEdgePin;	 /* ADC Threshold. Pin determines THROTTLE_RELEASE mode */
-	bool UseBrakeEdgePin;
-	bool UseNeutralPin;
-	bool UseForwardPin;
+	struct
+	{
+		uint32_t UseThrottleEdgePin 		: 1U;
+		uint32_t UseBrakeEdgePin 			: 1U;
+		uint32_t UseNeutralPin 				: 1U;
+		uint32_t UseForwardPin 				: 1U;
+		uint32_t UseBistateBrakePin 		: 1U;
+		uint32_t UseThrottleSafetyPin 		: 1U;
+	};
 
-	bool UseBistateBrakePin;
-	bool UseThrottleSafetyPin;	/* ADC Threshold. EXCEPT Throttle_Frac16, ThrottleZero_Adcu determines THROTTLE_RELEASE mode by default */
+	// bool UseThrottleEdgePin;	 /* ADC Threshold. Pin determines THROTTLE_RELEASE mode */
+	// bool UseBrakeEdgePin;
+	// bool UseNeutralPin;
+	// bool UseForwardPin;
+	// bool UseBistateBrakePin;
+	// bool UseThrottleSafetyPin;	/* ADC Threshold. EXCEPT Throttle_Frac16, ThrottleZero_Adcu determines THROTTLE_RELEASE mode by default */
 	uint16_t BistateBrakeValue_Frac16;
 
 	// bool UseErrorAdcuRange; //report error if adcu read falls outside Zero_Adcu and Max_Adcu

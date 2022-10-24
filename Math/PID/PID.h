@@ -41,7 +41,7 @@ typedef enum PID_Mode_Tag
 }
 PID_Mode_T;
 
-typedef struct __attribute__((aligned (4U))) PID_Params_Tag
+typedef struct __attribute__((aligned(4U))) PID_Params_Tag
 {
 	PID_Mode_T Mode;
 	uint32_t CalcFreq;
@@ -67,7 +67,7 @@ typedef struct PID_Tag
 	int32_t KiDivisorFreq; 	/* KpDivisor * CalcFreq */
 	int32_t KdFactorFreq; 	/* KdFactor * CalcFreq */
 	int32_t ErrorSum;
-	int32_t ErrorSumOverflow;
+	int32_t ErrorSumOverflow; /* Sum Limit before multiplication overflow */
 	int32_t ErrorPrev;
 	int32_t OutputMin; /*  */
 	int32_t OutputMax;

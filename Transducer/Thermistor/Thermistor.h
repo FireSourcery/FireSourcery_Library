@@ -75,7 +75,7 @@ Thermistor_Type_T;
 /*
 	Set Vin to same decimal precision as ADC_VREF
 */
-typedef struct __attribute__((aligned(4U))) Thermistor_Params_Tag
+typedef struct __attribute__((aligned(2U))) Thermistor_Params_Tag
 {
 	Thermistor_Type_T Type;
 	uint16_t VIn_Scalar; /* Vin Set to match Vref units */

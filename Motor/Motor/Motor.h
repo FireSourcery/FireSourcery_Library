@@ -239,15 +239,15 @@ Motor_SectorId_T;
 /*!
 	@brief Motor Parameters - Runtime variable configuration. Load from non volatile memory.
 */
-typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
+typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 {
-	Motor_CommutationMode_T 	CommutationMode;
-	Motor_SensorMode_T 			SensorMode;
-	Motor_FeedbackMode_T 		FeedbackMode; 	/* User FeedbackMode, UserControlModeCmd, and ThrottleCmd */
-	Motor_AlignMode_T 			AlignMode;
-	Motor_DirectionCalibration_T DirectionCalibration;
 	uint8_t PolePairs;
 
+	Motor_CommutationMode_T 	CommutationMode;
+	Motor_SensorMode_T 			SensorMode;
+	Motor_AlignMode_T 			AlignMode;
+	Motor_DirectionCalibration_T DirectionCalibration;
+	Motor_FeedbackMode_T 		FeedbackMode; 	/* User FeedbackMode, UserControlModeCmd, and ThrottleCmd */
 	// Motor_FeedbackMode_T 		ThrottleMode; 	/* Motor layer per Motor Implementation */
 	// Motor_FeedbackMode_T 		BrakeMode; 		/* Motor layer per Motor Implementation */
 
@@ -279,13 +279,13 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	//	uint8_t BrakeCoeffcient;
 	//	uint32_t RampAcceleration;
 
-	uint16_t OpenLoopVPwmMin;
-	uint16_t OpenLoopVPwmMax;
-	uint16_t OpenLoopSpeedStart;
-	uint16_t OpenLoopSpeedFinal;
-	uint16_t OpenLoopAccel;
-	//	uint16_t OpenLoopVHzGain;
-	//	uint16_t OpenLoopZcdTransition;
+	// uint16_t OpenLoopVPwmMin;
+	// uint16_t OpenLoopVPwmMax;
+	// uint16_t OpenLoopSpeedStart;
+	// uint16_t OpenLoopSpeedFinal;
+	// uint16_t OpenLoopAccel;
+		//	uint16_t OpenLoopVHzGain;
+		//	uint16_t OpenLoopZcdTransition;
 
 	Phase_Mode_T PhasePwmMode; /* Only 1 nvm param for phase module. */
 }
@@ -314,12 +314,10 @@ typedef struct Motor_Tag
 	volatile MotorAnalog_Results_T AnalogResults;
 
 	Encoder_T Encoder;
-	union /* Reduce SRAM use */
-	{
-		Hall_T Hall;
-		SinCos_T SinCos;
-	};
-
+	Hall_T Hall;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+	SinCos_T SinCos;
+#endif
 	Phase_T Phase;
 	Thermistor_T Thermistor;
 
@@ -333,7 +331,7 @@ typedef struct Motor_Tag
 
 	/* Run Substate */
 	Motor_Direction_T Direction; 			/* Active spin direction */
-	Motor_Direction_T UserDirection; 		/* Passed to StateMachine */
+	// Motor_Direction_T UserDirection; 		/* Passed to StateMachine */
 	Motor_FeedbackModeFlags_T FeedbackModeFlags;
 	Motor_RunStateFlags_T RunStateFlags; 	/* Run Substate */
 	// Motor_TorqueDirection_T TorqueDirection;
@@ -361,11 +359,11 @@ typedef struct Motor_Tag
 	/* Jog */
 	uint32_t JogIndex;
 
-	uint16_t VBemfPeak_Adcu; //todo
-	uint16_t VBemfPeakTemp_Adcu;
-	uint16_t IPhasePeak_Adcu;
-	uint16_t IPhasePeakTemp_Adcu;
-	uint16_t IPhasePeak2_Adcu;
+	// uint16_t VBemfPeak_Adcu; //todo
+	// uint16_t VBemfPeakTemp_Adcu;
+	// uint16_t IPhasePeak_Adcu;
+	// uint16_t IPhasePeakTemp_Adcu;
+	// uint16_t IPhasePeak2_Adcu;
 
 	/*
 		UserCmd Input => Ramp
@@ -416,11 +414,11 @@ typedef struct Motor_Tag
 		Open-loop
 	*/
 	// bool IsOpenLoop;
-	Linear_T OpenLoopRamp;
-	uint32_t OpenLoopRampIndex;
-	uint32_t OpenLoopCommutationPeriod;
-	uint16_t OpenLoopSpeed_RPM;
-	uint16_t OpenLoopVPwm;
+	// Linear_T OpenLoopRamp;
+	// uint32_t OpenLoopRampIndex;
+	// uint32_t OpenLoopCommutationPeriod;
+	// uint16_t OpenLoopSpeed_RPM;
+	// uint16_t OpenLoopVPwm;
 
 	// uint32_t MicrosRef; //debug
 	// volatile uint32_t DebugTime[10U];
@@ -523,7 +521,7 @@ static inline void Motor_ZeroSensor(Motor_T * p_motor)
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_OPEN_LOOP:
-			p_motor->OpenLoopRampIndex = 0U;
+			// p_motor->OpenLoopRampIndex = 0U;
 			break;
 
 		case MOTOR_SENSOR_MODE_SENSORLESS:

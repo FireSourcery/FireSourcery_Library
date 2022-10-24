@@ -152,17 +152,13 @@ void Motor_User_ActivateCalibrationSinCos(Motor_T * p_motor)
 
 void Motor_User_ActivateCalibrationSensor(Motor_T * p_motor)
 {
-	Motor_CalibrationState_T mode;
-
 	switch(p_motor->Parameters.SensorMode)
 	{
-		case MOTOR_SENSOR_MODE_HALL:	mode = MOTOR_CALIBRATION_STATE_HALL; 	break;
-		case MOTOR_SENSOR_MODE_ENCODER:	mode = MOTOR_CALIBRATION_STATE_ENCODER;	break;
-		case MOTOR_SENSOR_MODE_SIN_COS:	mode = MOTOR_CALIBRATION_STATE_SIN_COS;	break;
+		case MOTOR_SENSOR_MODE_HALL:		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL); 		break;
+		case MOTOR_SENSOR_MODE_ENCODER:		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER);	break;
+		case MOTOR_SENSOR_MODE_SIN_COS:		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_SIN_COS);	break;
 		default: break;
 	}
-
-	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, mode);
 }
 
 /******************************************************************************/
@@ -465,7 +461,9 @@ qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor)
 		case MOTOR_SENSOR_MODE_SENSORLESS: 	angle = 0; 	break;
 		case MOTOR_SENSOR_MODE_HALL: 		angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
 		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 			break;
+#endif
 		default: 							angle = 0; 	break;
 	}
 

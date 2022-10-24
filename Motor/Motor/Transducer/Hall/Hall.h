@@ -167,7 +167,7 @@ typedef enum Hall_Direction_Tag
 }
 Hall_Direction_T;
 
-typedef struct __attribute__((aligned(4U))) Hall_Params_Tag
+typedef struct __attribute__((aligned(2U))) Hall_Params_Tag
 {
 	Hall_Id_T SensorsTable[HALL_SENSORS_TABLE_LENGTH];
 }

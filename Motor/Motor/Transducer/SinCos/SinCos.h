@@ -37,7 +37,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct __attribute__((aligned(4U)))
+typedef struct __attribute__((aligned(2U)))
 {
 	uint16_t Zero_Adcu;
 	uint16_t Max_Adcu;

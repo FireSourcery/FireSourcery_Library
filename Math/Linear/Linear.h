@@ -40,8 +40,8 @@ typedef struct Linear_Tag
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
 	int32_t Slope;			/* y = (x - XOffset) * Slope >> SlopeShift + YOffset */
-	uint8_t SlopeShift;
 	int32_t InvSlope;		/* x = (y - YOffset) * InvSlope >> InvSlopeShift + XOffset */
+	uint8_t SlopeShift;
 	uint8_t InvSlopeShift;
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 	int32_t SlopeFactor;

@@ -289,7 +289,7 @@ static void Req_Control(MotorController_T * p_mc, MotPacket_ControlResp_T * p_tx
 }
 
 
-
+#if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 /******************************************************************************/
 /*! Stateful Read Data */
 /******************************************************************************/
@@ -422,6 +422,7 @@ static Protocol_ReqCode_T Req_WriteData_Blocking
 
 	return reqCode;
 }
+#endif
 
 /******************************************************************************/
 /*! Req Table */
@@ -438,8 +439,10 @@ static const Protocol_Req_T REQ_TABLE[] =
 	// PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VARS_8, 		Req_WriteVars8, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	// PROTOCOL_REQ_DEFINE(MOT_PACKET_READ_VARS_16, 		Req_ReadVars16, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_CONTROL_TYPE, 		Req_Control, 			0U, 	PROTOCOL_SYNC_ID_DISABLE),
+#if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_READ, 		0U, 	Req_ReadData, 				REQ_SYNC_DEFAULT),
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_WRITE, 	0U, 	Req_WriteData_Blocking, 	REQ_SYNC_DEFAULT),
+#endif
 };
 
 

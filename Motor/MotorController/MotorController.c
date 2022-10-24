@@ -33,18 +33,23 @@
 
 void MotorController_Init(MotorController_T * p_mc)
 {
+#if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 	Flash_Init(p_mc->CONFIG.P_FLASH);
+	MotorController_ReadOnce_Blocking(p_mc);
+#endif
+
 	EEPROM_Init_Blocking(p_mc->CONFIG.P_EEPROM);
 
 	if(p_mc->CONFIG.P_PARAMS_NVM != 0U) 	{ memcpy(&p_mc->Parameters, p_mc->CONFIG.P_PARAMS_NVM, sizeof(MotorController_Params_T)); }
 	if(p_mc->CONFIG.P_MEM_MAP_BOOT != 0U) 	{ p_mc->MemMapBoot.Register = p_mc->CONFIG.P_MEM_MAP_BOOT->Register; }
 
-	MotorController_ReadOnce_Blocking(p_mc);
-
 	AnalogN_Init(p_mc->CONFIG.P_ANALOG_N);
 
 	for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_Init(&p_mc->CONFIG.P_SERIALS[iSerial]); }
+
+#if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
 	// if(p_mc->Parameters.IsCanEnable == true) { CanBus_Init(p_mc->CONFIG.P_CAN_BUS, p_mc->Parameters.CanServicesId); } //move enable
+#endif
 
 	MotAnalogUser_Init(&p_mc->AnalogUser);
 
@@ -71,11 +76,13 @@ void MotorController_Init(MotorController_T * p_mc)
 	Timer_InitPeriodic(&p_mc->TimerMillis, 				1U);
 	Timer_InitPeriodic(&p_mc->TimerMillis10, 			10U);
 	Timer_InitPeriodic(&p_mc->TimerIsrDividerSeconds, 	1000U);
-	Timer_Init(&p_mc->TimerState);
+	// Timer_Init(&p_mc->TimerState);
 
 	for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++) { Protocol_Init(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]); }
 
+#ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
 	Shell_Init(&p_mc->Shell);
+#endif
 
 	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_Adcu, p_mc->Parameters.BatteryFull_Adcu, 1000U);
 
@@ -95,7 +102,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	);
 
 	p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
-	p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
+	// p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
 	// p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	// p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	// p_mc->SpeedLimitActiveId = MOTOR_SPEED_LIMIT_ACTIVE_DISABLE;
@@ -295,8 +302,10 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_mc->ThermistorMosfetsBot.CONFIG.P_PARAMS, 	&p_mc->ThermistorMosfetsBot.Params, 	sizeof(Thermistor_Params_T)); };
  	if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_mc->VMonitorPos.CONFIG.P_PARAMS, 			&p_mc->VMonitorPos.Params, 				sizeof(VMonitor_Params_T)); };
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_mc->VMonitorAcc.CONFIG.P_PARAMS, 			&p_mc->VMonitorAcc.Params, 				sizeof(VMonitor_Params_T)); };
-	if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_mc->VMonitorSense.CONFIG.P_PARAMS, 		&p_mc->VMonitorSense.Params, 			sizeof(VMonitor_Params_T)); };
+	if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_mc->VMonitorSense.CONFIG.P_PARAMS, 		&p_mc->VMonitorSense.Params,			sizeof(VMonitor_Params_T)); };
+#ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_mc->Shell.CONFIG.P_PARAMS, 				&p_mc->Shell.Params, 					sizeof(Shell_Params_T)); };
+#endif
 
 	if (status == NV_MEMORY_STATUS_SUCCESS)
 	{
@@ -322,6 +331,9 @@ NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
 #endif
 }
 
+
+#if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
+
 NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc)
 {
 #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
@@ -342,3 +354,4 @@ NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc)
 #endif
 }
 
+#endif

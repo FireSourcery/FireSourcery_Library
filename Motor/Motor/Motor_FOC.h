@@ -107,9 +107,9 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 
 				p_foc->Theta = integrate speed to angle
 			*/
-			p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcIndexOutput(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopSpeed_RPM);
-			electricalAngle = p_motor->ElectricalAngle + Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
-			speedFeedback_Frac16 = 0U;
+			// p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcIndexOutput(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopSpeed_RPM);
+			// electricalAngle = p_motor->ElectricalAngle + Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
+			// speedFeedback_Frac16 = 0U;
 			break;
 
 		case MOTOR_SENSOR_MODE_SENSORLESS:
@@ -168,13 +168,13 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			// speedFeedback_Frac16 = _Motor_FOC_CaptureAngleSpeed(p_motor, electricalAngle);
 
 			break;
-
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_SENSOR_MODE_SIN_COS:
 			SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
 			electricalAngle = SinCos_GetElectricalAngle(&p_motor->SinCos);
 			if(procSpeed == true) { speedFeedback_Frac16 = _Motor_FOC_CaptureAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos)); }
 			break;
-
+#endif
 		default:
 			electricalAngle = 0U;
 			speedFeedback_Frac16 = 0U;
@@ -301,7 +301,7 @@ static inline void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 //		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
 //		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 //	}
-//#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) &&defined(CONFIG_MOTOR_V_SENSORS_ADC)
+//#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) &&defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
 ////	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
 ////	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
 ////	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
