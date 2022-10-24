@@ -44,7 +44,7 @@ static inline void Motor_Calibrate_StartSinCos(Motor_T * p_motor)
 	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_ControlCycles);
 }
 
-static inline bool Motor_Calibrate_ProcSinCos(Motor_T * p_motor)
+static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
 {
 	bool isComplete = false;
 
@@ -233,7 +233,7 @@ static inline void Motor_Calibrate_StartAdc(Motor_T * p_motor)
 
 static inline bool Motor_Calibrate_Adc(Motor_T *p_motor)
 {
-	bool isComplete = Timer_Poll(&p_motor->ControlTimer);
+	bool isComplete = Timer_Poll(&p_motor->ControlTimer); /* Calibrate Adc 1 wait step only */
 	if (isComplete == true)
 	{
 		p_motor->Parameters.IaZeroRef_Adcu = Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu);

@@ -466,7 +466,7 @@ extern MotPacket_HeaderStatus_T MotPacket_DataPacket_Parse(const uint8_t ** pp_d
 /******************************************************************************/
 extern uint8_t MotPacket_PingReq_Build(MotPacket_PingReq_T * p_reqPacket);
 extern uint8_t MotPacket_PingReq_GetRespLength(void);
-extern void MotPacket_PingResp_Parse(uint8_t * p_version, const MotPacket_PingResp_T * p_respPacket);
+extern MotPacket_HeaderStatus_T MotPacket_PingResp_Parse(const MotPacket_PingResp_T * p_respPacket, uint8_t * p_version);
 
 extern uint8_t MotPacket_StopReq_Build(MotPacket_StopReq_T * p_reqPacket);
 extern uint8_t MotPacket_StopReq_GetRespLength(void);

@@ -81,6 +81,7 @@ static inline void Motor_FOC_CaptureIc(Motor_T * p_motor)
 	Private
 */
 /******************************************************************************/
+/* when not using encoder module */
 static inline int32_t _Motor_FOC_CaptureAngleSpeed(Motor_T * p_motor, qangle16_t speedAngle)
 {
 	int32_t speedDelta = speedAngle - p_motor->SpeedAngle; /* loops if no overflow past 1 full cycle */

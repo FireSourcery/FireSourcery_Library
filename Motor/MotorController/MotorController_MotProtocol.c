@@ -138,12 +138,21 @@ static uint32_t GetVar(MotorController_T * p_mc, MotVarId_T varId)
 
 	switch(varId)
 	{
-		case MOT_VAR_THROTTLE:		value = MotAnalogUser_GetThrottle(&p_mc->AnalogUser); break;					/* Value 16-bit */
-		case MOT_VAR_BRAKE:			value = MotAnalogUser_GetBrake(&p_mc->AnalogUser); break;						/* Value 16-bit */
-		case MOT_VAR_DIRECTION:		value = (uint32_t)MotorController_User_GetDirection(p_mc); break;				/* Value 0: Neutral, 1: Reverse, 2: Forward */
+		// temp
+		case MOT_VAR_THROTTLE:		value = MotAnalogUser_GetThrottle(&p_mc->AnalogUser); 	break;					/* Value 16-bit */
+		case MOT_VAR_BRAKE:			value = MotAnalogUser_GetBrake(&p_mc->AnalogUser); 		break;					/* Value 16-bit */
+
+		// case MOT_VAR_THROTTLE:		value = MotorController_User_GetCmdValue(p_mc); 			break;				/* Write-Only */
+		// case MOT_VAR_BRAKE:			value = MotorController_User_GetCmdValue(p_mc);				break;				/* Write-Only */
+
+		case MOT_VAR_DIRECTION:		value = (uint32_t)MotorController_User_GetDirection(p_mc); 	break;				/* Value 0: Neutral, 1: Reverse, 2: Forward */
+		case MOT_VAR_USER_CMD:		value = MotorController_User_GetCmdValue(p_mc);				break;				/* Write-Only */
+
+		// case MOT_VAR_ANALOG_THROTTLE:		value = MotAnalogUser_GetThrottle(&p_mc->AnalogUser); 	break;					/* Value 16-bit */
+		// case MOT_VAR_ANALOG_BRAKE:			value = MotAnalogUser_GetBrake(&p_mc->AnalogUser); 		break;					/* Value 16-bit */
 
 		case MOT_VAR_SPEED_RPM:		value = Motor_User_GetSpeed_Rpm(MotorController_User_GetPtrMotor(p_mc, 0U)); 	break;
-		case MOT_VAR_ERROR_CODE:	value = p_mc->FaultFlags.State;	break;
+		case MOT_VAR_ERROR_CODE:	value = p_mc->FaultFlags.State;								break;
 		case MOT_VAR_MC_STATE:		value = (uint32_t)MotorController_User_GetStateId(p_mc); 	break;
 		// case MOT_VAR_I_PEAK_AMP:		Motor_User_GetIPhase_Amp(MotorController_User_GetPtrMotor(p_mc, 0U)); 	break;
 		// case MOT_VAR_SPEED_GROUND_KMH:	Motor_User_GetSpeed_Rpm(MotorController_User_GetPtrMotor(p_mc, 0U)); 	break;

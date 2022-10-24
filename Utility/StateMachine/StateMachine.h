@@ -36,32 +36,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define STATE_MACHINE_INPUT_ID_NULL 		(0xFFU)
+#define STATE_MACHINE_INPUT_VALUE_NULL 		(0U)
+
 struct StateMachine_State_Tag;
-#define STATE_MACHINE_INPUT_NULL 		(0xFFU)
 typedef uint8_t statemachine_input_t;	/* Input ID/Category. Index into transition table. User may overwrite with enum. */
 typedef uint8_t statemachine_state_t;	/* State ID. User may overwrite with enum */
 
 typedef void (*StateMachine_Output_T)(void * p_context); /* Synchronous State Output */
 
-/*
-	Input is passed via context
-*/
-typedef struct StateMachine_State_Tag * (* StateMachine_Transition_T)(void * p_context);
-
 /*!
-	TransitionFunction defined via P_TRANSITION_EXT_TABLE
-	Additional input passed as arguments
+	Transition Function - defined by user via P_TRANSITION_TABLE
+	1 Additional input passed as arguments
 	@return returns pointer to new state, if it exists.
 			0 - no transition, bypass exit and entry, indicates user defined non transition
 			!0 - transition, perform exist and entry. User may return same state, for self transition, proc exit and entry
 */
-typedef struct StateMachine_State_Tag * (* StateMachine_TransitionExt_T)(void * p_context, uint32_t inputExt);
+typedef struct StateMachine_State_Tag * (*StateMachine_Transition_T)(void * p_context, uint32_t inputExt);
 
-/*!
-	user implement case switch calls _StateMachine_ProcStateTransition
-	@return user status
-*/
-typedef bool (*StateMachine_TransitionFunction_T)(void * p_context, statemachine_input_t inputId, uint32_t inputExt);
 
 /*
 	Array Implementation - 2D input table
@@ -78,9 +70,7 @@ typedef bool (*StateMachine_TransitionFunction_T)(void * p_context, statemachine
 typedef const struct StateMachine_State_Tag
 {
 	const statemachine_state_t ID;
-	const StateMachine_Transition_T * const P_TRANSITION_TABLE;
-	const StateMachine_TransitionExt_T * const P_TRANSITION_EXT_TABLE; 	/* extended inputs */
-	const StateMachine_TransitionFunction_T TRANSITION_FUNCTION;		/* Single function, user provide switch case */
+	const StateMachine_Transition_T * const P_TRANSITION_TABLE; /* Forms the TransitionFunction */
 	const StateMachine_Output_T OUTPUT;		/* Synchronous output. Asynchronous case, proc on input only. No null pointer check, user must supply empty function */
 	const StateMachine_Output_T ENTRY;		/* Common to all transition to current state, including self transition */
 	const StateMachine_Output_T EXIT;
@@ -94,7 +84,7 @@ StateMachine_State_T;
 typedef struct StateMachine_Machine_Tag
 {
 	const StateMachine_State_T * const P_STATE_INITIAL;
-	const uint8_t TRANSITION_TABLE_LENGTH;			/* Total input count. Shared table length for all states, i.e. all states allocate for all inputs*/
+	const uint8_t TRANSITION_TABLE_LENGTH; 	/* Total input count. Shared table length for all states, i.e. all states allocate for all inputs*/
 }
 StateMachine_Machine_T;
 
@@ -146,14 +136,11 @@ static inline statemachine_state_t StateMachine_GetActiveStateId(StateMachine_T 
 extern void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState);
 extern void StateMachine_Init(StateMachine_T * p_stateMachine);
 extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
+
 extern void StateMachine_Sync_Proc(StateMachine_T * p_stateMachine);
-extern bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, uint8_t input);
-extern bool StateMachine_Sync_SetInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt);
-extern bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, uint8_t input);
-extern bool StateMachine_Async_ProcInputExt(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt);
+extern bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_t inputId, uint32_t inputExt);
+extern bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t inputId, uint32_t inputExt);
 extern void StateMachine_Semi_ProcOutput(StateMachine_T * p_stateMachine);
-extern bool StateMachine_Semi_ProcInput(StateMachine_T * p_stateMachine, uint8_t input);
-extern bool StateMachine_Semi_ProcInputExt(StateMachine_T * p_stateMachine, uint8_t input, uint32_t inputExt);
-extern bool StateMachine_Semi_ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t input, uint32_t inputExt);
+extern bool StateMachine_Semi_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t inputId, uint32_t inputExt);
 
 #endif

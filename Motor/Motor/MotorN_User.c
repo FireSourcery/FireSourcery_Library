@@ -77,12 +77,7 @@ void MotorN_User_Ground(Motor_T * p_motor, uint8_t motorCount)
 bool MotorN_User_SetDirectionForward(Motor_T * p_motor, uint8_t motorCount)
 {
 	bool isSet = true;
-
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		if(Motor_User_SetDirectionForward(&p_motor[iMotor]) == false) { isSet = false; }
-	}
-
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(Motor_User_SetDirectionForward(&p_motor[iMotor]) == false) { isSet = false; } }
 	return isSet;
 }
 

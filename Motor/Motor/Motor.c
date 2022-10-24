@@ -75,7 +75,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	PID_Init(&p_motor->PidSpeed);
 	PID_Init(&p_motor->PidIq);
 	PID_Init(&p_motor->PidId);
-	PID_Init(&p_motor->PidIBus);
+	// PID_Init(&p_motor->PidIBus);
 
 	//temporary //set assuming forward direction
 	// PID_SetOutputLimits(&p_motor->PidSpeed, 0 - p_motor->Parameters.SpeedLimitCw_Frac16, p_motor->Parameters.SpeedLimitCcw_Frac16);
@@ -106,7 +106,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 		p_motor->Parameters.ILimitHeat_Frac16,
 		0U /* Param not used */
 	);
-
 
 	Motor_SetDirectionForward(p_motor);
 

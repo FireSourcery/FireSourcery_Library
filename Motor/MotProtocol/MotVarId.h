@@ -38,10 +38,11 @@ typedef enum MotVarId_Tag
 	/*
 		Demo Group 0-255 0b1111
 	*/
-	MOT_VAR_THROTTLE = 1U, 		/* Value 16-bit */
-	MOT_VAR_BRAKE = 2U,			/* Value 16-bit */
-	MOT_VAR_DIRECTION = 3U,		/* Value 0: Neutral, 1: Reverse, 2: Forward */
-	MOT_VAR_BEEP = 4U,			/* Beep */
+	MOT_VAR_THROTTLE = 1U, 			/* Value 16-bit */
+	MOT_VAR_BRAKE = 2U,				/* Value 16-bit */
+	MOT_VAR_DIRECTION = 3U,			/* Value 0: Neutral, 1: Reverse, 2: Forward */
+	MOT_VAR_BEEP = 4U,				/* Beep */
+	MOT_VAR_USER_CMD = 5U,			/* Beep */
 
 	MOT_VAR_SPEED_RPM = 129U,				/* Value 16-bit */
 	MOT_VAR_ERROR_CODE = 130U,				/* Value Bitfield 16-bit */

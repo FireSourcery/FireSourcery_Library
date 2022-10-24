@@ -45,8 +45,8 @@ typedef enum MotorStateMachine_Input_Tag
 	//	MSM_TRANSITION_FREEWHEEL,
 	//	MSM_TRANSITION_FAULT,
 	MSM_INPUT_FAULT,  		/* Toggle Fault */
-	MSM_INPUT_CONTROL, 		/* Set Control Mode, transitions to Run State (Active Control), and FeedbackMode update */
-	MSM_INPUT_FLOAT, 		/* Release Control */
+	MSM_INPUT_CONTROL, 		/* Activate Control Mode - Transition to Run State (Active Control), and FeedbackMode update */
+	MSM_INPUT_RELEASE, 		/* Release Control */
 	// MSM_INPUT_GROUND,
 	MSM_INPUT_DIRECTION,
 	MSM_INPUT_CALIBRATION,

@@ -205,6 +205,7 @@ typedef enum Motor_CalibrationState_Tag
 	MOTOR_CALIBRATION_STATE_HALL,
 	MOTOR_CALIBRATION_STATE_ENCODER,
 	MOTOR_CALIBRATION_STATE_SIN_COS,
+	MOTOR_CALIBRATION_STATE_POSITION_SENSOR,
 }
 Motor_CalibrationState_T;
 
@@ -246,6 +247,9 @@ typedef struct __attribute__((aligned(4U))) Motor_Params_Tag
 	Motor_AlignMode_T 			AlignMode;
 	Motor_DirectionCalibration_T DirectionCalibration;
 	uint8_t PolePairs;
+
+	// Motor_FeedbackMode_T 		ThrottleMode; 	/* Motor layer per Motor Implementation */
+	// Motor_FeedbackMode_T 		BrakeMode; 		/* Motor layer per Motor Implementation */
 
  	/*
 		Ref values, known calibration parameter provide by user
@@ -309,10 +313,14 @@ typedef struct Motor_Tag
 
 	volatile MotorAnalog_Results_T AnalogResults;
 
-	Phase_T Phase;
 	Encoder_T Encoder;
-	Hall_T Hall;
-	SinCos_T SinCos;
+	union /* Reduce SRAM use */
+	{
+		Hall_T Hall;
+		SinCos_T SinCos;
+	};
+
+	Phase_T Phase;
 	Thermistor_T Thermistor;
 
 	/*
@@ -395,7 +403,7 @@ typedef struct Motor_Tag
 	/*
 		Six-Step
 	*/
-	PID_T PidIBus;
+	// PID_T PidIBus;
 //	BEMF_T Bemf;
 	// Motor_SectorId_T NextPhase;
 	// Motor_SectorId_T CommutationPhase;
@@ -414,9 +422,9 @@ typedef struct Motor_Tag
 	uint16_t OpenLoopSpeed_RPM;
 	uint16_t OpenLoopVPwm;
 
-	uint32_t MicrosRef; //debug
-	volatile uint32_t DebugTime[10U];
-	volatile uint32_t Debug[20U];
+	// uint32_t MicrosRef; //debug
+	// volatile uint32_t DebugTime[10U];
+	// volatile uint32_t Debug[20U];
 
 	/*
 		Unit Conversions
@@ -433,8 +441,8 @@ typedef struct Motor_Tag
 }
 Motor_T;
 
-static inline void Motor_DisablePwm(Motor_T * p_motor) 			{ Phase_DisableInterrupt(&p_motor->Phase); } 	//todo
-static inline void Motor_EnablePwm(Motor_T * p_motor) 			{ Phase_EnableInterrupt(&p_motor->Phase); } 	//todo
+static inline void Motor_DisablePwm(Motor_T * p_motor) 			{ Phase_DisableInterrupt(&p_motor->Phase); }
+static inline void Motor_EnablePwm(Motor_T * p_motor) 			{ Phase_EnableInterrupt(&p_motor->Phase); }
 static inline void Motor_ClearPwmInterrupt(Motor_T * p_motor) 	{ Phase_ClearInterrupt(&p_motor->Phase); }
 
 /******************************************************************************/
@@ -570,21 +578,17 @@ static inline Motor_FeedbackModeFlags_T Motor_ConvertFeedbackModeFlags(Motor_Fee
 }
 
 /*!
-	check feedback mode change and controlmode inactive
-	@return true if needs update
+	check feedback mode change
+	@return
 */
-static inline bool Motor_CheckControlUpdate(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+static inline bool Motor_CheckFeedbackModeFlags(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-	// ControlFlags_T controlFlags;
-	// controlFlags.FeedbackModeFlags.State = Motor_ConvertFeedbackModeFlags(mode).State;
-	// return (p_motor->ControlFlags.State != controlFlags);
-
-	return (p_motor->FeedbackModeFlags.State != Motor_ConvertFeedbackModeFlags(mode).State);
+	return (p_motor->FeedbackModeFlags.State == Motor_ConvertFeedbackModeFlags(mode).State);
 }
 
 /*
 	Sets flags only
-	Motor_User_SetControlMode() applys flags to run state
+	Motor_User_SetControlMode() apply flags to run state
 */
 static inline void Motor_SetFeedbackModeFlags(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {

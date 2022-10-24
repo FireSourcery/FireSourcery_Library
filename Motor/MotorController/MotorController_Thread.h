@@ -58,7 +58,8 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 		case MOT_ANALOG_USER_CMD_SET_THROTTLE:				MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottleValue(&p_mc->AnalogUser));	break;
 		case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			MotorController_User_SetCmdZero(p_mc);															break;
 		case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_SetCmdZero(p_mc);															break;
-		case MOT_ANALOG_USER_CMD_PROC_ZERO:					MotorController_User_ProcCmdZero(p_mc);															break;
+		case MOT_ANALOG_USER_CMD_PROC_ZERO:					MotorController_User_SetCmdZero(p_mc);															break;
+		// case MOT_ANALOG_USER_CMD_PROC_ZERO:					MotorController_User_ProcCmdZero(p_mc);															break;
 		// case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:				MotorController_User_ProcNeutral(p_mc);															break;
 		case MOT_ANALOG_USER_CMD_SET_NEUTRAL:				MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);					break;
 		case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD: 	MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);					break;

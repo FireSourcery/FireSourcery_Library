@@ -37,15 +37,8 @@
 /******************************************************************************/
 /*
 	Live Control User Input Interface subject to StateMachine process
-
-	Need to save to temporary variable, as StateMachine functions pass 1 context variable only
-	Alternatively, StateMachine_InputExt
 */
 /******************************************************************************/
-
-// static inline void MotorController_User_SetNeutral(MotorController_T * p_mc) 			{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SET_NEUTRAL); }
-// static inline void MotorController_User_SetReleaseThrottle(MotorController_T * p_mc) 	{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_RELEASE_THROTTLE); }
-// static inline void MotorController_User_SetReleaseBrake(MotorController_T * p_mc) 		{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_RELEASE_BRAKE); }
 
 /******************************************************************************/
 /*
@@ -53,26 +46,30 @@
 		common input substate proc across state machine input modes
 */
 /******************************************************************************/
-static inline void MotorController_User_ProcCmdZero(MotorController_T * p_mc) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_PROC_ZERO); }
+// static inline void MotorController_User_ProcCmdZero(MotorController_T * p_mc) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_PROC_ZERO); }
 
 static inline void MotorController_User_SetCmdZero(MotorController_T * p_mc)
 {
-	if(p_mc->UserCmd == 0U) 	{ MotorController_User_ProcCmdZero(p_mc); }
-	else 						{ p_mc->UserCmd = 0U; StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SET_ZERO); }
+	// if(p_mc->UserCmd == 0U) 	{ MotorController_User_ProcCmdZero(p_mc); }
+	// else 						{ p_mc->UserCmd = 0U; StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SET_ZERO); }
+	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_ZERO, 0U);
 }
 
 static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd)
 {
-	if(userCmd == 0U) 	{ MotorController_User_SetCmdZero(p_mc); }
-	else 				{ p_mc->UserCmd = userCmd; StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE); }
+	// if(userCmd == 0U) 	{ MotorController_User_SetCmdZero(p_mc); }
+	// else 				{ p_mc->UserCmd = userCmd; StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE); }
+	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd);
 }
 
 static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd)
 {
-	if(userCmd == 0U) 	{ MotorController_User_SetCmdZero(p_mc); }
-	else 				{ p_mc->UserCmd = userCmd; StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE); }
+	// if(userCmd == 0U) 	{ MotorController_User_SetCmdZero(p_mc); }
+	// else 				{ p_mc->UserCmd = userCmd; StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE); }
+	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd);
 }
 
+static inline uint16_t MotorController_User_GetCmdValue(MotorController_T * p_mc) { return p_mc->UserCmd; }
 // static inline void MotorController_User_SetCmdBrakeAlt(MotorController_T * p_mc, uint16_t userCmd) { p_mc->UserCmd = userCmd; 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE_ALT); }
 
 /*
@@ -84,12 +81,9 @@ static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, ui
 /******************************************************************************/
 /* Direction */
 /******************************************************************************/
-static inline uint16_t MotorController_User_GetCmdValue(MotorController_T * p_mc) { return p_mc->UserCmd; }
-
 static inline void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction)
 {
-	p_mc->UserDirection = direction;
-	if(p_mc->ActiveDirection != direction) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SET_DIRECTION); }
+	if(p_mc->ActiveDirection != direction) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SET_DIRECTION, direction); }
 }
 
 static inline MotorController_Direction_T MotorController_User_GetDirection(MotorController_T * p_mc) { return p_mc->ActiveDirection; }
@@ -105,15 +99,23 @@ static inline bool MotorController_User_CheckFault(MotorController_T * p_mc)
 /* returns true if no fault active at the end of function */
 static inline bool MotorController_User_ClearFault(MotorController_T * p_mc)
 {
-	if(StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_FAULT) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT); }
+	if(StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_FAULT)
+	{
+		StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL);
+	}
 	return (StateMachine_GetActiveStateId(&p_mc->StateMachine) != MCSM_STATE_ID_FAULT);
 }
 
+/* system fault - may move */
 static inline void MotorController_User_SetFault(MotorController_T * p_mc)
 {
-	if(StateMachine_GetActiveStateId(&p_mc->StateMachine) != MCSM_STATE_ID_FAULT) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT); }
+	if(StateMachine_GetActiveStateId(&p_mc->StateMachine) != MCSM_STATE_ID_FAULT)
+	{
+		StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL);
+	}
 }
 
+/* user activate fault */
 static inline void MotorController_User_SetUserFault(MotorController_T * p_mc) { p_mc->FaultFlags.User = 1U; MotorController_User_SetFault(p_mc); }
 static inline bool MotorController_User_ClearUserFault(MotorController_T * p_mc) { p_mc->FaultFlags.User = 0U; return MotorController_User_ClearFault(p_mc); }
 
@@ -128,31 +130,23 @@ static inline void MotorController_User_ToggleUserFault(MotorController_T * p_mc
 /******************************************************************************/
 static inline void MotorController_User_SaveParameters_Blocking(MotorController_T * p_mc)
 {
-	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_PARAMS_ALL;
-	p_mc->NvmStatus = 0xFFU;
-	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
+	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS, MOTOR_CONTROLLER_NVM_PARAMS_ALL);
 }
 
 static inline void MotorController_User_SaveBootReg_Blocking(MotorController_T * p_mc)
 {
-	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_BOOT;
-	p_mc->NvmStatus = 0xFFU;
-	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
+	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS, MOTOR_CONTROLLER_NVM_BOOT);
 }
 
 static inline void MotorController_User_SaveOnce_Blocking(MotorController_T * p_mc)
 {
-	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_ONCE;
-	p_mc->NvmStatus = 0xFFU;
-	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
+	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS, MOTOR_CONTROLLER_NVM_ONCE);
 }
 
-// static inline void MotorController_User_SaveSection_Blocking(MotorController_T * p_mc)
-// {
-// 	p_mc->StopSubstate = MOTOR_CONTROLLER_NVM_SECTION_ID;
-// 	p_mc->NvmStatus = 0xFFU;
-// 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS);
-// }
+static inline void MotorController_User_ProcCalibration_Blocking(MotorController_T * p_mc, uint8_t sectionId)
+{
+	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SAVE_PARAMS, sectionId);
+}
 
 /******************************************************************************/
 /*
@@ -247,24 +241,26 @@ static inline uint32_t MotorController_User_GetIMax(MotorController_T * p_mc) { 
 /*
 	WriteOnce Variables
 */
-static inline void MotorController_User_GetName(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.NAME[0U], 8U); }
-static inline char * MotorController_User_GetPtrName(MotorController_T * p_mc) { return &p_mc->Manufacture.NAME[0U]; }
-static inline char MotorController_User_GetNameIndex(MotorController_T * p_mc, uint8_t charIndex) { return p_mc->Manufacture.NAME[charIndex]; }
-
-static inline void MotorController_User_GetManufacture(MotorController_T * p_mc, MotorController_Manufacture_T * p_dest) { memcpy(p_dest, &p_mc->Manufacture, sizeof(MotorController_Manufacture_T)); }
-// static inline uint32_t MotorController_User_GetSerialNumber(MotorController_T * p_mc) { return p_mc->Manufacture.SERIAL_NUMBER_REG; }
-// static inline uint32_t MotorController_User_GetManufactureNumber(MotorController_T * p_mc) { return p_mc->Manufacture.MANUFACTURE_NUMBER_REG; }
-// static inline void MotorController_User_GetIdExt(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.ID_EXT[0U], 8U); }
-
-// static inline void MotorController_User_SetManufacture(MotorController_T * p_mc, const MotorController_Manufacture_T * p_dest) { memcpy(&p_mc->Manufacture, p_string, sizeof(MotorController_Manufacture_T)); }
-
 /* Save Once does not need state machine */
-static inline void MotorController_User_WriteManufacture(MotorController_T * p_mc, const MotorController_Manufacture_T * p_dest)
+static inline void MotorController_User_WriteManufacture_Blocking(MotorController_T * p_mc, const MotorController_Manufacture_T * p_data)
 {
-	memcpy(&p_mc->Manufacture, p_dest, sizeof(MotorController_Manufacture_T));
+	memcpy(&p_mc->Manufacture, p_data, sizeof(MotorController_Manufacture_T));
 	MotorController_User_SaveOnce_Blocking(p_mc);
 }
 
+static inline void MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc)
+{
+	MotorController_User_ProcCalibration_Blocking(p_mc, 0U);
+}
+
+static inline void MotorController_User_GetName(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.NAME[0U], 8U); }
+static inline char * MotorController_User_GetPtrName(MotorController_T * p_mc) { return &p_mc->Manufacture.NAME[0U]; }
+// static inline char MotorController_User_GetNameIndex(MotorController_T * p_mc, uint8_t charIndex) { return p_mc->Manufacture.NAME[charIndex]; }
+
+static inline void MotorController_User_GetManufacture(MotorController_T * p_mc, MotorController_Manufacture_T * p_dest) { memcpy(p_dest, &p_mc->Manufacture, sizeof(MotorController_Manufacture_T)); }
+static inline uint32_t MotorController_User_GetSerialNumber(MotorController_T * p_mc) 		{ return p_mc->Manufacture.SERIAL_NUMBER_REG; }
+static inline uint32_t MotorController_User_GetManufactureDate(MotorController_T * p_mc)	{ return p_mc->Manufacture.MANUFACTURE_NUMBER_REG; }
+// static inline void MotorController_User_GetIdExt(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.ID_EXT[0U], 8U); }
 
 // static inline Flash_Status_T MotorController_User_ReadName_Blocking(MotorController_T * p_mc, uint8_t charIndex)
 // {
@@ -275,7 +271,6 @@ static inline void MotorController_User_WriteManufacture(MotorController_T * p_m
 // 	return Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_ONCE->NAME[charIndex], 8U);
 // // #endif
 // }
-
 // static inline Flash_Status_T MotorController_User_WriteName_Blocking(MotorController_T * p_mc, const uint8_t * p_nameString)
 // {
 // 	return Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_ONCE->NAME[0U], p_nameString, 8U);

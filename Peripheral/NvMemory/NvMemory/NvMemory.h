@@ -121,15 +121,6 @@ typedef const struct NvMemory_Config_Tag
 }
 NvMemory_Config_T;
 
-// typedef const struct NvMemory_OpControl_Tag
-// {
-// 	HAL_NvMemory_StartCmd_T Start_Cmd;
-// 	NvMemory_FinalizeCmd_T Finalize_Cmd;
-// 	NvMemory_Process_T Parse_Cmd_Error;
-// 	NvMemory_Process_T Finalize_Op;
-// 	size_t Units_Per_Cmd;
-// }
-// NvMemory_OpControl_T;
 
 /*
 	NvMemory controller

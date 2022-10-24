@@ -683,7 +683,8 @@ static Cmd_Status_T Cmd_reboot(MotorController_T * p_mc, int argc, char ** argv)
 	(void)p_mc;
 	(void)argc;
 	(void)argv;
-	SystemSoftwareReset();
+	// System_Reboot();
+	// SystemSoftwareReset();
 	return CMD_STATUS_SUCCESS;
 }
 

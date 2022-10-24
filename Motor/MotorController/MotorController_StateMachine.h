@@ -44,8 +44,9 @@ typedef enum MotorController_StateMachine_Input_Tag
 	/* Determined by calling function, using UserCmdValue */
 	MCSM_INPUT_THROTTLE,
 	MCSM_INPUT_BRAKE,
-	MCSM_INPUT_PROC_ZERO,				/* Zero Throttle/Brake Input. In Direction Fwd/Rev */
-	MCSM_INPUT_SET_ZERO,		 	/* Release Control */
+	// MCSM_INPUT_PROC_ZERO,			/* Zero Throttle/Brake Input. In Direction Fwd/Rev */
+	// MCSM_INPUT_SET_ZERO,		 	/* Release Control */
+	MCSM_INPUT_ZERO,
 
 	MCSM_INPUT_SAVE_PARAMS,
 	// MCSM_INPUT_RELEASE_THROTTLE, 	/* Release Control */

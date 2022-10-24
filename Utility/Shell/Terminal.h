@@ -69,6 +69,9 @@ typedef struct
 }
 Terminal_T;
 
+static inline void Terminal_Init(Terminal_T * p_terminal) { p_terminal->CursorIndex = 0; }
+static inline void Terminal_Reset(Terminal_T * p_terminal) { p_terminal->CursorIndex = 0; }
+
 static inline char Terminal_RecvChar(const Terminal_T * p_terminal)
 {
 	uint8_t rxChar = 0U;
@@ -131,14 +134,12 @@ static inline uint8_t * Terminal_AcquireTxBuffer(const Terminal_T * p_terminal)
 static inline void Terminal_ReleaseTxBuffer(const Terminal_T * p_terminal, size_t writeSize)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-	return Xcvr_ReleaseTxBuffer(&p_terminal->Xcvr, writeSize);
+	Xcvr_ReleaseTxBuffer(&p_terminal->Xcvr, writeSize);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	return Serial_ReleaseTxBuffer(p_terminal->p_Serial, writeSize);
+	Serial_ReleaseTxBuffer(p_terminal->p_Serial, writeSize);
 #endif
 }
 
-static inline void Terminal_Init(Terminal_T * p_terminal) { p_terminal->CursorIndex = 0; }
-static inline void Terminal_Reset(Terminal_T * p_terminal) { p_terminal->CursorIndex = 0; }
 static inline uint8_t Terminal_GetCmdlineArgC(const Terminal_T * p_terminal) { return p_terminal->ArgC; }
 static inline char ** Terminal_GetCmdlineArgV(Terminal_T * p_terminal) { return p_terminal->ArgV; }
 static inline char * Terminal_GetCmdlineVar(const Terminal_T * p_terminal, uint8_t varIndex) { return p_terminal->ArgV[varIndex]; }

@@ -30,22 +30,6 @@
 /******************************************************************************/
 #include "Motor_User.h"
 
-qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor)
-{
-	qangle16_t angle;
-
-	switch(p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_SENSORLESS: 	angle = 0; 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
-		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 			break;
-		default: 							angle = 0; 	break;
-	}
-
-	return angle;
-}
-
 /******************************************************************************/
 /*!
 	State Machine Error checked inputs
@@ -56,32 +40,43 @@ qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor)
 
 	SemiSync Mode -
 	State Proc in PWM thread. User Input in Main Thread. Need critical section during input.
-
-	Set async to proc, sync issue can recover?,
-	control proc may overwrite pid state set, but last to complete is always user input?
+	No Critical during transistion -> Prev State Proc may run before Entry.
 
 	Sync Mode
 	Must check input flags every pwm cycle
+
+	?
+	Set async to proc, sync issue can recover?
+	control proc may overwrite pid state set, but last to complete is always user input?
 */
 
 /*
-	Feedback mode update, match Ramp and PID state to output
-	Transition to Run/Control State
+	FeedbackMode update: match Ramp and PID state to output
+	Transition to Run State (Active Control)
 
-	Motor_User_Set[Control]ModeCmd must alway check feedback flags,
-	addtionall include update/active flag optimize state transition check
+	proc if (not run state) or (run state and change feedbackmode)
+	Motor_User_Set[Control]ModeCmd check feedback flags,
+	check control active flag
+	Store control active flag as FeedbackModeFlags.Update
 */
-void _Motor_User_SetControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+void _Motor_User_ActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-	if(Motor_CheckControlUpdate(p_motor, mode) == true)
+	if(Motor_CheckFeedbackModeFlags(p_motor, mode) == false)
 	{
-		Critical_Enter();
-		Motor_SetFeedbackModeFlags(p_motor, mode);
-		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL);
+		Critical_Enter(); /* dont not proc new flags before matching output with StateMachine */
+		Motor_SetFeedbackModeFlags(p_motor, mode); /* Matching output occurs in StateMachine Proc, depends on State */
+		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, STATE_MACHINE_INPUT_VALUE_NULL);
 		Critical_Exit();
 	}
 }
 
+/*
+	always State machine checked version
+*/
+void Motor_User_ReleaseControl(Motor_T * p_motor)
+{
+	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL); /* no critical for transition, only 1 transistion in run state? cannot conflict? */
+}
 
 /*
 	Disable control, motor may remain spinning
@@ -89,7 +84,7 @@ void _Motor_User_SetControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 void Motor_User_DisableControl(Motor_T * p_motor)
 {
 	Phase_Float(&p_motor->Phase); //move to state machine for field weakening
-	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_FLOAT); /* no critical for transition, only 1 transiition in run state? cannot conflict? */
+	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL); /* no critical for transition, only 1 transistion in run state? cannot conflict? */
 }
 
 void Motor_User_Ground(Motor_T * p_motor)
@@ -103,10 +98,8 @@ void Motor_User_Ground(Motor_T * p_motor)
 */
 bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
-	p_motor->UserDirection = direction;
-	if(p_motor->Direction != direction) { StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION); }
-	//StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction);
-	return (p_motor->UserDirection == p_motor->Direction);
+	if(p_motor->Direction != direction) { StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction); }
+	return (direction == p_motor->Direction);
 }
 
 bool Motor_User_SetDirectionForward(Motor_T * p_motor)
@@ -123,33 +116,53 @@ bool Motor_User_SetDirectionReverse(Motor_T * p_motor)
 
 /*
 	Calibration State - Run Calibration functions
+
+	Check SensorMode on input to determine start, or proc may run before checking during entry
+	alternatively, implement critical, move check into state machine, share 1 active function this way.
 */
+void Motor_User_ActivateCalibrationAdc(Motor_T * p_motor)
+{
+	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ADC);
+}
+
+
 void Motor_User_ActivateCalibrationHall(Motor_T * p_motor)
 {
-	p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_HALL;
-	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
+	{
+		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL);
+	}
 }
 
 void Motor_User_ActivateCalibrationEncoder(Motor_T * p_motor)
 {
-	p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ENCODER;
-	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
-}
-
-void Motor_User_ActivateCalibrationAdc(Motor_T * p_motor)
-{
-	p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_ADC;
-	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_ENCODER)
+	{
+		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER);
+	}
 }
 
 void Motor_User_ActivateCalibrationSinCos(Motor_T * p_motor)
 {
 	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
 	{
-		//check null SinCos config
-		p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_SIN_COS;
-		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION);
+		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_SIN_COS);
 	}
+}
+
+void Motor_User_ActivateCalibrationSensor(Motor_T * p_motor)
+{
+	Motor_CalibrationState_T mode;
+
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_HALL:	mode = MOTOR_CALIBRATION_STATE_HALL; 	break;
+		case MOTOR_SENSOR_MODE_ENCODER:	mode = MOTOR_CALIBRATION_STATE_ENCODER;	break;
+		case MOTOR_SENSOR_MODE_SIN_COS:	mode = MOTOR_CALIBRATION_STATE_SIN_COS;	break;
+		default: break;
+	}
+
+	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, mode);
 }
 
 /******************************************************************************/
@@ -438,4 +451,23 @@ void Motor_User_SetIPeakRef_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint1
 	uint16_t adcuZero = (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / _Motor_GetAdcVRef();
 	uint16_t adcuMax = (uint32_t)max_MilliV * ADC_MAX / _Motor_GetAdcVRef();
 	Motor_User_SetIPeakRef_Adcu(p_motor, adcuMax - adcuZero);
+}
+
+/******************************************************************************/
+/*   */
+/******************************************************************************/
+qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor)
+{
+	qangle16_t angle;
+
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_SENSORLESS: 	angle = 0; 	break;
+		case MOTOR_SENSOR_MODE_HALL: 		angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
+		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
+		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 			break;
+		default: 							angle = 0; 	break;
+	}
+
+	return angle;
 }

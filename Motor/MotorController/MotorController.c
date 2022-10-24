@@ -282,7 +282,7 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_
 		if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_motor->PidSpeed.CONFIG.P_PARAMS, 		&p_motor->PidSpeed.Params, 		sizeof(PID_Params_T)); }
 		if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_motor->PidIq.CONFIG.P_PARAMS, 			&p_motor->PidIq.Params, 		sizeof(PID_Params_T)); }
 		if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_motor->PidId.CONFIG.P_PARAMS, 			&p_motor->PidId.Params, 		sizeof(PID_Params_T)); }
-		if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_motor->PidIBus.CONFIG.P_PARAMS, 		&p_motor->PidIBus.Params, 		sizeof(PID_Params_T)); }
+		// if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_motor->PidIBus.CONFIG.P_PARAMS, 		&p_motor->PidIBus.Params, 		sizeof(PID_Params_T)); }
 		if (status == NV_MEMORY_STATUS_SUCCESS) { status = EEPROM_Write_Blocking(p_eeprom, p_motor->Thermistor.CONFIG.P_PARAMS, 	&p_motor->Thermistor.Params, 	sizeof(Thermistor_Params_T)); }
 		if (status != NV_MEMORY_STATUS_SUCCESS) { break; }
 	}

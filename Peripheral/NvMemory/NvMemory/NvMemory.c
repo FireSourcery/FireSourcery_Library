@@ -301,7 +301,6 @@ NvMemory_Status_T NvMemory_SetOpSourceData(NvMemory_T * p_this, const uint8_t * 
 	return status;
 }
 
-
 /******************************************************************************/
 /*!
 	Blocking Implementations

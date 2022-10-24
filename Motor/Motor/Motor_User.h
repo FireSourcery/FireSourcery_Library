@@ -39,7 +39,7 @@
 #include <stdbool.h>
 
 
-extern void _Motor_User_SetControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
+extern void _Motor_User_ActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 
 /******************************************************************************/
 /*!
@@ -49,6 +49,7 @@ extern void _Motor_User_SetControlMode(Motor_T * p_motor, Motor_FeedbackMode_T m
 
 	Call regularly to update cmd value
 	Cmd value sets without checking state machine.
+	although cmd/ramp value need not set on every state. handle outside due to using > 1 variable
 
 	User input sign +/- indicates along or against Direction selected. NOT virtual CW/CCW.
 	Convert sign to direction here. Called less frequently than control loop, 1/Millis.
@@ -81,7 +82,7 @@ static inline void _Motor_User_SetVoltageModeILimit(Motor_T * p_motor, bool isMo
 
 static inline void Motor_User_SetVoltageMode(Motor_T * p_motor)
 {
-	_Motor_User_SetControlMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE);
+	_Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE);
 }
 
 /*!
@@ -108,7 +109,7 @@ static inline void Motor_User_SetVoltageModeCmd(Motor_T * p_motor, int16_t volta
 /******************************************************************************/
 static inline void Motor_User_SetVFreqMode(Motor_T * p_motor)
 {
-	_Motor_User_SetControlMode(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE_FREQ_SCALAR);
+	_Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE_FREQ_SCALAR);
 }
 
 /*!
@@ -135,7 +136,7 @@ static inline void Motor_User_SetVFreqModeCmd(Motor_T * p_motor, uint32_t scalar
 /******************************************************************************/
 static inline void Motor_User_SetTorqueMode(Motor_T * p_motor)
 {
-	_Motor_User_SetControlMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT);
+	_Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT);
 }
 
 /*!
@@ -164,7 +165,7 @@ static inline void Motor_User_SetTorqueModeCmd(Motor_T * p_motor, int16_t torque
  */
 static inline void Motor_User_SetSpeedMode(Motor_T * p_motor)
 {
-	_Motor_User_SetControlMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT);
+	_Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT);
 }
 
 /*!
@@ -174,8 +175,7 @@ static inline void Motor_User_SetSpeedMode(Motor_T * p_motor)
 */
 static inline void Motor_User_SetSpeedCmdValue(Motor_T * p_motor, int16_t speed)
 {
-	int32_t input = (int32_t)speed * p_motor->SpeedLimit_Frac16 / 65536;
-	Motor_SetRamp(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, input));
+	Motor_SetRamp(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, (int32_t)speed * p_motor->SpeedLimit_Frac16 / 65536));
 }
 
 static inline void Motor_User_SetSpeedModeCmd(Motor_T * p_motor, int16_t speed)
@@ -206,7 +206,7 @@ static inline void Motor_User_SetSpeedModeCmd(Motor_T * p_motor, int16_t speed)
 /******************************************************************************/
 static inline void Motor_User_SetUserFeedbackMode(Motor_T * p_motor)
 {
-	_Motor_User_SetControlMode(p_motor, p_motor->Parameters.FeedbackMode);
+	_Motor_User_ActivateControl(p_motor, p_motor->Parameters.FeedbackMode); /* throttle FeedbackMode */
 }
 
 static inline void Motor_User_SetUserFeedbackCmdValue(Motor_T * p_motor, int16_t userCmd)
@@ -217,10 +217,14 @@ static inline void Motor_User_SetUserFeedbackCmdValue(Motor_T * p_motor, int16_t
 	}
 	else
 	{
-		(p_motor->FeedbackModeFlags.Current == 1U) ? Motor_User_SetTorqueCmdValue(p_motor, userCmd) : Motor_User_SetVoltageCmdValue(p_motor, userCmd);
+		if(p_motor->FeedbackModeFlags.Current == 1U) { Motor_User_SetTorqueCmdValue(p_motor, userCmd); }
+		else { Motor_User_SetVoltageCmdValue(p_motor, userCmd); }
 	}
 }
 
+/*!
+	@param[in] throttle [-32768:32767]
+*/
 static inline void Motor_User_SetUserFeedbackModeCmd(Motor_T * p_motor, int16_t userCmd)
 {
 	Motor_User_SetUserFeedbackMode(p_motor);
@@ -299,20 +303,26 @@ static inline void Motor_User_SetCoast(Motor_T * p_motor)
 	inline State wrappers
 */
 /******************************************************************************/
+
+
+
+
 /*
+	Fault - Shared StateMachine InputId
 	Fault State - checks exit
-	Other States - user initated tranisition to fault state
+	Other States - user initiated transistion to fault state
 */
+
 static inline void Motor_User_ToggleFault(Motor_T * p_motor)
 {
-	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
+	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL);
 }
 
 static inline bool Motor_User_ClearFault(Motor_T * p_motor)
 {
 	if(StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FAULT)
 	{
-		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
+		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL);
 	}
 
 	return (StateMachine_GetActiveStateId(&p_motor->StateMachine) != MSM_STATE_ID_FAULT);
@@ -322,7 +332,7 @@ static inline void Motor_User_SetFault(Motor_T * p_motor)
 {
 	if(StateMachine_GetActiveStateId(&p_motor->StateMachine) != MSM_STATE_ID_FAULT)
 	{
-		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT);
+		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL);
 	}
 }
 
@@ -330,6 +340,14 @@ static inline bool Motor_User_CheckFault(Motor_T * p_motor)
 {
 	return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FAULT);
 }
+
+
+/******************************************************************************/
+/*!
+	Non StateMachined Checked
+*/
+/******************************************************************************/
+// static inline void Motor_User_DisableControl(Motor_T * p_motor) { Phase_Float(&p_motor->Phase); }
 
 /******************************************************************************/
 /*
@@ -461,7 +479,6 @@ static inline void Motor_User_SetILimitHeatParam(Motor_T * p_motor, uint16_t sca
 	extern
 */
 /******************************************************************************/
-extern qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor);
 
 extern void Motor_User_DisableControl(Motor_T * p_motor);
 extern void Motor_User_Ground(Motor_T * p_motor);
@@ -501,5 +518,7 @@ extern void Motor_User_SetIaIbIcZero_Adcu(Motor_T * p_motor, uint16_t ia_adcu, u
 extern void Motor_User_SetDirectionCalibration(Motor_T * p_motor, Motor_DirectionCalibration_T mode);
 extern void Motor_User_SetPolePairs(Motor_T * p_motor, uint8_t polePairs);
 extern void Motor_User_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode);
+
+extern qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor);
 
 #endif

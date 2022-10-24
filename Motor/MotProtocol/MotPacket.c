@@ -105,12 +105,12 @@ uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_HeaderId_T
 */
 /******************************************************************************/
 /******************************************************************************/
-/*!	Ping Type */
+/*!	Ping Type */ //alternatively resp time stamp
 /******************************************************************************/
-//alternatively resp time stamp
 uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket)
 {
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, 0U, MOT_PACKET_HEADER_STATUS_OK);
+	// return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, 0U, MOT_PACKET_HEADER_STATUS_OK);
+	return _MotPacket_Sync_Build((MotPacket_Sync_T *)p_respPacket, MOT_PACKET_SYNC_ACK);
 }
 
 /******************************************************************************/
@@ -137,7 +137,7 @@ uint8_t MotPacket_StopResp_Build(MotPacket_StopResp_T * p_respPacket)
 /******************************************************************************/
 /*!	Save Nvm Type */
 /******************************************************************************/
-uint8_t MotPacket_SaveNvmResp_Build(MotPacket_SaveNvmResp_T * p_respPacket, uint8_t status)
+uint8_t MotPacket_SaveNvmResp_Build(MotPacket_SaveNvmResp_T * p_respPacket, MotPacket_HeaderStatus_T status)
 {
 	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_SAVE_NVM, 0U, status);
 }
@@ -148,12 +148,19 @@ uint8_t MotPacket_SaveNvmResp_Build(MotPacket_SaveNvmResp_T * p_respPacket, uint
 uint8_t MotPacket_ReadVarResp_Build(MotPacket_ReadVarResp_T * p_respPacket, uint32_t value)
 {
 	p_respPacket->ReadResp.Value32 = value; /* Upper 2-Bytes is written 0, if uint16 value. */ // todo select 6 or 8 payload by id?
-	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_READ_VAR, sizeof(MotPacket_ReadVarReq_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
+	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_READ_VAR, sizeof(MotPacket_ReadVarResp_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
 
 /******************************************************************************/
 /*!	Write Var */
 /******************************************************************************/
+uint16_t MotPacket_WriteVarReq_GetValue16(const MotPacket_WriteVarReq_T * p_reqPacket)
+{
+	return p_reqPacket->WriteReq.Value16; //may return aligned value
+	// return *((uint16_t *)(((MotPacket_T *)p_reqPacket)->Data[2U]));
+}
+
+
 uint8_t MotPacket_WriteVarResp_Build(MotPacket_WriteVarResp_T * p_respPacket, MotPacket_HeaderStatus_T status)
 {
 	return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_WRITE_VAR, 0U, status);
@@ -329,11 +336,23 @@ MotPacket_HeaderStatus_T MotPacket_DataPacket_Parse(const uint8_t ** pp_data, ui
 /******************************************************************************/
 uint8_t MotPacket_PingReq_Build(MotPacket_PingReq_T * p_reqPacket) { return _MotPacket_Sync_Build((MotPacket_Sync_T *)p_reqPacket, MOT_PACKET_PING); }
 // uint8_t MotPacket_PingReq_GetRespLength(void) { return sizeof(MotPacket_PingResp_T); }
-void MotPacket_PingResp_Parse(uint8_t * p_version, const MotPacket_PingResp_T * p_respPacket)
+MotPacket_HeaderStatus_T MotPacket_PingResp_Parse(const MotPacket_PingResp_T * p_respPacket, uint8_t * p_version)
 {
 	memcpy(p_version, &p_respPacket->VersionResp.Version[0U], 4U); //todo timestamp
-	// return p_respPacket->Header.Status;
+	return p_respPacket->Header.Status;
 }
+
+/******************************************************************************/
+/*!	Version */
+/******************************************************************************/
+// uint8_t MotPacket_VersionReq_Build(MotPacket_VersionReq_T * p_reqPacket) { return _MotPacket_Sync_Build((MotPacket_Sync_T *)p_reqPacket, MOT_PACKET_Version); }
+// // uint8_t MotPacket_VersionReq_GetRespLength(void) { return sizeof(MotPacket_VersionResp_T); }
+// MotPacket_Header_T MotPacket_VersionResp_Parse(uint8_t * p_version, const MotPacket_VersionResp_T * p_respPacket)
+// {
+// 	memcpy(p_version, &p_respPacket->VersionResp.Version[0U], 4U); //todo timestamp
+// 	return p_respPacket->Header.Status;
+// }
+
 
 /******************************************************************************/
 /*!	Stop All */
