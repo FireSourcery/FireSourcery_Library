@@ -76,6 +76,7 @@ static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn) { HAL_Pin_Wr
 static inline void Pin_Output_WritePhysical(const Pin_T * p_pin, bool isOn) { Pin_Output_Write(p_pin, isOn); }
 static inline void Pin_Output_Low(const Pin_T * p_pin)		{ HAL_Pin_WriteOutputOff(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
 static inline void Pin_Output_High(const Pin_T * p_pin) 	{ HAL_Pin_WriteOutputOn(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
+static inline void Pin_Output_Toggle(const Pin_T * p_pin) 	{ HAL_Pin_ToggleOutput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
 
 /* Include invert check */
 static inline void Pin_Output_WriteVirtual(const Pin_T * p_pin, bool isOn)
