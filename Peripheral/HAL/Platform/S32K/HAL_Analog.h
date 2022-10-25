@@ -39,42 +39,19 @@
 #define HAL_ANALOG_PLATFORM_H
 
 #include "External/S32K142/include/S32K142.h" /* use drivers or direct register access */
+#include "External/CMSIS/Core/Include/core_cm4.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
 typedef ADC_Type HAL_Analog_T;
 
-static inline void HAL_Analog_Activate(HAL_Analog_T * p_hal, uint32_t pinChannel)
-{
-	p_hal->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
-}
+static inline void HAL_Analog_Activate(HAL_Analog_T * p_hal, uint32_t pinChannel) { p_hal->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel); }
+static inline uint32_t HAL_Analog_ReadResult(const HAL_Analog_T * p_hal, uint32_t pinChannel) { (void)pinChannel; return (uint32_t)p_hal->R[0U]; }
 
-static inline uint32_t HAL_Analog_ReadResult(const HAL_Analog_T * p_hal, uint32_t pinChannel)
-{
-	(void)pinChannel;
-	return (uint32_t)p_hal->R[0U];
-}
-
-//static inline void HAL_Analog_WriteFifoPin(HAL_Analog_T * p_hal, uint32_t pinChannel)
-//{
-//	p_hal->SC1[0U] = ADC_SC1_ADCH((uint32_t )pinChannel);
-//}
-//
-//static inline void HAL_Analog_ActivateFifo(HAL_Analog_T * p_hal, uint32_t pinChannel)
-//{
-//	p_hal->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel);
-//}
-
-static inline void HAL_Analog_EnableHwTrigger(HAL_Analog_T * p_hal)
-{
-	p_hal->SC2 |= ADC_SC2_ADTRG_MASK;
-}
-
-static inline void HAL_Analog_DisableHwTrigger(HAL_Analog_T * p_hal)
-{
-	p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK);
-}
+static inline void HAL_Analog_WriteFifoCount(HAL_Analog_T * p_hal, uint32_t count) { (void)p_hal; (void)count; }
+static inline void HAL_Analog_WriteFifoPin(HAL_Analog_T * p_hal, uint32_t pinChannel) { (void)p_hal;(void)pinChannel; }
+static inline void HAL_Analog_ActivateFifo(HAL_Analog_T * p_hal, uint32_t pinChannel) { (void)p_hal;(void)pinChannel; }
 
 /*
 	Use NVIC interrupt for local critical section
@@ -84,8 +61,10 @@ static inline void HAL_Analog_DisableInterrupt(HAL_Analog_T * p_hal)
 {
 	switch((uint32_t)p_hal)
 	{
-		case (uint32_t)ADC0: S32_NVIC->ICER[ADC0_IRQn >> 5U] = (1UL << (ADC0_IRQn & 0x1FU)); break;
-		case (uint32_t)ADC1: S32_NVIC->ICER[ADC1_IRQn >> 5U] = (1UL << (ADC1_IRQn & 0x1FU)); break;
+		// case (uint32_t)ADC0: S32_NVIC->ICER[ADC0_IRQn >> 5U] = (1UL << (ADC0_IRQn & 0x1FU)); break;
+		// case (uint32_t)ADC1: S32_NVIC->ICER[ADC1_IRQn >> 5U] = (1UL << (ADC1_IRQn & 0x1FU)); break;
+		case (uint32_t)ADC0: NVIC_DisableIRQ(ADC0_IRQn); break;
+		case (uint32_t)ADC1: NVIC_DisableIRQ(ADC1_IRQn); break;
 		default: break;
 	}
 }
@@ -98,27 +77,22 @@ static inline void HAL_Analog_EnableInterrupt(HAL_Analog_T * p_hal)
 {
 	switch((uint32_t)p_hal)
 	{
-		case (uint32_t)ADC0: S32_NVIC->ISER[ADC0_IRQn >> 5U] = (1UL << (ADC0_IRQn & 0x1FU)); break;
-		case (uint32_t)ADC1: S32_NVIC->ISER[ADC1_IRQn >> 5U] = (1UL << (ADC1_IRQn & 0x1FU)); break;
+		// case (uint32_t)ADC0: S32_NVIC->ISER[ADC0_IRQn >> 5U] = (1UL << (ADC0_IRQn & 0x1FU)); break;
+		// case (uint32_t)ADC1: S32_NVIC->ISER[ADC1_IRQn >> 5U] = (1UL << (ADC1_IRQn & 0x1FU)); break;
+		case (uint32_t)ADC0: NVIC_EnableIRQ(ADC0_IRQn); break;
+		case (uint32_t)ADC1: NVIC_EnableIRQ(ADC1_IRQn); break;
 		default: break;
 	}
 }
 
-static inline void HAL_Analog_AbortConversion(HAL_Analog_T * p_hal)
-{
-	(void)p_hal; //todo
-}
+/*
+	Clear interrupt - automatic after read on S32k
+*/
+static inline void HAL_Analog_ClearConversionCompleteFlag(const HAL_Analog_T * p_hal) { (void)p_hal; }
+static inline bool HAL_Analog_ReadConversionCompleteFlag(const HAL_Analog_T * p_hal) { return ((p_hal->SC1[0U] & (uint32_t)ADC_SC1_COCO_MASK) != 0U); }
+static inline bool HAL_Analog_ReadConversionActiveFlag(const HAL_Analog_T * p_hal) { return ((p_hal->SC2 & (uint32_t)ADC_SC2_ADACT_MASK) != 0U); }
 
-static inline void HAL_Analog_DisableContinuousConversion(HAL_Analog_T * p_hal)
-{
-	p_hal->SC3 &= ~ADC_SC3_ADCO_MASK;
-}
-
-static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal)
-{
-	p_hal->SC3 |= ADC_SC3_ADCO_MASK;
-}
-
+static inline void HAL_Analog_AbortConversion(HAL_Analog_T * p_hal) { p_hal->SC1[0U] |= ADC_SC1_ADCH_MASK; }
 /*
 	111111b - Module is disabled
 
@@ -129,30 +103,12 @@ static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal)
 	when continuous conversions are not enabled because the module automatically enters a low-power
 	state when a conversion completes.
 */
-static inline void HAL_Analog_Deactivate(HAL_Analog_T * p_hal)
-{
-	p_hal->SC1[0U] = 0x3FU;
-}
+static inline void HAL_Analog_Deactivate(HAL_Analog_T * p_hal) { p_hal->SC1[0U] |= ADC_SC1_ADCH_MASK; }
 
-static inline bool HAL_Analog_ReadConversionActiveFlag(const HAL_Analog_T * p_hal)
-{
-	return ((p_hal->SC2 & (uint32_t)ADC_SC2_ADACT_MASK) != 0U) ? true : false;
-}
-
-static inline bool HAL_Analog_ReadConversionCompleteFlag(const HAL_Analog_T * p_hal)
-{
-	return ((p_hal->SC1[0U] & (uint32_t)ADC_SC1_COCO_MASK) != 0U) ? true : false;
-}
-
-/*
-	Clear interrupt
-	automatic after read on S32k
-*/
-static inline void HAL_Analog_ClearConversionCompleteFlag(const HAL_Analog_T * p_hal)
-{
-	(void)p_hal;
-
-}
+static inline void HAL_Analog_EnableHwTrigger(HAL_Analog_T * p_hal){	p_hal->SC2 |= ADC_SC2_ADTRG_MASK;}
+static inline void HAL_Analog_DisableHwTrigger(HAL_Analog_T * p_hal){	p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK);}
+static inline void HAL_Analog_DisableContinuousConversion(HAL_Analog_T * p_hal){	p_hal->SC3 &= ~ADC_SC3_ADCO_MASK;}
+static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal){	p_hal->SC3 |= ADC_SC3_ADCO_MASK;}
 
 /*
 	In Board_Init

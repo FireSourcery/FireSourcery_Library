@@ -61,19 +61,21 @@ extern uint32_t _Critical_RegPrimask;
 static inline void Critical_Enter(void) { _Critical_RegPrimask = __get_PRIMASK(); CRITICAL_DISABLE_INTERRUPTS(); }
 static inline void Critical_Exit(void) 	{ __set_PRIMASK(_Critical_RegPrimask); }
 
-#elif defined(CONFIG_CRITICAL_USER_DEFINED)
-/*
-	user provider
-	#define DISABLE_INTERRUPTS() {...}
-	#define ENABLE_INTERRUPTS() {...}
-*/
+// static inline void Critical_Enter(uint32_t * p_state) { uint32_t regPrimask = __get_PRIMASK(); __disable_irq(); p_state = regPrimask; }
+// static inline void Critical_Exit(uint32_t state) { __set_PRIMASK(state); }
+
+// #elif defined(CONFIG_CRITICAL_USER_DEFINED)
+// /*
+// 	user provider
+// 	#define DISABLE_INTERRUPTS() {...}
+// 	#define ENABLE_INTERRUPTS() {...}
+// */
 #elif defined(CONFIG_CRITICAL_DISABLED)
 #define CRITICAL_DISABLE_INTERRUPTS()
 #define CRITICAL_ENABLE_INTERRUPTS()
 static inline void Critical_Enter(void) {}
 static inline void Critical_Exit(void) {}
 #endif
-
 
 
 static inline void Critical_DisableIrq(void)
@@ -97,10 +99,25 @@ static inline void Critical_EnableIrq(void)
 /*
 	Non blocking mutex. must check if process completed
 */
-typedef volatile uint8_t critical_mutex_t;
+typedef volatile uint32_t critical_mutex_t;
 
 static inline bool Critical_AquireMutex(critical_mutex_t * p_mutex)
 {
+// #ifdef CONFIG_SYSTEM_MCU_ARM
+// 	// Note: __LDREXW and __STREXW are CMSIS functions
+// 	int status = 0;
+// 	do
+// 	{
+// 		while(__LDREXW(&p_mutex) != 0); // Wait until
+// 		// Lock_Variable is free
+// 		status = __STREXW(1, &p_mutex); // Try to set
+// 		// Lock_Variable
+// 	}
+// 	while(status != 0); //retry until lock successfully
+// 	__DMB();// Do not start any other memory access
+// 	// until memory barrier is completed
+// 	return;
+// #else
 	bool status = false;
 
 	Critical_Enter();
@@ -112,16 +129,25 @@ static inline bool Critical_AquireMutex(critical_mutex_t * p_mutex)
 	Critical_Exit();
 
 	return status;
+// #endif
 }
 
 static inline void Critical_ReleaseMutex(critical_mutex_t * p_mutex)
 {
+// #ifdef CONFIG_SYSTEM_MCU_ARM
+// 	// Note: __LDREXW and __STREXW are CMSIS functions
+// 	__DMB(); // Ensure memory operations completed before
+// 	// releasing lock
+// 	p_mutex = 0;
+// 	return;
+// #else
 	Critical_Enter();
 	if(*p_mutex == 0U)
 	{
 		*p_mutex = 1U;
 	}
 	Critical_Exit();
+// #endif
 }
 
 /* When thread sleep is not support, configure to global interrupt disable */

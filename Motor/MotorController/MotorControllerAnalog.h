@@ -42,7 +42,7 @@ typedef enum MotAnalog_Channel_Tag
 {
 	MOT_ANALOG_CHANNEL_VPOS, 				/* V battery, V in */
 	MOT_ANALOG_CHANNEL_VACC,				/* V accessories ~12V*/
-	MOT_ANALOG_CHANNEL_VSENSE,				/* V analog sensors ~5V*/
+	MOT_ANALOG_CHANNEL_VSENSE,				/* V sensors ~5V*/
 	MOT_ANALOG_CHANNEL_HEAT_PCB,
 	MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP,
 	MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT,

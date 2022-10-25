@@ -35,4 +35,32 @@
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_Analog.h)
 
+/*
+typedef void HAL_Analog_T;
+
+static inline void HAL_Analog_Activate(HAL_Analog_T * p_hal, uint32_t pinChannel) {}
+static inline uint32_t HAL_Analog_ReadResult(const HAL_Analog_T * p_hal, uint32_t pinChannel) {}
+
+static inline void HAL_Analog_WriteFifoCount(HAL_Analog_T * p_hal, uint32_t count) { (void)p_hal; (void)count; }
+static inline void HAL_Analog_WriteFifoPin(HAL_Analog_T * p_hal, uint32_t pinChannel) { (void)p_hal;(void)pinChannel; }
+static inline void HAL_Analog_ActivateFifo(HAL_Analog_T * p_hal, uint32_t pinChannel) { (void)p_hal;(void)pinChannel; }
+
+static inline void HAL_Analog_DisableInterrupt(HAL_Analog_T * p_hal) {}
+static inline void HAL_Analog_EnableInterrupt(HAL_Analog_T * p_hal) {}
+
+static inline void HAL_Analog_ClearConversionCompleteFlag(const HAL_Analog_T * p_hal) { (void)p_hal; }
+static inline bool HAL_Analog_ReadConversionCompleteFlag(const HAL_Analog_T * p_hal) {}
+static inline bool HAL_Analog_ReadConversionActiveFlag(const HAL_Analog_T * p_hal) {}
+
+static inline void HAL_Analog_AbortConversion(HAL_Analog_T * p_hal) {}
+static inline void HAL_Analog_Deactivate(HAL_Analog_T * p_hal) {}
+
+static inline void HAL_Analog_EnableHwTrigger(HAL_Analog_T * p_hal) {}
+static inline void HAL_Analog_DisableHwTrigger(HAL_Analog_T * p_hal) {}
+static inline void HAL_Analog_DisableContinuousConversion(HAL_Analog_T * p_hal) {}
+static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal) {}
+
+static inline void HAL_Analog_Init(const HAL_Analog_T * p_hal) { (void)p_hal; }
+*/
+
 #endif

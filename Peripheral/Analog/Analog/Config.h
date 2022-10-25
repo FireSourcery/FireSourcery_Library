@@ -55,11 +55,12 @@
 	#define CONFIG_ANALOG_ADC_PIN_UINT32
 #endif
 
+// HAL_ANALOG_FIFO_LENGTH
 #if 	defined(CONFIG_ANALOG_ADC_HW_FIFO_DISABLE)
-#elif 	defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE) 	/* Defined to same length for all instances */
-	#ifndef ADC_HW_FIFO_LENGTH
-		#error "Undefined: ADC_HW_FIFO_LENGTH"
-	#endif
+#elif 	defined(CONFIG_ANALOG_ADC_HW_FIFO_LENGTH) 	/* Max Length for all instances */
+	// #ifndef ADC_HW_FIFO_LENGTH
+	// 	#error "Undefined: ADC_HW_FIFO_LENGTH"
+	// #endif
 #else
 	#define CONFIG_ANALOG_ADC_HW_FIFO_DISABLE
 #endif

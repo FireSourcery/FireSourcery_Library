@@ -33,7 +33,9 @@
 
 static inline void System_Reboot(void)
 {
-
+// #ifdef CONFIG_SYSTEM_MCU_ARM
+// 	NVIC_SystemReset();
+// #endif
 }
 
 #endif

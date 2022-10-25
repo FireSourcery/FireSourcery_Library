@@ -59,14 +59,16 @@ AnalogN_AdcFlags_T;
 typedef const struct AnalogN_Conversion_Tag
 {
 	Analog_Conversion_T CONVERSION;
-	Analog_T * P_ANALOG;
+	Analog_T * P_ANALOG; /* AnalogI in Analog[N] */
 }
 AnalogN_Conversion_T;
 
-#define ANALOG_N_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId, p_AnalogIHost) 		\
+#define ANALOG_N_CONVERSION_HOST_NULL (0x8U)
+
+#define ANALOG_N_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId, p_AnalogHost) 		\
 {																												\
 	.CONVERSION 	= ANALOG_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId), 		\
-	.P_ANALOG 		= p_AnalogIHost,																			\
+	.P_ANALOG 		= p_AnalogHost,																				\
 }
 
 //todo
@@ -123,10 +125,11 @@ static inline bool AnalogN_EnqueueOptions(const AnalogN_T * p_analogn, const Ana
 	Group
 */
 /******************************************************************************/
-/*
+/*!
 	Multithreaded still need to disable all interrupts
 	Single Threaded N adc - use activeAdcs
 	Multithreaded N adc - not use activeAdcs
+	@param input activeAdcs - activeAdcs used by group defined by upper layer
 */
 static inline void AnalogN_Group_PauseQueue(const AnalogN_T * p_analogn, AnalogN_AdcFlags_T activeAdcs)
 {
@@ -137,6 +140,7 @@ static inline void AnalogN_Group_PauseQueue(const AnalogN_T * p_analogn, AnalogN
 #elif defined(CONFIG_ANALOG_SINGLE_THREADED)
 	for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONFIG.ANALOG_COUNT; iAnalog++)
 	{
+		/* Assuming little endian */
 		if(((1U << iAnalog) & activeAdcs.Flags) != 0U) { Analog_Group_PauseQueue(&p_analogn->CONFIG.P_ANALOGS[iAnalog]); }
 	}
 #endif
