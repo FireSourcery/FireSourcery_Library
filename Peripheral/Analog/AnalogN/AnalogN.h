@@ -93,6 +93,9 @@ typedef struct AnalogN_Tag
 }
 AnalogN_T;
 
+/*
+	AnalogN_Conversion_T passed to selected AnalogI
+*/
 static inline void AnalogN_ActivateConversion(const AnalogN_T * p_analogn, const AnalogN_Conversion_T * p_conversion)
 {
 	(void)p_analogn;
@@ -106,7 +109,7 @@ static inline bool AnalogN_EnqueueConversion(const AnalogN_T * p_analogn, const 
 }
 
 /*
-	Options AnalogN options on all adcs
+	AnalogN Options Enqueue options on all AnalogI
 */
 static inline bool AnalogN_EnqueueOptions(const AnalogN_T * p_analogn, const Analog_Options_T * p_options)
 {

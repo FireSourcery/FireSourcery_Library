@@ -100,7 +100,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 
 	switch(p_motor->Parameters.SensorMode)
 	{
-		case MOTOR_SENSOR_MODE_OPEN_LOOP:
+		// case MOTOR_SENSOR_MODE_OPEN_LOOP:
 			/*
 				OpenLoop
 				Blind input angle, constant voltage
@@ -110,7 +110,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			// p_motor->OpenLoopSpeed_RPM = Linear_Ramp_ProcIndexOutput(&p_motor->OpenLoopRamp, &p_motor->OpenLoopRampIndex, p_motor->OpenLoopSpeed_RPM);
 			// electricalAngle = p_motor->ElectricalAngle + Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(&p_motor->Encoder, p_motor->OpenLoopSpeed_RPM);
 			// speedFeedback_Frac16 = 0U;
-			break;
+			// break;
 
 		case MOTOR_SENSOR_MODE_SENSORLESS:
 			//todo observer

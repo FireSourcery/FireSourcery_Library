@@ -43,16 +43,35 @@ void WriteAdcChannel(const Analog_T * p_analog, const Analog_Conversion_T * p_co
 	HAL_Analog_Activate(p_analog->CONFIG.P_HAL_ANALOG, p_conversion->PIN);
 }
 
+#if (CONFIG_ANALOG_HW_FIFO_LENGTH > 0U)
+static inline void WriteAdcFifo(Analog_T * p_analog)
+{
+	Analog_Conversion_T * p_conversion;
+	// uint8_t iConversionIndex;
+
+	uint8_t remainingChannelCount = Ring_GetFullCount(&p_analog->ConversionQueue);
+	p_analog->ActiveChannelCount = (remainingChannelCount < CONFIG_ANALOG_HW_FIFO_LENGTH) ? remainingChannelCount : CONFIG_ANALOG_HW_FIFO_LENGTH;
+
+	HAL_Analog_WriteFifoCount(p_analog->CONFIG.P_HAL_ANALOG, p_analog->ActiveChannelCount);
+
+	for(uint8_t iConversion = 0U; iConversion < p_analog->ActiveChannelCount - 1U; iConversion++)
+	{
+		Ring_PeekIndex(&p_analog->ConversionQueue, &p_conversion, iConversion);
+		HAL_Analog_WriteFifoPin(p_analog->CONFIG.P_HAL_ANALOG, p_conversion->PIN);
+	}
+	Ring_PeekIndex(&p_analog->ConversionQueue, &p_conversion, p_analog->ActiveChannelCount);
+	HAL_Analog_ActivateFifo(p_analog->CONFIG.P_HAL_ANALOG, p_conversion->PIN);
+}
+#endif
+
 void WriteAdcOptions(Analog_T * p_analog, const Analog_Options_T * p_options)
 {
-	if(p_options->FLAGS.HwTriggerConversion == 1U) { HAL_Analog_EnableHwTrigger(p_analog->CONFIG.P_HAL_ANALOG); }
-	else { HAL_Analog_DisableHwTrigger(p_analog->CONFIG.P_HAL_ANALOG); }
+	// xor with previous
+	if(p_options->FLAGS.HwTriggerConversion == 1U) 		{ HAL_Analog_EnableHwTrigger(p_analog->CONFIG.P_HAL_ANALOG); }
+	else 												{ HAL_Analog_DisableHwTrigger(p_analog->CONFIG.P_HAL_ANALOG); }
 #ifdef CONFIG_ANALOG_HW_CONTINOUS_CONVERSION_ENABLE
-	(options.ContinuousConversion == true) ?
-		HAL_Analog_EnableContinuousConversion(p_analog->CONFIG.P_HAL_ANALOG) :
-		HAL_Analog_DisableContinuousConversion(p_analog->CONFIG.P_HAL_ANALOG);
-#else
-
+	if(p_options->FLAGS.ContinuousConversion == 1U) 	{ HAL_Analog_EnableContinuousConversion(p_analog->CONFIG.P_HAL_ANALOG): }
+	else 												{ HAL_Analog_DisableContinuousConversion(p_analog->CONFIG.P_HAL_ANALOG); }
 #endif
 	if(p_options->ON_OPTIONS != 0U) { p_options->ON_OPTIONS(p_options->P_CALLBACK_CONTEXT); }
 }
@@ -62,28 +81,37 @@ void WriteAdcOptions(Analog_T * p_analog, const Analog_Options_T * p_options)
 */
 void _Analog_ProcQueue(Analog_T * p_analog)
 {
-	bool isEmpty = true;
+	bool isComplete = true;
 	Analog_QueueItem_T * p_next;
 
-	for(uint8_t iConversion = 0U; iConversion < Ring_GetFullCount(&p_analog->ConversionQueue) + 1U; iConversion++) /* Let compiler optimize away */
-	{
-		if(Ring_PeekFront(&p_analog->ConversionQueue, &p_next) == true)
+	// for(uint8_t iConversion = 0U; iConversion < Ring_GetFullCount(&p_analog->ConversionQueue) + 1U; iConversion++) /* Let compiler optimize away */
+	// {
+		while(Ring_PeekFront(&p_analog->ConversionQueue, &p_next) == true)
 		{
-			if(p_next->TYPE == ANALOG_QUEUE_TYPE_OPTIONS) /* Write and complete. Ensure not to write empty conversion that calls ISR */
+			if(p_next->TYPE == ANALOG_QUEUE_TYPE_OPTIONS) /* Write and Deactivate. Ensure not to write empty conversion that calls ISR */
 			{
 				WriteAdcOptions(p_analog, (Analog_Options_T *)p_next);
 				Ring_RemoveFront(&p_analog->ConversionQueue, 1U);
 			}
 			else if(p_next->TYPE == ANALOG_QUEUE_TYPE_CHANNEL)  /* Activate and wait for ISR */
 			{
+
+#if (CONFIG_ANALOG_HW_FIFO_LENGTH > 0U)
+				WriteAdcFifo(p_analog);
+#else
 				WriteAdcChannel(p_analog, (Analog_Conversion_T *)p_next);
-				isEmpty = false;
+#endif
+				isComplete = false;
+				break;
+			}
+			else /* error */
+			{
 				break;
 			}
 		}
-	}
+	// }
 
-	if(isEmpty == true) { HAL_Analog_Deactivate(p_analog->CONFIG.P_HAL_ANALOG); }
+	if(isComplete == true) { HAL_Analog_Deactivate(p_analog->CONFIG.P_HAL_ANALOG); }
 }
 
 

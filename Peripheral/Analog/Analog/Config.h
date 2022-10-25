@@ -56,8 +56,8 @@
 #endif
 
 // HAL_ANALOG_FIFO_LENGTH
-#if 	defined(CONFIG_ANALOG_ADC_HW_FIFO_DISABLE)
-#elif 	defined(CONFIG_ANALOG_ADC_HW_FIFO_LENGTH) 	/* Max Length for all instances */
+#if 	defined(CONFIG_ANALOG_HW_FIFO_DISABLE)
+#elif 	defined(CONFIG_ANALOG_HW_FIFO_LENGTH) 	/* Max Length for all instances */
 	// #ifndef ADC_HW_FIFO_LENGTH
 	// 	#error "Undefined: ADC_HW_FIFO_LENGTH"
 	// #endif

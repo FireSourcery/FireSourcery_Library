@@ -140,9 +140,9 @@ typedef struct Analog_Tag
 {
 	const Analog_Config_T CONFIG;
 	Ring_T ConversionQueue;	/* Item type (Analog_QueueItem_T *), (Analog_Conversion_T *) or (Analog_Options_T *) */
-#if (CONFIG_ANALOG_ADC_HW_FIFO_LENGTH > 0U)
+#if (CONFIG_ANALOG_HW_FIFO_LENGTH > 0U)
 	uint8_t ActiveChannelCount; /*! Hw fifo only. Number of active channels being processed by ADC */
-	uint8_t ActiveChannelIndex; /*! Index into active conversion group */
+	// uint8_t ActiveChannelIndex; /*! Index into active conversion group (conversion queue) */
 #endif
 
 	/*
@@ -210,34 +210,54 @@ static inline void _Analog_ExitCritical(Analog_T * p_analog)
 static inline void _Analog_CaptureAdcResults(Analog_T * p_analog, Analog_Conversion_T * p_activeConversion)
 {
 	p_activeConversion->P_RESULTS_BUFFER[p_activeConversion->CHANNEL] = HAL_Analog_ReadResult(p_analog->CONFIG.P_HAL_ANALOG, p_activeConversion->PIN);
+	// analog_adcresult_t result = HAL_Analog_ReadResult(p_analog->CONFIG.P_HAL_ANALOG, p_activeConversion->PIN);
+	// if(p_analog->ActiveOptions.CaptureLocalPeak == true)
+	// {
+	// 	if(result > p_activeConversion->P_RESULTS_BUFFER[p_activeConversion->CHANNEL])
+	// 	{
+	// 		p_activeConversion->P_RESULTS_BUFFER[p_activeConversion->CHANNEL] = result;
+	// 	}
+	// 	else
+	// 	{
+	// 		p_analog->IsLocalPeakFound = true;
+	// 	}
+	// }
 }
 
+/* isAllChannelsComplete == Ring_GetIsEmpty(&p_analog->ConversionQueue) */
 static inline void _Analog_CaptureResults(Analog_T * p_analog)
 {
 	Analog_Conversion_T * p_completedConversion;
-	// bool isAllChannelsComplete;
-
-	HAL_Analog_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ANALOG);
+#ifdef CONFIG_ANALOG_ADC_HW_FIFO_LENGTH
+	/*
+		Should not need to boundary check on return. Read in the same way it was pushed
+	*/
+	for(uint8_t iConversionIndex = 0U; iConversionIndex < p_analog->ActiveChannelCount; iConversionIndex++)
+	{
+		Ring_Dequeue(&p_analog->ConversionQueue, &p_completedConversion);
+		_Analog_CaptureAdcResults(p_analog, p_completedConversion);
+		if(p_completedConversion->ON_COMPLETE != 0U) { p_completedConversion->ON_COMPLETE(p_completedConversion->P_CALLBACK_CONTEXT); }
+	}
+	_Analog_ProcQueue(p_analog);
+#else
 	Ring_Dequeue(&p_analog->ConversionQueue, &p_completedConversion);
 	_Analog_CaptureAdcResults(p_analog, p_completedConversion);
-
-	_Analog_ProcQueue(p_analog);
-
-	// isAllChannelsComplete = true;
-
+	_Analog_ProcQueue(p_analog); /* Peek next conversion into ADC before oncomplete */
+	/* if the next conversion completes before OnComplete functions return, ADC ISR should flag pending, but cannot(should not) interrupt the on going ISR */
 	if(p_completedConversion->ON_COMPLETE != 0U) { p_completedConversion->ON_COMPLETE(p_completedConversion->P_CALLBACK_CONTEXT); }
+#endif
 
-	// return (isAllChannelsComplete);
 }
 
 /*!
 	@brief	Capture ADC results, Process Channel OnComplete Functions.
 			Run in corresponding ADC ISR
 
-	ADC ISR should be higher priority than thread calling Analog_Activate()
+	ADC ISR should be higher priority than thread calling Analog_Activate() Analog_Enqueue
 */
 static inline void Analog_OnComplete_ISR(Analog_T * p_analog)
 {
+	HAL_Analog_ClearConversionCompleteFlag(p_analog->CONFIG.P_HAL_ANALOG);
 	_Analog_CaptureResults(p_analog);
 }
 
@@ -247,10 +267,7 @@ static inline void Analog_OnComplete_ISR(Analog_T * p_analog)
 static inline void Analog_PollComplete(Analog_T * p_analog)
 {
 	_Analog_EnterCritical(p_analog);
-	if(HAL_Analog_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ANALOG) == true)
-	{
-		Analog_OnComplete_ISR(p_analog);
-	}
+	if(HAL_Analog_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ANALOG) == true) { Analog_OnComplete_ISR(p_analog); }
 	_Analog_ExitCritical(p_analog);
 }
 
