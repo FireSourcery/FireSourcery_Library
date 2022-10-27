@@ -39,7 +39,7 @@
 #define HAL_ANALOG_PLATFORM_H
 
 #include "External/S32K142/include/S32K142.h" /* use drivers or direct register access */
-#include "External/CMSIS/Core/Include/core_cm4.h"
+#include "External/CMSIS/Core/Include/cmsis_compiler.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -53,6 +53,38 @@ static inline void HAL_Analog_WriteFifoCount(HAL_Analog_T * p_hal, uint32_t coun
 static inline void HAL_Analog_WriteFifoPin(HAL_Analog_T * p_hal, uint32_t pinChannel) { (void)p_hal;(void)pinChannel; }
 static inline void HAL_Analog_ActivateFifo(HAL_Analog_T * p_hal, uint32_t pinChannel) { (void)p_hal;(void)pinChannel; }
 
+/**
+  \brief   Enable Interrupt
+  \details Enables a device specific interrupt in the NVIC interrupt controller.
+  \param [in]      IRQn  Device specific interrupt number.
+  \note    IRQn must not be negative.
+ */
+__STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
+{
+  if ((int32_t)(IRQn) >= 0)
+  {
+    __COMPILER_BARRIER();
+    S32_NVIC->ISER[(((uint32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)IRQn) & 0x1FUL));
+    __COMPILER_BARRIER();
+  }
+}
+
+/**
+  \brief   Disable Interrupt
+  \details Disables a device specific interrupt in the NVIC interrupt controller.
+  \param [in]      IRQn  Device specific interrupt number.
+  \note    IRQn must not be negative.
+ */
+__STATIC_INLINE void __NVIC_DisableIRQ(IRQn_Type IRQn)
+{
+  if ((int32_t)(IRQn) >= 0)
+  {
+    S32_NVIC->ICER[(((uint32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)IRQn) & 0x1FUL));
+    __DSB();
+    __ISB();
+  }
+}
+
 /*
 	Use NVIC interrupt for local critical section
 	p_hal->SC1[0U] &= ~ADC_SC1_AIEN_MASK; aborts conversion
@@ -61,10 +93,8 @@ static inline void HAL_Analog_DisableInterrupt(HAL_Analog_T * p_hal)
 {
 	switch((uint32_t)p_hal)
 	{
-		// case (uint32_t)ADC0: S32_NVIC->ICER[ADC0_IRQn >> 5U] = (1UL << (ADC0_IRQn & 0x1FU)); break;
-		// case (uint32_t)ADC1: S32_NVIC->ICER[ADC1_IRQn >> 5U] = (1UL << (ADC1_IRQn & 0x1FU)); break;
-		case (uint32_t)ADC0: NVIC_DisableIRQ(ADC0_IRQn); break;
-		case (uint32_t)ADC1: NVIC_DisableIRQ(ADC1_IRQn); break;
+		case (uint32_t)ADC0: __NVIC_DisableIRQ(ADC0_IRQn); break;
+		case (uint32_t)ADC1: __NVIC_DisableIRQ(ADC1_IRQn); break;
 		default: break;
 	}
 }
@@ -77,10 +107,8 @@ static inline void HAL_Analog_EnableInterrupt(HAL_Analog_T * p_hal)
 {
 	switch((uint32_t)p_hal)
 	{
-		// case (uint32_t)ADC0: S32_NVIC->ISER[ADC0_IRQn >> 5U] = (1UL << (ADC0_IRQn & 0x1FU)); break;
-		// case (uint32_t)ADC1: S32_NVIC->ISER[ADC1_IRQn >> 5U] = (1UL << (ADC1_IRQn & 0x1FU)); break;
-		case (uint32_t)ADC0: NVIC_EnableIRQ(ADC0_IRQn); break;
-		case (uint32_t)ADC1: NVIC_EnableIRQ(ADC1_IRQn); break;
+		case (uint32_t)ADC0: __NVIC_EnableIRQ(ADC0_IRQn); break;
+		case (uint32_t)ADC1: __NVIC_EnableIRQ(ADC1_IRQn); break;
 		default: break;
 	}
 }

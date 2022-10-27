@@ -58,10 +58,17 @@ AnalogN_AdcFlags_T;
 
 typedef const struct AnalogN_Conversion_Tag
 {
-	Analog_Conversion_T CONVERSION;
-	Analog_T * P_ANALOG; /* AnalogI in Analog[N] */
+	const Analog_Conversion_T CONVERSION;
+	Analog_T * const P_ANALOG; /* AnalogI in Analog[N] */
 }
 AnalogN_Conversion_T;
+
+// typedef const struct AnalogN_Conversion_Tag
+// {
+// 	const AnalogN_Conversion_T * const * const PP_CONVERSIONS; /* Points to an array of pointers */
+// 	const uint8_t CONVERSIONS_COUNT;
+// }
+// AnalogN_ConversionGroup_T;
 
 #define ANALOG_N_CONVERSION_HOST_NULL (0x8U)
 

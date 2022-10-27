@@ -143,7 +143,7 @@ static inline void MotorController_User_SaveBootReg_Blocking(MotorController_T *
 // 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CALIBRATION, MOTOR_CONTROLLER_NVM_WRITE_ONCE);
 // }
 
-static inline void MotorController_User_ProcCalibration_Blocking(MotorController_T * p_mc, uint8_t operationId)
+static inline void MotorController_User_ProcCalibration_Blocking(MotorController_T * p_mc, uint32_t operationId)
 {
 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CALIBRATION, operationId);
 }
@@ -247,7 +247,7 @@ static inline void MotorController_User_WriteManufacture_Blocking(MotorControlle
 #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_COPY_ENABLE)
 	memcpy(&p_mc->Manufacture, p_data, sizeof(MotorController_Manufacture_T));
 #endif
-	MotorController_User_ProcCalibration_Blocking(&p_mc, MOTOR_CONTROLLER_NVM_WRITE_ONCE);
+	MotorController_User_ProcCalibration_Blocking(p_mc, MOTOR_CONTROLLER_NVM_WRITE_ONCE);
 }
 
 static inline void MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc)

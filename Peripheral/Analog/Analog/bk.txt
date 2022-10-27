@@ -1,5 +1,11 @@
 
+	/*
+		Active conversion as first conversion to support Enqueue Front (without shifting all items in queue).
+		Also use as ADC active flag. breaks fifo
+	*/
+	//	const Analog_QueueItem_T * p_ActiveConversion; 	/*! Queue unit type selected conversion group in process */
 
+	// todo prioity queue?
 /*
 	will break fifo
 	use active conversion for 1 item prioirty q,

@@ -73,7 +73,7 @@ Analog_QueueType_T;
 typedef const struct Analog_Conversion_Tag
 {
 	/* Defined by module */
-	Analog_QueueType_T 			TYPE;
+	const Analog_QueueType_T 	TYPE;
 	const analog_channel_t 		CHANNEL; 		/* Index into results buffer */
 	const Analog_Callback_T 	ON_COMPLETE; 	/* On channel complete */
 
@@ -122,7 +122,7 @@ Analog_Options_T;
 typedef const union Analog_QueueItem_Tag
 {
 	const Analog_QueueType_T 	TYPE;
-	const Analog_Conversion_T 	CONVERISON;
+	const Analog_Conversion_T 	CONVERSION;
 	const Analog_Options_T 		OPTIONS;
 }
 Analog_QueueItem_T;
@@ -142,17 +142,7 @@ typedef struct Analog_Tag
 	Ring_T ConversionQueue;	/* Item type (Analog_QueueItem_T *), (Analog_Conversion_T *) or (Analog_Options_T *) */
 #if (CONFIG_ANALOG_HW_FIFO_LENGTH > 0U)
 	uint8_t ActiveChannelCount; /*! Hw fifo only. Number of active channels being processed by ADC */
-	// uint8_t ActiveChannelIndex; /*! Index into active conversion group (conversion queue) */
 #endif
-
-	/*
-		Active conversion as first conversion to support Enqueue Front (without shifting all items in queue).
-		Also use as ADC active flag.
-	*/
-	//	const Analog_QueueItem_T * p_ActiveConversion; 	/*! Queue unit type selected conversion group in process */
-
-	// todo prioity queue?
-	//	bool IsLocalPeakFound;
 }
 Analog_T;
 
@@ -219,7 +209,7 @@ static inline void _Analog_CaptureAdcResults(Analog_T * p_analog, Analog_Convers
 	// 	}
 	// 	else
 	// 	{
-	// 		p_analog->IsLocalPeakFound = true;
+	// 		p_analog->IsLocalPeakFound[p_activeConversion->CHANNEL] = true;
 	// 	}
 	// }
 }
@@ -229,6 +219,7 @@ static inline void _Analog_CaptureResults(Analog_T * p_analog)
 {
 	Analog_Conversion_T * p_completedConversion;
 #ifdef CONFIG_ANALOG_ADC_HW_FIFO_LENGTH
+	// Analog_Conversion_T * p_completedConversions[CONFIG_ANALOG_ADC_HW_FIFO_LENGTH];
 	/*
 		Should not need to boundary check on return. Read in the same way it was pushed
 	*/
