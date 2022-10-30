@@ -309,6 +309,7 @@ static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
 			Terminal_SendNum(p_terminal, p_motor->Hall.Params.SensorsTable[6U]); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendNum(p_terminal, p_motor->Hall.Params.SensorsTable[7U]); Terminal_SendString(p_terminal, "\r\n");
 		}
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		else if(p_motor->CalibrationState == MOTOR_CALIBRATION_STATE_SIN_COS)
 		{
 			Terminal_SendString(p_terminal, "AngleOffset: "); 		Terminal_SendNum(p_terminal, p_motor->SinCos.Params.AngleOffet); 		Terminal_SendString(p_terminal, " \r\n");
@@ -339,7 +340,7 @@ static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
 			Terminal_SendString(p_terminal, "\r\n");
 
 		}
-
+#endif
 		Terminal_SendString(p_terminal, "\r\n");
 	}
 
@@ -614,7 +615,7 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 				// Terminal_SendNum(p_terminal, p_motor->Encoder.AngularD);
 				// Terminal_SendString(p_terminal, ", ");
 				break;
-
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 			case MOTOR_SENSOR_MODE_SIN_COS:
 				SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
 
@@ -623,7 +624,7 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 				Terminal_SendString(p_terminal, " Angle: "); 	Terminal_SendNum(p_terminal, SinCos_GetElectricalAngle(&p_motor->SinCos));
 				Terminal_SendString(p_terminal, "\r\n");
 				break;
-
+#endif
 			default:
 				break;
 		}

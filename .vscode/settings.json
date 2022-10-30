@@ -30,4 +30,5 @@
 	"files.trimTrailingWhitespace": true,
 	"explorer.copyRelativePathSeparator": "/",
 	"C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
+	"cmake.configureOnOpen": false,
 }
