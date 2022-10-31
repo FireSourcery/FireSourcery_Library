@@ -27,8 +27,13 @@
 	"editor.rulers": [
 		160
 	],
+	"editor.tabSize": 4,
+	"editor.insertSpaces": false,
+	"editor.detectIndentation": false,
 	"files.trimTrailingWhitespace": true,
-	"explorer.copyRelativePathSeparator": "/",
-	"C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
 	"cmake.configureOnOpen": false,
+	"explorer.copyRelativePathSeparator": "/",
+	"[jsonc]": {
+		"editor.defaultFormatter": "vscode.json-language-features"
+	}
 }
