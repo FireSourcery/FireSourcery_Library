@@ -474,7 +474,7 @@ extern uint8_t MotPacket_StopReq_GetRespLength(void);
 
 extern uint8_t MotPacket_ReadVarReq_Build(MotPacket_ReadVarReq_T * p_reqPacket, MotVarId_T motVarId);
 extern uint8_t MotPacket_ReadVarReq_GetRespLength(void);
-extern MotPacket_HeaderStatus_T MotPacket_ReadVarResp_Parse(uint32_t * p_value, const MotPacket_ReadVarResp_T * p_respPacket);
+extern MotPacket_HeaderStatus_T MotPacket_ReadVarResp_Parse(const MotPacket_ReadVarResp_T * p_respPacket, uint32_t * p_value);
 
 extern uint8_t MotPacket_WriteVarReq_Build(MotPacket_WriteVarReq_T * p_reqPacket, MotVarId_T motVarId, uint32_t value);
 extern uint8_t MotPacket_WriteVarReq_GetRespLength(void);

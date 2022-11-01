@@ -96,13 +96,22 @@ static uint8_t WriteVar(MotorController_T * p_mc, MotVarId_T varId, uint32_t var
 		case MOT_VAR_SPEED_RPM:			  	break;
 		case MOT_VAR_MC_STATE:				break;
 		case MOT_VAR_ERROR_CODE:		  	break;
-		case MOT_VAR_BEEP:		  	MotorController_User_BeepN(p_mc, 500U, 500U, varValue);								writeCount = 1U; 	break;
+		case MOT_VAR_BEEP:		  		MotorController_User_BeepN(p_mc, 500U, 500U, varValue);								writeCount = 1U; 	break;
+		case MOT_VAR_USER_INPUT_MODE:
+			switch (varValue)
+			{
+				case 0U: 	break;
+				case 1U: 	break;
+				case 2U: 	MotorController_User_ProcCalibration_Blocking(p_mc, MOTOR_CONTROLLER_TOGGLE_USER_INPUT_MODE); 	break;
+				default: 	break;
+			}
+			writeCount = 1U;
+			break;
 
-
-		// case MOT_VAR_I_PEAK_AMP:		  	break;
-		// case MOT_VAR_SPEED_GROUND_KMH:	  	break;
-		// case MOT_VAR_HEAT_PCB_DEG_C:	 	break;
-		// case MOT_VAR_FOC_IQ:			 	break;
+			// case MOT_VAR_I_PEAK_AMP:		  	break;
+			// case MOT_VAR_SPEED_GROUND_KMH:	  	break;
+			// case MOT_VAR_HEAT_PCB_DEG_C:	 	break;
+			// case MOT_VAR_FOC_IQ:			 	break;
 
 		case MOT_VAR_PARAM_TEST_BEGIN:		break;					/*  */
 		case MOT_VAR_PARAM_TEST_1: 			p_mc->Parameters.Test[0U] = varValue;	writeCount = 1U; 	break;						/* Value 16-bit */

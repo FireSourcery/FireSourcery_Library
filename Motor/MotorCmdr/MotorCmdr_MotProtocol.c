@@ -22,17 +22,16 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	MotPacket.c
-	@author FireSourcery
-	@brief
-	@version V0
+	@file 		MotPacket.c
+	@author 	FireSourcery
+	@version 	V0
+	@brief	App Protocol Packet Interface. Parse Packet to App structure
 */
 /******************************************************************************/
 #include "MotorCmdr.h"
 #include "Motor/MotProtocol/MotProtocol.h"
 #include <stddef.h>
 #include <string.h>
-
 
 /******************************************************************************/
 /*!	Ping */
@@ -41,7 +40,7 @@ static void Ping_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p
 {
 	(void)p_txPacket; (void)p_txSize; (void)rxSize;
 	// p_app->RespStatus =
-	MotPacket_PingResp_Parse(&p_app->Version[0U], p_rxPacket);
+	MotPacket_PingResp_Parse(p_rxPacket, &p_app->Version[0U]);
 }
 
 /******************************************************************************/
@@ -52,16 +51,6 @@ static void StopAll_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t 
 	(void)p_txPacket; (void)p_txSize; (void)rxSize;
 	// p_app->RespStatus = MotPacket_StopResp_Parse(p_rxPacket);
 }
-
-/******************************************************************************/
-/*!	Save NvMemory */
-/******************************************************************************/
-static void SaveNvm_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_SaveNvmResp_T * p_rxPacket, size_t rxSize)
-{
-	(void)p_txPacket; (void)p_txSize; (void)rxSize;
-	p_app->RespStatus = p_rxPacket->Header.Status;
-}
-
 
 /******************************************************************************/
 /*!	Write Var */
@@ -79,7 +68,7 @@ static void ReadVar_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t 
 {
 	(void)p_txPacket; (void)p_txSize; (void)rxSize;
 
-	p_app->RespStatus = MotPacket_ReadVarResp_Parse(&p_app->MotorReadVarValue, p_rxPacket);
+	p_app->RespStatus = MotPacket_ReadVarResp_Parse(p_rxPacket, &p_app->MotorReadVarValue);
 
 	// switch(p_app->MotorReadVarId)
 	// {
@@ -110,52 +99,55 @@ static void ReadVar_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t 
 }
 
 /******************************************************************************/
-/*!	Control */
+/*!	Save NvMemory */
 /******************************************************************************/
-static void Control_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_ControlResp_T * p_rxPacket, size_t rxSize)
+static void SaveNvm_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_SaveNvmResp_T * p_rxPacket, size_t rxSize)
 {
 	(void)p_txPacket; (void)p_txSize; (void)rxSize;
-	//may need to check correctness comparing ControlIdActive, control resp does not contain control id
-
-	// p_app->RespStatus = p_rxPacket->Header.Status;
+	p_app->RespStatus = p_rxPacket->Header.Status;
 }
 
 /******************************************************************************/
-/*!	Monitor */
+/*!	Control Monitor */
 /******************************************************************************/
-static void Monitor_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_MonitorResp_T * p_rxPacket, size_t rxSize)
-{
-	(void)p_txPacket; (void)p_txSize; (void)rxSize;
-	// p_app->RespStatus =
-	switch(p_app->MonitorIdActive)
-	{
-		case MOT_PACKET_MONITOR_SPEED: MotPacket_MonitorResp_Speed_Parse(&p_app->Speed, p_rxPacket); 		break;
-		case MOT_PACKET_MONITOR_I_FOC:
-			MotPacket_MonitorResp_IFoc_Parse(&p_app->Ia, &p_app->Ib, &p_app->Ic, &p_app->Ialpha, &p_app->Ibeta, &p_app->Id, &p_app->Iq, p_rxPacket);
-			break;
-		default: break;
-	}
-}
-/*
-	App Protocol Packet Interface
-	Parse to App structure
-*/
+// static void Control_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_ControlResp_T * p_rxPacket, size_t rxSize)
+// {
+// 	(void)p_txPacket; (void)p_txSize; (void)rxSize;
+// 	//may need to check correctness comparing ControlIdActive, control resp does not contain control id
+
+// 	// p_app->RespStatus = p_rxPacket->Header.Status;
+// }
+
+// static void Monitor_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_MonitorResp_T * p_rxPacket, size_t rxSize)
+// {
+// 	(void)p_txPacket; (void)p_txSize; (void)rxSize;
+// 	// p_app->RespStatus =
+// 	switch(p_app->MonitorIdActive)
+// 	{
+// 		case MOT_PACKET_MONITOR_SPEED: MotPacket_MonitorResp_Speed_Parse(&p_app->Speed, p_rxPacket); 		break;
+// 		case MOT_PACKET_MONITOR_I_FOC:
+// 			MotPacket_MonitorResp_IFoc_Parse(&p_app->Ia, &p_app->Ib, &p_app->Ic, &p_app->Ialpha, &p_app->Ibeta, &p_app->Id, &p_app->Iq, p_rxPacket);
+// 			break;
+// 		default: break;
+// 	}
+// }
+
 /******************************************************************************/
 /*!	Init Units */
 /******************************************************************************/
-static void InitUnits_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_InitUnitsResp_T * p_rxPacket, size_t rxSize)
-{
-	(void)p_txPacket; (void)p_txSize; (void)rxSize;
-	// p_app->RespStatus =
-	MotPacket_InitUnitsResp_Parse
-	(
-		&p_app->Units.SpeedFeedbackRef_Rpm, &p_app->Units.IMaxRef_Amp, &p_app->Units.VSupplyRef_Volts,
-		&p_app->Units.VSupply_R1, &p_app->Units.VSupply_R2,
-		&p_app->Units.VSense_R1, &p_app->Units.VSense_R2,
-		&p_app->Units.VAcc_R1, &p_app->Units.VAcc_R2,
-		p_rxPacket
-	);
-}
+// static void InitUnits_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const MotPacket_InitUnitsResp_T * p_rxPacket, size_t rxSize)
+// {
+// 	(void)p_txPacket; (void)p_txSize; (void)rxSize;
+// 	// p_app->RespStatus =
+// 	MotPacket_InitUnitsResp_Parse
+// 	(
+// 		&p_app->Units.SpeedFeedbackRef_Rpm, &p_app->Units.IMaxRef_Amp, &p_app->Units.VSupplyRef_Volts,
+// 		&p_app->Units.VSupply_R1, &p_app->Units.VSupply_R2,
+// 		&p_app->Units.VSense_R1, &p_app->Units.VSense_R2,
+// 		&p_app->Units.VAcc_R1, &p_app->Units.VAcc_R2,
+// 		p_rxPacket
+// 	);
+// }
 
 //todo stateful req
 // static void InitUnits_ProcReqRespExt(MotProtocol_Substate_T * p_substate, MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize)
@@ -184,15 +176,15 @@ static void InitUnits_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_
 */
 static const Protocol_Req_T REQ_TABLE[] =
 {
-	// PROTOCOL_REQ_DEFINE(MOT_PACKET_INIT_UNITS, 			0U, 	InitUnits_ProcReqRespExt, 	PROTOCOL_SYNC_ID_DISABLE), /todo statful
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_INIT_UNITS, 			InitUnits_ParseResp, 	0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_STOP_ALL, 			StopAll_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),  //todo sync set wait for ack, retx if resp is nack
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_PING, 				Ping_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_CONTROL_TYPE, 		Control_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_MONITOR_TYPE, 		Monitor_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_SAVE_NVM, 			SaveNvm_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
-	PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VAR, 			WriteVar_ParseResp, 	0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_STOP_ALL, 			StopAll_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),  //todo sync set wait for ack, retx if resp is nack
 	PROTOCOL_REQ_DEFINE(MOT_PACKET_READ_VAR, 			ReadVar_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VAR, 			WriteVar_ParseResp, 	0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	PROTOCOL_REQ_DEFINE(MOT_PACKET_SAVE_NVM, 			SaveNvm_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	// PROTOCOL_REQ_DEFINE(MOT_PACKET_INIT_UNITS, 			InitUnits_ParseResp, 	0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	// PROTOCOL_REQ_DEFINE(MOT_PACKET_INIT_UNITS, 			0U, 	InitUnits_ProcReqRespExt, 	PROTOCOL_SYNC_ID_DISABLE), /todo statful
+	// PROTOCOL_REQ_DEFINE(MOT_PACKET_CONTROL_TYPE, 		Control_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
+	// PROTOCOL_REQ_DEFINE(MOT_PACKET_MONITOR_TYPE, 		Monitor_ParseResp, 		0U, 	PROTOCOL_SYNC_ID_DISABLE),
 	// PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_WRITE, 		0U, 			WriteData, 	PROTOCOL_SYNC_ID ),
 	// PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_READ, 		0U, 			ReadData, 	PROTOCOL_SYNC_ID ),
 };
@@ -204,36 +196,36 @@ void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_
 {
 	switch(reqId)
 	{
-		case MOT_PACKET_STOP_ALL: 					*p_txLength = MotPacket_StopReq_Build((MotPacket_StopReq_T *)p_txPacket); 			break;
-		case MOT_PACKET_PING: 						*p_txLength = MotPacket_PingReq_Build((MotPacket_PingReq_T *)p_txPacket); 			break;
-		case MOT_PACKET_INIT_UNITS: 			*p_txLength = MotPacket_InitUnitsReq_Build((MotPacket_InitUnitsReq_T *)p_txPacket);		break;
-		case MOT_PACKET_SAVE_NVM: 				*p_txLength = MotPacket_SaveNvmReq_Build((MotPacket_SaveNvmReq_T *)p_txPacket);		break;
+		case MOT_PACKET_PING: 				*p_txLength = MotPacket_PingReq_Build((MotPacket_PingReq_T *)p_txPacket); 			break;
+		case MOT_PACKET_STOP_ALL: 			*p_txLength = MotPacket_StopReq_Build((MotPacket_StopReq_T *)p_txPacket); 			break;
+		case MOT_PACKET_READ_VAR: 	 		*p_txLength = MotPacket_ReadVarReq_Build((MotPacket_ReadVarReq_T *)p_txPacket, p_app->MotorReadVarId); break;
+		case MOT_PACKET_WRITE_VAR: 			*p_txLength = MotPacket_WriteVarReq_Build((MotPacket_WriteVarReq_T *)p_txPacket, p_app->MotorWriteVarId, p_app->MotorWriteVarValue); break;
+		case MOT_PACKET_SAVE_NVM: 			*p_txLength = MotPacket_SaveNvmReq_Build((MotPacket_SaveNvmReq_T *)p_txPacket);		break;
 
+		// case MOT_PACKET_INIT_UNITS: 		*p_txLength = MotPacket_InitUnitsReq_Build((MotPacket_InitUnitsReq_T *)p_txPacket);		break;
 		case MOT_PACKET_REBOOT: 						break;
 		case MOT_PACKET_CALL: 							break;
-		case MOT_PACKET_READ_VAR: 	 	*p_txLength = MotPacket_ReadVarReq_Build((MotPacket_ReadVarReq_T *)p_txPacket, p_app->MotorReadVarId); break;
-		case MOT_PACKET_WRITE_VAR: 		*p_txLength = MotPacket_WriteVarReq_Build((MotPacket_WriteVarReq_T *)p_txPacket, p_app->MotorWriteVarId, p_app->MotorWriteVarValue); break;
 		// case MOT_PACKET_READ_VAR16: 					break;
 		// case MOT_PACKET_WRITE_VAR16: 					break;
-		case MOT_PACKET_READ_MEMORY: 					break;
-		case MOT_PACKET_WRITE_MEMORY: 					break;
+		// case MOT_PACKET_READ_MEMORY: 					break;
+		// case MOT_PACKET_WRITE_MEMORY: 					break;
 		case MOT_PACKET_DATA_MODE_READ: 				break;
 		case MOT_PACKET_DATA_MODE_WRITE: 				break;
-		case MOT_PACKET_DATA_MODE_TYPE: 					break;
+		case MOT_PACKET_DATA_MODE_TYPE: 				break;
 
-		case MOT_PACKET_MONITOR_TYPE: 			*p_txLength = MotPacket_MonitorReq_Build((MotPacket_MonitorReq_T *)p_txPacket, p_app->MonitorIdActive);		break;
-		case MOT_PACKET_CONTROL_TYPE:
-			switch(p_app->ControlIdActive)
-			{
-				case MOT_PACKET_CONTROL_THROTTLE:			*p_txLength = MotPacket_ControlReq_Throttle_Build((MotPacket_ControlReq_T *)p_txPacket, p_app->MotorCmdValue); 		break;
-				case MOT_PACKET_CONTROL_BRAKE: 				*p_txLength = MotPacket_ControlReq_Brake_Build((MotPacket_ControlReq_T *)p_txPacket, p_app->MotorCmdValue); 		break;
-				case MOT_PACKET_CONTROL_RELEASE: 			*p_txLength = MotPacket_ControlReq_Release_Build((MotPacket_ControlReq_T *)p_txPacket); 							break;
-				case MOT_PACKET_CONTROL_DIRECTION_FORWARD: 	*p_txLength = MotPacket_ControlReq_DirectionForward_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;
-				case MOT_PACKET_CONTROL_DIRECTION_REVERSE: 	*p_txLength = MotPacket_ControlReq_DirectionReverse_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;
-				case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	*p_txLength = MotPacket_ControlReq_DirectionNeutral_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;
-				default: break;
-			}
-			break;
+		// case MOT_PACKET_MONITOR_TYPE: 			*p_txLength = MotPacket_MonitorReq_Build((MotPacket_MonitorReq_T *)p_txPacket, p_app->MonitorIdActive);		break;
+		// case MOT_PACKET_CONTROL_TYPE:
+		// 	switch(p_app->ControlIdActive)
+		// 	{
+		// 		case MOT_PACKET_CONTROL_THROTTLE:			*p_txLength = MotPacket_ControlReq_Throttle_Build((MotPacket_ControlReq_T *)p_txPacket, p_app->MotorCmdValue); 		break;
+		// 		case MOT_PACKET_CONTROL_BRAKE: 				*p_txLength = MotPacket_ControlReq_Brake_Build((MotPacket_ControlReq_T *)p_txPacket, p_app->MotorCmdValue); 		break;
+		// 		case MOT_PACKET_CONTROL_RELEASE: 			*p_txLength = MotPacket_ControlReq_Release_Build((MotPacket_ControlReq_T *)p_txPacket); 							break;
+		// 		case MOT_PACKET_CONTROL_DIRECTION_FORWARD: 	*p_txLength = MotPacket_ControlReq_DirectionForward_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;
+		// 		case MOT_PACKET_CONTROL_DIRECTION_REVERSE: 	*p_txLength = MotPacket_ControlReq_DirectionReverse_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;
+		// 		case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL: 	*p_txLength = MotPacket_ControlReq_DirectionNeutral_Build((MotPacket_ControlReq_T *)p_txPacket); 					break;
+		// 		default: break;
+		// 	}
+		// 	break;
 		case MOT_PACKET_EXT_CMD: 							break;
 		case MOT_PACKET_EXT_RSVR2: 							break;
 		case MOT_PACKET_ID_RESERVED_255: 					break;

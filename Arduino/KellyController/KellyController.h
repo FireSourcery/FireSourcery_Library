@@ -79,13 +79,14 @@ public:
 	void writeThrottle(uint16_t throttle) 			{ MotorCmdr_WriteThrottle(&motorCmdr, throttle); };
 	void writeBrake(uint16_t brake) 				{ MotorCmdr_WriteBrake(&motorCmdr, brake); };
 	void writeVar(MotVarId_T id, uint32_t value) 	{ MotorCmdr_WriteVar(&motorCmdr, id, value); };
-	void writeSaveNvm(void) 						{ MotorCmdr_SaveNvm(&motorCmdr); };
-	void writeRelease(void) 						{ MotorCmdr_WriteRelease(&motorCmdr); };
-	void writeDirectionForward(void) 				{ MotorCmdr_WriteDirectionForward(&motorCmdr); };
-	void writeDirectionReverse(void) 				{ MotorCmdr_WriteDirectionReverse(&motorCmdr); };
-	void writeDirectionNeutral(void) 				{ MotorCmdr_WriteDirectionNeutral(&motorCmdr); };
+	// void writeSaveNvm(void) 						{ MotorCmdr_SaveNvm(&motorCmdr); };
+	// void writeRelease(void) 						{ MotorCmdr_WriteRelease(&motorCmdr); };
+	// void writeDirectionForward(void) 				{ MotorCmdr_WriteDirectionForward(&motorCmdr); };
+	// void writeDirectionReverse(void) 				{ MotorCmdr_WriteDirectionReverse(&motorCmdr); };
+	// void writeDirectionNeutral(void) 				{ MotorCmdr_WriteDirectionNeutral(&motorCmdr); };
+	// void writeToggleAnalogIn(void) 					{ MotorCmdr_WriteToggleAnalogIn(&motorCmdr); };
 	void readSpeed(void) 							{ MotorCmdr_ReadSpeed(&motorCmdr); };
-	void readIFoc(void) 							{ MotorCmdr_ReadIFoc(&motorCmdr); };
+	// void readIFoc(void) 							{ MotorCmdr_ReadIFoc(&motorCmdr); };
 
 	int32_t getReadSpeed(void) { return MotorCmdr_GetReadSpeed(&motorCmdr); }
 	int16_t getReadIa(void) { return MotorCmdr_GetReadIa(&motorCmdr); }

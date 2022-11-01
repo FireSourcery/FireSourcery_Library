@@ -98,11 +98,12 @@ void MotorCmdr_ReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId)
 }
 
 /* Read speed back including:  */
-// void MotorCmdr_ReadSpeed(MotorCmdr_T * p_motorCmdr)
-// {
-// 	p_motorCmdr->MonitorIdActive = MOT_PACKET_MONITOR_SPEED;
-// 	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_MONITOR_TYPE);
-// }
+void MotorCmdr_ReadSpeed(MotorCmdr_T * p_motorCmdr)
+{
+	// p_motorCmdr->MonitorIdActive = MOT_PACKET_MONITOR_SPEED;
+	// Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_MONITOR_TYPE);
+	MotorCmdr_ReadVar(p_motorCmdr, MOT_VAR_SPEED_RPM);
+}
 
 // void MotorCmdr_ReadIFoc(MotorCmdr_T * p_motorCmdr)
 // {
@@ -113,9 +114,12 @@ void MotorCmdr_ReadVar(MotorCmdr_T * p_motorCmdr, MotVarId_T motVarId)
 /* Overwrites */
 void MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake)
 {
-	p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_BRAKE;
-	p_motorCmdr->MotorCmdValue = brake;
-	Protocol_Cmdr_StartReq_Overwrite(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
+	// p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_BRAKE;
+	// p_motorCmdr->MotorCmdValue = brake;
+	// Protocol_Cmdr_StartReq_Overwrite(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
+	p_motorCmdr->MotorWriteVarId = MOT_VAR_BRAKE;
+	p_motorCmdr->MotorWriteVarValue = brake;
+	Protocol_Cmdr_StartReq_Overwrite(&p_motorCmdr->Protocol, MOT_PACKET_WRITE_VAR);
 }
 
 void MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle)
@@ -127,31 +131,35 @@ void MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle)
 	MotorCmdr_WriteVar(p_motorCmdr, MOT_VAR_THROTTLE, throttle);
 }
 
-void MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr)
-{
-	p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_RELEASE;
-	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
-}
+// void MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr)
+// {
+// 	// p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_RELEASE;
+// 	// Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
+// 	MotorCmdr_WriteVar(p_motorCmdr, MOT_VAR_THROTTLE, 0U);
+// }
 
-void MotorCmdr_WriteDirectionForward(MotorCmdr_T * p_motorCmdr)
-{
-	p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_DIRECTION_FORWARD;
-	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
-}
+// void MotorCmdr_WriteDirectionForward(MotorCmdr_T * p_motorCmdr)
+// {
+// 	p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_DIRECTION_FORWARD;
+// 	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
+// }
 
-void MotorCmdr_WriteDirectionReverse(MotorCmdr_T * p_motorCmdr)
-{
-	p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_DIRECTION_REVERSE;
-	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
-}
+// void MotorCmdr_WriteDirectionReverse(MotorCmdr_T * p_motorCmdr)
+// {
+// 	p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_DIRECTION_REVERSE;
+// 	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
+// }
 
-void MotorCmdr_WriteDirectionNeutral(MotorCmdr_T * p_motorCmdr)
-{
-	p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_DIRECTION_NEUTRAL;
-	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
-}
+// void MotorCmdr_WriteDirectionNeutral(MotorCmdr_T * p_motorCmdr)
+// {
+// 	p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_DIRECTION_NEUTRAL;
+// 	Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
+// }
 
-
+// void MotorCmdr_WriteToggleAnalogIn(MotorCmdr_T * p_motorCmdr)
+// {
+// 	MotorCmdr_WriteVar(p_motorCmdr, MOT_VAR_USER_INPUT_MODE, 2U); /* 2 is Toggle */
+// }
 /******************************************************************************/
 /*!
 	Proctected Function - build packet, set wait state, without starting Tx

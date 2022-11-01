@@ -177,9 +177,11 @@ static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc, uin
 		case MOTOR_CONTROLLER_NVM_PARAMS_ALL: 	p_mc->NvmStatus = MotorController_SaveParameters_Blocking(p_mc); 	break;
 		case MOTOR_CONTROLLER_NVM_BOOT: 		p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc); 		break;
 #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-		case MOTOR_CONTROLLER_NVM_WRITE_ONCE: 		p_mc->NvmStatus = MotorController_SaveOnce_Blocking(p_mc); 			break;
+		case MOTOR_CONTROLLER_NVM_WRITE_ONCE: 	p_mc->NvmStatus = MotorController_SaveOnce_Blocking(p_mc); 			break;
 #endif
-
+		case MOTOR_CONTROLLER_TOGGLE_USER_INPUT_MODE:
+			if (p_mc->Parameters.UserInputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) {p_mc->Parameters.UserInputMode = MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL; }
+			else if (p_mc->Parameters.UserInputMode == MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL) {p_mc->Parameters.UserInputMode = MOTOR_CONTROLLER_INPUT_MODE_ANALOG; }
 		default: break;
 	}
 	Motor_EnablePwm(&p_mc->CONFIG.P_MOTORS[0U]);

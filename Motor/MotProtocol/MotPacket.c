@@ -395,7 +395,7 @@ uint8_t MotPacket_ReadVarReq_Build(MotPacket_ReadVarReq_T * p_reqPacket, MotVarI
 /*!
 	@param[out] p_value 4-byte value uint32_t or int32_t
 */
-MotPacket_HeaderStatus_T MotPacket_ReadVarResp_Parse(uint32_t * p_value, const MotPacket_ReadVarResp_T * p_respPacket)
+MotPacket_HeaderStatus_T MotPacket_ReadVarResp_Parse(const MotPacket_ReadVarResp_T * p_respPacket, uint32_t * p_value)
 {
 	*p_value = p_respPacket->ReadResp.Value32;
 	return p_respPacket->Header.Status;	// *p_status = p_respPacket->ReadResp.Status;

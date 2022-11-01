@@ -206,8 +206,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 				if(MotAnalogUser_PollBrakePins(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
 				if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]) == true)
 				{
-					// MotorController_User_DisableControl(p_mc);
-					// MotorController_User_SetFault(p_mc);
+					MotorController_User_DisableControl(p_mc);
+					MotorController_User_SetFault(p_mc);
 					p_mc->FaultFlags.RxLost = 1U;
 				}
 				break;

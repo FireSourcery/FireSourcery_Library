@@ -152,7 +152,7 @@ void loop(void)
         if(pressed) { kellyController.readSpeed(); printTx();}
         break;
       case 4U:
-        if(pressed) { kellyController.writeVar(MOT_VAR_USER_INPUT_MODE, 1U); printTx();}
+        if(pressed) { kellyController.writeVar(MOT_VAR_USER_INPUT_MODE, 2U); printTx();}
         break;
 
       case 5U:

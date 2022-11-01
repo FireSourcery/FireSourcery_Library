@@ -47,28 +47,9 @@
 */
 /******************************************************************************/
 // static inline void MotorController_User_ProcCmdZero(MotorController_T * p_mc) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_PROC_ZERO); }
-
-static inline void MotorController_User_SetCmdZero(MotorController_T * p_mc)
-{
-	// if(p_mc->UserCmd == 0U) 	{ MotorController_User_ProcCmdZero(p_mc); }
-	// else 						{ p_mc->UserCmd = 0U; StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SET_ZERO); }
-	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_ZERO, 0U);
-}
-
-static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd)
-{
-	// if(userCmd == 0U) 	{ MotorController_User_SetCmdZero(p_mc); }
-	// else 				{ p_mc->UserCmd = userCmd; StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE); }
-	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd);
-}
-
-static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd)
-{
-	// if(userCmd == 0U) 	{ MotorController_User_SetCmdZero(p_mc); }
-	// else 				{ p_mc->UserCmd = userCmd; StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE); }
-	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd);
-}
-
+static inline void MotorController_User_SetCmdZero(MotorController_T *p_mc) 						{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_ZERO, 0U); }
+static inline void MotorController_User_SetCmdThrottle(MotorController_T *p_mc, uint16_t userCmd) 	{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd); }
+static inline void MotorController_User_SetCmdBrake(MotorController_T *p_mc, uint16_t userCmd) 		{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
 static inline uint16_t MotorController_User_GetCmdValue(MotorController_T * p_mc) { return p_mc->UserCmd; }
 // static inline void MotorController_User_SetCmdBrakeAlt(MotorController_T * p_mc, uint16_t userCmd) { p_mc->UserCmd = userCmd; 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE_ALT); }
 
@@ -147,6 +128,7 @@ static inline void MotorController_User_ProcCalibration_Blocking(MotorController
 {
 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CALIBRATION, operationId);
 }
+
 
 /******************************************************************************/
 /*
