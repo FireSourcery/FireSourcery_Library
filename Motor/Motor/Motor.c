@@ -231,7 +231,7 @@ void Motor_ResetSensorMode(Motor_T * p_motor)
 
 void Motor_ResetUnitsVabc(Motor_T * p_motor)
 {
-#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) && defined(CONFIG_MOTOR_V_SENSORS_ADC)
+#if defined(CONFIG_MOTOR_V_SENSORS_ADC) && !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED)
 	Linear_Voltage_Init(&p_motor->UnitVabc, p_motor->CONFIG.UNIT_VABC_R1, p_motor->CONFIG.UNIT_VABC_R2, ADC_BITS, _Motor_AdcVRef_MilliV, _Motor_VSourceRef_V);
 #else
 	(void)p_motor;
