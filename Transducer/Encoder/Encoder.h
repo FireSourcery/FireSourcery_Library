@@ -161,31 +161,6 @@ Encoder_T;
 
 /******************************************************************************/
 /*!
-	ISRs
-*/
-/*! @{ */
-/******************************************************************************/
-//static inline void Encoder_TimerCounterOverflow_ISR(Encoder_T * p_encoder)
-//{
-//	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
-//	//set overflow direction?
-//}
-//
-///*
-// * Index Pin
-// */
-//static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
-//{
-//	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
-//	p_encoder->AngularD = 0U;
-//}
-/******************************************************************************/
-/*! @} */
-/******************************************************************************/
-
-
-/******************************************************************************/
-/*!
 	@addtogroup	CaptureDelta
 	@brief	Capture DeltaT or DeltaD between 2 samples.
 			Either DeltaT or DeltaD is selected to be fixed.
@@ -671,6 +646,66 @@ static inline uint32_t Encoder_ConvertSampleAngleToRotationalSpeed_RPM(Encoder_T
 {
 	return Encoder_ConvertAngleToRotationalSpeed_RPM(angle_UserDegrees, p_encoder->CONFIG.DELTA_D_SAMPLE_FREQ);
 }
+
+
+/******************************************************************************/
+/*!
+	Signed Version using quadrature mode - todo
+ */
+ /******************************************************************************/
+static inline bool Encoder_GetDirection(Encoder_T * p_encoder)
+{
+	// if(p_encoder->Params.IsALeadBPositive ^ Pin_Input_Read(&p_encoder->PhaseB)) { return false; }
+	// else { return true; }
+}
+
+static inline int16_t Encoder_GetAngularVelocity(Encoder_T * p_encoder)
+{
+// #if defined(CONFIG_ENCODER_HW_QUADRATURE_DISABLED)
+// 	if(Encoder_GetDirection(p_encoder)) { return (int32_t)Encoder_GetAngularSpeed(p_encoder); }
+// 	else { return (int32_t)0 - (int32_t)Encoder_GetAngularSpeed(p_encoder); }
+// #endif
+}
+
+static inline int32_t Encoder_GetRotationalVelocity(Encoder_T * p_encoder)
+{
+
+}
+
+static inline int32_t Encoder_GetLinearVelocity(Encoder_T * p_encoder)
+{
+	if(Encoder_GetDirection(p_encoder)) { return (int32_t)Encoder_GetLinearSpeed(p_encoder); }
+	else { return (int32_t)0 - (int32_t)Encoder_GetLinearSpeed(p_encoder); }
+}
+
+
+static inline int32_t Encoder_GetDeltaAngularDisplacement(Encoder_T * p_encoder)
+{
+
+}
+
+static inline int32_t Encoder_GetDeltaRotationalDisplacement(Encoder_T * p_encoder)
+{
+
+}
+
+// treat displacement as signed scalar quantity
+static inline int32_t Encoder_GetDeltaLinearDisplacement(Encoder_T * p_encoder)
+{
+
+}
+
+static inline int32_t Encoder_GetTotalAngularDisplacement(Encoder_T * p_encoder)
+{
+
+}
+
+static inline int32_t Encoder_GetTotalLinearDisplacement(Encoder_T * p_encoder)
+{
+
+}
+
+
 
 
 /******************************************************************************/

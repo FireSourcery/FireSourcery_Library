@@ -69,7 +69,6 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 	StateMachine_Semi_ProcOutput(&p_motor->StateMachine);
 }
 
-
 static inline void Motor_Heat_Thread(Motor_T * p_motor)
 {
 	if(Thermistor_GetIsMonitorEnable(&p_motor->Thermistor) == true)
@@ -87,6 +86,7 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 		}
 	}
 }
+
 
 #endif
 

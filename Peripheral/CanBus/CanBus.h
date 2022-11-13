@@ -127,7 +127,13 @@ typedef struct CanBus_Tag
 }
 
 
+static inline void CanBus_Rx_ISR(CanBus_T * p_can)
+{
+}
 
+static inline void CanBus_Tx_ISR(CanBus_T * p_can)
+{
+}
 
 /*
  * Abstraction layer must use to implementation for shared and independent rxTx buffers,

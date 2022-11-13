@@ -38,7 +38,7 @@
 	#define CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
 #endif
 
-/* Compile time define for all encoder instances if A Lead B is increment */
+/* Compile time define for all encoder instances if A Lead B is increment, additional configure available at runtime */
 #if 	defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT)
 #elif 	defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
 #else

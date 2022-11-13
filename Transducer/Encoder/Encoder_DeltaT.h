@@ -38,7 +38,6 @@ static inline void CaptureAngularDIncreasing(Encoder_T * p_encoder)
 	p_encoder->AngularD = (p_encoder->AngularD < p_encoder->Params.CountsPerRevolution - 1U) ? p_encoder->AngularD + 1U : 0U;
 }
 
-
 /*!
 	@brief Capture DeltaT, per fixed changed in distance, via pin edge interrupt
 
@@ -47,7 +46,11 @@ static inline void CaptureAngularDIncreasing(Encoder_T * p_encoder)
  */
 static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 {
+#if defined(CONFIG_ENCODER_HW_CAPTURE_TIME)
+	p_encoder->DeltaT = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+#else
 	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
+#endif
 	CaptureAngularDIncreasing(p_encoder);
 	p_encoder->TotalD += 1U; 	/* Capture integral */
 	p_encoder->TotalT += p_encoder->DeltaT;

@@ -35,5 +35,6 @@
 	"explorer.copyRelativePathSeparator": "/",
 	"[jsonc]": {
 		"editor.defaultFormatter": "vscode.json-language-features"
-	}
+	},
+	"C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
 }
