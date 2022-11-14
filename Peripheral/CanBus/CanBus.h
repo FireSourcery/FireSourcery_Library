@@ -130,8 +130,8 @@ typedef struct CanBus_Tag
 static inline void CanBus_Rx_ISR(CanBus_T * p_can)
 {
 }
-
 static inline void CanBus_Tx_ISR(CanBus_T * p_can)
+
 {
 }
 
