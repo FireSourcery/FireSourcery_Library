@@ -55,3 +55,6 @@ dkms.conf
 **/Exclude/
 *.log
 #**/External/CMSIS/
+
+.vscode/*
+!.vscode/settings.json

@@ -57,7 +57,7 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 	_Encoder_ResetUnitsScalarSpeed(p_encoder);
 
 	Encoder_Zero(p_encoder);
-	Encoder_DeltaT_SetInitial(p_encoder, 0U);
+	Encoder_DeltaT_SetInitial(p_encoder);
 }
 
 /*
@@ -74,23 +74,27 @@ void Encoder_DeltaT_SetExtendedTimer(Encoder_T * p_encoder, uint16_t effectiveSt
 */
 void Encoder_DeltaT_SetExtendedTimerDefault(Encoder_T * p_encoder)
 {
-	uint32_t time1Second = p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
-	uint32_t time1Rpm = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->CONFIG.DELTA_T_TIMER_FREQ;
-	p_encoder->Params.ExtendedTimerDeltaTStop = (time1Second < time1Rpm) ? time1Second : time1Rpm;
+	uint32_t timer1Second = p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
+	uint32_t timer1Rpm = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->CONFIG.DELTA_T_TIMER_FREQ;
+	p_encoder->Params.ExtendedTimerDeltaTStop = (timer1Second < timer1Rpm) ? timer1Second : timer1Rpm;
 }
 
 /*
 	Set initial capture to lowest speed, DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX
 */
-void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder, uint16_t initialRpm)
+void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 {
-	(void)initialRpm;
 	p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX;
-//	p_encoder->DeltaT = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, initialRpm);
-//	CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U;
-	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER) - (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U);
+	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
+	p_encoder->TimerCounterSaved = 0U;
+	// p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER) - (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U);
 	p_encoder->ExtendedTimerSaved = *p_encoder->CONFIG.P_EXTENDED_TIMER;
 }
+
+// void Encoder_DeltaT_SetInitial_RPM(Encoder_T * p_encoder, uint16_t initialRpm)
+// {
+// 	//	p_encoder->DeltaT = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, initialRpm);
+// }
 
 /*
 	Run on calibration routine

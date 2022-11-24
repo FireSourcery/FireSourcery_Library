@@ -141,14 +141,12 @@ static inline bool Encoder_DeltaT_PollReferenceEdgeDual(Encoder_T * p_encoder, b
 */
 static inline bool Encoder_DeltaT_PollPhaseAEdgeRising(Encoder_T * p_encoder)
 {
-	bool reference = Pin_Input_Read(&p_encoder->PhaseA);
-	return Encoder_DeltaT_PollReferenceEdgeRising(p_encoder, reference);
+	return Encoder_DeltaT_PollReferenceEdgeRising(p_encoder, Pin_Input_Read(&p_encoder->PhaseA));
 }
 
 static inline bool Encoder_DeltaT_PollPhaseAEdgeDual(Encoder_T * p_encoder)
 {
-	bool reference = Pin_Input_Read(&p_encoder->PhaseA);
-	return Encoder_DeltaT_PollReferenceEdgeDual(p_encoder, reference);
+	return Encoder_DeltaT_PollReferenceEdgeDual(p_encoder, Pin_Input_Read(&p_encoder->PhaseA));
 }
 
 /******************************************************************************/
@@ -178,16 +176,15 @@ static inline uint32_t GetEncoderExtendedTimerDelta(Encoder_T * p_encoder)
 }
 
 /*
- * Short timer overflow time in long timer counts
- * e.g. TimerFreq = 625000, TimerCounterMax = 0xFFFF, ExtTimerFreq = 1000Hz => 104ms
- *
- * Should optimize to compile time const
- */
+	Short timer overflow time in long timer counts
+	e.g. TimerFreq = 625000, TimerCounterMax = 0xFFFF, ExtTimerFreq = 1000Hz => 104ms
+
+	This should optimize to compile time const
+*/
 static inline uint32_t GetEncoderExtendedTimerConversion(Encoder_T * p_encoder)
 {
 	return ((uint32_t)CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->CONFIG.DELTA_T_TIMER_FREQ;
 }
-
 
 //extend 16bit timer cases to 32bit
 //
@@ -195,6 +192,13 @@ static inline uint32_t GetEncoderExtendedTimerConversion(Encoder_T * p_encoder)
 //104ms to 6871ms for TimerFreq = 625000
 static inline void Encoder_DeltaT_CaptureExtendedTimer(Encoder_T * p_encoder)
 {
+#if defined(CONFIG_ENCODER_HW_CAPTURE_TIME)
+	if(HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
+	{
+		p_encoder->DeltaT = GetEncoderExtendedTimerDelta(p_encoder) * (p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.EXTENDED_TIMER_FREQ);
+		p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
+	}
+#else
 	uint32_t extendedTimerDelta = GetEncoderExtendedTimerDelta(p_encoder);
 	p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
 
@@ -210,6 +214,7 @@ static inline void Encoder_DeltaT_CaptureExtendedTimer(Encoder_T * p_encoder)
 		p_encoder->DeltaT = extendedTimerDelta * (p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.EXTENDED_TIMER_FREQ);
 //	}
 	}
+#endif
 }
 
 //Poll if capture has stoped
@@ -257,6 +262,8 @@ static inline bool Encoder_DeltaT_PollWatchStop(Encoder_T * p_encoder)
 	Interpolation Functions
  */
 /******************************************************************************/
+//todo enable if capturefreq < PollingFreq
+
 /*!
 	@brief 	  CaptureDeltaT mode
 
@@ -332,7 +339,7 @@ static inline uint32_t Encoder_DeltaT_GetInterpolationFreq(Encoder_T *p_encoder)
 
 
 /*!
-	 Capture DeltaT Only -
+	Capture DeltaT Only -
  	CaptureDeltaT, DeltaD == 1: DeltaT timer ticks for given speed
 	CaptureDeltaD, DeltaT == 1: <= 1 (Number of fixed DeltaT samples, before a deltaD increment)
 
@@ -477,7 +484,7 @@ static inline uint32_t Encoder_DeltaT_ConvertInterpolationFreqToRotationalSpeed_
 extern void Encoder_DeltaT_Init(Encoder_T * p_encoder);
 extern void Encoder_DeltaT_SetExtendedTimer(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis);
 extern void Encoder_DeltaT_SetExtendedTimerDefault(Encoder_T * p_encoder);
-extern void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder, uint16_t initialRpm);
+extern void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder);
 // extern void Encoder_DeltaT_CalibrateQuadratureReference(Encoder_T * p_encoder);
 // extern void Encoder_DeltaT_CalibrateQuadraturePositive(Encoder_T * p_encoder);
 /******************************************************************************/

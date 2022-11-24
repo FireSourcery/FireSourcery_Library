@@ -45,8 +45,6 @@ typedef enum MotAnalogUser_Cmd_Tag
 	MOT_ANALOG_USER_CMD_SET_THROTTLE,
 	MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE,
 	MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE,
-	//	MOT_ANALOG_USER_CMD_SET_BRAKE_START,
-	//	MOT_ANALOG_USER_CMD_SET_THROTTLE_START,
 	MOT_ANALOG_USER_CMD_PROC_ZERO,	/* No Brake/Throttle input */
 	MOT_ANALOG_USER_CMD_SET_NEUTRAL,
 	MOT_ANALOG_USER_CMD_PROC_NEUTRAL,
@@ -74,22 +72,7 @@ typedef enum MotAnalogUser_DirectionPins_Tag
 }
 MotAnalogUser_DirectionPins_T;
 
-// typedef union MotAnalogUser_InvertPins_Tag
-// {
-// 	struct
-// 	{
-// 		uint32_t ThrottleEdge 		: 1U;
-// 		uint32_t BrakeEdge 			: 1U;
-// 		uint32_t Neutral 			: 1U;
-// 		uint32_t Forward 			: 1U;
-// 		uint32_t Reverse 			: 1U;
-// 		uint32_t BistateBrake 		: 1U;
-// 		uint32_t ThrottleSafety 	: 1U;
-// 	};
-// 	uint8_t State;
-// }
-// MotAnalogUser_InvertPins_T;
-
+/* AnalogInput Sub-Module */
 typedef struct MotAnalogUser_AIn_Tag
 {
 	Debounce_T EdgePin;
@@ -136,41 +119,25 @@ typedef struct MotAnalogUser_Tag
 {
 	MotAnalogUser_Config_T CONFIG;
 	MotAnalogUser_Params_T Params;
-
+	MotAnalogUser_AIn_T ThrottleAIn;
+	MotAnalogUser_AIn_T BrakeAIn;
 	Debounce_T ReversePin;
 	Debounce_T ForwardPin;
 	Debounce_T NeutralPin;
-
 	Debounce_T BistateBrakePin;
-	Debounce_T ThrottleSafetyPin;
-
-	/* todo sub AnalogInput struct */
-	MotAnalogUser_AIn_T ThrottleAIn;
-	MotAnalogUser_AIn_T BrakeAIn;
-
-	// Debounce_T BrakeEdgePin;
-	// Debounce_T ThrottleEdgePin;
-	// Linear_T UnitThrottle;
-	// Linear_T UnitBrake;
-	// uint16_t Throttle_Frac16;
-	// uint16_t ThrottlePrev_Frac16;
-	// uint16_t Brake_Frac16;
-	// uint16_t BrakePrev_Frac16;
-
 	MotAnalogUser_Cmd_T Cmd; /* Store last active Cmd */
 }
 MotAnalogUser_T;
 
 
-#define MOT_ANALOG_USER_INIT(p_BrakePinHal, BrakePinId, p_ThrottlePinHal, ThrottlePinId, p_ForwardPinHal, ForwardPinId, p_ReversePinHal, ReversePinId, p_BistateBrakePinHal, BistateBrakePinId, p_ThrottleSafetyPinHal, ThrottleSafetyPinId, InputPinsInvert, p_Millis, p_Params)	\
+#define MOT_ANALOG_USER_INIT(p_BrakePinHal, BrakePinId, p_ThrottlePinHal, ThrottlePinId, p_ForwardPinHal, ForwardPinId, p_ReversePinHal, ReversePinId, p_BistateBrakePinHal, BistateBrakePinId, InputPinsInvert, p_Millis, p_Params)	\
 {																																\
 	.CONFIG 				= { .P_PARAMS = p_Params, },																		\
 	.ThrottleAIn			= { .EdgePin = DEBOUNCE_INIT(p_ThrottlePinHal, 	ThrottlePinId, 	InputPinsInvert, p_Millis), }, 		\
 	.BrakeAIn				= { .EdgePin = DEBOUNCE_INIT(p_BrakePinHal, 	BrakePinId, 	InputPinsInvert, p_Millis), }, 		\
-	.ForwardPin 			= DEBOUNCE_INIT(p_ForwardPinHal, 			ForwardPinId, 			InputPinsInvert, p_Millis), 	\
-	.ReversePin 			= DEBOUNCE_INIT(p_ReversePinHal, 			ReversePinId, 			InputPinsInvert, p_Millis), 	\
-	.BistateBrakePin		= DEBOUNCE_INIT(p_BistateBrakePinHal, 		BistateBrakePinId, 		InputPinsInvert, p_Millis), 	\
-	.ThrottleSafetyPin 		= DEBOUNCE_INIT(p_ThrottleSafetyPinHal, 	ThrottleSafetyPinId, 	InputPinsInvert, p_Millis), 	\
+	.ForwardPin 			= DEBOUNCE_INIT(p_ForwardPinHal, 			ForwardPinId, 			InputPinsInvert, p_Millis ), 	\
+	.ReversePin 			= DEBOUNCE_INIT(p_ReversePinHal, 			ReversePinId, 			InputPinsInvert, p_Millis ), 	\
+	.BistateBrakePin		= DEBOUNCE_INIT(p_BistateBrakePinHal, 		BistateBrakePinId, 		InputPinsInvert, p_Millis ), 	\
 	.NeutralPin 			= DEBOUNCE_INIT(0, 0, 0, 0),  																		\
 }
 
@@ -220,8 +187,12 @@ static inline uint16_t _MotAnalogUser_AIn_GetValue(const MotAnalogUser_AIn_T * p
 	return (_MotAnalogUser_AIn_GetIsOn(p_aIn) == true) ? p_aIn->Value_Frac16 : 0U; /* Check IsOn again, If !IsOn Value_Frac16 remains prev captured value*/
 }
 
+
 /*
-	ADCU capture from outside module. Alternatively, map pointer
+	Capture Inputs
+*/
+/*
+	ADCU capture from outside module. Alternatively, map pointer.
 */
 static inline void MotAnalogUser_CaptureThrottleValue(MotAnalogUser_T * p_user, uint16_t throttle_Adcu) { _MotAnalogUser_AIn_CaptureValue(&p_user->ThrottleAIn, throttle_Adcu); }
 static inline void MotAnalogUser_CaptureBrakeValue(MotAnalogUser_T * p_user, uint16_t brake_Adcu) 		{ _MotAnalogUser_AIn_CaptureValue(&p_user->BrakeAIn, brake_Adcu); }
@@ -232,9 +203,6 @@ static inline void MotAnalogUser_CapturePins(MotAnalogUser_T * p_user)
 	if(p_user->Params.UseForwardPin == true) 			{ Debounce_CaptureState(&p_user->ForwardPin); }
 	if(p_user->Params.UseNeutralPin == true) 			{ Debounce_CaptureState(&p_user->NeutralPin); }
 	if(p_user->Params.UseBistateBrakePin == true) 		{ Debounce_CaptureState(&p_user->BistateBrakePin); }
-	// if(p_user->Params.UseThrottleSafetyPin == true) 	{ Debounce_CaptureState(&p_user->ThrottleSafetyPin); }
-	// if(p_user->Params.UseThrottleEdgePin == true) 		{ Debounce_CaptureState(&p_user->ThrottleEdgePin); }
-	// if(p_user->Params.UseBrakeEdgePin == true) 			{ Debounce_CaptureState(&p_user->BrakeEdgePin); }
 }
 
 /*
@@ -245,32 +213,11 @@ static inline void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_user, uint16_t
 	MotAnalogUser_CapturePins(p_user);
 	MotAnalogUser_CaptureThrottleValue(p_user, throttle_Adcu);
 	MotAnalogUser_CaptureBrakeValue(p_user, brake_Adcu);
-	// MotAnalogUser_CaptureBistateBrake(p_user);
 }
 
-// static inline void MotAnalogUser_CaptureBistateBrake(MotAnalogUser_T * p_user)
-// {
-// 	if((p_user->Params.UseBistateBrakePin == true) && (Debounce_GetState(&p_user->BistateBrakePin) == true))
-// 	{
-// 		if(p_user->BrakeAIn.Value_Frac16 < p_user->Params.BistateBrakeValue_Frac16) //using AIn.Value as shared value
-// 		{
-// 			p_user->BrakeAIn.Value_Frac16 = p_user->Params.BistateBrakeValue_Frac16;
-// 		}
-// 	}
-// }
-
-// static inline bool MotAnalogUser_GetIsThrottleSafetyOn(const MotAnalogUser_T * p_user) 	{ return (p_user->Params.UseThrottleSafetyPin == true) ? Debounce_GetState(&p_user->ThrottleSafetyPin) : true; }
-// static inline bool MotAnalogUser_GetIsThrottleOn(const MotAnalogUser_T * p_user) 		{ return _MotAnalogUser_AIn_GetIsOn(&p_user->ThrottleAIn); }
-// static inline bool MotAnalogUser_GetIsBrakeOn(const MotAnalogUser_T * p_user) 			{ return _MotAnalogUser_AIn_GetIsOn(&p_user->BrakeAIn); }
-// static inline bool MotAnalogUser_PollThrottleFallingEdge(MotAnalogUser_T * p_user) 		{ return _MotAnalogUser_AIn_PollFallingEdge(&p_user->ThrottleAIn); }
-// static inline bool MotAnalogUser_PollBrakeFallingEdge(MotAnalogUser_T * p_user) 			{ return _MotAnalogUser_AIn_PollFallingEdge(&p_user->BrakeAIn); }
-
-// static inline bool MotAnalogUser_PollBrakePinRisingEdge(MotAnalogUser_T * p_user)
-// {
-// 	return ((Debounce_CaptureState(&p_user->BrakeEdgePin) && Debounce_GetState(&p_user->BrakeEdgePin)) == true);
-// }
-
-
+/*
+	BiState/Handbrake
+*/
 static inline bool _MotAnalogUser_PollBistateBrakeFallingEdge(MotAnalogUser_T * p_user)
 {
 	return ((p_user->Params.UseBistateBrakePin == true) && Debounce_PollFallingEdge(&p_user->BistateBrakePin));
@@ -282,12 +229,9 @@ static inline bool MotAnalogUser_GetIsBistateBrakeOn(const MotAnalogUser_T * p_u
 	return ((p_user->Params.UseBistateBrakePin == true) && (Debounce_GetState(&p_user->BistateBrakePin) == true));
 }
 
-/* Early throttle release detect */
-// static inline bool MotAnalogUser_CheckThrottleValueRelease(const MotAnalogUser_T * p_user)
-// {
-// 	return (((int32_t)p_user->ThrottlePrev_Frac16 - (int32_t)p_user->Throttle_Frac16) > (65536 / 20));;
-// }
-
+/*
+	Direction
+*/
 static inline bool _MotAnalogUser_GetIsNeutralOn(const MotAnalogUser_T * p_user) 		{ return (p_user->Params.UseNeutralPin == true) && (Debounce_GetState(&p_user->NeutralPin) == true); }
 static inline bool _MotAnalogUser_GetIsForwardOn(const MotAnalogUser_T * p_user) 		{ return (p_user->Params.UseForwardPin == true) ? Debounce_GetState(&p_user->ForwardPin) : !Debounce_GetState(&p_user->ReversePin); }
 static inline bool _MotAnalogUser_GetIsReverseOn(const MotAnalogUser_T * p_user) 		{ return Debounce_GetState(&p_user->ReversePin); }
@@ -394,10 +338,6 @@ static inline bool MotAnalogUser_PollBrakePins(MotAnalogUser_T * p_user)
 	return ((Debounce_GetState(&p_user->BrakeAIn.EdgePin) == true) || (Debounce_GetState(&p_user->BistateBrakePin) == true)) ;
 }
 
-
-// static inline uint16_t MotAnalogUser_GetThrottleValue(const MotAnalogUser_T * p_user) 	{ return p_user->Throttle_Frac16; }
-// static inline uint16_t MotAnalogUser_GetBrakeValue(const MotAnalogUser_T * p_user) 		{ return p_user->Brake_Frac16; }
-
 static inline uint16_t MotAnalogUser_GetThrottle(const MotAnalogUser_T * p_user)
 {
 	return _MotAnalogUser_AIn_GetValue(&p_user->ThrottleAIn);
@@ -413,28 +353,16 @@ static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user)
 	return brakeValue;
 }
 
-static inline MotAnalogUser_Direction_T MotAnalogUser_GetDirection(const MotAnalogUser_T * p_user)
-{
-	MotAnalogUser_Direction_T direction;
-
-	if		(_MotAnalogUser_GetIsNeutralOn(p_user) == true) 	{ direction = MOT_ANALOG_USER_DIRECTION_NEUTRAL; }
-	else if	(MotAnalogUser_GetIsReverseOn(p_user) == true) 		{ direction = MOT_ANALOG_USER_DIRECTION_REVERSE; }
-	else if	(MotAnalogUser_GetIsForwardOn(p_user) == true) 		{ direction = MOT_ANALOG_USER_DIRECTION_FORWARD; }
-	else 														{ direction = MOT_ANALOG_USER_DIRECTION_NEUTRAL; }
-
-	return direction;
-}
-
+// static inline uint16_t MotAnalogUser_GetThrottleValue(const MotAnalogUser_T * p_user) 	{ return p_user->Throttle_Frac16; }
+// static inline uint16_t MotAnalogUser_GetBrakeValue(const MotAnalogUser_T * p_user) 		{ return p_user->Brake_Frac16; }
 
 extern void MotAnalogUser_Init(MotAnalogUser_T * p_user);
-extern void MotAnalogUser_SetParams(MotAnalogUser_T * p_user, const MotAnalogUser_Params_T * p_param);
+extern MotAnalogUser_Direction_T MotAnalogUser_GetDirection(const MotAnalogUser_T * p_user);
 extern void MotAnalogUser_SetBrakeRange(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu);
 extern void MotAnalogUser_SetThrottleRange(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu);
-extern void MotAnalogUser_SetBrakeAdc(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useBrakeEdgePin);
-extern void MotAnalogUser_SetThrottleAdc(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useThrottleEdgePin);
+extern void MotAnalogUser_SetBrakeAIn(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useBrakeEdgePin);
+extern void MotAnalogUser_SetThrottleAIn(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useThrottleEdgePin);
 extern void MotAnalogUser_SetBistateBrake(MotAnalogUser_T * p_user, bool useBistateBrake, uint16_t bistateBrakeIntensity_Frac16);
-extern void MotAnalogUser_SetThrottleSafety(MotAnalogUser_T * p_user, bool useThrottleSafety);
 extern void MotAnalogUser_SetDirectionPins(MotAnalogUser_T * p_user, MotAnalogUser_DirectionPins_T pins);
-// extern void MotAnalogUser_SetPinInvert(MotAnalogUser_T * p_user, MotAnalogUser_InvertPins_T invertPins);
 
 #endif

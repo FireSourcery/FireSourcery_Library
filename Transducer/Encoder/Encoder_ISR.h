@@ -11,12 +11,6 @@
 */
 /*! @{ */
 /******************************************************************************/
-// static inline void Encoder_TimerCounterOverflow_ISR(Encoder_T * p_encoder)
-// {
-// 	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
-// 	//set overflow direction?
-// }
-
 /*
 	Index Pin
 */
@@ -49,8 +43,8 @@ static inline void Encoder_CaptureDeltaT_ISR(Encoder_T * p_encoder)
 	{
 		Encoder_OnIndex_ISR(p_encoder);
 	}
-	Encoder_DeltaT_Capture(p_encoder);
 
+	Encoder_DeltaT_Capture(p_encoder);
 }
 /******************************************************************************/
 /*! @} */

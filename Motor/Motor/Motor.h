@@ -533,7 +533,7 @@ static inline void Motor_ZeroSensor(Motor_T * p_motor)
 
 		case MOTOR_SENSOR_MODE_HALL:
 			Encoder_Zero(&p_motor->Encoder); //zero angle speed //reset before Encoder_DeltaT_SetInitial
-			Encoder_DeltaT_SetInitial(&p_motor->Encoder, 10U); /* Set first capture DeltaT = 0xffff */
+			Encoder_DeltaT_SetInitial(&p_motor->Encoder); /* Set first capture DeltaT = 0xffff */
 			Hall_ResetCapture(&p_motor->Hall);
 			break;
 
