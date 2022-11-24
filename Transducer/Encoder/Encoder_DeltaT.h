@@ -47,7 +47,16 @@ static inline void CaptureAngularDIncreasing(Encoder_T * p_encoder)
 static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 {
 #if defined(CONFIG_ENCODER_HW_CAPTURE_TIME)
-	p_encoder->DeltaT = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+	if(HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
+	{
+		HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
+		p_encoder->DeltaT = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+	}
+	else
+	{
+		p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX;
+	}
+	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
 #else
 	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
 #endif
@@ -58,10 +67,9 @@ static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 
 
 /*
- * SW Quadrature
- *
- * only when capturing single phase (of 2 phase quadrature mode) 180 degree offset, not for 3 phase 120 degree offset
- */
+	SW Quadrature
+	only when capturing single phase (of 2 phase quadrature mode) 180 degree offset, not for 3 phase 120 degree offset
+*/
 // static inline void Encoder_DeltaT_CaptureQuadrature(Encoder_T * p_encoder)
 // {
 // //	bool phaseB = Pin_Input_Read(&p_encoder->PhaseB);

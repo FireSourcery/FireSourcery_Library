@@ -50,6 +50,7 @@ static inline void HAL_Encoder_ClearTimerCounterOverflow(HAL_Encoder_T * p_encod
 static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder) { return p_encoder->CNT; }
 static inline void HAL_Encoder_WriteTimerCounter(HAL_Encoder_T * p_encoder, uint32_t count) { p_encoder->CNT = FTM_CNT_COUNT(count); }
 static inline void HAL_Encoder_WriteTimerCounterMax(HAL_Encoder_T * p_encoder, uint32_t max) { p_encoder->MOD = FTM_MOD_MOD(max); }
+
 static inline bool HAL_Encoder_ReadQuadratureCounterDirection(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_QUADIR_MASK) != 0U); }
 /* Return true if counter over flow on increment */
 static inline bool HAL_Encoder_ReadQuadratureCounterOverflowIncrement(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) != 0U); }

@@ -31,70 +31,89 @@
 #include "MotAnalogUser.h"
 #include <string.h>
 
+static inline void _MotAnalogUser_AIn_EnableEdgePin(MotAnalogUser_AIn_T * p_aIn) { p_aIn->UseEdgePin = true; Debounce_Init(&p_aIn->EdgePin, 5U); }
+
 //todo handle pin config collision
 void MotAnalogUser_Init(MotAnalogUser_T * p_user)
 {
 	if(p_user->CONFIG.P_PARAMS != 0U)
 	{
 		memcpy(&p_user->Params, p_user->CONFIG.P_PARAMS, sizeof(MotAnalogUser_Params_T));
-		Linear_ADC_Init(&p_user->UnitThrottle, p_user->Params.ThrottleZero_Adcu, p_user->Params.ThrottleMax_Adcu, 1000U);
-		Linear_ADC_Init(&p_user->UnitBrake, p_user->Params.BrakeZero_Adcu, p_user->Params.BrakeMax_Adcu, 1000U);
+		Linear_ADC_Init(&p_user->ThrottleAIn.Units, p_user->Params.ThrottleZero_Adcu, p_user->Params.ThrottleMax_Adcu, 1000U);
+		Linear_ADC_Init(&p_user->BrakeAIn.Units, p_user->Params.BrakeZero_Adcu, p_user->Params.BrakeMax_Adcu, 1000U);
 	}
 	else
 	{
-		Linear_ADC_Init(&p_user->UnitThrottle, 0U, 4095U, 1000U);
-		Linear_ADC_Init(&p_user->UnitBrake, 0U, 4095U, 1000U);
+		Linear_ADC_Init(&p_user->ThrottleAIn.Units, 0U, 4095U, 1000U);
+		Linear_ADC_Init(&p_user->BrakeAIn.Units, 0U, 4095U, 1000U);
 	}
 
 	Debounce_Init(&p_user->ReversePin, 5U);
 	if(p_user->Params.UseForwardPin == true) 			{ Debounce_Init(&p_user->ForwardPin, 5U); }
 	if(p_user->Params.UseNeutralPin == true) 			{ Debounce_Init(&p_user->NeutralPin, 5U); }
-	if(p_user->Params.UseThrottleEdgePin == true) 		{ Debounce_Init(&p_user->ThrottleEdgePin, 5U); }
-	if(p_user->Params.UseBrakeEdgePin == true) 			{ Debounce_Init(&p_user->BrakeEdgePin, 5U); }
+	if(p_user->Params.UseThrottleEdgePin == true) 		{ _MotAnalogUser_AIn_EnableEdgePin(&p_user->ThrottleAIn); }
+	if(p_user->Params.UseBrakeEdgePin == true) 			{ _MotAnalogUser_AIn_EnableEdgePin(&p_user->BrakeAIn); }
 	if(p_user->Params.UseBistateBrakePin == true) 		{ Debounce_Init(&p_user->BistateBrakePin, 5U); }
-	if(p_user->Params.UseThrottleSafetyPin == true) 	{ Debounce_Init(&p_user->ThrottleSafetyPin, 5U); }
+	// if(p_user->Params.UseThrottleSafetyPin == true) 	{ Debounce_Init(&p_user->ThrottleSafetyPin, 5U); }
+	// MotAnalogUser_SetPinInvert(p_user, p_user->Params.InvertPins);
 
-	MotAnalogUser_SetPinInvert(p_user, p_user->Params.InvertPins);
-
-	p_user->ThrottlePrev_Frac16 = 0U;
-	p_user->Throttle_Frac16 = 0U;
-	p_user->BrakePrev_Frac16 = 0U;
-	p_user->Brake_Frac16 = 0U;
+	p_user->ThrottleAIn.ValuePrev_Frac16 = 0U;
+	p_user->ThrottleAIn.Value_Frac16 = 0U;
+	p_user->BrakeAIn.Value_Frac16 = 0U;
+	p_user->BrakeAIn.ValuePrev_Frac16 = 0U;
 }
 
-void MotAnalogUser_SetParams(MotAnalogUser_T * p_user, const MotAnalogUser_Params_T * p_param)
-{
-	memcpy(&p_user->Params, p_param, sizeof(MotAnalogUser_Params_T));
-}
+/* Set Parameters */
+// void MotAnalogUser_SetParams(MotAnalogUser_T * p_user, const MotAnalogUser_Params_T * p_param)
+// {
+// 	memcpy(&p_user->Params, p_param, sizeof(MotAnalogUser_Params_T));
+// }
 
+/*
+	// Non Propagating set. Reboot for Pin HAL config to take effect.
+	todo prevent set if P_HAL_PIN == 0U
+*/
+// void MotAnalogUser_SetParamsBrakeAIn(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useBrakeEdgePin) //range error
+// {
+// 	p_user->Params.BrakeZero_Adcu = zero_Adcu;
+// 	p_user->Params.BrakeMax_Adcu = max_Adcu;
+// 	p_user->Params.UseBrakeEdgePin = useBrakeEdgePin;
+// }
+
+/*
+	Propagating set.
+*/
 void MotAnalogUser_SetBrakeRange(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
 {
 	p_user->Params.BrakeZero_Adcu = zero_Adcu;
 	p_user->Params.BrakeMax_Adcu = max_Adcu;
-	Linear_ADC_Init(&p_user->UnitBrake, p_user->Params.BrakeZero_Adcu, p_user->Params.BrakeMax_Adcu, 1000U);
+
+	// if propagate
+	Linear_ADC_Init(&p_user->BrakeAIn.Units, zero_Adcu, max_Adcu, 1000U);
 }
 
 void MotAnalogUser_SetThrottleRange(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
 {
 	p_user->Params.ThrottleZero_Adcu = zero_Adcu;
 	p_user->Params.ThrottleMax_Adcu = max_Adcu;
-	Linear_ADC_Init(&p_user->UnitThrottle, p_user->Params.ThrottleZero_Adcu, p_user->Params.ThrottleMax_Adcu, 1000U);
+	Linear_ADC_Init(&p_user->ThrottleAIn.Units, zero_Adcu, max_Adcu, 1000U);
 }
 
-/*
-	Non Propagating set. Reboot for Pin HAL config to take effect.
-	todo prevent set if P_HAL_PIN == 0U
-*/
-void MotAnalogUser_SetBrakeAdc(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useBrakeEdgePin) //range error
+void MotAnalogUser_SetBrakeAIn(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useBrakeEdgePin) //range error
 {
 	MotAnalogUser_SetBrakeRange(p_user, zero_Adcu, max_Adcu);
 	p_user->Params.UseBrakeEdgePin = useBrakeEdgePin;
+	// if propagate
+	p_user->BrakeAIn.UseEdgePin = useBrakeEdgePin;
+	if(useBrakeEdgePin == true) { _MotAnalogUser_AIn_EnableEdgePin(&p_user->BrakeAIn); }
 }
 
-void MotAnalogUser_SetThrottleAdc(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useThrottleEdgePin) //range error
+void MotAnalogUser_SetThrottleAIn(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useThrottleEdgePin) //range error
 {
 	MotAnalogUser_SetThrottleRange(p_user, zero_Adcu, max_Adcu);
 	p_user->Params.UseThrottleEdgePin = useThrottleEdgePin;
+	p_user->ThrottleAIn.UseEdgePin = useThrottleEdgePin;
+	if(useThrottleEdgePin == true) { _MotAnalogUser_AIn_EnableEdgePin(&p_user->ThrottleAIn); }
 }
 
 // void MotAnalogUser_SetBrakeUnits_Frac16(MotAnalogUser_T * p_user, uint16_t zero_ , uint16_t max_ )
@@ -106,10 +125,10 @@ void MotAnalogUser_SetBistateBrake(MotAnalogUser_T * p_user, bool useBistateBrak
 	p_user->Params.BistateBrakeValue_Frac16 = bistateBrakeIntensity_Frac16;
 }
 
-void MotAnalogUser_SetThrottleSafety(MotAnalogUser_T * p_user, bool useThrottleSafety)
-{
-	p_user->Params.UseThrottleSafetyPin = useThrottleSafety;
-}
+// void MotAnalogUser_SetThrottleSafety(MotAnalogUser_T * p_user, bool useThrottleSafety)
+// {
+// 	p_user->Params.UseThrottleSafetyPin = useThrottleSafety;
+// }
 
 void MotAnalogUser_SetDirectionPins(MotAnalogUser_T * p_user, MotAnalogUser_DirectionPins_T pins)
 {
@@ -134,17 +153,17 @@ void MotAnalogUser_SetDirectionPins(MotAnalogUser_T * p_user, MotAnalogUser_Dire
 	}
 }
 
-void MotAnalogUser_SetPinInvert(MotAnalogUser_T * p_user, MotAnalogUser_InvertPins_T invertPins)
-{
-	if(p_user->Params.InvertPins.State != invertPins.State)
-	{
-		p_user->Params.InvertPins.State = invertPins.State;
-		(invertPins.BistateBrake == true) ? Debounce_EnableInvert(&p_user->BistateBrakePin) : Debounce_DisableInvert(&p_user->BistateBrakePin);
-		(invertPins.Reverse == true) ? Debounce_EnableInvert(&p_user->ReversePin) : Debounce_DisableInvert(&p_user->ReversePin);
-		(invertPins.Forward == true) ? Debounce_EnableInvert(&p_user->ForwardPin) : Debounce_DisableInvert(&p_user->ForwardPin);
-		(invertPins.Neutral == true) ? Debounce_EnableInvert(&p_user->NeutralPin) : Debounce_DisableInvert(&p_user->NeutralPin);
-		(invertPins.BrakeEdge == true) ? Debounce_EnableInvert(&p_user->BrakeEdgePin) : Debounce_DisableInvert(&p_user->BrakeEdgePin);
-		(invertPins.ThrottleEdge == true) ? Debounce_EnableInvert(&p_user->ThrottleEdgePin) : Debounce_DisableInvert(&p_user->ThrottleEdgePin);
-	}
-}
+// void MotAnalogUser_SetPinInvert(MotAnalogUser_T * p_user, MotAnalogUser_InvertPins_T invertPins)
+// {
+// 	if(p_user->Params.InvertPins.State != invertPins.State)
+// 	{
+// 		p_user->Params.InvertPins.State = invertPins.State;
+// 		(invertPins.BistateBrake == true) ? Debounce_EnableInvert(&p_user->BistateBrakePin) : Debounce_DisableInvert(&p_user->BistateBrakePin);
+// 		(invertPins.Reverse == true) ? Debounce_EnableInvert(&p_user->ReversePin) : Debounce_DisableInvert(&p_user->ReversePin);
+// 		(invertPins.Forward == true) ? Debounce_EnableInvert(&p_user->ForwardPin) : Debounce_DisableInvert(&p_user->ForwardPin);
+// 		(invertPins.Neutral == true) ? Debounce_EnableInvert(&p_user->NeutralPin) : Debounce_DisableInvert(&p_user->NeutralPin);
+// 		(invertPins.BrakeEdge == true) ? Debounce_EnableInvert(&p_user->BrakeEdgePin) : Debounce_DisableInvert(&p_user->BrakeEdgePin);
+// 		(invertPins.ThrottleEdge == true) ? Debounce_EnableInvert(&p_user->ThrottleEdgePin) : Debounce_DisableInvert(&p_user->ThrottleEdgePin);
+// 	}
+// }
 

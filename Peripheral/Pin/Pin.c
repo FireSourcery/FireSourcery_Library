@@ -30,9 +30,20 @@
 /******************************************************************************/
 #include "Pin.h"
 
-void Pin_Output_Init(Pin_T * p_pin) 	{ HAL_Pin_InitOutput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); HAL_Pin_WriteOutputOff(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); p_pin->IsInvert = false;}
-void Pin_Input_Init(Pin_T * p_pin) 		{ HAL_Pin_InitInput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); p_pin->IsInvert = false;}
+void Pin_Output_Init(Pin_T * p_pin)
+{
+	HAL_Pin_InitOutput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin));
+	HAL_Pin_WriteOutputOff(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin));
+	// p_pin->IsInvert = false;
+}
+
+void Pin_Input_Init(Pin_T * p_pin)
+{
+	HAL_Pin_InitInput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin));
+	// p_pin->IsInvert = false;
+}
+
 void Pin_Deinit(const Pin_T * p_pin)  	{ HAL_Pin_Deinit(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin));}
 
-void Pin_EnableInvert(Pin_T * p_pin) 	{ p_pin->IsInvert = true; }
-void Pin_DisableInvert(Pin_T * p_pin) 	{ p_pin->IsInvert = false; }
+// void Pin_EnableInvert(Pin_T * p_pin) 	{ p_pin->IsInvert = true; }
+// void Pin_DisableInvert(Pin_T * p_pin) 	{ p_pin->IsInvert = false; }

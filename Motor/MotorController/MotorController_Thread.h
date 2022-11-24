@@ -54,8 +54,8 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 	/* Assume no input cmd priority level (although implemented) */
 	switch(cmd)
 	{
-		case MOT_ANALOG_USER_CMD_SET_BRAKE:					MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrakeValue(&p_mc->AnalogUser));			break;
-		case MOT_ANALOG_USER_CMD_SET_THROTTLE:				MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottleValue(&p_mc->AnalogUser));	break;
+		case MOT_ANALOG_USER_CMD_SET_BRAKE:					MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_mc->AnalogUser));			break;
+		case MOT_ANALOG_USER_CMD_SET_THROTTLE:				MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottle(&p_mc->AnalogUser));	break;
 		case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:			MotorController_User_SetCmdZero(p_mc);															break;
 		case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:		MotorController_User_SetCmdZero(p_mc);															break;
 		case MOT_ANALOG_USER_CMD_PROC_ZERO:					MotorController_User_SetCmdZero(p_mc);															break;

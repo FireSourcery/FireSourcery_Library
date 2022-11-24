@@ -39,10 +39,8 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 	HAL_Encoder_InitCaptureTime
 	(
 		p_encoder->CONFIG.P_HAL_ENCODER,
-		p_encoder->PhaseA.CONFIG.P_HAL_PIN,
-		p_encoder->PhaseA.CONFIG.ID,
-		p_encoder->PhaseB.CONFIG.P_HAL_PIN,
-		p_encoder->PhaseB.CONFIG.ID
+		p_encoder->PhaseA.CONFIG.P_HAL_PIN, p_encoder->PhaseA.CONFIG.ID,
+		p_encoder->PhaseB.CONFIG.P_HAL_PIN, p_encoder->PhaseB.CONFIG.ID
 	);
 
 	// Pin_Input_Init(&p_encoder->PhaseA);

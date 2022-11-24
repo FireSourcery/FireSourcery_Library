@@ -53,18 +53,18 @@ typedef struct Debounce_Tag
 }
 Debounce_T;
 
-#define DEBOUNCE_INIT(p_PinHal, PinId, p_Timer) 	\
-{													\
-	.CONFIG =  { .P_TIMER = p_Timer, },				\
-	.Pin = PIN_INIT(p_PinHal, PinId),				\
+#define DEBOUNCE_INIT(p_PinHal, PinId, PinIsInvert, p_Timer) 	\
+{																\
+	.CONFIG =  { .P_TIMER = p_Timer, },							\
+	.Pin = PIN_INIT_INVERT(p_PinHal, PinId, PinIsInvert),		\
 }
 
 static inline bool Debounce_GetState(const Debounce_T * p_debounce) 	{ return p_debounce->DebouncedState;}
 static inline bool Debounce_GetRawState(const Debounce_T * p_debounce) 	{ return p_debounce->RawStatePrev; }
 
 static inline void Debounce_SetTime(Debounce_T * p_debounce, uint16_t millis) { p_debounce->DebounceTime = millis; }
-static inline void Debounce_EnableInvert(Debounce_T * p_debounce) { Pin_EnableInvert(&p_debounce->Pin); }
-static inline void Debounce_DisableInvert(Debounce_T * p_debounce) { Pin_DisableInvert(&p_debounce->Pin); }
+// static inline void Debounce_EnableInvert(Debounce_T * p_debounce) { Pin_EnableInvert(&p_debounce->Pin); }
+// static inline void Debounce_DisableInvert(Debounce_T * p_debounce) { Pin_DisableInvert(&p_debounce->Pin); }
 
 extern void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime);
 extern bool Debounce_CaptureState(Debounce_T * p_debounce);
