@@ -48,8 +48,7 @@ static inline const uint8_t * CalcOpCmdAddress(const NvMemory_T * p_this, const 
 #ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE
 	return (uint8_t *)((uint32_t)p_dest + p_this->p_OpPartition->OP_ADDRESS_OFFSET);
 #elif defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE)
-	(void)p_this;
-	return p_dest;
+	(void)p_this; return p_dest;
 #endif
 }
 
@@ -64,6 +63,10 @@ static inline bool StartOpCmd(const NvMemory_T * p_this, size_t opIndex)
 	// p_this->StartCmd(p_this->CONFIG.P_HAL, p_cmdDest, p_cmdData, units);
 	/* typedef void (*HAL_NvMemory_StartCmd_T)(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units); */
 	p_this->StartCmd(p_this->CONFIG.P_HAL, CalcOpCmdAddress(p_this, &p_this->p_OpDest[opIndex]), &p_this->p_OpData[opIndex], p_this->UnitsPerCmd);
+
+	/* SetCmd need not reside in RAM  */
+	// p_this->SetCmd(p_this->CONFIG.P_HAL, CalcOpCmdAddress(p_this, &p_this->p_OpDest[opIndex]), &p_this->p_OpData[opIndex], p_this->UnitsPerCmd);
+	// p_this->CONFIG.START_CMD();
 
 	return (p_this->CONFIG.READ_ERROR_FLAGS(p_this->CONFIG.P_HAL) == false);
 }
@@ -306,6 +309,29 @@ NvMemory_Status_T NvMemory_SetOpSourceData(NvMemory_T * p_this, const uint8_t * 
 	Blocking Implementations
 */
 /******************************************************************************/
+// static NvMemory_Status_T ProcOp_Blocking(NvMemory_T * p_this) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+// static NvMemory_Status_T ProcOp_Blocking(NvMemory_T * p_this)
+// {
+// 	NvMemory_Status_T status;
+
+// 	p_this->CONFIG.START_CMD(p_this->CONFIG.P_HAL);
+// 	if(p_this->CONFIG.READ_ERROR_FLAGS(p_this->CONFIG.P_HAL) == false)
+// 	{
+// 		while(p_this->CONFIG.READ_COMPLETE_FLAG(p_this->CONFIG.P_HAL) == false)
+// 		{
+// 			if(p_this->CONFIG.READ_ERROR_FLAGS(p_this->CONFIG.P_HAL) == true) { status = NV_MEMORY_STATUS_ERROR_CMD; break; }
+// 			if(p_this->Yield != 0U) { p_this->Yield(p_this->p_CallbackData); }
+// 		}
+// 		status = NV_MEMORY_STATUS_SUCCESS;
+// 	}
+// 	else
+// 	{
+// 		status = NV_MEMORY_STATUS_ERROR_CMD;
+// 	}
+
+// 	return status;
+// }
+
 NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
 {
 	NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
@@ -316,6 +342,21 @@ NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
 
 		for(size_t opIndex = 0U; opIndex < p_this->OpSize; opIndex += p_this->BytesPerCmd)
 		{
+			// if(SetOpCmd(p_this, opIndex) == true)
+			// {
+			// 	status = ProcOp_Blocking(p_this);
+			// 	if(status == NV_MEMORY_STATUS_SUCCESS)
+			// 	{
+			// 		if(p_this->FinalizeCmd != 0U)
+			// 		{
+			// 			status = p_this->FinalizeCmd(p_this, opIndex);
+			// 			if(status != NV_MEMORY_STATUS_SUCCESS) { break; }
+			// 		}
+			// 	}
+			// 	else { break; }
+			// }
+			// else { break; }
+
 			if(StartOpCmd(p_this, opIndex) == true)
 			{
 				while(p_this->CONFIG.READ_COMPLETE_FLAG(p_this->CONFIG.P_HAL) == false)

@@ -39,7 +39,7 @@ static inline void Encoder_CaptureDeltaT_ISR(Encoder_T * p_encoder)
 	{
 		HAL_Encoder_ClearPinFlagPhaseB(p_encoder->CONFIG.P_HAL_ENCODER, 0);
 	}
-	else if(HAL_Encoder_ReadPinFlagIndex(p_encoder->CONFIG.P_HAL_ENCODER) == true)
+	else if(HAL_Encoder_ReadPinFlagIndex(p_encoder->CONFIG.P_HAL_ENCODER, 0) == true)
 	{
 		Encoder_OnIndex_ISR(p_encoder);
 	}

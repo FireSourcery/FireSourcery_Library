@@ -101,17 +101,17 @@ static inline uint32_t Encoder_Motor_InterpolateElectricalDelta(Encoder_T * p_en
 */
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToInterpolationFreq(Encoder_T * p_encoder, uint16_t mechRpm)
 {
-	return Encoder_DeltaT_ConvertRotationalSpeedToInterpolationFreq_RPM(p_encoder, mechRpm);
+	return Encoder_DeltaT_ConvertRotationalSpeedToInterpolationCount_RPM(p_encoder, mechRpm);
 }
 
 static inline uint32_t Encoder_Motor_ConvertInterpolationFreqToMechanicalRpm(Encoder_T * p_encoder, uint16_t controlPeriods)
 {
-	return Encoder_DeltaT_ConvertInterpolationFreqToRotationalSpeed_RPM(p_encoder, controlPeriods);
+	return Encoder_DeltaT_ConvertInterpolationCountToRotationalSpeed_RPM(p_encoder, controlPeriods);
 }
 
 static inline uint32_t Encoder_Motor_GetInterpolationFreq(Encoder_T *p_encoder)
 {
-	return Encoder_DeltaT_GetInterpolationFreq(p_encoder);
+	return Encoder_DeltaT_GetInterpolationCount(p_encoder);
 }
 
 

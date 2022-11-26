@@ -221,11 +221,10 @@ static inline uint32_t Encoder_DeltaD_ConvertToAngularSpeed(Encoder_T * p_encode
 }
 
 /*
- * Speed to DeltaD conversions use
- *
- * unitsAngularSpeed => DELTA_D_SAMPLE_FREQ 1000Hz
- *
- */
+	Speed to DeltaD conversions use
+
+	unitsAngularSpeed => DELTA_D_SAMPLE_FREQ 1000Hz
+*/
 static inline uint32_t Encoder_DeltaD_ConvertFromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
 {
 	return (rpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / (60 * p_encoder->UnitAngularSpeed);
@@ -240,7 +239,7 @@ static inline uint32_t Encoder_DeltaD_ConvertToRotationalSpeed_RPM(Encoder_T * p
 
 static inline uint32_t Encoder_DeltaD_GetUnitSpeed(Encoder_T * p_encoder)
 {
-	return Encoder_CalcUnitSpeed(p_encoder, p_encoder->DeltaD, 1U);
+	return Encoder_CalcFrac16Speed(p_encoder, p_encoder->DeltaD, 1U);
 }
 
 

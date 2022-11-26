@@ -31,7 +31,7 @@
 #include "Encoder.h"
 
 /*!
-	highest precision (factor << leftShift / divisor) without overflow
+	highest precision (factor << targetShift / divisor) without overflow
 */
 static uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uint8_t targetShift)
 {
@@ -145,8 +145,25 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 }
 
 /*
+	(1 / POLLING_FREQ) < (0xFFFF / DELTA_T_TIMER_FREQ), (for 16-bit timer)
+	(1 / SPEED_SAMPLE_FREQ) < (0xFFFF / DELTA_T_TIMER_FREQ)
+
+	For 1000Hz (1ms) SPEED_SAMPLE_FREQ and ExtendedTimer, DELTA_T_TIMER_FREQ must be < 65MHz for 16-bit Timer
+
+	DELTA_T_TIMER_FREQ ~= 10,000 x CPR
+		=> RPM Min ~= 10RPM
+		=> 10000RPM error 1%
+*/
+void _Encoder_ResetTimerFreq(Encoder_T * p_encoder)
+{
+	p_encoder->UnitT_Freq = HAL_Encoder_ConfigTimerCounterFreq(p_encoder, p_encoder->Params.CountsPerRevolution * 10000U);
+	// p_encoder->ExtendedTimerThreshold = ((uint32_t)CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->UnitT_Freq;
+	p_encoder->ExtendedTimerConversion = p_encoder->UnitT_Freq / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
+}
+
+/*
 	reset runtime variables
-	todo check nessescity, split t/d mode
+	todo check necessity, split t/d mode
 */
 void Encoder_Zero(Encoder_T * p_encoder)
 {
@@ -180,6 +197,7 @@ void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRev
 {
 	p_encoder->Params.CountsPerRevolution = countsPerRevolution;
 	_Encoder_ResetUnitsAngular(p_encoder);
+	_Encoder_ResetTimerFreq(p_encoder);
 }
 
 void Encoder_SetDistancePerCount(Encoder_T * p_encoder, uint16_t distancePerCount)

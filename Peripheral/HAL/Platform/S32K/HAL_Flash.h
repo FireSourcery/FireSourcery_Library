@@ -188,7 +188,7 @@ static inline void _HAL_Flash_WriteCmdDest(HAL_Flash_T * p_regs, const uint8_t *
 	FTFx_FCCOB3 = GET_BIT_0_7(p_dest);
 }
 
-static inline void _HAL_Flash_WriteCmdWriteData(HAL_Flash_T * p_regs, const uint8_t * p_data)
+static inline void _HAL_Flash_WriteCmdData(HAL_Flash_T * p_regs, const uint8_t * p_data)
 {
 	for(uint8_t iByte = 0U; iByte < HAL_FLASH_UNIT_WRITE_SIZE; iByte++)
 	{
@@ -196,8 +196,8 @@ static inline void _HAL_Flash_WriteCmdWriteData(HAL_Flash_T * p_regs, const uint
 	}
 }
 
-static inline void _HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static inline void _HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs)
+static inline void HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static inline void HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs)
 {
 	(void)p_regs;
 	FTFC_FSTAT |= FTFC_FSTAT_CCIF_MASK;
@@ -206,18 +206,18 @@ static inline void _HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs)
 /*
 	API Common
 */
-static inline bool HAL_Flash_ReadCompleteFlag(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static inline bool HAL_Flash_ReadCompleteFlag(HAL_Flash_T * p_regs)
+static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs)
 {
 	(void)p_regs;
-	return ((FTFC_FSTAT & FTFC_FSTAT_CCIF_MASK) != 0U) ? true : false;
+	return ((FTFC_FSTAT & FTFC_FSTAT_CCIF_MASK) != 0U);
 }
 
-static inline bool HAL_Flash_ReadErrorFlags(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static inline bool HAL_Flash_ReadErrorFlags(HAL_Flash_T * p_regs)
+static inline bool HAL_Flash_ReadErrorFlags(const HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static inline bool HAL_Flash_ReadErrorFlags(const HAL_Flash_T * p_regs)
 {
 	(void)p_regs;
-	return ((FTFC_FSTAT & (FTFC_FSTAT_MGSTAT0_MASK | FTFC_FSTAT_FPVIOL_MASK | FTFC_FSTAT_ACCERR_MASK | FTFC_FSTAT_RDCOLERR_MASK)) != 0U) ? true : false;
+	return ((FTFC_FSTAT & (FTFC_FSTAT_MGSTAT0_MASK | FTFC_FSTAT_FPVIOL_MASK | FTFC_FSTAT_ACCERR_MASK | FTFC_FSTAT_RDCOLERR_MASK)) != 0U);
 }
 
 //static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
@@ -228,22 +228,22 @@ static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs)
 }
 
 //static inline bool HAL_Flash_ReadErrorVerifyFlag(HAL_Flash_T *p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static inline bool HAL_Flash_ReadErrorVerifyFlag(HAL_Flash_T * p_regs)
+static inline bool HAL_Flash_ReadErrorVerifyFlag(const HAL_Flash_T * p_regs)
 {
 	(void)p_regs;
-	return ((FTFC_FSTAT & (FTFC_FSTAT_MGSTAT0_MASK)) != 0U) ? true : false;
+	return ((FTFC_FSTAT & (FTFC_FSTAT_MGSTAT0_MASK)) != 0U);
 }
 
-static inline bool HAL_Flash_ReadErrorProtectionFlag(HAL_Flash_T * p_regs)
+static inline bool HAL_Flash_ReadErrorProtectionFlag(const HAL_Flash_T * p_regs)
 {
 	(void)p_regs;
 	return (FTFC_FSTAT & (FTFC_FSTAT_MGSTAT0_MASK | FTFC_FSTAT_FPVIOL_MASK));
 }
 
-static inline bool HAL_Flash_ReadSecurityFlag(HAL_Flash_T * p_regs)
+static inline bool HAL_Flash_ReadSecurityFlag(const HAL_Flash_T * p_regs)
 {
 	(void)p_regs;
-	return ((FTFx_FSEC & FTFC_FSEC_SEC_MASK) != FTFC_FSEC_SEC(0x02U)) ? true : false;
+	return ((FTFx_FSEC & FTFC_FSEC_SEC_MASK) != FTFC_FSEC_SEC(0x02U));
 }
 
 /*
@@ -253,15 +253,15 @@ static inline void HAL_Flash_StartCmdWritePage(HAL_Flash_T * p_regs, const uint8
 {
 	FTFx_FCCOB0 = FTFx_PROGRAM_PHRASE;
 	_HAL_Flash_WriteCmdDest(p_regs, p_dest);
-	_HAL_Flash_WriteCmdWriteData(p_regs, p_data);
-	_HAL_Flash_WriteCmdStart(p_regs);
+	_HAL_Flash_WriteCmdData(p_regs, p_data);
+	HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdEraseSector(HAL_Flash_T * p_regs, const uint8_t * p_dest)
 {
 	FTFx_FCCOB0 = FTFx_ERASE_SECTOR;
 	_HAL_Flash_WriteCmdDest(p_regs, p_dest);
-	_HAL_Flash_WriteCmdStart(p_regs);
+	HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdVerifyWriteUnit(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
@@ -273,7 +273,7 @@ static inline void HAL_Flash_StartCmdVerifyWriteUnit(HAL_Flash_T * p_regs, const
 	{
 		p_regs->FCCOB[iByte + 0x08U] = p_data[iByte]; // ((uint8_t *)FTFx_BASE)[iByte + 0x0CU] = p_data[iByte];
 	}
-	_HAL_Flash_WriteCmdStart(p_regs);
+	HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdVerifyEraseUnit(HAL_Flash_T * p_regs, const uint8_t * p_dest)
@@ -283,7 +283,7 @@ static inline void HAL_Flash_StartCmdVerifyEraseUnit(HAL_Flash_T * p_regs, const
 	FTFx_FCCOB4 = GET_BIT_8_15(0U);
 	FTFx_FCCOB5 = GET_BIT_0_7(1U);
 	FTFx_FCCOB6 = 1U; //CONFIG_HAL_FLASH_MARGIN_LEVEL
-	_HAL_Flash_WriteCmdStart(p_regs);
+	HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, const uint8_t * p_dest, uint16_t units)
@@ -293,7 +293,7 @@ static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, cons
 	FTFx_FCCOB4 = GET_BIT_8_15(units);
 	FTFx_FCCOB5 = GET_BIT_0_7(units);
 	FTFx_FCCOB6 = 1U; //CONFIG_HAL_FLASH_MARGIN_LEVEL
-	_HAL_Flash_WriteCmdStart(p_regs);
+	HAL_Flash_WriteCmdStart(p_regs);
 }
 
 /*
@@ -309,8 +309,8 @@ static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, const uint8
 	uint8_t recordIndex = (p_dest - (uint8_t *)S32K_FLASH_PROGRAM_ONCE_START) / S32K_FLASH_PHRASE_SIZE;
 	FTFx_FCCOB0 = FTFx_PROGRAM_ONCE;
 	FTFx_FCCOB1 = recordIndex;
-	_HAL_Flash_WriteCmdWriteData(p_regs, p_data);
-	_HAL_Flash_WriteCmdStart(p_regs);
+	_HAL_Flash_WriteCmdData(p_regs, p_data);
+	HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, const uint8_t * p_dest)
@@ -318,7 +318,7 @@ static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, const uint8_
 	uint8_t recordIndex = (p_dest - (uint8_t *)S32K_FLASH_PROGRAM_ONCE_START) / S32K_FLASH_PHRASE_SIZE;
 	FTFx_FCCOB0 = FTFx_READ_ONCE;
 	FTFx_FCCOB1 = recordIndex;
-	_HAL_Flash_WriteCmdStart(p_regs);
+	HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_ReadOnceData(HAL_Flash_T * p_regs, uint8_t * p_result)
@@ -332,7 +332,7 @@ static inline void HAL_Flash_ReadOnceData(HAL_Flash_T * p_regs, uint8_t * p_resu
 static inline void HAL_Flash_StartCmdEraseAll(HAL_Flash_T * p_regs)
 {
 	FTFx_FCCOB0 = FTFx_ERASE_ALL_BLOCK;
-	_HAL_Flash_WriteCmdStart(p_regs);
+	HAL_Flash_WriteCmdStart(p_regs);
 }
 
 static inline void HAL_Flash_Init(HAL_Flash_T * p_regs)

@@ -119,6 +119,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
+#if defined(CONFIG_ENCODER_HW_QUADRATURE_CAPTURE)
 			if(procSpeed == true)
 			{
 				Encoder_DeltaD_Capture(&p_motor->Encoder); /* Capture position and speed */
@@ -128,10 +129,18 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			{
 				Encoder_DeltaD_CaptureAngle(&p_motor->Encoder); /* Capture position only */
 			}
+#elif defined(CONFIG_ENCODER_HW_QUADRATURE_DISABLED)
+			/* Capture in ISR */
+			if(procSpeed == true)
+			{
+				Motor_PollDeltaTStop(p_motor);
+				speedFeedback_Frac16 = Encoder_DeltaT_GetFrac16Speed(&p_motor->Encoder);
+				// speedFeedback_Frac16 = Encoder_DeltaT_GetUnitSpeedAvg(&p_motor->Encoder);
+			}
+#endif
 			/* Encoder_Motor_GetElectricalTheta return [0, 65535] maps directly to negative portions of qangle16_t */
 			electricalAngle = (qangle16_t)Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);
-
-			//reset peakbemf
+			//reset peak bemf
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:
@@ -164,7 +173,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 				if(procSpeed == true) { Motor_PollDeltaTStop(p_motor); } /* Use as indicator for once per millis */
 			}
 
-			if(procSpeed == true) { speedFeedback_Frac16 = Encoder_DeltaT_GetUnitSpeed(&p_motor->Encoder); }
+			if(procSpeed == true) { speedFeedback_Frac16 = Encoder_DeltaT_GetFrac16Speed(&p_motor->Encoder); }
 			// speedFeedback_Frac16 = _Motor_FOC_CaptureAngleSpeed(p_motor, electricalAngle);
 
 			break;
@@ -370,7 +379,8 @@ static inline void _Motor_FOC_SetOutputMatch(Motor_T * p_motor, int32_t iq, int3
 
 	if(p_motor->FeedbackModeFlags.VFreqScalar != 1U)
 	{
-		(p_motor->FeedbackModeFlags.Speed == 1U) ? Motor_SetSpeedOutput(p_motor, userOutput) : Motor_SetRampOutput(p_motor, userOutput);
+		if(p_motor->FeedbackModeFlags.Speed == 1U) 	{ Motor_SetSpeedOutput(p_motor, userOutput); }
+		else 										{ Motor_SetRampOutput(p_motor, userOutput); }
 	}
 	else
 	{

@@ -51,32 +51,15 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 		memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T));
 	}
 
-	p_encoder->UnitT_Freq = p_encoder->CONFIG.DELTA_T_TIMER_FREQ;
+	// p_encoder->UnitT_Freq = p_encoder->CONFIG.DELTA_T_TIMER_FREQ;
+
+	_Encoder_ResetTimerFreq(p_encoder);
 	_Encoder_ResetUnitsAngular(p_encoder);
 	_Encoder_ResetUnitsLinear(p_encoder);
 	_Encoder_ResetUnitsScalarSpeed(p_encoder);
 
 	Encoder_Zero(p_encoder);
 	Encoder_DeltaT_SetInitial(p_encoder);
-}
-
-/*
-	Long timer ticks to determine short timer overflowed or stopped capture
-	p_encoder->CONFIG.EXTENDED_TIMER_FREQ should be small, < 65536
-*/
-void Encoder_DeltaT_SetExtendedTimer(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
-{
-	p_encoder->Params.ExtendedTimerDeltaTStop = effectiveStopTime_Millis * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / 1000U;
-}
-
-/*
-	Set default as 1s or 1rpm
-*/
-void Encoder_DeltaT_SetExtendedTimerDefault(Encoder_T * p_encoder)
-{
-	uint32_t timer1Second = p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
-	uint32_t timer1Rpm = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->CONFIG.DELTA_T_TIMER_FREQ;
-	p_encoder->Params.ExtendedTimerDeltaTStop = (timer1Second < timer1Rpm) ? timer1Second : timer1Rpm;
 }
 
 /*
@@ -87,14 +70,36 @@ void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 	p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX;
 	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
 	p_encoder->TimerCounterSaved = 0U;
-	// p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER) - (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U);
 	p_encoder->ExtendedTimerSaved = *p_encoder->CONFIG.P_EXTENDED_TIMER;
+	// if timer unwritable
+	// p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER) - (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U);
 }
 
 // void Encoder_DeltaT_SetInitial_RPM(Encoder_T * p_encoder, uint16_t initialRpm)
 // {
 // 	//	p_encoder->DeltaT = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, initialRpm);
 // }
+
+/*
+	Extended timer ticks to determine capture stopped
+		short timer overflow/conversion determined by TimerFreq and CountsPerRotation
+	p_encoder->CONFIG.EXTENDED_TIMER_FREQ should be small, 1000, < 65536
+*/
+void Encoder_DeltaT_SetExtendedTimerWatchStop(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
+{
+	p_encoder->Params.ExtendedTimerDeltaTStop = effectiveStopTime_Millis * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / 1000U;
+}
+
+/*
+	Set default as 1s or 1rpm
+*/
+void Encoder_DeltaT_SetExtendedTimerWatchStop_Default(Encoder_T * p_encoder)
+{
+	uint32_t timer1Second = p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
+	// uint32_t timer1Rpm = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->CONFIG.DELTA_T_TIMER_FREQ;
+	uint32_t timer1Rpm = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->UnitT_Freq;
+	p_encoder->Params.ExtendedTimerDeltaTStop = (timer1Second < timer1Rpm) ? timer1Second : timer1Rpm;
+}
 
 /*
 	Run on calibration routine

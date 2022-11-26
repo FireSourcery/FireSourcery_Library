@@ -79,7 +79,9 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 		UnitAngularSpeed = 8,000 => Max DeltaD = 536,870
 		10k RPM => DeltaD = 10000 / 60 * 8192 / 1000 = 1,532
 	*/
-	p_encoder->UnitT_Freq = p_encoder->CONFIG.DELTA_D_SAMPLE_FREQ;
+	// p_encoder->UnitT_Freq = p_encoder->CONFIG.DELTA_D_SAMPLE_FREQ;
+	p_encoder->UnitT_Freq = p_encoder->CONFIG.SPEED_SAMPLE_FREQ;
+	// _Encoder_ResetTimerFreq(p_encoder);
 	_Encoder_ResetUnitsAngular(p_encoder);
 	_Encoder_ResetUnitsLinear(p_encoder);
 	_Encoder_ResetUnitsScalarSpeed(p_encoder);

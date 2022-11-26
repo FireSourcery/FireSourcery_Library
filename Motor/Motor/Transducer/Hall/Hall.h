@@ -236,14 +236,16 @@ static inline bool Hall_PollCaptureSensors(Hall_T * p_hall)
 {
 	uint8_t sensorsNew = Hall_ReadSensors(p_hall).State;
 	bool isEdge = (sensorsNew != p_hall->SensorsRef.State);
-
-	if(isEdge)
-	{
-		p_hall->SensorsRef.State = sensorsNew;
-	}
-
+	if(isEdge) { p_hall->SensorsRef.State = sensorsNew; }
 	return (isEdge);
 }
+
+// static inline bool Hall_PollCaptureAngle(Hall_T * p_hall)
+// {
+// 	bool isEdge = Hall_PollCaptureSensors(p_hall);
+// 	if(isEdge) { p_hall->Angle = Hall_GetRotorAngle_Degrees16(&p_motor->Hall); }
+// 	return (isEdge);
+// }
 
 /*
 	Next capture is edge
