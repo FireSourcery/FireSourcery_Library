@@ -216,7 +216,7 @@ typedef struct __attribute__((aligned(2U))) MotorController_Params_Tag
 
 	uint16_t ILimitLowV_Frac16;
 	uint16_t ILimitHeat_Frac16; /* Final ILimit at HeatLimit. Proportionally effective beginning at HeatWarning */
-	// uint16_t ILimit_Frac16;	//battery max current, sset function passes to motor module
+	// uint16_t ILimit_Frac16;	//battery max current, set function passes to motor module
 
 	uint32_t Test[4U];
 }
@@ -256,11 +256,12 @@ typedef const struct MotorController_Config_Tag
 	CanBus_T * const 	P_CAN_BUS;
 #endif
 
-#if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
+// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 	Flash_T * const 	P_FLASH; 	/* Flash defined outside module, ensure flash config/params are in RAM */
-#endif
+// #endif
+#if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
 	EEPROM_T * const 	P_EEPROM;	/* defined outside for regularity */
-
+#endif
 	AnalogN_T * const P_ANALOG_N;
 	const MotAnalog_Conversions_T ANALOG_CONVERSIONS;
 
@@ -281,7 +282,7 @@ typedef struct MotorController_Tag
 	const MotorController_Config_T CONFIG;
 	MotorController_Params_T Parameters; 		/* ram copy */
 	MemMapBoot_T MemMapBoot;
-#if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_COPY_ENABLE)
+#if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_ENABLE)
 	MotorController_Manufacture_T Manufacture;
 #endif
 
@@ -322,7 +323,7 @@ typedef struct MotorController_Tag
 	// MotAnalog_Results_T FaultAnalogRecord;
 
 	// MotorController_Direction_T UserDirection;
-	/* Set by stateMachine only */
+	/* Set by StateMachine only */
 	MotorController_Direction_T ActiveDirection;
 	MotorController_SubId_T SubState;
 	NvMemory_Status_T NvmStatus;

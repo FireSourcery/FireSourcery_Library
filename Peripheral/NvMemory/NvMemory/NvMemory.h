@@ -175,6 +175,9 @@ NvMemory_T;
 	.P_BUFFER 		= p_Buffer,  						\
 	.BUFFER_SIZE 	= BufferSize,
 
+/*
+	ReadOnce must provide buffer here, or in calling function
+*/
 #define NV_MEMORY_INIT(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags, p_Partitions, PartitionsCount, p_Buffer, BufferSize)	\
 {																																						\
 	.CONFIG = 																																			\
@@ -184,7 +187,6 @@ NvMemory_T;
 		_NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)			 																						\
 	}																																					\
 }
-
 
 extern void NvMemory_Init(NvMemory_T * p_this);
 extern void NvMemory_SetYield(NvMemory_T * p_this, void (*yield)(void *), void * p_callbackData);
@@ -196,8 +198,8 @@ extern void NvMemory_SetOpFunctions(NvMemory_T * p_this, HAL_NvMemory_StartCmd_T
 extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this);
 
 extern NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize, size_t unitSize);
-extern NvMemory_Status_T NvMemory_SetOpSourceData(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
-extern NvMemory_Status_T NvMemory_SetOpSizeNoAlign(NvMemory_T * p_this, size_t opSize, size_t unitSize);
+extern NvMemory_Status_T NvMemory_SetOpDataWrite(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize, size_t unitSize);
 extern NvMemory_Status_T NvMemory_SetOpSizeAlignDown(NvMemory_T * p_this, size_t opSize, size_t unitSize);
 extern NvMemory_Status_T NvMemory_SetOpSizeAlignUp(NvMemory_T * p_this, size_t opSize, size_t unitSize);
 

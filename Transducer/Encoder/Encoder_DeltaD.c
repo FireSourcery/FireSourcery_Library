@@ -42,10 +42,8 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 	HAL_Encoder_InitCaptureCount
 	(
 		p_encoder->CONFIG.P_HAL_ENCODER,
-		p_encoder->PhaseA.CONFIG.P_HAL_PIN,
-		p_encoder->PhaseA.CONFIG.ID,
-		p_encoder->PhaseB.CONFIG.P_HAL_PIN,
-		p_encoder->PhaseB.CONFIG.ID
+		p_encoder->PhaseA.CONFIG.P_HAL_PIN,	p_encoder->PhaseA.CONFIG.ID,
+		p_encoder->PhaseB.CONFIG.P_HAL_PIN,	p_encoder->PhaseB.CONFIG.ID
 	);
 
 	if (p_encoder->CONFIG.P_PARAMS != 0U)

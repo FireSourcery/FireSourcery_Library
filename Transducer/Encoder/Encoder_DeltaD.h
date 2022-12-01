@@ -33,6 +33,34 @@
 
 #include "Encoder.h"
 
+
+/* If no HW quadrature available */
+static inline void Encoder_DeltaD_OnPhaseAB_ISR(Encoder_T * p_encoder)
+{
+	if(HAL_Encoder_ReadPinFlagPhaseA(p_encoder->CONFIG.P_HAL_ENCODER, 0) == true)
+	{
+		HAL_Encoder_ClearPinFlagPhaseA(p_encoder->CONFIG.P_HAL_ENCODER, 0);
+	}
+	else if(HAL_Encoder_ReadPinFlagPhaseB(p_encoder->CONFIG.P_HAL_ENCODER, 0) == true)
+	{
+		HAL_Encoder_ClearPinFlagPhaseB(p_encoder->CONFIG.P_HAL_ENCODER, 0);
+	}
+
+	_Encoder_CaptureAngularDIncreasing(p_encoder);
+}
+
+/*
+	Index Pin
+*/
+static inline void Encoder_DeltaD_OnIndex_ISR(Encoder_T * p_encoder)
+{
+	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
+	HAL_Encoder_ClearFlagIndex(p_encoder->CONFIG.P_HAL_ENCODER, 0);
+	HAL_Encoder_ClearPinFlagPhaseA(p_encoder->CONFIG.P_HAL_ENCODER, 0);
+	HAL_Encoder_ClearPinFlagPhaseB(p_encoder->CONFIG.P_HAL_ENCODER, 0);
+	p_encoder->AngularD = 0U;
+}
+
 /*!
 	@brief 	Capture DeltaD, per fixed changed in time, via timer periodic interrupt
 			Looping Angle Capture
@@ -46,7 +74,7 @@ static inline void Encoder_DeltaD_CaptureSinglePhase(Encoder_T * p_encoder)
 	p_encoder->DeltaD = deltaD;
 	p_encoder->AngularD = p_encoder->TimerCounterSaved;
 	p_encoder->TotalD += p_encoder->DeltaD;
-	p_encoder->TotalT += 1;
+	p_encoder->TotalT += 1U;
 }
 
 

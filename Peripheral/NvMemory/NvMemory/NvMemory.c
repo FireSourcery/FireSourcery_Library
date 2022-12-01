@@ -184,6 +184,7 @@ static inline bool CheckOpBoundary(NvMemory_T * p_this, const uint8_t * p_dest, 
 	return (p_this->p_OpPartition != 0U);
 }
 
+/* Todo template set with struct */
 /*
 	Checks Boundary and Dest Align
 */
@@ -235,14 +236,14 @@ NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest
 // 	return opSize / unitSize;
 // }
 
-NvMemory_Status_T NvMemory_SetOpSizeNoAlign(NvMemory_T * p_this, size_t opSize, size_t unitSize)
+NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize, size_t unitSize)
 {
 	NvMemory_Status_T status = (CheckAligned(opSize, unitSize) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT;
 	if(status == NV_MEMORY_STATUS_SUCCESS) { p_this->OpSize = opSize; }
 	return status;
 }
 
-/* Align Down, for write */
+/* Align Down, for write. Remainder handled in calling function */
 NvMemory_Status_T NvMemory_SetOpSizeAlignDown(NvMemory_T * p_this, size_t opSize, size_t unitSize)
 {
 	NvMemory_Status_T status;
@@ -255,7 +256,7 @@ NvMemory_Status_T NvMemory_SetOpSizeAlignDown(NvMemory_T * p_this, size_t opSize
 	}
 	else
 	{
-		status = NvMemory_SetOpSizeNoAlign(p_this, opSize, unitSize);
+		status = NvMemory_SetOpSize(p_this, opSize, unitSize);
 	}
 
 	return status;
@@ -273,7 +274,7 @@ NvMemory_Status_T NvMemory_SetOpSizeAlignUp(NvMemory_T * p_this, size_t opSize, 
 	}
 	else
 	{
-		status = NvMemory_SetOpSizeNoAlign(p_this, opSize, unitSize);
+		status = NvMemory_SetOpSize(p_this, opSize, unitSize);
 	}
 
 	return status;
@@ -291,7 +292,7 @@ static NvMemory_Status_T SetOpDataBuffer(NvMemory_T * p_this, const uint8_t * p_
 	Accepts p_source == 0 as NV_MEMORY_STATUS_SUCCESS
 		use to indicate preliminary set, for dest boundary checking
 */
-NvMemory_Status_T NvMemory_SetOpSourceData(NvMemory_T * p_this, const uint8_t * p_source, size_t size)
+NvMemory_Status_T NvMemory_SetOpDataWrite(NvMemory_T * p_this, const uint8_t * p_source, size_t size)
 {
 	NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
 
@@ -303,6 +304,7 @@ NvMemory_Status_T NvMemory_SetOpSourceData(NvMemory_T * p_this, const uint8_t * 
 
 	return status;
 }
+
 
 /******************************************************************************/
 /*!

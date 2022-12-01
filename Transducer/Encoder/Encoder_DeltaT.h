@@ -90,27 +90,27 @@ static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 	SW Quadrature
 	only when capturing a single phase of 2 phase quadrature mode, 180 degree offset. (not for 3 phase 120 degree offset)
 */
-static inline void Encoder_DeltaT_CaptureQuadrature(Encoder_T * p_encoder)
-{
-	bool phaseB = Pin_Input_Read(&p_encoder->PhaseB);
-	// #ifdef enocder hal pin read
-	// bool phaseB = HAL_Encoder_ReadPhaseB(&p_encoder->PhaseB);
+// static inline void Encoder_DeltaT_CaptureQuadrature(Encoder_T * p_encoder)
+// {
+// 	bool phaseB = Pin_Input_Read(&p_encoder->PhaseB);
+// 	// #ifdef enocder hal pin read
+// 	// bool phaseB = HAL_Encoder_ReadPhaseB(&p_encoder->PhaseB);
 
-	Encoder_DeltaT_CaptureT(p_encoder);
+// 	Encoder_DeltaT_CaptureT(p_encoder);
 
-	if (phaseB ^ p_encoder->Params.IsALeadBPositive) //check
-	{
-		_Encoder_CaptureAngularDIncreasing(p_encoder);
-		if(p_encoder->TotalD < INT32_MAX) {p_encoder->TotalD += 1U;}
-		//		p_encoder->DeltaD = 1; or set quadrature read direction
-	}
-	else
-	{
-		p_encoder->AngularD = (p_encoder->AngularD > 0U) ? p_encoder->AngularD - 1U : p_encoder->Params.CountsPerRevolution - 1U;
-		if(p_encoder->TotalD > INT32_MIN) {p_encoder->TotalD -= 1;}
-		//		p_encoder->DeltaD = -1; or set quadrature read direction
-	}
-}
+// 	if (phaseB ^ p_encoder->Params.IsALeadBPositive) //check
+// 	{
+// 		_Encoder_CaptureAngularDIncreasing(p_encoder);
+// 		if(p_encoder->TotalD < INT32_MAX) {p_encoder->TotalD += 1U;}
+// 		//		p_encoder->DeltaD = 1; or set quadrature read direction
+// 	}
+// 	else
+// 	{
+// 		p_encoder->AngularD = (p_encoder->AngularD > 0U) ? p_encoder->AngularD - 1U : p_encoder->Params.CountsPerRevolution - 1U;
+// 		if(p_encoder->TotalD > INT32_MIN) {p_encoder->TotalD -= 1;}
+// 		//		p_encoder->DeltaD = -1; or set quadrature read direction
+// 	}
+// }
 
 /*
 	Polling Capture

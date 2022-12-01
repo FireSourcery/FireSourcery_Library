@@ -48,4 +48,10 @@
 	#define CONFIG_FLASH_ATTRIBUTE_RAM_SECTION __attribute__((section (".code_ram")))
 #endif
 
+// #if 	defined(CONFIG_FLASH_ATTRIBUTE_RAM_SECTION_GCC)
+// 	#define	FLASH_ATTRIBUTE_RAM_SECTION __attribute__((section (".code_ram")))
+// #else
+
+// #endif
+
 #endif
