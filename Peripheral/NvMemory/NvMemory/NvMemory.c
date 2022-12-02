@@ -98,7 +98,7 @@ void NvMemory_Init(NvMemory_T * p_this)
 	p_this->OpIndex = 0U;
 	p_this->OpSize = 0U;
 	p_this->IsVerifyEnable = true;
-	p_this->IsOpBuffered = true;
+	p_this->IsOpBuffered = (p_this->CONFIG.BUFFER_SIZE > 0U);
 	p_this->IsForceAlignEnable = false;
 }
 

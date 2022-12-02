@@ -144,18 +144,29 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 	p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm, 16U);
 }
 
-/*
-	(1 / POLLING_FREQ) < (0xFFFF / DELTA_T_TIMER_FREQ), (for 16-bit timer)
-	(1 / SPEED_SAMPLE_FREQ) < (0xFFFF / DELTA_T_TIMER_FREQ)
 
-	For 1000Hz (1ms) SPEED_SAMPLE_FREQ and ExtendedTimer, DELTA_T_TIMER_FREQ must be < 65MHz for 16-bit Timer
-
-	DELTA_T_TIMER_FREQ ~= 10,000 x CPR
-		=> RPM Min ~= 10RPM
-		=> 10000RPM error 1%
-*/
 void _Encoder_ResetTimerFreq(Encoder_T * p_encoder)
 {
+	/*
+		RPM * CPR / 60[Seconds] = CPS
+		CPS = T_FREQ [Hz] / deltaT_ticks [timerticks/Count]
+		RPM * CPR / 60[Seconds] = T_FREQ [Hz] / deltaT_ticks
+
+		Error ~ 1, deltaT_ticks = 100
+		=> T_FREQ/CPS >= 100, (CPS/T_FREQ <= .01)
+			T_FREQ /(RPM * CPR / 60) >= 100
+		eg. RPM = 10000
+			T_FREQ >= 100*(10000RPM * CPR / 60)
+			T_FREQ >= 16666 * CPR
+
+		Min: deltaT_ticks = 65535
+			RPM = (T_FREQ / CPR) * (60 / 65535)
+			=> 15 ~= 16666 * (60 / 65535)
+
+		DELTA_T_TIMER_FREQ ~= 10000 * CPR
+			=> 10000RPM error ~1%
+			=> RPM Min ~= 10RPM
+	*/
 	p_encoder->UnitT_Freq = HAL_Encoder_ConfigTimerCounterFreq(p_encoder, p_encoder->Params.CountsPerRevolution * 10000U);
 	// p_encoder->ExtendedTimerThreshold = ((uint32_t)CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->UnitT_Freq;
 	p_encoder->ExtendedTimerConversion = p_encoder->UnitT_Freq / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;

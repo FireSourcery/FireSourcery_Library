@@ -150,7 +150,10 @@ typedef struct Encoder_Tag
 Encoder_T;
 
 
-
+/*
+	(1 / POLLING_FREQ) < (0xFFFF / DELTA_T_TIMER_FREQ), (for 16-bit timer)
+	For 1000Hz (1ms) SPEED_SAMPLE_FREQ and ExtendedTimer, DELTA_T_TIMER_FREQ must be < 65MHz for 16-bit Timer
+*/
 #define ENCODER_INIT(p_Hal_Encoder, p_PinA_Hal, PinAId, p_PinB_Hal, PinBId, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, p_Params)	\
 {														\
 	.CONFIG = 											\
