@@ -225,8 +225,6 @@ static uint16_t ConvertDegCToAdcu(Thermistor_T * p_therm, uint16_t degC)
 			break;
 	}
 
-
-
 	return adcu_r(ADC_MAX, _AdcVRef_Scalar, p_therm->Params.VIn_Scalar, p_therm->CONFIG.R_SERIES, rNet);
 }
 

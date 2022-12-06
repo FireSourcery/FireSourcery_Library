@@ -40,7 +40,6 @@
 	Mapped to Thread - Proc in All States
 */
 /******************************************************************************/
-
 static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 {
 	MotAnalogUser_Cmd_T cmd = MotAnalogUser_PollCmd(&p_mc->AnalogUser);
@@ -202,7 +201,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		switch(p_mc->Parameters.UserInputMode)
 		{
 			case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_mc);	break;
-			case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL: /* No disabling Protocol Throttle/Brake Inputs for now, Protocol mode selection only disables Analog  */
+			case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL: /* No disabling Protocol Throttle/Brake Inputs for now, Protocol mode selection only disables Analog */
 				if(MotAnalogUser_PollBrakePins(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
 				if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]) == true)
 				{
@@ -211,7 +210,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 					p_mc->FaultFlags.RxLost = 1U;
 				}
 				break;
-
+			case MOTOR_CONTROLLER_INPUT_MODE_DISABLE: break;
 			case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
 			default:  break;
 		}

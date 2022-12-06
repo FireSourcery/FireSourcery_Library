@@ -58,10 +58,6 @@ static inline uint32_t Encoder_Motor_GetElectricalDelta(Encoder_T * p_encoder)
 	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->DeltaD * p_encoder->Params.MotorPolePairs);
 }
 
-
-
-
-
 /******************************************************************************/
 /*!
 	Capture DeltaT Mode
@@ -131,7 +127,7 @@ static inline uint32_t Encoder_Motor_GetMechanicalTheta(Encoder_T * p_encoder)
  */
 static inline uint32_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
 {
-	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->AngularD * p_encoder->Params.MotorPolePairs);
+	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->AngularD * p_encoder->Params.MotorPolePairs); //todo check mod CountsPerRevolution
 }
 
 /******************************************************************************/

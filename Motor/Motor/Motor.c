@@ -241,6 +241,7 @@ void Motor_ResetUnitsVabc(Motor_T * p_motor)
 void Motor_ResetUnitsIabc(Motor_T * p_motor)
 {
 #ifdef CONFIG_MOTOR_I_SENSORS_INVERT
+// alternatively p_motor->CONFIG.I_ZERO_TO_PEAK_ADCU
 	Linear_ADC_Init_Inverted(&p_motor->UnitIa, p_motor->Parameters.IaZeroRef_Adcu, p_motor->Parameters.IaZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu, p_motor->CONFIG.I_MAX_AMP);
 	Linear_ADC_Init_Inverted(&p_motor->UnitIb, p_motor->Parameters.IbZeroRef_Adcu, p_motor->Parameters.IbZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu, p_motor->CONFIG.I_MAX_AMP);
 	Linear_ADC_Init_Inverted(&p_motor->UnitIc, p_motor->Parameters.IcZeroRef_Adcu, p_motor->Parameters.IcZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu, p_motor->CONFIG.I_MAX_AMP);

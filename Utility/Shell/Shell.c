@@ -143,7 +143,6 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 			}
 			break;
 
-
 		case SHELL_STATE_INACTIVE:
 			break;
 

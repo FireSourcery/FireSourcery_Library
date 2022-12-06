@@ -231,6 +231,9 @@ NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest
 	return status;
 }
 
+/*
+	Unit is granularity. UnitsPerCmd is data size each cmd cycle
+*/
 // static inline size_t CalcUnitsPerCmd(size_t opSize, uint8_t unitSize)
 // {
 // 	return opSize / unitSize;

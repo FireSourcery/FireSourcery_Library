@@ -39,10 +39,6 @@
  			Capture DeltaT, per fixed changed in distance, via pin edge interrupt
 */
 /******************************************************************************/
-static inline void _Encoder_CaptureAngularDIncreasing(Encoder_T * p_encoder)
-{
-	p_encoder->AngularD = (p_encoder->AngularD < p_encoder->Params.CountsPerRevolution - 1U) ? p_encoder->AngularD + 1U : 0U;
-}
 
 /*
 	Separate Capture Angle at High Freq
@@ -50,7 +46,7 @@ static inline void _Encoder_CaptureAngularDIncreasing(Encoder_T * p_encoder)
 static inline void Encoder_DeltaT_CaptureD(Encoder_T * p_encoder)
 {
 	_Encoder_CaptureAngularDIncreasing(p_encoder);
-	p_encoder->TotalD += 1U; 				/* Capture integral */
+	p_encoder->TotalD += 1U; /* Capture integral */
 }
 
 /*
@@ -58,21 +54,21 @@ static inline void Encoder_DeltaT_CaptureD(Encoder_T * p_encoder)
 */
 static inline void Encoder_DeltaT_CaptureT(Encoder_T * p_encoder)
 {
-// #if defined(CONFIG_ENCODER_HW_CAPTURE_TIME)
-	if(HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
-	{
-		HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
-		p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX;
-	}
-	else
-	{
-		p_encoder->DeltaT = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
-	}
-	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
-// #else
-// 	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
-// #endif
-	p_encoder->TotalT += p_encoder->DeltaT;
+// // #if defined(CONFIG_ENCODER_HW_CAPTURE_TIME)
+// 	if(HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
+// 	{
+// 		HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
+// 		p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX;
+// 	}
+// 	else
+// 	{
+// 		p_encoder->DeltaT = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+// 	}
+// 	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
+// // #else
+// // 	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX);
+// // #endif
+// 	p_encoder->TotalT += p_encoder->DeltaT;
 }
 
 /*!
@@ -140,15 +136,15 @@ static inline bool Encoder_DeltaT_PollReferenceEdgeDual(Encoder_T * p_encoder, b
 	polling frequency must be > signal freq, at least 2x to satisfy Nyquist theorem
 	2000ppr encoder, 20000hz sample => 300rpm max
 */
-static inline bool Encoder_DeltaT_PollPhaseAEdgeRising(Encoder_T * p_encoder)
-{
-	return Encoder_DeltaT_PollReferenceEdgeRising(p_encoder, Pin_Input_Read(&p_encoder->PhaseA));
-}
+// static inline bool Encoder_DeltaT_PollPhaseAEdgeRising(Encoder_T * p_encoder)
+// {
+// 	return Encoder_DeltaT_PollReferenceEdgeRising(p_encoder, Pin_Input_Read(&p_encoder->PhaseA));
+// }
 
-static inline bool Encoder_DeltaT_PollPhaseAEdgeDual(Encoder_T * p_encoder)
-{
-	return Encoder_DeltaT_PollReferenceEdgeDual(p_encoder, Pin_Input_Read(&p_encoder->PhaseA));
-}
+// static inline bool Encoder_DeltaT_PollPhaseAEdgeDual(Encoder_T * p_encoder)
+// {
+// 	return Encoder_DeltaT_PollReferenceEdgeDual(p_encoder, Pin_Input_Read(&p_encoder->PhaseA));
+// }
 
 /******************************************************************************/
 /*!
@@ -197,17 +193,17 @@ static inline void Encoder_DeltaT_CaptureExtendedTimer(Encoder_T * p_encoder)
 {
 // #if defined(CONFIG_ENCODER_HW_CAPTURE_TIME)
 	/* check time exceed short timer max value */
-	if(HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
-	{
-		p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * (p_encoder->ExtendedTimerConversion);
+	// if(HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
+	// {
+	// 	p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * (p_encoder->ExtendedTimerConversion);
 
-		/* If checking 32bit overflow is needed. should be caught by poll watch stop, which occurs prior */
-		//	if (extendedTimerDelta > (UINT32_MAX / p_encoder->CONFIG.DeltaT) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ)
-		//	{
-		//		p_encoder->DeltaT = UINT32_MAX;
-		//	}
-	}
-	p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
+	// 	/* If checking 32bit overflow is needed. should be caught by poll watch stop, which occurs prior */
+	// 	//	if (extendedTimerDelta > (UINT32_MAX / p_encoder->CONFIG.DeltaT) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ)
+	// 	//	{
+	// 	//		p_encoder->DeltaT = UINT32_MAX;
+	// 	//	}
+	// }
+	// p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
 // #else
 	// uint32_t extendedTimerDelta = _Encoder_GetExtendedTimerDelta(p_encoder);
 	// p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);

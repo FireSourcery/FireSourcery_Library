@@ -107,6 +107,16 @@ typedef enum NvMemory_State_Tag
 }
 NvMemory_State_T;
 
+typedef const struct NvMemory_OpControl_Tag
+{
+	HAL_NvMemory_StartCmd_T START_CMD;
+	NvMemory_FinalizeCmd_T FINALIZE_CMD;
+	NvMemory_Process_T PARSE_CMD_ERROR;
+	NvMemory_Process_T FINALIZE_OP;
+	size_t UNIT_SIZE;
+}
+NvMemory_OpControl_T;
+
 typedef const struct NvMemory_Config_Tag
 {
 	void * const P_HAL;
@@ -120,7 +130,6 @@ typedef const struct NvMemory_Config_Tag
 	const size_t BUFFER_SIZE;
 }
 NvMemory_Config_T;
-
 
 /*
 	NvMemory controller
@@ -142,10 +151,11 @@ typedef struct NvMemory_Tag
 
 	const NvMemory_Partition_T * p_OpPartition; /* Op Dest */
 
+	NvMemory_OpControl_T * p_OpControl;
 	HAL_NvMemory_StartCmd_T StartCmd;		/* Start HAL Cmd, many iterations per Op */
 	NvMemory_FinalizeCmd_T FinalizeCmd; 	/* On end per Cmd iteration */
 	NvMemory_Process_T ParseCmdError;		/* On end all Cmd iteration, Op Complete Error */
-	NvMemory_Process_T FinalizeOp;			/* On end all Cmd iteration, Op Complete Sucess */
+	NvMemory_Process_T FinalizeOp;			/* On end all Cmd iteration, Op Complete Success */
 
 	void * p_CallbackData;
 	NvMemory_Callback_T Yield; 			/*!< On Block */

@@ -32,17 +32,17 @@
 #define CONFIG_ENCODER_H
 
 /* Compile time define if chip supports quadrature capture. Enables toggle during runtime */
-#if 	defined(CONFIG_ENCODER_HW_QUADRATURE_CAPABLE)
-#elif 	defined(CONFIG_ENCODER_HW_QUADRATURE_DISABLED)
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
 #else
-	#define CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
+	// #define CONFIG_ENCODER_HW_DECODER
 #endif
 
 /* Compile time define for all encoder instances if A Lead B is increment, additional configure available at runtime */
-#if 	defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT)
-#elif 	defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+#if 	defined(CONFIG_ENCODER_HW_DECODER_A_LEAD_B_INCREMENT)
+#elif 	defined(CONFIG_ENCODER_HW_DECODER_A_LEAD_B_DECREMENT)
 #else
-	#define CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+	#define CONFIG_ENCODER_HW_DECODER_A_LEAD_B_INCREMENT
 #endif
 
 /*  Capture DeltaT Mode */

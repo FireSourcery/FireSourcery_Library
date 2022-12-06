@@ -8,58 +8,53 @@
 /******************************************************************************/
 /*!
 	ISRs
+	For emulated capture D need ISR, or callback hook
 */
 /*! @{ */
 /******************************************************************************/
+
+#if defined(CONFIG_ENCODER_HW_EMULATED)
 /*
 	Index Pin
 */
 static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 {
-	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
-	HAL_Encoder_ClearFlagIndex(p_encoder->CONFIG.P_HAL_ENCODER, 0);
-	HAL_Encoder_ClearPinFlagPhaseA(p_encoder->CONFIG.P_HAL_ENCODER, 0);
-	HAL_Encoder_ClearPinFlagPhaseB(p_encoder->CONFIG.P_HAL_ENCODER, 0);
+	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER_Z, 0U);
+	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
+	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
+	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
 	p_encoder->AngularD = 0U;
 }
 
-#if 	defined(CONFIG_ENCODER_HW_QUADRATURE_CAPABLE)
-#elif 	defined(CONFIG_ENCODER_HW_CAPTURE_COUNT)
-#elif 	defined(CONFIG_ENCODER_HW_CAPTURE_TIME)
-#endif
+static inline void Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
+{
+	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
+	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER_A, 0U);
+	_Encoder_CaptureAngularDIncreasing(p_encoder);
+	//todo check freq for capture speed
+// #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
+// 	_Encoder_CaptureAngularD_Quadrature(p_encoder);
+// #endif
+}
 
+static inline void Encoder_OnPhaseB_ISR(Encoder_T * p_encoder)
+{
+	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
+	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER_B, 0U);
+	_Encoder_CaptureAngularDIncreasing(p_encoder);
+// #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
+// 	_Encoder_CaptureAngularD_Quadrature(p_encoder);
+// #endif
+}
+
+/* Shared A, B Thread */
 static inline void Encoder_OnPhaseAB_ISR(Encoder_T * p_encoder)
 {
-	if(HAL_Encoder_ReadPinFlagPhaseA(p_encoder->CONFIG.P_HAL_ENCODER, 0) == true)
-	{
-		HAL_Encoder_ClearPinFlagPhaseA(p_encoder->CONFIG.P_HAL_ENCODER, 0);
-	}
-	else if(HAL_Encoder_ReadPinFlagPhaseB(p_encoder->CONFIG.P_HAL_ENCODER, 0) == true)
-	{
-		HAL_Encoder_ClearPinFlagPhaseB(p_encoder->CONFIG.P_HAL_ENCODER, 0);
-	}
-
-	Encoder_DeltaT_Capture(p_encoder);
+	if 		(HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID) == true) { Encoder_OnPhaseA_ISR(p_encoder); }
+	else if	(HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID) == true) { Encoder_OnPhaseB_ISR(p_encoder); }
 }
+#endif
 
-/* Shared Index, A, B Thread */
-static inline void Encoder_CaptureDeltaT_ISR(Encoder_T * p_encoder)
-{
-	if(HAL_Encoder_ReadPinFlagPhaseA(p_encoder->CONFIG.P_HAL_ENCODER, 0) == true)
-	{
-		HAL_Encoder_ClearPinFlagPhaseA(p_encoder->CONFIG.P_HAL_ENCODER, 0);
-	}
-	else if(HAL_Encoder_ReadPinFlagPhaseB(p_encoder->CONFIG.P_HAL_ENCODER, 0) == true)
-	{
-		HAL_Encoder_ClearPinFlagPhaseB(p_encoder->CONFIG.P_HAL_ENCODER, 0);
-	}
-	else if(HAL_Encoder_ReadPinFlagIndex(p_encoder->CONFIG.P_HAL_ENCODER, 0) == true)
-	{
-		Encoder_OnIndex_ISR(p_encoder);
-	}
-
-	Encoder_DeltaT_Capture(p_encoder);
-}
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

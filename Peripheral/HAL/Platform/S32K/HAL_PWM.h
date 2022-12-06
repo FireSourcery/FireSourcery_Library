@@ -52,7 +52,7 @@ static inline void HAL_PWM_EnableInterrupt(HAL_PWM_T * p_hal) { p_hal->SC |= FTM
 	S32K syncs module. e.g CnV sync, partial, per channel, register write, not supported.
 */
 static inline void HAL_PWM_Sync(HAL_PWM_T * p_hal, uint32_t channel) { (void)channel; p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK; }
-static inline void HAL_PWM_WriteDuty(HAL_PWM_T * p_hal, uint32_t channel, uint32_t pwm) { p_hal->CONTROLS[channel].CnV = pwm; }
+static inline void HAL_PWM_WriteDuty(HAL_PWM_T * p_hal, uint32_t channel, uint32_t ticks) { p_hal->CONTROLS[channel].CnV = ticks; }
 static inline void HAL_PWM_EnableOutput(HAL_PWM_T * p_hal, uint32_t channel) { p_hal->OUTMASK &= ~(1UL << channel); } /* Mask to disable output */
 static inline void HAL_PWM_DisableOutput(HAL_PWM_T * p_hal, uint32_t channel) { p_hal->OUTMASK |= (1UL << channel); }
 static inline void HAL_PWM_EnableInvertPolarity(HAL_PWM_T * p_hal, uint32_t channel) { p_hal->POL |= (1UL << channel); }

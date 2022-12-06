@@ -163,15 +163,7 @@ static inline Flash_Status_T FinalizeReadOnce(Flash_T * p_flash)
 /*!
 	Private Set - Referenced by Finalize and Set todo struct
 	todo replace with set image
-	typedef const struct NvMemory_OpControl_Tag
-	{
-		HAL_NvMemory_StartCmd_T START_CMD;
-		NvMemory_FinalizeCmd_T FINALIZE_CMD;
-		NvMemory_Process_T PARSE_CMD_ERROR;
-		NvMemory_Process_T FINALIZE_OP;
-		size_t UNITS_PER_CMD;
-	}
-	NvMemory_OpControl_T;
+
 */
 /******************************************************************************/
 static inline size_t CalcVerifyEraseUnitsPerCmd(size_t bytes)
@@ -182,6 +174,15 @@ static inline size_t CalcVerifyEraseUnitsPerCmd(size_t bytes)
 	return 1U;
 #endif
 }
+
+// static const NvMemory_OpControl_T FLASH_OP_WRITE =
+// {
+// 	.START_CMD 			= StartCmdWritePage,
+// 	.FINALIZE_CMD 		= 0U,
+// 	.PARSE_CMD_ERROR 	= ParseCmdErrorWrite,
+// 	.FINALIZE_OP 		= FinalizeWrite,
+// 	.UNIT_SIZE 			= FLASH_UNIT_WRITE_SIZE,
+// };
 
 static inline void SetWriteControl(Flash_T * p_flash)
 {
@@ -220,15 +221,9 @@ void Flash_Init(Flash_T * p_flash)
 }
 
 /* Yield must point to RAM address for Flash case  */
-void Flash_SetYield(Flash_T * p_flash, void (*yield)(void *), void * p_callbackData)
-{
-	NvMemory_SetYield(p_flash, yield, p_callbackData);
-}
+void Flash_SetYield(Flash_T * p_flash, void (*yield)(void *), void * p_callbackData) { NvMemory_SetYield(p_flash, yield, p_callbackData); }
 
-bool Flash_ReadSecurityFlag(Flash_T * p_flash)
-{
-	return HAL_Flash_ReadSecurityFlag(p_flash->CONFIG.P_HAL);
-}
+bool Flash_ReadSecurityFlag(Flash_T * p_flash) { return HAL_Flash_ReadSecurityFlag(p_flash->CONFIG.P_HAL); }
 
 void Flash_EnableForceAlign(Flash_T * p_flash) { NvMemory_EnableForceAlign(p_flash); }
 void Flash_DisableForceAlign(Flash_T * p_flash) { NvMemory_DisableForceAlign(p_flash); }
@@ -244,7 +239,7 @@ Flash_Status_T Flash_SetWrite(Flash_T * p_flash, const uint8_t * p_destFlash, co
 	Flash_Status_T status = NvMemory_SetOpDest(p_flash, p_destFlash, size, FLASH_UNIT_WRITE_SIZE);
 	if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpSizeAlignDown(p_flash, size, FLASH_UNIT_WRITE_SIZE); }
 	if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpDataWrite(p_flash, p_source, size); }
-	if(status == FLASH_STATUS_SUCCESS) { SetWriteControl(p_flash); }
+	if(status == FLASH_STATUS_SUCCESS) { SetWriteControl(p_flash); /* p_flash->p_OpControl = &FLASH_OP_WRITE; */ }
 	return status;
 }
 
@@ -318,7 +313,7 @@ Flash_Status_T Flash_SetOp(Flash_T * p_flash, const uint8_t * p_destFlash, const
 		case FLASH_OPERATION_VERIFY_WRITE:	status = Flash_SetVerifyWrite(p_flash, p_destFlash, p_data, size); 		break;
 		case FLASH_OPERATION_VERIFY_ERASE:	status = Flash_SetVerifyErase(p_flash, p_destFlash, size); 				break;
 		case FLASH_OPERATION_WRITE_ONCE:	status = Flash_SetWriteOnce(p_flash, p_destFlash, p_data, size); 		break;
-		case FLASH_OPERATION_READ_ONCE:		status = Flash_SetReadOnce(p_flash, p_data, p_destFlash, size); 		break;
+		case FLASH_OPERATION_READ_ONCE:		status = Flash_SetReadOnce(p_flash, (uint8_t *)p_data, p_destFlash, size); 		break;
 		default:  							status = FLASH_STATUS_ERROR_INVALID_OP; 								break;
 	}
 
@@ -349,9 +344,9 @@ Flash_Status_T Flash_ProcThisOp_Blocking(Flash_T * p_flash)
 static Flash_Status_T WriteBytesAlignFilled(Flash_T * p_flash, size_t unitSize)
 {
 	Flash_Status_T status;
-	uint32_t alignedData[FLASH_UNIT_WRITE_SIZE / 4U];
-	for(uint8_t iByte = 0U; iByte < sizeof(alignedData); iByte++) { alignedData[iByte] = FLASH_UNIT_ERASE_PATTERN; }
-	memcpy(alignedData, p_flash->p_OpData + p_flash->OpSize, p_flash->ForceAlignBytes);
+	uint32_t alignedData[FLASH_UNIT_WRITE_SIZE];
+	for(uint8_t iByte = 0U; iByte < FLASH_UNIT_WRITE_SIZE; iByte++) { alignedData[iByte] = FLASH_UNIT_ERASE_PATTERN; }
+	memcpy(alignedData, &p_flash->p_OpData[p_flash->OpSize], p_flash->ForceAlignBytes); /* start from remaining data */
 	p_flash->p_OpData = (uint8_t *)alignedData;
 	p_flash->OpSize = unitSize;
 

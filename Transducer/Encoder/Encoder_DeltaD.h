@@ -33,34 +33,6 @@
 
 #include "Encoder.h"
 
-
-/* If no HW quadrature available */
-static inline void Encoder_DeltaD_OnPhaseAB_ISR(Encoder_T * p_encoder)
-{
-	if(HAL_Encoder_ReadPinFlagPhaseA(p_encoder->CONFIG.P_HAL_ENCODER, 0) == true)
-	{
-		HAL_Encoder_ClearPinFlagPhaseA(p_encoder->CONFIG.P_HAL_ENCODER, 0);
-	}
-	else if(HAL_Encoder_ReadPinFlagPhaseB(p_encoder->CONFIG.P_HAL_ENCODER, 0) == true)
-	{
-		HAL_Encoder_ClearPinFlagPhaseB(p_encoder->CONFIG.P_HAL_ENCODER, 0);
-	}
-
-	_Encoder_CaptureAngularDIncreasing(p_encoder);
-}
-
-/*
-	Index Pin
-*/
-static inline void Encoder_DeltaD_OnIndex_ISR(Encoder_T * p_encoder)
-{
-	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
-	HAL_Encoder_ClearFlagIndex(p_encoder->CONFIG.P_HAL_ENCODER, 0);
-	HAL_Encoder_ClearPinFlagPhaseA(p_encoder->CONFIG.P_HAL_ENCODER, 0);
-	HAL_Encoder_ClearPinFlagPhaseB(p_encoder->CONFIG.P_HAL_ENCODER, 0);
-	p_encoder->AngularD = 0U;
-}
-
 /*!
 	@brief 	Capture DeltaD, per fixed changed in time, via timer periodic interrupt
 			Looping Angle Capture
@@ -154,7 +126,7 @@ static inline void Encoder_DeltaD_CaptureSinglePhase(Encoder_T * p_encoder)
 
 static inline uint32_t Encoder_DeltaD_CaptureAngle(Encoder_T * p_encoder)
 {
-#ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
+#ifdef CONFIG_ENCODER_HW_DECODER
 //	if (p_encoder->Params.IsQuadratureCaptureEnabled == true)
 //	{
 		return p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
@@ -171,7 +143,7 @@ static inline uint32_t Encoder_DeltaD_CaptureAngle(Encoder_T * p_encoder)
 
 static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 {
-#ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
+#ifdef CONFIG_ENCODER_HW_DECODER
 	if (p_encoder->Params.IsQuadratureCaptureEnabled == true)
 	{
 		// Encoder_DeltaD_CaptureQuadrature(p_encoder);
@@ -190,7 +162,7 @@ static inline uint32_t Encoder_DeltaD_GetDeltaAngle(Encoder_T * p_encoder)
 
 static inline uint32_t Encoder_DeltaD_GetAngle(Encoder_T * p_encoder)
 {
-	return Encoder_ConvertCounterDToAngle(p_encoder, HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER));
+	// return Encoder_ConvertCounterDToAngle(p_encoder, HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER));
 }
 
 /******************************************************************************/

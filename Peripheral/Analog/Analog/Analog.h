@@ -68,12 +68,12 @@ typedef enum Analog_QueueType_Tag
 	ANALOG_QUEUE_TYPE_CHANNEL,
 	ANALOG_QUEUE_TYPE_OPTIONS,
 }
-Analog_QueueType_T;
+Analog_OpType_T;
 
 typedef const struct Analog_Conversion_Tag
 {
 	/* Defined by module */
-	const Analog_QueueType_T 	TYPE;
+	const Analog_OpType_T 		TYPE;
 	const analog_channel_t 		CHANNEL; 		/* Index into results buffer */
 	const Analog_Callback_T 	ON_COMPLETE; 	/* On channel complete */
 
@@ -109,9 +109,9 @@ Analog_OptionsFlags_T;
 
 typedef const struct Analog_Options_Tag
 {
-	const Analog_QueueType_T TYPE;
-	const Analog_OptionsFlags_T FLAGS;
-	const Analog_Callback_T ON_OPTIONS; /* On options set */
+	const Analog_OpType_T 			TYPE;
+	const Analog_OptionsFlags_T 	FLAGS;
+	const Analog_Callback_T 		ON_OPTIONS; /* On options set */
 	void * const P_CALLBACK_CONTEXT;
 }
 Analog_Options_T;
@@ -121,7 +121,7 @@ Analog_Options_T;
 */
 typedef const union Analog_QueueItem_Tag
 {
-	const Analog_QueueType_T 	TYPE;
+	const Analog_OpType_T 		TYPE;
 	const Analog_Conversion_T 	CONVERSION;
 	const Analog_Options_T 		OPTIONS;
 }

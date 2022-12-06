@@ -568,7 +568,6 @@ static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_STATUS_SUCCESS;
 }
 
-
 static Cmd_Status_T Cmd_jog(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argv;
@@ -586,6 +585,35 @@ static Cmd_Status_T Cmd_jog(MotorController_T * p_mc, int argc, char ** argv)
 	}
 
 	return status;
+}
+
+static Cmd_Status_T Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
+{
+	(void)argc;
+	(void)argv;
+	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+	p_motor->JogIndex = 0U;
+
+	switch(Motor_User_GetSensorMode(p_motor))
+	{
+		case MOTOR_SENSOR_MODE_SENSORLESS:
+			break;
+
+		case MOTOR_SENSOR_MODE_HALL:
+			break;
+
+		case MOTOR_SENSOR_MODE_ENCODER:
+			Encoder_Zero(&p_motor->Encoder);
+			break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+		case MOTOR_SENSOR_MODE_SIN_COS:
+
+#endif
+		default:
+			break;
+	}
+
+	return CMD_STATUS_PROCESS_LOOP;
 }
 
 static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
@@ -611,9 +639,10 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 				break;
 
 			case MOTOR_SENSOR_MODE_ENCODER:
-				// Encoder_DeltaD_Capture(&p_motor->Encoder);
-				// Terminal_SendNum(p_terminal, p_motor->Encoder.AngularD);
-				// Terminal_SendString(p_terminal, ", ");
+				Terminal_SendNum(p_terminal, Encoder_GetAngularD(&p_motor->Encoder));
+				Terminal_SendString(p_terminal, ", ");
+				Terminal_SendNum(p_terminal, Encoder_GetAngle(&p_motor->Encoder));
+				Terminal_SendString(p_terminal, "\r\n");
 				break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 			case MOTOR_SENSOR_MODE_SIN_COS:
@@ -640,16 +669,6 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 	}
 
 	return status;
-}
-
-
-static Cmd_Status_T Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
-{
-	(void)argc;
-	(void)argv;
-	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
-	p_motor->JogIndex = 0U;
-	return CMD_STATUS_PROCESS_LOOP;
 }
 
 static Cmd_Status_T Cmd_set(MotorController_T * p_mc, int argc, char ** argv)

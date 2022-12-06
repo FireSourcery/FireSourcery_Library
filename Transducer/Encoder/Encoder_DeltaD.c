@@ -36,15 +36,13 @@
 */
 void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 {
-	//	Pin_Deinit(&p_encoder->PhaseA);
-	//	Pin_Deinit(&p_encoder->PhaseB);
-
-	HAL_Encoder_InitCaptureCount
-	(
-		p_encoder->CONFIG.P_HAL_ENCODER,
-		p_encoder->PhaseA.CONFIG.P_HAL_PIN,	p_encoder->PhaseA.CONFIG.ID,
-		p_encoder->PhaseB.CONFIG.P_HAL_PIN,	p_encoder->PhaseB.CONFIG.ID
-	);
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
+	HAL_Encoder_InitCaptureCount(p_encoder->CONFIG.P_HAL_ENCODER);
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+	HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
+	HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
+	HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
+#endif
 
 	if (p_encoder->CONFIG.P_PARAMS != 0U)
 	{
@@ -52,7 +50,9 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 	}
 
 //todo
-// #ifdef CONFIG_ENCODER_HW_QUADRATURE_CAPABLE
+//	Pin_Deinit(&p_encoder->PhaseA);
+//	Pin_Deinit(&p_encoder->PhaseB);
+// #ifdef CONFIG_ENCODER_HW_DECODER
 // 	if (p_encoder->Params.IsQuadratureCaptureEnabled == true)
 // 	{
 // //		HAL_Encoder_ConfigCaptureQuadrature(p_encoder);
@@ -62,8 +62,12 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 // 	{
 // //		HAL_Encoder_ConfigCaptureDualEdge(p_encoder);
 // 	}
-
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
 	HAL_Encoder_WriteTimerCounterMax(p_encoder->CONFIG.P_HAL_ENCODER, p_encoder->Params.CountsPerRevolution - 1U);
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+
+#endif
+
 
 	/*
 		e.g.
@@ -94,9 +98,12 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 
 void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder)
 {
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
 	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
 	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
-	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+#endif
+	p_encoder->AngularD = 0U;
 }
 
 /*
@@ -104,18 +111,25 @@ void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder)
 */
 void Encoder_DeltaD_CalibrateQuadratureReference(Encoder_T * p_encoder)
 {
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
 	p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+#endif
 }
 
 //call after having moved in the positive direction
 void Encoder_DeltaD_CalibrateQuadraturePositive(Encoder_T * p_encoder)
 {
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
 	uint32_t counterValue = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
 
 #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
 	p_encoder->Params.IsALeadBPositive = (counterValue > p_encoder->TimerCounterSaved);
 #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
 	p_encoder->Params.IsALeadBPositive = !(counterValue > p_encoder->TimerCounterSaved);
+#endif
+
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
 #endif
 
 //	Encoder_DeltaD_SetQuadratureDirectionCalibration(p_encoder, (counterValue > p_encoder->TimerCounterSaved));
