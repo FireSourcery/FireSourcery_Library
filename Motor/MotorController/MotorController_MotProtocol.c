@@ -170,10 +170,10 @@ static uint32_t GetVar(MotorController_T * p_mc, MotVarId_T varId)
 		case MOT_VAR_BEEP:		  	  	break;
 
 		case MOT_VAR_PARAM_TEST_BEGIN:	break;					/*  */
-		case MOT_VAR_PARAM_TEST_1:	value = p_mc->Parameters.Test[0U];	break;						/* Value 16-bit */
-		case MOT_VAR_PARAM_TEST_2:	value = p_mc->Parameters.Test[1U];	break;						/* Value 32-bit */
-		case MOT_VAR_PARAM_TEST_3:	value = p_mc->Parameters.Test[2U];	break;						/* Value 0, 1 */
-		case MOT_VAR_PARAM_TEST_4:	value = p_mc->Parameters.Test[3U];	break;						/* Value enum: 0:White, 1:Black, 2:Red, */
+		case MOT_VAR_PARAM_TEST_1:		value = p_mc->Parameters.Test[0U];	break;						/* Value 16-bit */
+		case MOT_VAR_PARAM_TEST_2:		value = p_mc->Parameters.Test[1U];	break;						/* Value 32-bit */
+		case MOT_VAR_PARAM_TEST_3:		value = p_mc->Parameters.Test[2U];	break;						/* Value 0, 1 */
+		case MOT_VAR_PARAM_TEST_4:		value = p_mc->Parameters.Test[3U];	break;						/* Value enum: 0:White, 1:Black, 2:Red, */
 		// case MOT_VAR_PARAM_TEST_5:	value = p_mc->Parameters.Test[4U];	break;						/*   */
 
 		case MOT_VAR_POLE_PAIRS:  				value = Motor_User_GetPolePairs(MotorController_User_GetPtrMotor(p_mc, 0U)); 	break;

@@ -119,28 +119,13 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
-#if defined(CONFIG_ENCODER_HW_QUADRATURE_CAPTURE)
 			if(procSpeed == true)
 			{
 				Encoder_DeltaD_Capture(&p_motor->Encoder); /* Capture position and speed */
-				speedFeedback_Frac16 = Encoder_DeltaD_GetUnitSpeed(&p_motor->Encoder);
+				speedFeedback_Frac16 = Encoder_DeltaD_GetFrac16Speed(&p_motor->Encoder);
 			}
-			else
-			{
-				Encoder_DeltaD_CaptureAngle(&p_motor->Encoder); /* Capture position only */
-			}
-#elif defined(CONFIG_ENCODER_HW_QUADRATURE_DISABLED)
-			/* Capture in ISR */
-			if(procSpeed == true)
-			{
-				Motor_PollDeltaTStop(p_motor);
-				speedFeedback_Frac16 = Encoder_DeltaT_GetFrac16Speed(&p_motor->Encoder);
-				// speedFeedback_Frac16 = Encoder_DeltaT_GetUnitSpeedAvg(&p_motor->Encoder);
-			}
-#endif
-			/* Encoder_Motor_GetElectricalTheta return [0, 65535] maps directly to negative portions of qangle16_t */
-			electricalAngle = (qangle16_t)Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);
-			//reset peak bemf
+			/* Encoder_Motor_GetElectricalTheta returns [0, 65535] maps directly to negative portions of qangle16_t */
+			electricalAngle = (qangle16_t)Encoder_Motor_D_GetElectricalTheta(&p_motor->Encoder);
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:

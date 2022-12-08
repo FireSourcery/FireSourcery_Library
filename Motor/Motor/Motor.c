@@ -259,7 +259,7 @@ void Motor_ResetUnitsHall(Motor_T * p_motor)
 		Encoder_Motor_SetHallCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs);
 	}
 
-	if(p_motor->Parameters.SpeedFeedbackRef_Rpm != p_motor->Encoder.Params.ScalarSpeedRef_Rpm)
+	if(p_motor->Parameters.SpeedFeedbackRef_Rpm != p_motor->Encoder.Params.Frac16SpeedRef_Rpm)
 	{
 		Encoder_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 	}

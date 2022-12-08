@@ -110,9 +110,9 @@ void _Encoder_ResetUnitsAngular(Encoder_T * p_encoder)
 	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->CONFIG.POLLING_FREQ * p_encoder->Params.CountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
 
 	/*
-	 *  UnitScalarSpeed = unitTFreq * 65535U * 60U / CountsPerRevolution / ScalarSpeedRef_Rpm;
+	 *  UnitFrac16Speed = unitTFreq * 65535U * 60U / CountsPerRevolution / Frac16SpeedRef_Rpm;
 	 */
-	p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm, 16U);
+	p_encoder->UnitFrac16Speed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.Frac16SpeedRef_Rpm, 16U);
 	// e.g. no truncate = 16,384,000
 }
 
@@ -133,15 +133,15 @@ void _Encoder_ResetUnitsLinear(Encoder_T * p_encoder)
 	p_encoder->UnitLinearSpeed = p_encoder->Params.DistancePerCount * p_encoder->UnitT_Freq;
 }
 
-void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
+void _Encoder_ResetUnitsFrac16Speed(Encoder_T * p_encoder)
 {
 	/*
-		UnitScalarSpeed = unitTFreq * 65535U * 60U / CountsPerRevolution / ScalarSpeedRef_Rpm;
+		UnitFrac16Speed = unitTFreq * 65535U * 60U / CountsPerRevolution / Frac16SpeedRef_Rpm;
 
-		e.g.  unitTFreq = 625000, CountsPerRevolution = 60, ScalarSpeedRef_Rpm =
+		e.g.  unitTFreq = 625000, CountsPerRevolution = 60, Frac16SpeedRef_Rpm =
 		 = 16,384,000 (no truncate)
 	*/
-	p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm, 16U);
+	p_encoder->UnitFrac16Speed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.Frac16SpeedRef_Rpm, 16U);
 }
 
 
@@ -183,13 +183,11 @@ void Encoder_Zero(Encoder_T * p_encoder)
 	p_encoder->TotalD = 0U;
 	p_encoder->TotalT = 0U;
 	p_encoder->AngularD = 0U;
-	//	p_encoder->UserD 	= 0;
-	//	p_encoder->UserT 	= 0;
 	p_encoder->SpeedSaved = 0U;
 	p_encoder->DeltaSpeed = 0U;
 
-	// HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
-	// HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
+	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
+	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
 }
 
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)
@@ -220,6 +218,6 @@ void Encoder_SetDistancePerCount(Encoder_T * p_encoder, uint16_t distancePerCoun
 
 void Encoder_SetScalarSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
 {
-	p_encoder->Params.ScalarSpeedRef_Rpm = speedRef;
-	_Encoder_ResetUnitsScalarSpeed(p_encoder);
+	p_encoder->Params.Frac16SpeedRef_Rpm = speedRef;
+	_Encoder_ResetUnitsFrac16Speed(p_encoder);
 }

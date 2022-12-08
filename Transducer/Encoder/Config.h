@@ -31,7 +31,7 @@
 #ifndef CONFIG_ENCODER_H
 #define CONFIG_ENCODER_H
 
-/* Compile time define if chip supports quadrature capture. Enables toggle during runtime */
+/* Compile time define if chip supports quadrature decoder capture. Enables toggle during runtime */
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
 #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
 #else

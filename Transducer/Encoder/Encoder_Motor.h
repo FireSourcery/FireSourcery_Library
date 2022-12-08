@@ -114,6 +114,7 @@ static inline uint32_t Encoder_Motor_GetInterpolationFreq(Encoder_T *p_encoder)
 /******************************************************************************/
 /*!
 	Position - Both Capture Modes
+	todo freq auto
 */
 /******************************************************************************/
 static inline uint32_t Encoder_Motor_GetMechanicalTheta(Encoder_T * p_encoder)
@@ -124,10 +125,31 @@ static inline uint32_t Encoder_Motor_GetMechanicalTheta(Encoder_T * p_encoder)
 /*!
 	Electrical Theta Angle, position Angle [Degree16s]
 	implied modulus uint16
- */
+	Overflow caution:  AngularD * MotorPolePairs > 65535
+*/
 static inline uint32_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
 {
-	return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->AngularD * p_encoder->Params.MotorPolePairs); //todo check mod CountsPerRevolution
+	return Encoder_ConvertCounterDToAngle(p_encoder, (uint32_t)p_encoder->AngularD * (uint32_t)p_encoder->Params.MotorPolePairs);
+	// return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->AngularD) * p_encoder->Params.MotorPolePairs;
+}
+
+
+/******************************************************************************/
+/*!
+	Position
+*/
+/******************************************************************************/
+static inline uint32_t Encoder_Motor_D_GetMechanicalTheta(Encoder_T * p_encoder)
+{
+	return Encoder_DeltaD_GetAngle(p_encoder);
+}
+
+/*!
+*/
+static inline uint32_t Encoder_Motor_D_GetElectricalTheta(Encoder_T * p_encoder)
+{
+	// return Encoder_ConvertCounterDToAngle(p_encoder, (uint32_t)p_encoder->AngularD * (uint32_t)p_encoder->Params.MotorPolePairs);
+	return Encoder_DeltaD_GetAngle(p_encoder) * p_encoder->Params.MotorPolePairs;
 }
 
 /******************************************************************************/
@@ -169,7 +191,7 @@ static inline uint32_t Encoder_Motor_GetElectricalRpm(Encoder_T * p_encoder)
 
 /*
 
- */
+*/
 static inline int32_t Encoder_Motor_GetGroundSpeed(Encoder_T * p_encoder)
 {
 	return Encoder_GetLinearSpeed(p_encoder);
@@ -180,7 +202,6 @@ static inline int32_t Encoder_Motor_GetGroundSpeed(Encoder_T * p_encoder)
 	Integrate  speed to position, use ticks
 */
 /******************************************************************************/
-
 /*
 	10k rpm, 20kHz => 546 ~= .83 percent of revolution
 */
@@ -193,10 +214,10 @@ static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToMechanicalDelta(Encod
 	Convert Mechanical Angular Speed [Revolutions per Minute] to Electrical Delta [Degree16s Per Control Period]
 
 	Skips conversion through DeltaD
+	angle = (rpm * MotorPolePairs << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / (60U * controlFreq)
 */
 static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(Encoder_T * p_encoder, uint16_t mechRpm)
 {
-//	return (mechRpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / 60U * p_encoder->Params.MotorPolePairs / p_encoder->UnitT_Freq;
 	return Encoder_ConvertRotationalSpeedToControlAngle_RPM(p_encoder, mechRpm * p_encoder->Params.MotorPolePairs);
 }
 
@@ -216,8 +237,6 @@ static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(Encod
 //{
 //	return Encoder_ConvertDeltaDToRotationalSpeed_RPM(p_encoder, deltaD_Ticks);
 //}
-
-
 
 /******************************************************************************/
 /*!

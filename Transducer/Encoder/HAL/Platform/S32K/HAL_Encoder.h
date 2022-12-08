@@ -38,49 +38,75 @@
 
 typedef FTM_Type HAL_Encoder_T;
 
+
 static inline bool HAL_Encoder_ReadTimerCounterOverflow(const HAL_Encoder_T * p_encoder) { return p_encoder->SC & FTM_SC_TOF_MASK; }
-
 /* Clear interrupt */
-static inline void HAL_Encoder_ClearTimerCounterOverflow(HAL_Encoder_T * p_encoder)
-{
-	p_encoder->SC &= ~FTM_SC_TOF_MASK;
-	p_encoder->SC;	/* Read-after-write sequence to guarantee required serialization of memory operations */
-}
-
+/* Read-after-write sequence to guarantee required serialization of memory operations */
+static inline void HAL_Encoder_ClearTimerCounterOverflow(HAL_Encoder_T * p_encoder) { p_encoder->SC &= ~FTM_SC_TOF_MASK;	p_encoder->SC; }
 static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder) { return p_encoder->CNT; }
 static inline void HAL_Encoder_WriteTimerCounter(HAL_Encoder_T * p_encoder, uint32_t count) { p_encoder->CNT = FTM_CNT_COUNT(count); }
 static inline void HAL_Encoder_WriteTimerCounterMax(HAL_Encoder_T * p_encoder, uint32_t max) { p_encoder->MOD = FTM_MOD_MOD(max); }
 
-static inline bool HAL_Encoder_ReadQuadratureCounterDirection(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_QUADIR_MASK) != 0U); }
-/* Return true if counter over flow on increment */
-static inline bool HAL_Encoder_ReadQuadratureCounterOverflowIncrement(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) != 0U); }
-/* Return true if counter over flow on decrement */
-static inline bool HAL_Encoder_ReadQuadratureCounterOverflowDecrement(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) == 0U); }
+#ifndef CONFIG_ENCODER_HAL_CLOCK_SOURCE_FREQ
+#define CONFIG_ENCODER_HAL_CLOCK_SOURCE_FREQ 80000000UL
+#endif
+
+/*!
+	@return freq set
+
+	Prescale Factor Selection
+	000 Divide by 1
+	001 Divide by 2
+	010 Divide by 4
+	011 Divide by 8
+	100 Divide by 16
+	101 Divide by 32
+	110 Divide by 64
+	111 Divide by 128
+*/
+static inline uint32_t HAL_Encoder_ConfigTimerCounterFreq(HAL_Encoder_T * p_encoder, uint32_t freq)
+{
+	uint8_t preScalerValue = CONFIG_ENCODER_HAL_CLOCK_SOURCE_FREQ / freq;
+	uint8_t preScaler = 0U;
+
+	while(preScalerValue > 1U) { preScalerValue = preScalerValue >> 1U; preScaler++; } /* log base2 */
+	p_encoder->SC = (p_encoder->SC & ~FTM_SC_CLKS_MASK) | FTM_SC_PS(preScaler);
+
+	return CONFIG_ENCODER_HAL_CLOCK_SOURCE_FREQ / ((uint32_t)1UL << preScaler);
+}
 
 /*
-	S32K use pin read Phase
+	Quadrature Decoder Mode
 */
-// #include "Peripheral/HAL/Platform/S32K/Chip.h"
-//static inline bool HAL_Encoder_ReadQuadraturePhaseA(const HAL_Encoder_T * p_encoder){(void)p_encoder;}
-//static inline bool HAL_Encoder_ReadQuadraturePhaseB(const HAL_Encoder_T * p_encoder){(void)p_encoder;}
+static inline bool HAL_Encoder_ReadDecoderCounterDirection(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_QUADIR_MASK) != 0U); }
+/* Return true if counter over flow on increment */
+static inline bool HAL_Encoder_ReadDecoderCounterOverflowIncrement(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) != 0U); }
+/* Return true if counter over flow on decrement */
+static inline bool HAL_Encoder_ReadDecoderCounterOverflowDecrement(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) == 0U); }
+
+/*
+	Emulated
+*/
+// static inline void HAL_Encoder_EnablePhaseInterrupt(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 		{ p_encoder->CONTROLS[phaseId].CnSC |= FTM_CnSC_CHIE_MASK; }
+// static inline void HAL_Encoder_DisablePhaseInterrupt(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 	{ p_encoder->CONTROLS[phaseId].CnSC &= ~FTM_CnSC_CHIE_MASK; }
+// static inline void HAL_Encoder_ClearPhaseFlag(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 			{ p_encoder->CONTROLS[phaseId].CnSC &= ~FTM_CnSC_CHIE_MASK; }
+// static inline bool HAL_Encoder_ReadPhaseFlag(const HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 		{ return (p_encoder->CONTROLS[phaseId].CnSC | FTM_CnSC_CHF_MASK != 0U); }
 
 extern void Board_Encoder_InitCaptureTime(void);
 extern void Board_Encoder_InitCaptureCount(void);
 
 /* Config SW Polling capture mode. On S32K Hw capture mode disables gpio pin read */
-static inline void HAL_Encoder_InitCaptureTime(HAL_Encoder_T * p_encoder, void * p_phaseAPinHal, uint32_t phaseAPinId, void * p_phaseBPinHal, uint32_t phaseBPinId)
+static inline void HAL_Encoder_InitCaptureTime(HAL_Encoder_T * p_encoder)
 {
-//	(p_encoder->QDCTRL) &= ~(1UL << FTM_QDCTRL_QUADEN_SHIFT);
-	(void)p_encoder; (void)p_phaseAPinHal; (void)phaseAPinId; (void)p_phaseBPinHal; (void)phaseBPinId;
-	Board_Encoder_InitCaptureTime();
+	//	(p_encoder->QDCTRL) &= ~(1UL << FTM_QDCTRL_QUADEN_SHIFT);
+	(void)p_encoder; Board_Encoder_InitCaptureTime();
 }
 
 /* Enocder Res still needs to be configured. */
-static inline void HAL_Encoder_InitCaptureCount(HAL_Encoder_T * p_encoder, void * p_phaseAPinHal, uint32_t phaseAPinId, void * p_phaseBPinHal, uint32_t phaseBPinId)
+static inline void HAL_Encoder_InitCaptureCount(HAL_Encoder_T * p_encoder)
 {
-//	(p_encoder->QDCTRL) |= (1UL << FTM_QDCTRL_QUADEN_SHIFT);
-	(void)p_encoder; (void)p_phaseAPinHal; (void)phaseAPinId; (void)p_phaseBPinHal; (void)phaseBPinId;
-	Board_Encoder_InitCaptureCount();
+	//	(p_encoder->QDCTRL) |= (1UL << FTM_QDCTRL_QUADEN_SHIFT);
+	(void)p_encoder; Board_Encoder_InitCaptureCount();
 }
 
 static inline void HAL_Encoder_Init(HAL_Encoder_T * p_encoder)

@@ -42,8 +42,6 @@
 #include "Math/FOC.h"
 
 #include "Transducer/Encoder/Encoder_Motor.h"
-#include "Transducer/Encoder/Encoder_DeltaT.h"
-#include "Transducer/Encoder/Encoder_DeltaD.h"
 #include "Transducer/Encoder/Encoder.h"
 #include "Transducer/Thermistor/Thermistor.h"
 

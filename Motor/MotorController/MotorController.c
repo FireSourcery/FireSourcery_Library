@@ -230,7 +230,7 @@ void MotorController_Init(MotorController_T * p_mc)
 // 	// .IsQuadratureCaptureEnabled 		= true,
 // 	// .IsALeadBPositive 				= true,
 // 	// .ExtendedTimerDeltaTStop 		= 1000U,	//ExtendedTimer time read at deltaT stopped
-// 	// .ScalarSpeedRef_Rpm;
+// 	// .Frac16SpeedRef_Rpm;
 
 // // Motor_User_ActivateCalibrationHall(p_motor);
 // // Hall_MapSensorsTable(&p_motor->Hall, HALL_VIRTUAL_SENSORS_A, HALL_VIRTUAL_SENSORS_INV_C, HALL_VIRTUAL_SENSORS_B, HALL_VIRTUAL_SENSORS_INV_A, HALL_VIRTUAL_SENSORS_C, HALL_VIRTUAL_SENSORS_INV_B);

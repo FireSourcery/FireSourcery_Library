@@ -56,7 +56,7 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 	_Encoder_ResetTimerFreq(p_encoder);
 	_Encoder_ResetUnitsAngular(p_encoder);
 	_Encoder_ResetUnitsLinear(p_encoder);
-	_Encoder_ResetUnitsScalarSpeed(p_encoder);
+	_Encoder_ResetUnitsFrac16Speed(p_encoder);
 
 	Encoder_Zero(p_encoder);
 	Encoder_DeltaT_SetInitial(p_encoder);
