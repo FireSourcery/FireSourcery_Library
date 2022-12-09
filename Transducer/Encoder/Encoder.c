@@ -167,7 +167,7 @@ void _Encoder_ResetTimerFreq(Encoder_T * p_encoder)
 			=> 10000RPM error ~1%
 			=> RPM Min ~= 10RPM
 	*/
-	p_encoder->UnitT_Freq = HAL_Encoder_ConfigTimerCounterFreq(p_encoder, p_encoder->Params.CountsPerRevolution * 16666U);
+	p_encoder->UnitT_Freq = HAL_Encoder_ConfigTimerCounterFreq(p_encoder->CONFIG.P_HAL_ENCODER, p_encoder->Params.CountsPerRevolution * 16666U);
 	// p_encoder->ExtendedTimerThreshold = ((uint32_t)CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->UnitT_Freq;
 	p_encoder->ExtendedTimerConversion = p_encoder->UnitT_Freq / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
 }
