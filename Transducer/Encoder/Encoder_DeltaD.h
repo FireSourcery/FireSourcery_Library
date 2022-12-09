@@ -64,14 +64,14 @@
 /*!
 	CONFIG_ENCODER_HW_EMULATED set AngularD in ISR
 */
-static inline uint32_t _Encoder_DeltaD_GetAngularD(Encoder_T * p_encoder)
-{
-#if 	defined(CONFIG_ENCODER_HW_DECODER)
-	return HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
-#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
-	return p_encoder->AngularD;
-#endif
-}
+// static inline uint32_t _Encoder_DeltaD_GetAngularD(Encoder_T * p_encoder)
+// {
+// #if 	defined(CONFIG_ENCODER_HW_DECODER)
+// 	return HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+// #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+// 	return p_encoder->AngularD;
+// #endif
+// }
 
 /******************************************************************************/
 /*!
@@ -80,13 +80,18 @@ static inline uint32_t _Encoder_DeltaD_GetAngularD(Encoder_T * p_encoder)
 /******************************************************************************/
 static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 {
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
+	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+	/* Emulated Capture in ISR */
+#endif
+
 	// if (p_encoder->Params.IsQuadratureCaptureEnabled == true)
 	// {
 
 	// }
 	// else
 	{
-		_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaD, p_encoder->Params.CountsPerRevolution - 1U, _Encoder_DeltaD_GetAngularD(p_encoder));
+		_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaD, p_encoder->Params.CountsPerRevolution - 1U, p_encoder->AngularD);
 	}
 	// integral/average functions
 	// p_encoder->TotalD += p_encoder->DeltaD;
@@ -180,10 +185,10 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 	Angle
 */
 /******************************************************************************/
-static inline uint32_t Encoder_DeltaD_GetAngle(Encoder_T * p_encoder)
-{
-	return Encoder_ConvertCounterDToAngle(p_encoder, _Encoder_DeltaD_GetAngularD(p_encoder));
-}
+// static inline uint32_t Encoder_DeltaD_GetAngle(Encoder_T * p_encoder)
+// {
+// 	return Encoder_ConvertCounterDToAngle(p_encoder, _Encoder_DeltaD_GetAngularD(p_encoder));
+// }
 
 static inline uint32_t Encoder_DeltaD_GetDelta(Encoder_T * p_encoder) 			{ return p_encoder->DeltaD; }
 static inline uint32_t Encoder_DeltaD_GetDeltaAngle(Encoder_T * p_encoder) 		{ return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->DeltaD); }

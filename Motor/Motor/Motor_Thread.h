@@ -34,6 +34,10 @@
 
 #include "Motor_StateMachine.h"
 // #include "System/SysTime/SysTime.h"
+#include "Motor_User.h"
+#include "Motor.h"
+
+#include "Transducer/Encoder/Encoder_ISR.h"
 
 /*
 	Default 50us
@@ -87,6 +91,37 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 	}
 }
 
+/* Optionally use Hall ISR */
+static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_motor)
+{
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_ENCODER: Encoder_OnIndex_ISR(&p_motor->Encoder); break;
+		case MOTOR_SENSOR_MODE_HALL:
+			Encoder_Motor_OnPhaseC_ISR(&p_motor->Encoder);
+			_Motor_FOC_CaptureHall(p_motor);
+			break;
+		default: break;
+	}
+}
+
+static inline void Motor_HallEncoderA_ISR(Motor_T * p_motor)
+{
+	Encoder_OnPhaseA_ISR(&p_motor->Encoder);
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { _Motor_FOC_CaptureHall(p_motor); }
+}
+
+static inline void Motor_HallEncoderB_ISR(Motor_T * p_motor)
+{
+	Encoder_OnPhaseB_ISR(&p_motor->Encoder);
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { _Motor_FOC_CaptureHall(p_motor); }
+}
+
+static inline void Motor_HallEncoderAB_ISR(Motor_T * p_motor)
+{
+	Encoder_OnPhaseAB_ISR(&p_motor->Encoder);
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { _Motor_FOC_CaptureHall(p_motor); }
+}
 
 #endif
 

@@ -38,7 +38,7 @@
 	adcu to physical(user yref) returns without division
 	division in physical to adcu, frac16 to physical units
 	Shift 14 to allow oversaturation f([-2*XRef:2*XRef]) == [-2*YRef:2*YRef] before overflow
-
+		i.e 2x input range, before overflow, while retaining sign bit
 	p_linear->YReference in Units
 	p_linear->YOffset in Frac16;
 */

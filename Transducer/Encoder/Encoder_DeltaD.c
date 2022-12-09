@@ -37,7 +37,7 @@
 void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 {
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
-	HAL_Encoder_InitCaptureCount(p_encoder->CONFIG.P_HAL_ENCODER);
+	// HAL_Encoder_InitCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
 #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
 	HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
 	HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
@@ -51,10 +51,7 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 	#endif
 #endif
 
-	if (p_encoder->CONFIG.P_PARAMS != 0U)
-	{
-		memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T));
-	}
+	if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
 
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
 	HAL_Encoder_WriteTimerCounterMax(p_encoder->CONFIG.P_HAL_ENCODER, p_encoder->Params.CountsPerRevolution - 1U);
@@ -67,10 +64,7 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 	_Encoder_ResetUnitsLinear(p_encoder);
 	_Encoder_ResetUnitsFrac16Speed(p_encoder);
 
-	if(p_encoder->Params.CountsPerRevolution > (UINT32_MAX / p_encoder->UnitAngularSpeed))
-	{
-		p_encoder->UnitAngularSpeed = 0U;
-	}
+	if(p_encoder->Params.CountsPerRevolution > (UINT32_MAX / p_encoder->UnitAngularSpeed)) { p_encoder->UnitAngularSpeed = 0U; }
 
 	Encoder_Zero(p_encoder);
 }

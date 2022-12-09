@@ -121,6 +121,55 @@ static inline void Encoder_ResetTotalAngle(Encoder_T * p_encoder)
 //static inline uint32_t Encoder_GetLinearDeltaDistance(Encoder_T * p_encoder)	{return Encoder_GetDeltaD_Units(p_encoder);}
 static inline uint32_t Encoder_GetLinearTotalDistance(Encoder_T * p_encoder) { return Encoder_GetTotalD_Units(p_encoder); }
 
+
+/*!
+	@brief  LinearDistance Interpolation Functions
+*/
+///*!
+//	@brief CaptureDeltaD Mode: Estimate D using captured DeltaD sample. Assuming constant speed.
+//	@param domain unitless
+// */
+//static inline uint32_t Encoder_InterpolateDistance_Slope(Encoder_T * p_encoder, uint32_t index, uint32_t domain)
+//{
+//	return index * Encoder_GetDeltaD_Units(p_encoder) / domain;
+//}
+//
+///*!
+//	@brief CaptureDeltaT Mode: Estimate DeltaD using captured DeltaT sample. Assuming constant speed.
+//
+//	Delta Peroid > Control Peroid
+//	time domain - if domain is with respect to time =>
+//	@param index range [0:interpolationFreq/DeltaTFreq]. interpolationFreq/DeltaT_Freq == [interpolationFreq/(UnitT_Freq/DeltaT)] == [interpolationFreq * DeltaT / UnitT_Freq]
+// */
+//static inline uint32_t Encoder_InterpolateDistance(Encoder_T * p_encoder, uint32_t index)
+//{
+////	return index * p_encoder->UnitInterpolateD / p_encoder->DeltaT; /* index * [UnitD * UnitT_Freq / interpolationFreq] / DeltaT */
+//	return index * Encoder_GetSpeed(p_encoder) / p_encoder->CONFIG.POLLING_FREQ; 	//index * 1 * [UnitD * UnitT_Freq] / p_encoder->DeltaT / interpolationFreq;
+//}
+
+/*!
+	Interpolate Delta Angle
+*/
+//static inline uint32_t Encoder_InterpolateAngle_IndexDomain(Encoder_T * p_encoder, uint32_t index, uint32_t domain)
+//{
+//	return index * Encoder_GetDeltaAngle(p_encoder) / domain;
+//}
+
+//static inline uint32_t Encoder_InterpolateSpeed_Slope(Encoder_T * p_encoder, uint32_t index, uint32_t domain)
+//{
+//	return index * Encoder_GetSpeed(p_encoder) / domain;
+//}
+
+//static inline uint32_t Encoder_InterpolateSpeed(Encoder_T * p_encoder, uint32_t index, uint32_t interpolationFreq)
+//{
+////	return index * Encoder_GetSpeed(p_encoder) * p_encoder->UnitInterpolatedD / p_encoder->DeltaT;
+//
+////	index * Encoder_GetAcceleration(p_encoder) / interpolationFreq;
+//}
+/******************************************************************************/
+/*! @} */
+/******************************************************************************/
+
 /******************************************************************************/
 /*!
 	Signed Version using quadrature mode - todo

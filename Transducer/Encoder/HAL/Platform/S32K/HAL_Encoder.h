@@ -38,11 +38,10 @@
 
 typedef FTM_Type HAL_Encoder_T;
 
-
 static inline bool HAL_Encoder_ReadTimerCounterOverflow(const HAL_Encoder_T * p_encoder) { return p_encoder->SC & FTM_SC_TOF_MASK; }
 /* Clear interrupt */
 /* Read-after-write sequence to guarantee required serialization of memory operations */
-static inline void HAL_Encoder_ClearTimerCounterOverflow(HAL_Encoder_T * p_encoder) { p_encoder->SC &= ~FTM_SC_TOF_MASK;	p_encoder->SC; }
+static inline void HAL_Encoder_ClearTimerCounterOverflow(HAL_Encoder_T * p_encoder) { p_encoder->SC &= ~FTM_SC_TOF_MASK; p_encoder->SC; }
 static inline uint32_t HAL_Encoder_ReadTimerCounter(const HAL_Encoder_T * p_encoder) { return p_encoder->CNT; }
 static inline void HAL_Encoder_WriteTimerCounter(HAL_Encoder_T * p_encoder, uint32_t count) { p_encoder->CNT = FTM_CNT_COUNT(count); }
 static inline void HAL_Encoder_WriteTimerCounterMax(HAL_Encoder_T * p_encoder, uint32_t max) { p_encoder->MOD = FTM_MOD_MOD(max); }
@@ -92,26 +91,17 @@ static inline bool HAL_Encoder_ReadDecoderCounterOverflowDecrement(const HAL_Enc
 // static inline void HAL_Encoder_ClearPhaseFlag(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 			{ p_encoder->CONTROLS[phaseId].CnSC &= ~FTM_CnSC_CHIE_MASK; }
 // static inline bool HAL_Encoder_ReadPhaseFlag(const HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 		{ return (p_encoder->CONTROLS[phaseId].CnSC | FTM_CnSC_CHF_MASK != 0U); }
 
-extern void Board_Encoder_InitCaptureTime(void);
-extern void Board_Encoder_InitCaptureCount(void);
-
 /* Config SW Polling capture mode. On S32K Hw capture mode disables gpio pin read */
-static inline void HAL_Encoder_InitCaptureTime(HAL_Encoder_T * p_encoder)
-{
-	//	(p_encoder->QDCTRL) &= ~(1UL << FTM_QDCTRL_QUADEN_SHIFT);
-	(void)p_encoder; Board_Encoder_InitCaptureTime();
-}
+// static inline void HAL_Encoder_InitCaptureTime(HAL_Encoder_T * p_encoder)
+// {
+// 	(void)p_encoder;
+// }
 
-/* Enocder Res still needs to be configured. */
-static inline void HAL_Encoder_InitCaptureCount(HAL_Encoder_T * p_encoder)
-{
-	//	(p_encoder->QDCTRL) |= (1UL << FTM_QDCTRL_QUADEN_SHIFT);
-	(void)p_encoder; Board_Encoder_InitCaptureCount();
-}
+// static inline void HAL_Encoder_InitCounter(HAL_Encoder_T * p_encoder)
+// {
+// 	(p_encoder->QDCTRL) |= (1UL << FTM_QDCTRL_QUADEN_SHIFT);
+// }
 
-static inline void HAL_Encoder_Init(HAL_Encoder_T * p_encoder)
-{
-	(void)p_encoder;
-}
+// static inline void HAL_Encoder_Init(HAL_Encoder_T * p_encoder) { (void)p_encoder; }
 
 #endif

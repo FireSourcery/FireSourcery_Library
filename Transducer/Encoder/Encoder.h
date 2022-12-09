@@ -60,8 +60,10 @@ Encoder_Params_T;
 
 typedef const struct Encoder_Config_Tag
 {
+	//todo separate HAL_Encoder_Timer_T, HAL_Encoder_Counter_T for DT Mode
 	HAL_Encoder_T * const P_HAL_ENCODER; 	/*!< DeltaT and DeltaD TimerCounter - DeltaT, DeltaD Emulated Hw use a Timer. DeltaD Decoder Use as Counter. */
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
+	HAL_Encoder_Counter_T * const P_HAL_ENCODER;
 #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
 	/* Emulated D Mode */
 	// HAL_Encoder_Timer_T * const P_HAL_ENCODER;
@@ -102,9 +104,9 @@ typedef struct Encoder_Tag
 	uint32_t TimerCounterSaved; /*!< First time/count sample used to calculate Delta */
 	uint32_t ExtendedTimerSaved;
 
-	uint32_t DeltaT; 	/*!< Captured TimerCounter time interval counts between 2 distance events. Units in raw timer ticks */
-	int16_t DeltaD; 	/*!< Captured TimerCounter distance interval counts between 2 points in time. Units in raw timer ticks */
-	uint16_t AngularD; 	/*!< Looping TotalD at CountsPerRevolution */
+	volatile uint32_t DeltaT; 	/*!< Captured TimerCounter time interval counts between 2 distance events. Units in raw timer ticks */
+	volatile int16_t DeltaD; 	/*!< Captured TimerCounter distance interval counts between 2 points in time. Units in raw timer ticks */
+	volatile uint16_t AngularD; 	/*!< Looping TotalD at CountsPerRevolution */
 
 	uint32_t TotalT;	 /*!< TimerCounter ticks, persistent through Delta captures */
 	int32_t TotalD;
@@ -226,11 +228,11 @@ static inline void _Encoder_CaptureAngularD_Increasing(Encoder_T * p_encoder)
 
 static inline void _Encoder_CaptureAngularD(Encoder_T * p_encoder)
 {
-	if(p_encoder->Params.IsQuadratureCaptureEnabled == true)
-	{
-		//todo
-	}
-	else
+	// if(p_encoder->Params.IsQuadratureCaptureEnabled == true)
+	// {
+	// 	//todo
+	// }
+	// else
 	{
 		_Encoder_CaptureAngularD_Increasing(p_encoder);
 	}
@@ -303,8 +305,8 @@ static inline uint32_t Encoder_ConvertAngleToCounterD(Encoder_T * p_encoder, uin
 }
 
 // HW_DECODER capture is exception to this interface
-// static inline uint32_t Encoder_GetAngularD(Encoder_T * p_encoder) 	{ return p_encoder->AngularD; }
-// static inline uint32_t Encoder_GetAngle(Encoder_T * p_encoder) 		{ return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->AngularD); }
+static inline uint32_t Encoder_GetAngularD(Encoder_T * p_encoder) 	{ return p_encoder->AngularD; }
+static inline uint32_t Encoder_GetAngle(Encoder_T * p_encoder) 		{ return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->AngularD); }
 
 /******************************************************************************/
 /*!

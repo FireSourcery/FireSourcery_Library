@@ -32,8 +32,9 @@
 #define ENCODER_ISR_H
 
 #include "Encoder.h"
-// #include "Encoder_DeltaD.h"
-// #include "Encoder_DeltaT.h"
+#include "Encoder_DeltaD.h"
+#include "Encoder_DeltaT.h"
+#include "Encoder_Motor.h"
 
 /******************************************************************************/
 /*!
@@ -47,8 +48,8 @@
 */
 static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 {
-#if 	defined(CONFIG_ENCODER_HW_EMULATED)
 	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
+#if 	defined(CONFIG_ENCODER_HW_EMULATED)
 #else 	defined(CONFIG_ENCODER_HW_DECODER)
 	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
 #endif
@@ -59,13 +60,31 @@ static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 static inline void Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
 {
 	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
-	_Encoder_CaptureAngularD(p_encoder);
+// #if 	defined(CONFIG_ENCODER_HW_EMULATED)
+// 	_Encoder_CaptureAngularD(p_encoder);
+// #else /* DeltaT ISR version */
+	Encoder_DeltaT_Capture(p_encoder); /* superfluous deltaT capture for emulated D mode for now */
+// #endif
 }
 
 static inline void Encoder_OnPhaseB_ISR(Encoder_T * p_encoder)
 {
 	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
-	_Encoder_CaptureAngularD(p_encoder);
+// #if 	defined(CONFIG_ENCODER_HW_EMULATED)
+// 	_Encoder_CaptureAngularD(p_encoder);
+// #else
+	Encoder_DeltaT_Capture(p_encoder);
+// #endif
+}
+
+static inline void Encoder_Motor_OnPhaseC_ISR(Encoder_T * p_encoder)
+{
+	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
+// #if 	defined(CONFIG_ENCODER_HW_EMULATED)
+// 	_Encoder_CaptureAngularD(p_encoder);
+// #else
+	Encoder_DeltaT_Capture(p_encoder);
+// #endif
 }
 
 /* Shared A, B Thread */

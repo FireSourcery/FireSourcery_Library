@@ -236,7 +236,7 @@ static inline bool Hall_PollCaptureSensors(Hall_T * p_hall)
 {
 	uint8_t sensorsNew = Hall_ReadSensors(p_hall).State;
 	bool isEdge = (sensorsNew != p_hall->SensorsRef.State);
-	if(isEdge) { p_hall->SensorsRef.State = sensorsNew; }
+	if(isEdge == true) { p_hall->SensorsRef.State = sensorsNew; }
 	return (isEdge);
 }
 

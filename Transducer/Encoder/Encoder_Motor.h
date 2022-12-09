@@ -133,25 +133,6 @@ static inline uint32_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
 	// return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->AngularD) * p_encoder->Params.MotorPolePairs;
 }
 
-
-/******************************************************************************/
-/*!
-	Position
-*/
-/******************************************************************************/
-static inline uint32_t Encoder_Motor_D_GetMechanicalTheta(Encoder_T * p_encoder)
-{
-	return Encoder_DeltaD_GetAngle(p_encoder);
-}
-
-/*!
-*/
-static inline uint32_t Encoder_Motor_D_GetElectricalTheta(Encoder_T * p_encoder)
-{
-	// return Encoder_ConvertCounterDToAngle(p_encoder, (uint32_t)p_encoder->AngularD * (uint32_t)p_encoder->Params.MotorPolePairs);
-	return Encoder_DeltaD_GetAngle(p_encoder) * p_encoder->Params.MotorPolePairs;
-}
-
 /******************************************************************************/
 /*!
 	Speed
@@ -244,8 +225,8 @@ static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(Encod
 */
 /*! @{ */
 /******************************************************************************/
-extern void Encoder_Motor_InitCaptureCount(Encoder_T * p_encoder);
-extern void Encoder_Motor_InitCaptureTime(Encoder_T * p_encoder);
+extern void Encoder_Motor_InitModeD(Encoder_T * p_encoder);
+extern void Encoder_Motor_InitModeT(Encoder_T * p_encoder);
 extern void Encoder_Motor_SetHallCountsPerRevolution(Encoder_T * p_encoder, uint8_t motorPolePairs);
 // extern void Encoder_Motor_SetLinearUnits(Encoder_T * p_encoder, uint32_t wheelDiameter, uint32_t wheeltoMotorRatio_Factor, uint32_t wheeltoMotorRatio_Divisor);
 /******************************************************************************/

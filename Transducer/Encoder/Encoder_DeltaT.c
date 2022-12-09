@@ -36,15 +36,7 @@
 */
 void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 {
-	// HAL_Encoder_InitCaptureTime
-	// (
-	// 	p_encoder->CONFIG.P_HAL_ENCODER,
-	// 	p_encoder->PhaseA.CONFIG.P_HAL_PIN, p_encoder->PhaseA.CONFIG.ID,
-	// 	p_encoder->PhaseB.CONFIG.P_HAL_PIN, p_encoder->PhaseB.CONFIG.ID
-	// );
-
-	// Pin_Input_Init(&p_encoder->PhaseA);
-	// Pin_Input_Init(&p_encoder->PhaseB);
+	// HAL_Encoder_InitTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
 
 	if (p_encoder->CONFIG.P_PARAMS != 0U)
 	{
@@ -67,10 +59,12 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 */
 void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 {
+	p_encoder->AngularD = 0U;
 	p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX;
-	// HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
 	p_encoder->TimerCounterSaved = 0U;
 	p_encoder->ExtendedTimerSaved = *p_encoder->CONFIG.P_EXTENDED_TIMER;
+	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
+	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
 	// if timer unwritable
 	// p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER) - (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U);
 }

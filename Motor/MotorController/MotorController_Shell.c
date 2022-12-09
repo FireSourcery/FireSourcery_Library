@@ -633,15 +633,18 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 				if(p_motor->JogIndex % 6U == 0U)
 				{
 					Terminal_SendString(p_terminal, "\r\n");
+					Terminal_SendString(p_terminal, "AngularD: ");
+					Terminal_SendNum(p_terminal, Encoder_GetAngularD(&p_motor->Encoder));
+					Terminal_SendString(p_terminal, "\r\n");
 					Terminal_SendString(p_terminal, "Hall: ");
 				}
 				Terminal_SendNum(p_terminal, Hall_ReadSensors(&p_motor->Hall).State); Terminal_SendString(p_terminal, " ");
 				break;
 
 			case MOTOR_SENSOR_MODE_ENCODER:
-				Terminal_SendNum(p_terminal, _Encoder_DeltaD_GetAngularD(&p_motor->Encoder));
+				Terminal_SendNum(p_terminal, Encoder_GetAngularD(&p_motor->Encoder));
 				Terminal_SendString(p_terminal, ", ");
-				Terminal_SendNum(p_terminal, Encoder_DeltaD_GetAngle(&p_motor->Encoder));
+				Terminal_SendNum(p_terminal, Encoder_GetAngle(&p_motor->Encoder));
 				Terminal_SendString(p_terminal, "\r\n");
 				break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)

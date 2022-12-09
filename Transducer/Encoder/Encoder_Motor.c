@@ -36,7 +36,7 @@
 	UnitAngularD set to reflect mechanical angle => set for electrical angle to be derived value.
 	Allow TotalD of at least CountsPerRevolution
 */
-void Encoder_Motor_InitCaptureCount(Encoder_T * p_encoder)
+void Encoder_Motor_InitModeD(Encoder_T * p_encoder)
 {
 	Encoder_DeltaD_Init(p_encoder);
 }
@@ -67,7 +67,7 @@ void Encoder_Motor_InitCaptureCount(Encoder_T * p_encoder)
 	MRPM 		= 1[Delta]*60[s]*TimerFreq[Hz]/PolePairs/Delta[Ticks]
 
 */
-void Encoder_Motor_InitCaptureTime(Encoder_T * p_encoder)
+void Encoder_Motor_InitModeT(Encoder_T * p_encoder)
 {
 	Encoder_DeltaT_Init(p_encoder);
 }

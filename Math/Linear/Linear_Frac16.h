@@ -33,14 +33,13 @@
 
 #include "Linear.h"
 
-// Q16
-// Q16_Frac16
-// Q16_UFrac16
-
+/******************************************************************************/
 /*!
-	65535 => 1.0f
-	@return fixed32 q16.16 format. range bounded to [-65536*2:65535*2]
+	Using int32_t q16.16 format
+	65536 <=> 1.0f
+	range bounded to [-65536*2:65535*2] via shift 14 at init.
 */
+/******************************************************************************/
 static inline int32_t Linear_Frac16(const Linear_T * p_linear, int32_t x)
 {
 	return linear_m16_f16(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, p_linear->YOffset, x);

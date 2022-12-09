@@ -91,6 +91,22 @@ static inline int32_t _Motor_FOC_CaptureAngleSpeed(Motor_T * p_motor, qangle16_t
 	return speedFeedback_Frac16;
 }
 
+static void _Motor_FOC_CaptureHall(Motor_T * p_motor)
+{
+	Encoder_DeltaT_CaptureExtendedTimer(&p_motor->Encoder);
+	p_motor->HallAngle = (qangle16_t)Hall_GetRotorAngle_Degrees16(&p_motor->Hall);
+	p_motor->InterpolatedAngleIndex = 1U;
+
+	// if(Hall_GetSensorsId(&p_motor->Hall) == 1U)
+	// {
+	// 	p_motor->VBemfPeak_Adcu = p_motor->VBemfPeakTemp_Adcu;
+	// 	p_motor->VBemfPeakTemp_Adcu = 0U;
+
+	// 	p_motor->IPhasePeak_Adcu = p_motor->IPhasePeakTemp_Adcu;
+	// 	p_motor->IPhasePeakTemp_Adcu = 0U;
+	// }
+}
+
 static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 {
 	bool procSpeed = Timer_Poll(&p_motor->SpeedTimer);
@@ -125,28 +141,19 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 				speedFeedback_Frac16 = Encoder_DeltaD_GetFrac16Speed(&p_motor->Encoder);
 			}
 			/* Encoder_Motor_GetElectricalTheta returns [0, 65535] maps directly to negative portions of qangle16_t */
-			electricalAngle = (qangle16_t)Encoder_Motor_D_GetElectricalTheta(&p_motor->Encoder);
+			electricalAngle = (qangle16_t)Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:
+#if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
 			if(Hall_PollCaptureSensors(&p_motor->Hall) == true)
 			{
 				Encoder_DeltaT_Capture(&p_motor->Encoder);
-				Encoder_DeltaT_CaptureExtendedTimer(&p_motor->Encoder);
-				p_motor->HallAngle = (qangle16_t)Hall_GetRotorAngle_Degrees16(&p_motor->Hall);
+				_Motor_FOC_CaptureHall(p_motor);
 				electricalAngle = p_motor->HallAngle;
-				p_motor->InterpolatedAngleIndex = 1U;
-
-				// if(Hall_GetSensorsId(&p_motor->Hall) == 1U)
-				// {
-				// 	p_motor->VBemfPeak_Adcu = p_motor->VBemfPeakTemp_Adcu;
-				// 	p_motor->VBemfPeakTemp_Adcu = 0U;
-
-				// 	p_motor->IPhasePeak_Adcu = p_motor->IPhasePeakTemp_Adcu;
-				// 	p_motor->IPhasePeakTemp_Adcu = 0U;
-				// }
 			}
 			else
+#endif
 			{
 				electricalDelta = Encoder_Motor_InterpolateElectricalDelta(&p_motor->Encoder, p_motor->InterpolatedAngleIndex);
 				if(electricalDelta > 65536U / 6U) { electricalDelta = 65536U / 6U; }

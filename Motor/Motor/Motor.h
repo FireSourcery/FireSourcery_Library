@@ -277,6 +277,7 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 	//	uint8_t BrakeCoeffcient;
 	//	uint32_t RampAcceleration;
 
+#if  defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)
 	// uint16_t OpenLoopVPwmMin;
 	// uint16_t OpenLoopVPwmMax;
 	// uint16_t OpenLoopSpeedStart;
@@ -284,7 +285,7 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 	// uint16_t OpenLoopAccel;
 		//	uint16_t OpenLoopVHzGain;
 		//	uint16_t OpenLoopZcdTransition;
-
+#endif
 	Phase_Mode_T PhasePwmMode; /* Only 1 nvm param for phase module. */
 }
 Motor_Params_T;
@@ -301,6 +302,9 @@ typedef const struct Motor_Init_Tag
 	AnalogN_T * const P_ANALOG_N;
 	const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
 	const Motor_Params_T * const P_PARAMS_NVM;
+	void (*INIT_SENSOR_HALL)(void);
+	void (*INIT_SENSOR_ENCODER)(void);
+	// void (*INIT_SENSOR_SIN_COS)(void);
 }
 Motor_Config_T;
 
@@ -399,6 +403,7 @@ typedef struct Motor_Tag
 	/*
 		Six-Step
 	*/
+#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
 	// PID_T PidIBus;
 //	BEMF_T Bemf;
 	// Motor_SectorId_T NextPhase;
@@ -407,20 +412,19 @@ typedef struct Motor_Tag
 	// uint32_t IBus_Frac16;
 	// uint32_t IBusSum_Frac16;
 	// uint16_t VPwm; 	/* Six-Step Control Variable */
+#endif
 
 	/*
 		Open-loop
 	*/
-	// bool IsOpenLoop;
-	// Linear_T OpenLoopRamp;
-	// uint32_t OpenLoopRampIndex;
-	// uint32_t OpenLoopCommutationPeriod;
-	// uint16_t OpenLoopSpeed_RPM;
-	// uint16_t OpenLoopVPwm;
-
-	// uint32_t MicrosRef; //debug
-	// volatile uint32_t DebugTime[10U];
-	// volatile uint32_t Debug[20U];
+#if  defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)
+	bool IsOpenLoop;
+	Linear_T OpenLoopRamp;
+	uint32_t OpenLoopRampIndex;
+	uint32_t OpenLoopCommutationPeriod;
+	uint16_t OpenLoopSpeed_RPM;
+	uint16_t OpenLoopVPwm;
+#endif
 
 	/*
 		Unit Conversions
@@ -434,6 +438,12 @@ typedef struct Motor_Tag
 	Filter_T FilterA; 	//Calibration use
 	Filter_T FilterB;
 	Filter_T FilterC;
+
+#if  defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	uint32_t MicrosRef;
+	volatile uint32_t DebugTime[10U];
+	volatile uint32_t Debug[20U];
+#endif
 }
 Motor_T;
 

@@ -49,17 +49,17 @@ static inline int32_t Linear_ADC_CalcFraction16(const Linear_T * p_linear, uint1
 	return Linear_Frac16(p_linear, adcu);
 }
 
-static inline int32_t Linear_ADC_CalcFractionSigned16(const Linear_T * p_linear, uint16_t adcu)
+static inline int16_t Linear_ADC_CalcFractionSigned16(const Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Frac16_Signed(p_linear, adcu);
 }
 
-static inline uint32_t Linear_ADC_CalcFractionUnsigned16(const Linear_T * p_linear, uint16_t adcu)
+static inline uint16_t Linear_ADC_CalcFractionUnsigned16(const Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Frac16_Unsigned(p_linear, adcu);
 }
 
-static inline uint32_t Linear_ADC_CalcFractionUnsigned16_Abs(const Linear_T * p_linear, uint16_t adcu)
+static inline uint16_t Linear_ADC_CalcFractionUnsigned16_Abs(const Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Frac16_Unsigned_Abs(p_linear, adcu);
 }

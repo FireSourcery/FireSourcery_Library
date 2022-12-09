@@ -103,10 +103,10 @@ static inline void _Encoder_DeltaT_CaptureDelta(Encoder_T * p_encoder)
 */
 static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 {
+ 	_Encoder_CaptureAngularD(p_encoder);
 	_Encoder_DeltaT_CaptureDelta(p_encoder);
-	_Encoder_CaptureAngularD(p_encoder);
-	p_encoder->TotalD += 1U; /* Capture integral */
-	p_encoder->TotalT += p_encoder->DeltaT;
+	// p_encoder->TotalD += 1U; /* Capture integral */
+	// p_encoder->TotalT += p_encoder->DeltaT;
 }
 
 #if defined(CONFIG_ENCODER_HW_EMULATED) && defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
@@ -222,17 +222,12 @@ static inline void Encoder_DeltaT_CaptureExtendedTimer(Encoder_T * p_encoder)
 {
 // #if defined(CONFIG_ENCODER_HW_CAPTURE_TIME)
 	/* check time exceed short timer max value */
-	// if(HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
-	// {
-	// 	p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * (p_encoder->ExtendedTimerConversion);
-
-	// 	/* If checking 32bit overflow is needed. should be caught by poll watch stop, which occurs prior */
-	// 	//	if (extendedTimerDelta > (UINT32_MAX / p_encoder->CONFIG.DeltaT) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ)
-	// 	//	{
-	// 	//		p_encoder->DeltaT = UINT32_MAX;
-	// 	//	}
-	// }
-	// p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
+	if(HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
+	{
+		p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->ExtendedTimerConversion;
+		/* 32bit DeltaT overflow should be caught by poll watch stop, which is a shorter period */
+	}
+	p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
 // #else
 	// uint32_t extendedTimerDelta = _Encoder_GetExtendedTimerDelta(p_encoder);
 	// p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
@@ -407,53 +402,7 @@ static inline uint32_t Encoder_DeltaT_ConvertFromLinearSpeed_UnitsPerMinute(Enco
 
 
 
-/*!
-	@brief  LinearInterpolation Functions
-*/
-///*!
-//	@brief CaptureDeltaD Mode: Estimate D using captured DeltaD sample. Assuming constant speed.
-//	@param domain unitless
-// */
-//static inline uint32_t Encoder_InterpolateDistance_Slope(Encoder_T * p_encoder, uint32_t index, uint32_t domain)
-//{
-//	return index * Encoder_GetDeltaD_Units(p_encoder) / domain;
-//}
-//
-///*!
-//	@brief CaptureDeltaT Mode: Estimate DeltaD using captured DeltaT sample. Assuming constant speed.
-//
-//	Delta Peroid > Control Peroid
-//	time domain - if domain is with respect to time =>
-//	@param index range [0:interpolationFreq/DeltaTFreq]. interpolationFreq/DeltaT_Freq == [interpolationFreq/(UnitT_Freq/DeltaT)] == [interpolationFreq * DeltaT / UnitT_Freq]
-// */
-//static inline uint32_t Encoder_InterpolateDistance(Encoder_T * p_encoder, uint32_t index)
-//{
-////	return index * p_encoder->UnitInterpolateD / p_encoder->DeltaT; /* index * [UnitD * UnitT_Freq / interpolationFreq] / DeltaT */
-//	return index * Encoder_GetSpeed(p_encoder) / p_encoder->CONFIG.POLLING_FREQ; 	//index * 1 * [UnitD * UnitT_Freq] / p_encoder->DeltaT / interpolationFreq;
-//}
 
-/*!
-	Interpolate Delta Angle
-*/
-//static inline uint32_t Encoder_InterpolateAngle_IndexDomain(Encoder_T * p_encoder, uint32_t index, uint32_t domain)
-//{
-//	return index * Encoder_GetDeltaAngle(p_encoder) / domain;
-//}
-
-//static inline uint32_t Encoder_InterpolateSpeed_Slope(Encoder_T * p_encoder, uint32_t index, uint32_t domain)
-//{
-//	return index * Encoder_GetSpeed(p_encoder) / domain;
-//}
-
-//static inline uint32_t Encoder_InterpolateSpeed(Encoder_T * p_encoder, uint32_t index, uint32_t interpolationFreq)
-//{
-////	return index * Encoder_GetSpeed(p_encoder) * p_encoder->UnitInterpolatedD / p_encoder->DeltaT;
-//
-////	index * Encoder_GetAcceleration(p_encoder) / interpolationFreq;
-//}
-/******************************************************************************/
-/*! @} */
-/******************************************************************************/
 
 
 /******************************************************************************/

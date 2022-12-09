@@ -197,7 +197,7 @@ void Motor_ResetSensorMode(Motor_T * p_motor)
 		case MOTOR_SENSOR_MODE_SENSORLESS:
 			if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 			{
-				Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
+				Encoder_Motor_InitModeT(&p_motor->Encoder);
 			}
 			else
 			{
@@ -206,14 +206,16 @@ void Motor_ResetSensorMode(Motor_T * p_motor)
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:
+			p_motor->CONFIG.INIT_SENSOR_HALL();
 			Hall_Init(&p_motor->Hall);
-			Encoder_Motor_InitCaptureTime(&p_motor->Encoder);
+			Encoder_Motor_InitModeT(&p_motor->Encoder);
 			/* Encoder module contains independent params, sync to main motor module setting */
 			Motor_ResetUnitsHall(p_motor);
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
-			Encoder_Motor_InitCaptureCount(&p_motor->Encoder);
+			p_motor->CONFIG.INIT_SENSOR_ENCODER();
+			Encoder_Motor_InitModeD(&p_motor->Encoder);
 			Encoder_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 			break;
 

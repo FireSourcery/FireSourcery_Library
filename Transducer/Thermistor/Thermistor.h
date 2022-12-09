@@ -32,6 +32,7 @@
 #define THERMISTOR_H
 
 #include "Config.h"
+#include "Math/Linear/Linear_ADC.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -67,8 +68,9 @@ Thermistor_ThresholdStatus_T;
 typedef enum Thermistor_Type_Tag
 {
 	THERMISTOR_TYPE_NTC,
+	THERMISTOR_TYPE_PTC,
 	THERMISTOR_TYPE_LINEAR,
-	// THERMISTOR_TYPE_LUT,
+	THERMISTOR_TYPE_LUT,
 }
 Thermistor_Type_T;
 
@@ -100,7 +102,7 @@ typedef struct Thermistor_Config_Tag
 {
 	const uint32_t R_SERIES; 	/* Pull-up */
 	const uint32_t R_PARALLEL; 	/* Parallel pull-down if applicable. 0 for Disable */
-	//bool IS_NTC_FIXED;		/* Disable NTC set functions */
+	//bool IS_FIXED;			/* Disable Coefficient set functions */
 	const Thermistor_Params_T * P_PARAMS;
 }
 Thermistor_Config_T;
@@ -109,11 +111,12 @@ typedef struct Thermistor_Tag
 {
 	const Thermistor_Config_T CONFIG;
 	Thermistor_Params_T Params;
-	// Linear_T WarningShutdownInterpolation; /* return value [Warning:Shutdown] as [65535:paramVar] */
+	Linear_T LinearDegreesC; /* Simple linear fit. Roughly linear 70-100C */
 	Thermistor_ThresholdStatus_T ShutdownThreshold;
 	Thermistor_ThresholdStatus_T WarningThreshold; /* Threshold save state info */
 	Thermistor_Status_T Status;
 	uint16_t Adcu; /* Previous ADC sample */
+	// Linear_T WarningShutdownInterpolation; /* return value [Warning_Adcu:Shutdown_Adcu] as [65535:paramVar] */
 }
 Thermistor_T;
 
