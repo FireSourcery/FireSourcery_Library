@@ -38,9 +38,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
-extern void _Motor_User_ActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T mode);
-
 /******************************************************************************/
 /*!
 	UserCmd functions
@@ -58,6 +55,8 @@ extern void _Motor_User_ActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T 
 	SetCmd functions check/sets control mode, and sets cmd value
 */
 /******************************************************************************/
+
+extern void _Motor_User_ActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 
 /*!
 	@param[in] userCmd [-32768:32767]
@@ -128,7 +127,6 @@ static inline void Motor_User_SetVFreqModeCmd(Motor_T * p_motor, uint32_t scalar
 	Motor_User_SetVFreqCmdValue(p_motor, scalar);
 }
 
-
 /******************************************************************************/
 /*!
 	Torque Mode
@@ -153,7 +151,6 @@ static inline void Motor_User_SetTorqueModeCmd(Motor_T * p_motor, int16_t torque
 	Motor_User_SetTorqueMode(p_motor);
 	Motor_User_SetTorqueCmdValue(p_motor, torque);
 }
-
 
 /******************************************************************************/
 /*!
@@ -303,16 +300,11 @@ static inline void Motor_User_SetCoast(Motor_T * p_motor)
 	inline State wrappers
 */
 /******************************************************************************/
-
-
-
-
 /*
 	Fault - Shared StateMachine InputId
 	Fault State - checks exit
 	Other States - user initiated transistion to fault state
 */
-
 static inline void Motor_User_ToggleFault(Motor_T * p_motor)
 {
 	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL);
@@ -341,13 +333,24 @@ static inline bool Motor_User_CheckFault(Motor_T * p_motor)
 	return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FAULT);
 }
 
-
 /******************************************************************************/
 /*!
 	Non StateMachined Checked
 */
 /******************************************************************************/
-// static inline void Motor_User_DisableControl(Motor_T * p_motor) { Phase_Float(&p_motor->Phase); }
+static inline void Motor_User_ForceDisableControl(Motor_T * p_motor) { Phase_Float(&p_motor->Phase); }
+
+/******************************************************************************/
+/*!
+	Error checked User Get Set Values
+*/
+/******************************************************************************/
+#ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
+static inline int32_t _Motor_User_ConvertToSpeedFrac16(Motor_T * p_motor, int32_t speed_rpm) 	{ return speed_rpm * 65535 / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
+static inline int16_t _Motor_User_ConvertToSpeedRpm(Motor_T * p_motor, int32_t speed_frac16) 	{ return speed_frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / 65536; }
+static inline int32_t _Motor_User_ConvertToIFrac16(Motor_T * p_motor, int32_t i_amp) 			{ return i_amp * 65535 / p_motor->CONFIG.I_MAX_AMP; }
+static inline int16_t _Motor_User_ConvertToIAmp(Motor_T * p_motor, int32_t i_frac16) 			{ return i_frac16 * p_motor->CONFIG.I_MAX_AMP / 65536; }
+#endif
 
 /******************************************************************************/
 /*
@@ -399,10 +402,14 @@ static inline int32_t Motor_User_GetSpeed_Frac16(Motor_T * p_motor)
 	return (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? p_motor->SpeedFeedback_Frac16 : 0 - p_motor->SpeedFeedback_Frac16;
 }
 
-// #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-static inline int16_t Motor_User_GetIPhase_Amp(Motor_T * p_motor) { return Motor_ConvertToIAmp(p_motor, Motor_User_GetIPhase_Frac16(p_motor)); }
+#ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
+static inline int16_t Motor_User_GetIPhase_Amp(Motor_T * p_motor) { return _Motor_User_ConvertToIAmp(p_motor, Motor_User_GetIPhase_Frac16(p_motor)); }
 /*!	@return [-32767:32767] Rpm should not exceed int16_t */
-static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor) { return Motor_ConvertToSpeedRpm(p_motor, Motor_User_GetSpeed_Frac16(p_motor)); }
+static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor) { return _Motor_User_ConvertToSpeedRpm(p_motor, Motor_User_GetSpeed_Frac16(p_motor)); }
+
+
+
+#endif
 
 /*
 	User output only
@@ -449,7 +456,7 @@ static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Mo
 static inline uint8_t Motor_User_GetPolePairs(Motor_T * p_motor) 									{ return p_motor->Parameters.PolePairs; }
 static inline uint16_t Motor_User_GetSpeedFeedbackRef_Rpm(Motor_T * p_motor) 						{ return p_motor->Parameters.SpeedFeedbackRef_Rpm; }
 static inline uint16_t Motor_User_GetSpeedVMatchRef_Rpm(Motor_T * p_motor) 							{ return p_motor->Parameters.SpeedVMatchRef_Rpm; }
-static inline uint32_t Motor_User_ConvertToVMatchFrac16(Motor_T * p_motor, uint16_t rpm) 			{ return Linear_Function(&p_motor->SpeedVMatchRatio, Motor_ConvertToSpeedFrac16(p_motor, rpm)); }
+static inline uint32_t Motor_User_ConvertToVMatchFrac16(Motor_T * p_motor, uint16_t rpm) 			{ return Linear_Function(&p_motor->SpeedVMatchRatio, _Motor_User_ConvertToSpeedFrac16(p_motor, rpm)); }
 //todo change back to 16 after test
 
 static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode)  	{ p_motor->Parameters.CommutationMode = mode; }
@@ -494,23 +501,38 @@ extern void Motor_User_SetSpeedLimitActive(Motor_T * p_motor, uint16_t scalar_fr
 extern void Motor_User_ClearSpeedLimitActive(Motor_T * p_motor);
 // extern bool Motor_User_SetSpeedLimitActive_Id(Motor_T * p_motor, uint16_t scalar_frac16, Motor_SpeedLimitActiveId_T id);
 // extern void Motor_User_ClearSpeedLimitActive_Id(Motor_T * p_motor, Motor_SpeedLimitActiveId_T id);
-extern void _Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16);
-extern void _Motor_User_ClearLimitActive(Motor_T * p_motor);
+// extern void _Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16);
+// extern void _Motor_User_ClearLimitActive(Motor_T * p_motor);
 extern bool Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16, Motor_ILimitActiveId_T id);
 extern bool Motor_User_ClearILimitActive(Motor_T * p_motor, Motor_ILimitActiveId_T id);
 
 extern void Motor_User_SetSpeedLimitParam_Frac16(Motor_T * p_motor, uint16_t forward_Frac16, uint16_t reverse_Frac16);
+extern void Motor_User_SetSpeedLimitForwardParam_Frac16(Motor_T * p_motor, uint16_t forward_Frac16);
+extern void Motor_User_SetSpeedLimitReverseParam_Frac16(Motor_T * p_motor, uint16_t reverse_Frac16);
 extern void Motor_User_SetILimitParam_Frac16(Motor_T * p_motor, uint16_t motoring_Frac16, uint16_t generating_Frac16);
-extern void Motor_User_SetILimitParam_Amp(Motor_T * p_motor, uint16_t motoring_Amp, uint16_t generating_Amp);
+extern void Motor_User_SetILimitMotoringParam_Frac16(Motor_T * p_motor, uint16_t motoring_Frac16);
+extern void Motor_User_SetILimitGeneratingParam_Frac16(Motor_T * p_motor, uint16_t generating_Frac16);
+
+#if   	defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL)
 extern void Motor_User_SetSpeedLimitParam_Rpm(Motor_T * p_motor, uint16_t forward_Rpm, uint16_t reverse_Rpm);
+extern void Motor_User_SetSpeedLimitForwardParam_Rpm(Motor_T * p_motor, uint16_t forward_Rpm);
+extern void Motor_User_SetSpeedLimitReverseParam_Rpm(Motor_T * p_motor, uint16_t reverse_Rpm);
+extern void Motor_User_SetILimitParam_Amp(Motor_T * p_motor, uint16_t motoring_Amp, uint16_t generating_Amp);
+extern void Motor_User_SetILimitMotoringParam_Amp(Motor_T * p_motor, uint16_t motoring_Amp);
+extern void Motor_User_SetILimitGeneratingParam_Amp(Motor_T * p_motor, uint16_t generating_Amp);
+#endif
 
 extern void Motor_User_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm);
 extern void Motor_User_SetSpeedFeedbackRef_VRpm(Motor_T * p_motor, uint16_t vMotor, uint16_t vMotorSpeed_Rpm);
 extern void Motor_User_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm);
 extern void Motor_User_SetSpeedVMatchRef_VRpm(Motor_T * p_motor, uint16_t vMotor_V, uint16_t vMotorSpeed_Rpm);
 
+#if 	defined(CONFIG_MOTOR_DEBUG_ENABLE)
+extern void Motor_User_SetIPeakRef_Adcu_Debug(Motor_T * p_motor, uint16_t adcu);
 extern void Motor_User_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu);
 extern void Motor_User_SetIPeakRef_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV);
+#endif
+
 extern void Motor_User_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu);
 extern void Motor_User_SetIbZero_Adcu(Motor_T * p_motor, uint16_t adcu);
 extern void Motor_User_SetIcZero_Adcu(Motor_T * p_motor, uint16_t adcu);

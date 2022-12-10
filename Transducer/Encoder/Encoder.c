@@ -31,7 +31,7 @@
 #include "Encoder.h"
 
 /*!
-	highest precision (factor << targetShift / divisor) without overflow
+	Perform highest precision (factor << targetShift / divisor) without overflow
 */
 static uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uint8_t targetShift)
 {
@@ -49,15 +49,8 @@ static uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uint8_t ta
 			if(factor <= (UINT32_MAX >> maxShift))
 			{
 				result = (factor << maxShift) / divisor;
-
-				if(result <= (UINT32_MAX >> (targetShift - maxShift)))
-				{
-					result = result << (targetShift - maxShift);
-				}
-				else /* error, will overflow 32 bit even using ((factor << 0)/divisor) << leftShift */
-				{
-					result = 0U;
-				}
+				if(result <= (UINT32_MAX >> (targetShift - maxShift))) { result = result << (targetShift - maxShift); }
+				else { result = 0U; } /* error, will overflow 32 bit even using ((factor << 0) / divisor) << leftShift */
 				break;
 			}
 		}
@@ -69,77 +62,75 @@ static uint32_t MaxLeftShiftDivide(uint32_t factor, uint32_t divisor, uint8_t ta
 void _Encoder_ResetUnitsAngular(Encoder_T * p_encoder)
 {
 	/*
-	 * Angle Calc
-	 * Angle = UnitAngle_Factor * DeltaD >> UnitAngle_Divisor
-	 *
-	 * uneven UnitD = unitAngle_DataBits/unitAngle_SensorResolution divide results in loss of precision
-	 *
-	 * UnitAngularD_ShiftDivisor == CONFIG_ENCODER_ANGLE_DEGREES_BITS
-	 */
+		Angle = CounterD * (1 << DEGREES_BITS) / CountsPerRevolution
+		Angle = CounterD * [((1 << DEGREES_BITS) << UnitAngularD_ShiftDivisor) / CountsPerRevolution] >> UnitAngularD_ShiftDivisor
+			UnitAngularD_ShiftDivisor == (32 - DEGREES_BITS)
+	*/
 	p_encoder->UnitAngularD_Factor = 0xFFFFFFFFU / p_encoder->Params.CountsPerRevolution + 1U;
 
 	/*
-	 * Angular Speed Calc
-	 * Angular Speed = DeltaD * [UnitAngularD_Factor * UnitT_Freq / (32-ANGLE_DEGREES_BITS)] / DeltaT
-	 *
-	 * most cases: UnitT_Freq > DeltaD
-	 *
-	 * e.g.
-	 * Real:   				8000 * 429,497{encoderRes == 10k} * 20000 / 65536 / 1 == 1,048,576,660.16
-	 *
-	 * Primitive:	  		(DeltaD * UnitAngularD_Factor) / (32-ANGLE_DEGREES_BITS) * UnitT_Freq / DeltaT == 1,048,560,000
-	 * UnitAngularSpeed: 	DeltaD * [UnitAngularD_Factor * UnitT_Freq / (32-ANGLE_DEGREES_BITS)] / DeltaT == 1,048,576,000
-	 */
+		AngularSpeed = DeltaD * [(1 << DEGREES_BITS) * UnitT_Freq / CountsPerRevolution] / DeltaT
+			UnitAngularSpeed == [UnitAngularD_Factor * UnitT_Freq >> (32-DEGREES_BITS)]
+
+		e.g.
+			UnitAngularSpeed = 160,000 		{ DEGREES_BITS = 16, UnitT_Freq = 20000, CountsPerRevolution = 8192 }
+			UnitAngularSpeed = 8,000 		{ DEGREES_BITS = 16, UnitT_Freq = 1000, CountsPerRevolution = 8192 }
+			UnitAngularSpeed = 819,200,000 	{ DEGREES_BITS = 16, UnitT_Freq = 750000, CountsPerRevolution = 60 }
+			UnitAngularSpeed = 131,072		{ DEGREES_BITS = 16, UnitT_Freq = 20000, CountsPerRevolution = 10000 }
+	*/
 	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->Params.CountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
 
-	//	//set boundary using speed ref
-	//	if(p_encoder->UnitAngularSpeed > UINT32_MAX / ref)	{p_encoder->UnitAngularSpeed = 0U;}
-
 	/*
-	 * set boundary using 1 revolution minimum
-	 */
-	 //	if(unitTFreq > (UINT32_MAX >> CONFIG_ENCODER_ANGLE_DEGREES_BITS))
-	 //	{
-	 //		p_encoder->UnitAngularSpeed = 0U;
-	 //	}
-	 //	else
-	 //	{
-	 //		p_encoder->UnitAngularSpeed = (unitTFreq << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / countsPerRevolution;
-	 //	}
+		DeltaT side overflow boundary set by MaxLeftShiftDivide
+	*/
 
 	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->CONFIG.POLLING_FREQ * p_encoder->Params.CountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
-
-	/*
-	 *  UnitFrac16Speed = unitTFreq * 65535U * 60U / CountsPerRevolution / Frac16SpeedRef_Rpm;
-	 */
-	p_encoder->UnitFrac16Speed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.Frac16SpeedRef_Rpm, 16U);
-	// e.g. no truncate = 16,384,000
 }
 
 void _Encoder_ResetUnitsLinear(Encoder_T * p_encoder)
 {
-	p_encoder->UnitLinearD = p_encoder->Params.DistancePerCount;
 	/*
-		Overflow Caution
+		SurfaceToEncoder Ratio <=> gearRatio_Factor/gearRatio_Divisor
 
-		DeltaT Mode, DeltaD == 1:  largeunitDeltaT_Freq, constraint on unitDeltaD
-		Max unitDeltaD => UINT32_MAX / (unitDeltaT_Freq)
-		e.g. unitDeltaD ~14,000, for 300,000 unitDeltaT_Freq
+		SurfaceSpeed_DistancePerHour = (RPM * gearRatio_Divisor/gearRatio_Factor) * surfaceDiameter_Mm * 314 / 100 * 60 / DistanceUserConversion
+		RPM = 60 *(deltaD_Ticks * UnitT_Freq) / (CountsPerRevolution * deltaT_Ticks)
 
-		DeltaD Mode, DeltaT == 1: constraint on unitDeltaD, and deltaD
-		Max deltaD => UINT32_MAX / (unitDeltaD * unitDeltaT_Freq)
-		e.g. deltaD ~14,000, for 300,000 (unitDeltaD * unitDeltaT_Freq)
+		SurfaceSpeed_UserDPerSecond = (deltaD_Ticks * UnitT_Freq * gearRatio_Divisor * surfaceDiameter_Mm * 314) / (CountsPerRevolution * deltaT_Ticks * gearRatio_Factor * 100))
+		SurfaceSpeed_UserDPerSecond = deltaD_Ticks * [UnitT_Freq * gearRatio_Divisor * surfaceDiameter_Mm * 314] / (deltaT_Ticks * [CountsPerRevolution * gearRatio_Factor * 100])
+		SurfaceSpeed_UserDPerSecond = deltaD_Ticks * [[UnitT_Freq * gearRatio_Divisor * surfaceDiameter_Mm * 314] / [CountsPerRevolution * gearRatio_Factor * 100]] / deltaT_Ticks
+
+		SurfaceSpeed_DistancePerHour = ((60 * (deltaD_Ticks * UnitT_Freq) * gearRatio_Divisor * surfaceDiameter_Mm * 314 * 60) / (CountsPerRevolution * deltaT_Ticks * gearRatio_Factor * 100 * DistanceUserConversion ))
+
+		UserD => mm
+		DistanceUserConversion:
+		mph => 1,609,344
+		kmh => 1,000,000
+
+		e.g.
+			UnitT_Freq = 1000, GearRatio = 8, SurfaceDiameter = 20in, 508mm, CountsPerRevolution = 8192
+			UnitLinearSpeed = 24.3395996094
+			1000 RPM => 7.44 mph, 11.97352 kmh
+				=> DeltaD = 136.533333333
+			mph = 136.533333333 * 24.3395996094 * 60 * 60 / 1609344 = 7.4337121212
+			mph = 136 * 24 * 60 * 60 / 1609344 = 7.3
+			kmh = 136 * 24 * 60 * 60 / 1000000 = 11.7504
+
 	*/
-	p_encoder->UnitLinearSpeed = p_encoder->Params.DistancePerCount * p_encoder->UnitT_Freq;
+	p_encoder->UnitLinearSpeed = (p_encoder->UnitT_Freq * p_encoder->Params.GearRatio_Divisor * p_encoder->Params.SurfaceDiameter * 314) / (p_encoder->Params.CountsPerRevolution * p_encoder->Params.GearRatio_Factor * 100);
+
+	// DistancePerRevolution = (gearRatio_Divisor * surfaceDiameter_Mm * 314 / gearRatio_Factor * 100)
+	// p_encoder->UnitLinearD_Factor = p_encoder->Params.DistancePerRevolution;
+	// p_encoder->UnitLinearSpeed = p_encoder->Params.DistancePerRevolution * p_encoder->UnitT_Freq;
 }
 
 void _Encoder_ResetUnitsFrac16Speed(Encoder_T * p_encoder)
 {
 	/*
-		UnitFrac16Speed = unitTFreq * 65535U * 60U / CountsPerRevolution / Frac16SpeedRef_Rpm;
+		UnitFrac16Speed = unitTFreq * 65535U * 60U / CountsPerRevolution / Frac16SpeedRef_Rpm
 
-		e.g.  unitTFreq = 625000, CountsPerRevolution = 60, Frac16SpeedRef_Rpm =
-		 = 16,384,000 (no truncate)
+		e.g.  unitTFreq = 625000, CountsPerRevolution = 60,
+			Frac16SpeedRef_Rpm = 2500 => 16,384,000
+			Frac16SpeedRef_Rpm = 10000 => 4,095,937.5
 	*/
 	p_encoder->UnitFrac16Speed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.Frac16SpeedRef_Rpm, 16U);
 }
@@ -208,16 +199,41 @@ void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRev
 	p_encoder->Params.CountsPerRevolution = countsPerRevolution;
 	_Encoder_ResetUnitsAngular(p_encoder);
 	_Encoder_ResetTimerFreq(p_encoder);
+	_Encoder_ResetUnitsFrac16Speed(p_encoder);
 }
 
-void Encoder_SetDistancePerCount(Encoder_T * p_encoder, uint16_t distancePerCount)
-{
-	p_encoder->Params.DistancePerCount = distancePerCount;
-	_Encoder_ResetUnitsLinear(p_encoder);
-}
-
-void Encoder_SetScalarSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
+void Encoder_SetFrac16SpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
 {
 	p_encoder->Params.Frac16SpeedRef_Rpm = speedRef;
 	_Encoder_ResetUnitsFrac16Speed(p_encoder);
 }
+
+void Encoder_SetDistancePerRevolution(Encoder_T * p_encoder, uint16_t distancePerRevolution)
+{
+	p_encoder->Params.DistancePerRevolution = distancePerRevolution;
+	_Encoder_ResetUnitsLinear(p_encoder);
+}
+
+void Encoder_Motor_SetSurfaceRatio(Encoder_T * p_encoder, uint32_t surfaceDiameter, uint32_t surfaceToMotorRatio_Factor, uint32_t surfaceToMotorRatio_Divisor)
+{
+	p_encoder->Params.SurfaceDiameter = surfaceDiameter;
+	p_encoder->Params.GearRatio_Factor = surfaceToMotorRatio_Factor;
+	p_encoder->Params.GearRatio_Divisor = surfaceToMotorRatio_Divisor;
+	_Encoder_ResetUnitsLinear(p_encoder);
+
+	// Encoder_SetDistancePerRevolution(p_encoder, surfaceDiameter * surfaceToMotorRatio_Divisor * 314 / (100 * surfaceToMotorRatio_Factor));
+}
+
+void Encoder_Motor_SetGroundRatio_US(Encoder_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+{
+	Encoder_Motor_SetSurfaceRatio(p_encoder, wheelDiameter_Inch10 * 254 / 100, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);
+}
+
+void Encoder_Motor_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+{
+	Encoder_Motor_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);
+}
+
+
+
+

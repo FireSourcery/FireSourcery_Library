@@ -167,10 +167,13 @@ static StateMachine_State_T * Stop_InputBrake(MotorController_T * p_mc, uint32_t
 	return 0U;
 }
 
-static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc, uint32_t substateId)
+/* This function is blocking */
+static StateMachine_State_T * Stop_InputSaveParams_Blocking(MotorController_T * p_mc, uint32_t substateId)
 {
 	/* Disable PWM interrupt to disable Motor_StateMachine */
-	Motor_DisablePwm(&p_mc->CONFIG.P_MOTORS[0U]);
+	// Motor_DisablePwm(&p_mc->CONFIG.P_MOTORS[0U]);
+
+	/* Flash Write will enter critical */
 	p_mc->NvmStatus = NV_MEMORY_STATUS_PROCESSING;
 	switch(substateId)
 	{
@@ -179,12 +182,12 @@ static StateMachine_State_T * Stop_InputSaveParams(MotorController_T * p_mc, uin
 #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 		case MOTOR_CONTROLLER_NVM_WRITE_ONCE: 	p_mc->NvmStatus = MotorController_SaveOnce_Blocking(p_mc); 			break;
 #endif
-		case MOTOR_CONTROLLER_TOGGLE_USER_INPUT_MODE:
-			if (p_mc->Parameters.UserInputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) {p_mc->Parameters.UserInputMode = MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL; }
-			else if (p_mc->Parameters.UserInputMode == MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL) {p_mc->Parameters.UserInputMode = MOTOR_CONTROLLER_INPUT_MODE_ANALOG; }
+		// case MOTOR_CONTROLLER_TOGGLE_USER_INPUT_MODE:
+		// 	if (p_mc->Parameters.UserInputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) {p_mc->Parameters.UserInputMode = MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL; }
+		// 	else if (p_mc->Parameters.UserInputMode == MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL) {p_mc->Parameters.UserInputMode = MOTOR_CONTROLLER_INPUT_MODE_ANALOG; }
 		default: break;
 	}
-	Motor_EnablePwm(&p_mc->CONFIG.P_MOTORS[0U]);
+	// Motor_EnablePwm(&p_mc->CONFIG.P_MOTORS[0U]);
 
 	return 0U;
 }
@@ -198,7 +201,7 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MCSM_TRANSITION_TAB
 	// [MCSM_INPUT_SET_ZERO] 			= (StateMachine_Transition_T)0U,
 	// [MCSM_INPUT_PROC_ZERO] 			= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)0U,
-	[MCSM_INPUT_CALIBRATION] 		= (StateMachine_Transition_T)Stop_InputSaveParams, //todo share with calibration
+	[MCSM_INPUT_CALIBRATION] 		= (StateMachine_Transition_T)Stop_InputSaveParams_Blocking, //todo share with calibration
 	// [MCSM_INPUT_RELEASE_THROTTLE] 	= (StateMachine_Transition_T)Stop_InputRelease,
 	// [MCSM_INPUT_RELEASE_BRAKE] 		= (StateMachine_Transition_T)0U,
 };

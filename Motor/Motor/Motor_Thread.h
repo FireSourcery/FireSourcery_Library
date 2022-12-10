@@ -45,7 +45,10 @@
 */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-	// p_motor->MicrosRef = SysTime_GetMicros();
+#if 	defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	p_motor->MicrosRef = SysTime_GetMicros();
+#endif
+
 	p_motor->ControlTimerBase++;
 
 #if 	defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
@@ -71,6 +74,10 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 	//	}
 
 	StateMachine_Semi_ProcOutput(&p_motor->StateMachine);
+
+#if 	defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	p_motor->DebugTime[5] = SysTime_GetMicros() - p_motor->MicrosRef;
+#endif
 }
 
 static inline void Motor_Heat_Thread(Motor_T * p_motor)

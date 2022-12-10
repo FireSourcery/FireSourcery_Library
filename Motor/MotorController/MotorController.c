@@ -113,7 +113,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	p_mc->ThermistorMosfetsTop.Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
 	p_mc->ThermistorMosfetsBot.Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
 
-	p_mc->AnalogResults.VPos_Adcu = p_mc->VMonitorPos.Params.WarningLower_Adcu + 1U;
+	p_mc->AnalogResults.VSource_Adcu = p_mc->VMonitorPos.Params.WarningLower_Adcu + 1U;
 	p_mc->AnalogResults.VAcc_Adcu = p_mc->VMonitorAcc.Params.WarningLower_Adcu + 1U;
 	p_mc->AnalogResults.VSense_Adcu = p_mc->VMonitorSense.Params.WarningLower_Adcu + 1U;
 
@@ -121,7 +121,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	p_mc->AnalogResults.HeatMosfetsTop_Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
 	p_mc->AnalogResults.HeatMosfetsBot_Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
 
-	p_mc->AnalogResults.VPos_Adcu = p_mc->VMonitorPos.Params.WarningLower_Adcu + 1U;
+	p_mc->AnalogResults.VSource_Adcu = p_mc->VMonitorPos.Params.WarningLower_Adcu + 1U;
 	p_mc->AnalogResults.VAcc_Adcu = p_mc->VMonitorAcc.Params.WarningLower_Adcu + 1U;
 	p_mc->AnalogResults.VSense_Adcu = p_mc->VMonitorSense.Params.WarningLower_Adcu + 1U;
 
@@ -226,7 +226,7 @@ void MotorController_Init(MotorController_T * p_mc)
 // 	PID_SetTunings(&p_motor->PidId, 1U, 1U, 1U, 2U, 0U, 0U);
 
 // 	// .CountsPerRevolution 			= 8192U,	//currently unused for Hall captureT, should be MotorPolePairs*6
-// 	// .DistancePerCount 				= 1U,
+// 	// .DistancePerRevolution 				= 1U,
 // 	// .IsQuadratureCaptureEnabled 		= true,
 // 	// .IsALeadBPositive 				= true,
 // 	// .ExtendedTimerDeltaTStop 		= 1000U,	//ExtendedTimer time read at deltaT stopped

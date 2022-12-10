@@ -40,9 +40,9 @@
 */
 typedef enum MotAnalog_Channel_Tag
 {
-	MOT_ANALOG_CHANNEL_VPOS, 				/* V battery, V in */
-	MOT_ANALOG_CHANNEL_VACC,				/* V accessories ~12V*/
-	MOT_ANALOG_CHANNEL_VSENSE,				/* V sensors ~5V*/
+	MOT_ANALOG_CHANNEL_VSOURCE, 			/* V Source, V Battery */
+	MOT_ANALOG_CHANNEL_VACC,				/* V Accessories, ~12V */
+	MOT_ANALOG_CHANNEL_VSENSE,				/* V Sensors, ~5V */
 	MOT_ANALOG_CHANNEL_HEAT_PCB,
 	MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP,
 	MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT,
@@ -56,7 +56,7 @@ typedef union MotAnalog_Results_Tag
 {
 	struct
 	{
-		analog_adcresult_t VPos_Adcu;
+		analog_adcresult_t VSource_Adcu;
 		analog_adcresult_t VAcc_Adcu;
 		analog_adcresult_t VSense_Adcu;
 		analog_adcresult_t HeatPcb_Adcu;
@@ -79,7 +79,7 @@ typedef struct MotAnalog_Conversions_Tag
 	{
 		struct
 		{
-			const AnalogN_Conversion_T CONVERSION_VPOS;
+			const AnalogN_Conversion_T CONVERSION_VSOURCE;
 			const AnalogN_Conversion_T CONVERSION_VACC;
 			const AnalogN_Conversion_T CONVERSION_VSENSE;
 			const AnalogN_Conversion_T CONVERSION_HEAT_PCB;

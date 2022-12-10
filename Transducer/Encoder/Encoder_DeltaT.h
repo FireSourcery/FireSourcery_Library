@@ -76,7 +76,6 @@
  			Capture DeltaT, per fixed changed in distance, via pin edge interrupt
 */
 /******************************************************************************/
-
 static inline void _Encoder_DeltaT_CaptureDelta(Encoder_T * p_encoder)
 {
 // #if defined(CONFIG_ENCODER_HW_OVERFLOW_DETECT)
@@ -91,7 +90,7 @@ static inline void _Encoder_DeltaT_CaptureDelta(Encoder_T * p_encoder)
 	}
 	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
 // #else
-// 	_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaT, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX, HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER));
+// 	p_encoder->DeltaT = _Encoder_CaptureDelta(p_encoder, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX, HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER));
 // #endif
 }
 
@@ -338,21 +337,18 @@ static inline uint32_t Encoder_DeltaT_GetAngularSpeed(Encoder_T * p_encoder)
 
 static inline uint32_t Encoder_DeltaT_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
 {
-	return Encoder_CalcRotationalSpeed_RPM(p_encoder, 1U, p_encoder->DeltaT);
-	// Encoder_DeltaT_ConvertToRotationalSpeed_RPM(p_encoder, p_encoder->DeltaT);
-	// return Encoder_GetAngularSpeed(p_encoder) * 60U >> CONFIG_ENCODER_ANGLE_DEGREES_BITS;
+	return _Encoder_CalcRotationalSpeed(p_encoder, 1U, p_encoder->DeltaT);
 }
 
 static inline uint32_t Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
 {
-	return p_encoder->UnitT_Freq * 60U / (p_encoder->Params.CountsPerRevolution * rpm);
+	return (rpm == 0U) ? 0U : p_encoder->UnitT_Freq * 60U / (p_encoder->Params.CountsPerRevolution * rpm);
 }
 
-// static inline uint32_t Encoder_DeltaT_ConvertToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaT_ticks)
-// {
-// 	return p_encoder->UnitT_Freq * 60U / (p_encoder->Params.CountsPerRevolution * deltaT_ticks);
-// }
-
+static inline uint32_t Encoder_DeltaT_ConvertToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaT_ticks)
+{
+	return Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, deltaT_ticks);
+}
 
 /******************************************************************************/
 /*!
@@ -373,13 +369,8 @@ static inline uint32_t Encoder_DeltaT_GetFrac16Speed(Encoder_T * p_encoder)
 static inline uint32_t Encoder_DeltaT_GetLinearSpeed(Encoder_T * p_encoder)
 {
 	return Encoder_CalcLinearSpeed(p_encoder, 1U, p_encoder->DeltaT);
-	// return Encoder_DeltaT_ConvertToSpeed(p_encoder, p_encoder->DeltaT);
 }
 
-/*!
-	CaptureDeltaT, DeltaD == 1: DeltaT timer ticks for given speed
-	CaptureDeltaD, DeltaT == 1: (Number of fixed DeltaT samples, before a deltaD increment) (results in less than 1)
-*/
 static inline uint32_t Encoder_DeltaT_ConvertFromLinearSpeed(Encoder_T * p_encoder, uint32_t speed_UnitsPerSecond)
 {
 	return (speed_UnitsPerSecond == 0U) ? 0U : p_encoder->UnitLinearSpeed / speed_UnitsPerSecond;
@@ -390,20 +381,25 @@ static inline uint32_t Encoder_DeltaT_ConvertFromLinearSpeed_UnitsPerMinute(Enco
 	return (speed_UnitsPerMinute == 0U) ? 0U : p_encoder->UnitLinearSpeed * 60U / speed_UnitsPerMinute;
 }
 
-// static inline uint32_t Encoder_DeltaT_ConvertToSpeed(Encoder_T * p_encoder, uint32_t deltaT_ticks)
-// {
-// 	return Encoder_DeltaT_ConvertFromSpeed(p_encoder, deltaT_ticks); /* Same division */
-// }
+static inline uint32_t Encoder_DeltaT_ConvertToLinearSpeed(Encoder_T * p_encoder, uint32_t deltaT_ticks)
+{
+	return Encoder_DeltaT_ConvertFromLinearSpeed(p_encoder, deltaT_ticks); /* Same division */
+}
 
-// static inline uint32_t Encoder_DeltaT_ConvertToSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t deltaT_Ticks)
-// {
-// 	return Encoder_DeltaT_ConvertFromSpeed_UnitsPerMinute(p_encoder, deltaT_Ticks); /* Same division */
-// }
+static inline uint32_t Encoder_DeltaT_ConvertToLinearSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t deltaT_Ticks)
+{
+	return Encoder_DeltaT_ConvertFromLinearSpeed_UnitsPerMinute(p_encoder, deltaT_Ticks); /* Same division */
+}
 
+static inline uint32_t Encoder_DeltaT_GetGroundSpeed_Mph(Encoder_T * p_encoder)
+{
+	return Encoder_CalcGroundSpeed_Mph(p_encoder, 1U, p_encoder->DeltaT);
+}
 
-
-
-
+static inline uint32_t Encoder_DeltaT_GetGroundSpeed_Kmh(Encoder_T * p_encoder)
+{
+	return Encoder_CalcGroundSpeed_Kmh(p_encoder, 1U, p_encoder->DeltaT);
+}
 
 /******************************************************************************/
 /*!

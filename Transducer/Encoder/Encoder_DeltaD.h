@@ -91,7 +91,7 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 	// }
 	// else
 	{
-		_Encoder_CaptureDelta(p_encoder, &p_encoder->DeltaD, p_encoder->Params.CountsPerRevolution - 1U, p_encoder->AngularD);
+		p_encoder->DeltaD = _Encoder_CaptureDelta(p_encoder, p_encoder->Params.CountsPerRevolution - 1U, p_encoder->AngularD);
 	}
 	// integral/average functions
 	// p_encoder->TotalD += p_encoder->DeltaD;
@@ -298,6 +298,16 @@ static inline uint32_t Encoder_DeltaD_ConvertToLinearSpeed(Encoder_T * p_encoder
 static inline uint32_t Encoder_DeltaD_ConvertToLinearSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
 {
 	return Encoder_CalcLinearSpeed(p_encoder, deltaD_Ticks * 60U, 1U);
+}
+
+static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Mph(Encoder_T * p_encoder)
+{
+	return Encoder_CalcGroundSpeed_Mph(p_encoder, p_encoder->DeltaD, 1U);
+}
+
+static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Kmh(Encoder_T * p_encoder)
+{
+	return Encoder_CalcGroundSpeed_Kmh(p_encoder, p_encoder->DeltaD, 1U);
 }
 
 /******************************************************************************/

@@ -233,7 +233,7 @@ static void Req_ReadVar(MotorController_T * p_mc, MotPacket_ReadVarResp_T * p_tx
 // static void TxPacket_BuildMonitorAdcBatchMsb(MotorController_T * p_mc, MotPacket_MonitorResp_T * p_txPacket)
 // {
 // 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
-// 	p_txPacket->Monitor.ValueU8s[0U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_VPOS);
+// 	p_txPacket->Monitor.ValueU8s[0U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_VSOURCE);
 // 	p_txPacket->Monitor.ValueU8s[1U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_VACC);
 // 	p_txPacket->Monitor.ValueU8s[2U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_VSENSE);
 // 	p_txPacket->Monitor.ValueU8s[3U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_HEAT_PCB);

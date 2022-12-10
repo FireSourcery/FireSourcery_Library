@@ -38,20 +38,10 @@
 
 typedef FTM_Type HAL_PWM_T;
 
-static inline void HAL_PWM_ClearInterrupt(HAL_PWM_T * p_hal)
-{
-	p_hal->SC &= ~FTM_SC_TOF_MASK;
-	p_hal->SC;	/* Read-after-write sequence to guarantee required serialization of memory operations */
-}
-
-static inline void HAL_PWM_DisableInterrupt(HAL_PWM_T * p_hal) { p_hal->SC &= ~FTM_SC_TOIE_MASK; }
-static inline void HAL_PWM_EnableInterrupt(HAL_PWM_T * p_hal) { p_hal->SC |= FTM_SC_TOIE_MASK; }
-
 /*
 	Common Sync, may split for polarity and CV
 	S32K syncs module. e.g CnV sync, partial, per channel, register write, not supported.
 */
-static inline void HAL_PWM_Sync(HAL_PWM_T * p_hal, uint32_t channel) { (void)channel; p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK; }
 static inline void HAL_PWM_WriteDuty(HAL_PWM_T * p_hal, uint32_t channel, uint32_t ticks) { p_hal->CONTROLS[channel].CnV = ticks; }
 static inline void HAL_PWM_EnableOutput(HAL_PWM_T * p_hal, uint32_t channel) { p_hal->OUTMASK &= ~(1UL << channel); } /* Mask to disable output */
 static inline void HAL_PWM_DisableOutput(HAL_PWM_T * p_hal, uint32_t channel) { p_hal->OUTMASK |= (1UL << channel); }
@@ -63,9 +53,31 @@ static inline void HAL_PWM_WriteHigh(HAL_PWM_T * p_hal, uint32_t channel) { p_ha
 static inline void HAL_PWM_WriteLow(HAL_PWM_T * p_hal, uint32_t channel) { p_hal->SWOCTRL &= ~(1UL << (channel + FTM_SWOCTRL_CH0OCV_SHIFT)); }
 
 /*
+	Init Channel
+*/
+static inline void HAL_PWM_Init(HAL_PWM_T * p_hal, uint32_t channel)
+{
+	p_hal->CONTROLS[channel].CnSC = FTM_CnSC_ELSB_MASK;
+	p_hal->SC |= (1UL << (channel + FTM_SC_PWMEN0_SHIFT));
+}
+
+/*
+	Shared Module
+*/
+static inline void HAL_PWM_ClearInterrupt(HAL_PWM_T * p_hal)
+{
+	p_hal->SC &= ~FTM_SC_TOF_MASK;
+	p_hal->SC;	/* Read-after-write sequence to guarantee required serialization of memory operations */
+}
+
+static inline void HAL_PWM_DisableInterrupt(HAL_PWM_T * p_hal) { p_hal->SC &= ~FTM_SC_TOIE_MASK; }
+static inline void HAL_PWM_EnableInterrupt(HAL_PWM_T * p_hal) { p_hal->SC |= FTM_SC_TOIE_MASK; }
+static inline void HAL_PWM_Module_Sync(HAL_PWM_T * p_hal) { p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK; }
+
+/*
 	Init Module
 */
-static inline void HAL_PWM_InitModule(HAL_PWM_T * p_hal)
+static inline void HAL_PWM_Module_Init(HAL_PWM_T * p_hal)
 {
 	p_hal->CONF 	= FTM_CONF_BDMMODE(0x03U);
 	p_hal->OUTMASK 	= FTM_OUTMASK_CH0OM_MASK | FTM_OUTMASK_CH1OM_MASK | FTM_OUTMASK_CH2OM_MASK | FTM_OUTMASK_CH3OM_MASK | FTM_OUTMASK_CH4OM_MASK | FTM_OUTMASK_CH5OM_MASK | FTM_OUTMASK_CH6OM_MASK | FTM_OUTMASK_CH7OM_MASK;
@@ -82,15 +94,6 @@ static inline void HAL_PWM_InitModule(HAL_PWM_T * p_hal)
 	p_hal->COMBINE 	= FTM_COMBINE_SYNCEN0_MASK | FTM_COMBINE_SYNCEN1_MASK | FTM_COMBINE_SYNCEN2_MASK | FTM_COMBINE_SYNCEN3_MASK;	/* All channel sync set to enable. Only Cnv option selected */
 	p_hal->PWMLOAD 	= FTM_PWMLOAD_LDOK_MASK;
 	p_hal->SC 		= FTM_SC_CLKS(0x01U) | FTM_SC_CPWMS_MASK | FTM_SC_TOIE_MASK; //| FTM_SC_PWMEN5_MASK | FTM_SC_PWMEN6_MASK | FTM_SC_PWMEN7_MASK;
-}
-
-/*
-	Init Channel
-*/
-static inline void HAL_PWM_InitChannel(HAL_PWM_T * p_hal, uint32_t channel)
-{
-	p_hal->CONTROLS[channel].CnSC = FTM_CnSC_ELSB_MASK;
-	p_hal->SC |= (1UL << (channel + FTM_SC_PWMEN0_SHIFT));
 }
 
 #endif

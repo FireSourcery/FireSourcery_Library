@@ -41,7 +41,7 @@ void Phase_Init(Phase_T * p_phase)
 
 void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phaseMode)
 {
-	if(p_phase->PhaseMode == PHASE_MODE_BIPOLAR)
+	if(p_phase->PhaseMode == PHASE_MODE_BIPOLAR) /* If current phase mode is Bipolar, disable */
 	{
 		Phase_Float(p_phase);
 		PWM_DisableInvertPolarity(&p_phase->PwmA);

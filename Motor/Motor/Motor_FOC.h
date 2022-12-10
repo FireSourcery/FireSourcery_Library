@@ -35,6 +35,10 @@
 
 #include "Motor.h"
 
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	#include "System/SysTime/SysTime.h"
+#endif
+
 /******************************************************************************/
 /*
 	+/- Sign indicates absolute direction, CW/CCW. NOT along or against direction selected.
@@ -332,14 +336,19 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 #endif
 	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
 
-	/* ~10us */ // p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
+#if 	defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	/* ~10us */
+	p_motor->DebugTime[1] = SysTime_GetMicros() - p_motor->MicrosRef;
+#endif
 
 	/* samples chain complete shortly after queue resumes. adc isr priority higher than pwm. */
 	_Motor_FOC_ProcPositionFeedback(p_motor);
 
+#if 	defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	/* Ic complete? ~29 us */
-
-	/* ~29 us */ // p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
+	/* ~29 us */
+	p_motor->DebugTime[2] = SysTime_GetMicros() - p_motor->MicrosRef;
+#endif
 
 #if 	defined(CONFIG_MOTOR_I_SENSORS_AB)
 	FOC_ProcClarkePark_AB(&p_motor->Foc);
@@ -347,7 +356,10 @@ static inline void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 	FOC_ProcClarkePark(&p_motor->Foc);
 #endif
 
-	/* ~30us */ // p_motor->DebugTime[3] = SysTime_GetMicros() - p_motor->MicrosRef;
+#if 	defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	/* ~30us */
+	p_motor->DebugTime[3] = SysTime_GetMicros() - p_motor->MicrosRef;
+#endif
 
 	_Motor_FOC_ProcFeedbackLoop(p_motor);
 	_Motor_FOC_ActivateAngle(p_motor);

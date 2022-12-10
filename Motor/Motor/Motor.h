@@ -61,6 +61,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/******************************************************************************/
+/*!
+	Frac16 [-1:1] <=> [-65536:65536] in q16.16 may over saturate
+	FracU16 [0:1] <=> [0:65535] in q0.16
+	FracS16 [-1:1] <=> [-32768:32767] in q1.15
+*/
+/******************************************************************************/
+
 #define MOTOR_LIB_VERSION_OPT		0U
 #define MOTOR_LIB_VERSION_MAJOR 	0U
 #define MOTOR_LIB_VERSION_MINOR 	1U
@@ -155,7 +163,7 @@ Motor_RunStateFlags_T;
 typedef enum Motor_ILimitActiveId_Tag
 {
 	MOTOR_I_LIMIT_ACTIVE_DISABLE = 0U,
-	MOTOR_I_LIMIT_ACTIVE_HEAT = 1U,
+	MOTOR_I_LIMIT_ACTIVE_HEAT = 1U, 	/* MotorHeat */
 	MOTOR_I_LIMIT_ACTIVE_SYSTEM = 20U,  /* From upper module */
 	MOTOR_I_LIMIT_ACTIVE_USER = 30U,
 }
@@ -239,27 +247,28 @@ Motor_SectorId_T;
 */
 typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 {
-	uint8_t PolePairs;
-
 	Motor_CommutationMode_T 	CommutationMode;
 	Motor_SensorMode_T 			SensorMode;
 	Motor_AlignMode_T 			AlignMode;
-	Motor_DirectionCalibration_T DirectionCalibration;
 	Motor_FeedbackMode_T 		FeedbackMode; 	/* User FeedbackMode, UserControlModeCmd, and ThrottleCmd */
 	// Motor_FeedbackMode_T 		ThrottleMode; 	/* Motor layer per Motor Implementation */
 	// Motor_FeedbackMode_T 		BrakeMode; 		/* Motor layer per Motor Implementation */
+	Motor_DirectionCalibration_T DirectionCalibration;
 
  	/*
 		Ref values, known calibration parameter provide by user
 	*/
+	uint8_t PolePairs;
 
 	/*
 		Motor Refs use Speed at VSource.
 	*/
 	uint16_t SpeedFeedbackRef_Rpm; 	/* Feedback / PID Regulator, Limits Ref. User IO units conversion, Encoder speed calc ref. */
-	uint16_t SpeedVMatchRef_Rpm; 	/* Votlage Match Ref. VF Mode, Freewheel to Run. Use higher value to bias speed matching to begin at lower speed. */
+	uint16_t SpeedVMatchRef_Rpm; 	/* Voltage Match Ref. VF Mode, Freewheel to Run. Use higher value to bias speed matching to begin at lower speed. */
 
-	uint16_t IPeakRef_Adcu; 		/* Zero-To-Peak, derived from sensor hardware */ //todo change to I_ZERO_TO_PEAK_ADCU
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	uint16_t IPeakRef_Adcu;
+#endif
 	uint16_t IaZeroRef_Adcu;
 	uint16_t IbZeroRef_Adcu;
 	uint16_t IcZeroRef_Adcu;
@@ -297,8 +306,8 @@ typedef const struct Motor_Init_Tag
 {
 	const uint16_t UNIT_VABC_R1;
 	const uint16_t UNIT_VABC_R2;
-	const uint16_t I_MAX_AMP; 				/* Motor I controller rating. pass to Linear_ADC. Unit conversion, ui output and param set. */
-	const uint16_t I_ZERO_TO_PEAK_ADCU; 	/* Sensor calibration */
+	const uint16_t I_MAX_AMP; 				/* Motor I controller rating. pass to Linear_ADC. Unit conversion, UI input/output, param set. */
+	const uint16_t I_ZERO_TO_PEAK_ADCU; 	/* Sensor calibration *//* Zero-To-Peak, derived from sensor hardware */
 	AnalogN_T * const P_ANALOG_N;
 	const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
 	const Motor_Params_T * const P_PARAMS_NVM;
@@ -332,7 +341,7 @@ typedef struct Motor_Tag
 	Timer_T ControlTimer; 			/* State Timer, openloop, Bemf */
 
 	/* Run Substate */
-	Motor_Direction_T Direction; 			/* Active spin direction */
+	Motor_Direction_T Direction; 				/* Active spin direction */
 	// Motor_Direction_T UserDirection; 		/* Passed to StateMachine */
 	Motor_FeedbackModeFlags_T FeedbackModeFlags;
 	Motor_RunStateFlags_T RunStateFlags; 	/* Run Substate */
@@ -350,7 +359,7 @@ typedef struct Motor_Tag
 	uint16_t ILimitMotoring_Frac16;		/* Active ILimit */
 	uint16_t ILimitGenerating_Frac16;
 	Motor_ILimitActiveId_T ILimitActiveId;
-	uint16_t ILimitActiveScalar;		/* Store for comparison */
+	uint16_t ILimitActiveSentinel;		/* Store for comparison */
 	int16_t VoltageModeILimit_QFracS16; /* [-32767:32767] directional input into pid */
 	Linear_T ILimitHeatRate;
 
@@ -392,7 +401,9 @@ typedef struct Motor_Tag
 	qangle16_t ElectricalAngle;		/* Save for user output, can remove later */
 	// uint32_t ElectricalDelta;
 
-	Linear_T UnitAngleRpm; 			/* Non Encoder/Hall sensor */
+	/* Sensorless and SinCos. Non Encoder module square wave */
+	Linear_T UnitAngleRpm; 			/*  */
+	Linear_T UnitSurfaceSpeed; 			/*  */
 	qangle16_t SpeedAngle; 			/* Save for reference */
 	// uint32_t MechanicalDelta;
 
@@ -404,14 +415,14 @@ typedef struct Motor_Tag
 		Six-Step
 	*/
 #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-	// PID_T PidIBus;
-//	BEMF_T Bemf;
-	// Motor_SectorId_T NextPhase;
-	// Motor_SectorId_T CommutationPhase;
-	// uint32_t CommutationTimeRef;
-	// uint32_t IBus_Frac16;
-	// uint32_t IBusSum_Frac16;
-	// uint16_t VPwm; 	/* Six-Step Control Variable */
+	PID_T PidIBus;
+	BEMF_T Bemf;
+	Motor_SectorId_T NextPhase;
+	Motor_SectorId_T CommutationPhase;
+	uint32_t CommutationTimeRef;
+	uint32_t IBus_Frac16;
+	uint32_t IBusSum_Frac16;
+	uint16_t VPwm; 	/* Six-Step Control Variable */
 #endif
 
 	/*
@@ -536,7 +547,7 @@ static inline void Motor_ZeroSensor(Motor_T * p_motor)
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
-			Encoder_Zero(&p_motor->Encoder);
+			Encoder_Zero(&p_motor->Encoder); //check redundancy
 			break;
 
 		case MOTOR_SENSOR_MODE_HALL:
@@ -607,11 +618,6 @@ static inline void Motor_SetFeedbackModeFlags(Motor_T * p_motor, Motor_FeedbackM
 	Common Sets
 */
 /******************************************************************************/
-static inline int32_t Motor_ConvertToSpeedFrac16(Motor_T * p_motor, int32_t speed_rpm) 	{ return speed_rpm * 65535 / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
-static inline int16_t Motor_ConvertToSpeedRpm(Motor_T * p_motor, int32_t speed_frac16) 	{ return speed_frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / 65536; }
-static inline int32_t Motor_ConvertToIFrac16(Motor_T * p_motor, int32_t i_amp) 			{ return i_amp * 65535 / p_motor->CONFIG.I_MAX_AMP; }
-static inline int16_t Motor_ConvertToIAmp(Motor_T * p_motor, int32_t i_frac16) 			{ return i_frac16 * p_motor->CONFIG.I_MAX_AMP / 65536; }
-
 static inline void Motor_ResetSpeedLimits(Motor_T * p_motor)
 {
 	p_motor->SpeedLimitCcw_Frac16 = p_motor->Parameters.SpeedLimitCcw_Frac16;
@@ -653,6 +659,8 @@ extern void Motor_ResetSensorMode(Motor_T * p_motor);
 extern void Motor_ResetUnitsVabc(Motor_T * p_motor);
 extern void Motor_ResetUnitsIabc(Motor_T * p_motor);
 extern void Motor_ResetUnitsHall(Motor_T * p_motor);
+extern void Motor_ResetUnitsEncoder(Motor_T * p_motor);
+extern void Motor_ResetUnitsAngle(Motor_T * p_motor);
 extern void Motor_ResetSpeedVMatchRatio(Motor_T * p_motor);
 
 #endif

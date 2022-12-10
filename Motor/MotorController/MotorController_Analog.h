@@ -35,7 +35,7 @@
 
 #define MOT_ANALOG_CONVERSIONS_INIT(VPosPin, VPosHost, VAccPin, VAccHost, VSensePin, VSenseHost, HeatPcbPin, HeatPcbHost, HeatMosTopPin, HeatMosTopHost, HeatMosBotPin, HeatMosBotHost, ThrottlePin, ThrottleHost, BrakePin, BrakeHost, p_Hosts, p_Mot) \
 {																																																								\
-	.CONVERSION_VPOS 				=	ANALOG_N_CONVERSION_INIT(MOT_ANALOG_CHANNEL_VPOS, 				0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VPosPin, 		&(p_Hosts)[VPosHost]), 							\
+	.CONVERSION_VSOURCE 				=	ANALOG_N_CONVERSION_INIT(MOT_ANALOG_CHANNEL_VSOURCE, 				0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VPosPin, 		&(p_Hosts)[VPosHost]), 							\
 	.CONVERSION_VACC 				=	ANALOG_N_CONVERSION_INIT(MOT_ANALOG_CHANNEL_VACC, 				0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VAccPin, 		&(p_Hosts)[VAccHost]), 							\
 	.CONVERSION_VSENSE 				=	ANALOG_N_CONVERSION_INIT(MOT_ANALOG_CHANNEL_VSENSE, 			0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VSensePin, 		&(p_Hosts)[VSenseHost]), 						\
 	.CONVERSION_HEAT_PCB 			=	ANALOG_N_CONVERSION_INIT(MOT_ANALOG_CHANNEL_HEAT_PCB, 			0U, 	p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), HeatPcbPin, 		&(p_Hosts)[HeatPcbHost]), 						\

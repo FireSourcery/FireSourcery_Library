@@ -125,7 +125,7 @@ MotorController_SubId_T;
 typedef enum MotorController_ILimitActiveId_Tag
 {
 	MOTOR_CONTROLLER_I_LIMIT_ACTIVE_DISABLE = 0U,
-	MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT = 1U,
+	MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT = 1U, /* MotorIlimit_Sysyem +1 */
 	MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V = 2U,
 }
 MotorController_ILimitActiveId_T;

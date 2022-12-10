@@ -43,7 +43,7 @@ typedef enum MotorController_StateMachine_Input_Tag
 	MCSM_INPUT_THROTTLE,
 	MCSM_INPUT_BRAKE,
 	MCSM_INPUT_ZERO,				/* Release Control (On Zero Throttle/BraKe), Continue Zero Input in Direction Fwd/Rev */
-	MCSM_INPUT_CALIBRATION,			/* Block and slow functions */
+	MCSM_INPUT_CALIBRATION,			/* Blocking and slow functions */
 }
 MotorController_StateMachine_Input_T;
 

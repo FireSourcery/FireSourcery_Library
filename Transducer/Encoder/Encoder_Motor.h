@@ -114,7 +114,7 @@ static inline uint32_t Encoder_Motor_GetInterpolationFreq(Encoder_T *p_encoder)
 /******************************************************************************/
 /*!
 	Position - Both Capture Modes
-	todo freq auto
+	todo freq auto DT mode, or split
 */
 /******************************************************************************/
 static inline uint32_t Encoder_Motor_GetMechanicalTheta(Encoder_T * p_encoder)
@@ -135,7 +135,8 @@ static inline uint32_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
 
 /******************************************************************************/
 /*!
-	Speed
+	Speed - Both Capture Modes
+		todo freq auto DT mode, or split
 */
 /******************************************************************************/
 /*!
@@ -164,19 +165,13 @@ static inline uint32_t Encoder_Motor_GetElectricalSpeed(Encoder_T * p_encoder)
 
 	//	return p_encoder->DeltaD * (p_encoder->UnitAngularSpeed  / p_encoder->DeltaT) * p_encoder->Params.MotorPolePairs
 }
+
 static inline uint32_t Encoder_Motor_GetElectricalRpm(Encoder_T * p_encoder)
 {
 	return Encoder_Motor_GetMechanicalRpm(p_encoder) * p_encoder->Params.MotorPolePairs;
 //	return ((p_encoder->DeltaD * p_encoder->UnitAngularSpeed * p_encoder->Params.MotorPolePairs >> (32 - p_encoder->UnitAngularD_DivisorShift) - 6U) * 60U >> 6U)/ p_encoder->DeltaT;
 }
 
-/*
-
-*/
-static inline int32_t Encoder_Motor_GetGroundSpeed(Encoder_T * p_encoder)
-{
-	return Encoder_GetLinearSpeed(p_encoder);
-}
 
 /******************************************************************************/
 /*!
@@ -228,7 +223,6 @@ static inline uint32_t Encoder_Motor_ConvertMechanicalRpmToElectricalDelta(Encod
 extern void Encoder_Motor_InitModeD(Encoder_T * p_encoder);
 extern void Encoder_Motor_InitModeT(Encoder_T * p_encoder);
 extern void Encoder_Motor_SetHallCountsPerRevolution(Encoder_T * p_encoder, uint8_t motorPolePairs);
-// extern void Encoder_Motor_SetLinearUnits(Encoder_T * p_encoder, uint32_t wheelDiameter, uint32_t wheeltoMotorRatio_Factor, uint32_t wheeltoMotorRatio_Divisor);
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

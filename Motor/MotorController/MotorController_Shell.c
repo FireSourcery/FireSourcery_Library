@@ -38,7 +38,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 //todo User_Wrapper functions
 
 /******************************************************************************/
@@ -141,7 +140,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 
 			// Terminal_SendString(p_terminal, "IPhasePeak_Adcu: "); Terminal_SendNum(p_terminal, p_motor->IPhasePeak_Adcu); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ILimitActiveId: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveId); Terminal_SendString(p_terminal, "\r\n");
-			Terminal_SendString(p_terminal, "ILimitActiveScalar: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveScalar); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "ILimitActiveSentinel: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveSentinel); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ILimitMotoring_Frac16: "); Terminal_SendNum(p_terminal, p_motor->ILimitMotoring_Frac16); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "VoltageModeILimitActive: "); Terminal_SendNum(p_terminal, p_motor->RunStateFlags.VoltageModeILimitActive); Terminal_SendString(p_terminal, "\r\n");
 
@@ -502,7 +501,7 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 
 		Terminal_SendString(p_terminal, "\r\n");
 		Terminal_SendString(p_terminal, "FaultAdcu:\r\n");
-		// Terminal_SendString(p_terminal, "VPos: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VPos_Adcu); 			Terminal_SendString(p_terminal, "\r\n");
+		// Terminal_SendString(p_terminal, "VPos: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VSource_Adcu); 			Terminal_SendString(p_terminal, "\r\n");
 		// Terminal_SendString(p_terminal, "VAcc: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VAcc_Adcu); 			Terminal_SendString(p_terminal, "\r\n");
 		// Terminal_SendString(p_terminal, "VSense: "); 	Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VSense_Adcu); 			Terminal_SendString(p_terminal, "\r\n");
 		// Terminal_SendString(p_terminal, "Pcb: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatPcb_Adcu); 		Terminal_SendString(p_terminal, "\r\n");
@@ -622,7 +621,7 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Cmd_Status_T status;
 
-	if(p_motor->JogIndex < Motor_User_GetPolePairs(p_motor) * 6U + 1U)
+	if(p_motor->JogIndex < Motor_User_GetPolePairs(p_motor) * 6U)
 	{
 		switch(Motor_User_GetSensorMode(p_motor))
 		{
@@ -776,6 +775,7 @@ static void PrintIPeak(Terminal_T * p_terminal, uint16_t min_Adcu, int32_t min_F
 	Terminal_SendNum(p_terminal, max_Frac16); Terminal_SendString(p_terminal, " Frac16\r\n");
 }
 
+#if	defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
 static Cmd_Status_T Cmd_ipeak(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
@@ -787,7 +787,7 @@ static Cmd_Status_T Cmd_ipeak(MotorController_T * p_mc, int argc, char ** argv)
 	if(argc == 2U)
 	{
 		zeroToPeak_Adcu = strtoul(argv[1U], 0U, 10);
-		Motor_User_SetIPeakRef_Adcu(p_motor, zeroToPeak_Adcu);
+		Motor_User_SetIPeakRef_Adcu_Debug(p_motor, zeroToPeak_Adcu);
 
 		Terminal_SendString(p_terminal, "Phase A:\r\n");
 		min_Adcu = p_motor->Parameters.IaZeroRef_Adcu - p_motor->Parameters.IPeakRef_Adcu;
@@ -809,6 +809,7 @@ static Cmd_Status_T Cmd_ipeak(MotorController_T * p_mc, int argc, char ** argv)
 
 	return CMD_STATUS_SUCCESS;
 }
+#endif
 
 static Cmd_Status_T Cmd_ilimit(MotorController_T * p_mc, int argc, char ** argv)
 {
