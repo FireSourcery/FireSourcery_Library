@@ -140,7 +140,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 
 			// Terminal_SendString(p_terminal, "IPhasePeak_Adcu: "); Terminal_SendNum(p_terminal, p_motor->IPhasePeak_Adcu); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ILimitActiveId: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveId); Terminal_SendString(p_terminal, "\r\n");
-			Terminal_SendString(p_terminal, "ILimitActiveSentinel: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveSentinel); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "ILimitActive: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveSentinel); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ILimitMotoring_Frac16: "); Terminal_SendNum(p_terminal, p_motor->ILimitMotoring_Frac16); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "VoltageModeILimitActive: "); Terminal_SendNum(p_terminal, p_motor->RunStateFlags.VoltageModeILimitActive); Terminal_SendString(p_terminal, "\r\n");
 
@@ -434,7 +434,7 @@ static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 // 	char * p_stringDest = p_stringBuffer;
 
 // 	memcpy(p_stringDest, STR_VPOS, strlen(STR_VPOS)); 		p_stringDest += strlen(STR_VPOS);
-// 	p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorPos, p_stringDest, 1000U);
+// 	p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorSource, p_stringDest, 1000U);
 // 	memcpy(p_stringDest, "\r\n", 2U); 	p_stringDest += 2U;
 
 // 	memcpy(p_stringDest, STR_VSENSE, strlen(STR_VSENSE)); 	p_stringDest += strlen(STR_VSENSE);
@@ -453,17 +453,17 @@ static Cmd_Status_T Cmd_v(MotorController_T * p_mc, int argc, char ** argv)
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
 	// char * p_txString;
 	// uint8_t txSize = 0U;
-	int32_t vSen, vAcc, vPos, battery;
+	int32_t vSense, vAcc, vSource, battery;
 
 	if(argc == 1U)
 	{
 		//todo to string
-		vPos = MotorController_User_GetVPos(p_mc, 1000U);
-		vSen = MotorController_User_GetVSense(p_mc, 1000U);
+		vSource = MotorController_User_GetVSource(p_mc, 1000U);
+		vSense = MotorController_User_GetVSense(p_mc, 1000U);
 		vAcc = MotorController_User_GetVAcc(p_mc, 1000U);
 		battery = MotorController_User_GetBatteryCharge_Unit1000(p_mc);
-		Terminal_SendString(p_terminal, "VPos: "); Terminal_SendNum(p_terminal, vPos); Terminal_SendString(p_terminal, " mV\r\n");
-		Terminal_SendString(p_terminal, "VSen: "); Terminal_SendNum(p_terminal, vSen); Terminal_SendString(p_terminal, " mV\r\n");
+		Terminal_SendString(p_terminal, "VSource: "); Terminal_SendNum(p_terminal, vSource); Terminal_SendString(p_terminal, " mV\r\n");
+		Terminal_SendString(p_terminal, "VSense: "); Terminal_SendNum(p_terminal, vSense); Terminal_SendString(p_terminal, " mV\r\n");
 		Terminal_SendString(p_terminal, "VAcc: "); Terminal_SendNum(p_terminal, vAcc); Terminal_SendString(p_terminal, " mV\r\n");
 		Terminal_SendString(p_terminal, "Battery: "); Terminal_SendNum(p_terminal, battery); Terminal_SendString(p_terminal, " 1000th\r\n");
 		Terminal_SendString(p_terminal, "\r\n");
@@ -592,26 +592,7 @@ static Cmd_Status_T Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
 	(void)argv;
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	p_motor->JogIndex = 0U;
-
-	switch(Motor_User_GetSensorMode(p_motor))
-	{
-		case MOTOR_SENSOR_MODE_SENSORLESS:
-			break;
-
-		case MOTOR_SENSOR_MODE_HALL:
-			break;
-
-		case MOTOR_SENSOR_MODE_ENCODER:
-			Encoder_Zero(&p_motor->Encoder);
-			break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-		case MOTOR_SENSOR_MODE_SIN_COS:
-
-#endif
-		default:
-			break;
-	}
-
+	Motor_ZeroSensor(p_motor);
 	return CMD_STATUS_PROCESS_LOOP;
 }
 
@@ -621,8 +602,10 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Cmd_Status_T status;
 
-	if(p_motor->JogIndex < Motor_User_GetPolePairs(p_motor) * 6U)
+	if(p_motor->JogIndex < Motor_User_GetPolePairs(p_motor) * 6U + 1U)
 	{
+		Terminal_SendNum(p_terminal, p_motor->JogIndex);
+		Terminal_SendString(p_terminal, " ");
 		switch(Motor_User_GetSensorMode(p_motor))
 		{
 			case MOTOR_SENSOR_MODE_SENSORLESS:
@@ -631,7 +614,7 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 			case MOTOR_SENSOR_MODE_HALL:
 				if(p_motor->JogIndex % 6U == 0U)
 				{
-					Terminal_SendString(p_terminal, "\r\n");
+
 					Terminal_SendString(p_terminal, "AngularD: ");
 					Terminal_SendNum(p_terminal, Encoder_GetAngularD(&p_motor->Encoder));
 					Terminal_SendString(p_terminal, "\r\n");
@@ -964,27 +947,9 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"version", 	"version",							(Cmd_Function_T)Cmd_version, 	{0U}	},
 	{"debug", 		"print debug info",					(Cmd_Function_T)Cmd_debug, 		{0U}	},
 
-	// {"analoguser", 	"analoguser enable/disable", 		(Cmd_Function_T)Cmd_analoguser,	{0U}	},
 };
 
 #endif
-
-// static Cmd_Status_T Cmd_analoguser(MotorController_T * p_mc, int argc, char ** argv)
-// {
-// 	if(argc == 2U)
-// 	{
-// 		if(strncmp(argv[1U], "disable", 8U) == 0U)
-// 		{
-// 			p_mc->Parameters.UserInputMode = MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL; //tdo
-// 		}
-// 		else if(strncmp(argv[1U], "enable", 7U) == 0U)
-// 		{
-// 			p_mc->Parameters.UserInputMode = MOTOR_CONTROLLER_INPUT_MODE_ANALOG;
-// 		}
-// 	}
-
-// 	return CMD_STATUS_SUCCESS;
-// }
 
 //static Cmd_Status_T Cmd_configfile(int argc, char **argv)
 //{

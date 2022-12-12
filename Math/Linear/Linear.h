@@ -36,6 +36,7 @@
 #include "math_linear.h"
 #include <stdint.h>
 
+#define LINEAR_DIVIDE_SHIFT 14U /* Allow signed, and 2x xRef input */
 typedef struct Linear_Tag
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
@@ -79,7 +80,19 @@ Linear_T;
 	Protected
 */
 /******************************************************************************/
-extern int32_t _Linear_Sat(int32_t min, int32_t max, int32_t value);
+/******************************************************************************/
+/*!
+	Protected
+*/
+/******************************************************************************/
+static inline int32_t _Linear_Sat(int32_t min, int32_t max, int32_t value)
+{
+	int32_t saturated;
+	if		(value > max) 	{ saturated = max; }
+	else if	(value < min) 	{ saturated = min; }
+	else 					{ saturated = value; }
+	return saturated;
+}
 
 static inline int16_t _Linear_SatSigned16(int32_t frac16) { return (int16_t)_Linear_Sat(INT16_MIN, INT16_MAX, frac16); }
 static inline uint16_t _Linear_SatUnsigned16(int32_t frac16) { return (uint16_t)_Linear_Sat(0, UINT16_MAX, frac16); }
@@ -87,6 +100,18 @@ static inline uint16_t _Linear_SatUnsigned16_Abs(int32_t frac16)
 {
 	int32_t sat = _Linear_Sat(0 - (int32_t)UINT16_MAX, UINT16_MAX, frac16);
 	return (sat < 0) ? (uint16_t)(0 - sat): (uint16_t)sat;
+}
+
+static inline void _Linear_SetSlope(Linear_T * p_linear, int32_t slopeFactor, int32_t slopeDivisor)
+{
+	p_linear->Slope = (slopeFactor << LINEAR_DIVIDE_SHIFT) / slopeDivisor;
+	p_linear->InvSlope = (slopeDivisor << LINEAR_DIVIDE_SHIFT) / slopeFactor;
+}
+
+static inline void _Linear_SetSlope_Y0(Linear_T * p_linear, int32_t slopeFactor, int32_t slopeDivisor, int32_t initial)
+{
+	_Linear_SetSlope(p_linear, slopeFactor, slopeDivisor);
+	p_linear->YOffset = initial;
 }
 
 

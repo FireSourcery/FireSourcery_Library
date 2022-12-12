@@ -31,26 +31,70 @@
 #include "Encoder_DeltaT.h"
 #include <string.h>
 
+void _Encoder_ResetTimerFreq(Encoder_T * p_encoder)
+{
+	/*
+		RPM * CPR / 60[Seconds] = CPS
+		CPS = T_FREQ [Hz] / deltaT_ticks [timerticks/Count]
+		RPM * CPR / 60[Seconds] = T_FREQ [Hz] / deltaT_ticks
+
+		Error ~ 1, deltaT_ticks = 100
+		=> T_FREQ/CPS >= 100, (CPS/T_FREQ <= .01)
+			T_FREQ /(RPM * CPR / 60) >= 100
+		eg. RPM = 10000
+			T_FREQ >= 100*(10000RPM * CPR / 60)
+			T_FREQ >= 16666 * CPR
+
+		Min: deltaT_ticks = 65535
+			RPM = (T_FREQ / CPR) * (60 / 65535)
+			=> 15 ~= 16666 * (60 / 65535)
+
+		T_TIMER_FREQ ~= 10000 * CPR
+			=> 10000RPM error ~1%
+			=> RPM Min ~= 10RPM
+	*/
+	p_encoder->UnitT_Freq = HAL_Encoder_ConfigTimerCounterFreq(p_encoder->CONFIG.P_HAL_ENCODER, p_encoder->Params.CountsPerRevolution * 16666U);
+
+	p_encoder->ExtendedTimerConversion = p_encoder->UnitT_Freq / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
+
+	/* Alternatively use Threshold, ExtendedTimer ticks equal to short timer overflow time */
+	// p_encoder->ExtendedTimerThreshold = ((uint32_t)CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->UnitT_Freq;
+}
+
 /*!
 	Uses pin ISR, or polling
 */
 void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 {
-	// HAL_Encoder_InitTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
+	HAL_Encoder_InitTimer(p_encoder->CONFIG.P_HAL_ENCODER);
 
 	if (p_encoder->CONFIG.P_PARAMS != 0U)
 	{
 		memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T));
 	}
 
-	// p_encoder->UnitT_Freq = p_encoder->CONFIG.DELTA_T_TIMER_FREQ;
+#ifdef CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
+	if(p_encoder->Params.IsQuadratureCaptureEnabled == true)
+	{
+		Pin_Init(&p_encoder->PinA);
+		Pin_Init(&p_encoder->PinB);
+	}
+#endif
 
+#ifdef CONFIG_ENCODER_DYNAMIC_TIMER
 	_Encoder_ResetTimerFreq(p_encoder);
+#else
+	/* Freq * 60 < UINT32_MAX for RPM calc */
+	/* Freq * 60 * PolePairs < UINT32_MAX for RPM calc */
+	p_encoder->UnitT_Freq = p_encoder->CONFIG.T_TIMER_FREQ;
+	p_encoder->ExtendedTimerConversion = p_encoder->UnitT_Freq / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
+#endif
+
 	_Encoder_ResetUnitsAngular(p_encoder);
 	_Encoder_ResetUnitsLinear(p_encoder);
-	_Encoder_ResetUnitsFrac16Speed(p_encoder);
+	_Encoder_ResetUnitsScalarSpeed(p_encoder);
 
-	Encoder_Zero(p_encoder);
+	p_encoder->DeltaD = 1U; /* Unused if using Encoder_DeltaT Functions, effective for shared functions only */
 	Encoder_DeltaT_SetInitial(p_encoder);
 }
 
@@ -61,18 +105,14 @@ void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 {
 	p_encoder->AngularD = 0U;
 	p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX;
-	p_encoder->TimerCounterSaved = 0U;
+	// p_encoder->TimerCounterSaved = 0U;
 	p_encoder->ExtendedTimerSaved = *p_encoder->CONFIG.P_EXTENDED_TIMER;
 	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
 	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
-	// if timer unwritable
-	// p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER) - (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.DELTA_T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U);
+	// HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
+	// HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
 }
 
-// void Encoder_DeltaT_SetInitial_RPM(Encoder_T * p_encoder, uint16_t initialRpm)
-// {
-// 	//	p_encoder->DeltaT = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, initialRpm);
-// }
 
 /*
 	Extended timer ticks to determine capture stopped
@@ -90,29 +130,30 @@ void Encoder_DeltaT_SetExtendedTimerWatchStop(Encoder_T * p_encoder, uint16_t ef
 void Encoder_DeltaT_SetExtendedTimerWatchStop_Default(Encoder_T * p_encoder)
 {
 	uint32_t timer1Second = p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
-	// uint32_t timer1Rpm = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->CONFIG.DELTA_T_TIMER_FREQ;
 	uint32_t timer1Rpm = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->UnitT_Freq;
 	p_encoder->Params.ExtendedTimerDeltaTStop = (timer1Second < timer1Rpm) ? timer1Second : timer1Rpm;
 }
 
+#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLED)
 /*
 	Run on calibration routine
 */
-// void Encoder_DeltaT_CalibrateQuadratureReference(Encoder_T * p_encoder)
-// {
+void Encoder_DeltaT_CalibrateQuadratureReference(Encoder_T * p_encoder)
+{
 
-// }
+}
 
-// //call after having moved in the positive direction
-// void Encoder_DeltaT_CalibrateQuadraturePositive(Encoder_T * p_encoder)
-// {
-// 	//deltaT check if phaseB is negative on an edge
-// //	if ((HAL_Encoder_ReadPhaseA(p_encoder->CONFIG.P_HAL_ENCODER) == true) && (HAL_Encoder_ReadPhaseB(p_encoder->CONFIG.P_HAL_ENCODER) == false))
-// //	{
-// ////		 p_encoder->IsALeadBPositive = true;
-// //	}
-// //	else
-// //	{
-// //		//	p_encoder->IsALeadBPositive = false;
-// //	}
-// }
+//call after having moved in the positive direction
+void Encoder_DeltaT_CalibrateQuadraturePositive(Encoder_T * p_encoder)
+{
+	//deltaT check if phaseB is negative on an edge
+//	if ((HAL_Encoder_ReadPhaseA(p_encoder->CONFIG.P_HAL_ENCODER) == true) && (HAL_Encoder_ReadPhaseB(p_encoder->CONFIG.P_HAL_ENCODER) == false))
+//	{
+////		 p_encoder->IsALeadBPositive = true;
+//	}
+//	else
+//	{
+//		//	p_encoder->IsALeadBPositive = false;
+//	}
+}
+#endif

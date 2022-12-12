@@ -1,3 +1,4 @@
+
 /******************************************************************************/
 /*!
 	@section LICENSE
@@ -22,19 +23,35 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.c
+	@file 	Motor_Debug.h
 	@author FireSourcery
 	@brief
 	@version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_LINEAR_H
-#define CONFIG_LINEAR_H
+#ifndef MOTOR_DEBUG_H
+#define MOTOR_DEBUG_H
 
-#if 	defined(CONFIG_LINEAR_DIVIDE_SHIFT)
-#elif 	defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+#include "Motor.h"
+
+#include "System/SysTime/SysTime.h"
+
+static inline void Motor_CaptureRefTime(Motor_T * p_motor)
+{
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	p_motor->MicrosRef = SysTime_GetMicros();
 #else
-	#define CONFIG_LINEAR_DIVIDE_SHIFT
+	(void)p_motor; (void)index;
 #endif
+}
+
+static inline void Motor_Debug_CaptureTime(Motor_T * p_motor, uint8_t index)
+{
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	p_motor->DebugTime[index] = SysTime_GetMicros() - p_motor->MicrosRef;
+#else
+	(void)p_motor; (void)index;
+#endif
+}
 
 #endif

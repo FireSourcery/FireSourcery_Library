@@ -198,7 +198,7 @@ MotorController_BuzzerFlags_T;
 typedef struct __attribute__((aligned(2U))) MotorController_Params_Tag
 {
 	uint16_t AdcVRef_MilliV;
-	uint16_t VSource;
+	uint16_t VSourceRef;
 	MotorController_InputMode_T UserInputMode;
 	MotorController_BrakeMode_T BrakeMode;
 	MotorController_ZeroCmdMode_T ZeroCmdMode;
@@ -301,7 +301,7 @@ typedef struct MotorController_Tag
 	Thermistor_T ThermistorPcb;
 	Thermistor_T ThermistorMosfetsTop;
 	Thermistor_T ThermistorMosfetsBot;
-	VMonitor_T VMonitorPos; 	//Controller Supply
+	VMonitor_T VMonitorSource; 	//Controller Supply
 	VMonitor_T VMonitorSense; 	//5V
 	VMonitor_T VMonitorAcc; 	//12V
 	Linear_T BatteryLife; 		//Battery Life percentage

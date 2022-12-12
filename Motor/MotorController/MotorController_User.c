@@ -45,14 +45,14 @@ void MotorController_User_SetAdcVRef(MotorController_T * p_mc, uint16_t adcVRef_
 
 void MotorController_User_SetVSource(MotorController_T * p_mc, uint16_t volts)
 {
-	p_mc->Parameters.VSource = (volts > p_mc->CONFIG.V_MAX) ? p_mc->CONFIG.V_MAX : volts;
-	Motor_InitVSourceRef_V(p_mc->Parameters.VSource);
+	p_mc->Parameters.VSourceRef = (volts > p_mc->CONFIG.V_MAX) ? p_mc->CONFIG.V_MAX : volts;
+	Motor_InitVSourceRef_V(p_mc->Parameters.VSourceRef);
 }
 
 void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32_t zero_mV, uint32_t max_mV)
 {
-	p_mc->Parameters.BatteryZero_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorPos, zero_mV);
-	p_mc->Parameters.BatteryFull_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorPos, max_mV);
+	p_mc->Parameters.BatteryZero_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorSource, zero_mV);
+	p_mc->Parameters.BatteryFull_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorSource, max_mV);
 	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_Adcu, p_mc->Parameters.BatteryFull_Adcu, 1000U);
 }
 

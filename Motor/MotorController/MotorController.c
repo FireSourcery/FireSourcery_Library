@@ -56,7 +56,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	MotAnalogUser_Init(&p_mc->AnalogUser);
 
 	VMonitor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
-	VMonitor_Init(&p_mc->VMonitorPos);
+	VMonitor_Init(&p_mc->VMonitorSource);
 	VMonitor_Init(&p_mc->VMonitorSense);
 	VMonitor_Init(&p_mc->VMonitorAcc);
 
@@ -66,7 +66,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	Thermistor_Init(&p_mc->ThermistorMosfetsBot);
 
 	Motor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
-	Motor_InitVSourceRef_V(p_mc->Parameters.VSource);
+	Motor_InitVSourceRef_V(p_mc->Parameters.VSourceRef);
 	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Init(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 
 	Blinky_Init(&p_mc->Buzzer);
@@ -113,7 +113,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	p_mc->ThermistorMosfetsTop.Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
 	p_mc->ThermistorMosfetsBot.Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
 
-	p_mc->AnalogResults.VSource_Adcu = p_mc->VMonitorPos.Params.WarningLower_Adcu + 1U;
+	p_mc->AnalogResults.VSource_Adcu = p_mc->VMonitorSource.Params.WarningLower_Adcu + 1U;
 	p_mc->AnalogResults.VAcc_Adcu = p_mc->VMonitorAcc.Params.WarningLower_Adcu + 1U;
 	p_mc->AnalogResults.VSense_Adcu = p_mc->VMonitorSense.Params.WarningLower_Adcu + 1U;
 
@@ -121,7 +121,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	p_mc->AnalogResults.HeatMosfetsTop_Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
 	p_mc->AnalogResults.HeatMosfetsBot_Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
 
-	p_mc->AnalogResults.VSource_Adcu = p_mc->VMonitorPos.Params.WarningLower_Adcu + 1U;
+	p_mc->AnalogResults.VSource_Adcu = p_mc->VMonitorSource.Params.WarningLower_Adcu + 1U;
 	p_mc->AnalogResults.VAcc_Adcu = p_mc->VMonitorAcc.Params.WarningLower_Adcu + 1U;
 	p_mc->AnalogResults.VSense_Adcu = p_mc->VMonitorSense.Params.WarningLower_Adcu + 1U;
 
@@ -153,15 +153,15 @@ void MotorController_Init(MotorController_T * p_mc)
 // 	MotorController_User_SetILimitOnLowVParam(p_mc, 65536U / 2U);
 // 	MotorController_User_SetILimitOnHeatParam(p_mc, 65536U / 2U);
 
-// 	// VMonitor_SetLimitUpper_MilliV(&p_mc->VMonitorPos, p_mc->CONFIG.V_MAX * 1000U + p_mc->CONFIG.V_MAX * 200U);
-// 	// VMonitor_SetLimitLower_MilliV(&p_mc->VMonitorPos, p_mc->CONFIG.V_MAX * 1000U - p_mc->CONFIG.V_MAX * 200U);
-// 	// VMonitor_SetWarningUpper_MilliV(&p_mc->VMonitorPos, p_mc->CONFIG.V_MAX * 1000U + p_mc->CONFIG.V_MAX * 100U);
-// 	// VMonitor_SetWarningLower_MilliV(&p_mc->VMonitorPos, p_mc->CONFIG.V_MAX * 1000U - p_mc->CONFIG.V_MAX * 100U);
-// 	// VMonitor_Enable(&p_mc->VMonitorPos);
+// 	// VMonitor_SetLimitUpper_MilliV(&p_mc->VMonitorSource, p_mc->CONFIG.V_MAX * 1000U + p_mc->CONFIG.V_MAX * 200U);
+// 	// VMonitor_SetLimitLower_MilliV(&p_mc->VMonitorSource, p_mc->CONFIG.V_MAX * 1000U - p_mc->CONFIG.V_MAX * 200U);
+// 	// VMonitor_SetWarningUpper_MilliV(&p_mc->VMonitorSource, p_mc->CONFIG.V_MAX * 1000U + p_mc->CONFIG.V_MAX * 100U);
+// 	// VMonitor_SetWarningLower_MilliV(&p_mc->VMonitorSource, p_mc->CONFIG.V_MAX * 1000U - p_mc->CONFIG.V_MAX * 100U);
+// 	// VMonitor_Enable(&p_mc->VMonitorSource);
 // 	// MotorController_User_SetBatteryLife_MilliV(p_mc, p_mc->CONFIG.V_MAX * 1000U - p_mc->CONFIG.V_MAX * 250U, p_mc->CONFIG.V_MAX * 1000U);
 
-// 	VMonitor_SetLimits_MilliV(&p_mc->VMonitorPos, 30000U, 45000U, 35000U, 43000U);
-// 	VMonitor_Enable(&p_mc->VMonitorPos);
+// 	VMonitor_SetLimits_MilliV(&p_mc->VMonitorSource, 30000U, 45000U, 35000U, 43000U);
+// 	VMonitor_Enable(&p_mc->VMonitorSource);
 // 	// MotorController_User_SetBatteryLife_MilliV(p_mc, 30000U, 42000U); //need to set vmonitor for conversion
 
 // 	VMonitor_SetLimits_MilliV(&p_mc->VMonitorSense, 4500U, 5500U, 4800U, 5200U);
@@ -230,7 +230,7 @@ void MotorController_Init(MotorController_T * p_mc)
 // 	// .IsQuadratureCaptureEnabled 		= true,
 // 	// .IsALeadBPositive 				= true,
 // 	// .ExtendedTimerDeltaTStop 		= 1000U,	//ExtendedTimer time read at deltaT stopped
-// 	// .Frac16SpeedRef_Rpm;
+// 	// .ScalarSpeedRef_Rpm;
 
 // // Motor_User_ActivateCalibrationHall(p_motor);
 // // Hall_MapSensorsTable(&p_motor->Hall, HALL_VIRTUAL_SENSORS_A, HALL_VIRTUAL_SENSORS_INV_C, HALL_VIRTUAL_SENSORS_B, HALL_VIRTUAL_SENSORS_INV_A, HALL_VIRTUAL_SENSORS_C, HALL_VIRTUAL_SENSORS_INV_B);
@@ -263,7 +263,7 @@ void MotorController_Init(MotorController_T * p_mc)
 // THERMISTOR_PCB;
 // THERMISTOR_MOSFETS_TOP;
 // THERMISTOR_MOSFETS_BOT;
-// VMONITOR_VPOS;
+// VMONITOR_VSOURCE;
 // VMONITOR_VSENSE;
 // VMONITOR_VACC;
 // MOTOR_CONTROLLER;
@@ -311,7 +311,7 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->ThermistorPcb.CONFIG.P_PARAMS, 			&p_mc->ThermistorPcb.Params, 			sizeof(Thermistor_Params_T)); };
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->ThermistorMosfetsTop.CONFIG.P_PARAMS, 	&p_mc->ThermistorMosfetsTop.Params, 	sizeof(Thermistor_Params_T)); };
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->ThermistorMosfetsBot.CONFIG.P_PARAMS, 	&p_mc->ThermistorMosfetsBot.Params, 	sizeof(Thermistor_Params_T)); };
- 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->VMonitorPos.CONFIG.P_PARAMS, 			&p_mc->VMonitorPos.Params, 				sizeof(VMonitor_Params_T)); };
+ 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->VMonitorSource.CONFIG.P_PARAMS, 			&p_mc->VMonitorSource.Params, 				sizeof(VMonitor_Params_T)); };
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->VMonitorAcc.CONFIG.P_PARAMS, 			&p_mc->VMonitorAcc.Params, 				sizeof(VMonitor_Params_T)); };
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->VMonitorSense.CONFIG.P_PARAMS, 			&p_mc->VMonitorSense.Params,			sizeof(VMonitor_Params_T)); };
 #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE

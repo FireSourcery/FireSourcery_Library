@@ -73,14 +73,25 @@
 // #endif
 // }
 
+/* for common interface via angularD */
+// static inline uint32_t Encoder_DeltaD_CaptureAngularD(Encoder_T * p_encoder)
+// {
+// #if 	defined(CONFIG_ENCODER_HW_DECODER)
+// 	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+// #elif 	defined(CONFIG_ENCODER_HW_EMULATED) /* Capture in ISR */
+// #endif
+// 	return p_encoder->AngularD;
+// }
+
 /******************************************************************************/
 /*!
-	@brief 	Capture DeltaD, per fixed changed in time, SPEED_SAMPLE_FREQ
+	@brief 	Capture DeltaD, per fixed changed in time, D_SPEED_FREQ
 */
 /******************************************************************************/
 static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 {
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
+	/* For Common interface functions */
 	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
 	/* Emulated Capture in ISR */
 #endif
@@ -257,12 +268,12 @@ static inline uint32_t Encoder_DeltaD_ConvertToRotationalSpeed_RPM(Encoder_T * p
 
 /******************************************************************************/
 /*!
-	Frac16
+	Scalar
 */
 /******************************************************************************/
-static inline uint32_t Encoder_DeltaD_GetFrac16Speed(Encoder_T * p_encoder)
+static inline uint32_t Encoder_DeltaD_GetScalarSpeed(Encoder_T * p_encoder)
 {
-	return Encoder_CalcFrac16Speed(p_encoder, p_encoder->DeltaD, 1U);
+	return Encoder_CalcScalarSpeed(p_encoder, p_encoder->DeltaD, 1U);
 }
 
 /******************************************************************************/
@@ -271,9 +282,7 @@ static inline uint32_t Encoder_DeltaD_GetFrac16Speed(Encoder_T * p_encoder)
 */
 /******************************************************************************/
 /*!
-	Overflow caution:
-	Max deltaD = UINT32_MAX / (unitD * unitT_Freq)
-	deltaD ~14,000, for 300,000 (unitD * unitT_Freq)
+	Overflow caution: Max DeltaD = UINT32_MAX / UnitLinearSpeed
 */
 static inline uint32_t Encoder_DeltaD_GetLinearSpeed(Encoder_T * p_encoder)
 {

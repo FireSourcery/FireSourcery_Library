@@ -86,22 +86,23 @@ static inline bool HAL_Encoder_ReadDecoderCounterOverflowDecrement(const HAL_Enc
 /*
 	Emulated
 */
-// static inline void HAL_Encoder_EnablePhaseInterrupt(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 		{ p_encoder->CONTROLS[phaseId].CnSC |= FTM_CnSC_CHIE_MASK; }
-// static inline void HAL_Encoder_DisablePhaseInterrupt(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 	{ p_encoder->CONTROLS[phaseId].CnSC &= ~FTM_CnSC_CHIE_MASK; }
-// static inline void HAL_Encoder_ClearPhaseFlag(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 			{ p_encoder->CONTROLS[phaseId].CnSC &= ~FTM_CnSC_CHIE_MASK; }
-// static inline bool HAL_Encoder_ReadPhaseFlag(const HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 		{ return (p_encoder->CONTROLS[phaseId].CnSC | FTM_CnSC_CHF_MASK != 0U); }
+// static inline void HAL_Encoder_EnablePhaseInterrupt(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 		{   }
+// static inline void HAL_Encoder_DisablePhaseInterrupt(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 	{   }
+// static inline void HAL_Encoder_ClearPhaseFlag(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 			{   }
+// static inline bool HAL_Encoder_ReadPhaseFlag(const HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 		{  }
 
 /* Config SW Polling capture mode. On S32K Hw capture mode disables gpio pin read */
-// static inline void HAL_Encoder_InitCaptureTime(HAL_Encoder_T * p_encoder)
-// {
-// 	(void)p_encoder;
-// }
+static inline void HAL_Encoder_InitCaptureTime(HAL_Encoder_T * p_encoder)
+{
+	(void)p_encoder;
+}
 
-// static inline void HAL_Encoder_InitCounter(HAL_Encoder_T * p_encoder)
-// {
-// 	(p_encoder->QDCTRL) |= (1UL << FTM_QDCTRL_QUADEN_SHIFT);
-// }
+static inline void HAL_Encoder_InitCounter(HAL_Encoder_T * p_encoder)
+{
+	(void)p_encoder;
+	// (p_encoder->QDCTRL) |= (1UL << FTM_QDCTRL_QUADEN_SHIFT);
+}
 
-// static inline void HAL_Encoder_Init(HAL_Encoder_T * p_encoder) { (void)p_encoder; }
+static inline void HAL_Encoder_Init(HAL_Encoder_T * p_encoder) { (void)p_encoder; }
 
 #endif

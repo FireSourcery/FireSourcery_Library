@@ -41,10 +41,10 @@ extern void Motor_Analog_CaptureIa(Motor_T * p_motor);
 extern void Motor_Analog_CaptureIb(Motor_T * p_motor);
 extern void Motor_Analog_CaptureIc(Motor_T * p_motor);
 
-#if 	defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-	#define _MOTOR_ANALOG_N_CONVERSION_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor) 																\
-		.CONVERSION_SIN 	= ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_SIN, 	0U, 									p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), SinPin, 	&(p_Hosts)[SinHost]), 	\
-		.CONVERSION_COS 	= ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_COS, 	0U, 									p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), CosPin, 	&(p_Hosts)[CosHost]),
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+	#define _MOTOR_ANALOG_N_CONVERSION_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor) 																		\
+		.CONVERSION_SIN 	= ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_SIN, 0U, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), SinPin, &(p_Hosts)[SinHost]), 	\
+		.CONVERSION_COS 	= ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_COS, 0U, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), CosPin, &(p_Hosts)[CosHost]),
 #else
 	#define _MOTOR_ANALOG_N_CONVERSION_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor)
 #endif

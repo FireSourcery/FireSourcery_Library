@@ -56,35 +56,32 @@ static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 	p_encoder->AngularD = 0U;
 }
 
-//todo check freq for auto capture speed
+static inline void _Encoder_OnPhase_ISR(Encoder_T * p_encoder)
+{
+// #if defined(CONFIG_ENCODER_HW_EMULATED)
+	_Encoder_CaptureAngularD(p_encoder);
+	// Emulated, still need Capture DeltaT
+// #else /* DeltaT OR ModeDT ISR version */ //todo check freq for auto capture speed
+	// Encoder_DeltaT_Capture(p_encoder); /* superfluous deltaT capture for emulated D mode for now */
+// #endif
+}
+
 static inline void Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
 {
 	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
-// #if 	defined(CONFIG_ENCODER_HW_EMULATED)
-	_Encoder_CaptureAngularD(p_encoder);
-// #else /* DeltaT ISR version */
-	Encoder_DeltaT_Capture(p_encoder); /* superfluous deltaT capture for emulated D mode for now */
-// #endif
+	_Encoder_OnPhase_ISR(p_encoder);
 }
 
 static inline void Encoder_OnPhaseB_ISR(Encoder_T * p_encoder)
 {
 	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
-// #if 	defined(CONFIG_ENCODER_HW_EMULATED)
-	_Encoder_CaptureAngularD(p_encoder);
-// #else
-	Encoder_DeltaT_Capture(p_encoder);
-// #endif
+	_Encoder_OnPhase_ISR(p_encoder);
 }
 
 static inline void Encoder_Motor_OnPhaseC_ISR(Encoder_T * p_encoder)
 {
 	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
-// #if 	defined(CONFIG_ENCODER_HW_EMULATED)
-	_Encoder_CaptureAngularD(p_encoder);
-// #else
-	Encoder_DeltaT_Capture(p_encoder);
-// #endif
+	_Encoder_OnPhase_ISR(p_encoder);
 }
 
 /* Shared A, B Thread */

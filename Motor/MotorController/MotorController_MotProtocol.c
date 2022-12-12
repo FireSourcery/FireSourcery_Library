@@ -286,7 +286,7 @@ static void Req_Control(MotorController_T * p_mc, MotPacket_ControlResp_T * p_tx
 	// (
 	// 	p_txPacket,
 	// 	Motor_User_GetSpeedFeedbackRef_Rpm(p_motor), MotorController_User_GetIMax(p_mc), MotorController_User_GetVSource(p_mc), /* Frac16 conversions */
-	// 	p_mc->VMonitorPos.CONFIG.UNITS_R1, p_mc->VMonitorPos.CONFIG.UNITS_R2,	/* Adcu <-> Volts conversions */
+	// 	p_mc->VMonitorSource.CONFIG.UNITS_R1, p_mc->VMonitorSource.CONFIG.UNITS_R2,	/* Adcu <-> Volts conversions */
 	// 	p_mc->VMonitorSense.CONFIG.UNITS_R1, p_mc->VMonitorSense.CONFIG.UNITS_R2,
 	// 	p_mc->VMonitorAcc.CONFIG.UNITS_R1, p_mc->VMonitorAcc.CONFIG.UNITS_R2
 	// );

@@ -33,7 +33,6 @@
 #define MOTOR_THREAD_H
 
 #include "Motor_StateMachine.h"
-// #include "System/SysTime/SysTime.h"
 #include "Motor_User.h"
 #include "Motor.h"
 
@@ -41,43 +40,15 @@
 
 /*
 	Default 50us
-	Calling function must clear interrupt flag
+	Calling function clears interrupt flag
 */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-#if 	defined(CONFIG_MOTOR_DEBUG_ENABLE)
-	p_motor->MicrosRef = SysTime_GetMicros();
-#endif
-
+	Motor_CaptureRefTime(p_motor);
 	p_motor->ControlTimerBase++;
-
-#if 	defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-	if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
-	{
-		//todo group
-		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
-	}
-#endif
-
-
-	//  todo _Motor_Analog_Thread( p_motor); use analog select mode to implement prefered order
-
-	//always check angle or stop / run / freewheel mode only?
-	//	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
-	//	{
-	//		Motor_FOC_ProcAngleObserve(p_motor);
-	//	}
-	//	else /* p_motor->CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */
-	//	{
-	//
-	//	}
-
+	//  alternatively _Motor_Analog_Thread(p_motor); use analog select mode to implement preferred order
 	StateMachine_Semi_ProcOutput(&p_motor->StateMachine);
-
-#if 	defined(CONFIG_MOTOR_DEBUG_ENABLE)
-	p_motor->DebugTime[5] = SysTime_GetMicros() - p_motor->MicrosRef;
-#endif
+	Motor_Debug_CaptureTime(p_motor, 5U);
 }
 
 static inline void Motor_Heat_Thread(Motor_T * p_motor)
@@ -104,10 +75,12 @@ static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_motor)
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_ENCODER: Encoder_OnIndex_ISR(&p_motor->Encoder); break;
+#if defined(CONFIG_MOTOR_HALL_MODE_ISR)
 		case MOTOR_SENSOR_MODE_HALL:
 			Encoder_Motor_OnPhaseC_ISR(&p_motor->Encoder);
-			_Motor_FOC_CaptureHall(p_motor);
+			Motor_FOC_CaptureHall_ISR(p_motor);
 			break;
+#endif
 		default: break;
 	}
 }
@@ -115,19 +88,25 @@ static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_motor)
 static inline void Motor_HallEncoderA_ISR(Motor_T * p_motor)
 {
 	Encoder_OnPhaseA_ISR(&p_motor->Encoder);
-	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { _Motor_FOC_CaptureHall(p_motor); }
+#if defined(CONFIG_MOTOR_HALL_MODE_ISR)
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Motor_FOC_CaptureHall_ISR(p_motor); }
+#endif
 }
 
 static inline void Motor_HallEncoderB_ISR(Motor_T * p_motor)
 {
 	Encoder_OnPhaseB_ISR(&p_motor->Encoder);
-	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { _Motor_FOC_CaptureHall(p_motor); }
+#if defined(CONFIG_MOTOR_HALL_MODE_ISR)
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Motor_FOC_CaptureHall_ISR(p_motor); }
+#endif
 }
 
 static inline void Motor_HallEncoderAB_ISR(Motor_T * p_motor)
 {
 	Encoder_OnPhaseAB_ISR(&p_motor->Encoder);
-	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { _Motor_FOC_CaptureHall(p_motor); }
+#if defined(CONFIG_MOTOR_HALL_MODE_ISR)
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Motor_FOC_CaptureHall_ISR(p_motor); }
+#endif
 }
 
 #endif

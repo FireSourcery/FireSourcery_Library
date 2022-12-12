@@ -51,11 +51,7 @@ void SysTime_Delay(uint32_t ms)
 	}
 }
 
-void SysTime_SetDelayYield(void (*fp)(void))
-{
-	Yield = fp;
-}
-
+void SysTime_SetDelayYield(void (*fp)(void)) { Yield = fp; }
 
 void SysTime_Init(void)
 {

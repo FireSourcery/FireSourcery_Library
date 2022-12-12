@@ -33,7 +33,13 @@
 
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 
-#define MOTOR_ANALOG_CHANNEL_COUNT 	10U
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+	#define _MOTOR_ANALOG_CHANNEL_COUNT_SIN_COS (2U)
+#else
+	#define _MOTOR_ANALOG_CHANNEL_COUNT_SIN_COS (0U)
+#endif
+
+#define MOTOR_ANALOG_CHANNEL_COUNT 	(7U + _MOTOR_ANALOG_CHANNEL_COUNT_SIN_COS)
 
 /*!
 	@brief Virtual channel identifiers, index into arrays containing Analog channel
@@ -47,8 +53,10 @@ typedef enum MotorAnalog_Channel_Tag
 	MOTOR_ANALOG_CHANNEL_IB,
 	MOTOR_ANALOG_CHANNEL_IC,
 	MOTOR_ANALOG_CHANNEL_HEAT,	/* Temperature */
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 	MOTOR_ANALOG_CHANNEL_SIN,
 	MOTOR_ANALOG_CHANNEL_COS,
+#endif
 }
 MotorAnalog_Channel_T;
 
@@ -56,17 +64,19 @@ typedef union MotorAnalog_Results_Tag
 {
 	struct
 	{
-		analog_adcresult_t Va_Adcu;
-		analog_adcresult_t Vb_Adcu;
-		analog_adcresult_t Vc_Adcu;
-		analog_adcresult_t Ia_Adcu;
-		analog_adcresult_t Ib_Adcu;
-		analog_adcresult_t Ic_Adcu;
-		analog_adcresult_t Heat_Adcu;
-		analog_adcresult_t Sin_Adcu;
-		analog_adcresult_t Cos_Adcu;
+		analog_result_t Va_Adcu;
+		analog_result_t Vb_Adcu;
+		analog_result_t Vc_Adcu;
+		analog_result_t Ia_Adcu;
+		analog_result_t Ib_Adcu;
+		analog_result_t Ic_Adcu;
+		analog_result_t Heat_Adcu;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+		analog_result_t Sin_Adcu;
+		analog_result_t Cos_Adcu;
+#endif
 	};
-	analog_adcresult_t Channels[MOTOR_ANALOG_CHANNEL_COUNT];
+	analog_result_t Channels[MOTOR_ANALOG_CHANNEL_COUNT];
 }
 MotorAnalog_Results_T;
 
@@ -83,8 +93,10 @@ typedef struct MotorAnalog_Conversions_Tag
 			const AnalogN_Conversion_T CONVERSION_IB;
 			const AnalogN_Conversion_T CONVERSION_IC;
 			const AnalogN_Conversion_T CONVERSION_HEAT;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 			const AnalogN_Conversion_T CONVERSION_SIN;
 			const AnalogN_Conversion_T CONVERSION_COS;
+#endif
 		};
 		AnalogN_Conversion_T CONVERSIONS[MOTOR_ANALOG_CHANNEL_COUNT];
 	};

@@ -29,140 +29,97 @@
 */
 /******************************************************************************/
 #include "Motor_Analog.h"
-//#include "Motor_SixStep.h"
 #include "Motor_FOC.h"
+#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+#include "Motor_SixStep.h"
+#endif
 
 /******************************************************************************/
 /*!
 	@brief  Callback functions must be mapped
 */
 /******************************************************************************/
-
 /******************************************************************************/
 /*!
-	@brief  Conversion
+	@brief  Vabc
 */
 /******************************************************************************/
+static inline void CaptureVPeak(Motor_T * p_motor, uint16_t adcu) { if(adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = adcu; } }
+
 void Motor_Analog_CaptureVa(Motor_T * p_motor)
 {
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
-	{
-		//		Motor_SixStep_CaptureBemfA(p_motor);
-	}
-	else
-	{
-
-	}
-
-	// if(p_motor->AnalogResults.Va_Adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Va_Adcu; }
+#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP) { Motor_SixStep_CaptureBemfA(p_motor); }
+#endif
+	CaptureVPeak(p_motor, p_motor->AnalogResults.Va_Adcu);
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	// p_motor->DebugTimeABC[0] = SysTime_GetMicros() - p_motor->MicrosRef;
+#endif
 }
 
-/******************************************************************************/
-/*!
-	@brief  Conversion
-*/
-/******************************************************************************/
 void Motor_Analog_CaptureVb(Motor_T * p_motor)
 {
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
-	{
-		//		Motor_SixStep_CaptureBemfB(p_motor);
-	}
-	else
-	{
-
-	}
-
-	// if(p_motor->AnalogResults.Vb_Adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Vb_Adcu; }
+#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP) { Motor_SixStep_CaptureBemfB(p_motor); }
+#endif
+	CaptureVPeak(p_motor, p_motor->AnalogResults.Vb_Adcu);
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	// p_motor->DebugTimeABC[1] = SysTime_GetMicros() - p_motor->MicrosRef;
+#endif
 }
 
-/******************************************************************************/
-/*!
-	@brief  Conversion
-*/
-/******************************************************************************/
 void Motor_Analog_CaptureVc(Motor_T * p_motor)
 {
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
-	{
-		//		Motor_SixStep_CaptureBemfC(p_motor);
-	}
-	else
-	{
-
-	}
-
-	// if(p_motor->AnalogResults.Vc_Adcu > p_motor->VBemfPeakTemp_Adcu) { p_motor->VBemfPeakTemp_Adcu = p_motor->AnalogResults.Vc_Adcu; }
+#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP) { Motor_SixStep_CaptureBemfC(p_motor); }
+#endif
+	CaptureVPeak(p_motor, p_motor->AnalogResults.Vc_Adcu);
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	p_motor->DebugTimeABC[2] = SysTime_GetMicros() - p_motor->MicrosRef;
+#endif
 }
 
 /******************************************************************************/
 /*!
-	@brief  Common
+	@brief  Iabc
 */
 /******************************************************************************/
-// static inline void CaptureIZeroToPeak(Motor_T * p_motor, int32_t adcu)
-// {
-// 	uint16_t zeroToPeak = (adcu > 0) ? adcu : 0 - adcu;
-// 	if(zeroToPeak > p_motor->IPhasePeakTemp_Adcu) { p_motor->IPhasePeakTemp_Adcu = zeroToPeak; }
-// }
+static inline void CaptureIZeroToPeak(Motor_T * p_motor, uint16_t adcuZero, uint16_t adcu)
+{
+	int16_t signedAdcu = adcu - adcuZero;
+	uint16_t zeroToPeak = (signedAdcu > 0) ? signedAdcu : 0 - signedAdcu;
+	if(zeroToPeak > p_motor->IPhasePeakTemp_Adcu) { p_motor->IPhasePeakTemp_Adcu = zeroToPeak; }
+}
 
-/******************************************************************************/
-/*!
-	@brief  Conversion
-*/
-/******************************************************************************/
 void Motor_Analog_CaptureIa(Motor_T * p_motor)
 {
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
-	{
-		//		Motor_SixStep_CaptureIBusA(p_motor);
-	}
-	else
-	{
-		Motor_FOC_CaptureIa(p_motor);
-	}
-
-	// CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ia_Adcu - p_motor->Parameters.IaZeroRef_Adcu);
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_CaptureIa(p_motor); }
+#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+	else /* (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP) */
+	{ Motor_SixStep_CaptureIa(p_motor); }
+#endif
+	CaptureIZeroToPeak(p_motor, p_motor->Parameters.IaZeroRef_Adcu, p_motor->AnalogResults.Ia_Adcu);
 }
 
-/******************************************************************************/
-/*!
-	@brief  Conversion
-*/
-/******************************************************************************/
 void Motor_Analog_CaptureIb(Motor_T * p_motor)
 {
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
-	{
-		//		Motor_SixStep_CaptureIBusB(p_motor);
-	}
-	else
-	{
-		Motor_FOC_CaptureIb(p_motor);
-	}
-
-	// CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ib_Adcu - p_motor->Parameters.IbZeroRef_Adcu);
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_CaptureIb(p_motor); }
+#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+	else /* (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP) */
+	{ Motor_SixStep_CaptureIb(p_motor); }
+#endif
+	CaptureIZeroToPeak(p_motor, p_motor->Parameters.IbZeroRef_Adcu, p_motor->AnalogResults.Ib_Adcu);
 }
 
-/******************************************************************************/
-/*!
-	@brief  Conversion
-*/
-/******************************************************************************/
 void Motor_Analog_CaptureIc(Motor_T * p_motor)
 {
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
-	{
-		//		Motor_SixStep_CaptureIBusC(p_motor);
-	}
-	else
-	{
-		Motor_FOC_CaptureIc(p_motor);
-	}
-
-	// CaptureIZeroToPeak(p_motor, (int32_t)p_motor->AnalogResults.Ic_Adcu - p_motor->Parameters.IcZeroRef_Adcu);
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_CaptureIc(p_motor); }
+#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+	else /* (p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP) */
+	{ Motor_SixStep_CaptureIc(p_motor); }
+#endif
+	CaptureIZeroToPeak(p_motor, p_motor->Parameters.IcZeroRef_Adcu, p_motor->AnalogResults.Ic_Adcu);
 }
-
 
 
 /******************************************************************************/

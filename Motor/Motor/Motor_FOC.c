@@ -30,7 +30,6 @@
 /******************************************************************************/
 #include "Motor_FOC.h"
 
-
 static void ResetSpeedPidILimitsCcw(Motor_T * p_motor)
 {
 	PID_SetOutputLimits(&p_motor->PidSpeed, 0 - p_motor->ILimitGenerating_Frac16 / 2, p_motor->ILimitMotoring_Frac16 / 2);

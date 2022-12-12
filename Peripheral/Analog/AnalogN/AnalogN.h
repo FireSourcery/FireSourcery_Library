@@ -63,13 +63,6 @@ typedef const struct AnalogN_Conversion_Tag
 }
 AnalogN_Conversion_T;
 
-// typedef const struct AnalogN_Conversion_Tag
-// {
-// 	const AnalogN_Conversion_T * const * const PP_CONVERSIONS; /* Points to an array of pointers */
-// 	const uint8_t CONVERSIONS_COUNT;
-// }
-// AnalogN_ConversionGroup_T;
-
 #define ANALOG_N_CONVERSION_HOST_NULL (0x8U)
 
 #define ANALOG_N_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId, p_AnalogHost) 		\
@@ -79,6 +72,13 @@ AnalogN_Conversion_T;
 }
 
 //todo
+// typedef const struct AnalogN_Conversion_Tag
+// {
+// 	const AnalogN_Conversion_T * const * const PP_CONVERSIONS; /* Points to an array of pointers */
+// 	const uint8_t CONVERSIONS_COUNT;
+// }
+// AnalogN_ConversionGroup_T;
+
 // typedef const struct
 // {
 // 	Analog_Conversion_T * P_CONVERSIONS;

@@ -47,16 +47,16 @@
 
 /* Software side data storage */
 #ifdef CONFIG_ANALOG_ADC_RESULT_UINT8
-typedef volatile uint8_t analog_adcresult_t;
+typedef volatile uint8_t analog_result_t;
 #elif defined(CONFIG_ANALOG_ADC_RESULT_UINT16)
-typedef volatile uint16_t analog_adcresult_t;
+typedef volatile uint16_t analog_result_t;
 #endif
 
 /* ADC Pin Channel - May or may not need 32 bits */
 #ifdef CONFIG_ANALOG_ADC_PIN_UINT8
-typedef uint8_t analog_adcpin_t;
+typedef uint8_t analog_pin_t;
 #elif defined(CONFIG_ANALOG_ADC_PIN_UINT32)
-typedef uint32_t analog_adcpin_t;
+typedef uint32_t analog_pin_t;
 #endif
 
 typedef uint8_t analog_channel_t; /* Virtual Channel Index */
@@ -79,8 +79,8 @@ typedef const struct Analog_Conversion_Tag
 
 	/* Defined by main */
 	void * const P_CALLBACK_CONTEXT;
-	volatile analog_adcresult_t * const P_RESULTS_BUFFER;	 /*!< Persistent ADC results buffer, virtual channel index.  */
-	const analog_adcpin_t PIN;
+	volatile analog_result_t * const P_RESULTS_BUFFER;	 /*!< Persistent ADC results buffer, virtual channel index.  */
+	const analog_pin_t PIN;
 }
 Analog_Conversion_T;
 
@@ -200,7 +200,7 @@ static inline void _Analog_ExitCritical(Analog_T * p_analog)
 static inline void _Analog_CaptureAdcResults(Analog_T * p_analog, Analog_Conversion_T * p_activeConversion)
 {
 	p_activeConversion->P_RESULTS_BUFFER[p_activeConversion->CHANNEL] = HAL_Analog_ReadResult(p_analog->CONFIG.P_HAL_ANALOG, p_activeConversion->PIN);
-	// analog_adcresult_t result = HAL_Analog_ReadResult(p_analog->CONFIG.P_HAL_ANALOG, p_activeConversion->PIN);
+	// analog_result_t result = HAL_Analog_ReadResult(p_analog->CONFIG.P_HAL_ANALOG, p_activeConversion->PIN);
 	// if(p_analog->ActiveOptions.CaptureLocalPeak == true)
 	// {
 	// 	if(result > p_activeConversion->P_RESULTS_BUFFER[p_activeConversion->CHANNEL])
@@ -268,11 +268,8 @@ static inline void Analog_PollComplete(Analog_T * p_analog)
 */
 static inline bool _Analog_ReadIsActive(const Analog_T * p_analog)
 {
-	return
-	(
-		(HAL_Analog_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ANALOG) == true) ||
-		(HAL_Analog_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ANALOG) == true)
-	);
+	return ((HAL_Analog_ReadConversionActiveFlag(p_analog->CONFIG.P_HAL_ANALOG) == true) ||
+		(HAL_Analog_ReadConversionCompleteFlag(p_analog->CONFIG.P_HAL_ANALOG) == true));
 }
 
 /*

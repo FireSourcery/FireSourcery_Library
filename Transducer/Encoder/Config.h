@@ -50,11 +50,36 @@
 	#define CONFIG_ENCODER_HW_DECODER_A_LEAD_B_INCREMENT
 #endif
 
-/*  Capture DeltaT Mode */
+/* Capture DeltaT Mode */
 #if 	defined(CONFIG_ENCODER_HW_TIMER_COUNTER_MAX)
 #else
 		#define CONFIG_ENCODER_HW_TIMER_COUNTER_MAX 0xFFFFU
 #endif
+
+// #if 	defined(CONFIG_ENCODER_HW_TIMER_WRITABLE_ENABLE)
+// #elif 	defined(CONFIG_ENCODER_HW_TIMER_WRITABLE_DISABLE)
+// #else
+// 		#define CONFIG_ENCODER_HW_TIMER_WRITABLE_ENABLE
+// #endif
+
+/* Emulated and Decoder Quadrature Capture */
+#if 	defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE) /* Emulated and Decoder */
+#elif 	defined(CONFIG_ENCODER_QUADRATURE_MODE_DECODER_ONLY)
+#elif 	defined(CONFIG_ENCODER_QUADRATURE_MODE_DISABLED)
+#else
+	#define CONFIG_ENCODER_QUADRATURE_MODE_DISABLED
+#endif
+
+/* Adjust timer freq at runtime */
+#ifdef CONFIG_ENCODER_DYNAMIC_TIMER
+#else
+#endif
+
+/* Internal Polling Capture */
+#if defined(CONFIG_ENCODER_POLLING_CAPTURE_ENABLE)
+
+#endif
+
 
 #if 	defined(CONFIG_ENCODER_ANGLE_DEGREES_BITS)
 #else

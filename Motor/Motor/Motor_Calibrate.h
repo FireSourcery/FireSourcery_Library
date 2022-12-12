@@ -50,7 +50,7 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
 {
 	bool isComplete = false;
 
-	if (Timer_Poll(&p_motor->ControlTimer) == true)
+	if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
 	{
 		switch (p_motor->CalibrationStateIndex)
 		{
@@ -121,7 +121,7 @@ static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
 	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
 	bool isComplete = false;
 
-	if (Timer_Poll(&p_motor->ControlTimer) == true)
+	if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
 	{
 		switch (p_motor->CalibrationStateIndex)
 		{
@@ -183,7 +183,7 @@ static inline bool Motor_Calibrate_Encoder(Motor_T * p_motor)
 {
 	bool isComplete = false;
 
-	if (Timer_Poll(&p_motor->ControlTimer) == true)
+	if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
 	{
 //		switch (p_motor->CalibrationStateIndex)
 //		{
@@ -236,7 +236,7 @@ static inline void Motor_Calibrate_StartAdc(Motor_T * p_motor)
 
 static inline bool Motor_Calibrate_Adc(Motor_T *p_motor)
 {
-	bool isComplete = Timer_Poll(&p_motor->ControlTimer); /* Calibrate Adc 1 wait step only */
+	bool isComplete = Timer_Periodic_Poll(&p_motor->ControlTimer); /* Calibrate Adc 1 wait step only */
 	if (isComplete == true)
 	{
 		p_motor->Parameters.IaZeroRef_Adcu = Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu);

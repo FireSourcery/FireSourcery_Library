@@ -30,14 +30,16 @@
 /******************************************************************************/
 #include "Linear_Ramp.h"
 
-
-//todo init frac16 mode
+/* todo change to frac16 for granularity  */
 
 /******************************************************************************/
 /*
 
 */
 /******************************************************************************/
+/*
+	Other functions provide higher granularity
+*/
 void Linear_Ramp_Init(Linear_T * p_linear, int32_t slope_UnitPerTick, int32_t initial, int32_t final)
 {
 	Linear_Init(p_linear, slope_UnitPerTick, 1U, initial, final);
@@ -49,16 +51,16 @@ void Linear_Ramp_Init(Linear_T * p_linear, int32_t slope_UnitPerTick, int32_t in
 
 	Overflow: slope_UnitPerSecond > 131,071
 */
-void Linear_Ramp_Init_Acceleration(Linear_T * p_linear, int32_t slope_UnitPerSecond, uint32_t updateFreq_Hz, int32_t initial, int32_t final)
+void Linear_Ramp_Init_Acceleration(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t slope_UnitPerSecond, int32_t initial, int32_t final)
 {
 	Linear_Init(p_linear, slope_UnitPerSecond, updateFreq_Hz, initial, final);
 }
 
 /*
-	Overflow: 	(peroid_Ms * updateFreq_Hz) > 131,071,000
+	Overflow: 	(period_Ms * updateFreq_Hz) > 131,071,000
 				(final - initial) > 131,071
 */
-void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint16_t peroid_Ms, uint32_t updateFreq_Hz, int32_t initial, int32_t final)
+void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t period_Ms, int32_t initial, int32_t final)
 {
-	Linear_Init(p_linear, (final - initial), (uint32_t)peroid_Ms * (uint32_t)updateFreq_Hz / 1000U, initial, final);
+	Linear_Init(p_linear, final - initial, period_Ms * updateFreq_Hz / 1000U, initial, final);
 }

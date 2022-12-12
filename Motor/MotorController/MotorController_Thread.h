@@ -193,7 +193,7 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
 static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 {
 	/* Med Freq, Low Priority, 1 ms */
-	if(Timer_Poll(&p_mc->TimerMillis) == true)
+	if(Timer_Periodic_Poll(&p_mc->TimerMillis) == true)
 	{
 		StateMachine_Semi_ProcOutput(&p_mc->StateMachine);
 
@@ -229,7 +229,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 	}
 
 	/* Low Freq, Low Priority, 10ms */
-	if(Timer_Poll(&p_mc->TimerMillis10) == true)
+	if(Timer_Periodic_Poll(&p_mc->TimerMillis10) == true)
 	{
 #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
 		Shell_Proc(&p_mc->Shell);
@@ -238,7 +238,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 	}
 
 	/* Low Freq, Low Priority, 1s */
-	if(Timer_Poll(&p_mc->TimerSeconds) == true)
+	if(Timer_Periodic_Poll(&p_mc->TimerSeconds) == true)
 	{
 		/* In case of Serial Rx Overflow Timeout */
 		for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]); }
@@ -259,7 +259,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 {
 //	BrakeThread(p_mc);
 #if defined(CONFIG_MOTOR_V_SENSORS_ADC) /* && !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) */
-	VMonitor_Status_T statusVPos = VMonitor_PollStatus(&p_mc->VMonitorPos, p_mc->AnalogResults.VSource_Adcu);
+	VMonitor_Status_T statusVPos = VMonitor_PollStatus(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu);
 
 	AnalogN_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VSOURCE);
 
@@ -287,7 +287,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 	}
 #endif
 
-	if(Timer_Poll(&p_mc->TimerIsrDividerSeconds) == true)
+	if(Timer_Periodic_Poll(&p_mc->TimerIsrDividerSeconds) == true)
 	{
 		_MotorController_ProcVoltageMonitor(p_mc); /* Except voltage supply */
 		_MotorController_ProcHeatMonitor(p_mc);

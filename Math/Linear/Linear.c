@@ -58,8 +58,8 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 	//else ensure invfunctino does not overflow
 
 	//todo determine max shift if factor > 65536
-	p_linear->Slope = (factor << 14U) / divisor;
-	p_linear->SlopeShift = 14U;
+	p_linear->Slope = (factor << LINEAR_DIVIDE_SHIFT) / divisor;
+	p_linear->SlopeShift = LINEAR_DIVIDE_SHIFT;
 
 	/*
 		Allow max input of x = XReference, without overflow
@@ -67,7 +67,7 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 
 		loop if divisor < XReference
 		alternatively
-			p_linear->Slope = (factor << 14U) / XReference;
+			p_linear->Slope = (factor << LINEAR_DIVIDE_SHIFT) / XReference;
 			p_linear->YReference * divisor / XReference
 	*/
 	//todo non iterative, log2
@@ -78,8 +78,8 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 	}
 
 	//todo maxleftshift, if factor > divisor, invslope can be > 14
-	p_linear->InvSlope = (divisor << 14U) / factor;
-	p_linear->InvSlopeShift = 14U;
+	p_linear->InvSlope = (divisor << LINEAR_DIVIDE_SHIFT) / factor;
+	p_linear->InvSlopeShift = LINEAR_DIVIDE_SHIFT;
 
 	while((p_linear->YReference - y0 > INT32_MAX / p_linear->InvSlope) && (p_linear->InvSlopeShift > 0U))
 	{
@@ -132,27 +132,13 @@ void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 }
 
 
-/******************************************************************************/
-/*!
-	Protected
-*/
-/******************************************************************************/
-int32_t _Linear_Sat(int32_t min, int32_t max, int32_t value)
-{
-	int32_t saturated;
-	if		(value > max) 	{ saturated = max; }
-	else if	(value < min) 	{ saturated = min; }
-	else 					{ saturated = value; }
-	return saturated;
-}
-
 
 /******************************************************************************/
 /*!
 	bound user input
 */
 /******************************************************************************/
-/* Saturating input implicitly saturates out and avoids overflow */
+/* Saturating input indirectly saturates output and avoids overflow */
 int32_t Linear_Function_Sat(const Linear_T * p_linear, int32_t x)
 {
 	int32_t xSaturated = _Linear_Sat(0 - p_linear->XReference, p_linear->XReference, x);
@@ -163,6 +149,49 @@ int32_t Linear_InvFunction_Sat(const Linear_T * p_linear, int32_t y)
 {
 	int32_t ySaturated = _Linear_Sat(0 - p_linear->YReference, p_linear->YReference, y);
 	return Linear_InvFunction(p_linear, ySaturated);
+}
+
+/******************************************************************************/
+/*!
+	Saturated Output
+	Saturate to uint16_t, q0.16 [0, 65535]
+	f([-XRef:XRef]) => [0:65536]
+*/
+/******************************************************************************/
+/* negative returns zero */
+uint16_t Linear_Function_FractionUnsigned16(const Linear_T * p_linear, int32_t x)
+{
+	return _Linear_SatUnsigned16(Linear_Function_Frac16(p_linear, x));
+}
+
+/* negative returns abs */
+uint16_t Linear_Function_FractionUnsigned16_Abs(const Linear_T * p_linear, int32_t x)
+{
+	return _Linear_SatUnsigned16_Abs(Linear_Function_Frac16(p_linear, x));
+}
+
+/* y_frac16 in q0.16 format is handled by q16.16 case */
+int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_linear, uint16_t y_fracU16)
+{
+	return Linear_InvFunction_Frac16(p_linear, y_fracU16);
+}
+
+/******************************************************************************/
+/*!
+	Saturate to int16_t, q1.15 [-32768, 32767]
+	f([-XRef:XRef]) => [-32768:32767]
+*/
+/******************************************************************************/
+/* */
+int16_t Linear_Function_FractionSigned16(const Linear_T * p_linear, int32_t x)
+{
+	return _Linear_SatSigned16(Linear_Function_Frac16(p_linear, x) / 2);
+}
+
+/* y_frac16 use q1.15 */
+int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_linear, int16_t y_fracS16)
+{
+	return Linear_InvFunction_Frac16(p_linear, (int32_t)y_fracS16 * 2);
 }
 
 /******************************************************************************/
@@ -202,46 +231,4 @@ int32_t Linear_InvFunction_Scalar(const Linear_T * p_linear, int32_t y, uint16_t
 	(void)y;
 	(void)scalar;
 	return 0; //todo
-}
-
-/******************************************************************************/
-/*!
-	Saturate to uint16_t, q0.16 [0, 65535]
-	f([-XRef:XRef]) => [0:65536]
-*/
-/******************************************************************************/
-/* negative returns zero */
-uint16_t Linear_Function_FractionUnsigned16(const Linear_T * p_linear, int32_t x)
-{
-	return _Linear_SatUnsigned16(Linear_Function_Frac16(p_linear, x));
-}
-
-/* negative returns abs */
-uint16_t Linear_Function_FractionUnsigned16_Abs(const Linear_T * p_linear, int32_t x)
-{
-	return _Linear_SatUnsigned16_Abs(Linear_Function_Frac16(p_linear, x));
-}
-
-/* y_frac16 in q0.16 format is handled by q16.16 case */
-int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_linear, uint16_t y_fracU16)
-{
-	return Linear_InvFunction_Frac16(p_linear, y_fracU16);
-}
-
-/******************************************************************************/
-/*!
-	Saturate to int16_t, q1.15 [-32768, 32767]
-	f([-XRef:XRef]) => [-32768:32767]
-*/
-/******************************************************************************/
-/* */
-int16_t Linear_Function_FractionSigned16(const Linear_T * p_linear, int32_t x)
-{
-	return _Linear_SatSigned16(Linear_Function_Frac16(p_linear, x) / 2);
-}
-
-/* y_frac16 use q1.15 */
-int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_linear, int16_t y_fracS16)
-{
-	return Linear_InvFunction_Frac16(p_linear, (int32_t)y_fracS16 * 2);
 }

@@ -97,7 +97,7 @@ static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac1
 	C = (-alpha - sqrt3*beta)/2
 */
 /******************************************************************************/
-static inline void foc_invclarke(qfrac16_t * p_A, qfrac16_t * p_B, qfrac16_t * p_C, qfrac16_t alpha, qfrac16_t beta)
+static inline void foc_invclarke(qfrac16_t * p_a, qfrac16_t * p_b, qfrac16_t * p_c, qfrac16_t alpha, qfrac16_t beta)
 {
 	int32_t alphaDiv2 = 0 - qfrac16_mul(alpha, QFRAC16_1_DIV_2);
 	int32_t betaSqrt3Div2 = qfrac16_mul(beta, QFRAC16_SQRT3_DIV_2);
@@ -105,9 +105,9 @@ static inline void foc_invclarke(qfrac16_t * p_A, qfrac16_t * p_B, qfrac16_t * p
 	int32_t b = alphaDiv2 + betaSqrt3Div2;
 	int32_t c = alphaDiv2 - betaSqrt3Div2;
 
-	*p_A = alpha;
-	*p_B = qfrac16_sat(b);
-	*p_C = qfrac16_sat(c);
+	*p_a = alpha;
+	*p_b = qfrac16_sat(b);
+	*p_c = qfrac16_sat(c);
 }
 
 /******************************************************************************/
@@ -170,18 +170,24 @@ static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_
 	foc_invpark_vector(p_alpha, p_beta, d, q, sin, cos);
 }
 
+static inline uint16_t foc_magnitude(qfrac16_t d, qfrac16_t q)
+{
+	return q_sqrt((int32_t)d * (int32_t)d + (int32_t)q * (int32_t)q);
+}
+
 /* unitize, q d proportional */
+/* saves sqrt operation if magnitude is not needed every cycle */
 static inline void foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax)
 {
 	uint32_t vectorMaxSquared = (int32_t)vectorMax * (int32_t)vectorMax;
 	uint32_t dqSquared = ((int32_t)(*p_d) * (int32_t)(*p_d)) + ((int32_t)(*p_q) * (int32_t)(*p_q));
-	uint16_t vectorMagnitutde;
+	uint16_t vectorMagnitude;
 	qfrac16_t ratio; /* where 32767 q1.15 = 1 */
 
 	if(dqSquared > vectorMaxSquared)
 	{
-		vectorMagnitutde = q_sqrt(dqSquared);
-		ratio = qfrac16_div(vectorMax, vectorMagnitutde);
+		vectorMagnitude = q_sqrt(dqSquared);
+		ratio = qfrac16_div(vectorMax, vectorMagnitude);
 		*p_d = (qfrac16_t)qfrac16_mul(*p_d, ratio); /* no saturation needed, ratio < 1 */
 		*p_q = (qfrac16_t)qfrac16_mul(*p_q, ratio);
 	}

@@ -55,12 +55,11 @@ static inline uint32_t _Encoder_MicrosHelper(uint32_t timerTicks, uint32_t timer
 //static inline uint32_t Encoder_GetTotalT_Micros(Encoder_T * p_encoder)	{return _Encoder_MicrosHelper(p_encoder->TotalT,  p_encoder->UnitT_Freq);}
 /******************************************************************************/
 /*!
-	T Unit Conversions - Variable DeltaT (DeltaD is fixed, == 1).
+	T Unit Conversions
 */
 /******************************************************************************/
 //static inline uint32_t Encoder_ConvertToTime_Millis(Encoder_T * p_encoder, uint32_t deltaT_Ticks)		{return deltaT_Ticks * 1000U / p_encoder->UnitT_Freq;}
 //static inline uint32_t Encoder_ConvertToTime_Seconds(Encoder_T * p_encoder, uint32_t deltaT_Ticks)	{return deltaT_Ticks / p_encoder->UnitT_Freq;}
-//static inline uint32_t Encoder_ConvertToFreq(Encoder_T * p_encoder, uint32_t deltaT_Ticks)			{return (deltaT_Ticks == 0U) ? 0U : p_encoder->UnitT_Freq / deltaT_Ticks;}
 //static inline uint32_t Encoder_ConvertToFreq_CPM(Encoder_T * p_encoder, uint32_t deltaT_Ticks)		{return (deltaT_Ticks == 0U) ? 0U : p_encoder->UnitT_Freq * 60U / deltaT_Ticks;}
 ////static inline uint32_t Encoder_ConvertFreqTo(Encoder_T * p_encoder, uint32_t deltaT_FreqHz)			{return (deltaT_FreqHz == 0U) ? 0U : p_encoder->UnitT_Freq / deltaT_FreqHz;}
 //
@@ -227,4 +226,32 @@ static inline uint32_t Encoder_GetLinearTotalDistance(Encoder_T * p_encoder) { r
 
 
 
+// if Ttimer unwritable
+// p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER) - (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U);
 
+// void Encoder_DeltaT_SetInitial_RPM(Encoder_T * p_encoder, uint16_t initialRpm)
+// {
+// 	//	p_encoder->DeltaT = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, initialRpm);
+// }
+
+
+/*
+	Extended timer counts equal to short timer overflow time
+	This should optimize to compile time const
+*/
+static inline uint32_t _Encoder_GetExtendedTimerThreshold(Encoder_T * p_encoder)
+{
+	// return ((uint32_t)CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->CONFIG.T_TIMER_FREQ;
+	return ((uint32_t)CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->UnitT_Freq;
+}
+
+static inline void Encoder_DeltaT_CaptureExtended(Encoder_T * p_encoder)
+{
+	uint32_t extendedTimerDelta = _Encoder_GetExtendedTimerDelta(p_encoder);
+	p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
+
+	if (extendedTimerDelta > _Encoder_GetExtendedTimerThreshold(p_encoder))
+	{
+		p_encoder->DeltaT = extendedTimerDelta * p_encoder->ExtendedTimerConversion;
+	}
+}

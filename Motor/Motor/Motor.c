@@ -81,12 +81,11 @@ void Motor_InitReboot(Motor_T * p_motor)
 #endif
 
 	/*
-		Ramp 0 to 32767 max in ~500ms
+		Ramp 0 to 32767 max in ~500ms, 3.2767 per control cycle
+		Final value is overwritten, slope is persistent
 	*/
-	Linear_Ramp_Init_Millis(&p_motor->Ramp, 500U, 20000U, 0U, 32767U); /* final value is overwritten, slope is persistent */
-	Motor_SetRamp(p_motor, 0U);
-	p_motor->RampCmd = 0U;
-	p_motor->RampIndex = 0U;
+	Linear_Ramp_Init_Millis(&p_motor->Ramp, 20000U, 500U, 0U, 32767U);
+	Motor_ResetRamp(p_motor);
 
 	Motor_ResetUnitsVabc(p_motor);
 	Motor_ResetUnitsIabc(p_motor);
@@ -94,7 +93,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Motor_ResetSpeedVMatchRatio(p_motor);
 	Motor_ResetSpeedLimits(p_motor);
 	Motor_ResetILimits(p_motor);
-	p_motor->ILimitActiveSentinel = 0xFFFF;
+	p_motor->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 
 	Linear_Frac16_Init_Map
 	(
@@ -107,24 +106,22 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	Motor_SetDirectionForward(p_motor);
 
-#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)
+#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		Linear_Ramp_Init_Millis(&p_motor->OpenLoopRamp, 2000U, 20000U, 0U, 300U);	//can start at 0 speed in foc mode for continuous angle displacements
+		/* todo frac16 */
+		Linear_Ramp_Init_Millis(&p_motor->OpenLoopRamp, 20000U, 5000U, 0U, p_motor->Parameters.OpenLoopSpeed_RPM);
+		/* Start at 0 speed in foc mode for continuous angle displacements */
 	}
 	else
 	{
 
 	}
+
 	p_motor->OpenLoopRampIndex = 0U;
 #endif
-
-	Motor_SetFeedbackModeFlags(p_motor, p_motor->Parameters.FeedbackMode); //set user control mode so pids set to initial state.
-
+	Motor_SetFeedbackModeFlags(p_motor, p_motor->Parameters.FeedbackMode); // set user control mode so pids set to initial state.
 	p_motor->ControlTimerBase = 0U;
-	// p_motor->UserDirection = p_motor->Direction;
-	// p_motor->SpeedLimitActiveId = MOTOR_SPEED_LIMIT_ACTIVE_DISABLE;
-	p_motor->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 }
 
 /******************************************************************************/
@@ -266,9 +263,9 @@ void Motor_ResetUnitsHall(Motor_T * p_motor)
 
 void Motor_ResetUnitsEncoder(Motor_T * p_motor)
 {
-	if(p_motor->Parameters.SpeedFeedbackRef_Rpm != p_motor->Encoder.Params.Frac16SpeedRef_Rpm)
+	if(p_motor->Parameters.SpeedFeedbackRef_Rpm != p_motor->Encoder.Params.ScalarSpeedRef_Rpm)
 	{
-		Encoder_SetFrac16SpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
+		Encoder_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 	}
 }
 

@@ -92,7 +92,7 @@ static inline void Motor_User_SetVoltageCmdValue(Motor_T * p_motor, int16_t volt
 	int32_t input = (voltage > 0) ? voltage : 0;
 	bool isMotoring = (p_motor->Direction == MOTOR_DIRECTION_CCW) ? (voltage - p_motor->RampCmd >= 0) : (voltage - p_motor->RampCmd <= 0);
 	_Motor_User_SetVoltageModeILimit(p_motor, isMotoring);
-	Motor_SetRamp(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, input));
+	Motor_SetRampTarget(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, input));
 }
 
 static inline void Motor_User_SetVoltageModeCmd(Motor_T * p_motor, int16_t voltage)
@@ -118,7 +118,7 @@ static inline void Motor_User_SetVFreqCmdValue(Motor_T * p_motor, uint32_t scala
 {
 	bool isMotoring = (scalar > 65535U);
 	_Motor_User_SetVoltageModeILimit(p_motor, isMotoring);
-	Motor_SetRamp(p_motor, scalar);
+	Motor_SetRampTarget(p_motor, scalar);
 }
 
 static inline void Motor_User_SetVFreqModeCmd(Motor_T * p_motor, uint32_t scalar)
@@ -143,7 +143,7 @@ static inline void Motor_User_SetTorqueMode(Motor_T * p_motor)
 static inline void Motor_User_SetTorqueCmdValue(Motor_T * p_motor, int16_t torque)
 {
 	int32_t input = (torque > 0) ? ((int32_t)torque * p_motor->ILimitMotoring_Frac16 / 65536) : ((int32_t)torque * p_motor->ILimitGenerating_Frac16 / 65536);
-	Motor_SetRamp(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, input));
+	Motor_SetRampTarget(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, input));
 }
 
 static inline void Motor_User_SetTorqueModeCmd(Motor_T * p_motor, int16_t torque)
@@ -172,7 +172,7 @@ static inline void Motor_User_SetSpeedMode(Motor_T * p_motor)
 */
 static inline void Motor_User_SetSpeedCmdValue(Motor_T * p_motor, int16_t speed)
 {
-	Motor_SetRamp(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, (int32_t)speed * p_motor->SpeedLimit_Frac16 / 65536));
+	Motor_SetRampTarget(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, (int32_t)speed * p_motor->SpeedLimit_Frac16 / 65536));
 }
 
 static inline void Motor_User_SetSpeedModeCmd(Motor_T * p_motor, int16_t speed)
@@ -395,6 +395,7 @@ static inline int32_t Motor_User_GetIPhase_Frac16(Motor_T * p_motor)
 }
 
 /*!
+	SpeedFeedback_Frac16 set as CCW us positive
 	@return speed forward as positive. reverse as negative.
 */
 static inline int32_t Motor_User_GetSpeed_Frac16(Motor_T * p_motor)
@@ -406,9 +407,6 @@ static inline int32_t Motor_User_GetSpeed_Frac16(Motor_T * p_motor)
 static inline int16_t Motor_User_GetIPhase_Amp(Motor_T * p_motor) { return _Motor_User_ConvertToIAmp(p_motor, Motor_User_GetIPhase_Frac16(p_motor)); }
 /*!	@return [-32767:32767] Rpm should not exceed int16_t */
 static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor) { return _Motor_User_ConvertToSpeedRpm(p_motor, Motor_User_GetSpeed_Frac16(p_motor)); }
-
-
-
 #endif
 
 /*
