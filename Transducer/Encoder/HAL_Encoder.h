@@ -38,8 +38,10 @@
 	#include STR(CONFIG_HAL_ENCODER_PATH/HAL_Encoder.h)
 #elif defined(CONFIG_HAL_ENCODER_PLATFORM)
 	#include STR(HAL/Platform/CONFIG_HAL_ENCODER_PLATFORM/HAL_Encoder.h)
+	#include STR(HAL/Platform/CONFIG_HAL_ENCODER_PLATFORM/HAL_Pin.h)
 #elif defined(CONFIG_HAL_PERIPHERAL_PATH) || defined(CONFIG_HAL_PERIPHERAL_PLATFORM)
 	#include HAL_PERIPHERAL_PATH(HAL_Encoder.h)
+	#include HAL_PERIPHERAL_PATH(HAL_Pin.h)
 #endif
 
 #endif

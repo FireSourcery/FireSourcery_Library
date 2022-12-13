@@ -39,7 +39,6 @@ void Blinky_Init(Blinky_T * p_blinky)
 {
 	Pin_Output_Init(&p_blinky->Pin);
 	Timer_Init(&p_blinky->Timer);
-	Blinky_Off(p_blinky);
 	p_blinky->PatternFunction = 0U;
 }
 
@@ -55,7 +54,7 @@ void Blinky_Proc(Blinky_T * p_blinky)
 	{
 		if(Timer_GetIsOneShot(&p_blinky->Timer) == true) /* Timer is in OneShot Mode */
 		{
-			if (p_blinky->Index < p_blinky->Max)
+			if (p_blinky->Index < p_blinky->Max) /* OneShot Pattern */
 			{
 				Pattern_PeriodicToggle(p_blinky);
 				Timer_Restart(&p_blinky->Timer);
@@ -76,11 +75,17 @@ void Blinky_Proc(Blinky_T * p_blinky)
 
 void Blinky_On(Blinky_T * p_blinky)			{p_blinky->IsOn = true;		Pin_Output_High(&p_blinky->Pin);}
 void Blinky_Off(Blinky_T * p_blinky)		{p_blinky->IsOn = false;	Pin_Output_Low(&p_blinky->Pin);}
-void Blinky_Toggle(Blinky_T * p_blinky) 	{(p_blinky->IsOn == true) ? Blinky_Off(p_blinky) : Blinky_On(p_blinky);}
 void Blinky_Disable(Blinky_T * p_blinky) 	{ Blinky_Off(p_blinky); Timer_Disable(&p_blinky->Timer); p_blinky->PatternFunction = Blinky_Disable;}
 void Blinky_Stop(Blinky_T * p_blinky) 		{ Blinky_Disable(p_blinky);}
 
-/* Always on first */
+void Blinky_Toggle(Blinky_T * p_blinky)
+{
+	// if(p_blinky->IsOn == true) 	{ Blinky_Off(p_blinky) }
+	// else 						{ Blinky_On(p_blinky); }
+	Pin_Output_Toggle(&p_blinky->Pin);
+}
+
+/* Start with On first */
 void Blinky_Blink_OnOff(Blinky_T * p_blinky, uint32_t duration)
 {
 	Blinky_On(p_blinky);

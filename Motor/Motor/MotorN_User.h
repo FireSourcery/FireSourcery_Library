@@ -42,6 +42,7 @@
 */
 /******************************************************************************/
 extern bool MotorN_User_CheckStop(Motor_T * p_motor, uint8_t motorCount);
+extern void MotorN_User_ReleaseControl(Motor_T * p_motor, uint8_t motorCount);
 extern void MotorN_User_DisableControl(Motor_T * p_motor, uint8_t motorCount);
 extern void MotorN_User_Ground(Motor_T * p_motor, uint8_t motorCount);
 extern bool MotorN_User_SetDirectionForward(Motor_T * p_motor, uint8_t motorCount);

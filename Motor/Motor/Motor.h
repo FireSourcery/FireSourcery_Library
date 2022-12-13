@@ -115,45 +115,35 @@ typedef union Motor_FeedbackModeFlags_Tag
 {
 	struct
 	{
-		uint32_t OpenLoop 		: 1U; 	/* 0 -> Position feedback, 1 -> Openloop*/
 		uint32_t Speed 			: 1U;	/* 0 -> Voltage or Current only, 1 -> Speed feedback */
 		uint32_t Current 		: 1U;	/* 0 -> Voltage, 1-> Current */
 		uint32_t VFreqScalar 	: 1U; 	/* 1-> Use VFreqScalar  */
-		uint32_t Update 		: 1U;	/* Control Mode Update, shared */
+		uint32_t OpenLoop 		: 1U; 	 /* 0 -> Position feedback, 1 -> Openloop */
+		uint32_t Update 		: 1U;	 /* Control Mode Update, shared */
 	};
 	uint32_t State;
 }
 Motor_FeedbackModeFlags_T;
 
-//move control mode update
-// typedef union Motor_ControlFlags_Tag
-// {
-// 	struct
-// 	{
-// 		Motor_FeedbackModeFlags_T FeedbackModeFlags;
-// 		uint32_t Active 			: 1U;
-// 		uint32_t FieldWeakening 	: 1U;
-// 	};
-// 	uint32_t State;
-// }
-// Motor_ControlStateFlags_T;
-
 /*
 	Effectively sync mailbox for async calculations
 */
-typedef union Motor_RunStateFlags_Tag
+typedef union Motor_ControlFlags_Tag
 {
 	struct
 	{
+		// Motor_FeedbackModeFlags_T FeedbackModeFlags;
+		uint32_t SensorFeedback				: 1U;
 		uint32_t HeatWarning 				: 1U;
 		uint32_t VoltageModeILimitActive 	: 1U;
+		uint32_t Active 					: 1U;
+		// uint32_t FieldWeakening 			: 1U;
 		// uint32_t SpeedLimitScalarActive 	: 1U;
 		// uint32_t ILimitScalarActive 		: 1U; /* Set approx 1/s */
-		// uint32_t FieldWeakening 			: 1U; //todo
 	};
 	uint32_t State;
 }
-Motor_RunStateFlags_T;
+Motor_ControlFlags_T;
 
 // typedef enum Motor_SpeedLimitActiveId_Tag
 // {
@@ -251,7 +241,7 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 	Motor_CommutationMode_T 	CommutationMode;
 	Motor_SensorMode_T 			SensorMode;
 	Motor_AlignMode_T 			AlignMode;
-	Motor_FeedbackMode_T 		FeedbackMode; 	/* User FeedbackMode, UserControlModeCmd, and ThrottleCmd */
+	Motor_FeedbackMode_T 		UserFeedbackMode; 	/* User FeedbackMode, UserControlModeCmd, and ThrottleCmd */
 	// Motor_FeedbackMode_T 		ThrottleMode; 	/* Motor layer per Motor Implementation */
 	// Motor_FeedbackMode_T 		BrakeMode; 		/* Motor layer per Motor Implementation */
 	Motor_DirectionCalibration_T DirectionCalibration;
@@ -289,7 +279,7 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	uint16_t OpenLoopSpeed_RPM;
-	uint16_t OpenLoopVPwm;
+	uint16_t OpenLoopVPwm; 	/* Frac16 */
 	// uint16_t OpenLoopVPwmMin;
 	// uint16_t OpenLoopVPwmMax;
 	// uint16_t OpenLoopSpeedStart;
@@ -346,7 +336,7 @@ typedef struct Motor_Tag
 	/* Run Substate */
 	Motor_Direction_T Direction; 				/* Active spin direction */
 	Motor_FeedbackModeFlags_T FeedbackModeFlags;
-	Motor_RunStateFlags_T RunStateFlags; 	/* Run Substate */
+	Motor_ControlFlags_T ControlFlags; 	/* Run Substate */
 	// Motor_TorqueDirection_T TorqueDirection;
 
 	/*
@@ -471,6 +461,43 @@ static inline void Motor_ClearPwmInterrupt(Motor_T * p_motor) 	{ Phase_ClearInte
 
 /******************************************************************************/
 /*
+	Simplify CommutationMode Check
+*/
+/******************************************************************************/
+typedef void(*Motor_CommutationModeFunction_T)(Motor_T * p_motor);
+
+static inline void Motor_ProcCommutationMode(Motor_T * p_motor, Motor_CommutationModeFunction_T focFunction, Motor_CommutationModeFunction_T sixStepFunction)
+{
+#if 	defined(CONFIG_MOTOR_SIX_STEP_ENABLE) && defined(CONFIG_MOTOR_FOC_ENABLE)
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) 				{ focFunction(p_motor); }
+	else /* p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */ 	{ sixStepFunction(p_motor); }
+#elif 	defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+	(void)focFunction;
+	sixStepFunction(p_motor);
+#else /* defined(CONFIG_MOTOR_FOC_ENABLE) */
+	(void)sixStepFunction;
+	focFunction(p_motor);
+#endif
+}
+
+typedef void(*Motor_CommutationModeFunction1_T)(Motor_T * p_motor, uint32_t var);
+
+static inline void Motor_ProcCommutationMode1(Motor_T * p_motor, Motor_CommutationModeFunction1_T focFunction, Motor_CommutationModeFunction1_T sixStepFunction, uint32_t var)
+{
+#if 	defined(CONFIG_MOTOR_SIX_STEP_ENABLE) && defined(CONFIG_MOTOR_FOC_ENABLE)
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) 				{ focFunction(p_motor, var); }
+	else /* p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */ 	{ sixStepFunction(p_motor, var); }
+#elif 	defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+	(void)focFunction;
+	sixStepFunction(p_motor, var);
+#else /* defined(CONFIG_MOTOR_FOC_ENABLE) */
+	(void)sixStepFunction;
+	focFunction(p_motor, var);
+#endif
+}
+
+/******************************************************************************/
+/*
 	Ramp
 */
 /******************************************************************************/
@@ -487,16 +514,14 @@ static inline void Motor_ProcRamp(Motor_T * p_motor) { Linear_Ramp_ProcCmdOutput
 static inline void Motor_SetRampTarget(Motor_T * p_motor, int32_t userCmd) { Linear_Ramp_SetTarget(&p_motor->Ramp, userCmd); }
 
 /*
-	Match ramp output
+	Match ramp output //	Linear_Ramp_SetIndex(&p_motor->Ramp, &p_motor->RampIndex, matchOutput);
 */
-//	Linear_Ramp_SetIndex(&p_motor->Ramp, &p_motor->RampIndex, matchOutput);
 static inline void Motor_SetRampOutput(Motor_T * p_motor, int32_t matchOutput) { Linear_Ramp_SetCmdOutput(&p_motor->Ramp, &p_motor->RampCmd, matchOutput); }
 
 /*
 	dynamically generated Ramp,
-	divide input over control period intervals, when using 1ms period
+	divide input over control period intervals, when using 1ms period only
 	acceleration proportional to change in userCmd
-	assuming 1ms update period
 */
 static inline void Motor_SetRampInterpolate(Motor_T * p_motor, int32_t userCmd) { Linear_Ramp_SetSlope_Millis(&p_motor->Ramp, 20000U, 1U, p_motor->RampCmd, userCmd); }
 
@@ -515,63 +540,34 @@ static inline void Motor_SetSpeedOutput(Motor_T * p_motor, int32_t speedControlM
 	p_motor->SpeedControl = speedControlMatch;
 }
 
+static inline bool Motor_CheckSpeed(Motor_T * p_motor)
+{
+	return (p_motor->SpeedFeedback_Frac16 < 65536);	/* Only check forward direction */
+}
+
 /******************************************************************************/
 /*
 	OpenLoop Common
 */
 /******************************************************************************/
-static bool Motor_CheckOpenLoop(Motor_T * p_motor)
+static inline bool Motor_CheckPositionFeedback(Motor_T * p_motor)
 {
-#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-	return (p_motor->FeedbackModeFlags.OpenLoop == false);
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	return (p_motor->ControlFlags.SensorFeedback == 1U);
 #else
-	return false;
+	(void)p_motor; return true;
 #endif
 }
 
-static void Motor_StartOpenLoop(Motor_T * p_motor)
+// static inline bool Motor_CheckOpenLoop(Motor_T * p_motor) { return !Motor_CheckPositionFeedback(p_motor); }
+
+static inline void Motor_StartOpenLoop(Motor_T * p_motor)
 {
-#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-	p_motor->FeedbackModeFlags.OpenLoop = true; //change different flag
+	p_motor->FeedbackModeFlags.OpenLoop = 1U; //change different flag
 	p_motor->OpenLoopRampIndex = 0U;
 	p_motor->OpenLoopSpeed_RPM = 0U;
 	p_motor->OpenLoopVPwm = p_motor->Parameters.OpenLoopVPwm;
-#else
-	(void)p_motor;
-#endif
-}
-
-/******************************************************************************/
-/*
-	Reset Sensors/Align
-*/
-/******************************************************************************/
-static inline void Motor_ZeroSensor(Motor_T * p_motor)
-{
-	switch(p_motor->Parameters.SensorMode)
-	{
-#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-		case MOTOR_SENSOR_MODE_OPEN_LOOP:
-			break;
-#endif
-		case MOTOR_SENSOR_MODE_SENSORLESS:
-			break;
-
-		case MOTOR_SENSOR_MODE_ENCODER:
-			Encoder_DeltaD_SetInitial(&p_motor->Encoder);
-			break;
-
-		case MOTOR_SENSOR_MODE_HALL:
-			Encoder_DeltaT_SetInitial(&p_motor->Encoder); /* Set first capture DeltaT = 0xffff */
-			Hall_ResetCapture(&p_motor->Hall);
-			break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-		case MOTOR_SENSOR_MODE_SIN_COS:
-
-#endif
-		default:
-			break;
-	}
+	Motor_SetRampTarget(p_motor, p_motor->Parameters.OpenLoopVPwm);
 }
 
 /******************************************************************************/
@@ -622,6 +618,11 @@ static inline void Motor_SetFeedbackModeFlags(Motor_T * p_motor, Motor_FeedbackM
 	p_motor->FeedbackModeFlags.State = Motor_ConvertFeedbackModeFlags(mode).State;
 }
 
+// static inline void Motor_SetControlFlags(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+// {
+// 	p_motor->FeedbackModeFlags.State = Motor_ConvertFeedbackModeFlags(mode).State;
+// 	p_motor->FeedbackModeFlags.OpenLoop |= Motor_ConvertFeedbackModeFlags(mode).OpenLoop;
+// }
 
 /******************************************************************************/
 /*
@@ -643,6 +644,23 @@ static inline void Motor_ResetILimits(Motor_T * p_motor)
 	p_motor->ILimitActiveSentinel = 0xFFFFU; /* Use for comparison on set */
 }
 
+// Motor_AlignMode_T GetAlignMode(Motor_T *p_motor)
+// {
+// 	Motor_AlignMode_T alignMode;
+
+// 	// if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
+// 	// {
+// 	// 	alignMode = MOTOR_ALIGN_MODE_DISABLE;
+// 	// }
+// 	// else
+// 	{
+// 		// alignMode = p_motor->Parameters.AlignMode;
+// 		alignMode = MOTOR_ALIGN_MODE_ALIGN;
+// 	}
+
+// 	return alignMode;
+// }
+
 /******************************************************************************/
 /*!
 	Extern
@@ -656,24 +674,29 @@ extern void Motor_InitVSourceRef_V(uint16_t vRefSupply);
 extern void Motor_Init(Motor_T * p_motor);
 extern void Motor_InitReboot(Motor_T * p_motor);
 
-extern void Motor_Jog12Step(Motor_T * p_motor, uint8_t step);
-extern void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step);
-extern void Motor_Jog6Step(Motor_T * p_motor, uint8_t step);
-extern void Motor_Jog6(Motor_T * p_motor);
-extern void Motor_Jog12(Motor_T * p_motor);
-
 extern void Motor_SetDirectionCcw(Motor_T * p_motor);
 extern void Motor_SetDirectionCw(Motor_T * p_motor);
 extern void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
 extern void Motor_SetDirectionForward(Motor_T * p_motor);
 extern void Motor_SetDirectionReverse(Motor_T * p_motor);
+extern void Motor_ZeroSensor(Motor_T * p_motor);
 
 extern void Motor_ResetSensorMode(Motor_T * p_motor);
 extern void Motor_ResetUnitsVabc(Motor_T * p_motor);
 extern void Motor_ResetUnitsIabc(Motor_T * p_motor);
 extern void Motor_ResetUnitsHall(Motor_T * p_motor);
 extern void Motor_ResetUnitsEncoder(Motor_T * p_motor);
-extern void Motor_ResetUnitsAngle(Motor_T * p_motor);
+extern void Motor_ResetUnitsSinCos(Motor_T * p_motor);
+extern void Motor_ResetUnitsAngleSpeed_Mech(Motor_T * p_motor);
+extern void Motor_ResetUnitsAngleSpeed_ElecControl(Motor_T * p_motor);
 extern void Motor_ResetSpeedVMatchRatio(Motor_T * p_motor);
+
+extern void Motor_Jog12Step(Motor_T * p_motor, uint8_t step);
+extern void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step);
+extern void Motor_Jog6Step(Motor_T * p_motor, uint8_t step);
+extern void Motor_Jog12(Motor_T * p_motor);
+extern void Motor_Jog6Phase(Motor_T * p_motor);
+extern void Motor_Jog6(Motor_T * p_motor);
+
 
 #endif

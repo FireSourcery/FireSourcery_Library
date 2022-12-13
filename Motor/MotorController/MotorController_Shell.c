@@ -142,7 +142,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			// Terminal_SendString(p_terminal, "ILimitActiveId: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveId); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "ILimitActive: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveSentinel); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ILimitMotoring_Frac16: "); Terminal_SendNum(p_terminal, p_motor->ILimitMotoring_Frac16); Terminal_SendString(p_terminal, "\r\n");
-			// Terminal_SendString(p_terminal, "VoltageModeILimitActive: "); Terminal_SendNum(p_terminal, p_motor->RunStateFlags.VoltageModeILimitActive); Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "VoltageModeILimitActive: "); Terminal_SendNum(p_terminal, p_motor->ControlFlags.VoltageModeILimitActive); Terminal_SendString(p_terminal, "\r\n");
 
 			Terminal_SendString(p_terminal, "SpeedPid Limit: "); Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutputMax); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ElecAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetElectricalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
@@ -242,12 +242,16 @@ static Cmd_Status_T Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 	char * p_end;
 	uint32_t value;
 
-	if(argc == 2U) /* run [num] */
+	if(argc == 1U) /* run*/
+	{
+		MotorController_User_SetCmdThrottle(p_mc, MotorController_User_GetPtrMotor(p_mc, 0U)->Parameters.AlignVoltage_Frac16);
+	}
+	else if(argc == 2U) /* run [num] */
 	{
 		value = strtoul(argv[1U], &p_end, 10);
 		MotorController_User_SetCmdThrottle(p_mc, value);
 	}
-	if(argc == 3U) /* run [throttle/brake] [num] */
+	else if(argc == 3U) /* run [throttle/brake] [num] */
 	{
 		value = strtoul(argv[2U], &p_end, 10);
 		if(strncmp(argv[1U], "throttle", 9U) == 0U) 	{ MotorController_User_SetCmdThrottle(p_mc, value); }
@@ -616,17 +620,22 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 				{
 
 					Terminal_SendString(p_terminal, "AngularD: ");
-					Terminal_SendNum(p_terminal, Encoder_GetAngularD(&p_motor->Encoder));
+					Terminal_SendNum(p_terminal, Encoder_GetCounterD(&p_motor->Encoder));
 					Terminal_SendString(p_terminal, "\r\n");
 					Terminal_SendString(p_terminal, "Hall: ");
 				}
 				Terminal_SendNum(p_terminal, Hall_ReadSensors(&p_motor->Hall).State); Terminal_SendString(p_terminal, " ");
 				break;
 
+			case MOTOR_SENSOR_MODE_OPEN_LOOP:
 			case MOTOR_SENSOR_MODE_ENCODER:
-				Terminal_SendNum(p_terminal, Encoder_GetAngularD(&p_motor->Encoder));
+				Terminal_SendNum(p_terminal, Encoder_GetCounterD(&p_motor->Encoder));
+				Terminal_SendString(p_terminal, ", ");
+				Terminal_SendNum(p_terminal, p_motor->Encoder.AngularD);
 				Terminal_SendString(p_terminal, ", ");
 				Terminal_SendNum(p_terminal, Encoder_GetAngle(&p_motor->Encoder));
+				Terminal_SendString(p_terminal, ", ");
+				Terminal_SendNum(p_terminal, p_motor->Encoder.ErrorCount);
 				Terminal_SendString(p_terminal, "\r\n");
 				break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
@@ -643,7 +652,7 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 				break;
 		}
 
-		Motor_Jog6(p_motor);
+		Motor_Jog6Phase(p_motor);
 		status = CMD_STATUS_SUCCESS;
 	}
 	else

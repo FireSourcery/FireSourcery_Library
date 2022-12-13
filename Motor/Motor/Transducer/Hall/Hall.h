@@ -211,12 +211,10 @@ static inline uint8_t InverseHall(uint8_t hall) { return (~hall & 0x07U); }
 
 static inline Hall_Sensors_T Hall_ReadSensors(const Hall_T * p_hall)
 {
-	Hall_Sensors_T sensors = {.State = 0U};
-
+	Hall_Sensors_T sensors;
 	sensors.A = Pin_Input_ReadPhysical(&p_hall->PinA);
 	sensors.B = Pin_Input_ReadPhysical(&p_hall->PinB);
 	sensors.C = Pin_Input_ReadPhysical(&p_hall->PinC);
-
 	return sensors;
 }
 

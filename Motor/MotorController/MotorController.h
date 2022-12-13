@@ -294,9 +294,9 @@ typedef struct MotorController_Tag
 	Blinky_T Buzzer;
 	MotorController_BuzzerFlags_T BuzzerFlagsActive; /* Active conditions requesting buzzer */
 
-	Debounce_T OptDin; 	/* Configurable input */
-	Pin_T Meter;
+	Blinky_T Meter;
 	Pin_T Relay;
+	Debounce_T OptDin; 	/* Configurable input */
 
 	Thermistor_T ThermistorPcb;
 	Thermistor_T ThermistorMosfetsTop;
@@ -389,16 +389,18 @@ static inline bool MotorController_ProcUserDirection(MotorController_T * p_mc, M
 
 static inline void MotorController_ProcUserCmdBrake(MotorController_T * p_mc, uint32_t userCmdBrake)
 {
+	p_mc->UserCmd = userCmdBrake;
 	if		(p_mc->Parameters.BrakeMode == MOTOR_CONTROLLER_BRAKE_MODE_TORQUE) 			{ MotorN_User_SetBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, userCmdBrake); }
 	else if	(p_mc->Parameters.BrakeMode == MOTOR_CONTROLLER_BRAKE_MODE_VFREQ_SCALAR) 	{ MotorN_User_SetRegenCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, userCmdBrake); }
 }
 
-static inline void MotorController_ProcUserCmdThrottle(MotorController_T * p_mc, uint32_t userCmdThrottle)		{ MotorN_User_SetThrottleCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, userCmdThrottle); }
+static inline void MotorController_ProcUserCmdThrottle(MotorController_T * p_mc, uint32_t userCmdThrottle)		{ p_mc->UserCmd = userCmdThrottle; MotorN_User_SetThrottleCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, userCmdThrottle); }
 // static inline void MotorController_ProcUserCmdVoltageBrake(MotorController_T * p_mc) 	{ MotorN_User_SetVoltageBrakeCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 
 static inline void MotorController_SetCoastMotorAll(MotorController_T * p_mc) 			{ MotorN_User_SetCoast(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 
 static inline void MotorController_DisableMotorAll(MotorController_T * p_mc) 			{ MotorN_User_DisableControl(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
+static inline void MotorController_ReleaseMotorAll(MotorController_T * p_mc) 			{ MotorN_User_ReleaseControl(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 static inline void MotorController_GroundMotorAll(MotorController_T * p_mc) 			{ MotorN_User_Ground(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 
 /* Checks 0 speed. alternatively check stop state. */

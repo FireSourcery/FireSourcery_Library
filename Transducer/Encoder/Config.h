@@ -65,9 +65,10 @@
 /* Emulated and Decoder Quadrature Capture */
 #if 	defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE) /* Emulated and Decoder */
 #elif 	defined(CONFIG_ENCODER_QUADRATURE_MODE_DECODER_ONLY)
-#elif 	defined(CONFIG_ENCODER_QUADRATURE_MODE_DISABLED)
+#elif 	defined(CONFIG_ENCODER_QUADRATURE_MODE_DISABLE)
 #else
-	#define CONFIG_ENCODER_QUADRATURE_MODE_DISABLED
+	// #define CONFIG_ENCODER_QUADRATURE_MODE_DISABLE
+	#define CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
 #endif
 
 /* Adjust timer freq at runtime */

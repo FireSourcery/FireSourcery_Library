@@ -62,25 +62,25 @@
 */
 
 /*!
-	CONFIG_ENCODER_HW_EMULATED set AngularD in ISR
+	CONFIG_ENCODER_HW_EMULATED set CounterD in ISR
 */
-// static inline uint32_t _Encoder_DeltaD_GetAngularD(Encoder_T * p_encoder)
+// static inline uint32_t _Encoder_DeltaD_GetCounterD(Encoder_T * p_encoder)
 // {
 // #if 	defined(CONFIG_ENCODER_HW_DECODER)
 // 	return HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
 // #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
-// 	return p_encoder->AngularD;
+// 	return p_encoder->CounterD;
 // #endif
 // }
 
 /* for common interface via angularD */
-// static inline uint32_t Encoder_DeltaD_CaptureAngularD(Encoder_T * p_encoder)
+// static inline uint32_t Encoder_DeltaD_CaptureCounterD(Encoder_T * p_encoder)
 // {
 // #if 	defined(CONFIG_ENCODER_HW_DECODER)
-// 	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+// 	p_encoder->CounterD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
 // #elif 	defined(CONFIG_ENCODER_HW_EMULATED) /* Capture in ISR */
 // #endif
-// 	return p_encoder->AngularD;
+// 	return p_encoder->CounterD;
 // }
 
 /******************************************************************************/
@@ -88,11 +88,14 @@
 	@brief 	Capture DeltaD, per fixed changed in time, D_SPEED_FREQ
 */
 /******************************************************************************/
+/* For speed functions */
 static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 {
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
 	/* For Common interface functions */
-	p_encoder->AngularD = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+	p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
+	p_encoder->Angle32 = p_encoder->CounterD * p_encoder->UnitAngularD;
+
 	/* Emulated Capture in ISR */
 #endif
 
@@ -102,7 +105,7 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 	// }
 	// else
 	{
-		p_encoder->DeltaD = _Encoder_CaptureDelta(p_encoder, p_encoder->Params.CountsPerRevolution - 1U, p_encoder->AngularD);
+		p_encoder->DeltaD = _Encoder_CaptureDelta(p_encoder, p_encoder->Params.CountsPerRevolution - 1U, p_encoder->CounterD);
 	}
 	// integral/average functions
 	// p_encoder->TotalD += p_encoder->DeltaD;
@@ -111,7 +114,7 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 
 #if defined(CONFIG_ENCODER_HW_DECODER) && defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 // // HW Quadrature if counter ticks downs
-// static inline void _Encoder_DeltaD_CaptureQuadrature(Encoder_T * p_encoder)
+// static inline void _Encoder_DeltaD_Capture_Quadrature(Encoder_T * p_encoder)
 // {
 // 	uint32_t counterValue = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
 // 	bool isIncrement;
@@ -153,7 +156,7 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 // 	}
 
 // 	p_encoder->TimerCounterSaved = counterValue;
-// 	p_encoder->AngularD = counterValue;
+// 	p_encoder->CounterD = counterValue;
 // 	p_encoder->TotalT += 1U;
 
 	//static inline void Encoder_DeltaD_ReadQuadratureDirection(Encoder_T * p_encoder)
@@ -198,7 +201,7 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 /******************************************************************************/
 // static inline uint32_t Encoder_DeltaD_GetAngle(Encoder_T * p_encoder)
 // {
-// 	return Encoder_ConvertCounterDToAngle(p_encoder, _Encoder_DeltaD_GetAngularD(p_encoder));
+// 	return Encoder_ConvertCounterDToAngle(p_encoder, _Encoder_DeltaD_GetCounterD(p_encoder));
 // }
 
 static inline uint32_t Encoder_DeltaD_GetDelta(Encoder_T * p_encoder) 			{ return p_encoder->DeltaD; }
@@ -253,11 +256,11 @@ static inline uint32_t Encoder_DeltaD_GetRotationalSpeed_RPM(Encoder_T * p_encod
 
 /*
 	Speed to DeltaD conversion
-	1 Division for inverse conversion. Alternatively, (rpm * CountsPerRevolution) / (UnitT_Freq * 60U)
+	1 Division for inverse conversion. Alternatively,
+	(rpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / (p_encoder->UnitAngularSpeed * 60U)
 */
 static inline uint32_t Encoder_DeltaD_ConvertFromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
 {
-	// return (rpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / (p_encoder->UnitAngularSpeed * 60U);
 	return (rpm * p_encoder->Params.CountsPerRevolution) / (p_encoder->UnitT_Freq * 60U);
 }
 

@@ -58,20 +58,19 @@ bool MotorN_User_CheckStop(Motor_T * p_motor, uint8_t motorCount)
 	return isStop;
 }
 
+void MotorN_User_ReleaseControl(Motor_T * p_motor, uint8_t motorCount)
+{
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_ReleaseControl(&p_motor[iMotor]); }
+}
+
 void MotorN_User_DisableControl(Motor_T * p_motor, uint8_t motorCount)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		Motor_User_DisableControl(&p_motor[iMotor]);
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_DisableControl(&p_motor[iMotor]); }
 }
 
 void MotorN_User_Ground(Motor_T * p_motor, uint8_t motorCount)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		Motor_User_Ground(&p_motor[iMotor]);
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_Ground(&p_motor[iMotor]); }
 }
 
 bool MotorN_User_SetDirectionForward(Motor_T * p_motor, uint8_t motorCount)
@@ -85,10 +84,7 @@ bool MotorN_User_SetDirectionReverse(Motor_T * p_motor, uint8_t motorCount)
 {
 	bool isSet = true;
 
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		if(Motor_User_SetDirectionReverse(&p_motor[iMotor]) == false) { isSet = false; }
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(Motor_User_SetDirectionReverse(&p_motor[iMotor]) == false) { isSet = false; } }
 
 	return isSet;
 }
@@ -97,10 +93,7 @@ bool MotorN_User_CheckFault(Motor_T * p_motor, uint8_t motorCount)
 {
 	bool isFault = false;
 
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		if(Motor_User_CheckFault(&p_motor[iMotor]) == true) { isFault = true; }
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(Motor_User_CheckFault(&p_motor[iMotor]) == true) { isFault = true; } }
 
 	return isFault;
 }
@@ -109,76 +102,49 @@ bool MotorN_User_ClearFault(Motor_T * p_motor, uint8_t motorCount)
 {
 	bool isClear = true;
 
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		if(Motor_User_ClearFault(&p_motor[iMotor]) == false) { isClear = false; }
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(Motor_User_ClearFault(&p_motor[iMotor]) == false) { isClear = false; } }
 
 	return isClear;
 }
 
 void MotorN_User_SetUserFeedbackModeCmd(Motor_T * p_motor, uint8_t motorCount, int32_t cmd)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		Motor_User_SetUserFeedbackModeCmd(&p_motor[iMotor], cmd);
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetUserFeedbackModeCmd(&p_motor[iMotor], cmd); }
 }
 
 void MotorN_User_SetThrottleCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		Motor_User_SetThrottleCmd(&p_motor[iMotor], throttle);
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetThrottleCmd(&p_motor[iMotor], throttle); }
 }
 
 void MotorN_User_SetBrakeCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t brake)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		Motor_User_SetBrakeCmd(&p_motor[iMotor], brake);
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetBrakeCmd(&p_motor[iMotor], brake); }
 }
 
 void MotorN_User_SetCoast(Motor_T * p_motor, uint8_t motorCount)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		Motor_User_SetCoast(&p_motor[iMotor]);
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetCoast(&p_motor[iMotor]); }
 }
 
 // void MotorN_User_SetVoltageBrakeCmd(Motor_T * p_motor, uint8_t motorCount)
 // {
-// 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-// 	{
-// 		Motor_User_SetVoltageBrakeCmd(&p_motor[iMotor]);
-// 	}
+// for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetVoltageBrakeCmd(&p_motor[iMotor]); }
 // }
 
 void MotorN_User_SetRegenCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t brake)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		Motor_User_SetRegenCmd(&p_motor[iMotor], brake);
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetRegenCmd(&p_motor[iMotor], brake); }
 }
 
 void MotorN_User_SetSpeedLimitActive(Motor_T * p_motor, uint8_t motorCount, uint16_t limit_frac16)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		Motor_User_SetSpeedLimitActive(&p_motor[iMotor], limit_frac16);
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetSpeedLimitActive(&p_motor[iMotor], limit_frac16); }
 }
 
 void MotorN_User_ClearSpeedLimit(Motor_T * p_motor, uint8_t motorCount)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		Motor_User_ClearSpeedLimitActive(&p_motor[iMotor]);
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_ClearSpeedLimitActive(&p_motor[iMotor]); }
 }
 
 /*! @return true if at least one is set */

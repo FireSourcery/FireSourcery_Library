@@ -134,7 +134,9 @@ static inline void MotorController_User_ProcCalibration_Blocking(MotorController
 	Direct Inputs
 */
 /******************************************************************************/
-static inline void MotorController_User_DisableControl(MotorController_T * p_mc) { MotorController_DisableMotorAll(p_mc); }
+/* Not StateMachine Checked, Use with caution */
+static inline void MotorController_User_DisableControl(MotorController_T * p_mc) 	{ MotorController_DisableMotorAll(p_mc); }
+static inline void MotorController_User_ReleaseControl(MotorController_T * p_mc) 	{ MotorController_ReleaseMotorAll(p_mc); }
 static inline void MotorController_User_BeepN(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime, uint8_t n) { Blinky_BlinkN(&p_mc->Buzzer, onTime, offTime, n); }
 static inline void MotorController_User_BeepStart(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime) { Blinky_StartPeriodic(&p_mc->Buzzer, onTime, offTime); }
 static inline void MotorController_User_BeepStop(MotorController_T * p_mc) { Blinky_Stop(&p_mc->Buzzer); }

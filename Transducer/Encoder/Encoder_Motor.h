@@ -125,12 +125,17 @@ static inline uint32_t Encoder_Motor_GetMechanicalTheta(Encoder_T * p_encoder)
 /*!
 	Electrical Theta Angle, position Angle [Degree16s]
 	implied modulus uint16
-	Overflow caution:  AngularD * MotorPolePairs > 65535
+	Overflow caution:  CounterD * MotorPolePairs > 65535
 */
 static inline uint32_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
 {
-	return Encoder_ConvertCounterDToAngle(p_encoder, (uint32_t)p_encoder->AngularD * (uint32_t)p_encoder->Params.MotorPolePairs);
-	// return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->AngularD) * p_encoder->Params.MotorPolePairs;
+	// return Encoder_ConvertCounterDToAngle(p_encoder, (uint32_t)p_encoder->CounterD * (uint32_t)p_encoder->Params.MotorPolePairs);
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
+	// update angle p_encoder->Angle32
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+	return ((p_encoder->Angle32 >> 6U) * p_encoder->Params.MotorPolePairs) >> 10U; /* MotorPolePairs less than 64 */
+#endif
+
 }
 
 /******************************************************************************/

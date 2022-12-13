@@ -49,7 +49,8 @@ void Motor_FOC_ResetSpeedPidILimits(Motor_T * p_motor)
 {
 	if((p_motor->FeedbackModeFlags.Speed == 1U) && (p_motor->FeedbackModeFlags.Current == 1U)) /* Speed PID Output is Iq */
 	{
-		(p_motor->Direction == MOTOR_DIRECTION_CCW) ? ResetSpeedPidILimitsCcw(p_motor) : ResetSpeedPidILimitsCw(p_motor);
+		if(p_motor->Direction == MOTOR_DIRECTION_CCW) 	{ ResetSpeedPidILimitsCcw(p_motor); }
+		else 											{ ResetSpeedPidILimitsCw(p_motor); };
 	}
 }
 
@@ -81,6 +82,7 @@ void Motor_FOC_SetDirectionCw(Motor_T * p_motor)
 		if(p_motor->FeedbackModeFlags.Current == 1U) 	{ ResetSpeedPidILimitsCw(p_motor); }						/* Speed PID Output is Iq */
 		else 											{ PID_SetOutputLimits(&p_motor->PidSpeed, INT16_MIN, 0); } 	/* Speed PID Output is Vq */
 	}
+
 	PID_SetOutputLimits(&p_motor->PidIq, INT16_MIN, 0);
 	PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
 }

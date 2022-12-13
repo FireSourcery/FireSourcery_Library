@@ -107,11 +107,11 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 
 	AnalogN_Group_PauseQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_HEAT);
 	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_PCB);
-	if(Thermistor_GetIsMonitorEnable(&p_mc->ThermistorMosfetsTop))
+	if(Thermistor_GetIsMonitorEnable(&p_mc->ThermistorMosfetsTop) == true)
 	{
 		AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_MOSFETS_TOP);
 	}
-	if(Thermistor_GetIsMonitorEnable(&p_mc->ThermistorMosfetsBot))
+	if(Thermistor_GetIsMonitorEnable(&p_mc->ThermistorMosfetsBot) == true)
 	{
 		AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_MOSFETS_BOT);
 	}
@@ -235,6 +235,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		Shell_Proc(&p_mc->Shell);
 #endif
 		Blinky_Proc(&p_mc->Buzzer);
+		Blinky_Proc(&p_mc->Meter);
 	}
 
 	/* Low Freq, Low Priority, 1s */
@@ -258,10 +259,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 {
 //	BrakeThread(p_mc);
-#if defined(CONFIG_MOTOR_V_SENSORS_ADC) /* && !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) */
+#if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
 	VMonitor_Status_T statusVPos = VMonitor_PollStatus(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu);
-
-	AnalogN_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VSOURCE);
 
 	switch(statusVPos)
 	{
@@ -271,20 +270,22 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 		case VMONITOR_WARNING_LOWER:
 			if(p_mc->WarningFlags.LowV == false)
 			{
+				p_mc->WarningFlags.LowV = true;
 				MotorController_SetILimitMotorAll(p_mc, p_mc->Parameters.ILimitLowV_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
 				Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U);
-				p_mc->WarningFlags.LowV = true;
 			}
 			break;
 		case VMONITOR_STATUS_OK:
 			if(p_mc->WarningFlags.LowV == true)
 			{
-				MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
 				p_mc->WarningFlags.LowV = false;
+				MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
 			}
 			break;
 		default: break;
 	}
+
+	AnalogN_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VSOURCE);
 #endif
 
 	if(Timer_Periodic_Poll(&p_mc->TimerIsrDividerSeconds) == true)
@@ -293,6 +294,10 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 		_MotorController_ProcHeatMonitor(p_mc);
 		for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 	}
+
+#if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	Blinky_Toggle(&p_mc->Meter);
+#endif
 }
 
 /*

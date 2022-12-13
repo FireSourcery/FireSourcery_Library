@@ -59,10 +59,12 @@ void SinCos_SetParamsAdc_mV(SinCos_T * p_sincos, uint16_t adcVref_mV, uint16_t m
 	SinCos_SetParamsAdc(p_sincos, (uint32_t)(max_mV + min_mV) * ADC_MAX / 2U / adcVref_mV, (uint32_t)max_mV * ADC_MAX / adcVref_mV, max_mV);
 }
 
-void SinCos_SetERotationsPerCycle(SinCos_T * p_sincos, uint16_t polePairs, uint16_t cyclesPerMRotation)
+void SinCos_SetAngleRatio(SinCos_T * p_sincos, uint16_t polePairs)
 {
-	p_sincos->Params.ElectricalRotationsPerCycle = polePairs / cyclesPerMRotation;
+	p_sincos->Params.ElectricalRotationsRatio = polePairs;
 }
+
+// void SinCos_SetAngleRatio_(SinCos_T * p_sincos, uint16_t polePairs, uint16_t cyclesPerMRotation)
 
 void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {

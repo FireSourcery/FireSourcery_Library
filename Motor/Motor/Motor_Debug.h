@@ -39,7 +39,7 @@
 static inline void Motor_CaptureRefTime(Motor_T * p_motor)
 {
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
-	p_motor->MicrosRef = SysTime_GetMicros();
+	// p_motor->MicrosRef = SysTime_GetMicros();
 #else
 	(void)p_motor; (void)index;
 #endif
@@ -48,7 +48,7 @@ static inline void Motor_CaptureRefTime(Motor_T * p_motor)
 static inline void Motor_Debug_CaptureTime(Motor_T * p_motor, uint8_t index)
 {
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
-	p_motor->DebugTime[index] = SysTime_GetMicros() - p_motor->MicrosRef;
+	// p_motor->DebugTime[index] = SysTime_GetMicros() - p_motor->MicrosRef;
 #else
 	(void)p_motor; (void)index;
 #endif

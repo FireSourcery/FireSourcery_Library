@@ -70,21 +70,6 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 }
 
 /* Optionally use Hall ISR */
-static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_motor)
-{
-	switch(p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_ENCODER: Encoder_OnIndex_ISR(&p_motor->Encoder); break;
-#if defined(CONFIG_MOTOR_HALL_MODE_ISR)
-		case MOTOR_SENSOR_MODE_HALL:
-			Encoder_Motor_OnPhaseC_ISR(&p_motor->Encoder);
-			Motor_FOC_CaptureHall_ISR(p_motor);
-			break;
-#endif
-		default: break;
-	}
-}
-
 static inline void Motor_HallEncoderA_ISR(Motor_T * p_motor)
 {
 	Encoder_OnPhaseA_ISR(&p_motor->Encoder);
@@ -109,6 +94,20 @@ static inline void Motor_HallEncoderAB_ISR(Motor_T * p_motor)
 #endif
 }
 
+static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_motor)
+{
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_ENCODER: Encoder_OnIndex_ISR(&p_motor->Encoder); break;
+#if defined(CONFIG_MOTOR_HALL_MODE_ISR)
+		case MOTOR_SENSOR_MODE_HALL:
+			Encoder_Motor_OnPhaseC_ISR(&p_motor->Encoder);
+			Motor_FOC_CaptureHall_ISR(p_motor);
+			break;
+#endif
+		default: break;
+	}
+}
 #endif
 
 

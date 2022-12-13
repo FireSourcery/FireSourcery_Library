@@ -36,7 +36,7 @@
 /*
 	e.g. CaptureDeltaT, Fixed DeltaD:
 	UnitT_Freq = 312500							=> Period = 3.2 uS
-	CounterMax = 0xFFFF							=> Overflow 209,712 us, 209 ms
+	TimerMax = 0xFFFF							=> Overflow 209,712 us, 209 ms
 	DeltaDUnits(CountsPerRevolution) = 1/8 (8) 	=> AngleRes 0.125 (of 1), 8,169.5 Angle16
 
 	DeltaT = 0xFFFF => Speed = 312500*(1/8)/0xFFFF	= 0.5976 rps, 35.76 RPM
@@ -50,8 +50,8 @@
 
 	e.g. 2:
 	UnitT_Freq = 2,000,000						=> Period = .5 uS
-	CounterMax = 0xFFFF								=> Overflow 32677.5us, 32.6775 ms
-	CounterMax = 0xFFFFFFFF							=> Overflow 35.7913941 minutes
+	TimerMax = 0xFFFF								=> Overflow 32677.5us, 32.6775 ms
+	TimerMax = 0xFFFFFFFF							=> Overflow 35.7913941 minutes
 	DeltaDUnits(CountsPerRevolution) = 1/2048(2048) 	=> AngleRes 0.000488 (of 1), 32 Angle16
 
 	DeltaT = 0xFFFF => Speed = 2,000,000*(1/2048)/0xFFFF	= 0.01490 rps, 0.89408331426 RPM
@@ -70,9 +70,9 @@
 	20000Hz/(10000RPM/60) => 120 PPR. Less than 120 PPR, use Fixed DeltaD
 */
 
-static inline void Encoder_DeltaT_CaptureAngularD(Encoder_T * p_encoder)
+static inline void Encoder_DeltaT_CaptureCounterD(Encoder_T * p_encoder)
 {
- 	_Encoder_CaptureAngularD(p_encoder);
+ 	_Encoder_CaptureCounterD(p_encoder);
 }
 
 /******************************************************************************/
@@ -84,61 +84,42 @@ static inline void Encoder_DeltaT_CaptureAngularD(Encoder_T * p_encoder)
 static inline void _Encoder_DeltaT_CaptureDelta(Encoder_T * p_encoder)
 {
 // #if defined(CONFIG_ENCODER_HW_OVERFLOW_DETECT)
-	if(HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == false)
+	if(HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == false)
 	{
-		p_encoder->DeltaT = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
-		HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
+		p_encoder->DeltaT = HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
+		HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
 	}
 #if defined(CONFIG_ENCODER_EXTENDED_TIMER_DISABLE)
 	else
 	{
-		HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
+		HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
 		p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX;
 	}
 #endif
 // #else
-// 	p_encoder->DeltaT = _Encoder_CaptureDelta(p_encoder, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX, HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER));
+// 	p_encoder->DeltaT = _Encoder_CaptureDelta(p_encoder, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX, HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER));
 // #endif
 }
 
 /*!
 	Capture Angle and Speed(DeltaT)
-	Captures AngularD and DeltaT each pulse - ideal for low freq < POLLING_FREQ, use interpolation
+	Captures CounterD and DeltaT each pulse - ideal for low freq < POLLING_FREQ, use interpolation
 	Interval cannot be greater than 0xFFFF [ticks] => (0xFFFF / TimerFreq) [seconds]
  		e.g. Call each hall cycle / electric rotation inside hall edge interrupt
 */
 static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 {
- 	_Encoder_CaptureAngularD(p_encoder);
+ 	// _Encoder_CaptureCounterD(p_encoder);
 	_Encoder_DeltaT_CaptureDelta(p_encoder);
 	// p_encoder->TotalD += 1U; /* Capture integral */
 	// p_encoder->TotalT += p_encoder->DeltaT;
 }
 
 
-#if defined(CONFIG_ENCODER_HW_EMULATED) && defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-/*
-	SW Quadrature - UNTESTED
-	only when capturing a single phase of 2 phase quadrature mode, 180 degree offset. (not for 3 phase 120 degree offset)
-*/
+#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 static inline void Encoder_DeltaT_CaptureQuadrature(Encoder_T * p_encoder)
 {
-	bool phaseB = Pin_Input_Read(&p_encoder->PinB);
 
-	_Encoder_DeltaT_CaptureDelta(p_encoder);
-
-	if (phaseB ^ p_encoder->Params.IsALeadBPositive) //check
-	{
-		_Encoder_CaptureAngularD(p_encoder);
-		p_encoder->DeltaD = 1; //or set quadrature read direction
-		if(p_encoder->TotalD < INT32_MAX) {p_encoder->TotalD += 1U;}
-	}
-	else
-	{
-		p_encoder->AngularD = (p_encoder->AngularD > 0U) ? p_encoder->AngularD - 1U : p_encoder->Params.CountsPerRevolution - 1U;
-		p_encoder->DeltaD = -1; //or set quadrature read direction
-		if(p_encoder->TotalD > INT32_MIN) {p_encoder->TotalD -= 1;}
-	}
 }
 #endif
 
@@ -186,7 +167,7 @@ static inline bool Encoder_DeltaT_PollPhaseAEdgeDual(Encoder_T * p_encoder)
 /*!
 	@brief 	Extend base timer, 16bit timer cases to 32bit.
 
-	ExtTimerFreq = 1000Hz, TimerCounterMax = 0xFFFF
+	ExtTimerFreq = 1000Hz, TimerMax = 0xFFFF
 		209ms to 13743S for TimerFreq = 312500Hz, 3.2us intervals
 		104ms to 6871S for TimerFreq = 625000Hz
 		1.6ms to 107S for TimerFreq = 40Mhz
@@ -215,11 +196,11 @@ static inline uint32_t _Encoder_GetExtendedTimerDelta(Encoder_T * p_encoder)
 static inline void Encoder_DeltaT_CaptureExtended(Encoder_T * p_encoder)
 {
 	/* check time exceed short timer max value */
-	if(HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
+	if(HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == true)
 	{
 		p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->ExtendedTimerConversion;
-		HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
-		HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
+		HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
+		HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
 	}
 	p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
 }
@@ -279,6 +260,12 @@ static inline uint32_t Encoder_DeltaT_InterpolateAngleIncIndex(Encoder_T * p_enc
 	(*p_pollingIndex)++;
 	return angle;
 }
+
+// static inline uint32_t Encoder_DeltaT_InterpolateAngle_Saturated(Encoder_T * p_encoder, uint32_t pollingIndex)
+// {
+// 	return pollingIndex * p_encoder->UnitInterpolateAngle / p_encoder->DeltaT;
+// }
+
 
 /*
 	Samples per DeltaT Capture, index max

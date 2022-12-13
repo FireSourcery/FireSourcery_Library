@@ -46,9 +46,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	if(p_mc->CONFIG.P_MEM_MAP_BOOT != 0U) 	{ p_mc->MemMapBoot.Register = p_mc->CONFIG.P_MEM_MAP_BOOT->Register; }
 
 	AnalogN_Init(p_mc->CONFIG.P_ANALOG_N);
-
 	for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_Init(&p_mc->CONFIG.P_SERIALS[iSerial]); }
-
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
 	// if(p_mc->Parameters.IsCanEnable == true) { CanBus_Init(p_mc->CONFIG.P_CAN_BUS, p_mc->Parameters.CanServicesId); }
 #endif
@@ -70,14 +68,14 @@ void MotorController_Init(MotorController_T * p_mc)
 	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Init(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 
 	Blinky_Init(&p_mc->Buzzer);
+	Blinky_Init(&p_mc->Meter);
 	Pin_Output_Init(&p_mc->Relay);
-	Pin_Output_Init(&p_mc->Meter);
 	Debounce_Init(&p_mc->OptDin, 5U);
 
-	Timer_InitPeriodic(&p_mc->TimerSeconds, 			1000U);
-	Timer_InitPeriodic(&p_mc->TimerMillis, 				1U);
-	Timer_InitPeriodic(&p_mc->TimerMillis10, 			10U);
-	Timer_InitPeriodic(&p_mc->TimerIsrDividerSeconds, 	1000U);
+	Timer_Periodic_Init(&p_mc->TimerSeconds, 			1000U);
+	Timer_Periodic_Init(&p_mc->TimerMillis, 			1U);
+	Timer_Periodic_Init(&p_mc->TimerMillis10, 			10U);
+	Timer_Periodic_Init(&p_mc->TimerIsrDividerSeconds, 	1000U);
 	// Timer_Init(&p_mc->TimerState);
 
 	for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++) { Protocol_Init(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]); }
@@ -89,6 +87,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_Adcu, p_mc->Parameters.BatteryFull_Adcu, 1000U);
 
 	/*
+		MOSFETs Heat ILimit
 		Shutdown_Adcu [~2176], => ILimitHeat_Frac16
 		Warning_Adcu [~2800],  => 65535
 		slope = 860,343
@@ -102,28 +101,26 @@ void MotorController_Init(MotorController_T * p_mc)
 	);
 
 	p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
-	// p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
 	// p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
-	// p_mc->UserDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	// p_mc->SpeedLimitActiveId = MOTOR_SPEED_LIMIT_ACTIVE_DISABLE;
 	// p_mc->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 
 	/* Set none fault sample value, or wait in Init State  */
-	p_mc->ThermistorPcb.Adcu = p_mc->ThermistorPcb.Params.WarningThreshold_Adcu + 1U;
-	p_mc->ThermistorMosfetsTop.Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
-	p_mc->ThermistorMosfetsBot.Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
+	// p_mc->ThermistorPcb.Adcu = p_mc->ThermistorPcb.Params.WarningThreshold_Adcu + 1U;
+	// p_mc->ThermistorMosfetsTop.Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
+	// p_mc->ThermistorMosfetsBot.Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
 
-	p_mc->AnalogResults.VSource_Adcu = p_mc->VMonitorSource.Params.WarningLower_Adcu + 1U;
-	p_mc->AnalogResults.VAcc_Adcu = p_mc->VMonitorAcc.Params.WarningLower_Adcu + 1U;
-	p_mc->AnalogResults.VSense_Adcu = p_mc->VMonitorSense.Params.WarningLower_Adcu + 1U;
+	// p_mc->AnalogResults.VSource_Adcu = p_mc->VMonitorSource.Params.WarningLower_Adcu + 1U;
+	// p_mc->AnalogResults.VAcc_Adcu = p_mc->VMonitorAcc.Params.WarningLower_Adcu + 1U;
+	// p_mc->AnalogResults.VSense_Adcu = p_mc->VMonitorSense.Params.WarningLower_Adcu + 1U;
 
-	p_mc->AnalogResults.HeatPcb_Adcu = p_mc->ThermistorPcb.Params.WarningThreshold_Adcu + 1U;
-	p_mc->AnalogResults.HeatMosfetsTop_Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
-	p_mc->AnalogResults.HeatMosfetsBot_Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
+	// p_mc->AnalogResults.HeatPcb_Adcu = p_mc->ThermistorPcb.Params.WarningThreshold_Adcu + 1U;
+	// p_mc->AnalogResults.HeatMosfetsTop_Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
+	// p_mc->AnalogResults.HeatMosfetsBot_Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
 
-	p_mc->AnalogResults.VSource_Adcu = p_mc->VMonitorSource.Params.WarningLower_Adcu + 1U;
-	p_mc->AnalogResults.VAcc_Adcu = p_mc->VMonitorAcc.Params.WarningLower_Adcu + 1U;
-	p_mc->AnalogResults.VSense_Adcu = p_mc->VMonitorSense.Params.WarningLower_Adcu + 1U;
+	// p_mc->AnalogResults.VSource_Adcu = p_mc->VMonitorSource.Params.WarningLower_Adcu + 1U;
+	// p_mc->AnalogResults.VAcc_Adcu = p_mc->VMonitorAcc.Params.WarningLower_Adcu + 1U;
+	// p_mc->AnalogResults.VSense_Adcu = p_mc->VMonitorSense.Params.WarningLower_Adcu + 1U;
 
 	StateMachine_Init(&p_mc->StateMachine);
 }

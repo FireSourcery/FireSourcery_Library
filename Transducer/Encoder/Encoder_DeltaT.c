@@ -53,7 +53,7 @@ void _Encoder_ResetTimerFreq(Encoder_T * p_encoder)
 			=> 10000RPM error ~1%
 			=> RPM Min ~= 10RPM
 	*/
-	p_encoder->UnitT_Freq = HAL_Encoder_ConfigTimerCounterFreq(p_encoder->CONFIG.P_HAL_ENCODER, p_encoder->Params.CountsPerRevolution * 16666U);
+	p_encoder->UnitT_Freq = HAL_Encoder_ConfigTimerFreq(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, p_encoder->Params.CountsPerRevolution * 16666U);
 
 	p_encoder->ExtendedTimerConversion = p_encoder->UnitT_Freq / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
 
@@ -66,18 +66,15 @@ void _Encoder_ResetTimerFreq(Encoder_T * p_encoder)
 */
 void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 {
-	HAL_Encoder_InitTimer(p_encoder->CONFIG.P_HAL_ENCODER);
+	HAL_Encoder_InitTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
 
-	if (p_encoder->CONFIG.P_PARAMS != 0U)
-	{
-		memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T));
-	}
+	if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
 
 #ifdef CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
 	if(p_encoder->Params.IsQuadratureCaptureEnabled == true)
 	{
-		Pin_Init(&p_encoder->PinA);
-		Pin_Init(&p_encoder->PinB);
+		Pin_Input_Init(&p_encoder->PinA);
+		Pin_Input_Init(&p_encoder->PinB);
 	}
 #endif
 
@@ -103,14 +100,12 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 */
 void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 {
-	p_encoder->AngularD = 0U;
+	p_encoder->CounterD = 0U;
 	p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX;
-	// p_encoder->TimerCounterSaved = 0U;
+	// p_encoder->TimerSaved = 0U;
 	p_encoder->ExtendedTimerSaved = *p_encoder->CONFIG.P_EXTENDED_TIMER;
-	HAL_Encoder_WriteTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
-	HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
-	// HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER, 0U);
-	// HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
+	HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
+	HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
 }
 
 
@@ -134,7 +129,7 @@ void Encoder_DeltaT_SetExtendedTimerWatchStop_Default(Encoder_T * p_encoder)
 	p_encoder->Params.ExtendedTimerDeltaTStop = (timer1Second < timer1Rpm) ? timer1Second : timer1Rpm;
 }
 
-#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLED)
+#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 /*
 	Run on calibration routine
 */
@@ -147,7 +142,7 @@ void Encoder_DeltaT_CalibrateQuadratureReference(Encoder_T * p_encoder)
 void Encoder_DeltaT_CalibrateQuadraturePositive(Encoder_T * p_encoder)
 {
 	//deltaT check if phaseB is negative on an edge
-//	if ((HAL_Encoder_ReadPhaseA(p_encoder->CONFIG.P_HAL_ENCODER) == true) && (HAL_Encoder_ReadPhaseB(p_encoder->CONFIG.P_HAL_ENCODER) == false))
+//	if ((HAL_Encoder_ReadPhaseA(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == true) && (HAL_Encoder_ReadPhaseB(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == false))
 //	{
 ////		 p_encoder->IsALeadBPositive = true;
 //	}

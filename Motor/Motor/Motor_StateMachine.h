@@ -37,13 +37,6 @@
 
 typedef enum MotorStateMachine_Input_Tag
 {
-	//	MSM_TRANSITION_INIT,
-	//	MSM_TRANSITION_STOP,
-	//	MSM_TRANSITION_ALIGN,
-	//	MSM_TRANSITION_OPEN_LOOP,
-	//	MSM_TRANSITION_RUN,
-	//	MSM_TRANSITION_FREEWHEEL,
-	//	MSM_TRANSITION_FAULT,
 	MSM_INPUT_FAULT,  		/* Toggle Fault */
 	MSM_INPUT_CONTROL, 		/* Activate Control Mode - Transition to Run State (Active Control), and FeedbackMode update */
 	MSM_INPUT_RELEASE, 		/* Release Control */
@@ -57,10 +50,10 @@ typedef enum Motor_StateMachine_StateId_Tag
 {
 	MSM_STATE_ID_INIT,
 	MSM_STATE_ID_STOP,
-	MSM_STATE_ID_ALIGN,
-	MSM_STATE_ID_OPEN_LOOP,
 	MSM_STATE_ID_RUN,
 	MSM_STATE_ID_FREEWHEEL,
+	MSM_STATE_ID_ALIGN,
+	MSM_STATE_ID_OPEN_LOOP,
 	MSM_STATE_ID_CALIBRATION,
 	MSM_STATE_ID_FAULT,
 }

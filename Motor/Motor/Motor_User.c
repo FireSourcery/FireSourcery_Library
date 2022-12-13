@@ -60,13 +60,20 @@
 	check control active flag
 	Store control active flag as FeedbackModeFlags.Update
 */
+static inline bool Motor_CheckActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+{
+	// return (((Motor_CheckFeedbackModeFlags(p_motor, mode) == false) && (Motor_CheckPositionFeedback(p_motor) == true)) || p_motor->FeedbackModeFlags.Update);
+	return (Motor_CheckFeedbackModeFlags(p_motor, mode) == false);
+}
+
+
 void _Motor_User_ActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-	if(Motor_CheckFeedbackModeFlags(p_motor, mode) == false)
+	if(Motor_CheckActivateControl(p_motor, mode) == true)
 	{
-		Critical_Enter(); /* dont not proc new flags before matching output with StateMachine */
+		Critical_Enter(); /* Block PWM Thread, do not proc new flags before matching output with StateMachine */
 		Motor_SetFeedbackModeFlags(p_motor, mode); /* Matching output occurs in StateMachine Proc, depends on State */
-		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, STATE_MACHINE_INPUT_VALUE_NULL);
+		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode);
 		Critical_Exit();
 	}
 }
@@ -84,6 +91,7 @@ void Motor_User_ReleaseControl(Motor_T * p_motor)
 */
 void Motor_User_DisableControl(Motor_T * p_motor)
 {
+	Phase_Float(&p_motor->Phase);
 	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL); /* no critical for transition, only 1 transistion in run state? cannot conflict? */
 }
 
@@ -124,7 +132,6 @@ void Motor_User_ActivateCalibrationAdc(Motor_T * p_motor)
 {
 	StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ADC);
 }
-
 
 void Motor_User_ActivateCalibrationHall(Motor_T * p_motor)
 {
@@ -506,13 +513,12 @@ void Motor_User_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
 	p_motor->Parameters.SpeedFeedbackRef_Rpm = rpm;
 #ifdef CONFIG_MOTOR_PROPAGATE_SET_PARAM_ENABLE
-	// p_motor->Parameters.SpeedLimitCcw_Frac16 = (uint32_t)p_motor->Parameters.SpeedLimitCcw_Frac16 * rpm / p_motor->Parameters.SpeedFeedbackRef_Rpm;
-	// p_motor->Parameters.SpeedLimitCw_Frac16 = (uint32_t)p_motor->Parameters.SpeedLimitCw_Frac16 * rpm / p_motor->Parameters.SpeedFeedbackRef_Rpm;
 	Motor_ResetSpeedVMatchRatio(p_motor);
 	if((p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) || (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_ENCODER))
 	{
 		Motor_ResetUnitsEncoder(p_motor);
 	}
+	/* todo non encoder */
 #endif
 }
 
@@ -591,10 +597,7 @@ void Motor_User_SetPolePairs(Motor_T * p_motor, uint8_t polePairs)
 {
 	p_motor->Parameters.PolePairs = polePairs;
 #ifdef CONFIG_MOTOR_PROPAGATE_SET_PARAM_ENABLE
-	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
-	{
-		Motor_ResetUnitsHall(p_motor);
-	}
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Motor_ResetUnitsHall(p_motor); }
 #endif
 }
 

@@ -30,6 +30,24 @@
 /******************************************************************************/
 #include "Encoder.h"
 
+/* Phase in BABA order */
+const int8_t _ENCODER_TABLE[_ENCODER_TABLE_LENGTH] =
+{
+	0,-1,1,_ENCODER_TABLE_ERROR,
+	1,0,_ENCODER_TABLE_ERROR,-1,
+	-1,_ENCODER_TABLE_ERROR,0,1,
+	_ENCODER_TABLE_ERROR,1,-1,0
+};
+
+/* Phase A Both Edge */
+const int8_t _ENCODER_TABLE_PHASE_A[_ENCODER_TABLE_LENGTH] =
+{
+	0,_ENCODER_TABLE_ERROR,_ENCODER_TABLE_ERROR,-1,
+	_ENCODER_TABLE_ERROR,0,1,_ENCODER_TABLE_ERROR,
+	_ENCODER_TABLE_ERROR,1,0,_ENCODER_TABLE_ERROR,
+	-1,_ENCODER_TABLE_ERROR,_ENCODER_TABLE_ERROR,0
+};
+
 /*!
 	Perform highest precision (factor << targetShift / divisor) without overflow
 */
@@ -66,11 +84,11 @@ void _Encoder_ResetUnitsAngular(Encoder_T * p_encoder)
 		Angle = CounterD * [((1 << DEGREES_BITS) << UnitAngularD_ShiftDivisor) / CountsPerRevolution] >> UnitAngularD_ShiftDivisor
 			UnitAngularD_ShiftDivisor == (32 - DEGREES_BITS)
 	*/
-	p_encoder->UnitAngularD_Factor = 0xFFFFFFFFU / p_encoder->Params.CountsPerRevolution + 1U;
+	p_encoder->UnitAngularD = UINT32_MAX / p_encoder->Params.CountsPerRevolution + 1U;
 
 	/*
 		AngularSpeed = DeltaD * [(1 << DEGREES_BITS) * UnitT_Freq / CountsPerRevolution] / DeltaT
-			UnitAngularSpeed == [UnitAngularD_Factor * UnitT_Freq >> (32-DEGREES_BITS)]
+			UnitAngularSpeed == [UnitAngularD * UnitT_Freq >> (32-DEGREES_BITS)]
 
 		e.g.
 			UnitAngularSpeed = 160,000 		{ DEGREES_BITS = 16, UnitT_Freq = 20000, CountsPerRevolution = 8192 }
@@ -184,7 +202,7 @@ void Encoder_Motor_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDi
 }
 
 
-#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLED)
+#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)
 {
 	p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled;
