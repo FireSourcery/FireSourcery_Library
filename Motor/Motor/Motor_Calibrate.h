@@ -214,7 +214,7 @@ static inline bool Motor_Calibrate_Encoder(Motor_T * p_motor)
 */
 static inline void Motor_Calibrate_StartAdc(Motor_T * p_motor)
 {
-	Timer_StartPeriod(&p_motor->ControlTimer, 20000U); // Motor.Parameters.AdcCalibrationTime
+	Timer_StartPeriod(&p_motor->ControlTimer, GLOBAL_MOTOR.CONTROL_FREQ); // Motor.Parameters.AdcCalibrationTime
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{

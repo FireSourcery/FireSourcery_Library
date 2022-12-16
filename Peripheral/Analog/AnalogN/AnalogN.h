@@ -144,8 +144,7 @@ static inline bool AnalogN_EnqueueOptions(const AnalogN_T * p_analogn, const Ana
 static inline void AnalogN_Group_PauseQueue(const AnalogN_T * p_analogn, AnalogN_AdcFlags_T activeAdcs)
 {
 #if  defined(CONFIG_ANALOG_MULTITHREADED)
-	(void)p_analogn;
-	(void)activeAdcs;
+	(void)p_analogn; (void)activeAdcs;
 	Critical_Enter();
 #elif defined(CONFIG_ANALOG_SINGLE_THREADED)
 	for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONFIG.ANALOG_COUNT; iAnalog++)

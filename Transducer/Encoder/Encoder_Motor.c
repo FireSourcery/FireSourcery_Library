@@ -77,3 +77,8 @@ void Encoder_Motor_SetHallCountsPerRevolution(Encoder_T * p_encoder, uint8_t mot
 	p_encoder->Params.MotorPolePairs = motorPolePairs;
 	Encoder_SetCountsPerRevolution(p_encoder, motorPolePairs * 6U);
 }
+
+void Encoder_Motor_SetPolePairs(Encoder_T * p_encoder, uint8_t motorPolePairs)
+{
+	p_encoder->Params.MotorPolePairs = motorPolePairs;
+}

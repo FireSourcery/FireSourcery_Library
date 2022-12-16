@@ -71,10 +71,7 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 			break;
 
 		case SHELL_STATE_WAIT_INPUT:
-			if (Terminal_ProcCmdline(&p_shell->Terminal) == true)
-			{
-				p_shell->State = SHELL_STATE_PROCESS_CMD;
-			}
+			if(Terminal_ProcCmdline(&p_shell->Terminal) == true) { p_shell->State = SHELL_STATE_PROCESS_CMD; }
 //			status = SHELL_STATUS_OK;
 			break;
 
@@ -100,6 +97,7 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 							break;
 
 						case CMD_STATUS_PROCESS_LOOP:
+							p_shell->ProcTimeRef = *p_shell->CONFIG.P_TIMER;
 							p_shell->State = SHELL_STATE_PROCESS_CMD_LOOP;
 //							status = SHELL_STATUS_CMD_PROCESSING;
 							break;
@@ -134,11 +132,11 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 			}
 			else
 			{
-				if (*p_shell->CONFIG.P_TIMER - p_shell->LoopModeTimeRef > p_shell->CONFIG.TIMER_FREQ * 10U / p_shell->p_Cmd->PROCESS.FREQ)
+				if (*p_shell->CONFIG.P_TIMER - p_shell->ProcTimeRef > p_shell->p_Cmd->PROCESS.PERIOD)
 				{
-					p_shell->LoopModeTimeRef = *p_shell->CONFIG.P_TIMER;
 					p_shell->CmdReturnCode = p_shell->p_Cmd->PROCESS.FUNCTION(p_shell->CONFIG.P_CMD_CONTEXT);
 					if (p_shell->CmdReturnCode == CMD_STATUS_PROCESS_END) { p_shell->State = SHELL_STATE_PROMPT; }
+					p_shell->ProcTimeRef = *p_shell->CONFIG.P_TIMER;
 				}
 			}
 			break;
@@ -155,9 +153,9 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 #ifdef CONFIG_SHELL_XCVR_ENABLE
 bool Shell_SetXcvr(Shell_T * p_shell, uint8_t xcvrId)
 {
-	bool isSucess = Terminal_SetXcvr(&p_shell->Terminal, xcvrId);
-	if(isSucess == true) { p_shell->Params.XcvrId = xcvrId; }
-	return isSucess;
+	bool isSuccess = Terminal_SetXcvr(&p_shell->Terminal, xcvrId);
+	if(isSuccess == true) { p_shell->Params.XcvrId = xcvrId; }
+	return isSuccess;
 }
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
 void Shell_SetSerial(Shell_T * p_shell, Serial_T * p_serial)

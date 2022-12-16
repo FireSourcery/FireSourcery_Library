@@ -100,12 +100,11 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 */
 void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 {
-	p_encoder->CounterD = 0U;
 	p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX;
-	// p_encoder->TimerSaved = 0U;
 	p_encoder->ExtendedTimerSaved = *p_encoder->CONFIG.P_EXTENDED_TIMER;
 	HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
 	HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
+	_Encoder_ZeroAngle(p_encoder);
 }
 
 

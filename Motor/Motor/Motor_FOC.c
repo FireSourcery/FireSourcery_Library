@@ -99,3 +99,22 @@ void Motor_FOC_SetDirectionForward(Motor_T * p_motor)
 	else 																	{ Motor_FOC_SetDirectionCw(p_motor); }
 }
 
+
+/*
+	Call from user must also set Vector Sine/Cosine, not set during position read
+*/
+void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd)
+{
+//	p_motor->ElectricalAngle = angle;
+	FOC_SetVq(&p_motor->Foc, vq);
+	FOC_SetVd(&p_motor->Foc, vd);
+	FOC_SetVector(&p_motor->Foc, angle);
+	FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
+	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
+}
+
+void Motor_FOC_Align(Motor_T * p_motor)
+{
+	Motor_FOC_ActivateAngle(p_motor, 0, 0, p_motor->Parameters.AlignVoltage_Frac16 / 2U);
+	Phase_ActivateSwitchABC(&p_motor->Phase);
+}

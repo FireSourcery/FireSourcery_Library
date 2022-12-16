@@ -46,7 +46,6 @@
 	Sync Mode
 	Must check input flags every pwm cycle
 
-	?
 	Set async to proc, sync issue can recover?
 	control proc may overwrite pid state set, but last to complete is always user input?
 */
@@ -524,7 +523,7 @@ void Motor_User_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 
 void Motor_User_SetSpeedFeedbackRef_VRpm(Motor_T * p_motor, uint16_t vMotor_V, uint16_t vMotorSpeed_Rpm)
 {
-	Motor_User_SetSpeedFeedbackRef_Rpm(p_motor, vMotorSpeed_Rpm * _Motor_GetVSourceRef() / vMotor_V);
+	Motor_User_SetSpeedFeedbackRef_Rpm(p_motor, vMotorSpeed_Rpm * Global_Motor_GetVSourceRef() / vMotor_V);
 }
 
 void Motor_User_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm)
@@ -543,7 +542,7 @@ void Motor_User_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 
 void Motor_User_SetSpeedVMatchRef_VRpm(Motor_T * p_motor, uint16_t vMotor_V, uint16_t vMotorSpeed_Rpm)
 {
-	Motor_User_SetSpeedVMatchRef_Rpm(p_motor, vMotorSpeed_Rpm * _Motor_GetVSourceRef() / vMotor_V);
+	Motor_User_SetSpeedVMatchRef_Rpm(p_motor, vMotorSpeed_Rpm * Global_Motor_GetVSourceRef() / vMotor_V);
 }
 
 // void Motor_User_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu)
@@ -597,7 +596,7 @@ void Motor_User_SetPolePairs(Motor_T * p_motor, uint8_t polePairs)
 {
 	p_motor->Parameters.PolePairs = polePairs;
 #ifdef CONFIG_MOTOR_PROPAGATE_SET_PARAM_ENABLE
-	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Motor_ResetUnitsHall(p_motor); }
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Motor_ResetUnitsHallPolePairs(p_motor); }
 #endif
 }
 
@@ -624,7 +623,7 @@ void Motor_User_SetIPeakRef_Adcu_Debug(Motor_T * p_motor, uint16_t adcu)
 
 void Motor_User_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
 {
-	p_motor->Parameters.IPeakRef_Adcu = (adcu > p_motor->CONFIG.I_ZERO_TO_PEAK_ADCU) ? p_motor->CONFIG.I_ZERO_TO_PEAK_ADCU : adcu;
+	p_motor->Parameters.IPeakRef_Adcu = (adcu >  GLOBAL_MOTOR.I_ZERO_TO_PEAK_ADCU) ?  GLOBAL_MOTOR.I_ZERO_TO_PEAK_ADCU : adcu;
 #ifdef CONFIG_MOTOR_PROPAGATE_SET_PARAM_ENABLE
 	Motor_ResetUnitsIabc(p_motor);
 #endif
@@ -632,8 +631,8 @@ void Motor_User_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
 
 void Motor_User_SetIPeakRef_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV)
 {
-	uint16_t adcuZero = (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / _Motor_GetAdcVRef();
-	uint16_t adcuMax = (uint32_t)max_MilliV * ADC_MAX / _Motor_GetAdcVRef();
+	uint16_t adcuZero = (uint32_t)(max_MilliV + min_MilliV) * ADC_MAX / 2U / Global_Motor_GetAdcVRef();
+	uint16_t adcuMax = (uint32_t)max_MilliV * ADC_MAX / Global_Motor_GetAdcVRef();
 	Motor_User_SetIPeakRef_Adcu(p_motor, adcuMax - adcuZero);
 }
 #endif

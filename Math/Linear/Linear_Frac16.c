@@ -34,11 +34,10 @@
 /*!
 	Linear with
 
-	frac16 conversion returns without division, as frac16 calc is performed more frequently
+	Sets frac16 conversion to return without division
 	adcu to physical(user yref) returns without division
 	division in physical to adcu, frac16 to physical units
-	Shift 14 to allow oversaturation f([-2*XRef:2*XRef]) == [-2*YRef:2*YRef] before overflow
-		i.e 2x input range, before overflow, while retaining sign bit
+
 	p_linear->YReference in Units
 	p_linear->YOffset in Frac16;
 */
@@ -46,9 +45,6 @@
 
 /*
 	Init using slope, y. Derive XRef
-	Sets 100% input, x, as f(xRef) == yRef
-	f(x>2XRef) will overflow
-	Shift 14 to allow oversaturation f([-2*XRef:2*XRef]) == [-2*YRef:2*YRef] before overflow
 	Scales factor to 65536
 	Scales divisor to xref
 */

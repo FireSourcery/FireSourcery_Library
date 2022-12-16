@@ -43,12 +43,6 @@
 	#define	CONFIG_MOTOR_DEBUG_DISABLE
 #endif
 
-
-#if 	defined(CONFIG_MOTOR_ALIGN_VOLTAGE_MAX)
-#else
-	#define CONFIG_MOTOR_ALIGN_VOLTAGE_MAX 	(65536U /10U)
-#endif
-
 #if 	defined(CONFIG_MOTOR_I_SENSORS_NONINVERT)
 #elif 	defined(CONFIG_MOTOR_I_SENSORS_INVERT)
 #else

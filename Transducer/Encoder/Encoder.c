@@ -152,7 +152,6 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 	p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm, 16U);
 }
 
-
 /*
 
 */
@@ -201,7 +200,6 @@ void Encoder_Motor_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDi
 	Encoder_Motor_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);
 }
 
-
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)
 {
@@ -215,6 +213,7 @@ void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALe
 {
 	p_encoder->Params.IsALeadBPositive = isALeadBPositive;
 }
+
 #endif
 
 

@@ -49,25 +49,28 @@
 static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 {
 	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
-#if 	defined(CONFIG_ENCODER_HW_EMULATED)
-#elif	defined(CONFIG_ENCODER_HW_DECODER)
-	HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0U);
-#endif
-	// p_encoder->CounterD = 0U;
-	// p_encoder->Angle32 = 0U;
+	p_encoder->IndexCount++;
+// #if 	defined(CONFIG_ENCODER_HW_EMULATED)
+// #elif	defined(CONFIG_ENCODER_HW_DECODER)
+// 	HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0U);
+// #endif
+// 	p_encoder->IndexCounterDOffset = p_encoder->CounterD - p_encoder->Params.CountsPerRevolution;
+// 	p_encoder->IndexCounterD = p_encoder->CounterD + p_encoder->IndexCounterDOffset;
 }
 
 static inline void _Encoder_OnPhase_ISR(Encoder_T * p_encoder)
 {
-// #if defined(CONFIG_ENCODER_HW_EMULATED)
+#if 	defined(CONFIG_ENCODER_HW_EMULATED) && defined(CONFIG_ENCODER_DELTA_T_ISR)
+// check switch
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
 	// _Encoder_CaptureCounterD(p_encoder);
-	_Encoder_CaptureCounterD_PhaseARisingEdge(p_encoder);
-	// _Encoder_CaptureCounterD_Quadrature(p_encoder);
+	// _Encoder_CaptureCounterD_Inc(p_encoder);
+	_Encoder_CaptureCounterD_Quadrature(p_encoder);
 	// HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U); /* for DT Capture */
 	// Emulated, still need Capture DeltaT
-// #else /* DeltaT OR ModeDT ISR version */ //todo check freq for auto capture speed
-	// Encoder_DeltaT_Capture(p_encoder); /* superfluous deltaT capture for emulated D mode for now */
-// #endif
+#elif 	defined(CONFIG_ENCODER_DELTA_T_ISR)/* DeltaT OR ModeDT ISR version */ //todo check freq for auto capture speed
+	Encoder_DeltaT_Capture(p_encoder); /* superfluous deltaT capture for emulated D mode for now */
+#endif
 }
 
 static inline void Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)

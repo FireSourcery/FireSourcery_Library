@@ -70,11 +70,6 @@
 	20000Hz/(10000RPM/60) => 120 PPR. Less than 120 PPR, use Fixed DeltaD
 */
 
-static inline void Encoder_DeltaT_CaptureCounterD(Encoder_T * p_encoder)
-{
- 	_Encoder_CaptureCounterD(p_encoder);
-}
-
 /******************************************************************************/
 /*!
 	@brief 	Capture Functions - Poll Pulse, ISR
@@ -101,6 +96,11 @@ static inline void _Encoder_DeltaT_CaptureDelta(Encoder_T * p_encoder)
 // #endif
 }
 
+static inline void Encoder_DeltaT_CaptureDelta(Encoder_T * p_encoder)
+{
+	_Encoder_DeltaT_CaptureDelta(p_encoder);
+}
+
 /*!
 	Capture Angle and Speed(DeltaT)
 	Captures CounterD and DeltaT each pulse - ideal for low freq < POLLING_FREQ, use interpolation
@@ -109,7 +109,7 @@ static inline void _Encoder_DeltaT_CaptureDelta(Encoder_T * p_encoder)
 */
 static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 {
- 	// _Encoder_CaptureCounterD(p_encoder);
+ 	_Encoder_CaptureCounterD_Inc(p_encoder);
 	_Encoder_DeltaT_CaptureDelta(p_encoder);
 	// p_encoder->TotalD += 1U; /* Capture integral */
 	// p_encoder->TotalT += p_encoder->DeltaT;
@@ -117,9 +117,10 @@ static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 
 
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-static inline void Encoder_DeltaT_CaptureQuadrature(Encoder_T * p_encoder)
+static inline void Encoder_DeltaT_Capture_Quadrature(Encoder_T * p_encoder)
 {
-
+	_Encoder_CaptureCounterD_Quadrature(p_encoder);
+	_Encoder_DeltaT_CaptureDelta(p_encoder);
 }
 #endif
 

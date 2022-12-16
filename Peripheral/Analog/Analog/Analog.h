@@ -139,7 +139,12 @@ Analog_Config_T;
 typedef struct Analog_Tag
 {
 	const Analog_Config_T CONFIG;
+	/* todo flag based */
+#if 	defined(CONFIG_ANALOG_USE_QUEUE)
+#elif 	defined(CONFIG_ANALOG_USE_FLAGS)
+#endif
 	Ring_T ConversionQueue;	/* Item type (Analog_QueueItem_T *), (Analog_Conversion_T *) or (Analog_Options_T *) */
+
 #if (CONFIG_ANALOG_HW_FIFO_LENGTH > 0U)
 	uint8_t ActiveChannelCount; /*! Hw fifo only. Number of active channels being processed by ADC */
 #endif

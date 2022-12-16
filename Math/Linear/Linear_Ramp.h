@@ -46,34 +46,21 @@ static inline int32_t Linear_Ramp_GetTarget(const Linear_T * p_linear) { return 
 	Index version - allows non sequential calculation, shallow slope use must use index
 	Init using Signed Slope. Index is unsigned
 */
-
-static inline int32_t Linear_Ramp_CalcIndexOutput(const Linear_T * p_linear, uint32_t index, int32_t currentRampValue)
+static inline int32_t Linear_Ramp_CalcIndexOutput(const Linear_T * p_linear, uint32_t index)
 {
-	int32_t newRampValue;
+	return ((int32_t)index < p_linear->XReference) ? Linear_Function(p_linear, index) : p_linear->YReference;
+}
 
-	if(currentRampValue != p_linear->YReference)
-	{
-		newRampValue = Linear_Function(p_linear, index);
-		/* bound and set YRef as indicator of end  */
-		if		((p_linear->Slope > 0) && (newRampValue > p_linear->YReference)) 	{ newRampValue = p_linear->YReference; } /* slope is positive, inc ramp if less than final */
-		else if	((p_linear->Slope < 0) && (newRampValue < p_linear->YReference)) 	{ newRampValue = p_linear->YReference; } /* slope is negative, inc ramp if greater than final */
-		else 																		{ newRampValue = currentRampValue; } /* else slope is 0, continue to return the same value */
-	}
-	else { newRampValue = currentRampValue; }
-
+static inline int32_t Linear_Ramp_ProcIndexOutputIncN(const Linear_T * p_linear, uint32_t * p_index, uint32_t indexIncrement)
+{
+	int32_t newRampValue = Linear_Ramp_CalcIndexOutput(p_linear, *p_index);
+	if((int32_t)*p_index < p_linear->XReference) { *p_index += indexIncrement; }
 	return newRampValue;
 }
 
-static inline int32_t Linear_Ramp_ProcIndexOutputIncN(const Linear_T * p_linear, uint32_t * p_index, uint32_t indexIncreament, int32_t currentRampValue)
+static inline int32_t Linear_Ramp_ProcIndexOutput(const Linear_T * p_linear, uint32_t * p_index)
 {
-	int32_t newRampValue = Linear_Ramp_CalcIndexOutput(p_linear, *p_index, currentRampValue);
-	if(newRampValue != p_linear->YReference) { *p_index += indexIncreament; }
-	return newRampValue;
-}
-
-static inline int32_t Linear_Ramp_ProcIndexOutput(const Linear_T * p_linear, uint32_t * p_index, int32_t currentRampValue)
-{
-	return Linear_Ramp_ProcIndexOutputIncN(p_linear, p_index, 1U, currentRampValue);
+	return Linear_Ramp_ProcIndexOutputIncN(p_linear, p_index, 1U);
 }
 
 static inline void Linear_Ramp_SetIndex(const Linear_T * p_linear, uint32_t * p_index, int32_t rampValue) { *p_index = Linear_InvFunction(p_linear, rampValue); }
@@ -83,33 +70,28 @@ static inline int32_t Linear_Ramp_ResetIndex(const Linear_T * p_linear, uint32_t
 	Accumulative version - sequential calculation only
 	Init with positive slope
 */
-static inline int32_t Linear_Ramp_CalcNextOutput(const Linear_T * p_linear, int32_t currentRampValue)
+static inline int32_t Linear_Ramp_CalcCmdNextOutput(const Linear_T * p_linear, int32_t currentRampValue)
 {
 	int32_t newRampValue;
 
 	if(currentRampValue < p_linear->YReference)
 	{
 		newRampValue = ((currentRampValue << p_linear->SlopeShift) + p_linear->Slope) >> p_linear->SlopeShift;
-
 		if(newRampValue > p_linear->YReference) { newRampValue = p_linear->YReference; }
 	}
 	else if(currentRampValue > p_linear->YReference)
 	{
 		newRampValue = ((currentRampValue << p_linear->SlopeShift) - p_linear->Slope) >> p_linear->SlopeShift;
-
 		if(newRampValue < p_linear->YReference) { newRampValue = p_linear->YReference; }
 	}
-	else
-	{
-		newRampValue = currentRampValue;
-	}
+	else { newRampValue = currentRampValue; }
 
 	return newRampValue;
 }
 
 static inline void Linear_Ramp_ProcCmdOutput(Linear_T * p_linear, int32_t * p_currentRampValue)
 {
-	*p_currentRampValue = Linear_Ramp_CalcNextOutput(p_linear, *p_currentRampValue);
+	*p_currentRampValue = Linear_Ramp_CalcCmdNextOutput(p_linear, *p_currentRampValue);
 }
 
 static inline void Linear_Ramp_SetCmdOutput(Linear_T * p_linear, int32_t * p_currentRampValue, int32_t matchOutput)
@@ -126,15 +108,18 @@ static inline void Linear_Ramp_ResetCmdOutput(Linear_T * p_linear, int32_t * p_c
 
 /*
 	Sets slope and initial for dynamically generated ramp
+	need xref for index
 */
-static inline void Linear_Ramp_SetSlope(Linear_T * p_linear, int32_t slope_UnitPerTick, int32_t initial)
+static inline void Linear_Ramp_SetSlope(Linear_T * p_linear, int32_t slope_UnitPerTick, int32_t initial, int32_t final)
 {
 	_Linear_SetSlope_Y0(p_linear, slope_UnitPerTick, 1U, initial);
+	p_linear->YReference = final;
 }
 
-static inline void Linear_Ramp_SetSlope_Acceleration(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t slope_UnitPerSecond, int32_t initial)
+static inline void Linear_Ramp_SetSlope_Acceleration(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t slope_UnitPerSecond, int32_t initial, int32_t final)
 {
 	_Linear_SetSlope_Y0(p_linear, slope_UnitPerSecond, updateFreq_Hz, initial);
+	p_linear->YReference = final;
 }
 
 static inline void Linear_Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t period_Ms, int32_t initial, int32_t final)

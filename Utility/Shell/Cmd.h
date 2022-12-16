@@ -49,7 +49,7 @@ typedef Cmd_Status_T (*Cmd_ProcessFunction_T)(void * p_context);
 typedef const struct
 {
     const Cmd_ProcessFunction_T FUNCTION; //loop function
-    const uint32_t FREQ; //dHz
+    const uint32_t PERIOD;
 }
 Cmd_Process_T;
 

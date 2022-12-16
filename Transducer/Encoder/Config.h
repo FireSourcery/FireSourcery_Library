@@ -31,11 +31,20 @@
 #ifndef CONFIG_ENCODER_H
 #define CONFIG_ENCODER_H
 
+#if 	defined(CONFIG_ENCODER_HW_TIMER_COUNTER_MAX)
+#else
+	#define CONFIG_ENCODER_HW_TIMER_COUNTER_MAX 0xFFFFU
+#endif
+
+#if 	defined(CONFIG_ENCODER_ANGLE_DEGREES_BITS)
+#else
+	#define CONFIG_ENCODER_ANGLE_DEGREES_BITS 16U
+#endif
+
 /*
 	HW_TIMER_ONLY
-	HW_TIMER_COUNTER
 	HW_DECODER
-	Compile time define if chip supports quadrature decoder capture. Enables toggle during runtime
+	Compile time define if chip supports decoder/counter.
 */
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
 #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
@@ -50,19 +59,7 @@
 	#define CONFIG_ENCODER_HW_DECODER_A_LEAD_B_INCREMENT
 #endif
 
-/* Capture DeltaT Mode */
-#if 	defined(CONFIG_ENCODER_HW_TIMER_COUNTER_MAX)
-#else
-		#define CONFIG_ENCODER_HW_TIMER_COUNTER_MAX 0xFFFFU
-#endif
-
-// #if 	defined(CONFIG_ENCODER_HW_TIMER_WRITABLE_ENABLE)
-// #elif 	defined(CONFIG_ENCODER_HW_TIMER_WRITABLE_DISABLE)
-// #else
-// 		#define CONFIG_ENCODER_HW_TIMER_WRITABLE_ENABLE
-// #endif
-
-/* Emulated and Decoder Quadrature Capture */
+/* Emulated and Decoder Quadrature Capture. Enables toggle during runtime */
 #if 	defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE) /* Emulated and Decoder */
 #elif 	defined(CONFIG_ENCODER_QUADRATURE_MODE_DECODER_ONLY)
 #elif 	defined(CONFIG_ENCODER_QUADRATURE_MODE_DISABLE)
@@ -71,20 +68,26 @@
 	#define CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
 #endif
 
+#if 	defined(CONFIG_ENCODER_DELTA_T_ISR)
+#elif 	defined(CONFIG_ENCODER_DELTA_T_POLLING)
+#else
+	#define CONFIG_ENCODER_DELTA_T_POLLING
+#endif
+
 /* Adjust timer freq at runtime */
 #ifdef CONFIG_ENCODER_DYNAMIC_TIMER
 #else
 #endif
 
+// #if 	defined(CONFIG_ENCODER_HW_TIMER_WRITABLE_ENABLE)
+// #elif 	defined(CONFIG_ENCODER_HW_TIMER_WRITABLE_DISABLE)
+// #else
+// 		#define CONFIG_ENCODER_HW_TIMER_WRITABLE_ENABLE
+// #endif
+
 /* Internal Polling Capture */
 #if defined(CONFIG_ENCODER_POLLING_CAPTURE_ENABLE)
-
 #endif
 
-
-#if 	defined(CONFIG_ENCODER_ANGLE_DEGREES_BITS)
-#else
-	#define CONFIG_ENCODER_ANGLE_DEGREES_BITS 16U
-#endif
 
 #endif

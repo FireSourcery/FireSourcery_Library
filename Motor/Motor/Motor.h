@@ -33,6 +33,7 @@
 
 #include "Config.h"
 
+#include "Global_Motor.h"
 #include "MotorAnalog.h"
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 
@@ -101,7 +102,7 @@ typedef enum Motor_FeedbackMode_Tag
 {
 	MOTOR_FEEDBACK_MODE_OPEN_LOOP,
 	MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE,
-	MOTOR_FEEDBACK_MODE_VOLTAGE_FREQ_SCALAR,
+	MOTOR_FEEDBACK_MODE_SCALAR_VOLTAGE_FREQ,
 	MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_VOLTAGE,
 	MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT,
 	MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT,
@@ -115,11 +116,11 @@ typedef union Motor_FeedbackModeFlags_Tag
 {
 	struct
 	{
-		uint32_t Speed 			: 1U;	/* 0 -> Voltage or Current only, 1 -> Speed feedback */
-		uint32_t Current 		: 1U;	/* 0 -> Voltage, 1-> Current */
-		uint32_t VFreqScalar 	: 1U; 	/* 1-> Use VFreqScalar  */
-		uint32_t OpenLoop 		: 1U; 	 /* 0 -> Position feedback, 1 -> Openloop */
-		uint32_t Update 		: 1U;	 /* Control Mode Update, shared */
+		uint32_t Speed 		: 1U;	/* 0 -> Voltage or Current only, 1 -> Speed feedback */
+		uint32_t Current 	: 1U;	/* 0 -> Voltage, 1-> Current */
+		uint32_t Scalar 	: 1U; 	/* 1-> Use Scalar  */
+		uint32_t OpenLoop 	: 1U; 	/* 0 -> Position feedback, 1 -> Openloop */
+		uint32_t Update 	: 1U;	/* Control Mode Update, shared */
 	};
 	uint32_t State;
 }
@@ -137,6 +138,7 @@ typedef union Motor_ControlFlags_Tag
 		uint32_t HeatWarning 				: 1U;
 		uint32_t VoltageModeILimitActive 	: 1U;
 		uint32_t Active 					: 1U;
+		// uint32_t OpenLoop 		: 1U; 	 /* 0 -> Position feedback, 1 -> Openloop */
 		// uint32_t FieldWeakening 			: 1U;
 		// uint32_t SpeedLimitScalarActive 	: 1U;
 		// uint32_t ILimitScalarActive 		: 1U; /* Set approx 1/s */
@@ -250,13 +252,9 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 		Ref values, known calibration parameter provide by user
 	*/
 	uint8_t PolePairs;
-
-	/*
-		Motor Refs use Speed at VSource.
-	*/
+	/* Motor Refs use Speed at VSource. */
 	uint16_t SpeedFeedbackRef_Rpm; 	/* Feedback / PID Regulator, Limits Ref. User IO units conversion, Encoder speed calc ref. */
 	uint16_t SpeedVMatchRef_Rpm; 	/* Voltage Match Ref. VF Mode, Freewheel to Run. Use higher value to bias speed matching to begin at lower speed. */
-
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	uint16_t IPeakRef_Adcu;
 #endif
@@ -279,7 +277,7 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	uint16_t OpenLoopSpeed_RPM;
-	uint16_t OpenLoopVPwm; 	/* Frac16 */
+	uint16_t OpenLoopVPwm_Frac16; 	/* Frac16 */
 	// uint16_t OpenLoopVPwmMin;
 	// uint16_t OpenLoopVPwmMax;
 	// uint16_t OpenLoopSpeedStart;
@@ -288,7 +286,7 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 	// uint16_t OpenLoopVHzGain;
 	// uint16_t OpenLoopZcdTransition;
 #endif
-	Phase_Mode_T PhasePwmMode; /* Only 1 nvm param for phase module. */
+	Phase_Mode_T PhasePwmMode; 	/* Only 1 nvm param for phase module. */
 }
 Motor_Params_T;
 
@@ -297,10 +295,6 @@ Motor_Params_T;
 */
 typedef const struct Motor_Init_Tag
 {
-	const uint16_t UNIT_VABC_R1;
-	const uint16_t UNIT_VABC_R2;
-	const uint16_t I_MAX_AMP; 				/* Motor I controller rating. pass to Linear_ADC. Unit conversion, UI input/output, param set. */
-	const uint16_t I_ZERO_TO_PEAK_ADCU; 	/* Sensor calibration *//* Zero-To-Peak, derived from sensor hardware */
 	AnalogN_T * const P_ANALOG_N;
 	const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
 	const Motor_Params_T * const P_PARAMS_NVM;
@@ -352,7 +346,7 @@ typedef struct Motor_Tag
 	uint16_t ILimitGenerating_Frac16;
 	Motor_ILimitActiveId_T ILimitActiveId;
 	uint16_t ILimitActiveSentinel;		/* Store for comparison */
-	int16_t VoltageModeILimit_QFracS16; /* [-32767:32767] directional input into pid */
+	int16_t ILimitVoltageMode_FracS16; /* [-32767:32767] directional input into pid */
 	Linear_T ILimitHeatRate;
 
 	/* Calibration Substate */
@@ -377,10 +371,10 @@ typedef struct Motor_Tag
 	/*
 		Speed Feedback
 	*/
-	PID_T PidSpeed;					/* Input SpeedFeedback_Frac16 Q16.16, Output SpeedControl => VPwm, Vq, Iq */
+	PID_T PidSpeed;					/* Input SpeedFeedback_Frac16 Q16.16, Output SpeedControl_FracS16 => VPwm, Vq, Iq */
 	Timer_T SpeedTimer;				/* Speed Calc Timer */
 	int32_t SpeedFeedback_Frac16; 	/* [~-65535*2:~65535*2] Speed Feedback Variable. Can over saturate */
-	int32_t SpeedControl; 			/* [~-32767:~32767] Speed Control Variable. PidSpeed(RampCmd - SpeedFeedback_Frac16 / 2) => VPwm, Vq, Iq. Updated once per millis */
+	int32_t SpeedControl_FracS16; 			/* [~-32767:~32767] Speed Control Variable. PidSpeed(RampCmd - SpeedFeedback_Frac16 / 2) => VPwm, Vq, Iq. Updated once per millis */
 	// uint32_t Speed2_Frac16;
 
 	/*
@@ -424,7 +418,7 @@ typedef struct Motor_Tag
 	Linear_T OpenLoopRamp;
 	uint32_t OpenLoopRampIndex;
 	uint16_t OpenLoopSpeed_RPM;
-	uint16_t OpenLoopVPwm;
+	uint16_t OpenLoopVPwm_Frac16;
 	#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
 	uint32_t OpenLoopCommutationPeriod;
 	#endif
@@ -454,10 +448,6 @@ Motor_T;
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	#include "Motor_Debug.h"
 #endif
-
-static inline void Motor_DisablePwm(Motor_T * p_motor) 			{ Phase_DisableInterrupt(&p_motor->Phase); }
-static inline void Motor_EnablePwm(Motor_T * p_motor) 			{ Phase_EnableInterrupt(&p_motor->Phase); }
-static inline void Motor_ClearPwmInterrupt(Motor_T * p_motor) 	{ Phase_ClearInterrupt(&p_motor->Phase); }
 
 /******************************************************************************/
 /*
@@ -498,13 +488,24 @@ static inline void Motor_ProcCommutationMode1(Motor_T * p_motor, Motor_Commutati
 
 /******************************************************************************/
 /*
+	Interrupts
+*/
+/******************************************************************************/
+static inline void Motor_DisablePwm(Motor_T * p_motor) 			{ Phase_DisableInterrupt(&p_motor->Phase); }
+static inline void Motor_EnablePwm(Motor_T * p_motor) 			{ Phase_EnableInterrupt(&p_motor->Phase); }
+static inline void Motor_ClearPwmInterrupt(Motor_T * p_motor) 	{ Phase_ClearInterrupt(&p_motor->Phase); }
+
+/******************************************************************************/
+/*
 	Ramp
+	RampCmd [-32768:32767]
+	[0:65535] VFreq Mode
 */
 /******************************************************************************/
 /*
 	Proc ~20000Hz
-*/
 //	p_motor->RampCmd = Linear_Ramp_ProcIndexOutput(&p_motor->Ramp, &p_motor->RampIndex, p_motor->RampCmd); //index mode check negative
+*/
 static inline void Motor_ProcRamp(Motor_T * p_motor) { Linear_Ramp_ProcCmdOutput(&p_motor->Ramp, &p_motor->RampCmd); }
 
 /*
@@ -514,19 +515,19 @@ static inline void Motor_ProcRamp(Motor_T * p_motor) { Linear_Ramp_ProcCmdOutput
 static inline void Motor_SetRampTarget(Motor_T * p_motor, int32_t userCmd) { Linear_Ramp_SetTarget(&p_motor->Ramp, userCmd); }
 
 /*
-	Match ramp output //	Linear_Ramp_SetIndex(&p_motor->Ramp, &p_motor->RampIndex, matchOutput);
+	Match ramp output
+		Set p_motor->RampCmd = userCmd, bypasses Ramp
+	//	Linear_Ramp_SetIndex(&p_motor->Ramp, &p_motor->RampIndex, matchOutput);
 */
-static inline void Motor_SetRampOutput(Motor_T * p_motor, int32_t matchOutput) { Linear_Ramp_SetCmdOutput(&p_motor->Ramp, &p_motor->RampCmd, matchOutput); }
+static inline void Motor_SetRampOutput(Motor_T * p_motor, int32_t matchOutput) 	{ Linear_Ramp_SetCmdOutput(&p_motor->Ramp, &p_motor->RampCmd, matchOutput); }
+static inline void Motor_ResetRamp(Motor_T * p_motor) 							{ Linear_Ramp_SetCmdOutput(&p_motor->Ramp, &p_motor->RampCmd, 0);}
 
 /*
 	dynamically generated Ramp,
 	divide input over control period intervals, when using 1ms period only
 	acceleration proportional to change in userCmd
 */
-static inline void Motor_SetRampInterpolate(Motor_T * p_motor, int32_t userCmd) { Linear_Ramp_SetSlope_Millis(&p_motor->Ramp, 20000U, 1U, p_motor->RampCmd, userCmd); }
-
-static inline void Motor_ResetRamp(Motor_T * p_motor) { Linear_Ramp_ResetCmdOutput(&p_motor->Ramp, &p_motor->RampCmd); }
-
+static inline void Motor_SetRampInterpolate(Motor_T * p_motor, int32_t userCmd) { Linear_Ramp_SetSlope_Millis(&p_motor->Ramp, GLOBAL_MOTOR.CONTROL_FREQ, 1U, p_motor->RampCmd, userCmd); }
 
 /******************************************************************************/
 /*
@@ -536,8 +537,8 @@ static inline void Motor_ResetRamp(Motor_T * p_motor) { Linear_Ramp_ResetCmdOutp
 static inline void Motor_SetSpeedOutput(Motor_T * p_motor, int32_t speedControlMatch)
 {
 	Motor_SetRampOutput(p_motor, p_motor->SpeedFeedback_Frac16 / 2U); 	/* RampOut/PidIn always use SpeedFeedback */
-	PID_SetIntegral(&p_motor->PidSpeed, speedControlMatch);  			/* SpeedControl may be V or I */
-	p_motor->SpeedControl = speedControlMatch;
+	PID_SetIntegral(&p_motor->PidSpeed, speedControlMatch);  			/* SpeedControl_FracS16 may be V or I */
+	p_motor->SpeedControl_FracS16 = speedControlMatch;
 }
 
 static inline bool Motor_CheckSpeed(Motor_T * p_motor)
@@ -561,13 +562,22 @@ static inline bool Motor_CheckPositionFeedback(Motor_T * p_motor)
 
 // static inline bool Motor_CheckOpenLoop(Motor_T * p_motor) { return !Motor_CheckPositionFeedback(p_motor); }
 
+static inline bool Motor_SetPositionFeedback(Motor_T * p_motor, bool isTrue)
+{
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	(p_motor->ControlFlags.SensorFeedback = isTrue);
+#else
+	(void)p_motor; (void)isTrue;
+#endif
+}
+
 static inline void Motor_StartOpenLoop(Motor_T * p_motor)
 {
-	p_motor->FeedbackModeFlags.OpenLoop = 1U; //change different flag
+	// p_motor->FeedbackModeFlags.OpenLoop = 1U; //change different flag
 	p_motor->OpenLoopRampIndex = 0U;
 	p_motor->OpenLoopSpeed_RPM = 0U;
-	p_motor->OpenLoopVPwm = p_motor->Parameters.OpenLoopVPwm;
-	Motor_SetRampTarget(p_motor, p_motor->Parameters.OpenLoopVPwm);
+	p_motor->OpenLoopVPwm_Frac16 = p_motor->Parameters.OpenLoopVPwm_Frac16;
+	Motor_SetRampTarget(p_motor, p_motor->Parameters.OpenLoopVPwm_Frac16);
 }
 
 /******************************************************************************/
@@ -577,12 +587,12 @@ static inline void Motor_StartOpenLoop(Motor_T * p_motor)
 /******************************************************************************/
 static inline Motor_FeedbackModeFlags_T Motor_ConvertFeedbackModeFlags(Motor_FeedbackMode_T mode)
 {
-	static const Motor_FeedbackModeFlags_T MODE_OPEN_LOOP 		= { .OpenLoop = 1U, .Speed = 0U, .Current = 0U, .VFreqScalar = 0U, .Update = 0U, };
-	static const Motor_FeedbackModeFlags_T MODE_VOLTAGE 		= { .OpenLoop = 0U, .Speed = 0U, .Current = 0U, .VFreqScalar = 0U, .Update = 0U, };
-	static const Motor_FeedbackModeFlags_T MODE_VOLTAGE_FREQ 	= { .OpenLoop = 0U, .Speed = 0U, .Current = 0U, .VFreqScalar = 1U, .Update = 0U, };
-	static const Motor_FeedbackModeFlags_T MODE_CURRENT 		= { .OpenLoop = 0U, .Speed = 0U, .Current = 1U, .VFreqScalar = 0U, .Update = 0U, };
-	static const Motor_FeedbackModeFlags_T MODE_SPEED_VOLTAGE 	= { .OpenLoop = 0U, .Speed = 1U, .Current = 0U, .VFreqScalar = 0U, .Update = 0U, };
-	static const Motor_FeedbackModeFlags_T MODE_SPEED_CURRENT 	= { .OpenLoop = 0U, .Speed = 1U, .Current = 1U, .VFreqScalar = 0U, .Update = 0U, };
+	static const Motor_FeedbackModeFlags_T MODE_OPEN_LOOP 		= { .OpenLoop = 1U, .Speed = 0U, .Current = 0U, .Scalar = 0U, .Update = 0U, };
+	static const Motor_FeedbackModeFlags_T MODE_VOLTAGE 		= { .OpenLoop = 0U, .Speed = 0U, .Current = 0U, .Scalar = 0U, .Update = 0U, };
+	static const Motor_FeedbackModeFlags_T MODE_VOLTAGE_FREQ 	= { .OpenLoop = 0U, .Speed = 0U, .Current = 0U, .Scalar = 1U, .Update = 0U, };
+	static const Motor_FeedbackModeFlags_T MODE_CURRENT 		= { .OpenLoop = 0U, .Speed = 0U, .Current = 1U, .Scalar = 0U, .Update = 0U, };
+	static const Motor_FeedbackModeFlags_T MODE_SPEED_VOLTAGE 	= { .OpenLoop = 0U, .Speed = 1U, .Current = 0U, .Scalar = 0U, .Update = 0U, };
+	static const Motor_FeedbackModeFlags_T MODE_SPEED_CURRENT 	= { .OpenLoop = 0U, .Speed = 1U, .Current = 1U, .Scalar = 0U, .Update = 0U, };
 
 	Motor_FeedbackModeFlags_T flags;
 
@@ -590,7 +600,7 @@ static inline Motor_FeedbackModeFlags_T Motor_ConvertFeedbackModeFlags(Motor_Fee
 	{
 		case MOTOR_FEEDBACK_MODE_OPEN_LOOP:					flags.State = MODE_OPEN_LOOP.State; 	break;
 		case MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE:			flags.State = MODE_VOLTAGE.State;		break;
-		case MOTOR_FEEDBACK_MODE_VOLTAGE_FREQ_SCALAR:		flags.State = MODE_VOLTAGE_FREQ.State;	break;
+		case MOTOR_FEEDBACK_MODE_SCALAR_VOLTAGE_FREQ:		flags.State = MODE_VOLTAGE_FREQ.State;	break;
 		case MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT:			flags.State = MODE_CURRENT.State;		break;
 		case MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_VOLTAGE:	flags.State = MODE_SPEED_VOLTAGE.State;	break;
 		case MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT:	flags.State = MODE_SPEED_CURRENT.State;	break;
@@ -618,11 +628,13 @@ static inline void Motor_SetFeedbackModeFlags(Motor_T * p_motor, Motor_FeedbackM
 	p_motor->FeedbackModeFlags.State = Motor_ConvertFeedbackModeFlags(mode).State;
 }
 
-// static inline void Motor_SetControlFlags(Motor_T * p_motor, Motor_FeedbackMode_T mode)
-// {
-// 	p_motor->FeedbackModeFlags.State = Motor_ConvertFeedbackModeFlags(mode).State;
-// 	p_motor->FeedbackModeFlags.OpenLoop |= Motor_ConvertFeedbackModeFlags(mode).OpenLoop;
-// }
+static inline void Motor_SetControlFlags(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+{
+	// p_motor->FeedbackModeFlags.State = Motor_ConvertFeedbackModeFlags(mode).State;
+	// p_motor->FeedbackModeFlags.OpenLoop |= Motor_ConvertFeedbackModeFlags(mode).OpenLoop;
+	Motor_SetFeedbackModeFlags(p_motor, mode);
+	if(p_motor->FeedbackModeFlags.OpenLoop == 1U) { p_motor->ControlFlags.SensorFeedback = 0U; } /* Clear only */
+}
 
 /******************************************************************************/
 /*
@@ -666,11 +678,6 @@ static inline void Motor_ResetILimits(Motor_T * p_motor)
 	Extern
 */
 /******************************************************************************/
-extern uint16_t _Motor_GetAdcVRef(void);
-extern uint16_t _Motor_GetVSourceRef(void);
-extern void Motor_InitAdcVRef_MilliV(uint16_t adcVRef_MilliV);
-extern void Motor_InitVSourceRef_V(uint16_t vRefSupply);
-
 extern void Motor_Init(Motor_T * p_motor);
 extern void Motor_InitReboot(Motor_T * p_motor);
 
@@ -684,7 +691,8 @@ extern void Motor_ZeroSensor(Motor_T * p_motor);
 extern void Motor_ResetSensorMode(Motor_T * p_motor);
 extern void Motor_ResetUnitsVabc(Motor_T * p_motor);
 extern void Motor_ResetUnitsIabc(Motor_T * p_motor);
-extern void Motor_ResetUnitsHall(Motor_T * p_motor);
+extern void Motor_ResetUnitsHallPolePairs(Motor_T * p_motor);
+extern void Motor_ResetUnitsEncoderPolePairs(Motor_T * p_motor);
 extern void Motor_ResetUnitsEncoder(Motor_T * p_motor);
 extern void Motor_ResetUnitsSinCos(Motor_T * p_motor);
 extern void Motor_ResetUnitsAngleSpeed_Mech(Motor_T * p_motor);
@@ -697,6 +705,5 @@ extern void Motor_Jog6Step(Motor_T * p_motor, uint8_t step);
 extern void Motor_Jog12(Motor_T * p_motor);
 extern void Motor_Jog6Phase(Motor_T * p_motor);
 extern void Motor_Jog6(Motor_T * p_motor);
-
 
 #endif

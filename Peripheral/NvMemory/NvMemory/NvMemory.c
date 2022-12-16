@@ -78,7 +78,7 @@ static inline bool StartOpCmd(const NvMemory_T * p_this, size_t opIndex)
 */
 static inline uint32_t CalcAlignDown(uint32_t num, uint32_t align) { return ((num) & -(align)); }
 static inline uint32_t CalcAlignUp(uint32_t num, uint32_t align) { return (-(-(num) & -(align))); }
-static inline bool CheckAligned(uint32_t num, uint32_t align) { return ((num & (align - 1U)) == 0U); }
+static inline bool CheckAligned(uint32_t num, uint32_t align) { return ((num & (align - 1U)) == 0UL); }
 
 /******************************************************************************/
 /*!

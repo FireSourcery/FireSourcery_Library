@@ -63,6 +63,7 @@
 #include <stdint.h>
 #include <string.h>
 
+/* Library Software Version */
 #define MOT_SOFTWARE_VERSION_OPT 		0U
 #define MOT_SOFTWARE_VERSION_MAJOR 		0U
 #define MOT_SOFTWARE_VERSION_MINOR 		0U
@@ -153,9 +154,14 @@ typedef union MotorController_FaultFlags_Tag
 	struct
 	{
 		uint32_t PcbOverHeat 		: 1U;
+#if		defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
 		uint32_t MosfetsTopOverHeat : 1U;
 		uint32_t MosfetsBotOverHeat : 1U;
-		uint32_t VPosLimit 			: 1U;
+#else
+		uint32_t MosfetsOverHeat 	: 1U;
+#endif
+
+		uint32_t VSourceLimit 		: 1U;
 		uint32_t VSenseLimit 		: 1U;
 		uint32_t VAccLimit 			: 1U;
 		uint32_t Motors				: 1U;
@@ -269,10 +275,14 @@ typedef const struct MotorController_Config_Tag
 	Protocol_T * const P_PROTOCOLS; /* Simultaneously active protocols */
 	const uint8_t PROTOCOL_COUNT;
 
-	const uint16_t V_MAX;
-	const uint16_t I_MAX;
 	const uint16_t ADC_VREF_MAX_MILLIV;
 	const uint16_t ADC_VREF_MIN_MILLIV;
+
+	const uint32_t ANALOG_USER_DIVIDER;
+	const uint32_t MAIN_DIVIDER_10;
+	const uint32_t MAIN_DIVIDER_1000;
+	const uint32_t TIMER_DIVIDER_1000;
+
 	const uint8_t SOFTWARE_VERSION[4U];
 }
 MotorController_Config_T;
@@ -298,9 +308,14 @@ typedef struct MotorController_Tag
 	Pin_T Relay;
 	Debounce_T OptDin; 	/* Configurable input */
 
+//todo outside allocate heat channels
 	Thermistor_T ThermistorPcb;
+#if		defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
 	Thermistor_T ThermistorMosfetsTop;
 	Thermistor_T ThermistorMosfetsBot;
+#else
+	Thermistor_T ThermistorMosfets;
+#endif
 	VMonitor_T VMonitorSource; 	//Controller Supply
 	VMonitor_T VMonitorSense; 	//5V
 	VMonitor_T VMonitorAcc; 	//12V
@@ -308,10 +323,8 @@ typedef struct MotorController_Tag
 	Linear_T ILimitHeatRate;
 
 	Timer_T TimerMillis;
-	Timer_T TimerMillis10;
-	Timer_T TimerSeconds;
-	Timer_T TimerIsrDividerSeconds;
-	// Timer_T TimerState;
+	uint32_t MainDividerCounter;
+	uint32_t TimerDividerCounter;
 
 #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
 	Shell_T Shell;
@@ -322,8 +335,6 @@ typedef struct MotorController_Tag
 	MotorController_FaultFlags_T FaultFlags; /* Fault Substate */
 	MotorController_WarningFlags_T WarningFlags;
 	// MotAnalog_Results_T FaultAnalogRecord;
-
-	// MotorController_Direction_T UserDirection;
 	/* Set by StateMachine only */
 	MotorController_Direction_T ActiveDirection;
 	MotorController_SubId_T SubState;

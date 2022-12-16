@@ -36,6 +36,10 @@
 #include "math_linear.h"
 #include <stdint.h>
 
+/*
+	Shift 14 to allow over saturation f([-2*XRef:2*XRef]) == [-2*YRef:2*YRef] before overflow
+		i.e 2x input range, before overflow, while retaining sign bit
+*/
 #define LINEAR_DIVIDE_SHIFT 14U /* Allow signed, and 2x xRef input */
 typedef struct Linear_Tag
 {

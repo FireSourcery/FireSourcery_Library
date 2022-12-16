@@ -73,7 +73,7 @@ static inline int32_t _Motor_User_CalcDirectionalCmd(Motor_T * p_motor, int32_t 
 static inline void _Motor_User_SetVoltageModeILimit(Motor_T * p_motor, bool isMotoring)
 {
 	int32_t iLimit = (isMotoring == true) ? (p_motor->ILimitMotoring_Frac16 / 3) : (0 - p_motor->ILimitGenerating_Frac16 / 3); /* temp /3, todo account for id */
-	p_motor->VoltageModeILimit_QFracS16 = _Motor_User_CalcDirectionalCmd(p_motor, iLimit); 	/* determine limit input into IPid */
+	p_motor->ILimitVoltageMode_FracS16 = _Motor_User_CalcDirectionalCmd(p_motor, iLimit); 	/* determine limit input into IPid */
 }
 
 
@@ -106,7 +106,7 @@ static inline void Motor_User_SetVoltageModeCmd(Motor_T * p_motor, int16_t volta
 /******************************************************************************/
 static inline void Motor_User_SetVFreqMode(Motor_T * p_motor)
 {
-	_Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE_FREQ_SCALAR);
+	_Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_SCALAR_VOLTAGE_FREQ);
 }
 
 /*!
@@ -213,7 +213,7 @@ static inline void Motor_User_SetUserFeedbackCmdValue(Motor_T * p_motor, int16_t
 }
 
 /*!
-	@param[in] throttle [-32768:32767]
+	@param[in] userCmd [-32768:32767]
 */
 static inline void Motor_User_SetUserFeedbackModeCmd(Motor_T * p_motor, int16_t userCmd)
 {
@@ -342,8 +342,8 @@ static inline bool Motor_User_CheckFault(Motor_T * p_motor)
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 static inline int32_t _Motor_User_ConvertToSpeedFrac16(Motor_T * p_motor, int32_t speed_rpm) 	{ return speed_rpm * 65535 / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
 static inline int16_t _Motor_User_ConvertToSpeedRpm(Motor_T * p_motor, int32_t speed_frac16) 	{ return speed_frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / 65536; }
-static inline int32_t _Motor_User_ConvertToIFrac16(Motor_T * p_motor, int32_t i_amp) 			{ return i_amp * 65535 / p_motor->CONFIG.I_MAX_AMP; }
-static inline int16_t _Motor_User_ConvertToIAmp(Motor_T * p_motor, int32_t i_frac16) 			{ return i_frac16 * p_motor->CONFIG.I_MAX_AMP / 65536; }
+static inline int32_t _Motor_User_ConvertToIFrac16(Motor_T * p_motor, int32_t i_amp) 			{ return i_amp * 65535 /  GLOBAL_MOTOR.I_MAX_AMP; }
+static inline int16_t _Motor_User_ConvertToIAmp(Motor_T * p_motor, int32_t i_frac16) 			{ return i_frac16 *  GLOBAL_MOTOR.I_MAX_AMP / 65536; }
 #endif
 
 /******************************************************************************/
@@ -453,8 +453,8 @@ static inline uint32_t Motor_User_ConvertToVMatchFrac16(Motor_T * p_motor, uint1
 
 static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode)  	{ p_motor->Parameters.CommutationMode = mode; }
 static inline void Motor_User_SetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode) 				{ p_motor->Parameters.AlignMode = mode; }
-static inline void Motor_User_SetAlignVoltage(Motor_T * p_motor, uint16_t v_frac16) 				{ p_motor->Parameters.AlignVoltage_Frac16 = (v_frac16 > CONFIG_MOTOR_ALIGN_VOLTAGE_MAX) ? CONFIG_MOTOR_ALIGN_VOLTAGE_MAX : v_frac16; }
-static inline void Motor_User_SetAlignTime_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.AlignTime_ControlCycles = millis * (p_motor->ControlTimer.CONFIG.BASE_FREQ/1000U) ; } /* correlated value set at compile time*/
+static inline void Motor_User_SetAlignVoltage(Motor_T * p_motor, uint16_t v_frac16) 				{ p_motor->Parameters.AlignVoltage_Frac16 = (v_frac16 > GLOBAL_MOTOR.ALIGN_VOLTAGE_MAX) ? GLOBAL_MOTOR.ALIGN_VOLTAGE_MAX : v_frac16; }
+static inline void Motor_User_SetAlignTime_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.AlignTime_ControlCycles = millis * (p_motor->ControlTimer.CONFIG.BASE_FREQ / 1000U) ; } /* correlated value set at compile time*/
 // static inline void Motor_User_SetVoltageBrakeScalar_Frac16(Motor_T * p_motor, uint16_t scalar_Frac16) 	{ p_motor->Parameters.VoltageBrakeScalar_InvFrac16 = 65535U - scalar_Frac16; }
 
 /* Persistent Control Mode */

@@ -124,7 +124,11 @@ typedef struct Encoder_Tag
 
 	volatile uint16_t AngularD; 	/*!< Looping CounterD at CountsPerRevolution */
 	volatile int32_t CounterD;
+	volatile int32_t IndexCounterD;
+	volatile int32_t IndexCounterDOffset;
+
 	volatile uint32_t Angle32;
+	volatile uint32_t IndexCount;
 	volatile uint32_t ErrorCount;
 
 	uint32_t TimerCounterSaved; 		/*!< First time/count sample used to calculate Delta */
@@ -245,19 +249,18 @@ extern const int8_t _ENCODER_TABLE[_ENCODER_TABLE_LENGTH];
 */
 static inline void _Encoder_CaptureCounterD_Inc(Encoder_T * p_encoder)
 {
-	// p_encoder->AngularD = (p_encoder->AngularD < p_encoder->Params.CountsPerRevolution - 1U) ? p_encoder->AngularD + 1U : 0U;
 	p_encoder->CounterD++;
 	p_encoder->Angle32 += p_encoder->UnitAngularD;
+	// p_encoder->AngularD = (p_encoder->AngularD < p_encoder->Params.CountsPerRevolution - 1U) ? p_encoder->AngularD + 1U : 0U;
 }
 
-static inline void _Encoder_CaptureCounterD_Dec(Encoder_T * p_encoder)
-{
-	// p_encoder->AngularD = (p_encoder->AngularD > 0U) ? p_encoder->AngularD - 1U : p_encoder->Params.CountsPerRevolution - 1U;
-}
+// static inline void _Encoder_CaptureCounterD_Dec(Encoder_T * p_encoder)
+// {
+// 	// p_encoder->AngularD = (p_encoder->AngularD > 0U) ? p_encoder->AngularD - 1U : p_encoder->Params.CountsPerRevolution - 1U;
+// }
 
 /*
-	SW Quadrature - UNTESTED
-	only when capturing a single phase of 2 phase quadrature mode, 180 degree offset. (not for 3 phase 120 degree offset)
+	SW Quadrature
 */
 static inline void _Encoder_CaptureCounterD_Quadrature(Encoder_T * p_encoder)
 {
@@ -276,10 +279,6 @@ static inline void _Encoder_CaptureCounterD_Quadrature(Encoder_T * p_encoder)
 		p_encoder->Angle32 += ((int32_t)count * (int32_t)p_encoder->UnitAngularD);
 	}
 
-	// if		(count == 1) 						{ _Encoder_CaptureCounterD_Inc(p_encoder); }
-	// else if	(count == -1) 						{ _Encoder_CaptureCounterD_Dec(p_encoder); }
-	// else if (count == _ENCODER_TABLE_ERROR) 	{ p_encoder->ErrorCount++; }
-
 	// p_encoder->DeltaD = count; //or set quadrature read direction
 	// if(p_encoder->TotalD < INT32_MAX) {p_encoder->TotalD += 1U;} integral functions
 	// if(p_encoder->TotalD > INT32_MIN) {p_encoder->TotalD -= 1;}
@@ -287,14 +286,19 @@ static inline void _Encoder_CaptureCounterD_Quadrature(Encoder_T * p_encoder)
 	p_encoder->Phases.State = phases.State;
 }
 
-static inline void _Encoder_CaptureCounterD_PhaseARisingEdge(Encoder_T * p_encoder)
+static inline void _Encoder_CaptureCounterD_QuadraturePhaseA(Encoder_T * p_encoder)
 {
-	// int8_t count = (Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1;
-	p_encoder->CounterD += 1;
-	// p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngularD);
+	//using PhaseA table
 }
 
-static inline void _Encoder_CaptureCounterD(Encoder_T * p_encoder)
+// static inline void _Encoder_CaptureCounterD_PhaseA(Encoder_T * p_encoder)
+// {
+// 	// int8_t count = (Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1;
+// 	p_encoder->CounterD += 1;
+// 	// p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngularD);
+// }
+
+static inline void Encoder_CaptureCounterD(Encoder_T * p_encoder)
 {
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 	if(p_encoder->Params.IsQuadratureCaptureEnabled == true) { _Encoder_CaptureCounterD_Quadrature(p_encoder); }
@@ -316,6 +320,12 @@ static inline uint32_t _Encoder_CaptureDelta(Encoder_T * p_encoder, uint32_t tim
 	return delta;
 }
 
+static inline void _Encoder_ZeroAngle(Encoder_T * p_encoder)
+{
+	p_encoder->CounterD = 0U;
+	p_encoder->Angle32 = 0U;
+}
+
 /*!
 	Acceleration
 */
@@ -326,7 +336,6 @@ static inline uint32_t _Encoder_CaptureDelta(Encoder_T * p_encoder, uint32_t tim
 // 	p_encoder->SpeedSaved = newSpeed;
 // 	return newSpeed;
 // }
-
 /******************************************************************************/
 /*!
 	@brief 	 CounterD conversions.
@@ -364,14 +373,39 @@ static inline uint32_t Encoder_ConvertAngleToCounterD(Encoder_T * p_encoder, uin
 	return (angle_UserDegrees << (32U - CONFIG_ENCODER_ANGLE_DEGREES_BITS)) / p_encoder->UnitAngularD;
 }
 
+static inline uint32_t _Encoder_GetAngle32(Encoder_T * p_encoder)
+{
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
+	p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
+	return HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER) * (int32_t)p_encoder->UnitAngularD;
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+	return p_encoder->Angle32;
+#endif
+}
+
+static inline uint32_t Encoder_GetCounterD(Encoder_T * p_encoder)
+{
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
+	// return HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER) * IndexCounts;
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+	return p_encoder->CounterD;
+#endif
+}
+
+static inline uint16_t Encoder_GetAngle(Encoder_T * p_encoder)
+{
+	uint16_t angle = _Encoder_GetAngle32(p_encoder) >> 16U;
+	return (p_encoder->Params.IsALeadBPositive == true) ? angle : 0 - angle;
+}
+
 /******************************************************************************/
 /*!
 	Linear Distance
 */
 /******************************************************************************/
-static inline uint32_t Encoder_ConvertCounterDToUnits(Encoder_T * p_encoder, uint32_t counterD_Ticks) { return counterD_Ticks * p_encoder->UnitLinearD; }
-static inline uint32_t Encoder_ConvertUnitsToCounterD(Encoder_T * p_encoder, uint32_t counterD_Ticks) { return counterD_Ticks / p_encoder->UnitLinearD; }
-// static inline uint32_t Encoder_GetTotalDistance(Encoder_T * p_encoder) { return Encoder_ConvertCounterDToUnits(p_encoder, p_encoder->TotalD); }
+static inline uint32_t Encoder_ConvertCounterDToDistance(Encoder_T * p_encoder, uint32_t counterD_Ticks) { return counterD_Ticks * p_encoder->UnitLinearD; }
+static inline uint32_t Encoder_ConvertDistanceToCounterD(Encoder_T * p_encoder, uint32_t counterD_Ticks) { return counterD_Ticks / p_encoder->UnitLinearD; }
+// static inline uint32_t Encoder_GetTotalDistance(Encoder_T * p_encoder) { return Encoder_ConvertCounterDToDistance(p_encoder, p_encoder->TotalD); }
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
@@ -526,64 +560,6 @@ static inline uint32_t Encoder_CalcGroundSpeed_Kmh(Encoder_T * p_encoder, uint32
 /*! @} */
 /******************************************************************************/
 
-/******************************************************************************/
-/*!
-	Speed position conversions
-	Independent from Delta Captures
-	Use for integrate Speed to position
-*/
-/******************************************************************************/
-/*
-	Overflow caution:
-*/
-static inline uint32_t Encoder_ConvertRotationalSpeedToAngle_RPM(uint32_t rpm, uint32_t sampleFreq)
-{
-	uint32_t angle;
-
-	if(rpm < (UINT32_MAX >> CONFIG_ENCODER_ANGLE_DEGREES_BITS))
-	{
-		angle = (rpm << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / (60U * sampleFreq);
-	}
-	else
-	{
-		angle = (1U << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / 60U * rpm / sampleFreq;
-	}
-
-	return angle;
-}
-
-static inline uint32_t Encoder_ConvertAngleToRotationalSpeed_RPM(uint32_t angle_UserDegrees, uint32_t sampleFreq)
-{
-	return (angle_UserDegrees * sampleFreq >> CONFIG_ENCODER_ANGLE_DEGREES_BITS) * 60U;
-}
-
-/*
-	D/T Common
-	delta angle for speed position integration => POLLING_FREQ e.g. 20000Hz
-*/
-static inline uint32_t Encoder_ConvertRotationalSpeedToControlAngle_RPM(Encoder_T * p_encoder, uint32_t rpm)
-{
-	return Encoder_ConvertRotationalSpeedToAngle_RPM(rpm, p_encoder->CONFIG.POLLING_FREQ);
-}
-
-static inline uint32_t Encoder_ConvertControlAngleToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t angle_UserDegrees)
-{
-	return Encoder_ConvertAngleToRotationalSpeed_RPM(angle_UserDegrees, p_encoder->CONFIG.POLLING_FREQ);
-}
-
-/*
-	D only
-	Avg Speed sampling
-*/
-static inline uint32_t Encoder_ConvertRotationalSpeedToSampleAngle_RPM(Encoder_T * p_encoder, uint32_t rpm)
-{
-	return Encoder_ConvertRotationalSpeedToAngle_RPM(rpm, p_encoder->CONFIG.D_SPEED_FREQ);
-}
-
-static inline uint32_t Encoder_ConvertSampleAngleToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t angle_UserDegrees)
-{
-	return Encoder_ConvertAngleToRotationalSpeed_RPM(angle_UserDegrees, p_encoder->CONFIG.D_SPEED_FREQ);
-}
 
 /******************************************************************************/
 /*
@@ -592,10 +568,7 @@ static inline uint32_t Encoder_ConvertSampleAngleToRotationalSpeed_RPM(Encoder_T
 	todo alternatively, freq mode change
 */
 /******************************************************************************/
-// may change HW_DECODER capture is exception to this interface
-static inline uint32_t Encoder_GetCounterD(Encoder_T * p_encoder) 	{ return p_encoder->CounterD; }
-static inline uint32_t Encoder_GetAngle(Encoder_T * p_encoder) 		{ return p_encoder->Angle32 >> 16U; }
-
+/* NonOptimized functions */
 static inline uint32_t Encoder_GetAngularSpeed(Encoder_T * p_encoder)
 {
 	return Encoder_CalcAngularSpeed(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
@@ -616,7 +589,7 @@ static inline uint32_t Encoder_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
 	return Encoder_CalcRotationalSpeed_RPM(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
 }
 
-static inline uint32_t Encoder_GetFrac16Speed(Encoder_T * p_encoder)
+static inline uint32_t Encoder_GetScalarSpeed(Encoder_T * p_encoder)
 {
 	return Encoder_CalcScalarSpeed(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
 }

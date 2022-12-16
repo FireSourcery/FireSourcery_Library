@@ -22,33 +22,41 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Linear_Speed.c
+	@file 	Global_Motor.h
 	@author FireSourcery
-	@brief
+	@brief  Per Motor State Control.
 	@version V0
 */
 /******************************************************************************/
-#include "Linear_Speed.h"
+#ifndef GLOBAL_MOTOR_H
+#define GLOBAL_MOTOR_H
 
-/******************************************************************************/
-/*!
-	f(angle) = rpm
-	f16(angle) = speed_frac16
-	f(angleMax == XRef) = speedRef_Rpm
+#include "Config.h"
+#include <stdint.h>
+#include <stdbool.h>
 
-	SlopeFactor = sampleFreq * 60U
-	SlopeDivisor = (1U << angleBits)
- */
- /******************************************************************************/
-void Linear_Speed_InitAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t angleBits, uint16_t speedRef_Rpm)
+/* Global Static Const  */
+typedef const struct
 {
-	Linear_Frac16_Init(p_linear, (sampleFreq * 60U), ((uint32_t)1UL << angleBits), 0, speedRef_Rpm);
+	const uint16_t CONTROL_FREQ;
+	const uint16_t V_MAX_VOLTS;
+	const uint16_t I_MAX_AMP; 				/* Motor I controller rating. pass to Linear_ADC. Unit conversion, UI input/output, param set. */
+	const uint16_t I_ZERO_TO_PEAK_ADCU; 	/* Sensor calibration *//* Zero-To-Peak, derived from sensor hardware */
+	const uint16_t VABC_R1;
+	const uint16_t VABC_R2;
+	const uint16_t ALIGN_VOLTAGE_MAX;
+	const uint32_t CONTROL_ANALOG_DIVIDER; 	/* In Pow2 - 1 */
+	const uint8_t INIT_WAIT;
 }
+Global_Motor_T;
 
-/* f(eangle) = mechspeed */
-/* check overflow */
-void Linear_Speed_InitElectricalAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t angleBits, uint8_t polePairs, uint16_t speedRef_Rpm)
-{
-	Linear_Frac16_Init(p_linear, (sampleFreq * 60U), ((uint32_t)1UL << angleBits) * polePairs, 0, speedRef_Rpm);
-}
+/* MISRA violation */
+/* Define in Main App */
+extern const Global_Motor_T GLOBAL_MOTOR;
 
+extern uint16_t Global_Motor_GetAdcVRef(void);
+extern uint16_t Global_Motor_GetVSourceRef(void);
+extern void Global_Motor_InitAdcVRef_MilliV(uint16_t adcVRef_MilliV);
+extern void Global_Motor_InitVSourceRef_V(uint16_t vRefSupply);
+
+#endif

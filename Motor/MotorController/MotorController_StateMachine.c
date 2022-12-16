@@ -72,7 +72,7 @@ static void Init_Exit(MotorController_T * p_mc)
 
 static void Init_Proc(MotorController_T * p_mc)
 {
-	if(SysTime_GetMillis() > 5U) { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP); }
+	if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT) { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP); }
 	/* todo And throttle, init conditionals */
 }
 
@@ -132,10 +132,7 @@ static void Stop_Entry(MotorController_T * p_mc)
 	// }
 }
 
-static void Stop_Proc(MotorController_T * p_mc)
-{
-	(void)p_mc;
-}
+static void Stop_Proc(MotorController_T * p_mc){	(void)p_mc;}
 
 static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc, uint32_t inputDirection)
 {
@@ -446,10 +443,15 @@ static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc, uint32_
 	p_mc->FaultFlags.Motors 				= (MotorController_ClearFaultMotorAll(p_mc) == false);
 	p_mc->FaultFlags.VSenseLimit 			= VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense);
 	p_mc->FaultFlags.VAccLimit 				= VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc);
-	p_mc->FaultFlags.VPosLimit 				= VMonitor_GetIsStatusLimit(&p_mc->VMonitorSource);
+	p_mc->FaultFlags.VSourceLimit 			= VMonitor_GetIsStatusLimit(&p_mc->VMonitorSource);
 	p_mc->FaultFlags.PcbOverHeat 			= Thermistor_GetIsShutdown(&p_mc->ThermistorPcb);
+#if		defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
 	p_mc->FaultFlags.MosfetsTopOverHeat 	= Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsTop);
 	p_mc->FaultFlags.MosfetsBotOverHeat 	= Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsBot);
+#else
+	p_mc->FaultFlags.MosfetsOverHeat 	= Thermistor_GetIsShutdown(&p_mc->ThermistorMosfets);
+#endif
+
 	p_mc->FaultFlags.User 					= 0U;
 	// if(p_mc->FaultFlags.Motors == 0U) {p_mc->FaultFlags.MotorOverHeat = 0U;}
 	return 0U;

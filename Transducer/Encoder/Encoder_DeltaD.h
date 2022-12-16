@@ -92,13 +92,10 @@
 static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 {
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
-	/* For Common interface functions */
+	/* For common interface functions. Emulated Capture in ISR */
 	p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
 	p_encoder->Angle32 = p_encoder->CounterD * p_encoder->UnitAngularD;
-
-	/* Emulated Capture in ISR */
 #endif
-
 	// if (p_encoder->Params.IsQuadratureCaptureEnabled == true)
 	// {
 
@@ -201,15 +198,17 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 /******************************************************************************/
 // static inline uint32_t Encoder_DeltaD_GetAngle(Encoder_T * p_encoder)
 // {
-// 	return Encoder_ConvertCounterDToAngle(p_encoder, _Encoder_DeltaD_GetCounterD(p_encoder));
+// 	// return Encoder_ConvertCounterDToAngle(p_encoder, _Encoder_DeltaD_GetCounterD(p_encoder));
+// 	return Encoder_GetAngle(p_encoder);
 // }
 
-static inline uint32_t Encoder_DeltaD_GetDelta(Encoder_T * p_encoder) 			{ return p_encoder->DeltaD; }
-static inline uint32_t Encoder_DeltaD_GetDeltaAngle(Encoder_T * p_encoder) 		{ return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->DeltaD); }
-static inline uint32_t Encoder_DeltaD_GetDeltaDistance(Encoder_T * p_encoder) 	{ return Encoder_ConvertCounterDToUnits(p_encoder, p_encoder->DeltaD); }
+// static inline uint32_t Encoder_DeltaD_GetDelta(Encoder_T * p_encoder) 			{ return p_encoder->DeltaD; }
+// static inline uint32_t Encoder_DeltaD_GetDeltaAngle(Encoder_T * p_encoder) 		{ return Encoder_ConvertCounterDToAngle(p_encoder, p_encoder->DeltaD); }
+// static inline uint32_t Encoder_DeltaD_GetDeltaDistance(Encoder_T * p_encoder) 	{ return Encoder_ConvertCounterDToDistance(p_encoder, p_encoder->DeltaD); }
 
 /******************************************************************************/
 /*!
+	Compiler optimize conversion
 	Get Speed - Variable DeltaD (DeltaT is fixed, == 1).
 	Fixed DeltaT: DeltaD count on fixed time sample.
 */

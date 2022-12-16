@@ -95,7 +95,6 @@ void _Analog_ProcQueue(Analog_T * p_analog)
 			}
 			else if(p_next->TYPE == ANALOG_QUEUE_TYPE_CHANNEL)  /* Activate and wait for ISR */
 			{
-
 #if (CONFIG_ANALOG_HW_FIFO_LENGTH > 0U)
 				WriteAdcFifo(p_analog);
 #else

@@ -48,7 +48,7 @@ static inline void CaptureVPeak(Motor_T * p_motor, uint16_t adcu) { if(adcu > p_
 
 void Motor_Analog_CaptureVa(Motor_T * p_motor)
 {
-	Motor_ProcCommutationMode(p_motor, 0U, 0U/* Motor_SixStep_CaptureBemfA */);
+	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVa, 0U/* Motor_SixStep_CaptureBemfA */);
 	CaptureVPeak(p_motor, p_motor->AnalogResults.Va_Adcu);
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	// p_motor->DebugTimeABC[0] = SysTime_GetMicros() - p_motor->MicrosRef;
@@ -57,8 +57,8 @@ void Motor_Analog_CaptureVa(Motor_T * p_motor)
 
 void Motor_Analog_CaptureVb(Motor_T * p_motor)
 {
-	Motor_ProcCommutationMode(p_motor, 0U, 0U/* Motor_SixStep_CaptureBemfB */);
-	CaptureVPeak(p_motor, p_motor->AnalogResults.Vb_Adcu);
+	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVb, 0U/* Motor_SixStep_CaptureBemfB */);
+	// CaptureVPeak(p_motor, p_motor->AnalogResults.Vb_Adcu);
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	// p_motor->DebugTimeABC[1] = SysTime_GetMicros() - p_motor->MicrosRef;
 #endif
@@ -66,11 +66,11 @@ void Motor_Analog_CaptureVb(Motor_T * p_motor)
 
 void Motor_Analog_CaptureVc(Motor_T * p_motor)
 {
-	Motor_ProcCommutationMode(p_motor, 0U, 0U/* Motor_SixStep_CaptureBemfC */);
-	CaptureVPeak(p_motor, p_motor->AnalogResults.Vc_Adcu);
-#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
-	// p_motor->DebugTimeABC[2] = SysTime_GetMicros() - p_motor->MicrosRef;
-#endif
+	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVc, 0U/* Motor_SixStep_CaptureBemfC */);
+	// CaptureVPeak(p_motor, p_motor->AnalogResults.Vc_Adcu);
+	// p_motor->Motor_Debug_CapturePeriod[2] = SysTime_GetMicros() - p_motor->MicrosRef;
+	// Motor_Debug_CapturePeriod(p_motor, 8U);
+
 }
 
 /******************************************************************************/
@@ -94,13 +94,14 @@ void Motor_Analog_CaptureIa(Motor_T * p_motor)
 void Motor_Analog_CaptureIb(Motor_T * p_motor)
 {
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIb, 0U/* Motor_SixStep_CaptureIb */);
-	CaptureIZeroToPeak(p_motor, p_motor->Parameters.IbZeroRef_Adcu, p_motor->AnalogResults.Ib_Adcu);
+	// CaptureIZeroToPeak(p_motor, p_motor->Parameters.IbZeroRef_Adcu, p_motor->AnalogResults.Ib_Adcu);
 }
 
 void Motor_Analog_CaptureIc(Motor_T * p_motor)
 {
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIc, 0U/* Motor_SixStep_CaptureIc */);
-	CaptureIZeroToPeak(p_motor, p_motor->Parameters.IcZeroRef_Adcu, p_motor->AnalogResults.Ic_Adcu);
+	// CaptureIZeroToPeak(p_motor, p_motor->Parameters.IcZeroRef_Adcu, p_motor->AnalogResults.Ic_Adcu);
+	Debug_LED();
 }
 
 

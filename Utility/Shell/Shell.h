@@ -91,7 +91,7 @@ typedef struct
 	Shell_State_T State;
 	Cmd_T * p_Cmd; 			/*!< Cmd  in process preserve across state change */
 	Cmd_Status_T CmdReturnCode;
-	uint32_t LoopModeTimeRef;
+	uint32_t ProcTimeRef;
 }
 Shell_T;
 

@@ -22,33 +22,20 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Linear_Speed.c
+	@file 	Global_Motor.c
 	@author FireSourcery
 	@brief
 	@version V0
 */
 /******************************************************************************/
-#include "Linear_Speed.h"
+#include "Global_Motor.h"
 
-/******************************************************************************/
-/*!
-	f(angle) = rpm
-	f16(angle) = speed_frac16
-	f(angleMax == XRef) = speedRef_Rpm
+/* Global Static, for all Motor instances */
+static uint16_t AdcVRef_MilliV;  	/* Sync with upper layer */
+static uint16_t VSourceRef_V; 		/* Battery/Supply voltage. Sync with upper layer */
 
-	SlopeFactor = sampleFreq * 60U
-	SlopeDivisor = (1U << angleBits)
- */
- /******************************************************************************/
-void Linear_Speed_InitAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t angleBits, uint16_t speedRef_Rpm)
-{
-	Linear_Frac16_Init(p_linear, (sampleFreq * 60U), ((uint32_t)1UL << angleBits), 0, speedRef_Rpm);
-}
+uint16_t Global_Motor_GetAdcVRef(void) 		{ return AdcVRef_MilliV; }
+uint16_t Global_Motor_GetVSourceRef(void) 	{ return VSourceRef_V; }
 
-/* f(eangle) = mechspeed */
-/* check overflow */
-void Linear_Speed_InitElectricalAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t angleBits, uint8_t polePairs, uint16_t speedRef_Rpm)
-{
-	Linear_Frac16_Init(p_linear, (sampleFreq * 60U), ((uint32_t)1UL << angleBits) * polePairs, 0, speedRef_Rpm);
-}
-
+void Global_Motor_InitAdcVRef_MilliV(uint16_t adcVRef_MilliV) 	{ AdcVRef_MilliV = adcVRef_MilliV; }
+void Global_Motor_InitVSourceRef_V(uint16_t vSourceRef_V) 		{ VSourceRef_V = vSourceRef_V; }

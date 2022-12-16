@@ -60,11 +60,15 @@ void MotorController_Init(MotorController_T * p_mc)
 
 	Thermistor_InitAdcVRef_Scalar(p_mc->Parameters.AdcVRef_MilliV);
 	Thermistor_Init(&p_mc->ThermistorPcb);
+#if		defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
 	Thermistor_Init(&p_mc->ThermistorMosfetsTop);
 	Thermistor_Init(&p_mc->ThermistorMosfetsBot);
+#else
+	Thermistor_Init(&p_mc->ThermistorMosfets);
+#endif
 
-	Motor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
-	Motor_InitVSourceRef_V(p_mc->Parameters.VSourceRef);
+	Global_Motor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
+	Global_Motor_InitVSourceRef_V(p_mc->Parameters.VSourceRef);
 	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Init(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 
 	Blinky_Init(&p_mc->Buzzer);
@@ -72,11 +76,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	Pin_Output_Init(&p_mc->Relay);
 	Debounce_Init(&p_mc->OptDin, 5U);
 
-	Timer_Periodic_Init(&p_mc->TimerSeconds, 			1000U);
-	Timer_Periodic_Init(&p_mc->TimerMillis, 			1U);
-	Timer_Periodic_Init(&p_mc->TimerMillis10, 			10U);
-	Timer_Periodic_Init(&p_mc->TimerIsrDividerSeconds, 	1000U);
-	// Timer_Init(&p_mc->TimerState);
+	Timer_Periodic_Init(&p_mc->TimerMillis, 1U);
 
 	for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++) { Protocol_Init(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]); }
 
@@ -96,32 +96,14 @@ void MotorController_Init(MotorController_T * p_mc)
 	Linear_Frac16_Init_Map
 	(
 		&p_mc->ILimitHeatRate,
-		p_mc->ThermistorMosfetsTop.Params.Shutdown_Adcu, 	p_mc->ThermistorMosfetsTop.Params.Warning_Adcu,
-		p_mc->Parameters.ILimitHeat_Frac16,					0U /* Param not used */
+		p_mc->ThermistorMosfets.Params.Shutdown_Adcu, 	p_mc->ThermistorMosfets.Params.Warning_Adcu,
+		p_mc->Parameters.ILimitHeat_Frac16,				0U /* Param not used */
 	);
 
 	p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
 	// p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 	// p_mc->SpeedLimitActiveId = MOTOR_SPEED_LIMIT_ACTIVE_DISABLE;
 	// p_mc->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
-
-	/* Set none fault sample value, or wait in Init State  */
-	// p_mc->ThermistorPcb.Adcu = p_mc->ThermistorPcb.Params.WarningThreshold_Adcu + 1U;
-	// p_mc->ThermistorMosfetsTop.Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
-	// p_mc->ThermistorMosfetsBot.Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
-
-	// p_mc->AnalogResults.VSource_Adcu = p_mc->VMonitorSource.Params.WarningLower_Adcu + 1U;
-	// p_mc->AnalogResults.VAcc_Adcu = p_mc->VMonitorAcc.Params.WarningLower_Adcu + 1U;
-	// p_mc->AnalogResults.VSense_Adcu = p_mc->VMonitorSense.Params.WarningLower_Adcu + 1U;
-
-	// p_mc->AnalogResults.HeatPcb_Adcu = p_mc->ThermistorPcb.Params.WarningThreshold_Adcu + 1U;
-	// p_mc->AnalogResults.HeatMosfetsTop_Adcu = p_mc->ThermistorMosfetsTop.Params.WarningThreshold_Adcu + 1U;
-	// p_mc->AnalogResults.HeatMosfetsBot_Adcu = p_mc->ThermistorMosfetsBot.Params.WarningThreshold_Adcu + 1U;
-
-	// p_mc->AnalogResults.VSource_Adcu = p_mc->VMonitorSource.Params.WarningLower_Adcu + 1U;
-	// p_mc->AnalogResults.VAcc_Adcu = p_mc->VMonitorAcc.Params.WarningLower_Adcu + 1U;
-	// p_mc->AnalogResults.VSense_Adcu = p_mc->VMonitorSense.Params.WarningLower_Adcu + 1U;
-
 	StateMachine_Init(&p_mc->StateMachine);
 }
 
@@ -216,8 +198,8 @@ void MotorController_Init(MotorController_T * p_mc)
 // 	Motor_User_SetAlignTime_Millis(p_motor, 1000U);
 
 // 	// PID_SetFreq(&p_motor->PidSpeed, 1000U);
-// 	// PID_SetFreq(&p_motor->PidIq, 20000U);
-// 	// PID_SetFreq(&p_motor->PidId, 20000U);
+// 	// PID_SetFreq(&p_motor->PidIq, GLOBAL_MOTOR.CONTROL_FREQ);
+// 	// PID_SetFreq(&p_motor->PidId, GLOBAL_MOTOR.CONTROL_FREQ);
 // 	PID_SetTunings(&p_motor->PidSpeed, 1U, 1U, 1U, 2U, 0U, 0U);
 // 	PID_SetTunings(&p_motor->PidIq, 1U, 1U, 1U, 2U, 0U, 0U);
 // 	PID_SetTunings(&p_motor->PidId, 1U, 1U, 1U, 2U, 0U, 0U);
@@ -306,9 +288,15 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->CONFIG.P_MEM_MAP_BOOT, 					&p_mc->MemMapBoot, 						sizeof(MemMapBoot_T)); };
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->AnalogUser.CONFIG.P_PARAMS, 				&p_mc->AnalogUser.Params, 				sizeof(MotAnalogUser_Params_T)); };
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->ThermistorPcb.CONFIG.P_PARAMS, 			&p_mc->ThermistorPcb.Params, 			sizeof(Thermistor_Params_T)); };
+
+#if		defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->ThermistorMosfetsTop.CONFIG.P_PARAMS, 	&p_mc->ThermistorMosfetsTop.Params, 	sizeof(Thermistor_Params_T)); };
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->ThermistorMosfetsBot.CONFIG.P_PARAMS, 	&p_mc->ThermistorMosfetsBot.Params, 	sizeof(Thermistor_Params_T)); };
- 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->VMonitorSource.CONFIG.P_PARAMS, 			&p_mc->VMonitorSource.Params, 				sizeof(VMonitor_Params_T)); };
+#else
+	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->ThermistorMosfets.CONFIG.P_PARAMS, 	&p_mc->ThermistorMosfets.Params, 	sizeof(Thermistor_Params_T)); };
+#endif
+
+	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->VMonitorSource.CONFIG.P_PARAMS, 			&p_mc->VMonitorSource.Params, 				sizeof(VMonitor_Params_T)); };
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->VMonitorAcc.CONFIG.P_PARAMS, 			&p_mc->VMonitorAcc.Params, 				sizeof(VMonitor_Params_T)); };
 	if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->VMonitorSense.CONFIG.P_PARAMS, 			&p_mc->VMonitorSense.Params,			sizeof(VMonitor_Params_T)); };
 #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE

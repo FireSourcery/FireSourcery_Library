@@ -45,32 +45,32 @@
 */
 /******************************************************************************/
 /*
-
 	x0 = 0
 */
 void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
 {
+	p_linear->XOffset = 0;
+	p_linear->YOffset = y0;
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-
-	/* if factor > divisor, bound with yref. */
+	/*
+		if factor > divisor, bound with yref.
+		invf overflow if  (divisor * yRef) > INT32_MAX
+	*/
 	p_linear->YReference = yRef;
-	p_linear->XReference = linear_invf(factor, divisor, y0, yRef); /* yRef*divisor/factor */
-	//else ensure invfunctino does not overflow
+	p_linear->XReference = linear_invf(factor, divisor, y0, yRef); /* (yRef - y0)*divisor/factor */
 
-	//todo determine max shift if factor > 65536
+	/*
+		Allow max input of x = XReference * 2
+			XReference * 2 * Slope_Shifted <= INT32_MAX
+
+			(1 << SlopeShift) <= INT32_MAX / (XReference * 2 * factor) * divisor
+			(1 << SlopeShift) <= INT32_MAX / 2 / factor * divisor / XReference
+		//todo determine max shift, factor > 65536
+	*/
 	p_linear->Slope = (factor << LINEAR_DIVIDE_SHIFT) / divisor;
 	p_linear->SlopeShift = LINEAR_DIVIDE_SHIFT;
 
-	/*
-		Allow max input of x = XReference, without overflow
-			i.e XReference * Slope < INT32_MAX
-
-		loop if divisor < XReference
-		alternatively
-			p_linear->Slope = (factor << LINEAR_DIVIDE_SHIFT) / XReference;
-			p_linear->YReference * divisor / XReference
-	*/
-	//todo non iterative, log2
+	/*	Iterative log2	*/
 	while((p_linear->XReference > INT32_MAX / p_linear->Slope) && (p_linear->SlopeShift > 0U))
 	{
 		p_linear->Slope = p_linear->Slope >> 1U;
@@ -87,8 +87,6 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 		p_linear->InvSlopeShift--;
 	}
 
-	p_linear->XOffset = 0;
-	p_linear->YOffset = y0;
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 	p_linear->SlopeFactor = factor;
 	p_linear->SlopeDivisor = divisor;
@@ -130,8 +128,6 @@ void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 	p_linear->YOffset = y0;
 #endif
 }
-
-
 
 /******************************************************************************/
 /*!
