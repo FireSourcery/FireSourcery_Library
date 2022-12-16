@@ -301,17 +301,24 @@ static void Align_Entry(Motor_T * p_motor)
 	// switch(p_motor->Parameters.AlignMode)
 	// {
 	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_ControlCycles);
-	Motor_ProcCommutationMode(p_motor, Motor_FOC_Align, 0U /* Motor_SixStep_StartPhaseControl */);
+	// Motor_ProcCommutationMode(p_motor, Motor_FOC_Align, 0U);
+	Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAlign, 0U);
 	// }
 }
 
 static void Align_Proc(Motor_T * p_motor)
 {
+	// switch(p_motor->Parameters.AlignMode)
+	// {
 	if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
 	{
 		Motor_ZeroSensor(p_motor);
 		if(Motor_CheckPositionFeedback(p_motor) == true) 	{ _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN);  }
 		else 												{ _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_OPEN_LOOP); }
+	}
+	else
+	{
+		Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAlign, 0U);
 	}
 }
 
@@ -339,14 +346,15 @@ static const StateMachine_State_T STATE_ALIGN =
 /******************************************************************************/
 static void OpenLoop_Entry(Motor_T * p_motor)
 {
-	Motor_StartOpenLoop(p_motor);
-	// Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAngleControl, 0U /* Motor_SixStep_StartPhaseControl */);
+	// Motor_StartOpenLoop(p_motor);
+	Motor_ProcCommutationMode(p_motor, Motor_FOC_StartOpenLoop, 0U /* Motor_SixStep_StartPhaseControl */);
 }
 
 static void OpenLoop_Proc(Motor_T * p_motor)
 {
 	if(Motor_CheckPositionFeedback(p_motor) == true) 	{ _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN); }
-	else 												{ Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, 0U /* Motor_SixStep_ProcPhaseControl */ ); }
+	// else 												{ _Motor_FOC_ProcOpenLoop(p_motor); Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, 0U /* Motor_SixStep_ProcPhaseControl */ ); }
+	else 												{ Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcOpenLoop, 0U /* Motor_SixStep_ProcPhaseControl */ ); }
 }
 
 static const StateMachine_Transition_T OPEN_LOOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
@@ -373,12 +381,6 @@ static const StateMachine_State_T STATE_OPEN_LOOP =
 	Functions defined in Motor_Calibrate.h for readability
 */
 /******************************************************************************/
-static StateMachine_State_T * Calibration_InputRelease(Motor_T * p_motor, uint32_t voidVar)
-{
-	(void)p_motor; 	(void)voidVar;
-	return &STATE_STOP;
-}
-
 static void Calibration_Entry(Motor_T * p_motor)
 {
 	p_motor->ControlTimerBase = 0U;
@@ -413,6 +415,12 @@ static void Calibration_Proc(Motor_T * p_motor)
 	}
 
 	if(isComplete == true) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
+}
+
+static StateMachine_State_T * Calibration_InputRelease(Motor_T * p_motor, uint32_t voidVar)
+{
+	(void)p_motor; 	(void)voidVar;
+	return &STATE_STOP;
 }
 
 static const StateMachine_Transition_T CALIBRATION_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =

@@ -102,6 +102,7 @@ void Motor_FOC_SetDirectionForward(Motor_T * p_motor)
 
 /*
 	Call from user must also set Vector Sine/Cosine, not set during position read
+	angl control loop must set vector before feedback calc
 */
 void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd)
 {
@@ -113,8 +114,41 @@ void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, 
 	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 }
 
+/* 1Step Align */
 void Motor_FOC_Align(Motor_T * p_motor)
 {
-	Motor_FOC_ActivateAngle(p_motor, 0, 0, p_motor->Parameters.AlignVoltage_Frac16 / 2U);
+	Motor_FOC_ActivateAngle(p_motor, 0, 0, p_motor->Parameters.AlignVPwm_Frac16 / 2U);
 	Phase_ActivateSwitchABC(&p_motor->Phase);
+}
+
+/* Alternate Soft Align */
+void Motor_FOC_StartAlign(Motor_T * p_motor)
+{
+	Motor_ResetRamp(p_motor); /* ramp already reset coming out of stop */
+	Motor_SetRampTarget(p_motor, p_motor->Parameters.AlignVPwm_Frac16 / 2U);
+	Motor_FOC_ActivateAngle(p_motor, 0, 0, 0);
+	Phase_ActivateSwitchABC(&p_motor->Phase);
+}
+
+void Motor_FOC_ProcAlign(Motor_T * p_motor)
+{
+	Motor_ProcRamp(p_motor);
+	Motor_FOC_ActivateAngle(p_motor, 0, 0, p_motor->RampCmd);
+}
+
+/* Alternate OpenLoop */
+void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
+{
+	// Motor_StartOpenLoop(p_motor);
+	p_motor->OpenLoopRampIndex = 0U;
+	p_motor->OpenLoopSpeed_RPM = 0U;
+	Motor_ResetRamp(p_motor);
+	Motor_SetRampTarget(p_motor, p_motor->Parameters.OpenLoopVPwm_Frac16 / 2U);
+}
+
+void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
+{
+	_Motor_FOC_ProcOpenLoop(p_motor);
+	Motor_ProcRamp(p_motor);
+	Motor_FOC_ActivateAngle(p_motor, p_motor->ElectricalAngle, p_motor->RampCmd, 0);
 }

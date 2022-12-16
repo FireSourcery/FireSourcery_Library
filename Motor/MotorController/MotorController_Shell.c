@@ -60,7 +60,7 @@ static Cmd_Status_T Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 
 	if(argc == 1U) /* run*/
 	{
-		MotorController_User_SetCmdThrottle(p_mc, MotorController_User_GetPtrMotor(p_mc, 0U)->Parameters.AlignVoltage_Frac16);
+		MotorController_User_SetCmdThrottle(p_mc, MotorController_User_GetPtrMotor(p_mc, 0U)->Parameters.AlignVPwm_Frac16);
 	}
 	else if(argc == 2U) /* run [num] */
 	{
@@ -158,7 +158,7 @@ static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	//	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
-	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
+	const uint16_t duty = p_motor->Parameters.AlignVPwm_Frac16;
 
 	if(argc == 2U)
 	{

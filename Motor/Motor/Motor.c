@@ -101,8 +101,47 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 	p_motor->OpenLoopRampIndex = 0U;
 #endif
+
 	Motor_SetFeedbackModeFlags(p_motor, p_motor->Parameters.UserFeedbackMode); // set user control mode so pids set to initial state.
 	p_motor->ControlTimerBase = 0U;
+}
+
+/******************************************************************************/
+/*
+	Reset Sensors/Align
+*/
+/******************************************************************************/
+/* From Stop and after Align */
+void Motor_ZeroSensor(Motor_T * p_motor)
+{
+	p_motor->ElectricalAngle = 0U;
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_HALL:
+			Motor_SetPositionFeedback(p_motor, 1U); /* move to init? */
+			Encoder_DeltaT_SetInitial(&p_motor->Encoder); /* Set first capture DeltaT = 0xffff */
+			Hall_ResetCapture(&p_motor->Hall);
+			break;
+		case MOTOR_SENSOR_MODE_ENCODER:
+			Motor_SetPositionFeedback(p_motor, 1U);
+			Encoder_DeltaD_SetInitial(&p_motor->Encoder);
+			break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+		case MOTOR_SENSOR_MODE_SIN_COS:		break;
+#endif
+#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+		case MOTOR_SENSOR_MODE_OPEN_LOOP:
+			Motor_SetPositionFeedback(p_motor, 0U);
+		break;
+#endif
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+		case MOTOR_SENSOR_MODE_SENSORLESS:
+			Motor_SetPositionFeedback(p_motor, 0U);
+		break;
+#endif
+		default:
+			break;
+	}
 }
 
 /******************************************************************************/
@@ -162,44 +201,6 @@ void Motor_SetDirectionReverse(Motor_T * p_motor)
 {
 	if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) 	{ Motor_SetDirectionCw(p_motor); }
 	else 																	{ Motor_SetDirectionCcw(p_motor); }
-}
-
-/******************************************************************************/
-/*
-	Reset Sensors/Align
-*/
-/******************************************************************************/
-/* From Stop and after Align */
-void Motor_ZeroSensor(Motor_T * p_motor)
-{
-	p_motor->ElectricalAngle = 0U;
-	switch(p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_HALL:
-			Motor_SetPositionFeedback(p_motor, 1U); /* move to init? */
-			Encoder_DeltaT_SetInitial(&p_motor->Encoder); /* Set first capture DeltaT = 0xffff */
-			Hall_ResetCapture(&p_motor->Hall);
-			break;
-		case MOTOR_SENSOR_MODE_ENCODER:
-			Motor_SetPositionFeedback(p_motor, 0U);
-			Encoder_DeltaD_SetInitial(&p_motor->Encoder);
-			break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-		case MOTOR_SENSOR_MODE_SIN_COS:		break;
-#endif
-#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-		case MOTOR_SENSOR_MODE_OPEN_LOOP:
-			Motor_SetPositionFeedback(p_motor, 0U);
-		break;
-#endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-		case MOTOR_SENSOR_MODE_SENSORLESS:
-			Motor_SetPositionFeedback(p_motor, 0U);
-		break;
-#endif
-		default:
-			break;
-	}
 }
 
 /******************************************************************************/
@@ -321,12 +322,10 @@ void Motor_ResetUnitsEncoder(Motor_T * p_motor)
 	{
 		Encoder_Motor_SetPolePairs(&p_motor->Encoder, p_motor->Parameters.PolePairs);
 	}
-
 	if(p_motor->Parameters.SpeedFeedbackRef_Rpm != p_motor->Encoder.Params.ScalarSpeedRef_Rpm)
 	{
 		Encoder_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 	}
-
 	// if(p_motor->Parameters.GearRatio_Factor != p_motor->Encoder.Params.GearRatio_Factor)
 	// {
 	// 	// Encoder_Motor_SetSurfaceRatio(&p_motor->Encoder, p_motor->Parameters.GearRatio);
@@ -352,7 +351,7 @@ void Motor_ResetUnitsSinCos(Motor_T * p_motor)
 //todo check state machine
 void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
 {
-	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
+	const uint16_t duty = p_motor->Parameters.AlignVPwm_Frac16;
 	uint16_t index = step % 12U;
 	switch(index)
 	{
@@ -374,7 +373,7 @@ void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
 
 void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
 {
-	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
+	const uint16_t duty = p_motor->Parameters.AlignVPwm_Frac16;
 	uint16_t index = step % 6U;
 	switch(index)
 	{
@@ -393,7 +392,7 @@ void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
 */
 void Motor_Jog6Step(Motor_T * p_motor, uint8_t step)
 {
-	const uint16_t duty = p_motor->Parameters.AlignVoltage_Frac16;
+	const uint16_t duty = p_motor->Parameters.AlignVPwm_Frac16;
 	uint16_t index = step % 6U;
 	switch(index)
 	{

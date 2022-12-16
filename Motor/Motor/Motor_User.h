@@ -453,7 +453,7 @@ static inline uint32_t Motor_User_ConvertToVMatchFrac16(Motor_T * p_motor, uint1
 
 static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode)  	{ p_motor->Parameters.CommutationMode = mode; }
 static inline void Motor_User_SetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode) 				{ p_motor->Parameters.AlignMode = mode; }
-static inline void Motor_User_SetAlignVoltage(Motor_T * p_motor, uint16_t v_frac16) 				{ p_motor->Parameters.AlignVoltage_Frac16 = (v_frac16 > GLOBAL_MOTOR.ALIGN_VOLTAGE_MAX) ? GLOBAL_MOTOR.ALIGN_VOLTAGE_MAX : v_frac16; }
+static inline void Motor_User_SetAlignVoltage(Motor_T * p_motor, uint16_t v_frac16) 				{ p_motor->Parameters.AlignVPwm_Frac16 = (v_frac16 > GLOBAL_MOTOR.ALIGN_VOLTAGE_MAX) ? GLOBAL_MOTOR.ALIGN_VOLTAGE_MAX : v_frac16; }
 static inline void Motor_User_SetAlignTime_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.AlignTime_ControlCycles = millis * (p_motor->ControlTimer.CONFIG.BASE_FREQ / 1000U) ; } /* correlated value set at compile time*/
 // static inline void Motor_User_SetVoltageBrakeScalar_Frac16(Motor_T * p_motor, uint16_t scalar_Frac16) 	{ p_motor->Parameters.VoltageBrakeScalar_InvFrac16 = 65535U - scalar_Frac16; }
 

@@ -131,8 +131,8 @@ static inline void _Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
 	p_motor->ElectricalAngle += (p_motor->OpenLoopSpeed_RPM << 16U) / (60U * GLOBAL_MOTOR.CONTROL_FREQ);
 	// p_motor->SpeedFeedback_Frac16 = p_motor->OpenLoopSpeed_RPM * 65535 / p_motor->Parameters.SpeedFeedbackRef_Rpm; /* temp convert to frac 16 and back again  for user read */
 	// p_motor->OpenLoopVPwm_Frac16 = p_motor->RampCmd; proportional and bounded
-	FOC_SetVq(&p_motor->Foc, p_motor->Parameters.OpenLoopVPwm_Frac16 / 2U);
-	FOC_SetVd(&p_motor->Foc, 0);
+	// FOC_SetVq(&p_motor->Foc, p_motor->RampCmd / 2U); /* Ramp to OpenLoopVPwm_Frac16 */
+	// FOC_SetVd(&p_motor->Foc, 0);
 }
 
 static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
@@ -380,8 +380,7 @@ static void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 	Motor_ProcRamp(p_motor);
 
 	/* User request open loop support, implement outside _Motor_FOC_ProcPositionFeedback  */
-	if(Motor_CheckPositionFeedback(p_motor) == true) 	{ _Motor_FOC_ProcPositionFeedback(p_motor); }
-	else 												{ _Motor_FOC_ProcOpenLoop(p_motor); }
+	if(Motor_CheckPositionFeedback(p_motor) == true) 	{ _Motor_FOC_ProcPositionFeedback(p_motor); } /* Update ElectricalAngle */
 
 	FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
 
@@ -395,7 +394,7 @@ static void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 
 	/* ~30us */	Motor_Debug_CaptureTime(p_motor, 3U);
 
-	if(Motor_CheckPositionFeedback(p_motor) == true) { _Motor_FOC_ProcFeedbackLoop(p_motor); }
+	if(Motor_CheckPositionFeedback(p_motor) == true) { _Motor_FOC_ProcFeedbackLoop(p_motor); } /* Set Vd Vq */
 
 	FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
 	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
@@ -418,15 +417,17 @@ static inline void Motor_FOC_StartAngleControl(Motor_T * p_motor)
 */
 /******************************************************************************/
 /*
-
 */
+/* FeedbackModeFlags.Scalar => Start from scalar of 1, output speed */
+/* FeedbackModeFlags.Speed == 1,  SPEED_CURRENT, or SPEED_VOLTAGE */
+/* FeedbackModeFlags.Scalar == 0,  CONSTANT_CURRENT, or CONSTANT_VOLTAGE, Open Loop */
 static void _Motor_FOC_SetOutputMatch(Motor_T * p_motor, int32_t iq, int32_t vq, int32_t vd)
 {
 	int32_t userOutput = (p_motor->FeedbackModeFlags.Current == 1U) ? iq : vq;
 
-	if		(p_motor->FeedbackModeFlags.Scalar == 1U) 	{ Motor_SetRampOutput(p_motor, 65535); } 		/* Start from scalar of 1, output speed */
-	else if	(p_motor->FeedbackModeFlags.Speed == 1U) 	{ Motor_SetSpeedOutput(p_motor, userOutput);} 	/* SPEED_CURRENT, or SPEED_VOLTAGE */
-	else 												{ Motor_SetRampOutput(p_motor, userOutput); } 	/* CONSTANT_CURRENT, or CONSTANT_VOLTAGE */
+	if		(p_motor->FeedbackModeFlags.Scalar == 1U) 	{ Motor_SetRampOutput(p_motor, 65535); }
+	else if	(p_motor->FeedbackModeFlags.Speed == 1U) 	{ Motor_SetRampOutput(p_motor, p_motor->SpeedFeedback_Frac16 / 2); Motor_SetSpeedOutput(p_motor, userOutput);}
+	else 												{ Motor_SetRampOutput(p_motor, userOutput); }
 
 	PID_SetIntegral(&p_motor->PidIq, vq);
 	PID_SetIntegral(&p_motor->PidId, vd);
@@ -498,5 +499,10 @@ extern void Motor_FOC_SetDirectionForward(Motor_T * p_motor);
 
 extern void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd);
 extern void Motor_FOC_Align(Motor_T * p_motor);
+
+extern void Motor_FOC_StartAlign(Motor_T * p_motor);
+extern void Motor_FOC_ProcAlign(Motor_T * p_motor);
+extern void Motor_FOC_StartOpenLoop(Motor_T * p_motor);
+extern void Motor_FOC_ProcOpenLoop(Motor_T * p_motor);
 
 #endif

@@ -269,7 +269,7 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 	uint16_t ILimitGenerating_Frac16;
 	uint16_t ILimitHeat_Frac16; 		/* Base Heat Limit. Active on thermistor warning. Frac16 scalar on active limit */
 
-	uint16_t AlignVoltage_Frac16;
+	uint16_t AlignVPwm_Frac16;
 	uint16_t AlignTime_ControlCycles;
 	// uint16_t VoltageBrakeScalar_InvFrac16; /* [0:65535], 0 is highest intensity */
 	//	uint8_t BrakeCoeffcient;
@@ -536,7 +536,7 @@ static inline void Motor_SetRampInterpolate(Motor_T * p_motor, int32_t userCmd) 
 /******************************************************************************/
 static inline void Motor_SetSpeedOutput(Motor_T * p_motor, int32_t speedControlMatch)
 {
-	Motor_SetRampOutput(p_motor, p_motor->SpeedFeedback_Frac16 / 2U); 	/* RampOut/PidIn always use SpeedFeedback */
+	/* RampOut/PidIn always use SpeedFeedback */
 	PID_SetIntegral(&p_motor->PidSpeed, speedControlMatch);  			/* SpeedControl_FracS16 may be V or I */
 	p_motor->SpeedControl_FracS16 = speedControlMatch;
 }
@@ -576,7 +576,7 @@ static inline void Motor_StartOpenLoop(Motor_T * p_motor)
 	// p_motor->FeedbackModeFlags.OpenLoop = 1U; //change different flag
 	p_motor->OpenLoopRampIndex = 0U;
 	p_motor->OpenLoopSpeed_RPM = 0U;
-	p_motor->OpenLoopVPwm_Frac16 = p_motor->Parameters.OpenLoopVPwm_Frac16;
+	// p_motor->OpenLoopVPwm_Frac16 = p_motor->Parameters.OpenLoopVPwm_Frac16;
 	Motor_SetRampTarget(p_motor, p_motor->Parameters.OpenLoopVPwm_Frac16);
 }
 
