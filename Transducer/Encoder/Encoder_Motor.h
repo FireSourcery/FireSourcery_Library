@@ -38,6 +38,33 @@
 
 /******************************************************************************/
 /*!
+	Position - Both Capture Modes
+	todo freq auto DT mode, or split
+*/
+/******************************************************************************/
+static inline uint16_t Encoder_Motor_GetMechanicalTheta(Encoder_T * p_encoder)
+{
+	return Encoder_GetAngle(p_encoder);
+}
+
+/*!
+	Electrical Theta Angle, position Angle [Degree16s]
+		=> MechanicalTheta * PolePairs % 65536
+*/
+static inline uint16_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
+{
+	uint16_t angle;
+	// return Encoder_ConvertCounterDToAngle(p_encoder, (uint32_t)p_encoder->CounterD * (uint32_t)p_encoder->Params.MotorPolePairs);
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
+	// update angle p_encoder->Angle32
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+	angle = ((_Encoder_GetAngle32(p_encoder) >> 6U) * p_encoder->Params.MotorPolePairs) >> 10U; /* MotorPolePairs less than 64 */
+#endif
+	return (p_encoder->Params.IsALeadBPositive == true) ? angle : 0 - angle;
+}
+
+/******************************************************************************/
+/*!
 	Capture DeltaD Mode
 	CounterD Angle Functions
 	DeltaD measures mechanical angle
@@ -84,13 +111,15 @@ static inline uint32_t Encoder_Motor_InterpolateElectricalDelta(Encoder_T * p_en
 	{
 		return Encoder_DeltaT_InterpolateAngle(p_encoder, pollingIndex * p_encoder->Params.MotorPolePairs);
 	}
+	// if(electricalDelta > 65536U / 6U) { electricalDelta = 65536U / 6U; }
 }
 
-// static inline uint32_t Encoder_Motor_InterpolateHallDelta(Encoder_T * p_encoder, uint32_t pollingIndex)
-// {
-// 	//todo with saturation?
-// }
+static inline uint32_t Encoder_Motor_InterpolateHallDelta(Encoder_T * p_encoder, uint32_t pollingIndex)
+{
+	//todo with saturation?
 
+
+}
 
 /*
 	Control periods per encoder pulse, hall phase
@@ -110,34 +139,6 @@ static inline uint32_t Encoder_Motor_GetInterpolationFreq(Encoder_T *p_encoder)
 	return Encoder_DeltaT_GetInterpolationCount(p_encoder);
 }
 
-
-/******************************************************************************/
-/*!
-	Position - Both Capture Modes
-	todo freq auto DT mode, or split
-*/
-/******************************************************************************/
-static inline uint16_t Encoder_Motor_GetMechanicalTheta(Encoder_T * p_encoder)
-{
-	return Encoder_GetAngle(p_encoder);
-}
-
-/*!
-	Electrical Theta Angle, position Angle [Degree16s]
-		=> MechanicalTheta * PolePairs % 65536
-*/
-static inline uint16_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
-{
-	uint16_t angle;
-	// return Encoder_ConvertCounterDToAngle(p_encoder, (uint32_t)p_encoder->CounterD * (uint32_t)p_encoder->Params.MotorPolePairs);
-#if 	defined(CONFIG_ENCODER_HW_DECODER)
-	// update angle p_encoder->Angle32
-#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
-	angle = ((_Encoder_GetAngle32(p_encoder) >> 6U) * p_encoder->Params.MotorPolePairs) >> 10U; /* MotorPolePairs less than 64 */
-#endif
-	return (p_encoder->Params.IsALeadBPositive == true) ? angle : 0 - angle;
-}
-
 /******************************************************************************/
 /*!
 	Speed - Both Capture Modes
@@ -147,7 +148,7 @@ static inline uint16_t Encoder_Motor_GetElectricalTheta(Encoder_T * p_encoder)
 /* Mechanical Scalar Speed */
 static inline uint32_t Encoder_Motor_GetScalarSpeed(Encoder_T * p_encoder)
 {
-	return Encoder_GetScalarSpeed(p_encoder);
+	// return Encoder_GetScalarSpeed(p_encoder);
 }
 
 /*!
@@ -155,13 +156,13 @@ static inline uint32_t Encoder_Motor_GetScalarSpeed(Encoder_T * p_encoder)
 */
 static inline uint32_t Encoder_Motor_GetMechanicalSpeed(Encoder_T * p_encoder)
 {
-	return Encoder_GetAngularSpeed(p_encoder);
+	// return Encoder_GetAngularSpeed(p_encoder);
 }
 
 static inline uint32_t Encoder_Motor_GetMechanicalRpm(Encoder_T * p_encoder)
 {
 	/* Max DeltaD = 447, for UnitSpeed = 160000, PolerPairs = 12 */
-	return Encoder_GetRotationalSpeed_RPM(p_encoder);
+	// return Encoder_GetRotationalSpeed_RPM(p_encoder);
 }
 
 /*!

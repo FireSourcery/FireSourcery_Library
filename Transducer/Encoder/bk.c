@@ -224,34 +224,88 @@ static inline uint32_t Encoder_GetLinearTotalDistance(Encoder_T * p_encoder) { r
 // }
 
 
-
-
-// if Ttimer unwritable
-// p_encoder->TimerCounterSaved = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER) - (CONFIG_ENCODER_HW_TIMER_COUNTER_MAX - p_encoder->CONFIG.T_TIMER_FREQ / p_encoder->CONFIG.POLLING_FREQ + 1U);
-
-// void Encoder_DeltaT_SetInitial_RPM(Encoder_T * p_encoder, uint16_t initialRpm)
+#if defined(CONFIG_ENCODER_HW_DECODER) && defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
+// // HW Quadrature if counter ticks downs
+// static inline void _Encoder_DeltaD_Capture_Quadrature(Encoder_T * p_encoder)
 // {
-// 	//	p_encoder->DeltaT = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, initialRpm);
+// 	uint32_t counterValue = HAL_Encoder_ReadTimerCounter(p_encoder->CONFIG.P_HAL_ENCODER);
+// 	bool isIncrement;
+// 	// bool isCounterIncrementDirectionPositive;
+
+// 	/*
+// 		Unsigned DeltaD capture
+// 	*/
+// 	if (HAL_Encoder_ReadTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER) == true)
+// 	{
+// 		if(HAL_Encoder_ReadDecoderCounterOverflowIncrement(p_encoder->CONFIG.P_HAL_ENCODER) == true)
+// 		{
+// 			p_encoder->DeltaD = p_encoder->Params.CountsPerRevolution - p_encoder->TimerCounterSaved + counterValue;
+// 			isIncrement = true;
+// 		}
+// 		else if (HAL_Encoder_ReadDecoderCounterOverflowDecrement(p_encoder->CONFIG.P_HAL_ENCODER) == true) //counter counts down, deltaD is negative
+// 		{
+// 			p_encoder->DeltaD = p_encoder->Params.CountsPerRevolution - counterValue + p_encoder->TimerCounterSaved;
+// 			isIncrement = false;
+// 		}
+
+// 		HAL_Encoder_ClearTimerCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER);
+// 	}
+// 	else
+// 	{
+// 		if (counterValue > p_encoder->TimerCounterSaved)
+// 		{
+// 			p_encoder->DeltaD = counterValue - p_encoder->TimerCounterSaved;
+// 			isIncrement = true;
+// 		}
+// 		else //counter counts down, deltaD is negative
+// 		{
+// 			p_encoder->DeltaD = p_encoder->TimerCounterSaved - counterValue;
+// 			isIncrement = false;
+// 		}
+
+// 		//signed capture
+// //		p_encoder->DeltaD = counterValue - p_encoder->TimerCounterSaved;
+// 	}
+
+// 	p_encoder->TimerCounterSaved = counterValue;
+// 	p_encoder->CounterD = counterValue;
+// 	p_encoder->TotalT += 1U;
+
+	//static inline void Encoder_DeltaD_ReadQuadratureDirection(Encoder_T * p_encoder)
+	//{//#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+	//	//	isCounterIncrementDirectionPositive = p_encoder->IsALeadBDirectionPositive;
+	//	//#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+	//	//	isCounterIncrementDirectionPositive = !p_encoder->IsALeadBDirectionPositive;
+	//	//#endif
+	//	return HAL_Encoder_ReadDecoderCounterDirection(p_encoder->CONFIG.P_HAL_ENCODER);
+	//}
+
+// #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+// 	isCounterIncrementDirectionPositive = p_encoder->Params.IsALeadBPositive;
+// #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+// 	isCounterIncrementDirectionPositive = !p_encoder->Params.IsALeadBPositive;
+// #endif
+
+// 	if ((isCounterIncrementDirectionPositive) && (isIncrement == true))
+// //	if ((p_encoder->Params.DirectionCalibration == ENCODER_DIRECTION_DIRECT) && (isIncrement == true)) //Positive DeltaD is positive direction
+// 	{
+// 		p_encoder->TotalD += p_encoder->DeltaD;
+// 	}
+// 	else
+// 	{
+// 		p_encoder->TotalD -= p_encoder->DeltaD;	//  deltaD is negative
+// 	}
 // }
+#endif
 
 
-/*
-	Extended timer counts equal to short timer overflow time
-	This should optimize to compile time const
+/*!
+	Acceleration
 */
-static inline uint32_t _Encoder_GetExtendedTimerThreshold(Encoder_T * p_encoder)
-{
-	// return ((uint32_t)CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->CONFIG.T_TIMER_FREQ;
-	return ((uint32_t)CONFIG_ENCODER_HW_TIMER_COUNTER_MAX + 1UL) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->UnitT_Freq;
-}
-
-static inline void Encoder_DeltaT_CaptureExtended(Encoder_T * p_encoder)
-{
-	uint32_t extendedTimerDelta = _Encoder_GetExtendedTimerDelta(p_encoder);
-	p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
-
-	if (extendedTimerDelta > _Encoder_GetExtendedTimerThreshold(p_encoder))
-	{
-		p_encoder->DeltaT = extendedTimerDelta * p_encoder->ExtendedTimerConversion;
-	}
-}
+// static inline uint32_t Encoder_CaptureSpeed(Encoder_T * p_encoder)
+// {
+// 	uint32_t newSpeed = p_encoder->DeltaD * p_encoder->UnitLinearSpeed / p_encoder->DeltaT;
+// 	p_encoder->DeltaSpeed = newSpeed - p_encoder->SpeedSaved;
+// 	p_encoder->SpeedSaved = newSpeed;
+// 	return newSpeed;
+// }

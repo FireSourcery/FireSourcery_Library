@@ -42,6 +42,7 @@
 		option 1. save y-intercept as shifted to preserve precision
 		option 2. selectively calc with 1 offset at function call.
 			reuse procedure inv functions, + supplement inv frac16 functions
+	Overflow factor, divisor > 131,071
 */
 /******************************************************************************/
 /*
@@ -120,74 +121,13 @@ void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
 	p_linear->YReference = yRef;
 	p_linear->XReference = xRef;
-	p_linear->Slope = ((yRef - y0) << 14U) / (xRef - x0);
-	p_linear->SlopeShift = 14U;
-	p_linear->InvSlope = ((xRef - x0) << 14U) / (yRef - y0);
-	p_linear->InvSlopeShift = 14U;
+	p_linear->Slope = ((yRef - y0) << LINEAR_DIVIDE_SHIFT) / (xRef - x0);
+	p_linear->SlopeShift = LINEAR_DIVIDE_SHIFT;
+	p_linear->InvSlope = ((xRef - x0) << LINEAR_DIVIDE_SHIFT) / (yRef - y0);
+	p_linear->InvSlopeShift = LINEAR_DIVIDE_SHIFT;
 	p_linear->XOffset = x0;
 	p_linear->YOffset = y0;
 #endif
-}
-
-/******************************************************************************/
-/*!
-	bound user input
-*/
-/******************************************************************************/
-/* Saturating input indirectly saturates output and avoids overflow */
-int32_t Linear_Function_Sat(const Linear_T * p_linear, int32_t x)
-{
-	int32_t xSaturated = _Linear_Sat(0 - p_linear->XReference, p_linear->XReference, x);
-	return Linear_Function(p_linear, xSaturated);
-}
-
-int32_t Linear_InvFunction_Sat(const Linear_T * p_linear, int32_t y)
-{
-	int32_t ySaturated = _Linear_Sat(0 - p_linear->YReference, p_linear->YReference, y);
-	return Linear_InvFunction(p_linear, ySaturated);
-}
-
-/******************************************************************************/
-/*!
-	Saturated Output
-	Saturate to uint16_t, q0.16 [0, 65535]
-	f([-XRef:XRef]) => [0:65536]
-*/
-/******************************************************************************/
-/* negative returns zero */
-uint16_t Linear_Function_FractionUnsigned16(const Linear_T * p_linear, int32_t x)
-{
-	return _Linear_SatUnsigned16(Linear_Function_Frac16(p_linear, x));
-}
-
-/* negative returns abs */
-uint16_t Linear_Function_FractionUnsigned16_Abs(const Linear_T * p_linear, int32_t x)
-{
-	return _Linear_SatUnsigned16_Abs(Linear_Function_Frac16(p_linear, x));
-}
-
-/* y_frac16 in q0.16 format is handled by q16.16 case */
-int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_linear, uint16_t y_fracU16)
-{
-	return Linear_InvFunction_Frac16(p_linear, y_fracU16);
-}
-
-/******************************************************************************/
-/*!
-	Saturate to int16_t, q1.15 [-32768, 32767]
-	f([-XRef:XRef]) => [-32768:32767]
-*/
-/******************************************************************************/
-/* */
-int16_t Linear_Function_FractionSigned16(const Linear_T * p_linear, int32_t x)
-{
-	return _Linear_SatSigned16(Linear_Function_Frac16(p_linear, x) / 2);
-}
-
-/* y_frac16 use q1.15 */
-int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_linear, int16_t y_fracS16)
-{
-	return Linear_InvFunction_Frac16(p_linear, (int32_t)y_fracS16 * 2);
 }
 
 /******************************************************************************/

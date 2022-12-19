@@ -32,6 +32,7 @@
 #define THERMISTOR_H
 
 #include "Config.h"
+#include "Peripheral/Analog/Analog/Global_Analog.h"
 #include "Math/Linear/Linear_ADC.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -167,7 +168,6 @@ static inline uint16_t Thermistor_GetVIn(Thermistor_T * p_therm) { return p_ther
 /*
 	Extern
 */
-extern void Thermistor_InitAdcVRef_Scalar(uint16_t adcVRef_MilliV);
 extern void Thermistor_Init(Thermistor_T * p_therm);
 
 extern Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t adcu);

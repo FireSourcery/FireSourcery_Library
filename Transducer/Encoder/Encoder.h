@@ -42,15 +42,14 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
 typedef union Encoder_Phases_Tag
 {
 	struct
 	{
 		uint8_t B : 1U;
 		uint8_t A : 1U;
-		uint8_t Resv2 : 1U;
-		uint8_t Resv3 : 1U;
+		uint8_t PrevB : 1U;
+		uint8_t PrevA : 1U;
 		uint8_t Resv4 : 1U;
 		uint8_t Resv5 : 1U;
 		uint8_t Resv6 : 1U;
@@ -63,7 +62,7 @@ Encoder_Phases_T;
 typedef struct __attribute__((aligned(2U))) Encoder_Params_Tag
 {
 	uint16_t CountsPerRevolution; 		/* Derive Angular Units. Max for counting AngularD, CaptureDeltaT mode need 2nd TimerCounterMax */
-	uint16_t DistancePerRevolution;		/* Derive Linear Units. */
+	uint16_t DistancePerRevolution;		/* DistancePerRevolution_Factor Derive Linear Units. */
 	uint16_t SurfaceDiameter;			/* Derive Linear Units. */
 	uint16_t GearRatio_Factor;			/* Derive Linear Units. Surface:Encoder Ratio */
 	uint16_t GearRatio_Divisor;			/* Derive Linear Units. */
@@ -73,16 +72,14 @@ typedef struct __attribute__((aligned(2U))) Encoder_Params_Tag
 	bool IsALeadBPositive; 				/* User runtime calibration for encoder install direction, combine with compile time defined QUADRATURE_A_LEAD_B_INCREMENT */
 #endif
 	uint16_t ExtendedTimerDeltaTStop;	/* ExtendedTimer time read as deltaT stopped, default as 1s or .5rpm */
-
-	//	uint32_t InterpolateAngleLimit;
 	/* Overallocation of variable space to allow runtime polymorphism */
 	uint8_t MotorPolePairs; 			/* Motor subtype, Convert between electrical speed and mechanical speed. Motor Hall Mode */
 }
 Encoder_Params_T;
-
 typedef const struct Encoder_Config_Tag
 {
 	HAL_Encoder_Timer_T * const P_HAL_ENCODER_TIMER; 	/*!< ModeT Timer. ModeD Emulated Hw use a Timer. */
+	const uint32_t TIMER_FREQ;	/*!< DeltaT Mode Timer Freq */
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
 	HAL_Encoder_Counter_T * const P_HAL_ENCODER_COUNTER; /*!< ModeD Counter */
 #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
@@ -90,9 +87,8 @@ typedef const struct Encoder_Config_Tag
 	HAL_Encoder_Phase_T * const P_HAL_ENCODER_B; const uint32_t PHASE_B_ID;
 	HAL_Encoder_Phase_T * const P_HAL_ENCODER_Z; const uint32_t PHASE_Z_ID;
 #endif
-	const uint32_t T_TIMER_FREQ;	/*!< DeltaT Mode Timer Freq */
-	const uint32_t POLLING_FREQ;	/*!< DeltaD - Polling D Freq. DeltaT - Interpolation Freq. */
-	const uint32_t D_SPEED_FREQ; 	/*!< DeltaD Mode Speed Sample Freq */
+	const uint32_t POLLING_FREQ;		/*!< DeltaD - Polling D Freq. DeltaT - Interpolation Freq. */
+	const uint32_t SPEED_SAMPLE_FREQ; 	/*!< DeltaD Mode Speed Sample Freq */
 	const volatile uint32_t * const P_EXTENDED_TIMER;	/* Polling DeltaT stop */
 	const uint32_t EXTENDED_TIMER_FREQ;
 	const Encoder_Params_T * P_PARAMS;
@@ -105,31 +101,26 @@ typedef struct Encoder_Tag
 	Encoder_Params_T Params;
 
 #if (defined(CONFIG_ENCODER_HW_EMULATED) && defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE))
-	Encoder_Phases_T Phases; /* Save Prev State */
-#endif
-
-#if (defined(CONFIG_ENCODER_HW_EMULATED) && defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE))
 	Pin_T PinA;
 	Pin_T PinB;
-	// HAL_Pin_T * const P_HAL_PIN_A; const uint32_t PIN_A_ID;
-	// HAL_Pin_T * const P_HAL_PIN_B; const uint32_t PIN_B_ID;
-	// HAL_Pin_T * const P_HAL_PIN_Z; const uint32_t PIN_Z_ID;
 #endif
 
 	/*
 		Runtime Variables
 	*/
-	volatile uint32_t DeltaT; 		/*!< Captured TimerCounter time interval counts between 2 distance events. Units in raw timer ticks */
+#if (defined(CONFIG_ENCODER_HW_EMULATED) && defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE))
+	volatile Encoder_Phases_T Phases; /* Save Prev State */
+#endif
 	volatile int32_t DeltaD; 		/*!< Captured TimerCounter distance interval counts between 2 points in time. Units in raw timer ticks */
-
-	volatile uint16_t AngularD; 	/*!< Looping CounterD at CountsPerRevolution */
+	volatile uint32_t DeltaT; 		/*!< Captured TimerCounter time interval counts between 2 distance events. Units in raw timer ticks */
+	volatile uint32_t DeltaTh; 		/*!< ModeDT */
+	volatile uint32_t FreqD; 		/*!< ModeDT */
 	volatile int32_t CounterD;
+	volatile uint32_t Angle32;
+	volatile uint32_t ErrorCount;
+	volatile uint32_t IndexCount;
 	volatile int32_t IndexCounterD;
 	volatile int32_t IndexCounterDOffset;
-
-	volatile uint32_t Angle32;
-	volatile uint32_t IndexCount;
-	volatile uint32_t ErrorCount;
 
 	uint32_t TimerCounterSaved; 		/*!< First time/count sample used to calculate Delta */
 	uint32_t ExtendedTimerSaved;
@@ -180,6 +171,7 @@ typedef struct Encoder_Tag
 	uint32_t UnitAngularD; 					/*!< [0xFFFFFFFFU/CountsPerRevolution + 1] 		=> Angle = CounterD * UnitAngle_Factor >> (32 - DEGREES_BITS) */
 	uint32_t UnitAngularSpeed; 				/*!< [(1 << DEGREES_BITS) * UnitT_Freq / CountsPerRevolution] 	=> AngularSpeed = DeltaD * UnitAngularSpeed / DeltaT */
 	uint32_t UnitInterpolateAngle; 			/*!< [UnitT_Freq << DEGREES_BITS / POLLING_FREQ / CountsPerRevolution] */
+	uint32_t InterpolateAngleLimit;
 	uint32_t UnitScalarSpeed;				/*!< Percentage Speed of ScalarSpeedRef_Rpm, given max speed, as Fraction16 */
 	//	uint32_t UnitInterpolateDistance_Factor;		/*!< [UnitD * UnitT_Freq] => D = index * DeltaD * UnitInterpolateD_Factor / POLLING_FREQ */
 }
@@ -187,12 +179,16 @@ Encoder_T;
 
 
 /*
-	T_TIMER_FREQ <
-	T_TIMER_FREQ * 60 < UINT32_MAX for RPM calc
-	T_TIMER_FREQ * 60 * PolePairs < UINT32_MAX for Motor RPM calc
+	ModeDT
+	TIMER_FREQ time for 16-bit Timer, TIMER_FREQ must be < 65MHz, 1000Hz (1ms) ExtendedTimer
+	0xFFFF/50[Mhz]*1000 = 1.31[ms]
+	0xFFFF/65[Mhz]*1000 = 1[ms]
+	4MHz max for DT Sample
+	0xFFFFFFFF/1000 ~=4MHz
 
-	(1 / POLLING_FREQ) < (0xFFFF / T_TIMER_FREQ), (for 16-bit timer)
-	For 1000Hz (1ms) D_SPEED_FREQ and ExtendedTimer, T_TIMER_FREQ must be < 65MHz for 16-bit Timer
+	DeltaT
+	TIMER_FREQ * 60 < UINT32_MAX for RPM calc
+	TIMER_FREQ * 60 * PolePairs < UINT32_MAX for Motor RPM calc
 */
 
 #define ENCODER_INIT_HW_DECODER(p_Hal_Encoder, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, p_Params)	\
@@ -201,7 +197,7 @@ Encoder_T;
 	{													\
 		.P_HAL_ENCODER_COUNTER 	= p_Hal_Encoder,		\
 		.POLLING_FREQ 			= PollingFreq,			\
-		.D_SPEED_FREQ 			= SpeedSampleFreq, 		\
+		.SPEED_SAMPLE_FREQ 		= SpeedSampleFreq, 		\
 		.P_EXTENDED_TIMER 		= p_ExtendedTimer,		\
 		.EXTENDED_TIMER_FREQ 	= ExtendedTimerFreq,	\
 		.P_PARAMS 				= p_Params,				\
@@ -216,18 +212,15 @@ Encoder_T;
 #define _ENCODER_INIT_HW_EMULATED_QUADRATURE(p_PinA_Hal, PinAId, p_PinB_Hal, PinBId)
 #endif
 
-/*
-	change to init all
-*/
-#define ENCODER_INIT_HW_EMULATED(p_PhaseA_Hal, PhaseAId, p_PinA_Hal, PinAId, p_PhaseB_Hal, PhaseBId, p_PinB_Hal, PinBId, p_PhaseZ_Hal, PhaseZId, p_Timer_Hal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, p_Params )	\
-{														\
-	.CONFIG = 											\
-	{													\
+#define ENCODER_INIT(p_PhaseA_Hal, PhaseAId, p_PinA_Hal, PinAId, p_PhaseB_Hal, PhaseBId, p_PinB_Hal, PinBId, p_PhaseZ_Hal, PhaseZId, p_Timer_Hal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, p_Params )	\
+{																										\
+	.CONFIG = 																							\
+	{																									\
 		.P_HAL_ENCODER_A 		= p_PhaseA_Hal,			.PHASE_A_ID 			= PhaseAId,				\
 		.P_HAL_ENCODER_B 		= p_PhaseB_Hal,			.PHASE_B_ID 			= PhaseBId,				\
 		.P_HAL_ENCODER_Z 		= p_PhaseZ_Hal,			.PHASE_Z_ID 			= PhaseZId,				\
-		.P_HAL_ENCODER_TIMER 	= p_Timer_Hal,			.T_TIMER_FREQ 			= TimerFreq,			\
-		.POLLING_FREQ 			= PollingFreq,			.D_SPEED_FREQ 			= SpeedSampleFreq, 		\
+		.P_HAL_ENCODER_TIMER 	= p_Timer_Hal,			.TIMER_FREQ 			= TimerFreq,			\
+		.POLLING_FREQ 			= PollingFreq,			.SPEED_SAMPLE_FREQ 		= SpeedSampleFreq, 		\
 		.P_EXTENDED_TIMER 		= p_ExtendedTimer,		.EXTENDED_TIMER_FREQ 	= ExtendedTimerFreq,	\
 		.P_PARAMS 				= p_Params,																\
 	},																									\
@@ -237,75 +230,16 @@ Encoder_T;
 #define _ENCODER_TABLE_ERROR (2U)
 #define _ENCODER_TABLE_LENGTH (16U)
 extern const int8_t _ENCODER_TABLE[_ENCODER_TABLE_LENGTH];
+extern const int8_t _ENCODER_TABLE_PHASE_A[_ENCODER_TABLE_LENGTH];
 
-/******************************************************************************/
-/*!
-	@brief Common Capture Functions
-*/
-/*! @{ */
-/******************************************************************************/
-/*
-	DeltaT and Emulated DeltaD
-*/
-static inline void _Encoder_CaptureCounterD_Inc(Encoder_T * p_encoder)
-{
-	p_encoder->CounterD++;
-	p_encoder->Angle32 += p_encoder->UnitAngularD;
-	// p_encoder->AngularD = (p_encoder->AngularD < p_encoder->Params.CountsPerRevolution - 1U) ? p_encoder->AngularD + 1U : 0U;
-}
-
-// static inline void _Encoder_CaptureCounterD_Dec(Encoder_T * p_encoder)
-// {
-// 	// p_encoder->AngularD = (p_encoder->AngularD > 0U) ? p_encoder->AngularD - 1U : p_encoder->Params.CountsPerRevolution - 1U;
-// }
-
-/*
-	SW Quadrature
-*/
-static inline void _Encoder_CaptureCounterD_Quadrature(Encoder_T * p_encoder)
-{
-	Encoder_Phases_T phases;
-	int8_t count;
-
-	phases.A = Pin_Input_ReadPhysical(&p_encoder->PinA);
-	phases.B = Pin_Input_ReadPhysical(&p_encoder->PinB);
-	count = _ENCODER_TABLE[((p_encoder->Phases.State << 2U) | phases.State)];
-
-	if(count == _ENCODER_TABLE_ERROR) { p_encoder->ErrorCount++; }
-	else
-	{
-		p_encoder->CounterD += count;
-		/* Alternatively force pow2 and mask */
-		p_encoder->Angle32 += ((int32_t)count * (int32_t)p_encoder->UnitAngularD);
-	}
-
-	// p_encoder->DeltaD = count; //or set quadrature read direction
-	// if(p_encoder->TotalD < INT32_MAX) {p_encoder->TotalD += 1U;} integral functions
-	// if(p_encoder->TotalD > INT32_MIN) {p_encoder->TotalD -= 1;}
-
-	p_encoder->Phases.State = phases.State;
-}
-
-static inline void _Encoder_CaptureCounterD_QuadraturePhaseA(Encoder_T * p_encoder)
-{
-	//using PhaseA table
-}
-
-// static inline void _Encoder_CaptureCounterD_PhaseA(Encoder_T * p_encoder)
-// {
-// 	// int8_t count = (Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1;
-// 	p_encoder->CounterD += 1;
-// 	// p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngularD);
-// }
-
-static inline void Encoder_CaptureCounterD(Encoder_T * p_encoder)
-{
-#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-	if(p_encoder->Params.IsQuadratureCaptureEnabled == true) { _Encoder_CaptureCounterD_Quadrature(p_encoder); }
-	else
+#ifndef ENCODER_TIMER_MAX
+#define ENCODER_TIMER_MAX (0xFFFFU)
 #endif
-	{ _Encoder_CaptureCounterD_Inc(p_encoder); }
-}
+
+#ifndef ENCODER_ANGLE16
+#define ENCODER_ANGLE16 (16U)
+#endif
+
 
 /*!
 	@brief 	Capture Increasing DeltaT or DeltaD between 2 samples. Used speed calculations.
@@ -326,69 +260,12 @@ static inline void _Encoder_ZeroAngle(Encoder_T * p_encoder)
 	p_encoder->Angle32 = 0U;
 }
 
-/*!
-	Acceleration
-*/
-// static inline uint32_t Encoder_CaptureSpeed(Encoder_T * p_encoder)
-// {
-// 	uint32_t newSpeed = p_encoder->DeltaD * p_encoder->UnitLinearSpeed / p_encoder->DeltaT;
-// 	p_encoder->DeltaSpeed = newSpeed - p_encoder->SpeedSaved;
-// 	p_encoder->SpeedSaved = newSpeed;
-// 	return newSpeed;
-// }
-/******************************************************************************/
-/*!
-	@brief 	 CounterD conversions.
-*/
-/*! @{ */
-/******************************************************************************/
-/******************************************************************************/
-/*!
-	Angle
-	Base unit in CONFIG_ENCODER_ANGLE_DEGREES_BITS
-*/
-/******************************************************************************/
-static inline uint32_t Encoder_ConvertCounterDToAngle(Encoder_T * p_encoder, uint32_t counterD_Ticks)
-{
-	uint32_t angle;
-
-	/*
-		Overflow if counterD > CountsPerRevolution
-		UnitAngularD == UINT32_MAX / CountsPerRevolution
-	*/
-	if(counterD_Ticks > p_encoder->Params.CountsPerRevolution)
-	{
-		angle = ((counterD_Ticks << CONFIG_ENCODER_ANGLE_DEGREES_BITS) / p_encoder->Params.CountsPerRevolution);
-	}
-	else
-	{
-		angle = ((counterD_Ticks * p_encoder->UnitAngularD) >> (32U - CONFIG_ENCODER_ANGLE_DEGREES_BITS));
-	}
-
-	return angle;
-}
-
-static inline uint32_t Encoder_ConvertAngleToCounterD(Encoder_T * p_encoder, uint16_t angle_UserDegrees)
-{
-	return (angle_UserDegrees << (32U - CONFIG_ENCODER_ANGLE_DEGREES_BITS)) / p_encoder->UnitAngularD;
-}
-
 static inline uint32_t _Encoder_GetAngle32(Encoder_T * p_encoder)
 {
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
-	p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
 	return HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER) * (int32_t)p_encoder->UnitAngularD;
 #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
 	return p_encoder->Angle32;
-#endif
-}
-
-static inline uint32_t Encoder_GetCounterD(Encoder_T * p_encoder)
-{
-#if 	defined(CONFIG_ENCODER_HW_DECODER)
-	// return HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER) * IndexCounts;
-#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
-	return p_encoder->CounterD;
 #endif
 }
 
@@ -396,6 +273,50 @@ static inline uint16_t Encoder_GetAngle(Encoder_T * p_encoder)
 {
 	uint16_t angle = _Encoder_GetAngle32(p_encoder) >> 16U;
 	return (p_encoder->Params.IsALeadBPositive == true) ? angle : 0 - angle;
+}
+
+
+/******************************************************************************/
+/*!
+	@brief 	 CounterD conversions. For DeltaD
+*/
+/*! @{ */
+/******************************************************************************/
+/******************************************************************************/
+/*!
+	Angle
+	Base unit in ENCODER_ANGLE16
+*/
+/******************************************************************************/
+static inline uint32_t Encoder_ConvertCounterDToAngle(Encoder_T * p_encoder, uint32_t counterD_Ticks)
+{
+	uint32_t angle;
+
+	/* Overflow if counterD > CountsPerRevolution,	UnitAngularD == UINT32_MAX / CountsPerRevolution */
+	if(counterD_Ticks > p_encoder->Params.CountsPerRevolution)
+	{
+		angle = ((counterD_Ticks << ENCODER_ANGLE16) / p_encoder->Params.CountsPerRevolution);
+	}
+	else
+	{
+		angle = ((counterD_Ticks * p_encoder->UnitAngularD) >> (32U - ENCODER_ANGLE16));
+	}
+
+	return angle;
+}
+
+static inline uint32_t Encoder_ConvertAngleToCounterD(Encoder_T * p_encoder, uint16_t angle_UserDegrees)
+{
+	return (angle_UserDegrees << (32U - ENCODER_ANGLE16)) / p_encoder->UnitAngularD;
+}
+
+static inline uint32_t Encoder_GetCounterD(Encoder_T * p_encoder)
+{
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
+	return HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+	return p_encoder->CounterD;
+#endif
 }
 
 /******************************************************************************/
@@ -420,7 +341,7 @@ static inline uint32_t Encoder_ConvertDistanceToCounterD(Encoder_T * p_encoder, 
 /******************************************************************************/
 /*!
 	Angular Speed Functions
-	Base unit in CONFIG_ENCODER_ANGLE_DEGREES_BITS Per Second
+	Base unit in ENCODER_ANGLE16 Per Second
 */
 /******************************************************************************/
 /*
@@ -456,7 +377,7 @@ static inline uint32_t _Encoder_CalcRotationalSpeed(Encoder_T * p_encoder, uint3
 */
 static inline uint32_t _Encoder_CalcRotationalSpeed_Shift(Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
 {
-	return _Encoder_CalcAngularSpeed(p_encoder, deltaD_Ticks, deltaT_Ticks) >> CONFIG_ENCODER_ANGLE_DEGREES_BITS;
+	return _Encoder_CalcAngularSpeed(p_encoder, deltaD_Ticks, deltaT_Ticks) >> ENCODER_ANGLE16;
 }
 
 static inline uint32_t Encoder_CalcAngularSpeed(Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
@@ -469,7 +390,7 @@ static inline uint32_t Encoder_CalcAngularSpeed(Encoder_T * p_encoder, uint32_t 
 	*/
 	if(p_encoder->UnitAngularSpeed == 0U)
 	{
-		speed = _Encoder_CalcRotationalSpeed(p_encoder, deltaD_Ticks, deltaT_Ticks) << CONFIG_ENCODER_ANGLE_DEGREES_BITS;
+		speed = _Encoder_CalcRotationalSpeed(p_encoder, deltaD_Ticks, deltaT_Ticks) << ENCODER_ANGLE16;
 	}
 	else
 	{
@@ -518,7 +439,7 @@ static inline uint32_t Encoder_CalcRotationalSpeed_RPM(Encoder_T * p_encoder, ui
 /******************************************************************************/
 /*!
 	Scalar Speed Functions
-	RotationalSpeed * 60 / ScalarSpeedRef_Rpm
+	RotationalSpeed_RPS * 65556 * 60 / ScalarSpeedRef_Rpm
 
 	Unsigned Frac16 65556 <=> 1
 	Can over saturate 1
@@ -555,67 +476,9 @@ static inline uint32_t Encoder_CalcGroundSpeed_Kmh(Encoder_T * p_encoder, uint32
 {
 	return deltaD_Ticks * p_encoder->UnitLinearSpeed * 60U * 60U / (deltaT_Ticks * 1000000U);
 }
-
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
-
-
-/******************************************************************************/
-/*
-	Shared Get Functions
-	Speed Functions- Use D/T mode for compiler optimization
-	todo alternatively, freq mode change
-*/
-/******************************************************************************/
-/* NonOptimized functions */
-static inline uint32_t Encoder_GetAngularSpeed(Encoder_T * p_encoder)
-{
-	return Encoder_CalcAngularSpeed(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
-}
-
-static inline uint32_t Encoder_GetAngularSpeed_RadS(Encoder_T * p_encoder)
-{
-	return Encoder_CalcAngularSpeed_RadS(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
-}
-
-static inline uint32_t Encoder_GetRotationalSpeed_RPS(Encoder_T * p_encoder)
-{
-	return Encoder_CalcRotationalSpeed(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
-}
-
-static inline uint32_t Encoder_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
-{
-	return Encoder_CalcRotationalSpeed_RPM(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
-}
-
-static inline uint32_t Encoder_GetScalarSpeed(Encoder_T * p_encoder)
-{
-	return Encoder_CalcScalarSpeed(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
-}
-
-static inline uint32_t Encoder_GetLinearSpeed(Encoder_T * p_encoder)
-{
-	return Encoder_CalcLinearSpeed(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
-}
-
-static inline uint32_t Encoder_GetGroundSpeed_Mph(Encoder_T * p_encoder)
-{
-	return Encoder_CalcGroundSpeed_Mph(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
-}
-
-static inline uint32_t Encoder_GetGroundSpeed_Kmh(Encoder_T * p_encoder)
-{
-	return Encoder_CalcGroundSpeed_Kmh(p_encoder, p_encoder->DeltaD, p_encoder->DeltaT);
-}
-
-/*
-	Units/S/S
-*/
-//static inline uint32_t Encoder_GetAcceleration(Encoder_T * p_encoder)
-//{
-//	return p_encoder->DeltaSpeed * p_encoder->UnitT_Freq / p_encoder->DeltaT;
-//}
 
 /******************************************************************************/
 /*!

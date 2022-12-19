@@ -37,6 +37,7 @@ static void ResetRuntime(PID_T * p_pid)
 	p_pid->KiDivisorFreq 	= p_pid->Params.KiDivisor * p_pid->Params.CalcFreq;
 	p_pid->KdFactorFreq 	= p_pid->Params.KdFactor * p_pid->Params.CalcFreq;
 	p_pid->ErrorSumOverflow = INT32_MAX / p_pid->Params.KiFactor;
+	p_pid->IntegralOverflow = INT32_MAX / p_pid->KiDivisorFreq;
 }
 
 void PID_Init(PID_T * p_pid)
@@ -68,34 +69,15 @@ void PID_Init_Args
 
 static int32_t GetIntegral(PID_T * p_pid)
 {
-	int32_t integral;
-
-	if((p_pid->ErrorSum > p_pid->ErrorSumOverflow) || (p_pid->ErrorSum < 0 - p_pid->ErrorSumOverflow))
-	{
-		integral = p_pid->ErrorSum / p_pid->KiDivisorFreq * p_pid->Params.KiFactor;
-	}
-	else
-	{
-		integral = p_pid->Params.KiFactor * p_pid->ErrorSum / p_pid->KiDivisorFreq;
-	}
-
-	return integral;
+	return ((p_pid->ErrorSum > p_pid->ErrorSumOverflow) || (p_pid->ErrorSum < 0 - p_pid->ErrorSumOverflow)) ?
+		(p_pid->ErrorSum / p_pid->KiDivisorFreq * p_pid->Params.KiFactor) : (p_pid->Params.KiFactor * p_pid->ErrorSum / p_pid->KiDivisorFreq);
 }
 
 static void SetIntegral(PID_T * p_pid, int32_t integral)
 {
-	int32_t integralOverflow = INT32_MAX / p_pid->KiDivisorFreq;
-
-	if((integral > integralOverflow) || (integral < 0 - integralOverflow))
-	{
-		p_pid->ErrorSum = integral / p_pid->Params.KiFactor * p_pid->KiDivisorFreq;
-	}
-	else
-	{
-		p_pid->ErrorSum = integral * p_pid->KiDivisorFreq / p_pid->Params.KiFactor;
-	}
+	p_pid->ErrorSum = ((integral > p_pid->IntegralOverflow) || (integral < 0 - p_pid->IntegralOverflow)) ?
+		(integral / p_pid->Params.KiFactor * p_pid->KiDivisorFreq) : (integral * p_pid->KiDivisorFreq / p_pid->Params.KiFactor);
 }
-
 
 /*
 	Standard PID calculation
@@ -109,20 +91,13 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 
 	integral = GetIntegral(p_pid);
 
-	if(integral > p_pid->OutputMax)
-	{
-		integral = p_pid->OutputMax;
-		if(error < 0) { p_pid->ErrorSum += error; } /* only if error sum becomes out of sync, add error if error is negative */ //may need p_pid->OutputMax > 0
-	}
-	else if(integral < p_pid->OutputMin)
-	{
-		integral = p_pid->OutputMin;
-		if(error > 0) { p_pid->ErrorSum += error; } /* only if error sum becomes out of sync, add error if error is positive */
-	}
-	else
-	{
-		p_pid->ErrorSum += error; /* stops accumulating integral if output is past limits */
-	}
+	/*
+		Stops accumulating ErrorSum if output is past limits
+		If error sum becomes out of sync, add error if accumulating towards Min/Max
+	*/
+	if 		(integral > p_pid->OutputMax) 	{ integral = p_pid->OutputMax; if(error < 0) { p_pid->ErrorSum += error; } }
+	else if	(integral < p_pid->OutputMin) 	{ integral = p_pid->OutputMin; if(error > 0) { p_pid->ErrorSum += error; } }
+	else 									{ p_pid->ErrorSum += error; }
 
 	if(p_pid->Params.Mode == PID_MODE_PID)
 	{
@@ -200,19 +175,17 @@ void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t 
 	ResetRuntime(p_pid);
 }
 
-void PID_SetTunings_FractionSigned16(PID_T * p_pid, int32_t kp, int32_t ki, int32_t kd)
+/* todo kp kd use shift, ki use divide */
+void PID_SetTunings_Frac16(PID_T * p_pid, int32_t kp, int32_t ki, int32_t kd)
 {
-	/* scale down ki overflow */
-	// int32_t kiFactor = ki >> 12U;
-	// int32_t kiDivisor = 32768 >> 12U;
+	/* reduce ki for overflow */
 	// while ()
-
-	PID_SetTunings(p_pid, kp, 32768, ki, 32768, kd, 32768);
+	PID_SetTunings(p_pid, kp, 65536, ki, 65536, kd, 65536);
 }
 
-int32_t PID_GetKp_FractionSigned16(PID_T * p_pid) { return 32768 * p_pid->Params.KpFactor / p_pid->Params.KpDivisor; }
-int32_t PID_GetKi_FractionSigned16(PID_T * p_pid) { return 32768 * p_pid->Params.KiFactor / p_pid->Params.KiDivisor; }
-int32_t PID_GetKd_FractionSigned16(PID_T * p_pid) { return 32768 * p_pid->Params.KdFactor / p_pid->Params.KdDivisor; }
+int32_t PID_GetKp_Frac16(PID_T * p_pid) { return 65536 * p_pid->Params.KpFactor / p_pid->Params.KpDivisor; }
+int32_t PID_GetKi_Frac16(PID_T * p_pid) { return 65536 * p_pid->Params.KiFactor / p_pid->Params.KiDivisor; }
+int32_t PID_GetKd_Frac16(PID_T * p_pid) { return 65536 * p_pid->Params.KdFactor / p_pid->Params.KdDivisor; }
 
 int32_t PID_GetKp_Int(PID_T * p_pid, uint16_t scalar) { return scalar * p_pid->Params.KpFactor / p_pid->Params.KpDivisor; }
 int32_t PID_GetKi_Int(PID_T * p_pid, uint16_t scalar) { return scalar * p_pid->Params.KiFactor / p_pid->Params.KiDivisor; }

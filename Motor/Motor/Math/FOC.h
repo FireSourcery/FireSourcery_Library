@@ -100,6 +100,8 @@ static inline void FOC_SetVector(FOC_T * p_foc, qangle16_t theta) { qfrac16_vect
 static inline void FOC_SetIa(FOC_T * p_foc, qfrac16_t ia) { p_foc->Ia = ia; }
 static inline void FOC_SetIb(FOC_T * p_foc, qfrac16_t ib) { p_foc->Ib = ib; }
 static inline void FOC_SetIc(FOC_T * p_foc, qfrac16_t ic) { p_foc->Ic = ic; }
+static inline void FOC_SetId(FOC_T * p_foc, qfrac16_t id) { p_foc->Id = id; }
+static inline void FOC_SetIq(FOC_T * p_foc, qfrac16_t iq) { p_foc->Iq = iq; }
 static inline void FOC_SetVd(FOC_T * p_foc, qfrac16_t vd) { p_foc->Vd = vd; }
 static inline void FOC_SetVq(FOC_T * p_foc, qfrac16_t vq) { p_foc->Vq = vq; }
 static inline uint16_t FOC_GetDutyA(FOC_T * p_foc) { return p_foc->DutyA; }

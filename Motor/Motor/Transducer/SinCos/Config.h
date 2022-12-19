@@ -31,11 +31,7 @@
 #ifndef CONFIG_SIN_COS_H
 #define CONFIG_SIN_COS_H
 
-#if 	defined(CONFIG_SIN_COS_ADC_MAX)
-#elif 	defined(ADC_MAX)
-#else
-	#define ADC_MAX 4096U
-#endif
+
 
 #endif
 

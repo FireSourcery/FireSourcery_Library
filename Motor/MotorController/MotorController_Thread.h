@@ -35,7 +35,7 @@
 #include "MotorController_User.h"
 #include "Motor/Motor/Motor_Thread.h"
 
-static inline bool CheckAlign(uint32_t num, uint32_t align) { return ((num & (align)) == 0UL); }
+static inline bool CheckDividerMask(uint32_t num, uint32_t align) { return ((num & (align)) == 0UL); }
 
 /******************************************************************************/
 /*
@@ -62,13 +62,13 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 		default: break;
 	}
 
-	// if(CheckAlign(p_mc->MainDividerCounter, p_mc->CONFIG.ANALOG_USER_DIVIDER))
-	// {
-	// 	AnalogN_Group_PauseQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_USER);
-	// 	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_THROTTLE);
-	// 	AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_BRAKE);
-	// 	AnalogN_Group_ResumeQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_USER);
-	// }
+	if(CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONFIG.ANALOG_USER_DIVIDER))
+	{
+		AnalogN_Group_PauseQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_USER);
+		AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_THROTTLE);
+		AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_BRAKE);
+		AnalogN_Group_ResumeQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_USER);
+	}
 }
 
 /*
@@ -256,7 +256,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 #endif
 
 		/* Low Freq, Low Priority, ~10ms ~16ms, 100Hz */
-		if(CheckAlign(p_mc->MainDividerCounter, p_mc->CONFIG.MAIN_DIVIDER_10) == true)
+		if(CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONFIG.MAIN_DIVIDER_10) == true)
 		{
 	#ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
 			Shell_Proc(&p_mc->Shell);
@@ -267,7 +267,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 
 		/* Low Freq, Low Priority, ~1s ~1024ms */
 
-		if(CheckAlign(p_mc->MainDividerCounter, p_mc->CONFIG.MAIN_DIVIDER_1000) == true)
+		if(CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONFIG.MAIN_DIVIDER_1000) == true)
 		{
 			/* In case of Serial Rx Overflow Timeout */
 			for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]); }
@@ -322,7 +322,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 	AnalogN_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VSOURCE);
 #endif
 
-	if(CheckAlign(p_mc->TimerDividerCounter, p_mc->CONFIG.TIMER_DIVIDER_1000) == true)
+	if(CheckDividerMask(p_mc->TimerDividerCounter, p_mc->CONFIG.TIMER_DIVIDER_1000) == true)
 	{
 		_MotorController_ProcVoltageMonitor(p_mc); /* Except voltage supply */
 		_MotorController_ProcHeatMonitor(p_mc);

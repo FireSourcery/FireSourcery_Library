@@ -112,7 +112,7 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
 
 static inline void Motor_Calibrate_StartHall(Motor_T * p_motor)
 {
-	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_ControlCycles);
+	Timer_StartPeriod(&p_motor->ControlTimer, _Motor_ConvertToControlCycles(p_motor, p_motor->Parameters.AlignTime_Ms));
 }
 
 //120 degree, hall aligned with phase
@@ -176,7 +176,7 @@ static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
 
 static inline void Motor_Calibrate_StartEncoder(Motor_T * p_motor)
 {
-	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_ControlCycles);
+	Timer_StartPeriod(&p_motor->ControlTimer, _Motor_ConvertToControlCycles(p_motor, p_motor->Parameters.AlignTime_Ms));
 }
 
 static inline bool Motor_Calibrate_Encoder(Motor_T * p_motor)
@@ -214,7 +214,7 @@ static inline bool Motor_Calibrate_Encoder(Motor_T * p_motor)
 */
 static inline void Motor_Calibrate_StartAdc(Motor_T * p_motor)
 {
-	Timer_StartPeriod(&p_motor->ControlTimer, GLOBAL_MOTOR.CONTROL_FREQ); // Motor.Parameters.AdcCalibrationTime
+	Timer_StartPeriod(&p_motor->ControlTimer, GLOBAL_MOTOR.CONTROL_FREQ);
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
@@ -224,38 +224,45 @@ static inline void Motor_Calibrate_StartAdc(Motor_T * p_motor)
 	{
 		Phase_Ground(&p_motor->Phase);
 	}
-
-	p_motor->AnalogResults.Ia_Adcu = 2048U;
-	p_motor->AnalogResults.Ib_Adcu = 2048U;
-	p_motor->AnalogResults.Ic_Adcu = 2048U;
-
 	Filter_InitAvg(&p_motor->FilterA);
 	Filter_InitAvg(&p_motor->FilterB);
 	Filter_InitAvg(&p_motor->FilterC);
+	p_motor->AnalogResults.Ia_Adcu = 0U;
+	p_motor->AnalogResults.Ib_Adcu = 0U;
+	p_motor->AnalogResults.Ic_Adcu = 0U;
 }
 
 static inline bool Motor_Calibrate_Adc(Motor_T *p_motor)
 {
-	bool isComplete = Timer_Periodic_Poll(&p_motor->ControlTimer); /* Calibrate Adc 1 wait step only */
+	bool isComplete = Timer_Periodic_Poll(&p_motor->ControlTimer);
+
 	if (isComplete == true)
 	{
 		p_motor->Parameters.IaZeroRef_Adcu = Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu);
 		p_motor->Parameters.IbZeroRef_Adcu = Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_Adcu);
 		p_motor->Parameters.IcZeroRef_Adcu = Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_Adcu);
-		// p_motor->Parameters.IaRefMax_Adcu = p_motor->Parameters.IaZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
-		// p_motor->Parameters.IbRefMax_Adcu = p_motor->Parameters.IbZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
-		// p_motor->Parameters.IcRefMax_Adcu = p_motor->Parameters.IcZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
 		Motor_ResetUnitsIabc(p_motor);
 		Phase_Float(&p_motor->Phase);
 	}
 	else
 	{
-		Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu);
-		Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_Adcu);
-		Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_Adcu);
-		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
+		/* 4x sample time */
+		if((p_motor->ControlTimerBase & 0b11UL) == 0UL)
+		{
+			if(p_motor->AnalogResults.Ia_Adcu != 0U) { Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu); }
+			if(p_motor->AnalogResults.Ib_Adcu != 0U) { Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_Adcu); }
+			if(p_motor->AnalogResults.Ic_Adcu != 0U) { Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_Adcu); }
+		}
+		else
+		{
+			AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
+			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
+		#if defined(CONFIG_MOTOR_I_SENSORS_ABC)
+			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
+		#endif
+			AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+		}
 	}
 
 	return isComplete;

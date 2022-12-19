@@ -39,7 +39,6 @@
 /******************************************************************************/
 /*!
 	ISRs
-	emulated capture D, or callback hook
 */
 /*! @{ */
 /******************************************************************************/
@@ -50,27 +49,92 @@ static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 {
 	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
 	p_encoder->IndexCount++;
-// #if 	defined(CONFIG_ENCODER_HW_EMULATED)
+// #if 		defined(CONFIG_ENCODER_HW_EMULATED)
 // #elif	defined(CONFIG_ENCODER_HW_DECODER)
 // 	HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0U);
 // #endif
-// 	p_encoder->IndexCounterDOffset = p_encoder->CounterD - p_encoder->Params.CountsPerRevolution;
-// 	p_encoder->IndexCounterD = p_encoder->CounterD + p_encoder->IndexCounterDOffset;
 }
 
+/******************************************************************************/
+/*!
+	@brief 	SW Capture Functions - Emulated ModeD, ModeDT
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*
+	Quadrature, Signed Direction
+*/
+/******************************************************************************/
+static inline uint8_t _Encoder_CapturePhasesState(Encoder_T * p_encoder)
+{
+	p_encoder->Phases.PrevA = p_encoder->Phases.A;
+	p_encoder->Phases.PrevB = p_encoder->Phases.B;
+	p_encoder->Phases.A = Pin_Input_ReadPhysical(&p_encoder->PinA);
+	p_encoder->Phases.B = Pin_Input_ReadPhysical(&p_encoder->PinB);
+	return p_encoder->Phases.State;
+}
+
+static inline void _Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
+{
+	if(count == _ENCODER_TABLE_ERROR) { p_encoder->ErrorCount++; }
+	else
+	{
+		p_encoder->CounterD += count;
+		p_encoder->Angle32 += ((int32_t)count * (int32_t)p_encoder->UnitAngularD);
+	}
+}
+
+static inline void _Encoder_CaptureCounterD_Quadrature(Encoder_T * p_encoder)
+{
+	_Encoder_CaptureCount(p_encoder, _ENCODER_TABLE[_Encoder_CapturePhasesState(p_encoder)]);
+}
+
+static inline void _Encoder_CaptureCounterD_QuadraturePhaseA(Encoder_T * p_encoder)
+{
+	_Encoder_CaptureCount(p_encoder, _ENCODER_TABLE_PHASE_A[_Encoder_CapturePhasesState(p_encoder)]);
+}
+
+/******************************************************************************/
+/*
+	Single Phase, Unsigned Direction
+*/
+/******************************************************************************/
+// static inline void _Encoder_CaptureCounterD_Inc(Encoder_T * p_encoder)
+// {
+// 	p_encoder->CounterD++;
+// 	p_encoder->Angle32 += p_encoder->UnitAngularD;
+// 	// p_encoder->AngularD = (p_encoder->AngularD < p_encoder->Params.CountsPerRevolution - 1U) ? p_encoder->AngularD + 1U : 0U;
+// }
+
+// static inline void _Encoder_CaptureCounterD_PhaseA(Encoder_T * p_encoder)
+// {
+// 	// int8_t count = (Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1;
+// 	p_encoder->CounterD += 1;
+// 	// p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngularD);
+// }
+
+/******************************************************************************/
+/*
+	Quadrature On/Off Switch
+*/
+/******************************************************************************/
+// static inline void _Encoder_CaptureCounterD(Encoder_T * p_encoder)
+// {
+// #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
+// 	if(p_encoder->Params.IsQuadratureCaptureEnabled == true) { _Encoder_CaptureCounterD_Quadrature(p_encoder); }
+// 	else
+// #endif
+// 	{ _Encoder_CaptureCounterD_Inc(p_encoder); }
+// }
+
+/*
+	All ISR Mode, HW_EMULATED ModeD, ModeDT, DELTA_T_ISR ModeT
+	Possible, superfluous DeltaT capture for Emulated ModeD
+*/
 static inline void _Encoder_OnPhase_ISR(Encoder_T * p_encoder)
 {
-#if 	defined(CONFIG_ENCODER_HW_EMULATED) && defined(CONFIG_ENCODER_DELTA_T_ISR)
-// check switch
-#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
-	// _Encoder_CaptureCounterD(p_encoder);
-	// _Encoder_CaptureCounterD_Inc(p_encoder);
 	_Encoder_CaptureCounterD_Quadrature(p_encoder);
-	// HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U); /* for DT Capture */
-	// Emulated, still need Capture DeltaT
-#elif 	defined(CONFIG_ENCODER_DELTA_T_ISR)/* DeltaT OR ModeDT ISR version */ //todo check freq for auto capture speed
-	Encoder_DeltaT_Capture(p_encoder); /* superfluous deltaT capture for emulated D mode for now */
-#endif
+	Encoder_DeltaT_Capture(p_encoder);
 }
 
 static inline void Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
@@ -91,14 +155,14 @@ static inline void Encoder_Motor_OnPhaseC_ISR(Encoder_T * p_encoder)
 	_Encoder_OnPhase_ISR(p_encoder);
 }
 
-/* Shared A, B Thread */
+/* Shared A, B ISR */
 static inline void Encoder_OnPhaseAB_ISR(Encoder_T * p_encoder)
 {
 	if 		(HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID) == true) { Encoder_OnPhaseA_ISR(p_encoder); }
 	else if	(HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID) == true) { Encoder_OnPhaseB_ISR(p_encoder); }
 }
 
-/* Shared A, B, Index Thread */
+/* Shared A, B, Index ISR */
 static inline void Encoder_OnPhaseABZ_ISR(Encoder_T * p_encoder)
 {
 	if 		(HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID) == true) { Encoder_OnPhaseA_ISR(p_encoder); }

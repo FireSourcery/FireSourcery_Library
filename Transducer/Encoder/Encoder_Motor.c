@@ -70,6 +70,7 @@ void Encoder_Motor_InitModeD(Encoder_T * p_encoder)
 void Encoder_Motor_InitModeT(Encoder_T * p_encoder)
 {
 	Encoder_DeltaT_Init(p_encoder);
+	p_encoder->InterpolateAngleLimit = (65536UL / 6U);
 }
 
 void Encoder_Motor_SetHallCountsPerRevolution(Encoder_T * p_encoder, uint8_t motorPolePairs)

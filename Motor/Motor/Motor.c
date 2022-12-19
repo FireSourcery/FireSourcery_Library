@@ -31,6 +31,9 @@
 #include "Motor.h"
 #include <string.h>
 
+/*
+	Init Global_Motor first
+*/
 void Motor_Init(Motor_T * p_motor)
 {
 	if(p_motor->CONFIG.P_PARAMS_NVM != 0U) { memcpy(&p_motor->Parameters, p_motor->CONFIG.P_PARAMS_NVM, sizeof(Motor_Params_T)); }
@@ -67,11 +70,10 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Motor_SetDirectionForward(p_motor);
 
 	/*
-		Ramp 0 to 32767 max in ~500ms, 3.2767 per control cycle
-		Final value is overwritten, slope is persistent
+		Ramp 0 to 32767 max in ~500ms, 3.2767 per ControlCycle
+		Final value is overwritten, Slope is persistent
 	*/
-	Linear_Ramp_Init_Millis(&p_motor->Ramp, GLOBAL_MOTOR.CONTROL_FREQ, 500U, 0U, 32767U);
-	Motor_ResetRamp(p_motor);
+	Linear_Ramp_Init_Ticks(&p_motor->Ramp, _Motor_ConvertToControlCycles(p_motor, p_motor->Parameters.RampAccel_Ms), 0U, INT16_MAX);
 
 	Motor_ResetUnitsVabc(p_motor);
 	Motor_ResetUnitsIabc(p_motor);
@@ -91,15 +93,13 @@ void Motor_InitReboot(Motor_T * p_motor)
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		/* todo frac16 */ /* Start at 0 speed in foc mode for continuous angle displacements */
-		Linear_Ramp_Init_Millis(&p_motor->OpenLoopRamp, GLOBAL_MOTOR.CONTROL_FREQ, 3000U, 0U, p_motor->Parameters.OpenLoopSpeed_RPM);
+		/* todo frac16 */ /* Start at 0 speed in FOC mode for continuous angle displacements */
+		Linear_Ramp_Init_Ticks(&p_motor->OpenLoopRamp, _Motor_ConvertToControlCycles(p_motor, p_motor->Parameters.OpenLoopAccel_Ms), 0U, p_motor->Parameters.OpenLoopSpeed_RPM);
 	}
 	else
 	{
 
 	}
-
-	p_motor->OpenLoopRampIndex = 0U;
 #endif
 
 	Motor_SetFeedbackModeFlags(p_motor, p_motor->Parameters.UserFeedbackMode); // set user control mode so pids set to initial state.
@@ -127,7 +127,8 @@ void Motor_ZeroSensor(Motor_T * p_motor)
 			Encoder_DeltaD_SetInitial(&p_motor->Encoder);
 			break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-		case MOTOR_SENSOR_MODE_SIN_COS:		break;
+		case MOTOR_SENSOR_MODE_SIN_COS:
+		break;
 #endif
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 		case MOTOR_SENSOR_MODE_OPEN_LOOP:
@@ -252,7 +253,7 @@ void Motor_ResetSensorMode(Motor_T * p_motor)
 void Motor_ResetUnitsVabc(Motor_T * p_motor)
 {
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-	Linear_Voltage_Init(&p_motor->UnitVabc, GLOBAL_MOTOR.VABC_R1, GLOBAL_MOTOR.VABC_R2, ADC_BITS, Global_Motor_GetAdcVRef(), Global_Motor_GetVSourceRef());
+	Linear_Voltage_Init(&p_motor->UnitVabc, GLOBAL_MOTOR.V_ABC_R1, GLOBAL_MOTOR.V_ABC_R2, GLOBAL_ANALOG.ADC_BITS, GLOBAL_ANALOG.ADC_VREF_MILLIV, Global_Motor_GetVSource_V());
 #else
 	(void)p_motor;
 #endif
@@ -263,24 +264,23 @@ void Motor_ResetUnitsIabc(Motor_T * p_motor)
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	uint16_t iPeakRef_Adcu = p_motor->Parameters.IPeakRef_Adcu;
 #elif defined(CONFIG_MOTOR_DEBUG_DISABLE)
-	uint16_t iPeakRef_Adcu =  GLOBAL_MOTOR.I_ZERO_TO_PEAK_ADCU;
+	uint16_t iPeakRef_Adcu =  GLOBAL_MOTOR.I_MAX_ZTP_ADCU;
 #endif
-
+	Linear_ADC_Init_ZeroToPeak(&p_motor->UnitIa, p_motor->Parameters.IaZeroRef_Adcu, iPeakRef_Adcu, GLOBAL_MOTOR.I_UNITS_AMPS);
+	Linear_ADC_Init_ZeroToPeak(&p_motor->UnitIb, p_motor->Parameters.IbZeroRef_Adcu, iPeakRef_Adcu, GLOBAL_MOTOR.I_UNITS_AMPS);
+	Linear_ADC_Init_ZeroToPeak(&p_motor->UnitIc, p_motor->Parameters.IcZeroRef_Adcu, iPeakRef_Adcu, GLOBAL_MOTOR.I_UNITS_AMPS);
 #ifdef CONFIG_MOTOR_I_SENSORS_INVERT
-	Linear_ADC_Init_Inverted(&p_motor->UnitIa, p_motor->Parameters.IaZeroRef_Adcu, p_motor->Parameters.IaZeroRef_Adcu + iPeakRef_Adcu,  GLOBAL_MOTOR.I_MAX_AMP);
-	Linear_ADC_Init_Inverted(&p_motor->UnitIb, p_motor->Parameters.IbZeroRef_Adcu, p_motor->Parameters.IbZeroRef_Adcu + iPeakRef_Adcu,  GLOBAL_MOTOR.I_MAX_AMP);
-	Linear_ADC_Init_Inverted(&p_motor->UnitIc, p_motor->Parameters.IcZeroRef_Adcu, p_motor->Parameters.IcZeroRef_Adcu + iPeakRef_Adcu,  GLOBAL_MOTOR.I_MAX_AMP);
-#elif defined(CONFIG_MOTOR_I_SENSORS_NONINVERT)
-	Linear_ADC_Init(&p_motor->UnitIa, p_motor->Parameters.IaZeroRef_Adcu, p_motor->Parameters.IaZeroRef_Adcu + iPeakRef_Adcu, p_motor->CONFIG.I_MAX_AMP);
-	Linear_ADC_Init(&p_motor->UnitIb, p_motor->Parameters.IbZeroRef_Adcu, p_motor->Parameters.IbZeroRef_Adcu + iPeakRef_Adcu, p_motor->CONFIG.I_MAX_AMP);
-	Linear_ADC_Init(&p_motor->UnitIc, p_motor->Parameters.IcZeroRef_Adcu, p_motor->Parameters.IcZeroRef_Adcu + iPeakRef_Adcu, p_motor->CONFIG.I_MAX_AMP);
+	Linear_ADC_SetInverted(&p_motor->UnitIa);
+	Linear_ADC_SetInverted(&p_motor->UnitIb);
+	Linear_ADC_SetInverted(&p_motor->UnitIc);
 #endif
 }
 
+/* resume from freewheel */
 void Motor_ResetSpeedVMatchRatio(Motor_T * p_motor)
 {
 	//todo xref
-	// Linear_Init(&p_motor->SpeedVMatchRatio, p_motor->Parameters.SpeedFeedbackRef_Rpm, p_motor->Parameters.SpeedVMatchRef_Rpm, 0, 65535*2);
+	Linear_Init(&p_motor->SpeedVMatchRatio, p_motor->Parameters.SpeedFeedbackRef_Rpm, p_motor->Parameters.SpeedVMatchRef_Rpm, 0, 65535*2);
 }
 
 /* Sensorless */
@@ -326,7 +326,7 @@ void Motor_ResetUnitsEncoder(Motor_T * p_motor)
 	{
 		Encoder_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 	}
-	// if(p_motor->Parameters.GearRatio_Factor != p_motor->Encoder.Params.GearRatio_Factor)
+	// if(p_motor->Parameters.GearRatio_Factor != p_motor->Encoder.Params.GearRatio_Factor) ||
 	// {
 	// 	// Encoder_Motor_SetSurfaceRatio(&p_motor->Encoder, p_motor->Parameters.GearRatio);
 	// }

@@ -30,16 +30,22 @@
 /******************************************************************************/
 #include "Linear_Frac16.h"
 
+
+
 /******************************************************************************/
 /*!
-	Linear with
-
+	Linear
 	Sets frac16 conversion to return without division
-	adcu to physical(user yref) returns without division
-	division in physical to adcu, frac16 to physical units
 
-	p_linear->YReference in Units
-	p_linear->YOffset in Frac16;
+	f(x) = y_Units, 				Shift
+	f16(x) = y_Frac16, 				Shift
+	invf(y_Units) = x, 				Division
+	invf16(y_Frac16) = x, 			Shift
+	f16units(y_Frac16) = y_Units, 	Division
+
+	f16(0) = y0_Frac16
+	f(xRef) = yRef_Units
+	f16(xRef) = 65535
 */
 /******************************************************************************/
 
@@ -52,10 +58,10 @@ void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, in
 {
 	p_linear->YReference = yRef_Units;
 	p_linear->XReference = linear_invf(factor, divisor, 0, yRef_Units); /* (yRef_Units - 0)*divisor/factor */
-	p_linear->Slope = (65536 << 14U) / p_linear->XReference; /* x0 == 0 */
-	p_linear->SlopeShift = 14U;
-	p_linear->InvSlope = (p_linear->XReference << 14U) / 65536; //todo maxleftshift, if factor > divisor, invslope can be > 14
-	p_linear->InvSlopeShift = 14U;
+	p_linear->Slope = (65536 << LINEAR_DIVIDE_SHIFT) / p_linear->XReference; /* x0 == 0 */
+	p_linear->SlopeShift = LINEAR_DIVIDE_SHIFT;
+	p_linear->InvSlope = (p_linear->XReference << LINEAR_DIVIDE_SHIFT) / 65536; //todo maxleftshift, if factor > divisor, invslope can be > 14
+	p_linear->InvSlopeShift = LINEAR_DIVIDE_SHIFT;
 	p_linear->XOffset = 0;
 	p_linear->YOffset = y0_Frac16;
 }
@@ -68,10 +74,10 @@ void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, in
 */
 void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0_Frac16, int32_t yRef_Units)
 {
-	p_linear->Slope = (65536 << 14U) / (xRef - x0);
-	p_linear->SlopeShift = 14U;
-	p_linear->InvSlope = ((xRef - x0) << 14U) / 65536; //todo maxleftshift, if factor > divisor, invslope can be > 14
-	p_linear->InvSlopeShift = 14U;
+	p_linear->Slope = (65536 << LINEAR_DIVIDE_SHIFT) / (xRef - x0);
+	p_linear->SlopeShift = LINEAR_DIVIDE_SHIFT;
+	p_linear->InvSlope = ((xRef - x0) << LINEAR_DIVIDE_SHIFT) / 65536;
+	p_linear->InvSlopeShift = LINEAR_DIVIDE_SHIFT;
 	p_linear->XOffset = x0;
 	p_linear->YOffset = y0_Frac16;
 	p_linear->XReference = xRef; /* Unused for calculations, User info */

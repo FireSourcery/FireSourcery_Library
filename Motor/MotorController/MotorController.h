@@ -334,12 +334,14 @@ typedef struct MotorController_Tag
 	StateMachine_T StateMachine;
 	MotorController_FaultFlags_T FaultFlags; /* Fault Substate */
 	MotorController_WarningFlags_T WarningFlags;
-	// MotAnalog_Results_T FaultAnalogRecord;
+#if	defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
+	MotAnalog_Results_T FaultAnalogRecord;
+#endif
 	/* Set by StateMachine only */
 	MotorController_Direction_T ActiveDirection;
 	MotorController_SubId_T SubState;
 	NvMemory_Status_T NvmStatus;
-	uint16_t UserCmd;
+	uint16_t UserCmd; /* For Edge Detect, using 0 */
 
 	// MotorController_SpeedLimitActiveId_T SpeedLimitActiveId;
 	// MotorController_ILimitActiveId_T ILimitActiveId;

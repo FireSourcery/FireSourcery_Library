@@ -30,8 +30,6 @@
 /******************************************************************************/
 #include "Linear_Ramp.h"
 
-/* todo change to frac16 for granularity  */
-
 /******************************************************************************/
 /*
 
@@ -39,21 +37,18 @@
 /******************************************************************************/
 /*
 	Other functions provide higher granularity
+	Slope is signed, if initial > final AND acceleration is positive, ramp returns final value
+	Overflow: slope_UnitPerSecond > 131,071 [17-bits]
 */
 void Linear_Ramp_Init(Linear_T * p_linear, int32_t slope_UnitPerTick, int32_t initial, int32_t final)
 {
 	Linear_Init(p_linear, slope_UnitPerTick, 1U, initial, final);
 }
 
-/*
-	User must account for acceleration sign,
-	If initial > final AND acceleration is positive, ramp returns final value
-
-	Overflow: slope_UnitPerSecond > 131,071
-*/
-void Linear_Ramp_Init_Acceleration(Linear_T * p_linear, uint32_t updateFreq_Hz, int32_t slope_UnitPerSecond, int32_t initial, int32_t final)
+void Linear_Ramp_Init_Ticks(Linear_T * p_linear, uint32_t updatePeriod_Ticks,  int32_t initial, int32_t final)
 {
-	Linear_Init(p_linear, slope_UnitPerSecond, updateFreq_Hz, initial, final);
+	uint32_t divider = (updatePeriod_Ticks != 0U) ? (updatePeriod_Ticks) : 1U;
+	Linear_Init(p_linear, final - initial, divider, initial, final);
 }
 
 /*
@@ -62,5 +57,6 @@ void Linear_Ramp_Init_Acceleration(Linear_T * p_linear, uint32_t updateFreq_Hz, 
 */
 void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t period_Ms, int32_t initial, int32_t final)
 {
-	Linear_Init(p_linear, final - initial, period_Ms * updateFreq_Hz / 1000U, initial, final);
+	uint32_t divider = (period_Ms != 0U) ? (period_Ms * updateFreq_Hz / 1000U) : 1U;
+	Linear_Init(p_linear, final - initial, divider, initial, final);
 }

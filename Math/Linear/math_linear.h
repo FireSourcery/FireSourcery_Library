@@ -189,7 +189,7 @@ static inline int32_t linear_invf16_yref_shift(int32_t invm_shifted, uint8_t shi
 
 /******************************************************************************/
 /*
-	when slope is set to frac16 conversion, f_m16 returns user units secondarily
+	when slope is set to frac16 conversion, m16_f returns user units secondarily
 */
 /******************************************************************************/
 /* e.g. x to y_frac16 */

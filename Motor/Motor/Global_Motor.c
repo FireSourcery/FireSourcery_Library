@@ -31,11 +31,8 @@
 #include "Global_Motor.h"
 
 /* Global Static, for all Motor instances */
-static uint16_t AdcVRef_MilliV;  	/* Sync with upper layer */
 static uint16_t VSourceRef_V; 		/* Battery/Supply voltage. Sync with upper layer */
+void Global_Motor_InitVSourceRef_V(uint16_t vSource) { Global_Motor_SetVSource_V(vSource); }
+void Global_Motor_SetVSource_V(uint16_t vSource) { VSourceRef_V = (vSource > GLOBAL_MOTOR.V_MAX_VOLTS) ? GLOBAL_MOTOR.V_MAX_VOLTS : vSource; }
+uint16_t Global_Motor_GetVSource_V(void) { return VSourceRef_V; }
 
-uint16_t Global_Motor_GetAdcVRef(void) 		{ return AdcVRef_MilliV; }
-uint16_t Global_Motor_GetVSourceRef(void) 	{ return VSourceRef_V; }
-
-void Global_Motor_InitAdcVRef_MilliV(uint16_t adcVRef_MilliV) 	{ AdcVRef_MilliV = adcVRef_MilliV; }
-void Global_Motor_InitVSourceRef_V(uint16_t vSourceRef_V) 		{ VSourceRef_V = vSourceRef_V; }

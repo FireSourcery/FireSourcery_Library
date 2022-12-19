@@ -32,15 +32,8 @@
 #include <string.h>
 #include <math.h>
 
-static uint16_t _AdcVRef_Scalar; /* Shared by all instances. */
-
-/*
-	Set Vin to same decimal precision as AdcVRef
-*/
-void Thermistor_InitAdcVRef_Scalar(uint16_t adcVRef_MilliV)
-{
-	_AdcVRef_Scalar = adcVRef_MilliV / 10U;
-}
+/* Set Vin to same decimal precision as AdcVRef. Shared by all instances. */
+#define ADC_VREF_SCALAR (GLOBAL_ANALOG.ADC_VREF_MILLIV / 10U)
 
 void Thermistor_Init(Thermistor_T * p_therm)
 {
@@ -194,7 +187,7 @@ static inline float invsteinhart(double b, double t0, double r0, double invKelvi
 
 static float ConvertAdcuToDegC(Thermistor_T * p_therm, uint16_t adcu)
 {
-	uint32_t rNet = r_pulldown_adcu(p_therm->CONFIG.R_SERIES/100U, p_therm->Params.VIn_Scalar, ADC_MAX, _AdcVRef_Scalar, adcu) * 100U;
+	uint32_t rNet = r_pulldown_adcu(p_therm->CONFIG.R_SERIES/100U, p_therm->Params.VIn_Scalar, GLOBAL_ANALOG.ADC_MAX, ADC_VREF_SCALAR, adcu) * 100U;
 	uint32_t rTh = (p_therm->CONFIG.R_PARALLEL != 0U) ? r_parallel(rNet, p_therm->CONFIG.R_PARALLEL) : rNet;
 	double invKelvin = steinhart(p_therm->Params.BConstant, p_therm->Params.TNominal, p_therm->Params.RNominal, rTh);
 	return (1.0F / invKelvin - 273.15F);
@@ -225,7 +218,7 @@ static uint16_t ConvertDegCToAdcu(Thermistor_T * p_therm, uint16_t degC)
 			break;
 	}
 
-	return adcu_r(ADC_MAX, _AdcVRef_Scalar, p_therm->Params.VIn_Scalar, p_therm->CONFIG.R_SERIES, rNet);
+	return adcu_r(GLOBAL_ANALOG.ADC_MAX, ADC_VREF_SCALAR, p_therm->Params.VIn_Scalar, p_therm->CONFIG.R_SERIES, rNet);
 }
 
 float Thermistor_ConvertToDegC_Float(Thermistor_T * p_therm, uint16_t adcu)
@@ -251,7 +244,7 @@ uint16_t Thermistor_ConvertToAdcu_DegC(Thermistor_T * p_therm, uint16_t degC)
 static uint16_t ConvertDegCToAdcu_SetUser(Thermistor_T * p_therm, uint8_t degC)
 {
 	uint16_t adcu = ConvertDegCToAdcu(p_therm, degC);
-	while(((uint16_t)ConvertAdcuToDegC(p_therm, adcu) > degC) && (adcu < ADC_MAX))
+	while(((uint16_t)ConvertAdcuToDegC(p_therm, adcu) > degC) && (adcu < GLOBAL_ANALOG.ADC_MAX))
 	{
 		adcu += 1U;
 	}

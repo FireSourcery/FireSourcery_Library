@@ -33,10 +33,8 @@
 
 void MotorController_Init(MotorController_T * p_mc)
 {
-// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 	Flash_Init(p_mc->CONFIG.P_FLASH);
 	MotorController_ReadOnce_Blocking(p_mc);
-// #endif
 
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
 	EEPROM_Init_Blocking(p_mc->CONFIG.P_EEPROM);
@@ -53,12 +51,10 @@ void MotorController_Init(MotorController_T * p_mc)
 
 	MotAnalogUser_Init(&p_mc->AnalogUser);
 
-	VMonitor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
 	VMonitor_Init(&p_mc->VMonitorSource);
 	VMonitor_Init(&p_mc->VMonitorSense);
 	VMonitor_Init(&p_mc->VMonitorAcc);
 
-	Thermistor_InitAdcVRef_Scalar(p_mc->Parameters.AdcVRef_MilliV);
 	Thermistor_Init(&p_mc->ThermistorPcb);
 #if		defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
 	Thermistor_Init(&p_mc->ThermistorMosfetsTop);
@@ -67,7 +63,6 @@ void MotorController_Init(MotorController_T * p_mc)
 	Thermistor_Init(&p_mc->ThermistorMosfets);
 #endif
 
-	Global_Motor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
 	Global_Motor_InitVSourceRef_V(p_mc->Parameters.VSourceRef);
 	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Init(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 
@@ -181,7 +176,7 @@ void MotorController_Init(MotorController_T * p_mc)
 // 	Motor_User_SetCommutationMode(p_motor, MOTOR_COMMUTATION_MODE_FOC);
 // 	// Motor_User_SetFeedbackModeParam(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT);
 
-// 	// Motor_User_SetSpeedFeedbackRef_VRpm(p_motor, BOARD_V_MAX, SPEED_MAX_DEFAULT);
+// 	// Motor_User_SetSpeedFeedbackRef_VRpm(p_motor, BOARD_V_VOLTS, SPEED_MAX_DEFAULT);
 // 	// Motor_User_SetSpeedFeedbackRef_VRpm(p_motor, 42U, SPEED_MAX_DEFAULT);
 // 	Motor_User_SetSpeedFeedbackRef_Rpm(p_motor, SPEED_MAX_DEFAULT);
 // 	// Motor_User_SetIPeakRef_Adcu(p_motor, BOARD_I_SENSOR_LIMIT * 9U / 10U);

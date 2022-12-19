@@ -31,6 +31,7 @@
 #include "SinCos.h"
 #include "Config.h"
 
+#include "Peripheral/Analog/Analog/Global_Analog.h"
 #include <string.h>
 
 void SinCos_Init(SinCos_T * p_sincos)
@@ -56,7 +57,7 @@ void SinCos_SetParamsAdc(SinCos_T * p_sincos, uint16_t zero_Adcu, uint16_t max_A
 
 void SinCos_SetParamsAdc_mV(SinCos_T * p_sincos, uint16_t adcVref_mV, uint16_t min_mV, uint16_t max_mV)
 {
-	SinCos_SetParamsAdc(p_sincos, (uint32_t)(max_mV + min_mV) * ADC_MAX / 2U / adcVref_mV, (uint32_t)max_mV * ADC_MAX / adcVref_mV, max_mV);
+	SinCos_SetParamsAdc(p_sincos, (uint32_t)(max_mV + min_mV) * GLOBAL_ANALOG.ADC_MAX / 2U / adcVref_mV, (uint32_t)max_mV * GLOBAL_ANALOG.ADC_MAX / adcVref_mV, max_mV);
 }
 
 void SinCos_SetAngleRatio(SinCos_T * p_sincos, uint16_t polePairs)

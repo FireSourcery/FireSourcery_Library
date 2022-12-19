@@ -66,6 +66,8 @@ static inline void Motor_Debug_CapturePeriod(Motor_T * p_motor, uint8_t index)
 
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
 extern void Debug_LED(void);
+extern void Debug_LedOn(void);
+extern void Debug_LedOff(void);
 #endif
 
 #endif

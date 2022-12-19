@@ -44,11 +44,12 @@
 */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-	Motor_CaptureRefTime(p_motor);
-	p_motor->ControlTimerBase++;
 	//  alternatively _Motor_Analog_Thread(p_motor); use analog select mode to implement preferred order
 	StateMachine_Semi_ProcOutput(&p_motor->StateMachine);
 	Motor_Debug_CaptureTime(p_motor, 5U);
+
+	p_motor->ControlTimerBase++;
+	Motor_CaptureRefTime(p_motor);
 }
 
 static inline void Motor_Heat_Thread(Motor_T * p_motor)

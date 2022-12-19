@@ -37,17 +37,10 @@
 
 void PWM_Init(PWM_T * p_pwm)
 {
-	HAL_PWM_Module_Init(p_pwm->CONFIG.P_HAL_PWM);
-	HAL_PWM_Init(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID);
+	HAL_PWM_InitModule(p_pwm->CONFIG.P_HAL_PWM);
+	HAL_PWM_InitChannel(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID);
 }
 
-void PWM_InitChannel(PWM_T * p_pwm)
-{
-	HAL_PWM_Init(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID);
-}
-
-void PWM_InitModule(PWM_T * p_pwm)
-{
-	HAL_PWM_Module_Init(p_pwm->CONFIG.P_HAL_PWM);
-}
+void PWM_InitChannel(PWM_T * p_pwm) { HAL_PWM_InitChannel(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
+void PWM_InitModule(PWM_T * p_pwm) { HAL_PWM_InitModule(p_pwm->CONFIG.P_HAL_PWM); }
 

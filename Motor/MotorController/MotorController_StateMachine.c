@@ -163,8 +163,8 @@ static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc, uint3
 
 	if((p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_FORWARD) || (p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE))
 	{
-		p_nextState = &STATE_RUN;
 		MotorController_ProcUserCmdThrottle(p_mc, userCmdThrottle); /* or non polling modes have to input throttle twice */
+		p_nextState = &STATE_RUN;
 	}
 
 	return p_nextState;
@@ -345,7 +345,7 @@ static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc, u
 
 	if(MotorController_ProcUserDirection(p_mc, inputDirection) == true)
 	{
-		// if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = 0U; } /* Not applicable for AnalogUser */
+		// if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) 	{ p_nextState = 0U; } /* Not applicable for AnalogUser */
 		// else 															{ p_nextState = &STATE_RUN; }
 		if((p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_FORWARD) || (p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE))
 		{
@@ -411,7 +411,9 @@ static const StateMachine_State_T STATE_NEUTRAL =
 static void Fault_Entry(MotorController_T * p_mc)
 {
 	MotorController_DisableMotorAll(p_mc);
-	// memcpy((void *)&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
+#if	defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
+	memcpy((void *)&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
+#endif
 	Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U);
 }
 
@@ -449,7 +451,7 @@ static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc, uint32_
 	p_mc->FaultFlags.MosfetsTopOverHeat 	= Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsTop);
 	p_mc->FaultFlags.MosfetsBotOverHeat 	= Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsBot);
 #else
-	p_mc->FaultFlags.MosfetsOverHeat 	= Thermistor_GetIsShutdown(&p_mc->ThermistorMosfets);
+	p_mc->FaultFlags.MosfetsOverHeat 		= Thermistor_GetIsShutdown(&p_mc->ThermistorMosfets);
 #endif
 
 	p_mc->FaultFlags.User 					= 0U;
@@ -463,7 +465,7 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TA
 	[MCSM_INPUT_SET_DIRECTION] 		= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_THROTTLE] 			= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_BRAKE] 				= (StateMachine_Transition_T)0U,
-	[MCSM_INPUT_ZERO] 			= (StateMachine_Transition_T)0U,
+	[MCSM_INPUT_ZERO] 				= (StateMachine_Transition_T)0U,
 	[MCSM_INPUT_CALIBRATION] 		= (StateMachine_Transition_T)0U,
 };
 

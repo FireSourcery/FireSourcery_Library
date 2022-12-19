@@ -44,7 +44,7 @@ bool Analog_EnqueueFrontConversion(Analog_T * p_analog, const Analog_ConversionC
 
 /*
 	Dequeue if no conversions are active.
-	For Active conversion chain dequeue is out of sync
+	For Active conversion, chain dequeue is out of sync
 */
 bool Analog_PollQueue(Analog_T * p_analog)
 {

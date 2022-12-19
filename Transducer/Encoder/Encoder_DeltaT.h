@@ -33,140 +33,33 @@
 
 #include "Encoder.h"
 
-/*
-	e.g. CaptureDeltaT, Fixed DeltaD:
-	UnitT_Freq = 312500							=> Period = 3.2 uS
-	TimerMax = 0xFFFF							=> Overflow 209,712 us, 209 ms
-	DeltaDUnits(CountsPerRevolution) = 1/8 (8) 	=> AngleRes 0.125 (of 1), 8,169.5 Angle16
-
-	DeltaT = 0xFFFF => Speed = 312500*(1/8)/0xFFFF	= 0.5976 rps, 35.76 RPM
-	DeltaT = 1 		=> Speed = 312500*(1/8) 		= 39062.5 rps, 2343750 RPM
-	DeltaT = 100	=> Speed = 312500*(1/8)/100		= 390.625 rps, 23437.50 RPM // accurate within 1% below
-
-	1RPM: DeltaT = (312500/8)/(1/60) = 2,343,750
-	RPM = 100, 		RPS = 1.6667, 	Angle16Real = 109225 	=> ISR = 13.3333 Hz, 75ms,	 => DeltaT = 23437, 	Angle16 = 109227, error 2,
-	RPM = 1000, 	RPS = 16.667, 	Angle16Real = 1092250 	=> ISR = 133.333 Hz, 7.5ms,	=> DeltaT = 2343, 		Angle16 = 1092599, error 349, 0.0053 rps
-	RPM = 10000, 	RPS = 166.67,	Angle16Real = 10922500 	=> ISR = 1333.33 Hz, .75ms,	=> DeltaT = 234, 		Angle16 = 10940004, error 17504, .2670 rps
-
-	e.g. 2:
-	UnitT_Freq = 2,000,000						=> Period = .5 uS
-	TimerMax = 0xFFFF								=> Overflow 32677.5us, 32.6775 ms
-	TimerMax = 0xFFFFFFFF							=> Overflow 35.7913941 minutes
-	DeltaDUnits(CountsPerRevolution) = 1/2048(2048) 	=> AngleRes 0.000488 (of 1), 32 Angle16
-
-	DeltaT = 0xFFFF => Speed = 2,000,000*(1/2048)/0xFFFF	= 0.01490 rps, 0.89408331426 RPM
-	DeltaT = 1 		=> Speed = 2,000,000*(1/2048) 			= 976.5625 rps, 58593.75 RPM
-	DeltaT = 10		=> Speed = 2,000,000*(1/2048)/10 		= 97.65625 rps, 5859.375 RPM => accurate within 10% below
-
-	1RPM: DeltaT = (2,000,000/2048)/(1/60) = 58593.75, angle 1092.26666667
-	RPM = 100, 		RPS = 1.6667, Angle16Real = 109226.66667 => ISR = 3413.3333 Hz, 292.96875us, 	=> DeltaT = 585, 	Angle16 = 109400, error 175
-	RPM = 1000, 	RPS = 16.667, Angle16Real = 1092266.6667 => ISR = 34133.333 Hz, 29.29687us, 	=> DeltaT = 58, 	Angle16 = 1103431, error 11181,	0.1706 rps
-	RPM = 10000, 	RPS = 166.67, Angle16Real = 10922666.667 => ISR = 341333.33 Hz, 2.92968us,		=> DeltaT = 5, 		Angle16 = 12799804, error 1877304, 28.645 rps
-
-	PPR = 8192 => 136.5333 ISR/s/RPM => 10000 rpm => 1,365,333 ISR/s
-	2MHz Period = .5 uS => accurate within 1% when speed < 146.484375 RPM, within 10% when 1464.84375
-	20MHz Period = .05 uS => accurate within 1% when speed < 1464.84375 RPM, within 10% when 14648.4375
-
-	20000Hz/(10000RPM/60) => 120 PPR. Less than 120 PPR, use Fixed DeltaD
-*/
-
 /******************************************************************************/
 /*!
-	@brief 	Capture Functions - Poll Pulse, ISR
- 			Capture DeltaT, per fixed changed in distance, via pin edge interrupt
+	@brief 	Capture DeltaT - Poll Pulse, ISR
+ 			Capture DeltaT, per count, fixed changed in distance
+			Interval cannot be greater than 0xFFFF [ticks] => (0xFFFF / TimerFreq) [seconds]
+			Low freq, < POLLING_FREQ, use interpolation
+				e.g. Call each hall cycle / electric rotation inside hall edge interrupt
 */
 /******************************************************************************/
-static inline void _Encoder_DeltaT_CaptureDelta(Encoder_T * p_encoder)
+static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 {
-// #if defined(CONFIG_ENCODER_HW_OVERFLOW_DETECT)
 	if(HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == false)
 	{
 		p_encoder->DeltaT = HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-		HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
 	}
-#if defined(CONFIG_ENCODER_EXTENDED_TIMER_DISABLE)
 	else
 	{
 		HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-		p_encoder->DeltaT = CONFIG_ENCODER_HW_TIMER_COUNTER_MAX;
+		p_encoder->DeltaT = ENCODER_TIMER_MAX;
 	}
-#endif
-// #else
-// 	p_encoder->DeltaT = _Encoder_CaptureDelta(p_encoder, CONFIG_ENCODER_HW_TIMER_COUNTER_MAX, HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER));
-// #endif
+
+	HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
 }
-
-static inline void Encoder_DeltaT_CaptureDelta(Encoder_T * p_encoder)
-{
-	_Encoder_DeltaT_CaptureDelta(p_encoder);
-}
-
-/*!
-	Capture Angle and Speed(DeltaT)
-	Captures CounterD and DeltaT each pulse - ideal for low freq < POLLING_FREQ, use interpolation
-	Interval cannot be greater than 0xFFFF [ticks] => (0xFFFF / TimerFreq) [seconds]
- 		e.g. Call each hall cycle / electric rotation inside hall edge interrupt
-*/
-static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
-{
- 	_Encoder_CaptureCounterD_Inc(p_encoder);
-	_Encoder_DeltaT_CaptureDelta(p_encoder);
-	// p_encoder->TotalD += 1U; /* Capture integral */
-	// p_encoder->TotalT += p_encoder->DeltaT;
-}
-
-
-#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-static inline void Encoder_DeltaT_Capture_Quadrature(Encoder_T * p_encoder)
-{
-	_Encoder_CaptureCounterD_Quadrature(p_encoder);
-	_Encoder_DeltaT_CaptureDelta(p_encoder);
-}
-#endif
-
-#if defined(CONFIG_ENCODER_POLLING_CAPTURE_ENABLE)
-/*
-	Polling Capture
-*/
-/* rising edge detect */
-static inline bool Encoder_DeltaT_PollReferenceEdgeRising(Encoder_T * p_encoder, bool reference)
-{
-	bool status = (reference == true) && (p_encoder->PulseReferenceSaved == false);
-	if (status == true) {Encoder_DeltaT_Capture(p_encoder);}
-	p_encoder->PulseReferenceSaved = reference;
-	return status;
-}
-
-/* both edge detect */
-static inline bool Encoder_DeltaT_PollReferenceEdgeDual(Encoder_T * p_encoder, bool reference)
-{
-	bool status = (reference ^ p_encoder->PulseReferenceSaved);
-	if (status == true)	{Encoder_DeltaT_Capture(p_encoder);}
-	p_encoder->PulseReferenceSaved = reference;
-	return status;
-}
-
-/*!
-	@brief Capture DeltaT, via polling from main loop or control isr, when pin interrupt is not available.
-
-	e.g. use 1 hall edge for reference
-	polling frequency must be > signal freq, at least 2x to satisfy Nyquist theorem
-	2000ppr encoder, 20000hz sample => 300rpm max
-*/
-static inline bool Encoder_DeltaT_PollPhaseAEdgeRising(Encoder_T * p_encoder)
-{
-	return Encoder_DeltaT_PollReferenceEdgeRising(p_encoder, Pin_Input_Read(&p_encoder->PinA));
-}
-
-static inline bool Encoder_DeltaT_PollPhaseAEdgeDual(Encoder_T * p_encoder)
-{
-	return Encoder_DeltaT_PollReferenceEdgeDual(p_encoder, Pin_Input_Read(&p_encoder->PinA));
-}
-#endif
 
 /******************************************************************************/
 /*!
-	@brief 	Extend base timer, 16bit timer cases to 32bit.
+	@brief Extend base timer, 16bit timer cases to 32bit.
 
 	ExtTimerFreq = 1000Hz, TimerMax = 0xFFFF
 		209ms to 13743S for TimerFreq = 312500Hz, 3.2us intervals
@@ -196,26 +89,72 @@ static inline uint32_t _Encoder_GetExtendedTimerDelta(Encoder_T * p_encoder)
 */
 static inline void Encoder_DeltaT_CaptureExtended(Encoder_T * p_encoder)
 {
-	/* check time exceed short timer max value */
-	if(HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == true)
+	if(HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == false)
 	{
-		p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->ExtendedTimerConversion;
-		HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-		HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
+		p_encoder->DeltaT = HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
 	}
+	else
+	{
+		HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
+		p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->ExtendedTimerConversion;
+	}
+
+	HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
 	p_encoder->ExtendedTimerSaved = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
 }
 
 /*
 	Use Extended Timer to check 0 speed.
 	Call periodically.
+	Check Only, use with CaptureExtended
 */
-/* Check Only, use with CaptureExtended */
 static inline bool Encoder_DeltaT_CheckWatchStop(Encoder_T * p_encoder)
 {
  	return (_Encoder_GetExtendedTimerDelta(p_encoder) > p_encoder->Params.ExtendedTimerDeltaTStop);
 }
 
+/******************************************************************************/
+/*!
+	Polling Capture
+*/
+/******************************************************************************/
+/*
+	Polling Capture, Single Phase
+*/
+/* rising edge detect */
+static inline bool Encoder_DeltaT_PollReferenceEdgeRising(Encoder_T * p_encoder, bool reference)
+{
+	bool status = (reference == true) && (p_encoder->Phases.A == false);
+	if(status == true) { Encoder_DeltaT_Capture(p_encoder); }
+	p_encoder->Phases.A = reference;
+	return status;
+}
+
+/* both edge detect */
+static inline bool Encoder_DeltaT_PollReferenceEdgeDual(Encoder_T * p_encoder, bool reference)
+{
+	bool status = (reference ^ p_encoder->Phases.A);
+	if(status == true) { Encoder_DeltaT_Capture(p_encoder); }
+	p_encoder->Phases.A = reference;
+	return status;
+}
+
+/*!
+	@brief Capture DeltaT, via polling from main loop or control isr, when pin interrupt is not available.
+
+	e.g. use 1 hall edge for reference
+	polling frequency must be > signal freq, at least 2x to satisfy Nyquist theorem
+	2000ppr encoder, 20000hz sample => 300rpm max
+*/
+static inline bool Encoder_DeltaT_PollPhaseAEdgeRising(Encoder_T * p_encoder)
+{
+	return Encoder_DeltaT_PollReferenceEdgeRising(p_encoder, Pin_Input_Read(&p_encoder->PinA));
+}
+
+static inline bool Encoder_DeltaT_PollPhaseAEdgeDual(Encoder_T * p_encoder)
+{
+	return Encoder_DeltaT_PollReferenceEdgeDual(p_encoder, Pin_Input_Read(&p_encoder->PinA));
+}
 
 /******************************************************************************/
 /*!
@@ -224,31 +163,26 @@ static inline bool Encoder_DeltaT_CheckWatchStop(Encoder_T * p_encoder)
 /******************************************************************************/
 static inline uint32_t Encoder_DeltaT_ConvertToFreq(Encoder_T * p_encoder, uint32_t deltaT_Ticks) { return (deltaT_Ticks == 0U) ? 0U : p_encoder->UnitT_Freq / deltaT_Ticks; }
 
-
 /******************************************************************************/
 /*!
-	@brief 	Angle Interpolation Functions
-			DeltaT Estimate Angle in between Encoder counts
-			Only when POLLING_FREQ > EncoderFreq, i.e. polls per encoder count > 1
-			 todo auto enable if capture freq < PollingFreq
+	@brief	Angle Interpolation Functions
+
+	Estimate Angle each control cycle in between encoder counts
+	AngleControlIndex * AngularSpeed / POLLING_FREQ;
+		(AngleControlIndex / POLLING_FREQ) * [1(DeltaD) * UnitT_Freq / DeltaT) * (AngleSize / EncoderResolution)]
+		AngleControlIndex * [1(DeltaD) * AngleSize * UnitT_Freq / DeltaT / EncoderResolution] / POLLING_FREQ
+		AngleControlIndex * [1(DeltaD) * AngleSize * UnitT_Freq / EncoderResolution / POLLING_FREQ] / DeltaT
+	AngleControlIndex ranges from 0 to InterpolationCount
+
+	Only when POLLING_FREQ > EncoderFreq, polls per encoder count > 1
+		todo auto enable if EncoderFreq < PollingFreq
 */
 /*! @{ */
 /******************************************************************************/
 /*!
-	@brief 	Angular Interpolation
-
-	Estimate angle each control period in between encoder pulse
-
-	(AngleControlIndex / POLLING_FREQ) * (1(DeltaD) * UnitT_Freq / DeltaT) * (AngleSize / EncoderResolution)
-	AngleControlIndex * 1(DeltaD) * AngleSize * UnitT_Freq / DeltaT / POLLING_FREQ / EncoderResolution
-
-	AngleControlIndex ranges from 0 to ControlResolution [InterpolationFreq]
-
-	UnitInterpolateAngle = UnitAngularSpeed / POLLING_FREQ
-	return pollingIndex * Encoder_GetAngularSpeed(p_encoder) / POLLING_FREQ;
-
-	UnitInterpolateAngle = [AngleSize[65536] * UnitDeltaT_Freq / POLLING_FREQ / CountsPerRevolution]
-	return pollingIndex * [UnitAngularSpeed / POLLING_FREQ] / DeltaT;
+	@brief InterpolateAngle
+	pollingIndex * 1(DeltaD) * [UnitInterpolateAngle] / DeltaT
+	UnitInterpolateAngle = [AngleSize[65536] * UnitT_Freq / POLLING_FREQ / CountsPerRevolution]
 */
 static inline uint32_t Encoder_DeltaT_InterpolateAngle(Encoder_T * p_encoder, uint32_t pollingIndex)
 {
@@ -261,12 +195,6 @@ static inline uint32_t Encoder_DeltaT_InterpolateAngleIncIndex(Encoder_T * p_enc
 	(*p_pollingIndex)++;
 	return angle;
 }
-
-// static inline uint32_t Encoder_DeltaT_InterpolateAngle_Saturated(Encoder_T * p_encoder, uint32_t pollingIndex)
-// {
-// 	return pollingIndex * p_encoder->UnitInterpolateAngle / p_encoder->DeltaT;
-// }
-
 
 /*
 	Samples per DeltaT Capture, index max
@@ -389,15 +317,48 @@ static inline uint32_t Encoder_DeltaT_GetGroundSpeed_Kmh(Encoder_T * p_encoder)
 /*! @{ */
 /******************************************************************************/
 extern void Encoder_DeltaT_Init(Encoder_T * p_encoder);
-extern void Encoder_DeltaT_SetExtendedTimerWatchStop(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis);
-extern void Encoder_DeltaT_SetExtendedTimerWatchStop_Default(Encoder_T * p_encoder);
 extern void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder);
-#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-extern void Encoder_DeltaT_CalibrateQuadratureReference(Encoder_T * p_encoder);
-extern void Encoder_DeltaT_CalibrateQuadraturePositive(Encoder_T * p_encoder);
-#endif
+extern void Encoder_DeltaT_SetExtendedTimerWatchStop_Millis(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis);
+extern void Encoder_DeltaT_SetExtendedTimerWatchStop_RPM(Encoder_T * p_encoder);
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
 
 #endif
+
+/*
+	e.g. CaptureDeltaT, Fixed DeltaD:
+	UnitT_Freq = 312500							=> Period = 3.2 uS
+	TimerMax = 0xFFFF							=> Overflow 209,712 us, 209 ms
+	DeltaDUnits(CountsPerRevolution) = 1/8 (8) 	=> AngleRes 0.125 (of 1), 8,169.5 Angle16
+
+	DeltaT = 0xFFFF => Speed = 312500*(1/8)/0xFFFF	= 0.5976 rps, 35.76 RPM
+	DeltaT = 1 		=> Speed = 312500*(1/8) 		= 39062.5 rps, 2343750 RPM
+	DeltaT = 100	=> Speed = 312500*(1/8)/100		= 390.625 rps, 23437.50 RPM // accurate within 1% below
+
+	1RPM: DeltaT = (312500/8)/(1/60) = 2,343,750
+	RPM = 100, 		RPS = 1.6667, 	Angle16Real = 109225 	=> ISR = 13.3333 Hz, 75ms,	 => DeltaT = 23437, 	Angle16 = 109227, error 2,
+	RPM = 1000, 	RPS = 16.667, 	Angle16Real = 1092250 	=> ISR = 133.333 Hz, 7.5ms,	=> DeltaT = 2343, 		Angle16 = 1092599, error 349, 0.0053 rps
+	RPM = 10000, 	RPS = 166.67,	Angle16Real = 10922500 	=> ISR = 1333.33 Hz, .75ms,	=> DeltaT = 234, 		Angle16 = 10940004, error 17504, .2670 rps
+
+	e.g. 2:
+	UnitT_Freq = 2,000,000						=> Period = .5 uS
+	TimerMax = 0xFFFF								=> Overflow 32677.5us, 32.6775 ms
+	TimerMax = 0xFFFFFFFF							=> Overflow 35.7913941 minutes
+	DeltaDUnits(CountsPerRevolution) = 1/2048(2048) 	=> AngleRes 0.000488 (of 1), 32 Angle16
+
+	DeltaT = 0xFFFF => Speed = 2,000,000*(1/2048)/0xFFFF	= 0.01490 rps, 0.89408331426 RPM
+	DeltaT = 1 		=> Speed = 2,000,000*(1/2048) 			= 976.5625 rps, 58593.75 RPM
+	DeltaT = 10		=> Speed = 2,000,000*(1/2048)/10 		= 97.65625 rps, 5859.375 RPM => accurate within 10% below
+
+	1RPM: DeltaT = (2,000,000/2048)/(1/60) = 58593.75, angle 1092.26666667
+	RPM = 100, 		RPS = 1.6667, Angle16Real = 109226.66667 => ISR = 3413.3333 Hz, 292.96875us, 	=> DeltaT = 585, 	Angle16 = 109400, error 175
+	RPM = 1000, 	RPS = 16.667, Angle16Real = 1092266.6667 => ISR = 34133.333 Hz, 29.29687us, 	=> DeltaT = 58, 	Angle16 = 1103431, error 11181,	0.1706 rps
+	RPM = 10000, 	RPS = 166.67, Angle16Real = 10922666.667 => ISR = 341333.33 Hz, 2.92968us,		=> DeltaT = 5, 		Angle16 = 12799804, error 1877304, 28.645 rps
+
+	PPR = 8192 => 136.5333 ISR/s/RPM => 10000 rpm => 1,365,333 ISR/s
+	2MHz Period = .5 uS => accurate within 1% when speed < 146.484375 RPM, within 10% when 1464.84375
+	20MHz Period = .05 uS => accurate within 1% when speed < 1464.84375 RPM, within 10% when 14648.4375
+
+	20000Hz/(10000RPM/60) => 120 PPR. Less than 120 PPR, use Fixed DeltaD
+*/

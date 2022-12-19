@@ -38,19 +38,21 @@
 /*
 	Activate and wait for return
 */
-void WriteAdcChannel(const Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
+static inline void WriteAdcChannel(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
 {
 	HAL_Analog_Activate(p_analog->CONFIG.P_HAL_ANALOG, p_conversion->PIN);
+#ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
+	p_analog->ActiveChannelCount = 1U;
+#endif
 }
 
-#if (CONFIG_ANALOG_HW_FIFO_LENGTH > 0U)
+#ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
 static inline void WriteAdcFifo(Analog_T * p_analog)
 {
 	Analog_Conversion_T * p_conversion;
-	// uint8_t iConversionIndex;
 
-	uint8_t remainingChannelCount = Ring_GetFullCount(&p_analog->ConversionQueue);
-	p_analog->ActiveChannelCount = (remainingChannelCount < CONFIG_ANALOG_HW_FIFO_LENGTH) ? remainingChannelCount : CONFIG_ANALOG_HW_FIFO_LENGTH;
+	uint8_t remainingChannelCount = Ring_GetFullCount(&p_analog->ConversionQueue); //check options
+	p_analog->ActiveChannelCount = (remainingChannelCount < GLOBAL_ANALOG.ADC_FIFO_LENGTH) ? remainingChannelCount : GLOBAL_ANALOG.ADC_FIFO_LENGTH;
 
 	HAL_Analog_WriteFifoCount(p_analog->CONFIG.P_HAL_ANALOG, p_analog->ActiveChannelCount);
 
@@ -84,31 +86,25 @@ void _Analog_ProcQueue(Analog_T * p_analog)
 	bool isComplete = true;
 	Analog_QueueItem_T * p_next;
 
-	// for(uint8_t iConversion = 0U; iConversion < Ring_GetFullCount(&p_analog->ConversionQueue) + 1U; iConversion++) /* Let compiler optimize away */
-	// {
-		while(Ring_PeekFront(&p_analog->ConversionQueue, &p_next) == true)
+	while(Ring_PeekFront(&p_analog->ConversionQueue, &p_next) == true)
+	{
+		if(p_next->TYPE == ANALOG_QUEUE_TYPE_OPTIONS) /* Write and Deactivate. Ensure not to write empty conversion that calls ISR */
 		{
-			if(p_next->TYPE == ANALOG_QUEUE_TYPE_OPTIONS) /* Write and Deactivate. Ensure not to write empty conversion that calls ISR */
-			{
-				WriteAdcOptions(p_analog, (Analog_Options_T *)p_next);
-				Ring_RemoveFront(&p_analog->ConversionQueue, 1U);
-			}
-			else if(p_next->TYPE == ANALOG_QUEUE_TYPE_CHANNEL)  /* Activate and wait for ISR */
-			{
-#if (CONFIG_ANALOG_HW_FIFO_LENGTH > 0U)
-				WriteAdcFifo(p_analog);
-#else
-				WriteAdcChannel(p_analog, (Analog_Conversion_T *)p_next);
-#endif
-				isComplete = false;
-				break;
-			}
-			else /* error */
-			{
-				break;
-			}
+			WriteAdcOptions(p_analog, (Analog_Options_T *)p_next);
+			Ring_RemoveFront(&p_analog->ConversionQueue, 1U);
 		}
-	// }
+		else if(p_next->TYPE == ANALOG_QUEUE_TYPE_CHANNEL)  /* Activate and wait for ISR */
+		{
+#ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
+			WriteAdcFifo(p_analog);
+#else
+			WriteAdcChannel(p_analog, (Analog_Conversion_T *)p_next);
+#endif
+			isComplete = false;
+			break;
+		}
+		else { break; } /* error */
+	}
 
 	if(isComplete == true) { HAL_Analog_Deactivate(p_analog->CONFIG.P_HAL_ANALOG); }
 }
@@ -159,7 +155,6 @@ bool Analog_EnqueueOptions(Analog_T * p_analog, const Analog_Options_T * p_optio
 
 /*!
 	@brief Public function to activate ADC.
-
 	Overwrite active conversion
 */
 void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
@@ -183,11 +178,16 @@ void Analog_ActivateOptions(Analog_T * p_analog, const Analog_Options_T * p_opti
 	Group
 */
 /******************************************************************************/
+/* Common with AnalogN */
 void _Analog_Group_ResumeQueue(Analog_T * p_analog)
 {
 	if(_Analog_ReadIsActive(p_analog) == false) { _Analog_ProcQueue(p_analog); }
 }
 
+/*
+	Enqueue without starting conversion of first item until queue resumes
+	Eliminate repeat empty check, and uneven wait period between 1st and 2nd complete
+*/
 void Analog_Group_PauseQueue(Analog_T * p_analog)
 {
 	_Analog_EnterCritical(p_analog);
@@ -199,10 +199,6 @@ void Analog_Group_ResumeQueue(Analog_T * p_analog)
 	_Analog_ExitCritical(p_analog);
 }
 
-/*
-	Enqueue without starting conversion of first item until queue resumes
-	Eliminate repeat empty check and uneven wait period between 1st and 2nd complete
-*/
 bool Analog_Group_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
 {
 	return Ring_Enqueue(&p_analog->ConversionQueue, &p_conversion);

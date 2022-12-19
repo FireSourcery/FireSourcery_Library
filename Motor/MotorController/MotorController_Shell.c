@@ -153,6 +153,54 @@ static void PrintSensor(Terminal_T * p_terminal, Motor_T * p_motor)
 	}
 }
 
+
+#ifdef CONFIG_VMONITOR_STRING_FUNCTIONS_ENABLE
+static const char * STR_LIMIT 		= "Limit: ";
+static const char * STR_WARNING 	= "Warning: ";
+static const char * STR_UPPER 		= "Upper: ";
+static const char * STR_LOWER 		= "Lower: ";
+
+/*
+	Limit: Upper: [Num] Lower: [Num] Warning: Upper: [Num] Lower: [Num]
+*/
+size_t VMonitor_ToString_Verbose(VMonitor_T * p_vMonitor, char * p_stringBuffer, uint16_t unitVScalar)
+{
+	char * p_stringDest = p_stringBuffer;
+	int32_t num;
+	char numStr[16U];
+
+	memcpy(p_stringDest, STR_LIMIT, strlen(STR_LIMIT)); p_stringDest += strlen(STR_LIMIT);
+
+	memcpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)); p_stringDest += strlen(STR_UPPER);
+	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitUpper_Adcu, unitVScalar);
+	snprintf(numStr, 16U, "%d", (int)num);
+	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
+	*p_stringDest = ' '; p_stringDest++;
+
+	memcpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)); p_stringDest += strlen(STR_LOWER);
+	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitLower_Adcu, unitVScalar);
+	snprintf(numStr, 16U, "%d", (int)num);
+	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
+	*p_stringDest = ' '; p_stringDest++;
+
+	memcpy(p_stringDest, STR_WARNING, strlen(STR_WARNING)); p_stringDest += strlen(STR_WARNING);
+
+	memcpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)); p_stringDest += strlen(STR_UPPER);
+	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningUpper_Adcu, unitVScalar);
+	snprintf(numStr, 16U, "%d", (int)num);
+	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
+	*p_stringDest = ' '; p_stringDest++;
+
+	memcpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)); p_stringDest += strlen(STR_LOWER);
+	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningLower_Adcu, unitVScalar);
+	snprintf(numStr, 16U, "%d", (int)num);
+	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
+	*p_stringDest = ' '; p_stringDest++;
+
+	return p_stringDest - p_stringBuffer;
+}
+#endif
+
 /* Need stop to release */
 static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 {
@@ -261,26 +309,34 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 	switch(p_mc->ShellSubstate)
 	{
 		case 0U:
-			Terminal_SendString(p_terminal, "Speed: ");	Terminal_SendNum(p_terminal, Motor_User_GetSpeed_Rpm(p_motor)); Terminal_SendString(p_terminal, " RPM ");
-			Terminal_SendNum(p_terminal, Motor_User_GetSpeed_Frac16(p_motor)); Terminal_SendString(p_terminal, " Frac16\r\n");
+			// Terminal_SendString(p_terminal, "Speed: ");	Terminal_SendNum(p_terminal, Motor_User_GetSpeed_Rpm(p_motor)); Terminal_SendString(p_terminal, " RPM ");
+			// Terminal_SendNum(p_terminal, Motor_User_GetSpeed_Frac16(p_motor)); Terminal_SendString(p_terminal, " Frac16\r\n");
 
 			// Terminal_SendString(p_terminal, "Speed2: "); Terminal_SendNum(p_terminal, p_motor->Speed2_RPM); Terminal_SendString(p_terminal, " RPM ");
 			// Terminal_SendNum(p_terminal, p_motor->Speed2_Frac16); Terminal_SendString(p_terminal, " Frac16\r\n");
 
 //    		Terminal_SendString(p_terminal, "DeltaAngle: "); Terminal_SendNum(p_terminal, (uint16_t)p_motor->DeltaAngle); Terminal_SendString(p_terminal, " Frac16\r\n");
 
-			Terminal_SendString(p_terminal, "Throttle: "); 	Terminal_SendNum(p_terminal, MotAnalogUser_GetThrottle(&p_mc->AnalogUser)); Terminal_SendString(p_terminal, " Frac16\r\n");
-			Terminal_SendString(p_terminal, "Brake: "); 	Terminal_SendNum(p_terminal, MotAnalogUser_GetBrake(&p_mc->AnalogUser)); Terminal_SendString(p_terminal, " Frac16\r\n");
-			Terminal_SendString(p_terminal, "RampCmd: "); 	Terminal_SendNum(p_terminal, p_motor->RampCmd); Terminal_SendString(p_terminal, " Q1.15\r\n");
-			//			Terminal_SendString(p_terminal, ", RampIndex: "); Terminal_SendNum(p_terminal, p_motor->RampIndex);
+			// Terminal_SendString(p_terminal, "Throttle: "); 	Terminal_SendNum(p_terminal, MotAnalogUser_GetThrottle(&p_mc->AnalogUser)); Terminal_SendString(p_terminal, " Frac16\r\n");
+			// Terminal_SendString(p_terminal, "Brake: "); 	Terminal_SendNum(p_terminal, MotAnalogUser_GetBrake(&p_mc->AnalogUser)); Terminal_SendString(p_terminal, " Frac16\r\n");
+			// Terminal_SendString(p_terminal, "RampCmd: "); 	Terminal_SendNum(p_terminal, p_motor->RampCmd); Terminal_SendString(p_terminal, " Q1.15\r\n");
+			// //			Terminal_SendString(p_terminal, ", RampIndex: "); Terminal_SendNum(p_terminal, p_motor->RampIndex);
 
 			Terminal_SendString(p_terminal, "Iq: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Iq);
-			Terminal_SendString(p_terminal, ", Vq: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Vq); Terminal_SendString(p_terminal, " Q1.15\r\n");
+			Terminal_SendString(p_terminal, ", Vq: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Vq);
+			Terminal_SendString(p_terminal, " Q1.15\r\n");
 
 			Terminal_SendString(p_terminal, "Id: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Id);
-			Terminal_SendString(p_terminal, ", Vd: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Vd); Terminal_SendString(p_terminal, " Q1.15\r\n");
+			Terminal_SendString(p_terminal, ", Vd: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Vd);
+			Terminal_SendString(p_terminal, " Q1.15\r\n");
 
         	Terminal_SendString(p_terminal, "IPhase: "); Terminal_SendNum(p_terminal, Motor_User_GetIPhase_Amp(p_motor)); Terminal_SendString(p_terminal, " Amp\r\n");
+
+
+			Terminal_SendString(p_terminal, "Ia: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Ia); Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "Ib: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Ib); Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "Ic: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Ic); Terminal_SendString(p_terminal, " \r\n");
+
 
 			// Terminal_SendString(p_terminal, "AnalogUserCmd: ");
 			// switch(p_mc->AnalogUser.Cmd)
@@ -298,39 +354,39 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			// }
 			// Terminal_SendString(p_terminal, "\r\n");
 
-			Terminal_SendString(p_terminal, "MSM: ");
-			switch(Motor_User_GetStateId(p_motor))
-			{
-				case MSM_STATE_ID_INIT:			Terminal_SendString(p_terminal, "Init");		break;
-				case MSM_STATE_ID_STOP:			Terminal_SendString(p_terminal, "Stop");		break;
-				case MSM_STATE_ID_ALIGN:		Terminal_SendString(p_terminal, "Align");		break;
-				case MSM_STATE_ID_OPEN_LOOP:	Terminal_SendString(p_terminal, "OpenLoop");	break;
-				case MSM_STATE_ID_RUN:			Terminal_SendString(p_terminal, "Run");			break;
-				case MSM_STATE_ID_FREEWHEEL:	Terminal_SendString(p_terminal, "Freewheel");	break;
-				case MSM_STATE_ID_CALIBRATION:	Terminal_SendString(p_terminal, "Calib");		break;
-				case MSM_STATE_ID_FAULT:		Terminal_SendString(p_terminal, "Fault");		break;
-				default: break;
-			}
-			Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "MSM: ");
+			// switch(Motor_User_GetStateId(p_motor))
+			// {
+			// 	case MSM_STATE_ID_INIT:			Terminal_SendString(p_terminal, "Init");		break;
+			// 	case MSM_STATE_ID_STOP:			Terminal_SendString(p_terminal, "Stop");		break;
+			// 	case MSM_STATE_ID_ALIGN:		Terminal_SendString(p_terminal, "Align");		break;
+			// 	case MSM_STATE_ID_OPEN_LOOP:	Terminal_SendString(p_terminal, "OpenLoop");	break;
+			// 	case MSM_STATE_ID_RUN:			Terminal_SendString(p_terminal, "Run");			break;
+			// 	case MSM_STATE_ID_FREEWHEEL:	Terminal_SendString(p_terminal, "Freewheel");	break;
+			// 	case MSM_STATE_ID_CALIBRATION:	Terminal_SendString(p_terminal, "Calib");		break;
+			// 	case MSM_STATE_ID_FAULT:		Terminal_SendString(p_terminal, "Fault");		break;
+			// 	default: break;
+			// }
+			// Terminal_SendString(p_terminal, "\r\n");
 
-			Terminal_SendString(p_terminal, "MCSM: ");
-			switch(MotorController_User_GetStateId(p_mc))
-			{
-				case MCSM_STATE_ID_INIT:	Terminal_SendString(p_terminal, "Init");	break;
-				case MCSM_STATE_ID_STOP:	Terminal_SendString(p_terminal, "Stop");	break;
-				case MCSM_STATE_ID_RUN:		Terminal_SendString(p_terminal, "Run");		break;
-				case MCSM_STATE_ID_FAULT:	Terminal_SendString(p_terminal, "Fault");	break;
-				default: break;
-			}
-			Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "MCSM: ");
+			// switch(MotorController_User_GetStateId(p_mc))
+			// {
+			// 	case MCSM_STATE_ID_INIT:	Terminal_SendString(p_terminal, "Init");	break;
+			// 	case MCSM_STATE_ID_STOP:	Terminal_SendString(p_terminal, "Stop");	break;
+			// 	case MCSM_STATE_ID_RUN:		Terminal_SendString(p_terminal, "Run");		break;
+			// 	case MCSM_STATE_ID_FAULT:	Terminal_SendString(p_terminal, "Fault");	break;
+			// 	default: break;
+			// }
+			// Terminal_SendString(p_terminal, "\r\n");
 
 			// Terminal_SendString(p_terminal, "IPhasePeak_Adcu: "); Terminal_SendNum(p_terminal, p_motor->IPhasePeak_Adcu); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ILimitActiveId: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveId); Terminal_SendString(p_terminal, "\r\n");
-			Terminal_SendString(p_terminal, "ILimitActive: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveSentinel); Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "ILimitActive: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveSentinel); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ILimitMotoring_Frac16: "); Terminal_SendNum(p_terminal, p_motor->ILimitMotoring_Frac16); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "VoltageModeILimitActive: "); Terminal_SendNum(p_terminal, p_motor->ControlFlags.VoltageModeILimitActive); Terminal_SendString(p_terminal, "\r\n");
 
-			Terminal_SendString(p_terminal, "SpeedPid Limit: "); Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutputMax); Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "SpeedPid Limit: "); Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutputMax); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ElecAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetElectricalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
 			// Terminal_SendString(p_terminal, "MechAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetMechanicalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
 
@@ -600,6 +656,25 @@ static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 // 	return p_stringDest - p_stringBuffer;
 // }
 
+
+static Cmd_Status_T Cmd_auser(MotorController_T * p_mc, int argc, char ** argv)
+{
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+
+	if(argc == 1U)
+	{
+		Terminal_SendString(p_terminal, "Throttle: ");
+		Terminal_SendNum(p_terminal, MotorController_User_GetAdcu(p_mc, MOT_ANALOG_CHANNEL_THROTTLE)); 	Terminal_SendString(p_terminal, " Adcu ");
+		Terminal_SendNum(p_terminal, MotAnalogUser_GetThrottle(&p_mc->AnalogUser)); 					Terminal_SendString(p_terminal, " Frac16\r\n");
+		Terminal_SendString(p_terminal, "Brake: ");
+		Terminal_SendNum(p_terminal, MotorController_User_GetAdcu(p_mc, MOT_ANALOG_CHANNEL_BRAKE)); 	Terminal_SendString(p_terminal, " Adcu ");
+		Terminal_SendNum(p_terminal, MotAnalogUser_GetBrake(&p_mc->AnalogUser)); 						Terminal_SendString(p_terminal, " Frac16\r\n");
+	}
+
+	return CMD_STATUS_SUCCESS;
+}
+
+
 static Cmd_Status_T Cmd_v(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
@@ -609,7 +684,6 @@ static Cmd_Status_T Cmd_v(MotorController_T * p_mc, int argc, char ** argv)
 
 	if(argc == 1U)
 	{
-		//todo to string
 		vSource = MotorController_User_GetVSource(p_mc, 1000U);
 		vSense = MotorController_User_GetVSense(p_mc, 1000U);
 		vAcc = MotorController_User_GetVAcc(p_mc, 1000U);
@@ -677,15 +751,15 @@ static Cmd_Status_T Cmd_direction(MotorController_T * p_mc, int argc, char ** ar
 
 	if(argc == 2U)
 	{
-		if(strncmp(argv[1U], "fwd", 2U) == 0U) 			{ MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD); }
-		else if(strncmp(argv[1U], "rev", 2U) == 0U) 	{ MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE); }
+		if		(strncmp(argv[1U], "fwd", 2U) == 0U) 	{ MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD); }
+		else if	(strncmp(argv[1U], "rev", 2U) == 0U) 	{ MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE); }
 	}
 	if(argc == 3U)
 	{
 		if(strncmp(argv[1U], "calfwd", 4U) == 0U)
 		{
-			if(strncmp(argv[2U], "ccw", 4U) == 0U) 		{ Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CCW); }
-			else if(strncmp(argv[2U], "cw", 3U) == 0U) 	{ Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CW); }
+			if		(strncmp(argv[2U], "ccw", 4U) == 0U) 	{ Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CCW); }
+			else if	(strncmp(argv[2U], "cw", 3U) == 0U) 	{ Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CW); }
 		}
 	}
 
@@ -874,6 +948,9 @@ static Cmd_Status_T Cmd_version(MotorController_T * p_mc, int argc, char ** argv
 	Terminal_SendNum(p_terminal, MotorController_User_GetMainVersionIndex(p_mc, 1U)); Terminal_SendString(p_terminal, " ");
 	Terminal_SendNum(p_terminal, MotorController_User_GetMainVersionIndex(p_mc, 0U)); Terminal_SendString(p_terminal, "\r\n");
 
+	Terminal_SendString(p_terminal, "Manufacture: ");
+	Terminal_SendString(p_terminal, "\r\n");
+
 	return CMD_STATUS_SUCCESS;
 }
 
@@ -958,6 +1035,7 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"monitor", 	"Display motor info",				(Cmd_Function_T)Cmd_monitor, 	{ .FUNCTION = (Cmd_ProcessFunction_T)Cmd_monitor_Proc, 		.PERIOD = 2000U }		},
 	{"heat", 		"Display temperatures",				(Cmd_Function_T)Cmd_heat, 		{0U}	},
 	{"v", 			"Display voltages", 				(Cmd_Function_T)Cmd_v, 			{0U}	},
+	{"auser", 		"Display analog user", 				(Cmd_Function_T)Cmd_auser, 		{0U}	},
 	{"hall", 		"Read hall", 						(Cmd_Function_T)Cmd_hall, 		{0U}	},
 	{"fault", 		"Display fault info", 				(Cmd_Function_T)Cmd_fault, 		{0U}	},
 	{"mode", 		"Sets mode using options",			(Cmd_Function_T)Cmd_mode, 		{0U}	},

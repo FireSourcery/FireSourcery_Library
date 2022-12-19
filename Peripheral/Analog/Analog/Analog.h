@@ -32,6 +32,7 @@
 #define ANALOG_H
 
 #include "HAL_Analog.h"
+#include "Global_Analog.h"
 #include "Config.h"
 
 #include "Utility/Ring/Ring.h"
@@ -41,8 +42,6 @@
 
 #ifdef CONFIG_ANALOG_CRITICAL_LIBRARY_ENABLE
 #include "System/Critical/Critical.h"
-#elif defined(CONFIG_ANALOG_CRITICAL_DISABLE)
-
 #endif
 
 /* Software side data storage */
@@ -145,7 +144,7 @@ typedef struct Analog_Tag
 #endif
 	Ring_T ConversionQueue;	/* Item type (Analog_QueueItem_T *), (Analog_Conversion_T *) or (Analog_Options_T *) */
 
-#if (CONFIG_ANALOG_HW_FIFO_LENGTH > 0U)
+#ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
 	uint8_t ActiveChannelCount; /*! Hw fifo only. Number of active channels being processed by ADC */
 #endif
 }
@@ -223,13 +222,16 @@ static inline void _Analog_CaptureAdcResults(Analog_T * p_analog, Analog_Convers
 static inline void _Analog_CaptureResults(Analog_T * p_analog)
 {
 	Analog_Conversion_T * p_completedConversion;
-#ifdef CONFIG_ANALOG_ADC_HW_FIFO_LENGTH
-	// Analog_Conversion_T * p_completedConversions[CONFIG_ANALOG_ADC_HW_FIFO_LENGTH];
-	/*
-		Should not need to boundary check on return. Read in the same way it was pushed
-	*/
-	for(uint8_t iConversionIndex = 0U; iConversionIndex < p_analog->ActiveChannelCount; iConversionIndex++)
+#ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
+	static uint32_t error;
+	if(p_analog->ActiveChannelCount != HAL_Analog_ReadFifoCount(p_analog->CONFIG.P_HAL_ANALOG))
 	{
+		error++;
+	}
+	/* Should not need to boundary check on return. Read in the same way it was pushed	*/
+	for(p_analog->ActiveChannelCount; p_analog->ActiveChannelCount > 0U; p_analog->ActiveChannelCount--)
+	{
+
 		Ring_Dequeue(&p_analog->ConversionQueue, &p_completedConversion);
 		_Analog_CaptureAdcResults(p_analog, p_completedConversion);
 		if(p_completedConversion->ON_COMPLETE != 0U) { p_completedConversion->ON_COMPLETE(p_completedConversion->P_CALLBACK_CONTEXT); }
@@ -282,10 +284,7 @@ static inline bool _Analog_ReadIsActive(const Analog_T * p_analog)
 */
 static inline void Analog_Deactivate(Analog_T * p_analog)
 {
-	// _Analog_EnterCritical(p_analog);
-//	p_analog->p_ActiveConversion = 0U;
 	HAL_Analog_Deactivate(p_analog->CONFIG.P_HAL_ANALOG);
-	// _Analog_ExitCritical(p_analog);
 }
 
 extern void Analog_Init(Analog_T * p_analog);

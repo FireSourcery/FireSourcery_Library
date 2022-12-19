@@ -31,11 +31,6 @@
 #ifndef CONFIG_MOTOR_H
 #define CONFIG_MOTOR_H
 
-#if   defined(ADC_BITS)
-#else
-	#define ADC_BITS 12U
-#endif
-
 #if 	defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	#define CONFIG_MOTOR_OPEN_LOOP_ENABLE
 #elif 	defined(CONFIG_MOTOR_DEBUG_DISABLE)

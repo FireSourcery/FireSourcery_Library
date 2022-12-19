@@ -32,22 +32,26 @@
 
 /******************************************************************************/
 /*!
-	f(adcu) = physical
 	f16(adcu) = adc_frac16
-
+	f16(adcuRef) = 65535
+	f(adcu) = physical
 	f(adcuZero) = 0
 	f(adcuRef) = physicalRef
-	f16(adcuRef) = 65535
 
-	frac16 conversion returns without division, as frac16 calc is performed more frequently
-	adcu to physical(user yref) returns without division
+	adcu to frac16 conversion returns without division
+	adcu to physical returns without division
 	division in physical to adcu, frac16 to physical units
-	Shift 14 to allow oversaturation f([-2*XRef:2*XRef]) == [-2*YRef:2*YRef] before overflow
+
 */
 /******************************************************************************/
 void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef)
 {
 	Linear_Frac16_Init_Map(p_linear, adcuZero, adcuRef, 0, physicalRef);
+}
+
+void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef, int16_t physicalRef)
+{
+	Linear_Frac16_Init_Map(p_linear, adcuZero, adcuZero + adcuZtPRef, 0, physicalRef);
 }
 
 
@@ -56,9 +60,9 @@ void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, i
 	Inverted pivot on 0
 	f(adcuZero) = 0
 	f(adcuRef) = -physicalRef
-	f16(adcuRef) = -65535
-	f(adcuZero - (adcuRef - adcuZero)) = physicalRef
-	f16(adcuZero - (adcuRef - adcuZero)) = 65535
+	f(-adcuRef) = physicalRef
+	f16(adcuRef) = -65536
+	f16(-adcuRef) = 65536
 */
 /******************************************************************************/
 void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef)

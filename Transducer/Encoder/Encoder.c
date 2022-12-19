@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "Encoder.h"
 
-/* Phase in BABA order */
+/* Phase in ABAB order, ALeadB as increment */
 const int8_t _ENCODER_TABLE[_ENCODER_TABLE_LENGTH] =
 {
 	0,-1,1,_ENCODER_TABLE_ERROR,
@@ -96,13 +96,13 @@ void _Encoder_ResetUnitsAngular(Encoder_T * p_encoder)
 			UnitAngularSpeed = 819,200,000 	{ DEGREES_BITS = 16, UnitT_Freq = 750000, CountsPerRevolution = 60 }
 			UnitAngularSpeed = 131,072		{ DEGREES_BITS = 16, UnitT_Freq = 20000, CountsPerRevolution = 10000 }
 	*/
-	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->Params.CountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
+	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->Params.CountsPerRevolution, ENCODER_ANGLE16);
 
 	/*
 		DeltaT side overflow boundary set by MaxLeftShiftDivide
 	*/
 
-	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->CONFIG.POLLING_FREQ * p_encoder->Params.CountsPerRevolution, CONFIG_ENCODER_ANGLE_DEGREES_BITS);
+	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->CONFIG.POLLING_FREQ * p_encoder->Params.CountsPerRevolution, ENCODER_ANGLE16);
 }
 
 void _Encoder_ResetUnitsLinear(Encoder_T * p_encoder)
@@ -148,6 +148,8 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 		e.g.  unitTFreq = 625000, CountsPerRevolution = 60,
 			ScalarSpeedRef_Rpm = 2500 => 16,384,000
 			ScalarSpeedRef_Rpm = 10000 => 4,095,937.5
+		e.g.  unitTFreq = 1000, CountsPerRevolution = 8192,
+			ScalarSpeedRef_Rpm = 5000 => 96
 	*/
 	p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm, 16U);
 }
@@ -178,7 +180,7 @@ void Encoder_SetDistancePerRevolution(Encoder_T * p_encoder, uint16_t distancePe
 }
 
 /*
-	gearRaito is Sufrace:Encoder
+	gearRatio is Surface:Encoder
 */
 void Encoder_Motor_SetSurfaceRatio(Encoder_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatio_Factor, uint32_t gearRatio_Divisor)
 {

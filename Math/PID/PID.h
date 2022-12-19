@@ -68,6 +68,7 @@ typedef struct PID_Tag
 	int32_t KdFactorFreq; 	/* KdFactor * CalcFreq */
 	int32_t ErrorSum;
 	int32_t ErrorSumOverflow; /* Sum Limit before multiplication overflow */
+	int32_t IntegralOverflow;
 	int32_t ErrorPrev;
 	int32_t OutputMin; /*  */
 	int32_t OutputMax;
@@ -93,10 +94,10 @@ extern void PID_SetOutputState(PID_T * p_pid, int32_t integral);
 extern void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max);
 extern void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq);
 extern void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor);
-extern void PID_SetTunings_FractionSigned16(PID_T * p_pid, int32_t kp, int32_t ki, int32_t kd);
-extern int32_t PID_GetKp_FractionSigned16(PID_T * p_pid);
-extern int32_t PID_GetKi_FractionSigned16(PID_T * p_pid);
-extern int32_t PID_GetKd_FractionSigned16(PID_T * p_pid);
+extern void PID_SetTunings_Frac16(PID_T * p_pid, int32_t kp, int32_t ki, int32_t kd);
+extern int32_t PID_GetKp_Frac16(PID_T * p_pid);
+extern int32_t PID_GetKi_Frac16(PID_T * p_pid);
+extern int32_t PID_GetKd_Frac16(PID_T * p_pid);
 extern int32_t PID_GetKp_Int(PID_T * p_pid, uint16_t scalar);
 extern int32_t PID_GetKi_Int(PID_T * p_pid, uint16_t scalar);
 extern int32_t PID_GetKd_Int(PID_T * p_pid, uint16_t scalar);

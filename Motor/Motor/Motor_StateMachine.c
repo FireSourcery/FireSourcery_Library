@@ -120,7 +120,8 @@ static void Stop_Proc(Motor_T * p_motor)
 	//	}
 	//	else
 	{
-		Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleObserve, 0U);
+		// Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleObserve, 0U);
+		Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcStop, 0U);
 	}
 }
 
@@ -129,7 +130,8 @@ static StateMachine_State_T * Stop_InputControl(Motor_T * p_motor, uint32_t void
 	(void)voidVar;
 	StateMachine_State_T * p_nextState;
 
-	Motor_FOC_SetOutputMatchStop(p_motor);
+	Motor_ProcCommutationMode(p_motor, Motor_FOC_SetOutputMatchStop, 0U);
+	Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAngleControl, 0U);
 
 	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
 	{
@@ -138,8 +140,7 @@ static StateMachine_State_T * Stop_InputControl(Motor_T * p_motor, uint32_t void
 	}
 	else
 	{
-		/* ZeroSensors after Align */
-		p_nextState = &STATE_ALIGN;
+		p_nextState = &STATE_ALIGN; 		/* ZeroSensors after Align */
 	}
 
 	return p_nextState;
@@ -160,7 +161,6 @@ static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor, uint32_t di
 		if(direction == MOTOR_DIRECTION_CCW) 	{ Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionCcw, Motor_SetDirectionCcw); }
 		else 									{ Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionCw, Motor_SetDirectionCw); }
 	}
-
 	return 0U;
 }
 
@@ -199,7 +199,7 @@ static const StateMachine_State_T STATE_STOP =
 /******************************************************************************/
 static void Run_Entry(Motor_T * p_motor)
 {
-	Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAngleControl, 0U);
+	Motor_ProcCommutationMode(p_motor, Motor_FOC_MatchOutput, 0U);
 }
 
 static void Run_Proc(Motor_T * p_motor)
@@ -211,8 +211,9 @@ static void Run_Proc(Motor_T * p_motor)
 static StateMachine_State_T * Run_InputControl(Motor_T * p_motor, uint32_t voidVar)
 {
 	(void)voidVar;
-	Motor_ProcCommutationMode(p_motor, Motor_FOC_SetOutputMatchRun, 0U);
-	return 0U;
+	// Motor_ProcCommutationMode(p_motor, Motor_FOC_SetOutputMatchRun, 0U);
+	// return 0U;
+	return &STATE_RUN; /* repeat entry function */
 }
 
 static StateMachine_State_T * Run_InputRelease(Motor_T * p_motor, uint32_t voidVar)
@@ -263,7 +264,8 @@ static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, uint32_t
 
 	if(Motor_CheckPositionFeedback(p_motor) == true)
 	{
-		Motor_ProcCommutationMode(p_motor, Motor_FOC_SetOutputMatchFreewheel, 0U /* Motor_SixStep_ResumePhaseControl */);
+		Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAngleControl, 0U /* Motor_SixStep_ResumePhaseControl */);
+		Motor_ProcCommutationMode(p_motor, Motor_FOC_SetOutputMatchFreewheel, 0U);
 		p_newState = &STATE_RUN;
 	}
 	else
@@ -300,9 +302,9 @@ static void Align_Entry(Motor_T * p_motor)
 {
 	// switch(p_motor->Parameters.AlignMode)
 	// {
-	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_ControlCycles);
-	// Motor_ProcCommutationMode(p_motor, Motor_FOC_Align, 0U);
+	Timer_StartPeriod(&p_motor->ControlTimer, _Motor_ConvertToControlCycles(p_motor, p_motor->Parameters.AlignTime_Ms)) ;
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAlign, 0U);
+	// Motor_ProcCommutationMode(p_motor, Motor_FOC_Align, 0U);
 	// }
 }
 
@@ -313,7 +315,10 @@ static void Align_Proc(Motor_T * p_motor)
 	if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
 	{
 		Motor_ZeroSensor(p_motor);
-		if(Motor_CheckPositionFeedback(p_motor) == true) 	{ _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN);  }
+		Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAngleControl, 0U /* Motor_SixStep_ResumePhaseControl */);
+		Motor_ProcCommutationMode(p_motor, Motor_FOC_SetOutputMatchStop, 0U);
+
+		if(Motor_CheckPositionFeedback(p_motor) == true) 	{ Motor_SetRampSlopeRun(p_motor); _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN);  }
 		else 												{ _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_OPEN_LOOP); }
 	}
 	else
@@ -346,15 +351,14 @@ static const StateMachine_State_T STATE_ALIGN =
 /******************************************************************************/
 static void OpenLoop_Entry(Motor_T * p_motor)
 {
-	// Motor_StartOpenLoop(p_motor);
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_StartOpenLoop, 0U /* Motor_SixStep_StartPhaseControl */);
 }
 
 static void OpenLoop_Proc(Motor_T * p_motor)
 {
-	if(Motor_CheckPositionFeedback(p_motor) == true) 	{ _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN); }
-	// else 												{ _Motor_FOC_ProcOpenLoop(p_motor); Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, 0U /* Motor_SixStep_ProcPhaseControl */ ); }
+	if(Motor_CheckPositionFeedback(p_motor) == true) 	{ Motor_SetRampSlopeRun(p_motor); _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN); }
 	else 												{ Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcOpenLoop, 0U /* Motor_SixStep_ProcPhaseControl */ ); }
+// else 												{ _Motor_FOC_ProcOpenLoop(p_motor); Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, 0U /* Motor_SixStep_ProcPhaseControl */ ); }
 }
 
 static const StateMachine_Transition_T OPEN_LOOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =

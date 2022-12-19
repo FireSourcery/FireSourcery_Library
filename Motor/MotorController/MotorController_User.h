@@ -46,6 +46,7 @@
 		common input substate proc across state machine input modes
 */
 /******************************************************************************/
+/* Zero Throttle or Brake */
 static inline void MotorController_User_SetCmdZero(MotorController_T *p_mc) 						{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_ZERO, STATE_MACHINE_INPUT_VALUE_NULL); }
 static inline void MotorController_User_SetCmdThrottle(MotorController_T *p_mc, uint16_t userCmd) 	{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd); }
 static inline void MotorController_User_SetCmdBrake(MotorController_T *p_mc, uint16_t userCmd) 		{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
@@ -154,7 +155,7 @@ static inline void MotorController_User_BeepStop(MotorController_T * p_mc) { Bli
 static inline MotorController_StateMachine_StateId_T MotorController_User_GetStateId(MotorController_T * p_mc) { return StateMachine_GetActiveStateId(&p_mc->StateMachine); }
 
 static inline uint16_t MotorController_User_GetAdcu(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) 		{ return p_mc->AnalogResults.Channels[adcChannel]; }
-static inline uint8_t MotorController_User_GetAdcu_Msb8(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) 	{ return MotorController_User_GetAdcu(p_mc, adcChannel) >> (ADC_BITS - 8U); }
+static inline uint8_t MotorController_User_GetAdcu_Msb8(MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) 	{ return MotorController_User_GetAdcu(p_mc, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
 static inline uint32_t MotorController_User_GetVSource(MotorController_T * p_mc, uint16_t vScalar) 					{ return VMonitor_ConvertToV(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu, vScalar); }
 static inline uint32_t MotorController_User_GetVSense(MotorController_T * p_mc, uint16_t vScalar) 					{ return VMonitor_ConvertToV(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu, vScalar); }
 static inline uint32_t MotorController_User_GetVAcc(MotorController_T * p_mc, uint16_t vScalar) 					{ return VMonitor_ConvertToV(&p_mc->VMonitorAcc, p_mc->AnalogResults.VAcc_Adcu, vScalar); }
@@ -179,7 +180,6 @@ static inline int32_t MotorController_User_GetHeatMosfets_DegC(MotorController_T
 /*
 	Controller NvM Variables Parameters
 */
-static inline uint16_t MotorController_User_GetAdcVRef(MotorController_T * p_mc)  { return p_mc->Parameters.AdcVRef_MilliV; }
 static inline uint16_t MotorController_User_GetVSourceRef(MotorController_T * p_mc)  { return p_mc->Parameters.VSourceRef; }
 
 static inline void MotorController_User_SetFastBoot(MotorController_T * p_mc, bool isEnable) 		{ p_mc->MemMapBoot.FastBoot = isEnable; }
@@ -224,7 +224,7 @@ static inline uint32_t MotorController_User_GetMainVersion(MotorController_T * p
 static inline uint8_t MotorController_User_GetMainVersionIndex(MotorController_T * p_mc, uint8_t charIndex) { return p_mc->CONFIG.SOFTWARE_VERSION[charIndex]; }
 
 static inline uint32_t MotorController_User_GetVMax(MotorController_T * p_mc) { return GLOBAL_MOTOR.V_MAX_VOLTS; }
-static inline uint32_t MotorController_User_GetIMax(MotorController_T * p_mc) { return GLOBAL_MOTOR.I_MAX_AMP; }
+static inline uint32_t MotorController_User_GetIMax(MotorController_T * p_mc) { return GLOBAL_MOTOR.I_UNITS_AMPS; }
 
 /*
 	WriteOnce Variables

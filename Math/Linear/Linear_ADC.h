@@ -81,6 +81,8 @@ static inline uint16_t Linear_ADC_CalcAdcu_FractionUnsigned16(const Linear_T * p
 }
 
 extern void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef);
+extern void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef, int16_t physicalRef);
 extern void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef);
+extern void Linear_ADC_SetInverted(Linear_T * p_linear);
 
 #endif

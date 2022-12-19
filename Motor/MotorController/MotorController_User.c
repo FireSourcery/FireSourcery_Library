@@ -30,23 +30,10 @@
 /******************************************************************************/
 #include "MotorController_User.h"
 
-void MotorController_User_SetAdcVRef(MotorController_T * p_mc, uint16_t adcVRef_MilliV)
-{
-	if		(adcVRef_MilliV > p_mc->CONFIG.ADC_VREF_MAX_MILLIV) { p_mc->Parameters.AdcVRef_MilliV = p_mc->CONFIG.ADC_VREF_MIN_MILLIV; }
-	else if	(adcVRef_MilliV < p_mc->CONFIG.ADC_VREF_MIN_MILLIV) { p_mc->Parameters.AdcVRef_MilliV = p_mc->CONFIG.ADC_VREF_MIN_MILLIV; }
-	else 														{ p_mc->Parameters.AdcVRef_MilliV = adcVRef_MilliV; }
-
-	VMonitor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
-	Global_Motor_InitAdcVRef_MilliV(p_mc->Parameters.AdcVRef_MilliV);
-	Thermistor_InitAdcVRef_Scalar(p_mc->Parameters.AdcVRef_MilliV);
-
-	//must reset to propagate additional set
-}
-
 void MotorController_User_SetVSource(MotorController_T * p_mc, uint16_t volts)
 {
-	p_mc->Parameters.VSourceRef = (volts > GLOBAL_MOTOR.V_MAX_VOLTS) ? GLOBAL_MOTOR.V_MAX_VOLTS : volts;
-	Global_Motor_InitVSourceRef_V(p_mc->Parameters.VSourceRef);
+	Global_Motor_SetVSource_V(volts);
+	p_mc->Parameters.VSourceRef = Global_Motor_GetVSource_V();
 }
 
 void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32_t zero_mV, uint32_t max_mV)

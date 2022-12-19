@@ -35,9 +35,11 @@
 
 /******************************************************************************/
 /*!
-	Using int32_t q16.16 format
-	65536 <=> 1.0f
-	range bounded to [-65536*2:65535*2] via shift 14 at init.
+	Fixed32
+	Fraction in q16.16 [-2,147,483,648:2,147,483,647]
+	f([-XRef:XRef]) => [-65536:65536]
+	Range bounded to [-65536*2:65535*2] via shift 14 at init.
+	Pre saturation to FracU16 [0:65535], FracS16 [-32768:32767]
 */
 /******************************************************************************/
 static inline int32_t Linear_Frac16(const Linear_T * p_linear, int32_t x)

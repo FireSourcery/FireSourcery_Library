@@ -305,14 +305,7 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 			/* Check Throttle. Direction is non edge Forward or Reverse */
 			else if(_MotAnalogUser_AIn_GetIsOn(&p_user->ThrottleAIn) == true)
 			{
-				// if(MotAnalogUser_CheckThrottleValueRelease(p_user) == true) /* repeat throttle release is okay for now, otherwise track previous cmd state */
-				// {
-				// 	cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE;
-				// }
-				// else
-				{
-					cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE;
-				}
+				cmd = MOT_ANALOG_USER_CMD_SET_THROTTLE;
 			}
 			else if(_MotAnalogUser_AIn_PollFallingEdge(&p_user->ThrottleAIn) == true)
 			{
