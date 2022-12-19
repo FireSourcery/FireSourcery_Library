@@ -94,6 +94,9 @@ typedef struct __attribute__((aligned(2U))) Thermistor_Params_Tag
 	uint16_t Warning_Adcu;
 	uint16_t WarningThreshold_Adcu;
 
+	uint16_t Shutdown_DegC;
+	uint16_t Warning_DegC;
+
 	// uint16_t CaptureScalar; //remove?
 	bool IsMonitorEnable;
 }
@@ -112,7 +115,7 @@ typedef struct Thermistor_Tag
 {
 	const Thermistor_Config_T CONFIG;
 	Thermistor_Params_T Params;
-	Linear_T LinearDegreesC; /* Simple linear fit. Roughly linear 70-100C */
+	Linear_T LinearDegC; /* Simple linear fit. Roughly linear 70-100C */
 	Thermistor_ThresholdStatus_T ShutdownThreshold;
 	Thermistor_ThresholdStatus_T WarningThreshold; /* Threshold save state info */
 	Thermistor_Status_T Status;
@@ -175,7 +178,7 @@ extern Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16
 extern void Thermistor_SetNtc(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, uint32_t b);
 extern void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV);
 
-// #ifndef HOST_SIDE_UNIT_CONVERSION
+// #ifndef LOCAL_UNIT_CONVERSION
 extern void Thermistor_CaptureUnits_DegC(Thermistor_T * p_therm, uint16_t adcu);
 extern float Thermistor_ConvertToDegC_Float(Thermistor_T * p_therm, uint16_t adcu);
 extern int32_t Thermistor_ConvertToDegC_Int(Thermistor_T * p_therm, uint16_t adcu, uint16_t scalar);

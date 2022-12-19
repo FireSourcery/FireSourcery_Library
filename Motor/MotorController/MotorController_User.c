@@ -43,13 +43,13 @@ void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32
 	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_Adcu, p_mc->Parameters.BatteryFull_Adcu, 1000U);
 }
 
-void MotorController_User_SetILimitDc(MotorController_T * p_mc, uint16_t dc)
-{
-	uint16_t iPeakAc = dc;
-	uint16_t motoring = iPeakAc;
+// void MotorController_User_SetILimitDc(MotorController_T * p_mc, uint16_t dc)
+// {
+// 	uint16_t iPeakAc = dc;
+// 	uint16_t motoring = iPeakAc;
 
-	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
-	{
-		Motor_User_SetILimitMotoringParam_Amp(&p_mc->CONFIG.P_MOTORS[iMotor], motoring);
-	}
-}
+// 	for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
+// 	{
+// 		Motor_User_SetILimitMotoringParam_Amp(&p_mc->CONFIG.P_MOTORS[iMotor], motoring);
+// 	}
+// }

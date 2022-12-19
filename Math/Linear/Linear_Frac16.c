@@ -30,62 +30,61 @@
 /******************************************************************************/
 #include "Linear_Frac16.h"
 
-
-
 /******************************************************************************/
 /*!
-	Linear
+	Linear Frac16
+	[x0:xRef] => [0:65536] => [y0_Units:yRef_Units]
+
 	Sets frac16 conversion to return without division
 
-	f(x) = y_Units, 				Shift
 	f16(x) = y_Frac16, 				Shift
-	invf(y_Units) = x, 				Division
+	f(x) = y_Units, 				Shift
 	invf16(y_Frac16) = x, 			Shift
-	f16units(y_Frac16) = y_Units, 	Division
+	invf(y_Units) = x, 				Division
+	units(y_Frac16) = y_Units, 		Shift
+	invunits(y_Units) = y_Frac16, 	Division
 
-	f16(0) = y0_Frac16
-	f(xRef) = yRef_Units
+	f16(x0) = y0_Frac16 = 0
 	f16(xRef) = 65535
+	f(x0) = y0_Units
+	f(xRef) = yRef_Units
 */
 /******************************************************************************/
-
-/*
-	Init using slope, y. Derive XRef
-	Scales factor to 65536
-	Scales divisor to xref
-*/
-void Linear_Frac16_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0_Frac16, int32_t yRef_Units)
-{
-	p_linear->YReference = yRef_Units;
-	p_linear->XReference = linear_invf(factor, divisor, 0, yRef_Units); /* (yRef_Units - 0)*divisor/factor */
-	p_linear->Slope = (65536 << LINEAR_DIVIDE_SHIFT) / p_linear->XReference; /* x0 == 0 */
-	p_linear->SlopeShift = LINEAR_DIVIDE_SHIFT;
-	p_linear->InvSlope = (p_linear->XReference << LINEAR_DIVIDE_SHIFT) / 65536; //todo maxleftshift, if factor > divisor, invslope can be > 14
-	p_linear->InvSlopeShift = LINEAR_DIVIDE_SHIFT;
-	p_linear->XOffset = 0;
-	p_linear->YOffset = y0_Frac16;
-}
-
 /*!
-	Map [x0, xRef] to [y0, 65535]
-	Init using (x0, y0), (xref, yref). Derive slope
-	@param[in] y0_Frac16 frac16 offset
-	@param[in] yRef user units equivalent to 65536, 100%
+	Map [x0, xRef] to [0, 65535]
+	Init using (x0, y0), (xRef, yRef). Derive slope
+
+	@param[in] y0_Units   user units at x0
+	@param[in] yRef_Units user units 100%
 */
-void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0_Frac16, int32_t yRef_Units)
+void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0_Units, int32_t yRef_Units)
 {
 	p_linear->Slope = (65536 << LINEAR_DIVIDE_SHIFT) / (xRef - x0);
 	p_linear->SlopeShift = LINEAR_DIVIDE_SHIFT;
 	p_linear->InvSlope = ((xRef - x0) << LINEAR_DIVIDE_SHIFT) / 65536;
 	p_linear->InvSlopeShift = LINEAR_DIVIDE_SHIFT;
 	p_linear->XOffset = x0;
-	p_linear->YOffset = y0_Frac16;
-	p_linear->XReference = xRef; /* Unused for calculations, User info */
-	p_linear->YReference = yRef_Units; /* Retain for "Units" conversion only */
+	p_linear->YOffset = y0_Units;
+	// p_linear->XReference = xRef;
+	// p_linear->YReference = yRef_Units;
+	p_linear->DeltaX = xRef - x0; 				/* Retain for Units conversion */
+	p_linear->DeltaY = yRef_Units - y0_Units; 	/* Retain for Units conversion */
 }
 
-// void Linear_Frac16_Init_X0XRef(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t xRef)
+/*
+	Init using slope, y. Derive XRef
+	Scales factor to 65536
+	Scales divisor to xref
+*/
+// void Linear_Frac16_Init_Slope(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0_Frac16, int32_t yRef_Units)
 // {
-
+// 	p_linear->YReference = yRef_Units;
+// 	p_linear->XReference = linear_invf(factor, divisor, 0, yRef_Units); /* (yRef_Units - 0)*divisor/factor */
+// 	p_linear->Slope = (65536 << LINEAR_DIVIDE_SHIFT) / p_linear->XReference; /* x0 == 0 */
+// 	p_linear->SlopeShift = LINEAR_DIVIDE_SHIFT;
+// 	p_linear->InvSlope = (p_linear->XReference << LINEAR_DIVIDE_SHIFT) / 65536; //todo maxleftshift, if factor > divisor, invslope can be > 14
+// 	p_linear->InvSlopeShift = LINEAR_DIVIDE_SHIFT;
+// 	p_linear->XOffset = 0;
+// 	p_linear->YOffset = y0_Frac16;
 // }
 

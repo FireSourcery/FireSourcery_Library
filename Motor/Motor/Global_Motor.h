@@ -58,4 +58,5 @@ extern const Global_Motor_T GLOBAL_MOTOR;
 extern void Global_Motor_InitVSourceRef_V(uint16_t vSource);
 extern void Global_Motor_SetVSource_V(uint16_t vSource);
 extern uint16_t Global_Motor_GetVSource_V(void);
+
 #endif

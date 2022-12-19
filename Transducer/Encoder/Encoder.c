@@ -150,6 +150,7 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 			ScalarSpeedRef_Rpm = 10000 => 4,095,937.5
 		e.g.  unitTFreq = 1000, CountsPerRevolution = 8192,
 			ScalarSpeedRef_Rpm = 5000 => 96
+			todo
 	*/
 	p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm, 16U);
 }

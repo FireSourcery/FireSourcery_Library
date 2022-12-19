@@ -102,6 +102,7 @@ static inline uint32_t Encoder_Motor_InterpolateMechanicalDelta(Encoder_T * p_en
 
 static inline uint32_t Encoder_Motor_InterpolateElectricalDelta(Encoder_T * p_encoder, uint32_t pollingIndex)
 {
+
 	//todo check overflow boundaries
 //	if (pollingIndex > UINT32_MAX / (p_encoder->UnitInterpolateAngle * p_encoder->Params.MotorPolePairs))
 //	{
@@ -116,8 +117,19 @@ static inline uint32_t Encoder_Motor_InterpolateElectricalDelta(Encoder_T * p_en
 
 static inline uint32_t Encoder_Motor_InterpolateHallDelta(Encoder_T * p_encoder, uint32_t pollingIndex)
 {
-	//todo with saturation?
+	uint32_t electricalDelta;
 
+	//todo check overflow boundaries
+//	if (pollingIndex > UINT32_MAX / (p_encoder->UnitInterpolateAngle * p_encoder->Params.MotorPolePairs))
+//	{
+//		return Encoder_InterpolateAngle(p_encoder, pollingIndex) * p_encoder->Params.MotorPolePairs;
+//	}
+//	else
+	{
+		electricalDelta = Encoder_DeltaT_InterpolateAngle(p_encoder, pollingIndex * p_encoder->Params.MotorPolePairs);
+	}
+	if(electricalDelta > 65536U / 6U) { electricalDelta = 65536U / 6U; }
+	return electricalDelta;
 
 }
 

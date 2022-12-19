@@ -131,7 +131,7 @@ static StateMachine_State_T * Stop_InputControl(Motor_T * p_motor, uint32_t void
 	StateMachine_State_T * p_nextState;
 
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_SetOutputMatchStop, 0U);
-	Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAngleControl, 0U);
+	Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, 0U);
 
 	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL || p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
 	{
@@ -199,7 +199,7 @@ static const StateMachine_State_T STATE_STOP =
 /******************************************************************************/
 static void Run_Entry(Motor_T * p_motor)
 {
-	Motor_ProcCommutationMode(p_motor, Motor_FOC_MatchOutput, 0U);
+	Motor_ProcCommutationMode(p_motor, Motor_FOC_MatchFeedbackLoop, 0U);
 }
 
 static void Run_Proc(Motor_T * p_motor)
@@ -264,7 +264,7 @@ static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, uint32_t
 
 	if(Motor_CheckPositionFeedback(p_motor) == true)
 	{
-		Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAngleControl, 0U /* Motor_SixStep_ResumePhaseControl */);
+		Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, 0U /* Motor_SixStep_ResumePhaseControl */);
 		Motor_ProcCommutationMode(p_motor, Motor_FOC_SetOutputMatchFreewheel, 0U);
 		p_newState = &STATE_RUN;
 	}
@@ -315,7 +315,7 @@ static void Align_Proc(Motor_T * p_motor)
 	if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
 	{
 		Motor_ZeroSensor(p_motor);
-		Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAngleControl, 0U /* Motor_SixStep_ResumePhaseControl */);
+		Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, 0U /* Motor_SixStep_ResumePhaseControl */);
 		Motor_ProcCommutationMode(p_motor, Motor_FOC_SetOutputMatchStop, 0U);
 
 		if(Motor_CheckPositionFeedback(p_motor) == true) 	{ Motor_SetRampSlopeRun(p_motor); _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN);  }

@@ -81,7 +81,7 @@ void Motor_Analog_CaptureVc(Motor_T * p_motor)
 static inline void CaptureIZeroToPeak(Motor_T * p_motor, uint16_t adcuZero, uint16_t adcu)
 {
 	int16_t signedAdcu = adcu - adcuZero;
-	uint16_t zeroToPeak = (signedAdcu > 0) ? signedAdcu : 0 - signedAdcu;
+	uint16_t zeroToPeak = (signedAdcu > 0) ? signedAdcu : (0 - signedAdcu);
 	if(zeroToPeak > p_motor->IPhasePeakTemp_Adcu) { p_motor->IPhasePeakTemp_Adcu = zeroToPeak; }
 }
 

@@ -90,7 +90,7 @@ void Encoder_DeltaD_CalibrateQuadratureReference(Encoder_T * p_encoder)
 }
 
 /*
-	call after having moved in the positive direction
+	Call after having moved in the positive direction
 */
 void Encoder_DeltaD_CalibrateQuadraturePositive(Encoder_T * p_encoder)
 {

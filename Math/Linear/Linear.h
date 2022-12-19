@@ -25,7 +25,7 @@
 	@file 	Linear.h
 	@author FireSourcery
 	@brief  Mathematical linear function.
-			e.g. Dynamic look up table, unit/ADC conversion using factor and divisor.
+			e.g. Dynamic look up table, unit/ADC conversion.
 	@version V0
 */
 /******************************************************************************/
@@ -37,8 +37,8 @@
 #include <stdint.h>
 
 /*
-	Shift 14 to allow over saturation f([-2*XRef:2*XRef]) == [-2*YRef:2*YRef] before overflow
-		i.e 2x input range, before overflow, while retaining sign bit
+	Shift 14 to allow over saturation f([X0-2(XRef-X0):X0+2(XRef-X0)]) == [-2*YRef:2*YRef] before overflow
+		i.e 2x zero to peak input range, before overflow, while retaining sign bit
 */
 #define LINEAR_DIVIDE_SHIFT 14U /* Allow signed, and 2x xRef input */
 
@@ -56,29 +56,13 @@ typedef struct Linear_Tag
 	int32_t XOffset;
 	int32_t YOffset;
 	/* One Ref is derived */
-	int32_t XReference;		/* f(x[0:XRef]) => frac16(x)[0:65536] */
+	int32_t XReference;		/* f([0:XRef]) => frac16(x)[0:65536] */
 	int32_t YReference;		/* f(x)[0:YRef] => frac16(x)[0:65536] */
+
+	int32_t DeltaX;		/* (XRef - X0), f([X0-DeltaX:X0+DeltaX]) == [-YRef:YRef]   */
+	int32_t DeltaY;
 }
 Linear_T;
-
-#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
-#define LINEAR_INIT(factor, divisor, y0, yRef)													\
-{																								\
-	.Slope 				= ((int32_t)65536 << 14U) / ((int32_t)(divisor) * yRef / (factor)),		\
-	.SlopeShift 		= 14U,																	\
-	.InvSlope 			= (((int32_t)(divisor) * (yRef) / (factor)) << 14U) / 65536, 			\
-	.InvSlopeShift 		= 14U,																	\
-	.XOffset 			= 0,																	\
-	.YOffset 			= y0,																	\
- 	.XReference 		= ((int32_t)(divisor) * (yRef) / (factor)), 							\
-	.YReference 		= yRef, 																\
-}
-#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-#define LINEAR_INIT(factor, divisor, offset, rangeRef)					\
-{																		\
-																		\
-}
-#endif
 
 /******************************************************************************/
 /*!
@@ -189,8 +173,7 @@ static inline int32_t Linear_InvFunction_Round(const Linear_T * p_linear, int32_
 
 /******************************************************************************/
 /*!
-	Unoptimized Frac16
-	@brief Fraction16
+	@brief 	Unoptimized Frac16
 	Fraction in q16.16 [-2,147,483,648, 2,147,483,647]
 	f([-XRef:XRef]) => [-65536:65536]
 	@{
@@ -199,7 +182,7 @@ static inline int32_t Linear_InvFunction_Round(const Linear_T * p_linear, int32_
 /*  */
 static inline int32_t Linear_Function_Frac16(const Linear_T * p_linear, int32_t x)
 {
-	return linear_f16(p_linear->XOffset, p_linear->XReference, x);
+	return linear_f16(p_linear->XOffset, p_linear->DeltaX, x);
 }
 
 /*!
@@ -208,9 +191,8 @@ static inline int32_t Linear_Function_Frac16(const Linear_T * p_linear, int32_t 
 */
 static inline int32_t Linear_InvFunction_Frac16(const Linear_T * p_linear, int32_t y_frac16)
 {
-	return linear_invf16(p_linear->XOffset, p_linear->XReference, y_frac16);
+	return linear_invf16(p_linear->XOffset, p_linear->DeltaX, y_frac16);
 }
-
 
 /******************************************************************************/
 /*!

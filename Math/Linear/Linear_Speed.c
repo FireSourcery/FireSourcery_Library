@@ -42,13 +42,13 @@
  /******************************************************************************/
 void Linear_Speed_InitAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t angleBits, uint16_t speedRef_Rpm)
 {
-	Linear_Frac16_Init(p_linear, (sampleFreq * 60U), ((uint32_t)1UL << angleBits), 0, speedRef_Rpm);
+	// Linear_Frac16_Init(p_linear, (sampleFreq * 60U), ((uint32_t)1UL << angleBits), 0, speedRef_Rpm);
 }
 
 /* f(eangle) = mechspeed */
 /* check overflow */
 void Linear_Speed_InitElectricalAngleRpm(Linear_T * p_linear, uint32_t sampleFreq, uint8_t angleBits, uint8_t polePairs, uint16_t speedRef_Rpm)
 {
-	Linear_Frac16_Init(p_linear, (sampleFreq * 60U), ((uint32_t)1UL << angleBits) * polePairs, 0, speedRef_Rpm);
+	// Linear_Frac16_Init(p_linear, (sampleFreq * 60U), ((uint32_t)1UL << angleBits) * polePairs, 0, speedRef_Rpm);
 }
 

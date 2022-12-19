@@ -80,6 +80,7 @@ static inline uint32_t Encoder_ModeDT_GetRotationalSpeed_RPM(Encoder_T * p_encod
 static inline uint32_t Encoder_ModeDT_GetScalarSpeed(Encoder_T * p_encoder)
 {
 	// p_encoder->FreqD * [60U * 65535U  / CountsPerRevolution / ScalarSpeedRef_Rpm]
+	// p_encoder->FreqD * 60U * / CountsPerRevolution * 65535U / ScalarSpeedRef_Rpm;
 	Encoder_CalcScalarSpeed(p_encoder, p_encoder->FreqD / p_encoder->CONFIG.SPEED_SAMPLE_FREQ, 1U);
 }
 

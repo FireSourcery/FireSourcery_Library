@@ -286,7 +286,7 @@ void Motor_ResetSpeedVMatchRatio(Motor_T * p_motor)
 /* Sensorless */
 void Motor_ResetUnitsAngleSpeed_ElecControl(Motor_T * p_motor)
 {
-	Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, GLOBAL_MOTOR.CONTROL_FREQ, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedFeedbackRef_Rpm); /* Alt speed calc */
+	Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitAngleRpm, GLOBAL_MOTOR.CONTROL_FREQ, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 }
 
 /* SinCos, Mechanical Rotation Sensor */

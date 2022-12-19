@@ -75,3 +75,22 @@
 
 // 	return shift;
 // }
+
+#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
+#define LINEAR_INIT(factor, divisor, y0, yRef)													\
+{																								\
+	.Slope 				= ((int32_t)65536 << LINEAR_DIVIDE_SHIFT) / ((int32_t)(divisor) * yRef / (factor)),		\
+	.SlopeShift 		= LINEAR_DIVIDE_SHIFT,																	\
+	.InvSlope 			= (((int32_t)(divisor) * (yRef) / (factor)) << LINEAR_DIVIDE_SHIFT) / 65536, 			\
+	.InvSlopeShift 		= LINEAR_DIVIDE_SHIFT,																	\
+	.XOffset 			= 0,																	\
+	.YOffset 			= y0,																	\
+ 	.XReference 		= ((int32_t)(divisor) * (yRef) / (factor)), 							\
+	.YReference 		= yRef, 																\
+}
+#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+#define LINEAR_INIT(factor, divisor, offset, rangeRef)					\
+{																		\
+																		\
+}
+#endif

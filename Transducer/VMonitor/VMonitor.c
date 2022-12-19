@@ -33,19 +33,16 @@
 #include <string.h>
 #include <stdio.h>
 
-static inline void SetUnitConversion(VMonitor_T * p_vMonitor) //public reset?
+static inline void ResetUnitConversion(VMonitor_T * p_vMonitor)
 {
 	Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONFIG.UNITS_R1, p_vMonitor->CONFIG.UNITS_R2, GLOBAL_ANALOG.ADC_BITS, GLOBAL_ANALOG.ADC_VREF_MILLIV, p_vMonitor->Params.VInRefMax);
 }
 
 void VMonitor_Init(VMonitor_T * p_vMonitor)
 {
-	if(p_vMonitor->CONFIG.P_PARAMS != 0U)
-	{
-		memcpy(&p_vMonitor->Params, p_vMonitor->CONFIG.P_PARAMS, sizeof(VMonitor_Params_T));
-	}
+	if(p_vMonitor->CONFIG.P_PARAMS != 0U) { memcpy(&p_vMonitor->Params, p_vMonitor->CONFIG.P_PARAMS, sizeof(VMonitor_Params_T)); }
 
-	SetUnitConversion(p_vMonitor);
+	ResetUnitConversion(p_vMonitor);
 	p_vMonitor->Status = VMONITOR_STATUS_OK;
 }
 

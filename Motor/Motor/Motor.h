@@ -391,12 +391,11 @@ typedef struct Motor_Tag
 
 	/* Sensorless and SinCos. Non Encoder module square wave */
 	Linear_T UnitAngleRpm; 			/*  */
-	Linear_T UnitSurfaceSpeed; 			/*  */
+	Linear_T UnitSurfaceSpeed; 		/*  */
 	qangle16_t SpeedAngle; 			/* Save for reference */
 	// uint32_t MechanicalDelta;
 
 	/* Interpolated angle */
-	qangle16_t HallAngle;
 	uint32_t InterpolatedAngleIndex;
 
 	/*

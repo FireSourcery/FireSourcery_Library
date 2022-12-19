@@ -56,7 +56,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	VMonitor_Init(&p_mc->VMonitorAcc);
 
 	Thermistor_Init(&p_mc->ThermistorPcb);
-#if		defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
+#if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
 	Thermistor_Init(&p_mc->ThermistorMosfetsTop);
 	Thermistor_Init(&p_mc->ThermistorMosfetsBot);
 #else

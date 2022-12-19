@@ -161,7 +161,10 @@ static inline bool Encoder_DeltaT_PollPhaseAEdgeDual(Encoder_T * p_encoder)
 	T Unit Conversions
 */
 /******************************************************************************/
-static inline uint32_t Encoder_DeltaT_ConvertToFreq(Encoder_T * p_encoder, uint32_t deltaT_Ticks) { return (deltaT_Ticks == 0U) ? 0U : p_encoder->UnitT_Freq / deltaT_Ticks; }
+static inline uint32_t Encoder_DeltaT_ConvertToFreq(Encoder_T * p_encoder, uint32_t deltaT_Ticks)
+{
+	return (deltaT_Ticks == 0U) ? 0U : p_encoder->UnitT_Freq / deltaT_Ticks;
+}
 
 /******************************************************************************/
 /*!

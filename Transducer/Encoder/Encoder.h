@@ -72,6 +72,7 @@ typedef struct __attribute__((aligned(2U))) Encoder_Params_Tag
 	bool IsALeadBPositive; 				/* User runtime calibration for encoder install direction, combine with compile time defined QUADRATURE_A_LEAD_B_INCREMENT */
 #endif
 	uint16_t ExtendedTimerDeltaTStop;	/* ExtendedTimer time read as deltaT stopped, default as 1s or .5rpm */
+
 	/* Overallocation of variable space to allow runtime polymorphism */
 	uint8_t MotorPolePairs; 			/* Motor subtype, Convert between electrical speed and mechanical speed. Motor Hall Mode */
 }
@@ -99,12 +100,10 @@ typedef struct Encoder_Tag
 {
 	const Encoder_Config_T CONFIG;
 	Encoder_Params_T Params;
-
 #if (defined(CONFIG_ENCODER_HW_EMULATED) && defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE))
 	Pin_T PinA;
 	Pin_T PinB;
 #endif
-
 	/*
 		Runtime Variables
 	*/
@@ -121,17 +120,14 @@ typedef struct Encoder_Tag
 	volatile uint32_t IndexCount;
 	volatile int32_t IndexCounterD;
 	volatile int32_t IndexCounterDOffset;
-
 	uint32_t TimerCounterSaved; 		/*!< First time/count sample used to calculate Delta */
 	uint32_t ExtendedTimerSaved;
 	uint32_t ExtendedTimerConversion;	/* Extended Timer to Short Timer */
-
 	/* Experimental */
 	// uint32_t TotalT; 		/*!< TimerCounter ticks, persistent through Delta captures */
 	// int32_t TotalD; 			/* Integral Capture */
 	// uint32_t SpeedSaved; 	/*!< Most recently calculated speed, used for acceleration calc */
 	// uint32_t DeltaSpeed; 	/*!< Save for acceleration calc */
-
 	/*
 		Unit conversion. derived on init from Nv Params
 	*/
@@ -239,7 +235,6 @@ extern const int8_t _ENCODER_TABLE_PHASE_A[_ENCODER_TABLE_LENGTH];
 #ifndef ENCODER_ANGLE16
 #define ENCODER_ANGLE16 (16U)
 #endif
-
 
 /*!
 	@brief 	Capture Increasing DeltaT or DeltaD between 2 samples. Used speed calculations.

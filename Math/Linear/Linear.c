@@ -37,40 +37,28 @@
 	f(x) = (factor * (x - x0) / divisor) + y0
 	f(xRef) = yRef
 
-	x0 implementation: equations include 2 offsets. always include 1 additional operation
-	alternatively
-		option 1. save y-intercept as shifted to preserve precision
-		option 2. selectively calc with 1 offset at function call.
-			reuse procedure inv functions, + supplement inv frac16 functions
-	Overflow factor, divisor > 131,071
+	Overflow: factor, divisor > 131,071. (divisor *(yRef - y0)) > INT32_MAX
+
+	@param[in] y0 - y-intercept, x0 = 0
+	@param[in] yRef - y output as 100 percent
 */
 /******************************************************************************/
-/*
-	x0 = 0
-*/
 void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
 {
-	p_linear->XOffset = 0;
-	p_linear->YOffset = y0;
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-	/*
-		if factor > divisor, bound with yref.
-		invf overflow if  (divisor * yRef) > INT32_MAX
-	*/
+	/* if factor > divisor, bound with yRef. */
 	p_linear->YReference = yRef;
 	p_linear->XReference = linear_invf(factor, divisor, y0, yRef); /* (yRef - y0)*divisor/factor */
 
-	/*
-		Allow max input of x = XReference * 2
-			XReference * 2 * Slope_Shifted <= INT32_MAX
+	p_linear->DeltaX = p_linear->XReference - p_linear->XOffset;
+	p_linear->DeltaY = p_linear->YReference - p_linear->YOffset;
 
-			(1 << SlopeShift) <= INT32_MAX / (XReference * 2 * factor) * divisor
-			(1 << SlopeShift) <= INT32_MAX / 2 / factor * divisor / XReference
-		//todo determine max shift, factor > 65536
-	*/
 	p_linear->Slope = (factor << LINEAR_DIVIDE_SHIFT) / divisor;
 	p_linear->SlopeShift = LINEAR_DIVIDE_SHIFT;
 
+	/*
+		Allow max input of x = XReference * 2.	XReference * 2 * Slope_Shifted <= INT32_MAX
+	*/
 	/*	Iterative log2	*/
 	while((p_linear->XReference > INT32_MAX / p_linear->Slope) && (p_linear->SlopeShift > 0U))
 	{
@@ -78,7 +66,7 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 		p_linear->SlopeShift--;
 	}
 
-	//todo maxleftshift, if factor > divisor, invslope can be > 14
+	/* If factor > divisor, InvSlope can be > 14 */
 	p_linear->InvSlope = (divisor << LINEAR_DIVIDE_SHIFT) / factor;
 	p_linear->InvSlopeShift = LINEAR_DIVIDE_SHIFT;
 
@@ -88,6 +76,9 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 		p_linear->InvSlopeShift--;
 	}
 
+	p_linear->XOffset = 0;
+	p_linear->YOffset = y0;
+
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 	p_linear->SlopeFactor = factor;
 	p_linear->SlopeDivisor = divisor;
@@ -96,17 +87,7 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 #endif
 }
 
-// void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t xRef)
-// {
-
-// }
-
-// void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t y0, int32_t yRef)
-// {
-
-// }
-
-// void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t y0, int32_t xRef)
+// void Linear_Init_X0(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t xRef)
 // {
 
 // }
@@ -114,19 +95,18 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 /*
 	Map [x0:xRef] to [y0:yRef]. Interpolate from (x0, y0) to (xRef, yRef).
 	Derive slope
-	User input yRef > y0, XRef > x0
 */
 void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, int32_t yRef)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-	p_linear->YReference = yRef;
-	p_linear->XReference = xRef;
 	p_linear->Slope = ((yRef - y0) << LINEAR_DIVIDE_SHIFT) / (xRef - x0);
 	p_linear->SlopeShift = LINEAR_DIVIDE_SHIFT;
 	p_linear->InvSlope = ((xRef - x0) << LINEAR_DIVIDE_SHIFT) / (yRef - y0);
 	p_linear->InvSlopeShift = LINEAR_DIVIDE_SHIFT;
 	p_linear->XOffset = x0;
 	p_linear->YOffset = y0;
+	p_linear->YReference = yRef;
+	p_linear->XReference = xRef;
 #endif
 }
 

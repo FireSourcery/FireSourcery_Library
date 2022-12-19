@@ -218,7 +218,7 @@ static inline void Motor_Calibrate_StartAdc(Motor_T * p_motor)
 
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
-		Motor_FOC_StartAngleControl(p_motor);
+		Motor_FOC_ActivateOutput(p_motor);
 	}
 	else if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
 	{

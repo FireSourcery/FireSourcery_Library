@@ -203,12 +203,11 @@ MotorController_BuzzerFlags_T;
 
 typedef struct __attribute__((aligned(2U))) MotorController_Params_Tag
 {
-	uint16_t AdcVRef_MilliV;
-	uint16_t VSourceRef;
 	MotorController_InputMode_T UserInputMode;
 	MotorController_BrakeMode_T BrakeMode;
 	MotorController_ZeroCmdMode_T ZeroCmdMode;
 
+	uint16_t VSourceRef;
 	uint16_t BatteryZero_Adcu;
 	uint16_t BatteryFull_Adcu;
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
@@ -275,9 +274,6 @@ typedef const struct MotorController_Config_Tag
 	Protocol_T * const P_PROTOCOLS; /* Simultaneously active protocols */
 	const uint8_t PROTOCOL_COUNT;
 
-	const uint16_t ADC_VREF_MAX_MILLIV;
-	const uint16_t ADC_VREF_MIN_MILLIV;
-
 	const uint32_t ANALOG_USER_DIVIDER;
 	const uint32_t MAIN_DIVIDER_10;
 	const uint32_t MAIN_DIVIDER_1000;
@@ -308,9 +304,8 @@ typedef struct MotorController_Tag
 	Pin_T Relay;
 	Debounce_T OptDin; 	/* Configurable input */
 
-//todo outside allocate heat channels
 	Thermistor_T ThermistorPcb;
-#if		defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
+#if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
 	Thermistor_T ThermistorMosfetsTop;
 	Thermistor_T ThermistorMosfetsBot;
 #else
@@ -326,7 +321,7 @@ typedef struct MotorController_Tag
 	uint32_t MainDividerCounter;
 	uint32_t TimerDividerCounter;
 
-#ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
+#if defined(CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE)
 	Shell_T Shell;
 	uint16_t ShellSubstate;
 #endif

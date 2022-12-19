@@ -102,24 +102,6 @@ Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t capt
 
 /******************************************************************************/
 /*!
-	Set Params
-*/
-/******************************************************************************/
-void Thermistor_SetNtc(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, uint32_t b)
-{
-	p_therm->Params.RNominal = r0;
-	p_therm->Params.TNominal = t0_degC + 273;
-	p_therm->Params.BConstant = b;
-}
-
-void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV)
-{
-	p_therm->Params.VIn_Scalar = vIn_MilliV / 10U;
-}
-
-
-/******************************************************************************/
-/*!
 	Unit Conversion
 */
 /******************************************************************************/
@@ -238,7 +220,50 @@ uint16_t Thermistor_ConvertToAdcu_DegC(Thermistor_T * p_therm, uint16_t degC)
 
 /******************************************************************************/
 /*!
-	Set Params
+	Set Unit Conversion Params Params
+*/
+/******************************************************************************/
+void Thermistor_SetNtc(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, uint32_t b)
+{
+	p_therm->Params.RNominal = r0;
+	p_therm->Params.TNominal = t0_degC + 273;
+	p_therm->Params.BConstant = b;
+}
+
+void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV)
+{
+	p_therm->Params.VIn_Scalar = vIn_MilliV / 10U;
+}
+
+
+
+/* warning_adcu must be > 1/2 * ADC_MAX, or ADC_MAX will overflow Linear */
+
+	// Shutdown_Adcu 2112	=> 0
+	// Warning_Adcu  3072	=> 65535
+	// Shutdown_Adcu 		=> Shutdown_DegC 	100
+	// Warning_Adcu 		=> Warning_DegC		70
+	// max = (3072-2112)*2+2112
+	// slope 1,118,481, inv = 240
+void Thermistor_SetLinear_DegC(Thermistor_T * p_therm, uint32_t warningDegC, uint32_t shutdownDegC)
+{
+	p_therm->Params.Warning_DegC = warningDegC;
+	p_therm->Params.Shutdown_DegC = shutdownDegC;
+
+	// Heat_Adcu lower is higher heat
+	// Shutdown_Adcu 	=> 0
+	// Warning_Adcu 	=> 65535
+	// Shutdown_Adcu 	=> Shutdown_DegC
+	// Warning_Adcu 	=> Warning_DegC
+	Linear_ADC_Init(&p_therm->LinearDegC, p_therm->Params.Shutdown_Adcu, p_therm->Params.Warning_Adcu, p_therm->Params.Warning_DegC);
+
+}
+
+
+
+/******************************************************************************/
+/*!
+	Set Limits Params
 */
 /******************************************************************************/
 static uint16_t ConvertDegCToAdcu_SetUser(Thermistor_T * p_therm, uint8_t degC)

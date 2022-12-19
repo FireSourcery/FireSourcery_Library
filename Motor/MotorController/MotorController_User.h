@@ -199,11 +199,11 @@ static inline uint32_t MotorController_User_GetBatteryCharge_Frac16(MotorControl
 
 /******************************************************************************/
 /*
-	Info Params
+	Read Only Params
 */
 /******************************************************************************/
 /*
-	ReadOnly
+	Read Only
 */
 static inline uint32_t MotorController_User_GetLibraryVersion(void) { return MOT_SOFTWARE_VERSION_ID; }
 static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIndex)
