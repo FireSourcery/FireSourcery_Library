@@ -25,9 +25,7 @@
 	@file 	Linear_Voltage.h
 	@author FireSourcery
 	@brief 	ADC to Voltage values conversion using voltage divider.
-			Calculates and holds ADCU voltage conversion ratios.
-			Flexible voltage units.
-			Frac16 init fixes precision to 1 voltage unit.
+			Flexible V units with precision over Linear_ADC.
 	@version V0
 */
 /******************************************************************************/
@@ -80,7 +78,7 @@ static inline int32_t Linear_Voltage_CalcScalarV(const Linear_T * p_linear, uint
 	@brief 	results expressed in Q16.16, where 65356 => 100% of vInMax
 */
 /******************************************************************************/
-static inline int32_t Linear_Voltage_CalcFraction16(const Linear_T * p_linear, uint16_t adcu)
+static inline int32_t Linear_Voltage_CalcFrac16(const Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Function_Frac16(p_linear, adcu);
 }
@@ -90,9 +88,9 @@ static inline int32_t Linear_Voltage_CalcFraction16(const Linear_T * p_linear, u
 	@brief 	results expressed in Q0.16, Saturated to 65535 max
 */
 /******************************************************************************/
-static inline uint16_t Linear_Voltage_CalcFractionUnsigned16(const Linear_T * p_linear, uint16_t adcu)
+static inline uint16_t Linear_Voltage_CalcFracU16(const Linear_T * p_linear, uint16_t adcu)
 {
-	return Linear_Function_FractionUnsigned16(p_linear, adcu);
+	return Linear_Function_FracU16(p_linear, adcu);
 }
 
 /******************************************************************************/
@@ -100,9 +98,9 @@ static inline uint16_t Linear_Voltage_CalcFractionUnsigned16(const Linear_T * p_
 	@brief 	results expressed in Q1.15 where 32,767 => 100% of vInMax
 */
 /******************************************************************************/
-static inline int16_t Linear_Voltage_CalcFractionSigned16(const Linear_T * p_linear, uint16_t adcu)
+static inline int16_t Linear_Voltage_CalcFracS16(const Linear_T * p_linear, uint16_t adcu)
 {
-	return Linear_Function_FractionSigned16(p_linear, adcu);
+	return Linear_Function_FracS16(p_linear, adcu);
 }
 
 /******************************************************************************/
@@ -129,25 +127,25 @@ static inline uint16_t Linear_Voltage_CalcAdcu_ScalarV(const Linear_T * p_linear
 	return (uint16_t)Linear_InvFunction_Scalar(p_linear, scalarV, scalar); //todo
 }
 
-static inline uint16_t Linear_Voltage_CalcAdcu_Fraction16(const Linear_T * p_linear, int32_t fract16)
+static inline uint16_t Linear_Voltage_CalcAdcu_Frac16(const Linear_T * p_linear, int32_t frac16)
 {
-	return (uint16_t)Linear_InvFunction_Frac16(p_linear, fract16);
+	return (uint16_t)Linear_InvFunction_Frac16(p_linear, frac16);
 }
 
-/* Same as general Linear_Voltage_CalcAdcu_Fraction16 */
-static inline uint16_t Linear_Voltage_CalcAdcu_FractionUnsigned16(const Linear_T * p_linear, uint16_t fract16)
+/* Same as general Linear_Voltage_CalcAdcu_Frac16 */
+static inline uint16_t Linear_Voltage_CalcAdcu_FracU16(const Linear_T * p_linear, uint16_t frac16)
 {
-	return (uint16_t)Linear_InvFunction_FractionUnsigned16(p_linear, fract16);
+	return (uint16_t)Linear_InvFunction_FracU16(p_linear, frac16);
 }
 
-/* fract16 in Q1.15 */
-static inline uint16_t Linear_Voltage_CalcAdcu_FractionSigned16(const Linear_T * p_linear, int16_t fract16)
+/* frac16 in Q1.15 */
+static inline uint16_t Linear_Voltage_CalcAdcu_FracS16(const Linear_T * p_linear, int16_t frac16)
 {
-	return (uint16_t)Linear_InvFunction_FractionSigned16(p_linear, fract16);
+	return (uint16_t)Linear_InvFunction_FracS16(p_linear, frac16);
 }
 
 extern void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcBits, uint16_t adcVRef_MilliV, uint16_t vInMax);
-extern uint16_t Linear_Voltage_CalcAdcu_UserV(const Linear_T * p_linear, uint16_t volts);
-extern uint16_t Linear_Voltage_CalcAdcu_UserMilliV(const Linear_T * p_linear, uint32_t milliV);
+extern uint16_t Linear_Voltage_CalcAdcu_InputV(const Linear_T * p_linear, uint8_t adcBits, uint16_t volts);
+extern uint16_t Linear_Voltage_CalcAdcu_InputMilliV(const Linear_T * p_linear, uint8_t adcBits, uint32_t milliV);
 
 #endif

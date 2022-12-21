@@ -44,6 +44,7 @@ static const StateMachine_State_T STATE_RUN;
 static const StateMachine_State_T STATE_FREEWHEEL;
 static const StateMachine_State_T STATE_ALIGN;
 static const StateMachine_State_T STATE_OPEN_LOOP;
+static const StateMachine_State_T STATE_SERVO;
 static const StateMachine_State_T STATE_CALIBRATION;
 static const StateMachine_State_T STATE_FAULT;
 
@@ -377,6 +378,40 @@ static const StateMachine_State_T STATE_OPEN_LOOP =
 	.ENTRY 					= (StateMachine_Output_T)OpenLoop_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)OpenLoop_Proc,
 };
+
+/******************************************************************************/
+/*!
+	@brief  State Servo
+*/
+/******************************************************************************/
+// static void Servo_Entry(Motor_T * p_motor)
+// {
+// 	Motor_ProcCommutationMode(p_motor, Motor_FOC_StartServo, 0U /* Motor_SixStep_StartPhaseControl */);
+// }
+
+// static void Servo_Proc(Motor_T * p_motor)
+// {
+// 	if(Motor_CheckPositionFeedback(p_motor) == true) 	{ StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN); }
+// 	else 												{ Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcServo, 0U /* Motor_SixStep_ProcPhaseControl */ ); }
+// // else 												{ _Motor_FOC_ProcServo(p_motor); Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, 0U /* Motor_SixStep_ProcPhaseControl */ ); }
+// }
+
+// static const StateMachine_Transition_T SERVO_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
+// {
+// 	[MSM_INPUT_FAULT] 			= (StateMachine_Transition_T)TransitionFault,
+// 	[MSM_INPUT_RELEASE] 		= (StateMachine_Transition_T)TransitionFreewheel, /* No resume from Servo, freewheel state check stop */
+// 	[MSM_INPUT_CONTROL] 		= (StateMachine_Transition_T)0U,
+// 	[MSM_INPUT_DIRECTION] 		= (StateMachine_Transition_T)0U,
+// 	[MSM_INPUT_CALIBRATION] 	= (StateMachine_Transition_T)0U,
+// };
+
+// static const StateMachine_State_T STATE_SERVO =
+// {
+// 	.ID 					= MSM_STATE_ID_SERVO,
+// 	.P_TRANSITION_TABLE 	= SERVO_TRANSITION_TABLE,
+// 	.ENTRY 					= (StateMachine_Output_T)Servo_Entry,
+// 	.OUTPUT 				= (StateMachine_Output_T)Servo_Proc,
+// };
 
 /******************************************************************************/
 /*!

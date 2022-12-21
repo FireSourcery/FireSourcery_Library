@@ -39,8 +39,9 @@
 
 typedef struct __attribute__((aligned(2U)))
 {
-	uint16_t Zero_Adcu;
+	uint16_t Min_Adcu;
 	uint16_t Max_Adcu;
+	uint16_t Min_MilliV;
 	uint16_t Max_MilliV;
 	uint16_t ElectricalRotationsRatio; /* = PolePairs / CyclesPerRotation */
 //	uint16_t CyclePerMechRotation;
@@ -79,8 +80,8 @@ SinCos_T;
 */
 static inline qangle16_t _SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-	qfrac16_t sin = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitsAngle, sin_Adcu);
-	qfrac16_t cos = Linear_ADC_CalcFractionSigned16(&p_sincos->UnitsAngle, cos_Adcu);
+	qfrac16_t sin = Linear_ADC_CalcFracS16(&p_sincos->UnitsAngle, sin_Adcu);
+	qfrac16_t cos = Linear_ADC_CalcFracS16(&p_sincos->UnitsAngle, cos_Adcu);
 	qangle16_t angle = qfrac16_atan2(sin, cos);
 	return angle;
 }
@@ -111,10 +112,10 @@ static inline qangle16_t SinCos_GetElectricalAngle(SinCos_T * p_sincos) { return
 	Extern declarations
 */
 extern void SinCos_Init(SinCos_T * p_sincos);
-extern void SinCos_SetParamsAdc(SinCos_T * p_sincos, uint16_t zero_Adcu, uint16_t max_Adcu, uint16_t max_mV);
-extern void SinCos_SetParamsAdc_mV(SinCos_T * p_sincos, uint16_t adcVref_mV, uint16_t min_mV, uint16_t max_mV);
+extern void SinCos_ResetUnitsAngle(SinCos_T * p_sincos);
 extern void SinCos_SetAngleRatio(SinCos_T * p_sincos, uint16_t polePairs);
-// extern void SinCos_SetERotationsPerCycle_(SinCos_T * p_sincos, uint16_t polePairs, uint16_t cyclesPerMRotation);
+extern void SinCos_SetParamsAdc(SinCos_T * p_sincos, uint16_t min_Adcu, uint16_t max_Adcu, uint16_t min_mV, uint16_t max_mV);
+extern void SinCos_SetParamsAdc_mV(SinCos_T * p_sincos, uint16_t adcVref_mV, uint16_t min_mV, uint16_t max_mV);
 extern void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu);
 extern void SinCos_CalibrateCcwPositive(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu);
 extern void SinCos_CalibrateA(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu);

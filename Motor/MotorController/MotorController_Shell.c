@@ -154,53 +154,6 @@ static void PrintSensor(Terminal_T * p_terminal, Motor_T * p_motor)
 }
 
 
-#ifdef CONFIG_VMONITOR_STRING_FUNCTIONS_ENABLE
-static const char * STR_LIMIT 		= "Limit: ";
-static const char * STR_WARNING 	= "Warning: ";
-static const char * STR_UPPER 		= "Upper: ";
-static const char * STR_LOWER 		= "Lower: ";
-
-/*
-	Limit: Upper: [Num] Lower: [Num] Warning: Upper: [Num] Lower: [Num]
-*/
-size_t VMonitor_ToString_Verbose(VMonitor_T * p_vMonitor, char * p_stringBuffer, uint16_t unitVScalar)
-{
-	char * p_stringDest = p_stringBuffer;
-	int32_t num;
-	char numStr[16U];
-
-	memcpy(p_stringDest, STR_LIMIT, strlen(STR_LIMIT)); p_stringDest += strlen(STR_LIMIT);
-
-	memcpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)); p_stringDest += strlen(STR_UPPER);
-	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitUpper_Adcu, unitVScalar);
-	snprintf(numStr, 16U, "%d", (int)num);
-	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
-	*p_stringDest = ' '; p_stringDest++;
-
-	memcpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)); p_stringDest += strlen(STR_LOWER);
-	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitLower_Adcu, unitVScalar);
-	snprintf(numStr, 16U, "%d", (int)num);
-	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
-	*p_stringDest = ' '; p_stringDest++;
-
-	memcpy(p_stringDest, STR_WARNING, strlen(STR_WARNING)); p_stringDest += strlen(STR_WARNING);
-
-	memcpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)); p_stringDest += strlen(STR_UPPER);
-	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningUpper_Adcu, unitVScalar);
-	snprintf(numStr, 16U, "%d", (int)num);
-	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
-	*p_stringDest = ' '; p_stringDest++;
-
-	memcpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)); p_stringDest += strlen(STR_LOWER);
-	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningLower_Adcu, unitVScalar);
-	snprintf(numStr, 16U, "%d", (int)num);
-	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
-	*p_stringDest = ' '; p_stringDest++;
-
-	return p_stringDest - p_stringBuffer;
-}
-#endif
-
 /* Need stop to release */
 static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 {
@@ -289,14 +242,8 @@ static Cmd_Status_T Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv
 	}
 	else if(argc == 2U)
 	{
-		if(strncmp(argv[1U], "sensor", 6U) == 0U)
-		{
-			p_mc->ShellSubstate = 1U;
-		}
-		else if(strncmp(argv[1U], "x", 2U) == 0U)
-		{
-			p_mc->ShellSubstate = 2U;
-		}
+		if(strncmp(argv[1U], "sensor", 6U) == 0U) { p_mc->ShellSubstate = 1U; }
+		else if(strncmp(argv[1U], "x", 2U) == 0U) { p_mc->ShellSubstate = 2U; }
 	}
 	return CMD_STATUS_PROCESS_LOOP;
 }
@@ -482,7 +429,7 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 }
 
 
-	//todo to string functions
+//todo to string functions
 static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
 {
 	Cmd_Status_T status = CMD_STATUS_PROCESS_LOOP;
@@ -580,7 +527,24 @@ static Cmd_Status_T Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_STATUS_SUCCESS;
 }
 
-//seperate print functions
+void PrintThermistorLimit(Terminal_T * p_terminal, Thermistor_T * p_thermistor)
+{
+	Terminal_SendString(p_terminal, "Shutdown: ");
+	Terminal_SendNum(p_terminal, Thermistor_GetShutdown_Adcu(p_thermistor)); Terminal_SendString(p_terminal, " ADCU, ");
+	Terminal_SendNum(p_terminal, Thermistor_GetShutdown_DegCInt(p_thermistor, 1U)); Terminal_SendString(p_terminal, " C ");
+	Terminal_SendString(p_terminal, " Threshold: ");
+	Terminal_SendNum(p_terminal, Thermistor_GetShutdownThreshold_Adcu(p_thermistor)); Terminal_SendString(p_terminal, " ADCU, ");
+	Terminal_SendNum(p_terminal, Thermistor_GetShutdownThreshold_DegCInt(p_thermistor, 1U)); Terminal_SendString(p_terminal, " C\r\n");
+
+	Terminal_SendString(p_terminal, "Warning: ");
+	Terminal_SendNum(p_terminal, Thermistor_GetWarning_Adcu(p_thermistor)); Terminal_SendString(p_terminal, " ADCU, ");
+	Terminal_SendNum(p_terminal, Thermistor_GetWarning_DegCInt(p_thermistor, 1U)); Terminal_SendString(p_terminal, " C ");
+	Terminal_SendString(p_terminal, " Threshold: ");
+	Terminal_SendNum(p_terminal, Thermistor_GetWarningThreshold_Adcu(p_thermistor)); Terminal_SendString(p_terminal, " ADCU, ");
+	Terminal_SendNum(p_terminal, Thermistor_GetWarningThreshold_DegCInt(p_thermistor, 1U)); Terminal_SendString(p_terminal, " C\r\n");
+}
+
+//todo seperate print functions
 static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
@@ -588,45 +552,54 @@ static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 
 	if(argc == 1U)
 	{
-		Terminal_SendString(p_terminal, "PCB: "); 			Terminal_SendNum(p_terminal, MotorController_User_GetHeatPcb_DegC(p_mc, 1U)); 			Terminal_SendString(p_terminal, " C\r\n");
+		Terminal_SendString(p_terminal, "PCB: ");
+		Terminal_SendNum(p_terminal, MotorController_User_GetAdcu(p_mc, MOT_ANALOG_CHANNEL_HEAT_PCB)); Terminal_SendString(p_terminal, " ADCU, ");
+		Terminal_SendNum(p_terminal, MotorController_User_GetHeatPcb_DegC(p_mc, 1U)); Terminal_SendString(p_terminal, " C\r\n");
 #if		defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
-		Terminal_SendString(p_terminal, "MOSFETs Top: "); 	Terminal_SendNum(p_terminal, MotorController_User_GetHeatMosfetsTop_DegC(p_mc, 1U)); 	Terminal_SendString(p_terminal, " C\r\n");
-		Terminal_SendString(p_terminal, "MOSFETs Bot: "); 	Terminal_SendNum(p_terminal, MotorController_User_GetHeatMosfetsBot_DegC(p_mc, 1U)); 	Terminal_SendString(p_terminal, " C\r\n");
+		Terminal_SendString(p_terminal, "MOSFETs Top: ");
+		Terminal_SendNum(p_terminal, MotorController_User_GetHeatMosfetsTop_DegC(p_mc, 1U)); 	Terminal_SendString(p_terminal, " C\r\n");
+		Terminal_SendString(p_terminal, "MOSFETs Bot: ");
+		Terminal_SendNum(p_terminal, MotorController_User_GetHeatMosfetsBot_DegC(p_mc, 1U)); 	Terminal_SendString(p_terminal, " C\r\n");
 #else
-		Terminal_SendString(p_terminal, "MOSFETs Top: "); 	Terminal_SendNum(p_terminal, MotorController_User_GetHeatMosfets_DegC(p_mc, 1U)); 	Terminal_SendString(p_terminal, " C\r\n");
-
+		Terminal_SendString(p_terminal, "MOSFETs: ");
+		Terminal_SendNum(p_terminal, MotorController_User_GetAdcu(p_mc, MOT_ANALOG_CHANNEL_HEAT_MOSFETS)); Terminal_SendString(p_terminal, " ADCU, ");
+		Terminal_SendNum(p_terminal, MotorController_User_GetHeatMosfets_DegC(p_mc, 1U)); Terminal_SendString(p_terminal, " C\r\n");
 #endif
-		Terminal_SendString(p_terminal, "Motor0: "); 		Terminal_SendNum(p_terminal, Motor_User_GetHeat_DegC(p_motor, 1U)); 					Terminal_SendString(p_terminal, " C\r\n");
-		Terminal_SendString(p_terminal, "Motor0: "); 		Terminal_SendNum(p_terminal, p_motor->AnalogResults.Heat_Adcu); 						Terminal_SendString(p_terminal, " Adcu\r\n");
+		Terminal_SendString(p_terminal, "Motor0: ");
+		Terminal_SendNum(p_terminal, Motor_User_GetAdcu(p_motor, MOTOR_ANALOG_CHANNEL_HEAT)); Terminal_SendString(p_terminal, " ADCU, ");
+		Terminal_SendNum(p_terminal, Motor_User_GetHeat_DegC(p_motor, 1U)); Terminal_SendString(p_terminal, " C\r\n");
 	}
 	else if(argc == 2U)
 	{
 		if(strncmp(argv[1U], "limits", 7U) == 0U)
 		{
-			Terminal_SendString(p_terminal, "PCB: ");
-			Terminal_SendString(p_terminal, " Shutdown: "); 	Terminal_SendNum(p_terminal, Thermistor_GetShutdown_DegCInt(&p_mc->ThermistorPcb, 1U));
-			Terminal_SendString(p_terminal, " Threshold: "); 	Terminal_SendNum(p_terminal, Thermistor_GetShutdownThreshold_DegCInt(&p_mc->ThermistorPcb, 1U));
-			Terminal_SendString(p_terminal, " Warning: "); 		Terminal_SendNum(p_terminal, Thermistor_GetWarning_DegCInt(&p_mc->ThermistorPcb, 1U));
-			Terminal_SendString(p_terminal, " C\r\n");
+			Terminal_SendString(p_terminal, "PCB:\r\n"); PrintThermistorLimit(p_terminal, &p_mc->ThermistorPcb);
 #if		defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
-			Terminal_SendString(p_terminal, "MOSFETs Top: ");
-			Terminal_SendString(p_terminal, " Shutdown: "); 	Terminal_SendNum(p_terminal, Thermistor_GetShutdown_DegCInt(&p_mc->ThermistorMosfetsTop, 1U));
-			Terminal_SendString(p_terminal, " Threshold: "); 	Terminal_SendNum(p_terminal, Thermistor_GetShutdownThreshold_DegCInt(&p_mc->ThermistorMosfetsTop, 1U));
-			Terminal_SendString(p_terminal, " Warning: "); 		Terminal_SendNum(p_terminal, Thermistor_GetWarning_DegCInt(&p_mc->ThermistorMosfetsTop, 1U));
-			Terminal_SendString(p_terminal, " C\r\n");
-
-			// Terminal_SendString(p_terminal, "MOSFETs Bot: "); 	Terminal_SendNum(p_terminal, heatMosfetsBot); 	Terminal_SendString(p_terminal, " C\r\n");
-			// Terminal_SendString(p_terminal, "Motor0: "); 		Terminal_SendNum(p_terminal, heatMotor0); 		Terminal_SendString(p_terminal, " C\r\n");
+			Terminal_SendString(p_terminal, "MOSFETs Top:\r\n"); PrintThermistorLimit(p_terminal, &p_mc->ThermistorMosfetsTop);
+			Terminal_SendString(p_terminal, "MOSFETs Bot:\r\n"); PrintThermistorLimit(p_terminal, &p_mc->ThermistorMosfetsBot);
 #else
-			Terminal_SendString(p_terminal, "MOSFETs: ");
-			Terminal_SendString(p_terminal, " Shutdown: "); 	Terminal_SendNum(p_terminal, Thermistor_GetShutdown_DegCInt(&p_mc->ThermistorMosfets, 1U));
-			Terminal_SendString(p_terminal, " Threshold: "); 	Terminal_SendNum(p_terminal, Thermistor_GetShutdownThreshold_DegCInt(&p_mc->ThermistorMosfets, 1U));
-			Terminal_SendString(p_terminal, " Warning: "); 		Terminal_SendNum(p_terminal, Thermistor_GetWarning_DegCInt(&p_mc->ThermistorMosfets, 1U));
-			Terminal_SendString(p_terminal, " C\r\n");
+			Terminal_SendString(p_terminal, "MOSFETs:\r\n"); PrintThermistorLimit(p_terminal, &p_mc->ThermistorMosfets);
 #endif
+			Terminal_SendString(p_terminal, "Motor0:\r\n"); PrintThermistorLimit(p_terminal, &p_motor->Thermistor);
 			Terminal_SendString(p_terminal, "\r\n");
-
 		}
+	}
+
+	return CMD_STATUS_SUCCESS;
+}
+
+static Cmd_Status_T Cmd_auser(MotorController_T * p_mc, int argc, char ** argv)
+{
+	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+
+	if(argc == 1U)
+	{
+		Terminal_SendString(p_terminal, "Throttle: ");
+		Terminal_SendNum(p_terminal, MotorController_User_GetAdcu(p_mc, MOT_ANALOG_CHANNEL_THROTTLE)); 	Terminal_SendString(p_terminal, " Adcu ");
+		Terminal_SendNum(p_terminal, MotAnalogUser_GetThrottle(&p_mc->AnalogUser)); 					Terminal_SendString(p_terminal, " Frac16\r\n");
+		Terminal_SendString(p_terminal, "Brake: ");
+		Terminal_SendNum(p_terminal, MotorController_User_GetAdcu(p_mc, MOT_ANALOG_CHANNEL_BRAKE)); 	Terminal_SendString(p_terminal, " Adcu ");
+		Terminal_SendNum(p_terminal, MotAnalogUser_GetBrake(&p_mc->AnalogUser)); 						Terminal_SendString(p_terminal, " Frac16\r\n");
 	}
 
 	return CMD_STATUS_SUCCESS;
@@ -657,23 +630,52 @@ static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 // }
 
 
-static Cmd_Status_T Cmd_auser(MotorController_T * p_mc, int argc, char ** argv)
+#ifdef CONFIG_VMONITOR_STRING_FUNCTIONS_ENABLE
+static const char * STR_LIMIT 		= "Limit: ";
+static const char * STR_WARNING 	= "Warning: ";
+static const char * STR_UPPER 		= "Upper: ";
+static const char * STR_LOWER 		= "Lower: ";
+
+/*
+	Limit: Upper: [Num] Lower: [Num] Warning: Upper: [Num] Lower: [Num]
+*/
+size_t VMonitor_ToString_Verbose(VMonitor_T * p_vMonitor, char * p_stringBuffer, uint16_t unitVScalar)
 {
-	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
+	char * p_stringDest = p_stringBuffer;
+	int32_t num;
+	char numStr[16U];
 
-	if(argc == 1U)
-	{
-		Terminal_SendString(p_terminal, "Throttle: ");
-		Terminal_SendNum(p_terminal, MotorController_User_GetAdcu(p_mc, MOT_ANALOG_CHANNEL_THROTTLE)); 	Terminal_SendString(p_terminal, " Adcu ");
-		Terminal_SendNum(p_terminal, MotAnalogUser_GetThrottle(&p_mc->AnalogUser)); 					Terminal_SendString(p_terminal, " Frac16\r\n");
-		Terminal_SendString(p_terminal, "Brake: ");
-		Terminal_SendNum(p_terminal, MotorController_User_GetAdcu(p_mc, MOT_ANALOG_CHANNEL_BRAKE)); 	Terminal_SendString(p_terminal, " Adcu ");
-		Terminal_SendNum(p_terminal, MotAnalogUser_GetBrake(&p_mc->AnalogUser)); 						Terminal_SendString(p_terminal, " Frac16\r\n");
-	}
+	memcpy(p_stringDest, STR_LIMIT, strlen(STR_LIMIT)); p_stringDest += strlen(STR_LIMIT);
 
-	return CMD_STATUS_SUCCESS;
+	memcpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)); p_stringDest += strlen(STR_UPPER);
+	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitUpper_Adcu, unitVScalar);
+	snprintf(numStr, 16U, "%d", (int)num);
+	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
+	*p_stringDest = ' '; p_stringDest++;
+
+	memcpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)); p_stringDest += strlen(STR_LOWER);
+	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitLower_Adcu, unitVScalar);
+	snprintf(numStr, 16U, "%d", (int)num);
+	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
+	*p_stringDest = ' '; p_stringDest++;
+
+	memcpy(p_stringDest, STR_WARNING, strlen(STR_WARNING)); p_stringDest += strlen(STR_WARNING);
+
+	memcpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)); p_stringDest += strlen(STR_UPPER);
+	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningUpper_Adcu, unitVScalar);
+	snprintf(numStr, 16U, "%d", (int)num);
+	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
+	*p_stringDest = ' '; p_stringDest++;
+
+	memcpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)); p_stringDest += strlen(STR_LOWER);
+	num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningLower_Adcu, unitVScalar);
+	snprintf(numStr, 16U, "%d", (int)num);
+	memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
+	*p_stringDest = ' '; p_stringDest++;
+
+	return p_stringDest - p_stringBuffer;
 }
-
+#endif
 
 static Cmd_Status_T Cmd_v(MotorController_T * p_mc, int argc, char ** argv)
 {
@@ -885,17 +887,17 @@ static Cmd_Status_T Cmd_ipeak(MotorController_T * p_mc, int argc, char ** argv)
 		Terminal_SendString(p_terminal, "Phase A:\r\n");
 		min_Adcu = p_motor->Parameters.IaZeroRef_Adcu - p_motor->Parameters.IPeakRef_Adcu;
 		max_Adcu = p_motor->Parameters.IaZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
-		PrintIPeak(p_terminal, min_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, min_Adcu), max_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, max_Adcu));
+		PrintIPeak(p_terminal, min_Adcu, Linear_ADC_CalcFracS16(&p_motor->UnitIa, min_Adcu), max_Adcu, Linear_ADC_CalcFracS16(&p_motor->UnitIa, max_Adcu));
 
 		Terminal_SendString(p_terminal, "Phase B:\r\n");
 		min_Adcu = p_motor->Parameters.IbZeroRef_Adcu - p_motor->Parameters.IPeakRef_Adcu;
 		max_Adcu = p_motor->Parameters.IbZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
-		PrintIPeak(p_terminal, min_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, min_Adcu), max_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, max_Adcu));
+		PrintIPeak(p_terminal, min_Adcu, Linear_ADC_CalcFracS16(&p_motor->UnitIb, min_Adcu), max_Adcu, Linear_ADC_CalcFracS16(&p_motor->UnitIb, max_Adcu));
 
 		Terminal_SendString(p_terminal, "Phase C:\r\n");
 		min_Adcu = p_motor->Parameters.IcZeroRef_Adcu - p_motor->Parameters.IPeakRef_Adcu;
 		max_Adcu = p_motor->Parameters.IcZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
-		PrintIPeak(p_terminal, min_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, min_Adcu), max_Adcu, Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, max_Adcu));
+		PrintIPeak(p_terminal, min_Adcu, Linear_ADC_CalcFracS16(&p_motor->UnitIc, min_Adcu), max_Adcu, Linear_ADC_CalcFracS16(&p_motor->UnitIc, max_Adcu));
 
 		Terminal_SendString(p_terminal, "\r\n");
 	}

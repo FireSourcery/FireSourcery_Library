@@ -36,9 +36,8 @@
 /******************************************************************************/
 /*!
 	Fixed32
-	Fraction in q16.16 [-2,147,483,648:2,147,483,647]
-	f([-XRef:XRef]) => [-65536:65536]
-	Range bounded to [-65536*2:65535*2] via shift 14 at init.
+	Unsaturated Fraction in q16.16 [-2,147,483,648:2,147,483,647]
+	f([-XRef:XRef]) => [-65536:65536], Range bounded to [-65536*2:65535*2] via shift 14 at init.
 	Pre saturation to FracU16 [0:65535], FracS16 [-32768:32767]
 */
 /******************************************************************************/
@@ -51,6 +50,16 @@ static inline int32_t Linear_Frac16(const Linear_T * p_linear, int32_t x)
 static inline int32_t Linear_Frac16_Inv(const Linear_T * p_linear, int32_t y_frac16)
 {
 	return linear_m16_invf16(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, y_frac16);
+}
+
+static inline int32_t Linear_Frac16_Units16(const Linear_T * p_linear, int32_t y_frac16)
+{
+	return linear_m16_g(p_linear->YOffset, p_linear->DeltaY, y_frac16);
+}
+
+static inline int32_t Linear_Frac16_InvUnits16(const Linear_T * p_linear, int32_t y_units)
+{
+	return linear_m16_invg(p_linear->YOffset, p_linear->DeltaY, y_units);
 }
 
 /* User Units using YRef */
@@ -111,7 +120,7 @@ static inline int32_t Linear_Frac16_InvSigned(const Linear_T * p_linear, int16_t
 	return Linear_Frac16_Inv(p_linear, (int32_t)y_fracS16 * 2);
 }
 
-extern void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0_Frac16, int32_t yRef_Units);
-extern void Linear_Frac16_Init_Slope(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0_Frac16, int32_t yRef_Units);
+extern void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0_Units, int32_t yRef_Units);
+extern void Linear_Frac16_Init_Slope(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0_Units, int32_t yRef_Units);
 
 #endif

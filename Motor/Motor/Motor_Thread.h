@@ -54,16 +54,16 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 
 static inline void Motor_Heat_Thread(Motor_T * p_motor)
 {
+	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT);
+
 	if(Thermistor_GetIsMonitorEnable(&p_motor->Thermistor) == true)
 	{
-		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT);
-
 		switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
 		{
 			case THERMISTOR_STATUS_OK: 			Motor_User_ClearILimitActive(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT); 	break;
 			case THERMISTOR_STATUS_SHUTDOWN: 	Motor_User_SetFault(p_motor); 										break;
 			case THERMISTOR_STATUS_WARNING: 	/* repeatedly checks if heat is a lower ILimit when another ILimit is active */
-				Motor_User_SetILimitActive(p_motor, Linear_Frac16_Unsigned(&p_motor->ILimitHeatRate, p_motor->AnalogResults.Heat_Adcu), MOTOR_I_LIMIT_ACTIVE_HEAT);
+				Motor_User_SetILimitActive(p_motor, Thermistor_GetHeatLimit_FracU16(&p_motor->Thermistor), MOTOR_I_LIMIT_ACTIVE_HEAT);
 				break;
 			default: break;
 		}

@@ -45,14 +45,19 @@
 
 */
 /******************************************************************************/
-void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef)
+void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef)
 {
-	Linear_Frac16_Init_Map(p_linear, adcuZero, adcuRef, 0, physicalRef);
+	Linear_Frac16_Init_Map(p_linear, adcuZero, adcuRef, physicalZero, physicalRef);
 }
 
-void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef, int16_t physicalRef)
+void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef, int16_t physicalZero, int16_t physicalRef)
 {
-	Linear_Frac16_Init_Map(p_linear, adcuZero, adcuZero + adcuZtPRef, 0, physicalRef);
+	Linear_Frac16_Init_Map(p_linear, adcuZero, adcuZero + adcuZtPRef, physicalZero, physicalRef);
+}
+
+void Linear_ADC_Init_MinMax(Linear_T * p_linear, uint16_t adcuMin, uint16_t adcuMax, int16_t physicalMin, int16_t physicalMax)
+{
+	Linear_Frac16_Init_Map(p_linear, (adcuMin + adcuMax) / 2, adcuMax, (physicalMin + physicalMax) / 2, physicalMax);
 }
 
 
@@ -66,9 +71,9 @@ void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t
 	f16(-adcuRef) = 65536
 */
 /******************************************************************************/
-void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalRef)
+void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef)
 {
-	Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalRef);
+	Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalZero, physicalRef);
 	p_linear->Slope = 0 - p_linear->Slope;
 	p_linear->InvSlope = 0 - p_linear->InvSlope;
 }
@@ -79,16 +84,16 @@ void Linear_ADC_SetInverted(Linear_T * p_linear)
 	p_linear->InvSlope = 0 - p_linear->InvSlope;
 }
 
-void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t min_MilliV, uint16_t max_MilliV, int16_t physicalRef)
+void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t min_MilliV, uint16_t max_MilliV, int16_t physicalZero, int16_t physicalRef)
 {
 	uint16_t adcuZero = ((uint32_t)max_MilliV + min_MilliV) * adcMax / 2U / adcVRef_MilliV;
 	uint16_t adcuRef = (uint32_t)max_MilliV * adcMax / adcVRef_MilliV;
-	Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalRef);
+	Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalZero, physicalRef);
 }
 
-void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t zero_MilliV, uint16_t max_MilliV, int16_t physicalRef)
+void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t zero_MilliV, uint16_t max_MilliV, int16_t physicalZero, int16_t physicalRef)
 {
 	uint16_t adcuZero = (uint32_t)zero_MilliV * adcMax / adcVRef_MilliV;
 	uint16_t adcuRef = (uint32_t)max_MilliV * adcMax / adcVRef_MilliV;
-	Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalRef);
+	Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalZero, physicalRef);
 }

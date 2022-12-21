@@ -60,19 +60,19 @@
 /******************************************************************************/
 static inline void Motor_FOC_CaptureIa(Motor_T * p_motor)
 {
-	qfrac16_t i_temp = ((int32_t)Linear_ADC_CalcFractionSigned16(&p_motor->UnitIa, p_motor->AnalogResults.Ia_Adcu) + (int32_t)FOC_GetIa(&p_motor->Foc)) / 2;
+	qfrac16_t i_temp = ((int32_t)Linear_ADC_CalcFracS16(&p_motor->UnitIa, p_motor->AnalogResults.Ia_Adcu) + (int32_t)FOC_GetIa(&p_motor->Foc)) / 2;
 	FOC_SetIa(&p_motor->Foc, i_temp);
 }
 
 static inline void Motor_FOC_CaptureIb(Motor_T * p_motor)
 {
-	qfrac16_t i_temp = ((int32_t)Linear_ADC_CalcFractionSigned16(&p_motor->UnitIb, p_motor->AnalogResults.Ib_Adcu) + (int32_t)FOC_GetIb(&p_motor->Foc)) / 2;
+	qfrac16_t i_temp = ((int32_t)Linear_ADC_CalcFracS16(&p_motor->UnitIb, p_motor->AnalogResults.Ib_Adcu) + (int32_t)FOC_GetIb(&p_motor->Foc)) / 2;
 	FOC_SetIb(&p_motor->Foc, i_temp);
 }
 
 static inline void Motor_FOC_CaptureIc(Motor_T * p_motor)
 {
-	qfrac16_t i_temp = ((int32_t)Linear_ADC_CalcFractionSigned16(&p_motor->UnitIc, p_motor->AnalogResults.Ic_Adcu) + (int32_t)FOC_GetIc(&p_motor->Foc)) / 2;
+	qfrac16_t i_temp = ((int32_t)Linear_ADC_CalcFracS16(&p_motor->UnitIc, p_motor->AnalogResults.Ic_Adcu) + (int32_t)FOC_GetIc(&p_motor->Foc)) / 2;
 	FOC_SetIc(&p_motor->Foc, i_temp);
 }
 
@@ -129,8 +129,8 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 				electricalDelta = 0;
 			}
 			else
-			{
 #endif
+			{
 				electricalDelta = Encoder_Motor_InterpolateHallDelta(&p_motor->Encoder, p_motor->InterpolatedAngleIndex);
 				if(p_motor->Direction == MOTOR_DIRECTION_CW) { electricalDelta = 0 - electricalDelta; };
 				p_motor->InterpolatedAngleIndex++;
@@ -425,7 +425,7 @@ static inline void Motor_FOC_SetOutputMatchFreewheel(Motor_T * p_motor)
 		Captured VBemfPeak always positive
 		todo check bemf capture available.
 	*/
-	// vqReq = Linear_ADC_CalcFractionSigned16(&p_motor->CONFIG.UNIT_V_ABC, p_motor->VBemfPeak_Adcu);
+	// vqReq = Linear_ADC_CalcFracS16(&p_motor->CONFIG.UNIT_V_ABC, p_motor->VBemfPeak_Adcu);
 
 	/*
 		Match to Speed

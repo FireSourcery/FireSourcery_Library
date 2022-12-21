@@ -83,13 +83,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Motor_ResetILimits(p_motor);
 	p_motor->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 
-	Linear_Frac16_Init_Map
-	(
-		&p_motor->ILimitHeatRate,
-		p_motor->Thermistor.Params.Shutdown_Adcu, 	p_motor->Thermistor.Params.Warning_Adcu,
-		p_motor->Parameters.ILimitHeat_Frac16, 		0U /* Param not used */
-	);
-
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
@@ -143,6 +136,24 @@ void Motor_ZeroSensor(Motor_T * p_motor)
 		default:
 			break;
 	}
+}
+
+qangle16_t Motor_GetMechanicalAngle(Motor_T * p_motor)
+{
+	qangle16_t angle;
+
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_SENSORLESS: 	angle = 0; 	break;
+		case MOTOR_SENSOR_MODE_HALL: 		angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
+		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 			break;
+#endif
+		default: 							angle = 0; 	break;
+	}
+
+	return angle;
 }
 
 /******************************************************************************/
@@ -266,9 +277,9 @@ void Motor_ResetUnitsIabc(Motor_T * p_motor)
 #elif defined(CONFIG_MOTOR_DEBUG_DISABLE)
 	uint16_t iPeakRef_Adcu =  GLOBAL_MOTOR.I_MAX_ZTP_ADCU;
 #endif
-	Linear_ADC_Init_ZeroToPeak(&p_motor->UnitIa, p_motor->Parameters.IaZeroRef_Adcu, iPeakRef_Adcu, GLOBAL_MOTOR.I_UNITS_AMPS);
-	Linear_ADC_Init_ZeroToPeak(&p_motor->UnitIb, p_motor->Parameters.IbZeroRef_Adcu, iPeakRef_Adcu, GLOBAL_MOTOR.I_UNITS_AMPS);
-	Linear_ADC_Init_ZeroToPeak(&p_motor->UnitIc, p_motor->Parameters.IcZeroRef_Adcu, iPeakRef_Adcu, GLOBAL_MOTOR.I_UNITS_AMPS);
+	Linear_ADC_Init_ZeroToPeak(&p_motor->UnitIa, p_motor->Parameters.IaZeroRef_Adcu, iPeakRef_Adcu, 0, GLOBAL_MOTOR.I_UNITS_AMPS);
+	Linear_ADC_Init_ZeroToPeak(&p_motor->UnitIb, p_motor->Parameters.IbZeroRef_Adcu, iPeakRef_Adcu, 0, GLOBAL_MOTOR.I_UNITS_AMPS);
+	Linear_ADC_Init_ZeroToPeak(&p_motor->UnitIc, p_motor->Parameters.IcZeroRef_Adcu, iPeakRef_Adcu, 0, GLOBAL_MOTOR.I_UNITS_AMPS);
 #ifdef CONFIG_MOTOR_I_SENSORS_INVERT
 	Linear_ADC_SetInverted(&p_motor->UnitIa);
 	Linear_ADC_SetInverted(&p_motor->UnitIb);

@@ -128,7 +128,6 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 #endif
 
 	if(Thermistor_GetIsShutdown(&p_mc->ThermistorPcb) == true) 			{ p_mc->FaultFlags.PcbOverHeat = 1U; isFault = true; }
-
 #if		defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
 	if(Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsTop) == true) 	{ p_mc->FaultFlags.MosfetsTopOverHeat = 1U; isFault = true; }
 	if(Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsBot) == true) 	{ p_mc->FaultFlags.MosfetsBotOverHeat = 1U; isFault = true; }
@@ -155,16 +154,11 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 		{
 			/*
 				Thermistor Adcu is roughly linear in Warning region
-				Assume HeatMostfetTop as highest heat, temp
+				Assume HeatMostfet as highest heat
 				constantly compares lowest active limit, alternatively, check and restore prev on clear limit
 				Increasing Limit only, reset on warning clear.
 			*/
-			MotorController_SetILimitMotorAll
-			(
-				p_mc,
-				Linear_Frac16_Unsigned(&p_mc->ILimitHeatRate, p_mc->AnalogResults.HeatMosfets_Adcu),
-				MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT
-			);
+			MotorController_SetILimitMotorAll(p_mc, Thermistor_GetHeatLimit_FracU16(&p_mc->ThermistorMosfets), MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT);
 
 			// Thermistor_PollWarningRisingEdge(&p_mc->ThermistorMosfetsTop);
 			if(p_mc->WarningFlags.Heat == false)
@@ -266,7 +260,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 		}
 
 		/* Low Freq, Low Priority, ~1s ~1024ms */
-
 		if(CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONFIG.MAIN_DIVIDER_1000) == true)
 		{
 			/* In case of Serial Rx Overflow Timeout */

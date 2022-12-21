@@ -154,14 +154,14 @@ static inline int32_t linear_m16_invf16(int32_t invm16_shifted, uint8_t shift, i
 /* frac16 to y_units */
 static inline int32_t linear_m16_g(int32_t y0_units, int32_t deltay_units, int32_t y_frac16)
 {
-	return ((y_frac16 * deltay_units) >> 16U) + y0_units;
+	return ((y_frac16 * deltay_units) / 65536) + y0_units;
 }
 
 /* (y_units - y0_units) << 16U / (yref_units - y0_units) */
 /* y_units to frac16 */
 static inline int32_t linear_m16_invg(int32_t y0_units, int32_t deltay_units, int32_t y_units)
 {
-	return ((y_units - y0_units) << 16U / deltay_units);
+	return ((y_units - y0_units) * 65536 / deltay_units);
 }
 
 /* f(x) = f16(x) * (yref - y0) >> 16 + y0 */

@@ -68,12 +68,22 @@ Thermistor_ThresholdStatus_T;
 /* Calculation */
 typedef enum Thermistor_Type_Tag
 {
+	THERMISTOR_TYPE_LINEAR,
+#if defined(CONFIG_THERMISTOR_UNITS_NON_LINEAR)
 	THERMISTOR_TYPE_NTC,
 	THERMISTOR_TYPE_PTC,
-	THERMISTOR_TYPE_LINEAR,
+#endif
 	THERMISTOR_TYPE_LUT,
 }
 Thermistor_Type_T;
+
+// typedef struct Thermistor_LimitThreshold_Tag
+// {
+// 	uint16_t Limit_Adcu;
+// 	uint16_t Threshold_Adcu;
+// 	Thermistor_Threshold_Status_T Status;
+// }
+// Thermistor_LimitThreshold_T;
 
 /*
 	Set Vin to same decimal precision as ADC_VREF
@@ -94,8 +104,8 @@ typedef struct __attribute__((aligned(2U))) Thermistor_Params_Tag
 	uint16_t Warning_Adcu;
 	uint16_t WarningThreshold_Adcu;
 
-	uint16_t Shutdown_DegC;
-	uint16_t Warning_DegC;
+	uint16_t UnitsShutdown_DegC;
+	uint16_t UnitsWarning_DegC;
 
 	// uint16_t CaptureScalar; //remove?
 	bool IsMonitorEnable;
@@ -106,7 +116,7 @@ typedef struct Thermistor_Config_Tag
 {
 	const uint32_t R_SERIES; 	/* Pull-up */
 	const uint32_t R_PARALLEL; 	/* Parallel pull-down if applicable. 0 for Disable */
-	//bool IS_FIXED;			/* Disable Coefficient set functions */
+	//bool IS_CONST;			/* Disable Coefficient set functions */
 	const Thermistor_Params_T * P_PARAMS;
 }
 Thermistor_Config_T;
@@ -115,12 +125,12 @@ typedef struct Thermistor_Tag
 {
 	const Thermistor_Config_T CONFIG;
 	Thermistor_Params_T Params;
-	Linear_T LinearDegC; /* Simple linear fit. Roughly linear 70-100C */
+	Linear_T LinearDegC; /* Simple linear fit. */
+	Linear_T LinearLimits; /* return value [Warning_Adcu:Shutdown_Adcu] as [65535:0], Roughly linear 70-100C */
 	Thermistor_ThresholdStatus_T ShutdownThreshold;
 	Thermistor_ThresholdStatus_T WarningThreshold; /* Threshold save state info */
 	Thermistor_Status_T Status;
 	uint16_t Adcu; /* Previous ADC sample */
-	// Linear_T WarningShutdownInterpolation; /* return value [Warning_Adcu:Shutdown_Adcu] as [65535:paramVar] */
 }
 Thermistor_T;
 
@@ -149,50 +159,68 @@ Thermistor_T;
 	.Params = _THERMISTOR_INIT_PARAMS_NTC(NtcR0, NtcT0_Kelvin, NtcB),						\
 }
 
+/******************************************************************************/
+/*
+	HeatLimit scalar value - Fraction Inverse to heat
+	From Warning_Adcu => 65535
+	To Shutdown_Adcu => 0
+*/
+/******************************************************************************/
+static inline uint16_t Thermistor_GetHeatLimit_FracU16(Thermistor_T * p_therm) 						{ return Linear_ADC_CalcFracU16(&p_therm->LinearDegC, p_therm->Adcu); }
+static inline uint16_t Thermistor_ConvertHeatLimit_FracU16(Thermistor_T * p_therm, uint16_t adcu) 	{ return Linear_ADC_CalcFracU16(&p_therm->LinearDegC, adcu); }
+
+/* Monitor */
+static inline Thermistor_Status_T Thermistor_GetStatus(Thermistor_T * p_therm) 	{ return (p_therm->Status); }
+static inline bool Thermistor_GetIsShutdown(Thermistor_T * p_therm) 			{ return p_therm->Status == THERMISTOR_STATUS_SHUTDOWN; } //||THERMISTOR_SHUTDOWN_RISING_EDGE
+static inline bool Thermistor_GetIsWarning(Thermistor_T * p_therm) 				{ return p_therm->Status == THERMISTOR_STATUS_WARNING; }
+static inline bool Thermistor_GetIsMonitorEnable(Thermistor_T * p_therm) 		{ return p_therm->Params.IsMonitorEnable; }
+
+static inline void Thermistor_EnableMonitor(Thermistor_T * p_therm) 					{ p_therm->Params.IsMonitorEnable = true; }
+static inline void Thermistor_DisableMonitor(Thermistor_T * p_therm) 					{ p_therm->Params.IsMonitorEnable = false; }
+static inline void Thermistor_SetMonitorEnable(Thermistor_T * p_therm, bool isEnable) 	{ p_therm->Params.IsMonitorEnable = isEnable; }
+
+static inline uint32_t Thermistor_GetR0(Thermistor_T * p_therm) 		{ return p_therm->Params.RNominal; }
+static inline uint16_t Thermistor_GetT0(Thermistor_T * p_therm) 		{ return p_therm->Params.TNominal; } /* Degrees Kelvin */
+static inline uint16_t Thermistor_GetT0_DegC(Thermistor_T * p_therm) 	{ return p_therm->Params.TNominal - 273; }
+static inline uint16_t Thermistor_GetB(Thermistor_T * p_therm) 			{ return p_therm->Params.BConstant; }
+static inline uint16_t Thermistor_GetVIn(Thermistor_T * p_therm) 		{ return p_therm->Params.VIn_Scalar; }
+
+static inline uint16_t Thermistor_GetShutdown_Adcu(Thermistor_T * p_therm)			{ return p_therm->Params.Shutdown_Adcu; }
+static inline uint16_t Thermistor_GetShutdownThreshold_Adcu(Thermistor_T * p_therm)	{ return p_therm->Params.ShutdownThreshold_Adcu; }
+static inline uint16_t Thermistor_GetWarning_Adcu(Thermistor_T * p_therm)			{ return p_therm->Params.Warning_Adcu; }
+static inline uint16_t Thermistor_GetWarningThreshold_Adcu(Thermistor_T * p_therm)	{ return p_therm->Params.WarningThreshold_Adcu; }
+
+
 /* Using capture conversion only */
 // static inline int32_t Thermistor_GetHeat_DegC(Thermistor_T * p_therm) { return p_therm->Heat_DegC; }
 
-/* Monitor */
-static inline Thermistor_Status_T Thermistor_GetStatus(Thermistor_T * p_therm) { return (p_therm->Status); }
-static inline bool Thermistor_GetIsShutdown(Thermistor_T * p_therm) { return p_therm->Status == THERMISTOR_STATUS_SHUTDOWN; } //||THERMISTOR_SHUTDOWN_RISING_EDGE
-static inline bool Thermistor_GetIsWarning(Thermistor_T * p_therm) { return p_therm->Status == THERMISTOR_STATUS_WARNING; }
-static inline bool Thermistor_GetIsMonitorEnable(Thermistor_T * p_therm) { return p_therm->Params.IsMonitorEnable; }
-
-static inline void Thermistor_EnableMonitor(Thermistor_T * p_therm) {  p_therm->Params.IsMonitorEnable = true; }
-static inline void Thermistor_DisableMonitor(Thermistor_T * p_therm) {  p_therm->Params.IsMonitorEnable = false; }
-static inline void Thermistor_SetMonitorEnable(Thermistor_T * p_therm, bool isEnable) {  p_therm->Params.IsMonitorEnable = isEnable; }
-
-static inline uint32_t Thermistor_GetR0(Thermistor_T * p_therm) { return p_therm->Params.RNominal; }
-static inline uint16_t Thermistor_GetT0(Thermistor_T * p_therm) { return p_therm->Params.TNominal; }
-static inline uint16_t Thermistor_GetT0_DegC(Thermistor_T * p_therm) { return p_therm->Params.TNominal - 273; }
-static inline uint16_t Thermistor_GetB(Thermistor_T * p_therm) { return p_therm->Params.BConstant; }
-static inline uint16_t Thermistor_GetVIn(Thermistor_T * p_therm) { return p_therm->Params.VIn_Scalar; }
-
+/******************************************************************************/
 /*
 	Extern
 */
+/******************************************************************************/
 extern void Thermistor_Init(Thermistor_T * p_therm);
 
 extern Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t adcu);
-
 extern void Thermistor_SetNtc(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, uint32_t b);
 extern void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV);
 
-// #ifndef LOCAL_UNIT_CONVERSION
 extern void Thermistor_CaptureUnits_DegC(Thermistor_T * p_therm, uint16_t adcu);
 extern float Thermistor_ConvertToDegC_Float(Thermistor_T * p_therm, uint16_t adcu);
-extern int32_t Thermistor_ConvertToDegC_Int(Thermistor_T * p_therm, uint16_t adcu, uint16_t scalar);
+extern int32_t Thermistor_ConvertToDegC_Int(Thermistor_T * p_therm, uint16_t adcu, uint8_t scalar);
 
 extern void Thermistor_SetShutdown_DegC(Thermistor_T * p_therm, uint8_t shutdown_degC, uint8_t shutdownThreshold_degC);
 extern void Thermistor_SetWarning_DegC(Thermistor_T * p_therm, uint8_t warning_degC, uint8_t warningThreshold_degC);
 extern void Thermistor_SetLimits_DegC(Thermistor_T * p_therm, uint8_t shutdown, uint8_t shutdownThreshold, uint8_t warning, uint8_t warningThreshold);
+
+
+extern int16_t Thermistor_GetShutdown_DegC(Thermistor_T * p_therm);
+extern int16_t Thermistor_GetShutdownThreshold_DegC(Thermistor_T * p_therm);
+extern int16_t Thermistor_GetWarning_DegC(Thermistor_T * p_therm);
+extern int16_t Thermistor_GetWarningThreshold_DegC(Thermistor_T * p_therm);
 extern int32_t Thermistor_GetShutdown_DegCInt(Thermistor_T * p_therm, uint16_t scalar);
 extern int32_t Thermistor_GetShutdownThreshold_DegCInt(Thermistor_T * p_therm, uint16_t scalar);
 extern int32_t Thermistor_GetWarning_DegCInt(Thermistor_T * p_therm, uint16_t scalar);
-extern int32_t Thermistor_GetWarningThreshold_DegC(Thermistor_T * p_therm);
-extern int32_t Thermistor_GetShutdown_DegC(Thermistor_T * p_therm);
-extern int32_t Thermistor_GetShutdownThreshold_DegC(Thermistor_T * p_therm);
-extern int32_t Thermistor_GetWarning_DegC(Thermistor_T * p_therm);
 extern int32_t Thermistor_GetWarningThreshold_DegCInt(Thermistor_T * p_therm, uint16_t scalar);
 extern float Thermistor_GetShutdown_DegCFloat(Thermistor_T * p_therm);
 extern float Thermistor_GetShutdownThreshold_DegCFloat(Thermistor_T * p_therm);

@@ -267,7 +267,7 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 	uint16_t SpeedLimitCw_Frac16;
 	uint16_t ILimitMotoring_Frac16;		/* Persistent User Param. Frac16 of RefMax I_UNITS_AMPS */
 	uint16_t ILimitGenerating_Frac16;
-	uint16_t ILimitHeat_Frac16; 		/* Base Heat Limit. Active on thermistor warning. Frac16 scalar on active limit */
+	// uint16_t ILimitHeat_Frac16; 		/* Base Heat Limit. Active on thermistor warning. Frac16 scalar on active limit */
 
 	/* todo uniformly change to control cycles */
 	uint16_t RampAccel_Ms;
@@ -350,7 +350,7 @@ typedef struct Motor_Tag
 	Motor_ILimitActiveId_T ILimitActiveId;
 	uint16_t ILimitActiveSentinel;		/* Store for comparison */
 	int16_t ILimitVoltageMode_FracS16; /* [-32767:32767] directional input into pid */
-	Linear_T ILimitHeatRate;
+	// Linear_T ILimitHeatRate;
 
 	/* Calibration Substate */
 	Motor_CalibrationState_T CalibrationState; 	/* Substate, selection for calibration */
@@ -378,7 +378,12 @@ typedef struct Motor_Tag
 	Timer_T SpeedTimer;				/* Speed Calc Timer */
 	int32_t SpeedFeedback_Frac16; 	/* [~-65535*2:~65535*2] Speed Feedback Variable. Can over saturate */
 	int32_t SpeedControl_FracS16; 	/* [~-32767:~32767] Speed Control Variable. PidSpeed(RampCmd - SpeedFeedback_Frac16 / 2) => VPwm, Vq, Iq. Updated once per millis */
-	// uint32_t Speed2_Frac16;
+
+	PID_T PidPosition;
+	qangle16_t PositionControl_Angle16;
+
+	qangle16_t MechanicalAngle;
+	qangle16_t ElectricalAngle;		/* OpenLoop, Shared E-Cycle edge detect, User output */
 
 	/*
 		FOC
@@ -386,14 +391,11 @@ typedef struct Motor_Tag
 	FOC_T Foc;
 	PID_T PidIq;					/* Input (IqReq - IqFeedback), Output Vq. Sign indicates ccw/cw direction */
 	PID_T PidId;
-	qangle16_t ElectricalAngle;		/* OpenLoop, Shared E-Cycle edge detect, User output */
-	// uint32_t ElectricalDelta;
 
 	/* Sensorless and SinCos. Non Encoder module square wave */
 	Linear_T UnitAngleRpm; 			/*  */
 	Linear_T UnitSurfaceSpeed; 		/*  */
-	qangle16_t SpeedAngle; 			/* Save for reference */
-	// uint32_t MechanicalDelta;
+	qangle16_t SpeedAngle; 			/* Save for reference, MechanicalDelta */
 
 	/* Interpolated angle */
 	uint32_t InterpolatedAngleIndex;
@@ -508,9 +510,9 @@ static inline void Motor_ProcCommutationMode1(Motor_T * p_motor, Motor_Commutati
 	Interrupts
 */
 /******************************************************************************/
+static inline void Motor_ClearPwmInterrupt(Motor_T * p_motor) 	{ Phase_ClearInterrupt(&p_motor->Phase); }
 static inline void Motor_DisablePwm(Motor_T * p_motor) 			{ Phase_DisableInterrupt(&p_motor->Phase); }
 static inline void Motor_EnablePwm(Motor_T * p_motor) 			{ Phase_EnableInterrupt(&p_motor->Phase); }
-static inline void Motor_ClearPwmInterrupt(Motor_T * p_motor) 	{ Phase_ClearInterrupt(&p_motor->Phase); }
 
 /******************************************************************************/
 /*
@@ -722,6 +724,7 @@ extern void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
 extern void Motor_SetDirectionForward(Motor_T * p_motor);
 extern void Motor_SetDirectionReverse(Motor_T * p_motor);
 extern void Motor_ZeroSensor(Motor_T * p_motor);
+extern qangle16_t Motor_GetMechanicalAngle(Motor_T * p_motor);
 
 extern void Motor_ResetSensorMode(Motor_T * p_motor);
 extern void Motor_ResetUnitsVabc(Motor_T * p_motor);

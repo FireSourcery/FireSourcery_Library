@@ -329,10 +329,10 @@ static const StateMachine_State_T STATE_RUN =
 /******************************************************************************/
 /*!
 	@brief  Neutral State
+	Brake effective. Throttle no effect.
 	Motors in Freewheel or Stop state, or Run when braking.
 	Motor may transition between Motor Freewheel and Stop, on 0 speed
 	but MCSM remains in Neutral state, motor floating, due to input
-	Brake effective, throttle no effect.
 */
 /******************************************************************************/
 /* If entry while braking, will experience brief discontinuity */ /* todo handles ignore while braking */
@@ -372,7 +372,7 @@ static StateMachine_State_T * Neutral_InputSetZero(MotorController_T * p_mc, uin
 */
 static StateMachine_State_T * Neutral_InputZero(MotorController_T * p_mc, uint32_t voidVar)
 {
-	(void)voidVar; //use coast mode?
+	(void)voidVar;
 	if(p_mc->UserCmd != 0U) { Neutral_InputSetZero(p_mc, STATE_MACHINE_INPUT_VALUE_NULL); p_mc->UserCmd = 0U; }
 	return 0U;
 }
@@ -402,6 +402,40 @@ static const StateMachine_State_T STATE_NEUTRAL =
 	.OUTPUT 				= (StateMachine_Output_T)Neutral_Proc,
 };
 
+
+/******************************************************************************/
+/*!
+	@brief Servo State
+*/
+/******************************************************************************/
+// static void Servo_Entry(Motor_T * p_motor)
+// {
+// 	Motor_ProcCommutationMode(p_motor, Motor_FOC_StartServo, 0U /* Motor_SixStep_StartPhaseControl */);
+// }
+
+// static void Servo_Proc(Motor_T * p_motor)
+// {
+// 	if(Motor_CheckPositionFeedback(p_motor) == true) 	{ StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN); }
+// 	else 												{ Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcServo, 0U /* Motor_SixStep_ProcPhaseControl */ ); }
+// // else 												{ _Motor_FOC_ProcServo(p_motor); Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, 0U /* Motor_SixStep_ProcPhaseControl */ ); }
+// }
+
+// static const StateMachine_Transition_T SERVO_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
+// {
+// 	[MSM_INPUT_FAULT] 			= (StateMachine_Transition_T)TransitionFault,
+// 	[MSM_INPUT_RELEASE] 		= (StateMachine_Transition_T)TransitionFreewheel, /* No resume from Servo, freewheel state check stop */
+// 	[MSM_INPUT_CONTROL] 		= (StateMachine_Transition_T)0U,
+// 	[MSM_INPUT_DIRECTION] 		= (StateMachine_Transition_T)0U,
+// 	[MSM_INPUT_CALIBRATION] 	= (StateMachine_Transition_T)0U,
+// };
+
+// static const StateMachine_State_T STATE_SERVO =
+// {
+// 	.ID 					= MSM_STATE_ID_SERVO,
+// 	.P_TRANSITION_TABLE 	= SERVO_TRANSITION_TABLE,
+// 	.ENTRY 					= (StateMachine_Output_T)Servo_Entry,
+// 	.OUTPUT 				= (StateMachine_Output_T)Servo_Proc,
+// };
 
 /******************************************************************************/
 /*!

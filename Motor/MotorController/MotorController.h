@@ -125,9 +125,9 @@ MotorController_SubId_T;
 
 typedef enum MotorController_ILimitActiveId_Tag
 {
-	MOTOR_CONTROLLER_I_LIMIT_ACTIVE_DISABLE = 0U,
-	MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT = 1U, /* MotorIlimit_Sysyem +1 */
-	MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V = 2U,
+	MOTOR_CONTROLLER_I_LIMIT_ACTIVE_DISABLE 	= 0U,
+	MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT 		= 1U, /* MotorIlimit_Sysyem +1 */
+	MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V 		= 2U,
 }
 MotorController_ILimitActiveId_T;
 
@@ -221,7 +221,7 @@ typedef struct __attribute__((aligned(2U))) MotorController_Params_Tag
 	uint16_t OptDinSpeedLimit_Frac16;
 
 	uint16_t ILimitLowV_Frac16;
-	uint16_t ILimitHeat_Frac16; /* Final ILimit at HeatLimit. Proportionally effective beginning at HeatWarning */
+	// uint16_t ILimitHeat_Frac16; /* Final ILimit at HeatLimit. Proportionally effective beginning at HeatWarning */
 	// uint16_t ILimit_Frac16;	//battery max current, set function passes to motor module
 
 	uint32_t Test[4U];
@@ -296,10 +296,8 @@ typedef struct MotorController_Tag
 	volatile MotAnalog_Results_T AnalogResults;
 
 	MotAnalogUser_T AnalogUser;
-
 	Blinky_T Buzzer;
 	MotorController_BuzzerFlags_T BuzzerFlagsActive; /* Active conditions requesting buzzer */
-
 	Blinky_T Meter;
 	Pin_T Relay;
 	Debounce_T OptDin; 	/* Configurable input */
@@ -315,7 +313,7 @@ typedef struct MotorController_Tag
 	VMonitor_T VMonitorSense; 	//5V
 	VMonitor_T VMonitorAcc; 	//12V
 	Linear_T BatteryLife; 		//Battery Life percentage
-	Linear_T ILimitHeatRate;
+	// Linear_T ILimitHeatRate;
 
 	Timer_T TimerMillis;
 	uint32_t MainDividerCounter;
@@ -443,5 +441,5 @@ extern NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController
 extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc);
 extern NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc);
 extern NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc);
-
+extern void MotorController_ResetUnitsBatteryLife(MotorController_T * p_mc);
 #endif

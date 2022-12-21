@@ -79,21 +79,7 @@ void MotorController_Init(MotorController_T * p_mc)
 	Shell_Init(&p_mc->Shell);
 #endif
 
-	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_Adcu, p_mc->Parameters.BatteryFull_Adcu, 1000U);
-
-	/*
-		MOSFETs Heat ILimit
-		Shutdown_Adcu [~2176], => ILimitHeat_Frac16
-		Warning_Adcu [~2800],  => 65535
-		slope = 860,343
-		Heat_Adcu Lower is higher heat
-	*/
-	Linear_Frac16_Init_Map
-	(
-		&p_mc->ILimitHeatRate,
-		p_mc->ThermistorMosfets.Params.Shutdown_Adcu, 	p_mc->ThermistorMosfets.Params.Warning_Adcu,
-		p_mc->Parameters.ILimitHeat_Frac16,				0U /* Param not used */
-	);
+	MotorController_ResetUnitsBatteryLife(p_mc);
 
 	p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD;
 	// p_mc->ActiveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
@@ -347,3 +333,8 @@ NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc)
 #endif
 }
 // #endif
+
+void MotorController_ResetUnitsBatteryLife(MotorController_T * p_mc)
+{
+	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_Adcu, p_mc->Parameters.BatteryFull_Adcu, 0U, 1000U);
+}

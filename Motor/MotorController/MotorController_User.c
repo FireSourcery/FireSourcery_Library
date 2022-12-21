@@ -40,7 +40,7 @@ void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32
 {
 	p_mc->Parameters.BatteryZero_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorSource, zero_mV);
 	p_mc->Parameters.BatteryFull_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorSource, max_mV);
-	Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_Adcu, p_mc->Parameters.BatteryFull_Adcu, 1000U);
+	MotorController_ResetUnitsBatteryLife(p_mc);
 }
 
 // void MotorController_User_SetILimitDc(MotorController_T * p_mc, uint16_t dc)

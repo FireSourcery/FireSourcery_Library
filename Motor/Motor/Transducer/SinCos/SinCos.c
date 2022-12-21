@@ -39,33 +39,35 @@ void SinCos_Init(SinCos_T * p_sincos)
 	if(p_sincos->CONFIG.P_PARAMS != 0U)
 	{
 		memcpy(&p_sincos->Params, p_sincos->CONFIG.P_PARAMS, sizeof(SinCos_Params_T));
-		Linear_ADC_Init(&p_sincos->UnitsAngle, p_sincos->Params.Zero_Adcu, p_sincos->Params.Max_Adcu, p_sincos->Params.Max_MilliV);
-	}
-	else
-	{
-		Linear_ADC_Init(&p_sincos->UnitsAngle, 2048U, 4095U, 5000U);
+		SinCos_ResetUnitsAngle(p_sincos);
 	}
 }
 
-void SinCos_SetParamsAdc(SinCos_T * p_sincos, uint16_t zero_Adcu, uint16_t max_Adcu, uint16_t max_mV)
+void SinCos_ResetUnitsAngle(SinCos_T * p_sincos)
 {
-	p_sincos->Params.Zero_Adcu = zero_Adcu;
+	Linear_ADC_Init(&p_sincos->UnitsAngle, p_sincos->Params.Min_Adcu, p_sincos->Params.Max_Adcu, p_sincos->Params.Min_MilliV, p_sincos->Params.Max_MilliV);
+}
+
+void SinCos_SetParamsAdc(SinCos_T * p_sincos, uint16_t min_Adcu, uint16_t max_Adcu, uint16_t min_mV, uint16_t max_mV)
+{
+	p_sincos->Params.Min_Adcu = min_Adcu;
 	p_sincos->Params.Max_Adcu = max_Adcu;
+	p_sincos->Params.Min_MilliV = min_mV;
 	p_sincos->Params.Max_MilliV = max_mV;
-	Linear_ADC_Init(&p_sincos->UnitsAngle, zero_Adcu, max_Adcu, max_mV);
+	SinCos_ResetUnitsAngle(p_sincos);
 }
 
 void SinCos_SetParamsAdc_mV(SinCos_T * p_sincos, uint16_t adcVref_mV, uint16_t min_mV, uint16_t max_mV)
 {
-	SinCos_SetParamsAdc(p_sincos, (uint32_t)(max_mV + min_mV) * GLOBAL_ANALOG.ADC_MAX / 2U / adcVref_mV, (uint32_t)max_mV * GLOBAL_ANALOG.ADC_MAX / adcVref_mV, max_mV);
+	uint16_t min_Adcu = (uint32_t)min_mV * GLOBAL_ANALOG.ADC_MAX / adcVref_mV;
+	uint16_t max_Adcu = (uint32_t)max_mV * GLOBAL_ANALOG.ADC_MAX / adcVref_mV;
+	SinCos_SetParamsAdc(p_sincos, min_Adcu, max_Adcu, min_mV, max_mV);
 }
 
 void SinCos_SetAngleRatio(SinCos_T * p_sincos, uint16_t polePairs)
 {
 	p_sincos->Params.ElectricalRotationsRatio = polePairs;
 }
-
-// void SinCos_SetAngleRatio_(SinCos_T * p_sincos, uint16_t polePairs, uint16_t cyclesPerMRotation)
 
 void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {

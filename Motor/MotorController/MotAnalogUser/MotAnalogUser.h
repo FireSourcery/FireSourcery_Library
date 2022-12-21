@@ -150,8 +150,7 @@ static inline void _MotAnalogUser_AIn_CaptureValue(MotAnalogUser_AIn_T * p_aIn, 
 	if((p_aIn->UseEdgePin == false) || (Debounce_GetState(&p_aIn->EdgePin) == true))
 	{
 		p_aIn->ValuePrev_Frac16 = p_aIn->Value_Frac16;
-		// p_aIn->Value_Frac16 = Linear_ADC_CalcFractionUnsigned16(&p_aIn->Units, value_Adcu);
-		p_aIn->Value_Frac16 = (Linear_ADC_CalcFractionUnsigned16(&p_aIn->Units, value_Adcu) + p_aIn->ValuePrev_Frac16) / 2U;
+		p_aIn->Value_Frac16 = (Linear_ADC_CalcFracU16(&p_aIn->Units, value_Adcu) + p_aIn->ValuePrev_Frac16) / 2U;
 	}
 }
 

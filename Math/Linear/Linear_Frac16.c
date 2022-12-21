@@ -65,8 +65,8 @@ void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32
 	p_linear->InvSlopeShift = LINEAR_DIVIDE_SHIFT;
 	p_linear->XOffset = x0;
 	p_linear->YOffset = y0_Units;
-	// p_linear->XReference = xRef;
-	// p_linear->YReference = yRef_Units;
+	p_linear->XReference = xRef;
+	p_linear->YReference = yRef_Units;
 	p_linear->DeltaX = xRef - x0; 				/* Retain for Units conversion */
 	p_linear->DeltaY = yRef_Units - y0_Units; 	/* Retain for Units conversion */
 }
@@ -88,3 +88,14 @@ void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32
 // 	p_linear->YOffset = y0_Frac16;
 // }
 
+void Linear_Frac16_Init_Slope(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0_Frac16, int32_t yRef_Units)
+{
+	p_linear->YReference = yRef_Units;
+	p_linear->XReference = linear_invf(factor, divisor, 0, yRef_Units); /* (yRef_Units - 0)*divisor/factor */
+	p_linear->Slope = (65536 << LINEAR_DIVIDE_SHIFT) / p_linear->XReference; /* x0 == 0 */
+	p_linear->SlopeShift = LINEAR_DIVIDE_SHIFT;
+	p_linear->InvSlope = (p_linear->XReference << LINEAR_DIVIDE_SHIFT) / 65536; //todo maxleftshift, if factor > divisor, invslope can be > 14
+	p_linear->InvSlopeShift = LINEAR_DIVIDE_SHIFT;
+	p_linear->XOffset = 0;
+	p_linear->YOffset = y0_Frac16;
+}

@@ -87,7 +87,7 @@ VMonitor_T;
 }
 
 static inline int32_t VMonitor_ConvertToV(VMonitor_T * p_vMonitor, uint16_t adcu, uint16_t vScalar) 	{ return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, adcu, vScalar); }
-static inline int32_t VMonitor_ConvertToFrac16(VMonitor_T * p_vMonitor, uint16_t adcu) 					{ return Linear_Voltage_CalcFraction16(&p_vMonitor->Units, adcu); }
+static inline int32_t VMonitor_ConvertToFrac16(VMonitor_T * p_vMonitor, uint16_t adcu) 					{ return Linear_Voltage_CalcFrac16(&p_vMonitor->Units, adcu); }
 static inline int32_t VMonitor_ConvertMilliVToAdcu(VMonitor_T * p_vMonitor, uint32_t milliV) 			{ return Linear_Voltage_CalcAdcu_MilliV(&p_vMonitor->Units, milliV); }
 // static inline int32_t VMonitor_ConvertToAdcu(VMonitor_T * p_vMonitor, uint16_t v, uint16_t scalar) { return Linear_Voltage_CalcAdcu_ScalarV(&p_vMonitor->Units, v, scalar); }
 

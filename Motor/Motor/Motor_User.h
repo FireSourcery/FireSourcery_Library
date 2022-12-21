@@ -347,14 +347,14 @@ static inline bool Motor_User_CheckFault(Motor_T * p_motor)
 	Conversion functions only on user call. Not called regularly
 */
 /******************************************************************************/
-static inline uint16_t Motor_User_GetElectricalAngle(Motor_T * p_motor) 									{ return p_motor->ElectricalAngle; }
-static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(Motor_T * p_motor) 						{ return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
-static inline uint16_t Motor_User_GetMotorAdcu(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel) 		{ return p_motor->AnalogResults.Channels[adcChannel]; }
-static inline uint8_t Motor_User_GetMotorAdcu_Msb8(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel) 	{ return Motor_User_GetMotorAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
-static inline int32_t Motor_User_GetHeat_DegC(Motor_T * p_motor, uint16_t scalar) 							{ return Thermistor_ConvertToDegC_Int(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
-static inline float Motor_User_GetHeat_DegCFloat(Motor_T * p_motor) 										{ return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
-static inline uint16_t Motor_User_GetVBemf_Frac16(Motor_T * p_motor)										{ return Linear_Voltage_CalcFractionUnsigned16(&p_motor->UnitVabc, p_motor->VBemfPeak_Adcu); }
-static inline uint16_t Motor_User_GetVBemf_V(Motor_T * p_motor)												{ return Linear_Voltage_CalcV(&p_motor->UnitVabc, p_motor->VBemfPeak_Adcu); }
+static inline uint16_t Motor_User_GetElectricalAngle(Motor_T * p_motor) 							{ return p_motor->ElectricalAngle; }
+static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(Motor_T * p_motor) 				{ return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
+static inline uint16_t Motor_User_GetAdcu(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel) 		{ return p_motor->AnalogResults.Channels[adcChannel]; }
+static inline uint8_t Motor_User_GetAdcu_Msb8(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel) 	{ return Motor_User_GetAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
+static inline int32_t Motor_User_GetHeat_DegC(Motor_T * p_motor, uint16_t scalar) 					{ return Thermistor_ConvertToDegC_Int(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
+static inline float Motor_User_GetHeat_DegCFloat(Motor_T * p_motor) 								{ return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
+static inline uint16_t Motor_User_GetVBemf_Frac16(Motor_T * p_motor)								{ return Linear_Voltage_CalcFracU16(&p_motor->UnitVabc, p_motor->VBemfPeak_Adcu); }
+static inline uint16_t Motor_User_GetVBemf_V(Motor_T * p_motor)										{ return Linear_Voltage_CalcV(&p_motor->UnitVabc, p_motor->VBemfPeak_Adcu); }
 
 /*!
 	@return I zero to peak.
@@ -455,7 +455,7 @@ static inline void Motor_User_SetRampAccel_Control(Motor_T * p_motor, uint16_t c
 /* Persistent Control Mode */
 static inline void Motor_User_SetFeedbackModeParam(Motor_T * p_motor, Motor_FeedbackMode_T mode) 	{ p_motor->Parameters.UserFeedbackMode = mode; p_motor->FeedbackModeFlags.Update = 1U; }
 static inline void Motor_User_SetPhaseModeParam(Motor_T * p_motor, Phase_Mode_T mode) 				{ p_motor->Parameters.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->Phase, mode); }
-static inline void Motor_User_SetILimitHeatParam(Motor_T * p_motor, uint16_t scalar_Frac16) 		{ p_motor->Parameters.ILimitHeat_Frac16 = scalar_Frac16; }
+// static inline void Motor_User_SetILimitHeatParam(Motor_T * p_motor, uint16_t scalar_Frac16) 		{ p_motor->Parameters.ILimitHeat_Frac16 = scalar_Frac16; }
 
 /******************************************************************************/
 /*

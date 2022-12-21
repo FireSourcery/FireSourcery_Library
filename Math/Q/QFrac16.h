@@ -43,6 +43,16 @@ typedef int16_t qangle16_t; 	/*!< [-pi, pi) signed or [0, 2pi) unsigned, angle l
 #define SINE_90_TABLE_LSB 		(6U)	/*!< Insignificant bits, shifted away*/
 extern const qfrac16_t QFRAC16_SINE_90_TABLE[SINE_90_TABLE_ENTRIES];	/*! Resolution: 1024 steps per revolution */
 
+#define QANGLE16_QUADRANT_MASK (0xC000U)
+typedef enum qangle16_quadrant_tag
+{
+	QANGLE16_QUADRANT_I, 	/* 0_90 */
+	QANGLE16_QUADRANT_II, 	/* 90_180 */
+	QANGLE16_QUADRANT_III, 	/* 180_270 */
+	QANGLE16_QUADRANT_IV, 	/* 270_360 */
+}
+qangle16_quadrant_t;
+
 static const qfrac16_t QFRAC16_MAX = INT16_MAX; /*!< (32767) */
 static const qfrac16_t QFRAC16_MIN = INT16_MIN; /*!< (-32768) */
 
@@ -80,6 +90,20 @@ static inline qfrac16_t qfrac16_sat(int32_t qfrac)
 	else if	(qfrac < (int32_t)QFRAC16_MIN) 	{ sat = QFRAC16_MIN; }
 	else 									{ sat = (qfrac16_t)qfrac; }
 	return sat;
+}
+
+static inline qangle16_quadrant_t qangle16_quadrant(qangle16_t theta)
+{
+	qangle16_quadrant_t quadrant;
+	switch((uint16_t)theta & QANGLE16_QUADRANT_MASK)
+	{
+		case (uint16_t)QANGLE16_0: 		quadrant = QANGLE16_QUADRANT_I; break;
+		case (uint16_t)QANGLE16_90: 	quadrant = QANGLE16_QUADRANT_II; break;
+		case (uint16_t)QANGLE16_180: 	quadrant = QANGLE16_QUADRANT_III; break;
+		case (uint16_t)QANGLE16_270: 	quadrant = QANGLE16_QUADRANT_IV; break;
+		default: quadrant = 0U; break; /* Should not occur */
+	}
+	return quadrant;
 }
 
 /*!
@@ -154,9 +178,9 @@ static inline qfrac16_t qfrac16_sqrt(int32_t x)
 }
 
 /*
-	0b so11 1111 11xx xxxx
+	0b xx11 1111 11xx xxxx
 	Use 8 most significant digits of 90 degree bound.
-	Remove sign / 180 degree place bit, 90 degree place bit, and 6 lsb.
+	Remove sign / 180 degree bit, 90 degree bit, and 6 lsb.
 */
 static inline qfrac16_t sin90(qangle16_t theta)
 {
@@ -165,7 +189,7 @@ static inline qfrac16_t sin90(qangle16_t theta)
 
 static inline qfrac16_t cos90(qangle16_t theta)
 {
-	return QFRAC16_SINE_90_TABLE[((uint8_t)0xFF - (uint8_t)(theta >> SINE_90_TABLE_LSB))];
+	return QFRAC16_SINE_90_TABLE[(0xFFU - (uint8_t)(theta >> SINE_90_TABLE_LSB))];
 }
 
 /*
@@ -173,26 +197,17 @@ static inline qfrac16_t cos90(qangle16_t theta)
 	[90, 180)	=> [0x4000, 0x7FFF] => [0xFF, 0] == (1, 0]
 	[180, 270)	=> [0x8000, 0xBFFF] => [0, 0xFF] == [0, -1)
 	[270, 360)	=> [0xC000, 0xFFFF] => [0xFF, 0] == (-1, 0]
-
-	Alternatively, check first 2 bits for branch
-	#define QFRAC16_SIN_MASK 	0xC000
-	#define QANGLE16_0_90 		QANGLE16_0
-	#define QANGLE16_90_180 	QANGLE16_90
-	#define QANGLE16_180_270 	QANGLE16_180
-	#define QANGLE16_270_360 	QANGLE16_270
 */
 static inline qfrac16_t qfrac16_sin(qangle16_t theta)
 {
 	qfrac16_t sine;
-	if((uint16_t)theta < (uint16_t)QANGLE16_180)
+	switch(qangle16_quadrant(theta))
 	{
-		if((uint16_t)theta < (uint16_t)QANGLE16_90)		{ sine = sin90(theta); }
-		else											{ sine = sin90(QANGLE16_180 - 1 - theta); }
-	}
-	else
-	{
-		if((uint16_t)theta < (uint16_t)QANGLE16_270) 	{ sine = 0 - sin90(theta); }
-		else											{ sine = 0 - sin90(QANGLE16_180 - 1 - theta); }
+		case QANGLE16_QUADRANT_I: 	sine = sin90(theta); 							break;
+		case QANGLE16_QUADRANT_II: 	sine = sin90(QANGLE16_180 - 1 - theta); 		break;
+		case QANGLE16_QUADRANT_III: sine = 0 - sin90(theta); 						break;
+		case QANGLE16_QUADRANT_IV: 	sine = 0 - sin90(QANGLE16_180 - 1 - theta); 	break;
+		default: sine = 0; break;
 	}
 	return sine;
 }
@@ -200,48 +215,22 @@ static inline qfrac16_t qfrac16_sin(qangle16_t theta)
 static inline qfrac16_t qfrac16_cos(qangle16_t theta)
 {
 	qfrac16_t cosine;
-	if((uint16_t)theta < (uint16_t)QANGLE16_180)
+	switch(qangle16_quadrant(theta))
 	{
-		if((uint16_t)theta < (uint16_t)QANGLE16_90)		{ cosine = sin90(QANGLE16_180 - 1 - theta); }
-		else											{ cosine = 0 - sin90(theta); }
-	}
-	else
-	{
-		if((uint16_t)theta < (uint16_t)QANGLE16_270) 	{ cosine = 0 - sin90(QANGLE16_180 - 1 - theta); }
-		else											{ cosine = sin90(theta); }
+		case QANGLE16_QUADRANT_I: 	cosine = sin90(QANGLE16_180 - 1 - theta); 		break;
+		case QANGLE16_QUADRANT_II: 	cosine = 0 - sin90(theta); 						break;
+		case QANGLE16_QUADRANT_III: cosine = 0 - sin90(QANGLE16_180 - 1 - theta); 	break;
+		case QANGLE16_QUADRANT_IV: 	cosine = sin90(theta); 							break;
+		default: cosine = 0; break;
 	}
 	return cosine;
 }
 
+/* compiler optimize into single switch? */
 static inline void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16_t theta)
 {
-	if((uint16_t)theta < (uint16_t)QANGLE16_180)
-	{
-		if((uint16_t)theta < (uint16_t)QANGLE16_90)
-		{
-			*p_sin = sin90(theta);
-			*p_cos = sin90(QANGLE16_180 - 1 - theta);
-		}
-		else
-		{
-			*p_sin = sin90(QANGLE16_180 - 1 - theta);
-			*p_cos = 0 - sin90(theta);
-		}
-	}
-	else
-	{
-		if((uint16_t)theta < (uint16_t)QANGLE16_270)
-		{
-			*p_sin = 0 - sin90(theta);
-			*p_cos = 0 - sin90(QANGLE16_180 - 1 - theta);;
-		}
-		else
-		{
-			*p_sin = 0 - sin90(QANGLE16_180 - 1 - theta);
-			*p_cos = sin90(theta);
-		}
-	}
-
+	*p_sin = qfrac16_sin(theta);
+	*p_cos = qfrac16_cos(theta);
 	return;
 }
 

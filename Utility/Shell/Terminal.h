@@ -44,6 +44,17 @@
 #include <string.h>
 #include <stdio.h> /* for snprintf */
 
+/*
+	All terminal instances will be instantiated to these sizes
+*/
+#ifndef CMDLINE_ARG_MAX
+	#define CMDLINE_ARG_MAX		5U /* including cmd string */
+#endif
+
+#ifndef CMDLINE_CHAR_MAX
+	#define CMDLINE_CHAR_MAX	50U
+#endif
+
 #define KEY_ESC (0x1BU)
 #define KEY_DEL (0x7FU)
 
@@ -122,6 +133,7 @@ static inline bool Terminal_GetIsKeyPressed(const Terminal_T * p_terminal)
 #endif
 }
 
+/* Experimental */
 static inline uint8_t * Terminal_AcquireTxBuffer(const Terminal_T * p_terminal)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE

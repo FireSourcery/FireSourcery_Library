@@ -55,11 +55,11 @@ typedef struct Linear_Tag
 #endif
 	int32_t XOffset;
 	int32_t YOffset;
-	/* One Ref is derived */
+	/* User Info only for now */
 	int32_t XReference;		/* f([0:XRef]) => frac16(x)[0:65536] */
 	int32_t YReference;		/* f(x)[0:YRef] => frac16(x)[0:65536] */
 
-	int32_t DeltaX;		/* (XRef - X0), f([X0-DeltaX:X0+DeltaX]) == [-YRef:YRef]   */
+	int32_t DeltaX;			/* (XRef - X0), f([X0-DeltaX:X0+DeltaX]) == [-YRef:YRef]   */
 	int32_t DeltaY;
 }
 Linear_T;
@@ -150,29 +150,6 @@ static inline int32_t Linear_InvFunction_Sat(const Linear_T * p_linear, int32_t 
 
 /******************************************************************************/
 /*!
-	Round
-*/
-/******************************************************************************/
-static inline int32_t Linear_Function_Round(const Linear_T * p_linear, int32_t x)
-{
-#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
-	return Linear_Function(p_linear, x);
-#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-	return linear_f_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, x);
-#endif
-}
-
-static inline int32_t Linear_InvFunction_Round(const Linear_T * p_linear, int32_t y)
-{
-#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
-	return Linear_InvFunction(p_linear, y);
-#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-	return linear_invf_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, y);
-#endif
-}
-
-/******************************************************************************/
-/*!
 	@brief 	Unoptimized Frac16
 	Fraction in q16.16 [-2,147,483,648, 2,147,483,647]
 	f([-XRef:XRef]) => [-65536:65536]
@@ -202,19 +179,19 @@ static inline int32_t Linear_InvFunction_Frac16(const Linear_T * p_linear, int32
 */
 /******************************************************************************/
 /* negative returns zero */
-static inline uint16_t Linear_Function_FractionUnsigned16(const Linear_T * p_linear, int32_t x)
+static inline uint16_t Linear_Function_FracU16(const Linear_T * p_linear, int32_t x)
 {
 	return _Linear_SatUnsigned16(Linear_Function_Frac16(p_linear, x));
 }
 
 /* negative returns abs */
-static inline uint16_t Linear_Function_FractionUnsigned16_Abs(const Linear_T * p_linear, int32_t x)
+static inline uint16_t Linear_Function_FracU16_Abs(const Linear_T * p_linear, int32_t x)
 {
 	return _Linear_SatUnsigned16_Abs(Linear_Function_Frac16(p_linear, x));
 }
 
 /* y_frac16 in q0.16 format is handled by q16.16 case */
-static inline int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_linear, uint16_t y_fracU16)
+static inline int32_t Linear_InvFunction_FracU16(const Linear_T * p_linear, uint16_t y_fracU16)
 {
 	return Linear_InvFunction_Frac16(p_linear, y_fracU16);
 }
@@ -226,15 +203,38 @@ static inline int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_l
 */
 /******************************************************************************/
 /* */
-static inline int16_t Linear_Function_FractionSigned16(const Linear_T * p_linear, int32_t x)
+static inline int16_t Linear_Function_FracS16(const Linear_T * p_linear, int32_t x)
 {
 	return _Linear_SatSigned16(Linear_Function_Frac16(p_linear, x) / 2);
 }
 
 /* y_frac16 use q1.15 */
-static inline int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_linear, int16_t y_fracS16)
+static inline int32_t Linear_InvFunction_FracS16(const Linear_T * p_linear, int16_t y_fracS16)
 {
 	return Linear_InvFunction_Frac16(p_linear, (int32_t)y_fracS16 * 2);
+}
+
+/******************************************************************************/
+/*!
+	Round
+*/
+/******************************************************************************/
+static inline int32_t Linear_Function_Round(const Linear_T * p_linear, int32_t x)
+{
+#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
+	return Linear_Function(p_linear, x);
+#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+	return linear_f_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, x);
+#endif
+}
+
+static inline int32_t Linear_InvFunction_Round(const Linear_T * p_linear, int32_t y)
+{
+#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
+	return Linear_InvFunction(p_linear, y);
+#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+	return linear_invf_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, y);
+#endif
 }
 
 /******************************************************************************/
@@ -250,10 +250,10 @@ extern int32_t Linear_InvFunction_Sat(const Linear_T * p_linear, int32_t y);
 extern int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar);
 extern int32_t Linear_InvFunction_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar);
 
-extern uint16_t Linear_Function_FractionUnsigned16(const Linear_T * p_linear, int32_t x);
-extern uint16_t Linear_Function_FractionUnsigned16_Abs(const Linear_T * p_linear, int32_t x);
-extern int32_t Linear_InvFunction_FractionUnsigned16(const Linear_T * p_linear, uint16_t y_fracU16);
-extern int16_t Linear_Function_FractionSigned16(const Linear_T * p_linear, int32_t x);
-extern int32_t Linear_InvFunction_FractionSigned16(const Linear_T * p_linear, int16_t y_fracS16);
+extern uint16_t Linear_Function_FracU16(const Linear_T * p_linear, int32_t x);
+extern uint16_t Linear_Function_FracU16_Abs(const Linear_T * p_linear, int32_t x);
+extern int32_t Linear_InvFunction_FracU16(const Linear_T * p_linear, uint16_t y_fracU16);
+extern int16_t Linear_Function_FracS16(const Linear_T * p_linear, int32_t x);
+extern int32_t Linear_InvFunction_FracS16(const Linear_T * p_linear, int16_t y_fracS16);
 
 #endif
