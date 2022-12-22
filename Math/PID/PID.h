@@ -66,12 +66,16 @@ typedef struct PID_Tag
 	PID_Params_T Params;
 	int32_t KiDivisorFreq; 	/* KpDivisor * CalcFreq */
 	int32_t KdFactorFreq; 	/* KdFactor * CalcFreq */
-	int32_t ErrorSum;
-	int32_t ErrorSumOverflow; /* Sum Limit before multiplication overflow */
-	int32_t IntegralOverflow;
 	int32_t ErrorPrev;
 	int32_t OutputMin; /*  */
 	int32_t OutputMax;
+#ifdef CONFIG_PID_INTEGRAL_32BITS
+	int32_t ErrorSumOverflow; /* Sum Limit before multiplication overflow */
+	int32_t IntegralOverflow;
+	int32_t ErrorSum;
+#else
+	int64_t ErrorSum;
+#endif
 }
 PID_T;
 

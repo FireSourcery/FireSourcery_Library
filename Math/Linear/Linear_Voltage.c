@@ -30,8 +30,6 @@
 /*******************************************************************************/
 #include "Linear_Voltage.h"
 
-#define LINEAR_VOLTAGE_SHIFT 15U
-
 /******************************************************************************/
 /*!
 	@brief 	Initialize Linear struct using Voltage Divider parameters.
@@ -82,14 +80,14 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t 
  	p_linear->YReference = vInMax; /* Frac16 reference only */
 }
 
-uint16_t Linear_Voltage_CalcAdcu_InputV(const Linear_T * p_linear, uint8_t adcBits, uint16_t volts) // check calc
+uint16_t Linear_Voltage_CalcAdcuUser_V(const Linear_T * p_linear, uint8_t adcBits, uint16_t volts) // check calc
 {
 	uint16_t adcu = Linear_Voltage_CalcAdcu_V(p_linear, volts);
 	while(((uint16_t)Linear_Voltage_CalcV(p_linear, adcu) < volts) && (adcu < adcBits)) { adcu += 1U; }
 	return adcu;
 }
 
-uint16_t Linear_Voltage_CalcAdcu_InputMilliV(const Linear_T * p_linear, uint8_t adcBits, uint32_t milliV)
+uint16_t Linear_Voltage_CalcAdcuUser_MilliV(const Linear_T * p_linear, uint8_t adcBits, uint32_t milliV)
 {
 	uint16_t adcu = Linear_Voltage_CalcAdcu_MilliV(p_linear, milliV);
 	while(((uint32_t)Linear_Voltage_CalcMilliV(p_linear, adcu) < milliV) && (adcu < adcBits)) { adcu += 1U; }

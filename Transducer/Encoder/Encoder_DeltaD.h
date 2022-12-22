@@ -43,14 +43,14 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 {
 #if defined(CONFIG_ENCODER_HW_DECODER)
 	/* For common interface functions. Emulated Capture in ISR */
-	uint16_t counterD;
-	counterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
+	uint16_t counterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
 	p_encoder->DeltaD = _Encoder_CaptureDelta(p_encoder, p_encoder->Params.CountsPerRevolution - 1U, counterD);
 	// p_encoder->CounterD += p_encoder->DeltaD;
-	p_encoder->Angle32 = counterD * p_encoder->UnitAngularD;
+	// p_encoder->Angle32 = counterD * p_encoder->UnitAngularD;
 #else
 	p_encoder->DeltaD = p_encoder->CounterD;
 	p_encoder->CounterD = 0;
+	// p_encoder->DeltaD = _Encoder_CaptureDelta(p_encoder, INT32, p_encoder->CounterD);
 #endif
 }
 

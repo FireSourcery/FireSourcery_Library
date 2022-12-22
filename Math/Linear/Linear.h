@@ -37,8 +37,8 @@
 #include <stdint.h>
 
 /*
-	Shift 14 to allow over saturation f([X0-2(XRef-X0):X0+2(XRef-X0)]) == [-2*YRef:2*YRef] before overflow
-		i.e 2x zero to peak input range, before overflow, while retaining sign bit
+	Shift 14 to allow over saturation f([X0-2*(XRef-X0):X0+2*(XRef-X0)]) == [-2*YRef:2*YRef] before overflow
+		i.e 2x input interval, while retaining sign bit, before overflow.
 */
 #define LINEAR_DIVIDE_SHIFT 14U /* Allow signed, and 2x xRef input */
 
@@ -102,7 +102,6 @@ static inline void _Linear_SetSlope_Y0(Linear_T * p_linear, int32_t slopeFactor,
 /******************************************************************************/
 /*!
 	@brief Linear Essential Functions - User Units
-	@{
 */
 /******************************************************************************/
 /*
@@ -129,9 +128,6 @@ static inline int32_t Linear_InvFunction(const Linear_T * p_linear, int32_t y)
 	return linear_invf(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, y);
 #endif
 }
-/******************************************************************************/
-/*! @} */
-/******************************************************************************/
 
 /******************************************************************************/
 /*!

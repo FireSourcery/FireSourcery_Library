@@ -90,10 +90,6 @@ static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 	foc_circlelimit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX);
 	foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
 	svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
-
-	p_foc->DutyA = p_foc->DutyA * 2U;
-	p_foc->DutyB = p_foc->DutyB * 2U;
-	p_foc->DutyC = p_foc->DutyC * 2U;
 }
 
 static inline void FOC_SetVector(FOC_T * p_foc, qangle16_t theta) { qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, theta); }

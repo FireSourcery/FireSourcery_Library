@@ -48,7 +48,7 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
 	/* if factor > divisor, bound with yRef. */
 	p_linear->YReference = yRef;
-	p_linear->XReference = linear_invf(factor, divisor, y0, yRef); /* (yRef - y0)*divisor/factor */
+	p_linear->XReference = linear_invf(factor, divisor, y0, yRef); 	/* (yRef - y0)*divisor/factor */
 
 	p_linear->DeltaX = p_linear->XReference - p_linear->XOffset;
 	p_linear->DeltaY = p_linear->YReference - p_linear->YOffset;
@@ -78,7 +78,8 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 
 	p_linear->XOffset = 0;
 	p_linear->YOffset = y0;
-
+	p_linear->DeltaX = p_linear->XReference - p_linear->XOffset;
+	p_linear->DeltaY = yRef - y0;
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 	p_linear->SlopeFactor = factor;
 	p_linear->SlopeDivisor = divisor;
@@ -105,6 +106,8 @@ void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 	p_linear->InvSlopeShift = LINEAR_DIVIDE_SHIFT;
 	p_linear->XOffset = x0;
 	p_linear->YOffset = y0;
+	p_linear->DeltaX = xRef - x0;
+	p_linear->DeltaY = yRef - y0;
 	p_linear->YReference = yRef;
 	p_linear->XReference = xRef;
 #endif

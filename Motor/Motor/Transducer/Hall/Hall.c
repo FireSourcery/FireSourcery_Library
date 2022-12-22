@@ -34,12 +34,12 @@
 
 const uint16_t _HALL_DEGREES_TABLE[HALL_SENSORS_TABLE_LENGTH] =
 {
-	[HALL_ANGLE_30_90] 		= 10922U,
-	[HALL_ANGLE_90_150] 	= 21845U,
-	[HALL_ANGLE_150_210] 	= 32768U,
-	[HALL_ANGLE_210_270] 	= 43690U,
-	[HALL_ANGLE_270_330] 	= 54613U,
-	[HALL_ANGLE_330_30] 	= 0U,
+	[HALL_ANGLE_330_30] 	= 0U, 		/* 0 */
+	[HALL_ANGLE_30_90] 		= 10922U, 	/* 60 */
+	[HALL_ANGLE_90_150] 	= 21845U, 	/* 120 */
+	[HALL_ANGLE_150_210] 	= 32768U, 	/* 180 */
+	[HALL_ANGLE_210_270] 	= 43690U, 	/* 240 */
+	[HALL_ANGLE_270_330] 	= 54613U, 	/* 300 */
 };
 
 /*
@@ -47,26 +47,8 @@ const uint16_t _HALL_DEGREES_TABLE[HALL_SENSORS_TABLE_LENGTH] =
 */
 void Hall_Init(Hall_T * p_hall)
 {
-	Pin_Input_Init(&p_hall->PinA);
-	Pin_Input_Init(&p_hall->PinB);
-	Pin_Input_Init(&p_hall->PinC);
 	p_hall->Direction = HALL_DIRECTION_CCW;
-
-	if(p_hall->CONFIG.P_PARAMS_NVM != 0U)
-	{
-		memcpy(&p_hall->Params.SensorsTable[0U], &p_hall->CONFIG.P_PARAMS_NVM->SensorsTable[0U], sizeof(Hall_Params_T));
-	}
-	else
-	{
-		Hall_SetSensorsTable
-		(
-			p_hall,
-			HALL_VIRTUAL_SENSORS_A,			HALL_VIRTUAL_SENSORS_INV_C,		HALL_VIRTUAL_SENSORS_B,
-			HALL_VIRTUAL_SENSORS_INV_A,		HALL_VIRTUAL_SENSORS_C,			HALL_VIRTUAL_SENSORS_INV_B
-		);
-	}
-
-	Hall_CaptureSensors_ISR(p_hall);
+	if(p_hall->CONFIG.P_PARAMS_NVM != 0U) { memcpy(&p_hall->Params, p_hall->CONFIG.P_PARAMS_NVM, sizeof(Hall_Params_T)); }
 }
 
 void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC, uint8_t sensorsB, uint8_t sensorsInvA, uint8_t sensorsC, uint8_t sensorsInvB)
@@ -82,12 +64,88 @@ void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC
 }
 
 /*
+	180 Degree Active
 	Sensors are aligned to motor phase, 0 degree offset.
-	i.e Motor Phase A measure in between a hall state and not on a transition boundary.
 */
-void Hall_CalibratePhaseA(Hall_T * p_hall) 		{ p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_A; }
-void Hall_CalibratePhaseInvC(Hall_T * p_hall) 	{ p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_C; }
-void Hall_CalibratePhaseB(Hall_T * p_hall) 		{ p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_B; }
-void Hall_CalibratePhaseInvA(Hall_T * p_hall) 	{ p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_A; }
-void Hall_CalibratePhaseC(Hall_T * p_hall) 		{ p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_C; }
-void Hall_CalibratePhaseInvB(Hall_T * p_hall) 	{ p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_B; }
+static void CalibratePhaseA(Hall_T * p_hall) 		{ p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_A; }
+static void CalibratePhaseInvC(Hall_T * p_hall) 	{ p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_C; }
+static void CalibratePhaseB(Hall_T * p_hall) 		{ p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_B; }
+static void CalibratePhaseInvA(Hall_T * p_hall) 	{ p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_A; }
+static void CalibratePhaseC(Hall_T * p_hall) 		{ p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_C; }
+static void CalibratePhaseInvB(Hall_T * p_hall) 	{ p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_B; }
+
+/* For both 120 and 180 degree active */
+void Hall_StartCalibrate(Hall_T * p_hall) 		{ Hall_ResetCapture(p_hall); p_hall->Params.BoundaryType = 0U; }
+void Hall_CalibratePhaseA(Hall_T * p_hall) 		{ if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseA(p_hall); p_hall->Params.BoundaryType++;} }
+void Hall_CalibratePhaseInvC(Hall_T * p_hall) 	{ if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvC(p_hall); p_hall->Params.BoundaryType++;} }
+void Hall_CalibratePhaseB(Hall_T * p_hall) 		{ if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseB(p_hall); p_hall->Params.BoundaryType++;} }
+void Hall_CalibratePhaseInvA(Hall_T * p_hall) 	{ if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvA(p_hall); p_hall->Params.BoundaryType++;} }
+void Hall_CalibratePhaseC(Hall_T * p_hall) 		{ if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseC(p_hall); p_hall->Params.BoundaryType++;} }
+void Hall_CalibratePhaseInvB(Hall_T * p_hall) 	{ if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvB(p_hall); p_hall->Params.BoundaryType++;} }
+
+
+
+// void Hall_Calibrate
+// (
+// 	Hall_T * p_hall,
+// 	(void)(*activePhase)(void * p_phaseContext, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC),
+// 	void * p_phaseContext,
+// 	(void)(*wait)(void * p_waitContext),
+// 	void * p_waitContext
+// )
+// {
+// 	const uint16_t duty = p_motor->Parameters.AlignVPwm_Frac16;
+// 	bool isComplete = false;
+
+// 	if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
+// 	{
+// 		switch (p_motor->CalibrationStateIndex)
+// 		{
+// 		case 0U:
+// 			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, 0U);
+// 			p_motor->CalibrationStateIndex = 1U;
+// 			break;
+
+// 		case 1U:
+// 			Hall_CalibratePhaseA(&p_motor->Hall);
+// 			Phase_ActivateDuty(&p_motor->Phase, duty, duty, 0U);
+// 			p_motor->CalibrationStateIndex = 2U;
+// 			break;
+
+// 		case 2U:
+// 			Hall_CalibratePhaseInvC(&p_motor->Hall);
+// 			Phase_ActivateDuty(&p_motor->Phase, 0U, duty, 0U);
+// 			p_motor->CalibrationStateIndex = 3U;
+// 			break;
+
+// 		case 3U:
+// 			Hall_CalibratePhaseB(&p_motor->Hall);
+// 			Phase_ActivateDuty(&p_motor->Phase, 0U, duty, duty);
+// 			p_motor->CalibrationStateIndex = 4U;
+// 			break;
+
+// 		case 4U:
+// 			Hall_CalibratePhaseInvA(&p_motor->Hall);
+// 			Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, duty);
+// 			p_motor->CalibrationStateIndex = 5U;
+// 			break;
+
+// 		case 5U:
+// 			Hall_CalibratePhaseC(&p_motor->Hall);
+// 			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, duty);
+// 			p_motor->CalibrationStateIndex = 6U;
+// 			break;
+
+// 		case 6U:
+// 			Hall_CalibratePhaseInvB(&p_motor->Hall);
+// 			Phase_Float(&p_motor->Phase);
+// 			isComplete = true;
+// 			break;
+
+// 		default:
+// 			break;
+// 		}
+// 	}
+
+// 	return isComplete;
+// }

@@ -37,21 +37,6 @@
 #define QFRAC16_N_FRAC_BITS (15U) /*!< Q1.15, 15 fractional bits, shift mul/div by 32768 */
 
 typedef int16_t qfrac16_t; 		/*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
-typedef int16_t qangle16_t; 	/*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
-
-#define SINE_90_TABLE_ENTRIES 	(256U)
-#define SINE_90_TABLE_LSB 		(6U)	/*!< Insignificant bits, shifted away*/
-extern const qfrac16_t QFRAC16_SINE_90_TABLE[SINE_90_TABLE_ENTRIES];	/*! Resolution: 1024 steps per revolution */
-
-#define QANGLE16_QUADRANT_MASK (0xC000U)
-typedef enum qangle16_quadrant_tag
-{
-	QANGLE16_QUADRANT_I, 	/* 0_90 */
-	QANGLE16_QUADRANT_II, 	/* 90_180 */
-	QANGLE16_QUADRANT_III, 	/* 180_270 */
-	QANGLE16_QUADRANT_IV, 	/* 270_360 */
-}
-qangle16_quadrant_t;
 
 static const qfrac16_t QFRAC16_MAX = INT16_MAX; /*!< (32767) */
 static const qfrac16_t QFRAC16_MIN = INT16_MIN; /*!< (-32768) */
@@ -68,15 +53,8 @@ static const qfrac16_t QFRAC16_SQRT2_DIV_2 = 0x5A82;
 static const qfrac16_t QFRAC16_PI_DIV_4 = 0x6487;
 
 static const int32_t QFRAC16_1_OVERSAT 	= (int32_t)0x00008000; /*!< (32768) */
-static const int32_t QFRAC16_PI 		= (int32_t)0x0001921F; /* Oversaturated */
-static const int32_t QFRAC16_3PI_DIV_4 	= (int32_t)0x00012D97; /* Oversaturated */
-
-static const qangle16_t QANGLE16_0 = 0; 		/*! 0 */
-static const qangle16_t QANGLE16_90 = 0x4000; 	/*! 16384 */
-static const qangle16_t QANGLE16_120 = 0x5555;	/*! 21845 */
-static const qangle16_t QANGLE16_180 = 0x8000;	/*! 32768, -32768, 180 == -180 */
-static const qangle16_t QANGLE16_240 = 0xAAAA;	/*! 43690, -21845 */
-static const qangle16_t QANGLE16_270 = 0xC000;	/*! 49152, -16384, 270 == -90 */
+static const int32_t QFRAC16_PI 		= (int32_t)0x0001921F; /* Over saturated */
+static const int32_t QFRAC16_3PI_DIV_4 	= (int32_t)0x00012D97; /* Over saturated */
 
 #define QFRAC16(x) ((qfrac16_t) (((x) < 1.0) ? (((x) >= -1.0) ? (x*32768.0) : INT16_MIN) : INT16_MAX))
 
@@ -90,20 +68,6 @@ static inline qfrac16_t qfrac16_sat(int32_t qfrac)
 	else if	(qfrac < (int32_t)QFRAC16_MIN) 	{ sat = QFRAC16_MIN; }
 	else 									{ sat = (qfrac16_t)qfrac; }
 	return sat;
-}
-
-static inline qangle16_quadrant_t qangle16_quadrant(qangle16_t theta)
-{
-	qangle16_quadrant_t quadrant;
-	switch((uint16_t)theta & QANGLE16_QUADRANT_MASK)
-	{
-		case (uint16_t)QANGLE16_0: 		quadrant = QANGLE16_QUADRANT_I; break;
-		case (uint16_t)QANGLE16_90: 	quadrant = QANGLE16_QUADRANT_II; break;
-		case (uint16_t)QANGLE16_180: 	quadrant = QANGLE16_QUADRANT_III; break;
-		case (uint16_t)QANGLE16_270: 	quadrant = QANGLE16_QUADRANT_IV; break;
-		default: quadrant = 0U; break; /* Should not occur */
-	}
-	return quadrant;
 }
 
 /*!
@@ -175,6 +139,53 @@ static inline qfrac16_t qfrac16_abs(qfrac16_t x)
 static inline qfrac16_t qfrac16_sqrt(int32_t x)
 {
 	return q_sqrt((int32_t)x << QFRAC16_N_FRAC_BITS);
+}
+
+/******************************************************************************/
+/*!
+	qangle16
+*/
+/******************************************************************************/
+typedef int16_t qangle16_t; 	/*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
+
+#define SINE_90_TABLE_ENTRIES 	(256U)
+#define SINE_90_TABLE_LSB 		(6U)	/*!< Insignificant bits, shifted away*/
+extern const qfrac16_t QFRAC16_SINE_90_TABLE[SINE_90_TABLE_ENTRIES];	/*! Resolution: 1024 steps per revolution */
+
+static const qangle16_t QANGLE16_0 = 0; 		/*! 0 */
+static const qangle16_t QANGLE16_30 = 0x1555; 	/*! 5461 */
+static const qangle16_t QANGLE16_60 = 0x2AAA; 	/*! 10922 */
+static const qangle16_t QANGLE16_90 = 0x4000; 	/*! 16384 */
+static const qangle16_t QANGLE16_120 = 0x5555;	/*! 21845 */
+static const qangle16_t QANGLE16_150 = 0x6AAA;	/*! 27306 */
+static const qangle16_t QANGLE16_180 = 0x8000;	/*! 32768, -32768, 180 == -180 */
+static const qangle16_t QANGLE16_210 = 0x9555;	/*! 38229 */
+static const qangle16_t QANGLE16_240 = 0xAAAA;	/*! 43690, -21845 */
+static const qangle16_t QANGLE16_270 = 0xC000;	/*! 49152, -16384, 270 == -90 */
+
+#define QANGLE16_QUADRANT_MASK (0xC000U)
+
+typedef enum qangle16_quadrant_tag
+{
+	QANGLE16_QUADRANT_I, 	/* 0_90 */
+	QANGLE16_QUADRANT_II, 	/* 90_180 */
+	QANGLE16_QUADRANT_III, 	/* 180_270 */
+	QANGLE16_QUADRANT_IV, 	/* 270_360 */
+}
+qangle16_quadrant_t;
+
+static inline qangle16_quadrant_t qangle16_quadrant(qangle16_t theta)
+{
+	qangle16_quadrant_t quadrant;
+	switch((uint16_t)theta & QANGLE16_QUADRANT_MASK)
+	{
+		case (uint16_t)QANGLE16_0: 		quadrant = QANGLE16_QUADRANT_I; break;
+		case (uint16_t)QANGLE16_90: 	quadrant = QANGLE16_QUADRANT_II; break;
+		case (uint16_t)QANGLE16_180: 	quadrant = QANGLE16_QUADRANT_III; break;
+		case (uint16_t)QANGLE16_270: 	quadrant = QANGLE16_QUADRANT_IV; break;
+		default: quadrant = 0U; break; /* Should not occur */
+	}
+	return quadrant;
 }
 
 /*

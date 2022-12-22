@@ -54,7 +54,7 @@ typedef struct __attribute__((aligned(4U))) VMonitor_Params_Tag
 	uint16_t LimitLower_Adcu;
 	uint16_t WarningUpper_Adcu;
 	uint16_t WarningLower_Adcu;
-	uint16_t VInRefMax; /* VIn 100%, frac16 ref only, not used */
+	uint16_t VInRefMax; /* VIn 100%, frac16 ref only */
 	bool IsMonitorEnable;
 }
 VMonitor_Params_T;

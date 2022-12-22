@@ -126,6 +126,7 @@ static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
 		switch (p_motor->CalibrationStateIndex)
 		{
 		case 0U:
+			Hall_StartCalibrate(&p_motor->Hall);
 			Phase_ActivateDuty(&p_motor->Phase, duty, 0U, 0U);
 			p_motor->CalibrationStateIndex = 1U;
 			break;

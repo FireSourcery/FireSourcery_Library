@@ -60,21 +60,20 @@ static inline uint16_t Linear_ADC_CalcFracU16(const Linear_T * p_linear, uint16_
 	return Linear_Frac16_Unsigned(p_linear, adcu);
 }
 
-// static inline int32_t Linear_ADC_CalcPhysical_FracS16(const Linear_T * p_linear, int32_t frac16)
-// {
-// 	return Linear_Frac16_Units(p_linear, adcu);
-// }
-
-// static inline int32_t Linear_ADC_CalcFrac16_Physical(const Linear_T * p_linear, int32_t frac16)
-// {
-// 	return Linear_Frac16_Units(p_linear, adcu);
-// }
-
-
 static inline uint16_t Linear_ADC_CalcFracU16_Abs(const Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Frac16_Unsigned_Abs(p_linear, adcu);
 }
+
+// static inline int32_t Linear_ADC_CalcPhysical_Frac16(const Linear_T * p_linear, uint16_t frac16)
+// {
+// 	return Linear_Frac16_Units16(p_linear, frac16);
+// }
+
+// static inline int32_t Linear_ADC_CalcFrac16_Physical(const Linear_T * p_linear, int32_t units)
+// {
+// 	return Linear_Frac16_InvUnits16(p_linear, units);
+// }
 
 /* Division in this function only */
 static inline uint16_t Linear_ADC_CalcAdcu_Physical(const Linear_T * p_linear, int16_t units)

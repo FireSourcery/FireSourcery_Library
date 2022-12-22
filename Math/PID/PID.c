@@ -36,8 +36,10 @@ static void ResetRuntime(PID_T * p_pid)
 {
 	p_pid->KiDivisorFreq 	= p_pid->Params.KiDivisor * p_pid->Params.CalcFreq;
 	p_pid->KdFactorFreq 	= p_pid->Params.KdFactor * p_pid->Params.CalcFreq;
+#ifdef CONFIG_PID_INTEGRAL_32BITS
 	p_pid->ErrorSumOverflow = INT32_MAX / p_pid->Params.KiFactor;
 	p_pid->IntegralOverflow = INT32_MAX / p_pid->KiDivisorFreq;
+#endif
 }
 
 void PID_Init(PID_T * p_pid)
@@ -51,8 +53,7 @@ void PID_Init(PID_T * p_pid)
 
 void PID_Init_Args
 (
-	PID_T * p_pid,
-	uint32_t calcFreq,
+	PID_T * p_pid, uint32_t calcFreq,
 	int32_t kpFactor, int32_t kpDivisor,
 	int32_t kiFactor, int32_t kiDivisor,
 	int32_t kdFactor, int32_t kdDivisor,
@@ -66,7 +67,7 @@ void PID_Init_Args
 	PID_Reset(p_pid);
 }
 
-
+#ifdef CONFIG_PID_INTEGRAL_32BITS
 static int32_t GetIntegral(PID_T * p_pid)
 {
 	return ((p_pid->ErrorSum > p_pid->ErrorSumOverflow) || (p_pid->ErrorSum < 0 - p_pid->ErrorSumOverflow)) ?
@@ -78,6 +79,11 @@ static void SetIntegral(PID_T * p_pid, int32_t integral)
 	p_pid->ErrorSum = ((integral > p_pid->IntegralOverflow) || (integral < 0 - p_pid->IntegralOverflow)) ?
 		(integral / p_pid->Params.KiFactor * p_pid->KiDivisorFreq) : (integral * p_pid->KiDivisorFreq / p_pid->Params.KiFactor);
 }
+#else
+static int32_t GetIntegral(PID_T * p_pid) { return (p_pid->Params.KiFactor * p_pid->ErrorSum / p_pid->KiDivisorFreq); }
+static void SetIntegral(PID_T * p_pid, int32_t integral) { p_pid->ErrorSum = ((int64_t)integral * p_pid->KiDivisorFreq / p_pid->Params.KiFactor); }
+#endif
+
 
 /*
 	Standard PID calculation

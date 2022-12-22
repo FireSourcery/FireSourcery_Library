@@ -32,19 +32,16 @@
 #include <string.h>
 #include <math.h>
 
-/* Set Vin to same decimal precision as AdcVRef. Shared by all instances. */
-#define ADC_VREF_SCALAR (GLOBAL_ANALOG.ADC_VREF_MILLIV / 10U)
-
 static void ResetUnitsLinear(Thermistor_T * p_therm)
 {
+	Linear_ADC_Init(&p_therm->LinearLimits, p_therm->Params.Shutdown_Adcu, p_therm->Params.Warning_Adcu, 0, 0);
 	/*
 		Max resolution
 		12-bit ADC, 200 physical degrees interval
 		.1 to .05 physical degrees resolution.
 		x20 for max resolution
 	*/
-	Linear_ADC_Init(&p_therm->LinearLimits, p_therm->Params.Shutdown_Adcu, p_therm->Params.Warning_Adcu, p_therm->Params.UnitsShutdown_DegC, p_therm->Params.UnitsWarning_DegC);
-	Linear_Init_Map(&p_therm->LinearDegC, p_therm->Params.Shutdown_Adcu, p_therm->Params.Warning_Adcu, p_therm->Params.UnitsShutdown_DegC, p_therm->Params.UnitsWarning_DegC);
+	Linear_Init_Map(&p_therm->LinearUnits, p_therm->Params.LinearUnits0_Adcu, p_therm->Params.LinearUnits1_Adcu, p_therm->Params.LinearUnits0_DegC, p_therm->Params.LinearUnits1_DegC);
 }
 
 void Thermistor_Init(Thermistor_T * p_therm)
@@ -112,8 +109,6 @@ Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t capt
 /******************************************************************************/
 /*!
 	Unit Conversion
-
-
 */
 /******************************************************************************/
 /*
@@ -127,28 +122,29 @@ Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t capt
 */
 static inline uint32_t r_pulldown_adcu(uint32_t rPullUp, uint16_t vIn, uint16_t adcMax, uint16_t adcVRef, uint16_t adcu)
 {
-	return ((double)rPullUp * adcVRef * adcu) / (vIn * adcMax - adcVRef * adcu);
+	return ((uint64_t)rPullUp * adcVRef * adcu) / (vIn * adcMax - adcVRef * adcu);
 }
 
+/* Thermistor as pull-up */
 static inline uint32_t r_pullup_adcu(uint32_t rPullDown, uint16_t vIn, uint16_t adcMax, uint16_t adcVRef, uint16_t adcu)
 {
-	return rPullDown * (((double)vIn * adcMax) / (adcVRef * adcu) - 1U);
+	return ((uint64_t)rPullDown * vIn * adcMax) / (adcVRef * adcu) - rPullDown;
 }
 
-/* Convert Resistence [Ohm] to ADCU */
+/* Convert Resistance [Ohm] to ADCU */
 static inline uint16_t adcu_r(uint16_t adcMax, uint16_t adcVRef, uint16_t vIn, uint32_t rPullUp, uint32_t rPullDown)
 {
-	return ((double)vIn * adcMax * rPullDown) / ((double)adcVRef * (rPullUp + rPullDown));
+	return ((uint64_t)vIn * adcMax * rPullDown) / ((uint64_t)adcVRef * (rPullUp + rPullDown));
 }
 
 static inline uint32_t r_net(uint32_t rParallel1, uint32_t rParallel2)
 {
-	return ((double)rParallel1 * rParallel2) / (rParallel1 + rParallel2); 	/* 1 / (1/r1 + 1/r2) */
+	return ((uint64_t)rParallel1 * rParallel2) / (rParallel1 + rParallel2); 	/* 1 / (1/r1 + 1/r2) */
 }
 
 static inline uint32_t r_parallel(uint32_t rNet, uint32_t rParallel)
 {
-	return ((double)rNet * rParallel) / (rNet - rParallel); 				/* 1 / (1/rNet - 1/rParallel) */
+	return ((uint64_t)rNet * rParallel) / (rNet - rParallel); 				/* 1 / (1/rNet - 1/rParallel) */
 }
 
 /*
@@ -170,7 +166,7 @@ static inline float invsteinhart(double b, double t0, double r0, double invKelvi
 
 static float ConvertAdcuToDegC_Ntc(Thermistor_T * p_therm, uint16_t adcu)
 {
-	uint32_t rNet = r_pulldown_adcu(p_therm->CONFIG.R_SERIES/100U, p_therm->Params.VIn_Scalar, GLOBAL_ANALOG.ADC_MAX, ADC_VREF_SCALAR, adcu) * 100U;
+	uint32_t rNet = r_pulldown_adcu(p_therm->CONFIG.R_SERIES, p_therm->Params.VInRef_MilliV, GLOBAL_ANALOG.ADC_MAX, GLOBAL_ANALOG.ADC_VREF_MILLIV, adcu);
 	uint32_t rTh = (p_therm->CONFIG.R_PARALLEL != 0U) ? r_parallel(rNet, p_therm->CONFIG.R_PARALLEL) : rNet;
 	double invKelvin = steinhart(p_therm->Params.BConstant, p_therm->Params.TNominal, p_therm->Params.RNominal, rTh);
 	return (1.0F / invKelvin - 273.15F);
@@ -181,46 +177,15 @@ static uint16_t ConvertDegCToAdcu_Ntc(Thermistor_T * p_therm, uint16_t degC)
 	double invKelvin = (double)1.0F / (degC + 273.15F);
 	uint32_t rTh = invsteinhart(p_therm->Params.BConstant, p_therm->Params.TNominal, p_therm->Params.RNominal, invKelvin);
 	uint32_t rNet = (p_therm->CONFIG.R_PARALLEL != 0U) ? r_net(p_therm->CONFIG.R_PARALLEL, rTh) : rTh;
-	adcu_r(GLOBAL_ANALOG.ADC_MAX, ADC_VREF_SCALAR, p_therm->Params.VIn_Scalar, p_therm->CONFIG.R_SERIES, rNet);
+	adcu_r(GLOBAL_ANALOG.ADC_MAX, GLOBAL_ANALOG.ADC_VREF_MILLIV, p_therm->Params.VInRef_MilliV, p_therm->CONFIG.R_SERIES, rNet);
 }
 
-static int16_t ConvertAdcuToDegC_Linear(Thermistor_T * p_therm, uint16_t adcu) 		{ Linear_ADC_CalcPhysical(&p_therm->LinearDegC, adcu); }
-static uint16_t ConvertDegCToAdcu_Linear(Thermistor_T * p_therm, uint16_t degC) 	{ Linear_ADC_CalcAdcu_Physical(&p_therm->LinearDegC, degC); }
+static int16_t ConvertAdcuToDegC_Linear(Thermistor_T * p_therm, uint16_t adcu) 	{ return Linear_Function(&p_therm->LinearUnits, adcu); }
+static uint16_t ConvertDegCToAdcu_Linear(Thermistor_T * p_therm, int16_t degC) 	{ return Linear_InvFunction(&p_therm->LinearUnits, degC); }
 
 static int16_t ConvertAdcuToDegC(Thermistor_T * p_therm, uint16_t adcu)
 {
 	int16_t degC;
-	switch(p_therm->Params.Type)
-	{
-		case THERMISTOR_TYPE_LINEAR: 	degC = ConvertAdcuToDegC_Linear(p_therm, adcu); break;
-#if defined(CONFIG_THERMISTOR_UNITS_NON_LINEAR)
-		case THERMISTOR_TYPE_NTC:   	degC = ConvertAdcuToDegC_Ntc(p_therm, adcu); break;
-#endif
-		default: degC = 0; break;
-	}
-	return degC;
-}
-
-/*
-	Scalar < 20
-*/
-// static int16_t ConvertAdcuToDegC_Int(Thermistor_T * p_therm, uint16_t adcu, uint16_t scalar)
-// {
-// 	int16_t degC;
-// 	switch(p_therm->Params.Type)
-// 	{
-// 		case THERMISTOR_TYPE_LINEAR: 	degC = ConvertAdcuToDegC_Linear(p_therm, adcu) / (20); break;
-// #if defined(CONFIG_THERMISTOR_UNITS_NON_LINEAR)
-// 		case THERMISTOR_TYPE_NTC:   	degC = ConvertAdcuToDegC_Ntc(p_therm, adcu); break;
-// #endif
-// 		default: degC = 0; break;
-// 	}
-// 	return degC;
-// }
-
-static float ConvertAdcuToDegC_Float(Thermistor_T * p_therm, uint16_t adcu)
-{
-	float degC;
 	switch(p_therm->Params.Type)
 	{
 		case THERMISTOR_TYPE_LINEAR: 	degC = ConvertAdcuToDegC_Linear(p_therm, adcu); break;
@@ -245,10 +210,26 @@ static uint16_t ConvertDegCToAdcu(Thermistor_T * p_therm, uint16_t degC)
 	}
 	return adcu;
 }
-
-float Thermistor_ConvertToDegC_Float(Thermistor_T * p_therm, uint16_t adcu) { return ConvertAdcuToDegC(p_therm, adcu); }
-int32_t Thermistor_ConvertToDegC_Int(Thermistor_T * p_therm, uint16_t adcu, uint8_t scalar) { return ConvertAdcuToDegC(p_therm, adcu) * scalar; }
+/* Scalar < 20 */
+int16_t Thermistor_ConvertToDegC(Thermistor_T * p_therm, uint16_t adcu) { return ConvertAdcuToDegC(p_therm, adcu); }
+int32_t Thermistor_ConvertToDegC_Int(Thermistor_T * p_therm, uint16_t adcu, uint8_t scalar) { return ConvertAdcuToDegC(p_therm, adcu * scalar); }
 uint16_t Thermistor_ConvertToAdcu_DegC(Thermistor_T * p_therm, uint16_t degC) { return ConvertDegCToAdcu(p_therm, degC); }
+
+static float ConvertAdcuToDegC_Float(Thermistor_T * p_therm, uint16_t adcu)
+{
+	float degC;
+	switch(p_therm->Params.Type)
+	{
+		case THERMISTOR_TYPE_LINEAR: 	degC = ConvertAdcuToDegC_Linear(p_therm, adcu); break;
+#if defined(CONFIG_THERMISTOR_UNITS_NON_LINEAR)
+		case THERMISTOR_TYPE_NTC:   	degC = ConvertAdcuToDegC_Ntc(p_therm, adcu); break;
+#endif
+		default: degC = 0; break;
+	}
+	return degC;
+}
+
+float Thermistor_ConvertToDegC_Float(Thermistor_T * p_therm, uint16_t adcu) { return ConvertAdcuToDegC_Float(p_therm, adcu); }
 
 /* For setting conversion processing to lower frequency than user output */
 // void Thermistor_CaptureUnits_DegC(Thermistor_T * p_therm, uint16_t adcu) { p_therm->Heat_DegC = Thermistor_ConvertToDegC_Int(p_therm, adcu, p_therm->Params.CaptureScalar);}
@@ -267,7 +248,7 @@ void Thermistor_SetNtc(Thermistor_T * p_therm, uint32_t r0, uint32_t t0_degC, ui
 
 void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV)
 {
-	p_therm->Params.VIn_Scalar = vIn_MilliV / 10U;
+	p_therm->Params.VInRef_MilliV = vIn_MilliV;
 }
 
 /*
@@ -276,12 +257,12 @@ void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV)
 	Warning_Adcu 		=> Warning_DegC		70
 */
 /* Warning_Adcu must be > 1/2 * ADC_MAX, or ADC_MAX will overflow Linear */
-void Thermistor_SetLinearUnits_DegC(Thermistor_T * p_therm, uint32_t warningDegC, uint32_t shutdownDegC)
-{
-	p_therm->Params.UnitsWarning_DegC = warningDegC;
-	p_therm->Params.UnitsShutdown_DegC = shutdownDegC;
-	ResetUnitsLinear(p_therm);
-}
+// void Thermistor_SetLinearUnits_DegC(Thermistor_T * p_therm, uint32_t warningDegC, uint32_t shutdownDegC)
+// {
+// 	p_therm->Params.LinearUnits1_DegC = warningDegC;
+// 	p_therm->Params.UnitsShutdown_DegC = shutdownDegC;
+// 	ResetUnitsLinear(p_therm);
+// }
 
 
 /******************************************************************************/

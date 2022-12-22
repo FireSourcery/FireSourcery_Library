@@ -97,7 +97,6 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 							break;
 
 						case CMD_STATUS_PROCESS_LOOP:
-							p_shell->ProcTimeRef = *p_shell->CONFIG.P_TIMER;
 							p_shell->State = SHELL_STATE_PROCESS_CMD_LOOP;
 //							status = SHELL_STATUS_CMD_PROCESSING;
 							break;

@@ -88,21 +88,20 @@ void _Encoder_ResetUnitsAngular(Encoder_T * p_encoder)
 
 	/*
 		AngularSpeed = DeltaD * [(1 << DEGREES_BITS) * UnitT_Freq / CountsPerRevolution] / DeltaT
-			UnitAngularSpeed == [UnitAngularD * UnitT_Freq >> (32-DEGREES_BITS)]
+			UnitAngularSpeed == [(1 << DEGREES_BITS) * UnitT_Freq / CountsPerRevolution] = [UnitAngularD * UnitT_Freq >> (32-DEGREES_BITS)]
 
 		e.g.
-			UnitAngularSpeed = 160,000 		{ DEGREES_BITS = 16, UnitT_Freq = 20000, CountsPerRevolution = 8192 }
-			UnitAngularSpeed = 8,000 		{ DEGREES_BITS = 16, UnitT_Freq = 1000, CountsPerRevolution = 8192 }
 			UnitAngularSpeed = 819,200,000 	{ DEGREES_BITS = 16, UnitT_Freq = 750000, CountsPerRevolution = 60 }
+			UnitAngularSpeed = 160,000 		{ DEGREES_BITS = 16, UnitT_Freq = 20000, CountsPerRevolution = 8192 }
 			UnitAngularSpeed = 131,072		{ DEGREES_BITS = 16, UnitT_Freq = 20000, CountsPerRevolution = 10000 }
+			UnitAngularSpeed = 8,000 		{ DEGREES_BITS = 16, UnitT_Freq = 1000, CountsPerRevolution = 8192 }
 	*/
 	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->Params.CountsPerRevolution, ENCODER_ANGLE16);
+	// p_encoder->UnitAngularSpeed = ((uint64_t)p_encoder->UnitT_Freq << ENCODER_ANGLE16) / p_encoder->Params.CountsPerRevolution;
 
-	/*
-		DeltaT side overflow boundary set by MaxLeftShiftDivide
-	*/
-
+	/* p_encoder->UnitAngularSpeed / p_encoder->CONFIG.POLLING_FREQ if no overflow  */
 	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->CONFIG.POLLING_FREQ * p_encoder->Params.CountsPerRevolution, ENCODER_ANGLE16);
+	// p_encoder->UnitInterpolateAngle = ((uint64_t)p_encoder->UnitT_Freq << ENCODER_ANGLE16) / p_encoder->CONFIG.POLLING_FREQ * p_encoder->Params.CountsPerRevolution ;
 }
 
 void _Encoder_ResetUnitsLinear(Encoder_T * p_encoder)
@@ -143,16 +142,17 @@ void _Encoder_ResetUnitsLinear(Encoder_T * p_encoder)
 void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 {
 	/*
-		UnitScalarSpeed = unitTFreq * 65535U * 60U / CountsPerRevolution / ScalarSpeedRef_Rpm
+		UnitScalarSpeed = UnitT_Freq * 65535U * 60U / CountsPerRevolution / ScalarSpeedRef_Rpm
 
-		e.g.  unitTFreq = 625000, CountsPerRevolution = 60,
+		e.g.  UnitT_Freq = 625000, CountsPerRevolution = 60,
 			ScalarSpeedRef_Rpm = 2500 => 16,384,000
 			ScalarSpeedRef_Rpm = 10000 => 4,095,937.5
-		e.g.  unitTFreq = 1000, CountsPerRevolution = 8192,
+		e.g.  UnitT_Freq = 1000, CountsPerRevolution = 8192,
 			ScalarSpeedRef_Rpm = 5000 => 96
 			todo
 	*/
 	p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm, 16U);
+	// p_encoder->UnitScalarSpeed = (((uint64_t)p_encoder->UnitT_Freq * 60U) << 16U) / (p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm);
 }
 
 /*

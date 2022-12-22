@@ -94,24 +94,24 @@ static inline void _Encoder_CaptureCounterD_QuadraturePhaseA(Encoder_T * p_encod
 	_Encoder_CaptureCount(p_encoder, _ENCODER_TABLE_PHASE_A[_Encoder_CapturePhasesState(p_encoder)]);
 }
 
+// static inline void _Encoder_CaptureCounterD_QuadraturePhaseALeadingEdge(Encoder_T * p_encoder)
+// {
+// 	// int8_t count = (Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1;
+// 	p_encoder->CounterD += count;
+// 	// p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngularD);
+// }
+
 /******************************************************************************/
 /*
 	Single Phase, Unsigned Direction
 */
 /******************************************************************************/
-// static inline void _Encoder_CaptureCounterD_Inc(Encoder_T * p_encoder)
-// {
-// 	p_encoder->CounterD++;
-// 	p_encoder->Angle32 += p_encoder->UnitAngularD;
-// 	// p_encoder->AngularD = (p_encoder->AngularD < p_encoder->Params.CountsPerRevolution - 1U) ? p_encoder->AngularD + 1U : 0U;
-// }
-
-// static inline void _Encoder_CaptureCounterD_PhaseA(Encoder_T * p_encoder)
-// {
-// 	// int8_t count = (Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1;
-// 	p_encoder->CounterD += 1;
-// 	// p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngularD);
-// }
+static inline void _Encoder_CaptureCounterD_Inc(Encoder_T * p_encoder)
+{
+	p_encoder->CounterD++;
+	p_encoder->Angle32 += p_encoder->UnitAngularD;
+	// p_encoder->AngularD = (p_encoder->AngularD < p_encoder->Params.CountsPerRevolution - 1U) ? p_encoder->AngularD + 1U : 0U;
+}
 
 /******************************************************************************/
 /*

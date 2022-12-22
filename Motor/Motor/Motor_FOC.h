@@ -83,6 +83,7 @@ static inline void Motor_FOC_CaptureVc(Motor_T * p_motor) {}
 static inline void _Motor_FOC_CaptureHallDelta(Motor_T * p_motor)
 {
 	Encoder_DeltaT_CaptureExtended(&p_motor->Encoder);
+	// _Encoder_CaptureCounterD_Inc(&p_motor->Encoder);
 	p_motor->InterpolatedAngleIndex = 1U;
 }
 
@@ -115,8 +116,8 @@ static inline int32_t _Motor_FOC_AngleSpeed(Motor_T * p_motor, qangle16_t speedA
 static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 {
 	bool procSpeed = Timer_Periodic_Poll(&p_motor->SpeedTimer);
-	uint32_t electricalDelta;
-	qangle16_t electricalAngle;
+	volatile uint16_t electricalDelta;
+	qangle16_t electricalAngle; /* FracU16 [0, 65535] map negative portions of qangle16_t */
 	int32_t speedFeedback_Frac16;
 
 	switch(p_motor->Parameters.SensorMode)
@@ -146,14 +147,12 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
-			/*  */
+			electricalAngle = Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);
 			if(procSpeed == true)
 			{
-				Encoder_DeltaD_Capture(&p_motor->Encoder); /* speed */
-				speedFeedback_Frac16 = Encoder_DeltaD_GetScalarSpeed(&p_motor->Encoder); /* quadrature capture is signed */
+				Encoder_DeltaD_Capture(&p_motor->Encoder);
+				speedFeedback_Frac16 = Encoder_DeltaD_GetScalarSpeed(&p_motor->Encoder); /* Quadrature capture is signed */
 			}
-			/* Encoder_Motor_GetElectricalTheta returns [0, 65535] maps directly to negative portions of qangle16_t */
-			electricalAngle = (qangle16_t)Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);
 			break;
 
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
@@ -360,15 +359,16 @@ static void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
 */
 static void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
-
-	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-#if defined(CONFIG_MOTOR_I_SENSORS_ABC)
-	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-#endif
-	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-
+	if(((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER)) == 0UL)
+	{
+		AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
+		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
+	#if defined(CONFIG_MOTOR_I_SENSORS_ABC)
+		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
+	#endif
+		AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+	}
 	/* Samples chain completes sometime after queue resumes. ADC isr priority higher than PWM. */
 
 	// /* ~10us */ Motor_Debug_CaptureTime(p_motor, 1U);

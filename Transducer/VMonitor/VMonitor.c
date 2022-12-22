@@ -77,10 +77,10 @@ VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
 
 // uint16_t VMonitor_GetVInRefMax(VMonitor_T * p_vMonitor) { return p_vMonitor->Params.VInRefMax; }
 
-void VMonitor_SetLimitUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.LimitUpper_Adcu = Linear_Voltage_CalcAdcu_InputMilliV(&p_vMonitor->Units, GLOBAL_ANALOG.ADC_BITS, limit_mV); }
-void VMonitor_SetLimitLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.LimitLower_Adcu = Linear_Voltage_CalcAdcu_InputMilliV(&p_vMonitor->Units, GLOBAL_ANALOG.ADC_BITS, limit_mV); }
-void VMonitor_SetWarningUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.WarningUpper_Adcu = Linear_Voltage_CalcAdcu_InputMilliV(&p_vMonitor->Units, GLOBAL_ANALOG.ADC_BITS, limit_mV); }
-void VMonitor_SetWarningLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.WarningLower_Adcu = Linear_Voltage_CalcAdcu_InputMilliV(&p_vMonitor->Units, GLOBAL_ANALOG.ADC_BITS, limit_mV); }
+void VMonitor_SetLimitUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.LimitUpper_Adcu = Linear_Voltage_CalcAdcuUser_MilliV(&p_vMonitor->Units, GLOBAL_ANALOG.ADC_BITS, limit_mV); }
+void VMonitor_SetLimitLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.LimitLower_Adcu = Linear_Voltage_CalcAdcuUser_MilliV(&p_vMonitor->Units, GLOBAL_ANALOG.ADC_BITS, limit_mV); }
+void VMonitor_SetWarningUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.WarningUpper_Adcu = Linear_Voltage_CalcAdcuUser_MilliV(&p_vMonitor->Units, GLOBAL_ANALOG.ADC_BITS, limit_mV); }
+void VMonitor_SetWarningLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.WarningLower_Adcu = Linear_Voltage_CalcAdcuUser_MilliV(&p_vMonitor->Units, GLOBAL_ANALOG.ADC_BITS, limit_mV); }
 
 void VMonitor_SetLimits_MilliV(VMonitor_T * p_vMonitor, uint32_t limitLower, uint32_t limitUpper, uint32_t warningLower, uint32_t warningUpper)
 {

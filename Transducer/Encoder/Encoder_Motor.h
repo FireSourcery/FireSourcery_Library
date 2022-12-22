@@ -130,7 +130,6 @@ static inline uint32_t Encoder_Motor_InterpolateHallDelta(Encoder_T * p_encoder,
 	}
 	if(electricalDelta > 65536U / 6U) { electricalDelta = 65536U / 6U; }
 	return electricalDelta;
-
 }
 
 /*

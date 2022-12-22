@@ -42,6 +42,19 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
+#ifndef ENCODER_TIMER_MAX
+#define ENCODER_TIMER_MAX (0xFFFFU)
+#endif
+
+#ifndef ENCODER_ANGLE16
+#define ENCODER_ANGLE16 (16U)
+#endif
+
+#define _ENCODER_TABLE_ERROR (2U)
+#define _ENCODER_TABLE_LENGTH (16U)
+extern const int8_t _ENCODER_TABLE[_ENCODER_TABLE_LENGTH];
+extern const int8_t _ENCODER_TABLE_PHASE_A[_ENCODER_TABLE_LENGTH];
 typedef union Encoder_Phases_Tag
 {
 	struct
@@ -181,6 +194,8 @@ Encoder_T;
 	0xFFFF/65[Mhz]*1000 = 1[ms]
 	4MHz max for DT Sample
 	0xFFFFFFFF/1000 ~=4MHz
+	Mode DeltaT, for UnitAngularSpeed Shift Divide
+	TIMER_FREQ < UINT32_MAX / (1 << ENCODER_ANGLE16) * CountsPerRevolution ~= 1Mhz-4Mhz for Unsigned Speed
 
 	DeltaT
 	TIMER_FREQ * 60 < UINT32_MAX for RPM calc
@@ -223,18 +238,6 @@ Encoder_T;
 	_ENCODER_INIT_HW_EMULATED_QUADRATURE(p_PinA_Hal, PinAId, p_PinB_Hal, PinBId)						\
 }
 
-#define _ENCODER_TABLE_ERROR (2U)
-#define _ENCODER_TABLE_LENGTH (16U)
-extern const int8_t _ENCODER_TABLE[_ENCODER_TABLE_LENGTH];
-extern const int8_t _ENCODER_TABLE_PHASE_A[_ENCODER_TABLE_LENGTH];
-
-#ifndef ENCODER_TIMER_MAX
-#define ENCODER_TIMER_MAX (0xFFFFU)
-#endif
-
-#ifndef ENCODER_ANGLE16
-#define ENCODER_ANGLE16 (16U)
-#endif
 
 /*!
 	@brief 	Capture Increasing DeltaT or DeltaD between 2 samples. Used speed calculations.

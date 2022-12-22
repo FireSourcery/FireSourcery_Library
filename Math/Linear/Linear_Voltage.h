@@ -35,18 +35,20 @@
 #include "Linear.h"
 #include <stdint.h>
 
+#define LINEAR_VOLTAGE_SHIFT 15U
+
 /*
 	Overflow: R2 > 65536
- */
-#define LINEAR_VOLTAGE_CONFIG(r1, r2, adcBits, adcVRef_MilliV, vInMax) 									\
-{																										\
-	.Slope 				= (((int32_t)adcVRef_MilliV * (r1 + r2)) << (15U - adcBits)) / r2 / 1000U, 		\
-	.SlopeShift 		= 15U,																			\
-	.InvSlope  			= ((int32_t)r2 << 15U) / adcVRef_MilliV * 1000U / (r1 + r2),					\
-	.InvSlopeShift 		= 15U - adcBits,																\
-	.YOffset 			= 0U, 																			\
-	.XOffset 			= 0U, 																			\
-	.YReference 		= vInMax, 																		\
+*/
+#define LINEAR_VOLTAGE_CONFIG(r1, r2, adcBits, adcVRef_MilliV, vInMax) 													\
+{																														\
+	.Slope 				= (((int32_t)adcVRef_MilliV * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 1000U, 	\
+	.SlopeShift 		= LINEAR_VOLTAGE_SHIFT,																			\
+	.InvSlope  			= ((int32_t)r2 << LINEAR_VOLTAGE_SHIFT) / adcVRef_MilliV * 1000U / (r1 + r2),					\
+	.InvSlopeShift 		= LINEAR_VOLTAGE_SHIFT - adcBits,																\
+	.YOffset 			= 0U, 																							\
+	.XOffset 			= 0U, 																							\
+	.YReference 		= vInMax, 																						\
 }
 
  /******************************************************************************/
@@ -145,7 +147,7 @@ static inline uint16_t Linear_Voltage_CalcAdcu_FracS16(const Linear_T * p_linear
 }
 
 extern void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcBits, uint16_t adcVRef_MilliV, uint16_t vInMax);
-extern uint16_t Linear_Voltage_CalcAdcu_InputV(const Linear_T * p_linear, uint8_t adcBits, uint16_t volts);
-extern uint16_t Linear_Voltage_CalcAdcu_InputMilliV(const Linear_T * p_linear, uint8_t adcBits, uint32_t milliV);
+extern uint16_t Linear_Voltage_CalcAdcuUser_V(const Linear_T * p_linear, uint8_t adcBits, uint16_t volts);
+extern uint16_t Linear_Voltage_CalcAdcuUser_MilliV(const Linear_T * p_linear, uint8_t adcBits, uint32_t milliV);
 
 #endif

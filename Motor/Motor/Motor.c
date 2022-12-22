@@ -141,7 +141,6 @@ void Motor_ZeroSensor(Motor_T * p_motor)
 qangle16_t Motor_GetMechanicalAngle(Motor_T * p_motor)
 {
 	qangle16_t angle;
-
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_SENSORLESS: 	angle = 0; 	break;
@@ -152,7 +151,6 @@ qangle16_t Motor_GetMechanicalAngle(Motor_T * p_motor)
 #endif
 		default: 							angle = 0; 	break;
 	}
-
 	return angle;
 }
 
@@ -224,7 +222,6 @@ void Motor_ResetSensorMode(Motor_T * p_motor)
 {
 	switch(p_motor->Parameters.SensorMode)
 	{
-
 		case MOTOR_SENSOR_MODE_HALL:
 			p_motor->CONFIG.INIT_SENSOR_HALL();
 			Hall_Init(&p_motor->Hall);

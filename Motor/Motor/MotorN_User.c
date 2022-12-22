@@ -43,18 +43,14 @@
 //	}
 //}
 
-//alternatively use check stop state?
 bool MotorN_User_CheckStop(Motor_T * p_motor, uint8_t motorCount)
 {
 	bool isStop = true;
-
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
 	{
-		// if(p_motor[iMotor].SpeedFeedback_Frac16 > 0) { isStop = false; break; } // + check direction
-
-		if(Motor_User_GetStateId(&p_motor[iMotor]) != MSM_STATE_ID_STOP) { isStop = false; break; } // + check direction
+		// if(p_motor[iMotor].SpeedFeedback_Frac16 > 0) { isStop = false; break; }
+		if(Motor_User_GetStateId(&p_motor[iMotor]) != MSM_STATE_ID_STOP) { isStop = false; break; }
 	}
-
 	return isStop;
 }
 
@@ -83,27 +79,21 @@ bool MotorN_User_SetDirectionForward(Motor_T * p_motor, uint8_t motorCount)
 bool MotorN_User_SetDirectionReverse(Motor_T * p_motor, uint8_t motorCount)
 {
 	bool isSet = true;
-
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(Motor_User_SetDirectionReverse(&p_motor[iMotor]) == false) { isSet = false; } }
-
 	return isSet;
 }
 
 bool MotorN_User_CheckFault(Motor_T * p_motor, uint8_t motorCount)
 {
 	bool isFault = false;
-
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(Motor_User_CheckFault(&p_motor[iMotor]) == true) { isFault = true; } }
-
 	return isFault;
 }
 
 bool MotorN_User_ClearFault(Motor_T * p_motor, uint8_t motorCount)
 {
 	bool isClear = true;
-
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(Motor_User_ClearFault(&p_motor[iMotor]) == false) { isClear = false; } }
-
 	return isClear;
 }
 
@@ -151,12 +141,7 @@ void MotorN_User_ClearSpeedLimit(Motor_T * p_motor, uint8_t motorCount)
 bool MotorN_User_SetILimitActive(Motor_T * p_motor, uint8_t motorCount, uint16_t limit_frac16, Motor_ILimitActiveId_T id)
 {
 	bool isSet = false;
-
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		if(Motor_User_SetILimitActive(&p_motor[iMotor], limit_frac16, id) == true) { isSet = true; };
-	}
-
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(Motor_User_SetILimitActive(&p_motor[iMotor], limit_frac16, id) == true) { isSet = true; }; }
 	return isSet;
 }
 
@@ -164,11 +149,6 @@ bool MotorN_User_SetILimitActive(Motor_T * p_motor, uint8_t motorCount, uint16_t
 bool MotorN_User_ClearILimit(Motor_T * p_motor, uint8_t motorCount, Motor_ILimitActiveId_T id)
 {
 	bool isClear = true;
-
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		if(Motor_User_ClearILimitActive(&p_motor[iMotor], id) == false) { isClear = false; };
-	}
-
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(Motor_User_ClearILimitActive(&p_motor[iMotor], id) == false) { isClear = false; }; }
 	return isClear;
 }
