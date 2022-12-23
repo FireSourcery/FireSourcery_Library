@@ -160,7 +160,7 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 }
 
 /*
-
+	DeltaD and DeltaT only
 */
 void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRevolution)
 {
@@ -168,7 +168,7 @@ void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRev
 	_Encoder_ResetUnitsAngular(p_encoder);
 	_Encoder_ResetUnitsScalarSpeed(p_encoder);
 	_Encoder_ResetUnitsInterpolateAngle(p_encoder);
-// #ifdef CONFIG_ENCODER_DYNAMIC_TIMER && EMULATED
+// #ifdef CONFIG_ENCODER_DYNAMIC_TIMER
 // 	_Encoder_ResetTimerFreq(p_encoder);
 // #endif
 }

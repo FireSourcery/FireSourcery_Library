@@ -93,7 +93,6 @@ static inline int32_t _Motor_FOC_AngleSpeed(Motor_T * p_motor, qangle16_t speedA
 {
 	int32_t speedDelta = speedAngle - p_motor->SpeedAngle; /* loops if no overflow past 1 full cycle */
 	int32_t speedFeedback_Frac16 = (p_motor->SpeedFeedback_Frac16 + Linear_Speed_CalcAngleRpmFrac16(&p_motor->UnitAngleRpm, speedDelta)) / 2;
-		// if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedDelta = 0 - speedDelta; } //already signed?
 	p_motor->SpeedAngle = speedAngle; /* mechanical angle */
 	return speedFeedback_Frac16;
 }
@@ -124,7 +123,6 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			{
 				electricalDelta = Encoder_ModeDT_InterpolateAngle(&p_motor->Encoder);
 				if(p_motor->Direction == MOTOR_DIRECTION_CW) { electricalDelta = 0 - electricalDelta; };
-				p_motor->InterpolatedAngleIndex++;
 			}
 			electricalAngle = Hall_GetRotorAngle_Degrees16(&p_motor->Hall) + electricalDelta;
 			if(procSpeed == true)
@@ -214,13 +212,13 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 /******************************************************************************/
 /*
 	Constant Voltage Mode
-	input	RampCmd[-32767:32767]
-	output	VqReq[-32767:32767] => RampCmd
+	input	RampCmd[-32768:32768]
+	output	VqReq[-32768:32767] => RampCmd
 */
 /*
 	Scalar Voltage Mode
 	input	RampCmd[0:65535] == Scalar
-	output	VqReq[-32767:32767] => Scalar * SpeedFeedback
+	output	VqReq[-32768:32767] => Scalar * SpeedFeedback
 
 	SpeedVMatchRatio = SpeedFeedback_Frac16 * SpeedFeedbackRef_Rpm / SpeedVMatchRef_Rpm / 2;
 	SpeedVMatchRatio = Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16) / 2;
@@ -231,45 +229,40 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 	Overflow caution:
 	Linear_Function(&p_motor->SpeedVMatchRatio) input range [-65535*3/2:65535*3/2], when VMatchRef == FeedbackRef * 3 / 4
 */
-static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, int32_t userOutput)
+static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq)
 {
 	bool isOverLimit;
 	qfrac16_t vqReqOut;
 
-	if(p_motor->FeedbackModeFlags.Scalar == 1U)
-	{
-		userOutput = p_motor->RampCmd * (Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16 / 2)) / 65536;
 
-		if		(userOutput > 32767) 	{ userOutput = 32767; }
-		else if	(userOutput < -32767) 	{ userOutput = -32767; }
-	}
-	/* ILimitVoltageMode_FracS16 set to torque direction. Alternatively, use limits stored in SpeedPid  */
-	// if		(p_motor->ILimitVoltageMode_FracS16 > 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) > p_motor->ILimitVoltageMode_FracS16); }
-	// else if	(p_motor->ILimitVoltageMode_FracS16 < 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) < p_motor->ILimitVoltageMode_FracS16); }
+
+	/* ILimitVoltageMode_FracS16 set to torque direction. Alternatively, use/store limits in Pid  */
+	if		(p_motor->ILimitVoltageMode_FracS16 > 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) > p_motor->ILimitVoltageMode_FracS16); }
+	else if	(p_motor->ILimitVoltageMode_FracS16 < 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) < p_motor->ILimitVoltageMode_FracS16); }
+	else 												{ isOverLimit = false; } /* should not occur */
+
+	// if		(p_motor->ILimitVoltageMode_FracS16 > 0) 	{ isOverLimit = (FOC_GetIMagnitude(&p_motor->Foc) > p_motor->ILimitVoltageMode_FracS16); }
+	// else if	(p_motor->ILimitVoltageMode_FracS16 < 0) 	{ isOverLimit = (FOC_GetIMagnitude(&p_motor->Foc) > 0 - p_motor->ILimitVoltageMode_FracS16); }
 	// else 												{ isOverLimit = false; } /* should not occur */
 
-	// // if		(p_motor->ILimitVoltageMode_FracS16 > 0) 	{ isOverLimit = (FOC_GetIMagnitude(&p_motor->Foc) > p_motor->ILimitVoltageMode_FracS16); }
-	// // else if	(p_motor->ILimitVoltageMode_FracS16 < 0) 	{ isOverLimit = (FOC_GetIMagnitude(&p_motor->Foc) > 0 - p_motor->ILimitVoltageMode_FracS16); }
-	// // else 												{ isOverLimit = false; } /* should not occur */
+	if((isOverLimit == true) && (p_motor->ControlFlags.VoltageModeILimitActive == false))
+	{
+		p_motor->ControlFlags.VoltageModeILimitActive = true;
+		PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
+	}
+	else /* alternatively remain set until manual reset */
+	{
+		p_motor->ControlFlags.VoltageModeILimitActive = false;
+	}
 
-	// if((isOverLimit == true) && (p_motor->ControlFlags.VoltageModeILimitActive == false))
-	// {
-	// 	p_motor->ControlFlags.VoltageModeILimitActive = true;
-	// 	PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
-	// }
-	// else /* alternatively remain set until manual reset */
-	// {
-	// 	p_motor->ControlFlags.VoltageModeILimitActive = false;
-	// }
+	vqReqOut = (p_motor->ControlFlags.VoltageModeILimitActive == true) ?
+		PID_Calc(&p_motor->PidIq, p_motor->ILimitVoltageMode_FracS16, FOC_GetIq(&p_motor->Foc)) : vqReq;
 
-	// vqReqOut = (p_motor->ControlFlags.VoltageModeILimitActive == true) ?
-	// 	PID_Calc(&p_motor->PidIq, p_motor->ILimitVoltageMode_FracS16, FOC_GetIq(&p_motor->Foc)) : vqReq;
-
-	// vqReqOut = PID_Calc(&p_motor->PidIq, p_motor->ILimitVoltageMode_FracS16, FOC_GetIq(&p_motor->Foc));
-	// if(vqReq < vqReqOut) { vqReqOut = vqReq; }
+	vqReqOut = PID_Calc(&p_motor->PidIq, p_motor->ILimitVoltageMode_FracS16, FOC_GetIq(&p_motor->Foc));
+	if(vqReq < vqReqOut) { vqReqOut = vqReq; }
 
 	// FOC_SetVq(&p_motor->Foc, vqReqOut);
-	FOC_SetVq(&p_motor->Foc, userOutput);
+	FOC_SetVq(&p_motor->Foc, vqReqOut);
 	FOC_SetVd(&p_motor->Foc, 0);
 }
 
@@ -284,6 +277,12 @@ static inline void _Motor_FOC_ProcFeedbackLoop(Motor_T * p_motor)
 	}
 	else /* Voltage Control mode - use current feedback for over current only */
 	{
+		if(p_motor->FeedbackModeFlags.Scalar == 1U)
+		{
+			userOutput = p_motor->RampCmd * (Linear_Function(&p_motor->SpeedVMatchRatio, p_motor->SpeedFeedback_Frac16 / 2)) / 65536; /* change to linear_frac16 */
+			if		(userOutput > 32767) 	{ userOutput = 32767; }
+			else if	(userOutput < -32767) 	{ userOutput = -32767; }
+		}
 		_Motor_FOC_ProcVoltageMode(p_motor, userOutput);
 	}
 }

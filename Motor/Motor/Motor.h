@@ -136,7 +136,7 @@ typedef union Motor_ControlFlags_Tag
 		uint32_t SensorFeedback				: 1U;
 		uint32_t HeatWarning 				: 1U;
 		uint32_t VoltageModeILimitActive 	: 1U;
-		uint32_t Active 					: 1U;
+		// uint32_t Active 					: 1U;
 		// uint32_t OpenLoop 		: 1U; 	 /* 0 -> Position feedback, 1 -> Openloop */
 		// uint32_t FieldWeakening 			: 1U;
 		// uint32_t SpeedLimitScalarActive 	: 1U;
@@ -395,9 +395,6 @@ typedef struct Motor_Tag
 	Linear_T UnitAngleRpm; 			/*  */
 	Linear_T UnitSurfaceSpeed; 		/*  */
 	qangle16_t SpeedAngle; 			/* Save for reference, MechanicalDelta */
-
-	/* Interpolated angle */
-	uint32_t InterpolatedAngleIndex;
 
 	/*
 		Six-Step
@@ -750,7 +747,7 @@ extern void Motor_SetDirectionReverse(Motor_T * p_motor);
 extern void Motor_ZeroSensor(Motor_T * p_motor);
 extern qangle16_t Motor_GetMechanicalAngle(Motor_T * p_motor);
 
-extern void Motor_ResetSensorMode(Motor_T * p_motor);
+extern void Motor_InitSensor(Motor_T * p_motor);
 extern void Motor_ResetUnitsVabc(Motor_T * p_motor);
 extern void Motor_ResetUnitsIabc(Motor_T * p_motor);
 extern void Motor_ResetUnitsHallEncoder(Motor_T * p_motor);

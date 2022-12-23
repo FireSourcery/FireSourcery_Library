@@ -80,16 +80,16 @@ void Motor_Analog_CaptureVc(Motor_T * p_motor)
 /******************************************************************************/
 static inline void CaptureIZeroToPeak(Motor_T * p_motor, uint16_t adcuZero, uint16_t adcu)
 {
-	int16_t signedAdcu = (int16_t)adcu - (int16_t)adcuZero;
-	uint16_t zeroToPeak = (signedAdcu > 0) ? signedAdcu : (0 - signedAdcu);
-	if(zeroToPeak > p_motor->IPhasePeakTemp_Adcu) { p_motor->IPhasePeakTemp_Adcu = zeroToPeak; }
+	int16_t zeroToPeak = (int16_t)adcu - (int16_t)adcuZero;
+	uint16_t zeroToPeakAbs = (zeroToPeak > 0) ? zeroToPeak : (0 - zeroToPeak);
+	if(zeroToPeakAbs > p_motor->IPhasePeakTemp_Adcu) { p_motor->IPhasePeakTemp_Adcu = zeroToPeakAbs; }
 }
 
 void Motor_Analog_CaptureIa(Motor_T * p_motor)
 {
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIa, 0U/* Motor_SixStep_CaptureIa */);
-	// CaptureIZeroToPeak(p_motor, p_motor->Parameters.IaZeroRef_Adcu, p_motor->AnalogResults.Ia_Adcu);
-		Debug_LedOff();
+	CaptureIZeroToPeak(p_motor, p_motor->Parameters.IaZeroRef_Adcu, p_motor->AnalogResults.Ia_Adcu);
+	Debug_LedOff();
 }
 
 void Motor_Analog_CaptureIb(Motor_T * p_motor)

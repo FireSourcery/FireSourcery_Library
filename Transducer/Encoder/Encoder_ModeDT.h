@@ -43,7 +43,7 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
 {
 	const uint32_t periodTs_Freq = p_encoder->CONFIG.SAMPLE_FREQ; /* periodTs = 1 / SAMPLE_FREQ */
 	const uint32_t timerFreq = p_encoder->CONFIG.TIMER_FREQ;
-	uint32_t deltaTh; /* clear on Capture DeltaT */
+	uint32_t deltaTh;
 	uint32_t periodTk_Freq;
 
 	Encoder_DeltaD_Capture(p_encoder);
@@ -55,19 +55,17 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
 	else
 	{
 		deltaTh = HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-
 		if(p_encoder->DeltaD != 0)
 		{
-			/* 	periodTk = periodTs + DeltaThPrev/timerFreq - deltaTh/timerFreq */
+			/* periodTk = periodTs + DeltaThPrev/timerFreq - deltaTh/timerFreq */
 			periodTk_Freq = (timerFreq * periodTs_Freq) / (timerFreq + (periodTs_Freq * (p_encoder->DeltaTh - deltaTh)));
-			/* 	if(periodTk > periodTs / 2) { freqD = (deltaD / periodTk) } */
-			// if((periodTs_Freq * 2U) > periodTk_Freq) { p_encoder->FreqD = (p_encoder->DeltaD * periodTk_Freq); }
+			/* freqD = (deltaD / periodTk) */
 			p_encoder->FreqD = (p_encoder->DeltaD * periodTk_Freq);
+			/* if(periodTk > periodTs / 2) { freqD = (deltaD / periodTk) } */
+			// if((periodTs_Freq * 2U) > periodTk_Freq) { p_encoder->FreqD = (p_encoder->DeltaD * periodTk_Freq); }
 		}
-
 		p_encoder->DeltaTh = deltaTh;
 	}
-
 }
 
 static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
@@ -82,10 +80,10 @@ static inline uint32_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 	return (freqD < p_encoder->CONFIG.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
 }
 
-
 static inline int32_t Encoder_ModeDT_GetAngularVelocity(Encoder_T * p_encoder)
 {
 	return ((p_encoder->FreqD << 8U) / p_encoder->Params.CountsPerRevolution) << 8U;
+	// 	return ((p_encoder->FreqD << ShiftMax) / p_encoder->Params.CountsPerRevolution) << (16-ShiftMax);
 }
 
 static inline int32_t Encoder_ModeDT_GetRotationalVelocity(Encoder_T * p_encoder)
@@ -150,4 +148,7 @@ static inline int32_t Encoder_ModeDT_GetGroundVelocity_Kmh(Encoder_T * p_encoder
 
 extern void Encoder_ModeDT_Init(Encoder_T * p_encoder);
 extern void Encoder_ModeDT_SetInitial(Encoder_T * p_encoder);
+extern void Encoder_ModeDT_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRevolution);
+extern void Encoder_ModeDT_SetScalarSpeedRef(Encoder_T * p_encoder, uint16_t speedRef);
+
 #endif

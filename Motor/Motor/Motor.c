@@ -46,7 +46,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	/*
 		HW Wrappers Init
 	*/
-	Motor_ResetSensorMode(p_motor);
+	Motor_InitSensor(p_motor);
 	Phase_Init(&p_motor->Phase);
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
 	Thermistor_Init(&p_motor->Thermistor);
@@ -218,7 +218,7 @@ void Motor_SetDirectionReverse(Motor_T * p_motor)
 	Propagate param values
 */
 /******************************************************************************/
-void Motor_ResetSensorMode(Motor_T * p_motor)
+void Motor_InitSensor(Motor_T * p_motor)
 {
 	switch(p_motor->Parameters.SensorMode)
 	{
@@ -313,7 +313,7 @@ void Motor_ResetUnitsHallEncoder(Motor_T * p_motor)
 {
 	if((p_motor->Parameters.PolePairs * 6U != p_motor->Encoder.Params.CountsPerRevolution) || (p_motor->Parameters.PolePairs != p_motor->Encoder.Params.InterpolateAngleScalar))
 	{
-		Encoder_SetCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs * 6U);
+		Encoder_ModeDT_SetCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs * 6U);
 		Encoder_DeltaT_SetInterpolateAngleScalar(&p_motor->Encoder, p_motor->Parameters.PolePairs);
 	}
 	p_motor->Encoder.Params.IsQuadratureCaptureEnabled = false;
@@ -325,7 +325,7 @@ void Motor_ResetUnitsEncoder(Motor_T * p_motor)
 {
 	if(p_motor->Parameters.SpeedFeedbackRef_Rpm != p_motor->Encoder.Params.ScalarSpeedRef_Rpm)
 	{
-		Encoder_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
+		Encoder_ModeDT_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 	}
 	// if(p_motor->Parameters.GearRatio_Factor != p_motor->Encoder.Params.GearRatio_Factor) ||
 	// {

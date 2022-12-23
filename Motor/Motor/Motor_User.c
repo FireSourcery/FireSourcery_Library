@@ -588,7 +588,7 @@ void Motor_User_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode)
 {
 	p_motor->Parameters.SensorMode = mode;
 #ifdef CONFIG_MOTOR_PROPAGATE_SET_PARAM_ENABLE
-	Motor_ResetSensorMode(p_motor);
+	Motor_InitSensor(p_motor);
 #endif
 }
 /******************************************************************************/

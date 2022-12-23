@@ -57,12 +57,13 @@
 extern void _Motor_User_ActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 
 /*!
-	@param[in] userCmd [-32768:32767]
-	@return int32_t[-32767:32767]
+	Convert user reference direction to CCW/CW direction
+	@param[in] userCmd int16_t[-32768:32767]
+	@return int32_t[-32768:32768]
 */
-static inline int32_t _Motor_User_CalcDirectionalCmd(Motor_T * p_motor, int32_t userCmd) //int16_t?
+static inline int32_t _Motor_User_CalcDirectionalCmd(Motor_T * p_motor, int16_t userCmd)
 {
-	return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? userCmd : 0 - userCmd;
+	return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? userCmd : (int32_t)0 - userCmd;
 }
 
 /******************************************************************************/
@@ -72,8 +73,8 @@ static inline int32_t _Motor_User_CalcDirectionalCmd(Motor_T * p_motor, int32_t 
 /******************************************************************************/
 static inline void _Motor_User_SetVoltageModeILimit(Motor_T * p_motor, bool isMotoring)
 {
-	int32_t iLimit = (isMotoring == true) ? (p_motor->ILimitMotoring_Frac16 / 3) : (0 - p_motor->ILimitGenerating_Frac16 / 3); /* temp /3, todo account for id */
-	p_motor->ILimitVoltageMode_FracS16 = _Motor_User_CalcDirectionalCmd(p_motor, iLimit); 	/* determine limit input into IPid */
+	int32_t iLimit = (isMotoring == true) ? (p_motor->ILimitMotoring_Frac16) : (p_motor->ILimitGenerating_Frac16); /* temp /3, todo account for id */
+	p_motor->ILimitVoltageMode_FracS16 = _Motor_User_CalcDirectionalCmd(p_motor, iLimit / 2); 	/* determine limit input into IPid */
 }
 
 
@@ -87,10 +88,10 @@ static inline void Motor_User_SetVoltageMode(Motor_T * p_motor)
 */
 static inline void Motor_User_SetVoltageCmdValue(Motor_T * p_motor, int16_t voltage)
 {
-	int32_t input = (voltage > 0) ? voltage : 0;
-	bool isMotoring = (p_motor->Direction == MOTOR_DIRECTION_CCW) ? (voltage - p_motor->RampCmd >= 0) : (voltage - p_motor->RampCmd <= 0);
+	int32_t input = (voltage > 0) ? _Motor_User_CalcDirectionalCmd(p_motor, voltage) : 0; /* Reverse voltage use change direction */
+	bool isMotoring = (p_motor->Direction == MOTOR_DIRECTION_CCW) ? (voltage >= p_motor->RampCmd) : (voltage <= p_motor->RampCmd);
 	_Motor_User_SetVoltageModeILimit(p_motor, isMotoring);
-	Motor_SetRampTarget(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, input));
+	Motor_SetRampTarget(p_motor, input);
 }
 
 static inline void Motor_User_SetVoltageModeCmd(Motor_T * p_motor, int16_t voltage)

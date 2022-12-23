@@ -33,6 +33,8 @@
 #include "Encoder_DeltaT.h"
 #include <string.h>
 
+static void ResetUnitsScalarSpeed(Encoder_T * p_encoder);
+
 void Encoder_ModeDT_Init(Encoder_T * p_encoder)
 {
 	if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
@@ -42,8 +44,7 @@ void Encoder_ModeDT_Init(Encoder_T * p_encoder)
 	p_encoder->UnitT_Freq = 1U;
 	_Encoder_ResetUnitsAngular(p_encoder);
 	_Encoder_ResetUnitsLinear(p_encoder);
-	_Encoder_ResetUnitsScalarSpeed(p_encoder);
-	p_encoder->UnitScalarSpeed = (uint32_t)60U * 65536U / p_encoder->Params.CountsPerRevolution; // p_encoder->Params.ScalarSpeedRef_Rpm;
+	ResetUnitsScalarSpeed(p_encoder);
 
 	Encoder_DeltaD_SetInitial(p_encoder);
 	Encoder_DeltaT_SetInitial(p_encoder);
@@ -55,4 +56,31 @@ void Encoder_ModeDT_SetInitial(Encoder_T * p_encoder)
 	Encoder_DeltaT_SetInitial(p_encoder);
 	p_encoder->DeltaTh = 0U;
 	p_encoder->FreqD = 0;
+}
+
+static void ResetUnitsScalarSpeed(Encoder_T * p_encoder)
+{
+	p_encoder->UnitScalarSpeed = (uint32_t)60U * 65536U / p_encoder->Params.CountsPerRevolution; // p_encoder->Params.ScalarSpeedRef_Rpm;
+	// freqDMax = p_encoder->Params.ScalarSpeedRef_Rpm * 2U * p_encoder->Params.CountsPerRevolution / 60U;
+	// p_encoder->UnitScalarSpeed_Shift = 0U;
+	// // shiftMax = log2(INT32_MAX / freqDMax) - 1U;
+	// while(((INT32_MAX / freqDMax) >> p_encoder->UnitScalarSpeed_Shift) > 1U) { p_encoder->UnitScalarSpeed_Shift++; }
+	// p_encoder->UnitScalarSpeed_Factor = MaxLeftShiftDivide(65536U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm / 60U, p_encoder->UnitScalarSpeed_Shift);
+
+	// p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm / 60U, 16U);
+	// p_encoder->UnitScalarSpeed = (((uint64_t)p_encoder->UnitT_Freq * 60U) << 16U) / (p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm);
+}
+
+void Encoder_ModeDT_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRevolution)
+{
+	p_encoder->Params.CountsPerRevolution = countsPerRevolution;
+	_Encoder_ResetUnitsAngular(p_encoder);
+	_Encoder_ResetUnitsInterpolateAngle(p_encoder);
+	ResetUnitsScalarSpeed(p_encoder);
+}
+
+void Encoder_ModeDT_SetScalarSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
+{
+	p_encoder->Params.ScalarSpeedRef_Rpm = speedRef;
+	ResetUnitsScalarSpeed(p_encoder);
 }

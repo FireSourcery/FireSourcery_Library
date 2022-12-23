@@ -24,8 +24,8 @@
 /*!
 	@file  	Encoder_DeltaT.h
 	@author FireSourcery
+	@brief 	Capture DeltaT Mode, displacement is fixed
 	@version V0
-	@brief 	Capture Delta T Mode, displacement is fixed
 */
 /******************************************************************************/
 #ifndef ENCODER_DELTA_T_H
@@ -136,7 +136,7 @@ static inline bool Encoder_DeltaT_CheckExtendedStop(Encoder_T * p_encoder)
 	pollingIndex * 1(DeltaD) * [UnitInterpolateAngle] / DeltaT
 	UnitInterpolateAngle = [AngleSize[65536] * UnitT_Freq / POLLING_FREQ / CountsPerRevolution]
 */
-static inline uint32_t Encoder_DeltaT_InterpolateAngle(Encoder_T * p_encoder, uint32_t pollingIndex)
+static inline uint32_t Encoder_DeltaT_InterpolateAngleIndex(Encoder_T * p_encoder, uint32_t pollingIndex)
 {
 	uint32_t angle = pollingIndex * p_encoder->UnitInterpolateAngle / p_encoder->DeltaT;
 	return (angle > p_encoder->InterpolateAngleLimit) ? p_encoder->InterpolateAngleLimit : angle;
@@ -145,7 +145,7 @@ static inline uint32_t Encoder_DeltaT_InterpolateAngle(Encoder_T * p_encoder, ui
 static inline uint32_t Encoder_DeltaT_ProcInterpolateAngle(Encoder_T * p_encoder)
 {
 	p_encoder->InterpolationIndex++;
-	return Encoder_DeltaT_InterpolateAngle(p_encoder, p_encoder->InterpolationIndex);
+	return Encoder_DeltaT_InterpolateAngleIndex(p_encoder, p_encoder->InterpolationIndex);
 }
 
 static inline void Encoder_DeltaT_ZeroInterpolateAngle(Encoder_T * p_encoder)
@@ -234,40 +234,40 @@ static inline uint32_t Encoder_DeltaT_GetScalarSpeed(Encoder_T * p_encoder)
 */
 /******************************************************************************/
 /* In UnitsPerSecond */
-// static inline uint32_t Encoder_DeltaT_GetLinearSpeed(Encoder_T * p_encoder)
-// {
-// 	return Encoder_CalcLinearSpeed(p_encoder, 1U, p_encoder->DeltaT);
-// }
+static inline uint32_t Encoder_DeltaT_GetLinearSpeed(Encoder_T * p_encoder)
+{
+	return Encoder_CalcLinearSpeed(p_encoder, 1U, p_encoder->DeltaT);
+}
 
-// static inline uint32_t Encoder_DeltaT_ConvertFromLinearSpeed(Encoder_T * p_encoder, uint32_t speed_UnitsPerSecond)
-// {
-// 	return (speed_UnitsPerSecond == 0U) ? 0U : p_encoder->UnitLinearSpeed / speed_UnitsPerSecond;
-// }
+static inline uint32_t Encoder_DeltaT_ConvertFromLinearSpeed(Encoder_T * p_encoder, uint32_t speed_UnitsPerSecond)
+{
+	return (speed_UnitsPerSecond == 0U) ? 0U : p_encoder->UnitLinearSpeed / speed_UnitsPerSecond;
+}
 
-// static inline uint32_t Encoder_DeltaT_ConvertFromLinearSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t speed_UnitsPerMinute)
-// {
-// 	return (speed_UnitsPerMinute == 0U) ? 0U : p_encoder->UnitLinearSpeed * 60U / speed_UnitsPerMinute;
-// }
+static inline uint32_t Encoder_DeltaT_ConvertFromLinearSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t speed_UnitsPerMinute)
+{
+	return (speed_UnitsPerMinute == 0U) ? 0U : p_encoder->UnitLinearSpeed * 60U / speed_UnitsPerMinute;
+}
 
-// static inline uint32_t Encoder_DeltaT_ConvertToLinearSpeed(Encoder_T * p_encoder, uint32_t deltaT_ticks)
-// {
-// 	return Encoder_DeltaT_ConvertFromLinearSpeed(p_encoder, deltaT_ticks); /* Same division */
-// }
+static inline uint32_t Encoder_DeltaT_ConvertToLinearSpeed(Encoder_T * p_encoder, uint32_t deltaT_ticks)
+{
+	return Encoder_DeltaT_ConvertFromLinearSpeed(p_encoder, deltaT_ticks); /* Same division */
+}
 
-// static inline uint32_t Encoder_DeltaT_ConvertToLinearSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t deltaT_Ticks)
-// {
-// 	return Encoder_DeltaT_ConvertFromLinearSpeed_UnitsPerMinute(p_encoder, deltaT_Ticks); /* Same division */
-// }
+static inline uint32_t Encoder_DeltaT_ConvertToLinearSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t deltaT_Ticks)
+{
+	return Encoder_DeltaT_ConvertFromLinearSpeed_UnitsPerMinute(p_encoder, deltaT_Ticks); /* Same division */
+}
 
-// static inline uint32_t Encoder_DeltaT_GetGroundSpeed_Mph(Encoder_T * p_encoder)
-// {
-// 	return Encoder_CalcGroundSpeed_Mph(p_encoder, 1U, p_encoder->DeltaT);
-// }
+static inline uint32_t Encoder_DeltaT_GetGroundSpeed_Mph(Encoder_T * p_encoder)
+{
+	return Encoder_CalcGroundSpeed_Mph(p_encoder, 1U, p_encoder->DeltaT);
+}
 
-// static inline uint32_t Encoder_DeltaT_GetGroundSpeed_Kmh(Encoder_T * p_encoder)
-// {
-// 	return Encoder_CalcGroundSpeed_Kmh(p_encoder, 1U, p_encoder->DeltaT);
-// }
+static inline uint32_t Encoder_DeltaT_GetGroundSpeed_Kmh(Encoder_T * p_encoder)
+{
+	return Encoder_CalcGroundSpeed_Kmh(p_encoder, 1U, p_encoder->DeltaT);
+}
 
 /******************************************************************************/
 /*!
@@ -287,39 +287,3 @@ extern void Encoder_DeltaT_SetInterpolateAngleScalar(Encoder_T * p_encoder, uint
 
 #endif
 
-/*
-	e.g. CaptureDeltaT, Fixed DeltaD:
-	UnitT_Freq = 312500							=> Period = 3.2 uS
-	TimerMax = 0xFFFF							=> Overflow 209,712 us, 209 ms
-	DeltaDUnits(CountsPerRevolution) = 1/8 (8) 	=> AngleRes 0.125 (of 1), 8,169.5 Angle16
-
-	DeltaT = 0xFFFF => Speed = 312500*(1/8)/0xFFFF	= 0.5976 rps, 35.76 RPM
-	DeltaT = 1 		=> Speed = 312500*(1/8) 		= 39062.5 rps, 2343750 RPM
-	DeltaT = 100	=> Speed = 312500*(1/8)/100		= 390.625 rps, 23437.50 RPM // accurate within 1% below
-
-	1RPM: DeltaT = (312500/8)/(1/60) = 2,343,750
-	RPM = 100, 		RPS = 1.6667, 	Angle16Real = 109225 	=> ISR = 13.3333 Hz, 75ms,	 => DeltaT = 23437, 	Angle16 = 109227, error 2,
-	RPM = 1000, 	RPS = 16.667, 	Angle16Real = 1092250 	=> ISR = 133.333 Hz, 7.5ms,	=> DeltaT = 2343, 		Angle16 = 1092599, error 349, 0.0053 rps
-	RPM = 10000, 	RPS = 166.67,	Angle16Real = 10922500 	=> ISR = 1333.33 Hz, .75ms,	=> DeltaT = 234, 		Angle16 = 10940004, error 17504, .2670 rps
-
-	e.g. 2:
-	UnitT_Freq = 2,000,000						=> Period = .5 uS
-	TimerMax = 0xFFFF								=> Overflow 32677.5us, 32.6775 ms
-	TimerMax = 0xFFFFFFFF							=> Overflow 35.7913941 minutes
-	DeltaDUnits(CountsPerRevolution) = 1/2048(2048) 	=> AngleRes 0.000488 (of 1), 32 Angle16
-
-	DeltaT = 0xFFFF => Speed = 2,000,000*(1/2048)/0xFFFF	= 0.01490 rps, 0.89408331426 RPM
-	DeltaT = 1 		=> Speed = 2,000,000*(1/2048) 			= 976.5625 rps, 58593.75 RPM
-	DeltaT = 10		=> Speed = 2,000,000*(1/2048)/10 		= 97.65625 rps, 5859.375 RPM => accurate within 10% below
-
-	1RPM: DeltaT = (2,000,000/2048)/(1/60) = 58593.75, angle 1092.26666667
-	RPM = 100, 		RPS = 1.6667, Angle16Real = 109226.66667 => ISR = 3413.3333 Hz, 292.96875us, 	=> DeltaT = 585, 	Angle16 = 109400, error 175
-	RPM = 1000, 	RPS = 16.667, Angle16Real = 1092266.6667 => ISR = 34133.333 Hz, 29.29687us, 	=> DeltaT = 58, 	Angle16 = 1103431, error 11181,	0.1706 rps
-	RPM = 10000, 	RPS = 166.67, Angle16Real = 10922666.667 => ISR = 341333.33 Hz, 2.92968us,		=> DeltaT = 5, 		Angle16 = 12799804, error 1877304, 28.645 rps
-
-	PPR = 8192 => 136.5333 ISR/s/RPM => 10000 rpm => 1,365,333 ISR/s
-	2MHz Period = .5 uS => accurate within 1% when speed < 146.484375 RPM, within 10% when 1464.84375
-	20MHz Period = .05 uS => accurate within 1% when speed < 1464.84375 RPM, within 10% when 14648.4375
-
-	20000Hz/(10000RPM/60) => 120 PPR. Less than 120 PPR, use Fixed DeltaD
-*/
