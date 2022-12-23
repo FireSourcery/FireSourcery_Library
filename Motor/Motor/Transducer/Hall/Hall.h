@@ -247,7 +247,9 @@ static inline bool Hall_PollCaptureRotorAngle(Hall_T * p_hall)
 }
 
 /* Next poll is edge */
-static inline void Hall_ResetCapture(Hall_T * p_hall) { p_hall->Sensors.State = 0U; p_hall->Angle = 0U; }
+static inline void Hall_ResetCapture(Hall_T * p_hall) { p_hall->Sensors.State = 0U;	p_hall->Angle = 0U; }
+
+static inline void Hall_SetInitial(Hall_T * p_hall) { Hall_CaptureRotorAngle_ISR(p_hall); }
 
 /*
 	return true once per hall cycle

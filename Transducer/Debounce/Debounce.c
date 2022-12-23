@@ -82,9 +82,9 @@ bool Debounce_PollRisingEdge(Debounce_T * p_debounce)
 	return isEdge;
 }
 
-bool Debounce_PollEdge(Debounce_T * p_debounce)
+bool Debounce_PollDualEdge(Debounce_T * p_debounce)
 {
-	bool isEdge = ((p_debounce->DebouncedState ^ p_debounce->DebouncedStatePrev) == false);
+	bool isEdge = ((p_debounce->DebouncedState ^ p_debounce->DebouncedStatePrev) == true);
 	if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
 	return isEdge;
 }

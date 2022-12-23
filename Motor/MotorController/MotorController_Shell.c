@@ -130,8 +130,8 @@ static void PrintSensor(Terminal_T * p_terminal, Motor_T * p_motor)
 		case MOTOR_SENSOR_MODE_ENCODER:
 			// Terminal_SendNum(p_terminal, step);														Terminal_SendString(p_terminal, " ");
 			Terminal_SendNum(p_terminal, Encoder_GetCounterD(&p_motor->Encoder));					Terminal_SendString(p_terminal, ", ");
-			Terminal_SendNum(p_terminal, Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder));		Terminal_SendString(p_terminal, ", ");
-			Terminal_SendNum(p_terminal, Encoder_Motor_GetElectricalTheta(&p_motor->Encoder));		Terminal_SendString(p_terminal, ", ");
+			// Terminal_SendNum(p_terminal, Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder));		Terminal_SendString(p_terminal, ", ");
+			// Terminal_SendNum(p_terminal, Encoder_Motor_GetElectricalTheta(&p_motor->Encoder));		Terminal_SendString(p_terminal, ", ");
 			Terminal_SendNum(p_terminal, p_motor->Encoder.IndexCount);								Terminal_SendString(p_terminal, ", ");
 			Terminal_SendNum(p_terminal, p_motor->Encoder.ErrorCount);								Terminal_SendString(p_terminal, "\r\n");
 			break;
@@ -259,8 +259,11 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			Terminal_SendString(p_terminal, "Speed: ");	Terminal_SendNum(p_terminal, Motor_User_GetSpeed_Rpm(p_motor)); Terminal_SendString(p_terminal, " RPM, ");
 			Terminal_SendNum(p_terminal, Motor_User_GetSpeed_Frac16(p_motor)); Terminal_SendString(p_terminal, " Frac16\r\n");
 
-			// Terminal_SendString(p_terminal, "Speed2: "); Terminal_SendNum(p_terminal, p_motor->Speed2_RPM); Terminal_SendString(p_terminal, " RPM ");
-			// Terminal_SendNum(p_terminal, p_motor->Speed2_Frac16); Terminal_SendString(p_terminal, " Frac16\r\n");
+			Terminal_SendString(p_terminal, "TestSpeed: ");
+			Terminal_SendNum(p_terminal, Encoder_ModeDT_GetRotationalVelocity_RPM(&p_motor->Encoder)); Terminal_SendString(p_terminal, " RPM, ");
+			Terminal_SendNum(p_terminal, Encoder_ModeDT_GetScalarVelocity(&p_motor->Encoder)); Terminal_SendString(p_terminal, " Frac16\r\n");
+			Terminal_SendString(p_terminal, "DeltaT: "); Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaT); Terminal_SendString(p_terminal, " \r\n");
+			Terminal_SendString(p_terminal, "FreqD: "); Terminal_SendNum(p_terminal, p_motor->Encoder.FreqD); Terminal_SendString(p_terminal, " \r\n");
 
 			// Terminal_SendString(p_terminal, "Throttle: "); 	Terminal_SendNum(p_terminal, MotAnalogUser_GetThrottle(&p_mc->AnalogUser)); Terminal_SendString(p_terminal, " Frac16\r\n");
 			// Terminal_SendString(p_terminal, "Brake: "); 	Terminal_SendNum(p_terminal, MotAnalogUser_GetBrake(&p_mc->AnalogUser)); Terminal_SendString(p_terminal, " Frac16\r\n");
@@ -275,7 +278,9 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			Terminal_SendString(p_terminal, ", Vd: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Vd);
 			Terminal_SendString(p_terminal, " Q1.15\r\n");
 
-        	Terminal_SendString(p_terminal, "IPhase: "); Terminal_SendNum(p_terminal, Motor_User_GetIPhase_Amp(p_motor)); Terminal_SendString(p_terminal, " Amp\r\n");
+        	Terminal_SendString(p_terminal, "IPhasePeak: "); Terminal_SendNum(p_terminal, Motor_User_GetIPhase_Amp(p_motor)); Terminal_SendString(p_terminal, " Amp\r\n");
+			Terminal_SendString(p_terminal, "Capture: "); Terminal_SendNum(p_terminal, p_motor->IPhasePeak_Adcu); Terminal_SendString(p_terminal, " ADCU\r\n");
+			Terminal_SendString(p_terminal, "FOC: "); Terminal_SendNum(p_terminal, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitIa, FOC_GetIMagnitude(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_terminal, " ADCU\r\n");
 
 
 			// Terminal_SendString(p_terminal, "Ia: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Ia); Terminal_SendString(p_terminal, " \r\n");

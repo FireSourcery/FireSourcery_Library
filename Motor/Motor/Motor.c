@@ -112,12 +112,12 @@ void Motor_ZeroSensor(Motor_T * p_motor)
 	{
 		case MOTOR_SENSOR_MODE_HALL:
 			Motor_SetPositionFeedback(p_motor, 1U); /* move to init? */
-			Encoder_DeltaT_SetInitial(&p_motor->Encoder); /* Set first capture DeltaT = 0xffff */
-			Hall_ResetCapture(&p_motor->Hall);
+			Encoder_ModeDT_SetInitial(&p_motor->Encoder);
+			Hall_SetInitial(&p_motor->Hall);
 			break;
 		case MOTOR_SENSOR_MODE_ENCODER:
 			Motor_SetPositionFeedback(p_motor, 1U);
-			Encoder_DeltaD_SetInitial(&p_motor->Encoder);
+			Encoder_ModeDT_SetInitial(&p_motor->Encoder);
 			break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_SENSOR_MODE_SIN_COS:
@@ -144,8 +144,8 @@ qangle16_t Motor_GetMechanicalAngle(Motor_T * p_motor)
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_SENSORLESS: 	angle = 0; 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
+		// case MOTOR_SENSOR_MODE_HALL: 		angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
+		// case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 			break;
 #endif
@@ -225,14 +225,16 @@ void Motor_ResetSensorMode(Motor_T * p_motor)
 		case MOTOR_SENSOR_MODE_HALL:
 			p_motor->CONFIG.INIT_SENSOR_HALL();
 			Hall_Init(&p_motor->Hall);
-			Encoder_Motor_InitModeT(&p_motor->Encoder);
-			Motor_ResetUnitsHallPolePairs(p_motor);
+			// Encoder_Motor_InitModeT(&p_motor->Encoder);
+			Encoder_ModeDT_Init(&p_motor->Encoder);
+			Motor_ResetUnitsHallEncoder(p_motor);
 			Motor_ResetUnitsEncoder(p_motor); //testing
 			Motor_ResetUnitsAngleSpeed_ElecControl(p_motor);
 			break;
 		case MOTOR_SENSOR_MODE_ENCODER:
 			p_motor->CONFIG.INIT_SENSOR_ENCODER();
-			Encoder_Motor_InitModeD(&p_motor->Encoder);
+			// Encoder_Motor_InitModeD(&p_motor->Encoder);
+			Encoder_ModeDT_Init(&p_motor->Encoder);
 			Motor_ResetUnitsEncoder(p_motor);
 			break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
@@ -307,29 +309,20 @@ void Motor_ResetUnitsAngleSpeed_Mech(Motor_T * p_motor)
 	Reset Sensors, propagate Motor Params to sensor module independent params,
 	Sync to main motor module setting
 */
-void Motor_ResetUnitsHallPolePairs(Motor_T * p_motor)
+void Motor_ResetUnitsHallEncoder(Motor_T * p_motor)
 {
-	if((p_motor->Parameters.PolePairs != p_motor->Encoder.Params.MotorPolePairs) || (p_motor->Parameters.PolePairs * 6U != p_motor->Encoder.Params.CountsPerRevolution))
+	if((p_motor->Parameters.PolePairs * 6U != p_motor->Encoder.Params.CountsPerRevolution) || (p_motor->Parameters.PolePairs != p_motor->Encoder.Params.InterpolateAngleScalar))
 	{
-		Encoder_Motor_SetHallCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs);
+		Encoder_SetCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs * 6U);
+		Encoder_DeltaT_SetInterpolateAngleScalar(&p_motor->Encoder, p_motor->Parameters.PolePairs);
 	}
+	p_motor->Encoder.Params.IsQuadratureCaptureEnabled = false;
 }
 
-// void Motor_ResetUnitsEncoderPolePairs(Motor_T * p_motor)
-// {
-// 	if(p_motor->Parameters.PolePairs != p_motor->Encoder.Params.MotorPolePairs)
-// 	{
-// 		Encoder_Motor_SetPolePairs(&p_motor->Encoder, p_motor->Parameters.PolePairs);
-// 	}
-// }
 
 /* Common, Set after PolePairs */
 void Motor_ResetUnitsEncoder(Motor_T * p_motor)
 {
-	if(p_motor->Parameters.PolePairs != p_motor->Encoder.Params.MotorPolePairs)
-	{
-		Encoder_Motor_SetPolePairs(&p_motor->Encoder, p_motor->Parameters.PolePairs);
-	}
 	if(p_motor->Parameters.SpeedFeedbackRef_Rpm != p_motor->Encoder.Params.ScalarSpeedRef_Rpm)
 	{
 		Encoder_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);

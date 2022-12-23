@@ -99,9 +99,13 @@ void _Encoder_ResetUnitsAngular(Encoder_T * p_encoder)
 	p_encoder->UnitAngularSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->Params.CountsPerRevolution, ENCODER_ANGLE16);
 	// p_encoder->UnitAngularSpeed = ((uint64_t)p_encoder->UnitT_Freq << ENCODER_ANGLE16) / p_encoder->Params.CountsPerRevolution;
 
-	/* p_encoder->UnitAngularSpeed / p_encoder->CONFIG.POLLING_FREQ if no overflow  */
-	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->CONFIG.POLLING_FREQ * p_encoder->Params.CountsPerRevolution, ENCODER_ANGLE16);
+}
+
+void _Encoder_ResetUnitsInterpolateAngle(Encoder_T * p_encoder)
+{
+	p_encoder->UnitInterpolateAngle = MaxLeftShiftDivide(p_encoder->CONFIG.TIMER_FREQ * p_encoder->Params.InterpolateAngleScalar, p_encoder->CONFIG.POLLING_FREQ * p_encoder->Params.CountsPerRevolution, ENCODER_ANGLE16);
 	// p_encoder->UnitInterpolateAngle = ((uint64_t)p_encoder->UnitT_Freq << ENCODER_ANGLE16) / p_encoder->CONFIG.POLLING_FREQ * p_encoder->Params.CountsPerRevolution ;
+	p_encoder->InterpolateAngleLimit = (1UL << ENCODER_ANGLE16) * p_encoder->Params.InterpolateAngleScalar / p_encoder->Params.CountsPerRevolution;
 }
 
 void _Encoder_ResetUnitsLinear(Encoder_T * p_encoder)
@@ -134,9 +138,10 @@ void _Encoder_ResetUnitsLinear(Encoder_T * p_encoder)
 	*/
 	p_encoder->UnitLinearSpeed = (p_encoder->UnitT_Freq * p_encoder->Params.GearRatio_Divisor * p_encoder->Params.SurfaceDiameter * 314) / (p_encoder->Params.CountsPerRevolution * p_encoder->Params.GearRatio_Factor * 100);
 
-	// DistancePerRevolution = (gearRatio_Divisor * surfaceDiameter_Mm * 314 / gearRatio_Factor * 100)
-	// p_encoder->UnitLinearD_Factor = p_encoder->Params.DistancePerRevolution;
-	// p_encoder->UnitLinearSpeed = p_encoder->Params.DistancePerRevolution * p_encoder->UnitT_Freq;
+	// DistancePerRevolution = [gearRatio_Divisor * surfaceDiameter_Mm * 314 / gearRatio_Factor * 100]
+	// p_encoder->UnitLinearSpeed =  p_encoder->CONFIG.SAMPLE_FREQ * DistancePerRevolution / p_encoder->Params.CountsPerRevolution
+	// p_encoder->UnitLinearSpeed_Factor = (p_encoder->CONFIG.SAMPLE_FREQ * p_encoder->Params.GearRatio_Divisor * p_encoder->Params.SurfaceDiameter * 314);
+	// p_encoder->UnitLinearSpeed_Divisor = (p_encoder->Params.CountsPerRevolution * p_encoder->Params.GearRatio_Factor * 100);
 }
 
 void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
@@ -149,9 +154,8 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 			ScalarSpeedRef_Rpm = 10000 => 4,095,937.5
 		e.g.  UnitT_Freq = 1000, CountsPerRevolution = 8192,
 			ScalarSpeedRef_Rpm = 5000 => 96
-			todo
 	*/
-	p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq * 60U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm, 16U);
+	p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm / 60U, 16U);
 	// p_encoder->UnitScalarSpeed = (((uint64_t)p_encoder->UnitT_Freq * 60U) << 16U) / (p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm);
 }
 
@@ -163,6 +167,7 @@ void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRev
 	p_encoder->Params.CountsPerRevolution = countsPerRevolution;
 	_Encoder_ResetUnitsAngular(p_encoder);
 	_Encoder_ResetUnitsScalarSpeed(p_encoder);
+	_Encoder_ResetUnitsInterpolateAngle(p_encoder);
 // #ifdef CONFIG_ENCODER_DYNAMIC_TIMER && EMULATED
 // 	_Encoder_ResetTimerFreq(p_encoder);
 // #endif

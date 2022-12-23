@@ -34,10 +34,8 @@
 /*!
 
 */
-void Encoder_DeltaD_Init(Encoder_T * p_encoder)
+void _Encoder_DeltaD_Init(Encoder_T * p_encoder)
 {
-	if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
-
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
 	HAL_Encoder_InitCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
 	HAL_Encoder_WriteCounterMax(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, p_encoder->Params.CountsPerRevolution - 1U);
@@ -48,17 +46,25 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 		Pin_Input_Init(&p_encoder->PinA);
 		Pin_Input_Init(&p_encoder->PinB);
 	}
+	#endif
 	// HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
 	// HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
 	// HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
-	#endif
 #endif
+}
+/*!
 
-	p_encoder->UnitT_Freq = p_encoder->CONFIG.SPEED_SAMPLE_FREQ;
+*/
+void Encoder_DeltaD_Init(Encoder_T * p_encoder)
+{
+	if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
+	_Encoder_DeltaD_Init(p_encoder);
+
+	// p_encoder->UnitT_Freq = p_encoder->CONFIG.SAMPLE_FREQ;
 	_Encoder_ResetUnitsAngular(p_encoder);
 	_Encoder_ResetUnitsLinear(p_encoder);
 	_Encoder_ResetUnitsScalarSpeed(p_encoder);
-	if(p_encoder->Params.CountsPerRevolution > (UINT32_MAX / p_encoder->UnitAngularSpeed)) { p_encoder->UnitAngularSpeed = 0U; }
+	// if(p_encoder->Params.CountsPerRevolution > (UINT32_MAX / p_encoder->UnitAngularSpeed)) { p_encoder->UnitAngularSpeed = 0U; }
 
 	p_encoder->DeltaT = 1U;
 	Encoder_DeltaD_SetInitial(p_encoder);
@@ -72,6 +78,7 @@ void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder)
 	_Encoder_ZeroAngle(p_encoder);
 #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
 	_Encoder_ZeroAngle(p_encoder);
+	p_encoder->DeltaD = 0U;
 #endif
 }
 

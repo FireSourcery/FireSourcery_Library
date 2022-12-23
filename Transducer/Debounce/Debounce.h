@@ -70,7 +70,7 @@ extern void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime);
 extern bool Debounce_CaptureState(Debounce_T * p_debounce);
 extern bool Debounce_PollFallingEdge(Debounce_T * p_debounce);
 extern bool Debounce_PollRisingEdge(Debounce_T * p_debounce);
-extern bool Debounce_PollEdge(Debounce_T * p_debounce);
+extern bool Debounce_PollDualEdge(Debounce_T * p_debounce);
 
 //static inline uint16_t Debounce_GetStateTime()   { }
 //static inline bool Debounce_GetLongPress(Debounce_T * p_debounce){}

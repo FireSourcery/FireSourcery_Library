@@ -212,8 +212,6 @@ static void Run_Proc(Motor_T * p_motor)
 static StateMachine_State_T * Run_InputControl(Motor_T * p_motor, uint32_t voidVar)
 {
 	(void)voidVar;
-	// Motor_ProcCommutationMode(p_motor, Motor_FOC_SetOutputMatchRun, 0U);
-	// return 0U;
 	return &STATE_RUN; /* repeat entry function */
 }
 

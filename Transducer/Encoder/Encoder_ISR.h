@@ -34,7 +34,6 @@
 #include "Encoder.h"
 #include "Encoder_DeltaD.h"
 #include "Encoder_DeltaT.h"
-#include "Encoder_Motor.h"
 
 /******************************************************************************/
 /*!
@@ -55,77 +54,19 @@ static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 // #endif
 }
 
-/******************************************************************************/
-/*!
-	@brief 	SW Capture Functions - Emulated ModeD, ModeDT
-*/
-/******************************************************************************/
-/******************************************************************************/
-/*
-	Quadrature, Signed Direction
-*/
-/******************************************************************************/
-static inline uint8_t _Encoder_CapturePhasesState(Encoder_T * p_encoder)
+static inline void Encoder_CapturePulse_Quadrature(Encoder_T * p_encoder)
 {
-	p_encoder->Phases.PrevA = p_encoder->Phases.A;
-	p_encoder->Phases.PrevB = p_encoder->Phases.B;
-	p_encoder->Phases.A = Pin_Input_ReadPhysical(&p_encoder->PinA);
-	p_encoder->Phases.B = Pin_Input_ReadPhysical(&p_encoder->PinB);
-	return p_encoder->Phases.State;
+	_Encoder_CaptureCounterD_Quadrature(p_encoder);
+	Encoder_DeltaT_CaptureExtended(p_encoder);
+	Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
 
-static inline void _Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
+static inline void Encoder_CapturePulse_Inc(Encoder_T * p_encoder)
 {
-	if(count == _ENCODER_TABLE_ERROR) { p_encoder->ErrorCount++; }
-	else
-	{
-		p_encoder->CounterD += count;
-		p_encoder->Angle32 += ((int32_t)count * (int32_t)p_encoder->UnitAngularD);
-	}
+	_Encoder_CaptureCounterD_Inc(p_encoder);
+	Encoder_DeltaT_CaptureExtended(p_encoder);
+	Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
-
-static inline void _Encoder_CaptureCounterD_Quadrature(Encoder_T * p_encoder)
-{
-	_Encoder_CaptureCount(p_encoder, _ENCODER_TABLE[_Encoder_CapturePhasesState(p_encoder)]);
-}
-
-static inline void _Encoder_CaptureCounterD_QuadraturePhaseA(Encoder_T * p_encoder)
-{
-	_Encoder_CaptureCount(p_encoder, _ENCODER_TABLE_PHASE_A[_Encoder_CapturePhasesState(p_encoder)]);
-}
-
-// static inline void _Encoder_CaptureCounterD_QuadraturePhaseALeadingEdge(Encoder_T * p_encoder)
-// {
-// 	// int8_t count = (Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1;
-// 	p_encoder->CounterD += count;
-// 	// p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngularD);
-// }
-
-/******************************************************************************/
-/*
-	Single Phase, Unsigned Direction
-*/
-/******************************************************************************/
-static inline void _Encoder_CaptureCounterD_Inc(Encoder_T * p_encoder)
-{
-	p_encoder->CounterD++;
-	p_encoder->Angle32 += p_encoder->UnitAngularD;
-	// p_encoder->AngularD = (p_encoder->AngularD < p_encoder->Params.CountsPerRevolution - 1U) ? p_encoder->AngularD + 1U : 0U;
-}
-
-/******************************************************************************/
-/*
-	Quadrature On/Off Switch
-*/
-/******************************************************************************/
-// static inline void _Encoder_CaptureCounterD(Encoder_T * p_encoder)
-// {
-// #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-// 	if(p_encoder->Params.IsQuadratureCaptureEnabled == true) { _Encoder_CaptureCounterD_Quadrature(p_encoder); }
-// 	else
-// #endif
-// 	{ _Encoder_CaptureCounterD_Inc(p_encoder); }
-// }
 
 /*
 	All ISR Mode, HW_EMULATED ModeD, ModeDT, DELTA_T_ISR ModeT
@@ -134,6 +75,7 @@ static inline void _Encoder_CaptureCounterD_Inc(Encoder_T * p_encoder)
 static inline void _Encoder_OnPhase_ISR(Encoder_T * p_encoder)
 {
 	_Encoder_CaptureCounterD_Quadrature(p_encoder);
+	// Encoder_CaptureCounterD(p_encoder);
 	Encoder_DeltaT_Capture(p_encoder);
 }
 

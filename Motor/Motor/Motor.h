@@ -42,8 +42,7 @@
 #include "Transducer/SinCos/SinCos.h"
 #include "Math/FOC.h"
 
-#include "Transducer/Encoder/Encoder_Motor.h"
-#include "Transducer/Encoder/Encoder.h"
+#include "Transducer/Encoder/Encoder_ModeDT.h"
 #include "Transducer/Thermistor/Thermistor.h"
 
 #include "Utility/StateMachine/StateMachine.h"
@@ -377,7 +376,7 @@ typedef struct Motor_Tag
 	PID_T PidSpeed;					/* Input SpeedFeedback_Frac16 Q16.16, Output SpeedControl_FracS16 => VPwm, Vq, Iq */
 	Timer_T SpeedTimer;				/* Speed Calc Timer */
 	int32_t SpeedFeedback_Frac16; 	/* [~-65535*2:~65535*2] Speed Feedback Variable. Can over saturate */
-	int32_t SpeedControl_FracS16; 	/* [~-32767:~32767] Speed Control Variable. PidSpeed(RampCmd - SpeedFeedback_Frac16 / 2) => VPwm, Vq, Iq. Updated once per millis */
+	int16_t SpeedControl_FracS16; 	/* [~-32767:~32767] Speed Control Variable. PidSpeed(RampCmd - SpeedFeedback_Frac16 / 2) => VPwm, Vq, Iq. Updated once per millis */
 
 	PID_T PidPosition;
 	qangle16_t PositionControl_Angle16;
@@ -445,7 +444,8 @@ typedef struct Motor_Tag
 	uint32_t MicrosRef;
 	volatile uint32_t DebugTime[10U];
 	volatile uint32_t DebugTimeABC[3U];
-
+	volatile int32_t TestSpeed;
+	volatile int32_t TestSpeed_RPM;
 #endif
 }
 Motor_T;
@@ -716,7 +716,23 @@ static inline void Motor_ResetILimits(Motor_T * p_motor)
 	Motor Encoder Hall
 */
 /******************************************************************************/
+/*!
+	Electrical Theta Angle, position Angle [Degree16s]
+		=> MechanicalTheta * PolePairs
 
+	todo push to encoder
+*/
+static inline int16_t Motor_GetEncoderAngle(Motor_T * p_motor)
+{
+	Encoder_T * p_encoder = &p_motor->Encoder;
+	int16_t angle;
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
+	// update angle p_encoder->Angle32
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+	angle = ((_Encoder_GetAngle32(p_encoder) >> 6U) * p_motor->Parameters.PolePairs) >> 10U; /* MotorPolePairs less than 64 */
+#endif
+	return (p_encoder->Params.IsALeadBPositive == true) ? angle : 0 - angle;
+}
 
 /******************************************************************************/
 /*!
@@ -737,7 +753,7 @@ extern qangle16_t Motor_GetMechanicalAngle(Motor_T * p_motor);
 extern void Motor_ResetSensorMode(Motor_T * p_motor);
 extern void Motor_ResetUnitsVabc(Motor_T * p_motor);
 extern void Motor_ResetUnitsIabc(Motor_T * p_motor);
-extern void Motor_ResetUnitsHallPolePairs(Motor_T * p_motor);
+extern void Motor_ResetUnitsHallEncoder(Motor_T * p_motor);
 extern void Motor_ResetUnitsEncoderPolePairs(Motor_T * p_motor);
 extern void Motor_ResetUnitsEncoder(Motor_T * p_motor);
 extern void Motor_ResetUnitsSinCos(Motor_T * p_motor);

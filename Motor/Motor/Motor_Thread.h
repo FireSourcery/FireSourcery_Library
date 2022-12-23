@@ -71,6 +71,12 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 }
 
 /* Optionally use Hall ISR */
+static inline void Motor_FOC_CaptureHall_ISR(Motor_T * p_motor)
+{
+	Hall_CaptureRotorAngle_ISR(&p_motor->Hall);
+	Encoder_CapturePulse_Inc(&p_motor->Encoder);
+}
+
 static inline void Motor_HallEncoderA_ISR(Motor_T * p_motor)
 {
 	Encoder_OnPhaseA_ISR(&p_motor->Encoder);

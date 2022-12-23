@@ -34,10 +34,11 @@
 #define MOTOR_FOC_H
 
 #include "Motor.h"
+#include "Transducer/Encoder/Encoder_ISR.h"
 
 /******************************************************************************/
 /*
-	+/- Sign indicates absolute direction, CW/CCW. NOT along or against direction selected.
+	+/- Sign indicates absolute direction, CW/CCW. NOT along/against direction selected.
 	Positive is virtual CCW.
 	B and Beta are virtual CCW of A/Alpha.
 	Iq sign is relative to rotor direction, NOT Vq direction.
@@ -80,18 +81,7 @@ static inline void Motor_FOC_CaptureVa(Motor_T * p_motor) {}
 static inline void Motor_FOC_CaptureVb(Motor_T * p_motor) {}
 static inline void Motor_FOC_CaptureVc(Motor_T * p_motor) {}
 
-static inline void _Motor_FOC_CaptureHallDelta(Motor_T * p_motor)
-{
-	Encoder_DeltaT_CaptureExtended(&p_motor->Encoder);
-	// _Encoder_CaptureCounterD_Inc(&p_motor->Encoder);
-	p_motor->InterpolatedAngleIndex = 1U;
-}
 
-static inline void Motor_FOC_CaptureHall_ISR(Motor_T * p_motor)
-{
-	Hall_CaptureRotorAngle_ISR(&p_motor->Hall);
-	_Motor_FOC_CaptureHallDelta(p_motor);
-}
 
 /******************************************************************************/
 /*!
@@ -126,32 +116,31 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 #if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
 			if(Hall_PollCaptureRotorAngle(&p_motor->Hall) == true)
 			{
-				_Motor_FOC_CaptureHallDelta(p_motor);
+				Encoder_CapturePulse_Inc(&p_motor->Encoder);
 				electricalDelta = 0;
 			}
 			else
 #endif
 			{
-				electricalDelta = Encoder_Motor_InterpolateHallDelta(&p_motor->Encoder, p_motor->InterpolatedAngleIndex);
+				electricalDelta = Encoder_ModeDT_InterpolateAngle(&p_motor->Encoder);
 				if(p_motor->Direction == MOTOR_DIRECTION_CW) { electricalDelta = 0 - electricalDelta; };
 				p_motor->InterpolatedAngleIndex++;
 			}
 			electricalAngle = Hall_GetRotorAngle_Degrees16(&p_motor->Hall) + electricalDelta;
-
 			if(procSpeed == true)
 			{
-				speedFeedback_Frac16 = Encoder_DeltaT_GetScalarSpeed_WatchStop(&p_motor->Encoder);
+				Encoder_ModeDT_CaptureVelocity(&p_motor->Encoder);
+				speedFeedback_Frac16 = Encoder_ModeDT_GetScalarVelocity(&p_motor->Encoder);
 				if(p_motor->Direction == MOTOR_DIRECTION_CW) { speedFeedback_Frac16 = 0 - speedFeedback_Frac16; };
 			}
-			// speedFeedback_Frac16 = _Motor_FOC_CaptureAngleSpeed(p_motor, electricalAngle);
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
-			electricalAngle = Encoder_Motor_GetElectricalTheta(&p_motor->Encoder);
+			electricalAngle = Motor_GetEncoderAngle(p_motor);
 			if(procSpeed == true)
 			{
-				Encoder_DeltaD_Capture(&p_motor->Encoder);
-				speedFeedback_Frac16 = Encoder_DeltaD_GetScalarSpeed(&p_motor->Encoder); /* Quadrature capture is signed */
+				Encoder_ModeDT_CaptureVelocity(&p_motor->Encoder);
+				speedFeedback_Frac16 = Encoder_ModeDT_GetScalarVelocity(&p_motor->Encoder); /* Quadrature capture is signed */
 			}
 			break;
 

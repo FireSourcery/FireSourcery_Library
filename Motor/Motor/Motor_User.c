@@ -170,23 +170,7 @@ void Motor_User_ActivateCalibrationSensor(Motor_T * p_motor)
 /******************************************************************************/
 /*   */
 /******************************************************************************/
-qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor)
-{
-	qangle16_t angle;
 
-	switch(p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_SENSORLESS: 	angle = 0; 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_Motor_GetMechanicalTheta(&p_motor->Encoder);	break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 			break;
-#endif
-		default: 							angle = 0; 	break;
-	}
-
-	return angle;
-}
 
 int16_t Motor_User_GetGroundSpeed_Kmh(Motor_T * p_motor)
 {
@@ -195,7 +179,7 @@ int16_t Motor_User_GetGroundSpeed_Kmh(Motor_T * p_motor)
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_SENSORLESS: 	speed = 0; 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		speed = Encoder_DeltaT_GetGroundSpeed_Kmh(&p_motor->Encoder);	break;
+		case MOTOR_SENSOR_MODE_HALL: 		speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);	break;
 		case MOTOR_SENSOR_MODE_ENCODER: 	speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);	break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_SENSOR_MODE_SIN_COS: 	speed =  Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->SpeedFeedback_Frac16); break;
@@ -213,7 +197,7 @@ int16_t Motor_User_GetGroundSpeed_Mph(Motor_T * p_motor)
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_SENSORLESS: 	speed = 0; 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		speed = Encoder_DeltaT_GetGroundSpeed_Mph(&p_motor->Encoder);	break;
+		case MOTOR_SENSOR_MODE_HALL: 		speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);	break;
 		case MOTOR_SENSOR_MODE_ENCODER: 	speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);	break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_SENSOR_MODE_SIN_COS: 	speed =  Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->SpeedFeedback_Frac16); break;
@@ -596,7 +580,7 @@ void Motor_User_SetPolePairs(Motor_T * p_motor, uint8_t polePairs)
 {
 	p_motor->Parameters.PolePairs = polePairs;
 #ifdef CONFIG_MOTOR_PROPAGATE_SET_PARAM_ENABLE
-	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Motor_ResetUnitsHallPolePairs(p_motor); }
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Motor_ResetUnitsHallEncoder(p_motor); }
 #endif
 }
 
