@@ -25,7 +25,7 @@
 	@file 	Motor_FOC.h
 	@author FireSourcery
 	@brief  Motor FOC submodule. FOC control functions.
-			FOC mode State Machine mapping
+			FOC mode StateMachine mapping
 			defined as inline for StateMachine wrapper functions
 	@version V0
 */
@@ -164,14 +164,6 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 			p_motor->ControlFlags.SensorFeedback = 0U;
 			break;
 #endif
-// #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-// 		case MOTOR_SENSOR_MODE_OPEN_LOOP: /* Sensor mode set indicates OpenLoop Only */
-// 			_Motor_FOC_ProcOpenLoop(p_motor);
-// 			procSpeed = false;
-// 			electricalAngle = p_motor->ElectricalAngle;
-// 			speedFeedback_Frac16 = p_motor->SpeedFeedback_Frac16;
-// 			break;
-// #endif
 		default:
 			electricalAngle = 0;
 			speedFeedback_Frac16 = 0;
@@ -183,7 +175,7 @@ static inline void _Motor_FOC_ProcPositionFeedback(Motor_T * p_motor)
 		speedFeedback_Frac16 = (speedFeedback_Frac16 + p_motor->SpeedFeedback_Frac16) / 2;
 		/*
 			Speed Feedback Loop
-				SpeedControl_FracS16 update 1000Hz, Ramp input 1000Hz, RampCmd output 20000Hz, alternatively use RampIndex += 20?
+				SpeedControl_FracS16 update ~1000Hz, Ramp input 1000Hz, RampCmd output 20000Hz
 			input	RampCmd[-32767:32767] - (speedFeedback_Frac16 / 2)[-32767:32767]
 			output 	SpeedControl_FracS16[-32767:32767] => IqReq or VqReq
 		*/
@@ -233,17 +225,11 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 {
 	bool isOverLimit;
 	qfrac16_t vqReqOut;
+	qfrac16_t iLimit;
 
-
-
-	/* ILimitVoltageMode_FracS16 set to torque direction. Alternatively, use/store limits in Pid  */
-	if		(p_motor->ILimitVoltageMode_FracS16 > 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) > p_motor->ILimitVoltageMode_FracS16); }
-	else if	(p_motor->ILimitVoltageMode_FracS16 < 0) 	{ isOverLimit = (FOC_GetIq(&p_motor->Foc) < p_motor->ILimitVoltageMode_FracS16); }
-	else 												{ isOverLimit = false; } /* should not occur */
-
-	// if		(p_motor->ILimitVoltageMode_FracS16 > 0) 	{ isOverLimit = (FOC_GetIMagnitude(&p_motor->Foc) > p_motor->ILimitVoltageMode_FracS16); }
-	// else if	(p_motor->ILimitVoltageMode_FracS16 < 0) 	{ isOverLimit = (FOC_GetIMagnitude(&p_motor->Foc) > 0 - p_motor->ILimitVoltageMode_FracS16); }
-	// else 												{ isOverLimit = false; } /* should not occur */
+	if		(FOC_GetIq(&p_motor->Foc) > p_motor->VoltageModeILimitCcw_FracS16) 	{ iLimit = p_motor->VoltageModeILimitCcw_FracS16; isOverLimit = true; }
+	else if	(FOC_GetIq(&p_motor->Foc) < p_motor->VoltageModeILimitCw_FracS16) 	{ iLimit = p_motor->VoltageModeILimitCw_FracS16; isOverLimit = true; }
+	else 																		{ isOverLimit = false; iLimit = vqReq; }
 
 	if((isOverLimit == true) && (p_motor->ControlFlags.VoltageModeILimitActive == false))
 	{
@@ -255,13 +241,8 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 		p_motor->ControlFlags.VoltageModeILimitActive = false;
 	}
 
-	vqReqOut = (p_motor->ControlFlags.VoltageModeILimitActive == true) ?
-		PID_Calc(&p_motor->PidIq, p_motor->ILimitVoltageMode_FracS16, FOC_GetIq(&p_motor->Foc)) : vqReq;
+	vqReqOut = (p_motor->ControlFlags.VoltageModeILimitActive == true) ? PID_Calc(&p_motor->PidIq, iLimit, FOC_GetIq(&p_motor->Foc)) : vqReq;
 
-	vqReqOut = PID_Calc(&p_motor->PidIq, p_motor->ILimitVoltageMode_FracS16, FOC_GetIq(&p_motor->Foc));
-	if(vqReq < vqReqOut) { vqReqOut = vqReq; }
-
-	// FOC_SetVq(&p_motor->Foc, vqReqOut);
 	FOC_SetVq(&p_motor->Foc, vqReqOut);
 	FOC_SetVd(&p_motor->Foc, 0);
 }
@@ -452,12 +433,9 @@ static inline uint32_t Motor_FOC_GetIMagnitude_Frac16(Motor_T * p_motor)
 	Extern
 */
 /******************************************************************************/
-extern void Motor_FOC_SetOutputLimitsCcw(Motor_T * p_motor);
-extern void Motor_FOC_SetOutputLimitsCw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirectionCcw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirectionCw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
-extern void Motor_FOC_ResetSpeedPidILimits(Motor_T * p_motor);
 extern void Motor_FOC_SetDirectionForward(Motor_T * p_motor);
 
 extern void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd);

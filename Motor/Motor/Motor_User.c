@@ -172,72 +172,6 @@ void Motor_User_ActivateCalibrationSensor(Motor_T * p_motor)
 /******************************************************************************/
 
 
-int16_t Motor_User_GetGroundSpeed_Kmh(Motor_T * p_motor)
-{
-	int16_t speed;
-
-	switch(p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_SENSORLESS: 	speed = 0; 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);	break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);	break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-		case MOTOR_SENSOR_MODE_SIN_COS: 	speed =  Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->SpeedFeedback_Frac16); break;
-#endif
-		default: 							speed = 0; 	break;
-	}
-
-	return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
-}
-
-int16_t Motor_User_GetGroundSpeed_Mph(Motor_T * p_motor)
-{
-	int16_t speed;
-
-	switch(p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_SENSORLESS: 	speed = 0; 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);	break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);	break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-		case MOTOR_SENSOR_MODE_SIN_COS: 	speed =  Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->SpeedFeedback_Frac16); break;
-#endif
-		default: 							speed = 0; 	break;
-	}
-
-	return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
-}
-
-void Motor_User_SetGroundSpeed_Kmh(Motor_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
-{
-	switch(p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		Encoder_Motor_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	Encoder_Motor_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-		case MOTOR_SENSOR_MODE_SIN_COS: 	Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->SpeedFeedback_Frac16); break;
-#endif
-		default: 	break;
-	}
-}
-
-void Motor_User_SetGroundSpeed_Mph(Motor_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
-{
-	int16_t speed;
-
-	switch(p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		Encoder_Motor_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	Encoder_Motor_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-		case MOTOR_SENSOR_MODE_SIN_COS: 	 Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->SpeedFeedback_Frac16); break;
-#endif
-		default: 							break;
-	}
-}
-
 /******************************************************************************/
 /*!
 	Limits
@@ -303,13 +237,13 @@ void _Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar_frac16)
 	p_motor->ILimitActiveSentinel = scalar_frac16;
 	p_motor->ILimitMotoring_Frac16 = ScaleFrac16(scalar_frac16, p_motor->Parameters.ILimitMotoring_Frac16);
 	p_motor->ILimitGenerating_Frac16 = ScaleFrac16(scalar_frac16, p_motor->Parameters.ILimitGenerating_Frac16);
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetSpeedPidILimits(p_motor); }
+	Motor_ResetPidILimits(p_motor);
 }
 
 void _Motor_User_ClearILimitActive(Motor_T * p_motor)
 {
 	Motor_ResetILimits(p_motor);
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { Motor_FOC_ResetSpeedPidILimits(p_motor); }
+	Motor_ResetPidILimits(p_motor);
 }
 
 /*
@@ -347,6 +281,80 @@ bool Motor_User_ClearILimitActive(Motor_T * p_motor, Motor_ILimitActiveId_T id)
 }
 
 Motor_ILimitActiveId_T Motor_User_GetILimitActiveId(Motor_T * p_motor) { return p_motor->ILimitActiveId; }
+
+
+
+
+int16_t Motor_User_GetGroundSpeed_Kmh(Motor_T * p_motor)
+{
+	int16_t speed;
+
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_SENSORLESS: 	speed = 0; 	break;
+		case MOTOR_SENSOR_MODE_HALL: 		speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);	break;
+		case MOTOR_SENSOR_MODE_ENCODER: 	speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);	break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+		case MOTOR_SENSOR_MODE_SIN_COS: 	speed =  Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->SpeedFeedback_Frac16); break;
+#endif
+		default: 							speed = 0; 	break;
+	}
+
+	return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
+}
+
+/******************************************************************************/
+/*
+	Ground Speed
+*/
+/******************************************************************************/
+int16_t Motor_User_GetGroundSpeed_Mph(Motor_T * p_motor)
+{
+	int16_t speed;
+
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_SENSORLESS: 	speed = 0; 	break;
+		case MOTOR_SENSOR_MODE_HALL: 		speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);	break;
+		case MOTOR_SENSOR_MODE_ENCODER: 	speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);	break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+		case MOTOR_SENSOR_MODE_SIN_COS: 	speed =  Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->SpeedFeedback_Frac16); break;
+#endif
+		default: 							speed = 0; 	break;
+	}
+
+	return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
+}
+
+void Motor_User_SetGroundSpeed_Kmh(Motor_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+{
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
+		case MOTOR_SENSOR_MODE_HALL: 		Encoder_Motor_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
+		case MOTOR_SENSOR_MODE_ENCODER: 	Encoder_Motor_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+		case MOTOR_SENSOR_MODE_SIN_COS: 	Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->SpeedFeedback_Frac16); break;
+#endif
+		default: 	break;
+	}
+}
+
+void Motor_User_SetGroundSpeed_Mph(Motor_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+{
+	int16_t speed;
+
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
+		case MOTOR_SENSOR_MODE_HALL: 		Encoder_Motor_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
+		case MOTOR_SENSOR_MODE_ENCODER: 	Encoder_Motor_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+		case MOTOR_SENSOR_MODE_SIN_COS: 	 Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->SpeedFeedback_Frac16); break;
+#endif
+		default: 							break;
+	}
+}
 
 /******************************************************************************/
 /*

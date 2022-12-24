@@ -30,46 +30,27 @@
 /******************************************************************************/
 #include "Motor_FOC.h"
 
-static void ResetSpeedPidILimitsCcw(Motor_T * p_motor)
-{
-	PID_SetOutputLimits(&p_motor->PidSpeed, 0 - p_motor->ILimitGenerating_Frac16 / 2, p_motor->ILimitMotoring_Frac16 / 2);
-}
-
-static void ResetSpeedPidILimitsCw(Motor_T * p_motor)
-{
-	PID_SetOutputLimits(&p_motor->PidSpeed, 0 - p_motor->ILimitMotoring_Frac16 / 2, p_motor->ILimitGenerating_Frac16 / 2);
-}
-
-/*
-	Set on Limits change
-	SpeedPid - Speed In, I Out, only
-	SPEED_VOLTAGE_MODE only change with direction
+/******************************************************************************/
+/*!
 */
-void Motor_FOC_ResetSpeedPidILimits(Motor_T * p_motor)
+/******************************************************************************/
+void Motor_FOC_PollPositionSensor(Motor_T * p_motor)
 {
-	if((p_motor->FeedbackModeFlags.Speed == 1U) && (p_motor->FeedbackModeFlags.Current == 1U)) /* Speed PID Output is Iq */
-	{
-		if(p_motor->Direction == MOTOR_DIRECTION_CCW) 	{ ResetSpeedPidILimitsCcw(p_motor); }
-		else 											{ ResetSpeedPidILimitsCw(p_motor); };
-	}
+
 }
 
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 /*
 	Set on Direction change
+	Iq/Id PID always Vq/Vd, clip opposite user direction range, no plugging.
+	Voltage Feedback Mode active during over current only.
 */
 void Motor_FOC_SetDirectionCcw(Motor_T * p_motor)
 {
 	Motor_SetDirectionCcw(p_motor);
-	if(p_motor->FeedbackModeFlags.Speed == 1U)
-	{
-		if(p_motor->FeedbackModeFlags.Current == 1U) 	{ ResetSpeedPidILimitsCcw(p_motor); }						/* Speed PID Output is Iq */
-		else 											{ PID_SetOutputLimits(&p_motor->PidSpeed, 0, INT16_MAX); } 	/* Speed PID Output is Vq */
-	}
-
-	/*
-		Iq/Id PID always Vq/Vd, clip opposite user direction range, no plugging.
-		Voltage Feedback Mode active during over current only.
-	*/
 	PID_SetOutputLimits(&p_motor->PidIq, 0, INT16_MAX);
 	PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2); /* Symmetrical for now */
 }
@@ -77,12 +58,6 @@ void Motor_FOC_SetDirectionCcw(Motor_T * p_motor)
 void Motor_FOC_SetDirectionCw(Motor_T * p_motor)
 {
 	Motor_SetDirectionCw(p_motor);
-	if(p_motor->FeedbackModeFlags.Speed == 1U)
-	{
-		if(p_motor->FeedbackModeFlags.Current == 1U) 	{ ResetSpeedPidILimitsCw(p_motor); }						/* Speed PID Output is Iq */
-		else 											{ PID_SetOutputLimits(&p_motor->PidSpeed, INT16_MIN, 0); } 	/* Speed PID Output is Vq */
-	}
-
 	PID_SetOutputLimits(&p_motor->PidIq, INT16_MIN, 0);
 	PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
 }
@@ -99,6 +74,10 @@ void Motor_FOC_SetDirectionForward(Motor_T * p_motor)
 	else 																	{ Motor_FOC_SetDirectionCw(p_motor); }
 }
 
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 /*
 	Call from user must also set Vector Sine/Cosine, not set during position read
 	angl control loop must set vector before feedback calc

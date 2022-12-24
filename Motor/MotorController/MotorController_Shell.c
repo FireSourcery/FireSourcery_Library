@@ -144,8 +144,6 @@ static void PrintSensor(Terminal_T * p_terminal, Motor_T * p_motor)
 			Terminal_SendString(p_terminal, "\r\n");
 			break;
 #endif
-		case MOTOR_SENSOR_MODE_OPEN_LOOP:
-			break;
 		case MOTOR_SENSOR_MODE_SENSORLESS:
 			break;
 		default:

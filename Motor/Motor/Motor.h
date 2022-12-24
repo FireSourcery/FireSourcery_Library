@@ -78,7 +78,6 @@ Motor_CommutationMode_T;
 */
 typedef enum Motor_SensorMode_Tag
 {
-	MOTOR_SENSOR_MODE_OPEN_LOOP,
 	MOTOR_SENSOR_MODE_HALL,
 	MOTOR_SENSOR_MODE_ENCODER,
 	MOTOR_SENSOR_MODE_SIN_COS,
@@ -348,7 +347,8 @@ typedef struct Motor_Tag
 	uint16_t ILimitGenerating_Frac16;
 	Motor_ILimitActiveId_T ILimitActiveId;
 	uint16_t ILimitActiveSentinel;		/* Store for comparison */
-	int16_t ILimitVoltageMode_FracS16; /* [-32767:32767] directional input into pid */
+	int16_t VoltageModeILimitCcw_FracS16; /* [-32767:32767] directional input into pid */
+	int16_t VoltageModeILimitCw_FracS16; /* [-32767:32767] directional input into pid */
 	// Linear_T ILimitHeatRate;
 
 	/* Calibration Substate */
@@ -410,7 +410,7 @@ typedef struct Motor_Tag
 	uint16_t VPwm; 	/* Six-Step Control Variable */
 #endif
 
-	Linear_T VPwmRamp;			/* OpenLoop and Align */
+	// Linear_T VPwmRamp;			/* OpenLoop and Align */
 
 	/*
 		Open-loop
@@ -739,6 +739,9 @@ static inline int16_t Motor_GetEncoderAngle(Motor_T * p_motor)
 extern void Motor_Init(Motor_T * p_motor);
 extern void Motor_InitReboot(Motor_T * p_motor);
 
+extern void Motor_ResetPidILimits(Motor_T * p_motor);
+extern void Motor_SetLimitsCcw(Motor_T * p_motor);
+extern void Motor_SetLimitsCw(Motor_T * p_motor);
 extern void Motor_SetDirectionCcw(Motor_T * p_motor);
 extern void Motor_SetDirectionCw(Motor_T * p_motor);
 extern void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
