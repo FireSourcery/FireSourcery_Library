@@ -112,7 +112,7 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
 
 static inline void Motor_Calibrate_StartHall(Motor_T * p_motor)
 {
-	Timer_StartPeriod(&p_motor->ControlTimer, _Motor_ConvertToControlCycles(p_motor, p_motor->Parameters.AlignTime_Ms));
+	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
 }
 
 //120 degree, hall aligned with phase
@@ -177,7 +177,7 @@ static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
 
 static inline void Motor_Calibrate_StartEncoder(Motor_T * p_motor)
 {
-	Timer_StartPeriod(&p_motor->ControlTimer, _Motor_ConvertToControlCycles(p_motor, p_motor->Parameters.AlignTime_Ms));
+	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
 }
 
 static inline bool Motor_Calibrate_Encoder(Motor_T * p_motor)

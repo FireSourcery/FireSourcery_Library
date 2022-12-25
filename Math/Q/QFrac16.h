@@ -33,6 +33,7 @@
 
 #include "Q.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 #define QFRAC16_N_FRAC_BITS (15U) /*!< Q1.15, 15 fractional bits, shift mul/div by 32768 */
 
@@ -186,6 +187,11 @@ static inline qangle16_quadrant_t qangle16_quadrant(qangle16_t theta)
 		default: quadrant = 0U; break; /* Should not occur */
 	}
 	return quadrant;
+}
+
+static inline bool qangle16_cycle(qangle16_t theta0, qangle16_t theta1)
+{
+	return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U);
 }
 
 /*

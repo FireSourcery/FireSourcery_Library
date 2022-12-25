@@ -120,11 +120,10 @@ static inline bool Encoder_DeltaT_CheckExtendedStop(Encoder_T * p_encoder)
 	@brief	Angle Interpolation Functions
 
 	Estimate Angle each control cycle in between encoder counts
-	AngleControlIndex * AngularSpeed / POLLING_FREQ;
+	AngularSpeed * AngleControlIndex / POLLING_FREQ ;
 		(AngleControlIndex / POLLING_FREQ) * [1(DeltaD) * UnitT_Freq / DeltaT) * (AngleSize / EncoderResolution)]
-		AngleControlIndex * [1(DeltaD) * AngleSize * UnitT_Freq / DeltaT / EncoderResolution] / POLLING_FREQ
 		AngleControlIndex * [1(DeltaD) * AngleSize * UnitT_Freq / EncoderResolution / POLLING_FREQ] / DeltaT
-	AngleControlIndex ranges from 0 to InterpolationCount
+	AngleControlIndex [0:InterpolationCount]
 
 	Only when POLLING_FREQ > EncoderFreq, i.e. 0 encoder counts per poll, polls per encoder count > 1
 	e.g. High res break even point
@@ -156,17 +155,13 @@ static inline void Encoder_DeltaT_ZeroInterpolateAngle(Encoder_T * p_encoder)
 /*
 	InterpolationCycles - numbers of Polls per encoder count.
 	Samples per DeltaT Capture, index max
-	CaptureDeltaT only (DeltaD ==1) (DeltaT Mode UnitT_Freq > POLLING_FREQ) - cannot capture fractional DeltaD
-	POLLING_FREQ/DeltaTCaptureFreq =  POLLING_FREQ / (UnitT_Freq / DeltaT);
+	POLLING_FREQ/PulseFreq == POLLING_FREQ / (UnitT_Freq / DeltaT);
 */
 static inline uint32_t Encoder_DeltaT_GetInterpolationCount(Encoder_T * p_encoder)
 {
 	return p_encoder->CONFIG.POLLING_FREQ * p_encoder->DeltaT / p_encoder->UnitT_Freq;
 }
 
-/*
-
-*/
 static inline uint32_t Encoder_DeltaT_ConvertRotationalSpeedToInterpolationCount_RPM(Encoder_T * p_encoder, uint16_t mechRpm)
 {
 	return p_encoder->CONFIG.POLLING_FREQ * 60U / (p_encoder->Params.CountsPerRevolution * mechRpm);

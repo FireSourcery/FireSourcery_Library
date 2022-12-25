@@ -71,17 +71,11 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 }
 
 /* Optionally use Hall ISR */
-static inline void Motor_FOC_CaptureHall_ISR(Motor_T * p_motor)
-{
-	Hall_CaptureRotorAngle_ISR(&p_motor->Hall);
-	Encoder_CapturePulse_Inc(&p_motor->Encoder);
-}
-
 static inline void Motor_HallEncoderA_ISR(Motor_T * p_motor)
 {
 	Encoder_OnPhaseA_ISR(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
-	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Motor_FOC_CaptureHall_ISR(p_motor); }
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureRotorAngle_ISR(&p_motor->Hall); }
 #endif
 }
 
@@ -89,7 +83,7 @@ static inline void Motor_HallEncoderB_ISR(Motor_T * p_motor)
 {
 	Encoder_OnPhaseB_ISR(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
-	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Motor_FOC_CaptureHall_ISR(p_motor); }
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureRotorAngle_ISR(&p_motor->Hall); }
 #endif
 }
 
@@ -97,7 +91,7 @@ static inline void Motor_HallEncoderAB_ISR(Motor_T * p_motor)
 {
 	Encoder_OnPhaseAB_ISR(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
-	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Motor_FOC_CaptureHall_ISR(p_motor); }
+	if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureRotorAngle_ISR(&p_motor->Hall); }
 #endif
 }
 
@@ -109,7 +103,7 @@ static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_motor)
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
 		case MOTOR_SENSOR_MODE_HALL:
 			Encoder_Motor_OnPhaseC_ISR(&p_motor->Encoder);
-			Motor_FOC_CaptureHall_ISR(p_motor);
+			Hall_CaptureRotorAngle_ISR(&p_motor->Hall);
 			break;
 #endif
 		default: break;

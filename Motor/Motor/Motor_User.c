@@ -331,8 +331,8 @@ void Motor_User_SetGroundSpeed_Kmh(Motor_T * p_motor, uint32_t wheelDiameter_Mm,
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		Encoder_Motor_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	Encoder_Motor_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
+		case MOTOR_SENSOR_MODE_HALL: 		Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
+		case MOTOR_SENSOR_MODE_ENCODER: 	Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_SENSOR_MODE_SIN_COS: 	Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->SpeedFeedback_Frac16); break;
 #endif
@@ -347,8 +347,8 @@ void Motor_User_SetGroundSpeed_Mph(Motor_T * p_motor, uint32_t wheelDiameter_Inc
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
-		case MOTOR_SENSOR_MODE_HALL: 		Encoder_Motor_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	Encoder_Motor_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
+		case MOTOR_SENSOR_MODE_HALL: 		Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
+		case MOTOR_SENSOR_MODE_ENCODER: 	Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);	break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_SENSOR_MODE_SIN_COS: 	 Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->SpeedFeedback_Frac16); break;
 #endif

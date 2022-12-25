@@ -32,11 +32,159 @@
 
 /******************************************************************************/
 /*!
+	Position Sensor Feedback - Speed, Angle
 */
 /******************************************************************************/
-void Motor_FOC_PollPositionSensor(Motor_T * p_motor)
+static inline qangle16_t Motor_FOC_PollPositionSensorAngle(Motor_T * p_motor)
 {
+	qangle16_t electricalAngle; /* FracU16 [0, 65535] map negative portions of qangle16_t */
 
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_HALL:
+#if defined(CONFIG_MOTOR_HALL_MODE_POLLING) /* todo fix */
+			if(Hall_PollCaptureRotorAngle(&p_motor->Hall) == true) { Encoder_CapturePulse(&p_motor->Encoder); }
+#endif
+			electricalAngle = Hall_GetRotorAngle_Degrees16(&p_motor->Hall);
+			electricalAngle += Encoder_ModeDT_InterpolateAngle(&p_motor->Encoder);
+			break;
+
+		case MOTOR_SENSOR_MODE_ENCODER:
+			electricalAngle = Motor_GetEncoderElectricalAngle(p_motor);
+			electricalAngle += Encoder_ModeDT_InterpolateAngle(&p_motor->Encoder);
+			break;
+
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+		case MOTOR_SENSOR_MODE_SIN_COS:
+			SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
+			electricalAngle = SinCos_GetElectricalAngle(&p_motor->SinCos);
+			//todo group
+			AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
+			AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+			break;
+#endif
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+		case MOTOR_SENSOR_MODE_SENSORLESS:
+			//todo observer
+			electricalAngle = 0;
+			p_motor->FeedbackModeFlags.OpenLoop = 1U;
+			p_motor->FeedbackModeFlags.OpenLoop = 1U;
+			p_motor->ControlFlags.SensorFeedback = 0U;
+			p_motor->ControlFlags.SensorFeedback = 0U;
+			break;
+#endif
+		default: electricalAngle = 0; break;
+	}
+
+	return electricalAngle;
+}
+
+/* For SinCos, Sensorless, when not using Encoder module */
+// static inline int32_t PollAngleSpeed(Motor_T * p_motor, qangle16_t speedAngle)
+// {
+// 	int32_t speedDelta = speedAngle - p_motor->SpeedAngle; /* loops if no overflow past 1 full cycle */
+// 	int32_t speedFeedback_Frac16 = (p_motor->SpeedFeedback_Frac16 + Linear_Speed_CalcAngleRpmFrac16(&p_motor->UnitAngleRpm, speedDelta)) / 2;
+// 	p_motor->SpeedAngle = speedAngle; /* mechanical angle */
+// 	return speedFeedback_Frac16;
+// }
+
+/* returns [-65536:65536] as [-1:1] unsaturated */
+static inline int32_t Motor_FOC_PollPositionSensorSpeed(Motor_T * p_motor)
+{
+	int32_t speed_Frac16;
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_HALL:		speed_Frac16 = Encoder_ModeDT_PollScalarVelocity(&p_motor->Encoder); break;
+		case MOTOR_SENSOR_MODE_ENCODER: 	speed_Frac16 = Encoder_ModeDT_PollScalarVelocity(&p_motor->Encoder); break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+		case MOTOR_SENSOR_MODE_SIN_COS:		speed_Frac16 = PollAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos));	break;
+#endif
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+		case MOTOR_SENSOR_MODE_SENSORLESS: break;
+#endif
+		default: speed_Frac16 = 0; break;
+	}
+	return speed_Frac16;
+}
+
+void Motor_FOC_ProcPosition(Motor_T * p_motor)
+{
+	qangle16_t electricalAngle = Motor_FOC_PollPositionSensorAngle(p_motor);
+	if(qangle16_cycle(p_motor->ElectricalAngle, electricalAngle) == true) /* Once Per Cycle (p_motor->ElectricalAngle < 0 && electricalAngle > 0) */
+	{
+		p_motor->VBemfPeak_Adcu = p_motor->VBemfPeakTemp_Adcu;
+		p_motor->VBemfPeakTemp_Adcu = 0U;
+		p_motor->IPhasePeak_Adcu = p_motor->IPhasePeakTemp_Adcu;
+		p_motor->IPhasePeakTemp_Adcu = 0U;
+	}
+	p_motor->ElectricalAngle = electricalAngle;
+	FOC_SetVector(&p_motor->Foc, electricalAngle);
+}
+
+bool Motor_FOC_ProcSpeed(Motor_T * p_motor)
+{
+	bool procSpeed = Timer_Periodic_Poll(&p_motor->SpeedTimer);
+	if(procSpeed == true) { p_motor->SpeedFeedback_Frac16 = (Motor_FOC_PollPositionSensorSpeed(p_motor) + p_motor->SpeedFeedback_Frac16) / 2; }
+	return procSpeed;
+}
+
+void Motor_FOC_ProcSpeedFeedback(Motor_T * p_motor)
+{
+	if(Motor_FOC_ProcSpeed(p_motor) == true) { Motor_ProcSpeedFeedback(p_motor, p_motor->SpeedFeedback_Frac16 / 2); }
+}
+
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
+/*
+	FreeWheel and Stop State
+*/
+void Motor_FOC_ProcAngleObserve(Motor_T * p_motor)
+{
+	qangle16_t electricalAngle;
+#if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
+	if(((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER)) == 0UL)
+	{
+		AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
+		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
+		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
+		AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+	}
+#endif
+	Motor_FOC_ProcPosition(p_motor);
+	Motor_FOC_ProcSpeed(p_motor);
+// Debug_LED();
+}
+
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
+/*
+	Enables PWM Output - From Stop and Freewheel
+*/
+void Motor_FOC_ActivateOutput(Motor_T * p_motor)
+{
+	FOC_SetDutyZero(&p_motor->Foc);
+	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
+	Phase_ActivateSwitchABC(&p_motor->Phase);
+}
+
+/*
+	OpenLoop/User Activate
+	must also set Vector Sine/Cosine, not set during position read,
+	angle control loop must set vector before feedback calc
+*/
+void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd)
+{
+//	p_motor->ElectricalAngle = angle;
+	FOC_SetVq(&p_motor->Foc, vq);
+	FOC_SetVd(&p_motor->Foc, vd);
+	FOC_SetVector(&p_motor->Foc, angle);
+	FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
+	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 }
 
 /******************************************************************************/
@@ -72,103 +220,4 @@ void Motor_FOC_SetDirectionForward(Motor_T * p_motor)
 {
 	if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) 	{ Motor_FOC_SetDirectionCcw(p_motor); }
 	else 																	{ Motor_FOC_SetDirectionCw(p_motor); }
-}
-
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/
-/*
-	Call from user must also set Vector Sine/Cosine, not set during position read
-	angl control loop must set vector before feedback calc
-*/
-void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd)
-{
-//	p_motor->ElectricalAngle = angle;
-	FOC_SetVq(&p_motor->Foc, vq);
-	FOC_SetVd(&p_motor->Foc, vd);
-	FOC_SetVector(&p_motor->Foc, angle);
-	FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
-	Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
-}
-
-/* 1 Step Align */
-void Motor_FOC_Align(Motor_T * p_motor)
-{
-	Motor_FOC_ActivateAngle(p_motor, 0, 0, p_motor->Parameters.AlignVPwm_Frac16 / 2U);
-}
-
-/* Alternate Soft Align */
-void Motor_FOC_StartAlign(Motor_T * p_motor)
-{
-	// Motor_SetRampTarget_Millis
-	Motor_ZeroRamp(p_motor);
-	Motor_SetRampSlope_Millis(p_motor, p_motor->Parameters.AlignTime_Ms, 0, p_motor->Parameters.AlignVPwm_Frac16 / 2U);
-	Motor_SetRampTarget(p_motor, p_motor->Parameters.AlignVPwm_Frac16 / 2U);
-}
-
-void Motor_FOC_ProcAlign(Motor_T * p_motor)
-{
-	Motor_ProcRamp(p_motor);
-	Motor_FOC_ActivateAngle(p_motor, 0, 0, p_motor->RampCmd);
-}
-
-/* Alternate OpenLoop */
-void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
-{
-	p_motor->OpenLoopSpeed_RPM = 0U;
-	// todo  Motor_SetRampTarget_Millis
-	// Linear_Ramp_SetSlope_Ticks(&p_motor->VPwmRamp, _Motor_ConvertToControlCycles(p_motor, p_motor->Parameters.RampAccel_Ms), 0, p_motor->Parameters.OpenLoopVPwm_Frac16 / 2U);
-	Motor_ZeroRamp(p_motor); /* start from 0, since 90 degrees ahead of align */
-	Motor_SetRampSlope_Millis(p_motor, p_motor->Parameters.RampAccel_Ms, 0, p_motor->Parameters.OpenLoopVPwm_Frac16 / 2U);
-	Motor_SetRampTarget(p_motor, p_motor->Parameters.OpenLoopVPwm_Frac16 / 2U);
-}
-
-/*
-	OpenLoop
-	Blind input angle, constant voltage
-	ElectricalAngle => integrate speed to angle
-*/
-static inline void _Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
-{
-	p_motor->OpenLoopSpeed_RPM = Linear_Ramp_CalcCmdNextOutput(&p_motor->OpenLoopRamp, p_motor->OpenLoopSpeed_RPM);
-	p_motor->ElectricalAngle += (p_motor->OpenLoopSpeed_RPM << 16U) / (60U * GLOBAL_MOTOR.CONTROL_FREQ);
-	// p_motor->SpeedFeedback_Frac16 = p_motor->OpenLoopSpeed_RPM * 65535 / p_motor->Parameters.SpeedFeedbackRef_Rpm; /* temp convert to frac 16 and back again  for user read */
-}
-
-void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
-{
-	_Motor_FOC_ProcOpenLoop(p_motor);
-	/* proc current, or use AngleControl */
-	Motor_ProcRamp(p_motor);
-	Motor_FOC_ActivateAngle(p_motor, p_motor->ElectricalAngle, p_motor->RampCmd, 0);
-}
-
-
-void Motor_FOC_ProcStop(Motor_T * p_motor)
-{
-#if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
-	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
-	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
-	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-#endif
-	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-#if defined(CONFIG_MOTOR_I_SENSORS_ABC)
-	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-#endif
-	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-
-	_Motor_FOC_ProcPositionFeedback(p_motor);
-
-	FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
-
-#if 	defined(CONFIG_MOTOR_I_SENSORS_AB)
-	FOC_ProcClarkePark_AB(&p_motor->Foc);
-#elif 	defined(CONFIG_MOTOR_I_SENSORS_ABC)
-	FOC_ProcClarkePark(&p_motor->Foc);
-#endif
 }

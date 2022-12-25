@@ -209,10 +209,10 @@ void Encoder_Motor_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDi
 }
 
 /* Outer module sets direction */
-// void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool isPositive)
-// {
-// 	p_encoder->Direction = isEnabled;
-// }
+void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool isPositive)
+{
+	p_encoder->IsSinglePhasePositive = isPositive;
+}
 
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)

@@ -462,12 +462,12 @@ static inline uint32_t Motor_User_ConvertToVMatchFrac16(Motor_T * p_motor, uint1
 static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode)  	{ p_motor->Parameters.CommutationMode = mode; }
 static inline void Motor_User_SetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode) 				{ p_motor->Parameters.AlignMode = mode; }
 static inline void Motor_User_SetAlignVoltage(Motor_T * p_motor, uint16_t v_frac16) 				{ p_motor->Parameters.AlignVPwm_Frac16 = (v_frac16 > GLOBAL_MOTOR.ALIGN_VPWM_MAX) ? GLOBAL_MOTOR.ALIGN_VPWM_MAX : v_frac16; }
-static inline void Motor_User_SetAlignTime_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.AlignTime_Ms = millis; }
-static inline void Motor_User_SetAlignTime_Control(Motor_T * p_motor, uint16_t cycles) 				{ p_motor->Parameters.AlignTime_Ms =  _Motor_ConvertToMillis(p_motor, cycles); }
-static inline void Motor_User_SetOpenLoopAccel_Millis(Motor_T * p_motor, uint16_t millis) 			{ p_motor->Parameters.OpenLoopAccel_Ms = millis; }
-static inline void Motor_User_SetOpenLoopAccel_Control(Motor_T * p_motor, uint16_t cycles) 			{ p_motor->Parameters.OpenLoopAccel_Ms = _Motor_ConvertToMillis(p_motor, cycles); }
-static inline void Motor_User_SetRampAccel_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.RampAccel_Ms = millis; }
-static inline void Motor_User_SetRampAccel_Control(Motor_T * p_motor, uint16_t cycles) 				{ p_motor->Parameters.RampAccel_Ms = _Motor_ConvertToMillis(p_motor, cycles); }
+static inline void Motor_User_SetAlignTime_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.AlignTime_Cycles = millis; }
+static inline void Motor_User_SetAlignTime_Control(Motor_T * p_motor, uint16_t cycles) 				{ p_motor->Parameters.AlignTime_Cycles = cycles; }
+static inline void Motor_User_SetOpenLoopAccel_Millis(Motor_T * p_motor, uint16_t millis) 			{ p_motor->Parameters.OpenLoopAccel_Cycles = millis; }
+static inline void Motor_User_SetOpenLoopAccel_Control(Motor_T * p_motor, uint16_t cycles) 			{ p_motor->Parameters.OpenLoopAccel_Cycles = cycles; }
+static inline void Motor_User_SetRampAccel_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.RampAccel_Cycles = millis; }
+static inline void Motor_User_SetRampAccel_Control(Motor_T * p_motor, uint16_t cycles) 				{ p_motor->Parameters.RampAccel_Cycles = cycles; }
 // static inline void Motor_User_SetVoltageBrakeScalar_Frac16(Motor_T * p_motor, uint16_t scalar_Frac16) 	{ p_motor->Parameters.VoltageBrakeScalar_InvFrac16 = 65535U - scalar_Frac16; }
 
 /* Persistent Control Mode */

@@ -41,6 +41,40 @@ void Motor_Init(Motor_T * p_motor)
 	StateMachine_Init(&p_motor->StateMachine);
 }
 
+void Motor_InitSensor(Motor_T * p_motor)
+{
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_HALL:
+			p_motor->CONFIG.INIT_SENSOR_HALL();
+			Hall_Init(&p_motor->Hall);
+			Encoder_ModeDT_Init(&p_motor->Encoder);
+			Motor_ResetUnitsHallEncoder(p_motor);
+			Motor_ResetUnitsEncoder(p_motor);
+			Motor_ResetUnitsAngleSpeed_ElecControl(p_motor);
+			break;
+		case MOTOR_SENSOR_MODE_ENCODER:
+			p_motor->CONFIG.INIT_SENSOR_ENCODER();
+			Encoder_ModeDT_Init(&p_motor->Encoder);
+			Motor_ResetUnitsEncoder(p_motor);
+			break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+		case MOTOR_SENSOR_MODE_SIN_COS:
+			SinCos_Init(&p_motor->SinCos);
+			Motor_ResetUnitsSinCos(&p_motor->SinCos);
+			Motor_ResetUnitsAngleSpeed_Mech(&p_motor);
+			break;
+#endif
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+		case MOTOR_SENSOR_MODE_SENSORLESS:
+			Motor_ResetUnitsAngleSpeed_ElecControl(p_motor);
+			break;
+#endif
+		default:
+			break;
+	}
+}
+
 void Motor_InitReboot(Motor_T * p_motor)
 {
 	/*
@@ -73,7 +107,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 		Ramp 0 to 32767 max in ~500ms, 3.2767 per ControlCycle
 		Final value is overwritten, Slope is persistent
 	*/
-	Linear_Ramp_Init_Ticks(&p_motor->Ramp, _Motor_ConvertToControlCycles(p_motor, p_motor->Parameters.RampAccel_Ms), 0U, INT16_MAX);
+	Linear_Ramp_Init_Ticks(&p_motor->Ramp, p_motor->Parameters.RampAccel_Cycles, 0U, INT16_MAX);
 
 	Motor_ResetUnitsVabc(p_motor);
 	Motor_ResetUnitsIabc(p_motor);
@@ -87,7 +121,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
 		/* todo frac16 */ /* Start at 0 speed in FOC mode for continuous angle displacements */
-		Linear_Ramp_Init_Ticks(&p_motor->OpenLoopRamp, _Motor_ConvertToControlCycles(p_motor, p_motor->Parameters.OpenLoopAccel_Ms), 0U, p_motor->Parameters.OpenLoopSpeed_RPM);
+		Linear_Ramp_Init_Ticks(&p_motor->OpenLoopRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0U, p_motor->Parameters.OpenLoopSpeed_RPM);
 	}
 	else
 	{
@@ -222,7 +256,7 @@ void Motor_SetDirectionCcw(Motor_T * p_motor)
 	Motor_SetLimitsCcw(p_motor);
 	switch(p_motor->Parameters.SensorMode)
 	{
-		case MOTOR_SENSOR_MODE_HALL: 		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW); break;
+		case MOTOR_SENSOR_MODE_HALL: Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW); Encoder_SetSinglePhaseDirection(&p_motor->Encoder, true); break;
 		case MOTOR_SENSOR_MODE_ENCODER: 	break;
 		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
 		default: break;
@@ -235,7 +269,7 @@ void Motor_SetDirectionCw(Motor_T * p_motor)
 	Motor_SetLimitsCw(p_motor);
 	switch(p_motor->Parameters.SensorMode)
 	{
-		case MOTOR_SENSOR_MODE_HALL: 		Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW); break;
+		case MOTOR_SENSOR_MODE_HALL: Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW); Encoder_SetSinglePhaseDirection(&p_motor->Encoder, false); break;
 		case MOTOR_SENSOR_MODE_ENCODER: 	break;
 		case MOTOR_SENSOR_MODE_SENSORLESS: 	break;
 		default: break;
@@ -271,40 +305,6 @@ void Motor_SetDirectionReverse(Motor_T * p_motor)
 	Propagate param values
 */
 /******************************************************************************/
-void Motor_InitSensor(Motor_T * p_motor)
-{
-	switch(p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_HALL:
-			p_motor->CONFIG.INIT_SENSOR_HALL();
-			Hall_Init(&p_motor->Hall);
-			Encoder_ModeDT_Init(&p_motor->Encoder);
-			Motor_ResetUnitsHallEncoder(p_motor);
-			Motor_ResetUnitsEncoder(p_motor);
-			Motor_ResetUnitsAngleSpeed_ElecControl(p_motor);
-			break;
-		case MOTOR_SENSOR_MODE_ENCODER:
-			p_motor->CONFIG.INIT_SENSOR_ENCODER();
-			Encoder_ModeDT_Init(&p_motor->Encoder);
-			Motor_ResetUnitsEncoder(p_motor);
-			break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-		case MOTOR_SENSOR_MODE_SIN_COS:
-			SinCos_Init(&p_motor->SinCos);
-			Motor_ResetUnitsSinCos(&p_motor->SinCos);
-			Motor_ResetUnitsAngleSpeed_Mech(&p_motor);
-			break;
-#endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-		case MOTOR_SENSOR_MODE_SENSORLESS:
-			Motor_ResetUnitsAngleSpeed_ElecControl(p_motor);
-			break;
-#endif
-		default:
-			break;
-	}
-}
-
 void Motor_ResetUnitsVabc(Motor_T * p_motor)
 {
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)

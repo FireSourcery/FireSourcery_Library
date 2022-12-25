@@ -134,6 +134,7 @@ static inline void switchcpy(void *p_dest, const void *p_source, size_t unitSize
 		default: memcpy(p_dest, p_source, unitSize);  break;
 	}
 }
+
 static inline void PeekFront(const Ring_T * p_ring, void * p_dest) 					{ switchcpy(p_dest, GetPtrFront(p_ring), p_ring->CONFIG.UNIT_SIZE); }
 static inline void PeekBack(const Ring_T * p_ring, void * p_dest) 					{ switchcpy(p_dest, GetPtrBack(p_ring), p_ring->CONFIG.UNIT_SIZE); }
 static inline void PeekIndex(const Ring_T * p_ring, void * p_dest, size_t index) 	{ switchcpy(p_dest, GetPtrIndex(p_ring, index), p_ring->CONFIG.UNIT_SIZE); }
@@ -215,11 +216,7 @@ bool Ring_DequeueN(Ring_T * p_ring, void * p_dest, size_t nUnits)
 }
 
 /*
-	while((Ring_GetIsFull(p_ring) == false) && (count < nUnits))
-	{
-		Enqueue(p_ring, CalcPtrUnit(p_units, p_ring->CONFIG.UNIT_SIZE, count));
-		count++;
-	}
+
 */
 size_t Ring_EnqueueMax(Ring_T * p_ring, const void * p_units, size_t nUnits)
 {
@@ -235,11 +232,7 @@ size_t Ring_EnqueueMax(Ring_T * p_ring, const void * p_units, size_t nUnits)
 }
 
 /*
-	while((Ring_GetIsEmpty(p_ring) == false) && (count < nUnits))
-	{
-		Dequeue(p_ring, CalcPtrUnit(p_dest, p_ring->CONFIG.UNIT_SIZE, count));
-		count++;
-	}
+
 */
 size_t Ring_DequeueMax(Ring_T * p_ring, void * p_dest, size_t nUnits)
 {

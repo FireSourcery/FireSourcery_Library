@@ -301,7 +301,7 @@ static void Align_Entry(Motor_T * p_motor)
 {
 	// switch(p_motor->Parameters.AlignMode)
 	// {
-	Timer_StartPeriod(&p_motor->ControlTimer, _Motor_ConvertToControlCycles(p_motor, p_motor->Parameters.AlignTime_Ms)) ;
+	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAlign, 0U);
 	// Motor_ProcCommutationMode(p_motor, Motor_FOC_Align, 0U);
 	// }

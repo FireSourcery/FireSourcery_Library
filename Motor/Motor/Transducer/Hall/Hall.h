@@ -164,7 +164,7 @@ typedef struct Hall_Tag
 	Hall_Params_T Params;
 	Hall_Direction_T Direction;
 	Hall_Sensors_T Sensors;		/* Save last physical read */
-	uint16_t Angle;
+	volatile uint16_t Angle;
 #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
 	Hall_CommutationPhase_T CommuntationTable[HALL_SENSORS_TABLE_LENGTH];
 	void * p_CommutationContext;

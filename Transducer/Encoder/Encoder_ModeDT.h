@@ -76,8 +76,32 @@ static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
 
 static inline uint32_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 {
-	uint32_t freqD = (p_encoder->FreqD < 0) ? 0 - p_encoder->FreqD : p_encoder->FreqD; /* DeltaD < 2  */
+	uint32_t freqD = (p_encoder->FreqD < 0) ? 0 - p_encoder->FreqD : p_encoder->FreqD; /* |DeltaD| < 2 */
 	return (freqD < p_encoder->CONFIG.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
+}
+
+static inline uint32_t Encoder_ModeDT_InterpolateAngularDisplacement(Encoder_T * p_encoder)
+{
+	return Encoder_GetDirection(p_encoder) * Encoder_ModeDT_InterpolateAngle(p_encoder);
+}
+
+static inline uint32_t Encoder_ModeDT_GetScalarSpeed(Encoder_T * p_encoder)
+{
+	// p_encoder->FreqD * [60U * 65536U  / CountsPerRevolution / ScalarSpeedRef_Rpm]
+	// return p_encoder->FreqD * ((uint32_t)60U * 65536UL / p_encoder->Params.CountsPerRevolution) / p_encoder->Params.ScalarSpeedRef_Rpm;
+	// return Encoder_CalcScalarVelocity(p_encoder, p_encoder->FreqD, 1U);
+	return p_encoder->FreqD * (p_encoder->UnitScalarSpeed) / p_encoder->Params.ScalarSpeedRef_Rpm;
+}
+
+static inline int32_t Encoder_ModeDT_GetScalarVelocity(Encoder_T * p_encoder)
+{
+	return Encoder_GetDirection(p_encoder) * Encoder_ModeDT_GetScalarSpeed(p_encoder);
+}
+
+static inline int32_t Encoder_ModeDT_PollScalarVelocity(Encoder_T * p_encoder)
+{
+	Encoder_ModeDT_CaptureVelocity(p_encoder);
+	return Encoder_ModeDT_GetScalarVelocity(p_encoder);
 }
 
 static inline int32_t Encoder_ModeDT_GetAngularVelocity(Encoder_T * p_encoder)
@@ -96,14 +120,6 @@ static inline int32_t Encoder_ModeDT_GetRotationalVelocity_RPM(Encoder_T * p_enc
 {
 	return p_encoder->FreqD * 60U / p_encoder->Params.CountsPerRevolution;
 	// return _Encoder_CalcRotationalVelocity_Shift(p_encoder, p_encoder->FreqD * 60U, 1U);
-}
-
-static inline int32_t Encoder_ModeDT_GetScalarVelocity(Encoder_T * p_encoder)
-{
-	// p_encoder->FreqD * [60U * 65536U  / CountsPerRevolution / ScalarSpeedRef_Rpm]
-	// return p_encoder->FreqD * ((uint32_t)60U * 65536UL / p_encoder->Params.CountsPerRevolution) / p_encoder->Params.ScalarSpeedRef_Rpm;
-	return p_encoder->FreqD * (p_encoder->UnitScalarSpeed) / p_encoder->Params.ScalarSpeedRef_Rpm;
-	// return Encoder_CalcScalarVelocity(p_encoder, p_encoder->FreqD, 1U);
 }
 
 static inline int32_t Encoder_ModeDT_GetLinearVelocity(Encoder_T * p_encoder)

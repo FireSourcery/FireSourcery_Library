@@ -268,10 +268,10 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 	// uint16_t ILimitHeat_Frac16; 		/* Base Heat Limit. Active on thermistor warning. Frac16 scalar on active limit */
 
 	/* todo uniformly change to control cycles */
-	uint16_t RampAccel_Ms;
+	uint16_t RampAccel_Cycles;
 
 	uint16_t AlignVPwm_Frac16;
-	uint16_t AlignTime_Ms;
+	uint16_t AlignTime_Cycles;
 	// uint16_t VoltageBrakeScalar_InvFrac16; /* [0:65535], 0 is highest intensity */
 	//	uint8_t BrakeCoeffcient;
 	//	uint32_t RampAcceleration;
@@ -279,7 +279,7 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	uint16_t OpenLoopSpeed_RPM; 	/* Max */
 	uint16_t OpenLoopVPwm_Frac16; 	/* Frac16 */
-	uint16_t OpenLoopAccel_Ms;		/* Time to reach OpenLoopSpeed_RPM */
+	uint16_t OpenLoopAccel_Cycles;		/* Time to reach OpenLoopSpeed_RPM */
 	// uint16_t OpenLoopVHzGain;
 #endif
 
@@ -540,10 +540,10 @@ static inline void Motor_SetRampSlope_Ticks(Motor_T * p_motor, uint32_t updatePe
 	Linear_Ramp_SetSlope_Ticks(&p_motor->Ramp, updatePeriod_Ticks, initial, final);
 }
 
-static inline void Motor_SetRampSlope_Millis(Motor_T * p_motor, uint16_t period_Ms, int32_t initial, int32_t final)
-{
-	Linear_Ramp_SetSlope_Ticks(&p_motor->Ramp, _Motor_ConvertToControlCycles(p_motor, period_Ms), initial, final);
-}
+// static inline void Motor_SetRampSlope_Millis(Motor_T * p_motor, uint16_t period_Ms, int32_t initial, int32_t final)
+// {
+// 	Linear_Ramp_SetSlope_Ticks(&p_motor->Ramp, _Motor_ConvertToControlCycles(p_motor, period_Ms), initial, final);
+// }
 
 /*
 	Dynamically generated Ramp
@@ -558,7 +558,7 @@ static inline void Motor_SetRampSlope_Millis(Motor_T * p_motor, uint16_t period_
 */
 static inline void Motor_SetRampSlopeRun(Motor_T * p_motor)
 {
-	Linear_Ramp_SetSlope_Ticks(&p_motor->Ramp, _Motor_ConvertToControlCycles(p_motor, p_motor->Parameters.RampAccel_Ms), 0U, INT16_MAX);
+	Linear_Ramp_SetSlope_Ticks(&p_motor->Ramp, p_motor->Parameters.RampAccel_Cycles, 0U, INT16_MAX);
 }
 
 
@@ -567,11 +567,21 @@ static inline void Motor_SetRampSlopeRun(Motor_T * p_motor)
 	Speed
 */
 /******************************************************************************/
-static inline void Motor_SetSpeedOutput(Motor_T * p_motor, int32_t speedControlMatch)
+/*
+	Speed Feedback Loop
+	SpeedControl_FracS16 update ~1000Hz, Ramp input 1000Hz, RampCmd output 20000Hz
+	input	RampCmd[-32767:32767] - (speedFeedback_Frac16 / 2)[-32767:32767]
+	output 	SpeedControl_FracS16[-32767:32767] => IqReq or VqReq
+*/
+static inline void Motor_ProcSpeedFeedback(Motor_T * p_motor, int32_t speedFeedback_FracS16)
 {
-	/* RampOut/PidIn always use SpeedFeedback */
-	p_motor->SpeedControl_FracS16 = speedControlMatch;
-	PID_SetIntegral(&p_motor->PidSpeed, speedControlMatch);  			/* SpeedControl_FracS16 may be V or I */
+	if(p_motor->FeedbackModeFlags.Speed == 1U) { p_motor->SpeedControl_FracS16 = PID_Calc(&p_motor->PidSpeed, p_motor->RampCmd, speedFeedback_FracS16); };
+}
+
+static inline void Motor_SetSpeedOutput(Motor_T * p_motor, int32_t speedControlMatch_FracS16)
+{
+	p_motor->SpeedControl_FracS16 = speedControlMatch_FracS16; /* SpeedControl_FracS16 may be V or I */
+	PID_SetIntegral(&p_motor->PidSpeed, speedControlMatch_FracS16);
 }
 
 static inline bool Motor_CheckSpeed(Motor_T * p_motor)
@@ -719,7 +729,7 @@ static inline void Motor_ResetILimits(Motor_T * p_motor)
 
 	todo push to encoder
 */
-static inline int16_t Motor_GetEncoderAngle(Motor_T * p_motor)
+static inline int16_t Motor_GetEncoderElectricalAngle(Motor_T * p_motor)
 {
 	Encoder_T * p_encoder = &p_motor->Encoder;
 	int16_t angle;
