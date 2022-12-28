@@ -109,7 +109,7 @@ typedef struct __attribute__((aligned(2U))) Thermistor_Params_Tag
 	int16_t LinearUnits0_DegC;
 	int16_t LinearUnits1_DegC;
 
-	// uint16_t CaptureScalar; //remove?
+	// uint16_t CaptureScalar;
 	bool IsMonitorEnable;
 }
 Thermistor_Params_T;
@@ -213,7 +213,6 @@ extern int32_t Thermistor_ConvertToDegC_Int(Thermistor_T * p_therm, uint16_t adc
 extern void Thermistor_SetShutdown_DegC(Thermistor_T * p_therm, uint8_t shutdown_degC, uint8_t shutdownThreshold_degC);
 extern void Thermistor_SetWarning_DegC(Thermistor_T * p_therm, uint8_t warning_degC, uint8_t warningThreshold_degC);
 extern void Thermistor_SetLimits_DegC(Thermistor_T * p_therm, uint8_t shutdown, uint8_t shutdownThreshold, uint8_t warning, uint8_t warningThreshold);
-
 
 extern int16_t Thermistor_GetShutdown_DegC(Thermistor_T * p_therm);
 extern int16_t Thermistor_GetShutdownThreshold_DegC(Thermistor_T * p_therm);

@@ -100,6 +100,12 @@
 #endif
 
 
+#if   	defined(CONFIG_MOTOR_EXTERN_CONTROL_ENABLE)
+#elif   defined(CONFIG_MOTOR_EXTERN_CONTROL_DISABLE)
+#else
+	#define	CONFIG_MOTOR_EXTERN_CONTROL_DISABLE
+#endif
+
 #endif
 
 

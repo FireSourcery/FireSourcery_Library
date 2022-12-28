@@ -31,6 +31,23 @@
 #include "Encoder_DeltaT.h"
 #include <string.h>
 
+/*!
+	Uses pin ISR, or polling
+*/
+void Encoder_DeltaT_Init(Encoder_T * p_encoder)
+{
+	if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
+	_Encoder_DeltaT_Init(p_encoder);
+
+	p_encoder->UnitT_Freq = p_encoder->CONFIG.TIMER_FREQ;
+	_Encoder_ResetUnitsAngular(p_encoder);
+	_Encoder_ResetUnitsLinear(p_encoder);
+	_Encoder_ResetUnitsScalarSpeed(p_encoder);
+
+	p_encoder->DeltaD = 1U; /* Effective for shared functions only */
+	Encoder_DeltaT_SetInitial(p_encoder);
+}
+
 void _Encoder_ResetTimerFreq(Encoder_T * p_encoder)
 {
 	/*
@@ -62,29 +79,11 @@ void _Encoder_ResetTimerFreq(Encoder_T * p_encoder)
 void _Encoder_DeltaT_Init(Encoder_T * p_encoder)
 {
 	HAL_Encoder_InitTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-
 #ifdef CONFIG_ENCODER_DYNAMIC_TIMER
 	_Encoder_ResetTimerFreq(p_encoder);
 #else
 	p_encoder->ExtendedTimerConversion = p_encoder->CONFIG.TIMER_FREQ / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
 #endif
-}
-
-/*!
-	Uses pin ISR, or polling
-*/
-void Encoder_DeltaT_Init(Encoder_T * p_encoder)
-{
-	if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
-	_Encoder_DeltaT_Init(p_encoder);
-
-	p_encoder->UnitT_Freq = p_encoder->CONFIG.TIMER_FREQ;
-	_Encoder_ResetUnitsAngular(p_encoder);
-	_Encoder_ResetUnitsLinear(p_encoder);
-	_Encoder_ResetUnitsScalarSpeed(p_encoder);
-
-	p_encoder->DeltaD = 1U; /* Unused if using Encoder_DeltaT Functions, effective for shared functions only */
-	Encoder_DeltaT_SetInitial(p_encoder);
 }
 
 /*
@@ -95,7 +94,7 @@ void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 	HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
 	HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
 	p_encoder->ExtendedTimerPrev = *p_encoder->CONFIG.P_EXTENDED_TIMER;
-	p_encoder->DeltaT = 0xFFFFFFFFUL;
+	p_encoder->DeltaT = 0xFFFFFFFFUL - 0xFFFF;
 	p_encoder->InterpolationIndex = 0U;
 	_Encoder_ZeroAngle(p_encoder);
 }

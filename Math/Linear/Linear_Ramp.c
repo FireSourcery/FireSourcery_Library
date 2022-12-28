@@ -30,33 +30,43 @@
 /******************************************************************************/
 #include "Linear_Ramp.h"
 
+#define LINEAR_RAMP_SHIFT 15U
+
 /******************************************************************************/
 /*
+	Ramp using Linear
 
+	Slope 		=> RampInc << Shift
+	YReference 	=> Target << Shift
+	YOffset 	=> Current Value << Shift
+	XReference 	=>
+	XOffset 	=>
+	DeltaX => Slope_Divisor
+	DeltaY => Slope_Factor
 */
 /******************************************************************************/
 /*
-	Other functions provide higher granularity
-	Slope is signed, if initial > final AND acceleration is positive, ramp returns final value
-	Overflow: slope_UnitPerSecond > 131,071 [17-bits]
+	if initial > final AND acceleration is positive, ramp returns final value
+	Overflow: final > 65535
 */
-void Linear_Ramp_Init(Linear_T * p_linear, int32_t slope_UnitPerTick, int32_t initial, int32_t final)
+void Linear_Ramp_Init(Linear_T * p_linear, uint32_t period_Ticks, int32_t initial, int32_t final)
 {
-	Linear_Init(p_linear, slope_UnitPerTick, 1U, initial, final);
-}
+	p_linear->SlopeShift 	= LINEAR_RAMP_SHIFT;
+	p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT;
+	Linear_Ramp_SetSlope(p_linear, period_Ticks, initial, final);
+	Linear_Ramp_SetTarget(p_linear, final);
+	p_linear->YOffset = initial << p_linear->SlopeShift;
 
-void Linear_Ramp_Init_Ticks(Linear_T * p_linear, uint32_t updatePeriod_Ticks,  int32_t initial, int32_t final)
-{
-	uint32_t divider = (updatePeriod_Ticks != 0U) ? (updatePeriod_Ticks) : 1U;
-	Linear_Init(p_linear, final - initial, divider, initial, final);
 }
 
 /*
 	Overflow: 	(period_Ms * updateFreq_Hz) > 131,071,000
-				(final - initial) > 131,071
 */
 void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t period_Ms, int32_t initial, int32_t final)
 {
-	uint32_t divider = (period_Ms != 0U) ? (period_Ms * updateFreq_Hz / 1000U) : 1U;
-	Linear_Init(p_linear, final - initial, divider, initial, final);
+	p_linear->SlopeShift 	= LINEAR_RAMP_SHIFT;
+	p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT;
+	Linear_Ramp_SetSlope_Millis(p_linear, updateFreq_Hz, period_Ms, initial, final);
+	Linear_Ramp_SetTarget(p_linear, final);
+	p_linear->YOffset = initial << p_linear->SlopeShift;
 }

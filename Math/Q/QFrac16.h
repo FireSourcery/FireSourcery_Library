@@ -189,9 +189,21 @@ static inline qangle16_quadrant_t qangle16_quadrant(qangle16_t theta)
 	return quadrant;
 }
 
+
 static inline bool qangle16_cycle(qangle16_t theta0, qangle16_t theta1)
 {
-	return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U);
+	return ((theta0 < 0) && (theta1 > 0));
+}
+
+static inline bool qangle16_cycle2(qangle16_t theta0, qangle16_t theta1)
+{
+	// return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U);
+	return ((theta0 ^ theta1) < 0);
+}
+
+static inline bool qangle16_cycle4(qangle16_t theta0, qangle16_t theta1)
+{
+	return (((theta0 ^ theta1) & QANGLE16_QUADRANT_MASK) != (uint16_t)0U);
 }
 
 /*

@@ -35,24 +35,24 @@
 #include "Linear.h"
 #include <stdint.h>
 
-#define LINEAR_VOLTAGE_SHIFT 15U
+#define LINEAR_VOLTAGE_SHIFT (15U)
 
 /*
 	Overflow: R2 > 65536
 */
-#define LINEAR_VOLTAGE_CONFIG(r1, r2, adcBits, adcVRef_MilliV, vInMax) 													\
+#define LINEAR_VOLTAGE_INIT(r1, r2, adcBits, adcVRef_MilliV, vInRef) 													\
 {																														\
-	.Slope 				= (((int32_t)adcVRef_MilliV * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 1000U, 	\
+	.Slope 				= (((uint32_t)adcVRef_MilliV * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 1000U, 	\
 	.SlopeShift 		= LINEAR_VOLTAGE_SHIFT,																			\
 	.InvSlope  			= ((int32_t)r2 << LINEAR_VOLTAGE_SHIFT) / adcVRef_MilliV * 1000U / (r1 + r2),					\
 	.InvSlopeShift 		= LINEAR_VOLTAGE_SHIFT - adcBits,																\
 	.YOffset 			= 0U, 																							\
 	.XOffset 			= 0U, 																							\
-	.YReference 		= vInMax, 																						\
+	.YReference 		= vInRef, 																						\
 }
 
- /******************************************************************************/
- /*!
+/******************************************************************************/
+/*!
 	@brief Calculate voltage from given ADC value
 
 	@param[in] p_linear - struct containing calculated intermediate values
@@ -77,29 +77,28 @@ static inline int32_t Linear_Voltage_CalcScalarV(const Linear_T * p_linear, uint
 
 /******************************************************************************/
 /*!
-	@brief 	results expressed in Q16.16, where 65356 => 100% of vInMax
+	@brief
 */
 /******************************************************************************/
+/*!
+	@brief 	results expressed in Q16.16, where 65356 => 100% of vInMax
+*/
 static inline int32_t Linear_Voltage_CalcFrac16(const Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Function_Frac16(p_linear, adcu);
 }
 
-/******************************************************************************/
 /*!
 	@brief 	results expressed in Q0.16, Saturated to 65535 max
 */
-/******************************************************************************/
 static inline uint16_t Linear_Voltage_CalcFracU16(const Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Function_FracU16(p_linear, adcu);
 }
 
-/******************************************************************************/
 /*!
 	@brief 	results expressed in Q1.15 where 32,767 => 100% of vInMax
 */
-/******************************************************************************/
 static inline int16_t Linear_Voltage_CalcFracS16(const Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Function_FracS16(p_linear, adcu);
@@ -146,8 +145,13 @@ static inline uint16_t Linear_Voltage_CalcAdcu_FracS16(const Linear_T * p_linear
 	return (uint16_t)Linear_InvFunction_FracS16(p_linear, frac16);
 }
 
+/******************************************************************************/
+/*!
+	@brief
+*/
+/******************************************************************************/
 extern void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcBits, uint16_t adcVRef_MilliV, uint16_t vInMax);
-extern uint16_t Linear_Voltage_CalcAdcuUser_V(const Linear_T * p_linear, uint8_t adcBits, uint16_t volts);
-extern uint16_t Linear_Voltage_CalcAdcuUser_MilliV(const Linear_T * p_linear, uint8_t adcBits, uint32_t milliV);
+extern uint16_t Linear_Voltage_CalcAdcuInput_V(const Linear_T * p_linear, uint16_t volts);
+extern uint16_t Linear_Voltage_CalcAdcuInput_MilliV(const Linear_T * p_linear, uint32_t milliV);
 
 #endif

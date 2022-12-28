@@ -33,6 +33,27 @@
 #include "Encoder_DeltaT.h"
 #include <string.h>
 
+
+/* Iterative log2 */
+uint8_t Log2(uint32_t num)
+{
+	uint8_t shift = 0U;
+	while((num >> shift) > 1U) { shift++; }
+	return shift;
+}
+
+uint8_t GetMaxShift_Signed(int32_t num)
+{
+	return Log2(INT32_MAX / num);
+}
+
+/* 1 << Shift <= INT32_MAX / ((x_max - x0) * Slope) */
+uint8_t GetMaxSlopeShift_Signed(int32_t factor, int32_t divisor, int32_t maxDelta)
+{
+	return GetMaxShift_Signed(maxDelta * factor / divisor); /* divide first rounds up log output */
+}
+
+
 static void ResetUnitsScalarSpeed(Encoder_T * p_encoder);
 
 void Encoder_ModeDT_Init(Encoder_T * p_encoder)
@@ -58,17 +79,15 @@ void Encoder_ModeDT_SetInitial(Encoder_T * p_encoder)
 	p_encoder->FreqD = 0;
 }
 
+// ((uint32_t)60U * 65536UL / (p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm);
 static void ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 {
 	p_encoder->UnitScalarSpeed = (uint32_t)60U * 65536U / p_encoder->Params.CountsPerRevolution; // p_encoder->Params.ScalarSpeedRef_Rpm;
-	// freqDMax = p_encoder->Params.ScalarSpeedRef_Rpm * 2U * p_encoder->Params.CountsPerRevolution / 60U;
-	// p_encoder->UnitScalarSpeed_Shift = 0U;
-	// // shiftMax = log2(INT32_MAX / freqDMax) - 1U;
-	// while(((INT32_MAX / freqDMax) >> p_encoder->UnitScalarSpeed_Shift) > 1U) { p_encoder->UnitScalarSpeed_Shift++; }
-	// p_encoder->UnitScalarSpeed_Factor = MaxLeftShiftDivide(65536U, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm / 60U, p_encoder->UnitScalarSpeed_Shift);
-
-	// p_encoder->UnitScalarSpeed = MaxLeftShiftDivide(p_encoder->UnitT_Freq, p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm / 60U, 16U);
-	// p_encoder->UnitScalarSpeed = (((uint64_t)p_encoder->UnitT_Freq * 60U) << 16U) / (p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm);
+	// uint32_t freqDMax = p_encoder->Params.ScalarSpeedRef_Rpm * 2U * p_encoder->Params.CountsPerRevolution / 60U;
+	// // freq max = 204,800
+ 	// p_encoder->UnitScalarSpeed_Shift = GetMaxShift_Signed((uint64_t)60U * 65536U / p_encoder->Params.CountsPerRevolution * freqDMax / p_encoder->Params.ScalarSpeedRef_Rpm);
+	// // 131,072
+	// p_encoder->UnitScalarSpeed = ((uint64_t)60U * (uint64_t)65536U) << (uint64_t)p_encoder->UnitScalarSpeed_Shift / ((uint64_t)p_encoder->Params.CountsPerRevolution * (uint64_t)p_encoder->Params.ScalarSpeedRef_Rpm);
 }
 
 void Encoder_ModeDT_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRevolution)

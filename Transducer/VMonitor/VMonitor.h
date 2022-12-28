@@ -95,6 +95,7 @@ static inline bool VMonitor_GetIsStatusLimit(VMonitor_T * p_vMonitor) { return (
 static inline bool VMonitor_GetIsStatusWarning(VMonitor_T * p_vMonitor) { return ((p_vMonitor->Status == VMONITOR_WARNING_UPPER) || (p_vMonitor->Status == VMONITOR_WARNING_LOWER)); }
 static inline VMonitor_Status_T VMonitor_GetStatus(VMonitor_T * p_vMonitor) { return  (p_vMonitor->Status); }
 
+// uint16_t VMonitor_GetVInRefMax(VMonitor_T * p_vMonitor) { return p_vMonitor->Params.VInRefMax; }
 static inline void VMonitor_Enable(VMonitor_T * p_vMonitor) { p_vMonitor->Params.IsMonitorEnable = true; }
 static inline void VMonitor_Disable(VMonitor_T * p_vMonitor) { p_vMonitor->Params.IsMonitorEnable = false; }
 

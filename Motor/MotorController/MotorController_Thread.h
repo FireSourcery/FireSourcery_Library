@@ -80,23 +80,28 @@ static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
 
 	if(p_mc->Parameters.OptDinFunction != MOTOR_CONTROLLER_OPT_DIN_DISABLE)
 	{
-		if(Debounce_CaptureState(&p_mc->OptDin) == true)
-		{
-			/* Compiler optimize to Debounce_GetState */
-			if(Debounce_PollRisingEdge(&p_mc->OptDin) == true) { dinStatus = 1U; }
-			else if(Debounce_PollFallingEdge(&p_mc->OptDin) == true) { dinStatus = 2U; }
-		}
+		Debounce_CaptureState(&p_mc->OptDin);
 
 		switch(p_mc->Parameters.OptDinFunction)
 		{
 			case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
-				switch(dinStatus)
+				switch(Debounce_PollDualEdge(&p_mc->OptDin))
 				{
-					case 1U: MotorController_SetSpeedLimitMotorAll(p_mc, p_mc->Parameters.OptDinSpeedLimit_Frac16); break;
-					case 2U: MotorController_ClearSpeedLimitMotorAll(p_mc); break;
+					case DEBOUNCE_EDGE_RISING: 	MotorController_SetSpeedLimitMotorAll(p_mc, p_mc->Parameters.OptDinSpeedLimit_Frac16); break;
+					case DEBOUNCE_EDGE_FALLING: MotorController_ClearSpeedLimitMotorAll(p_mc); break;
 					default: break;
 				}
 				break;
+#ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
+			case MOTOR_CONTROLLER_OPT_DIN_SERVO:
+				switch(Debounce_PollDualEdge(&p_mc->OptDin))
+				{
+					case DEBOUNCE_EDGE_RISING: 	MotorController_User_EnterServoMode(p_mc); 	break;
+					case DEBOUNCE_EDGE_FALLING: MotorController_User_ExitServoMode(p_mc); 	break;
+					default: break;
+				}
+				break;
+#endif
 			default: break;
 		}
 	}

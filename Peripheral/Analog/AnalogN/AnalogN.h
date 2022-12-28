@@ -72,20 +72,13 @@ AnalogN_Conversion_T;
 }
 
 //todo
-// typedef const struct AnalogN_Conversion_Tag
-// {
-// 	const AnalogN_Conversion_T * const * const PP_CONVERSIONS; /* Points to an array of pointers */
-// 	const uint8_t CONVERSIONS_COUNT;
-// }
-// AnalogN_ConversionGroup_T;
-
-// typedef const struct
-// {
-// 	Analog_Conversion_T * P_CONVERSIONS;
-// 	uint8_t CONVERSION_COUNT;
-// 	AnalogN_AdcFlags_T activeAdcs
-// }
-// AnalogN_ConversionGroup_T;
+typedef const struct
+{
+	analog_channel_t * P_CHANNELS;
+	uint8_t CHANNELS_COUNT;
+	AnalogN_AdcFlags_T ACTIVE_ADCS;
+}
+AnalogN_ConversionGroup_T;
 
 typedef const struct AnalogN_Config_Tag
 {

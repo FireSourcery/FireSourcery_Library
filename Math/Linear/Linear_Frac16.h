@@ -74,15 +74,6 @@ static inline int32_t Linear_Frac16_InvUnits(const Linear_T * p_linear, int32_t 
 	return linear_m16_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, p_linear->YOffset, p_linear->DeltaY, y);
 }
 
-//may be iterative shift convert
-static inline int32_t Linear_Frac16_Units_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
-{
-	(void)p_linear;
-	(void)x;
-	(void)scalar;
-	return 0U; //todo
-}
-
 /******************************************************************************/
 /*!
 	Saturate to uint16_t, q0.16 [0:65535]
@@ -120,7 +111,12 @@ static inline int32_t Linear_Frac16_InvSigned(const Linear_T * p_linear, int16_t
 	return Linear_Frac16_Inv(p_linear, (int32_t)y_fracS16 * 2);
 }
 
-extern void Linear_Frac16_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0_Units, int32_t yRef_Units);
-extern void Linear_Frac16_Init_Slope(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0_Units, int32_t yRef_Units);
+/******************************************************************************/
+/*!
+	Extern
+*/
+/******************************************************************************/
+extern void Linear_Frac16_Init(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0_Units, int32_t yRef_Units);
+extern void Linear_Frac16_Init_Slope(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t x0, int32_t xRef);
 
 #endif

@@ -96,6 +96,7 @@ static inline void Encoder_DeltaT_CaptureExtended(Encoder_T * p_encoder)
 	if(HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == false)
 	{
 		p_encoder->DeltaT = (HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) + p_encoder->DeltaT) / 2U;
+		// p_encoder->DeltaT = HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
 	}
 	else
 	{
@@ -184,7 +185,7 @@ static inline uint32_t Encoder_DeltaT_ConvertInterpolationCountToRotationalSpeed
 /******************************************************************************/
 static inline uint32_t Encoder_DeltaT_GetAngularSpeed(Encoder_T * p_encoder)
 {
-	/*	p_encoder->UnitAngularSpeed set to 0U if overflow */
+	/* p_encoder->UnitAngularSpeed set to 0U if overflow */
 	return (p_encoder->UnitAngularSpeed == 0U) ?
 		((p_encoder->UnitT_Freq / p_encoder->DeltaT) << ENCODER_ANGLE16) / p_encoder->Params.CountsPerRevolution :
 		_Encoder_CalcAngularSpeed(p_encoder, 1U, p_encoder->DeltaT);

@@ -32,6 +32,7 @@
 
 /* Global Static, for all Motor instances */
 static uint16_t VSourceRef_V; 		/* Battery/Supply voltage. Sync with upper layer */
+
 void Global_Motor_InitVSourceRef_V(uint16_t vSource) { Global_Motor_SetVSource_V(vSource); }
 void Global_Motor_SetVSource_V(uint16_t vSource) { VSourceRef_V = (vSource > GLOBAL_MOTOR.V_MAX_VOLTS) ? GLOBAL_MOTOR.V_MAX_VOLTS : vSource; }
 uint16_t Global_Motor_GetVSource_V(void) { return VSourceRef_V; }

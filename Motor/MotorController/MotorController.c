@@ -162,8 +162,8 @@ void MotorController_Init(MotorController_T * p_mc)
 // 	Motor_User_SetCommutationMode(p_motor, MOTOR_COMMUTATION_MODE_FOC);
 // 	// Motor_User_SetFeedbackModeParam(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT);
 
-// 	// Motor_User_SetSpeedFeedbackRef_VRpm(p_motor, BOARD_V_VOLTS, SPEED_MAX_DEFAULT);
-// 	// Motor_User_SetSpeedFeedbackRef_VRpm(p_motor, 42U, SPEED_MAX_DEFAULT);
+// 	// Motor_User_SetSpeedRef_VRpm(p_motor, BOARD_V_VOLTS, SPEED_MAX_DEFAULT);
+// 	// Motor_User_SetSpeedRef_VRpm(p_motor, 42U, SPEED_MAX_DEFAULT);
 // 	Motor_User_SetSpeedFeedbackRef_Rpm(p_motor, SPEED_MAX_DEFAULT);
 // 	// Motor_User_SetIPeakRef_Adcu(p_motor, BOARD_I_SENSOR_LIMIT * 9U / 10U);
 // 	// Motor_User_SetIPeakRef_MilliV(p_motor,  min_MilliV,  max_MilliV);

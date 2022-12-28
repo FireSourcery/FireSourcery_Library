@@ -48,6 +48,13 @@ const int8_t _ENCODER_TABLE_PHASE_A[_ENCODER_TABLE_LENGTH] =
 	-1,_ENCODER_TABLE_ERROR,_ENCODER_TABLE_ERROR,0
 };
 
+void Encoder_InitInterrupts(Encoder_T * p_encoder)
+{
+	HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
+	HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
+	HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
+}
+
 /*!
 	Perform highest precision (factor << targetShift / divisor) without overflow
 */
@@ -188,7 +195,7 @@ void Encoder_SetDistancePerRevolution(Encoder_T * p_encoder, uint16_t distancePe
 /*
 	gearRatio is Surface:Encoder
 */
-void Encoder_Motor_SetSurfaceRatio(Encoder_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatio_Factor, uint32_t gearRatio_Divisor)
+void Encoder_SetSurfaceRatio(Encoder_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatio_Factor, uint32_t gearRatio_Divisor)
 {
 	p_encoder->Params.SurfaceDiameter = surfaceDiameter;
 	p_encoder->Params.GearRatio_Factor = gearRatio_Factor;
@@ -198,35 +205,23 @@ void Encoder_Motor_SetSurfaceRatio(Encoder_T * p_encoder, uint32_t surfaceDiamet
 	// Encoder_SetDistancePerRevolution(p_encoder, surfaceDiameter * surfaceToMotorRatio_Divisor * 314 / (100 * surfaceToMotorRatio_Factor));
 }
 
-void Encoder_Motor_SetGroundRatio_US(Encoder_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+void Encoder_SetGroundRatio_US(Encoder_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
 {
-	Encoder_Motor_SetSurfaceRatio(p_encoder, wheelDiameter_Inch10 * 254 / 100, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);
+	Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Inch10 * 254 / 100, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);
 }
 
-void Encoder_Motor_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+void Encoder_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
 {
-	Encoder_Motor_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);
+	Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);
 }
 
 /* Outer module sets direction */
-void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool isPositive)
-{
-	p_encoder->IsSinglePhasePositive = isPositive;
-}
+void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool isPositive) { p_encoder->IsSinglePhasePositive = isPositive; }
 
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)
-{
-	p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled;
-}
-
-/*!
-	isALeadBPositive - User runtime calibrate
-*/
-void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive)
-{
-	p_encoder->Params.IsALeadBPositive = isALeadBPositive;
-}
+void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled) { p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled; }
+/*!	isALeadBPositive - User runtime calibrate */
+void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive) { p_encoder->Params.IsALeadBPositive = isALeadBPositive; }
 #endif
 
 

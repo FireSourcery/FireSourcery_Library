@@ -47,9 +47,10 @@
 */
 /******************************************************************************/
 /* Zero Throttle or Brake */
-static inline void MotorController_User_SetCmdZero(MotorController_T *p_mc) 						{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_ZERO, STATE_MACHINE_INPUT_VALUE_NULL); }
-static inline void MotorController_User_SetCmdThrottle(MotorController_T *p_mc, uint16_t userCmd) 	{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd); }
-static inline void MotorController_User_SetCmdBrake(MotorController_T *p_mc, uint16_t userCmd) 		{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
+static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, uint16_t userCmd) 	{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CMD, userCmd); }
+static inline void MotorController_User_SetCmdZero(MotorController_T * p_mc) 						{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_ZERO, STATE_MACHINE_INPUT_VALUE_NULL); }
+static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd) 	{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd); }
+static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd) 	{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
 static inline uint16_t MotorController_User_GetCmdValue(MotorController_T * p_mc) { return p_mc->UserCmd; }
 // static inline void MotorController_User_SetCmdBrakeAlt(MotorController_T * p_mc, uint16_t userCmd) { p_mc->UserCmd = userCmd; 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE_ALT); }
 
@@ -68,6 +69,15 @@ static inline void MotorController_User_SetDirection(MotorController_T * p_mc, M
 }
 
 static inline MotorController_Direction_T MotorController_User_GetDirection(MotorController_T * p_mc) { return p_mc->ActiveDirection; }
+
+/******************************************************************************/
+/* Servo  */
+/******************************************************************************/
+#ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
+static inline void MotorController_User_EnterServoMode(MotorController_T * p_mc) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_MACHINE_INPUT_VALUE_NULL); }
+static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SET_DIRECTION, STATE_MACHINE_INPUT_VALUE_NULL); }
+#endif
+
 
 /******************************************************************************/
 /* Fault */
@@ -132,7 +142,7 @@ static inline void MotorController_User_ProcCalibration_Blocking(MotorController
 
 /******************************************************************************/
 /*
-	Direct Inputs
+	Non StateMachine Checked Direct Inputs
 */
 /******************************************************************************/
 /* Not StateMachine Checked, Use with caution */
@@ -142,6 +152,7 @@ static inline void MotorController_User_BeepN(MotorController_T * p_mc, uint32_t
 static inline void MotorController_User_BeepStart(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime) { Blinky_StartPeriodic(&p_mc->Buzzer, onTime, offTime); }
 static inline void MotorController_User_BeepStop(MotorController_T * p_mc) { Blinky_Stop(&p_mc->Buzzer); }
 
+/* ClearSpeed */
 
 /******************************************************************************/
 /*

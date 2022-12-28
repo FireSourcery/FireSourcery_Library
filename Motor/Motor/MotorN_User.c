@@ -35,20 +35,19 @@
 	N Motor Array functions
 */
 /******************************************************************************/
-//void ProcN(Motor_T * p_motor, uint8_t motorCount, uint32_t (*op)(Motor_T*, uint32_t), uint16_t var)
-//{
-//	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-//	{
-//		op(&p_motor[iMotor], var);
-//	}
-//}
+void MotorN_User_SetCmd(Motor_T * p_motor, uint8_t motorCount, Motor_User_SetCmd_T cmdFunction, int16_t cmdValue)
+{
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { cmdFunction(&p_motor[iMotor], cmdValue); }
+}
+
+void MotorN_User_SetTorqueCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t cmdValue) { MotorN_User_SetCmd(p_motor, motorCount, Motor_User_SetTorqueCmdValue, cmdValue); }
 
 bool MotorN_User_CheckStop(Motor_T * p_motor, uint8_t motorCount)
 {
 	bool isStop = true;
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
 	{
-		// if(p_motor[iMotor].SpeedFeedback_Frac16 > 0) { isStop = false; break; }
+		// if(p_motor[iMotor].Speed_Frac16 > 0) { isStop = false; break; }
 		if(Motor_User_GetStateId(&p_motor[iMotor]) != MSM_STATE_ID_STOP) { isStop = false; break; }
 	}
 	return isStop;

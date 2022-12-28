@@ -13,10 +13,10 @@ A **General Embedded C Library** and **Motor Control Library**
 
 * Motor Library Features
   - FOC.
-  - Sensors: Hall, Sine Cosine, Quadrature Encoder.
+  - Sensors: Hall, Quadrature Encoder, Sine Cosine.
   - Speed and current feedback loop.
-  - Hierarchical implementation of control behaviors with code reuse.
-  - Standard protocol for GUI side. Arduino compatible wrapper.
+  - Layered implementation of control behaviors with code reuse.
+  - Standard protocol for GUI side. Arduino-compatible wrapper.
 
 * TODO
   - Encoder HFI align
@@ -29,9 +29,9 @@ A **General Embedded C Library** and **Motor Control Library**
 
 * Motor - Motor Control Library
   - Motor - Functions and state information for the operation of a single unique motor.
-  - Motor Controller - Functions and state information common to all motors, e.g. handling of communication, user input/outputs.
+  - MotorController - Functions and state information common to all motors, e.g. handling of communication, and user input/outputs.
 
-* Peripheral - Peripheral abstraction layer. Common peripheral interface called by upper layers.
+* Peripheral - Peripheral abstraction layer. A common peripheral interface called by upper layers.
   - HAL - Hardware abstraction layer. Handling of hardware registers, per chip implementation.
 
 * System - Common interface for system functions. Abstraction layer over some hardware dependencies.

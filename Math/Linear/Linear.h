@@ -36,12 +36,6 @@
 #include "math_linear.h"
 #include <stdint.h>
 
-/*
-	Shift 14 to allow over saturation f([X0-2*(XRef-X0):X0+2*(XRef-X0)]) == [-2*YRef:2*YRef] before overflow
-		i.e 2x input interval, while retaining sign bit, before overflow.
-*/
-#define LINEAR_DIVIDE_SHIFT 14U /* Allow signed, and 2x xRef input */
-
 typedef struct Linear_Tag
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
@@ -55,14 +49,26 @@ typedef struct Linear_Tag
 #endif
 	int32_t XOffset;
 	int32_t YOffset;
-	/* User Info only for now */
-	int32_t XReference;		/* f([0:XRef]) => frac16(x)[0:65536] */
+	int32_t XReference;		/* f([0:XRef]) => frac16(x)[0:65536] *//* User Info only for now */
 	int32_t YReference;		/* f(x)[0:YRef] => frac16(x)[0:65536] */
-
-	int32_t DeltaX;			/* (XRef - X0), f([X0-DeltaX:X0+DeltaX]) == [-YRef:YRef]   */
+	int32_t DeltaX;			/* (XRef - X0), f([X0-DeltaX:X0+DeltaX]) == [-YRef:YRef] */
 	int32_t DeltaY;
 }
 Linear_T;
+
+#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
+#define LINEAR_INIT(factor, divisor, y0, yRef)			\
+{														\
+	.Slope 				= ,								\
+	.SlopeShift 		= ,								\
+	.InvSlope 			= , 							\
+	.InvSlopeShift 		= ,								\
+	.XOffset 			= ,								\
+	.YOffset 			= ,								\
+ 	.XReference 		= , 							\
+	.YReference 		= , 							\
+}
+#endif
 
 /******************************************************************************/
 /*!
@@ -89,14 +95,8 @@ static inline uint16_t _Linear_SatUnsigned16_Abs(int32_t frac16)
 /* NonError Checked */
 static inline void _Linear_SetSlope(Linear_T * p_linear, int32_t slopeFactor, int32_t slopeDivisor)
 {
-	p_linear->Slope = (slopeFactor << LINEAR_DIVIDE_SHIFT) / slopeDivisor;
-	p_linear->InvSlope = (slopeDivisor << LINEAR_DIVIDE_SHIFT) / slopeFactor;
-}
-
-static inline void _Linear_SetSlope_Y0(Linear_T * p_linear, int32_t slopeFactor, int32_t slopeDivisor, int32_t initial)
-{
-	_Linear_SetSlope(p_linear, slopeFactor, slopeDivisor);
-	p_linear->YOffset = initial;
+	p_linear->Slope = (slopeFactor << p_linear->SlopeShift) / slopeDivisor;
+	p_linear->InvSlope = (slopeDivisor << p_linear->InvSlopeShift) / slopeFactor;
 }
 
 /******************************************************************************/
@@ -131,23 +131,8 @@ static inline int32_t Linear_InvFunction(const Linear_T * p_linear, int32_t y)
 
 /******************************************************************************/
 /*!
-	Saturated on Input - indirectly saturates output and avoids overflow
-*/
-/******************************************************************************/
-static inline int32_t Linear_Function_Sat(const Linear_T * p_linear, int32_t x)
-{
-	return Linear_Function(p_linear, _Linear_Sat(0 - p_linear->XReference, p_linear->XReference, x));
-}
-
-static inline int32_t Linear_InvFunction_Sat(const Linear_T * p_linear, int32_t y)
-{
-	return Linear_InvFunction(p_linear, _Linear_Sat(0 - p_linear->YReference, p_linear->YReference, y));
-}
-
-/******************************************************************************/
-/*!
-	@brief 	Unoptimized Frac16
-	Fraction in q16.16 [-2,147,483,648, 2,147,483,647]
+	@brief Frac16 with division
+	Fraction in q16.16 [-2,147,483,648:2,147,483,647]
 	f([-XRef:XRef]) => [-65536:65536]
 	@{
 */
@@ -170,7 +155,7 @@ static inline int32_t Linear_InvFunction_Frac16(const Linear_T * p_linear, int32
 /******************************************************************************/
 /*!
 	Frac16 Saturated Output
-	Saturate to uint16_t, q0.16 [0, 65535]
+	Saturate to uint16_t, q0.16 [0:65535]
 	f([-XRef:XRef]) => [0:65536]
 */
 /******************************************************************************/
@@ -194,7 +179,7 @@ static inline int32_t Linear_InvFunction_FracU16(const Linear_T * p_linear, uint
 
 /******************************************************************************/
 /*!
-	Saturate to int16_t, q1.15 [-32768, 32767]
+	Saturate to int16_t, q1.15 [-32768:32767]
 	f([-XRef:XRef]) => [-32768:32767]
 */
 /******************************************************************************/
@@ -208,6 +193,22 @@ static inline int16_t Linear_Function_FracS16(const Linear_T * p_linear, int32_t
 static inline int32_t Linear_InvFunction_FracS16(const Linear_T * p_linear, int16_t y_fracS16)
 {
 	return Linear_InvFunction_Frac16(p_linear, (int32_t)y_fracS16 * 2);
+}
+
+
+/******************************************************************************/
+/*!
+	Saturated on Input - indirectly saturates output and avoids overflow
+*/
+/******************************************************************************/
+static inline int32_t Linear_Function_Sat(const Linear_T * p_linear, int32_t x)
+{
+	return Linear_Function(p_linear, _Linear_Sat(0 - p_linear->XReference, p_linear->XReference, x));
+}
+
+static inline int32_t Linear_InvFunction_Sat(const Linear_T * p_linear, int32_t y)
+{
+	return Linear_InvFunction(p_linear, _Linear_Sat(0 - p_linear->YReference, p_linear->YReference, y));
 }
 
 /******************************************************************************/
@@ -241,8 +242,6 @@ static inline int32_t Linear_InvFunction_Round(const Linear_T * p_linear, int32_
 extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef);
 extern void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, int32_t yRef);
 
-extern int32_t Linear_Function_Sat(const Linear_T * p_linear, int32_t x);
-extern int32_t Linear_InvFunction_Sat(const Linear_T * p_linear, int32_t y);
 extern int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar);
 extern int32_t Linear_InvFunction_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar);
 

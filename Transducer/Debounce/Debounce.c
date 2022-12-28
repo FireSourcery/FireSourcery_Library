@@ -57,34 +57,43 @@ bool Debounce_CaptureState(Debounce_T * p_debounce)
 	}
 	else
 	{
+		// if(p_debounce->DebouncedState != )
+		{
 		if(*p_debounce->CONFIG.P_TIMER - p_debounce->TimePrev > p_debounce->DebounceTime)
 		{
 			p_debounce->TimePrev = UINT32_MAX - p_debounce->DebounceTime; /* disable until next change in pin */
 			p_debounce->DebouncedStatePrev = p_debounce->DebouncedState;
 			p_debounce->DebouncedState = pinState;
 		}
+		}
 	}
 
 	return (p_debounce->DebouncedStatePrev ^ p_debounce->DebouncedState);
 }
 
+
 bool Debounce_PollFallingEdge(Debounce_T * p_debounce)
 {
-	bool isEdge = ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true)) ;
+	bool isEdge = ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true));
 	if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
 	return isEdge;
 }
 
 bool Debounce_PollRisingEdge(Debounce_T * p_debounce)
 {
-	bool isEdge = ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false)) ;
+	bool isEdge = ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false));
 	if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
 	return isEdge;
 }
 
-bool Debounce_PollDualEdge(Debounce_T * p_debounce)
+bool Debounce_PollIsDualEdge(Debounce_T * p_debounce)
 {
 	bool isEdge = ((p_debounce->DebouncedState ^ p_debounce->DebouncedStatePrev) == true);
 	if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
 	return isEdge;
+}
+
+Debounce_Edge_T Debounce_PollDualEdge(Debounce_T * p_debounce)
+{
+	return ((Debounce_PollIsDualEdge(p_debounce) == true) ? ((p_debounce->DebouncedState = true) ? DEBOUNCE_EDGE_RISING : DEBOUNCE_EDGE_FALLING) : DEBOUNCE_EDGE_NULL);
 }

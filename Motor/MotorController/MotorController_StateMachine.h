@@ -34,7 +34,13 @@
 #include "MotorController.h"
 #include "Utility/StateMachine/StateMachine.h"
 
-#define MCSM_TRANSITION_TABLE_LENGTH 	(7U)
+#ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
+	#define _MCSM_TRANSITION_TABLE_LENGTH_SERVO (1U)
+#else
+	#define _MCSM_TRANSITION_TABLE_LENGTH_SERVO (0U)
+#endif
+
+#define MCSM_TRANSITION_TABLE_LENGTH 	(7U + _MCSM_TRANSITION_TABLE_LENGTH_SERVO)
 
 typedef enum MotorController_StateMachine_Input_Tag
 {
@@ -43,6 +49,10 @@ typedef enum MotorController_StateMachine_Input_Tag
 	MCSM_INPUT_THROTTLE,
 	MCSM_INPUT_BRAKE,
 	MCSM_INPUT_ZERO,				/* Release Control (On Zero Throttle/BraKe), Continue Zero Input in Direction Fwd/Rev */
+	MCSM_INPUT_CMD,
+#ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
+	MCSM_INPUT_SERVO,
+#endif
 	MCSM_INPUT_CALIBRATION,			/* Blocking and slow functions */
 }
 MotorController_StateMachine_Input_T;
@@ -52,6 +62,9 @@ typedef enum MotorController_StateMachine_StateId_Tag
 	MCSM_STATE_ID_INIT,
 	MCSM_STATE_ID_STOP,
 	MCSM_STATE_ID_RUN,
+#ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
+	MCSM_STATE_ID_SERVO,
+#endif
 	MCSM_STATE_ID_FAULT,
 }
 MotorController_StateMachine_StateId_T;

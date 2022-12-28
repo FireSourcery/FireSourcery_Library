@@ -54,7 +54,7 @@
 */
 /******************************************************************************/
 
-extern void _Motor_User_ActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T mode);
+extern void _Motor_User_ActivateControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 
 /*!
 	Convert user reference direction to CCW/CW direction
@@ -73,7 +73,7 @@ static inline int32_t _Motor_User_CalcDirectionalCmd(Motor_T * p_motor, int16_t 
 /******************************************************************************/
 static inline void Motor_User_SetVoltageMode(Motor_T * p_motor)
 {
-	_Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE);
+	_Motor_User_ActivateControlMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE);
 }
 
 /*!
@@ -82,7 +82,7 @@ static inline void Motor_User_SetVoltageMode(Motor_T * p_motor)
 static inline void Motor_User_SetVoltageCmdValue(Motor_T * p_motor, int16_t voltage)
 {
 	int32_t input = (voltage > 0) ? voltage : 0; /* Reverse voltage use change direction */
-	Motor_SetRampTarget(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, input));
+	Linear_Ramp_SetTarget(&p_motor->Ramp, _Motor_User_CalcDirectionalCmd(p_motor, input));
 }
 
 static inline void Motor_User_SetVoltageModeCmd(Motor_T * p_motor, int16_t voltage)
@@ -98,7 +98,7 @@ static inline void Motor_User_SetVoltageModeCmd(Motor_T * p_motor, int16_t volta
 /******************************************************************************/
 static inline void Motor_User_SetScalarMode(Motor_T * p_motor)
 {
-	_Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_SCALAR_VOLTAGE_FREQ);
+	_Motor_User_ActivateControlMode(p_motor, MOTOR_FEEDBACK_MODE_SCALAR_VOLTAGE_FREQ);
 }
 
 /*!
@@ -106,7 +106,7 @@ static inline void Motor_User_SetScalarMode(Motor_T * p_motor)
 */
 static inline void Motor_User_SetScalarCmdValue(Motor_T * p_motor, uint32_t scalar)
 {
-	Motor_SetRampTarget(p_motor, scalar);
+	Linear_Ramp_SetTarget(&p_motor->Ramp, scalar);
 }
 
 static inline void Motor_User_SetScalarModeCmd(Motor_T * p_motor, uint32_t scalar)
@@ -122,7 +122,7 @@ static inline void Motor_User_SetScalarModeCmd(Motor_T * p_motor, uint32_t scala
 /******************************************************************************/
 static inline void Motor_User_SetTorqueMode(Motor_T * p_motor)
 {
-	_Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT);
+	_Motor_User_ActivateControlMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT);
 }
 
 /*!
@@ -131,7 +131,7 @@ static inline void Motor_User_SetTorqueMode(Motor_T * p_motor)
 static inline void Motor_User_SetTorqueCmdValue(Motor_T * p_motor, int16_t torque)
 {
 	int32_t input = (torque > 0) ? ((int32_t)torque * p_motor->ILimitMotoring_Frac16 / 65536) : ((int32_t)torque * p_motor->ILimitGenerating_Frac16 / 65536);
-	Motor_SetRampTarget(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, input));
+	Linear_Ramp_SetTarget(&p_motor->Ramp, _Motor_User_CalcDirectionalCmd(p_motor, input));
 }
 
 static inline void Motor_User_SetTorqueModeCmd(Motor_T * p_motor, int16_t torque)
@@ -150,7 +150,7 @@ static inline void Motor_User_SetTorqueModeCmd(Motor_T * p_motor, int16_t torque
 */
 static inline void Motor_User_SetSpeedMode(Motor_T * p_motor)
 {
-	_Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT);
+	_Motor_User_ActivateControlMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT);
 }
 
 /*!
@@ -160,7 +160,7 @@ static inline void Motor_User_SetSpeedMode(Motor_T * p_motor)
 */
 static inline void Motor_User_SetSpeedCmdValue(Motor_T * p_motor, int16_t speed)
 {
-	Motor_SetRampTarget(p_motor, _Motor_User_CalcDirectionalCmd(p_motor, (int32_t)speed * p_motor->SpeedLimit_Frac16 / 65536));
+	Linear_Ramp_SetTarget(&p_motor->Ramp, _Motor_User_CalcDirectionalCmd(p_motor, (int32_t)speed * p_motor->SpeedLimit_Frac16 / 65536));
 }
 
 static inline void Motor_User_SetSpeedModeCmd(Motor_T * p_motor, int16_t speed)
@@ -179,14 +179,14 @@ static inline void Motor_User_SetSpeedModeCmd(Motor_T * p_motor, int16_t speed)
 */
 static inline void Motor_User_SetOpenLoopMode(Motor_T * p_motor)
 {
-	_Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP);
+	_Motor_User_ActivateControlMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP);
 }
 
 /*!
 */
 static inline void Motor_User_SetOpenLoopCmdValue(Motor_T * p_motor, int16_t vPwm)
 {
-	Motor_SetRampTarget(p_motor, p_motor->Parameters.OpenLoopVPwm_Frac16 / 2U);
+	Linear_Ramp_SetTarget(&p_motor->Ramp, p_motor->Parameters.OpenLoopVPwm_Frac16 / 2U);
 }
 
 static inline void Motor_User_SetOpenLoopModeCmd(Motor_T * p_motor, int16_t vPwm)
@@ -217,7 +217,7 @@ static inline void Motor_User_SetOpenLoopModeCmd(Motor_T * p_motor, int16_t vPwm
 /******************************************************************************/
 static inline void Motor_User_SetUserFeedbackMode(Motor_T * p_motor)
 {
-	_Motor_User_ActivateControl(p_motor, p_motor->Parameters.UserFeedbackMode); /* throttle FeedbackMode */
+	_Motor_User_ActivateControlMode(p_motor, p_motor->Parameters.DefaultFeedbackMode); /* throttle FeedbackMode */
 }
 
 static inline void Motor_User_SetUserFeedbackCmdValue(Motor_T * p_motor, int16_t userCmd)
@@ -237,10 +237,11 @@ static inline void Motor_User_SetUserFeedbackModeCmd(Motor_T * p_motor, int16_t 
 	Motor_User_SetUserFeedbackCmdValue(p_motor, userCmd);
 }
 
+//todo remove
 /******************************************************************************/
 /*!
 	Throttle and Brake accept uint16_t, wrapped functions use int16_t
-	- UserCmd value in configured UserFeedbackMode
+	- UserCmd value in configured DefaultFeedbackMode
 */
 /******************************************************************************/
 /*!
@@ -286,8 +287,8 @@ static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 // {
 // 	// if(Motor_GetSpeed_RPM(p_motor) > 30U)
 // 	// {
-// 	// Motor_User_SetVoltageModeCmd(p_motor, p_motor->SpeedFeedback_Frac16 * p_motor->Parameters.VoltageBrakeScalar_InvFrac16 / 65536U);
-// 	// Motor_User_SetVoltageModeCmd(p_motor, p_motor->SpeedFeedback_Frac16 * voltage / 65536U);
+// 	// Motor_User_SetVoltageModeCmd(p_motor, p_motor->Speed_Frac16 * p_motor->Parameters.VoltageBrakeScalar_InvFrac16 / 65536U);
+// 	// Motor_User_SetVoltageModeCmd(p_motor, p_motor->Speed_Frac16 * voltage / 65536U);
 // 	// }
 // 	// else
 // 	// {
@@ -343,20 +344,12 @@ static inline bool Motor_User_CheckFault(Motor_T * p_motor)
 	return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FAULT);
 }
 
-/******************************************************************************/
-/*!
-	Non StateMachined Checked
-*/
-/******************************************************************************/
-// static inline void Motor_User_ForceDisableControl(Motor_T * p_motor) { Phase_Float(&p_motor->Phase); }
 
 /******************************************************************************/
 /*!
 	Error checked User Get Set Values
 */
 /******************************************************************************/
-
-
 /******************************************************************************/
 /*
 	RAM Variables
@@ -368,8 +361,8 @@ static inline uint16_t Motor_User_GetAdcu(Motor_T * p_motor, MotorAnalog_Channel
 static inline uint8_t Motor_User_GetAdcu_Msb8(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel) 	{ return Motor_User_GetAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
 static inline int32_t Motor_User_GetHeat_DegC(Motor_T * p_motor, uint16_t scalar) 					{ return Thermistor_ConvertToDegC_Int(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
 static inline float Motor_User_GetHeat_DegCFloat(Motor_T * p_motor) 								{ return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
-static inline uint16_t Motor_User_GetVBemf_Frac16(Motor_T * p_motor)								{ return Linear_Voltage_CalcFracU16(&p_motor->UnitVabc, p_motor->VBemfPeak_Adcu); }
-static inline uint16_t Motor_User_GetVBemf_V(Motor_T * p_motor)										{ return Linear_Voltage_CalcV(&p_motor->UnitVabc, p_motor->VBemfPeak_Adcu); }
+static inline uint16_t Motor_User_GetVBemf_Frac16(Motor_T * p_motor)								{ return Linear_Voltage_CalcFracU16(&p_motor->UnitsVabc, p_motor->VBemfPeak_Adcu); }
+static inline uint16_t Motor_User_GetVBemf_V(Motor_T * p_motor)										{ return Linear_Voltage_CalcV(&p_motor->UnitsVabc, p_motor->VBemfPeak_Adcu); }
 
 static inline qangle16_t Motor_User_GetElectricalAngle(Motor_T * p_motor) { return p_motor->ElectricalAngle; }
 static inline qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor) { return Motor_GetMechanicalAngle(p_motor); }
@@ -398,12 +391,12 @@ static inline int32_t Motor_User_GetIPhase_Frac16(Motor_T * p_motor)
 }
 
 /*!
-	SpeedFeedback_Frac16 set as CCW us positive
+	Speed_Frac16 set as CCW us positive
 	@return speed forward as positive. reverse as negative.
 */
 static inline int32_t Motor_User_GetSpeed_Frac16(Motor_T * p_motor)
 {
-	return (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? p_motor->SpeedFeedback_Frac16 : 0 - p_motor->SpeedFeedback_Frac16;
+	return (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? p_motor->Speed_Frac16 : 0 - p_motor->Speed_Frac16;
 }
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
@@ -452,28 +445,28 @@ static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor) { return _Motor
 /******************************************************************************/
 static inline Motor_CommutationMode_T Motor_User_GetCommutationMode(Motor_T * p_motor) 				{ return p_motor->Parameters.CommutationMode; }
 static inline Motor_SensorMode_T Motor_User_GetSensorMode(Motor_T * p_motor) 						{ return p_motor->Parameters.SensorMode; }
-static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(Motor_T * p_motor) 					{ return p_motor->Parameters.UserFeedbackMode; }
+static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(Motor_T * p_motor) 					{ return p_motor->Parameters.DefaultFeedbackMode; }
 static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Motor_T * p_motor) 	{ return p_motor->Parameters.DirectionCalibration; }
 static inline uint8_t Motor_User_GetPolePairs(Motor_T * p_motor) 									{ return p_motor->Parameters.PolePairs; }
 static inline uint16_t Motor_User_GetSpeedFeedbackRef_Rpm(Motor_T * p_motor) 						{ return p_motor->Parameters.SpeedFeedbackRef_Rpm; }
-static inline uint16_t Motor_User_GetSpeedVMatchRef_Rpm(Motor_T * p_motor) 							{ return p_motor->Parameters.SpeedVMatchRef_Rpm; }
-static inline uint32_t Motor_User_ConvertToVMatchFrac16(Motor_T * p_motor, uint16_t rpm) 			{ return Linear_Function(&p_motor->SpeedVMatchRatio, _Motor_ConvertToSpeedFrac16(p_motor, rpm)); }
-//todo change back to 16 after test
+static inline uint16_t Motor_User_GetSpeedVRef_Rpm(Motor_T * p_motor) 								{ return p_motor->Parameters.SpeedVRef_Rpm; }
+
+static inline uint32_t Motor_User_ConvertToSpeedV(Motor_T * p_motor, uint16_t rpm) 					{ return Linear_Function(&p_motor->UnitsVSpeed, _Motor_ConvertToSpeedFrac16(p_motor, rpm)); }
+
 static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode)  	{ p_motor->Parameters.CommutationMode = mode; }
 static inline void Motor_User_SetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode) 				{ p_motor->Parameters.AlignMode = mode; }
 static inline void Motor_User_SetAlignVoltage(Motor_T * p_motor, uint16_t v_frac16) 				{ p_motor->Parameters.AlignVPwm_Frac16 = (v_frac16 > GLOBAL_MOTOR.ALIGN_VPWM_MAX) ? GLOBAL_MOTOR.ALIGN_VPWM_MAX : v_frac16; }
-static inline void Motor_User_SetAlignTime_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.AlignTime_Cycles = millis; }
-static inline void Motor_User_SetAlignTime_Control(Motor_T * p_motor, uint16_t cycles) 				{ p_motor->Parameters.AlignTime_Cycles = cycles; }
-static inline void Motor_User_SetOpenLoopAccel_Millis(Motor_T * p_motor, uint16_t millis) 			{ p_motor->Parameters.OpenLoopAccel_Cycles = millis; }
-static inline void Motor_User_SetOpenLoopAccel_Control(Motor_T * p_motor, uint16_t cycles) 			{ p_motor->Parameters.OpenLoopAccel_Cycles = cycles; }
-static inline void Motor_User_SetRampAccel_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.RampAccel_Cycles = millis; }
-static inline void Motor_User_SetRampAccel_Control(Motor_T * p_motor, uint16_t cycles) 				{ p_motor->Parameters.RampAccel_Cycles = cycles; }
+static inline void Motor_User_SetAlignTime_Cycles(Motor_T * p_motor, uint16_t cycles) 				{ p_motor->Parameters.AlignTime_Cycles = cycles; }
+// static inline void Motor_User_SetAlignTime_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.AlignTime_Cycles = millis; }
+static inline void Motor_User_SetOpenLoopAccel_Cycles(Motor_T * p_motor, uint16_t cycles) 			{ p_motor->Parameters.OpenLoopAccel_Cycles = cycles; }
+// static inline void Motor_User_SetOpenLoopAccel_Millis(Motor_T * p_motor, uint16_t millis) 			{ p_motor->Parameters.OpenLoopAccel_Cycles = millis; }
+static inline void Motor_User_SetRampAccel_Cycles(Motor_T * p_motor, uint16_t cycles) 				{ p_motor->Parameters.RampAccel_Cycles = cycles; }
+// static inline void Motor_User_SetRampAccel_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.RampAccel_Cycles = millis; }
 // static inline void Motor_User_SetVoltageBrakeScalar_Frac16(Motor_T * p_motor, uint16_t scalar_Frac16) 	{ p_motor->Parameters.VoltageBrakeScalar_InvFrac16 = 65535U - scalar_Frac16; }
 
 /* Persistent Control Mode */
-static inline void Motor_User_SetFeedbackModeParam(Motor_T * p_motor, Motor_FeedbackMode_T mode) 	{ p_motor->Parameters.UserFeedbackMode = mode; p_motor->FeedbackModeFlags.Update = 1U; }
+static inline void Motor_User_SetFeedbackModeParam(Motor_T * p_motor, Motor_FeedbackMode_T mode) 	{ p_motor->Parameters.DefaultFeedbackMode = mode; p_motor->FeedbackModeFlags.Update = 1U; }
 static inline void Motor_User_SetPhaseModeParam(Motor_T * p_motor, Phase_Mode_T mode) 				{ p_motor->Parameters.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->Phase, mode); }
-// static inline void Motor_User_SetILimitHeatParam(Motor_T * p_motor, uint16_t scalar_Frac16) 		{ p_motor->Parameters.ILimitHeat_Frac16 = scalar_Frac16; }
 
 /******************************************************************************/
 /*
@@ -532,9 +525,9 @@ extern void Motor_User_SetILimitGeneratingParam_Amp(Motor_T * p_motor, uint16_t 
 #endif
 
 extern void Motor_User_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm);
-extern void Motor_User_SetSpeedFeedbackRef_VRpm(Motor_T * p_motor, uint16_t vMotor, uint16_t vMotorSpeed_Rpm);
-extern void Motor_User_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm);
-extern void Motor_User_SetSpeedVMatchRef_VRpm(Motor_T * p_motor, uint16_t vMotor_V, uint16_t vMotorSpeed_Rpm);
+extern void Motor_User_SetSpeedFeedbackRef_Kv(Motor_T * p_motor, uint16_t kv);
+extern void Motor_User_SetSpeedVRef_Rpm(Motor_T * p_motor, uint16_t rpm);
+extern void Motor_User_SetSpeedVRef_Kv(Motor_T * p_motor, uint16_t kv);
 
 extern void Motor_User_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu);
 extern void Motor_User_SetIbZero_Adcu(Motor_T * p_motor, uint16_t adcu);

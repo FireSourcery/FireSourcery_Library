@@ -41,14 +41,11 @@
 
 	VDIV = VIN*(R2/(R1+R2))
 	DIV = (R2/(R1+R2))
-	VADC_RES = VREF/ADC_MAX
+	VADC = ADC_VREF/ADC_MAX
 
-	ADC = VIN*DIV/VADC_RES = VIN*(R2*ADC_MAX)/((R1+R2)*VREF)
-	VIN = ADC*VADC_RES/DIV = ADC*(VREF*(R1+R2))/(ADC_MAX*R2)
-	VIN/ADC = VADC_RES/DIV = VREF*(R1 + R2)/(ADC_MAX*R2)
-
-	VPerADCFactor = vRef * (r1 + r2) / r2;
-	VPerADCDivisor = ((int32_t)1 << adcBits);
+	ADC = VIN*DIV/VADC = VIN*(R2*ADC_MAX)/((R1+R2)*ADC_VREF)
+	VIN = ADC*VADC/DIV = ADC*(ADC_VREF*(R1+R2))/(ADC_MAX*R2)
+	VIN/ADC = VADC/DIV = ADC_VREF*(R1 + R2)/(ADC_MAX*R2)
 
 	Overflow: R2 > 65536
 	(uint32_t)adcVRef_MilliV * (r1 + r2)) << (15U - adcBits):
@@ -59,37 +56,36 @@
 	@param[in] line - Struct containing calculated intermediate values
 	@param[in] r1 - R1 value expressed as a whole number, < 65536
 	@param[in] r2 - R2 value expressed as a whole number, < 65536
-	@param[in] adcVRef - reference voltage
 	@param[in] adcBit - Number of ADC bits
+	@param[in] adcVRef - ADC reference voltage
+	@param[in] vInRef - Frac16 reference
 */
 /******************************************************************************/
-void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcBits, uint16_t adcVRef_MilliV, uint16_t vInMax)
+void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcBits, uint16_t adcVRef_MilliV, uint16_t vInRef)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-	//alternatively call maxleftshift divide
-	p_linear->Slope 			= (((uint32_t)adcVRef_MilliV * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 1000U; /* (VREF*(R1 + R2) << 16)/(ADC_MAX*R2) */
+	p_linear->Slope 			= (((uint32_t)adcVRef_MilliV / 100U * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 10U; /* (ADC_VREF*(R1 + R2) << 16)/(ADC_MAX*R2) */
 	p_linear->SlopeShift 		= LINEAR_VOLTAGE_SHIFT;
-	p_linear->InvSlope 			= ((uint32_t)r2 << LINEAR_VOLTAGE_SHIFT) / adcVRef_MilliV * 1000U / (r1 + r2); /* ((R2) << 16)/(VREF*(R1 + R2)) */
+	p_linear->InvSlope 			= ((uint32_t)r2 << LINEAR_VOLTAGE_SHIFT) / adcVRef_MilliV * 1000U / (r1 + r2); /* (R2 << 16)/(ADC_VREF*(R1 + R2)) */
 	p_linear->InvSlopeShift 	= LINEAR_VOLTAGE_SHIFT - adcBits;
 #elif defined (CONFIG_LINEAR_DIVIDE_NUMERICAL)
-	p_linear->SlopeFactor 	= adcVRef_MilliV * (r1 + r2) / 1000U;			/* (VREF*(R1+R2)) */
-	p_linear->SlopeDivisor 	= (((uint32_t)1UL << adcBits) - 1U) * r2; 		/* (ADC_MAX*R2) */
+	p_linear->SlopeFactor 		= adcVRef_MilliV * (r1 + r2) / 1000U;			/* (ADC_VREF*(R1+R2)) */
+	p_linear->SlopeDivisor 		= (((uint32_t)1UL << adcBits) - 1U) * r2; 		/* (ADC_MAX*R2) */
 #endif
-	p_linear->XOffset = 0;
-	p_linear->YOffset = 0;
- 	p_linear->YReference = vInMax; /* Frac16 reference only */
+	p_linear->XOffset 			= 0;
+	p_linear->YOffset 			= 0;
+	p_linear->YReference 		= vInRef;
+	p_linear->XReference 		= linear_invf(p_linear->Slope, ((uint32_t)1UL << LINEAR_VOLTAGE_SHIFT), 0, vInRef); /* Frac16 reference */
+	p_linear->DeltaX 			= p_linear->XReference - p_linear->XOffset;
+	p_linear->DeltaY 			= vInRef - p_linear->YOffset;
 }
 
-uint16_t Linear_Voltage_CalcAdcuUser_V(const Linear_T * p_linear, uint8_t adcBits, uint16_t volts) // check calc
+uint16_t Linear_Voltage_CalcAdcuInput_V(const Linear_T * p_linear, uint16_t volts)
 {
-	uint16_t adcu = Linear_Voltage_CalcAdcu_V(p_linear, volts);
-	while(((uint16_t)Linear_Voltage_CalcV(p_linear, adcu) < volts) && (adcu < adcBits)) { adcu += 1U; }
-	return adcu;
+	return Linear_Voltage_CalcAdcu_V(p_linear, volts) + Linear_Voltage_CalcAdcu_V(p_linear, 1U);
 }
 
-uint16_t Linear_Voltage_CalcAdcuUser_MilliV(const Linear_T * p_linear, uint8_t adcBits, uint32_t milliV)
+uint16_t Linear_Voltage_CalcAdcuInput_MilliV(const Linear_T * p_linear, uint32_t milliV)
 {
-	uint16_t adcu = Linear_Voltage_CalcAdcu_MilliV(p_linear, milliV);
-	while(((uint32_t)Linear_Voltage_CalcMilliV(p_linear, adcu) < milliV) && (adcu < adcBits)) { adcu += 1U; }
-	return adcu;
+	return Linear_Voltage_CalcAdcu_MilliV(p_linear, milliV) + Linear_Voltage_CalcAdcu_MilliV(p_linear, 1U);
 }

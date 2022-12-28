@@ -130,6 +130,7 @@ static inline int32_t linear_invf16(int32_t x0, int32_t deltax, int32_t y_frac16
 /******************************************************************************/
 /*
 	when slope is set to frac16 conversion, m16_f returns user units secondarily
+	y0 == 0
 	m16_shifted == [65536 / (xref - x0) << shift]
  	f16([x0:xRef]) = [0:65536]
 	g([0:65536]) = [y0_Units:yRef_Units]

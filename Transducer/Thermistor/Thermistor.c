@@ -210,6 +210,7 @@ static uint16_t ConvertDegCToAdcu(Thermistor_T * p_therm, uint16_t degC)
 	}
 	return adcu;
 }
+
 /* Scalar < 20 */
 int16_t Thermistor_ConvertToDegC(Thermistor_T * p_therm, uint16_t adcu) { return ConvertAdcuToDegC(p_therm, adcu); }
 int32_t Thermistor_ConvertToDegC_Int(Thermistor_T * p_therm, uint16_t adcu, uint8_t scalar) { return ConvertAdcuToDegC(p_therm, adcu * scalar); }
@@ -270,23 +271,21 @@ void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV)
 	Set Limits Params
 */
 /******************************************************************************/
-static uint16_t ConvertDegCToAdcu_SetUser(Thermistor_T * p_therm, uint8_t degC)
+static uint16_t ConvertDegCToAdcu_Input(Thermistor_T * p_therm, uint8_t degC)
 {
-	uint16_t adcu = ConvertDegCToAdcu(p_therm, degC);
-	while(((uint16_t)ConvertAdcuToDegC(p_therm, adcu) > degC) && (adcu < GLOBAL_ANALOG.ADC_MAX)) { adcu += 1U; }
-	return adcu;
+	return ConvertDegCToAdcu(p_therm, degC) + ConvertDegCToAdcu(p_therm, 1U);
 }
 
 void Thermistor_SetShutdown_DegC(Thermistor_T * p_therm, uint8_t shutdown_degC, uint8_t shutdownThreshold_degC)
 {
-	p_therm->Params.Shutdown_Adcu = ConvertDegCToAdcu_SetUser(p_therm, shutdown_degC);
-	p_therm->Params.ShutdownThreshold_Adcu = ConvertDegCToAdcu_SetUser(p_therm, shutdownThreshold_degC);
+	p_therm->Params.Shutdown_Adcu = ConvertDegCToAdcu_Input(p_therm, shutdown_degC);
+	p_therm->Params.ShutdownThreshold_Adcu = ConvertDegCToAdcu_Input(p_therm, shutdownThreshold_degC);
 }
 
 void Thermistor_SetWarning_DegC(Thermistor_T * p_therm, uint8_t warning_degC, uint8_t warningThreshold_degC)
 {
-	p_therm->Params.Warning_Adcu = ConvertDegCToAdcu_SetUser(p_therm, warning_degC);
-	p_therm->Params.WarningThreshold_Adcu = ConvertDegCToAdcu_SetUser(p_therm, warningThreshold_degC);
+	p_therm->Params.Warning_Adcu = ConvertDegCToAdcu_Input(p_therm, warning_degC);
+	p_therm->Params.WarningThreshold_Adcu = ConvertDegCToAdcu_Input(p_therm, warningThreshold_degC);
 }
 
 void Thermistor_SetLimits_DegC(Thermistor_T * p_therm, uint8_t shutdown, uint8_t shutdownThreshold, uint8_t warning, uint8_t warningThreshold)

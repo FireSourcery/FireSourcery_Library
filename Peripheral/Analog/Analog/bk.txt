@@ -41,7 +41,6 @@ bool Analog_EnqueueFrontConversion(Analog_T * p_analog, const Analog_ConversionC
 	return true;
 }
 
-
 /*
 	Dequeue if no conversions are active.
 	For Active conversion, chain dequeue is out of sync
@@ -51,18 +50,19 @@ bool Analog_PollQueue(Analog_T * p_analog)
 	bool isSuccess = false;
 	const Analog_Conversion_T * p_conversion;
 
+	_Analog_EnterCritical(p_analog);
 	if(Ring_GetIsEmpty(&p_analog->ConversionQueue) == false) /* Preliminary check */
 	{
-		_Analog_EnterCritical(p_analog);
-		if(Queue_PeekFront(&p_analog->ConversionQueue, &p_conversion) == true) //&& not active
+		if(Queue_PeekFront(&p_analog->ConversionQueue, &p_conversion) == true)
 		{
 			_Analog_ActivateConversion(p_analog, p_conversion);
 			isSuccess = true;
 		}
-		_Analog_ExitCritical(p_analog);
 	}
+	_Analog_ExitCritical(p_analog);
 
 	return isSuccess;
 }
+
 
 

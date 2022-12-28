@@ -39,7 +39,7 @@ typedef struct Filter_Tag
 	// uint8_t BufferSize;
 	// bool IsBufferFull;
 	uint16_t Index;
-	int32_t Coeffcient;
+	int32_t Coefficient;
 	int32_t Accumulator;
 }
 Filter_T;

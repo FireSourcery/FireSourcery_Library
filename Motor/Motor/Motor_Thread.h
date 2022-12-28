@@ -44,12 +44,11 @@
 */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-	//  alternatively _Motor_Analog_Thread(p_motor); use analog select mode to implement preferred order
-	StateMachine_Semi_ProcOutput(&p_motor->StateMachine);
-	Motor_Debug_CaptureTime(p_motor, 5U);
-
-	p_motor->ControlTimerBase++;
 	Motor_CaptureRefTime(p_motor);
+	p_motor->ControlTimerBase++;
+	StateMachine_Semi_ProcOutput(&p_motor->StateMachine);
+	//  alternatively _Motor_Analog_Thread(p_motor); use analog select mode to implement preferred order
+	Motor_Debug_CaptureTime(p_motor, 5U);
 }
 
 static inline void Motor_Heat_Thread(Motor_T * p_motor)
@@ -102,7 +101,7 @@ static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_motor)
 		case MOTOR_SENSOR_MODE_ENCODER: Encoder_OnIndex_ISR(&p_motor->Encoder); break;
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
 		case MOTOR_SENSOR_MODE_HALL:
-			Encoder_Motor_OnPhaseC_ISR(&p_motor->Encoder);
+			Encoder_OnPhaseC_Hall_ISR(&p_motor->Encoder);
 			Hall_CaptureRotorAngle_ISR(&p_motor->Hall);
 			break;
 #endif

@@ -35,6 +35,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+typedef enum Debounce_Edge_Tag
+{
+	DEBOUNCE_EDGE_NULL,
+	DEBOUNCE_EDGE_FALLING,
+	DEBOUNCE_EDGE_RISING,
+}
+Debounce_Edge_T;
+
 typedef const struct Debounce_Config_Tag
 {
 	const volatile uint32_t * const P_TIMER;
@@ -62,6 +70,14 @@ Debounce_T;
 static inline bool Debounce_GetState(const Debounce_T * p_debounce) 	{ return p_debounce->DebouncedState;}
 static inline bool Debounce_GetRawState(const Debounce_T * p_debounce) 	{ return p_debounce->RawStatePrev; }
 
+static inline bool Debounce_GetIsFallingEdge(Debounce_T * p_debounce) 	{ return ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true)); }
+static inline bool Debounce_GetIsRisingEdge(Debounce_T * p_debounce) 	{ return ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false)); }
+static inline bool Debounce_GetIsDualEdge(Debounce_T * p_debounce) 		{ return ((p_debounce->DebouncedState ^ p_debounce->DebouncedStatePrev) == true); }
+static inline Debounce_Edge_T Debounce_GetDualEdge(Debounce_T * p_debounce)
+{
+	return ((Debounce_GetIsDualEdge(p_debounce) == true) ? ((p_debounce->DebouncedState = true) ? DEBOUNCE_EDGE_RISING : DEBOUNCE_EDGE_FALLING) : DEBOUNCE_EDGE_NULL);
+}
+
 static inline void Debounce_SetTime(Debounce_T * p_debounce, uint16_t millis) { p_debounce->DebounceTime = millis; }
 // static inline void Debounce_EnableInvert(Debounce_T * p_debounce) { Pin_EnableInvert(&p_debounce->Pin); }
 // static inline void Debounce_DisableInvert(Debounce_T * p_debounce) { Pin_DisableInvert(&p_debounce->Pin); }
@@ -70,7 +86,7 @@ extern void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime);
 extern bool Debounce_CaptureState(Debounce_T * p_debounce);
 extern bool Debounce_PollFallingEdge(Debounce_T * p_debounce);
 extern bool Debounce_PollRisingEdge(Debounce_T * p_debounce);
-extern bool Debounce_PollDualEdge(Debounce_T * p_debounce);
+extern Debounce_Edge_T Debounce_PollDualEdge(Debounce_T * p_debounce);
 
 //static inline uint16_t Debounce_GetStateTime()   { }
 //static inline bool Debounce_GetLongPress(Debounce_T * p_debounce){}

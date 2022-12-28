@@ -44,24 +44,24 @@
 static inline void Filter_MovAvg_Init(Filter_T * p_filter, int32_t y0, qfrac16_t lambda)
 {
 	p_filter->Accumulator = y0;
-	p_filter->Coeffcient = lambda;
+	p_filter->Coefficient = lambda;
 }
 
 static inline int32_t Filter_MovAvg(Filter_T * p_filter, int32_t in)
 {
-	p_filter->Accumulator = filter_movavg(p_filter->Accumulator, in, p_filter->Coeffcient);
+	p_filter->Accumulator = filter_movavg(p_filter->Accumulator, in, p_filter->Coefficient);
 	return p_filter->Accumulator;
 }
 
 static inline void Filter_MovAvg_InitN(Filter_T * p_filter, int32_t y0, uint16_t n)
 {
 	p_filter->Accumulator = y0;
-	p_filter->Coeffcient = n;
+	p_filter->Coefficient = n;
 }
 
 static inline int32_t Filter_MovAvg_N(Filter_T * p_filter, int32_t in)
 {
-	p_filter->Accumulator = filter_movavgn(p_filter->Accumulator, in, p_filter->Coeffcient);
+	p_filter->Accumulator = filter_movavgn(p_filter->Accumulator, in, p_filter->Coefficient);
 	return p_filter->Accumulator;
 }
 

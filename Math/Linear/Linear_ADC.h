@@ -25,6 +25,7 @@
 	@file 	Linear_ADC.h
 	@author FireSourcery
 	@brief	Scale ADCU to provided reference value
+			Fast Frac16 without division. No physical units scalar for precision.
 	@version V0
 */
 /******************************************************************************/
@@ -34,17 +35,11 @@
 #include "Linear_Frac16.h"
 #include <stdint.h>
 
-static inline int32_t Linear_ADC_CalcPhysical(const Linear_T * p_linear, uint16_t adcu)
-{
-	return Linear_Frac16_Units(p_linear, adcu);
-}
-
-/* Small overflow range */
-static inline int32_t Linear_ADC_CalcPhysical_Scalar(const Linear_T * p_linear, uint16_t adcu, uint16_t scalar)
-{
-	return Linear_Frac16_Units_Scalar(p_linear, adcu, scalar);
-}
-
+/******************************************************************************/
+/*!
+	From ADCU
+*/
+/******************************************************************************/
 static inline int32_t Linear_ADC_CalcFrac16(const Linear_T * p_linear, uint16_t adcu)
 {
 	return Linear_Frac16(p_linear, adcu);
@@ -65,17 +60,33 @@ static inline uint16_t Linear_ADC_CalcFracU16_Abs(const Linear_T * p_linear, uin
 	return Linear_Frac16_Unsigned_Abs(p_linear, adcu);
 }
 
-// static inline int32_t Linear_ADC_CalcPhysical_Frac16(const Linear_T * p_linear, uint16_t frac16)
-// {
-// 	return Linear_Frac16_Units16(p_linear, frac16);
-// }
+static inline int32_t Linear_ADC_CalcPhysical(const Linear_T * p_linear, uint16_t adcu)
+{
+	return Linear_Frac16_Units(p_linear, adcu);
+}
 
-// static inline int32_t Linear_ADC_CalcFrac16_Physical(const Linear_T * p_linear, int32_t units)
-// {
-// 	return Linear_Frac16_InvUnits16(p_linear, units);
-// }
+/******************************************************************************/
+/*!
+	Intermediary
+*/
+/******************************************************************************/
+static inline int32_t Linear_ADC_CalcPhysical_Frac16(const Linear_T * p_linear, uint16_t frac16)
+{
+	return Linear_Frac16_Units16(p_linear, frac16);
+}
 
-/* Division in this function only */
+/* Division in this function */
+static inline int32_t Linear_ADC_CalcFrac16_Physical(const Linear_T * p_linear, int32_t units)
+{
+	return Linear_Frac16_InvUnits16(p_linear, units);
+}
+
+/******************************************************************************/
+/*!
+	To ADCU
+*/
+/******************************************************************************/
+/* Division in this function */
 static inline uint16_t Linear_ADC_CalcAdcu_Physical(const Linear_T * p_linear, int16_t units)
 {
 	return Linear_Frac16_InvUnits(p_linear, units);
@@ -91,11 +102,16 @@ static inline uint16_t Linear_ADC_CalcAdcu_FracU16(const Linear_T * p_linear, ui
 	return Linear_Frac16_InvUnsigned(p_linear, unsignedFrac16);
 }
 
+/******************************************************************************/
+/*!
+	Extern
+*/
+/******************************************************************************/
 extern void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef);
+extern void Linear_ADC_InitInverted(Linear_T * p_linear);
 extern void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef, int16_t physicalZero, int16_t physicalRef);
 extern void Linear_ADC_Init_MinMax(Linear_T * p_linear, uint16_t adcuMin, uint16_t adcuMax, int16_t physicalMin, int16_t physicalMax);
 extern void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef);
-extern void Linear_ADC_SetInverted(Linear_T * p_linear);
 extern void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t min_MilliV, uint16_t max_MilliV, int16_t physicalZero, int16_t physicalRef);
 extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t zero_MilliV, uint16_t max_MilliV, int16_t physicalZero, int16_t physicalRef);
 

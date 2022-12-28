@@ -36,11 +36,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+typedef void(*Motor_User_SetCmd_T)(Motor_T * p_motor, int16_t cmd);
+
 /******************************************************************************/
 /*!
 	Extern
 */
 /******************************************************************************/
+extern void MotorN_User_SetCmd(Motor_T * p_motor, uint8_t motorCount, Motor_User_SetCmd_T cmdFunction, int16_t cmdValue);
+extern void MotorN_User_SetTorqueCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t cmdValue);
+
 extern bool MotorN_User_CheckStop(Motor_T * p_motor, uint8_t motorCount);
 extern void MotorN_User_ReleaseControl(Motor_T * p_motor, uint8_t motorCount);
 extern void MotorN_User_DisableControl(Motor_T * p_motor, uint8_t motorCount);

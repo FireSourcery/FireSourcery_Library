@@ -91,12 +91,7 @@ static inline uint32_t Timer_GetElapsed_Millis(Timer_T * p_timer) 	{ return Time
 static inline uint32_t Timer_GetElapsed_Micros(Timer_T * p_timer)
 {
 	uint32_t ticks = Timer_GetElapsed_Ticks(p_timer);
-	uint32_t micros;
-
-	if(ticks > UINT32_MAX / 1000000U) 	{ micros = ticks / p_timer->CONFIG.BASE_FREQ * 1000000U; }
-	else 								{ micros = ticks * 1000000U / p_timer->CONFIG.BASE_FREQ; }
-
-	return  micros;
+	return (ticks > UINT32_MAX / 1000000U) ? (ticks / p_timer->CONFIG.BASE_FREQ * 1000000U) : (ticks * 1000000U / p_timer->CONFIG.BASE_FREQ);
 }
 
 static inline bool Timer_GetIsComplete(Timer_T * p_timer) { return (Timer_GetElapsed_Ticks(p_timer) >= p_timer->Period) ? true : false; }
@@ -166,6 +161,5 @@ static inline bool Timer_OneShot_Poll(Timer_T * p_timer)
 }
 
 static inline void Timer_OneShot_Init(Timer_T * p_timer) { p_timer->IsOneShot = true; p_timer->Period = 0U; }
-
 
 #endif /* TIMER_H */

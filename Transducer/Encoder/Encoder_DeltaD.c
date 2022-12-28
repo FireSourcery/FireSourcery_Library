@@ -34,27 +34,6 @@
 /*!
 
 */
-void _Encoder_DeltaD_Init(Encoder_T * p_encoder)
-{
-#if 	defined(CONFIG_ENCODER_HW_DECODER)
-	HAL_Encoder_InitCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
-	HAL_Encoder_WriteCounterMax(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, p_encoder->Params.CountsPerRevolution - 1U);
-#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
-	#ifdef CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
-	if(p_encoder->Params.IsQuadratureCaptureEnabled == true)
-	{
-		Pin_Input_Init(&p_encoder->PinA);
-		Pin_Input_Init(&p_encoder->PinB);
-	}
-	#endif
-	// HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
-	// HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
-	// HAL_Encoder_EnablePhaseInterrupt(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
-#endif
-}
-/*!
-
-*/
 void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 {
 	if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
@@ -70,16 +49,34 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 	Encoder_DeltaD_SetInitial(p_encoder);
 }
 
+/*!
+
+*/
+void _Encoder_DeltaD_Init(Encoder_T * p_encoder)
+{
+#if 	defined(CONFIG_ENCODER_HW_DECODER)
+	HAL_Encoder_InitCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
+	HAL_Encoder_WriteCounterMax(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, p_encoder->Params.CountsPerRevolution - 1U);
+#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+	#ifdef CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
+	if(p_encoder->Params.IsQuadratureCaptureEnabled == true)
+	{
+		Pin_Input_Init(&p_encoder->PinA);
+		Pin_Input_Init(&p_encoder->PinB);
+	}
+	#endif
+#endif
+}
+
 void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder)
 {
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
 	HAL_Encoder_ClearCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
 	HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0U);
-	_Encoder_ZeroAngle(p_encoder);
 #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
-	_Encoder_ZeroAngle(p_encoder);
-	p_encoder->DeltaD = 0U;
 #endif
+	p_encoder->DeltaD = 0U;
+	_Encoder_ZeroAngle(p_encoder);
 }
 
 
