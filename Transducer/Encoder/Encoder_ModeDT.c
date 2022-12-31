@@ -33,38 +33,17 @@
 #include "Encoder_DeltaT.h"
 #include <string.h>
 
-
-/* Iterative log2 */
-uint8_t Log2(uint32_t num)
-{
-	uint8_t shift = 0U;
-	while((num >> shift) > 1U) { shift++; }
-	return shift;
-}
-
-uint8_t GetMaxShift_Signed(int32_t num)
-{
-	return Log2(INT32_MAX / num);
-}
-
-/* 1 << Shift <= INT32_MAX / ((x_max - x0) * Slope) */
-uint8_t GetMaxSlopeShift_Signed(int32_t factor, int32_t divisor, int32_t maxDelta)
-{
-	return GetMaxShift_Signed(maxDelta * factor / divisor); /* divide first rounds up log output */
-}
-
-
 static void ResetUnitsScalarSpeed(Encoder_T * p_encoder);
 
 void Encoder_ModeDT_Init(Encoder_T * p_encoder)
 {
 	if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
+
 	_Encoder_DeltaT_Init(p_encoder);
 	_Encoder_DeltaD_Init(p_encoder);
 
 	p_encoder->UnitT_Freq = 1U;
-	_Encoder_ResetUnitsAngular(p_encoder);
-	_Encoder_ResetUnitsLinear(p_encoder);
+	_Encoder_ResetUnits(p_encoder);
 	ResetUnitsScalarSpeed(p_encoder);
 
 	Encoder_DeltaD_SetInitial(p_encoder);
@@ -77,6 +56,8 @@ void Encoder_ModeDT_SetInitial(Encoder_T * p_encoder)
 	Encoder_DeltaT_SetInitial(p_encoder);
 	p_encoder->DeltaTh = 0U;
 	p_encoder->FreqD = 0;
+	p_encoder->DirectionD = 0;
+	p_encoder->TotalD = 0;
 }
 
 // ((uint32_t)60U * 65536UL / (p_encoder->Params.CountsPerRevolution * p_encoder->Params.ScalarSpeedRef_Rpm);
@@ -93,8 +74,7 @@ static void ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 void Encoder_ModeDT_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRevolution)
 {
 	p_encoder->Params.CountsPerRevolution = countsPerRevolution;
-	_Encoder_ResetUnitsAngular(p_encoder);
-	_Encoder_ResetUnitsInterpolateAngle(p_encoder);
+	_Encoder_ResetUnits(p_encoder);
 	ResetUnitsScalarSpeed(p_encoder);
 }
 

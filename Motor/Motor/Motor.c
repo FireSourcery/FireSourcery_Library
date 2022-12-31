@@ -49,11 +49,14 @@ void Motor_InitSensor(Motor_T * p_motor)
 			p_motor->CONFIG.INIT_SENSOR_HALL();
 			Hall_Init(&p_motor->Hall);
 			Encoder_ModeDT_Init(&p_motor->Encoder);
+#if defined(CONFIG_MOTOR_HALL_MODE_ISR)
+			Encoder_InitInterrupts_ABC(&p_motor->Encoder);
+#endif
 			break;
 		case MOTOR_SENSOR_MODE_ENCODER:
 			p_motor->CONFIG.INIT_SENSOR_ENCODER();
-			//Encoder_InitInterrupts
 			Encoder_ModeDT_Init(&p_motor->Encoder);
+			Encoder_InitInterrupts_Quadrature(&p_motor->Encoder);
 			break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_SENSOR_MODE_SIN_COS:
@@ -75,9 +78,10 @@ void Motor_InitReboot(Motor_T * p_motor)
 	/*
 		HW Wrappers Init
 	*/
-	Motor_InitSensor(p_motor);
 	Phase_Init(&p_motor->Phase);
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
+	Motor_InitSensor(p_motor);
+
 	Thermistor_Init(&p_motor->Thermistor);
 
 	/*
@@ -103,6 +107,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 		Final value is overwritten, Slope is persistent
 	*/
 	Linear_Ramp_Init(&p_motor->Ramp, p_motor->Parameters.RampAccel_Cycles, 0U, INT16_MAX);
+	Linear_Ramp_Init(&p_motor->AuxRamp, 0U, 0U, 0U);
 
 	Motor_ResetUnitsVabc(p_motor);
 	Motor_ResetUnitsIabc(p_motor);
@@ -115,7 +120,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
 		/* todo frac16 */ /* Start at 0 speed in FOC mode for continuous angle displacements */
-		Linear_Ramp_Init(&p_motor->OpenLoopRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0U, p_motor->Parameters.OpenLoopSpeed_RPM);
+		Linear_Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0U, p_motor->Parameters.OpenLoopSpeed_RPM);
 	}
 	else
 	{
@@ -146,8 +151,9 @@ bool Motor_CheckSensorFeedback(Motor_T * p_motor)
 #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
 		case MOTOR_SENSOR_MODE_SENSORLESS: 	isAvailable = false;	break;
 #endif
-		default: break;
+		default: isAvailable = false; break;
 	}
+	return isAvailable;
 }
 
 void Motor_ZeroSensor(Motor_T * p_motor)

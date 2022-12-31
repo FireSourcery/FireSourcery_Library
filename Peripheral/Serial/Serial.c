@@ -207,7 +207,7 @@ void Serial_Deinit(Serial_T * p_serial)
 
 void Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate) //Serial_InitBaudRate
 {
-	HAL_Serial_ConfigBaudRate(p_serial->CONFIG.P_HAL_SERIAL, baudRate);
+	HAL_Serial_InitBaudRate(p_serial->CONFIG.P_HAL_SERIAL, baudRate);
 }
 
 bool Serial_SendByte(Serial_T * p_serial, uint8_t txChar)

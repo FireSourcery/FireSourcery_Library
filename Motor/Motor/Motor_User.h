@@ -59,7 +59,7 @@ extern void _Motor_User_ActivateControlMode(Motor_T * p_motor, Motor_FeedbackMod
 /*!
 	Convert user reference direction to CCW/CW direction
 	@param[in] userCmd int16_t[-32768:32767]
-	@return int32_t[-32768:32768]
+	@return int32_t[-32768:32768], Over saturated if input is -32768
 */
 static inline int32_t _Motor_User_CalcDirectionalCmd(Motor_T * p_motor, int16_t userCmd)
 {

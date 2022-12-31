@@ -38,6 +38,7 @@
 
 typedef const struct PWM_Config_Tag
 {
+	// HAL_PWM_Module_T * const P_HAL_PWM_MODULE;
 	HAL_PWM_T * const P_HAL_PWM;
 	const uint32_t CHANNEL_ID;
 	const uint32_t PERIOD_TICKS;
@@ -57,6 +58,9 @@ PWM_T;
 
 #define PWM_DUTY16 (65536U)
 
+/*
+	Channel
+*/
 static inline uint32_t _PWM_CalcPwmDutyTicks(const PWM_T * p_pwm, uint32_t duty) { return p_pwm->CONFIG.PERIOD_TICKS * duty / PWM_DUTY16; }
 
 /*
@@ -85,13 +89,15 @@ static inline void PWM_Disable(const PWM_T * p_pwm) 				{ HAL_PWM_DisableOutput(
 static inline void PWM_EnableInvertPolarity(const PWM_T * p_pwm) 	{ HAL_PWM_EnableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
 static inline void PWM_DisableInvertPolarity(const PWM_T * p_pwm) 	{ HAL_PWM_DisableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
 
-
+/*
+	Module
+*/
 /* Shared interrupt */
 static inline void PWM_ClearInterrupt(const PWM_T * p_pwm) 		{ HAL_PWM_ClearInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
 static inline void PWM_DisableInterrupt(const PWM_T * p_pwm) 	{ HAL_PWM_DisableInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
 static inline void PWM_EnableInterrupt(const PWM_T * p_pwm) 	{ HAL_PWM_EnableInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
 /* If multiple PWMs share a register. may interfere with sync */
-static inline void PWM_ActuateSync(const PWM_T * p_pwm) 		{ HAL_PWM_Module_Sync(p_pwm->CONFIG.P_HAL_PWM); }
+static inline void PWM_ActuateSync(const PWM_T * p_pwm) 		{ HAL_PWM_SyncModule(p_pwm->CONFIG.P_HAL_PWM); }
 
 /*
 	Extern
@@ -181,7 +187,7 @@ extern void PWM_InitModule(PWM_T * p_pwm);
 // static inline void PWM_Module_DisableChannels(const PWM_Module_T * p_pwm) 			{ HAL_PWM_DisableOutput(p_pwm->CONFIG.P_HAL_PWM, p_pwm->SyncBuffer); }
 // static inline void PWM_Module_EnableInvertPolarity(const PWM_Module_T * p_pwm) 		{ HAL_PWM_EnableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->SyncBuffer); }
 // static inline void PWM_Module_DisableInvertPolarity(const PWM_Module_T * p_pwm) 	{ HAL_PWM_DisableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->SyncBuffer); }
-// static inline void PWM_Module_ActuateSync(const PWM_Module_T * p_pwm) 				{ HAL_PWM_Module_Sync(p_pwm->CONFIG.P_HAL_PWM); }
+// static inline void PWM_Module_ActuateSync(const PWM_Module_T * p_pwm) 				{ HAL_PWM_SyncModule(p_pwm->CONFIG.P_HAL_PWM); }
 
 
 // static inline void PWM_Module_EnableChannels(const PWM_Module_T * p_pwm, const PWM_T * pp_channels, uint8_t channelCount)
@@ -193,4 +199,4 @@ extern void PWM_InitModule(PWM_T * p_pwm);
 // 	}
 // 	HAL_PWM_EnableOutput(p_pwm->CONFIG.P_HAL_PWM, buffer);
 // }
-// static inline void PWM_Module_ActuateSync(const PWM_Module_T * p_pwm) { HAL_PWM_Module_Sync(p_pwm->CONFIG.P_HAL_PWM); }
+// static inline void PWM_Module_ActuateSync(const PWM_Module_T * p_pwm) { HAL_PWM_SyncModule(p_pwm->CONFIG.P_HAL_PWM); }

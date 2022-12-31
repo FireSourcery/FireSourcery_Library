@@ -24,7 +24,7 @@
 /*!
 	@file  	Encoder_DeltaD.h
 	@author FireSourcery
-	@brief 	Capture DeltaD Mode, sample time is fixed
+	@brief 	Capture DeltaD per sample time: variable DeltaD, DeltaT is fixed, 1.
 	@version V0
 */
 /******************************************************************************/
@@ -35,7 +35,7 @@
 
 /******************************************************************************/
 /*!
-	@brief 	Capture DeltaD, per fixed changed in time, SAMPLE_FREQ
+	@brief 	Capture DeltaD
 */
 /******************************************************************************/
 static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
@@ -44,13 +44,12 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 	/* For common interface functions. Emulated Capture in ISR */
 	uint16_t counterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
 	p_encoder->DeltaD = _Encoder_CaptureDelta(p_encoder, p_encoder->Params.CountsPerRevolution - 1U, counterD);
-	// p_encoder->CounterD += p_encoder->DeltaD;
+	// p_encoder->TotalD += p_encoder->DeltaD;
 	// p_encoder->Angle32 = counterD * p_encoder->UnitAngularD;
 	//quadrature check overflow flag
 #else
 	p_encoder->DeltaD = p_encoder->CounterD;
 	p_encoder->CounterD = 0;
-	// p_encoder->DeltaD = _Encoder_CaptureDelta(p_encoder, INT32_MAX, p_encoder->CounterD);
 #endif
 }
 
@@ -65,31 +64,26 @@ static inline uint32_t Encoder_DeltaD_GetDeltaDistance(Encoder_T * p_encoder) 	{
 
 /******************************************************************************/
 /*!
-	@brief 	DeltaD only speed functions
-		Get and unit conversion.
-		Convert To - shared with encoder common.
-		Convert From - unique to mode
-	Compiler optimize passing const 1
-	Get Speed - Variable DeltaD (DeltaT is fixed, == 1).
-	Fixed DeltaT: DeltaD count on fixed time sample.
+	@brief 	DeltaD only Speed Functions
 */
 /******************************************************************************/
+/******************************************************************************/
+/*!
+	Scalar
+*/
+/******************************************************************************/
+static inline uint32_t Encoder_DeltaD_GetScalarSpeed(Encoder_T * p_encoder)
+{
+	return p_encoder->DeltaD * p_encoder->UnitScalarSpeed; /* Shift */
+}
+
 /******************************************************************************/
 /*!
 	Angular
 */
 /******************************************************************************/
 /*
-	e.g.
-	CountsPerRevolution = 8192
 
-	SampleFreq = 20000
-	UnitAngularSpeed = 160,000 => DeltaD overflow ~= 26,843
-	10k RPM => DeltaD = 10000 / 60 * 8192 / 20000 = 68
-
-	SampleFreq = 1000
-	UnitAngularSpeed = 8,000 =>  DeltaD overflow ~= 536,870
-	10k RPM => DeltaD = 10000 / 60 * 8192 / 1000 = 1,365
 */
 static inline uint32_t Encoder_DeltaD_GetAngularSpeed(Encoder_T * p_encoder)
 {
@@ -116,30 +110,17 @@ static inline uint32_t Encoder_DeltaD_GetRotationalSpeed_RPM(Encoder_T * p_encod
 
 /*
 	Speed to DeltaD conversion
-	1 Division for inverse conversion. Alternatively,
-	(rpm << ENCODER_ANGLE16) / (p_encoder->UnitAngularSpeed * 60U)
+	1 Division for inverse conversion.
 */
-// static inline uint32_t Encoder_DeltaD_ConvertFromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
-// {
-// 	return (rpm * p_encoder->Params.CountsPerRevolution) / (p_encoder->UnitT_Freq * 60U);
-// }
-
-// static inline uint32_t Encoder_DeltaD_ConvertToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
-// {
-// 	return _Encoder_CalcRotationalSpeed_Shift(p_encoder, deltaD_Ticks * 60U, 1U);
-// }
-
-/******************************************************************************/
-/*!
-	Scalar
-*/
-/******************************************************************************/
-static inline uint32_t Encoder_DeltaD_GetScalarSpeed(Encoder_T * p_encoder)
+static inline uint32_t Encoder_DeltaD_ConvertFromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
 {
-	// return Encoder_CalcScalarSpeed(p_encoder, p_encoder->DeltaD, 1U);
-	return p_encoder->DeltaD * p_encoder->UnitScalarSpeed;
+	return (rpm * p_encoder->Params.CountsPerRevolution) / (p_encoder->CONFIG.SAMPLE_FREQ * 60U);
 }
 
+static inline uint32_t Encoder_DeltaD_ConvertToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
+{
+	return _Encoder_CalcRotationalSpeed_Shift(p_encoder, deltaD_Ticks * 60U, 1U);
+}
 
 /******************************************************************************/
 /*!
@@ -193,8 +174,6 @@ static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Kmh(Encoder_T * p_encoder)
 extern void _Encoder_DeltaD_Init(Encoder_T * p_encoder);
 extern void Encoder_DeltaD_Init(Encoder_T * p_encoder);
 extern void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder);
-extern void Encoder_DeltaD_CalibrateQuadratureReference(Encoder_T * p_encoder);
-extern void Encoder_DeltaD_CalibrateQuadraturePositive(Encoder_T * p_encoder);
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

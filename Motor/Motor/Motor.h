@@ -138,19 +138,25 @@ typedef union Motor_ControlFlags_Tag
 {
 	struct
 	{
-		// Motor_FeedbackModeFlags_T FeedbackModeFlags;
 		uint32_t SensorFeedback				: 1U;
 		uint32_t HeatWarning 				: 1U;
 		uint32_t VoltageModeILimitActive 	: 1U;
-		// uint32_t Active 					: 1U;
-		// uint32_t OpenLoop 		: 1U; 	 /* 0 -> Position feedback, 1 -> Openloop */
 		// uint32_t FieldWeakening 			: 1U;
-		// uint32_t SpeedLimitScalarActive 	: 1U;
-		// uint32_t ILimitScalarActive 		: 1U; /* Set approx 1/s */
 	};
 	uint32_t State;
 }
 Motor_ControlFlags_T;
+
+typedef union
+{
+	struct
+	{
+		uint32_t HeatShutdown 		: 1U;
+		uint32_t AlignStartUp 		: 1U;
+	};
+	uint32_t State;
+}
+Motor_FaultFlags_T;
 
 // typedef enum Motor_SpeedLimitActiveId_Tag
 // {
@@ -187,7 +193,18 @@ typedef enum Motor_DirectionCalibration_Tag
 Motor_DirectionCalibration_T;
 
 /*
-	Calibration SubState Flag
+	Align SubState
+*/
+typedef enum Motor_AlignState_Tag
+{
+	MOTOR_ALIGN_STATE_ALIGN,
+	MOTOR_ALIGN_STATE_START_UP,
+	MOTOR_ALIGN_STATE_CHECK_FAULT,
+}
+Motor_AlignState_T;
+
+/*
+	Calibration SubState
 */
 typedef enum Motor_CalibrationState_Tag
 {
@@ -328,10 +345,12 @@ typedef struct Motor_Tag
 	/* Run SubState */
 	Motor_Direction_T Direction; 			/* Active spin direction */
 	Motor_FeedbackModeFlags_T FeedbackModeFlags;
-	Motor_ControlFlags_T ControlFlags; 		/* Run Substate */
+	Motor_ControlFlags_T ControlFlags; 		/* Run SubState */
 	/* Calibration SubState */
-	Motor_CalibrationState_T CalibrationState; 	/* Substate, selection for calibration */
+	Motor_CalibrationState_T CalibrationState; 	/* SubState, selection for calibration */
 	uint8_t CalibrationStateIndex;
+	Motor_FaultFlags_T FaultFlags;
+	Motor_AlignState_T AlignState;
 
 	/*
 		Active Limits
@@ -353,9 +372,9 @@ typedef struct Motor_Tag
 	/*
 		UserCmd Input => Ramp
 	*/
-	Linear_T Ramp;		/* Input Ramp - Speed, Current, or Voltage */
+	Linear_T Ramp;		/* User Input Ramp - Speed, Current, or Voltage. Updated without StateMachine Check */
 						/* [-32767:32767] SetPoint after ramp => SpeedReq, IReq, VReq. [0:65535] VFreq Mode */
-	// Linear_T VPwmRamp;			/* OpenLoop and Align */
+	Linear_T AuxRamp; 	/* OpenLoop and Align */
 
 	/*
 		Speed Feedback
@@ -405,7 +424,7 @@ typedef struct Motor_Tag
 		OpenLoops speed ramp
 	*/
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-	Linear_T OpenLoopRamp;			/* OpenLoopSpeed Ramp */
+	Linear_T OpenLoopSpeedRamp;			/* OpenLoopSpeed Ramp */
 	uint16_t OpenLoopSpeed_RPM;
 	#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
 	uint32_t OpenLoopCommutationPeriod;
@@ -430,10 +449,41 @@ typedef struct Motor_Tag
 
 #if  defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	uint32_t MicrosRef;
+	volatile bool DebugFlag;
+	volatile uint32_t DebugError;
 	volatile uint32_t DebugTime[10U];
 	volatile uint32_t DebugTimeABC[3U];
-	volatile int32_t TestSpeed;
-	volatile int32_t TestSpeed_RPM;
+
+	// // volatile int32_t FreqD[25];
+	// // volatile int32_t DeltaD[25];
+	// // volatile uint32_t DeltaTh[25];
+	// // volatile uint32_t Angle[25];
+	// volatile int32_t Speed[25];
+	// // volatile int32_t RampValue[25];
+	// // volatile int32_t ErrorSum[25];
+	// volatile int32_t SpeedControl[25];
+	// // volatile int16_t Iq[25];
+	// // volatile int16_t Id[25];
+
+
+	// volatile uint32_t ControlTimerDebug[25];
+	// volatile uint32_t ControlTimerDebug2[25];
+
+
+	// // volatile int32_t FreqD2[25];
+	// // volatile int32_t DeltaD2[25];
+	// // volatile uint32_t DeltaTh2[25];
+	// // volatile uint32_t Angle[25];
+	// volatile int32_t Speed2[25];
+	// // volatile int32_t RampValue[25];
+	// // volatile int32_t ErrorSum[25];
+	// volatile int32_t SpeedControl2[25];
+	// volatile int16_t Vq[25];
+	// volatile int16_t Vq2[25];
+	// // volatile int16_t Id2[25];
+
+	volatile uint32_t DebugCounter;
+	volatile uint32_t DebugCounter2;
 #endif
 }
 Motor_T;
@@ -441,6 +491,39 @@ Motor_T;
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	#include "Motor_Debug.h"
 #endif
+
+/******************************************************************************/
+/*
+	Simplify CommutationMode Check
+*/
+/******************************************************************************/
+typedef void(*Motor_CommutationModeFunction_T)(Motor_T * p_motor);
+
+static inline void Motor_ProcCommutationMode(Motor_T * p_motor, Motor_CommutationModeFunction_T focFunction, Motor_CommutationModeFunction_T sixStepFunction)
+{
+#if 	defined(CONFIG_MOTOR_SIX_STEP_ENABLE) && defined(CONFIG_MOTOR_FOC_ENABLE)
+	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) 				{ focFunction(p_motor); }
+	else /* p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */ 	{ sixStepFunction(p_motor); }
+#elif 	defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+	(void)focFunction;	sixStepFunction(p_motor);
+#else /* defined(CONFIG_MOTOR_FOC_ENABLE) */
+	(void)sixStepFunction;	focFunction(p_motor);
+#endif
+}
+
+// typedef void(*Motor_CommutationModeFunction1_T)(Motor_T * p_motor, uint32_t var);
+
+// static inline void Motor_ProcCommutationMode1(Motor_T * p_motor, Motor_CommutationModeFunction1_T focFunction, Motor_CommutationModeFunction1_T sixStepFunction, uint32_t var)
+// {
+// #if 	defined(CONFIG_MOTOR_SIX_STEP_ENABLE) && defined(CONFIG_MOTOR_FOC_ENABLE)
+// 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) 				{ focFunction(p_motor, var); }
+// 	else /* p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */ 	{ sixStepFunction(p_motor, var); }
+// #elif 	defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+// 	(void)focFunction;	sixStepFunction(p_motor, var);
+// #else /* defined(CONFIG_MOTOR_FOC_ENABLE) */
+// 	(void)sixStepFunction;	focFunction(p_motor, var);
+// #endif
+// }
 
 /******************************************************************************/
 /*
@@ -459,43 +542,6 @@ static inline uint32_t _Motor_ConvertToControlCycles(Motor_T * p_motor, int32_t 
 static inline uint32_t _Motor_ConvertAngleToRpm(uint16_t angle16, uint32_t sampleFreq) 		{ return (angle16 * sampleFreq >> 16U) * 60U; }
 static inline uint32_t _Motor_ConvertRpmToAngle(uint16_t rpm, uint32_t sampleFreq) 			{ return (rpm << 16U) / (60U * sampleFreq); }
 #endif
-
-/******************************************************************************/
-/*
-	Simplify CommutationMode Check
-*/
-/******************************************************************************/
-typedef void(*Motor_CommutationModeFunction_T)(Motor_T * p_motor);
-
-static inline void Motor_ProcCommutationMode(Motor_T * p_motor, Motor_CommutationModeFunction_T focFunction, Motor_CommutationModeFunction_T sixStepFunction)
-{
-#if 	defined(CONFIG_MOTOR_SIX_STEP_ENABLE) && defined(CONFIG_MOTOR_FOC_ENABLE)
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) 				{ focFunction(p_motor); }
-	else /* p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */ 	{ sixStepFunction(p_motor); }
-#elif 	defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-	(void)focFunction;
-	sixStepFunction(p_motor);
-#else /* defined(CONFIG_MOTOR_FOC_ENABLE) */
-	(void)sixStepFunction;
-	focFunction(p_motor);
-#endif
-}
-
-typedef void(*Motor_CommutationModeFunction1_T)(Motor_T * p_motor, uint32_t var);
-
-static inline void Motor_ProcCommutationMode1(Motor_T * p_motor, Motor_CommutationModeFunction1_T focFunction, Motor_CommutationModeFunction1_T sixStepFunction, uint32_t var)
-{
-#if 	defined(CONFIG_MOTOR_SIX_STEP_ENABLE) && defined(CONFIG_MOTOR_FOC_ENABLE)
-	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) 				{ focFunction(p_motor, var); }
-	else /* p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */ 	{ sixStepFunction(p_motor, var); }
-#elif 	defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-	(void)focFunction;
-	sixStepFunction(p_motor, var);
-#else /* defined(CONFIG_MOTOR_FOC_ENABLE) */
-	(void)sixStepFunction;
-	focFunction(p_motor, var);
-#endif
-}
 
 /******************************************************************************/
 /*
@@ -534,6 +580,18 @@ static inline bool Motor_CheckSpeed(Motor_T * p_motor)
 	return (p_motor->Speed_Frac16 < 65536);	/* Disable release from fw. Only check forward direction */
 }
 
+/* VScalar Ramp direction? */
+static inline bool Motor_CheckAlignStartUp(Motor_T * p_motor)
+{
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_ENCODER:	if((p_motor->Speed_Frac16 ^ Linear_Ramp_GetTarget(&p_motor->Ramp)) < 0) { p_motor->FaultFlags.AlignStartUp = 1U; } break;
+		default: break;
+	}
+
+	return p_motor->FaultFlags.AlignStartUp;
+}
+
 
 /*
 	Match to Bemf
@@ -550,7 +608,7 @@ static inline uint16_t Motor_GetVSpeedFrac16_VBemf(Motor_T * p_motor)
 	User sets lower SpeedVRef_Rpm to ensure not match to higher speed
 	Output must be saturated. Calling function /2 does not clear over saturation
 */
-static inline uint16_t Motor_GetVSpeedFrac16_VSpeed(Motor_T * p_motor)
+static inline uint16_t Motor_GetVSpeedFrac16_Speed(Motor_T * p_motor)
 {
 	return Linear_Function_FracU16(&p_motor->UnitsVSpeed, p_motor->Speed_Frac16);
 }
@@ -688,12 +746,27 @@ static inline int16_t Motor_GetEncoderElectricalAngle(Motor_T * p_motor)
 
 
 /*
-	Restore Run Ramp after OpenLoop/Align, matchoutput will overwrite targetvalue
+	Restore Run Ramp after OpenLoop/Align, MatchOutput will overwrite target value
 	alternatively allocate Ramp for Align/OpenLoop
 */
-static inline void Motor_ResetRampSlopeRun(Motor_T * p_motor)
+// static inline void Motor_ResetRampSlope(Motor_T * p_motor)
+// {
+// 	Linear_Ramp_SetSlope(&p_motor->Ramp, p_motor->Parameters.RampAccel_Cycles, 0U, INT16_MAX);
+// }
+
+/*!
+	Convert user reference direction to CCW/CW direction
+	@param[in] userCmd int16_t[-32768:32767]
+	@return int32_t[-32768:32768], Over saturated if input is -32768
+*/
+static inline int32_t _Motor_ConvertDirectionalCmd(Motor_T * p_motor, int16_t userCmd)
 {
-	Linear_Ramp_SetSlope(&p_motor->Ramp, p_motor->Parameters.RampAccel_Cycles, 0U, INT16_MAX);
+	return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? userCmd : (int32_t)0 - userCmd;
+}
+
+static inline void Motor_SetDirectionalCmd(Motor_T * p_motor, int16_t userCmd)
+{
+	Linear_Ramp_SetTarget(&p_motor->Ramp, _Motor_ConvertDirectionalCmd(p_motor, userCmd));
 }
 
 /******************************************************************************/

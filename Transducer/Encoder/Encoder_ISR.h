@@ -58,30 +58,30 @@ static inline uint8_t _Encoder_CapturePhasesState(Encoder_T * p_encoder)
 
 static inline void _Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
 {
-	if(count == _ENCODER_TABLE_ERROR) { p_encoder->ErrorCount++; }
-	else
-	{
-		p_encoder->CounterD += count;
-		// p_encoder->TotalD += count;
-		p_encoder->Angle32 += ((int32_t)count * (int32_t)p_encoder->UnitAngularD);
-	}
-}
-
-static inline void _Encoder_CaptureCounterD_Quadrature(Encoder_T * p_encoder)
-{
-	_Encoder_CaptureCount(p_encoder, _ENCODER_TABLE[_Encoder_CapturePhasesState(p_encoder)]);
-}
-
-static inline void _Encoder_CaptureCounterD_QuadraturePhaseA(Encoder_T * p_encoder)
-{
-	_Encoder_CaptureCount(p_encoder, _ENCODER_TABLE_PHASE_A[_Encoder_CapturePhasesState(p_encoder)]);
-}
-
-static inline void _Encoder_CaptureCounterD_QuadraturePhaseARisingEdge(Encoder_T * p_encoder)
-{
-	int8_t count = (Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1;
 	p_encoder->CounterD += count;
-	p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngularD);
+	// p_encoder->TotalD += count;
+	p_encoder->Angle32 += ((int32_t)count * (int32_t)p_encoder->UnitAngularD);
+}
+
+static inline void _Encoder_CaptureCount_Quadrature(Encoder_T * p_encoder, int8_t count)
+{
+	if(count == _ENCODER_TABLE_ERROR) 	{ p_encoder->ErrorCount++; }
+	else 								{ _Encoder_CaptureCount(p_encoder, count); }
+}
+
+static inline void _Encoder_CapturePulse_Quadrature(Encoder_T * p_encoder)
+{
+	_Encoder_CaptureCount_Quadrature(p_encoder, _ENCODER_TABLE[_Encoder_CapturePhasesState(p_encoder)]);
+}
+
+static inline void _Encoder_CapturePulse_QuadraturePhaseA(Encoder_T * p_encoder)
+{
+	_Encoder_CaptureCount_Quadrature(p_encoder, _ENCODER_TABLE_PHASE_A[_Encoder_CapturePhasesState(p_encoder)]);
+}
+
+static inline void _Encoder_CapturePulse_QuadraturePhaseARisingEdge(Encoder_T * p_encoder)
+{
+	_Encoder_CaptureCount_Quadrature(p_encoder, ((Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1));
 }
 
 /******************************************************************************/
@@ -89,10 +89,9 @@ static inline void _Encoder_CaptureCounterD_QuadraturePhaseARisingEdge(Encoder_T
 	Single Phase, Unsigned Direction
 */
 /******************************************************************************/
-static inline void _Encoder_CaptureCounterD_SinglePhase(Encoder_T * p_encoder)
+static inline void _Encoder_CapturePulse_SinglePhase(Encoder_T * p_encoder)
 {
-	p_encoder->CounterD++;
-	p_encoder->Angle32 += p_encoder->UnitAngularD;
+	_Encoder_CaptureCount(p_encoder, 1);
 }
 
 /******************************************************************************/
@@ -102,14 +101,14 @@ static inline void _Encoder_CaptureCounterD_SinglePhase(Encoder_T * p_encoder)
 /******************************************************************************/
 static inline void Encoder_CapturePulse_Quadrature(Encoder_T * p_encoder)
 {
-	_Encoder_CaptureCounterD_Quadrature(p_encoder);
+	_Encoder_CapturePulse_Quadrature(p_encoder);
 	Encoder_DeltaT_CaptureExtended(p_encoder);
 	Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
 
 static inline void Encoder_CapturePulse_SinglePhase(Encoder_T * p_encoder)
 {
-	_Encoder_CaptureCounterD_SinglePhase(p_encoder);
+	_Encoder_CapturePulse_SinglePhase(p_encoder);
 	Encoder_DeltaT_CaptureExtended(p_encoder);
 	Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
@@ -119,9 +118,9 @@ static inline void Encoder_CapturePulse_SinglePhase(Encoder_T * p_encoder)
 	Quadrature On/Off Switch
 */
 /******************************************************************************/
-static inline void _Encoder_CaptureCounterD(Encoder_T * p_encoder)
+static inline void _Encoder_CapturePulse(Encoder_T * p_encoder)
 {
-	Encoder_ProcCaptureModeFunction(p_encoder, _Encoder_CaptureCounterD_Quadrature, _Encoder_CaptureCounterD_SinglePhase);
+	Encoder_ProcCaptureModeFunction(p_encoder, _Encoder_CapturePulse_Quadrature, _Encoder_CapturePulse_SinglePhase);
 }
 
 /*
@@ -129,7 +128,7 @@ static inline void _Encoder_CaptureCounterD(Encoder_T * p_encoder)
 */
 static inline void Encoder_CapturePulse(Encoder_T * p_encoder)
 {
-	_Encoder_CaptureCounterD(p_encoder);
+	_Encoder_CapturePulse(p_encoder);
 	Encoder_DeltaT_CaptureExtended(p_encoder);
 	Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
@@ -148,8 +147,6 @@ static inline void Encoder_CapturePulse(Encoder_T * p_encoder)
 static inline void _Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
 {
 	HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
-	// Encoder_DeltaT_CaptureExtended(p_encoder);
-	// Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
 
 static inline void _Encoder_OnPhaseB_ISR(Encoder_T * p_encoder)

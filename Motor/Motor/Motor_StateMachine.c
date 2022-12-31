@@ -300,27 +300,74 @@ static void Align_Entry(Motor_T * p_motor)
 	// switch(p_motor->Parameters.AlignMode)
 	// {
 	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
+	p_motor->AlignState = MOTOR_ALIGN_STATE_ALIGN;
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAlign, 0U);
 	// }
 }
 
 static void Align_Proc(Motor_T * p_motor)
 {
-	// switch(p_motor->Parameters.AlignMode)
+	// if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
 	// {
-	if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
-	{
-		Motor_ZeroSensor(p_motor);
-		Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, 0U /* Motor_SixStep_ResumePhaseControl */);
-		// Motor_FOC_SetControlMode(p_motor, p_motor->CmdFeedbackMode);
+	// 	Motor_ZeroSensor(p_motor);
+	// 	if(Motor_CheckPositionFeedback(p_motor) == true) 	{ Motor_ResetRampSlope(p_motor); _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN);  }
+	// 	else 												{ _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_OPEN_LOOP); }
+	// }
+	// else
+	// {
+	// 	Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAlign, 0U);
+	// }
 
-		if(Motor_CheckPositionFeedback(p_motor) == true) 	{ Motor_ResetRampSlopeRun(p_motor); _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN);  }
-		else 												{ _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_OPEN_LOOP); }
-	}
-	else
+	switch(p_motor->AlignState)
 	{
-		Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAlign, 0U);
+		case MOTOR_ALIGN_STATE_ALIGN:
+			if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
+			{
+				Motor_ZeroSensor(p_motor);
+				if(Motor_CheckPositionFeedback(p_motor) == true)
+				{
+					Timer_StartPeriod(&p_motor->ControlTimer, 10000); //todo
+					// Motor_FOC_SetControlMode(p_motor, p_motor->CmdFeedbackMode);
+					// Motor_ProcCommutationMode(p_motor, Motor_FOC_MatchFeedbackLoop, 0U);
+					p_motor->AlignState = MOTOR_ALIGN_STATE_START_UP;
+				}
+				else
+				{
+					_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_OPEN_LOOP);
+				}
+			}
+			else
+			{
+				Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAlign, 0U);
+			}
+			break;
+
+		case MOTOR_ALIGN_STATE_START_UP:
+			if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
+			{
+				Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
+				p_motor->AlignState = MOTOR_ALIGN_STATE_CHECK_FAULT;
+			}
+			else
+			{
+				Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, 0U);
+			}
+			break;
+
+		case MOTOR_ALIGN_STATE_CHECK_FAULT:
+			if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
+			{
+				_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN);
+			}
+			else
+			{
+				Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, 0U);
+				if(Motor_CheckAlignStartUp(p_motor) == true) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FAULT); }
+			}
+			break;
+		default: break;
 	}
+
 }
 
 static const StateMachine_Transition_T ALIGN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
@@ -352,7 +399,7 @@ static void OpenLoop_Entry(Motor_T * p_motor)
 
 static void OpenLoop_Proc(Motor_T * p_motor)
 {
-	if(Motor_CheckPositionFeedback(p_motor) == true) 	{ Motor_ResetRampSlopeRun(p_motor); _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN); }
+	if(Motor_CheckPositionFeedback(p_motor) == true) 	{ _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN); }
 	else 												{ Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcOpenLoop, 0U /* Motor_SixStep_ProcPhaseControl */ ); }
 }
 
@@ -447,13 +494,12 @@ static const StateMachine_State_T STATE_CALIBRATION =
 static void Fault_Entry(Motor_T * p_motor) { Phase_Float(&p_motor->Phase); }
 static void Fault_Proc(Motor_T * p_motor) { Phase_Float(&p_motor->Phase);/* repeat ok */ }
 
-static StateMachine_State_T * Fault_InputFault(Motor_T * p_motor, uint32_t voidVar)
+static StateMachine_State_T * Fault_InputClearFault(Motor_T * p_motor, uint32_t voidVar)
 {
 	(void)voidVar;
-	bool isClear = true;
-	if(Thermistor_GetIsShutdown(&p_motor->Thermistor) == true) { isClear = false; }
-	/* Check additional Faults */
-	return (isClear == true) ? &STATE_STOP : 0U;
+	if(Thermistor_GetIsShutdown(&p_motor->Thermistor) == false) { p_motor->FaultFlags.HeatShutdown = 0U; }
+	if(p_motor->FaultFlags.AlignStartUp == 1U) { p_motor->FaultFlags.AlignStartUp = 0U; }
+	return (p_motor->FaultFlags.State == 0U) ? &STATE_STOP : 0U;
 }
 
 static StateMachine_State_T * Fault_InputAll(Motor_T * p_motor, uint32_t voidVar)
@@ -465,7 +511,7 @@ static StateMachine_State_T * Fault_InputAll(Motor_T * p_motor, uint32_t voidVar
 
 static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-	[MSM_INPUT_FAULT] 			= (StateMachine_Transition_T)Fault_InputFault,
+	[MSM_INPUT_FAULT] 			= (StateMachine_Transition_T)Fault_InputClearFault,
 	[MSM_INPUT_CONTROL] 		= (StateMachine_Transition_T)Fault_InputAll,
 	[MSM_INPUT_RELEASE] 		= (StateMachine_Transition_T)Fault_InputAll,
 	[MSM_INPUT_DIRECTION] 		= (StateMachine_Transition_T)Fault_InputAll,

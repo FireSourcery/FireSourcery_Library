@@ -39,12 +39,9 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 	if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
 	_Encoder_DeltaD_Init(p_encoder);
 
-	// p_encoder->UnitT_Freq = p_encoder->CONFIG.SAMPLE_FREQ;
-	_Encoder_ResetUnitsAngular(p_encoder);
-	_Encoder_ResetUnitsLinear(p_encoder);
-	_Encoder_ResetUnitsScalarSpeed(p_encoder);
+	p_encoder->UnitT_Freq = p_encoder->CONFIG.SAMPLE_FREQ;
+	_Encoder_ResetUnits(p_encoder);
 	// if(p_encoder->Params.CountsPerRevolution > (UINT32_MAX / p_encoder->UnitAngularSpeed)) { p_encoder->UnitAngularSpeed = 0U; }
-
 	p_encoder->DeltaT = 1U;
 	Encoder_DeltaD_SetInitial(p_encoder);
 }
@@ -73,42 +70,12 @@ void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder)
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
 	HAL_Encoder_ClearCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
 	HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0U);
+	p_encoder->IndexCount = 0U;
 #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+	_Encoder_ZeroPulseCount(p_encoder);
 #endif
 	p_encoder->DeltaD = 0U;
-	_Encoder_ZeroAngle(p_encoder);
 }
 
 
-#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-/*
-	Run on calibration routine start
-*/
-void Encoder_DeltaD_CalibrateQuadratureReference(Encoder_T * p_encoder)
-{
-#if 	defined(CONFIG_ENCODER_HW_DECODER)
-	p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
-#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
-	p_encoder->CounterD = 0;
-#endif
-}
-
-/*
-	Call after having moved in the positive direction
-*/
-void Encoder_DeltaD_CalibrateQuadraturePositive(Encoder_T * p_encoder)
-{
-#if 	defined(CONFIG_ENCODER_HW_DECODER)
-	uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
-	#ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-	p_encoder->Params.IsALeadBPositive = (counterValue > p_encoder->CounterD);
-	#elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-	p_encoder->Params.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
-	#endif
-#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
-	p_encoder->Params.IsALeadBPositive = (p_encoder->CounterD > 0);
-#endif
-}
-
-#endif
 

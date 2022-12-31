@@ -101,8 +101,8 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 		Stops accumulating ErrorSum if output is past limits
 		If error sum becomes out of sync, add error if accumulating towards Min/Max
 	*/
-	if 		(integral > p_pid->OutputMax) 	{ integral = p_pid->OutputMax; if(error < 0) { p_pid->ErrorSum += error; } }
-	else if	(integral < p_pid->OutputMin) 	{ integral = p_pid->OutputMin; if(error > 0) { p_pid->ErrorSum += error; } }
+	if 		(integral > p_pid->OutputMax) 	{ integral = p_pid->OutputMax; if(error < 0) { SetIntegral(p_pid, p_pid->OutputMax); } }
+	else if	(integral < p_pid->OutputMin) 	{ integral = p_pid->OutputMin; if(error > 0) { SetIntegral(p_pid, p_pid->OutputMin);  } }
 	else 									{ p_pid->ErrorSum += error; }
 
 	if(p_pid->Params.Mode == PID_MODE_PID)
@@ -181,13 +181,6 @@ void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t 
 	ResetRuntime(p_pid);
 }
 
-/* todo kp kd use shift, ki use divide */
-void PID_SetTunings_Frac16(PID_T * p_pid, int32_t kp, int32_t ki, int32_t kd)
-{
-	/* reduce ki for overflow */
-	// while ()
-	PID_SetTunings(p_pid, kp, 65536, ki, 65536, kd, 65536);
-}
 
 int32_t PID_GetKp_Frac16(PID_T * p_pid) { return 65536 * p_pid->Params.KpFactor / p_pid->Params.KpDivisor; }
 int32_t PID_GetKi_Frac16(PID_T * p_pid) { return 65536 * p_pid->Params.KiFactor / p_pid->Params.KiDivisor; }

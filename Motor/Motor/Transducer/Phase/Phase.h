@@ -78,30 +78,30 @@ Phase_Id_T;
 // }
 // Phase_Id_T;
 
-
 typedef struct Phase_Tag
 {
 	PWM_T PwmA;
 	PWM_T PwmB;
 	PWM_T PwmC;
-	//	PWM3X_T Pwm3x;
-#ifdef CONFIG_PHASE_EXTERNAL_SWITCH
-	Pin_T SwitchA;
-	Pin_T SwitchB;
-	Pin_T SwitchC;
+	//	PWM_Module_T PwmModule;
+#ifdef CONFIG_PHASE_PIN_SWITCH
+	Pin_T PinA;
+	Pin_T PinB;
+	Pin_T PinC;
 #endif
 	Phase_Mode_T PhaseMode;
 }
 Phase_T;
 
-#define PHASE_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel, p_SwitchAHal, SwitchAId, p_SwitchBHal, SwitchBId, p_SwitchCHal, SwitchCId)	\
+//p_PwmAHal, p_PwmBHal, p_PwmCHal
+#define PHASE_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel, p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId)	\
 {																	\
 	.PwmA = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel),		\
 	.PwmB = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmBChannel),		\
 	.PwmC = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmCChannel),		\
-	.SwitchA = PIN_INIT(p_SwitchAHal, SwitchAId),					\
-	.SwitchB = PIN_INIT(p_SwitchBHal, SwitchBId),					\
-	.SwitchC = PIN_INIT(p_SwitchCHal, SwitchCId),					\
+	.PinA = PIN_INIT(p_PinAHal, PinAId),							\
+	.PinB = PIN_INIT(p_PinBHal, PinBId),							\
+	.PinC = PIN_INIT(p_PinCHal, PinCId),							\
 }
 
 static inline void Phase_ClearInterrupt(const Phase_T * p_phase) 	{ PWM_ClearInterrupt(&p_phase->PwmA); }
@@ -118,8 +118,8 @@ static inline void _Phase_SyncPwmDuty(const Phase_T * p_phase)
 /* Sync activation of Switch and Invert Polarity */
 static inline void _Phase_SyncPwmSwitch(const Phase_T * p_phase)
 {
-#ifndef CONFIG_PHASE_EXTERNAL_SWITCH
-	PWM_ActuateSync(&p_phase->PwmA);
+#ifndef CONFIG_PHASE_PIN_SWITCH
+	PWM_ActuateSync(&p_phase->PwmA); //PWM_Module_ActuateSync(&p_phase->PwmModule);
 #endif
 }
 
@@ -129,31 +129,40 @@ static inline void _Phase_SyncPwmSwitch(const Phase_T * p_phase)
 */
 /*! @{ */
 /******************************************************************************/
-static inline void _Phase_Enable(const PWM_T * p_pwm, const Pin_T * p_pin)
+static inline void _Phase_EnablePwmSwitch(const PWM_T * p_pwm)
 {
-#ifdef CONFIG_PHASE_EXTERNAL_SWITCH
-	(void)p_pwm; Pin_Output_High(p_pin);
-#else
-	(void)p_pin; PWM_Enable(p_pwm);
+#ifndef CONFIG_PHASE_PIN_SWITCH
+	PWM_Enable(p_pwm);
 #endif
 }
 
-static inline void _Phase_Disable(const PWM_T * p_pwm, const Pin_T * p_pin)
+static inline void _Phase_DisablePwmSwitch(const PWM_T * p_pwm)
 {
-#ifdef CONFIG_PHASE_EXTERNAL_SWITCH
-	(void)p_pwm; Pin_Output_Low(p_pin);
-#else
-	(void)p_pin; PWM_Enable(p_pwm);
+#ifndef CONFIG_PHASE_PIN_SWITCH
+	PWM_Disable(p_pwm);
 #endif
 }
 
-// todo remove config passing siwtch
-static inline void _Phase_EnableA(const Phase_T * p_phase) { _Phase_Enable(&p_phase->PwmA, &p_phase->SwitchA); }
-static inline void _Phase_EnableB(const Phase_T * p_phase) { _Phase_Enable(&p_phase->PwmB, &p_phase->SwitchB); }
-static inline void _Phase_EnableC(const Phase_T * p_phase) { _Phase_Enable(&p_phase->PwmC, &p_phase->SwitchC);  }
-static inline void _Phase_DisableA(const Phase_T * p_phase) { _Phase_Disable(&p_phase->PwmA, &p_phase->SwitchA); }
-static inline void _Phase_DisableB(const Phase_T * p_phase) { _Phase_Disable(&p_phase->PwmB, &p_phase->SwitchB); }
-static inline void _Phase_DisableC(const Phase_T * p_phase) { _Phase_Disable(&p_phase->PwmC, &p_phase->SwitchC); }
+static inline void _Phase_EnablePinSwitch(const Pin_T * p_pin)
+{
+#ifdef CONFIG_PHASE_PIN_SWITCH
+	Pin_Output_High(p_pin);
+#endif
+}
+
+static inline void _Phase_DisablePinSwitch(const Pin_T * p_pin)
+{
+#ifdef CONFIG_PHASE_PIN_SWITCH
+	Pin_Output_Low(p_pin);
+#endif
+}
+
+static inline void _Phase_EnableA(const Phase_T * p_phase) { _Phase_EnablePwmSwitch(&p_phase->PwmA); _Phase_EnablePinSwitch(&p_phase->PinA); }
+static inline void _Phase_EnableB(const Phase_T * p_phase) { _Phase_EnablePwmSwitch(&p_phase->PwmB); _Phase_EnablePinSwitch(&p_phase->PinB); }
+static inline void _Phase_EnableC(const Phase_T * p_phase) { _Phase_EnablePwmSwitch(&p_phase->PwmC); _Phase_EnablePinSwitch(&p_phase->PinC); }
+static inline void _Phase_DisableA(const Phase_T * p_phase) { _Phase_DisablePwmSwitch(&p_phase->PwmA); _Phase_DisablePinSwitch(&p_phase->PinA); }
+static inline void _Phase_DisableB(const Phase_T * p_phase) { _Phase_DisablePwmSwitch(&p_phase->PwmB); _Phase_DisablePinSwitch(&p_phase->PinB); }
+static inline void _Phase_DisableC(const Phase_T * p_phase) { _Phase_DisablePwmSwitch(&p_phase->PwmC); _Phase_DisablePinSwitch(&p_phase->PinC); }
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

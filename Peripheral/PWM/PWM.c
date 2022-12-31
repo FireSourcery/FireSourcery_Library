@@ -24,7 +24,7 @@
 /*!
 	@file 	PWM.c
 	@author FireSourcery
-	@brief 	PWM module conventional function definitions
+	@brief
 	@version V0
 */
 /******************************************************************************/

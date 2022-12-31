@@ -24,7 +24,7 @@
 /*!
 	@file  	Encoder_DeltaT.h
 	@author FireSourcery
-	@brief 	Capture DeltaT Mode, displacement is fixed
+	@brief 	Capture DeltaT per pulse count: variable DeltaT, DeltaD is fixed, 1.
 	@version V0
 */
 /******************************************************************************/
@@ -33,13 +33,20 @@
 
 #include "Encoder.h"
 
+static inline uint32_t _Encoder_DeltaT_GetTimerFreq(Encoder_T * p_encoder)
+{
+#ifdef CONFIG_ENCODER_DYNAMIC_TIMER
+	return p_encoder->UnitT_Freq;
+#else
+	return p_encoder->CONFIG.TIMER_FREQ;
+#endif
+}
+
 /******************************************************************************/
 /*!
-	@brief 	Capture DeltaT - Poll Pulse, ISR
- 			Capture DeltaT, per count, fixed changed in distance
-			Interval cannot be greater than 0xFFFF [ticks] => (0xFFFF / TimerFreq) [seconds]
-			Low freq, < POLLING_FREQ, use interpolation
-				e.g. Call each hall cycle / electric rotation inside hall edge interrupt
+	@brief 	Capture DeltaT - Pulse Edge Polling/ISR
+			Interval cannot be greater than 0xFFFF [ticks] => (0xFFFF / TIMER_FREQ) [seconds]
+			Low EncoderPulseFreq, < POLLING_FREQ, use interpolation.
 */
 /******************************************************************************/
 static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
@@ -66,8 +73,8 @@ static inline bool Encoder_DeltaT_CheckStop(Encoder_T * p_encoder)
 /*!
 	@brief Extend base timer, 16bit timer cases to 32bit.
 	Use Extended Timer to extend Low RPM range.
-	ExtTimerFreq = 1000Hz, TimerMax = 0xFFFF
-		209ms to 13743S for TimerFreq = 312500Hz, 3.2us intervals
+	EXTENDED_TIMER_FREQ = 1000Hz, ENCODER_TIMER_MAX = 0xFFFF
+		209ms to 13743S for TimerFreq = 312500Hz, 3.2us period
 		104ms to 6871S for TimerFreq = 625000Hz
 		1.6ms to 107S for TimerFreq = 40Mhz
 */
@@ -82,29 +89,23 @@ static inline uint32_t _Encoder_GetExtendedTimerDelta(Encoder_T * p_encoder)
 	if(time < p_encoder->ExtendedDeltaTimerSaved) { deltaTime = UINT32_MAX - p_encoder->ExtendedDeltaTimerSaved + time + 1U; }
 	else
 #endif
-	{ deltaTime = time - p_encoder->ExtendedTimerPrev;	}
+	{ deltaTime = time - p_encoder->ExtendedTimerPrev; }
 
 	return deltaTime;
 }
 
 /*
 	Call on Encoder Edge.
-	32 bit DeltaT overflow should be caught by poll watch stop, which is a shorter period
+	32 bit DeltaT overflow should be caught by CheckExtendedStop, which is a shorter period
 */
 static inline void Encoder_DeltaT_CaptureExtended(Encoder_T * p_encoder)
 {
-	if(HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == false)
+	Encoder_DeltaT_Capture(p_encoder);
+	if(Encoder_DeltaT_CheckStop(p_encoder) == true)
 	{
-		p_encoder->DeltaT = (HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) + p_encoder->DeltaT) / 2U;
-		// p_encoder->DeltaT = HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-	}
-	else
-	{
-		HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
 		p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->ExtendedTimerConversion;
+		// p_encoder->ExtendedTimerPrev = *(p_encoder->CONFIG.P_EXTENDED_TIMER); //wait for overflow twice, 1 less check, first capture invalid
 	}
-
-	HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
 	p_encoder->ExtendedTimerPrev = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
 }
 
@@ -121,19 +122,19 @@ static inline bool Encoder_DeltaT_CheckExtendedStop(Encoder_T * p_encoder)
 	@brief	Angle Interpolation Functions
 
 	Estimate Angle each control cycle in between encoder counts
-	AngularSpeed * AngleControlIndex / POLLING_FREQ ;
-		(AngleControlIndex / POLLING_FREQ) * [1(DeltaD) * UnitT_Freq / DeltaT) * (AngleSize / EncoderResolution)]
-		AngleControlIndex * [1(DeltaD) * AngleSize * UnitT_Freq / EncoderResolution / POLLING_FREQ] / DeltaT
-	AngleControlIndex [0:InterpolationCount]
+	AngularSpeed * AngleIndex / POLLING_FREQ
+		(AngleIndex / POLLING_FREQ) * [1(DeltaD) * UnitT_Freq / DeltaT) * (AngleSize / EncoderResolution)]
+		AngleIndex * [1(DeltaD) * AngleSize * UnitT_Freq / EncoderResolution / POLLING_FREQ] / DeltaT
+	AngleIndex [0:InterpolationCount]
 
-	Only when POLLING_FREQ > EncoderFreq, i.e. 0 encoder counts per poll, polls per encoder count > 1
+	Only when POLLING_FREQ > EncoderPulseFreq, i.e. 0 encoder counts per poll, polls per encoder count > 1
 	e.g. High res break even point
 		8192 CountsPerRevolution, 20Khz POLLING_FREQ => 146 RPM
 */
 /******************************************************************************/
 /*!
 	@brief InterpolateAngle
-	pollingIndex * 1(DeltaD) * [UnitInterpolateAngle] / DeltaT
+	AngleIndex * 1(DeltaD) * [UnitInterpolateAngle] / DeltaT
 	UnitInterpolateAngle = [AngleSize[65536] * UnitT_Freq / POLLING_FREQ / CountsPerRevolution]
 */
 static inline uint32_t Encoder_DeltaT_InterpolateAngleIndex(Encoder_T * p_encoder, uint32_t pollingIndex)
@@ -144,23 +145,22 @@ static inline uint32_t Encoder_DeltaT_InterpolateAngleIndex(Encoder_T * p_encode
 
 static inline uint32_t Encoder_DeltaT_ProcInterpolateAngle(Encoder_T * p_encoder)
 {
-	p_encoder->InterpolationIndex++;
-	return Encoder_DeltaT_InterpolateAngleIndex(p_encoder, p_encoder->InterpolationIndex);
+	p_encoder->InterpolateAngleIndex++;
+	return Encoder_DeltaT_InterpolateAngleIndex(p_encoder, p_encoder->InterpolateAngleIndex);
 }
 
 static inline void Encoder_DeltaT_ZeroInterpolateAngle(Encoder_T * p_encoder)
 {
-	p_encoder->InterpolationIndex = 0U;
+	p_encoder->InterpolateAngleIndex = 0U;
 }
 
 /*
-	InterpolationCycles - numbers of Polls per encoder count.
-	Samples per DeltaT Capture, index max
-	POLLING_FREQ/PulseFreq == POLLING_FREQ / (UnitT_Freq / DeltaT);
+	InterpolationCount - numbers of Polls per encoder count, per DeltaT Capture, AngleIndex max
+	POLLING_FREQ/EncoderPulseFreq == POLLING_FREQ / (TIMER_FREQ / DeltaT);
 */
 static inline uint32_t Encoder_DeltaT_GetInterpolationCount(Encoder_T * p_encoder)
 {
-	return p_encoder->CONFIG.POLLING_FREQ * p_encoder->DeltaT / p_encoder->UnitT_Freq;
+	return p_encoder->CONFIG.POLLING_FREQ * p_encoder->DeltaT / p_encoder->CONFIG.TIMER_FREQ;
 }
 
 static inline uint32_t Encoder_DeltaT_ConvertRotationalSpeedToInterpolationCount_RPM(Encoder_T * p_encoder, uint16_t mechRpm)
@@ -175,9 +175,19 @@ static inline uint32_t Encoder_DeltaT_ConvertInterpolationCountToRotationalSpeed
 
 /******************************************************************************/
 /*!
-	@brief DeltaT only Functions
+	@brief DeltaT only Speed Functions
 */
 /******************************************************************************/
+/******************************************************************************/
+/*!
+	@brief Scalar Speed
+*/
+/******************************************************************************/
+static inline uint32_t Encoder_DeltaT_GetScalarSpeed(Encoder_T * p_encoder)
+{
+	return p_encoder->UnitScalarSpeed / p_encoder->DeltaT;
+}
+
 /******************************************************************************/
 /*!
 	@brief Angular/Rotational Speed
@@ -187,7 +197,7 @@ static inline uint32_t Encoder_DeltaT_GetAngularSpeed(Encoder_T * p_encoder)
 {
 	/* p_encoder->UnitAngularSpeed set to 0U if overflow */
 	return (p_encoder->UnitAngularSpeed == 0U) ?
-		((p_encoder->UnitT_Freq / p_encoder->DeltaT) << ENCODER_ANGLE16) / p_encoder->Params.CountsPerRevolution :
+		((p_encoder->CONFIG.TIMER_FREQ / p_encoder->DeltaT) << ENCODER_ANGLE16) / p_encoder->Params.CountsPerRevolution :
 		_Encoder_CalcAngularSpeed(p_encoder, 1U, p_encoder->DeltaT);
 }
 
@@ -202,27 +212,16 @@ static inline uint32_t Encoder_DeltaT_GetRotationalSpeed_RPM(Encoder_T * p_encod
 	return _Encoder_CalcRotationalSpeed(p_encoder, 60U, p_encoder->DeltaT);
 }
 
-// static inline uint32_t Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
-// {
-// 	check (p_encoder->UnitAngularSpeed == 0U) || *60 > INTMAX
-// 	return (rpm == 0U) ? 0U : p_encoder->UnitT_Freq * 60U / (p_encoder->Params.CountsPerRevolution * rpm);
-// }
-
-// static inline uint32_t Encoder_DeltaT_ConvertToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaT_ticks)
-// {
-// 	return Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, deltaT_ticks);
-// }
-
-/******************************************************************************/
-/*!
-	@brief Scalar Speed
-*/
-/******************************************************************************/
-static inline uint32_t Encoder_DeltaT_GetScalarSpeed(Encoder_T * p_encoder)
+static inline uint32_t Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
 {
-	return p_encoder->UnitScalarSpeed / p_encoder->DeltaT;
+	// check (p_encoder->UnitAngularSpeed == 0U) || *60 > INTMAX
+	return (rpm == 0U) ? 0U : p_encoder->CONFIG.TIMER_FREQ * 60U / (p_encoder->Params.CountsPerRevolution * rpm);
 }
 
+static inline uint32_t Encoder_DeltaT_ConvertToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaT_ticks)
+{
+	return Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, deltaT_ticks);
+}
 
 /******************************************************************************/
 /*!

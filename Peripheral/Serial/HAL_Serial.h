@@ -51,7 +51,7 @@
 	// static inline void HAL_Serial_DisableRxInterrupt(HAL_Serial_T * p_hal) {}
 	// static inline void HAL_Serial_WriteTxSwitch(HAL_Serial_T * p_hal, bool enable) {}
 	// static inline void HAL_Serial_WriteRxSwitch(HAL_Serial_T * p_hal, bool enable) {}
-	// static inline void HAL_Serial_ConfigBaudRate(HAL_Serial_T * p_hal, uint32_t baudRate) {}
+	// static inline void HAL_Serial_InitBaudRate(HAL_Serial_T * p_hal, uint32_t baudRate) {}
 	// static inline void HAL_Serial_Init(HAL_Serial_T * p_hal) {}
 	// static inline void HAL_Serial_Deinit(HAL_Serial_T * p_hal) {}
 #endif

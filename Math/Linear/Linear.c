@@ -40,13 +40,14 @@ uint8_t _Linear_Log2(uint32_t num)
 
 uint8_t _Linear_GetMaxShift_Signed(int32_t num)
 {
-	return  _Linear_Log2(INT32_MAX / num);
+	uint32_t positiveMax = (num >= 0) ? INT32_MAX / num : INT32_MIN / num;
+	return  _Linear_Log2(positiveMax);
 }
 
 /* 1 << Shift <= INT32_MAX / ((x_max - x0) * Slope) */
-uint8_t _Linear_GetMaxSlopeShift_Signed(int32_t factor, int32_t divisor, int32_t maxDelta)
+uint8_t _Linear_GetMaxSlopeShift_Signed(int32_t factor, int32_t divisor, int32_t maxInputDelta)
 {
-	return  _Linear_GetMaxShift_Signed(maxDelta * factor / divisor); /* divide first rounds up log output */
+	return  _Linear_GetMaxShift_Signed(maxInputDelta * factor / divisor); /* divide first rounds up log output */
 }
 
 /******************************************************************************/

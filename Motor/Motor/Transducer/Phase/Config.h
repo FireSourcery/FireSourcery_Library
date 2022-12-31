@@ -31,7 +31,7 @@
 #ifndef CONFIG_PHASE_H
 #define CONFIG_PHASE_H
 
-#ifdef CONFIG_PHASE_EXTERNAL_SWITCH
+#ifdef CONFIG_PHASE_PIN_SWITCH
 #endif
 
 #endif

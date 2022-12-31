@@ -63,7 +63,7 @@ static inline void HAL_PWM_ClearInterrupt(HAL_PWM_T * p_hal)
 
 static inline void HAL_PWM_DisableInterrupt(HAL_PWM_T * p_hal) { p_hal->SC &= ~FTM_SC_TOIE_MASK; }
 static inline void HAL_PWM_EnableInterrupt(HAL_PWM_T * p_hal) { p_hal->SC |= FTM_SC_TOIE_MASK; }
-static inline void HAL_PWM_Module_Sync(HAL_PWM_T * p_hal) { p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK; }
+static inline void HAL_PWM_SyncModule(HAL_PWM_T * p_hal) { p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK; }
 
 /*
 	Init Channel

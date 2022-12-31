@@ -55,8 +55,14 @@ static Cmd_Status_T Cmd_stop(MotorController_T * p_mc, int argc, char ** argv)
 
 static Cmd_Status_T Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 {
+	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	char * p_end;
 	uint32_t value;
+
+	p_motor->DebugCounter = 0U;
+	p_motor->DebugCounter2 = 0U;
+	p_motor->DebugFlag = false;
+	p_motor->DebugError = 0U;
 
 	if(argc == 1U) /* run */
 	{
@@ -270,17 +276,15 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			Terminal_SendNum(p_terminal, Encoder_ModeDT_GetScalarVelocity(&p_motor->Encoder)); Terminal_SendString(p_terminal, " Frac16\r\n");
 
 			Terminal_SendString(p_terminal, "SpeedControl: "); Terminal_SendNum(p_terminal, p_motor->SpeedControl_FracS16); Terminal_SendString(p_terminal, "\r\n");
-			// Terminal_SendString(p_terminal, "Speed Error: "); Terminal_SendNum(p_terminal, Linear_Ramp_GetOutput(&p_motor->Ramp) - (p_motor->Speed_Frac16 / 2)); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "RampOut: "); Terminal_SendNum(p_terminal, Linear_Ramp_GetOutput(&p_motor->Ramp)); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "DeltaD: "); Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaD); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "DeltaT: "); Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaT); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "DeltaTh: "); Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaTh); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "FreqD: "); Terminal_SendNum(p_terminal, p_motor->Encoder.FreqD); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "TotalD: "); Terminal_SendNum(p_terminal, p_motor->Encoder.TotalD); Terminal_SendString(p_terminal, "\r\n");
 
 			// Terminal_SendString(p_terminal, "Throttle: "); 	Terminal_SendNum(p_terminal, MotAnalogUser_GetThrottle(&p_mc->AnalogUser)); Terminal_SendString(p_terminal, " Frac16\r\n");
 			// Terminal_SendString(p_terminal, "Brake: "); 	Terminal_SendNum(p_terminal, MotAnalogUser_GetBrake(&p_mc->AnalogUser)); Terminal_SendString(p_terminal, " Frac16\r\n");
-			// Terminal_SendString(p_terminal, "RampCmd: "); 	Terminal_SendNum(p_terminal, p_motor->RampCmd); Terminal_SendString(p_terminal, " Q1.15\r\n");
-			// //			Terminal_SendString(p_terminal, ", RampIndex: "); Terminal_SendNum(p_terminal, p_motor->RampIndex);
 
 			Terminal_SendString(p_terminal, "Iq: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Iq);
 			Terminal_SendString(p_terminal, ", Vq: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Vq);
@@ -354,6 +358,8 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			break;
 		case 1U:
 			PrintSensor(p_terminal, p_motor);
+
+		case 2U:
 
 		default: break;
 	}
@@ -737,29 +743,26 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 	{
 		MotorController_User_ToggleUserFault(p_mc);
 
-		// Terminal_SendString(p_terminal, "FaultFlags [VSource][VAcc][VSense][Pcb][MosTop][MosBot]: ");
-		// Terminal_SendNum(p_terminal, p_mc->FaultFlags.VSourceLimit);
-		// Terminal_SendNum(p_terminal, p_mc->FaultFlags.VAccLimit);
-		// Terminal_SendNum(p_terminal, p_mc->FaultFlags.VSenseLimit);
-		// Terminal_SendNum(p_terminal, p_mc->FaultFlags.PcbOverHeat);
-		// Terminal_SendNum(p_terminal, p_mc->FaultFlags.MosfetsTopOverHeat);
-		// Terminal_SendNum(p_terminal, p_mc->FaultFlags.MosfetsBotOverHeat);
+		Terminal_SendString(p_terminal, "FaultFlags [VSource][VAcc][VSense][Pcb][MosTop][MosBot]: ");
+		Terminal_SendNum(p_terminal, p_mc->FaultFlags.VSourceLimit);
+		Terminal_SendNum(p_terminal, p_mc->FaultFlags.VAccLimit);
+		Terminal_SendNum(p_terminal, p_mc->FaultFlags.VSenseLimit);
+		Terminal_SendNum(p_terminal, p_mc->FaultFlags.PcbOverHeat);
+		Terminal_SendNum(p_terminal, p_mc->FaultFlags.MosfetsOverHeat);
 		Terminal_SendString(p_terminal, "\r\n");
 
 		Terminal_SendString(p_terminal, "\r\n");
-		Terminal_SendString(p_terminal, "FaultAdcu:\r\n");
-		// Terminal_SendString(p_terminal, "VSource: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VSource_Adcu); 			Terminal_SendString(p_terminal, "\r\n");
-		// Terminal_SendString(p_terminal, "VAcc: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VAcc_Adcu); 			Terminal_SendString(p_terminal, "\r\n");
-		// Terminal_SendString(p_terminal, "VSense: "); 	Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VSense_Adcu); 			Terminal_SendString(p_terminal, "\r\n");
-		// Terminal_SendString(p_terminal, "Pcb: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatPcb_Adcu); 		Terminal_SendString(p_terminal, "\r\n");
-		// Terminal_SendString(p_terminal, "MosTop: "); 	Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatMosfetsTop_Adcu); 	Terminal_SendString(p_terminal, "\r\n");
-		// Terminal_SendString(p_terminal, "MosBot: "); 	Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatMosfetsBot_Adcu); 	Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "Fault ADCU:\r\n");
+		Terminal_SendString(p_terminal, "VSource: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VSource_Adcu); 		Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "VAcc: "); 			Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VAcc_Adcu); 			Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "VSense: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.VSense_Adcu); 			Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "Pcb: "); 			Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatPcb_Adcu); 		Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "Mosfets: "); 		Terminal_SendNum(p_terminal, p_mc->FaultAnalogRecord.HeatMosfets_Adcu); 	Terminal_SendString(p_terminal, "\r\n");
 
 		Terminal_SendString(p_terminal, "\r\n");
 		Terminal_SendString(p_terminal, "Fault DegC:\r\n");
-		// Terminal_SendString(p_terminal, "Pcb: "); 		Terminal_SendNum(p_terminal, Thermistor_ConvertToDegC_Int(&p_mc->ThermistorPcb, p_mc->FaultAnalogRecord.HeatPcb_Adcu, 1U)); 				Terminal_SendString(p_terminal, "\r\n");
-		// Terminal_SendString(p_terminal, "MosTop: "); 	Terminal_SendNum(p_terminal, Thermistor_ConvertToDegC_Int(&p_mc->ThermistorMosfetsTop, p_mc->FaultAnalogRecord.HeatMosfetsTop_Adcu, 1U)); 	Terminal_SendString(p_terminal, "\r\n");
-		// Terminal_SendString(p_terminal, "MosBot: "); 	Terminal_SendNum(p_terminal, Thermistor_ConvertToDegC_Int(&p_mc->ThermistorMosfetsBot, p_mc->FaultAnalogRecord.HeatMosfetsBot_Adcu, 1U)); 	Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "Pcb: "); 		Terminal_SendNum(p_terminal,MotorController_User_GetFaultHeatPcb_DegC(p_mc, 1U)); 	Terminal_SendString(p_terminal, "\r\n");
+		Terminal_SendString(p_terminal, "Mosfets: "); 	Terminal_SendNum(p_terminal, MotorController_User_GetFaultHeatMosfets_DegC(p_mc, 1U)); 	Terminal_SendString(p_terminal, "\r\n");
 		Terminal_SendString(p_terminal, "\r\n");
 	}
 

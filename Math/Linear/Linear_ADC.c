@@ -42,7 +42,6 @@
 	adcu to frac16 conversion returns without division
 	adcu to physical returns without division
 	division in physical to adcu, frac16 to physical units
-
 */
 /******************************************************************************/
 void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef)
