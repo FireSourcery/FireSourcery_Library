@@ -53,9 +53,9 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
 		/* Assume its user direction, low speed opposite direction will be seen as aligned direction */
 		// p_encoder->FreqD = Encoder_GetDirection_SinglePhase(p_encoder) * (timerFreq / p_encoder->DeltaT);
 		p_encoder->FreqD = p_encoder->DirectionD * (timerFreq / p_encoder->DeltaT);
+		/* Set next periodTk as ~DeltaT on overflow */
 		p_encoder->DeltaTh = (HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == true) ?
 			p_encoder->DeltaT - timerFreq / sampleFreq : HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-			/* Set next periodTk as ~DeltaT on overflow */
 	}
 	else
 	{

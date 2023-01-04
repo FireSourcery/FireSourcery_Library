@@ -50,6 +50,7 @@ static Cmd_Status_T Cmd_stop(MotorController_T * p_mc, int argc, char ** argv)
 {
 	(void)argc; (void)argv;
 	MotorController_User_DisableControl(p_mc);
+	MotorController_User_SetCmdZero(p_mc);
 	return CMD_STATUS_SUCCESS;
 }
 
@@ -435,7 +436,7 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 		}
 		else if(strncmp(argv[1U], "brakevf", 7U) == 0U)
 		{
-			MotorController_User_SetBrakeMode(p_mc, MOTOR_CONTROLLER_BRAKE_MODE_VFREQ_SCALAR);
+			MotorController_User_SetBrakeMode(p_mc, MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE);
 			Terminal_SendString(p_terminal, "VFreq Brake\r\n");
 		}
 		else if(strncmp(argv[1U], "brakei", 7U) == 0U)

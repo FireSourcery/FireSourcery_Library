@@ -46,14 +46,14 @@ static inline qangle16_t Motor_FOC_PollSensorAngle(Motor_T * p_motor)
 			if(Hall_PollCaptureRotorAngle(&p_motor->Hall) == true) { Encoder_CapturePulse(&p_motor->Encoder); }
 #endif
 			electricalAngle = Hall_GetRotorAngle_Degrees16(&p_motor->Hall);
-			electricalAngle += Encoder_ModeDT_InterpolateAngle(&p_motor->Encoder);
-			// electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->Encoder);
+			// electricalAngle += Encoder_ModeDT_InterpolateAngle(&p_motor->Encoder);
+			electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->Encoder);
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
 			electricalAngle = Motor_GetEncoderElectricalAngle(p_motor);
 			// electricalAngle += Encoder_ModeDT_InterpolateAngle(&p_motor->Encoder); //direction todo
-			// electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->Encoder); //direction todo
+			electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->Encoder);
 			break;
 
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
@@ -84,7 +84,7 @@ static inline qangle16_t Motor_FOC_PollSensorAngle(Motor_T * p_motor)
 void Motor_FOC_ProcSensorAngle(Motor_T * p_motor)
 {
 	qangle16_t electricalAngle = Motor_FOC_PollSensorAngle(p_motor);
-	/* Once Per Half Cycle (p_motor->ElectricalAngle < 0 && electricalAngle > 0) || (p_motor->ElectricalAngle > 0 && electricalAngle < 0) */
+	/* Once Per Cycle */
 	if(qangle16_cycle(p_motor->ElectricalAngle, electricalAngle) == true)
 	{
 		p_motor->VBemfPeak_Adcu = p_motor->VBemfPeakTemp_Adcu;
@@ -133,7 +133,6 @@ bool Motor_FOC_ProcSpeed(Motor_T * p_motor)
 void Motor_FOC_ProcSpeedFeedback(Motor_T * p_motor)
 {
 	if(Motor_FOC_ProcSpeed(p_motor) == true) { Motor_ProcSpeedFeedback(p_motor, p_motor->Speed_Frac16 / 2); }
-	// if((p_motor->Speed_Frac16 ^ (int32_t)p_motor->Foc.Vq) < 0) { p_motor->FaultFlags.AlignStartUp = 1U; p_motor->DebugError++; }
 }
 
 /******************************************************************************/
@@ -179,7 +178,7 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 		p_motor->ControlFlags.VoltageModeILimitActive = false;
 	}
 
-	vqReqOut = (p_motor->ControlFlags.VoltageModeILimitActive == true) ? PID_Calc(&p_motor->PidIq, iLimit, FOC_GetIq(&p_motor->Foc)) : vqReq;
+	vqReqOut = (p_motor->ControlFlags.VoltageModeILimitActive == true) ? PID_Proc(&p_motor->PidIq, iLimit, FOC_GetIq(&p_motor->Foc)) : vqReq;
 
 	FOC_SetVq(&p_motor->Foc, vqReqOut);
 	FOC_SetVd(&p_motor->Foc, 0);
@@ -191,8 +190,8 @@ static inline void _Motor_FOC_ProcCurrentFeedback(Motor_T * p_motor)
 
 	if(p_motor->FeedbackModeFlags.Current == 1U) /* Current Control mode - proc using last adc measure */
 	{
-		FOC_SetVq(&p_motor->Foc, PID_Calc(&p_motor->PidIq, userOutput, 	FOC_GetIq(&p_motor->Foc)));
-		FOC_SetVd(&p_motor->Foc, PID_Calc(&p_motor->PidId, 0U, 			FOC_GetId(&p_motor->Foc)));
+		FOC_SetVq(&p_motor->Foc, PID_Proc(&p_motor->PidIq, userOutput, 	FOC_GetIq(&p_motor->Foc)));
+		FOC_SetVd(&p_motor->Foc, PID_Proc(&p_motor->PidId, 0U, 			FOC_GetId(&p_motor->Foc)));
 	}
 	else /* Voltage Control mode - use current feedback for over current only */
 	{
@@ -210,8 +209,9 @@ static inline void _Motor_FOC_ProcCurrentFeedback(Motor_T * p_motor)
 #ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
 extern void Motor_ExternControl(Motor_T * p_motor);
 #endif
+
 /*
-	Main Control Loop - Run State
+	Feedback Control Loop
 	StateMachine calls each PWM, ~20kHz
 */
 void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
@@ -234,9 +234,10 @@ void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 	Linear_Ramp_ProcOutput(&p_motor->Ramp);
 
 	/* User request open loop support, implement outside */
-	if(Motor_CheckPositionFeedback(p_motor) == true)
+	if(Motor_CheckOpenLoop(p_motor) == false)
 	{
 		Motor_FOC_ProcSensorAngle(p_motor);
+		// Motor_FOC_ProcPositionFeedback(p_motor);
 		Motor_FOC_ProcSpeedFeedback(p_motor);
 		FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
 	}
@@ -293,13 +294,10 @@ void Motor_FOC_ActivateOutput(Motor_T * p_motor)
 }
 
 /*
-	OpenLoop/User Activate
-	must also set Vector Sine/Cosine, not set during position read,
-	angle control loop must set vector before feedback calc
+	Active Feed Forward Angle without ClarkPark on Current
 */
 void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd)
 {
-//	p_motor->ElectricalAngle = angle;
 	FOC_SetVq(&p_motor->Foc, vq);
 	FOC_SetVd(&p_motor->Foc, vd);
 	FOC_SetVector(&p_motor->Foc, angle);

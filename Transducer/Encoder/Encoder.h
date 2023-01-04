@@ -133,13 +133,14 @@ typedef struct Encoder_Tag
 	uint32_t ExtendedTimerPrev;
 	uint32_t ExtendedTimerConversion;	/* Extended Timer to Short Timer */
 	bool IsSinglePhasePositive;
-	bool IsAbsPosition;
+	bool IsAligned;
+	bool IsAbsAligned;
 	int32_t AbsOffset;
 
 	/* Experimental */
 	int32_t TotalD; 			/* Integral Capture */
-	// uint32_t TotalT; 		/*!< Extended? Timer ticks, persistent through Delta captures */
-	// uint32_t SpeedPrev; 		/*!< Most recently calculated speed, used for acceleration calc */
+	// uint32_t TotalT; 		/*!< Extended? Timer ticks, persistent through DeltaT captures */
+	// uint32_t SpeedPrev; 		/*!< Most recently calculated speed, use for acceleration */
 	// uint32_t DeltaSpeed; 	/*!< Save for acceleration calc */
 
 	/*
@@ -147,10 +148,10 @@ typedef struct Encoder_Tag
 	*/
 	uint32_t UnitT_Freq;					/*!< Common Units reset depending on mode. T unit(seconds) conversion factor. */
 	uint32_t UnitAngularD; 					/*!< [0xFFFFFFFFU/CountsPerRevolution + 1] 		=> Angle = CounterD * UnitAngle_Factor >> (32 - DEGREES_BITS) */
-	uint32_t UnitAngularSpeed; 				/*!< [(1 << DEGREES_BITS) * UnitT_Freq / CountsPerRevolution] 	=> AngularSpeed = DeltaD * UnitAngularSpeed / DeltaT */
+	uint32_t UnitLinearD;					/*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT is 1). Units per DeltaT capture, using Capture DeltaT (DeltaD is 1).*/
 	uint32_t UnitInterpolateAngle; 			/*!< [UnitT_Freq << DEGREES_BITS / POLLING_FREQ / CountsPerRevolution] */
 	uint32_t InterpolateAngleLimit;
-	uint32_t UnitLinearD;					/*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT is 1). Units per DeltaT capture, using Capture DeltaT (DeltaD is 1).*/
+	uint32_t UnitAngularSpeed; 				/*!< [(1 << DEGREES_BITS) * UnitT_Freq / CountsPerRevolution] 	=> AngularSpeed = DeltaD * UnitAngularSpeed / DeltaT */
 	uint32_t UnitLinearSpeed;				/*!< [UnitD * UnitT_Freq] 						=> Speed = DeltaD * UnitSpeed / DeltaT */
 	uint32_t UnitScalarSpeed;				/*!< Percentage Speed of ScalarSpeedRef_Rpm, given max speed, as Fraction16 */
 	uint32_t UnitScalarSpeed_Shift;

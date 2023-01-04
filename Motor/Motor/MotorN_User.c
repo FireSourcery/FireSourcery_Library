@@ -96,9 +96,9 @@ bool MotorN_User_ClearFault(Motor_T * p_motor, uint8_t motorCount)
 	return isClear;
 }
 
-void MotorN_User_SetUserFeedbackModeCmd(Motor_T * p_motor, uint8_t motorCount, int32_t cmd)
+void MotorN_User_SetUserCmd(Motor_T * p_motor, uint8_t motorCount, int32_t cmd)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetUserFeedbackModeCmd(&p_motor[iMotor], cmd); }
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetUserCmd(&p_motor[iMotor], cmd); }
 }
 
 void MotorN_User_SetThrottleCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle)
@@ -111,9 +111,9 @@ void MotorN_User_SetBrakeCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t bra
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetBrakeCmd(&p_motor[iMotor], brake); }
 }
 
-void MotorN_User_SetCoast(Motor_T * p_motor, uint8_t motorCount)
+void MotorN_User_SetCruise(Motor_T * p_motor, uint8_t motorCount)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetCoast(&p_motor[iMotor]); }
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetCruise(&p_motor[iMotor]); }
 }
 
 // void MotorN_User_SetVoltageBrakeCmd(Motor_T * p_motor, uint8_t motorCount)

@@ -88,13 +88,13 @@ void Encoder_Init_SinglePhase(Encoder_T * p_encoder)
 
 void Encoder_CalibrateAbsolutePositionRef(Encoder_T * p_encoder)
 {
-	p_encoder->IsAbsPosition = 0U;
+	p_encoder->IsAbsAligned = 0U;
 	_Encoder_ZeroPulseCount(p_encoder);
 }
 
 void Encoder_CalibrateAbsolutePositionOffset(Encoder_T * p_encoder)
 {
-	p_encoder->IsAbsPosition = 1U;
+	p_encoder->IsAbsAligned = 1U;
 	// p_encoder->AbsOffset = p_encoder->IndexOffset;
 }
 

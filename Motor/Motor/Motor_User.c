@@ -48,6 +48,8 @@
 
 	Set async to proc, sync issue can recover?
 	control proc may overwrite pid state set, but last to complete is always user input?
+
+	CmdValue (Ramp Target) and CmdMode selectively sync inputs for StateMachine
 */
 
 /*

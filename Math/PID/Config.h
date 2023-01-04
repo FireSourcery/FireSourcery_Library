@@ -37,4 +37,11 @@
 	#define CONFIG_PID_K_INT
 #endif
 
+#if 	defined(CONFIG_PID_DIVIDE_SHIFT)
+#elif 	defined(CONFIG_PID_DIVIDE_NUMERICAL)
+#else
+	#define CONFIG_PID_DIVIDE_SHIFT
+#endif
+
+
 #endif

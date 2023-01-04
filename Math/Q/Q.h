@@ -24,7 +24,7 @@
 /*!
 	@file 	Q.h
 	@author FireSourcery
-	@brief 	Q module common functions
+	@brief 	Q fixed point math operations
 	@version V0
 */
 /******************************************************************************/
@@ -33,51 +33,13 @@
 
 #include <stdint.h>
 
-static inline int16_t q_sat16(int32_t x)
-{
-	int16_t sat;
-	if		(x > (int32_t)INT16_MAX) 	{ sat = INT16_MAX; }
-	else if	(x < (int32_t)INT16_MIN) 	{ sat = INT16_MIN; }
-	else 								{ sat = (int16_t)x; }
-	return sat;
-}
+extern uint16_t q_sqrt(int32_t x);
 
-/*!
-	@brief Calculates square root
-
-	Babylonian method
-	y[n] = ( y[n-1] + (x / y[n-1]) ) / 2
-
-	<https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method>
-*/
-static inline uint16_t q_sqrt(int32_t x)
-{
-	uint32_t yPrev;
-	uint32_t y;
-
-	if(x > 0)
-	{
-		/*
-			Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
-
-			8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
-			128*128 == (1 << 14), solve < 1048576
-			1048576U == (1 << 20)
-		*/
-		yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
-		for(uint8_t iteration = 0U; iteration < 6U; iteration++)
-		{
-			y = (yPrev + (x / yPrev)) / 2U;
-			if(y == yPrev) { break; }
-			yPrev = y;
-		}
-	}
-	else
-	{
-		y = 0U;
-	}
-
-	return (uint16_t)y;
-}
+extern uint8_t q_log2(uint32_t num);
+extern uint8_t q_log2_ceiling(uint32_t num);
+extern uint8_t q_log2_round(uint32_t num);
+extern uint32_t q_pow2_round(uint32_t num);
+extern uint8_t q_maxshift_signed(int32_t num);
+extern uint8_t q_maxshift_unsigned(uint32_t positiveNum);
 
 #endif

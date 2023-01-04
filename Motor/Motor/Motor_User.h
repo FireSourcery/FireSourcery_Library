@@ -231,7 +231,7 @@ static inline void Motor_User_SetUserFeedbackCmdValue(Motor_T * p_motor, int16_t
 /*!
 	@param[in] userCmd [-32768:32767]
 */
-static inline void Motor_User_SetUserFeedbackModeCmd(Motor_T * p_motor, int16_t userCmd)
+static inline void Motor_User_SetUserCmd(Motor_T * p_motor, int16_t userCmd)
 {
 	Motor_User_SetUserFeedbackMode(p_motor);
 	Motor_User_SetUserFeedbackCmdValue(p_motor, userCmd);
@@ -249,7 +249,7 @@ static inline void Motor_User_SetUserFeedbackModeCmd(Motor_T * p_motor, int16_t 
 */
 static inline void Motor_User_SetThrottleCmd(Motor_T * p_motor, uint16_t throttle)
 {
-	Motor_User_SetUserFeedbackModeCmd(p_motor, throttle / 2U);
+	Motor_User_SetUserCmd(p_motor, throttle / 2U);
 }
 
 /*!
@@ -301,7 +301,7 @@ static inline void Motor_User_SetRegenCmd(Motor_T * p_motor, uint16_t brake)
 	Motor_User_SetScalarModeCmd(p_motor, (65535U - brake)); /* Higher brake => lower voltage */
 }
 
-static inline void Motor_User_SetCoast(Motor_T * p_motor)
+static inline void Motor_User_SetCruise(Motor_T * p_motor)
 {
 	Motor_User_SetTorqueModeCmd(p_motor, 0U);
 }

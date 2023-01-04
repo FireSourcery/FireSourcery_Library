@@ -57,7 +57,9 @@ static const int32_t QFRAC16_1_OVERSAT 	= (int32_t)0x00008000; /*!< (32768) */
 static const int32_t QFRAC16_PI 		= (int32_t)0x0001921F; /* Over saturated */
 static const int32_t QFRAC16_3PI_DIV_4 	= (int32_t)0x00012D97; /* Over saturated */
 
-#define QFRAC16(x) ((qfrac16_t) (((x) < 1.0) ? (((x) >= -1.0) ? (x*32768.0) : INT16_MIN) : INT16_MAX))
+#define QFRAC16_FLOAT_MAX (0.999969482421875)
+#define QFRAC16_FLOAT_MIN (-1.0)
+#define QFRAC16(x) ((qfrac16_t)(((x) < QFRAC16_FLOAT_MAX) ? (((x) >= QFRAC16_FLOAT_MIN) ? ((x)*32768.0) : INT16_MIN) : INT16_MAX))
 
 static inline qfrac16_t qfrac16(int16_t num, int32_t max) { return (qfrac16_t)(((int32_t)num << QFRAC16_N_FRAC_BITS) / max); }
 static inline qfrac16_t qfrac16_convert(int16_t num, int32_t max) { return qfrac16(num, max); }
@@ -149,9 +151,9 @@ static inline qfrac16_t qfrac16_sqrt(int32_t x)
 /******************************************************************************/
 typedef int16_t qangle16_t; 	/*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
 
-#define SINE_90_TABLE_ENTRIES 	(256U)
-#define SINE_90_TABLE_LSB 		(6U)	/*!< Insignificant bits, shifted away*/
-extern const qfrac16_t QFRAC16_SINE_90_TABLE[SINE_90_TABLE_ENTRIES];	/*! Resolution: 1024 steps per revolution */
+#define QFRAC16_SINE_90_TABLE_LENGTH 	(256U)
+#define QFRAC16_SINE_90_TABLE_LSB 		(6U)	/*!< Insignificant bits, shifted away*/
+extern const qfrac16_t QFRAC16_SINE_90_TABLE[QFRAC16_SINE_90_TABLE_LENGTH];	/*! Resolution: 1024 steps per revolution */
 
 static const qangle16_t QANGLE16_0 = 0; 		/*! 0 */
 static const qangle16_t QANGLE16_30 = 0x1555; 	/*! 5461 */
@@ -213,12 +215,12 @@ static inline bool qangle16_cycle4(qangle16_t theta0, qangle16_t theta1)
 */
 static inline qfrac16_t sin90(qangle16_t theta)
 {
-	return QFRAC16_SINE_90_TABLE[(uint8_t)(theta >> SINE_90_TABLE_LSB)];
+	return QFRAC16_SINE_90_TABLE[(uint8_t)(theta >> QFRAC16_SINE_90_TABLE_LSB)];
 }
 
 static inline qfrac16_t cos90(qangle16_t theta)
 {
-	return QFRAC16_SINE_90_TABLE[(0xFFU - (uint8_t)(theta >> SINE_90_TABLE_LSB))];
+	return QFRAC16_SINE_90_TABLE[(0xFFU - (uint8_t)(theta >> QFRAC16_SINE_90_TABLE_LSB))];
 }
 
 /*
@@ -260,6 +262,29 @@ static inline void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16
 {
 	*p_sin = qfrac16_sin(theta);
 	*p_cos = qfrac16_cos(theta);
+	return; /* (*p_cos, *p_sin) */
+}
+
+static inline uint16_t qfrac16_vectormagnitude(qfrac16_t x, qfrac16_t y)
+{
+	return q_sqrt((int32_t)x * x + (int32_t)y * y);
+}
+
+/* circle limit */
+static inline void qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax)
+{
+	uint32_t magnitudeMaxSquared = (int32_t)magnitudeMax * magnitudeMax;
+	uint32_t vectorMagnitudeSquared = ((int32_t)(*p_x) * (*p_x)) + ((int32_t)(*p_y) * (*p_y));
+	uint16_t vectorMagnitude;
+	qfrac16_t ratio; /* where 32767 q1.15 = 1 */
+
+	if(vectorMagnitudeSquared > magnitudeMaxSquared)
+	{
+		vectorMagnitude = q_sqrt(vectorMagnitudeSquared);
+		ratio = qfrac16_div(magnitudeMax, vectorMagnitude);
+		*p_x = (qfrac16_t)qfrac16_mul(*p_x, ratio); /* no saturation needed, ratio < 1 */
+		*p_y = (qfrac16_t)qfrac16_mul(*p_y, ratio);
+	}
 	return;
 }
 

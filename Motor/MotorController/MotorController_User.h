@@ -43,16 +43,16 @@
 /******************************************************************************/
 /*
 	UserCmd - determine state machine input mode here,
-		common input substate proc across state machine input modes
+		common input SubState proc across state machine input modes
 */
 /******************************************************************************/
 /* Zero Throttle or Brake */
-static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, uint16_t userCmd) 	{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CMD, userCmd); }
+static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, int32_t userCmd) 		{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CMD, userCmd); }
 static inline void MotorController_User_SetCmdZero(MotorController_T * p_mc) 						{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_ZERO, STATE_MACHINE_INPUT_VALUE_NULL); }
 static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd) 	{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd); }
 static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd) 	{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
+// static inline void MotorController_User_SetCmdBrakeAlt(MotorController_T * p_mc, uint16_t userCmd) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE_ALT); }
 static inline uint16_t MotorController_User_GetCmdValue(MotorController_T * p_mc) { return p_mc->UserCmd; }
-// static inline void MotorController_User_SetCmdBrakeAlt(MotorController_T * p_mc, uint16_t userCmd) { p_mc->UserCmd = userCmd; 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE_ALT); }
 
 /*
 	Input mode voluntarily call checked function, avoids intermediate buffer

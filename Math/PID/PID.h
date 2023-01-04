@@ -34,6 +34,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "Math/math_general.h"
+#include "Math/Q/Q.h"
+
 typedef enum PID_Mode_Tag
 {
 	PID_MODE_PI,
@@ -44,13 +47,21 @@ PID_Mode_T;
 typedef struct __attribute__((aligned(4U))) PID_Params_Tag
 {
 	PID_Mode_T Mode;
-	uint32_t CalcFreq;
-	int32_t KpFactor;
-	int32_t KpDivisor;
-	int32_t KiFactor;
-	int32_t KiDivisor;
-	int32_t KdFactor;
-	int32_t KdDivisor;
+	uint32_t SampleFreq;
+	int32_t Kp_Fixed32;
+	int32_t Ki_Fixed32;
+	int32_t Kd_Fixed32;
+	int16_t PropGain;			/*  */
+	int8_t PropGainShift; 		/*  */
+	int16_t IntegralGain;
+	int8_t IntegralGainShift;
+
+	// int16_t KpFactor;
+	// uint16_t KpDivisor;
+	// int16_t KiFactor;
+	// uint16_t KiDivisor;
+	// int16_t KdFactor;
+	// uint16_t KdDivisor;
 }
 PID_Params_T;
 
@@ -64,46 +75,52 @@ typedef struct PID_Tag
 {
 	const PID_Config_T CONFIG;
 	PID_Params_T Params;
-	int32_t KiDivisorFreq; 	/* KpDivisor * CalcFreq */
-	int32_t KdFactorFreq; 	/* KdFactor * CalcFreq */
+	int32_t Integral32; 			/* Shifted 16 */
 	int32_t ErrorPrev;
-	int32_t OutputMin; /*  */
-	int32_t OutputMax;
-#ifdef CONFIG_PID_INTEGRAL_32BITS
-	int32_t ErrorSumOverflow; /* Sum Limit before multiplication overflow */
-	int32_t IntegralOverflow;
-	int32_t ErrorSum;
-#else
-	int64_t ErrorSum;
-#endif
+	int16_t OutputMin;
+	int16_t OutputMax;
+	int16_t Output;
+
+// int32_t KiDivisorFreq; 	/* KiDivisor * SampleFreq */
+// int32_t KdFactorFreq; 	/* KdFactor * SampleFreq */
+
+// #ifdef CONFIG_PID_INTEGRAL_32BITS
+// 	int32_t ErrorSumOverflow; /* Sum Limit before multiplication overflow */
+// 	int32_t IntegralOverflow;
+// 	int32_t ErrorSum;
+// #else
+// 	int64_t ErrorSum;
+// #endif
 }
 PID_T;
 
 #define PID_INIT(p_Params) { .CONFIG = { .P_PARAMS = p_Params, } }
 
+static inline int16_t PID_GetOutput(PID_T * p_pid) 			{ return p_pid->Output; }
+static inline int32_t PID_GetKpParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Kp_Fixed32; }
+static inline int32_t PID_GetKiParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Ki_Fixed32; }
+static inline int32_t PID_GetKdParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Kd_Fixed32; }
+
 extern void PID_Init(PID_T * p_pid);
-extern void PID_Init_Args
-(
-	PID_T * p_pid,
-	uint32_t calcFreq,
-	int32_t kpFactor, int32_t kpDivisor,
-	int32_t kiFactor, int32_t kiDivisor,
-	int32_t kdFactor, int32_t kdDivisor,
-	int32_t outMin, int32_t outMax
-);
-extern int32_t PID_Calc(PID_T *p_pid, int32_t setpoint, int32_t feedback);
+// extern void PID_Init_Args
+// (
+// 	PID_T * p_pid,
+// 	uint32_t calcFreq,
+// 	int32_t kpFactor, int32_t kpDivisor,
+// 	int32_t kiFactor, int32_t kiDivisor,
+// 	int32_t kdFactor, int32_t kdDivisor,
+// 	int32_t outMin, int32_t outMax
+// );
+extern int32_t PID_Proc(PID_T *p_pid, int32_t setpoint, int32_t feedback);
 extern void PID_Reset(PID_T * p_pid);
-extern void PID_SetIntegral(PID_T * p_pid, int32_t integral);
-extern void PID_SetOutputState(PID_T * p_pid, int32_t integral);
-extern void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max);
+extern void PID_SetIntegral(PID_T * p_pid, int16_t integral);
+extern void PID_SetOutputState(PID_T * p_pid, int16_t integral);
+extern void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max);
 extern void PID_SetFreq(PID_T * p_pid, uint32_t calcFreq);
-extern void PID_SetTunings(PID_T * p_pid, int32_t kpFactor, int32_t kpDivisor, int32_t kiFactor, int32_t kiDivisor, int32_t kdFactor, int32_t kdDivisor);
-extern void PID_SetTunings_Frac16(PID_T * p_pid, int32_t kp, int32_t ki, int32_t kd);
-extern int32_t PID_GetKp_Frac16(PID_T * p_pid);
-extern int32_t PID_GetKi_Frac16(PID_T * p_pid);
-extern int32_t PID_GetKd_Frac16(PID_T * p_pid);
-extern int32_t PID_GetKp_Int(PID_T * p_pid, uint16_t scalar);
-extern int32_t PID_GetKi_Int(PID_T * p_pid, uint16_t scalar);
-extern int32_t PID_GetKd_Int(PID_T * p_pid, uint16_t scalar);
+extern void PID_SetKp_Fixed32(PID_T * p_pid, int32_t kp);
+extern void PID_SetKi_Fixed32(PID_T * p_pid, int32_t ki);
+extern int32_t PID_GetKp_Fixed32(PID_T * p_pid);
+extern int32_t PID_GetKi_Fixed32(PID_T * p_pid);
+extern int32_t PID_GetKd_Fixed32(PID_T * p_pid);
 
 #endif /* PID_H */

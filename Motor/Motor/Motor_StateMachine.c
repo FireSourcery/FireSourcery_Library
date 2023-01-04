@@ -216,7 +216,8 @@ static StateMachine_State_T * Run_InputControl(Motor_T * p_motor, uint32_t contr
 static StateMachine_State_T * Run_InputRelease(Motor_T * p_motor, uint32_t voidVar)
 {
 	(void)voidVar;
-	return (Motor_CheckSpeed(p_motor) == true) ? &STATE_FREEWHEEL : 0U;
+	// return (Motor_CheckSpeed(p_motor) == true) ? &STATE_FREEWHEEL : 0U;
+	return &STATE_FREEWHEEL;
 }
 
 static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
@@ -362,7 +363,7 @@ static void Align_Proc(Motor_T * p_motor)
 			else
 			{
 				Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, 0U);
-				if(Motor_CheckAlignStartUp(p_motor) == true) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FAULT); }
+				if(Motor_CheckAlignStartUpFault(p_motor) == true) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FAULT); }
 			}
 			break;
 		default: break;

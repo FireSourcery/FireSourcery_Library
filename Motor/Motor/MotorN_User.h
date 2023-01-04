@@ -58,7 +58,7 @@ extern bool MotorN_User_ClearFault(Motor_T * p_motor, uint8_t motorCount);
 extern void MotorN_User_SetUserControlCmd(Motor_T * p_motor, uint8_t motorCount, int32_t cmd);
 extern void MotorN_User_SetThrottleCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle);
 extern void MotorN_User_SetBrakeCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t brake);
-extern void MotorN_User_SetCoast(Motor_T * p_motor, uint8_t motorCount);
+extern void MotorN_User_SetCruise(Motor_T * p_motor, uint8_t motorCount);
 // extern void MotorN_User_SetVoltageBrakeCmd(Motor_T * p_motor, uint8_t motorCount);
 extern void MotorN_User_SetRegenCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t brake);
 

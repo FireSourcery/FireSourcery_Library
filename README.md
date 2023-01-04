@@ -20,7 +20,8 @@ A **General Embedded C Library** and **Motor Control Library**
 
 * TODO
   - Encoder HFI align
-  - Sensorless algorithms
+  - Sensorless
+  - Input Devices: 1-D, 2-D, Joystick.
   - Misra compliance
 
 ### Directory Contents Overview

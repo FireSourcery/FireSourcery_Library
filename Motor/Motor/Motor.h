@@ -345,12 +345,24 @@ typedef struct Motor_Tag
 	/* Run SubState */
 	Motor_Direction_T Direction; 			/* Active spin direction */
 	Motor_FeedbackModeFlags_T FeedbackModeFlags;
+
+	Motor_FeedbackModeFlags_T CmdFeedbackFlags;
+	Motor_FeedbackModeFlags_T ControlFeedbackFlags;
+
 	Motor_ControlFlags_T ControlFlags; 		/* Run SubState */
 	/* Calibration SubState */
 	Motor_CalibrationState_T CalibrationState; 	/* SubState, selection for calibration */
 	uint8_t CalibrationStateIndex;
 	Motor_FaultFlags_T FaultFlags;
 	Motor_AlignState_T AlignState;
+
+	/*
+		UserCmd Input => Ramp
+	*/
+	Linear_T Ramp;		/* User Input Ramp, Ramp Target is UserCmd -  Speed, Current, or Voltage. Updated without StateMachine Check */
+						/* [-32767:32767] SetPoint after ramp => SpeedReq, IReq, VReq. [0:65535] VFreq Mode */
+	Linear_T AuxRamp; 	/* OpenLoop and Align */
+
 
 	/*
 		Active Limits
@@ -368,13 +380,8 @@ typedef struct Motor_Tag
 	int16_t VoltageModeILimitCw_FracS16;
 	// int16_t TorqueModeSpeedLimitCcw_FracS16;
 	// int16_t TorqueModeSpeedLimitCw_FracS16;
-
-	/*
-		UserCmd Input => Ramp
-	*/
-	Linear_T Ramp;		/* User Input Ramp - Speed, Current, or Voltage. Updated without StateMachine Check */
-						/* [-32767:32767] SetPoint after ramp => SpeedReq, IReq, VReq. [0:65535] VFreq Mode */
-	Linear_T AuxRamp; 	/* OpenLoop and Align */
+	// int16_t ILimitCcw_FracS16; /* [-32767:32767] directional input into IqPid, Same as SpeedPid output limit during SPEED_CURRENT_MODE */
+	// int16_t ILimitCw_FracS16;
 
 	/*
 		Speed Feedback
@@ -389,11 +396,12 @@ typedef struct Motor_Tag
 	Linear_T UnitsSurfaceSpeed; 		/*  */
 	qangle16_t SpeedAngle; 			/* Save for reference, MechanicalDelta */
 
-	// PID_T PidPosition;
-	// int16_t PositionControl;
+	/* todo */
+	PID_T PidPosition;
+	int16_t PositionControl;
 
 	qangle16_t MechanicalAngle;
-	qangle16_t ElectricalAngle;		/* OpenLoop, Shared E-Cycle edge detect, User output */
+	qangle16_t ElectricalAngle;		/* Angle Feedback. Shared E-Cycle edge detect, User output */
 	uint16_t VBemfPeak_Adcu;
 	uint16_t VBemfPeakTemp_Adcu;
 	uint16_t IPhasePeak_Adcu;
@@ -566,7 +574,22 @@ static inline void Motor_EnablePwm(Motor_T * p_motor) 			{ Phase_EnableInterrupt
 */
 static inline void Motor_ProcSpeedFeedback(Motor_T * p_motor, int32_t speedFeedback_FracS16)
 {
-	if(p_motor->FeedbackModeFlags.Speed == 1U) { p_motor->SpeedControl_FracS16 = PID_Calc(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp), speedFeedback_FracS16); };
+	if(p_motor->FeedbackModeFlags.Speed == 1U) { p_motor->SpeedControl_FracS16 = PID_Proc(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp), speedFeedback_FracS16); }
+	else
+	{
+		// if((speedFeedback_FracS16 > p_motor->SpeedCcwLimit) || (speedFeedback_FracS16 < p_motor->SpeedCwLimit))
+		// {
+		// 	if(p_motor->ControlFeedbackFlags.Speed == 0U)
+		// 	{
+		// 		p_motor->ControlFeedbackFlags.Speed = 1U;
+		// 		PID_SetOutputState(&p_motor->PidSpeed, speedFeedback_FracS16);
+		// 	}
+		// }
+		// else
+		// {
+
+		// }
+	}
 }
 
 static inline void Motor_SetSpeedOutput(Motor_T * p_motor, int32_t speedControlMatch_FracS16)
@@ -575,13 +598,13 @@ static inline void Motor_SetSpeedOutput(Motor_T * p_motor, int32_t speedControlM
 	PID_SetIntegral(&p_motor->PidSpeed, speedControlMatch_FracS16);
 }
 
-static inline bool Motor_CheckSpeed(Motor_T * p_motor)
-{
-	return (p_motor->Speed_Frac16 < 65536);	/* Disable release from fw. Only check forward direction */
-}
+// static inline bool Motor_CheckSpeed(Motor_T * p_motor)
+// {
+// 	return (p_motor->Speed_Frac16 < 65536);
+// }
 
 /* VScalar Ramp direction? */
-static inline bool Motor_CheckAlignStartUp(Motor_T * p_motor)
+static inline bool Motor_CheckAlignStartUpFault(Motor_T * p_motor)
 {
 	switch(p_motor->Parameters.SensorMode)
 	{
@@ -619,6 +642,15 @@ static inline uint16_t Motor_GetVSpeedFrac16_Speed(Motor_T * p_motor)
 	OpenLoop Common
 */
 /******************************************************************************/
+static inline bool Motor_CheckOpenLoop(Motor_T * p_motor)
+{
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+	return (p_motor->FeedbackModeFlags.OpenLoop == 1U);
+#else
+	(void)p_motor; return false;
+#endif
+}
+
 static inline bool Motor_CheckPositionFeedback(Motor_T * p_motor)
 {
 #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
@@ -628,7 +660,7 @@ static inline bool Motor_CheckPositionFeedback(Motor_T * p_motor)
 #endif
 }
 
-// static inline bool Motor_CheckOpenLoop(Motor_T * p_motor) { return !Motor_CheckPositionFeedback(p_motor); }
+
 
 static inline bool Motor_SetPositionFeedback(Motor_T * p_motor, bool isTrue)
 {
@@ -698,12 +730,12 @@ static inline bool Motor_CheckControlMode(Motor_T * p_motor, Motor_FeedbackMode_
 	return (Motor_CheckFeedbackModeFlags(p_motor, mode) == false);
 }
 
-static inline void Motor_SetControlFlags(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+static inline void Motor_SetControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-	// p_motor->FeedbackModeFlags.State = Motor_ConvertFeedbackModeFlags(mode).State;
-	// p_motor->FeedbackModeFlags.OpenLoop |= Motor_ConvertFeedbackModeFlags(mode).OpenLoop;
-	Motor_SetFeedbackModeFlags(p_motor, mode);
-	if(p_motor->FeedbackModeFlags.OpenLoop == 1U) { p_motor->ControlFlags.SensorFeedback = 0U; } /* Clear only */
+	Motor_FeedbackModeFlags_T flags;
+	flags.State = Motor_ConvertFeedbackModeFlags(mode).State;
+	if(p_motor->ControlFlags.SensorFeedback = 0U) { flags.OpenLoop = 1U; }
+	p_motor->FeedbackModeFlags.State = flags.State;
 }
 
 /******************************************************************************/

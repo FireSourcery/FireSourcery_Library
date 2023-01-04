@@ -82,6 +82,7 @@ static inline int32_t _Linear_Sat(int32_t min, int32_t max, int32_t value)
 	else if	(value < min) 	{ saturated = min; }
 	else 					{ saturated = value; }
 	return saturated;
+	// return math_clamp(value, min, max);
 }
 
 static inline int16_t _Linear_SatSigned16(int32_t frac16) { return (int16_t)_Linear_Sat(INT16_MIN, INT16_MAX, frac16); }

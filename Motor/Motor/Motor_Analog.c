@@ -50,27 +50,19 @@ void Motor_Analog_CaptureVa(Motor_T * p_motor)
 {
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVa, 0U/* Motor_SixStep_CaptureBemfA */);
 	CaptureVPeak(p_motor, p_motor->AnalogResults.Va_Adcu);
-#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
-	// p_motor->DebugTimeABC[0] = SysTime_GetMicros() - p_motor->MicrosRef;
-#endif
 }
 
 void Motor_Analog_CaptureVb(Motor_T * p_motor)
 {
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVb, 0U/* Motor_SixStep_CaptureBemfB */);
 	// CaptureVPeak(p_motor, p_motor->AnalogResults.Vb_Adcu);
-#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
-	// p_motor->DebugTimeABC[1] = SysTime_GetMicros() - p_motor->MicrosRef;
-#endif
 }
 
 void Motor_Analog_CaptureVc(Motor_T * p_motor)
 {
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVc, 0U/* Motor_SixStep_CaptureBemfC */);
 	// CaptureVPeak(p_motor, p_motor->AnalogResults.Vc_Adcu);
-	// p_motor->Motor_Debug_CapturePeriod[2] = SysTime_GetMicros() - p_motor->MicrosRef;
 	// Motor_Debug_CapturePeriod(p_motor, 8U);
-
 }
 
 /******************************************************************************/
@@ -111,26 +103,6 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
 	@brief
 */
 /******************************************************************************/
-
-//void Motor_CapturePwmOnFlag(Motor_T * p_motor)
-//{
-//	p_motor->IsPwmOn = true;
-//}
-
-/*
- * Sets options only
- */
- //const Analog_Options_T MOTOR_ANALOG_OPTIONS_PWM_ON =
- //{
- //	.OPTIONS = {.IsValid = 1U, .HwTriggerConversion = 1U, },
- //	.ON_OPTIONS = SetPwmOnFlag,
- //};
- //
- //const Analog_Options_T MOTOR_ANALOG_OPTIONS_RESTORE =
- //{
- //	.OPTIONS = {.IsValid = 1U, .HwTriggerConversion = 0U, },
- //};
-
 // static inline void EnqueueVabc(Motor_T * p_motor)
 // {
 // 	//no current sense during pwm float, check bemf

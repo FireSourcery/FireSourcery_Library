@@ -56,13 +56,12 @@ const StateMachine_Machine_T MCSM_MACHINE =
 };
 
 static StateMachine_State_T * TransitionFault(MotorController_T * p_mc, uint32_t voidVar) { (void)p_mc; (void)voidVar; return &STATE_FAULT; }
-// static StateMachine_State_T * TransitionStop(MotorController_T * p_mc) { (void)p_mc; return &STATE_STOP; }
 
 /******************************************************************************/
 /*!
 	@brief Init State
 
-	Initially Fault flags are set by adc, but Init State does not transistion to fault
+	Init State does not transistion to fault, wait for ADC
 */
 /******************************************************************************/
 static void Init_Entry(MotorController_T * p_mc) { (void)p_mc; }
@@ -191,9 +190,6 @@ static StateMachine_State_T * Stop_InputServo(MotorController_T * p_mc, uint32_t
 /* This function is blocking */
 static StateMachine_State_T * Stop_InputSaveParams_Blocking(MotorController_T * p_mc, uint32_t substateId)
 {
-	/* Disable PWM interrupt to disable Motor_StateMachine */
-	// Motor_DisablePwm(&p_mc->CONFIG.p_mcS[0U]);
-
 	/* Flash Write will enter critical */
 	p_mc->NvmStatus = NV_MEMORY_STATUS_PROCESSING;
 	switch(substateId)
@@ -208,7 +204,6 @@ static StateMachine_State_T * Stop_InputSaveParams_Blocking(MotorController_T * 
 		// 	else if (p_mc->Parameters.UserInputMode == MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL) {p_mc->Parameters.UserInputMode = MOTOR_CONTROLLER_INPUT_MODE_ANALOG; }
 		default: break;
 	}
-	// Motor_EnablePwm(&p_mc->CONFIG.p_mcS[0U]);
 
 	return 0U;
 }
@@ -234,6 +229,12 @@ static const StateMachine_State_T STATE_STOP =
 	.ENTRY 					= (StateMachine_Output_T)Stop_Entry,
 	.OUTPUT 				= (StateMachine_Output_T)Stop_Proc,
 };
+
+/******************************************************************************/
+/*!
+	@brief  Stopping State?
+*/
+/******************************************************************************/
 
 /******************************************************************************/
 /*!
@@ -264,8 +265,14 @@ static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc, uint3
 	return p_nextState;
 }
 
-/*
+static StateMachine_State_T * Run_InputUserCmd(MotorController_T * p_mc, uint32_t userCmd_Signed)
+{
+	// MotorController_SetUserCmd(p_mc, userCmd_Signed);
+	return 0U;
+}
 
+/*
+	Check Stop / Zero Throttle
 */
 static StateMachine_State_T * Run_InputProcZero(MotorController_T * p_mc, uint32_t voidVar)
 {
@@ -273,24 +280,21 @@ static StateMachine_State_T * Run_InputProcZero(MotorController_T * p_mc, uint32
 	switch(p_mc->Parameters.ZeroCmdMode)
 	{
 		case MOTOR_CONTROLLER_ZERO_CMD_MODE_FLOAT: break;
-		case MOTOR_CONTROLLER_ZERO_CMD_MODE_COAST: break;
-		// case MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN: MotorController_ProcRegenMotorAll(p_mc); break;
+		case MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN: /* MotorController_ProcRegenMotorAll(p_mc); */ break;
+		case MOTOR_CONTROLLER_ZERO_CMD_MODE_CRUISE: break;
 		default: break;
 	}
 	return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
 }
 
-/*
-
-*/
 static StateMachine_State_T * Run_InputSetZero(MotorController_T * p_mc, uint32_t voidVar)
 {
 	(void)voidVar;
 	switch(p_mc->Parameters.ZeroCmdMode)
 	{
 		case MOTOR_CONTROLLER_ZERO_CMD_MODE_FLOAT: MotorController_ReleaseMotorAll(p_mc); break;
-		case MOTOR_CONTROLLER_ZERO_CMD_MODE_COAST: MotorController_SetCoastMotorAll(p_mc); break; /* Maintain 0 current [amps] */
-		case MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN: break;
+		case MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN: /* MotorController_SetRegenMotorAll(p_mc); */ break;
+		case MOTOR_CONTROLLER_ZERO_CMD_MODE_CRUISE: MotorController_SetCruiseMotorAll(p_mc); break; /* Maintain 0 current [amps] */
 		default: break;
 	}
 	return 0U;
@@ -532,7 +536,6 @@ static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc, uint32_
 #endif
 
 	p_mc->FaultFlags.User 					= 0U;
-	// if(p_mc->FaultFlags.Motors == 0U) {p_mc->FaultFlags.MotorOverHeat = 0U;}
 	return 0U;
 }
 

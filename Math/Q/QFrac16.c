@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "QFrac16.h"
 
-const qfrac16_t QFRAC16_SINE_90_TABLE[SINE_90_TABLE_ENTRIES] =
+const qfrac16_t QFRAC16_SINE_90_TABLE[QFRAC16_SINE_90_TABLE_LENGTH] =
 {
 	0, 201, 402, 603, 804, 1005, 1206, 1406,
 	1607, 1808, 2009, 2209, 2410, 2610, 2811, 3011,
