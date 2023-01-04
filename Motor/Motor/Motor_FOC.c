@@ -46,14 +46,12 @@ static inline qangle16_t Motor_FOC_PollSensorAngle(Motor_T * p_motor)
 			if(Hall_PollCaptureRotorAngle(&p_motor->Hall) == true) { Encoder_CapturePulse(&p_motor->Encoder); }
 #endif
 			electricalAngle = Hall_GetRotorAngle_Degrees16(&p_motor->Hall);
-			// electricalAngle += Encoder_ModeDT_InterpolateAngle(&p_motor->Encoder);
 			electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->Encoder);
 			break;
 
 		case MOTOR_SENSOR_MODE_ENCODER:
 			electricalAngle = Motor_GetEncoderElectricalAngle(p_motor);
-			// electricalAngle += Encoder_ModeDT_InterpolateAngle(&p_motor->Encoder); //direction todo
-			electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->Encoder);
+			// electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->Encoder);
 			break;
 
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)

@@ -297,7 +297,6 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 		case VMONITOR_LIMIT_UPPER: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_User_SetFault(p_mc); break;
 		case VMONITOR_LIMIT_LOWER: p_mc->FaultFlags.VSourceLimit = 1U;	MotorController_User_SetFault(p_mc); break;
 		case VMONITOR_WARNING_UPPER:
-
 			break;
 		case VMONITOR_WARNING_LOWER:
 			if(p_mc->WarningFlags.LowV == false)

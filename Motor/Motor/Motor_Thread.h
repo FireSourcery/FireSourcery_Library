@@ -44,19 +44,19 @@
 */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-	Motor_CaptureRefTime(p_motor);
+	// Motor_CaptureRefTime(p_motor);
 	p_motor->ControlTimerBase++;
 	StateMachine_Semi_ProcOutput(&p_motor->StateMachine);
 	//  alternatively _Motor_Analog_Thread(p_motor); use analog select mode to implement preferred order
-	Motor_Debug_CaptureTime(p_motor, 5U);
+	// Motor_Debug_CaptureTime(p_motor, 5U);
 }
 
 static inline void Motor_Heat_Thread(Motor_T * p_motor)
 {
-	AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT);
-
 	if(Thermistor_GetIsMonitorEnable(&p_motor->Thermistor) == true)
 	{
+		AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT);
+
 		switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
 		{
 			case THERMISTOR_STATUS_OK: 			Motor_User_ClearILimitActive(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT); 	break;

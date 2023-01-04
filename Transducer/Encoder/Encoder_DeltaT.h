@@ -107,6 +107,19 @@ static inline void Encoder_DeltaT_CaptureExtended(Encoder_T * p_encoder)
 		// p_encoder->ExtendedTimerPrev = *(p_encoder->CONFIG.P_EXTENDED_TIMER); //wait for overflow twice, 1 less check, first capture invalid
 	}
 	p_encoder->ExtendedTimerPrev = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
+
+	// if(HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == false)
+	// {
+	// 	// p_encoder->DeltaT = (HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) + p_encoder->DeltaT) / 2U;
+	// 	p_encoder->DeltaT = HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
+	// }
+	// else
+	// {
+	// 	HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
+	// 	p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->ExtendedTimerConversion;
+	// }
+	// HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
+	// p_encoder->ExtendedTimerPrev = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
 }
 
 /*

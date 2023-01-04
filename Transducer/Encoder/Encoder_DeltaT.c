@@ -91,6 +91,7 @@ void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 {
 	// p_encoder->DeltaT = (0xFFFFFFFFUL - p_encoder->CONFIG.TIMER_FREQ) / p_encoder->CONFIG.SAMPLE_FREQ;
 	p_encoder->DeltaT = p_encoder->CONFIG.TIMER_FREQ;
+	// p_encoder->DeltaT = 0xFFFF;
 	p_encoder->InterpolateAngleIndex = 0U;
 	_Encoder_ZeroPulseCount(p_encoder);
 	p_encoder->ExtendedTimerPrev = *p_encoder->CONFIG.P_EXTENDED_TIMER;

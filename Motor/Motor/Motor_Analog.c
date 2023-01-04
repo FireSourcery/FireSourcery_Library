@@ -81,7 +81,7 @@ void Motor_Analog_CaptureIa(Motor_T * p_motor)
 {
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIa, 0U/* Motor_SixStep_CaptureIa */);
 	CaptureIZeroToPeak(p_motor, p_motor->Parameters.IaZeroRef_Adcu, p_motor->AnalogResults.Ia_Adcu);
-	Debug_LedOff();
+	// Debug_LedOff();
 }
 
 void Motor_Analog_CaptureIb(Motor_T * p_motor)
@@ -94,7 +94,8 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
 {
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIc, 0U/* Motor_SixStep_CaptureIc */);
 	// CaptureIZeroToPeak(p_motor, p_motor->Parameters.IcZeroRef_Adcu, p_motor->AnalogResults.Ic_Adcu);
-	Debug_LedOn();
+	// Debug_LedOn();
+	Debug_LED();
 }
 
 
