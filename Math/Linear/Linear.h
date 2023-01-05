@@ -32,8 +32,9 @@
 #ifndef LINEAR_H
 #define LINEAR_H
 
-#include "Config.h"
 #include "math_linear.h"
+#include "Config.h"
+#include "Math/math_general.h"
 #include <stdint.h>
 
 typedef struct Linear_Tag
@@ -77,12 +78,7 @@ Linear_T;
 /******************************************************************************/
 static inline int32_t _Linear_Sat(int32_t min, int32_t max, int32_t value)
 {
-	int32_t saturated;
-	if		(value > max) 	{ saturated = max; }
-	else if	(value < min) 	{ saturated = min; }
-	else 					{ saturated = value; }
-	return saturated;
-	// return math_clamp(value, min, max);
+	return math_clamp(value, min, max);
 }
 
 static inline int16_t _Linear_SatSigned16(int32_t frac16) { return (int16_t)_Linear_Sat(INT16_MIN, INT16_MAX, frac16); }

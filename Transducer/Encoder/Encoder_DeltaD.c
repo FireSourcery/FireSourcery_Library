@@ -38,10 +38,8 @@ void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 {
 	if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
 	_Encoder_DeltaD_Init(p_encoder);
-
 	p_encoder->UnitT_Freq = p_encoder->CONFIG.SAMPLE_FREQ;
 	_Encoder_ResetUnits(p_encoder);
-	// if(p_encoder->Params.CountsPerRevolution > (UINT32_MAX / p_encoder->UnitAngularSpeed)) { p_encoder->UnitAngularSpeed = 0U; }
 	p_encoder->DeltaT = 1U;
 	Encoder_DeltaD_SetInitial(p_encoder);
 }

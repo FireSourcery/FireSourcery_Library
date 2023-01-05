@@ -47,9 +47,11 @@ typedef struct __attribute__((aligned(4U))) PID_Params_Tag
 {
 	PID_Mode_T Mode;
 	uint32_t SampleFreq;
-	int32_t Kp_Fixed32;
-	int32_t Ki_Fixed32;
-	int32_t Kd_Fixed32;
+
+	uint32_t Kp_Fixed32;
+	uint32_t Ki_Fixed32;
+	uint32_t Kd_Fixed32;
+
 	int16_t PropGain;
 	int8_t PropGainShift;
 	int16_t IntegralGain;
@@ -88,9 +90,9 @@ extern void PID_SetIntegral(PID_T * p_pid, int16_t integral);
 extern void PID_SetOutputState(PID_T * p_pid, int16_t integral);
 extern void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max);
 extern void PID_SetFreq(PID_T * p_pid, uint32_t sampleFreq);
-extern void PID_SetKp_Fixed32(PID_T * p_pid, int32_t kp_Fixed32);
-extern void PID_SetKi_Fixed32(PID_T * p_pid, int32_t ki_Fixed32);
-extern void PID_SetKd_Fixed32(PID_T * p_pid, int32_t kd_Fixed32);
+extern void PID_SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32);
+extern void PID_SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32);
+extern void PID_SetKd_Fixed32(PID_T * p_pid, uint32_t kd_Fixed32);
 extern int32_t PID_GetKp_Fixed32(PID_T * p_pid);
 extern int32_t PID_GetKi_Fixed32(PID_T * p_pid);
 extern int32_t PID_GetKd_Fixed32(PID_T * p_pid);

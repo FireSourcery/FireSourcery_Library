@@ -144,7 +144,7 @@ bool Motor_CheckSensorFeedback(Motor_T * p_motor)
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_HALL: 		isAvailable = true;		break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	isAvailable = false;	break; /* todo getabs position */
+		case MOTOR_SENSOR_MODE_ENCODER: 	isAvailable = Encoder_GetIsAligned(&p_motor->Encoder);	break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_SENSOR_MODE_SIN_COS: 	isAvailable = true;		break;
 #endif
@@ -156,18 +156,52 @@ bool Motor_CheckSensorFeedback(Motor_T * p_motor)
 	return isAvailable;
 }
 
-void Motor_ZeroSensor(Motor_T * p_motor)
+void Motor_SetSensorAlign(Motor_T * p_motor)
 {
 	p_motor->ElectricalAngle = 0U;
 	switch(p_motor->Parameters.SensorMode)
 	{
+		case MOTOR_SENSOR_MODE_ENCODER:		Encoder_CalibrateAlign(&p_motor->Encoder);	break;
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+		case MOTOR_SENSOR_MODE_SENSORLESS:	break;
+#endif
+		default: break;
+	}
+}
+
+void Motor_SetSensorAlignValidate(Motor_T * p_motor)
+{
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_ENCODER:		Encoder_CalibrateAlignValidate(&p_motor->Encoder);	break;
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+		case MOTOR_SENSOR_MODE_SENSORLESS:	break;
+#endif
+		default: break;
+	}
+}
+
+/* VScalar Ramp direction?, check current and speed */
+bool Motor_CheckAlignStartUpFault(Motor_T * p_motor)
+{
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_ENCODER:	if((p_motor->Speed_Frac16 ^ Linear_Ramp_GetTarget(&p_motor->Ramp)) < 0) { p_motor->FaultFlags.AlignStartUp = 1U; } break;
+		default: break;
+	}
+
+	return p_motor->FaultFlags.AlignStartUp;
+}
+
+void Motor_ZeroSensor(Motor_T * p_motor)
+{
+	switch(p_motor->Parameters.SensorMode)
+	{
 		case MOTOR_SENSOR_MODE_HALL:
-			Motor_SetPositionFeedback(p_motor, 1U);
-			Encoder_ModeDT_SetInitial(&p_motor->Encoder);
 			Hall_SetInitial(&p_motor->Hall);
+			Encoder_ModeDT_SetInitial(&p_motor->Encoder);
 			break;
 		case MOTOR_SENSOR_MODE_ENCODER:
-			Motor_SetPositionFeedback(p_motor, 1U);
 			Encoder_ModeDT_SetInitial(&p_motor->Encoder);
 			break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
@@ -247,7 +281,7 @@ static void ResetVoltageModeILimitsCw(Motor_T * p_motor)
 */
 void Motor_ResetPidILimits(Motor_T * p_motor)
 {
-	if((p_motor->FeedbackModeFlags.Speed == 1U) && (p_motor->FeedbackModeFlags.Current == 1U))
+	if((p_motor->FeedbackMode.Speed == 1U) && (p_motor->FeedbackMode.Current == 1U))
 	{
 		/* Only when Speed PID Output is I */
 		if(p_motor->Direction == MOTOR_DIRECTION_CCW) 	{ ResetSpeedPidILimitsCcw(p_motor); }
@@ -265,10 +299,10 @@ void Motor_ResetPidILimits(Motor_T * p_motor)
 */
 void Motor_SetLimitsCcw(Motor_T * p_motor)
 {
-	if(p_motor->FeedbackModeFlags.Speed == 1U)
+	if(p_motor->FeedbackMode.Speed == 1U)
 	{
 		p_motor->SpeedLimit_Frac16 = p_motor->SpeedLimitCcw_Frac16;
-		if(p_motor->FeedbackModeFlags.Current == 1U) 	{ ResetSpeedPidILimitsCcw(p_motor); }						/* Speed PID Output is I */
+		if(p_motor->FeedbackMode.Current == 1U) 	{ ResetSpeedPidILimitsCcw(p_motor); }						/* Speed PID Output is I */
 		else 											{ PID_SetOutputLimits(&p_motor->PidSpeed, 0, INT16_MAX); } 	/* Speed PID Output is V */
 	}
 	ResetVoltageModeILimitsCcw(p_motor); /* SPEED_VOLTAGE, CONSTANT_VOLTAGE, Superfluous for Speed Current mode only */
@@ -276,10 +310,10 @@ void Motor_SetLimitsCcw(Motor_T * p_motor)
 
 void Motor_SetLimitsCw(Motor_T * p_motor)
 {
-	if(p_motor->FeedbackModeFlags.Speed == 1U)
+	if(p_motor->FeedbackMode.Speed == 1U)
 	{
 		p_motor->SpeedLimit_Frac16 = p_motor->SpeedLimitCw_Frac16;
-		if(p_motor->FeedbackModeFlags.Current == 1U) 	{ ResetSpeedPidILimitsCw(p_motor); }						/* Speed PID Output is I */
+		if(p_motor->FeedbackMode.Current == 1U) 	{ ResetSpeedPidILimitsCw(p_motor); }						/* Speed PID Output is I */
 		else 											{ PID_SetOutputLimits(&p_motor->PidSpeed, INT16_MIN, 0); } 	/* Speed PID Output is V */
 	}
 	ResetVoltageModeILimitsCw(p_motor);
@@ -417,14 +451,22 @@ void Motor_ResetUnitsAngleSpeed_Mech(Motor_T * p_motor)
 
 /*
 	Reset Sensors, propagate Motor Params to sensor module independent params,
-	Sync to main motor module setting
+	Sync to motor module params
+*/
+
+/*!
+	Hall sensors as speed encoder.
+
+	MECH_R = ELECTRIC_R / N_POLE_PAIRS
+	ELECTRIC_R = 6 COMMUTATION_STEPS
+	Capture Pulse Per Commutation, 	CPR = PolePairs*6 	=> GetSpeed reflects mechanical speed
+ 	Capture Pulse Per Commutation, 	CPR = PolePairs  	=> GetSpeed reflects electrical speed
 */
 void Motor_ResetUnitsHallEncoder(Motor_T * p_motor)
 {
-	if((p_motor->Parameters.PolePairs * 6U != p_motor->Encoder.Params.CountsPerRevolution) || (p_motor->Parameters.PolePairs != p_motor->Encoder.Params.InterpolateAngleScalar))
+	if(p_motor->Parameters.PolePairs * 6U != p_motor->Encoder.Params.CountsPerRevolution)
 	{
-		Encoder_ModeDT_SetCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs * 6U);
-		Encoder_DeltaT_SetInterpolateAngleScalar(&p_motor->Encoder, p_motor->Parameters.PolePairs);
+		Encoder_SetCountsPerRevolution(&p_motor->Encoder, p_motor->Parameters.PolePairs * 6U);
 	}
 	p_motor->Encoder.Params.IsQuadratureCaptureEnabled = false;
 }
@@ -435,9 +477,9 @@ void Motor_ResetUnitsEncoder(Motor_T * p_motor)
 {
 	if(p_motor->Parameters.SpeedFeedbackRef_Rpm != p_motor->Encoder.Params.ScalarSpeedRef_Rpm)
 	{
-		Encoder_ModeDT_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
+		Encoder_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 	}
-	if(p_motor->Parameters.PolePairs != p_motor->Encoder.Params.InterpolateAngleScalar)
+	if(p_motor->Parameters.PolePairs != p_motor->Encoder.Params.InterpolateAngleScalar) /* Set for electrical cycle */
 	{
 		Encoder_DeltaT_SetInterpolateAngleScalar(&p_motor->Encoder, p_motor->Parameters.PolePairs);
 	}

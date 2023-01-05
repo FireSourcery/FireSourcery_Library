@@ -67,8 +67,8 @@ static inline qangle16_t Motor_FOC_PollSensorAngle(Motor_T * p_motor)
 		case MOTOR_SENSOR_MODE_SENSORLESS:
 			//todo observer
 			electricalAngle = 0;
-			p_motor->FeedbackModeFlags.OpenLoop = 1U;
-			p_motor->FeedbackModeFlags.OpenLoop = 1U;
+			p_motor->FeedbackMode.OpenLoop = 1U;
+			p_motor->FeedbackMode.OpenLoop = 1U;
 			p_motor->ControlFlags.SensorFeedback = 0U;
 			p_motor->ControlFlags.SensorFeedback = 0U;
 			break;
@@ -135,8 +135,30 @@ void Motor_FOC_ProcSpeedFeedback(Motor_T * p_motor)
 
 /******************************************************************************/
 /*!
+	Feedback
 */
 /******************************************************************************/
+/*!
+	Match Feedback State to Output
+	PID update when changing Control/FeedbackMode
+	V output is prev VReq, match to start at 0 change in torque
+	Iq PID output differs between voltage Iq limit mode and Iq control mode. still need to match
+*/
+/* FeedbackMode.Scalar => Start from scalar of 1, output speed */
+/* FeedbackMode.Speed == 1, SPEED_CURRENT, or SPEED_VOLTAGE */
+/* FeedbackMode.Scalar == 0, CONSTANT_CURRENT, or CONSTANT_VOLTAGE, Open Loop */
+void Motor_FOC_MatchFeedbackLoop(Motor_T * p_motor)
+{
+	int32_t userOutput = (p_motor->FeedbackMode.Current == 1U) ? FOC_GetIq(&p_motor->Foc) : FOC_GetVq(&p_motor->Foc);; /* q_sqrt(vd vq) */
+
+	if		(p_motor->FeedbackMode.Scalar == 1U) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, 65535); }
+	else if	(p_motor->FeedbackMode.Speed == 1U) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->Speed_Frac16 / 2); PID_SetOutputState(&p_motor->PidSpeed, userOutput); }
+	else 											{ Linear_Ramp_SetOutputState(&p_motor->Ramp, userOutput); }
+
+	PID_SetIntegral(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
+	PID_SetIntegral(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
+}
+
 /******************************************************************************/
 /*!
 	Voltage Current Feedback - Angle Control State
@@ -184,16 +206,16 @@ static inline void _Motor_FOC_ProcVoltageMode(Motor_T * p_motor, qfrac16_t vqReq
 
 static inline void _Motor_FOC_ProcCurrentFeedback(Motor_T * p_motor)
 {
-	int32_t userOutput = (p_motor->FeedbackModeFlags.Speed == 1U) ? p_motor->SpeedControl_FracS16 : Linear_Ramp_GetOutput(&p_motor->Ramp);
+	int32_t userOutput = (p_motor->FeedbackMode.Speed == 1U) ? PID_GetOutput(&p_motor->PidSpeed) : Linear_Ramp_GetOutput(&p_motor->Ramp);
 
-	if(p_motor->FeedbackModeFlags.Current == 1U) /* Current Control mode - proc using last adc measure */
+	if(p_motor->FeedbackMode.Current == 1U) /* Current Control mode - proc using last adc measure */
 	{
-		FOC_SetVq(&p_motor->Foc, PID_Proc(&p_motor->PidIq, userOutput, 	FOC_GetIq(&p_motor->Foc)));
-		FOC_SetVd(&p_motor->Foc, PID_Proc(&p_motor->PidId, 0U, 			FOC_GetId(&p_motor->Foc)));
+		FOC_SetVq(&p_motor->Foc, PID_Proc(&p_motor->PidIq, userOutput, 					FOC_GetIq(&p_motor->Foc)));
+		FOC_SetVd(&p_motor->Foc, PID_Proc(&p_motor->PidId, FOC_GetIdReq(&p_motor->Foc), FOC_GetId(&p_motor->Foc))); /* todo regularize */
 	}
 	else /* Voltage Control mode - use current feedback for over current only */
 	{
-		// if(p_motor->FeedbackModeFlags.Scalar == 1U)
+		// if(p_motor->FeedbackMode.Scalar == 1U)
 		// {
 		// 	userOutput = Linear_Ramp_GetOutput(&p_motor->Ramp) * (Motor_GetVSpeedFrac16_Speed(p_motor) / 2) / 65536;
 		// 	if		(userOutput > 32767) 	{ userOutput = 32767; }
@@ -235,7 +257,6 @@ void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 	if(Motor_CheckOpenLoop(p_motor) == false)
 	{
 		Motor_FOC_ProcSensorAngle(p_motor);
-		// Motor_FOC_ProcPositionFeedback(p_motor);
 		Motor_FOC_ProcSpeedFeedback(p_motor);
 		FOC_SetVector(&p_motor->Foc, p_motor->ElectricalAngle);
 	}
@@ -292,7 +313,7 @@ void Motor_FOC_ActivateOutput(Motor_T * p_motor)
 }
 
 /*
-	Active Feed Forward Angle without ClarkPark on Current
+	Feed Forward Angle without ClarkPark on Current
 */
 void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd)
 {
@@ -308,9 +329,9 @@ void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, 
 */
 void Motor_FOC_SetControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-	if(Motor_CheckControlMode(p_motor, mode) == true)
+	if(p_motor->FeedbackMode.State != mode.State)
 	{
-		Motor_SetFeedbackModeFlags(p_motor, mode);
+		p_motor->FeedbackMode = mode;
 		Motor_FOC_MatchFeedbackLoop(p_motor);
 	}
 }

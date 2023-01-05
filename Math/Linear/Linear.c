@@ -29,25 +29,12 @@
 */
 /******************************************************************************/
 #include "Linear.h"
+#include "Math/Q/Q.h"
 
-/* Iterative log2 */
-uint8_t _Linear_Log2(uint32_t num)
-{
-	uint8_t shift = 0U;
-	while((num >> shift) > 1U) { shift++; }
-	return shift;
-}
-
-uint8_t _Linear_GetMaxShift_Signed(int32_t num)
-{
-	uint32_t positiveMax = (num >= 0) ? INT32_MAX / num : INT32_MIN / num;
-	return  _Linear_Log2(positiveMax);
-}
-
-/* 1 << Shift <= INT32_MAX / ((x_max - x0) * Slope) */
+/* Shift <= log2(INT32_MAX / ((x_max - x0) * Slope)) */
 uint8_t _Linear_GetMaxSlopeShift_Signed(int32_t factor, int32_t divisor, int32_t maxInputDelta)
 {
-	return  _Linear_GetMaxShift_Signed(maxInputDelta * factor / divisor); /* divide first rounds up log output */
+	return q_maxshift_signed(maxInputDelta * factor / divisor); /* divide first rounds up log2 */
 }
 
 /******************************************************************************/
@@ -75,9 +62,9 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 	p_linear->YOffset 			= y0;
 	p_linear->DeltaX 			= p_linear->XReference - p_linear->XOffset;
 	p_linear->DeltaY 			= yRef - y0;
-	p_linear->SlopeShift 		= _Linear_GetMaxSlopeShift_Signed(factor, divisor, (p_linear->DeltaX * 2));
+	p_linear->SlopeShift 		= _Linear_GetMaxSlopeShift_Signed(factor, divisor, (p_linear->DeltaX * 2 - 1));
 	p_linear->Slope 			= (factor << p_linear->SlopeShift) / divisor;
-	p_linear->InvSlopeShift 	= _Linear_GetMaxSlopeShift_Signed(divisor, factor, (p_linear->DeltaY * 2));
+	p_linear->InvSlopeShift 	= _Linear_GetMaxSlopeShift_Signed(divisor, factor, (p_linear->DeltaY * 2 - 1));
 	p_linear->InvSlope 			= (divisor << p_linear->InvSlopeShift) / factor;
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
 	p_linear->SlopeFactor = factor;

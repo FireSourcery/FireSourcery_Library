@@ -33,6 +33,20 @@
 
 #include "Encoder.h"
 
+/*!
+	@brief 	Capture Increasing DeltaD between 2 samples.
+*/
+#if defined(CONFIG_ENCODER_HW_DECODER)
+static inline uint32_t _Encoder_CaptureDeltaD(Encoder_T * p_encoder, uint32_t timerCounterMax, uint32_t timerCounterValue)
+{
+	uint32_t delta = (timerCounterValue < p_encoder->CounterD) ?
+		(timerCounterMax - p_encoder->CounterD + timerCounterValue + 1U) :	/* TimerCounter overflow */
+		(timerCounterValue - p_encoder->CounterD); 							/* Normal case */
+	p_encoder->CounterD = timerCounterValue;
+	return delta;
+}
+#endif
+
 /******************************************************************************/
 /*!
 	@brief 	Capture DeltaD
@@ -43,7 +57,7 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 #if defined(CONFIG_ENCODER_HW_DECODER)
 	/* For common interface functions. Emulated Capture in ISR */
 	uint16_t counterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
-	p_encoder->DeltaD = _Encoder_CaptureDelta(p_encoder, p_encoder->Params.CountsPerRevolution - 1U, counterD);
+	p_encoder->DeltaD = _Encoder_CaptureDeltaD(p_encoder, p_encoder->Params.CountsPerRevolution - 1U, counterD);
 	// p_encoder->TotalD += p_encoder->DeltaD;
 	// p_encoder->Angle32 = counterD * p_encoder->UnitAngularD;
 	//quadrature check overflow flag
@@ -74,7 +88,7 @@ static inline uint32_t Encoder_DeltaD_GetDeltaDistance(Encoder_T * p_encoder) 	{
 /******************************************************************************/
 static inline uint32_t Encoder_DeltaD_GetScalarSpeed(Encoder_T * p_encoder)
 {
-	return p_encoder->DeltaD * p_encoder->UnitScalarSpeed; /* Shift */
+	return p_encoder->DeltaD * p_encoder->UnitScalarSpeed >> p_encoder->UnitScalarSpeedShift;
 }
 
 /******************************************************************************/
@@ -87,7 +101,8 @@ static inline uint32_t Encoder_DeltaD_GetScalarSpeed(Encoder_T * p_encoder)
 */
 static inline uint32_t Encoder_DeltaD_GetAngularSpeed(Encoder_T * p_encoder)
 {
-	return _Encoder_CalcAngularSpeed(p_encoder, p_encoder->DeltaD, 1U);
+	// return _Encoder_CalcAngularSpeed(p_encoder, p_encoder->DeltaD, 1U);
+	return p_encoder->DeltaD * p_encoder->UnitAngularSpeed >> p_encoder->UnitAngularSpeedShift;
 }
 
 /*!
@@ -95,17 +110,17 @@ static inline uint32_t Encoder_DeltaD_GetAngularSpeed(Encoder_T * p_encoder)
 */
 static inline uint32_t Encoder_DeltaD_ConvertFromAngularSpeed(Encoder_T * p_encoder, uint32_t angularSpeed_UserDegreesPerSecond)
 {
-	return angularSpeed_UserDegreesPerSecond / p_encoder->UnitAngularSpeed;
+	// return angularSpeed_UserDegreesPerSecond / p_encoder->UnitAngularSpeed;
 }
 
 static inline uint32_t Encoder_DeltaD_ConvertToAngularSpeed(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
 {
-	return _Encoder_CalcAngularSpeed(p_encoder, deltaD_Ticks, 1U);
+	// return _Encoder_CalcAngularSpeed(p_encoder, deltaD_Ticks, 1U);
 }
 
 static inline uint32_t Encoder_DeltaD_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
 {
-	return _Encoder_CalcRotationalSpeed_Shift(p_encoder, p_encoder->DeltaD * 60U, 1U);
+	// return _Encoder_CalcRotationalSpeed_Shift(p_encoder, p_encoder->DeltaD * 60U, 1U);
 }
 
 /*
@@ -119,7 +134,7 @@ static inline uint32_t Encoder_DeltaD_ConvertFromRotationalSpeed_RPM(Encoder_T *
 
 static inline uint32_t Encoder_DeltaD_ConvertToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
 {
-	return _Encoder_CalcRotationalSpeed_Shift(p_encoder, deltaD_Ticks * 60U, 1U);
+	// return _Encoder_CalcRotationalSpeed_Shift(p_encoder, deltaD_Ticks * 60U, 1U);
 }
 
 /******************************************************************************/
@@ -128,31 +143,32 @@ static inline uint32_t Encoder_DeltaD_ConvertToRotationalSpeed_RPM(Encoder_T * p
 */
 /******************************************************************************/
 /*!
-	Overflow caution: Max DeltaD = UINT32_MAX / UnitLinearSpeed
+	Overflow caution: Max DeltaD = UINT32_MAX / UnitSurfaceSpeed
 */
 static inline uint32_t Encoder_DeltaD_GetLinearSpeed(Encoder_T * p_encoder)
 {
-	return Encoder_CalcLinearSpeed(p_encoder, p_encoder->DeltaD, 1U);
+	// return Encoder_CalcLinearSpeed(p_encoder, p_encoder->DeltaD, 1U);
+	return p_encoder->DeltaD * p_encoder->UnitSurfaceSpeed >> p_encoder->UnitSurfaceSpeedShift;
 }
 
 static inline uint32_t Encoder_DeltaD_ConvertFromLinearSpeed(Encoder_T * p_encoder, uint32_t speed_UnitsPerSecond)
 {
-	return speed_UnitsPerSecond / p_encoder->UnitLinearSpeed;
+	// return speed_UnitsPerSecond / p_encoder->UnitSurfaceSpeed;
 }
 
 static inline uint32_t Encoder_DeltaD_ConvertFromLinearSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t speed_UnitsPerMinute)
 {
-	return speed_UnitsPerMinute * 60U / p_encoder->UnitLinearSpeed;
+	// return speed_UnitsPerMinute * 60U / p_encoder->UnitSurfaceSpeed;
 }
 
 static inline uint32_t Encoder_DeltaD_ConvertToLinearSpeed(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
 {
-	return Encoder_CalcLinearSpeed(p_encoder, deltaD_Ticks, 1U);
+	// return Encoder_CalcLinearSpeed(p_encoder, deltaD_Ticks, 1U);
 }
 
 static inline uint32_t Encoder_DeltaD_ConvertToLinearSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
 {
-	return Encoder_CalcLinearSpeed(p_encoder, deltaD_Ticks * 60U, 1U);
+	// return Encoder_CalcLinearSpeed(p_encoder, deltaD_Ticks * 60U, 1U);
 }
 
 static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Mph(Encoder_T * p_encoder)

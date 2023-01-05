@@ -67,7 +67,7 @@ static Cmd_Status_T Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 
 	if(argc == 1U) /* run */
 	{
-		MotorController_User_SetCmdValue(p_mc, 65536U/20U);
+		MotorController_User_SetCmdThrottle(p_mc, 65536U/20U);
 	}
 	else if(argc == 2U) /* run [num] */
 	{
@@ -78,7 +78,7 @@ static Cmd_Status_T Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 		else
 		{
 			value = strtoul(argv[1U], &p_end, 10);
-			MotorController_User_SetCmdValue(p_mc, value);
+			MotorController_User_SetCmdThrottle(p_mc, value);
 		}
 	}
 	else if(argc == 3U) /* run [throttle/brake] [num] */
@@ -276,7 +276,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			Terminal_SendNum(p_terminal, Encoder_ModeDT_GetRotationalVelocity_RPM(&p_motor->Encoder)); Terminal_SendString(p_terminal, " RPM, ");
 			Terminal_SendNum(p_terminal, Encoder_ModeDT_GetScalarVelocity(&p_motor->Encoder)); Terminal_SendString(p_terminal, " Frac16\r\n");
 
-			Terminal_SendString(p_terminal, "SpeedControl: "); Terminal_SendNum(p_terminal, p_motor->SpeedControl_FracS16); Terminal_SendString(p_terminal, "\r\n");
+			Terminal_SendString(p_terminal, "SpeedControl: "); Terminal_SendNum(p_terminal, PID_GetOutput(&p_motor->PidSpeed)); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "RampOut: "); Terminal_SendNum(p_terminal, Linear_Ramp_GetOutput(&p_motor->Ramp)); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "DeltaD: "); Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaD); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "DeltaT: "); Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaT); Terminal_SendString(p_terminal, "\r\n");

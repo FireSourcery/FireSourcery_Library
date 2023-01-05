@@ -39,10 +39,17 @@
 typedef struct FOC_Tag
 {
 	/* Params */
-	qfrac16_t VectorMaxMagnitude;
-	qfrac16_t VectorMaxD; /* default 1/sqrt3 */
+	// qfrac16_t VectorMaxMagnitude;
+	// qfrac16_t VectorMaxD; /* default 1/sqrt3 */
 
-	/* Inputs */
+	qfrac16_t IdReq;
+	qfrac16_t IqReq;
+	/* During Freewheel */
+	qfrac16_t Va;
+	qfrac16_t Vb;
+	qfrac16_t Vc;
+
+	/* Inputs - Capture by ADC */
 	qfrac16_t Ia;
 	qfrac16_t Ib;
 	qfrac16_t Ic;
@@ -50,8 +57,8 @@ typedef struct FOC_Tag
 	qfrac16_t Ialpha;
 	qfrac16_t Ibeta;
 
-	/* Theta */
-	qfrac16_t Sine; /* save for inverse park call */
+	/* Theta, save for inverse park call  */
+	qfrac16_t Sine;
 	qfrac16_t Cosine;
 
 	/* PID process/feedback variable */
@@ -114,9 +121,21 @@ static inline qfrac16_t FOC_GetIalpha(FOC_T * p_foc) { return p_foc->Ialpha; }
 static inline qfrac16_t FOC_GetIbeta(FOC_T * p_foc) { return p_foc->Ibeta; }
 static inline uint16_t FOC_GetIMagnitude(FOC_T * p_foc) { return q_sqrt(((int32_t)p_foc->Id * p_foc->Id) + ((int32_t)p_foc->Iq * p_foc->Iq)); }
 
+static inline void FOC_SetVa(FOC_T * p_foc, qfrac16_t va) { p_foc->Va = va; }
+static inline void FOC_SetVb(FOC_T * p_foc, qfrac16_t vb) { p_foc->Vb = vb; }
+static inline void FOC_SetVc(FOC_T * p_foc, qfrac16_t vc) { p_foc->Vc = vc; }
+static inline qfrac16_t FOC_GetVa(FOC_T * p_foc) { return p_foc->Va; }
+static inline qfrac16_t FOC_GetVb(FOC_T * p_foc) { return p_foc->Vb; }
+static inline qfrac16_t FOC_GetVc(FOC_T * p_foc) { return p_foc->Vc; }
+static inline void FOC_SetIdReq(FOC_T * p_foc, qfrac16_t id) { p_foc->IdReq = id; }
+static inline void FOC_SetIqReq(FOC_T * p_foc, qfrac16_t iq) { p_foc->IqReq = iq; }
+static inline qfrac16_t FOC_GetIdReq(FOC_T * p_foc) { return p_foc->IdReq; }
+static inline qfrac16_t FOC_GetIqReq(FOC_T * p_foc) { return p_foc->IqReq; }
+
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
 extern void FOC_ZeroSvpwm(FOC_T * p_foc);
+extern void FOC_ClearState(FOC_T * p_foc);
 // extern void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax);
 
 #endif

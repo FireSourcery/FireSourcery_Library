@@ -34,7 +34,6 @@
 #define MOTOR_FOC_H
 
 #include "Motor.h"
-#include "Transducer/Encoder/Encoder_ISR.h"
 
 /******************************************************************************/
 /*
@@ -76,9 +75,23 @@ static inline void Motor_FOC_CaptureIc(Motor_T * p_motor)
 	FOC_SetIc(&p_motor->Foc, iphase);
 }
 
-static inline void Motor_FOC_CaptureVa(Motor_T * p_motor) {}
-static inline void Motor_FOC_CaptureVb(Motor_T * p_motor) {}
-static inline void Motor_FOC_CaptureVc(Motor_T * p_motor) {}
+static inline void Motor_FOC_CaptureVa(Motor_T * p_motor)
+{
+	qfrac16_t vphase = ((int32_t)Linear_Voltage_CalcFracS16(&p_motor->UnitsVabc, p_motor->AnalogResults.Va_Adcu) + FOC_GetVa(&p_motor->Foc)) / 2;
+	FOC_SetVa(&p_motor->Foc, vphase);
+}
+
+static inline void Motor_FOC_CaptureVb(Motor_T * p_motor)
+{
+	qfrac16_t vphase = ((int32_t)Linear_Voltage_CalcFracS16(&p_motor->UnitsVabc, p_motor->AnalogResults.Vb_Adcu) + FOC_GetVb(&p_motor->Foc)) / 2;
+	FOC_SetVb(&p_motor->Foc, vphase);
+}
+
+static inline void Motor_FOC_CaptureVc(Motor_T * p_motor)
+{
+	qfrac16_t vphase = ((int32_t)Linear_Voltage_CalcFracS16(&p_motor->UnitsVabc, p_motor->AnalogResults.Vc_Adcu) + FOC_GetVc(&p_motor->Foc)) / 2;
+	FOC_SetVc(&p_motor->Foc, vphase);
+}
 
 /******************************************************************************/
 /*!
@@ -104,50 +117,32 @@ extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);
 extern void Motor_FOC_ActivateOutput(Motor_T * p_motor);
 extern void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd);
 extern void Motor_FOC_SetControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
+extern void Motor_FOC_MatchFeedbackLoop(Motor_T * p_motor);
 
 /******************************************************************************/
 /*!
 	State Machine
 */
 /******************************************************************************/
-/*!
-	Match Feedback State to Output
-	PID update when changing Control/FeedbackMode
-	V output is prev VReq, match to start at 0 change in torque
-	Iq PID output differs between voltage Iq limit mode and Iq control mode. still need to match
-*/
-/* FeedbackModeFlags.Scalar => Start from scalar of 1, output speed */
-/* FeedbackModeFlags.Speed == 1, SPEED_CURRENT, or SPEED_VOLTAGE */
-/* FeedbackModeFlags.Scalar == 0, CONSTANT_CURRENT, or CONSTANT_VOLTAGE, Open Loop */
-static inline void Motor_FOC_MatchFeedbackLoop(Motor_T * p_motor)
-{
-	int32_t userOutput = (p_motor->FeedbackModeFlags.Current == 1U) ? FOC_GetIq(&p_motor->Foc) : FOC_GetVq(&p_motor->Foc);; /* q_sqrt(vd vq) */
-
-	if		(p_motor->FeedbackModeFlags.Scalar == 1U) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, 65535); }
-	else if	(p_motor->FeedbackModeFlags.Speed == 1U) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->Speed_Frac16 / 2); Motor_SetSpeedOutput(p_motor, userOutput);}
-	else 												{ Linear_Ramp_SetOutputState(&p_motor->Ramp, userOutput); }
-
-	PID_SetIntegral(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
-	PID_SetIntegral(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
-}
-
 static inline void Motor_FOC_StartAlign(Motor_T * p_motor)
 {
-	// Motor_FOC_SetControlMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT);
-	Linear_Ramp_SetStart(&p_motor->AuxRamp, p_motor->Parameters.AlignTime_Cycles, 0, p_motor->Parameters.AlignVPwm_Frac16 / 2U);
+	Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.AlignTime_Cycles, 0, p_motor->Parameters.AlignVPwm_Frac16 / 2U);
+	Motor_SetControlFeedbackOpenLoopCurrent(p_motor);
+	FOC_SetIqReq(&p_motor->Foc, 0);
+	FOC_SetVector(&p_motor->Foc, 0);
 }
 
 static inline void Motor_FOC_ProcAlign(Motor_T * p_motor)
 {
-	Motor_FOC_ProcAngleObserve(p_motor);
 	Linear_Ramp_ProcOutput(&p_motor->AuxRamp);
-	Motor_FOC_ActivateAngle(p_motor, 0, 0, Linear_Ramp_GetOutput(&p_motor->AuxRamp));
+	FOC_SetIdReq(&p_motor->Foc, Linear_Ramp_GetOutput(&p_motor->AuxRamp));
+	Motor_FOC_ProcAngleControl(p_motor);
 }
 
 static inline void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
 {
 	p_motor->OpenLoopSpeed_RPM = 0U;
-	Linear_Ramp_SetStart(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, p_motor->Parameters.OpenLoopVPwm_Frac16 / 2U);
+	Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, p_motor->Parameters.OpenLoopVPwm_Frac16 / 2U);
 }
 
 /*
@@ -178,10 +173,8 @@ static inline void Motor_FOC_ProcStop(Motor_T * p_motor)
 /* Also Clears Iq for OpenLoop/Align */
 static inline void Motor_FOC_SetOutputMatchStop(Motor_T * p_motor)
 {
-	FOC_SetIq(&p_motor->Foc, 0);
-	FOC_SetVq(&p_motor->Foc, 0);
-	FOC_SetVd(&p_motor->Foc, 0);
-	p_motor->Speed_Frac16 = 0;
+	FOC_ClearState(&p_motor->Foc);
+	// p_motor->Speed_Frac16 = 0;
 }
 
 /*
@@ -190,35 +183,18 @@ static inline void Motor_FOC_SetOutputMatchStop(Motor_T * p_motor)
 static inline void Motor_FOC_SetOutputMatchFreewheel(Motor_T * p_motor)
 {
 	int32_t vqReq;
-	// vqReq = Motor_GetVSpeedFrac16_VBemf(p_motor) / 2;
+	// vqReq = Motor_GetVSpeedFrac16_VBemf(p_motor) / 2; /* Using bemf peak, alternatively, use captured Vabc */
 	vqReq = Motor_GetVSpeedFrac16_Speed(p_motor) / 2;
 	FOC_SetIq(&p_motor->Foc, 0);
 	FOC_SetVq(&p_motor->Foc, vqReq);
 	FOC_SetVd(&p_motor->Foc, 0);
 }
 
-static inline void Motor_FOC_SetOutputMatchAlign(Motor_T * p_motor)
-{
-	// int32_t vqReq;
-	// // vqReq = Motor_GetVSpeedFrac16_VBemf(p_motor) / 2;
-	// vqReq = Motor_GetVSpeedFrac16_Speed(p_motor) / 2;
-	// FOC_SetIq(&p_motor->Foc, 0);
-	// FOC_SetVq(&p_motor->Foc, 0);
-	// FOC_SetVd(&p_motor->Foc, 0);
-}
-
-
 /******************************************************************************/
 /*!
 	Extern
 */
 /******************************************************************************/
-// extern void Motor_FOC_StartAlign(Motor_T * p_motor);
-// extern void Motor_FOC_ProcAlign(Motor_T * p_motor);
-// extern void Motor_FOC_StartOpenLoop(Motor_T * p_motor);
-// extern void Motor_FOC_ProcOpenLoop(Motor_T * p_motor);
-// extern void Motor_FOC_ProcStop(Motor_T * p_motor);
-
 extern void Motor_FOC_SetDirectionCcw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirectionCw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);

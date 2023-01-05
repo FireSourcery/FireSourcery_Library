@@ -80,55 +80,73 @@ int32_t _Linear_Ramp_CalcOutput(const Linear_T * p_linear, int32_t currentRampVa
 	if initial > final AND acceleration is positive, ramp returns final value
 	Overflow: final > 65535
 */
-void Linear_Ramp_Init(Linear_T * p_linear, uint32_t period_Ticks, int32_t initial, int32_t final)
+void Linear_Ramp_Init(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final)
 {
 	p_linear->SlopeShift 	= LINEAR_RAMP_SHIFT;
 	p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT;
-	Linear_Ramp_SetSlope(p_linear, period_Ticks, initial, final);
-	Linear_Ramp_SetTarget(p_linear, final);
-	p_linear->YOffset = initial << p_linear->SlopeShift;
+	Linear_Ramp_Set(p_linear, duration_Ticks, initial, final);
 
 }
 
 /*
-	Overflow: 	(period_Ms * updateFreq_Hz) > 131,071,000
+	Overflow: 	(duration_Ms * updateFreq_Hz) > 131,071,000
 */
-void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t period_Ms, int32_t initial, int32_t final)
+void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
 {
 	p_linear->SlopeShift 	= LINEAR_RAMP_SHIFT;
 	p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT;
-	Linear_Ramp_SetSlope_Millis(p_linear, updateFreq_Hz, period_Ms, initial, final);
-	Linear_Ramp_SetTarget(p_linear, final);
-	p_linear->YOffset = initial << p_linear->SlopeShift;
+	Linear_Ramp_Set_Millis(p_linear, updateFreq_Hz, duration_Ms, initial, final);
 }
 
 /******************************************************************************/
 /*
-	Sets slope and initial for dynamically generated ramp
+	Set Slope
 */
 /******************************************************************************/
-/* period_Ticks != 0  */
-void Linear_Ramp_SetSlope(Linear_T * p_linear, uint32_t period_Ticks, int32_t initial, int32_t final)
+/* duration_Ticks != 0  */
+void Linear_Ramp_SetSlope(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final)
 {
-	_Linear_SetSlope(p_linear, final - initial, period_Ticks);
+	_Linear_SetSlope(p_linear, final - initial, duration_Ticks);
 }
 
-void Linear_Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t period_Ms, int32_t initial, int32_t final)
+void Linear_Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
 {
-	uint32_t ticks = (period_Ms != 0U) ? (period_Ms * updateFreq_Hz / 1000U) : 1U;
+	uint32_t ticks = (duration_Ms != 0U) ? (duration_Ms * updateFreq_Hz / 1000U) : 1U;
 	Linear_Ramp_SetSlope(p_linear, ticks, initial, final);
 }
 
-void Linear_Ramp_SetStart(Linear_T * p_linear, uint32_t updatePeriod_Ticks, int32_t initial, int32_t final)
+/******************************************************************************/
+/*
+	Set
+*/
+/******************************************************************************/
+void Linear_Ramp_Set(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final)
 {
-	Linear_Ramp_SetSlope(p_linear, updatePeriod_Ticks, initial, final);
+	Linear_Ramp_SetSlope(p_linear, duration_Ticks, initial, final);
 	Linear_Ramp_SetOutputState(p_linear, initial);
 	Linear_Ramp_SetTarget(p_linear, final);
 }
 
-void Linear_Ramp_SetStart_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t period_Ms, int32_t initial, int32_t final)
+void Linear_Ramp_Set_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
 {
-	Linear_Ramp_SetSlope_Millis(p_linear, updateFreq_Hz, period_Ms, initial, final);
+	Linear_Ramp_SetSlope_Millis(p_linear, updateFreq_Hz, duration_Ms, initial, final);
 	Linear_Ramp_SetOutputState(p_linear, initial);
 	Linear_Ramp_SetTarget(p_linear, final);
+}
+
+/******************************************************************************/
+/*
+	Set Slope and initial state for dynamically generated ramp
+	Divide input over control period intervals
+	Acceleration proportional to change in userCmd
+*/
+/******************************************************************************/
+void Linear_Ramp_SetInterpolate(Linear_T * p_linear, uint32_t duration_Ticks, int32_t final)
+{
+	Linear_Ramp_Set(p_linear, duration_Ticks, Linear_Ramp_GetOutput(p_linear), final);
+}
+
+void Linear_Ramp_SetInterpolate_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t final)
+{
+	Linear_Ramp_Set_Millis(p_linear, updateFreq_Hz, duration_Ms, Linear_Ramp_GetOutput(p_linear), final);
 }

@@ -54,7 +54,7 @@
 */
 /******************************************************************************/
 
-extern void _Motor_User_ActivateControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
+extern void _Motor_User_ActivateControlMode(Motor_T * p_motor, Motor_FeedbackModeId_T mode);
 
 /*!
 	Convert user reference direction to CCW/CW direction
@@ -222,9 +222,9 @@ static inline void Motor_User_SetUserFeedbackMode(Motor_T * p_motor)
 
 static inline void Motor_User_SetUserFeedbackCmdValue(Motor_T * p_motor, int16_t userCmd)
 {
-	if		(p_motor->FeedbackModeFlags.Speed == 1U) 	{ Motor_User_SetSpeedCmdValue(p_motor, userCmd); }
-	else if	(p_motor->FeedbackModeFlags.Current == 1U) 	{ Motor_User_SetTorqueCmdValue(p_motor, userCmd); }
-	else 												{ Motor_User_SetVoltageCmdValue(p_motor, userCmd); }
+	if		(p_motor->FeedbackMode.Speed == 1U) 	{ Motor_User_SetSpeedCmdValue(p_motor, userCmd); }
+	else if	(p_motor->FeedbackMode.Current == 1U) 	{ Motor_User_SetTorqueCmdValue(p_motor, userCmd); }
+	else 											{ Motor_User_SetVoltageCmdValue(p_motor, userCmd); }
 
 }
 
@@ -265,7 +265,7 @@ static inline void Motor_User_SetThrottleCmd(Motor_T * p_motor, uint16_t throttl
 static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 {
 
-	// if(p_motor->FeedbackModeFlags.Hold == 0U)
+	// if(p_motor->FeedbackMode.Hold == 0U)
 	// {
 	// 	if(Motor_GetSpeed_RPM(p_motor) > 10U)
 	// 	{
@@ -273,7 +273,7 @@ static inline void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 	// 	}
 	// 	else
 	// 	{
-	// 		p_motor->FeedbackModeFlags.Hold = 1U;  //clears on throttle
+	// 		p_motor->FeedbackMode.Hold = 1U;  //clears on throttle
 	// 		Phase_Ground(&p_motor->Phase);
 	// 	}
 	// }
@@ -445,7 +445,7 @@ static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor) { return _Motor
 /******************************************************************************/
 static inline Motor_CommutationMode_T Motor_User_GetCommutationMode(Motor_T * p_motor) 				{ return p_motor->Parameters.CommutationMode; }
 static inline Motor_SensorMode_T Motor_User_GetSensorMode(Motor_T * p_motor) 						{ return p_motor->Parameters.SensorMode; }
-static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(Motor_T * p_motor) 					{ return p_motor->Parameters.DefaultFeedbackMode; }
+static inline Motor_FeedbackModeId_T Motor_User_GetFeedbackMode(Motor_T * p_motor) 					{ return p_motor->Parameters.DefaultFeedbackMode; }
 static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Motor_T * p_motor) 	{ return p_motor->Parameters.DirectionCalibration; }
 static inline uint8_t Motor_User_GetPolePairs(Motor_T * p_motor) 									{ return p_motor->Parameters.PolePairs; }
 static inline uint16_t Motor_User_GetSpeedFeedbackRef_Rpm(Motor_T * p_motor) 						{ return p_motor->Parameters.SpeedFeedbackRef_Rpm; }
@@ -465,7 +465,7 @@ static inline void Motor_User_SetRampAccel_Cycles(Motor_T * p_motor, uint16_t cy
 // static inline void Motor_User_SetVoltageBrakeScalar_Frac16(Motor_T * p_motor, uint16_t scalar_Frac16) 	{ p_motor->Parameters.VoltageBrakeScalar_InvFrac16 = 65535U - scalar_Frac16; }
 
 /* Persistent Control Mode */
-static inline void Motor_User_SetFeedbackModeParam(Motor_T * p_motor, Motor_FeedbackMode_T mode) 	{ p_motor->Parameters.DefaultFeedbackMode = mode; p_motor->FeedbackModeFlags.Update = 1U; }
+static inline void Motor_User_SetFeedbackModeParam(Motor_T * p_motor, Motor_FeedbackModeId_T mode) 	{ p_motor->Parameters.DefaultFeedbackMode = mode; p_motor->FeedbackMode.IsDisable = 1U; }
 static inline void Motor_User_SetPhaseModeParam(Motor_T * p_motor, Phase_Mode_T mode) 				{ p_motor->Parameters.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->Phase, mode); }
 
 /******************************************************************************/

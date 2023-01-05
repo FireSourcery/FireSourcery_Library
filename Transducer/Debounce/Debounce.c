@@ -71,7 +71,7 @@ bool Debounce_CaptureState(Debounce_T * p_debounce)
 	return (p_debounce->DebouncedStatePrev ^ p_debounce->DebouncedState);
 }
 
-
+/* todo change state var */
 bool Debounce_PollFallingEdge(Debounce_T * p_debounce)
 {
 	bool isEdge = ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true));

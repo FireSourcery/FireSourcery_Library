@@ -190,7 +190,7 @@ void MotorController_Init(MotorController_T * p_mc)
 // 	// .DistancePerRevolution 				= 1U,
 // 	// .IsQuadratureCaptureEnabled 		= true,
 // 	// .IsALeadBPositive 				= true,
-// 	// .ExtendedTimerDeltaTStop 		= 1000U,	//ExtendedTimer time read at deltaT stopped
+// 	// .ExtendedDeltaTStop 		= 1000U,	//ExtendedTimer time read at deltaT stopped
 // 	// .ScalarSpeedRef_Rpm;
 
 // // Motor_User_ActivateCalibrationHall(p_motor);

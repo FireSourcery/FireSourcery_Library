@@ -54,6 +54,10 @@ static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, ui
 // static inline void MotorController_User_SetCmdBrakeAlt(MotorController_T * p_mc, uint16_t userCmd) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE_ALT); }
 static inline uint16_t MotorController_User_GetCmdValue(MotorController_T * p_mc) { return p_mc->UserCmd; }
 
+/* StateMachine unchecked disable motors, use with caution */
+static inline void MotorController_User_DisableControl(MotorController_T * p_mc) 	{ MotorController_DisableMotorAll(p_mc); StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CMD, 0);}
+static inline void MotorController_User_ReleaseControl(MotorController_T * p_mc) 	{ StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CMD, 0); }
+
 /*
 	Input mode voluntarily call checked function, avoids intermediate buffer
 */
@@ -145,14 +149,9 @@ static inline void MotorController_User_ProcCalibration_Blocking(MotorController
 	Non StateMachine Checked Direct Inputs
 */
 /******************************************************************************/
-/* Not StateMachine Checked, Use with caution */
-static inline void MotorController_User_DisableControl(MotorController_T * p_mc) 	{ MotorController_DisableMotorAll(p_mc); }
-static inline void MotorController_User_ReleaseControl(MotorController_T * p_mc) 	{ MotorController_ReleaseMotorAll(p_mc); }
-static inline void MotorController_User_BeepN(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime, uint8_t n) { Blinky_BlinkN(&p_mc->Buzzer, onTime, offTime, n); }
-static inline void MotorController_User_BeepStart(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime) { Blinky_StartPeriodic(&p_mc->Buzzer, onTime, offTime); }
-static inline void MotorController_User_BeepStop(MotorController_T * p_mc) { Blinky_Stop(&p_mc->Buzzer); }
-
-/* ClearSpeed */
+static inline void MotorController_User_BeepN(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime, uint8_t n) 	{ Blinky_BlinkN(&p_mc->Buzzer, onTime, offTime, n); }
+static inline void MotorController_User_BeepStart(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime) 			{ Blinky_StartPeriodic(&p_mc->Buzzer, onTime, offTime); }
+static inline void MotorController_User_BeepStop(MotorController_T * p_mc) 												{ Blinky_Stop(&p_mc->Buzzer); }
 
 /******************************************************************************/
 /*
@@ -185,7 +184,6 @@ static inline uint32_t MotorController_User_GetFaultVSense(MotorController_T * p
 static inline uint32_t MotorController_User_GetFaultVAcc(MotorController_T * p_mc, uint16_t vScalar) 				{ return VMonitor_ConvertToV(&p_mc->VMonitorAcc, p_mc->FaultAnalogRecord.VAcc_Adcu, vScalar); }
 static inline int32_t MotorController_User_GetFaultHeatPcb_DegC(MotorController_T * p_mc, uint8_t scalar) 			{ return Thermistor_ConvertToDegC_Int(&p_mc->ThermistorPcb, p_mc->FaultAnalogRecord.HeatPcb_Adcu, scalar); }
 static inline int32_t MotorController_User_GetFaultHeatMosfets_DegC(MotorController_T * p_mc, uint8_t scalar) 		{ return Thermistor_ConvertToDegC_Int(&p_mc->ThermistorMosfets, p_mc->FaultAnalogRecord.HeatMosfets_Adcu, scalar); }
-
 // static inline int32_t MotorController_User_GetFaultHeatMosfetsTop_DegC(MotorController_T * p_mc, uint8_t scalar) 	{ return Thermistor_ConvertToDegC_Int(&p_mc->ThermistorMosfetsTop, p_mc->FaultAnalogRecord.HeatMosfetsTop_Adcu, scalar); }
 // static inline int32_t MotorController_User_GetFaultHeatMosfetsBot_DegC(MotorController_T * p_mc, uint8_t scalar) 	{ return Thermistor_ConvertToDegC_Int(&p_mc->ThermistorMosfetsBot, p_mc->FaultAnalogRecord.HeatMosfetsBot_Adcu, scalar); }
 #endif
@@ -203,7 +201,6 @@ static inline void MotorController_User_SetBrakeMode(MotorController_T * p_mc, M
 static inline void MotorController_User_SetOptDinSpeedLimit(MotorController_T * p_mc, uint16_t scalar_Frac16) 	{ p_mc->Parameters.OptDinFunction = MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT; p_mc->Parameters.OptDinSpeedLimit_Frac16 = scalar_Frac16; }
 static inline void MotorController_User_DisableOptDin(MotorController_T * p_mc) 								{ p_mc->Parameters.OptDinFunction = MOTOR_CONTROLLER_OPT_DIN_DISABLE; }
 static inline void MotorController_User_SetILimitOnLowVParam(MotorController_T * p_mc, uint16_t scalar_Frac16) 	{ p_mc->Parameters.ILimitLowV_Frac16 = scalar_Frac16; }
-// static inline void MotorController_User_SetILimitOnHeatParam(MotorController_T * p_mc, uint16_t scalar_Frac16) 	{ p_mc->Parameters.ILimitHeat_Frac16 = scalar_Frac16; }
 
 // change to Linear_Init flexible scalar output
 // static inline uint32_t MotorController_User_GetBatteryCharge_Base10(MotorController_T * p_mc, uint8_t scalar) 	{ return Linear_ADC_CalcPhysical(&p_mc->BatteryLife, p_mc->AnalogResults.VSource_Adcu); }

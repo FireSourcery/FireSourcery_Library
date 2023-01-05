@@ -91,14 +91,14 @@ static inline int32_t Encoder_ModeDT_InterpolateAngularDisplacement(Encoder_T * 
 	return Encoder_GetDirection(p_encoder) * p_encoder->DirectionD * Encoder_ModeDT_InterpolateAngle(p_encoder);
 }
 
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
 /* Signed with capture reference */
-// FreqD * [60U * 65536U  / CountsPerRevolution / ScalarSpeedRef_Rpm]
 static inline int32_t _Encoder_ModeDT_GetScalarSpeed(Encoder_T * p_encoder)
 {
-	// return p_encoder->FreqD * ((uint32_t)60U * 65536UL / p_encoder->Params.CountsPerRevolution) / p_encoder->Params.ScalarSpeedRef_Rpm;
-	return p_encoder->FreqD * (int32_t)(p_encoder->UnitScalarSpeed) / (int32_t)p_encoder->Params.ScalarSpeedRef_Rpm; /* singed * unsigned stores at unsigned */
-	// return Encoder_CalcScalarVelocity(p_encoder, p_encoder->FreqD, 1U);
-	// return p_encoder->FreqD * p_encoder->UnitScalarSpeed >> (p_encoder->UnitScalarSpeed_Shift);
+	return p_encoder->FreqD * p_encoder->UnitScalarSpeed >> p_encoder->UnitScalarSpeedShift;
 }
 
 static inline int32_t Encoder_ModeDT_GetScalarVelocity(Encoder_T * p_encoder)
@@ -112,25 +112,43 @@ static inline int32_t Encoder_ModeDT_PollScalarVelocity(Encoder_T * p_encoder)
 	return Encoder_ModeDT_GetScalarVelocity(p_encoder);
 }
 
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+static inline int32_t Encoder_ModeDT_GetAngularSpeed(Encoder_T * p_encoder)
+{
+	return p_encoder->FreqD * p_encoder->UnitAngularSpeed >> p_encoder->UnitAngularSpeedShift;
+}
+
+static inline int32_t Encoder_ModeDT_GetRotationalSpeed(Encoder_T * p_encoder)
+{
+	return p_encoder->FreqD / p_encoder->Params.CountsPerRevolution;
+}
+
+static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
+{
+	return p_encoder->FreqD * 60U / p_encoder->Params.CountsPerRevolution;
+}
+
 static inline int32_t Encoder_ModeDT_GetAngularVelocity(Encoder_T * p_encoder)
 {
-	// return ((p_encoder->FreqD << 8U) / p_encoder->Params.CountsPerRevolution) << 8U;
-	// return ((p_encoder->FreqD << ShiftMax) / p_encoder->Params.CountsPerRevolution) << (16-ShiftMax);
 }
 
 static inline int32_t Encoder_ModeDT_GetRotationalVelocity(Encoder_T * p_encoder)
 {
-	return p_encoder->FreqD / p_encoder->Params.CountsPerRevolution;
-	// return _Encoder_CalcRotationalVelocity_Shift(p_encoder, p_encoder->FreqD, 1U);
 }
 
 static inline int32_t Encoder_ModeDT_GetRotationalVelocity_RPM(Encoder_T * p_encoder)
 {
-	return p_encoder->FreqD * 60U / p_encoder->Params.CountsPerRevolution;
-	// return _Encoder_CalcRotationalVelocity_Shift(p_encoder, p_encoder->FreqD * 60U, 1U);
 }
 
-static inline int32_t Encoder_ModeDT_GetLinearVelocity(Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_GetSurfaceSpeed(Encoder_T * p_encoder)
+{
+	return p_encoder->FreqD * p_encoder->UnitSurfaceSpeed >> p_encoder->UnitSurfaceSpeedShift;
+}
+
+static inline int32_t Encoder_ModeDT_GetSurfaceVelocity(Encoder_T * p_encoder)
 {
 
 }
@@ -168,9 +186,11 @@ static inline int32_t Encoder_ModeDT_GetGroundVelocity_Kmh(Encoder_T * p_encoder
 // {
 // }
 
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
 extern void Encoder_ModeDT_Init(Encoder_T * p_encoder);
 extern void Encoder_ModeDT_SetInitial(Encoder_T * p_encoder);
-extern void Encoder_ModeDT_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRevolution);
-extern void Encoder_ModeDT_SetScalarSpeedRef(Encoder_T * p_encoder, uint16_t speedRef);
 
 #endif

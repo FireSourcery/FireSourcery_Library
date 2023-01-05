@@ -72,11 +72,11 @@ static inline void Linear_Ramp_ZeroOutputState(Linear_T * p_linear) { p_linear->
 	Extern
 */
 /******************************************************************************/
-extern void Linear_Ramp_Init(Linear_T * p_linear, uint32_t updatePeriod_Ticks, int32_t initial, int32_t final);
-extern void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t period_Ms, int32_t initial, int32_t final);
-extern void Linear_Ramp_SetSlope(Linear_T * p_linear, uint32_t period_Ticks, int32_t initial, int32_t final);
-extern void Linear_Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t period_Ms, int32_t initial, int32_t final);
-extern void Linear_Ramp_SetStart(Linear_T * p_linear, uint32_t updatePeriod_Ticks, int32_t initial, int32_t final);
-extern void Linear_Ramp_SetStart_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t period_Ms, int32_t initial, int32_t final);
+extern void Linear_Ramp_Init(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
+extern void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
+extern void Linear_Ramp_SetSlope(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
+extern void Linear_Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
+extern void Linear_Ramp_Set(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
+extern void Linear_Ramp_Set_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
 #endif
 

@@ -31,22 +31,22 @@
 
 void FOC_Init(FOC_T * p_foc)
 {
-	p_foc->VectorMaxMagnitude = QFRAC16_MAX;
-	p_foc->VectorMaxD = QFRAC16_1_DIV_SQRT3;
+	// p_foc->VectorMaxMagnitude = QFRAC16_MAX;
+	// p_foc->VectorMaxD = QFRAC16_1_DIV_SQRT3;
 
-	p_foc->Ia = 0;
-	p_foc->Ib = 0;
-	p_foc->Ic = 0;
-	p_foc->Ialpha = 0;
-	p_foc->Ibeta = 0;
-	p_foc->Id = 0;
-	p_foc->Iq = 0;
-	p_foc->Vd = 0;
-	p_foc->Vq = 0;
-	p_foc->Valpha = 0;
-	p_foc->Vbeta = 0;
-	p_foc->Sine = 0;
-	p_foc->Cosine = 0;
+	// p_foc->Ia = 0;
+	// p_foc->Ib = 0;
+	// p_foc->Ic = 0;
+	// p_foc->Ialpha = 0;
+	// p_foc->Ibeta = 0;
+	// p_foc->Id = 0;
+	// p_foc->Iq = 0;
+	// p_foc->Vd = 0;
+	// p_foc->Vq = 0;
+	// p_foc->Valpha = 0;
+	// p_foc->Vbeta = 0;
+	// p_foc->Sine = 0;
+	// p_foc->Cosine = 0;
 }
 
 // void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax)
@@ -69,4 +69,14 @@ void FOC_ZeroSvpwm(FOC_T * p_foc)
 	p_foc->DutyA = 65536U / 2U;
 	p_foc->DutyB = 65536U / 2U;
 	p_foc->DutyC = 65536U / 2U;
+}
+
+void FOC_ClearState(FOC_T * p_foc)
+{
+	p_foc->Vd = 0; /* VReq */
+	p_foc->Vq = 0;
+	p_foc->Id = 0; /* IObserved */
+	p_foc->Iq = 0;
+	p_foc->IdReq = 0; /* IReq */
+	p_foc->IqReq = 0;
 }

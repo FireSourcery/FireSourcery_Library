@@ -38,7 +38,6 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 {
 	if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
 	_Encoder_DeltaT_Init(p_encoder);
-
 	_Encoder_ResetUnits(p_encoder);
 	p_encoder->DeltaD = 1U; /* Effective for shared functions only */
 	Encoder_DeltaT_SetInitial(p_encoder);
@@ -90,8 +89,8 @@ void _Encoder_DeltaT_Init(Encoder_T * p_encoder)
 void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 {
 	// p_encoder->DeltaT = (0xFFFFFFFFUL - p_encoder->CONFIG.TIMER_FREQ) / p_encoder->CONFIG.SAMPLE_FREQ;
-	p_encoder->DeltaT = p_encoder->CONFIG.TIMER_FREQ;
 	// p_encoder->DeltaT = 0xFFFF;
+	p_encoder->DeltaT = p_encoder->CONFIG.TIMER_FREQ;
 	p_encoder->InterpolateAngleIndex = 0U;
 	_Encoder_ZeroPulseCount(p_encoder);
 	p_encoder->ExtendedTimerPrev = *p_encoder->CONFIG.P_EXTENDED_TIMER;
@@ -103,15 +102,15 @@ void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 	Extended timer ticks to determine capture stopped
 	EXTENDED_TIMER_FREQ should be small, 1000, < 65536
 */
-void Encoder_DeltaT_SetExtendedTimerWatchStop_Millis(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
+void Encoder_DeltaT_SetExtendedWatchStop_Millis(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
 {
-	p_encoder->Params.ExtendedTimerDeltaTStop = effectiveStopTime_Millis * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / 1000U;
+	p_encoder->Params.ExtendedDeltaTStop = effectiveStopTime_Millis * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / 1000U;
 }
 
-// void Encoder_DeltaT_SetExtendedTimerWatchStop_RPM(Encoder_T * p_encoder)
-// {
-// 	p_encoder->Params.ExtendedTimerDeltaTStop = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->UnitT_Freq;
-// }
+void Encoder_DeltaT_SetExtendedWatchStop_RPM(Encoder_T * p_encoder)
+{
+	p_encoder->Params.ExtendedDeltaTStop = Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->CONFIG.TIMER_FREQ;
+}
 
 void Encoder_DeltaT_SetInterpolateAngleScalar(Encoder_T * p_encoder, uint16_t scalar)
 {
