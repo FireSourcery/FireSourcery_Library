@@ -32,12 +32,14 @@
 #define QFRAC16_H
 
 #include "Q.h"
+#include "Math/math_general.h"
 #include <stdint.h>
 #include <stdbool.h>
 
 #define QFRAC16_N_FRAC_BITS (15U) /*!< Q1.15, 15 fractional bits, shift mul/div by 32768 */
 
 typedef int16_t qfrac16_t; 		/*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
+// typedef int32_t qfrac16_t; 		/* Allow calculation with over saturation */
 
 static const qfrac16_t QFRAC16_MAX = INT16_MAX; /*!< (32767) */
 static const qfrac16_t QFRAC16_MIN = INT16_MIN; /*!< (-32768) */
@@ -53,36 +55,29 @@ static const qfrac16_t QFRAC16_SQRT3_DIV_4 = 0x376D;
 static const qfrac16_t QFRAC16_SQRT2_DIV_2 = 0x5A82;
 static const qfrac16_t QFRAC16_PI_DIV_4 = 0x6487;
 
-static const int32_t QFRAC16_1_OVERSAT 	= (int32_t)0x00008000; /*!< (32768) */
-static const int32_t QFRAC16_PI 		= (int32_t)0x0001921F; /* Over saturated */
-static const int32_t QFRAC16_3PI_DIV_4 	= (int32_t)0x00012D97; /* Over saturated */
+static const int32_t QFRAC16_1_OVERSAT 	= 0x00008000; /*!< (32768) */
+static const int32_t QFRAC16_PI 		= 0x0001921F; /* Over saturated */
+static const int32_t QFRAC16_3PI_DIV_4 	= 0x00012D97; /* Over saturated */
 
-#define QFRAC16_FLOAT_MAX (0.999969482421875)
-#define QFRAC16_FLOAT_MIN (-1.0)
-#define QFRAC16(x) ((qfrac16_t)(((x) < QFRAC16_FLOAT_MAX) ? (((x) >= QFRAC16_FLOAT_MIN) ? ((x)*32768.0) : INT16_MIN) : INT16_MAX))
+#define QFRAC16_FLOAT_MAX (0.999969482421875F)
+#define QFRAC16_FLOAT_MIN (-1.0F)
+#define QFRAC16(x) ((qfrac16_t)(((x) < QFRAC16_FLOAT_MAX) ? (((x) >= QFRAC16_FLOAT_MIN) ? ((x)*32768.0F) : INT16_MIN) : INT16_MAX))
 
 static inline qfrac16_t qfrac16(int16_t num, int32_t max) { return (qfrac16_t)(((int32_t)num << QFRAC16_N_FRAC_BITS) / max); }
 static inline qfrac16_t qfrac16_convert(int16_t num, int32_t max) { return qfrac16(num, max); }
-
-static inline qfrac16_t qfrac16_sat(int32_t qfrac)
-{
-	qfrac16_t sat;
-	if		(qfrac > (int32_t)QFRAC16_MAX) 	{ sat = QFRAC16_MAX; }
-	else if	(qfrac < (int32_t)QFRAC16_MIN) 	{ sat = QFRAC16_MIN; }
-	else 									{ sat = (qfrac16_t)qfrac; }
-	return sat;
-}
+static inline qfrac16_t qfrac16_sat(int32_t qfrac) { return math_clamp(qfrac, QFRAC16_MIN, QFRAC16_MAX); }
 
 /*!
-	@brief Unsaturated multiply
+	@brief Unsaturated Multiply
 
-	input max without overflow factor1 * factor2 < INT32_MAX (2,147,483,647)
-	e.g. (32,767, 65,535), (131,071, 16,383)
+	overflow input max factor1 * factor2 < INT32_MAX (2,147,483,647)
+		e.g. (65,536, 32,767), (131,072, 16,383)
 
-	qfrac16_mul(frac, frac) 	returns frac value, 0x8000 -> over saturated 1
-	qfrac16_mul(int, frac) 		returns int value, 0x8000 -> positive 32768
+	qfrac16_mul(+/-32768, +/-32768) returns 32768 [0x8000]
+		(int32_t)32768 -> positive 32768, over saturated 1
+		(int16_t)32768 -> -32768, -1
 
-	@return int32_t[-65536, 65535]
+	@return int32_t[-65536:65535] <=> [-2:2)
 */
 static inline int32_t qfrac16_mul(int32_t factor, int32_t frac)
 {
@@ -90,32 +85,27 @@ static inline int32_t qfrac16_mul(int32_t factor, int32_t frac)
 }
 
 /*!
-	Alternatively, qfrac16_mul_sat(qfrac16_t, qfrac16_t):
-	still must check saturation for qfrac16_mul_sat(-32768, -32768), casting 0x8000
+	Saturate to QFRAC16_MIN, QFRAC16_MAX
 
-	0x8000 [-32768] * 0x8000 [-32768] returns as positive int32_t 0x8000 [32768]
-	0x8000 casts from 32768 int32_t to -32768 int16_t incorrectly
-	must call sat to convert to correct int16_t value
-	(product == 32768) ? 32767 : product;
+	qfrac16_mul(int16_t factor, int16_t frac) must still check for 32768 case
+		(product == +32768) ? 32767 : product;
 
-	@return int16_t[-32768, 32767]
+	@return int16_t[-32768, 32767] <=> [-1:1)
 */
 static inline qfrac16_t qfrac16_mul_sat(int32_t factor, int32_t frac)
 {
-	int32_t product = qfrac16_mul(factor, frac);
-	return qfrac16_sat(product);
+	return qfrac16_sat(qfrac16_mul(factor, frac));
 }
 
 /*!
-	@brief Unsaturated divide
+	@brief Unsaturated Divide
 
-	qfrac16_div(frac, frac) 	returns frac value
-		when dividend >= divisor, over saturated qfrac16_t. 0x8000 -> over saturated 1
-		when dividend < divisor, within qfrac16_t range
+	dividend >= divisor returns [-1073741824:1073709056] <=> (-32768, 32767)
+		over saturated qfrac16_t, 32768 [0x8000] -> over saturated 1
+	dividend < divisor returns [-32767:32767] <=> (-1:1)
+		within qfrac16_t range
 
-	qfrac16_div(int, frac) 		returns int value
-
-	@return int32_t[-1073741824, 1073709056], [0XC0000000, 0X3FFF8000]
+	@return int32_t[-1073741824:1073709056], [0XC0000000, 0X3FFF8000]
 */
 static inline int32_t qfrac16_div(int16_t dividend, int32_t divisor)
 {
@@ -127,8 +117,7 @@ static inline int32_t qfrac16_div(int16_t dividend, int32_t divisor)
 */
 static inline qfrac16_t qfrac16_div_sat(int16_t dividend, int32_t divisor)
 {
-	int32_t quotient = qfrac16_div(dividend, divisor);
-	return qfrac16_sat(quotient);
+	return qfrac16_sat(qfrac16_div(dividend, divisor));
 }
 
 static inline qfrac16_t qfrac16_abs(qfrac16_t x)
@@ -139,7 +128,7 @@ static inline qfrac16_t qfrac16_abs(qfrac16_t x)
 	return val;
 }
 
-static inline qfrac16_t qfrac16_sqrt(int32_t x)
+static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
 {
 	return q_sqrt((int32_t)x << QFRAC16_N_FRAC_BITS);
 }
@@ -276,12 +265,12 @@ static inline void qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16
 	uint32_t magnitudeMaxSquared = (int32_t)magnitudeMax * magnitudeMax;
 	uint32_t vectorMagnitudeSquared = ((int32_t)(*p_x) * (*p_x)) + ((int32_t)(*p_y) * (*p_y));
 	uint16_t vectorMagnitude;
-	qfrac16_t ratio; /* where 32767 q1.15 = 1 */
+	qfrac16_t ratio; /* where 32767 q1.15 ~= 1 */
 
 	if(vectorMagnitudeSquared > magnitudeMaxSquared)
 	{
 		vectorMagnitude = q_sqrt(vectorMagnitudeSquared);
-		ratio = qfrac16_div(magnitudeMax, vectorMagnitude);
+		ratio = qfrac16_div(magnitudeMax, vectorMagnitude);  /* no saturation needed, vectorMagnitude < magnitudeMax */
 		*p_x = (qfrac16_t)qfrac16_mul(*p_x, ratio); /* no saturation needed, ratio < 1 */
 		*p_y = (qfrac16_t)qfrac16_mul(*p_y, ratio);
 	}

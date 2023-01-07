@@ -40,6 +40,8 @@ static inline int32_t math_clamp(int32_t value, int32_t low, int32_t high) { ret
 static inline uint32_t math_abs(int32_t num) { return abs(num); } /* check - INT_MIN */
 static inline int32_t math_sign(int32_t value) { return (value > 0) - (value < 0); } /* +1, 0, -1 */
 
+static inline int32_t math_isbound(int32_t value, int32_t low, int32_t high) { return (value == math_clamp(value, low, high)); }
+
 extern uint32_t math_muldiv64_unsigned(uint32_t value, uint32_t factor, uint32_t divisor);
 
 #endif

@@ -78,5 +78,6 @@ extern void Linear_Ramp_SetSlope(Linear_T * p_linear, uint32_t duration_Ticks, i
 extern void Linear_Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
 extern void Linear_Ramp_Set(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
 extern void Linear_Ramp_Set_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
+
 #endif
 

@@ -53,20 +53,21 @@
 */
 
 /*
-	FeedbackMode update: match Ramp and PID state to output
+	ControlFeedbackMode update: match Ramp and PID state to output
 	Transition to Run State (Active Control)
 
 	proc if (not run state) or (run state and change feedbackmode)
 	Motor_User_Set[Control]ModeCmd check feedback flags,
 	check control active flag
-	Store control active flag as FeedbackMode.IsDisable
+	Store control active flag as ControlFeedbackMode.IsDisable
 */
 void _Motor_User_ActivateControlMode(Motor_T * p_motor, Motor_FeedbackModeId_T mode)
 {
-	if(p_motor->FeedbackMode.State != Motor_ConvertFeedbackModeId(mode).State)
+	p_motor->CmdFeedbackMode.State = Motor_ConvertFeedbackModeId(mode).State;
+	if(p_motor->ControlFeedbackMode.State != Motor_ConvertFeedbackModeId(mode).State)
+	// if(p_motor->CmdFeedbackMode.State != Motor_ConvertFeedbackModeId(mode).State)
 	{
 		Critical_Enter(); /* Block PWM Thread, do not proc new flags before matching output with StateMachine */
-		// Motor_SetFeedbackModeFlags(p_motor, mode); /* Matching output occurs in StateMachine Proc, depends on State */
 		StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode);
 		Critical_Exit();
 	}

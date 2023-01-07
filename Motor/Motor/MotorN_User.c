@@ -98,7 +98,7 @@ bool MotorN_User_ClearFault(Motor_T * p_motor, uint8_t motorCount)
 
 void MotorN_User_SetUserCmd(Motor_T * p_motor, uint8_t motorCount, int32_t cmd)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetUserCmd(&p_motor[iMotor], cmd); }
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetDefaultCmd(&p_motor[iMotor], cmd); }
 }
 
 void MotorN_User_SetThrottleCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle)
@@ -123,7 +123,7 @@ void MotorN_User_SetCruise(Motor_T * p_motor, uint8_t motorCount)
 
 void MotorN_User_SetRegenCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t brake)
 {
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetRegenCmd(&p_motor[iMotor], brake); }
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetVBrakeCmd(&p_motor[iMotor], brake); }
 }
 
 void MotorN_User_SetSpeedLimitActive(Motor_T * p_motor, uint8_t motorCount, uint16_t limit_frac16)

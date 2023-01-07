@@ -111,6 +111,7 @@ uint8_t q_log2_round(uint32_t num)
 	return (pow2Upper - num) < (num - pow2Lower) ? upper : lower;
 }
 
+/* nearest pow2 */
 uint32_t q_pow2_round(uint32_t num)
 {
 	uint32_t lower = q_log2(num);

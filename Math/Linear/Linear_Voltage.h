@@ -75,6 +75,11 @@ static inline int32_t Linear_Voltage_CalcScalarV(const Linear_T * p_linear, uint
 	return Linear_Function_Scalar(p_linear, adcu, scalar);
 }
 
+static inline int32_t Linear_Voltage_CalcV_Frac16(const Linear_T * p_linear, uint16_t frac16)
+{
+
+}
+
 /******************************************************************************/
 /*!
 	@brief

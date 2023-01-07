@@ -62,7 +62,6 @@ void Motor_Analog_CaptureVc(Motor_T * p_motor)
 {
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVc, 0U/* Motor_SixStep_CaptureBemfC */);
 	// CaptureVPeak(p_motor, p_motor->AnalogResults.Vc_Adcu);
-	// Motor_Debug_CapturePeriod(p_motor, 8U);
 }
 
 /******************************************************************************/
@@ -81,7 +80,6 @@ void Motor_Analog_CaptureIa(Motor_T * p_motor)
 {
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIa, 0U/* Motor_SixStep_CaptureIa */);
 	CaptureIZeroToPeak(p_motor, p_motor->Parameters.IaZeroRef_Adcu, p_motor->AnalogResults.Ia_Adcu);
-	// Debug_LedOff();
 }
 
 void Motor_Analog_CaptureIb(Motor_T * p_motor)
@@ -94,7 +92,6 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
 {
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIc, 0U/* Motor_SixStep_CaptureIc */);
 	// CaptureIZeroToPeak(p_motor, p_motor->Parameters.IcZeroRef_Adcu, p_motor->AnalogResults.Ic_Adcu);
-	// Debug_LedOn();
 	Debug_LED();
 }
 
@@ -104,19 +101,6 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
 	@brief
 */
 /******************************************************************************/
-// static inline void EnqueueVabc(Motor_T * p_motor)
-// {
-// 	//no current sense during pwm float, check bemf
-// #if  defined(CONFIG_MOTOR_V_SENSORS_ADC) && !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED)
-// 	AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-// 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
-// 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
-// 	AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
-// 	AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-// #else
-// 	(void)p_motor;
-// #endif
-// }
 
 //static inline void Motor_Analog_Proc(Motor_T * p_motor)
 //{
@@ -127,23 +111,12 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor)
 //		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
 //		AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 //	}
-//
 ////	switch(p_motor->AnalogCmd)
 ////	{
 ////		case FOC_I_ABC :
-////			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-////			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-////#if defined(CONFIG_MOTOR_I_SENSORS_ABC) && !defined(CONFIG_MOTOR_I_SENSORS_AB)
-////			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-////#endif
 ////			break;
 ////
-////		case FOC_BEMF :
-////#if !defined(CONFIG_MOTOR_V_SENSORS_ISOLATED) &&defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-////			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
-////			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
-////			AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
-////#endif
+////		case FOC_VBEMF :
 ////			break;
 ////
 ////		default :

@@ -25,7 +25,7 @@
 	@file 	Motor_Thread.h
 	@author FireSourcery
 	@brief  Motor module functions must be placed into corresponding user app threads
-			Most outer functions to call from main app
+			Outer most functions to call from main app
 	@version V0
 */
 /******************************************************************************/
@@ -44,7 +44,7 @@
 */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-	// Motor_CaptureRefTime(p_motor);
+	Motor_CaptureRefTime(p_motor);
 	p_motor->ControlTimerBase++;
 	StateMachine_Semi_ProcOutput(&p_motor->StateMachine);
 	//  alternatively _Motor_Analog_Thread(p_motor); use analog select mode to implement preferred order

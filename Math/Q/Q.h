@@ -34,7 +34,6 @@
 #include <stdint.h>
 
 extern uint16_t q_sqrt(int32_t x);
-
 extern uint8_t q_log2(uint32_t num);
 extern uint8_t q_log2_ceiling(uint32_t num);
 extern uint8_t q_log2_round(uint32_t num);

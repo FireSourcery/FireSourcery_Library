@@ -78,8 +78,7 @@ Encoder_Phases_T;
 typedef enum Encoder_Align_Tag
 {
 	ENCODER_ALIGN_NO,
-	ENCODER_ALIGN_SET,
-	ENCODER_ALIGN_VALIDATED,
+	ENCODER_ALIGN_YES,
 	ENCODER_ALIGN_ABSOLUTE,
 }
 Encoder_Align_T;
@@ -299,7 +298,7 @@ static inline uint16_t Encoder_GetAngle(Encoder_T * p_encoder)
 
 static inline bool Encoder_GetIsAligned(Encoder_T * p_encoder)
 {
-	return (p_encoder->Align == ENCODER_ALIGN_ABSOLUTE) || (p_encoder->Align == ENCODER_ALIGN_VALIDATED);
+	return (p_encoder->Align == ENCODER_ALIGN_ABSOLUTE) || (p_encoder->Align == ENCODER_ALIGN_YES);
 }
 
 /******************************************************************************/
@@ -366,7 +365,7 @@ extern void Encoder_InitInterrupts_Quadrature(Encoder_T * p_encoder);
 extern void Encoder_InitInterrupts_ABC(Encoder_T * p_encoder);
 
 extern void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool isPositive);
-extern void Encoder_CalibrateAlign(Encoder_T * p_encoder);
+extern void Encoder_CalibrateAlignZero(Encoder_T * p_encoder);
 extern void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder);
 
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)

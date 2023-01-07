@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	PID.h
-    @author FireSourcery
-    @brief
-    @version V0
+	@file 	PID.h
+	@author FireSourcery
+	@brief
+	@version V0
 */
 /******************************************************************************/
 #ifndef PID_H
@@ -36,6 +36,7 @@
 
 #include "Math/math_general.h"
 #include "Math/Q/Q.h"
+
 typedef enum PID_Mode_Tag
 {
 	PID_MODE_PI,
@@ -58,6 +59,7 @@ typedef struct __attribute__((aligned(4U))) PID_Params_Tag
 	int8_t IntegralGainShift;
 }
 PID_Params_T;
+
 typedef const struct PID_Config_Tag
 {
 	const PID_Params_T * const P_PARAMS;
@@ -83,6 +85,10 @@ static inline int32_t PID_GetKpParam_Fixed32(PID_T * p_pid) { return p_pid->Para
 static inline int32_t PID_GetKiParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Ki_Fixed32; }
 static inline int32_t PID_GetKdParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Kd_Fixed32; }
 
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 extern void PID_Init(PID_T * p_pid);
 extern int32_t PID_Proc(PID_T *p_pid, int32_t setpoint, int32_t feedback);
 extern void PID_Reset(PID_T * p_pid);

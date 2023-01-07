@@ -60,8 +60,7 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 	proportional = (p_pid->Params.PropGain * error) >> p_pid->Params.PropGainShift; /* Inclusive of 16 shift */
 
 	/*
-		Store as Integral. Allows compute time gain adjustment.
-		Alternatively, store as Sum. (Ki * ErrorSum * SampleTime)
+		Store as Integral. Allows compute time gain adjustment. Alternatively, store as Sum. (Ki * ErrorSum * SampleTime)
 	*/
 	/* Forward rectangular approximation */
 	integral32 = p_pid->Integral32 + ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift);
@@ -70,8 +69,6 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 	/* Dynamic Clamp */
 	integralMin = math_min(p_pid->OutputMin - proportional, 0);
 	integralMax = math_max(p_pid->OutputMax - proportional, 0);
-	// integralMin = p_pid->OutputMin;
-	// integralMax = p_pid->OutputMax;
 
 	if 		(integral > integralMax) 	{ integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
 	else if	(integral < integralMin) 	{ integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }

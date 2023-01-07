@@ -278,11 +278,11 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 
 			Terminal_SendString(p_terminal, "SpeedControl: "); Terminal_SendNum(p_terminal, PID_GetOutput(&p_motor->PidSpeed)); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "RampOut: "); Terminal_SendNum(p_terminal, Linear_Ramp_GetOutput(&p_motor->Ramp)); Terminal_SendString(p_terminal, "\r\n");
-			Terminal_SendString(p_terminal, "DeltaD: "); Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaD); Terminal_SendString(p_terminal, "\r\n");
-			Terminal_SendString(p_terminal, "DeltaT: "); Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaT); Terminal_SendString(p_terminal, "\r\n");
-			Terminal_SendString(p_terminal, "DeltaTh: "); Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaTh); Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "DeltaD: "); Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaD); Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "DeltaT: "); Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaT); Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "DeltaTh: "); Terminal_SendNum(p_terminal, p_motor->Encoder.DeltaTh); Terminal_SendString(p_terminal, "\r\n");
 			Terminal_SendString(p_terminal, "FreqD: "); Terminal_SendNum(p_terminal, p_motor->Encoder.FreqD); Terminal_SendString(p_terminal, "\r\n");
-			Terminal_SendString(p_terminal, "TotalD: "); Terminal_SendNum(p_terminal, p_motor->Encoder.TotalD); Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "TotalD: "); Terminal_SendNum(p_terminal, p_motor->Encoder.TotalD); Terminal_SendString(p_terminal, "\r\n");
 
 			// Terminal_SendString(p_terminal, "Throttle: "); 	Terminal_SendNum(p_terminal, MotAnalogUser_GetThrottle(&p_mc->AnalogUser)); Terminal_SendString(p_terminal, " Frac16\r\n");
 			// Terminal_SendString(p_terminal, "Brake: "); 	Terminal_SendNum(p_terminal, MotAnalogUser_GetBrake(&p_mc->AnalogUser)); Terminal_SendString(p_terminal, " Frac16\r\n");
@@ -298,6 +298,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
         	Terminal_SendString(p_terminal, "IPhasePeak: "); Terminal_SendNum(p_terminal, Motor_User_GetIPhase_Amp(p_motor)); Terminal_SendString(p_terminal, " Amp\r\n");
 			Terminal_SendString(p_terminal, "Capture: "); Terminal_SendNum(p_terminal, p_motor->IPhasePeak_Adcu); Terminal_SendString(p_terminal, " ADCU\r\n");
 			Terminal_SendString(p_terminal, "FOC: "); Terminal_SendNum(p_terminal, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsIa, FOC_GetIMagnitude(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_terminal, " ADCU\r\n");
+			Terminal_SendString(p_terminal, "FOC Clarke: "); Terminal_SendNum(p_terminal, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsIa, FOC_GetIMagnitude_Clarke(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_terminal, " ADCU\r\n");
 
 
 			// Terminal_SendString(p_terminal, "Ia: "); 	Terminal_SendNum(p_terminal, p_motor->Foc.Ia); Terminal_SendString(p_terminal, "\r\n");
@@ -350,7 +351,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			// Terminal_SendString(p_terminal, "ILimitActiveId: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveId); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ILimitActive: "); Terminal_SendNum(p_terminal, p_motor->ILimitActiveSentinel); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ILimitMotoring_Frac16: "); Terminal_SendNum(p_terminal, p_motor->ILimitMotoring_Frac16); Terminal_SendString(p_terminal, "\r\n");
-			// Terminal_SendString(p_terminal, "VoltageModeILimitActive: "); Terminal_SendNum(p_terminal, p_motor->ControlFlags.VoltageModeILimitActive); Terminal_SendString(p_terminal, "\r\n");
+			// Terminal_SendString(p_terminal, "VoltageModeILimitActive: "); Terminal_SendNum(p_terminal, p_motor->StatusFlags.VoltageModeILimitActive); Terminal_SendString(p_terminal, "\r\n");
 
 			// Terminal_SendString(p_terminal, "SpeedPid Limit: "); Terminal_SendNum(p_terminal, p_motor->PidSpeed.OutputMax); Terminal_SendString(p_terminal, "\r\n");
 			// Terminal_SendString(p_terminal, "ElecAngle: "); Terminal_SendNum(p_terminal, Motor_User_GetElectricalAngle(p_motor)); Terminal_SendString(p_terminal, " Deg16\r\n");
@@ -398,7 +399,7 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 		}
 		Terminal_SendString(p_terminal, "\r\n");
 
-		Terminal_SendString(p_terminal, "FeedbackMode: ");
+		Terminal_SendString(p_terminal, "ControlFeedbackMode: ");
 		switch(Motor_User_GetFeedbackMode(p_motor))
 		{
 			case MOTOR_FEEDBACK_MODE_OPEN_LOOP: 				Terminal_SendString(p_terminal, "OPEN_LOOP"); 		break;
@@ -851,7 +852,7 @@ static Cmd_Status_T Cmd_beep(MotorController_T * p_mc, int argc, char ** argv)
 	return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_speedv(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_kvspeed(MotorController_T * p_mc, int argc, char ** argv)
 {
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	Terminal_T * p_terminal = &p_mc->Shell.Terminal;
@@ -864,19 +865,19 @@ static Cmd_Status_T Cmd_speedv(MotorController_T * p_mc, int argc, char ** argv)
 		rpm = Motor_User_GetSpeedVRef_Rpm(p_motor);
 
 		Terminal_SendString(p_terminal, "\r\nSpeedV_Rpm: "); Terminal_SendNum(p_terminal, rpm);
-		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToSpeedV(p_motor, rpm));
+		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToVSpeed(p_motor, rpm));
 		Terminal_SendString(p_terminal, " Frac16\r\n");
 
 		Terminal_SendString(p_terminal, "RPM: "); Terminal_SendNum(p_terminal, rpm*3U/4U);
-		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToSpeedV(p_motor, rpm*3U/4U));
+		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToVSpeed(p_motor, rpm*3U/4U));
 		Terminal_SendString(p_terminal, " Frac16\r\n");
 
 		Terminal_SendString(p_terminal, "RPM: "); Terminal_SendNum(p_terminal, rpm/2U);
-		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToSpeedV(p_motor, rpm/2U));
+		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToVSpeed(p_motor, rpm/2U));
 		Terminal_SendString(p_terminal, " Frac16\r\n");
 
  		Terminal_SendString(p_terminal, "RPM: "); Terminal_SendNum(p_terminal, rpm*1U/4U);
-		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToSpeedV(p_motor, rpm*1U/4U));
+		Terminal_SendString(p_terminal, " PWM: "); Terminal_SendNum(p_terminal, Motor_User_ConvertToVSpeed(p_motor, rpm*1U/4U));
 		Terminal_SendString(p_terminal, " Frac16\r\n");
 	}
 
@@ -1105,7 +1106,7 @@ const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 	{"rev", 		"Rev motor",	 					(Cmd_Function_T)Cmd_rev, 		{ .FUNCTION = (Cmd_ProcessFunction_T)Cmd_rev_Proc, 			.PERIOD = 250U } },
 	{"servo", 		"servo mode", 						(Cmd_Function_T)Cmd_servo, 		{0U}	},
 	{"beep", 		"beep",								(Cmd_Function_T)Cmd_beep, 		{0U}	},
-	{"speedv", 		"speedv",							(Cmd_Function_T)Cmd_speedv, 	{0U}	},
+	{"speedv", 		"speedv",							(Cmd_Function_T)Cmd_kvspeed, 	{0U}	},
 
 	{"ipeak", 		"ipeak",							(Cmd_Function_T)Cmd_ipeak, 		{0U}	},
 	{"ilimit", 		"ilimit",							(Cmd_Function_T)Cmd_ilimit, 	{0U}	},

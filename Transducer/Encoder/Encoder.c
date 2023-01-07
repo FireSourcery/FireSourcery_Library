@@ -86,17 +86,30 @@ void Encoder_Init_SinglePhase(Encoder_T * p_encoder)
 
 }
 
-void Encoder_CalibrateAlign(Encoder_T * p_encoder)
+/* Outer module sets direction */
+void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool isPositive) { p_encoder->IsSinglePhasePositive = isPositive; }
+
+void Encoder_CalibrateAlignZero(Encoder_T * p_encoder)
 {
-	p_encoder->Align = ENCODER_ALIGN_SET;
 	p_encoder->Angle32 = 0U;
 	_Encoder_ZeroPulseCount(p_encoder);
 }
 
 void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder)
 {
-	p_encoder->Align = ENCODER_ALIGN_VALIDATED;
+	p_encoder->Align = ENCODER_ALIGN_YES;
 	_Encoder_ZeroPulseCount(p_encoder);
+}
+
+void Encoder_CalibrateIndexStart(Encoder_T * p_encoder)
+{
+	// _Encoder_ZeroPulseCount(p_encoder);
+}
+
+void Encoder_CalibrateIndex(Encoder_T * p_encoder)
+{
+	p_encoder->Align = ENCODER_ALIGN_ABSOLUTE;
+	// p_encoder->AbsoluteOffset = p_encoder->IndexOffset;
 }
 
 void Encoder_ClearAlign(Encoder_T * p_encoder)
@@ -104,19 +117,6 @@ void Encoder_ClearAlign(Encoder_T * p_encoder)
 	p_encoder->Align = ENCODER_ALIGN_NO;
 }
 
-void Encoder_CalibrateAbsolutePositionRef(Encoder_T * p_encoder)
-{
-	// _Encoder_ZeroPulseCount(p_encoder);
-}
-
-void Encoder_CalibrateAbsolutePositionOffset(Encoder_T * p_encoder)
-{
-	p_encoder->Align = ENCODER_ALIGN_ABSOLUTE;
-	// p_encoder->AbsoluteOffset = p_encoder->IndexOffset;
-}
-
-/* Outer module sets direction */
-void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool isPositive) { p_encoder->IsSinglePhasePositive = isPositive; }
 
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled) { p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled; }
@@ -130,6 +130,7 @@ void Encoder_CalibrateQuadratureReference(Encoder_T * p_encoder)
 {
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
 	p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
+	HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0);
 #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
 	p_encoder->CounterD = 0;
 #endif
@@ -151,6 +152,7 @@ void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder)
 	p_encoder->Params.IsALeadBPositive = (p_encoder->CounterD > 0);
 #endif
 }
+
 #endif
 
 /******************************************************************************/

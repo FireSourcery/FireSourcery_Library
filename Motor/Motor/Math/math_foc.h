@@ -185,9 +185,9 @@ static inline void foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t v
 /* limit, prioritize maintaining d */
 static inline void foc_circlelimit_dmax(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax, qfrac16_t dMax)
 {
-	uint32_t vectorMaxSquared = (int32_t)vectorMax * (int32_t)vectorMax;
-	uint32_t dSquared = (int32_t)(*p_d) * (int32_t)(*p_d);
-	uint32_t qSquared = (int32_t)(*p_q) * (int32_t)(*p_q);
+	uint32_t vectorMaxSquared = (int32_t)vectorMax * vectorMax;
+	uint32_t dSquared = (int32_t)(*p_d) * (*p_d);
+	uint32_t qSquared = (int32_t)(*p_q) * (*p_q);
 	uint32_t dqSquared = dSquared + qSquared;
 	uint32_t qMaxSquared;
 	uint16_t qMax;
