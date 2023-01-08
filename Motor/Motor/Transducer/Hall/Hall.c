@@ -94,7 +94,7 @@ void Hall_CalibratePhaseInvB(Hall_T * p_hall) 	{ if(Hall_PollCaptureSensors(p_ha
 // 	void * p_waitContext
 // )
 // {
-// 	const uint16_t duty = p_motor->Parameters.AlignVPwm_Frac16;
+// 	const uint16_t duty = p_motor->Parameters.AlignPower_Frac16;
 // 	bool isComplete = false;
 
 // 	if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)

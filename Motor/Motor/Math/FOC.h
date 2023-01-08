@@ -60,8 +60,8 @@ typedef struct FOC_Tag
 	qfrac16_t Cosine;
 
 	/* PID Input Variable - From Ramp, SpeedPid, OpenLoop */
-	qfrac16_t IdReq;
-	qfrac16_t IqReq;
+	qfrac16_t VIdReq;
+	qfrac16_t VIqReq;
 
 	/* PID Feedback Variable */
 	qfrac16_t Id;
@@ -101,8 +101,27 @@ static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 	svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
 }
 
-static inline uint16_t FOC_GetIMagnitude(FOC_T * p_foc) 		{ return qfrac16_vectormagnitude(p_foc->Id, p_foc->Iq); }
-static inline uint16_t FOC_GetIMagnitude_Clarke(FOC_T * p_foc) 	{ return qfrac16_vectormagnitude(p_foc->Ialpha, p_foc->Ibeta); }
+/* VBemf */
+static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc)
+{
+	foc_clarke(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Va, p_foc->Vb, p_foc->Vc);
+	foc_park_vector(&p_foc->Vd, &p_foc->Vq, p_foc->Valpha, p_foc->Vbeta, p_foc->Sine, p_foc->Cosine);
+}
+
+// static inline uint16_t FOC_ProcVBemfMagnitude(FOC_T * p_foc)
+// {
+// 	foc_clarke(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Va, p_foc->Vb, p_foc->Vc);
+// 	return qfrac16_vectormagnitude(p_foc->Valpha, p_foc->Vbeta);
+// }
+
+static inline uint16_t FOC_GetIMagnitude_Idq(FOC_T * p_foc) 	{ return qfrac16_vectormagnitude(p_foc->Id, p_foc->Iq); }
+static inline uint16_t FOC_GetIMagnitude(FOC_T * p_foc) 		{ return qfrac16_vectormagnitude(p_foc->Ialpha, p_foc->Ibeta); }
+static inline uint16_t FOC_GetVMagnitude(FOC_T * p_foc) 		{ return qfrac16_vectormagnitude(p_foc->Valpha, p_foc->Vbeta); }
+static inline qfrac16_t FOC_GetIPhase(FOC_T * p_foc) 			{ return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
+static inline qfrac16_t FOC_GetVPhase(FOC_T * p_foc) 			{ return FOC_GetVMagnitude(p_foc) * math_sign(p_foc->Vq); }
+
+/* [0:49152] <=> [0:1.5] */
+static inline int32_t FOC_GetPower(FOC_T * p_foc) 				{ return (qfrac16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2); }
 
 static inline void FOC_SetTheta(FOC_T * p_foc, qangle16_t theta) { qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, theta); }
 static inline void FOC_SetIa(FOC_T * p_foc, qfrac16_t ia) { p_foc->Ia = ia; }
@@ -126,19 +145,6 @@ static inline qfrac16_t FOC_GetIc(FOC_T * p_foc) { return p_foc->Ic; }
 static inline qfrac16_t FOC_GetIalpha(FOC_T * p_foc) { return p_foc->Ialpha; }
 static inline qfrac16_t FOC_GetIbeta(FOC_T * p_foc) { return p_foc->Ibeta; }
 
-/* VBemf */
-static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc)
-{
-	foc_clarke(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Va, p_foc->Vb, p_foc->Vc);
-	foc_park_vector(&p_foc->Vd, &p_foc->Vq, p_foc->Valpha, p_foc->Vbeta, p_foc->Sine, p_foc->Cosine);
-}
-
-static inline qfrac16_t FOC_GetVBemfMagnitude(FOC_T * p_foc)
-{
-	foc_clarke(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Va, p_foc->Vb, p_foc->Vc);
-	return qfrac16_vectormagnitude(p_foc->Valpha, p_foc->Vbeta);
-}
-
 static inline void FOC_SetVBemfA(FOC_T * p_foc, qfrac16_t va) { p_foc->Va = va; }
 static inline void FOC_SetVBemfB(FOC_T * p_foc, qfrac16_t vb) { p_foc->Vb = vb; }
 static inline void FOC_SetVBemfC(FOC_T * p_foc, qfrac16_t vc) { p_foc->Vc = vc; }
@@ -146,10 +152,10 @@ static inline qfrac16_t FOC_GetVBemfA(FOC_T * p_foc) { return p_foc->Va; }
 static inline qfrac16_t FOC_GetVBemfB(FOC_T * p_foc) { return p_foc->Vb; }
 static inline qfrac16_t FOC_GetVBemfC(FOC_T * p_foc) { return p_foc->Vc; }
 
-static inline void FOC_SetIVdReq(FOC_T * p_foc, qfrac16_t id) { p_foc->IdReq = id; }
-static inline void FOC_SetIVqReq(FOC_T * p_foc, qfrac16_t iq) { p_foc->IqReq = iq; }
-static inline qfrac16_t FOC_GetIVdReq(FOC_T * p_foc) { return p_foc->IdReq; }
-static inline qfrac16_t FOC_GetIVqReq(FOC_T * p_foc) { return p_foc->IqReq; }
+static inline void FOC_SetIVdReq(FOC_T * p_foc, qfrac16_t id) { p_foc->VIdReq = id; }
+static inline void FOC_SetIVqReq(FOC_T * p_foc, qfrac16_t iq) { p_foc->VIqReq = iq; }
+static inline qfrac16_t FOC_GetIVdReq(FOC_T * p_foc) { return p_foc->VIdReq; }
+static inline qfrac16_t FOC_GetIVqReq(FOC_T * p_foc) { return p_foc->VIqReq; }
 
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);

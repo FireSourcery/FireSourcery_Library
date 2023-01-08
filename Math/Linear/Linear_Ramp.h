@@ -43,7 +43,7 @@ extern int32_t _Linear_Ramp_CalcOutput(const Linear_T * p_linear, int32_t curren
 
 static inline int32_t Linear_Ramp_CalcOutputN(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps)
 {
-	return _Linear_Ramp_CalcOutput(p_linear, currentRampValue, steps) >> 16U;
+	return _Linear_Ramp_CalcOutput(p_linear, currentRampValue, steps) >> p_linear->SlopeShift;
 }
 
 static inline int32_t Linear_Ramp_CalcOutput(const Linear_T * p_linear, int32_t currentRampValue)
@@ -51,14 +51,15 @@ static inline int32_t Linear_Ramp_CalcOutput(const Linear_T * p_linear, int32_t 
 	return Linear_Ramp_CalcOutputN(p_linear, currentRampValue, 1U);
 }
 
-static inline void Linear_Ramp_ProcOutputN(Linear_T * p_linear, int32_t steps)
+static inline int32_t Linear_Ramp_ProcOutputN(Linear_T * p_linear, int32_t steps)
 {
 	if(p_linear->YOffset != p_linear->YReference) { p_linear->YOffset = _Linear_Ramp_CalcOutput(p_linear, p_linear->YOffset, steps); }
+	return p_linear->YOffset >> p_linear->SlopeShift;
 }
 
-static inline void Linear_Ramp_ProcOutput(Linear_T * p_linear)
+static inline int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear)
 {
-	Linear_Ramp_ProcOutputN(p_linear, 1U);
+	return Linear_Ramp_ProcOutputN(p_linear, 1U);
 }
 
 static inline void Linear_Ramp_SetTarget(Linear_T * p_linear, int32_t target) { p_linear->YReference = (target << p_linear->SlopeShift); }

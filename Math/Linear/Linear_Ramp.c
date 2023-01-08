@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "Linear_Ramp.h"
 
-#define LINEAR_RAMP_SHIFT 15U
+#define LINEAR_RAMP_SHIFT 15U /* Fixed Slope, Fixed input interval without overflow */
 
 /*
 	store as y shifted
@@ -89,7 +89,7 @@ void Linear_Ramp_Init(Linear_T * p_linear, uint32_t duration_Ticks, int32_t init
 }
 
 /*
-	Overflow: 	(duration_Ms * updateFreq_Hz) > 131,071,000
+	Overflow: (duration_Ms * updateFreq_Hz) > 131,071,000
 */
 void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
 {

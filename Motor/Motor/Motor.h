@@ -290,14 +290,13 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 	uint16_t ILimitGenerating_Frac16;
 
 	uint16_t RampAccel_Cycles;
-	uint16_t AlignVPwm_Frac16;
+	uint16_t AlignPower_Frac16; 	/* V or I Frac16 */
 	uint32_t AlignTime_Cycles;
 	// uint16_t VoltageBrakeScalar_InvFrac16; /* [0:65535], 0 is highest intensity */
 	//	uint8_t BrakeCoeffcient;
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-	// uint16_t OpenLoopSpeed_RPM; 	/* Max */
-	uint16_t OpenLoopSpeed_Frac16; 	/* Max */
-	uint16_t OpenLoopVPwm_Frac16; 	/* Frac16 */
+	uint16_t OpenLoopSpeed_Frac16; 	/* Max, 65536 will overflow */
+	uint16_t OpenLoopPower_Frac16; 	/* V or I Frac16 */
 	uint16_t OpenLoopAccel_Cycles;		/* Time to reach OpenLoopSpeed_RPM */
 	// uint16_t OpenLoopVHzGain;
 #endif
@@ -418,11 +417,11 @@ typedef struct Motor_Tag
 	uint32_t IBus_Frac16;
 	uint32_t IBusSum_Frac16;
 	uint16_t VPwm; 	/* Six-Step Control Variable */
+	volatile uint16_t VBemfPeak_Adcu;
+	volatile uint16_t VBemfPeakTemp_Adcu;
+	volatile uint16_t IPhasePeak_Adcu;
+	volatile uint16_t IPhasePeakTemp_Adcu;
 #endif
-	uint16_t VBemfPeak_Adcu;
-	uint16_t VBemfPeakTemp_Adcu;
-	uint16_t IPhasePeak_Adcu;
-	uint16_t IPhasePeakTemp_Adcu;
 
 	/*
 		OpenLoops speed ramp
@@ -444,7 +443,7 @@ typedef struct Motor_Tag
 	Linear_T UnitsIb;
 	Linear_T UnitsIc;
 	Linear_T UnitsVabc;		/* Bemf V,mV, and Frac16 conversion */
-	Linear_T UnitsVSpeed;
+	Linear_T UnitsVSpeed; /* Frac16 Speed => V */
 
 	Filter_T FilterA; /* Calibration use */
 	Filter_T FilterB;
@@ -507,15 +506,23 @@ static inline void Motor_ProcCommutationMode(Motor_T * p_motor, Motor_Commutatio
 /******************************************************************************/
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 static inline int32_t _Motor_ConvertToSpeedFrac16(Motor_T * p_motor, int32_t speed_rpm) 	{ return speed_rpm * 65535 / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
-static inline int16_t _Motor_ConvertToSpeedRpm(Motor_T * p_motor, int32_t speed_frac16) 	{ return speed_frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / 65536; }
+static inline int16_t _Motor_ConvertToRpm(Motor_T * p_motor, int32_t speed_frac16) 			{ return speed_frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / 65536; }
+static inline uint32_t _Motor_ConvertToMillis(Motor_T * p_motor, uint32_t controlCycles) 	{ (void)p_motor; return controlCycles * 1000 / GLOBAL_MOTOR.CONTROL_FREQ; }
+static inline uint32_t _Motor_ConvertToControlCycles(Motor_T * p_motor, uint32_t millis) 	{ (void)p_motor; return millis * GLOBAL_MOTOR.CONTROL_FREQ / 1000; }
 static inline int32_t _Motor_ConvertToIFrac16(Motor_T * p_motor, int32_t i_amp) 			{ (void)p_motor; return i_amp * 65535 /  GLOBAL_MOTOR.I_UNITS_AMPS; }
-static inline int16_t _Motor_ConvertToIAmp(Motor_T * p_motor, int32_t i_frac16) 			{ (void)p_motor; return i_frac16 *  GLOBAL_MOTOR.I_UNITS_AMPS / 65536; }
-static inline uint32_t _Motor_ConvertToMillis(Motor_T * p_motor, int32_t controlCycles) 	{ (void)p_motor; return controlCycles * 1000 / GLOBAL_MOTOR.CONTROL_FREQ; }
-static inline uint32_t _Motor_ConvertToControlCycles(Motor_T * p_motor, int32_t millis) 	{ (void)p_motor; return millis * GLOBAL_MOTOR.CONTROL_FREQ / 1000; }
-// static inline uint32_t speed_angle16torpm(uint16_t angle16, uint32_t sampleFreq) { return  (angle16 * sampleFreq >> 16U) * 60U; }
-// static inline uint32_t speed_rpmtoangle16(uint16_t rpm, uint32_t sampleFreq) { return (rpm << 16U) / (60U * sampleFreq); }
-static inline uint32_t _Motor_ConvertAngleToRpm(uint16_t angle16, uint32_t sampleFreq) 		{ return (angle16 * sampleFreq >> 16U) * 60U; }
-static inline uint32_t _Motor_ConvertRpmToAngle(uint16_t rpm, uint32_t sampleFreq) 			{ return (rpm << 16U) / (60U * sampleFreq); }
+static inline int16_t _Motor_ConvertToAmps(Motor_T * p_motor, int32_t i_frac16) 			{ (void)p_motor; return i_frac16 *  GLOBAL_MOTOR.I_UNITS_AMPS / 65536; }
+static inline int32_t _Motor_ConvertToVFrac16(Motor_T * p_motor, int32_t v_volts) 			{ (void)p_motor; return v_volts * 65535 / Global_Motor_GetVSource_V(); }
+static inline int16_t _Motor_ConvertToVolts(Motor_T * p_motor, int32_t v_frac16) 			{ (void)p_motor; return v_frac16 * Global_Motor_GetVSource_V() / 65536; }
+static inline int32_t _Motor_ConvertToWatts(Motor_T * p_motor, int32_t vi_frac16) 			{ (void)p_motor; return vi_frac16 * GLOBAL_MOTOR.I_UNITS_AMPS * Global_Motor_GetVSource_V() / 65536; }
+
+// static inline uint32_t speed_angle16torpm(uint16_t angle16, uint32_t sampleFreq) 		{ return  (angle16 * sampleFreq >> 16U) * 60U; }
+// static inline uint32_t speed_rpmtoangle16(uint16_t rpm, uint32_t sampleFreq) 			{ return (rpm << 16U) / (60U * sampleFreq); }
+// static inline uint32_t _Motor_ConvertMechAngleToRpm(Motor_T * p_motor, uint16_t angle16 ) 		{ return (angle16 * GLOBAL_MOTOR.SPEED_FREQ >> 16U) * 60U; }
+// static inline uint32_t _Motor_ConvertMechRpmToAngle(Motor_T * p_motor, uint16_t rpm ) 			{ return (rpm << 16U) / (60U * GLOBAL_MOTOR.SPEED_FREQ); }
+// static inline int32_t _Motor_VSpeed_ConvertSpeedToVFrac16(Motor_T * p_motor, int32_t speed_frac16) 	{ return speed_frac16 * p_motor->Parameters.SpeedVRef_Rpm / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
+// static inline int32_t _Motor_VSpeed_ConvertRpmToVFrac16(Motor_T * p_motor, int32_t speed_rpm) 	{ return _Motor_VSpeed_ConvertSpeedToVFrac16(p_motor, _Motor_ConvertToSpeedFrac16(p_motor, speed_rpm) ); }
+// static inline uint32_t _Motor_VSpeed_ConvertToVSpeed(Motor_T * p_motor, uint16_t rpm) 		{ return Linear_Function(&p_motor->UnitsVSpeed, _Motor_ConvertToSpeedFrac16(p_motor, rpm)); }
+
 #endif
 
 /******************************************************************************/
@@ -619,12 +626,10 @@ static inline void Motor_SetFeedbackModeFlags(Motor_T * p_motor, Motor_FeedbackM
 */
 static inline void Motor_ProcCmdControlFeedbackMode(Motor_T * p_motor)
 {
-
-
 	// if(p_motor->ControlFeedbackMode.State != mode.State)
 	// {
 	// 	p_motor->ControlFeedbackMode = mode;
-	// 	Motor_FOC_SetFeedbackMatch(p_motor);
+	// 	Motor_FOC_ProcFeedbackMatch(p_motor);
 	// }
 }
 
@@ -696,7 +701,8 @@ extern void Motor_Init(Motor_T * p_motor);
 extern void Motor_InitReboot(Motor_T * p_motor);
 extern void Motor_InitSensor(Motor_T * p_motor);
 
-extern void Motor_ProcSensorAngle(Motor_T * p_motor);
+extern qangle16_t Motor_PollSensorAngle(Motor_T * p_motor);
+// extern void Motor_CaptureSensorCycle(Motor_T * p_motor);
 extern bool Motor_ProcSensorSpeed(Motor_T * p_motor);
 extern void Motor_ProcSpeedFeedback(Motor_T * p_motor);
 extern qangle16_t Motor_GetMechanicalAngle(Motor_T * p_motor);
@@ -705,7 +711,7 @@ extern void Motor_ZeroSensor(Motor_T * p_motor);
 extern void Motor_ZeroSensorAlign(Motor_T * p_motor);
 extern void Motor_CalibrateSensorAlign(Motor_T * p_motor);
 extern bool Motor_CheckSensorFeedback(Motor_T * p_motor);
-extern bool Motor_CheckAlignStartUpFault(Motor_T * p_motor);
+extern bool Motor_CheckAlignFault(Motor_T * p_motor);
 
 extern void Motor_ResetPidILimits(Motor_T * p_motor);
 extern void Motor_SetLimitsCcw(Motor_T * p_motor);

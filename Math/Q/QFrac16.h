@@ -49,6 +49,7 @@ static const qfrac16_t QFRAC16_1_DIV_4 = 0x2000;
 static const qfrac16_t QFRAC16_3_DIV_4 = 0x6000;
 static const qfrac16_t QFRAC16_1_DIV_3 = 0x2AAA;
 static const qfrac16_t QFRAC16_2_DIV_3 = 0x5555;
+static const qfrac16_t QFRAC16_1_DIV_SQRT2 = 0x5A82; /*!< 0.70710678118f */
 static const qfrac16_t QFRAC16_1_DIV_SQRT3 = 0x49E7; /*!< 0.57735026919f */
 static const qfrac16_t QFRAC16_SQRT3_DIV_2 = 0x6EDA;
 static const qfrac16_t QFRAC16_SQRT3_DIV_4 = 0x376D;

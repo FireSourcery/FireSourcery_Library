@@ -138,7 +138,7 @@ static inline bool Timer_GetIsPeriodic(Timer_T * p_timer) 					{ return !p_timer
 /*!
 	Periodic Only Timer
 */
-/******************************************************************************/
+/******************************************* ***********************************/
 static inline bool Timer_Periodic_Poll(Timer_T * p_timer)
 {
 	bool isComplete = Timer_CheckComplete(p_timer);
