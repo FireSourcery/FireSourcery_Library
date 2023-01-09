@@ -126,49 +126,25 @@ static inline void ProcOuterFeedback(Motor_T * p_motor)
 {
 	Linear_Ramp_ProcOutput(&p_motor->Ramp);
 
-	// if((Motor_ProcSensorSpeed(p_motor) == true) && (p_motor->ControlFeedbackMode.Speed == 1U))
-	// {
-	// 	FOC_SetIVqReq(&p_motor->Foc, PID_Proc(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp), p_motor->Speed_Frac16 / 2));
-	// 	FOC_SetIVdReq(&p_motor->Foc, 0);
-	// }
-	// else if(p_motor->ControlFeedbackMode.Speed == 0U)
-	// {
-	// 	// if(Motor_CheckSpeedOverLimit(Motor_T * p_motor) == true)
-	// 	// if(math_isbound(speed_FracS16, p_motor->SpeedLimitCw_FracS16, p_motor->SpeedLimitCcw_FracS16) == true)
-	// 	// {
-	// 		FOC_SetIVqReq(&p_motor->Foc, Linear_Ramp_GetOutput(&p_motor->Ramp));
-	// 		FOC_SetIVdReq(&p_motor->Foc, 0);
-	// 	// }
-	// 	// else
-	// 	// {
-	// 	// 	p_motor->ControlFeedbackMode.Speed = 1U;
-	// 	// 	PID_SetOutputState(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp));
-	// 	// 	if		(speed_FracS16 < p_motor->SpeedLimitCw_FracS16) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCw_FracS16); }
-	// 	// 	else if	(speed_FracS16 > p_motor->SpeedLimitCcw_FracS16) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCcw_FracS16); }
-	// 	// }
-	// }
-	if(Motor_ProcSensorSpeed(p_motor) == true)
+	if((Motor_ProcSensorSpeed(p_motor) == true) && (p_motor->ControlFeedbackMode.Speed == 1U))
 	{
-		if(p_motor->ControlFeedbackMode.Speed == 1U)
+		FOC_SetIVqReq(&p_motor->Foc, PID_Proc(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp), p_motor->Speed_Frac16 / 2));
+		FOC_SetIVdReq(&p_motor->Foc, 0);
+	}
+	else if(p_motor->ControlFeedbackMode.Speed == 0U)
+	{
+		// if(Motor_CheckSpeedOverLimit(Motor_T * p_motor) == true)
+		if(math_isbound(p_motor->Speed_Frac16, (int32_t)0 - p_motor->SpeedLimitCw_Frac16, p_motor->SpeedLimitCcw_Frac16) == true)
 		{
-			FOC_SetIVqReq(&p_motor->Foc, PID_Proc(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp), p_motor->Speed_Frac16 / 2));
+			FOC_SetIVqReq(&p_motor->Foc, Linear_Ramp_GetOutput(&p_motor->Ramp));
 			FOC_SetIVdReq(&p_motor->Foc, 0);
 		}
 		else
 		{
-			// if(Motor_CheckSpeedOverLimit(Motor_T * p_motor) == true)
-			// if(math_isbound(speed_FracS16, p_motor->SpeedLimitCw_FracS16, p_motor->SpeedLimitCcw_FracS16) == true)
-			// {
-			FOC_SetIVqReq(&p_motor->Foc, Linear_Ramp_GetOutput(&p_motor->Ramp));
-			FOC_SetIVdReq(&p_motor->Foc, 0);
-			// }
-			// else
-			// {
-			// 	p_motor->ControlFeedbackMode.Speed = 1U;
-			// 	PID_SetOutputState(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp));
-			// 	if		(speed_FracS16 < p_motor->SpeedLimitCw_FracS16) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCw_FracS16); }
-			// 	else if	(speed_FracS16 > p_motor->SpeedLimitCcw_FracS16) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCcw_FracS16); }
-			// }
+			p_motor->ControlFeedbackMode.Speed = 1U;
+			PID_SetOutputState(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp));
+			if		(p_motor->Speed_Frac16 < p_motor->SpeedLimitCw_Frac16) 		{ Linear_Ramp_SetOutputState(&p_motor->Ramp, (int32_t)0 - p_motor->SpeedLimitCw_Frac16 / 2); }
+			else if	(p_motor->Speed_Frac16 > p_motor->SpeedLimitCcw_Frac16) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCcw_Frac16 / 2); }
 		}
 	}
 }

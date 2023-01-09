@@ -165,24 +165,19 @@ void Motor_User_SetVoltageCmdValue(Motor_T * p_motor, int16_t vCmd)
 	{
 		Linear_Ramp_SetTarget(&p_motor->Ramp, vReq);
 	}
-	else if (Motor_CheckOpenLoop(p_motor) == true)
-	{
-		// Motor_User_SetOpenLoopCmdValue(p_motor, ivCmd);
-	}
-	else
-	{
-		if((p_motor->ControlFeedbackMode.Speed == 1U) && (Motor_CheckSpeedOverThreshold(p_motor) == false)) 	{ p_motor->ControlFeedbackMode.Speed = 0U; }
-		if((p_motor->ControlFeedbackMode.Current == 1U) && (Motor_FOC_CheckIOverThreshold(p_motor) == false)) 	{ p_motor->ControlFeedbackMode.Current = 0U; }
+	// else
+	// {
+	// 	if((p_motor->ControlFeedbackMode.Speed == 1U) && (Motor_CheckSpeedOverThreshold(p_motor) == false)) 	{ p_motor->ControlFeedbackMode.Speed = 0U; }
+	// 	if((p_motor->ControlFeedbackMode.Current == 1U) && (Motor_FOC_CheckIOverThreshold(p_motor) == false)) 	{ p_motor->ControlFeedbackMode.Current = 0U; }
 
-		if(p_motor->ControlFeedbackMode.Speed == 1U)
-		{
-			if((Motor_CheckSpeedOverThreshold(p_motor) == false) || (math_abs(vReq) < math_abs(p_motor->PidSpeed.Output)))
-			{
-				p_motor->ControlFeedbackMode.Speed = 0U;
-			}
-		}
-
-	}
+	// 	if(p_motor->ControlFeedbackMode.Speed == 1U)
+	// 	{
+	// 		if((Motor_CheckSpeedOverThreshold(p_motor) == false) || (math_abs(vReq) < math_abs(p_motor->PidSpeed.Output)))
+	// 		{
+	// 			p_motor->ControlFeedbackMode.Speed = 0U;
+	// 		}
+	// 	}
+	// }
 }
 
 void Motor_User_SetVoltageModeCmd(Motor_T * p_motor, int16_t voltage)
@@ -340,8 +335,7 @@ void Motor_User_SetDefaultFeedbackMode(Motor_T * p_motor)
 
 void Motor_User_SetDefaultFeedbackCmdValue(Motor_T * p_motor, int16_t userCmd)
 {
-	Motor_FeedbackMode_T flags;
-	flags.State = Motor_ConvertFeedbackModeId(p_motor->Parameters.DefaultFeedbackMode).State;
+	Motor_FeedbackMode_T flags = Motor_ConvertFeedbackModeId(p_motor->Parameters.DefaultFeedbackMode);
 
 	if		(flags.OpenLoop == 1U) 	{ Motor_User_SetOpenLoopCmdValue(p_motor, userCmd); }
 	else if	(flags.Position == 1U) 	{ Motor_User_SetPositionCmdValue(p_motor, userCmd); }
