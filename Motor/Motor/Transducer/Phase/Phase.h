@@ -24,14 +24,13 @@
 /*!
 	@file 	Phase.h
 	@author FireSourcery
+	@version V0
 	@brief  3-Phase PWM functions. Includes 2-Phase Polar implementation
 
 	Treats each phase as a complementary PWM output.
-	2-Phase settings: PWM positive side MOSFETs, ground side bottom MOSFET stays on.
+	2-Phase: PWM positive side MOSFETs, ground side bottom MOSFET stays on.
 	e.g. PhaseAB -> PWM phase A MOSFETs, phase B bottom MOSFET stays on.
-	Implementation details; dead time, are delegated to user/HAL functions
 
-	@version V0
 */
 /******************************************************************************/
 #ifndef PHASE_H
@@ -83,7 +82,7 @@ typedef struct Phase_Tag
 	PWM_T PwmA;
 	PWM_T PwmB;
 	PWM_T PwmC;
-	//	PWM_Module_T PwmModule;
+	PWM_T PwmModule;
 #ifdef CONFIG_PHASE_PIN_SWITCH
 	Pin_T PinA;
 	Pin_T PinB;
@@ -96,6 +95,7 @@ Phase_T;
 //p_PwmAHal, p_PwmBHal, p_PwmCHal
 #define PHASE_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel, p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId)	\
 {																	\
+	.PwmModule = PWM_INIT(p_PwmHal, 0, 0),							\
 	.PwmA = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel),		\
 	.PwmB = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmBChannel),		\
 	.PwmC = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmCChannel),		\
@@ -104,9 +104,9 @@ Phase_T;
 	.PinC = PIN_INIT(p_PinCHal, PinCId),							\
 }
 
-static inline void Phase_ClearInterrupt(const Phase_T * p_phase) 	{ PWM_ClearInterrupt(&p_phase->PwmA); }
-static inline void Phase_DisableInterrupt(const Phase_T * p_phase) 	{ PWM_DisableInterrupt(&p_phase->PwmA); }
-static inline void Phase_EnableInterrupt(const Phase_T * p_phase) 	{ PWM_EnableInterrupt(&p_phase->PwmA); }
+static inline void Phase_ClearInterrupt(const Phase_T * p_phase) 	{ PWM_ClearInterrupt(&p_phase->PwmModule); }
+static inline void Phase_DisableInterrupt(const Phase_T * p_phase) 	{ PWM_DisableInterrupt(&p_phase->PwmModule); }
+static inline void Phase_EnableInterrupt(const Phase_T * p_phase) 	{ PWM_EnableInterrupt(&p_phase->PwmModule); }
 
 
 /******************************************************************************/
@@ -119,15 +119,14 @@ extern void Phase_ActivateSwitchABC(const Phase_T * p_phase);
 extern void Phase_Float(const Phase_T * p_phase);
 extern void Phase_Ground(const Phase_T * p_phase);
 
-
 extern void Phase_Polar_ActivateA(const Phase_T * p_phase, uint16_t duty);
 extern void Phase_Polar_ActivateB(const Phase_T * p_phase, uint16_t duty);
 extern void Phase_Polar_ActivateC(const Phase_T * p_phase, uint16_t duty);
 extern void Phase_Polar_ActivateInvA(const Phase_T * p_phase, uint16_t duty);
 extern void Phase_Polar_ActivateInvB(const Phase_T * p_phase, uint16_t duty);
 extern void Phase_Polar_ActivateInvC(const Phase_T * p_phase, uint16_t duty);
-extern void Phase_Polar_Ground(const Phase_T * p_phase);
 
+extern void Phase_Polar_Ground(const Phase_T * p_phase);
 extern void Phase_Polar_ActivateSwitchAC(const Phase_T * p_phase);
 extern void Phase_Polar_ActivateSwitchBC(const Phase_T * p_phase);
 extern void Phase_Polar_ActivateSwitchBA(const Phase_T * p_phase);

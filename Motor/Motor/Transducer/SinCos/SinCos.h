@@ -64,12 +64,12 @@ typedef struct
 	qangle16_t Angle; /* Sensor Output Angle, Mechanical Angle or proportional */
 	// bool IsDirectionPositive;
 
-	qangle16_t DebugAPre;
-	qangle16_t DebugBPre;
-	qangle16_t DebugAPostMech;
-	qangle16_t DebugBPostMech;
-	qangle16_t DebugAPostElec;
-	qangle16_t DebugBPostElec;
+	// qangle16_t DebugAPre;
+	// qangle16_t DebugBPre;
+	// qangle16_t DebugAPostMech;
+	// qangle16_t DebugBPostMech;
+	// qangle16_t DebugAPostElec;
+	// qangle16_t DebugBPostElec;
 }
 SinCos_T;
 

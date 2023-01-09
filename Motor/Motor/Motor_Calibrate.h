@@ -44,7 +44,6 @@ static inline void Motor_Calibrate_StartHall(Motor_T * p_motor)
 	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
 }
 
-//120 degree, hall aligned with phase
 static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
 {
 	const uint16_t duty = p_motor->Parameters.AlignPower_Frac16;
@@ -107,33 +106,30 @@ static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
 static inline void Motor_Calibrate_StartEncoder(Motor_T * p_motor)
 {
 	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
+	Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_Frac16, 0U, 0U);
 }
 
 static inline bool Motor_Calibrate_Encoder(Motor_T * p_motor)
 {
 	bool isComplete = false;
 
-	if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
+	if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
 	{
-//		switch (p_motor->CalibrationStateIndex)
-//		{
-		// Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_Frac16, 0U, 0U); /* Align Phase A 10% pwm */
-//			case 0U:
-//				Encoder_CalibrateQuadratureReference(&p_motor->Encoder);
-//				Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_Frac16, p_motor->Parameters.AlignPower_Frac16, 0U);
-//				p_motor->CalibrationStateIndex = 1U;
-//				break;
-//
-//			case 1U:
-//				Encoder_CalibrateQuadraturePositive(&p_motor->Encoder);
-//				Phase_Float(&p_motor->Phase);
-//				p_motor->CalibrationStateIndex = 0U;
-//				isComplete = true;
-//				break;
-//
-//			default:
-//				break;
-//		}
+		switch(p_motor->CalibrationStateIndex)
+		{
+			case 0U:
+				Encoder_CalibrateQuadratureReference(&p_motor->Encoder);
+				Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignPower_Frac16, 0U);
+				p_motor->CalibrationStateIndex = 1U;
+				break;
+
+			case 1U:
+				Encoder_CalibrateQuadraturePositive(&p_motor->Encoder);
+				Phase_Float(&p_motor->Phase);
+				isComplete = true;
+				break;
+			default: break;
+		}
 	}
 
 	return isComplete;
@@ -176,8 +172,7 @@ static inline bool Motor_Calibrate_Adc(Motor_T *p_motor)
 	}
 	else
 	{
-		/* 4x sample time */
-		if((p_motor->ControlTimerBase & 0b11UL) == 0UL)
+		if((p_motor->ControlTimerBase & 0b11UL) == 0UL)		/* 4x sample time */
 		{
 			if(p_motor->AnalogResults.Ia_Adcu != 0U) { Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu); }
 			if(p_motor->AnalogResults.Ib_Adcu != 0U) { Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_Adcu); }

@@ -100,7 +100,6 @@ void Motor_InitReboot(Motor_T * p_motor)
 #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
 	PID_Init(&p_motor->PidIBus);
 #endif
-	Motor_SetDirectionForward(p_motor);
 
 	/*
 		Ramp 0 to 32767 max in ~500ms, 3.2767 per ControlCycle
@@ -128,7 +127,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 	}
 #endif
 
-	Motor_SetFeedbackModeFlags(p_motor, p_motor->Parameters.DefaultFeedbackMode); // set user control mode so pids set to initial state.
+	p_motor->ControlFeedbackMode.State = p_motor->Parameters.DefaultFeedbackMode; /* set user control mode so limits set to initial state. */
 	p_motor->ControlTimerBase = 0U;
 }
 
@@ -137,6 +136,16 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Position Sensor Feedback - Speed, Angle
 */
 /******************************************************************************/
+/*!
+	ElectricalAngle, position Angle [Degree16s] => MechanicalAngle * PolePairs
+	todo push to encoder
+*/
+static inline int16_t Motor_GetEncoderElectricalAngle(Motor_T * p_motor)
+{
+	qangle16_t angle = ((_Encoder_GetAngle32(&p_motor->Encoder) >> 6U) * p_motor->Parameters.PolePairs) >> 10U;  /* MotorPolePairs less than 64 */
+	return Encoder_GetDirection_Quadrature(&p_motor->Encoder) * angle;
+}
+
 qangle16_t Motor_PollSensorAngle(Motor_T * p_motor)
 {
 	qangle16_t electricalAngle; /* FracU16 [0, 65535] maps to negative portions of qangle16_t */
@@ -352,14 +361,14 @@ static void ResetSpeedPidILimitsCw(Motor_T * p_motor)
 
 static void ResetILimitsCcw(Motor_T * p_motor)
 {
-	p_motor->ILimitCcw_FracS16 = p_motor->ILimitMotoring_Frac16 / 3; /* todo estimate Imag using Iq */
-	p_motor->ILimitCw_FracS16 = 0 - p_motor->ILimitGenerating_Frac16 / 3;
+	p_motor->ILimitCcw_FracS16 = p_motor->ILimitMotoring_Frac16 / 2;
+	p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitGenerating_Frac16 / 2;
 }
 
 static void ResetILimitsCw(Motor_T * p_motor)
 {
-	p_motor->ILimitCcw_FracS16 = p_motor->ILimitGenerating_Frac16 / 3;
-	p_motor->ILimitCw_FracS16 = 0 - p_motor->ILimitMotoring_Frac16 / 3;
+	p_motor->ILimitCcw_FracS16 = p_motor->ILimitGenerating_Frac16 / 2;
+	p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitMotoring_Frac16 / 2;
 }
 
 /*

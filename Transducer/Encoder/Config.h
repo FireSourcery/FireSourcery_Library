@@ -32,12 +32,11 @@
 #define CONFIG_ENCODER_H
 
 /*
-	HW_TIMER_ONLY
-	HW_DECODER
 	Compile time define if chip supports decoder/counter.
 */
 #if 	defined(CONFIG_ENCODER_HW_DECODER)
 #elif 	defined(CONFIG_ENCODER_HW_EMULATED)
+#elif 	defined(CONFIG_ENCODER_HW_COUNTER)
 #else
 	// #define CONFIG_ENCODER_HW_DECODER
 #endif

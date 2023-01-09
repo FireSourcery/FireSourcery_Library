@@ -49,10 +49,8 @@ typedef struct Serial_Tag
 	const Serial_Config_T CONFIG;
 	Ring_T RxRing;
 	Ring_T TxRing;
-	//  volatile Serial_Status_T TxStatus;		/*!< Status of last driver transmit operation */
-	//  volatile Serial_Status_T RxStatus;		/*!< Status of last driver receive operation */
-	//  Serial_TransferMode_T TransferMode;		/*!< interrupt/dma mode */
 #if CONFIG_SERIAL_DMA_ENABLE
+	Serial_TransferMode_T TransferMode;	/*!< interrupt/dma mode */
 	uint8_t RxDmaChannel;                /*!< DMA channel number for DMA-based rx. */
 	uint8_t TxDmaChannel;                /*!< DMA channel number for DMA-based tx. */
 #endif

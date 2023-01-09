@@ -216,7 +216,7 @@ static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_
 
 /*
 	ScalarSpeed[Frac16] = Speed * 65536 / ScalarSpeedRef
-	UnitScalarSpeed => DeltaD * [UnitT_Freq * 65536 * 60 / CountsPerRevolution / ScalarSpeedRef_Rpm] / DeltaT
+	UnitScalarSpeed => DeltaD * [UnitT_Freq * 65536 * 60 / (CountsPerRevolution * ScalarSpeedRef_Rpm)] / DeltaT
 
 	e.g.
 	UnitT_Freq = 625000, CountsPerRevolution = 60,
@@ -224,9 +224,6 @@ static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_
 		ScalarSpeedRef_Rpm = 10000 => 4,095,937.5
 	UnitT_Freq = 1000, CountsPerRevolution = 8192,
 		ScalarSpeedRef_Rpm = 5000 => 96
-
-	speedFactor = UnitT_Freq * 60U * 65536U
-	speedDivisor = CountsPerRevolution * ScalarSpeedRef_Rpm
 
 	ModeD
 	deltaDMax = ScalarSpeedRef_Rpm * 2 * CountsPerRevolution / (60 * UnitT_Freq)

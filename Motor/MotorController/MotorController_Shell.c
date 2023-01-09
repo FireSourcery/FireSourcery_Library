@@ -313,7 +313,6 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 			{
 				case MSM_STATE_ID_INIT:			Terminal_SendString(p_term, "Init");		break;
 				case MSM_STATE_ID_STOP:			Terminal_SendString(p_term, "Stop");		break;
-				case MSM_STATE_ID_ALIGN:		Terminal_SendString(p_term, "Align");		break;
 				case MSM_STATE_ID_OPEN_LOOP:	Terminal_SendString(p_term, "OpenLoop");	break;
 				case MSM_STATE_ID_RUN:			Terminal_SendString(p_term, "Run");			break;
 				case MSM_STATE_ID_FREEWHEEL:	Terminal_SendString(p_term, "Freewheel");	break;

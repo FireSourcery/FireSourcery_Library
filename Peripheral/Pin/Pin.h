@@ -48,7 +48,6 @@ Pin_Config_T;
 typedef struct Pin_Tag
 {
 	const Pin_Config_T CONFIG;
-	// bool IsInvert; /* Use ground state as on */
 }
 Pin_T;
 
@@ -118,6 +117,10 @@ static inline bool Pin_Input_Read(const Pin_T * p_pin)
 	return (p_pin->CONFIG.IS_INVERT == true) ? !readVal : readVal;
 }
 
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 extern void Pin_Output_Init(Pin_T * p_pin);
 extern void Pin_Input_Init(Pin_T * p_pin);
 extern void Pin_Deinit(const Pin_T * p_pin);

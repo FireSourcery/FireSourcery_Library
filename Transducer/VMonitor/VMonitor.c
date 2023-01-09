@@ -35,7 +35,7 @@
 
 static inline void ResetUnitConversion(VMonitor_T * p_vMonitor)
 {
-	Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONFIG.UNITS_R1, p_vMonitor->CONFIG.UNITS_R2, GLOBAL_ANALOG.ADC_BITS, GLOBAL_ANALOG.ADC_VREF_MILLIV, p_vMonitor->Params.VInRefMax);
+	Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONFIG.UNITS_R1, p_vMonitor->CONFIG.UNITS_R2, GLOBAL_ANALOG.ADC_BITS, GLOBAL_ANALOG.ADC_VREF_MILLIV, p_vMonitor->Params.VInRef);
 }
 
 void VMonitor_Init(VMonitor_T * p_vMonitor)
@@ -66,14 +66,14 @@ VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
 }
 
 // Frac16 only
-// void VMonitor_SetVInRefMax(VMonitor_T * p_vMonitor, uint32_t vInRefMax)
-// {
-// 	if(p_vMonitor->Params.VInRefMax != vInRefMax)
-// 	{
-// 		p_vMonitor->Params.VInRefMax = vInRefMax;
-// 		SetUnitConversion(p_vMonitor);
-// 	}
-// }
+void VMonitor_SetVInRef(VMonitor_T * p_vMonitor, uint32_t vInRef)
+{
+	if(p_vMonitor->Params.VInRef != vInRef)
+	{
+		p_vMonitor->Params.VInRef = vInRef;
+		ResetUnitConversion(p_vMonitor);
+	}
+}
 
 void VMonitor_SetLimitUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.LimitUpper_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, limit_mV); }
 void VMonitor_SetLimitLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV) { p_vMonitor->Params.LimitLower_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, limit_mV); }

@@ -73,8 +73,8 @@ void Blinky_Proc(Blinky_T * p_blinky)
 	}
 }
 
-void Blinky_On(Blinky_T * p_blinky)			{p_blinky->IsOn = true;		Pin_Output_High(&p_blinky->Pin);}
-void Blinky_Off(Blinky_T * p_blinky)		{p_blinky->IsOn = false;	Pin_Output_Low(&p_blinky->Pin);}
+void Blinky_On(Blinky_T * p_blinky)			{ p_blinky->IsOn = true; 	Pin_Output_High(&p_blinky->Pin); }
+void Blinky_Off(Blinky_T * p_blinky)		{ p_blinky->IsOn = false; 	Pin_Output_Low(&p_blinky->Pin); }
 void Blinky_Disable(Blinky_T * p_blinky) 	{ Blinky_Off(p_blinky); Timer_Disable(&p_blinky->Timer); p_blinky->PatternFunction = Blinky_Disable;}
 void Blinky_Stop(Blinky_T * p_blinky) 		{ Blinky_Disable(p_blinky);}
 

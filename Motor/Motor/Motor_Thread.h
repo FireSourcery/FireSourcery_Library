@@ -47,8 +47,8 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 	Motor_CaptureRefTime(p_motor);
 	p_motor->ControlTimerBase++;
 	StateMachine_Semi_ProcOutput(&p_motor->StateMachine);
-	//  alternatively _Motor_Analog_Thread(p_motor); use analog select mode to implement preferred order
-	// Motor_Debug_CaptureTime(p_motor, 5U);
+	//  Motor_Analog_Thread(p_motor); alternatively use analog select mode to implement preferred order
+	Motor_Debug_CaptureTime(p_motor, 5U);
 }
 
 static inline void Motor_Heat_Thread(Motor_T * p_motor)
@@ -68,6 +68,7 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 		}
 	}
 }
+
 
 /* Optionally use Hall ISR */
 static inline void Motor_HallEncoderA_ISR(Motor_T * p_motor)

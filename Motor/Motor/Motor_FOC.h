@@ -137,6 +137,10 @@ static inline void Motor_FOC_SetVSpeed(Motor_T * p_motor)
 	FOC_SetVd(&p_motor->Foc, 0);
 }
 
+//check DC current limit
+// Motor_FOC_GetElectricalPower_Frac16(p_motor) / Global_Motor_GetVSource_V() ;
+
+
 /******************************************************************************/
 /*!
 	Extern

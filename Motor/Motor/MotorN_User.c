@@ -45,11 +45,7 @@ void MotorN_User_SetTorqueCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t cm
 bool MotorN_User_CheckStop(Motor_T * p_motor, uint8_t motorCount)
 {
 	bool isStop = true;
-	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++)
-	{
-		// if(p_motor[iMotor].Speed_Frac16 > 0) { isStop = false; break; }
-		if(Motor_User_GetStateId(&p_motor[iMotor]) != MSM_STATE_ID_STOP) { isStop = false; break; }
-	}
+	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(Motor_User_GetStateId(&p_motor[iMotor]) != MSM_STATE_ID_STOP) { isStop = false; break; } }
 	return isStop;
 }
 
@@ -96,7 +92,7 @@ bool MotorN_User_ClearFault(Motor_T * p_motor, uint8_t motorCount)
 	return isClear;
 }
 
-void MotorN_User_SetUserCmd(Motor_T * p_motor, uint8_t motorCount, int32_t cmd)
+void MotorN_User_SetDefaultCmd(Motor_T * p_motor, uint8_t motorCount, int32_t cmd)
 {
 	for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_SetDefaultCmd(&p_motor[iMotor], cmd); }
 }

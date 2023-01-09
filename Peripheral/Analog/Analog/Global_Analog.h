@@ -41,8 +41,6 @@ typedef const struct Global_Analog_Tag
 	const uint16_t ADC_BITS;
 	const uint16_t ADC_MAX;
 	const uint16_t ADC_VREF_MILLIV;
-	// const uint16_t ADC_VREF_MAX_MILLIV;
-	// const uint16_t ADC_VREF_MIN_MILLIV;
 	const uint16_t ADC_FIFO_LENGTH;
 }
 Global_Analog_T;
@@ -52,14 +50,5 @@ Global_Analog_T;
 /* MISRA violation */
 /* Define in Main App */
 extern const Global_Analog_T GLOBAL_ANALOG;
-
-
-// void Global_Analog_SetAdcVRef( uint16_t adcVRef_MilliV)
-// {
-// 	if		(adcVRef_MilliV > GLOBAL_ANALOG.ADC_VREF_MAX_MILLIV) { AdcVRef_MilliV = GLOBAL_ANALOG.ADC_VREF_MIN_MILLIV; }
-// 	else if	(adcVRef_MilliV < GLOBAL_ANALOG.ADC_VREF_MIN_MILLIV) { AdcVRef_MilliV = GLOBAL_ANALOG.ADC_VREF_MIN_MILLIV; }
-// 	else 														{ AdcVRef_MilliV = adcVRef_MilliV; }
-// }
-
 
 #endif

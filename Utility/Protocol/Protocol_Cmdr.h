@@ -45,8 +45,6 @@ extern bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol);
 /*
 
 */
-// extern bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId);
-// extern bool _Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId);
 // extern size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_reqid_t cmdId);
 // extern size_t _Protocol_Cmdr_BuildTxReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId);
 // extern bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol);

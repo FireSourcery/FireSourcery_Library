@@ -124,33 +124,53 @@ static inline void ProcInnerFeedback(Motor_T * p_motor)
 */
 static inline void ProcOuterFeedback(Motor_T * p_motor)
 {
-	int32_t speed_FracS16;
 	Linear_Ramp_ProcOutput(&p_motor->Ramp);
 
-	if((Motor_ProcSensorSpeed(p_motor) == true) && (p_motor->ControlFeedbackMode.Speed == 1U))
+	// if((Motor_ProcSensorSpeed(p_motor) == true) && (p_motor->ControlFeedbackMode.Speed == 1U))
+	// {
+	// 	FOC_SetIVqReq(&p_motor->Foc, PID_Proc(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp), p_motor->Speed_Frac16 / 2));
+	// 	FOC_SetIVdReq(&p_motor->Foc, 0);
+	// }
+	// else if(p_motor->ControlFeedbackMode.Speed == 0U)
+	// {
+	// 	// if(Motor_CheckSpeedOverLimit(Motor_T * p_motor) == true)
+	// 	// if(math_isbound(speed_FracS16, p_motor->SpeedLimitCw_FracS16, p_motor->SpeedLimitCcw_FracS16) == true)
+	// 	// {
+	// 		FOC_SetIVqReq(&p_motor->Foc, Linear_Ramp_GetOutput(&p_motor->Ramp));
+	// 		FOC_SetIVdReq(&p_motor->Foc, 0);
+	// 	// }
+	// 	// else
+	// 	// {
+	// 	// 	p_motor->ControlFeedbackMode.Speed = 1U;
+	// 	// 	PID_SetOutputState(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp));
+	// 	// 	if		(speed_FracS16 < p_motor->SpeedLimitCw_FracS16) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCw_FracS16); }
+	// 	// 	else if	(speed_FracS16 > p_motor->SpeedLimitCcw_FracS16) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCcw_FracS16); }
+	// 	// }
+	// }
+	if(Motor_ProcSensorSpeed(p_motor) == true)
 	{
-		speed_FracS16 = p_motor->Speed_Frac16 / 2;
-		FOC_SetIVqReq(&p_motor->Foc, PID_Proc(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp), speed_FracS16));
-		FOC_SetIVdReq(&p_motor->Foc, 0);
-	}
-	else if(p_motor->ControlFeedbackMode.Speed == 0U)
-	{
-		speed_FracS16 = p_motor->Speed_Frac16 / 2;
-		// if(Motor_CheckSpeedOverLimit(Motor_T * p_motor) == true)
-		// if(math_isbound(speed_FracS16, p_motor->SpeedLimitCw_FracS16, p_motor->SpeedLimitCcw_FracS16) == true)
-		// {
+		if(p_motor->ControlFeedbackMode.Speed == 1U)
+		{
+			FOC_SetIVqReq(&p_motor->Foc, PID_Proc(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp), p_motor->Speed_Frac16 / 2));
+			FOC_SetIVdReq(&p_motor->Foc, 0);
+		}
+		else
+		{
+			// if(Motor_CheckSpeedOverLimit(Motor_T * p_motor) == true)
+			// if(math_isbound(speed_FracS16, p_motor->SpeedLimitCw_FracS16, p_motor->SpeedLimitCcw_FracS16) == true)
+			// {
 			FOC_SetIVqReq(&p_motor->Foc, Linear_Ramp_GetOutput(&p_motor->Ramp));
 			FOC_SetIVdReq(&p_motor->Foc, 0);
-		// }
-		// else
-		// {
-		// 	p_motor->ControlFeedbackMode.Speed = 1U;
-		// 	PID_SetOutputState(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp));
-		// 	if		(speed_FracS16 < p_motor->SpeedLimitCw_FracS16) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCw_FracS16); }
-		// 	else if	(speed_FracS16 > p_motor->SpeedLimitCcw_FracS16) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCcw_FracS16); }
-		// }
+			// }
+			// else
+			// {
+			// 	p_motor->ControlFeedbackMode.Speed = 1U;
+			// 	PID_SetOutputState(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp));
+			// 	if		(speed_FracS16 < p_motor->SpeedLimitCw_FracS16) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCw_FracS16); }
+			// 	else if	(speed_FracS16 > p_motor->SpeedLimitCcw_FracS16) 	{ Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCcw_FracS16); }
+			// }
+		}
 	}
-
 }
 
 /*!
@@ -248,7 +268,8 @@ void Motor_FOC_ProcAngleVBemf(Motor_T * p_motor)
 /******************************************************************************/
 void Motor_FOC_StartAlign(Motor_T * p_motor)
 {
-	Motor_SetControlFeedbackOpenLoopCurrent(p_motor);
+	// p_motor->ControlFeedbackMode.State = Motor_ConvertFeedbackModeId(MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT).State;
+	p_motor->ControlFeedbackMode.Current = 1U;
 	Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.AlignTime_Cycles, 0, p_motor->Parameters.AlignPower_Frac16 / 2U);
 	FOC_SetIVqReq(&p_motor->Foc, 0);
 	FOC_SetTheta(&p_motor->Foc, 0);
@@ -266,12 +287,11 @@ void Motor_FOC_StartAlignValidate(Motor_T * p_motor)
 	Motor_ZeroSensorAlign(p_motor);
 	Motor_ZeroSensor(p_motor);
 	FOC_SetIVdReq(&p_motor->Foc, 0);
-	p_motor->ControlFeedbackMode.OpenLoop = 0U;	// p_motor->ControlFeedbackMode = p_motor->CmdFeedbackMode;
+	// p_motor->ControlFeedbackMode.OpenLoop = 0U;	// p_motor->ControlFeedbackMode = p_motor->CmdFeedbackMode;
 }
 
 void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
 {
-	// Motor_SetControlFeedbackOpenLoopCurrent(p_motor);
 	// p_motor->ControlFeedbackMode.Current = 0U;
 	p_motor->Speed_Frac16 = 0;
 	Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, _Motor_ConvertDirectionalCmd(p_motor, p_motor->Parameters.OpenLoopPower_Frac16 / 2U));

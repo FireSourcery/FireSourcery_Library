@@ -71,7 +71,7 @@ void SinCos_SetAngleRatio(SinCos_T * p_sincos, uint16_t polePairs)
 
 void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-	p_sincos->DebugAPre = _SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu);	//debug //check == 0
+	// p_sincos->DebugAPre = _SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu);	//debug //check == 0
 
 	p_sincos->Params.AngleOffet = _SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu);
 }
@@ -81,7 +81,7 @@ void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_
 */
 void SinCos_CalibrateCcwPositive(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-	p_sincos->DebugBPre = _SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu);	//debug //check == 120
+	// p_sincos->DebugBPre = _SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu);	//debug //check == 120
 
 	p_sincos->Params.IsCcwPositive = (_SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu) > 0);
 }

@@ -165,28 +165,6 @@ static inline int32_t Encoder_ModeDT_GetGroundVelocity_Kmh(Encoder_T * p_encoder
 
 }
 
-// static inline int32_t Encoder_GetDeltaAngularDisplacement(Encoder_T * p_encoder)
-// {
-
-// }
-
-// static inline int32_t Encoder_GetDeltaRotationalDisplacement(Encoder_T * p_encoder)
-// {
-
-// }
-
-// static inline int32_t Encoder_GetDeltaLinearDisplacement(Encoder_T * p_encoder)
-// {
-
-// }
-
-// static inline int32_t Encoder_GetTotalAngularDisplacement(Encoder_T * p_encoder)
-// {
-// }
-
-// static inline int32_t Encoder_GetTotalLinearDisplacement(Encoder_T * p_encoder)
-// {
-// }
 
 /******************************************************************************/
 /*
