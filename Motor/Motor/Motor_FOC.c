@@ -265,18 +265,17 @@ void Motor_FOC_StartAlignValidate(Motor_T * p_motor)
 	Motor_ZeroSensorAlign(p_motor);
 	Motor_ZeroSensor(p_motor);
 	FOC_SetIVdReq(&p_motor->Foc, 0);
-	// p_motor->ControlFeedbackMode.OpenLoop = 0U;	// p_motor->ControlFeedbackMode = p_motor->CmdFeedbackMode;
+	// p_motor->ControlFeedbackMode.OpenLoop = 0U;
 }
 
 void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
 {
 	// p_motor->ControlFeedbackMode.Current = 0U;
 	p_motor->Speed_FracS16 = 0;
-	Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopPower_FracU16 / 2U));
+	Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopPower_FracU16 / 2U));	// alternatively, clamp user input ramp
 	Linear_Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopSpeed_FracU16 / 2U));
 	Linear_Ramp_SetOutputState(&p_motor->OpenLoopSpeedRamp, 0);
 	FOC_SetIVdReq(&p_motor->Foc, 0);
-	// alternatively, clamp user input ramp
 }
 
 /*
@@ -287,8 +286,8 @@ void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
 static void _Motor_FOC_ProcOpenLoopSpeed(Motor_T * p_motor)
 {
 	/*
-		OpenLoopSpeed_RPM = Speed_FracS16 * 2 * SpeedFeedbackRef_Rpm / 65535
-		ElectricalAngle += (OpenLoopSpeed_RPM * 65536 * PolePairs) / (60 *CONTROL_FREQ)
+		RPM = Speed_FracS16 * 2 * SpeedFeedbackRef_Rpm / 65535
+		ElectricalAngle += (RPM * 65536 * PolePairs) / (60 * CONTROL_FREQ)
 	*/
 	p_motor->Speed_FracS16 = Linear_Ramp_ProcOutput(&p_motor->OpenLoopSpeedRamp);
 	p_motor->ElectricalAngle += ((p_motor->Speed_FracS16 * p_motor->Parameters.SpeedFeedbackRef_Rpm * p_motor->Parameters.PolePairs * 2) / ((int32_t)60 * GLOBAL_MOTOR.CONTROL_FREQ));

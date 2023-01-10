@@ -86,6 +86,12 @@
 	#define	CONFIG_MOTOR_SIX_STEP_DISABLE
 #endif
 
+#if 	defined(CONFIG_MOTOR_FOC_ENABLE)
+#elif 	defined(CONFIG_MOTOR_FOC_DISABLE)
+#else
+	#define	CONFIG_MOTOR_FOC_ENABLE
+#endif
+
 /* must reboot for params to take effect when disabled */
 #if   	defined(CONFIG_MOTOR_PROPAGATE_SET_PARAM_DISABLE)
 #elif   defined(CONFIG_MOTOR_PROPAGATE_SET_PARAM_ENABLE)
