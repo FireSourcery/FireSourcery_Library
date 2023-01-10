@@ -133,7 +133,7 @@ static inline void Motor_FOC_ClearState(Motor_T * p_motor)
 /*	From FreeWheel State, match to speed, overwrite VBemfClarke */
 static inline void Motor_FOC_SetVSpeed(Motor_T * p_motor)
 {
-	FOC_SetVq(&p_motor->Foc, Linear_Function_FracS16(&p_motor->UnitsVSpeed, p_motor->Speed_Frac16));
+	FOC_SetVq(&p_motor->Foc, Linear_Function_FracS16(&p_motor->UnitsVSpeed, p_motor->Speed_FracS16));
 	FOC_SetVd(&p_motor->Foc, 0);
 }
 

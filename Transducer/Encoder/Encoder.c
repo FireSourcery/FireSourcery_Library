@@ -88,6 +88,8 @@ void Encoder_Init_SinglePhase(Encoder_T * p_encoder)
 
 /* Outer module sets direction */
 void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool isPositive) { p_encoder->IsSinglePhasePositive = isPositive; }
+void Encoder_SetSinglePhaseDirectionPositive(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = true; }
+void Encoder_SetSinglePhaseDirectionNegative(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = false; }
 
 void Encoder_CalibrateAlignZero(Encoder_T * p_encoder)
 {

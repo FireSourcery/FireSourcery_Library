@@ -90,7 +90,7 @@ static inline int32_t PID_GetKdParam_Fixed32(PID_T * p_pid) { return p_pid->Para
 */
 /******************************************************************************/
 extern void PID_Init(PID_T * p_pid);
-extern int32_t PID_Proc(PID_T *p_pid, int32_t setpoint, int32_t feedback);
+extern int32_t PID_ProcPI(PID_T *p_pid, int32_t setpoint, int32_t feedback);
 extern void PID_Reset(PID_T * p_pid);
 extern void PID_SetIntegral(PID_T * p_pid, int16_t integral);
 extern void PID_SetOutputState(PID_T * p_pid, int16_t integral);

@@ -79,7 +79,10 @@ void Motor_InitReboot(Motor_T * p_motor)
 		HW Wrappers Init
 	*/
 	Phase_Init(&p_motor->Phase);
+#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
 	Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
+#endif
+
 	Motor_InitSensor(p_motor);
 
 	Thermistor_Init(&p_motor->Thermistor);
@@ -111,15 +114,15 @@ void Motor_InitReboot(Motor_T * p_motor)
 	Motor_ResetUnitsVabc(p_motor);
 	Motor_ResetUnitsIabc(p_motor);
 	Motor_ResetUnitsVSpeed(p_motor);
-	Motor_ResetSpeedLimits(p_motor);
-	Motor_ResetILimits(p_motor);
+	Motor_ResetActiveSpeedLimits(p_motor);
+	Motor_ResetActiveILimits(p_motor);
 	p_motor->ILimitActiveId = MOTOR_I_LIMIT_ACTIVE_DISABLE;
 
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 	if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
 	{
 		/* Start at 0 speed in FOC mode for continuous angle displacements */
-		Linear_Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0, p_motor->Parameters.OpenLoopSpeed_Frac16);
+		Linear_Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0, p_motor->Parameters.OpenLoopSpeed_FracU16);
 	}
 	else
 	{
@@ -190,11 +193,29 @@ qangle16_t Motor_PollSensorAngle(Motor_T * p_motor)
 	return electricalAngle;
 }
 
+qangle16_t Motor_GetMechanicalAngle(Motor_T * p_motor)
+{
+	qangle16_t angle;
+	switch(p_motor->Parameters.SensorMode)
+	{
+		case MOTOR_SENSOR_MODE_HALL: 		angle = Encoder_GetAngle(&p_motor->Encoder);	break;
+		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_GetAngle(&p_motor->Encoder);	break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 	break;
+#endif
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+		case MOTOR_SENSOR_MODE_SENSORLESS: 	angle = 0; 	break;
+#endif
+		default: 							angle = 0; 	break;
+	}
+	return angle;
+}
+
 /* For SinCos, Sensorless, when not using Encoder module */
 // static inline int32_t PollAngleSpeed(Motor_T * p_motor, qangle16_t speedAngle)
 // {
 // 	int32_t speedDelta = speedAngle - p_motor->SpeedAngle; /* loops if no overflow past 1 full cycle */
-// 	int32_t speedFeedback_Frac16 = (p_motor->Speed_Frac16 + Linear_Speed_CalcAngleRpmFrac16(&p_motor->UnitsAngleRpm, speedDelta)) / 2;
+// 	int32_t speedFeedback_Frac16 = (p_motor->Speed_FracS16 + Linear_Speed_CalcAngleRpmFrac16(&p_motor->UnitsAngleRpm, speedDelta)) / 2;
 // 	p_motor->SpeedAngle = speedAngle; /* mechanical angle */
 // 	return speedFeedback_Frac16;
 // }
@@ -221,27 +242,10 @@ int32_t Motor_PollSensorSpeed(Motor_T * p_motor)
 bool Motor_ProcSensorSpeed(Motor_T * p_motor)
 {
 	bool procSpeed = Timer_Periodic_Poll(&p_motor->SpeedTimer);
-	if(procSpeed == true) { p_motor->Speed_Frac16 = (Motor_PollSensorSpeed(p_motor) + p_motor->Speed_Frac16) / 2; }
+	if(procSpeed == true) { p_motor->Speed_FracS16 = ((Motor_PollSensorSpeed(p_motor) / 2) + p_motor->Speed_FracS16) / 2; }
 	return procSpeed;
 }
 
-qangle16_t Motor_GetMechanicalAngle(Motor_T * p_motor)
-{
-	qangle16_t angle;
-	switch(p_motor->Parameters.SensorMode)
-	{
-		case MOTOR_SENSOR_MODE_HALL: 		angle = Encoder_GetAngle(&p_motor->Encoder);	break;
-		case MOTOR_SENSOR_MODE_ENCODER: 	angle = Encoder_GetAngle(&p_motor->Encoder);	break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-		case MOTOR_SENSOR_MODE_SIN_COS: 	angle = SinCos_GetMechanicalAngle(&p_motor->SinCos); 	break;
-#endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-		case MOTOR_SENSOR_MODE_SENSORLESS: 	angle = 0; 	break;
-#endif
-		default: 							angle = 0; 	break;
-	}
-	return angle;
-}
 
 /******************************************************************************/
 /*
@@ -318,9 +322,9 @@ bool Motor_CheckAlignFault(Motor_T * p_motor)
 {
 	switch(p_motor->Parameters.SensorMode)
 	{
-		case MOTOR_SENSOR_MODE_ENCODER:	if((p_motor->Speed_Frac16 ^ Linear_Ramp_GetTarget(&p_motor->Ramp)) < 0) { p_motor->FaultFlags.AlignStartUp = 1U; } break;
+		case MOTOR_SENSOR_MODE_ENCODER:	if((p_motor->Speed_FracS16 ^ Linear_Ramp_GetTarget(&p_motor->Ramp)) < 0) { p_motor->FaultFlags.AlignStartUp = 1U; } break;
 
-		// (p_motor->Speed_Frac16 ^ Iq)
+		// (p_motor->Speed_FracS16 ^ Iq)
 		default: break;
 	}
 
@@ -349,75 +353,108 @@ bool Motor_CheckAlignFault(Motor_T * p_motor)
 	Direction functions - Include in StateMachine protected calling function
 */
 /******************************************************************************/
-static void ResetSpeedPidILimitsCcw(Motor_T * p_motor)
+/* Speed PID Output is I */
+// static void SetSpeedPidILimitsCcw(Motor_T * p_motor)
+// 	{ PID_SetOutputLimits(&p_motor->PidSpeed, (int16_t)0 - p_motor->ILimitGenerating_ScalarU16 / 2, p_motor->ILimitMotoring_ScalarU16 / 2); }
+
+// static void SetSpeedPidILimitsCw(Motor_T * p_motor)
+// 	{ PID_SetOutputLimits(&p_motor->PidSpeed, (int16_t)0 - p_motor->ILimitMotoring_ScalarU16 / 2, p_motor->ILimitGenerating_ScalarU16 / 2); }
+
+// static void SetILimitsCcw(Motor_T * p_motor)
+// {
+// 	p_motor->ILimitCcw_FracS16 = p_motor->ILimitMotoring_ScalarU16 / 2;
+// 	p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitGenerating_ScalarU16 / 2;
+// }
+
+// static void SetILimitsCw(Motor_T * p_motor)
+// {
+// 	p_motor->ILimitCcw_FracS16 = p_motor->ILimitGenerating_ScalarU16 / 2;
+// 	p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitMotoring_ScalarU16 / 2;
+// }
+
+static void SetFeedbackILimitsCcw(Motor_T * p_motor)
 {
-	PID_SetOutputLimits(&p_motor->PidSpeed, 0 - p_motor->ILimitGenerating_Frac16 / 2, p_motor->ILimitMotoring_Frac16 / 2);
+	if(p_motor->ControlFeedbackMode.Current == 0U) 		/* IPid Disabled */
+	{
+		p_motor->ILimitCcw_FracS16 = p_motor->ILimitMotoring_ScalarU16 / 2;
+		p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitGenerating_ScalarU16 / 2;
+	}
+	else if(p_motor->ControlFeedbackMode.Speed == 1U) 	/* Only when SpeedPid Output is I */
+	{
+		PID_SetOutputLimits(&p_motor->PidSpeed, (int16_t)0 - p_motor->ILimitGenerating_ScalarU16 / 2, p_motor->ILimitMotoring_ScalarU16 / 2);
+	}
 }
 
-static void ResetSpeedPidILimitsCw(Motor_T * p_motor)
+static void SetFeedbackILimitsCw(Motor_T * p_motor)
 {
-	PID_SetOutputLimits(&p_motor->PidSpeed, 0 - p_motor->ILimitMotoring_Frac16 / 2, p_motor->ILimitGenerating_Frac16 / 2);
+	if(p_motor->ControlFeedbackMode.Current == 0U)
+	{
+		p_motor->ILimitCcw_FracS16 = p_motor->ILimitGenerating_ScalarU16 / 2;
+		p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitMotoring_ScalarU16 / 2;
+	}
+	else if(p_motor->ControlFeedbackMode.Speed == 1U)
+	{
+		PID_SetOutputLimits(&p_motor->PidSpeed, (int16_t)0 - p_motor->ILimitMotoring_ScalarU16 / 2, p_motor->ILimitGenerating_ScalarU16 / 2);
+	}
 }
 
-static void ResetILimitsCcw(Motor_T * p_motor)
+static void SetFeedbackSpeedLimitsCcw(Motor_T * p_motor)
 {
-	p_motor->ILimitCcw_FracS16 = p_motor->ILimitMotoring_Frac16 / 2;
-	p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitGenerating_Frac16 / 2;
+	p_motor->SpeedLimitDirect_ScalarU16 = (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ?
+		p_motor->SpeedLimitForward_ScalarU16 : p_motor->SpeedLimitReverse_ScalarU16;
+
+	if(p_motor->ControlFeedbackMode.Speed == 0U)
+	{
+		p_motor->SpeedLimitCcw_FracS16 = p_motor->SpeedLimitDirect_ScalarU16 / 2;
+		p_motor->SpeedLimitCw_FracS16 = (int16_t)0 - p_motor->SpeedLimitDirect_ScalarU16 / 2; /* or 0 */
+	}
+	else
+	{
+		if(p_motor->ControlFeedbackMode.Current == 0U) { PID_SetOutputLimits(&p_motor->PidSpeed, 0, INT16_MAX); } 	/* Speed PID Output is V */
+	}
 }
 
-static void ResetILimitsCw(Motor_T * p_motor)
+static void SetFeedbackSpeedLimitsCw(Motor_T * p_motor)
 {
-	p_motor->ILimitCcw_FracS16 = p_motor->ILimitGenerating_Frac16 / 2;
-	p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitMotoring_Frac16 / 2;
+	p_motor->SpeedLimitDirect_ScalarU16 = (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ?
+		p_motor->SpeedLimitReverse_ScalarU16 : p_motor->SpeedLimitForward_ScalarU16;
+
+	if(p_motor->ControlFeedbackMode.Speed == 0U)
+	{
+		p_motor->SpeedLimitCcw_FracS16 = p_motor->SpeedLimitDirect_ScalarU16 / 2; /* or 0 */
+		p_motor->SpeedLimitCw_FracS16 = (int16_t)0 - p_motor->SpeedLimitDirect_ScalarU16 / 2;
+	}
+	else
+	{
+		if(p_motor->ControlFeedbackMode.Current == 0U) { PID_SetOutputLimits(&p_motor->PidSpeed, INT16_MIN, 0); }
+	}
 }
 
 /*
 	Set on Limits change
 */
-void Motor_ResetPidILimits(Motor_T * p_motor)
+void Motor_SetFeedbackILimits(Motor_T * p_motor)
 {
-	if((p_motor->ControlFeedbackMode.Speed == 1U) && (p_motor->ControlFeedbackMode.Current == 1U))
-	{
-		/* Only when Speed PID Output is I */
-		if(p_motor->Direction == MOTOR_DIRECTION_CCW) 	{ ResetSpeedPidILimitsCcw(p_motor); }
-		else 											{ ResetSpeedPidILimitsCw(p_motor); }
-	}
-	else
-	{
-		if(p_motor->Direction == MOTOR_DIRECTION_CCW) 	{ ResetILimitsCcw(p_motor); }
-		else 											{ ResetILimitsCw(p_motor); }
-	}
+	if(p_motor->Direction == MOTOR_DIRECTION_CCW) 	{ SetFeedbackILimitsCcw(p_motor); }
+	else 											{ SetFeedbackILimitsCw(p_motor); }
+}
+
+void Motor_SetFeedbackSpeedLimits(Motor_T * p_motor)
+{
+	if(p_motor->Direction == MOTOR_DIRECTION_CCW) 	{ SetFeedbackSpeedLimitsCcw(p_motor); }
+	else 											{ SetFeedbackSpeedLimitsCw(p_motor); }
 }
 
 /*
 	Set on Direction change
 */
-void Motor_SetLimitsCcw(Motor_T * p_motor)
-{
-	if(p_motor->ControlFeedbackMode.Speed == 1U)
-	{
-		p_motor->SpeedLimit_Frac16 = p_motor->SpeedLimitCcw_Frac16;
-		if(p_motor->ControlFeedbackMode.Current == 1U) 	{ ResetSpeedPidILimitsCcw(p_motor); }						/* Speed PID Output is I */
-		else 											{ PID_SetOutputLimits(&p_motor->PidSpeed, 0, INT16_MAX); } 	/* Speed PID Output is V */
-	}
-	ResetILimitsCcw(p_motor); /* SPEED_VOLTAGE, CONSTANT_VOLTAGE, Superfluous for Speed Current mode only */
-}
-
-void Motor_SetLimitsCw(Motor_T * p_motor)
-{
-	if(p_motor->ControlFeedbackMode.Speed == 1U)
-	{
-		p_motor->SpeedLimit_Frac16 = p_motor->SpeedLimitCw_Frac16;
-		if(p_motor->ControlFeedbackMode.Current == 1U) 	{ ResetSpeedPidILimitsCw(p_motor); }						/* Speed PID Output is I */
-		else 											{ PID_SetOutputLimits(&p_motor->PidSpeed, INT16_MIN, 0); } 	/* Speed PID Output is V */
-	}
-	ResetILimitsCw(p_motor);
-}
+void Motor_SetFeedbackLimitsCcw(Motor_T * p_motor) 	{ SetFeedbackSpeedLimitsCcw(p_motor); SetFeedbackILimitsCcw(p_motor); }
+void Motor_SetFeedbackLimitsCw(Motor_T * p_motor) 	{ SetFeedbackSpeedLimitsCw(p_motor); SetFeedbackILimitsCw(p_motor); }
 
 void Motor_SetDirectionCcw(Motor_T * p_motor)
 {
 	p_motor->Direction = MOTOR_DIRECTION_CCW;
-	Motor_SetLimitsCcw(p_motor);
+	Motor_SetFeedbackLimitsCcw(p_motor);
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_HALL: Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW); Encoder_SetSinglePhaseDirection(&p_motor->Encoder, true); break;
@@ -432,7 +469,7 @@ void Motor_SetDirectionCcw(Motor_T * p_motor)
 void Motor_SetDirectionCw(Motor_T * p_motor)
 {
 	p_motor->Direction = MOTOR_DIRECTION_CW;
-	Motor_SetLimitsCw(p_motor);
+	Motor_SetFeedbackLimitsCw(p_motor);
 	switch(p_motor->Parameters.SensorMode)
 	{
 		case MOTOR_SENSOR_MODE_HALL: Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW); Encoder_SetSinglePhaseDirection(&p_motor->Encoder, false); break;
@@ -529,16 +566,14 @@ void Motor_ResetUnitsIabc(Motor_T * p_motor)
 /* resume from freewheel */
 void Motor_ResetUnitsVSpeed(Motor_T * p_motor)
 {
-	Linear_Init(&p_motor->UnitsVSpeed, p_motor->Parameters.SpeedVRef_Rpm, p_motor->Parameters.SpeedFeedbackRef_Rpm, 0, 65536);
+	Linear_Init(&p_motor->UnitsVSpeed, p_motor->Parameters.VSpeedRef_Rpm, p_motor->Parameters.SpeedFeedbackRef_Rpm, 0, 65536);
 }
 
-/* Sensorless */
+/* SinCos, Mechanical Rotation Sensor */
 void Motor_ResetUnitsAngleSpeed_ElecControl(Motor_T * p_motor)
 {
 	// Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitsAngleRpm, GLOBAL_MOTOR.CONTROL_FREQ, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 }
-
-/* SinCos, Mechanical Rotation Sensor */
 void Motor_ResetUnitsAngleSpeed_Mech(Motor_T * p_motor)
 {
 	// Linear_Speed_InitAngleRpm(&p_motor->UnitsAngleRpm, 1000U, 16U, p_motor->Parameters.SpeedFeedbackRef_Rpm);
@@ -602,7 +637,7 @@ void Motor_ResetUnitsSinCos(Motor_T * p_motor)
 //todo statemachine version
 void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
 {
-	const uint16_t duty = p_motor->Parameters.AlignPower_Frac16;
+	const uint16_t duty = p_motor->Parameters.AlignPower_FracU16;
 	uint16_t index = step % 12U;
 	switch(index)
 	{
@@ -624,7 +659,7 @@ void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
 
 void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
 {
-	const uint16_t duty = p_motor->Parameters.AlignPower_Frac16;
+	const uint16_t duty = p_motor->Parameters.AlignPower_FracU16;
 	uint16_t index = step % 6U;
 	switch(index)
 	{
@@ -643,7 +678,7 @@ void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
 */
 void Motor_Jog6Step(Motor_T * p_motor, uint8_t step)
 {
-	const uint16_t duty = p_motor->Parameters.AlignPower_Frac16;
+	const uint16_t duty = p_motor->Parameters.AlignPower_FracU16;
 	uint16_t index = step % 6U;
 	switch(index)
 	{

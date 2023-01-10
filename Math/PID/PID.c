@@ -53,17 +53,17 @@ static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integra
 	Conventional parallel PID calculation
 	control = (Kp * error) + (Ki * error * SampleTime + IntegralPrev) + (Kd * (error - ErrorPrev) / SampleTime)
 */
-static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
+static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 {
-	int32_t control, proportional, integral32, integral, derivative, integralMin, integralMax;
+	int32_t proportional, integral32, integral, derivative, integralMin, integralMax;
 
 	proportional = (p_pid->Params.PropGain * error) >> p_pid->Params.PropGainShift; /* Inclusive of 16 shift */
 
 	/*
-		Store as Integral. Allows compute time gain adjustment. Alternatively, store as Sum. (Ki * ErrorSum * SampleTime)
+		Store as Integral. Allows compute time gain adjustment. Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
 	*/
 	/* Forward rectangular approximation */
-	integral32 = p_pid->Integral32 + ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift);
+	integral32 = p_pid->Integral32 + ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift); /* Exclusive of 16 shift */
 	integral = integral32 >> 16;
 
 	/* Dynamic Clamp */
@@ -74,25 +74,24 @@ static inline int32_t CalcPid(PID_T * p_pid, int32_t error)
 	else if	(integral < integralMin) 	{ integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
 	else 								{ p_pid->Integral32 = integral32; }
 
-	// if(p_pid->Params.Mode == PID_MODE_PID)
-	// {
-	// 	derivative = (p_pid->KdFactorFreq * (error - p_pid->ErrorPrev) / p_pid->Params.KdDivisor);
-	// 	p_pid->ErrorPrev = error;
-	// 	control = proportional + integral + derivative;
-	// }
-	// else /* (p_pid->Mode == PID_MODE_PI) */
-	{
-		control = proportional + integral;
-	}
-
-	p_pid->Output = math_clamp(control, p_pid->OutputMin, p_pid->OutputMax);
-
-	return p_pid->Output;
+	return proportional + integral;
 }
 
-int32_t PID_Proc(PID_T * p_pid, int32_t setpoint, int32_t feedback)
+// int32_t PID_ProcPID(PID_T * p_pid, int32_t setpoint, int32_t feedback)
+// {
+// 	int32_t error = setpoint - feedback;
+// 	int32_t pi = CalcPI(p_pid, error);
+// 	int32_t derivative = (p_pid->KdFactorFreq * (error - p_pid->ErrorPrev) / p_pid->Params.KdDivisor);
+
+// 	p_pid->ErrorPrev = error;
+// 	p_pid->Output = math_clamp(pi + derivative, p_pid->OutputMin, p_pid->OutputMax);
+// 	return p_pid->Output;
+// }
+
+int32_t PID_ProcPI(PID_T * p_pid, int32_t setpoint, int32_t feedback)
 {
-	return CalcPid(p_pid, setpoint - feedback);
+	p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
+	return p_pid->Output;
 }
 
 /*

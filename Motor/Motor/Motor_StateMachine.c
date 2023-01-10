@@ -113,7 +113,7 @@ static void Stop_Entry(Motor_T * p_motor)
 
 static void Stop_Proc(Motor_T * p_motor)
 {
-	//	if(p_motor->Speed_Frac16 > 0U)
+	//	if(p_motor->Speed_FracS16 > 0U)
 	//	{
 	//		_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
 	//	}
@@ -153,7 +153,7 @@ static StateMachine_State_T * Stop_InputRelease(Motor_T * p_motor, uint32_t void
 
 static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor, uint32_t direction)
 {
-	if(p_motor->Speed_Frac16 == 0U)
+	if(p_motor->Speed_FracS16 == 0U)
 	{
 		/* work around function casting warning */
 		if(direction == MOTOR_DIRECTION_CCW) 	{ Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionCcw, Motor_SetDirectionCcw); }
@@ -250,7 +250,7 @@ static void Freewheel_Proc(Motor_T * p_motor)
 {
 	Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleVBemf, 0U /* Motor_SixStep_ProcPhaseObserve */);
 	/* Check after capture speed, this way lower priority input cannot proc in between capture and check */
-	if(p_motor->Speed_Frac16 == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
+	if(p_motor->Speed_FracS16 == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
 }
 
 static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, uint32_t feedbackModeId)
@@ -311,7 +311,7 @@ static void OpenLoop_Proc(Motor_T * p_motor)
 		case MOTOR_OPEN_LOOP_STATE_ALIGN:
 			if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
 			{
-				// if(p_motor->Speed_Frac16 != 0U) /* direct check sensor speed  todo */
+				// if(p_motor->Speed_Fixed32 != 0U) /* direct check sensor speed  todo */
 				// {
 				// 	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
 				// }
@@ -363,7 +363,7 @@ static void OpenLoop_Proc(Motor_T * p_motor)
 
 // static StateMachine_State_T * OpenLoop_InputCmdValue(Motor_T * p_motor, uint32_t ivCmd)
 // {
-// 	int32_t ivCmd_Positive = math_clamp((int32_t)ivCmd, 0, (int32_t)p_motor->Parameters.OpenLoopPower_Frac16 / 2);
+// 	int32_t ivCmd_Positive = math_clamp((int32_t)ivCmd, 0, (int32_t)p_motor->Parameters.OpenLoopPower_FracU16 / 2);
 // 	Motor_SetDirectionalCmd(p_motor, ivCmd_Positive);
 // 	return 0U;
 // }

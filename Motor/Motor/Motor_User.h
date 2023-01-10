@@ -39,6 +39,7 @@
 #include <stdbool.h>
 
 
+
 /******************************************************************************/
 /*!
 	Inline StateMachine Wrappers
@@ -98,7 +99,7 @@ static inline void Motor_User_ToggleFault(Motor_T * p_motor)
 
 /******************************************************************************/
 /*!
-	User Get Set Wrapper
+	User Get Set Wrappers
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -117,13 +118,10 @@ static inline qangle16_t Motor_User_GetElectricalAngle(Motor_T * p_motor) { retu
 static inline qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor) { return Motor_GetMechanicalAngle(p_motor); }
 
 /*!
-	Speed_Frac16 set as CCW is positive
+	Speed_Fixed32 set as CCW is positive
 	@return speed forward as positive. reverse as negative.
 */
-static inline int32_t Motor_User_GetSpeed_Frac16(Motor_T * p_motor)
-{
-	return (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? p_motor->Speed_Frac16 : 0 - p_motor->Speed_Frac16;
-}
+static inline int32_t Motor_User_GetSpeed_Frac16(Motor_T * p_motor) { return Motor_ConvertUserDirection(p_motor, p_motor->Speed_FracS16); }
 
 typedef int32_t(*Motor_CommutationModeFunctionInt32_T)(Motor_T * p_motor);
 
@@ -143,24 +141,28 @@ static inline int32_t Motor_GetCommutationModeInt32(Motor_T * p_motor, Motor_Com
 
 
 /*!
-	@return I zero to peak.
+	@return IPhase Zero to Peak.
 
 	iPhase motoring as positive. generating as negative.
 */
 static inline int32_t Motor_User_GetIPhase_Frac16(Motor_T * p_motor)
 {
-	int32_t iPhase = Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_Frac16, 0U);
-	return (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? iPhase : 0 - iPhase;
+	return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_Frac16, 0U));
 }
 
+/*
+	BEMF
+*/
 // static inline int32_t Motor_User_GetVBemf_Frac16(Motor_T * p_motor)
 // {
 // }
 
+/*
+	BEMF during freewheel or V Out during active control
+*/
 static inline int32_t Motor_User_GetVPhase_Frac16(Motor_T * p_motor)
 {
-	int32_t vPhase = Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_Frac16, 0U);
-	return (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? vPhase : 0 - vPhase;
+	return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_Frac16, 0U));
 }
 
 static inline int32_t Motor_User_GetElectricalPower_Frac16(Motor_T * p_motor)
@@ -190,11 +192,11 @@ static inline Motor_FeedbackModeId_T Motor_User_GetFeedbackMode(Motor_T * p_moto
 static inline Motor_DirectionCalibration_T Motor_User_GetDirectionCalibration(Motor_T * p_motor) 	{ return p_motor->Parameters.DirectionCalibration; }
 static inline uint8_t Motor_User_GetPolePairs(Motor_T * p_motor) 									{ return p_motor->Parameters.PolePairs; }
 static inline uint16_t Motor_User_GetSpeedFeedbackRef_Rpm(Motor_T * p_motor) 						{ return p_motor->Parameters.SpeedFeedbackRef_Rpm; }
-static inline uint16_t Motor_User_GetSpeedVRef_Rpm(Motor_T * p_motor) 								{ return p_motor->Parameters.SpeedVRef_Rpm; }
+static inline uint16_t Motor_User_GetSpeedVRef_Rpm(Motor_T * p_motor) 								{ return p_motor->Parameters.VSpeedRef_Rpm; }
 
 static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode)  	{ p_motor->Parameters.CommutationMode = mode; }
 static inline void Motor_User_SetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode) 				{ p_motor->Parameters.AlignMode = mode; }
-static inline void Motor_User_SetAlignVoltage(Motor_T * p_motor, uint16_t v_frac16) 				{ p_motor->Parameters.AlignPower_Frac16 = (v_frac16 > GLOBAL_MOTOR.ALIGN_VPWM_MAX) ? GLOBAL_MOTOR.ALIGN_VPWM_MAX : v_frac16; }
+static inline void Motor_User_SetAlignVoltage(Motor_T * p_motor, uint16_t v_frac16) 				{ p_motor->Parameters.AlignPower_FracU16 = (v_frac16 > GLOBAL_MOTOR.ALIGN_VPWM_MAX) ? GLOBAL_MOTOR.ALIGN_VPWM_MAX : v_frac16; }
 static inline void Motor_User_SetAlignTime_Cycles(Motor_T * p_motor, uint16_t cycles) 				{ p_motor->Parameters.AlignTime_Cycles = cycles; }
 static inline void Motor_User_SetOpenLoopAccel_Cycles(Motor_T * p_motor, uint16_t cycles) 			{ p_motor->Parameters.OpenLoopAccel_Cycles = cycles; }
 static inline void Motor_User_SetRampAccel_Cycles(Motor_T * p_motor, uint16_t cycles) 				{ p_motor->Parameters.RampAccel_Cycles = cycles; }
@@ -207,8 +209,9 @@ static inline void Motor_User_SetRampAccel_Millis(Motor_T * p_motor, uint16_t mi
 
 /* Persistent Control Mode */
 static inline void Motor_User_SetFeedbackModeParam(Motor_T * p_motor, Motor_FeedbackModeId_T mode) 	{ p_motor->Parameters.DefaultFeedbackMode = mode; p_motor->ControlFeedbackMode.IsDisable = 1U; }
+#ifdef CONFIG_MOTOR_SIX_STEP_ENABLE
 static inline void Motor_User_SetPhaseModeParam(Motor_T * p_motor, Phase_Mode_T mode) 				{ p_motor->Parameters.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->Phase, mode); }
-
+#endif
 
 /******************************************************************************/
 /*!
@@ -279,8 +282,8 @@ extern void Motor_User_SetILimitGeneratingParam_Amp(Motor_T * p_motor, uint16_t 
 
 extern void Motor_User_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm);
 extern void Motor_User_SetSpeedFeedbackRef_Kv(Motor_T * p_motor, uint16_t kv);
-extern void Motor_User_SetSpeedVRef_Rpm(Motor_T * p_motor, uint16_t rpm);
-extern void Motor_User_SetSpeedVRef_Kv(Motor_T * p_motor, uint16_t kv);
+extern void Motor_User_SetVSpeedRef_Rpm(Motor_T * p_motor, uint16_t rpm);
+extern void Motor_User_SetVSpeedRef_Kv(Motor_T * p_motor, uint16_t kv);
 
 extern void Motor_User_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu);
 extern void Motor_User_SetIbZero_Adcu(Motor_T * p_motor, uint16_t adcu);
