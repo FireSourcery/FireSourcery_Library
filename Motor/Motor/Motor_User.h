@@ -195,7 +195,7 @@ static inline uint16_t Motor_User_GetSpeedFeedbackRef_Rpm(Motor_T * p_motor) 			
 static inline uint16_t Motor_User_GetSpeedVRef_Rpm(Motor_T * p_motor) 								{ return p_motor->Parameters.VSpeedRef_Rpm; }
 
 static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode)  	{ p_motor->Parameters.CommutationMode = mode; }
-static inline void Motor_User_SetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode) 				{ p_motor->Parameters.AlignMode = mode; }
+// static inline void Motor_User_SetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode) 				{ p_motor->Parameters.AlignMode = mode; }
 static inline void Motor_User_SetAlignVoltage(Motor_T * p_motor, uint16_t v_frac16) 				{ p_motor->Parameters.AlignPower_FracU16 = (v_frac16 > GLOBAL_MOTOR.ALIGN_VPWM_MAX) ? GLOBAL_MOTOR.ALIGN_VPWM_MAX : v_frac16; }
 static inline void Motor_User_SetAlignTime_Cycles(Motor_T * p_motor, uint16_t cycles) 				{ p_motor->Parameters.AlignTime_Cycles = cycles; }
 static inline void Motor_User_SetOpenLoopAccel_Cycles(Motor_T * p_motor, uint16_t cycles) 			{ p_motor->Parameters.OpenLoopAccel_Cycles = cycles; }

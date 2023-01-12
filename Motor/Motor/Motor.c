@@ -56,6 +56,7 @@ void Motor_InitSensor(Motor_T * p_motor)
 		case MOTOR_SENSOR_MODE_ENCODER:
 			p_motor->CONFIG.INIT_SENSOR_ENCODER();
 			Encoder_ModeDT_Init(&p_motor->Encoder);
+			Encoder_EnableQuadratureMode(&p_motor->Encoder);
 			Encoder_InitInterrupts_Quadrature(&p_motor->Encoder);
 			break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
@@ -331,47 +332,11 @@ bool Motor_CheckAlignFault(Motor_T * p_motor)
 	return p_motor->FaultFlags.AlignStartUp;
 }
 
-// Motor_AlignMode_T GetAlignMode(Motor_T *p_motor)
-// {
-// 	Motor_AlignMode_T alignMode;
-
-// 	// if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
-// 	// {
-// 	// 	alignMode = MOTOR_ALIGN_MODE_DISABLE;
-// 	// }
-// 	// else
-// 	{
-// 		// alignMode = p_motor->Parameters.AlignMode;
-// 		alignMode = MOTOR_ALIGN_MODE_ALIGN;
-// 	}
-
-// 	return alignMode;
-// }
-
 /******************************************************************************/
 /*
 	Direction functions - Include in StateMachine protected calling function
 */
 /******************************************************************************/
-/* Speed PID Output is I */
-// static void SetSpeedPidILimitsCcw(Motor_T * p_motor)
-// 	{ PID_SetOutputLimits(&p_motor->PidSpeed, (int16_t)0 - p_motor->ILimitGenerating_ScalarU16 / 2, p_motor->ILimitMotoring_ScalarU16 / 2); }
-
-// static void SetSpeedPidILimitsCw(Motor_T * p_motor)
-// 	{ PID_SetOutputLimits(&p_motor->PidSpeed, (int16_t)0 - p_motor->ILimitMotoring_ScalarU16 / 2, p_motor->ILimitGenerating_ScalarU16 / 2); }
-
-// static void SetILimitsCcw(Motor_T * p_motor)
-// {
-// 	p_motor->ILimitCcw_FracS16 = p_motor->ILimitMotoring_ScalarU16 / 2;
-// 	p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitGenerating_ScalarU16 / 2;
-// }
-
-// static void SetILimitsCw(Motor_T * p_motor)
-// {
-// 	p_motor->ILimitCcw_FracS16 = p_motor->ILimitGenerating_ScalarU16 / 2;
-// 	p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitMotoring_ScalarU16 / 2;
-// }
-
 static void SetFeedbackILimitsCcw(Motor_T * p_motor)
 {
 	if(p_motor->ControlFeedbackMode.Current == 0U) 		/* IPid Disabled */
@@ -634,7 +599,6 @@ void Motor_ResetUnitsSinCos(Motor_T * p_motor)
 
 */
 /******************************************************************************/
-//todo statemachine version
 void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
 {
 	const uint16_t duty = p_motor->Parameters.AlignPower_FracU16;

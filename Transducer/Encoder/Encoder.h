@@ -370,6 +370,7 @@ extern void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder);
 
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 extern void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled);
+extern void Encoder_EnableQuadratureMode(Encoder_T * p_encoder);
 extern void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive);
 extern void Encoder_CalibrateQuadratureReference(Encoder_T * p_encoder);
 extern void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder);

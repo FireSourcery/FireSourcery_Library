@@ -122,6 +122,7 @@ void Encoder_ClearAlign(Encoder_T * p_encoder)
 
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled) { p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled; }
+void Encoder_EnableQuadratureMode(Encoder_T * p_encoder) { p_encoder->Params.IsQuadratureCaptureEnabled = true; }
 /*!	isALeadBPositive - User runtime calibrate */
 void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive) { p_encoder->Params.IsALeadBPositive = isALeadBPositive; }
 

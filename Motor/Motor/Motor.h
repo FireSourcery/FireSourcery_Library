@@ -93,14 +93,6 @@ typedef enum Motor_SensorMode_Tag
 }
 Motor_SensorMode_T;
 
-typedef enum Motor_AlignMode_Tag
-{
-	MOTOR_ALIGN_MODE_DISABLE,
-	MOTOR_ALIGN_MODE_ALIGN,
-	MOTOR_ALIGN_MODE_HFI,
-}
-Motor_AlignMode_T;
-
 /*
 	Feedback Control Variable Mode
 */
@@ -263,7 +255,6 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 {
 	Motor_CommutationMode_T 	CommutationMode;
 	Motor_SensorMode_T 			SensorMode;
-	Motor_AlignMode_T 			AlignMode;
 	Motor_FeedbackModeId_T 		DefaultFeedbackMode; 	/* Default ControlFeedbackMode, and ThrottleCmd */
 	Motor_DirectionCalibration_T DirectionCalibration;
 
@@ -367,11 +358,10 @@ typedef struct Motor_Tag
 	uint16_t SpeedLimitDirect_ScalarU16; 	/* Frac16 of SpeedRefMax Param. Check on set */
 	uint16_t SpeedLimitForward_ScalarU16;
 	uint16_t SpeedLimitReverse_ScalarU16;
-	int16_t SpeedLimitCcw_FracS16;	/* Checked when Speed feedback inactive */
-	int16_t SpeedLimitCw_FracS16;
 	// Motor_SpeedLimitActiveId_T SpeedLimitActiveId;
 	// uint16_t SpeedLimitActiveScalar;
-
+	int16_t SpeedLimitCcw_FracS16;	/* Checked when Speed feedback inactive */
+	int16_t SpeedLimitCw_FracS16;
 	uint16_t ILimitMotoring_ScalarU16;
 	uint16_t ILimitGenerating_ScalarU16;
 	Motor_ILimitActiveId_T ILimitActiveId;
@@ -446,7 +436,7 @@ typedef struct Motor_Tag
 	Linear_T UnitsVabc;		/* Bemf V,mV, and Frac16 conversion */
 	Linear_T UnitsVSpeed; 	/* Frac16 Speed => V */
 
-	Filter_T FilterA; /* Calibration use */
+	Filter_T FilterA; 		/* Calibration use */
 	Filter_T FilterB;
 	Filter_T FilterC;
 
@@ -570,7 +560,6 @@ static inline int32_t Motor_ConvertUserDirection(Motor_T * p_motor, int32_t user
 // {
 // 	Linear_Ramp_SetTarget(&p_motor->Ramp, _Motor_ConvertDirectionalCmd(p_motor, userCmd));
 // }
-
 
 /******************************************************************************/
 /*
