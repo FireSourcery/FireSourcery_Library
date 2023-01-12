@@ -235,6 +235,8 @@ static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_
 void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 {
 	SetUnitsSpeed(p_encoder, &p_encoder->UnitScalarSpeed, &p_encoder->UnitScalarSpeedShift, (uint32_t)65536U * 60U, p_encoder->Params.ScalarSpeedRef_Rpm);
+
+	p_encoder->_FreqDMax = p_encoder->ScalarSpeedRef_Rpm * 2 * p_encoder->Params.CountsPerRevolution / (60 * p_encoder->UnitT_Freq);
 }
 
 /*

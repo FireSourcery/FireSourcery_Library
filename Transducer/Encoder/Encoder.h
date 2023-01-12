@@ -149,6 +149,8 @@ typedef struct Encoder_Tag
 	Encoder_Align_T Align;
 	int32_t AbsoluteOffset;
 
+	int32_t _FreqDMax;
+
 	/* Experimental */
 	int32_t TotalD; 			/* Integral Capture */
 	// uint32_t TotalT; 		/*!< Extended? Timer ticks, persistent through DeltaT captures */
