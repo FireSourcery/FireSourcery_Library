@@ -224,20 +224,20 @@ qangle16_t Motor_GetMechanicalAngle(Motor_T * p_motor)
 /* returns [-65536:65536] as [-1:1] unsaturated */
 int32_t Motor_PollSensorSpeed(Motor_T * p_motor)
 {
-	int32_t speed_Frac16;
+	int32_t speed_Fixed32;
 	switch(p_motor->Parameters.SensorMode)
 	{
-		case MOTOR_SENSOR_MODE_HALL:		speed_Frac16 = Encoder_ModeDT_PollScalarVelocity(&p_motor->Encoder); break; // p_motor->MechanicalAngle = Encoder_GetAngle(&p_motor->Encoder);
-		case MOTOR_SENSOR_MODE_ENCODER: 	speed_Frac16 = Encoder_ModeDT_PollScalarVelocity(&p_motor->Encoder); break; // p_motor->MechanicalAngle = Encoder_GetAngle(&p_motor->Encoder);
+		case MOTOR_SENSOR_MODE_HALL:		speed_Fixed32 = Encoder_ModeDT_PollScalarVelocity(&p_motor->Encoder); break; // p_motor->MechanicalAngle = Encoder_GetAngle(&p_motor->Encoder);
+		case MOTOR_SENSOR_MODE_ENCODER: 	speed_Fixed32 = Encoder_ModeDT_PollScalarVelocity(&p_motor->Encoder); break; // p_motor->MechanicalAngle = Encoder_GetAngle(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-		case MOTOR_SENSOR_MODE_SIN_COS:		speed_Frac16 = PollAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos));	break;
+		case MOTOR_SENSOR_MODE_SIN_COS:		speed_Fixed32 = PollAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos));	break;
 #endif
 #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
 		case MOTOR_SENSOR_MODE_SENSORLESS: break;
 #endif
-		default: speed_Frac16 = 0; break;
+		default: speed_Fixed32 = 0; break;
 	}
-	return speed_Frac16;
+	return speed_Fixed32;
 }
 
 bool Motor_ProcSensorSpeed(Motor_T * p_motor)

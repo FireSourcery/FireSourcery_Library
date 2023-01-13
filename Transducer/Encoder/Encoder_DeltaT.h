@@ -134,7 +134,7 @@ static inline bool Encoder_DeltaT_CheckExtendedStop(Encoder_T * p_encoder)
 /*!
 	@brief InterpolateAngle
 	AngleIndex * 1(DeltaD) * [UnitInterpolateAngle] / DeltaT
-	UnitInterpolateAngle = [AngleSize[65536] * UnitT_Freq / POLLING_FREQ / CountsPerRevolution]
+	UnitInterpolateAngle = [ENCODER_ANGLE_DEGREES[65536] * TIMER_FREQ / POLLING_FREQ / CountsPerRevolution]
 */
 static inline uint32_t Encoder_DeltaT_InterpolateAngleIndex(Encoder_T * p_encoder, uint32_t pollingIndex)
 {

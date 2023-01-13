@@ -121,7 +121,7 @@ static inline qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor) { retu
 	Speed_Fixed32 set as CCW is positive
 	@return speed forward as positive. reverse as negative.
 */
-static inline int32_t Motor_User_GetSpeed_Frac16(Motor_T * p_motor) { return Motor_ConvertUserDirection(p_motor, p_motor->Speed_FracS16); }
+static inline int32_t Motor_User_GetSpeed_Frac16(Motor_T * p_motor) { return Motor_ConvertUserDirection(p_motor, p_motor->Speed_FracS16 * 2); }
 
 typedef int32_t(*Motor_CommutationModeFunctionInt32_T)(Motor_T * p_motor);
 
