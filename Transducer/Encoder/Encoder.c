@@ -228,9 +228,10 @@ static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_
 	UnitT_Freq = 1000, CountsPerRevolution = 8192,
 		ScalarSpeedRef_Rpm = 5000 => 96
 
-	ModeD
+	ModeD/DT
 	deltaDMax = ScalarSpeedRef_Rpm * 2 * CountsPerRevolution / (60 * UnitT_Freq)
 	deltaDMax * speedFactor / speedDivisor = 65536 * 2;
+	Shift == 14, UnitScalarSpeed == 131,072 / deltaDMax
 */
 void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 {

@@ -271,7 +271,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 	{
 		case 0U:
 			Terminal_SendString(p_term, "Speed: ");	Terminal_SendNum(p_term, Motor_User_GetSpeed_Rpm(p_motor)); Terminal_SendString(p_term, " RPM, ");
-			Terminal_SendNum(p_term, Motor_User_GetSpeed_Frac16(p_motor)); Terminal_SendString(p_term, " Frac16\r\n");
+			Terminal_SendNum(p_term, Motor_User_GetSpeed_Frac16(p_motor)); Terminal_SendString(p_term, " Frac16, ");
 			Terminal_SendNum(p_term, p_motor->Speed_FracS16); Terminal_SendString(p_term, " Q1.15\r\n");
 
 			Terminal_SendString(p_term, "Encoder Speed: ");

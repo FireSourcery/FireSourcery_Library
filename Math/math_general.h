@@ -42,6 +42,14 @@ static inline int32_t math_sign(int32_t value) { return (value > 0) - (value < 0
 
 static inline int32_t math_isbound(int32_t value, int32_t low, int32_t high) { return (value == math_clamp(value, low, high)); }
 
+static inline int32_t math_add_sat(int32_t a, int32_t b)
+{
+	int32_t result = a + b;
+	if 		((a > 0) && (b > 0) && (result < 0)) { result = INT32_MAX; } /* (a > 0 && b > INT_MAX - a) */
+    else if ((a < 0) && (b < 0) && (result > 0)) { result = 0 - INT32_MAX; } /* (a < 0 && b < INT_MIN - a) */
+	return result;
+}
+
 extern uint32_t math_muldiv64_unsigned(uint32_t value, uint32_t factor, uint32_t divisor);
 
 #endif
