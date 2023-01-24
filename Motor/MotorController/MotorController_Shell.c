@@ -217,6 +217,7 @@ static Cmd_Status_T Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 	p_motor->JogIndex = 0U;
 	p_motor->Encoder.TotalD = 0U;
+	Motor_ZeroSensor(p_motor);
 	return CMD_STATUS_PROCESS_LOOP;
 }
 
@@ -228,12 +229,12 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 
 	if(p_motor->JogIndex < Motor_User_GetPolePairs(p_motor) * 6U + 1U)
 	{
-		if(p_motor->JogIndex == 0U) { Motor_ZeroSensor(p_motor); }
+		// if(p_motor->JogIndex == 0U) { Motor_ZeroSensor(p_motor); }
 		// Terminal_SendNum(p_term, p_motor->JogIndex);
 		// PrintPhase(p_term, p_motor, p_motor->JogIndex);
 		Terminal_SendNum(p_term, p_motor->JogIndex); Terminal_SendString(p_term, " ");
 		PrintSensor(p_term, p_motor);
-		Motor_Jog6(p_motor);
+		// Motor_Jog6(p_motor);
 		status = CMD_STATUS_SUCCESS;
 	}
 	else

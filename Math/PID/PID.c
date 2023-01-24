@@ -64,7 +64,6 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 	*/
 	/* Forward rectangular approximation.  */
 	// integral32Part = ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift); /* Exclusive of 16 shift */
-
 	// integral32 = math_add_sat(p_pid->Integral32, integral32Part); 	/* Check for overflow. Integral partition may be > proportional */
 	// integral = integral32 >> 16;
 
@@ -149,9 +148,10 @@ void PID_SetFreq(PID_T * p_pid, uint32_t sampleFreq)
 /*
 	Proportional(k) = Kp * error(k) = kp_Fixed32 * error(k) >> 16
 
+	PropGain < 32,767, errorMax = (32,767 - (-32,768))
 	kp_Fixed32 >> 16 = PropGain >> PropGainShift, inclusive of shift 16
 	PropGain = kp_Fixed32 << PropGainShift >> 16
-	[kp_Fixed32 << PropGainShift >> 16] * errorMax < INT32_MAX; errorMax = (32,767 - (-32,768))
+	[kp_Fixed32 << PropGainShift >> 16] * errorMax < INT32_MAX;
 	PropGainShift < log2(INT32_MAX / 65536 * 65536 / kp_Fixed32)
 
 	kp_Fixed32 = 65536 => LShift 14-16, RShift 2, Gain = 16,384
@@ -169,10 +169,10 @@ int32_t PID_GetKp_Fixed32(PID_T * p_pid) { return p_pid->Params.PropGain << (16 
 	Integral(k) = Ki * error(k) / SampleFreq + Integral(k-1)
 				= ki_Fixed32 * error(k) / SampleFreq >> 16 + Integral(k-1)
 
+	IntegralGain < 32,767, errorMax = (32,767 - (-32,768))
 	ki_Fixed32 / SampleFreq = IntegralGain >> IntegralGainShift, exclusive of shift 16
-	IntegralGain < 32,767
 	IntegralGain = ki_Fixed32 / SampleFreq << IntegralGainShift
-	[ki_Fixed32 / SampleFreq << IntegralGainShift] * errorMax < INT32_MAX; errorMax = (32,767 - (-32,768))
+	[ki_Fixed32 / SampleFreq << IntegralGainShift] * errorMax < INT32_MAX;
 	IntegralGainShift < log2(INT32_MAX / 65536 * SampleFreq / ki_Fixed32)
 */
 void PID_SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)

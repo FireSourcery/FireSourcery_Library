@@ -265,11 +265,11 @@ static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc, uint3
 	return p_nextState;
 }
 
-static StateMachine_State_T * Run_InputUserCmd(MotorController_T * p_mc, uint32_t userCmd_Signed)
-{
-	// MotorController_SetUserCmd(p_mc, userCmd_Signed);
-	return 0U;
-}
+// static StateMachine_State_T * Run_InputUserCmd(MotorController_T * p_mc, uint32_t userCmd_Signed)
+// {
+// 	// MotorController_SetUserCmd(p_mc, userCmd_Signed);
+// 	return 0U;
+// }
 
 /*
 	Check Stop / Zero Throttle

@@ -59,6 +59,7 @@ static inline uint8_t _Encoder_CapturePhasesState(Encoder_T * p_encoder)
 static inline void _Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
 {
 	p_encoder->CounterD += count;
+	// p_encoder->CounterD += count;
 	// p_encoder->TotalD += count;
 	p_encoder->Angle32 += ((int32_t)count * (int32_t)p_encoder->UnitAngularD);
 }

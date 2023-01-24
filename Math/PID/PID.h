@@ -49,9 +49,9 @@ typedef struct __attribute__((aligned(4U))) PID_Params_Tag
 	PID_Mode_T Mode;
 	uint32_t SampleFreq;
 
-	uint32_t Kp_Fixed32;
-	uint32_t Ki_Fixed32;
-	uint32_t Kd_Fixed32;
+	int32_t Kp_Fixed32; /* Q16.16 */
+	int32_t Ki_Fixed32;
+	int32_t Kd_Fixed32;
 
 	int16_t PropGain;
 	int8_t PropGainShift;
@@ -70,10 +70,10 @@ typedef struct PID_Tag
 {
 	const PID_Config_T CONFIG;
 	PID_Params_T Params;
-	int32_t Integral32; 		/* Shifted 16 */
+	int32_t Integral32; /* Q16.16, Shifted 16 */
 	int32_t ErrorPrev;
-	int16_t OutputMin;
-	int16_t OutputMax;
+	int16_t OutputMin; /* -32768 Min */
+	int16_t OutputMax; /* 32767 Max */
 	int16_t Output;
 }
 PID_T;
