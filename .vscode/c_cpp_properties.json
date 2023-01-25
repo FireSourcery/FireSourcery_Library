@@ -1,0 +1,28 @@
+{
+    "env": {},
+    "configurations": [
+        {
+            "name": "Win32",
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "${default}"
+            ],
+            "includePath": [
+                "${workspaceFolder}",
+                "../FireSourcery_Library",
+                "${default}"
+            ],
+            "forcedInclude": [
+                "${default}"
+            ],
+            "windowsSdkVersion": "10.0.19041.0",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm"
+        }
+    ],
+    "version": 4
+}
+// https://code.visualstudio.com/docs/cpp/c-cpp-properties-schema-referenceom/docs/cpp/c-cpp-properties-schema-reference

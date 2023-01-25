@@ -364,7 +364,7 @@ void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 	// {
 	// 	if(Motor_GetSpeed_RPM(p_motor) > 10U)
 	// 	{
-	Motor_User_SetTorqueModeCmd(p_motor, (int32_t)0 - (int32_t)brake / 2);
+    Motor_User_SetTorqueModeCmd(p_motor, (int32_t)0 - (brake / 2U));
 	// 	}
 	// 	else
 	// 	{

@@ -251,6 +251,7 @@ void Motor_FOC_StartAlign(Motor_T * p_motor)
 	Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.AlignTime_Cycles, 0, p_motor->Parameters.AlignPower_FracU16 / 2U);
 	FOC_SetIVqReq(&p_motor->Foc, 0);
 	FOC_SetTheta(&p_motor->Foc, 0);
+    Motor_FOC_ProcFeedbackMatch(p_motor);
 }
 
 void Motor_FOC_ProcAlign(Motor_T * p_motor)
@@ -262,10 +263,12 @@ void Motor_FOC_ProcAlign(Motor_T * p_motor)
 
 void Motor_FOC_StartAlignValidate(Motor_T * p_motor)
 {
-	Motor_ZeroSensorAlign(p_motor);
+	Motor_CalibrateSensorZero(p_motor);
 	Motor_ZeroSensor(p_motor);
 	FOC_SetIVdReq(&p_motor->Foc, 0);
-	// p_motor->ControlFeedbackMode.OpenLoop = 0U;
+    // Linear_Ramp_Set(&p_motor->Ramp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, INT16_MAX / 2U));
+    Motor_FOC_ProcFeedbackMatch(p_motor);
+    // p_motor->ControlFeedbackMode.OpenLoop = 0U;
 }
 
 void Motor_FOC_StartOpenLoop(Motor_T * p_motor)

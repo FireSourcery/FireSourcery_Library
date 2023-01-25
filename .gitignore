@@ -57,4 +57,5 @@ dkms.conf
 #**/External/CMSIS/
 
 .vscode/*
+!.vscode/c_cpp_properties.json
 !.vscode/settings.json

@@ -53,12 +53,12 @@ void SysTime_Delay(uint32_t ms)
 
 void SysTime_SetDelayYield(void (*fp)(void)) { Yield = fp; }
 
+/* App init must set priority */
 void SysTime_Init(void)
 {
 #ifdef CONFIG_SYSTIME_SYSTICK
 	SYST_RVR = (CPU_FREQ / 1000U) - 1U;
 	SYST_CVR = 0U;
 	SYST_CSR = SYST_CSR_CLKSOURCE_MASK | SYST_CSR_TICKINT_MASK | SYST_CSR_ENABLE_MASK;
-	SCB_SHPR3 = (SCB_SHPR3 & SCB_SHPR3_PRI_15_MASK) | (SCB_SHPR3_PRI_15(CONFIG_SYSTIME_SYSTICK_PRIORITY)); /* Priority => PRIORITY & 0xF0 >> 4, lower is higher */
 #endif
 }

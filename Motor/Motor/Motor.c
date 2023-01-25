@@ -56,8 +56,8 @@ void Motor_InitSensor(Motor_T * p_motor)
 		case MOTOR_SENSOR_MODE_ENCODER:
 			p_motor->CONFIG.INIT_SENSOR_ENCODER();
 			Encoder_ModeDT_Init(&p_motor->Encoder);
-			Encoder_EnableQuadratureMode(&p_motor->Encoder);
 			Encoder_InitInterrupts_Quadrature(&p_motor->Encoder);
+			Encoder_EnableQuadratureMode(&p_motor->Encoder);
 			break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 		case MOTOR_SENSOR_MODE_SIN_COS:
@@ -293,7 +293,7 @@ bool Motor_CheckSensorFeedback(Motor_T * p_motor)
 	return isAvailable;
 }
 
-void Motor_ZeroSensorAlign(Motor_T * p_motor)
+void Motor_CalibrateSensorZero(Motor_T * p_motor)
 {
 	p_motor->ElectricalAngle = 0U;
 	switch(p_motor->Parameters.SensorMode)
@@ -306,7 +306,7 @@ void Motor_ZeroSensorAlign(Motor_T * p_motor)
 	}
 }
 
-void Motor_CalibrateSensorAlign(Motor_T * p_motor)
+void Motor_ValidateSensorAlign(Motor_T * p_motor)
 {
 	switch(p_motor->Parameters.SensorMode)
 	{

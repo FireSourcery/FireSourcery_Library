@@ -642,8 +642,8 @@ extern void Motor_ProcSpeedFeedback(Motor_T * p_motor);
 extern qangle16_t Motor_GetMechanicalAngle(Motor_T * p_motor);
 
 extern void Motor_ZeroSensor(Motor_T * p_motor);
-extern void Motor_ZeroSensorAlign(Motor_T * p_motor);
-extern void Motor_CalibrateSensorAlign(Motor_T * p_motor);
+extern void Motor_CalibrateSensorZero(Motor_T * p_motor);
+extern void Motor_ValidateSensorAlign(Motor_T * p_motor);
 extern bool Motor_CheckSensorFeedback(Motor_T * p_motor);
 extern bool Motor_CheckAlignFault(Motor_T * p_motor);
 
