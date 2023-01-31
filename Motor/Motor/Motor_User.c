@@ -708,7 +708,7 @@ void Motor_User_SetSpeedLimitReverseParam_Frac16(Motor_T * p_motor, uint16_t rev
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 static uint16_t ConvertToSpeedLimitFrac16(Motor_T * p_motor, uint16_t speed_rpm)
 {
-	int32_t speed_frac16 = _Motor_ConvertToSpeedFrac16(p_motor, speed_rpm);
+	int32_t speed_frac16 = _Motor_ConvertSpeed_RpmToScalar16(p_motor, speed_rpm);
 	return (speed_frac16 > UINT16_MAX) ? UINT16_MAX : speed_frac16;
 }
 
@@ -731,15 +731,15 @@ uint16_t Motor_User_GetSpeedLimitForwardParam_Rpm(Motor_T * p_motor)
 {
 	// uint16_t speedLimit = (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ?
 	// 	p_motor->Parameters.SpeedLimitCcw_FracS16 : p_motor->Parameters.SpeedLimitCw_FracS16;
-	// return _Motor_ConvertToRpm(p_motor, speedLimit);
-	return _Motor_ConvertToRpm(p_motor, p_motor->Parameters.SpeedLimitForward_ScalarU16);
+	// return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, speedLimit);
+	return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, p_motor->Parameters.SpeedLimitForward_ScalarU16);
 }
 
 uint16_t Motor_User_GetSpeedLimitReverseParam_Rpm(Motor_T * p_motor)
 {
 	// uint16_t speedLimit = (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ?
 	// 	p_motor->Parameters.SpeedLimitCw_FracS16 : p_motor->Parameters.SpeedLimitCcw_FracS16;
-	return _Motor_ConvertToRpm(p_motor, p_motor->Parameters.SpeedLimitReverse_ScalarU16);
+	return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, p_motor->Parameters.SpeedLimitReverse_ScalarU16);
 }
 #endif
 

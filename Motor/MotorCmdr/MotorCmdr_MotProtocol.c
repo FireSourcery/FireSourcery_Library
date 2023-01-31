@@ -211,7 +211,7 @@ void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_
 		// case MOT_PACKET_WRITE_MEMORY: 					break;
 		case MOT_PACKET_DATA_MODE_READ: 				break;
 		case MOT_PACKET_DATA_MODE_WRITE: 				break;
-		case MOT_PACKET_DATA_MODE_TYPE: 				break;
+		case MOT_PACKET_DATA_MODE_DATA: 				break;
 
 		// case MOT_PACKET_MONITOR_TYPE: 			*p_txLength = MotPacket_MonitorReq_Build((MotPacket_MonitorReq_T *)p_txPacket, p_app->MonitorIdActive);		break;
 		// case MOT_PACKET_CONTROL_TYPE:

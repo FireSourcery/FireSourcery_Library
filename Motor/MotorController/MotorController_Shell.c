@@ -271,7 +271,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
     {
         case 0U:
             Terminal_SendString(p_term, "Speed: ");    Terminal_SendNum(p_term, Motor_User_GetSpeed_Rpm(p_motor)); Terminal_SendString(p_term, " RPM, ");
-            Terminal_SendNum(p_term, Motor_User_GetSpeed_Frac16(p_motor)); Terminal_SendString(p_term, " Frac16, ");
+            Terminal_SendNum(p_term, Motor_User_GetSpeed_FracS16(p_motor)); Terminal_SendString(p_term, " Frac16, ");
             Terminal_SendNum(p_term, p_motor->Speed_FracS16); Terminal_SendString(p_term, " Q1.15\r\n");
 
             Terminal_SendString(p_term, "Encoder Speed: ");
@@ -359,13 +359,13 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 
             Terminal_SendString(p_term, "Ideal Power: ");
             Terminal_SendNum(p_term, Motor_User_GetElectricalPower_VA(p_motor));         Terminal_SendString(p_term, " Volt-Amps, ");
-            Terminal_SendNum(p_term, Motor_User_GetElectricalPower_Frac16(p_motor));     Terminal_SendString(p_term, " Frac16\r\n");
+            Terminal_SendNum(p_term, Motor_User_GetElectricalPower_FracS16(p_motor));     Terminal_SendString(p_term, " Frac16\r\n");
             Terminal_SendString(p_term, "VPhase: ");
             Terminal_SendNum(p_term, Motor_User_GetVPhase_Volts(p_motor));      Terminal_SendString(p_term, " Volts, ");
-            Terminal_SendNum(p_term, Motor_User_GetVPhase_Frac16(p_motor));     Terminal_SendString(p_term, " Frac16\r\n");
+            Terminal_SendNum(p_term, Motor_User_GetVPhase_FracS16(p_motor));     Terminal_SendString(p_term, " Frac16\r\n");
             Terminal_SendString(p_term, "IPhase: ");
             Terminal_SendNum(p_term, Motor_User_GetIPhase_Amps(p_motor));        Terminal_SendString(p_term, " Amps, ");
-            Terminal_SendNum(p_term, Motor_User_GetIPhase_Frac16(p_motor));        Terminal_SendString(p_term, " Frac16\r\n");
+            Terminal_SendNum(p_term, Motor_User_GetIPhase_FracS16(p_motor));        Terminal_SendString(p_term, " Frac16\r\n");
             Terminal_SendString(p_term, "IPeakAdcu: ");     Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsIa, FOC_GetIMagnitude(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
             // Terminal_SendString(p_term, "Capture: ");             Terminal_SendNum(p_term, p_motor->IPhasePeak_Adcu);             Terminal_SendString(p_term, " ADCU\r\n");
             // Terminal_SendString(p_term, "Ia: ");     Terminal_SendNum(p_term, p_motor->Foc.Ia); Terminal_SendString(p_term, "\r\n");
@@ -374,7 +374,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
             break;
 
         case 3U:
-            // Terminal_SendString(p_term, "Bemf Peak: ");         Terminal_SendNum(p_term, Motor_User_GetVPhase_Frac16(p_motor)); Terminal_SendString(p_term, " Frac16\r\n");
+            // Terminal_SendString(p_term, "Bemf Peak: ");         Terminal_SendNum(p_term, Motor_User_GetVPhase_FracS16(p_motor)); Terminal_SendString(p_term, " Frac16\r\n");
             // Terminal_SendString(p_term, "Capture: ");         Terminal_SendNum(p_term, p_motor->VBemfPeak_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
             // Terminal_SendString(p_term, "FOC: ");             Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsVa, FOC_GetIMagnitude(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
             // Terminal_SendString(p_term, "FOC Clarke: ");     Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsVa, FOC_GetIMagnitude_Clarke(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");

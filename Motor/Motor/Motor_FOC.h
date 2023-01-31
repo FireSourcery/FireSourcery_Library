@@ -97,20 +97,21 @@ static inline void Motor_FOC_CaptureVc(Motor_T * p_motor)
 
 */
 /******************************************************************************/
-static inline int32_t Motor_FOC_GetIPhase_Frac16(Motor_T * p_motor) 			{ return (int32_t)FOC_GetIPhase(&p_motor->Foc) * 2; }
-static inline int32_t Motor_FOC_GetVPhase_Frac16(Motor_T * p_motor) 			{ return (int32_t)FOC_GetVPhase(&p_motor->Foc) * 2; }
-static inline int32_t Motor_FOC_GetElectricalPower_Frac16(Motor_T * p_motor) 	{ return (int32_t)FOC_GetPower(&p_motor->Foc) * 2; }
+/* return int32 for function pointer casting compatibility  */
+static inline int32_t Motor_FOC_GetIPhase_FracS16(Motor_T * p_motor) 			{ return FOC_GetIPhase(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetVPhase_FracS16(Motor_T * p_motor) 			{ return FOC_GetVPhase(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetElectricalPower_FracS16(Motor_T * p_motor) 	{ return FOC_GetPower(&p_motor->Foc); }
 
 /* In User Reference Sign */
 // static inline int32_t Motor_FOC_GetIPhaseUser_Frac16(Motor_T * p_motor)
 // {
-// 	int32_t iPhase = Motor_FOC_GetIPhase_Frac16(p_motor);
+// 	int32_t iPhase = Motor_FOC_GetIPhase_FracS16(p_motor);
 // 	return (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? iPhase : 0 - iPhase;
 // }
 
 // static inline int32_t Motor_FOC_GetVPhaseUser_Frac16(Motor_T * p_motor)
 // {
-// 	int32_t vPhase = Motor_FOC_GetVPhase_Frac16(p_motor);
+// 	int32_t vPhase = Motor_FOC_GetVPhase_FracS16(p_motor);
 // 	return (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? vPhase : 0 - vPhase;
 // }
 
@@ -138,7 +139,7 @@ static inline void Motor_FOC_SetVSpeed(Motor_T * p_motor)
 }
 
 //check DC current limit
-// Motor_FOC_GetElectricalPower_Frac16(p_motor) / Global_Motor_GetVSource_V() ;
+// Motor_FOC_GetElectricalPower_FracS16(p_motor) / Global_Motor_GetVSource_V() ;
 
 
 /******************************************************************************/

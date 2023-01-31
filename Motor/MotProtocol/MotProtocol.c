@@ -70,14 +70,14 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
  	/* Move PACKET_LENGTH_INDEX to protocol module handle, for cases where header length index defined */
 	if(rxCount >= MOT_PACKET_LENGTH_BYTE_INDEX)
 	{
-		if(rxCount == MotPacket_GetTotalLength(p_rxPacket)) /* Packet Complete */
+		if(rxCount == MotPacket_ParseTotalLength(p_rxPacket)) /* Packet Complete */
 		{
 			*p_reqId = p_rxPacket->Header.HeaderId;
 			rxCode = (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_PACKET_ERROR;
 		}
 		else /* Packet Length Known */
 		{
-			*p_packetLength = MotPacket_GetTotalLength(p_rxPacket);
+			*p_packetLength = MotPacket_ParseTotalLength(p_rxPacket);
 		}
 	}
 	else if(rxCount >= MOT_PACKET_LENGTH_MIN) /* Packet is Sync type */

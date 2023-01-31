@@ -171,10 +171,10 @@ static StateMachine_State_T * Stop_InputCalibration(Motor_T * p_motor, uint32_t 
 
 static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT] = (StateMachine_Transition_T)TransitionFault,
-    [MSM_INPUT_CONTROL] = (StateMachine_Transition_T)Stop_InputControl,
-    [MSM_INPUT_RELEASE] = (StateMachine_Transition_T)Stop_InputRelease,
-    [MSM_INPUT_DIRECTION] = (StateMachine_Transition_T)Stop_InputDirection,
+    [MSM_INPUT_FAULT]       = (StateMachine_Transition_T)TransitionFault,
+    [MSM_INPUT_CONTROL]     = (StateMachine_Transition_T)Stop_InputControl,
+    [MSM_INPUT_RELEASE]     = (StateMachine_Transition_T)Stop_InputRelease,
+    [MSM_INPUT_DIRECTION]   = (StateMachine_Transition_T)Stop_InputDirection,
     [MSM_INPUT_CALIBRATION] = (StateMachine_Transition_T)Stop_InputCalibration,
     //	[MSM_INPUT_GROUND] 			= (StateMachine_Transition_T)Stop_InputGround,
 };
@@ -219,19 +219,19 @@ static StateMachine_State_T * Run_InputRelease(Motor_T * p_motor, uint32_t voidV
 
 static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT] = (StateMachine_Transition_T)TransitionFault,
-    [MSM_INPUT_CONTROL] = (StateMachine_Transition_T)Run_InputControl,
-    [MSM_INPUT_RELEASE] = (StateMachine_Transition_T)Run_InputRelease,
-    [MSM_INPUT_DIRECTION] = (StateMachine_Transition_T)0U,
-    [MSM_INPUT_CALIBRATION] = (StateMachine_Transition_T)0U,
+    [MSM_INPUT_FAULT]           = (StateMachine_Transition_T)TransitionFault,
+    [MSM_INPUT_CONTROL]         = (StateMachine_Transition_T)Run_InputControl,
+    [MSM_INPUT_RELEASE]         = (StateMachine_Transition_T)Run_InputRelease,
+    [MSM_INPUT_DIRECTION]       = (StateMachine_Transition_T)0U,
+    [MSM_INPUT_CALIBRATION]     = (StateMachine_Transition_T)0U,
 };
 
 static const StateMachine_State_T STATE_RUN =
 {
-    .ID = MSM_STATE_ID_RUN,
+    .ID                 = MSM_STATE_ID_RUN,
     .P_TRANSITION_TABLE = &RUN_TRANSITION_TABLE[0U],
-    .ENTRY = (StateMachine_Output_T)Run_Entry,
-    .OUTPUT = (StateMachine_Output_T)Run_Proc,
+    .ENTRY              = (StateMachine_Output_T)Run_Entry,
+    .OUTPUT             = (StateMachine_Output_T)Run_Proc,
 };
 
 /******************************************************************************/

@@ -117,12 +117,6 @@ static inline float Motor_User_GetHeat_DegCFloat(Motor_T * p_motor) 								{ re
 static inline qangle16_t Motor_User_GetElectricalAngle(Motor_T * p_motor) { return p_motor->ElectricalAngle; }
 static inline qangle16_t Motor_User_GetMechanicalAngle(Motor_T * p_motor) { return Motor_GetMechanicalAngle(p_motor); }
 
-/*!
-	Speed_Fixed32 set as CCW is positive
-	@return speed forward as positive. reverse as negative.
-*/
-static inline int32_t Motor_User_GetSpeed_Frac16(Motor_T * p_motor) { return Motor_ConvertUserDirection(p_motor, p_motor->Speed_FracS16 * 2); }
-
 typedef int32_t(*Motor_CommutationModeFunctionInt32_T)(Motor_T * p_motor);
 
 static inline int32_t Motor_GetCommutationModeInt32(Motor_T * p_motor, Motor_CommutationModeFunctionInt32_T focFunction, Motor_CommutationModeFunctionInt32_T sixStepFunction)
@@ -139,47 +133,55 @@ static inline int32_t Motor_GetCommutationModeInt32(Motor_T * p_motor, Motor_Com
 #endif
 }
 
+/*!
+	Speed_Fixed32 set as CCW is positive
+	@return speed forward as positive. reverse as negative.
+*/
+static inline int32_t Motor_User_GetSpeed_FracS16(Motor_T * p_motor) { return Motor_ConvertUserDirection(p_motor, p_motor->Speed_FracS16); }
 
 /*!
 	@return IPhase Zero to Peak.
 
 	iPhase motoring as positive. generating as negative.
 */
-static inline int32_t Motor_User_GetIPhase_Frac16(Motor_T * p_motor)
+static inline int32_t Motor_User_GetIPhase_FracS16(Motor_T * p_motor)
 {
-	return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_Frac16, 0U));
+	return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_FracS16, 0U));
 }
 
 /*
 	BEMF
 */
-// static inline int32_t Motor_User_GetVBemf_Frac16(Motor_T * p_motor)
+// static inline int32_t Motor_User_GetVBemf_FracS16(Motor_T * p_motor)
 // {
 // }
 
 /*
 	BEMF during freewheel or V Out during active control
 */
-static inline int32_t Motor_User_GetVPhase_Frac16(Motor_T * p_motor)
+static inline int32_t Motor_User_GetVPhase_FracS16(Motor_T * p_motor)
 {
-	return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_Frac16, 0U));
+	return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_FracS16, 0U));
 }
 
-static inline int32_t Motor_User_GetElectricalPower_Frac16(Motor_T * p_motor)
+/* Ideal electrical power */
+static inline int32_t Motor_User_GetElectricalPower_FracS16(Motor_T * p_motor)
 {
-	return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetElectricalPower_Frac16, 0U);
+	return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetElectricalPower_FracS16, 0U);
 }
 
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 /*!	@return [-32767:32767] Rpm should not exceed int16_t */
-static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor) 			{ return _Motor_ConvertToRpm(p_motor, Motor_User_GetSpeed_Frac16(p_motor)); }
-static inline int16_t Motor_User_GetIPhase_Amps(Motor_T * p_motor) 			{ return _Motor_ConvertToAmps(p_motor, Motor_User_GetIPhase_Frac16(p_motor)); }
-static inline int16_t Motor_User_GetVPhase_Volts(Motor_T * p_motor) 		{ return _Motor_ConvertToVolts(p_motor, Motor_User_GetVPhase_Frac16(p_motor)); }
-static inline int32_t Motor_User_GetElectricalPower_VA(Motor_T * p_motor) 	{ return _Motor_ConvertToWatts(p_motor, Motor_User_GetElectricalPower_Frac16(p_motor)); }
+static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor) 			{ return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, Motor_User_GetSpeed_FracS16(p_motor)); }
+static inline int16_t Motor_User_GetIPhase_Amps(Motor_T * p_motor) 			{ return _Motor_ConvertI_FracS16ToAmps(Motor_User_GetIPhase_FracS16(p_motor)); }
+static inline int16_t Motor_User_GetVPhase_Volts(Motor_T * p_motor) 		{ return _Motor_ConvertV_FracS16ToVolts(Motor_User_GetVPhase_FracS16(p_motor)); }
+static inline int32_t Motor_User_GetElectricalPower_VA(Motor_T * p_motor) 	{ return _Motor_ConvertPower_FracS16ToWatts(Motor_User_GetElectricalPower_FracS16(p_motor)); }
 #endif
 
-static inline uint32_t Motor_User_ConvertToVSpeed(Motor_T * p_motor, uint16_t rpm) { return Linear_Function(&p_motor->UnitsVSpeed, _Motor_ConvertToSpeedFrac16(p_motor, rpm)); }
+
+//todo check conversion
+static inline uint32_t Motor_User_ConvertToVSpeed(Motor_T * p_motor, uint16_t rpm)  { return Linear_Function(&p_motor->UnitsVSpeed, _Motor_ConvertSpeed_RpmToScalar16(p_motor, rpm)); }
 
 /******************************************************************************/
 /*
