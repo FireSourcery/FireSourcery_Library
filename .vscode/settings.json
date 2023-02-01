@@ -41,7 +41,6 @@
     "editor.indentSize": "tabSize",
     "files.trimTrailingWhitespace": true,
     "cmake.configureOnOpen": false,
-    "explorer.copyRelativePathSeparator": "/",
     "[c]": {
         "editor.tabSize": 4,
         "editor.insertSpaces": true,
@@ -56,4 +55,5 @@
     "C_Cpp.vcFormat.indent.caseContentsWhenBlock": true,
 
     // "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
+    "explorer.copyRelativePathSeparator": "/",
 }

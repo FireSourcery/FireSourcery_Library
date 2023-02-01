@@ -39,10 +39,10 @@
 #ifdef CONFIG_SYSTIME_SYSTICK
 #endif
 
-#ifdef CONFIG_SYSTIME_SYSTICK_PRIORITY
-#else
-	#define CONFIG_SYSTIME_SYSTICK_PRIORITY 0x80U /* Priority 8 */
-#endif
+// #ifdef CONFIG_SYSTIME_SYSTICK_PRIORITY
+// #else
+// 	#define CONFIG_SYSTIME_SYSTICK_PRIORITY 0x80U /* Priority 8 */
+// #endif
 
 #endif
 

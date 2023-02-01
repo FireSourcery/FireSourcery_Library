@@ -60,6 +60,7 @@
 
 /*
 	MISRA Violation
+    extern variable to inline wrapper
 */
 extern volatile uint32_t SysTime_Millis;
 

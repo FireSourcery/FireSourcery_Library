@@ -768,7 +768,7 @@ void Motor_User_SetILimitGeneratingParam_Frac16(Motor_T * p_motor, uint16_t gene
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 static uint16_t ConvertToILimitFrac16(Motor_T * p_motor, uint16_t i_amp)
 {
-	int32_t i_frac16 = _Motor_ConvertToIFrac16(p_motor, i_amp);
+	int32_t i_frac16 = _Motor_ConvertI_AmpToFrac16(i_amp);
 	return (i_frac16 > UINT16_MAX) ? UINT16_MAX : i_frac16;
 }
 
@@ -787,8 +787,8 @@ void Motor_User_SetILimitGeneratingParam_Amp(Motor_T * p_motor, uint16_t generat
 	Motor_User_SetILimitGeneratingParam_Frac16(p_motor, ConvertToILimitFrac16(p_motor, generating_Amp));
 }
 
-uint16_t Motor_User_GetILimitMotoringParam_Amp(Motor_T * p_motor) 		{ return _Motor_ConvertToAmps(p_motor, p_motor->Parameters.ILimitMotoring_ScalarU16); }
-uint16_t Motor_User_GetILimitGeneratingParam_Amp(Motor_T * p_motor) 	{ return _Motor_ConvertToAmps(p_motor, p_motor->Parameters.ILimitGenerating_ScalarU16); }
+uint16_t Motor_User_GetILimitMotoringParam_Amp(Motor_T * p_motor) 		{ return _Motor_ConvertI_Frac16ToAmp(p_motor->Parameters.ILimitMotoring_ScalarU16); }
+uint16_t Motor_User_GetILimitGeneratingParam_Amp(Motor_T * p_motor) 	{ return _Motor_ConvertI_Frac16ToAmp(p_motor->Parameters.ILimitGenerating_ScalarU16); }
 #endif
 
 /******************************************************************************/

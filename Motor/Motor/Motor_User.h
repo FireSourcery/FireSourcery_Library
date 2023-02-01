@@ -173,7 +173,7 @@ static inline int32_t Motor_User_GetElectricalPower_FracS16(Motor_T * p_motor)
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 /*!	@return [-32767:32767] Rpm should not exceed int16_t */
-static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor) 			{ return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, Motor_User_GetSpeed_FracS16(p_motor)); }
+static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor) 			{ return _Motor_ConvertSpeed_FracS16ToRpm(p_motor, Motor_User_GetSpeed_FracS16(p_motor)); }
 static inline int16_t Motor_User_GetIPhase_Amps(Motor_T * p_motor) 			{ return _Motor_ConvertI_FracS16ToAmps(Motor_User_GetIPhase_FracS16(p_motor)); }
 static inline int16_t Motor_User_GetVPhase_Volts(Motor_T * p_motor) 		{ return _Motor_ConvertV_FracS16ToVolts(Motor_User_GetVPhase_FracS16(p_motor)); }
 static inline int32_t Motor_User_GetElectricalPower_VA(Motor_T * p_motor) 	{ return _Motor_ConvertPower_FracS16ToWatts(Motor_User_GetElectricalPower_FracS16(p_motor)); }
@@ -203,9 +203,9 @@ static inline void Motor_User_SetAlignTime_Cycles(Motor_T * p_motor, uint16_t cy
 static inline void Motor_User_SetOpenLoopAccel_Cycles(Motor_T * p_motor, uint16_t cycles) 			{ p_motor->Parameters.OpenLoopAccel_Cycles = cycles; }
 static inline void Motor_User_SetRampAccel_Cycles(Motor_T * p_motor, uint16_t cycles) 				{ p_motor->Parameters.RampAccel_Cycles = cycles; }
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-static inline void Motor_User_SetAlignTime_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.AlignTime_Cycles = _Motor_ConvertToControlCycles(p_motor, millis); }
-static inline void Motor_User_SetOpenLoopAccel_Millis(Motor_T * p_motor, uint16_t millis) 			{ p_motor->Parameters.OpenLoopAccel_Cycles = _Motor_ConvertToControlCycles(p_motor, millis); }
-static inline void Motor_User_SetRampAccel_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.RampAccel_Cycles = _Motor_ConvertToControlCycles(p_motor, millis); }
+static inline void Motor_User_SetAlignTime_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.AlignTime_Cycles = _Motor_ConvertToControlCycles(millis); }
+static inline void Motor_User_SetOpenLoopAccel_Millis(Motor_T * p_motor, uint16_t millis) 			{ p_motor->Parameters.OpenLoopAccel_Cycles = _Motor_ConvertToControlCycles(millis); }
+static inline void Motor_User_SetRampAccel_Millis(Motor_T * p_motor, uint16_t millis) 				{ p_motor->Parameters.RampAccel_Cycles = _Motor_ConvertToControlCycles(millis); }
 #endif
 // static inline void Motor_User_SetVoltageBrakeScalar_Frac16(Motor_T * p_motor, uint16_t scalar_Frac16) 	{ p_motor->Parameters.VoltageBrakeScalar_InvFrac16 = 65535U - scalar_Frac16; }
 

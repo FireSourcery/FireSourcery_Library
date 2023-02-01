@@ -67,12 +67,11 @@ static inline void ResetTimerFreq(Encoder_T * p_encoder)
 			=> RPM Min ~= 10RPM
 	*/
 #ifdef CONFIG_ENCODER_DYNAMIC_TIMER
-	// p_encoder->UnitT_Freq = HAL_Encoder_InitTimerFreq(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, p_encoder->Params.CountsPerRevolution * 16666U);
-	p_encoder->ExtendedTimerConversion = p_encoder->UnitT_Freq / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
+	// uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, p_encoder->Params.CountsPerRevolution * 16666U);
+	uint32_t timerFreq  = HAL_Encoder_InitTimerFreq(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, p_encoder->CONFIG.TIMER_FREQ);
+	p_encoder->ExtendedTimerConversion = timerFreq / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
 #else
-	p_encoder->UnitT_Freq = p_encoder->CONFIG.TIMER_FREQ;
-	p_encoder->UnitT_Freq = HAL_Encoder_InitTimerFreq(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, p_encoder->CONFIG.TIMER_FREQ);
-	p_encoder->ExtendedTimerConversion = p_encoder->UnitT_Freq / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
+	p_encoder->ExtendedTimerConversion = p_encoder->CONFIG.TIMER_FREQ / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
 #endif
 }
 
@@ -88,9 +87,7 @@ void _Encoder_DeltaT_Init(Encoder_T * p_encoder)
 */
 void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 {
-	// p_encoder->DeltaT = (0xFFFFFFFFUL - p_encoder->CONFIG.TIMER_FREQ) / p_encoder->CONFIG.SAMPLE_FREQ;
-	// p_encoder->DeltaT = 0xFFFF;
-	p_encoder->DeltaT = p_encoder->CONFIG.TIMER_FREQ;
+	p_encoder->DeltaT = p_encoder->CONFIG.TIMER_FREQ; /* Set as 1s */
 	p_encoder->InterpolateAngleIndex = 0U;
 	_Encoder_ZeroPulseCount(p_encoder);
 	p_encoder->ExtendedTimerPrev = *p_encoder->CONFIG.P_EXTENDED_TIMER;

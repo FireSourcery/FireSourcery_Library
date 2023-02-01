@@ -146,7 +146,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 */
 static inline int16_t Motor_GetEncoderElectricalAngle(Motor_T * p_motor)
 {
-	qangle16_t angle = ((_Encoder_GetAngle32(&p_motor->Encoder) >> 6U) * p_motor->Parameters.PolePairs) >> 10U;  /* MotorPolePairs less than 64 */
+	qangle16_t angle = ((_Encoder_GetAngle32(&p_motor->Encoder) >> 8U) * p_motor->Parameters.PolePairs) >> 8U;  /* MotorPolePairs less than 256 */
 	return Encoder_GetDirection_Quadrature(&p_motor->Encoder) * angle;
 }
 

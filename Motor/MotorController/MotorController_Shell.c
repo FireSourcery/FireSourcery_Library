@@ -270,9 +270,8 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
     switch(p_mc->ShellSubstate)
     {
         case 0U:
-            Terminal_SendString(p_term, "Speed: ");    Terminal_SendNum(p_term, Motor_User_GetSpeed_Rpm(p_motor)); Terminal_SendString(p_term, " RPM, ");
-            Terminal_SendNum(p_term, Motor_User_GetSpeed_FracS16(p_motor)); Terminal_SendString(p_term, " Frac16, ");
-            Terminal_SendNum(p_term, p_motor->Speed_FracS16); Terminal_SendString(p_term, " Q1.15\r\n");
+            Terminal_SendString(p_term, "Speed: "); Terminal_SendNum(p_term, Motor_User_GetSpeed_Rpm(p_motor)); Terminal_SendString(p_term, " RPM, ");
+            Terminal_SendNum(p_term, Motor_User_GetSpeed_FracS16(p_motor)); Terminal_SendString(p_term, " FracS16\r\n");
 
             Terminal_SendString(p_term, "Encoder Speed: ");
             Terminal_SendNum(p_term, Encoder_ModeDT_GetRotationalVelocity_RPM(&p_motor->Encoder)); Terminal_SendString(p_term, " RPM, ");
@@ -281,9 +280,9 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
             Terminal_SendString(p_term, "SpeedControl: "); Terminal_SendNum(p_term, PID_GetOutput(&p_motor->PidSpeed)); Terminal_SendString(p_term, "\r\n");
             Terminal_SendString(p_term, "RampOut: "); Terminal_SendNum(p_term, Linear_Ramp_GetOutput(&p_motor->Ramp)); Terminal_SendString(p_term, "\r\n");
             Terminal_SendString(p_term, "RampTarget: "); Terminal_SendNum(p_term, Linear_Ramp_GetTarget(&p_motor->Ramp)); Terminal_SendString(p_term, "\r\n");
-            // Terminal_SendString(p_term, "DeltaD: "); Terminal_SendNum(p_term, p_motor->Encoder.DeltaD); Terminal_SendString(p_term, "\r\n");
-            // Terminal_SendString(p_term, "DeltaT: "); Terminal_SendNum(p_term, p_motor->Encoder.DeltaT); Terminal_SendString(p_term, "\r\n");
-            // Terminal_SendString(p_term, "DeltaTh: "); Terminal_SendNum(p_term, p_motor->Encoder.DeltaTh); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendString(p_term, "DeltaD: "); Terminal_SendNum(p_term, p_motor->Encoder.DeltaD); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendString(p_term, "DeltaT: "); Terminal_SendNum(p_term, p_motor->Encoder.DeltaT); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendString(p_term, "DeltaTh: "); Terminal_SendNum(p_term, p_motor->Encoder.DeltaTh); Terminal_SendString(p_term, "\r\n");
             Terminal_SendString(p_term, "FreqD: "); Terminal_SendNum(p_term, p_motor->Encoder.FreqD); Terminal_SendString(p_term, "\r\n");
             // Terminal_SendString(p_term, "TotalD: "); Terminal_SendNum(p_term, p_motor->Encoder.TotalD); Terminal_SendString(p_term, "\r\n");
 
@@ -362,10 +361,10 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
             Terminal_SendNum(p_term, Motor_User_GetElectricalPower_FracS16(p_motor));     Terminal_SendString(p_term, " Frac16\r\n");
             Terminal_SendString(p_term, "VPhase: ");
             Terminal_SendNum(p_term, Motor_User_GetVPhase_Volts(p_motor));      Terminal_SendString(p_term, " Volts, ");
-            Terminal_SendNum(p_term, Motor_User_GetVPhase_FracS16(p_motor));     Terminal_SendString(p_term, " Frac16\r\n");
+            Terminal_SendNum(p_term, Motor_User_GetVPhase_FracS16(p_motor));     Terminal_SendString(p_term, " FracS16\r\n");
             Terminal_SendString(p_term, "IPhase: ");
             Terminal_SendNum(p_term, Motor_User_GetIPhase_Amps(p_motor));        Terminal_SendString(p_term, " Amps, ");
-            Terminal_SendNum(p_term, Motor_User_GetIPhase_FracS16(p_motor));        Terminal_SendString(p_term, " Frac16\r\n");
+            Terminal_SendNum(p_term, Motor_User_GetIPhase_FracS16(p_motor));        Terminal_SendString(p_term, " FracS16\r\n");
             Terminal_SendString(p_term, "IPeakAdcu: ");     Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsIa, FOC_GetIMagnitude(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
             // Terminal_SendString(p_term, "Capture: ");             Terminal_SendNum(p_term, p_motor->IPhasePeak_Adcu);             Terminal_SendString(p_term, " ADCU\r\n");
             // Terminal_SendString(p_term, "Ia: ");     Terminal_SendNum(p_term, p_motor->Foc.Ia); Terminal_SendString(p_term, "\r\n");
