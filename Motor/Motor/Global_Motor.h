@@ -39,7 +39,7 @@
 typedef const struct Global_Motor_Tag
 {
 	const uint16_t CONTROL_FREQ;
-	const uint16_t V_MAX_VOLTS;
+	const uint16_t V_MAX_VOLTS;     /* VSource Limit */
 	const uint16_t V_ABC_R1;
 	const uint16_t V_ABC_R2;
 	const uint16_t I_MAX_ZTP_ADCU; 	/* Sensor calibration. Zero-To-Peak, derived from sensor hardware */

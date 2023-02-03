@@ -69,7 +69,7 @@ void FOC_ClearState(FOC_T * p_foc)
 	p_foc->Ic = 0;
 	p_foc->Id = 0; /* Feedback */
 	p_foc->Iq = 0;
-	p_foc->Vd = 0; /* Req/Bemf */
+	p_foc->Vd = 0; /* Output/Bemf */
 	p_foc->Vq = 0;
 	p_foc->VIdReq = 0; /* Req */
 	p_foc->VIqReq = 0;

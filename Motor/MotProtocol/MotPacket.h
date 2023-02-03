@@ -54,7 +54,7 @@
 typedef enum MotPacket_HeaderId_Tag
 {
     /*
-        2-Byte Packets
+        Short 2-Byte Sync Packets
         Response Packet must use different ID - Length compare determined by Id
     */
     MOT_PACKET_STOP_ALL = 0x00U,    /* If first char after Start Byte is 0x00. */
@@ -63,8 +63,8 @@ typedef enum MotPacket_HeaderId_Tag
     MOT_PACKET_SYNC_NACK = 0x13U,
     MOT_PACKET_SYNC_ABORT = 0x14U,
 
-    /* 8-Byte Header Packets */
-    MOT_PACKET_STATUS = 0x20U,        /* Header Status Only */
+    /* Full 8-Byte Header Packets */
+    MOT_PACKET_STATUS = 0x20U,      /* Header Status Only */
     MOT_PACKET_VERSION = 0x21U,
 
     /*  */

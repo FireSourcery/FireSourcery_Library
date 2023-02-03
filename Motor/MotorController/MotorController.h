@@ -399,7 +399,7 @@ static inline void MotorController_SetBrake(MotorController_T * p_mc, uint16_t u
 }
 
 static inline void MotorController_SetThrottle(MotorController_T * p_mc, uint16_t userCmdThrottle)  { MotorN_User_SetThrottleCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, userCmdThrottle); }
-static inline void MotorController_SetCmd(MotorController_T * p_mc, int16_t userCmdThrottle)       { MotorN_User_SetDefaultCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, userCmdThrottle); }
+static inline void MotorController_SetCmd(MotorController_T * p_mc, int16_t userCmdThrottle)        { MotorN_User_SetDefaultCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, userCmdThrottle); }
 
 
 static inline void MotorController_DisableAll(MotorController_T * p_mc)    { MotorN_User_DisableControl(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }

@@ -227,7 +227,7 @@ void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_
 		// 	}
 		// 	break;
 		case MOT_PACKET_EXT_CMD: 							break;
-		case MOT_PACKET_EXT_RSVR2: 							break;
+		// case MOT_PACKET_EXT_RSVR2: 							break;
 		case MOT_PACKET_ID_RESERVED_255: 					break;
 		default: break;
 	}

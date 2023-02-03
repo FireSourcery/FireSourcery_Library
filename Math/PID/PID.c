@@ -63,29 +63,29 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 		Store as Integral. Allows compute time gain adjustment. Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
 	*/
 	/* Forward rectangular approximation.  */
-	// integral32Part = ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift); /* Exclusive of 16 shift */
-	// integral32 = math_add_sat(p_pid->Integral32, integral32Part); 	/* Check for overflow. Integral partition may be > proportional */
-	// integral = integral32 >> 16;
-
-	// /* Dynamic Clamp */
-	// integralMin = math_min(p_pid->OutputMin - proportional, 0);
-	// integralMax = math_max(p_pid->OutputMax - proportional, 0);
-
-	// if 		(integral > integralMax) 	{ integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
-	// else if (integral < integralMin) 	{ integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
-	// else 								{ p_pid->Integral32 = integral32; }
-
 	integral32Part = ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift); /* Exclusive of 16 shift */
-	integral = (p_pid->Integral32 >> 16) + (integral32Part >> 16);
+	integral32 = math_add_sat(p_pid->Integral32, integral32Part); 	/* Check for overflow. Integral partition may be > proportional */
+	integral = integral32 >> 16;
 
 	/* Dynamic Clamp */
 	integralMin = math_min(p_pid->OutputMin - proportional, 0);
 	integralMax = math_max(p_pid->OutputMax - proportional, 0);
 
-	if 		(integral >= integralMax) 	{ integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
-	else if (integral <= integralMin) 	{ integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
-	/* integralMin < integral < integralMax. -65535 > integral32Part < 65535 */
-	else 								{ p_pid->Integral32 = p_pid->Integral32 + integral32Part; }
+	if 		(integral > integralMax) 	{ integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
+	else if (integral < integralMin) 	{ integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
+	else 								{ p_pid->Integral32 = integral32; }
+
+	// integral32Part = ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift); /* Exclusive of 16 shift */
+	// integral = (p_pid->Integral32 >> 16) + (integral32Part >> 16);
+
+	// /* Dynamic Clamp */
+	// integralMin = math_min(p_pid->OutputMin - proportional, 0);
+	// integralMax = math_max(p_pid->OutputMax - proportional, 0);
+
+	// if 		(integral >= integralMax) 	{ integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
+	// else if (integral <= integralMin) 	{ integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
+	// /* integralMin < integral < integralMax. -65535 > integral32Part < 65535 */
+	// else 								{ p_pid->Integral32 = p_pid->Integral32 + integral32Part; }
 
 	return proportional + integral;
 }
