@@ -263,7 +263,6 @@ static Cmd_Status_T Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv
     return CMD_STATUS_PROCESS_LOOP;
 }
 
-extern volatile uint32_t VectorMagnitude;
 
 static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 {
@@ -384,9 +383,9 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
             // Terminal_SendString(p_term, "FOC Clarke: ");     Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsVa, FOC_GetIMagnitude_Clarke(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
 
         case 4U:
-            Terminal_SendString(p_term, "VectorMagnitude: ");  Terminal_SendNum(p_term, VectorMagnitude); Terminal_SendString(p_term, " FracS16\r\n");
-            Terminal_SendString(p_term, "Throttle: ");  Terminal_SendNum(p_term, MotAnalogUser_GetThrottle(&p_mc->AnalogUser)); Terminal_SendString(p_term, " Frac16\r\n");
-            Terminal_SendString(p_term, "Brake: ");     Terminal_SendNum(p_term, MotAnalogUser_GetBrake(&p_mc->AnalogUser)); Terminal_SendString(p_term, " Frac16\r\n");
+            // Terminal_SendString(p_term, "VectorMagnitude: "); Terminal_SendNum(p_term, VectorMagnitude); Terminal_SendString(p_term, " FracS16\r\n");
+            Terminal_SendString(p_term, "Throttle: ");  Terminal_SendNum(p_term, MotAnalogUser_GetThrottle(&p_mc->AnalogUser));     Terminal_SendString(p_term, " Frac16\r\n");
+            Terminal_SendString(p_term, "Brake: ");     Terminal_SendNum(p_term, MotAnalogUser_GetBrake(&p_mc->AnalogUser));        Terminal_SendString(p_term, " Frac16\r\n");
             Terminal_SendString(p_term, "Speed: ");     Terminal_SendNum(p_term, Motor_User_GetSpeed_Rpm(p_motor)); Terminal_SendString(p_term, " RPM\r\n");
             Terminal_SendString(p_term, "Iq: "); Terminal_SendNum(p_term, p_motor->Foc.Iq); Terminal_SendString(p_term, ", Vq: "); Terminal_SendNum(p_term, p_motor->Foc.Vq); Terminal_SendString(p_term, " FracS16\r\n");
             Terminal_SendString(p_term, "Id: "); Terminal_SendNum(p_term, p_motor->Foc.Id); Terminal_SendString(p_term, ", Vd: "); Terminal_SendNum(p_term, p_motor->Foc.Vd); Terminal_SendString(p_term, " FracS16\r\n");

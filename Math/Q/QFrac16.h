@@ -260,8 +260,6 @@ static inline uint16_t qfrac16_vectormagnitude(qfrac16_t x, qfrac16_t y)
 	return q_sqrt((int32_t)x * x + (int32_t)y * y);
 }
 
-extern volatile uint32_t VectorMagnitude;
-
 /* circle limit */
 static inline void qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax)
 {
@@ -277,9 +275,6 @@ static inline void qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16
 		*p_x = (qfrac16_t)qfrac16_mul(*p_x, ratio); /* no saturation needed, ratio < 1 */
 		*p_y = (qfrac16_t)qfrac16_mul(*p_y, ratio);
 	}
-
-    VectorMagnitude = q_sqrt(((int32_t)(*p_x) * (*p_x)) + ((int32_t)(*p_y) * (*p_y))); // saturated vector magnitude
-    if(VectorMagnitude > 32767) VectorMagnitude = 0xFFFFFFFF;
     return;
 }
 
