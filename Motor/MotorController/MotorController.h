@@ -81,10 +81,10 @@ MotorController_InputMode_T;
 
 typedef enum MotorController_ZeroCmdMode_Tag
 {
-    MOTOR_CONTROLLER_ZERO_CMD_MODE_FLOAT,    /* "Coast". MOSFETS non conducting. Same as neutral. */
-    MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN,     /* Regen Brake */
-    MOTOR_CONTROLLER_ZERO_CMD_MODE_CRUISE,    /* Voltage following, Zero currrent/torque */
-    MOTOR_CONTROLLER_ZERO_CMD_MODE_ZERO,    /* SetPoint Zero */
+    MOTOR_CONTROLLER_ZERO_CMD_MODE_FLOAT,       /* "Coast". MOSFETS non conducting. Same as neutral. */
+    MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN,       /* Regen Brake */
+    MOTOR_CONTROLLER_ZERO_CMD_MODE_CRUISE,      /* Voltage following, Zero currrent/torque */
+    MOTOR_CONTROLLER_ZERO_CMD_MODE_ZERO,        /* SetPoint Zero */
 }
 MotorController_ZeroCmdMode_T;
 
@@ -219,13 +219,9 @@ typedef struct __attribute__((aligned(2U))) MotorController_Params_Tag
 #endif
 
     MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
-
     MotorController_OptDinFunction_T OptDinFunction;
     uint16_t OptDinSpeedLimit_Frac16;
-
     uint16_t ILimitLowV_Frac16;
-
-    uint32_t Test[4U];
 }
 MotorController_Params_T;
 
@@ -251,21 +247,21 @@ MotorController_Manufacture_T;
 typedef const struct MotorController_Config_Tag
 {
     const MotorController_Params_T * const P_PARAMS_NVM;
-    const MotorController_Manufacture_T * const P_ONCE; /* use void pointer? cannot read directly */
+    const MotorController_Manufacture_T * const P_ONCE; /* cannot read directly if FlashOnce is selected */
     const MemMapBoot_T * const P_MEM_MAP_BOOT;
 
     Motor_T * const     P_MOTORS;
-    const uint8_t         MOTOR_COUNT;
-    Serial_T * const     P_SERIALS;     /* Simultaneous active serial */
-    const uint8_t         SERIAL_COUNT;
+    const uint8_t       MOTOR_COUNT;
+    Serial_T * const    P_SERIALS;     /* Simultaneous active serial */
+    const uint8_t       SERIAL_COUNT;
 
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     CanBus_T * const     P_CAN_BUS;
 #endif
 
-    // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
+// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
     Flash_T * const     P_FLASH;     /* Flash defined outside module, ensure flash config/params are in RAM */
-    // #endif
+// #endif
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
     EEPROM_T * const     P_EEPROM;    /* defined outside for regularity */
 #endif
@@ -290,10 +286,6 @@ typedef struct MotorController_Tag
     const MotorController_Config_T CONFIG;
     MotorController_Params_T Parameters;         /* ram copy */
     MemMapBoot_T MemMapBoot;
-#if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_ENABLE)
-    MotorController_Manufacture_T Manufacture;
-#endif
-
     volatile MotAnalog_Results_T AnalogResults;
 
     MotAnalogUser_T AnalogUser;
@@ -423,11 +415,11 @@ static inline void MotorController_SetSpeedLimitMotorAll(MotorController_T * p_m
 static inline void MotorController_ClearSpeedLimitMotorAll(MotorController_T * p_mc) { MotorN_User_ClearSpeedLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
 
 static inline bool MotorController_SetILimitMotorAll(MotorController_T * p_mc, uint16_t limit_frac16, MotorController_ILimitActiveId_T id)
-{ return MotorN_User_SetILimitActive(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, limit_frac16, (id + MOTOR_I_LIMIT_ACTIVE_SYSTEM)); }
+    { return MotorN_User_SetILimitActive(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, limit_frac16, (id + MOTOR_I_LIMIT_ACTIVE_SYSTEM)); }
 
 /* returns true if limit of id is cleared */
 static inline bool MotorController_ClearILimitMotorAll(MotorController_T * p_mc, MotorController_ILimitActiveId_T id)
-{ return MotorN_User_ClearILimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, (id + MOTOR_I_LIMIT_ACTIVE_SYSTEM)); }
+    { return MotorN_User_ClearILimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, (id + MOTOR_I_LIMIT_ACTIVE_SYSTEM)); }
 
 /******************************************************************************/
 /*
@@ -438,10 +430,9 @@ extern void MotorController_Init(MotorController_T * p_mc);
 extern void MotorController_InitDefault(MotorController_T * p_mc);
 extern NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_mc);
 extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc);
-extern NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc);
-extern NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc);
+extern NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc, uint8_t * p_sourceBuffer);
+extern NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc, const uint8_t * p_destBuffer);
 extern void MotorController_ResetUnitsBatteryLife(MotorController_T * p_mc);
-
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE)
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
 extern void MotorController_ServoExtern_Start(MotorController_T * p_mc);

@@ -116,7 +116,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 
     AnalogN_Group_PauseQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_HEAT);
     AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_PCB);
-#if        defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
+#if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
     AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_MOSFETS_TOP);
     AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT_MOSFETS_BOT);
 #else
@@ -125,7 +125,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
     AnalogN_Group_ResumeQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_HEAT);
 
     Thermistor_PollMonitor(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu);
-#if     defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
+#if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
     Thermistor_PollMonitor(&p_mc->ThermistorMosfetsTop, p_mc->AnalogResults.HeatMosfetsTop_Adcu);
     Thermistor_PollMonitor(&p_mc->ThermistorMosfetsBot, p_mc->AnalogResults.HeatMosfetsBot_Adcu);
 #else
@@ -133,7 +133,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 #endif
 
     if(Thermistor_GetIsShutdown(&p_mc->ThermistorPcb) == true) { p_mc->FaultFlags.PcbOverHeat = 1U; isFault = true; }
-#if        defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
+#if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
     if(Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsTop) == true) { p_mc->FaultFlags.MosfetsTopOverHeat = 1U; isFault = true; }
     if(Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsBot) == true) { p_mc->FaultFlags.MosfetsBotOverHeat = 1U; isFault = true; }
 #else
@@ -268,6 +268,11 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
         if(CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONFIG.MAIN_DIVIDER_1000) == true)
         {
             /* In case of Serial Rx Overflow Timeout */
+            for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++)
+            {
+                if(Serial_CheckRxFull(&p_mc->CONFIG.P_SERIALS[iSerial]) == true) MotorController_BeepShort(p_mc);
+            }
+
             for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]); }
 
             /* Can use low priority check, as motor is already in fault state */

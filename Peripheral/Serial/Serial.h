@@ -110,13 +110,21 @@ static inline void Serial_TxData_ISR(Serial_T * p_serial)
 	}
 }
 
-static inline void Serial_PollRestartRxIsr(const Serial_T * p_serial)
+static inline bool Serial_PollRestartRxIsr(const Serial_T * p_serial)
 {
+    bool status = false;
 	if((HAL_Serial_ReadRxOverrun(p_serial->CONFIG.P_HAL_SERIAL) == true) && (Ring_GetIsFull(&p_serial->RxRing) == false))
 	{
 		HAL_Serial_ClearRxErrors(p_serial->CONFIG.P_HAL_SERIAL);
 		HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+        status = true;
 	}
+    return status;
+}
+
+static inline bool Serial_CheckRxFull(const Serial_T * p_serial)
+{
+	return ((HAL_Serial_ReadRxOverrun(p_serial->CONFIG.P_HAL_SERIAL) == true) || (Ring_GetIsFull(&p_serial->RxRing) == true));
 }
 
 //todo polling via hw fifo buffer

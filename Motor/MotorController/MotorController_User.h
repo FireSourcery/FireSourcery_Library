@@ -234,30 +234,30 @@ static inline uint32_t MotorController_User_GetIMax(MotorController_T * p_mc) { 
 */
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 /* Save Once does not need state machine */
-static inline void MotorController_User_WriteManufacture_Blocking(MotorController_T * p_mc, const MotorController_Manufacture_T * p_data)
-{
-#if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_COPY_ENABLE)
-    memcpy(&p_mc->Manufacture, p_data, sizeof(MotorController_Manufacture_T));
-#endif
-    MotorController_User_ProcCalibration_Blocking(p_mc, MOTOR_CONTROLLER_NVM_WRITE_ONCE);
-}
+// static inline void MotorController_User_WriteManufacture_Blocking(MotorController_T * p_mc, const MotorController_Manufacture_T * p_data)
+// {
+// #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_COPY_ENABLE)
+//     memcpy(&p_mc->Manufacture, p_data, sizeof(MotorController_Manufacture_T));
+// #endif
+//     MotorController_User_ProcCalibration_Blocking(p_mc, MOTOR_CONTROLLER_NVM_WRITE_ONCE);
+// }
 
-static inline void MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc)
-{
-    MotorController_User_ProcCalibration_Blocking(p_mc, MOTOR_CONTROLLER_NVM_READ_ONCE);
-}
+// static inline void MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc)
+// {
+//     MotorController_User_ProcCalibration_Blocking(p_mc, MOTOR_CONTROLLER_NVM_READ_ONCE);
+// }
 
-#if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_COPY_ENABLE)
+// #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_COPY_ENABLE)
 
-static inline void MotorController_User_GetName(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.NAME[0U], 8U); }
-static inline char * MotorController_User_GetPtrName(MotorController_T * p_mc) { return &p_mc->Manufacture.NAME[0U]; }
-// static inline char MotorController_User_GetNameIndex(MotorController_T * p_mc, uint8_t charIndex) { return p_mc->Manufacture.NAME[charIndex]; }
+// static inline void MotorController_User_GetName(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.NAME[0U], 8U); }
+// static inline char * MotorController_User_GetPtrName(MotorController_T * p_mc) { return &p_mc->Manufacture.NAME[0U]; }
+// // static inline char MotorController_User_GetNameIndex(MotorController_T * p_mc, uint8_t charIndex) { return p_mc->Manufacture.NAME[charIndex]; }
 
-static inline void MotorController_User_GetManufacture(MotorController_T * p_mc, MotorController_Manufacture_T * p_dest) { memcpy(p_dest, &p_mc->Manufacture, sizeof(MotorController_Manufacture_T)); }
-static inline uint32_t MotorController_User_GetSerialNumber(MotorController_T * p_mc) { return p_mc->Manufacture.SERIAL_NUMBER_REG; }
-static inline uint32_t MotorController_User_GetManufactureDate(MotorController_T * p_mc) { return p_mc->Manufacture.MANUFACTURE_NUMBER_REG; }
-// static inline void MotorController_User_GetIdExt(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.ID_EXT[0U], 8U); }
-#endif
+// static inline void MotorController_User_GetManufacture(MotorController_T * p_mc, MotorController_Manufacture_T * p_dest) { memcpy(p_dest, &p_mc->Manufacture, sizeof(MotorController_Manufacture_T)); }
+// static inline uint32_t MotorController_User_GetSerialNumber(MotorController_T * p_mc) { return p_mc->Manufacture.SERIAL_NUMBER_REG; }
+// static inline uint32_t MotorController_User_GetManufactureDate(MotorController_T * p_mc) { return p_mc->Manufacture.MANUFACTURE_NUMBER_REG; }
+// // static inline void MotorController_User_GetIdExt(MotorController_T * p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.ID_EXT[0U], 8U); }
+// #endif
 
 // static inline Flash_Status_T MotorController_User_ReadName_Blocking(MotorController_T * p_mc, uint8_t charIndex)
 // {
@@ -289,7 +289,7 @@ static inline Motor_T * MotorController_User_GetPtrMotor(const MotorController_T
 
 static inline Protocol_T * MotorController_User_GetPtrProtocol(const MotorController_T * p_mc, uint8_t protocolIndex)
 {
-    return (protocolIndex < p_mc->CONFIG.PROTOCOL_COUNT) ? &p_mc->CONFIG.P_PROTOCOLS[0U] : &p_mc->CONFIG.P_PROTOCOLS[protocolIndex];
+    return (protocolIndex < p_mc->CONFIG.PROTOCOL_COUNT) ? &p_mc->CONFIG.P_PROTOCOLS[protocolIndex] : &p_mc->CONFIG.P_PROTOCOLS[0U];
 }
 
 /*

@@ -242,8 +242,8 @@ Protocol_Specs_T;
 typedef enum Protocol_RxState_Tag
 {
     PROTOCOL_RX_STATE_INACTIVE,
-    PROTOCOL_RX_STATE_WAIT_BYTE_1,
-    PROTOCOL_RX_STATE_WAIT_PACKET,
+    PROTOCOL_RX_STATE_AWAIT_BYTE_1,
+    PROTOCOL_RX_STATE_AWAIT_PACKET,
     PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL,
 }
 Protocol_RxState_T;
@@ -317,7 +317,7 @@ typedef struct Protocol_Tag
     Protocol_RxState_T RxState;
     Protocol_RxCode_T RxStatus;     /* Returned from child function, also return to caller. updated per proc */
     size_t RxIndex;                 /* AKA RxCount */
-    size_t RxLength;                /* Rx Packet Total Length. Parse with PARSE_RX_META */
+    size_t RxLength;                /* Rx Packet Total Length. From Parse with PARSE_RX_META */
     uint32_t RxTimeStart;
 
     Protocol_ReqState_T ReqState;
@@ -328,11 +328,26 @@ typedef struct Protocol_Tag
 
     size_t TxLength;
     uint8_t NackCount;
+
+    uint16_t TxPacketCount;
+    uint16_t RxPacketSuccessCount;
+    uint16_t RxPacketErrorCount;
 }
 Protocol_T;
 
-static inline Protocol_RxCode_T Protocol_GetRxStatus(Protocol_T * p_protocol) { return p_protocol->RxStatus; }
-static inline Protocol_ReqCode_T Protocol_GetReqStatus(Protocol_T * p_protocol) { return p_protocol->ReqStatus; }
+static inline Protocol_RxCode_T Protocol_GetRxStatus(const Protocol_T * p_protocol) { return p_protocol->RxStatus; }
+static inline Protocol_ReqCode_T Protocol_GetReqStatus(const Protocol_T * p_protocol) { return p_protocol->ReqStatus; }
+
+static inline uint16_t Protocol_GetTxPacketCount(const Protocol_T * p_protocol) { return p_protocol->TxPacketCount; }
+static inline uint16_t Protocol_GetRxPacketCount(const Protocol_T * p_protocol) { return p_protocol->RxPacketErrorCount + p_protocol->RxPacketSuccessCount; }
+// static inline void Protocol_ClearTxPacketCount(Protocol_T * p_protocol) { p_protocol->TxPacketCount = 0U; }
+static inline void Protocol_ClearTxRxPacketCount(Protocol_T * p_protocol)
+{
+    p_protocol->TxPacketCount = 0U;
+    p_protocol->RxPacketSuccessCount = 0U;
+    p_protocol->RxPacketErrorCount = 0U;
+}
+
 
 /*
     User must reboot. Does propagate set. Current settings remain active until reboot.

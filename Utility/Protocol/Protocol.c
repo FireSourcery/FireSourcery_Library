@@ -133,7 +133,7 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
 
     switch(p_protocol->RxState)
     {
-        case PROTOCOL_RX_STATE_WAIT_BYTE_1: /* nonblocking wait state, no timer */
+        case PROTOCOL_RX_STATE_AWAIT_BYTE_1: /* nonblocking wait state, no timer */
             if(Xcvr_RxMax(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[0U], 1U) == true)
             {
                 /*
@@ -145,13 +145,13 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
                     p_protocol->RxIndex = 1U;
                     p_protocol->RxLength = 0U; /* RxLength is unknown */
                     p_protocol->RxTimeStart = *p_protocol->CONFIG.P_TIMER;
-                    p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
+                    p_protocol->RxState = PROTOCOL_RX_STATE_AWAIT_PACKET;
                     // rxStatus = PROTOCOL_RX_CODE_WAIT_PACKET; /* Should already be set */
                 }
             }
             break;
 
-        case PROTOCOL_RX_STATE_WAIT_PACKET: /* nonblocking wait state, timer started */
+        case PROTOCOL_RX_STATE_AWAIT_PACKET: /* nonblocking wait state, timer started */
             if(*p_protocol->CONFIG.P_TIMER - p_protocol->RxTimeStart < p_protocol->p_Specs->RX_TIMEOUT)  /* No need to check for overflow if using millis */
             {
                 rxStatus = BuildRxPacket(p_protocol);
@@ -165,7 +165,7 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
                     Incoming packet bytes wait in queue. Cannot miss packets (unless overflow)
                     Cannot check for Abort without user signal, persistent wait process
                 */
-                if(rxStatus != PROTOCOL_RX_CODE_WAIT_PACKET) { p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1; }
+                if(rxStatus != PROTOCOL_RX_CODE_WAIT_PACKET) { p_protocol->RxState = PROTOCOL_RX_STATE_AWAIT_BYTE_1; }
 
                 if(rxStatus == PROTOCOL_RX_CODE_PACKET_ERROR)
                 {
@@ -175,7 +175,7 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
                         if(p_protocol->NackCount < p_protocol->p_Specs->NACK_COUNT)
                         {
                             TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_PACKET_ERROR);
-                            p_protocol->NackCount++;
+                            p_protocol->NackCount++; //tx nack count
                             // p_protocol->RxTimeStart = *p_protocol->CONFIG.P_TIMER;
                             // rxStatus = PROTOCOL_RX_CODE_PACKET_ERROR;
                         }
@@ -187,11 +187,13 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
                             p_protocol->NackCount = 0U;
                         }
                     }
+                    p_protocol->RxPacketErrorCount++;
 
                 }
-                else
+                else if(rxStatus != PROTOCOL_RX_CODE_WAIT_PACKET) /* !PROTOCOL_RX_CODE_WAIT_PACKET && !RX_CODE_PACKET_ERROR */
                 {
                     p_protocol->NackCount = 0U;
+                    p_protocol->RxPacketSuccessCount++;
                 }
             }
             else
@@ -219,7 +221,7 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
             break;
 
             // case PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL:
-            //     p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+            //     p_protocol->RxState = PROTOCOL_RX_STATE_AWAIT_BYTE_1;
             //     rxStatus = PROTOCOL_RX_CODE_WAIT_PACKET;
             //     // p_protocol->NackCount = 0U;
             //     break;
@@ -239,7 +241,14 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
 */
 static inline bool TxReqResp(Protocol_T * p_protocol, const uint8_t * p_txBuffer, uint8_t length)
 {
-    return (length > 0U) ? Xcvr_TxN(&p_protocol->Xcvr, p_txBuffer, length) : false;
+    bool status = (length > 0U);
+    if(status == true)
+    {
+        p_protocol->TxPacketCount++;
+        Xcvr_TxN(&p_protocol->Xcvr, p_txBuffer, length);
+    }
+    // return (length > 0U) ? Xcvr_TxN(&p_protocol->Xcvr, p_txBuffer, length) : false;
+    return status;
 }
 
 /*
@@ -499,7 +508,7 @@ bool Protocol_Enable(Protocol_T * p_protocol)
 
     if(isEnable == true)
     {
-        p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+        p_protocol->RxState = PROTOCOL_RX_STATE_AWAIT_BYTE_1;
         p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_COMPLETE_ID;
         p_protocol->RxIndex = 0U;
         p_protocol->TxLength = 0U;

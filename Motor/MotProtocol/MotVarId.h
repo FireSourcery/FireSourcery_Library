@@ -33,23 +33,30 @@
 
 typedef enum MotVarId_Tag
 {
+    /*
+        Partition0 - 0-255 0xFF
+    */
     MOT_VAR_NULL = 0U,
-
     MOT_VAR_SPEED = 1U,           /* FracS16 may over saturate */
-    MOT_VAR_VOLTAGE = 2U,         /* FracS16 may over saturate */
-    MOT_VAR_CURRENT = 3U,         /* FracS16 may over saturate */
+    MOT_VAR_CURRENT = 2U,         /* FracS16 may over saturate */
+    MOT_VAR_VOLTAGE = 3U,         /* FracS16 may over saturate */
     MOT_VAR_POWER = 4U,           /* FracS16 may over saturate */
-
+    MOT_VAR_FOC_IQ = 17U,
+    MOT_VAR_FOC_ID = 18U,
     MOT_VAR_DEBUG = 128U,
+    MOT_VAR_MILLIS = 129U,
+
+    MOT_VAR_TX_PACKET_COUNT = 130U,
+    MOT_VAR_RX_PACKET_COUNT = 131U,
 
     /*
-        Demo Group 0-255 0b1111
+        Demo Group 0-255
     */
     MOT_VAR_THROTTLE = 101U,          /* Value 16-bit */
     MOT_VAR_BRAKE = 102U,             /* Value 16-bit */
     MOT_VAR_DIRECTION = 103U,         /* Value 0: Neutral, 1: Reverse, 2: Forward */
     MOT_VAR_BEEP = 104U,              /* Beep */
-    MOT_VAR_USER_CMD = 105U,          /* Beep */
+    MOT_VAR_USER_CMD = 105U,
 
     MOT_VAR_SPEED_RPM = 200U,       /* Value 16-bit */
     MOT_VAR_ERROR_CODE = 201U,      /* Value Bitfield 16-bit */
@@ -62,15 +69,21 @@ typedef enum MotVarId_Tag
     // MOT_VAR_SPEED_GROUND_KMH = 131U,        /* Value 16-bit */
 
     MOT_VAR_PARAM_TEST_BEGIN = 256U,    /*  */
-    MOT_VAR_USER_INPUT_MODE = 257U,        /* Value enum: 0:Analog, 1:Protocol */
+    MOT_VAR_USER_INPUT_MODE = 257U,     /* Value enum: 0:Analog, 1:Protocol */
     MOT_VAR_PARAM_TEST_1 = 258U,        /* Value 16-bit */
     MOT_VAR_PARAM_TEST_2 = 259U,        /* Value 32-bit */
     MOT_VAR_PARAM_TEST_3 = 260U,        /* Value 0, 1 */
     MOT_VAR_PARAM_TEST_4 = 261U,        /* Value 16-bit Read-Only */
 
     /*
+        Partition2 0x100:0x1FF
+    */
+
+
+    /*
         Real Time Monitor Vars
     */
+
 
     /*
         Parameter Vars

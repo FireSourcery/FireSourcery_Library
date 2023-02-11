@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	MotorController.h
+    @file   MotorController.c
     @author FireSourcery
-    @brief
     @version V0
+    @brief
 */
 /******************************************************************************/
 #include "MotorController.h"
@@ -34,7 +34,6 @@
 void MotorController_Init(MotorController_T * p_mc)
 {
     Flash_Init(p_mc->CONFIG.P_FLASH);
-    MotorController_ReadOnce_Blocking(p_mc);
 
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
     EEPROM_Init_Blocking(p_mc->CONFIG.P_EEPROM);
@@ -91,107 +90,107 @@ void MotorController_Init(MotorController_T * p_mc)
 /* Set Params Via interface functions */
 // void MotorController_SetParamsDefault(MotorController_T * p_mc)
 // {
-// #define SPEED_MAX_DEFAULT 	2000U
-// #define ADC_VREF_DEFAULT 	5100U
+// #define SPEED_MAX_DEFAULT     2000U
+// #define ADC_VREF_DEFAULT     5100U
 
-// 	Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+//     Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 
-// 	MotAnalogUser_InvertPins_T invertPins = { .State = 0U };
+//     MotAnalogUser_InvertPins_T invertPins = { .State = 0U };
 
-// 	MotorController_User_SetAdcVRef(p_mc, ADC_VREF_DEFAULT);
-// 	MotorController_User_SetVSource(p_mc, 42U);
-// 	// MotorController_User_SetVSource(p_mc, p_mc->CONFIG.V_MAX);
+//     MotorController_User_SetAdcVRef(p_mc, ADC_VREF_DEFAULT);
+//     MotorController_User_SetVSource(p_mc, 42U);
+//     // MotorController_User_SetVSource(p_mc, p_mc->CONFIG.V_MAX);
 
-// 	//  MotorController_User_SetInputMode(p_mc, MOTOR_CONTROLLER_INPUT_MODE_ANALOG);
-// 	//  MotorController_User_SetCoastMode(p_mc, MOTOR_CONTROLLER_ZERO_CMD_MODE_CRUISE);
-// 	// MotorController_User_SetCanBusServicesId(p_mc, 0U);
-// 	//  MotorController_User_DisableCanBusId(p_mc, 0U);
+//     //  MotorController_User_SetInputMode(p_mc, MOTOR_CONTROLLER_INPUT_MODE_ANALOG);
+//     //  MotorController_User_SetCoastMode(p_mc, MOTOR_CONTROLLER_ZERO_CMD_MODE_CRUISE);
+//     // MotorController_User_SetCanBusServicesId(p_mc, 0U);
+//     //  MotorController_User_DisableCanBusId(p_mc, 0U);
 
-// 	// MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
+//     // MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
 
-// 	// MotorController_User_SetOptDinSpeedLimit(p_mc, 65536U / 2U);
-// 	MotorController_User_DisableOptDin(p_mc);
-// 	MotorController_User_SetILimitOnLowVParam(p_mc, 65536U / 2U);
-// 	MotorController_User_SetILimitOnHeatParam(p_mc, 65536U / 2U);
+//     // MotorController_User_SetOptDinSpeedLimit(p_mc, 65536U / 2U);
+//     MotorController_User_DisableOptDin(p_mc);
+//     MotorController_User_SetILimitOnLowVParam(p_mc, 65536U / 2U);
+//     MotorController_User_SetILimitOnHeatParam(p_mc, 65536U / 2U);
 
-// 	// VMonitor_SetLimitUpper_MilliV(&p_mc->VMonitorSource, p_mc->CONFIG.V_MAX * 1000U + p_mc->CONFIG.V_MAX * 200U);
-// 	// VMonitor_SetLimitLower_MilliV(&p_mc->VMonitorSource, p_mc->CONFIG.V_MAX * 1000U - p_mc->CONFIG.V_MAX * 200U);
-// 	// VMonitor_SetWarningUpper_MilliV(&p_mc->VMonitorSource, p_mc->CONFIG.V_MAX * 1000U + p_mc->CONFIG.V_MAX * 100U);
-// 	// VMonitor_SetWarningLower_MilliV(&p_mc->VMonitorSource, p_mc->CONFIG.V_MAX * 1000U - p_mc->CONFIG.V_MAX * 100U);
-// 	// VMonitor_Enable(&p_mc->VMonitorSource);
-// 	// MotorController_User_SetBatteryLife_MilliV(p_mc, p_mc->CONFIG.V_MAX * 1000U - p_mc->CONFIG.V_MAX * 250U, p_mc->CONFIG.V_MAX * 1000U);
+//     // VMonitor_SetLimitUpper_MilliV(&p_mc->VMonitorSource, p_mc->CONFIG.V_MAX * 1000U + p_mc->CONFIG.V_MAX * 200U);
+//     // VMonitor_SetLimitLower_MilliV(&p_mc->VMonitorSource, p_mc->CONFIG.V_MAX * 1000U - p_mc->CONFIG.V_MAX * 200U);
+//     // VMonitor_SetWarningUpper_MilliV(&p_mc->VMonitorSource, p_mc->CONFIG.V_MAX * 1000U + p_mc->CONFIG.V_MAX * 100U);
+//     // VMonitor_SetWarningLower_MilliV(&p_mc->VMonitorSource, p_mc->CONFIG.V_MAX * 1000U - p_mc->CONFIG.V_MAX * 100U);
+//     // VMonitor_Enable(&p_mc->VMonitorSource);
+//     // MotorController_User_SetBatteryLife_MilliV(p_mc, p_mc->CONFIG.V_MAX * 1000U - p_mc->CONFIG.V_MAX * 250U, p_mc->CONFIG.V_MAX * 1000U);
 
-// 	VMonitor_SetLimits_MilliV(&p_mc->VMonitorSource, 30000U, 45000U, 35000U, 43000U);
-// 	VMonitor_Enable(&p_mc->VMonitorSource);
-// 	// MotorController_User_SetBatteryLife_MilliV(p_mc, 30000U, 42000U); //need to set vmonitor for conversion
+//     VMonitor_SetLimits_MilliV(&p_mc->VMonitorSource, 30000U, 45000U, 35000U, 43000U);
+//     VMonitor_Enable(&p_mc->VMonitorSource);
+//     // MotorController_User_SetBatteryLife_MilliV(p_mc, 30000U, 42000U); //need to set vmonitor for conversion
 
-// 	VMonitor_SetLimits_MilliV(&p_mc->VMonitorSense, 4500U, 5500U, 4800U, 5200U);
-// 	VMonitor_Enable(&p_mc->VMonitorSense);
+//     VMonitor_SetLimits_MilliV(&p_mc->VMonitorSense, 4500U, 5500U, 4800U, 5200U);
+//     VMonitor_Enable(&p_mc->VMonitorSense);
 
-// 	VMonitor_SetLimits_MilliV(&p_mc->VMonitorAcc, 10000U, 14000U, 11000U, 13000U);
-// 	VMonitor_Enable(&p_mc->VMonitorAcc);
+//     VMonitor_SetLimits_MilliV(&p_mc->VMonitorAcc, 10000U, 14000U, 11000U, 13000U);
+//     VMonitor_Enable(&p_mc->VMonitorAcc);
 
-// 	// Thermistor_SetNtc(&p_mc->ThermistorPcb, BOARD_THERM_PCB_R0, BOARD_THERM_PCB_T0_DEG_C, BOARD_THERM_PCB_B);
-// 	Thermistor_SetVInRef_MilliV(&p_mc->ThermistorPcb, ADC_VREF_DEFAULT);
-// 	Thermistor_SetLimits_DegC(&p_mc->ThermistorPcb, 100U, 90U, 80U, 78U);
-// 	// Thermistor_SetMonitorEnable(&p_mc->ThermistorPcb, BOARD_THERM_PCB_PRESENT);
+//     // Thermistor_SetNtc(&p_mc->ThermistorPcb, BOARD_THERM_PCB_R0, BOARD_THERM_PCB_T0_DEG_C, BOARD_THERM_PCB_B);
+//     Thermistor_SetVInRef_MilliV(&p_mc->ThermistorPcb, ADC_VREF_DEFAULT);
+//     Thermistor_SetLimits_DegC(&p_mc->ThermistorPcb, 100U, 90U, 80U, 78U);
+//     // Thermistor_SetMonitorEnable(&p_mc->ThermistorPcb, BOARD_THERM_PCB_PRESENT);
 
-// 	// Thermistor_SetNtc(&p_mc->ThermistorMosfetsTop, BOARD_THERM_MOSFETS_TOP_R0, BOARD_THERM_MOSFETS_TOP_T0_DEG_C, BOARD_THERM_MOSFETS_TOP_B);
-// 	Thermistor_SetVInRef_MilliV(&p_mc->ThermistorMosfetsTop, ADC_VREF_DEFAULT); /* Same as adc by default, but may be different */
-// 	Thermistor_SetLimits_DegC(&p_mc->ThermistorMosfetsTop, 100U, 90U, 80U, 78U);
-// 	// Thermistor_SetMonitorEnable(&p_mc->ThermistorMosfetsTop, BOARD_THERM_MOSFETS_TOP_PRESENT);
+//     // Thermistor_SetNtc(&p_mc->ThermistorMosfetsTop, BOARD_THERM_MOSFETS_TOP_R0, BOARD_THERM_MOSFETS_TOP_T0_DEG_C, BOARD_THERM_MOSFETS_TOP_B);
+//     Thermistor_SetVInRef_MilliV(&p_mc->ThermistorMosfetsTop, ADC_VREF_DEFAULT); /* Same as adc by default, but may be different */
+//     Thermistor_SetLimits_DegC(&p_mc->ThermistorMosfetsTop, 100U, 90U, 80U, 78U);
+//     // Thermistor_SetMonitorEnable(&p_mc->ThermistorMosfetsTop, BOARD_THERM_MOSFETS_TOP_PRESENT);
 
-// 	// Thermistor_SetNtc(&p_mc->ThermistorMosfetsBot, BOARD_THERM_MOSFETS_BOT_R0, BOARD_THERM_MOSFETS_BOT_T0_DEG_C, BOARD_THERM_MOSFETS_BOT_B);
-// 	Thermistor_SetVInRef_MilliV(&p_mc->ThermistorMosfetsBot, ADC_VREF_DEFAULT);
-// 	Thermistor_SetLimits_DegC(&p_mc->ThermistorMosfetsBot, 100U, 90U, 80U, 78U);
-// 	// Thermistor_SetMonitorEnable(&p_mc->ThermistorMosfetsBot, BOARD_THERM_MOSFETS_BOT_PRESENT);
+//     // Thermistor_SetNtc(&p_mc->ThermistorMosfetsBot, BOARD_THERM_MOSFETS_BOT_R0, BOARD_THERM_MOSFETS_BOT_T0_DEG_C, BOARD_THERM_MOSFETS_BOT_B);
+//     Thermistor_SetVInRef_MilliV(&p_mc->ThermistorMosfetsBot, ADC_VREF_DEFAULT);
+//     Thermistor_SetLimits_DegC(&p_mc->ThermistorMosfetsBot, 100U, 90U, 80U, 78U);
+//     // Thermistor_SetMonitorEnable(&p_mc->ThermistorMosfetsBot, BOARD_THERM_MOSFETS_BOT_PRESENT);
 
-// 	Thermistor_SetNtc(&p_motor->Thermistor, 0U, 0U, 0U);
-// 	Thermistor_SetVInRef_MilliV(&p_motor->Thermistor, ADC_VREF_DEFAULT);
-// 	Thermistor_SetLimits_DegC(&p_motor->Thermistor, 100U, 90U, 80U, 78U);
-// 	Thermistor_DisableMonitor(&p_motor->Thermistor);
+//     Thermistor_SetNtc(&p_motor->Thermistor, 0U, 0U, 0U);
+//     Thermistor_SetVInRef_MilliV(&p_motor->Thermistor, ADC_VREF_DEFAULT);
+//     Thermistor_SetLimits_DegC(&p_motor->Thermistor, 100U, 90U, 80U, 78U);
+//     Thermistor_DisableMonitor(&p_motor->Thermistor);
 
-// 	MotAnalogUser_SetBrakeAdc(&p_mc->AnalogUser, 0U, 4095U, true);
-// 	MotAnalogUser_SetThrottleAdc(&p_mc->AnalogUser, 0U, 4095U, true);
-// 	MotAnalogUser_SetBistateBrake(&p_mc->AnalogUser, false, 65536U / 10U);
-// 	MotAnalogUser_SetDirectionPins(&p_mc->AnalogUser, MOT_ANALOG_USER_DIRECTION_PINS_FR);
-// 	MotAnalogUser_SetPinInvert(&p_mc->AnalogUser, invertPins);
+//     MotAnalogUser_SetBrakeAdc(&p_mc->AnalogUser, 0U, 4095U, true);
+//     MotAnalogUser_SetThrottleAdc(&p_mc->AnalogUser, 0U, 4095U, true);
+//     MotAnalogUser_SetBistateBrake(&p_mc->AnalogUser, false, 65536U / 10U);
+//     MotAnalogUser_SetDirectionPins(&p_mc->AnalogUser, MOT_ANALOG_USER_DIRECTION_PINS_FR);
+//     MotAnalogUser_SetPinInvert(&p_mc->AnalogUser, invertPins);
 
-// 	Motor_User_SetPolePairs(p_motor, 8U);
-// 	Motor_User_SetSensorMode(p_motor, MOTOR_SENSOR_MODE_HALL);
-// 	// Motor_User_SetAlignMode(p_motor, MOTOR_ALIGN_MODE_DISABLE);
-// 	Motor_User_SetCommutationMode(p_motor, MOTOR_COMMUTATION_MODE_FOC);
-// 	// Motor_User_SetFeedbackModeParam(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT);
+//     Motor_User_SetPolePairs(p_motor, 8U);
+//     Motor_User_SetSensorMode(p_motor, MOTOR_SENSOR_MODE_HALL);
+//     // Motor_User_SetAlignMode(p_motor, MOTOR_ALIGN_MODE_DISABLE);
+//     Motor_User_SetCommutationMode(p_motor, MOTOR_COMMUTATION_MODE_FOC);
+//     // Motor_User_SetFeedbackModeParam(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT);
 
-// 	// Motor_User_SetSpeedRef_VRpm(p_motor, BOARD_V_VOLTS, SPEED_MAX_DEFAULT);
-// 	// Motor_User_SetSpeedRef_VRpm(p_motor, 42U, SPEED_MAX_DEFAULT);
-// 	Motor_User_SetSpeedFeedbackRef_Rpm(p_motor, SPEED_MAX_DEFAULT);
-// 	// Motor_User_SetIPeakRef_Adcu(p_motor, BOARD_I_SENSOR_LIMIT * 9U / 10U);
-// 	// Motor_User_SetIPeakRef_MilliV(p_motor,  min_MilliV,  max_MilliV);
-// 	// Motor_User_SetIaIbIcZero_Adcu(p_motor, ADC_MAX / 2U, ADC_MAX / 2U, ADC_MAX / 2U);
+//     // Motor_User_SetSpeedRef_VRpm(p_motor, BOARD_V_VOLTS, SPEED_MAX_DEFAULT);
+//     // Motor_User_SetSpeedRef_VRpm(p_motor, 42U, SPEED_MAX_DEFAULT);
+//     Motor_User_SetSpeedFeedbackRef_Rpm(p_motor, SPEED_MAX_DEFAULT);
+//     // Motor_User_SetIPeakRef_Adcu(p_motor, BOARD_I_SENSOR_LIMIT * 9U / 10U);
+//     // Motor_User_SetIPeakRef_MilliV(p_motor,  min_MilliV,  max_MilliV);
+//     // Motor_User_SetIaIbIcZero_Adcu(p_motor, ADC_MAX / 2U, ADC_MAX / 2U, ADC_MAX / 2U);
 
-// 	Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CCW);
-// 	Motor_User_SetSpeedLimitParam_Rpm(p_motor, SPEED_MAX_DEFAULT, SPEED_MAX_DEFAULT / 2U);
-// 	Motor_User_SetILimitParam_Amp(p_motor, BOARD_I_MAX, BOARD_I_MAX / 2U);
-// 	Motor_User_SetILimitHeatParam(p_motor, 65536U / 2U);
-// 	// Motor_User_VoltageBrakeScalar_Frac16(p_motor, 65536U / 4U);
-// 	// Motor_User_SetPhaseModeParam(p_motor, PHASE_MODE_UNIPOLAR_1);
-// 	Motor_User_SetAlignVoltage(p_motor, 65536U / 20U);
-// 	Motor_User_SetAlignTime_Millis(p_motor, 1000U);
+//     Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CCW);
+//     Motor_User_SetSpeedLimitParam_Rpm(p_motor, SPEED_MAX_DEFAULT, SPEED_MAX_DEFAULT / 2U);
+//     Motor_User_SetILimitParam_Amp(p_motor, BOARD_I_MAX, BOARD_I_MAX / 2U);
+//     Motor_User_SetILimitHeatParam(p_motor, 65536U / 2U);
+//     // Motor_User_VoltageBrakeScalar_Frac16(p_motor, 65536U / 4U);
+//     // Motor_User_SetPhaseModeParam(p_motor, PHASE_MODE_UNIPOLAR_1);
+//     Motor_User_SetAlignVoltage(p_motor, 65536U / 20U);
+//     Motor_User_SetAlignTime_Millis(p_motor, 1000U);
 
-// 	// PID_SetFreq(&p_motor->PidSpeed, 1000U);
-// 	// PID_SetFreq(&p_motor->PidIq, GLOBAL_MOTOR.CONTROL_FREQ);
-// 	// PID_SetFreq(&p_motor->PidId, GLOBAL_MOTOR.CONTROL_FREQ);
-// 	PID_SetTunings(&p_motor->PidSpeed, 1U, 1U, 1U, 2U, 0U, 0U);
-// 	PID_SetTunings(&p_motor->PidIq, 1U, 1U, 1U, 2U, 0U, 0U);
-// 	PID_SetTunings(&p_motor->PidId, 1U, 1U, 1U, 2U, 0U, 0U);
+//     // PID_SetFreq(&p_motor->PidSpeed, 1000U);
+//     // PID_SetFreq(&p_motor->PidIq, GLOBAL_MOTOR.CONTROL_FREQ);
+//     // PID_SetFreq(&p_motor->PidId, GLOBAL_MOTOR.CONTROL_FREQ);
+//     PID_SetTunings(&p_motor->PidSpeed, 1U, 1U, 1U, 2U, 0U, 0U);
+//     PID_SetTunings(&p_motor->PidIq, 1U, 1U, 1U, 2U, 0U, 0U);
+//     PID_SetTunings(&p_motor->PidId, 1U, 1U, 1U, 2U, 0U, 0U);
 
-// 	// .CountsPerRevolution 			= 8192U,	//currently unused for Hall captureT, should be MotorPolePairs*6
-// 	// .DistancePerRevolution 				= 1U,
-// 	// .IsQuadratureCaptureEnabled 		= true,
-// 	// .IsALeadBPositive 				= true,
-// 	// .ExtendedDeltaTStop 		= 1000U,	//ExtendedTimer time read at deltaT stopped
-// 	// .ScalarSpeedRef_Rpm;
+//     // .CountsPerRevolution             = 8192U,    //currently unused for Hall captureT, should be MotorPolePairs*6
+//     // .DistancePerRevolution                 = 1U,
+//     // .IsQuadratureCaptureEnabled         = true,
+//     // .IsALeadBPositive                 = true,
+//     // .ExtendedDeltaTStop         = 1000U,    //ExtendedTimer time read at deltaT stopped
+//     // .ScalarSpeedRef_Rpm;
 
 // // Motor_User_ActivateCalibrationHall(p_motor);
 // // Hall_MapSensorsTable(&p_motor->Hall, HALL_VIRTUAL_SENSORS_A, HALL_VIRTUAL_SENSORS_INV_C, HALL_VIRTUAL_SENSORS_B, HALL_VIRTUAL_SENSORS_INV_A, HALL_VIRTUAL_SENSORS_C, HALL_VIRTUAL_SENSORS_INV_B);
@@ -199,16 +198,16 @@ void MotorController_Init(MotorController_T * p_mc)
 // // Motor_User_ActivateCalibrationAdc(p_motor);
 // // Motor_User_ActivateCalibrationSinCos(p_motor);
 
-// 	// Protocol_SetSpecs(&p_mc->CONFIG.P_PROTOCOLS[0U], 0U);
-// 	// Protocol_SetXcvr(&p_mc->CONFIG.P_PROTOCOLS[0U], 1U);
-// 	// // Protocol_EnableOnInit(&p_mc->CONFIG.P_PROTOCOLS[0U]);
-// 	// Protocol_DisableOnInit(&p_mc->CONFIG.P_PROTOCOLS[0U]);
+//     // Protocol_SetSpecs(&p_mc->CONFIG.P_PROTOCOLS[0U], 0U);
+//     // Protocol_SetXcvr(&p_mc->CONFIG.P_PROTOCOLS[0U], 1U);
+//     // // Protocol_EnableOnInit(&p_mc->CONFIG.P_PROTOCOLS[0U]);
+//     // Protocol_DisableOnInit(&p_mc->CONFIG.P_PROTOCOLS[0U]);
 
-// 	// Shell_SetXcvr(&p_mc->Shell, 1U);
-// 	// Shell_ConfigBaudRate(&p_mc->Shell, 19200U);
-// 	// // Shell_SetXcvr(&p_mc->Shell, 0U);
-// 	// Shell_EnableOnInit(&p_mc->Shell);
-// 	// Shell_DisableOnInit(&p_mc->Shell);
+//     // Shell_SetXcvr(&p_mc->Shell, 1U);
+//     // Shell_ConfigBaudRate(&p_mc->Shell, 19200U);
+//     // // Shell_SetXcvr(&p_mc->Shell, 0U);
+//     // Shell_EnableOnInit(&p_mc->Shell);
+//     // Shell_DisableOnInit(&p_mc->Shell);
 // }
 
 ///save segment ID
@@ -243,14 +242,14 @@ NvMemory_Status_T _MotorController_WriteNvm_Blocking(void * p_nvm, const void * 
 
 NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_mc)
 {
-    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
-    Motor_T * p_motor;
-    Protocol_T * p_protocol;
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
     EEPROM_T * p_nvm = p_mc->CONFIG.P_EEPROM;
 #elif defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
     Flash_T * p_nvm = p_mc->CONFIG.P_FLASH;
 #endif
+    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+    Motor_T * p_motor;
+    Protocol_T * p_protocol;
 
     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
     {
@@ -261,7 +260,7 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_
         if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_motor->PidSpeed.CONFIG.P_PARAMS, &p_motor->PidSpeed.Params, sizeof(PID_Params_T)); }
         if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_motor->PidIq.CONFIG.P_PARAMS, &p_motor->PidIq.Params, sizeof(PID_Params_T)); }
         if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_motor->PidId.CONFIG.P_PARAMS, &p_motor->PidId.Params, sizeof(PID_Params_T)); }
-        // if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_motor->PidIBus.CONFIG.P_PARAMS, 	&p_motor->PidIBus.Params, 		sizeof(PID_Params_T)); }
+        // if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_motor->PidIBus.CONFIG.P_PARAMS,     &p_motor->PidIBus.Params,         sizeof(PID_Params_T)); }
         if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_motor->Thermistor.CONFIG.P_PARAMS, &p_motor->Thermistor.Params, sizeof(Thermistor_Params_T)); }
         if(status != NV_MEMORY_STATUS_SUCCESS) { break; }
     }
@@ -271,7 +270,7 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->AnalogUser.CONFIG.P_PARAMS, &p_mc->AnalogUser.Params, sizeof(MotAnalogUser_Params_T)); };
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->ThermistorPcb.CONFIG.P_PARAMS, &p_mc->ThermistorPcb.Params, sizeof(Thermistor_Params_T)); };
 
-#if		defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
+#if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->ThermistorMosfetsTop.CONFIG.P_PARAMS, &p_mc->ThermistorMosfetsTop.Params, sizeof(Thermistor_Params_T)); };
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_nvm, p_mc->ThermistorMosfetsBot.CONFIG.P_PARAMS, &p_mc->ThermistorMosfetsBot.Params, sizeof(Thermistor_Params_T)); };
 #else
@@ -308,29 +307,21 @@ NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
 }
 
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc)
+NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc, uint8_t * p_destBuffer)
 {
 #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
-#if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_ENABLE)
-    NvMemory_Status_T status = Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)&p_mc->Manufacture, (uint8_t *)p_mc->CONFIG.P_ONCE, sizeof(MotorController_Manufacture_T));
-#endif
+    return (NvMemory_Status_T)Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, p_destBuffer, (uint8_t *)p_mc->CONFIG.P_ONCE, sizeof(MotorController_Manufacture_T));
 #elif defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
 
 #endif
-    return status;
 }
 
-// NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc, uint8_t * p_returnBuffer)
-// {
-
-// }
-
-NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc)
+NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc, const uint8_t * p_sourceBuffer)
 {
 #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
-    return Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_ONCE, (uint8_t *)&p_mc->Manufacture, sizeof(MotorController_Manufacture_T));
+    return (NvMemory_Status_T)Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_ONCE, p_sourceBuffer, sizeof(MotorController_Manufacture_T));
 #elif defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
-    return Flash_Write_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_ONCE, (uint8_t *)&p_mc->Manufacture, sizeof(MotorController_Manufacture_T));
+    return (NvMemory_Status_T)Flash_Write_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_ONCE, p_dataBuffer, sizeof(MotorController_Manufacture_T));
 #endif
 }
 // #endif

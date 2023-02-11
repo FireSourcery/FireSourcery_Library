@@ -39,6 +39,8 @@
     "editor.detectIndentation": false,
     "editor.formatOnPaste": true,
     "editor.indentSize": "tabSize",
+    "editor.semanticHighlighting.enabled": "configuredByTheme",
+
     "files.trimTrailingWhitespace": true,
     "cmake.configureOnOpen": false,
     "[c]": {
@@ -48,6 +50,7 @@
         "editor.indentSize": "tabSize",
         "editor.detectIndentation": false,
         "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.semanticHighlighting.enabled": "configuredByTheme",
     },
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features"

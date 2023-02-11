@@ -57,7 +57,7 @@ static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 		p_protocol->p_Specs->CMDR_BUILD_TX_REQ(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_APP_INTERFACE, cmdId);
 
 		// p_req->CMDR_BUILD_REQ(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_APP_INTERFACE);
-		//if resp length is known, and wait sync, PROTOCOL_RX_STATE_WAIT_PACKET, skip wait byte one
+		//if resp length is known, and wait sync, PROTOCOL_RX_STATE_AWAIT_PACKET, skip wait byte one
 
 		if((p_req->PROC_EXT != 0U) || (p_req->SYNC.RX_ACK == true))
 		{
@@ -196,7 +196,7 @@ bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
 // 		//todo nack
 // 		// if (p_protocol->NackCount < p_protocol->p_Specs->SYNC.NACK_REPEAT)
 // 		// {
-// 		// 	p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
+// 		// 	p_protocol->RxState = PROTOCOL_RX_STATE_AWAIT_PACKET;
 // 		// }
 // 		// else
 // 		{
