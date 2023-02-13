@@ -164,12 +164,16 @@ static inline int32_t Motor_User_GetVPhase_FracS16(Motor_T * p_motor)
 	return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_FracS16, 0U));
 }
 
-/* Ideal electrical power */
+/* Ideal electrical power *//* [0:49152] <=> [0:1.5] */
 static inline int32_t Motor_User_GetElectricalPower_FracS16(Motor_T * p_motor)
 {
 	return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetElectricalPower_FracS16, 0U);
 }
 
+static inline uint32_t Motor_User_GetElectricalPower_FracU16(Motor_T * p_motor)
+{
+	return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetElectricalPower_FracS16, 0U);
+}
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 /*!	@return [-32767:32767] Rpm should not exceed int16_t */

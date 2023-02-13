@@ -52,15 +52,10 @@ void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, P
 		case PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT:		syncId = MOT_PACKET_SYNC_NACK; 		break;
 		case PROTOCOL_TX_SYNC_NACK_REQ_EXT:			syncId = MOT_PACKET_SYNC_NACK; 		break;
 		case PROTOCOL_TX_SYNC_ABORT:				syncId = MOT_PACKET_SYNC_ABORT; 	break;
-		default: *p_txSize = 0U; syncId = 0xFFU; break;
+		default: *p_txSize = 0U; syncId = MOT_PACKET_ID_RESERVED_255; break;
 	}
 
 	*p_txSize = MotPacket_Sync_Build(p_txPacket, syncId);
-}
-
-void MotProtocol_ResetExt(MotProtocol_Substate_T * p_subState)
-{
-	p_subState->StateId = 0U;
 }
 
 Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p_packetLength, const MotPacket_T * p_rxPacket, size_t rxCount)
@@ -92,14 +87,13 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 			default: break;
 		}
 	}
-	// else /* ParseMeta should not have been called */
-	// {
-	// 	rxCode = PROTOCOL_RX_CODE_ERROR;
-	// }
+	else /* ParseMeta should not have been called */
+	{
+		rxCode = PROTOCOL_RX_CODE_PACKET_ERROR;
+	}
 
 	return rxCode;
 }
-
 
 /******************************************************************************/
 /*!

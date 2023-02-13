@@ -35,7 +35,7 @@
 const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, protocol_reqid_t id)
 {
     const Protocol_Req_T * p_req = 0U;
-    for(uint8_t iChar = 0U; iChar < tableLength; iChar++) { if(p_reqTable[iChar].ID == id) { p_req = &p_reqTable[iChar]; } }
+    for(uint8_t iChar = 0U; iChar < tableLength; iChar++) { if(p_reqTable[iChar].ID == id) { p_req = &p_reqTable[iChar]; break; } }
     return p_req;
 }
 
@@ -45,19 +45,19 @@ void Protocol_Init(Protocol_T * p_protocol)
     {
         memcpy(&p_protocol->Params, p_protocol->CONFIG.P_PARAMS, sizeof(Protocol_Params_T));
     }
-    else
-    {
-        p_protocol->Params.XcvrId = 0U;
-        p_protocol->Params.SpecsId = 0U;
-        p_protocol->Params.IsEnableOnInit = 0U;
-        p_protocol->Params.WatchdogTime = 0U;
-    }
+    // else
+    // {
+    //     p_protocol->Params.XcvrId = 0U;
+    //     p_protocol->Params.SpecsId = 0U;
+    //     p_protocol->Params.IsEnableOnInit = 0U;
+    //     p_protocol->Params.WatchdogTime = 0U;
+    // }
 
     Xcvr_Init(&p_protocol->Xcvr, p_protocol->Params.XcvrId);
     Protocol_SetSpecs(p_protocol, p_protocol->Params.SpecsId);
 
-    if(p_protocol->Params.IsEnableOnInit == true) { Protocol_Enable(p_protocol); }
-    else { Protocol_Disable(p_protocol); }
+    if(p_protocol->Params.IsEnableOnInit == true)   { Protocol_Enable(p_protocol); }
+    else                                            { Protocol_Disable(p_protocol); }
 }
 
 /*

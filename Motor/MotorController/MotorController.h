@@ -105,17 +105,17 @@ typedef enum MotorController_Direction_Tag
 }
 MotorController_Direction_T;
 
-typedef enum MotorController_SubId_Tag
+/* Blocking Functions Ids */
+typedef enum MotorController_OperationId_Tag
 {
     MOTOR_CONTROLLER_NVM_PARAMS_ALL, //save nvm
     MOTOR_CONTROLLER_NVM_BOOT,
     MOTOR_CONTROLLER_NVM_WRITE_ONCE,
     MOTOR_CONTROLLER_NVM_READ_ONCE,
     MOTOR_CONTROLLER_CALIBRATION,
-
-    MOTOR_CONTROLLER_TOGGLE_USER_INPUT_MODE,
+    // MOTOR_CONTROLLER_TOGGLE_USER_INPUT_MODE,
 }
-MotorController_SubId_T;
+MotorController_OperationId_T;
 
 // typedef enum MotorController_SpeedLimitActiveId_Tag
 // {
@@ -142,11 +142,11 @@ typedef enum MotorController_OptDinFunction_Tag
 MotorController_OptDinFunction_T;
 
 /* Set function interface */
-typedef enum MotorController_FaultId_Tag
-{
-    MOTOR_CONTROLLER_FAULT_PCB_OVERHEAT,
-}
-MotorController_FaultId_T;
+// typedef enum MotorController_FaultId_Tag
+// {
+//     MOTOR_CONTROLLER_FAULT_PCB_OVERHEAT,
+// }
+// MotorController_FaultId_T;
 
 /*
     Fault substate flags
@@ -220,8 +220,8 @@ typedef struct __attribute__((aligned(2U))) MotorController_Params_Tag
 
     MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
     MotorController_OptDinFunction_T OptDinFunction;
-    uint16_t OptDinSpeedLimit_Frac16;
-    uint16_t ILimitLowV_Frac16;
+    uint16_t OptDinSpeedLimit_Scalar16;
+    uint16_t ILimitLowV_Scalar16;
 }
 MotorController_Params_T;
 
@@ -325,7 +325,7 @@ typedef struct MotorController_Tag
 #endif
     /* Set by StateMachine only */
     MotorController_Direction_T ActiveDirection;
-    MotorController_SubId_T SubState;
+    MotorController_OperationId_T SubState;
     NvMemory_Status_T NvmStatus;
     int32_t UserCmd; /* For Edge Detect, using 0 */
 

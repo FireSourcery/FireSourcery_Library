@@ -150,7 +150,7 @@ static void SaveNvm_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t 
 // }
 
 //todo stateful req
-// static void InitUnits_ProcReqRespExt(MotProtocol_Substate_T * p_substate, MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize)
+// static void InitUnits_ProcReqRespExt(MotProtocol_SubState_T * p_substate, MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize)
 // {
 //  	(void)rxSize;
 // 	switch(p_substate->StateId)
@@ -242,7 +242,7 @@ const Protocol_Specs_T MOTOR_CMDR_MOT_PROTOCOL_SPECS =
 
 	.P_REQ_TABLE 		= &REQ_TABLE[0U],
 	.REQ_TABLE_LENGTH 	= sizeof(REQ_TABLE)/sizeof(Protocol_Req_T),
-	.REQ_EXT_RESET 		= (Protocol_ResetExt_T)MotProtocol_ResetExt,
+	.REQ_EXT_RESET 		= (Protocol_ResetExt_T)MotProtocol_ResetSubState,
 	.CMDR_BUILD_TX_REQ 	= (Protocol_Cmdr_BuildTxReq_T)Cmdr_BuildTxReq,
 
 	.RX_START_ID 		= MOT_PACKET_START_BYTE,

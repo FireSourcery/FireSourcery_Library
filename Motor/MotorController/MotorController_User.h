@@ -51,13 +51,12 @@ static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc,
 static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd)     { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
 static inline uint16_t MotorController_User_GetCmdValue(MotorController_T * p_mc)                   { return p_mc->UserCmd; }
 
-/* Zero Throttle or Brake *///remove?
+/* Zero Throttle or Brake *///remove MotorController_User_SetCmdValue(p_mc, 0);
 static inline void MotorController_User_SetCmdZero(MotorController_T * p_mc)    { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_ZERO, STATE_MACHINE_INPUT_VALUE_NULL); }
 /* StateMachine unchecked disable motors, use with caution */
-static inline void MotorController_User_DisableControl(MotorController_T * p_mc) { MotorController_DisableAll(p_mc); MotorController_User_SetCmdZero(p_mc); }
 static inline void MotorController_User_ReleaseControl(MotorController_T * p_mc) { MotorController_User_SetCmdZero(p_mc); }
-// static inline void MotorController_User_DisableControl(MotorController_T * p_mc) { MotorController_DisableAll(p_mc); StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CMD, 0);}
-// static inline void MotorController_User_ReleaseControl(MotorController_T * p_mc) { StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CMD, 0); }
+// static inline void MotorController_User_ReleaseControl(MotorController_T * p_mc) { MotorController_User_SetCmdValue(p_mc, 0); }
+static inline void MotorController_User_DisableControl(MotorController_T * p_mc) { MotorController_DisableAll(p_mc); MotorController_User_ReleaseControl(p_mc); }
 
 /*
     Input mode voluntarily call checked function, avoids intermediate buffer
@@ -96,12 +95,12 @@ static inline void MotorController_User_SaveBootReg_Blocking(MotorController_T *
     StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CALIBRATION, MOTOR_CONTROLLER_NVM_BOOT);
 }
 
-// static inline void MotorController_User_SaveOnce_Blocking(MotorController_T * p_mc)
-// {
-// 	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CALIBRATION, MOTOR_CONTROLLER_NVM_WRITE_ONCE);
-// }
+static inline void MotorController_User_SaveOnce_Blocking(MotorController_T * p_mc)
+{
+	StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CALIBRATION, MOTOR_CONTROLLER_NVM_WRITE_ONCE);
+}
 
-static inline void MotorController_User_ProcCalibration_Blocking(MotorController_T * p_mc, uint32_t operationId)
+static inline void MotorController_User_ProcCalibration_Blocking(MotorController_T * p_mc, MotorController_OperationId_T operationId)
 {
     StateMachine_Semi_ProcInput(&p_mc->StateMachine, MCSM_INPUT_CALIBRATION, operationId);
 }
@@ -191,9 +190,9 @@ static inline void MotorController_User_SetLoadDefault(MotorController_T * p_mc,
 
 static inline MotorController_InputMode_T MotorController_User_GetInputMode(MotorController_T * p_mc) { return p_mc->Parameters.UserInputMode; }
 static inline void MotorController_User_SetBrakeMode(MotorController_T * p_mc, MotorController_BrakeMode_T brakeMode) { p_mc->Parameters.BrakeMode = brakeMode; }
-static inline void MotorController_User_SetOptDinSpeedLimit(MotorController_T * p_mc, uint16_t scalar_Frac16) { p_mc->Parameters.OptDinFunction = MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT; p_mc->Parameters.OptDinSpeedLimit_Frac16 = scalar_Frac16; }
+static inline void MotorController_User_SetOptDinSpeedLimit(MotorController_T * p_mc, uint16_t scalar_Frac16) { p_mc->Parameters.OptDinFunction = MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT; p_mc->Parameters.OptDinSpeedLimit_Scalar16 = scalar_Frac16; }
 static inline void MotorController_User_DisableOptDin(MotorController_T * p_mc) { p_mc->Parameters.OptDinFunction = MOTOR_CONTROLLER_OPT_DIN_DISABLE; }
-static inline void MotorController_User_SetILimitOnLowVParam(MotorController_T * p_mc, uint16_t scalar_Frac16) { p_mc->Parameters.ILimitLowV_Frac16 = scalar_Frac16; }
+static inline void MotorController_User_SetILimitOnLowVParam(MotorController_T * p_mc, uint16_t scalar_Frac16) { p_mc->Parameters.ILimitLowV_Scalar16 = scalar_Frac16; }
 
 // change to Linear_Init flexible scalar output
 // static inline uint32_t MotorController_User_GetBatteryCharge_Base10(MotorController_T * p_mc, uint8_t scalar) 	{ return Linear_ADC_CalcPhysical(&p_mc->BatteryLife, p_mc->AnalogResults.VSource_Adcu); }
@@ -223,11 +222,11 @@ static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIn
     return versionChar;
 }
 
-static inline uint32_t MotorController_User_GetMainVersion(MotorController_T * p_mc) { return *((uint32_t *)(&p_mc->CONFIG.SOFTWARE_VERSION[0U])); }
-static inline uint8_t MotorController_User_GetMainVersionIndex(MotorController_T * p_mc, uint8_t charIndex) { return p_mc->CONFIG.SOFTWARE_VERSION[charIndex]; }
+static inline uint32_t MotorController_User_GetMainVersion(const MotorController_T * p_mc) { return *((uint32_t *)(&p_mc->CONFIG.SOFTWARE_VERSION[0U])); }
+static inline uint8_t MotorController_User_GetMainVersionIndex(const MotorController_T * p_mc, uint8_t charIndex) { return p_mc->CONFIG.SOFTWARE_VERSION[charIndex]; }
 
-static inline uint32_t MotorController_User_GetVMax(MotorController_T * p_mc) { return GLOBAL_MOTOR.V_MAX_VOLTS; }
-static inline uint32_t MotorController_User_GetIMax(MotorController_T * p_mc) { return GLOBAL_MOTOR.I_UNITS_AMPS; }
+static inline uint32_t MotorController_User_GetVMax(const MotorController_T * p_mc) { return GLOBAL_MOTOR.V_MAX_VOLTS; }
+static inline uint32_t MotorController_User_GetIMax(const MotorController_T * p_mc) { return GLOBAL_MOTOR.I_UNITS_AMPS; }
 
 /*
     WriteOnce Variables

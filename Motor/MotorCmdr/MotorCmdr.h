@@ -57,7 +57,7 @@ typedef struct MotorCmdr_Tag
 	uint8_t TxPacket[MOT_PACKET_LENGTH_MAX];
 	uint8_t RxPacket[MOT_PACKET_LENGTH_MAX];
 	Protocol_T Protocol;
-	MotProtocol_Substate_T Substate; /* Stateful Protocol Substate */
+	MotProtocol_SubState_T Substate; /* Stateful Protocol Substate */
 
 	/* Req Interface */
 	uint16_t RespStatus;

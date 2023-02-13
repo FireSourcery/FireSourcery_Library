@@ -62,7 +62,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
         default: break;
     }
 
-    if(CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONFIG.ANALOG_USER_DIVIDER))
+    if(CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONFIG.ANALOG_USER_DIVIDER) == true)
     {
         AnalogN_Group_PauseQueue(p_mc->CONFIG.P_ANALOG_N, p_mc->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_USER);
         AnalogN_Group_EnqueueConversion(p_mc->CONFIG.P_ANALOG_N, &p_mc->CONFIG.ANALOG_CONVERSIONS.CONVERSION_THROTTLE);
@@ -87,7 +87,7 @@ static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
             case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
                 switch(Debounce_PollDualEdge(&p_mc->OptDin))
                 {
-                    case DEBOUNCE_EDGE_RISING:  MotorController_SetSpeedLimitMotorAll(p_mc, p_mc->Parameters.OptDinSpeedLimit_Frac16); break;
+                    case DEBOUNCE_EDGE_RISING:  MotorController_SetSpeedLimitMotorAll(p_mc, p_mc->Parameters.OptDinSpeedLimit_Scalar16); break;
                     case DEBOUNCE_EDGE_FALLING: MotorController_ClearSpeedLimitMotorAll(p_mc); break;
                     default: break;
                 }
@@ -96,8 +96,8 @@ static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
             case MOTOR_CONTROLLER_OPT_DIN_SERVO:
                 switch(Debounce_PollDualEdge(&p_mc->OptDin))
                 {
-                    case DEBOUNCE_EDGE_RISING:  MotorController_User_EnterServoMode(p_mc);     break;
-                    case DEBOUNCE_EDGE_FALLING: MotorController_User_ExitServoMode(p_mc);     break;
+                    case DEBOUNCE_EDGE_RISING:  MotorController_User_EnterServoMode(p_mc);  break;
+                    case DEBOUNCE_EDGE_FALLING: MotorController_User_ExitServoMode(p_mc);   break;
                     default: break;
                 }
                 break;
@@ -196,7 +196,7 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
     VMonitor_PollStatus(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu);
     VMonitor_PollStatus(&p_mc->VMonitorAcc, p_mc->AnalogResults.VAcc_Adcu);
     if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense) == true) { p_mc->FaultFlags.VSenseLimit = 1U; isFault = true; }
-    if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc) == true) { p_mc->FaultFlags.VAccLimit = 1U; isFault = true; }
+    if(VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc) == true)   { p_mc->FaultFlags.VAccLimit = 1U; isFault = true; }
 
     if(isFault == true) { MotorController_User_SetFault(p_mc); }     /* Sensors checks fault only */
 }
@@ -307,7 +307,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
             if(p_mc->WarningFlags.LowV == false)
             {
                 p_mc->WarningFlags.LowV = true;
-                MotorController_SetILimitMotorAll(p_mc, p_mc->Parameters.ILimitLowV_Frac16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
+                MotorController_SetILimitMotorAll(p_mc, p_mc->Parameters.ILimitLowV_Scalar16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
                 Blinky_BlinkN(&p_mc->Buzzer, 250U, 500U, 2U);
             }
             break;
