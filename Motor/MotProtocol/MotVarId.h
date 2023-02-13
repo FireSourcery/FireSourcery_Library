@@ -45,16 +45,19 @@ typedef enum MotVarId_Tag
     MOT_VAR_FOC_IQ = 17U,
     MOT_VAR_FOC_ID = 18U,
 
-    // MOT_VAR_STATUS_FLAGS = 0x0FU,
-    MOT_VAR_ERROR_CODE = 201U,      /* Value Bitfield 16-bit */
+    MOT_VAR_STATUS_FLAGS = 65U,
+    // MOT_VAR_ERROR_FLAGS = 201U,      /* Value Bitfield 16-bit */
     MOT_VAR_MC_STATE = 202U,        /* Value enum: 0:INIT, 1:STOP, 2:RUN, 3:FAULT */
-    // MOT_VAR_MC_MOTOR0_STATE = 203U,        /*   */
-
+    // MOT_VAR_HEAT_PCB_DEG_C = 133U,       /* Value 16-bit */
     MOT_VAR_DEBUG = 128U,
     MOT_VAR_MILLIS = 129U,
-    MOT_VAR_TX_PACKET_COUNT = 130U,
-    MOT_VAR_RX_PACKET_COUNT = 131U,
-    // MOT_VAR_HEAT_PCB_DEG_C = 133U,       /* Value 16-bit */
+
+    // MOT_VAR_MC_MOTOR0_STATE = 203U,        /*   */
+    MOT_VAR_ANALOG_THROTTLE = 130U,          /* Value U16 */
+    MOT_VAR_ANALOG_BRAKE = 131U,             /* Value U16 */
+
+    MOT_VAR_TX_PACKET_COUNT = 254U,
+    MOT_VAR_RX_PACKET_COUNT = 255U,
     /*
         Partition1 256-511 0x100-0x1FF
         Read Write

@@ -36,10 +36,9 @@
     Var Reg Read Write Interface
     Variables, Single-Argument Functions
 */
-
 int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId)
 {
-    int32_t value = 0U;
+    int32_t value = 0;
     Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U);
     Protocol_T * p_protocol = MotorController_User_GetPtrProtocol(p_mc, 1U);
 
@@ -56,32 +55,25 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
         case MOT_VAR_MILLIS:    value = Millis();                           break;
         case MOT_VAR_TX_PACKET_COUNT:   value = Protocol_GetTxPacketCount(p_protocol);      break;
         case MOT_VAR_RX_PACKET_COUNT:   value = Protocol_GetRxPacketCount(p_protocol);      break;
-        case MOT_VAR_VERSION:   value =  MotorController_User_GetMainVersion(p_mc);         break;
 
+        case MOT_VAR_ANALOG_THROTTLE:   value = MotAnalogUser_GetThrottle(&p_mc->AnalogUser);   break;  /* Value U16 */
+        case MOT_VAR_ANALOG_BRAKE:      value = MotAnalogUser_GetBrake(&p_mc->AnalogUser);      break;  /* Value U16 */
 
-        // // case MOT_VAR_THROTTLE:      value = MotAnalogUser_GetThrottle(&p_mc->AnalogUser);   break;
-        // // case MOT_VAR_BRAKE:         value = MotAnalogUser_GetBrake(&p_mc->AnalogUser);      break;
-        // case MOT_VAR_THROTTLE:   value = MotorController_User_GetCmdValue(p_mc);         break;  /* Write-Only */
-        // case MOT_VAR_BRAKE:      value = MotorController_User_GetCmdValue(p_mc);         break;  /* Write-Only */
-        //     // case MOT_VAR_ANALOG_THROTTLE:        value = MotAnalogUser_GetThrottle(&p_mc->AnalogUser);     break;                    /* Value 16-bit */
-        //     // case MOT_VAR_ANALOG_BRAKE:            value = MotAnalogUser_GetBrake(&p_mc->AnalogUser);         break;                    /* Value 16-bit */
+        case MOT_VAR_USER_CMD:      value = MotorController_User_GetCmdValue(p_mc);         break;
+        case MOT_VAR_THROTTLE:      value = MotorController_User_GetCmdValue(p_mc);         break;  /* Write-only or May differ from Write */
+        case MOT_VAR_BRAKE:         value = MotorController_User_GetCmdValue(p_mc);         break;  /* Write-only or May differ from Write */
+        case MOT_VAR_DIRECTION:     value = MotorController_User_GetDirection(p_mc);        break;   /* Value 0: Neutral, 1: Reverse, 2: Forward */
+        case MOT_VAR_STATUS_FLAGS:  value = p_mc->FaultFlags.State;                         break;
+        case MOT_VAR_MC_STATE:      value = MotorController_User_GetStateId(p_mc);          break;
 
-        // case MOT_VAR_DIRECTION:        value = (uint32_t)MotorController_User_GetDirection(p_mc);     break;                /* Value 0: Neutral, 1: Reverse, 2: Forward */
-        // case MOT_VAR_USER_CMD:        value = MotorController_User_GetCmdValue(p_mc);                break;                /* Write-Only */
-
-        // case MOT_VAR_SPEED_RPM:        value = Motor_User_GetSpeed_Rpm(p_motor);     break;
-        // case MOT_VAR_ERROR_CODE:    value = p_mc->FaultFlags.State;                                break;
-        // case MOT_VAR_MC_STATE:        value = (uint32_t)MotorController_User_GetStateId(p_mc);     break;
-
-        //     // case MOT_VAR_HEAT_PCB_DEG_C:    MotorController_User_GetHeatPcb_DegC(p_mc, 1U);             break;
-
+        // case MOT_VAR_HEAT_PCB_DEG_C:    MotorController_User_GetHeatPcb_DegC(p_mc, 1U);             break;
+        // case MOT_VAR_I_MAX_REF_AMP:  value = MotorController_User_GetIMax(p_mc); break;
         // case MOT_VAR_I_PEAK_AMP:              break;
         // case MOT_VAR_SPEED_GROUND_KMH:          break;
         // case MOT_VAR_HEAT_PCB_DEG_C:         break;
         // case MOT_VAR_POLE_PAIRS:                  value = Motor_User_GetPolePairs(p_motor);     break;
-        // case MOT_VAR_SPEED_FEEDBACK_REF_RPM:    break;
-        // case MOT_VAR_I_MAX_REF_AMP:             value = MotorController_User_GetIMax(p_mc); break;
-        default: value = 0U; break;
+        case MOT_VAR_VERSION:   value =  MotorController_User_GetMainVersion(p_mc);         break;
+        default: value = 0xAAU; break;
     }
 
     return value;

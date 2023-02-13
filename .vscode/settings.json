@@ -1,6 +1,7 @@
 {
-    "C_Cpp.formatting": "vcFormat",
     "C_Cpp.clang_format_sortIncludes": true,
+
+    "C_Cpp.formatting": "vcFormat",
     "C_Cpp.vcFormat.wrap.preserveBlocks": "allOneLineScopes",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "newLine",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.block": "newLine",
@@ -26,8 +27,9 @@
     "C_Cpp.vcFormat.indent.preserveComments": false,
     "C_Cpp.vcFormat.indent.accessSpecifiers": true,
     "C_Cpp.vcFormat.indent.caseLabels": true,
-    // "C_Cpp.vcFormat.indent.gotoLabels": "none",
     "C_Cpp.vcFormat.indent.caseContents": true,
+    "C_Cpp.vcFormat.indent.caseContentsWhenBlock": true,
+
     "C_Cpp.doxygen.generatedStyle": "/*!",
 
     "editor.defaultFormatter": "ms-vscode.cpptools",
@@ -40,6 +42,7 @@
     "editor.formatOnPaste": true,
     "editor.indentSize": "tabSize",
     "editor.semanticHighlighting.enabled": "configuredByTheme",
+    // "editor.semanticHighlighting.enabled": false,
 
     "files.trimTrailingWhitespace": true,
     "cmake.configureOnOpen": false,
@@ -51,12 +54,12 @@
         "editor.detectIndentation": false,
         "editor.defaultFormatter": "ms-vscode.cpptools",
         "editor.semanticHighlighting.enabled": "configuredByTheme",
+        // "editor.semanticHighlighting.enabled": true,
     },
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features"
     },
-    "C_Cpp.vcFormat.indent.caseContentsWhenBlock": true,
 
-    // "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
+    // "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
     "explorer.copyRelativePathSeparator": "/",
 }

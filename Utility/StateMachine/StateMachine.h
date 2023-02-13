@@ -127,7 +127,7 @@ StateMachine_T;
     }                                                           \
 }
 
-static inline statemachine_state_t StateMachine_GetActiveStateId(StateMachine_T * p_stateMachine) { return p_stateMachine->p_StateActive->ID; }
+static inline statemachine_state_t StateMachine_GetActiveStateId(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_StateActive->ID; }
 
 /******************************************************************************/
 /*

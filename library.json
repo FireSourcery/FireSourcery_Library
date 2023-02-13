@@ -1,7 +1,7 @@
 {
   "name": "FireSourcery_Library",
   "version": "0.0.1",
-  "description": "Embedded C Library, Motor Control, Peripheral Abstration Layer",
+  "description": "Embedded C Library, Motor Control, Peripheral Abstraction Layer",
   "keywords": "motor, foc, hal",
   "repository":
   {

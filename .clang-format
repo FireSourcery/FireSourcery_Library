@@ -1,7 +1,7 @@
 ---
 # https://zed0.co.uk/clang-format-configurator/
 # https://clang.llvm.org/docs/ClangFormatStyleOptions.html
-BasedOnStyle: Microsoft
+# BasedOnStyle: Microsoft
 IndentWidth: 4
 ColumnLimit: 160
 UseTab: Never
@@ -31,7 +31,7 @@ BreakBeforeBinaryOperators: All
 AlignAfterOpenBracket: Align
 AlignConsecutiveMacros: 'true'
 AlignConsecutiveAssignments: 'true'
-AlignConsecutiveDeclarations: 'false'
+AlignConsecutiveDeclarations: 'true'
 AlignEscapedNewlines: Left
 AlignOperands: 'true'
 AlignTrailingComments: 'true'
