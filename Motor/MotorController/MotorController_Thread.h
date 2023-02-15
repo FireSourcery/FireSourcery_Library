@@ -248,7 +248,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
         //     Serial_PollTxData(&p_mc->CONFIG.P_SERIALS[iSerial]);
         // }
 
-		for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]); }
+        for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]); }
 
     #ifdef CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE
         if(p_mc->Parameters.IsCanEnable == true) { CanBus_ProcServices(p_mc->CONFIG.P_CAN_BUS); }
@@ -256,10 +256,10 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 
         /* Low Freq, Low Priority, ~10ms ~16ms, 100Hz */
         if(CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONFIG.MAIN_DIVIDER_10) == true)
-		{
-		#ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
-			Shell_Proc(&p_mc->Shell);
-		#endif
+        {
+        #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
+            Shell_Proc(&p_mc->Shell);
+        #endif
             Blinky_Proc(&p_mc->Buzzer);
             Blinky_Proc(&p_mc->Meter);
         }
@@ -267,11 +267,11 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
         /* Low Freq, Low Priority, ~1s ~1024ms */
         if(CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONFIG.MAIN_DIVIDER_1000) == true)
         {
-            /* In case of Serial Rx Overflow Timeout */
-            for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++)
-            {
-                if(Serial_CheckRxFull(&p_mc->CONFIG.P_SERIALS[iSerial]) == true) MotorController_BeepShort(p_mc);
-            }
+            // /* In case of Serial Rx Overflow Timeout */
+            // for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++)
+            // {
+            //     if(Serial_CheckRxFull(&p_mc->CONFIG.P_SERIALS[iSerial]) == true) MotorController_BeepShort(p_mc);
+            // }
 
             for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]); }
 

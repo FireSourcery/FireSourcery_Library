@@ -22,9 +22,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	math_foc.h
+    @file     math_foc.h
     @author FireSourcery
-    @brief	FOC pure math functions.
+    @brief    FOC pure math functions.
             Aligned in CCW order: a, b, c; alpha, beta; d, q
     @version V0
 */
@@ -36,7 +36,7 @@
 
 /******************************************************************************/
 /*!
-    @brief	Clarke
+    @brief    Clarke
             Transform 3-phase (120 degree) stationary reference frame quantities: Ia, Ib, Ic
             into 2-axis orthogonal stationary reference frame quantities: Ialpha and Ibeta
 
@@ -68,7 +68,7 @@ static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t
 
 /******************************************************************************/
 /*!
-    @brief	2-Phase Version
+    @brief    2-Phase Version
 
     Ialpha = Ia
     Ibeta = (Ia + 2*Ib)/sqrt3
@@ -90,7 +90,7 @@ static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac1
 
 /******************************************************************************/
 /*!
-    @brief	Inverse Clarke
+    @brief    Inverse Clarke
 
     A = alpha;
     B = (-alpha + sqrt3*beta)/2

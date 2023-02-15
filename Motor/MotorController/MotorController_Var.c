@@ -45,7 +45,10 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
     switch(varId)
     {
         case MOT_VAR_NULL:      value = 0;                                                  break;
-        case MOT_VAR_SPEED:     value = Motor_User_GetSpeed_FracS16(p_motor);               break;
+        case MOT_VAR_SPEED:     value = Motor_User_GetSpeed_FracS16(p_motor);
+           value = math_clamp(value, -INT16_MAX, INT16_MAX);
+            // temporary check over saturation
+        break;
         case MOT_VAR_CURRENT:   value = Motor_User_GetIPhase_FracS16(p_motor);              break;
         case MOT_VAR_VOLTAGE:   value = Motor_User_GetVPhase_FracS16(p_motor);              break;
         case MOT_VAR_POWER:     value = Motor_User_GetElectricalPower_FracS16(p_motor);     break;

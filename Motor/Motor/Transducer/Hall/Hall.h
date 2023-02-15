@@ -1,31 +1,31 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Hall.h
-	@author FireSourcery
-	@brief
-	@version V0
+    @file     Hall.h
+    @author FireSourcery
+    @brief
+    @version V0
 */
 /******************************************************************************/
 #ifndef HALL_H
@@ -38,15 +38,15 @@
 #include <stdint.h>
 
 /* Virtual State Where ID => 0bCBA */
-#define	HALL_VIRTUAL_SENSORS_A 		(0b001U)
-#define	HALL_VIRTUAL_SENSORS_B 		(0b010U)
-#define	HALL_VIRTUAL_SENSORS_C 		(0b100U)
+#define    HALL_VIRTUAL_SENSORS_A         (0b001U)
+#define    HALL_VIRTUAL_SENSORS_B         (0b010U)
+#define    HALL_VIRTUAL_SENSORS_C         (0b100U)
 /* 180 Degree active sensors */
-#define	HALL_VIRTUAL_SENSORS_INV_A 	(0b110U)
-#define	HALL_VIRTUAL_SENSORS_INV_B 	(0b101U)
-#define	HALL_VIRTUAL_SENSORS_INV_C 	(0b011U)
+#define    HALL_VIRTUAL_SENSORS_INV_A     (0b110U)
+#define    HALL_VIRTUAL_SENSORS_INV_B     (0b101U)
+#define    HALL_VIRTUAL_SENSORS_INV_C     (0b011U)
 
-#define	HALL_SENSORS_TABLE_LENGTH 	(8U)
+#define    HALL_SENSORS_TABLE_LENGTH     (8U)
 
 #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
 typedef void (*Hall_CommutationPhase_T)(void * p_userData);
@@ -54,133 +54,133 @@ typedef void (*Hall_CommutationPhase_T)(void * p_userData);
 
 typedef union Hall_Sensors_Tag
 {
-	struct
-	{
-		uint8_t A : 1U;
-		uint8_t B : 1U;
-		uint8_t C : 1U;
-		uint8_t Resv3 : 1U;
-		uint8_t Resv4 : 1U;
-		uint8_t Resv5 : 1U;
-		uint8_t Resv6 : 1U;
-		uint8_t Resv7 : 1U;
-	};
-	uint8_t State;
+    struct
+    {
+        uint8_t A : 1U;
+        uint8_t B : 1U;
+        uint8_t C : 1U;
+        uint8_t Resv3 : 1U;
+        uint8_t Resv4 : 1U;
+        uint8_t Resv5 : 1U;
+        uint8_t Resv6 : 1U;
+        uint8_t Resv7 : 1U;
+    };
+    uint8_t State;
 }
 Hall_Sensors_T;
 
 /*
-	Hall sensor ID. ID base value reflects 3 bit sensor state, or sequential ID
-	if both sequential ID, and sensor state is needed, another table must be used
+    Hall sensor ID. ID base value reflects 3 bit sensor state, or sequential ID
+    if both sequential ID, and sensor state is needed, another table must be used
 */
 typedef enum Hall_Id_Tag
 {
-	/*
-		Rotor Angle, CCW is increasing Angle
-	*/
-	HALL_ANGLE_330_30 = HALL_VIRTUAL_SENSORS_A,
-	HALL_ANGLE_30_90 = HALL_VIRTUAL_SENSORS_INV_C,
-	HALL_ANGLE_90_150 = HALL_VIRTUAL_SENSORS_B,
-	HALL_ANGLE_150_210 = HALL_VIRTUAL_SENSORS_INV_A,
-	HALL_ANGLE_210_270 = HALL_VIRTUAL_SENSORS_C,
-	HALL_ANGLE_270_330 = HALL_VIRTUAL_SENSORS_INV_B,
-	HALL_ANGLE_ERROR_0 = 0U,
-	HALL_ANGLE_ERROR_7 = 7U,
+    /*
+        Rotor Angle, CCW is increasing Angle
+    */
+    HALL_ANGLE_330_30 = HALL_VIRTUAL_SENSORS_A,
+    HALL_ANGLE_30_90 = HALL_VIRTUAL_SENSORS_INV_C,
+    HALL_ANGLE_90_150 = HALL_VIRTUAL_SENSORS_B,
+    HALL_ANGLE_150_210 = HALL_VIRTUAL_SENSORS_INV_A,
+    HALL_ANGLE_210_270 = HALL_VIRTUAL_SENSORS_C,
+    HALL_ANGLE_270_330 = HALL_VIRTUAL_SENSORS_INV_B,
+    HALL_ANGLE_ERROR_0 = 0U,
+    HALL_ANGLE_ERROR_7 = 7U,
 
-	/* Rotor Angle Id via boundary from CCW and CW */
-	HALL_ANGLE_CCW_30 = HALL_ANGLE_30_90,
-	HALL_ANGLE_CCW_90 = HALL_ANGLE_90_150,
-	HALL_ANGLE_CCW_150 = HALL_ANGLE_150_210,
-	HALL_ANGLE_CCW_210 = HALL_ANGLE_210_270,
-	HALL_ANGLE_CCW_270 = HALL_ANGLE_270_330,
-	HALL_ANGLE_CCW_330 = HALL_ANGLE_330_30,
+    /* Rotor Angle Id via boundary from CCW and CW */
+    HALL_ANGLE_CCW_30 = HALL_ANGLE_30_90,
+    HALL_ANGLE_CCW_90 = HALL_ANGLE_90_150,
+    HALL_ANGLE_CCW_150 = HALL_ANGLE_150_210,
+    HALL_ANGLE_CCW_210 = HALL_ANGLE_210_270,
+    HALL_ANGLE_CCW_270 = HALL_ANGLE_270_330,
+    HALL_ANGLE_CCW_330 = HALL_ANGLE_330_30,
 
-	HALL_ANGLE_CW_30 = HALL_ANGLE_330_30,
-	HALL_ANGLE_CW_90 = HALL_ANGLE_30_90,
-	HALL_ANGLE_CW_150 = HALL_ANGLE_90_150,
-	HALL_ANGLE_CW_210 = HALL_ANGLE_150_210,
-	HALL_ANGLE_CW_270 = HALL_ANGLE_210_270,
-	HALL_ANGLE_CW_330 = HALL_ANGLE_270_330,
+    HALL_ANGLE_CW_30 = HALL_ANGLE_330_30,
+    HALL_ANGLE_CW_90 = HALL_ANGLE_30_90,
+    HALL_ANGLE_CW_150 = HALL_ANGLE_90_150,
+    HALL_ANGLE_CW_210 = HALL_ANGLE_150_210,
+    HALL_ANGLE_CW_270 = HALL_ANGLE_210_270,
+    HALL_ANGLE_CW_330 = HALL_ANGLE_270_330,
 
-	/*
-		Commutation angle - CCW direction, 90 degree
-	*/
-	HALL_COMMUTATION_PHASE_AC = HALL_VIRTUAL_SENSORS_INV_B,
-	HALL_COMMUTATION_PHASE_BC = HALL_VIRTUAL_SENSORS_A,
-	HALL_COMMUTATION_PHASE_BA = HALL_VIRTUAL_SENSORS_INV_C,
-	HALL_COMMUTATION_PHASE_CA = HALL_VIRTUAL_SENSORS_B,
-	HALL_COMMUTATION_PHASE_CB = HALL_VIRTUAL_SENSORS_INV_A,
-	HALL_COMMUTATION_PHASE_AB = HALL_VIRTUAL_SENSORS_C,
-	HALL_COMMUTATION_PHASE_ERROR_0 = 0U,
-	HALL_COMMUTATION_PHASE_ERROR_7 = 7U,
+    /*
+        Commutation angle - CCW direction, 90 degree
+    */
+    HALL_COMMUTATION_PHASE_AC = HALL_VIRTUAL_SENSORS_INV_B,
+    HALL_COMMUTATION_PHASE_BC = HALL_VIRTUAL_SENSORS_A,
+    HALL_COMMUTATION_PHASE_BA = HALL_VIRTUAL_SENSORS_INV_C,
+    HALL_COMMUTATION_PHASE_CA = HALL_VIRTUAL_SENSORS_B,
+    HALL_COMMUTATION_PHASE_CB = HALL_VIRTUAL_SENSORS_INV_A,
+    HALL_COMMUTATION_PHASE_AB = HALL_VIRTUAL_SENSORS_C,
+    HALL_COMMUTATION_PHASE_ERROR_0 = 0U,
+    HALL_COMMUTATION_PHASE_ERROR_7 = 7U,
 
-	HALL_COMMUTATION_ANGLE_30 = HALL_COMMUTATION_PHASE_AC,
-	HALL_COMMUTATION_ANGLE_90 = HALL_COMMUTATION_PHASE_BC,
-	HALL_COMMUTATION_ANGLE_150 = HALL_COMMUTATION_PHASE_BA,
-	HALL_COMMUTATION_ANGLE_210 = HALL_COMMUTATION_PHASE_CA,
-	HALL_COMMUTATION_ANGLE_270 = HALL_COMMUTATION_PHASE_CB,
-	HALL_COMMUTATION_ANGLE_330 = HALL_COMMUTATION_PHASE_AB,
+    HALL_COMMUTATION_ANGLE_30 = HALL_COMMUTATION_PHASE_AC,
+    HALL_COMMUTATION_ANGLE_90 = HALL_COMMUTATION_PHASE_BC,
+    HALL_COMMUTATION_ANGLE_150 = HALL_COMMUTATION_PHASE_BA,
+    HALL_COMMUTATION_ANGLE_210 = HALL_COMMUTATION_PHASE_CA,
+    HALL_COMMUTATION_ANGLE_270 = HALL_COMMUTATION_PHASE_CB,
+    HALL_COMMUTATION_ANGLE_330 = HALL_COMMUTATION_PHASE_AB,
 
-	/*
-		Sector number
-	*/
-	HALL_SECTOR_0 = 0U,
-	HALL_SECTOR_1 = HALL_VIRTUAL_SENSORS_A,
-	HALL_SECTOR_2 = HALL_VIRTUAL_SENSORS_INV_C,
-	HALL_SECTOR_3 = HALL_VIRTUAL_SENSORS_B,
-	HALL_SECTOR_4 = HALL_VIRTUAL_SENSORS_INV_A,
-	HALL_SECTOR_5 = HALL_VIRTUAL_SENSORS_C,
-	HALL_SECTOR_6 = HALL_VIRTUAL_SENSORS_INV_B,
-	HALL_SECTOR_7 = 7U,
+    /*
+        Sector number
+    */
+    HALL_SECTOR_0 = 0U,
+    HALL_SECTOR_1 = HALL_VIRTUAL_SENSORS_A,
+    HALL_SECTOR_2 = HALL_VIRTUAL_SENSORS_INV_C,
+    HALL_SECTOR_3 = HALL_VIRTUAL_SENSORS_B,
+    HALL_SECTOR_4 = HALL_VIRTUAL_SENSORS_INV_A,
+    HALL_SECTOR_5 = HALL_VIRTUAL_SENSORS_C,
+    HALL_SECTOR_6 = HALL_VIRTUAL_SENSORS_INV_B,
+    HALL_SECTOR_7 = 7U,
 }
 Hall_Id_T;
 
 typedef enum Hall_Direction_Tag
 {
-	HALL_DIRECTION_CCW = 0U,
-	HALL_DIRECTION_CW = 1U,
+    HALL_DIRECTION_CCW = 0U,
+    HALL_DIRECTION_CW = 1U,
 }
 Hall_Direction_T;
 
 typedef struct __attribute__((aligned(4U))) Hall_Params_Tag
 {
-	Hall_Id_T SensorsTable[HALL_SENSORS_TABLE_LENGTH];
-	uint8_t BoundaryType; /* 3 states 120 degree active, or 6 step, 180 degree active */
+    Hall_Id_T SensorsTable[HALL_SENSORS_TABLE_LENGTH];
+    uint8_t BoundaryType; /* 3 states 120 degree active, or 6 step, 180 degree active */
 }
 Hall_Params_T;
 
 typedef const struct Hall_Config_Tag
 {
-	const Hall_Params_T * const P_PARAMS_NVM;
+    const Hall_Params_T * const P_PARAMS_NVM;
 }
 Hall_Config_T;
 
 typedef struct Hall_Tag
 {
-	const Hall_Config_T CONFIG;
-	Pin_T PinA;
-	Pin_T PinB;
-	Pin_T PinC;
-	Hall_Params_T Params;
-	Hall_Direction_T Direction;
-	Hall_Sensors_T Sensors;		/* Save last physical read */
-	volatile uint16_t Angle;
+    const Hall_Config_T CONFIG;
+    Pin_T PinA;
+    Pin_T PinB;
+    Pin_T PinC;
+    Hall_Params_T Params;
+    Hall_Direction_T Direction;
+    Hall_Sensors_T Sensors;        /* Save last physical read */
+    volatile uint16_t Angle;
 #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
-	Hall_CommutationPhase_T CommuntationTable[HALL_SENSORS_TABLE_LENGTH];
-	void * p_CommutationContext;
+    Hall_CommutationPhase_T CommuntationTable[HALL_SENSORS_TABLE_LENGTH];
+    void * p_CommutationContext;
 #endif
 }
 Hall_T;
 
-#define HALL_INIT(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_Params)	\
-{																\
-	.CONFIG = 													\
-	{															\
-		.P_PARAMS_NVM = p_Params, 								\
-	},															\
-	.PinA = PIN_INIT(p_PinAHal, PinAId),						\
-	.PinB = PIN_INIT(p_PinBHal, PinBId),						\
-	.PinC = PIN_INIT(p_PinCHal, PinCId),						\
+#define HALL_INIT(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_Params)    \
+{                                                                \
+    .CONFIG =                                                     \
+    {                                                            \
+        .P_PARAMS_NVM = p_Params,                                 \
+    },                                                            \
+    .PinA = PIN_INIT(p_PinAHal, PinAId),                        \
+    .PinB = PIN_INIT(p_PinBHal, PinBId),                        \
+    .PinC = PIN_INIT(p_PinCHal, PinCId),                        \
 }
 
 extern const uint16_t _HALL_DEGREES_TABLE[HALL_SENSORS_TABLE_LENGTH];
@@ -190,36 +190,36 @@ static inline uint8_t InverseHall(uint8_t hall) { return (~hall & 0x07U); }
 
 static inline Hall_Sensors_T Hall_ReadSensors(const Hall_T * p_hall)
 {
-	Hall_Sensors_T sensors;
-	sensors.A = Pin_Input_ReadPhysical(&p_hall->PinA);
-	sensors.B = Pin_Input_ReadPhysical(&p_hall->PinB);
-	sensors.C = Pin_Input_ReadPhysical(&p_hall->PinC);
-	return sensors;
+    Hall_Sensors_T sensors;
+    sensors.A = Pin_Input_ReadPhysical(&p_hall->PinA);
+    sensors.B = Pin_Input_ReadPhysical(&p_hall->PinB);
+    sensors.C = Pin_Input_ReadPhysical(&p_hall->PinC);
+    return sensors;
 }
 
 static inline void Hall_CaptureSensors_ISR(Hall_T * p_hall)
 {
-	p_hall->Sensors.State = Hall_ReadSensors(p_hall).State;
+    p_hall->Sensors.State = Hall_ReadSensors(p_hall).State;
 }
 
 /*
-	Capture sensor on Hall edge, angle boundary
-	return true on every phase edge. i.e 6x per Hall cycle
+    Capture sensor on Hall edge, angle boundary
+    return true on every phase edge. i.e 6x per Hall cycle
 */
 static inline bool Hall_PollCaptureSensors(Hall_T * p_hall)
 {
-	uint8_t sensorsNew = Hall_ReadSensors(p_hall).State;
-	bool isEdge = (sensorsNew != p_hall->Sensors.State);
-	if(isEdge == true) { p_hall->Sensors.State = sensorsNew; }
-	return (isEdge);
+    uint8_t sensorsNew = Hall_ReadSensors(p_hall).State;
+    bool isEdge = (sensorsNew != p_hall->Sensors.State);
+    if(isEdge == true) { p_hall->Sensors.State = sensorsNew; }
+    return (isEdge);
 }
 
 /*
-	Angle
+    Angle
 */
 static inline uint16_t Hall_ConvertToAngle_Degrees16(Hall_T * p_hall, uint8_t physicalSensors)
 {
-	return _HALL_DEGREES_TABLE[p_hall->Params.SensorsTable[physicalSensors]];
+    return _HALL_DEGREES_TABLE[p_hall->Params.SensorsTable[physicalSensors]];
 }
 
 /* returns based on Direction */
@@ -227,32 +227,32 @@ static inline uint16_t Hall_ConvertToAngle_Degrees16(Hall_T * p_hall, uint8_t ph
 /* 120 degree boundaries, +/- 60 degrees, activate 150:30 degrees ahead, 150 degrees to reach next boundary. handle outside */
 static inline uint16_t Hall_ConvertToRotorAngle_Degrees16(Hall_T * p_hall, uint8_t physicalSensors)
 {
-	uint16_t angle16 = Hall_ConvertToAngle_Degrees16(p_hall, physicalSensors);
-	// uint16_t boundary = (p_hall->Params.BoundaryType == 3U) ? 10922U : 5461U;
-	uint16_t boundary = 5461U;
-	return ((p_hall->Direction == HALL_DIRECTION_CW) ? angle16 + boundary : angle16 - boundary); /* unsigned angle wraps */
+    uint16_t angle16 = Hall_ConvertToAngle_Degrees16(p_hall, physicalSensors);
+    // uint16_t boundary = (p_hall->Params.BoundaryType == 3U) ? 10922U : 5461U;
+    uint16_t boundary = 5461U;
+    return ((p_hall->Direction == HALL_DIRECTION_CW) ? angle16 + boundary : angle16 - boundary); /* unsigned angle wraps */
 }
 
 static inline void Hall_CaptureRotorAngle_ISR(Hall_T * p_hall)
 {
-	Hall_CaptureSensors_ISR(p_hall);
-	p_hall->Angle = Hall_ConvertToRotorAngle_Degrees16(p_hall, p_hall->Sensors.State);
+    Hall_CaptureSensors_ISR(p_hall);
+    p_hall->Angle = Hall_ConvertToRotorAngle_Degrees16(p_hall, p_hall->Sensors.State);
 }
 
 static inline bool Hall_PollCaptureRotorAngle(Hall_T * p_hall)
 {
-	bool isEdge = Hall_PollCaptureSensors(p_hall);
-	if(isEdge == true) { p_hall->Angle = Hall_ConvertToRotorAngle_Degrees16(p_hall, p_hall->Sensors.State); }
-	return (isEdge);
+    bool isEdge = Hall_PollCaptureSensors(p_hall);
+    if(isEdge == true) { p_hall->Angle = Hall_ConvertToRotorAngle_Degrees16(p_hall, p_hall->Sensors.State); }
+    return (isEdge);
 }
 
 /* Next poll is edge */
-static inline void Hall_ResetCapture(Hall_T * p_hall) { p_hall->Sensors.State = 0U;	p_hall->Angle = 0U; }
+static inline void Hall_ResetCapture(Hall_T * p_hall) { p_hall->Sensors.State = 0U;    p_hall->Angle = 0U; }
 
 static inline void Hall_SetInitial(Hall_T * p_hall) { Hall_CaptureRotorAngle_ISR(p_hall); }
 
 /*
-	return true once per hall cycle
+    return true once per hall cycle
 */
 static inline bool Hall_PollEdgeA(Hall_T * p_hall) { return ((Hall_ReadSensors(p_hall).A == true) && ((p_hall->Sensors.A) == false)); }
 
@@ -262,7 +262,7 @@ static inline Hall_Id_T Hall_GetRotorId(Hall_T * p_hall) { return Hall_ConvertTo
 /* returns based on Direction */
 static inline Hall_Id_T Hall_ConvertToCommutationId(Hall_T * p_hall, uint8_t physicalSensors)
 {
-	return (p_hall->Direction == HALL_DIRECTION_CW) ? p_hall->Params.SensorsTable[InverseHall(physicalSensors)] : p_hall->Params.SensorsTable[physicalSensors]; /* Offset 180 */
+    return (p_hall->Direction == HALL_DIRECTION_CW) ? p_hall->Params.SensorsTable[InverseHall(physicalSensors)] : p_hall->Params.SensorsTable[physicalSensors]; /* Offset 180 */
 }
 static inline Hall_Id_T Hall_GetCommutationId(Hall_T * p_hall) { return Hall_ConvertToCommutationId(p_hall, p_hall->Sensors.State); }
 

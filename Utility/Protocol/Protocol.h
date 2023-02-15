@@ -156,10 +156,10 @@ Protocol_ReqSync_T;
 /* Protocol_Req_T */
 typedef const struct Protocol_Req_Tag
 {
-    const protocol_reqid_t        	 	ID;
-    const Protocol_ProcReqResp_T   		PROC;
-    const Protocol_ProcReqRespExt_T		PROC_EXT;
-    const Protocol_ReqSync_T        	SYNC;        /* Stateless ack nack */
+    const protocol_reqid_t                 ID;
+    const Protocol_ProcReqResp_T           PROC;
+    const Protocol_ProcReqRespExt_T        PROC_EXT;
+    const Protocol_ReqSync_T            SYNC;        /* Stateless ack nack */
     //    const uint32_t     TIMEOUT; /* overwrite common timeout */
 }
 Protocol_Req_T;

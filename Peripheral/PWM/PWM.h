@@ -1,31 +1,31 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	PWM.h
-	@author FireSourcery
-	@brief
-	@version V0
+    @file     PWM.h
+    @author FireSourcery
+    @brief
+    @version V0
 */
 /******************************************************************************/
 #ifndef PWM_H
@@ -38,33 +38,33 @@
 
 typedef const struct PWM_Config_Tag
 {
-	// HAL_PWM_Module_T * const P_HAL_PWM_MODULE;
-	HAL_PWM_T * const P_HAL_PWM;
-	const uint32_t CHANNEL_ID;
-	const uint32_t PERIOD_TICKS;
+    // HAL_PWM_Module_T * const P_HAL_PWM_MODULE;
+    HAL_PWM_T * const P_HAL_PWM;
+    const uint32_t CHANNEL_ID;
+    const uint32_t PERIOD_TICKS;
 }
 PWM_Config_T;
 
 typedef struct PWM_Tag
 {
-	const PWM_Config_T CONFIG;
+    const PWM_Config_T CONFIG;
 }
 PWM_T;
 
-#define PWM_INIT(p_Hal, Peroid_Ticks, Channel) 												\
-{																							\
-	.CONFIG = { .P_HAL_PWM = p_Hal, .PERIOD_TICKS = Peroid_Ticks, .CHANNEL_ID = Channel },	\
+#define PWM_INIT(p_Hal, Peroid_Ticks, Channel)                                                 \
+{                                                                                            \
+    .CONFIG = { .P_HAL_PWM = p_Hal, .PERIOD_TICKS = Peroid_Ticks, .CHANNEL_ID = Channel },    \
 }
 
 #define PWM_DUTY16 (65536U)
 
 /*
-	Channel
+    Channel
 */
 static inline uint32_t _PWM_CalcPwmDutyTicks(const PWM_T * p_pwm, uint32_t duty) { return p_pwm->CONFIG.PERIOD_TICKS * duty / PWM_DUTY16; }
 
 /*
-	Actuate arguments immediately, unless use sync is enabled
+    Actuate arguments immediately, unless use sync is enabled
 */
 static inline void PWM_ActuateDuty_Ticks(const PWM_T * p_pwm, uint32_t pwmDuty_Ticks) { HAL_PWM_WriteDuty(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID, pwmDuty_Ticks); }
 
@@ -73,34 +73,34 @@ static inline void PWM_ActuateDuty(const PWM_T * p_pwm, uint32_t pwmDuty) { PWM_
 
 static inline void PWM_ActuateDutyMidPlus(const PWM_T * p_pwm, uint32_t pwmDuty)
 {
-	PWM_ActuateDuty_Ticks(p_pwm, (p_pwm->CONFIG.PERIOD_TICKS + _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)) / 2U);
+    PWM_ActuateDuty_Ticks(p_pwm, (p_pwm->CONFIG.PERIOD_TICKS + _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)) / 2U);
 }
 
 static inline void PWM_ActuateDutyMidMinus(const PWM_T * p_pwm, uint32_t pwmDuty)
 {
-	PWM_ActuateDuty_Ticks(p_pwm, (p_pwm->CONFIG.PERIOD_TICKS - _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)) / 2U);
+    PWM_ActuateDuty_Ticks(p_pwm, (p_pwm->CONFIG.PERIOD_TICKS - _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)) / 2U);
 }
 
 static inline void PWM_ActuateDuty_Frac16(const PWM_T * p_pwm, uint16_t pwmDuty16) { PWM_ActuateDuty_Ticks(p_pwm, (uint32_t)pwmDuty16 * p_pwm->CONFIG.PERIOD_TICKS >> 16U); }
 static inline void PWM_ActuateDuty_Frac15(const PWM_T * p_pwm, uint16_t pwmDuty15) { PWM_ActuateDuty_Ticks(p_pwm, (uint32_t)pwmDuty15 * p_pwm->CONFIG.PERIOD_TICKS >> 15U); }
 
-static inline void PWM_Enable(const PWM_T * p_pwm) 					{ HAL_PWM_EnableOutput(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
-static inline void PWM_Disable(const PWM_T * p_pwm) 				{ HAL_PWM_DisableOutput(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
-static inline void PWM_EnableInvertPolarity(const PWM_T * p_pwm) 	{ HAL_PWM_EnableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
-static inline void PWM_DisableInvertPolarity(const PWM_T * p_pwm) 	{ HAL_PWM_DisableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
+static inline void PWM_Enable(const PWM_T * p_pwm)                     { HAL_PWM_EnableOutput(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
+static inline void PWM_Disable(const PWM_T * p_pwm)                 { HAL_PWM_DisableOutput(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
+static inline void PWM_EnableInvertPolarity(const PWM_T * p_pwm)     { HAL_PWM_EnableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
+static inline void PWM_DisableInvertPolarity(const PWM_T * p_pwm)     { HAL_PWM_DisableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
 
 /*
-	Module
+    Module
 */
 /* Shared interrupt */
-static inline void PWM_ClearInterrupt(const PWM_T * p_pwm) 		{ HAL_PWM_ClearInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
-static inline void PWM_DisableInterrupt(const PWM_T * p_pwm) 	{ HAL_PWM_DisableInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
-static inline void PWM_EnableInterrupt(const PWM_T * p_pwm) 	{ HAL_PWM_EnableInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
+static inline void PWM_ClearInterrupt(const PWM_T * p_pwm)         { HAL_PWM_ClearInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
+static inline void PWM_DisableInterrupt(const PWM_T * p_pwm)     { HAL_PWM_DisableInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
+static inline void PWM_EnableInterrupt(const PWM_T * p_pwm)     { HAL_PWM_EnableInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
 /* If multiple PWMs share a register. may interfere with sync. todo buffered module sync */
-static inline void PWM_ActuateSync(const PWM_T * p_pwm) 		{ HAL_PWM_SyncModule(p_pwm->CONFIG.P_HAL_PWM); }
+static inline void PWM_ActuateSync(const PWM_T * p_pwm)         { HAL_PWM_SyncModule(p_pwm->CONFIG.P_HAL_PWM); }
 
 /*
-	Extern
+    Extern
 */
 extern void PWM_Init(PWM_T * p_pwm);
 extern void PWM_InitChannel(PWM_T * p_pwm);

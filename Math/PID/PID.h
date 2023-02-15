@@ -1,31 +1,31 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	PID.h
-	@author FireSourcery
-	@brief
-	@version V0
+    @file     PID.h
+    @author FireSourcery
+    @brief
+    @version V0
 */
 /******************************************************************************/
 #ifndef PID_H
@@ -39,48 +39,48 @@
 
 typedef enum PID_Mode_Tag
 {
-	PID_MODE_PI,
-	PID_MODE_PID,
+    PID_MODE_PI,
+    PID_MODE_PID,
 }
 PID_Mode_T;
 
 typedef struct __attribute__((aligned(4U))) PID_Params_Tag
 {
-	PID_Mode_T Mode;
-	uint32_t SampleFreq;
+    PID_Mode_T Mode;
+    uint32_t SampleFreq;
 
-	int32_t Kp_Fixed32; /* Q16.16 */
-	int32_t Ki_Fixed32;
-	int32_t Kd_Fixed32;
+    int32_t Kp_Fixed32; /* Q16.16 */
+    int32_t Ki_Fixed32;
+    int32_t Kd_Fixed32;
 
-	int16_t PropGain;
-	int8_t PropGainShift;
-	int16_t IntegralGain;
-	int8_t IntegralGainShift;
+    int16_t PropGain;
+    int8_t PropGainShift;
+    int16_t IntegralGain;
+    int8_t IntegralGainShift;
 }
 PID_Params_T;
 
 typedef const struct PID_Config_Tag
 {
-	const PID_Params_T * const P_PARAMS;
+    const PID_Params_T * const P_PARAMS;
 }
 PID_Config_T;
 
 typedef struct PID_Tag
 {
-	const PID_Config_T CONFIG;
-	PID_Params_T Params;
-	int32_t Integral32; /* Q16.16, Shifted 16 */
-	int32_t ErrorPrev;
-	int16_t OutputMin; /* -32768 Min */
-	int16_t OutputMax; /* 32767 Max */
-	int16_t Output;
+    const PID_Config_T CONFIG;
+    PID_Params_T Params;
+    int32_t Integral32; /* Q16.16, Shifted 16 */
+    int32_t ErrorPrev;
+    int16_t OutputMin; /* -32768 Min */
+    int16_t OutputMax; /* 32767 Max */
+    int16_t Output;
 }
 PID_T;
 
 #define PID_INIT(p_Params) { .CONFIG = { .P_PARAMS = p_Params, } }
 
-static inline int16_t PID_GetOutput(PID_T * p_pid) 			{ return p_pid->Output; }
+static inline int16_t PID_GetOutput(PID_T * p_pid)             { return p_pid->Output; }
 static inline int32_t PID_GetKpParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Kp_Fixed32; }
 static inline int32_t PID_GetKiParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Ki_Fixed32; }
 static inline int32_t PID_GetKdParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Kd_Fixed32; }

@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	MotorStateMachine.c
+    @file     MotorStateMachine.c
     @author FireSourcery
     @brief  MotorStateMachine
     @version V0
@@ -58,7 +58,7 @@ const StateMachine_Machine_T MSM_MACHINE =
 };
 
 static StateMachine_State_T * TransitionFault(Motor_T * p_motor, uint32_t voidVar) { (void)p_motor; (void)voidVar; return &STATE_FAULT; }
-static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, uint32_t voidVar) { (void)p_motor; (void)voidVar;	return &STATE_FREEWHEEL; }
+static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, uint32_t voidVar) { (void)p_motor; (void)voidVar;    return &STATE_FREEWHEEL; }
 
 /******************************************************************************/
 /*!
@@ -113,11 +113,11 @@ static void Stop_Entry(Motor_T * p_motor)
 
 static void Stop_Proc(Motor_T * p_motor)
 {
-    //	if(p_motor->Speed_FracS16 > 0U)
-    //	{
-    //		_StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
-    //	}
-    //	else
+    //    if(p_motor->Speed_FracS16 > 0U)
+    //    {
+    //        _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
+    //    }
+    //    else
     {
         Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleVBemf, 0U);
     }
@@ -176,7 +176,7 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABL
     [MSM_INPUT_RELEASE]     = (StateMachine_Transition_T)Stop_InputRelease,
     [MSM_INPUT_DIRECTION]   = (StateMachine_Transition_T)Stop_InputDirection,
     [MSM_INPUT_CALIBRATION] = (StateMachine_Transition_T)Stop_InputCalibration,
-    //	[MSM_INPUT_GROUND] 			= (StateMachine_Transition_T)Stop_InputGround,
+    //    [MSM_INPUT_GROUND]             = (StateMachine_Transition_T)Stop_InputGround,
 };
 
 static const StateMachine_State_T STATE_STOP =
@@ -317,7 +317,7 @@ static void OpenLoop_Proc(Motor_T * p_motor)
             {
                 // if(p_motor->Speed_Fixed32 != 0U) /* direct check sensor speed  todo */
                 // {
-                // 	Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
+                //     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
                 // }
                 // else
                 {
@@ -363,9 +363,9 @@ static void OpenLoop_Proc(Motor_T * p_motor)
 
 // static StateMachine_State_T * OpenLoop_InputCmdValue(Motor_T * p_motor, uint32_t ivCmd)
 // {
-// 	int32_t ivCmd_Positive = math_clamp((int32_t)ivCmd, 0, (int32_t)p_motor->Parameters.OpenLoopPower_FracU16 / 2);
-// 	Motor_SetDirectionalCmd(p_motor, ivCmd_Positive);
-// 	return 0U;
+//     int32_t ivCmd_Positive = math_clamp((int32_t)ivCmd, 0, (int32_t)p_motor->Parameters.OpenLoopPower_FracU16 / 2);
+//     Motor_SetDirectionalCmd(p_motor, ivCmd_Positive);
+//     return 0U;
 // }
 
 static const StateMachine_Transition_T OPEN_LOOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
@@ -400,11 +400,11 @@ static void Calibration_Entry(Motor_T * p_motor)
 
     switch(p_motor->CalibrationState)
     {
-        case MOTOR_CALIBRATION_STATE_ADC:		Motor_Calibrate_StartAdc(p_motor);		break;
-        case MOTOR_CALIBRATION_STATE_HALL:		Motor_Calibrate_StartHall(p_motor);		break;
-        case MOTOR_CALIBRATION_STATE_ENCODER:	Motor_Calibrate_StartEncoder(p_motor);	break;
+        case MOTOR_CALIBRATION_STATE_ADC:        Motor_Calibrate_StartAdc(p_motor);        break;
+        case MOTOR_CALIBRATION_STATE_HALL:        Motor_Calibrate_StartHall(p_motor);        break;
+        case MOTOR_CALIBRATION_STATE_ENCODER:    Motor_Calibrate_StartEncoder(p_motor);    break;
         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_CALIBRATION_STATE_SIN_COS:	Motor_Calibrate_StartSinCos(p_motor);	break;
+        case MOTOR_CALIBRATION_STATE_SIN_COS:    Motor_Calibrate_StartSinCos(p_motor);    break;
         #endif
         default: break;
     }
@@ -416,11 +416,11 @@ static void Calibration_Proc(Motor_T * p_motor)
 
     switch(p_motor->CalibrationState)
     {
-        case MOTOR_CALIBRATION_STATE_ADC:		isComplete = Motor_Calibrate_Adc(p_motor); 			break;
-        case MOTOR_CALIBRATION_STATE_HALL:		isComplete = Motor_Calibrate_Hall(p_motor); 		break;
-        case MOTOR_CALIBRATION_STATE_ENCODER:	isComplete = Motor_Calibrate_Encoder(p_motor); 		break;
+        case MOTOR_CALIBRATION_STATE_ADC:        isComplete = Motor_Calibrate_Adc(p_motor);             break;
+        case MOTOR_CALIBRATION_STATE_HALL:        isComplete = Motor_Calibrate_Hall(p_motor);         break;
+        case MOTOR_CALIBRATION_STATE_ENCODER:    isComplete = Motor_Calibrate_Encoder(p_motor);         break;
         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_CALIBRATION_STATE_SIN_COS:	isComplete = Motor_Calibrate_SinCos(p_motor);		break;
+        case MOTOR_CALIBRATION_STATE_SIN_COS:    isComplete = Motor_Calibrate_SinCos(p_motor);        break;
         #endif
         default: break;
     }
@@ -430,8 +430,8 @@ static void Calibration_Proc(Motor_T * p_motor)
 
 // static StateMachine_State_T * Calibration_InputRelease(Motor_T * p_motor, uint32_t voidVar)
 // {
-// 	(void)p_motor; 	(void)voidVar;
-// 	return &STATE_STOP;
+//     (void)p_motor;     (void)voidVar;
+//     return &STATE_STOP;
 // }
 
 static const StateMachine_Transition_T CALIBRATION_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =

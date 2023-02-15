@@ -22,9 +22,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	math_svpwm.h
+    @file     math_svpwm.h
     @author FireSourcery
-    @brief	SVPWM pure math functions.
+    @brief    SVPWM pure math functions.
     @version V0
 */
 /******************************************************************************/
@@ -68,8 +68,8 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
                 Sector 1: X >= 0 and Z < 0
 
                 Duty Cycle:
-                A:		|v100| = (sqrt3 * alpha - beta) / 2 = -Z;
-                invC:	|v110| = beta = X;
+                A:        |v100| = (sqrt3 * alpha - beta) / 2 = -Z;
+                invC:    |v110| = beta = X;
 
                 SVPWM:
                 A -> Max, B -> Mid, C -> Min
@@ -94,8 +94,8 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
 
 
                 Duty Cycle:
-                invC: 	|v110| = 1 * (beta + sqrt3 * alpha) / 2 = Y;
-                B:	 	|v010| = 1 * (beta - sqrt3 * alpha) / 2 = Z;
+                invC:     |v110| = 1 * (beta + sqrt3 * alpha) / 2 = Y;
+                B:         |v010| = 1 * (beta - sqrt3 * alpha) / 2 = Z;
 
                 SVPWM:
                 A -> Mid, B -> Max, C -> Min
@@ -115,8 +115,8 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
                 Sector 3: X >= 0 and Y < 0
 
                 Duty Cycle:
-                B: 		|v010| = X;
-                invA:	|v011| = -Y;
+                B:         |v010| = X;
+                invA:    |v011| = -Y;
 
                 SVPWM:
                 A -> Min, B -> Max, C -> Mid
@@ -139,8 +139,8 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
                 Sector 4: X < 0 and Z >= 0
 
                 Duty Cycle:
-                invA: 	|v011| = Z;
-                C:		|v001| = -X;
+                invA:     |v011| = Z;
+                C:        |v001| = -X;
 
                 SVPWM:
                 A -> Min, B -> Mid, C -> Max
@@ -160,8 +160,8 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
                 Sector 5:  Y < 0 and Z < 0
 
                 Duty Cycle:
-                C: 		|v001| = -Y;
-                invB:	|v101| = -Z;
+                C:         |v001| = -Y;
+                invB:    |v101| = -Z;
 
                 SVPWM:
                 A -> Mid, B -> Min, C -> Max
@@ -181,8 +181,8 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
                 Sector 6: X < 0 and Y >= 0
 
                 Duty Cycle:
-                invB: 	|v101| = -X;
-                A:		|v100| = Y;
+                invB:     |v101| = -X;
+                A:        |v100| = Y;
 
                 SVPWM:
                 A -> Max, B -> Min, C -> Mid

@@ -1,35 +1,35 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Phase.h
-	@author FireSourcery
-	@version V0
-	@brief  3-Phase PWM functions. Includes 2-Phase Polar implementation
+    @file     Phase.h
+    @author FireSourcery
+    @version V0
+    @brief  3-Phase PWM functions. Includes 2-Phase Polar implementation
 
-	Treats each phase as a complementary PWM output.
-	2-Phase: PWM positive side MOSFETs, ground side bottom MOSFET stays on.
-	e.g. PhaseAB -> PWM phase A MOSFETs, phase B bottom MOSFET stays on.
+    Treats each phase as a complementary PWM output.
+    2-Phase: PWM positive side MOSFETs, ground side bottom MOSFET stays on.
+    e.g. PhaseAB -> PWM phase A MOSFETs, phase B bottom MOSFET stays on.
 
 */
 /******************************************************************************/
@@ -43,70 +43,70 @@
 
 typedef enum Phase_Mode_Tag
 {
-	PHASE_MODE_UNIPOLAR_1,	/*!<   */
-	PHASE_MODE_UNIPOLAR_2,	/*!<   */
-	PHASE_MODE_BIPOLAR   	/*!<   */
+    PHASE_MODE_UNIPOLAR_1,    /*!<   */
+    PHASE_MODE_UNIPOLAR_2,    /*!<   */
+    PHASE_MODE_BIPOLAR       /*!<   */
 }
 Phase_Mode_T;
 
 /* 2-Phase */
 typedef enum Phase_Id_Tag
 {
-	PHASE_ID_0 = 0U,
-	PHASE_ID_1_AC = 1U,
-	PHASE_ID_2_BC = 2U,
-	PHASE_ID_3_BA = 3U,
-	PHASE_ID_4_CA = 4U,
-	PHASE_ID_5_CB = 5U,
-	PHASE_ID_6_AB = 6U,
-	PHASE_ID_7 = 7U,
+    PHASE_ID_0 = 0U,
+    PHASE_ID_1_AC = 1U,
+    PHASE_ID_2_BC = 2U,
+    PHASE_ID_3_BA = 3U,
+    PHASE_ID_4_CA = 4U,
+    PHASE_ID_5_CB = 5U,
+    PHASE_ID_6_AB = 6U,
+    PHASE_ID_7 = 7U,
 }
 Phase_Id_T;
 
 /* 3-Phase */
 // typedef enum Phase_Id_Tag
 // {
-// 	PHASE_ID_0 = 0U,
-// 	PHASE_ID_A = 1U,
-// 	PHASE_ID_B = 2U,
-// 	PHASE_ID_C = 3U,
-// 	PHASE_ID_INV_A = 4U,
-// 	PHASE_ID_INV_B = 5U,
-// 	PHASE_ID_INV_C = 6U,
-// 	PHASE_ID_7 = 7U,
+//     PHASE_ID_0 = 0U,
+//     PHASE_ID_A = 1U,
+//     PHASE_ID_B = 2U,
+//     PHASE_ID_C = 3U,
+//     PHASE_ID_INV_A = 4U,
+//     PHASE_ID_INV_B = 5U,
+//     PHASE_ID_INV_C = 6U,
+//     PHASE_ID_7 = 7U,
 // }
 // Phase_Id_T;
 
 typedef struct Phase_Tag
 {
-	PWM_T PwmA;
-	PWM_T PwmB;
-	PWM_T PwmC;
-	PWM_T PwmModule;
+    PWM_T PwmA;
+    PWM_T PwmB;
+    PWM_T PwmC;
+    PWM_T PwmModule;
 #ifdef CONFIG_PHASE_PIN_SWITCH
-	Pin_T PinA;
-	Pin_T PinB;
-	Pin_T PinC;
+    Pin_T PinA;
+    Pin_T PinB;
+    Pin_T PinC;
 #endif
-	Phase_Mode_T PhaseMode;
+    Phase_Mode_T PhaseMode;
 }
 Phase_T;
 
 //p_PwmAHal, p_PwmBHal, p_PwmCHal
-#define PHASE_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel, p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId)	\
-{																	\
-	.PwmModule = PWM_INIT(p_PwmHal, 0, 0),							\
-	.PwmA = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel),		\
-	.PwmB = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmBChannel),		\
-	.PwmC = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmCChannel),		\
-	.PinA = PIN_INIT(p_PinAHal, PinAId),							\
-	.PinB = PIN_INIT(p_PinBHal, PinBId),							\
-	.PinC = PIN_INIT(p_PinCHal, PinCId),							\
+#define PHASE_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel, p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId)    \
+{                                                                    \
+    .PwmModule = PWM_INIT(p_PwmHal, 0, 0),                            \
+    .PwmA = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel),        \
+    .PwmB = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmBChannel),        \
+    .PwmC = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmCChannel),        \
+    .PinA = PIN_INIT(p_PinAHal, PinAId),                            \
+    .PinB = PIN_INIT(p_PinBHal, PinBId),                            \
+    .PinC = PIN_INIT(p_PinCHal, PinCId),                            \
 }
 
-static inline void Phase_ClearInterrupt(const Phase_T * p_phase) 	{ PWM_ClearInterrupt(&p_phase->PwmModule); }
-static inline void Phase_DisableInterrupt(const Phase_T * p_phase) 	{ PWM_DisableInterrupt(&p_phase->PwmModule); }
-static inline void Phase_EnableInterrupt(const Phase_T * p_phase) 	{ PWM_EnableInterrupt(&p_phase->PwmModule); }
+static inline void Phase_ClearInterrupt(const Phase_T * p_phase)     { PWM_ClearInterrupt(&p_phase->PwmModule); }
+static inline void Phase_DisableInterrupt(const Phase_T * p_phase)     { PWM_DisableInterrupt(&p_phase->PwmModule); }
+static inline void Phase_EnableInterrupt(const Phase_T * p_phase)     { PWM_EnableInterrupt(&p_phase->PwmModule); }
 
 
 /******************************************************************************/

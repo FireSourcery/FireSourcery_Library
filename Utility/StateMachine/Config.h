@@ -22,9 +22,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file 	Config.h
+    @file     Config.h
     @author FireSourcery
-    @brief 	State machine module preprocessor configuration options and defaults.
+    @brief     State machine module preprocessor configuration options and defaults.
     @version V0
 */
 /******************************************************************************/

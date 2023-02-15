@@ -1,31 +1,31 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	HAL_Encoder.h
-	@author FireSourcery
-	@brief 	Encoder Timer Counter HAL for S32K
-	@version V0
+    @file     HAL_Encoder.h
+    @author FireSourcery
+    @brief     Encoder Timer Counter HAL for S32K
+    @version V0
 */
 /******************************************************************************/
 #ifndef HAL_ENCODER_PLATFORM_H
@@ -51,31 +51,31 @@ static inline void HAL_Encoder_WriteTimerCounterMax(HAL_Encoder_T * p_encoder, u
 #endif
 
 /*!
-	@return freq set
+    @return freq set
 
-	Prescale Factor Selection
-	000 Divide by 1
-	001 Divide by 2
-	010 Divide by 4
-	011 Divide by 8
-	100 Divide by 16
-	101 Divide by 32
-	110 Divide by 64
-	111 Divide by 128
+    Prescale Factor Selection
+    000 Divide by 1
+    001 Divide by 2
+    010 Divide by 4
+    011 Divide by 8
+    100 Divide by 16
+    101 Divide by 32
+    110 Divide by 64
+    111 Divide by 128
 */
 static inline uint32_t HAL_Encoder_ConfigTimerCounterFreq(HAL_Encoder_T * p_encoder, uint32_t freq)
 {
-	uint8_t preScalerValue = CONFIG_ENCODER_HAL_CLOCK_SOURCE_FREQ / freq;
-	uint8_t preScaler = 0U;
+    uint8_t preScalerValue = CONFIG_ENCODER_HAL_CLOCK_SOURCE_FREQ / freq;
+    uint8_t preScaler = 0U;
 
-	while(preScalerValue > 1U) { preScalerValue = preScalerValue >> 1U; preScaler++; } /* log base2 */
-	p_encoder->SC = (p_encoder->SC & ~FTM_SC_CLKS_MASK) | FTM_SC_PS(preScaler);
+    while(preScalerValue > 1U) { preScalerValue = preScalerValue >> 1U; preScaler++; } /* log base2 */
+    p_encoder->SC = (p_encoder->SC & ~FTM_SC_CLKS_MASK) | FTM_SC_PS(preScaler);
 
-	return CONFIG_ENCODER_HAL_CLOCK_SOURCE_FREQ / ((uint32_t)1UL << preScaler);
+    return CONFIG_ENCODER_HAL_CLOCK_SOURCE_FREQ / ((uint32_t)1UL << preScaler);
 }
 
 /*
-	Quadrature Decoder Mode
+    Quadrature Decoder Mode
 */
 static inline bool HAL_Encoder_ReadDecoderCounterDirection(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_QUADIR_MASK) != 0U); }
 /* Return true if counter over flow on increment */
@@ -84,23 +84,23 @@ static inline bool HAL_Encoder_ReadDecoderCounterOverflowIncrement(const HAL_Enc
 static inline bool HAL_Encoder_ReadDecoderCounterOverflowDecrement(const HAL_Encoder_T * p_encoder) { return ((p_encoder->QDCTRL & FTM_QDCTRL_TOFDIR_MASK) == 0U); }
 
 /*
-	Emulated
+    Emulated
 */
-// static inline void HAL_Encoder_EnablePhaseInterrupt(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 		{   }
-// static inline void HAL_Encoder_DisablePhaseInterrupt(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 	{   }
-// static inline void HAL_Encoder_ClearPhaseFlag(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 			{   }
-// static inline bool HAL_Encoder_ReadPhaseFlag(const HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId) 		{  }
+// static inline void HAL_Encoder_EnablePhaseInterrupt(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId)         {   }
+// static inline void HAL_Encoder_DisablePhaseInterrupt(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId)     {   }
+// static inline void HAL_Encoder_ClearPhaseFlag(HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId)             {   }
+// static inline bool HAL_Encoder_ReadPhaseFlag(const HAL_Encoder_Phase_T * p_encoder, uint32_t phaseId)         {  }
 
 /* Config SW Polling capture mode. On S32K Hw capture mode disables gpio pin read */
 static inline void HAL_Encoder_InitCaptureTime(HAL_Encoder_T * p_encoder)
 {
-	(void)p_encoder;
+    (void)p_encoder;
 }
 
 static inline void HAL_Encoder_InitCounter(HAL_Encoder_T * p_encoder)
 {
-	(void)p_encoder;
-	// (p_encoder->QDCTRL) |= (1UL << FTM_QDCTRL_QUADEN_SHIFT);
+    (void)p_encoder;
+    // (p_encoder->QDCTRL) |= (1UL << FTM_QDCTRL_QUADEN_SHIFT);
 }
 
 static inline void HAL_Encoder_Init(HAL_Encoder_T * p_encoder) { (void)p_encoder; }

@@ -1,31 +1,31 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	PID.c
-	@author FireSourcery
-	@brief
-	@version V0
+    @file     PID.c
+    @author FireSourcery
+    @brief
+    @version V0
 */
 /******************************************************************************/
 #include "PID.h"
@@ -33,152 +33,152 @@
 
 static void ResetGains(PID_T * p_pid)
 {
-	PID_SetKp_Fixed32(p_pid, p_pid->Params.Kp_Fixed32);
-	PID_SetKi_Fixed32(p_pid, p_pid->Params.Ki_Fixed32);
-	// PID_SetKd_Fixed32(p_pid, p_pid->Params.Kd_Fixed32);
+    PID_SetKp_Fixed32(p_pid, p_pid->Params.Kp_Fixed32);
+    PID_SetKi_Fixed32(p_pid, p_pid->Params.Ki_Fixed32);
+    // PID_SetKd_Fixed32(p_pid, p_pid->Params.Kd_Fixed32);
 }
 
 void PID_Init(PID_T * p_pid)
 {
-	if(p_pid->CONFIG.P_PARAMS != 0U) { memcpy(&p_pid->Params, p_pid->CONFIG.P_PARAMS, sizeof(PID_Params_T)); }
-	PID_SetOutputLimits(p_pid, INT16_MIN, INT16_MAX);
-	ResetGains(p_pid);
-	PID_Reset(p_pid);
+    if(p_pid->CONFIG.P_PARAMS != 0U) { memcpy(&p_pid->Params, p_pid->CONFIG.P_PARAMS, sizeof(PID_Params_T)); }
+    PID_SetOutputLimits(p_pid, INT16_MIN, INT16_MAX);
+    ResetGains(p_pid);
+    PID_Reset(p_pid);
 }
 
 static inline int16_t GetIntegral(PID_T * p_pid) { return (p_pid->Integral32 >> 16); }
 static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integral32 = ((int32_t)integral << 16); }
 
 /*
-	Conventional parallel PID calculation
-	control = (Kp * error) + (Ki * error * SampleTime + IntegralPrev) + (Kd * (error - ErrorPrev) / SampleTime)
+    Conventional parallel PID calculation
+    control = (Kp * error) + (Ki * error * SampleTime + IntegralPrev) + (Kd * (error - ErrorPrev) / SampleTime)
 */
 static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 {
-	int32_t proportional, integral32, integral32Part, integral, integralMin, integralMax, derivative;
+    int32_t proportional, integral32, integral32Part, integral, integralMin, integralMax, derivative;
 
-	proportional = (p_pid->Params.PropGain * error) >> p_pid->Params.PropGainShift; /* Inclusive of 16 shift */
+    proportional = (p_pid->Params.PropGain * error) >> p_pid->Params.PropGainShift; /* Inclusive of 16 shift */
 
-	/*
-		Store as Integral. Allows compute time gain adjustment. Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
-	*/
-	/* Forward rectangular approximation.  */
-	integral32Part = ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift); /* Exclusive of 16 shift */
-	integral32 = math_add_sat(p_pid->Integral32, integral32Part); 	/* Check for overflow. Integral partition may be > proportional */
-	integral = integral32 >> 16;
+    /*
+        Store as Integral. Allows compute time gain adjustment. Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
+    */
+    /* Forward rectangular approximation.  */
+    integral32Part = ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift); /* Exclusive of 16 shift */
+    integral32 = math_add_sat(p_pid->Integral32, integral32Part);     /* Check for overflow. Integral partition may be > proportional */
+    integral = integral32 >> 16;
 
-	/* Dynamic Clamp */
-	integralMin = math_min(p_pid->OutputMin - proportional, 0);
-	integralMax = math_max(p_pid->OutputMax - proportional, 0);
+    /* Dynamic Clamp */
+    integralMin = math_min(p_pid->OutputMin - proportional, 0);
+    integralMax = math_max(p_pid->OutputMax - proportional, 0);
 
-	if 		(integral > integralMax) 	{ integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
-	else if (integral < integralMin) 	{ integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
-	else 								{ p_pid->Integral32 = integral32; }
+    if         (integral > integralMax)     { integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
+    else if (integral < integralMin)     { integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
+    else                                 { p_pid->Integral32 = integral32; }
 
-	// integral32Part = ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift); /* Exclusive of 16 shift */
-	// integral = (p_pid->Integral32 >> 16) + (integral32Part >> 16);
+    // integral32Part = ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift); /* Exclusive of 16 shift */
+    // integral = (p_pid->Integral32 >> 16) + (integral32Part >> 16);
 
-	// /* Dynamic Clamp */
-	// integralMin = math_min(p_pid->OutputMin - proportional, 0);
-	// integralMax = math_max(p_pid->OutputMax - proportional, 0);
+    // /* Dynamic Clamp */
+    // integralMin = math_min(p_pid->OutputMin - proportional, 0);
+    // integralMax = math_max(p_pid->OutputMax - proportional, 0);
 
-	// if 		(integral >= integralMax) 	{ integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
-	// else if (integral <= integralMin) 	{ integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
-	// /* integralMin < integral < integralMax. -65535 > integral32Part < 65535 */
-	// else 								{ p_pid->Integral32 = p_pid->Integral32 + integral32Part; }
+    // if         (integral >= integralMax)     { integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
+    // else if (integral <= integralMin)     { integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
+    // /* integralMin < integral < integralMax. -65535 > integral32Part < 65535 */
+    // else                                 { p_pid->Integral32 = p_pid->Integral32 + integral32Part; }
 
-	return proportional + integral;
+    return proportional + integral;
 }
 
 // int32_t PID_ProcPID(PID_T * p_pid, int32_t setpoint, int32_t feedback)
 // {
-// 	int32_t error = setpoint - feedback;
-// 	int32_t pi = CalcPI(p_pid, error);
-// 	int32_t derivative = (p_pid->KdFactorFreq * (error - p_pid->ErrorPrev) / p_pid->Params.KdDivisor);
+//     int32_t error = setpoint - feedback;
+//     int32_t pi = CalcPI(p_pid, error);
+//     int32_t derivative = (p_pid->KdFactorFreq * (error - p_pid->ErrorPrev) / p_pid->Params.KdDivisor);
 
-// 	p_pid->ErrorPrev = error;
-// 	p_pid->Output = math_clamp(pi + derivative, p_pid->OutputMin, p_pid->OutputMax);
-// 	return p_pid->Output;
+//     p_pid->ErrorPrev = error;
+//     p_pid->Output = math_clamp(pi + derivative, p_pid->OutputMin, p_pid->OutputMax);
+//     return p_pid->Output;
 // }
 
 int32_t PID_ProcPI(PID_T * p_pid, int32_t setpoint, int32_t feedback)
 {
-	p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
-	return p_pid->Output;
+    p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
+    return p_pid->Output;
 }
 
 /*
-	Compute-Time Variables Set
+    Compute-Time Variables Set
 */
 void PID_Reset(PID_T * p_pid)
 {
-	p_pid->Integral32 = 0;
-	p_pid->ErrorPrev = 0;
+    p_pid->Integral32 = 0;
+    p_pid->ErrorPrev = 0;
 }
 
 void PID_SetIntegral(PID_T * p_pid, int16_t integral)
 {
-	SetIntegral(p_pid, math_clamp(integral, p_pid->OutputMin, p_pid->OutputMax));
+    SetIntegral(p_pid, math_clamp(integral, p_pid->OutputMin, p_pid->OutputMax));
 }
 
 void PID_SetOutputState(PID_T * p_pid, int16_t integral)
 {
-	PID_SetIntegral(p_pid, integral);
-	p_pid->Output = integral;
+    PID_SetIntegral(p_pid, integral);
+    p_pid->Output = integral;
 }
 
 void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 {
-	if(max > min)
-	{
-		p_pid->OutputMin = min;
-		p_pid->OutputMax = max;
-		PID_SetIntegral(p_pid, GetIntegral(p_pid)); /* Reset integral with limits */
-	}
+    if(max > min)
+    {
+        p_pid->OutputMin = min;
+        p_pid->OutputMax = max;
+        PID_SetIntegral(p_pid, GetIntegral(p_pid)); /* Reset integral with limits */
+    }
 }
 
 /*
-	Persistent Params Set
+    Persistent Params Set
 */
 void PID_SetFreq(PID_T * p_pid, uint32_t sampleFreq)
 {
-	if(sampleFreq > 0U) { p_pid->Params.SampleFreq = sampleFreq; }
+    if(sampleFreq > 0U) { p_pid->Params.SampleFreq = sampleFreq; }
 }
 
 /*
-	Proportional(k) = Kp * error(k) = kp_Fixed32 * error(k) >> 16
+    Proportional(k) = Kp * error(k) = kp_Fixed32 * error(k) >> 16
 
-	PropGain < 32,767, errorMax = (32,767 - (-32,768))
-	kp_Fixed32 >> 16 = PropGain >> PropGainShift, inclusive of shift 16
-	PropGain = kp_Fixed32 << PropGainShift >> 16
-	[kp_Fixed32 << PropGainShift >> 16] * errorMax < INT32_MAX;
-	PropGainShift < log2(INT32_MAX / 65536 * 65536 / kp_Fixed32)
+    PropGain < 32,767, errorMax = (32,767 - (-32,768))
+    kp_Fixed32 >> 16 = PropGain >> PropGainShift, inclusive of shift 16
+    PropGain = kp_Fixed32 << PropGainShift >> 16
+    [kp_Fixed32 << PropGainShift >> 16] * errorMax < INT32_MAX;
+    PropGainShift < log2(INT32_MAX / 65536 * 65536 / kp_Fixed32)
 
-	kp_Fixed32 = 65536 => LShift 14-16, RShift 2, Gain = 16,384
-	kp_Fixed32 = 65535 => LShift 15-16, RShift 1, Gain = 32,767
+    kp_Fixed32 = 65536 => LShift 14-16, RShift 2, Gain = 16,384
+    kp_Fixed32 = 65535 => LShift 15-16, RShift 1, Gain = 32,767
 */
 void PID_SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
 {
-	p_pid->Params.PropGainShift = q_log2((uint32_t)32767U * 65536U / kp_Fixed32);
-	p_pid->Params.PropGain = kp_Fixed32 >> (16 - p_pid->Params.PropGainShift);
+    p_pid->Params.PropGainShift = q_log2((uint32_t)32767U * 65536U / kp_Fixed32);
+    p_pid->Params.PropGain = kp_Fixed32 >> (16 - p_pid->Params.PropGainShift);
 }
 
 int32_t PID_GetKp_Fixed32(PID_T * p_pid) { return p_pid->Params.PropGain << (16 - p_pid->Params.PropGainShift); }
 
 /*
-	Integral(k) = Ki * error(k) / SampleFreq + Integral(k-1)
-				= ki_Fixed32 * error(k) / SampleFreq >> 16 + Integral(k-1)
+    Integral(k) = Ki * error(k) / SampleFreq + Integral(k-1)
+                = ki_Fixed32 * error(k) / SampleFreq >> 16 + Integral(k-1)
 
-	IntegralGain < 32,767, errorMax = (32,767 - (-32,768))
-	ki_Fixed32 / SampleFreq = IntegralGain >> IntegralGainShift, exclusive of shift 16
-	IntegralGain = ki_Fixed32 / SampleFreq << IntegralGainShift
-	[ki_Fixed32 / SampleFreq << IntegralGainShift] * errorMax < INT32_MAX;
-	IntegralGainShift < log2(INT32_MAX / 65536 * SampleFreq / ki_Fixed32)
+    IntegralGain < 32,767, errorMax = (32,767 - (-32,768))
+    ki_Fixed32 / SampleFreq = IntegralGain >> IntegralGainShift, exclusive of shift 16
+    IntegralGain = ki_Fixed32 / SampleFreq << IntegralGainShift
+    [ki_Fixed32 / SampleFreq << IntegralGainShift] * errorMax < INT32_MAX;
+    IntegralGainShift < log2(INT32_MAX / 65536 * SampleFreq / ki_Fixed32)
 */
 void PID_SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
 {
-	p_pid->Params.IntegralGainShift = q_log2((uint32_t)32767U * p_pid->Params.SampleFreq / ki_Fixed32);
-	p_pid->Params.IntegralGain = (ki_Fixed32 << p_pid->Params.IntegralGainShift) / p_pid->Params.SampleFreq;
+    p_pid->Params.IntegralGainShift = q_log2((uint32_t)32767U * p_pid->Params.SampleFreq / ki_Fixed32);
+    p_pid->Params.IntegralGain = (ki_Fixed32 << p_pid->Params.IntegralGainShift) / p_pid->Params.SampleFreq;
 }
 
 int32_t PID_GetKi_Fixed32(PID_T * p_pid) { return p_pid->Params.IntegralGain * p_pid->Params.SampleFreq >> p_pid->Params.IntegralGainShift; }

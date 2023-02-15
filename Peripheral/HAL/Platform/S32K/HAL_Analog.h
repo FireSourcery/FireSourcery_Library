@@ -1,39 +1,39 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	HAL_ADC.h
-	@author FireSourcery
-	@brief 	S32K Analog import functions. Used by HAL.
-			Runtime configure options only. Runtime constant settings delegated to MCU init.
-	@version V0
+    @file     HAL_ADC.h
+    @author FireSourcery
+    @brief     S32K Analog import functions. Used by HAL.
+            Runtime configure options only. Runtime constant settings delegated to MCU init.
+    @version V0
 */
 /******************************************************************************/
 /*
-	ADC TOTAL CONVERSION TIME = Sample Phase Time (set by SMPLTS + 1) + Hold
-	Phase (1 ADC Cycle) + Compare Phase Time (8-bit Mode = 20 ADC Cycles, 10-bit
-	Mode = 24 ADC Cycles, 12-bit Mode = 28 ADC Cycles) + Single or First continuous
-	time adder (5 ADC cycles + 5 bus clock cycles)
+    ADC TOTAL CONVERSION TIME = Sample Phase Time (set by SMPLTS + 1) + Hold
+    Phase (1 ADC Cycle) + Compare Phase Time (8-bit Mode = 20 ADC Cycles, 10-bit
+    Mode = 24 ADC Cycles, 12-bit Mode = 28 ADC Cycles) + Single or First continuous
+    time adder (5 ADC cycles + 5 bus clock cycles)
 */
 #ifndef HAL_ANALOG_PLATFORM_H
 #define HAL_ANALOG_PLATFORM_H
@@ -86,35 +86,35 @@ __STATIC_INLINE void __NVIC_DisableIRQ(IRQn_Type IRQn)
 }
 
 /*
-	Use NVIC interrupt for local critical section
-	p_hal->SC1[0U] &= ~ADC_SC1_AIEN_MASK; aborts conversion
+    Use NVIC interrupt for local critical section
+    p_hal->SC1[0U] &= ~ADC_SC1_AIEN_MASK; aborts conversion
 */
 static inline void HAL_Analog_DisableInterrupt(HAL_Analog_T * p_hal)
 {
-	switch((uint32_t)p_hal)
-	{
-		case (uint32_t)ADC0: __NVIC_DisableIRQ(ADC0_IRQn); break;
-		case (uint32_t)ADC1: __NVIC_DisableIRQ(ADC1_IRQn); break;
-		default: break;
-	}
+    switch((uint32_t)p_hal)
+    {
+        case (uint32_t)ADC0: __NVIC_DisableIRQ(ADC0_IRQn); break;
+        case (uint32_t)ADC1: __NVIC_DisableIRQ(ADC1_IRQn); break;
+        default: break;
+    }
 }
 
 /*
-	Use NVIC interrupt for local critical section
-	p_hal->SC1[0U] |= ADC_SC1_AIEN_MASK;
+    Use NVIC interrupt for local critical section
+    p_hal->SC1[0U] |= ADC_SC1_AIEN_MASK;
 */
 static inline void HAL_Analog_EnableInterrupt(HAL_Analog_T * p_hal)
 {
-	switch((uint32_t)p_hal)
-	{
-		case (uint32_t)ADC0: __NVIC_EnableIRQ(ADC0_IRQn); break;
-		case (uint32_t)ADC1: __NVIC_EnableIRQ(ADC1_IRQn); break;
-		default: break;
-	}
+    switch((uint32_t)p_hal)
+    {
+        case (uint32_t)ADC0: __NVIC_EnableIRQ(ADC0_IRQn); break;
+        case (uint32_t)ADC1: __NVIC_EnableIRQ(ADC1_IRQn); break;
+        default: break;
+    }
 }
 
 /*
-	Clear interrupt - automatic after read on S32k
+    Clear interrupt - automatic after read on S32k
 */
 static inline void HAL_Analog_ClearConversionCompleteFlag(const HAL_Analog_T * p_hal) { (void)p_hal; }
 static inline bool HAL_Analog_ReadConversionCompleteFlag(const HAL_Analog_T * p_hal) { return ((p_hal->SC1[0U] & (uint32_t)ADC_SC1_COCO_MASK) != 0U); }
@@ -122,28 +122,28 @@ static inline bool HAL_Analog_ReadConversionActiveFlag(const HAL_Analog_T * p_ha
 
 static inline void HAL_Analog_AbortConversion(HAL_Analog_T * p_hal) { p_hal->SC1[0U] |= ADC_SC1_ADCH_MASK; }
 /*
-	111111b - Module is disabled
+    111111b - Module is disabled
 
-	The successive approximation converter subsystem is turned off when the pinChannel bits are all set (i.e.
-	ADCH set to all 1s). This feature allows explicit disabling of the ADC and isolation of the input channel
-	from all sources. Terminating continuous conversions this way prevents an additional single conversion
-	from being performed. It is not necessary to set ADCH to all 1s to place the ADC in a low-power state
-	when continuous conversions are not enabled because the module automatically enters a low-power
-	state when a conversion completes.
+    The successive approximation converter subsystem is turned off when the pinChannel bits are all set (i.e.
+    ADCH set to all 1s). This feature allows explicit disabling of the ADC and isolation of the input channel
+    from all sources. Terminating continuous conversions this way prevents an additional single conversion
+    from being performed. It is not necessary to set ADCH to all 1s to place the ADC in a low-power state
+    when continuous conversions are not enabled because the module automatically enters a low-power
+    state when a conversion completes.
 */
 static inline void HAL_Analog_Deactivate(HAL_Analog_T * p_hal) { p_hal->SC1[0U] |= ADC_SC1_ADCH_MASK; }
 
-static inline void HAL_Analog_EnableHwTrigger(HAL_Analog_T * p_hal){	p_hal->SC2 |= ADC_SC2_ADTRG_MASK;}
-static inline void HAL_Analog_DisableHwTrigger(HAL_Analog_T * p_hal){	p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK);}
-static inline void HAL_Analog_DisableContinuousConversion(HAL_Analog_T * p_hal){	p_hal->SC3 &= ~ADC_SC3_ADCO_MASK;}
-static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal){	p_hal->SC3 |= ADC_SC3_ADCO_MASK;}
+static inline void HAL_Analog_EnableHwTrigger(HAL_Analog_T * p_hal){    p_hal->SC2 |= ADC_SC2_ADTRG_MASK;}
+static inline void HAL_Analog_DisableHwTrigger(HAL_Analog_T * p_hal){    p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK);}
+static inline void HAL_Analog_DisableContinuousConversion(HAL_Analog_T * p_hal){    p_hal->SC3 &= ~ADC_SC3_ADCO_MASK;}
+static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal){    p_hal->SC3 |= ADC_SC3_ADCO_MASK;}
 
 /*
-	In Board_Init
+    In Board_Init
 */
 static inline void HAL_Analog_Init(const HAL_Analog_T * p_hal)
 {
-	(void)p_hal;
+    (void)p_hal;
 }
 
 #endif

@@ -1,31 +1,31 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	MotProtocol.h
-	@author FireSourcery
-	@brief
-	@version V0
+    @file     MotProtocol.h
+    @author FireSourcery
+    @brief
+    @version V0
 */
 /******************************************************************************/
 #ifndef MOT_PROTOCOL_H
@@ -34,16 +34,16 @@
 #include "MotPacket.h"
 #include "Utility/Protocol/Protocol.h"
 
-#define MOT_PROTOCOL_BAUD_RATE_DEFAULT		(19200U)
-#define MOT_PROTOCOL_TIMEOUT_MS				(2000U) 	/* Timeout packet / req */
+#define MOT_PROTOCOL_BAUD_RATE_DEFAULT        (19200U)
+#define MOT_PROTOCOL_TIMEOUT_MS                (2000U)     /* Timeout packet / req */
 
 typedef struct MotProtocol_SubState_Tag
 {
-	uint8_t StateId;
-	uint32_t DataModeAddress;
-	uint16_t DataModeSize;
-	bool IsDataModeActive;
-	MotPacket_HeaderStatus_T WriteModeStatus;
+    uint8_t StateId;
+    uint32_t DataModeAddress;
+    uint16_t DataModeSize;
+    bool IsDataModeActive;
+    MotPacket_HeaderStatus_T WriteModeStatus;
 }
 MotProtocol_SubState_T;
 

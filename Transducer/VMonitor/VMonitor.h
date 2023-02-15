@@ -1,31 +1,31 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	VMonitor.h
-	@author FireSourcery
-	@brief 	Voltage divider unit conversion, plus status monitor
-	@version V0
+    @file     VMonitor.h
+    @author FireSourcery
+    @brief     Voltage divider unit conversion, plus status monitor
+    @version V0
 */
 /******************************************************************************/
 #ifndef VMONITOR_H
@@ -40,55 +40,55 @@
 
 typedef enum VMonitor_Status_Tag
 {
-	VMONITOR_STATUS_OK,
-	VMONITOR_LIMIT_UPPER,
-	VMONITOR_LIMIT_LOWER,
-	VMONITOR_WARNING_UPPER,
-	VMONITOR_WARNING_LOWER,
+    VMONITOR_STATUS_OK,
+    VMONITOR_LIMIT_UPPER,
+    VMONITOR_LIMIT_LOWER,
+    VMONITOR_WARNING_UPPER,
+    VMONITOR_WARNING_LOWER,
 }
 VMonitor_Status_T;
 
 typedef struct __attribute__((aligned(4U))) VMonitor_Params_Tag
 {
-	uint16_t LimitUpper_Adcu;
-	uint16_t LimitLower_Adcu;
-	uint16_t WarningUpper_Adcu;
-	uint16_t WarningLower_Adcu;
-	uint16_t VInRef; /* VIn 100%, frac16 use only */
-	bool IsMonitorEnable;
+    uint16_t LimitUpper_Adcu;
+    uint16_t LimitLower_Adcu;
+    uint16_t WarningUpper_Adcu;
+    uint16_t WarningLower_Adcu;
+    uint16_t VInRef; /* VIn 100%, frac16 use only */
+    bool IsMonitorEnable;
 }
 VMonitor_Params_T;
 
 typedef const struct VMonitor_Config_Tag
 {
-	const uint16_t UNITS_R1;
-	const uint16_t UNITS_R2;
-	const VMonitor_Params_T * const P_PARAMS;
+    const uint16_t UNITS_R1;
+    const uint16_t UNITS_R2;
+    const VMonitor_Params_T * const P_PARAMS;
 }
 VMonitor_Config_T;
 
 typedef struct
 {
-	VMonitor_Config_T CONFIG;
-	VMonitor_Params_T Params;
-	Linear_T Units;
-	VMonitor_Status_T Status; /* Store status for low freq polling */
+    VMonitor_Config_T CONFIG;
+    VMonitor_Params_T Params;
+    Linear_T Units;
+    VMonitor_Status_T Status; /* Store status for low freq polling */
 }
 VMonitor_T;
 
-#define VMONITOR_INIT(r1, r2, p_Params)	\
-{											\
-	.CONFIG =								\
-	{										\
-	 	.UNITS_R1 = r1, 					\
-		.UNITS_R2 = r2,						\
-		.P_PARAMS = p_Params,				\
-	},										\
+#define VMONITOR_INIT(r1, r2, p_Params)    \
+{                                            \
+    .CONFIG =                                \
+    {                                        \
+         .UNITS_R1 = r1,                     \
+        .UNITS_R2 = r2,                        \
+        .P_PARAMS = p_Params,                \
+    },                                        \
 }
 
-static inline int32_t VMonitor_ConvertToV(const VMonitor_T * p_vMonitor, uint16_t adcu, uint16_t vScalar) 	{ return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, adcu, vScalar); }
-static inline int32_t VMonitor_ConvertToFrac16(const VMonitor_T * p_vMonitor, uint16_t adcu) 					{ return Linear_Voltage_CalcFrac16(&p_vMonitor->Units, adcu); }
-static inline int32_t VMonitor_ConvertMilliVToAdcu(const VMonitor_T * p_vMonitor, uint32_t milliV) 			{ return Linear_Voltage_CalcAdcu_MilliV(&p_vMonitor->Units, milliV); }
+static inline int32_t VMonitor_ConvertToV(const VMonitor_T * p_vMonitor, uint16_t adcu, uint16_t vScalar)     { return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, adcu, vScalar); }
+static inline int32_t VMonitor_ConvertToFrac16(const VMonitor_T * p_vMonitor, uint16_t adcu)                     { return Linear_Voltage_CalcFrac16(&p_vMonitor->Units, adcu); }
+static inline int32_t VMonitor_ConvertMilliVToAdcu(const VMonitor_T * p_vMonitor, uint32_t milliV)             { return Linear_Voltage_CalcAdcu_MilliV(&p_vMonitor->Units, milliV); }
 // static inline int32_t VMonitor_ConvertToAdcu(VMonitor_T * p_vMonitor, uint16_t v, uint16_t scalar) { return Linear_Voltage_CalcAdcu_ScalarV(&p_vMonitor->Units, v, scalar); }
 
 static inline bool VMonitor_GetIsStatusLimit(VMonitor_T * p_vMonitor) { return ((p_vMonitor->Status == VMONITOR_LIMIT_UPPER) || (p_vMonitor->Status == VMONITOR_LIMIT_LOWER)); }
@@ -101,7 +101,7 @@ static inline void VMonitor_Disable(VMonitor_T * p_vMonitor) { p_vMonitor->Param
 
 /******************************************************************************/
 /*!
-	extern
+    extern
 */
 /******************************************************************************/
 extern void VMonitor_Init(VMonitor_T * p_vMonitor);

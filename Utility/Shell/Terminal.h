@@ -1,31 +1,31 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file  	Terminal.h
-	@author FireSourcery
-	@brief	text io functions for terminal ui
-	@version V0
+    @file      Terminal.h
+    @author FireSourcery
+    @brief    text io functions for terminal ui
+    @version V0
 */
 /******************************************************************************/
 #ifndef TERMINAL_H
@@ -45,14 +45,14 @@
 #include <stdio.h> /* for snprintf */
 
 /*
-	All terminal instances will be instantiated to these sizes
+    All terminal instances will be instantiated to these sizes
 */
 #ifndef CMDLINE_ARG_MAX
-	#define CMDLINE_ARG_MAX		5U /* including cmd string */
+    #define CMDLINE_ARG_MAX        5U /* including cmd string */
 #endif
 
 #ifndef CMDLINE_CHAR_MAX
-	#define CMDLINE_CHAR_MAX	50U
+    #define CMDLINE_CHAR_MAX    50U
 #endif
 
 #define KEY_ESC (0x1BU)
@@ -60,23 +60,23 @@
 
 typedef enum
 {
-	TERMINAL_SUCCESS,
-	TERMINAL_PARSER_FAIL,
+    TERMINAL_SUCCESS,
+    TERMINAL_PARSER_FAIL,
 }
 Terminal_Status_T;
 
 typedef struct
 {
-	/* TxRx string functions */
+    /* TxRx string functions */
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-	Xcvr_T Xcvr;
+    Xcvr_T Xcvr;
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_T * p_Serial;
+    Serial_T * p_Serial;
 #endif
-	char Cmdline[CMDLINE_CHAR_MAX]; /*!< Cmdline buffer */
-	char * (ArgV[CMDLINE_ARG_MAX]); /*!<  */
-	uint8_t ArgC;
-	uint8_t CursorIndex;
+    char Cmdline[CMDLINE_CHAR_MAX]; /*!< Cmdline buffer */
+    char * (ArgV[CMDLINE_ARG_MAX]); /*!<  */
+    uint8_t ArgC;
+    uint8_t CursorIndex;
 }
 Terminal_T;
 
@@ -85,21 +85,21 @@ static inline void Terminal_Reset(Terminal_T * p_terminal) { p_terminal->CursorI
 
 static inline char Terminal_RecvChar(const Terminal_T * p_terminal)
 {
-	uint8_t rxChar = 0U;
+    uint8_t rxChar = 0U;
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-	Xcvr_Rx(&p_terminal->Xcvr, &rxChar, 1U);
+    Xcvr_Rx(&p_terminal->Xcvr, &rxChar, 1U);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_RecvByte(p_terminal->p_Serial, &rxChar);
+    Serial_RecvByte(p_terminal->p_Serial, &rxChar);
 #endif
-	return rxChar;
+    return rxChar;
 }
 
 static inline void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-	Xcvr_Tx(&p_terminal->Xcvr, (uint8_t *)(&txChar), 1U);
+    Xcvr_Tx(&p_terminal->Xcvr, (uint8_t *)(&txChar), 1U);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_SendByte(p_terminal->p_Serial, txChar);
+    Serial_SendByte(p_terminal->p_Serial, txChar);
 #endif
 }
 
@@ -108,9 +108,9 @@ static inline void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
 static inline void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-	Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, strlen(p_str));
+    Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, strlen(p_str));
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_SendN(p_terminal->p_Serial, (const uint8_t *)p_str, strlen(p_str));
+    Serial_SendN(p_terminal->p_Serial, (const uint8_t *)p_str, strlen(p_str));
 #endif
 }
 
@@ -118,18 +118,18 @@ static inline void Terminal_SendString(const Terminal_T * p_terminal, const char
 static inline void Terminal_SendString_Len(const Terminal_T * p_terminal, const char * p_str, uint8_t length)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-	Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, length);
+    Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, length);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_SendN(p_terminal->p_Serial, (const uint8_t *)p_str, length);
+    Serial_SendN(p_terminal->p_Serial, (const uint8_t *)p_str, length);
 #endif
 }
 
 static inline bool Terminal_GetIsKeyPressed(const Terminal_T * p_terminal)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-	return ((Xcvr_GetRxFullCount(&p_terminal->Xcvr) == 0U) ? false : true);
+    return ((Xcvr_GetRxFullCount(&p_terminal->Xcvr) == 0U) ? false : true);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	return ((Serial_GetRxFullCount(p_terminal->p_Serial) == 0U) ? false : true);
+    return ((Serial_GetRxFullCount(p_terminal->p_Serial) == 0U) ? false : true);
 #endif
 }
 
@@ -137,18 +137,18 @@ static inline bool Terminal_GetIsKeyPressed(const Terminal_T * p_terminal)
 static inline uint8_t * Terminal_AcquireTxBuffer(const Terminal_T * p_terminal)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-	return Xcvr_AcquireTxBuffer(&p_terminal->Xcvr);
+    return Xcvr_AcquireTxBuffer(&p_terminal->Xcvr);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	return Serial_AcquireTxBuffer(p_terminal->p_Serial);
+    return Serial_AcquireTxBuffer(p_terminal->p_Serial);
 #endif
 }
 
 static inline void Terminal_ReleaseTxBuffer(const Terminal_T * p_terminal, size_t writeSize)
 {
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-	Xcvr_ReleaseTxBuffer(&p_terminal->Xcvr, writeSize);
+    Xcvr_ReleaseTxBuffer(&p_terminal->Xcvr, writeSize);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-	Serial_ReleaseTxBuffer(p_terminal->p_Serial, writeSize);
+    Serial_ReleaseTxBuffer(p_terminal->p_Serial, writeSize);
 #endif
 }
 

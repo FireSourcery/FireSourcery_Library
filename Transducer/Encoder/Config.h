@@ -1,58 +1,58 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Config.h
-	@author FireSourcery
-	@brief 	Encoder module preprocessor configuration options and defaults.
-	@version V0
+    @file     Config.h
+    @author FireSourcery
+    @brief     Encoder module preprocessor configuration options and defaults.
+    @version V0
 */
 /******************************************************************************/
 #ifndef CONFIG_ENCODER_H
 #define CONFIG_ENCODER_H
 
 /*
-	Compile time define if chip supports decoder/counter.
+    Compile time define if chip supports decoder/counter.
 */
-#if 	defined(CONFIG_ENCODER_HW_DECODER)
-#elif 	defined(CONFIG_ENCODER_HW_EMULATED)
-#elif 	defined(CONFIG_ENCODER_HW_COUNTER)
+#if     defined(CONFIG_ENCODER_HW_DECODER)
+#elif     defined(CONFIG_ENCODER_HW_EMULATED)
+#elif     defined(CONFIG_ENCODER_HW_COUNTER)
 #else
-	// #define CONFIG_ENCODER_HW_DECODER
+    // #define CONFIG_ENCODER_HW_DECODER
 #endif
 
 /* Compile time define for all encoder instances if A Lead B is increment, additional configure available at runtime */
-#if 	defined(CONFIG_ENCODER_HW_DECODER_A_LEAD_B_INCREMENT)
-#elif 	defined(CONFIG_ENCODER_HW_DECODER_A_LEAD_B_DECREMENT)
+#if     defined(CONFIG_ENCODER_HW_DECODER_A_LEAD_B_INCREMENT)
+#elif     defined(CONFIG_ENCODER_HW_DECODER_A_LEAD_B_DECREMENT)
 #else
-	#define CONFIG_ENCODER_HW_DECODER_A_LEAD_B_INCREMENT
+    #define CONFIG_ENCODER_HW_DECODER_A_LEAD_B_INCREMENT
 #endif
 
 /* Emulated and Decoder Quadrature Capture. Enables toggle during runtime */
-#if 	defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE) /* Emulated and Decoder */
-#elif 	defined(CONFIG_ENCODER_QUADRATURE_MODE_DISABLE)
+#if     defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE) /* Emulated and Decoder */
+#elif     defined(CONFIG_ENCODER_QUADRATURE_MODE_DISABLE)
 #else
-	#define CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
+    #define CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
 #endif
 
 /* Adjust timer freq at runtime */

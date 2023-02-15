@@ -1,31 +1,31 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSoucery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	.h
-	@author FireSoucery
-	@brief
-	@version V0
+    @file     .h
+    @author FireSoucery
+    @brief
+    @version V0
 */
 /******************************************************************************/
 #ifndef CHIP_PLATFORM_H
@@ -37,23 +37,23 @@
 #include <stdbool.h>
 
 /*
-	Expected to be called directly from main module. no common control layer
+    Expected to be called directly from main module. no common control layer
 */
 
 static inline void Chip_PCC_SetClockSource(uint8_t peripheralIndex, uint8_t clockSource)
 {
-	PCC->PCCn[peripheralIndex] &= ~PCC_PCCn_CGC_MASK;								/* Ensure clk disabled for config */
-	PCC->PCCn[peripheralIndex] |= PCC_PCCn_PCS(clockSource) | PCC_PCCn_CGC_MASK; 	/* Clock Src = 3 (CLK_SRC_FIRC_DIV2) */
+    PCC->PCCn[peripheralIndex] &= ~PCC_PCCn_CGC_MASK;                                /* Ensure clk disabled for config */
+    PCC->PCCn[peripheralIndex] |= PCC_PCCn_PCS(clockSource) | PCC_PCCn_CGC_MASK;     /* Clock Src = 3 (CLK_SRC_FIRC_DIV2) */
 }
 
 static inline void Chip_PCC_EnableClock(uint8_t peripheralIndex)
 {
-	PCC->PCCn[peripheralIndex] |= PCC_PCCn_CGC_MASK;
+    PCC->PCCn[peripheralIndex] |= PCC_PCCn_CGC_MASK;
 }
 
 static inline void Chip_PCC_DisableClock(uint8_t peripheralIndex)
 {
-	PCC->PCCn[peripheralIndex] &= ~PCC_PCCn_CGC_MASK;
+    PCC->PCCn[peripheralIndex] &= ~PCC_PCCn_CGC_MASK;
 }
 
 ///*!
@@ -79,7 +79,7 @@ static inline void Chip_PCC_DisableClock(uint8_t peripheralIndex)
 //} port_mux_t;
 static inline void Chip_Port_SetMux(PORT_Type * p_port, uint8_t pin, uint8_t mux)
 {
-	p_port->PCR[pin] = (p_port->PCR[pin] & ~PORT_PCR_MUX_MASK) | PORT_PCR_MUX(mux);
+    p_port->PCR[pin] = (p_port->PCR[pin] & ~PORT_PCR_MUX_MASK) | PORT_PCR_MUX(mux);
 }
 
 /*
@@ -87,41 +87,41 @@ static inline void Chip_Port_SetMux(PORT_Type * p_port, uint8_t pin, uint8_t mux
  */
 static inline void Chip_InitLpuart(uint8_t lpuartId, uint8_t clockSource, PORT_Type * p_port, uint8_t pinTx, uint8_t pinRx)
 {
-	uint8_t pccIndex = lpuartId + PCC_LPUART0_INDEX;
-	uint8_t irqN;
+    uint8_t pccIndex = lpuartId + PCC_LPUART0_INDEX;
+    uint8_t irqN;
 
-	switch (lpuartId)
-	{
-		case 0: irqN = LPUART0_RxTx_IRQn; break;
-		case 1: irqN = LPUART1_RxTx_IRQn; break;
-	}
+    switch (lpuartId)
+    {
+        case 0: irqN = LPUART0_RxTx_IRQn; break;
+        case 1: irqN = LPUART1_RxTx_IRQn; break;
+    }
 
-	Chip_PCC_SetClockSource(pccIndex, clockSource);
-	Chip_Port_SetMux(p_port, pinTx, 2U); //mux 2 for alt lpuart function
-	Chip_Port_SetMux(p_port, pinRx, 2U);
-	S32_NVIC->ISER[(irqN) >> 5U] = (1UL << ((irqN) & 0x1FU));
+    Chip_PCC_SetClockSource(pccIndex, clockSource);
+    Chip_Port_SetMux(p_port, pinTx, 2U); //mux 2 for alt lpuart function
+    Chip_Port_SetMux(p_port, pinRx, 2U);
+    S32_NVIC->ISER[(irqN) >> 5U] = (1UL << ((irqN) & 0x1FU));
 }
 
 static inline void Chip_DeinitLpuart(uint8_t lpuartId, PORT_Type * p_port, uint8_t pinTx, uint8_t pinRx)
 {
-	uint8_t pccIndex = lpuartId + PCC_LPUART0_INDEX;
-	Chip_Port_SetMux(p_port, pinTx, 0U);
-	Chip_Port_SetMux(p_port, pinRx, 0U);
-	Chip_PCC_DisableClock(pccIndex);
+    uint8_t pccIndex = lpuartId + PCC_LPUART0_INDEX;
+    Chip_Port_SetMux(p_port, pinTx, 0U);
+    Chip_Port_SetMux(p_port, pinRx, 0U);
+    Chip_PCC_DisableClock(pccIndex);
 }
 
 static inline void Chip_InitGpio(PORT_Type * p_port, uint8_t pinId)
 {
-	uint8_t portIndex = ((uint32_t)(p_port) - PORTA_BASE) / 0x1000U + PCC_PORTA_INDEX;
+    uint8_t portIndex = ((uint32_t)(p_port) - PORTA_BASE) / 0x1000U + PCC_PORTA_INDEX;
 
-	Chip_PCC_EnableClock(portIndex);
-	Chip_Port_SetMux(p_port, pinId, 0x01U);
+    Chip_PCC_EnableClock(portIndex);
+    Chip_Port_SetMux(p_port, pinId, 0x01U);
 }
 
 static inline void Chip_DeinitGpio(PORT_Type * p_port, uint8_t pinId)
 {
-	Chip_Port_SetMux(p_port, pinId, 0U);
-//	PCC->PCCn[p_config->PORT_INDEX] &= ~PCC_PCCn_CGC_MASK; //defer deinit to cpu deinit to avoid deinit shared port pins
+    Chip_Port_SetMux(p_port, pinId, 0U);
+//    PCC->PCCn[p_config->PORT_INDEX] &= ~PCC_PCCn_CGC_MASK; //defer deinit to cpu deinit to avoid deinit shared port pins
 }
 
 

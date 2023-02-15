@@ -1,31 +1,31 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file 	Ring.h
-	@author FireSourcery
-	@brief	Ring Buffer. Improved efficiency using POW2_MASK over modulus
-	@version V0
+    @file     Ring.h
+    @author FireSourcery
+    @brief    Ring Buffer. Improved efficiency using POW2_MASK over modulus
+    @version V0
 */
 /******************************************************************************/
 #ifndef RING_UTILITY_H
@@ -39,39 +39,39 @@
 
 typedef const struct Ring_Config_Tag
 {
-	void * const P_BUFFER;
-	const size_t UNIT_SIZE;		/* Bytes */
-	const size_t LENGTH; 		/* In UNIT_SIZE counts (NOT bytes) */
+    void * const P_BUFFER;
+    const size_t UNIT_SIZE;        /* Bytes */
+    const size_t LENGTH;         /* In UNIT_SIZE counts (NOT bytes) */
 #if defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) || defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
-	const uint32_t POW2_MASK;
+    const uint32_t POW2_MASK;
 #endif
-#if defined(CONFIG_RING_MULTITHREADED_ENABLE) 	/* Ring layer enable */
-	const bool USE_CRITICAL;					/* Per instance enable */
+#if defined(CONFIG_RING_MULTITHREADED_ENABLE)     /* Ring layer enable */
+    const bool USE_CRITICAL;                    /* Per instance enable */
 #endif
 }
 Ring_Config_T;
 
 /*
-	CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED
-	Max usable capacity is length
+    CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED
+    Max usable capacity is length
 
-	CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED, CONFIG_RING_LENGTH_ANY
-	Empty space detection method. Head always points to empty space. Max usable capacity is length - 1
+    CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED, CONFIG_RING_LENGTH_ANY
+    Empty space detection method. Head always points to empty space. Max usable capacity is length - 1
 */
 typedef struct Ring_Tag
 {
-	const Ring_Config_T CONFIG;
-	volatile size_t Head;	/* Write to head  */
-	volatile size_t Tail;	/* Read from tail */
+    const Ring_Config_T CONFIG;
+    volatile size_t Head;    /* Write to head  */
+    volatile size_t Tail;    /* Read from tail */
 #if defined(CONFIG_RING_MULTITHREADED_ENABLE)
-	volatile critical_mutex_t Mutex;
+    volatile critical_mutex_t Mutex;
 #endif
 }
 Ring_T;
 
-#if 	defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) || defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
+#if     defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) || defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
 #define _RING_INIT_POW2(Pow2Mask) .POW2_MASK = Pow2Mask,
-#elif  	defined(CONFIG_RING_LENGTH_ANY)
+#elif      defined(CONFIG_RING_LENGTH_ANY)
 #define _RING_INIT_POW2(Pow2Mask)
 #endif
 
@@ -81,16 +81,16 @@ Ring_T;
 #define _RING_INIT_CRITICAL(UseCritical)
 #endif
 
-#define RING_INIT(p_Buffer, Length, UnitSize, UseCritical) 		\
-{																\
-	.CONFIG =													\
-	{                                               			\
-		.P_BUFFER 		= p_Buffer,								\
-		.LENGTH 		= Length,								\
-		.UNIT_SIZE 		= UnitSize,								\
-		_RING_INIT_POW2(Length - 1U)							\
-		_RING_INIT_CRITICAL(UseCritical)						\
-	},															\
+#define RING_INIT(p_Buffer, Length, UnitSize, UseCritical)         \
+{                                                                \
+    .CONFIG =                                                    \
+    {                                                           \
+        .P_BUFFER         = p_Buffer,                                \
+        .LENGTH         = Length,                                \
+        .UNIT_SIZE         = UnitSize,                                \
+        _RING_INIT_POW2(Length - 1U)                            \
+        _RING_INIT_CRITICAL(UseCritical)                        \
+    },                                                            \
 }
 
 // #define RING_INIT(p_Buffer, Length, UnitSize)
@@ -98,93 +98,93 @@ Ring_T;
 
 /******************************************************************************/
 /*!
-	Private
+    Private
 */
 /******************************************************************************/
 static inline size_t _Ring_CalcIndexWrapped(const Ring_T * p_ring, size_t index)
 {
-#if 	defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) || defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
-	return (index & p_ring->CONFIG.POW2_MASK);
-#elif  	defined(CONFIG_RING_LENGTH_ANY)
-	return (index % p_ring->CONFIG.LENGTH);
+#if     defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED) || defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
+    return (index & p_ring->CONFIG.POW2_MASK);
+#elif      defined(CONFIG_RING_LENGTH_ANY)
+    return (index % p_ring->CONFIG.LENGTH);
 #endif
 }
 
 static inline size_t _Ring_CalcIndexInc(const Ring_T * p_ring, size_t index, size_t inc)
 {
-#if 	defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
-	(void)p_ring;
-	return index + inc;
-#elif 	defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_RING_LENGTH_ANY)
-	return _Ring_CalcIndexWrapped(p_ring, index + inc);
-	// return (index + inc > p_ring->CONFIG.LENGTH) ?  index + inc - p_ring->CONFIG.LENGTH: index + inc;
+#if     defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
+    (void)p_ring;
+    return index + inc;
+#elif     defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_RING_LENGTH_ANY)
+    return _Ring_CalcIndexWrapped(p_ring, index + inc);
+    // return (index + inc > p_ring->CONFIG.LENGTH) ?  index + inc - p_ring->CONFIG.LENGTH: index + inc;
 #endif
 }
 
 static inline size_t _Ring_CalcIndexDec(const Ring_T * p_ring, size_t index, size_t dec)
 {
-#if 	defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
-	(void)p_ring;
-	return index - dec;
-#elif 	defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
-	return _Ring_CalcIndexWrapped(p_ring, index - dec);
-#elif  	defined(CONFIG_RING_LENGTH_ANY)
-	return _Ring_CalcIndexWrapped(p_ring, p_ring->CONFIG.LENGTH + index - dec);
-	// return (index - dec < 0) ?  p_ring->CONFIG.LENGTH + index - dec : index - dec;
+#if     defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
+    (void)p_ring;
+    return index - dec;
+#elif     defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
+    return _Ring_CalcIndexWrapped(p_ring, index - dec);
+#elif      defined(CONFIG_RING_LENGTH_ANY)
+    return _Ring_CalcIndexWrapped(p_ring, p_ring->CONFIG.LENGTH + index - dec);
+    // return (index - dec < 0) ?  p_ring->CONFIG.LENGTH + index - dec : index - dec;
 #endif
 }
 
 /******************************************************************************/
 /*!
-	Public
+    Public
 */
 /******************************************************************************/
 /*
-	later 2 cases: returns max of buffer length - 1, to account for 1 space used for detection
+    later 2 cases: returns max of buffer length - 1, to account for 1 space used for detection
 */
 static inline size_t Ring_GetFullCount(const Ring_T * p_ring)
 {
-#if 	defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
-	return (p_ring->Head - p_ring->Tail);
-#elif 	defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
-	return _Ring_CalcIndexWrapped(p_ring, p_ring->Head - p_ring->Tail);
-#elif  	defined(CONFIG_RING_LENGTH_ANY)
-	return _Ring_CalcIndexWrapped(p_ring, p_ring->CONFIG.LENGTH + p_ring->Head - p_ring->Tail);
+#if     defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
+    return (p_ring->Head - p_ring->Tail);
+#elif     defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
+    return _Ring_CalcIndexWrapped(p_ring, p_ring->Head - p_ring->Tail);
+#elif      defined(CONFIG_RING_LENGTH_ANY)
+    return _Ring_CalcIndexWrapped(p_ring, p_ring->CONFIG.LENGTH + p_ring->Head - p_ring->Tail);
 #endif
 }
 
 /*
-	later 2 cases: -1 to account for 1 space used for detection
+    later 2 cases: -1 to account for 1 space used for detection
 */
 static inline size_t Ring_GetEmptyCount(const Ring_T * p_ring)
 {
-#if 	defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
-	return p_ring->CONFIG.LENGTH + p_ring->Tail - p_ring->Head;
-#elif 	defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
-	return _Ring_CalcIndexWrapped(p_ring, p_ring->CONFIG.LENGTH + p_ring->Tail - p_ring->Head - 1U);
-#elif  	defined(CONFIG_RING_LENGTH_ANY)
-	return _Ring_CalcIndexWrapped(p_ring, p_ring->CONFIG.LENGTH + p_ring->Tail - p_ring->Head - 1U);
-	//	return (p_ring->Tail > p_ring->Head) ? (p_ring->Tail - p_ring->Head - 1U) : (p_ring->CONFIG.LENGTH - p_ring->Head + p_ring->Tail - 1U);
+#if     defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
+    return p_ring->CONFIG.LENGTH + p_ring->Tail - p_ring->Head;
+#elif     defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)
+    return _Ring_CalcIndexWrapped(p_ring, p_ring->CONFIG.LENGTH + p_ring->Tail - p_ring->Head - 1U);
+#elif      defined(CONFIG_RING_LENGTH_ANY)
+    return _Ring_CalcIndexWrapped(p_ring, p_ring->CONFIG.LENGTH + p_ring->Tail - p_ring->Head - 1U);
+    //    return (p_ring->Tail > p_ring->Head) ? (p_ring->Tail - p_ring->Head - 1U) : (p_ring->CONFIG.LENGTH - p_ring->Head + p_ring->Tail - 1U);
 #endif
 }
 
 static inline bool Ring_GetIsEmpty(const Ring_T * p_ring)
 {
-	return (p_ring->Head == p_ring->Tail);
+    return (p_ring->Head == p_ring->Tail);
 }
 
 static inline bool Ring_GetIsFull(const Ring_T * p_ring)
 {
-#if 	defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
-	return (Ring_GetFullCount(p_ring) == p_ring->CONFIG.LENGTH);
-#elif 	defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_RING_LENGTH_ANY)
-	return (_Ring_CalcIndexInc(p_ring, p_ring->Head, 1U) == p_ring->Tail);
+#if     defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)
+    return (Ring_GetFullCount(p_ring) == p_ring->CONFIG.LENGTH);
+#elif     defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED) || defined(CONFIG_RING_LENGTH_ANY)
+    return (_Ring_CalcIndexInc(p_ring, p_ring->Head, 1U) == p_ring->Tail);
 #endif
 }
 
 /******************************************************************************/
 /*!
-	Extern
+    Extern
 */
 /******************************************************************************/
 extern void Ring_Init(Ring_T * p_ring);
@@ -206,7 +206,7 @@ extern bool Ring_RemoveBack(Ring_T * p_ring, size_t nUnits);
 
 /******************************************************************************/
 /*!
-	Experimental
+    Experimental
 */
 /******************************************************************************/
 #ifdef CONFIG_RING_DYNAMIC_MEMORY_ALLOCATION

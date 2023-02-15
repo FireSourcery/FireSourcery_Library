@@ -1,31 +1,31 @@
 /******************************************************************************/
 /*!
-	@section LICENSE
+    @section LICENSE
 
-	Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
 
-	This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
-	@file  	Blinky.h
-	@author FireSourcery
-	@brief 	Pin Indicator
-	@version V0
+    @file      Blinky.h
+    @author FireSourcery
+    @brief     Pin Indicator
+    @version V0
 */
 /******************************************************************************/
 #ifndef BLINKY_H
@@ -39,30 +39,30 @@
 
 // typedef struct
 // {
-// 	void (*Pattern)(void * p_context);
-// 	void * p_Context;
+//     void (*Pattern)(void * p_context);
+//     void * p_Context;
 // }
 // Blinky_Pattern_T;
 
 typedef struct Blinky_Tag
 {
-	Pin_T Pin;
-	Timer_T Timer;
-	bool IsOn;
-	uint32_t Index;
-	uint32_t Max;
-	uint32_t OnTime;
-	uint32_t OffTime;
-	// uint32_t OffTimeDefault; unchanged between activation types
-	void (*PatternFunction)(struct Blinky_Tag * p_this);
-	// uint8_t ActiveSourceId;
+    Pin_T Pin;
+    Timer_T Timer;
+    bool IsOn;
+    uint32_t Index;
+    uint32_t Max;
+    uint32_t OnTime;
+    uint32_t OffTime;
+    // uint32_t OffTimeDefault; unchanged between activation types
+    void (*PatternFunction)(struct Blinky_Tag * p_this);
+    // uint8_t ActiveSourceId;
 }
 Blinky_T;
 
-#define BLINKY_INIT(p_PinHal, PinId, p_TimerBase, TimerBaseFreq) 	\
-{																	\
-	.Pin 	= PIN_INIT(p_PinHal, PinId),							\
-	.Timer 	= TIMER_INIT(p_TimerBase, TimerBaseFreq)				\
+#define BLINKY_INIT(p_PinHal, PinId, p_TimerBase, TimerBaseFreq)     \
+{                                                                    \
+    .Pin     = PIN_INIT(p_PinHal, PinId),                            \
+    .Timer     = TIMER_INIT(p_TimerBase, TimerBaseFreq)                \
 }
 
 extern void Blinky_Init(Blinky_T * p_blinky);
