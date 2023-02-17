@@ -35,6 +35,6 @@
 #include "Motor/MotProtocol/MotVarId.h"
 
 extern int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId);
-extern uint8_t MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T varId, uint32_t varValue);
+extern uint8_t MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T varId, int32_t varValue);
 
 #endif

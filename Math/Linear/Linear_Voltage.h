@@ -42,12 +42,12 @@
 */
 #define LINEAR_VOLTAGE_INIT(r1, r2, adcBits, adcVRef_MilliV, vInRef)                                                     \
 {                                                                                                                        \
-    .Slope                 = (((uint32_t)adcVRef_MilliV * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 1000U,     \
+    .Slope              = (((uint32_t)adcVRef_MilliV * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 1000U,     \
     .SlopeShift         = LINEAR_VOLTAGE_SHIFT,                                                                            \
-    .InvSlope              = ((int32_t)r2 << LINEAR_VOLTAGE_SHIFT) / adcVRef_MilliV * 1000U / (r1 + r2),                    \
-    .InvSlopeShift         = LINEAR_VOLTAGE_SHIFT - adcBits,                                                                \
-    .YOffset             = 0U,                                                                                             \
-    .XOffset             = 0U,                                                                                             \
+    .InvSlope           = ((int32_t)r2 << LINEAR_VOLTAGE_SHIFT) / adcVRef_MilliV * 1000U / (r1 + r2),                    \
+    .InvSlopeShift      = LINEAR_VOLTAGE_SHIFT - adcBits,                                                                \
+    .YOffset            = 0U,                                                                                             \
+    .XOffset            = 0U,                                                                                             \
     .YReference         = vInRef,                                                                                         \
 }
 

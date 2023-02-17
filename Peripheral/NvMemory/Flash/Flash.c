@@ -37,21 +37,21 @@
     HAL Launch Cmd
 */
 /******************************************************************************/
-static void StartCmdWritePage            (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdEraseSector            (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdVerifyWriteUnit        (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static void StartCmdWritePage           (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static void StartCmdEraseSector         (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static void StartCmdVerifyWriteUnit     (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static void StartCmdVerifyEraseUnits    (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdWriteOnce            (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static void StartCmdWriteOnce           (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static void StartCmdReadOnce            (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static void StartCmdEraseAll            (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 
-static void StartCmdWritePage            (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)units;                     HAL_Flash_StartCmdWritePage(p_hal, p_cmdDest, p_cmdData);}
-static void StartCmdEraseSector            (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)p_cmdData; (void)units;     HAL_Flash_StartCmdEraseSector(p_hal, p_cmdDest);}
-static void StartCmdVerifyWriteUnit        (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)units;                     HAL_Flash_StartCmdVerifyWriteUnit(p_hal, p_cmdDest, p_cmdData);}
-static void StartCmdVerifyEraseUnits    (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)p_cmdData;                 HAL_Flash_StartCmdVerifyEraseUnits(p_hal, p_cmdDest, units);}
-static void StartCmdWriteOnce            (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)units;                     HAL_Flash_StartCmdWriteOnce(p_hal, p_cmdDest, p_cmdData);}
-static void StartCmdReadOnce            (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)p_cmdData; (void)units;     HAL_Flash_StartCmdReadOnce(p_hal, p_cmdDest);}
-static void StartCmdEraseAll            (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)p_cmdDest; (void)p_cmdData; (void)units;     HAL_Flash_StartCmdEraseAll(p_hal);}
+static void StartCmdWritePage           (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)units;                    HAL_Flash_StartCmdWritePage(p_hal, p_cmdDest, p_cmdData);}
+static void StartCmdEraseSector         (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)p_cmdData; (void)units;   HAL_Flash_StartCmdEraseSector(p_hal, p_cmdDest);}
+static void StartCmdVerifyWriteUnit     (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)units;                    HAL_Flash_StartCmdVerifyWriteUnit(p_hal, p_cmdDest, p_cmdData);}
+static void StartCmdVerifyEraseUnits    (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)p_cmdData;                HAL_Flash_StartCmdVerifyEraseUnits(p_hal, p_cmdDest, units);}
+static void StartCmdWriteOnce           (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)units;                    HAL_Flash_StartCmdWriteOnce(p_hal, p_cmdDest, p_cmdData);}
+static void StartCmdReadOnce            (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)p_cmdData; (void)units;   HAL_Flash_StartCmdReadOnce(p_hal, p_cmdDest);}
+static void StartCmdEraseAll            (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) { (void)p_cmdDest; (void)p_cmdData; (void)units;  HAL_Flash_StartCmdEraseAll(p_hal);}
 
 /******************************************************************************/
 /*!
@@ -177,11 +177,11 @@ static inline size_t CalcVerifyEraseUnitsPerCmd(size_t bytes)
 
 // static const NvMemory_OpControl_T FLASH_OP_WRITE =
 // {
-//     .START_CMD             = StartCmdWritePage,
-//     .FINALIZE_CMD         = 0U,
+//     .START_CMD           = StartCmdWritePage,
+//     .FINALIZE_CMD        = 0U,
 //     .PARSE_CMD_ERROR     = ParseCmdErrorWrite,
 //     .FINALIZE_OP         = FinalizeWrite,
-//     .UNIT_SIZE             = FLASH_UNIT_WRITE_SIZE,
+//     .UNIT_SIZE           = FLASH_UNIT_WRITE_SIZE,
 // };
 
 static inline void SetWriteControl(Flash_T * p_flash)

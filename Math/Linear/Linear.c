@@ -56,16 +56,16 @@ uint8_t _Linear_GetMaxSlopeShift_Signed(int32_t factor, int32_t divisor, int32_t
 void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-    p_linear->YReference         = yRef;
-    p_linear->XReference         = linear_invf(factor, divisor, y0, yRef);     /* (yRef - y0)*divisor/factor + 0 */
-    p_linear->XOffset             = 0;
-    p_linear->YOffset             = y0;
-    p_linear->DeltaX             = p_linear->XReference - p_linear->XOffset;
-    p_linear->DeltaY             = yRef - y0;
-    p_linear->SlopeShift         = _Linear_GetMaxSlopeShift_Signed(factor, divisor, p_linear->DeltaX);
+    p_linear->YReference        = yRef;
+    p_linear->XReference        = linear_invf(factor, divisor, y0, yRef);     /* (yRef - y0)*divisor/factor + 0 */
+    p_linear->XOffset           = 0;
+    p_linear->YOffset           = y0;
+    p_linear->DeltaX            = p_linear->XReference - p_linear->XOffset;
+    p_linear->DeltaY            = yRef - y0;
+    p_linear->SlopeShift        = _Linear_GetMaxSlopeShift_Signed(factor, divisor, p_linear->DeltaX);
     p_linear->Slope             = (factor << p_linear->SlopeShift) / divisor;
     p_linear->InvSlopeShift     = _Linear_GetMaxSlopeShift_Signed(divisor, factor, p_linear->DeltaY);
-    p_linear->InvSlope             = (divisor << p_linear->InvSlopeShift) / factor;
+    p_linear->InvSlope          = (divisor << p_linear->InvSlopeShift) / factor;
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
     p_linear->SlopeFactor = factor;
     p_linear->SlopeDivisor = divisor;
@@ -81,16 +81,16 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, int32_t yRef)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-    p_linear->XOffset             = x0;
-    p_linear->YOffset             = y0;
-    p_linear->DeltaX             = xRef - x0;
-    p_linear->DeltaY             = yRef - y0;
-    p_linear->YReference         = yRef;
-    p_linear->XReference         = xRef;
-    p_linear->SlopeShift         = _Linear_GetMaxSlopeShift_Signed(p_linear->DeltaY, p_linear->DeltaX, p_linear->DeltaX);
+    p_linear->XOffset           = x0;
+    p_linear->YOffset           = y0;
+    p_linear->DeltaX            = xRef - x0;
+    p_linear->DeltaY            = yRef - y0;
+    p_linear->YReference        = yRef;
+    p_linear->XReference        = xRef;
+    p_linear->SlopeShift        = _Linear_GetMaxSlopeShift_Signed(p_linear->DeltaY, p_linear->DeltaX, p_linear->DeltaX);
     p_linear->Slope             = (p_linear->DeltaY << p_linear->SlopeShift) / p_linear->DeltaX;
     p_linear->InvSlopeShift     = _Linear_GetMaxSlopeShift_Signed(p_linear->DeltaY, p_linear->DeltaX, p_linear->DeltaY);
-    p_linear->InvSlope             = (p_linear->DeltaX << p_linear->InvSlopeShift) / p_linear->DeltaY;
+    p_linear->InvSlope          = (p_linear->DeltaX << p_linear->InvSlopeShift) / p_linear->DeltaY;
 #endif
 }
 

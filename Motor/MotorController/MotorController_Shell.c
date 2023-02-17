@@ -439,7 +439,7 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
         Terminal_SendString(p_term, "\r\n");
 
         Terminal_SendString(p_term, "ControlFeedbackMode: ");
-        switch(Motor_User_GetFeedbackMode(p_motor))
+        switch(Motor_User_GetDefaultFeedbackMode(p_motor))
         {
             case MOTOR_FEEDBACK_MODE_OPEN_LOOP:                 Terminal_SendString(p_term, "OPEN_LOOP");       break;
             case MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE:          Terminal_SendString(p_term, "VOLTAGE");         break;
@@ -463,10 +463,10 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
     {
         if      (strncmp(argv[1U], "foc", 4U) == 0U)        { Motor_User_SetCommutationMode(p_motor, MOTOR_COMMUTATION_MODE_FOC); }
         else if (strncmp(argv[1U], "sixstep", 8U) == 0U)    { Motor_User_SetCommutationMode(p_motor, MOTOR_COMMUTATION_MODE_SIX_STEP); }
-        else if (strncmp(argv[1U], "voltage", 8U) == 0U)    { Motor_User_SetFeedbackModeParam(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE); }
-        else if (strncmp(argv[1U], "current", 8U) == 0U)    { Motor_User_SetFeedbackModeParam(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT); }
-        else if (strncmp(argv[1U], "speedv", 7U) == 0U)     { Motor_User_SetFeedbackModeParam(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_VOLTAGE); }
-        else if (strncmp(argv[1U], "speedi", 7U) == 0U)     { Motor_User_SetFeedbackModeParam(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT); }
+        else if (strncmp(argv[1U], "voltage", 8U) == 0U)    { Motor_User_SetDefaultFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE); }
+        else if (strncmp(argv[1U], "current", 8U) == 0U)    { Motor_User_SetDefaultFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT); }
+        else if (strncmp(argv[1U], "speedv", 7U) == 0U)     { Motor_User_SetDefaultFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_VOLTAGE); }
+        else if (strncmp(argv[1U], "speedi", 7U) == 0U)     { Motor_User_SetDefaultFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT); }
         else if (strncmp(argv[1U], "fwdccw", 7U) == 0U)     { Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CCW); }
         else if (strncmp(argv[1U], "fwdcw", 6U) == 0U)      { Motor_User_SetDirectionCalibration(p_motor, MOTOR_FORWARD_IS_CW); }
         else if (strncmp(argv[1U], "protocol", 9U) == 0U)

@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Motor.h
+    @file   Motor.h
     @author FireSourcery
     @brief  Per Motor State Control.
     @version V0
@@ -62,10 +62,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MOTOR_LIB_VERSION_OPT        0U
+#define MOTOR_LIB_VERSION_OPT       0U
 #define MOTOR_LIB_VERSION_MAJOR     0U
 #define MOTOR_LIB_VERSION_MINOR     1U
-#define MOTOR_LIB_VERSION_BUGFIX     0U
+#define MOTOR_LIB_VERSION_BUGFIX    0U
 
 typedef enum Motor_CommutationMode_Tag
 {
@@ -253,10 +253,10 @@ Motor_SectorId_T;
 */
 typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 {
-    Motor_CommutationMode_T     CommutationMode;
-    Motor_SensorMode_T             SensorMode;
-    Motor_FeedbackModeId_T         DefaultFeedbackMode;     /* Default ControlFeedbackMode, and ThrottleCmd */
-    Motor_DirectionCalibration_T DirectionCalibration;
+    Motor_CommutationMode_T         CommutationMode;
+    Motor_SensorMode_T              SensorMode;
+    Motor_FeedbackModeId_T          DefaultFeedbackMode;     /* Default ControlFeedbackMode, and ThrottleCmd */
+    Motor_DirectionCalibration_T    DirectionCalibration;
 
     /*
         Ref values, known calibration parameter provide by user
@@ -593,13 +593,13 @@ static inline Motor_FeedbackMode_T Motor_ConvertFeedbackModeId(Motor_FeedbackMod
 
     switch(mode)
     {
-        case MOTOR_FEEDBACK_MODE_OPEN_LOOP:                    flags.State = MODE_OPEN_LOOP.State;             break;
-        case MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT:            flags.State = MODE_OPEN_LOOP_CURRENT.State;     break;
-        case MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE:            flags.State = MODE_VOLTAGE.State;                break;
-        case MOTOR_FEEDBACK_MODE_SCALAR_VOLTAGE_FREQ:        flags.State = MODE_VOLTAGE_FREQ.State;            break;
-        case MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT:            flags.State = MODE_CURRENT.State;                break;
-        case MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_VOLTAGE:    flags.State = MODE_SPEED_VOLTAGE.State;            break;
-        case MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT:    flags.State = MODE_SPEED_CURRENT.State;            break;
+        case MOTOR_FEEDBACK_MODE_OPEN_LOOP:                 flags.State = MODE_OPEN_LOOP.State;             break;
+        case MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT:         flags.State = MODE_OPEN_LOOP_CURRENT.State;     break;
+        case MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE:          flags.State = MODE_VOLTAGE.State;               break;
+        case MOTOR_FEEDBACK_MODE_SCALAR_VOLTAGE_FREQ:       flags.State = MODE_VOLTAGE_FREQ.State;          break;
+        case MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT:          flags.State = MODE_CURRENT.State;               break;
+        case MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_VOLTAGE:    flags.State = MODE_SPEED_VOLTAGE.State;         break;
+        case MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT:    flags.State = MODE_SPEED_CURRENT.State;         break;
         default: flags.State = 0; break;
     }
 

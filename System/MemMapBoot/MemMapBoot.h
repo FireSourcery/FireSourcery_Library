@@ -36,7 +36,7 @@
 */
 
 /* use 2 bits do differentiate unwritten memory patterns */
-typedef enum
+typedef enum MemMapBoot_IsValid_Tag
 {
     MEM_MAP_BOOT_IS_VALID_01 = 0b01,
     MEM_MAP_BOOT_IS_VALID_10 = 0b10,
@@ -45,16 +45,16 @@ typedef enum
 }
 MemMapBoot_IsValid_T;
 
-typedef union
+typedef union MemMapBoot_Tag
 {
     struct
     {
-        volatile uint32_t IsValid         : 2U;
-        volatile uint32_t FastBoot         : 1U;
-        volatile uint32_t Beep             : 1U;
+        volatile uint32_t IsValid       : 2U;
+        volatile uint32_t FastBoot      : 1U;
+        volatile uint32_t Beep          : 1U;
         volatile uint32_t Blink         : 1U;
-        volatile uint32_t LoadDefault     : 1U;
-        volatile uint32_t ProtocolId     : 1U;
+        volatile uint32_t LoadDefault   : 1U;
+        volatile uint32_t ProtocolId    : 1U;
     };
     volatile uint32_t Register;
 }

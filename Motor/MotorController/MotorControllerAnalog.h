@@ -46,11 +46,12 @@
 */
 typedef enum MotAnalog_Channel_Tag
 {
-    MOT_ANALOG_CHANNEL_VSOURCE,             /* V Source, V Battery */
-    MOT_ANALOG_CHANNEL_VACC,                /* V Accessories, ~12V */
-    MOT_ANALOG_CHANNEL_VSENSE,                /* V Sensors, ~5V */
+    MOT_ANALOG_CHANNEL_VSOURCE,         /* V Source, V Battery */
+    MOT_ANALOG_CHANNEL_VSENSE,          /* V Sensors, ~5V */
+    MOT_ANALOG_CHANNEL_VACC,            /* V Accessories, ~12V */
     MOT_ANALOG_CHANNEL_HEAT_PCB,
 #if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
+    MOT_ANALOG_CHANNEL_HEAT_MOSFETS,
     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP = MOT_ANALOG_CHANNEL_HEAT_MOSFETS,
     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT,
 #else
@@ -66,8 +67,8 @@ typedef union MotAnalog_Results_Tag
     struct
     {
         analog_result_t VSource_Adcu;
-        analog_result_t VAcc_Adcu;
         analog_result_t VSense_Adcu;
+        analog_result_t VAcc_Adcu;
         analog_result_t HeatPcb_Adcu;
 #if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
         analog_result_t HeatMosfetsTop_Adcu;
@@ -89,14 +90,15 @@ typedef struct MotAnalog_Conversions_Tag
         struct
         {
             const AnalogN_Conversion_T CONVERSION_VSOURCE;
-            const AnalogN_Conversion_T CONVERSION_VACC;
             const AnalogN_Conversion_T CONVERSION_VSENSE;
+            const AnalogN_Conversion_T CONVERSION_VACC;
             const AnalogN_Conversion_T CONVERSION_HEAT_PCB;
 #if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
             const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS_TOP;
             const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS_BOT;
 #else
             const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS;
+            // const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS[CONFIG_HEAT_MOSFETS_COUNT];
 #endif
             const AnalogN_Conversion_T CONVERSION_THROTTLE;
             const AnalogN_Conversion_T CONVERSION_BRAKE;

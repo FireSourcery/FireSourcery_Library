@@ -57,14 +57,14 @@ bool Debounce_CaptureState(Debounce_T * p_debounce)
     }
     else
     {
-        // if(p_debounce->DebouncedState != )
+        // if(p_debounce->DebouncedState != p_debounce->DebouncedStatePrev) //change polling state var
         {
-        if(*p_debounce->CONFIG.P_TIMER - p_debounce->TimePrev > p_debounce->DebounceTime)
-        {
-            p_debounce->TimePrev = UINT32_MAX - p_debounce->DebounceTime; /* disable until next change in pin */
-            p_debounce->DebouncedStatePrev = p_debounce->DebouncedState;
-            p_debounce->DebouncedState = pinState;
-        }
+            if(*p_debounce->CONFIG.P_TIMER - p_debounce->TimePrev > p_debounce->DebounceTime)
+            {
+                p_debounce->TimePrev = UINT32_MAX - p_debounce->DebounceTime; /* disable until next change in pin */
+                p_debounce->DebouncedStatePrev = p_debounce->DebouncedState;
+                p_debounce->DebouncedState = pinState;
+            }
         }
     }
 

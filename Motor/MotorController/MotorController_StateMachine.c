@@ -74,6 +74,8 @@ static void Init_Exit(MotorController_T * p_mc)
 
 static void Init_Proc(MotorController_T * p_mc)
 {
+//sample and set vsource    //set vsource if vsource less than max
+
     if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT) { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP); }
     /* todo And throttle, init conditionals */
 }
@@ -554,12 +556,13 @@ static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc, statema
 
 static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT]         = (StateMachine_Transition_T)Fault_InputFault,
-    [MCSM_INPUT_SET_DIRECTION] = (StateMachine_Transition_T)0U,
-    [MCSM_INPUT_THROTTLE]      = (StateMachine_Transition_T)0U,
-    [MCSM_INPUT_BRAKE]         = (StateMachine_Transition_T)0U,
-    [MCSM_INPUT_ZERO]          = (StateMachine_Transition_T)0U,
-    [MCSM_INPUT_CALIBRATION]   = (StateMachine_Transition_T)0U,
+    [MCSM_INPUT_FAULT]          = (StateMachine_Transition_T)Fault_InputFault,
+    [MCSM_INPUT_CALIBRATION]    = (StateMachine_Transition_T)Stop_InputSaveParams_Blocking,
+    [MCSM_INPUT_SET_DIRECTION]  = (StateMachine_Transition_T)0U,
+    [MCSM_INPUT_THROTTLE]       = (StateMachine_Transition_T)0U,
+    [MCSM_INPUT_BRAKE]          = (StateMachine_Transition_T)0U,
+    [MCSM_INPUT_ZERO]           = (StateMachine_Transition_T)0U,
+    [MCSM_INPUT_CMD]            = (StateMachine_Transition_T)0U,
 };
 
 static const StateMachine_State_T STATE_FAULT =

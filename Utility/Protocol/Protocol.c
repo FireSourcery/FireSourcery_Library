@@ -44,20 +44,17 @@ void Protocol_Init(Protocol_T * p_protocol)
     if(p_protocol->CONFIG.P_PARAMS != 0U)
     {
         memcpy(&p_protocol->Params, p_protocol->CONFIG.P_PARAMS, sizeof(Protocol_Params_T));
+
+        Xcvr_Init(&p_protocol->Xcvr, p_protocol->Params.XcvrId);
+        Protocol_ConfigXcvrBaudRate(p_protocol, p_protocol->Params.BaudRate);
+        Protocol_SetSpecs(p_protocol, p_protocol->Params.SpecsId);
+        if(p_protocol->Params.IsEnableOnInit == true)   { Protocol_Enable(p_protocol); }
+        else                                            { Protocol_Disable(p_protocol); }
     }
-    // else
-    // {
-    //     p_protocol->Params.XcvrId = 0U;
-    //     p_protocol->Params.SpecsId = 0U;
-    //     p_protocol->Params.IsEnableOnInit = 0U;
-    //     p_protocol->Params.WatchdogTime = 0U;
-    // }
-
-    Xcvr_Init(&p_protocol->Xcvr, p_protocol->Params.XcvrId);
-    Protocol_SetSpecs(p_protocol, p_protocol->Params.SpecsId);
-
-    if(p_protocol->Params.IsEnableOnInit == true)   { Protocol_Enable(p_protocol); }
-    else                                            { Protocol_Disable(p_protocol); }
+    else
+    {
+        Protocol_Disable(p_protocol);
+    }
 }
 
 /*
@@ -485,7 +482,7 @@ void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId)
 
 void Protocol_ConfigXcvrBaudRate(Protocol_T * p_protocol, uint32_t baudRate)
 {
-    if(Xcvr_CheckIsSet(&p_protocol->Xcvr, p_protocol->Params.XcvrId) == true)
+    if((baudRate != 0U) && (Xcvr_CheckIsSet(&p_protocol->Xcvr, p_protocol->Params.XcvrId) == true))
     {
         Xcvr_ConfigBaudRate(&p_protocol->Xcvr, baudRate);
     }
@@ -495,10 +492,10 @@ void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t p_specsId)
 {
     const Protocol_Specs_T * p_specs = (p_specsId < p_protocol->CONFIG.SPECS_COUNT) ? p_protocol->CONFIG.PP_SPECS_TABLE[p_specsId] : 0U;
 
-    if(p_specs != 0U && p_specs->RX_LENGTH_MAX <= p_protocol->CONFIG.PACKET_BUFFER_LENGTH)
+    if((p_specs != 0U) && (p_specs->RX_LENGTH_MAX <= p_protocol->CONFIG.PACKET_BUFFER_LENGTH))
     {
         p_protocol->p_Specs = p_specs;
-        if(p_protocol->p_Specs->BAUD_RATE_DEFAULT != 0U) { Protocol_ConfigXcvrBaudRate(p_protocol, p_protocol->p_Specs->BAUD_RATE_DEFAULT); }
+        if(p_protocol->Params.BaudRate == 0U) { Protocol_ConfigXcvrBaudRate(p_protocol, p_protocol->p_Specs->BAUD_RATE_DEFAULT); }
     }
 }
 

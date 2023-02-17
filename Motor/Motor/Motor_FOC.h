@@ -98,9 +98,9 @@ static inline void Motor_FOC_CaptureVc(Motor_T * p_motor)
 */
 /******************************************************************************/
 /* return int32 for function pointer casting compatibility  */
-static inline int32_t Motor_FOC_GetIPhase_FracS16(Motor_T * p_motor)             { return FOC_GetIPhase(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetVPhase_FracS16(Motor_T * p_motor)             { return FOC_GetVPhase(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetElectricalPower_FracS16(Motor_T * p_motor)     { return FOC_GetPower(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetIPhase_FracS16(Motor_T * p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetVPhase_FracS16(Motor_T * p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetElectricalPower_FracS16(Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
 
 /* In User Reference Sign */
 // static inline int32_t Motor_FOC_GetIPhaseUser_Frac16(Motor_T * p_motor)

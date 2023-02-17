@@ -42,19 +42,20 @@
 typedef enum NvMemory_Status_Tag
 {
     NV_MEMORY_STATUS_SUCCESS,
-    NV_MEMORY_STATUS_PROCESSING,         /* NonBlocking Only */
-    NV_MEMORY_STATUS_START_VERIFY,         /* Follow up Op after complete */
+    NV_MEMORY_STATUS_PROCESSING,        /* NonBlocking Only */
+    NV_MEMORY_STATUS_START_VERIFY,      /* Follow up Op after complete */
     // NV_MEMORY_STATUS_ERROR,
     NV_MEMORY_STATUS_ERROR_BUSY,
-    NV_MEMORY_STATUS_ERROR_INPUT,        /* op params, dest address or size */ //todo   parse error destination, align
+    NV_MEMORY_STATUS_ERROR_INPUT,       /* op params, dest address or size */ //todo   parse error destination, align
     NV_MEMORY_STATUS_ERROR_BOUNDARY,    /* Dest, size, larger than partition */
-    NV_MEMORY_STATUS_ERROR_ALIGNMENT,    /* dest, size, not aligned */
-    NV_MEMORY_STATUS_ERROR_CMD,            /* Cmd Failed. Unparsed Error */
-    NV_MEMORY_STATUS_ERROR_VERIFY,        /* Verify cmd */
+    NV_MEMORY_STATUS_ERROR_ALIGNMENT,   /* dest, size, not aligned */
+    NV_MEMORY_STATUS_ERROR_CMD,         /* Cmd Failed. Unparsed Error */
+    NV_MEMORY_STATUS_ERROR_VERIFY,      /* Verify cmd */
     NV_MEMORY_STATUS_ERROR_PROTECTION,
-    NV_MEMORY_STATUS_ERROR_BUFFER,        /* Virtual buffer */
     NV_MEMORY_STATUS_ERROR_CHECKSUM,    /*  */
     NV_MEMORY_STATUS_ERROR_INVALID_OP,
+    NV_MEMORY_STATUS_ERROR_BUFFER,      /* Virtual buffer */
+    NV_MEMORY_STATUS_ERROR_OTHER,
 }
 NvMemory_Status_T;
 

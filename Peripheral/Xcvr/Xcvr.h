@@ -51,25 +51,25 @@ typedef enum Xcvr_Type_Tag
 }
 Xcvr_Type_T;
 
-typedef    bool(*Xcvr_Interface_TxByte_T)         (void * p_context, uint8_t txChar);
-typedef    bool(*Xcvr_Interface_RxByte_T)         (void * p_context, uint8_t * p_rxChar);
-typedef    size_t(*Xcvr_Interface_TxMax_T)     (void * p_context, const uint8_t * p_srcBuffer,     size_t bufferSize);
-typedef size_t(*Xcvr_Interface_RxMax_T)     (void * p_context, uint8_t * p_destBuffer,             size_t bufferSize);
-typedef bool(*Xcvr_Interface_TxN_T)         (void * p_context, const uint8_t * p_src,     size_t length);
-typedef bool(*Xcvr_Interface_RxN_T)            (void * p_context, uint8_t * p_dest,         size_t length);
-typedef size_t(*Xcvr_Interface_GetCount_T)     (void * p_context);
-typedef void(*Xcvr_Interface_ConfigBaudRate_T) (void * p_context, uint32_t baudRate);
+typedef bool(*Xcvr_Interface_TxByte_T)          (void * p_xcvr, uint8_t txChar);
+typedef bool(*Xcvr_Interface_RxByte_T)          (void * p_xcvr, uint8_t * p_rxChar);
+typedef size_t(*Xcvr_Interface_TxMax_T)         (void * p_xcvr, const uint8_t * p_srcBuffer, size_t bufferSize);
+typedef size_t(*Xcvr_Interface_RxMax_T)         (void * p_xcvr, uint8_t * p_destBuffer, size_t bufferSize);
+typedef bool(*Xcvr_Interface_TxN_T)             (void * p_xcvr, const uint8_t * p_src, size_t length);
+typedef bool(*Xcvr_Interface_RxN_T)             (void * p_xcvr, uint8_t * p_dest, size_t length);
+typedef size_t(*Xcvr_Interface_GetCount_T)      (void * p_xcvr);
+typedef void(*Xcvr_Interface_ConfigBaudRate_T)  (void * p_xcvr, uint32_t baudRate);
 
 typedef const struct Xcvr_Interface_Tag
 {
-    Xcvr_Interface_TxByte_T     TX_BYTE;
-    Xcvr_Interface_RxByte_T     RX_BYTE;
-    Xcvr_Interface_TxMax_T         TX_MAX;
-    Xcvr_Interface_RxMax_T         RX_MAX;
-    Xcvr_Interface_TxN_T         TX_N;
-    Xcvr_Interface_RxN_T         RX_N;
-    Xcvr_Interface_GetCount_T     GET_TX_EMPTY_COUNT;
-    Xcvr_Interface_GetCount_T     GET_RX_FULL_COUNT;
+    Xcvr_Interface_TxByte_T         TX_BYTE;
+    Xcvr_Interface_RxByte_T         RX_BYTE;
+    Xcvr_Interface_TxMax_T          TX_MAX;
+    Xcvr_Interface_RxMax_T          RX_MAX;
+    Xcvr_Interface_TxN_T            TX_N;
+    Xcvr_Interface_RxN_T            RX_N;
+    Xcvr_Interface_GetCount_T       GET_TX_EMPTY_COUNT;
+    Xcvr_Interface_GetCount_T       GET_RX_FULL_COUNT;
     Xcvr_Interface_ConfigBaudRate_T CONFIG_BAUD_RATE;
 }
 Xcvr_Interface_T;
@@ -87,16 +87,16 @@ typedef const struct Xcvr_Xcvr_Tag
 Xcvr_Xcvr_T;
 
 #define XCVR_XCVR_INIT(p_Xcvr, Type)    \
-{                                        \
-    .P_CONTEXT     = (void *)p_Xcvr,         \
-    .TYPE         = Type,                    \
+{                                       \
+    .P_CONTEXT  = (void *)p_Xcvr,       \
+    .TYPE       = Type,                 \
 }
 
-#define XCVR_XCVR_INIT_INTERFACE(p_Xcvr, p_Interface)    \
-{                                                        \
-    .P_CONTEXT         = (void *)p_Xcvr,                     \
-    .TYPE             = XCVR_TYPE_INTERFACE,                \
-    .P_INTERFACE     = p_Interface,                        \
+#define XCVR_XCVR_INIT_INTERFACE(p_Xcvr, p_Interface)   \
+{                                                       \
+    .P_CONTEXT      = (void *)p_Xcvr,                   \
+    .TYPE           = XCVR_TYPE_INTERFACE,              \
+    .P_INTERFACE    = p_Interface,                      \
 }
 
 typedef const struct Xcvr_Config_Tag
@@ -107,6 +107,7 @@ typedef const struct Xcvr_Config_Tag
 Xcvr_Config_T;
 
 /*
+   Todo Link
     Xcvr Controller
 */
 typedef struct Xcvr_Tag
@@ -116,14 +117,7 @@ typedef struct Xcvr_Tag
 }
 Xcvr_T;
 
-#define XCVR_INIT(p_XcvrTable, Count)        \
-{                                            \
-    .CONFIG =                                \
-    {                                          \
-        .P_XCVR_TABLE    = p_XcvrTable,        \
-        .XCVR_COUNT        = Count,            \
-    },                                        \
-}
+#define XCVR_INIT(p_XcvrTable, Count) { .CONFIG = { .P_XCVR_TABLE = p_XcvrTable,.XCVR_COUNT = Count, }, }
 
 extern bool Xcvr_TxByte(const Xcvr_T * p_xcvr, uint8_t txChar);
 extern bool Xcvr_RxByte(const Xcvr_T * p_xcvr, uint8_t * p_rxChar);
@@ -133,13 +127,13 @@ extern size_t Xcvr_TxMax(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, siz
 extern size_t Xcvr_RxMax(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize);
 
 static inline bool Xcvr_Tx(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length)         { return Xcvr_TxN(p_xcvr, p_src, length); }
-static inline size_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)     { return Xcvr_RxMax(p_xcvr, p_destBuffer, destSize); }
+static inline size_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)    { return Xcvr_RxMax(p_xcvr, p_destBuffer, destSize); }
 
 extern void Xcvr_Init(Xcvr_T * p_xcvr, uint8_t xcvrDefaultIndex);
 extern bool Xcvr_SetXcvr(Xcvr_T * p_xcvr, uint8_t xcvrIndex);
 extern bool Xcvr_CheckIsSet(const Xcvr_T * p_xcvr, uint8_t xcvrIndex);
 extern bool Xcvr_CheckValid(const Xcvr_T * p_xcvr, void * p_target);
-extern void Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate);
+extern bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate);
 extern size_t Xcvr_GetRxFullCount(const Xcvr_T * p_xcvr);
 extern size_t Xcvr_GetTxEmptyCount(const Xcvr_T * p_xcvr);
 

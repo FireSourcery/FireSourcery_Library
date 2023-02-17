@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Config.h
+    @file   Config.h
     @author FireSourcery
     @brief
     @version V0
@@ -31,18 +31,18 @@
 #ifndef CONFIG_RING_H
 #define CONFIG_RING_H
 
+#if     defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)    /* Power 2 length only. Integer overflow wrap only */
+#elif   defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)      /* Power 2 length only. Does not need integer overflow wrap */
+#elif   defined(CONFIG_RING_LENGTH_ANY)
+#else
+    #define CONFIG_RING_LENGTH_ANY
+#endif
+
 #if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
-#elif     defined(CONFIG_RING_MULTITHREADED_DISABLE) || defined(CONFIG_RING_SINGLE_THREADED)
+#elif   defined(CONFIG_RING_MULTITHREADED_DISABLE) || defined(CONFIG_RING_SINGLE_THREADED)
 #else
     #define CONFIG_RING_MULTITHREADED_DISABLE
     #define CONFIG_RING_SINGLE_THREADED
-#endif
-
-#if     defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)     /* Power 2 length only. Integer overflow wrap only */
-#elif      defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)        /* Power 2 length only. Does not need integer overflow wrap */
-#elif      defined(CONFIG_RING_LENGTH_ANY)
-#else
-    #define CONFIG_RING_LENGTH_ANY
 #endif
 
 #endif

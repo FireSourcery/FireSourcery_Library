@@ -30,10 +30,24 @@
 /******************************************************************************/
 #include "MotorController_User.h"
 
+// uint32_t _GetVSourceRatio(const MotorController_T * p_mc)
+// {
+// }
+
 void MotorController_User_SetVSource(MotorController_T * p_mc, uint16_t volts)
 {
-    Global_Motor_SetVSource_V(volts);
-    p_mc->Parameters.VSourceRef = Global_Motor_GetVSource_V();
+    MotorController_SetVSource(p_mc, volts);
+    VMonitor_SetVInRef(&p_mc->VMonitorSource, volts);
+//propagate set //todo restore ratio set
+    VMonitor_SetLimitsDefault(&p_mc->VMonitorSource);
+    MotorController_User_SetBatteryLifeDefault(p_mc);
+}
+
+void MotorController_User_SetBatteryLifeDefault(MotorController_T * p_mc)
+{
+    p_mc->Parameters.BatteryZero_Adcu = VMonitor_GetLimitLower(&p_mc->VMonitorSource);
+    p_mc->Parameters.BatteryFull_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorSource, (uint32_t)p_mc->Parameters.VSourceRef * 1000U);
+    MotorController_ResetUnitsBatteryLife(p_mc);
 }
 
 void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32_t zero_mV, uint32_t max_mV)

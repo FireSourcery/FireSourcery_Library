@@ -70,9 +70,10 @@ Debounce_T;
 static inline bool Debounce_GetState(const Debounce_T * p_debounce)     { return p_debounce->DebouncedState;}
 static inline bool Debounce_GetRawState(const Debounce_T * p_debounce)     { return p_debounce->RawStatePrev; }
 
-static inline bool Debounce_GetIsFallingEdge(Debounce_T * p_debounce)     { return ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true)); }
-static inline bool Debounce_GetIsRisingEdge(Debounce_T * p_debounce)     { return ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false)); }
-static inline bool Debounce_GetIsDualEdge(Debounce_T * p_debounce)         { return ((p_debounce->DebouncedState ^ p_debounce->DebouncedStatePrev) == true); }
+/* During same synchronous cycle only */
+static inline bool Debounce_GetIsFallingEdge(Debounce_T * p_debounce)   { return ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true)); }
+static inline bool Debounce_GetIsRisingEdge(Debounce_T * p_debounce)    { return ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false)); }
+static inline bool Debounce_GetIsDualEdge(Debounce_T * p_debounce)      { return ((p_debounce->DebouncedState ^ p_debounce->DebouncedStatePrev) == true); }
 static inline Debounce_Edge_T Debounce_GetDualEdge(Debounce_T * p_debounce)
 {
     return ((Debounce_GetIsDualEdge(p_debounce) == true) ? ((p_debounce->DebouncedState = true) ? DEBOUNCE_EDGE_RISING : DEBOUNCE_EDGE_FALLING) : DEBOUNCE_EDGE_NULL);

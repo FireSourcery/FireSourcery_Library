@@ -192,6 +192,65 @@ static inline size_t Hw_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t
     Public
 */
 /******************************************************************************/
+/*
+    Rx data reg/fifo full ISR, receive from hw to software buffer
+*/
+void Serial_RxData_ISR(Serial_T * p_serial)
+{
+    uint8_t rxChar;
+
+    while(HAL_Serial_ReadRxFullCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U) /* Rx until hw buffer is empty */
+    {
+        if(Ring_GetIsFull(&p_serial->RxRing) == true) /* Rx until software buffer is full */
+        {
+            /* if buffer stays full, disable irq to prevent blocking lower priority threads. user must restart rx irq */
+            HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+            break;
+        }
+        else
+        {
+            rxChar = HAL_Serial_ReadRxChar(p_serial->CONFIG.P_HAL_SERIAL);
+            Ring_Enqueue(&p_serial->RxRing, &rxChar);
+        }
+    }
+}
+
+/*
+    Tx data reg/fifo empty ISR, transmit from software buffer to hw
+    Alternatively, HAL_Serial_ReadTxFullCount < CONFIG_HAL_SERIAL_FIFO_SIZE
+*/
+void Serial_TxData_ISR(Serial_T * p_serial)
+{
+    uint8_t txChar;
+
+    while(HAL_Serial_ReadTxEmptyCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U) /* Tx until hw buffer is full */
+    {
+        if(Ring_GetIsEmpty(&p_serial->TxRing) == true) /* Tx until software buffer is empty */
+        {
+            HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+            break;
+        }
+        else
+        {
+            Ring_Dequeue(&p_serial->TxRing, &txChar);
+            HAL_Serial_WriteTxChar(p_serial->CONFIG.P_HAL_SERIAL, txChar);
+        }
+    }
+}
+
+bool Serial_PollRestartRxIsr(const Serial_T * p_serial)
+{
+    bool status = false;
+    if((HAL_Serial_ReadRxOverrun(p_serial->CONFIG.P_HAL_SERIAL) == true) && (Ring_GetIsFull(&p_serial->RxRing) == false))
+    {
+        HAL_Serial_ClearRxErrors(p_serial->CONFIG.P_HAL_SERIAL);
+        HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+        status = true;
+    }
+    return status;
+}
+
+
 void Serial_Init(Serial_T * p_serial)
 {
     HAL_Serial_Init(p_serial->CONFIG.P_HAL_SERIAL);
@@ -205,9 +264,9 @@ void Serial_Deinit(Serial_T * p_serial)
     HAL_Serial_Deinit(p_serial->CONFIG.P_HAL_SERIAL);
 }
 
-void Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate) //Serial_InitBaudRate
+bool Serial_InitBaudRate(Serial_T * p_serial, uint32_t baudRate)
 {
-    HAL_Serial_InitBaudRate(p_serial->CONFIG.P_HAL_SERIAL, baudRate);
+   return HAL_Serial_InitBaudRate(p_serial->CONFIG.P_HAL_SERIAL, baudRate);
 }
 
 bool Serial_SendByte(Serial_T * p_serial, uint8_t txChar)
@@ -348,6 +407,10 @@ size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
 }
 
 /*
+    Experimental
+*/
+
+/*
     Passes buffer to upper layer to avoid double buffer write.
     Must flush buffer to start at 0 index.
 */
@@ -370,7 +433,6 @@ void Serial_ReleaseTxBuffer(Serial_T * p_serial, size_t writeSize)
     ReleaseCriticalTx(p_serial);
 }
 
-/* UNTESTED */
 bool Serial_SendCharString(Serial_T * p_serial, const uint8_t * p_srcBuffer)
 {
     bool status = false;
@@ -390,4 +452,25 @@ bool Serial_SendCharString(Serial_T * p_serial, const uint8_t * p_srcBuffer)
     }
 
     return status;
+}
+
+//todo polling via hw fifo buffer
+void Serial_PollRxData(Serial_T * p_serial)
+{
+    HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+    Serial_RxData_ISR(p_serial);
+    HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+}
+
+void Serial_PollTxData(Serial_T * p_serial)
+{
+    HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+    Serial_TxData_ISR(p_serial);
+    if(Ring_GetIsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+}
+
+void Serial_FlushBuffers(Serial_T * p_serial)
+{
+    Ring_Clear(&p_serial->TxRing);
+    Ring_Clear(&p_serial->RxRing);
 }

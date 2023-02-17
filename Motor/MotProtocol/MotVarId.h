@@ -38,17 +38,32 @@ typedef enum MotVarId_Tag
         Read Only
     */
     MOT_VAR_NULL = 0U,
-    MOT_VAR_SPEED = 1U,           /* FracS16 may over saturate */
-    MOT_VAR_CURRENT = 2U,         /* FracS16 may over saturate */
-    MOT_VAR_VOLTAGE = 3U,         /* FracS16 may over saturate */
-    MOT_VAR_POWER = 4U,           /* FracS16 may over saturate */
-    MOT_VAR_FOC_IQ = 17U,
-    MOT_VAR_FOC_ID = 18U,
+    MOT_VAR_SPEED = 1U,             /* FracU16, where  */
+    MOT_VAR_I_PHASE = 2U,           /* FracS16 may over saturate */
+    MOT_VAR_V_PHASE = 3U,           /* FracS16 may over saturate */
+    MOT_VAR_POWER = 4U,             /* FracS16 may over saturate */
+    MOT_VAR_MOTOR_STATE = 5U,       /* Value enum:  */
 
-    MOT_VAR_STATUS_FLAGS = 65U,
+    MOT_VAR_FOC_IQ = 16U,
+    MOT_VAR_FOC_ID = 17U,
+    MOT_VAR_FOC_Q_REQ = 18U,
+    MOT_VAR_FOC_D_REQ = 19U,
+    MOT_VAR_FOC_IA = 20U,
+    MOT_VAR_FOC_IB = 21U,
+    MOT_VAR_FOC_IC = 22U,
+
+    MOT_VAR_MC_STATE        = 32U,  /* Value enum: 0:INIT, 1:STOP, 2:RUN, 3:FAULT */
+    MOT_VAR_MC_STATUS_FLAGS = 33U,
+    MOT_VAR_V_SOURCE        = 40U,  /* Base as ADCU */
+    MOT_VAR_V_SENSOR        = 41U,
+    MOT_VAR_V_ACC           = 42U,
+    MOT_VAR_HEAT_PCB        = 43U,
+    MOT_VAR_HEAT_MOSFETS    = 44U,
+
+    // MOT_VAR_Next      = 48U,
+
     // MOT_VAR_ERROR_FLAGS = 201U,      /* Value Bitfield 16-bit */
-    MOT_VAR_MC_STATE = 202U,        /* Value enum: 0:INIT, 1:STOP, 2:RUN, 3:FAULT */
-    // MOT_VAR_HEAT_PCB_DEG_C = 133U,       /* Value 16-bit */
+    // MOT_VAR_HEAT_PCB_DEG_C = 133U,   /* Value 16-bit */
     MOT_VAR_DEBUG = 128U,
     MOT_VAR_MILLIS = 129U,
 
@@ -58,6 +73,7 @@ typedef enum MotVarId_Tag
 
     MOT_VAR_TX_PACKET_COUNT = 254U,
     MOT_VAR_RX_PACKET_COUNT = 255U,
+
     /*
         Partition1 256-511 0x100-0x1FF
         Read Write
@@ -85,17 +101,7 @@ typedef enum MotVarId_Tag
     // MOT_VAR_CMD_SPEED = 0x15U,           /* Value [-32768:32767] */
     // MOT_VAR_CMD_ANGLE = 0x16U,           /*   */
 
-    // MOT_VAR_ANALOG_USER = 0x10U,
-    // MOT_VAR_HALL = 0x11U,
-    // MOT_VAR_SIN_COS = 0x12U,
-    // MOT_VAR_ENCODER = 0x13U,
-    // MOT_VAR_V_SENSORS = 0x21U,       /* VSource, ~5V, ~12V */
-    // MOT_VAR_HEAT = 0x22U,            /* In ADCU, Lower is higher */
-    // MOT_VAR_METERS = 0x31U,          /* Speed, Angles */
-    // MOT_VAR_I_FOC = 0x03U,           /* Iabc, Ialphabeta, Idq in Q1.15 */
-    // MOT_VAR_ADC_MOTOR_COMMON,
-    // MOT_VAR_ADC_MOTOR_0,
-    // MOT_VAR_ADC_MOTOR_1,
+
 
 
     /*
@@ -105,7 +111,8 @@ typedef enum MotVarId_Tag
     /*
         Motor[0] by default
     */
-    MOT_VAR_USER_INPUT_MODE = 1024U,     /* Value enum: 0:Analog, 1:Protocol */
+    MOT_VAR_DEFAULT_FEEDBACK_MODE = 1024U,
+    // MOT_VAR_USER_INPUT_MODE =  U,     /* Value enum: 0:Analog, 1:Protocol */
     // MOT_VAR_POLE_PAIRS,
     // MOT_VAR_SPEED_FEEDBACK_REF_RPM,
     // MOT_VAR_SPEED_VMATCH_REF_RPM,

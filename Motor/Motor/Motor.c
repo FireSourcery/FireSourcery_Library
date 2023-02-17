@@ -516,7 +516,7 @@ void Motor_ResetUnitsIabc(Motor_T * p_motor)
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
     uint16_t iPeakRef_Adcu = p_motor->Parameters.IPeakRef_Adcu;
 #elif defined(CONFIG_MOTOR_DEBUG_DISABLE)
-    uint16_t iPeakRef_Adcu =  GLOBAL_MOTOR.I_MAX_ZTP_ADCU;
+    uint16_t iPeakRef_Adcu =  GLOBAL_MOTOR.I_ZERO_TO_PEAK_ADCU;
 #endif
     Linear_ADC_Init_ZeroToPeak(&p_motor->UnitsIa, p_motor->Parameters.IaZeroRef_Adcu, iPeakRef_Adcu, 0, GLOBAL_MOTOR.I_UNITS_AMPS);
     Linear_ADC_Init_ZeroToPeak(&p_motor->UnitsIb, p_motor->Parameters.IbZeroRef_Adcu, iPeakRef_Adcu, 0, GLOBAL_MOTOR.I_UNITS_AMPS);

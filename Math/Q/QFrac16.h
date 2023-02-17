@@ -172,15 +172,14 @@ static inline qangle16_quadrant_t qangle16_quadrant(qangle16_t theta)
     qangle16_quadrant_t quadrant;
     switch((uint16_t)theta & QANGLE16_QUADRANT_MASK)
     {
-        case (uint16_t)QANGLE16_0:         quadrant = QANGLE16_QUADRANT_I; break;
+        case (uint16_t)QANGLE16_0:      quadrant = QANGLE16_QUADRANT_I; break;
         case (uint16_t)QANGLE16_90:     quadrant = QANGLE16_QUADRANT_II; break;
-        case (uint16_t)QANGLE16_180:     quadrant = QANGLE16_QUADRANT_III; break;
-        case (uint16_t)QANGLE16_270:     quadrant = QANGLE16_QUADRANT_IV; break;
+        case (uint16_t)QANGLE16_180:    quadrant = QANGLE16_QUADRANT_III; break;
+        case (uint16_t)QANGLE16_270:    quadrant = QANGLE16_QUADRANT_IV; break;
         default: quadrant = 0U; break; /* Should not occur */
     }
     return quadrant;
 }
-
 
 static inline bool qangle16_cycle(qangle16_t theta0, qangle16_t theta1)
 {
@@ -198,111 +197,11 @@ static inline bool qangle16_cycle4(qangle16_t theta0, qangle16_t theta1)
     return (((theta0 ^ theta1) & QANGLE16_QUADRANT_MASK) != (uint16_t)0U);
 }
 
-/*
-    0b xx11 1111 11xx xxxx
-    Use 8 most significant digits of 90 degree bound.
-    Remove sign / 180 degree bit, 90 degree bit, and 6 lsb.
-*/
-static inline qfrac16_t sin90(qangle16_t theta)
-{
-    return QFRAC16_SINE_90_TABLE[(uint8_t)(theta >> QFRAC16_SINE_90_TABLE_LSB)];
-}
-
-static inline qfrac16_t cos90(qangle16_t theta)
-{
-    return QFRAC16_SINE_90_TABLE[(0xFFU - (uint8_t)(theta >> QFRAC16_SINE_90_TABLE_LSB))];
-}
-
-/*
-    [0, 90)        => [0x0000, 0x3FFF]    => [0, 0xFF] == [0, 1)
-    [90, 180)    => [0x4000, 0x7FFF] => [0xFF, 0] == (1, 0]
-    [180, 270)    => [0x8000, 0xBFFF] => [0, 0xFF] == [0, -1)
-    [270, 360)    => [0xC000, 0xFFFF] => [0xFF, 0] == (-1, 0]
-*/
-static inline qfrac16_t qfrac16_sin(qangle16_t theta)
-{
-    qfrac16_t sine;
-    switch(qangle16_quadrant(theta))
-    {
-        case QANGLE16_QUADRANT_I:     sine = sin90(theta);                             break;
-        case QANGLE16_QUADRANT_II:     sine = sin90(QANGLE16_180 - 1 - theta);         break;
-        case QANGLE16_QUADRANT_III: sine = 0 - sin90(theta);                         break;
-        case QANGLE16_QUADRANT_IV:     sine = 0 - sin90(QANGLE16_180 - 1 - theta);     break;
-        default: sine = 0; break;
-    }
-    return sine;
-}
-
-static inline qfrac16_t qfrac16_cos(qangle16_t theta)
-{
-    qfrac16_t cosine;
-    switch(qangle16_quadrant(theta))
-    {
-        case QANGLE16_QUADRANT_I:     cosine = sin90(QANGLE16_180 - 1 - theta);         break;
-        case QANGLE16_QUADRANT_II:     cosine = 0 - sin90(theta);                         break;
-        case QANGLE16_QUADRANT_III: cosine = 0 - sin90(QANGLE16_180 - 1 - theta);     break;
-        case QANGLE16_QUADRANT_IV:     cosine = sin90(theta);                             break;
-        default: cosine = 0; break;
-    }
-    return cosine;
-}
-
-/* compiler optimize into single switch? */
-static inline void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16_t theta)
-{
-    *p_sin = qfrac16_sin(theta);
-    *p_cos = qfrac16_cos(theta);
-    return; /* (*p_cos, *p_sin) */
-}
-
-static inline uint16_t qfrac16_vectormagnitude(qfrac16_t x, qfrac16_t y)
-{
-    return q_sqrt((int32_t)x * x + (int32_t)y * y);
-}
-
-/* circle limit */
-static inline void qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax)
-{
-    uint32_t magnitudeMaxSquared = (int32_t)magnitudeMax * magnitudeMax;
-    uint32_t vectorMagnitudeSquared = ((int32_t)(*p_x) * (*p_x)) + ((int32_t)(*p_y) * (*p_y));
-    uint16_t vectorMagnitude;
-    qfrac16_t ratio; /* where 32767 q1.15 ~= 1 */
-
-    if(vectorMagnitudeSquared > magnitudeMaxSquared)
-    {
-        vectorMagnitude = q_sqrt(vectorMagnitudeSquared);
-        ratio = qfrac16_div(magnitudeMax, vectorMagnitude); /* no saturation needed, magnitudeMax < vectorMagnitude */
-        *p_x = (qfrac16_t)qfrac16_mul(*p_x, ratio); /* no saturation needed, ratio < 1 */
-        *p_y = (qfrac16_t)qfrac16_mul(*p_y, ratio);
-    }
-    return;
-}
-
-/*
-    Adapted from libfixmath https://github.com/PetteriAimonen/libfixmath/blob/master/libfixmath/qfrac16_trig.c
-*/
-static inline qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
-{
-    int32_t mask = (y >> QFRAC16_N_FRAC_BITS);
-    int32_t yAbs = (y + mask) ^ mask;
-    int32_t r, r_3, angle;
-
-    if(x >= 0)
-    {
-        r = qfrac16_div((x - yAbs), (x + yAbs));
-        r_3 = qfrac16_mul(qfrac16_mul(r, r), r);
-        angle = qfrac16_mul(0x07FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_1_DIV_4;
-    }
-    else
-    {
-        r = qfrac16_div((x + yAbs), (yAbs - x));
-        r_3 = qfrac16_mul(qfrac16_mul(r, r), r);
-        angle = qfrac16_mul(0x07FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_3_DIV_4;
-    }
-
-    if(y < 0) { angle = 0 - angle; }
-
-    return angle; /* angle loops, no need to saturate */
-}
+extern qfrac16_t qfrac16_sin(qangle16_t theta);
+extern qfrac16_t qfrac16_cos(qangle16_t theta);
+extern void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16_t theta);
+extern uint16_t qfrac16_vectormagnitude(qfrac16_t x, qfrac16_t y);
+extern void qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax);
+extern qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x);
 
 #endif
