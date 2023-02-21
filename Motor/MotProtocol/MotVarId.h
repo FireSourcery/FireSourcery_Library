@@ -43,6 +43,7 @@ typedef enum MotVarId_Tag
     MOT_VAR_V_PHASE = 3U,           /* FracS16 may over saturate */
     MOT_VAR_POWER = 4U,             /* FracS16 may over saturate */
     MOT_VAR_MOTOR_STATE = 5U,       /* Value enum:  */
+    MOT_VAR_RAMP_CMD = 6U,
 
     MOT_VAR_FOC_IQ = 16U,
     MOT_VAR_FOC_ID = 17U,
@@ -112,6 +113,12 @@ typedef enum MotVarId_Tag
         Motor[0] by default
     */
     MOT_VAR_DEFAULT_FEEDBACK_MODE = 1024U,
+    MOT_VAR_HALL_SENSOR_TABLE_1 = 1025U,
+    MOT_VAR_HALL_SENSOR_TABLE_2 = 1026U,
+    MOT_VAR_HALL_SENSOR_TABLE_3 = 1027U,
+    MOT_VAR_HALL_SENSOR_TABLE_4 = 1028U,
+    MOT_VAR_HALL_SENSOR_TABLE_5 = 1029U,
+    MOT_VAR_HALL_SENSOR_TABLE_6 = 1030U,
     // MOT_VAR_USER_INPUT_MODE =  U,     /* Value enum: 0:Analog, 1:Protocol */
     // MOT_VAR_POLE_PAIRS,
     // MOT_VAR_SPEED_FEEDBACK_REF_RPM,

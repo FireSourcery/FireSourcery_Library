@@ -109,9 +109,9 @@ static inline void Motor_User_ToggleFault(Motor_T * p_motor)
 */
 /******************************************************************************/
 static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(Motor_T * p_motor)                 { return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
-static inline uint16_t Motor_User_GetAdcu(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel)         { return p_motor->AnalogResults.Channels[adcChannel]; }
-static inline uint8_t Motor_User_GetAdcu_Msb8(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel)     { return Motor_User_GetAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
-static inline int32_t Motor_User_GetHeat_DegC(Motor_T * p_motor, uint16_t scalar)                     { return Thermistor_ConvertToDegC_Int(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
+static inline uint16_t Motor_User_GetAdcu(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel)      { return p_motor->AnalogResults.Channels[adcChannel]; }
+static inline uint8_t Motor_User_GetAdcu_Msb8(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel)  { return Motor_User_GetAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
+static inline int32_t Motor_User_GetHeat_DegC(Motor_T * p_motor, uint16_t scalar)                   { return Thermistor_ConvertToDegC_Int(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
 static inline float Motor_User_GetHeat_DegCFloat(Motor_T * p_motor)                                 { return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 
 static inline qangle16_t Motor_User_GetElectricalAngle(Motor_T * p_motor) { return p_motor->ElectricalAngle; }
@@ -179,10 +179,10 @@ static inline uint32_t Motor_User_GetElectricalPower_FracU16(Motor_T * p_motor)
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 /*!    @return [-32767:32767] Rpm should not exceed int16_t */
-static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor)             { return _Motor_ConvertSpeed_FracS16ToRpm(p_motor, Motor_User_GetSpeed_FracS16(p_motor)); }
-static inline int16_t Motor_User_GetIPhase_Amps(Motor_T * p_motor)             { return _Motor_ConvertI_FracS16ToAmps(Motor_User_GetIPhase_FracS16(p_motor)); }
+static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor)            { return _Motor_ConvertSpeed_FracS16ToRpm(p_motor, Motor_User_GetSpeed_FracS16(p_motor)); }
+static inline int16_t Motor_User_GetIPhase_Amps(Motor_T * p_motor)          { return _Motor_ConvertI_FracS16ToAmps(Motor_User_GetIPhase_FracS16(p_motor)); }
 static inline int16_t Motor_User_GetVPhase_Volts(Motor_T * p_motor)         { return _Motor_ConvertV_FracS16ToVolts(Motor_User_GetVPhase_FracS16(p_motor)); }
-static inline int32_t Motor_User_GetElectricalPower_VA(Motor_T * p_motor)     { return _Motor_ConvertPower_FracS16ToWatts(Motor_User_GetElectricalPower_FracS16(p_motor)); }
+static inline int32_t Motor_User_GetElectricalPower_VA(Motor_T * p_motor)   { return _Motor_ConvertPower_FracS16ToWatts(Motor_User_GetElectricalPower_FracS16(p_motor)); }
 #endif
 
 
@@ -258,6 +258,7 @@ extern void Motor_User_ActivateCalibrationHall(Motor_T * p_motor);
 extern void Motor_User_ActivateCalibrationEncoder(Motor_T * p_motor);
 extern void Motor_User_ActivateCalibrationAdc(Motor_T * p_motor);
 extern void Motor_User_ActivateCalibrationSinCos(Motor_T * p_motor);
+extern void Motor_User_ActivateCalibrationSensor(Motor_T * p_motor);
 
 extern void Motor_User_SetSpeedLimitActive(Motor_T * p_motor, uint16_t scalar_frac16);
 extern void Motor_User_ClearSpeedLimitActive(Motor_T * p_motor);

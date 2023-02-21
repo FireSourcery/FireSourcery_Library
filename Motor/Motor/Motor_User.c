@@ -446,9 +446,9 @@ void Motor_User_ActivateCalibrationSensor(Motor_T * p_motor)
     switch(p_motor->Parameters.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL:        StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL);         break;
-        case MOTOR_SENSOR_MODE_ENCODER:        StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER);    break;
+        case MOTOR_SENSOR_MODE_ENCODER:     StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER);    break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SIN_COS:        StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_SIN_COS);    break;
+        case MOTOR_SENSOR_MODE_SIN_COS:     StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_SIN_COS);    break;
 #endif
         default: break;
     }
