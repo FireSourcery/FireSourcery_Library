@@ -44,11 +44,11 @@
 */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-    Motor_CaptureRefTime(p_motor);
+    // Motor_Debug_CaptureRefTime(p_motor);
     p_motor->ControlTimerBase++;
     StateMachine_Semi_ProcOutput(&p_motor->StateMachine);
     //  Motor_Analog_Thread(p_motor); alternatively use analog select mode to implement preferred order
-    Motor_Debug_CaptureTime(p_motor, 5U);
+    // Motor_Debug_CaptureTime(p_motor, 5U);
 }
 
 static inline void Motor_Heat_Thread(Motor_T * p_motor)
@@ -59,8 +59,8 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 
         switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
         {
-            case THERMISTOR_STATUS_OK:             Motor_User_ClearILimitActive(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT);     break;
-            case THERMISTOR_STATUS_SHUTDOWN:     Motor_User_SetFault(p_motor);                                         break;
+            case THERMISTOR_STATUS_OK:          Motor_User_ClearILimitActive(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT);     break;
+            case THERMISTOR_STATUS_SHUTDOWN:    Motor_User_SetFault(p_motor);                                         break;
             case THERMISTOR_STATUS_WARNING:     /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
                 Motor_User_SetILimitActive(p_motor, Thermistor_GetHeatLimit_FracU16(&p_motor->Thermistor), MOTOR_I_LIMIT_ACTIVE_HEAT);
                 break;

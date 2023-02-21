@@ -58,7 +58,7 @@ const StateMachine_Machine_T MSM_MACHINE =
 };
 
 static StateMachine_State_T * TransitionFault(Motor_T * p_motor, uint32_t voidVar) { (void)p_motor; (void)voidVar; return &STATE_FAULT; }
-static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, uint32_t voidVar) { (void)p_motor; (void)voidVar;    return &STATE_FREEWHEEL; }
+static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, uint32_t voidVar) { (void)p_motor; (void)voidVar; return &STATE_FREEWHEEL; }
 
 /******************************************************************************/
 /*!

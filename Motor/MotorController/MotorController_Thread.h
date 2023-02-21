@@ -202,19 +202,12 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
 }
 
 /*
-    High Freq, Low Priority
-*/
-static inline void _MotorController_ProcBackground(MotorController_T * p_mc)
-{
-
-}
-
-/*
     High Freq, Low Priority, Main
 */
 static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 {
-    _MotorController_ProcBackground(p_mc);
+    /* High Freq, Low Priority */
+    for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]); }
 
     /* Med Freq, Low Priority, 1 ms */
     if(Timer_Periodic_Poll(&p_mc->TimerMillis) == true)
@@ -248,8 +241,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
         //     Serial_PollTxData(&p_mc->CONFIG.P_SERIALS[iSerial]);
         // }
 
-        for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]); }
-
     #ifdef CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE
         if(p_mc->Parameters.IsCanEnable == true) { CanBus_ProcServices(p_mc->CONFIG.P_CAN_BUS); }
     #endif
@@ -275,9 +266,9 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 
             _MotorController_ProcOptDin(p_mc);
 
-            _MotorController_ProcVoltageMonitor(p_mc); /* Except voltage supply */
-            _MotorController_ProcHeatMonitor(p_mc);
-            for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
+            // _MotorController_ProcVoltageMonitor(p_mc); /* Except voltage supply */
+            // _MotorController_ProcHeatMonitor(p_mc);
+            // for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 
             // for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++)
             // {

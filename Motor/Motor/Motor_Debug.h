@@ -36,7 +36,7 @@
 
 #include "System/SysTime/SysTime.h"
 
-static inline void Motor_CaptureRefTime(Motor_T * p_motor)
+static inline void Motor_Debug_CaptureRefTime(Motor_T * p_motor)
 {
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
     p_motor->MicrosRef = SysTime_GetMicros();
