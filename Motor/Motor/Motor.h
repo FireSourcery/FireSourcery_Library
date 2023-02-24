@@ -263,7 +263,8 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
     */
     uint8_t PolePairs;
     uint16_t Kv;
-    uint16_t SpeedFeedbackRef_Rpm;     /* Feedback / PID Regulator Limits Ref, User IO units conversion, Encoder speed calc ref. */
+    uint16_t SpeedFeedbackRef_Rpm;  /* Feedback / PID Regulator Limits Ref, User IO units conversion, Encoder speed calc ref. */
+                                    /* A value greater than achievable will cause integral windup */
     uint16_t VSpeedRef_Rpm;         /* Derive from Kv + offset. Use < SpeedFeedbackRef_Rpm to begin at lower speed. */
     //option Scale to Kv or Bemf on resume
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
@@ -273,9 +274,9 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
     uint16_t IbZeroRef_Adcu;
     uint16_t IcZeroRef_Adcu;
 
-    uint16_t SpeedLimitForward_ScalarU16;     /* "Root" Limits. Persistent User Param. Frac16 of SpeedFeedbackRef_Rpm */
+    uint16_t SpeedLimitForward_ScalarU16;   /* "Root" Limits. Persistent User Param. Frac16 of SpeedFeedbackRef_Rpm */
     uint16_t SpeedLimitReverse_ScalarU16;
-    uint16_t ILimitMotoring_ScalarU16;         /* Persistent User Param. Frac16 of RefMax I_UNITS_AMPS. ILimit must be < 100% to account for I_Frac saturation. */
+    uint16_t ILimitMotoring_ScalarU16;      /* Persistent User Param. Frac16 of RefMax I_UNITS_AMPS. ILimit must be < 100% to account for I_Frac saturation. */
     uint16_t ILimitGenerating_ScalarU16;
 
     uint16_t RampAccel_Cycles;
@@ -287,7 +288,7 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     uint16_t OpenLoopSpeed_FracU16;         /* Max, 65536 will overflow */
     uint16_t OpenLoopPower_FracU16;         /* V or I Frac16 */
-    uint16_t OpenLoopAccel_Cycles;             /* Time to reach OpenLoopSpeed_RPM */
+    uint16_t OpenLoopAccel_Cycles;          /* Time to reach OpenLoopSpeed_RPM */
     // uint16_t OpenLoopVHzGain;
 #endif
 

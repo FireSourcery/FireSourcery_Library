@@ -287,6 +287,7 @@ typedef const struct MotorController_Config_Tag
     Protocol_T * const P_PROTOCOLS; /* Simultaneously active protocols */
     const uint8_t PROTOCOL_COUNT;
 
+    /* In Pow2 */
     const uint32_t ANALOG_USER_DIVIDER;
     const uint32_t MAIN_DIVIDER_10;
     const uint32_t MAIN_DIVIDER_1000;

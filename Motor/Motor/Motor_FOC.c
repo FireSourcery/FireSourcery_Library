@@ -176,7 +176,7 @@ static inline void ProcClarkePark(Motor_T * p_motor)
 {
 #if     defined(CONFIG_MOTOR_I_SENSORS_AB)
     FOC_ProcClarkePark_AB(&p_motor->Foc);
-#elif     defined(CONFIG_MOTOR_I_SENSORS_ABC)
+#elif   defined(CONFIG_MOTOR_I_SENSORS_ABC)
     FOC_ProcClarkePark(&p_motor->Foc);
 #endif
 }
@@ -190,8 +190,11 @@ static void ActivateAngle(Motor_T * p_motor)
 
 static void ProcInnerFeedbackOutput(Motor_T * p_motor)
 {
-    ProcClarkePark(p_motor);
-    ProcInnerFeedback(p_motor); /* Set Vd Vq */
+    // if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
+    // {
+        ProcClarkePark(p_motor);
+        ProcInnerFeedback(p_motor); /* Set Vd Vq */
+    // }
     ActivateAngle(p_motor);
 }
 
@@ -211,6 +214,7 @@ extern void Motor_ExternControl(Motor_T * p_motor);
 void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
     Motor_FOC_EnqueueIabc(p_motor); /* Samples chain completes sometime after queue resumes. ADC ISR priority higher than PWM. */
+
 #ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
     Motor_ExternControl(p_motor);
 #endif

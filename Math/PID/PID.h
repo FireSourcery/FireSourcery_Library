@@ -49,7 +49,7 @@ typedef struct __attribute__((aligned(4U))) PID_Params_Tag
     PID_Mode_T Mode;
     uint32_t SampleFreq;
 
-    int32_t Kp_Fixed32; /* Q16.16 */
+    int32_t Kp_Fixed32; /* Q16.16, Gain < 32,767, [Error Max] = 65535 */
     int32_t Ki_Fixed32;
     int32_t Kd_Fixed32;
 

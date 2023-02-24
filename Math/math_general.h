@@ -45,7 +45,7 @@ static inline int32_t math_isbound(int32_t value, int32_t low, int32_t high) { r
 static inline int32_t math_add_sat(int32_t a, int32_t b)
 {
     int32_t result = a + b;
-    if         ((a > 0) && (b > 0) && (result < 0)) { result = INT32_MAX; } /* (a > 0 && b > INT_MAX - a) */
+    if      ((a > 0) && (b > 0) && (result < 0)) { result = INT32_MAX; } /* (a > 0 && b > INT_MAX - a) */
     else if ((a < 0) && (b < 0) && (result > 0)) { result = 0 - INT32_MAX; } /* (a < 0 && b < INT_MIN - a) */
     return result;
 }

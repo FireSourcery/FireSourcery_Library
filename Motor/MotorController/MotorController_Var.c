@@ -62,10 +62,10 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
         case MOT_VAR_DEBUG:     value = qfrac16_sin(Millis());              break;
         case MOT_VAR_MILLIS:    value = Millis();                           break;
 
-        case MOT_VAR_MC_STATE:          value = MotorController_User_GetStateId(p_mc);    break;
-        case MOT_VAR_MC_STATUS_FLAGS:   value = 0;                  break;
+        case MOT_VAR_MC_STATE:          value = MotorController_User_GetStateId(p_mc);  break;
+        case MOT_VAR_MC_STATUS_FLAGS:   value = 0;                                      break;
 
-        //todo change to adcu
+        //todo change to adcu/V*100
         case MOT_VAR_V_SOURCE:      value = MotorController_User_GetVSource(p_mc, 1000U);           break;
         case MOT_VAR_V_SENSOR:      value = MotorController_User_GetVSense(p_mc, 1U);               break;
         case MOT_VAR_V_ACC:         value = MotorController_User_GetVAcc(p_mc, 1U);                 break;
@@ -81,10 +81,9 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
         case MOT_VAR_USER_CMD:      value = MotorController_User_GetCmdValue(p_mc);         break;
         case MOT_VAR_THROTTLE:      value = MotorController_User_GetCmdValue(p_mc);         break;  /* Write-only or May differ from Write */
         case MOT_VAR_BRAKE:         value = MotorController_User_GetCmdValue(p_mc);         break;  /* Write-only or May differ from Write */
-        case MOT_VAR_DIRECTION:     value = MotorController_User_GetDirection(p_mc);        break;   /* Value 0: Neutral, 1: Reverse, 2: Forward */
+        case MOT_VAR_DIRECTION:     value = MotorController_User_GetDirection(p_mc);        break;  /* Value 0: Neutral, 1: Reverse, 2: Forward */
 
-        case MOT_VAR_ACTIVE_FEEDBACK_MODE:   value = Motor_User_GetDefaultFeedbackMode(p_motor);    break; //todo change to active
-
+        case MOT_VAR_ACTIVE_FEEDBACK_MODE:  value = Motor_User_GetDefaultFeedbackMode(p_motor);    break; //todo change to active
 
         /* Parameters */
         case MOT_VAR_DEFAULT_FEEDBACK_MODE: value = Motor_User_GetDefaultFeedbackMode(p_motor);    break; //todo change to active
@@ -96,12 +95,12 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
         case MOT_VAR_HALL_SENSOR_TABLE_5: value = p_motor->Hall.Params.SensorsTable[5U];    break;
         case MOT_VAR_HALL_SENSOR_TABLE_6: value = p_motor->Hall.Params.SensorsTable[6U];    break;
         // case MOT_VAR_HEAT_PCB_DEG_C:    MotorController_User_GetHeatPcb_DegC(p_mc, 1U);             break;
-        // case MOT_VAR_I_MAX_REF_AMP:  value = MotorController_User_GetIMax(p_mc); break;
+        // case MOT_VAR_I_MAX_REF_AMP:      value = MotorController_User_GetIMax(p_mc); break;
         // case MOT_VAR_I_PEAK_AMP:              break;
         // case MOT_VAR_SPEED_GROUND_KMH:          break;
         // case MOT_VAR_HEAT_PCB_DEG_C:         break;
-        // case MOT_VAR_POLE_PAIRS:                  value = Motor_User_GetPolePairs(p_motor);     break;
-        case MOT_VAR_VERSION:   value =  MotorController_User_GetMainVersion(p_mc);         break;
+        // case MOT_VAR_POLE_PAIRS:         value = Motor_User_GetPolePairs(p_motor);     break;
+        case MOT_VAR_VERSION:   value = MotorController_User_GetMainVersion(p_mc);          break;
         default: value = 0xAAU; break;
     }
 
@@ -123,12 +122,12 @@ uint8_t MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T varId, int3
         case MOT_VAR_BRAKE:         MotorController_User_SetCmdBrake(p_mc, (uint16_t)varValue);                         writeCount = 2U;    break;
         case MOT_VAR_DIRECTION:     MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)varValue);     writeCount = 2U;    break;  /* Value 0: Neutral, 1: Reverse, 2: Forward */
         case MOT_VAR_BEEP:          MotorController_User_BeepN(p_mc, 500U, 500U, varValue);                             writeCount = 2U;    break;
-        case MOT_VAR_CALIBRATE_SENSOR:  Motor_User_ActivateCalibrationSensor(p_motor);                             writeCount = 2U;    break;
+        case MOT_VAR_CALIBRATE_SENSOR:  Motor_User_ActivateCalibrationSensor(p_motor);                                  writeCount = 2U;    break;
 
         case MOT_VAR_ACTIVE_FEEDBACK_MODE:  Motor_User_SetDefaultFeedbackMode(p_motor, (Motor_FeedbackModeId_T)varValue);  writeCount = 2U;   break; //todo change to active
 
         /* Parameters */
-        case MOT_VAR_DEFAULT_FEEDBACK_MODE:  Motor_User_SetDefaultFeedbackMode(p_motor, (Motor_FeedbackModeId_T)varValue);  writeCount = 2U;   break; //todo change to active
+        case MOT_VAR_DEFAULT_FEEDBACK_MODE: Motor_User_SetDefaultFeedbackMode(p_motor, (Motor_FeedbackModeId_T)varValue);  writeCount = 2U;   break; //todo change to active
         // case MOT_VAR_USER_INPUT_MODE: MotorController_User_SetInputMode_Blocking(p_mc, (MotorController_InputMode_T)varValue); writeCount = 2U;break;
 
         // case MOT_VAR_PARAM_X:           break;                    /*  */

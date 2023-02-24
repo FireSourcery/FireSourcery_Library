@@ -59,33 +59,29 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 
     proportional = (p_pid->Params.PropGain * error) >> p_pid->Params.PropGainShift; /* Inclusive of 16 shift */
 
-    /*
-        Store as Integral. Allows compute time gain adjustment. Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
-    */
-    /* Forward rectangular approximation.  */
-    integral32Part = ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift); /* Exclusive of 16 shift */
-    integral32 = math_add_sat(p_pid->Integral32, integral32Part);     /* Check for overflow. Integral partition may be > proportional */
-    integral = integral32 >> 16;
-
     /* Dynamic Clamp */
     integralMin = math_min(p_pid->OutputMin - proportional, 0);
     integralMax = math_max(p_pid->OutputMax - proportional, 0);
 
-    if         (integral > integralMax)     { integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
-    else if (integral < integralMin)     { integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
-    else                                 { p_pid->Integral32 = integral32; }
+    /*
+        Store as Integral ("integrate" then sum). Allows compute time gain adjustment. Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
+    */
+    /* Forward rectangular approximation. */
+    integral32Part = (p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift; /* Exclusive of 16 shift */
+    integral32 = math_add_sat(p_pid->Integral32, integral32Part);
+    integral = integral32 >> 16;
 
-    // integral32Part = ((p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift); /* Exclusive of 16 shift */
+    if      (integral > integralMax) { integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
+    else if (integral < integralMin) { integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
+    else                             { p_pid->Integral32 = integral32; }
+
+    // integral32Part = (p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift; /* Exclusive of 16 shift */
     // integral = (p_pid->Integral32 >> 16) + (integral32Part >> 16);
 
-    // /* Dynamic Clamp */
-    // integralMin = math_min(p_pid->OutputMin - proportional, 0);
-    // integralMax = math_max(p_pid->OutputMax - proportional, 0);
-
-    // if         (integral >= integralMax)     { integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
-    // else if (integral <= integralMin)     { integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
+    // if      (integral >= integralMax) { integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
+    // else if (integral <= integralMin) { integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
     // /* integralMin < integral < integralMax. -65535 > integral32Part < 65535 */
-    // else                                 { p_pid->Integral32 = p_pid->Integral32 + integral32Part; }
+    // else                              { p_pid->Integral32 = p_pid->Integral32 + integral32Part; }
 
     return proportional + integral;
 }
@@ -148,14 +144,14 @@ void PID_SetFreq(PID_T * p_pid, uint32_t sampleFreq)
 /*
     Proportional(k) = Kp * error(k) = kp_Fixed32 * error(k) >> 16
 
-    PropGain < 32,767, errorMax = (32,767 - (-32,768))
+    [Error Max] = (32,767 - (-32,768)) = 65535 => Gain < 32,767
     kp_Fixed32 >> 16 = PropGain >> PropGainShift, inclusive of shift 16
     PropGain = kp_Fixed32 << PropGainShift >> 16
-    [kp_Fixed32 << PropGainShift >> 16] * errorMax < INT32_MAX;
+    [kp_Fixed32 << PropGainShift >> 16] * [Error Max] < INT32_MAX;
     PropGainShift < log2(INT32_MAX / 65536 * 65536 / kp_Fixed32)
 
-    kp_Fixed32 = 65536 => LShift 14-16, RShift 2, Gain = 16,384
-    kp_Fixed32 = 65535 => LShift 15-16, RShift 1, Gain = 32,767
+    kp_Fixed32 = 65536 => LShift 14-16 = -2, RShift 2, Gain = 16,384
+    kp_Fixed32 = 65535 => LShift 15-16 = -1, RShift 1, Gain = 32,767
 */
 void PID_SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
 {
@@ -169,11 +165,11 @@ int32_t PID_GetKp_Fixed32(PID_T * p_pid) { return p_pid->Params.PropGain << (16 
     Integral(k) = Ki * error(k) / SampleFreq + Integral(k-1)
                 = ki_Fixed32 * error(k) / SampleFreq >> 16 + Integral(k-1)
 
-    IntegralGain < 32,767, errorMax = (32,767 - (-32,768))
-    ki_Fixed32 / SampleFreq = IntegralGain >> IntegralGainShift, exclusive of shift 16
-    IntegralGain = ki_Fixed32 / SampleFreq << IntegralGainShift
-    [ki_Fixed32 / SampleFreq << IntegralGainShift] * errorMax < INT32_MAX;
-    IntegralGainShift < log2(INT32_MAX / 65536 * SampleFreq / ki_Fixed32)
+    [Error Max] = (32,767 - (-32,768)) = 65535 => Gain < 32,767
+        ki_Fixed32 / SampleFreq = IntegralGain >> IntegralGainShift, exclusive of shift 16
+        IntegralGain = ki_Fixed32 / SampleFreq << IntegralGainShift
+        [ki_Fixed32 / SampleFreq << IntegralGainShift] * [Error Max] < INT32_MAX;
+        IntegralGainShift < log2(INT32_MAX / 65536 * SampleFreq / ki_Fixed32)
 */
 void PID_SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
 {
