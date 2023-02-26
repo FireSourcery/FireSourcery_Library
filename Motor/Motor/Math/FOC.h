@@ -59,17 +59,19 @@ typedef struct FOC_Tag
     qfrac16_t Sine;
     qfrac16_t Cosine;
 
-    /* PID Input Variable - From Ramp, SpeedPid, OpenLoop */
-    qfrac16_t VIdReq;
-    qfrac16_t VIqReq;
-
     /* PID Feedback Variable */
     qfrac16_t Id;
     qfrac16_t Iq;
 
+    /* PID Setpoint Variable - From Ramp, SpeedPid, OpenLoop */
+    qfrac16_t VIdReq;
+    qfrac16_t VIqReq;
+
     /* PID Control Variable, or intermediate input bypass current feedback */
     qfrac16_t Vd;
     qfrac16_t Vq;
+
+    uint16_t Vunlimited;   /* Q1.15 Unsigned */
 
     qfrac16_t Valpha;
     qfrac16_t Vbeta;
@@ -96,7 +98,7 @@ static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 {
     // foc_circlelimit_dmax(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
-    foc_circlelimit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX);
+    p_foc->Vunlimited = foc_circlelimit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX);
     foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
     svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
 }
@@ -111,8 +113,10 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc)
 static inline uint16_t FOC_GetIMagnitude_Idq(FOC_T * p_foc) { return qfrac16_vectormagnitude(p_foc->Id, p_foc->Iq); }
 static inline uint16_t FOC_GetIMagnitude(FOC_T * p_foc)     { return qfrac16_vectormagnitude(p_foc->Ialpha, p_foc->Ibeta); }
 static inline uint16_t FOC_GetVMagnitude(FOC_T * p_foc)     { return qfrac16_vectormagnitude(p_foc->Valpha, p_foc->Vbeta); }
-static inline qfrac16_t FOC_GetIPhase(FOC_T * p_foc)        { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
-static inline qfrac16_t FOC_GetVPhase(FOC_T * p_foc)        { return FOC_GetVMagnitude(p_foc) * math_sign(p_foc->Vq); }
+// static inline qfrac16_t FOC_GetIPhase(FOC_T * p_foc)        { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
+// static inline qfrac16_t FOC_GetVPhase(FOC_T * p_foc)        { return FOC_GetVMagnitude(p_foc) * math_sign(p_foc->Vq); }
+static inline uint16_t FOC_GetIPhase(FOC_T * p_foc)         { return math_abs(FOC_GetIMagnitude(p_foc)); }
+static inline uint16_t FOC_GetVPhase(FOC_T * p_foc)         { return math_abs(FOC_GetVMagnitude(p_foc)); }
 
 /* [0:49152] <=> [0:1.5] */
 static inline int32_t FOC_GetPower(FOC_T * p_foc) { return (qfrac16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2); }

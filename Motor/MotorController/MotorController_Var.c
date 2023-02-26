@@ -51,33 +51,39 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
         case MOT_VAR_POWER:     value = Motor_User_GetElectricalPower_FracS16(p_motor);     break;
         case MOT_VAR_RAMP_CMD:  value = Linear_Ramp_GetOutput(&p_motor->Ramp);              break;
 
+        case MOT_VAR_FOC_IA:    value = p_motor->Foc.Ia;        break;
+        case MOT_VAR_FOC_IB:    value = p_motor->Foc.Ib;        break;
+        case MOT_VAR_FOC_IC:    value = p_motor->Foc.Ic;        break;
         case MOT_VAR_FOC_IQ:    value = p_motor->Foc.Iq;        break;
         case MOT_VAR_FOC_ID:    value = p_motor->Foc.Id;        break;
         case MOT_VAR_FOC_Q_REQ: value = p_motor->Foc.VIqReq;    break;
         case MOT_VAR_FOC_D_REQ: value = p_motor->Foc.VIdReq;    break;
-        case MOT_VAR_FOC_IA:    value = p_motor->Foc.Ia;        break;
-        case MOT_VAR_FOC_IB:    value = p_motor->Foc.Ib;        break;
-        case MOT_VAR_FOC_IC:    value = p_motor->Foc.Ic;        break;
+        case MOT_VAR_FOC_VQ:    value = p_motor->Foc.Vq;        break;
+        case MOT_VAR_FOC_VD:    value = p_motor->Foc.Vd;        break;
+        // case MOT_VAR_FOC_VQ:  qfrac16_vectorlimit(&x, &y, 32767);  value = x;   break;
+        // case MOT_VAR_FOC_VD:  qfrac16_vectorlimit(&x, &y, 32767);  value = y;   break;
+        case MOT_VAR_DEBUG:     value = p_motor->Foc.Vunlimited;     break;
 
-        case MOT_VAR_DEBUG:     value = qfrac16_sin(Millis());              break;
+        // case MOT_VAR_DEBUG:     value = qfrac16_sin(Millis());              break;
         case MOT_VAR_MILLIS:    value = Millis();                           break;
+        // case MOT_VAR_TX_PACKET_COUNT:   value = Protocol_GetTxPacketCount(p_protocol);      break;
+        // case MOT_VAR_RX_PACKET_COUNT:   value = Protocol_GetRxPacketCount(p_protocol);      break;
 
         case MOT_VAR_MC_STATE:          value = MotorController_User_GetStateId(p_mc);  break;
         case MOT_VAR_MC_STATUS_FLAGS:   value = 0;                                      break;
 
-        //todo change to adcu/V*100
-        case MOT_VAR_V_SOURCE:      value = MotorController_User_GetVSource(p_mc, 1000U);           break;
-        case MOT_VAR_V_SENSOR:      value = MotorController_User_GetVSense(p_mc, 1U);               break;
-        case MOT_VAR_V_ACC:         value = MotorController_User_GetVAcc(p_mc, 1U);                 break;
-        case MOT_VAR_HEAT_PCB:      value = MotorController_User_GetHeatPcb_DegC(p_mc, 1U);         break;
-        case MOT_VAR_HEAT_MOSFETS:  value = MotorController_User_GetHeatMosfets_DegC(p_mc, 1U);     break;
-
-        case MOT_VAR_TX_PACKET_COUNT:   value = Protocol_GetTxPacketCount(p_protocol);      break;
-        case MOT_VAR_RX_PACKET_COUNT:   value = Protocol_GetRxPacketCount(p_protocol);      break;
+        case MOT_VAR_V_SOURCE:      value = MotorController_User_GetVSource(p_mc, 100U);            break;
+        case MOT_VAR_V_SENSOR:      value = MotorController_User_GetVSense(p_mc, 100U);             break;
+        case MOT_VAR_V_ACC:         value = MotorController_User_GetVAcc(p_mc, 100U);               break;
+        case MOT_VAR_HEAT_PCB:      value = MotorController_User_GetAdcu(p_mc, MOT_ANALOG_CHANNEL_HEAT_PCB);        break;
+        case MOT_VAR_HEAT_MOSFETS:  value = MotorController_User_GetAdcu(p_mc, MOT_ANALOG_CHANNEL_HEAT_MOSFETS);     break;
+        case MOT_VAR_HEAT_PCB_DEG_C:        value = MotorController_User_GetHeatPcb_DegC(p_mc, 1U);         break;
+        case MOT_VAR_HEAT_MOSFETS_DEG_C:    value = MotorController_User_GetHeatMosfets_DegC(p_mc, 1U);     break;
 
         case MOT_VAR_ANALOG_THROTTLE:   value = MotAnalogUser_GetThrottle(&p_mc->AnalogUser);   break;  /* Value U16 */
         case MOT_VAR_ANALOG_BRAKE:      value = MotAnalogUser_GetBrake(&p_mc->AnalogUser);      break;  /* Value U16 */
 
+        /* Read Write */
         case MOT_VAR_USER_CMD:      value = MotorController_User_GetCmdValue(p_mc);         break;
         case MOT_VAR_THROTTLE:      value = MotorController_User_GetCmdValue(p_mc);         break;  /* Write-only or May differ from Write */
         case MOT_VAR_BRAKE:         value = MotorController_User_GetCmdValue(p_mc);         break;  /* Write-only or May differ from Write */
@@ -94,11 +100,11 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
         case MOT_VAR_HALL_SENSOR_TABLE_4: value = p_motor->Hall.Params.SensorsTable[4U];    break;
         case MOT_VAR_HALL_SENSOR_TABLE_5: value = p_motor->Hall.Params.SensorsTable[5U];    break;
         case MOT_VAR_HALL_SENSOR_TABLE_6: value = p_motor->Hall.Params.SensorsTable[6U];    break;
-        // case MOT_VAR_HEAT_PCB_DEG_C:    MotorController_User_GetHeatPcb_DegC(p_mc, 1U);             break;
+
+
+
         // case MOT_VAR_I_MAX_REF_AMP:      value = MotorController_User_GetIMax(p_mc); break;
         // case MOT_VAR_I_PEAK_AMP:              break;
-        // case MOT_VAR_SPEED_GROUND_KMH:          break;
-        // case MOT_VAR_HEAT_PCB_DEG_C:         break;
         // case MOT_VAR_POLE_PAIRS:         value = Motor_User_GetPolePairs(p_motor);     break;
         case MOT_VAR_VERSION:   value = MotorController_User_GetMainVersion(p_mc);          break;
         default: value = 0xAAU; break;

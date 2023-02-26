@@ -97,6 +97,11 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 //     return p_pid->Output;
 // }
 
+/*!
+    -65535 < (setpoint - feedback) < 65535
+    @param[in] setpoint [-65536:65535]
+    @param[in] feedback [-65536:65535]
+*/
 int32_t PID_ProcPI(PID_T * p_pid, int32_t setpoint, int32_t feedback)
 {
     p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
@@ -141,35 +146,46 @@ void PID_SetFreq(PID_T * p_pid, uint32_t sampleFreq)
     if(sampleFreq > 0U) { p_pid->Params.SampleFreq = sampleFreq; }
 }
 
+/******************************************************************************/
 /*
+    Select Gain and Shift without overflow
+    [Error Max] = (32,767 - (-32,768)) = 65535 => [Gain Max] = 32,767
+*/
+/******************************************************************************/
+
+/*!
     Proportional(k) = Kp * error(k) = kp_Fixed32 * error(k) >> 16
 
-    [Error Max] = (32,767 - (-32,768)) = 65535 => Gain < 32,767
     kp_Fixed32 >> 16 = PropGain >> PropGainShift, inclusive of shift 16
     PropGain = kp_Fixed32 << PropGainShift >> 16
-    [kp_Fixed32 << PropGainShift >> 16] * [Error Max] < INT32_MAX;
-    PropGainShift < log2(INT32_MAX / 65536 * 65536 / kp_Fixed32)
+    [kp_Fixed32 << PropGainShift >> 16] * [Error Max] < INT32_MAX
+    PropGainShift <= log2(INT32_MAX / 65536 * 65536 / kp_Fixed32)
 
-    kp_Fixed32 = 65536 => LShift 14-16 = -2, RShift 2, Gain = 16,384
-    kp_Fixed32 = 65535 => LShift 15-16 = -1, RShift 1, Gain = 32,767
+    kp_Fixed32 = 65536 => RShift 2, Gain = (16,384, 14)
+    kp_Fixed32 = 65535 => RShift 1, Gain = (32,767, 15)
+    kp_Fixed32 = 32768 => RShift 1, Gain = (16,384, 15)
+    kp_Fixed32 = 32767 => RShift 0, Gain = (32,767, 16)
+
+    @param[in] kp_Fixed32 [0:INT32_MAX], Q16.16, 65536 => 1
 */
 void PID_SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
 {
-    p_pid->Params.PropGainShift = q_log2((uint32_t)32767U * 65536U / kp_Fixed32);
-    p_pid->Params.PropGain = kp_Fixed32 >> (16 - p_pid->Params.PropGainShift);
+    p_pid->Params.PropGainShift = q_log2(INT32_MAX / kp_Fixed32);
+    p_pid->Params.PropGain = kp_Fixed32 >> (16U - p_pid->Params.PropGainShift);
 }
 
-int32_t PID_GetKp_Fixed32(PID_T * p_pid) { return p_pid->Params.PropGain << (16 - p_pid->Params.PropGainShift); }
+int32_t PID_GetKp_Fixed32(PID_T * p_pid) { return p_pid->Params.PropGain << (16U - p_pid->Params.PropGainShift); }
 
-/*
+/*!
     Integral(k) = Ki * error(k) / SampleFreq + Integral(k-1)
                 = ki_Fixed32 * error(k) / SampleFreq >> 16 + Integral(k-1)
 
-    [Error Max] = (32,767 - (-32,768)) = 65535 => Gain < 32,767
-        ki_Fixed32 / SampleFreq = IntegralGain >> IntegralGainShift, exclusive of shift 16
-        IntegralGain = ki_Fixed32 / SampleFreq << IntegralGainShift
-        [ki_Fixed32 / SampleFreq << IntegralGainShift] * [Error Max] < INT32_MAX;
-        IntegralGainShift < log2(INT32_MAX / 65536 * SampleFreq / ki_Fixed32)
+    ki_Fixed32 / SampleFreq = IntegralGain >> IntegralGainShift, exclusive of shift 16
+    IntegralGain = ki_Fixed32 / SampleFreq << IntegralGainShift
+    [ki_Fixed32 / SampleFreq << IntegralGainShift] * [Error Max] < INT32_MAX
+    IntegralGainShift <= log2(INT32_MAX / 65536 * SampleFreq / ki_Fixed32)
+
+    kp_Fixed32 = 65536, SampleFreq = 20000 => RShift 3, Gain = (26,843, 13)
 */
 void PID_SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
 {
@@ -178,3 +194,17 @@ void PID_SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
 }
 
 int32_t PID_GetKi_Fixed32(PID_T * p_pid) { return p_pid->Params.IntegralGain * p_pid->Params.SampleFreq >> p_pid->Params.IntegralGainShift; }
+
+
+/*!
+    @param[in] kp_Fixed16 [0:INT16_MAX] Q8.8 256 => 1
+*/
+void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 8); }
+
+int32_t PID_GetKp_Fixed16(PID_T * p_pid) { return PID_GetKp_Fixed32(p_pid) >> 8; }
+
+/*!
+*/
+void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 8); }
+
+int32_t PID_GetKi_Fixed16(PID_T * p_pid) { return PID_GetKi_Fixed32(p_pid) >> 8; }

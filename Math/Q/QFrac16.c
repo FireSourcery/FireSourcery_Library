@@ -128,22 +128,26 @@ uint16_t qfrac16_vectormagnitude(qfrac16_t x, qfrac16_t y)
     return q_sqrt((int32_t)x * x + (int32_t)y * y);
 }
 
-/* circle limit */
-void qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax)
+/*!
+    Vector Circle Limit
+    @return sqrt(x^2 + y^2) if limited
+*/
+uint16_t qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax)
 {
     uint32_t magnitudeMaxSquared = (int32_t)magnitudeMax * magnitudeMax;
     uint32_t vectorMagnitudeSquared = ((int32_t)(*p_x) * (*p_x)) + ((int32_t)(*p_y) * (*p_y));
-    uint16_t vectorMagnitude;
-    qfrac16_t ratio; /* where 32767 q1.15 ~= 1 */
+    uint16_t vectorMagnitude = 0U;
+    int32_t ratio; /* Q1.15 where 32767 ~= 1 */
 
     if(vectorMagnitudeSquared > magnitudeMaxSquared)
     {
         vectorMagnitude = q_sqrt(vectorMagnitudeSquared);
-        ratio = qfrac16_div(magnitudeMax, vectorMagnitude); /* no saturation needed, magnitudeMax < vectorMagnitude */
+        ratio = qfrac16_div(magnitudeMax, vectorMagnitude); /* no saturation needed, max return 32768 ~= 1 */
         *p_x = (qfrac16_t)qfrac16_mul(*p_x, ratio); /* no saturation needed, ratio < 1 */
         *p_y = (qfrac16_t)qfrac16_mul(*p_y, ratio);
     }
-    return;
+
+    return vectorMagnitude;
 }
 
 /*

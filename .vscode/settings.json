@@ -62,4 +62,7 @@
 
     // "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
     "explorer.copyRelativePathSeparator": "/",
+    "cSpell.words": [
+        "setpoint"
+    ],
 }

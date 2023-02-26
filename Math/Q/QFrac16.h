@@ -66,7 +66,7 @@ static const int32_t QFRAC16_3PI_DIV_4     = 0x00012D97; /* Over saturated */
 
 static inline qfrac16_t qfrac16(int16_t num, int32_t max) { return (qfrac16_t)(((int32_t)num << QFRAC16_N_FRAC_BITS) / max); }
 static inline qfrac16_t qfrac16_convert(int16_t num, int32_t max) { return qfrac16(num, max); }
-static inline qfrac16_t qfrac16_sat(int32_t qfrac) { return math_clamp(qfrac, QFRAC16_MIN, QFRAC16_MAX); }
+static inline qfrac16_t qfrac16_sat(int32_t qfrac) { return math_clamp(qfrac, -QFRAC16_MAX, QFRAC16_MAX); }
 
 /*!
     @brief Unsaturated Multiply
@@ -123,10 +123,7 @@ static inline qfrac16_t qfrac16_div_sat(int16_t dividend, int32_t divisor)
 
 static inline qfrac16_t qfrac16_abs(qfrac16_t x)
 {
-    qfrac16_t val;
-    if(x < 0)     { val = (x == -32768) ? 32767 : 0 - x; }
-    else         { val = x; }
-    return val;
+    return (x < 0) ? ((x == -32768) ? 32767 : 0 - x) : x;
 }
 
 static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
@@ -201,7 +198,7 @@ extern qfrac16_t qfrac16_sin(qangle16_t theta);
 extern qfrac16_t qfrac16_cos(qangle16_t theta);
 extern void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16_t theta);
 extern uint16_t qfrac16_vectormagnitude(qfrac16_t x, qfrac16_t y);
-extern void qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax);
+extern uint16_t qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax);
 extern qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x);
 
 #endif

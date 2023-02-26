@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Motor_User.h
+    @file   Motor_User.h
     @author FireSourcery
     @brief  User Interface. Motor module public functions.
             Functions include error checking.
@@ -37,8 +37,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
-
 
 /******************************************************************************/
 /*!
@@ -172,19 +170,21 @@ static inline int32_t Motor_User_GetElectricalPower_FracS16(Motor_T * p_motor)
     return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetElectricalPower_FracS16, 0U);
 }
 
-static inline uint32_t Motor_User_GetElectricalPower_FracU16(Motor_T * p_motor)
-{
-    return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetElectricalPower_FracS16, 0U);
-}
+// static inline uint32_t Motor_User_GetElectricalPower_FracU16(Motor_T * p_motor)
+// {
+//     return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetElectricalPower_FracS16, 0U);
+// }
+
+//check DC current limit
+// Motor_FOC_GetElectricalPower_FracS16(p_motor) / Global_Motor_GetVSource_V() ;
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-/*!    @return [-32767:32767] Rpm should not exceed int16_t */
+/*! @return [-32767:32767] Rpm should not exceed int16_t */
 static inline int16_t Motor_User_GetSpeed_Rpm(Motor_T * p_motor)            { return _Motor_ConvertSpeed_FracS16ToRpm(p_motor, Motor_User_GetSpeed_FracS16(p_motor)); }
 static inline int16_t Motor_User_GetIPhase_Amps(Motor_T * p_motor)          { return _Motor_ConvertI_FracS16ToAmps(Motor_User_GetIPhase_FracS16(p_motor)); }
 static inline int16_t Motor_User_GetVPhase_Volts(Motor_T * p_motor)         { return _Motor_ConvertV_FracS16ToVolts(Motor_User_GetVPhase_FracS16(p_motor)); }
 static inline int32_t Motor_User_GetElectricalPower_VA(Motor_T * p_motor)   { return _Motor_ConvertPower_FracS16ToWatts(Motor_User_GetElectricalPower_FracS16(p_motor)); }
 #endif
-
 
 //todo check conversion
 static inline uint32_t Motor_User_ConvertToVSpeed(Motor_T * p_motor, uint16_t rpm)  { return Linear_Function(&p_motor->UnitsVSpeed, _Motor_ConvertSpeed_RpmToScalar16(p_motor, rpm)); }

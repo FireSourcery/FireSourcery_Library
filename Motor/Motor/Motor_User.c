@@ -133,10 +133,9 @@ static void Motor_User_GetCmd(Motor_T * p_motor)
 void Motor_User_SetVoltageMode(Motor_T * p_motor)
 {
     // Motor_FeedbackMode_T modeControl = Motor_ConvertFeedbackModeId(modeCmd);
-    // if((modeControl.Speed == 0U) && Motor_CheckSpeedOverThreshold(p_motor) == true)         { modeControl.Speed = 1U; }
-    // if((modeControl.Current == 0U) && Motor_FOC_CheckIOverThreshold(p_motor) == true)     { modeControl.Current = 1U; }
+    // if((modeControl.Speed == 0U) && Motor_CheckSpeedOverThreshold(p_motor) == true)      { modeControl.Speed = 1U; }
+    // if((modeControl.Current == 0U) && Motor_FOC_CheckIOverThreshold(p_motor) == true)    { modeControl.Current = 1U; }
     // return modeControl;
-
     _Motor_User_ActivateControlMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE);
 }
 
@@ -146,26 +145,27 @@ void Motor_User_SetVoltageMode(Motor_T * p_motor)
 void Motor_User_SetVoltageCmdValue(Motor_T * p_motor, int16_t voltageCmd)
 {
     int32_t voltageCmdIn = (voltageCmd > 0) ? voltageCmd : 0; /* Reverse voltage use change direction */
-    if((p_motor->ControlFeedbackMode.Speed == 0U) && (p_motor->ControlFeedbackMode.Current == 0U))
-    {
-        Motor_User_SetCmd(p_motor, voltageCmdIn);
-    }
-    else
-    {
-        // if(voltageCmdIn < Motor_User_GetCmd(p_motor))
-        // {
-        //     if((p_motor->ControlFeedbackMode.Speed == 1U) && (Motor_CheckSpeedOverThreshold(p_motor) == false))     { p_motor->ControlFeedbackMode.Speed = 0U; }
-        //     if((p_motor->ControlFeedbackMode.Current == 1U) && (Motor_FOC_CheckIOverThreshold(p_motor) == false))     { p_motor->ControlFeedbackMode.Current = 0U; }
+    Motor_User_SetCmd(p_motor, voltageCmdIn);
+    // if((p_motor->ControlFeedbackMode.Speed == 0U) && (p_motor->ControlFeedbackMode.Current == 0U))
+    // {
+    //     Motor_User_SetCmd(p_motor, voltageCmdIn);
+    // }
+    // else
+    // {
+    //     // if(voltageCmdIn < Motor_User_GetCmd(p_motor))
+    //     // {
+    //     //     if((p_motor->ControlFeedbackMode.Speed == 1U) && (Motor_CheckSpeedOverThreshold(p_motor) == false))     { p_motor->ControlFeedbackMode.Speed = 0U; }
+    //     //     if((p_motor->ControlFeedbackMode.Current == 1U) && (Motor_FOC_CheckIOverThreshold(p_motor) == false))     { p_motor->ControlFeedbackMode.Current = 0U; }
 
-        //     if(p_motor->ControlFeedbackMode.Speed == 1U)
-        //     {
-        //         if((Motor_CheckSpeedOverThreshold(p_motor) == false) || (math_abs(vReq) < math_abs(p_motor->PidSpeed.Output)))
-        //         {
-        //             p_motor->ControlFeedbackMode.Speed = 0U;
-        //         }
-        //     }
-        // }
-    }
+    //     //     if(p_motor->ControlFeedbackMode.Speed == 1U)
+    //     //     {
+    //     //         if((Motor_CheckSpeedOverThreshold(p_motor) == false) || (math_abs(vReq) < math_abs(p_motor->PidSpeed.Output)))
+    //     //         {
+    //     //             p_motor->ControlFeedbackMode.Speed = 0U;
+    //     //         }
+    //     //     }
+    //     // }
+    // }
 }
 
 void Motor_User_SetVoltageModeCmd(Motor_T * p_motor, int16_t voltageCmd)
@@ -213,7 +213,6 @@ void Motor_User_SetTorqueMode(Motor_T * p_motor)
 */
 void Motor_User_SetTorqueCmdValue(Motor_T * p_motor, int16_t torqueCmd)
 {
-
     int32_t torqueCmdIn = (torqueCmd > 0) ? Scale16(p_motor->ILimitMotoring_ScalarU16, torqueCmd) : Scale16(p_motor->ILimitGenerating_ScalarU16, torqueCmd);
     Motor_User_SetCmd(p_motor, torqueCmdIn);
 }
@@ -317,11 +316,11 @@ void Motor_User_SetDefaultFeedbackCmdValue(Motor_T * p_motor, int16_t userCmd)
 {
     Motor_FeedbackMode_T flags = Motor_ConvertFeedbackModeId(p_motor->Parameters.DefaultFeedbackMode);
 
-    if        (flags.OpenLoop == 1U)     { Motor_User_SetOpenLoopCmdValue(p_motor, userCmd); }
-    else if    (flags.Position == 1U)     { Motor_User_SetPositionCmdValue(p_motor, userCmd); }
-    else if    (flags.Speed == 1U)     { Motor_User_SetSpeedCmdValue(p_motor, userCmd); }
-    else if    (flags.Current == 1U)     { Motor_User_SetTorqueCmdValue(p_motor, userCmd); }
-    else                             { Motor_User_SetVoltageCmdValue(p_motor, userCmd); }
+    if      (flags.OpenLoop == 1U)  { Motor_User_SetOpenLoopCmdValue(p_motor, userCmd); }
+    else if (flags.Position == 1U)  { Motor_User_SetPositionCmdValue(p_motor, userCmd); }
+    else if (flags.Speed == 1U)     { Motor_User_SetSpeedCmdValue(p_motor, userCmd); }
+    else if (flags.Current == 1U)   { Motor_User_SetTorqueCmdValue(p_motor, userCmd); }
+    else                            { Motor_User_SetVoltageCmdValue(p_motor, userCmd); }
 }
 
 /*!
@@ -883,7 +882,7 @@ void Motor_User_SetIPeakRef_Adcu_Debug(Motor_T * p_motor, uint16_t adcu)
 
 void Motor_User_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
 {
-    p_motor->Parameters.IPeakRef_Adcu = (adcu >  GLOBAL_MOTOR.I_ZERO_TO_PEAK_ADCU) ?  GLOBAL_MOTOR.I_ZERO_TO_PEAK_ADCU : adcu;
+    p_motor->Parameters.IPeakRef_Adcu = (adcu > GLOBAL_MOTOR.I_ZERO_TO_PEAK_ADCU) ? GLOBAL_MOTOR.I_ZERO_TO_PEAK_ADCU : adcu;
     PropagateSet(p_motor, Motor_ResetUnitsIabc);
 }
 

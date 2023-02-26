@@ -81,13 +81,13 @@ static inline void ProcInnerFeedback(Motor_T * p_motor)
     {
         /*
             Constant Voltage Mode
-            input    RampCmd[-32768:32768]
-            output    VqReq[-32768:32767]
+            input   RampCmd[-32768:32768]
+            output  VqReq[-32768:32767]
         */
         /*
             Scalar Voltage Mode
-            input    RampCmd[0:65535] => Scalar
-            output    VqReq[-32768:32767] = RampCmd / 65536 * VSpeed_Frac16 / 2
+            input   RampCmd[0:65535] => Scalar
+            output  VqReq[-32768:32767] = RampCmd / 65536 * VSpeed_Frac16 / 2
                     VSpeed_Frac16 =< Speed_FracS16, to not exceed 1
 
             Overflow caution:
@@ -119,9 +119,9 @@ static inline void ProcInnerFeedback(Motor_T * p_motor)
 /*
     Speed Feedback Loop
     SpeedControl_FracS16 update ~1000Hz, Ramp input 1000Hz, RampCmd output 20000Hz
-    input    RampCmd[-32767:32767] - (speedFeedback_Frac16)[-32767:32767]
+    input   RampCmd[-32767:32767] - (speedFeedback_Frac16)[-32767:32767]
             accepts over saturated inputs
-    output     SpeedControl_FracS16[-32767:32767] => IqReq or VqReq
+    output  SpeedControl_FracS16[-32767:32767] => IqReq or VqReq
 */
 static inline void ProcOuterFeedback(Motor_T * p_motor)
 {
@@ -190,11 +190,11 @@ static void ActivateAngle(Motor_T * p_motor)
 
 static void ProcInnerFeedbackOutput(Motor_T * p_motor)
 {
-    // if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
-    // {
+    if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
+    {
         ProcClarkePark(p_motor);
         ProcInnerFeedback(p_motor); /* Set Vd Vq */
-    // }
+    }
     ActivateAngle(p_motor);
 }
 
@@ -213,21 +213,24 @@ extern void Motor_ExternControl(Motor_T * p_motor);
 */
 void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
-    Motor_FOC_EnqueueIabc(p_motor); /* Samples chain completes sometime after queue resumes. ADC ISR priority higher than PWM. */
-
-#ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
-    Motor_ExternControl(p_motor);
-#endif
-// /* ~10us */ Motor_Debug_CaptureTime(p_motor, 1U);
-    // if(Motor_CheckOpenLoop(p_motor) == false)
+    // if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
     // {
-    p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
-    FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
-    ProcOuterFeedback(p_motor);
+        Motor_FOC_EnqueueIabc(p_motor); /* Samples chain completes sometime after queue resumes. ADC ISR priority higher than PWM. */
+
+    #ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
+        Motor_ExternControl(p_motor);
+    #endif
+        // /* ~10us */ Motor_Debug_CaptureTime(p_motor, 1U);
+            // if(Motor_CheckOpenLoop(p_motor) == false)
+            // {
+        p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
+        FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
+        ProcOuterFeedback(p_motor);
+        // }
+    // /* ~29 us */ Motor_Debug_CaptureTime(p_motor, 2U);
+        ProcInnerFeedbackOutput(p_motor);
+        // /* ~37us */ Motor_Debug_CaptureTime(p_motor, 4U);
     // }
-// /* ~29 us */ Motor_Debug_CaptureTime(p_motor, 2U);
-    ProcInnerFeedbackOutput(p_motor);
-// /* ~37us */ Motor_Debug_CaptureTime(p_motor, 4U);
 }
 
 /*

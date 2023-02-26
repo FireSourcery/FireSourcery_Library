@@ -98,8 +98,11 @@ static inline void Motor_FOC_CaptureVc(Motor_T * p_motor)
 */
 /******************************************************************************/
 /* return int32 for function pointer casting compatibility  */
+/* in Frac16 without int16 sign bit */
 static inline int32_t Motor_FOC_GetIPhase_FracS16(Motor_T * p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
 static inline int32_t Motor_FOC_GetVPhase_FracS16(Motor_T * p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
+// static inline int32_t Motor_FOC_GetIPhase_FracS16(Motor_T * p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
+// static inline int32_t Motor_FOC_GetVPhase_FracS16(Motor_T * p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
 static inline int32_t Motor_FOC_GetElectricalPower_FracS16(Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
 
 /* In User Reference Sign */
@@ -131,15 +134,13 @@ static inline void Motor_FOC_ClearState(Motor_T * p_motor)
     FOC_ClearState(&p_motor->Foc);
 }
 
-/*    From FreeWheel State, match to speed, overwrite VBemfClarke */
+/* From FreeWheel State, match to speed, overwrite VBemfClarke */
 static inline void Motor_FOC_SetVSpeed(Motor_T * p_motor)
 {
     FOC_SetVq(&p_motor->Foc, Linear_Function_FracS16(&p_motor->UnitsVSpeed, p_motor->Speed_FracS16));
     FOC_SetVd(&p_motor->Foc, 0);
 }
 
-//check DC current limit
-// Motor_FOC_GetElectricalPower_FracS16(p_motor) / Global_Motor_GetVSource_V() ;
 
 
 /******************************************************************************/

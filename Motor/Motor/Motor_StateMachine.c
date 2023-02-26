@@ -57,8 +57,8 @@ const StateMachine_Machine_T MSM_MACHINE =
     .TRANSITION_TABLE_LENGTH = MSM_TRANSITION_TABLE_LENGTH,
 };
 
-static StateMachine_State_T * TransitionFault(Motor_T * p_motor, uint32_t voidVar) { (void)p_motor; (void)voidVar; return &STATE_FAULT; }
-static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, uint32_t voidVar) { (void)p_motor; (void)voidVar; return &STATE_FREEWHEEL; }
+static StateMachine_State_T * TransitionFault(Motor_T * p_motor, uint32_t voidVar)      { (void)p_motor; (void)voidVar; return &STATE_FAULT; }
+static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, uint32_t voidVar)  { (void)p_motor; (void)voidVar; return &STATE_FREEWHEEL; }
 
 /******************************************************************************/
 /*!
@@ -74,24 +74,25 @@ static void Init_Entry(Motor_T * p_motor)
 static void Init_Proc(Motor_T * p_motor)
 {
     /* Wait for thermistor Adc */
+    //check params
     if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
 }
 
 static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT] = 0U, //(StateMachine_Transition_T)TransitionFault,
-    [MSM_INPUT_CONTROL] = 0U,
-    [MSM_INPUT_RELEASE] = 0U,
-    [MSM_INPUT_DIRECTION] = 0U,
-    [MSM_INPUT_CALIBRATION] = 0U,
+    [MSM_INPUT_FAULT]           = 0U, //(StateMachine_Transition_T)TransitionFault,
+    [MSM_INPUT_CONTROL]         = 0U,
+    [MSM_INPUT_RELEASE]         = 0U,
+    [MSM_INPUT_DIRECTION]       = 0U,
+    [MSM_INPUT_CALIBRATION]     = 0U,
 };
 
 static const StateMachine_State_T STATE_INIT =
 {
-    .ID = MSM_STATE_ID_INIT,
+    .ID                 = MSM_STATE_ID_INIT,
     .P_TRANSITION_TABLE = &INIT_TRANSITION_TABLE[0U],
-    .ENTRY = (StateMachine_Output_T)Init_Entry,
-    .OUTPUT = (StateMachine_Output_T)Init_Proc,
+    .ENTRY              = (StateMachine_Output_T)Init_Entry,
+    .OUTPUT             = (StateMachine_Output_T)Init_Proc,
 };
 
 /******************************************************************************/
@@ -109,6 +110,7 @@ static void Stop_Entry(Motor_T * p_motor)
     Phase_Float(&p_motor->Phase);
     p_motor->ControlTimerBase = 0U; /* ok to reset timer */
     p_motor->ControlFeedbackMode.IsDisable = 1U;
+    Linear_Ramp_ZeroOutputState(&p_motor->Ramp); /* For User Output */
 }
 
 static void Stop_Proc(Motor_T * p_motor)
@@ -274,11 +276,11 @@ static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, uint32_t
 
 static const StateMachine_Transition_T FREEWHEEL_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT] = (StateMachine_Transition_T)TransitionFault,
-    [MSM_INPUT_CONTROL] = (StateMachine_Transition_T)Freewheel_InputControl,
-    [MSM_INPUT_RELEASE] = (StateMachine_Transition_T)0U,
-    [MSM_INPUT_DIRECTION] = (StateMachine_Transition_T)0U,
-    [MSM_INPUT_CALIBRATION] = (StateMachine_Transition_T)0U,
+    [MSM_INPUT_FAULT]           = (StateMachine_Transition_T)TransitionFault,
+    [MSM_INPUT_CONTROL]         = (StateMachine_Transition_T)Freewheel_InputControl,
+    [MSM_INPUT_RELEASE]         = (StateMachine_Transition_T)0U,
+    [MSM_INPUT_DIRECTION]       = (StateMachine_Transition_T)0U,
+    [MSM_INPUT_CALIBRATION]     = (StateMachine_Transition_T)0U,
 };
 
 static const StateMachine_State_T STATE_FREEWHEEL =
