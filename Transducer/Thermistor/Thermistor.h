@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -117,8 +117,8 @@ Thermistor_Params_T;
 
 typedef struct Thermistor_Config_Tag
 {
-    const uint32_t R_SERIES;     /* Pull-up */
-    const uint32_t R_PARALLEL;     /* Parallel pull-down if applicable. 0 for Disable */
+    const uint32_t R_SERIES;    /* Pull-up */
+    const uint32_t R_PARALLEL;  /* Parallel pull-down if applicable. 0 for Disable */
     //bool IS_CONST;            /* Disable Coefficient set functions */
     const Thermistor_Params_T * P_PARAMS;
 }
@@ -137,19 +137,19 @@ typedef struct Thermistor_Tag
 }
 Thermistor_T;
 
-#define _THERMISTOR_INIT_CONFIG(RSeries, RParallel, p_Params)     \
-{                                                                \
-    .R_SERIES         = RSeries,                                    \
-    .R_PARALLEL        = RParallel,                                \
-    .P_PARAMS        = p_Params,                                    \
+#define _THERMISTOR_INIT_CONFIG(RSeries, RParallel, p_Params)   \
+{                                                               \
+    .R_SERIES       = RSeries,                                  \
+    .R_PARALLEL     = RParallel,                                \
+    .P_PARAMS       = p_Params,                                 \
 }
 
-#define _THERMISTOR_INIT_PARAMS_NTC(R0, T0_Kelvin, B)     \
-{                                                        \
-    .NtcR0         = R0,                                \
-    .NtcT0        = T0_Kelvin,                        \
-    .NtcB        = B,                                \
-}                                                        \
+#define _THERMISTOR_INIT_PARAMS_NTC(R0, T0_Kelvin, B)   \
+{                                                       \
+    .NtcR0  = R0,                                       \
+    .NtcT0  = T0_Kelvin,                                \
+    .NtcB   = B,                                        \
+}                                                       \
 
 #define THERMISTOR_INIT(RSeries, RParallel, p_Params)                     \
 {                                                                        \
@@ -173,27 +173,33 @@ static inline uint16_t Thermistor_GetHeatLimit_FracU16(Thermistor_T * p_therm) {
 static inline uint16_t Thermistor_ConvertHeatLimit_FracU16(Thermistor_T * p_therm, uint16_t adcu) { return Linear_ADC_CalcFracU16(&p_therm->LinearLimits, adcu); }
 
 /* Monitor */
-static inline Thermistor_Status_T Thermistor_GetStatus(const Thermistor_T * p_therm) { return (p_therm->Status); }
-static inline bool Thermistor_GetIsShutdown(const Thermistor_T * p_therm) { return p_therm->Status == THERMISTOR_STATUS_SHUTDOWN; } //||THERMISTOR_SHUTDOWN_RISING_EDGE
-static inline bool Thermistor_GetIsWarning(const Thermistor_T * p_therm) { return p_therm->Status == THERMISTOR_STATUS_WARNING; }
-static inline bool Thermistor_GetIsMonitorEnable(const Thermistor_T * p_therm) { return p_therm->Params.IsMonitorEnable; }
+static inline Thermistor_Status_T Thermistor_GetStatus(const Thermistor_T * p_therm)    { return (p_therm->Status); }
+static inline bool Thermistor_GetIsShutdown(const Thermistor_T * p_therm)               { return (p_therm->Status == THERMISTOR_STATUS_SHUTDOWN); } //||THERMISTOR_SHUTDOWN_RISING_EDGE
+static inline bool Thermistor_GetIsWarning(const Thermistor_T * p_therm)                { return (p_therm->Status == THERMISTOR_STATUS_WARNING); }
 
-static inline void Thermistor_EnableMonitor(Thermistor_T * p_therm) { p_therm->Params.IsMonitorEnable = true; }
-static inline void Thermistor_DisableMonitor(Thermistor_T * p_therm) { p_therm->Params.IsMonitorEnable = false; }
-static inline void Thermistor_SetMonitorEnable(Thermistor_T * p_therm, bool isEnable) { p_therm->Params.IsMonitorEnable = isEnable; }
+static inline void Thermistor_EnableMonitor(Thermistor_T * p_therm)                     { p_therm->Params.IsMonitorEnable = true; }
+static inline void Thermistor_DisableMonitor(Thermistor_T * p_therm)                    { p_therm->Params.IsMonitorEnable = false; }
+static inline void Thermistor_SetMonitorEnable(Thermistor_T * p_therm, bool isEnable)   { p_therm->Params.IsMonitorEnable = isEnable; }
 
-static inline uint32_t Thermistor_GetR0(const Thermistor_T * p_therm) { return p_therm->Params.NtcR0; }
-static inline uint16_t Thermistor_GetT0(const Thermistor_T * p_therm) { return p_therm->Params.NtcT0; } /* Degrees Kelvin */
-static inline uint16_t Thermistor_GetT0_DegC(const Thermistor_T * p_therm) { return p_therm->Params.NtcT0 - 273; }
-static inline uint16_t Thermistor_GetB(const Thermistor_T * p_therm) { return p_therm->Params.NtcB; }
-static inline uint16_t Thermistor_GetVIn(const Thermistor_T * p_therm) { return p_therm->Params.VInRef_MilliV; }
+static inline bool Thermistor_GetIsMonitorEnable(const Thermistor_T * p_therm)                  { return p_therm->Params.IsMonitorEnable; }
+static inline uint16_t Thermistor_GetShutdown_Adcu(const Thermistor_T * p_therm)                { return p_therm->Params.Fault_Adcu; }
+static inline uint16_t Thermistor_GetShutdownThreshold_Adcu(const Thermistor_T * p_therm)       { return p_therm->Params.FaultThreshold_Adcu; }
+static inline uint16_t Thermistor_GetWarning_Adcu(const Thermistor_T * p_therm)                 { return p_therm->Params.Warning_Adcu; }
+static inline uint16_t Thermistor_GetWarningThreshold_Adcu(const Thermistor_T * p_therm)        { return p_therm->Params.WarningThreshold_Adcu; }
 
-static inline uint16_t Thermistor_GetShutdown_Adcu(const Thermistor_T * p_therm) { return p_therm->Params.Fault_Adcu; }
-static inline uint16_t Thermistor_GetShutdownThreshold_Adcu(const Thermistor_T * p_therm) { return p_therm->Params.FaultThreshold_Adcu; }
-static inline uint16_t Thermistor_GetWarning_Adcu(const Thermistor_T * p_therm) { return p_therm->Params.Warning_Adcu; }
-static inline uint16_t Thermistor_GetWarningThreshold_Adcu(const Thermistor_T * p_therm) { return p_therm->Params.WarningThreshold_Adcu; }
+/* Conversion */
+static inline Thermistor_Type_T Thermistor_GetType(const Thermistor_T * p_therm)    { return p_therm->Params.Type; }
+static inline uint16_t Thermistor_GetLinearT0_Adcu(const Thermistor_T * p_therm)    { return p_therm->Params.LinearT0_Adcu; }
+static inline uint16_t Thermistor_GetLinearT0_DegC(const Thermistor_T * p_therm)    { return p_therm->Params.LinearT0_DegC; }
+static inline uint16_t Thermistor_GetLinearT1_Adcu(const Thermistor_T * p_therm)    { return p_therm->Params.LinearT1_Adcu; }
+static inline uint16_t Thermistor_GetLinearT1_DegC(const Thermistor_T * p_therm)    { return p_therm->Params.LinearT1_DegC; }
+static inline uint32_t Thermistor_GetR0(const Thermistor_T * p_therm)               { return p_therm->Params.NtcR0; }
+static inline uint16_t Thermistor_GetT0(const Thermistor_T * p_therm)               { return p_therm->Params.NtcT0; } /* Degrees Kelvin */
+static inline uint16_t Thermistor_GetT0_DegC(const Thermistor_T * p_therm)          { return p_therm->Params.NtcT0 - 273; }
+static inline uint16_t Thermistor_GetB(const Thermistor_T * p_therm)                { return p_therm->Params.NtcB; }
+static inline uint16_t Thermistor_GetVIn(const Thermistor_T * p_therm)              { return p_therm->Params.VInRef_MilliV; }
 
-/* Using capture conversion only */
+/* Using async capture conversion only */
 // static inline int32_t Thermistor_GetHeat_DegC(Thermistor_T * p_therm) { return p_therm->Heat_DegC; }
 
 /******************************************************************************/

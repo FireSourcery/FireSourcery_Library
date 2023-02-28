@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -288,6 +288,10 @@ typedef struct MotPacket_DataReqResp_Tag { MotPacket_Header_T Header; MotPacket_
 typedef enum MotPacket_ExtId_Tag
 {
     MOT_PACKET_BATCH_RESV_0 = 0x00U,
+    MOT_PACKET_BATCH_MANUFACTURER_READ = 0x01U,
+    MOT_PACKET_BATCH_MANUFACTURER_WRITE = 0x02U,
+    // MOT_PACKET_BATCH_MANUFACTURER_WRITE_0 = 0x02U,
+    // MOT_PACKET_BATCH_MANUFACTURER_WRITE_1 = 0x02U,
     MOT_PACKET_BATCH_INIT_UNITS = 0x10U,
     MOT_PACKET_BATCH_SEQUENCE_1 = 0x11U,    /* Rx Throttle, Brake, Direction. Tx: Speed, IPhase, Battery, Error,  */
     // MOT_PACKET_BATCH_CONTROL_1 = 0x11U,  /* Rx Throttle, Brake, Direction. Tx: Speed, IPhase, Battery, Error,  */

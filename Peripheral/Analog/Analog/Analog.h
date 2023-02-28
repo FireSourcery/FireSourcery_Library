@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -83,14 +83,14 @@ typedef const struct Analog_Conversion_Tag
 }
 Analog_Conversion_T;
 
-#define ANALOG_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId)     \
-{                                                                                            \
-    .TYPE                     = ANALOG_QUEUE_TYPE_CHANNEL,                                     \
-    .CHANNEL                 = Channel,                                                        \
-    .ON_COMPLETE             = OnComplete,                                                    \
-    .P_CALLBACK_CONTEXT     = p_CallbackContext,                                            \
-    .P_RESULTS_BUFFER         = p_Results,                                                    \
-    .PIN                     = PinId,                                                        \
+#define ANALOG_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId)    \
+{                                                                                           \
+    .TYPE               = ANALOG_QUEUE_TYPE_CHANNEL,                                        \
+    .CHANNEL            = Channel,                                                          \
+    .ON_COMPLETE        = OnComplete,                                                       \
+    .P_CALLBACK_CONTEXT = p_CallbackContext,                                                \
+    .P_RESULTS_BUFFER   = p_Results,                                                        \
+    .PIN                = PinId,                                                            \
 }
 
 typedef struct Analog_OptionsFlags_Tag

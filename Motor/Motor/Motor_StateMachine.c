@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -365,7 +365,7 @@ static void OpenLoop_Proc(Motor_T * p_motor)
 
 // static StateMachine_State_T * OpenLoop_InputCmdValue(Motor_T * p_motor, uint32_t ivCmd)
 // {
-//     int32_t ivCmd_Positive = math_clamp((int32_t)ivCmd, 0, (int32_t)p_motor->Parameters.OpenLoopPower_FracU16 / 2);
+//     int32_t ivCmd_Positive = math_clamp((int32_t)ivCmd, 0, (int32_t)p_motor->Parameters.OpenLoopPower_Scalar16 / 2);
 //     Motor_SetDirectionalCmd(p_motor, ivCmd_Positive);
 //     return 0U;
 // }
@@ -464,7 +464,7 @@ static void Fault_Proc(Motor_T * p_motor) { Phase_Float(&p_motor->Phase);/* repe
 static StateMachine_State_T * Fault_InputClearFault(Motor_T * p_motor, uint32_t voidVar)
 {
     (void)voidVar;
-    if(Thermistor_GetIsShutdown(&p_motor->Thermistor) == false) { p_motor->FaultFlags.HeatShutdown = 0U; }
+    if(Thermistor_GetIsShutdown(&p_motor->Thermistor) == false) { p_motor->FaultFlags.OverHeat = 0U; }
     if(p_motor->FaultFlags.AlignStartUp == 1U) { p_motor->FaultFlags.AlignStartUp = 0U; }
     return (p_motor->FaultFlags.State == 0U) ? &STATE_STOP : 0U;
 }

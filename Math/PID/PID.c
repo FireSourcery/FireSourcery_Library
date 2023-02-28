@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -74,14 +74,6 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     if      (integral > integralMax) { integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
     else if (integral < integralMin) { integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
     else                             { p_pid->Integral32 = integral32; }
-
-    // integral32Part = (p_pid->Params.IntegralGain * error) >> p_pid->Params.IntegralGainShift; /* Exclusive of 16 shift */
-    // integral = (p_pid->Integral32 >> 16) + (integral32Part >> 16);
-
-    // if      (integral >= integralMax) { integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
-    // else if (integral <= integralMin) { integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
-    // /* integralMin < integral < integralMax. -65535 > integral32Part < 65535 */
-    // else                              { p_pid->Integral32 = p_pid->Integral32 + integral32Part; }
 
     return proportional + integral;
 }
@@ -201,10 +193,10 @@ int32_t PID_GetKi_Fixed32(PID_T * p_pid) { return p_pid->Params.IntegralGain * p
 */
 void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 8); }
 
-int32_t PID_GetKp_Fixed16(PID_T * p_pid) { return PID_GetKp_Fixed32(p_pid) >> 8; }
+int16_t PID_GetKp_Fixed16(PID_T * p_pid) { return PID_GetKp_Fixed32(p_pid) >> 8; }
 
 /*!
 */
 void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 8); }
 
-int32_t PID_GetKi_Fixed16(PID_T * p_pid) { return PID_GetKi_Fixed32(p_pid) >> 8; }
+int16_t PID_GetKi_Fixed16(PID_T * p_pid) { return PID_GetKi_Fixed32(p_pid) >> 8; }

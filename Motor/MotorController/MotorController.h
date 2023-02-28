@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -65,13 +65,6 @@
 #include <stdint.h>
 #include <string.h>
 
-/* Library Software Version */
-#define MOT_SOFTWARE_VERSION_OPT        0U
-#define MOT_SOFTWARE_VERSION_MAJOR      0U
-#define MOT_SOFTWARE_VERSION_MINOR      0U
-#define MOT_SOFTWARE_VERSION_BUGFIX     1U
-#define MOT_SOFTWARE_VERSION_ID         ((MOT_SOFTWARE_VERSION_OPT << 24U) | (MOT_SOFTWARE_VERSION_MAJOR << 16U) | (MOT_SOFTWARE_VERSION_MINOR << 8U) | (MOT_SOFTWARE_VERSION_BUGFIX))
-
 typedef enum MotorController_InputMode_Tag
 {
     MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
@@ -86,7 +79,7 @@ typedef enum MotorController_ZeroCmdMode_Tag
     MOTOR_CONTROLLER_ZERO_CMD_MODE_FLOAT,       /* "Coast". MOSFETS non conducting. Same as neutral. */
     MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN,       /* Regen Brake */
     MOTOR_CONTROLLER_ZERO_CMD_MODE_CRUISE,      /* Voltage following, Zero currrent/torque */
-    MOTOR_CONTROLLER_ZERO_CMD_MODE_ZERO,        /* SetPoint Zero */
+    MOTOR_CONTROLLER_ZERO_CMD_MODE_ZERO,        /* Setpoint Zero */
 }
 MotorController_ZeroCmdMode_T;
 
@@ -129,7 +122,7 @@ MotorController_OperationId_T;
 typedef enum MotorController_ILimitActiveId_Tag
 {
     MOTOR_CONTROLLER_I_LIMIT_ACTIVE_DISABLE = 0U,
-    MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT = 1U, /* MotorIlimit_Sysyem +1 */
+    MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT = 1U,
     MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V = 2U,
 }
 MotorController_ILimitActiveId_T;
@@ -159,7 +152,7 @@ typedef union MotorController_FaultFlags_Tag
     struct
     {
         uint32_t PcbOverHeat : 1U;
-    #if        defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
+    #if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
         uint32_t MosfetsTopOverHeat : 1U;
         uint32_t MosfetsBotOverHeat : 1U;
     #else
@@ -218,20 +211,20 @@ MotorController_BuzzerFlags_T;
 
 typedef struct __attribute__((aligned(2U))) MotorController_Params_Tag
 {
-    MotorController_InputMode_T UserInputMode;
-    MotorController_BrakeMode_T BrakeMode;
-    MotorController_ZeroCmdMode_T ZeroCmdMode;
     uint16_t VSourceRef;        /* Sync with Global_Motor VSourceRef_V */
     uint16_t BatteryZero_Adcu;
     uint16_t BatteryFull_Adcu;
+    MotorController_InputMode_T UserInputMode;
+    MotorController_BrakeMode_T BrakeMode;
+    MotorController_ZeroCmdMode_T ZeroCmdMode;
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     uint8_t CanServicesId;
-    bool IsCanEnable;
+    bool CanIsEnable;
 #endif
-    MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
+    // MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
+    uint16_t ILimitLowV_Scalar16;
     MotorController_OptDinFunction_T OptDinFunction;
     uint16_t OptDinSpeedLimit_Scalar16;
-    uint16_t ILimitLowV_Scalar16;
 }
 MotorController_Params_T;
 
@@ -260,21 +253,17 @@ typedef const struct MotorController_Config_Tag
     const void * const P_PARAMS_START; /* All params start */
     const uint16_t PARAMS_SIZE;
 #endif
-
     const MotorController_Params_T * const P_PARAMS_NVM;
     const MotorController_Manufacture_T * const P_ONCE; /* cannot read directly if FlashOnce is selected */
     const MemMapBoot_T * const P_MEM_MAP_BOOT;
 //RAM_START, RAM_END for Read Address
-
     Motor_T * const     P_MOTORS;
     const uint8_t       MOTOR_COUNT;
     Serial_T * const    P_SERIALS;     /* Simultaneous active serial */
     const uint8_t       SERIAL_COUNT;
-
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     CanBus_T * const     P_CAN_BUS;
 #endif
-
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
     Flash_T * const     P_FLASH;     /* Flash defined outside module, ensure flash config/params are in RAM */
 // #endif
@@ -283,16 +272,12 @@ typedef const struct MotorController_Config_Tag
 #endif
     AnalogN_T * const P_ANALOG_N;
     const MotAnalog_Conversions_T ANALOG_CONVERSIONS;
-
     Protocol_T * const P_PROTOCOLS; /* Simultaneously active protocols */
     const uint8_t PROTOCOL_COUNT;
-
-    /* In Pow2 */
-    const uint32_t ANALOG_USER_DIVIDER;
+    const uint32_t ANALOG_USER_DIVIDER;  /* In Pow2 */
     const uint32_t MAIN_DIVIDER_10;
     const uint32_t MAIN_DIVIDER_1000;
     const uint32_t TIMER_DIVIDER_1000;
-
     const uint8_t SOFTWARE_VERSION[4U];
 }
 MotorController_Config_T;
@@ -307,7 +292,7 @@ typedef struct MotorController_Tag
 
     MotAnalogUser_T AnalogUser;
     Blinky_T Buzzer;
-    MotorController_BuzzerFlags_T BuzzerFlagsActive; /* Active conditions requesting buzzer */
+    // MotorController_BuzzerFlags_T BuzzerFlagsActive; /* Active conditions requesting buzzer */
     Blinky_T Meter;
     Pin_T Relay;
     Debounce_T OptDin;     /* Configurable input */
@@ -450,26 +435,26 @@ extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T 
 extern NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc, uint8_t * p_sourceBuffer);
 extern NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc, const uint8_t * p_destBuffer);
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE)
-#if defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
-extern void MotorController_ServoExtern_Start(MotorController_T * p_mc);
-extern void MotorController_ServoExtern_Proc(MotorController_T * p_mc);
-extern void MotorController_ServoExtern_SetCmd(MotorController_T * p_mc, int32_t cmd);
-#else
-static inline MotorController_Servo_Start(MotorController_T * p_mc)
-{
+    #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
+    extern void MotorController_ServoExtern_Start(MotorController_T * p_mc);
+    extern void MotorController_ServoExtern_Proc(MotorController_T * p_mc);
+    extern void MotorController_ServoExtern_SetCmd(MotorController_T * p_mc, int32_t cmd);
+    #else
+    static inline MotorController_Servo_Start(MotorController_T * p_mc)
+    {
 
-}
+    }
 
-static inline MotorController_Servo_Proc(MotorController_T * p_mc)
-{
+    static inline MotorController_Servo_Proc(MotorController_T * p_mc)
+    {
 
-}
+    }
 
-static inline MotorController_Servo_SetCmd(MotorController_T * p_mc, uint32_t cmd)
-{
+    static inline MotorController_Servo_SetCmd(MotorController_T * p_mc, uint32_t cmd)
+    {
 
-}
-#endif
+    }
+    #endif
 #endif
 
 

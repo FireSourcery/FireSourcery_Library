@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -34,10 +34,6 @@ void FOC_Init(FOC_T * p_foc)
     // p_foc->IdqMagnitudeMax = QFRAC16_MAX;
     // p_foc->IdMax = QFRAC16_1_DIV_SQRT3;
     FOC_ClearState(p_foc);
-    // p_foc->Valpha = 0;
-    // p_foc->Vbeta = 0;
-    // p_foc->Sine = 0;
-    // p_foc->Cosine = 0;
 }
 
 // void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax)
@@ -73,4 +69,9 @@ void FOC_ClearState(FOC_T * p_foc)
     p_foc->Vq = 0;
     p_foc->VIdReq = 0; /* Req */
     p_foc->VIqReq = 0;
+
+    // p_foc->Valpha = 0;
+    // p_foc->Vbeta = 0;
+    // p_foc->Sine = 0;
+    // p_foc->Cosine = 0;
 }

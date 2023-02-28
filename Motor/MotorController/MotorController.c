@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -274,7 +274,7 @@ NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc, co
 //     Motor_User_SetILimitHeatParam(p_motor, 65536U / 2U);
 //     // Motor_User_VoltageBrakeScalar_Frac16(p_motor, 65536U / 4U);
 //     // Motor_User_SetPhaseModeParam(p_motor, PHASE_MODE_UNIPOLAR_1);
-//     Motor_User_SetAlignVoltage(p_motor, 65536U / 20U);
+//     Motor_User_SetAlignPower(p_motor, 65536U / 20U);
 //     Motor_User_SetAlignTime_Millis(p_motor, 1000U);
 
 //     // PID_SetFreq(&p_motor->PidSpeed, 1000U);

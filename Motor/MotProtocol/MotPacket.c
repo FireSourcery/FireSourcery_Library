@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -136,12 +136,22 @@ uint8_t MotPacket_StopResp_Build(MotPacket_StopResp_T * p_respPacket) //may need
 /******************************************************************************/
 /*! Version Type */
 /******************************************************************************/
-uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket)
+uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket) // , uint32_t software, uint32_t flex)
 {
     p_respPacket->VersionResp.Version[0U] = MOT_PACKET_VERSION_BUGFIX;
     p_respPacket->VersionResp.Version[1U] = MOT_PACKET_VERSION_MINOR;
     p_respPacket->VersionResp.Version[2U] = MOT_PACKET_VERSION_MAJOR;
     p_respPacket->VersionResp.Version[3U] = MOT_PACKET_VERSION_OPT;
+
+    // p_respPacket->VersionResp.Software[0U] = 0;
+    // p_respPacket->VersionResp.Software[1U] = 0;
+    // p_respPacket->VersionResp.Software[2U] = 0;
+    // p_respPacket->VersionResp.Software[3U] = 0;
+
+    // p_respPacket->VersionResp.Flex0[0U] = 0;
+    // p_respPacket->VersionResp.Flex1[1U] = 0;
+    // p_respPacket->VersionResp.Flex2[2U] = 0;
+    // p_respPacket->VersionResp.Flex3[3U] = 0;
 
     return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, sizeof(MotPacket_VersionResp_Payload_T), MOT_PACKET_HEADER_STATUS_OK);
 }
@@ -274,55 +284,9 @@ uint8_t MotPacket_Data_ParseSize(const MotPacket_DataReqResp_T * p_dataPacket) {
 /******************************************************************************/
 uint8_t MotPacket_BatchResp_Build(MotPacket_BatchResp_T * p_respPacket, MotPacket_ExtId_T id)
 {
-    p_respPacket->BatchResp  ;
+    p_respPacket->BatchResp;
     return Packet_BuildHeader_Imm((MotPacket_T *)p_respPacket, MOT_PACKET_EXT_CMD, sizeof(uint16_t), MOT_PACKET_HEADER_STATUS_OK, id, 0U);
 }
-
-/*! Init Units Type */
-// uint8_t MotPacket_InitUnitsResp_Build
-// (
-//     MotPacket_InitUnitsResp_T * p_respPacket,
-//     uint16_t speedRef_Rpm, uint16_t iRef_Amp, uint16_t vRef_Volts, /* Frac16 conversions */
-//     uint16_t vSupply_R1, uint16_t vSupply_R2,    /* Adcu <-> Volts conversions */
-//     uint16_t vSense_R1, uint16_t vSense_R2,
-//     uint16_t vAcc_R1, uint16_t vAcc_R2
-// )
-// {
-//     p_respPacket->InitUnitsResp.U16s[0U] = speedRef_Rpm;
-//     p_respPacket->InitUnitsResp.U16s[0U] = iRef_Amp;
-//     p_respPacket->InitUnitsResp.U16s[0U] = vRef_Volts;
-//     p_respPacket->InitUnitsResp.U16s[0U] = vSupply_R1;
-//     p_respPacket->InitUnitsResp.U16s[0U] = vSupply_R2;
-//     p_respPacket->InitUnitsResp.U16s[0U] = vSense_R1;
-//     p_respPacket->InitUnitsResp.U16s[0U] = vSense_R2;
-//     p_respPacket->InitUnitsResp.U16s[0U] = vAcc_R1;
-//     p_respPacket->InitUnitsResp.U16s[0U] = vAcc_R2;
-
-//     return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_INIT_UNITS, 18U, MOT_PACKET_HEADER_STATUS_OK);
-// }
-
-
-// uint8_t MotPacket_InitUnitsResp_Build
-// (
-//     MotProtocol_SubState_T * p_subState,
-//     MotPacket_InitUnitsResp_T * p_respPacket,
-//     uint16_t unitReference[16U]
-// )
-// {
-//     uint8_t txSize;
-
-//     switch(p_subState->StateId)
-//     {
-//         case 0U:
-//             // txSize = MotPacket_InitUnitsResp_Build0(p_respPacket, unitReference[0U], unitReference[1U], unitReference[2U]);
-//             p_subState->StateId = 1U;
-//             break;
-//     }
-
-//     return txSize;
-// }
-
-
 
 
 /******************************************************************************/

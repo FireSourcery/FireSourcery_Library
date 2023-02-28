@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -73,11 +73,11 @@ static int32_t Scale16(uint16_t scalarU16, int32_t value) { return scalarU16 * v
 // }
 
 //todo split super function
-static inline Motor_FeedbackMode_T Motor_GetValidFeedbackMode(Motor_T * p_motor, Motor_FeedbackModeId_T modeCmd)
+static inline Motor_FeedbackMode_T _Motor_GetValidFeedbackMode(Motor_T * p_motor, Motor_FeedbackModeId_T modeCmd)
 {
     Motor_FeedbackMode_T modeControl = Motor_ConvertFeedbackModeId(modeCmd);
     if((modeControl.Speed == 0U) && Motor_CheckSpeedOverThreshold(p_motor) == true)     { modeControl.Speed = 1U; }
-    if((modeControl.Current == 0U) && Motor_FOC_CheckIOverThreshold(p_motor) == true)     { modeControl.Current = 1U; }
+    if((modeControl.Current == 0U) && Motor_FOC_CheckIOverThreshold(p_motor) == true)   { modeControl.Current = 1U; }
     return modeControl;
 }
 
@@ -87,7 +87,7 @@ void _Motor_User_ActivateControlMode(Motor_T * p_motor, Motor_FeedbackModeId_T m
 
     if(p_motor->ControlFeedbackMode.State != Motor_ConvertFeedbackModeId(modeCmd).State)
     {
-        modeControl = Motor_GetValidFeedbackMode(p_motor, modeCmd);
+        modeControl = _Motor_GetValidFeedbackMode(p_motor, modeCmd);
 
         if(p_motor->ControlFeedbackMode.State != modeControl.State)
         {
@@ -100,15 +100,8 @@ void _Motor_User_ActivateControlMode(Motor_T * p_motor, Motor_FeedbackModeId_T m
 }
 
 /* Ramp Proc interrupt may overwrite set */
-static void Motor_User_SetCmd(Motor_T * p_motor, int16_t userCmd)
-{
-    Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_ConvertUserDirection(p_motor, userCmd));
-}
-
-static void Motor_User_GetCmd(Motor_T * p_motor)
-{
-    Motor_ConvertUserDirection(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp));
-}
+static void Motor_User_SetCmd(Motor_T * p_motor, int16_t userCmd) { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_ConvertUserDirection(p_motor, userCmd)); }
+static void Motor_User_GetCmd(Motor_T * p_motor) { Motor_ConvertUserDirection(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
 
 /******************************************************************************/
 /*!
@@ -146,6 +139,7 @@ void Motor_User_SetVoltageCmdValue(Motor_T * p_motor, int16_t voltageCmd)
 {
     int32_t voltageCmdIn = (voltageCmd > 0) ? voltageCmd : 0; /* Reverse voltage use change direction */
     Motor_User_SetCmd(p_motor, voltageCmdIn);
+    //todo limites
     // if((p_motor->ControlFeedbackMode.Speed == 0U) && (p_motor->ControlFeedbackMode.Current == 0U))
     // {
     //     Motor_User_SetCmd(p_motor, voltageCmdIn);
@@ -291,7 +285,7 @@ void Motor_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_Frac16)
 */
 void Motor_User_SetOpenLoopCmdValue(Motor_T * p_motor, int16_t ivCmd)
 {
-    int32_t ivCmdIn = math_clamp(ivCmd, 0, p_motor->Parameters.OpenLoopPower_FracU16 / 2U);
+    int32_t ivCmdIn = math_clamp(ivCmd, 0, p_motor->Parameters.OpenLoopPower_Scalar16 / 2U);
     Motor_User_SetCmd(p_motor, ivCmdIn);
 }
 
@@ -300,7 +294,6 @@ void Motor_User_SetOpenLoopModeCmd(Motor_T * p_motor, int16_t ivMagnitude)
     Motor_User_SetOpenLoopMode(p_motor);
     Motor_User_SetOpenLoopCmdValue(p_motor, ivMagnitude);
 }
-
 
 /******************************************************************************/
 /*!
@@ -375,7 +368,7 @@ void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
 
 void Motor_User_SetVBrakeCmd(Motor_T * p_motor, uint16_t brake)
 {
-    Motor_User_SetScalarModeCmd(p_motor, (65535U - brake)); /* Higher brake => lower voltage */
+    // Motor_User_SetScalarModeCmd(p_motor, (65535U - brake)); /* Higher brake => lower voltage */
 }
 
 void Motor_User_SetCruise(Motor_T * p_motor)
@@ -569,83 +562,6 @@ bool Motor_User_ClearILimitActive(Motor_T * p_motor, Motor_ILimitActiveId_T id)
 Motor_ILimitActiveId_T Motor_User_GetILimitActiveId(Motor_T * p_motor) { return p_motor->ILimitActiveId; }
 
 
-/******************************************************************************/
-/*
-    Ground Speed
-*/
-/******************************************************************************/
-int16_t Motor_User_GetGroundSpeed_Kmh(Motor_T * p_motor)
-{
-    int16_t speed;
-
-    switch(p_motor->Parameters.SensorMode)
-    {
-        case MOTOR_SENSOR_MODE_HALL:         speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);    break;
-        case MOTOR_SENSOR_MODE_ENCODER:     speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);    break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SIN_COS:     speed = Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
-#endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-        case MOTOR_SENSOR_MODE_SENSORLESS:     speed = 0;     break;
-#endif
-        default:                             speed = 0;     break;
-    }
-
-    return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
-}
-
-int16_t Motor_User_GetGroundSpeed_Mph(Motor_T * p_motor)
-{
-    int16_t speed;
-
-    switch(p_motor->Parameters.SensorMode)
-    {
-        case MOTOR_SENSOR_MODE_HALL:         speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);    break;
-        case MOTOR_SENSOR_MODE_ENCODER:     speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);    break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SIN_COS:     speed =  Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
-#endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-        case MOTOR_SENSOR_MODE_SENSORLESS:     speed = 0;     break;
-#endif
-        default:                             speed = 0;     break;
-    }
-
-    return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
-}
-
-void Motor_User_SetGroundSpeed_Kmh(Motor_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
-{
-    switch(p_motor->Parameters.SensorMode)
-    {
-        case MOTOR_SENSOR_MODE_HALL:         Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
-        case MOTOR_SENSOR_MODE_ENCODER:     Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SIN_COS:     Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
-#endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-        case MOTOR_SENSOR_MODE_SENSORLESS:     speed = 0;     break;
-#endif
-        default:     break;
-    }
-}
-
-void Motor_User_SetGroundSpeed_Mph(Motor_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
-{
-    switch(p_motor->Parameters.SensorMode)
-    {
-        case MOTOR_SENSOR_MODE_HALL:         Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
-        case MOTOR_SENSOR_MODE_ENCODER:     Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SIN_COS:      Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
-#endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-        case MOTOR_SENSOR_MODE_SENSORLESS:     speed = 0;     break;
-#endif
-        default:                             break;
-    }
-}
-
 
 /******************************************************************************/
 /*
@@ -671,7 +587,23 @@ static inline void PropagateSet(Motor_T * p_motor, Motor_PropagateSet_T reset)
 /*
     Persistent SpeedLimit - effective Speed Feedback Mode only
 */
-void Motor_User_SetSpeedLimitParam_Frac16(Motor_T * p_motor, uint16_t forwardScalar16, uint16_t reverseScalar16)
+void Motor_User_SetSpeedLimitForwardParam_Scalar16(Motor_T * p_motor, uint16_t forward_Frac16)
+{
+    p_motor->Parameters.SpeedLimitForward_ScalarU16 = forward_Frac16;
+    PropagateSet(p_motor, Motor_User_ClearSpeedLimitActive);
+    // if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW)     { p_motor->Parameters.SpeedLimitCcw_FracS16 = forward_Frac16; }
+    // else                                                                     { p_motor->Parameters.SpeedLimitCw_FracS16 = forward_Frac16; }
+}
+
+void Motor_User_SetSpeedLimitReverseParam_Scalar16(Motor_T * p_motor, uint16_t reverse_Frac16)
+{
+    p_motor->Parameters.SpeedLimitReverse_ScalarU16 = reverse_Frac16;
+    PropagateSet(p_motor, Motor_User_ClearSpeedLimitActive);
+    // if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW)     { p_motor->Parameters.SpeedLimitCw_FracS16 = reverse_Frac16; }
+    // else                                                                     { p_motor->Parameters.SpeedLimitCcw_FracS16 = reverse_Frac16; }
+}
+
+void Motor_User_SetSpeedLimitParam_Scalar16(Motor_T * p_motor, uint16_t forwardScalar16, uint16_t reverseScalar16)
 {
     p_motor->Parameters.SpeedLimitForward_ScalarU16 = forwardScalar16;
     p_motor->Parameters.SpeedLimitReverse_ScalarU16 = reverseScalar16;
@@ -688,24 +620,8 @@ void Motor_User_SetSpeedLimitParam_Frac16(Motor_T * p_motor, uint16_t forwardSca
     PropagateSet(p_motor, Motor_User_ClearSpeedLimitActive);
 }
 
-void Motor_User_SetSpeedLimitForwardParam_Frac16(Motor_T * p_motor, uint16_t forward_Frac16)
-{
-    // if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW)     { p_motor->Parameters.SpeedLimitCcw_FracS16 = forward_Frac16; }
-    // else                                                                     { p_motor->Parameters.SpeedLimitCw_FracS16 = forward_Frac16; }
-    p_motor->Parameters.SpeedLimitForward_ScalarU16 = forward_Frac16;
-    PropagateSet(p_motor, Motor_User_ClearSpeedLimitActive);
-}
-
-void Motor_User_SetSpeedLimitReverseParam_Frac16(Motor_T * p_motor, uint16_t reverse_Frac16)
-{
-    // if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW)     { p_motor->Parameters.SpeedLimitCw_FracS16 = reverse_Frac16; }
-    // else                                                                     { p_motor->Parameters.SpeedLimitCcw_FracS16 = reverse_Frac16; }
-    p_motor->Parameters.SpeedLimitReverse_ScalarU16 = reverse_Frac16;
-    PropagateSet(p_motor, Motor_User_ClearSpeedLimitActive);
-}
-
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-static uint16_t ConvertToSpeedLimitFrac16(Motor_T * p_motor, uint16_t speed_rpm)
+static uint16_t ConvertToSpeedLimitScalar16(Motor_T * p_motor, uint16_t speed_rpm)
 {
     int32_t speed_frac16 = _Motor_ConvertSpeed_RpmToScalar16(p_motor, speed_rpm);
     return (speed_frac16 > UINT16_MAX) ? UINT16_MAX : speed_frac16;
@@ -713,81 +629,81 @@ static uint16_t ConvertToSpeedLimitFrac16(Motor_T * p_motor, uint16_t speed_rpm)
 
 void Motor_User_SetSpeedLimitParam_Rpm(Motor_T * p_motor, uint16_t forward_Rpm, uint16_t reverse_Rpm)
 {
-    Motor_User_SetSpeedLimitParam_Frac16(p_motor, ConvertToSpeedLimitFrac16(p_motor, forward_Rpm), ConvertToSpeedLimitFrac16(p_motor, reverse_Rpm));
+    Motor_User_SetSpeedLimitParam_Scalar16(p_motor, ConvertToSpeedLimitScalar16(p_motor, forward_Rpm), ConvertToSpeedLimitScalar16(p_motor, reverse_Rpm));
 }
 
 void Motor_User_SetSpeedLimitForwardParam_Rpm(Motor_T * p_motor, uint16_t forward_Rpm)
 {
-    Motor_User_SetSpeedLimitForwardParam_Frac16(p_motor, ConvertToSpeedLimitFrac16(p_motor, forward_Rpm));
+    Motor_User_SetSpeedLimitForwardParam_Scalar16(p_motor, ConvertToSpeedLimitScalar16(p_motor, forward_Rpm));
 }
 
 void Motor_User_SetSpeedLimitReverseParam_Rpm(Motor_T * p_motor, uint16_t reverse_Rpm)
 {
-    Motor_User_SetSpeedLimitReverseParam_Frac16(p_motor, ConvertToSpeedLimitFrac16(p_motor, reverse_Rpm));
+    Motor_User_SetSpeedLimitReverseParam_Scalar16(p_motor, ConvertToSpeedLimitScalar16(p_motor, reverse_Rpm));
 }
 
 uint16_t Motor_User_GetSpeedLimitForwardParam_Rpm(Motor_T * p_motor)
 {
+    return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, p_motor->Parameters.SpeedLimitForward_ScalarU16);
     // uint16_t speedLimit = (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ?
     //     p_motor->Parameters.SpeedLimitCcw_FracS16 : p_motor->Parameters.SpeedLimitCw_FracS16;
     // return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, speedLimit);
-    return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, p_motor->Parameters.SpeedLimitForward_ScalarU16);
 }
 
 uint16_t Motor_User_GetSpeedLimitReverseParam_Rpm(Motor_T * p_motor)
 {
+    return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, p_motor->Parameters.SpeedLimitReverse_ScalarU16);
     // uint16_t speedLimit = (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ?
     //  p_motor->Parameters.SpeedLimitCw_FracS16 : p_motor->Parameters.SpeedLimitCcw_FracS16;
-    return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, p_motor->Parameters.SpeedLimitReverse_ScalarU16);
 }
 #endif
 
 /*
     Persistent ILimit
 */
-void Motor_User_SetILimitParam_Frac16(Motor_T * p_motor, uint16_t motoring_Frac16, uint16_t generating_Frac16)
+void Motor_User_SetILimitMotoringParam_Scalar16(Motor_T * p_motor, uint16_t motoring_Frac16)
 {
     p_motor->Parameters.ILimitMotoring_ScalarU16 = motoring_Frac16;
+    PropagateSet(p_motor, _Motor_User_ClearILimitActive);
+}
+
+void Motor_User_SetILimitGeneratingParam_Scalar16(Motor_T * p_motor, uint16_t generating_Frac16)
+{
     p_motor->Parameters.ILimitGenerating_ScalarU16 = generating_Frac16;
     PropagateSet(p_motor, _Motor_User_ClearILimitActive);
 }
 
-void Motor_User_SetILimitMotoringParam_Frac16(Motor_T * p_motor, uint16_t motoring_Frac16)
+void Motor_User_SetILimitParam_Scalar16(Motor_T * p_motor, uint16_t motoring_Frac16, uint16_t generating_Frac16)
 {
     p_motor->Parameters.ILimitMotoring_ScalarU16 = motoring_Frac16;
-    PropagateSet(p_motor, _Motor_User_ClearILimitActive);
-}
-
-void Motor_User_SetILimitGeneratingParam_Frac16(Motor_T * p_motor, uint16_t generating_Frac16)
-{
     p_motor->Parameters.ILimitGenerating_ScalarU16 = generating_Frac16;
     PropagateSet(p_motor, _Motor_User_ClearILimitActive);
 }
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-static uint16_t ConvertToILimitFrac16(Motor_T * p_motor, uint16_t i_amp)
+static uint16_t ConvertToILimitScalar16(Motor_T * p_motor, uint16_t i_amp)
 {
-    int32_t i_frac16 = _Motor_ConvertI_AmpToFrac16(i_amp);
+    int32_t i_frac16 = _Motor_ConvertI_AmpToScalar16(i_amp);
     return (i_frac16 > UINT16_MAX) ? UINT16_MAX : i_frac16;
 }
 
 void Motor_User_SetILimitParam_Amp(Motor_T * p_motor, uint16_t motoring_Amp, uint16_t generating_Amp)
 {
-    Motor_User_SetILimitParam_Frac16(p_motor, ConvertToILimitFrac16(p_motor, motoring_Amp), ConvertToILimitFrac16(p_motor, generating_Amp));
+    Motor_User_SetILimitParam_Scalar16(p_motor, ConvertToILimitScalar16(p_motor, motoring_Amp), ConvertToILimitScalar16(p_motor, generating_Amp));
 }
 
 void Motor_User_SetILimitMotoringParam_Amp(Motor_T * p_motor, uint16_t motoring_Amp)
 {
-    Motor_User_SetILimitMotoringParam_Frac16(p_motor, ConvertToILimitFrac16(p_motor, motoring_Amp));
+    Motor_User_SetILimitMotoringParam_Scalar16(p_motor, ConvertToILimitScalar16(p_motor, motoring_Amp));
 }
 
 void Motor_User_SetILimitGeneratingParam_Amp(Motor_T * p_motor, uint16_t generating_Amp)
 {
-    Motor_User_SetILimitGeneratingParam_Frac16(p_motor, ConvertToILimitFrac16(p_motor, generating_Amp));
+    Motor_User_SetILimitGeneratingParam_Scalar16(p_motor, ConvertToILimitScalar16(p_motor, generating_Amp));
 }
 
-uint16_t Motor_User_GetILimitMotoringParam_Amp(Motor_T * p_motor)   { return _Motor_ConvertI_Frac16ToAmp(p_motor->Parameters.ILimitMotoring_ScalarU16); }
-uint16_t Motor_User_GetILimitGeneratingParam_Amp(Motor_T * p_motor) { return _Motor_ConvertI_Frac16ToAmp(p_motor->Parameters.ILimitGenerating_ScalarU16); }
+uint16_t Motor_User_GetILimitMotoringParam_Amp(Motor_T * p_motor)   { return _Motor_ConvertI_Scalar16ToAmp(p_motor->Parameters.ILimitMotoring_ScalarU16); }
+uint16_t Motor_User_GetILimitGeneratingParam_Amp(Motor_T * p_motor) { return _Motor_ConvertI_Scalar16ToAmp(p_motor->Parameters.ILimitGenerating_ScalarU16); }
 #endif
 
 /******************************************************************************/
@@ -891,5 +807,84 @@ void Motor_User_SetIPeakRef_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint1
     uint16_t adcuZero = (uint32_t)(max_MilliV + min_MilliV) * GLOBAL_ANALOG.ADC_MAX / 2U / GLOBAL_ANALOG.ADC_VREF_MILLIV;
     uint16_t adcuMax = (uint32_t)max_MilliV * GLOBAL_ANALOG.ADC_MAX / GLOBAL_ANALOG.ADC_VREF_MILLIV;
     Motor_User_SetIPeakRef_Adcu(p_motor, adcuMax - adcuZero);
+}
+#endif
+
+/******************************************************************************/
+/*
+    Ground Speed
+*/
+/******************************************************************************/
+#ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
+int16_t Motor_User_GetGroundSpeed_Kmh(Motor_T * p_motor)
+{
+    int16_t speed;
+
+    switch(p_motor->Parameters.SensorMode)
+    {
+        case MOTOR_SENSOR_MODE_HALL:        speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);    break;
+        case MOTOR_SENSOR_MODE_ENCODER:     speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);    break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        case MOTOR_SENSOR_MODE_SIN_COS:     speed = Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
+#endif
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+        case MOTOR_SENSOR_MODE_SENSORLESS:     speed = 0;     break;
+#endif
+        default:                             speed = 0;     break;
+    }
+
+    return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
+}
+
+int16_t Motor_User_GetGroundSpeed_Mph(Motor_T * p_motor)
+{
+    int16_t speed;
+
+    switch(p_motor->Parameters.SensorMode)
+    {
+        case MOTOR_SENSOR_MODE_HALL:         speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);    break;
+        case MOTOR_SENSOR_MODE_ENCODER:     speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);    break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        case MOTOR_SENSOR_MODE_SIN_COS:     speed =  Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
+#endif
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+        case MOTOR_SENSOR_MODE_SENSORLESS:     speed = 0;     break;
+#endif
+        default:                             speed = 0;     break;
+    }
+
+    return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
+}
+
+void Motor_User_SetGroundSpeed_Kmh(Motor_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+{
+    switch(p_motor->Parameters.SensorMode)
+    {
+        case MOTOR_SENSOR_MODE_HALL:         Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
+        case MOTOR_SENSOR_MODE_ENCODER:     Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        case MOTOR_SENSOR_MODE_SIN_COS:     Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
+#endif
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+        case MOTOR_SENSOR_MODE_SENSORLESS:     speed = 0;     break;
+#endif
+        default:     break;
+    }
+}
+
+void Motor_User_SetGroundSpeed_Mph(Motor_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+{
+    switch(p_motor->Parameters.SensorMode)
+    {
+        case MOTOR_SENSOR_MODE_HALL:         Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
+        case MOTOR_SENSOR_MODE_ENCODER:     Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        case MOTOR_SENSOR_MODE_SIN_COS:      Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
+#endif
+#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+        case MOTOR_SENSOR_MODE_SENSORLESS:     speed = 0;     break;
+#endif
+        default:                             break;
+    }
 }
 #endif

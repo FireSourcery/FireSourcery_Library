@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -81,10 +81,11 @@ PID_T;
 
 #define PID_INIT(p_Params) { .CONFIG = { .P_PARAMS = p_Params, } }
 
-static inline int16_t PID_GetOutput(PID_T * p_pid)             { return p_pid->Output; }
-static inline int32_t PID_GetKpParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Kp_Fixed32; }
-static inline int32_t PID_GetKiParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Ki_Fixed32; }
-static inline int32_t PID_GetKdParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Kd_Fixed32; }
+static inline int16_t PID_GetOutput(PID_T * p_pid)          { return p_pid->Output; }
+// static inline int32_t PID_GetKpParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Kp_Fixed32; }
+// static inline int32_t PID_GetKiParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Ki_Fixed32; }
+// static inline int32_t PID_GetKdParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Kd_Fixed32; }
+static inline uint32_t PID_GetSampleFreq(PID_T * p_pid)     { return p_pid->Params.SampleFreq; }
 
 /******************************************************************************/
 /*!
@@ -103,5 +104,8 @@ extern void PID_SetKd_Fixed32(PID_T * p_pid, uint32_t kd_Fixed32);
 extern int32_t PID_GetKp_Fixed32(PID_T * p_pid);
 extern int32_t PID_GetKi_Fixed32(PID_T * p_pid);
 extern int32_t PID_GetKd_Fixed32(PID_T * p_pid);
+extern int16_t PID_GetKp_Fixed16(PID_T * p_pid);
+extern int16_t PID_GetKi_Fixed16(PID_T * p_pid);
+extern int16_t PID_GetKd_Fixed16(PID_T * p_pid);
 
 #endif /* PID_H */

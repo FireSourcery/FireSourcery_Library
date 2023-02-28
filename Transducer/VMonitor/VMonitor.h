@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -100,9 +100,8 @@ static inline bool VMonitor_GetIsStatusWarning(const VMonitor_T * p_vMonitor)   
     Params
 */
 /******************************************************************************/
-static inline void VMonitor_Enable(VMonitor_T * p_vMonitor)     { p_vMonitor->Params.IsMonitorEnable = true; }
-static inline void VMonitor_Disable(VMonitor_T * p_vMonitor)    { p_vMonitor->Params.IsMonitorEnable = false; }
 
+static inline bool VMonitor_GetIsEnable(const VMonitor_T * p_vMonitor)          { return p_vMonitor->Params.IsMonitorEnable; }
 static inline uint16_t VMonitor_GetVInRef(const VMonitor_T * p_vMonitor)        { return p_vMonitor->Params.VInRef; }
 static inline uint16_t VMonitor_GetLimitUpper(const VMonitor_T * p_vMonitor)    { return p_vMonitor->Params.LimitUpper_Adcu; }
 static inline uint16_t VMonitor_GetLimitLower(const VMonitor_T * p_vMonitor)    { return p_vMonitor->Params.LimitLower_Adcu; }
@@ -117,6 +116,8 @@ static inline uint32_t VMonitor_GetLimitLower_MilliV(const VMonitor_T * p_vMonit
 static inline uint32_t VMonitor_GetWarningUpper_MilliV(const VMonitor_T * p_vMonitor) { return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.WarningUpper_Adcu); }
 static inline uint32_t VMonitor_GetWarningLower_MilliV(const VMonitor_T * p_vMonitor) { return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.WarningLower_Adcu); }
 
+static inline void VMonitor_Enable(VMonitor_T * p_vMonitor)     { p_vMonitor->Params.IsMonitorEnable = true; }
+static inline void VMonitor_Disable(VMonitor_T * p_vMonitor)    { p_vMonitor->Params.IsMonitorEnable = false; }
 static inline void VMonitor_SetLimitUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)    { p_vMonitor->Params.LimitUpper_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, limit_mV); }
 static inline void VMonitor_SetLimitLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)    { p_vMonitor->Params.LimitLower_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, limit_mV); }
 static inline void VMonitor_SetWarningUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)  { p_vMonitor->Params.WarningUpper_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, limit_mV); }

@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -31,9 +31,9 @@
 #include "MotAnalogUser.h"
 #include <string.h>
 
-static inline void AIn_EnableEdgePin(MotAnalogUser_AIn_T * p_aIn)     { p_aIn->UseEdgePin = true; Debounce_Init(&p_aIn->EdgePin, 5U); }
-static inline void ResetBrakeUnits(MotAnalogUser_T * p_user)         { Linear_ADC_Init(&p_user->BrakeAIn.Units,  p_user->Params.ThrottleZero_Adcu, p_user->Params.ThrottleMax_Adcu, 0U, 1000U); }
-static inline void ResetThrottleUnits(MotAnalogUser_T * p_user)     { Linear_ADC_Init(&p_user->ThrottleAIn.Units, p_user->Params.BrakeZero_Adcu, p_user->Params.BrakeMax_Adcu, 0U, 1000U); }
+static inline void AIn_EnableEdgePin(MotAnalogUser_AIn_T * p_aIn) { p_aIn->UseEdgePin = true; Debounce_Init(&p_aIn->EdgePin, 5U); }
+static inline void ResetBrakeUnits(MotAnalogUser_T * p_user)    { Linear_ADC_Init(&p_user->BrakeAIn.Units, p_user->Params.ThrottleZero_Adcu, p_user->Params.ThrottleMax_Adcu, 0U, 1000U); }
+static inline void ResetThrottleUnits(MotAnalogUser_T * p_user) { Linear_ADC_Init(&p_user->ThrottleAIn.Units, p_user->Params.BrakeZero_Adcu, p_user->Params.BrakeMax_Adcu, 0U, 1000U); }
 
 void MotAnalogUser_Init(MotAnalogUser_T * p_user)
 {

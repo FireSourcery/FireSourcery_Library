@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -113,10 +113,12 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc)
 static inline uint16_t FOC_GetIMagnitude_Idq(FOC_T * p_foc) { return qfrac16_vectormagnitude(p_foc->Id, p_foc->Iq); }
 static inline uint16_t FOC_GetIMagnitude(FOC_T * p_foc)     { return qfrac16_vectormagnitude(p_foc->Ialpha, p_foc->Ibeta); }
 static inline uint16_t FOC_GetVMagnitude(FOC_T * p_foc)     { return qfrac16_vectormagnitude(p_foc->Valpha, p_foc->Vbeta); }
-// static inline qfrac16_t FOC_GetIPhase(FOC_T * p_foc)        { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
-// static inline qfrac16_t FOC_GetVPhase(FOC_T * p_foc)        { return FOC_GetVMagnitude(p_foc) * math_sign(p_foc->Vq); }
-static inline uint16_t FOC_GetIPhase(FOC_T * p_foc)         { return math_abs(FOC_GetIMagnitude(p_foc)); }
-static inline uint16_t FOC_GetVPhase(FOC_T * p_foc)         { return math_abs(FOC_GetVMagnitude(p_foc)); }
+/* [0:65535] <=> [0:2] */
+static inline uint16_t FOC_GetIPhase(FOC_T * p_foc)         { return FOC_GetIMagnitude(p_foc); }
+static inline uint16_t FOC_GetVPhase(FOC_T * p_foc)         { return FOC_GetVMagnitude(p_foc); }
+/* [-32768:32767] <=> [-1:1] */
+static inline qfrac16_t FOC_GetIPhase_Signed(FOC_T * p_foc) { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
+static inline qfrac16_t FOC_GetVPhase_Signed(FOC_T * p_foc) { return FOC_GetVMagnitude(p_foc) * math_sign(p_foc->Vq); }
 
 /* [0:49152] <=> [0:1.5] */
 static inline int32_t FOC_GetPower(FOC_T * p_foc) { return (qfrac16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2); }

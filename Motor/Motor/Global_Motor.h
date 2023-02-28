@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -34,6 +34,13 @@
 #include "Config.h"
 #include <stdint.h>
 #include <stdbool.h>
+
+/* Library Software Version */
+#define MOTOR_LIBRARY_VERSION_OPT        0U
+#define MOTOR_LIBRARY_VERSION_MAJOR      0U
+#define MOTOR_LIBRARY_VERSION_MINOR      0U
+#define MOTOR_LIBRARY_VERSION_BUGFIX     1U
+#define MOTOR_LIBRARY_VERSION_ID         ((MOTOR_LIBRARY_VERSION_OPT << 24U) | (MOTOR_LIBRARY_VERSION_MAJOR << 16U) | (MOTOR_LIBRARY_VERSION_MINOR << 8U) | (MOTOR_LIBRARY_VERSION_BUGFIX))
 
 /* Global Static Const  */
 typedef const struct Global_Motor_Tag

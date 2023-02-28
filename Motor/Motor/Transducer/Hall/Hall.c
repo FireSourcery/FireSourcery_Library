@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -35,11 +35,11 @@
 const uint16_t _HALL_DEGREES_TABLE[HALL_SENSORS_TABLE_LENGTH] =
 {
     [HALL_ANGLE_330_30]     = 0U,         /* 0 */
-    [HALL_ANGLE_30_90]         = 10922U,     /* 60 */
+    [HALL_ANGLE_30_90]      = 10922U,     /* 60 */
     [HALL_ANGLE_90_150]     = 21845U,     /* 120 */
-    [HALL_ANGLE_150_210]     = 32768U,     /* 180 */
-    [HALL_ANGLE_210_270]     = 43690U,     /* 240 */
-    [HALL_ANGLE_270_330]     = 54613U,     /* 300 */
+    [HALL_ANGLE_150_210]    = 32768U,     /* 180 */
+    [HALL_ANGLE_210_270]    = 43690U,     /* 240 */
+    [HALL_ANGLE_270_330]    = 54613U,     /* 300 */
 };
 
 /*
@@ -53,12 +53,12 @@ void Hall_Init(Hall_T * p_hall)
 
 void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC, uint8_t sensorsB, uint8_t sensorsInvA, uint8_t sensorsC, uint8_t sensorsInvB)
 {
-    p_hall->Params.SensorsTable[sensorsA]         = HALL_VIRTUAL_SENSORS_A;
-    p_hall->Params.SensorsTable[sensorsInvC]     = HALL_VIRTUAL_SENSORS_INV_C;
-    p_hall->Params.SensorsTable[sensorsB]         = HALL_VIRTUAL_SENSORS_B;
-    p_hall->Params.SensorsTable[sensorsInvA]     = HALL_VIRTUAL_SENSORS_INV_A;
-    p_hall->Params.SensorsTable[sensorsC]         = HALL_VIRTUAL_SENSORS_C;
-    p_hall->Params.SensorsTable[sensorsInvB]     = HALL_VIRTUAL_SENSORS_INV_B;
+    p_hall->Params.SensorsTable[sensorsA]       = HALL_VIRTUAL_SENSORS_A;
+    p_hall->Params.SensorsTable[sensorsInvC]    = HALL_VIRTUAL_SENSORS_INV_C;
+    p_hall->Params.SensorsTable[sensorsB]       = HALL_VIRTUAL_SENSORS_B;
+    p_hall->Params.SensorsTable[sensorsInvA]    = HALL_VIRTUAL_SENSORS_INV_A;
+    p_hall->Params.SensorsTable[sensorsC]       = HALL_VIRTUAL_SENSORS_C;
+    p_hall->Params.SensorsTable[sensorsInvB]    = HALL_VIRTUAL_SENSORS_INV_B;
     p_hall->Params.SensorsTable[0U] = 0U;
     p_hall->Params.SensorsTable[7U] = 7U;
 }
@@ -67,23 +67,21 @@ void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC
     180 Degree Active
     Sensors are aligned to motor phase, 0 degree offset.
 */
-static void CalibratePhaseA(Hall_T * p_hall)         { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_A; }
-static void CalibratePhaseInvC(Hall_T * p_hall)     { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_C; }
-static void CalibratePhaseB(Hall_T * p_hall)         { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_B; }
-static void CalibratePhaseInvA(Hall_T * p_hall)     { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_A; }
-static void CalibratePhaseC(Hall_T * p_hall)         { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_C; }
-static void CalibratePhaseInvB(Hall_T * p_hall)     { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_B; }
+static void CalibratePhaseA(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_A; }
+static void CalibratePhaseInvC(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_C; }
+static void CalibratePhaseB(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_B; }
+static void CalibratePhaseInvA(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_A; }
+static void CalibratePhaseC(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_C; }
+static void CalibratePhaseInvB(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_B; }
 
 /* For both 120 and 180 degree active */
-void Hall_StartCalibrate(Hall_T * p_hall)         { Hall_ResetCapture(p_hall); p_hall->Params.BoundaryType = 0U; }
-void Hall_CalibratePhaseA(Hall_T * p_hall)         { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseA(p_hall); p_hall->Params.BoundaryType++;} }
-void Hall_CalibratePhaseInvC(Hall_T * p_hall)     { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvC(p_hall); p_hall->Params.BoundaryType++;} }
-void Hall_CalibratePhaseB(Hall_T * p_hall)         { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseB(p_hall); p_hall->Params.BoundaryType++;} }
-void Hall_CalibratePhaseInvA(Hall_T * p_hall)     { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvA(p_hall); p_hall->Params.BoundaryType++;} }
-void Hall_CalibratePhaseC(Hall_T * p_hall)         { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseC(p_hall); p_hall->Params.BoundaryType++;} }
-void Hall_CalibratePhaseInvB(Hall_T * p_hall)     { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvB(p_hall); p_hall->Params.BoundaryType++;} }
-
-
+void Hall_StartCalibrate(Hall_T * p_hall)       { Hall_ResetCapture(p_hall); p_hall->Params.BoundaryType = 0U; }
+void Hall_CalibratePhaseA(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseA(p_hall); p_hall->Params.BoundaryType++;} }
+void Hall_CalibratePhaseInvC(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvC(p_hall); p_hall->Params.BoundaryType++;} }
+void Hall_CalibratePhaseB(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseB(p_hall); p_hall->Params.BoundaryType++;} }
+void Hall_CalibratePhaseInvA(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvA(p_hall); p_hall->Params.BoundaryType++;} }
+void Hall_CalibratePhaseC(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseC(p_hall); p_hall->Params.BoundaryType++;} }
+void Hall_CalibratePhaseInvB(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvB(p_hall); p_hall->Params.BoundaryType++;} }
 
 // void Hall_Calibrate
 // (

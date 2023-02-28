@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Config.h
+    @file   Config.h
     @author FireSourcery
     @brief
     @version V0
@@ -31,9 +31,8 @@
 #ifndef CONFIG_THERMISTOR_H
 #define CONFIG_THERMISTOR_H
 
-
 #if     defined(CONFIG_THERMISTOR_UNITS_LINEAR_ONLY)
-#elif     defined(CONFIG_THERMISTOR_UNITS_NON_LINEAR)
+#elif   defined(CONFIG_THERMISTOR_UNITS_NON_LINEAR)
 #else
     #define CONFIG_THERMISTOR_UNITS_LINEAR_ONLY
 #endif

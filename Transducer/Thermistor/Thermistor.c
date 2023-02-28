@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -77,9 +77,9 @@ Thermistor_ThresholdStatus_T CheckThreshold(Thermistor_ThresholdStatus_T status,
     else /* if(p_therm->ShutdownThreshold == THERMISTOR_STATUS_SHUTDOWN) || THERMISTOR_SHUTDOWN_THRESHOLD */
     {
         /* in case if heat sample out of sync, repeat check */
-        if        (adcu < limit)             { status = THERMISTOR_THRESHOLD_LIMIT; }     /* crossing limit */
-        else if    (adcu < threshold)         { status = THERMISTOR_THRESHOLD_CONTINUE; } /* still over threshold  */
-        else                             { status = THERMISTOR_THRESHOLD_OK; }
+        if      (adcu < limit)      { status = THERMISTOR_THRESHOLD_LIMIT; }     /* crossing limit */
+        else if (adcu < threshold)  { status = THERMISTOR_THRESHOLD_CONTINUE; } /* still over threshold  */
+        else                        { status = THERMISTOR_THRESHOLD_OK; }
     }
 
     return status;
@@ -212,9 +212,9 @@ static uint16_t ConvertDegCToAdcu(const Thermistor_T * p_therm, uint16_t degC)
 }
 
 /* Scalar < 20 */
-int16_t Thermistor_ConvertToDegC(const Thermistor_T * p_therm, uint16_t adcu) { return ConvertAdcuToDegC(p_therm, adcu); }
-int32_t Thermistor_ConvertToDegC_Int(const Thermistor_T * p_therm, uint16_t adcu, uint8_t scalar) { return ConvertAdcuToDegC(p_therm, adcu * scalar); }
-uint16_t Thermistor_ConvertToAdcu_DegC(const Thermistor_T * p_therm, uint16_t degC) { return ConvertDegCToAdcu(p_therm, degC); }
+int16_t Thermistor_ConvertToDegC(const Thermistor_T * p_therm, uint16_t adcu)                       { return ConvertAdcuToDegC(p_therm, adcu); }
+int32_t Thermistor_ConvertToDegC_Int(const Thermistor_T * p_therm, uint16_t adcu, uint8_t scalar)   { return ConvertAdcuToDegC(p_therm, adcu * scalar); }
+uint16_t Thermistor_ConvertToAdcu_DegC(const Thermistor_T * p_therm, uint16_t degC)                 { return ConvertDegCToAdcu(p_therm, degC); }
 
 static float ConvertAdcuToDegC_Float(const Thermistor_T * p_therm, uint16_t adcu)
 {

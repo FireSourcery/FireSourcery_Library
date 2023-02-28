@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,9 +22,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     math_svpwm.h
+    @file   math_svpwm.h
     @author FireSourcery
-    @brief    SVPWM pure math functions.
+    @brief  SVPWM pure math functions.
     @version V0
 */
 /******************************************************************************/

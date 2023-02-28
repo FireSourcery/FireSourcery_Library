@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -95,7 +95,7 @@ static inline void ProcInnerFeedback(Motor_T * p_motor)
         */
         if(p_motor->ControlFeedbackMode.Scalar == 1U)
         {
-            // FOC_SetIVqReq(&p_motor->Foc, math_clamp(Linear_Ramp_GetOutput(&p_motor->Ramp) * (Motor_GetKvSpeed_Frac16(p_motor) / 2 / Scalar) / 65536, -32767, 32767));
+            // FOC_SetIVqReq(&p_motor->Foc, math_clamp(Linear_Ramp_GetOutput(&p_motor->Ramp) * (Motor_GetVSpeed_FracS16(p_motor) / 2 / Scalar) / 65536, -32767, 32767));
         }
 
         if(math_isbound(FOC_GetIq(&p_motor->Foc), p_motor->ILimitCw_FracS16, p_motor->ILimitCcw_FracS16) == true)
@@ -282,8 +282,8 @@ void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
 {
     // p_motor->ControlFeedbackMode.Current = 0U;
     p_motor->Speed_FracS16 = 0;
-    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopPower_FracU16 / 2U));    // alternatively, clamp user input ramp
-    Linear_Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopSpeed_FracU16 / 2U));
+    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopPower_Scalar16 / 2U));    // alternatively, clamp user input ramp
+    Linear_Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopSpeed_Scalar16 / 2U));
     Linear_Ramp_SetOutputState(&p_motor->OpenLoopSpeedRamp, 0);
     FOC_SetIVdReq(&p_motor->Foc, 0);
 }

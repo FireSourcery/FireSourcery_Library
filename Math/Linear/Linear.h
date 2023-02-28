@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -58,16 +58,16 @@ typedef struct Linear_Tag
 Linear_T;
 
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
-#define LINEAR_INIT(factor, divisor, y0, yRef)            \
-{                                                        \
-    .Slope                 = ,                                \
-    .SlopeShift         = ,                                \
-    .InvSlope             = ,                             \
-    .InvSlopeShift         = ,                                \
-    .XOffset             = ,                                \
-    .YOffset             = ,                                \
-     .XReference         = ,                             \
-    .YReference         = ,                             \
+#define LINEAR_INIT(factor, divisor, y0, yRef)  \
+{                                               \
+    .Slope              = ,                     \
+    .SlopeShift         = ,                     \
+    .InvSlope           = ,                     \
+    .InvSlopeShift      = ,                     \
+    .XOffset            = ,                     \
+    .YOffset            = ,                     \
+    .XReference         = ,                     \
+    .YReference         = ,                     \
 }
 #endif
 
@@ -135,18 +135,18 @@ static inline int32_t Linear_InvFunction(const Linear_T * p_linear, int32_t y)
 */
 /******************************************************************************/
 /*  */
-static inline int32_t Linear_Function_Frac16(const Linear_T * p_linear, int32_t x)
+static inline int32_t Linear_Function_Fixed32(const Linear_T * p_linear, int32_t x)
 {
     return linear_f16(p_linear->XOffset, p_linear->DeltaX, x);
 }
 
 /*!
-    y_frac16 in q16.16 format
-    @param[in] y_frac16 overflow limit ~q1.16
+    y_fixed32 in q16.16 format
+    @param[in] y_fixed32 overflow limit ~q1.16
 */
-static inline int32_t Linear_InvFunction_Frac16(const Linear_T * p_linear, int32_t y_frac16)
+static inline int32_t Linear_InvFunction_Fixed32(const Linear_T * p_linear, int32_t y_fixed32)
 {
-    return linear_invf16(p_linear->XOffset, p_linear->DeltaX, y_frac16);
+    return linear_invf16(p_linear->XOffset, p_linear->DeltaX, y_fixed32);
 }
 
 /******************************************************************************/
@@ -159,19 +159,19 @@ static inline int32_t Linear_InvFunction_Frac16(const Linear_T * p_linear, int32
 /* negative returns zero */
 static inline uint16_t Linear_Function_FracU16(const Linear_T * p_linear, int32_t x)
 {
-    return _Linear_SatUnsigned16(Linear_Function_Frac16(p_linear, x));
+    return _Linear_SatUnsigned16(Linear_Function_Fixed32(p_linear, x));
 }
 
 /* negative returns abs */
 static inline uint16_t Linear_Function_FracU16_Abs(const Linear_T * p_linear, int32_t x)
 {
-    return _Linear_SatUnsigned16_Abs(Linear_Function_Frac16(p_linear, x));
+    return _Linear_SatUnsigned16_Abs(Linear_Function_Fixed32(p_linear, x));
 }
 
 /* y_frac16 in q0.16 format is handled by q16.16 case */
 static inline int32_t Linear_InvFunction_FracU16(const Linear_T * p_linear, uint16_t y_fracU16)
 {
-    return Linear_InvFunction_Frac16(p_linear, y_fracU16);
+    return Linear_InvFunction_Fixed32(p_linear, y_fracU16);
 }
 
 /******************************************************************************/
@@ -183,13 +183,13 @@ static inline int32_t Linear_InvFunction_FracU16(const Linear_T * p_linear, uint
 /* */
 static inline int16_t Linear_Function_FracS16(const Linear_T * p_linear, int32_t x)
 {
-    return _Linear_SatSigned16(Linear_Function_Frac16(p_linear, x) / 2);
+    return _Linear_SatSigned16(Linear_Function_Fixed32(p_linear, x) / 2);
 }
 
 /* y_frac16 use q1.15 */
 static inline int32_t Linear_InvFunction_FracS16(const Linear_T * p_linear, int16_t y_fracS16)
 {
-    return Linear_InvFunction_Frac16(p_linear, (int32_t)y_fracS16 * 2);
+    return Linear_InvFunction_Fixed32(p_linear, (int32_t)y_fracS16 * 2);
 }
 
 

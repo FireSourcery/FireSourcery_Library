@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,9 +22,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file      Timer.h
+    @file   Timer.h
     @author FireSourcery
-    @brief     Elapsed time
+    @brief  Elapsed time
     @version V0
 */
 /******************************************************************************/
@@ -118,8 +118,8 @@ static inline bool Timer_Poll(Timer_T * p_timer)
     bool isComplete = (p_timer->Period > 0U) && (Timer_CheckComplete(p_timer) == true);
     if(isComplete == true)
     {
-        if(p_timer->IsOneShot == true)     { p_timer->Period = 0U; }
-        else                             { Timer_Restart(p_timer); }
+        if(p_timer->IsOneShot == true)  { p_timer->Period = 0U; }
+        else                            { Timer_Restart(p_timer); }
     }
     return isComplete;
 }

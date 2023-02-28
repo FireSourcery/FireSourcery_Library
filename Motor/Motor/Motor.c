@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -123,7 +123,7 @@ void Motor_InitReboot(Motor_T * p_motor)
     if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
     {
         /* Start at 0 speed in FOC mode for continuous angle displacements */
-        Linear_Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0, p_motor->Parameters.OpenLoopSpeed_FracU16);
+        Linear_Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0, p_motor->Parameters.OpenLoopSpeed_Scalar16);
     }
     else
     {
@@ -440,7 +440,7 @@ void Motor_SetDirectionCw(Motor_T * p_motor)
         case MOTOR_SENSOR_MODE_HALL: Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW); Encoder_SetSinglePhaseDirection(&p_motor->Encoder, false); break;
         case MOTOR_SENSOR_MODE_ENCODER:     break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SENSORLESS:     break;
+        case MOTOR_SENSOR_MODE_SENSORLESS:  break;
 #endif
         default: break;
     }
@@ -451,8 +451,8 @@ void Motor_SetDirectionCw(Motor_T * p_motor)
 */
 void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if(direction == MOTOR_DIRECTION_CCW)     { Motor_SetDirectionCcw(p_motor); }
-    else                                     { Motor_SetDirectionCw(p_motor); }
+    if(direction == MOTOR_DIRECTION_CCW)    { Motor_SetDirectionCcw(p_motor); }
+    else                                    { Motor_SetDirectionCw(p_motor); }
 }
 
 /*
@@ -460,14 +460,14 @@ void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 */
 void Motor_SetDirectionForward(Motor_T * p_motor)
 {
-    if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW)     { Motor_SetDirectionCcw(p_motor); }
-    else                                                                     { Motor_SetDirectionCw(p_motor); }
+    if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW)    { Motor_SetDirectionCcw(p_motor); }
+    else                                                                    { Motor_SetDirectionCw(p_motor); }
 }
 
 void Motor_SetDirectionReverse(Motor_T * p_motor)
 {
-    if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW)     { Motor_SetDirectionCw(p_motor); }
-    else                                                                     { Motor_SetDirectionCcw(p_motor); }
+    if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW)    { Motor_SetDirectionCw(p_motor); }
+    else                                                                    { Motor_SetDirectionCcw(p_motor); }
 }
 
 /******************************************************************************/
@@ -554,7 +554,7 @@ void Motor_ResetUnitsAngleSpeed_Mech(Motor_T * p_motor)
     MECH_R = ELECTRIC_R / N_POLE_PAIRS
     ELECTRIC_R = 6 COMMUTATION_STEPS
     Capture Pulse Per Commutation,     CPR = PolePairs*6     => GetSpeed reflects mechanical speed
-     Capture Pulse Per Commutation,     CPR = PolePairs      => GetSpeed reflects electrical speed
+    Capture Pulse Per Commutation,     CPR = PolePairs      => GetSpeed reflects electrical speed
 */
 void Motor_ResetUnitsHallEncoder(Motor_T * p_motor)
 {

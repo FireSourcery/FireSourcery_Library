@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2021 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -90,7 +90,7 @@ static inline int32_t Linear_Voltage_CalcV_Frac16(const Linear_T * p_linear, uin
 */
 static inline int32_t Linear_Voltage_CalcFrac16(const Linear_T * p_linear, uint16_t adcu)
 {
-    return Linear_Function_Frac16(p_linear, adcu);
+    return Linear_Function_FracS16(p_linear, adcu);
 }
 
 /*!
@@ -135,7 +135,7 @@ static inline uint16_t Linear_Voltage_CalcAdcu_ScalarV(const Linear_T * p_linear
 
 static inline uint16_t Linear_Voltage_CalcAdcu_Frac16(const Linear_T * p_linear, int32_t frac16)
 {
-    return (uint16_t)Linear_InvFunction_Frac16(p_linear, frac16);
+    return (uint16_t)Linear_InvFunction_Fixed32(p_linear, frac16);
 }
 
 /* Same as general Linear_Voltage_CalcAdcu_Frac16 */
