@@ -164,15 +164,16 @@ typedef enum qangle16_quadrant_tag
 }
 qangle16_quadrant_t;
 
+/* Mechanical Angle */
 static inline qangle16_quadrant_t qangle16_quadrant(qangle16_t theta)
 {
     qangle16_quadrant_t quadrant;
     switch((uint16_t)theta & QANGLE16_QUADRANT_MASK)
     {
-        case (uint16_t)QANGLE16_0:      quadrant = QANGLE16_QUADRANT_I; break;
-        case (uint16_t)QANGLE16_90:     quadrant = QANGLE16_QUADRANT_II; break;
-        case (uint16_t)QANGLE16_180:    quadrant = QANGLE16_QUADRANT_III; break;
-        case (uint16_t)QANGLE16_270:    quadrant = QANGLE16_QUADRANT_IV; break;
+        case (uint16_t)QANGLE16_0:      quadrant = QANGLE16_QUADRANT_I;     break;
+        case (uint16_t)QANGLE16_90:     quadrant = QANGLE16_QUADRANT_II;    break;
+        case (uint16_t)QANGLE16_180:    quadrant = QANGLE16_QUADRANT_III;   break;
+        case (uint16_t)QANGLE16_270:    quadrant = QANGLE16_QUADRANT_IV;    break;
         default: quadrant = 0U; break; /* Should not occur */
     }
     return quadrant;

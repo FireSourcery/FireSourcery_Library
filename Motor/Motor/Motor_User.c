@@ -73,13 +73,13 @@ static int32_t Scale16(uint16_t scalarU16, int32_t value) { return scalarU16 * v
 // }
 
 //todo split super function
-static inline Motor_FeedbackMode_T _Motor_GetValidFeedbackMode(Motor_T * p_motor, Motor_FeedbackModeId_T modeCmd)
-{
-    Motor_FeedbackMode_T modeControl = Motor_ConvertFeedbackModeId(modeCmd);
-    if((modeControl.Speed == 0U) && Motor_CheckSpeedOverThreshold(p_motor) == true)     { modeControl.Speed = 1U; }
-    if((modeControl.Current == 0U) && Motor_FOC_CheckIOverThreshold(p_motor) == true)   { modeControl.Current = 1U; }
-    return modeControl;
-}
+// static inline Motor_FeedbackMode_T _Motor_User_ConvertFeedbackModeId(Motor_T * p_motor, Motor_FeedbackModeId_T modeCmd)
+// {
+//     Motor_FeedbackMode_T modeControl = Motor_ConvertFeedbackModeId(modeCmd);
+//     if((modeControl.Speed == 0U) && Motor_CheckSpeedOverThreshold(p_motor) == true)     { modeControl.Speed = 1U; }
+//     if((modeControl.Current == 0U) && Motor_FOC_CheckIOverThreshold(p_motor) == true)   { modeControl.Current = 1U; }
+//     return modeControl;
+// }
 
 void _Motor_User_ActivateControlMode(Motor_T * p_motor, Motor_FeedbackModeId_T modeCmd)
 {
@@ -87,7 +87,8 @@ void _Motor_User_ActivateControlMode(Motor_T * p_motor, Motor_FeedbackModeId_T m
 
     if(p_motor->ControlFeedbackMode.State != Motor_ConvertFeedbackModeId(modeCmd).State)
     {
-        modeControl = _Motor_GetValidFeedbackMode(p_motor, modeCmd);
+        // modeControl = _Motor_User_ConvertFeedbackModeId(p_motor, modeCmd);
+        modeControl = Motor_ConvertFeedbackModeId(modeCmd);
 
         if(p_motor->ControlFeedbackMode.State != modeControl.State)
         {
@@ -437,7 +438,7 @@ void Motor_User_ActivateCalibrationSensor(Motor_T * p_motor)
 {
     switch(p_motor->Parameters.SensorMode)
     {
-        case MOTOR_SENSOR_MODE_HALL:        StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL);         break;
+        case MOTOR_SENSOR_MODE_HALL:        StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL);       break;
         case MOTOR_SENSOR_MODE_ENCODER:     StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER);    break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS:     StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_SIN_COS);    break;

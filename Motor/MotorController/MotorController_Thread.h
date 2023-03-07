@@ -269,11 +269,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
             // _MotorController_ProcVoltageMonitor(p_mc); /* Except voltage supply */
             // _MotorController_ProcHeatMonitor(p_mc);
             // for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
-
-            // for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++)
-            // {
-            //     if(Serial_IsRxFull(&p_mc->CONFIG.P_SERIALS[iSerial]) == true) MotorController_BeepShort(p_mc);
-            // }
         }
     }
 }

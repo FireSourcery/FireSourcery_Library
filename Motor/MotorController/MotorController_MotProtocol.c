@@ -132,6 +132,7 @@ static void WriteVars16(MotorController_T * p_mc, MotPacket_WriteVars16Resp_T * 
     volatile int a = 0;
     volatile int b = 0;
     a = b;
+
     uint8_t varsCount = MotPacket_WriteVars16Req_ParseVarIdsCount(p_rxPacket);
     // const MotVarId_T * p_varIds = MotPacket_WriteVars16Req_ParsePtrVarIds(p_rxPacket);
     // const uint16_t * p_varValues = MotPacket_WriteVars16Req_ParsePtrVarValues(p_rxPacket);

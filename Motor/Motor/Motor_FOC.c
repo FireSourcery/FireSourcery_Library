@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Motor_FOC.c
+    @file   Motor_FOC.c
     @author FireSourcery
     @brief
     @version V0
@@ -98,21 +98,21 @@ static inline void ProcInnerFeedback(Motor_T * p_motor)
             // FOC_SetIVqReq(&p_motor->Foc, math_clamp(Linear_Ramp_GetOutput(&p_motor->Ramp) * (Motor_GetVSpeed_FracS16(p_motor) / 2 / Scalar) / 65536, -32767, 32767));
         }
 
-        if(math_isbound(FOC_GetIq(&p_motor->Foc), p_motor->ILimitCw_FracS16, p_motor->ILimitCcw_FracS16) == true)
-        {
+        // if(math_isbound(FOC_GetIq(&p_motor->Foc), p_motor->ILimitCw_FracS16, p_motor->ILimitCcw_FracS16) == true)
+        // {
             FOC_SetVq(&p_motor->Foc, FOC_GetIVqReq(&p_motor->Foc));
             FOC_SetVd(&p_motor->Foc, FOC_GetIVdReq(&p_motor->Foc));
-        }
-        else
-        {
-            Motor_SetFeedbackILimits(p_motor);
-            p_motor->ControlFeedbackMode.Current == 1U;
-            PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
-            PID_SetOutputState(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
-            if      (FOC_GetIq(&p_motor->Foc) < p_motor->ILimitCw_FracS16)  { FOC_SetIVqReq(&p_motor->Foc, p_motor->ILimitCw_FracS16); }
-            else if (FOC_GetIq(&p_motor->Foc) > p_motor->ILimitCcw_FracS16) { FOC_SetIVqReq(&p_motor->Foc, p_motor->ILimitCcw_FracS16); }
-            FOC_SetIVdReq(&p_motor->Foc, 0U);
-        }
+        // }
+        // else
+        // {
+        //     Motor_SetFeedbackILimits(p_motor);
+        //     p_motor->ControlFeedbackMode.Current == 1U;
+        //     PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
+        //     PID_SetOutputState(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
+        //     if      (FOC_GetIq(&p_motor->Foc) < p_motor->ILimitCw_FracS16)  { FOC_SetIVqReq(&p_motor->Foc, p_motor->ILimitCw_FracS16); }
+        //     else if (FOC_GetIq(&p_motor->Foc) > p_motor->ILimitCcw_FracS16) { FOC_SetIVqReq(&p_motor->Foc, p_motor->ILimitCcw_FracS16); }
+        //     FOC_SetIVdReq(&p_motor->Foc, 0U);
+        // }
     }
 }
 
@@ -134,20 +134,20 @@ static inline void ProcOuterFeedback(Motor_T * p_motor)
     }
     else if(p_motor->ControlFeedbackMode.Speed == 0U)
     {
-        // if(Motor_CheckSpeedOverLimit(Motor_T * p_motor) == true)
-        if(math_isbound(p_motor->Speed_FracS16, p_motor->SpeedLimitCw_FracS16, p_motor->SpeedLimitCcw_FracS16) == true)
-        {
+        // if(Motor_CheckSpeedOverLimit(Motor_T * p_motor) == false)
+        // if(math_isbound(p_motor->Speed_FracS16, p_motor->SpeedLimitCw_FracS16, p_motor->SpeedLimitCcw_FracS16) == true)
+        // {
             FOC_SetIVqReq(&p_motor->Foc, Linear_Ramp_GetOutput(&p_motor->Ramp));
             FOC_SetIVdReq(&p_motor->Foc, 0);
-        }
-        else
-        {
-            Motor_SetFeedbackSpeedLimits( p_motor);
-            p_motor->ControlFeedbackMode.Speed = 1U;
-            PID_SetOutputState(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp));
-            if      (p_motor->Speed_FracS16 < p_motor->SpeedLimitCw_FracS16)    { Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCw_FracS16); }
-            else if (p_motor->Speed_FracS16 > p_motor->SpeedLimitCcw_FracS16)   { Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCcw_FracS16); }
-        }
+        // }
+        // else
+        // {
+        //     Motor_SetFeedbackSpeedLimits( p_motor);
+        //     p_motor->ControlFeedbackMode.Speed = 1U;
+        //     PID_SetOutputState(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp));
+        //     if      (p_motor->Speed_FracS16 < p_motor->SpeedLimitCw_FracS16)    { Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCw_FracS16); }
+        //     else if (p_motor->Speed_FracS16 > p_motor->SpeedLimitCcw_FracS16)   { Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->SpeedLimitCcw_FracS16); }
+        // }
     }
 }
 
@@ -194,8 +194,8 @@ static void ProcInnerFeedbackOutput(Motor_T * p_motor)
     {
         ProcClarkePark(p_motor);
         ProcInnerFeedback(p_motor); /* Set Vd Vq */
+        ActivateAngle(p_motor);
     }
-    ActivateAngle(p_motor);
 }
 
 /******************************************************************************/
@@ -213,24 +213,20 @@ extern void Motor_ExternControl(Motor_T * p_motor);
 */
 void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
-    // if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
-    // {
+    if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
+    {
         Motor_FOC_EnqueueIabc(p_motor); /* Samples chain completes sometime after queue resumes. ADC ISR priority higher than PWM. */
-
     #ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
         Motor_ExternControl(p_motor);
     #endif
         // /* ~10us */ Motor_Debug_CaptureTime(p_motor, 1U);
-            // if(Motor_CheckOpenLoop(p_motor) == false)
-            // {
         p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
         FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
         ProcOuterFeedback(p_motor);
-        // }
-    // /* ~29 us */ Motor_Debug_CaptureTime(p_motor, 2U);
+        // /* ~29 us */ Motor_Debug_CaptureTime(p_motor, 2U);
         ProcInnerFeedbackOutput(p_motor);
         // /* ~37us */ Motor_Debug_CaptureTime(p_motor, 4U);
-    // }
+    }
 }
 
 /*

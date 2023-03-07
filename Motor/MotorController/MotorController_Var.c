@@ -262,6 +262,10 @@ uint8_t MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T varId, int3
     uint8_t writeCount = 0U; // identify var size on write?
     Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U);
 
+    volatile int a = 0;
+    volatile int b = 0;
+    a = b;
+
     switch(varId)
     {
         case MOT_VAR_USER_CMD:      MotorController_User_SetCmdValue(p_mc, (uint16_t)varValue);                         writeCount = 2U;    break;
@@ -433,4 +437,7 @@ uint8_t MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T varId, int3
 }
 
 
+uint8_t MotorController_Var_GetSize(MotorController_T * p_mc, MotVarId_T varId)
+{
 
+}
