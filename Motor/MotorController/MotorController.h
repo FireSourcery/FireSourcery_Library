@@ -200,7 +200,7 @@ typedef union MotorController_BuzzerFlags_Tag
     struct
     {
         uint32_t ThrottleOnInit : 1U;
-        uint32_t OnReverse : 2U; /* 0: Off, 1: Short Beep, 2: Continuous */
+        uint32_t OnReverse      : 2U; /* 0: Off, 1: Short Beep, 2: Continuous */
         // uint32_t ThrottleOnBrakeCmd;
         // uint32_t ThrottleOnBrakeRelease;
         // uint32_t ThrottleOnNeutralRelease;
@@ -255,6 +255,7 @@ typedef const struct MotorController_Config_Tag
 #endif
     const MotorController_Params_T * const P_PARAMS_NVM;
     const MotorController_Manufacture_T * const P_ONCE; /* cannot read directly if FlashOnce is selected */
+    // const MotorController_Manufacture_T * const P_MANUFACTURE; /* cannot read directly if FlashOnce is selected */
     const MemMapBoot_T * const P_MEM_MAP_BOOT;
 //RAM_START, RAM_END for Read Address
     Motor_T * const     P_MOTORS;
@@ -265,10 +266,10 @@ typedef const struct MotorController_Config_Tag
     CanBus_T * const     P_CAN_BUS;
 #endif
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-    Flash_T * const     P_FLASH;     /* Flash defined outside module, ensure flash config/params are in RAM */
+    Flash_T * const     P_FLASH;        /* Flash defined outside module, ensure flash config/params are in RAM */
 // #endif
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
-    EEPROM_T * const     P_EEPROM;    /* defined outside for regularity */
+    EEPROM_T * const     P_EEPROM;      /* Defined outside for regularity */
 #endif
     AnalogN_T * const P_ANALOG_N;
     const MotAnalog_Conversions_T ANALOG_CONVERSIONS;
@@ -320,7 +321,7 @@ typedef struct MotorController_Tag
 
     /* State and SubState */
     StateMachine_T StateMachine;
-    MotorController_FaultFlags_T FaultFlags; /* Fault Substate */
+    MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
     MotorController_WarningFlags_T WarningFlags;
 #if    defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
     MotAnalog_Results_T FaultAnalogRecord;
