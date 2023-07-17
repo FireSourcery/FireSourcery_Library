@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -53,7 +53,6 @@
 #include "Math/Linear/Linear_ADC.h"
 #include "Math/Linear/Linear_Voltage.h"
 #include "Math/Linear/Linear_Ramp.h"
-// #include "Math/Linear/Linear_Speed.h"
 #include "Math/Linear/Linear.h"
 #include "Math/PID/PID.h"
 #include "Math/Filter/Filter_MovAvg.h"
@@ -244,13 +243,6 @@ typedef enum Motor_SectorId_Tag
 }
 Motor_SectorId_T;
 
-/******************************************************************************/
-/*!
-    Frac16 [-1:1] <=> [-65536:65536] in q16.16 may over saturate
-    FracU16 [0:1] <=> [0:65535] in q0.16
-    FracS16 [-1:1] <=> [-32768:32767] in q1.15
-*/
-/******************************************************************************/
 /*!
     @brief Motor Parameters - Runtime variable configuration. Load from non volatile memory.
 */
@@ -283,19 +275,22 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
     uint16_t ILimitGenerating_ScalarU16;
 
     uint16_t RampAccel_Cycles;
-    uint16_t AlignPower_FracU16;     /* V or I Frac16 */
+    uint16_t AlignPower_ScalarU16;          /* V or I */
     uint32_t AlignTime_Cycles;
     // uint16_t VoltageBrakeScalar_Frac16; /* [0:65535], 0 is highest intensity */
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     uint16_t OpenLoopSpeed_Scalar16;    /* Max, 65536 will overflow */
-    uint16_t OpenLoopPower_Scalar16;    /* V or I Frac16 */
+    uint16_t OpenLoopPower_Scalar16;    /* V or I */
     uint16_t OpenLoopAccel_Cycles;      /* Time to reach OpenLoopSpeed */
     // uint16_t OpenLoopVHzGain;
 #endif
 
+#if defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
     uint16_t SurfaceDiameter;
     uint16_t GearRatio_Factor;
     uint16_t GearRatio_Divisor;
+#endif
+
 #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
     Phase_Mode_T PhasePwmMode;     /* Only 1 nvm param for phase module. */
 #endif
@@ -366,7 +361,7 @@ typedef struct Motor_Tag
     uint16_t ILimitMotoring_ScalarU16;
     uint16_t ILimitGenerating_ScalarU16;
     Motor_ILimitActiveId_T ILimitActiveId;
-    uint16_t ILimitActiveSentinel;        /* Store for comparison */
+    uint16_t ILimitActiveSentinel_ScalarU16;        /* Store for comparison */
     int16_t ILimitCcw_FracS16;             /* Checked when Current feedback inactive, [-32767:32767] directional input into IqPid, Same as SpeedPid output limit during SPEED_CURRENT_MODE */
     int16_t ILimitCw_FracS16;
 
@@ -419,9 +414,9 @@ typedef struct Motor_Tag
     */
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     Linear_T OpenLoopSpeedRamp;            /* OpenLoopSpeed Ramp */
-#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+    #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
     uint32_t OpenLoopCommutationPeriod;
-#endif
+    #endif
 #endif
 
     /* Jog */
@@ -430,13 +425,13 @@ typedef struct Motor_Tag
     /*
         Unit Conversions
     */
-    Linear_T UnitsIa;          /* Frac16 and Amps */
+    Linear_T UnitsIa;           /* Frac16 and Amps */
     Linear_T UnitsIb;
     Linear_T UnitsIc;
     Linear_T UnitsVabc;         /* Bemf V,mV, and Frac16 conversion */
     Linear_T UnitsVSpeed;       /* Frac16 Speed => V */
 
-    Filter_T FilterA;         /* Calibration use */
+    Filter_T FilterA;           /* Calibration use */
     Filter_T FilterB;
     Filter_T FilterC;
 
@@ -458,46 +453,13 @@ Motor_T;
 
 /******************************************************************************/
 /*
-    Simplify CommutationMode Check
-*/
-/******************************************************************************/
-typedef void(*Motor_CommutationModeFunction_T)(Motor_T * p_motor);
-
-static inline void Motor_ProcCommutationMode(Motor_T * p_motor, Motor_CommutationModeFunction_T focFunction, Motor_CommutationModeFunction_T sixStepFunction)
-{
-#if     defined(CONFIG_MOTOR_SIX_STEP_ENABLE) && defined(CONFIG_MOTOR_FOC_ENABLE)
-    if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC) { focFunction(p_motor); }
-    else /* p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */ { sixStepFunction(p_motor); }
-#elif     defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-    (void)focFunction; sixStepFunction(p_motor);
-#elif     defined(CONFIG_MOTOR_FOC_ENABLE)
-    (void)sixStepFunction; focFunction(p_motor);
-#endif
-}
-
-// uint32_t type cast warning
-// typedef void(*Motor_CommutationModeFunction1_T)(Motor_T * p_motor, uint32_t var);
-
-// static inline void Motor_ProcCommutationMode1(Motor_T * p_motor, Motor_CommutationModeFunction1_T focFunction, Motor_CommutationModeFunction1_T sixStepFunction, uint32_t var)
-// {
-// #if     defined(CONFIG_MOTOR_SIX_STEP_ENABLE) && defined(CONFIG_MOTOR_FOC_ENABLE)
-//     if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)                 { focFunction(p_motor, var); }
-//     else /* p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */     { sixStepFunction(p_motor, var); }
-// #elif     defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-//     (void)focFunction;    sixStepFunction(p_motor, var);
-// #else /* defined(CONFIG_MOTOR_FOC_ENABLE) */
-//     (void)sixStepFunction;    focFunction(p_motor, var);
-// #endif
-// }
-
-/******************************************************************************/
-/*
     Number formats
-    Scalar16 => [0:65535], 1 <=> 65535
-    FracS16 => [-32768:32767], 1 <=> 32767
-    Frac16Abs => [0:65535], 1 <=> 32767
-    Fixed32 => [INT32_MIN:INT32_MAX], 1 <=> 65536 | todo rename Frac16,
-    Fixed16 => [-32768:32767], 1 <=> 256
+
+    FracS16 => [-32768:32767], [-1:1] <=> [-32768:32767] in q1.15
+    FracS16Abs => [0:65535], [0:2] <=> [0:65535] in q1.15 without sign bit, todo rename as FracU16
+    Scalar16 => [0:65535], [0:1] <=> [0:65535] in q0.16
+    Fixed32 => [INT32_MIN:INT32_MAX], [-1:1] <=> [-65536:65536] in q16.16
+    Fixed16 => [-32768:32767], [-1:1] <=> [-256:256]
 */
 /******************************************************************************/
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
@@ -528,8 +490,41 @@ static inline int32_t _Motor_ConvertPower_Scalar16ToWatts(int32_t vi_frac16)  { 
 // static inline int32_t _Motor_VSpeed_ConvertSpeedToVFrac16(Motor_T * p_motor, int32_t speed_frac16)     { return speed_frac16 * p_motor->Parameters.VSpeedRef_Rpm / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
 // static inline int32_t _Motor_VSpeed_ConvertRpmToVFrac16(Motor_T * p_motor, int32_t speed_rpm)     { return _Motor_VSpeed_ConvertSpeedToVFrac16(p_motor, _Motor_ConvertSpeed_RpmToScalar16(p_motor, speed_rpm) ); }
 // static inline uint32_t _Motor_VSpeed_ConvertToVSpeed(Motor_T * p_motor, uint16_t rpm)         { return Linear_Function(&p_motor->UnitsVSpeed, _Motor_ConvertSpeed_RpmToScalar16(p_motor, rpm)); }
-
 #endif
+
+/******************************************************************************/
+/*
+    Simplify CommutationMode Check
+*/
+/******************************************************************************/
+typedef void(*Motor_CommutationModeFunction_T)(Motor_T * p_motor);
+
+static inline void Motor_ProcCommutationMode(Motor_T * p_motor, Motor_CommutationModeFunction_T focFunction, Motor_CommutationModeFunction_T sixStepFunction)
+{
+#if     defined(CONFIG_MOTOR_SIX_STEP_ENABLE) && defined(CONFIG_MOTOR_FOC_ENABLE)
+    if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)               { focFunction(p_motor); }
+    else /* p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */   { sixStepFunction(p_motor); }
+#elif   defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+    (void)focFunction; sixStepFunction(p_motor);
+#elif   defined(CONFIG_MOTOR_FOC_ENABLE)
+    (void)sixStepFunction; focFunction(p_motor);
+#endif
+}
+
+// uint32_t type cast warning
+// typedef void(*Motor_CommutationModeFunction1_T)(Motor_T * p_motor, uint32_t var);
+
+// static inline void Motor_ProcCommutationMode1(Motor_T * p_motor, Motor_CommutationModeFunction1_T focFunction, Motor_CommutationModeFunction1_T sixStepFunction, uint32_t var)
+// {
+// #if     defined(CONFIG_MOTOR_SIX_STEP_ENABLE) && defined(CONFIG_MOTOR_FOC_ENABLE)
+//     if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)                 { focFunction(p_motor, var); }
+//     else /* p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP */     { sixStepFunction(p_motor, var); }
+// #elif     defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+//     (void)focFunction;    sixStepFunction(p_motor, var);
+// #else /* defined(CONFIG_MOTOR_FOC_ENABLE) */
+//     (void)sixStepFunction;    focFunction(p_motor, var);
+// #endif
+// }
 
 /******************************************************************************/
 /*
@@ -626,7 +621,7 @@ static inline void Motor_ResetActiveILimits(Motor_T * p_motor)
 {
     p_motor->ILimitMotoring_ScalarU16 = p_motor->Parameters.ILimitMotoring_ScalarU16;
     p_motor->ILimitGenerating_ScalarU16 = p_motor->Parameters.ILimitGenerating_ScalarU16;
-    p_motor->ILimitActiveSentinel = 0xFFFFU; /* Use for comparison on set */
+    p_motor->ILimitActiveSentinel_ScalarU16 = 0xFFFFU; /* Use for comparison on set */
 }
 /******************************************************************************/
 /*

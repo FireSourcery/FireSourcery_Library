@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -266,6 +266,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 
             _MotorController_ProcOptDin(p_mc);
 
+            // Serial_SendN(&p_mc->CONFIG.P_SERIALS[1], "abc", 4);
+
             // _MotorController_ProcVoltageMonitor(p_mc); /* Except voltage supply */
             // _MotorController_ProcHeatMonitor(p_mc);
             // for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
@@ -293,17 +295,17 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
         case VMONITOR_WARNING_UPPER:
             break;
         case VMONITOR_WARNING_LOWER:
-            if(p_mc->WarningFlags.LowV == false)
+            if(p_mc->WarningFlags.LowV == 0U)
             {
-                p_mc->WarningFlags.LowV = true;
+                p_mc->WarningFlags.LowV = 1U;
                 MotorController_SetILimitMotorAll(p_mc, p_mc->Parameters.ILimitLowV_Scalar16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
                 Blinky_BlinkN(&p_mc->Buzzer, 500U, 250U, 2U);
             }
             break;
         case VMONITOR_STATUS_OK:
-            if(p_mc->WarningFlags.LowV == true)
+            if(p_mc->WarningFlags.LowV == 1U)
             {
-                p_mc->WarningFlags.LowV = false;
+                p_mc->WarningFlags.LowV = 0U;
                 MotorController_ClearILimitMotorAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
             }
             break;

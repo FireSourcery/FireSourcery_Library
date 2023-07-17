@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -93,10 +93,10 @@ static inline void ProcInnerFeedback(Motor_T * p_motor)
             Overflow caution:
             Linear_Function(&p_motor->UnitsVSpeed) input range
         */
-        if(p_motor->ControlFeedbackMode.Scalar == 1U)
-        {
-            // FOC_SetIVqReq(&p_motor->Foc, math_clamp(Linear_Ramp_GetOutput(&p_motor->Ramp) * (Motor_GetVSpeed_FracS16(p_motor) / 2 / Scalar) / 65536, -32767, 32767));
-        }
+        // if(p_motor->ControlFeedbackMode.Scalar == 1U)
+        // {
+        //     // FOC_SetIVqReq(&p_motor->Foc, math_clamp(Linear_Ramp_GetOutput(&p_motor->Ramp) * (Motor_GetVSpeed_FracS16(p_motor) / 2 / Scalar) / 65536, -32767, 32767));
+        // }
 
         // if(math_isbound(FOC_GetIq(&p_motor->Foc), p_motor->ILimitCw_FracS16, p_motor->ILimitCcw_FracS16) == true)
         // {
@@ -125,8 +125,6 @@ static inline void ProcInnerFeedback(Motor_T * p_motor)
 */
 static inline void ProcOuterFeedback(Motor_T * p_motor)
 {
-    Linear_Ramp_ProcOutput(&p_motor->Ramp);
-
     if((Motor_ProcSensorSpeed(p_motor) == true) && (p_motor->ControlFeedbackMode.Speed == 1U))
     {
         FOC_SetIVqReq(&p_motor->Foc, PID_ProcPI(&p_motor->PidSpeed, Linear_Ramp_GetOutput(&p_motor->Ramp), p_motor->Speed_FracS16));
@@ -213,12 +211,15 @@ extern void Motor_ExternControl(Motor_T * p_motor);
 */
 void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
+    Linear_Ramp_ProcOutput(&p_motor->Ramp);
+
+    //todo change angle as 20khz
     if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
     {
-        Motor_FOC_EnqueueIabc(p_motor); /* Samples chain completes sometime after queue resumes. ADC ISR priority higher than PWM. */
-    #ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
+        Motor_FOC_EnqueueIabc(p_motor);     /* Samples chain completes sometime after queue resumes. ADC ISR priority higher than PWM. */
+#ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
         Motor_ExternControl(p_motor);
-    #endif
+#endif
         // /* ~10us */ Motor_Debug_CaptureTime(p_motor, 1U);
         p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
         FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
@@ -240,74 +241,6 @@ void Motor_FOC_ProcAngleVBemf(Motor_T * p_motor)
     FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
     FOC_ProcVBemfClarkePark(&p_motor->Foc);
 }
-
-/******************************************************************************/
-/*!
-    StateMachine mapping
-    defined as inline for StateMachine wrapper functions
-*/
-/******************************************************************************/
-void Motor_FOC_StartAlign(Motor_T * p_motor)
-{
-    // p_motor->ControlFeedbackMode.State = Motor_ConvertFeedbackModeId(MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT).State;
-    p_motor->ControlFeedbackMode.Current = 1U;
-    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.AlignTime_Cycles, 0, p_motor->Parameters.AlignPower_FracU16 / 2U);
-    FOC_SetIVqReq(&p_motor->Foc, 0);
-    FOC_SetTheta(&p_motor->Foc, 0);
-    Motor_FOC_ProcFeedbackMatch(p_motor);
-}
-
-void Motor_FOC_ProcAlign(Motor_T * p_motor)
-{
-    Motor_FOC_EnqueueIabc(p_motor);
-    FOC_SetIVdReq(&p_motor->Foc, Linear_Ramp_ProcOutput(&p_motor->AuxRamp));
-    ProcInnerFeedbackOutput(p_motor);
-}
-
-void Motor_FOC_StartAlignValidate(Motor_T * p_motor)
-{
-    Motor_CalibrateSensorZero(p_motor);
-    Motor_ZeroSensor(p_motor);
-    FOC_SetIVdReq(&p_motor->Foc, 0);
-    // Linear_Ramp_Set(&p_motor->Ramp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, INT16_MAX / 2U));
-    Motor_FOC_ProcFeedbackMatch(p_motor);
-    // p_motor->ControlFeedbackMode.OpenLoop = 0U;
-}
-
-void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
-{
-    // p_motor->ControlFeedbackMode.Current = 0U;
-    p_motor->Speed_FracS16 = 0;
-    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopPower_Scalar16 / 2U));    // alternatively, clamp user input ramp
-    Linear_Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopSpeed_Scalar16 / 2U));
-    Linear_Ramp_SetOutputState(&p_motor->OpenLoopSpeedRamp, 0);
-    FOC_SetIVdReq(&p_motor->Foc, 0);
-}
-
-/*
-    OpenLoop
-    Blind input angle, constant voltage/current
-    ElectricalAngle => integrate speed to angle
-*/
-static void _Motor_FOC_ProcOpenLoopSpeed(Motor_T * p_motor)
-{
-    /*
-        RPM = Speed_FracS16 * 2 * SpeedFeedbackRef_Rpm / 65535
-        ElectricalAngle += (RPM * 65536 * PolePairs) / (60 * CONTROL_FREQ)
-    */
-    p_motor->Speed_FracS16 = Linear_Ramp_ProcOutput(&p_motor->OpenLoopSpeedRamp);
-    p_motor->ElectricalAngle += ((p_motor->Speed_FracS16 * p_motor->Parameters.SpeedFeedbackRef_Rpm * p_motor->Parameters.PolePairs * 2) / ((int32_t)60 * GLOBAL_MOTOR.CONTROL_FREQ));
-}
-
-void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
-{
-    Motor_FOC_EnqueueIabc(p_motor);
-    _Motor_FOC_ProcOpenLoopSpeed(p_motor);
-    FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
-    FOC_SetIVqReq(&p_motor->Foc, Linear_Ramp_ProcOutput(&p_motor->AuxRamp)); // Linear_Ramp_ProcOutput(&p_motor->Ramp);
-    ProcInnerFeedbackOutput(p_motor);
-}
-
 
 /******************************************************************************/
 /*!
@@ -369,4 +302,71 @@ void Motor_FOC_SetDirectionForward(Motor_T * p_motor)
 {
     if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW)     { Motor_FOC_SetDirectionCcw(p_motor); }
     else                                                                     { Motor_FOC_SetDirectionCw(p_motor); }
+}
+
+/******************************************************************************/
+/*!
+    StateMachine mapping
+    defined as inline for StateMachine wrapper functions tdo
+*/
+/******************************************************************************/
+void Motor_FOC_StartAlign(Motor_T * p_motor)
+{
+    // p_motor->ControlFeedbackMode.State = Motor_ConvertFeedbackModeId(MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT).State;
+    p_motor->ControlFeedbackMode.Current = 1U;
+    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.AlignTime_Cycles, 0, p_motor->Parameters.AlignPower_ScalarU16 / 2U);
+    FOC_SetIVqReq(&p_motor->Foc, 0);
+    FOC_SetTheta(&p_motor->Foc, 0);
+    Motor_FOC_ProcFeedbackMatch(p_motor);
+}
+
+void Motor_FOC_ProcAlign(Motor_T * p_motor)
+{
+    Motor_FOC_EnqueueIabc(p_motor);
+    FOC_SetIVdReq(&p_motor->Foc, Linear_Ramp_ProcOutput(&p_motor->AuxRamp));
+    ProcInnerFeedbackOutput(p_motor);
+}
+
+void Motor_FOC_StartAlignValidate(Motor_T * p_motor)
+{
+    Motor_CalibrateSensorZero(p_motor);
+    Motor_ZeroSensor(p_motor);
+    FOC_SetIVdReq(&p_motor->Foc, 0);
+    // Linear_Ramp_Set(&p_motor->Ramp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, INT16_MAX / 2U));
+    Motor_FOC_ProcFeedbackMatch(p_motor);
+    // p_motor->ControlFeedbackMode.OpenLoop = 0U;
+}
+
+void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
+{
+    // p_motor->ControlFeedbackMode.Current = 0U;
+    p_motor->Speed_FracS16 = 0;
+    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopPower_Scalar16 / 2U));    // alternatively, clamp user input ramp
+    Linear_Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopSpeed_Scalar16 / 2U));
+    Linear_Ramp_SetOutputState(&p_motor->OpenLoopSpeedRamp, 0);
+    FOC_SetIVdReq(&p_motor->Foc, 0);
+}
+
+/*
+    OpenLoop
+    Blind input angle, constant voltage/current
+    ElectricalAngle => integrate speed to angle
+*/
+static void _Motor_FOC_ProcOpenLoopSpeed(Motor_T * p_motor)
+{
+    /*
+        RPM = Speed_FracS16 * 2 * SpeedFeedbackRef_Rpm / 65535
+        ElectricalAngle += (RPM * 65536 * PolePairs) / (60 * CONTROL_FREQ)
+    */
+    p_motor->Speed_FracS16 = Linear_Ramp_ProcOutput(&p_motor->OpenLoopSpeedRamp);
+    p_motor->ElectricalAngle += ((p_motor->Speed_FracS16 * p_motor->Parameters.SpeedFeedbackRef_Rpm * p_motor->Parameters.PolePairs * 2) / ((int32_t)60 * GLOBAL_MOTOR.CONTROL_FREQ));
+}
+
+void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
+{
+    Motor_FOC_EnqueueIabc(p_motor);
+    _Motor_FOC_ProcOpenLoopSpeed(p_motor);
+    FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
+    FOC_SetIVqReq(&p_motor->Foc, Linear_Ramp_ProcOutput(&p_motor->AuxRamp)); // Linear_Ramp_ProcOutput(&p_motor->Ramp);
+    ProcInnerFeedbackOutput(p_motor);
 }

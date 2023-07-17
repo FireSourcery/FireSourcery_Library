@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -46,7 +46,7 @@ static inline void Motor_Calibrate_StartHall(Motor_T * p_motor)
 
 static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
 {
-    const uint16_t duty = p_motor->Parameters.AlignPower_FracU16;
+    const uint16_t duty = p_motor->Parameters.AlignPower_ScalarU16;
     bool isComplete = false;
 
     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
@@ -106,7 +106,7 @@ static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
 static inline void Motor_Calibrate_StartEncoder(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
-    Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_FracU16, 0U, 0U);
+    Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_ScalarU16, 0U, 0U);
 }
 
 static inline bool Motor_Calibrate_Encoder(Motor_T * p_motor)
@@ -119,7 +119,7 @@ static inline bool Motor_Calibrate_Encoder(Motor_T * p_motor)
         {
             case 0U:
                 Encoder_CalibrateQuadratureReference(&p_motor->Encoder);
-                Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignPower_FracU16, 0U);
+                Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignPower_ScalarU16, 0U);
                 p_motor->CalibrationStateIndex = 1U;
                 break;
 
@@ -209,7 +209,7 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
         switch (p_motor->CalibrationStateIndex)
         {
             case 0U:
-                Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_FracU16, 0U, 0U);
+                Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_ScalarU16, 0U, 0U);
                 p_motor->CalibrationStateIndex = 2U;
                 /* wait 1s */
                 break;
@@ -224,7 +224,7 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
 
             case 2U:
                 SinCos_CalibrateA(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
-                Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignPower_FracU16, 0U);
+                Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignPower_ScalarU16, 0U);
                 p_motor->CalibrationStateIndex = 4U;
                 /* wait 1s */
                 break;
@@ -237,16 +237,16 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
 
             case 4U:
                 SinCos_CalibrateB(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
-//                Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, p_motor->Parameters.AlignPower_FracU16);
+//                Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, p_motor->Parameters.AlignPower_ScalarU16);
                 p_motor->CalibrationStateIndex = 5U;
                 // isComplete = true;
-                Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_FracU16, 0U, 0U);
+                Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_ScalarU16, 0U, 0U);
                 break;
 
             case 5U:
                 p_motor->SinCos.DebugAPostMech = SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
                 p_motor->SinCos.DebugAPostElec = SinCos_GetElectricalAngle(&p_motor->SinCos);
-                Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignPower_FracU16, 0U);
+                Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignPower_ScalarU16, 0U);
                 p_motor->CalibrationStateIndex = 6U;
                 break;
 

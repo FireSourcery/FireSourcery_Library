@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     .h
+    @file   MotorAnalog.h
     @author FireSourcery
     @brief
     @version V0
@@ -42,8 +42,8 @@ extern void Motor_Analog_CaptureIb(Motor_T * p_motor);
 extern void Motor_Analog_CaptureIc(Motor_T * p_motor);
 
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-    #define _MOTOR_ANALOG_N_CONVERSION_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor)                                                                         \
-        .CONVERSION_SIN     = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_SIN, 0U, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), SinPin, &(p_Hosts)[SinHost]),     \
+    #define _MOTOR_ANALOG_N_CONVERSION_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor)                                                                      \
+        .CONVERSION_SIN     = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_SIN, 0U, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), SinPin, &(p_Hosts)[SinHost]),   \
         .CONVERSION_COS     = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_COS, 0U, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), CosPin, &(p_Hosts)[CosHost]),
 #else
     #define _MOTOR_ANALOG_N_CONVERSION_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor)
@@ -58,7 +58,7 @@ extern void Motor_Analog_CaptureIc(Motor_T * p_motor);
     .CONVERSION_IB      = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_IB, (Analog_Callback_T)Motor_Analog_CaptureIb,  p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), IbPin,   &(p_Hosts)[IbHost]),    \
     .CONVERSION_IC      = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_IC, (Analog_Callback_T)Motor_Analog_CaptureIc,  p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), IcPin,   &(p_Hosts)[IcHost]),    \
     .CONVERSION_HEAT    = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_HEAT,   0U,                                     p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), HeatPin, &(p_Hosts)[HeatHost]),  \
-     _MOTOR_ANALOG_N_CONVERSION_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor)                                                                                                                 \
+    _MOTOR_ANALOG_N_CONVERSION_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor)                                                                                                                  \
     .ADCS_GROUP_I       = { .Flags = (uint8_t)((1U << IaHost) | (1U << IbHost) | (1U << IcHost) | (1U << SinHost) | (1U << CosHost)), },                                                                    \
     .ADCS_GROUP_V       = { .Flags = (uint8_t)((1U << VaHost) | (1U << VbHost) | (1U << VcHost) | (1U << SinHost) | (1U << CosHost)), },                                                                    \
     .ADCS_GROUP_PWM     = { .Flags = (uint8_t)((1U << VaHost) | (1U << VbHost) | (1U << VcHost) | (1U << IaHost) | (1U << IbHost) | (1U << IcHost)| (1U << SinHost) | (1U << CosHost)), },                  \

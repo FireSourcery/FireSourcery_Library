@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -72,7 +72,7 @@ typedef enum MotAnalogUser_DirectionPins_Tag
 }
 MotAnalogUser_DirectionPins_T;
 
-/* AnalogInput Sub-Module */
+/* AnalogInput Sub-Module, todo move to ain */
 typedef struct MotAnalogUser_AIn_Tag
 {
     Debounce_T EdgePin;

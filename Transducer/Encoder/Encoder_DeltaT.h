@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -208,8 +208,8 @@ static inline uint32_t Encoder_DeltaT_GetScalarSpeed(Encoder_T * p_encoder)
 static inline uint32_t Encoder_DeltaT_GetAngularSpeed(Encoder_T * p_encoder)
 {
     /* p_encoder->UnitAngularSpeed set to 0U if overflow */
-    return (p_encoder->UnitAngularSpeed == 0U) ?
-        ((p_encoder->CONFIG.TIMER_FREQ / p_encoder->DeltaT) << ENCODER_ANGLE16) / p_encoder->Params.CountsPerRevolution : p_encoder->UnitAngularSpeed / p_encoder->DeltaT;
+    // return (p_encoder->UnitAngularSpeed == 0U) ?
+    //     ((p_encoder->CONFIG.TIMER_FREQ / p_encoder->DeltaT) << ENCODER_ANGLE_BITS) / p_encoder->Params.CountsPerRevolution : p_encoder->UnitAngularSpeed / p_encoder->DeltaT;
 }
 
 static inline uint32_t Encoder_DeltaT_GetRotationalSpeed(Encoder_T * p_encoder)

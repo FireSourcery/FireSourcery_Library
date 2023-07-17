@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     math_linear.h
+    @file   math_linear.h
     @author FireSourcery
     @brief  Linear pure functions.
     @version V0
@@ -113,6 +113,7 @@ static inline int32_t linear_invf_round(int32_t m_factor, int32_t m_divisor, int
 
 /******************************************************************************/
 /*
+    frac16 with division
     f16(x) = 65536 * (x - x0) / (xref - x0)
     invf16(y_frac16) = y_frac16 * (xref - x0) / 65536 - x0;
 */
@@ -129,10 +130,10 @@ static inline int32_t linear_invf16(int32_t x0, int32_t deltax, int32_t y_frac16
 
 /******************************************************************************/
 /*
-    when slope is set to frac16 conversion, m16_f returns user units secondarily
+    Slope is set to frac16 conversion without division, m16_f returns user units secondarily
     y0 == 0
     m16_shifted == [65536 / (xref - x0) << shift]
-     f16([x0:xRef]) = [0:65536]
+    f16([x0:xRef]) = [0:65536]
     g([0:65536]) = [y0_Units:yRef_Units]
     f([x0:xRef]) = g(f16([x0:xRef])) = [y0_Units:yRef_Units]
 */
@@ -175,7 +176,7 @@ static inline int32_t linear_m16_f(int32_t m16_shifted, uint8_t shift, int32_t x
 /* y_units to x */
 static inline int32_t linear_m16_invf(int32_t invm16_shifted, uint8_t shift, int32_t x0, int32_t y0_units, int32_t deltay_units, int32_t y_units)
 {
-    return  linear_m16_invf16(invm16_shifted, shift, x0, linear_m16_invg(deltay_units, y0_units, y_units));
+    return linear_m16_invf16(invm16_shifted, shift, x0, linear_m16_invg(deltay_units, y0_units, y_units));
 }
 
 #endif

@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -110,6 +110,8 @@ static inline void Motor_User_ToggleFault(Motor_T * p_motor)
 static inline uint32_t Motor_User_GetControlTimer(Motor_T * p_motor)                        { return p_motor->ControlTimerBase; }
 static inline Motor_Direction_T Motor_User_GetDirection(Motor_T * p_motor)                  { return p_motor->Direction; }
 static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackMode(Motor_T * p_motor)      { return p_motor->ControlFeedbackMode; }
+// static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackModeId(Motor_T * p_motor)    { return p_motor->ControlFeedbackMode; }
+// static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackModeFlags(Motor_T * p_motor) { return p_motor->ControlFeedbackMode; }
 static inline Motor_StatusFlags_T Motor_User_GetStatusFlags(Motor_T * p_motor)              { return p_motor->StatusFlags; }
 static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(Motor_T * p_motor)                { return p_motor->FaultFlags; }
 static inline Motor_OpenLoopState_T Motor_User_GetOpenLoopState(Motor_T * p_motor)          { return p_motor->OpenLoopState; }
@@ -124,7 +126,7 @@ static inline uint16_t Motor_User_GetAdcu(Motor_T * p_motor, MotorAnalog_Channel
 static inline uint8_t Motor_User_GetAdcu_Msb8(Motor_T * p_motor, MotorAnalog_Channel_T adcChannel)  { return Motor_User_GetAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
 static inline int32_t Motor_User_GetHeat_DegC(Motor_T * p_motor, uint16_t scalar)                   { return Thermistor_ConvertToDegC_Int(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
 // static inline float Motor_User_GetHeat_DegCFloat(Motor_T * p_motor)                                 { return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
-static inline uint16_t Motor_User_GetActiveILimit(Motor_T * p_motor)                                { return p_motor->ILimitActiveSentinel; }
+static inline uint16_t Motor_User_GetActiveILimit(Motor_T * p_motor)                                { return p_motor->ILimitActiveSentinel_ScalarU16; }
 static inline uint16_t Motor_User_GetActiveSpeedLimit(Motor_T * p_motor)                            { return p_motor->SpeedLimitDirect_ScalarU16; }
 
 typedef int32_t(*Motor_CommutationModeFunctionInt32_T)(Motor_T * p_motor);
@@ -144,11 +146,12 @@ static inline int32_t Motor_GetCommutationModeInt32(Motor_T * p_motor, Motor_Com
 }
 
 /*!
-    Speed_Fixed32 set as CCW is positive
+    Speed_FracS16 set as CCW is positive
     @return speed forward as positive. reverse as negative.
 */
+/* [-32767:32767] <=> [-1:1] */
 static inline int32_t Motor_User_GetSpeed_FracS16(Motor_T * p_motor) { return Motor_ConvertUserDirection(p_motor, p_motor->Speed_FracS16); }
-/* [0:65535], 32767 => 1 */
+/* [0:65535] <=> [0:2] */
 static inline uint16_t Motor_User_GetSpeed_Frac16Abs(Motor_T * p_motor) { return math_abs(Motor_ConvertUserDirection(p_motor, p_motor->Speed_FracS16)); }
 
 /*!
@@ -216,7 +219,7 @@ static inline uint16_t Motor_User_GetILimitMotoring_ScalarU16(Motor_T * p_motor)
 static inline uint16_t Motor_User_GetILimitGenerating_ScalarU16(Motor_T * p_motor)                  { return p_motor->Parameters.ILimitGenerating_ScalarU16; }
 static inline uint16_t Motor_User_GetRampAccel_Cycles(Motor_T * p_motor)                            { return p_motor->Parameters.RampAccel_Cycles; }
 // static inline void Motor_User_GetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode)            { return p_motor->Parameters.AlignMode; }
-static inline uint16_t Motor_User_GetAlignPower_Scalar16(Motor_T * p_motor)                        { return p_motor->Parameters.AlignPower_FracU16; }
+static inline uint16_t Motor_User_GetAlignPower_Scalar16(Motor_T * p_motor)                        { return p_motor->Parameters.AlignPower_ScalarU16; }
 static inline uint32_t Motor_User_GetAlignTime_Cycles(Motor_T * p_motor)                            { return p_motor->Parameters.AlignTime_Cycles; }
 static inline uint16_t Motor_User_GetOpenLoopSpeed_Scalar16(Motor_T * p_motor)                      { return p_motor->Parameters.OpenLoopSpeed_Scalar16; }
 static inline uint32_t Motor_User_GetOpenLoopPower_Scalar16(Motor_T * p_motor)                      { return p_motor->Parameters.OpenLoopPower_Scalar16; }
@@ -228,7 +231,7 @@ static inline void Motor_User_SetDefaultFeedbackMode(Motor_T * p_motor, Motor_Fe
 // static inline void Motor_User_SetVoltageBrakeScalar_Frac16(Motor_T * p_motor, uint16_t scalar_Frac16)     { p_motor->Parameters.VoltageBrakeScalar_InvFrac16 = 65535U - scalar_Frac16; }
 static inline void Motor_User_SetRampAccel_Cycles(Motor_T * p_motor, uint16_t cycles)                   { p_motor->Parameters.RampAccel_Cycles = cycles; }
 // static inline void Motor_User_SetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode)                 { p_motor->Parameters.AlignMode = mode; }
-static inline void Motor_User_SetAlignPower_Scalar16(Motor_T * p_motor, uint16_t v_scalar16)            { p_motor->Parameters.AlignPower_FracU16 = (v_scalar16 > GLOBAL_MOTOR.ALIGN_VPWM_MAX) ? GLOBAL_MOTOR.ALIGN_VPWM_MAX : v_scalar16; }
+static inline void Motor_User_SetAlignPower_Scalar16(Motor_T * p_motor, uint16_t v_scalar16)            { p_motor->Parameters.AlignPower_ScalarU16 = (v_scalar16 > GLOBAL_MOTOR.ALIGN_VPWM_MAX) ? GLOBAL_MOTOR.ALIGN_VPWM_MAX : v_scalar16; }
 static inline void Motor_User_SetAlignTime_Cycles(Motor_T * p_motor, uint16_t cycles)                   { p_motor->Parameters.AlignTime_Cycles = cycles; }
 static inline void Motor_User_SetOpenLoopSpeed_Scalar16(Motor_T * p_motor, uint16_t speed_scalar16)     { p_motor->Parameters.OpenLoopSpeed_Scalar16 = speed_scalar16; }
 static inline void Motor_User_SetOpenLoopPower_Scalar16(Motor_T * p_motor, uint16_t v_scalar16)         { p_motor->Parameters.OpenLoopPower_Scalar16 = v_scalar16; }
@@ -322,7 +325,7 @@ extern void Motor_User_SetDirectionCalibration(Motor_T * p_motor, Motor_Directio
 extern void Motor_User_SetPolePairs(Motor_T * p_motor, uint8_t polePairs);
 extern void Motor_User_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode);
 
-#if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL)
+#if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
 extern int16_t Motor_User_GetGroundSpeed_Mph(Motor_T * p_motor);
 extern void Motor_User_SetGroundSpeed_Kmh(Motor_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
 extern void Motor_User_SetGroundSpeed_Mph(Motor_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);

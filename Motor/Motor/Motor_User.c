@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -511,7 +511,7 @@ void Motor_User_ClearSpeedLimitActive(Motor_T * p_motor)
 */
 void _Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar16)
 {
-    p_motor->ILimitActiveSentinel = scalar16;
+    p_motor->ILimitActiveSentinel_ScalarU16 = scalar16;
     p_motor->ILimitMotoring_ScalarU16 = Scale16(scalar16, p_motor->Parameters.ILimitMotoring_ScalarU16);
     p_motor->ILimitGenerating_ScalarU16 = Scale16(scalar16, p_motor->Parameters.ILimitGenerating_ScalarU16);
     Motor_SetFeedbackILimits(p_motor);
@@ -536,7 +536,7 @@ void _Motor_User_ClearILimitActive(Motor_T * p_motor)
 /*! @return true if set */
 bool Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar16, Motor_ILimitActiveId_T id)
 {
-    bool isSet = (scalar16 < p_motor->ILimitActiveSentinel);
+    bool isSet = (scalar16 < p_motor->ILimitActiveSentinel_ScalarU16);
     if(isSet == true)
     {
         _Motor_User_SetILimitActive(p_motor, scalar16);
@@ -816,7 +816,7 @@ void Motor_User_SetIPeakRef_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint1
     Ground Speed
 */
 /******************************************************************************/
-#ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
+#if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
 int16_t Motor_User_GetGroundSpeed_Kmh(Motor_T * p_motor)
 {
     int16_t speed;

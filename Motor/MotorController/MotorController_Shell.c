@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -170,7 +170,7 @@ static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 {
     Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     //    Terminal_T * p_term = &p_mc->Shell.Terminal;
-    const uint16_t duty = p_motor->Parameters.AlignPower_FracU16;
+    const uint16_t duty = p_motor->Parameters.AlignPower_ScalarU16;
 
     if(argc == 2U)
     {
@@ -341,7 +341,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
             Terminal_SendString(p_term, "\r\n");
 
             // Terminal_SendString(p_term, "ILimitActiveId: "); Terminal_SendNum(p_term, p_motor->ILimitActiveId); Terminal_SendString(p_term, "\r\n");
-            // Terminal_SendString(p_term, "ILimitActive: "); Terminal_SendNum(p_term, p_motor->ILimitActiveSentinel); Terminal_SendString(p_term, "\r\n");
+            // Terminal_SendString(p_term, "ILimitActive: "); Terminal_SendNum(p_term, p_motor->ILimitActiveSentinel_ScalarU16); Terminal_SendString(p_term, "\r\n");
             // Terminal_SendString(p_term, "ILimitMotoring_ScalarU16: "); Terminal_SendNum(p_term, p_motor->ILimitMotoring_ScalarU16); Terminal_SendString(p_term, "\r\n");
             // Terminal_SendString(p_term, "IsILimitActive: "); Terminal_SendNum(p_term, p_motor->StatusFlags.ILimitActive); Terminal_SendString(p_term, "\r\n");
 

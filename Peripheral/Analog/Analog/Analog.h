@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -72,13 +72,13 @@ Analog_OpType_T;
 typedef const struct Analog_Conversion_Tag
 {
     /* Defined by module */
-    const Analog_OpType_T         TYPE;
-    const analog_channel_t         CHANNEL;         /* Index into results buffer */
+    const Analog_OpType_T       TYPE;
+    const analog_channel_t      CHANNEL;         /* Index into results buffer */
     const Analog_Callback_T     ON_COMPLETE;     /* On channel complete */
 
     /* Defined by main */
     void * const P_CALLBACK_CONTEXT;
-    volatile analog_result_t * const P_RESULTS_BUFFER;     /*!< Persistent ADC results buffer, virtual channel index.  */
+    volatile analog_result_t * const P_RESULTS_BUFFER;  /*!< Persistent ADC results buffer, virtual channel index.  */
     const analog_pin_t PIN;
 }
 Analog_Conversion_T;
@@ -100,15 +100,15 @@ typedef struct Analog_OptionsFlags_Tag
     //    uint32_t CaptureLocalPeak         :1U; /* for now, conversion stops on 1 local peak in channel set, user must also set ContinuousConversion */
     //    uint32_t HwAveraging
     //    uint32_t HwTriggerChannel         :1U; /* Per Hw buffer complete. Per Channel if both are set*/
-    //    uint32_t Interrupt                 :1U;
-    //    uint32_t Dma                     :1U;
+    //    uint32_t Interrupt                :1U;
+    //    uint32_t Dma                      :1U;
     //    uint8_t Priority
 }
 Analog_OptionsFlags_T;
 
 typedef const struct Analog_Options_Tag
 {
-    const Analog_OpType_T             TYPE;
+    const Analog_OpType_T           TYPE;
     const Analog_OptionsFlags_T     FLAGS;
     const Analog_Callback_T         ON_OPTIONS; /* On options set */
     void * const P_CALLBACK_CONTEXT;
@@ -120,9 +120,9 @@ Analog_Options_T;
 */
 typedef const union Analog_QueueItem_Tag
 {
-    const Analog_OpType_T         TYPE;
-    const Analog_Conversion_T     CONVERSION;
-    const Analog_Options_T         OPTIONS;
+    const Analog_OpType_T       TYPE;
+    const Analog_Conversion_T   CONVERSION;
+    const Analog_Options_T      OPTIONS;
 }
 Analog_QueueItem_T;
 
@@ -140,7 +140,7 @@ typedef struct Analog_Tag
     const Analog_Config_T CONFIG;
     /* todo flag based */
 #if     defined(CONFIG_ANALOG_USE_QUEUE)
-#elif     defined(CONFIG_ANALOG_USE_FLAGS)
+#elif   defined(CONFIG_ANALOG_USE_FLAGS)
 #endif
     Ring_T ConversionQueue;    /* Item type (Analog_QueueItem_T *), (Analog_Conversion_T *) or (Analog_Options_T *) */
 
@@ -153,10 +153,10 @@ Analog_T;
 /*
     Queue buffer length in units
 */
-#define ANALOG_INIT(p_HalAnalog, p_ConversionBuffer, ConversionQueueLength)                                         \
-{                                                                                                                    \
-    .CONFIG = { .P_HAL_ANALOG = p_HalAnalog, },                                                                        \
-    .ConversionQueue = RING_INIT(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),        \
+#define ANALOG_INIT(p_HalAnalog, p_ConversionBuffer, ConversionQueueLength)                                     \
+{                                                                                                               \
+    .CONFIG = { .P_HAL_ANALOG = p_HalAnalog, },                                                                 \
+    .ConversionQueue = RING_INIT(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),  \
 }
 
 extern void _Analog_ProcQueue(Analog_T * p_analog);

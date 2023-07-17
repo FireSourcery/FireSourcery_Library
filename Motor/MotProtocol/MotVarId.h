@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -43,9 +43,9 @@ typedef enum MotVarId_Tag
     MOT_VAR_I_PHASE = 2U,           /* FracS16Abs, may over saturate */
     MOT_VAR_V_PHASE = 3U,           /* FracS16Abs, may over saturate */
     MOT_VAR_POWER = 4U,             /* FracS16Abs, may over saturate */
-    MOT_VAR_RAMP_CMD = 6U,
-    MOT_VAR_MOTOR_STATE = 5U,       /* Value enum:  */
-    MOT_VAR_MOTOR_STATUS_FLAGS = 5U,
+    MOT_VAR_RAMP_CMD = 5U,
+    MOT_VAR_MOTOR_STATE = 6U,       /* Value enum:  */
+    MOT_VAR_MOTOR_STATUS_FLAGS = 7U,
     // MOT_VAR_MOTOR_FAULT_FLAGS = 5U,
 
     MOT_VAR_FOC_IQ = 16U,

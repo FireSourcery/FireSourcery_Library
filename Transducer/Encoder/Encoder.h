@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -46,17 +46,17 @@
 #define ENCODER_TIMER_MAX (0xFFFFU)
 #endif
 
-#ifndef ENCODER_ANGLE16
-#define ENCODER_ANGLE16 (16U)
+#ifndef ENCODER_ANGLE_DEGREES
+#define ENCODER_ANGLE_BITS      (16U)
+#define ENCODER_ANGLE_SHIFT     (32U - ENCODER_ANGLE_BITS)
+#define ENCODER_ANGLE_DEGREES   ((uint32_t)1UL << ENCODER_ANGLE_BITS)
 #endif
-
-#define ENCODER_ANGLE_DEGREES     ((uint32_t)1UL << ENCODER_ANGLE16)
-#define ENCODER_ANGLE_SHIFT     (32U - ENCODER_ANGLE16)
 
 #define _ENCODER_TABLE_ERROR (2U)
 #define _ENCODER_TABLE_LENGTH (16U)
 extern const int8_t _ENCODER_TABLE[_ENCODER_TABLE_LENGTH];
 extern const int8_t _ENCODER_TABLE_PHASE_A[_ENCODER_TABLE_LENGTH];
+
 typedef union Encoder_Phases_Tag
 {
     struct
@@ -74,11 +74,10 @@ typedef union Encoder_Phases_Tag
 }
 Encoder_Phases_T;
 
-
 typedef enum Encoder_Align_Tag
 {
     ENCODER_ALIGN_NO,
-    ENCODER_ALIGN_YES,
+    ENCODER_ALIGN_PHASE,
     ENCODER_ALIGN_ABSOLUTE,
 }
 Encoder_Align_T;
@@ -103,14 +102,14 @@ typedef const struct Encoder_Config_Tag
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     HAL_Encoder_Counter_T * const P_HAL_ENCODER_COUNTER; /*!< Pulse Counter */
-#elif     defined(CONFIG_ENCODER_HW_EMULATED)
+#elif   defined(CONFIG_ENCODER_HW_EMULATED)
     HAL_Encoder_Phase_T * const P_HAL_ENCODER_A; const uint32_t PHASE_A_ID;
     HAL_Encoder_Phase_T * const P_HAL_ENCODER_B; const uint32_t PHASE_B_ID;
     HAL_Encoder_Phase_T * const P_HAL_ENCODER_Z; const uint32_t PHASE_Z_ID;
 #endif
-    HAL_Encoder_Timer_T * const P_HAL_ENCODER_TIMER;     /*!< DeltaT Timer. */
-    const uint32_t TIMER_FREQ;                            /*!< DeltaT Timer Freq */
-    const volatile uint32_t * const P_EXTENDED_TIMER;    /* Polling DeltaT stop */
+    HAL_Encoder_Timer_T * const P_HAL_ENCODER_TIMER;    /*!< DeltaT Timer. */
+    const uint32_t TIMER_FREQ;                          /*!< DeltaT Timer Freq */
+    const volatile uint32_t * const P_EXTENDED_TIMER;   /* Polling DeltaT stop */
     const uint32_t EXTENDED_TIMER_FREQ;
     const uint32_t POLLING_FREQ;        /*!< DeltaT Interpolation Freq. */
     const uint32_t SAMPLE_FREQ;         /*!< DeltaD Speed Sample Freq. */
@@ -154,7 +153,7 @@ typedef struct Encoder_Tag
     /* Experimental */
     int32_t TotalD;             /* Integral Capture */
     // uint32_t TotalT;         /*!< Extended? Timer ticks, persistent through DeltaT captures */
-    // uint32_t SpeedPrev;         /*!< Most recently calculated speed, use for acceleration */
+    // uint32_t SpeedPrev;      /*!< Most recently calculated speed, use for acceleration */
     // uint32_t DeltaSpeed;     /*!< Save for acceleration calc */
 
     /*
@@ -183,34 +182,34 @@ Encoder_T;
     Min Speed for Interpolation,
 
     UnitAngularSpeed Shift Divide
-    TIMER_FREQ < UINT32_MAX * CountsPerRevolution / (1 << ENCODER_ANGLE16) ~= 1Mhz-4Mhz for Unsigned Speed
+    TIMER_FREQ < UINT32_MAX * CountsPerRevolution / (1 << ENCODER_ANGLE_BITS) ~= 1Mhz-4Mhz for Unsigned Speed
     TIMER_FREQ * 60 < UINT32_MAX for RPM calc
 */
 #if defined(CONFIG_ENCODER_HW_EMULATED)
-#define _ENCODER_INIT_HW_PHASES(p_Counter_Hal, p_PhaseA_Hal, PhaseAId, p_PhaseB_Hal, PhaseBId, p_PhaseZ_Hal, PhaseZId)        \
-        .P_HAL_ENCODER_A = p_PhaseA_Hal, .PHASE_A_ID = PhaseAId,     \
-        .P_HAL_ENCODER_B = p_PhaseB_Hal, .PHASE_B_ID = PhaseBId,     \
-        .P_HAL_ENCODER_Z = p_PhaseZ_Hal, .PHASE_Z_ID = PhaseZId,
-#define _ENCODER_INIT_HW_PINS(p_PinA_Hal, PinAId, p_PinB_Hal, PinBId)     \
-        .PinA = PIN_INIT(p_PinA_Hal, PinAId),                             \
-        .PinB = PIN_INIT(p_PinB_Hal, PinBId),
+    #define _ENCODER_INIT_HW_PHASES(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId)  \
+        .P_HAL_ENCODER_A = p_PhaseAHal, .PHASE_A_ID = PhaseAId,    \
+        .P_HAL_ENCODER_B = p_PhaseBHal, .PHASE_B_ID = PhaseBId,    \
+        .P_HAL_ENCODER_Z = p_PhaseZHal, .PHASE_Z_ID = PhaseZId,
+    #define _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)   \
+        .PinA = PIN_INIT(p_PinAHal, PinAId),                               \
+        .PinB = PIN_INIT(p_PinBHal, PinBId),
 #else
-#define _ENCODER_INIT_HW_PHASES(p_Counter_Hal, p_PhaseA_Hal, PhaseAId, p_PhaseB_Hal, PhaseBId, p_PhaseZ_Hal, PhaseZId)        \
-        .P_HAL_ENCODER_COUNTER     = p_Counter_Hal, \
-#define _ENCODER_INIT_HW_PINS(p_PinA_Hal, PinAId, p_PinB_Hal, PinBId)
+    #define _ENCODER_INIT_HW_PHASES(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId)  \
+        .P_HAL_ENCODER_COUNTER  = p_CounterHal,
+    #define _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)
 #endif
 
-#define ENCODER_INIT(p_Counter_Hal, p_PhaseA_Hal, PhaseAId, p_PinA_Hal, PinAId, p_PhaseB_Hal, PhaseBId, p_PinB_Hal, PinBId, p_PhaseZ_Hal, PhaseZId, p_Timer_Hal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, p_Params )    \
-{                                                                                                                        \
-    .CONFIG =                                                                                                             \
-    {                                                                                                                    \
-        _ENCODER_INIT_HW_PHASES(p_Counter_Hal, p_PhaseA_Hal, PhaseAId, p_PhaseB_Hal, PhaseBId, p_PhaseZ_Hal, PhaseZId)     \
-        .P_HAL_ENCODER_TIMER     = p_Timer_Hal,            .TIMER_FREQ             = TimerFreq,                            \
-        .P_EXTENDED_TIMER         = p_ExtendedTimer,        .EXTENDED_TIMER_FREQ     = ExtendedTimerFreq,                    \
-        .POLLING_FREQ             = PollingFreq,            .SAMPLE_FREQ             = SpeedSampleFreq,                         \
-        .P_PARAMS                 = p_Params,                                                                                \
-    },                                                                                                                    \
-    _ENCODER_INIT_HW_PINS(p_PinA_Hal, PinAId, p_PinB_Hal, PinBId)                                                        \
+#define ENCODER_INIT(p_CounterHal, p_PhaseAHal, PhaseAId, p_PinAHal, PinAId, p_PhaseBHal, PhaseBId, p_PinBHal, PinBId, p_PhaseZHal, PhaseZId, p_TimerHal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, p_Params)    \
+{                                                                                                                           \
+    .CONFIG =                                                                                                               \
+    {                                                                                                                       \
+        _ENCODER_INIT_HW_PHASES(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId)          \
+        .P_HAL_ENCODER_TIMER    = p_TimerHal,            .TIMER_FREQ           = TimerFreq,                                 \
+        .P_EXTENDED_TIMER       = p_ExtendedTimer,        .EXTENDED_TIMER_FREQ  = ExtendedTimerFreq,                        \
+        .POLLING_FREQ           = PollingFreq,            .SAMPLE_FREQ          = SpeedSampleFreq,                          \
+        .P_PARAMS               = p_Params,                                                                                 \
+    },                                                                                                                      \
+    _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)                                                             \
 }
 
 /******************************************************************************/
@@ -300,7 +299,7 @@ static inline uint16_t Encoder_GetAngle(Encoder_T * p_encoder)
 
 static inline bool Encoder_GetIsAligned(Encoder_T * p_encoder)
 {
-    return (p_encoder->Align == ENCODER_ALIGN_ABSOLUTE) || (p_encoder->Align == ENCODER_ALIGN_YES);
+    return (p_encoder->Align == ENCODER_ALIGN_ABSOLUTE) || (p_encoder->Align == ENCODER_ALIGN_PHASE);
 }
 
 /******************************************************************************/
@@ -309,19 +308,19 @@ static inline bool Encoder_GetIsAligned(Encoder_T * p_encoder)
 */
 /******************************************************************************/
 /*!
-    Angle - Base unit in ENCODER_ANGLE16
+    Angle - Base unit in ENCODER_ANGLE_BITS
 */
 static inline uint32_t Encoder_ConvertCounterDToAngle(Encoder_T * p_encoder, uint32_t counterD_Ticks)
 {
     /* Overflow: counterD > CountsPerRevolution, UnitAngularD == UINT32_MAX / CountsPerRevolution */
     return (counterD_Ticks > p_encoder->Params.CountsPerRevolution) ?
-        ((counterD_Ticks << ENCODER_ANGLE16) / p_encoder->Params.CountsPerRevolution) :
-        ((counterD_Ticks * p_encoder->UnitAngularD) >> (32U - ENCODER_ANGLE16));
+        ((counterD_Ticks << ENCODER_ANGLE_BITS) / p_encoder->Params.CountsPerRevolution) :
+        ((counterD_Ticks * p_encoder->UnitAngularD) >> (32U - ENCODER_ANGLE_BITS));
 }
 
 static inline uint32_t Encoder_ConvertAngleToCounterD(Encoder_T * p_encoder, uint16_t angle_UserDegrees)
 {
-    return (angle_UserDegrees << (32U - ENCODER_ANGLE16)) / p_encoder->UnitAngularD;
+    return (angle_UserDegrees << (32U - ENCODER_ANGLE_BITS)) / p_encoder->UnitAngularD;
 }
 
 static inline int32_t Encoder_GetCounterD(Encoder_T * p_encoder)

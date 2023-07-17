@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     MotorStateMachine.c
+    @file   MotorStateMachine.c
     @author FireSourcery
     @brief  MotorStateMachine
     @version V0
@@ -67,20 +67,20 @@ static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, uint32_t vo
 /******************************************************************************/
 static void Init_Entry(Motor_T * p_motor)
 {
-    /* Alleviate circular inclusion form Motor_Init */
+    /* Alleviate circular inclusion from Motor_Init */
     Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionForward, Motor_SetDirectionForward);
 }
 
 static void Init_Proc(Motor_T * p_motor)
 {
     /* Wait for thermistor Adc */
-    //check params
     if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
+    //(&& Motor_CheckParams() == true)    //check params
 }
 
 static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT]           = 0U, //(StateMachine_Transition_T)TransitionFault,
+    [MSM_INPUT_FAULT]           = 0U,
     [MSM_INPUT_CONTROL]         = 0U,
     [MSM_INPUT_RELEASE]         = 0U,
     [MSM_INPUT_DIRECTION]       = 0U,

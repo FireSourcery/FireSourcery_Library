@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Motor.c
+    @file   Motor.c
     @author FireSourcery
     @brief  Motor module conventional function definitions.
     @version V0
@@ -37,41 +37,8 @@
 void Motor_Init(Motor_T * p_motor)
 {
     if(p_motor->CONFIG.P_PARAMS_NVM != 0U) { memcpy(&p_motor->Parameters, p_motor->CONFIG.P_PARAMS_NVM, sizeof(Motor_Params_T)); }
-    Motor_InitReboot(p_motor);
+    Motor_InitReboot(p_motor); //move to state machine?
     StateMachine_Init(&p_motor->StateMachine);
-}
-
-void Motor_InitSensor(Motor_T * p_motor)
-{
-    switch(p_motor->Parameters.SensorMode)
-    {
-        case MOTOR_SENSOR_MODE_HALL:
-            p_motor->CONFIG.INIT_SENSOR_HALL();
-            Hall_Init(&p_motor->Hall);
-            Encoder_ModeDT_Init(&p_motor->Encoder);
-        #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
-            Encoder_InitInterrupts_ABC(&p_motor->Encoder);
-        #endif
-            break;
-        case MOTOR_SENSOR_MODE_ENCODER:
-            p_motor->CONFIG.INIT_SENSOR_ENCODER();
-            Encoder_ModeDT_Init(&p_motor->Encoder);
-            Encoder_InitInterrupts_Quadrature(&p_motor->Encoder);
-            Encoder_EnableQuadratureMode(&p_motor->Encoder);
-            break;
-        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SIN_COS:
-            SinCos_Init(&p_motor->SinCos);
-            break;
-        #endif
-        #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-        case MOTOR_SENSOR_MODE_SENSORLESS:
-            break;
-        #endif
-        default:
-            break;
-    }
-    Motor_ResetUnitsSensor(p_motor);
 }
 
 void Motor_InitReboot(Motor_T * p_motor)
@@ -106,7 +73,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 #endif
 
     /*
-        Ramp 0 to 32767 max in ~500ms, 3.2767 per ControlCycle
+        e.g. Ramp 0 to 32767 max in ~500ms, 3.2767 per ControlCycle
         Final value is overwritten, Slope is persistent
     */
     Linear_Ramp_Init(&p_motor->Ramp, p_motor->Parameters.RampAccel_Cycles, 0U, INT16_MAX);
@@ -131,8 +98,41 @@ void Motor_InitReboot(Motor_T * p_motor)
     }
 #endif
 
-    p_motor->ControlFeedbackMode.State = p_motor->Parameters.DefaultFeedbackMode; /* set user control mode so limits set to initial state. */
+    p_motor->ControlFeedbackMode.State = p_motor->Parameters.DefaultFeedbackMode; /* set user control mode so statemachine init sets limits to initial state. */
     p_motor->ControlTimerBase = 0U;
+}
+
+void Motor_InitSensor(Motor_T * p_motor)
+{
+    switch(p_motor->Parameters.SensorMode)
+    {
+        case MOTOR_SENSOR_MODE_HALL:
+            p_motor->CONFIG.INIT_SENSOR_HALL();
+            Hall_Init(&p_motor->Hall);
+            Encoder_ModeDT_Init(&p_motor->Encoder);
+        #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
+            Encoder_InitInterrupts_ABC(&p_motor->Encoder);
+        #endif
+            break;
+        case MOTOR_SENSOR_MODE_ENCODER:
+            p_motor->CONFIG.INIT_SENSOR_ENCODER();
+            Encoder_ModeDT_Init(&p_motor->Encoder);
+            Encoder_InitInterrupts_Quadrature(&p_motor->Encoder);
+            Encoder_EnableQuadratureMode(&p_motor->Encoder);
+            break;
+        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        case MOTOR_SENSOR_MODE_SIN_COS:
+            SinCos_Init(&p_motor->SinCos);
+            break;
+        #endif
+        #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+        case MOTOR_SENSOR_MODE_SENSORLESS:
+            break;
+        #endif
+        default:
+            break;
+    }
+    Motor_ResetUnitsSensor(p_motor);
 }
 
 /******************************************************************************/
@@ -601,7 +601,7 @@ void Motor_ResetUnitsSinCos(Motor_T * p_motor)
 /******************************************************************************/
 void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
 {
-    const uint16_t duty = p_motor->Parameters.AlignPower_FracU16;
+    const uint16_t duty = p_motor->Parameters.AlignPower_ScalarU16;
     uint16_t index = step % 12U;
     switch(index)
     {
@@ -623,7 +623,7 @@ void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
 
 void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
 {
-    const uint16_t duty = p_motor->Parameters.AlignPower_FracU16;
+    const uint16_t duty = p_motor->Parameters.AlignPower_ScalarU16;
     uint16_t index = step % 6U;
     switch(index)
     {
@@ -642,7 +642,7 @@ void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
 */
 void Motor_Jog6Step(Motor_T * p_motor, uint8_t step)
 {
-    const uint16_t duty = p_motor->Parameters.AlignPower_FracU16;
+    const uint16_t duty = p_motor->Parameters.AlignPower_ScalarU16;
     uint16_t index = step % 6U;
     switch(index)
     {

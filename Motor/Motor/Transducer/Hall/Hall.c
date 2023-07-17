@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2023 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -74,14 +74,14 @@ static void CalibratePhaseInvA(Hall_T * p_hall) { p_hall->Params.SensorsTable[Ha
 static void CalibratePhaseC(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_C; }
 static void CalibratePhaseInvB(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_B; }
 
-/* For both 120 and 180 degree active */
+/* For 180 degree active. 120 degree active todo */
 void Hall_StartCalibrate(Hall_T * p_hall)       { Hall_ResetCapture(p_hall); p_hall->Params.BoundaryType = 0U; }
-void Hall_CalibratePhaseA(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseA(p_hall); p_hall->Params.BoundaryType++;} }
-void Hall_CalibratePhaseInvC(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvC(p_hall); p_hall->Params.BoundaryType++;} }
-void Hall_CalibratePhaseB(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseB(p_hall); p_hall->Params.BoundaryType++;} }
-void Hall_CalibratePhaseInvA(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvA(p_hall); p_hall->Params.BoundaryType++;} }
-void Hall_CalibratePhaseC(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseC(p_hall); p_hall->Params.BoundaryType++;} }
-void Hall_CalibratePhaseInvB(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvB(p_hall); p_hall->Params.BoundaryType++;} }
+void Hall_CalibratePhaseA(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseA(p_hall); /* p_hall->Params.BoundaryType++; */ } }
+void Hall_CalibratePhaseInvC(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvC(p_hall); /* p_hall->Params.BoundaryType++; */ } }
+void Hall_CalibratePhaseB(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseB(p_hall); /* p_hall->Params.BoundaryType++; */ } }
+void Hall_CalibratePhaseInvA(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvA(p_hall); /* p_hall->Params.BoundaryType++; */ } }
+void Hall_CalibratePhaseC(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseC(p_hall); /* p_hall->Params.BoundaryType++; */ } }
+void Hall_CalibratePhaseInvB(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvB(p_hall); /* p_hall->Params.BoundaryType++; */ } }
 
 // void Hall_Calibrate
 // (
@@ -92,7 +92,7 @@ void Hall_CalibratePhaseInvB(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_h
 //     void * p_waitContext
 // )
 // {
-//     const uint16_t duty = p_motor->Parameters.AlignPower_FracU16;
+//     const uint16_t duty = p_motor->Parameters.AlignPower_ScalarU16;
 //     bool isComplete = false;
 
 //     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)

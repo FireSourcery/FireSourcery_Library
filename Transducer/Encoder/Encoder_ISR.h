@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2022 FireSourcery / The Firebrand Forge Inc
+    Copyright (C) 2022 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -41,6 +41,12 @@
     CONFIG_ENCODER_HW_EMULATED mode DeltaD, ModeDT; DeltaT ISR Mode
 */
 /******************************************************************************/
+
+/******************************************************************************/
+/*
+    Helper Functions
+*/
+/******************************************************************************/
 /******************************************************************************/
 /*
     Quadrature, Signed Direction
@@ -65,8 +71,8 @@ static inline void _Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
 
 static inline void _Encoder_CaptureCount_Quadrature(Encoder_T * p_encoder, int8_t count)
 {
-    if(count == _ENCODER_TABLE_ERROR)     { p_encoder->ErrorCount++; }
-    else                                 { _Encoder_CaptureCount(p_encoder, count); }
+    if(count == _ENCODER_TABLE_ERROR)   { p_encoder->ErrorCount++; }
+    else                                { _Encoder_CaptureCount(p_encoder, count); }
 }
 
 static inline void _Encoder_CapturePulse_Quadrature(Encoder_T * p_encoder)
@@ -74,15 +80,15 @@ static inline void _Encoder_CapturePulse_Quadrature(Encoder_T * p_encoder)
     _Encoder_CaptureCount_Quadrature(p_encoder, _ENCODER_TABLE[_Encoder_CapturePhasesState(p_encoder)]);
 }
 
-static inline void _Encoder_CapturePulse_QuadraturePhaseA(Encoder_T * p_encoder)
-{
-    _Encoder_CaptureCount_Quadrature(p_encoder, _ENCODER_TABLE_PHASE_A[_Encoder_CapturePhasesState(p_encoder)]);
-}
+// static inline void _Encoder_CapturePulse_QuadraturePhaseA(Encoder_T * p_encoder)
+// {
+//     _Encoder_CaptureCount_Quadrature(p_encoder, _ENCODER_TABLE_PHASE_A[_Encoder_CapturePhasesState(p_encoder)]);
+// }
 
-static inline void _Encoder_CapturePulse_QuadraturePhaseARisingEdge(Encoder_T * p_encoder)
-{
-    _Encoder_CaptureCount_Quadrature(p_encoder, ((Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1));
-}
+// static inline void _Encoder_CapturePulse_QuadraturePhaseARisingEdge(Encoder_T * p_encoder)
+// {
+//     _Encoder_CaptureCount_Quadrature(p_encoder, ((Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1));
+// }
 
 /******************************************************************************/
 /*
@@ -162,8 +168,8 @@ static inline void _Encoder_OnPhaseZ_ISR(Encoder_T * p_encoder)
 /* Shared A, B ISR */
 static inline void _Encoder_OnPhaseAB_ISR(Encoder_T * p_encoder)
 {
-    if         (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID) == true) { _Encoder_OnPhaseA_ISR(p_encoder); }
-    else if    (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID) == true) { _Encoder_OnPhaseB_ISR(p_encoder); }
+    if      (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID) == true) { _Encoder_OnPhaseA_ISR(p_encoder); }
+    else if (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID) == true) { _Encoder_OnPhaseB_ISR(p_encoder); }
 }
 
 /******************************************************************************/
