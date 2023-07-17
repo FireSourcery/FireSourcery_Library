@@ -1124,9 +1124,9 @@ static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
 const Cmd_T MC_CMD_TABLE[MC_SHELL_CMD_COUNT] =
 {
     {"monitor",     "Display motor info",                (Cmd_Function_T)Cmd_monitor,     {.FUNCTION = (Cmd_ProcessFunction_T)Cmd_monitor_Proc,         .PERIOD = 2000U } },
-    {"heat",         "Display temperatures",                (Cmd_Function_T)Cmd_heat,         {0U}    },
-    {"v",             "Display voltages",                 (Cmd_Function_T)Cmd_v,             {0U}    },
-    {"auser",         "Display analog user",                 (Cmd_Function_T)Cmd_auser,         {0U}    },
+    {"heat",        "Display temperatures",                (Cmd_Function_T)Cmd_heat,         {0U}    },
+    {"v",           "Display voltages",                 (Cmd_Function_T)Cmd_v,             {0U}    },
+    {"auser",       "Display analog user",                 (Cmd_Function_T)Cmd_auser,         {0U}    },
     {"hall",         "Read hall",                         (Cmd_Function_T)Cmd_hall,         {0U}    },
     {"fault",         "Display fault info",                 (Cmd_Function_T)Cmd_fault,         {0U}    },
     {"mode",         "Sets mode using options",            (Cmd_Function_T)Cmd_mode,         {0U}    },

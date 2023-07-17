@@ -74,7 +74,7 @@ static void Init_Exit(MotorController_T * p_mc)
 
 static void Init_Proc(MotorController_T * p_mc)
 {
-//sample and set vsource    //set vsource if vsource less than max
+    //sample and set vsource    //set vsource if vsource less than max
     if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT) { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_STOP); }
     // check motor init state
     /* todo And throttle, init conditionals */
