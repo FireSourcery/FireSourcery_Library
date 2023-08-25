@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Analog.h
+    @file   Analog.h
     @author FireSourcery
     @brief     ADC wrapper module. Implements run time configurable settings.
     @version V0

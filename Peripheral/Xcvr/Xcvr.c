@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Xcvr.c
+    @file   Xcvr.c
     @author FireSourcery
     @brief
     @version V0
@@ -32,7 +32,7 @@
 
 /*
     Abstraction layer runtime interface.
-    Outside module handle Xcvr_Xcvr_T hardware init
+    Outside module handle Xcvr_Entry_T hardware init
 */
 void Xcvr_Init(Xcvr_T * p_xcvr, uint8_t xcvrDefaultIndex)
 {
@@ -41,21 +41,21 @@ void Xcvr_Init(Xcvr_T * p_xcvr, uint8_t xcvrDefaultIndex)
 
 bool Xcvr_SetXcvr(Xcvr_T * p_xcvr, uint8_t xcvrIndex)
 {
-    bool status = xcvrIndex < p_xcvr->CONFIG.XCVR_COUNT;
+    bool status = xcvrIndex < p_xcvr->CONFIG.XCVR_TABLE_LENGTH;
     if(status == true) { p_xcvr->p_Xcvr = &p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex]; }
     return status;
 }
 
 bool Xcvr_CheckIsSet(const Xcvr_T * p_xcvr, uint8_t xcvrIndex)
 {
-    return ((xcvrIndex < p_xcvr->CONFIG.XCVR_COUNT) && (p_xcvr->p_Xcvr->P_CONTEXT == p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].P_CONTEXT));
+    return ((xcvrIndex < p_xcvr->CONFIG.XCVR_TABLE_LENGTH) && (p_xcvr->p_Xcvr->P_CONTEXT == p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].P_CONTEXT));
 }
 
-bool Xcvr_CheckValid(const Xcvr_T * p_xcvr, void * p_target)
+bool Xcvr_CheckIsValid(const Xcvr_T * p_xcvr, void * p_target)
 {
     bool isValid = false;
 
-    for(uint8_t iXcvr = 0U; iXcvr < p_xcvr->CONFIG.XCVR_COUNT; iXcvr++)
+    for(uint8_t iXcvr = 0U; iXcvr < p_xcvr->CONFIG.XCVR_TABLE_LENGTH; iXcvr++)
     {
         if(p_target == p_xcvr->CONFIG.P_XCVR_TABLE[iXcvr].P_CONTEXT) { isValid = true; break; }
     }
@@ -186,6 +186,12 @@ size_t Xcvr_GetTxEmptyCount(const Xcvr_T * p_xcvr)
     return count;
 }
 
+
+size_t Xcvr_FlushRxBuffer(const Xcvr_T * p_xcvr)
+{
+
+
+}
 
 /* Experimental */
 #if     defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)

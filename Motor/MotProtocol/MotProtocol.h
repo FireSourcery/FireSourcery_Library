@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     MotProtocol.h
+    @file   MotProtocol.h
     @author FireSourcery
     @brief
     @version V0
@@ -34,9 +34,11 @@
 #include "MotPacket.h"
 #include "Utility/Protocol/Protocol.h"
 
-#define MOT_PROTOCOL_BAUD_RATE_DEFAULT        (19200U)
-#define MOT_PROTOCOL_TIMEOUT_MS                (2000U)     /* Timeout packet / req */
+#define MOT_PROTOCOL_BAUD_RATE_DEFAULT  (19200U)
+#define MOT_PROTOCOL_TIMEOUT_RX         (2000U)     /* Timeout Rx Packet */
+#define MOT_PROTOCOL_TIMEOUT_REQ        (5000U)     /* Timeout Req */
 
+/* For flashloader only */
 typedef struct MotProtocol_SubState_Tag
 {
     uint8_t StateId;

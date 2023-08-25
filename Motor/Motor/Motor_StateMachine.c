@@ -91,8 +91,8 @@ static const StateMachine_State_T STATE_INIT =
 {
     .ID                 = MSM_STATE_ID_INIT,
     .P_TRANSITION_TABLE = &INIT_TRANSITION_TABLE[0U],
-    .ENTRY              = (StateMachine_Output_T)Init_Entry,
-    .OUTPUT             = (StateMachine_Output_T)Init_Proc,
+    .ENTRY              = (StateMachine_Function_T)Init_Entry,
+    .LOOP             = (StateMachine_Function_T)Init_Proc,
 };
 
 /******************************************************************************/
@@ -185,8 +185,8 @@ static const StateMachine_State_T STATE_STOP =
 {
     .ID = MSM_STATE_ID_STOP,
     .P_TRANSITION_TABLE = &STOP_TRANSITION_TABLE[0U],
-    .ENTRY = (StateMachine_Output_T)Stop_Entry,
-    .OUTPUT = (StateMachine_Output_T)Stop_Proc,
+    .ENTRY = (StateMachine_Function_T)Stop_Entry,
+    .LOOP = (StateMachine_Function_T)Stop_Proc,
 };
 
 /******************************************************************************/
@@ -232,8 +232,8 @@ static const StateMachine_State_T STATE_RUN =
 {
     .ID                 = MSM_STATE_ID_RUN,
     .P_TRANSITION_TABLE = &RUN_TRANSITION_TABLE[0U],
-    .ENTRY              = (StateMachine_Output_T)Run_Entry,
-    .OUTPUT             = (StateMachine_Output_T)Run_Proc,
+    .ENTRY              = (StateMachine_Function_T)Run_Entry,
+    .LOOP             = (StateMachine_Function_T)Run_Proc,
 };
 
 /******************************************************************************/
@@ -287,8 +287,8 @@ static const StateMachine_State_T STATE_FREEWHEEL =
 {
     .ID = MSM_STATE_ID_FREEWHEEL,
     .P_TRANSITION_TABLE = &FREEWHEEL_TRANSITION_TABLE[0U],
-    .ENTRY = (StateMachine_Output_T)Freewheel_Entry,
-    .OUTPUT = (StateMachine_Output_T)Freewheel_Proc,
+    .ENTRY = (StateMachine_Function_T)Freewheel_Entry,
+    .LOOP = (StateMachine_Function_T)Freewheel_Proc,
 };
 
 /******************************************************************************/
@@ -383,8 +383,8 @@ static const StateMachine_State_T STATE_OPEN_LOOP =
 {
     .ID = MSM_STATE_ID_OPEN_LOOP,
     .P_TRANSITION_TABLE = &OPEN_LOOP_TRANSITION_TABLE[0U],
-    .ENTRY = (StateMachine_Output_T)OpenLoop_Entry,
-    .OUTPUT = (StateMachine_Output_T)OpenLoop_Proc,
+    .ENTRY = (StateMachine_Function_T)OpenLoop_Entry,
+    .LOOP = (StateMachine_Function_T)OpenLoop_Proc,
 };
 
 /******************************************************************************/
@@ -449,8 +449,8 @@ static const StateMachine_State_T STATE_CALIBRATION =
 {
     .ID = MSM_STATE_ID_CALIBRATION,
     .P_TRANSITION_TABLE = &CALIBRATION_TRANSITION_TABLE[0U],
-    .ENTRY = (StateMachine_Output_T)Calibration_Entry,
-    .OUTPUT = (StateMachine_Output_T)Calibration_Proc,
+    .ENTRY = (StateMachine_Function_T)Calibration_Entry,
+    .LOOP = (StateMachine_Function_T)Calibration_Proc,
 };
 
 /******************************************************************************/
@@ -464,7 +464,7 @@ static void Fault_Proc(Motor_T * p_motor) { Phase_Float(&p_motor->Phase);/* repe
 static StateMachine_State_T * Fault_InputClearFault(Motor_T * p_motor, uint32_t voidVar)
 {
     (void)voidVar;
-    if(Thermistor_GetIsShutdown(&p_motor->Thermistor) == false) { p_motor->FaultFlags.OverHeat = 0U; }
+    if(Thermistor_GetIsFault(&p_motor->Thermistor) == false) { p_motor->FaultFlags.OverHeat = 0U; }
     if(p_motor->FaultFlags.AlignStartUp == 1U) { p_motor->FaultFlags.AlignStartUp = 0U; }
     return (p_motor->FaultFlags.State == 0U) ? &STATE_STOP : 0U;
 }
@@ -489,6 +489,6 @@ static const StateMachine_State_T STATE_FAULT =
 {
     .ID = MSM_STATE_ID_FAULT,
     .P_TRANSITION_TABLE = &FAULT_TRANSITION_TABLE[0U],
-    .ENTRY = (StateMachine_Output_T)Fault_Entry,
-    .OUTPUT = (StateMachine_Output_T)Fault_Proc,
+    .ENTRY = (StateMachine_Function_T)Fault_Entry,
+    .LOOP = (StateMachine_Function_T)Fault_Proc,
 };

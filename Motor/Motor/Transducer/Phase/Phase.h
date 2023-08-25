@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Phase.h
+    @file   Phase.h
     @author FireSourcery
     @version V0
     @brief  3-Phase PWM functions. Includes 2-Phase Polar implementation

@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file         MotPacket.c
+    @file       MotPacket.c
     @author     FireSourcery
     @version     V0
     @brief    App Protocol Packet Interface. Parse Packet to App structure

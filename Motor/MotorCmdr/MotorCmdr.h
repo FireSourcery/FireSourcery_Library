@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     MotProtocol.c
+    @file   MotProtocol.c
     @author FireSourcery
     @brief    Implements MotProtocol
     @version V0

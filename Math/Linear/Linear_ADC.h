@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Linear_ADC.h
+    @file   Linear_ADC.h
     @author FireSourcery
     @brief    Scale ADCU to provided reference value
             Fast Frac16 without division. No physical units scalar for precision.
@@ -78,10 +78,10 @@ static inline uint16_t Linear_ADC_CalcAdcu_FracU16(const Linear_T * p_linear, ui
 */
 /******************************************************************************/
 extern void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef);
-extern void Linear_ADC_InitInverted(Linear_T * p_linear);
 extern void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef, int16_t physicalZero, int16_t physicalRef);
 extern void Linear_ADC_Init_MinMax(Linear_T * p_linear, uint16_t adcuMin, uint16_t adcuMax, int16_t physicalMin, int16_t physicalMax);
 extern void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef);
+extern void Linear_ADC_SetInverted(Linear_T * p_linear);
 extern void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t min_MilliV, uint16_t max_MilliV, int16_t physicalZero, int16_t physicalRef);
 extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t zero_MilliV, uint16_t max_MilliV, int16_t physicalZero, int16_t physicalRef);
 

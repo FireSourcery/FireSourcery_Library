@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Motor_Thread.h
+    @file   Motor_Thread.h
     @author FireSourcery
     @brief  Motor module functions must be placed into corresponding user app threads
             Outer most functions to call from main app
@@ -46,7 +46,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
     // Motor_Debug_CaptureRefTime(p_motor);
     p_motor->ControlTimerBase++;
-    StateMachine_Semi_ProcOutput(&p_motor->StateMachine);
+    StateMachine_Proc(&p_motor->StateMachine);
     //  Motor_Analog_Thread(p_motor); alternatively use analog select mode to implement preferred order
     // Motor_Debug_CaptureTime(p_motor, 5U);
 }
@@ -59,8 +59,8 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 
         switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
         {
-            case THERMISTOR_STATUS_OK:          Motor_User_ClearILimitActive(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT);     break;
-            case THERMISTOR_STATUS_SHUTDOWN:    Motor_User_SetFault(p_motor);                                         break;
+            case THERMISTOR_STATUS_OK:          Motor_User_ClearILimitActive(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT);     break; /* todo warning flag */
+            case THERMISTOR_STATUS_FAULT:    Motor_User_SetFault(p_motor);                                         break;
             case THERMISTOR_STATUS_WARNING:     /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
                 Motor_User_SetILimitActive(p_motor, Thermistor_GetHeatLimit_FracU16(&p_motor->Thermistor), MOTOR_I_LIMIT_ACTIVE_HEAT);
                 break;
@@ -99,7 +99,9 @@ static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_motor)
 {
     switch(p_motor->Parameters.SensorMode)
     {
-        case MOTOR_SENSOR_MODE_ENCODER: Encoder_OnIndex_ISR(&p_motor->Encoder); break;
+        case MOTOR_SENSOR_MODE_ENCODER:
+            Encoder_OnIndex_ISR(&p_motor->Encoder);
+            break;
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
         case MOTOR_SENSOR_MODE_HALL:
             Encoder_OnPhaseC_Hall_ISR(&p_motor->Encoder);

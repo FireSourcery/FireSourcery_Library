@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     MotorController_StateMachine.h
+    @file   MotorController_StateMachine.h
     @author FireSourcery
     @brief  MotorController_StateMachine
     @version V0

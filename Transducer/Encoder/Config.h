@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Config.h
+    @file   Config.h
     @author FireSourcery
     @brief     Encoder module preprocessor configuration options and defaults.
     @version V0
@@ -35,22 +35,22 @@
     Compile time define if chip supports decoder/counter.
 */
 #if     defined(CONFIG_ENCODER_HW_DECODER)
-#elif     defined(CONFIG_ENCODER_HW_EMULATED)
-#elif     defined(CONFIG_ENCODER_HW_COUNTER)
+#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+#elif   defined(CONFIG_ENCODER_HW_COUNTER)
 #else
     // #define CONFIG_ENCODER_HW_DECODER
 #endif
 
 /* Compile time define for all encoder instances if A Lead B is increment, additional configure available at runtime */
 #if     defined(CONFIG_ENCODER_HW_DECODER_A_LEAD_B_INCREMENT)
-#elif     defined(CONFIG_ENCODER_HW_DECODER_A_LEAD_B_DECREMENT)
+#elif   defined(CONFIG_ENCODER_HW_DECODER_A_LEAD_B_DECREMENT)
 #else
     #define CONFIG_ENCODER_HW_DECODER_A_LEAD_B_INCREMENT
 #endif
 
 /* Emulated and Decoder Quadrature Capture. Enables toggle during runtime */
 #if     defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE) /* Emulated and Decoder */
-#elif     defined(CONFIG_ENCODER_QUADRATURE_MODE_DISABLE)
+#elif   defined(CONFIG_ENCODER_QUADRATURE_MODE_DISABLE)
 #else
     #define CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
 #endif

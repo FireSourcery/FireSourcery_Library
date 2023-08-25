@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file      Encoder_ModeDT.h
+    @file    Encoder_ModeDT.h
     @author FireSourcery
     @brief     Mixed Frequency Sampling
     @version V0
@@ -60,6 +60,7 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
     else
     {
         p_encoder->DirectionD = (p_encoder->DeltaD > 0) - (p_encoder->DeltaD < 0);
+        // p_encoder->DirectionD = math_sign(p_encoder->DeltaD);
         deltaTh = HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER); /* Overflow is > SampleTime. DeltaD == 0 occurs prior. */
         /* periodTk = periodTs + DeltaThPrev/timerFreq - deltaTh/timerFreq */
         freqTk = (timerFreq * sampleFreq) / (timerFreq + (sampleFreq * (p_encoder->DeltaTh - deltaTh)));
@@ -76,9 +77,10 @@ static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
     else                                                         { p_encoder->FreqD = 0U; }
 }
 
+/* |DeltaD| <= 1 */
 static inline uint32_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 {
-    uint32_t freqD = (p_encoder->FreqD < 0) ? 0 - p_encoder->FreqD : p_encoder->FreqD; /* |DeltaD| <= 1 */
+    uint32_t freqD = (p_encoder->FreqD < 0) ? 0 - p_encoder->FreqD : p_encoder->FreqD;
     return (freqD < p_encoder->CONFIG.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
 }
 

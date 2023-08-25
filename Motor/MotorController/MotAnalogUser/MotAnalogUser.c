@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     MotAnalogUser.c
+    @file   MotAnalogUser.c
     @author FireSourcery
     @brief
     @version V0
@@ -45,16 +45,16 @@ void MotAnalogUser_Init(MotAnalogUser_T * p_user)
     }
 
     Debounce_Init(&p_user->ReversePin, 5U);
-    if(p_user->Params.UseForwardPin == true)             { Debounce_Init(&p_user->ForwardPin, 5U); }
-    if(p_user->Params.UseNeutralPin == true)             { Debounce_Init(&p_user->NeutralPin, 5U); }
-    if(p_user->Params.UseThrottleEdgePin == true)         { AIn_EnableEdgePin(&p_user->ThrottleAIn); }
-    if(p_user->Params.UseBrakeEdgePin == true)             { AIn_EnableEdgePin(&p_user->BrakeAIn); }
-    if(p_user->Params.UseBistateBrakePin == true)         { Debounce_Init(&p_user->BistateBrakePin, 5U); }
+    if(p_user->Params.UseForwardPin == true)            { Debounce_Init(&p_user->ForwardPin, 5U); }
+    if(p_user->Params.UseNeutralPin == true)            { Debounce_Init(&p_user->NeutralPin, 5U); }
+    if(p_user->Params.UseThrottleEdgePin == true)       { AIn_EnableEdgePin(&p_user->ThrottleAIn); }
+    if(p_user->Params.UseBrakeEdgePin == true)          { AIn_EnableEdgePin(&p_user->BrakeAIn); }
+    if(p_user->Params.UseBistateBrakePin == true)       { Debounce_Init(&p_user->BistateBrakePin, 5U); }
 
-    p_user->ThrottleAIn.ValuePrev_Frac16 = 0U;
-    p_user->ThrottleAIn.Value_Frac16 = 0U;
-    p_user->BrakeAIn.Value_Frac16 = 0U;
-    p_user->BrakeAIn.ValuePrev_Frac16 = 0U;
+    p_user->ThrottleAIn.ValuePrev_Scalar16 = 0U;
+    p_user->ThrottleAIn.Value_Scalar16 = 0U;
+    p_user->BrakeAIn.Value_Scalar16 = 0U;
+    p_user->BrakeAIn.ValuePrev_Scalar16 = 0U;
 }
 
 MotAnalogUser_Direction_T MotAnalogUser_GetDirection(const MotAnalogUser_T * p_user)
@@ -111,7 +111,7 @@ void MotAnalogUser_SetThrottleAIn(MotAnalogUser_T * p_user, uint16_t zero_Adcu, 
 void MotAnalogUser_SetBistateBrake(MotAnalogUser_T * p_user, bool useBistateBrake, uint16_t bistateBrakeIntensity_Frac16)
 {
     p_user->Params.UseBistateBrakePin = useBistateBrake;
-    p_user->Params.BistateBrakeValue_Frac16 = bistateBrakeIntensity_Frac16;
+    p_user->Params.BistateBrakeValue_Scalar16 = bistateBrakeIntensity_Frac16;
 }
 
 void MotAnalogUser_SetDirectionPins(MotAnalogUser_T * p_user, MotAnalogUser_DirectionPins_T pins)

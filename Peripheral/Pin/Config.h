@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Config.h
+    @file   Config.h
     @author FireSourcery
     @brief
     @version V0
@@ -32,7 +32,7 @@
 #define CONFIG_PIN_H
 
 #if     defined(CONFIG_PIN_HAL_USE_MASK)
-#elif     defined(CONFIG_PIN_HAL_USE_ID)
+#elif   defined(CONFIG_PIN_HAL_USE_ID)
 #else
     #define CONFIG_PIN_HAL_USE_MASK
 #endif

@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Hall.h
+    @file   Hall.h
     @author FireSourcery
     @brief
     @version V0
@@ -145,7 +145,7 @@ Hall_Direction_T;
 typedef struct __attribute__((aligned(4U))) Hall_Params_Tag
 {
     Hall_Id_T SensorsTable[HALL_SENSORS_TABLE_LENGTH];
-    uint8_t BoundaryType; /* 3 states 120 degree active, or 6 step, 180 degree active */
+    // uint8_t BoundaryType; /* 3 states 120 degree active, or 6 step, 180 degree active */
 }
 Hall_Params_T;
 
@@ -173,11 +173,11 @@ typedef struct Hall_Tag
 Hall_T;
 
 #define HALL_INIT(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_Params)    \
-{                                                                \
-    .CONFIG =                                                     \
-    {                                                            \
-        .P_PARAMS_NVM = p_Params,                                 \
-    },                                                            \
+{                                                               \
+    .CONFIG =                                                   \
+    {                                                           \
+        .P_PARAMS_NVM = p_Params,                               \
+    },                                                          \
     .PinA = PIN_INIT(p_PinAHal, PinAId),                        \
     .PinB = PIN_INIT(p_PinBHal, PinBId),                        \
     .PinC = PIN_INIT(p_PinCHal, PinCId),                        \
@@ -247,7 +247,7 @@ static inline bool Hall_PollCaptureRotorAngle(Hall_T * p_hall)
 }
 
 /* Next poll is edge */
-static inline void Hall_ResetCapture(Hall_T * p_hall) { p_hall->Sensors.State = 0U;    p_hall->Angle = 0U; }
+static inline void Hall_ResetCapture(Hall_T * p_hall) { p_hall->Sensors.State = 0U; p_hall->Angle = 0U; }
 
 static inline void Hall_SetInitial(Hall_T * p_hall) { Hall_CaptureRotorAngle_ISR(p_hall); }
 

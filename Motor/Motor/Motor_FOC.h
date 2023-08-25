@@ -54,6 +54,7 @@
 /*!
     Map to Motor Analog Conversions
     Convert current from ADCU to QFrac
+    where 32767 is fully saturated current sensor
 */
 /******************************************************************************/
 static inline void Motor_FOC_CaptureIa(Motor_T * p_motor)
@@ -97,24 +98,19 @@ static inline void Motor_FOC_CaptureVc(Motor_T * p_motor)
 
 */
 /******************************************************************************/
-static inline int32_t Motor_FOC_GetIPhase_FracS16(Motor_T * p_motor)               { return FOC_GetIPhase_Signed(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetVPhase_FracS16(Motor_T * p_motor)               { return FOC_GetVPhase_Signed(&p_motor->Foc); }
-/* return int32 for function pointer casting compatibility  */
-/* FracS16Abs in Frac16 without int16 sign bit */
-static inline int32_t Motor_FOC_GetIPhase_FracS16Abs(Motor_T * p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetVPhase_FracS16Abs(Motor_T * p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetElectricalPower_FracS16Abs(Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetIPhase_FracS16(Motor_T * p_motor)            { return FOC_GetIPhase_Signed(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetVPhase_FracS16(Motor_T * p_motor)            { return FOC_GetVPhase_Signed(&p_motor->Foc); }
+
+/* return int32 for function pointer casting compatibility */
+static inline int32_t Motor_FOC_GetIPhase_FracU16(Motor_T * p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetVPhase_FracU16(Motor_T * p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetElectricalPower_FracU16(Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
 
 /******************************************************************************/
 /*!
-    Check limits on set
+
 */
 /******************************************************************************/
-static inline bool Motor_FOC_CheckIOverThreshold(Motor_T * p_motor)
-{
-    return !math_isbound(FOC_GetIq(&p_motor->Foc), (int32_t)p_motor->ILimitCw_FracS16 * 7 / 8, (int32_t)p_motor->ILimitCcw_FracS16 * 7 / 8);
-}
-
 /* Clear State for SetFeedbackMatch */
 static inline void Motor_FOC_ClearState(Motor_T * p_motor)
 {
@@ -124,7 +120,7 @@ static inline void Motor_FOC_ClearState(Motor_T * p_motor)
 /* From FreeWheel State, match to speed, overwrites VBemfClarke */
 static inline void Motor_FOC_SetVSpeed(Motor_T * p_motor)
 {
-    FOC_SetVq(&p_motor->Foc, Linear_Function_FracS16(&p_motor->UnitsVSpeed, p_motor->Speed_FracS16));
+    FOC_SetVq(&p_motor->Foc, Motor_GetVSpeed_FracS16(p_motor));
     FOC_SetVd(&p_motor->Foc, 0);
 }
 

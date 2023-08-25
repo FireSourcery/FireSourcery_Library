@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Q.h
+    @file   Q.h
     @author FireSourcery
     @brief     Math with 16 bit fractions in Q1.15 format
     @version V0
@@ -39,7 +39,6 @@
 #define QFRAC16_N_FRAC_BITS (15U) /*!< Q1.15, 15 fractional bits, shift mul/div by 32768 */
 
 typedef int16_t qfrac16_t;         /*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
-// typedef int32_t qfrac16_t;         /* Allow calculation with over saturation */
 
 static const qfrac16_t QFRAC16_MAX = INT16_MAX; /*!< (32767) */
 static const qfrac16_t QFRAC16_MIN = INT16_MIN; /*!< (-32768) */
@@ -56,13 +55,15 @@ static const qfrac16_t QFRAC16_SQRT3_DIV_4 = 0x376D;
 static const qfrac16_t QFRAC16_SQRT2_DIV_2 = 0x5A82;
 static const qfrac16_t QFRAC16_PI_DIV_4 = 0x6487;
 
-static const int32_t QFRAC16_1_OVERSAT     = 0x00008000; /*!< (32768) */
-static const int32_t QFRAC16_PI         = 0x0001921F; /* Over saturated */
-static const int32_t QFRAC16_3PI_DIV_4     = 0x00012D97; /* Over saturated */
+/* Allow calculation with over saturation */
+// typedef int32_t qfrac16_t;
+static const int32_t QFRAC16_1_OVERSAT      = 0x00008000; /*!< (32768) */
+static const int32_t QFRAC16_PI             = 0x0001921F; /* Over saturated */
+static const int32_t QFRAC16_3PI_DIV_4      = 0x00012D97; /* Over saturated */
 
 #define QFRAC16_FLOAT_MAX (0.999969482421875F)
 #define QFRAC16_FLOAT_MIN (-1.0F)
-#define QFRAC16(x) ((qfrac16_t)(((x) < QFRAC16_FLOAT_MAX) ? (((x) >= QFRAC16_FLOAT_MIN) ? ((x)*32768.0F) : INT16_MIN) : INT16_MAX))
+#define QFRAC16_FLOAT(x) ((qfrac16_t)(((x) < QFRAC16_FLOAT_MAX) ? (((x) >= QFRAC16_FLOAT_MIN) ? ((x)*32768.0F) : INT16_MIN) : INT16_MAX))
 
 static inline qfrac16_t qfrac16(int16_t num, int32_t max) { return (qfrac16_t)(((int32_t)num << QFRAC16_N_FRAC_BITS) / max); }
 static inline qfrac16_t qfrac16_convert(int16_t num, int32_t max) { return qfrac16(num, max); }
@@ -157,10 +158,10 @@ static const qangle16_t QANGLE16_270 = 0xC000;    /*! 49152, -16384, 270 == -90 
 
 typedef enum qangle16_quadrant_tag
 {
-    QANGLE16_QUADRANT_I,     /* 0_90 */
-    QANGLE16_QUADRANT_II,     /* 90_180 */
-    QANGLE16_QUADRANT_III,     /* 180_270 */
-    QANGLE16_QUADRANT_IV,     /* 270_360 */
+    QANGLE16_QUADRANT_I,        /* 0_90 */
+    QANGLE16_QUADRANT_II,       /* 90_180 */
+    QANGLE16_QUADRANT_III,      /* 180_270 */
+    QANGLE16_QUADRANT_IV,       /* 270_360 */
 }
 qangle16_quadrant_t;
 
@@ -174,15 +175,16 @@ static inline qangle16_quadrant_t qangle16_quadrant(qangle16_t theta)
         case (uint16_t)QANGLE16_90:     quadrant = QANGLE16_QUADRANT_II;    break;
         case (uint16_t)QANGLE16_180:    quadrant = QANGLE16_QUADRANT_III;   break;
         case (uint16_t)QANGLE16_270:    quadrant = QANGLE16_QUADRANT_IV;    break;
-        default: quadrant = 0U; break; /* Should not occur */
+        default: quadrant = -1; break; /* Should not occur */
     }
     return quadrant;
 }
 
-static inline bool qangle16_cycle(qangle16_t theta0, qangle16_t theta1)
-{
-    return ((theta0 < 0) && (theta1 > 0));
-}
+/* Previous andgle and new angle changed a full cycle */
+// static inline bool qangle16_cycle(qangle16_t theta0, qangle16_t theta1)
+// {
+//     // return ((theta0 < 0) && (theta1 > 0));
+// }
 
 static inline bool qangle16_cycle2(qangle16_t theta0, qangle16_t theta1)
 {

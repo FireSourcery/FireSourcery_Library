@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file      Encoder_DeltaD.c
+    @file    Encoder_DeltaD.c
     @author FireSourcery
     @brief
     @version V0
@@ -32,19 +32,11 @@
 #include <string.h>
 
 /*!
-    Uses pin ISR, or polling
+    Protected Init Timer HAL
 */
-void Encoder_DeltaT_Init(Encoder_T * p_encoder)
+void _Encoder_DeltaT_InitTimer(Encoder_T * p_encoder)
 {
-    if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
-    _Encoder_DeltaT_Init(p_encoder);
-    _Encoder_ResetUnits(p_encoder);
-    p_encoder->DeltaD = 1U; /* Effective for shared functions only */
-    Encoder_DeltaT_SetInitial(p_encoder);
-}
-
-static inline void ResetTimerFreq(Encoder_T * p_encoder)
-{
+    HAL_Encoder_InitTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
     /*
         RPM * CPR / 60[Seconds] = CPS
         CPS = T_FREQ [Hz] / deltaT_ticks [timerticks/Count]
@@ -68,18 +60,26 @@ static inline void ResetTimerFreq(Encoder_T * p_encoder)
     */
 #ifdef CONFIG_ENCODER_DYNAMIC_TIMER
     // uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, p_encoder->Params.CountsPerRevolution * 16666U);
-    uint32_t timerFreq  = HAL_Encoder_InitTimerFreq(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, p_encoder->CONFIG.TIMER_FREQ);
+    uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, p_encoder->CONFIG.TIMER_FREQ);
     p_encoder->ExtendedTimerConversion = timerFreq / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
 #else
+    /* Compile time defined TIMER_FREQ */
+    HAL_Encoder_InitTimerFreq(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, p_encoder->CONFIG.TIMER_FREQ);
     p_encoder->ExtendedTimerConversion = p_encoder->CONFIG.TIMER_FREQ / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
 #endif
 }
 
-void _Encoder_DeltaT_Init(Encoder_T * p_encoder)
+/*!
+    Uses pin ISR, or polling
+*/
+void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 {
-    HAL_Encoder_InitTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-    ResetTimerFreq(p_encoder);
+    if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
+    _Encoder_DeltaT_InitTimer(p_encoder);
+    _Encoder_ResetUnits(p_encoder);
+    p_encoder->DeltaD = 1U; /* Effective for shared functions only */
     p_encoder->IsSinglePhasePositive = true;
+    Encoder_DeltaT_SetInitial(p_encoder);
 }
 
 /*
