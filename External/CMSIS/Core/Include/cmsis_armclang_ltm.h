@@ -1,5 +1,5 @@
 /**************************************************************************//**
- * @file   cmsis_armclang_ltm.h
+ * @file     cmsis_armclang_ltm.h
  * @brief    CMSIS compiler armclang (Arm Compiler 6) header file
  * @version  V1.5.3
  * @date     27. May 2021

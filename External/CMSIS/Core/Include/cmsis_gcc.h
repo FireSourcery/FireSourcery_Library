@@ -1,5 +1,5 @@
 /**************************************************************************//**
- * @file   cmsis_gcc.h
+ * @file     cmsis_gcc.h
  * @brief    CMSIS compiler GCC header file
  * @version  V5.4.1
  * @date     27. May 2021
