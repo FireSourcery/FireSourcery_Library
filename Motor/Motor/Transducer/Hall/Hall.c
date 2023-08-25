@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Hall.c
+    @file   Hall.c
     @author FireSourcery
     @brief
     @version V0
@@ -43,7 +43,7 @@ const uint16_t _HALL_DEGREES_TABLE[HALL_SENSORS_TABLE_LENGTH] =
 };
 
 /*
-
+    PinA,B,C HAL initialized in main app
 */
 void Hall_Init(Hall_T * p_hall)
 {
@@ -75,7 +75,7 @@ static void CalibratePhaseC(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Ha
 static void CalibratePhaseInvB(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_B; }
 
 /* For 180 degree active. 120 degree active todo */
-void Hall_StartCalibrate(Hall_T * p_hall)       { Hall_ResetCapture(p_hall); p_hall->Params.BoundaryType = 0U; }
+void Hall_StartCalibrate(Hall_T * p_hall)       { Hall_ResetCapture(p_hall); /* p_hall->Params.BoundaryType = 0U; */ }
 void Hall_CalibratePhaseA(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseA(p_hall); /* p_hall->Params.BoundaryType++; */ } }
 void Hall_CalibratePhaseInvC(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvC(p_hall); /* p_hall->Params.BoundaryType++; */ } }
 void Hall_CalibratePhaseB(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseB(p_hall); /* p_hall->Params.BoundaryType++; */ } }

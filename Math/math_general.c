@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     math_general.h
+    @file   math_general.h
     @author FireSourcery
     @brief  Re-implementation of C++ library not found in C
     @version V0

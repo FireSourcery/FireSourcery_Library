@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     HAL_Encoder.h
+    @file   HAL_Encoder.h
     @author FireSourcery
     @brief     Encoder Timer Counter HAL for S32K
     @version V0

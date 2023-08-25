@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     HAL_Peripheral.h
+    @file   HAL_Peripheral.h
     @author FireSourcery
     @brief    Define configurable HAL Peripheral path
     @version V0

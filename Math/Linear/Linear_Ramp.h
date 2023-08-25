@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Linear_Ramp.h
+    @file   Linear_Ramp.h
     @author FireSourcery
     @brief
     @version V0
@@ -63,9 +63,10 @@ static inline int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear)
 }
 
 static inline void Linear_Ramp_SetTarget(Linear_T * p_linear, int32_t target) { p_linear->YReference = (target << p_linear->SlopeShift); }
-static inline int32_t Linear_Ramp_GetTarget(const Linear_T * p_linear) { return p_linear->YReference >> p_linear->SlopeShift; }
-static inline int32_t Linear_Ramp_GetOutput(const Linear_T * p_linear) { return p_linear->YOffset >> p_linear->SlopeShift; }
-static inline void Linear_Ramp_SetOutputState(Linear_T * p_linear, int32_t matchOutput) { p_linear->YOffset = matchOutput << p_linear->SlopeShift; }
+static inline int32_t Linear_Ramp_GetTarget(const Linear_T * p_linear) { return (p_linear->YReference >> p_linear->SlopeShift); }
+
+static inline int32_t Linear_Ramp_GetOutput(const Linear_T * p_linear) { return (p_linear->YOffset >> p_linear->SlopeShift); }
+static inline void Linear_Ramp_SetOutputState(Linear_T * p_linear, int32_t matchOutput) { p_linear->YOffset = (matchOutput << p_linear->SlopeShift); }
 static inline void Linear_Ramp_ZeroOutputState(Linear_T * p_linear) { p_linear->YOffset = 0; }
 
 /******************************************************************************/

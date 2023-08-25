@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     FOC.c
+    @file   FOC.c
     @author FireSourcery
     @version V0
 */
@@ -42,6 +42,7 @@ void FOC_Init(FOC_T * p_foc)
 //     p_foc->VectorMaxD = dMax;
 // }
 
+/* Prep Align using input intensity */
 void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd)
 {
     p_foc->Vd = vd;
@@ -67,8 +68,8 @@ void FOC_ClearState(FOC_T * p_foc)
     p_foc->Iq = 0;
     p_foc->Vd = 0; /* Output/Bemf */
     p_foc->Vq = 0;
-    p_foc->VIdReq = 0; /* Req */
-    p_foc->VIqReq = 0;
+    p_foc->DReq = 0; /* Req */
+    p_foc->QReq = 0;
 
     // p_foc->Valpha = 0;
     // p_foc->Vbeta = 0;

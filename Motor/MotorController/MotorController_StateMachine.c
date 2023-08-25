@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     MotorController_StateMachine.c
+    @file   MotorController_StateMachine.c
     @author FireSourcery
     @brief  MotorController StateMachine
             States for input mode, User perspective
@@ -55,7 +55,7 @@ const StateMachine_Machine_T MCSM_MACHINE =
     .TRANSITION_TABLE_LENGTH = MCSM_TRANSITION_TABLE_LENGTH,
 };
 
-static StateMachine_State_T * TransitionFault(MotorController_T * p_mc, statemachine_inputext_t voidVar) { (void)p_mc; (void)voidVar; return &STATE_FAULT; }
+static StateMachine_State_T * TransitionFault(MotorController_T * p_mc, statemachine_inputvalue_t voidVar) { (void)p_mc; (void)voidVar; return &STATE_FAULT; }
 
 /******************************************************************************/
 /*!
@@ -108,9 +108,9 @@ static const StateMachine_State_T STATE_INIT =
 {
     .ID                 = MCSM_STATE_ID_INIT,
     .P_TRANSITION_TABLE = &INIT_TRANSITION_TABLE[0U],
-    .ENTRY              = (StateMachine_Output_T)Init_Entry,
-    .EXIT               = (StateMachine_Output_T)Init_Exit,
-    .OUTPUT             = (StateMachine_Output_T)Init_Proc,
+    .ENTRY              = (StateMachine_Function_T)Init_Entry,
+    .EXIT               = (StateMachine_Function_T)Init_Exit,
+    .LOOP             = (StateMachine_Function_T)Init_Proc,
 };
 
 /******************************************************************************/
@@ -138,7 +138,7 @@ static void Stop_Entry(MotorController_T * p_mc)
 
 static void Stop_Proc(MotorController_T * p_mc) { (void)p_mc; }
 
-static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc, statemachine_inputext_t inputDirection)
+static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc, statemachine_inputvalue_t inputDirection)
 {
     StateMachine_State_T * p_nextState;
     /*
@@ -160,7 +160,7 @@ static StateMachine_State_T * Stop_InputDirection(MotorController_T * p_mc, stat
 }
 
 /* */
-static StateMachine_State_T * Stop_InputCmd(MotorController_T * p_mc, statemachine_inputext_t userCmd)
+static StateMachine_State_T * Stop_InputCmd(MotorController_T * p_mc, statemachine_inputvalue_t userCmd)
 {
     // StateMachine_State_T * p_nextState = 0U;
     // p_mc->UserCmd = (int16_t)userCmd;
@@ -172,7 +172,7 @@ static StateMachine_State_T * Stop_InputCmd(MotorController_T * p_mc, statemachi
     // return p_nextState;
 }
 
-static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc, statemachine_inputext_t userCmdThrottle)
+static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc, statemachine_inputvalue_t userCmdThrottle)
 {
     StateMachine_State_T * p_nextState = 0U;
 
@@ -186,7 +186,7 @@ static StateMachine_State_T * Stop_InputThrottle(MotorController_T * p_mc, state
     return p_nextState;
 }
 
-static StateMachine_State_T * Stop_InputBrake(MotorController_T * p_mc, statemachine_inputext_t userCmdBrake)
+static StateMachine_State_T * Stop_InputBrake(MotorController_T * p_mc, statemachine_inputvalue_t userCmdBrake)
 {
     p_mc->UserCmd = (uint16_t)userCmdBrake;
     MotorController_GroundAll(p_mc); /* repeat set is okay for brake */
@@ -194,7 +194,7 @@ static StateMachine_State_T * Stop_InputBrake(MotorController_T * p_mc, statemac
 }
 
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
-static StateMachine_State_T * Stop_InputServo(MotorController_T * p_mc, statemachine_inputext_t voidVar)
+static StateMachine_State_T * Stop_InputServo(MotorController_T * p_mc, statemachine_inputvalue_t voidVar)
 {
     (void)voidVar;
     return &STATE_SERVO;
@@ -202,7 +202,7 @@ static StateMachine_State_T * Stop_InputServo(MotorController_T * p_mc, statemac
 #endif
 
 /* This function is blocking */
-static StateMachine_State_T * Stop_InputSaveParams_Blocking(MotorController_T * p_mc, statemachine_inputext_t substateId)
+static StateMachine_State_T * Stop_InputSaveParams_Blocking(MotorController_T * p_mc, statemachine_inputvalue_t substateId)
 {
     /* Flash Write will enter critical */
     p_mc->NvmStatus = NV_MEMORY_STATUS_PROCESSING;
@@ -240,8 +240,8 @@ static const StateMachine_State_T STATE_STOP =
 {
     .ID                 = MCSM_STATE_ID_STOP,
     .P_TRANSITION_TABLE = &STOP_TRANSITION_TABLE[0U],
-    .ENTRY              = (StateMachine_Output_T)Stop_Entry,
-    .OUTPUT             = (StateMachine_Output_T)Stop_Proc,
+    .ENTRY              = (StateMachine_Function_T)Stop_Entry,
+    .LOOP               = (StateMachine_Function_T)Stop_Proc,
 };
 
 /******************************************************************************/
@@ -261,7 +261,7 @@ static const StateMachine_State_T STATE_STOP =
 static void Run_Entry(MotorController_T * p_mc) { (void)p_mc; }
 static void Run_Proc(MotorController_T * p_mc) { (void)p_mc; }
 
-static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc, statemachine_inputext_t inputDirection)
+static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc, statemachine_inputvalue_t inputDirection)
 {
     StateMachine_State_T * p_nextState;
 
@@ -282,7 +282,7 @@ static StateMachine_State_T * Run_InputDirection(MotorController_T * p_mc, state
 /*
     Check Stop / Zero Throttle
 */
-static StateMachine_State_T * _Run_InputProcZero(MotorController_T * p_mc, statemachine_inputext_t voidVar)
+static StateMachine_State_T * _Run_InputProcZero(MotorController_T * p_mc, statemachine_inputvalue_t voidVar)
 {
     (void)voidVar;
     switch(p_mc->Parameters.ZeroCmdMode)
@@ -295,7 +295,7 @@ static StateMachine_State_T * _Run_InputProcZero(MotorController_T * p_mc, state
     return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
 }
 
-static StateMachine_State_T * _Run_InputSetZero(MotorController_T * p_mc, statemachine_inputext_t voidVar)
+static StateMachine_State_T * _Run_InputSetZero(MotorController_T * p_mc, statemachine_inputvalue_t voidVar)
 {
     (void)voidVar;
     switch(p_mc->Parameters.ZeroCmdMode)
@@ -308,7 +308,7 @@ static StateMachine_State_T * _Run_InputSetZero(MotorController_T * p_mc, statem
     return 0U;
 }
 
-static StateMachine_State_T * Run_InputZero(MotorController_T * p_mc, statemachine_inputext_t voidVar)
+static StateMachine_State_T * Run_InputZero(MotorController_T * p_mc, statemachine_inputvalue_t voidVar)
 {
     (void)voidVar;
     StateMachine_State_T * p_nextState = 0U;
@@ -320,14 +320,14 @@ static StateMachine_State_T * Run_InputZero(MotorController_T * p_mc, statemachi
     return p_nextState;
 }
 
-static StateMachine_State_T * Run_InputCmd(MotorController_T * p_mc, statemachine_inputext_t userCmd)
+static StateMachine_State_T * Run_InputCmd(MotorController_T * p_mc, statemachine_inputvalue_t userCmd)
 {
     // if(userCmd == 0U)   { Run_InputZero(p_mc, STATE_MACHINE_INPUT_VALUE_NULL); }
     // else                { p_mc->UserCmd = (int16_t)userCmd; MotorController_SetCmd(p_mc, userCmd); };
     return 0U;
 }
 
-static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_mc, statemachine_inputext_t userCmdThrottle)
+static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_mc, statemachine_inputvalue_t userCmdThrottle)
 {
     StateMachine_State_T * p_nextState = 0U;
     if(userCmdThrottle == 0U)   { p_nextState = Run_InputZero(p_mc, STATE_MACHINE_INPUT_VALUE_NULL); }
@@ -335,7 +335,7 @@ static StateMachine_State_T * Run_InputThrottle(MotorController_T * p_mc, statem
     return p_nextState;
 }
 
-static StateMachine_State_T * Run_InputBrake(MotorController_T * p_mc, statemachine_inputext_t userCmdBrake)
+static StateMachine_State_T * Run_InputBrake(MotorController_T * p_mc, statemachine_inputvalue_t userCmdBrake)
 {
     StateMachine_State_T * p_nextState = 0U;
     if(userCmdBrake == 0U)  { p_nextState = Run_InputZero(p_mc, STATE_MACHINE_INPUT_VALUE_NULL); }
@@ -358,8 +358,8 @@ static const StateMachine_State_T STATE_RUN =
 {
     .ID                     = MCSM_STATE_ID_RUN,
     .P_TRANSITION_TABLE     = &RUN_TRANSITION_TABLE[0U],
-    .ENTRY                  = (StateMachine_Output_T)Run_Entry,
-    .OUTPUT                 = (StateMachine_Output_T)Run_Proc,
+    .ENTRY                  = (StateMachine_Function_T)Run_Entry,
+    .LOOP                 = (StateMachine_Function_T)Run_Proc,
 };
 
 /******************************************************************************/
@@ -375,7 +375,7 @@ static const StateMachine_State_T STATE_RUN =
 static void Neutral_Entry(MotorController_T * p_mc) { MotorController_ReleaseAll(p_mc); }
 static void Neutral_Proc(MotorController_T * p_mc) { (void)p_mc; }
 
-static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc, statemachine_inputext_t inputDirection)
+static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc, statemachine_inputvalue_t inputDirection)
 {
     StateMachine_State_T * p_nextState = 0U;
 
@@ -398,14 +398,14 @@ static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc, s
 /*
     Waits for user to input brake before transitioning to Stop
 */
-static StateMachine_State_T * Neutral_InputZero(MotorController_T * p_mc, statemachine_inputext_t voidVar)
+static StateMachine_State_T * Neutral_InputZero(MotorController_T * p_mc, statemachine_inputvalue_t voidVar)
 {
     (void)voidVar;
     if(p_mc->UserCmd != 0U) { p_mc->UserCmd = 0U; MotorController_ReleaseAll(p_mc);}
     return 0U;
 }
 
-static StateMachine_State_T * Neutral_InputBrake(MotorController_T * p_mc, statemachine_inputext_t userCmdBrake)
+static StateMachine_State_T * Neutral_InputBrake(MotorController_T * p_mc, statemachine_inputvalue_t userCmdBrake)
 {
     if(userCmdBrake == 0U)  { Neutral_InputZero(p_mc, STATE_MACHINE_INPUT_VALUE_NULL); }
     else                    { p_mc->UserCmd = (uint16_t)userCmdBrake; MotorController_SetBrake(p_mc, userCmdBrake); };
@@ -413,7 +413,7 @@ static StateMachine_State_T * Neutral_InputBrake(MotorController_T * p_mc, state
     return (MotorController_CheckStopMotorAll(p_mc) == true) ? &STATE_STOP : 0U;
 }
 
-static StateMachine_State_T * Neutral_InputCmd(MotorController_T * p_mc, statemachine_inputext_t userCmd)
+static StateMachine_State_T * Neutral_InputCmd(MotorController_T * p_mc, statemachine_inputvalue_t userCmd)
 {
 
 }
@@ -432,8 +432,8 @@ static const StateMachine_Transition_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_
 static const StateMachine_State_T STATE_NEUTRAL =
 {
     .P_TRANSITION_TABLE     = &NEUTRAL_TRANSITION_TABLE[0U],
-    .ENTRY                  = (StateMachine_Output_T)Neutral_Entry,
-    .OUTPUT                 = (StateMachine_Output_T)Neutral_Proc,
+    .ENTRY                  = (StateMachine_Function_T)Neutral_Entry,
+    .LOOP                 = (StateMachine_Function_T)Neutral_Proc,
 };
 
 
@@ -461,14 +461,14 @@ static void Servo_Proc(MotorController_T * p_mc)
 #endif
 }
 
-static StateMachine_State_T * Servo_InputExit(MotorController_T * p_mc, statemachine_inputext_t voidVar)
+static StateMachine_State_T * Servo_InputExit(MotorController_T * p_mc, statemachine_inputvalue_t voidVar)
 {
     (void)voidVar;
     MotorController_ReleaseAll(p_mc);
     return &STATE_STOP;
 }
 
-static StateMachine_State_T * Servo_InputCmd(MotorController_T * p_mc, statemachine_inputext_t cmd)
+static StateMachine_State_T * Servo_InputCmd(MotorController_T * p_mc, statemachine_inputvalue_t cmd)
 {
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
     MotorController_ServoExtern_SetCmd(p_mc, cmd);
@@ -494,8 +494,8 @@ static const StateMachine_State_T STATE_SERVO =
 {
     .ID                 = MCSM_STATE_ID_SERVO,
     .P_TRANSITION_TABLE = &SERVO_TRANSITION_TABLE[0U],
-    .ENTRY              = (StateMachine_Output_T)Servo_Entry,
-    .OUTPUT             = (StateMachine_Output_T)Servo_Proc,
+    .ENTRY              = (StateMachine_Function_T)Servo_Entry,
+    .LOOP             = (StateMachine_Function_T)Servo_Proc,
 };
 #endif
 
@@ -535,19 +535,19 @@ static void Fault_Proc(MotorController_T * p_mc)
 
 /* Fault State Input Fault Checks Fault */
 /* Sensor faults only clear on user input */
-static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc, statemachine_inputext_t voidVar)
+static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc, statemachine_inputvalue_t voidVar)
 {
     (void)voidVar;
-    p_mc->FaultFlags.Motors       = (MotorController_ClearFaultMotorAll(p_mc) == false);
-    p_mc->FaultFlags.VSenseLimit  = VMonitor_GetIsStatusLimit(&p_mc->VMonitorSense);
-    p_mc->FaultFlags.VAccLimit    = VMonitor_GetIsStatusLimit(&p_mc->VMonitorAcc);
-    p_mc->FaultFlags.VSourceLimit = VMonitor_GetIsStatusLimit(&p_mc->VMonitorSource);
-    p_mc->FaultFlags.PcbOverHeat  = Thermistor_GetIsShutdown(&p_mc->ThermistorPcb);
+    p_mc->FaultFlags.Motors       = (MotorController_ClearFaultAll(p_mc) == false);
+    p_mc->FaultFlags.VSenseLimit  = VMonitor_GetIsFault(&p_mc->VMonitorSense);
+    p_mc->FaultFlags.VAccLimit    = VMonitor_GetIsFault(&p_mc->VMonitorAcc);
+    p_mc->FaultFlags.VSourceLimit = VMonitor_GetIsFault(&p_mc->VMonitorSource);
+    p_mc->FaultFlags.PcbOverHeat  = Thermistor_GetIsFault(&p_mc->ThermistorPcb);
 #if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
-    p_mc->FaultFlags.MosfetsTopOverHeat = Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsTop);
-    p_mc->FaultFlags.MosfetsBotOverHeat = Thermistor_GetIsShutdown(&p_mc->ThermistorMosfetsBot);
+    p_mc->FaultFlags.MosfetsTopOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsTop);
+    p_mc->FaultFlags.MosfetsBotOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsBot);
 #else
-    p_mc->FaultFlags.MosfetsOverHeat = Thermistor_GetIsShutdown(&p_mc->ThermistorMosfets);
+    p_mc->FaultFlags.MosfetsOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfets);
 #endif
 
     p_mc->FaultFlags.User = 0U;
@@ -569,6 +569,6 @@ static const StateMachine_State_T STATE_FAULT =
 {
     .ID                 = MCSM_STATE_ID_FAULT,
     .P_TRANSITION_TABLE = &FAULT_TRANSITION_TABLE[0U],
-    .ENTRY              = (StateMachine_Output_T)Fault_Entry,
-    .OUTPUT             = (StateMachine_Output_T)Fault_Proc,
+    .ENTRY              = (StateMachine_Function_T)Fault_Entry,
+    .LOOP             = (StateMachine_Function_T)Fault_Proc,
 };

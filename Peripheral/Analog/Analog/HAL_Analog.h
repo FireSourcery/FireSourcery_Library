@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     HAL_Analog.h
+    @file   HAL_Analog.h
     @author FireSourcery
     @brief     Analog module import functions.
             User must provide HW functions, or configure peripheral HAL

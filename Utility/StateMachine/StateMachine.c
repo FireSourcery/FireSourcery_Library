@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     StateMachine.c
+    @file   StateMachine.c
     @author FireSourcery
     @brief     StateMachine
     @version V0
@@ -64,44 +64,51 @@ static inline void ExitCritical(StateMachine_T * p_stateMachine)
 #endif
 }
 
-/*
-    No null pointer check. User ensure OUTPUT is defined when using this interface. supply empty for no op
-*/
-static inline void ProcOutput(StateMachine_T * p_stateMachine)
-{
-    p_stateMachine->p_StateActive->OUTPUT(p_stateMachine->CONFIG.P_CONTEXT);
-}
-
 static void Reset(StateMachine_T * p_stateMachine)
 {
     p_stateMachine->p_StateActive = p_stateMachine->CONFIG.P_MACHINE->P_STATE_INITIAL;
     if(p_stateMachine->p_StateActive->ENTRY != 0U) { p_stateMachine->p_StateActive->ENTRY(p_stateMachine->CONFIG.P_CONTEXT); }
 }
 
+/*
+    No null pointer check. User ensure LOOP is defined when using this interface. supply empty for no op
+*/
+static inline void ProcState(StateMachine_T * p_stateMachine)
+{
+    p_stateMachine->p_StateActive->LOOP(p_stateMachine->CONFIG.P_CONTEXT);
+}
+
 /*!
     @return false indicates not accepted input, transition does not exist.
             true indicates accepted input, state may transition or self transition (with or without entry and exit function).
 */
-static inline bool CheckTransitionTable(StateMachine_T * p_stateMachine, statemachine_input_t inputId)
+static inline bool CheckTransitionTable(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId)
 {
     return ((inputId < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH) && (p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId] != 0U));
 }
 
-// static inline StateMachine_State_T * TransitionFunction(StateMachine_State_T * p_active, void * p_context, statemachine_input_t inputId, statemachine_inputext_t inputExt)
+// static inline StateMachine_State_T * TransitionFunction(StateMachine_State_T * p_active, void * p_context, statemachine_input_t inputId, statemachine_inputext_t inputValue)
 // {
-//     return p_active->P_TRANSITION_TABLE[inputId](p_context, inputExt);
+//     return p_active->P_TRANSITION_TABLE[inputId](p_context, inputValue);
 // }
 
 /*!
     Transistion Function maps current state to new state for each input
     private helper without input error checking
 */
-static inline void ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_t inputId, statemachine_inputext_t inputExt)
+static inline void ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue)
 {
-    StateMachine_State_T * p_newState = p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId](p_stateMachine->CONFIG.P_CONTEXT, inputExt);
+    // StateMachine_State_T * p_newState = TransitionFunction(p_stateMachine->p_StateActive, p_stateMachine->CONFIG.P_CONTEXT, inputId, inputValue);
+    StateMachine_State_T * p_newState = p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId](p_stateMachine->CONFIG.P_CONTEXT, inputValue);
     if(p_newState != 0U) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); }
 }
 
+static bool ProcInput(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue)
+{
+    bool isAccept = CheckTransitionTable(p_stateMachine, inputId);
+    if(isAccept == true) { ProcTransitionFunction(p_stateMachine, inputId, inputValue); }
+    return isAccept;
+}
 
 /******************************************************************************/
 /*!
@@ -139,7 +146,7 @@ void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, StateMac
 void StateMachine_Init(StateMachine_T * p_stateMachine)
 {
     p_stateMachine->SyncInput = STATE_MACHINE_INPUT_ID_NULL;
-    p_stateMachine->SyncInputExt = 0U;
+    p_stateMachine->SyncInputValue = 0U;
 #ifdef  CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE
     p_stateMachine->Mutex = 1U;
 #endif
@@ -158,6 +165,7 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 /******************************************************************************/
 /*
     Synchronous Machine
+    User Input proc during Synchronous State Update Proc
     proc last set input, always single threaded proc
     Does not need Critical Section if Proc thread is higher priority than Input Thread
 */
@@ -166,57 +174,86 @@ void StateMachine_Sync_Proc(StateMachine_T * p_stateMachine)
 {
     if(p_stateMachine->SyncInput != STATE_MACHINE_INPUT_ID_NULL)
     {
-        ProcTransitionFunction(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputExt);
+        p_stateMachine->IsSyncInputAccept = ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
         p_stateMachine->SyncInput = STATE_MACHINE_INPUT_ID_NULL; /* clear input, reserved char */
     }
-    else
-    {
-        ProcOutput(p_stateMachine);
-    }
+
+    ProcState(p_stateMachine);
 }
 
-bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_t inputId, statemachine_inputext_t inputExt)
+bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue)
 {
-    bool isAccept = CheckTransitionTable(p_stateMachine, inputId);
-    if(isAccept == true) { p_stateMachine->SyncInput = inputId; p_stateMachine->SyncInputExt = inputExt; }
-    return isAccept;
+    // bool isAccept = CheckTransitionTable(p_stateMachine, inputId);
+    // if(isAccept == true) { p_stateMachine->SyncInput = inputId; p_stateMachine->SyncInputExt = inputValue; }
+    // return isAccept;
+    p_stateMachine->SyncInput = inputId;
+    p_stateMachine->SyncInputValue = inputValue;
 }
 
 /******************************************************************************/
 /*
     Asynchronous Machine
-    Asynchronous Machine has no synchronous periodic output
+    User input may change state immediately, optionally implement periodic output
+    Need Critical section to prevent ProcState state transition in between checking input and proc input
+    User may selective implement critical in calling layer, if protection not require for all inputs
 */
 /******************************************************************************/
-bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t inputId, statemachine_inputext_t inputExt)
+bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue)
 {
     bool isAccept = false;
     if(EnterCritical(p_stateMachine))
     {
-        isAccept = CheckTransitionTable(p_stateMachine, inputId);
-        if(isAccept == true) { ProcTransitionFunction(p_stateMachine, inputId, inputExt); }
+        isAccept = ProcInput(p_stateMachine, inputId, inputValue);
         ExitCritical(p_stateMachine);
     }
     return isAccept;
 }
 
-/******************************************************************************/
 /*
-    Semi-synchronous Machine
-    Synchronous periodic output
-    Asynchronous Input
-
-    User may selective implement critical in calling layer
+    Assuming ProcState runs higher prioity than ProcInput, critical is implemented in ProcInput only
 */
-/******************************************************************************/
-void StateMachine_Semi_ProcOutput(StateMachine_T * p_stateMachine)
+void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine)
 {
-    ProcOutput(p_stateMachine);
+   ProcState(p_stateMachine);
 }
 
-bool StateMachine_Semi_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t inputId, statemachine_inputext_t inputExt)
+/*
+    Optionally run without peroidic proc function. Use State Function as common output.
+    need critical if inputs on different threads
+*/
+bool StateMachine_Async_Proc(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue)
 {
-    return StateMachine_Async_ProcInput(p_stateMachine, inputId, inputExt);
+    bool isAccept = false;
+    if(EnterCritical(p_stateMachine))
+    {
+        isAccept = ProcInput(p_stateMachine, inputId, inputValue);
+        if(isAccept == true) { ProcState(p_stateMachine); }
+        ExitCritical(p_stateMachine);
+    }
+    return isAccept;
+}
+
+
+/******************************************************************************/
+/*
+    Hybrid Semi-synchronous Machine
+    supports both operation as expense of superflous condition checking
+*/
+/******************************************************************************/
+void StateMachine_Proc(StateMachine_T * p_stateMachine)
+{
+    ProcState(p_stateMachine);
+    // StateMachine_Sync_Proc(p_stateMachine);
+}
+
+bool StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue)
+{
+    return StateMachine_Async_ProcInput(p_stateMachine, inputId, inputValue);
+}
+
+void StateMachine_SetSyncInput(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue)
+{
+    StateMachine_Sync_SetInput(p_stateMachine, inputId, inputValue);
 }
 
 /******************************************************************************/
@@ -225,9 +262,9 @@ bool StateMachine_Semi_ProcInput(StateMachine_T * p_stateMachine, statemachine_i
 */
 /******************************************************************************/
 #ifdef CONFIG_STATE_MACHINE_MENU_ENABLE
-void StateMachine_Menu_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_t input, statemachine_inputext_t inputExt)
+void StateMachine_Menu_ProcInput(StateMachine_T * p_stateMachine, statemachine_inputid_t input, statemachine_inputvalue_t inputValue)
 {
-    StateMachine_Semi_ProcInput(p_stateMachine, input, statemachine_inputext_t inputExt)
+    StateMachine_ProcAsyncInput(p_stateMachine, input, statemachine_inputvalue_t inputValue)
 }
 
 StateMachine_State_T * StateMachine_Menu_GetPtrActive(StateMachine_T * p_stateMachine)
@@ -257,13 +294,13 @@ void StateMachine_Menu_StartNext(StateMachine_T * p_stateMachine)
     if(p_stateMachine->p_StateActive->P_NEXT_MENU != 0U) { StateMachine_Menu_StartMenu(p_stateMachine, p_stateMachine->p_StateActive->P_NEXT_MENU); }
 }
 
-void StateMachine_Menu_ProcFunction(StateMachine_T * p_stateMachine, statemachine_input_t input, statemachine_inputext_t inputExt)
+void StateMachine_Menu_ProcFunction(StateMachine_T * p_stateMachine, statemachine_inputid_t input, statemachine_inputvalue_t inputValue)
 {
-    StateMachine_Semi_ProcInput(p_stateMachine, input, statemachine_inputext_t inputExt)
+    StateMachine_ProcAsyncInput(p_stateMachine, input, statemachine_inputvalue_t inputValue)
 }
 
 void StateMachine_Menu_ProcLoop(StateMachine_T * p_stateMachine)
 {
-    StateMachine_Semi_ProcOutput(p_stateMachine);
+    StateMachine_ProcState(p_stateMachine);
 }
 #endif

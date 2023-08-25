@@ -124,22 +124,22 @@ static inline void * GetPtrFront(const Ring_T * p_ring)                 { return
 static inline void * GetPtrBack(const Ring_T * p_ring)                  { return CalcPtrUnit(p_ring->CONFIG.P_BUFFER, p_ring->CONFIG.UNIT_SIZE, GetIndex(p_ring, p_ring->Head)); }
 static inline void * GetPtrIndex(const Ring_T * p_ring, size_t index)   { return CalcPtrUnit(p_ring->CONFIG.P_BUFFER, p_ring->CONFIG.UNIT_SIZE, GetIndex(p_ring, p_ring->Tail + index)); }
 
-static inline void switchcpy(void *p_dest, const void *p_source, size_t unitSize)
+static inline void SwitchCopy(void *p_dest, const void *p_source, size_t unitSize)
 {
     switch (unitSize)
     {
         case sizeof(uint32_t): *((uint32_t *)p_dest) = *((uint32_t *)p_source); break;
         case sizeof(uint16_t): *((uint16_t *)p_dest) = *((uint16_t *)p_source); break;
-        case sizeof(uint8_t) : *((uint8_t  *)p_dest) = *((uint8_t  *)p_source); break;
+        /* case sizeof(uint8_t) : *((uint8_t  *)p_dest) = *((uint8_t  *)p_source); break; */
         default: memcpy(p_dest, p_source, unitSize);  break;
     }
 }
 
-static inline void PeekFront(const Ring_T * p_ring, void * p_dest)                  { switchcpy(p_dest, GetPtrFront(p_ring), p_ring->CONFIG.UNIT_SIZE); }
-static inline void PeekBack(const Ring_T * p_ring, void * p_dest)                   { switchcpy(p_dest, GetPtrBack(p_ring), p_ring->CONFIG.UNIT_SIZE); }
-static inline void PeekIndex(const Ring_T * p_ring, void * p_dest, size_t index)    { switchcpy(p_dest, GetPtrIndex(p_ring, index), p_ring->CONFIG.UNIT_SIZE); }
-static inline void PlaceFront(Ring_T * p_ring, const void * p_unit)                 { switchcpy(GetPtrFront(p_ring), p_unit, p_ring->CONFIG.UNIT_SIZE); }
-static inline void PlaceBack(Ring_T * p_ring, const void * p_unit)                  { switchcpy(GetPtrBack(p_ring), p_unit, p_ring->CONFIG.UNIT_SIZE); }
+static inline void PeekFront(const Ring_T * p_ring, void * p_dest)                  { SwitchCopy(p_dest, GetPtrFront(p_ring), p_ring->CONFIG.UNIT_SIZE); }
+static inline void PeekBack(const Ring_T * p_ring, void * p_dest)                   { SwitchCopy(p_dest, GetPtrBack(p_ring), p_ring->CONFIG.UNIT_SIZE); }
+static inline void PeekIndex(const Ring_T * p_ring, void * p_dest, size_t index)    { SwitchCopy(p_dest, GetPtrIndex(p_ring, index), p_ring->CONFIG.UNIT_SIZE); }
+static inline void PlaceFront(Ring_T * p_ring, const void * p_unit)                 { SwitchCopy(GetPtrFront(p_ring), p_unit, p_ring->CONFIG.UNIT_SIZE); }
+static inline void PlaceBack(Ring_T * p_ring, const void * p_unit)                  { SwitchCopy(GetPtrBack(p_ring), p_unit, p_ring->CONFIG.UNIT_SIZE); }
 static inline void RemoveFront(Ring_T * p_ring, size_t nUnits)                      { p_ring->Tail = _Ring_CalcIndexInc(p_ring, p_ring->Tail, nUnits); }
 static inline void RemoveBack(Ring_T * p_ring, size_t nUnits)                       { p_ring->Head = _Ring_CalcIndexDec(p_ring, p_ring->Head, nUnits); }
 static inline void AddFront(Ring_T * p_ring, size_t nUnits)                         { p_ring->Tail = _Ring_CalcIndexDec(p_ring, p_ring->Tail, nUnits); }

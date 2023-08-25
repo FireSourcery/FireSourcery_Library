@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Linear_ADC.c
+    @file   Linear_ADC.c
     @author FireSourcery
     @brief
     @version V0
@@ -70,17 +70,18 @@ void Linear_ADC_Init_MinMax(Linear_T * p_linear, uint16_t adcuMin, uint16_t adcu
     f16(-adcuRef) = 65536
 */
 /******************************************************************************/
-void Linear_ADC_InitInverted(Linear_T * p_linear)
+void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef)
+{
+    Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalZero, physicalRef);
+    Linear_ADC_SetInverted(p_linear);
+}
+
+void Linear_ADC_SetInverted(Linear_T * p_linear)
 {
     p_linear->Slope = 0 - p_linear->Slope;
     p_linear->InvSlope = 0 - p_linear->InvSlope;
 }
 
-void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef)
-{
-    Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalZero, physicalRef);
-    Linear_ADC_InitInverted(p_linear);
-}
 
 /******************************************************************************/
 /*!

@@ -31,98 +31,152 @@
 #ifndef MOT_VAR_ID_H
 #define MOT_VAR_ID_H
 
-typedef enum MotVarId_Tag
+#include <stdint.h>
+
+/*
+    Motor[0] by default
+    Group 0
+*/
+typedef enum
+{
+    MOT_VAR_NULL,
+    MOT_VAR_SPEED,             // FracU16,
+    MOT_VAR_I_PHASE,           // FracU16, may over saturate
+    MOT_VAR_V_PHASE,           // FracU16, may over saturate
+    MOT_VAR_POWER,             // FracU16, may over saturate
+    MOT_VAR_RAMP_CMD,
+    MOT_VAR_MOTOR_STATE,           // Value enum:
+    MOT_VAR_MOTOR_STATUS_FLAGS,    // Includes Fault and Warning Flags
+    MOT_VAR_MOTOR_FAULT_FLAGS,
+    MOT_VAR_MOTOR_HEAT,
+    // MOT_VAR_MOTOR_HEAT_DEG_C = 10U,
+
+    // MOT_VAR_ELECTRICAL_ANGLE  = 7U, // Degrees 16
+    // MOT_VAR_MECHANICAL_ANGLE  = 7U,
+    // MOT_VAR_MOTOR_CALIBRATION_STATE = 260U,
+    // MOT_VAR_MOTOR_CALIBRATION_STATE_INDEX = 260U,
+    MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT , // Scalar16, RPM Option
+    MOT_VAR_MOTOR_ACTIVE_I_LIMIT  ,
+
+    MOT_VAR_FOC_IA,
+    MOT_VAR_FOC_IB,
+    MOT_VAR_FOC_IC,
+    MOT_VAR_FOC_IQ,
+    MOT_VAR_FOC_ID,
+    MOT_VAR_FOC_VQ,
+    MOT_VAR_FOC_VD,
+    MOT_VAR_FOC_Q_REQ,
+    MOT_VAR_FOC_D_REQ,
+
+    MOT_VAR_ENCODER_FREQ,
+    // MOT_VAR_ENCODER_   ,
+
+    // MOT_VAR_PID_OUT  ,
+}
+MotVarId_RealTimeMotor_T;
+
+/*
+    Motor Controller / Motor Global
+    Group 1
+*/
+typedef enum
+{
+    MOT_VAR_MILLIS,
+    MOT_VAR_DEBUG,
+
+    MOT_VAR_MC_STATE,       // Value enum: 0:INIT, 1:STOP, 2:RUN, 3:FAULT
+    MOT_VAR_MC_STATUS_FLAGS,
+    MOT_VAR_MC_ERROR_FLAGS,
+    MOT_VAR_V_SOURCE,       // ADCU, Volts * 10
+    MOT_VAR_V_SENSOR,       // ADCU, mV
+    MOT_VAR_V_ACC,          // ADCU, mV
+    MOT_VAR_BATTERY_CHARGE,  // Scalar16, Fraction1000
+    MOT_VAR_HEAT_PCB,       // ADCU, DegC
+    MOT_VAR_HEAT_MOSFETS,
+    // MOT_VAR_HEAT_PCB_DEG_C      ,
+    // MOT_VAR_HEAT_MOSFETS_DEG_C  ,
+    // MOT_VAR_ACTIVE_SPEED_LIMIT, //
+    // MOT_VAR_ACTIVE_I_LIMIT,
+    MOT_VAR_ANALOG_THROTTLE,         // Value Scalar16
+    MOT_VAR_ANALOG_THROTTLE_DIN,     // Bool
+    MOT_VAR_ANALOG_BRAKE,            // Value Scalar16
+    MOT_VAR_ANALOG_BRAKE_DIN,        // Bool
+
+    // MOT_VAR_TX_PACKET_COUNT = 254U,
+    // MOT_VAR_RX_PACKET_COUNT = 255U,
+}
+MotVarId_RealTimeGlobal_T;
+
+/*
+    Group 2
+*/
+typedef enum
 {
     /*
-        Partition0 - 0-255 0X0-0xFF
-        Read Only
-    */
-    /* Motor[0] by default*/
-    MOT_VAR_NULL = 0U,
-    MOT_VAR_SPEED = 1U,             /* FracS16Abs,    */
-    MOT_VAR_I_PHASE = 2U,           /* FracS16Abs, may over saturate */
-    MOT_VAR_V_PHASE = 3U,           /* FracS16Abs, may over saturate */
-    MOT_VAR_POWER = 4U,             /* FracS16Abs, may over saturate */
-    MOT_VAR_RAMP_CMD = 5U,
-    MOT_VAR_MOTOR_STATE = 6U,       /* Value enum:  */
-    MOT_VAR_MOTOR_STATUS_FLAGS = 7U,
-    // MOT_VAR_MOTOR_FAULT_FLAGS = 5U,
-
-    MOT_VAR_FOC_IQ = 16U,
-    MOT_VAR_FOC_ID = 17U,
-    MOT_VAR_FOC_Q_REQ = 18U,
-    MOT_VAR_FOC_D_REQ = 19U,
-    MOT_VAR_FOC_IA = 20U,
-    MOT_VAR_FOC_IB = 21U,
-    MOT_VAR_FOC_IC = 22U,
-    MOT_VAR_FOC_VQ = 23U,
-    MOT_VAR_FOC_VD = 24U,
-
-    /* Motor Controller / Motor Global */
-    MOT_VAR_MC_STATE            = 32U,  /* Value enum: 0:INIT, 1:STOP, 2:RUN, 3:FAULT */
-    MOT_VAR_MC_STATUS_FLAGS     = 33U,
-    // MOT_VAR_MC_ERROR_FLAGS   = 34U,
-    MOT_VAR_V_SOURCE            = 40U,  /* Base as ADCU */
-    MOT_VAR_V_SENSOR            = 41U,
-    MOT_VAR_V_ACC               = 42U,
-    MOT_VAR_BATTERY_CHARGE      = 47U,
-    MOT_VAR_HEAT_PCB            = 43U,
-    MOT_VAR_HEAT_MOSFETS        = 44U,
-    MOT_VAR_HEAT_PCB_DEG_C      = 45U,
-    MOT_VAR_HEAT_MOSFETS_DEG_C  = 46U,
-
-    MOT_VAR_DEBUG = 128U,
-    MOT_VAR_MILLIS = 129U,
-
-    MOT_VAR_ANALOG_THROTTLE = 130U,         /* Value U16 */
-    MOT_VAR_ANALOG_BRAKE = 131U,            /* Value U16 */
-
-    MOT_VAR_TX_PACKET_COUNT = 254U,
-    MOT_VAR_RX_PACKET_COUNT = 255U,
-
-    /*
-        Partition1 256-511 0x100-0x1FF
+        Run time command functions
         Read Write
+        Read Values may differ from write
     */
-    /* Motor Controller / Motor Global */
-    MOT_VAR_USER_CMD    = 256U,
-    MOT_VAR_DIRECTION   = 259U,             /* Value enum: 0:Neutral, 1:Reverse, 2:Forward */
-    // MOT_VAR_DIRECTION_FORWARD = 0x01U,   /* Main direction */
-    // MOT_VAR_DIRECTION_REVERSE = 0x02U,   /* Main direction */
-    // MOT_VAR_DIRECTION_NEUTRAL = 0x03U,   /* Main direction */
-    MOT_VAR_ACTIVE_FEEDBACK_MODE = 260U,
-    MOT_VAR_ACTIVE_SPEED_LIMIT_SCALAR16, /*   */
-    MOT_VAR_ACTIVE_I_LIMIT_SCALAR16,
-
     /* Motor[0] */
+    MOT_VAR_MOTOR_USER_CMD,                 // Read/Write buffered user value.
+    MOT_VAR_MOTOR_DIRECTION,                // Motor_Direction_T // CW/CCW. Write buffered user value, read state value
+    MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,     // Write buffered user value, read state value
+
+    MOT_VAR_MOTOR_USER_SPEED_LIMIT, //
+    MOT_VAR_MOTOR_USER_I_LIMIT,
+
+    /* Motor Controller / Motor Global */
+    MOT_VAR_USER_CMD,                   // Value [-32768:32767]. Selected Mode, Speed by default
+    MOT_VAR_DIRECTION,                  // MotorController_Direction_T // Value enum: 0:Neutral, 1:Reverse, 2:Forward
+    // MOT_VAR_ACTIVE_FEEDBACK_MODE,
+    // MOT_VAR_USER_SPEED_LIMIT, //
+    // MOT_VAR_USER_I_LIMIT,
 
     /*
-        Partition2 256-512 0x200-0x2FF
+        Run time command functions
         Write Only
+        Write Via User StateMachine Function
     */
-    MOT_VAR_THROTTLE            = 257U,     /* Value U16 */
-    MOT_VAR_BRAKE               = 258U,     /* Value U16 */
-    MOT_VAR_BEEP                = 512U,     /* Beep */
-    MOT_VAR_CALIBRATE_SENSOR    = 514U,
-    MOT_VAR_CALIBRATE_ADC       = 515U,
-    MOT_VAR_CALIBRATE           = 516U,     /* Value enum: ADC, Sensor, */
-    // Set Cmd and Feedback Mode
-    // MOT_VAR_CMD_VOLTAGE = ,         /* Value [-32768:32767] */
-    // MOT_VAR_CMD_CURRENT = ,         /* Value [-32768:32767] */
-    // MOT_VAR_CMD_SPEED = ,           /* Value [-32768:32767] */
-    // MOT_VAR_CMD_ANGLE = ,           /*   */
+     /* Motor[0] */
+    MOT_VAR_MOTOR_CMD_SPEED,           // Value [-32768:32767]
+    MOT_VAR_MOTOR_CMD_CURRENT,         // Value [-32768:32767]
+    MOT_VAR_MOTOR_CMD_VOLTAGE,         // Value [0:32767]
+    MOT_VAR_MOTOR_CMD_ANGLE,           //
+    // MOT_VAR_MOTOR_RELEASE_CONTROL,
+    // MOT_VAR_MOTOR_DISABLE,
+    // MOT_VAR_MOTOR_CLEAR_FAULT,
+    // MOT_VAR_MOTOR_SET_FAULT,
+    // MOT_VAR_MOTOR_CALIBRATE_SENSOR,
+    // MOT_VAR_MOTOR_CALIBRATE_ADC,
+    // MOT_VAR_MOTOR_CALIBRATE,     // Value enum: ADC, Sensor,
+    // MOT_VAR_MOTOR_CALIBRATE_,
 
-    /*
-        Partition4 1024  0x400-0x4FF
-        Parameter Vars Read Write
-    */
-    /*
-        Motor[0] by default
-    */
-    MOT_VAR_COMMUTATION_MODE = 1024U,       /* Motor_CommutationMode_T */
-    MOT_VAR_SENSOR_MODE,                    /* Motor_SensorMode_T */
-    MOT_VAR_DEFAULT_FEEDBACK_MODE,          /* Motor_FeedbackModeId_T */
-    MOT_VAR_DIRECTION_CALIBRATION,          /* Motor_DirectionCalibration_T */
+    /* Motor Controller / Motor Global */
+    MOT_VAR_THROTTLE,     // Value Scalar16
+    MOT_VAR_BRAKE,     // Value Scalar16
+    MOT_VAR_RELEASE_CONTROL,
+    MOT_VAR_DISABLE_CONTROL,
+    MOT_VAR_CLEAR_FAULT,
+    MOT_VAR_SET_FAULT,
+    MOT_VAR_CALIBRATE_SENSOR,
+    // MOT_VAR_CALIBRATE_ADC       = 515U,
+    // MOT_VAR_CALIBRATE           = 516U,     // Value enum: ADC, Sensor,
+
+    MOT_VAR_BEEP,     // Beep
+}
+MotVarId_RealTimeCmds_T;
+
+/*
+    Group 3
+    Parameter Vars - Read Write
+    Motor[0] by default
+*/
+typedef enum
+{
+    MOT_VAR_COMMUTATION_MODE,               // Motor_CommutationMode_T
+    MOT_VAR_SENSOR_MODE,                    // Motor_SensorMode_T
+    MOT_VAR_DEFAULT_FEEDBACK_MODE,          // Motor_FeedbackModeId_T
+    MOT_VAR_DIRECTION_CALIBRATION,          // Motor_DirectionCalibration_T
     MOT_VAR_POLE_PAIRS,
     MOT_VAR_KV,
     MOT_VAR_SPEED_FEEDBACK_REF_RPM,
@@ -133,17 +187,17 @@ typedef enum MotVarId_Tag
     MOT_VAR_IB_REF_ZERO_ADCU,
     MOT_VAR_IC_REF_ZERO_ADCU,
 
-    MOT_VAR_BASE_SPEED_LIMIT_FORWARD_SCALAR16,      /* ScalarU16 */
-    MOT_VAR_BASE_SPEED_LIMIT_REVERSE_SCALAR16,      /* ScalarU16 */
-    MOT_VAR_BASE_I_LIMIT_MOTORING_SCALAR16,         /* ScalarU16 */
-    MOT_VAR_BASE_I_LIMIT_GENERATING_SCALAR16,       /* ScalarU16 */
+    MOT_VAR_BASE_SPEED_LIMIT_FORWARD,      // ScalarU16
+    MOT_VAR_BASE_SPEED_LIMIT_REVERSE,      // ScalarU16
+    MOT_VAR_BASE_I_LIMIT_MOTORING,         // ScalarU16
+    MOT_VAR_BASE_I_LIMIT_GENERATING,       // ScalarU16
     MOT_VAR_RAMP_ACCEL_TIME_CYCLES,
     MOT_VAR_ALIGN_MODE,
-    MOT_VAR_ALIGN_POWER_SCALAR16,                   /* V or I, ScalarU16 */
-    MOT_VAR_ALIGN_TIME_CYCLES,                      /* Control Cycles */
-    MOT_VAR_OPEN_LOOP_POWER_SCALAR16,               /* Scalar16 */
-    MOT_VAR_OPEN_LOOP_SPEED_SCALAR16,         /* Scalar16 */
-    MOT_VAR_OPEN_LOOP_ACCEL_TIME_CYCLES,            /* Cycles */
+    MOT_VAR_ALIGN_POWER,                   // V or I, ScalarU16
+    MOT_VAR_ALIGN_TIME_CYCLES,                      // Control Cycles
+    MOT_VAR_OPEN_LOOP_POWER,               // U16
+    MOT_VAR_OPEN_LOOP_SPEED,               // U16
+    MOT_VAR_OPEN_LOOP_ACCEL_TIME_CYCLES,            // Cycles
     // uint16_t SurfaceDiameter;
     // uint16_t GearRatio_Factor;
     // uint16_t GearRatio_Divisor;
@@ -160,14 +214,15 @@ typedef enum MotVarId_Tag
     /*
         Hall/Encoder
     */
-    MOT_VAR_ENCODER_COUNTS_PER_REVOLUTION, /* */
-
-    /* Calibration Set */
-    MOT_VAR_IS_QUADRATURE_CAPTURE_ENABLED,
-    MOT_VAR_IS_A_LEAD_B_POSITIVE,
-    /* Auto set */
+    MOT_VAR_ENCODER_COUNTS_PER_REVOLUTION,
     MOT_VAR_ENCODER_EXTENDED_TIMER_DELTA_T_STOP,
     MOT_VAR_ENCODER_INTERPOLATE_ANGLE_SCALAR,
+    MOT_VAR_ENCODER_IS_QUADRATURE_CAPTURE_ENABLED,
+    MOT_VAR_ENCODER_IS_A_LEAD_B_POSITIVE,
+    //ScalarSpeedRef_Rpm;          Derive Frac16 Units.
+    //SurfaceDiameter;             Derive Linear Units.
+    //GearRatio_Factor;             Derive Linear Units. Surface:Encoder Ratio
+    //GearRatio_Divisor;             Derive Linear Units.
 
     /*
         Sine Cos Encoder
@@ -182,53 +237,59 @@ typedef enum MotVarId_Tag
     /*
         PID
     */
-    MOT_VAR_PID_SPEED_KP_FIXED_16,
-    MOT_VAR_PID_SPEED_KI_FIXED_16,
-    MOT_VAR_PID_SPEED_KD_FIXED_16,
-    MOT_VAR_PID_SPEED_SAMPLE_FREQ, /* Read-Only for now */
+    /* Set with interface functions */
+    MOT_VAR_PID_SPEED_KP_FIXED16,
+    MOT_VAR_PID_SPEED_KI_FIXED16,
+    MOT_VAR_PID_SPEED_KD_FIXED16,
+    MOT_VAR_PID_SPEED_SAMPLE_FREQ,
     // MOT_VAR_PID_SPEED_MODE,
-    MOT_VAR_PID_FOC_IQ_KP_FIXED_16,
-    MOT_VAR_PID_FOC_IQ_KI_FIXED_16,
-    MOT_VAR_PID_FOC_IQ_KD_FIXED_16,
+    MOT_VAR_PID_FOC_IQ_KP_FIXED16,
+    MOT_VAR_PID_FOC_IQ_KI_FIXED16,
+    MOT_VAR_PID_FOC_IQ_KD_FIXED16,
     MOT_VAR_PID_FOC_IQ_SAMPLE_FREQ,
     // MOT_VAR_PID_FOC_IQ_MODE,
-    MOT_VAR_PID_FOC_ID_KP_FIXED_16,
-    MOT_VAR_PID_FOC_ID_KI_FIXED_16,
-    MOT_VAR_PID_FOC_ID_KD_FIXED_16,
+    MOT_VAR_PID_FOC_ID_KP_FIXED16,
+    MOT_VAR_PID_FOC_ID_KI_FIXED16,
+    MOT_VAR_PID_FOC_ID_KD_FIXED16,
     MOT_VAR_PID_FOC_ID_SAMPLE_FREQ,
     // MOT_VAR_PID_FOC_ID_MODE
+
     // Prop_Gain,
     // Prop_Gain_Shift,
     // Integral_Gain,
     // Integral_Gain_Shift,
 
-    MOT_VAR_THERMISTOR_MOTOR_TYPE,      /* Thermistor_Type_T */
-    MOT_VAR_THERMISTOR_MOTOR_R,         /* NTC Unit Conversion */
+    MOT_VAR_THERMISTOR_MOTOR_TYPE,      // Thermistor_Type_T
+    MOT_VAR_THERMISTOR_MOTOR_R,         // NTC Unit Conversion
     MOT_VAR_THERMISTOR_MOTOR_T,
     MOT_VAR_THERMISTOR_MOTOR_B,
-    MOT_VAR_THERMISTOR_MOTOR_LINEAR_T0_ADCU,        /* Linear Unit Conversion */
+    MOT_VAR_THERMISTOR_MOTOR_LINEAR_T0_ADCU,        // Linear Unit Conversion
     MOT_VAR_THERMISTOR_MOTOR_LINEAR_T0_DEG_C,
     MOT_VAR_THERMISTOR_MOTOR_LINEAR_T1_ADCU,
     MOT_VAR_THERMISTOR_MOTOR_LINEAR_T1_DEG_C,
-    MOT_VAR_THERMISTOR_MOTOR_FAULT_ADCU,            /* Monitor Limits */
+    MOT_VAR_THERMISTOR_MOTOR_FAULT_ADCU,            // Monitor Limits
     MOT_VAR_THERMISTOR_MOTOR_FAULT_THRESHOLD_ADCU,
     MOT_VAR_THERMISTOR_MOTOR_WARNING_ADCU,
     MOT_VAR_THERMISTOR_MOTOR_WARNING_THRESHOLD_ADCU,
     MOT_VAR_THERMISTOR_MOTOR_IS_MONITOR_ENABLE,
+}
+MotVarId_ParamsMotor_T;
 
-    /*
-        Motor Controller
-    */
-    MOT_VAR_V_SOURCE_VOLTS,             /* Volts */
+/*
+    Group 4
+*/
+typedef enum
+{
+    MOT_VAR_V_SOURCE_VOLTS,             // Volts
     MOT_VAR_BATTERY_ZERO_ADCU,
     MOT_VAR_BATTERY_FULL_ADCU,
-    MOT_VAR_USER_INPUT_MODE,            /* MotorController_InputMode_T */
-    MOT_VAR_BRAKE_MODE,                 /* MotorController_BrakeMode_T */
-    MOT_VAR_ZERO_CMD_MODE,              /* MotorController_ZeroCmdMode_T */
-    MOT_VAR_BUZZER_FLAGS_ENABLE,        /* MotorController_BuzzerFlags_T */
-    MOT_VAR_OPT_DIN_FUNCTION,           /* MotorController_OptDinFunction_T */
-    MOT_VAR_OPT_DIN_SPEED_LIMIT_SCALAR16,
-    MOT_VAR_I_LIMIT_LOW_V_SCALAR16,
+    MOT_VAR_USER_INPUT_MODE,            // MotorController_InputMode_T
+    MOT_VAR_BRAKE_MODE,                 // MotorController_BrakeMode_T
+    MOT_VAR_ZERO_CMD_MODE,              // MotorController_ZeroCmdMode_T
+    MOT_VAR_BUZZER_FLAGS_ENABLE,        // MotorController_BuzzerFlags_T
+    MOT_VAR_OPT_DIN_FUNCTION,           // MotorController_OptDinFunction_T
+    MOT_VAR_OPT_DIN_SPEED_LIMIT,
+    MOT_VAR_I_LIMIT_LOW_V,
     MOT_VAR_CAN_SERVICES_ID,
     MOT_VAR_CAN_IS_ENABLE,
 
@@ -252,29 +313,29 @@ typedef enum MotVarId_Tag
     MOT_VAR_VMONITOR_ACC_IS_ENABLE,
 
     /* Thermistor_Params_T */
-    MOT_VAR_THERMISTOR_PCB_TYPE,      /* Thermistor_Type_T */
-    MOT_VAR_THERMISTOR_PCB_R,         /* NTC Unit Conversion */
+    MOT_VAR_THERMISTOR_PCB_TYPE,      // Thermistor_Type_T
+    MOT_VAR_THERMISTOR_PCB_R,         // NTC Unit Conversion
     MOT_VAR_THERMISTOR_PCB_T,
     MOT_VAR_THERMISTOR_PCB_B,
-    MOT_VAR_THERMISTOR_PCB_LINEAR_T0_ADCU,        /* Linear Unit Conversion */
+    MOT_VAR_THERMISTOR_PCB_LINEAR_T0_ADCU,        // Linear Unit Conversion
     MOT_VAR_THERMISTOR_PCB_LINEAR_T0_DEG_C,
     MOT_VAR_THERMISTOR_PCB_LINEAR_T1_ADCU,
     MOT_VAR_THERMISTOR_PCB_LINEAR_T1_DEG_C,
-    MOT_VAR_THERMISTOR_PCB_FAULT_ADCU,            /* Monitor Limits */
+    MOT_VAR_THERMISTOR_PCB_FAULT_ADCU,            // Monitor Limits
     MOT_VAR_THERMISTOR_PCB_FAULT_THRESHOLD_ADCU,
     MOT_VAR_THERMISTOR_PCB_WARNING_ADCU,
     MOT_VAR_THERMISTOR_PCB_WARNING_THRESHOLD_ADCU,
     MOT_VAR_THERMISTOR_PCB_IS_MONITOR_ENABLE,
 
-    MOT_VAR_THERMISTOR_MOSFETS_TYPE,      /* Thermistor_Type_T */
-    MOT_VAR_THERMISTOR_MOSFETS_R,         /* NTC Unit Conversion */
+    MOT_VAR_THERMISTOR_MOSFETS_TYPE,      // Thermistor_Type_T
+    MOT_VAR_THERMISTOR_MOSFETS_R,         // NTC Unit Conversion
     MOT_VAR_THERMISTOR_MOSFETS_T,
     MOT_VAR_THERMISTOR_MOSFETS_B,
-    MOT_VAR_THERMISTOR_MOSFETS_LINEAR_T0_ADCU,        /* Linear Unit Conversion */
+    MOT_VAR_THERMISTOR_MOSFETS_LINEAR_T0_ADCU,        // Linear Unit Conversion
     MOT_VAR_THERMISTOR_MOSFETS_LINEAR_T0_DEG_C,
     MOT_VAR_THERMISTOR_MOSFETS_LINEAR_T1_ADCU,
     MOT_VAR_THERMISTOR_MOSFETS_LINEAR_T1_DEG_C,
-    MOT_VAR_THERMISTOR_MOSFETS_FAULT_ADCU,            /* Monitor Limits */
+    MOT_VAR_THERMISTOR_MOSFETS_FAULT_ADCU,            // Monitor Limits
     MOT_VAR_THERMISTOR_MOSFETS_FAULT_THRESHOLD_ADCU,
     MOT_VAR_THERMISTOR_MOSFETS_WARNING_ADCU,
     MOT_VAR_THERMISTOR_MOSFETS_WARNING_THRESHOLD_ADCU,
@@ -287,86 +348,130 @@ typedef enum MotVarId_Tag
     MOT_VAR_ANALOG_BRAKE_ZERO_ADCU,
     MOT_VAR_ANALOG_BRAKE_MAX_ADCU,
     MOT_VAR_ANALOG_BRAKE_EDGE_PIN_IS_ENABLE,
-    MOT_VAR_ANALOG_DIN_BRAKE_VALUE_FRAC16,
+    MOT_VAR_ANALOG_DIN_BRAKE_VALUE,
     MOT_VAR_ANALOG_DIN_BRAKE_IS_ENABLE,
-    MOT_VAR_ANALOG_DIRECTION_PINS, /* MotAnalogUser_DirectionPins_T */
+    MOT_VAR_ANALOG_DIRECTION_PINS, // MotAnalogUser_DirectionPins_T
 
     /* Protocol_Params_T */
     MOT_VAR_PROTOCOL0_XCVR_ID,
     MOT_VAR_PROTOCOL0_SPECS_ID,
     MOT_VAR_PROTOCOL0_WATCHDOG_TIME,
     MOT_VAR_PROTOCOL0_BAUD_RATE,
-    MOT_VAR_PROTOCOL0_IS_ENABLED,   /* Enable on start up */
+    MOT_VAR_PROTOCOL0_IS_ENABLED,
 
     MOT_VAR_PROTOCOL1_XCVR_ID,
     MOT_VAR_PROTOCOL1_SPECS_ID,
     MOT_VAR_PROTOCOL1_WATCHDOG_TIME,
     MOT_VAR_PROTOCOL1_BAUD_RATE,
-    MOT_VAR_PROTOCOL1_IS_ENABLED,   /* Enable on start up */
+    MOT_VAR_PROTOCOL1_IS_ENABLED,
 
     MOT_VAR_PROTOCOL2_XCVR_ID,
     MOT_VAR_PROTOCOL2_SPECS_ID,
     MOT_VAR_PROTOCOL2_WATCHDOG_TIME,
     MOT_VAR_PROTOCOL2_BAUD_RATE,
-    MOT_VAR_PROTOCOL2_IS_ENABLED,   /* Enable on start up */
+    MOT_VAR_PROTOCOL2_IS_ENABLED,
 
     /*
-        Partition5 2048  0x800-0x8FF
-        Read Only, Once Manufacturer
+        Const
     */
-    MOT_VAR_VERSION_KMC_0 = 2048U,
-    MOT_VAR_VERSION_KMC_1 = 2049U,
-    MOT_VAR_VERSION_KMC_2 = 2050U,
-    MOT_VAR_VERSION_KMC_3 = 2051U,
-    MOT_VAR_VERSION_KMC_REG32 = 2052U,  /* Var32 */
-    MOT_VAR_I_MAX_AMP       = 2053U,
-    MOT_VAR_V_MAX_VOLTS     = 2054U,
+    // MOT_VAR_VERSION_KMC_0,
+    // MOT_VAR_VERSION_KMC_1,
+    // MOT_VAR_VERSION_KMC_2,
+    // MOT_VAR_VERSION_KMC_3,
+    // MOT_VAR_VERSION_KMC_REG32,
+    MOT_VAR_I_MAX_AMP,
+    MOT_VAR_V_MAX_VOLTS,
 
-    // /*
-    //     Once Manufacturer
-    // */
-    // MOT_VAR_NAME_0 = 2304U,
-    // MOT_VAR_NAME_1 = 2305U,
-    // MOT_VAR_NAME_2 = 2306U,
-    // MOT_VAR_NAME_3 = 2307U,
-    // MOT_VAR_NAME_4 = 2308U,
-    // MOT_VAR_NAME_5 = 2309U,
-    // MOT_VAR_NAME_6 = 2310U,
-    // MOT_VAR_NAME_7 = 2311U,
-    // MOT_VAR_NAME_REG32_0 = 2311U,
-    // MOT_VAR_NAME_REG32_1 = 2311U,
-    // MOT_VAR_SERIAL_NUMBER_0 = 2312U,
-    // MOT_VAR_SERIAL_NUMBER_1 = 2313U,
-    // MOT_VAR_SERIAL_NUMBER_2 = 2314U,
-    // MOT_VAR_SERIAL_NUMBER_3 = 2315U,
-    // MOT_VAR_SERIAL_NUMBER_REG32 = 2315U,
-    // MOT_VAR_MANUFACTURE_NUMBER_0 = 2316U, /* Day */
-    // MOT_VAR_MANUFACTURE_NUMBER_1 = 2317U, /* Month */
-    // MOT_VAR_MANUFACTURE_NUMBER_2 = 2318U, /* Year */
-    // MOT_VAR_MANUFACTURE_NUMBER_3 = 2319U, /* Resv */
-    // MOT_VAR_MANUFACTURE_NUMBER_REG32 = 2319U,
-    // MOT_VAR_HARDWARE_VERSION_0 = 2320U,
-    // MOT_VAR_HARDWARE_VERSION_1 = 2321U,
-    // MOT_VAR_HARDWARE_VERSION_2 = 2322U,
-    // MOT_VAR_HARDWARE_VERSION_3 = 2323U,
-    // MOT_VAR_HARDWARE_VERSION_REG32 = 2323U,
-    // MOT_VAR_ID_EXT_0 = 2324U,
-    // MOT_VAR_ID_EXT_1 = 2325U,
-    // MOT_VAR_ID_EXT_2 = 2326U,
-    // MOT_VAR_ID_EXT_3 = 2327U,
-    // MOT_VAR_ID_EXT_REG32 = 2327U,
-    // MOT_VAR_RESV_0 = 2328U,
-    // MOT_VAR_RESV_1 = 2329U,
-    // MOT_VAR_RESV_2 = 2330U,
-    // MOT_VAR_RESV_3 = 2331U,
-    // MOT_VAR_RESV_4 = 2332U,
-    // MOT_VAR_RESV_5 = 2333U,
-    // MOT_VAR_RESV_6 = 2334U,
-    // MOT_VAR_RESV_7 = 2335U,
+    /*
+        Once Manufacturer
+    */
+    // MOT_VAR_NAME_0,
+    // MOT_VAR_NAME_1,
+    // MOT_VAR_NAME_2,
+    // MOT_VAR_NAME_3,
+    // MOT_VAR_NAME_4,
+    // MOT_VAR_NAME_5,
+    // MOT_VAR_NAME_6,
+    // MOT_VAR_NAME_7,
+    // MOT_VAR_NAME_REG32_0,
+    // MOT_VAR_NAME_REG32_1,
+    // MOT_VAR_SERIAL_NUMBER_0,
+    // MOT_VAR_SERIAL_NUMBER_1,
+    // MOT_VAR_SERIAL_NUMBER_2,
+    // MOT_VAR_SERIAL_NUMBER_3,
+    // MOT_VAR_SERIAL_NUMBER_REG32,
+    // MOT_VAR_MANUFACTURE_NUMBER_0, // Day
+    // MOT_VAR_MANUFACTURE_NUMBER_1, // Month
+    // MOT_VAR_MANUFACTURE_NUMBER_2, // Year
+    // MOT_VAR_MANUFACTURE_NUMBER_3, // Resv
+    // MOT_VAR_MANUFACTURE_NUMBER_REG32,
+    // MOT_VAR_HARDWARE_VERSION_0,
+    // MOT_VAR_HARDWARE_VERSION_1,
+    // MOT_VAR_HARDWARE_VERSION_2,
+    // MOT_VAR_HARDWARE_VERSION_3,
+    // MOT_VAR_HARDWARE_VERSION_REG32,
+    // MOT_VAR_ID_EXT_0,
+    // MOT_VAR_ID_EXT_1,
+    // MOT_VAR_ID_EXT_2,
+    // MOT_VAR_ID_EXT_3,
+    // MOT_VAR_ID_EXT_REG32,
+    // MOT_VAR_RESV_0,
+    // MOT_VAR_RESV_1,
+    // MOT_VAR_RESV_2,
+    // MOT_VAR_RESV_3,
+    // MOT_VAR_RESV_4,
+    // MOT_VAR_RESV_5,
+    // MOT_VAR_RESV_6,
+    // MOT_VAR_RESV_7,
+}
+MotVarId_ParamsGlobal_T;
 
-    MOT_VAR_RESERVED_65535 = 0xFFFFU,
+typedef enum
+{
+    MOT_VAR_ID_PREFIX_REAL_TIME_MOTOR = 0U,
+    MOT_VAR_ID_PREFIX_REAL_TIME_GLOBAL = 1U,
+    MOT_VAR_ID_PREFIX_REAL_TIME_CMD = 2U,
+    MOT_VAR_ID_PREFIX_PARAMS_MOTOR = 3U,
+    MOT_VAR_ID_PREFIX_PARAMS_GLOBAL = 4U,
+    MOT_VAR_ID_PREFIX_5 = 5U,
+    MOT_VAR_ID_PREFIX_6 = 6U,
+    MOT_VAR_ID_PREFIX_7 = 7U,
+}
+MotVarId_Prefix_T;
+
+typedef union
+{
+    struct
+    {
+        uint32_t Prefix     : 3; /* 8 Sets/Pages, repeatable id  */
+        uint32_t Units      : 2; /* Data Option */
+        uint32_t Motor      : 2; /* Allocate for 4 motors */
+        uint32_t OptResv    : 1;
+    };
+    uint8_t Byte;
+}
+MotVarId_Arg_T;
+
+
+typedef union
+{
+    struct
+    {
+        uint8_t Id;     /* BaseId */
+        MotVarId_Arg_T Arg;    /*   *///check is this packed
+    };
+    struct
+    {
+        uint32_t IdBase     : 8;
+        uint32_t IdPrefix   : 3;
+        uint32_t Units      : 2; /* Data Option */
+        uint32_t Motor      : 2; /* Allocate for 4 motors */
+        uint32_t OptResv    : 1;
+    };
+    uint16_t Reg;
 }
 MotVarId_T;
+
 
 // typedef enum MotVarSize_Tag
 // {

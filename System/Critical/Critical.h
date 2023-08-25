@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     Critical.h
+    @file   Critical.h
     @author FireSourcery
     @brief  Implements Critical Section
     @version V0

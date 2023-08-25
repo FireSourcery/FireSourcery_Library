@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file     MotPacket.c
+    @file   MotPacket.c
     @author FireSourcery
     @brief
     @version V0
@@ -40,56 +40,59 @@
 /******************************************************************************/
 void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, Protocol_TxSyncId_T txId)
 {
-    MotPacket_HeaderId_T syncId;
+    MotPacket_HeaderId_T syncChar;
 
     switch(txId)
     {
-        case PROTOCOL_TX_SYNC_ACK_REQ_ID:            syncId = MOT_PACKET_SYNC_ACK;         break;
-        case PROTOCOL_TX_SYNC_ACK_REQ_EXT:            syncId = MOT_PACKET_SYNC_ACK;         break;
-        case PROTOCOL_TX_SYNC_NACK_REQ_ID:            syncId = MOT_PACKET_SYNC_NACK;         break;
-        case PROTOCOL_TX_SYNC_NACK_PACKET_ERROR:    syncId = MOT_PACKET_SYNC_NACK;         break;
-        case PROTOCOL_TX_SYNC_NACK_REQ_TIMEOUT:        syncId = MOT_PACKET_SYNC_NACK;         break;
-        case PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT:        syncId = MOT_PACKET_SYNC_NACK;         break;
-        case PROTOCOL_TX_SYNC_NACK_REQ_EXT:            syncId = MOT_PACKET_SYNC_NACK;         break;
-        case PROTOCOL_TX_SYNC_ABORT:                syncId = MOT_PACKET_SYNC_ABORT;     break;
-        default: *p_txSize = 0U; syncId = MOT_PACKET_ID_RESERVED_255; break;
+        case PROTOCOL_TX_SYNC_ACK_REQ:          syncChar = MOT_PACKET_SYNC_ACK;   break;
+        case PROTOCOL_TX_SYNC_ACK_REQ_EXT:      syncChar = MOT_PACKET_SYNC_ACK;   break;
+        case PROTOCOL_TX_SYNC_NACK_REQ:         syncChar = MOT_PACKET_SYNC_NACK;  break;
+        // case PROTOCOL_TX_SYNC_NACK_PACKET_ERROR:    syncChar = MOT_PACKET_SYNC_NACK;         break;
+        case PROTOCOL_TX_SYNC_NACK_PACKET_META: syncChar = MOT_PACKET_SYNC_NACK;  break;
+        case PROTOCOL_TX_SYNC_NACK_PACKET_DATA: syncChar = MOT_PACKET_SYNC_NACK;  break;
+        case PROTOCOL_TX_SYNC_NACK_REQ_TIMEOUT: syncChar = MOT_PACKET_SYNC_NACK;  break;
+        case PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT:  syncChar = MOT_PACKET_SYNC_NACK;  break;
+        case PROTOCOL_TX_SYNC_NACK_REQ_EXT:     syncChar = MOT_PACKET_SYNC_NACK;  break;
+        case PROTOCOL_TX_SYNC_ACK_ABORT:        syncChar = MOT_PACKET_SYNC_ABORT; break;
+        // case PROTOCOL_TX_SYNC_ABORT:         syncChar = MOT_PACKET_SYNC_ABORT; break;
+        default: *p_txSize = 0U; syncChar = MOT_PACKET_ID_RESERVED_255; break;
     }
 
-    *p_txSize = MotPacket_Sync_Build(p_txPacket, syncId);
+    *p_txSize = MotPacket_Sync_Build(p_txPacket, syncChar);
 }
 
 Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p_packetLength, const MotPacket_T * p_rxPacket, size_t rxCount)
 {
-    Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_WAIT_PACKET;
+    Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_AWAIT_PACKET;
 
-     /* Move PACKET_LENGTH_INDEX to protocol module handle, for cases where header length index defined */
+    /* Move PACKET_LENGTH_INDEX to protocol module handle, for cases where header length index defined */
     if(rxCount >= MOT_PACKET_LENGTH_BYTE_INDEX)
     {
         if(rxCount == MotPacket_ParseTotalLength(p_rxPacket)) /* Packet Complete */
         {
             *p_reqId = p_rxPacket->Header.HeaderId;
-            rxCode = (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_PACKET_ERROR;
+            rxCode = (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_ERROR_DATA;
         }
         else /* Packet Length Known */
         {
             *p_packetLength = MotPacket_ParseTotalLength(p_rxPacket);
         }
     }
-    else if(rxCount >= MOT_PACKET_LENGTH_MIN) /* Packet is Sync type */
+    else if(rxCount >= MOT_PACKET_LENGTH_MIN) /* Check Packet is Sync type */
     {
         switch(p_rxPacket->Header.HeaderId)
         {
-            case MOT_PACKET_STOP_ALL:        rxCode = PROTOCOL_RX_CODE_PACKET_COMPLETE; *p_reqId = MOT_PACKET_STOP_ALL;    break;
-            case MOT_PACKET_PING:            rxCode = PROTOCOL_RX_CODE_PACKET_COMPLETE; *p_reqId = MOT_PACKET_PING;        break;
-            case MOT_PACKET_SYNC_ACK:        rxCode = PROTOCOL_RX_CODE_ACK;                 break;
-            case MOT_PACKET_SYNC_NACK:        rxCode = PROTOCOL_RX_CODE_NACK;             break;
-            case MOT_PACKET_SYNC_ABORT:        rxCode = PROTOCOL_RX_CODE_ABORT;             break;
+            case MOT_PACKET_STOP_ALL:       rxCode = PROTOCOL_RX_CODE_PACKET_COMPLETE; *p_reqId = MOT_PACKET_STOP_ALL;    break;
+            case MOT_PACKET_PING:           rxCode = PROTOCOL_RX_CODE_PACKET_COMPLETE; *p_reqId = MOT_PACKET_PING;        break;
+            case MOT_PACKET_SYNC_ACK:       rxCode = PROTOCOL_RX_CODE_ACK;      break;
+            case MOT_PACKET_SYNC_NACK:      rxCode = PROTOCOL_RX_CODE_NACK;     break;
+            case MOT_PACKET_SYNC_ABORT:     rxCode = PROTOCOL_RX_CODE_ABORT;    break;
             default: break;
         }
     }
-    else /* ParseMeta should not have been called */
+    else /* (rxCount < MOT_PACKET_LENGTH_MIN) ParseMeta should not have been called */
     {
-        rxCode = PROTOCOL_RX_CODE_PACKET_ERROR;
+        rxCode = PROTOCOL_RX_CODE_ERROR_META;
     }
 
     return rxCode;
@@ -98,7 +101,6 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p
 /******************************************************************************/
 /*!
     Ctrlr Side Functions
-    Memory Access Functions Does not require
 */
 /******************************************************************************/
 
