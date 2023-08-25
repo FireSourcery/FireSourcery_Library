@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   HAL_ADC.h
+    @file     HAL_ADC.h
     @author FireSourcery
     @brief     S32K Analog import functions. Used by HAL.
             Runtime configure options only. Runtime constant settings delegated to MCU init.

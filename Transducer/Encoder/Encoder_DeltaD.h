@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Encoder_DeltaD.h
+    @file      Encoder_DeltaD.h
     @author FireSourcery
     @brief     Capture DeltaD per sample time: variable DeltaD, DeltaT is fixed, 1.
     @version V0
@@ -187,7 +187,7 @@ static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Kmh(Encoder_T * p_encoder)
 */
 /*! @{ */
 /******************************************************************************/
-extern void _Encoder_DeltaD_InitCounter(Encoder_T * p_encoder);
+extern void _Encoder_DeltaD_Init(Encoder_T * p_encoder);
 extern void Encoder_DeltaD_Init(Encoder_T * p_encoder);
 extern void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder);
 /******************************************************************************/

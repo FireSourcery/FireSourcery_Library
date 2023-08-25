@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Linear.h
+    @file     Linear.h
     @author FireSourcery
     @brief  Mathematical linear function.
             e.g. Dynamic look up table, unit/ADC conversion.

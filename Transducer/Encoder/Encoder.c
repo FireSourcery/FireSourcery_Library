@@ -76,18 +76,27 @@ void Encoder_InitInterrupts_ABC(Encoder_T * p_encoder)
     HAL_Encoder_EnablePhaseInterruptDualEdge(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
 }
 
+void Encoder_Init_Quadrature(Encoder_T * p_encoder)
+{
 
+}
 
-/*
+void Encoder_Init_SinglePhase(Encoder_T * p_encoder)
+{
 
-*/
+}
+
+/* Outer module sets direction */
+void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool isPositive) { p_encoder->IsSinglePhasePositive = isPositive; }
+void Encoder_SetSinglePhaseDirectionPositive(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = true; }
+void Encoder_SetSinglePhaseDirectionNegative(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = false; }
+
 void Encoder_CalibrateAlignZero(Encoder_T * p_encoder)
 {
     p_encoder->Angle32 = 0U;
     _Encoder_ZeroPulseCount(p_encoder);
 }
 
-/* todo */
 void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder)
 {
     p_encoder->Align = ENCODER_ALIGN_PHASE;
@@ -112,9 +121,8 @@ void Encoder_ClearAlign(Encoder_T * p_encoder)
 
 
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)   { p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled; }
-void Encoder_EnableQuadratureMode(Encoder_T * p_encoder)                { p_encoder->Params.IsQuadratureCaptureEnabled = true; }
-void Encoder_DisableQuadratureMode(Encoder_T * p_encoder)               { p_encoder->Params.IsQuadratureCaptureEnabled = false; }
+void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled) { p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled; }
+void Encoder_EnableQuadratureMode(Encoder_T * p_encoder) { p_encoder->Params.IsQuadratureCaptureEnabled = true; }
 /*!    isALeadBPositive - User runtime calibrate */
 void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive) { p_encoder->Params.IsALeadBPositive = isALeadBPositive; }
 
@@ -163,7 +171,7 @@ void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder)
 */
 /*
     UnitAngle[DEGREES/EncoderTick] = DegreesPerRevolution[DEGREES/1]/CountsPerRevolution[EncoderCounts/1]
-    UnitAngle => PulseCounter * [((1 << 32) / CountsPerRevolution] >> (32 - DEGREES_BITS)
+    UnitAngle => CounterD * [((1 << 32) / CountsPerRevolution] >> (32 - DEGREES_BITS)
 */
 void _Encoder_ResetUnitsAngle(Encoder_T * p_encoder)
 {

@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Config.h
+    @file     Config.h
     @author FireSourcery
     @brief  Motor module preprocessor configuration options and defaults
     @version V0

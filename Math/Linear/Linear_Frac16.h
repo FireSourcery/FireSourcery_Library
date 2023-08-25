@@ -22,9 +22,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Linear_Frac16.h
+    @file     Linear_Frac16.h
     @author FireSourcery
-    @brief  Linear Frac16 calc without division
+    @brief    Linear Frac16 calc without division
     @version V0
 */
 /******************************************************************************/

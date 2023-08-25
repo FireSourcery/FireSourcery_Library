@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Analog.c
+    @file     Analog.c
     @author FireSourcery
     @brief     Analog module conventional function definitions
     @version V0

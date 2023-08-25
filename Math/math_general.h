@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   math_general.h
+    @file     math_general.h
     @author FireSourcery
     @brief  Re-implementation of C++ library not found in C
     @version V0
@@ -37,7 +37,7 @@
 static inline int32_t math_max(int32_t value1, int32_t value2) { return ((value1 > value2) ? value1 : value2); }
 static inline int32_t math_min(int32_t value1, int32_t value2) { return ((value1 < value2) ? value1 : value2); }
 static inline int32_t math_clamp(int32_t value, int32_t low, int32_t high) { return math_min(math_max(value, low), high); }
-static inline uint32_t math_abs(int32_t num) { return abs(num); } /* todo check - INT_MIN */
+static inline uint32_t math_abs(int32_t num) { return abs(num); } /* check - INT_MIN */
 static inline int32_t math_sign(int32_t value) { return (value > 0) - (value < 0); } /* +1, 0, -1 */
 
 static inline int32_t math_isbound(int32_t value, int32_t low, int32_t high) { return (value == math_clamp(value, low, high)); }

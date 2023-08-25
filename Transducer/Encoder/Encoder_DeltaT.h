@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Encoder_DeltaT.h
+    @file      Encoder_DeltaT.h
     @author FireSourcery
     @brief     Capture DeltaT per pulse count: variable DeltaT, DeltaD is fixed, 1.
     @version V0
@@ -66,7 +66,7 @@ static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 
 static inline bool Encoder_DeltaT_CheckStop(Encoder_T * p_encoder)
 {
-    return (p_encoder->DeltaT == ENCODER_TIMER_MAX);
+     return (p_encoder->DeltaT == ENCODER_TIMER_MAX);
 }
 
 /******************************************************************************/
@@ -81,15 +81,17 @@ static inline bool Encoder_DeltaT_CheckStop(Encoder_T * p_encoder)
 /******************************************************************************/
 static inline uint32_t _Encoder_GetExtendedTimerDelta(Encoder_T * p_encoder)
 {
+    uint32_t time = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
+    uint32_t deltaTime;
+
 #ifdef CONFIG_ENCODER_EXTENDED_TIMER_CHECK_OVERFLOW
     /* Millis overflow 40+ days */
-    uint32_t time = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
-    return (time < p_encoder->ExtendedDeltaTimerSaved) ?
-        (UINT32_MAX - p_encoder->ExtendedDeltaTimerSaved + time + 1U) :
-        *(p_encoder->CONFIG.P_EXTENDED_TIMER) - p_encoder->ExtendedTimerPrev;
-#else
-    return *(p_encoder->CONFIG.P_EXTENDED_TIMER) - p_encoder->ExtendedTimerPrev;
+    if(time < p_encoder->ExtendedDeltaTimerSaved) { deltaTime = UINT32_MAX - p_encoder->ExtendedDeltaTimerSaved + time + 1U; }
+    else
 #endif
+    { deltaTime = time - p_encoder->ExtendedTimerPrev; }
+
+    return deltaTime;
 }
 
 /*
@@ -129,7 +131,7 @@ static inline bool Encoder_DeltaT_CheckExtendedStop(Encoder_T * p_encoder)
 
 /******************************************************************************/
 /*!
-    @brief  Angle Interpolation Functions
+    @brief    Angle Interpolation Functions
 
     Estimate Angle each control cycle in between encoder counts
     AngularSpeed * AngleIndex / POLLING_FREQ
@@ -279,7 +281,7 @@ static inline uint32_t Encoder_DeltaT_GetGroundSpeed_Kmh(Encoder_T * p_encoder)
 */
 /*! @{ */
 /******************************************************************************/
-extern void _Encoder_DeltaT_InitTimer(Encoder_T * p_encoder);
+extern void _Encoder_DeltaT_Init(Encoder_T * p_encoder);
 extern void Encoder_DeltaT_Init(Encoder_T * p_encoder);
 extern void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder);
 extern void Encoder_DeltaT_SetExtendedWatchStop_Millis(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis);

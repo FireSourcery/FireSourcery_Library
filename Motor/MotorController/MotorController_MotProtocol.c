@@ -93,7 +93,7 @@ static void SaveNvm_Blocking(MotorController_T * p_mc, MotPacket_SaveNvmResp_T *
 static void ReadVar(MotorController_T * p_mc, MotPacket_ReadVarResp_T * p_txPacket, size_t * p_txSize, const MotPacket_ReadVarReq_T * p_rxPacket, size_t rxSize)
 {
     (void)rxSize;
-    *p_txSize = MotPacket_ReadVarResp_Build(p_txPacket, MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_ReadVarReq_ParseVarId(p_rxPacket)));
+    *p_txSize = MotPacket_ReadVarResp_Build(p_txPacket, MotorController_Var_Get(p_mc, MotPacket_ReadVarReq_ParseVarId(p_rxPacket)));
 }
 
 /******************************************************************************/
@@ -103,7 +103,7 @@ static void WriteVar(MotorController_T * p_mc, MotPacket_WriteVarResp_T * p_txPa
 {
     (void)rxSize;
     MotPacket_HeaderStatus_T status = MOT_PACKET_HEADER_STATUS_OK;
-    if(MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_WriteVarReq_ParseVarId(p_rxPacket), MotPacket_WriteVarReq_ParseVarValue(p_rxPacket)) == 0U) { status = MOT_PACKET_HEADER_STATUS_ERROR; }
+    if(MotorController_Var_Set(p_mc, MotPacket_WriteVarReq_ParseVarId(p_rxPacket), MotPacket_WriteVarReq_ParseVarValue(p_rxPacket)) == 0U) { status = MOT_PACKET_HEADER_STATUS_ERROR; }
     *p_txSize = MotPacket_WriteVarResp_Build(p_txPacket, status);
 }
 
@@ -117,7 +117,7 @@ static void ReadVars16(MotorController_T * p_mc, MotPacket_ReadVars16Resp_T * p_
     uint8_t varsCount = MotPacket_ReadVars16Req_ParseVarIdsCount(p_rxPacket);
     for(uint8_t iVar = 0U; iVar < varsCount; iVar++)
     {
-        MotPacket_ReadVars16Resp_BuildVarValue(p_txPacket, iVar, (uint16_t)MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_ReadVars16Req_ParseVarId(p_rxPacket, iVar)));
+        MotPacket_ReadVars16Resp_BuildVarValue(p_txPacket, iVar, (uint16_t)MotorController_Var_Get(p_mc, MotPacket_ReadVars16Req_ParseVarId(p_rxPacket, iVar)));
     }
     *p_txSize = MotPacket_ReadVars16Resp_BuildHeader(p_txPacket, varsCount);
 
@@ -129,9 +129,9 @@ static void ReadVars16(MotorController_T * p_mc, MotPacket_ReadVars16Resp_T * p_
 static void WriteVars16(MotorController_T * p_mc, MotPacket_WriteVars16Resp_T * p_txPacket, size_t * p_txSize, const MotPacket_WriteVars16Req_T * p_rxPacket, size_t rxSize)
 {
     (void)rxSize;
-    // volatile int a = 0;
-    // volatile int b = 0;
-    // a = b;
+    volatile int a = 0;
+    volatile int b = 0;
+    a = b;
 
     uint8_t varsCount = MotPacket_WriteVars16Req_ParseVarIdsCount(p_rxPacket);
     // const MotVarId_T * p_varIds = MotPacket_WriteVars16Req_ParsePtrVarIds(p_rxPacket);
@@ -139,7 +139,7 @@ static void WriteVars16(MotorController_T * p_mc, MotPacket_WriteVars16Resp_T * 
     MotPacket_HeaderStatus_T status = MOT_PACKET_HEADER_STATUS_OK;
     for(uint8_t iVar = 0U; iVar < varsCount; iVar++)
     {
-        if(MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_WriteVars16Req_ParseVarId(p_rxPacket, iVar), MotPacket_WriteVars16Req_ParseVarValue(p_rxPacket, iVar)) == 0U)
+        if(MotorController_Var_Set(p_mc, MotPacket_WriteVars16Req_ParseVarId(p_rxPacket, iVar), MotPacket_WriteVars16Req_ParseVarValue(p_rxPacket, iVar)) == 0U)
         {
             status = MOT_PACKET_HEADER_STATUS_ERROR;
         }
@@ -231,7 +231,7 @@ static Protocol_ReqCode_T ReadData
 {
     (void)rxSize;
     (void)p_appInterface;
-    Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_AWAIT_PROCESS;
+    Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_WAIT_PROCESS;
     // MotPacket_HeaderStatus_T headerStatus = MOT_PACKET_HEADER_STATUS_OK;
     uint16_t readSize;
 
@@ -281,7 +281,7 @@ static Protocol_ReqCode_T WriteData_Blocking
 )
 {
     (void)rxSize;
-    Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_AWAIT_PROCESS;
+    Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_WAIT_PROCESS;
     Flash_T * p_flash = p_appInterface->CONFIG.P_FLASH;
     Flash_Status_T flashStatus;
     MotPacket_HeaderStatus_T headerStatus;
@@ -304,7 +304,7 @@ static Protocol_ReqCode_T WriteData_Blocking
 
         case 1U: /* Await Data */
             p_subState->StateId = 2U;
-            reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_EXT;
+            reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_REQ_EXT;
             break;
 
         case 2U: /* Write Data - rxPacket is DataPacket */
@@ -356,24 +356,24 @@ static Protocol_ReqCode_T WriteData_Blocking
 /******************************************************************************/
 /*! Req Table */
 /******************************************************************************/
-#define REQ_SYNC_DEFAULT PROTOCOL_SYNC(1U, 1U, 3U)
+#define REQ_SYNC_DEFAULT PROTOCOL_SYNC_ID_DEFINE(1U, 1U, 3U)
 
 static const Protocol_Req_T REQ_TABLE[] =
 {
-    PROTOCOL_REQ(MOT_PACKET_PING,            Ping,               0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_STOP_ALL,        StopAll,            0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_VERSION,         Version,            0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_SAVE_NVM,        SaveNvm_Blocking,   0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_WRITE_VAR,       WriteVar,           0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_READ_VAR,        ReadVar,            0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_WRITE_VARS16,    WriteVars16,        0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_READ_VARS16,     ReadVars16,         0U,     PROTOCOL_SYNC_DISABLE),
-    // PROTOCOL_REQ(MOT_PACKET_WRITE_VARS_FLEX,    WriteVarsFlex,        0U,     PROTOCOL_SYNC_DISABLE),
-    // PROTOCOL_REQ(MOT_PACKET_READ_VARS_FLEX,     ReadVarsFlex,         0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_EXT_CMD,         Batch,              0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_PING,            Ping,               0U,     PROTOCOL_SYNC_ID_DISABLE),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_STOP_ALL,        StopAll,            0U,     PROTOCOL_SYNC_ID_DISABLE),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_VERSION,         Version,            0U,     PROTOCOL_SYNC_ID_DISABLE),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_SAVE_NVM,        SaveNvm_Blocking,   0U,     PROTOCOL_SYNC_ID_DISABLE),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VAR,       WriteVar,           0U,     PROTOCOL_SYNC_ID_DISABLE),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_READ_VAR,        ReadVar,            0U,     PROTOCOL_SYNC_ID_DISABLE),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VARS16,    WriteVars16,        0U,     PROTOCOL_SYNC_ID_DISABLE),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_READ_VARS16,     ReadVars16,         0U,     PROTOCOL_SYNC_ID_DISABLE),
+    // PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VARS_FLEX,    WriteVarsFlex,        0U,     PROTOCOL_SYNC_ID_DISABLE),
+    // PROTOCOL_REQ_DEFINE(MOT_PACKET_READ_VARS_FLEX,     ReadVarsFlex,         0U,     PROTOCOL_SYNC_ID_DISABLE),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_EXT_CMD,         Batch,              0U,     PROTOCOL_SYNC_ID_DISABLE),
 #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-    PROTOCOL_REQ(MOT_PACKET_DATA_MODE_READ,      0U,     ReadData,               REQ_SYNC_DEFAULT),
-    PROTOCOL_REQ(MOT_PACKET_DATA_MODE_WRITE,     0U,     WriteData_Blocking,     REQ_SYNC_DEFAULT),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_READ,      0U,     ReadData,               REQ_SYNC_DEFAULT),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_DATA_MODE_WRITE,     0U,     WriteData_Blocking,     REQ_SYNC_DEFAULT),
 #endif
 };
 
@@ -389,9 +389,9 @@ const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
 
     .RX_START_ID = MOT_PACKET_START_BYTE,
     .RX_END_ID = 0x00U,
-    // .ENCODED = false,
+    .ENCODED = false,
 
-    .RX_TIMEOUT = MOT_PROTOCOL_TIMEOUT_RX,
-    .REQ_TIMEOUT = MOT_PROTOCOL_TIMEOUT_REQ,
+    .RX_TIMEOUT = MOT_PROTOCOL_TIMEOUT_MS,
+    .REQ_TIMEOUT = MOT_PROTOCOL_TIMEOUT_MS,
     .BAUD_RATE_DEFAULT = MOT_PROTOCOL_BAUD_RATE_DEFAULT,
 };

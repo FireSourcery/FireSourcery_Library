@@ -23,7 +23,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Encoder_DeltaDT.c
+    @file      Encoder_DeltaDT.c
     @author FireSourcery
     @brief
     @version V0
@@ -37,8 +37,8 @@
 void Encoder_ModeDT_Init(Encoder_T * p_encoder)
 {
     if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
-    _Encoder_DeltaT_InitTimer(p_encoder);
-    _Encoder_DeltaD_InitCounter(p_encoder);
+    _Encoder_DeltaT_Init(p_encoder);
+    _Encoder_DeltaD_Init(p_encoder);
     p_encoder->UnitT_Freq = 1U;
     _Encoder_ResetUnits(p_encoder);
     Encoder_DeltaD_SetInitial(p_encoder);

@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Encoder_DeltaD.c
+    @file      Encoder_DeltaD.c
     @author FireSourcery
     @brief
     @version V0
@@ -34,47 +34,45 @@
 /*!
 
 */
-void _Encoder_DeltaD_InitCounter(Encoder_T * p_encoder)
-{
-#if     defined(CONFIG_ENCODER_HW_DECODER)
-    HAL_Encoder_InitCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
-    HAL_Encoder_WriteCounterMax(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, p_encoder->Params.CountsPerRevolution - 1U);
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
-    /* Pins HAL init in main app */
-    // #ifdef CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
-    // if(p_encoder->Params.IsQuadratureCaptureEnabled == true)
-    // {
-    //     Pin_Input_Init(&p_encoder->PinA);
-    //     Pin_Input_Init(&p_encoder->PinB);
-    // }
-    // #endif
-#endif
-}
-
-/*!
-
-*/
 void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 {
     if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
-    _Encoder_DeltaD_InitCounter(p_encoder);
+    _Encoder_DeltaD_Init(p_encoder);
     p_encoder->UnitT_Freq = p_encoder->CONFIG.SAMPLE_FREQ;
     _Encoder_ResetUnits(p_encoder);
     p_encoder->DeltaT = 1U;
     Encoder_DeltaD_SetInitial(p_encoder);
 }
 
+/*!
+
+*/
+void _Encoder_DeltaD_Init(Encoder_T * p_encoder)
+{
+#if     defined(CONFIG_ENCODER_HW_DECODER)
+    HAL_Encoder_InitCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
+    HAL_Encoder_WriteCounterMax(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, p_encoder->Params.CountsPerRevolution - 1U);
+#elif     defined(CONFIG_ENCODER_HW_EMULATED)
+    #ifdef CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
+    if(p_encoder->Params.IsQuadratureCaptureEnabled == true)
+    {
+        Pin_Input_Init(&p_encoder->PinA);
+        Pin_Input_Init(&p_encoder->PinB);
+    }
+    #endif
+#endif
+}
 
 void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder)
 {
-    p_encoder->DeltaD = 0U;
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     HAL_Encoder_ClearCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
     HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0U);
     p_encoder->IndexCount = 0U;
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+#elif     defined(CONFIG_ENCODER_HW_EMULATED)
     _Encoder_ZeroPulseCount(p_encoder);
 #endif
+    p_encoder->DeltaD = 0U;
 }
 
 

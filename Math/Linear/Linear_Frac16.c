@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Linear_Frac16.c
+    @file     Linear_Frac16.c
     @author FireSourcery
     @brief  Linear
     @version V0
@@ -44,12 +44,12 @@
     [x0:xRef] => [0:65536] => [y0_Units:yRef_Units]
     y0_Frac16 always 0
 
-    f16(x) = y_Frac16,              Shift
+    f16(x) = y_Frac16,                 Shift
     f(x) = y_Units,                 Shift
-    invf16(y_Frac16) = x,           Shift
-    invf(y_Units) = x,              Division
-    units(y_Frac16) = y_Units,      Shift
-    invunits(y_Units) = y_Frac16,   Division
+    invf16(y_Frac16) = x,             Shift
+    invf(y_Units) = x,                 Division
+    units(y_Frac16) = y_Units,         Shift
+    invunits(y_Units) = y_Frac16,     Division
 
     f16(x0) = y0_Frac16 = 0
     f16(xRef) = 65535

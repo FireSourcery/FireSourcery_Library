@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MotorController_User.c
+    @file     MotorController_User.c
     @author FireSourcery
     @brief
     @version V0
@@ -30,24 +30,14 @@
 /******************************************************************************/
 #include "MotorController_User.h"
 
-
-/*
-    Controller NvM Variables Parameters Set
-*/
-
 // uint32_t _GetVSourceRatio(const MotorController_T * p_mc)
 // {
 // }
 
-/* VSource is a value < GLOBAL_MOTOR.VMAX and Parameters.VSourceRef */
-void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts)
+void MotorController_User_SetVSource(MotorController_T * p_mc, uint16_t volts)
 {
-    // MotorController_SetVSourceRef(p_mc, volts);
-    Global_Motor_InitVSourceRef_V(volts);
-    p_mc->Parameters.VSourceRef = Global_Motor_GetVSource_V();
-    for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_ResetUnitsVabc(&p_mc->CONFIG.P_MOTORS[iMotor]); }
+    MotorController_SetVSource(p_mc, volts);
     VMonitor_SetVInRef(&p_mc->VMonitorSource, volts);
-
 //propagate set //todo restore ratio set
     VMonitor_SetLimitsDefault(&p_mc->VMonitorSource);
     MotorController_User_SetBatteryLifeDefault(p_mc);
@@ -55,7 +45,7 @@ void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts
 
 void MotorController_User_SetBatteryLifeDefault(MotorController_T * p_mc)
 {
-    p_mc->Parameters.BatteryZero_Adcu = VMonitor_GetFaultLower(&p_mc->VMonitorSource);
+    p_mc->Parameters.BatteryZero_Adcu = VMonitor_GetLimitLower(&p_mc->VMonitorSource);
     p_mc->Parameters.BatteryFull_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorSource, (uint32_t)p_mc->Parameters.VSourceRef * 1000U);
     MotorController_ResetUnitsBatteryLife(p_mc);
 }
@@ -67,7 +57,7 @@ void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32
     MotorController_ResetUnitsBatteryLife(p_mc);
 }
 
-// void MotorController_User_SetILimit_DC(MotorController_T * p_mc, uint16_t dc)
+// void MotorController_User_SetILimitDc(MotorController_T * p_mc, uint16_t dc)
 // {
 //     uint16_t iPeakAc = dc;
 //     uint16_t motoring = iPeakAc;

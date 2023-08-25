@@ -47,7 +47,7 @@ void MotorN_User_SetTorqueCmd(Motor_T * p_motor, uint8_t motorCount, int16_t cmd
 
 void MotorN_User_SetDefaultCmd(Motor_T * p_motor, uint8_t motorCount, int16_t cmdValue)
 {
-    MotorN_User_ApplyInt16(p_motor, motorCount, Motor_User_SetDefaultModeCmd, cmdValue);
+    MotorN_User_ApplyInt16(p_motor, motorCount, Motor_User_SetDefaultCmd, cmdValue);
 }
 
 void MotorN_User_SetThrottleCmd(Motor_T * p_motor, uint8_t motorCount, uint16_t throttle)

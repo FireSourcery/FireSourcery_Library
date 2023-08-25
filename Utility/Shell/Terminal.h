@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Terminal.h
+    @file      Terminal.h
     @author FireSourcery
     @brief    text io functions for terminal ui
     @version V0

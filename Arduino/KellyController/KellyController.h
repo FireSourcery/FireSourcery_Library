@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   KellyController.h
+    @file     KellyController.h
     @author FireSourcery
     @brief
     @version V0
@@ -42,7 +42,7 @@ extern "C"
 
 #define KELLY_XCVR_COUNT (1U)
 
-extern const Xcvr_Entry_T KELLY_XCVR_TABLE[KELLY_XCVR_COUNT];
+extern const Xcvr_Xcvr_T KELLY_XCVR_TABLE[KELLY_XCVR_COUNT];
 
 class KellyController
 {
@@ -69,7 +69,7 @@ public:
         }
         else
         {
-            return PROTOCOL_RX_CODE_AWAIT_PACKET;
+            return PROTOCOL_RX_CODE_WAIT_PACKET;
         }
     };
 

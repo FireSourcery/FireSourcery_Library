@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Q.c
+    @file     Q.c
     @author FireSourcery
     @brief
     @version V0
@@ -142,7 +142,7 @@ uint16_t qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitu
     if(vectorMagnitudeSquared > magnitudeMaxSquared)
     {
         vectorMagnitude = q_sqrt(vectorMagnitudeSquared);
-        ratio = qfrac16_div(magnitudeMax, vectorMagnitude); /* no saturation needed, vectorMagnitude > magnitudeMax, max return 32768 ~= 1 */
+        ratio = qfrac16_div(magnitudeMax, vectorMagnitude); /* no saturation needed, max return 32768 ~= 1 */
         *p_x = (qfrac16_t)qfrac16_mul(*p_x, ratio); /* no saturation needed, ratio < 1 */
         *p_y = (qfrac16_t)qfrac16_mul(*p_y, ratio);
     }

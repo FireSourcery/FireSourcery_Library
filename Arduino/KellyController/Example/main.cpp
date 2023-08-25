@@ -103,10 +103,10 @@ void loop(void)
 
   switch (kellyController.procRxReqTxResp())
   {
-    case PROTOCOL_RX_CODE_ERROR_TIMEOUT:   Serial.print("Rx Timeout: ");       printRx();      break;
+    case PROTOCOL_RX_CODE_PACKET_TIMEOUT:   Serial.print("Rx Timeout: ");       printRx();      break;
     case PROTOCOL_RX_CODE_PACKET_COMPLETE:  Serial.print("Rx Success: ");       printRx();      break;
-    case PROTOCOL_RX_CODE_ERROR_DATA:     Serial.print("Rx Packet Error: ");  printRx();      break;
-    case PROTOCOL_RX_CODE_ERROR_META:       Serial.print("Rx Sync Error: ");    printRx();      break;
+    case PROTOCOL_RX_CODE_PACKET_ERROR:     Serial.print("Rx Packet Error: ");  printRx();      break;
+    case PROTOCOL_RX_CODE_SYNC_ERROR:       Serial.print("Rx Sync Error: ");    printRx();      break;
     default:  break;
   }
 

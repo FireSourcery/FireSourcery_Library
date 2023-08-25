@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Linear_Voltage.h
+    @file     Linear_Voltage.h
     @author FireSourcery
     @brief     ADC to Voltage values conversion using voltage divider.
             Flexible V units with precision over Linear_ADC.

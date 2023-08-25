@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MotorN_User.h
+    @file     MotorN_User.h
     @author FireSourcery
     @brief  User Interface. Motor module public functions.
             Functions include error checking.

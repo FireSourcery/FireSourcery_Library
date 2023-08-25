@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Encoder_ISR.h
+    @file      Encoder_ISR.h
     @author FireSourcery
     @version V0
     @brief
@@ -62,7 +62,6 @@ static inline uint8_t _Encoder_CapturePhasesState(Encoder_T * p_encoder)
     return p_encoder->Phases.State;
 }
 
-/* count = {-1,+1} */
 static inline void _Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
 {
     p_encoder->CounterD += count;
@@ -93,7 +92,7 @@ static inline void _Encoder_CapturePulse_Quadrature(Encoder_T * p_encoder)
 
 /******************************************************************************/
 /*
-    Single Phase, Non-Directional
+    Single Phase, Unsigned Direction
 */
 /******************************************************************************/
 static inline void _Encoder_CapturePulse_SinglePhase(Encoder_T * p_encoder)
@@ -126,7 +125,7 @@ static inline void Encoder_CapturePulse_SinglePhase(Encoder_T * p_encoder)
 static inline void Encoder_CapturePulse(Encoder_T * p_encoder)
 {
     Encoder_ProcCaptureModeFunction(p_encoder, _Encoder_CapturePulse_Quadrature, _Encoder_CapturePulse_SinglePhase); /* Quadrature On/Off Switch */
-    Encoder_DeltaT_CaptureExtended(p_encoder);
+    Encoder_DeltaT_CaptureExtended(p_encoder); /* Superfluous capture DeltaT for Emulated DeltaD only mode */
     Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
 
@@ -186,7 +185,6 @@ static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 {
     HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
     p_encoder->IndexCount++;
-    //todo phase index delta
 // #if         defined(CONFIG_ENCODER_HW_EMULATED)
 // #elif     defined(CONFIG_ENCODER_HW_DECODER)
 //     HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0U);

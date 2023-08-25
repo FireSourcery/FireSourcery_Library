@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   KellyController.cpp
+    @file     KellyController.cpp
     @author FireSourcery
     @brief
     @version V0
@@ -42,9 +42,9 @@ const Xcvr_Interface_T XCVR_INTERFACE_ARDUINO_SERIAL =
     .TX_N = (Xcvr_Interface_TxN_T)HardwareSerial_Write,
 };
 
-const Xcvr_Entry_T KELLY_XCVR_TABLE[KELLY_XCVR_COUNT] =
+const Xcvr_Xcvr_T KELLY_XCVR_TABLE[KELLY_XCVR_COUNT] =
 {
-    [0] = XCVR_ENTRY_INIT_INTERFACE(&Serial1, &XCVR_INTERFACE_ARDUINO_SERIAL),
+    [0] = XCVR_XCVR_INIT_INTERFACE(&Serial1, &XCVR_INTERFACE_ARDUINO_SERIAL),
 };
 
 /******************************************************************************/

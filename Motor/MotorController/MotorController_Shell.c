@@ -280,7 +280,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
             Terminal_SendNum(p_term, Encoder_ModeDT_GetScalarVelocity(&p_motor->Encoder)); Terminal_SendString(p_term, " Frac16\r\n");
 
             // Terminal_SendString(p_term, "SpeedControl: "); Terminal_SendNum(p_term, PID_GetOutput(&p_motor->PidSpeed)); Terminal_SendString(p_term, "\r\n");
-            Terminal_SendString(p_term, "IdReq: "); Terminal_SendNum(p_term, p_motor->Foc.QReq); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendString(p_term, "IdReq: "); Terminal_SendNum(p_term, p_motor->Foc.VIqReq); Terminal_SendString(p_term, "\r\n");
 
             Terminal_SendString(p_term, "RampOut: "); Terminal_SendNum(p_term, Linear_Ramp_GetOutput(&p_motor->Ramp)); Terminal_SendString(p_term, "\r\n");
             Terminal_SendString(p_term, "RampTarget: "); Terminal_SendNum(p_term, Linear_Ramp_GetTarget(&p_motor->Ramp)); Terminal_SendString(p_term, "\r\n");
@@ -596,11 +596,11 @@ static Cmd_Status_T Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 void PrintThermistorLimit(Terminal_T * p_term, Thermistor_T * p_thermistor)
 {
     Terminal_SendString(p_term, "Shutdown: ");
-    Terminal_SendNum(p_term, Thermistor_GetFault_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
-    Terminal_SendNum(p_term, Thermistor_GetFault_DegCInt(p_thermistor, 1U)); Terminal_SendString(p_term, " C ");
+    Terminal_SendNum(p_term, Thermistor_GetShutdown_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
+    Terminal_SendNum(p_term, Thermistor_GetShutdown_DegCInt(p_thermistor, 1U)); Terminal_SendString(p_term, " C ");
     Terminal_SendString(p_term, " Threshold: ");
-    Terminal_SendNum(p_term, Thermistor_GetFaultThreshold_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
-    Terminal_SendNum(p_term, Thermistor_GetFaultThreshold_DegCInt(p_thermistor, 1U)); Terminal_SendString(p_term, " C\r\n");
+    Terminal_SendNum(p_term, Thermistor_GetShutdownThreshold_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
+    Terminal_SendNum(p_term, Thermistor_GetShutdownThreshold_DegCInt(p_thermistor, 1U)); Terminal_SendString(p_term, " C\r\n");
 
     Terminal_SendString(p_term, "Warning: ");
     Terminal_SendNum(p_term, Thermistor_GetWarning_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
@@ -714,13 +714,13 @@ size_t VMonitor_ToString_Verbose(VMonitor_T * p_vMonitor, char * p_stringBuffer,
     memcpy(p_stringDest, STR_LIMIT, strlen(STR_LIMIT)); p_stringDest += strlen(STR_LIMIT);
 
     memcpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)); p_stringDest += strlen(STR_UPPER);
-    num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.FaultUpper_Adcu, unitVScalar);
+    num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitUpper_Adcu, unitVScalar);
     snprintf(numStr, 16U, "%d", (int)num);
     memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
     *p_stringDest = ' '; p_stringDest++;
 
     memcpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)); p_stringDest += strlen(STR_LOWER);
-    num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.FaultLower_Adcu, unitVScalar);
+    num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.LimitLower_Adcu, unitVScalar);
     snprintf(numStr, 16U, "%d", (int)num);
     memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
     *p_stringDest = ' '; p_stringDest++;

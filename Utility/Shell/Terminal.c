@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Terminal.h
+    @file      Terminal.h
     @author FireSourcery
     @brief    Serial text support functions for terminal ui
     @version V0

@@ -22,9 +22,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Pin.h
+    @file     Pin.h
     @author FireSourcery
-    @brief  Uniform Wrapper for HAL_Pin
+    @brief    Uniform Wrapper for HAL_Pin
     @version V0
 */
 /******************************************************************************/
@@ -51,26 +51,26 @@ typedef struct Pin_Tag
 }
 Pin_T;
 
-#define PIN_INIT(p_Hal, Id)     \
-{                               \
-    .CONFIG =                   \
-    {                           \
-        .P_HAL_PIN = p_Hal,     \
-        .ID = Id,               \
+#define PIN_INIT(p_Hal, Id)        \
+{                                \
+    .CONFIG =                     \
+    {                            \
+        .P_HAL_PIN = p_Hal,        \
+        .ID = Id,                \
         .MASK = (1UL << Id),    \
-        .IS_INVERT = false,     \
-    },                          \
+        .IS_INVERT = false,        \
+    },                            \
 }
 
 #define PIN_INIT_INVERT(p_Hal, Id, IsInvert)    \
-{                                               \
-    .CONFIG =                                   \
-    {                                           \
-        .P_HAL_PIN = p_Hal,                     \
-        .ID = Id,                               \
+{                                                \
+    .CONFIG =                                     \
+    {                                            \
+        .P_HAL_PIN = p_Hal,                        \
+        .ID = Id,                                \
         .MASK = (1UL << Id),                    \
-        .IS_INVERT = IsInvert,                  \
-    },                                          \
+        .IS_INVERT = IsInvert,                    \
+    },                                            \
 }
 
 static inline uint32_t _Pin_GetHalArg(const Pin_T * p_pin)
@@ -83,20 +83,22 @@ static inline uint32_t _Pin_GetHalArg(const Pin_T * p_pin)
 }
 
 /* Ignore invert check, when handled by upper layer */
-static inline void Pin_Output_Low(const Pin_T * p_pin)          { HAL_Pin_WriteOutputOff(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
-static inline void Pin_Output_High(const Pin_T * p_pin)         { HAL_Pin_WriteOutputOn(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
-static inline void Pin_Output_Toggle(const Pin_T * p_pin)       { HAL_Pin_ToggleOutput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
+static inline void Pin_Output_Low(const Pin_T * p_pin)        { HAL_Pin_WriteOutputOff(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
+static inline void Pin_Output_High(const Pin_T * p_pin)     { HAL_Pin_WriteOutputOn(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
+static inline void Pin_Output_Toggle(const Pin_T * p_pin)     { HAL_Pin_ToggleOutput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin)); }
 static inline void Pin_Output_WritePhysical(const Pin_T * p_pin, bool isOn) { HAL_Pin_WriteOutput(p_pin->CONFIG.P_HAL_PIN, _Pin_GetHalArg(p_pin), isOn); }
 
 /* Include invert check */
 static inline void Pin_Output_Off(const Pin_T * p_pin)
 {
-    if(p_pin->CONFIG.IS_INVERT == true) { Pin_Output_High(p_pin); } else { Pin_Output_Low(p_pin); }
+    if(p_pin->CONFIG.IS_INVERT == true) { Pin_Output_High(p_pin); }
+    else                                 { Pin_Output_Low(p_pin); }
 }
 
 static inline void Pin_Output_On(const Pin_T * p_pin)
 {
-    if(p_pin->CONFIG.IS_INVERT == true) { Pin_Output_Low(p_pin); } else { Pin_Output_High(p_pin); }
+    if(p_pin->CONFIG.IS_INVERT == true) { Pin_Output_Low(p_pin); }
+    else                                 { Pin_Output_High(p_pin); }
 }
 
 static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn)
@@ -122,7 +124,7 @@ static inline bool Pin_Input_Read(const Pin_T * p_pin)
 extern void Pin_Output_Init(Pin_T * p_pin);
 extern void Pin_Input_Init(Pin_T * p_pin);
 extern void Pin_Deinit(const Pin_T * p_pin);
-// extern void Pin_EnableInvert(Pin_T * p_pin);
-// extern void Pin_DisableInvert(Pin_T * p_pin);
+extern void Pin_EnableInvert(Pin_T * p_pin);
+extern void Pin_DisableInvert(Pin_T * p_pin);
 
 #endif

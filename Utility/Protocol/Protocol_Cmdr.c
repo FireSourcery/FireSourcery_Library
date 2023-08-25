@@ -22,9 +22,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Protocol.c
+    @file     Protocol.c
     @author FireSourcery
-    @brief  Cmd side
+    @brief
     @version V0
 */
 /******************************************************************************/
@@ -62,18 +62,18 @@ static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
         if((p_req->PROC_EXT != 0U) || (p_req->SYNC.RX_ACK == true))
         {
             p_protocol->p_ReqActive = p_req;
-            p_protocol->RxReqId = cmdId;
+            p_protocol->ReqIdActive = cmdId;
         }
 
         if(p_req->PROC_EXT != 0U)
         {
             // if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_SUBSTATE_BUFFER); }
             if(p_req->SYNC.RX_ACK == true)     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC; }
-            else                             { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_EXT; }
+            else                             { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_COMPLETE_EXT; }
 
         }
         else if(p_req->SYNC.RX_ACK == true)     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC_FINAL; }
-        else                                     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_INITIAL; }
+        else                                     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_COMPLETE_ID; }
 
         //set inactive or wait id, cannot distinguish, without queue count. only distinguish sync wait and non sync
         p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
@@ -91,7 +91,7 @@ static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 // /* Does not start if ReqState WAIT_SYNC WAIT_EXT */
 bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 {
-    return (p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_INITIAL) ? StartReq(p_protocol, cmdId) : false;
+    return (p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_COMPLETE_ID) ? StartReq(p_protocol, cmdId) : false;
     //(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) ||
 }
 
@@ -168,16 +168,16 @@ bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
 // */
 // bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 // {
-//     // p_protocol->RxCode = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxPacketReqId);
+//     // p_protocol->RxCode = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->ReqIdActive);
 //     //change to handle with build
 //     // BuildRxPacket(p_protocol);
-//     // if Req return == RxPacketReqId,
+//     // if Req return == ReqIdActive,
 //     bool isSuccess = false;
 
 //     if(p_protocol->RxCode == PROTOCOL_RX_CODE_PACKET_COMPLETE)
 //     {
 //         ((Protocol_Cmdr_Req_T *)p_protocol->p_CmdrReqActive)->PARSE_RESP(p_protocol->CONFIG.P_APP_INTERFACE, p_protocol->CONFIG.P_RX_PACKET_BUFFER);
-//         // parse packet may need to check packet seqeunce correctness p_protocol->RxPacketReqId
+//         // parse packet may need to check packet seqeunce correctness p_protocol->ReqIdActive
 
 //         // Proc ReqResp
 //         // p_protocol->p_CmdrReqActive->PROC

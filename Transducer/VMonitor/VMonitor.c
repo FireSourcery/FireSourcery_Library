@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   VMonitor.c
+    @file     VMonitor.c
     @author FireSourcery
     @brief
     @version V0
@@ -46,29 +46,25 @@ void VMonitor_Init(VMonitor_T * p_vMonitor)
     p_vMonitor->Status = VMONITOR_STATUS_OK;
 }
 
-/*
-    No previous state
-    Monitor: FaultLower_Adcu < WarningLower_Adcu < V_adcu < WarningUpper_Adcu < FaultUpper_Adcu
-*/
 VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
 {
+    VMonitor_Status_T status = VMONITOR_STATUS_OK;
+
     if(p_vMonitor->Params.IsMonitorEnable == true)
     {
-        if(adcu > p_vMonitor->Params.FaultUpper_Adcu)           { p_vMonitor->Status = VMONITOR_FAULT_UPPER; }
-        else if(adcu < p_vMonitor->Params.FaultLower_Adcu)      { p_vMonitor->Status = VMONITOR_FAULT_LOWER; }
-        else if(adcu > p_vMonitor->Params.WarningUpper_Adcu)    { p_vMonitor->Status = VMONITOR_WARNING_UPPER; }
-        else if(adcu < p_vMonitor->Params.WarningLower_Adcu)    { p_vMonitor->Status = VMONITOR_WARNING_LOWER; }
-        else                                                    { p_vMonitor->Status = VMONITOR_STATUS_OK; }
+        if      (adcu > p_vMonitor->Params.LimitUpper_Adcu) { status = VMONITOR_LIMIT_UPPER; }
+        else if (adcu < p_vMonitor->Params.LimitLower_Adcu) { status = VMONITOR_LIMIT_LOWER; }
+        else
+        {
+            if      (adcu > p_vMonitor->Params.WarningUpper_Adcu) { status = VMONITOR_WARNING_UPPER; }
+            else if (adcu < p_vMonitor->Params.WarningLower_Adcu) { status = VMONITOR_WARNING_LOWER; }
+        }
+        p_vMonitor->Status = status;
     }
 
-    return p_vMonitor->Status;
+    return status;
 }
 
-/******************************************************************************/
-/*!
-    Params
-*/
-/******************************************************************************/
 // Frac16 conversion use only
 void VMonitor_SetVInRef(VMonitor_T * p_vMonitor, uint32_t vInRef)
 {
@@ -79,10 +75,10 @@ void VMonitor_SetVInRef(VMonitor_T * p_vMonitor, uint32_t vInRef)
     }
 }
 
-void VMonitor_SetLimits_MilliV(VMonitor_T * p_vMonitor, uint32_t faultLower, uint32_t faultUpper, uint32_t warningLower, uint32_t warningUpper)
+void VMonitor_SetLimits_MilliV(VMonitor_T * p_vMonitor, uint32_t limitLower, uint32_t limitUpper, uint32_t warningLower, uint32_t warningUpper)
 {
-    VMonitor_SetFaultLower_MilliV(p_vMonitor, faultLower);
-    VMonitor_SetFaultUpper_MilliV(p_vMonitor, faultUpper);
+    VMonitor_SetLimitLower_MilliV(p_vMonitor, limitLower);
+    VMonitor_SetLimitUpper_MilliV(p_vMonitor, limitUpper);
     VMonitor_SetWarningLower_MilliV(p_vMonitor, warningLower);
     VMonitor_SetWarningUpper_MilliV(p_vMonitor, warningUpper);
 }

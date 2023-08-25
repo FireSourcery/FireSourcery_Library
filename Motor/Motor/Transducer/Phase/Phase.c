@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Phase.c
+    @file     Phase.c
     @author FireSourcery
     @version V0
     @brief     Phase module conventional function definitions

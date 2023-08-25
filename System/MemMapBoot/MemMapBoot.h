@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MemMapBoot.h
+    @file     MemMapBoot.h
     @author FireSourcery
     @brief
     @version V0
@@ -30,8 +30,6 @@
 /******************************************************************************/
 #ifndef MEM_MAP_BOOT_H
 #define MEM_MAP_BOOT_H
-
-#define MEM_MAP_BOOT ((MemMapBoot_T *)CONFIG_MEM_MAP_BOOT_ADDRESS) /* User define externally */
 
 /*
     Calling apps are compiled to the same platform, endianess should be consistent
@@ -62,18 +60,35 @@ typedef union MemMapBoot_Tag
 }
 MemMapBoot_T;
 
+#define MEM_MAP_BOOT ((MemMapBoot_T *)CONFIG_MEM_MAP_BOOT_ADDRESS)
+
 static inline bool MemMapBoot_GetIsValid(void)
 {
     return ((MEM_MAP_BOOT->IsValid == MEM_MAP_BOOT_IS_VALID_01) || (MEM_MAP_BOOT->IsValid == MEM_MAP_BOOT_IS_VALID_10));
 }
 
-/* Load Default by default */
-static inline bool MemMapBoot_GetLoadDefault(void) { return ((MemMapBoot_GetIsValid() == false) || (MEM_MAP_BOOT->LoadDefault == 1U)); }
+/*
+    No FastBoot by default
+*/
+static inline bool MemMapBoot_GetFastBoot(void)
+{
+    return ((MemMapBoot_GetIsValid() == true) && (MEM_MAP_BOOT->FastBoot == 1U));
+}
 
-/* Beep by default */
-static inline bool MemMapBoot_GetBeep(void) { return ((MemMapBoot_GetIsValid() == false) || (MEM_MAP_BOOT->Beep == 1U)); }
+/*
+    Beep by default
+*/
+static inline bool MemMapBoot_GetBeep(void)
+{
+    return ((MemMapBoot_GetIsValid() == false) || (MEM_MAP_BOOT->Beep == 1U));
+}
 
-/* No FastBoot by default */
-static inline bool MemMapBoot_GetFastBoot(void) { return ((MemMapBoot_GetIsValid() == true) && (MEM_MAP_BOOT->FastBoot == 1U)); }
+/*
+    Load Default by default
+*/
+static inline bool MemMapBoot_GetLoadDefault(void)
+{
+    return ((MemMapBoot_GetIsValid() == false) || (MEM_MAP_BOOT->LoadDefault == 1U));
+}
 
 #endif
