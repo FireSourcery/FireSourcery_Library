@@ -50,331 +50,190 @@
 /******************************************************************************/
 /*! Ping */
 /******************************************************************************/
-static void Ping(MotorController_T * p_mc, MotPacket_PingResp_T * p_txPacket, size_t * p_txSize, const MotPacket_PingReq_T * p_rxPacket, size_t rxSize)
+static uint8_t Ping(MotorController_T * p_mc, MotPacket_PingResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
 {
-    (void)p_mc; (void)p_rxPacket; (void)rxSize;
-    *p_txSize = MotPacket_PingResp_Build(p_txPacket);
-}
-
-/******************************************************************************/
-/*! Stop All */
-/******************************************************************************/
-static void StopAll(MotorController_T * p_mc, MotPacket_StopResp_T * p_txPacket, size_t * p_txSize, const MotPacket_StopReq_T * p_rxPacket, size_t rxSize)
-{
-    (void)p_rxPacket; (void)rxSize;
-    MotorController_User_DisableControl(p_mc);
-    *p_txSize = MotPacket_StopResp_Build(p_txPacket);
+    (void)p_mc; (void)p_rxPacket;
+    return MotPacket_PingResp_Build(p_txPacket);
 }
 
 /******************************************************************************/
 /*! Version */
 /******************************************************************************/
-static void Version(MotorController_T * p_mc, MotPacket_VersionResp_T * p_txPacket, size_t * p_txSize, const MotPacket_PingReq_T * p_rxPacket, size_t rxSize)
+static uint8_t Version(MotorController_T * p_mc, MotPacket_VersionResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
 {
-    (void)p_mc; (void)p_rxPacket; (void)rxSize;
-    *p_txSize = MotPacket_VersionResp_Build(p_txPacket);
+    (void)p_rxPacket;
+    return MotPacket_VersionResp_Build(p_txPacket, MotorController_User_GetLibraryVersion(), MotorController_User_GetMainVersion(p_mc));
 }
 
 /******************************************************************************/
-/*! Save Nvm All - Blocking, todo check exteneded timeout is needed */
+/*! Stop All */
 /******************************************************************************/
-static void SaveNvm_Blocking(MotorController_T * p_mc, MotPacket_SaveNvmResp_T * p_txPacket, size_t * p_txSize, const MotPacket_SaveNvmReq_T * p_rxPacket, size_t rxSize)
+static uint8_t StopAll(MotorController_T * p_mc, MotPacket_StopResp_T * p_txPacket, const MotPacket_StopReq_T * p_rxPacket)
 {
-    (void)p_rxPacket; (void)rxSize;
-    MotPacket_HeaderStatus_T status;
+    (void)p_rxPacket;
+    MotorController_User_DisableControl(p_mc);
+    return MotPacket_StopResp_Build(p_txPacket, 0U);
+}
+
+/******************************************************************************/
+/*! Save Nvm All - Blocking, todo check extended timeout is needed */
+/******************************************************************************/
+static uint8_t SaveNvm_Blocking(MotorController_T * p_mc, MotPacket_SaveNvmResp_T * p_txPacket, const MotPacket_SaveNvmReq_T * p_rxPacket)
+{
+    (void)p_rxPacket;
     MotorController_User_SaveParameters_Blocking(p_mc);
-    status = (p_mc->NvmStatus == NV_MEMORY_STATUS_SUCCESS) ? MOT_PACKET_HEADER_STATUS_OK : MOT_PACKET_HEADER_STATUS_ERROR;
-    *p_txSize = MotPacket_SaveNvmResp_Build(p_txPacket, status);
-}
-
-/******************************************************************************/
-/*! Read Single Var */
-/******************************************************************************/
-static void ReadVar(MotorController_T * p_mc, MotPacket_ReadVarResp_T * p_txPacket, size_t * p_txSize, const MotPacket_ReadVarReq_T * p_rxPacket, size_t rxSize)
-{
-    (void)rxSize;
-    *p_txSize = MotPacket_ReadVarResp_Build(p_txPacket, MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_ReadVarReq_ParseVarId(p_rxPacket)));
-}
-
-/******************************************************************************/
-/*! Write Single Var */
-/******************************************************************************/
-static void WriteVar(MotorController_T * p_mc, MotPacket_WriteVarResp_T * p_txPacket, size_t * p_txSize, const MotPacket_WriteVarReq_T * p_rxPacket, size_t rxSize)
-{
-    (void)rxSize;
-    MotPacket_HeaderStatus_T status = MOT_PACKET_HEADER_STATUS_OK;
-    if(MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_WriteVarReq_ParseVarId(p_rxPacket), MotPacket_WriteVarReq_ParseVarValue(p_rxPacket)) == 0U) { status = MOT_PACKET_HEADER_STATUS_ERROR; }
-    *p_txSize = MotPacket_WriteVarResp_Build(p_txPacket, status);
+    return MotPacket_SaveNvmResp_Build(p_txPacket, p_mc->NvmStatus);
 }
 
 /******************************************************************************/
 /*! Read Vars */
 /******************************************************************************/
 /* Resp Truncates 32-Bit Vars */
-static void ReadVars16(MotorController_T * p_mc, MotPacket_ReadVars16Resp_T * p_txPacket, size_t * p_txSize, const MotPacket_ReadVars16Req_T * p_rxPacket, size_t rxSize)
+static uint8_t VarRead(MotorController_T * p_mc, MotPacket_VarReadResp_T * p_txPacket, const MotPacket_VarReadReq_T * p_rxPacket)
 {
-    (void)rxSize;
-    uint8_t varsCount = MotPacket_ReadVars16Req_ParseVarIdsCount(p_rxPacket);
+    uint8_t varsCount = MotPacket_VarReadReq_ParseVarIdsCount(p_rxPacket);
     for(uint8_t iVar = 0U; iVar < varsCount; iVar++)
-    {
-        MotPacket_ReadVars16Resp_BuildVarValue(p_txPacket, iVar, (uint16_t)MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_ReadVars16Req_ParseVarId(p_rxPacket, iVar)));
-    }
-    *p_txSize = MotPacket_ReadVars16Resp_BuildHeader(p_txPacket, varsCount);
+        { MotPacket_VarReadResp_BuildVarValue(p_txPacket, iVar, (uint16_t)MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_VarReadReq_ParseVarId(p_rxPacket, iVar))); }
+    return MotPacket_VarReadResp_BuildHeader(p_txPacket, varsCount);
 
 }
 
 /******************************************************************************/
 /*! Write Vars */
 /******************************************************************************/
-static void WriteVars16(MotorController_T * p_mc, MotPacket_WriteVars16Resp_T * p_txPacket, size_t * p_txSize, const MotPacket_WriteVars16Req_T * p_rxPacket, size_t rxSize)
+static uint8_t VarWrite(MotorController_T * p_mc, MotPacket_VarWriteResp_T * p_txPacket, const MotPacket_VarWriteReq_T * p_rxPacket)
 {
-    (void)rxSize;
-    // volatile int a = 0;
-    // volatile int b = 0;
-    // a = b;
-
-    uint8_t varsCount = MotPacket_WriteVars16Req_ParseVarIdsCount(p_rxPacket);
-    // const MotVarId_T * p_varIds = MotPacket_WriteVars16Req_ParsePtrVarIds(p_rxPacket);
-    // const uint16_t * p_varValues = MotPacket_WriteVars16Req_ParsePtrVarValues(p_rxPacket);
-    MotPacket_HeaderStatus_T status = MOT_PACKET_HEADER_STATUS_OK;
+    uint8_t varsCount = MotPacket_VarWriteReq_ParseVarsCount(p_rxPacket);
     for(uint8_t iVar = 0U; iVar < varsCount; iVar++)
     {
-        if(MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_WriteVars16Req_ParseVarId(p_rxPacket, iVar), MotPacket_WriteVars16Req_ParseVarValue(p_rxPacket, iVar)) == 0U)
-        {
-            status = MOT_PACKET_HEADER_STATUS_ERROR;
-        }
+        if(MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_VarWriteReq_ParseVarId(p_rxPacket, iVar), MotPacket_VarWriteReq_ParseVarValue(p_rxPacket, iVar)) == 0U)
+            { MotPacket_VarWriteResp_BuildVarStatus(p_txPacket, iVar, MOT_VAR_STATUS_OK); }
+        else
+            { MotPacket_VarWriteResp_BuildVarStatus(p_txPacket, iVar, MOT_VAR_STATUS_OK); }
     }
-    *p_txSize = MotPacket_WriteVars16Resp_BuildHeader(p_txPacket, status, varsCount);
+    return MotPacket_VarWriteResp_BuildHeader(p_txPacket, varsCount);
 }
 
-/******************************************************************************/
-/*! Batch - Batch Operation by ExtId Single TxRx Sequence */
-/******************************************************************************/
-static void Batch(MotorController_T * p_mc, MotPacket_BatchResp_T * p_txPacket, size_t * p_txSize, const MotPacket_BatchReq_T * p_rxPacket, size_t rxSize)
-{
-    (void)rxSize;
-    Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U);
-
-    // switch(p_rxPacket->ControlReq.ExtId)     // MotPacket_ControlReq_ParseId(p_monitorId, p_rxPacket);
-    // {
-    //     // case MOT_PACKET_CONTROL_RELEASE:             MotorController_User_SetReleaseThrottle(p_mc);                                     break;
-    //     case MOT_PACKET_CONTROL_RELEASE:             MotorController_User_SetCmdZero(p_mc);                                             break;
-    //     case MOT_PACKET_CONTROL_DIRECTION_FORWARD:     MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);    break;
-    //     case MOT_PACKET_CONTROL_DIRECTION_REVERSE:     MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);    break;
-    //     case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL:     MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);    break;
-    //         // case MOT_PACKET_CONTROL_DIRECTION_NEUTRAL:     MotorController_User_SetNeutral(p_mc);                                             break;
-    //     case MOT_PACKET_CONTROL_THROTTLE:             Motor_User_SetThrottleCmd(p_motor, p_rxPacket->ControlReq.ValueU16s[0U]);         break;
-    //     case MOT_PACKET_CONTROL_BRAKE:                 Motor_User_SetBrakeCmd(p_motor, p_rxPacket->ControlReq.ValueU16s[0U]);             break;
-
-    //         // case MOT_PACKET_MONITOR_SPEED: *p_txSize = MotPacket_MonitorResp_Speed_Build(p_txPacket, Motor_User_GetSpeed_FracS16(p_motor));                                                 break;
-    //         // case MOT_PACKET_MONITOR_I_FOC:
-    //         //     *p_txSize = MotPacket_MonitorResp_IFoc_Build
-    //         //     (
-    //         //         p_txPacket, FOC_GetIa(&p_motor->Foc), FOC_GetIb(&p_motor->Foc), FOC_GetIc(&p_motor->Foc),
-    //         //         FOC_GetIalpha(&p_motor->Foc), FOC_GetIbeta(&p_motor->Foc),
-    //         //         FOC_GetId(&p_motor->Foc), FOC_GetIq(&p_motor->Foc)
-    //         //     );
-    //         //     break;
-    //         // case MOT_PACKET_MONITOR_ADC_BATCH_MSB:
-    //         //     TxPacket_BuildMonitorAdcBatchMsb(p_mc, p_txPacket);
-    //         //     *p_txSize = MotPacket_BuildHeader(p_txPacket, MOT_PACKET_MONITOR_ADC_BATCH_MSB, 16U);
-    //         //     break;
-
-    //     // *p_txSize = MotPacket_InitUnitsResp_Build
-    //     // (
-    //     //     p_txPacket,
-    //     //     Motor_User_GetSpeedFeedbackRef_Rpm(p_motor), MotorController_User_GetIMax(p_mc), MotorController_User_GetVSource(p_mc), /* Frac16 conversions */
-    //     //     p_mc->VMonitorSource.CONFIG.UNITS_R1, p_mc->VMonitorSource.CONFIG.UNITS_R2,    /* Adcu <-> Volts conversions */
-    //     //     p_mc->VMonitorSense.CONFIG.UNITS_R1, p_mc->VMonitorSense.CONFIG.UNITS_R2,
-    //     //     p_mc->VMonitorAcc.CONFIG.UNITS_R1, p_mc->VMonitorAcc.CONFIG.UNITS_R2
-    //     // );
-
-    //     default: break;
-    // }
-
-    // *p_txSize = MotPacket_ControlResp_MainStatus_Build(p_txPacket, 0U);
-}
-
-// static void TxPacket_BuildMonitorAdcBatchMsb(MotorController_T * p_mc, MotPacket_MonitorResp_T * p_txPacket)
-// {
-//     Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
-//     p_txPacket->Monitor.ValueU8s[0U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_VSOURCE);
-//     p_txPacket->Monitor.ValueU8s[1U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_VACC);
-//     p_txPacket->Monitor.ValueU8s[2U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_VSENSE);
-//     p_txPacket->Monitor.ValueU8s[3U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_HEAT_PCB);
-//     p_txPacket->Monitor.ValueU8s[4U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP);
-//     p_txPacket->Monitor.ValueU8s[5U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT);
-//     p_txPacket->Monitor.ValueU8s[6U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_THROTTLE);
-//     p_txPacket->Monitor.ValueU8s[7U] = MotorController_User_GetAdcu_Msb8(p_mc, MOT_ANALOG_CHANNEL_BRAKE);
-//     p_txPacket->Monitor.ValueU8s[8U] = Motor_User_GetAdcu_Msb8(p_motor, MOTOR_ANALOG_CHANNEL_VA);
-//     p_txPacket->Monitor.ValueU8s[9U] = Motor_User_GetAdcu_Msb8(p_motor, MOTOR_ANALOG_CHANNEL_VB);
-//     p_txPacket->Monitor.ValueU8s[10U] = Motor_User_GetAdcu_Msb8(p_motor, MOTOR_ANALOG_CHANNEL_VC);
-//     p_txPacket->Monitor.ValueU8s[11U] = Motor_User_GetAdcu_Msb8(p_motor, MOTOR_ANALOG_CHANNEL_IA);
-//     p_txPacket->Monitor.ValueU8s[12U] = Motor_User_GetAdcu_Msb8(p_motor, MOTOR_ANALOG_CHANNEL_IB);
-//     p_txPacket->Monitor.ValueU8s[13U] = Motor_User_GetAdcu_Msb8(p_motor, MOTOR_ANALOG_CHANNEL_IC);
-//     p_txPacket->Monitor.ValueU8s[14U] = Motor_User_GetAdcu_Msb8(p_motor, MOTOR_ANALOG_CHANNEL_HEAT);
-//     p_txPacket->Monitor.ValueU8s[15U] = Motor_User_GetAdcu_Msb8(p_motor, MOTOR_ANALOG_CHANNEL_SIN);
-//     p_txPacket->Monitor.ValueU8s[16U] = Motor_User_GetAdcu_Msb8(p_motor, MOTOR_ANALOG_CHANNEL_COS);
-// }
-
-
-#if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
+// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 /******************************************************************************/
 /*! Stateful Read Data */
 /******************************************************************************/
-static Protocol_ReqCode_T ReadData
-(
-    MotProtocol_SubState_T * p_subState, void * p_appInterface,
-    MotPacket_T * p_txPacket, size_t * p_txSize,
-    const MotPacket_T * p_rxPacket, size_t rxSize
-)
-{
-    (void)rxSize;
-    (void)p_appInterface;
-    Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_AWAIT_PROCESS;
-    // MotPacket_HeaderStatus_T headerStatus = MOT_PACKET_HEADER_STATUS_OK;
-    uint16_t readSize;
+// static Protocol_ReqCode_T ReadData(MotorController_T * p_appInterface, Protocol_ReqInterface_T * args)
+// {
+//     MotProtocol_SubState_T * p_subState = args->p_SubState;
+//     Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_AWAIT_PROCESS;
+//     uint16_t readSize;
+//     switch(p_subState->StateId)
+//     {
+//         case 0U: /* Tx Ack handled by common Sync */
+//             p_subState->DataModeAddress = MotPacket_ReadDataReq_ParseAddress((MotPacket_DataModeReq_T *)args->p_RxPacket);
+//             p_subState->DataModeSize = MotPacket_ReadDataReq_ParseSize((MotPacket_DataModeReq_T *)args->p_RxPacket);
+//             p_subState->StateId = 1U;
+//             args->TxSize = MotPacket_ReadDataResp_Build((MotPacket_DataModeResp_T *)p_txPacket, MOT_VAR_STATUS_OK);
+//             reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
+//             break;
+//         case 1U: /* Tx Data */
+//             if(p_subState->DataModeSize > 0U)
+//             {
+//                 //sequenceid*32 == data
+//                 readSize = (p_subState->DataModeSize > 32U) ? 32U : p_subState->DataModeSize;
+//                 args->TxSize = MotPacket_DataRead_BuildStatus((MotPacket_DataMode_T *)args->p_TxPacket, 0, 0);
+//                 args->TxSize = MotPacket_DataRead_BuildData((MotPacket_DataMode_T *)args->p_TxPacket, (uint8_t *)p_subState->DataModeAddress, readSize);
+//                 p_subState->DataModeSize -= readSize;
+//                 p_subState->DataModeAddress += readSize;
+//                 reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
+//             }
+//             else /* (p_subState->DataModeSize == 0U) */
+//             {
+//                 args->TxSize = MotPacket_ReadDataResp_Build((MotPacket_DataMode_T *)args->p_TxPacket, MOT_VAR_STATUS_OK);
+//                 reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+//             }
+//         default:
+//             break;
+//     }
 
-    switch(p_subState->StateId)
-    {
-        case 0U: /* Tx Ack handled by common Sync */
-            // p_respPayload = (MotPacket_ReadDataResp_Payload_T *)p_rxPacket->Payload;
-            // p_subState->p_DataModeAddress = (uint8_t *)p_rxPacket->ReadDataReq.AddressStart;
-            // p_subState->DataModeSize = p_rxPacket->ReadDataReq.SizeBytes;
-            MotPacket_ReadDataReq_Parse(&p_subState->DataModeAddress, &p_subState->DataModeSize, (MotPacket_ReadDataReq_T *)p_rxPacket);
-            p_subState->StateId = 1U;
-            *p_txSize = MotPacket_ReadDataResp_Build((MotPacket_ReadDataResp_T *)p_txPacket, MOT_PACKET_HEADER_STATUS_OK);
-            reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_SYNC;
-            break;
+//     return reqCode;
+// }
 
-        case 1U: /* Tx Data */
-            if(p_subState->DataModeSize > 0U)
-            {
-                //sequenceid*32 == data
-                readSize = (p_subState->DataModeSize > 32U) ? 32U : p_subState->DataModeSize;
-                *p_txSize = MotPacket_DataPacket_Build((MotPacket_DataPacket_T *)p_txPacket, (uint8_t *)p_subState->DataModeAddress, readSize);
-                p_subState->DataModeSize -= readSize;
-                p_subState->DataModeAddress += readSize;
-                reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_SYNC;
-            }
-            else /* (p_subState->DataModeSize == 0U) */
-            {
-                *p_txSize = MotPacket_ReadDataResp_Build((MotPacket_ReadDataResp_T *)p_txPacket, MOT_PACKET_HEADER_STATUS_OK);
-                reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
-            }
+// /******************************************************************************/
+// /*! Stateful Write Data */
+// /******************************************************************************/
+// static Protocol_ReqCode_T WriteData_Blocking(MotorController_T * p_appInterface, Protocol_ReqInterface_T * args)
+// {
+//     MotProtocol_SubState_T * const p_subState = args->p_SubState;
+//     Flash_T * const p_flash = p_appInterface->CONFIG.P_FLASH;
+//     Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_AWAIT_PROCESS;
+//     Flash_Status_T flashStatus;
+//     const uint8_t * p_writeData; /* DataPacket Payload */
+//     uint8_t writeSize; /* DataPacket Size */
 
-        default:
-            break;
-    }
+//     switch(p_subState->StateId)
+//     {
+//         case 0U: /* Tx Ack handled by Common Req Sync */
+//             p_subState->DataModeAddress = MotPacket_WriteDataReq_ParseAddress((MotPacket_DataModeReq_T *)args->p_RxPacket);
+//             p_subState->DataModeSize = MotPacket_WriteDataReq_ParseSize((MotPacket_DataModeReq_T *)args->p_RxPacket);
+//             /* use full set to check boundaries. bytecount will be overwritten */
+//             flashStatus = Flash_SetWrite(p_flash, (uint8_t *)p_subState->DataModeAddress, 0U, p_subState->DataModeSize);
+//             p_subState->StateId = 1U;
+//             args->TxSize = MotPacket_WriteDataResp_Build((MotPacket_DataModeResp_T *)p_txPacket, flashStatus);
+//             reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
+//             break;
 
-    return reqCode;
-}
+//         case 1U: /* Write Data - rxPacket is DataPacket */
+//             if(MotPacket_DataWrite_ParseChecksum((const MotPacket_DataMode_T *)args->p_RxPacket) == true)
+//             {
+//                 writeSize = MotPacket_DataWrite_ParseDataSize((const MotPacket_DataMode_T *)args->p_RxPacket);
+//                 p_writeData = MotPacket_DataWrite_ParsePtrData((const MotPacket_DataMode_T *)args->p_RxPacket);
+//             }
+//             if(p_subState->DataModeSize >= writeSize)
+//             {
+//                 flashStatus = Flash_ContinueWrite_Blocking(p_flash, p_writeData, writeSize);
+//                 if(flashStatus == FLASH_STATUS_SUCCESS)
+//                 {
+//                     p_subState->DataModeSize -= writeSize;
+//                     args->TxSize = 0U;
+//                     reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE; /* need separate state for tx response after tx ack */
+//                 }
+//                 else
+//                 {
+//                     args->TxSize = MotPacket_WriteDataResp_Build((MotPacket_DataModeResp_T *)p_txPacket, flashStatus);
+//                     reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+//                 }
+//             }
+//             else
+//             {
+//                 args->TxSize = MotPacket_WriteDataResp_Build((MotPacket_DataModeResp_T *)p_txPacket, MOT_VAR_STATUS_OK);
+//                 reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+//             }
+//             break;
 
-/******************************************************************************/
-/*! Stateful Write Data */
-/******************************************************************************/
-static Protocol_ReqCode_T WriteData_Blocking
-(
-    MotProtocol_SubState_T * p_subState, MotorController_T * p_appInterface,
-    MotPacket_WriteDataResp_T * p_txPacket, size_t * p_txSize,
-    const MotPacket_WriteDataReq_T * p_rxPacket, size_t rxSize
-)
-{
-    (void)rxSize;
-    Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_AWAIT_PROCESS;
-    Flash_T * p_flash = p_appInterface->CONFIG.P_FLASH;
-    Flash_Status_T flashStatus;
-    MotPacket_HeaderStatus_T headerStatus;
-    const uint8_t * p_writeData; /* DataPacket Payload */
-    uint8_t writeSize; /* DataPacket Size */
+//         default:
+//             break;
+//     }
 
-    switch(p_subState->StateId)
-    {
-        case 0U: /* Tx Ack handled by Common Req Sync */
-            MotPacket_WriteDataReq_Parse(&p_subState->DataModeAddress, &p_subState->DataModeSize, (MotPacket_WriteDataReq_T *)p_rxPacket);
-            flashStatus = Flash_SetWrite(p_flash, (uint8_t *)p_subState->DataModeAddress, 0U, p_subState->DataModeSize);  //use full set to check boundaries. bytecount will be overwritten
-            headerStatus = (flashStatus == FLASH_STATUS_SUCCESS) ? MOT_PACKET_HEADER_STATUS_OK : MOT_PACKET_HEADER_STATUS_ERROR;
-            // motPacketStatus = RemapFlashStatus(flashStatus);
-            // p_subState->DataModeSize = p_rxPacket->WriteDataReq.SizeBytes;
-            // p_subState->IsDataModeActive = true;
-            p_subState->StateId = 1U;
-            *p_txSize = MotPacket_WriteDataResp_Build((MotPacket_WriteDataResp_T *)p_txPacket, headerStatus);
-            reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_SYNC;
-            break;
-
-        case 1U: /* Await Data */
-            p_subState->StateId = 2U;
-            reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_EXT;
-            break;
-
-        case 2U: /* Write Data - rxPacket is DataPacket */
-            // writeSize = MotPacket_DataPacket_ParseDataLength((MotPacket_DataPacket_T *)p_rxPacket);
-            MotPacket_DataPacket_Parse(&p_writeData, &writeSize, (const MotPacket_DataPacket_T *)p_rxPacket);
-            if(p_subState->DataModeSize >= writeSize)
-            {
-                flashStatus = Flash_ContinueWrite_Blocking(p_flash, p_writeData, writeSize);
-                if(flashStatus == FLASH_STATUS_SUCCESS)
-                {
-                    p_subState->DataModeSize -= writeSize;
-                    // p_subState->DataPhaseBytes -= p_rxPacket->framingPacket.length;
-                    // if(p_subState->DataPhaseBytes > 0U) { p_subState->StateIndex = 1U; }
-                    // else { p_subState->StateIndex = 3U; }
-                    reqCode = PROTOCOL_REQ_CODE_TX_ACK; /* need separate state for tx response after tx ack */
-                }
-                else
-                {
-                    // *p_txSize = NxpBootPacket_BuildGenericResponse(p_txPacket, RemapFlashStatus(flashStatus), kCommandTag_WriteMemory);
-                    // *p_txSize += NxpBootPacket_BuildFraming(p_txPacket, kFramingPacketType_Command, *p_txSize);
-                    reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
-                }
-            }
-            else
-            {
-                // *p_txSize = NxpBootPacket_BuildGenericResponse(p_txPacket, kStatus_MemoryWriteFailed, kCommandTag_WriteMemory);
-                // *p_txSize += NxpBootPacket_BuildFraming(p_txPacket, kFramingPacketType_Command, *p_txSize);
-                reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
-            }
-            break;
-
-        case 3U: /* Tx Final Response */ /* Rx Ack handled by Common Req Sync */
-            // p_subState->IsDataModeActive = false;
-            *p_txSize = MotPacket_WriteDataResp_Build((MotPacket_WriteDataResp_T *)p_txPacket, p_subState->WriteModeStatus);
-            reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
-            // *p_txSize = NxpBootPacket_BuildGenericResponse(p_txPacket, kStatus_Success, kCommandTag_WriteMemory);
-            // *p_txSize += NxpBootPacket_BuildFraming(p_txPacket, kFramingPacketType_Command, *p_txSize);
-            // reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
-            break;
-
-        default:
-            break;
-    }
-
-    return reqCode;
-}
-#endif
+//     return reqCode;
+// }
+// #endif
 
 /******************************************************************************/
 /*! Req Table */
 /******************************************************************************/
-#define REQ_SYNC_DEFAULT PROTOCOL_SYNC(1U, 1U, 3U)
+#define REQ_SYNC_DATA_MODE PROTOCOL_SYNC_EXT(1U, 1U, 1U, 1U, 3U)
 
 static const Protocol_Req_T REQ_TABLE[] =
 {
-    PROTOCOL_REQ(MOT_PACKET_PING,            Ping,               0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_STOP_ALL,        StopAll,            0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_VERSION,         Version,            0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_SAVE_NVM,        SaveNvm_Blocking,   0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_WRITE_VAR,       WriteVar,           0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_READ_VAR,        ReadVar,            0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_WRITE_VARS16,    WriteVars16,        0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_READ_VARS16,     ReadVars16,         0U,     PROTOCOL_SYNC_DISABLE),
-    // PROTOCOL_REQ(MOT_PACKET_WRITE_VARS_FLEX,    WriteVarsFlex,        0U,     PROTOCOL_SYNC_DISABLE),
-    // PROTOCOL_REQ(MOT_PACKET_READ_VARS_FLEX,     ReadVarsFlex,         0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_EXT_CMD,         Batch,              0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_PING,           Ping,               0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_STOP_ALL,       StopAll,            0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_VERSION,        Version,            0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_SAVE_PARAMS,    SaveNvm_Blocking,   0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_VAR_WRITE,      VarWrite,           0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_VAR_READ,       VarRead,            0U,     PROTOCOL_SYNC_DISABLE),
 #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-    PROTOCOL_REQ(MOT_PACKET_DATA_MODE_READ,      0U,     ReadData,               REQ_SYNC_DEFAULT),
-    PROTOCOL_REQ(MOT_PACKET_DATA_MODE_WRITE,     0U,     WriteData_Blocking,     REQ_SYNC_DEFAULT),
+    // PROTOCOL_REQ(MOT_PACKET_DATA_MODE_READ,      0U,     ReadData,               REQ_SYNC_DATA_MODE),
+    // PROTOCOL_REQ(MOT_PACKET_DATA_MODE_WRITE,     0U,     WriteData_Blocking,     REQ_SYNC_DATA_MODE),
 #endif
+    // PROTOCOL_REQ(MOT_PACKET_WRITE_VAR,       WriteVar,           0U,     PROTOCOL_SYNC_DISABLE),
+    // PROTOCOL_REQ(MOT_PACKET_READ_VAR,        ReadVar,            0U,     PROTOCOL_SYNC_DISABLE),
 };
 
 const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
@@ -395,3 +254,26 @@ const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
     .REQ_TIMEOUT = MOT_PROTOCOL_TIMEOUT_REQ,
     .BAUD_RATE_DEFAULT = MOT_PROTOCOL_BAUD_RATE_DEFAULT,
 };
+
+
+// /******************************************************************************/
+// /*! Read Single Var */
+// /******************************************************************************/
+// static uint8_t ReadVar(MotorController_T * p_mc, MotPacket_ReadVarResp_T * p_txPacket, const MotPacket_ReadVarReq_T * p_rxPacket)
+// {
+//
+//     return MotPacket_ReadVarResp_Build(p_txPacket, MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_ReadVarReq_ParseVarId(p_rxPacket)));
+// }
+
+// /******************************************************************************/
+// /*! Write Single Var */
+// /******************************************************************************/
+// static uint8_t WriteVar(MotorController_T * p_mc, MotPacket_WriteVarResp_T * p_txPacket, const MotPacket_WriteVarReq_T * p_rxPacket)
+// {
+//
+//     MotPacket_Status_T status = MOT_VAR_STATUS_OK;
+//     if(MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_WriteVarReq_ParseVarId(p_rxPacket), MotPacket_WriteVarReq_ParseVarValue(p_rxPacket)) == 0U)
+//         { status = MOT_VAR_STATUS_ERROR; }
+//     return MotPacket_WriteVarResp_Build(p_txPacket, status);
+// }
+

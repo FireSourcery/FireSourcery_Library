@@ -113,7 +113,7 @@ int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t sc
     */
     for(uint16_t iDivisor = 1U; scalar >= iDivisor; iDivisor *= 4U)     /* scalar / iDivisor > 0U */
     {
-        if(factor < INT32_MAX / scalar * iDivisor) /* (factor < INT32_MAX / (scalar / iDivisor)) */
+        if(factor < INT32_MAX / scalar * iDivisor) /* (factor * (scalar / iDivisor) < INT32_MAX  ) */
         {
             result = Linear_Function(p_linear, x * scalar / iDivisor) * iDivisor;
             break;

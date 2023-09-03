@@ -44,9 +44,9 @@
     @brief  Vabc
 */
 /******************************************************************************/
-void Motor_Analog_CaptureVa(Motor_T * p_motor){    Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVa, 0U/* Motor_SixStep_CaptureBemfA */);}
-void Motor_Analog_CaptureVb(Motor_T * p_motor){    Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVb, 0U/* Motor_SixStep_CaptureBemfB */);}
-void Motor_Analog_CaptureVc(Motor_T * p_motor){    Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVc, 0U/* Motor_SixStep_CaptureBemfC */);}
+void Motor_Analog_CaptureVa(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVa, 0U/* Motor_SixStep_CaptureBemfA */); }
+void Motor_Analog_CaptureVb(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVb, 0U/* Motor_SixStep_CaptureBemfB */); }
+void Motor_Analog_CaptureVc(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVc, 0U/* Motor_SixStep_CaptureBemfC */); }
 
 /******************************************************************************/
 /*!
@@ -63,27 +63,59 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor) { Motor_ProcCommutationMode(p_mot
     @brief
 */
 /******************************************************************************/
+// void Motor_FOC_EnqueueVabc(Motor_T * p_motor)
+// {
+// #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
+//     if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
+//     {
+//         AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+//         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
+//         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
+//         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
+//         AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+//     }
+// #else
+//     (void)p_motor;
+// #endif
+// }
 
-//static inline void Motor_Analog_Proc(Motor_T * p_motor)
-//{
+// void Motor_FOC_EnqueueIabc(Motor_T * p_motor)
+// {
+//     if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
+//     {
+//         AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+//         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
+//         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
+// #if defined(CONFIG_MOTOR_I_SENSORS_ABC)
+//         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
+// #endif
+//         AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+
+//         // AnalogN_SetChannelConversion(p_motor->CONFIG.P_ANALOG_N, MOTOR_ANALOG_CHANNEL_VA);
+//     }
+// }
+
+
+static inline void Motor_Analog_Proc(Motor_T * p_motor)
+{
 //    AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_PWM);
-//
+
 //    if (p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
 //    {
 //        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
 //        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 //    }
-////    switch(p_motor->AnalogCmd)
-////    {
-////        case FOC_I_ABC :
-////            break;
-////
-////        case FOC_VBEMF :
-////            break;
-////
-////        default :
-////            break;
-////    }
-//
+   switch(p_motor->AnalogCmd)
+   {
+    //    case FOC_I_ABC :
+    //        break;
+
+    //    case FOC_VBEMF :
+    //        break;
+
+    //    default :
+    //        break;
+   }
+
 //    AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_PWM);
-//}
+}

@@ -33,7 +33,7 @@
 /*
     Frac16
     Shift 14 to allow over saturation f([X0-2*(XRef-X0):X0+2*(XRef-X0)]) == [Y0-2*(YRef-Y0):Y0+2*(YRef-Y0)] before overflow
-        i.e 2x input interval, while retaining sign bit, before overflow.
+        i.e 2x input interval (XRef-X0), before overflow, while retaining sign bit.
 */
 #define LINEAR_FRAC16_SHIFT 14U
 

@@ -34,12 +34,14 @@
 #include <stdint.h>
 
 /*
-    Motor[0] by default
-    Group 0
+
 */
 typedef enum
 {
-    MOT_VAR_NULL,
+    MOT_VAR_ZERO,
+    MOT_VAR_MILLIS,
+    MOT_VAR_DEBUG,
+
     MOT_VAR_SPEED,             // FracU16,
     MOT_VAR_I_PHASE,           // FracU16, may over saturate
     MOT_VAR_V_PHASE,           // FracU16, may over saturate
@@ -48,8 +50,7 @@ typedef enum
     MOT_VAR_MOTOR_STATE,           // Value enum:
     MOT_VAR_MOTOR_STATUS_FLAGS,    // Includes Fault and Warning Flags
     MOT_VAR_MOTOR_FAULT_FLAGS,
-    MOT_VAR_MOTOR_HEAT,
-    // MOT_VAR_MOTOR_HEAT_DEG_C = 10U,
+    MOT_VAR_MOTOR_HEAT, // MOT_VAR_MOTOR_HEAT_DEG_C = 10U,
 
     // MOT_VAR_ELECTRICAL_ANGLE  = 7U, // Degrees 16
     // MOT_VAR_MECHANICAL_ANGLE  = 7U,
@@ -70,20 +71,12 @@ typedef enum
 
     MOT_VAR_ENCODER_FREQ,
     // MOT_VAR_ENCODER_   ,
-
     // MOT_VAR_PID_OUT  ,
-}
-MotVarId_RealTimeMotor_T;
 
-/*
-    Motor Controller / Motor Global
-    Group 1
-*/
-typedef enum
-{
-    MOT_VAR_MILLIS,
-    MOT_VAR_DEBUG,
-
+    /*
+        Motor Controller / Motor Global
+        Group 1
+    */
     MOT_VAR_MC_STATE,       // Value enum: 0:INIT, 1:STOP, 2:RUN, 3:FAULT
     MOT_VAR_MC_STATUS_FLAGS,
     MOT_VAR_MC_ERROR_FLAGS,
@@ -105,7 +98,7 @@ typedef enum
     // MOT_VAR_TX_PACKET_COUNT = 254U,
     // MOT_VAR_RX_PACKET_COUNT = 255U,
 }
-MotVarId_RealTimeGlobal_T;
+MotVarId_RealTimeMonitor_T;
 
 /*
     Group 2
@@ -158,13 +151,16 @@ typedef enum
     MOT_VAR_DISABLE_CONTROL,
     MOT_VAR_CLEAR_FAULT,
     MOT_VAR_SET_FAULT,
+
+    /* Async Blocking Operations */
     MOT_VAR_CALIBRATE_SENSOR,
+    MOT_VAR_SAVE_NVM,
     // MOT_VAR_CALIBRATE_ADC       = 515U,
     // MOT_VAR_CALIBRATE           = 516U,     // Value enum: ADC, Sensor,
 
     MOT_VAR_BEEP,     // Beep
 }
-MotVarId_RealTimeCmds_T;
+MotVarId_RealTimeControl_T;
 
 /*
     Group 3
@@ -428,11 +424,11 @@ MotVarId_ParamsGlobal_T;
 
 typedef enum
 {
-    MOT_VAR_ID_PREFIX_REAL_TIME_MOTOR = 0U,
-    MOT_VAR_ID_PREFIX_REAL_TIME_GLOBAL = 1U,
-    MOT_VAR_ID_PREFIX_REAL_TIME_CMD = 2U,
+    MOT_VAR_ID_PREFIX_REAL_TIME_MONITOR = 0U,
+    MOT_VAR_ID_PREFIX_REAL_TIME_CONTROL = 2U,
     MOT_VAR_ID_PREFIX_PARAMS_MOTOR = 3U,
     MOT_VAR_ID_PREFIX_PARAMS_GLOBAL = 4U,
+    MOT_VAR_ID_PREFIX_4 = 5U,
     MOT_VAR_ID_PREFIX_5 = 5U,
     MOT_VAR_ID_PREFIX_6 = 6U,
     MOT_VAR_ID_PREFIX_7 = 7U,
@@ -443,10 +439,10 @@ typedef union
 {
     struct
     {
-        uint32_t Prefix     : 3; /* 8 Sets/Pages, repeatable id  */
-        uint32_t Units      : 2; /* Data Option */
-        uint32_t Motor      : 2; /* Allocate for 4 motors */
-        uint32_t OptResv    : 1;
+        uint32_t Prefix     : 2;    /* 8 Sets/Pages, repeatable id  */
+        uint32_t Alt        : 2;    /* Data Option */
+        uint32_t Motor      : 2;    /* Allocate for 4 motors */
+        uint32_t OptResv    : 2;
     };
     uint8_t Byte;
 }
@@ -457,32 +453,16 @@ typedef union
 {
     struct
     {
-        uint8_t Id;     /* BaseId */
-        MotVarId_Arg_T Arg;    /*   *///check is this packed
+        uint8_t Id8;     /* BaseId MotVarId_Monitor_T, MotVarId_Control_T,  MotVarId_ParamsMotor_T, MotVarId_ParamsGlobal_T */
+        uint8_t Arg;    /*   */
     };
     struct
     {
-        uint32_t IdBase     : 8;
-        uint32_t IdPrefix   : 3;
-        uint32_t Units      : 2; /* Data Option */
-        uint32_t Motor      : 2; /* Allocate for 4 motors */
-        uint32_t OptResv    : 1;
+        uint32_t Id10       : 10;
+        uint32_t Arg6       : 6;
     };
-    uint16_t Reg;
+    uint16_t Word16;
 }
 MotVarId_T;
-
-
-// typedef enum MotVarSize_Tag
-// {
-//     MOT_VAR_SIZE_16 = 0U,
-//     MOT_VAR_SIZE_32 = 1U,
-// }
-// MotVarSize_T;
-
-// uint8_t MotVarId_SizeOf(MotVarId_T varId)
-// {
-
-// }
 
 #endif

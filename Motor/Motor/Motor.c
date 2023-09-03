@@ -372,7 +372,7 @@ static void SetFeedbackILimitsCcw(Motor_T * p_motor)
 {
     p_motor->ILimitCcw_FracS16 = p_motor->ILimitMotoring_ScalarU16 / 2;
     p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitGenerating_ScalarU16 / 2;
-    if(/* (p_motor->ControlFeedbackMode.Speed == 1U) && */ (p_motor->ControlFeedbackMode.Current == 1U))      /* Only when SpeedPid Output is I */
+    if((p_motor->ControlFeedbackMode.Speed == 1U) && (p_motor->ControlFeedbackMode.Current == 1U))      /* Only when SpeedPid Output is I */
         { PID_SetOutputLimits(&p_motor->PidSpeed, (int16_t)0 - p_motor->ILimitGenerating_ScalarU16 / 2, p_motor->ILimitMotoring_ScalarU16 / 2); }
 }
 
@@ -380,7 +380,7 @@ static void SetFeedbackILimitsCw(Motor_T * p_motor)
 {
     p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitMotoring_ScalarU16 / 2;
     p_motor->ILimitCcw_FracS16 = p_motor->ILimitGenerating_ScalarU16 / 2;
-    if(/* (p_motor->ControlFeedbackMode.Speed == 1U) && */ (p_motor->ControlFeedbackMode.Current == 1U))
+    if((p_motor->ControlFeedbackMode.Speed == 1U) && (p_motor->ControlFeedbackMode.Current == 1U))
         { PID_SetOutputLimits(&p_motor->PidSpeed, (int16_t)0 - p_motor->ILimitMotoring_ScalarU16 / 2, p_motor->ILimitGenerating_ScalarU16 / 2); }
 }
 
@@ -425,7 +425,7 @@ void Motor_SetFeedbackLimitsCcw(Motor_T * p_motor)
 {
     SetFeedbackSpeedLimitsCcw(p_motor);
     SetFeedbackILimitsCcw(p_motor);
-    if(/* (p_motor->ControlFeedbackMode.Speed == 1U) && */ (p_motor->ControlFeedbackMode.Current == 0U))
+    if((p_motor->ControlFeedbackMode.Speed == 1U) && (p_motor->ControlFeedbackMode.Current == 0U))
         { PID_SetOutputLimits(&p_motor->PidSpeed, 0, INT16_MAX); }     /* Speed PID Output is V */
 }
 
@@ -433,7 +433,7 @@ void Motor_SetFeedbackLimitsCw(Motor_T * p_motor)
 {
     SetFeedbackSpeedLimitsCw(p_motor);
     SetFeedbackILimitsCw(p_motor);
-    if(/* (p_motor->ControlFeedbackMode.Speed == 1U) && */ (p_motor->ControlFeedbackMode.Current == 0U))
+    if((p_motor->ControlFeedbackMode.Speed == 1U) && (p_motor->ControlFeedbackMode.Current == 0U))
         { PID_SetOutputLimits(&p_motor->PidSpeed, INT16_MIN, 0); }
 }
 

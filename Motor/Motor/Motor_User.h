@@ -135,9 +135,9 @@ static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackModeFlags(Motor_T
 static inline uint16_t Motor_User_GetActiveILimit(Motor_T * p_motor)                                { return p_motor->ILimitActiveSentinel_ScalarU16; }
 static inline uint16_t Motor_User_GetActiveSpeedLimit(Motor_T * p_motor)                            { return p_motor->SpeedLimitDirect_ScalarU16; }
 
-typedef int32_t(*Motor_CommutationModeFunctionInt32_T)(Motor_T * p_motor);
+typedef int32_t(*Motor_FunctionInt32_T)(Motor_T * p_motor);
 
-static inline int32_t Motor_GetCommutationModeInt32(Motor_T * p_motor, Motor_CommutationModeFunctionInt32_T focFunction, Motor_CommutationModeFunctionInt32_T sixStepFunction)
+static inline int32_t Motor_GetCommutationModeInt32(Motor_T * p_motor, Motor_FunctionInt32_T focFunction, Motor_FunctionInt32_T sixStepFunction)
 {
 #if     defined(CONFIG_MOTOR_SIX_STEP_ENABLE) && defined(CONFIG_MOTOR_FOC_ENABLE)
     int32_t value32;

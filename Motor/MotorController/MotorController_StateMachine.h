@@ -50,10 +50,10 @@ typedef enum MotorController_StateMachine_Input_Tag
     MCSM_INPUT_BRAKE,
     MCSM_INPUT_ZERO,                /* Release Control (On Zero Throttle/BraKe), Continue Zero Input in Direction Fwd/Rev */
     MCSM_INPUT_CMD,
+    MCSM_INPUT_CALIBRATION,            /* Blocking and slow functions */
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
     MCSM_INPUT_SERVO,
 #endif
-    MCSM_INPUT_CALIBRATION,            /* Blocking and slow functions */
 }
 MotorController_StateMachine_Input_T;
 
@@ -62,10 +62,10 @@ typedef enum MotorController_StateMachine_StateId_Tag
     MCSM_STATE_ID_INIT,
     MCSM_STATE_ID_STOP,
     MCSM_STATE_ID_RUN,
+    MCSM_STATE_ID_FAULT,
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
     MCSM_STATE_ID_SERVO,
 #endif
-    MCSM_STATE_ID_FAULT,
 }
 MotorController_StateMachine_StateId_T;
 

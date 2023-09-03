@@ -54,24 +54,6 @@ static int32_t Scale16(uint16_t scalarU16, int32_t value) { return scalarU16 * v
     CmdValue (Ramp Target) and CmdMode selectively sync inputs for StateMachine
 */
 
-// static inline void _CheckSetCurrentLimitFeedback(Motor_T * p_motor)
-// {
-//     if((modeControl.Current == 0U) && Motor_FOC_CheckIOverThreshold(p_motor) == true) { modeControl.Current = 1U; }
-// }
-// static inline void _CheckSetSpeedLimitFeedback(Motor_T * p_motor)
-// {
-//     if((modeControl.Speed == 0U) && Motor_CheckSpeedOverThreshold(p_motor) == true) { modeControl.Speed = 1U; }
-// }
-
-//todo split super function
-// static inline Motor_FeedbackMode_T  CheckFeedbackModeId(Motor_T * p_motor, Motor_FeedbackModeId_T modeCmd)
-// {
-//     Motor_FeedbackMode_T modeControl = Motor_ConvertFeedbackModeId(modeCmd);
-//     if((modeControl.Speed == 0U) && Motor_CheckSpeedOverThreshold(p_motor) == true)     { modeControl.Speed = 1U; }
-//     if((modeControl.Current == 0U) && Motor_FOC_CheckIOverThreshold(p_motor) == true)   { modeControl.Current = 1U; }
-//     return modeControl;
-// }
-
 /*
     ControlFeedbackMode update: match Ramp and PID state to output
     Transition to Run State (Active Control)
@@ -90,7 +72,7 @@ void Motor_User_ActivateFeedbackMode(Motor_T * p_motor, Motor_FeedbackModeId_T m
         // modeControl = CheckFeedbackModeId(p_motor, modeCmd);
         modeControl = Motor_ConvertFeedbackModeId(modeCmd);
 
-        if(p_motor->ControlFeedbackMode.State != modeControl.State)
+        if(p_motor->ControlFeedbackMode.State != modeControl.State) //todo
         {
             Critical_Enter(); /* Block PWM Thread, do not proc new flags before matching output with StateMachine */
             p_motor->ControlFeedbackMode.State = modeControl.State;
@@ -118,7 +100,7 @@ void Motor_User_ActivateFeedbackMode(Motor_T * p_motor, Motor_FeedbackModeId_T m
 
 /*
     Sets Ramp Target
-    Ramp Proc interrupt only update rampvalue?
+    Ramp Proc interrupt only update rampvalue? RampTarget is safe from sync
 */
 void Motor_User_SetCmd(Motor_T * p_motor, int16_t userCmd)  { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_ConvertUserDirection(p_motor, userCmd)); }
 int32_t Motor_User_GetCmd(Motor_T * p_motor)                { return Motor_ConvertUserDirection(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
@@ -130,10 +112,6 @@ int32_t Motor_User_GetCmd(Motor_T * p_motor)                { return Motor_Conve
 /******************************************************************************/
 void Motor_User_SetVoltageMode(Motor_T * p_motor)
 {
-    // Motor_FeedbackMode_T modeControl = Motor_ConvertFeedbackModeId(modeCmd);
-    // if((modeControl.Speed == 0U) && Motor_CheckSpeedOverThreshold(p_motor) == true)      { modeControl.Speed = 1U; }
-    // if((modeControl.Current == 0U) && Motor_FOC_CheckIOverThreshold(p_motor) == true)    { modeControl.Current = 1U; }
-    // return modeControl;
     Motor_User_ActivateFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE);
 }
 

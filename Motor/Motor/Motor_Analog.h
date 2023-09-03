@@ -24,7 +24,7 @@
 /*!
     @file   MotorAnalog.h
     @author FireSourcery
-    @brief
+    @brief  Analog functions, require dependencies to map call back
     @version V0
 */
 /******************************************************************************/

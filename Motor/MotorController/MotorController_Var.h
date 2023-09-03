@@ -32,9 +32,24 @@
 #define MOTOR_CONTROLLER_VAR_H
 
 #include "MotorController.h"
-#include "Motor/MotProtocol/MotVarId.h"
+#include "MotVarId.h"
+
+typedef enum MotPacket_Status_Tag
+{
+    MOT_VAR_STATUS_OK = 0x00U,
+    MOT_VAR_STATUS_ERROR = 0x01U,
+    MOT_VAR_STATUS_ERROR_READ_ONLY = 0x11U,
+    MOT_VAR_STATUS_ERROR_INVALID_ID = 0x12U,
+    MOT_VAR_STATUS_RESERVED = 0xFFU,
+}
+MotVar_Status_T;
+
+typedef union { uint32_t Unsigned; int32_t Signed; } var32_t;
+typedef union { uint16_t Unsigned; int16_t Signed; } var16_t;
+typedef union { uint8_t Unsigned; int8_t Signed; } var8_t;
+
 
 extern int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId);
-extern uint8_t MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T varId, int32_t varValue);
+extern MotVar_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T varId, int32_t varValue);
 
 #endif

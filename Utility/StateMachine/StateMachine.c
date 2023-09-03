@@ -165,8 +165,10 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 /******************************************************************************/
 /*
     Synchronous Machine
-    User Input proc during Synchronous State Update Proc
-    proc last set input, always single threaded proc
+    Synchronous State Update - ProcState synchronous to timer
+    Synchronous Proc User Input - Async user inputs proc synchronously during ProcState
+
+    Proc last set input, always single threaded proc, inputs may overwrite
     Does not need Critical Section if Proc thread is higher priority than Input Thread
 */
 /******************************************************************************/
@@ -193,7 +195,9 @@ bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_in
 /******************************************************************************/
 /*
     Asynchronous Machine
-    User input may change state immediately, optionally implement periodic output
+    Async user input may change state immediately,
+    optionally implement periodic ProcState
+
     Need Critical section to prevent ProcState state transition in between checking input and proc input
     User may selective implement critical in calling layer, if protection not require for all inputs
 */
@@ -218,7 +222,7 @@ void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine)
 }
 
 /*
-    Optionally run without peroidic proc function. Use State Function as common output.
+    Optionally run without periodic proc function. Use State Function as common output.
     need critical if inputs on different threads
 */
 bool StateMachine_Async_Proc(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue)
@@ -242,8 +246,7 @@ bool StateMachine_Async_Proc(StateMachine_T * p_stateMachine, statemachine_input
 /******************************************************************************/
 void StateMachine_Proc(StateMachine_T * p_stateMachine)
 {
-    ProcState(p_stateMachine);
-    // StateMachine_Sync_Proc(p_stateMachine);
+    StateMachine_Sync_Proc(p_stateMachine);
 }
 
 bool StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue)

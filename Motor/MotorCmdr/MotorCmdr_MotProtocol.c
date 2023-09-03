@@ -180,7 +180,7 @@ static const Protocol_Req_T REQ_TABLE[] =
     PROTOCOL_REQ_DEFINE(MOT_PACKET_STOP_ALL,             StopAll_ParseResp,         0U,     PROTOCOL_SYNC_ID_DISABLE),  //todo sync set wait for ack, retx if resp is nack
     PROTOCOL_REQ_DEFINE(MOT_PACKET_READ_VAR,             ReadVar_ParseResp,         0U,     PROTOCOL_SYNC_ID_DISABLE),
     PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VAR,             WriteVar_ParseResp,     0U,     PROTOCOL_SYNC_ID_DISABLE),
-    PROTOCOL_REQ_DEFINE(MOT_PACKET_SAVE_NVM,             SaveNvm_ParseResp,         0U,     PROTOCOL_SYNC_ID_DISABLE),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_SAVE_PARAMS,             SaveNvm_ParseResp,         0U,     PROTOCOL_SYNC_ID_DISABLE),
     // PROTOCOL_REQ_DEFINE(MOT_PACKET_INIT_UNITS,             InitUnits_ParseResp,     0U,     PROTOCOL_SYNC_ID_DISABLE),
     // PROTOCOL_REQ_DEFINE(MOT_PACKET_INIT_UNITS,             0U,     InitUnits_ProcReqRespExt,     PROTOCOL_SYNC_ID_DISABLE), /todo statful
     // PROTOCOL_REQ_DEFINE(MOT_PACKET_CONTROL_TYPE,         Control_ParseResp,         0U,     PROTOCOL_SYNC_ID_DISABLE),
@@ -200,7 +200,7 @@ void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_
         case MOT_PACKET_STOP_ALL:             *p_txLength = MotPacket_StopReq_Build((MotPacket_StopReq_T *)p_txPacket);             break;
         case MOT_PACKET_READ_VAR:              *p_txLength = MotPacket_ReadVarReq_Build((MotPacket_ReadVarReq_T *)p_txPacket, p_app->MotorReadVarId); break;
         case MOT_PACKET_WRITE_VAR:             *p_txLength = MotPacket_WriteVarReq_Build((MotPacket_WriteVarReq_T *)p_txPacket, p_app->MotorWriteVarId, p_app->MotorWriteVarValue); break;
-        case MOT_PACKET_SAVE_NVM:             *p_txLength = MotPacket_SaveNvmReq_Build((MotPacket_SaveNvmReq_T *)p_txPacket);        break;
+        case MOT_PACKET_SAVE_PARAMS:             *p_txLength = MotPacket_SaveNvmReq_Build((MotPacket_SaveNvmReq_T *)p_txPacket);        break;
 
         // case MOT_PACKET_INIT_UNITS:         *p_txLength = MotPacket_InitUnitsReq_Build((MotPacket_InitUnitsReq_T *)p_txPacket);        break;
         case MOT_PACKET_REBOOT:                         break;
@@ -242,7 +242,7 @@ const Protocol_Specs_T MOTOR_CMDR_MOT_PROTOCOL_SPECS =
 
     .P_REQ_TABLE         = &REQ_TABLE[0U],
     .REQ_TABLE_LENGTH     = sizeof(REQ_TABLE)/sizeof(Protocol_Req_T),
-    .REQ_EXT_RESET         = (Protocol_ResetExt_T)MotProtocol_ResetSubState,
+    .REQ_EXT_RESET         = (Protocol_ResetReqState_T)MotProtocol_ResetSubState,
     .CMDR_BUILD_TX_REQ     = (Protocol_Cmdr_BuildTxReq_T)Cmdr_BuildTxReq,
 
     .RX_START_ID         = MOT_PACKET_START_BYTE,

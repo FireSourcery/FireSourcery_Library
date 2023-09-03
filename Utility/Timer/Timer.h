@@ -45,14 +45,24 @@ Timer_Config_T;
 typedef struct Timer_Tag
 {
     const Timer_Config_T CONFIG;
+    uint32_t TimeRef;
     uint32_t Period;                /* In Base Freq Ticks, 0 is Disable */
     bool IsOneShot;
-    uint32_t TimeRef;
     //     uint32_t OneShotCount;
     //     uint32_t PeriodN;            /* In Base Freq Ticks, 0 is Loop infinite */
     //     uint32_t PeriodNCounter;    /* In Base Freq Ticks, 0 is Disable */
 }
 Timer_T;
+
+/* Repeat Timer */
+typedef struct TimerN_Tag
+{
+    Timer_T Timer;
+    uint32_t OneShotCount;
+    uint32_t PeriodN;               /* In Base Freq Ticks, 0 is Loop infinite */
+    uint32_t PeriodNCounter;        /* In Base Freq Ticks, 0 is Disable */
+}
+TimerN_T;
 
 #define TIMER_INIT(p_Base, BaseFreq) { .CONFIG = {.P_BASE = p_Base, .BASE_FREQ = BaseFreq, }, }
 

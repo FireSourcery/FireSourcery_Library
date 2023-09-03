@@ -44,8 +44,9 @@ typedef struct MotProtocol_SubState_Tag
     uint8_t StateId;
     uint32_t DataModeAddress;
     uint16_t DataModeSize;
+    uint16_t SequenceIndex;
     bool IsDataModeActive;
-    MotPacket_HeaderStatus_T WriteModeStatus;
+    uint16_t WriteModeStatus;
 }
 MotProtocol_SubState_T;
 
@@ -53,6 +54,6 @@ static inline void MotProtocol_ResetSubState(MotProtocol_SubState_T * p_subState
 
 extern void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, Protocol_TxSyncId_T txId);
 extern void MotProtocol_ResetSubState(MotProtocol_SubState_T * p_subState);
-extern Protocol_RxCode_T MotProtocol_ParseRxMeta(protocol_reqid_t * p_reqId, size_t * p_rxRemaining, const MotPacket_T * p_rxPacket, size_t rxCount);
+extern Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, size_t rxCount);
 
 #endif

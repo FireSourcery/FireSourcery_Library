@@ -60,10 +60,10 @@ typedef enum Flash_Operation_Tag
 Flash_Operation_T;
 
 typedef NvMemory_Status_T Flash_Status_T;
-// /*
-//     Alias for NvMemory Status
-// */
-// enum
+/*
+    Alias for NvMemory Status
+*/
+// enum Flash_Status_Alias_Tag
 // {
 //     FLASH_STATUS_SUCCESS = NV_MEMORY_STATUS_SUCCESS,
 //     FLASH_STATUS_PROCESSING = NV_MEMORY_STATUS_PROCESSING,
@@ -76,7 +76,7 @@ typedef NvMemory_Status_T Flash_Status_T;
 //     FLASH_STATUS_ERROR_PROTECTION = NV_MEMORY_STATUS_ERROR_PROTECTION,
 //     FLASH_STATUS_ERROR_CHECKSUM = NV_MEMORY_STATUS_ERROR_CHECKSUM,
 //     FLASH_STATUS_ERROR_INVALID_OP = NV_MEMORY_STATUS_ERROR_INVALID_OP,
-// };
+// } Flash_Status_Alias_T;
 
 #define FLASH_STATUS_SUCCESS             (NV_MEMORY_STATUS_SUCCESS)
 #define FLASH_STATUS_PROCESSING         (NV_MEMORY_STATUS_PROCESSING)

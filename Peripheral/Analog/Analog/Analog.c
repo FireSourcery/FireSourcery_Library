@@ -24,7 +24,7 @@
 /*!
     @file   Analog.c
     @author FireSourcery
-    @brief     Analog module conventional function definitions
+    @brief  Analog module conventional function definitions
     @version V0
 */
 /******************************************************************************/
@@ -47,6 +47,7 @@ static inline void WriteAdcChannel(Analog_T * p_analog, const Analog_Conversion_
 }
 
 #ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
+//untested
 static inline void WriteAdcFifo(Analog_T * p_analog)
 {
     Analog_Conversion_T * p_conversion;
@@ -69,11 +70,11 @@ static inline void WriteAdcFifo(Analog_T * p_analog)
 void WriteAdcOptions(Analog_T * p_analog, const Analog_Options_T * p_options)
 {
     // xor with previous
-    if(p_options->FLAGS.HwTriggerConversion == 1U)         { HAL_Analog_EnableHwTrigger(p_analog->CONFIG.P_HAL_ANALOG); }
-    else                                                 { HAL_Analog_DisableHwTrigger(p_analog->CONFIG.P_HAL_ANALOG); }
+    if(p_options->FLAGS.HwTriggerConversion == 1U)      { HAL_Analog_EnableHwTrigger(p_analog->CONFIG.P_HAL_ANALOG); }
+    else                                                { HAL_Analog_DisableHwTrigger(p_analog->CONFIG.P_HAL_ANALOG); }
 #ifdef CONFIG_ANALOG_HW_CONTINOUS_CONVERSION_ENABLE
     if(p_options->FLAGS.ContinuousConversion == 1U)     { HAL_Analog_EnableContinuousConversion(p_analog->CONFIG.P_HAL_ANALOG): }
-    else                                                 { HAL_Analog_DisableContinuousConversion(p_analog->CONFIG.P_HAL_ANALOG); }
+    else                                                { HAL_Analog_DisableContinuousConversion(p_analog->CONFIG.P_HAL_ANALOG); }
 #endif
     if(p_options->ON_OPTIONS != 0U) { p_options->ON_OPTIONS(p_options->P_CALLBACK_CONTEXT); }
 }
@@ -210,3 +211,19 @@ bool Analog_Group_EnqueueOptions(Analog_T * p_analog, const Analog_Options_T * p
 }
 
 
+
+/******************************************************************************/
+/*!
+    Channel Fags
+*/
+/******************************************************************************/
+// void Analog_SetChannelConversion(Analog_T * p_analog, analog_channel_t channelId)
+// {
+//     p_analog->ChannelFlags = (p_analog->ChannelFlags | (1U << channelId));
+// }
+
+// void Analog_ProcChannelConversion(Analog_T * p_analog, analog_channel_t channelId)
+// {
+    // for(channel in channels)
+//     p_analog->ChannelFlags
+// }

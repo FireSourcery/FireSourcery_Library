@@ -121,9 +121,9 @@ NvMemory_OpControl_T;
 typedef const struct NvMemory_Config_Tag
 {
     void * const P_HAL;
-    /* template functions provided by concrete child class */
-    const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;     /* Must reside in RAM, for Flash case*/
-    const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;    /* Must reside in RAM, for Flash case*/
+    /* abstract functions provided by concrete child class */
+    const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM, for Flash case*/
+    const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM, for Flash case*/
     const HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
     NvMemory_Partition_T * const P_PARTITIONS;
     const uint8_t PARTITION_COUNT;
@@ -172,15 +172,15 @@ NvMemory_T;
 /*
     Alternatively template the calling function
 */
-#define _NV_MEMORY_INIT_HAL(p_Hal, ReadCompleteFlag, ReadErrorFlags, ClearErrorFlags)    \
-    .P_HAL = p_Hal,                                                                      \
-    .READ_COMPLETE_FLAG     = (HAL_NvMemory_ReadFlags_T)ReadCompleteFlag,                \
-    .READ_ERROR_FLAGS         = (HAL_NvMemory_ReadFlags_T)ReadErrorFlags,                    \
-    .CLEAR_ERROR_FLAGS         = (HAL_NvMemory_ClearFlags_T)ClearErrorFlags,
+#define _NV_MEMORY_INIT_HAL(p_Hal, ReadCompleteFlag, ReadErrorFlags, ClearErrorFlags)   \
+    .P_HAL = p_Hal,                                                                     \
+    .READ_COMPLETE_FLAG = (HAL_NvMemory_ReadFlags_T)ReadCompleteFlag,                   \
+    .READ_ERROR_FLAGS   = (HAL_NvMemory_ReadFlags_T)ReadErrorFlags,                     \
+    .CLEAR_ERROR_FLAGS  = (HAL_NvMemory_ClearFlags_T)ClearErrorFlags,
 
-#define _NV_MEMORY_INIT_PARTITIONS(p_Partitions, PartitionsCount)    \
-    .P_PARTITIONS         = p_Partitions,                              \
-    .PARTITION_COUNT     = PartitionsCount,
+#define _NV_MEMORY_INIT_PARTITIONS(p_Partitions, PartitionsCount)   \
+    .P_PARTITIONS       = p_Partitions,                             \
+    .PARTITION_COUNT    = PartitionsCount,
 
 #define _NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)    \
     .P_BUFFER         = p_Buffer,                          \

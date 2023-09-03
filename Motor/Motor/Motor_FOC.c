@@ -62,6 +62,8 @@ void Motor_FOC_EnqueueIabc(Motor_T * p_motor)
         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
 #endif
         AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+
+        // AnalogN_SetChannelConversion(p_motor->CONFIG.P_ANALOG_N, MOTOR_ANALOG_CHANNEL_VA);
     }
 }
 
@@ -80,8 +82,8 @@ int32_t Motor_GetILimitReq(Motor_T * p_motor)
         if(feedback < p_motor->ILimitCw_FracS16)          { req = 0 - (p_motor->ILimitCw_FracS16 / feedback); }
         else if(feedback > p_motor->ILimitCcw_FracS16)    { req = p_motor->ILimitCcw_FracS16 / feedback; }
         //todo flag for threshold, match output on return to user cmd
-            // PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
-            // PID_SetOutputState(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
+        // PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
+        // PID_SetOutputState(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
         //alternatively enable PID
         // p_motor->ControlFeedbackMode.I = 1U;
         // MatchOutput

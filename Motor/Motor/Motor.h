@@ -318,6 +318,7 @@ typedef struct Motor_Tag
     Motor_Params_T Parameters;
 
     volatile MotorAnalog_Results_T AnalogResults;
+    MotorAnalog_ChannelGroup_T AnalogCmd;
 
     Encoder_T Encoder;
     Hall_T Hall;
@@ -456,9 +457,9 @@ Motor_T;
 /*
     Number formats
 
-    FracS16 => [-32768:32767],          [-1:1) <=> [-32768:32767] in Q1.15
-    FracS16Abs, FracU16 => [0:65535],   [0:2) <=> [0:65535] in Q1.15, sign bit as 1s place
-    Scalar16 => [0:65535],              [0:1) <=> [0:65535] in Q0.16
+    Frac16 FracS16                      [-1:1) <=> [-32768:32767] in Q1.15, may oversaturate to [-2:2) <=> [-65536:65536]
+    UFrac16, FracU16 =>                 [0:2) <=> [0:65535] in Q1.15, sign bit as 1s place
+    Scalar16 =>                         [0:1) <=> [0:65535] in Q0.16
     Fixed32 => [INT32_MIN:INT32_MAX],   [-1:1] <=> [-65536:65536] in Q16.16
     Fixed16 => [-32768:32767],          [-1:1] <=> [-256:256]
 */

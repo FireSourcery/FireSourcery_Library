@@ -33,6 +33,7 @@
 #define MOTOR_THREAD_H
 
 #include "Motor_StateMachine.h"
+#include "Motor_Analog.h"
 #include "Motor_User.h"
 #include "Motor.h"
 
@@ -46,8 +47,8 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
     // Motor_Debug_CaptureRefTime(p_motor);
     p_motor->ControlTimerBase++;
+    Motor_Analog_Proc(p_motor);
     StateMachine_Proc(&p_motor->StateMachine);
-    //  Motor_Analog_Thread(p_motor); alternatively use analog select mode to implement preferred order
     // Motor_Debug_CaptureTime(p_motor, 5U);
 }
 
