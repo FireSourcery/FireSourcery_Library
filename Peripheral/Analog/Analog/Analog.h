@@ -133,11 +133,11 @@ typedef const struct Analog_Config_Tag
 Analog_Config_T;
 
 
-typedef struct Analog_Tag
-{
-    uint32_t Channel0 :1U;
-}
-Analog_ChannelFlags_T ;
+// typedef struct Analog_ChannelFlags_Tag
+// {
+//     uint32_t Channel0 :1U;
+// }
+// Analog_ChannelFlags_T ;
 
 /*
     Analog_T per ADC

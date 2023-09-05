@@ -152,12 +152,6 @@ typedef enum
     MOT_VAR_CLEAR_FAULT,
     MOT_VAR_SET_FAULT,
 
-    /* Async Blocking Operations */
-    MOT_VAR_CALIBRATE_SENSOR,
-    MOT_VAR_SAVE_NVM,
-    // MOT_VAR_CALIBRATE_ADC       = 515U,
-    // MOT_VAR_CALIBRATE           = 516U,     // Value enum: ADC, Sensor,
-
     MOT_VAR_BEEP,     // Beep
 }
 MotVarId_RealTimeControl_T;

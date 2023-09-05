@@ -39,35 +39,13 @@
 
 */
 /******************************************************************************/
-extern int32_t _Linear_Ramp_CalcOutput(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps);
-
-static inline int32_t Linear_Ramp_CalcOutputN(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps)
-{
-    return _Linear_Ramp_CalcOutput(p_linear, currentRampValue, steps) >> p_linear->SlopeShift;
-}
-
-static inline int32_t Linear_Ramp_CalcOutput(const Linear_T * p_linear, int32_t currentRampValue)
-{
-    return Linear_Ramp_CalcOutputN(p_linear, currentRampValue, 1U);
-}
-
-static inline int32_t Linear_Ramp_ProcOutputN(Linear_T * p_linear, int32_t steps)
-{
-    if(p_linear->YOffset != p_linear->YReference) { p_linear->YOffset = _Linear_Ramp_CalcOutput(p_linear, p_linear->YOffset, steps); }
-    return p_linear->YOffset >> p_linear->SlopeShift;
-}
-
-static inline int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear)
-{
-    return Linear_Ramp_ProcOutputN(p_linear, 1U);
-}
+/* Aliases */
+static inline int32_t Linear_Ramp_GetTarget(const Linear_T * p_linear) { return (p_linear->YReference >> p_linear->SlopeShift); }
+static inline int32_t Linear_Ramp_GetOutput(const Linear_T * p_linear) { return (p_linear->YOffset >> p_linear->SlopeShift); }
 
 static inline void Linear_Ramp_SetTarget(Linear_T * p_linear, int32_t target) { p_linear->YReference = (target << p_linear->SlopeShift); }
-static inline int32_t Linear_Ramp_GetTarget(const Linear_T * p_linear) { return (p_linear->YReference >> p_linear->SlopeShift); }
-
-static inline int32_t Linear_Ramp_GetOutput(const Linear_T * p_linear) { return (p_linear->YOffset >> p_linear->SlopeShift); }
-static inline void Linear_Ramp_SetOutputState(Linear_T * p_linear, int32_t matchOutput) { p_linear->YOffset = (matchOutput << p_linear->SlopeShift); }
-static inline void Linear_Ramp_ZeroOutputState(Linear_T * p_linear) { p_linear->YOffset = 0; }
+static inline void Linear_Ramp_SetState(Linear_T * p_linear, int32_t matchOutput) { p_linear->YOffset = (matchOutput << p_linear->SlopeShift); }
+static inline void Linear_Ramp_ZeroState(Linear_T * p_linear) { p_linear->YOffset = 0; }
 
 /******************************************************************************/
 /*
@@ -80,6 +58,11 @@ extern void Linear_Ramp_SetSlope(Linear_T * p_linear, uint32_t duration_Ticks, i
 extern void Linear_Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
 extern void Linear_Ramp_Set(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
 extern void Linear_Ramp_Set_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
+
+extern int32_t Linear_Ramp_CalcOutputN(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps);
+extern int32_t Linear_Ramp_ProcOutputN(Linear_T * p_linear, int32_t steps);
+extern int32_t Linear_Ramp_CalcOutput(const Linear_T * p_linear, int32_t currentRampValue);
+extern int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear);
 
 #endif
 

@@ -105,17 +105,17 @@ static inline void Motor_Analog_Proc(Motor_T * p_motor)
 //        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
 //        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
 //    }
-   switch(p_motor->AnalogCmd)
-   {
-    //    case FOC_I_ABC :
-    //        break;
+//    switch(p_motor->AnalogCmd)
+//    {
+//     //    case FOC_I_ABC :
+//     //        break;
 
-    //    case FOC_VBEMF :
-    //        break;
+//     //    case FOC_VBEMF :
+//     //        break;
 
-    //    default :
-    //        break;
-   }
+//     //    default :
+//     //        break;
+//    }
 
 //    AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_PWM);
 }

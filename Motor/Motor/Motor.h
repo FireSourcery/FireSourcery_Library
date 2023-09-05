@@ -318,7 +318,7 @@ typedef struct Motor_Tag
     Motor_Params_T Parameters;
 
     volatile MotorAnalog_Results_T AnalogResults;
-    MotorAnalog_ChannelGroup_T AnalogCmd;
+    // MotorAnalog_ChannelGroup_T AnalogCmd;
 
     Encoder_T Encoder;
     Hall_T Hall;

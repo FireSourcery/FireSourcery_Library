@@ -248,7 +248,6 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 
 static Cmd_Status_T Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv)
 {
-    (void)argv;
     if(argc == 1U)
     {
         p_mc->ShellSubstate = 0U;

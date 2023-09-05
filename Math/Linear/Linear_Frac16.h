@@ -84,8 +84,10 @@ static inline int32_t Linear_Frac16_InvUnits(const Linear_T * p_linear, int32_t 
 /*!
     Saturate to uint16_t, q0.16 [0:65535]
     65535 => 1.0f
+    todo change 2
 */
 /******************************************************************************/
+// static inline uint16_t Linear_UFrac16(const Linear_T * p_linear, int32_t x)
 static inline uint16_t Linear_Frac16_Unsigned(const Linear_T * p_linear, int32_t x)
 {
     return _Linear_SatUnsigned16(Linear_Frac16(p_linear, x));
@@ -107,6 +109,9 @@ static inline int32_t Linear_Frac16_InvUnsigned(const Linear_T * p_linear, uint1
     32767 => 1.0f
 */
 /******************************************************************************/
+// static inline int16_t Linear_Frac16_Sat(const Linear_T * p_linear, int32_t x)
+// static inline int32_t Linear_Frac16(const Linear_T * p_linear, int32_t x)
+
 static inline int16_t Linear_Frac16_Signed(const Linear_T * p_linear, int32_t x)
 {
     return _Linear_SatSigned16(Linear_Frac16(p_linear, x) / 2);

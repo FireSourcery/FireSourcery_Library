@@ -107,17 +107,12 @@ typedef struct MotorAnalog_Conversions_Tag
 }
 MotorAnalog_Conversions_T;
 
-typedef enum MotorAnalog_Channel_Tag
-{
-    MOTOR_ANALOG_CHANNEL_DISABLED,
-    MOTOR_ANALOG_CHANNEL_V_ABC,
-    MOTOR_ANALOG_CHANNEL_I_ABC,
-    MOTOR_ANALOG_CHANNEL_HEAT,    /* Temperature */
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-    MOTOR_ANALOG_CHANNEL_SIN,
-    MOTOR_ANALOG_CHANNEL_COS,
-#endif
-}
-MotorAnalog_ChannelGroup_T;
+// typedef enum MotorAnalog_Channel_Tag
+// {
+//     MOTOR_ANALOG_CHANNEL_DISABLED,
+//     MOTOR_ANALOG_CHANNEL_V_ABC,
+//     MOTOR_ANALOG_CHANNEL_I_ABC,
+// }
+// MotorAnalog_ChannelGroup_T;
 
 #endif

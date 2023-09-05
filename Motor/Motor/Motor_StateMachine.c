@@ -110,7 +110,7 @@ static void Stop_Entry(Motor_T * p_motor)
     Phase_Float(&p_motor->Phase);
     p_motor->ControlTimerBase = 0U; /* ok to reset timer */
     p_motor->ControlFeedbackMode.IsDisable = 1U;
-    Linear_Ramp_ZeroOutputState(&p_motor->Ramp); /* For User Output */
+    Linear_Ramp_ZeroState(&p_motor->Ramp); /* For User Output */
 }
 
 static void Stop_Proc(Motor_T * p_motor)

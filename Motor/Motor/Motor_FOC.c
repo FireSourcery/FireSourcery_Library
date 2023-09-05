@@ -157,9 +157,9 @@ void Motor_FOC_ProcFeedbackMatch(Motor_T * p_motor)
 {
     int32_t qReq = (p_motor->ControlFeedbackMode.Current == 1U) ? FOC_GetIq(&p_motor->Foc) : FOC_GetVq(&p_motor->Foc); /* q_sqrt(vd vq) */
 
-    if(p_motor->ControlFeedbackMode.Speed == 1U)    { Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->Speed_FracS16); PID_SetOutputState(&p_motor->PidSpeed, qReq); }
-    else                                            { Linear_Ramp_SetOutputState(&p_motor->Ramp, qReq); } /* CONSTANT_CURRENT, or CONSTANT_VOLTAGE */
-    // else if (p_motor->ControlFeedbackMode.Scalar == 1U) { Linear_Ramp_SetOutputState(&p_motor->Ramp, 65535); }
+    if(p_motor->ControlFeedbackMode.Speed == 1U)    { Linear_Ramp_SetState(&p_motor->Ramp, p_motor->Speed_FracS16); PID_SetOutputState(&p_motor->PidSpeed, qReq); }
+    else                                            { Linear_Ramp_SetState(&p_motor->Ramp, qReq); } /* CONSTANT_CURRENT, or CONSTANT_VOLTAGE */
+    // else if (p_motor->ControlFeedbackMode.Scalar == 1U) { Linear_Ramp_SetState(&p_motor->Ramp, 65535); }
 
     if(p_motor->ControlFeedbackMode.Current == 1U)
     {
@@ -387,7 +387,7 @@ void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
     p_motor->Speed_FracS16 = 0;
     Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopPower_Scalar16 / 2U));    // alternatively, clamp user input ramp
     Linear_Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopSpeed_Scalar16 / 2U));
-    Linear_Ramp_SetOutputState(&p_motor->OpenLoopSpeedRamp, 0);
+    Linear_Ramp_SetState(&p_motor->OpenLoopSpeedRamp, 0);
     FOC_SetDReq(&p_motor->Foc, 0);
 }
 
