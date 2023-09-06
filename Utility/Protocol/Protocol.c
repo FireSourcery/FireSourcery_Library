@@ -93,7 +93,8 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 
         if (nextRxIndex > p_protocol->p_Specs->RX_LENGTH_MAX) { rxStatus = PROTOCOL_RX_CODE_ERROR_META; break; }
         /* Copy from Xcvr buffer to Protocol buffer, up to xcvrRxLimit */
-        p_protocol->RxCount = Xcvr_RxMax(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxCount], nextRxIndex -  p_protocol->RxCount);
+        p_protocol->RxCount += Xcvr_RxMax(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxCount], nextRxIndex - p_protocol->RxCount);
+
         if(p_protocol->RxCount == nextRxIndex) //(xcvrRxCount == xcvrRxLimit)
         {
             /* Implicitly: (xcvrRxCount != 0), (xcvrRxLimit != 0). (RxCount >= RX_LENGTH_MIN)  */
@@ -227,8 +228,9 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
 
             /*
                 Continue BuildRxPacket during ReqExt processing
+                Buffers will not be overwritten until user function returns.
+                Req ensure packet data is processed, or copied
                 Rx can queue out of sequence. Invalid Rx sequence until timeout buffer flush
-                Rx Buffer will be overwritten, Req ensure packet data is processed, or set Rx to wait signal
 
                 Alternatively, pause BuildRxPacket during ReqExt processing
                 Incoming packet bytes wait in queue. Cannot miss packets (unless overflow)
@@ -363,6 +365,7 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
 
                         case PROTOCOL_REQ_CODE_ABORT: p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_INITIAL; break;
 
+                        //user process needs to copy packet buffers
                         case PROTOCOL_REQ_CODE_AWAIT_PROCESS:                                                                           break;     /* PROC_EXT implements nonblocking wait */
                         case PROTOCOL_REQ_CODE_AWAIT_PROCESS_EXTEND_TIMER: p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;      break;
 

@@ -273,14 +273,14 @@ typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
 
     uint16_t SpeedLimitForward_ScalarU16;   /* "Root" Limits. Persistent User Param. Frac16 of SpeedFeedbackRef_Rpm */
     uint16_t SpeedLimitReverse_ScalarU16;
-    uint16_t ILimitMotoring_ScalarU16;      /* Persistent User Param. Frac16 of RefMax I_UNITS_AMPS. ILimit must be < 100% to account for I_Frac saturation. */
+    uint16_t ILimitMotoring_ScalarU16;      /* Persistent User Param. Frac16 of RefMax I_MAX_AMPS. ILimit must be < 100% to account for I_Frac saturation. */
     uint16_t ILimitGenerating_ScalarU16;
 
     uint16_t RampAccel_Cycles;
     uint16_t AlignPower_ScalarU16;          /* V or I */
     uint32_t AlignTime_Cycles;
     // uint16_t VoltageBrakeScalar_Frac16; /* [0:65535], 0 is highest intensity */
-#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     uint16_t OpenLoopSpeed_Scalar16;    /* Max, 65536 will overflow */
     uint16_t OpenLoopPower_Scalar16;    /* V or I */
     uint16_t OpenLoopAccel_Cycles;      /* Time to reach OpenLoopSpeed */
@@ -467,22 +467,22 @@ Motor_T;
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 static inline int32_t _Motor_ConvertSpeed_RpmToFracS16(Motor_T * p_motor, int32_t speed_rpm)        { return speed_rpm * 32767 / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
 static inline int16_t _Motor_ConvertSpeed_FracS16ToRpm(Motor_T * p_motor, int32_t speed_frac16)     { return speed_frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / 32768; }
-static inline int32_t _Motor_ConvertI_AmpsToIFracS16(int32_t i_amp)                                 { return i_amp * 32767 / GLOBAL_MOTOR.I_UNITS_AMPS; }
-static inline int16_t _Motor_ConvertI_FracS16ToAmps(int32_t i_frac16)                               { return i_frac16 * GLOBAL_MOTOR.I_UNITS_AMPS / 32768; }
+static inline int32_t _Motor_ConvertI_AmpsToIFracS16(int32_t i_amp)                                 { return i_amp * 32767 / GLOBAL_MOTOR.I_MAX_AMPS; }
+static inline int16_t _Motor_ConvertI_FracS16ToAmps(int32_t i_frac16)                               { return i_frac16 * GLOBAL_MOTOR.I_MAX_AMPS / 32768; }
 static inline int32_t _Motor_ConvertV_VoltsToFracS16(int32_t v_volts)                               { return v_volts * 32767 / Global_Motor_GetVSource_V(); }
 static inline int16_t _Motor_ConvertV_FracS16ToVolts(int32_t v_frac16)                              { return v_frac16 * Global_Motor_GetVSource_V() / 32768; }
-static inline int32_t _Motor_ConvertPower_FracS16ToWatts(int32_t vi_frac16)                         { return vi_frac16 * GLOBAL_MOTOR.I_UNITS_AMPS * Global_Motor_GetVSource_V() / 32768; }
+static inline int32_t _Motor_ConvertPower_FracS16ToWatts(int32_t vi_frac16)                         { return vi_frac16 * GLOBAL_MOTOR.I_MAX_AMPS * Global_Motor_GetVSource_V() / 32768; }
 
 static inline uint32_t _Motor_ConvertToMillis(uint32_t controlCycles) { return controlCycles * 1000 / GLOBAL_MOTOR.CONTROL_FREQ; }
 static inline uint32_t _Motor_ConvertToControlCycles(uint32_t millis) { return millis * GLOBAL_MOTOR.CONTROL_FREQ / 1000; }
 
 static inline int32_t _Motor_ConvertSpeed_RpmToScalar16(Motor_T * p_motor, int32_t speed_rpm)       { return speed_rpm * 65535 / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
 static inline int16_t _Motor_ConvertSpeed_Scalar16ToRpm(Motor_T * p_motor, int32_t speed_scalar16)  { return speed_scalar16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / 65536; }
-static inline int32_t _Motor_ConvertI_AmpToScalar16(int32_t i_amp)                                  { return i_amp * 65535 / GLOBAL_MOTOR.I_UNITS_AMPS; }
-static inline int16_t _Motor_ConvertI_Scalar16ToAmp(int32_t i_scalar16)                             { return i_scalar16 * GLOBAL_MOTOR.I_UNITS_AMPS / 65536; }
+static inline int32_t _Motor_ConvertI_AmpToScalar16(int32_t i_amp)                                  { return i_amp * 65535 / GLOBAL_MOTOR.I_MAX_AMPS; }
+static inline int16_t _Motor_ConvertI_Scalar16ToAmp(int32_t i_scalar16)                             { return i_scalar16 * GLOBAL_MOTOR.I_MAX_AMPS / 65536; }
 static inline int32_t _Motor_ConvertV_VoltsToScalar16(int32_t v_volts)                              { return v_volts * 65535 / Global_Motor_GetVSource_V(); }
 static inline int16_t _Motor_ConvertV_Scalar16ToVolts(int32_t v_scalar16)                           { return v_scalar16 * Global_Motor_GetVSource_V() / 65536; }
-static inline int32_t _Motor_ConvertPower_Scalar16ToWatts(int32_t vi_scalar16)                      { return vi_scalar16 * GLOBAL_MOTOR.I_UNITS_AMPS * Global_Motor_GetVSource_V() / 65536; }
+static inline int32_t _Motor_ConvertPower_Scalar16ToWatts(int32_t vi_scalar16)                      { return vi_scalar16 * GLOBAL_MOTOR.I_MAX_AMPS * Global_Motor_GetVSource_V() / 65536; }
 
 /* todo */
 // static inline uint32_t speed_angle16torpm(uint16_t angle16, uint32_t sampleFreq)                 { return  (angle16 * sampleFreq >> 16U) * 60U; }

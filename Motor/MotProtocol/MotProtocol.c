@@ -63,7 +63,9 @@ void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, P
 
 Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, size_t rxCount)
 {
-    Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_AWAIT_PACKET;
+    volatile Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_AWAIT_PACKET;
+    volatile Protocol_RxCode_T rxCode2 = PROTOCOL_RX_CODE_AWAIT_PACKET;
+    rxCode = rxCode2;
 
     if(rxCount >= MOT_PACKET_LENGTH_BYTE_INDEX) /* length index is valid */
     {

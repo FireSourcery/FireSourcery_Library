@@ -48,19 +48,19 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
     MotAnalogUser_CaptureInput(&p_mc->AnalogUser, p_mc->AnalogResults.Throttle_Adcu, p_mc->AnalogResults.Brake_Adcu);
 
     /* Assume no input cmd priority level (although implemented) */
-    // switch(cmd)
-    // {
-    //     case MOT_ANALOG_USER_CMD_SET_BRAKE:                 MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_mc->AnalogUser));          break;
-    //     case MOT_ANALOG_USER_CMD_SET_THROTTLE:              MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottle(&p_mc->AnalogUser));    break;
-    //     case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:         MotorController_User_SetCmdZero(p_mc);                                                      break;
-    //     case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:      MotorController_User_SetCmdZero(p_mc);                                                      break;
-    //     case MOT_ANALOG_USER_CMD_PROC_ZERO:                 MotorController_User_SetCmdZero(p_mc);                                                      break;
-    //     case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD:     MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);                break;
-    //     case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE:     MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);                break;
-    //     case MOT_ANALOG_USER_CMD_SET_NEUTRAL:               MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);                break;
-    //     case MOT_ANALOG_USER_CMD_PROC_NEUTRAL: break;
-    //     default: break;
-    // }
+    switch(cmd)
+    {
+        case MOT_ANALOG_USER_CMD_SET_BRAKE:                 MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_mc->AnalogUser));          break;
+        case MOT_ANALOG_USER_CMD_SET_THROTTLE:              MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottle(&p_mc->AnalogUser));    break;
+        case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:         MotorController_User_SetCmdZero(p_mc);                                                      break;
+        case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:      MotorController_User_SetCmdZero(p_mc);                                                      break;
+        case MOT_ANALOG_USER_CMD_PROC_ZERO:                 MotorController_User_SetCmdZero(p_mc);                                                      break;
+        case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD:     MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);                break;
+        case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE:     MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);                break;
+        case MOT_ANALOG_USER_CMD_SET_NEUTRAL:               MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);                break;
+        case MOT_ANALOG_USER_CMD_PROC_NEUTRAL: break;
+        default: break;
+    }
 
     if(CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONFIG.ANALOG_USER_DIVIDER) == true)
     {

@@ -227,9 +227,12 @@ static inline uint16_t Motor_User_GetRampAccel_Cycles(Motor_T * p_motor)        
 // static inline void Motor_User_GetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode)            { return p_motor->Parameters.AlignMode; }
 static inline uint16_t Motor_User_GetAlignPower_Scalar16(Motor_T * p_motor)                        { return p_motor->Parameters.AlignPower_ScalarU16; }
 static inline uint32_t Motor_User_GetAlignTime_Cycles(Motor_T * p_motor)                            { return p_motor->Parameters.AlignTime_Cycles; }
+
+#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 static inline uint16_t Motor_User_GetOpenLoopSpeed_Scalar16(Motor_T * p_motor)                      { return p_motor->Parameters.OpenLoopSpeed_Scalar16; }
 static inline uint32_t Motor_User_GetOpenLoopPower_Scalar16(Motor_T * p_motor)                      { return p_motor->Parameters.OpenLoopPower_Scalar16; }
 static inline uint16_t Motor_User_GetOpenLoopAccel_Cycles(Motor_T * p_motor)                        { return p_motor->Parameters.OpenLoopAccel_Cycles; }
+#endif
 
 static inline void Motor_User_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode)       { p_motor->Parameters.CommutationMode = mode; }
 /* Persistent Control Mode */

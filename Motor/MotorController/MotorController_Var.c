@@ -49,11 +49,8 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
     Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U); //switch(arg.Motor)
     Protocol_T * p_protocol = MotorController_User_GetPtrProtocol(p_mc, 1U);
 
+    // volatile
     MotVarId_Arg_T arg = (MotVarId_Arg_T)varId.Arg;
-
-    // volatile int a = 0;
-    // volatile int b = 0;
-    // a = b;
 
     switch((MotVarId_Prefix_T)arg.Prefix)
     {
@@ -164,7 +161,7 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
                 case MOT_VAR_SPEED_FEEDBACK_REF_RPM:    value = Motor_User_GetSpeedFeedbackRef_Rpm(p_motor);    break;
                 case MOT_VAR_SPEED_V_REF_RPM:           value = Motor_User_GetSpeedVRef_Rpm(p_motor);           break;
 
-                case MOT_VAR_I_REF_PEAK_ADCU:   value = GLOBAL_MOTOR.I_ZERO_TO_PEAK_ADCU;   break;
+                case MOT_VAR_I_REF_PEAK_ADCU:   value = GLOBAL_MOTOR.I_MAX_ADCU;   break;
                 case MOT_VAR_IA_REF_ZERO_ADCU:  value = Motor_User_GetIaZero_Adcu(p_motor); break;
                 case MOT_VAR_IB_REF_ZERO_ADCU:  value = Motor_User_GetIbZero_Adcu(p_motor); break;
                 case MOT_VAR_IC_REF_ZERO_ADCU:  value = Motor_User_GetIcZero_Adcu(p_motor); break;
@@ -328,12 +325,9 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
 MotVar_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T varId, int32_t varValue)
 {
     Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U);
-
-    // volatile int a = 0;
-    // volatile int b = 0;
-    // a = b;
-
+    volatile
     MotVarId_Arg_T arg = (MotVarId_Arg_T)varId.Arg;
+    MotVar_Status_T status = MOT_VAR_STATUS_OK;
 
     switch((MotVarId_Prefix_T)arg.Prefix)
     {
@@ -391,7 +385,7 @@ MotVar_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T var
                 case MOT_VAR_SPEED_FEEDBACK_REF_RPM:    Motor_User_SetSpeedFeedbackRef_Rpm(p_motor, varValue);    break;
                 // case MOT_VAR_SPEED_V_REF_RPM:           Motor_User_SetSpeedVRef_Rpm(p_motor);           break;
 
-                // case MOT_VAR_I_REF_PEAK_ADCU:   GLOBAL_MOTOR.I_ZERO_TO_PEAK_ADCU;   break;
+                // case MOT_VAR_I_REF_PEAK_ADCU:   GLOBAL_MOTOR.I_MAX_ADCU;   break;
                 // case MOT_VAR_IA_REF_ZERO_ADCU:  Motor_User_SetIaZero_Adcu(p_motor); break;
                 // case MOT_VAR_IB_REF_ZERO_ADCU:  Motor_User_SetIbZero_Adcu(p_motor); break;
                 // case MOT_VAR_IC_REF_ZERO_ADCU:  Motor_User_SetIcZero_Adcu(p_motor); break;
@@ -542,6 +536,8 @@ MotVar_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T var
             break;
         default: break;
     }
+
+    return status;
 }
 
 

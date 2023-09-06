@@ -364,9 +364,9 @@ typedef struct Protocol_Tag
 
     /* Debug */
     uint16_t TxPacketCount;
-    uint16_t RxPacketSuccessCount;
-    uint16_t RxPacketErrorCount;
-    uint16_t RxPacketErrorSync;
+   volatile uint16_t RxPacketSuccessCount;
+ volatile   uint16_t RxPacketErrorCount;
+   volatile uint16_t RxPacketErrorSync;
 }
 Protocol_T;
 

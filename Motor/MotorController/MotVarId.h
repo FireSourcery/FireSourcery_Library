@@ -416,16 +416,13 @@ typedef enum
 }
 MotVarId_ParamsGlobal_T;
 
-typedef enum
+typedef enum MotVarId_Prefix_Tag
 {
     MOT_VAR_ID_PREFIX_REAL_TIME_MONITOR = 0U,
-    MOT_VAR_ID_PREFIX_REAL_TIME_CONTROL = 2U,
-    MOT_VAR_ID_PREFIX_PARAMS_MOTOR = 3U,
-    MOT_VAR_ID_PREFIX_PARAMS_GLOBAL = 4U,
-    MOT_VAR_ID_PREFIX_4 = 5U,
-    MOT_VAR_ID_PREFIX_5 = 5U,
-    MOT_VAR_ID_PREFIX_6 = 6U,
-    MOT_VAR_ID_PREFIX_7 = 7U,
+    MOT_VAR_ID_PREFIX_REAL_TIME_CONTROL = 1U,
+    MOT_VAR_ID_PREFIX_PARAMS_MOTOR = 2U,
+    MOT_VAR_ID_PREFIX_PARAMS_GLOBAL = 3U,
+    MOT_VAR_ID_PREFIX_END = 7U,
 }
 MotVarId_Prefix_T;
 
@@ -433,17 +430,16 @@ typedef union
 {
     struct
     {
-        uint32_t Prefix     : 2;    /* 8 Sets/Pages, repeatable id  */
-        uint32_t Alt        : 2;    /* Data Option */
-        uint32_t Motor      : 2;    /* Allocate for 4 motors */
-        uint32_t OptResv    : 2;
+        uint8_t Prefix     : 2U;    /* 8 Sets/Pages, repeatable id  */
+        uint8_t Alt        : 2U;    /* Data Option */
+        uint8_t Motor      : 2U;    /* Allocate for 4 motors */
+        uint8_t OptResv    : 2U;
     };
     uint8_t Byte;
 }
 MotVarId_Arg_T;
 
-
-typedef union
+typedef union MotVarId_Tag
 {
     struct
     {
@@ -452,8 +448,8 @@ typedef union
     };
     struct
     {
-        uint32_t Id10       : 10;
-        uint32_t Arg6       : 6;
+        uint16_t Id10   : 10U;
+        uint16_t Arg6   : 6U;
     };
     uint16_t Word16;
 }

@@ -106,9 +106,12 @@ static uint8_t Call_Blocking(MotorController_T * p_mc, MotPacket_CallResp_T * p_
 /* Resp Truncates 32-Bit Vars */
 static uint8_t VarRead(MotorController_T * p_mc, MotPacket_VarReadResp_T * p_txPacket, const MotPacket_VarReadReq_T * p_rxPacket)
 {
-    uint8_t varsCount = MotPacket_VarReadReq_ParseVarIdsCount(p_rxPacket);
+    uint8_t varsCount = MotPacket_VarReadReq_ParseVarIdCount(p_rxPacket);
     for(uint8_t iVar = 0U; iVar < varsCount; iVar++)
-        { MotPacket_VarReadResp_BuildVarValue(p_txPacket, iVar, (uint16_t)MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_VarReadReq_ParseVarId(p_rxPacket, iVar))); }
+    {
+        MotPacket_VarReadResp_BuildVarValue(p_txPacket, iVar, (uint16_t)MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_VarReadReq_ParseVarId(p_rxPacket, iVar)));
+    }
+    // MotPacket_VarReadResp_BuildInnerHeader(p_txPacket, 0, 0);
     return MotPacket_VarReadResp_BuildHeader(p_txPacket, varsCount);
 
 }
@@ -118,14 +121,14 @@ static uint8_t VarRead(MotorController_T * p_mc, MotPacket_VarReadResp_T * p_txP
 /******************************************************************************/
 static uint8_t VarWrite(MotorController_T * p_mc, MotPacket_VarWriteResp_T * p_txPacket, const MotPacket_VarWriteReq_T * p_rxPacket)
 {
-    uint8_t varsCount = MotPacket_VarWriteReq_ParseVarsCount(p_rxPacket);
+    uint8_t varsCount = MotPacket_VarWriteReq_ParseVarCount(p_rxPacket);
+    MotVar_Status_T status;
     for(uint8_t iVar = 0U; iVar < varsCount; iVar++)
     {
-        if(MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_VarWriteReq_ParseVarId(p_rxPacket, iVar), MotPacket_VarWriteReq_ParseVarValue(p_rxPacket, iVar)) == 0U)
-            { MotPacket_VarWriteResp_BuildVarStatus(p_txPacket, iVar, MOT_VAR_STATUS_OK); }
-        else
-            { MotPacket_VarWriteResp_BuildVarStatus(p_txPacket, iVar, MOT_VAR_STATUS_OK); }
+        status = MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_VarWriteReq_ParseVarId(p_rxPacket, iVar), MotPacket_VarWriteReq_ParseVarValue(p_rxPacket, iVar));
+        MotPacket_VarWriteResp_BuildVarStatus(p_txPacket, iVar, status);
     }
+    // MotPacket_VarWriteResp_BuildInnerHeader(p_txPacket, 0, 0);
     return MotPacket_VarWriteResp_BuildHeader(p_txPacket, varsCount);
 }
 

@@ -283,7 +283,7 @@ static inline uint32_t MotorController_User_GetMainVersion(const MotorController
 static inline uint8_t MotorController_User_GetMainVersionIndex(const MotorController_T * p_mc, uint8_t charIndex) { return p_mc->CONFIG.SOFTWARE_VERSION[charIndex]; }
 
 static inline uint32_t MotorController_User_GetVMax(const MotorController_T * p_mc) { return GLOBAL_MOTOR.V_MAX_VOLTS; }
-static inline uint32_t MotorController_User_GetIMax(const MotorController_T * p_mc) { return GLOBAL_MOTOR.I_UNITS_AMPS; }
+static inline uint32_t MotorController_User_GetIMax(const MotorController_T * p_mc) { return GLOBAL_MOTOR.I_MAX_AMPS; }
 
 /******************************************************************************/
 /*

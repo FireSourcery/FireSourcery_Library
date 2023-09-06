@@ -765,7 +765,7 @@ void Motor_User_SetIPeakRef_Adcu_Debug(Motor_T * p_motor, uint16_t adcu)
 
 void Motor_User_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
 {
-    p_motor->Parameters.IPeakRef_Adcu = (adcu > GLOBAL_MOTOR.I_ZERO_TO_PEAK_ADCU) ? GLOBAL_MOTOR.I_ZERO_TO_PEAK_ADCU : adcu;
+    p_motor->Parameters.IPeakRef_Adcu = (adcu > GLOBAL_MOTOR.I_MAX_ADCU) ? GLOBAL_MOTOR.I_MAX_ADCU : adcu;
     PropagateSet(p_motor, Motor_ResetUnitsIabc);
 }
 
