@@ -76,10 +76,7 @@ Linear_T;
     Protected
 */
 /******************************************************************************/
-static inline int32_t _Linear_Sat(int32_t min, int32_t max, int32_t value)
-{
-    return math_clamp(value, min, max);
-}
+static inline int32_t _Linear_Sat(int32_t min, int32_t max, int32_t value) { return math_clamp(value, min, max); }
 
 static inline int16_t _Linear_SatSigned16(int32_t frac16) { return (int16_t)_Linear_Sat(INT16_MIN, INT16_MAX, frac16); }
 static inline uint16_t _Linear_SatUnsigned16(int32_t frac16) { return (uint16_t)_Linear_Sat(0, UINT16_MAX, frac16); }
@@ -196,6 +193,7 @@ static inline int32_t Linear_InvFunction_FracS16(const Linear_T * p_linear, int1
 /******************************************************************************/
 /*!
     Saturated on Input - indirectly saturates output and avoids overflow
+    x2?
 */
 /******************************************************************************/
 static inline int32_t Linear_Function_Sat(const Linear_T * p_linear, int32_t x)

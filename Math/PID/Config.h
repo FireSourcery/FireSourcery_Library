@@ -31,17 +31,17 @@
 #ifndef CONFIG_PID_H
 #define CONFIG_PID_H
 
-#if     defined(CONFIG_PID_K_INT)
-#elif     defined(CONFIG_PID_K_FLOAT)
-#else
-    #define CONFIG_PID_K_INT
-#endif
+// #if     defined(CONFIG_PID_K_INT)
+// #elif     defined(CONFIG_PID_K_FLOAT)
+// #else
+//     #define CONFIG_PID_K_INT
+// #endif
 
-#if     defined(CONFIG_PID_DIVIDE_SHIFT)
-#elif     defined(CONFIG_PID_DIVIDE_NUMERICAL)
-#else
-    #define CONFIG_PID_DIVIDE_SHIFT
-#endif
+// #if     defined(CONFIG_PID_DIVIDE_SHIFT)
+// #elif     defined(CONFIG_PID_DIVIDE_NUMERICAL)
+// #else
+//     #define CONFIG_PID_DIVIDE_SHIFT
+// #endif
 
 
 #endif

@@ -149,7 +149,7 @@ typedef struct Analog_Tag
     // Analog_ChannelFlags_T ChannelFlags;
     Ring_T ConversionQueue;    /* Item type (Analog_QueueItem_T *), (Analog_Conversion_T *) or (Analog_Options_T *) */
 #ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
-    uint8_t ActiveChannelCount; /*! Hw fifo only. Number of active channels being processed by ADC */
+    volatile uint8_t ActiveChannelCount; /*! Hw fifo only. Number of active channels being processed by ADC */
 #endif
 }
 Analog_T;

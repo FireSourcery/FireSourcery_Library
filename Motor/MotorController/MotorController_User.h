@@ -58,12 +58,6 @@ static inline void MotorController_User_ReleaseControl(MotorController_T * p_mc)
 // static inline void MotorController_User_ReleaseControl(MotorController_T * p_mc) { MotorController_User_SetCmdValue(p_mc, 0); }
 static inline void MotorController_User_DisableControl(MotorController_T * p_mc) { MotorController_DisableAll(p_mc); MotorController_User_ReleaseControl(p_mc); }
 
-/*
-    Input mode voluntarily call checked function, avoids intermediate buffer
-*/
-//static inline void MotorController_User_Serial_SetCmdValue(MotorController_T * p_mc, uint16_t userCmd)     { if (p_mc->Parameters.UserInputMode == MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL) {p_mc->UserCmd = userCmd;} }
-//static inline void MotorController_User_CanBus_SetCmdValue(MotorController_T * p_mc, uint16_t userCmd)     { if (p_mc->Parameters.UserInputMode == MOTOR_CONTROLLER_INPUT_MODE_CAN) {p_mc->UserCmd = userCmd;} }
-
 /******************************************************************************/
 /* Direction */
 /******************************************************************************/

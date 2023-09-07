@@ -93,7 +93,7 @@ static uint8_t Call_Blocking(MotorController_T * p_mc, MotPacket_CallResp_T * p_
     uint16_t status = 0U;
     switch((MotCallId_T)p_rxPacket->CallReq.Id)
     {
-        case MOT_CALL_CALIBRATE_SENSOR:     Motor_User_ActivateCalibrationSensor(p_motor);          status = 0U;                 break;
+        case MOT_CALL_CALIBRATE_SENSOR:     Motor_User_CalibrateSensor(p_motor);          status = 0U;                 break;
         case MOT_CALL_SAVE_PARAMS:          MotorController_User_SaveParameters_Blocking(p_mc);     status = p_mc->NvmStatus;   break;
         default: break;
     }

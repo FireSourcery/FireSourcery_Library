@@ -169,7 +169,8 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
     Synchronous Proc User Input - Async user inputs proc synchronously during ProcState
 
     Proc last set input, always single threaded proc, inputs may overwrite
-    Does not need Critical Section if Proc thread is higher priority than Input Thread
+    Does not need Critical Section if Proc thread is higher priority than Input Thread,
+       SyncInputValue set before SyncInput, SyncInputValue clear on higher priority thread
 */
 /******************************************************************************/
 void StateMachine_Sync_Proc(StateMachine_T * p_stateMachine)
@@ -188,8 +189,12 @@ bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_in
     // bool isAccept = CheckTransitionTable(p_stateMachine, inputId);
     // if(isAccept == true) { p_stateMachine->SyncInput = inputId; p_stateMachine->SyncInputExt = inputValue; }
     // return isAccept;
-    p_stateMachine->SyncInput = inputId;
-    p_stateMachine->SyncInputValue = inputValue;
+    // if(EnterCritical(p_stateMachine))
+    {
+        p_stateMachine->SyncInputValue = inputValue;
+        p_stateMachine->SyncInput = inputId;
+        // ExitCritical(p_stateMachine);
+    }
 }
 
 /******************************************************************************/

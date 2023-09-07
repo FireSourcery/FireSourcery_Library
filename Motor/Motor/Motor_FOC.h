@@ -98,13 +98,13 @@ static inline void Motor_FOC_CaptureVc(Motor_T * p_motor)
 
 */
 /******************************************************************************/
-static inline int32_t Motor_FOC_GetIPhase_FracS16(Motor_T * p_motor)            { return FOC_GetIPhase_Signed(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetVPhase_FracS16(Motor_T * p_motor)            { return FOC_GetVPhase_Signed(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetIPhase_Frac16(Motor_T * p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetVPhase_Frac16(Motor_T * p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
 
 /* return int32 for function pointer casting compatibility */
-static inline int32_t Motor_FOC_GetIPhase_FracU16(Motor_T * p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetVPhase_FracU16(Motor_T * p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetElectricalPower_FracU16(Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetIPhase_UFrac16(Motor_T * p_motor)            { return FOC_GetIMagnitude(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetVPhase_UFrac16(Motor_T * p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetElectricalPower_UFrac16(Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
 
 /******************************************************************************/
 /*!

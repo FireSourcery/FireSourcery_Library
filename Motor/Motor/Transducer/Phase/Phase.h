@@ -94,8 +94,8 @@ Phase_T;
 
 //p_PwmAHal, p_PwmBHal, p_PwmCHal
 #define PHASE_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel, p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId)    \
-{                                                                    \
-    .PwmModule = PWM_INIT(p_PwmHal, 0, 0),                            \
+{                                                                   \
+    .PwmModule = PWM_INIT(p_PwmHal, 0, 0),                          \
     .PwmA = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel),        \
     .PwmB = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmBChannel),        \
     .PwmC = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmCChannel),        \
@@ -104,9 +104,9 @@ Phase_T;
     .PinC = PIN_INIT(p_PinCHal, PinCId),                            \
 }
 
-static inline void Phase_ClearInterrupt(const Phase_T * p_phase)     { PWM_ClearInterrupt(&p_phase->PwmModule); }
-static inline void Phase_DisableInterrupt(const Phase_T * p_phase)     { PWM_DisableInterrupt(&p_phase->PwmModule); }
-static inline void Phase_EnableInterrupt(const Phase_T * p_phase)     { PWM_EnableInterrupt(&p_phase->PwmModule); }
+static inline void Phase_ClearInterrupt(const Phase_T * p_phase)    { PWM_ClearInterrupt(&p_phase->PwmModule); }
+static inline void Phase_DisableInterrupt(const Phase_T * p_phase)  { PWM_DisableInterrupt(&p_phase->PwmModule); }
+static inline void Phase_EnableInterrupt(const Phase_T * p_phase)   { PWM_EnableInterrupt(&p_phase->PwmModule); }
 
 
 /******************************************************************************/

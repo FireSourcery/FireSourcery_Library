@@ -30,12 +30,14 @@
 /******************************************************************************/
 #include "Linear_Frac16.h"
 
+//todo shift 15, change 1 <=> 32767, reuse for ramp.
 /*
     Frac16
     Shift 14 to allow over saturation f([X0-2*(XRef-X0):X0+2*(XRef-X0)]) == [Y0-2*(YRef-Y0):Y0+2*(YRef-Y0)] before overflow
         i.e 2x input interval (XRef-X0), before overflow, while retaining sign bit.
 */
 #define LINEAR_FRAC16_SHIFT 14U
+#define LINEAR_FRAC16_REF (INT16_MAX >> 1U)
 
 /******************************************************************************/
 /*!

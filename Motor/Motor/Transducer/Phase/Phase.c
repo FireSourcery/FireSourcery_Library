@@ -119,17 +119,17 @@ void Phase_ActivateDuty(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwm
 
 void Phase_ActuateDuty_Frac15(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
 {
-    PWM_ActuateDuty_Frac15(&p_phase->PwmA, pwmDutyA);
-    PWM_ActuateDuty_Frac15(&p_phase->PwmB, pwmDutyB);
-    PWM_ActuateDuty_Frac15(&p_phase->PwmC, pwmDutyC);
+    PWM_ActuateDuty_Frac16(&p_phase->PwmA, pwmDutyA);
+    PWM_ActuateDuty_Frac16(&p_phase->PwmB, pwmDutyB);
+    PWM_ActuateDuty_Frac16(&p_phase->PwmC, pwmDutyC);
     _Phase_SyncPwmDuty(p_phase);
 }
 
 void Phase_ActuateDuty_Frac16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
 {
-    PWM_ActuateDuty_Frac16(&p_phase->PwmA, pwmDutyA);
-    PWM_ActuateDuty_Frac16(&p_phase->PwmB, pwmDutyB);
-    PWM_ActuateDuty_Frac16(&p_phase->PwmC, pwmDutyC);
+    PWM_ActuateDuty_Scalar16(&p_phase->PwmA, pwmDutyA);
+    PWM_ActuateDuty_Scalar16(&p_phase->PwmB, pwmDutyB);
+    PWM_ActuateDuty_Scalar16(&p_phase->PwmC, pwmDutyC);
     _Phase_SyncPwmDuty(p_phase);
 }
 
@@ -249,8 +249,8 @@ void Phase_Polar_ActivateDutyAC(const Phase_T * p_phase, uint16_t duty)
 {
     switch(p_phase->PhaseMode)
     {
-        case PHASE_MODE_UNIPOLAR_1:    Phase_Unipolar1_ActivateDutyAC(p_phase, duty);    break;
-        case PHASE_MODE_UNIPOLAR_2:    Phase_Unipolar2_ActivateDutyAC(p_phase, duty);    break;
+        case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyAC(p_phase, duty);    break;
+        case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyAC(p_phase, duty);    break;
         case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyAC(p_phase, duty);    break;
         default: break;
     }
@@ -261,8 +261,8 @@ void Phase_Polar_ActivateDutyBC(const Phase_T * p_phase, uint16_t duty)
 {
     switch(p_phase->PhaseMode)
     {
-        case PHASE_MODE_UNIPOLAR_1:    Phase_Unipolar1_ActivateDutyBC(p_phase, duty);    break;
-        case PHASE_MODE_UNIPOLAR_2:    Phase_Unipolar2_ActivateDutyBC(p_phase, duty);    break;
+        case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyBC(p_phase, duty);    break;
+        case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyBC(p_phase, duty);    break;
         case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyBC(p_phase, duty);    break;
         default: break;
     }
@@ -273,8 +273,8 @@ void Phase_Polar_ActivateDutyBA(const Phase_T * p_phase, uint16_t duty)
 {
     switch(p_phase->PhaseMode)
     {
-        case PHASE_MODE_UNIPOLAR_1:    Phase_Unipolar1_ActivateDutyBA(p_phase, duty);    break;
-        case PHASE_MODE_UNIPOLAR_2:    Phase_Unipolar2_ActivateDutyBA(p_phase, duty);    break;
+        case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyBA(p_phase, duty);    break;
+        case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyBA(p_phase, duty);    break;
         case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyBA(p_phase, duty);    break;
         default: break;
     }
@@ -285,8 +285,8 @@ void Phase_Polar_ActivateDutyCA(const Phase_T * p_phase, uint16_t duty)
 {
     switch(p_phase->PhaseMode)
     {
-        case PHASE_MODE_UNIPOLAR_1:    Phase_Unipolar1_ActivateDutyCA(p_phase, duty);    break;
-        case PHASE_MODE_UNIPOLAR_2:    Phase_Unipolar2_ActivateDutyCA(p_phase, duty);    break;
+        case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyCA(p_phase, duty);    break;
+        case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyCA(p_phase, duty);    break;
         case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyCA(p_phase, duty);    break;
         default: break;
     }
@@ -297,8 +297,8 @@ void Phase_Polar_ActivateDutyCB(const Phase_T * p_phase, uint16_t duty)
 {
     switch(p_phase->PhaseMode)
     {
-        case PHASE_MODE_UNIPOLAR_1:    Phase_Unipolar1_ActivateDutyCB(p_phase, duty);    break;
-        case PHASE_MODE_UNIPOLAR_2:    Phase_Unipolar2_ActivateDutyCB(p_phase, duty);    break;
+        case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyCB(p_phase, duty);    break;
+        case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyCB(p_phase, duty);    break;
         case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyCB(p_phase, duty);    break;
         default: break;
     }
@@ -309,8 +309,8 @@ void Phase_Polar_ActivateDutyAB(const Phase_T * p_phase, uint16_t duty)
 {
     switch(p_phase->PhaseMode)
     {
-        case PHASE_MODE_UNIPOLAR_1:    Phase_Unipolar1_ActivateDutyAB(p_phase, duty);    break;
-        case PHASE_MODE_UNIPOLAR_2:    Phase_Unipolar2_ActivateDutyAB(p_phase, duty);    break;
+        case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyAB(p_phase, duty);    break;
+        case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyAB(p_phase, duty);    break;
         case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyAB(p_phase, duty);    break;
         default: break;
     }
@@ -357,7 +357,7 @@ void Phase_Polar_Activate(Phase_T * p_phase, Phase_Id_T phaseId, uint16_t duty)
     switch(phaseId)
     {
         case PHASE_ID_0: break;
-        case PHASE_ID_1_AC:    Phase_Polar_ActivateAC(p_phase, duty); break;
+        case PHASE_ID_1_AC: Phase_Polar_ActivateAC(p_phase, duty); break;
         case PHASE_ID_2_BC: Phase_Polar_ActivateBC(p_phase, duty); break;
         case PHASE_ID_3_BA: Phase_Polar_ActivateBA(p_phase, duty); break;
         case PHASE_ID_4_CA: Phase_Polar_ActivateCA(p_phase, duty); break;
@@ -373,7 +373,7 @@ void Phase_Polar_ActivateDuty(Phase_T * p_phase, Phase_Id_T phaseId, uint16_t du
     switch(phaseId)
     {
         case PHASE_ID_0: break;
-        case PHASE_ID_1_AC:    Phase_Polar_ActivateDutyAC(p_phase, duty); break;
+        case PHASE_ID_1_AC: Phase_Polar_ActivateDutyAC(p_phase, duty); break;
         case PHASE_ID_2_BC: Phase_Polar_ActivateDutyBC(p_phase, duty); break;
         case PHASE_ID_3_BA: Phase_Polar_ActivateDutyBA(p_phase, duty); break;
         case PHASE_ID_4_CA: Phase_Polar_ActivateDutyCA(p_phase, duty); break;
@@ -389,7 +389,7 @@ void Phase_Polar_ActivateSwitch(Phase_T * p_phase, Phase_Id_T phaseId)
     switch(phaseId)
     {
         case PHASE_ID_0: break;
-        case PHASE_ID_1_AC:    Phase_Polar_ActivateSwitchAC(p_phase); break;
+        case PHASE_ID_1_AC: Phase_Polar_ActivateSwitchAC(p_phase); break;
         case PHASE_ID_2_BC: Phase_Polar_ActivateSwitchBC(p_phase); break;
         case PHASE_ID_3_BA: Phase_Polar_ActivateSwitchBA(p_phase); break;
         case PHASE_ID_4_CA: Phase_Polar_ActivateSwitchCA(p_phase); break;

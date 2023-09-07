@@ -35,6 +35,7 @@
 #include "MotorControllerAnalog.h"
 #include "MotAnalogUser/MotAnalogUser.h"
 
+#include "Motor/Motor/Motor_Params.h"
 #include "Motor/Motor/Motor_User.h"
 #include "Motor/Motor/MotorN_User.h"
 

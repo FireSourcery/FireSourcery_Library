@@ -61,14 +61,14 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
                 case MOT_VAR_MILLIS:                value = Millis();                                           break;
                 // case MOT_VAR_DEBUG:              value = qfrac16_sin(Millis());                              break;
 
-                case MOT_VAR_SPEED:                 value = Motor_User_GetSpeed_FracU16(p_motor);               break;
-                case MOT_VAR_I_PHASE:               value = Motor_User_GetIPhase_FracS16(p_motor);              break;
-                case MOT_VAR_V_PHASE:               value = Motor_User_GetVPhase_FracS16(p_motor);              break;
-                case MOT_VAR_POWER:                 value = Motor_User_GetElectricalPower_FracS16(p_motor);     break;
+                case MOT_VAR_SPEED:                 value = Motor_User_GetSpeed_UFrac16(p_motor);               break;
+                case MOT_VAR_I_PHASE:               value = Motor_User_GetIPhase_Frac16(p_motor);              break;
+                case MOT_VAR_V_PHASE:               value = Motor_User_GetVPhase_Frac16(p_motor);              break;
+                case MOT_VAR_POWER:                 value = Motor_User_GetElectricalPower_UFrac16(p_motor);     break;
                 case MOT_VAR_RAMP_CMD:              value = Linear_Ramp_GetOutput(&p_motor->Ramp);              break;
                 case MOT_VAR_MOTOR_STATE:           value = Motor_User_GetStateId(p_motor);                     break;
-                case MOT_VAR_MOTOR_STATUS_FLAGS:    value = Motor_User_GetStatusFlags(p_motor).State;           break;
-                case MOT_VAR_MOTOR_FAULT_FLAGS:     value = Motor_User_GetFaultFlags(p_motor).State;            break;
+                case MOT_VAR_MOTOR_STATUS_FLAGS:    value = Motor_User_GetStatusFlags(p_motor).Word;           break;
+                case MOT_VAR_MOTOR_FAULT_FLAGS:     value = Motor_User_GetFaultFlags(p_motor).Word;            break;
 
 
                 case MOT_VAR_MOTOR_HEAT:
@@ -122,7 +122,7 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
                 /* Read Write */
                 case MOT_VAR_MOTOR_USER_CMD:                value = Motor_User_GetCmd(p_motor);                                 break;
                 case MOT_VAR_MOTOR_DIRECTION:               value = Motor_User_GetDirection(p_motor);                           break;
-                case MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE:    value = (Motor_User_GetActiveFeedbackMode(p_motor).State);          break;
+                case MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE:    value = (Motor_User_GetActiveFeedbackMode(p_motor).Word);          break;
                 // case MOT_VAR_MOTOR_USER_SPEED_LIMIT:        value = Motor_User_GetUserSpeedLimit(p_motor);                    break;
                 // case MOT_VAR_MOTOR_USER_I_LIMIT:            value = Motor_User_GetUserILimit(p_motor);                        break;
                 case MOT_VAR_USER_CMD:                      value = MotorController_User_GetCmdValue(p_mc);                     break;
@@ -152,33 +152,33 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
         case MOT_VAR_ID_PREFIX_PARAMS_MOTOR:
             switch((MotVarId_ParamsMotor_T)varId.Id8)
             {
-                case MOT_VAR_COMMUTATION_MODE:          value = Motor_User_GetCommutationMode(p_motor);         break;
-                case MOT_VAR_SENSOR_MODE:               value = Motor_User_GetSensorMode(p_motor);              break;
-                case MOT_VAR_DEFAULT_FEEDBACK_MODE:     value = Motor_User_GetDefaultFeedbackMode(p_motor);     break;
-                case MOT_VAR_DIRECTION_CALIBRATION:     value = Motor_User_GetDirectionCalibration(p_motor);    break;
-                case MOT_VAR_POLE_PAIRS:                value = Motor_User_GetPolePairs(p_motor);               break;
-                case MOT_VAR_KV:                        value = Motor_User_GetKv(p_motor);                      break;
-                case MOT_VAR_SPEED_FEEDBACK_REF_RPM:    value = Motor_User_GetSpeedFeedbackRef_Rpm(p_motor);    break;
-                case MOT_VAR_SPEED_V_REF_RPM:           value = Motor_User_GetSpeedVRef_Rpm(p_motor);           break;
+                case MOT_VAR_COMMUTATION_MODE:          value = Motor_Params_GetCommutationMode(p_motor);         break;
+                case MOT_VAR_SENSOR_MODE:               value = Motor_Params_GetSensorMode(p_motor);              break;
+                case MOT_VAR_DEFAULT_FEEDBACK_MODE:     value = Motor_Params_GetDefaultFeedbackMode(p_motor).Word;     break;
+                case MOT_VAR_DIRECTION_CALIBRATION:     value = Motor_Params_GetDirectionCalibration(p_motor);    break;
+                case MOT_VAR_POLE_PAIRS:                value = Motor_Params_GetPolePairs(p_motor);               break;
+                case MOT_VAR_KV:                        value = Motor_Params_GetKv(p_motor);                      break;
+                case MOT_VAR_SPEED_FEEDBACK_REF_RPM:    value = Motor_Params_GetSpeedFeedbackRef_Rpm(p_motor);    break;
+                case MOT_VAR_SPEED_V_REF_RPM:           value = Motor_Params_GetSpeedVRef_Rpm(p_motor);           break;
 
                 case MOT_VAR_I_REF_PEAK_ADCU:   value = GLOBAL_MOTOR.I_MAX_ADCU;   break;
-                case MOT_VAR_IA_REF_ZERO_ADCU:  value = Motor_User_GetIaZero_Adcu(p_motor); break;
-                case MOT_VAR_IB_REF_ZERO_ADCU:  value = Motor_User_GetIbZero_Adcu(p_motor); break;
-                case MOT_VAR_IC_REF_ZERO_ADCU:  value = Motor_User_GetIcZero_Adcu(p_motor); break;
+                case MOT_VAR_IA_REF_ZERO_ADCU:  value = Motor_Params_GetIaZero_Adcu(p_motor); break;
+                case MOT_VAR_IB_REF_ZERO_ADCU:  value = Motor_Params_GetIbZero_Adcu(p_motor); break;
+                case MOT_VAR_IC_REF_ZERO_ADCU:  value = Motor_Params_GetIcZero_Adcu(p_motor); break;
 
-                case MOT_VAR_BASE_SPEED_LIMIT_FORWARD: value = Motor_User_GetSpeedLimitForward_ScalarU16(p_motor); break;
-                case MOT_VAR_BASE_SPEED_LIMIT_REVERSE: value = Motor_User_GetSpeedLimitReverse_ScalarU16(p_motor); break;
-                case MOT_VAR_BASE_I_LIMIT_MOTORING:    value = Motor_User_GetILimitMotoring_ScalarU16(p_motor);    break;
-                case MOT_VAR_BASE_I_LIMIT_GENERATING:  value = Motor_User_GetILimitGenerating_ScalarU16(p_motor);  break;
+                case MOT_VAR_BASE_SPEED_LIMIT_FORWARD: value = Motor_Params_GetSpeedLimitForward_Scalar16(p_motor); break;
+                case MOT_VAR_BASE_SPEED_LIMIT_REVERSE: value = Motor_Params_GetSpeedLimitReverse_Scalar16(p_motor); break;
+                case MOT_VAR_BASE_I_LIMIT_MOTORING:    value = Motor_Params_GetILimitMotoring_Scalar16(p_motor);    break;
+                case MOT_VAR_BASE_I_LIMIT_GENERATING:  value = Motor_Params_GetILimitGenerating_Scalar16(p_motor);  break;
 
-                case MOT_VAR_RAMP_ACCEL_TIME_CYCLES:    value = Motor_User_GetRampAccel_Cycles(p_motor); break;
-                // case MOT_VAR_ALIGN_MODE:             value = Motor_User_GetAlignMode(p_motor); break;
-                case MOT_VAR_ALIGN_POWER:               value = Motor_User_GetAlignPower_Scalar16(p_motor); break;
-                case MOT_VAR_ALIGN_TIME_CYCLES:         value = Motor_User_GetAlignTime_Cycles(p_motor); break;
-                case MOT_VAR_OPEN_LOOP_POWER:               value = Motor_User_GetOpenLoopPower_Scalar16(p_motor); break;
-                case MOT_VAR_OPEN_LOOP_SPEED:               value = Motor_User_GetOpenLoopSpeed_Scalar16(p_motor); break;
-                case MOT_VAR_OPEN_LOOP_ACCEL_TIME_CYCLES:   value = Motor_User_GetOpenLoopAccel_Cycles(p_motor); break;
-                // case MOT_VAR_PHASE_PWM_MODE:                    value = Motor_User_GetPhaseModeParam(p_motor); break;
+                case MOT_VAR_RAMP_ACCEL_TIME_CYCLES:    value = Motor_Params_GetRampAccel_Cycles(p_motor); break;
+                // case MOT_VAR_ALIGN_MODE:             value = Motor_Params_GetAlignMode(p_motor); break;
+                case MOT_VAR_ALIGN_POWER:               value = Motor_Params_GetAlignPower_Scalar16(p_motor); break;
+                case MOT_VAR_ALIGN_TIME_CYCLES:         value = Motor_Params_GetAlignTime_Cycles(p_motor); break;
+                case MOT_VAR_OPEN_LOOP_POWER:               value = Motor_Params_GetOpenLoopPower_Scalar16(p_motor); break;
+                case MOT_VAR_OPEN_LOOP_SPEED:               value = Motor_Params_GetOpenLoopSpeed_Scalar16(p_motor); break;
+                case MOT_VAR_OPEN_LOOP_ACCEL_TIME_CYCLES:   value = Motor_Params_GetOpenLoopAccel_Cycles(p_motor); break;
+                // case MOT_VAR_PHASE_PWM_MODE:                    value = Motor_Params_GetPhaseModeParam(p_motor); break;
 
                 case MOT_VAR_HALL_SENSOR_TABLE_1: value = p_motor->Hall.Params.SensorsTable[1U];    break;
                 case MOT_VAR_HALL_SENSOR_TABLE_2: value = p_motor->Hall.Params.SensorsTable[2U];    break;
@@ -373,36 +373,37 @@ MotVar_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T var
             Parameters
         */
         case MOT_VAR_ID_PREFIX_PARAMS_MOTOR:
+        //if stateMacchineState
             switch((MotVarId_ParamsMotor_T)varId.Id8)
             {
-                // case MOT_VAR_COMMUTATION_MODE:          Motor_User_SetCommutationMode(p_motor);         break;
-                // case MOT_VAR_SENSOR_MODE:               Motor_User_SetSensorMode(p_motor);              break;
-                // case MOT_VAR_DEFAULT_FEEDBACK_MODE:     Motor_User_SetDefaultFeedbackMode(p_motor, (Motor_FeedbackModeId_T)varValue);       break;
-                // case MOT_VAR_DIRECTION_CALIBRATION:     Motor_User_SetDirectionCalibration(p_motor);    break;
+                // case MOT_VAR_COMMUTATION_MODE:          Motor_Params_SetCommutationMode(p_motor);         break;
+                // case MOT_VAR_SENSOR_MODE:               Motor_Params_SetSensorMode(p_motor);              break;
+                // case MOT_VAR_DEFAULT_FEEDBACK_MODE:     Motor_Params_SetDefaultFeedbackMode(p_motor, (Motor_FeedbackModeId_T)varValue);       break;
+                // case MOT_VAR_DIRECTION_CALIBRATION:     Motor_Params_SetDirectionCalibration(p_motor);    break;
 
-                // case MOT_VAR_POLE_PAIRS:                Motor_User_SetPolePairs(p_motor, varValue);     break;
-                // case MOT_VAR_KV:                        Motor_User_SetKv(p_motor);                      break;
-                case MOT_VAR_SPEED_FEEDBACK_REF_RPM:    Motor_User_SetSpeedFeedbackRef_Rpm(p_motor, varValue);    break;
-                // case MOT_VAR_SPEED_V_REF_RPM:           Motor_User_SetSpeedVRef_Rpm(p_motor);           break;
+                // case MOT_VAR_POLE_PAIRS:                Motor_Params_SetPolePairs(p_motor, varValue);     break;
+                // case MOT_VAR_KV:                        Motor_Params_SetKv(p_motor);                      break;
+                case MOT_VAR_SPEED_FEEDBACK_REF_RPM:    Motor_Params_SetSpeedFeedbackRef_Rpm(p_motor, varValue);    break;
+                // case MOT_VAR_SPEED_V_REF_RPM:           Motor_Params_SetSpeedVRef_Rpm(p_motor);           break;
 
                 // case MOT_VAR_I_REF_PEAK_ADCU:   GLOBAL_MOTOR.I_MAX_ADCU;   break;
-                // case MOT_VAR_IA_REF_ZERO_ADCU:  Motor_User_SetIaZero_Adcu(p_motor); break;
-                // case MOT_VAR_IB_REF_ZERO_ADCU:  Motor_User_SetIbZero_Adcu(p_motor); break;
-                // case MOT_VAR_IC_REF_ZERO_ADCU:  Motor_User_SetIcZero_Adcu(p_motor); break;
+                // case MOT_VAR_IA_REF_ZERO_ADCU:  Motor_Params_SetIaZero_Adcu(p_motor); break;
+                // case MOT_VAR_IB_REF_ZERO_ADCU:  Motor_Params_SetIbZero_Adcu(p_motor); break;
+                // case MOT_VAR_IC_REF_ZERO_ADCU:  Motor_Params_SetIcZero_Adcu(p_motor); break;
 
-                // case MOT_VAR_BASE_SPEED_LIMIT_FORWARD: Motor_User_SetSpeedLimitForward_ScalarU16(p_motor); break;
-                // case MOT_VAR_BASE_SPEED_LIMIT_REVERSE: Motor_User_SetSpeedLimitReverse_ScalarU16(p_motor); break;
-                // case MOT_VAR_BASE_I_LIMIT_MOTORING:    Motor_User_SetILimitMotoring_ScalarU16(p_motor);    break;
-                // case MOT_VAR_BASE_I_LIMIT_GENERATING:  Motor_User_SetILimitGenerating_ScalarU16(p_motor);  break;
+                // case MOT_VAR_BASE_SPEED_LIMIT_FORWARD: Motor_Params_SetSpeedLimitForward_Scalar16(p_motor); break;
+                // case MOT_VAR_BASE_SPEED_LIMIT_REVERSE: Motor_Params_SetSpeedLimitReverse_Scalar16(p_motor); break;
+                // case MOT_VAR_BASE_I_LIMIT_MOTORING:    Motor_Params_SetILimitMotoring_Scalar16(p_motor);    break;
+                // case MOT_VAR_BASE_I_LIMIT_GENERATING:  Motor_Params_SetILimitGenerating_Scalar16(p_motor);  break;
 
-                // case MOT_VAR_RAMP_ACCEL_TIME_CYCLES:            Motor_User_SetRampAccel_Cycles(p_motor); break;
-                //     // case MOT_VAR_ALIGN_MODE:                        Motor_User_SetAlignMode(p_motor); break;
-                // case MOT_VAR_ALIGN_POWER:              Motor_User_SetAlignPower_Scalar16(p_motor); break;
-                // case MOT_VAR_ALIGN_TIME_CYCLES:                 Motor_User_SetAlignTime_Cycles(p_motor); break;
-                // case MOT_VAR_OPEN_LOOP_POWER:          Motor_User_SetOpenLoopPower_Scalar16(p_motor); break;
-                // case MOT_VAR_OPEN_LOOP_SPEED:          Motor_User_SetOpenLoopSpeed_Scalar16(p_motor); break;
-                // case MOT_VAR_OPEN_LOOP_ACCEL_TIME_CYCLES:       Motor_User_SetOpenLoopAccel_Cycles(p_motor); break;
-                //     // case MOT_VAR_PHASE_PWM_MODE:                    Motor_User_SetPhaseModeParam(p_motor); break;
+                // case MOT_VAR_RAMP_ACCEL_TIME_CYCLES:            Motor_Params_SetRampAccel_Cycles(p_motor); break;
+                //     // case MOT_VAR_ALIGN_MODE:                        Motor_Params_SetAlignMode(p_motor); break;
+                // case MOT_VAR_ALIGN_POWER:              Motor_Params_SetAlignPower_Scalar16(p_motor); break;
+                // case MOT_VAR_ALIGN_TIME_CYCLES:                 Motor_Params_SetAlignTime_Cycles(p_motor); break;
+                // case MOT_VAR_OPEN_LOOP_POWER:          Motor_Params_SetOpenLoopPower_Scalar16(p_motor); break;
+                // case MOT_VAR_OPEN_LOOP_SPEED:          Motor_Params_SetOpenLoopSpeed_Scalar16(p_motor); break;
+                // case MOT_VAR_OPEN_LOOP_ACCEL_TIME_CYCLES:       Motor_Params_SetOpenLoopAccel_Cycles(p_motor); break;
+                //     // case MOT_VAR_PHASE_PWM_MODE:                    Motor_Params_SetPhaseModeParam(p_motor); break;
 
                 // case MOT_VAR_HALL_SENSOR_TABLE_1: p_motor->Hall.Params.SensorsTable[1U];    break;
                 // case MOT_VAR_HALL_SENSOR_TABLE_2: p_motor->Hall.Params.SensorsTable[2U];    break;

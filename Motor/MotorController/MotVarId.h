@@ -42,10 +42,10 @@ typedef enum
     MOT_VAR_MILLIS,
     MOT_VAR_DEBUG,
 
-    MOT_VAR_SPEED,             // FracU16,
-    MOT_VAR_I_PHASE,           // FracU16, may over saturate
-    MOT_VAR_V_PHASE,           // FracU16, may over saturate
-    MOT_VAR_POWER,             // FracU16, may over saturate
+    MOT_VAR_SPEED,             // UFrac16,
+    MOT_VAR_I_PHASE,           // UFrac16, may over saturate
+    MOT_VAR_V_PHASE,           // UFrac16, may over saturate
+    MOT_VAR_POWER,             // UFrac16, may over saturate
     MOT_VAR_RAMP_CMD,
     MOT_VAR_MOTOR_STATE,           // Value enum:
     MOT_VAR_MOTOR_STATUS_FLAGS,    // Includes Fault and Warning Flags
@@ -177,13 +177,13 @@ typedef enum
     MOT_VAR_IB_REF_ZERO_ADCU,
     MOT_VAR_IC_REF_ZERO_ADCU,
 
-    MOT_VAR_BASE_SPEED_LIMIT_FORWARD,      // ScalarU16
-    MOT_VAR_BASE_SPEED_LIMIT_REVERSE,      // ScalarU16
-    MOT_VAR_BASE_I_LIMIT_MOTORING,         // ScalarU16
-    MOT_VAR_BASE_I_LIMIT_GENERATING,       // ScalarU16
+    MOT_VAR_BASE_SPEED_LIMIT_FORWARD,      // Scalar16
+    MOT_VAR_BASE_SPEED_LIMIT_REVERSE,      // Scalar16
+    MOT_VAR_BASE_I_LIMIT_MOTORING,         // Scalar16
+    MOT_VAR_BASE_I_LIMIT_GENERATING,       // Scalar16
     MOT_VAR_RAMP_ACCEL_TIME_CYCLES,
     MOT_VAR_ALIGN_MODE,
-    MOT_VAR_ALIGN_POWER,                   // V or I, ScalarU16
+    MOT_VAR_ALIGN_POWER,                   // V or I, Scalar16
     MOT_VAR_ALIGN_TIME_CYCLES,                      // Control Cycles
     MOT_VAR_OPEN_LOOP_POWER,               // U16
     MOT_VAR_OPEN_LOOP_SPEED,               // U16

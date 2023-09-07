@@ -210,7 +210,7 @@ static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_
 }
 
 /*
-    ScalarSpeed[Frac16] = Speed * 65536 / ScalarSpeedRef
+    ScalarSpeed[Scalar16] = Speed * 65536 / ScalarSpeedRef
     UnitScalarSpeed => DeltaD * [UnitT_Freq * 65536 * 60 / (CountsPerRevolution * ScalarSpeedRef_Rpm)] / DeltaT
 
     e.g.

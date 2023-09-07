@@ -103,9 +103,9 @@ typedef struct StateMachine_Tag
 {
     const StateMachine_Config_T CONFIG;
     const StateMachine_State_T * p_StateActive;
-    statemachine_inputid_t SyncInput;
-    uint32_t SyncInputValue;
-    bool IsSyncInputAccept;
+    volatile statemachine_inputid_t SyncInput;
+    volatile uint32_t SyncInputValue;
+    volatile bool IsSyncInputAccept;
 #if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
     volatile critical_mutex_t Mutex;
 #endif

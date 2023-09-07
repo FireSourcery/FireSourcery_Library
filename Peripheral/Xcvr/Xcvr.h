@@ -107,8 +107,7 @@ typedef const struct Xcvr_Config_Tag
 Xcvr_Config_T;
 
 /*
-   Todo Link
-    Xcvr Controller
+   Todo  Xcvr_T, Xcvr_Table_T => 1 layer of dereference for operations
 */
 typedef struct Xcvr_Tag
 {
