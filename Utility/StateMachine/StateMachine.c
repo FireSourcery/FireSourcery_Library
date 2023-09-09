@@ -170,7 +170,7 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 
     Proc last set input, always single threaded proc, inputs may overwrite
     Does not need Critical Section if Proc thread is higher priority than Input Thread,
-       SyncInputValue set before SyncInput, SyncInputValue clear on higher priority thread
+       SyncInputValue set before SyncInput, SyncInputValue clear on higher priority thread, SyncInput as Signal
 */
 /******************************************************************************/
 void StateMachine_Sync_Proc(StateMachine_T * p_stateMachine)

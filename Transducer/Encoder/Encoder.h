@@ -65,10 +65,10 @@ typedef union Encoder_Phases_Tag
         uint8_t A : 1U;
         uint8_t PrevB : 1U;
         uint8_t PrevA : 1U;
-        uint8_t Resv4 : 1U;
-        uint8_t Resv5 : 1U;
-        uint8_t Resv6 : 1U;
-        uint8_t Resv7 : 1U;
+        // uint8_t Resv4 : 1U;
+        // uint8_t Resv5 : 1U;
+        // uint8_t Resv6 : 1U;
+        // uint8_t Resv7 : 1U;
     };
     uint8_t State;
 }
@@ -98,15 +98,16 @@ typedef struct __attribute__((aligned(2U))) Encoder_Params_Tag
 #endif
 }
 Encoder_Params_T;
+
 typedef const struct Encoder_Config_Tag
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     HAL_Encoder_Counter_T * const P_HAL_ENCODER_COUNTER; /*!< Pulse Counter */
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
-    /* Phase HAL configures settings not included in Pin HAL. e.g. interrupt support */
-    HAL_Encoder_Phase_T * const P_HAL_ENCODER_A; const uint32_t PHASE_A_ID;
-    HAL_Encoder_Phase_T * const P_HAL_ENCODER_B; const uint32_t PHASE_B_ID;
-    HAL_Encoder_Phase_T * const P_HAL_ENCODER_Z; const uint32_t PHASE_Z_ID;
+    /* HAL_Encoder_Pin_T configures settings not included in Pin_T, case of interrupt support */
+    HAL_Encoder_Pin_T * const P_HAL_PIN_A; const uint32_t PIN_A_ID;
+    HAL_Encoder_Pin_T * const P_HAL_PIN_B; const uint32_t PIN_B_ID;
+    HAL_Encoder_Pin_T * const P_HAL_PIN_Z; const uint32_t PIN_Z_ID;
 #endif
     HAL_Encoder_Timer_T * const P_HAL_ENCODER_TIMER;    /*!< DeltaT Timer. */
     const uint32_t TIMER_FREQ;                          /*!< DeltaT Timer Freq */
@@ -114,7 +115,8 @@ typedef const struct Encoder_Config_Tag
     const uint32_t EXTENDED_TIMER_FREQ;
     const uint32_t POLLING_FREQ;        /*!< DeltaT Interpolation Freq. */
     const uint32_t SAMPLE_FREQ;         /*!< DeltaD Speed Sample Freq. */
-    const Encoder_Params_T * P_PARAMS;
+    void(* const INIT_HAL)(void);
+    const Encoder_Params_T * const P_PARAMS;
 }
 Encoder_Config_T;
 
@@ -122,14 +124,14 @@ typedef struct Encoder_Tag
 {
     const Encoder_Config_T CONFIG;
     Encoder_Params_T Params;
-#if (defined(CONFIG_ENCODER_HW_EMULATED) && defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE))
+#if defined(CONFIG_ENCODER_HW_EMULATED)
     Pin_T PinA;
     Pin_T PinB;
 #endif
     /*
         Compute-Time Variables
     */
-#if (defined(CONFIG_ENCODER_HW_EMULATED) && defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE))
+#if defined(CONFIG_ENCODER_HW_EMULATED)
     Encoder_Phases_T Phases; /* Save Prev State */
 #endif
     int32_t CounterD;
@@ -187,15 +189,15 @@ Encoder_T;
     TIMER_FREQ * 60 < UINT32_MAX for RPM calc
 */
 #if defined(CONFIG_ENCODER_HW_EMULATED)
-    #define _ENCODER_INIT_HW_PHASES(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId)  \
-        .P_HAL_ENCODER_A = p_PhaseAHal, .PHASE_A_ID = PhaseAId,    \
-        .P_HAL_ENCODER_B = p_PhaseBHal, .PHASE_B_ID = PhaseBId,    \
-        .P_HAL_ENCODER_Z = p_PhaseZHal, .PHASE_Z_ID = PhaseZId,
+    #define _ENCODER_INIT_HW_COUNTER(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId)  \
+        .P_HAL_PIN_A = p_PhaseAHal, .PIN_A_ID = PhaseAId,    \
+        .P_HAL_PIN_B = p_PhaseBHal, .PIN_B_ID = PhaseBId,    \
+        .P_HAL_PIN_Z = p_PhaseZHal, .PIN_Z_ID = PhaseZId,
     #define _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)   \
         .PinA = PIN_INIT(p_PinAHal, PinAId),                               \
         .PinB = PIN_INIT(p_PinBHal, PinBId),
 #else
-    #define _ENCODER_INIT_HW_PHASES(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId)  \
+    #define _ENCODER_INIT_HW_COUNTER(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId)  \
         .P_HAL_ENCODER_COUNTER  = p_CounterHal,
     #define _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)
 #endif
@@ -204,10 +206,10 @@ Encoder_T;
 {                                                                                                                           \
     .CONFIG =                                                                                                               \
     {                                                                                                                       \
-        _ENCODER_INIT_HW_PHASES(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId)          \
+        _ENCODER_INIT_HW_COUNTER(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId)         \
         .P_HAL_ENCODER_TIMER    = p_TimerHal,            .TIMER_FREQ           = TimerFreq,                                 \
-        .P_EXTENDED_TIMER       = p_ExtendedTimer,        .EXTENDED_TIMER_FREQ  = ExtendedTimerFreq,                        \
-        .POLLING_FREQ           = PollingFreq,            .SAMPLE_FREQ          = SpeedSampleFreq,                          \
+        .P_EXTENDED_TIMER       = p_ExtendedTimer,       .EXTENDED_TIMER_FREQ  = ExtendedTimerFreq,                         \
+        .POLLING_FREQ           = PollingFreq,           .SAMPLE_FREQ          = SpeedSampleFreq,                           \
         .P_PARAMS               = p_Params,                                                                                 \
     },                                                                                                                      \
     _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)                                                             \

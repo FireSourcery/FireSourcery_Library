@@ -35,10 +35,16 @@
     N Motor Array functions
 */
 /******************************************************************************/
+
 void MotorN_User_ApplyInt16(Motor_T * p_motor, uint8_t motorCount, Motor_User_SetCmd_T cmdFunction, int16_t cmdValue)
 {
     for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { cmdFunction(&p_motor[iMotor], cmdValue); }
 }
+
+// void MotorN_User_ReleaseControl(Motor_T * p_motor, uint8_t motorCount)
+
+
+
 
 void MotorN_User_SetTorqueCmd(Motor_T * p_motor, uint8_t motorCount, int16_t cmdValue)
 {
@@ -89,7 +95,7 @@ void MotorN_User_DisableControl(Motor_T * p_motor, uint8_t motorCount)
 
 void MotorN_User_Ground(Motor_T * p_motor, uint8_t motorCount)
 {
-    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_Ground(&p_motor[iMotor]); }
+    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_Hold(&p_motor[iMotor]); }
 }
 
 bool MotorN_User_SetDirectionForward(Motor_T * p_motor, uint8_t motorCount)

@@ -24,8 +24,7 @@
 /*!
     @file   MotorN_User.h
     @author FireSourcery
-    @brief  User Interface. Motor module public functions.
-            Functions include error checking.
+    @brief
     @version V0
 */
 /******************************************************************************/
@@ -36,7 +35,25 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+typedef void(*Motor_User_ProcVoid_T)(Motor_T * p_motor);
 typedef void(*Motor_User_SetCmd_T)(Motor_T * p_motor, int16_t cmd);
+typedef void(*Motor_User_SetId_T)(Motor_T * p_motor, uint32_t enumValue);
+typedef bool(*Motor_User_ProcStatus_T)(Motor_T * p_motor );
+
+static inline void MotorN_User_ProcFunction(Motor_T * p_motor, uint8_t motorCount, Motor_User_ProcVoid_T cmdFunction)
+{
+    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { cmdFunction(&p_motor[iMotor]); }
+}
+
+static inline void MotorN_User_SetCmd(Motor_T * p_motor, uint8_t motorCount, Motor_User_SetCmd_T cmdFunction, int16_t cmdValue)
+{
+    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { cmdFunction(&p_motor[iMotor], cmdValue); }
+}
+
+void MotorN_User_SetInt16(Motor_T * p_motor, uint8_t motorCount, Motor_User_SetCmd_T cmdFunction, int16_t cmdValue)
+{
+    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { cmdFunction(&p_motor[iMotor], cmdValue); }
+}
 
 /******************************************************************************/
 /*!

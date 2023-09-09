@@ -59,20 +59,50 @@ void FOC_ZeroSvpwm(FOC_T * p_foc)
     p_foc->DutyC = 65536U / 2U;
 }
 
+// void FOC_ZeroVOut(FOC_T * p_foc)
+// {
+//     p_foc->Vd = 0;
+//     p_foc->Vq = 0;
+// }
+
 void FOC_ClearState(FOC_T * p_foc)
 {
     p_foc->Ia = 0;  /* ADC */
     p_foc->Ib = 0;
     p_foc->Ic = 0;
-    p_foc->Id = 0; /* Feedback */
+    p_foc->Id = 0;  /* Feedback */
     p_foc->Iq = 0;
-    p_foc->Vd = 0; /* Output/Bemf */
-    p_foc->Vq = 0;
     p_foc->DReq = 0; /* Req */
     p_foc->QReq = 0;
 
-    // p_foc->Valpha = 0;
-    // p_foc->Vbeta = 0;
-    // p_foc->Sine = 0;
-    // p_foc->Cosine = 0;
+    p_foc->Sine = 0;
+    p_foc->Cosine = 0;
+    p_foc->Va = 0;
+    p_foc->Vb = 0;
+    p_foc->Vc = 0;
+    p_foc->Valpha = 0;
+    p_foc->Vbeta = 0;
+    p_foc->Vd = 0; /* Output/Bemf */
+    p_foc->Vq = 0;
+
+    FOC_ZeroSvpwm(p_foc);
+}
+
+void FOC_ClearControlState(FOC_T * p_foc)
+{
+    p_foc->Ia = 0;  /* ADC */
+    p_foc->Ib = 0;
+    p_foc->Ic = 0;
+    p_foc->Id = 0;  /* Feedback */
+    p_foc->Iq = 0;
+    p_foc->DReq = 0; /* Req */
+    p_foc->QReq = 0;
+    FOC_ZeroSvpwm(p_foc);
+}
+
+void FOC_ClearObserveState(FOC_T * p_foc)
+{
+    p_foc->Va = 0;
+    p_foc->Vb = 0;
+    p_foc->Vc = 0;
 }

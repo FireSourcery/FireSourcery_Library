@@ -143,24 +143,24 @@ static inline void Encoder_CapturePulse(Encoder_T * p_encoder)
 /******************************************************************************/
 static inline void _Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
 {
-    HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
+    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
 }
 
 static inline void _Encoder_OnPhaseB_ISR(Encoder_T * p_encoder)
 {
-    HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
+    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
 }
 
 static inline void _Encoder_OnPhaseZ_ISR(Encoder_T * p_encoder)
 {
-    HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
+    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
 }
 
 /* Shared A, B ISR */
 static inline void _Encoder_OnPhaseAB_ISR(Encoder_T * p_encoder)
 {
-    if      (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID) == true) { _Encoder_OnPhaseA_ISR(p_encoder); }
-    else if (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID) == true) { _Encoder_OnPhaseB_ISR(p_encoder); }
+    if      (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID) == true) { _Encoder_OnPhaseA_ISR(p_encoder); }
+    else if (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID) == true) { _Encoder_OnPhaseB_ISR(p_encoder); }
 }
 
 /******************************************************************************/
@@ -171,20 +171,20 @@ static inline void _Encoder_OnPhaseAB_ISR(Encoder_T * p_encoder)
 /******************************************************************************/
 static inline void Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
 {
-    HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
+    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
     Encoder_CapturePulse(p_encoder);
 }
 
 static inline void Encoder_OnPhaseB_ISR(Encoder_T * p_encoder)
 {
-    HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
+    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
     Encoder_CapturePulse(p_encoder);
 }
 
 /* Index Pin */
 static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 {
-    HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
+    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
     p_encoder->IndexCount++;
     //todo phase index delta
 // #if         defined(CONFIG_ENCODER_HW_EMULATED)
@@ -195,23 +195,23 @@ static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 
 static inline void Encoder_OnPhaseC_Hall_ISR(Encoder_T * p_encoder)
 {
-    HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
+    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
     Encoder_CapturePulse(p_encoder);
 }
 
 /* Shared A, B ISR */
 static inline void Encoder_OnPhaseAB_ISR(Encoder_T * p_encoder)
 {
-    if         (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID) == true) { Encoder_OnPhaseA_ISR(p_encoder); }
-    else if    (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID) == true) { Encoder_OnPhaseB_ISR(p_encoder); }
+    if         (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID) == true) { Encoder_OnPhaseA_ISR(p_encoder); }
+    else if    (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID) == true) { Encoder_OnPhaseB_ISR(p_encoder); }
 }
 
 /* Shared A, B, Index ISR */
 static inline void Encoder_OnPhaseABZ_ISR(Encoder_T * p_encoder)
 {
-    if         (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID) == true) { Encoder_OnPhaseA_ISR(p_encoder); }
-    else if    (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID) == true) { Encoder_OnPhaseB_ISR(p_encoder); }
-    else if    (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID) == true) { Encoder_OnIndex_ISR(p_encoder); }
+    if         (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID) == true) { Encoder_OnPhaseA_ISR(p_encoder); }
+    else if    (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID) == true) { Encoder_OnPhaseB_ISR(p_encoder); }
+    else if    (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID) == true) { Encoder_OnIndex_ISR(p_encoder); }
 }
 /******************************************************************************/
 /*! @} */
@@ -226,22 +226,22 @@ static inline void Encoder_OnPhaseABZ_ISR(Encoder_T * p_encoder)
 // /******************************************************************************/
 // static inline void _Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
 // {
-//     HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
+//     HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
 // }
 
 // static inline void _Encoder_OnPhaseB_ISR(Encoder_T * p_encoder)
 // {
-//     HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
+//     HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
 // }
 
 // static inline void _Encoder_OnPhaseZ_ISR(Encoder_T * p_encoder)
 // {
-//     HAL_Encoder_ClearPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
+//     HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
 // }
 
 // /* Shared A, B ISR */
 // static inline void _Encoder_OnPhaseAB_ISR(Encoder_T * p_encoder)
 // {
-//     if         (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID) == true) { _Encoder_OnPhaseA_ISR(p_encoder); }
-//     else if    (HAL_Encoder_ReadPhaseFlag(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID) == true) { _Encoder_OnPhaseB_ISR(p_encoder); }
+//     if         (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID) == true) { _Encoder_OnPhaseA_ISR(p_encoder); }
+//     else if    (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID) == true) { _Encoder_OnPhaseB_ISR(p_encoder); }
 // }

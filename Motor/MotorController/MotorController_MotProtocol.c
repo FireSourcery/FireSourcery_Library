@@ -82,6 +82,8 @@ typedef enum MotCallId_Tag
 {
     MOT_CALL_SAVE_PARAMS = 0x00U,
     MOT_CALL_CALIBRATE_SENSOR = 0x01U,
+    MOT_CALL_ENTER_CRITICAL = 0xF1U,
+    MOT_CALL_EXIT_CRITICAL = 0xF2U,
     // MOT_VAR_CALIBRATE_ADC       = 515U,
     // MOT_VAR_CALIBRATE           = 516U,     // Value enum: ADC, Sensor,
 }
@@ -91,12 +93,18 @@ static uint8_t Call_Blocking(MotorController_T * p_mc, MotPacket_CallResp_T * p_
 {
     Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U);
     uint16_t status = 0U;
+
     switch((MotCallId_T)p_rxPacket->CallReq.Id)
     {
-        case MOT_CALL_CALIBRATE_SENSOR:     Motor_User_CalibrateSensor(p_motor);          status = 0U;                 break;
-        case MOT_CALL_SAVE_PARAMS:          MotorController_User_SaveParameters_Blocking(p_mc);     status = p_mc->NvmStatus;   break;
+        case MOT_CALL_CALIBRATE_SENSOR:     MotorController_User_ProcCritical_Blocking(p_mc, MOTOR_CONTROLLER_OP_CALIBRATE_SENSOR);     status = 0U;                    break;
+        // case MOT_CALL_WRITE_MANUFACTURE:     MotorController_User_Write_Blocking(p_mc, MOTOR_CONTROLLER_OP_CALIBRATE_SENSOR);     status = 0U;                    break;
+        // case MOT_CALL_READ_MANUFACTURE:     MotorController_User_ProcCritical_Blocking(p_mc, MOTOR_CONTROLLER_OP_CALIBRATE_SENSOR);     status = 0U;                    break;
+        case MOT_CALL_SAVE_PARAMS:          MotorController_User_ProcCritical_Blocking(p_mc, MOTOR_CONTROLLER_OP_NVM_SAVE_PARAMS);      status = p_mc->NvmStatus;       break;
+        case MOT_CALL_ENTER_CRITICAL:       MotorController_User_ProcCritical_Blocking(p_mc, MOTOR_CONTROLLER_ENTER_CRITICAL);          status = 0;       break;
+        case MOT_CALL_EXIT_CRITICAL:        MotorController_User_ProcCritical_Blocking(p_mc, MOTOR_CONTROLLER_EXIT_CRITICAL);           status = 0;       break;
         default: break;
     }
+
     return MotPacket_CallResp_Build(p_txPacket, p_rxPacket->CallReq.Id, status);
 }
 
@@ -144,7 +152,7 @@ static uint8_t VarWrite(MotorController_T * p_mc, MotPacket_VarWriteResp_T * p_t
 //     switch(p_subState->StateId)
 //     {
 //         case 0U: /* Tx Ack handled by common Sync */
-//             p_subState->DataModeAddress = MotPacket_ReadDataReq_ParseAddress((MotPacket_DataModeReq_T *)args->p_RxPacket);
+            // p_subState->DataModeAddress = MotPacket_ReadDataReq_ParseAddress((MotPacket_DataModeReq_T *)args->p_RxPacket);
 //             p_subState->DataModeSize = MotPacket_ReadDataReq_ParseSize((MotPacket_DataModeReq_T *)args->p_RxPacket);
 //             p_subState->StateId = 1U;
 //             args->TxSize = MotPacket_DataModeReadResp_Build((MotPacket_DataModeResp_T *)p_txPacket, MOT_VAR_STATUS_OK);

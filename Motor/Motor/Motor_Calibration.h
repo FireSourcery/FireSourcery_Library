@@ -39,12 +39,12 @@
     Calibration State Functions - Mapped to StateMachine, Nonblocking
 */
 /******************************************************************************/
-static inline void Motor_Calibrate_StartHall(Motor_T * p_motor)
+static inline void Motor_Calibration_StartHall(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
 }
 
-static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
+static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
 {
     const uint16_t duty = p_motor->Parameters.AlignPower_Scalar16;
     bool isComplete = false;
@@ -103,13 +103,13 @@ static inline bool Motor_Calibrate_Hall(Motor_T * p_motor)
     return isComplete;
 }
 
-static inline void Motor_Calibrate_StartEncoder(Motor_T * p_motor)
+static inline void Motor_Calibration_StartEncoder(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
     Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_Scalar16, 0U, 0U);
 }
 
-static inline bool Motor_Calibrate_Encoder(Motor_T * p_motor)
+static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
 {
     bool isComplete = false;
 
@@ -138,7 +138,7 @@ static inline bool Motor_Calibrate_Encoder(Motor_T * p_motor)
 /*
     Calibrate Current ADC
 */
-static inline void Motor_Calibrate_StartAdc(Motor_T * p_motor)
+static inline void Motor_Calibration_StartAdc(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, GLOBAL_MOTOR.CONTROL_FREQ);
 
@@ -158,7 +158,7 @@ static inline void Motor_Calibrate_StartAdc(Motor_T * p_motor)
     p_motor->AnalogResults.Ic_Adcu = 0U;
 }
 
-static inline bool Motor_Calibrate_Adc(Motor_T *p_motor)
+static inline bool Motor_Calibration_ProcAdc(Motor_T *p_motor)
 {
     bool isComplete = Timer_Periodic_Poll(&p_motor->ControlTimer);
 

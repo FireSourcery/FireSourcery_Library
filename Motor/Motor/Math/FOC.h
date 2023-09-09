@@ -59,19 +59,22 @@ typedef struct FOC_Tag
     qfrac16_t Sine;
     qfrac16_t Cosine;
 
+    /* Feedback */
     /* PID Feedback Variable */
     qfrac16_t Id;
     qfrac16_t Iq;
 
+    /* Request in V or I  */
     /* PID Setpoint Variable - From Ramp, SpeedPid, OpenLoop */
     qfrac16_t DReq;
     qfrac16_t QReq;
 
+    /* VOutput/VBemf */
     /* PID Control Variable, or intermediate input bypass current feedback */
     qfrac16_t Vd;
     qfrac16_t Vq;
 
-    uint16_t Vunlimited;   /* Q1.15 Unsigned, vector magnitude prior to limit */
+    uint16_t VdqReq;   /* UFrac16, Q1.15 Unsigned, vector magnitude prior to limit */
 
     qfrac16_t Valpha;
     qfrac16_t Vbeta;
@@ -98,7 +101,7 @@ static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 {
     // foc_circlelimit_dmax(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
-    p_foc->Vunlimited = foc_circlelimit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX);
+    p_foc->VdqReq = foc_circlelimit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX);
     foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
     svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
 }
@@ -129,6 +132,7 @@ static inline void FOC_SetId(FOC_T * p_foc, qfrac16_t id) { p_foc->Id = id; }
 static inline void FOC_SetIq(FOC_T * p_foc, qfrac16_t iq) { p_foc->Iq = iq; }
 static inline void FOC_SetVd(FOC_T * p_foc, qfrac16_t vd) { p_foc->Vd = vd; }
 static inline void FOC_SetVq(FOC_T * p_foc, qfrac16_t vq) { p_foc->Vq = vq; }
+
 static inline uint16_t FOC_GetDutyA(FOC_T * p_foc) { return p_foc->DutyA; }
 static inline uint16_t FOC_GetDutyB(FOC_T * p_foc) { return p_foc->DutyB; }
 static inline uint16_t FOC_GetDutyC(FOC_T * p_foc) { return p_foc->DutyC; }
@@ -141,6 +145,7 @@ static inline qfrac16_t FOC_GetIb(FOC_T * p_foc) { return p_foc->Ib; }
 static inline qfrac16_t FOC_GetIc(FOC_T * p_foc) { return p_foc->Ic; }
 static inline qfrac16_t FOC_GetIalpha(FOC_T * p_foc) { return p_foc->Ialpha; }
 static inline qfrac16_t FOC_GetIbeta(FOC_T * p_foc) { return p_foc->Ibeta; }
+
 
 /*  */
 static inline void FOC_SetVBemfA(FOC_T * p_foc, qfrac16_t va) { p_foc->Va = va; }
@@ -158,7 +163,9 @@ static inline qfrac16_t FOC_GetQReq(FOC_T * p_foc) { return p_foc->QReq; }
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
 extern void FOC_ZeroSvpwm(FOC_T * p_foc);
-extern void FOC_ClearState(FOC_T * p_foc);
+// extern void FOC_ZeroVOut(FOC_T * p_foc);
+extern void FOC_ClearControlState(FOC_T * p_foc);
+extern void FOC_ClearObserveState(FOC_T * p_foc);
 // extern void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax);
 
 #endif

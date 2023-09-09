@@ -437,7 +437,7 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
         }
         Terminal_SendString(p_term, "\r\n");
 
-        Terminal_SendString(p_term, "ControlFeedbackMode: ");
+        Terminal_SendString(p_term, "FeedbackMode: ");
         switch(Motor_User_GetDefaultFeedbackMode(p_motor))
         {
             case MOTOR_FEEDBACK_MODE_OPEN_LOOP:                 Terminal_SendString(p_term, "OPEN_LOOP");       break;

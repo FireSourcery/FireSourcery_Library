@@ -55,60 +55,60 @@ const int8_t _ENCODER_TABLE_PHASE_A[_ENCODER_TABLE_LENGTH] =
 /******************************************************************************/
 static void InitPhases(Encoder_T * p_encoder)
 {
-    HAL_Encoder_InitPhase(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
-    HAL_Encoder_InitPhase(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
-    HAL_Encoder_InitPhase(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
+    HAL_Encoder_InitPin(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
+    HAL_Encoder_InitPin(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
+    HAL_Encoder_InitPin(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
 }
 
 void Encoder_InitInterrupts_Quadrature(Encoder_T * p_encoder)
 {
     InitPhases(p_encoder);
-    HAL_Encoder_EnablePhaseInterruptDualEdge(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
-    HAL_Encoder_EnablePhaseInterruptDualEdge(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
-    HAL_Encoder_EnablePhaseInterruptFallingEdge(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
+    HAL_Encoder_EnablePinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
+    HAL_Encoder_EnablePinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
+    HAL_Encoder_EnablePinInterruptFallingEdge(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
 }
 
 void Encoder_InitInterrupts_ABC(Encoder_T * p_encoder)
 {
     InitPhases(p_encoder);
-    HAL_Encoder_EnablePhaseInterruptDualEdge(p_encoder->CONFIG.P_HAL_ENCODER_A, p_encoder->CONFIG.PHASE_A_ID);
-    HAL_Encoder_EnablePhaseInterruptDualEdge(p_encoder->CONFIG.P_HAL_ENCODER_B, p_encoder->CONFIG.PHASE_B_ID);
-    HAL_Encoder_EnablePhaseInterruptDualEdge(p_encoder->CONFIG.P_HAL_ENCODER_Z, p_encoder->CONFIG.PHASE_Z_ID);
+    HAL_Encoder_EnablePinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
+    HAL_Encoder_EnablePinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
+    HAL_Encoder_EnablePinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
 }
 
 
 
-/*
+    /*
 
-*/
-void Encoder_CalibrateAlignZero(Encoder_T * p_encoder)
-{
-    p_encoder->Angle32 = 0U;
-    _Encoder_ZeroPulseCount(p_encoder);
-}
+    */
+    void Encoder_CalibrateAlignZero(Encoder_T * p_encoder)
+    {
+        p_encoder->Angle32 = 0U;
+        _Encoder_ZeroPulseCount(p_encoder);
+    }
 
-/* todo */
-void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder)
-{
-    p_encoder->Align = ENCODER_ALIGN_PHASE;
-    _Encoder_ZeroPulseCount(p_encoder);
-}
+    /* todo */
+    void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder)
+    {
+        p_encoder->Align = ENCODER_ALIGN_PHASE;
+        _Encoder_ZeroPulseCount(p_encoder);
+    }
 
-void Encoder_CalibrateIndexStart(Encoder_T * p_encoder)
-{
-    // _Encoder_ZeroPulseCount(p_encoder);
-}
+    void Encoder_CalibrateIndexStart(Encoder_T * p_encoder)
+    {
+        // _Encoder_ZeroPulseCount(p_encoder);
+    }
 
-void Encoder_CalibrateIndex(Encoder_T * p_encoder)
-{
-    p_encoder->Align = ENCODER_ALIGN_ABSOLUTE;
-    // p_encoder->AbsoluteOffset = p_encoder->IndexOffset;
-}
+    void Encoder_CalibrateIndex(Encoder_T * p_encoder)
+    {
+        p_encoder->Align = ENCODER_ALIGN_ABSOLUTE;
+        // p_encoder->AbsoluteOffset = p_encoder->IndexOffset;
+    }
 
-void Encoder_ClearAlign(Encoder_T * p_encoder)
-{
-    p_encoder->Align = ENCODER_ALIGN_NO;
-}
+    void Encoder_ClearAlign(Encoder_T * p_encoder)
+    {
+        p_encoder->Align = ENCODER_ALIGN_NO;
+    }
 
 
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
@@ -126,7 +126,7 @@ void Encoder_CalibrateQuadratureReference(Encoder_T * p_encoder)
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
     HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0);
-#elif     defined(CONFIG_ENCODER_HW_EMULATED)
+#elif   defined(CONFIG_ENCODER_HW_EMULATED)
     p_encoder->CounterD = 0;
 #endif
 }
@@ -138,12 +138,12 @@ void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder)
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
-    #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-    p_encoder->Params.IsALeadBPositive = (counterValue > p_encoder->CounterD);
-    #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-    p_encoder->Params.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
-    #endif
-#elif     defined(CONFIG_ENCODER_HW_EMULATED)
+    // #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+    // p_encoder->Params.IsALeadBPositive = (counterValue > p_encoder->CounterD);
+    // #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+    // p_encoder->Params.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
+    // #endif
+#elif   defined(CONFIG_ENCODER_HW_EMULATED)
     p_encoder->Params.IsALeadBPositive = (p_encoder->CounterD > 0);
 #endif
 }

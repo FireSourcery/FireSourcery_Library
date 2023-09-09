@@ -184,7 +184,8 @@ uint16_t Motor_Params_GetILimitGenerating_Amp(Motor_T * p_motor) { return _Motor
 void Motor_Params_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
     p_motor->Parameters.SpeedFeedbackRef_Rpm = rpm;
-    if(rpm < p_motor->Parameters.VSpeedRef_Rpm) { p_motor->Parameters.VSpeedRef_Rpm = rpm; }
+    // if(rpm > kv * Global_Motor_GetVSource_V())
+    if(p_motor->Parameters.VSpeedRef_Rpm > rpm) { p_motor->Parameters.VSpeedRef_Rpm = rpm; }
     PropagateSet(p_motor, Motor_ResetUnitsVSpeed);
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
@@ -192,21 +193,21 @@ void Motor_Params_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 /* SpeedVRef =< SetSpeedFeedbackRef to ensure not match to higher speed */
 void Motor_Params_SetVSpeedRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
-    p_motor->Parameters.VSpeedRef_Rpm = (rpm <= p_motor->Parameters.SpeedFeedbackRef_Rpm) ? rpm : p_motor->Parameters.SpeedFeedbackRef_Rpm;
+    p_motor->Parameters.VSpeedRef_Rpm = (rpm > p_motor->Parameters.SpeedFeedbackRef_Rpm) ? p_motor->Parameters.SpeedFeedbackRef_Rpm : rpm;
     PropagateSet(p_motor, Motor_ResetUnitsVSpeed);
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
 
-void Motor_Params_SetSpeedFeedbackRef_Kv(Motor_T * p_motor, uint16_t kv)
+static void SetSpeedFeedbackRef_Kv(Motor_T * p_motor, uint16_t kv)
 {
-    uint16_t kvRpm = kv * Global_Motor_GetVSource_V();
-    if((p_motor->Parameters.SpeedFeedbackRef_Rpm == 0U) || kvRpm < p_motor->Parameters.SpeedFeedbackRef_Rpm)
+    uint16_t rpm = kv * Global_Motor_GetVSource_V();
+    if((p_motor->Parameters.SpeedFeedbackRef_Rpm == 0U) || rpm < p_motor->Parameters.SpeedFeedbackRef_Rpm)
     {
-        Motor_Params_SetSpeedFeedbackRef_Rpm(p_motor, kvRpm);
+        Motor_Params_SetSpeedFeedbackRef_Rpm(p_motor, rpm);
     }
 }
 
-void Motor_Params_SetVSpeedRef_Kv(Motor_T * p_motor, uint16_t kv)
+static void SetVSpeedRef_Kv(Motor_T * p_motor, uint16_t kv)
 {
     Motor_Params_SetVSpeedRef_Rpm(p_motor, kv * Global_Motor_GetVSource_V());
 }
@@ -215,8 +216,8 @@ void Motor_Params_SetVSpeedRef_Kv(Motor_T * p_motor, uint16_t kv)
 void Motor_Params_SetKv(Motor_T * p_motor, uint16_t kv)
 {
     p_motor->Parameters.Kv = kv;
-    Motor_Params_SetSpeedFeedbackRef_Kv(p_motor, kv);
-    Motor_Params_SetVSpeedRef_Kv(p_motor, kv);
+    SetSpeedFeedbackRef_Kv(p_motor, kv);
+    SetVSpeedRef_Kv(p_motor, kv);
 }
 
 void Motor_Params_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Parameters.IaZeroRef_Adcu = adcu; }// PropagateSet(p_motor, Motor_ResetUnitsIa);

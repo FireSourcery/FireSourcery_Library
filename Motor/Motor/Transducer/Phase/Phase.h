@@ -113,9 +113,9 @@ static inline void Phase_EnableInterrupt(const Phase_T * p_phase)   { PWM_Enable
 /*! Extern */
 /******************************************************************************/
 extern void Phase_ActivateDuty(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
-extern void Phase_ActuateDuty_Frac15(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
 extern void Phase_ActuateDuty_Frac16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
-extern void Phase_ActivateSwitchABC(const Phase_T * p_phase);
+extern void Phase_ActuateDuty_Scalar16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
+extern void Phase_ActivateOutputABC(const Phase_T * p_phase);
 extern void Phase_Float(const Phase_T * p_phase);
 extern void Phase_Ground(const Phase_T * p_phase);
 
@@ -127,12 +127,12 @@ extern void Phase_Polar_ActivateInvB(const Phase_T * p_phase, uint16_t duty);
 extern void Phase_Polar_ActivateInvC(const Phase_T * p_phase, uint16_t duty);
 
 extern void Phase_Polar_Ground(const Phase_T * p_phase);
-extern void Phase_Polar_ActivateSwitchAC(const Phase_T * p_phase);
-extern void Phase_Polar_ActivateSwitchBC(const Phase_T * p_phase);
-extern void Phase_Polar_ActivateSwitchBA(const Phase_T * p_phase);
-extern void Phase_Polar_ActivateSwitchCA(const Phase_T * p_phase);
-extern void Phase_Polar_ActivateSwitchCB(const Phase_T * p_phase);
-extern void Phase_Polar_ActivateSwitchAB(const Phase_T * p_phase);
+extern void Phase_Polar_ActivateOutputAC(const Phase_T * p_phase);
+extern void Phase_Polar_ActivateOutputBC(const Phase_T * p_phase);
+extern void Phase_Polar_ActivateOutputBA(const Phase_T * p_phase);
+extern void Phase_Polar_ActivateOutputCA(const Phase_T * p_phase);
+extern void Phase_Polar_ActivateOutputCB(const Phase_T * p_phase);
+extern void Phase_Polar_ActivateOutputAB(const Phase_T * p_phase);
 
 extern void Phase_Unipolar1_ActivateDutyAC(const Phase_T * p_phase, uint16_t duty);
 extern void Phase_Unipolar1_ActivateDutyBC(const Phase_T * p_phase, uint16_t duty);
@@ -173,7 +173,7 @@ extern void Phase_Init(Phase_T * p_phase);
 extern void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phaseMode);
 extern void Phase_Polar_Activate(Phase_T * p_phase, Phase_Id_T phaseId, uint16_t duty);
 extern void Phase_Polar_ActivateDuty(Phase_T * p_phase, Phase_Id_T phaseId, uint16_t duty);
-extern void Phase_Polar_ActivateSwitch(Phase_T * p_phase, Phase_Id_T phaseId);
+extern void Phase_Polar_ActivateOutput(Phase_T * p_phase, Phase_Id_T phaseId);
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

@@ -111,18 +111,52 @@ static inline int32_t Motor_FOC_GetElectricalPower_UFrac16(Motor_T * p_motor)   
 
 */
 /******************************************************************************/
-/* Clear State for SetFeedbackMatch */
-static inline void Motor_FOC_ClearState(Motor_T * p_motor)
+static inline void Motor_FOC_ClearControlState(Motor_T * p_motor) /* Begin Observe, Ifeedback not updated */
 {
-    FOC_ClearState(&p_motor->Foc);
+    FOC_ClearControlState(&p_motor->Foc);
+    Linear_Ramp_ZeroState(&p_motor->Ramp);
+    PID_Reset(&p_motor->PidIq);
+    PID_Reset(&p_motor->PidId);
+    PID_Reset(&p_motor->PidSpeed);
 }
 
-/* From FreeWheel State, match to speed, overwrites VBemfClarke */
-static inline void Motor_FOC_SetVSpeed(Motor_T * p_motor)
+static inline void Motor_FOC_ClearObserveState(Motor_T * p_motor) /* Begin Control, Vabc not updated */
 {
-    FOC_SetVq(&p_motor->Foc, Motor_GetVSpeed_FracS16(p_motor));
-    FOC_SetVd(&p_motor->Foc, 0);
+    FOC_ClearControlState(&p_motor->Foc);
 }
+
+// static inline void Motor_FOC_ZeroVOut(Motor_T * p_motor)
+// {
+//     FOC_ZeroVOut(&p_motor->Foc);
+//     // FOC_ClearState(&p_motor->Foc);
+//     // Linear_Ramp_ZeroState(&p_motor->Ramp);
+//     // PID_Reset(&p_motor->PidIq);
+//     // PID_Reset(&p_motor->PidId);
+//     // PID_Reset(&p_motor->PidSpeed);
+// }
+
+#include "System/Critical/Critical.h"
+
+static inline bool Motor_FOC_SetFeedbackMode_Async(Motor_T * p_motor, Motor_FeedbackMode_T reqMode)
+{
+    // Motor_FeedbackMode_T reqMode = { .Word = modeValue, };
+    // bool update = (reqMode.Word == p_motor->FeedbackMode.Word);
+    // if(update == true)
+    // {
+        Critical_Enter();
+        p_motor->FeedbackMode.Word = reqMode.Word;
+        Motor_FOC_ProcFeedbackMatch(p_motor);
+        Critical_Exit();
+    // }
+    // return update;
+}
+
+// static inline bool Motor_FOC_SetFeedbackMode_Sync(Motor_T * p_motor, Motor_FeedbackMode_T reqMode)
+// {
+//     p_motor->FeedbackMode.Word = reqMode.Word;
+//     // wait for entry to update
+//     // return update;
+// }
 
 /******************************************************************************/
 /*!

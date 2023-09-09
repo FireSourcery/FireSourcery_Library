@@ -63,15 +63,18 @@ static inline uint16_t Motor_User_GetSpeed_UFrac16(Motor_T * p_motor) { return m
 */
 static inline int32_t Motor_User_GetIPhase_Frac16(Motor_T * p_motor)
 {
-    return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_UFrac16, 0U));
+    // return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_Frac16, 0U));
+    return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_UFrac16, 0U) ;
 }
+
 
 /*
     BEMF during freewheel or VOut during active control
 */
 static inline int32_t Motor_User_GetVPhase_Frac16(Motor_T * p_motor)
 {
-    return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_UFrac16, 0U));
+    // return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_Frac16, 0U));
+    return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_UFrac16, 0U);
 }
 
 
@@ -116,9 +119,9 @@ static inline int32_t Motor_User_GetHeat_DegC(Motor_T * p_motor, uint16_t scalar
     Writable via interface functions
 */
 static inline Motor_Direction_T Motor_User_GetDirection(Motor_T * p_motor)                  { return p_motor->Direction; }
-static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackMode(Motor_T * p_motor)      { return p_motor->ControlFeedbackMode; }
-static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackModeFlags(Motor_T * p_motor) { return p_motor->ControlFeedbackMode; }
-// static inline Motor_FeedbackModeId_T Motor_User_GetActiveFeedbackModeId(Motor_T * p_motor)    { return p_motor->ControlFeedbackMode; }
+static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackMode(Motor_T * p_motor)      { return p_motor->FeedbackMode; }
+static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackModeFlags(Motor_T * p_motor) { return p_motor->FeedbackMode; }
+// static inline Motor_FeedbackModeId_T Motor_User_GetActiveFeedbackModeId(Motor_T * p_motor)    { return p_motor->FeedbackMode; }
 static inline uint16_t Motor_User_GetActiveILimit(Motor_T * p_motor)                        { return p_motor->ILimitActiveSentinel_Scalar16; }
 static inline uint16_t Motor_User_GetActiveSpeedLimit(Motor_T * p_motor)                    { return p_motor->SpeedLimitDirect_Scalar16; }
 
@@ -143,22 +146,25 @@ extern void Motor_User_SetTorqueModeCmd(Motor_T * p_motor, int16_t torque);
 extern void Motor_User_SetSpeedMode(Motor_T * p_motor);
 extern void Motor_User_SetSpeedCmdValue(Motor_T * p_motor, int16_t speed);
 extern void Motor_User_SetSpeedModeCmd(Motor_T * p_motor, int16_t speed);
+extern void Motor_User_SetPositionCmdValue(Motor_T * p_motor, uint16_t angle);
 extern void Motor_User_SetOpenLoopMode(Motor_T * p_motor);
 extern void Motor_User_SetOpenLoopCmdValue(Motor_T * p_motor, int16_t ivCmd);
 extern void Motor_User_SetOpenLoopModeCmd(Motor_T * p_motor, int16_t ivMagnitude);
-extern void Motor_User_SetPositionCmdValue(Motor_T * p_motor, uint16_t angle);
+extern void Motor_User_SetCmdModeValue(Motor_T * p_motor, int16_t userCmd);
+extern void Motor_User_ActivateDefaultFeedbackMode(Motor_T * p_motor);
+
 extern void Motor_User_SetDefaultFeedbackCmdValue(Motor_T * p_motor, int16_t userCmd);
 extern void Motor_User_SetDefaultModeCmd(Motor_T * p_motor, int16_t userCmd);
 extern void Motor_User_SetThrottleCmd(Motor_T * p_motor, uint16_t throttle);
 extern void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake);
 extern void Motor_User_SetVBrakeCmd(Motor_T * p_motor, uint16_t brake);
 extern void Motor_User_SetCruise(Motor_T * p_motor);
-extern void Motor_User_ActivateDefaultFeedbackMode(Motor_T * p_motor);
 
 //rename
 extern void Motor_User_ReleaseControl(Motor_T * p_motor);
 extern void Motor_User_DisableControl(Motor_T * p_motor);
-extern void Motor_User_Ground(Motor_T * p_motor);
+extern void Motor_User_ActivateControl(Motor_T * p_motor);
+extern void Motor_User_Hold(Motor_T * p_motor);
 extern bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
 extern bool Motor_User_SetDirectionForward(Motor_T * p_motor);
 extern bool Motor_User_SetDirectionReverse(Motor_T * p_motor);

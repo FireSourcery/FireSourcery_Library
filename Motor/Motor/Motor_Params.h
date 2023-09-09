@@ -24,8 +24,7 @@
 /*!
     @file   Motor_Params.h
     @author FireSourcery
-    @brief  Params Interface. Motor module public functions.
-            Functions include error checking.
+    @brief  Params
     @version V0
 */
 /******************************************************************************/
@@ -33,9 +32,17 @@
 #define MOTOR_PARAMS_H
 
 #include "Motor.h"
+#include "Motor_StateMachine.h"
 
 #include <stdint.h>
 #include <stdbool.h>
+
+typedef void (*Motor_Params_Set_T)(Motor_T * p_motor, uint16_t value);
+
+uint16_t Motor_Params_Set(Motor_T * p_motor, Motor_Params_Set_T setFunction, uint16_t value)
+{
+    if(StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP) { setFunction(p_motor, value); }
+}
 
 /******************************************************************************/
 /*
@@ -43,6 +50,14 @@
     Selectively handle using StateId
 */
 /******************************************************************************/
+static inline void Motor_Params_SetDefaultFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)      { p_motor->Parameters.DefaultFeedbackMode = mode; /* p_motor->FeedbackMode.IsDisable = 1U;  */}
+
+static inline void Motor_Params_SetDefaultFeedbackMode_Cast(Motor_T * p_motor, uint16_t wordValue)
+{
+    Motor_FeedbackMode_T mode = { .Word = wordValue, };
+    Motor_Params_SetDefaultFeedbackMode(p_motor, mode);
+}
+
 /* Persistent Limits */
 static inline uint16_t Motor_Params_GetSpeedLimitForward_Scalar16(Motor_T * p_motor)                 { return p_motor->Parameters.SpeedLimitForward_Scalar16; }
 static inline uint16_t Motor_Params_GetSpeedLimitReverse_Scalar16(Motor_T * p_motor)                 { return p_motor->Parameters.SpeedLimitReverse_Scalar16; }
@@ -67,8 +82,8 @@ static inline uint16_t Motor_Params_GetRampAccel_Cycles(Motor_T * p_motor)      
 // static inline void Motor_Params_GetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode)                { return p_motor->Parameters.AlignMode; }
 static inline uint16_t Motor_Params_GetAlignPower_Scalar16(Motor_T * p_motor)                             { return p_motor->Parameters.AlignPower_Scalar16; }
 static inline uint32_t Motor_Params_GetAlignTime_Cycles(Motor_T * p_motor)                                { return p_motor->Parameters.AlignTime_Cycles; }
+
 static inline void Motor_Params_SetCommutationMode(Motor_T * p_motor, Motor_CommutationMode_T mode)       { p_motor->Parameters.CommutationMode = mode; }
-static inline void Motor_Params_SetDefaultFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)      { p_motor->Parameters.DefaultFeedbackMode = mode; /* p_motor->ControlFeedbackMode.IsDisable = 1U;  */}
 static inline void Motor_Params_SetRampAccel_Cycles(Motor_T * p_motor, uint16_t cycles)                   { p_motor->Parameters.RampAccel_Cycles = cycles; }
 // static inline void Motor_Params_SetAlignMode(Motor_T * p_motor, Motor_AlignMode_T mode)                 { p_motor->Parameters.AlignMode = mode; }
 static inline void Motor_Params_SetAlignPower_Scalar16(Motor_T * p_motor, uint16_t v_scalar16)            { p_motor->Parameters.AlignPower_Scalar16 = (v_scalar16 > GLOBAL_MOTOR.ALIGN_VPWM_MAX) ? GLOBAL_MOTOR.ALIGN_VPWM_MAX : v_scalar16; }

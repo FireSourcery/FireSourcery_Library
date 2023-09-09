@@ -108,15 +108,15 @@ typedef enum NvMemory_State_Tag
 }
 NvMemory_State_T;
 
-typedef const struct NvMemory_OpControl_Tag
-{
-    HAL_NvMemory_StartCmd_T START_CMD;
-    NvMemory_FinalizeCmd_T FINALIZE_CMD;
-    NvMemory_Process_T PARSE_CMD_ERROR;
-    NvMemory_Process_T FINALIZE_OP;
-    size_t UNIT_SIZE;
-}
-NvMemory_OpControl_T;
+// typedef const struct NvMemory_OpControl_Tag
+// {
+//     HAL_NvMemory_StartCmd_T START_CMD;
+//     NvMemory_FinalizeCmd_T FINALIZE_CMD;
+//     NvMemory_Process_T PARSE_CMD_ERROR;
+//     NvMemory_Process_T FINALIZE_OP;
+//     size_t UNIT_SIZE;
+// }
+// NvMemory_OpControl_T;
 
 typedef const struct NvMemory_Config_Tag
 {

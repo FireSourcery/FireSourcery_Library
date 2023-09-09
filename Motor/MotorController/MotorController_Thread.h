@@ -48,6 +48,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
     MotAnalogUser_CaptureInput(&p_mc->AnalogUser, p_mc->AnalogResults.Throttle_Adcu, p_mc->AnalogResults.Brake_Adcu);
 
     /* Assume no input cmd priority level (although implemented) */
+    /* Edge detect implemented but handled by state machine */
     switch(cmd)
     {
         case MOT_ANALOG_USER_CMD_SET_BRAKE:                 MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_mc->AnalogUser));          break;
@@ -166,19 +167,19 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
             MotorController_SetILimitAll(p_mc, Thermistor_GetHeatLimit_FracU16(&p_mc->ThermistorMosfets), MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT);
 
             // Thermistor_PollWarningRisingEdge(&p_mc->ThermistorMosfetsTop);
-            if(p_mc->WarningFlags.Heat == false)
+            if(p_mc->StatusFlags.Heat == false)
             {
                 Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 1U);
-                p_mc->WarningFlags.Heat = true;
+                p_mc->StatusFlags.Heat = true;
             }
         }
         else
         {
             // Thermistor_PollWarningFallingEdge(&p_mc->ThermistorMosfetsTop);
-            if(p_mc->WarningFlags.Heat == true)
+            if(p_mc->StatusFlags.Heat == true)
             {
                 MotorController_ClearILimitAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT);
-                p_mc->WarningFlags.Heat = false;
+                p_mc->StatusFlags.Heat = false;
             }
         }
     }
@@ -295,17 +296,17 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
         case VMONITOR_WARNING_UPPER:
             break;
         case VMONITOR_WARNING_LOWER:
-            if(p_mc->WarningFlags.LowV == 0U)
+            if(p_mc->StatusFlags.LowV == 0U)
             {
-                p_mc->WarningFlags.LowV = 1U;
+                p_mc->StatusFlags.LowV = 1U;
                 MotorController_SetILimitAll(p_mc, p_mc->Parameters.ILimitLowV_Scalar16, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
                 Blinky_BlinkN(&p_mc->Buzzer, 500U, 250U, 2U);
             }
             break;
         case VMONITOR_STATUS_OK:
-            if(p_mc->WarningFlags.LowV == 1U)
+            if(p_mc->StatusFlags.LowV == 1U)
             {
-                p_mc->WarningFlags.LowV = 0U;
+                p_mc->StatusFlags.LowV = 0U;
                 MotorController_ClearILimitAll(p_mc, MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V);
             }
             break;
