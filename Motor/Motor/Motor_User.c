@@ -41,15 +41,13 @@ static int32_t Scale16(uint16_t scalar16, int32_t value) { return scalar16 * val
 /*
     Motor State Machine Thread Safety
 
-    SemiSync Mode -
+    ASync Mode -
     State Proc in PWM thread. User Input in Main Thread. may Need critical section during input.
     No Critical during transistion -> Prev State Proc may run before Entry.
+    control proc may overwrite pid state set
 
     Sync Mode
-    Must check input flags every pwm cycle
-
-    Set async to proc, sync issue can recover?
-    control proc may overwrite pid state set, but last to complete is always user input?
+    Must check input flags every pwm cycle. Input value before Input Id, suffcient?
 
     CmdValue (Ramp Target) and CmdMode selectively sync inputs for StateMachine
 */
@@ -65,27 +63,33 @@ static int32_t Scale16(uint16_t scalar16, int32_t value) { return scalar16 * val
 
     SetMode     - Invokes StateMachine - Sets control mode only
     SetCmdValue - Without invoking StateMachine - Sets buffered cmd value, sets on all states even when inactive
-    SetModeCmd  - Check/sets control mode and cmd value
+        SetModeCmd  - Check/sets control mode and cmd value
 */
 /******************************************************************************/
 /*
-    ControlFeedbackMode update: Set mode flags => match Ramp and PID state to output on change
+    FeedbackMode update: Set mode flags => match Ramp and PID state to output on change
 */
 void Motor_User_ActivateFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-    // Motor_FeedbackMode_T mode = Motor_FeedbackModeFlags(mode);
+    // // Motor_FeedbackMode_T mode = Motor_FeedbackModeFlags(mode);
+    // uint16_t word = 6;
+    // volatile Motor_FeedbackMode_T modeTest = mode;
+    // modeTest.Word = word;
 
-    if(p_motor->ControlFeedbackMode.Word != mode.Word)
+    // if(p_motor->FeedbackMode.Word != mode.Word)
+    // {
+    //     // Critical_Enter(); /* Block PWM Thread, do not proc new flags before matching output with StateMachine */
+    //     // p_motor->FeedbackMode.State = mode.State;
+    //     // Motor_SetFeedbackMode(p_motor, feedbackMode);
+    //     // StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode);
+    //     // Critical_Exit();
+    //     // Critical_Enter();
+    //     // Critical_Exit();
+    // }
+    // StateMachine_SetSyncInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Word);
+    if(p_motor->FeedbackMode.Word != mode.Word)
     {
-        // //does not need critical if run state transition through freewheel first?
-        // Critical_Enter(); /* Block PWM Thread, do not proc new flags before matching output with StateMachine */
-        // p_motor->ControlFeedbackMode.State = mode.State;
-        // Motor_SetFeedbackMode(p_motor, feedbackMode);
-        // StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode);
-        // Critical_Exit();
-        // Critical_Enter();
-        StateMachine_SetSyncInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, (statemachine_inputvalue_t)mode.Word);
-        // Critical_Exit();
+        StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_FEEDBACK, mode.Word);
     }
 }
 
@@ -116,11 +120,11 @@ void Motor_User_SetVoltageCmdValue(Motor_T * p_motor, int16_t voltageCmd)
 
 }
 
-void Motor_User_SetVoltageModeCmd(Motor_T * p_motor, int16_t voltageCmd)
-{
-    Motor_User_SetVoltageMode(p_motor);
-    Motor_User_SetVoltageCmdValue(p_motor, voltageCmd);
-}
+// void Motor_User_SetVoltageModeCmd(Motor_T * p_motor, int16_t voltageCmd)
+// {
+//     Motor_User_SetVoltageMode(p_motor);
+//     Motor_User_SetVoltageCmdValue(p_motor, voltageCmd);
+// }
 
 /******************************************************************************/
 /*!
@@ -165,11 +169,11 @@ void Motor_User_SetTorqueCmdValue(Motor_T * p_motor, int16_t torqueCmd)
     Motor_User_SetCmd(p_motor, torqueCmdIn);
 }
 
-void Motor_User_SetTorqueModeCmd(Motor_T * p_motor, int16_t torqueCmd)
-{
-    Motor_User_SetTorqueMode(p_motor);
-    Motor_User_SetTorqueCmdValue(p_motor, torqueCmd);
-}
+// void Motor_User_SetTorqueModeCmd(Motor_T * p_motor, int16_t torqueCmd)
+// {
+//     Motor_User_SetTorqueMode(p_motor);
+//     Motor_User_SetTorqueCmdValue(p_motor, torqueCmd);
+// }
 
 /******************************************************************************/
 /*!
@@ -195,11 +199,11 @@ void Motor_User_SetSpeedCmdValue(Motor_T * p_motor, int16_t speedCmd)
     Motor_User_SetCmd(p_motor, speedCmdIn);
 }
 
-void Motor_User_SetSpeedModeCmd(Motor_T * p_motor, int16_t speedCmd)
-{
-    Motor_User_SetSpeedMode(p_motor);
-    Motor_User_SetSpeedCmdValue(p_motor, speedCmd);
-}
+// void Motor_User_SetSpeedModeCmd(Motor_T * p_motor, int16_t speedCmd)
+// {
+//     Motor_User_SetSpeedMode(p_motor);
+//     Motor_User_SetSpeedCmdValue(p_motor, speedCmd);
+// }
 
 /******************************************************************************/
 /*!
@@ -210,8 +214,8 @@ void Motor_User_SetSpeedModeCmd(Motor_T * p_motor, int16_t speedCmd)
     @param[in] angle [0:65535]
     todo
 */
-void Motor_User_SetPositionCmdValue(Motor_T * p_motor, uint16_t angle)
 {
+void Motor_User_SetPositionCmdValue(Motor_T * p_motor, uint16_t angle)
     // _Motor_User_ActivateControlMode(p_motor, MOTOR_FEEDBACK_MODE_POSITION_SPEED_CURRENT);
     // Motor_User_SetCmd(p_motor, angle);
 }
@@ -229,9 +233,9 @@ void Motor_User_SetOpenLoopMode(Motor_T * p_motor)
     Motor_User_ActivateFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP);
 }
 
-void Motor_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_Frac16)
+void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_Frac16)
 {
-    // Linear_Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, speed_Frac16);
+    Linear_Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, speed_Frac16);
 }
 
 /*!
@@ -243,11 +247,32 @@ void Motor_User_SetOpenLoopCmdValue(Motor_T * p_motor, int16_t ivCmd)
     Motor_User_SetCmd(p_motor, ivCmdIn);
 }
 
-void Motor_User_SetOpenLoopModeCmd(Motor_T * p_motor, int16_t ivMagnitude)
+// void Motor_User_SetOpenLoopModeCmd(Motor_T * p_motor, int16_t ivMagnitude)
+// {
+//     Motor_User_SetOpenLoopMode(p_motor);
+//     Motor_User_SetOpenLoopCmdValue(p_motor, ivMagnitude);
+// }
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+/*!
+    @param[in] userCmd [-32768:32767]
+*/
+void Motor_User_SetCmdModeValue(Motor_T * p_motor, int16_t userCmd)
 {
-    Motor_User_SetOpenLoopMode(p_motor);
-    Motor_User_SetOpenLoopCmdValue(p_motor, ivMagnitude);
+    // Motor_FeedbackMode_T flags = Motor_FeedbackModeFlags(p_motor->Parameters.DefaultFeedbackMode);
+    volatile  Motor_FeedbackMode_T flags = p_motor->FeedbackMode;
+
+    if      (flags.OpenLoop == 1U)  { Motor_User_SetOpenLoopCmdValue(p_motor, userCmd); }
+    else if (flags.Position == 1U)  { Motor_User_SetPositionCmdValue(p_motor, userCmd); }
+    else if (flags.Speed == 1U)     { Motor_User_SetSpeedCmdValue(p_motor, userCmd); }
+    else if (flags.Current == 1U)   { Motor_User_SetTorqueCmdValue(p_motor, userCmd); }
+    else                            { Motor_User_SetVoltageCmdValue(p_motor, userCmd); }
 }
+
 
 /******************************************************************************/
 /*!
@@ -259,86 +284,21 @@ void Motor_User_ActivateDefaultFeedbackMode(Motor_T * p_motor)
     Motor_User_ActivateFeedbackMode(p_motor, p_motor->Parameters.DefaultFeedbackMode);
 }
 
-void Motor_User_SetDefaultFeedbackCmdValue(Motor_T * p_motor, int16_t userCmd)
-{
-    // Motor_FeedbackMode_T flags = Motor_FeedbackModeFlags(p_motor->Parameters.DefaultFeedbackMode);
-    Motor_FeedbackMode_T flags = p_motor->Parameters.DefaultFeedbackMode;
-
-    if      (flags.OpenLoop == 1U)  { Motor_User_SetOpenLoopCmdValue(p_motor, userCmd); }
-    else if (flags.Position == 1U)  { Motor_User_SetPositionCmdValue(p_motor, userCmd); }
-    else if (flags.Speed == 1U)     { Motor_User_SetSpeedCmdValue(p_motor, userCmd); }
-    else if (flags.Current == 1U)   { Motor_User_SetTorqueCmdValue(p_motor, userCmd); }
-    else                            { Motor_User_SetVoltageCmdValue(p_motor, userCmd); }
-}
-
-/*!
-    @param[in] userCmd [-32768:32767]
-*/
-void Motor_User_SetDefaultModeCmd(Motor_T * p_motor, int16_t userCmd)
-{
-    Motor_User_ActivateDefaultFeedbackMode(p_motor);
-    Motor_User_SetDefaultFeedbackCmdValue(p_motor, userCmd);
-}
-
-/******************************************************************************/
-/*!
-    Vehicle Wrapper
-    Throttle and Brake accept uint16_t, wrapped functions use int16_t
-    - UserCmd value in configured DefaultFeedbackMode
-*/
-/******************************************************************************/
-/*!
-    @param[in] throttle [0:65535] throttle percentage, 65535 => speed limit
-*/
-void Motor_User_SetThrottleCmd(Motor_T * p_motor, uint16_t throttle)
-{
-    Motor_User_SetDefaultModeCmd(p_motor, throttle / 2U); // change to speed?
-}
-
-/*!
-    Always request opposite direction current
-    req opposite iq, bound vq to 0 for no plugging brake
-
-    transition from accelerating to decelerating,
-    use signed ramp to transition through 0 without discontinuity
-    ramp from in-direction torque to 0 to counter-direction torque
-
-    @param[in] brake [0:65535]
-*/
-void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
-{
-
-    // if(p_motor->ControlFeedbackMode.Hold == 0U)
-    // {
-    if(Motor_User_GetSpeed_UFrac16(p_motor) > INT16_MAX / 100U)
-    {
-        Motor_User_SetTorqueModeCmd(p_motor, (int32_t)0 - (brake / 2U));
-    }
-    else
-    {
-        // p_motor->ControlFeedbackMode.Hold = 1U;  //clears on throttle
-        // Phase_Ground(&p_motor->Phase);
-        // Phase_Float(&p_motor->Phase);
-        Motor_User_ReleaseControl(p_motor);
-    }
-    // }
-}
-
-void Motor_User_SetVBrakeCmd(Motor_T * p_motor, uint16_t brake)
-{
-    // Motor_User_SetScalarModeCmd(p_motor, (65535U - brake)); /* Higher brake => lower voltage */
-}
-
-void Motor_User_SetCruise(Motor_T * p_motor)
-{
-    Motor_User_SetTorqueModeCmd(p_motor, 0U);
-}
 
 /******************************************************************************/
 /*!
 
 */
 /******************************************************************************/
+/*
+    Disable control Non StateMachine checked
+*/
+void Motor_User_DisableControl(Motor_T * p_motor)
+{
+    Phase_Float(&p_motor->Phase);
+    StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
+}
+
 /*
     always State machine checked version
 */
@@ -348,20 +308,16 @@ void Motor_User_ReleaseControl(Motor_T * p_motor)
     /* no critical for transition, only 1 transistion in run state? cannot conflict? */
 }
 
-/*
-    Disable control
-*/
-void Motor_User_DisableControl(Motor_T * p_motor)
+void Motor_User_Hold(Motor_T * p_motor)
 {
-    Phase_Float(&p_motor->Phase);
-    StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
+    StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL);
+    // Phase_Ground(&p_motor->Phase);
+    // Motor_User_SetVoltageModeCmd(p_motor, 0U);
 }
 
-void Motor_User_Ground(Motor_T * p_motor)
+void Motor_User_ActivateControl(Motor_T * p_motor)
 {
-    Phase_Ground(&p_motor->Phase);
-    //    StateMachine_Semi_ProcInput(&p_motor->StateMachine, MSM_INPUT_GROUND);    //todo only ground in stop state
-    // Motor_User_SetVoltageModeCmd(p_motor, 0U);
+    StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, STATE_MACHINE_INPUT_VALUE_NULL);
 }
 
 /*
@@ -426,26 +382,6 @@ void Motor_User_CalibrateAdc(Motor_T * p_motor)
 {
     StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ADC);
 }
-
-void Motor_User_CalibrateHall(Motor_T * p_motor)
-{
-    if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL)
-        { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL); }
-}
-
-void Motor_User_CalibrateEncoder(Motor_T * p_motor)
-{
-    if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_ENCODER)
-        { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER); }
-}
-
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-void Motor_User_CalibrateSinCos(Motor_T * p_motor)
-{
-    if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
-        { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_SIN_COS); }
-}
-#endif
 
 void Motor_User_CalibrateSensor(Motor_T * p_motor)
 {
@@ -655,3 +591,82 @@ void Motor_User_SetGroundSpeed_Mph(Motor_T * p_motor, uint32_t wheelDiameter_Inc
     }
 }
 #endif
+
+
+    /*!
+        @param[in] userCmd [-32768:32767]
+    */
+    void Motor_User_SetDefaultFeedbackCmdValue(Motor_T * p_motor, int16_t userCmd)
+    {
+        // Motor_FeedbackMode_T flags = Motor_FeedbackModeFlags(p_motor->Parameters.DefaultFeedbackMode);
+        volatile  Motor_FeedbackMode_T flags = p_motor->Parameters.DefaultFeedbackMode;
+
+        if      (flags.OpenLoop == 1U)  { Motor_User_SetOpenLoopCmdValue(p_motor, userCmd); }
+        else if (flags.Position == 1U)  { Motor_User_SetPositionCmdValue(p_motor, userCmd); }
+        else if (flags.Speed == 1U)     { Motor_User_SetSpeedCmdValue(p_motor, userCmd); }
+        else if (flags.Current == 1U)   { Motor_User_SetTorqueCmdValue(p_motor, userCmd); }
+        else                            { Motor_User_SetVoltageCmdValue(p_motor, userCmd); }
+    }
+
+    /*!
+        @param[in] userCmd [-32768:32767]
+    */
+    void Motor_User_SetDefaultModeCmd(Motor_T * p_motor, int16_t userCmd)
+    {
+        Motor_User_ActivateDefaultFeedbackMode(p_motor);
+        Motor_User_SetDefaultFeedbackCmdValue(p_motor, userCmd);
+    }
+
+    /******************************************************************************/
+    /*!
+        Vehicle Wrapper
+        Throttle and Brake accept uint16_t, wrapped functions use int16_t
+        - UserCmd value in configured DefaultFeedbackMode
+    */
+    /******************************************************************************/
+    /*!
+        @param[in] throttle [0:65535] throttle percentage, 65535 => speed limit
+    */
+    void Motor_User_SetThrottleCmd(Motor_T * p_motor, uint16_t throttle)
+    {
+        Motor_User_SetDefaultModeCmd(p_motor, throttle / 2U); // change to speed?
+    }
+
+    /*!
+        Always request opposite direction current
+        req opposite iq, bound vq to 0 for no plugging brake
+
+        transition from accelerating to decelerating,
+        use signed ramp to transition through 0 without discontinuity
+        ramp from in-direction torque to 0 to counter-direction torque
+
+        @param[in] brake [0:65535]
+    */
+    void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
+    {
+
+        // if(p_motor->FeedbackMode.Hold == 0U)
+        // {
+        if(Motor_User_GetSpeed_UFrac16(p_motor) > INT16_MAX / 100U)
+        {
+            Motor_User_SetTorqueModeCmd(p_motor, (int32_t)0 - (brake / 2U));
+        }
+        else
+        {
+            // p_motor->FeedbackMode.Hold = 1U;  //clears on throttle
+            // Phase_Ground(&p_motor->Phase);
+            // Phase_Float(&p_motor->Phase);
+            Motor_User_ReleaseControl(p_motor);
+        }
+        // }
+    }
+
+    void Motor_User_SetVBrakeCmd(Motor_T * p_motor, uint16_t brake)
+    {
+        // Motor_User_SetScalarModeCmd(p_motor, (65535U - brake)); /* Higher brake => lower voltage */
+    }
+
+    void Motor_User_SetCruise(Motor_T * p_motor)
+    {
+        Motor_User_SetTorqueModeCmd(p_motor, 0U);
+    }
