@@ -505,6 +505,8 @@ static inline int32_t _Motor_ConvertPower_Scalar16ToWatts(int32_t vi_scalar16)  
 // static inline uint32_t _Motor_VSpeed_ConvertToVSpeed(Motor_T * p_motor, uint16_t rpm)                { return Linear_Function(&p_motor->UnitsVSpeed, _Motor_ConvertSpeed_RpmToScalar16(p_motor, rpm)); }
 #endif
 
+// #define MOTOR_CONTROL_CYCLES(MilliSeconds, PwmFreq) (((uint32_t)MilliSeconds) * (uint32_t)PwmFreq / 1000UL)
+
 /******************************************************************************/
 /*
     Simplify CommutationMode Check

@@ -38,10 +38,34 @@
 */
 typedef enum
 {
+    /*
+        Motor Controller / Motor Global
+        Group 1
+    */
     MOT_VAR_ZERO,
     MOT_VAR_MILLIS,
     MOT_VAR_DEBUG,
+    MOT_VAR_MC_STATE,           // MotorController_StateMachine_StateId_T
+    MOT_VAR_MC_STATUS_FLAGS,
+    MOT_VAR_MC_ERROR_FLAGS,
+    MOT_VAR_V_SOURCE,           // ADCU, Volts * 10
+    MOT_VAR_V_SENSOR,           // ADCU, mV
+    MOT_VAR_V_ACC,              // ADCU, mV
+    MOT_VAR_BATTERY_CHARGE,     // Scalar16, Fraction1000
+    MOT_VAR_HEAT_PCB,           // ADCU, DegC
+    // MOT_VAR_HEAT_PCB_DEG_C      ,
+    MOT_VAR_HEAT_MOSFETS,
+    // MOT_VAR_HEAT_MOSFETS_DEG_C  ,
 
+    MOT_VAR_ANALOG_THROTTLE,         // Value Scalar16
+    MOT_VAR_ANALOG_THROTTLE_DIN,     // Bool
+    MOT_VAR_ANALOG_BRAKE,            // Value Scalar16
+    MOT_VAR_ANALOG_BRAKE_DIN,        // Bool
+
+    // MOT_VAR_TX_PACKET_COUNT = 254U,
+    // MOT_VAR_RX_PACKET_COUNT = 255U,
+
+    /* Motor */
     MOT_VAR_SPEED,             // UFrac16,
     MOT_VAR_I_PHASE,           // UFrac16, may over saturate
     MOT_VAR_V_PHASE,           // UFrac16, may over saturate
@@ -52,12 +76,11 @@ typedef enum
     MOT_VAR_MOTOR_FAULT_FLAGS,
     MOT_VAR_MOTOR_HEAT, // MOT_VAR_MOTOR_HEAT_DEG_C = 10U,
 
-    // MOT_VAR_ELECTRICAL_ANGLE  = 7U, // Degrees 16
-    // MOT_VAR_MECHANICAL_ANGLE  = 7U,
-    // MOT_VAR_MOTOR_CALIBRATION_STATE = 260U,
-    // MOT_VAR_MOTOR_CALIBRATION_STATE_INDEX = 260U,
-    MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT , // Scalar16, RPM Option
-    MOT_VAR_MOTOR_ACTIVE_I_LIMIT  ,
+    MOT_VAR_ELECTRICAL_ANGLE, // Degrees 16
+    MOT_VAR_MECHANICAL_ANGLE,
+
+    MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT, // Scalar16, RPM Option
+    MOT_VAR_MOTOR_ACTIVE_I_LIMIT,
 
     MOT_VAR_FOC_IA,
     MOT_VAR_FOC_IB,
@@ -73,31 +96,6 @@ typedef enum
     MOT_VAR_ENCODER_FREQ,
     // MOT_VAR_ENCODER_   ,
     // MOT_VAR_PID_OUT  ,
-
-    /*
-        Motor Controller / Motor Global
-        Group 1
-    */
-    MOT_VAR_MC_STATE,       // Value enum: 0:INIT, 1:STOP, 2:RUN, 3:FAULT
-    MOT_VAR_MC_STATUS_FLAGS,
-    MOT_VAR_MC_ERROR_FLAGS,
-    MOT_VAR_V_SOURCE,       // ADCU, Volts * 10
-    MOT_VAR_V_SENSOR,       // ADCU, mV
-    MOT_VAR_V_ACC,          // ADCU, mV
-    MOT_VAR_BATTERY_CHARGE,  // Scalar16, Fraction1000
-    MOT_VAR_HEAT_PCB,       // ADCU, DegC
-    MOT_VAR_HEAT_MOSFETS,
-    // MOT_VAR_HEAT_PCB_DEG_C      ,
-    // MOT_VAR_HEAT_MOSFETS_DEG_C  ,
-    // MOT_VAR_ACTIVE_SPEED_LIMIT, //
-    // MOT_VAR_ACTIVE_I_LIMIT,
-    MOT_VAR_ANALOG_THROTTLE,         // Value Scalar16
-    MOT_VAR_ANALOG_THROTTLE_DIN,     // Bool
-    MOT_VAR_ANALOG_BRAKE,            // Value Scalar16
-    MOT_VAR_ANALOG_BRAKE_DIN,        // Bool
-
-    // MOT_VAR_TX_PACKET_COUNT = 254U,
-    // MOT_VAR_RX_PACKET_COUNT = 255U,
 }
 MotVarId_RealTimeMonitor_T;
 
@@ -108,30 +106,19 @@ typedef enum
 {
     /*
         Run time command functions
-        Read Write
-        Read Values may differ from write
-    */
-    /* Motor[0] */
-    MOT_VAR_MOTOR_USER_CMD,                 // Read/Write buffered user value.
-    MOT_VAR_MOTOR_DIRECTION,                // Motor_Direction_T // CW/CCW. Write buffered user value, read state value
-    MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,     // Write buffered user value, read state value
-
-    MOT_VAR_MOTOR_USER_SPEED_LIMIT, //
-    MOT_VAR_MOTOR_USER_I_LIMIT,
-
-    /* Motor Controller / Motor Global */
-    MOT_VAR_USER_CMD,                   // Value [-32768:32767]. Selected Mode, Speed by default
-    MOT_VAR_DIRECTION,                  // MotorController_Direction_T // Value enum: 0:Neutral, 1:Reverse, 2:Forward
-    // MOT_VAR_ACTIVE_FEEDBACK_MODE,
-    // MOT_VAR_USER_SPEED_LIMIT, //
-    // MOT_VAR_USER_I_LIMIT,
-
-    /*
-        Run time command functions
         Write Only
         Write Via User StateMachine Function
     */
-     /* Motor[0] */
+    /* Motor Controller / Motor Global */
+    MOT_VAR_BEEP,     // Beep
+    MOT_VAR_THROTTLE,     // Value Scalar16
+    MOT_VAR_BRAKE,     // Value Scalar16
+    MOT_VAR_RELEASE_CONTROL,
+    MOT_VAR_DISABLE_CONTROL,
+    MOT_VAR_CLEAR_FAULT,
+    MOT_VAR_SET_FAULT,
+
+    /* Motor[0] */
     MOT_VAR_MOTOR_CMD_SPEED,           // Value [-32768:32767]
     MOT_VAR_MOTOR_CMD_CURRENT,         // Value [-32768:32767]
     MOT_VAR_MOTOR_CMD_VOLTAGE,         // Value [0:32767]
@@ -146,15 +133,22 @@ typedef enum
     // MOT_VAR_MOTOR_CALIBRATE,     // Value enum: ADC, Sensor,
     // MOT_VAR_MOTOR_CALIBRATE_,
 
+    /*
+        Run time command functions
+        Read Write
+        Read Values may differ from write
+    */
     /* Motor Controller / Motor Global */
-    MOT_VAR_THROTTLE,     // Value Scalar16
-    MOT_VAR_BRAKE,     // Value Scalar16
-    MOT_VAR_RELEASE_CONTROL,
-    MOT_VAR_DISABLE_CONTROL,
-    MOT_VAR_CLEAR_FAULT,
-    MOT_VAR_SET_FAULT,
+    MOT_VAR_USER_CMD,                   // Value [-32768:32767]. Selected Mode, Speed by default
+    MOT_VAR_DIRECTION,                  // MotorController_Direction_T // Value enum: 0:Neutral, 1:Reverse, 2:Forward
 
-    MOT_VAR_BEEP,     // Beep
+    /* Motor[0] */
+    MOT_VAR_MOTOR_USER_CMD,                 // Read/Write buffered user value.
+    MOT_VAR_MOTOR_DIRECTION,                // Motor_Direction_T // CW/CCW. Write buffered user value, read state value
+    MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,     // Write buffered user value, read state value
+
+    MOT_VAR_MOTOR_USER_SPEED_LIMIT,
+    MOT_VAR_MOTOR_USER_I_LIMIT,
 }
 MotVarId_RealTimeControl_T;
 

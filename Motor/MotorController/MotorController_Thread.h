@@ -324,7 +324,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
     //     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
     // }
 #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-    Blinky_Toggle(&p_mc->Meter);
+    // Blinky_Toggle(&p_mc->Meter);
 #endif
 }
 

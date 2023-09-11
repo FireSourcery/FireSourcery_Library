@@ -97,8 +97,8 @@ static inline MotorController_Direction_T MotorController_User_GetDirection(cons
 /* Blocking */
 /******************************************************************************/
 static inline void MotorController_User_ProcBlocking_Blocking(MotorController_T * p_mc, MotorController_BlockingId_T opId) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BLOCKING, opId); }
-static inline void MotorController_User_EnterBlockingState(MotorController_T * p_mc) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BLOCKING, MOTOR_CONTROLLER_BLOCKING_ENTER); }
-static inline void MotorController_User_ExitBlockingState(MotorController_T * p_mc) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BLOCKING, MOTOR_CONTROLLER_BLOCKING_EXIT); }
+static inline void MotorController_User_EnterBlockingState(MotorController_T * p_mc) { MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_ENTER); }
+static inline void MotorController_User_ExitBlockingState(MotorController_T * p_mc) { MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_EXIT); }
 
 /* MOTOR_CONTROLLER_NVM_BOOT, MOTOR_CONTROLLER_NVM_WRITE_ONCE, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS */
 static inline NvMemory_Status_T MotorController_User_SaveNvm_Blocking(MotorController_T * p_mc, MotorController_BlockingId_T opId)
@@ -109,8 +109,7 @@ static inline NvMemory_Status_T MotorController_User_SaveNvm_Blocking(MotorContr
 
 static inline NvMemory_Status_T MotorController_User_SaveParameters_Blocking(MotorController_T * p_mc)
 {
-    MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);
-    return p_mc->NvmStatus;
+   return MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);
 }
 
 /******************************************************************************/

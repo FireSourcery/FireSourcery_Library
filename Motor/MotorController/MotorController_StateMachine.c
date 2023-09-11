@@ -433,6 +433,9 @@ static StateMachine_State_T * Blocking_InputBlocking_Blocking(MotorController_T 
     StateMachine_State_T * p_nextState = 0U;
     Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U); //toodo set all
 
+    volatile int debug =0;
+
+
     switch(opId)
     {
         case MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS:   p_mc->NvmStatus = MotorController_SaveParameters_Blocking(p_mc);    break;     /* Flash Write will disable interrupts */
