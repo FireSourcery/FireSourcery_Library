@@ -98,13 +98,13 @@ static inline void Motor_FOC_CaptureVc(Motor_T * p_motor)
 
 */
 /******************************************************************************/
-static inline int32_t Motor_FOC_GetIPhase_Frac16(Motor_T * p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetVPhase_Frac16(Motor_T * p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetIPhase_Frac16(const Motor_T * p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetVPhase_Frac16(const Motor_T * p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
 
 /* return int32 for function pointer casting compatibility */
-static inline int32_t Motor_FOC_GetIPhase_UFrac16(Motor_T * p_motor)            { return FOC_GetIMagnitude(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetVPhase_UFrac16(Motor_T * p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetElectricalPower_UFrac16(Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetIPhase_UFrac16(const Motor_T * p_motor)            { return FOC_GetIMagnitude(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetVPhase_UFrac16(const Motor_T * p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetElectricalPower_UFrac16(const Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
 
 /******************************************************************************/
 /*!
@@ -124,39 +124,6 @@ static inline void Motor_FOC_ClearObserveState(Motor_T * p_motor) /* Begin Contr
 {
     FOC_ClearControlState(&p_motor->Foc);
 }
-
-// static inline void Motor_FOC_ZeroVOut(Motor_T * p_motor)
-// {
-//     FOC_ZeroVOut(&p_motor->Foc);
-//     // FOC_ClearState(&p_motor->Foc);
-//     // Linear_Ramp_ZeroState(&p_motor->Ramp);
-//     // PID_Reset(&p_motor->PidIq);
-//     // PID_Reset(&p_motor->PidId);
-//     // PID_Reset(&p_motor->PidSpeed);
-// }
-
-#include "System/Critical/Critical.h"
-
-static inline bool Motor_FOC_SetFeedbackMode_Async(Motor_T * p_motor, Motor_FeedbackMode_T reqMode)
-{
-    // Motor_FeedbackMode_T reqMode = { .Word = modeValue, };
-    // bool update = (reqMode.Word == p_motor->FeedbackMode.Word);
-    // if(update == true)
-    // {
-        Critical_Enter();
-        p_motor->FeedbackMode.Word = reqMode.Word;
-        Motor_FOC_ProcFeedbackMatch(p_motor);
-        Critical_Exit();
-    // }
-    // return update;
-}
-
-// static inline bool Motor_FOC_SetFeedbackMode_Sync(Motor_T * p_motor, Motor_FeedbackMode_T reqMode)
-// {
-//     p_motor->FeedbackMode.Word = reqMode.Word;
-//     // wait for entry to update
-//     // return update;
-// }
 
 /******************************************************************************/
 /*!
@@ -180,5 +147,23 @@ extern void Motor_FOC_SetDirectionCcw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirectionCw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
 extern void Motor_FOC_SetDirectionForward(Motor_T * p_motor);
+
+
+#include "System/Critical/Critical.h"
+
+static inline bool Motor_FOC_SetFeedbackMode_Async(Motor_T * p_motor, Motor_FeedbackMode_T reqMode)
+{
+    // Motor_FeedbackMode_T reqMode = { .Word = modeValue, };
+    // bool update = (reqMode.Word == p_motor->FeedbackMode.Word);
+    // if(update == true)
+    // {
+        Critical_Enter(); /* Block PWM Thread, do not proc new flags before matching output with StateMachine */
+        p_motor->FeedbackMode.Word = reqMode.Word;
+        Motor_FOC_ProcFeedbackMatch(p_motor);
+        Critical_Exit();
+    // }
+    // return update;
+}
+
 
 #endif

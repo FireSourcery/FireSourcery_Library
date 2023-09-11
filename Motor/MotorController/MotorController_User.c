@@ -34,15 +34,9 @@
 /*
     Controller NvM Variables Parameters Set
 */
-
-// uint32_t _GetVSourceRatio(const MotorController_T * p_mc)
-// {
-// }
-
 /* VSource is a value < GLOBAL_MOTOR.VMAX and Parameters.VSourceRef */
 void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts)
 {
-    // MotorController_SetVSourceRef(p_mc, volts);
     Global_Motor_InitVSourceRef_V(volts);
     p_mc->Parameters.VSourceRef = Global_Motor_GetVSource_V();
     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_ResetUnitsVabc(&p_mc->CONFIG.P_MOTORS[iMotor]); }

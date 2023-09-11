@@ -96,7 +96,7 @@ static const StateMachine_State_T STATE_INIT =
 
 /******************************************************************************/
 /*!
-    @brief  State
+    @brief Stop State
 
     Motor is in floating state with 0 speed
 */
@@ -123,14 +123,22 @@ static void Stop_Proc(Motor_T * p_motor)
     }
 }
 
+static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor, statemachine_inputvalue_t direction)
+{
+    if(p_motor->Speed_FracS16 == 0U)
+    {
+        /* work around function casting warning, statemachine_inputvalue_t to Direction_T enum */
+        // Motor_SetCommutationModeUInt32(p_motor, (Motor_FunctionArg32_T)Motor_FOC_SetDirection, (Motor_FunctionArg32_T)Motor_SetDirection, direction);
+        if(direction == MOTOR_DIRECTION_CCW)    { Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionCcw, Motor_SetDirectionCcw); }
+        else                                    { Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionCw, Motor_SetDirectionCw); }
+    }
+    return 0U;
+}
+
 static StateMachine_State_T * Stop_InputControl(Motor_T * p_motor, statemachine_inputvalue_t voidIn)
 {
     (void)voidIn;
     StateMachine_State_T * p_nextState;
-
-    // Motor_ProcCommutationMode(p_motor, Motor_FOC_ZeroVOut, 0U); //if Vbemf not set? or
-    // Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcFeedbackMatch, 0U); /* Zeros PID state */
-    // Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, 0U);
 
     if(Motor_CheckOpenLoop(p_motor) == true)
     {
@@ -156,18 +164,6 @@ static StateMachine_State_T * Stop_InputHold(Motor_T * p_motor, statemachine_inp
 {
     (void)voidIn;
     Phase_Ground(&p_motor->Phase);
-    return 0U;
-}
-
-static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor, statemachine_inputvalue_t direction)
-{
-    if(p_motor->Speed_FracS16 == 0U)
-    {
-        /* work around function casting warning, statemachine_inputvalue_t to Direction_T enum */
-        // Motor_SetCommutationModeUInt32(p_motor, Motor_FOC_SetDirection, Motor_SetDirection, direction);
-        if(direction == MOTOR_DIRECTION_CCW)    { Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionCcw, Motor_SetDirectionCcw); }
-        else                                    { Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionCw, Motor_SetDirectionCw); }
-    }
     return 0U;
 }
 
@@ -207,7 +203,7 @@ static const StateMachine_State_T STATE_STOP =
 /*!
     @brief  Run State
 
-    Active control - UserCmd => RampCmd => FeedbackLoop is in effect
+    Active control - UserCmdValue => RampCmd => FeedbackLoop is in effect
 */
 /******************************************************************************/
 static void Run_Entry(Motor_T * p_motor)
@@ -225,30 +221,28 @@ static void Run_Proc(Motor_T * p_motor)
 static StateMachine_State_T * Run_InputControl(Motor_T * p_motor, statemachine_inputvalue_t voidIn)
 {
     (void)voidIn;
-    //crtical lock from outside
-    // return (Motor_SetFeedbackMode(p_motor, feedbackMode) == true) ? &STATE_RUN : 0U;
-    // return &STATE_RUN; /* repeat entry function */
     return 0U;
 }
 
 static StateMachine_State_T * Run_InputRelease(Motor_T * p_motor, statemachine_inputvalue_t voidIn)
 {
     (void)voidIn;
-    return &STATE_FREEWHEEL;
-    // return (Motor_CheckSpeed(p_motor) == true) ? &STATE_FREEWHEEL : 0U; // check speed range
+    return &STATE_FREEWHEEL;  // return (Motor_CheckSpeed(p_motor) == true) ? &STATE_FREEWHEEL : 0U; // check speed range
 }
 
+//critical lock from outside
+// return (Motor_SetFeedbackMode(p_motor, feedbackMode) == true) ? &STATE_RUN : 0U;
+// return &STATE_RUN; /* repeat entry function */
 static StateMachine_State_T * Run_InputFeedback(Motor_T * p_motor, statemachine_inputvalue_t feedbackModeWord)
 {
     /*
         Prevent ProcAngleControl before ProcFeedbackMatch.
         alternatively transition through freewheel first
-        Observed bemf may experience larger discountinouty than control voltage
+        Observed bemf may experience larger discontinuity than control voltage
     */
     Motor_FOC_SetFeedbackMode_Async(p_motor, Motor_FeedbackMode(feedbackModeWord));
     return 0U;
 }
-
 
 static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
@@ -270,7 +264,7 @@ static const StateMachine_State_T STATE_RUN =
 
 /******************************************************************************/
 /*!
-    @brief  State
+    @brief State
 */
 /******************************************************************************/
 static void Freewheel_Entry(Motor_T * p_motor)
@@ -290,7 +284,6 @@ static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, statemac
 {
     StateMachine_State_T * p_newState = 0U;
 
-    /* Openloop does not resume or set reqFeedbackMode */
     if(Motor_CheckOpenLoop(p_motor) == true)
     {
         p_newState = 0U; /* OpenLoop does not resume */
@@ -298,7 +291,6 @@ static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, statemac
     else
     {
         Motor_FOC_ProcFeedbackMatch(p_motor);
-        // Motor_ProcCommutationMode(p_motor, Motor_FOC_SetVSpeed, 0U); /* alternative to bemf sense */
         p_newState = &STATE_RUN;
     }
 
@@ -307,7 +299,6 @@ static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, statemac
 
 static StateMachine_State_T * Freewheel_InputFeedback(Motor_T * p_motor, statemachine_inputvalue_t feedbackModeWord)
 {
-    // Motor_FOC_ActivateFeedbackMode_Async(p_motor, Motor_FeedbackMode(feedbackModeWord));
     Motor_SetFeedbackMode_Cast(p_motor, feedbackModeWord);
     return 0U;
 }
@@ -380,7 +371,7 @@ static void OpenLoop_Proc(Motor_T * p_motor)
             if(Timer_Periodic_Poll(&p_motor->ControlTimer) == false)
             {
                 Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, 0U);
-                if(Motor_CheckAlignFault(p_motor) == true) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FAULT); }
+                if(Motor_PollAlignFault(p_motor) == true) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FAULT); }
             }
             else
             {
@@ -463,11 +454,11 @@ static void Calibration_Proc(Motor_T * p_motor)
     if(isComplete == true) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
 }
 
-// static StateMachine_State_T * Calibration_InputRelease(Motor_T * p_motor, statemachine_inputvalue_t voidIn)
-// {
-//     (void)p_motor;     (void)voidIn;
-//     return &STATE_STOP;
-// }
+static StateMachine_State_T * Calibration_InputRelease(Motor_T * p_motor, statemachine_inputvalue_t voidIn)
+{
+    (void)p_motor; (void)voidIn;
+    return &STATE_STOP;
+}
 
 static const StateMachine_Transition_T CALIBRATION_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {

@@ -688,7 +688,7 @@ static Cmd_Status_T Cmd_auser(MotorController_T * p_mc, int argc, char ** argv)
 //     memcpy(p_stringDest, "\r\n", 2U);     p_stringDest += 2U;
 
 //     memcpy(p_stringDest, STR_VACC, strlen(STR_VACC));         p_stringDest += strlen(STR_VACC);
-//     p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorAcc, p_stringDest, 1000U);
+//     p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorAccs, p_stringDest, 1000U);
 //     memcpy(p_stringDest, "\r\n", 2U);     p_stringDest += 2U;
 
 //     return p_stringDest - p_stringBuffer;
@@ -753,7 +753,7 @@ static Cmd_Status_T Cmd_v(MotorController_T * p_mc, int argc, char ** argv)
     {
         vSource = MotorController_User_GetVSource(p_mc, 1000U);
         vSense = MotorController_User_GetVSense(p_mc, 1000U);
-        vAcc = MotorController_User_GetVAcc(p_mc, 1000U);
+        vAcc = MotorController_User_GetVAccs(p_mc, 1000U);
         battery = MotorController_User_GetBatteryCharge_Unit1000(p_mc);
         Terminal_SendString(p_term, "VSource: "); Terminal_SendNum(p_term, vSource); Terminal_SendString(p_term, " mV\r\n");
         Terminal_SendString(p_term, "VSense: "); Terminal_SendNum(p_term, vSense); Terminal_SendString(p_term, " mV\r\n");
@@ -785,7 +785,7 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 
         Terminal_SendString(p_term, "FaultFlags [VSource][VAcc][VSense][Pcb][MosTop][MosBot]: ");
         Terminal_SendNum(p_term, p_mc->FaultFlags.VSourceLimit);
-        Terminal_SendNum(p_term, p_mc->FaultFlags.VAccLimit);
+        Terminal_SendNum(p_term, p_mc->FaultFlags.VAccsLimit);
         Terminal_SendNum(p_term, p_mc->FaultFlags.VSenseLimit);
         Terminal_SendNum(p_term, p_mc->FaultFlags.PcbOverHeat);
         Terminal_SendNum(p_term, p_mc->FaultFlags.MosfetsOverHeat);
@@ -794,7 +794,7 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
         Terminal_SendString(p_term, "\r\n");
         Terminal_SendString(p_term, "Fault ADCU:\r\n");
         Terminal_SendString(p_term, "VSource: ");         Terminal_SendNum(p_term, p_mc->FaultAnalogRecord.VSource_Adcu);         Terminal_SendString(p_term, "\r\n");
-        Terminal_SendString(p_term, "VAcc: ");             Terminal_SendNum(p_term, p_mc->FaultAnalogRecord.VAcc_Adcu);             Terminal_SendString(p_term, "\r\n");
+        Terminal_SendString(p_term, "VAcc: ");             Terminal_SendNum(p_term, p_mc->FaultAnalogRecord.VAccs_Adcu);             Terminal_SendString(p_term, "\r\n");
         Terminal_SendString(p_term, "VSense: ");         Terminal_SendNum(p_term, p_mc->FaultAnalogRecord.VSense_Adcu);             Terminal_SendString(p_term, "\r\n");
         Terminal_SendString(p_term, "Pcb: ");             Terminal_SendNum(p_term, p_mc->FaultAnalogRecord.HeatPcb_Adcu);         Terminal_SendString(p_term, "\r\n");
         Terminal_SendString(p_term, "Mosfets: ");         Terminal_SendNum(p_term, p_mc->FaultAnalogRecord.HeatMosfets_Adcu);     Terminal_SendString(p_term, "\r\n");

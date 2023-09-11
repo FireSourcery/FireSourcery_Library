@@ -132,20 +132,20 @@ uint16_t Motor_Params_GetSpeedLimitReverse_Rpm(Motor_T * p_motor)
 void Motor_Params_SetILimitMotoring_Scalar16(Motor_T * p_motor, uint16_t motoring_Frac16)
 {
     p_motor->Parameters.ILimitMotoring_Scalar16 = motoring_Frac16;
-    PropagateSet(p_motor, _Motor_User_ClearILimitActive);
+    PropagateSet(p_motor, Motor_User_ClearILimitActive);
 }
 
 void Motor_Params_SetILimitGenerating_Scalar16(Motor_T * p_motor, uint16_t generating_Frac16)
 {
     p_motor->Parameters.ILimitGenerating_Scalar16 = generating_Frac16;
-    PropagateSet(p_motor, _Motor_User_ClearILimitActive);
+    PropagateSet(p_motor, Motor_User_ClearILimitActive);
 }
 
 void Motor_Params_SetILimit_Scalar16(Motor_T * p_motor, uint16_t motoring_Frac16, uint16_t generating_Frac16)
 {
     p_motor->Parameters.ILimitMotoring_Scalar16 = motoring_Frac16;
     p_motor->Parameters.ILimitGenerating_Scalar16 = generating_Frac16;
-    PropagateSet(p_motor, _Motor_User_ClearILimitActive);
+    PropagateSet(p_motor, Motor_User_ClearILimitActive);
 }
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL

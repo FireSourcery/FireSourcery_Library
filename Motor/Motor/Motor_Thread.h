@@ -60,10 +60,17 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 
         switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
         {
-            case THERMISTOR_STATUS_OK:          Motor_User_ClearILimitActive(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT);     break; /* todo warning flag */
-            case THERMISTOR_STATUS_FAULT:    Motor_User_SetFault(p_motor);                                         break;
+            case THERMISTOR_STATUS_OK:
+                p_motor->StatusFlags.HeatWarning = 0U;
+                Motor_User_ClearILimitActive_Id(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
+                break;
             case THERMISTOR_STATUS_WARNING:     /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
-                Motor_User_SetILimitActive(p_motor, Thermistor_GetHeatLimit_FracU16(&p_motor->Thermistor), MOTOR_I_LIMIT_ACTIVE_HEAT);
+                p_motor->StatusFlags.HeatWarning = 1U;
+                Motor_User_SetILimitActive_Id(p_motor, Thermistor_GetHeatLimit_FracU16(&p_motor->Thermistor), MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
+                break;
+            case THERMISTOR_STATUS_FAULT:
+                p_motor->FaultFlags.OverHeat = 1U;
+                Motor_User_SetFault(p_motor);
                 break;
             default: break;
         }

@@ -68,7 +68,7 @@
 
 typedef enum MotorController_Direction_Tag
 {
-    // MOTOR_CONTROLLER_DIRECTION_DISABLED,
+    // MOTOR_CONTROLLER_DIRECTION_DISABLED, //PARKED
     MOTOR_CONTROLLER_DIRECTION_NEUTRAL,
     MOTOR_CONTROLLER_DIRECTION_REVERSE,
     MOTOR_CONTROLLER_DIRECTION_FORWARD,
@@ -84,14 +84,12 @@ typedef enum MotorController_InputMode_Tag
 }
 MotorController_InputMode_T;
 
-typedef enum MotorController_ZeroCmdMode_Tag
+typedef enum MotorController_InitMode_Tag
 {
-    MOTOR_CONTROLLER_ZERO_CMD_MODE_FLOAT,       /* "Coast". MOSFETS non conducting. Same as neutral. */
-    MOTOR_CONTROLLER_ZERO_CMD_MODE_REGEN,       /* Regen Brake */
-    MOTOR_CONTROLLER_ZERO_CMD_MODE_CRUISE,      /* Voltage following, Zero currrent/torque */
-    MOTOR_CONTROLLER_ZERO_CMD_MODE_ZERO,        /* Setpoint Zero. No overwrite */
+    MOTOR_CONTROLLER_INPUT_MODE_DRIVE,
+    MOTOR_CONTROLLER_INPUT_MODE_SERVO,
 }
-MotorController_ZeroCmdMode_T;
+MotorController_InitMode_T;
 
 typedef enum
 {
@@ -108,42 +106,35 @@ typedef enum
 }
 MotorController_ThrottleMode_T;
 
-/* For edge detection */
+/* Drive SubState use edge detection */
 typedef enum
 {
-    MOTOR_CONTROLLER_INPUT_BRAKE,
-    MOTOR_CONTROLLER_INPUT_THROTTLE,
-    MOTOR_CONTROLLER_INPUT_ZERO,
+    MOTOR_CONTROLLER_DRIVE_ZERO,
+    MOTOR_CONTROLLER_DRIVE_THROTTLE,
+    MOTOR_CONTROLLER_DRIVE_BRAKE,
 }
-MotorController_InputState_T;
-
-/* Blocking Functions Ids */
-typedef enum MotorController_OperationId_Tag
+MotorController_DriveId_T;
+typedef enum MotorController_DriveZeroMode_Tag
 {
-    MOTOR_CONTROLLER_ENTER_CRITICAL,
-    MOTOR_CONTROLLER_EXIT_CRITICAL,
-    MOTOR_CONTROLLER_OP_NVM_SAVE_PARAMS,
-    MOTOR_CONTROLLER_OP_NVM_BOOT,
-    MOTOR_CONTROLLER_OP_NVM_WRITE_ONCE,
-    MOTOR_CONTROLLER_OP_NVM_READ_ONCE,
-    MOTOR_CONTROLLER_OP_CALIBRATE_SENSOR,
+    MOTOR_CONTROLLER_DRIVE_ZERO_MODE_FLOAT,       /* "Coast". MOSFETS non conducting. Same as Neutral. */
+    MOTOR_CONTROLLER_DRIVE_ZERO_MODE_REGEN,       /* Regen Brake */
+    MOTOR_CONTROLLER_DRIVE_ZERO_MODE_CRUISE,      /* Voltage following, Zero current/torque */
+    MOTOR_CONTROLLER_DRIVE_ZERO_MODE_ZERO,        /* Setpoint Zero. No overwrite */
 }
-MotorController_OperationId_T;
+MotorController_DriveZeroMode_T;
 
-// typedef enum MotorController_SpeedLimitActiveId_Tag
-// {
-//     MOTOR_CONTROLLER_SPEED_LIMIT_ACTIVE_DISABLE = 0U,
-//     MOTOR_CONTROLLER_SPEED_LIMIT_ACTIVE_OPT = 1U, /* From parent class */
-// }
-// MotorController_SpeedLimitActiveId_T;
-
-typedef enum MotorController_ILimitActiveId_Tag
+/* Blocking SubState/Function Ids */
+typedef enum MotorController_BlockingId_Tag
 {
-    MOTOR_CONTROLLER_I_LIMIT_ACTIVE_DISABLE = 0U,
-    MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT = 1U,
-    MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V = 2U,
+    MOTOR_CONTROLLER_BLOCKING_ENTER,
+    MOTOR_CONTROLLER_BLOCKING_EXIT,
+    MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS,
+    MOTOR_CONTROLLER_BLOCKING_NVM_BOOT,
+    MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE,
+    MOTOR_CONTROLLER_BLOCKING_NVM_READ_ONCE,
+    MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR,
 }
-MotorController_ILimitActiveId_T;
+MotorController_BlockingId_T;
 
 typedef enum MotorController_OptDinFunction_Tag
 {
@@ -152,7 +143,24 @@ typedef enum MotorController_OptDinFunction_Tag
     MOTOR_CONTROLLER_OPT_DIN_SERVO,
     MOTOR_CONTROLLER_OPT_DIN_USER_FUNCTION,
 }
-MotorController_OptDinFunction_T;
+MotorController_OptDinMode_T;
+
+typedef union MotorController_StatusFlags_Tag
+{
+    struct
+    {
+        uint16_t HeatMosfets : 1U;
+        uint16_t LowV : 1U;
+        uint16_t ILimitLowV : 1U;
+        uint16_t ILimitHeatMosfets : 1U;
+        uint16_t ILimitHeatPcb : 1U;
+        uint16_t ILimitHeatMotors : 1U;
+        uint16_t SpeedLimit : 1U;
+        // uint16_t IsStopped : 1U;
+    };
+    uint16_t Word;
+}
+MotorController_StatusFlags_T;
 
 /*
     Fault substate flags
@@ -169,46 +177,45 @@ typedef union MotorController_FaultFlags_Tag
     #else
         uint16_t MosfetsOverHeat : 1U;
     #endif
-        uint16_t VSourceLimit : 1U;
-        uint16_t VSenseLimit : 1U;
-        uint16_t VAccLimit : 1U;
-        uint16_t Motors : 1U;
-        uint16_t DirectionSync : 1U;
-        uint16_t RxLost : 1U;
-        uint16_t User : 1U;
+        uint16_t VSourceLimit   : 1U;
+        uint16_t VSenseLimit    : 1U;
+        uint16_t VAccsLimit     : 1U;
+        uint16_t Motors         : 1U;
+        uint16_t DirectionSync  : 1U;
+        uint16_t RxLost         : 1U;
+        uint16_t User           : 1U;
     };
     uint16_t Word;
 }
 MotorController_FaultFlags_T;
 
 /*
-    flags retain prev state for edge detection
+    Init SubState
 */
-typedef union MotorController_StatusFlags_Tag
+typedef union MotorController_InitFlags_Tag
 {
     struct
     {
-        uint16_t Heat : 1U;
-        uint16_t LowV : 1U;
-        // uint16_t SetParams : 1U;
+        uint16_t IsThrottleZero : 1U;
+        uint16_t IsDirectionSet : 1U;
     };
     uint16_t Word;
 }
-MotorController_StatusFlags_T;
+MotorController_InitFlags_T;
 
-typedef union MotorController_BuzzerFlags_Tag
-{
-    struct
-    {
-        uint16_t ThrottleOnInit : 1U;
-        uint16_t OnReverse      : 2U; /* 0: Off, 1: Short Beep, 2: Continuous */
-        // uint16_t ThrottleOnBrakeCmd;
-        // uint16_t ThrottleOnBrakeRelease;
-        // uint16_t ThrottleOnNeutralRelease;
-    };
-    uint16_t Word;
-}
-MotorController_BuzzerFlags_T;
+// typedef union MotorController_BuzzerFlags_Tag
+// {
+//     struct
+//     {
+//         uint16_t ThrottleOnInit : 1U;
+//         uint16_t OnReverse      : 2U; /* 0: Off, 1: Short Beep, 2: Continuous */
+//         // uint16_t ThrottleOnBrakeCmd;
+//         // uint16_t ThrottleOnBrakeRelease;
+//         // uint16_t ThrottleOnNeutralRelease;
+//     };
+//     uint16_t Word;
+// }
+// MotorController_BuzzerFlags_T;
 
 /*
     MotorController Voltages
@@ -220,21 +227,22 @@ MotorController_BuzzerFlags_T;
 typedef struct __attribute__((aligned(2U))) MotorController_Params_Tag
 {
     uint16_t VSourceRef;        /* Nominal Battery Voltage. Sync with Global_Motor VSourceRef_V */
-    uint16_t BatteryZero_Adcu;
+    uint16_t BatteryZero_Adcu; //todo, use Vsource warning?
     uint16_t BatteryFull_Adcu;
     uint16_t ILimitLowV_Scalar16;
-    MotorController_InputMode_T UserInputMode;
+    MotorController_InputMode_T InputMode;
     MotorController_BrakeMode_T BrakeMode;
     MotorController_ThrottleMode_T ThrottleMode;
-    MotorController_ZeroCmdMode_T ZeroCmdMode;
+    MotorController_DriveZeroMode_T DriveZeroMode;
+    MotorController_InitMode_T InitMode;
     Motor_FeedbackMode_T DefaultCmdMode;
+    MotorController_OptDinMode_T OptDinMode;
+    uint16_t OptDinSpeedLimit_Scalar16;
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     uint8_t CanServicesId;
     bool CanIsEnable;
 #endif
     // MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
-    MotorController_OptDinFunction_T OptDinFunction;
-    uint16_t OptDinSpeedLimit_Scalar16;
 }
 MotorController_Params_T;
 
@@ -266,7 +274,7 @@ typedef const struct MotorController_Config_Tag
     const MotorController_Params_T * const P_PARAMS_NVM;
     const MotorController_Manufacture_T * const P_MANUFACTURE; /* cannot read directly if FlashOnce is selected */
     const MemMapBoot_T * const P_MEM_MAP_BOOT;
-//RAM_START, RAM_END for Read Address
+
     Motor_T * const     P_MOTORS;
     const uint8_t       MOTOR_COUNT;
     Serial_T * const    P_SERIALS;     /* Simultaneous active serial */
@@ -296,7 +304,7 @@ MotorController_Config_T;
 typedef struct MotorController_Tag
 {
     const MotorController_Config_T CONFIG;
-    MotorController_Params_T Parameters;         /* ram copy */
+    MotorController_Params_T Parameters;
     MemMapBoot_T MemMapBoot;
     volatile MotAnalog_Results_T AnalogResults;
 
@@ -313,10 +321,10 @@ typedef struct MotorController_Tag
 #else
     Thermistor_T ThermistorMosfets;
 #endif
-    VMonitor_T VMonitorSource;  // Controller Supply
-    VMonitor_T VMonitorSense;   // ~5V
-    VMonitor_T VMonitorAcc;     // ~12V
-    Linear_T BatteryLife;       // Battery Life percentage
+    VMonitor_T VMonitorSource;  /* Controller Supply */
+    VMonitor_T VMonitorSense;   /* ~5V */
+    VMonitor_T VMonitorAccs;    /* ~12V */
+    Linear_T BatteryLife;       /* Battery Life percentage */
 
     Timer_T TimerMillis;
     uint32_t MainDividerCounter;
@@ -329,30 +337,22 @@ typedef struct MotorController_Tag
 
     /* State and SubState */
     StateMachine_T StateMachine;
-    MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
     MotorController_StatusFlags_T StatusFlags;
+    MotorController_InitFlags_T InitFlags;
+    MotorController_FaultFlags_T FaultFlags;
 #if    defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
     MotAnalog_Results_T FaultAnalogRecord;
 #endif
-    // UserInputState
     /* Set by StateMachine only */
-    MotorController_Direction_T ActiveDirection;
-    // Motor_FeedbackMode_T UserCmdMode;
-    int32_t  UserCmd; /* For Edge Detect, using 0 *///move to Avalue?
+    MotorController_Direction_T DriveDirection;
+    MotorController_DriveId_T DriveState;
+    int32_t UserCmdValue; /* Pass outside StateMachine, User Get */
 
-    MotorController_InputState_T InputState;
-
-    /* CriticalOp SubState */
+    /* Blocking Op SubState */
+    // MotorController_BlockingId_T SubState; //save id for per op check
     /* Async return status */
     NvMemory_Status_T NvmStatus;
     // calibration status
-
-    // MotorController_OperationId_T SubState;
-    // uint16_t ParamId;
-    // int32_t ParamValue;
-
-    // MotorController_SpeedLimitActiveId_T SpeedLimitActiveId;
-    // MotorController_ILimitActiveId_T ILimitActiveId;
 }
 MotorController_T; // MotorCtrlr_T;
 
@@ -370,11 +370,11 @@ static inline Motor_T * MotorController_GetPtrMotor(const MotorController_T * p_
 /******************************************************************************/
 static inline void MotorController_BeepShort(MotorController_T * p_mc) { Blinky_Blink(&p_mc->Buzzer, 500U); }
 static inline void MotorController_BeepPeriodicType1(MotorController_T * p_mc) { Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U); }
-// static inline void MotorController_BeepType1(MotorController_T * p_mc) { Blinky_Blink(&p_mc->Buzzer, Type1OnTime, Type1OffTime); }
+// static inline void MotorController_BeepType1(MotorController_T * p_mc) { Blinky_BlinkN(&p_mc->Buzzer, Type1OnTime, Type1OffTime); }
 
 /******************************************************************************/
 /*
-    Proc by StateMachine - propagate to motors
+   MotorN Array Functions - Proc by StateMachine
 */
 /******************************************************************************/
 static inline void MotorController_ProcAll(MotorController_T * p_mc, Motor_User_ProcVoid_T cmdFunction)
@@ -387,6 +387,23 @@ static inline void MotorController_SetCmdAll(MotorController_T * p_mc, Motor_Use
     MotorN_User_SetCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, cmdFunction, userCmd);
 }
 
+static inline void MotorController_SetIdAll(MotorController_T * p_mc, Motor_User_SetId_T cmdFunction, uint32_t id)
+{
+    MotorN_User_SetId(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, cmdFunction, id);
+}
+static inline void MotorController_SetFeedbackAll(MotorController_T * p_mc, Motor_User_SetFeedbackMode_T cmdFunction, Motor_FeedbackMode_T feedbackMode)
+{
+    MotorN_User_SetFeedbackMode(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, cmdFunction, feedbackMode);
+}
+
+static inline void MotorController_DisableAll(MotorController_T * p_mc)     { MotorController_ProcAll(p_mc, Motor_User_DisableControl); }
+static inline void MotorController_ReleaseAll(MotorController_T * p_mc)     { MotorController_ProcAll(p_mc, Motor_User_ReleaseControl); }
+static inline void MotorController_ActivateAll(MotorController_T * p_mc)    { MotorController_ProcAll(p_mc, Motor_User_ActivateControl); }
+static inline void MotorController_HoldAll(MotorController_T * p_mc)        { MotorController_ProcAll(p_mc, Motor_User_Hold); }
+
+static inline void MotorController_SetCmdMode(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode)  { MotorController_SetFeedbackAll(p_mc, Motor_User_ActivateFeedbackMode, feedbackMode); }
+static inline void MotorController_SetCmdModeValue(MotorController_T * p_mc, int16_t userCmd)               { MotorController_SetCmdAll(p_mc, Motor_User_SetCmdValue, userCmd); }
+
 static inline void MotorController_SetThrottleMode(MotorController_T * p_mc)
 {
     switch(p_mc->Parameters.ThrottleMode)
@@ -397,9 +414,6 @@ static inline void MotorController_SetThrottleMode(MotorController_T * p_mc)
     }
 }
 
-/*
-    brake [0:32767]
-*/
 static inline void MotorController_SetThrottleValue(MotorController_T * p_mc, int16_t userCmdThrottle)
 {
     int16_t cmdValue = userCmdThrottle / 2;
@@ -411,14 +425,6 @@ static inline void MotorController_SetThrottleValue(MotorController_T * p_mc, in
     }
 }
 
-static inline void MotorController_SetBrakeMode(MotorController_T * p_mc)
-{
-    switch(p_mc->Parameters.BrakeMode)
-    {
-        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: MotorController_ProcAll(p_mc, Motor_User_SetTorqueMode); break;
-        default: break;
-    }
-}
 
 /*!
     Always request opposite direction current
@@ -428,16 +434,16 @@ static inline void MotorController_SetBrakeMode(MotorController_T * p_mc)
     use signed ramp to transition through 0 without discontinuity
     ramp from in-direction torque to 0 to counter-direction torque
 
-    @param[in] brake [0:65535]
+    @param[in] brake [0:32767]
 */
-void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
+static inline void _SetBrakeCmd(Motor_T * p_motor, int16_t brake)
 {
     // if(p_motor->FeedbackMode.Hold == 0U)
     // {
     if(Motor_User_GetSpeed_UFrac16(p_motor) > INT16_MAX / 100U)
     {
         // Motor_User_SetTorqueModeCmd(p_motor, (int32_t)0 - (brake / 2U));
-        Motor_User_SetTorqueCmdValue(p_motor, (int32_t)0 - (brake / 2U));
+        Motor_User_SetTorqueCmdValue(p_motor, (int32_t)0 - brake);
     }
     else
     {
@@ -449,78 +455,86 @@ void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
     // }
 }
 
+static inline void MotorController_SetBrakeMode(MotorController_T * p_mc)
+{
+    switch(p_mc->Parameters.BrakeMode)
+    {
+        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: MotorController_ProcAll(p_mc, Motor_User_SetTorqueMode); break;
+        case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: break;
+        default: break;
+    }
+}
+
 static inline void MotorController_SetBrakeValue(MotorController_T * p_mc, uint16_t userCmdBrake)
 {
     int16_t cmdValue = userCmdBrake / 2;
     switch(p_mc->Parameters.BrakeMode)
     {
-        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE:
-            MotorController_SetCmdAll(p_mc, Motor_User_SetBrakeCmd, cmdValue);
-        case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE:
+        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: MotorController_SetCmdAll(p_mc, _SetBrakeCmd, cmdValue);
+        case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: break;
+        default: break;
+    }
+}
 
-            break;
+
+static inline void MotorController_StartInputZero(MotorController_T * p_mc)
+{
+    switch(p_mc->Parameters.DriveZeroMode)
+    {
+        case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_FLOAT: MotorController_ReleaseAll(p_mc); break;
+        case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_REGEN: /* MotorController_SetRegenMotorAll(p_mc); */ break;
+        // case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_CRUISE: MotorController_SetCruiseMotorAll(p_mc); break;
         default: break;
     }
 }
 
 /*
-    Full direction proc, during stop only
-    Assume edge type input.
+    Check Stop / Zero Throttle
 */
-static inline bool MotorController_ProcUserDirection(MotorController_T * p_mc, MotorController_Direction_T inputDirection)
+static inline void MotorController_ProcInputZero(MotorController_T * p_mc)
+{
+    switch(p_mc->Parameters.DriveZeroMode)
+    {
+        case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_FLOAT: break;
+        case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_REGEN: /* MotorController_ProcRegenMotorAll(p_mc); */ break;
+        // case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_CRUISE: break;
+        default: break;
+    }
+}
+
+/* During stop only */
+static inline bool MotorController_SetDirectionAll(MotorController_T * p_mc, MotorController_Direction_T direction)
 {
     bool isSuccess;
-
-    switch(inputDirection)
+    switch(direction)
     {
-        // case MOTOR_CONTROLLER_DIRECTION_PARK:         isSuccess = true; break;
-        case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:     isSuccess = true; break;
-        case MOTOR_CONTROLLER_DIRECTION_FORWARD:     isSuccess = MotorN_User_SetDirectionForward(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
-        case MOTOR_CONTROLLER_DIRECTION_REVERSE:     isSuccess = MotorN_User_SetDirectionReverse(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); break;
-        default: isSuccess = false; break;
+        case MOTOR_CONTROLLER_DIRECTION_FORWARD: isSuccess = MotorN_User_ProcStatusAnd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetDirectionForward); break;
+        case MOTOR_CONTROLLER_DIRECTION_REVERSE: isSuccess = MotorN_User_ProcStatusAnd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetDirectionReverse); break;
+        default: isSuccess = false; break; /* MOTOR_CONTROLLER_DIRECTION_NEUTRAL, MOTOR_CONTROLLER_DIRECTION_DISABLE */
     }
-
-    // if((p_mc->Parameters.BuzzerFlagsEnable.OnReverse == true))
-    // {
-    //     if(p_mc->ActiveDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE)
-    //     {
-    //         MotorController_BeepPeriodicType1(p_mc);
-    //     }
-    //     else
-    //     {
-    //         Blinky_Stop(&p_mc->Buzzer);
-    //     }
-    // }
-
+    if(isSuccess == true) { p_mc->DriveDirection = direction; }; /* Status flag use */
     return isSuccess;
 }
 
-static inline void MotorController_DisableAll(MotorController_T * p_mc)     { MotorController_ProcAll(p_mc, Motor_User_DisableControl); }
-static inline void MotorController_ReleaseAll(MotorController_T * p_mc)     { MotorController_ProcAll(p_mc, Motor_User_ReleaseControl); }
-static inline void MotorController_ActivateAll(MotorController_T * p_mc)    { MotorController_ProcAll(p_mc, Motor_User_ActivateControl); }
-static inline void MotorController_HoldAll(MotorController_T * p_mc)        { MotorController_ProcAll(p_mc, Motor_User_Hold); }
-
-// static inline void MotorController_SetTorqueAll(MotorController_T * p_mc, int16_t userCmd) { MotorN_User_SetTorqueCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, userCmd); }
-// static inline void MotorController_SetTorqueValue(MotorController_T * p_mc, uint8_t motorId, int16_t userCmd) { Motor_User_SetTorqueCmdValue(&p_mc->CONFIG.P_MOTORS[motorId], userCmd); }
-// static inline void MotorController_SetTorqueMode(MotorController_T * p_mc, uint8_t motorId) { Motor_User_SetTorqueMode(&p_mc->CONFIG.P_MOTORS[motorId]); }
-// static inline void MotorController_SetCruiseAll(MotorController_T * p_mc)  { MotorN_User_SetCruise(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
-
-/* Checks 0 speed. alternatively check stop state. */
-static inline bool MotorController_CheckStopMotorAll(MotorController_T * p_mc)      { return MotorN_User_CheckStop(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
-static inline bool MotorController_CheckFaultMotorAll(MotorController_T * p_mc)     { return MotorN_User_CheckFault(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
-
+static inline bool MotorController_CheckForwardAll(const MotorController_T * p_mc)  { return MotorN_User_CheckStatusAnd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_IsDirectionForward); }
+static inline bool MotorController_CheckReverseAll(const MotorController_T * p_mc)  { return MotorN_User_CheckStatusAnd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_IsDirectionReverse); }
+static inline bool MotorController_CheckStopAll(const MotorController_T * p_mc)     { return MotorN_User_CheckStatusAnd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_CheckStop); }
+static inline bool MotorController_CheckFaultAll(const MotorController_T * p_mc)    { return MotorN_User_CheckStatusOr(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_CheckFault); }
 /* returns true if no faults remain active */
-static inline bool MotorController_ClearFaultAll(MotorController_T * p_mc)          { return MotorN_User_ClearFault(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
+static inline bool MotorController_ClearFaultAll(MotorController_T * p_mc)          { return MotorN_User_ProcStatusAnd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_ClearFault); }
 
-static inline void MotorController_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_frac16)    { MotorN_User_SetSpeedLimitActive(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, limit_frac16); }
-static inline void MotorController_ClearSpeedLimitAll(MotorController_T * p_mc)                         { MotorN_User_ClearSpeedLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT); }
+static inline void MotorController_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_scalar16)  { MotorN_User_SetScalar16(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetSpeedLimitActive, limit_scalar16); }
+static inline void MotorController_ClearSpeedLimitAll(MotorController_T * p_mc)                         { MotorN_User_ProcFunction(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_ClearSpeedLimitActive); }
+static inline void MotorController_SetILimitAll(MotorController_T * p_mc, uint16_t limit_scalar16)      { MotorN_User_SetScalar16(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetILimitActive, limit_scalar16); }
+static inline void MotorController_ClearILimitAll(MotorController_T * p_mc)                             { MotorN_User_ProcFunction(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_ClearILimitActive); }
 
-static inline bool MotorController_SetILimitAll(MotorController_T * p_mc, uint16_t limit_frac16, MotorController_ILimitActiveId_T id)
-    { return MotorN_User_SetILimitActive(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, limit_frac16, (id + MOTOR_I_LIMIT_ACTIVE_SYSTEM)); }
+static inline bool MotorController_SetILimitAll_Id(MotorController_T * p_mc, uint16_t limit_scalar16)
+    { return MotorN_User_SetLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetILimitActive_Id, limit_scalar16, MOTOR_I_LIMIT_ACTIVE_UPPER); }
 
-/* returns true if limit of id is cleared */
-static inline bool MotorController_ClearILimitAll(MotorController_T * p_mc, MotorController_ILimitActiveId_T id)
-    { return MotorN_User_ClearILimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, (id + MOTOR_I_LIMIT_ACTIVE_SYSTEM)); }
+/* returns true if limit of id is cleared on at least 1 motor */
+static inline bool MotorController_ClearILimitAll_Id(MotorController_T * p_mc)
+    { return MotorN_User_ClearLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_ClearILimitActive_Id, MOTOR_I_LIMIT_ACTIVE_UPPER); }
+
 
 /******************************************************************************/
 /*
@@ -534,29 +548,57 @@ extern NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController
 extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc);
 extern NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc, uint8_t * p_sourceBuffer);
 extern NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc, const uint8_t * p_destBuffer);
-#if defined(CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE)
-    #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
-    extern void MotorController_ServoExtern_Start(MotorController_T * p_mc);
-    extern void MotorController_ServoExtern_Proc(MotorController_T * p_mc);
-    extern void MotorController_ServoExtern_SetCmd(MotorController_T * p_mc, int32_t cmd);
-    #else
-    static inline MotorController_Servo_Start(MotorController_T * p_mc)
-    {
-
-    }
-
-    static inline MotorController_Servo_Proc(MotorController_T * p_mc)
-    {
-
-    }
-
-    static inline MotorController_Servo_SetCmd(MotorController_T * p_mc, uint32_t cmd)
-    {
-
-    }
-    #endif
-#endif
-
 extern void MotorController_LoadParamsDefault(MotorController_T * p_mc);
 
+#if defined(CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE) && defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
+extern void MotorController_ServoExtern_Start(MotorController_T * p_mc);
+extern void MotorController_ServoExtern_Proc(MotorController_T * p_mc);
+extern void MotorController_ServoExtern_SetCmd(MotorController_T * p_mc, int32_t cmd);
+#else
+static inline void MotorController_Servo_Start(MotorController_T * p_mc)
+{
+
+}
+
+static inline void MotorController_Servo_Proc(MotorController_T * p_mc)
+{
+
+}
+
+static inline void MotorController_Servo_SetCmd(MotorController_T * p_mc, uint32_t cmd)
+{
+
+}
 #endif
+
+#endif
+// typedef enum MotorController_SpeedLimitActiveId_Tag
+// {
+//     MOTOR_CONTROLLER_SPEED_LIMIT_ACTIVE_DISABLE = 0U,
+//     MOTOR_CONTROLLER_SPEED_LIMIT_ACTIVE_OPT = 1U, /* From parent class */
+// }
+// MotorController_SpeedLimitActiveId_T;
+
+// typedef enum MotorController_ILimitActiveId_Tag
+// {
+//     MOTOR_CONTROLLER_I_LIMIT_ACTIVE_DISABLE = 0U,
+//     MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT = 1U,
+//     MOTOR_CONTROLLER_I_LIMIT_ACTIVE_LOW_V = 2U,
+// }
+// MotorController_ILimitActiveId_T;
+
+// static inline bool MotorController_ProcDirectionAll(MotorController_T * p_mc, MotorController_Direction_T direction)
+// {
+//     // if((p_mc->Parameters.BuzzerFlagsEnable.OnReverse == true))
+//     // {
+//     //     if(p_mc->DriveDirection == MOTOR_CONTROLLER_DIRECTION_REVERSE)
+//     //     {
+//     //         MotorController_BeepPeriodicType1(p_mc);
+//     //     }
+//     //     else
+//     //     {
+//     //         Blinky_Stop(&p_mc->Buzzer);
+//     //     }
+//     // }
+//
+// }

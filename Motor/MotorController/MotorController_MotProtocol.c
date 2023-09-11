@@ -80,12 +80,10 @@ static uint8_t StopAll(MotorController_T * p_mc, MotPacket_StopResp_T * p_txPack
 /******************************************************************************/
 typedef enum MotCallId_Tag
 {
-    MOT_CALL_SAVE_PARAMS = 0x00U,
-    MOT_CALL_CALIBRATE_SENSOR = 0x01U,
-    MOT_CALL_ENTER_CRITICAL = 0xF1U,
-    MOT_CALL_EXIT_CRITICAL = 0xF2U,
-    // MOT_VAR_CALIBRATE_ADC       = 515U,
-    // MOT_VAR_CALIBRATE           = 516U,     // Value enum: ADC, Sensor,
+    MOT_CALL_SAVE_PARAMS        = 0x00U,
+    MOT_CALL_CALIBRATE_SENSOR   = 0x01U,
+    MOT_CALL_ENTER_BLOCKING     = 0xF1U,
+    MOT_CALL_EXIT_BLOCKING      = 0xF2U,
 }
 MotCallId_T;
 
@@ -96,12 +94,12 @@ static uint8_t Call_Blocking(MotorController_T * p_mc, MotPacket_CallResp_T * p_
 
     switch((MotCallId_T)p_rxPacket->CallReq.Id)
     {
-        case MOT_CALL_CALIBRATE_SENSOR:     MotorController_User_ProcCritical_Blocking(p_mc, MOTOR_CONTROLLER_OP_CALIBRATE_SENSOR);     status = 0U;                    break;
-        // case MOT_CALL_WRITE_MANUFACTURE:     MotorController_User_Write_Blocking(p_mc, MOTOR_CONTROLLER_OP_CALIBRATE_SENSOR);     status = 0U;                    break;
-        // case MOT_CALL_READ_MANUFACTURE:     MotorController_User_ProcCritical_Blocking(p_mc, MOTOR_CONTROLLER_OP_CALIBRATE_SENSOR);     status = 0U;                    break;
-        case MOT_CALL_SAVE_PARAMS:          MotorController_User_ProcCritical_Blocking(p_mc, MOTOR_CONTROLLER_OP_NVM_SAVE_PARAMS);      status = p_mc->NvmStatus;       break;
-        case MOT_CALL_ENTER_CRITICAL:       MotorController_User_ProcCritical_Blocking(p_mc, MOTOR_CONTROLLER_ENTER_CRITICAL);          status = 0;       break;
-        case MOT_CALL_EXIT_CRITICAL:        MotorController_User_ProcCritical_Blocking(p_mc, MOTOR_CONTROLLER_EXIT_CRITICAL);           status = 0;       break;
+        case MOT_CALL_CALIBRATE_SENSOR:     MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR);     status = 0U;                    break;
+        // case MOT_CALL_WRITE_MANUFACTURE:     MotorController_User_Write_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR);     status = 0U;                    break;
+        // case MOT_CALL_READ_MANUFACTURE:     MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR);     status = 0U;                    break;
+        case MOT_CALL_SAVE_PARAMS:          MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);      status = p_mc->NvmStatus;       break;
+        case MOT_CALL_ENTER_BLOCKING:       MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_ENTER);          status = 0;       break;
+        case MOT_CALL_EXIT_BLOCKING:        MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_EXIT);           status = 0;       break;
         default: break;
     }
 

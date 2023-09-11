@@ -220,9 +220,9 @@ Encoder_T;
     @brief  Function Templates
 */
 /******************************************************************************/
-typedef void(*Encoder_CaptureModeFunction_T)(Encoder_T * p_encoder);
+typedef void(*Encoder_CaptureMode_Proc_T)(Encoder_T * p_encoder);
 
-static inline void Encoder_ProcCaptureModeFunction(Encoder_T * p_encoder, Encoder_CaptureModeFunction_T quadratureFunction, Encoder_CaptureModeFunction_T singlePhaseFunction)
+static inline void Encoder_CaptureMode_Proc(Encoder_T * p_encoder, Encoder_CaptureMode_Proc_T quadratureFunction, Encoder_CaptureMode_Proc_T singlePhaseFunction)
 {
 #if     defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
     if(p_encoder->Params.IsQuadratureCaptureEnabled == true)     { quadratureFunction(p_encoder); }
@@ -232,9 +232,9 @@ static inline void Encoder_ProcCaptureModeFunction(Encoder_T * p_encoder, Encode
 #endif
 }
 
-typedef int32_t(*Encoder_CaptureModeFunction_Value_T)(Encoder_T * p_encoder);
+typedef int32_t(*Encoder_CaptureMode_Get_T)(const Encoder_T * p_encoder);
 
-static inline int32_t Encoder_ProcCaptureModeFunction_Value(Encoder_T * p_encoder, Encoder_CaptureModeFunction_Value_T quadratureFunction, Encoder_CaptureModeFunction_Value_T singlePhaseFunction)
+static inline int32_t Encoder_CaptureMode_Get(const Encoder_T * p_encoder, Encoder_CaptureMode_Get_T quadratureFunction, Encoder_CaptureMode_Get_T singlePhaseFunction)
 {
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
     return (p_encoder->Params.IsQuadratureCaptureEnabled == true) ? quadratureFunction(p_encoder) : singlePhaseFunction(p_encoder);
@@ -258,13 +258,13 @@ static inline void _Encoder_ZeroPulseCount(Encoder_T * p_encoder)
     Convert signed capture to user reference
     Caputured as ALeadB is positive by default
 */
-static inline int32_t Encoder_GetDirection_Quadrature(Encoder_T * p_encoder) { return (p_encoder->Params.IsALeadBPositive == true) ? 1 : -1; }
+static inline int32_t Encoder_GetDirection_Quadrature(const Encoder_T * p_encoder) { return (p_encoder->Params.IsALeadBPositive == true) ? 1 : -1; }
 /* set by user */
-static inline int32_t Encoder_GetDirection_SinglePhase(Encoder_T * p_encoder) { return (p_encoder->IsSinglePhasePositive == true) ? 1 : -1; }
+static inline int32_t Encoder_GetDirection_SinglePhase(const Encoder_T * p_encoder) { return (p_encoder->IsSinglePhasePositive == true) ? 1 : -1; }
 
-static inline int32_t Encoder_GetDirection(Encoder_T * p_encoder)
+static inline int32_t Encoder_GetDirection(const Encoder_T * p_encoder)
 {
-    return Encoder_ProcCaptureModeFunction_Value(p_encoder, Encoder_GetDirection_Quadrature, Encoder_GetDirection_SinglePhase);
+    return Encoder_CaptureMode_Get(p_encoder, Encoder_GetDirection_Quadrature, Encoder_GetDirection_SinglePhase);
 }
 
 /* Outer module sets direction */
@@ -272,7 +272,7 @@ static inline void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool i
 static inline void Encoder_SetSinglePhaseDirectionPositive(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = true; }
 static inline void Encoder_SetSinglePhaseDirectionNegative(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = false; }
 
-static inline int32_t Encoder_GetCounterD(Encoder_T * p_encoder)
+static inline int32_t Encoder_GetCounterD(const Encoder_T * p_encoder)
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     return HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
@@ -281,7 +281,7 @@ static inline int32_t Encoder_GetCounterD(Encoder_T * p_encoder)
 #endif
 }
 
-static inline uint32_t _Encoder_GetAngle32(Encoder_T * p_encoder)
+static inline uint32_t _Encoder_GetAngle32(const Encoder_T * p_encoder)
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     return HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER) * (int32_t)p_encoder->UnitAngularD;
@@ -290,7 +290,7 @@ static inline uint32_t _Encoder_GetAngle32(Encoder_T * p_encoder)
 #endif
 }
 
-static inline uint16_t _Encoder_GetAngle(Encoder_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
+static inline uint16_t _Encoder_GetAngle(const Encoder_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
 
 // static inline uint16_t Encoder_GetAngle_SinglePhase(Encoder_T * p_encoder)
 // {
@@ -305,10 +305,10 @@ static inline uint16_t _Encoder_GetAngle(Encoder_T * p_encoder) { return _Encode
 //     return (p_encoder->Params.IsALeadBPositive == true) ? angle : 0 - angle;
 // }
 
-static inline uint16_t Encoder_GetAngle(Encoder_T * p_encoder) { return Encoder_GetDirection(p_encoder) * _Encoder_GetAngle(p_encoder); }
+static inline uint16_t Encoder_GetAngle(const Encoder_T * p_encoder) { return Encoder_GetDirection(p_encoder) * _Encoder_GetAngle(p_encoder); }
 
 /* scalar < 256 */
-static inline uint16_t Encoder_GetAngle_Scalar(Encoder_T * p_encoder, uint8_t scalar)
+static inline uint16_t Encoder_GetAngle_Scalar(const Encoder_T * p_encoder, uint8_t scalar)
 {
     return Encoder_GetDirection(p_encoder) * (((_Encoder_GetAngle32(p_encoder) >> 8U) * scalar) >> 8U); //ENCODER_ANGLE_SHIFT/2
 }
@@ -319,7 +319,7 @@ static inline uint16_t Encoder_GetAngle_Scalar(Encoder_T * p_encoder, uint8_t sc
 */
 /******************************************************************************/
 /* todo testing */
-static inline bool Encoder_GetIsAligned(Encoder_T * p_encoder)
+static inline bool Encoder_GetIsAligned(const Encoder_T * p_encoder)
 {
     return (p_encoder->Align == ENCODER_ALIGN_ABSOLUTE) || (p_encoder->Align == ENCODER_ALIGN_PHASE);
 }

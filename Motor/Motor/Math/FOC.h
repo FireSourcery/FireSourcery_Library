@@ -114,15 +114,16 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc)
 }
 
 /* [0:32767] <=> [0:1] */
-static inline uint16_t FOC_GetIMagnitude_Idq(FOC_T * p_foc) { return qfrac16_vectormagnitude(p_foc->Id, p_foc->Iq); }
-static inline uint16_t FOC_GetIMagnitude(FOC_T * p_foc)     { return qfrac16_vectormagnitude(p_foc->Ialpha, p_foc->Ibeta); }
-static inline uint16_t FOC_GetVMagnitude(FOC_T * p_foc)     { return qfrac16_vectormagnitude(p_foc->Valpha, p_foc->Vbeta); }
+static inline uint16_t FOC_GetIMagnitude(const FOC_T * p_foc)     { return qfrac16_vectormagnitude(p_foc->Ialpha, p_foc->Ibeta); }
+static inline uint16_t FOC_GetVMagnitude(const FOC_T * p_foc)     { return qfrac16_vectormagnitude(p_foc->Valpha, p_foc->Vbeta); }
+static inline uint16_t FOC_GetIMagnitude_Idq(const FOC_T * p_foc) { return qfrac16_vectormagnitude(p_foc->Id, p_foc->Iq); }
+
 /* [-32768:32767] <=> [-1:1] */
-static inline qfrac16_t FOC_GetIPhase(FOC_T * p_foc) { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
-static inline qfrac16_t FOC_GetVPhase(FOC_T * p_foc) { return FOC_GetVMagnitude(p_foc) * math_sign(p_foc->Vq); }
+static inline qfrac16_t FOC_GetIPhase(const FOC_T * p_foc) { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
+static inline qfrac16_t FOC_GetVPhase(const FOC_T * p_foc) { return FOC_GetVMagnitude(p_foc) * math_sign(p_foc->Vq); }
 
 /* [0:49152] <=> [0:1.5] */
-static inline int32_t FOC_GetPower(FOC_T * p_foc) { return (qfrac16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2); }
+static inline int32_t FOC_GetPower(const FOC_T * p_foc) { return (qfrac16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2); }
 
 static inline void FOC_SetTheta(FOC_T * p_foc, qangle16_t theta) { qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, theta); }
 static inline void FOC_SetIa(FOC_T * p_foc, qfrac16_t ia) { p_foc->Ia = ia; }
@@ -133,37 +134,35 @@ static inline void FOC_SetIq(FOC_T * p_foc, qfrac16_t iq) { p_foc->Iq = iq; }
 static inline void FOC_SetVd(FOC_T * p_foc, qfrac16_t vd) { p_foc->Vd = vd; }
 static inline void FOC_SetVq(FOC_T * p_foc, qfrac16_t vq) { p_foc->Vq = vq; }
 
-static inline uint16_t FOC_GetDutyA(FOC_T * p_foc) { return p_foc->DutyA; }
-static inline uint16_t FOC_GetDutyB(FOC_T * p_foc) { return p_foc->DutyB; }
-static inline uint16_t FOC_GetDutyC(FOC_T * p_foc) { return p_foc->DutyC; }
-static inline qfrac16_t FOC_GetId(FOC_T * p_foc) { return p_foc->Id; }
-static inline qfrac16_t FOC_GetIq(FOC_T * p_foc) { return p_foc->Iq; }
-static inline qfrac16_t FOC_GetVd(FOC_T * p_foc) { return p_foc->Vd; }
-static inline qfrac16_t FOC_GetVq(FOC_T * p_foc) { return p_foc->Vq; }
-static inline qfrac16_t FOC_GetIa(FOC_T * p_foc) { return p_foc->Ia; }
-static inline qfrac16_t FOC_GetIb(FOC_T * p_foc) { return p_foc->Ib; }
-static inline qfrac16_t FOC_GetIc(FOC_T * p_foc) { return p_foc->Ic; }
-static inline qfrac16_t FOC_GetIalpha(FOC_T * p_foc) { return p_foc->Ialpha; }
-static inline qfrac16_t FOC_GetIbeta(FOC_T * p_foc) { return p_foc->Ibeta; }
-
+static inline uint16_t FOC_GetDutyA(const FOC_T * p_foc) { return p_foc->DutyA; }
+static inline uint16_t FOC_GetDutyB(const FOC_T * p_foc) { return p_foc->DutyB; }
+static inline uint16_t FOC_GetDutyC(const FOC_T * p_foc) { return p_foc->DutyC; }
+static inline qfrac16_t FOC_GetId(const FOC_T * p_foc) { return p_foc->Id; }
+static inline qfrac16_t FOC_GetIq(const FOC_T * p_foc) { return p_foc->Iq; }
+static inline qfrac16_t FOC_GetVd(const FOC_T * p_foc) { return p_foc->Vd; }
+static inline qfrac16_t FOC_GetVq(const FOC_T * p_foc) { return p_foc->Vq; }
+static inline qfrac16_t FOC_GetIa(const FOC_T * p_foc) { return p_foc->Ia; }
+static inline qfrac16_t FOC_GetIb(const FOC_T * p_foc) { return p_foc->Ib; }
+static inline qfrac16_t FOC_GetIc(const FOC_T * p_foc) { return p_foc->Ic; }
+static inline qfrac16_t FOC_GetIalpha(const FOC_T * p_foc) { return p_foc->Ialpha; }
+static inline qfrac16_t FOC_GetIbeta(const FOC_T * p_foc) { return p_foc->Ibeta; }
 
 /*  */
 static inline void FOC_SetVBemfA(FOC_T * p_foc, qfrac16_t va) { p_foc->Va = va; }
 static inline void FOC_SetVBemfB(FOC_T * p_foc, qfrac16_t vb) { p_foc->Vb = vb; }
 static inline void FOC_SetVBemfC(FOC_T * p_foc, qfrac16_t vc) { p_foc->Vc = vc; }
-static inline qfrac16_t FOC_GetVBemfA(FOC_T * p_foc) { return p_foc->Va; }
-static inline qfrac16_t FOC_GetVBemfB(FOC_T * p_foc) { return p_foc->Vb; }
-static inline qfrac16_t FOC_GetVBemfC(FOC_T * p_foc) { return p_foc->Vc; }
+static inline qfrac16_t FOC_GetVBemfA(const FOC_T * p_foc) { return p_foc->Va; }
+static inline qfrac16_t FOC_GetVBemfB(const FOC_T * p_foc) { return p_foc->Vb; }
+static inline qfrac16_t FOC_GetVBemfC(const FOC_T * p_foc) { return p_foc->Vc; }
 
 static inline void FOC_SetDReq(FOC_T * p_foc, qfrac16_t id) { p_foc->DReq = id; }
 static inline void FOC_SetQReq(FOC_T * p_foc, qfrac16_t iq) { p_foc->QReq = iq; }
-static inline qfrac16_t FOC_GetDReq(FOC_T * p_foc) { return p_foc->DReq; }
-static inline qfrac16_t FOC_GetQReq(FOC_T * p_foc) { return p_foc->QReq; }
+static inline qfrac16_t FOC_GetDReq(const FOC_T * p_foc) { return p_foc->DReq; }
+static inline qfrac16_t FOC_GetQReq(const FOC_T * p_foc) { return p_foc->QReq; }
 
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);
 extern void FOC_ZeroSvpwm(FOC_T * p_foc);
-// extern void FOC_ZeroVOut(FOC_T * p_foc);
 extern void FOC_ClearControlState(FOC_T * p_foc);
 extern void FOC_ClearObserveState(FOC_T * p_foc);
 // extern void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax);

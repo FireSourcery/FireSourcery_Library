@@ -125,7 +125,7 @@ static inline void Encoder_CapturePulse_SinglePhase(Encoder_T * p_encoder)
 */
 static inline void Encoder_CapturePulse(Encoder_T * p_encoder)
 {
-    Encoder_ProcCaptureModeFunction(p_encoder, _Encoder_CapturePulse_Quadrature, _Encoder_CapturePulse_SinglePhase); /* Quadrature On/Off Switch */
+    Encoder_CaptureMode_Proc(p_encoder, _Encoder_CapturePulse_Quadrature, _Encoder_CapturePulse_SinglePhase); /* Quadrature On/Off Switch */
     Encoder_DeltaT_CaptureExtended(p_encoder);
     Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }

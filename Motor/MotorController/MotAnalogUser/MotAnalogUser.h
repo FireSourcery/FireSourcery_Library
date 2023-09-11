@@ -90,14 +90,19 @@ typedef struct __attribute__((aligned(2U))) MotAnalogUser_Params_Tag
     uint16_t BrakeZero_Adcu;
     uint16_t BrakeMax_Adcu;
 
-    struct
+    union
     {
-        uint32_t UseThrottleEdgePin     : 1U; /* Nv Memory instance, loaded to AIn struct */
-        uint32_t UseBrakeEdgePin        : 1U;
-        uint32_t UseNeutralPin          : 1U;
-        uint32_t UseForwardPin          : 1U;
-        uint32_t UseBistateBrakePin     : 1U;
+        struct
+        {
+            uint8_t UseThrottleEdgePin  : 1U; /* Nv Memory instance, loaded to AIn struct */
+            uint8_t UseBrakeEdgePin     : 1U;
+            uint8_t UseNeutralPin       : 1U;
+            uint8_t UseForwardPin       : 1U;
+            uint8_t UseBistateBrakePin  : 1U;
+        };
+        uint8_t PinsSelect;
     };
+
 
     uint16_t BistateBrakeValue_Scalar16;
 

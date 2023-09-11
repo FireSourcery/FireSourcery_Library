@@ -68,6 +68,7 @@ typedef enum
     MOT_VAR_FOC_VD,
     MOT_VAR_FOC_Q_REQ,
     MOT_VAR_FOC_D_REQ,
+    MOT_VAR_FOC_REQ_PRELIMIT,
 
     MOT_VAR_ENCODER_FREQ,
     // MOT_VAR_ENCODER_   ,
@@ -135,6 +136,7 @@ typedef enum
     MOT_VAR_MOTOR_CMD_CURRENT,         // Value [-32768:32767]
     MOT_VAR_MOTOR_CMD_VOLTAGE,         // Value [0:32767]
     MOT_VAR_MOTOR_CMD_ANGLE,           //
+    MOT_VAR_MOTOR_CMD_OPEN_LOOP,        //
     // MOT_VAR_MOTOR_RELEASE_CONTROL,
     // MOT_VAR_MOTOR_DISABLE,
     // MOT_VAR_MOTOR_CLEAR_FAULT,
@@ -274,10 +276,12 @@ typedef enum
     MOT_VAR_BATTERY_ZERO_ADCU,
     MOT_VAR_BATTERY_FULL_ADCU,
     MOT_VAR_USER_INPUT_MODE,            // MotorController_InputMode_T
+
+    MOT_VAR_THROTTLE_MODE,                 // MotorController_ThrottleMode_T
     MOT_VAR_BRAKE_MODE,                 // MotorController_BrakeMode_T
-    MOT_VAR_ZERO_CMD_MODE,              // MotorController_ZeroCmdMode_T
+    MOT_VAR_DRIVE_ZERO_MODE,              // MotorController_ZeroCmdMode_T
     MOT_VAR_BUZZER_FLAGS_ENABLE,        // MotorController_BuzzerFlags_T
-    MOT_VAR_OPT_DIN_FUNCTION,           // MotorController_OptDinFunction_T
+    MOT_VAR_OPT_DIN_FUNCTION,           // MotorController_OptDinMode_T
     MOT_VAR_OPT_DIN_SPEED_LIMIT,
     MOT_VAR_I_LIMIT_LOW_V,
     MOT_VAR_CAN_SERVICES_ID,
@@ -364,13 +368,13 @@ typedef enum
     /*
         Const
     */
+    MOT_VAR_I_MAX_AMP,
+    MOT_VAR_V_MAX_VOLTS,
     // MOT_VAR_VERSION_KMC_0,
     // MOT_VAR_VERSION_KMC_1,
     // MOT_VAR_VERSION_KMC_2,
     // MOT_VAR_VERSION_KMC_3,
     // MOT_VAR_VERSION_KMC_REG32,
-    MOT_VAR_I_MAX_AMP,
-    MOT_VAR_V_MAX_VOLTS,
 
     /*
         Once Manufacturer

@@ -37,12 +37,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef void (*Motor_Params_Set_T)(Motor_T * p_motor, uint16_t value);
-
-uint16_t Motor_Params_Set(Motor_T * p_motor, Motor_Params_Set_T setFunction, uint16_t value)
-{
-    if(StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP) { setFunction(p_motor, value); }
-}
 
 /******************************************************************************/
 /*
@@ -50,7 +44,14 @@ uint16_t Motor_Params_Set(Motor_T * p_motor, Motor_Params_Set_T setFunction, uin
     Selectively handle using StateId
 */
 /******************************************************************************/
-static inline void Motor_Params_SetDefaultFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)      { p_motor->Parameters.DefaultFeedbackMode = mode; /* p_motor->FeedbackMode.IsDisable = 1U;  */}
+typedef void (*Motor_Params_Set_T)(Motor_T * p_motor, uint16_t value);
+
+static inline uint16_t Motor_Params_Set(Motor_T * p_motor, Motor_Params_Set_T setFunction, uint16_t value)
+{
+    if(StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP) { setFunction(p_motor, value); }
+}
+
+static inline void Motor_Params_SetDefaultFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)    { p_motor->Parameters.DefaultFeedbackMode = mode; }
 
 static inline void Motor_Params_SetDefaultFeedbackMode_Cast(Motor_T * p_motor, uint16_t wordValue)
 {
@@ -58,7 +59,7 @@ static inline void Motor_Params_SetDefaultFeedbackMode_Cast(Motor_T * p_motor, u
     Motor_Params_SetDefaultFeedbackMode(p_motor, mode);
 }
 
-/* Persistent Limits */
+/* Persistent Base Limits */
 static inline uint16_t Motor_Params_GetSpeedLimitForward_Scalar16(Motor_T * p_motor)                 { return p_motor->Parameters.SpeedLimitForward_Scalar16; }
 static inline uint16_t Motor_Params_GetSpeedLimitReverse_Scalar16(Motor_T * p_motor)                 { return p_motor->Parameters.SpeedLimitReverse_Scalar16; }
 static inline uint16_t Motor_Params_GetILimitMotoring_Scalar16(Motor_T * p_motor)                    { return p_motor->Parameters.ILimitMotoring_Scalar16; }
@@ -135,6 +136,8 @@ extern void Motor_Params_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm
 extern void Motor_Params_SetSpeedFeedbackRef_Kv(Motor_T * p_motor, uint16_t kv);
 extern void Motor_Params_SetVSpeedRef_Rpm(Motor_T * p_motor, uint16_t rpm);
 extern void Motor_Params_SetVSpeedRef_Kv(Motor_T * p_motor, uint16_t kv);
+extern void Motor_Params_SetKv(Motor_T * p_motor, uint16_t kv);
+
 extern void Motor_Params_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu);
 extern void Motor_Params_SetIbZero_Adcu(Motor_T * p_motor, uint16_t adcu);
 extern void Motor_Params_SetIcZero_Adcu(Motor_T * p_motor, uint16_t adcu);

@@ -152,7 +152,7 @@ typedef struct NvMemory_Tag
 
     const NvMemory_Partition_T * p_OpPartition; /* Op Dest */
 
-    NvMemory_OpControl_T * p_OpControl;
+    // NvMemory_OpControl_T * p_OpControl;
     HAL_NvMemory_StartCmd_T StartCmd;        /* Start HAL Cmd, many iterations per Op */
     NvMemory_FinalizeCmd_T FinalizeCmd;     /* On end per Cmd iteration */
     NvMemory_Process_T ParseCmdError;        /* On end all Cmd iteration, Op Complete Error */
