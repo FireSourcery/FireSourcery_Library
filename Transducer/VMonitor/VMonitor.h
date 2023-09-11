@@ -86,10 +86,19 @@ VMonitor_T;
     },                                  \
 }
 
-static inline int32_t VMonitor_ConvertToFrac16(const VMonitor_T * p_vMonitor, uint16_t adcu)                { return Linear_Voltage_CalcFrac16(&p_vMonitor->Units, adcu); }
-static inline int32_t VMonitor_ConvertToV(const VMonitor_T * p_vMonitor, uint16_t adcu, uint16_t vScalar)   { return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, adcu, vScalar); }
-static inline int32_t VMonitor_ConvertMilliVToAdcu(const VMonitor_T * p_vMonitor, uint32_t milliV)          { return Linear_Voltage_CalcAdcu_MilliV(&p_vMonitor->Units, milliV); }
+/* Map [0:VRef] to [0:65535] */
+static inline int32_t VMonitor_ConvertToScalar16(const VMonitor_T * p_vMonitor, uint16_t adcu)                  { return Linear_Voltage_CalcScalar16(&p_vMonitor->Units, adcu); }
+static inline int32_t VMonitor_ConvertToScalarV(const VMonitor_T * p_vMonitor, uint16_t adcu, uint16_t vScalar) { return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, adcu, vScalar); }
+static inline int32_t VMonitor_ConvertMilliVToAdcu(const VMonitor_T * p_vMonitor, uint32_t milliV)              { return Linear_Voltage_CalcAdcu_MilliV(&p_vMonitor->Units, milliV); }
 // static inline int32_t VMonitor_ConvertToAdcu(VMonitor_T * p_vMonitor, uint16_t v, uint16_t scalar) { return Linear_Voltage_CalcAdcu_ScalarV(&p_vMonitor->Units, v, scalar); }
+
+/******************************************************************************/
+/*
+    Map [FaultLower:VRef] to [0:65535]
+*/
+/******************************************************************************/
+// static inline uint16_t VMonitor_ConvertPercentage_FracU16(const VMonitor_T * p_vMonitor, uint16_t adcu)   { return Linear_ADC_CalcFracU16(&p_vMonitor->Linear , adcu); }
+// static inline uint16_t VMonitor_GetPercentage_FracU16(const VMonitor_T * p_vMonitor)                      { return VMonitor_ConvertPercentage_FracU16(p_vMonitor, p_vMonitor->Adcu); }
 
 static inline VMonitor_Status_T VMonitor_GetStatus(const VMonitor_T * p_vMonitor)   { return (p_vMonitor->Status); }
 static inline bool VMonitor_GetIsFault(const VMonitor_T * p_vMonitor)               { return ((p_vMonitor->Status == VMONITOR_FAULT_UPPER) || (p_vMonitor->Status == VMONITOR_FAULT_LOWER)); }

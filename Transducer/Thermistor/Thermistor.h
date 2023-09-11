@@ -142,8 +142,8 @@ Thermistor_T;
     To Fault_Adcu => 0
 */
 /******************************************************************************/
-static inline uint16_t Thermistor_GetHeatLimit_FracU16(Thermistor_T * p_therm) { return Linear_ADC_CalcFracU16(&p_therm->LinearLimits, p_therm->Adcu); }
-static inline uint16_t Thermistor_ConvertHeatLimit_FracU16(Thermistor_T * p_therm, uint16_t adcu) { return Linear_ADC_CalcFracU16(&p_therm->LinearLimits, adcu); }
+static inline uint16_t Thermistor_ConvertHeatLimit_FracU16(const Thermistor_T * p_therm, uint16_t adcu)   { return Linear_ADC_CalcFracU16(&p_therm->LinearLimits, adcu); }
+static inline uint16_t Thermistor_GetHeatLimit_FracU16(const Thermistor_T * p_therm)                      { return Thermistor_ConvertHeatLimit_FracU16(p_therm, p_therm->Adcu); }
 
 /* Monitor */
 static inline Thermistor_Status_T Thermistor_GetStatus(const Thermistor_T * p_therm)    { return (p_therm->Status); }

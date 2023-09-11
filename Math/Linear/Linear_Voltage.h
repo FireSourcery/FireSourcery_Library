@@ -88,7 +88,7 @@ static inline int32_t Linear_Voltage_CalcV_Frac16(const Linear_T * p_linear, uin
 /*!
     @brief     results expressed in Q16.16, where 65356 => 100% of vInMax
 */
-static inline int32_t Linear_Voltage_CalcFrac16(const Linear_T * p_linear, uint16_t adcu)
+static inline int32_t Linear_Voltage_CalcScalar16(const Linear_T * p_linear, uint16_t adcu)
 {
     return Linear_Function_FracS16(p_linear, adcu);
 }

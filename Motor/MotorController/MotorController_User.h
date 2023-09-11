@@ -34,8 +34,6 @@
 
 #include "MotorController_StateMachine.h"
 
-
-
 /******************************************************************************/
 /*
     Live Control User Input Interface; into StateMachine process
@@ -173,9 +171,9 @@ static inline MotorController_StatusFlags_T MotorController_User_GetStatusFlags(
 
 static inline uint16_t MotorController_User_GetAdcu(const MotorController_T * p_mc, MotAnalog_Channel_T adcChannel)     { return p_mc->AnalogResults.Channels[adcChannel]; }
 static inline uint8_t MotorController_User_GetAdcu_Msb8(const MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return MotorController_User_GetAdcu(p_mc, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
-static inline uint32_t MotorController_User_GetVSource(const MotorController_T * p_mc, uint16_t vScalar)                { return VMonitor_ConvertToV(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu, vScalar); }
-static inline uint32_t MotorController_User_GetVSense(const MotorController_T * p_mc, uint16_t vScalar)                 { return VMonitor_ConvertToV(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu, vScalar); }
-static inline uint32_t MotorController_User_GetVAccs(const MotorController_T * p_mc, uint16_t vScalar)                  { return VMonitor_ConvertToV(&p_mc->VMonitorAccs, p_mc->AnalogResults.VAccs_Adcu, vScalar); }
+static inline uint32_t MotorController_User_GetVSource(const MotorController_T * p_mc, uint16_t vScalar)                { return VMonitor_ConvertToScalarV(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu, vScalar); }
+static inline uint32_t MotorController_User_GetVSense(const MotorController_T * p_mc, uint16_t vScalar)                 { return VMonitor_ConvertToScalarV(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu, vScalar); }
+static inline uint32_t MotorController_User_GetVAccs(const MotorController_T * p_mc, uint16_t vScalar)                  { return VMonitor_ConvertToScalarV(&p_mc->VMonitorAccs, p_mc->AnalogResults.VAccs_Adcu, vScalar); }
 static inline uint32_t MotorController_User_GetBatteryCharge_Scalar16(const MotorController_T * p_mc)                   { return Linear_ADC_CalcFracU16(&p_mc->BatteryLife, p_mc->AnalogResults.VSource_Adcu); }
 // static inline uint32_t MotorController_User_GetBatteryCharge_Unit1000(const MotorController_T * p_mc)                   { return Linear_ADC_CalcPhysical(&p_mc->BatteryLife, p_mc->AnalogResults.VSource_Adcu); }
 // static inline int32_t MotorController_User_GetHeatPcb_DegC(const MotorController_T * p_mc, uint8_t scalar)              { return Thermistor_ConvertToDegC_Int(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu, scalar); }
@@ -187,9 +185,9 @@ static inline int32_t MotorController_User_GetHeatMosfetsBot_DegC(const MotorCon
 
 #if    defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) /* change to fault records ? */
 static inline uint16_t MotorController_User_GetFaultAdcu(const MotorController_T * p_mc, MotAnalog_Channel_T adcChannel)    { return p_mc->FaultAnalogRecord.Channels[adcChannel]; }
-static inline uint32_t MotorController_User_GetFaultVSource(const MotorController_T * p_mc, uint16_t vScalar)               { return VMonitor_ConvertToV(&p_mc->VMonitorSource, p_mc->FaultAnalogRecord.VSource_Adcu, vScalar); }
-static inline uint32_t MotorController_User_GetFaultVSense(const MotorController_T * p_mc, uint16_t vScalar)                { return VMonitor_ConvertToV(&p_mc->VMonitorSense, p_mc->FaultAnalogRecord.VSense_Adcu, vScalar); }
-static inline uint32_t MotorController_User_GetFaultVAcc(const MotorController_T * p_mc, uint16_t vScalar)                  { return VMonitor_ConvertToV(&p_mc->VMonitorAccs, p_mc->FaultAnalogRecord.VAccs_Adcu, vScalar); }
+static inline uint32_t MotorController_User_GetFaultVSource(const MotorController_T * p_mc, uint16_t vScalar)               { return VMonitor_ConvertToScalarV(&p_mc->VMonitorSource, p_mc->FaultAnalogRecord.VSource_Adcu, vScalar); }
+static inline uint32_t MotorController_User_GetFaultVSense(const MotorController_T * p_mc, uint16_t vScalar)                { return VMonitor_ConvertToScalarV(&p_mc->VMonitorSense, p_mc->FaultAnalogRecord.VSense_Adcu, vScalar); }
+static inline uint32_t MotorController_User_GetFaultVAcc(const MotorController_T * p_mc, uint16_t vScalar)                  { return VMonitor_ConvertToScalarV(&p_mc->VMonitorAccs, p_mc->FaultAnalogRecord.VAccs_Adcu, vScalar); }
 // static inline int32_t MotorController_User_GetFaultHeatPcb_DegC(const  MotorController_T * p_mc, uint8_t scalar)            { return Thermistor_ConvertToDegC_Int(&p_mc->ThermistorPcb, p_mc->FaultAnalogRecord.HeatPcb_Adcu, scalar); }
 // static inline int32_t MotorController_User_GetFaultHeatMosfets_DegC(const  MotorController_T * p_mc, uint8_t scalar)        { return Thermistor_ConvertToDegC_Int(&p_mc->ThermistorMosfets, p_mc->FaultAnalogRecord.HeatMosfets_Adcu, scalar); }
 // static inline int32_t MotorController_User_GetFaultHeatMosfetsTop_DegC(const MotorController_T * p_mc, uint8_t scalar)     { return Thermistor_ConvertToDegC_Int(&p_mc->ThermistorMosfetsTop, p_mc->FaultAnalogRecord.HeatMosfetsTop_Adcu, scalar); }
