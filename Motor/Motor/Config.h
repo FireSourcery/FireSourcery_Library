@@ -92,11 +92,11 @@
     #define CONFIG_MOTOR_FOC_ENABLE
 #endif
 
-/* must reboot for params to take effect when disabled */
-#if     defined(CONFIG_MOTOR_PROPAGATE_SET_PARAM_DISABLE)
-#elif   defined(CONFIG_MOTOR_PROPAGATE_SET_PARAM_ENABLE)
+/* reboot for params to take effect when disabled */
+#if     defined(CONFIG_MOTOR_PARAMS_PROPAGATE_SET_DISABLE)
+#elif   defined(CONFIG_MOTOR_PARAMS_PROPAGATE_SET_ENABLE)
 #else
-    #define CONFIG_MOTOR_PROPAGATE_SET_PARAM_ENABLE
+    #define CONFIG_MOTOR_PARAMS_PROPAGATE_SET_DISABLE
 #endif
 
 #if     defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL)

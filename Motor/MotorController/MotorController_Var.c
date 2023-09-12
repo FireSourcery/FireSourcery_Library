@@ -338,7 +338,7 @@ MotVar_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T var
                 switch((MotVarId_RealTimeControl_T)varId.Id8)
                 {
                     /* Read/Write Cmds */
-                    case MOT_VAR_MOTOR_USER_CMD:                Motor_User_SetCmdValue(p_motor, (uint16_t)varValue);                break;
+                    case MOT_VAR_MOTOR_USER_CMD:                Motor_User_SetActiveCmdValue(p_motor, (uint16_t)varValue);                break;
                     case MOT_VAR_MOTOR_DIRECTION:               Motor_User_SetDirection(p_motor, (Motor_Direction_T)varValue);      break;
                     case MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE:    Motor_User_ActivateFeedbackMode_Cast(p_motor, (uint8_t)varValue);   break;
                     case MOT_VAR_MOTOR_USER_SPEED_LIMIT:    Motor_User_SetSpeedLimitActive_Id(p_motor, (uint16_t)varValue, MOTOR_SPEED_LIMIT_ACTIVE_USER);  break;

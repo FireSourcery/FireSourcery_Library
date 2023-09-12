@@ -49,7 +49,7 @@ void Encoder_ModeDT_Init(Encoder_T * p_encoder)
     Encoder_DeltaT_SetInitial(p_encoder);
 }
 
-void Encoder_ModeDT_Init_Hall(Encoder_T * p_encoder)
+void Encoder_ModeDT_Init_Polling(Encoder_T * p_encoder)
 {
     if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
     if(p_encoder->CONFIG.INIT_HAL != 0U) { p_encoder->CONFIG.INIT_HAL(); }

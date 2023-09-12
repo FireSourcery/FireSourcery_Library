@@ -449,7 +449,7 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
         }
         Terminal_SendString(p_term, "\r\n");
 
-        Terminal_SendString(p_term, "DirectionCalibration: ");
+        Terminal_SendString(p_term, "DirectionForward: ");
         switch(Motor_User_GetDirectionCalibration(p_motor))
         {
             case MOTOR_FORWARD_IS_CW:   Terminal_SendString(p_term, "CW");  break;

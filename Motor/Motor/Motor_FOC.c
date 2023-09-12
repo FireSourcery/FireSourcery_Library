@@ -298,15 +298,10 @@ void Motor_FOC_SetDirectionCw(Motor_T * p_motor)
 
 void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if(direction == MOTOR_DIRECTION_CCW)    { Motor_FOC_SetDirectionCcw(p_motor); }
-    else                                    { Motor_FOC_SetDirectionCw(p_motor); }
+    if(direction == MOTOR_DIRECTION_CCW) { Motor_FOC_SetDirectionCcw(p_motor); } else { Motor_FOC_SetDirectionCw(p_motor); }
 }
 
-void Motor_FOC_SetDirectionForward(Motor_T * p_motor)
-{
-    if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW)    { Motor_FOC_SetDirectionCcw(p_motor); }
-    else                                                                    { Motor_FOC_SetDirectionCw(p_motor); }
-}
+void Motor_FOC_SetDirectionForward(Motor_T * p_motor) { Motor_FOC_SetDirection(p_motor, p_motor->Parameters.DirectionForward); }
 
 /******************************************************************************/
 /*!
@@ -316,10 +311,8 @@ void Motor_FOC_SetDirectionForward(Motor_T * p_motor)
 /******************************************************************************/
 void Motor_FOC_StartAlign(Motor_T * p_motor)
 {
-    // p_motor->FeedbackMode.State = Motor_FeedbackModeFlags(MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT).State;
     p_motor->FeedbackMode.Current = 1U;
     Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.AlignTime_Cycles, 0, p_motor->Parameters.AlignPower_Scalar16 / 2U);
-    // FOC_SetQReq(&p_motor->Foc, 0); FOC_SetTheta(&p_motor->Foc, 0); //Motor_FOC_ProcAngleFeedForward
     Motor_FOC_ProcFeedbackMatch(p_motor);
 }
 
@@ -330,19 +323,13 @@ void Motor_FOC_ProcAlign(Motor_T * p_motor)
 
 void Motor_FOC_StartAlignValidate(Motor_T * p_motor)
 {
-    Motor_CalibrateSensorZero(p_motor);
-    Motor_ZeroSensor(p_motor);
-    FOC_SetDReq(&p_motor->Foc, 0);
-    // Linear_Ramp_Set(&p_motor->Ramp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, INT16_MAX / 2U)); //clmap user input?
-    Motor_FOC_ProcFeedbackMatch(p_motor);
-    // p_motor->FeedbackMode.OpenLoop = 0U;
+    // Motor_CalibrateSensorZero(p_motor);
+    // Motor_ZeroSensor(p_motor);
+    // FOC_SetDReq(&p_motor->Foc, 0);
+    // // Linear_Ramp_Set(&p_motor->Ramp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_DirectionalCmd(p_motor, INT16_MAX / 2U)); //clmap user input?
+    // Motor_FOC_ProcFeedbackMatch(p_motor);
+    // // p_motor->FeedbackMode.OpenLoop = 0U;
 }
-// static StateMachine_State_T * OpenLoop_InputCmdValue(Motor_T * p_motor, statemachine_inputvalue_t ivCmd)
-// {
-//     int32_t ivCmd_Positive = math_clamp((int32_t)ivCmd, 0, (int32_t)p_motor->Parameters.OpenLoopPower_Scalar16 / 2);
-//     Motor_SetDirectionalCmd(p_motor, ivCmd_Positive);
-//     return 0U;
-// }
 
 /*
     OpenLoop - Feed forward input angle, enable/disable current feedback
@@ -351,8 +338,8 @@ void Motor_FOC_StartAlignValidate(Motor_T * p_motor)
 void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
 {
     p_motor->Speed_FracS16 = 0;
-    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopPower_Scalar16 / 2U));    // alternatively, clamp user input ramp
-    Linear_Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0, Motor_ConvertUserDirection(p_motor, p_motor->Parameters.OpenLoopSpeed_Scalar16 / 2U));
+    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_LogicalDirectionCmd(p_motor, p_motor->Parameters.OpenLoopPower_Scalar16 / 2U));    // alternatively, clamp user input ramp
+    Linear_Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0, Motor_LogicalDirectionCmd(p_motor, p_motor->Parameters.OpenLoopSpeed_Scalar16 / 2U));
     // FOC_SetDReq(&p_motor->Foc, 0); //Motor_FOC_ProcAngleFeedForward
 }
 

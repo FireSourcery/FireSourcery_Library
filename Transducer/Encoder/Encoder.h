@@ -85,13 +85,13 @@ Encoder_Align_T;
 typedef struct __attribute__((aligned(2U))) Encoder_Params_Tag
 {
     uint16_t CountsPerRevolution;         /* Derive Angular Units. Max for counting AngularD, CaptureDeltaT mode need 2nd TimerCounterMax */
-    uint16_t ScalarSpeedRef_Rpm;         /* Derive Frac16 Units. */
+    uint16_t ScalarSpeedRef_Rpm;         /* Derive Scalar16 Units. */
     uint16_t SurfaceDiameter;            /* Derive Linear Units. */
     uint16_t GearRatio_Factor;            /* Derive Linear Units. Surface:Encoder Ratio */
     uint16_t GearRatio_Divisor;            /* Derive Linear Units. */
     /* DistancePerRevolution_Factor, DistancePerRevolution_Factor_Divider */
     uint16_t ExtendedDeltaTStop;        /* ExtendedTimer time read as deltaT stopped, default as 1s or .5rpm */
-    uint32_t InterpolateAngleScalar;    /* Sets UnitInterpolateAngle Scalar and InterpolateAngleLimit */
+    uint32_t InterpolateAngleScalar;    /* Sets UnitInterpolateAngle Scalar and InterpolateAngleLimit. e.g electrical angle conversion */
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
     bool IsQuadratureCaptureEnabled;     /* Quadrature Mode - enable hardware/emulated quadrature speed capture */
     bool IsALeadBPositive;                 /* User runtime calibration for encoder install direction, combine with compile time defined QUADRATURE_A_LEAD_B_INCREMENT */
@@ -128,18 +128,16 @@ typedef struct Encoder_Tag
     Pin_T PinA;
     Pin_T PinB;
 #endif
-    /*
-        Compute-Time Variables
-    */
+
 #if defined(CONFIG_ENCODER_HW_EMULATED)
     Encoder_Phases_T Phases; /* Save Prev State */
 #endif
     int32_t CounterD;
     uint32_t Angle32;
-    int32_t DeltaD;         /*!< Counter distance counts between 2 samples. Units in raw counter ticks */
-    uint32_t DeltaT;        /*!< Timer time counts between 2 Encoder pulse counts. Units in raw timer ticks */
+    int32_t DeltaD;         /*!< Counter counts (of distance) between 2 samples. Units in raw counter ticks */
+    uint32_t DeltaT;        /*!< Timer counts between 2 pulse counts. Units in raw timer ticks */
     uint32_t DeltaTh;       /*!< ModeDT */
-    int32_t FreqD;          /*!< EncoderPulseFreq ModeDT */
+    int32_t FreqD;          /*!< EncoderPulseFreq ModeDT. DeltaD 1 Second */
     uint32_t InterpolateAngleIndex; /*!< ModeDT */
     int32_t DirectionD;     /*!< previous DeltaD sign, when DeltaD == 0 */
     uint32_t ErrorCount;
@@ -147,6 +145,7 @@ typedef struct Encoder_Tag
     // int32_t IndexCounterDOffset;
     uint32_t ExtendedTimerPrev;
     uint32_t ExtendedTimerConversion;    /* Extended Timer to Short Timer */
+
     bool IsSinglePhasePositive;
     Encoder_Align_T Align;
     int32_t AbsoluteOffset;
@@ -256,7 +255,7 @@ static inline void _Encoder_ZeroPulseCount(Encoder_T * p_encoder)
 
 /*
     Convert signed capture to user reference
-    Caputured as ALeadB is positive by default
+    Captured as ALeadB is positive by default
 */
 static inline int32_t Encoder_GetDirection_Quadrature(const Encoder_T * p_encoder) { return (p_encoder->Params.IsALeadBPositive == true) ? 1 : -1; }
 /* set by user */
@@ -332,7 +331,7 @@ static inline bool Encoder_GetIsAligned(const Encoder_T * p_encoder)
 /*!
     Angle - Base unit in ENCODER_ANGLE_BITS
 */
-static inline uint32_t Encoder_ConvertCounterDToAngle(Encoder_T * p_encoder, uint32_t counterD_Ticks)
+static inline uint32_t Encoder_AngleFromCounterD(Encoder_T * p_encoder, uint32_t counterD_Ticks)
 {
     /* Overflow: counterD > CountsPerRevolution, UnitAngularD == UINT32_MAX / CountsPerRevolution */
     return (counterD_Ticks < p_encoder->Params.CountsPerRevolution) ?
@@ -340,7 +339,7 @@ static inline uint32_t Encoder_ConvertCounterDToAngle(Encoder_T * p_encoder, uin
         ((counterD_Ticks << ENCODER_ANGLE_BITS) / p_encoder->Params.CountsPerRevolution);
 }
 
-static inline uint32_t Encoder_ConvertAngleToCounterD(Encoder_T * p_encoder, uint16_t angle_UserDegrees)
+static inline uint32_t Encoder_CounterDFromAngle(Encoder_T * p_encoder, uint16_t angle_UserDegrees)
 {
     return (angle_UserDegrees << ENCODER_ANGLE_SHIFT) / p_encoder->UnitAngularD;
 }
@@ -348,8 +347,8 @@ static inline uint32_t Encoder_ConvertAngleToCounterD(Encoder_T * p_encoder, uin
 /*!
     Linear Distance
 */
-static inline uint32_t Encoder_ConvertCounterDToDistance(Encoder_T * p_encoder, uint32_t counterD_Ticks) { return counterD_Ticks * p_encoder->UnitLinearD; }
-static inline uint32_t Encoder_ConvertDistanceToCounterD(Encoder_T * p_encoder, uint32_t counterD_Ticks) { return counterD_Ticks / p_encoder->UnitLinearD; }
+static inline uint32_t Encoder_DistanceFromCounterD(Encoder_T * p_encoder, uint32_t counterD_Ticks) { return counterD_Ticks * p_encoder->UnitLinearD; }
+static inline uint32_t Encoder_CounterDFromDistance(Encoder_T * p_encoder, uint32_t distance_Units) { return distance_Units / p_encoder->UnitLinearD; }
 
 /******************************************************************************/
 /*!

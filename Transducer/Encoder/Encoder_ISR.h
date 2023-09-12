@@ -44,11 +44,6 @@
 
 /******************************************************************************/
 /*
-    Helper Functions
-*/
-/******************************************************************************/
-/******************************************************************************/
-/*
     Quadrature, Signed Direction
     Captures as ALeadB is Positive, compensate on user Get
 */
@@ -70,6 +65,9 @@ static inline void _Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
     p_encoder->Angle32 += ((int32_t)count * (int32_t)p_encoder->UnitAngularD);
 }
 
+/******************************************************************************/
+/* Quadrature */
+/******************************************************************************/
 static inline void _Encoder_CaptureCount_Quadrature(Encoder_T * p_encoder, int8_t count)
 {
     if(count == _ENCODER_TABLE_ERROR)   { p_encoder->ErrorCount++; }
@@ -92,9 +90,7 @@ static inline void _Encoder_CapturePulse_Quadrature(Encoder_T * p_encoder)
 // }
 
 /******************************************************************************/
-/*
-    Single Phase, Non-Directional
-*/
+/* Single Phase, Non-Directional */
 /******************************************************************************/
 static inline void _Encoder_CapturePulse_SinglePhase(Encoder_T * p_encoder)
 {
@@ -136,33 +132,6 @@ static inline void Encoder_CapturePulse(Encoder_T * p_encoder)
 */
 /*! @{ */
 /******************************************************************************/
-/******************************************************************************/
-/*!
-    Upper layer configures ISRs
-*/
-/******************************************************************************/
-static inline void _Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
-{
-    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
-}
-
-static inline void _Encoder_OnPhaseB_ISR(Encoder_T * p_encoder)
-{
-    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
-}
-
-static inline void _Encoder_OnPhaseZ_ISR(Encoder_T * p_encoder)
-{
-    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
-}
-
-/* Shared A, B ISR */
-static inline void _Encoder_OnPhaseAB_ISR(Encoder_T * p_encoder)
-{
-    if      (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID) == true) { _Encoder_OnPhaseA_ISR(p_encoder); }
-    else if (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID) == true) { _Encoder_OnPhaseB_ISR(p_encoder); }
-}
-
 /******************************************************************************/
 /*!
     Configured using IsQuadratureMode flag
@@ -213,35 +182,34 @@ static inline void Encoder_OnPhaseABZ_ISR(Encoder_T * p_encoder)
     else if    (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID) == true) { Encoder_OnPhaseB_ISR(p_encoder); }
     else if    (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID) == true) { Encoder_OnIndex_ISR(p_encoder); }
 }
+
+/******************************************************************************/
+/*!
+    Upper layer configures ISRs
+*/
+/******************************************************************************/
+static inline void _Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
+{
+    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
+}
+
+static inline void _Encoder_OnPhaseB_ISR(Encoder_T * p_encoder)
+{
+    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
+}
+
+static inline void _Encoder_OnPhaseZ_ISR(Encoder_T * p_encoder)
+{
+    HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
+}
+
+/* Shared A, B ISR */
+static inline void _Encoder_OnPhaseAB_ISR(Encoder_T * p_encoder)
+{
+    if      (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID) == true) { _Encoder_OnPhaseA_ISR(p_encoder); }
+    else if (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID) == true) { _Encoder_OnPhaseB_ISR(p_encoder); }
+}
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
-
 #endif
-
-// /******************************************************************************/
-// /*!
-//     Upper layer configures ISRs
-// */
-// /******************************************************************************/
-// static inline void _Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
-// {
-//     HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
-// }
-
-// static inline void _Encoder_OnPhaseB_ISR(Encoder_T * p_encoder)
-// {
-//     HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
-// }
-
-// static inline void _Encoder_OnPhaseZ_ISR(Encoder_T * p_encoder)
-// {
-//     HAL_Encoder_ClearPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
-// }
-
-// /* Shared A, B ISR */
-// static inline void _Encoder_OnPhaseAB_ISR(Encoder_T * p_encoder)
-// {
-//     if         (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID) == true) { _Encoder_OnPhaseA_ISR(p_encoder); }
-//     else if    (HAL_Encoder_ReadPinInterrupt(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID) == true) { _Encoder_OnPhaseB_ISR(p_encoder); }
-// }

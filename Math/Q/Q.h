@@ -38,8 +38,8 @@ extern uint8_t q_log2(uint32_t num);
 extern uint8_t q_log2_ceiling(uint32_t num);
 extern uint8_t q_log2_round(uint32_t num);
 extern uint32_t q_pow2_round(uint32_t num);
-extern uint8_t q_maxshift_signed(int32_t num);
-extern uint8_t q_maxshift_unsigned(uint32_t positiveNum);
+extern uint8_t q_lshift_max_signed(int32_t num);
+extern uint8_t q_lshift_max_unsigned(uint32_t positiveNum);
 
 // typedef struct Q_Tag
 // {

@@ -24,7 +24,7 @@
 /*!
     @file   Motor_User.h
     @author FireSourcery
-    @brief  User Interface. Functions include error checking.
+    @brief  User Input/Output interface function, including error checking
     @version V0
 */
 /******************************************************************************/
@@ -52,7 +52,7 @@
     @return speed forward as positive. reverse as negative.
 */
 /* [-32767:32767] <=> [-1:1] */
-static inline int32_t Motor_User_GetSpeed_Frac16(const Motor_T * p_motor) { return Motor_ConvertUserDirection(p_motor, p_motor->Speed_FracS16); }
+static inline int32_t Motor_User_GetSpeed_Frac16(const Motor_T * p_motor) { return Motor_LogicalDirectionCmd(p_motor, p_motor->Speed_FracS16); }
 /* [0:65535] <=> [0:2] */
 static inline uint16_t Motor_User_GetSpeed_UFrac16(const Motor_T * p_motor) { return math_abs(p_motor->Speed_FracS16); }
 
@@ -63,7 +63,7 @@ static inline uint16_t Motor_User_GetSpeed_UFrac16(const Motor_T * p_motor) { re
 */
 static inline int32_t Motor_User_GetIPhase_Frac16(const Motor_T * p_motor)
 {
-    // return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_Frac16, 0U));
+    // return Motor_DirectionalCmd(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_Frac16, 0U));
     return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_UFrac16, 0U) ;
 }
 
@@ -72,7 +72,7 @@ static inline int32_t Motor_User_GetIPhase_Frac16(const Motor_T * p_motor)
 */
 static inline int32_t Motor_User_GetVPhase_Frac16(const Motor_T * p_motor)
 {
-    // return Motor_ConvertUserDirection(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_Frac16, 0U));
+    // return Motor_DirectionalCmd(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_Frac16, 0U));
     return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_UFrac16, 0U);
 }
 
@@ -97,19 +97,12 @@ static inline int32_t Motor_User_GetElectricalPower_VA(const Motor_T * p_motor) 
 /*
     Writable via interface functions
 */
-static inline Motor_Direction_T Motor_User_GetDirection(const Motor_T * p_motor) { return p_motor->Direction; }
-static inline bool Motor_User_IsDirectionForward(const Motor_T * p_motor)
-{
-    return (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? (p_motor->Direction == MOTOR_DIRECTION_CCW) : (p_motor->Direction == MOTOR_DIRECTION_CW);
-}
-static inline bool Motor_User_IsDirectionReverse(const Motor_T * p_motor)
-{
-    return (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? (p_motor->Direction == MOTOR_DIRECTION_CW) : (p_motor->Direction == MOTOR_DIRECTION_CCW);
-}
-
-static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackMode(const Motor_T * p_motor)      { return p_motor->FeedbackMode; }
-static inline uint16_t Motor_User_GetActiveILimit(const Motor_T * p_motor)                        { return p_motor->ILimitActiveSentinel_Scalar16; }
-static inline uint16_t Motor_User_GetActiveSpeedLimit(const Motor_T * p_motor)                    { return p_motor->SpeedLimitDirect_Scalar16; }
+static inline Motor_Direction_T Motor_User_GetDirection(const Motor_T * p_motor)                { return p_motor->Direction; }
+static inline bool Motor_User_IsDirectionForward(const Motor_T * p_motor)                       { return (p_motor->Parameters.DirectionForward == p_motor->Direction); }
+static inline bool Motor_User_IsDirectionReverse(const Motor_T * p_motor)                       { return !Motor_User_IsDirectionForward(p_motor); }
+static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackMode(const Motor_T * p_motor)    { return p_motor->FeedbackMode; }
+static inline uint16_t Motor_User_GetActiveILimit(const Motor_T * p_motor)                      { return p_motor->ILimitActiveSentinel_Scalar16; }
+static inline uint16_t Motor_User_GetActiveSpeedLimit(const Motor_T * p_motor)                  { return p_motor->SpeedLimitDirect_Scalar16; }
 
 /*
     Read-Only
@@ -132,8 +125,6 @@ static inline uint16_t Motor_User_GetAdcu(const Motor_T * p_motor, MotorAnalog_C
 static inline uint8_t Motor_User_GetAdcu_Msb8(const Motor_T * p_motor, MotorAnalog_Channel_T adcChannel)  { return Motor_User_GetAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
 static inline uint16_t Motor_User_GetHeat_Adcu(const Motor_T * p_motor)                                   { return p_motor->AnalogResults.Heat_Adcu; }
 static inline int32_t Motor_User_GetHeat_DegC(const Motor_T * p_motor, uint16_t scalar)                   { return Thermistor_ConvertToDegC_Int(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
-
-
 
 /******************************************************************************/
 /*!
@@ -160,9 +151,8 @@ extern void Motor_User_SetPositionCmdValue(Motor_T * p_motor, uint16_t angle);
 extern void Motor_User_SetOpenLoopMode(Motor_T * p_motor);
 extern void Motor_User_SetOpenLoopCmdValue(Motor_T * p_motor, int16_t ivCmd);
 extern void Motor_User_SetOpenLoopModeCmd(Motor_T * p_motor, int16_t ivMagnitude);
-extern void Motor_User_SetCmdValue(Motor_T * p_motor, int16_t userCmd);
+extern void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd);
 extern void Motor_User_ActivateDefaultFeedbackMode(Motor_T * p_motor);
-
 
 extern void Motor_User_ReleaseControl(Motor_T * p_motor);
 extern void Motor_User_DisableControl(Motor_T * p_motor);
@@ -194,11 +184,5 @@ extern void Motor_User_SetGroundSpeed_Mph(Motor_T * p_motor, uint32_t wheelDiame
 #endif
 #endif
 
-// extern void Motor_User_SetDefaultFeedbackCmdValue(Motor_T * p_motor, int16_t userCmd);
-// extern void Motor_User_SetDefaultModeCmd(Motor_T * p_motor, int16_t userCmd);
-// extern void Motor_User_SetThrottleCmd(Motor_T * p_motor, uint16_t throttle);
-// extern void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake);
-// extern void Motor_User_SetVBrakeCmd(Motor_T * p_motor, uint16_t brake);
-// extern void Motor_User_SetCruise(Motor_T * p_motor);
 
 // static inline float Motor_User_GetHeat_DegCFloat(const Motor_T * p_motor)                                 { return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }

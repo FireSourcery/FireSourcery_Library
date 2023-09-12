@@ -113,11 +113,8 @@ static void Stop_Entry(Motor_T * p_motor)
 
 static void Stop_Proc(Motor_T * p_motor)
 {
-    //    if(p_motor->Speed_FracS16 > 0U)
-    //    {
-    //        _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FREEWHEEL);
-    //    }
-    //    else
+    // if(p_motor->Speed_FracS16 > 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FREEWHEEL); }
+    // else
     {
         Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleVBemf, 0U);
     }
@@ -128,7 +125,7 @@ static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor, statemachin
     if(p_motor->Speed_FracS16 == 0U)
     {
         /* work around function casting warning, statemachine_inputvalue_t to Direction_T enum */
-        // Motor_SetCommutationModeUInt32(p_motor, (Motor_FunctionArg32_T)Motor_FOC_SetDirection, (Motor_FunctionArg32_T)Motor_SetDirection, direction);
+        // Motor_SetCommutationModeUInt32(p_motor,  Motor_FOC_SetDirection, Motor_SetDirection, direction);
         if(direction == MOTOR_DIRECTION_CCW)    { Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionCcw, Motor_SetDirectionCcw); }
         else                                    { Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionCw, Motor_SetDirectionCw); }
     }
@@ -394,6 +391,13 @@ static void OpenLoop_Proc(Motor_T * p_motor)
 }
 
 
+// static StateMachine_State_T * OpenLoop_InputCmdValue(Motor_T * p_motor, statemachine_inputvalue_t ivCmd)
+// {
+//     int32_t ivCmd_Positive = math_clamp((int32_t)ivCmd, 0, (int32_t)p_motor->Parameters.OpenLoopPower_Scalar16 / 2);
+//     Motor_SetDirectionalCmd(p_motor, ivCmd_Positive);
+//     return 0U;
+// }
+
 static const StateMachine_Transition_T OPEN_LOOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
     [MSM_INPUT_FAULT]           = (StateMachine_Transition_T)TransitionFault,
@@ -414,8 +418,6 @@ static const StateMachine_State_T STATE_OPEN_LOOP =
 /******************************************************************************/
 /*!
     @brief Calibration State
-
-    Functions defined in Motor_Calibrate.h for readability
 */
 /******************************************************************************/
 static void Calibration_Entry(Motor_T * p_motor)

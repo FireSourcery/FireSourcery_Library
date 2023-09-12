@@ -97,8 +97,8 @@ static inline int32_t VMonitor_ConvertMilliVToAdcu(const VMonitor_T * p_vMonitor
     Map [FaultLower:VRef] to [0:65535]
 */
 /******************************************************************************/
-// static inline uint16_t VMonitor_ConvertPercentage_FracU16(const VMonitor_T * p_vMonitor, uint16_t adcu)   { return Linear_ADC_CalcFracU16(&p_vMonitor->Linear , adcu); }
-// static inline uint16_t VMonitor_GetPercentage_FracU16(const VMonitor_T * p_vMonitor)                      { return VMonitor_ConvertPercentage_FracU16(p_vMonitor, p_vMonitor->Adcu); }
+// static inline uint16_t VMonitor_ConvertChargeLevel_FracU16(const VMonitor_T * p_vMonitor, uint16_t adcu)   { return Linear_ADC_CalcFracU16(&p_vMonitor->Linear , adcu); }
+// static inline uint16_t VMonitor_GetChargeLevel_FracU16(const VMonitor_T * p_vMonitor)                      { return VMonitor_ConvertPercentage_FracU16(p_vMonitor, p_vMonitor->Adcu); }
 
 static inline VMonitor_Status_T VMonitor_GetStatus(const VMonitor_T * p_vMonitor)   { return (p_vMonitor->Status); }
 static inline bool VMonitor_GetIsFault(const VMonitor_T * p_vMonitor)               { return ((p_vMonitor->Status == VMONITOR_FAULT_UPPER) || (p_vMonitor->Status == VMONITOR_FAULT_LOWER)); }

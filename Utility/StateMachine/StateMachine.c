@@ -254,6 +254,11 @@ void StateMachine_Proc(StateMachine_T * p_stateMachine)
     StateMachine_Sync_Proc(p_stateMachine);
 }
 
+void StateMachine_ProcState(StateMachine_T * p_stateMachine)
+{
+   ProcState(p_stateMachine);
+}
+
 bool StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue)
 {
     return StateMachine_Async_ProcInput(p_stateMachine, inputId, inputValue);

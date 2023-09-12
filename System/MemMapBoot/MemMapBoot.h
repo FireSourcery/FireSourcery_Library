@@ -58,7 +58,7 @@ typedef union MemMapBoot_Tag
         volatile uint32_t LoadDefault   : 1U;
         volatile uint32_t ProtocolId    : 1U;
     };
-    volatile uint32_t Register;
+    volatile uint32_t Word;
 }
 MemMapBoot_T;
 
@@ -75,5 +75,6 @@ static inline bool MemMapBoot_GetBeep(void) { return ((MemMapBoot_GetIsValid() =
 
 /* No FastBoot by default */
 static inline bool MemMapBoot_GetFastBoot(void) { return ((MemMapBoot_GetIsValid() == true) && (MEM_MAP_BOOT->FastBoot == 1U)); }
+
 
 #endif

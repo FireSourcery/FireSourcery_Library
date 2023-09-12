@@ -24,18 +24,17 @@
 /*!
     @file   Motor_User.c
     @author FireSourcery
-    @brief
+    @brief  User Input/Output interface function, including error checking
     @version V0
 */
 /******************************************************************************/
 #include "Motor_User.h"
-#include "System/Critical/Critical.h"
 
 static int32_t Scale16(uint16_t scalar16, int32_t value) { return scalar16 * value / 65536; }
 
 /******************************************************************************/
 /*!
-    State Machine Error checked inputs
+    State Machine inputs
 */
 /******************************************************************************/
 /*
@@ -74,35 +73,14 @@ void Motor_User_ActivateFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mod
     if(p_motor->FeedbackMode.Word != mode.Word) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_FEEDBACK, mode.Word); }
 }
 
-void Motor_User_ActivateFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeWord)
-{
-    Motor_FeedbackMode_T mode = { .Word = modeWord };
-    Motor_User_ActivateFeedbackMode(p_motor, mode);
-}
-
-// // Motor_FeedbackMode_T mode = Motor_FeedbackModeFlags(mode);
-// uint16_t word = 6;
-// volatile Motor_FeedbackMode_T modeTest = mode;
-// modeTest.Word = word;
-
-// if(p_motor->FeedbackMode.Word != mode.Word)
-// {
-//     // Critical_Enter(); /* Block PWM Thread, do not proc new flags before matching output with StateMachine */
-//     // p_motor->FeedbackMode.State = mode.State;
-//     // Motor_SetFeedbackMode(p_motor, feedbackMode);
-//     // StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode);
-//     // Critical_Exit();
-//     // Critical_Enter();
-//     // Critical_Exit();
-// }
-// StateMachine_SetSyncInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Word);
+void Motor_User_ActivateFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeWord) { Motor_User_ActivateFeedbackMode(p_motor, Motor_FeedbackMode(modeWord)); }
 
 /*
     Sets Ramp Target
     Ramp Proc interrupt only update OutputState, RampTarget is safe from sync?
 */
-void Motor_User_SetCmd(Motor_T * p_motor, int16_t userCmd)  { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_ConvertUserDirection(p_motor, userCmd)); } /* may need to be private */
-int32_t Motor_User_GetCmd(const Motor_T * p_motor)          { return Motor_ConvertUserDirection(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
+void Motor_User_SetCmd(Motor_T * p_motor, int16_t userCmd)  { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_LogicalDirectionCmd(p_motor, userCmd)); } /* may need to be private */
+int32_t Motor_User_GetCmd(const Motor_T * p_motor)          { return Motor_LogicalDirectionCmd(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
 
 /******************************************************************************/
 /*!
@@ -265,7 +243,7 @@ void Motor_User_SetOpenLoopModeCmd(Motor_T * p_motor, int16_t ivMagnitude)
 /*!
     @param[in] userCmd [-32768:32767]
 */
-void Motor_User_SetCmdValue(Motor_T * p_motor, int16_t userCmd)
+void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd)
 {
     Motor_FeedbackMode_T flags = p_motor->FeedbackMode;
 
@@ -284,7 +262,7 @@ void Motor_User_SetCmdValue(Motor_T * p_motor, int16_t userCmd)
 /******************************************************************************/
 void Motor_User_ActivateDefaultFeedbackMode(Motor_T * p_motor)
 {
-    Motor_User_ActivateFeedbackMode(p_motor, p_motor->Parameters.DefaultFeedbackMode);
+    Motor_User_ActivateFeedbackMode(p_motor, p_motor->Parameters.FeedbackModeDefault);
 }
 
 
@@ -330,18 +308,8 @@ bool Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
     return (direction == p_motor->Direction);
 }
 
-bool Motor_User_SetDirectionForward(Motor_T * p_motor)
-{
-    Motor_Direction_T direction = (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? MOTOR_DIRECTION_CCW : MOTOR_DIRECTION_CW;
-    return Motor_User_SetDirection(p_motor, direction);
-}
-
-bool Motor_User_SetDirectionReverse(Motor_T * p_motor)
-{
-    Motor_Direction_T direction = (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ? MOTOR_DIRECTION_CW : MOTOR_DIRECTION_CCW;
-    return Motor_User_SetDirection(p_motor, direction);
-}
-
+bool Motor_User_SetDirectionForward(Motor_T * p_motor) { return Motor_User_SetDirection(p_motor, p_motor->Parameters.DirectionForward); }
+bool Motor_User_SetDirectionReverse(Motor_T * p_motor) { return Motor_User_SetDirection(p_motor, Motor_DirectionReverse(p_motor)); }
 
 /******************************************************************************/
 /*
@@ -386,13 +354,11 @@ void Motor_User_CalibrateSensor(Motor_T * p_motor)
         default: break;
     }
 }
-/******************************************************************************/
-/*   */
-/******************************************************************************/
+
 
 /******************************************************************************/
 /*!
-    User Error Checked Get Set Functions
+    Getters/Setters
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -420,16 +386,10 @@ void Motor_User_SetSpeedLimitActive(Motor_T * p_motor, uint16_t scalar16)
     Motor_UpdateFeedbackSpeedLimits(p_motor);
 }
 
-void Motor_ResetActiveSpeedLimits(Motor_T * p_motor)
+void Motor_User_ClearSpeedLimitActive(Motor_T * p_motor)
 {
     p_motor->SpeedLimitForward_Scalar16 = p_motor->Parameters.SpeedLimitForward_Scalar16;
     p_motor->SpeedLimitReverse_Scalar16 = p_motor->Parameters.SpeedLimitReverse_Scalar16;
-    // p_motor->SpeedLimitActiveScalar = 0xFFFF;
-}
-
-void Motor_User_ClearSpeedLimitActive(Motor_T * p_motor)
-{
-    Motor_ResetActiveSpeedLimits(p_motor);
     Motor_UpdateFeedbackSpeedLimits(p_motor);
 }
 
@@ -443,20 +403,16 @@ void Motor_User_SetILimitActive(Motor_T * p_motor, uint16_t scalar16)
     Motor_UpdateFeedbackILimits(p_motor);
 }
 
-void Motor_ResetActiveILimits(Motor_T * p_motor)
+void Motor_User_ClearILimitActive(Motor_T * p_motor)
 {
     p_motor->ILimitMotoring_Scalar16 = p_motor->Parameters.ILimitMotoring_Scalar16;
     p_motor->ILimitGenerating_Scalar16 = p_motor->Parameters.ILimitGenerating_Scalar16;
-    // p_motor->ILimitActiveSentinel_Scalar16 = 0xFFFFU; /* Use for comparison on set */
-}
-
-void Motor_User_ClearILimitActive(Motor_T * p_motor)
-{
-    Motor_ResetActiveILimits(p_motor);
     Motor_UpdateFeedbackILimits(p_motor);
 }
 
-
+/*
+    Array
+*/
 bool Motor_User_SetSpeedLimitActive_Id(Motor_T * p_motor, uint16_t scalar16, uint8_t id)
 {
     // bool isSet = (scalar16 < p_motor->SpeedLimitDirect_Scalar16);
@@ -477,7 +433,6 @@ bool Motor_User_ClearSpeedLimitActive_Id(Motor_T * p_motor, uint8_t id)
     //     p_motor->SpeedLimitActiveId = MOTOR_SPEED_LIMIT_ACTIVE_DISABLE;
     // }
 }
-
 
 /*
     Check Lower
@@ -613,7 +568,7 @@ void Motor_User_SetGroundSpeed_Mph(Motor_T * p_motor, uint32_t wheelDiameter_Inc
     // /*!
     //     Vehicle Wrapper
     //     Throttle and Brake accept uint16_t, wrapped functions use int16_t
-    //     - UserCmdValue value in configured DefaultFeedbackMode
+    //     - UserCmdValue value in configured FeedbackModeDefault
     // */
     // /******************************************************************************/
     // /*!

@@ -46,7 +46,6 @@
 /******************************************************************************/
 static inline int32_t MotorController_User_GetCmdValue(const MotorController_T * p_mc) { return p_mc->UserCmdValue; }
 static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, int16_t userCmd) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD, STATE_MACHINE_INPUT_VALUE_NULL); p_mc->UserCmdValue = userCmd; }
-// static inline void MotorController_User_SetCmdZero(MotorController_T * p_mc)    { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_ZERO, STATE_MACHINE_INPUT_VALUE_NULL); }
 
 /******************************************************************************/
 /* Common */
@@ -68,10 +67,10 @@ static inline void MotorController_User_SetDriveCmd(MotorController_T * p_mc, Mo
 static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd)  { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_THROTTLE, userCmd); }
 static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd)     { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_BRAKE, userCmd); }
 static inline void MotorController_User_SetDriveCmdZero(MotorController_T * p_mc)                   { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_ZERO, 0); }
-static inline void MotorController_User_DisableDrive(MotorController_T * p_mc)                      { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, MOTOR_CONTROLLER_DIRECTION_NEUTRAL); }
+// static inline void MotorController_User_DisableDrive(MotorController_T * p_mc)                      { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, MOTOR_CONTROLLER_DIRECTION_NEUTRAL); }
 
 /******************************************************************************/
-/* Direction */
+/* Drive Direction */
 /******************************************************************************/
 static inline void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction)
 {
@@ -84,11 +83,12 @@ static inline MotorController_Direction_T MotorController_User_GetDirection(cons
 {
     MotorController_Direction_T direction;
     if(StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_NEUTRAL) { direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL; }
+    else if(StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_PARK) { direction = MOTOR_CONTROLLER_DIRECTION_PARK; }
     else
     {
         if(MotorController_CheckForwardAll(p_mc) == true)       { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
         else if(MotorController_CheckReverseAll(p_mc) == true)  { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
-        else { direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL; } /* error */
+        else { direction = p_mc->DriveDirection; } /* error */
     }
     return direction;
 }
@@ -116,7 +116,7 @@ static inline NvMemory_Status_T MotorController_User_SaveParameters_Blocking(Mot
 /* Servo */
 /******************************************************************************/
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
-static inline void MotorController_User_SetServoCmd(MotorController_T * p_mc, int16_t userCmd) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD, userCmd); }
+static inline void MotorController_User_SetServoCmd(MotorController_T * p_mc, int16_t userCmd) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, userCmd); }
 static inline void MotorController_User_EnterServoMode(MotorController_T * p_mc) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_MACHINE_INPUT_VALUE_NULL); }
 static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_MACHINE_INPUT_VALUE_NULL); }
 #endif
@@ -137,16 +137,6 @@ static inline void MotorController_User_SetFault(MotorController_T * p_mc)
 {
     if(MotorController_User_CheckFault(p_mc) == false) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL); }
 }
-
-// StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_FAULT, CLEAR_FAULT);
-/* user activate fault */
-// static inline void MotorController_User_SetUserFault(MotorController_T * p_mc)      { p_mc->FaultFlags.User = 1U; MotorController_User_SetFault(p_mc); }
-// static inline bool MotorController_User_ClearUserFault(MotorController_T * p_mc)    { p_mc->FaultFlags.User = 0U; return MotorController_User_ClearFault(p_mc); }
-// static inline void MotorController_User_ToggleUserFault(MotorController_T * p_mc)
-// {
-//     if(p_mc->FaultFlags.User == 1U) { MotorController_User_SetUserFault(p_mc); }
-//     else                            { MotorController_User_ClearUserFault(p_mc); }
-// }
 
 /******************************************************************************/
 /*
@@ -205,16 +195,19 @@ static inline void MotorController_User_SetBootReg(MotorController_T * p_mc, Mem
 static inline void MotorController_User_SetFastBoot(MotorController_T * p_mc, bool isEnable)        { p_mc->MemMapBoot.FastBoot = isEnable; }
 static inline void MotorController_User_SetLoadDefault(MotorController_T * p_mc, bool isEnable)     { p_mc->MemMapBoot.LoadDefault = isEnable; }
 
-static inline MotorController_InputMode_T MotorController_User_GetInputMode(const MotorController_T * p_mc) { return p_mc->Parameters.InputMode; }
+static inline MotorController_InputMode_T MotorController_User_GetInputMode(const MotorController_T * p_mc)         { return p_mc->Parameters.InputMode; }
+static inline MotorController_BrakeMode_T MotorController_User_GetBrakeMode(const MotorController_T * p_mc)         { return p_mc->Parameters.BrakeMode; }
+static inline MotorController_ThrottleMode_T MotorController_User_GetThrottleMode(const MotorController_T * p_mc)   { return p_mc->Parameters.ThrottleMode; }
+static inline MotorController_DriveZeroMode_T MotorController_User_GetDriveZeroMode(const MotorController_T * p_mc) { return p_mc->Parameters.DriveZeroMode; }
 
-static inline void MotorController_User_SetInputMode(MotorController_T * p_mc, MotorController_InputMode_T mode) { p_mc->Parameters.InputMode = mode; }
-static inline void MotorController_User_SetBrakeMode(MotorController_T * p_mc, MotorController_BrakeMode_T mode) { p_mc->Parameters.BrakeMode = mode; }
-static inline void MotorController_User_SetThrottleMode(MotorController_T * p_mc, MotorController_ThrottleMode_T mode) { p_mc->Parameters.ThrottleMode = mode; }
-static inline void MotorController_User_SetDriveZeroMode(MotorController_T * p_mc, MotorController_DriveZeroMode_T mode) { p_mc->Parameters.DriveZeroMode = mode; }
+static inline void MotorController_User_SetInputMode(MotorController_T * p_mc, MotorController_InputMode_T mode)            { p_mc->Parameters.InputMode = mode; }
+static inline void MotorController_User_SetBrakeMode(MotorController_T * p_mc, MotorController_BrakeMode_T mode)            { p_mc->Parameters.BrakeMode = mode; }
+static inline void MotorController_User_SetThrottleMode(MotorController_T * p_mc, MotorController_ThrottleMode_T mode)      { p_mc->Parameters.ThrottleMode = mode; }
+static inline void MotorController_User_SetDriveZeroMode(MotorController_T * p_mc, MotorController_DriveZeroMode_T mode)    { p_mc->Parameters.DriveZeroMode = mode; }
 
-static inline void MotorController_User_SetOptDinSpeedLimit(MotorController_T * p_mc, uint16_t scalar_Frac16)           { p_mc->Parameters.OptDinMode = MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT; p_mc->Parameters.OptDinSpeedLimit_Scalar16 = scalar_Frac16; }
-static inline void MotorController_User_DisableOptDin(MotorController_T * p_mc)                                         { p_mc->Parameters.OptDinMode = MOTOR_CONTROLLER_OPT_DIN_DISABLE; }
-static inline void MotorController_User_SetILimitOnLowV(MotorController_T * p_mc, uint16_t scalar_Frac16)               { p_mc->Parameters.ILimitLowV_Scalar16 = scalar_Frac16; }
+static inline void MotorController_User_SetOptDinSpeedLimit(MotorController_T * p_mc, uint16_t scalar_Frac16)   { p_mc->Parameters.OptDinMode = MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT; p_mc->Parameters.OptDinSpeedLimit_Scalar16 = scalar_Frac16; }
+static inline void MotorController_User_DisableOptDin(MotorController_T * p_mc)                                 { p_mc->Parameters.OptDinMode = MOTOR_CONTROLLER_OPT_DIN_DISABLE; }
+static inline void MotorController_User_SetILimitOnLowV(MotorController_T * p_mc, uint16_t scalar_Frac16)       { p_mc->Parameters.ILimitLowV_Scalar16 = scalar_Frac16; }
 
 /*
     Read Only Params

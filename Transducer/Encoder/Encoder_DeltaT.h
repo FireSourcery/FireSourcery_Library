@@ -42,6 +42,17 @@ static inline uint32_t _Encoder_DeltaT_GetTimerFreq(Encoder_T * p_encoder)
 #endif
 }
 
+/* Common */
+static inline bool _Encoder_DeltaT_Capture(Encoder_T * p_encoder)
+{
+    bool isValid = !HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
+    // p_encoder->DeltaT = (HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) + p_encoder->DeltaT) / 2U;
+    if(isValid == true) { p_encoder->DeltaT = HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER); }
+    else { HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER); }
+    HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
+    return isValid;
+}
+
 /******************************************************************************/
 /*!
     @brief     Capture DeltaT - Pulse Edge Polling/ISR
@@ -51,17 +62,7 @@ static inline uint32_t _Encoder_DeltaT_GetTimerFreq(Encoder_T * p_encoder)
 /******************************************************************************/
 static inline void Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 {
-    if(HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == false)
-    {
-        // p_encoder->DeltaT = (HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) + p_encoder->DeltaT) / 2U;
-        p_encoder->DeltaT = HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-    }
-    else
-    {
-        HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-        p_encoder->DeltaT = ENCODER_TIMER_MAX;
-    }
-    HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
+    if(_Encoder_DeltaT_Capture(p_encoder) == false) { p_encoder->DeltaT = ENCODER_TIMER_MAX; }
 }
 
 static inline bool Encoder_DeltaT_CheckStop(Encoder_T * p_encoder)
@@ -98,24 +99,7 @@ static inline uint32_t _Encoder_GetExtendedTimerDelta(Encoder_T * p_encoder)
 */
 static inline void Encoder_DeltaT_CaptureExtended(Encoder_T * p_encoder)
 {
-    // Encoder_DeltaT_Capture(p_encoder);
-    // if(Encoder_DeltaT_CheckStop(p_encoder) == true)
-    // {
-    //     p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->ExtendedTimerConversion;
-    //     // p_encoder->ExtendedTimerPrev = *(p_encoder->CONFIG.P_EXTENDED_TIMER); // wait for overflow twice, 1 less check, first capture invalid
-    // }
-
-    if(HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == false)
-    {
-        // p_encoder->DeltaT = (HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) + p_encoder->DeltaT) / 2U;
-        p_encoder->DeltaT = HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-    }
-    else
-    {
-        HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-        p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->ExtendedTimerConversion;
-    }
-    HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
+    if(_Encoder_DeltaT_Capture(p_encoder) == false) { p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->ExtendedTimerConversion; }
     p_encoder->ExtendedTimerPrev = *(p_encoder->CONFIG.P_EXTENDED_TIMER);
 }
 
@@ -124,7 +108,7 @@ static inline void Encoder_DeltaT_CaptureExtended(Encoder_T * p_encoder)
 */
 static inline bool Encoder_DeltaT_CheckExtendedStop(Encoder_T * p_encoder)
 {
-     return (_Encoder_GetExtendedTimerDelta(p_encoder) > p_encoder->Params.ExtendedDeltaTStop);
+    return (_Encoder_GetExtendedTimerDelta(p_encoder) > p_encoder->Params.ExtendedDeltaTStop);
 }
 
 /******************************************************************************/
@@ -173,14 +157,14 @@ static inline uint32_t Encoder_DeltaT_GetInterpolationCount(Encoder_T * p_encode
     return p_encoder->CONFIG.POLLING_FREQ * p_encoder->DeltaT / p_encoder->CONFIG.TIMER_FREQ;
 }
 
-static inline uint32_t Encoder_DeltaT_ConvertRotationalSpeedToInterpolationCount_RPM(Encoder_T * p_encoder, uint16_t mechRpm)
+static inline uint32_t Encoder_DeltaT_RotationalSpeedToInterpolationCount_RPM(Encoder_T * p_encoder, uint16_t mechRpm)
 {
     return p_encoder->CONFIG.POLLING_FREQ * 60U / (p_encoder->Params.CountsPerRevolution * mechRpm);
 }
 
-static inline uint32_t Encoder_DeltaT_ConvertInterpolationCountToRotationalSpeed_RPM(Encoder_T * p_encoder, uint16_t interpolationCount)
+static inline uint32_t Encoder_DeltaT_InterpolationCountToRotationalSpeed_RPM(Encoder_T * p_encoder, uint16_t interpolationCount)
 {
-    return Encoder_DeltaT_ConvertRotationalSpeedToInterpolationCount_RPM(p_encoder, interpolationCount);
+    return Encoder_DeltaT_RotationalSpeedToInterpolationCount_RPM(p_encoder, interpolationCount);
 }
 
 /******************************************************************************/
@@ -221,15 +205,15 @@ static inline uint32_t Encoder_DeltaT_GetRotationalSpeed_RPM(Encoder_T * p_encod
     // return _Encoder_CalcRotationalSpeed(p_encoder, 60U, p_encoder->DeltaT);
 }
 
-static inline uint32_t Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
+static inline uint32_t Encoder_DeltaT_FromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
 {
     // check (p_encoder->UnitAngularSpeed == 0U) || *60 > INTMAX
     return (rpm == 0U) ? 0U : p_encoder->CONFIG.TIMER_FREQ * 60U / (p_encoder->Params.CountsPerRevolution * rpm);
 }
 
-static inline uint32_t Encoder_DeltaT_ConvertToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaT_ticks)
+static inline uint32_t Encoder_DeltaT_ToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaT_ticks)
 {
-    return Encoder_DeltaT_ConvertFromRotationalSpeed_RPM(p_encoder, deltaT_ticks);
+    return Encoder_DeltaT_FromRotationalSpeed_RPM(p_encoder, deltaT_ticks);
 }
 
 /******************************************************************************/
@@ -243,24 +227,24 @@ static inline uint32_t Encoder_DeltaT_GetLinearSpeed(Encoder_T * p_encoder)
     // return Encoder_CalcLinearSpeed(p_encoder, 1U, p_encoder->DeltaT);
 }
 
-static inline uint32_t Encoder_DeltaT_ConvertFromLinearSpeed(Encoder_T * p_encoder, uint32_t speed_UnitsPerSecond)
+static inline uint32_t Encoder_DeltaT_FromLinearSpeed(Encoder_T * p_encoder, uint32_t speed_UnitsPerSecond)
 {
     return (speed_UnitsPerSecond == 0U) ? 0U : p_encoder->UnitSurfaceSpeed / speed_UnitsPerSecond;
 }
 
-static inline uint32_t Encoder_DeltaT_ConvertFromLinearSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t speed_UnitsPerMinute)
+static inline uint32_t Encoder_DeltaT_FromLinearSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t speed_UnitsPerMinute)
 {
     return (speed_UnitsPerMinute == 0U) ? 0U : p_encoder->UnitSurfaceSpeed * 60U / speed_UnitsPerMinute;
 }
 
-static inline uint32_t Encoder_DeltaT_ConvertToLinearSpeed(Encoder_T * p_encoder, uint32_t deltaT_ticks)
+static inline uint32_t Encoder_DeltaT_ToLinearSpeed(Encoder_T * p_encoder, uint32_t deltaT_ticks)
 {
-    // return Encoder_DeltaT_ConvertFromLinearSpeed(p_encoder, deltaT_ticks); /* Same division */
+    // return Encoder_DeltaT_FromLinearSpeed(p_encoder, deltaT_ticks); /* Same division */
 }
 
-static inline uint32_t Encoder_DeltaT_ConvertToLinearSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t deltaT_Ticks)
+static inline uint32_t Encoder_DeltaT_ToLinearSpeed_UnitsPerMinute(Encoder_T * p_encoder, uint32_t deltaT_Ticks)
 {
-    // return Encoder_DeltaT_ConvertFromLinearSpeed_UnitsPerMinute(p_encoder, deltaT_Ticks); /* Same division */
+    // return Encoder_DeltaT_FromLinearSpeed_UnitsPerMinute(p_encoder, deltaT_Ticks); /* Same division */
 }
 
 static inline uint32_t Encoder_DeltaT_GetGroundSpeed_Mph(Encoder_T * p_encoder)

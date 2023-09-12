@@ -76,6 +76,8 @@ uint16_t q_sqrt(int32_t x)
     0 -> 0
     1 -> 0
     2 -> 1
+    65535 -> 15
+    65536 -> 16
 */
 uint8_t q_log2(uint32_t num)
 {
@@ -88,6 +90,10 @@ uint8_t q_log2(uint32_t num)
     0 -> 0
     1 -> 1
     2 -> 2
+    32767 -> 15
+    32768 -> 16
+    65535 -> 16
+    65536 -> 16
 */
 uint8_t q_log2_ceiling(uint32_t num)
 {
@@ -125,16 +131,16 @@ uint32_t q_pow2_round(uint32_t num)
 }
 
 /* num != INT32_MIN */
-// uint8_t q_lshiftlimit_signed(int32_t num)
-uint8_t q_maxshift_signed(int32_t num)
+/*
+    131,071 -> 14
+*/
+uint8_t q_lshift_max_signed(int32_t num)
 {
-    // uint32_t positiveMax = (num >= 0) ? INT32_MAX / num : INT32_MIN / num;
-    // return  q_log2(positiveMax);
     uint32_t positiveNum = math_abs(num);
     return 30U - q_log2(positiveNum); /* q_log2(INT32_MAX) - q_log2(positiveNum); */
 }
 
-uint8_t q_maxshift_unsigned(uint32_t num)
+uint8_t q_lshift_max_unsigned(uint32_t num)
 {
     return 31U - q_log2(num);
 }

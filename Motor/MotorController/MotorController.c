@@ -39,7 +39,7 @@ void MotorController_Init(MotorController_T * p_mc)
 #endif
 
     if(p_mc->CONFIG.P_PARAMS_NVM != 0U) { memcpy(&p_mc->Parameters, p_mc->CONFIG.P_PARAMS_NVM, sizeof(MotorController_Params_T)); }
-    if(p_mc->CONFIG.P_MEM_MAP_BOOT != 0U) { p_mc->MemMapBoot.Register = p_mc->CONFIG.P_MEM_MAP_BOOT->Register; }
+    if(p_mc->CONFIG.P_MEM_MAP_BOOT != 0U) { p_mc->MemMapBoot.Word = p_mc->CONFIG.P_MEM_MAP_BOOT->Word; }
 
     // MotorController_LoadParamsDefault(p_mc);
 
@@ -197,6 +197,7 @@ void MotorController_LoadParamsDefault(MotorController_T * p_mc)
 {
     VMonitor_SetVInRef(&p_mc->VMonitorSource, p_mc->Parameters.VSourceRef);
     VMonitor_SetLimitsDefault(&p_mc->VMonitorSource);
+    // VMonitor_SetLimits_MilliV(p_vMonitor, vRef * 3U / 4U, vRef * 5U / 4U, vRef * 7U / 8U, vRef * 9U / 8U);
     // MotorController_User_SetBatteryLifeDefault(p_mc);
     Thermistor_SetLimits_DegC(&p_mc->ThermistorPcb, 100U, 90U, 80U, 78U);
     Thermistor_SetLimits_DegC(&p_mc->ThermistorMosfets, 100U, 90U, 80U, 78U);

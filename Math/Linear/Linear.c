@@ -34,7 +34,7 @@
 /* Shift <= log2(INT32_MAX / ((x_max - x0) * Slope)) */
 uint8_t _Linear_GetMaxSlopeShift_Signed(int32_t factor, int32_t divisor, int32_t maxInputDelta)
 {
-    return q_maxshift_signed((maxInputDelta * 2 - 1) * factor / divisor); /* divide first rounds up log2 */
+    return q_lshift_max_signed((maxInputDelta * 2 - 1) * factor / divisor); /* divide first rounds up log2 */
 }
 
 /******************************************************************************/

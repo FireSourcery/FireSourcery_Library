@@ -290,6 +290,7 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
             if((_MotAnalogUser_AIn_GetIsOn(&p_user->BrakeAIn) == true) || (MotAnalogUser_GetIsBistateBrakeOn(p_user) == true))
             {
                 cmd = MOT_ANALOG_USER_CMD_SET_BRAKE;
+                //check throttle active error
             }
             /* Both Brakes are off. possible release run twice? */
             else if((_MotAnalogUser_AIn_PollFallingEdge(&p_user->BrakeAIn) == true) || (_MotAnalogUser_PollBistateBrakeFallingEdge(p_user) == true))

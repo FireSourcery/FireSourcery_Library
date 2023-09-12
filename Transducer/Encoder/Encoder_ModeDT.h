@@ -51,22 +51,20 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
     if(p_encoder->DeltaD == 0)
     {
         /* Assume its user direction, low speed opposite direction will be seen as aligned direction */
-        // p_encoder->FreqD = Encoder_GetDirection_SinglePhase(p_encoder) * (timerFreq / p_encoder->DeltaT);
         p_encoder->FreqD = p_encoder->DirectionD * (timerFreq / p_encoder->DeltaT);
         /* Set next periodTk as ~DeltaT on overflow */
         p_encoder->DeltaTh = (HAL_Encoder_ReadTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER) == true) ?
-            p_encoder->DeltaT - timerFreq / sampleFreq : HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
+            (p_encoder->DeltaT - timerFreq / sampleFreq) : HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
     }
     else
     {
-        p_encoder->DirectionD = (p_encoder->DeltaD > 0) - (p_encoder->DeltaD < 0);
-        // p_encoder->DirectionD = math_sign(p_encoder->DeltaD);
+        p_encoder->DirectionD = math_sign(p_encoder->DeltaD);
         deltaTh = HAL_Encoder_ReadTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER); /* Overflow is > SampleTime. DeltaD == 0 occurs prior. */
         /* periodTk = periodTs + DeltaThPrev/timerFreq - deltaTh/timerFreq */
         freqTk = (timerFreq * sampleFreq) / (timerFreq + (sampleFreq * (p_encoder->DeltaTh - deltaTh)));
         /* if(periodTk > periodTs / 2) { freqD = (deltaD / periodTk) } */
         if((sampleFreq * 2U) > freqTk) { p_encoder->FreqD = (p_encoder->DeltaD * freqTk); }
-        // p_encoder->FreqD = (p_encoder->DeltaD * freqTk);
+            // p_encoder->FreqD = (p_encoder->DeltaD * freqTk); // without check
         p_encoder->DeltaTh = deltaTh;
     }
 }

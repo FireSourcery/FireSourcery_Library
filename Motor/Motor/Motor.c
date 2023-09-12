@@ -86,11 +86,10 @@ void Motor_InitReboot(Motor_T * p_motor)
     Motor_ResetUnitsVabc(p_motor);
     Motor_ResetUnitsIabc(p_motor);
     Motor_ResetUnitsVSpeed(p_motor);
-    // Motor_ResetActiveSpeedLimits(p_motor);
-    // Motor_ResetActiveILimits(p_motor);
-    Motor_InitActiveLimits(p_motor);
+    Motor_ResetSpeedLimitActive(p_motor);
+    Motor_ResetILimitActive(p_motor);
 
-    p_motor->FeedbackMode.Word = p_motor->Parameters.DefaultFeedbackMode.Word; /* set user control mode so statemachine init sets limits to initial state. */
+    p_motor->FeedbackMode.Word = p_motor->Parameters.FeedbackModeDefault.Word; /* StateMachine init sets initial limits using this value. */
     p_motor->ControlTimerBase = 0U;
 }
 
@@ -140,7 +139,7 @@ qangle16_t Motor_PollSensorAngle(Motor_T * p_motor)
     {
         case MOTOR_SENSOR_MODE_HALL:
 #if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
-            if(Hall_PollCaptureRotorAngle(&p_motor->Hall) == true) { Encoder_CapturePulse(&p_motor->Encoder); } //Encoder_CapturePulse_SinglePhase
+            if(Hall_PollCaptureRotorAngle(&p_motor->Hall) == true) { Encoder_CapturePulse(&p_motor->Encoder); Debug_LED(); } //Encoder_CapturePulse_SinglePhase
 #endif
             electricalAngle = Hall_GetRotorAngle_Degrees16(&p_motor->Hall);
             electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->Encoder);
@@ -423,16 +422,16 @@ static void UpdateILimitsCw(Motor_T * p_motor)
 
 static void UpdateSpeedLimitsCcw(Motor_T * p_motor)
 {
-    p_motor->SpeedLimitDirect_Scalar16 = (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ?
-        p_motor->SpeedLimitForward_Scalar16 : p_motor->SpeedLimitReverse_Scalar16;
+    p_motor->SpeedLimitDirect_Scalar16 =
+        (p_motor->Parameters.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitForward_Scalar16 : p_motor->SpeedLimitReverse_Scalar16;
     p_motor->SpeedLimitCcw_FracS16 = p_motor->SpeedLimitDirect_Scalar16 / 2;
     p_motor->SpeedLimitCw_FracS16 = 0;
 }
 
 static void UpdateSpeedLimitsCw(Motor_T * p_motor)
 {
-    p_motor->SpeedLimitDirect_Scalar16 = (p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) ?
-        p_motor->SpeedLimitReverse_Scalar16 : p_motor->SpeedLimitForward_Scalar16;
+    p_motor->SpeedLimitDirect_Scalar16 =
+        (p_motor->Parameters.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitReverse_Scalar16 : p_motor->SpeedLimitForward_Scalar16;
     p_motor->SpeedLimitCw_FracS16 = (int16_t)0 - p_motor->SpeedLimitDirect_Scalar16 / 2;
     p_motor->SpeedLimitCcw_FracS16 = 0;
 }
@@ -450,27 +449,6 @@ void Motor_UpdateFeedbackSpeedLimits(Motor_T * p_motor)
 {
     if(p_motor->Direction == MOTOR_DIRECTION_CCW) { UpdateSpeedLimitsCcw(p_motor); } else { UpdateSpeedLimitsCw(p_motor); }
 }
-
-
-void Motor_InitActiveLimits(Motor_T * p_motor)
-{
-    p_motor->SpeedLimitForward_Scalar16 = p_motor->Parameters.SpeedLimitForward_Scalar16;
-    p_motor->SpeedLimitReverse_Scalar16 = p_motor->Parameters.SpeedLimitReverse_Scalar16;
-    p_motor->SpeedLimitDirect_Scalar16 = UINT16_MAX;
-    for(uint8_t idIndex = 0U; idIndex < sizeof(p_motor->SpeedLimitBuffer) / sizeof(p_motor->SpeedLimitBuffer[0]); idIndex++)
-    {
-        p_motor->SpeedLimitBuffer[idIndex] = UINT16_MAX;
-    }
-
-    p_motor->ILimitMotoring_Scalar16 = p_motor->Parameters.ILimitMotoring_Scalar16;
-    p_motor->ILimitGenerating_Scalar16 = p_motor->Parameters.ILimitGenerating_Scalar16;
-    p_motor->ILimitActiveSentinel_Scalar16 = UINT16_MAX;
-    for(uint8_t idIndex = 0U; idIndex < sizeof(p_motor->ILimitBuffer) / sizeof(p_motor->ILimitBuffer[0]); idIndex++)
-    {
-        p_motor->ILimitBuffer[idIndex] = UINT16_MAX;
-    }
-}
-
 
 /******************************************************************************/
 /*
@@ -537,21 +515,32 @@ void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 /*
     Forward/Reverse using calibration param
 */
-void Motor_SetDirectionForward(Motor_T * p_motor)
-{
-    if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) { Motor_SetDirectionCcw(p_motor); } else { Motor_SetDirectionCw(p_motor); }
-}
-
-void Motor_SetDirectionReverse(Motor_T * p_motor)
-{
-    if(p_motor->Parameters.DirectionCalibration == MOTOR_FORWARD_IS_CCW) { Motor_SetDirectionCw(p_motor); } else { Motor_SetDirectionCcw(p_motor); }
-}
+void Motor_SetDirectionForward(Motor_T * p_motor) { Motor_SetDirection(p_motor, Motor_DirectionForward(p_motor)); }
+void Motor_SetDirectionReverse(Motor_T * p_motor) { Motor_SetDirection(p_motor, Motor_DirectionReverse(p_motor)); }
 
 /******************************************************************************/
 /*
     Propagate param values
 */
 /******************************************************************************/
+void Motor_ResetSpeedLimitActive(Motor_T * p_motor)
+{
+    p_motor->SpeedLimitForward_Scalar16 = p_motor->Parameters.SpeedLimitForward_Scalar16;
+    p_motor->SpeedLimitReverse_Scalar16 = p_motor->Parameters.SpeedLimitReverse_Scalar16;
+    p_motor->SpeedLimitDirect_Scalar16 = UINT16_MAX;
+    for(uint8_t idIndex = 0U; idIndex < sizeof(p_motor->SpeedLimitBuffer) / sizeof(p_motor->SpeedLimitBuffer[0]); idIndex++)
+        { p_motor->SpeedLimitBuffer[idIndex] = UINT16_MAX; }
+}
+
+void Motor_ResetILimitActive(Motor_T * p_motor)
+{
+    p_motor->ILimitMotoring_Scalar16 = p_motor->Parameters.ILimitMotoring_Scalar16;
+    p_motor->ILimitGenerating_Scalar16 = p_motor->Parameters.ILimitGenerating_Scalar16;
+    p_motor->ILimitActiveSentinel_Scalar16 = UINT16_MAX;
+    for(uint8_t idIndex = 0U; idIndex < sizeof(p_motor->ILimitBuffer) / sizeof(p_motor->ILimitBuffer[0]); idIndex++)
+        { p_motor->ILimitBuffer[idIndex] = UINT16_MAX; }
+}
+
 void Motor_ResetUnitsSensor(Motor_T * p_motor)
 {
     switch(p_motor->Parameters.SensorMode)

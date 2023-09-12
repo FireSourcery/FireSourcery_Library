@@ -85,7 +85,7 @@ StateMachine_State_T;
 typedef struct StateMachine_Machine_Tag
 {
     const StateMachine_State_T * const P_STATE_INITIAL;
-    const uint8_t TRANSITION_TABLE_LENGTH;     /* Total input count. Shared table length for all states, i.e. all states allocate for all inputs*/
+    const uint8_t TRANSITION_TABLE_LENGTH;     /* Total input count. Shared table length for all states, i.e. all states allocate for all inputs */
 }
 StateMachine_Machine_T;
 
@@ -129,6 +129,7 @@ StateMachine_T;
 }
 
 static inline statemachine_state_t StateMachine_GetActiveStateId(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_StateActive->ID; }
+static inline bool StateMachine_IsActiveState(const StateMachine_T * p_stateMachine, statemachine_state_t stateId) { return (stateId == p_stateMachine->p_StateActive->ID); }
 
 /******************************************************************************/
 /*
@@ -144,6 +145,7 @@ extern bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statem
 extern void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine);
 extern bool StateMachine_Async_Proc(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue);
 extern void StateMachine_Proc(StateMachine_T * p_stateMachine);
+extern void StateMachine_ProcState(StateMachine_T * p_stateMachine);
 extern bool StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue);
 extern void StateMachine_SetSyncInput(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue);
 

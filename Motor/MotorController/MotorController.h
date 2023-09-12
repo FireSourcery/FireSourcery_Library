@@ -68,7 +68,7 @@
 
 typedef enum MotorController_Direction_Tag
 {
-    // MOTOR_CONTROLLER_DIRECTION_DISABLED, //PARKED
+    MOTOR_CONTROLLER_DIRECTION_PARK,
     MOTOR_CONTROLLER_DIRECTION_NEUTRAL,
     MOTOR_CONTROLLER_DIRECTION_REVERSE,
     MOTOR_CONTROLLER_DIRECTION_FORWARD,
@@ -157,7 +157,7 @@ typedef union MotorController_StatusFlags_Tag
         uint16_t ILimitHeatPcb : 1U;
         uint16_t ILimitHeatMotors : 1U;
         uint16_t SpeedLimit : 1U;
-        // uint16_t IsStopped : 1U;
+        uint16_t IsStopped : 1U;
     };
     uint16_t Word;
 }
@@ -228,14 +228,14 @@ MotorController_InitFlags_T;
 typedef struct __attribute__((aligned(2U))) MotorController_Params_Tag
 {
     uint16_t VSourceRef;        /* Nominal Battery Voltage. Sync with Global_Motor VSourceRef_V */
-    uint16_t BatteryZero_Adcu; //todo, use Vsource warning?
+    uint16_t BatteryZero_Adcu;  //todo, use Vsource warning?
     uint16_t BatteryFull_Adcu;
     uint16_t ILimitLowV_Scalar16;
+    MotorController_InitMode_T InitMode;
     MotorController_InputMode_T InputMode;
     MotorController_BrakeMode_T BrakeMode;
     MotorController_ThrottleMode_T ThrottleMode;
     MotorController_DriveZeroMode_T DriveZeroMode;
-    MotorController_InitMode_T InitMode;
     Motor_FeedbackMode_T DefaultCmdMode;
     MotorController_OptDinMode_T OptDinMode;
     uint16_t OptDinSpeedLimit_Scalar16;
@@ -345,12 +345,12 @@ typedef struct MotorController_Tag
     MotAnalog_Results_T FaultAnalogRecord;
 #endif
     /* Set by StateMachine only */
-    MotorController_Direction_T DriveDirection;
+    MotorController_Direction_T DriveDirection; /* status */
     MotorController_DriveId_T DriveState;
     int32_t UserCmdValue; /* Pass outside StateMachine, User Get */
 
     /* Blocking Op SubState */
-    // MotorController_BlockingId_T SubState; //save id for per op check
+    MotorController_BlockingId_T BlockingState; /* Per Op check, User query */
     /* Async return status */
     NvMemory_Status_T NvmStatus;
     // calibration status
@@ -403,7 +403,7 @@ static inline void MotorController_ActivateAll(MotorController_T * p_mc)    { Mo
 static inline void MotorController_HoldAll(MotorController_T * p_mc)        { MotorController_ProcAll(p_mc, Motor_User_Hold); }
 
 static inline void MotorController_SetCmdMode(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode)  { MotorController_SetFeedbackAll(p_mc, Motor_User_ActivateFeedbackMode, feedbackMode); }
-static inline void MotorController_SetCmdModeValue(MotorController_T * p_mc, int16_t userCmd)               { MotorController_SetCmdAll(p_mc, Motor_User_SetCmdValue, userCmd); }
+static inline void MotorController_SetCmdModeValue(MotorController_T * p_mc, int16_t userCmd)               { MotorController_SetCmdAll(p_mc, Motor_User_SetActiveCmdValue, userCmd); }
 
 static inline void MotorController_SetThrottleMode(MotorController_T * p_mc)
 {
