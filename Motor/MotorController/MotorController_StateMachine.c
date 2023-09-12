@@ -76,7 +76,7 @@ static void Init_Exit(MotorController_T * p_mc)
 
 static void Init_Proc(MotorController_T * p_mc)
 {
-    if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT)
+    if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT  )
     {
         // sample and set vsource    //set vsource if vsource less than max
         // check init servo mode
@@ -223,11 +223,11 @@ static StateMachine_State_T * Drive_InputDirection(MotorController_T * p_mc, sta
 /*! @param[in] driveCmd MotorController_DriveId_T */
 static StateMachine_State_T * Drive_InputDrive(MotorController_T * p_mc, statemachine_inputvalue_t driveCmd)
 {
-    MotorController_DriveId_T _driveCmd = (p_mc->UserCmdValue == 0) ? MOTOR_CONTROLLER_DRIVE_ZERO : (MotorController_DriveId_T)driveCmd;
+    volatile MotorController_DriveId_T _driveCmd = (p_mc->UserCmdValue == 0) ? MOTOR_CONTROLLER_DRIVE_ZERO : (MotorController_DriveId_T)driveCmd;
     StateMachine_State_T * p_nextState = 0U;
     switch(_driveCmd)
     {
-        case MOTOR_CONTROLLER_DRIVE_BRAKE:
+        case MOTOR_CONTROLLER_DRIVE_BRAKE: //todo
             if(p_mc->DriveState == MOTOR_CONTROLLER_DRIVE_BRAKE) { MotorController_SetBrakeValue(p_mc, p_mc->UserCmdValue); }
             else if((p_mc->DriveState == MOTOR_CONTROLLER_DRIVE_ZERO) && (MotorController_CheckStopAll(p_mc) == true))
             {
@@ -237,12 +237,12 @@ static StateMachine_State_T * Drive_InputDrive(MotorController_T * p_mc, statema
             else { MotorController_SetBrakeMode(p_mc); }
             break;
         case MOTOR_CONTROLLER_DRIVE_THROTTLE:
-            if(p_mc->DriveState == MOTOR_CONTROLLER_DRIVE_THROTTLE) { MotorController_SetThrottleValue(p_mc, p_mc->UserCmdValue); }
-            else { MotorController_SetThrottleMode(p_mc); }
+            if(p_mc->DriveState != MOTOR_CONTROLLER_DRIVE_THROTTLE) { MotorController_SetThrottleMode(p_mc); }
+            MotorController_SetThrottleValue(p_mc, p_mc->UserCmdValue);
             break;
         case MOTOR_CONTROLLER_DRIVE_ZERO:
-            if(p_mc->DriveState == MOTOR_CONTROLLER_DRIVE_ZERO) { MotorController_ProcInputZero(p_mc); }
-            else { MotorController_StartInputZero(p_mc); }
+            if(p_mc->DriveState != MOTOR_CONTROLLER_DRIVE_ZERO) { MotorController_StartInputZero(p_mc); }
+            MotorController_ProcInputZero(p_mc);
             break;
         default: break;
     }
