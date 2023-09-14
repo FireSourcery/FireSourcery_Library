@@ -29,8 +29,9 @@
 */
 /******************************************************************************/
 #include "Motor_User.h"
+#include "System/Critical/Critical.h"
 
-static int32_t Scale16(uint16_t scalar16, int32_t value) { return scalar16 * value / 65536; }
+static int32_t Scale16(uint16_t scalar16, int32_t value) { return (int32_t)scalar16 * value / 65536; }
 
 /******************************************************************************/
 /*!
@@ -79,7 +80,11 @@ void Motor_User_ActivateFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeWord) {
     Sets Ramp Target
     Ramp Proc interrupt only update OutputState, RampTarget is safe from sync?
 */
-void Motor_User_SetCmd(Motor_T * p_motor, int16_t userCmd)  { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_LogicalDirectionCmd(p_motor, userCmd)); } /* may need to be private */
+void Motor_User_SetCmd(Motor_T * p_motor, int16_t userCmd)  {
+    // Critical_Enter();
+    Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_LogicalDirectionCmd(p_motor, userCmd));
+    // Critical_Exit();
+     } /* may need to be private */
 int32_t Motor_User_GetCmd(const Motor_T * p_motor)          { return Motor_LogicalDirectionCmd(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
 
 /******************************************************************************/
@@ -177,7 +182,7 @@ void Motor_User_SetSpeedMode(Motor_T * p_motor)
 */
 void Motor_User_SetSpeedCmdValue(Motor_T * p_motor, int16_t speedCmd)
 {
-    int32_t speedCmdIn = (speedCmd > 0) ? Scale16(p_motor->SpeedLimitDirect_Scalar16, speedCmd) : 0;
+    int16_t speedCmdIn = (speedCmd > 0) ? Scale16(p_motor->SpeedLimitDirect_Scalar16, speedCmd) : 0;
     Motor_User_SetCmd(p_motor, speedCmdIn);
 }
 

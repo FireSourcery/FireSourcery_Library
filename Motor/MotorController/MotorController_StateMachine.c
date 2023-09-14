@@ -151,8 +151,10 @@ static StateMachine_State_T * Park_InputBlocking(MotorController_T * p_mc, state
 
 static StateMachine_State_T * Park_InputDirection(MotorController_T * p_mc, statemachine_inputvalue_t direction)
 {
-    StateMachine_State_T * p_nextState = 0U;
-    if(direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = &STATE_NEUTRAL; }
+    StateMachine_State_T * volatile p_nextState = 0U;
+    p_mc->UserCmdValue = 0U; // non polling modes enter on brake
+    if(direction == MOTOR_CONTROLLER_DIRECTION_PARK) { p_nextState = 0U; }
+    else if(direction == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = &STATE_NEUTRAL; }
     else if(MotorController_SetDirectionAll(p_mc, direction) == true) { p_nextState = &STATE_DRIVE; }
     else { MotorController_BeepShort(p_mc); } /* failed or MOTOR_CONTROLLER_DIRECTION_PARK  */
     return p_nextState;
@@ -206,7 +208,7 @@ static StateMachine_State_T * Drive_InputDirection(MotorController_T * p_mc, sta
 {
     StateMachine_State_T * p_nextState = 0U;
 
-    if(direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = &STATE_NEUTRAL; }
+    if(direction == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = &STATE_NEUTRAL; }
     else if(MotorController_CheckStopAll(p_mc) == true)
     {
         if(direction == MOTOR_CONTROLLER_DIRECTION_PARK) { p_nextState = &STATE_PARK; }
@@ -229,7 +231,7 @@ static StateMachine_State_T * Drive_InputDrive(MotorController_T * p_mc, statema
     {
         case MOTOR_CONTROLLER_DRIVE_BRAKE: //todo
             if(p_mc->DriveState == MOTOR_CONTROLLER_DRIVE_BRAKE) { MotorController_SetBrakeValue(p_mc, p_mc->UserCmdValue); }
-            else if((p_mc->DriveState == MOTOR_CONTROLLER_DRIVE_ZERO) && (MotorController_CheckStopAll(p_mc) == true))
+            else if((p_mc->DriveState == MOTOR_CONTROLLER_DRIVE_ZERO) && (MotorController_CheckStopAll(p_mc) == true)) //todo check for 0 speed
             {
                 MotorController_HoldAll(p_mc);
                 p_mc->StatusFlags.IsStopped = 1U;
@@ -237,7 +239,7 @@ static StateMachine_State_T * Drive_InputDrive(MotorController_T * p_mc, statema
             else { MotorController_SetBrakeMode(p_mc); }
             break;
         case MOTOR_CONTROLLER_DRIVE_THROTTLE:
-            if(p_mc->DriveState != MOTOR_CONTROLLER_DRIVE_THROTTLE) { MotorController_SetThrottleMode(p_mc); }
+            if(p_mc->DriveState != MOTOR_CONTROLLER_DRIVE_THROTTLE) { MotorController_SetThrottleMode(p_mc); } //todo motor in stop state, activate
             MotorController_SetThrottleValue(p_mc, p_mc->UserCmdValue);
             break;
         case MOTOR_CONTROLLER_DRIVE_ZERO:
@@ -286,16 +288,17 @@ static const StateMachine_State_T STATE_DRIVE =
 /******************************************************************************/
 static void Neutral_Entry(MotorController_T * p_mc)
 {
-    if(p_mc->DriveState != MOTOR_CONTROLLER_DRIVE_BRAKE) { MotorController_ReleaseAll(p_mc); }  /* If enter neutral while braking, handle discontinuity */
-    p_mc->DriveDirection = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;
+    // if(p_mc->DriveState != MOTOR_CONTROLLER_DRIVE_BRAKE) { MotorController_ReleaseAll(p_mc); }  /* If enter neutral while braking, handle discontinuity */
+    MotorController_ReleaseAll(p_mc);
+    p_mc->DriveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL;
 }
 static void Neutral_Proc(MotorController_T * p_mc) { (void)p_mc; }
 
 static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc, statemachine_inputvalue_t direction)
 {
-    StateMachine_State_T * p_nextState = 0U;
-    /* ((direction == MOTOR_CONTROLLER_DIRECTION_FORWARD) || (direction == MOTOR_CONTROLLER_DIRECTION_REVERSE)) */
-    if(MotorController_SetDirectionAll(p_mc, direction) == true) { p_nextState = &STATE_DRIVE; }
+    StateMachine_State_T * volatile p_nextState = 0U;
+    if(direction == MOTOR_CONTROLLER_DIRECTION_NEUTRAL) { p_nextState = 0U; }
+    else if(MotorController_SetDirectionAll(p_mc, direction) == true) { p_nextState = &STATE_DRIVE; }
     else if(MotorController_CheckStopAll(p_mc) == true)
     {
         if(direction == MOTOR_CONTROLLER_DIRECTION_PARK) { p_nextState = &STATE_PARK; }

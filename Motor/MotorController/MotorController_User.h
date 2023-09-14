@@ -74,7 +74,9 @@ static inline void MotorController_User_SetDriveCmdZero(MotorController_T * p_mc
 /******************************************************************************/
 static inline void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction)
 {
-    if(p_mc->DriveDirection != direction) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
+    // if(p_mc->DriveDirection != direction)
+    { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
+    // return (p_mc->DriveDirection == direction);
 }
 
 static inline MotorController_Direction_T MotorController_User_GetDirection_Status(const MotorController_T * p_mc) { return p_mc->DriveDirection; }

@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "Linear_Ramp.h"
 
-#define LINEAR_RAMP_SHIFT 15U /* Output range [INT16_MIN:INT16_MAX]x2 without overflow */
+#define LINEAR_RAMP_SHIFT 14U /* Output range [INT16_MIN:INT16_MAX]x2 without overflow */
 
 /*
     store as y shifted
@@ -89,8 +89,9 @@ void Linear_Ramp_Init(Linear_T * p_linear, uint32_t duration_Ticks, int32_t init
 {
     p_linear->SlopeShift = LINEAR_RAMP_SHIFT;
     p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT;
-    Linear_Ramp_Set(p_linear, duration_Ticks, initial, final);
-
+    Linear_Ramp_SetSlope(p_linear, duration_Ticks, initial, final);
+    Linear_Ramp_SetState(p_linear, 0);
+    Linear_Ramp_SetTarget(p_linear, 0);
 }
 
 /*
@@ -100,7 +101,9 @@ void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16
 {
     p_linear->SlopeShift = LINEAR_RAMP_SHIFT;
     p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT;
-    Linear_Ramp_Set_Millis(p_linear, updateFreq_Hz, duration_Ms, initial, final);
+    Linear_Ramp_SetSlope_Millis(p_linear, updateFreq_Hz, duration_Ms, initial, final);
+    Linear_Ramp_SetState(p_linear, 0);
+    Linear_Ramp_SetTarget(p_linear, 0);
 }
 
 /******************************************************************************/

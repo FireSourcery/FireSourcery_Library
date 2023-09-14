@@ -140,7 +140,7 @@ typedef enum
     */
     /* Motor Controller / Motor Global */
     MOT_VAR_USER_CMD,                   // Value [-32768:32767]. Selected Mode, Speed by default
-    MOT_VAR_DIRECTION,                  // MotorController_Direction_T // Value enum: 0:Neutral, 1:Reverse, 2:Forward
+    MOT_VAR_DIRECTION,                  // MotorController_Direction_T
 
     /* Motor[0] */
     MOT_VAR_MOTOR_USER_CMD,                 // Read/Write buffered user value.

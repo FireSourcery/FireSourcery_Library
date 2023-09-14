@@ -415,9 +415,9 @@ static inline void MotorController_SetThrottleMode(MotorController_T * p_mc)
     }
 }
 
-static inline void MotorController_SetThrottleValue(MotorController_T * p_mc, int16_t userCmdThrottle)
+static inline void MotorController_SetThrottleValue(MotorController_T * p_mc, uint16_t userCmdThrottle)
 {
-    int16_t cmdValue = userCmdThrottle / 2;
+    int16_t cmdValue = (int32_t)userCmdThrottle / 2;
     switch(p_mc->Parameters.ThrottleMode)
     {
         case MOTOR_CONTROLLER_THROTTLE_MODE_SPEED:  MotorController_SetCmdAll(p_mc, Motor_User_SetSpeedCmdValue, cmdValue);     break;
