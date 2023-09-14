@@ -40,7 +40,7 @@
     #define _MCSM_TRANSITION_TABLE_LENGTH_SERVO (0U)
 #endif
 
-#define MCSM_TRANSITION_TABLE_LENGTH (7U + _MCSM_TRANSITION_TABLE_LENGTH_SERVO)
+#define MCSM_TRANSITION_TABLE_LENGTH (6U + _MCSM_TRANSITION_TABLE_LENGTH_SERVO)
 
 typedef enum MotorController_StateMachine_Input_Tag
 {
@@ -50,9 +50,7 @@ typedef enum MotorController_StateMachine_Input_Tag
     MCSM_INPUT_DIRECTION,   /* Drive Direction */
     MCSM_INPUT_DRIVE,       /* Drive Throttle/Brake */
     MCSM_INPUT_RELEASE,
-#ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
     MCSM_INPUT_SERVO,
-#endif
 }
 MotorController_StateMachine_Input_T;
 
@@ -64,9 +62,7 @@ typedef enum MotorController_StateMachine_StateId_Tag
     MCSM_STATE_ID_NEUTRAL,
     MCSM_STATE_ID_BLOCKING,
     MCSM_STATE_ID_FAULT,
-#ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
     MCSM_STATE_ID_SERVO,
-#endif
 }
 MotorController_StateMachine_StateId_T;
 
