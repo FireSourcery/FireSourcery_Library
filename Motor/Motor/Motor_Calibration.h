@@ -22,94 +22,73 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Motor_Calibrate_.h
+    @file   Motor_Calibration_.h
     @author FireSourcery
     @brief
     @version V0
 */
 /******************************************************************************/
-#ifndef MOTOR_CALIBRATE_H
-#define MOTOR_CALIBRATE_H
+#ifndef MOTOR_CALIBRATION_H
+#define MOTOR_CALIBRATION_H
 
 #include "Motor.h"
 #include "Motor_FOC.h"
+#include "Motor_Analog.h"
 
 /******************************************************************************/
 /*
     Calibration State Functions - Mapped to StateMachine, Nonblocking
 */
 /******************************************************************************/
-static inline void Motor_Calibration_StartHall(Motor_T * p_motor)
+static inline void Motor_Calibration_StartHall(MotorPtr_T p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
 }
 
-static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
+static inline bool Motor_Calibration_ProcHall(MotorPtr_T p_motor)
 {
     const uint16_t duty = p_motor->Parameters.AlignPower_Scalar16;
     bool isComplete = false;
-
-    if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
+    if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
     {
-        switch (p_motor->CalibrationStateIndex)
+        switch(p_motor->CalibrationStateIndex)
         {
-        case 0U:
-            Hall_StartCalibrate(&p_motor->Hall);
-            Phase_ActivateDuty(&p_motor->Phase, duty, 0U, 0U);
-            p_motor->CalibrationStateIndex = 1U;
-            break;
-
-        case 1U:
-            Hall_CalibratePhaseA(&p_motor->Hall);
-            Phase_ActivateDuty(&p_motor->Phase, duty, duty, 0U);
-            p_motor->CalibrationStateIndex = 2U;
-            break;
-
-        case 2U:
-            Hall_CalibratePhaseInvC(&p_motor->Hall);
-            Phase_ActivateDuty(&p_motor->Phase, 0U, duty, 0U);
-            p_motor->CalibrationStateIndex = 3U;
-            break;
-
-        case 3U:
-            Hall_CalibratePhaseB(&p_motor->Hall);
-            Phase_ActivateDuty(&p_motor->Phase, 0U, duty, duty);
-            p_motor->CalibrationStateIndex = 4U;
-            break;
-
-        case 4U:
-            Hall_CalibratePhaseInvA(&p_motor->Hall);
-            Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, duty);
-            p_motor->CalibrationStateIndex = 5U;
-            break;
-
-        case 5U:
-            Hall_CalibratePhaseC(&p_motor->Hall);
-            Phase_ActivateDuty(&p_motor->Phase, duty, 0U, duty);
-            p_motor->CalibrationStateIndex = 6U;
-            break;
-
-        case 6U:
-            Hall_CalibratePhaseInvB(&p_motor->Hall);
-            Phase_Float(&p_motor->Phase);
-            isComplete = true;
-            break;
-
-        default:
-            break;
+            case 0U: Hall_StartCalibrate(&p_motor->Hall);       Phase_ActivateDuty(&p_motor->Phase, duty, 0U, 0U);      p_motor->CalibrationStateIndex = 1U;    break;
+            case 1U: Hall_CalibratePhaseA(&p_motor->Hall);      Phase_ActivateDuty(&p_motor->Phase, duty, duty, 0U);    p_motor->CalibrationStateIndex = 2U;    break;
+            case 2U: Hall_CalibratePhaseInvC(&p_motor->Hall);   Phase_ActivateDuty(&p_motor->Phase, 0U, duty, 0U);      p_motor->CalibrationStateIndex = 3U;    break;
+            case 3U: Hall_CalibratePhaseB(&p_motor->Hall);      Phase_ActivateDuty(&p_motor->Phase, 0U, duty, duty);    p_motor->CalibrationStateIndex = 4U;    break;
+            case 4U: Hall_CalibratePhaseInvA(&p_motor->Hall);   Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, duty);      p_motor->CalibrationStateIndex = 5U;    break;
+            case 5U: Hall_CalibratePhaseC(&p_motor->Hall);      Phase_ActivateDuty(&p_motor->Phase, duty, 0U, duty);    p_motor->CalibrationStateIndex = 6U;    break;
+            case 6U: Hall_CalibratePhaseInvB(&p_motor->Hall);   Phase_Float(&p_motor->Phase);                           isComplete = true;                      break;
+            default: break;
         }
     }
-
     return isComplete;
 }
 
-static inline void Motor_Calibration_StartEncoder(Motor_T * p_motor)
+/*
+    Calibrate Current ADC
+*/
+static inline void Motor_Calibration_StartAdc(MotorPtr_T p_motor)
+{
+    Motor_Analog_StartCalibration(p_motor);
+}
+
+static inline bool Motor_Calibration_ProcAdc(MotorPtr_T p_motor)
+{
+    Motor_Analog_ProcCalibration(p_motor);
+}
+
+/******************************************************************************/
+/*   */
+/******************************************************************************/
+static inline void Motor_Calibration_StartEncoder(MotorPtr_T p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
     Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_Scalar16, 0U, 0U);
 }
 
-static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
+static inline bool Motor_Calibration_ProcEncoder(MotorPtr_T p_motor)
 {
     bool isComplete = false;
 
@@ -134,73 +113,54 @@ static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
 
     return isComplete;
 }
-
-/*
-    Calibrate Current ADC
-*/
-static inline void Motor_Calibration_StartAdc(Motor_T * p_motor)
-{
-    Timer_StartPeriod(&p_motor->ControlTimer, GLOBAL_MOTOR.CONTROL_FREQ);
-
-    if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_FOC)
+/* todo */
+    void Motor_CalibrateSensorZero(MotorPtr_T p_motor)
     {
-        Motor_FOC_ActivateOutput(p_motor);
-    }
-    else if(p_motor->Parameters.CommutationMode == MOTOR_COMMUTATION_MODE_SIX_STEP)
-    {
-        Phase_Ground(&p_motor->Phase);
-    }
-    Filter_InitAvg(&p_motor->FilterA);
-    Filter_InitAvg(&p_motor->FilterB);
-    Filter_InitAvg(&p_motor->FilterC);
-    p_motor->AnalogResults.Ia_Adcu = 0U;
-    p_motor->AnalogResults.Ib_Adcu = 0U;
-    p_motor->AnalogResults.Ic_Adcu = 0U;
-}
-
-static inline bool Motor_Calibration_ProcAdc(Motor_T *p_motor)
-{
-    bool isComplete = Timer_Periodic_Poll(&p_motor->ControlTimer);
-
-    if (isComplete == true)
-    {
-        p_motor->Parameters.IaZeroRef_Adcu = Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu);
-        p_motor->Parameters.IbZeroRef_Adcu = Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_Adcu);
-        p_motor->Parameters.IcZeroRef_Adcu = Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_Adcu);
-        Motor_ResetUnitsIabc(p_motor);
-        Phase_Float(&p_motor->Phase);
-    }
-    else
-    {
-        if((p_motor->ControlTimerBase & 0b11UL) == 0UL)        /* 4x sample time */
+        p_motor->ElectricalAngle = 0U;
+        switch(p_motor->Parameters.SensorMode)
         {
-            if(p_motor->AnalogResults.Ia_Adcu != 0U) { Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu); }
-            if(p_motor->AnalogResults.Ib_Adcu != 0U) { Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_Adcu); }
-            if(p_motor->AnalogResults.Ic_Adcu != 0U) { Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_Adcu); }
-        }
-        else
-        {
-            AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-            AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-            AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-        #if defined(CONFIG_MOTOR_I_SENSORS_ABC)
-            AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-        #endif
-            AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+            case MOTOR_SENSOR_MODE_ENCODER: Encoder_CalibrateAlignZero(&p_motor->Encoder);    break;
+    #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+            case MOTOR_SENSOR_MODE_SENSORLESS:    break;
+    #endif
+            default: break;
         }
     }
 
-    return isComplete;
-}
+    void Motor_ValidateSensorAlign(MotorPtr_T p_motor)
+    {
+        switch(p_motor->Parameters.SensorMode)
+        {
+            case MOTOR_SENSOR_MODE_ENCODER: Encoder_CalibrateAlignValidate(&p_motor->Encoder);    break; /* Quadrature direction must be set first */
+    #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+            case MOTOR_SENSOR_MODE_SENSORLESS: break;
+    #endif
+            default: break;
+        }
+    }
+
+    /* Using Signed Ramp mode */
+    bool Motor_PollAlignFault(MotorPtr_T p_motor)
+    {
+        switch(p_motor->Parameters.SensorMode)
+        {
+            case MOTOR_SENSOR_MODE_ENCODER: if((p_motor->Speed_FracS16 ^ Linear_Ramp_GetTarget(&p_motor->Ramp)) < 0) { p_motor->FaultFlags.AlignStartUp = 1U; } break;
+
+            // (p_motor->Speed_FracS16 ^ Iq)
+            default: break;
+        }
+
+        return p_motor->FaultFlags.AlignStartUp;
+    }
 
 
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-static inline void Motor_Calibrate_StartSinCos(Motor_T * p_motor)
+static inline void Motor_Calibrate_StartSinCos(MotorPtr_T p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_ControlCycles);
 }
 
-static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
+static inline bool Motor_Calibrate_SinCos(MotorPtr_T p_motor)
 {
     bool isComplete = false;
 

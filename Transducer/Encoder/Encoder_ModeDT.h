@@ -71,15 +71,14 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
 
 static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
 {
-    if(Encoder_DeltaT_CheckExtendedStop(p_encoder) == false)     { Encoder_ModeDT_CaptureFreqD(p_encoder); }
-    else                                                         { p_encoder->FreqD = 0U; }
+    if(Encoder_DeltaT_CheckExtendedStop(p_encoder) == false) { Encoder_ModeDT_CaptureFreqD(p_encoder); }
+    else { p_encoder->FreqD = 0U; }
 }
 
 /* |DeltaD| <= 1 */
 static inline uint32_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 {
-    uint32_t freqD = (p_encoder->FreqD < 0) ? 0 - p_encoder->FreqD : p_encoder->FreqD;
-    return (freqD < p_encoder->CONFIG.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
+    return (math_abs(p_encoder->FreqD) < p_encoder->CONFIG.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
 }
 
 /*
@@ -87,7 +86,6 @@ static inline uint32_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 */
 static inline int32_t Encoder_ModeDT_InterpolateAngularDisplacement(Encoder_T * p_encoder)
 {
-    // return Encoder_GetDirection_SinglePhase(p_encoder) * Encoder_ModeDT_InterpolateAngle(p_encoder); assume aligned to user select
     return Encoder_GetDirection(p_encoder) * p_encoder->DirectionD * Encoder_ModeDT_InterpolateAngle(p_encoder);
 }
 

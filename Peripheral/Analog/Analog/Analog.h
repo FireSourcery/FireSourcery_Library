@@ -74,11 +74,10 @@ typedef const struct Analog_Conversion_Tag
     /* Defined by module */
     const Analog_OpType_T       TYPE;
     const analog_channel_t      CHANNEL;         /* Index into results buffer */
-    const Analog_Callback_T     ON_COMPLETE;     /* On channel complete */
-
-    /* Defined by main */
-    void * const P_CALLBACK_CONTEXT;
     volatile analog_result_t * const P_RESULTS_BUFFER;  /*!< Persistent ADC results buffer, virtual channel index.  */
+    const Analog_Callback_T     ON_COMPLETE;     /* On channel complete */
+    void * const P_CALLBACK_CONTEXT;
+    /* Defined by main */
     const analog_pin_t PIN;
 }
 Analog_Conversion_T;

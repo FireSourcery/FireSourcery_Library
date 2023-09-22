@@ -32,11 +32,20 @@
 #ifndef MOTOR_DEBUG_H
 #define MOTOR_DEBUG_H
 
-#include "Motor.h"
-
 #include "System/SysTime/SysTime.h"
 
-static inline void Motor_Debug_CaptureRefTime(Motor_T * p_motor)
+
+#if  defined(CONFIG_MOTOR_DEBUG_ENABLE)
+    uint32_t MicrosRef;
+    volatile bool DebugFlag;
+    volatile uint32_t DebugError;
+    volatile uint32_t DebugTime[10U];
+    volatile uint32_t DebugTimeABC[3U];
+    volatile uint32_t DebugCounter;
+    volatile uint32_t DebugCounter2;
+#endif
+
+static inline void Motor_Debug_CaptureRefTime(MotorPtr_T p_motor)
 {
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
     p_motor->MicrosRef = SysTime_GetMicros();
@@ -45,7 +54,7 @@ static inline void Motor_Debug_CaptureRefTime(Motor_T * p_motor)
 #endif
 }
 
-static inline void Motor_Debug_CaptureTime(Motor_T * p_motor, uint8_t index)
+static inline void Motor_Debug_CaptureTime(MotorPtr_T p_motor, uint8_t index)
 {
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
     p_motor->DebugTime[index] = SysTime_GetMicros() - p_motor->MicrosRef;
@@ -54,7 +63,7 @@ static inline void Motor_Debug_CaptureTime(Motor_T * p_motor, uint8_t index)
 #endif
 }
 
-static inline void Motor_Debug_CapturePeriod(Motor_T * p_motor, uint8_t index)
+static inline void Motor_Debug_CapturePeriod(MotorPtr_T p_motor, uint8_t index)
 {
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
     p_motor->DebugTime[index + 1] = SysTime_GetMicros() - p_motor->DebugTime[index];

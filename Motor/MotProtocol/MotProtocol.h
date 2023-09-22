@@ -41,16 +41,17 @@
 /* For flashloader only */
 typedef struct MotProtocol_SubState_Tag
 {
-    uint8_t StateId;
+    uint8_t StateIndex;
     uint32_t DataModeAddress;
     uint16_t DataModeSize;
     uint16_t SequenceIndex;
     bool IsDataModeActive;
-    uint16_t WriteModeStatus;
+    // uint16_t WriteModeStatus;
+    uint8_t OnceBuffer[8U];
 }
 MotProtocol_SubState_T;
 
-static inline void MotProtocol_ResetSubState(MotProtocol_SubState_T * p_subState) { p_subState->StateId = 0U; }
+static inline void MotProtocol_ResetSubState(MotProtocol_SubState_T * p_subState) { p_subState->StateIndex = 0U; }
 
 extern void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, Protocol_TxSyncId_T txId);
 extern void MotProtocol_ResetSubState(MotProtocol_SubState_T * p_subState);

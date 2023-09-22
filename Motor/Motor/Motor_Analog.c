@@ -36,7 +36,7 @@
 
 /******************************************************************************/
 /*!
-    @brief  Callback functions must be mapped
+    @brief  Callback functions
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -44,18 +44,18 @@
     @brief  Vabc
 */
 /******************************************************************************/
-void Motor_Analog_CaptureVa(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVa, 0U/* Motor_SixStep_CaptureBemfA */); }
-void Motor_Analog_CaptureVb(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVb, 0U/* Motor_SixStep_CaptureBemfB */); }
-void Motor_Analog_CaptureVc(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVc, 0U/* Motor_SixStep_CaptureBemfC */); }
+void Motor_Analog_CaptureVa(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVa, 0U/* Motor_SixStep_CaptureBemfA */); }
+void Motor_Analog_CaptureVb(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVb, 0U/* Motor_SixStep_CaptureBemfB */); }
+void Motor_Analog_CaptureVc(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVc, 0U/* Motor_SixStep_CaptureBemfC */); }
 
 /******************************************************************************/
 /*!
     @brief  Iabc
 */
 /******************************************************************************/
-void Motor_Analog_CaptureIa(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIa, 0U/* Motor_SixStep_CaptureIa */); }
-void Motor_Analog_CaptureIb(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIb, 0U/* Motor_SixStep_CaptureIb */); }
-void Motor_Analog_CaptureIc(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIc, 0U/* Motor_SixStep_CaptureIc */);    /* Debug_LED(); */ }
+void Motor_Analog_CaptureIa(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIa, 0U/* Motor_SixStep_CaptureIa */); }
+void Motor_Analog_CaptureIb(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIb, 0U/* Motor_SixStep_CaptureIb */); }
+void Motor_Analog_CaptureIc(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIc, 0U/* Motor_SixStep_CaptureIc */);    /* Debug_LED(); */ }
 
 
 /******************************************************************************/
@@ -63,40 +63,41 @@ void Motor_Analog_CaptureIc(Motor_T * p_motor) { Motor_ProcCommutationMode(p_mot
     @brief
 */
 /******************************************************************************/
-// void Motor_FOC_EnqueueVabc(Motor_T * p_motor)
-// {
-// #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-//     if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
-//     {
-//         AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-//         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
-//         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
-//         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
-//         AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-//     }
-// #else
-//     (void)p_motor;
-// #endif
-// }
+static inline bool CheckDivider(MotorPtr_T p_motor) { return ((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL); }
 
-// void Motor_FOC_EnqueueIabc(Motor_T * p_motor)
-// {
-//     if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
-//     {
-//         AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-//         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-//         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
-// #if defined(CONFIG_MOTOR_I_SENSORS_ABC)
-//         AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
-// #endif
-//         AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+void Motor_Analog_EnqueueVabc(MotorPtr_T p_motor)
+{
+#if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
+    if(CheckDivider(p_motor) == true)
+    {
+        AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
+        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
+        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
+        AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+    }
+#else
+    (void)p_motor;
+#endif
+}
 
-//         // AnalogN_SetChannelConversion(p_motor->CONFIG.P_ANALOG_N, MOTOR_ANALOG_CHANNEL_VA);
-//     }
-// }
+void Motor_Analog_EnqueueIabc(MotorPtr_T p_motor)
+{
+    if(CheckDivider(p_motor) == true)
+    {
+        AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
+        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
+#if defined(CONFIG_MOTOR_I_SENSORS_ABC)
+        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
+#endif
+        AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+        // AnalogN_SetChannelConversion(p_motor->CONFIG.P_ANALOG_N, MOTOR_ANALOG_CHANNEL_VA);
+    }
+}
 
 
-static inline void Motor_Analog_Proc(Motor_T * p_motor)
+void Motor_Analog_Proc(MotorPtr_T p_motor)
 {
 //    AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_PWM);
 
@@ -118,4 +119,49 @@ static inline void Motor_Analog_Proc(Motor_T * p_motor)
 //    }
 
 //    AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_PWM);
+}
+
+/******************************************************************************/
+/*!
+    @brief
+*/
+/******************************************************************************/
+void Motor_Analog_StartCalibration(MotorPtr_T p_motor)
+{
+    Timer_StartPeriod(&p_motor->ControlTimer, GLOBAL_MOTOR.CONTROL_FREQ * 2U); /* 2 Seconds */
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, 0U /*Phase_Ground(&p_motor->Phase)*/);
+
+    Filter_InitAvg(&p_motor->FilterA);
+    Filter_InitAvg(&p_motor->FilterB);
+    Filter_InitAvg(&p_motor->FilterC);
+    p_motor->AnalogResults.Ia_Adcu = 0U;
+    p_motor->AnalogResults.Ib_Adcu = 0U;
+    p_motor->AnalogResults.Ic_Adcu = 0U;
+    Motor_Analog_EnqueueIabc(p_motor);
+}
+
+bool Motor_Analog_ProcCalibration(MotorPtr_T p_motor)
+{
+    static const uint32_t DIVIDER = (GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
+    bool isComplete = Timer_Periodic_Poll(&p_motor->ControlTimer);
+    if (isComplete == true)
+    {
+        p_motor->Parameters.IaZeroRef_Adcu = Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu);
+        p_motor->Parameters.IbZeroRef_Adcu = Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_Adcu);
+        p_motor->Parameters.IcZeroRef_Adcu = Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_Adcu);
+        Motor_ResetUnitsIabc(p_motor);
+        Phase_Float(&p_motor->Phase);
+    }
+    else
+    {
+        if((p_motor->ControlTimerBase & DIVIDER) == 0UL)
+        {
+            Filter_Avg(&p_motor->FilterA, p_motor->AnalogResults.Ia_Adcu);
+            Filter_Avg(&p_motor->FilterB, p_motor->AnalogResults.Ib_Adcu);
+            Filter_Avg(&p_motor->FilterC, p_motor->AnalogResults.Ic_Adcu);
+            Motor_Analog_EnqueueIabc(p_motor);
+        }
+    }
+
+    return isComplete;
 }

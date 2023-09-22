@@ -67,17 +67,9 @@ static inline uint32_t _PWM_CalcPwmDutyTicks(const PWM_T * p_pwm, uint32_t duty)
 static inline void PWM_ActuateDuty_Ticks(const PWM_T * p_pwm, uint32_t pwmDuty_Ticks) { HAL_PWM_WriteDuty(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID, pwmDuty_Ticks); }
 
 /* where PWM_DUTY_MAX is 100% duty */
-static inline void PWM_ActuateDuty(const PWM_T * p_pwm, uint32_t pwmDuty) { PWM_ActuateDuty_Ticks(p_pwm, _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)); }
-
-static inline void PWM_ActuateDutyMidPlus(const PWM_T * p_pwm, uint32_t pwmDuty)
-{
-    PWM_ActuateDuty_Ticks(p_pwm, (p_pwm->CONFIG.PERIOD_TICKS + _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)) / 2U);
-}
-
-static inline void PWM_ActuateDutyMidMinus(const PWM_T * p_pwm, uint32_t pwmDuty)
-{
-    PWM_ActuateDuty_Ticks(p_pwm, (p_pwm->CONFIG.PERIOD_TICKS - _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)) / 2U);
-}
+static inline void PWM_ActuateDuty(const PWM_T * p_pwm, uint32_t pwmDuty)           { PWM_ActuateDuty_Ticks(p_pwm, _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)); }
+static inline void PWM_ActuateDutyMidPlus(const PWM_T * p_pwm, uint32_t pwmDuty)    { PWM_ActuateDuty_Ticks(p_pwm, (p_pwm->CONFIG.PERIOD_TICKS + _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)) / 2U); }
+static inline void PWM_ActuateDutyMidMinus(const PWM_T * p_pwm, uint32_t pwmDuty)   { PWM_ActuateDuty_Ticks(p_pwm, (p_pwm->CONFIG.PERIOD_TICKS - _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)) / 2U); }
 
 static inline void PWM_ActuateDuty_Scalar16(const PWM_T * p_pwm, uint16_t pwmDuty16)    { PWM_ActuateDuty_Ticks(p_pwm, (uint32_t)pwmDuty16 * p_pwm->CONFIG.PERIOD_TICKS >> 16U); }
 static inline void PWM_ActuateDuty_Frac16(const PWM_T * p_pwm, uint16_t pwmDuty15)      { PWM_ActuateDuty_Ticks(p_pwm, (uint32_t)pwmDuty15 * p_pwm->CONFIG.PERIOD_TICKS >> 15U); }

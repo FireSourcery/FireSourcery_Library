@@ -24,7 +24,7 @@
 /*!
     @file   MotorController_MotProtocol.c
     @author FireSourcery
-    @brief1
+    @brief
     @version V0
 */
 /******************************************************************************/
@@ -50,7 +50,7 @@
 /******************************************************************************/
 /*! Ping */
 /******************************************************************************/
-static uint8_t Ping(MotorController_T * p_mc, MotPacket_PingResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
+static protocol_txsize_t Ping(MotorControllerPtr_T p_mc, MotPacket_PingResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
 {
     (void)p_mc; (void)p_rxPacket;
     return MotPacket_PingResp_Build(p_txPacket);
@@ -59,7 +59,7 @@ static uint8_t Ping(MotorController_T * p_mc, MotPacket_PingResp_T * p_txPacket,
 /******************************************************************************/
 /*! Version */
 /******************************************************************************/
-static uint8_t Version(MotorController_T * p_mc, MotPacket_VersionResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
+static protocol_txsize_t Version(MotorControllerPtr_T p_mc, MotPacket_VersionResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
     return MotPacket_VersionResp_Build(p_txPacket, MotorController_User_GetLibraryVersion(), MotorController_User_GetMainVersion(p_mc));
@@ -68,7 +68,7 @@ static uint8_t Version(MotorController_T * p_mc, MotPacket_VersionResp_T * p_txP
 /******************************************************************************/
 /*! Stop All */
 /******************************************************************************/
-static uint8_t StopAll(MotorController_T * p_mc, MotPacket_StopResp_T * p_txPacket, const MotPacket_StopReq_T * p_rxPacket)
+static protocol_txsize_t StopAll(MotorControllerPtr_T p_mc, MotPacket_StopResp_T * p_txPacket, const MotPacket_StopReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
     MotorController_User_DisableControl(p_mc);
@@ -87,9 +87,9 @@ typedef enum MotCallId_Tag
 }
 MotCallId_T;
 
-static uint8_t Call_Blocking(MotorController_T * p_mc, MotPacket_CallResp_T * p_txPacket, const MotPacket_CallReq_T * p_rxPacket)
+static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_CallResp_T * p_txPacket, const MotPacket_CallReq_T * p_rxPacket)
 {
-    Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_GetPtrMotor(p_mc, 0U);
     volatile uint16_t status = 0U;
 
     switch((MotCallId_T)p_rxPacket->CallReq.Id)
@@ -110,7 +110,7 @@ static uint8_t Call_Blocking(MotorController_T * p_mc, MotPacket_CallResp_T * p_
 /*! Read Vars */
 /******************************************************************************/
 /* Resp Truncates 32-Bit Vars */
-static uint8_t VarRead(MotorController_T * p_mc, MotPacket_VarReadResp_T * p_txPacket, const MotPacket_VarReadReq_T * p_rxPacket)
+static protocol_txsize_t VarRead(MotorControllerPtr_T p_mc, MotPacket_VarReadResp_T * p_txPacket, const MotPacket_VarReadReq_T * p_rxPacket)
 {
     uint8_t varsCount = MotPacket_VarReadReq_ParseVarIdCount(p_rxPacket);
     for(uint8_t iVar = 0U; iVar < varsCount; iVar++)
@@ -125,7 +125,7 @@ static uint8_t VarRead(MotorController_T * p_mc, MotPacket_VarReadResp_T * p_txP
 /******************************************************************************/
 /*! Write Vars */
 /******************************************************************************/
-static uint8_t VarWrite(MotorController_T * p_mc, MotPacket_VarWriteResp_T * p_txPacket, const MotPacket_VarWriteReq_T * p_rxPacket)
+static protocol_txsize_t VarWrite(MotorControllerPtr_T p_mc, MotPacket_VarWriteResp_T * p_txPacket, const MotPacket_VarWriteReq_T * p_rxPacket)
 {
     uint8_t varsCount = MotPacket_VarWriteReq_ParseVarCount(p_rxPacket);
     MotVar_Status_T status;
@@ -138,11 +138,56 @@ static uint8_t VarWrite(MotorController_T * p_mc, MotPacket_VarWriteResp_T * p_t
     return MotPacket_VarWriteResp_BuildHeader(p_txPacket, varsCount);
 }
 
+    /*
+        Once Manufacturer
+    */
+    // MOT_VAR_NAME_0,
+    // MOT_VAR_NAME_1,
+    // MOT_VAR_NAME_2,
+    // MOT_VAR_NAME_3,
+    // MOT_VAR_NAME_4,
+    // MOT_VAR_NAME_5,
+    // MOT_VAR_NAME_6,
+    // MOT_VAR_NAME_7,
+    // MOT_VAR_NAME_REG32_0,
+    // MOT_VAR_NAME_REG32_1,
+    // MOT_VAR_SERIAL_NUMBER_0,
+    // MOT_VAR_SERIAL_NUMBER_1,
+    // MOT_VAR_SERIAL_NUMBER_2,
+    // MOT_VAR_SERIAL_NUMBER_3,
+    // MOT_VAR_SERIAL_NUMBER_REG32,
+    // MOT_VAR_MANUFACTURE_NUMBER_0, // Day
+    // MOT_VAR_MANUFACTURE_NUMBER_1, // Month
+    // MOT_VAR_MANUFACTURE_NUMBER_2, // Year
+    // MOT_VAR_MANUFACTURE_NUMBER_3, // Resv
+    // MOT_VAR_MANUFACTURE_NUMBER_REG32,
+    // MOT_VAR_HARDWARE_VERSION_0,
+    // MOT_VAR_HARDWARE_VERSION_1,
+    // MOT_VAR_HARDWARE_VERSION_2,
+    // MOT_VAR_HARDWARE_VERSION_3,
+    // MOT_VAR_HARDWARE_VERSION_REG32,
+    // MOT_VAR_ID_EXT_0,
+    // MOT_VAR_ID_EXT_1,
+    // MOT_VAR_ID_EXT_2,
+    // MOT_VAR_ID_EXT_3,
+    // MOT_VAR_ID_EXT_REG32,
+    // char NAME[8U];
+    // union { uint8_t SERIAL_NUMBER[4U]; uint32_t SERIAL_NUMBER_REG; };
+    // union
+    // {
+    //     uint8_t MANUFACTURE_NUMBER[4U];
+    //     uint32_t MANUFACTURE_NUMBER_REG;
+    //     struct { uint8_t MANUFACTURE_DAY; uint8_t MANUFACTURE_MONTH; uint8_t MANUFACTURE_YEAR; uint8_t MANUFACTURE_RESV; };
+    // };
+    // union { uint8_t HARDWARE_VERSION[4U]; uint32_t HARDWARE_VERSION_REG; };
+    // uint8_t ID_EXT[4U];
+    // uint8_t RESERVED[8U];
+
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 /******************************************************************************/
 /*! Stateful Read Data */
 /******************************************************************************/
-// static Protocol_ReqCode_T ReadData(MotorController_T * p_appInterface, Protocol_ReqInterface_T * args)
+// static Protocol_ReqCode_T ReadData(MotorControllerPtr_T p_appInterface, Protocol_ReqContext_T * args)
 // {
 //     MotProtocol_SubState_T * p_subState = args->p_SubState;
 //     Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_AWAIT_PROCESS;
@@ -182,7 +227,7 @@ static uint8_t VarWrite(MotorController_T * p_mc, MotPacket_VarWriteResp_T * p_t
 // /******************************************************************************/
 // /*! Stateful Write Data */
 // /******************************************************************************/
-// static Protocol_ReqCode_T WriteData_Blocking(MotorController_T * p_appInterface, Protocol_ReqInterface_T * args)
+// static Protocol_ReqCode_T WriteData_Blocking(MotorControllerPtr_T p_appInterface, Protocol_ReqContext_T * args)
 // {
 //     MotProtocol_SubState_T * const p_subState = args->p_SubState;
 //     Flash_T * const p_flash = p_appInterface->CONFIG.P_FLASH;
@@ -269,11 +314,8 @@ const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
     .P_REQ_TABLE = &REQ_TABLE[0U],
     .REQ_TABLE_LENGTH = sizeof(REQ_TABLE) / sizeof(Protocol_Req_T),
     .REQ_EXT_RESET = 0U,
-
     .RX_START_ID = MOT_PACKET_START_BYTE,
     .RX_END_ID = 0x00U,
-    // .ENCODED = false,
-
     .RX_TIMEOUT = MOT_PROTOCOL_TIMEOUT_RX,
     .REQ_TIMEOUT = MOT_PROTOCOL_TIMEOUT_REQ,
     .BAUD_RATE_DEFAULT = MOT_PROTOCOL_BAUD_RATE_DEFAULT,
@@ -283,7 +325,7 @@ const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
 // /******************************************************************************/
 // /*! Read Single Var */
 // /******************************************************************************/
-// static uint8_t ReadVar(MotorController_T * p_mc, MotPacket_ReadVarResp_T * p_txPacket, const MotPacket_ReadVarReq_T * p_rxPacket)
+// static uint8_t ReadVar(MotorControllerPtr_T p_mc, MotPacket_ReadVarResp_T * p_txPacket, const MotPacket_ReadVarReq_T * p_rxPacket)
 // {
 //
 //     return MotPacket_ReadVarResp_Build(p_txPacket, MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_ReadVarReq_ParseVarId(p_rxPacket)));
@@ -292,7 +334,7 @@ const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
 // /******************************************************************************/
 // /*! Write Single Var */
 // /******************************************************************************/
-// static uint8_t WriteVar(MotorController_T * p_mc, MotPacket_WriteVarResp_T * p_txPacket, const MotPacket_WriteVarReq_T * p_rxPacket)
+// static uint8_t WriteVar(MotorControllerPtr_T p_mc, MotPacket_WriteVarResp_T * p_txPacket, const MotPacket_WriteVarReq_T * p_rxPacket)
 // {
 //
 //     MotPacket_Status_T status = MOT_VAR_STATUS_OK;

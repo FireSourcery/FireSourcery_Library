@@ -42,13 +42,12 @@ static inline bool CheckDividerMask(uint32_t num, uint32_t align) { return ((num
     Mapped to Thread - Proc in All States
 */
 /******************************************************************************/
-static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
+static inline void _MotorController_ProcAnalogUser(MotorControllerPtr_T p_mc)
 {
     MotAnalogUser_Cmd_T cmd = MotAnalogUser_PollCmd(&p_mc->AnalogUser);
     MotAnalogUser_CaptureInput(&p_mc->AnalogUser, p_mc->AnalogResults.Throttle_Adcu, p_mc->AnalogResults.Brake_Adcu);
 
-    /* Assume no input cmd priority level (although implemented) */
-    /* Edge detect implemented but handled by state machine */
+    /* MotAnalog user implements edge detect implemented and cmd priority, but handled by state machine */
     switch(cmd)
     {
         case MOT_ANALOG_USER_CMD_SET_BRAKE:                 MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_mc->AnalogUser));          break;
@@ -75,7 +74,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 /*
     Optional Din
 */
-static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
+static inline void _MotorController_ProcOptDin(MotorControllerPtr_T p_mc)
 {
     uint8_t dinStatus = 0U;
 
@@ -109,8 +108,7 @@ static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
 }
 
 /* Monitor Threads only set fault flags. Do not clear until user input clear */
-
-static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
+static inline void _MotorController_ProcHeatMonitor(MotorControllerPtr_T p_mc)
 {
     bool isFault = false;
     bool isWarning = false;
@@ -187,7 +185,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
     // for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 }
 
-static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
+static inline void _MotorController_ProcVoltageMonitor(MotorControllerPtr_T p_mc)
 {
     bool isFault = false;
 
@@ -208,7 +206,7 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
     Main
     High Freq, Low Priority,
 */
-static inline void MotorController_Main_Thread(MotorController_T * p_mc)
+static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
 {
     /* High Freq, Low Priority */
 
@@ -283,7 +281,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
     Thread Safety: Async Set Fault, is okay?
         Set ILimit - possible mix match sentinel value to id?
 */
-static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
+static inline void MotorController_Timer1Ms_Thread(MotorControllerPtr_T p_mc)
 {
     p_mc->TimerDividerCounter++;
     //    BrakeThread(p_mc);
@@ -331,7 +329,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 /*
     High Freq, High Priority
 */
-static inline void MotorController_PWM_Thread(MotorController_T * p_mc)
+static inline void MotorController_PWM_Thread(MotorControllerPtr_T p_mc)
 {
     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_PWM_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
     Motor_ClearPwmInterrupt(&p_mc->CONFIG.P_MOTORS[0U]);

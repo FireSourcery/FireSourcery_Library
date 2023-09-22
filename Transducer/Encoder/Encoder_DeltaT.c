@@ -36,6 +36,10 @@
 */
 void _Encoder_DeltaT_InitTimer(Encoder_T * p_encoder)
 {
+
+    // if(p_encoder->CONFIG.P_HAL_ENCODER_TIMER_INIT) { p_encoder->CONFIG.P_HAL_ENCODER_TIMER_INIT(); }
+    // else{}
+
     HAL_Encoder_InitTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
     /*
         RPM * CPR / 60[Seconds] = CPS

@@ -77,79 +77,6 @@ void Encoder_InitInterrupts_ABC(Encoder_T * p_encoder)
 }
 
 
-
-    /*
-
-    */
-    void Encoder_CalibrateAlignZero(Encoder_T * p_encoder)
-    {
-        p_encoder->Angle32 = 0U;
-        _Encoder_ZeroPulseCount(p_encoder);
-    }
-
-    /* todo */
-    void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder)
-    {
-        p_encoder->Align = ENCODER_ALIGN_PHASE;
-        _Encoder_ZeroPulseCount(p_encoder);
-    }
-
-    void Encoder_CalibrateIndexStart(Encoder_T * p_encoder)
-    {
-        // _Encoder_ZeroPulseCount(p_encoder);
-    }
-
-    void Encoder_CalibrateIndex(Encoder_T * p_encoder)
-    {
-        p_encoder->Align = ENCODER_ALIGN_ABSOLUTE;
-        // p_encoder->AbsoluteOffset = p_encoder->IndexOffset;
-    }
-
-    void Encoder_ClearAlign(Encoder_T * p_encoder)
-    {
-        p_encoder->Align = ENCODER_ALIGN_NO;
-    }
-
-
-#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)   { p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled; }
-void Encoder_EnableQuadratureMode(Encoder_T * p_encoder)                { p_encoder->Params.IsQuadratureCaptureEnabled = true; }
-void Encoder_DisableQuadratureMode(Encoder_T * p_encoder)               { p_encoder->Params.IsQuadratureCaptureEnabled = false; }
-/*!    isALeadBPositive - User runtime calibrate */
-void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive) { p_encoder->Params.IsALeadBPositive = isALeadBPositive; }
-
-/*
-    Run on calibration routine start
-*/
-void Encoder_CalibrateQuadratureReference(Encoder_T * p_encoder)
-{
-#if     defined(CONFIG_ENCODER_HW_DECODER)
-    p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
-    HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0);
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
-    p_encoder->CounterD = 0;
-#endif
-}
-
-/*
-    Call after having moved in the positive direction
-*/
-void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder)
-{
-#if     defined(CONFIG_ENCODER_HW_DECODER)
-    uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
-    // #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-    // p_encoder->Params.IsALeadBPositive = (counterValue > p_encoder->CounterD);
-    // #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-    // p_encoder->Params.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
-    // #endif
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
-    p_encoder->Params.IsALeadBPositive = (p_encoder->CounterD > 0);
-#endif
-}
-
-#endif
-
 /******************************************************************************/
 /*!
     Units
@@ -188,7 +115,6 @@ void _Encoder_ResetUnitsInterpolateAngle(Encoder_T * p_encoder)
 */
 static uint32_t DeltaDOverflow(Encoder_T * p_encoder)
     { return math_muldiv64_unsigned(p_encoder->Params.ScalarSpeedRef_Rpm * 2U, p_encoder->Params.CountsPerRevolution, 60U * p_encoder->UnitT_Freq); }
-
 
 
 static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_t * p_unitsSpeedShift, uint32_t unitsFactor, uint32_t unitsDivisor)
@@ -338,3 +264,78 @@ void Encoder_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter
     Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);
 }
 
+
+
+/******************************************************************************/
+/*!
+    Calibration Routine
+*/
+/******************************************************************************/
+    void Encoder_CalibrateAlignZero(Encoder_T * p_encoder)
+    {
+        p_encoder->Angle32 = 0U;
+        _Encoder_ZeroPulseCount(p_encoder);
+    }
+
+    /* todo */
+    void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder)
+    {
+        p_encoder->Align = ENCODER_ALIGN_PHASE;
+        _Encoder_ZeroPulseCount(p_encoder);
+    }
+
+    void Encoder_CalibrateIndexStart(Encoder_T * p_encoder)
+    {
+        // _Encoder_ZeroPulseCount(p_encoder);
+    }
+
+    void Encoder_CalibrateIndex(Encoder_T * p_encoder)
+    {
+        p_encoder->Align = ENCODER_ALIGN_ABSOLUTE;
+        // p_encoder->AbsoluteOffset = p_encoder->IndexOffset;
+    }
+
+    void Encoder_ClearAlign(Encoder_T * p_encoder)
+    {
+        p_encoder->Align = ENCODER_ALIGN_NO;
+    }
+
+
+#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
+void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)   { p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled; }
+void Encoder_EnableQuadratureMode(Encoder_T * p_encoder)                { p_encoder->Params.IsQuadratureCaptureEnabled = true; }
+void Encoder_DisableQuadratureMode(Encoder_T * p_encoder)               { p_encoder->Params.IsQuadratureCaptureEnabled = false; }
+/*!    isALeadBPositive - User runtime calibrate */
+void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive) { p_encoder->Params.IsALeadBPositive = isALeadBPositive; }
+
+/*
+    Run on calibration routine start
+*/
+void Encoder_CalibrateQuadratureReference(Encoder_T * p_encoder)
+{
+#if     defined(CONFIG_ENCODER_HW_DECODER)
+    p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
+    HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0);
+#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+    p_encoder->CounterD = 0;
+#endif
+}
+
+/*
+    Call after having moved in the positive direction
+*/
+void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder)
+{
+#if     defined(CONFIG_ENCODER_HW_DECODER)
+    uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
+    // #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+    // p_encoder->Params.IsALeadBPositive = (counterValue > p_encoder->CounterD);
+    // #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+    // p_encoder->Params.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
+    // #endif
+#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+    p_encoder->Params.IsALeadBPositive = (p_encoder->CounterD > 0);
+#endif
+}
+
+#endif

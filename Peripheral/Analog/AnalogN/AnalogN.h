@@ -65,10 +65,10 @@ AnalogN_Conversion_T;
 
 #define ANALOG_N_CONVERSION_HOST_NULL (0x8U)
 
-#define ANALOG_N_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId, p_AnalogHost)         \
-{                                                                                                                \
-    .CONVERSION     = ANALOG_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId),         \
-    .P_ANALOG         = p_AnalogHost,                                                                                \
+#define ANALOG_N_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId, p_AnalogHost)    \
+{                                                                                                           \
+    .CONVERSION     = ANALOG_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId),     \
+    .P_ANALOG       = p_AnalogHost,                                                                         \
 }
 
 //todo

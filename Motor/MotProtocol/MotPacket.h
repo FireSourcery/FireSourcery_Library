@@ -164,9 +164,9 @@ typedef MotPacket_Sync_T MotPacket_PingResp_T;
 /******************************************************************************/
 /*! Version - Static Response */
 /******************************************************************************/
-typedef MotPacket_Header_T                                                                                              MotPacket_VersionReq_T;
-typedef struct MotPacket_VersionResp_Payload_Tag { uint8_t Version[4U]; uint32_t Library; uint32_t Main; }              MotPacket_VersionResp_Payload_T;
-typedef struct MotPacket_VersionResp_Tag { MotPacket_Header_T Header; MotPacket_VersionResp_Payload_T VersionResp; }    MotPacket_VersionResp_T;
+typedef MotPacket_Header_T                                                                                                      MotPacket_VersionReq_T;
+typedef struct MotPacket_VersionResp_Payload_Tag { uint8_t Version[4U]; uint32_t Library; uint32_t Main; uint32_t Hardware; }   MotPacket_VersionResp_Payload_T;
+typedef struct MotPacket_VersionResp_Tag { MotPacket_Header_T Header; MotPacket_VersionResp_Payload_T VersionResp; }            MotPacket_VersionResp_T;
 
 /******************************************************************************/
 /*! Stop - Emergency Stop All */

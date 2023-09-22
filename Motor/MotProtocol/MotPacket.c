@@ -117,7 +117,7 @@ uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket, uint
     p_respPacket->VersionResp.Version[1U] = MOT_PACKET_VERSION_MINOR;
     p_respPacket->VersionResp.Version[2U] = MOT_PACKET_VERSION_MAJOR;
     p_respPacket->VersionResp.Version[3U] = MOT_PACKET_VERSION_OPT;
-    p_respPacket->VersionResp.Library  = library;
+    p_respPacket->VersionResp.Library = library;
     p_respPacket->VersionResp.Main = main;
 
     return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, sizeof(MotPacket_VersionResp_Payload_T));

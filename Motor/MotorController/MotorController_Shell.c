@@ -45,7 +45,7 @@
 */
 /*! @{ */
 /******************************************************************************/
-static Cmd_Status_T Cmd_stop(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_stop(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     (void)argc; (void)argv;
     MotorController_User_DisableControl(p_mc);
@@ -53,9 +53,9 @@ static Cmd_Status_T Cmd_stop(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_run(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     char * p_end;
     uint32_t value;
 
@@ -124,7 +124,7 @@ static void PrintPhase(Terminal_T * p_term, uint8_t step)
     }
 }
 
-static void PrintSensor(Terminal_T * p_term, Motor_T * p_motor)
+static void PrintSensor(Terminal_T * p_term, MotorPtr_T p_motor)
 {
     switch(Motor_User_GetSensorMode(p_motor))
     {
@@ -166,9 +166,9 @@ static void PrintSensor(Terminal_T * p_term, Motor_T * p_motor)
 
 
 /* Need stop to release */
-static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_phase(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     //    Terminal_T * p_term = &p_mc->Shell.Terminal;
     const uint16_t duty = p_motor->Parameters.AlignPower_ScalarU16;
 
@@ -191,10 +191,10 @@ static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_jog(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_jog(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     (void)argv;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Cmd_Status_T status;
     if(argc == 1U)
     {
@@ -210,20 +210,20 @@ static Cmd_Status_T Cmd_jog(MotorController_T * p_mc, int argc, char ** argv)
     return status;
 }
 
-static Cmd_Status_T Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_rev(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     (void)argc;    (void)argv;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     p_motor->JogIndex = 0U;
     p_motor->Encoder.TotalD = 0U;
     Motor_ZeroSensor(p_motor);
     return CMD_STATUS_PROCESS_LOOP;
 }
 
-static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
+static Cmd_Status_T Cmd_rev_Proc(MotorControllerPtr_T p_mc)
 {
     Terminal_T * p_term = &p_mc->Shell.Terminal;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Cmd_Status_T status;
 
     if(p_motor->JogIndex < Motor_User_GetPolePairs(p_motor) * 6U + 1U)
@@ -246,7 +246,7 @@ static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
     return status;
 }
 
-static Cmd_Status_T Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_monitor(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     if(argc == 1U)
     {
@@ -263,9 +263,9 @@ static Cmd_Status_T Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv
 }
 
 
-static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
+static Cmd_Status_T Cmd_monitor_Proc(MotorControllerPtr_T p_mc)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
 
     switch(p_mc->ShellSubstate)
@@ -409,9 +409,9 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
     return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_mode(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
 
     if(argc == 1U) /* display modes */
@@ -489,9 +489,9 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 }
 
 
-static Cmd_Status_T Cmd_calibrate(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_calibrate(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Cmd_Status_T status = CMD_STATUS_INVALID_ARGS;
 
     if(argc == 2U)
@@ -508,10 +508,10 @@ static Cmd_Status_T Cmd_calibrate(MotorController_T * p_mc, int argc, char ** ar
 }
 
 //todo to string functions
-static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
+static Cmd_Status_T Cmd_calibrate_Proc(MotorControllerPtr_T p_mc)
 {
     Cmd_Status_T status = CMD_STATUS_PROCESS_LOOP;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
 
     if(Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP)
@@ -570,10 +570,10 @@ static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
 
 
 
-static Cmd_Status_T Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_hall(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     (void)argv;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
 
     if(argc == 1U)
@@ -610,10 +610,10 @@ void PrintThermistorLimit(Terminal_T * p_term, Thermistor_T * p_thermistor)
 }
 
 //todo seperate print functions
-static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_heat(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     Terminal_T * p_term = &p_mc->Shell.Terminal;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 
     if(argc == 1U)
     {
@@ -653,7 +653,7 @@ static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_auser(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_auser(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     Terminal_T * p_term = &p_mc->Shell.Terminal;
 
@@ -675,7 +675,7 @@ static Cmd_Status_T Cmd_auser(MotorController_T * p_mc, int argc, char ** argv)
 // static const char * STR_VSENSE         = "V Sensor:\r\n";
 // static const char * STR_VACC         = "V Accessories:\r\n";
 
-// static size_t MotorController_ToString_VMonitorsLimits(MotorController_T * p_mc, char * p_stringBuffer)
+// static size_t MotorController_ToString_VMonitorsLimits(MotorControllerPtr_T p_mc, char * p_stringBuffer)
 // {
 //     char * p_stringDest = p_stringBuffer;
 
@@ -742,7 +742,7 @@ size_t VMonitor_ToString_Verbose(VMonitor_T * p_vMonitor, char * p_stringBuffer,
 }
 #endif
 
-static Cmd_Status_T Cmd_v(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_v(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     Terminal_T * p_term = &p_mc->Shell.Terminal;
     // char * p_txString;
@@ -774,7 +774,7 @@ static Cmd_Status_T Cmd_v(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_fault(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     (void)argv;
     Terminal_T * p_term = &p_mc->Shell.Terminal;
@@ -809,9 +809,9 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_direction(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_direction(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 
     if(argc == 2U)
     {
@@ -830,9 +830,9 @@ static Cmd_Status_T Cmd_direction(MotorController_T * p_mc, int argc, char ** ar
     return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_set(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_set(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
-    //    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    //    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
 
     if(argc == 2U)
@@ -848,7 +848,7 @@ static Cmd_Status_T Cmd_set(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_save(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     (void)argc;
     (void)argv;
@@ -858,7 +858,7 @@ static Cmd_Status_T Cmd_save(MotorController_T * p_mc, int argc, char ** argv)
 
 extern void SystemSoftwareReset(void); //todo abstraction layer
 
-static Cmd_Status_T Cmd_reboot(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_reboot(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     (void)p_mc;
     (void)argc;
@@ -868,7 +868,7 @@ static Cmd_Status_T Cmd_reboot(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_beep(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_beep(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     uint8_t count;
 
@@ -890,9 +890,9 @@ static Cmd_Status_T Cmd_beep(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_kvspeed(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_kvspeed(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
     uint16_t rpm;
 
@@ -933,9 +933,9 @@ static void PrintIPeak(Terminal_T * p_term, uint16_t min_Adcu, int32_t min_Frac1
 }
 
 #if    defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
-static Cmd_Status_T Cmd_ipeak(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_ipeak(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
     uint16_t zeroToPeak_Adcu;
     uint16_t min_Adcu;
@@ -968,9 +968,9 @@ static Cmd_Status_T Cmd_ipeak(MotorController_T * p_mc, int argc, char ** argv)
 }
 #endif
 
-static Cmd_Status_T Cmd_ilimit(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_ilimit(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
     uint16_t ilimit_Frac16;
 
@@ -994,7 +994,7 @@ static Cmd_Status_T Cmd_ilimit(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-static Cmd_Status_T Cmd_version(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_version(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     (void)argc;
     (void)argv;
@@ -1019,7 +1019,7 @@ static Cmd_Status_T Cmd_version(MotorController_T * p_mc, int argc, char ** argv
 }
 
 
-static Cmd_Status_T Cmd_servo(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_servo(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
 #if    defined(CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE)
     Terminal_T * p_term = &p_mc->Shell.Terminal;
@@ -1044,7 +1044,7 @@ static Cmd_Status_T Cmd_servo(MotorController_T * p_mc, int argc, char ** argv)
 }
 
 
-static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
+static Cmd_Status_T Cmd_debug(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     (void)argc;
     (void)argv;

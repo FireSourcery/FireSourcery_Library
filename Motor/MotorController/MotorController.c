@@ -31,7 +31,7 @@
 #include "MotorController.h"
 #include <string.h>
 
-void MotorController_Init(MotorController_T * p_mc)
+void MotorController_Init(MotorControllerPtr_T p_mc)
 {
     Flash_Init(p_mc->CONFIG.P_FLASH);
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
@@ -78,13 +78,12 @@ void MotorController_Init(MotorController_T * p_mc)
 #endif
 
     MotorController_ResetUnitsBatteryLife(p_mc);
-    p_mc->DriveDirection = MOTOR_CONTROLLER_DIRECTION_FORWARD; //= MOTOR_CONTROLLER_DIRECTION_DISABLED;
+    p_mc->DriveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
     StateMachine_Init(&p_mc->StateMachine);
 }
 
-
 //todo move to vmonitor
-void MotorController_ResetUnitsBatteryLife(MotorController_T * p_mc)
+void MotorController_ResetUnitsBatteryLife(MotorControllerPtr_T p_mc)
 {
     Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Parameters.BatteryZero_Adcu, p_mc->Parameters.BatteryFull_Adcu, 0U, 1000U);
 }
@@ -95,7 +94,7 @@ void MotorController_ResetUnitsBatteryLife(MotorController_T * p_mc)
     Nvm Wrappers Call from State Machine
 */
 /******************************************************************************/
-NvMemory_Status_T _MotorController_WriteNvm_Blocking(MotorController_T * p_mc, const void * p_dest, const void * p_source, size_t sizeBytes)
+NvMemory_Status_T _MotorController_WriteNvm_Blocking(MotorControllerPtr_T p_mc, const void * p_dest, const void * p_source, size_t sizeBytes)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
     return EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_dest, p_source, sizeBytes);
@@ -104,10 +103,10 @@ NvMemory_Status_T _MotorController_WriteNvm_Blocking(MotorController_T * p_mc, c
 #endif
 }
 
-NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_mc)
+NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p_mc)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
-    Motor_T * p_motor;
+    MotorPtr_T p_motor;
     Protocol_T * p_protocol;
 
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
@@ -160,7 +159,7 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorController_T * p_
     return status;
 }
 
-NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
+NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorControllerPtr_T p_mc)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
     return _MotorController_WriteNvm_Blocking(p_mc->CONFIG.P_MEM_MAP_BOOT, &p_mc->MemMapBoot, sizeof(MemMapBoot_T));
@@ -170,7 +169,7 @@ NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
 }
 
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc, uint8_t * p_destBuffer)
+NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_destBuffer)
 {
 #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
     return (NvMemory_Status_T)Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, p_destBuffer, (uint8_t *)p_mc->CONFIG.P_MANUFACTURE, sizeof(MotorController_Manufacture_T));
@@ -178,7 +177,7 @@ NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorController_T * p_mc, ui
 #endif
 }
 
-NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorController_T * p_mc, const uint8_t * p_sourceBuffer)
+NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorControllerPtr_T p_mc, const uint8_t * p_sourceBuffer)
 {
 #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
     return (NvMemory_Status_T)Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_MANUFACTURE, p_sourceBuffer, sizeof(MotorController_Manufacture_T));

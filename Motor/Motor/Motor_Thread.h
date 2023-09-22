@@ -43,7 +43,7 @@
     Default 50us
     Calling function clears interrupt flag
 */
-static inline void Motor_PWM_Thread(Motor_T * p_motor)
+static inline void Motor_PWM_Thread(MotorPtr_T p_motor)
 {
     // Motor_Debug_CaptureRefTime(p_motor);
     p_motor->ControlTimerBase++;
@@ -52,7 +52,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
     // Motor_Debug_CaptureTime(p_motor, 5U);
 }
 
-static inline void Motor_Heat_Thread(Motor_T * p_motor)
+static inline void Motor_Heat_Thread(MotorPtr_T p_motor)
 {
     if(Thermistor_GetIsMonitorEnable(&p_motor->Thermistor) == true)
     {
@@ -79,7 +79,7 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 
 
 /* Optionally use Hall ISR */
-static inline void Motor_HallEncoderA_ISR(Motor_T * p_motor)
+static inline void Motor_HallEncoderA_ISR(MotorPtr_T p_motor)
 {
     Encoder_OnPhaseA_ISR(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
@@ -87,7 +87,7 @@ static inline void Motor_HallEncoderA_ISR(Motor_T * p_motor)
 #endif
 }
 
-static inline void Motor_HallEncoderB_ISR(Motor_T * p_motor)
+static inline void Motor_HallEncoderB_ISR(MotorPtr_T p_motor)
 {
     Encoder_OnPhaseB_ISR(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
@@ -95,7 +95,7 @@ static inline void Motor_HallEncoderB_ISR(Motor_T * p_motor)
 #endif
 }
 
-static inline void Motor_HallEncoderAB_ISR(Motor_T * p_motor)
+static inline void Motor_HallEncoderAB_ISR(MotorPtr_T p_motor)
 {
     Encoder_OnPhaseAB_ISR(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
@@ -103,7 +103,7 @@ static inline void Motor_HallEncoderAB_ISR(Motor_T * p_motor)
 #endif
 }
 
-static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_motor)
+static inline void Motor_HallEncoderCZ_ISR(MotorPtr_T p_motor)
 {
     switch(p_motor->Parameters.SensorMode)
     {

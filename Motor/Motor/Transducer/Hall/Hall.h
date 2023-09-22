@@ -152,6 +152,7 @@ Hall_Params_T;
 typedef const struct Hall_Config_Tag
 {
     const Hall_Params_T * const P_PARAMS_NVM;
+    void (* const HAL_INIT)(void);
 }
 Hall_Config_T;
 

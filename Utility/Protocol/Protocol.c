@@ -24,20 +24,12 @@
 /*!
     @file   Protocol.c
     @author FireSourcery
-    @brief
+    @brief  Protocol abstract class equivalent
     @version V0
 */
 /******************************************************************************/
 #include "Protocol.h"
 #include <string.h>
-
-/*! @return pointer to Req */
-const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, protocol_reqid_t id)
-{
-    const Protocol_Req_T * p_req = 0U;
-    for(uint8_t iChar = 0U; iChar < tableLength; iChar++) { if(p_reqTable[iChar].ID == id) { p_req = &p_reqTable[iChar]; break; } }
-    return p_req;
-}
 
 void Protocol_Init(Protocol_T * p_protocol)
 {
@@ -465,6 +457,14 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
     }
 
     return reqStatus;
+}
+
+/*! @return pointer to Req */
+const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, protocol_reqid_t id)
+{
+    const Protocol_Req_T * p_req = 0U;
+    for(uint8_t iChar = 0U; iChar < tableLength; iChar++) { if(p_reqTable[iChar].ID == id) { p_req = &p_reqTable[iChar]; break; } }
+    return p_req;
 }
 
 /*

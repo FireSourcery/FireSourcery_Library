@@ -65,10 +65,7 @@ typedef union Encoder_Phases_Tag
         uint8_t A : 1U;
         uint8_t PrevB : 1U;
         uint8_t PrevA : 1U;
-        // uint8_t Resv4 : 1U;
-        // uint8_t Resv5 : 1U;
-        // uint8_t Resv6 : 1U;
-        // uint8_t Resv7 : 1U;
+        uint8_t Resv : 4U;
     };
     uint8_t State;
 }
@@ -115,7 +112,7 @@ typedef const struct Encoder_Config_Tag
     const uint32_t EXTENDED_TIMER_FREQ;
     const uint32_t POLLING_FREQ;        /*!< DeltaT Interpolation Freq. */
     const uint32_t SAMPLE_FREQ;         /*!< DeltaD Speed Sample Freq. */
-    void(* const INIT_HAL)(void);
+    void(* const HAL_INIT)(void);
     const Encoder_Params_T * const P_PARAMS;
 }
 Encoder_Config_T;
@@ -219,9 +216,10 @@ Encoder_T;
     @brief  Function Templates
 */
 /******************************************************************************/
-typedef void(*Encoder_CaptureMode_Proc_T)(Encoder_T * p_encoder);
+typedef void(*Encoder_Proc_T)(Encoder_T * p_encoder);
+typedef int32_t(*Encoder_Get_T)(const Encoder_T * p_encoder);
 
-static inline void Encoder_CaptureMode_Proc(Encoder_T * p_encoder, Encoder_CaptureMode_Proc_T quadratureFunction, Encoder_CaptureMode_Proc_T singlePhaseFunction)
+static inline void Encoder_CaptureMode_Proc(Encoder_T * p_encoder, Encoder_Proc_T quadratureFunction, Encoder_Proc_T singlePhaseFunction)
 {
 #if     defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
     if(p_encoder->Params.IsQuadratureCaptureEnabled == true)     { quadratureFunction(p_encoder); }
@@ -231,9 +229,7 @@ static inline void Encoder_CaptureMode_Proc(Encoder_T * p_encoder, Encoder_Captu
 #endif
 }
 
-typedef int32_t(*Encoder_CaptureMode_Get_T)(const Encoder_T * p_encoder);
-
-static inline int32_t Encoder_CaptureMode_Get(const Encoder_T * p_encoder, Encoder_CaptureMode_Get_T quadratureFunction, Encoder_CaptureMode_Get_T singlePhaseFunction)
+static inline int32_t Encoder_CaptureMode_Get(const Encoder_T * p_encoder, Encoder_Get_T quadratureFunction, Encoder_Get_T singlePhaseFunction)
 {
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
     return (p_encoder->Params.IsQuadratureCaptureEnabled == true) ? quadratureFunction(p_encoder) : singlePhaseFunction(p_encoder);
@@ -252,24 +248,6 @@ static inline void _Encoder_ZeroPulseCount(Encoder_T * p_encoder)
     p_encoder->CounterD = 0U;
     p_encoder->IndexCount = 0U;
 }
-
-/*
-    Convert signed capture to user reference
-    Captured as ALeadB is positive by default
-*/
-static inline int32_t Encoder_GetDirection_Quadrature(const Encoder_T * p_encoder) { return (p_encoder->Params.IsALeadBPositive == true) ? 1 : -1; }
-/* set by user */
-static inline int32_t Encoder_GetDirection_SinglePhase(const Encoder_T * p_encoder) { return (p_encoder->IsSinglePhasePositive == true) ? 1 : -1; }
-
-static inline int32_t Encoder_GetDirection(const Encoder_T * p_encoder)
-{
-    return Encoder_CaptureMode_Get(p_encoder, Encoder_GetDirection_Quadrature, Encoder_GetDirection_SinglePhase);
-}
-
-/* Outer module sets direction */
-static inline void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool isPositive) { p_encoder->IsSinglePhasePositive = isPositive; }
-static inline void Encoder_SetSinglePhaseDirectionPositive(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = true; }
-static inline void Encoder_SetSinglePhaseDirectionNegative(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = false; }
 
 static inline int32_t Encoder_GetCounterD(const Encoder_T * p_encoder)
 {
@@ -291,37 +269,27 @@ static inline uint32_t _Encoder_GetAngle32(const Encoder_T * p_encoder)
 
 static inline uint16_t _Encoder_GetAngle(const Encoder_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
 
-// static inline uint16_t Encoder_GetAngle_SinglePhase(Encoder_T * p_encoder)
-// {
-//     uint16_t angle = _Encoder_GetAngle(p_encoder);
-//     return (p_encoder->IsSinglePhasePositive == true) ? angle : 0 - angle;
-//     return Encoder_GetDirection_SinglePhase(p_encoder) * _Encoder_GetAngle(p_encoder)
-// }
+/* Direction set by outer module */
+static inline int32_t Encoder_GetDirection_SinglePhase(const Encoder_T * p_encoder) { return (p_encoder->IsSinglePhasePositive == true) ? 1 : -1; }
+static inline void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool isPositive) { p_encoder->IsSinglePhasePositive = isPositive; }
+static inline void Encoder_SetSinglePhaseDirectionPositive(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = true; }
+static inline void Encoder_SetSinglePhaseDirectionNegative(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = false; }
+static inline uint16_t Encoder_GetAngle_SinglePhase(Encoder_T * p_encoder) { return Encoder_GetDirection_SinglePhase(p_encoder) * _Encoder_GetAngle(p_encoder); }
 
-// static inline uint16_t Encoder_GetAngle_Quadrature(Encoder_T * p_encoder)
-// {
-//     uint16_t angle = _Encoder_GetAngle(p_encoder);
-//     return (p_encoder->Params.IsALeadBPositive == true) ? angle : 0 - angle;
-// }
-
-static inline uint16_t Encoder_GetAngle(const Encoder_T * p_encoder) { return Encoder_GetDirection(p_encoder) * _Encoder_GetAngle(p_encoder); }
-
-/* scalar < 256 */
-static inline uint16_t Encoder_GetAngle_Scalar(const Encoder_T * p_encoder, uint8_t scalar)
-{
-    return Encoder_GetDirection(p_encoder) * (((_Encoder_GetAngle32(p_encoder) >> 8U) * scalar) >> 8U); //ENCODER_ANGLE_SHIFT/2
-}
-
-/******************************************************************************/
-/*!
-    @brief
+/*
+    Convert signed capture to user reference
+    Captured as ALeadB is positive by default
 */
-/******************************************************************************/
-/* todo testing */
-static inline bool Encoder_GetIsAligned(const Encoder_T * p_encoder)
-{
-    return (p_encoder->Align == ENCODER_ALIGN_ABSOLUTE) || (p_encoder->Align == ENCODER_ALIGN_PHASE);
-}
+static inline int32_t Encoder_GetDirection_Quadrature(const Encoder_T * p_encoder) { return (p_encoder->Params.IsALeadBPositive == true) ? 1 : -1; }
+static inline uint16_t Encoder_GetAngle_Quadrature(Encoder_T * p_encoder) { return Encoder_GetDirection_Quadrature(p_encoder) * _Encoder_GetAngle(p_encoder); }
+
+
+/* Select using IsQuadratureCaptureEnabled */
+static inline int32_t Encoder_GetDirection(const Encoder_T * p_encoder) { return Encoder_CaptureMode_Get(p_encoder, Encoder_GetDirection_Quadrature, Encoder_GetDirection_SinglePhase); }
+static inline uint16_t Encoder_GetAngle(const Encoder_T * p_encoder) { return Encoder_GetDirection(p_encoder) * _Encoder_GetAngle(p_encoder); }
+/* scalar < 256 */ //ENCODER_ANGLE_SHIFT/2
+static inline uint16_t Encoder_GetAngle_Scalar(const Encoder_T * p_encoder, uint8_t scalar) { return Encoder_GetDirection(p_encoder) * (((_Encoder_GetAngle32(p_encoder) >> 8U) * scalar) >> 8U); }
+
 
 /******************************************************************************/
 /*!
@@ -331,9 +299,9 @@ static inline bool Encoder_GetIsAligned(const Encoder_T * p_encoder)
 /*!
     Angle - Base unit in ENCODER_ANGLE_BITS
 */
+    /* Overflow: counterD > CountsPerRevolution, UnitAngularD == UINT32_MAX / CountsPerRevolution */
 static inline uint32_t Encoder_AngleFromCounterD(Encoder_T * p_encoder, uint32_t counterD_Ticks)
 {
-    /* Overflow: counterD > CountsPerRevolution, UnitAngularD == UINT32_MAX / CountsPerRevolution */
     return (counterD_Ticks < p_encoder->Params.CountsPerRevolution) ?
         ((counterD_Ticks * p_encoder->UnitAngularD) >> ENCODER_ANGLE_SHIFT) :
         ((counterD_Ticks << ENCODER_ANGLE_BITS) / p_encoder->Params.CountsPerRevolution);
@@ -370,14 +338,13 @@ static inline uint32_t Encoder_CalcGroundSpeed_Kmh(Encoder_T * p_encoder, uint32
 
 /******************************************************************************/
 /*!
-    @brief     Extern Declarations
+    @brief Extern Declarations
 */
 /*! @{ */
 /******************************************************************************/
 extern void Encoder_InitInterrupts_Quadrature(Encoder_T * p_encoder);
 extern void Encoder_InitInterrupts_ABC(Encoder_T * p_encoder);
 
-extern void Encoder_SetSinglePhaseDirection(Encoder_T * p_encoder, bool isPositive);
 extern void Encoder_CalibrateAlignZero(Encoder_T * p_encoder);
 extern void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder);
 
@@ -404,5 +371,16 @@ extern void Encoder_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelD
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
+
+/******************************************************************************/
+/*!
+    @brief
+*/
+/******************************************************************************/
+/* todo testing */
+static inline bool Encoder_GetIsAligned(const Encoder_T * p_encoder)
+{
+    return (p_encoder->Align == ENCODER_ALIGN_ABSOLUTE) || (p_encoder->Align == ENCODER_ALIGN_PHASE);
+}
 
 #endif

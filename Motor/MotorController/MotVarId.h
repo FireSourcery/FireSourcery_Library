@@ -47,7 +47,7 @@ typedef enum
     MOT_VAR_DEBUG,
     MOT_VAR_MC_STATE,           // MotorController_StateMachine_StateId_T
     MOT_VAR_MC_STATUS_FLAGS,
-    MOT_VAR_MC_ERROR_FLAGS,
+    MOT_VAR_MC_FAULT_FLAGS,
     MOT_VAR_V_SOURCE,           // ADCU, Volts * 10
     MOT_VAR_V_SENSOR,           // ADCU, mV
     MOT_VAR_V_ACC,              // ADCU, mV
@@ -92,10 +92,10 @@ typedef enum
     MOT_VAR_FOC_Q_REQ,
     MOT_VAR_FOC_D_REQ,
     MOT_VAR_FOC_REQ_PRELIMIT,
+    // MOT_VAR_PID_OUT  ,
 
     MOT_VAR_ENCODER_FREQ,
     // MOT_VAR_ENCODER_   ,
-    // MOT_VAR_PID_OUT  ,
 }
 MotVarId_RealTimeMonitor_T;
 
@@ -110,28 +110,22 @@ typedef enum
         Write Via User StateMachine Function
     */
     /* Motor Controller / Motor Global */
-    MOT_VAR_BEEP,     // Beep
-    MOT_VAR_THROTTLE,     // Value Scalar16
-    MOT_VAR_BRAKE,     // Value Scalar16
+    MOT_VAR_BEEP,           // Beep
+    MOT_VAR_THROTTLE,       // Value Scalar16
+    MOT_VAR_BRAKE,          // Value Scalar16
     MOT_VAR_RELEASE_CONTROL,
     MOT_VAR_DISABLE_CONTROL,
     MOT_VAR_CLEAR_FAULT,
-    MOT_VAR_SET_FAULT,
 
     /* Motor[0] */
-    MOT_VAR_MOTOR_CMD_SPEED,           // Value [-32768:32767]
-    MOT_VAR_MOTOR_CMD_CURRENT,         // Value [-32768:32767]
-    MOT_VAR_MOTOR_CMD_VOLTAGE,         // Value [0:32767]
-    MOT_VAR_MOTOR_CMD_ANGLE,           //
+    MOT_VAR_MOTOR_CMD_SPEED,            // Value [-32768:32767]
+    MOT_VAR_MOTOR_CMD_CURRENT,          // Value [-32768:32767]
+    MOT_VAR_MOTOR_CMD_VOLTAGE,          // Value [0:32767]
+    MOT_VAR_MOTOR_CMD_ANGLE,            //
     MOT_VAR_MOTOR_CMD_OPEN_LOOP,        //
     // MOT_VAR_MOTOR_RELEASE_CONTROL,
     // MOT_VAR_MOTOR_DISABLE,
     // MOT_VAR_MOTOR_CLEAR_FAULT,
-    // MOT_VAR_MOTOR_SET_FAULT,
-    // MOT_VAR_MOTOR_CALIBRATE_SENSOR,
-    // MOT_VAR_MOTOR_CALIBRATE_ADC,
-    // MOT_VAR_MOTOR_CALIBRATE,     // Value enum: ADC, Sensor,
-    // MOT_VAR_MOTOR_CALIBRATE_,
 
     /*
         Run time command functions
@@ -269,11 +263,13 @@ typedef enum
     MOT_VAR_V_SOURCE_VOLTS,             // Volts
     MOT_VAR_BATTERY_ZERO_ADCU,
     MOT_VAR_BATTERY_FULL_ADCU,
-    MOT_VAR_USER_INPUT_MODE,            // MotorController_InputMode_T
 
-    MOT_VAR_THROTTLE_MODE,                 // MotorController_ThrottleMode_T
-    MOT_VAR_BRAKE_MODE,                 // MotorController_BrakeMode_T
-    MOT_VAR_DRIVE_ZERO_MODE,              // MotorController_ZeroCmdMode_T
+    MOT_VAR_USER_INIT_MODE,                 // MotorController_InitMode_T
+    MOT_VAR_USER_INPUT_MODE,                // MotorController_InputMode_T
+    MOT_VAR_THROTTLE_MODE,                  // MotorController_ThrottleMode_T
+    MOT_VAR_BRAKE_MODE,                     // MotorController_BrakeMode_T
+    MOT_VAR_DRIVE_ZERO_MODE,                // MotorController_DriveZeroMode_T
+
     MOT_VAR_BUZZER_FLAGS_ENABLE,        // MotorController_BuzzerFlags_T
     MOT_VAR_OPT_DIN_FUNCTION,           // MotorController_OptDinMode_T
     MOT_VAR_OPT_DIN_SPEED_LIMIT,
@@ -362,55 +358,9 @@ typedef enum
     /*
         Const
     */
-    MOT_VAR_I_MAX_AMP,
     MOT_VAR_V_MAX_VOLTS,
-    // MOT_VAR_VERSION_KMC_0,
-    // MOT_VAR_VERSION_KMC_1,
-    // MOT_VAR_VERSION_KMC_2,
-    // MOT_VAR_VERSION_KMC_3,
-    // MOT_VAR_VERSION_KMC_REG32,
-
-    /*
-        Once Manufacturer
-    */
-    // MOT_VAR_NAME_0,
-    // MOT_VAR_NAME_1,
-    // MOT_VAR_NAME_2,
-    // MOT_VAR_NAME_3,
-    // MOT_VAR_NAME_4,
-    // MOT_VAR_NAME_5,
-    // MOT_VAR_NAME_6,
-    // MOT_VAR_NAME_7,
-    // MOT_VAR_NAME_REG32_0,
-    // MOT_VAR_NAME_REG32_1,
-    // MOT_VAR_SERIAL_NUMBER_0,
-    // MOT_VAR_SERIAL_NUMBER_1,
-    // MOT_VAR_SERIAL_NUMBER_2,
-    // MOT_VAR_SERIAL_NUMBER_3,
-    // MOT_VAR_SERIAL_NUMBER_REG32,
-    // MOT_VAR_MANUFACTURE_NUMBER_0, // Day
-    // MOT_VAR_MANUFACTURE_NUMBER_1, // Month
-    // MOT_VAR_MANUFACTURE_NUMBER_2, // Year
-    // MOT_VAR_MANUFACTURE_NUMBER_3, // Resv
-    // MOT_VAR_MANUFACTURE_NUMBER_REG32,
-    // MOT_VAR_HARDWARE_VERSION_0,
-    // MOT_VAR_HARDWARE_VERSION_1,
-    // MOT_VAR_HARDWARE_VERSION_2,
-    // MOT_VAR_HARDWARE_VERSION_3,
-    // MOT_VAR_HARDWARE_VERSION_REG32,
-    // MOT_VAR_ID_EXT_0,
-    // MOT_VAR_ID_EXT_1,
-    // MOT_VAR_ID_EXT_2,
-    // MOT_VAR_ID_EXT_3,
-    // MOT_VAR_ID_EXT_REG32,
-    // MOT_VAR_RESV_0,
-    // MOT_VAR_RESV_1,
-    // MOT_VAR_RESV_2,
-    // MOT_VAR_RESV_3,
-    // MOT_VAR_RESV_4,
-    // MOT_VAR_RESV_5,
-    // MOT_VAR_RESV_6,
-    // MOT_VAR_RESV_7,
+    MOT_VAR_I_MAX_AMP,
+    MOT_VAR_I_MAX_ADCU,
 }
 MotVarId_ParamsGlobal_T;
 

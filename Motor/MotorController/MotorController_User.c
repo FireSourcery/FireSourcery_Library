@@ -35,7 +35,7 @@
     Controller NvM Variables Parameters Set
 */
 /* VSource is a value < GLOBAL_MOTOR.VMAX and Parameters.VSourceRef */
-void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts)
+void MotorController_User_SetVSourceRef(MotorControllerPtr_T p_mc, uint16_t volts)
 {
     Global_Motor_InitVSourceRef_V(volts);
     p_mc->Parameters.VSourceRef = Global_Motor_GetVSource_V();
@@ -47,21 +47,21 @@ void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts
     MotorController_User_SetBatteryLifeDefault(p_mc);
 }
 
-void MotorController_User_SetBatteryLifeDefault(MotorController_T * p_mc)
+void MotorController_User_SetBatteryLifeDefault(MotorControllerPtr_T p_mc)
 {
     p_mc->Parameters.BatteryZero_Adcu = VMonitor_GetFaultLower(&p_mc->VMonitorSource);
     p_mc->Parameters.BatteryFull_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorSource, (uint32_t)p_mc->Parameters.VSourceRef * 1000U);
     MotorController_ResetUnitsBatteryLife(p_mc);
 }
 
-void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32_t zero_mV, uint32_t max_mV)
+void MotorController_User_SetBatteryLife_MilliV(MotorControllerPtr_T p_mc, uint32_t zero_mV, uint32_t max_mV)
 {
     p_mc->Parameters.BatteryZero_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorSource, zero_mV);
     p_mc->Parameters.BatteryFull_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorSource, max_mV);
     MotorController_ResetUnitsBatteryLife(p_mc);
 }
 
-// void MotorController_User_SetILimit_DC(MotorController_T * p_mc, uint16_t dc)
+// void MotorController_User_SetILimit_DC(MotorControllerPtr_T p_mc, uint16_t dc)
 // {
 //     uint16_t iPeakAc = dc;
 //     uint16_t motoring = iPeakAc;
