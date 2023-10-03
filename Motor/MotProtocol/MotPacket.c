@@ -84,8 +84,8 @@ uint8_t _MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T sync
 
 uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId)
 {
-    return ((syncId == MOT_PACKET_PING) || (syncId == MOT_PACKET_SYNC_ACK) || (syncId == MOT_PACKET_SYNC_NACK) || (syncId == MOT_PACKET_SYNC_ABORT))
-        ? _MotPacket_Sync_Build(p_txPacket, syncId) : 0U;
+    return ((syncId == MOT_PACKET_PING) || (syncId == MOT_PACKET_SYNC_ACK) || (syncId == MOT_PACKET_SYNC_NACK) || (syncId == MOT_PACKET_SYNC_ABORT)) ?
+        _MotPacket_Sync_Build(p_txPacket, syncId) : 0U;
 }
 
 // static inline void Packet_BuildInnerHeader(MotPacket_StatusResp_T * p_packet, uint16_t reqState, uint16_t status)
@@ -97,7 +97,8 @@ uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncI
 /******************************************************************************/
 /*!
     Controller Side - Parse Req In, Build Resp Out
-    Build Packet Functions @return size of Packet(TxLength)
+    Build Packet Functions
+    @return size of Packet(TxLength)
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -111,7 +112,7 @@ uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket)
 /******************************************************************************/
 /*! Version Type */
 /******************************************************************************/
-uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket, uint32_t library, uint32_t main)
+uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket, uint32_t library, uint32_t main, uint32_t board)
 {
     p_respPacket->VersionResp.Version[0U] = MOT_PACKET_VERSION_BUGFIX;
     p_respPacket->VersionResp.Version[1U] = MOT_PACKET_VERSION_MINOR;
@@ -119,6 +120,7 @@ uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket, uint
     p_respPacket->VersionResp.Version[3U] = MOT_PACKET_VERSION_OPT;
     p_respPacket->VersionResp.Library = library;
     p_respPacket->VersionResp.Main = main;
+    p_respPacket->VersionResp.Board = board;
 
     return Packet_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, sizeof(MotPacket_VersionResp_Payload_T));
 }

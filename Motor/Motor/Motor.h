@@ -100,38 +100,24 @@ typedef union Motor_FeedbackMode_Tag
     struct
     {
         uint8_t OpenLoop   : 1U;   /* 0 -> Position feedback, 1 -> OpenLoop */
+        // uint8_t Ramp       : 1U;
         uint8_t Speed      : 1U;   /* 0 -> Voltage or Current only, 1 -> Speed feedback */
         uint8_t Current    : 1U;   /* 0 -> Voltage, 1-> Current */
-        uint8_t Scalar     : 1U;   /* 0 -> Voltage, 1-> Use Scalar */
         uint8_t Position   : 1U;
     };
     uint8_t Word;
 }
 Motor_FeedbackMode_T;
 
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP            = { .OpenLoop = 1U, .Speed = 0U, .Current = 0U, .Scalar = 0U, };
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT    = { .OpenLoop = 1U, .Speed = 0U, .Current = 1U, .Scalar = 0U, };
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_VOLTAGE              = { .OpenLoop = 0U, .Speed = 0U, .Current = 0U, .Scalar = 0U, };
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_VOLTAGE_FREQ         = { .OpenLoop = 0U, .Speed = 0U, .Current = 0U, .Scalar = 1U, };
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_CURRENT              = { .OpenLoop = 0U, .Speed = 0U, .Current = 1U, .Scalar = 0U, };
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_VOLTAGE        = { .OpenLoop = 0U, .Speed = 1U, .Current = 0U, .Scalar = 0U, };
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .OpenLoop = 0U, .Speed = 1U, .Current = 1U, .Scalar = 0U, };
+static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR     = { .OpenLoop = 1U, .Speed = 0U, .Current = 0U, };
+static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT    = { .OpenLoop = 1U, .Speed = 0U, .Current = 1U, };
+static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_VOLTAGE              = { .OpenLoop = 0U, .Speed = 0U, .Current = 0U, };
+static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_CURRENT              = { .OpenLoop = 0U, .Speed = 0U, .Current = 1U, };
+static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_VOLTAGE        = { .OpenLoop = 0U, .Speed = 1U, .Current = 0U, };
+static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .OpenLoop = 0U, .Speed = 1U, .Current = 1U, };
 
 static inline Motor_FeedbackMode_T Motor_FeedbackMode(uint8_t word) { Motor_FeedbackMode_T flags = { .Word = word }; return flags; }
 
-// consolidate state machine inputs
-// typedef union
-// {
-//     struct
-//     {
-//         Motor_FeedbackMode_T FeedbackMode : 5U;
-//         uint16_t Hold        : 1U;
-//         uint16_t Control     : 1U;
-//         uint16_t Release     : 1U;
-//     };
-//     uint16_t Word;
-// }
-// Motor_ControlReq_T;
 
 /*
     Effectively sync mailbox for async calculations
@@ -644,7 +630,7 @@ extern void Motor_Jog6(MotorPtr_T p_motor);
 /* Feedback Control Variable Mode  */
 // typedef enum Motor_FeedbackModeId_Tag
 // {
-//     MOTOR_FEEDBACK_MODE_OPEN_LOOP,
+//     MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR,
 //     MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT,
 //     MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE,
 //     MOTOR_FEEDBACK_MODE_SCALAR_VOLTAGE_FREQ,
@@ -662,10 +648,9 @@ extern void Motor_Jog6(MotorPtr_T p_motor);
 
 //     switch(mode)
 //     {
-//         case MOTOR_FEEDBACK_MODE_OPEN_LOOP:                 flags.State = MODE_OPEN_LOOP.State;             break;
+//         case MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR:                 flags.State = MODE_OPEN_LOOP.State;             break;
 //         case MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT:         flags.State = MODE_OPEN_LOOP_CURRENT.State;     break;
 //         case MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE:          flags.State = MODE_VOLTAGE.State;               break;
-//         case MOTOR_FEEDBACK_MODE_SCALAR_VOLTAGE_FREQ:       flags.State = MODE_VOLTAGE_FREQ.State;          break;
 //         case MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT:          flags.State = MODE_CURRENT.State;               break;
 //         case MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_VOLTAGE:    flags.State = MODE_SPEED_VOLTAGE.State;         break;
 //         case MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT:    flags.State = MODE_SPEED_CURRENT.State;         break;
@@ -681,10 +666,9 @@ extern void Motor_Jog6(MotorPtr_T p_motor);
 
 //     switch((uint32_t)mode.State)
 //     {
-//         case (uint32_t)MODE_OPEN_LOOP.State:          id = MOTOR_FEEDBACK_MODE_OPEN_LOOP;                 break;
+//         case (uint32_t)MODE_OPEN_LOOP.State:          id = MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR;                 break;
 //         case (uint32_t)MODE_OPEN_LOOP_CURRENT.State:  id = MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT;         break;
 //         case (uint32_t)MODE_VOLTAGE.State:            id = MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE;          break;
-//         case (uint32_t)MODE_VOLTAGE_FREQ.State:       id = MOTOR_FEEDBACK_MODE_SCALAR_VOLTAGE_FREQ;       break;
 //         case (uint32_t)MODE_CURRENT.State:            id = MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT;          break;
 //         case (uint32_t)MODE_SPEED_VOLTAGE.State:      id = MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_VOLTAGE;    break;
 //         case (uint32_t)MODE_SPEED_CURRENT.State:      id = MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT;    break;

@@ -172,6 +172,17 @@ static inline uint16_t Thermistor_GetT0_DegC(const Thermistor_T * p_therm)      
 static inline uint16_t Thermistor_GetB(const Thermistor_T * p_therm)                { return p_therm->Params.NtcB; }
 static inline uint16_t Thermistor_GetVIn(const Thermistor_T * p_therm)              { return p_therm->Params.VInRef_MilliV; }
 
+static inline void Thermistor_SetType(Thermistor_T * p_therm, uint16_t value)           { p_therm->Params.Type = value; }
+static inline void Thermistor_SetLinearT0_Adcu(Thermistor_T * p_therm, uint16_t value)  { p_therm->Params.LinearT0_Adcu = value; }
+static inline void Thermistor_SetLinearT0_DegC(Thermistor_T * p_therm, uint16_t value)  { p_therm->Params.LinearT0_DegC = value; }
+static inline void Thermistor_SetLinearT1_Adcu(Thermistor_T * p_therm, uint16_t value)  { p_therm->Params.LinearT1_Adcu = value; }
+static inline void Thermistor_SetLinearT1_DegC(Thermistor_T * p_therm, uint16_t value)  { p_therm->Params.LinearT1_DegC = value; }
+static inline void Thermistor_SetR0(Thermistor_T * p_therm, uint16_t value)             { p_therm->Params.NtcR0 = value; }
+static inline void Thermistor_SetT0(Thermistor_T * p_therm, uint16_t value)             { p_therm->Params.NtcT0 = value; } /* Degrees Kelvin */
+static inline void Thermistor_SetT0_DegC(Thermistor_T * p_therm, uint16_t value)        { p_therm->Params.NtcT0 = value; }
+static inline void Thermistor_SetB(Thermistor_T * p_therm, uint16_t value)              { p_therm->Params.NtcB = value; }
+static inline void Thermistor_SetVIn(Thermistor_T * p_therm, uint16_t value)            { p_therm->Params.VInRef_MilliV = value; }
+
 /* Using async capture conversion only */
 // static inline int32_t Thermistor_GetHeat_DegC(Thermistor_T * p_therm) { return p_therm->Heat_DegC; }
 

@@ -44,7 +44,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*
-    Conversion functions only on user call. No regular proc
+    Conversion functions only on user call. No periodic proc
 */
 /******************************************************************************/
 /*!
@@ -61,33 +61,23 @@ static inline uint16_t Motor_User_GetSpeed_UFrac16(const MotorPtr_T p_motor) { r
 
     iPhase motoring as positive. generating as negative.
 */
-static inline int32_t Motor_User_GetIPhase_Frac16(const MotorPtr_T p_motor)
-{
-    // return Motor_DirectionalCmd(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_Frac16, 0U));
-    return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_UFrac16, 0U) ;
-}
+static inline int32_t Motor_User_GetIPhase_Frac16(const MotorPtr_T p_motor) { return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_UFrac16, 0U); }
+// return Motor_DirectionalCmd(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_Frac16, 0U));
 
 /*
     BEMF during freewheel or VOut during active control
 */
-static inline int32_t Motor_User_GetVPhase_Frac16(const MotorPtr_T p_motor)
-{
-    // return Motor_DirectionalCmd(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_Frac16, 0U));
-    return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_UFrac16, 0U);
-}
+// return Motor_DirectionalCmd(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_Frac16, 0U));
+static inline int32_t Motor_User_GetVPhase_Frac16(const MotorPtr_T p_motor) { return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_UFrac16, 0U); }
 
 
 /* Ideal electrical power [0:49152] <=> [0:1.5] */
-static inline int32_t Motor_User_GetElectricalPower_UFrac16(const MotorPtr_T p_motor)
-{
-    return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetElectricalPower_UFrac16, 0U);
-}
+static inline int32_t Motor_User_GetElectricalPower_UFrac16(const MotorPtr_T p_motor) { return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetElectricalPower_UFrac16, 0U); }
 
 //check DC current limit
 // Motor_FOC_GetElectricalPower_FracS16Abs(p_motor) / Global_Motor_GetVSource_V() ;
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-/*! @return [-32767:32767] Rpm should not exceed int16_t */
 static inline int16_t Motor_User_GetSpeed_Rpm(const MotorPtr_T p_motor)            { return _Motor_ConvertSpeed_FracS16ToRpm(p_motor, Motor_User_GetSpeed_Frac16(p_motor)); }
 static inline int16_t Motor_User_GetIPhase_Amps(const MotorPtr_T p_motor)          { return _Motor_ConvertI_FracS16ToAmps(Motor_User_GetIPhase_Frac16(p_motor)); }
 static inline int16_t Motor_User_GetVPhase_Volts(const MotorPtr_T p_motor)         { return _Motor_ConvertV_FracS16ToVolts(Motor_User_GetVPhase_Frac16(p_motor)); }
@@ -101,6 +91,7 @@ static inline Motor_Direction_T Motor_User_GetDirection(const MotorPtr_T p_motor
 static inline bool Motor_User_IsDirectionForward(const MotorPtr_T p_motor)                       { return (p_motor->Parameters.DirectionForward == p_motor->Direction); }
 static inline bool Motor_User_IsDirectionReverse(const MotorPtr_T p_motor)                       { return !Motor_User_IsDirectionForward(p_motor); }
 static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackMode(const MotorPtr_T p_motor)    { return p_motor->FeedbackMode; }
+//todo enum version
 static inline uint16_t Motor_User_GetActiveILimit(const MotorPtr_T p_motor)                      { return p_motor->ILimitActiveSentinel_Scalar16; }
 static inline uint16_t Motor_User_GetActiveSpeedLimit(const MotorPtr_T p_motor)                  { return p_motor->SpeedLimitDirect_Scalar16; }
 
@@ -125,6 +116,7 @@ static inline uint16_t Motor_User_GetAdcu(const MotorPtr_T p_motor, MotorAnalog_
 static inline uint8_t Motor_User_GetAdcu_Msb8(const MotorPtr_T p_motor, MotorAnalog_Channel_T adcChannel)  { return Motor_User_GetAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
 static inline uint16_t Motor_User_GetHeat_Adcu(const MotorPtr_T p_motor)                                   { return p_motor->AnalogResults.Heat_Adcu; }
 static inline int32_t Motor_User_GetHeat_DegC(const MotorPtr_T p_motor, uint16_t scalar)                   { return Thermistor_ConvertToDegC_Int(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
+// static inline float Motor_User_GetHeat_DegCFloat(const MotorPtr_T p_motor        { return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 
 /******************************************************************************/
 /*!
@@ -185,4 +177,3 @@ extern void Motor_User_SetGroundSpeed_Mph(MotorPtr_T p_motor, uint32_t wheelDiam
 #endif
 
 
-// static inline float Motor_User_GetHeat_DegCFloat(const MotorPtr_T p_motor)                                 { return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }

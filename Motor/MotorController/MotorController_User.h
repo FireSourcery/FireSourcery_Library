@@ -240,9 +240,9 @@ static inline uint8_t MotorController_User_GetMainVersionIndex(const MotorContro
 static inline uint32_t MotorController_User_GetVMax(void) { return GLOBAL_MOTOR.V_MAX_VOLTS; }
 static inline uint32_t MotorController_User_GetIMax(void) { return GLOBAL_MOTOR.I_MAX_AMPS; }
 
-static inline uint32_t MotorController_User_GetHardwareVersion(const MotorControllerPtr_T p_mc)
+static inline uint32_t MotorController_User_GetBoardVersion(void)
 {
-    uint8_t version[4U] = { GLOBAL_MOTOR.I_MAX_ADCU, GLOBAL_MOTOR.I_MAX_AMPS,GLOBAL_MOTOR.V_MAX_VOLTS, 0U };
+    uint8_t version[4U] = { GLOBAL_MOTOR.I_MAX_ADCU, GLOBAL_MOTOR.I_MAX_AMPS, GLOBAL_MOTOR.V_MAX_VOLTS, 0U };
     return *((uint32_t *)(&version[0U]));
 }
 

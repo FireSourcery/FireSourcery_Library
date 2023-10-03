@@ -75,6 +75,7 @@ static inline void Motor_FOC_CaptureIc(MotorPtr_T p_motor)
     FOC_SetIc(&p_motor->Foc, iPhase);
 }
 
+//todo remove division
 static inline void Motor_FOC_CaptureVa(MotorPtr_T p_motor)
 {
     qfrac16_t vPhase = ((int32_t)Linear_Voltage_CalcFracS16(&p_motor->UnitsVabc, p_motor->AnalogResults.Va_Adcu) + FOC_GetVBemfA(&p_motor->Foc)) / 2;
@@ -124,6 +125,16 @@ static inline void Motor_FOC_ClearObserveState(MotorPtr_T p_motor) /* Begin Cont
 {
     FOC_ClearControlState(&p_motor->Foc);
 }
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+// void Motor_FOC_DisableOutput(MotorPtr_T p_motor)
+// {
+//     Phase_Float(&p_motor->Phase);
+// }
 
 /******************************************************************************/
 /*!

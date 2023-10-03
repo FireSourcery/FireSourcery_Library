@@ -87,19 +87,6 @@ static inline void ProcInnerFeedback(MotorPtr_T p_motor)
         FOC_SetVq(&p_motor->Foc, req);
         FOC_SetVd(&p_motor->Foc, FOC_GetDReq(&p_motor->Foc));
     }
-    /*
-        Scalar Voltage Mode
-        input   RampCmd[0:65535] => Scalar
-        output  VqReq[-32768:32767] = RampCmd / 65536 * VSpeed_Frac16 / 2
-                VSpeed_Frac16 =< Speed_FracS16, to not exceed 1
-
-        Overflow caution:
-        Linear_Function(&p_motor->UnitsVSpeed) input range
-    */
-    // if(p_motor->FeedbackMode.Scalar == 1U)
-    // {
-    //     // FOC_SetIVqReq(&p_motor->Foc, math_clamp(Linear_Ramp_GetOutput(&p_motor->Ramp) * (Motor_GetVSpeed_Frac16(p_motor) / 2 / Scalar) / 65536, -32767, 32767));
-    // }
 }
 
 /*
@@ -153,7 +140,6 @@ void Motor_FOC_ProcFeedbackMatch(MotorPtr_T p_motor)
     {
         Linear_Ramp_SetState(&p_motor->Ramp, qReq);
     }
-    // else if (p_motor->FeedbackMode.Scalar == 1U) { Linear_Ramp_SetState(&p_motor->Ramp, 65535); }
 }
 
 /******************************************************************************/
@@ -261,15 +247,6 @@ static inline void Motor_FOC_ProcVSpeed(MotorPtr_T p_motor)
     FOC_SetVd(&p_motor->Foc, 0);
 }
 
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-// void Motor_FOC_DisableOutput(MotorPtr_T p_motor)
-// {
-//     Phase_Float(&p_motor->Phase);
-// }
 
 
 /******************************************************************************/

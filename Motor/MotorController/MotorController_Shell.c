@@ -440,7 +440,7 @@ static Cmd_Status_T Cmd_mode(MotorControllerPtr_T p_mc, int argc, char ** argv)
         Terminal_SendString(p_term, "FeedbackMode: ");
         switch(Motor_User_GetDefaultFeedbackMode(p_motor))
         {
-            case MOTOR_FEEDBACK_MODE_OPEN_LOOP:                 Terminal_SendString(p_term, "OPEN_LOOP");       break;
+            case MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR:                 Terminal_SendString(p_term, "OPEN_LOOP");       break;
             case MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE:          Terminal_SendString(p_term, "VOLTAGE");         break;
             case MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT:          Terminal_SendString(p_term, "CURRENT");         break;
             case MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_VOLTAGE:    Terminal_SendString(p_term, "SPEED_VOLTAGE");   break;

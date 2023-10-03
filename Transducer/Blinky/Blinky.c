@@ -136,3 +136,11 @@ static void Pattern_PeriodicToggle(Blinky_T * p_blinky)
         Timer_SetPeriod(&p_blinky->Timer, p_blinky->OnTime);
     }
 }
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+// static inline void Blinky_Blink_Short(MotorControllerPtr_T p_mc) { Blinky_Blink(&p_mc->Buzzer, 500U); }
+// static inline void Blinky_Blink_PeriodicType1(MotorControllerPtr_T p_mc) { Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U); }

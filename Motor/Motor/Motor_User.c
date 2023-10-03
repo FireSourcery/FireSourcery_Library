@@ -115,30 +115,6 @@ void Motor_User_SetVoltageModeCmd(MotorPtr_T p_motor, int16_t voltageCmd)
 
 /******************************************************************************/
 /*!
-    Voltage Freq Mode
-*/
-/******************************************************************************/
-// void Motor_User_SetScalarMode(MotorPtr_T p_motor)
-// {
-//     _Motor_User_ActivateControlMode(p_motor, MOTOR_FEEDBACK_MODE_SCALAR_VOLTAGE_FREQ);
-// }
-
-// /*!
-//     @param[in] voltage [0:65535] temp scalar 65535 => 1
-// */
-// void Motor_User_SetScalarCmdValue(MotorPtr_T p_motor, uint32_t scalar)
-// {
-//     Linear_Ramp_SetTarget(&p_motor->Ramp, scalar);
-// }
-
-// void Motor_User_SetScalarModeCmd(MotorPtr_T p_motor, uint32_t scalar)
-// {
-//     Motor_User_SetScalarMode(p_motor);
-//     Motor_User_SetScalarCmdValue(p_motor, scalar);
-// }
-
-/******************************************************************************/
-/*!
     Torque Mode
 */
 /******************************************************************************/
@@ -217,7 +193,7 @@ void Motor_User_SetPositionCmdValue(MotorPtr_T p_motor, uint16_t angle)
 */
 void Motor_User_SetOpenLoopMode(MotorPtr_T p_motor)
 {
-    Motor_User_ActivateFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP);
+    Motor_User_ActivateFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR);
 }
 
 void Motor_User_SetOpenLoopSpeed(MotorPtr_T p_motor, int32_t speed_Frac16)
@@ -289,20 +265,11 @@ void Motor_User_DisableControl(MotorPtr_T p_motor)
     always State machine checked Disable
 */
 /* no critical for transition. no sync issue if states do no contain transition during proc, or may result in running input function on a different state */
-void Motor_User_ReleaseControl(MotorPtr_T p_motor)
-{
-    StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
-}
+void Motor_User_ReleaseControl(MotorPtr_T p_motor) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL); }
 
-void Motor_User_Hold(MotorPtr_T p_motor)
-{
-    StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL);
-}
+void Motor_User_Hold(MotorPtr_T p_motor) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL); }
 
-void Motor_User_ActivateControl(MotorPtr_T p_motor)
-{
-    StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, STATE_MACHINE_INPUT_VALUE_NULL);
-}
+void Motor_User_ActivateControl(MotorPtr_T p_motor) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, STATE_MACHINE_INPUT_VALUE_NULL); }
 
 /*
     Does not need critical section if PWM interrupt does not read/write direction

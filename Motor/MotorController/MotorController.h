@@ -114,7 +114,8 @@ typedef enum
     MOTOR_CONTROLLER_DRIVE_THROTTLE,
     MOTOR_CONTROLLER_DRIVE_BRAKE,
 }
-MotorController_DriveId_T;
+MotorController_DriveId_T; //SubStateId
+
 typedef enum MotorController_DriveZeroMode_Tag
 {
     MOTOR_CONTROLLER_DRIVE_ZERO_MODE_FLOAT,       /* "Coast". MOSFETS non conducting. Same as Neutral. */
@@ -338,8 +339,8 @@ typedef struct MotorController_Tag
 
     /* State and SubState */
     StateMachine_T StateMachine;
-    MotorController_StatusFlags_T StatusFlags;
     MotorController_InitFlags_T InitFlags;
+    MotorController_StatusFlags_T StatusFlags;
     MotorController_FaultFlags_T FaultFlags;
 #if    defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
     MotAnalog_Results_T FaultAnalogRecord;
@@ -588,7 +589,7 @@ static inline void MotorController_Servo_SetCmd(MotorControllerPtr_T p_mc, uint3
 // }
 // MotorController_ILimitActiveId_T;
 
-// static inline bool MotorController_ProcDirectionAll(MotorControllerPtr_T p_mc, MotorController_Direction_T direction)
+// static inline bool MotorController_ProcOnDirection(MotorControllerPtr_T p_mc, MotorController_Direction_T direction)
 // {
 //     // if((p_mc->Parameters.BuzzerFlagsEnable.OnReverse == true))
 //     // {

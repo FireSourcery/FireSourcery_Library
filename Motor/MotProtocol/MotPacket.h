@@ -67,10 +67,11 @@ typedef enum MotPacket_Id_Tag
     /* Fixed Length */
     MOT_PACKET_STOP_ALL = 0x00U,
     MOT_PACKET_VERSION = 0x21U,
-
-    /*  */
     MOT_PACKET_REBOOT = 0xC1U,
     MOT_PACKET_CALL = 0xC2U,
+    // /* Fixed Length */
+    // MOT_PACKET_READ_VAR = 0xD1U,            /* Read Single Var */
+    // MOT_PACKET_WRITE_VAR = 0xD2U,           /* Write Single Var */
 
     /*
         Read/Write by VarId:
@@ -90,29 +91,46 @@ typedef enum MotPacket_Id_Tag
     MOT_PACKET_DATA_MODE_WRITE = 0xDFU,     /* Stateful NvMemory Write using Address */
     MOT_PACKET_DATA_MODE_ABORT = MOT_PACKET_SYNC_ABORT,
 
-    ///Datagram
 
     /* Extended Id Modes */
     MOT_PACKET_EXT_CMD = 0xE1U,             /* ExtId Batch - Predefined Sequences */
     // MOT_PACKET_READ_ONCE = F1U,
     // MOT_PACKET_WRITE_ONCE = F2U,
     MOT_PACKET_ID_RESERVED_255 = 0xFFU,
+    ///Datagram
 
-    // /* Fixed Length */
-    // MOT_PACKET_READ_VAR = 0xD1U,            /* Read Single Var */
-    // MOT_PACKET_WRITE_VAR = 0xD2U,           /* Write Single Var */
 }
 MotPacket_Id_T;
 
 typedef uint8_t checksum_t;
 
 /* 2-Byte Sync Packet */
-typedef struct MotPacket_Sync_Tag
+typedef struct __attribute__((packed)) MotPacket_Sync_Tag
 {
     uint8_t Start;  /* MOT_PACKET_START_BYTE */
     uint8_t SyncId; /* MotPacket_HeaderId_T */
 }
 MotPacket_Sync_T;
+
+// typedef struct __attribute__((packed)) MotPacket_Fixed_Tag
+// {
+//     uint8_t Start;      /* MOT_PACKET_START_BYTE */
+//     uint8_t FixedId;    /* MotPacket_HeaderId_T */
+//     uint16_t Checksum;
+//     uint32_t Immediate;
+// }
+// MotPacket_Fixed_T;
+
+// typedef struct __attribute__((packed)) MotPacket_Header_Tag
+// {
+//     uint8_t Start;      /* MOT_PACKET_START_BYTE */
+//     uint8_t Id;         /* MotPacket_HeaderId_T - Cmd / Descriptor of packet contents */
+//     uint16_t Checksum;   /* Checksum */
+//     uint8_t Length;     /* Packet Length */
+//     uint8_t Resv;     /* Packet Length */
+//     uint16_t Imm16;
+// }
+// MotPacket_Header_T;
 
 /*   */
 typedef struct __attribute__((packed)) MotPacket_Header_Tag
@@ -165,11 +183,11 @@ typedef MotPacket_Sync_T MotPacket_PingResp_T;
 /*! Version - Static Response */
 /******************************************************************************/
 typedef MotPacket_Header_T                                                                                                      MotPacket_VersionReq_T;
-typedef struct MotPacket_VersionResp_Payload_Tag { uint8_t Version[4U]; uint32_t Library; uint32_t Main; uint32_t Hardware; }   MotPacket_VersionResp_Payload_T;
+typedef struct MotPacket_VersionResp_Payload_Tag { uint8_t Version[4U]; uint32_t Library; uint32_t Main; uint32_t Board; }      MotPacket_VersionResp_Payload_T;
 typedef struct MotPacket_VersionResp_Tag { MotPacket_Header_T Header; MotPacket_VersionResp_Payload_T VersionResp; }            MotPacket_VersionResp_T;
 
 /******************************************************************************/
-/*! Stop - Emergency Stop All */
+/*! Stop - Stop All */
 /******************************************************************************/
 typedef MotPacket_Header_T MotPacket_StopReq_T;
 typedef struct MotPacket_StopResp_Payload_Tag { uint16_t Status; }                                          MotPacket_StopResp_Payload_T;
@@ -286,7 +304,7 @@ extern uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_
 /*! Ctrlr side */
 /******************************************************************************/
 extern uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket);
-extern uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket, uint32_t library, uint32_t main);
+extern uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket, uint32_t library, uint32_t main, uint32_t board);
 extern uint8_t MotPacket_StopResp_Build(MotPacket_StopResp_T * p_respPacket, uint16_t status);
 extern uint8_t MotPacket_CallResp_Build(MotPacket_CallResp_T * p_respPacket, uint16_t id, uint16_t status);
 

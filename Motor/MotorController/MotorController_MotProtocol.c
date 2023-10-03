@@ -52,7 +52,8 @@
 /******************************************************************************/
 static protocol_txsize_t Ping(MotorControllerPtr_T p_mc, MotPacket_PingResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
 {
-    (void)p_mc; (void)p_rxPacket;
+    (void)p_rxPacket;
+    MotorController_User_BeepN(p_mc, 500U, 500U, 1U);
     return MotPacket_PingResp_Build(p_txPacket);
 }
 
@@ -62,7 +63,7 @@ static protocol_txsize_t Ping(MotorControllerPtr_T p_mc, MotPacket_PingResp_T * 
 static protocol_txsize_t Version(MotorControllerPtr_T p_mc, MotPacket_VersionResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
-    return MotPacket_VersionResp_Build(p_txPacket, MotorController_User_GetLibraryVersion(), MotorController_User_GetMainVersion(p_mc));
+    return MotPacket_VersionResp_Build(p_txPacket, MotorController_User_GetLibraryVersion(), MotorController_User_GetMainVersion(p_mc), MotorController_User_GetBoardVersion());
 }
 
 /******************************************************************************/
@@ -84,6 +85,8 @@ typedef enum MotCallId_Tag
     MOT_CALL_EXIT_BLOCKING,
     MOT_CALL_CALIBRATE_SENSOR,
     MOT_CALL_SAVE_PARAMS,
+    MOT_CALL_READ_MANUFACTURE,
+    MOT_CALL_WRITE_MANUFACTURE,
 }
 MotCallId_T;
 
@@ -94,12 +97,12 @@ static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_Call
 
     switch((MotCallId_T)p_rxPacket->CallReq.Id)
     {
-        case MOT_CALL_ENTER_BLOCKING:       MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_ENTER);          status = 0;       break;
-        case MOT_CALL_EXIT_BLOCKING:        MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_EXIT);           status = 0;       break;
-        case MOT_CALL_CALIBRATE_SENSOR:     MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR);     status = 0U;                    break;
+        case MOT_CALL_ENTER_BLOCKING:       MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_ENTER);              status = 0;                 break;
+        case MOT_CALL_EXIT_BLOCKING:        MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_EXIT);               status = 0;                 break;
+        case MOT_CALL_CALIBRATE_SENSOR:     MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR);   status = 0U;                break;
+        case MOT_CALL_SAVE_PARAMS:          MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);    status = p_mc->NvmStatus;   break;
         // case MOT_CALL_WRITE_MANUFACTURE: MotorController_User_Write_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR);     status = 0U;                    break;
         // case MOT_CALL_READ_MANUFACTURE:  MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR);     status = 0U;                    break;
-        case MOT_CALL_SAVE_PARAMS:          MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);      status = p_mc->NvmStatus;       break;
         default: break;
     }
 
