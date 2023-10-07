@@ -79,7 +79,7 @@ static protocol_txsize_t StopAll(MotorControllerPtr_T p_mc, MotPacket_StopResp_T
 /******************************************************************************/
 /*! Call - Blocking  */
 /******************************************************************************/
-typedef enum MotCallId_Tag
+typedef enum MotCallId
 {
     MOT_CALL_ENTER_BLOCKING,
     MOT_CALL_EXIT_BLOCKING,
@@ -131,7 +131,7 @@ static protocol_txsize_t VarRead(MotorControllerPtr_T p_mc, MotPacket_VarReadRes
 static protocol_txsize_t VarWrite(MotorControllerPtr_T p_mc, MotPacket_VarWriteResp_T * p_txPacket, const MotPacket_VarWriteReq_T * p_rxPacket)
 {
     uint8_t varsCount = MotPacket_VarWriteReq_ParseVarCount(p_rxPacket);
-    MotVar_Status_T status;
+    MotVarId_Status_T status;
     for(uint8_t iVar = 0U; iVar < varsCount; iVar++)
     {
         status = MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_VarWriteReq_ParseVarId(p_rxPacket, iVar), MotPacket_VarWriteReq_ParseVarValue(p_rxPacket, iVar));

@@ -39,7 +39,7 @@
 #define MOT_PROTOCOL_TIMEOUT_REQ        (5000U)     /* Timeout Req */
 
 /* For flashloader only */
-typedef struct MotProtocol_SubState_Tag
+typedef struct MotProtocol_SubState
 {
     uint8_t StateIndex;
     uint32_t DataModeAddress;

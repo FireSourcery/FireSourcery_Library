@@ -36,7 +36,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct Pin_Config_Tag
+typedef const struct Pin_Config
 {
     HAL_Pin_T * const P_HAL_PIN;
     const uint32_t ID;
@@ -45,7 +45,7 @@ typedef const struct Pin_Config_Tag
 }
 Pin_Config_T;
 
-typedef struct Pin_Tag
+typedef struct Pin
 {
     const Pin_Config_T CONFIG;
 }

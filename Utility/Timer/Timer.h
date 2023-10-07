@@ -35,14 +35,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct Timer_Config_Tag
+typedef struct Timer_Config
 {
     const volatile uint32_t * const P_BASE; /* Base Timer */
     const uint32_t BASE_FREQ;
 }
 Timer_Config_T;
 
-typedef struct Timer_Tag
+typedef struct Timer
 {
     const Timer_Config_T CONFIG;
     uint32_t TimeRef;
@@ -55,7 +55,7 @@ typedef struct Timer_Tag
 Timer_T;
 
 /* Repeat Timer */
-typedef struct TimerN_Tag
+typedef struct TimerN
 {
     Timer_T Timer;
     uint32_t OneShotCount;

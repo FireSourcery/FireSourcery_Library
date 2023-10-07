@@ -38,7 +38,7 @@
 /*
     Local unit converisons
 */
-typedef struct MotorCmdr_Units_Tag
+typedef struct MotorCmdr_Units
 {
     uint16_t SpeedFeedbackRef_Rpm;
     uint16_t IMaxRef_Amp;
@@ -52,7 +52,7 @@ typedef struct MotorCmdr_Units_Tag
 }
 MotorCmdr_Units_T;
 
-typedef struct MotorCmdr_Tag
+typedef struct MotorCmdr
 {
     uint8_t TxPacket[MOT_PACKET_LENGTH_MAX];
     uint8_t RxPacket[MOT_PACKET_LENGTH_MAX];

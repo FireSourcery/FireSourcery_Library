@@ -61,7 +61,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef enum Motor_CommutationMode_Tag
+typedef enum Motor_CommutationMode
 {
     MOTOR_COMMUTATION_MODE_FOC,
     MOTOR_COMMUTATION_MODE_SIX_STEP,
@@ -71,7 +71,7 @@ Motor_CommutationMode_T;
 /*
     Sensor Mode Param at start up.
 */
-typedef enum Motor_SensorMode_Tag
+typedef enum Motor_SensorMode
 {
     MOTOR_SENSOR_MODE_HALL,
     MOTOR_SENSOR_MODE_ENCODER,
@@ -95,7 +95,7 @@ Motor_SensorMode_T;
     Feedback Mode
 */
 /******************************************************************************/
-typedef union Motor_FeedbackMode_Tag
+typedef union Motor_FeedbackMode
 {
     struct
     {
@@ -122,7 +122,7 @@ static inline Motor_FeedbackMode_T Motor_FeedbackMode(uint8_t word) { Motor_Feed
 /*
     Effectively sync mailbox for async calculations
 */
-typedef union Motor_StatusFlags_Tag
+typedef union Motor_StatusFlags
 {
     struct
     {
@@ -151,7 +151,7 @@ typedef union
 }
 Motor_FaultFlags_T;
 
-typedef enum Motor_ILimitActiveId_Tag
+typedef enum Motor_ILimitActiveId
 {
     MOTOR_I_LIMIT_ACTIVE_HEAT_THIS,     /* MotorHeat */
     MOTOR_I_LIMIT_ACTIVE_UPPER,         /* From upper module */
@@ -159,7 +159,7 @@ typedef enum Motor_ILimitActiveId_Tag
 }
 Motor_ILimitActiveId_T;
 
-typedef enum Motor_SpeedLimitActiveId_Tag
+typedef enum Motor_SpeedLimitActiveId
 {
     MOTOR_SPEED_LIMIT_ACTIVE_UPPER, /* From upper module */
     MOTOR_SPEED_LIMIT_ACTIVE_USER,
@@ -169,7 +169,7 @@ Motor_SpeedLimitActiveId_T;
 /*
     Direction Run SubState
 */
-typedef enum Motor_Direction_Tag
+typedef enum Motor_Direction
 {
     MOTOR_DIRECTION_CCW,
     MOTOR_DIRECTION_CW,
@@ -179,7 +179,7 @@ Motor_Direction_T;
 /*
 
 */
-typedef enum Motor_OpenLoopState_Tag
+typedef enum Motor_OpenLoopState
 {
     MOTOR_OPEN_LOOP_STATE_ALIGN,
     MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN,
@@ -190,7 +190,7 @@ Motor_OpenLoopState_T;
 /*
     Calibration SubState
 */
-typedef enum Motor_CalibrationState_Tag
+typedef enum Motor_CalibrationState
 {
     MOTOR_CALIBRATION_STATE_DISABLE,
     MOTOR_CALIBRATION_STATE_ADC,
@@ -204,7 +204,7 @@ Motor_CalibrationState_T;
 /*
     All modules independently conform to same ID
 */
-typedef enum Motor_SectorId_Tag
+typedef enum Motor_SectorId
 {
     MOTOR_SECTOR_ID_0 = 0U,
     MOTOR_SECTOR_ID_1 = 1U,
@@ -231,7 +231,7 @@ Motor_SectorId_T;
 /*!
     @brief Motor Parameters - Runtime variable configuration. Load from non volatile memory.
 */
-typedef struct __attribute__((aligned(2U))) Motor_Params_Tag
+typedef struct __attribute__((aligned(2U))) Motor_Params
 {
     Motor_CommutationMode_T     CommutationMode;
     Motor_SensorMode_T          SensorMode;
@@ -286,7 +286,7 @@ Motor_Params_T;
 /*!
     @brief Motor Config - Compile time const configuration. Unique per Motor
 */
-typedef const struct Motor_Init_Tag
+typedef const struct Motor_Init
 {
     AnalogN_T * const P_ANALOG_N;
     const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
@@ -296,7 +296,7 @@ typedef const struct Motor_Init_Tag
 }
 Motor_Config_T;
 
-typedef struct Motor_Tag
+typedef struct Motor
 {
     const Motor_Config_T CONFIG;
     Motor_Params_T Parameters;
@@ -628,7 +628,7 @@ extern void Motor_Jog6(MotorPtr_T p_motor);
 #endif
 
 /* Feedback Control Variable Mode  */
-// typedef enum Motor_FeedbackModeId_Tag
+// typedef enum Motor_FeedbackModeId
 // {
 //     MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR,
 //     MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT,

@@ -35,7 +35,7 @@
 
 #define MSM_TRANSITION_TABLE_LENGTH     (7U)
 
-typedef enum MotorStateMachine_Input_Tag
+typedef enum MotorStateMachine_Input
 {
     MSM_INPUT_FAULT,            /* Toggle Fault */
 
@@ -49,7 +49,7 @@ typedef enum MotorStateMachine_Input_Tag
 }
 MotorStateMachine_Input_T;
 
-typedef enum Motor_StateMachine_StateId_Tag
+typedef enum Motor_StateMachine_StateId
 {
     MSM_STATE_ID_INIT,
     MSM_STATE_ID_STOP,

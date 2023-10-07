@@ -39,7 +39,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef union AnalogN_AdcFlags_Tag
+typedef union AnalogN_AdcFlags
 {
     struct
     {
@@ -56,7 +56,7 @@ typedef union AnalogN_AdcFlags_Tag
 }
 AnalogN_AdcFlags_T;
 
-typedef const struct AnalogN_Conversion_Tag
+typedef const struct AnalogN_Conversion
 {
     const Analog_Conversion_T CONVERSION;
     Analog_T * const P_ANALOG; /* AnalogI in Analog[N] */
@@ -80,14 +80,14 @@ typedef const struct
 }
 AnalogN_ConversionGroup_T;
 
-typedef const struct AnalogN_Config_Tag
+typedef const struct AnalogN_Config
 {
     Analog_T * const P_ANALOGS;
     uint8_t ANALOG_COUNT;
 }
 AnalogN_Config_T;
 
-typedef struct AnalogN_Tag
+typedef struct AnalogN
 {
     const AnalogN_Config_T CONFIG;
 }

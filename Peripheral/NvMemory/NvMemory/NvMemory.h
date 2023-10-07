@@ -39,7 +39,7 @@
 /*
     Common return status by public module functions
 */
-typedef enum NvMemory_Status_Tag
+typedef enum NvMemory_Status
 {
     NV_MEMORY_STATUS_SUCCESS,
     NV_MEMORY_STATUS_PROCESSING,        /* NonBlocking Only */
@@ -63,7 +63,7 @@ NvMemory_Status_T;
     Partition Group
     Partition defines writable ranges. Checked on op cmd.
 */
-typedef const struct NvMemory_Partition_Tag
+typedef const struct NvMemory_Partition
 {
     uint8_t * P_START;
     size_t SIZE;
@@ -94,12 +94,12 @@ typedef bool (* const HAL_NvMemory_ReadFlags_T)(const void * p_hal);
 typedef void (* const HAL_NvMemory_ClearFlags_T)(void * p_hal);
 typedef void (*HAL_NvMemory_StartCmd_T)(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
 
-struct NvMemory_Tag;
-typedef NvMemory_Status_T(*NvMemory_Process_T)(struct NvMemory_Tag * p_this);
-typedef NvMemory_Status_T(*NvMemory_FinalizeCmd_T)(struct NvMemory_Tag * p_this, size_t opIndex);
+struct NvMemory;
+typedef NvMemory_Status_T(*NvMemory_Process_T)(struct NvMemory * p_this);
+typedef NvMemory_Status_T(*NvMemory_FinalizeCmd_T)(struct NvMemory * p_this, size_t opIndex);
 typedef void (*NvMemory_Callback_T)(void * p_callbackData);
 
-typedef enum NvMemory_State_Tag
+typedef enum NvMemory_State
 {
     NV_MEMORY_STATE_IDLE,
     NV_MEMORY_STATE_ACTIVE,
@@ -108,7 +108,7 @@ typedef enum NvMemory_State_Tag
 }
 NvMemory_State_T;
 
-// typedef const struct NvMemory_OpControl_Tag
+// typedef const struct NvMemory_OpControl
 // {
 //     HAL_NvMemory_StartCmd_T START_CMD;
 //     NvMemory_FinalizeCmd_T FINALIZE_CMD;
@@ -118,7 +118,7 @@ NvMemory_State_T;
 // }
 // NvMemory_OpControl_T;
 
-typedef const struct NvMemory_Config_Tag
+typedef const struct NvMemory_Config
 {
     void * const P_HAL;
     /* abstract functions provided by concrete child class */
@@ -135,7 +135,7 @@ NvMemory_Config_T;
 /*
     NvMemory controller
 */
-typedef struct NvMemory_Tag
+typedef struct NvMemory
 {
     NvMemory_Config_T CONFIG;
 

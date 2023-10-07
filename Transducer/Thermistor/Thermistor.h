@@ -37,7 +37,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef enum Thermistor_Status_Tag
+typedef enum Thermistor_Status
 {
     /* Main Status Return */
     THERMISTOR_STATUS_OK,
@@ -49,7 +49,7 @@ typedef enum Thermistor_Status_Tag
 Thermistor_Status_T;
 
 /* Calculation */
-typedef enum Thermistor_Type_Tag
+typedef enum Thermistor_Type
 {
     THERMISTOR_TYPE_LINEAR,
 #if defined(CONFIG_THERMISTOR_UNITS_NON_LINEAR)
@@ -63,7 +63,7 @@ Thermistor_Type_T;
 /*
     Set Vin to same decimal precision as ADC_VREF
 */
-typedef struct __attribute__((aligned(2U))) Thermistor_Params_Tag
+typedef struct __attribute__((aligned(2U))) Thermistor_Params
 {
     Thermistor_Type_T Type;
 
@@ -90,7 +90,7 @@ typedef struct __attribute__((aligned(2U))) Thermistor_Params_Tag
 }
 Thermistor_Params_T;
 
-typedef struct Thermistor_Config_Tag
+typedef struct Thermistor_Config
 {
     const uint32_t R_SERIES;    /* Pull-up */
     const uint32_t R_PARALLEL;  /* Parallel pull-down if applicable. 0 for Disable */
@@ -99,7 +99,7 @@ typedef struct Thermistor_Config_Tag
 }
 Thermistor_Config_T;
 
-typedef struct Thermistor_Tag
+typedef struct Thermistor
 {
     const Thermistor_Config_T CONFIG;
     Thermistor_Params_T Params;

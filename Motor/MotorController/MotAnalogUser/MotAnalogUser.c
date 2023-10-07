@@ -138,7 +138,7 @@ void MotAnalogUser_SetDirectionPins(MotAnalogUser_T * p_user, MotAnalogUser_Dire
 }
 
 
-// typedef union MotAnalogUser_InvertPins_Tag
+// typedef union MotAnalogUser_InvertPins
 // {
 //     struct
 //     {

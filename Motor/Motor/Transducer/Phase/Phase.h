@@ -41,7 +41,7 @@
 #include "Peripheral/Pin/Pin.h"
 #include <stdint.h>
 
-typedef enum Phase_Mode_Tag
+typedef enum Phase_Mode
 {
     PHASE_MODE_UNIPOLAR_1,    /*!<   */
     PHASE_MODE_UNIPOLAR_2,    /*!<   */
@@ -50,7 +50,7 @@ typedef enum Phase_Mode_Tag
 Phase_Mode_T;
 
 /* 2-Phase */
-typedef enum Phase_Id_Tag
+typedef enum Phase_Id
 {
     PHASE_ID_0 = 0U,
     PHASE_ID_1_AC = 1U,
@@ -64,7 +64,7 @@ typedef enum Phase_Id_Tag
 Phase_Id_T;
 
 /* 3-Phase */
-// typedef enum Phase_Id_Tag
+// typedef enum Phase_Id
 // {
 //     PHASE_ID_0 = 0U,
 //     PHASE_ID_A = 1U,
@@ -77,7 +77,7 @@ Phase_Id_T;
 // }
 // Phase_Id_T;
 
-typedef struct Phase_Tag
+typedef struct Phase
 {
     PWM_T PwmA;
     PWM_T PwmB;

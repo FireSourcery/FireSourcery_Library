@@ -33,7 +33,7 @@
 
 #include <stdint.h>
 
-typedef struct Filter_Tag
+typedef struct Filter
 {
     // uint32_t * p_Buffer;
     // uint8_t BufferSize;

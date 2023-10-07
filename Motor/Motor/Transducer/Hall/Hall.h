@@ -52,7 +52,7 @@
 typedef void (*Hall_CommutationPhase_T)(void * p_userData);
 #endif
 
-typedef union Hall_Sensors_Tag
+typedef union Hall_Sensors
 {
     struct
     {
@@ -73,7 +73,7 @@ Hall_Sensors_T;
     Hall sensor ID. ID base value reflects 3 bit sensor state, or sequential ID
     if both sequential ID, and sensor state is needed, another table must be used
 */
-typedef enum Hall_Id_Tag
+typedef enum Hall_Id
 {
     /*
         Rotor Angle, CCW is increasing Angle
@@ -135,28 +135,28 @@ typedef enum Hall_Id_Tag
 }
 Hall_Id_T;
 
-typedef enum Hall_Direction_Tag
+typedef enum Hall_Direction
 {
     HALL_DIRECTION_CCW = 0U,
     HALL_DIRECTION_CW = 1U,
 }
 Hall_Direction_T;
 
-typedef struct __attribute__((aligned(4U))) Hall_Params_Tag
+typedef struct __attribute__((aligned(4U))) Hall_Params
 {
     Hall_Id_T SensorsTable[HALL_SENSORS_TABLE_LENGTH];
     // uint8_t BoundaryType; /* 3 states 120 degree active, or 6 step, 180 degree active */
 }
 Hall_Params_T;
 
-typedef const struct Hall_Config_Tag
+typedef const struct Hall_Config
 {
     const Hall_Params_T * const P_PARAMS_NVM;
     void (* const HAL_INIT)(void);
 }
 Hall_Config_T;
 
-typedef struct Hall_Tag
+typedef struct Hall
 {
     const Hall_Config_T CONFIG;
     Pin_T PinA;

@@ -44,7 +44,7 @@
 /*!
     @brief Virtual channel identifiers, index into arrays containing Analog channel
 */
-typedef enum MotAnalog_Channel_Tag
+typedef enum MotAnalog_Channel
 {
     MOT_ANALOG_CHANNEL_VSOURCE,         /* V Source, V Battery */
     MOT_ANALOG_CHANNEL_VSENSE,          /* V Sensors, ~5V */
@@ -62,7 +62,7 @@ typedef enum MotAnalog_Channel_Tag
 }
 MotAnalog_Channel_T;
 
-typedef union MotAnalog_Results_Tag
+typedef union MotAnalog_Results
 {
     struct
     {
@@ -83,7 +83,7 @@ typedef union MotAnalog_Results_Tag
 }
 MotAnalog_Results_T;
 
-typedef struct MotAnalog_Conversions_Tag
+typedef struct MotAnalog_Conversions
 {
     union
     {

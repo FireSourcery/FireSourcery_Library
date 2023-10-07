@@ -42,7 +42,7 @@
 
 #define MCSM_TRANSITION_TABLE_LENGTH (6U + _MCSM_TRANSITION_TABLE_LENGTH_SERVO)
 
-typedef enum MotorController_StateMachine_Input_Tag
+typedef enum MotorController_StateMachine_Input
 {
     MCSM_INPUT_FAULT,
     MCSM_INPUT_BLOCKING,
@@ -54,7 +54,7 @@ typedef enum MotorController_StateMachine_Input_Tag
 }
 MotorController_StateMachine_Input_T;
 
-typedef enum MotorController_StateMachine_StateId_Tag
+typedef enum MotorController_StateMachine_StateId
 {
     MCSM_STATE_ID_INIT,
     MCSM_STATE_ID_PARK,

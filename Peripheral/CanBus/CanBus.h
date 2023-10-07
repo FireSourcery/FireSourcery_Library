@@ -84,7 +84,7 @@ typedef const struct
 }
 CanBus_Config_T;
 
-typedef struct CanBus_Tag
+typedef struct CanBus
 {
     //buffer id map
     const CanBus_Config_T CONFIG;
@@ -99,9 +99,9 @@ typedef struct CanBus_Tag
     CanMessage_T RxBuffers[CONFIG_CAN_BUS_MESSAGE_BUFFER_COUNT/2];
 #endif
 
-//    void (*RxCompleteCallback)(struct CanBus_Tag * p_this);
-//    void (*TxCompleteCallback)(struct CanBus_Tag * p_this);
-//    void (*ErrorCallback)(struct CanBus_Tag * p_this);
+//    void (*RxCompleteCallback)(struct CanBus * p_this);
+//    void (*TxCompleteCallback)(struct CanBus * p_this);
+//    void (*ErrorCallback)(struct CanBus * p_this);
 
 #if CONFIG_CAN_BUS_DMA_ENABLE
     uint8_t RxFifoDmaChannel;

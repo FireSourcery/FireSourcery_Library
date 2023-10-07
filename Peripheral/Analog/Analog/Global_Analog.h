@@ -36,7 +36,7 @@
 #include <stdbool.h>
 
 /* Global Static Const  */
-typedef const struct Global_Analog_Tag
+typedef const struct Global_Analog
 {
     const uint16_t ADC_BITS;
     const uint16_t ADC_MAX;

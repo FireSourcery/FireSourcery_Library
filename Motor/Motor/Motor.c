@@ -50,9 +50,7 @@ void Motor_InitReboot(MotorPtr_T p_motor)
 #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
     Phase_Polar_ActivateMode(&p_motor->Phase, p_motor->Parameters.PhasePwmMode);
 #endif
-
     Motor_InitSensor(p_motor);
-
     Thermistor_Init(&p_motor->Thermistor);
 
     /*
@@ -289,9 +287,6 @@ bool Motor_CheckOpenLoop(const MotorPtr_T p_motor)
 {
     return ((Motor_CheckSensorFeedback(p_motor) == false) || (_Motor_CheckOpenLoop(p_motor) == true));
 }
-
-
-
 
 /******************************************************************************/
 /*

@@ -38,7 +38,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-typedef enum VMonitor_Status_Tag
+typedef enum VMonitor_Status
 {
     VMONITOR_STATUS_OK,
     VMONITOR_FAULT_UPPER,
@@ -48,7 +48,7 @@ typedef enum VMonitor_Status_Tag
 }
 VMonitor_Status_T;
 
-typedef struct __attribute__((aligned(4U))) VMonitor_Params_Tag
+typedef struct __attribute__((aligned(4U))) VMonitor_Params
 {
     uint16_t FaultUpper_Adcu;
     uint16_t FaultLower_Adcu;
@@ -59,7 +59,7 @@ typedef struct __attribute__((aligned(4U))) VMonitor_Params_Tag
 }
 VMonitor_Params_T;
 
-typedef const struct VMonitor_Config_Tag
+typedef const struct VMonitor_Config
 {
     const uint16_t UNITS_R1;
     const uint16_t UNITS_R2;

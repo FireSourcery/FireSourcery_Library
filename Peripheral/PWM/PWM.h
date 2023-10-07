@@ -36,7 +36,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct PWM_Config_Tag
+typedef const struct PWM_Config
 {
     // HAL_PWM_Module_T * const P_HAL_PWM_MODULE;
     HAL_PWM_T * const P_HAL_PWM;
@@ -45,7 +45,7 @@ typedef const struct PWM_Config_Tag
 }
 PWM_Config_T;
 
-typedef struct PWM_Tag
+typedef struct PWM
 {
     const PWM_Config_T CONFIG;
 }

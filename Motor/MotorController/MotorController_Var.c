@@ -41,12 +41,14 @@
 static inline Thermistor_T * ThermistorInstance(const MotorControllerPtr_T p_mc, MotVarId_T varId)
 {
     Thermistor_T * p_thermistor = 0U;
+
+    //todo use ptr
     switch((MotVarId_InstanceId_Thermistor_T)varId.Instance)
     {
         case MOT_VAR_ID_THERMISTOR_PCB:         p_thermistor = &p_mc->ThermistorPcb; break;
         case MOT_VAR_ID_THERMISTOR_MOSFETS_0:   p_thermistor = &p_mc->ThermistorMosfets; break;
         case MOT_VAR_ID_THERMISTOR_MOSFETS_1:   p_thermistor = &p_mc->ThermistorMosfets; break;
-        case MOT_VAR_ID_THERMISTOR_MOTOR_0:     p_thermistor = &MotorController_GetPtrMotor(p_mc, 0U)->Thermistor; break;
+        case MOT_VAR_ID_THERMISTOR_MOTOR_0:     p_thermistor = &(MotorController_User_GetPtrMotor(p_mc, 0U)->Thermistor); break;
         default: break;
     }
     return p_thermistor;
@@ -73,12 +75,12 @@ static inline VMonitor_T * VMonitorInstance(const MotorControllerPtr_T p_mc, Mot
 static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T varId)
 {
     int32_t value = 0;
-    MotorPtr_T p_motor = MotorController_GetPtrMotor(p_mc, varId.Instance);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
 
-    switch((MotVarId_Prefix_RealTime_T)varId.EnumPrefix)
+    switch((MotVarId_Prefix_RealTime_T)varId.NamePrefix)
     {
-        case MOT_VAR_ID_PREFIX_REAL_TIME_MOTOR:
-            switch((MotVarId_RealTime_Motor_T)varId.EnumName)
+        case MOT_VAR_ID_PREFIX_MONITOR_MOTOR:
+            switch((MotVarId_Monitor_Motor_T)varId.NameIndex)
             {
                 case MOT_VAR_SPEED:                 value = Motor_User_GetSpeed_UFrac16(p_motor);               break;
                 case MOT_VAR_I_PHASE:               value = Motor_User_GetIPhase_Frac16(p_motor);               break;
@@ -98,8 +100,8 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_REAL_TIME_MOTOR_FOC:
-            switch((MotVarId_RealTime_MotorFoc_T)varId.EnumName)
+        case MOT_VAR_ID_PREFIX_MONITOR_MOTOR_FOC:
+            switch((MotVarId_Monitor_MotorFoc_T)varId.NameIndex)
             {
                 case MOT_VAR_FOC_IA:    value = p_motor->Foc.Ia;        break;
                 case MOT_VAR_FOC_IB:    value = p_motor->Foc.Ib;        break;
@@ -115,12 +117,12 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_REAL_TIME_MOTOR_SENSOR:
+        case MOT_VAR_ID_PREFIX_MONITOR_MOTOR_SENSOR:
             // case MOT_VAR_ENCODER_FREQ:    value = p_motor->Encoder.FreqD;   break;
             break;
 
-        case MOT_VAR_ID_PREFIX_REAL_TIME_GLOBAL:
-            switch((MotVarId_RealTime_Global_T)varId.EnumName)
+        case MOT_VAR_ID_PREFIX_MONITOR_GLOBAL:
+            switch((MotVarId_Monitor_Global_T)varId.NameIndex)
             {
                 case MOT_VAR_ZERO:                  value = 0;                                                  break;
                 case MOT_VAR_MILLIS:                value = Millis();                                           break;
@@ -140,8 +142,8 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_REAL_TIME_ANALOG_INPUT:
-            switch((MotVarId_RealTime_AnalogInput_T)varId.EnumName)
+        case MOT_VAR_ID_PREFIX_MONITOR_ANALOG_INPUT:
+            switch((MotVarId_Monitor_UserAnalog_T)varId.NameIndex)
             {
                 case MOT_VAR_ANALOG_THROTTLE:       value = MotAnalogUser_GetThrottle(&p_mc->AnalogUser);               break;
                 case MOT_VAR_ANALOG_BRAKE:          value = MotAnalogUser_GetBrake(&p_mc->AnalogUser);                  break;
@@ -151,8 +153,8 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_REAL_TIME_CONTROL:
-            switch((MotVarId_RealTime_Control_T)varId.EnumName)
+        case MOT_VAR_ID_PREFIX_CONTROL:
+            switch((MotVarId_Control_T)varId.NameIndex)
             {
                 case MOT_VAR_USER_SET_POINT:                value = MotorController_User_GetCmdValue(p_mc);                     break;
                 case MOT_VAR_DIRECTION:                     value = MotorController_User_GetDirection(p_mc);                    break;
@@ -164,8 +166,8 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
                 default: break;
             }
             break;
-        case MOT_VAR_ID_PREFIX_REAL_TIME_CMD: break;
-        case MOT_VAR_ID_PREFIX_REAL_TIME_CMD_MOTOR: break;
+        case MOT_VAR_ID_PREFIX_CMD: break;
+        case MOT_VAR_ID_PREFIX_CMD_MOTOR: break;
         default: break;
     }
 
@@ -175,15 +177,15 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
 static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T varId)
 {
     int32_t value = 0;
-    MotorPtr_T p_motor = MotorController_GetPtrMotor(p_mc, varId.Instance);
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
     Protocol_T * p_protocol;
     Thermistor_T * p_thermistor;
     VMonitor_T * p_vMonitor;
 
-    switch((MotVarId_Prefix_Params_T)varId.EnumPrefix)
+    switch((MotVarId_Prefix_Params_T)varId.NamePrefix)
     {
         case MOT_VAR_ID_PREFIX_PARAMS_MOTOR_PRIMARY:
-            switch((MotVarId_Params_MotorPrimary_T)varId.EnumName)
+            switch((MotVarId_Params_MotorPrimary_T)varId.NameIndex)
             {
                 case MOT_VAR_COMMUTATION_MODE:          value = Motor_Params_GetCommutationMode(p_motor);           break;
                 case MOT_VAR_SENSOR_MODE:               value = Motor_Params_GetSensorMode(p_motor);                break;
@@ -202,7 +204,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
             break;
 
         case MOT_VAR_ID_PREFIX_PARAMS_MOTOR_SECONDARY:
-            switch((MotVarId_Params_MotorSecondary_T)varId.EnumName)
+            switch((MotVarId_Params_MotorSecondary_T)varId.NameIndex)
             {
                 case MOT_VAR_BASE_SPEED_LIMIT_FORWARD:      value = Motor_Params_GetSpeedLimitForward_Scalar16(p_motor);    break;
                 case MOT_VAR_BASE_SPEED_LIMIT_REVERSE:      value = Motor_Params_GetSpeedLimitReverse_Scalar16(p_motor);    break;
@@ -221,7 +223,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
             break;
 
         case MOT_VAR_ID_PREFIX_PARAMS_MOTOR_HALL:
-            switch((MotVarId_Params_MotorHall_T)varId.EnumName)
+            switch((MotVarId_Params_MotorHall_T)varId.NameIndex)
             {
                 case MOT_VAR_HALL_SENSOR_TABLE_1: value = p_motor->Hall.Params.SensorsTable[1U]; break;
                 case MOT_VAR_HALL_SENSOR_TABLE_2: value = p_motor->Hall.Params.SensorsTable[2U]; break;
@@ -234,7 +236,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
             break;
 
         case MOT_VAR_ID_PREFIX_PARAMS_MOTOR_ENCODER:
-            switch((MotVarId_Params_MotorEncoder_T)varId.EnumName)
+            switch((MotVarId_Params_MotorEncoder_T)varId.NameIndex)
             {
                 case MOT_VAR_ENCODER_COUNTS_PER_REVOLUTION:             value = p_motor->Encoder.Params.CountsPerRevolution;            break;
                 case MOT_VAR_ENCODER_IS_QUADRATURE_CAPTURE_ENABLED:     value = p_motor->Encoder.Params.IsQuadratureCaptureEnabled;     break;
@@ -246,7 +248,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
             break;
 
         case MOT_VAR_ID_PREFIX_PARAMS_MOTOR_PID:
-            switch((MotVarId_MotorPid_T)varId.EnumName)
+            switch((MotVarId_Params_MotorPid_T)varId.NameIndex)
             {
                 case MOT_VAR_PID_SPEED_KP_FIXED16:      value = PID_GetKp_Fixed16(&p_motor->PidSpeed);   break;
                 case MOT_VAR_PID_SPEED_KI_FIXED16:      value = PID_GetKi_Fixed16(&p_motor->PidSpeed);   break;
@@ -265,7 +267,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
             break;
 
         case MOT_VAR_ID_PREFIX_PARAMS_GLOBAL:
-            switch((MotVarId_Params_Global_T)varId.EnumName)
+            switch((MotVarId_Params_Global_T)varId.NameIndex)
             {
                 case MOT_VAR_V_SOURCE_VOLTS:            value = MotorController_User_GetVSourceRef(p_mc);       break;
                 case MOT_VAR_BATTERY_ZERO_ADCU:         value = (p_mc->Parameters.BatteryZero_Adcu);            break;
@@ -286,7 +288,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
             break;
 
         case MOT_VAR_ID_PREFIX_PARAMS_USER_ANALOG:
-            switch((MotVarId_Params_UserAnalog_T)varId.EnumName)
+            switch((MotVarId_Params_UserAnalog_T)varId.NameIndex)
             {
                 case MOT_VAR_ANALOG_THROTTLE_ZERO_ADCU:             value = p_mc->AnalogUser.Params.ThrottleZero_Adcu; break;
                 case MOT_VAR_ANALOG_THROTTLE_MAX_ADCU:              value = p_mc->AnalogUser.Params.ThrottleMax_Adcu; break;
@@ -303,7 +305,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
 
         case MOT_VAR_ID_PREFIX_PARAMS_PROTOCOL:
             p_protocol = MotorController_User_GetPtrProtocol(p_mc, varId.Instance);
-            switch((MotVarId_Params_Protocol_T)varId.EnumName)
+            switch((MotVarId_Params_Protocol_T)varId.NameIndex)
             {
                 case MOT_VAR_PROTOCOL_XCVR_ID:         value = p_protocol->Params.SpecsId; break;
                 case MOT_VAR_PROTOCOL_SPECS_ID:        value = 0; break;
@@ -316,7 +318,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
 
         case MOT_VAR_ID_PREFIX_PARAMS_THERMISTOR:
             p_thermistor = ThermistorInstance(p_mc, varId);
-            switch((MotVarId_Params_Thermistor_T)varId.EnumName)
+            switch((MotVarId_Params_Thermistor_T)varId.NameIndex)
             {
                 case MOT_VAR_THERMISTOR_LINEAR_T0_ADCU:           value = Thermistor_GetLinearT0_Adcu(p_thermistor);          break;
                 case MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C:          value = Thermistor_GetLinearT0_DegC(p_thermistor);          break;
@@ -337,7 +339,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
 
         case MOT_VAR_ID_PREFIX_PARAMS_VMONITOR:
             p_vMonitor = VMonitorInstance(p_mc, varId);
-            switch((MotVarId_Params_VMonitor_T)varId.EnumName)
+            switch((MotVarId_Params_VMonitor_T)varId.NameIndex)
             {
                 case MOT_VAR_VMONITOR_LIMIT_UPPER_ADCU:     value = VMonitor_GetFaultUpper(p_vMonitor);      break;
                 case MOT_VAR_VMONITOR_LIMIT_LOWER_ADCU:     value = VMonitor_GetFaultLower(p_vMonitor);      break;
@@ -361,10 +363,10 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
 int32_t MotorController_Var_Get(const MotorControllerPtr_T p_mc, MotVarId_T varId)
 {
     int32_t value = 0;
-    switch(varId.IsRealTime)
+    switch((MotVarId_Prefix_Type_T)varId.NamePrefixType)
     {
-        case 1U: value = GetRealTime(p_mc, varId); break;
-        case 0U: value = GetParameter(p_mc, varId); break;
+        case MOT_VAR_ID_PREFIX_REAL_TIME:   value = GetRealTime(p_mc, varId); break;
+        case MOT_VAR_ID_PREFIX_PARAMS:      value = GetParameter(p_mc, varId); break;
         default: break;
     }
     return value;
@@ -379,16 +381,16 @@ int32_t MotorController_Var_Get(const MotorControllerPtr_T p_mc, MotVarId_T varI
     Limitation:
         overwrite commands may cause error. e.g Brake and Throttle in the same packet
 */
-static inline MotVar_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
+static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
 {
     bool isSetSuccess = true;
-    MotVar_Status_T status = MOT_VAR_STATUS_OK;
-    MotorPtr_T p_motor = MotorController_GetPtrMotor(p_mc, varId.Instance);
+    MotVarId_Status_T status = MOT_VAR_STATUS_OK;
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
 
-    switch((MotVarId_Prefix_RealTime_T)varId.EnumPrefix)
+    switch((MotVarId_Prefix_RealTime_T)varId.NamePrefix)
     {
-        case MOT_VAR_ID_PREFIX_REAL_TIME_CONTROL:
-            switch((MotVarId_RealTime_Control_T)varId.EnumName)
+        case MOT_VAR_ID_PREFIX_CONTROL:
+            switch((MotVarId_Control_T)varId.NameIndex)
             {
                 case MOT_VAR_MOTOR_USER_SET_POINT:          Motor_User_SetActiveCmdValue(p_motor, varValue);                                        break;
                 case MOT_VAR_MOTOR_DIRECTION:               Motor_User_SetDirection(p_motor, (Motor_Direction_T)varValue);                          break;
@@ -401,8 +403,8 @@ static inline MotVar_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_T 
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_REAL_TIME_CMD:
-            switch((MotVarId_RealTime_Cmd_T)varId.EnumName)
+        case MOT_VAR_ID_PREFIX_CMD:
+            switch((MotVarId_Cmd_T)varId.NameIndex)
             {
                 case MOT_VAR_BEEP:              MotorController_User_BeepN(p_mc, 500U, 500U, varValue); break;
                 case MOT_VAR_THROTTLE:          MotorController_User_SetCmdThrottle(p_mc, varValue);    break;
@@ -414,8 +416,8 @@ static inline MotVar_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_T 
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_REAL_TIME_CMD_MOTOR:
-            switch((MotVarId_RealTime_CmdMotor_T)varId.EnumName)
+        case MOT_VAR_ID_PREFIX_CMD_MOTOR:
+            switch((MotVarId_CmdMotor_T)varId.NameIndex)
             {
                 case MOT_VAR_MOTOR_CMD_SPEED:       Motor_User_SetSpeedCmdValue(p_motor, varValue);     break;
                 case MOT_VAR_MOTOR_CMD_CURRENT:     Motor_User_SetTorqueCmdValue(p_motor, varValue);    break;
@@ -429,11 +431,11 @@ static inline MotVar_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_T 
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_REAL_TIME_MOTOR:         status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
-        case MOT_VAR_ID_PREFIX_REAL_TIME_MOTOR_FOC:     status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
-        case MOT_VAR_ID_PREFIX_REAL_TIME_MOTOR_SENSOR:  status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
-        case MOT_VAR_ID_PREFIX_REAL_TIME_GLOBAL:        status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
-        case MOT_VAR_ID_PREFIX_REAL_TIME_ANALOG_INPUT:  status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
+        case MOT_VAR_ID_PREFIX_MONITOR_MOTOR:         status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
+        case MOT_VAR_ID_PREFIX_MONITOR_MOTOR_FOC:     status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
+        case MOT_VAR_ID_PREFIX_MONITOR_MOTOR_SENSOR:  status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
+        case MOT_VAR_ID_PREFIX_MONITOR_GLOBAL:        status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
+        case MOT_VAR_ID_PREFIX_MONITOR_ANALOG_INPUT:  status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
         default: break;
     }
 
@@ -442,22 +444,22 @@ static inline MotVar_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_T 
     return status;
 }
 
-static inline MotVar_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
+static inline MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
 {
     bool isSetSuccess = true;
-    MotVar_Status_T status = MOT_VAR_STATUS_OK;
+    MotVarId_Status_T status = MOT_VAR_STATUS_OK;
     MotorPtr_T p_motor;
     Protocol_T * p_protocol;
     Thermistor_T * p_thermistor;
     VMonitor_T * p_vMonitor;
 
-    switch((MotVarId_Prefix_Params_T)varId.EnumPrefix)
+    switch((MotVarId_Prefix_Params_T)varId.NamePrefix)
     {
         case MOT_VAR_ID_PREFIX_PARAMS_MOTOR_PRIMARY:
-            p_motor = MotorController_GetPtrMotor(p_mc, varId.Instance);
+            p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
             if(p_motor != 0U)
             {
-                switch((MotVarId_Params_MotorPrimary_T)varId.EnumName)
+                switch((MotVarId_Params_MotorPrimary_T)varId.NameIndex)
                 {
                     case MOT_VAR_COMMUTATION_MODE:          Motor_Params_SetCommutationMode(p_motor, varValue);             break;
                     case MOT_VAR_SENSOR_MODE:               Motor_Params_SetSensorMode(p_motor, varValue);                  break;
@@ -477,10 +479,10 @@ static inline MotVar_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T
             break;
 
         case MOT_VAR_ID_PREFIX_PARAMS_MOTOR_SECONDARY:
-            p_motor = MotorController_GetPtrMotor(p_mc, varId.Instance);
+            p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
             if(p_motor != 0U)
             {
-                switch((MotVarId_Params_MotorSecondary_T)varId.EnumName)
+                switch((MotVarId_Params_MotorSecondary_T)varId.NameIndex)
                 {
                     case MOT_VAR_BASE_SPEED_LIMIT_FORWARD:      Motor_Params_SetSpeedLimitForward_Scalar16(p_motor, varValue);  break;
                     case MOT_VAR_BASE_SPEED_LIMIT_REVERSE:      Motor_Params_SetSpeedLimitReverse_Scalar16(p_motor, varValue);  break;
@@ -499,10 +501,10 @@ static inline MotVar_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T
             break;
 
         case MOT_VAR_ID_PREFIX_PARAMS_MOTOR_HALL:
-            p_motor = MotorController_GetPtrMotor(p_mc, varId.Instance);
+            p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
             if(p_motor != 0U)
             {
-                switch((MotVarId_Params_MotorHall_T)varId.EnumName)
+                switch((MotVarId_Params_MotorHall_T)varId.NameIndex)
                 {
                     // case MOT_VAR_HALL_SENSOR_TABLE_1: p_motor->Hall.Params.SensorsTable[1U];    break;
                     // case MOT_VAR_HALL_SENSOR_TABLE_2: p_motor->Hall.Params.SensorsTable[2U];    break;
@@ -516,10 +518,10 @@ static inline MotVar_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T
             break;
 
         case MOT_VAR_ID_PREFIX_PARAMS_MOTOR_ENCODER:
-            p_motor = MotorController_GetPtrMotor(p_mc, varId.Instance);
+            p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
             if(p_motor != 0U)
             {
-                switch((MotVarId_Params_MotorEncoder_T)varId.EnumName)
+                switch((MotVarId_Params_MotorEncoder_T)varId.NameIndex)
                 {
                     // case MOT_VAR_ENCODER_COUNTS_PER_REVOLUTION:              p_motor->Encoder.Params.CountsPerRevolution;            break;
                     // case MOT_VAR_ENCODER_IS_QUADRATURE_CAPTURE_ENABLED:      p_motor->Encoder.Params.IsQuadratureCaptureEnabled;     break;
@@ -532,10 +534,10 @@ static inline MotVar_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T
             break;
 
         case MOT_VAR_ID_PREFIX_PARAMS_MOTOR_PID:
-            p_motor = MotorController_GetPtrMotor(p_mc, varId.Instance);
+            p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
             if(p_motor != 0U)
             {
-                switch((MotVarId_MotorPid_T)varId.EnumName)
+                switch((MotVarId_Params_MotorPid_T)varId.NameIndex)
                 {
                     case MOT_VAR_PID_SPEED_KP_FIXED16:     PID_SetKp_Fixed16(&p_motor->PidSpeed, varValue);   break;
                     case MOT_VAR_PID_SPEED_KI_FIXED16:     PID_SetKi_Fixed16(&p_motor->PidSpeed, varValue);   break;
@@ -555,7 +557,7 @@ static inline MotVar_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T
             break;
 
         case MOT_VAR_ID_PREFIX_PARAMS_GLOBAL:
-            switch((MotVarId_Params_Global_T)varId.EnumName)
+            switch((MotVarId_Params_Global_T)varId.NameIndex)
             {
                 case MOT_VAR_V_SOURCE_VOLTS:    MotorController_User_SetVSourceRef(p_mc, varValue);                     break;
                     // case MOT_VAR_BATTERY_ZERO_ADCU:                         (p_mc->Parameters.BatteryZero_Adcu);                break;
@@ -576,7 +578,7 @@ static inline MotVar_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T
             break;
 
         case MOT_VAR_ID_PREFIX_PARAMS_USER_ANALOG:
-            switch((MotVarId_Params_UserAnalog_T)varId.EnumName)
+            switch((MotVarId_Params_UserAnalog_T)varId.NameIndex)
             {
                 case MOT_VAR_ANALOG_THROTTLE_ZERO_ADCU:             p_mc->AnalogUser.Params.ThrottleZero_Adcu = varValue; break;
                 case MOT_VAR_ANALOG_THROTTLE_MAX_ADCU:              p_mc->AnalogUser.Params.ThrottleMax_Adcu = varValue; break;
@@ -595,7 +597,7 @@ static inline MotVar_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T
             p_protocol = MotorController_User_GetPtrProtocol(p_mc, varId.Instance);
             if(p_protocol != 0U)
             {
-                switch((MotVarId_Params_Protocol_T)varId.EnumName)
+                switch((MotVarId_Params_Protocol_T)varId.NameIndex)
                 {
                     // case MOT_VAR_PROTOCOL0_XCVR_ID:                         MotorController_User_SetPtrProtocol(p_mc, 0)->Params.SpecsId; break;
                     // case MOT_VAR_PROTOCOL0_SPECS_ID:                        0; break;
@@ -611,7 +613,7 @@ static inline MotVar_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T
             p_thermistor = ThermistorInstance(p_mc, varId);
             if(p_thermistor != 0U)
             {
-                switch((MotVarId_Params_Thermistor_T)varId.EnumName)
+                switch((MotVarId_Params_Thermistor_T)varId.NameIndex)
                 {
                     case MOT_VAR_THERMISTOR_LINEAR_T0_ADCU:           Thermistor_SetLinearT0_Adcu(p_thermistor, varValue);            break;
                     case MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C:          Thermistor_SetLinearT0_DegC(p_thermistor, varValue);            break;
@@ -635,7 +637,7 @@ static inline MotVar_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T
             p_vMonitor = VMonitorInstance(p_mc, varId);
             if(p_vMonitor != 0U)
             {
-                switch((MotVarId_Params_VMonitor_T)varId.EnumName)
+                switch((MotVarId_Params_VMonitor_T)varId.NameIndex)
                 {
                     case MOT_VAR_VMONITOR_LIMIT_UPPER_ADCU:     VMonitor_SetFaultUpper(p_vMonitor, varValue);      break;
                     case MOT_VAR_VMONITOR_LIMIT_LOWER_ADCU:     VMonitor_SetFaultLower(p_vMonitor, varValue);      break;
@@ -652,18 +654,18 @@ static inline MotVar_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T
     }
 }
 
-MotVar_Status_T MotorController_Var_Set(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
+MotVarId_Status_T MotorController_Var_Set(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
 {
-    MotVar_Status_T status = MOT_VAR_STATUS_OK;
-    switch(varId.IsRealTime)
+    MotVarId_Status_T status = MOT_VAR_STATUS_OK;
+    switch((MotVarId_Prefix_Type_T)varId.NamePrefixType)
     {
-        case 1U:
-            status = (p_mc->Parameters.InputMode == MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL) ?
-                SetRealTime(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
-            break;
-        case 0U:
+        case MOT_VAR_ID_PREFIX_REAL_TIME:
             status = (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_BLOCKING) ?
                 SetParameter(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_RUNNING;
+            break;
+        case MOT_VAR_ID_PREFIX_PARAMS:
+            status = (p_mc->Parameters.InputMode == MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL) ?
+                SetRealTime(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
             break;
         default: break;
     }

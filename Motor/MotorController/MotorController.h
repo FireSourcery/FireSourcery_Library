@@ -66,7 +66,7 @@
 #include <stdint.h>
 #include <string.h>
 
-typedef enum MotorController_Direction_Tag
+typedef enum MotorController_Direction
 {
     MOTOR_CONTROLLER_DIRECTION_PARK,
     MOTOR_CONTROLLER_DIRECTION_NEUTRAL,
@@ -75,7 +75,7 @@ typedef enum MotorController_Direction_Tag
 }
 MotorController_Direction_T;
 
-typedef enum MotorController_InputMode_Tag
+typedef enum MotorController_InputMode
 {
     MOTOR_CONTROLLER_INPUT_MODE_DISABLE,
     MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
@@ -84,7 +84,7 @@ typedef enum MotorController_InputMode_Tag
 }
 MotorController_InputMode_T;
 
-typedef enum MotorController_InitMode_Tag
+typedef enum MotorController_InitMode
 {
     MOTOR_CONTROLLER_INIT_MODE_DRIVE,
     MOTOR_CONTROLLER_INIT_MODE_SERVO,
@@ -116,7 +116,7 @@ typedef enum
 }
 MotorController_DriveId_T; //SubStateId
 
-typedef enum MotorController_DriveZeroMode_Tag
+typedef enum MotorController_DriveZeroMode
 {
     MOTOR_CONTROLLER_DRIVE_ZERO_MODE_FLOAT,       /* "Coast". MOSFETS non conducting. Same as Neutral. */
     MOTOR_CONTROLLER_DRIVE_ZERO_MODE_REGEN,       /* Regen Brake */
@@ -126,7 +126,7 @@ typedef enum MotorController_DriveZeroMode_Tag
 MotorController_DriveZeroMode_T;
 
 /* Blocking SubState/Function Ids */
-typedef enum MotorController_BlockingId_Tag
+typedef enum MotorController_BlockingId
 {
     MOTOR_CONTROLLER_BLOCKING_ENTER,
     MOTOR_CONTROLLER_BLOCKING_EXIT,
@@ -138,7 +138,7 @@ typedef enum MotorController_BlockingId_Tag
 }
 MotorController_BlockingId_T;
 
-typedef enum MotorController_OptDinFunction_Tag
+typedef enum MotorController_OptDinFunction
 {
     MOTOR_CONTROLLER_OPT_DIN_DISABLE,
     MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT,
@@ -147,7 +147,7 @@ typedef enum MotorController_OptDinFunction_Tag
 }
 MotorController_OptDinMode_T;
 
-typedef union MotorController_StatusFlags_Tag
+typedef union MotorController_StatusFlags
 {
     struct
     {
@@ -168,7 +168,7 @@ MotorController_StatusFlags_T;
     Fault substate flags
     Faults flags with exception of RxLost retain set state until user clears
 */
-typedef union MotorController_FaultFlags_Tag
+typedef union MotorController_FaultFlags
 {
     struct
     {
@@ -194,7 +194,7 @@ MotorController_FaultFlags_T;
 /*
     Init SubState
 */
-typedef union MotorController_InitFlags_Tag
+typedef union MotorController_InitFlags
 {
     struct
     {
@@ -205,7 +205,7 @@ typedef union MotorController_InitFlags_Tag
 }
 MotorController_InitFlags_T;
 
-// typedef union MotorController_BuzzerFlags_Tag
+// typedef union MotorController_BuzzerFlags
 // {
 //     struct
 //     {
@@ -226,7 +226,7 @@ MotorController_InitFlags_T;
     MotorController_User_GetVSourceRef() -> user set nominal voltage
     MotorController_User_GetVSource() -> live voltage
 */
-typedef struct __attribute__((aligned(2U))) MotorController_Params_Tag
+typedef struct __attribute__((aligned(2U))) MotorController_Params
 {
     uint16_t VSourceRef;        /* Nominal Battery Voltage. Sync with Global_Motor VSourceRef_V */
     uint16_t BatteryZero_Adcu;  //todo, use Vsource warning?
@@ -248,7 +248,7 @@ typedef struct __attribute__((aligned(2U))) MotorController_Params_Tag
 }
 MotorController_Params_T;
 
-typedef struct __attribute__((aligned(FLASH_UNIT_WRITE_ONCE_SIZE))) MotorController_Manufacture_Tag
+typedef struct __attribute__((aligned(FLASH_UNIT_WRITE_ONCE_SIZE))) MotorController_Manufacture
 {
     char NAME[8U];
     union { uint8_t SERIAL_NUMBER[4U]; uint32_t SERIAL_NUMBER_REG; };
@@ -267,7 +267,7 @@ MotorController_Manufacture_T;
 /*
     allocated memory outside for less CONFIG define redundancy
 */
-typedef const struct MotorController_Config_Tag
+typedef const struct MotorController_Config
 {
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
     const void * const P_PARAMS_START; /* All params start */
@@ -303,7 +303,7 @@ typedef const struct MotorController_Config_Tag
 MotorController_Config_T;
 
 /*   */
-typedef struct MotorController_Tag
+typedef struct MotorController
 {
     const MotorController_Config_T CONFIG;
     MotorController_Params_T Parameters;
@@ -478,7 +478,6 @@ static inline void MotorController_SetBrakeValue(MotorControllerPtr_T p_mc, uint
     }
 }
 
-
 static inline void MotorController_StartInputZero(MotorControllerPtr_T p_mc)
 {
     switch(p_mc->Parameters.DriveZeroMode)
@@ -522,7 +521,6 @@ static inline void MotorController_ClearILimitAll(MotorControllerPtr_T p_mc)    
 static inline bool MotorController_ClearILimitAll_Id(MotorControllerPtr_T p_mc)                          { return MotorN_User_ClearLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_ClearILimitActive_Id, MOTOR_I_LIMIT_ACTIVE_UPPER); }
 static inline bool MotorController_SetILimitAll_Id(MotorControllerPtr_T p_mc, uint16_t limit_scalar16)   { return MotorN_User_SetLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetILimitActive_Id, limit_scalar16, MOTOR_I_LIMIT_ACTIVE_UPPER); }
 
-
 /******************************************************************************/
 /*
     Extern
@@ -560,28 +558,14 @@ static inline void MotorController_Servo_SetCmd(MotorControllerPtr_T p_mc, uint3
 
 #endif
 
-
-// static inline bool MotorController_SetDirectionAll(MotorControllerPtr_T p_mc, MotorController_Direction_T direction)
-// {
-//     bool isSuccess;
-//     switch(direction)
-//     {
-//         case MOTOR_CONTROLLER_DIRECTION_FORWARD: isSuccess = MotorN_User_ProcStatusAnd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetDirectionForward); break;
-//         case MOTOR_CONTROLLER_DIRECTION_REVERSE: isSuccess = MotorN_User_ProcStatusAnd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetDirectionReverse); break;
-//         default: isSuccess = false; break; /* MOTOR_CONTROLLER_DIRECTION_NEUTRAL, MOTOR_CONTROLLER_DIRECTION_DISABLE */
-//     }
-//     if(isSuccess == true) { p_mc->DriveDirection = direction; }; /* Status flag use */
-//     return isSuccess;
-// }
-
-// typedef enum MotorController_SpeedLimitActiveId_Tag
+// typedef enum MotorController_SpeedLimitActiveId
 // {
 //     MOTOR_CONTROLLER_SPEED_LIMIT_ACTIVE_DISABLE = 0U,
 //     MOTOR_CONTROLLER_SPEED_LIMIT_ACTIVE_OPT = 1U, /* From parent class */
 // }
 // MotorController_SpeedLimitActiveId_T;
 
-// typedef enum MotorController_ILimitActiveId_Tag
+// typedef enum MotorController_ILimitActiveId
 // {
 //     MOTOR_CONTROLLER_I_LIMIT_ACTIVE_DISABLE = 0U,
 //     MOTOR_CONTROLLER_I_LIMIT_ACTIVE_HEAT = 1U,

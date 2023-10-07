@@ -37,7 +37,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-typedef const struct Ring_Config_Tag
+typedef const struct Ring_Config
 {
     void * const P_BUFFER;
     const size_t UNIT_SIZE;     /* Bytes */
@@ -58,7 +58,7 @@ Ring_Config_T;
     CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED, CONFIG_RING_LENGTH_ANY
     Empty space detection method. Head always points to empty space. Max usable capacity is length - 1
 */
-typedef struct Ring_Tag
+typedef struct Ring
 {
     const Ring_Config_T CONFIG;
     volatile size_t Head;    /* Write to head  */

@@ -37,14 +37,14 @@
 #include "Math/math_general.h"
 #include "Math/Q/Q.h"
 
-typedef enum PID_Mode_Tag
+typedef enum PID_Mode
 {
     PID_MODE_PI,
     PID_MODE_PID,
 }
 PID_Mode_T;
 
-typedef struct __attribute__((aligned(4U))) PID_Params_Tag
+typedef struct __attribute__((aligned(4U))) PID_Params
 {
     PID_Mode_T Mode;
     uint32_t SampleFreq;
@@ -61,13 +61,13 @@ typedef struct __attribute__((aligned(4U))) PID_Params_Tag
 }
 PID_Params_T;
 
-typedef const struct PID_Config_Tag
+typedef const struct PID_Config
 {
     const PID_Params_T * const P_PARAMS;
 }
 PID_Config_T;
 
-typedef struct PID_Tag
+typedef struct PID
 {
     const PID_Config_T CONFIG;
     PID_Params_T Params;

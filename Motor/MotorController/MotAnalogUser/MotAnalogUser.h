@@ -39,7 +39,7 @@
 /*
     Input state/variation combined into single status
 */
-typedef enum MotAnalogUser_Cmd_Tag
+typedef enum MotAnalogUser_Cmd
 {
     MOT_ANALOG_USER_CMD_SET_BRAKE,
     MOT_ANALOG_USER_CMD_SET_THROTTLE,
@@ -53,7 +53,7 @@ typedef enum MotAnalogUser_Cmd_Tag
 }
 MotAnalogUser_Cmd_T;
 
-typedef enum MotAnalogUser_Direction_Tag
+typedef enum MotAnalogUser_Direction
 {
     MOT_ANALOG_USER_DIRECTION_NEUTRAL,
     MOT_ANALOG_USER_DIRECTION_FORWARD,
@@ -64,7 +64,7 @@ typedef enum MotAnalogUser_Direction_Tag
 }
 MotAnalogUser_Direction_T;
 
-typedef enum MotAnalogUser_DirectionPins_Tag
+typedef enum MotAnalogUser_DirectionPins
 {
     MOT_ANALOG_USER_DIRECTION_PINS_FNR,
     MOT_ANALOG_USER_DIRECTION_PINS_FR,
@@ -73,7 +73,7 @@ typedef enum MotAnalogUser_DirectionPins_Tag
 MotAnalogUser_DirectionPins_T;
 
 /* AnalogInput Sub-Module, todo move to ain */
-typedef struct MotAnalogUser_AIn_Tag
+typedef struct MotAnalogUser_AIn
 {
     Debounce_T EdgePin;
     bool UseEdgePin;        /* Use digital pin to determine AIn Threshold. */
@@ -83,7 +83,7 @@ typedef struct MotAnalogUser_AIn_Tag
 }
 MotAnalogUser_AIn_T;
 
-typedef struct __attribute__((aligned(2U))) MotAnalogUser_Params_Tag
+typedef struct __attribute__((aligned(2U))) MotAnalogUser_Params
 {
     uint16_t ThrottleZero_Adcu;
     uint16_t ThrottleMax_Adcu;
@@ -114,13 +114,13 @@ MotAnalogUser_Params_T;
 /*
     Activate ADC outside module
 */
-typedef const struct MotAnalogUser_Config_Tag
+typedef const struct MotAnalogUser_Config
 {
     const MotAnalogUser_Params_T * const P_PARAMS;
 }
 MotAnalogUser_Config_T;
 
-typedef struct MotAnalogUser_Tag
+typedef struct MotAnalogUser
 {
     MotAnalogUser_Config_T CONFIG;
     MotAnalogUser_Params_T Params;

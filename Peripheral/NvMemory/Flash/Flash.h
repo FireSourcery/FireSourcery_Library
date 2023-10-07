@@ -48,7 +48,7 @@
 #define FLASH_UNIT_READ_ONCE_SIZE        HAL_FLASH_UNIT_READ_ONCE_SIZE
 #define FLASH_UNIT_ERASE_PATTERN        HAL_FLASH_UNIT_ERASE_PATTERN
 
-typedef enum Flash_Operation_Tag
+typedef enum Flash_Operation
 {
     FLASH_OPERATION_WRITE,
     FLASH_OPERATION_ERASE,
@@ -63,7 +63,7 @@ typedef NvMemory_Status_T Flash_Status_T;
 /*
     Alias for NvMemory Status
 */
-// enum Flash_Status_Alias_Tag
+// enum Flash_Status_Alias
 // {
 //     FLASH_STATUS_SUCCESS = NV_MEMORY_STATUS_SUCCESS,
 //     FLASH_STATUS_PROCESSING = NV_MEMORY_STATUS_PROCESSING,

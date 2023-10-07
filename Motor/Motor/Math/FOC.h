@@ -36,7 +36,7 @@
 #include "math_svpwm.h"
 #include "Math/Q/QFrac16.h"
 
-typedef struct FOC_Tag
+typedef struct FOC
 {
     /* Params */
     // qfrac16_t IdqMagnitudeMax;

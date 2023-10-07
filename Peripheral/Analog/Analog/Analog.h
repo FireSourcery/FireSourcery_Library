@@ -62,14 +62,14 @@ typedef uint8_t analog_channel_t; /* Virtual Channel Index */
 
 typedef void (*Analog_Callback_T)(void * p_context);
 
-typedef enum Analog_QueueType_Tag
+typedef enum Analog_QueueType
 {
     ANALOG_QUEUE_TYPE_CHANNEL,
     ANALOG_QUEUE_TYPE_OPTIONS,
 }
 Analog_OpType_T;
 
-typedef const struct Analog_Conversion_Tag
+typedef const struct Analog_Conversion
 {
     /* Defined by module */
     const Analog_OpType_T       TYPE;
@@ -92,7 +92,7 @@ Analog_Conversion_T;
     .PIN                = PinId,                                                            \
 }
 
-typedef struct Analog_OptionsFlags_Tag
+typedef struct Analog_OptionsFlags
 {
     uint32_t HwTriggerConversion : 1U;
     //    uint32_t ContinuousConversion     :1U;
@@ -105,7 +105,7 @@ typedef struct Analog_OptionsFlags_Tag
 }
 Analog_OptionsFlags_T;
 
-typedef const struct Analog_Options_Tag
+typedef const struct Analog_Options
 {
     const Analog_OpType_T           TYPE;
     const Analog_OptionsFlags_T     FLAGS;
@@ -117,7 +117,7 @@ Analog_Options_T;
 /*
     Cast to this type to determine which item type first
 */
-typedef const union Analog_QueueItem_Tag
+typedef const union Analog_QueueItem
 {
     const Analog_OpType_T       TYPE;
     const Analog_Conversion_T   CONVERSION;
@@ -125,14 +125,14 @@ typedef const union Analog_QueueItem_Tag
 }
 Analog_QueueItem_T;
 
-typedef const struct Analog_Config_Tag
+typedef const struct Analog_Config
 {
     HAL_Analog_T * const P_HAL_ANALOG;     /*!< pointer to ADC register map base address */
 }
 Analog_Config_T;
 
 
-// typedef struct Analog_ChannelFlags_Tag
+// typedef struct Analog_ChannelFlags
 // {
 //     uint32_t Channel0 :1U;
 // }
@@ -141,7 +141,7 @@ Analog_Config_T;
 /*
     Analog_T per ADC
 */
-typedef struct Analog_Tag
+typedef struct Analog
 {
     const Analog_Config_T CONFIG;
     /* todo flag based, lose sequence and repeat information, */

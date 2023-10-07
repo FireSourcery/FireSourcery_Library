@@ -38,7 +38,7 @@
 */
 
 /* use 2 bits do differentiate unwritten memory patterns */
-typedef enum MemMapBoot_IsValid_Tag
+typedef enum MemMapBoot_IsValid
 {
     MEM_MAP_BOOT_IS_VALID_01 = 0b01,
     MEM_MAP_BOOT_IS_VALID_10 = 0b10,
@@ -47,7 +47,7 @@ typedef enum MemMapBoot_IsValid_Tag
 }
 MemMapBoot_IsValid_T;
 
-typedef union MemMapBoot_Tag
+typedef union MemMapBoot
 {
     struct
     {

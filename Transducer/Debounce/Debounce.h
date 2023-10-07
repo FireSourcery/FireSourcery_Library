@@ -35,7 +35,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef enum Debounce_Edge_Tag
+typedef enum Debounce_Edge
 {
     DEBOUNCE_EDGE_NULL,
     DEBOUNCE_EDGE_FALLING,
@@ -43,13 +43,13 @@ typedef enum Debounce_Edge_Tag
 }
 Debounce_Edge_T;
 
-typedef const struct Debounce_Config_Tag
+typedef const struct Debounce_Config
 {
     const volatile uint32_t * const P_TIMER;
 }
 Debounce_Config_T;
 
-typedef struct Debounce_Tag
+typedef struct Debounce
 {
     Debounce_Config_T CONFIG;
     Pin_T Pin;

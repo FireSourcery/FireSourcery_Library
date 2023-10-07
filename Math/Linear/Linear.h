@@ -37,7 +37,7 @@
 #include "Math/math_general.h"
 #include <stdint.h>
 
-typedef struct Linear_Tag
+typedef struct Linear
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
     int32_t Slope;            /* y = (x - XOffset) * Slope >> SlopeShift + YOffset */

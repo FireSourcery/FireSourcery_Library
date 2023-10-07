@@ -38,13 +38,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct Serial_Config_Tag
+typedef const struct Serial_Config
 {
     HAL_Serial_T * const P_HAL_SERIAL;
 }
 Serial_Config_T;
 
-typedef struct Serial_Tag
+typedef struct Serial
 {
     const Serial_Config_T CONFIG;
     Ring_T RxRing;

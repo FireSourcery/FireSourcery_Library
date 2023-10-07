@@ -44,7 +44,7 @@
 /*!
     @brief Virtual channel identifiers, index into arrays containing Analog channel
 */
-typedef enum MotorAnalog_Channel_Tag
+typedef enum MotorAnalog_Channel
 {
     MOTOR_ANALOG_CHANNEL_VA,
     MOTOR_ANALOG_CHANNEL_VB,
@@ -60,7 +60,7 @@ typedef enum MotorAnalog_Channel_Tag
 }
 MotorAnalog_Channel_T;
 
-typedef union MotorAnalog_Results_Tag
+typedef union MotorAnalog_Results
 {
     struct
     {
@@ -80,7 +80,7 @@ typedef union MotorAnalog_Results_Tag
 }
 MotorAnalog_Results_T;
 
-typedef struct MotorAnalog_Conversions_Tag
+typedef struct MotorAnalog_Conversions
 {
     union
     {
@@ -107,7 +107,7 @@ typedef struct MotorAnalog_Conversions_Tag
 }
 MotorAnalog_Conversions_T;
 
-// typedef enum MotorAnalog_Channel_Tag
+// typedef enum MotorAnalog_Channel
 // {
 //     MOTOR_ANALOG_CHANNEL_DISABLED,
 //     MOTOR_ANALOG_CHANNEL_V_ABC,

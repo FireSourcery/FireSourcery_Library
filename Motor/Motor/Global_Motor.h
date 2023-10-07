@@ -43,7 +43,7 @@
 #define MOTOR_LIBRARY_VERSION_ID         ((MOTOR_LIBRARY_VERSION_OPT << 24U) | (MOTOR_LIBRARY_VERSION_MAJOR << 16U) | (MOTOR_LIBRARY_VERSION_MINOR << 8U) | (MOTOR_LIBRARY_VERSION_BUGFIX))
 
 /* Global "Static" Const */
-// typedef const struct Global_Motor_Tag
+// typedef const struct Global_Motor
 // {
 //     const uint16_t CONTROL_FREQ;
 //     const uint16_t V_MAX_VOLTS;         /* VSource Limit */

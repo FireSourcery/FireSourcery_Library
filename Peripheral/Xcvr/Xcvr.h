@@ -41,7 +41,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-typedef enum Xcvr_Type_Tag
+typedef enum Xcvr_Type
 {
     XCVR_TYPE_SERIAL,
     XCVR_TYPE_I2C,
@@ -60,7 +60,7 @@ typedef bool(*Xcvr_Interface_RxN_T)             (void * p_xcvr, uint8_t * p_dest
 typedef size_t(*Xcvr_Interface_GetCount_T)      (void * p_xcvr);
 typedef void(*Xcvr_Interface_ConfigBaudRate_T)  (void * p_xcvr, uint32_t baudRate);
 
-typedef const struct Xcvr_Interface_Tag
+typedef const struct Xcvr_Interface
 {
     Xcvr_Interface_TxByte_T         TX_BYTE;
     Xcvr_Interface_RxByte_T         RX_BYTE;
@@ -78,7 +78,7 @@ Xcvr_Interface_T;
     Xcvr Entry/Core
     Entry in P_XCVR_TABLE
 */
-typedef const struct Xcvr_Xcvr_Tag
+typedef const struct Xcvr_Xcvr
 {
     void * P_CONTEXT; /* Xcvr data struct */
     Xcvr_Type_T TYPE;
@@ -99,7 +99,7 @@ Xcvr_Entry_T;
     .P_INTERFACE    = p_Interface,                      \
 }
 
-typedef const struct Xcvr_Config_Tag
+typedef const struct Xcvr_Config
 {
     const Xcvr_Entry_T * const P_XCVR_TABLE;
     const uint8_t XCVR_TABLE_LENGTH;
@@ -109,7 +109,7 @@ Xcvr_Config_T;
 /*
    Todo  Xcvr_T, Xcvr_Table_T => 1 layer of dereference for operations
 */
-typedef struct Xcvr_Tag
+typedef struct Xcvr
 {
     const Xcvr_Config_T CONFIG;
     Xcvr_Entry_T * p_Xcvr;

@@ -45,7 +45,7 @@ typedef uint8_t statemachine_state_t;           /* State ID. User may overwrite 
 
 typedef void (*StateMachine_Function_T)(void * p_context);
 
-struct StateMachine_State_Tag;
+struct StateMachine_State;
 /*!
     Transition Function - defined by user via P_TRANSITION_TABLE
     1 Additional input passed as arguments
@@ -53,7 +53,7 @@ struct StateMachine_State_Tag;
             0 - no transition, bypass exit and entry, indicates user defined non transition
             !0 - transition, perform exist and entry. User may return same state, for self transition, proc exit and entry
 */
-typedef struct StateMachine_State_Tag * (*StateMachine_Transition_T)(void * p_context, statemachine_inputvalue_t inputValue);
+typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_inputvalue_t inputValue);
 
 
 /*
@@ -68,7 +68,7 @@ typedef struct StateMachine_State_Tag * (*StateMachine_Transition_T)(void * p_co
     Non-transition (Output only / Mealy machine style outputs), does not proc entry function => function return 0
     Self-transition, proc entry function => function return pointer to self
 */
-typedef const struct StateMachine_State_Tag
+typedef const struct StateMachine_State
 {
     const statemachine_state_t ID;
     const StateMachine_Transition_T * const P_TRANSITION_TABLE; /* Forms the TransitionFunction */
@@ -76,20 +76,20 @@ typedef const struct StateMachine_State_Tag
     const StateMachine_Function_T ENTRY;      /* Common to all transition to current state, including self transition */
     const StateMachine_Function_T EXIT;
 #ifdef CONFIG_STATE_MACHINE_MENU_ENABLE
-    const struct StateMachine_State_Tag * P_NEXT_MENU;
-    const struct StateMachine_State_Tag * P_PREV_MENU;
+    const struct StateMachine_State * P_NEXT_MENU;
+    const struct StateMachine_State * P_PREV_MENU;
 #endif
 }
 StateMachine_State_T;
 
-typedef struct StateMachine_Machine_Tag
+typedef struct StateMachine_Machine
 {
     const StateMachine_State_T * const P_STATE_INITIAL;
     const uint8_t TRANSITION_TABLE_LENGTH;     /* Total input count. Shared table length for all states, i.e. all states allocate for all inputs */
 }
 StateMachine_Machine_T;
 
-typedef const struct StateMachine_Config_Tag
+typedef const struct StateMachine_Config
 {
     const StateMachine_Machine_T * const P_MACHINE;     /* Const definition of state transition behaviors */
     void * const P_CONTEXT;                                /* Mutable state information per state machine */
@@ -99,7 +99,7 @@ typedef const struct StateMachine_Config_Tag
 }
 StateMachine_Config_T;
 
-typedef struct StateMachine_Tag
+typedef struct StateMachine
 {
     const StateMachine_Config_T CONFIG;
     const StateMachine_State_T * p_StateActive;

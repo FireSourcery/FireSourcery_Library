@@ -56,7 +56,7 @@ typedef uint8_t protocol_reqid_t; /* Index into P_REQ_TABLE. child module define
     User functions return status - communicate module handled behaviors
     overload to eliminate need of addtional parser functions
 */
-typedef enum Protocol_RxCode_Tag
+typedef enum Protocol_RxCode
 {
     PROTOCOL_RX_CODE_AWAIT_PACKET,       /* Wait BuildRxPacket */
     PROTOCOL_RX_CODE_PACKET_COMPLETE,   /* Success Complete Req/ReqExt Packet */
@@ -80,7 +80,7 @@ typedef enum Protocol_RxCode_Tag
 Protocol_RxCode_T;
 
 //Control Meta
-typedef struct Protocol_HeaderMeta_Tag
+typedef struct Protocol_HeaderMeta
 {
     protocol_reqid_t ReqId;    /* Parse with PARSE_RX_META. protocol_reqid_t values defined by child module. Index into P_REQ_TABLE */
     size_t Length;             /* Parse with PARSE_RX_META. Rx Packet Total Length. */
@@ -117,7 +117,7 @@ typedef protocol_txsize_t(*Protocol_ProcReqResp_T)(void * p_appInterface, uint8_
 */
 /******************************************************************************/
 /* Common Req from child protocol to supported general protocol control, predefined behaviors */
-typedef enum Protocol_ReqCode_Tag
+typedef enum Protocol_ReqCode
 {
     // PROTOCOL_REQ_CODE_AWAIT_RX_REQ_INITIAL,
     PROTOCOL_REQ_CODE_PROCESS_CONTINUE,             /* continue using default sync settings, wait for next packet */
@@ -145,7 +145,7 @@ typedef enum Protocol_ReqCode_Tag
 Protocol_ReqCode_T;
 
 /* Stateful Req function */
-typedef struct Protocol_ReqInterface_Tag
+typedef struct Protocol_ReqInterface
 {
     const struct
     {
@@ -167,7 +167,7 @@ typedef void (*Protocol_ResetReqState_T)(void * p_subState);
     Stateless static string sync, ack, nack - Ack Nack Protocol_BuildTxSync_T
     Dynamic ack nack string implementation use Protocol_ReqExtFunction_T
 */
-typedef const union Protocol_ReqSync_Tag
+typedef const union Protocol_ReqSync
 {
     struct
     {
@@ -194,7 +194,7 @@ Protocol_ReqSync_T;
 /*
     Protocol_Req_T
 */
-typedef const struct Protocol_Req_Tag
+typedef const struct Protocol_Req
 {
     const protocol_reqid_t          ID;
     const Protocol_ProcReqResp_T    PROC;
@@ -224,7 +224,7 @@ Protocol_Req_T;
     User supply function to build Tx Ack, Nack, etc
 */
 /******************************************************************************/
-typedef enum Protocol_TxSyncId_Tag
+typedef enum Protocol_TxSyncId
 {
     PROTOCOL_TX_SYNC_ACK_REQ,
     PROTOCOL_TX_SYNC_NACK_REQ,
@@ -245,7 +245,7 @@ typedef void (* const Protocol_BuildTxSync_T)(uint8_t * p_txPacket, size_t * p_t
     Packet Format Specs
 */
 /******************************************************************************/
-typedef const struct Protocol_Specs_Tag
+typedef const struct Protocol_Specs
 {
     const uint8_t RX_LENGTH_MIN;                    /* Rx this many bytes before calling PARSE_RX */
     const uint8_t RX_LENGTH_MAX;
@@ -284,7 +284,7 @@ Protocol_Specs_T;
 
 */
 /******************************************************************************/
-typedef enum Protocol_RxState_Tag
+typedef enum Protocol_RxState
 {
     PROTOCOL_RX_STATE_INACTIVE,
     PROTOCOL_RX_STATE_WAIT_BYTE_1,
@@ -293,7 +293,7 @@ typedef enum Protocol_RxState_Tag
 }
 Protocol_RxState_T;
 
-typedef enum Protocol_ReqState_Tag
+typedef enum Protocol_ReqState
 {
     PROTOCOL_REQ_STATE_INACTIVE,
     PROTOCOL_REQ_STATE_WAIT_RX_INITIAL,
@@ -303,7 +303,7 @@ typedef enum Protocol_ReqState_Tag
 }
 Protocol_ReqState_T;
 
-typedef struct __attribute__((aligned(2U))) Protocol_Params_Tag
+typedef struct __attribute__((aligned(2U))) Protocol_Params
 {
     uint8_t XcvrId;
     uint8_t SpecsId;
@@ -316,7 +316,7 @@ typedef struct __attribute__((aligned(2U))) Protocol_Params_Tag
 }
 Protocol_Params_T;
 
-typedef const struct Protocol_Config_Tag
+typedef const struct Protocol_Config
 {
     uint8_t * const P_RX_PACKET_BUFFER;
     uint8_t * const P_TX_PACKET_BUFFER;
@@ -330,7 +330,7 @@ typedef const struct Protocol_Config_Tag
 }
 Protocol_Config_T;
 
-typedef struct Protocol_Tag
+typedef struct Protocol
 {
     const Protocol_Config_T CONFIG;
     Protocol_Params_T Params;

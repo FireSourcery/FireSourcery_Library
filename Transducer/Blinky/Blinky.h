@@ -44,7 +44,7 @@
 // }
 // Blinky_Pattern_T;
 
-typedef struct Blinky_Tag
+typedef struct Blinky
 {
     Pin_T Pin;
     Timer_T Timer;
@@ -54,7 +54,7 @@ typedef struct Blinky_Tag
     uint32_t OnTime;
     uint32_t OffTime;
     // uint32_t OffTimeDefault; unchanged between activation types
-    void (*PatternFunction)(struct Blinky_Tag * p_this);
+    void (*PatternFunction)(struct Blinky * p_this);
     // uint8_t ActiveSourceId;
 }
 Blinky_T;

@@ -57,7 +57,7 @@
 extern const int8_t _ENCODER_TABLE[_ENCODER_TABLE_LENGTH];
 extern const int8_t _ENCODER_TABLE_PHASE_A[_ENCODER_TABLE_LENGTH];
 
-typedef union Encoder_Phases_Tag
+typedef union Encoder_Phases
 {
     struct
     {
@@ -71,7 +71,7 @@ typedef union Encoder_Phases_Tag
 }
 Encoder_Phases_T;
 
-typedef enum Encoder_Align_Tag
+typedef enum Encoder_Align
 {
     ENCODER_ALIGN_NO,
     ENCODER_ALIGN_PHASE,
@@ -79,7 +79,7 @@ typedef enum Encoder_Align_Tag
 }
 Encoder_Align_T;
 
-typedef struct __attribute__((aligned(2U))) Encoder_Params_Tag
+typedef struct __attribute__((aligned(2U))) Encoder_Params
 {
     uint16_t CountsPerRevolution;         /* Derive Angular Units. Max for counting AngularD, CaptureDeltaT mode need 2nd TimerCounterMax */
     uint16_t ScalarSpeedRef_Rpm;         /* Derive Scalar16 Units. */
@@ -96,7 +96,7 @@ typedef struct __attribute__((aligned(2U))) Encoder_Params_Tag
 }
 Encoder_Params_T;
 
-typedef const struct Encoder_Config_Tag
+typedef const struct Encoder_Config
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     HAL_Encoder_Counter_T * const P_HAL_ENCODER_COUNTER; /*!< Pulse Counter */
@@ -117,7 +117,7 @@ typedef const struct Encoder_Config_Tag
 }
 Encoder_Config_T;
 
-typedef struct Encoder_Tag
+typedef struct Encoder
 {
     const Encoder_Config_T CONFIG;
     Encoder_Params_T Params;
