@@ -151,14 +151,14 @@ typedef union MotorController_StatusFlags
 {
     struct
     {
-        uint16_t HeatMosfets : 1U;
-        uint16_t LowV : 1U;
-        uint16_t ILimitLowV : 1U;
-        uint16_t ILimitHeatMosfets : 1U;
-        uint16_t ILimitHeatPcb : 1U;
-        uint16_t ILimitHeatMotors : 1U;
-        uint16_t SpeedLimit : 1U;
-        uint16_t IsStopped : 1U;
+        uint16_t HeatMosfets        : 1U; //ilimitheat
+        uint16_t LowV               : 1U;
+        uint16_t ILimitLowV         : 1U;
+        uint16_t ILimitHeatMosfets  : 1U;
+        uint16_t ILimitHeatPcb      : 1U;
+        uint16_t ILimitHeatMotors   : 1U;
+        uint16_t SpeedLimit         : 1U;
+        uint16_t IsStopped          : 1U;
     };
     uint16_t Word;
 }

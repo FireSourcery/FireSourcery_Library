@@ -49,6 +49,7 @@
 /*
     Packet and correspondence type. Per unique packet structure/parsing/processing pattern
     May process directly as cmd, or lead extended cmd id
+    Essential the packets "OpCode"
 */
 typedef enum MotPacket_Id
 {
@@ -60,6 +61,12 @@ typedef enum MotPacket_Id
     MOT_PACKET_SYNC_ACK = 0x12U,
     MOT_PACKET_SYNC_NACK = 0x13U,
     MOT_PACKET_SYNC_ABORT = 0x14U,
+    MOT_PACKET_SYNC_FEED_WATCHDOG = 0x15U,
+
+    // 4-byte status wihout checksum
+
+    // 8-byte immediates with 16 checksum
+    // MOT_PACKET_ACK_SEQ,
     // MOT_PACKET_STATUS_OK = 0x15U,
     // MOT_PACKET_STATUS_ERROR = 0x16U,
     // MOT_PACKET_STATUS_EXT = 0x17U,
