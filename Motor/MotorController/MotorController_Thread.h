@@ -208,6 +208,8 @@ static inline void _MotorController_ProcVoltageMonitor(MotorControllerPtr_T p_mc
 */
 static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
 {
+    char * test = "abc";
+
     /* High Freq, Low Priority */
 
     /* Med Freq, Low Priority, 1 ms */
@@ -270,7 +272,7 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
             _MotorController_ProcOptDin(p_mc);
             // _MotorController_ProcVoltageMonitor(p_mc); /* Except VSupply */
             // _MotorController_ProcHeatMonitor(p_mc);
-
+            // Blinky_Toggle(&p_mc->Buzzer);
         }
     }
 }
@@ -322,8 +324,8 @@ static inline void MotorController_Timer1Ms_Thread(MotorControllerPtr_T p_mc)
     //     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
     // }
 #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-    // Blinky_Toggle(&p_mc->Meter);
 #endif
+    // Blinky_Toggle(&p_mc->Meter);
 }
 
 /*

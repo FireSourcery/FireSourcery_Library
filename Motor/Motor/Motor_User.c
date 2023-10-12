@@ -80,12 +80,13 @@ void Motor_User_ActivateFeedbackMode_Cast(MotorPtr_T p_motor, uint8_t modeWord) 
     Sets Ramp Target
     Ramp Proc interrupt only update OutputState, RampTarget is safe from sync?
 */
-void Motor_User_SetCmd(MotorPtr_T p_motor, int16_t userCmd)  {
+void Motor_User_SetCmd(MotorPtr_T p_motor, int16_t userCmd)
+{
     // Critical_Enter();
     Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_LogicalDirectionCmd(p_motor, userCmd));
     // Critical_Exit();
-     } /* may need to be private */
-int32_t Motor_User_GetCmd(const MotorPtr_T p_motor)          { return Motor_LogicalDirectionCmd(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
+} /* may need to be private */
+int32_t Motor_User_GetCmd(const MotorPtr_T p_motor) { return Motor_LogicalDirectionCmd(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
 
 /******************************************************************************/
 /*!

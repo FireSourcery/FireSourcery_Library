@@ -65,8 +65,7 @@ bool Xcvr_CheckIsValid(const Xcvr_T * p_xcvr, void * p_target)
 
 bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate) //todo check valid baudrate
 {
-    volatile bool isSuccess;
-
+    bool isSuccess = true;
 #if     defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
     switch(p_xcvr->p_Xcvr->TYPE)
     {
@@ -82,7 +81,6 @@ bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate) //todo check 
 #elif     defined(CONFIG_XCVR_INTERFACE_POINTER_ONLY)
     if(p_xcvr->p_Xcvr->P_INTERFACE->CONFIG_BAUD_RATE != 0U) { p_xcvr->p_Xcvr->P_INTERFACE->CONFIG_BAUD_RATE(p_xcvr->p_Xcvr->P_CONTEXT, baudRate); }
 #endif
-
     return isSuccess;
 }
 

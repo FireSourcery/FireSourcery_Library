@@ -53,7 +53,7 @@
 static protocol_txsize_t Ping(MotorControllerPtr_T p_mc, MotPacket_PingResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
-    MotorController_User_BeepN(p_mc, 500U, 500U, 1U);
+    // MotorController_User_BeepN(p_mc, 500U, 500U, 1U);
     return MotPacket_PingResp_Build(p_txPacket);
 }
 
@@ -93,7 +93,7 @@ MotCallId_T;
 static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_CallResp_T * p_txPacket, const MotPacket_CallReq_T * p_rxPacket)
 {
     MotorPtr_T p_motor = MotorController_GetPtrMotor(p_mc, 0U);
-    volatile uint16_t status = 0U;
+    uint16_t status = 0U;
 
     switch((MotCallId_T)p_rxPacket->CallReq.Id)
     {
@@ -101,8 +101,8 @@ static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_Call
         case MOT_CALL_EXIT_BLOCKING:        MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_EXIT);               status = 0;                 break;
         case MOT_CALL_CALIBRATE_SENSOR:     MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR);   status = 0U;                break;
         case MOT_CALL_SAVE_PARAMS:          MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);    status = p_mc->NvmStatus;   break;
-        // case MOT_CALL_WRITE_MANUFACTURE: MotorController_User_Write_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR);     status = 0U;                    break;
-        // case MOT_CALL_READ_MANUFACTURE:  MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR);     status = 0U;                    break;
+        // case MOT_CALL_WRITE_MANUFACTURE: MotorController_User_ProcBlocking_Blocking(p_mc, MOT_CALL_WRITE_MANUFACTURE);       status = 0U;                    break;
+        // case MOT_CALL_READ_MANUFACTURE:  MotorController_User_ProcBlocking_Blocking(p_mc, MOT_CALL_READ_MANUFACTURE);        status = 0U;                    break;
         default: break;
     }
 
@@ -115,7 +115,7 @@ static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_Call
 /* Resp Truncates 32-Bit Vars */
 static protocol_txsize_t VarRead(MotorControllerPtr_T p_mc, MotPacket_VarReadResp_T * p_txPacket, const MotPacket_VarReadReq_T * p_rxPacket)
 {
-    uint8_t varsCount = MotPacket_VarReadReq_ParseVarIdCount(p_rxPacket);
+    volatile uint8_t varsCount = MotPacket_VarReadReq_ParseVarIdCount(p_rxPacket);
     for(uint8_t iVar = 0U; iVar < varsCount; iVar++)
     {
         MotPacket_VarReadResp_BuildVarValue(p_txPacket, iVar, (uint16_t)MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_VarReadReq_ParseVarId(p_rxPacket, iVar)));

@@ -41,10 +41,10 @@
 
 #define MOT_PACKET_LENGTH_MAX           (40U)
 #define MOT_PACKET_LENGTH_MIN           (2U)
-#define MOT_PACKET_LENGTH_BYTE_INDEX    (3U)
 #define MOT_PACKET_HEADER_LENGTH        (4U)
-#define MOT_PACKET_START_BYTE           (0xA5U)
 #define MOT_PACKET_PAYLOAD_MAX          (MOT_PACKET_LENGTH_MAX - MOT_PACKET_HEADER_LENGTH)
+#define MOT_PACKET_START_BYTE           (0xA5U)
+#define MOT_PACKET_LENGTH_BYTE_INDEX    (2U)
 
 /*
     Packet and correspondence type. Per unique packet structure/parsing/processing pattern

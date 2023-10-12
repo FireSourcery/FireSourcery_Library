@@ -65,7 +65,7 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, cons
 {
     Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_AWAIT_PACKET;
 
-    if(rxCount >= MOT_PACKET_LENGTH_BYTE_INDEX) /* length index is valid */
+    if(rxCount > MOT_PACKET_LENGTH_BYTE_INDEX) /* length index is valid */
     {
         if(rxCount == MotPacket_ParseTotalLength(p_rxPacket)) /* Packet Complete */
         {

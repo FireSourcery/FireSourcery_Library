@@ -159,7 +159,7 @@ static bool ProcTxNackRxRepeat(Protocol_T * p_protocol, uint8_t * p_nackCounter,
 */
 static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
 {
-    Protocol_RxCode_T rxStatus = PROTOCOL_RX_CODE_AWAIT_PACKET;
+    volatile Protocol_RxCode_T rxStatus = PROTOCOL_RX_CODE_AWAIT_PACKET;
 
     switch(p_protocol->RxState)
     {
@@ -229,6 +229,11 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
                 Cannot check for Abort without user signal, persistent wait process
             */
             if(rxStatus != PROTOCOL_RX_CODE_AWAIT_PACKET) { p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1; }
+            // if(rxStatus != PROTOCOL_RX_CODE_AWAIT_PACKET)
+            // {
+            //     p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
+            //     Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxCount);
+            // }
             break;
 
         case PROTOCOL_RX_STATE_INACTIVE:
@@ -322,7 +327,7 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
             switch(rxCode)
             {
                 case PROTOCOL_RX_CODE_AWAIT_PACKET:
-                    p_protocol->TxLength = 0U;
+                    // p_protocol->TxLength = 0U; //todo
                     // reqStatus = p_protocol->p_ReqActive->PROC_EXT(p_protocol->CONFIG.P_APP_INTERFACE, );
 
                     switch(reqStatus)

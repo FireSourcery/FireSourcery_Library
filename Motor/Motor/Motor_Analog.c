@@ -55,7 +55,7 @@ void Motor_Analog_CaptureVc(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_mo
 /******************************************************************************/
 void Motor_Analog_CaptureIa(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIa, 0U/* Motor_SixStep_CaptureIa */); }
 void Motor_Analog_CaptureIb(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIb, 0U/* Motor_SixStep_CaptureIb */); }
-void Motor_Analog_CaptureIc(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIc, 0U/* Motor_SixStep_CaptureIc */);    /* Debug_LED(); */ }
+void Motor_Analog_CaptureIc(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIc, 0U/* Motor_SixStep_CaptureIc */); }
 
 
 /******************************************************************************/
