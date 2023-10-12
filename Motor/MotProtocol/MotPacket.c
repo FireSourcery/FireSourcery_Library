@@ -52,10 +52,13 @@ static uint16_t Packet_CalcChecksum(const MotPacket_T * p_packet)
     return checkSum;
 }
 
-bool MotPacket_CheckChecksum(const MotPacket_T * p_packet)
-{
-    return ((checksum_t)Packet_CalcChecksum(p_packet) == p_packet->Header.Checksum);
-}
+//todo
+// static uint16_t VarId_CalcChecksum(const MotPacket_T * p_packet)
+// {
+//     uint16_t checkSum = 0U;
+//     checkSum += CalcChecksum((uint8_t *)&p_packet->Payload[0U], p_packet->Header.Length - sizeof(MotPacket_Header_T));
+//     return checkSum;
+// }
 
 static uint8_t BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T id, uint8_t payloadLength)
 {
@@ -73,6 +76,11 @@ static uint8_t BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T id, uint8_t pa
 static inline uint8_t Packet_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength)
 {
     return BuildHeader(p_packet, headerId, payloadLength);
+}
+
+bool MotPacket_CheckChecksum(const MotPacket_T * p_packet)
+{
+    return ((checksum_t)Packet_CalcChecksum(p_packet) == p_packet->Header.Checksum);
 }
 
 uint8_t _MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId)
