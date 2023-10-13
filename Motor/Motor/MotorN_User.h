@@ -44,6 +44,7 @@ typedef void (*Motor_User_ProcVoid_T)(MotorPtr_T p_motor);
 typedef void (*Motor_User_SetCmd_T)(MotorPtr_T p_motor, int16_t cmd);
 typedef void (*Motor_User_SetScalar16_T)(MotorPtr_T p_motor, uint16_t cmd);
 typedef void (*Motor_User_SetId_T)(MotorPtr_T p_motor, uint32_t enumValue);
+typedef void (*Motor_User_SetEnum32_T)(MotorPtr_T p_motor, uint32_t enumValue);
 typedef void (*Motor_User_SetFeedbackMode_T)(MotorPtr_T p_motor, Motor_FeedbackMode_T feedbackMode);
 typedef bool (*Motor_User_ProcStatus_T)(MotorPtr_T p_motor);
 typedef bool (*Motor_User_CheckStatus_T)(const MotorPtr_T p_motor);
@@ -54,7 +55,7 @@ typedef bool (*Motor_User_ClearLimit_T)(MotorPtr_T p_motor, uint8_t id);
 /*
     Motor_User_ReleaseControl
     Motor_User_DisableControl
-    Motor_User_Hold
+    Motor_User_TryHold
 */
 static inline void MotorN_User_ProcFunction(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_ProcVoid_T function)
 {
@@ -76,14 +77,20 @@ static inline void MotorN_User_SetId(MotorPtr_T p_motorArray, uint8_t motorCount
     for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { function(&p_motorArray[iMotor], cmdValue); }
 }
 
-static inline void MotorN_User_SetFeedbackMode(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_SetFeedbackMode_T function, Motor_FeedbackMode_T feedbackMode)
+//todo remove 1 arg
+// static inline void MotorN_User_SetFeedbackMode(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_SetFeedbackMode_T function, Motor_FeedbackMode_T feedbackMode)
+// {
+//     for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { function(&p_motorArray[iMotor], feedbackMode); }
+// }
+
+static inline void MotorN_User_SetFeedbackMode(MotorPtr_T p_motorArray, uint8_t motorCount,  Motor_FeedbackMode_T feedbackMode)
 {
-    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { function(&p_motorArray[iMotor], feedbackMode); }
+    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_ActivateFeedbackMode(&p_motorArray[iMotor], feedbackMode); }
 }
 
 /*
-    Motor_User_SetDirectionForward
-    Motor_User_SetDirectionReverse
+    Motor_User_TryDirectionForward
+    Motor_User_TryDirectionReverse
     MotorN_User_ClearFault
 */
 static inline bool MotorN_User_ProcStatusAnd(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_ProcStatus_T function)

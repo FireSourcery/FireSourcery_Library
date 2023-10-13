@@ -48,7 +48,7 @@ static inline void Motor_PWM_Thread(MotorPtr_T p_motor)
     // Motor_Debug_CaptureRefTime(p_motor);
     p_motor->ControlTimerBase++;
     // Motor_Analog_Proc(p_motor);
-    StateMachine_Proc(&p_motor->StateMachine);
+    StateMachine_Async_ProcState(&p_motor->StateMachine);
     // Motor_Debug_CaptureTime(p_motor, 5U);
 }
 

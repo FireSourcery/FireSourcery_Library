@@ -208,8 +208,6 @@ static inline void _MotorController_ProcVoltageMonitor(MotorControllerPtr_T p_mc
 */
 static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
 {
-    char * test = "abc";
-
     /* High Freq, Low Priority */
 
     /* Med Freq, Low Priority, 1 ms */

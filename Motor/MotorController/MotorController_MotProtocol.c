@@ -53,7 +53,7 @@
 static protocol_txsize_t Ping(MotorControllerPtr_T p_mc, MotPacket_PingResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
-    // MotorController_User_BeepN(p_mc, 500U, 500U, 1U);
+    MotorController_User_BeepN(p_mc, 500U, 500U, 1U);
     return MotPacket_PingResp_Build(p_txPacket);
 }
 
@@ -116,11 +116,12 @@ static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_Call
 static protocol_txsize_t VarRead(MotorControllerPtr_T p_mc, MotPacket_VarReadResp_T * p_txPacket, const MotPacket_VarReadReq_T * p_rxPacket)
 {
     volatile uint8_t varsCount = MotPacket_VarReadReq_ParseVarIdCount(p_rxPacket);
-    for(uint8_t iVar = 0U; iVar < varsCount; iVar++)
+    uint16_t idCheckSum = p_rxPacket->VarReadReq.IdChecksum;
+    for(uint8_t index = 0U; index < varsCount; index++)
     {
-        MotPacket_VarReadResp_BuildVarValue(p_txPacket, iVar, (uint16_t)MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_VarReadReq_ParseVarId(p_rxPacket, iVar)));
+        MotPacket_VarReadResp_BuildVarValue(p_txPacket, index, (uint16_t)MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_VarReadReq_ParseVarId(p_rxPacket, index)));
     }
-    // MotPacket_VarReadResp_BuildInnerHeader(p_txPacket, 0, 0);
+    MotPacket_VarReadResp_BuildInnerHeader(p_txPacket, idCheckSum, MOT_VAR_STATUS_OK);
     return MotPacket_VarReadResp_BuildHeader(p_txPacket, varsCount);
 
 }
@@ -131,13 +132,16 @@ static protocol_txsize_t VarRead(MotorControllerPtr_T p_mc, MotPacket_VarReadRes
 static protocol_txsize_t VarWrite(MotorControllerPtr_T p_mc, MotPacket_VarWriteResp_T * p_txPacket, const MotPacket_VarWriteReq_T * p_rxPacket)
 {
     uint8_t varsCount = MotPacket_VarWriteReq_ParseVarCount(p_rxPacket);
-    MotVarId_Status_T status;
-    for(uint8_t iVar = 0U; iVar < varsCount; iVar++)
+    uint16_t idCheckSum = p_rxPacket->VarWriteReq.IdChecksum;
+    MotVarId_Status_T headerStatus = MOT_VAR_STATUS_OK;
+    MotVarId_Status_T varStatus;
+    for(uint8_t index = 0U; index < varsCount; index++)
     {
-        status = MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_VarWriteReq_ParseVarId(p_rxPacket, iVar), MotPacket_VarWriteReq_ParseVarValue(p_rxPacket, iVar));
-        MotPacket_VarWriteResp_BuildVarStatus(p_txPacket, iVar, status);
+        varStatus = MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_VarWriteReq_ParseVarId(p_rxPacket, index), MotPacket_VarWriteReq_ParseVarValue(p_rxPacket, index));
+        MotPacket_VarWriteResp_BuildVarStatus(p_txPacket, index, varStatus);
+        if(varStatus != MOT_VAR_STATUS_OK) { headerStatus = MOT_VAR_STATUS_ERROR; }
     }
-    // MotPacket_VarWriteResp_BuildInnerHeader(p_txPacket, 0, 0);
+    MotPacket_VarWriteResp_BuildInnerHeader(p_txPacket, idCheckSum, headerStatus);
     return MotPacket_VarWriteResp_BuildHeader(p_txPacket, varsCount);
 }
 

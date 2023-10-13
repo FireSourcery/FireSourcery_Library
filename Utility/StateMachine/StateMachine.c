@@ -233,12 +233,12 @@ void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine)
 bool StateMachine_Async_Proc(StateMachine_T * p_stateMachine, statemachine_inputid_t inputId, statemachine_inputvalue_t inputValue)
 {
     bool isAccept = false;
-    if(EnterCritical(p_stateMachine))
-    {
-        isAccept = ProcInput(p_stateMachine, inputId, inputValue);
-        if(isAccept == true) { ProcState(p_stateMachine); }
-        ExitCritical(p_stateMachine);
-    }
+    // if(EnterCritical(p_stateMachine))
+    // {
+    isAccept = ProcInput(p_stateMachine, inputId, inputValue);
+    if(isAccept == true) { ProcState(p_stateMachine); }
+    //     ExitCritical(p_stateMachine);
+    // }
     return isAccept;
 }
 

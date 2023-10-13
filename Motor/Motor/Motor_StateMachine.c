@@ -62,6 +62,13 @@ static StateMachine_State_T * TransitionFreewheel(MotorPtr_T p_motor, statemachi
 
 /******************************************************************************/
 /*!
+    @brief States
+        Proc runs on PWM thread, high prioirty
+        Inputs run on main thread, low prioity
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
     @brief  State
 */
 /******************************************************************************/
@@ -113,11 +120,8 @@ static void Stop_Entry(MotorPtr_T p_motor)
 
 static void Stop_Proc(MotorPtr_T p_motor)
 {
-    // if(p_motor->Speed_FracS16 > 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FREEWHEEL); }
-    // else
-    {
-        Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleVBemf, 0U);
-    }
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleVBemf, 0U);
+    // and not hold // if(p_motor->Speed_FracS16 > 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FREEWHEEL); }
 }
 
 static StateMachine_State_T * Stop_InputDirection(MotorPtr_T p_motor, statemachine_inputvalue_t direction)
@@ -221,13 +225,25 @@ static StateMachine_State_T * Run_InputControl(MotorPtr_T p_motor, statemachine_
     return 0U;
 }
 
+static StateMachine_State_T * Run_InputHold(MotorPtr_T p_motor, statemachine_inputvalue_t voidIn)
+{
+    (void)voidIn;
+    StateMachine_State_T * p_nextState = 0U;
+
+    if(p_motor->Speed_FracS16 == 0U)
+    {
+       p_nextState = &STATE_STOP;
+    }
+    return 0U;
+}
+
 static StateMachine_State_T * Run_InputRelease(MotorPtr_T p_motor, statemachine_inputvalue_t voidIn)
 {
     (void)voidIn;
     return &STATE_FREEWHEEL;  // return (Motor_CheckSpeed(p_motor) == true) ? &STATE_FREEWHEEL : 0U; // check speed range
 }
 
-//critical lock from outside
+// critical lock from outside, alternatively only run mode needs to lock
 // return (Motor_SetFeedbackMode(p_motor, feedbackMode) == true) ? &STATE_RUN : 0U;
 // return &STATE_RUN; /* repeat entry function */
 static StateMachine_State_T * Run_InputFeedback(MotorPtr_T p_motor, statemachine_inputvalue_t feedbackModeWord)
@@ -237,6 +253,7 @@ static StateMachine_State_T * Run_InputFeedback(MotorPtr_T p_motor, statemachine
         alternatively transition through freewheel first
         Observed bemf may experience larger discontinuity than control voltage
     */
+//    Motor_SetCommutationModeUInt32
     Motor_FOC_SetFeedbackMode_Async(p_motor, Motor_FeedbackMode(feedbackModeWord));
     return 0U;
 }
@@ -244,7 +261,7 @@ static StateMachine_State_T * Run_InputFeedback(MotorPtr_T p_motor, statemachine
 static const StateMachine_Transition_T RUN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
     [MSM_INPUT_FAULT]           = (StateMachine_Transition_T)TransitionFault,
-    [MSM_INPUT_CONTROL]         = (StateMachine_Transition_T)Run_InputControl,
+    [MSM_INPUT_CONTROL]         = (StateMachine_Transition_T)0U,
     [MSM_INPUT_RELEASE]         = (StateMachine_Transition_T)Run_InputRelease,
     [MSM_INPUT_FEEDBACK]        = (StateMachine_Transition_T)Run_InputFeedback,
     [MSM_INPUT_DIRECTION]       = (StateMachine_Transition_T)0U, /* todo direction reverse match */
@@ -273,25 +290,24 @@ static void Freewheel_Entry(MotorPtr_T p_motor)
 static void Freewheel_Proc(MotorPtr_T p_motor)
 {
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleVBemf, 0U /* Motor_SixStep_ProcPhaseObserve */);
-    /* Check after capture speed, this way lower priority input cannot proc in between capture and check */
     if(p_motor->Speed_FracS16 == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
 }
 
 static StateMachine_State_T * Freewheel_InputControl(MotorPtr_T p_motor, statemachine_inputvalue_t voidIn)
 {
-    StateMachine_State_T * p_newState = 0U;
+    StateMachine_State_T * p_nextState = 0U;
 
     if(Motor_CheckOpenLoop(p_motor) == true)
     {
-        p_newState = 0U; /* OpenLoop does not resume */
+        p_nextState = 0U; /* OpenLoop does not resume */
     }
     else
     {
         Motor_FOC_ProcFeedbackMatch(p_motor);
-        p_newState = &STATE_RUN;
+        p_nextState = &STATE_RUN;
     }
 
-    return p_newState;
+    return p_nextState;
 }
 
 static StateMachine_State_T * Freewheel_InputFeedback(MotorPtr_T p_motor, statemachine_inputvalue_t feedbackModeWord)

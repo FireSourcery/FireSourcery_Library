@@ -44,12 +44,12 @@
     Selectively handle using StateId
 */
 /******************************************************************************/
-typedef void (*Motor_Params_Set_T)(MotorPtr_T p_motor, uint16_t value);
+// typedef void (*Motor_Params_Set_T)(MotorPtr_T p_motor, uint16_t value);
 
-static inline uint16_t Motor_Params_Set(MotorPtr_T p_motor, Motor_Params_Set_T setFunction, uint16_t value)
-{
-    if(StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP) { setFunction(p_motor, value); }
-}
+// static inline uint16_t Motor_Params_Set(MotorPtr_T p_motor, Motor_Params_Set_T setFunction, uint16_t value)
+// {
+//     if(StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP) { setFunction(p_motor, value); }
+// }
 
 static inline void Motor_Params_SetDefaultFeedbackMode(MotorPtr_T p_motor, Motor_FeedbackMode_T mode)    { p_motor->Parameters.FeedbackModeDefault = mode; }
 static inline void Motor_Params_SetDefaultFeedbackMode_Cast(MotorPtr_T p_motor, uint16_t wordValue)      { p_motor->Parameters.FeedbackModeDefault.Word = wordValue; }
@@ -70,6 +70,15 @@ static inline uint16_t Motor_Params_GetSpeedVRef_Rpm(MotorPtr_T p_motor)        
 static inline uint16_t Motor_Params_GetIaZero_Adcu(MotorPtr_T p_motor)                               { return p_motor->Parameters.IaZeroRef_Adcu; }
 static inline uint16_t Motor_Params_GetIbZero_Adcu(MotorPtr_T p_motor)                               { return p_motor->Parameters.IbZeroRef_Adcu; }
 static inline uint16_t Motor_Params_GetIcZero_Adcu(MotorPtr_T p_motor)                               { return p_motor->Parameters.IcZeroRef_Adcu; }
+
+static inline uint16_t Motor_Params_GetIRef_Adcu(MotorPtr_T p_motor)
+{
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+    return p_motor->Parameters.IPeakRef_Adcu;
+#else
+    return  GLOBAL_MOTOR.I_MAX_ADCU;
+#endif
+}
 
 /*  */
 static inline Motor_CommutationMode_T Motor_Params_GetCommutationMode(MotorPtr_T p_motor)                  { return p_motor->Parameters.CommutationMode; }
@@ -93,18 +102,17 @@ static inline void Motor_Params_SetRampAccel_Millis(MotorPtr_T p_motor, uint16_t
 #endif
 
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-static inline uint16_t Motor_Params_GetOpenLoopSpeed_Scalar16(MotorPtr_T p_motor)                      { return p_motor->Parameters.OpenLoopSpeed_Scalar16; }
-static inline uint32_t Motor_Params_GetOpenLoopPower_Scalar16(MotorPtr_T p_motor)                      { return p_motor->Parameters.OpenLoopPower_Scalar16; }
-static inline uint16_t Motor_Params_GetOpenLoopAccel_Cycles(MotorPtr_T p_motor)                        { return p_motor->Parameters.OpenLoopAccel_Cycles; }
-static inline void Motor_Params_SetOpenLoopSpeed_Scalar16(MotorPtr_T p_motor, uint16_t speed_scalar16)     { p_motor->Parameters.OpenLoopSpeed_Scalar16 = speed_scalar16; }
-static inline void Motor_Params_SetOpenLoopPower_Scalar16(MotorPtr_T p_motor, uint16_t v_scalar16)         { p_motor->Parameters.OpenLoopPower_Scalar16 = v_scalar16; }
-static inline void Motor_Params_SetOpenLoopAccel_Cycles(MotorPtr_T p_motor, uint16_t cycles)               { p_motor->Parameters.OpenLoopAccel_Cycles = cycles; }
+static inline uint16_t Motor_Params_GetOpenLoopSpeed_Scalar16(MotorPtr_T p_motor)                       { return p_motor->Parameters.OpenLoopSpeed_Scalar16; }
+static inline uint32_t Motor_Params_GetOpenLoopPower_Scalar16(MotorPtr_T p_motor)                       { return p_motor->Parameters.OpenLoopPower_Scalar16; }
+static inline uint16_t Motor_Params_GetOpenLoopAccel_Cycles(MotorPtr_T p_motor)                         { return p_motor->Parameters.OpenLoopAccel_Cycles; }
+static inline void Motor_Params_SetOpenLoopSpeed_Scalar16(MotorPtr_T p_motor, uint16_t speed_scalar16)  { p_motor->Parameters.OpenLoopSpeed_Scalar16 = speed_scalar16; }
+static inline void Motor_Params_SetOpenLoopPower_Scalar16(MotorPtr_T p_motor, uint16_t v_scalar16)      { p_motor->Parameters.OpenLoopPower_Scalar16 = v_scalar16; }
+static inline void Motor_Params_SetOpenLoopAccel_Cycles(MotorPtr_T p_motor, uint16_t cycles)            { p_motor->Parameters.OpenLoopAccel_Cycles = cycles; }
 #endif
 
 #ifdef CONFIG_MOTOR_SIX_STEP_ENABLE
 static inline void Motor_Params_SetPhaseModeParam(MotorPtr_T p_motor, Phase_Mode_T mode)       { p_motor->Parameters.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->Phase, mode); }
 #endif
-
 
 /******************************************************************************/
 /*!

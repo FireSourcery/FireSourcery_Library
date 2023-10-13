@@ -72,27 +72,41 @@ static inline void MotorController_User_SetDriveCmdZero(MotorControllerPtr_T p_m
 /******************************************************************************/
 /* Drive Direction */
 /******************************************************************************/
-static inline bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, MotorController_Direction_T direction)
-{
-    // if(p_mc->DriveDirection != direction)
-    { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
-    return (p_mc->DriveDirection == direction);
-}
 
 static inline MotorController_Direction_T MotorController_User_GetDirection_Status(const MotorControllerPtr_T p_mc) { return p_mc->DriveDirection; }
 
 static inline MotorController_Direction_T MotorController_User_GetDirection(const MotorControllerPtr_T p_mc)
 {
     MotorController_Direction_T direction;
-    if(StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_NEUTRAL) { direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL; }
-    else if(StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_PARK) { direction = MOTOR_CONTROLLER_DIRECTION_PARK; }
-    else
+    switch (StateMachine_GetActiveStateId(&p_mc->StateMachine))
     {
-        if(MotorController_CheckForwardAll(p_mc) == true)       { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
-        else if(MotorController_CheckReverseAll(p_mc) == true)  { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
-        else { direction = p_mc->DriveDirection; } /* error */
+        case MCSM_STATE_ID_PARK:        direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
+        case MCSM_STATE_ID_NEUTRAL:     direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;         break;
+        case MCSM_STATE_ID_DRIVE:
+            if(MotorController_CheckForwardAll(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
+            else if(MotorController_CheckReverseAll(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
+            else { direction = MOTOR_CONTROLLER_DIRECTION_ERROR; }
+            break;
+        default: direction = MOTOR_CONTROLLER_DIRECTION_ERROR; break;
     }
+
+    // if(StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_NEUTRAL) { direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL; }
+    // else if(StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_PARK) { direction = MOTOR_CONTROLLER_DIRECTION_PARK; }
+    // else
+    // {
+    //     if(MotorController_CheckForwardAll(p_mc) == true)       { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
+    //     else if(MotorController_CheckReverseAll(p_mc) == true)  { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
+    //     else { direction = p_mc->DriveDirection; } /* error */
+    // }
     return direction;
+}
+
+static inline bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, MotorController_Direction_T direction)
+{
+    // if(p_mc->DriveDirection != direction)
+    { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
+    // return (p_mc->DriveDirection == direction);
+    return (MotorController_User_GetDirection(p_mc) == direction);
 }
 
 /******************************************************************************/
@@ -106,7 +120,7 @@ static inline void MotorController_User_ExitBlockingState(MotorControllerPtr_T p
 static inline NvMemory_Status_T MotorController_User_SaveNvm_Blocking(MotorControllerPtr_T p_mc, MotorController_BlockingId_T opId)
 {
     MotorController_User_ProcBlocking_Blocking(p_mc, opId);
-    return p_mc->NvmStatus;
+    return p_mc->NvmStatus; // all nvm status
 }
 
 static inline NvMemory_Status_T MotorController_User_SaveParameters_Blocking(MotorControllerPtr_T p_mc)
@@ -242,7 +256,7 @@ static inline uint32_t MotorController_User_GetIMax(void) { return GLOBAL_MOTOR.
 
 static inline uint32_t MotorController_User_GetBoardVersion(void)
 {
-    uint8_t version[4U] = { GLOBAL_MOTOR.I_MAX_ADCU, GLOBAL_MOTOR.I_MAX_AMPS, GLOBAL_MOTOR.V_MAX_VOLTS, 0U };
+    uint8_t version[4U] = { GLOBAL_MOTOR.I_MAX_ADCU, GLOBAL_MOTOR.I_MAX_ADCU >> 8U, GLOBAL_MOTOR.I_MAX_AMPS, GLOBAL_MOTOR.V_MAX_VOLTS };
     return *((uint32_t *)(&version[0U]));
 }
 
