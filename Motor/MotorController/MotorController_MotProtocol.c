@@ -179,14 +179,14 @@ static protocol_txsize_t VarWrite(MotorControllerPtr_T p_mc, MotPacket_VarWriteR
     // MOT_VAR_ID_EXT_3,
     // MOT_VAR_ID_EXT_REG32,
     // char NAME[8U];
-    // union { uint8_t SERIAL_NUMBER[4U]; uint32_t SERIAL_NUMBER_REG; };
+    // union { uint8_t SERIAL_NUMBER[4U]; uint32_t SERIAL_NUMBER_WORD; };
     // union
     // {
     //     uint8_t MANUFACTURE_NUMBER[4U];
-    //     uint32_t MANUFACTURE_NUMBER_REG;
+    //     uint32_t MANUFACTURE_NUMBER_WORD;
     //     struct { uint8_t MANUFACTURE_DAY; uint8_t MANUFACTURE_MONTH; uint8_t MANUFACTURE_YEAR; uint8_t MANUFACTURE_RESV; };
     // };
-    // union { uint8_t HARDWARE_VERSION[4U]; uint32_t HARDWARE_VERSION_REG; };
+    // union { uint8_t HARDWARE_VERSION[4U]; uint32_t HARDWARE_VERSION_WORD; };
     // uint8_t ID_EXT[4U];
     // uint8_t RESERVED[8U];
 

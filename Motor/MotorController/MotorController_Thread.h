@@ -131,12 +131,12 @@ static inline void _MotorController_ProcHeatMonitor(MotorControllerPtr_T p_mc)
     Thermistor_PollMonitor(&p_mc->ThermistorMosfets, p_mc->AnalogResults.HeatMosfets_Adcu);
 #endif
 
-    if(Thermistor_GetIsFault(&p_mc->ThermistorPcb) == true) { p_mc->FaultFlags.PcbOverHeat = 1U; isFault = true; }
+    if(Thermistor_GetIsFault(&p_mc->ThermistorPcb) == true) { p_mc->FaultFlags.PcbOverheat = 1U; isFault = true; }
 #if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
     if(Thermistor_GetIsFault(&p_mc->ThermistorMosfetsTop) == true) { p_mc->FaultFlags.MosfetsTopOverHeat = 1U; isFault = true; }
     if(Thermistor_GetIsFault(&p_mc->ThermistorMosfetsBot) == true) { p_mc->FaultFlags.MosfetsBotOverHeat = 1U; isFault = true; }
 #else
-    if(Thermistor_GetIsFault(&p_mc->ThermistorMosfets) == true) { p_mc->FaultFlags.MosfetsOverHeat = 1U; isFault = true; }
+    if(Thermistor_GetIsFault(&p_mc->ThermistorMosfets) == true) { p_mc->FaultFlags.MosfetsOverheat = 1U; isFault = true; }
 #endif
 
     if(isFault == true)
@@ -265,7 +265,7 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
             for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]); }
 
             /* Can use low priority check, as motor is already in fault state */
-            if(MotorController_CheckFaultAll(p_mc) != 0U) { p_mc->FaultFlags.Motors = 1U; MotorController_User_SetFault(p_mc); }
+            if(MotorController_CheckFaultAny(p_mc) != 0U) { p_mc->FaultFlags.Motors = 1U; MotorController_User_SetFault(p_mc); }
 
             _MotorController_ProcOptDin(p_mc);
             // _MotorController_ProcVoltageMonitor(p_mc); /* Except VSupply */

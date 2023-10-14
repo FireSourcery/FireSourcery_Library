@@ -58,6 +58,8 @@ typedef const struct Global_Motor
 }
 Global_Motor_T;
 
+#define GLOBAL_MOTOR_DIVIDER(Pow2) ((uint32_t)Pow2 - 1U)
+
 /* MISRA violation */
 /* Define in Main App */
 extern const Global_Motor_T GLOBAL_MOTOR;

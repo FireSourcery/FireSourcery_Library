@@ -144,7 +144,7 @@ typedef union
 {
     struct
     {
-        uint16_t OverHeat       : 1U;
+        uint16_t Overheat       : 1U;
         uint16_t AlignStartUp   : 1U;
     };
     uint16_t Word;
@@ -202,7 +202,7 @@ typedef enum Motor_CalibrationState
 Motor_CalibrationState_T;
 
 /*
-    All modules independently conform to same ID
+    Sub-modules independently conform to same ID
 */
 typedef enum Motor_SectorId
 {
@@ -248,12 +248,12 @@ typedef struct __attribute__((aligned(2U))) Motor_Params
     //SpeedVOut
     uint16_t VSpeedRef_Rpm;         /* Derive from Kv + offset. Use < SpeedFeedbackRef_Rpm to begin at lower speed. */
                                     //option Scale to KvSpeed or Bemf on resume
-#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
-    uint16_t IPeakRef_Adcu;
-#endif
     uint16_t IaZeroRef_Adcu;
     uint16_t IbZeroRef_Adcu;
     uint16_t IcZeroRef_Adcu;
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+    uint16_t IPeakRef_Adcu;
+#endif
 
     uint16_t SpeedLimitForward_Scalar16;   /* "Root" Limits. Persistent User Param. Frac16 of SpeedFeedbackRef_Rpm */
     uint16_t SpeedLimitReverse_Scalar16;
@@ -268,7 +268,7 @@ typedef struct __attribute__((aligned(2U))) Motor_Params
     uint16_t OpenLoopSpeed_Scalar16;    /* Max, 65536 will overflow */
     uint16_t OpenLoopPower_Scalar16;    /* V or I */
     uint16_t OpenLoopAccel_Cycles;      /* Time to reach OpenLoopSpeed */
-    // uint16_t OpenLoopVHzGain;
+    // uint16_t OpenLoopGain_VHz;
 #endif
 
 #if defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
@@ -318,12 +318,12 @@ typedef struct Motor
     StateMachine_T StateMachine;
     uint32_t ControlTimerBase;                  /* Control Freq ~ 20kHz, calibration, commutation, angle control. overflow at 20Khz, 59 hours*/
     Timer_T ControlTimer;                       /* State Timer */
-    Motor_Direction_T Direction;                /* Active spin direction */
+    Motor_Direction_T Direction;                /* Active spin direction. SubState of Run State */
     Motor_FeedbackMode_T FeedbackMode;          /* Active FeedbackMode */
     Motor_StatusFlags_T StatusFlags;
     Motor_FaultFlags_T FaultFlags;
     Motor_OpenLoopState_T OpenLoopState;
-    Motor_CalibrationState_T CalibrationState;     /* SubState, selection for calibration */
+    Motor_CalibrationState_T CalibrationState;  /* SubState, selection for calibration */
     uint8_t CalibrationStateIndex;
 
     /*
@@ -342,32 +342,34 @@ typedef struct Motor
     uint16_t ILimitMotoring_Scalar16;
     uint16_t ILimitGenerating_Scalar16;
 
-    uint16_t SpeedLimitDirect_Scalar16;     /* Frac16 of SpeedRefMax Param. Check on set */
     uint16_t SpeedLimitBuffer[2U];
     // Motor_SpeedLimitActiveId_T SpeedLimitActiveId;
-    // uint16_t SpeedLimitActiveScalar;
+    uint16_t SpeedLimitDirect_Scalar16;     /* Frac16 of SpeedRefMax Param. Compare on set */
 
     uint16_t ILimitBuffer[3U];                      /* Fixed buffer for 3 values, internal thermistor, user, upper layer */
     // Motor_ILimitActiveId_T ILimitActiveId;
-    uint16_t ILimitActiveSentinel_Scalar16;         /* Store for comparison */
+    uint16_t ILimitActiveSentinel_Scalar16;         /* Compare on set */
 
-    /* Active directional limits   */
+    /* Active directional limits - on feedback */
     int16_t SpeedLimitCcw_FracS16;
     int16_t SpeedLimitCw_FracS16;
     int16_t ILimitCcw_FracS16;
     int16_t ILimitCw_FracS16;
+
+    /*
+
+    */
+    qangle16_t MechanicalAngle;
+    qangle16_t ElectricalAngle;         /* Angle Feedback. Shared E-Cycle edge detect, User output */
 
     PID_T PidPosition;    /* todo */
 
     /*
         Speed Feedback
     */
-    int32_t Speed_FracS16;             /* [-32765*2:32765*2] Speed Feedback Variable. Can over saturate. - is virtual CW, + => CCW */
-    Timer_T SpeedTimer;                /* Speed Calc Timer */
-    PID_T PidSpeed;                    /* Input PidSpeed(RampCmd - Speed_FracS16), Output [-32768:32767] => VPwm, Vq, Iq. Updated once per ms */
-
-    qangle16_t MechanicalAngle;
-    qangle16_t ElectricalAngle;         /* Angle Feedback. Shared E-Cycle edge detect, User output */
+    int32_t Speed_FracS16;              /* [-32765*2:32765*2] Speed Feedback Variable. Can over saturate. - is virtual CW, + => CCW */
+    Timer_T SpeedTimer;                 /* Speed Calc Timer */
+    PID_T PidSpeed;                     /* Input PidSpeed(RampCmd - Speed_FracS16), Output [-32768:32767] => VPwm, Vq, Iq. Updated once per ms */
 
     /*
         FOC
@@ -534,6 +536,8 @@ static inline void Motor_ClearPwmInterrupt(MotorPtr_T p_motor) { Phase_ClearInte
 static inline void Motor_DisablePwm(MotorPtr_T p_motor) { Phase_DisableInterrupt(&p_motor->Phase); }
 static inline void Motor_EnablePwm(MotorPtr_T p_motor) { Phase_EnableInterrupt(&p_motor->Phase); }
 
+static inline void Motor_DisableOutput(MotorPtr_T p_motor) { Phase_Float(&p_motor->Phase); }
+
 /******************************************************************************/
 /*
     Direction Cmd
@@ -543,7 +547,7 @@ static inline Motor_Direction_T Motor_DirectionForward(const MotorPtr_T p_motor)
 static inline Motor_Direction_T Motor_DirectionReverse(const MotorPtr_T p_motor) { return ((p_motor->Parameters.DirectionForward == MOTOR_DIRECTION_CCW) ? MOTOR_DIRECTION_CW : MOTOR_DIRECTION_CCW); }
 
 /*!
-    Convert user reference direction to CCW/CW direction
+    Convert between user reference direction to CCW/CW direction
     @param[in] userCmd int32_t[-65536:65536] frac16 or scalar16. positive is forward relative to the user.
     @return int32_t[-65536:65536], Over saturated if input is -32768
 */
@@ -570,7 +574,6 @@ static inline int16_t Motor_GetVSpeed_Frac16(MotorPtr_T p_motor)
     // return Linear_Function_Sat(&p_motor->UnitsVSpeed, p_motor->Speed_FracS16);
     // return Linear_Function_FracS16(&p_motor->UnitsVSpeed, p_motor->Speed_FracS16);
 }
-
 
 
 /******************************************************************************/
@@ -645,10 +648,9 @@ extern void Motor_Jog6(MotorPtr_T p_motor);
 // static inline Motor_FeedbackMode_T Motor_FeedbackModeFlags(Motor_FeedbackModeId_T mode)
 // {
 //     Motor_FeedbackMode_T flags;
-
 //     switch(mode)
 //     {
-//         case MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR:                 flags.State = MODE_OPEN_LOOP.State;             break;
+//         case MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR:          flags.State = MODE_OPEN_LOOP.State;             break;
 //         case MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT:         flags.State = MODE_OPEN_LOOP_CURRENT.State;     break;
 //         case MOTOR_FEEDBACK_MODE_CONSTANT_VOLTAGE:          flags.State = MODE_VOLTAGE.State;               break;
 //         case MOTOR_FEEDBACK_MODE_CONSTANT_CURRENT:          flags.State = MODE_CURRENT.State;               break;
@@ -656,7 +658,6 @@ extern void Motor_Jog6(MotorPtr_T p_motor);
 //         case MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT:    flags.State = MODE_SPEED_CURRENT.State;         break;
 //         default: flags.State = 0; break;
 //     }
-
 //     return flags;
 // }
 

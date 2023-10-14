@@ -86,6 +86,9 @@ void Motor_User_SetCmd(MotorPtr_T p_motor, int16_t userCmd)
     Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_LogicalDirectionCmd(p_motor, userCmd));
     // Critical_Exit();
 } /* may need to be private */
+
+// void Motor_User_ClearCmd(MotorPtr_T p_motor) { Linear_Ramp_SetTarget(&p_motor->Ramp, 0); }
+
 int32_t Motor_User_GetCmd(const MotorPtr_T p_motor) { return Motor_LogicalDirectionCmd(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
 
 /******************************************************************************/
@@ -103,9 +106,8 @@ void Motor_User_SetVoltageMode(MotorPtr_T p_motor)
 */
 void Motor_User_SetVoltageCmdValue(MotorPtr_T p_motor, int16_t voltageCmd)
 {
-    int32_t voltageCmdIn = (voltageCmd > 0) ? voltageCmd : 0; /* Reverse voltage use change direction */
+    int32_t voltageCmdIn = (voltageCmd > 0) ? voltageCmd : 0; /* Reverse voltage use change direction, no plugging */
     Motor_User_SetCmd(p_motor, voltageCmdIn);
-
 }
 
 void Motor_User_SetVoltageModeCmd(MotorPtr_T p_motor, int16_t voltageCmd)
@@ -219,7 +221,7 @@ void Motor_User_SetOpenLoopModeCmd(MotorPtr_T p_motor, int16_t ivMagnitude)
 
 /******************************************************************************/
 /*!
-
+    Variable Mode
 */
 /******************************************************************************/
 /*!
@@ -236,12 +238,6 @@ void Motor_User_SetActiveCmdValue(MotorPtr_T p_motor, int16_t userCmd)
     else                            { Motor_User_SetVoltageCmdValue(p_motor, userCmd); }
 }
 
-
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
 void Motor_User_ActivateDefaultFeedbackMode(MotorPtr_T p_motor)
 {
     Motor_User_ActivateFeedbackMode(p_motor, p_motor->Parameters.FeedbackModeDefault);
@@ -274,6 +270,8 @@ void Motor_User_ReleaseControl(MotorPtr_T p_motor)
 }
 
 void Motor_User_ActivateControl(MotorPtr_T p_motor) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, STATE_MACHINE_INPUT_VALUE_NULL); }
+
+// return if stop
 bool Motor_User_TryHold(MotorPtr_T p_motor) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL); }
 
 /*
@@ -293,17 +291,17 @@ bool Motor_User_TryDirectionReverse(MotorPtr_T p_motor) { return Motor_User_TryD
     Set Fault todo move
 */
 /******************************************************************************/
-bool Motor_User_CheckFault(const MotorPtr_T p_motor) { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FAULT); }
+bool Motor_User_IsFault(const MotorPtr_T p_motor) { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FAULT); }
 
 bool Motor_User_ClearFault(MotorPtr_T p_motor)
 {
-    if(Motor_User_CheckFault(p_motor) == true) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL); }
-    return (Motor_User_CheckFault(p_motor) == false);
+    if(Motor_User_IsFault(p_motor) == true) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL); }
+    return (Motor_User_IsFault(p_motor) == false);
 }
 
 void Motor_User_SetFault(MotorPtr_T p_motor)
 {
-    if(Motor_User_CheckFault(p_motor) == false) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL); }
+    if(Motor_User_IsFault(p_motor) == false) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL); }
 }
 
 /******************************************************************************/
@@ -335,7 +333,7 @@ void Motor_User_CalibrateSensor(MotorPtr_T p_motor)
 
 /******************************************************************************/
 /*!
-    Getters/Setters
+    Getters/Setters with interface function
 */
 /******************************************************************************/
 /******************************************************************************/

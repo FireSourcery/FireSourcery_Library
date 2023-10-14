@@ -112,7 +112,8 @@ static inline int32_t Motor_FOC_GetElectricalPower_UFrac16(const MotorPtr_T p_mo
 
 */
 /******************************************************************************/
-static inline void Motor_FOC_ClearControlState(MotorPtr_T p_motor) /* Begin Observe, Ifeedback not updated */
+/* Begin Observe, Ifeedback not updated */
+static inline void Motor_FOC_ClearControlState(MotorPtr_T p_motor)
 {
     FOC_ClearControlState(&p_motor->Foc);
     Linear_Ramp_ZeroState(&p_motor->Ramp);
@@ -121,20 +122,11 @@ static inline void Motor_FOC_ClearControlState(MotorPtr_T p_motor) /* Begin Obse
     PID_Reset(&p_motor->PidSpeed);
 }
 
-static inline void Motor_FOC_ClearObserveState(MotorPtr_T p_motor) /* Begin Control, Vabc not updated */
+/* Begin Control, Vabc not updated */
+static inline void Motor_FOC_ClearObserveState(MotorPtr_T p_motor)
 {
-    FOC_ClearControlState(&p_motor->Foc);
+    FOC_ClearObserveState(&p_motor->Foc);
 }
-
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-// void Motor_FOC_DisableOutput(MotorPtr_T p_motor)
-// {
-//     Phase_Float(&p_motor->Phase);
-// }
 
 /******************************************************************************/
 /*!
@@ -159,6 +151,11 @@ extern void Motor_FOC_SetDirectionCw(MotorPtr_T p_motor);
 extern void Motor_FOC_SetDirection(MotorPtr_T p_motor, Motor_Direction_T direction);
 extern void Motor_FOC_SetDirectionForward(MotorPtr_T p_motor);
 
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 #include "System/Critical/Critical.h"
 
 static inline bool Motor_FOC_SetFeedbackMode_Async(MotorPtr_T p_motor, Motor_FeedbackMode_T reqMode)
@@ -168,6 +165,5 @@ static inline bool Motor_FOC_SetFeedbackMode_Async(MotorPtr_T p_motor, Motor_Fee
     Motor_FOC_ProcFeedbackMatch(p_motor);
     Critical_Exit();
 }
-
 
 #endif

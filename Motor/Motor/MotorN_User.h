@@ -43,7 +43,7 @@
 typedef void (*Motor_User_ProcVoid_T)(MotorPtr_T p_motor);
 typedef void (*Motor_User_SetCmd_T)(MotorPtr_T p_motor, int16_t cmd);
 typedef void (*Motor_User_SetScalar16_T)(MotorPtr_T p_motor, uint16_t cmd);
-typedef void (*Motor_User_SetId_T)(MotorPtr_T p_motor, uint32_t enumValue);
+// typedef void (*Motor_User_SetId_T)(MotorPtr_T p_motor, uint32_t enumValue);
 typedef void (*Motor_User_SetEnum32_T)(MotorPtr_T p_motor, uint32_t enumValue);
 typedef void (*Motor_User_SetFeedbackMode_T)(MotorPtr_T p_motor, Motor_FeedbackMode_T feedbackMode);
 typedef bool (*Motor_User_ProcStatus_T)(MotorPtr_T p_motor);
@@ -72,20 +72,36 @@ static inline void MotorN_User_SetScalar16(MotorPtr_T p_motorArray, uint8_t moto
     for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { function(&p_motorArray[iMotor], scalar16); }
 }
 
-static inline void MotorN_User_SetId(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_SetId_T function, uint32_t cmdValue)
-{
-    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { function(&p_motorArray[iMotor], cmdValue); }
-}
-
-//todo remove 1 arg
-// static inline void MotorN_User_SetFeedbackMode(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_SetFeedbackMode_T function, Motor_FeedbackMode_T feedbackMode)
+// static inline void MotorN_User_SetId(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_SetId_T function, uint32_t cmdValue)
 // {
-//     for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { function(&p_motorArray[iMotor], feedbackMode); }
+//     for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { function(&p_motorArray[iMotor], cmdValue); }
 // }
 
-static inline void MotorN_User_SetFeedbackMode(MotorPtr_T p_motorArray, uint8_t motorCount,  Motor_FeedbackMode_T feedbackMode)
+static inline void MotorN_User_SetFeedbackMode(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_FeedbackMode_T feedbackMode)
 {
     for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_ActivateFeedbackMode(&p_motorArray[iMotor], feedbackMode); }
+}
+
+/*
+    AND logic
+    e.g. MotorN_User_CheckStop
+*/
+static inline bool MotorN_User_CheckStatusAll(const MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_CheckStatus_T function)
+{
+    bool isSet = true;
+    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(function(&p_motorArray[iMotor]) == false) { isSet = false; break; } }
+    return isSet;
+}
+
+/*
+    OR logic
+    e.g. MotorN_User_CheckFault
+*/
+static inline bool MotorN_User_CheckStatusAny(const MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_CheckStatus_T function)
+{
+    bool isSet = false;
+    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(function(&p_motorArray[iMotor]) == true) { isSet = true; break; } }
+    return isSet;
 }
 
 /*
@@ -93,7 +109,7 @@ static inline void MotorN_User_SetFeedbackMode(MotorPtr_T p_motorArray, uint8_t 
     Motor_User_TryDirectionReverse
     MotorN_User_ClearFault
 */
-static inline bool MotorN_User_ProcStatusAnd(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_ProcStatus_T function)
+static inline bool MotorN_User_ProcStatusAll(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_ProcStatus_T function)
 {
     bool isSet = true;
     for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(function(&p_motorArray[iMotor]) == false) { isSet = false; } }
@@ -102,32 +118,13 @@ static inline bool MotorN_User_ProcStatusAnd(MotorPtr_T p_motorArray, uint8_t mo
 
 /*
 */
-static inline bool MotorN_User_ProcStatusOr(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_ProcStatus_T function)
+static inline bool MotorN_User_ProcStatusAny(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_ProcStatus_T function)
 {
     bool isSet = false;
     for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(function(&p_motorArray[iMotor]) == true) { isSet = true; } }
     return isSet;
 }
 
-/*
-    MotorN_User_CheckFault
-*/
-static inline bool MotorN_User_CheckStatusOr(const MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_CheckStatus_T function)
-{
-    bool isSet = false;
-    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(function(&p_motorArray[iMotor]) == true) { isSet = true; break; } }
-    return isSet;
-}
-
-/*
-    MotorN_User_CheckStop
-*/
-static inline bool MotorN_User_CheckStatusAnd(const MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_CheckStatus_T function)
-{
-    bool isSet = true;
-    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { if(function(&p_motorArray[iMotor]) == false) { isSet = false; break; } }
-    return isSet;
-}
 
 /*
     Motor_User_SetILimitActive_Id

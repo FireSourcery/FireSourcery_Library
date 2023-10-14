@@ -43,7 +43,7 @@ static inline int32_t CalcOutputInner(const Linear_T * p_linear, int32_t current
     return ((currentRampValue) + (p_linear->Slope * steps));
 }
 
-int32_t CalcOutput(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps)
+static int32_t CalcOutput(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps)
 {
     int32_t newRampValue;
 
@@ -62,6 +62,7 @@ int32_t CalcOutput(const Linear_T * p_linear, int32_t currentRampValue, int32_t 
     return newRampValue;
 }
 
+/* Seek output */
 int32_t Linear_Ramp_CalcOutputN(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps)
 {
     return CalcOutput(p_linear, currentRampValue, steps) >> p_linear->SlopeShift;
@@ -73,6 +74,7 @@ int32_t Linear_Ramp_ProcOutputN(Linear_T * p_linear, int32_t steps)
     return Linear_Ramp_GetOutput(p_linear);
 }
 
+/* Next sequential output */
 int32_t Linear_Ramp_CalcOutput(const Linear_T * p_linear, int32_t currentRampValue) { return Linear_Ramp_CalcOutputN(p_linear, currentRampValue, 1U); }
 int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear) { return Linear_Ramp_ProcOutputN(p_linear, 1U); }
 

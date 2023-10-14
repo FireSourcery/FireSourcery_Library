@@ -218,7 +218,7 @@ void Motor_FOC_ProcAngleControl(MotorPtr_T p_motor)
     activate angle with current feedback for align and openloop
     Super function antipattern, but meaningful
 */
-void Motor_FOC_ProcAngleFeedForward(MotorPtr_T p_motor, qangle16_t angle, qfrac16_t dReq, qfrac16_t qReq)
+void Motor_FOC_ProcAngleFeedforward(MotorPtr_T p_motor, qangle16_t angle, qfrac16_t dReq, qfrac16_t qReq)
 {
     Motor_FOC_EnqueueIabc(p_motor);
     FOC_SetTheta(&p_motor->Foc, angle);
@@ -246,7 +246,6 @@ static inline void Motor_FOC_ProcVSpeed(MotorPtr_T p_motor)
     FOC_SetVq(&p_motor->Foc, Motor_GetVSpeed_Frac16(p_motor));
     FOC_SetVd(&p_motor->Foc, 0);
 }
-
 
 
 /******************************************************************************/
@@ -295,7 +294,7 @@ void Motor_FOC_StartAlign(MotorPtr_T p_motor)
 
 void Motor_FOC_ProcAlign(MotorPtr_T p_motor)
 {
-    Motor_FOC_ProcAngleFeedForward(p_motor, 0, Linear_Ramp_ProcOutput(&p_motor->AuxRamp), 0);
+    Motor_FOC_ProcAngleFeedforward(p_motor, 0, Linear_Ramp_ProcOutput(&p_motor->AuxRamp), 0);
 }
 
 void Motor_FOC_StartAlignValidate(MotorPtr_T p_motor)
@@ -317,7 +316,7 @@ void Motor_FOC_StartOpenLoop(MotorPtr_T p_motor)
     p_motor->Speed_FracS16 = 0;
     Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_LogicalDirectionCmd(p_motor, p_motor->Parameters.OpenLoopPower_Scalar16 / 2U));    // alternatively, clamp user input ramp
     Linear_Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0, Motor_LogicalDirectionCmd(p_motor, p_motor->Parameters.OpenLoopSpeed_Scalar16 / 2U));
-    // FOC_SetDReq(&p_motor->Foc, 0); //Motor_FOC_ProcAngleFeedForward
+    // FOC_SetDReq(&p_motor->Foc, 0); //Motor_FOC_ProcAngleFeedforward
 }
 
 /*
@@ -333,7 +332,7 @@ static void _Motor_FOC_ProcOpenLoop(MotorPtr_T p_motor)
 void Motor_FOC_ProcOpenLoop(MotorPtr_T p_motor)
 {
     _Motor_FOC_ProcOpenLoop(p_motor);
-    Motor_FOC_ProcAngleFeedForward(p_motor, p_motor->ElectricalAngle, 0, Linear_Ramp_ProcOutput(&p_motor->AuxRamp));
+    Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, 0, Linear_Ramp_ProcOutput(&p_motor->AuxRamp));
 }
 
 /*

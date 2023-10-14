@@ -69,7 +69,7 @@ static inline void Motor_Heat_Thread(MotorPtr_T p_motor)
                 Motor_User_SetILimitActive_Id(p_motor, Thermistor_GetHeatLimit_FracU16(&p_motor->Thermistor), MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
                 break;
             case THERMISTOR_STATUS_FAULT:
-                p_motor->FaultFlags.OverHeat = 1U;
+                p_motor->FaultFlags.Overheat = 1U;
                 Motor_User_SetFault(p_motor);
                 break;
             default: break;

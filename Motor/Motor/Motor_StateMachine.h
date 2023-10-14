@@ -35,19 +35,23 @@
 
 #define MSM_TRANSITION_TABLE_LENGTH     (7U)
 
-typedef enum MotorStateMachine_Input
+/*
+    INIT and OPEN_LOOP as passthrough. each other state has directly corresponding input
+*/
+typedef enum Motor_StateMachine_Input
 {
     MSM_INPUT_FAULT,            /* Toggle Fault */
 
-    MSM_INPUT_CONTROL,          /* Activate Control Mode - Transition to Run State (Active Control), and FeedbackMode update */
-    MSM_INPUT_RELEASE,          /* Release Control */
-    MSM_INPUT_HOLD,
+    MSM_INPUT_CONTROL,          /* Spin - Activate Control Mode - Transition to Run State (Active Control), and FeedbackMode update */
+    MSM_INPUT_RELEASE,          /* Freewheel - Release Control */
+    MSM_INPUT_HOLD,             /* Stop */
 
+    /* Feedback and Direction Inputs process by StateMachine */
     MSM_INPUT_FEEDBACK,
     MSM_INPUT_DIRECTION,
     MSM_INPUT_CALIBRATION,
 }
-MotorStateMachine_Input_T;
+Motor_StateMachine_Input_T;
 
 typedef enum Motor_StateMachine_StateId
 {

@@ -39,14 +39,6 @@
     Live Control User Input Interface; into StateMachine process
 */
 /******************************************************************************/
-
-/******************************************************************************/
-/* UserCmd - Common input, various handling */
-/*! @param[in] userCmd [-32767:32767] */
-/******************************************************************************/
-static inline int32_t MotorController_User_GetCmdValue(const MotorControllerPtr_T p_mc) { return p_mc->UserCmdValue; }
-static inline void MotorController_User_SetCmdValue(MotorControllerPtr_T p_mc, int16_t userCmd) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD, STATE_MACHINE_INPUT_VALUE_NULL); p_mc->UserCmdValue = userCmd; }
-
 /******************************************************************************/
 /* Common */
 /******************************************************************************/
@@ -55,26 +47,39 @@ static inline void MotorController_User_DisableControl(MotorControllerPtr_T p_mc
 static inline void MotorController_User_ReleaseControl(MotorControllerPtr_T p_mc) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL); }
 
 /******************************************************************************/
+/* UserCmd - Common input, various handling */
+/*! @param[in] userCmd [-32767:32767] */
+/******************************************************************************/
+static inline int32_t MotorController_User_GetCmdValue(const MotorControllerPtr_T p_mc) { return p_mc->UserCmdValue; }
+static inline void MotorController_User_SetCmdValue(MotorControllerPtr_T p_mc, int16_t userCmd)
+{
+    StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD, STATE_MACHINE_INPUT_VALUE_NULL);
+    p_mc->UserCmdValue = userCmd;
+}
+
+/******************************************************************************/
+/* Drive Mode */
+/******************************************************************************/
+/******************************************************************************/
 /* DriveCmd - Throttle, Brake, Zero */
+/*! @param[in] driveCmd Throttle, Brake, Zero */
 /*! @param[in] cmdValue [0:65535] */
 /******************************************************************************/
-static inline void MotorController_User_SetDriveCmd(MotorControllerPtr_T p_mc, MotorController_DriveId_T driveCmd, uint16_t cmdValue)
+static inline void MotorController_User_SetDriveCmd(MotorControllerPtr_T p_mc, MotorController_DriveId_T cmdId, uint16_t cmdValue)
 {
-    StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DRIVE, driveCmd);
+    StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DRIVE, cmdId);
     p_mc->UserCmdValue = cmdValue;
 }
 
 static inline void MotorController_User_SetCmdThrottle(MotorControllerPtr_T p_mc, uint16_t userCmd)  { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_THROTTLE, userCmd); }
 static inline void MotorController_User_SetCmdBrake(MotorControllerPtr_T p_mc, uint16_t userCmd)     { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_BRAKE, userCmd); }
+/* Same as Brake/Throttle 0 */
 static inline void MotorController_User_SetDriveCmdZero(MotorControllerPtr_T p_mc)                   { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_ZERO, 0); }
-// static inline void MotorController_User_DisableDrive(MotorControllerPtr_T p_mc)                      { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, MOTOR_CONTROLLER_DIRECTION_NEUTRAL); }
 
 /******************************************************************************/
 /* Drive Direction */
 /******************************************************************************/
-
-static inline MotorController_Direction_T MotorController_User_GetDirection_Status(const MotorControllerPtr_T p_mc) { return p_mc->DriveDirection; }
-
+// static inline MotorController_Direction_T MotorController_User_GetDirection_Status(const MotorControllerPtr_T p_mc) { return p_mc->DriveDirection; }
 static inline MotorController_Direction_T MotorController_User_GetDirection(const MotorControllerPtr_T p_mc)
 {
     MotorController_Direction_T direction;
@@ -248,8 +253,8 @@ static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIn
     return versionChar;
 }
 
-static inline uint32_t MotorController_User_GetMainVersion(const MotorControllerPtr_T p_mc) { return *((uint32_t *)(&p_mc->CONFIG.SOFTWARE_VERSION[0U])); }
-static inline uint8_t MotorController_User_GetMainVersionIndex(const MotorControllerPtr_T p_mc, uint8_t charIndex) { return p_mc->CONFIG.SOFTWARE_VERSION[charIndex]; }
+static inline uint32_t MotorController_User_GetMainVersion(const MotorControllerPtr_T p_mc) { return *((uint32_t *)(&p_mc->CONFIG.MAIN_VERSION[0U])); }
+static inline uint8_t MotorController_User_GetMainVersionIndex(const MotorControllerPtr_T p_mc, uint8_t charIndex) { return p_mc->CONFIG.MAIN_VERSION[charIndex]; }
 
 static inline uint32_t MotorController_User_GetVMax(void) { return GLOBAL_MOTOR.V_MAX_VOLTS; }
 static inline uint32_t MotorController_User_GetIMax(void) { return GLOBAL_MOTOR.I_MAX_AMPS; }
@@ -286,8 +291,8 @@ static inline uint32_t MotorController_User_GetBoardVersion(void)
 // // static inline char MotorController_User_GetNameIndex(MotorControllerPtr_T p_mc, uint8_t charIndex) { return p_mc->Manufacture.NAME[charIndex]; }
 
 // static inline void MotorController_User_GetManufacture(MotorControllerPtr_T p_mc, MotorController_Manufacture_T * p_dest) { memcpy(p_dest, &p_mc->Manufacture, sizeof(MotorController_Manufacture_T)); }
-// static inline uint32_t MotorController_User_GetSerialNumber(MotorControllerPtr_T p_mc) { return p_mc->Manufacture.SERIAL_NUMBER_REG; }
-// static inline uint32_t MotorController_User_GetManufactureDate(MotorControllerPtr_T p_mc) { return p_mc->Manufacture.MANUFACTURE_NUMBER_REG; }
+// static inline uint32_t MotorController_User_GetSerialNumber(MotorControllerPtr_T p_mc) { return p_mc->Manufacture.SERIAL_NUMBER_WORD; }
+// static inline uint32_t MotorController_User_GetManufactureDate(MotorControllerPtr_T p_mc) { return p_mc->Manufacture.MANUFACTURE_NUMBER_WORD; }
 // // static inline void MotorController_User_GetIdExt(MotorControllerPtr_T p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.ID_EXT[0U], 8U); }
 // #endif
 

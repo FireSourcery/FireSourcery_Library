@@ -282,7 +282,7 @@ static inline bool _Motor_CheckOpenLoop(const MotorPtr_T p_motor)
 #endif
 }
 
-/* User request or no sensorfeedback */
+/* User request or no sensor feedback */
 bool Motor_CheckOpenLoop(const MotorPtr_T p_motor)
 {
     return ((Motor_CheckSensorFeedback(p_motor) == false) || (_Motor_CheckOpenLoop(p_motor) == true));
@@ -552,6 +552,7 @@ void Motor_ResetUnitsAngleSpeed_ElecControl(MotorPtr_T p_motor)
 {
     // Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitsAngleRpm, GLOBAL_MOTOR.CONTROL_FREQ, 16U, p_motor->Parameters.PolePairs, p_motor->Parameters.SpeedFeedbackRef_Rpm);
 }
+
 void Motor_ResetUnitsAngleSpeed_Mech(MotorPtr_T p_motor)
 {
     // Linear_Speed_InitAngleRpm(&p_motor->UnitsAngleRpm, 1000U, 16U, p_motor->Parameters.SpeedFeedbackRef_Rpm);
@@ -577,7 +578,6 @@ void Motor_ResetUnitsHallEncoder(MotorPtr_T p_motor)
     }
     p_motor->Encoder.Params.IsQuadratureCaptureEnabled = false;
 }
-
 
 /* Common, Set after PolePairs */
 void Motor_ResetUnitsEncoder(MotorPtr_T p_motor)

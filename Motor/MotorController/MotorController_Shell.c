@@ -364,10 +364,10 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorControllerPtr_T p_mc)
             Terminal_SendNum(p_term, Motor_User_GetElectricalPower_UFrac16(p_motor));   Terminal_SendString(p_term, " FracS16\r\n");
             Terminal_SendString(p_term, "VPhase: ");
             Terminal_SendNum(p_term, Motor_User_GetVPhase_Volts(p_motor));      Terminal_SendString(p_term, " Volts, ");
-            Terminal_SendNum(p_term, Motor_User_GetVPhase_Frac16(p_motor));    Terminal_SendString(p_term, " FracS16\r\n");
+            Terminal_SendNum(p_term, Motor_User_GetVPhase_UFrac16(p_motor));    Terminal_SendString(p_term, " FracS16\r\n");
             Terminal_SendString(p_term, "IPhase: ");
             Terminal_SendNum(p_term, Motor_User_GetIPhase_Amps(p_motor));       Terminal_SendString(p_term, " Amps, ");
-            Terminal_SendNum(p_term, Motor_User_GetIPhase_Frac16(p_motor));    Terminal_SendString(p_term, " FracS16\r\n");
+            Terminal_SendNum(p_term, Motor_User_GetIPhase_UFrac16(p_motor));    Terminal_SendString(p_term, " FracS16\r\n");
             Terminal_SendString(p_term, "IPeakAdcu: "); Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsIa, FOC_GetIMagnitude(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
             // Terminal_SendString(p_term, "Capture: ");             Terminal_SendNum(p_term, p_motor->IPhasePeak_Adcu);             Terminal_SendString(p_term, " ADCU\r\n");
             // Terminal_SendString(p_term, "Ia: ");     Terminal_SendNum(p_term, p_motor->Foc.Ia); Terminal_SendString(p_term, "\r\n");
@@ -376,7 +376,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorControllerPtr_T p_mc)
             break;
 
         case 3U:
-            // Terminal_SendString(p_term, "Bemf Peak: ");      Terminal_SendNum(p_term, Motor_User_GetVPhase_Frac16(p_motor)); Terminal_SendString(p_term, " Frac16\r\n");
+            // Terminal_SendString(p_term, "Bemf Peak: ");      Terminal_SendNum(p_term, Motor_User_GetVPhase_UFrac16(p_motor)); Terminal_SendString(p_term, " Frac16\r\n");
             // Terminal_SendString(p_term, "Capture: ");        Terminal_SendNum(p_term, p_motor->VBemfPeak_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
             // Terminal_SendString(p_term, "FOC: ");            Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsVa, FOC_GetIMagnitude(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
             // Terminal_SendString(p_term, "FOC Clarke: ");     Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsVa, FOC_GetIMagnitude_Clarke(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
@@ -391,10 +391,10 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorControllerPtr_T p_mc)
 
             Terminal_SendString(p_term, "VPhase: ");
             Terminal_SendNum(p_term, Motor_User_GetVPhase_Volts(p_motor));      Terminal_SendString(p_term, " Volts, ");
-            Terminal_SendNum(p_term, Motor_User_GetVPhase_Frac16(p_motor));    Terminal_SendString(p_term, " FracS16\r\n");
+            Terminal_SendNum(p_term, Motor_User_GetVPhase_UFrac16(p_motor));    Terminal_SendString(p_term, " FracS16\r\n");
             Terminal_SendString(p_term, "IPhase: ");
             Terminal_SendNum(p_term, Motor_User_GetIPhase_Amps(p_motor));       Terminal_SendString(p_term, " Amps, ");
-            Terminal_SendNum(p_term, Motor_User_GetIPhase_Frac16(p_motor));    Terminal_SendString(p_term, " FracS16\r\n");
+            Terminal_SendNum(p_term, Motor_User_GetIPhase_UFrac16(p_motor));    Terminal_SendString(p_term, " FracS16\r\n");
             Terminal_SendString(p_term, "Ideal Power: ");
             Terminal_SendNum(p_term, Motor_User_GetElectricalPower_VA(p_motor));        Terminal_SendString(p_term, " Volt-Amps, ");
             Terminal_SendNum(p_term, Motor_User_GetElectricalPower_UFrac16(p_motor));   Terminal_SendString(p_term, " FracS16\r\n");
@@ -787,8 +787,8 @@ static Cmd_Status_T Cmd_fault(MotorControllerPtr_T p_mc, int argc, char ** argv)
         Terminal_SendNum(p_term, p_mc->FaultFlags.VSourceLimit);
         Terminal_SendNum(p_term, p_mc->FaultFlags.VAccsLimit);
         Terminal_SendNum(p_term, p_mc->FaultFlags.VSenseLimit);
-        Terminal_SendNum(p_term, p_mc->FaultFlags.PcbOverHeat);
-        Terminal_SendNum(p_term, p_mc->FaultFlags.MosfetsOverHeat);
+        Terminal_SendNum(p_term, p_mc->FaultFlags.PcbOverheat);
+        Terminal_SendNum(p_term, p_mc->FaultFlags.MosfetsOverheat);
         Terminal_SendString(p_term, "\r\n");
 
         Terminal_SendString(p_term, "\r\n");
@@ -1053,13 +1053,13 @@ static Cmd_Status_T Cmd_debug(MotorControllerPtr_T p_mc, int argc, char ** argv)
     // const MotorController_Manufacture_T TEST =
     // {
     //     .NAME = {'q', 'b', 'c', 'd'},
-    //     .MANUFACTURE_NUMBER_REG = 123U,
+    //     .MANUFACTURE_NUMBER_WORD = 123U,
     // };
 
     // const MotorController_Manufacture_T TEST1 =
     // {
     //     .NAME = {'x', 'y', 'z', 'z'},
-    //     .MANUFACTURE_NUMBER_REG = 9877U,
+    //     .MANUFACTURE_NUMBER_WORD = 9877U,
     // };
 
     // MotorController_Manufacture_T TestRead = {0};
@@ -1067,7 +1067,7 @@ static Cmd_Status_T Cmd_debug(MotorControllerPtr_T p_mc, int argc, char ** argv)
     // Terminal_SendString(p_term, "Manufacture:\r\n");
     // MotorController_User_GetManufacture(p_mc, &TestRead);
     // Terminal_SendString_Len(p_term, TestRead.NAME, 8U); Terminal_SendString(p_term, "\r\n");
-    // Terminal_SendNum(p_term, TestRead.MANUFACTURE_NUMBER_REG); Terminal_SendString(p_term, "\r\n");
+    // Terminal_SendNum(p_term, TestRead.MANUFACTURE_NUMBER_WORD); Terminal_SendString(p_term, "\r\n");
 
     // Terminal_SendString(p_term, "write1:\r\n");
     // MotorController_User_WriteManufacture(p_mc, &TEST);
@@ -1075,7 +1075,7 @@ static Cmd_Status_T Cmd_debug(MotorControllerPtr_T p_mc, int argc, char ** argv)
     // MotorController_ReadOnce_Blocking(p_mc);
     // MotorController_User_GetManufacture(p_mc, &TestRead);
     // Terminal_SendString_Len(p_term, TestRead.NAME, 8U); Terminal_SendString(p_term, "\r\n");
-    // Terminal_SendNum(p_term, TestRead.MANUFACTURE_NUMBER_REG); Terminal_SendString(p_term, "\r\n");
+    // Terminal_SendNum(p_term, TestRead.MANUFACTURE_NUMBER_WORD); Terminal_SendString(p_term, "\r\n");
 
     // Terminal_SendString(p_term, "write2:\r\n");
     // MotorController_User_WriteManufacture(p_mc, &TEST1);
@@ -1083,7 +1083,7 @@ static Cmd_Status_T Cmd_debug(MotorControllerPtr_T p_mc, int argc, char ** argv)
     // MotorController_ReadOnce_Blocking(p_mc);
     // MotorController_User_GetManufacture(p_mc, &TestRead);
     // Terminal_SendString_Len(p_term, TestRead.NAME, 8U); Terminal_SendString(p_term, "\r\n");
-    // Terminal_SendNum(p_term, TestRead.MANUFACTURE_NUMBER_REG); Terminal_SendString(p_term, "\r\n");
+    // Terminal_SendNum(p_term, TestRead.MANUFACTURE_NUMBER_WORD); Terminal_SendString(p_term, "\r\n");
 
     // qfrac16_t atan2_0 = qfrac16_atan2(0, 32767);
     // qfrac16_t atan2_90 = qfrac16_atan2(32767, 0);

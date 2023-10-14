@@ -83,8 +83,8 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
             switch((MotVarId_Monitor_Motor_T)varId.NameIndex)
             {
                 case MOT_VAR_SPEED:                 value = Motor_User_GetSpeed_UFrac16(p_motor);               break;
-                case MOT_VAR_I_PHASE:               value = Motor_User_GetIPhase_Frac16(p_motor);               break;
-                case MOT_VAR_V_PHASE:               value = Motor_User_GetVPhase_Frac16(p_motor);               break;
+                case MOT_VAR_I_PHASE:               value = Motor_User_GetIPhase_UFrac16(p_motor);               break;
+                case MOT_VAR_V_PHASE:               value = Motor_User_GetVPhase_UFrac16(p_motor);               break;
                 case MOT_VAR_POWER:                 value = Motor_User_GetElectricalPower_UFrac16(p_motor);     break;
                 case MOT_VAR_RAMP_SET_POINT:        value = Linear_Ramp_GetOutput(&p_motor->Ramp);              break;
                 case MOT_VAR_MOTOR_STATE:           value = Motor_User_GetStateId(p_motor);                     break;

@@ -78,7 +78,7 @@ void MotorController_Init(MotorControllerPtr_T p_mc)
 #endif
 
     MotorController_ResetUnitsBatteryLife(p_mc);
-    p_mc->DriveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
+    // p_mc->DriveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
     StateMachine_Init(&p_mc->StateMachine);
 }
 
@@ -196,7 +196,6 @@ void MotorController_LoadParamsDefault(MotorController_T * p_mc)
 {
     VMonitor_SetVInRef(&p_mc->VMonitorSource, p_mc->Parameters.VSourceRef);
     VMonitor_SetLimitsDefault(&p_mc->VMonitorSource);
-    // VMonitor_SetLimits_MilliV(p_vMonitor, vRef * 3U / 4U, vRef * 5U / 4U, vRef * 7U / 8U, vRef * 9U / 8U);
     // MotorController_User_SetBatteryLifeDefault(p_mc);
     Thermistor_SetLimits_DegC(&p_mc->ThermistorPcb, 100U, 90U, 80U, 78U);
     Thermistor_SetLimits_DegC(&p_mc->ThermistorMosfets, 100U, 90U, 80U, 78U);
