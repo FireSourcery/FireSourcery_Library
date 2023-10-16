@@ -103,7 +103,7 @@ typedef union Motor_FeedbackMode
         // uint8_t Ramp       : 1U;
         uint8_t Speed      : 1U;   /* 0 -> Voltage or Current only, 1 -> Speed feedback */
         uint8_t Current    : 1U;   /* 0 -> Voltage, 1-> Current */
-        uint8_t Position   : 1U;
+        // uint8_t Position   : 1U;
     };
     uint8_t Word;
 }
@@ -664,7 +664,6 @@ extern void Motor_Jog6(MotorPtr_T p_motor);
 // static inline Motor_FeedbackModeId_T Motor_FeedbackModeId(Motor_FeedbackMode_T mode)
 // {
 //     Motor_FeedbackModeId_T id;
-
 //     switch((uint32_t)mode.State)
 //     {
 //         case (uint32_t)MODE_OPEN_LOOP.State:          id = MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR;                 break;
@@ -675,6 +674,5 @@ extern void Motor_Jog6(MotorPtr_T p_motor);
 //         case (uint32_t)MODE_SPEED_CURRENT.State:      id = MOTOR_FEEDBACK_MODE_CONSTANT_SPEED_CURRENT;    break;
 //         default: id = 0; break;
 //     }
-
 //     return id;
 // }

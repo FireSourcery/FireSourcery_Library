@@ -88,30 +88,23 @@ static inline MotorController_Direction_T MotorController_User_GetDirection(cons
         case MCSM_STATE_ID_PARK:        direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
         case MCSM_STATE_ID_NEUTRAL:     direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;         break;
         case MCSM_STATE_ID_DRIVE:
-            if(MotorController_CheckForwardAll(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
-            else if(MotorController_CheckReverseAll(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
+            if(MotorController_CheckForwardAll(p_mc) == true)       { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
+            else if(MotorController_CheckReverseAll(p_mc) == true)  { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
             else { direction = MOTOR_CONTROLLER_DIRECTION_ERROR; }
             break;
         default: direction = MOTOR_CONTROLLER_DIRECTION_ERROR; break;
     }
-
-    // if(StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_NEUTRAL) { direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL; }
-    // else if(StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_PARK) { direction = MOTOR_CONTROLLER_DIRECTION_PARK; }
-    // else
-    // {
-    //     if(MotorController_CheckForwardAll(p_mc) == true)       { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
-    //     else if(MotorController_CheckReverseAll(p_mc) == true)  { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
-    //     else { direction = p_mc->DriveDirection; } /* error */
-    // }
     return direction;
 }
 
 static inline bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, MotorController_Direction_T direction)
 {
-    // if(p_mc->DriveDirection != direction)
-    { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
-    // return (p_mc->DriveDirection == direction);
-    return (MotorController_User_GetDirection(p_mc) == direction);
+    bool isSuccess;
+    if(MotorController_User_GetDirection(p_mc) != direction) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
+    else { MotorController_BeepDouble(p_mc); }
+    isSuccess = (MotorController_User_GetDirection(p_mc) == direction);
+    if (isSuccess == false) { MotorController_BeepShort(p_mc); }
+    return isSuccess;
 }
 
 /******************************************************************************/

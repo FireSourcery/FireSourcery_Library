@@ -423,6 +423,7 @@ static inline void MotorController_SetThrottleMode(MotorControllerPtr_T p_mc)
         case MOTOR_CONTROLLER_THROTTLE_MODE_TORQUE: MotorController_ProcAll(p_mc, Motor_User_SetTorqueMode);    break;
         default: break;
     }
+    MotorController_ActivateAll(p_mc);
 }
 
 static inline void MotorController_SetThrottleValue(MotorControllerPtr_T p_mc, uint16_t userCmdThrottle)
@@ -470,6 +471,7 @@ static inline void MotorController_SetBrakeMode(MotorControllerPtr_T p_mc)
         case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: break;
         default: break;
     }
+    MotorController_ActivateAll(p_mc);
 }
 
 static inline void MotorController_SetBrakeValue(MotorControllerPtr_T p_mc, uint16_t userCmdBrake)

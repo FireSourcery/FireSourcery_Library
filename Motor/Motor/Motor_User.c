@@ -232,7 +232,7 @@ void Motor_User_SetActiveCmdValue(MotorPtr_T p_motor, int16_t userCmd)
     Motor_FeedbackMode_T flags = p_motor->FeedbackMode;
 
     if      (flags.OpenLoop == 1U)  { Motor_User_SetOpenLoopCmdValue(p_motor, userCmd); }
-    else if (flags.Position == 1U)  { Motor_User_SetPositionCmdValue(p_motor, userCmd); }
+    // else if (flags.Position == 1U)  { Motor_User_SetPositionCmdValue(p_motor, userCmd); }
     else if (flags.Speed == 1U)     { Motor_User_SetSpeedCmdValue(p_motor, userCmd); }
     else if (flags.Current == 1U)   { Motor_User_SetTorqueCmdValue(p_motor, userCmd); }
     else                            { Motor_User_SetVoltageCmdValue(p_motor, userCmd); }
