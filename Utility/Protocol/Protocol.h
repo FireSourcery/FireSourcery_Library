@@ -262,7 +262,7 @@ typedef const struct Protocol_Specs
     const uint32_t RX_END_ID;
 
     //todo defaults over write in protocol Param
-    const uint32_t BAUD_RATE_DEFAULT;
+    // const uint32_t BAUD_RATE_DEFAULT;
     const uint32_t RX_TIMEOUT;              /* Reset cumulative per packet */
     // const uint32_t RX_TIMEOUT_BYTE;      /* Reset per byte *///todo as delimeter
     const uint32_t REQ_TIMEOUT;             /* checked for stateful Req only */

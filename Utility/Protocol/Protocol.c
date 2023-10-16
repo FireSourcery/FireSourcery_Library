@@ -513,7 +513,7 @@ void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t p_specsId)
     if((p_specs != 0U) && (p_specs->RX_LENGTH_MAX <= p_protocol->CONFIG.PACKET_BUFFER_LENGTH))
     {
         p_protocol->p_Specs = p_specs;
-        if(p_protocol->Params.BaudRate == 0U) { Protocol_ConfigXcvrBaudRate(p_protocol, p_protocol->p_Specs->BAUD_RATE_DEFAULT); }
+        // if(p_protocol->Params.BaudRate == 0U) { Protocol_ConfigXcvrBaudRate(p_protocol, p_protocol->p_Specs->BAUD_RATE_DEFAULT); }
     }
 }
 
