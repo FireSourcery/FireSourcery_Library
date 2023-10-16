@@ -91,7 +91,7 @@ static void Init_Proc(MotorControllerPtr_T p_mc)
 //     if((p_mc->Parameters.BuzzerFlagsEnable.ThrottleOnInit == true) && (p_mc->BuzzerFlagsActive.ThrottleOnInit == 0U))
 //     {
 //         p_mc->BuzzerFlagsActive.ThrottleOnInit = 1U;
-//         MotorController_BeepShort(p_mc);
+        // MotorController_BeepShort(p_mc);
 //     }
 //     return 0U;
 // }
@@ -134,7 +134,7 @@ static StateMachine_State_T * Park_InputBlocking(MotorControllerPtr_T p_mc, stat
 static StateMachine_State_T * Park_InputDirection(MotorControllerPtr_T p_mc, statemachine_inputvalue_t direction)
 {
     StateMachine_State_T * volatile p_nextState = 0U;
-    p_mc->UserCmdValue = 0U; // non polling modes enter on brake
+    p_mc->UserCmdValue = 0U; // non polling input enter on brake
     switch((MotorController_Direction_T)direction)
     {
         case MOTOR_CONTROLLER_DIRECTION_PARK: p_nextState = 0U; break;
@@ -143,7 +143,7 @@ static StateMachine_State_T * Park_InputDirection(MotorControllerPtr_T p_mc, sta
         case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
         default: break;
     }
-    if(p_nextState == 0U) { MotorController_BeepDouble(p_mc); }
+    // if(p_nextState == 0U) { MotorController_BeepShort(p_mc); }
 
     return p_nextState;
 }
@@ -182,7 +182,6 @@ static const StateMachine_State_T STATE_PARK =
 /******************************************************************************/
 static void DriveNeutral_SetBrake(MotorControllerPtr_T p_mc)
 {
-    // if(p_mc->DriveState == MOTOR_CONTROLLER_DRIVE_BRAKE) { MotorController_SetBrakeValue(p_mc, p_mc->UserCmdValue); }
     // Brake has been released, and reapplied. Drive case need check for 0 speed for transition to park
     if((p_mc->DriveState == MOTOR_CONTROLLER_DRIVE_ZERO) && (MotorController_CheckStopAll(p_mc) == true)) //check for 0 speed, motor run does nto transition
     {
@@ -194,25 +193,6 @@ static void DriveNeutral_SetBrake(MotorControllerPtr_T p_mc)
         if(p_mc->DriveState != MOTOR_CONTROLLER_DRIVE_BRAKE) { MotorController_SetBrakeMode(p_mc); }
         MotorController_SetBrakeValue(p_mc, p_mc->UserCmdValue);
     }
-
-
-    // switch(p_mc->DriveState)
-    // {
-    //     case MOTOR_CONTROLLER_DRIVE_BRAKE:
-    //         MotorController_SetBrakeValue(p_mc, p_mc->UserCmdValue);
-    //         break;
-
-    //     case MOTOR_CONTROLLER_DRIVE_THROTTLE:
-    //         MotorController_SetBrakeMode(p_mc);
-    //         MotorController_SetBrakeValue(p_mc, p_mc->UserCmdValue);
-    //         break;
-
-    //     case MOTOR_CONTROLLER_DRIVE_ZERO:
-    //         if(p_mc->DriveState == MOTOR_CONTROLLER_DRIVE_BRAKE) { MotorController_SetBrakeValue(p_mc, p_mc->UserCmdValue); }
-    //         break;
-
-    //     default: break;
-    // }
 }
 
 /******************************************************************************/
@@ -228,7 +208,7 @@ static void DriveNeutral_SetBrake(MotorControllerPtr_T p_mc)
 /******************************************************************************/
 static void Drive_Entry(MotorControllerPtr_T p_mc)
 {
-    MotorController_ActivateAll(p_mc);
+    // MotorController_ActivateAll(p_mc);
     // p_mc->StatusFlags.IsStopped = 0U;
 }
 
@@ -245,11 +225,13 @@ static StateMachine_State_T * Drive_InputDirection(MotorControllerPtr_T p_mc, st
         //try hold
         case MOTOR_CONTROLLER_DIRECTION_PARK: p_nextState = MotorController_CheckStopAll(p_mc) ? &STATE_PARK : 0U; break;
         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL: p_nextState = &STATE_NEUTRAL; break;
-        case MOTOR_CONTROLLER_DIRECTION_FORWARD: p_nextState = MotorController_TryDirectionForwardAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
-        case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
+        case MOTOR_CONTROLLER_DIRECTION_FORWARD: p_nextState = 0U; break;
+        case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = 0U; break;
+        // case MOTOR_CONTROLLER_DIRECTION_FORWARD: p_nextState = MotorController_TryDirectionForwardAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
+        // case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
         default: break;
     }
-    if(p_nextState == 0U) { MotorController_BeepDouble(p_mc); }
+    // if(p_nextState == 0U) { MotorController_BeepShort(p_mc); }
     return p_nextState;
 }
 
@@ -313,7 +295,7 @@ static void Neutral_Entry(MotorControllerPtr_T p_mc)
 {
     // if(p_mc->DriveState != MOTOR_CONTROLLER_DRIVE_BRAKE) { MotorController_ReleaseAll(p_mc); }  /* If enter neutral while braking, handle discontinuity */
     MotorController_ReleaseAll(p_mc);
-    // p_mc->DriveDirection == MOTOR_CONTROLLER_DIRECTION_NEUTRAL;
+    // p_mc->DriveDirection = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;
 }
 static void Neutral_Proc(MotorControllerPtr_T p_mc) { (void)p_mc; }
 
@@ -328,7 +310,7 @@ static StateMachine_State_T * Neutral_InputDirection(MotorControllerPtr_T p_mc, 
         case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
         default: break;
     }
-    if(p_nextState == 0U) { MotorController_BeepDouble(p_mc); }
+    // if(p_nextState == 0U) { MotorController_BeepShort(p_mc); }
     return p_nextState;
 }
 
