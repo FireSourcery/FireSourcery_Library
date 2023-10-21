@@ -143,7 +143,7 @@ static StateMachine_State_T * Park_InputDirection(MotorControllerPtr_T p_mc, sta
         case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
         default: break;
     }
-    // if(p_nextState == 0U) { MotorController_BeepShort(p_mc); }
+
 
     return p_nextState;
 }
@@ -231,7 +231,7 @@ static StateMachine_State_T * Drive_InputDirection(MotorControllerPtr_T p_mc, st
         // case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
         default: break;
     }
-    // if(p_nextState == 0U) { MotorController_BeepShort(p_mc); }
+
     return p_nextState;
 }
 
@@ -310,7 +310,7 @@ static StateMachine_State_T * Neutral_InputDirection(MotorControllerPtr_T p_mc, 
         case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
         default: break;
     }
-    // if(p_nextState == 0U) { MotorController_BeepShort(p_mc); }
+
     return p_nextState;
 }
 

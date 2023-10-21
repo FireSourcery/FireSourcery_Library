@@ -281,7 +281,6 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                             // p_protocol->p_Specs->BUILD_TX_HEADER(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, txId, payloadLength);
                             if((TxResp(p_protocol) == true) && (p_protocol->p_ReqActive->SYNC.RX_ACK == true)) /* Tx resp if TxLength > 0 */
                             {
-
                                 p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC;
                                 p_protocol->RxNackTxCount = 0U;
                                 reqStatus = PROTOCOL_REQ_CODE_AWAIT_RX_SYNC;

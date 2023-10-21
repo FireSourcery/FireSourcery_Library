@@ -75,7 +75,7 @@ static inline void HAL_Serial_WriteRxSwitch(HAL_Serial_T * p_hal, bool enable)
     while(((p_hal->CTRL & LPUART_CTRL_RE_MASK) != 0U) != enable) {}    /* Wait for the register write operation to complete */
 }
 
-static inline void HAL_Serial_InitBaudRate(HAL_Serial_T * p_hal, uint32_t baudRate)
+static inline void HAL_Serial_ConfigBaudRate(HAL_Serial_T * p_hal, uint32_t baudRate)
 {
     const uint32_t UART_BASE_FREQ = CONFIG_HAL_SERIAL_BASE_FREQ;
 
@@ -161,7 +161,7 @@ static inline void HAL_Serial_Init(HAL_Serial_T * p_hal)
 //    p_hal->CTRL = 0x00000000;   /* Reset all features/interrupts by default */
     p_hal->FIFO = 0x0003C000U;// | LPUART_FIFO_RXFE_MASK | LPUART_FIFO_TXFE_MASK;
 //    p_hal->WATER = LPUART_WATER_RXWATER(0x03U) | LPUART_WATER_TXWATER(0x01U);
-    HAL_Serial_InitBaudRate(p_hal, 9600U);
+    HAL_Serial_ConfigBaudRate(p_hal, 9600U);
 }
 
 static inline void HAL_Serial_Deinit(HAL_Serial_T * p_hal)

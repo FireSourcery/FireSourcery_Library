@@ -140,7 +140,7 @@ static inline void ReleaseCriticalRx(Serial_T * p_serial)
 /*
 
 */
-static inline bool Hw_SendChar(Serial_T * p_serial, const uint8_t txchar)
+static inline bool Hal_SendChar(Serial_T * p_serial, const uint8_t txchar)
 {
     bool isSuccess = (HAL_Serial_ReadTxEmptyCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U);
     if(isSuccess == true) { HAL_Serial_WriteTxChar(p_serial->CONFIG.P_HAL_SERIAL, txchar); }
@@ -150,14 +150,14 @@ static inline bool Hw_SendChar(Serial_T * p_serial, const uint8_t txchar)
 /*
 
 */
-static inline bool Hw_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
+static inline bool Hal_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
 {
     bool isSuccess = (HAL_Serial_ReadRxFullCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U);
     if(isSuccess == true) { *p_rxChar = HAL_Serial_ReadRxChar(p_serial->CONFIG.P_HAL_SERIAL); }
     return isSuccess;
 }
 
-static inline uint8_t Hw_GetLoopCount(size_t length)
+static inline uint8_t Hal_GetLoopCount(size_t length)
 {
 #ifdef CONFIG_SERIAL_HW_FIFO_DISABLE
     (void)length;
@@ -167,22 +167,22 @@ static inline uint8_t Hw_GetLoopCount(size_t length)
 #endif
 }
 
-static inline size_t Hw_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
+static inline size_t Hal_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length)
 {
     size_t charCount;
-    for(charCount = 0U; charCount < Hw_GetLoopCount(length); charCount++)
+    for(charCount = 0U; charCount < Hal_GetLoopCount(length); charCount++)
     {
-        if(Hw_SendChar(p_serial, p_srcBuffer[charCount]) == false) { break; }
+        if(Hal_SendChar(p_serial, p_srcBuffer[charCount]) == false) { break; }
     }
     return charCount;
 }
 
-static inline size_t Hw_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
+static inline size_t Hal_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
 {
     size_t charCount;
-    for(charCount = 0U; charCount < Hw_GetLoopCount(length); charCount++)
+    for(charCount = 0U; charCount < Hal_GetLoopCount(length); charCount++)
     {
-        if(Hw_RecvChar(p_serial, &p_destBuffer[charCount]) == false) { break; }
+        if(Hal_RecvChar(p_serial, &p_destBuffer[charCount]) == false) { break; }
     }
     return charCount;
 }
@@ -265,9 +265,19 @@ void Serial_Deinit(Serial_T * p_serial)
     HAL_Serial_Deinit(p_serial->CONFIG.P_HAL_SERIAL);
 }
 
-bool Serial_InitBaudRate(Serial_T * p_serial, uint32_t baudRate)
+bool Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate)
 {
-   return HAL_Serial_InitBaudRate(p_serial->CONFIG.P_HAL_SERIAL, baudRate);
+    bool isSuccess;
+
+    HAL_Serial_WriteTxSwitch(p_serial->CONFIG.P_HAL_SERIAL, false);
+    HAL_Serial_WriteRxSwitch(p_serial->CONFIG.P_HAL_SERIAL, false);
+
+    isSuccess = HAL_Serial_ConfigBaudRate(p_serial->CONFIG.P_HAL_SERIAL, baudRate);
+
+    HAL_Serial_WriteTxSwitch(p_serial->CONFIG.P_HAL_SERIAL, true);
+    HAL_Serial_WriteRxSwitch(p_serial->CONFIG.P_HAL_SERIAL, true);
+
+    return isSuccess;
 }
 
 bool Serial_SendByte(Serial_T * p_serial, uint8_t txChar)
@@ -278,7 +288,7 @@ bool Serial_SendByte(Serial_T * p_serial, uint8_t txChar)
     //write directly to hw fifo/reg todo
     //    if (Ring_GetIsEmpty(&p_serial->TxRing) == true) && HAL_Serial_GetIsActive == false
     //    {?Tx need not disable interrupt after checking empty, hw buffer can only decrease.
-    //        isSuccess = Hw_SendChar(p_serial, txChar);
+    //        isSuccess = Hal_SendChar(p_serial, txChar);
     //    }
     //    else
     //    {
@@ -297,7 +307,7 @@ bool Serial_RecvByte(Serial_T * p_serial, uint8_t * p_rxChar)
     EnterCriticalRx(p_serial);
     //    if (Ring_GetIsEmpty(&p_serial->RxRing) == true)
     //    {?Rx must prevent interrupt after checking full, hw buffer can increase.
-    //        isSuccess = Hw_RecvChar(p_serial, p_rxChar);
+    //        isSuccess = Hal_RecvChar(p_serial, p_rxChar);
     //    }
     //    else
     //    {
@@ -331,7 +341,7 @@ size_t Serial_SendMax(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t s
         //send immediate if fits in hardware fifo
         //        if (Ring_GetIsEmpty(&p_serial->TxRing) == true)
         //        {
-        //            charCount += Hw_Send(p_serial, p_srcBuffer, srcSize);
+        //            charCount += Hal_Send(p_serial, p_srcBuffer, srcSize);
         //        }
 
         //        if (charCount < srcSize)
@@ -354,7 +364,7 @@ size_t Serial_RecvMax(Serial_T * p_serial, uint8_t * p_destBuffer, size_t destSi
         //        if (Ring_GetIsEmpty(&p_serial->RxRing) == true)
         //        {
         //            EnterCriticalRx(p_serial);
-        //            charCount += Hw_Recv(p_serial, p_destBuffer, destSize);
+        //            charCount += Hal_Recv(p_serial, p_destBuffer, destSize);
         //            ExitCriticalRx(p_serial);
         //        }
         //        else

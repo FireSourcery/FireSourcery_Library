@@ -184,7 +184,7 @@ void Terminal_ConfigBaudRate(const Terminal_T * p_terminal, uint32_t baudRate)
 #ifdef CONFIG_SHELL_XCVR_ENABLE
         Xcvr_ConfigBaudRate(&p_terminal->Xcvr, baudRate);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-        if(p_terminal->p_Serial != 0U) { Serial_InitBaudRate(p_terminal->p_Serial, baudRate); }
+        if(p_terminal->p_Serial != 0U) { Serial_ConfigBaudRate(p_terminal->p_Serial, baudRate); }
 #endif
     }
 }

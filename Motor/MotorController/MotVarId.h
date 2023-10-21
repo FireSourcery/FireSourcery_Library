@@ -157,18 +157,18 @@ MotVarId_Cmd_T;
     Use instance index
     Value [-32768:32767]
 */
-// MOT_VAR_MOTOR_RELEASE_CONTROL,
-// MOT_VAR_MOTOR_DISABLE,
-// MOT_VAR_MOTOR_CLEAR_FAULT,
-typedef enum MotVarId_CmdMotor
+typedef enum MotVarId_Cmd_Motor
 {
     MOT_VAR_MOTOR_CMD_SPEED,
     MOT_VAR_MOTOR_CMD_CURRENT,
     MOT_VAR_MOTOR_CMD_VOLTAGE,
     MOT_VAR_MOTOR_CMD_ANGLE,
     MOT_VAR_MOTOR_CMD_OPEN_LOOP,
+// MOT_VAR_MOTOR_RELEASE_CONTROL,
+// MOT_VAR_MOTOR_DISABLE_CONTROL,
+// MOT_VAR_MOTOR_CLEAR_FAULT,
 }
-MotVarId_CmdMotor_T;
+MotVarId_Cmd_Motor_T;
 
 /******************************************************************************/
 /*

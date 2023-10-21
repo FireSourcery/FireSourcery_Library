@@ -85,7 +85,7 @@ extern bool Serial_PollRestartRxIsr(const Serial_T * p_serial);
 
 extern void Serial_Init(Serial_T * p_serial);
 extern void Serial_Deinit(Serial_T * p_serial);
-extern bool Serial_InitBaudRate(Serial_T * p_serial, uint32_t baudRate);
+extern bool Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate);
 extern bool Serial_SendByte(Serial_T * p_serial, uint8_t txChar);
 extern bool Serial_RecvByte(Serial_T * p_serial, uint8_t * p_rxChar);
 extern size_t Serial_SendMax(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t bufferSize);

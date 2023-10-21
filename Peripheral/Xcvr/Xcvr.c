@@ -72,7 +72,7 @@ bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate) //todo check 
         case XCVR_TYPE_INTERFACE:
             if(p_xcvr->p_Xcvr->P_INTERFACE->CONFIG_BAUD_RATE != 0U) { p_xcvr->p_Xcvr->P_INTERFACE->CONFIG_BAUD_RATE(p_xcvr->p_Xcvr->P_CONTEXT, baudRate); }
             break;
-        case XCVR_TYPE_SERIAL:      isSuccess = Serial_InitBaudRate(p_xcvr->p_Xcvr->P_CONTEXT, baudRate);    break;
+        case XCVR_TYPE_SERIAL:      isSuccess = Serial_ConfigBaudRate(p_xcvr->p_Xcvr->P_CONTEXT, baudRate);    break;
         case XCVR_TYPE_I2C:         break;
         case XCVR_TYPE_SPI:         break;
         case XCVR_TYPE_VIRTUAL:     break;

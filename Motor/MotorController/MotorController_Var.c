@@ -417,7 +417,7 @@ static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_
             break;
 
         case MOT_VAR_ID_PREFIX_CMD_MOTOR:
-            switch((MotVarId_CmdMotor_T)varId.NameIndex)
+            switch((MotVarId_Cmd_Motor_T)varId.NameIndex)
             {
                 case MOT_VAR_MOTOR_CMD_SPEED:       Motor_User_SetSpeedCmdValue(p_motor, varValue);     break;
                 case MOT_VAR_MOTOR_CMD_CURRENT:     Motor_User_SetTorqueCmdValue(p_motor, varValue);    break;
