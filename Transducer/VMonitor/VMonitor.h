@@ -54,8 +54,9 @@ typedef struct __attribute__((aligned(4U))) VMonitor_Params
     uint16_t FaultLower_Adcu;
     uint16_t WarningUpper_Adcu;
     uint16_t WarningLower_Adcu;
-    uint16_t VInRef;    /* VIn 100%, frac16 use only */// todo change to adcu for default??
+    uint16_t VInRef;    /* VIn 100%, frac16 use only */// todo change to adcu for default?
     bool IsMonitorEnable;
+    // Linear_T LinearLimits; /* return value [Warning_Adcu:Fault_Adcu] as [65535:0] */
 }
 VMonitor_Params_T;
 
@@ -125,9 +126,9 @@ static inline uint32_t VMonitor_GetFaultLower_MilliV(const VMonitor_T * p_vMonit
 static inline uint32_t VMonitor_GetWarningUpper_MilliV(const VMonitor_T * p_vMonitor) { return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.WarningUpper_Adcu); }
 static inline uint32_t VMonitor_GetWarningLower_MilliV(const VMonitor_T * p_vMonitor) { return Linear_Voltage_CalcMilliV(&p_vMonitor->Units, p_vMonitor->Params.WarningLower_Adcu); }
 
-static inline void VMonitor_Enable(VMonitor_T * p_vMonitor)                         { p_vMonitor->Params.IsMonitorEnable = true; }
-static inline void VMonitor_Disable(VMonitor_T * p_vMonitor)                        { p_vMonitor->Params.IsMonitorEnable = false; }
-static inline void VMonitor_SetIsEnable(VMonitor_T * p_vMonitor, bool isEnable)     { p_vMonitor->Params.IsMonitorEnable = isEnable; }
+static inline void VMonitor_Enable(VMonitor_T * p_vMonitor)                                     { p_vMonitor->Params.IsMonitorEnable = true; }
+static inline void VMonitor_Disable(VMonitor_T * p_vMonitor)                                    { p_vMonitor->Params.IsMonitorEnable = false; }
+static inline void VMonitor_SetIsEnable(VMonitor_T * p_vMonitor, bool isEnable)                 { p_vMonitor->Params.IsMonitorEnable = isEnable; }
 static inline void VMonitor_SetFaultUpper(VMonitor_T * p_vMonitor, uint32_t limit_adcu)         { p_vMonitor->Params.FaultUpper_Adcu = limit_adcu; }
 static inline void VMonitor_SetFaultLower(VMonitor_T * p_vMonitor, uint32_t limit_adcu)         { p_vMonitor->Params.FaultLower_Adcu = limit_adcu; }
 static inline void VMonitor_SetWarningUpper(VMonitor_T * p_vMonitor, uint32_t limit_adcu)       { p_vMonitor->Params.WarningUpper_Adcu = limit_adcu; }
@@ -139,7 +140,7 @@ static inline void VMonitor_SetWarningLower_MilliV(VMonitor_T * p_vMonitor, uint
 
 /******************************************************************************/
 /*!
-    extern
+    Extern
 */
 /******************************************************************************/
 extern void VMonitor_Init(VMonitor_T * p_vMonitor);

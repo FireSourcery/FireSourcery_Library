@@ -61,14 +61,14 @@ typedef enum MotVarId_Monitor_Global
 }
 MotVarId_Monitor_Global_T;
 
-typedef enum MotVarId_Monitor_UserAnalog
+typedef enum MotVarId_Monitor_AnalogUser
 {
     MOT_VAR_ANALOG_THROTTLE,
     MOT_VAR_ANALOG_THROTTLE_DIN,
     MOT_VAR_ANALOG_BRAKE,
     MOT_VAR_ANALOG_BRAKE_DIN,
 }
-MotVarId_Monitor_UserAnalog_T;
+MotVarId_Monitor_AnalogUser_T;
 
 /*
     Speed/IPhase
@@ -164,6 +164,9 @@ typedef enum MotVarId_Cmd_Motor
     MOT_VAR_MOTOR_CMD_VOLTAGE,
     MOT_VAR_MOTOR_CMD_ANGLE,
     MOT_VAR_MOTOR_CMD_OPEN_LOOP,
+// MOT_VAR_MOTOR_RELEASE_CONTROL,
+// MOT_VAR_MOTOR_DISABLE,
+// MOT_VAR_MOTOR_CLEAR_FAULT,
 // MOT_VAR_MOTOR_RELEASE_CONTROL,
 // MOT_VAR_MOTOR_DISABLE_CONTROL,
 // MOT_VAR_MOTOR_CLEAR_FAULT,
@@ -302,7 +305,7 @@ typedef enum MotVarId_Params_Global
 }
 MotVarId_Params_Global_T;
 
-typedef enum MotVarId_Params_UserAnalog
+typedef enum MotVarId_Params_AnalogUser
 {
     MOT_VAR_ANALOG_THROTTLE_ZERO_ADCU,
     MOT_VAR_ANALOG_THROTTLE_MAX_ADCU,
@@ -314,7 +317,7 @@ typedef enum MotVarId_Params_UserAnalog
     MOT_VAR_ANALOG_DIN_BRAKE_IS_ENABLE,
     MOT_VAR_ANALOG_DIRECTION_PINS,
 }
-MotVarId_Params_UserAnalog_T;
+MotVarId_Params_AnalogUser_T;
 
 /*
     Use instance Id
@@ -377,7 +380,7 @@ typedef enum MotVarId_Prefix_RealTime
 {
     // Monitor - Read-Only
     MOT_VAR_ID_PREFIX_MONITOR_GLOBAL,
-    MOT_VAR_ID_PREFIX_MONITOR_ANALOG_INPUT,
+    MOT_VAR_ID_PREFIX_MONITOR_ANALOG_USER,
     MOT_VAR_ID_PREFIX_MONITOR_MOTOR,
     MOT_VAR_ID_PREFIX_MONITOR_MOTOR_FOC,
     MOT_VAR_ID_PREFIX_MONITOR_MOTOR_SENSOR,
@@ -398,8 +401,8 @@ typedef enum MotVarId_Prefix_Params
     MOT_VAR_ID_PREFIX_PARAMS_MOTOR_ENCODER,
     MOT_VAR_ID_PREFIX_PARAMS_MOTOR_PID,
     MOT_VAR_ID_PREFIX_PARAMS_GLOBAL,
+    MOT_VAR_ID_PREFIX_PARAMS_ANALOG_USER,
     MOT_VAR_ID_PREFIX_PARAMS_PROTOCOL,
-    MOT_VAR_ID_PREFIX_PARAMS_USER_ANALOG,
     MOT_VAR_ID_PREFIX_PARAMS_THERMISTOR,
     MOT_VAR_ID_PREFIX_PARAMS_VMONITOR,
     MOT_VAR_ID_PREFIX_PARAMS_END = 16U,

@@ -251,6 +251,7 @@ static inline uint8_t MotorController_User_GetMainVersionIndex(const MotorContro
 
 static inline uint32_t MotorController_User_GetVMax(void) { return GLOBAL_MOTOR.V_MAX_VOLTS; }
 static inline uint32_t MotorController_User_GetIMax(void) { return GLOBAL_MOTOR.I_MAX_AMPS; }
+static inline uint32_t MotorController_User_GetIMaxAdcu(void) { return GLOBAL_MOTOR.I_MAX_ADCU; }
 
 static inline uint32_t MotorController_User_GetBoardVersion(void)
 {
