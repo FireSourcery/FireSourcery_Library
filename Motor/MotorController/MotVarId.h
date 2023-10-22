@@ -170,6 +170,13 @@ typedef enum MotVarId_Cmd_Motor
 }
 MotVarId_Cmd_Motor_T;
 
+// typedef enum MotVarId_Cmd_General
+// {
+//     MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE, // not saved to Nvm
+// }
+// MotVarId_Cmd_General_T;
+
+
 /******************************************************************************/
 /*
     Parameter
