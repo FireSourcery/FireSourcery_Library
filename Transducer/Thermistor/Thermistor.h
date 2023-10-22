@@ -73,7 +73,7 @@ typedef struct __attribute__((aligned(2U))) Thermistor_Params
     uint16_t NtcT0; /* In Kelvin*/
     uint16_t NtcB;
 
-    /* Linear Unit Conversion */
+    /* Back Up Linear Unit Conversion */
     uint16_t LinearT0_Adcu;
     uint8_t LinearT0_DegC;
     uint16_t LinearT1_Adcu;

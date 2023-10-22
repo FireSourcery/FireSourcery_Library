@@ -33,8 +33,10 @@
 #include <string.h>
 #include <stdio.h>
 
+
 static inline void ResetUnitConversion(VMonitor_T * p_vMonitor)
 {
+    // Linear_ADC_Init(&p_vMonitor->LinearLimits, p_vMonitor->Params.Fault_Adcu, p_vMonitor->Params.Warning_Adcu, 0, 0);
     Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONFIG.UNITS_R1, p_vMonitor->CONFIG.UNITS_R2, GLOBAL_ANALOG.ADC_BITS, GLOBAL_ANALOG.ADC_VREF_MILLIV, p_vMonitor->Params.VInRef);
 }
 

@@ -142,8 +142,8 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_MONITOR_ANALOG_INPUT:
-            switch((MotVarId_Monitor_UserAnalog_T)varId.NameIndex)
+        case MOT_VAR_ID_PREFIX_MONITOR_ANALOG_USER:
+            switch((MotVarId_Monitor_AnalogUser_T)varId.NameIndex)
             {
                 case MOT_VAR_ANALOG_THROTTLE:       value = MotAnalogUser_GetThrottle(&p_mc->AnalogUser);               break;
                 case MOT_VAR_ANALOG_BRAKE:          value = MotAnalogUser_GetBrake(&p_mc->AnalogUser);                  break;
@@ -166,9 +166,9 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
                 default: break;
             }
             break;
-        case MOT_VAR_ID_PREFIX_CMD: break;
-        case MOT_VAR_ID_PREFIX_CMD_MOTOR: break;
-        default: break;
+        case MOT_VAR_ID_PREFIX_CMD:         value = 0; break;
+        case MOT_VAR_ID_PREFIX_CMD_MOTOR:   value = 0; break;
+        default: value = 0; break;
     }
 
     return value;
@@ -287,8 +287,8 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_PARAMS_USER_ANALOG:
-            switch((MotVarId_Params_UserAnalog_T)varId.NameIndex)
+        case MOT_VAR_ID_PREFIX_PARAMS_ANALOG_USER:
+            switch((MotVarId_Params_AnalogUser_T)varId.NameIndex)
             {
                 case MOT_VAR_ANALOG_THROTTLE_ZERO_ADCU:             value = p_mc->AnalogUser.Params.ThrottleZero_Adcu; break;
                 case MOT_VAR_ANALOG_THROTTLE_MAX_ADCU:              value = p_mc->AnalogUser.Params.ThrottleMax_Adcu; break;
@@ -435,7 +435,7 @@ static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_
         case MOT_VAR_ID_PREFIX_MONITOR_MOTOR_FOC:     status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
         case MOT_VAR_ID_PREFIX_MONITOR_MOTOR_SENSOR:  status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
         case MOT_VAR_ID_PREFIX_MONITOR_GLOBAL:        status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
-        case MOT_VAR_ID_PREFIX_MONITOR_ANALOG_INPUT:  status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
+        case MOT_VAR_ID_PREFIX_MONITOR_ANALOG_USER:  status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
         default: break;
     }
 
@@ -577,8 +577,8 @@ static inline MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_PARAMS_USER_ANALOG:
-            switch((MotVarId_Params_UserAnalog_T)varId.NameIndex)
+        case MOT_VAR_ID_PREFIX_PARAMS_ANALOG_USER:
+            switch((MotVarId_Params_AnalogUser_T)varId.NameIndex)
             {
                 case MOT_VAR_ANALOG_THROTTLE_ZERO_ADCU:             p_mc->AnalogUser.Params.ThrottleZero_Adcu = varValue; break;
                 case MOT_VAR_ANALOG_THROTTLE_MAX_ADCU:              p_mc->AnalogUser.Params.ThrottleMax_Adcu = varValue; break;
