@@ -267,7 +267,7 @@ void Serial_Deinit(Serial_T * p_serial)
 
 bool Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate)
 {
-    bool isSuccess;
+    volatile bool isSuccess = true;
 
     HAL_Serial_WriteTxSwitch(p_serial->CONFIG.P_HAL_SERIAL, false);
     HAL_Serial_WriteRxSwitch(p_serial->CONFIG.P_HAL_SERIAL, false);
