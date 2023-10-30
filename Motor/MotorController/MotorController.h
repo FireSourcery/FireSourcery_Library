@@ -153,13 +153,15 @@ typedef union MotorController_StatusFlags
 {
     struct
     {
-        uint16_t HeatMosfets        : 1U; //ilimitheat
-        uint16_t LowV               : 1U;
+        uint16_t HeatWarning        : 1U; // ILimit by Heat
+        uint16_t LowV               : 1U; // ILimit by LowV
+        uint16_t SpeedLimit         : 1U; // use active speed limit?
+        // repeat
+        // derive from thermistor functions
         // uint16_t ILimitLowV         : 1U;
         // uint16_t ILimitHeatMosfets  : 1U;
         // uint16_t ILimitHeatPcb      : 1U;
         // uint16_t ILimitHeatMotors   : 1U;
-        uint16_t SpeedLimit         : 1U;
         // uint16_t IsStopped          : 1U;
     };
     uint16_t Word;
@@ -167,7 +169,7 @@ typedef union MotorController_StatusFlags
 MotorController_StatusFlags_T;
 
 /*
-    Fault substate flags
+    Fault SubState flags
     Faults flags with exception of RxLost retain set state until user clears
 */
 typedef union MotorController_FaultFlags
@@ -202,6 +204,7 @@ typedef union MotorController_InitFlags
     {
         uint16_t IsThrottleZero : 1U;
         uint16_t IsDirectionSet : 1U;
+        // uint16_t IsParamsLoaded : 1U;
     };
     uint16_t Word;
 }
@@ -325,13 +328,29 @@ typedef struct MotorController
     Thermistor_T ThermistorMosfetsTop;
     Thermistor_T ThermistorMosfetsBot;
 #else
+    // todo compile time select as top or bot?
     Thermistor_T ThermistorMosfets;
 #endif
     VMonitor_T VMonitorSource;  /* Controller Supply */
     VMonitor_T VMonitorSense;   /* ~5V */
     VMonitor_T VMonitorAccs;    /* ~12V */
+    // VMonitor_T VMonitorBattery;  /* VSource Scaled as BatteryLife */
+    /*
+        e.g. 42V Source:
+        VSource 100% 42V
+        VSource 0% 0V
+        VSource VInRef 42V
+        VSource FaultUpper 52.5V
+        VSource WarningUpper 47.25V
+        VSource WarningLower 36.75V - begin ILimitLowV
+        VSource FaultLower 31.5V
+        VBattery 100% 42V
+        VBattery 0% 31.5V
+    */
+// #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
+    // move to host
     Linear_T BatteryLife;       /* Battery Life percentage */
-
+// #endif
     Timer_T TimerMillis;
     uint32_t MainDividerCounter;
     uint32_t TimerDividerCounter;
@@ -344,8 +363,8 @@ typedef struct MotorController
     /* State and SubState */
     StateMachine_T StateMachine;
     MotorController_InitFlags_T InitFlags;
-    MotorController_StatusFlags_T StatusFlags;
     MotorController_FaultFlags_T FaultFlags;
+    MotorController_StatusFlags_T StatusFlags;
 #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
     MotAnalog_Results_T FaultAnalogRecord;
 #endif

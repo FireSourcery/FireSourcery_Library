@@ -42,11 +42,12 @@ void MotorController_User_SetVSourceRef(MotorControllerPtr_T p_mc, uint16_t volt
     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_ResetUnitsVabc(&p_mc->CONFIG.P_MOTORS[iMotor]); }
     VMonitor_SetVInRef(&p_mc->VMonitorSource, volts);
 
-//propagate set //todo restore ratio set
+    // propagate set //todo restore ratio set
     VMonitor_SetLimitsDefault(&p_mc->VMonitorSource);
     MotorController_User_SetBatteryLifeDefault(p_mc);
 }
 
+// #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 void MotorController_User_SetBatteryLifeDefault(MotorControllerPtr_T p_mc)
 {
     p_mc->Parameters.BatteryZero_Adcu = VMonitor_GetFaultLower(&p_mc->VMonitorSource);
@@ -60,7 +61,7 @@ void MotorController_User_SetBatteryLife_MilliV(MotorControllerPtr_T p_mc, uint3
     p_mc->Parameters.BatteryFull_Adcu = VMonitor_ConvertMilliVToAdcu(&p_mc->VMonitorSource, max_mV);
     MotorController_ResetUnitsBatteryLife(p_mc);
 }
-
+// #endif
 // void MotorController_User_SetILimit_DC(MotorControllerPtr_T p_mc, uint16_t dc)
 // {
 //     uint16_t iPeakAc = dc;

@@ -165,19 +165,19 @@ static inline void _MotorController_ProcHeatMonitor(MotorControllerPtr_T p_mc)
             MotorController_SetILimitAll_Id(p_mc, Thermistor_GetHeatLimit_FracU16(&p_mc->ThermistorMosfets));
 
             // Thermistor_PollWarningRisingEdge(&p_mc->ThermistorMosfetsTop);
-            if(p_mc->StatusFlags.HeatMosfets == false)
+            if(p_mc->StatusFlags.HeatWarning == false)
             {
                 Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 1U);
-                p_mc->StatusFlags.HeatMosfets = true;
+                p_mc->StatusFlags.HeatWarning = true;
             }
         }
         else
         {
             // Thermistor_PollWarningFallingEdge(&p_mc->ThermistorMosfetsTop);
-            if(p_mc->StatusFlags.HeatMosfets == true)
+            if(p_mc->StatusFlags.HeatWarning == true)
             {
                 MotorController_ClearILimitAll_Id(p_mc);
-                p_mc->StatusFlags.HeatMosfets = false;
+                p_mc->StatusFlags.HeatWarning = false;
             }
         }
     }

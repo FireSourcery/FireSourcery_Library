@@ -56,7 +56,7 @@ typedef struct __attribute__((aligned(4U))) VMonitor_Params
     uint16_t WarningLower_Adcu;
     uint16_t VInRef;    /* VIn 100%, frac16 use only */// todo change to adcu for default?
     bool IsMonitorEnable;
-    // Linear_T LinearLimits; /* return value [Warning_Adcu:Fault_Adcu] as [65535:0] */
+    // Linear_T LinearChargeLevel; /* return value [VRef:FaultLower_Adcu] as [65535:0] */
 }
 VMonitor_Params_T;
 
@@ -91,11 +91,11 @@ VMonitor_T;
 static inline int32_t VMonitor_ConvertToScalar16(const VMonitor_T * p_vMonitor, uint16_t adcu)                  { return Linear_Voltage_CalcScalar16(&p_vMonitor->Units, adcu); }
 static inline int32_t VMonitor_ConvertToScalarV(const VMonitor_T * p_vMonitor, uint16_t adcu, uint16_t vScalar) { return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, adcu, vScalar); }
 static inline int32_t VMonitor_ConvertMilliVToAdcu(const VMonitor_T * p_vMonitor, uint32_t milliV)              { return Linear_Voltage_CalcAdcu_MilliV(&p_vMonitor->Units, milliV); }
-// static inline int32_t VMonitor_ConvertToAdcu(VMonitor_T * p_vMonitor, uint16_t v, uint16_t scalar) { return Linear_Voltage_CalcAdcu_ScalarV(&p_vMonitor->Units, v, scalar); }
+static inline int32_t VMonitor_ConvertVToAdcu(VMonitor_T * p_vMonitor, uint16_t v)                              { return Linear_Voltage_CalcAdcu_V(&p_vMonitor->Units, v); }
 
 /******************************************************************************/
 /*
-    Map [FaultLower:VRef] to [0:65535]
+    Map [VRef:FaultLower] to [65535:0]
 */
 /******************************************************************************/
 // static inline uint16_t VMonitor_ConvertChargeLevel_FracU16(const VMonitor_T * p_vMonitor, uint16_t adcu)   { return Linear_ADC_CalcFracU16(&p_vMonitor->Linear , adcu); }

@@ -44,7 +44,7 @@
     VSensor, VAccs
         Units0 => mV
 */
-typedef enum MotVarId_Monitor_Global
+typedef enum MotVarId_Monitor_General
 {
     MOT_VAR_ZERO,
     MOT_VAR_MILLIS,
@@ -59,7 +59,7 @@ typedef enum MotVarId_Monitor_Global
     MOT_VAR_HEAT_PCB,
     MOT_VAR_HEAT_MOSFETS,
 }
-MotVarId_Monitor_Global_T;
+MotVarId_Monitor_General_T;
 
 typedef enum MotVarId_Monitor_AnalogUser
 {
@@ -286,7 +286,7 @@ MotVarId_Params_MotorPid_T;
 // Prop_Gain_Shift,
 // Integral_Gain,
 // Integral_Gain_Shift,
-typedef enum MotVarId_Params_Global
+typedef enum MotVarId_Params_General
 {
     MOT_VAR_V_SOURCE_VOLTS,
     MOT_VAR_BATTERY_ZERO_ADCU,
@@ -303,7 +303,7 @@ typedef enum MotVarId_Params_Global
     MOT_VAR_CAN_SERVICES_ID,
     MOT_VAR_CAN_IS_ENABLE,
 }
-MotVarId_Params_Global_T;
+MotVarId_Params_General_T;
 
 typedef enum MotVarId_Params_AnalogUser
 {
@@ -341,16 +341,16 @@ MotVarId_Params_Protocol_T;
 typedef enum MotVarId_Params_Thermistor
 {
     MOT_VAR_THERMISTOR_TYPE,
-    MOT_VAR_THERMISTOR_R,
-    MOT_VAR_THERMISTOR_T,
+    MOT_VAR_THERMISTOR_R0,
+    MOT_VAR_THERMISTOR_T0,
     MOT_VAR_THERMISTOR_B,
     MOT_VAR_THERMISTOR_LINEAR_T0_ADCU,
     MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C,
     MOT_VAR_THERMISTOR_LINEAR_T1_ADCU,
     MOT_VAR_THERMISTOR_LINEAR_T1_DEG_C,
-    MOT_VAR_THERMISTOR_FAULT_ADCU,
+    MOT_VAR_THERMISTOR_FAULT_TRIGGER_ADCU,
     MOT_VAR_THERMISTOR_FAULT_THRESHOLD_ADCU,
-    MOT_VAR_THERMISTOR_WARNING_ADCU,
+    MOT_VAR_THERMISTOR_WARNING_TRIGGER_ADCU,
     MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU,
     MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE,
 }
@@ -379,7 +379,7 @@ MotVarId_Params_VMonitor_T;
 typedef enum MotVarId_Prefix_RealTime
 {
     // Monitor - Read-Only
-    MOT_VAR_ID_PREFIX_MONITOR_GLOBAL,
+    MOT_VAR_ID_PREFIX_MONITOR_GENERAL,
     MOT_VAR_ID_PREFIX_MONITOR_ANALOG_USER,
     MOT_VAR_ID_PREFIX_MONITOR_MOTOR,
     MOT_VAR_ID_PREFIX_MONITOR_MOTOR_FOC,
@@ -400,7 +400,7 @@ typedef enum MotVarId_Prefix_Params
     MOT_VAR_ID_PREFIX_PARAMS_MOTOR_HALL,
     MOT_VAR_ID_PREFIX_PARAMS_MOTOR_ENCODER,
     MOT_VAR_ID_PREFIX_PARAMS_MOTOR_PID,
-    MOT_VAR_ID_PREFIX_PARAMS_GLOBAL,
+    MOT_VAR_ID_PREFIX_PARAMS_GENERAL,
     MOT_VAR_ID_PREFIX_PARAMS_ANALOG_USER,
     MOT_VAR_ID_PREFIX_PARAMS_PROTOCOL,
     MOT_VAR_ID_PREFIX_PARAMS_THERMISTOR,
@@ -466,7 +466,6 @@ typedef enum MotVarId_Status
     MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED = 0x04U,
     MOT_VAR_STATUS_ERROR_RUNNING = 0x05U,
     // MOT_VAR_STATUS_ERROR_REFUSED_BY_STATE_MACHINE = 0x03U,
-
     MOT_VAR_STATUS_RESERVED = 0xFFU,
 }
 MotVarId_Status_T;

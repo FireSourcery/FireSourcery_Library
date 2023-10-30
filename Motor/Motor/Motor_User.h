@@ -73,11 +73,17 @@ static inline int32_t Motor_User_GetElectricalPower_UFrac16(const MotorPtr_T p_m
 //check DC current limit
 // Motor_FOC_GetElectricalPower_FracS16Abs(p_motor) / Global_Motor_GetVSource_V() ;
 
+static inline uint16_t Motor_User_GetAdcu(const MotorPtr_T p_motor, MotorAnalog_Channel_T adcChannel)       { return p_motor->AnalogResults.Channels[adcChannel]; }
+static inline uint8_t Motor_User_GetAdcu_Msb8(const MotorPtr_T p_motor, MotorAnalog_Channel_T adcChannel)   { return Motor_User_GetAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
+static inline uint16_t Motor_User_GetHeat_Adcu(const MotorPtr_T p_motor)                                    { return p_motor->AnalogResults.Heat_Adcu; }
+
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 static inline int16_t Motor_User_GetSpeed_Rpm(const MotorPtr_T p_motor)            { return _Motor_ConvertSpeed_FracS16ToRpm(p_motor, Motor_User_GetSpeed_Frac16(p_motor)); }
 static inline int16_t Motor_User_GetIPhase_Amps(const MotorPtr_T p_motor)          { return _Motor_ConvertI_FracS16ToAmps(Motor_User_GetIPhase_UFrac16(p_motor)); }
 static inline int16_t Motor_User_GetVPhase_Volts(const MotorPtr_T p_motor)         { return _Motor_ConvertV_FracS16ToVolts(Motor_User_GetVPhase_UFrac16(p_motor)); }
 static inline int32_t Motor_User_GetElectricalPower_VA(const MotorPtr_T p_motor)   { return _Motor_ConvertPower_FracS16ToWatts(Motor_User_GetElectricalPower_UFrac16(p_motor)); }
+static inline int32_t Motor_User_GetHeat_DegC(const MotorPtr_T p_motor, uint16_t scalar)    { return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
+// static inline thermal_t Motor_User_GetHeat_DegC(const MotorPtr_T p_motor)                   { return Thermistor_ConvertToDegC(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 #endif
 
 /*
@@ -89,17 +95,12 @@ static inline qangle16_t Motor_User_GetMechanicalAngle(const MotorPtr_T p_motor)
 static inline Motor_StatusFlags_T Motor_User_GetStatusFlags(const MotorPtr_T p_motor)           { return p_motor->StatusFlags; }
 static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const MotorPtr_T p_motor)             { return p_motor->FaultFlags; }
 static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(const MotorPtr_T p_motor)      { return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
+static inline bool Motor_User_IsStop(const MotorPtr_T p_motor)                                  { return (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP); }
+static inline bool Motor_User_IsZeroSpeed(const MotorPtr_T p_motor)                             { return (p_motor->Speed_FracS16 == 0); }
+/* SubStates */
 static inline Motor_OpenLoopState_T Motor_User_GetOpenLoopState(const MotorPtr_T p_motor)       { return p_motor->OpenLoopState; }
 static inline Motor_CalibrationState_T Motor_User_GetCalibrationState(const MotorPtr_T p_motor) { return p_motor->CalibrationState; }
 static inline uint8_t Motor_User_GetCalibrationStateIndex(const MotorPtr_T p_motor)             { return p_motor->CalibrationStateIndex; }
-static inline bool Motor_User_IsStop(const MotorPtr_T p_motor)                                  { return (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP); }
-static inline bool Motor_User_IsZeroSpeed(const MotorPtr_T p_motor)                             { return (p_motor->Speed_FracS16 == 0); }
-
-static inline uint16_t Motor_User_GetAdcu(const MotorPtr_T p_motor, MotorAnalog_Channel_T adcChannel)       { return p_motor->AnalogResults.Channels[adcChannel]; }
-static inline uint8_t Motor_User_GetAdcu_Msb8(const MotorPtr_T p_motor, MotorAnalog_Channel_T adcChannel)   { return Motor_User_GetAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
-static inline uint16_t Motor_User_GetHeat_Adcu(const MotorPtr_T p_motor)                                    { return p_motor->AnalogResults.Heat_Adcu; }
-static inline int32_t Motor_User_GetHeat_DegC(const MotorPtr_T p_motor, uint16_t scalar)                    { return Thermistor_ConvertToDegC_Int(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
-// static inline float Motor_User_GetHeat_DegCFloat(const MotorPtr_T p_motor        { return Thermistor_ConvertToDegC_Float(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 
 /*
     Write via interface functions
@@ -108,7 +109,7 @@ static inline Motor_Direction_T Motor_User_GetDirection(const MotorPtr_T p_motor
 static inline bool Motor_User_IsDirectionForward(const MotorPtr_T p_motor)                      { return (p_motor->Parameters.DirectionForward == p_motor->Direction); }
 static inline bool Motor_User_IsDirectionReverse(const MotorPtr_T p_motor)                      { return !Motor_User_IsDirectionForward(p_motor); }
 static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackMode(const MotorPtr_T p_motor)   { return p_motor->FeedbackMode; }
-//todo enum ids, regularize direct/sentinel
+// todo enum ids, regularize direct/sentinel
 static inline uint16_t Motor_User_GetActiveILimit(const MotorPtr_T p_motor)                     { return p_motor->ILimitActiveSentinel_Scalar16; }
 static inline uint16_t Motor_User_GetActiveSpeedLimit(const MotorPtr_T p_motor)                 { return p_motor->SpeedLimitDirect_Scalar16; }
 

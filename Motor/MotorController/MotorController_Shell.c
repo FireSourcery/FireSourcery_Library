@@ -596,17 +596,17 @@ void PrintThermistorLimit(Terminal_T * p_term, Thermistor_T * p_thermistor)
 {
     Terminal_SendString(p_term, "Shutdown: ");
     Terminal_SendNum(p_term, Thermistor_GetFault_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
-    Terminal_SendNum(p_term, Thermistor_GetFault_DegCInt(p_thermistor, 1U)); Terminal_SendString(p_term, " C ");
+    Terminal_SendNum(p_term, Thermistor_GetFault_DegCScalar(p_thermistor, 1U)); Terminal_SendString(p_term, " C ");
     Terminal_SendString(p_term, " Threshold: ");
     Terminal_SendNum(p_term, Thermistor_GetFaultThreshold_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
-    Terminal_SendNum(p_term, Thermistor_GetFaultThreshold_DegCInt(p_thermistor, 1U)); Terminal_SendString(p_term, " C\r\n");
+    Terminal_SendNum(p_term, Thermistor_GetFaultThreshold_DegCScalar(p_thermistor, 1U)); Terminal_SendString(p_term, " C\r\n");
 
     Terminal_SendString(p_term, "Warning: ");
     Terminal_SendNum(p_term, Thermistor_GetWarning_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
-    Terminal_SendNum(p_term, Thermistor_GetWarning_DegCInt(p_thermistor, 1U)); Terminal_SendString(p_term, " C ");
+    Terminal_SendNum(p_term, Thermistor_GetWarning_DegCScalar(p_thermistor, 1U)); Terminal_SendString(p_term, " C ");
     Terminal_SendString(p_term, " Threshold: ");
     Terminal_SendNum(p_term, Thermistor_GetWarningThreshold_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
-    Terminal_SendNum(p_term, Thermistor_GetWarningThreshold_DegCInt(p_thermistor, 1U)); Terminal_SendString(p_term, " C\r\n");
+    Terminal_SendNum(p_term, Thermistor_GetWarningThreshold_DegCScalar(p_thermistor, 1U)); Terminal_SendString(p_term, " C\r\n");
 }
 
 //todo seperate print functions

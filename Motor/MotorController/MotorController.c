@@ -191,15 +191,18 @@ NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorControllerPtr_T p_mc, c
 /*
     Set runtime Params (RAM copy) via abstraction layer functions (in user units)
     Convience function over p_mc->Parameters compile time initializers
+    On first time boot up. propagate defaults
 */
 void MotorController_LoadParamsDefault(MotorController_T * p_mc)
 {
-    VMonitor_SetVInRef(&p_mc->VMonitorSource, p_mc->Parameters.VSourceRef);
+    // VMonitor_SetVInRef(&p_mc->VMonitorSource, p_mc->Parameters.VSourceRef);
     VMonitor_SetLimitsDefault(&p_mc->VMonitorSource);
-    // MotorController_User_SetBatteryLifeDefault(p_mc);
-    Thermistor_SetLimits_DegC(&p_mc->ThermistorPcb, 100U, 90U, 80U, 78U);
-    Thermistor_SetLimits_DegC(&p_mc->ThermistorMosfets, 100U, 90U, 80U, 78U);
-    for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Thermistor_SetLimits_DegC(&p_mc->CONFIG.P_MOTORS[iMotor].Thermistor, 100U, 90U, 80U, 78U); }
+    // MotorController_User_SetBatteryLifeDefault(p_mc); //todo
+
+    // Calculate values when adcu default is not provided
+    // Thermistor_SetLimits_DegC(&p_mc->ThermistorPcb, 100U, 90U, 80U, 78U);
+    // Thermistor_SetLimits_DegC(&p_mc->ThermistorMosfets, 100U, 90U, 80U, 78U);
+    // for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Thermistor_SetLimits_DegC(&p_mc->CONFIG.P_MOTORS[iMotor].Thermistor, 100U, 90U, 80U, 78U); }
 //     PID_SetTunings(&p_motor->PidSpeed, 1U, 1U, 1U, 2U, 0U, 0U);
 //     PID_SetTunings(&p_motor->PidIq, 1U, 1U, 1U, 2U, 0U, 0U);
 //     PID_SetTunings(&p_motor->PidId, 1U, 1U, 1U, 2U, 0U, 0U);

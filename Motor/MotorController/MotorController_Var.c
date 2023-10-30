@@ -121,8 +121,8 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
             // case MOT_VAR_ENCODER_FREQ:    value = p_motor->Encoder.FreqD;   break;
             break;
 
-        case MOT_VAR_ID_PREFIX_MONITOR_GLOBAL:
-            switch((MotVarId_Monitor_Global_T)varId.NameIndex)
+        case MOT_VAR_ID_PREFIX_MONITOR_GENERAL:
+            switch((MotVarId_Monitor_General_T)varId.NameIndex)
             {
                 case MOT_VAR_ZERO:                  value = 0;                                                  break;
                 case MOT_VAR_MILLIS:                value = Millis();                                           break;
@@ -266,8 +266,8 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_PARAMS_GLOBAL:
-            switch((MotVarId_Params_Global_T)varId.NameIndex)
+        case MOT_VAR_ID_PREFIX_PARAMS_GENERAL:
+            switch((MotVarId_Params_General_T)varId.NameIndex)
             {
                 case MOT_VAR_V_SOURCE_VOLTS:            value = MotorController_User_GetVSourceRef(p_mc);       break;
                 case MOT_VAR_BATTERY_ZERO_ADCU:         value = (p_mc->Parameters.BatteryZero_Adcu);            break;
@@ -325,12 +325,12 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
                 case MOT_VAR_THERMISTOR_LINEAR_T1_ADCU:           value = Thermistor_GetLinearT1_Adcu(p_thermistor);          break;
                 case MOT_VAR_THERMISTOR_LINEAR_T1_DEG_C:          value = Thermistor_GetLinearT1_DegC(p_thermistor);          break;
                 case MOT_VAR_THERMISTOR_TYPE:                     value = Thermistor_GetType(p_thermistor);                   break;
-                case MOT_VAR_THERMISTOR_R:                        value = Thermistor_GetR0(p_thermistor);                     break;
-                case MOT_VAR_THERMISTOR_T:                        value = Thermistor_GetT0(p_thermistor);                     break;
+                case MOT_VAR_THERMISTOR_R0:                        value = Thermistor_GetR0(p_thermistor);                     break;
+                case MOT_VAR_THERMISTOR_T0:                        value = Thermistor_GetT0(p_thermistor);                     break;
                 case MOT_VAR_THERMISTOR_B:                        value = Thermistor_GetB(p_thermistor);                      break;
-                case MOT_VAR_THERMISTOR_FAULT_ADCU:               value = Thermistor_GetFault_Adcu(p_thermistor);             break;
+                case MOT_VAR_THERMISTOR_FAULT_TRIGGER_ADCU:               value = Thermistor_GetFault_Adcu(p_thermistor);             break;
                 case MOT_VAR_THERMISTOR_FAULT_THRESHOLD_ADCU:     value = Thermistor_GetFaultThreshold_Adcu(p_thermistor);    break;
-                case MOT_VAR_THERMISTOR_WARNING_ADCU:             value = Thermistor_GetWarning_Adcu(p_thermistor);           break;
+                case MOT_VAR_THERMISTOR_WARNING_TRIGGER_ADCU:             value = Thermistor_GetWarning_Adcu(p_thermistor);           break;
                 case MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU:   value = Thermistor_GetWarningThreshold_Adcu(p_thermistor);  break;
                 case MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE:        value = Thermistor_GetIsMonitorEnable(p_thermistor);        break;
                 default: break;
@@ -431,11 +431,11 @@ static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_MONITOR_MOTOR:         status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
-        case MOT_VAR_ID_PREFIX_MONITOR_MOTOR_FOC:     status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
-        case MOT_VAR_ID_PREFIX_MONITOR_MOTOR_SENSOR:  status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
-        case MOT_VAR_ID_PREFIX_MONITOR_GLOBAL:        status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
-        case MOT_VAR_ID_PREFIX_MONITOR_ANALOG_USER:  status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
+        case MOT_VAR_ID_PREFIX_MONITOR_MOTOR:           status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
+        case MOT_VAR_ID_PREFIX_MONITOR_MOTOR_FOC:       status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
+        case MOT_VAR_ID_PREFIX_MONITOR_MOTOR_SENSOR:    status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
+        case MOT_VAR_ID_PREFIX_MONITOR_GENERAL:         status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
+        case MOT_VAR_ID_PREFIX_MONITOR_ANALOG_USER:     status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
         default: break;
     }
 
@@ -556,8 +556,8 @@ static inline MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId
             }
             break;
 
-        case MOT_VAR_ID_PREFIX_PARAMS_GLOBAL:
-            switch((MotVarId_Params_Global_T)varId.NameIndex)
+        case MOT_VAR_ID_PREFIX_PARAMS_GENERAL:
+            switch((MotVarId_Params_General_T)varId.NameIndex)
             {
                 case MOT_VAR_V_SOURCE_VOLTS:    MotorController_User_SetVSourceRef(p_mc, varValue);                     break;
                     // case MOT_VAR_BATTERY_ZERO_ADCU:                         (p_mc->Parameters.BatteryZero_Adcu);                break;
@@ -615,19 +615,20 @@ static inline MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId
             {
                 switch((MotVarId_Params_Thermistor_T)varId.NameIndex)
                 {
-                    case MOT_VAR_THERMISTOR_LINEAR_T0_ADCU:           Thermistor_SetLinearT0_Adcu(p_thermistor, varValue);            break;
-                    case MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C:          Thermistor_SetLinearT0_DegC(p_thermistor, varValue);            break;
+                    case MOT_VAR_THERMISTOR_LINEAR_T0_ADCU:           Thermistor_SetLinearT0_Adcu(p_thermistor, varValue);              break;
+                    case MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C:          Thermistor_SetLinearT0_DegC(p_thermistor, varValue);              break;
                     case MOT_VAR_THERMISTOR_LINEAR_T1_ADCU:           Thermistor_SetLinearT1_Adcu(p_thermistor, varValue);            break;
                     case MOT_VAR_THERMISTOR_LINEAR_T1_DEG_C:          Thermistor_SetLinearT1_DegC(p_thermistor, varValue);            break;
-                    case MOT_VAR_THERMISTOR_TYPE:                     Thermistor_SetType(p_thermistor, varValue);                     break;
-                    case MOT_VAR_THERMISTOR_R:                        Thermistor_SetR0(p_thermistor, varValue);                       break;
-                    case MOT_VAR_THERMISTOR_T:                        Thermistor_SetT0(p_thermistor, varValue);                       break;
-                    case MOT_VAR_THERMISTOR_B:                        Thermistor_SetB(p_thermistor, varValue);                        break;
-                        // case MOT_VAR_THERMISTOR_FAULT_ADCU:               Thermistor_SetFault_Adcu(p_thermistor, varValue);               break;
-                        // case MOT_VAR_THERMISTOR_FAULT_THRESHOLD_ADCU:     Thermistor_SetFaultThreshold_Adcu(p_thermistor, varValue);      break;
-                        // case MOT_VAR_THERMISTOR_WARNING_ADCU:             Thermistor_SetWarning_Adcu(p_thermistor, varValue);             break;
-                        // case MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU:   Thermistor_SetWarningThreshold_Adcu(p_thermistor, varValue);    break;
-                        // case MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE:        Thermistor_SetIsMonitorEnable(p_thermistor, varValue);          break;
+                    case MOT_VAR_THERMISTOR_TYPE:                     Thermistor_SetType(p_thermistor, varValue);                       break;
+                    case MOT_VAR_THERMISTOR_R0:                       Thermistor_SetR0(p_thermistor, varValue);                         break;
+                    case MOT_VAR_THERMISTOR_T0:                       Thermistor_SetT0(p_thermistor, varValue);                         break;
+                    case MOT_VAR_THERMISTOR_B:                        Thermistor_SetB(p_thermistor, varValue);                          break;
+                        // host side conversion params must be set for proper calib
+                    case MOT_VAR_THERMISTOR_FAULT_TRIGGER_ADCU:       Thermistor_SetFaultTrigger_Adcu(p_thermistor, varValue);             break;
+                    case MOT_VAR_THERMISTOR_FAULT_THRESHOLD_ADCU:     Thermistor_SetFaultThreshold_Adcu(p_thermistor, varValue);    break;
+                    case MOT_VAR_THERMISTOR_WARNING_TRIGGER_ADCU:     Thermistor_SetWarningTrigger_Adcu(p_thermistor, varValue);           break;
+                    case MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU:   Thermistor_SetWarningThreshold_Adcu(p_thermistor, varValue);  break;
+                    case MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE:        Thermistor_SetIsMonitorEnable(p_thermistor, varValue);        break;
                     default: break;
                 }
             }
@@ -645,7 +646,6 @@ static inline MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId
                     case MOT_VAR_VMONITOR_WARNING_LOWER_ADCU:   VMonitor_SetWarningLower(p_vMonitor, varValue);    break;
                     case MOT_VAR_VMONITOR_IS_ENABLE:            VMonitor_SetIsEnable(p_vMonitor, varValue);        break;
                     default: break;
-
                 }
             }
             break;
