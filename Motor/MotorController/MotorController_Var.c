@@ -363,7 +363,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
 int32_t MotorController_Var_Get(const MotorControllerPtr_T p_mc, MotVarId_T varId)
 {
     int32_t value = 0;
-    switch((MotVarId_Prefix_Type_T)varId.NamePrefixType)
+    switch((MotVarId_Prefix_Prefix_T)varId.NamePrefixPrefix)
     {
         case MOT_VAR_ID_PREFIX_REAL_TIME:   value = GetRealTime(p_mc, varId); break;
         case MOT_VAR_ID_PREFIX_PARAMS:      value = GetParameter(p_mc, varId); break;
@@ -657,7 +657,7 @@ static inline MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId
 MotVarId_Status_T MotorController_Var_Set(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
 {
     MotVarId_Status_T status = MOT_VAR_STATUS_OK;
-    switch((MotVarId_Prefix_Type_T)varId.NamePrefixType)
+    switch((MotVarId_Prefix_Prefix_T)varId.NamePrefixPrefix)
     {
         case MOT_VAR_ID_PREFIX_REAL_TIME:
             status = (p_mc->Parameters.InputMode == MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL) ?

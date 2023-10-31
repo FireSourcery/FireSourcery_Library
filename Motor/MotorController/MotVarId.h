@@ -416,12 +416,12 @@ typedef enum MotVarId_Prefix_Params
 }
 MotVarId_Prefix_Params_T;
 
-typedef enum MotVarId_Prefix_Type
+typedef enum MotVarId_Prefix_Prefix
 {
     MOT_VAR_ID_PREFIX_REAL_TIME,
     MOT_VAR_ID_PREFIX_PARAMS,
 }
-MotVarId_Prefix_Type_T;
+MotVarId_Prefix_Prefix_T;
 
 typedef enum MotVarId_InstanceId_Thermistor
 {
@@ -446,7 +446,7 @@ typedef union MotVarId
     {
         uint16_t NameIndex          : 4U;
         uint16_t NamePrefix         : 4U;
-        uint16_t NamePrefixType     : 1U;
+        uint16_t NamePrefixPrefix   : 1U;
         uint16_t Instance           : 3U;
         uint16_t Alt                : 2U; /* Alternative unit/format */
         uint16_t Resv               : 2U;
