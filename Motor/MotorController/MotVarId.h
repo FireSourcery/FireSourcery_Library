@@ -295,7 +295,7 @@ MotVarId_Params_MotorPid_T;
 // Integral_Gain_Shift,
 typedef enum MotVarId_Params_General
 {
-    MOT_VAR_V_SOURCE_VOLTS,
+    MOT_VAR_V_SOURCE_REF_VOLTS,
     MOT_VAR_BATTERY_ZERO_ADCU,
     MOT_VAR_BATTERY_FULL_ADCU,
     MOT_VAR_USER_INIT_MODE,                 // MotorController_InitMode_T
@@ -370,8 +370,8 @@ MotVarId_Params_Thermistor_T;
 */
 typedef enum MotVarId_Params_VMonitor
 {
-    MOT_VAR_VMONITOR_LIMIT_UPPER_ADCU,
-    MOT_VAR_VMONITOR_LIMIT_LOWER_ADCU,
+    MOT_VAR_VMONITOR_FAULT_UPPER_ADCU,
+    MOT_VAR_VMONITOR_FAULT_LOWER_ADCU,
     MOT_VAR_VMONITOR_WARNING_UPPER_ADCU,
     MOT_VAR_VMONITOR_WARNING_LOWER_ADCU,
     MOT_VAR_VMONITOR_IS_ENABLE,

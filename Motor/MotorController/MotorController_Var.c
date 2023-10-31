@@ -269,7 +269,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
         case MOT_VAR_ID_PREFIX_PARAMS_GENERAL:
             switch((MotVarId_Params_General_T)varId.NameIndex)
             {
-                case MOT_VAR_V_SOURCE_VOLTS:            value = MotorController_User_GetVSourceRef(p_mc);       break;
+                case MOT_VAR_V_SOURCE_REF_VOLTS:        value = MotorController_User_GetVSourceRef(p_mc);       break;
                 case MOT_VAR_BATTERY_ZERO_ADCU:         value = (p_mc->Parameters.BatteryZero_Adcu);            break;
                 case MOT_VAR_BATTERY_FULL_ADCU:         value = (p_mc->Parameters.BatteryFull_Adcu);            break;
                 case MOT_VAR_USER_INPUT_MODE:           value = MotorController_User_GetInputMode(p_mc);        break;
@@ -341,8 +341,8 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
             p_vMonitor = VMonitorInstance(p_mc, varId);
             switch((MotVarId_Params_VMonitor_T)varId.NameIndex)
             {
-                case MOT_VAR_VMONITOR_LIMIT_UPPER_ADCU:     value = VMonitor_GetFaultUpper(p_vMonitor);      break;
-                case MOT_VAR_VMONITOR_LIMIT_LOWER_ADCU:     value = VMonitor_GetFaultLower(p_vMonitor);      break;
+                case MOT_VAR_VMONITOR_FAULT_UPPER_ADCU:     value = VMonitor_GetFaultUpper(p_vMonitor);      break;
+                case MOT_VAR_VMONITOR_FAULT_LOWER_ADCU:     value = VMonitor_GetFaultLower(p_vMonitor);      break;
                 case MOT_VAR_VMONITOR_WARNING_UPPER_ADCU:   value = VMonitor_GetWarningUpper(p_vMonitor);    break;
                 case MOT_VAR_VMONITOR_WARNING_LOWER_ADCU:   value = VMonitor_GetWarningLower(p_vMonitor);    break;
                 case MOT_VAR_VMONITOR_IS_ENABLE:            value = VMonitor_GetIsEnable(p_vMonitor);        break;
@@ -559,7 +559,7 @@ static inline MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId
         case MOT_VAR_ID_PREFIX_PARAMS_GENERAL:
             switch((MotVarId_Params_General_T)varId.NameIndex)
             {
-                case MOT_VAR_V_SOURCE_VOLTS:    MotorController_User_SetVSourceRef(p_mc, varValue);                     break;
+                case MOT_VAR_V_SOURCE_REF_VOLTS:    MotorController_User_SetVSourceRef(p_mc, varValue);                     break;
                     // case MOT_VAR_BATTERY_ZERO_ADCU:                         (p_mc->Parameters.BatteryZero_Adcu);                break;
                     // case MOT_VAR_BATTERY_FULL_ADCU:                         (p_mc->Parameters.BatteryFull_Adcu);                break;
                 case MOT_VAR_USER_INIT_MODE:    p_mc->Parameters.InitMode = (MotorController_InitMode_T)varValue;       break;
@@ -640,8 +640,8 @@ static inline MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId
             {
                 switch((MotVarId_Params_VMonitor_T)varId.NameIndex)
                 {
-                    case MOT_VAR_VMONITOR_LIMIT_UPPER_ADCU:     VMonitor_SetFaultUpper(p_vMonitor, varValue);      break;
-                    case MOT_VAR_VMONITOR_LIMIT_LOWER_ADCU:     VMonitor_SetFaultLower(p_vMonitor, varValue);      break;
+                    case MOT_VAR_VMONITOR_FAULT_UPPER_ADCU:     VMonitor_SetFaultUpper(p_vMonitor, varValue);      break;
+                    case MOT_VAR_VMONITOR_FAULT_LOWER_ADCU:     VMonitor_SetFaultLower(p_vMonitor, varValue);      break;
                     case MOT_VAR_VMONITOR_WARNING_UPPER_ADCU:   VMonitor_SetWarningUpper(p_vMonitor, varValue);    break;
                     case MOT_VAR_VMONITOR_WARNING_LOWER_ADCU:   VMonitor_SetWarningLower(p_vMonitor, varValue);    break;
                     case MOT_VAR_VMONITOR_IS_ENABLE:            VMonitor_SetIsEnable(p_vMonitor, varValue);        break;
