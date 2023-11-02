@@ -154,17 +154,17 @@ static inline bool Thermistor_GetIsFault(const Thermistor_T * p_therm)          
 static inline bool Thermistor_GetIsWarning(const Thermistor_T * p_therm)                    { return ((p_therm->Status == THERMISTOR_STATUS_WARNING) || (p_therm->Status == THERMISTOR_STATUS_WARNING_THRESHOLD)); }
 
 static inline bool Thermistor_GetIsMonitorEnable(const Thermistor_T * p_therm)              { return p_therm->Params.IsMonitorEnable; }
-static inline uint16_t Thermistor_GetFault_Adcu(const Thermistor_T * p_therm)               { return p_therm->Params.FaultTrigger_Adcu; }
+static inline uint16_t Thermistor_GetFaultTrigger_Adcu(const Thermistor_T * p_therm)        { return p_therm->Params.FaultTrigger_Adcu; }
 static inline uint16_t Thermistor_GetFaultThreshold_Adcu(const Thermistor_T * p_therm)      { return p_therm->Params.FaultThreshold_Adcu; }
-static inline uint16_t Thermistor_GetWarning_Adcu(const Thermistor_T * p_therm)             { return p_therm->Params.WarningTrigger_Adcu; }
+static inline uint16_t Thermistor_GetWarningTrigger_Adcu(const Thermistor_T * p_therm)      { return p_therm->Params.WarningTrigger_Adcu; }
 static inline uint16_t Thermistor_GetWarningThreshold_Adcu(const Thermistor_T * p_therm)    { return p_therm->Params.WarningThreshold_Adcu; }
 
 static inline void Thermistor_EnableMonitor(Thermistor_T * p_therm)                                         { p_therm->Params.IsMonitorEnable = true; }
 static inline void Thermistor_DisableMonitor(Thermistor_T * p_therm)                                        { p_therm->Params.IsMonitorEnable = false; }
-static inline void Thermistor_SetIsMonitorEnable(Thermistor_T * p_therm, bool isEnable)                       { p_therm->Params.IsMonitorEnable = isEnable; }
-static inline void Thermistor_SetFaultTrigger_Adcu(Thermistor_T * p_therm, uint8_t fault)                          { p_therm->Params.FaultTrigger_Adcu = fault; }
+static inline void Thermistor_SetIsMonitorEnable(Thermistor_T * p_therm, bool isEnable)                     { p_therm->Params.IsMonitorEnable = isEnable; }
+static inline void Thermistor_SetFaultTrigger_Adcu(Thermistor_T * p_therm, uint8_t fault)                   { p_therm->Params.FaultTrigger_Adcu = fault; }
 static inline void Thermistor_SetFaultThreshold_Adcu(Thermistor_T * p_therm, uint8_t faultThreshold)        { p_therm->Params.FaultThreshold_Adcu = faultThreshold; }
-static inline void Thermistor_SetWarningTrigger_Adcu(Thermistor_T * p_therm, uint8_t warning)                      { p_therm->Params.WarningTrigger_Adcu = warning; }
+static inline void Thermistor_SetWarningTrigger_Adcu(Thermistor_T * p_therm, uint8_t warning)               { p_therm->Params.WarningTrigger_Adcu = warning; }
 static inline void Thermistor_SetWarningThreshold_Adcu(Thermistor_T * p_therm, uint8_t warningThreshold)    { p_therm->Params.WarningThreshold_Adcu = warningThreshold; }
 
 /******************************************************************************/
@@ -226,12 +226,12 @@ extern int32_t Thermistor_GetFaultThreshold_DegCScalar(const Thermistor_T * p_th
 extern int32_t Thermistor_GetWarning_DegCScalar(const Thermistor_T * p_therm, uint16_t scalar);
 extern int32_t Thermistor_GetWarningThreshold_DegCScalar(const Thermistor_T * p_therm, uint16_t scalar);
 
-#if  defined(CONFIG_THERMISTOR_UNITS_FLOAT)
-    extern float Thermistor_ConvertToDegC_Float(const Thermistor_T * p_therm, uint16_t adcu);
-    extern float Thermistor_GetFault_DegCFloat(const Thermistor_T * p_therm);
-    extern float Thermistor_GetFaultThreshold_DegCFloat(const Thermistor_T * p_therm);
-    extern float Thermistor_GetWarning_DegCFloat(const Thermistor_T * p_therm);
-    extern float Thermistor_GetWarningThreshold_DegCFloat(const Thermistor_T * p_therm);
-#endif
+// #if  defined(CONFIG_THERMISTOR_UNITS_FLOAT)
+//     extern float Thermistor_ConvertToDegC_Float(const Thermistor_T * p_therm, uint16_t adcu);
+//     extern float Thermistor_GetFault_DegCFloat(const Thermistor_T * p_therm);
+//     extern float Thermistor_GetFaultThreshold_DegCFloat(const Thermistor_T * p_therm);
+//     extern float Thermistor_GetWarning_DegCFloat(const Thermistor_T * p_therm);
+//     extern float Thermistor_GetWarningThreshold_DegCFloat(const Thermistor_T * p_therm);
+// #endif
 
 #endif

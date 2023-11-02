@@ -133,6 +133,7 @@ typedef enum MotVarId_Control
 {
     MOT_VAR_USER_SET_POINT,                 // Throttle, Brake, Servo In
     MOT_VAR_DIRECTION,                      // MotorController_Direction_T
+//     MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE, // not saved to Nvm
     MOT_VAR_MOTOR_USER_SET_POINT,           // Ramp Input
     MOT_VAR_MOTOR_DIRECTION,                // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
     MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,     // Write buffered user value, read state value
@@ -164,21 +165,11 @@ typedef enum MotVarId_Cmd_Motor
     MOT_VAR_MOTOR_CMD_VOLTAGE,
     MOT_VAR_MOTOR_CMD_ANGLE,
     MOT_VAR_MOTOR_CMD_OPEN_LOOP,
-// MOT_VAR_MOTOR_RELEASE_CONTROL,
-// MOT_VAR_MOTOR_DISABLE,
-// MOT_VAR_MOTOR_CLEAR_FAULT,
-// MOT_VAR_MOTOR_RELEASE_CONTROL,
-// MOT_VAR_MOTOR_DISABLE_CONTROL,
-// MOT_VAR_MOTOR_CLEAR_FAULT,
+    // MOT_VAR_MOTOR_RELEASE_CONTROL,
+    // MOT_VAR_MOTOR_DISABLE,
+    // MOT_VAR_MOTOR_CLEAR_FAULT,
 }
 MotVarId_Cmd_Motor_T;
-
-// typedef enum MotVarId_Cmd_General
-// {
-//     MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE, // not saved to Nvm
-// }
-// MotVarId_Cmd_General_T;
-
 
 /******************************************************************************/
 /*
@@ -201,11 +192,11 @@ typedef enum MotVarId_Params_MotorPrimary
     MOT_VAR_POLE_PAIRS,
     MOT_VAR_KV,
     MOT_VAR_SPEED_FEEDBACK_REF_RPM,
-    MOT_VAR_SPEED_V_REF_RPM,
-    MOT_VAR_IA_REF_ZERO_ADCU,
-    MOT_VAR_IB_REF_ZERO_ADCU,
-    MOT_VAR_IC_REF_ZERO_ADCU,
-    MOT_VAR_I_REF_PEAK_ADCU,
+    MOT_VAR_V_SPEED_REF_RPM,
+    MOT_VAR_IA_ZERO_REF_ADCU,
+    MOT_VAR_IB_ZERO_REF_ADCU,
+    MOT_VAR_IC_ZERO_REF_ADCU,
+    MOT_VAR_I_PEAK_REF_ADCU,
 }
 MotVarId_Params_MotorPrimary_T;
 
@@ -347,6 +338,8 @@ MotVarId_Params_Protocol_T;
 */
 typedef enum MotVarId_Params_Thermistor
 {
+    MOT_VAR_THERMISTOR_R_SERIES, // All instance Read-Only
+    MOT_VAR_THERMISTOR_R_PARALLEL, // All instance Read-Only
     MOT_VAR_THERMISTOR_TYPE,
     MOT_VAR_THERMISTOR_R0,
     MOT_VAR_THERMISTOR_T0,
@@ -378,11 +371,21 @@ typedef enum MotVarId_Params_VMonitor
 }
 MotVarId_Params_VMonitor_T;
 
+// typedef enum MotVarId_Params_Board
+// {
+//     MOT_VAR_BOARD_V_MAX,
+//     MOT_VAR_BOARD_I_MAX,
+//     MOT_VAR_BOARD_VABC_R1,
+//     MOT_VAR_BOARD_VABC_R2,
+// }
+// MotVarId_Params_Board_T;
+
 /******************************************************************************/
 /*
     Meta
 */
 /******************************************************************************/
+/* Type of NameId e.g. MotVarId_Monitor_General_T */
 typedef enum MotVarId_Prefix_RealTime
 {
     // Monitor - Read-Only
@@ -400,7 +403,8 @@ typedef enum MotVarId_Prefix_RealTime
 }
 MotVarId_Prefix_RealTime_T;
 
-typedef enum MotVarId_Prefix_Params
+/* Type of NameId */
+typedef enum MotVarId_Prefix_Parameter
 {
     MOT_VAR_ID_PREFIX_PARAMS_MOTOR_PRIMARY,
     MOT_VAR_ID_PREFIX_PARAMS_MOTOR_SECONDARY,
@@ -414,8 +418,9 @@ typedef enum MotVarId_Prefix_Params
     MOT_VAR_ID_PREFIX_PARAMS_VMONITOR,
     MOT_VAR_ID_PREFIX_PARAMS_END = 16U,
 }
-MotVarId_Prefix_Params_T;
+MotVarId_Prefix_Parameter_T;
 
+/* Type of MotVarId_Prefix_Parameter_T */
 typedef enum MotVarId_Prefix_Prefix
 {
     MOT_VAR_ID_PREFIX_REAL_TIME,
@@ -423,38 +428,38 @@ typedef enum MotVarId_Prefix_Prefix
 }
 MotVarId_Prefix_Prefix_T;
 
-typedef enum MotVarId_InstanceId_Thermistor
+typedef enum MotVarId_Instance_Thermistor
 {
     MOT_VAR_ID_THERMISTOR_PCB,
     MOT_VAR_ID_THERMISTOR_MOSFETS_0,
     MOT_VAR_ID_THERMISTOR_MOSFETS_1,
     MOT_VAR_ID_THERMISTOR_MOTOR_0,
 }
-MotVarId_InstanceId_Thermistor_T;
+MotVarId_Instance_Thermistor_T;
 
-typedef enum MotVarId_InstanceId_VMonitor
+typedef enum MotVarId_Instance_VMonitor
 {
     MOT_VAR_ID_VMONITOR_SOURCE,
     MOT_VAR_ID_VMONITOR_SENSOR,
     MOT_VAR_ID_VMONITOR_ACC,
 }
-MotVarId_InstanceId_VMonitor_T;
+MotVarId_Instance_VMonitor_T;
 
 typedef union MotVarId
 {
     struct
     {
-        uint16_t NameIndex          : 4U;
-        uint16_t NamePrefix         : 4U;
-        uint16_t NamePrefixPrefix   : 1U;
+        uint16_t NameId             : 4U;
+        uint16_t NamePrefix         : 4U; /* Name's Type */
+        uint16_t NamePrefixPrefix   : 1U; /* Name Type's Type */
         uint16_t Instance           : 3U;
         uint16_t Alt                : 2U; /* Alternative unit/format */
         uint16_t Resv               : 2U;
     };
     struct
     {
-        uint16_t Name       : 9U;
-        uint16_t Overload   : 5U;
+        uint16_t NameKey        : 9U; /* The Name that is the Var's type and tag key */
+        uint16_t Overload       : 7U;
     };
     uint16_t Word16;
 }

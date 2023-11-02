@@ -334,7 +334,6 @@ const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
 // /******************************************************************************/
 // static uint8_t ReadVar(MotorControllerPtr_T p_mc, MotPacket_ReadVarResp_T * p_txPacket, const MotPacket_ReadVarReq_T * p_rxPacket)
 // {
-//
 //     return MotPacket_ReadVarResp_Build(p_txPacket, MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_ReadVarReq_ParseVarId(p_rxPacket)));
 // }
 
@@ -343,7 +342,6 @@ const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
 // /******************************************************************************/
 // static uint8_t WriteVar(MotorControllerPtr_T p_mc, MotPacket_WriteVarResp_T * p_txPacket, const MotPacket_WriteVarReq_T * p_rxPacket)
 // {
-//
 //     MotPacket_Status_T status = MOT_VAR_STATUS_OK;
 //     if(MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_WriteVarReq_ParseVarId(p_rxPacket), MotPacket_WriteVarReq_ParseVarValue(p_rxPacket)) == 0U)
 //         { status = MOT_VAR_STATUS_ERROR; }

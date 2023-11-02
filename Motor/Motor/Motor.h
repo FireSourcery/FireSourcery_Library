@@ -237,9 +237,8 @@ typedef struct __attribute__((aligned(2U))) Motor_Params
     uint16_t Kv;
     uint16_t SpeedFeedbackRef_Rpm;  /* Feedback / PID Regulator Limits Ref, User IO units conversion, Encoder speed calc ref. */
                                     /* A value greater than achievable will cause integral windup */
-    //SpeedVOut
     uint16_t VSpeedRef_Rpm;         /* Derive from Kv + offset. Use < SpeedFeedbackRef_Rpm to begin at lower speed. */
-                                    //option Scale to KvSpeed or Bemf on resume
+        // Motor_ResumeMode_T    ResumeMode; // option Scale to KvSpeed or Bemf on resume
     uint16_t IaZeroRef_Adcu;
     uint16_t IbZeroRef_Adcu;
     uint16_t IcZeroRef_Adcu;
@@ -555,6 +554,7 @@ static inline void Motor_SetFeedbackMode(MotorPtr_T p_motor, Motor_FeedbackMode_
 */
 /******************************************************************************/
 /*
+    V of Speed
     VPhase approximation using Kv and Speed
         = Speed_FracS16 * VSpeedRef_Rpm / SpeedFeedbackRef_Rpm
     User sets lower VSpeedRef_Rpm to ensure not match to higher speed

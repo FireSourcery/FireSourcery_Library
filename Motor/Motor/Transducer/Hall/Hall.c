@@ -53,12 +53,12 @@ void Hall_Init(Hall_T * p_hall)
 
 void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC, uint8_t sensorsB, uint8_t sensorsInvA, uint8_t sensorsC, uint8_t sensorsInvB)
 {
-    p_hall->Params.SensorsTable[sensorsA]       = HALL_VIRTUAL_SENSORS_A;
-    p_hall->Params.SensorsTable[sensorsInvC]    = HALL_VIRTUAL_SENSORS_INV_C;
-    p_hall->Params.SensorsTable[sensorsB]       = HALL_VIRTUAL_SENSORS_B;
-    p_hall->Params.SensorsTable[sensorsInvA]    = HALL_VIRTUAL_SENSORS_INV_A;
-    p_hall->Params.SensorsTable[sensorsC]       = HALL_VIRTUAL_SENSORS_C;
-    p_hall->Params.SensorsTable[sensorsInvB]    = HALL_VIRTUAL_SENSORS_INV_B;
+    p_hall->Params.SensorsTable[sensorsA]       = HALL_SENSORS_VIRTUAL_A;
+    p_hall->Params.SensorsTable[sensorsInvC]    = HALL_SENSORS_VIRTUAL_INV_C;
+    p_hall->Params.SensorsTable[sensorsB]       = HALL_SENSORS_VIRTUAL_B;
+    p_hall->Params.SensorsTable[sensorsInvA]    = HALL_SENSORS_VIRTUAL_INV_A;
+    p_hall->Params.SensorsTable[sensorsC]       = HALL_SENSORS_VIRTUAL_C;
+    p_hall->Params.SensorsTable[sensorsInvB]    = HALL_SENSORS_VIRTUAL_INV_B;
     p_hall->Params.SensorsTable[0U] = 0U;
     p_hall->Params.SensorsTable[7U] = 7U;
 }
@@ -67,12 +67,12 @@ void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC
     180 Degree Active
     Sensors are aligned to motor phase, 0 degree offset.
 */
-static void CalibratePhaseA(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_A; }
-static void CalibratePhaseInvC(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_C; }
-static void CalibratePhaseB(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_B; }
-static void CalibratePhaseInvA(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_A; }
-static void CalibratePhaseC(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_C; }
-static void CalibratePhaseInvB(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_VIRTUAL_SENSORS_INV_B; }
+static void CalibratePhaseA(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_A; }
+static void CalibratePhaseInvC(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_INV_C; }
+static void CalibratePhaseB(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_B; }
+static void CalibratePhaseInvA(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_INV_A; }
+static void CalibratePhaseC(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_C; }
+static void CalibratePhaseInvB(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_INV_B; }
 
 /* For 180 degree active. 120 degree active todo */
 void Hall_StartCalibrate(Hall_T * p_hall)       { Hall_ResetCapture(p_hall); /* p_hall->Params.BoundaryType = 0U; */ }

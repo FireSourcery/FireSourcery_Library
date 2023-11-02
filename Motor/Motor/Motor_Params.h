@@ -66,7 +66,7 @@ static inline Motor_Direction_T Motor_Params_GetDirectionCalibration(MotorPtr_T 
 static inline uint8_t Motor_Params_GetPolePairs(MotorPtr_T p_motor)                                  { return p_motor->Parameters.PolePairs; }
 static inline uint16_t Motor_Params_GetKv(MotorPtr_T p_motor)                                        { return p_motor->Parameters.Kv; }
 static inline uint16_t Motor_Params_GetSpeedFeedbackRef_Rpm(MotorPtr_T p_motor)                      { return p_motor->Parameters.SpeedFeedbackRef_Rpm; }
-static inline uint16_t Motor_Params_GetSpeedVRef_Rpm(MotorPtr_T p_motor)                             { return p_motor->Parameters.VSpeedRef_Rpm; }
+static inline uint16_t Motor_Params_GetVSpeedRef_Rpm(MotorPtr_T p_motor)                             { return p_motor->Parameters.VSpeedRef_Rpm; }
 static inline uint16_t Motor_Params_GetIaZero_Adcu(MotorPtr_T p_motor)                               { return p_motor->Parameters.IaZeroRef_Adcu; }
 static inline uint16_t Motor_Params_GetIbZero_Adcu(MotorPtr_T p_motor)                               { return p_motor->Parameters.IbZeroRef_Adcu; }
 static inline uint16_t Motor_Params_GetIcZero_Adcu(MotorPtr_T p_motor)                               { return p_motor->Parameters.IcZeroRef_Adcu; }

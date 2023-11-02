@@ -258,9 +258,9 @@ int32_t Thermistor_GetFaultThreshold_DegCScalar(const Thermistor_T * p_therm, ui
 int32_t Thermistor_GetWarning_DegCScalar(const Thermistor_T * p_therm, uint16_t scalar)            { return Thermistor_ConvertToDegC_Scalar(p_therm, p_therm->Params.WarningTrigger_Adcu, scalar); }
 int32_t Thermistor_GetWarningThreshold_DegCScalar(const Thermistor_T * p_therm, uint16_t scalar)   { return Thermistor_ConvertToDegC_Scalar(p_therm, p_therm->Params.WarningThreshold_Adcu, scalar); }
 
-#if defined(CONFIG_THERMISTOR_UNITS_FLOAT)
-float Thermistor_GetFault_DegCFloat(const Thermistor_T * p_therm)               { return Thermistor_ConvertToDegC_Float(p_therm, p_therm->Params.FaultTrigger_Adcu); }
-float Thermistor_GetFaultThreshold_DegCFloat(const Thermistor_T * p_therm)      { return Thermistor_ConvertToDegC_Float(p_therm, p_therm->Params.FaultThreshold_Adcu); }
-float Thermistor_GetWarning_DegCFloat(const Thermistor_T * p_therm)             { return Thermistor_ConvertToDegC_Float(p_therm, p_therm->Params.WarningTrigger_Adcu); }
-float Thermistor_GetWarningThreshold_DegCFloat(const Thermistor_T * p_therm)    { return Thermistor_ConvertToDegC_Float(p_therm, p_therm->Params.WarningThreshold_Adcu); }
-#endif
+// #if defined(CONFIG_THERMISTOR_UNITS_FLOAT)
+// float Thermistor_GetFault_DegCFloat(const Thermistor_T * p_therm)               { return Thermistor_ConvertToDegC_Float(p_therm, p_therm->Params.FaultTrigger_Adcu); }
+// float Thermistor_GetFaultThreshold_DegCFloat(const Thermistor_T * p_therm)      { return Thermistor_ConvertToDegC_Float(p_therm, p_therm->Params.FaultThreshold_Adcu); }
+// float Thermistor_GetWarning_DegCFloat(const Thermistor_T * p_therm)             { return Thermistor_ConvertToDegC_Float(p_therm, p_therm->Params.WarningTrigger_Adcu); }
+// float Thermistor_GetWarningThreshold_DegCFloat(const Thermistor_T * p_therm)    { return Thermistor_ConvertToDegC_Float(p_therm, p_therm->Params.WarningThreshold_Adcu); }
+// #endif

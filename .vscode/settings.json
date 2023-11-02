@@ -75,6 +75,7 @@
         "MCSM",
         "MOSFETS",
         "setpoint",
-        "statemachine"
+        "statemachine",
+        "txsize"
     ],
 }
