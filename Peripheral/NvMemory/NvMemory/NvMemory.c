@@ -76,9 +76,9 @@ static inline bool StartOpCmd(const NvMemory_T * p_this, size_t opIndex)
     @param[in] num - address or size
     @param[in] align - unit always power of 2
 */
-static inline uint32_t CalcAlignDown(uint32_t num, uint32_t align) { return ((num) & -(align)); }
-static inline uint32_t CalcAlignUp(uint32_t num, uint32_t align) { return (-(-(num) & -(align))); }
-static inline bool CheckAligned(uint32_t num, uint32_t align) { return ((num & (align - 1U)) == 0UL); }
+static inline uint32_t AlignDown(size_t num, size_t align) { return ((num) & -(align)); }
+static inline uint32_t AlignUp(size_t num, size_t align) { return (-(-(num) & -(align))); }
+static inline bool IsAligned(size_t num, size_t align) { return ((num & (align - 1U)) == 0UL); }
 
 /******************************************************************************/
 /*!
@@ -152,7 +152,7 @@ bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this)
 /******************************************************************************/
 // static inline bool CheckOpAligned(const uint8_t * p_dest, size_t size, size_t align)
 // {
-//     return (CheckAligned((uint32_t)p_dest, align) && CheckAligned(size, align));
+//     return (IsAligned((uint32_t)p_dest, align) && IsAligned(size, align));
 // }
 
 static inline bool CheckAddressBoundary(uint32_t targetStart, size_t targetSize, uint32_t boundaryStart, size_t boundarySize)
@@ -194,7 +194,7 @@ NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest
 
     if(CheckOpBoundary(p_this, p_dest, opSize) == true)
     {
-        if(CheckAligned((uint32_t)p_dest, unitSize) == true)
+        if(IsAligned((uint32_t)p_dest, unitSize) == true)
         {
             p_this->p_OpDest = p_dest;
             status = NV_MEMORY_STATUS_SUCCESS;
@@ -207,12 +207,12 @@ NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest
         // if(p_this->IsForceAlignEnable == true) /* Not need check align, always set ForceAlignBytes as indicator this way */
         // {
         //     p_this->p_OpDest = p_dest; /* temp cannot force align over boundary this way, todo  */
-        //     // p_this->OpSize = CalcAlignDown(opSize, unitSize); /* Align down so we may uniquely process last cmd after loop */
-        //     p_this->OpSize = CalcAlignDown(opSize, unitSize);
-        //     p_this->ForceAlignBytes = opSize - CalcAlignDown(opSize, p_this->OpSize);
+        //     // p_this->OpSize = AlignDown(opSize, unitSize); /* Align down so we may uniquely process last cmd after loop */
+        //     p_this->OpSize = AlignDown(opSize, unitSize);
+        //     p_this->ForceAlignBytes = opSize - AlignDown(opSize, p_this->OpSize);
         //     status = NV_MEMORY_STATUS_SUCCESS;
         // }
-        // else if(CheckOpAligned(p_dest, opSize, unitSize) == true) //CheckAligned((uint32_t)p_dest, align) && CheckAligned(size, align)
+        // else if(CheckOpAligned(p_dest, opSize, unitSize) == true) //IsAligned((uint32_t)p_dest, align) && IsAligned(size, align)
         // {
         //     p_this->p_OpDest = p_dest;
         //     p_this->OpSize = opSize;
@@ -242,7 +242,7 @@ NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest
 
 NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize, size_t unitSize)
 {
-    NvMemory_Status_T status = (CheckAligned(opSize, unitSize) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT;
+    NvMemory_Status_T status = (IsAligned(opSize, unitSize) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT;
     if(status == NV_MEMORY_STATUS_SUCCESS) { p_this->OpSize = opSize; }
     return status;
 }
@@ -254,8 +254,8 @@ NvMemory_Status_T NvMemory_SetOpSizeAlignDown(NvMemory_T * p_this, size_t opSize
 
     if(p_this->IsForceAlignEnable == true)
     {
-        p_this->OpSize = CalcAlignDown(opSize, unitSize);
-        p_this->ForceAlignBytes = opSize - CalcAlignDown(opSize, p_this->OpSize);
+        p_this->OpSize = AlignDown(opSize, unitSize);
+        p_this->ForceAlignBytes = opSize - AlignDown(opSize, p_this->OpSize);
         status = NV_MEMORY_STATUS_SUCCESS;
     }
     else
@@ -273,7 +273,7 @@ NvMemory_Status_T NvMemory_SetOpSizeAlignUp(NvMemory_T * p_this, size_t opSize, 
 
     if(p_this->IsForceAlignEnable == true)
     {
-        p_this->OpSize = CalcAlignUp(opSize, unitSize);
+        p_this->OpSize = AlignUp(opSize, unitSize);
         status = NV_MEMORY_STATUS_SUCCESS;
     }
     else

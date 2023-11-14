@@ -105,6 +105,7 @@ static inline bool MotorN_User_CheckStatusAny(const MotorPtr_T p_motorArray, uin
 }
 
 /*
+    AND logic
     Motor_User_TryDirectionForward
     Motor_User_TryDirectionReverse
     MotorN_User_ClearFault
@@ -117,6 +118,7 @@ static inline bool MotorN_User_ProcStatusAll(MotorPtr_T p_motorArray, uint8_t mo
 }
 
 /*
+    OR logic
 */
 static inline bool MotorN_User_ProcStatusAny(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_ProcStatus_T function)
 {
@@ -126,11 +128,12 @@ static inline bool MotorN_User_ProcStatusAny(MotorPtr_T p_motorArray, uint8_t mo
 }
 
 
-/*
+/*!
     Motor_User_SetILimitActive_Id
     Motor_User_ClearLimit
+    OR logic
+    @return true if at least one is set
 */
-/*! @return true if at least one is set */
 static inline bool MotorN_User_SetLimit(MotorPtr_T p_motor, uint8_t motorCount, Motor_User_SetLimit_T function, uint16_t limit_scalar16, uint8_t id)
 {
     bool isSet = false;
@@ -138,7 +141,10 @@ static inline bool MotorN_User_SetLimit(MotorPtr_T p_motor, uint8_t motorCount, 
     return isSet;
 }
 
-/*! @return true if at least one is cleared */
+/*!
+    OR logic
+    @return true if at least one is cleared
+*/
 static inline bool MotorN_User_ClearLimit(MotorPtr_T p_motor, uint8_t motorCount, Motor_User_ClearLimit_T function, uint8_t id)
 {
     bool isSet = false;

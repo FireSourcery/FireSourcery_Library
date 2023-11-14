@@ -74,7 +74,7 @@ typedef struct FOC
     qfrac16_t Vd;
     qfrac16_t Vq;
 
-    uint16_t VdqReq;   /* UFrac16, Q1.15 Unsigned, vector magnitude prior to limit */
+    uint16_t ReqMagnitude;   /* UFrac16, Q1.15 Unsigned, vector magnitude prior to limit */
 
     qfrac16_t Valpha;
     qfrac16_t Vbeta;
@@ -101,7 +101,7 @@ static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 {
     // foc_circlelimit_dmax(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
-    p_foc->VdqReq = foc_circlelimit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX);
+    p_foc->ReqMagnitude = foc_circlelimit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX);
     foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
     svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
 }

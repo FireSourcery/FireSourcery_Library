@@ -136,14 +136,14 @@ MotAnalogUser_T;
 
 
 #define MOT_ANALOG_USER_INIT(p_BrakePinHal, BrakePinId, p_ThrottlePinHal, ThrottlePinId, p_ForwardPinHal, ForwardPinId, p_ReversePinHal, ReversePinId, p_BistateBrakePinHal, BistateBrakePinId, InputPinsInvert, p_Millis, p_Params)    \
-{                                                                                                                           \
-    .CONFIG                 = { .P_PARAMS = p_Params, },                                                                    \
-    .ThrottleAIn            = { .EdgePin = DEBOUNCE_INIT(p_ThrottlePinHal,  ThrottlePinId,  InputPinsInvert, p_Millis), },  \
-    .BrakeAIn               = { .EdgePin = DEBOUNCE_INIT(p_BrakePinHal,     BrakePinId,     InputPinsInvert, p_Millis), },  \
-    .ForwardPin             = DEBOUNCE_INIT(p_ForwardPinHal,        ForwardPinId,           InputPinsInvert, p_Millis ),    \
-    .ReversePin             = DEBOUNCE_INIT(p_ReversePinHal,        ReversePinId,           InputPinsInvert, p_Millis ),    \
-    .BistateBrakePin        = DEBOUNCE_INIT(p_BistateBrakePinHal,   BistateBrakePinId,      InputPinsInvert, p_Millis ),    \
-    .NeutralPin             = DEBOUNCE_INIT(0, 0, 0, 0),                                                                    \
+{                                                                                                                       \
+    .CONFIG             = { .P_PARAMS = p_Params, },                                                                    \
+    .ThrottleAIn        = { .EdgePin = DEBOUNCE_INIT(p_ThrottlePinHal,  ThrottlePinId,  InputPinsInvert, p_Millis), },  \
+    .BrakeAIn           = { .EdgePin = DEBOUNCE_INIT(p_BrakePinHal,     BrakePinId,     InputPinsInvert, p_Millis), },  \
+    .ForwardPin         = DEBOUNCE_INIT(p_ForwardPinHal,        ForwardPinId,           InputPinsInvert, p_Millis ),    \
+    .ReversePin         = DEBOUNCE_INIT(p_ReversePinHal,        ReversePinId,           InputPinsInvert, p_Millis ),    \
+    .BistateBrakePin    = DEBOUNCE_INIT(p_BistateBrakePinHal,   BistateBrakePinId,      InputPinsInvert, p_Millis ),    \
+    .NeutralPin         = DEBOUNCE_INIT(0, 0, 0, 0),                                                                    \
 }
 
 /*
@@ -154,8 +154,8 @@ static inline void _MotAnalogUser_AIn_CaptureValue(MotAnalogUser_AIn_T * p_aIn, 
     if(p_aIn->UseEdgePin == true) { Debounce_CaptureState(&p_aIn->EdgePin); }
     if((p_aIn->UseEdgePin == false) || (Debounce_GetState(&p_aIn->EdgePin) == true))
     {
+        p_aIn->Value_Scalar16 = ((uint32_t)Linear_ADC_CalcFracU16(&p_aIn->Units, value_Adcu) + p_aIn->ValuePrev_Scalar16) / 2U;
         p_aIn->ValuePrev_Scalar16 = p_aIn->Value_Scalar16;
-        p_aIn->Value_Scalar16 = (Linear_ADC_CalcFracU16(&p_aIn->Units, value_Adcu) + p_aIn->ValuePrev_Scalar16) / 2U;
     }
 }
 
@@ -336,11 +336,10 @@ static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user)
     return brakeValue;
 }
 
-// static inline uint16_t MotAnalogUser_GetThrottleValue(const MotAnalogUser_T * p_user)     { return p_user->Throttle_Frac16; }
-// static inline uint16_t MotAnalogUser_GetBrakeValue(const MotAnalogUser_T * p_user)         { return p_user->Brake_Frac16; }
-
 extern void MotAnalogUser_Init(MotAnalogUser_T * p_user);
 extern MotAnalogUser_Direction_T MotAnalogUser_GetDirection(const MotAnalogUser_T * p_user);
+extern void MotAnalogUser_SetBrakeZero(MotAnalogUser_T * p_user, uint16_t zero_Adcu);
+extern void MotAnalogUser_SetThrottleZero(MotAnalogUser_T * p_user, uint16_t zero_Adcu);
 extern void MotAnalogUser_SetBrakeRange(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu);
 extern void MotAnalogUser_SetThrottleRange(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu);
 extern void MotAnalogUser_SetBrakeAIn(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useBrakeEdgePin);

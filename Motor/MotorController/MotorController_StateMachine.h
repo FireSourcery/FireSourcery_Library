@@ -70,4 +70,8 @@ extern const StateMachine_Machine_T MCSM_MACHINE;
 
 #define MOTOR_CONTROLLER_STATE_MACHINE_INIT(p_MotorController) STATE_MACHINE_INIT(&MCSM_MACHINE, p_MotorController, false)
 
+extern bool MotorController_StateMachine_IsFault(const MotorControllerPtr_T p_mc);
+extern bool MotorController_StateMachine_ClearFault(MotorControllerPtr_T p_mc);
+extern void MotorController_StateMachine_SetFault(MotorControllerPtr_T p_mc);
+
 #endif

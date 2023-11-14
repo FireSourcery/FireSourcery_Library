@@ -71,11 +71,19 @@ MotAnalogUser_Direction_T MotAnalogUser_GetDirection(const MotAnalogUser_T * p_u
 /*
     Set Parameters
 */
+void MotAnalogUser_SetBrakeZero(MotAnalogUser_T * p_user, uint16_t zero_Adcu)
+{
+    p_user->Params.BrakeZero_Adcu = zero_Adcu;
+    ResetBrakeUnits(p_user);
 
+}
 
-/*
-    Propagating set.
-*/
+void MotAnalogUser_SetThrottleZero(MotAnalogUser_T * p_user, uint16_t zero_Adcu)
+{
+    p_user->Params.ThrottleZero_Adcu = zero_Adcu;
+    ResetThrottleUnits(p_user);
+}
+
 void MotAnalogUser_SetBrakeRange(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
 {
     p_user->Params.BrakeZero_Adcu = zero_Adcu;

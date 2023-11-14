@@ -31,27 +31,17 @@
 #ifndef CONFIG_FLASH_H
 #define CONFIG_FLASH_H
 
-#if     defined(CONFIG_FLASH_HW_OP_ADDRESS_RELATIVE)
-#elif     defined(CONFIG_FLASH_HW_OP_ADDRESS_ABSOLUTE)
-#else
-    #define CONFIG_FLASH_HW_OP_ADDRESS_ABSOLUTE
-#endif
+#include "Peripheral/NvMemory/NvMemory/Config.h"
 
 #if     defined(CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS)
-#elif     defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
+#elif   defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
 #else
     #define CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
 #endif
 
-#if     defined(CONFIG_FLASH_ATTRIBUTE_RAM_SECTION)
+#if defined(CONFIG_FLASH_ATTRIBUTE_RAM_SECTION)
 #else
-    #define CONFIG_FLASH_ATTRIBUTE_RAM_SECTION __attribute__((section (".code_ram")))
+    #define CONFIG_FLASH_ATTRIBUTE_RAM_SECTION CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION
 #endif
-
-// #if     defined(CONFIG_FLASH_ATTRIBUTE_RAM_SECTION_GCC)
-//     #define    FLASH_ATTRIBUTE_RAM_SECTION __attribute__((section (".code_ram")))
-// #else
-
-// #endif
 
 #endif

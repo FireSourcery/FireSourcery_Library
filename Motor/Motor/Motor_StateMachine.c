@@ -544,16 +544,16 @@ static const StateMachine_State_T STATE_FAULT =
     Fault interface functions
 */
 /******************************************************************************/
-// bool Motor_StateMachine_IsFault(const MotorPtr_T p_motor) { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FAULT); }
+bool Motor_StateMachine_IsFault(const MotorPtr_T p_motor) { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FAULT); }
 
-// /*! @return true on if no fault remain. alternatively return true if cleared applied */
-// bool Motor_StateMachine_ClearFault(MotorPtr_T p_motor)
-// {
-//     if(Motor_StateMachine_IsFault(p_motor) == true) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL); }
-//     return (Motor_StateMachine_IsFault(p_motor) == false);
-// }
+/*! @return true on if no fault remain. alternatively return true if cleared applied */
+bool Motor_StateMachine_ClearFault(MotorPtr_T p_motor)
+{
+    if(Motor_StateMachine_IsFault(p_motor) == true) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL); }
+    return (Motor_StateMachine_IsFault(p_motor) == false);
+}
 
-// void Motor_StateMachine_SetFault(MotorPtr_T p_motor)
-// {
-//     if(Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL); }
-// }
+void Motor_StateMachine_SetFault(MotorPtr_T p_motor)
+{
+    if(Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL); }
+}

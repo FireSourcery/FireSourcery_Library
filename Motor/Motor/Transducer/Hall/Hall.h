@@ -38,13 +38,13 @@
 #include <stdint.h>
 
 /* Virtual State Where ID => 0bCBA */
-#define    HALL_VIRTUAL_SENSORS_A         (0b001U)
-#define    HALL_VIRTUAL_SENSORS_B         (0b010U)
-#define    HALL_VIRTUAL_SENSORS_C         (0b100U)
+#define    HALL_SENSORS_VIRTUAL_A         (0b001U)
+#define    HALL_SENSORS_VIRTUAL_B         (0b010U)
+#define    HALL_SENSORS_VIRTUAL_C         (0b100U)
 /* 180 Degree active sensors */
-#define    HALL_VIRTUAL_SENSORS_INV_A     (0b110U)
-#define    HALL_VIRTUAL_SENSORS_INV_B     (0b101U)
-#define    HALL_VIRTUAL_SENSORS_INV_C     (0b011U)
+#define    HALL_SENSORS_VIRTUAL_INV_A     (0b110U)
+#define    HALL_SENSORS_VIRTUAL_INV_B     (0b101U)
+#define    HALL_SENSORS_VIRTUAL_INV_C     (0b011U)
 
 #define    HALL_SENSORS_TABLE_LENGTH     (8U)
 

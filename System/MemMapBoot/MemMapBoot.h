@@ -31,7 +31,11 @@
 #ifndef MEM_MAP_BOOT_H
 #define MEM_MAP_BOOT_H
 
-#define MEM_MAP_BOOT ((MemMapBoot_T *)CONFIG_MEM_MAP_BOOT_ADDRESS) /* User define externally */
+/*
+    User define externally
+    Align to minium NvM write size
+*/
+#define MEM_MAP_BOOT ((MemMapBoot_T *)CONFIG_MEM_MAP_BOOT_ADDRESS)
 
 /*
     Calling apps are compiled to the same platform, endianess should be consistent
@@ -62,19 +66,19 @@ typedef union MemMapBoot
 }
 MemMapBoot_T;
 
-static inline bool MemMapBoot_GetIsValid(void)
+static inline bool MemMapBoot_IsValid(void)
 {
     return ((MEM_MAP_BOOT->IsValid == MEM_MAP_BOOT_IS_VALID_01) || (MEM_MAP_BOOT->IsValid == MEM_MAP_BOOT_IS_VALID_10));
 }
 
 /* Load Default by default */
-static inline bool MemMapBoot_GetLoadDefault(void) { return ((MemMapBoot_GetIsValid() == false) || (MEM_MAP_BOOT->LoadDefault == 1U)); }
+static inline bool MemMapBoot_GetLoadDefault(void) { return ((MemMapBoot_IsValid() == false) || (MEM_MAP_BOOT->LoadDefault == 1U)); }
 
 /* Beep by default */
-static inline bool MemMapBoot_GetBeep(void) { return ((MemMapBoot_GetIsValid() == false) || (MEM_MAP_BOOT->Beep == 1U)); }
+static inline bool MemMapBoot_GetBeep(void) { return ((MemMapBoot_IsValid() == false) || (MEM_MAP_BOOT->Beep == 1U)); }
 
 /* No FastBoot by default */
-static inline bool MemMapBoot_GetFastBoot(void) { return ((MemMapBoot_GetIsValid() == true) && (MEM_MAP_BOOT->FastBoot == 1U)); }
+static inline bool MemMapBoot_GetFastBoot(void) { return ((MemMapBoot_IsValid() == true) && (MEM_MAP_BOOT->FastBoot == 1U)); }
 
 
 #endif

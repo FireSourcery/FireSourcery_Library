@@ -35,6 +35,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <assert.h>
 
 /*
     Common return status by public module functions
@@ -48,7 +49,7 @@ typedef enum NvMemory_Status
     NV_MEMORY_STATUS_ERROR_BUSY,
     NV_MEMORY_STATUS_ERROR_INPUT,       /* op params, dest address or size */ //todo   parse error destination, align
     NV_MEMORY_STATUS_ERROR_BOUNDARY,    /* Dest, size, larger than partition */
-    NV_MEMORY_STATUS_ERROR_ALIGNMENT,   /* dest, size, not aligned */
+    NV_MEMORY_STATUS_ERROR_ALIGNMENT,   /* Dest, size, not aligned */
     NV_MEMORY_STATUS_ERROR_CMD,         /* Cmd Failed. Unparsed Error */
     NV_MEMORY_STATUS_ERROR_VERIFY,      /* Verify cmd */
     NV_MEMORY_STATUS_ERROR_PROTECTION,
@@ -80,23 +81,23 @@ NvMemory_Partition_T;
 #define _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)
 #endif
 
-#define NV_MEMORY_INIT_PARTITION(p_Start, SizeBytes, OpAddressOffset)    \
-{                                                                        \
-    .P_START     = (void *)p_Start,                                      \
-    .SIZE         = SizeBytes,                                             \
-    _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)                    \
+#define NV_MEMORY_INIT_PARTITION(p_Start, SizeBytes, OpAddressOffset)   \
+{                                                                       \
+    .P_START     = (void *)p_Start,                                     \
+    .SIZE         = SizeBytes,                                          \
+    _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)                   \
 }
 
 /*
     NvMemory typedefs
 */
-typedef bool (* const HAL_NvMemory_ReadFlags_T)(const void * p_hal);
-typedef void (* const HAL_NvMemory_ClearFlags_T)(void * p_hal);
-typedef void (*HAL_NvMemory_StartCmd_T)(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
+typedef bool (* const HAL_NvMemory_ReadFlags_T) (const void * p_hal);
+typedef void (* const HAL_NvMemory_ClearFlags_T) (void * p_hal);
+typedef void (*HAL_NvMemory_StartCmd_T) (void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
 
 struct NvMemory;
-typedef NvMemory_Status_T(*NvMemory_Process_T)(struct NvMemory * p_this);
-typedef NvMemory_Status_T(*NvMemory_FinalizeCmd_T)(struct NvMemory * p_this, size_t opIndex);
+typedef NvMemory_Status_T(*NvMemory_Process_T) (struct NvMemory * p_this);
+typedef NvMemory_Status_T(*NvMemory_FinalizeCmd_T) (struct NvMemory * p_this, size_t opIndex);
 typedef void (*NvMemory_Callback_T)(void * p_callbackData);
 
 typedef enum NvMemory_State
@@ -145,18 +146,18 @@ typedef struct NvMemory
 
     const uint8_t * p_OpDest;
     const uint8_t * p_OpData;
-    size_t OpSize;             /* Total bytes at start */
+    size_t OpSize;          /* Total bytes at start */
     size_t BytesPerCmd;     /* Used by Erase for now */
     size_t UnitsPerCmd;
-    size_t ForceAlignBytes;
+    size_t ForceAlignBytes; /* Filler */
 
     const NvMemory_Partition_T * p_OpPartition; /* Op Dest */
 
     // NvMemory_OpControl_T * p_OpControl;
-    HAL_NvMemory_StartCmd_T StartCmd;        /* Start HAL Cmd, many iterations per Op */
+    HAL_NvMemory_StartCmd_T StartCmd;       /* Start HAL Cmd, many iterations per Op */
     NvMemory_FinalizeCmd_T FinalizeCmd;     /* On end per Cmd iteration */
-    NvMemory_Process_T ParseCmdError;        /* On end all Cmd iteration, Op Complete Error */
-    NvMemory_Process_T FinalizeOp;            /* On end all Cmd iteration, Op Complete Success */
+    NvMemory_Process_T ParseCmdError;       /* On end all Cmd iteration, Op Complete Error */
+    NvMemory_Process_T FinalizeOp;          /* On end all Cmd iteration, Op Complete Success */
 
     void * p_CallbackData;
     NvMemory_Callback_T Yield;             /*!< On Block */
@@ -170,6 +171,7 @@ typedef struct NvMemory
 NvMemory_T;
 
 /*
+    Vtable HAL so that parent class routines may be re used
     Alternatively template the calling function
 */
 #define _NV_MEMORY_INIT_HAL(p_Hal, ReadCompleteFlag, ReadErrorFlags, ClearErrorFlags)   \
@@ -183,21 +185,25 @@ NvMemory_T;
     .PARTITION_COUNT    = PartitionsCount,
 
 #define _NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)    \
-    .P_BUFFER         = p_Buffer,                          \
-    .BUFFER_SIZE     = BufferSize,
+    .P_BUFFER           = p_Buffer,                     \
+    .BUFFER_SIZE        = BufferSize,
 
 /*
     ReadOnce must provide buffer here, or in calling function
 */
-#define NV_MEMORY_INIT(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags, p_Partitions, PartitionsCount, p_Buffer, BufferSize)    \
-{                                                                                                                                                        \
-    .CONFIG =                                                                                                                                             \
-    {                                                                                                                                                    \
-        _NV_MEMORY_INIT_HAL(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags)                                                  \
-        _NV_MEMORY_INIT_PARTITIONS(p_Partitions, PartitionsCount)                                                                                         \
-        _NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)                                                                                                     \
-    }                                                                                                                                                    \
+#define NV_MEMORY_INIT(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags, p_Partitions, PartitionsCount, p_Buffer, BufferSize) \
+{                                                                                                                                                       \
+    .CONFIG =                                                                                                                                           \
+    {                                                                                                                                                   \
+        _NV_MEMORY_INIT_HAL(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags)                                                 \
+        _NV_MEMORY_INIT_PARTITIONS(p_Partitions, PartitionsCount)                                                                                       \
+        _NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)                                                                                                    \
+    }                                                                                                                                                   \
 }
+
+static inline bool NvMemory_IsAligned(size_t pointer, size_t align) { return pointer % align == 0U; }
+static inline bool NvMemory_IsAligned_Ptr(const void * pointer, size_t align) { return (uintptr_t)pointer % align == 0U; }
+static inline bool _NvMemory_AssertAligned(size_t pointer, size_t size, size_t align) { return NvMemory_IsAligned(pointer, align) && (size >= align); }
 
 extern void NvMemory_Init(NvMemory_T * p_this);
 extern void NvMemory_SetYield(NvMemory_T * p_this, void (*yield)(void *), void * p_callbackData);

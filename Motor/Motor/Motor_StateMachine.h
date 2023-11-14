@@ -31,6 +31,7 @@
 #ifndef MOTOR_STATE_MACHINE_H
 #define MOTOR_STATE_MACHINE_H
 
+#include "Motor.h"
 #include "Utility/StateMachine/StateMachine.h"
 
 #define MSM_TRANSITION_TABLE_LENGTH     (7U)
@@ -68,5 +69,9 @@ Motor_StateMachine_StateId_T;
 extern const StateMachine_Machine_T MSM_MACHINE;
 
 #define MOTOR_STATE_MACHINE_INIT(p_Motor) STATE_MACHINE_INIT(&MSM_MACHINE, p_Motor, false)
+
+extern bool Motor_StateMachine_IsFault(const MotorPtr_T p_motor);
+extern bool Motor_StateMachine_ClearFault(MotorPtr_T p_motor);
+extern void Motor_StateMachine_SetFault(MotorPtr_T p_motor);
 
 #endif

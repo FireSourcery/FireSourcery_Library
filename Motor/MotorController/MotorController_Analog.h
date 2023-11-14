@@ -56,4 +56,25 @@
     .ADCS_GROUP_USER        = { .Flags = (uint8_t)((1U << ThrottleHost) | (1U << BrakeHost)),                               },                                                                                  \
 }
 
+
+// static inline uint16_t MotorController_Analog_GetHeatPcb(const MotorControllerPtr_T p_mc)        { return p_mc->AnalogResults.HeatPcb_Adcu; }
+// static inline uint16_t MotorController_Analog_GetHeatMosfets(const MotorControllerPtr_T p_mc)    { return p_mc->AnalogResults.HeatMosfets_Adcu; }
+// static inline uint16_t MotorController_User_GetHeat_Adcu(const MotorControllerPtr_T p_mc, uint8_t index)    {  return p_mc->AnalogResultsThermal[index]; }
+
+// typedef enum MotVarId_Instance_ThermistorBoard
+// {
+//     MOT_VAR_ID_THERMISTOR_PCB,
+//     MOT_VAR_ID_THERMISTOR_MOSFETS_0,
+//     MOT_VAR_ID_THERMISTOR_MOSFETS_1,
+// }
+// MotVarId_Instance_ThermistorBoard_T;
+
+// typedef enum MotVarId_Instance_VMonitor
+// {
+//     MOT_VAR_ID_VMONITOR_SOURCE,
+//     MOT_VAR_ID_VMONITOR_SENSOR,
+//     MOT_VAR_ID_VMONITOR_ACC,
+// }
+// MotVarId_Instance_VMonitor_T;
+
 #endif

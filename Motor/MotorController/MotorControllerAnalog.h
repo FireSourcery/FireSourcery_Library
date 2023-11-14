@@ -63,6 +63,23 @@ typedef enum MotAnalog_Channel
 }
 MotAnalog_Channel_T;
 
+// typedef enum MotAnalog_Channel
+// {
+//     MOT_ANALOG_CHANNEL_HEAT_PCB,
+//     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_0,
+//     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_1,
+//     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_2,
+//     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_3,
+//     MOT_ANALOG_CHANNEL_HEAT_MOSFETS = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_0,
+//     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_0, //todo compile time select primary
+//     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_1,
+//     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_Q1 = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_0,
+//     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_Q2 = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_1,
+//     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_Q3 = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_2,
+//     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_Q4 = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_3,
+// }
+// MotAnalog_Channel_Heat_T;
+
 typedef union MotAnalog_Results
 {
     struct
@@ -99,13 +116,14 @@ typedef struct MotAnalog_Conversions
             const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS_BOT;
 #else
             const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS;
-            // const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS[CONFIG_HEAT_MOSFETS_COUNT];
+        // const AnalogN_Conversion_T CONVERSION_HEAT_MOSFETS[CONFIG_HEAT_MOSFETS_COUNT];
 #endif
             const AnalogN_Conversion_T CONVERSION_THROTTLE;
             const AnalogN_Conversion_T CONVERSION_BRAKE;
         };
         AnalogN_Conversion_T CONVERSIONS[MOT_ANALOG_CHANNEL_COUNT];
     };
+    //todo remove
     const AnalogN_AdcFlags_T ADCS_GROUP_USER;
     const AnalogN_AdcFlags_T ADCS_GROUP_V;
     const AnalogN_AdcFlags_T ADCS_GROUP_HEAT;

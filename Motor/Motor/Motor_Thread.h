@@ -61,8 +61,11 @@ static inline void Motor_Heat_Thread(MotorPtr_T p_motor)
         switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
         {
             case THERMISTOR_STATUS_OK:
-                p_motor->StatusFlags.HeatWarning = 0U;
-                Motor_User_ClearILimitActive_Id(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
+                if(p_motor->StatusFlags.HeatWarning == 1U)
+                {
+                    p_motor->StatusFlags.HeatWarning = 0U;
+                    Motor_User_ClearILimitActive_Id(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
+                }
                 break;
             case THERMISTOR_STATUS_WARNING:     /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
                 p_motor->StatusFlags.HeatWarning = 1U;
@@ -70,7 +73,7 @@ static inline void Motor_Heat_Thread(MotorPtr_T p_motor)
                 break;
             case THERMISTOR_STATUS_FAULT:
                 p_motor->FaultFlags.Overheat = 1U;
-                Motor_User_SetFault(p_motor);
+                Motor_StateMachine_SetFault(p_motor);
                 break;
             default: break;
         }

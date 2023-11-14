@@ -33,7 +33,7 @@
 #define MOTOR_DEBUG_H
 
 #include "System/SysTime/SysTime.h"
-
+#include "Motor.h"
 
 #if  defined(CONFIG_MOTOR_DEBUG_ENABLE)
     uint32_t MicrosRef;

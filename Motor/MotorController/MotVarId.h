@@ -120,30 +120,35 @@ MotVarId_Monitor_MotorSensor_T;
 
 /******************************************************************************/
 /*
-    Real-Time Control/Command -> Disabled on select
-    Control -> Read/Write
-    Command -> Write-Only, Read returns 0
+    Real-Time Control -> Disabled on select
+    MonitorControl -> Read/Write
+    Control -> Write-Only, Read returns 0
 */
 /******************************************************************************/
 /*
     Read Values may differ from write
     Motor Vars use instance
 */
-typedef enum MotVarId_Control
+typedef enum MotVarId_MonitorControl
 {
     MOT_VAR_USER_SET_POINT,                 // Throttle, Brake, Servo In
     MOT_VAR_DIRECTION,                      // MotorController_Direction_T
-//     MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE, // not saved to Nvm
+//  MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE,      // not saved to Nvm
+}
+MotVarId_MonitorControl_T;
+
+typedef enum MotVarId_MonitorControl_Motor
+{
     MOT_VAR_MOTOR_USER_SET_POINT,           // Ramp Input
     MOT_VAR_MOTOR_DIRECTION,                // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
     MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,     // Write buffered user value, read state value
     MOT_VAR_MOTOR_USER_SPEED_LIMIT,
     MOT_VAR_MOTOR_USER_I_LIMIT,
 }
-MotVarId_Control_T;
+MotVarId_MonitorControl_Motor_T;
 
 /* Write-Only */
-typedef enum MotVarId_Cmd
+typedef enum MotVarId_Control
 {
     MOT_VAR_BEEP,
     MOT_VAR_THROTTLE,
@@ -152,13 +157,13 @@ typedef enum MotVarId_Cmd
     MOT_VAR_DISABLE_CONTROL,
     MOT_VAR_CLEAR_FAULT,
 }
-MotVarId_Cmd_T;
+MotVarId_Control_T;
 
 /*
     Use instance index
     Value [-32768:32767]
 */
-typedef enum MotVarId_Cmd_Motor
+typedef enum MotVarId_Control_Motor
 {
     MOT_VAR_MOTOR_CMD_SPEED,
     MOT_VAR_MOTOR_CMD_CURRENT,
@@ -169,7 +174,7 @@ typedef enum MotVarId_Cmd_Motor
     // MOT_VAR_MOTOR_DISABLE,
     // MOT_VAR_MOTOR_CLEAR_FAULT,
 }
-MotVarId_Cmd_Motor_T;
+MotVarId_Control_Motor_T;
 
 /******************************************************************************/
 /*
@@ -248,12 +253,16 @@ MotVarId_Params_MotorEncoder_T;
 /*
     Sine Cos Encoder
 */
-// MOT_VAR_SIN_COS_ZERO_ADCU
-// MOT_VAR_SIN_COS_MAX_ADCU
-// MOT_VAR_SIN_COS_MAX_MILLIV
-// MOT_VAR_SIN_COS_ANGLE_OFFET
-// MOT_VAR_SIN_COS_IS_B_POSITIVE
-// MOT_VAR_SIN_COS_ELECTRICAL_ROTATIONS_PER_CYCLE
+// typedef enum MotVarId_Params_MotorSinCos
+// {
+//     MOT_VAR_SIN_COS_ZERO_ADCU,
+//     MOT_VAR_SIN_COS_MAX_ADCU,
+//     MOT_VAR_SIN_COS_MAX_MILLIV,
+//     MOT_VAR_SIN_COS_ANGLE_OFFSET,
+//     MOT_VAR_SIN_COS_IS_B_POSITIVE,
+//     MOT_VAR_SIN_COS_ELECTRICAL_ROTATIONS_PER_CYCLE,
+// }
+// MotVarId_Params_MotorSinCos_T;
 
 /*
     PID
@@ -345,8 +354,8 @@ typedef enum MotVarId_Params_Thermistor
     MOT_VAR_THERMISTOR_T0,
     MOT_VAR_THERMISTOR_B,
     MOT_VAR_THERMISTOR_LINEAR_T0_ADCU,
-    MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C,
     MOT_VAR_THERMISTOR_LINEAR_T1_ADCU,
+    MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C,
     MOT_VAR_THERMISTOR_LINEAR_T1_DEG_C,
     MOT_VAR_THERMISTOR_FAULT_TRIGGER_ADCU,
     MOT_VAR_THERMISTOR_FAULT_THRESHOLD_ADCU,
@@ -380,12 +389,18 @@ MotVarId_Params_VMonitor_T;
 // }
 // MotVarId_Params_Board_T;
 
+// typedef MotVarId_Params_Thermistor_T MotVarId_Params_MotorThermistor_T;
+// typedef MotVarId_Params_Thermistor_T MotVarId_Params_BoardThermistor_T;
+
 /******************************************************************************/
 /*
     Meta
 */
 /******************************************************************************/
-/* Type of NameId e.g. MotVarId_Monitor_General_T */
+/*
+    Type of NameId e.g. MotVarId_Monitor_General_T
+    struct id
+*/
 typedef enum MotVarId_Prefix_RealTime
 {
     // Monitor - Read-Only
@@ -394,16 +409,16 @@ typedef enum MotVarId_Prefix_RealTime
     MOT_VAR_ID_PREFIX_MONITOR_MOTOR,
     MOT_VAR_ID_PREFIX_MONITOR_MOTOR_FOC,
     MOT_VAR_ID_PREFIX_MONITOR_MOTOR_SENSOR,
-    // Control - Read/Write
+    // MonitorControl - Read/Write
+    MOT_VAR_ID_PREFIX_MONITOR_CONTROL,
+    MOT_VAR_ID_PREFIX_MONITOR_CONTROL_MOTOR,
+    // Control - Write-Only
     MOT_VAR_ID_PREFIX_CONTROL,
-    // Cmd - Write-Only
-    MOT_VAR_ID_PREFIX_CMD,
-    MOT_VAR_ID_PREFIX_CMD_MOTOR,
+    MOT_VAR_ID_PREFIX_CONTROL_MOTOR,
     MOT_VAR_ID_PREFIX_REAL_TIME_END = 16U,
 }
 MotVarId_Prefix_RealTime_T;
 
-/* Type of NameId */
 typedef enum MotVarId_Prefix_Parameter
 {
     MOT_VAR_ID_PREFIX_PARAMS_MOTOR_PRIMARY,
@@ -411,11 +426,12 @@ typedef enum MotVarId_Prefix_Parameter
     MOT_VAR_ID_PREFIX_PARAMS_MOTOR_HALL,
     MOT_VAR_ID_PREFIX_PARAMS_MOTOR_ENCODER,
     MOT_VAR_ID_PREFIX_PARAMS_MOTOR_PID,
+    MOT_VAR_ID_PREFIX_PARAMS_MOTOR_THERMISTOR,
     MOT_VAR_ID_PREFIX_PARAMS_GENERAL,
     MOT_VAR_ID_PREFIX_PARAMS_ANALOG_USER,
     MOT_VAR_ID_PREFIX_PARAMS_PROTOCOL,
-    MOT_VAR_ID_PREFIX_PARAMS_THERMISTOR,
     MOT_VAR_ID_PREFIX_PARAMS_VMONITOR,
+    MOT_VAR_ID_PREFIX_PARAMS_BOARD_THERMISTOR,
     MOT_VAR_ID_PREFIX_PARAMS_END = 16U,
 }
 MotVarId_Prefix_Parameter_T;
@@ -428,23 +444,6 @@ typedef enum MotVarId_Prefix_Prefix
 }
 MotVarId_Prefix_Prefix_T;
 
-typedef enum MotVarId_Instance_Thermistor
-{
-    MOT_VAR_ID_THERMISTOR_PCB,
-    MOT_VAR_ID_THERMISTOR_MOSFETS_0,
-    MOT_VAR_ID_THERMISTOR_MOSFETS_1,
-    MOT_VAR_ID_THERMISTOR_MOTOR_0,
-}
-MotVarId_Instance_Thermistor_T;
-
-typedef enum MotVarId_Instance_VMonitor
-{
-    MOT_VAR_ID_VMONITOR_SOURCE,
-    MOT_VAR_ID_VMONITOR_SENSOR,
-    MOT_VAR_ID_VMONITOR_ACC,
-}
-MotVarId_Instance_VMonitor_T;
-
 typedef union MotVarId
 {
     struct
@@ -452,13 +451,14 @@ typedef union MotVarId
         uint16_t NameId             : 4U;
         uint16_t NamePrefix         : 4U; /* Name's Type */
         uint16_t NamePrefixPrefix   : 1U; /* Name Type's Type */
-        uint16_t Instance           : 3U;
+        uint16_t Instance           : 3U; /* Upto 8 Instances Per Prefix Type */
+        // uint16_t InstancePrefix  : 1U; /* Motor or Board, thermistor */
         uint16_t Alt                : 2U; /* Alternative unit/format */
         uint16_t Resv               : 2U;
     };
     struct
     {
-        uint16_t NameKey        : 9U; /* The Name that is the Var's type and tag key */
+        uint16_t NameFull       : 9U; /* name can be determined by nameId + nameId_Type if prefix maps to nameId_Type 1:1 */
         uint16_t Overload       : 7U;
     };
     uint16_t Word16;
@@ -483,3 +483,4 @@ typedef enum MotVarId_Status
 MotVarId_Status_T;
 
 #endif
+

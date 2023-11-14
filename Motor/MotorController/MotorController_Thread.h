@@ -141,7 +141,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorControllerPtr_T p_mc)
 
     if(isFault == true)
     {
-        MotorController_User_SetFault(p_mc);         /* Shutdown repeat set ok */
+        MotorController_StateMachine_SetFault(p_mc);         /* Shutdown repeat set ok */
     }
     else
     {
@@ -199,7 +199,7 @@ static inline void _MotorController_ProcVoltageMonitor(MotorControllerPtr_T p_mc
     if(VMonitor_GetIsFault(&p_mc->VMonitorSense) == true) { p_mc->FaultFlags.VSenseLimit = 1U; isFault = true; }
     if(VMonitor_GetIsFault(&p_mc->VMonitorAccs) == true)   { p_mc->FaultFlags.VAccsLimit = 1U; isFault = true; }
 
-    if(isFault == true) { MotorController_User_SetFault(p_mc); } /* Sensors checks fault only */
+    if(isFault == true) { MotorController_StateMachine_SetFault(p_mc); } /* Sensors checks fault only */
 }
 
 /*
@@ -228,7 +228,7 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
                 // if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]) == true)
                 // {
                 //     MotorController_User_DisableControl(p_mc);
-                //     MotorController_User_SetFault(p_mc);
+                //     MotorController_StateMachine_SetFault(p_mc);
                 //     p_mc->FaultFlags.RxLost = 1U;
                 // }
                 break;
@@ -265,7 +265,7 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
             for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]); }
 
             /* Can use low priority check, as motor is already in fault state */
-            if(MotorController_CheckFaultAny(p_mc) != 0U) { p_mc->FaultFlags.Motors = 1U; MotorController_User_SetFault(p_mc); }
+            if(MotorController_CheckFaultAny(p_mc) != 0U) { p_mc->FaultFlags.Motors = 1U; MotorController_StateMachine_SetFault(p_mc); }
 
             _MotorController_ProcOptDin(p_mc);
             // _MotorController_ProcVoltageMonitor(p_mc); /* Except VSupply */
@@ -290,8 +290,8 @@ static inline void MotorController_Timer1Ms_Thread(MotorControllerPtr_T p_mc)
 
     switch(vStatus)
     {
-        case VMONITOR_FAULT_UPPER: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_User_SetFault(p_mc); break;
-        case VMONITOR_FAULT_LOWER: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_User_SetFault(p_mc); break;
+        case VMONITOR_FAULT_UPPER: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_StateMachine_SetFault(p_mc); break;
+        case VMONITOR_FAULT_LOWER: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_StateMachine_SetFault(p_mc); break;
         case VMONITOR_WARNING_UPPER:
             break;
         case VMONITOR_WARNING_LOWER:

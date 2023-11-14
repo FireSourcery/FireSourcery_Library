@@ -59,7 +59,7 @@ void Motor_Params_SetSpeedLimitForward_Scalar16(MotorPtr_T p_motor, uint16_t for
 {
     p_motor->Parameters.SpeedLimitForward_Scalar16 = forward_Frac16;
     // if(p_motor->Parameters.DirectionForward == MOTOR_FORWARD_IS_CCW)     { p_motor->Parameters.SpeedLimitCcw_FracS16 = forward_Frac16; }
-    // else                                                                     { p_motor->Parameters.SpeedLimitCw_FracS16 = forward_Frac16; }
+    // else                                                                 { p_motor->Parameters.SpeedLimitCw_FracS16 = forward_Frac16; }
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
 
@@ -67,7 +67,7 @@ void Motor_Params_SetSpeedLimitReverse_Scalar16(MotorPtr_T p_motor, uint16_t rev
 {
     p_motor->Parameters.SpeedLimitReverse_Scalar16 = reverse_Frac16;
     // if(p_motor->Parameters.DirectionForward == MOTOR_FORWARD_IS_CCW)     { p_motor->Parameters.SpeedLimitCw_FracS16 = reverse_Frac16; }
-    // else                                                                     { p_motor->Parameters.SpeedLimitCcw_FracS16 = reverse_Frac16; }
+    // else                                                                 { p_motor->Parameters.SpeedLimitCcw_FracS16 = reverse_Frac16; }
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
 
@@ -149,9 +149,7 @@ uint16_t Motor_Params_GetSpeedLimitReverse_Rpm(MotorPtr_T p_motor)
     // uint16_t speedLimit = (p_motor->Parameters.DirectionForward == MOTOR_FORWARD_IS_CCW) ?
     //  p_motor->Parameters.SpeedLimitCw_FracS16 : p_motor->Parameters.SpeedLimitCcw_FracS16;
 }
-#endif
 
-#ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 static uint16_t ConvertToILimitScalar16(MotorPtr_T p_motor, uint16_t i_amp)
 {
     int32_t i_frac16 = _Motor_ConvertI_AmpToScalar16(i_amp);
@@ -223,17 +221,9 @@ void Motor_Params_SetKv(MotorPtr_T p_motor, uint16_t kv)
     SetVSpeedRef_Kv(p_motor, kv);
 }
 
-void Motor_Params_SetIaZero_Adcu(MotorPtr_T p_motor, uint16_t adcu) { p_motor->Parameters.IaZeroRef_Adcu = adcu; }// PropagateSet(p_motor, Motor_ResetUnitsIa);
-void Motor_Params_SetIbZero_Adcu(MotorPtr_T p_motor, uint16_t adcu) { p_motor->Parameters.IbZeroRef_Adcu = adcu; }// PropagateSet(p_motor, Motor_ResetUnitsIb);
-void Motor_Params_SetIcZero_Adcu(MotorPtr_T p_motor, uint16_t adcu) { p_motor->Parameters.IcZeroRef_Adcu = adcu; }// PropagateSet(p_motor, Motor_ResetUnitsIc);
-
-void Motor_Params_SetIaIbIcZero_Adcu(MotorPtr_T p_motor, uint16_t ia_adcu, uint16_t ib_adcu, uint16_t ic_adcu)
-{
-    p_motor->Parameters.IaZeroRef_Adcu = ia_adcu;
-    p_motor->Parameters.IbZeroRef_Adcu = ib_adcu;
-    p_motor->Parameters.IcZeroRef_Adcu = ic_adcu;
-    PropagateSet(p_motor, Motor_ResetUnitsIabc);
-}
+void Motor_Params_SetIaZero_Adcu(MotorPtr_T p_motor, uint16_t adcu) { p_motor->Parameters.IaZeroRef_Adcu = adcu; PropagateSet(p_motor, Motor_ResetUnitsIa); }
+void Motor_Params_SetIbZero_Adcu(MotorPtr_T p_motor, uint16_t adcu) { p_motor->Parameters.IbZeroRef_Adcu = adcu; PropagateSet(p_motor, Motor_ResetUnitsIb); }
+void Motor_Params_SetIcZero_Adcu(MotorPtr_T p_motor, uint16_t adcu) { p_motor->Parameters.IcZeroRef_Adcu = adcu; PropagateSet(p_motor, Motor_ResetUnitsIc); }
 
 void Motor_Params_SetDirectionCalibration(MotorPtr_T p_motor, Motor_Direction_T directionForward)
 {
@@ -250,11 +240,11 @@ void Motor_Params_SetSensorMode(MotorPtr_T p_motor, Motor_SensorMode_T mode) { p
 /* IPeak  */
 /******************************************************************************/
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
-void Motor_Params_SetIPeakRef_Adcu_Debug(MotorPtr_T p_motor, uint16_t adcu)
-{
-    p_motor->Parameters.IPeakRef_Adcu = adcu;
-    Motor_ResetUnitsIabc(p_motor);
-}
+// void Motor_Params_SetIPeakRef_Adcu_Debug(MotorPtr_T p_motor, uint16_t adcu)
+// {
+//     p_motor->Parameters.IPeakRef_Adcu = adcu;
+//     Motor_ResetUnitsIabc(p_motor);
+// }
 
 void Motor_Params_SetIPeakRef_Adcu(MotorPtr_T p_motor, uint16_t adcu)
 {

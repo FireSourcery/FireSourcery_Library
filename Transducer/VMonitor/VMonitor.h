@@ -48,7 +48,7 @@ typedef enum VMonitor_Status
 }
 VMonitor_Status_T;
 
-typedef struct __attribute__((aligned(4U))) VMonitor_Params
+typedef struct __attribute__((aligned(2U))) VMonitor_Params
 {
     uint16_t FaultUpper_Adcu;
     uint16_t FaultLower_Adcu;
@@ -110,7 +110,6 @@ static inline bool VMonitor_GetIsWarning(const VMonitor_T * p_vMonitor)         
     Params
 */
 /******************************************************************************/
-
 static inline bool VMonitor_GetIsEnable(const VMonitor_T * p_vMonitor)          { return p_vMonitor->Params.IsMonitorEnable; }
 static inline uint16_t VMonitor_GetVInRef(const VMonitor_T * p_vMonitor)        { return p_vMonitor->Params.VInRef; }
 static inline uint16_t VMonitor_GetFaultUpper(const VMonitor_T * p_vMonitor)    { return p_vMonitor->Params.FaultUpper_Adcu; }

@@ -31,6 +31,8 @@
 #include "Flash.h"
 #include "System/Critical/Critical.h"
 #include <string.h>
+#include <assert.h>
+// #include <stdalign.h>
 
 /******************************************************************************/
 /*!
@@ -344,8 +346,7 @@ Flash_Status_T Flash_ProcThisOp_Blocking(Flash_T * p_flash)
 static Flash_Status_T WriteBytesAlignFilled(Flash_T * p_flash, size_t unitSize)
 {
     Flash_Status_T status;
-    uint32_t alignedData[FLASH_UNIT_WRITE_SIZE];
-    for(uint8_t iByte = 0U; iByte < FLASH_UNIT_WRITE_SIZE; iByte++) { alignedData[iByte] = FLASH_UNIT_ERASE_PATTERN; }
+    uint32_t alignedData[FLASH_UNIT_WRITE_SIZE] = { [0 ... (FLASH_UNIT_WRITE_SIZE - 1)] = FLASH_UNIT_ERASE_PATTERN };
     memcpy(alignedData, &p_flash->p_OpData[p_flash->OpSize], p_flash->ForceAlignBytes); /* start from remaining data */
     p_flash->p_OpData = (uint8_t *)alignedData;
     p_flash->OpSize = unitSize;
@@ -384,6 +385,9 @@ static inline Flash_Status_T ProcOpReturn_Blocking(Flash_T * p_flash, Flash_Stat
 
 Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
 {
+    assert(NvMemory_IsAligned_Ptr(p_destFlash, FLASH_UNIT_WRITE_SIZE));
+    assert(size >= FLASH_UNIT_WRITE_SIZE);
+
     Flash_Status_T status = ProcOpReturn_Blocking(p_flash, Flash_SetWrite(p_flash, p_destFlash, p_source, size));
     if(status == FLASH_STATUS_SUCCESS) { if(p_flash->ForceAlignBytes != 0U) { status = WriteBytesAlignFilled(p_flash, FLASH_UNIT_WRITE_SIZE); } }
     return status;
@@ -472,9 +476,9 @@ Flash_Status_T Flash_StartWriteOnce_NonBlocking(Flash_T * p_flash, const uint8_t
     return p_flash->Status;
 }
 
-Flash_Status_T Flash_StartReadOnce_NonBlocking(Flash_T * p_flash, uint8_t * p_dataResult, const uint8_t * p_destOnce, size_t size)
+Flash_Status_T Flash_StartReadOnce_NonBlocking(Flash_T * p_flash, uint8_t * p_dataResult, const uint8_t * p_once, size_t size)
 {
-    p_flash->Status = (Flash_SetReadOnce(p_flash, p_dataResult, p_destOnce, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
+    p_flash->Status = (Flash_SetReadOnce(p_flash, p_dataResult, p_once, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
     return p_flash->Status;
 }
 

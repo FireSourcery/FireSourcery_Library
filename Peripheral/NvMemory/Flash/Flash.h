@@ -40,12 +40,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define FLASH_UNIT_ERASE_SIZE            HAL_FLASH_UNIT_ERASE_SIZE
-#define FLASH_UNIT_WRITE_SIZE            HAL_FLASH_UNIT_WRITE_SIZE
+#define FLASH_UNIT_ERASE_SIZE           HAL_FLASH_UNIT_ERASE_SIZE
+#define FLASH_UNIT_WRITE_SIZE           HAL_FLASH_UNIT_WRITE_SIZE
 #define FLASH_UNIT_VERIFY_ERASE_SIZE    HAL_FLASH_UNIT_VERIFY_ERASE_SIZE
 #define FLASH_UNIT_VERIFY_WRITE_SIZE    HAL_FLASH_UNIT_VERIFY_WRITE_SIZE
-#define FLASH_UNIT_WRITE_ONCE_SIZE        HAL_FLASH_UNIT_WRITE_ONCE_SIZE
-#define FLASH_UNIT_READ_ONCE_SIZE        HAL_FLASH_UNIT_READ_ONCE_SIZE
+#define FLASH_UNIT_WRITE_ONCE_SIZE      HAL_FLASH_UNIT_WRITE_ONCE_SIZE
+#define FLASH_UNIT_READ_ONCE_SIZE       HAL_FLASH_UNIT_READ_ONCE_SIZE
 #define FLASH_UNIT_ERASE_PATTERN        HAL_FLASH_UNIT_ERASE_PATTERN
 
 typedef enum Flash_Operation
@@ -60,10 +60,10 @@ typedef enum Flash_Operation
 Flash_Operation_T;
 
 typedef NvMemory_Status_T Flash_Status_T;
-/*
-    Alias for NvMemory Status
-*/
-// enum Flash_Status_Alias
+// /*
+//     Alias for NvMemory Status
+// */
+// typedef enum Flash_Status
 // {
 //     FLASH_STATUS_SUCCESS = NV_MEMORY_STATUS_SUCCESS,
 //     FLASH_STATUS_PROCESSING = NV_MEMORY_STATUS_PROCESSING,
@@ -76,19 +76,20 @@ typedef NvMemory_Status_T Flash_Status_T;
 //     FLASH_STATUS_ERROR_PROTECTION = NV_MEMORY_STATUS_ERROR_PROTECTION,
 //     FLASH_STATUS_ERROR_CHECKSUM = NV_MEMORY_STATUS_ERROR_CHECKSUM,
 //     FLASH_STATUS_ERROR_INVALID_OP = NV_MEMORY_STATUS_ERROR_INVALID_OP,
-// } Flash_Status_Alias_T;
+// } Flash_Status_T;
 
-#define FLASH_STATUS_SUCCESS             (NV_MEMORY_STATUS_SUCCESS)
+//tod replace
+#define FLASH_STATUS_SUCCESS            (NV_MEMORY_STATUS_SUCCESS)
 #define FLASH_STATUS_PROCESSING         (NV_MEMORY_STATUS_PROCESSING)
-#define FLASH_STATUS_START_VERIFY         (NV_MEMORY_STATUS_START_VERIFY)
-// #define FLASH_STATUS_ERROR             (NV_MEMORY_STATUS_ERROR)
+#define FLASH_STATUS_START_VERIFY       (NV_MEMORY_STATUS_START_VERIFY)
+// #define FLASH_STATUS_ERROR           (NV_MEMORY_STATUS_ERROR)
 #define FLASH_STATUS_ERROR_BUSY         (NV_MEMORY_STATUS_ERROR_BUSY)
-#define FLASH_STATUS_ERROR_INPUT         (NV_MEMORY_STATUS_ERROR_INPUT)
-#define FLASH_STATUS_ERROR_CMD             (NV_MEMORY_STATUS_ERROR_CMD)
-#define FLASH_STATUS_ERROR_VERIFY         (NV_MEMORY_STATUS_ERROR_VERIFY)
-#define FLASH_STATUS_ERROR_PROTECTION     (NV_MEMORY_STATUS_ERROR_PROTECTION)
+#define FLASH_STATUS_ERROR_INPUT        (NV_MEMORY_STATUS_ERROR_INPUT)
+#define FLASH_STATUS_ERROR_CMD          (NV_MEMORY_STATUS_ERROR_CMD)
+#define FLASH_STATUS_ERROR_VERIFY       (NV_MEMORY_STATUS_ERROR_VERIFY)
+#define FLASH_STATUS_ERROR_PROTECTION   (NV_MEMORY_STATUS_ERROR_PROTECTION)
 #define FLASH_STATUS_ERROR_CHECKSUM     (NV_MEMORY_STATUS_ERROR_CHECKSUM)
-#define FLASH_STATUS_ERROR_INVALID_OP     (NV_MEMORY_STATUS_ERROR_INVALID_OP)
+#define FLASH_STATUS_ERROR_INVALID_OP   (NV_MEMORY_STATUS_ERROR_INVALID_OP)
 
 typedef NvMemory_Partition_T Flash_Partition_T;
 typedef NvMemory_T Flash_T; /* Flash struct must reside in RAM */
@@ -124,7 +125,7 @@ extern Flash_Status_T Flash_Erase_Blocking(Flash_T * p_flash, const uint8_t * p_
 extern Flash_Status_T Flash_VerifyWrite_Blocking(Flash_T * p_flash, const uint8_t * p_dest, const uint8_t * p_data, size_t size);
 extern Flash_Status_T Flash_VerifyErase_Blocking(Flash_T * p_flash, const uint8_t * p_dest, size_t size);
 extern Flash_Status_T Flash_WriteOnce_Blocking(Flash_T * p_flash, const uint8_t * p_dest, const uint8_t * p_data, size_t size);
-extern Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, uint8_t * p_dataResult, const uint8_t * p_destOnce, size_t size);
+extern Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, uint8_t * p_dataResult, const uint8_t * p_once, size_t size);
 extern Flash_Status_T Flash_EraseAll_Blocking(Flash_T * p_flash);
 extern Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, const uint8_t * p_dest, const uint8_t * p_data, size_t size, Flash_Operation_T opId);
 

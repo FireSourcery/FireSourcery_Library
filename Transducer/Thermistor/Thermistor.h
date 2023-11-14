@@ -67,7 +67,7 @@ Thermistor_Type_T;
 */
 typedef struct __attribute__((aligned(2U))) Thermistor_Params
 {
-    Thermistor_Type_T Type;
+    // Thermistor_Type_T Type;
 
     /* NTC Coffceients Conversion */
     uint16_t VInRef_MilliV;
@@ -77,8 +77,8 @@ typedef struct __attribute__((aligned(2U))) Thermistor_Params
 
     /* Back Up Linear Unit Conversion. Bypass R, alternatively derive from DeltaT, DeltaR */
     uint16_t LinearT0_Adcu;
-    uint8_t LinearT0_DegC;
     uint16_t LinearT1_Adcu;
+    uint8_t LinearT0_DegC;
     uint8_t LinearT1_DegC;
 
     /* Monitor Limits */
@@ -96,6 +96,9 @@ typedef struct Thermistor_Config
     const uint32_t R_SERIES;    /* Pull-up */
     const uint32_t R_PARALLEL;  /* Parallel pull-down if applicable. 0 for Disable */
     //bool IS_CONST;            /* Disable Coefficient set functions */
+    // uint32_t R0;
+    // uint16_t T0; /* In Kelvin*/
+    // uint16_t B;
     const Thermistor_Params_T * P_PARAMS;
 }
 Thermistor_Config_T;
@@ -104,8 +107,8 @@ typedef struct Thermistor
 {
     const Thermistor_Config_T CONFIG;
     Thermistor_Params_T Params;
-    Linear_T LinearUnits;   /* Back up linear fit. */
-    Linear_T LinearHeatLimit;  /* Linear fit for warning region, return value [WarningTrigger_Adcu:FaultTrigger_Adcu] as [65535:0], Roughly linear 70-100C */
+    Linear_T LinearUnits;       /* Back up linear fit. */
+    Linear_T LinearHeatLimit;   /* Linear fit for warning region, return value [WarningTrigger_Adcu:FaultTrigger_Adcu] as [65535:0], Roughly linear 70-100C */
     Thermistor_Status_T Status;
     uint16_t Adcu; /* Previous ADC sample */
 }
@@ -130,10 +133,10 @@ Thermistor_T;
     .CONFIG = _THERMISTOR_INIT_CONFIG(RSeries, RParallel, p_Params),    \
 }
 
-#define THERMISTOR_INIT_WITH_B(RSeries, RParallel, p_Params, NtcR0, NtcT0_Kelvin, NtcB)     \
-{                                                                                           \
-    .CONFIG = _THERMISTOR_INIT_CONFIG(RSeries, RParallel, p_Params),                        \
-    .Params = _THERMISTOR_INIT_PARAMS_B(R0, NtcT0_Kelvin, B),                               \
+#define THERMISTOR_INIT_WITH_B(RSeries, RParallel, p_Params, coeffR0, coeffT0_Kelvin, coeffB)       \
+{                                                                                                   \
+    .CONFIG = _THERMISTOR_INIT_CONFIG(RSeries, RParallel, p_Params),                                \
+    .Params = _THERMISTOR_INIT_PARAMS_B(R0, coeffT0_Kelvin, coeffB),                                \
 }
 
 /******************************************************************************/
@@ -143,7 +146,7 @@ Thermistor_T;
 */
 /******************************************************************************/
 static inline uint16_t Thermistor_ConvertHeatLimit_FracU16(const Thermistor_T * p_therm, uint16_t adcu)   { return Linear_ADC_CalcFracU16(&p_therm->LinearHeatLimit, adcu); }
-/* Captured on Monitor */
+/* Captured adcu on Monitor */
 static inline uint16_t Thermistor_GetHeatLimit_FracU16(const Thermistor_T * p_therm)                      { return Thermistor_ConvertHeatLimit_FracU16(p_therm, p_therm->Adcu); }
 
 /******************************************************************************/
@@ -170,34 +173,30 @@ static inline void Thermistor_SetWarningThreshold_Adcu(Thermistor_T * p_therm, u
 /******************************************************************************/
 /* Units */
 /******************************************************************************/
-static inline Thermistor_Type_T Thermistor_GetType(const Thermistor_T * p_therm)    { return p_therm->Params.Type; }
+// static inline Thermistor_Type_T Thermistor_GetType(const Thermistor_T * p_therm)    { return p_therm->Params.Type; }
 static inline uint32_t Thermistor_GetR0(const Thermistor_T * p_therm)               { return p_therm->Params.R0; }
 static inline uint16_t Thermistor_GetT0(const Thermistor_T * p_therm)               { return p_therm->Params.T0; } /* Degrees Kelvin */
 static inline uint16_t Thermistor_GetT0_DegC(const Thermistor_T * p_therm)          { return p_therm->Params.T0 - 273; }
 static inline uint16_t Thermistor_GetB(const Thermistor_T * p_therm)                { return p_therm->Params.B; }
 static inline uint16_t Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm)    { return p_therm->Params.VInRef_MilliV; }
 
-static inline void Thermistor_SetType(Thermistor_T * p_therm, uint16_t value)               { p_therm->Params.Type = value; }
+// static inline void Thermistor_SetType(Thermistor_T * p_therm, uint16_t value)               { p_therm->Params.Type = value; }
 static inline void Thermistor_SetR0(Thermistor_T * p_therm, uint16_t value)                 { p_therm->Params.R0 = value; }
 static inline void Thermistor_SetT0(Thermistor_T * p_therm, uint16_t value)                 { p_therm->Params.T0 = value; } /* Degrees Kelvin */
 static inline void Thermistor_SetT0_DegC(Thermistor_T * p_therm, uint16_t value)            { p_therm->Params.T0 = value + 273; }
 static inline void Thermistor_SetB(Thermistor_T * p_therm, uint16_t value)                  { p_therm->Params.B = value; }
 static inline void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV) { p_therm->Params.VInRef_MilliV = vIn_MilliV; }
 
-//todo
-//todo combine
+//todo combine?
 static inline uint16_t Thermistor_GetLinearT0_Adcu(const Thermistor_T * p_therm)    { return p_therm->Params.LinearT0_Adcu; }
-static inline uint16_t Thermistor_GetLinearT0_DegC(const Thermistor_T * p_therm)    { return p_therm->Params.LinearT0_DegC; }
 static inline uint16_t Thermistor_GetLinearT1_Adcu(const Thermistor_T * p_therm)    { return p_therm->Params.LinearT1_Adcu; }
+static inline uint16_t Thermistor_GetLinearT0_DegC(const Thermistor_T * p_therm)    { return p_therm->Params.LinearT0_DegC; }
 static inline uint16_t Thermistor_GetLinearT1_DegC(const Thermistor_T * p_therm)    { return p_therm->Params.LinearT1_DegC; }
 static inline void Thermistor_SetLinearT0_Adcu(Thermistor_T * p_therm, uint16_t value)      { p_therm->Params.LinearT0_Adcu = value; }
-static inline void Thermistor_SetLinearT0_DegC(Thermistor_T * p_therm, uint16_t value)      { p_therm->Params.LinearT0_DegC = value; }
 static inline void Thermistor_SetLinearT1_Adcu(Thermistor_T * p_therm, uint16_t value)      { p_therm->Params.LinearT1_Adcu = value; }
+static inline void Thermistor_SetLinearT0_DegC(Thermistor_T * p_therm, uint16_t value)      { p_therm->Params.LinearT0_DegC = value; }
 static inline void Thermistor_SetLinearT1_DegC(Thermistor_T * p_therm, uint16_t value)      { p_therm->Params.LinearT1_DegC = value; }
 
-/* Using async capture conversion, e.g. conversion processing lower frequency than user output */
-// static inline int32_t Thermistor_GetHeat_DegC(Thermistor_T * p_therm) { return p_therm->Heat_DegC; }
-// static inline void Thermistor_CaptureUnits_DegC(Thermistor_T * p_therm, uint16_t adcu) { p_therm->Heat_DegC = Thermistor_ConvertToDegC_Scalar(p_therm, adcu, p_therm->Params.CaptureScalar);}
 
 /******************************************************************************/
 /*
@@ -226,12 +225,8 @@ extern int32_t Thermistor_GetFaultThreshold_DegCScalar(const Thermistor_T * p_th
 extern int32_t Thermistor_GetWarning_DegCScalar(const Thermistor_T * p_therm, uint16_t scalar);
 extern int32_t Thermistor_GetWarningThreshold_DegCScalar(const Thermistor_T * p_therm, uint16_t scalar);
 
-// #if  defined(CONFIG_THERMISTOR_UNITS_FLOAT)
-//     extern float Thermistor_ConvertToDegC_Float(const Thermistor_T * p_therm, uint16_t adcu);
-//     extern float Thermistor_GetFault_DegCFloat(const Thermistor_T * p_therm);
-//     extern float Thermistor_GetFaultThreshold_DegCFloat(const Thermistor_T * p_therm);
-//     extern float Thermistor_GetWarning_DegCFloat(const Thermistor_T * p_therm);
-//     extern float Thermistor_GetWarningThreshold_DegCFloat(const Thermistor_T * p_therm);
-// #endif
-
 #endif
+
+/* Using async capture conversion, e.g. conversion processing lower frequency than user output */
+// static inline int32_t Thermistor_GetHeat_DegC(Thermistor_T * p_therm) { return p_therm->Heat_DegC; }
+// static inline void Thermistor_CaptureUnits_DegC(Thermistor_T * p_therm, uint16_t adcu) { p_therm->Heat_DegC = Thermistor_ConvertToDegC_Scalar(p_therm, adcu, p_therm->Params.CaptureScalar);}

@@ -200,3 +200,11 @@ int16_t PID_GetKp_Fixed16(PID_T * p_pid) { return PID_GetKp_Fixed32(p_pid) >> 8;
 void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 8); }
 
 int16_t PID_GetKi_Fixed16(PID_T * p_pid) { return PID_GetKi_Fixed32(p_pid) >> 8; }
+
+
+/*!
+    todo
+*/
+void PID_SetKd_Fixed16(PID_T * p_pid, uint16_t kd_Fixed16) {  }
+
+int16_t PID_GetKd_Fixed16(PID_T * p_pid) { return 0U; }

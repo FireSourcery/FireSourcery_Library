@@ -79,30 +79,46 @@ static protocol_txsize_t StopAll(MotorControllerPtr_T p_mc, MotPacket_StopResp_T
 /******************************************************************************/
 /*! Call - Blocking  */
 /******************************************************************************/
-typedef enum MotCallId
+typedef enum MotProtocol_CallId // todo change to
 {
-    MOT_CALL_ENTER_BLOCKING,
-    MOT_CALL_EXIT_BLOCKING,
-    MOT_CALL_CALIBRATE_SENSOR,
-    MOT_CALL_SAVE_PARAMS,
-    MOT_CALL_READ_MANUFACTURE,
-    MOT_CALL_WRITE_MANUFACTURE,
+    // MOT_CALL_ENTER_BLOCKING,
+    // MOT_CALL_EXIT_BLOCKING,
+    // MOT_CALL_CALIBRATE_SENSOR,
+    // MOT_CALL_CALIBRATE_ADC,
+    // MOT_CALL_SAVE_PARAMS,
+    // MOT_CALL_READ_MANUFACTURE,
+    // MOT_CALL_WRITE_MANUFACTURE,
+    MOT_CALL_BLOCKING,
 }
-MotCallId_T;
+MotProtocol_CallId_T;
 
 static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_CallResp_T * p_txPacket, const MotPacket_CallReq_T * p_rxPacket)
 {
     MotorPtr_T p_motor = MotorController_GetPtrMotor(p_mc, 0U);
     uint16_t status = 0U;
 
-    switch((MotCallId_T)p_rxPacket->CallReq.Id)
+    switch((MotProtocol_CallId_T)p_rxPacket->CallReq.Id)
     {
-        case MOT_CALL_ENTER_BLOCKING:       MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_ENTER);              status = 0;                 break;
-        case MOT_CALL_EXIT_BLOCKING:        MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_EXIT);               status = 0;                 break;
-        case MOT_CALL_CALIBRATE_SENSOR:     MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR);   status = 0U;                break;
-        case MOT_CALL_SAVE_PARAMS:          MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);    status = p_mc->NvmStatus;   break;
-        // case MOT_CALL_WRITE_MANUFACTURE: MotorController_User_ProcBlocking_Blocking(p_mc, MOT_CALL_WRITE_MANUFACTURE);       status = 0U;                    break;
-        // case MOT_CALL_READ_MANUFACTURE:  MotorController_User_ProcBlocking_Blocking(p_mc, MOT_CALL_READ_MANUFACTURE);        status = 0U;                    break;
+        case MOT_CALL_BLOCKING:
+            MotorController_User_ProcBlocking_Blocking(p_mc, (MotorController_BlockingId_T)p_rxPacket->CallReq.Arg);
+            switch((MotorController_BlockingId_T)p_rxPacket->CallReq.Arg)
+            {
+                case MOTOR_CONTROLLER_BLOCKING_ENTER:               status = 0U;        break;
+                case MOTOR_CONTROLLER_BLOCKING_EXIT:                status = 0U;        break;
+                case MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR:    status = 0U;        break;
+                case MOTOR_CONTROLLER_BLOCKING_CALIBRATE_ADC:       status = 0U;        break;
+                case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:      status = p_mc->NvmStatus;   break;
+                case MOTOR_CONTROLLER_BLOCKING_NVM_READ_ONCE:       status = p_mc->NvmStatus;   break;
+                case MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS:     status = p_mc->NvmStatus;   break;
+                default: break;
+            }
+            break;
+        // case MOT_CALL_ENTER_BLOCKING:       MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_ENTER);              status = 0U;                break;
+        // case MOT_CALL_EXIT_BLOCKING:        MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_EXIT);               status = 0U;                break;
+        // case MOT_CALL_CALIBRATE_SENSOR:     MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR);   status = 0U;                break;
+        // case MOT_CALL_SAVE_PARAMS:          MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);    status = p_mc->NvmStatus;   break;
+        // case MOT_CALL_WRITE_MANUFACTURE: MotorController_User_ProcBlocking_Blocking(p_mc,  );        status = 0U;                    break;
+        // case MOT_CALL_READ_MANUFACTURE:  MotorController_User_ProcBlocking_Blocking(p_mc,  );        status = 0U;                    break;
         default: break;
     }
 
@@ -115,7 +131,7 @@ static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_Call
 /* Resp Truncates 32-Bit Vars */
 static protocol_txsize_t VarRead(MotorControllerPtr_T p_mc, MotPacket_VarReadResp_T * p_txPacket, const MotPacket_VarReadReq_T * p_rxPacket)
 {
-    volatile uint8_t varsCount = MotPacket_VarReadReq_ParseVarIdCount(p_rxPacket);
+    uint8_t varsCount = MotPacket_VarReadReq_ParseVarIdCount(p_rxPacket);
     uint16_t idCheckSum = p_rxPacket->VarReadReq.IdChecksum;
     for(uint8_t index = 0U; index < varsCount; index++)
     {

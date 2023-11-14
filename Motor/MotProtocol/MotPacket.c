@@ -156,7 +156,7 @@ uint8_t MotPacket_CallResp_Build(MotPacket_CallResp_T * p_respPacket, uint16_t i
 /*! Read Vars */
 /******************************************************************************/
 uint8_t MotPacket_VarReadReq_ParseVarIdCount(const MotPacket_VarReadReq_T * p_reqPacket)            { return (MotPacket_ParsePayloadLength((MotPacket_T *)p_reqPacket) - 4U) / sizeof(uint16_t); }
-uint16_t MotPacket_VarReadReq_ParseVarId(const MotPacket_VarReadReq_T * p_reqPacket, uint8_t index) { return p_reqPacket->VarReadReq.MotVarIds[index]; }
+uint16_t MotPacket_VarReadReq_ParseVarId(const MotPacket_VarReadReq_T * p_reqPacket, uint8_t index) { return p_reqPacket->VarReadReq.MotVarIds[index]; } //todo include varid and cast
 
 void MotPacket_VarReadResp_BuildVarValue(MotPacket_VarReadResp_T * p_respPacket, uint8_t index, uint16_t value) { p_respPacket->VarReadResp.Value16[index] = value; } /* pass index avoids double buffer */
 void MotPacket_VarReadResp_BuildInnerHeader(MotPacket_VarReadResp_T * p_respPacket, uint16_t idChecksum, uint16_t status16)

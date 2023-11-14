@@ -520,17 +520,31 @@ void Motor_ResetUnitsVabc(MotorPtr_T p_motor)
 
 void Motor_ResetUnitsIabc(MotorPtr_T p_motor)
 {
-#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
-    uint16_t iPeakRef_Adcu = p_motor->Parameters.IPeakRef_Adcu;
-#elif defined(CONFIG_MOTOR_DEBUG_DISABLE)
-    uint16_t iPeakRef_Adcu = GLOBAL_MOTOR.I_MAX_ADCU;
-#endif
-    Linear_ADC_Init_ZeroToPeak(&p_motor->UnitsIa, p_motor->Parameters.IaZeroRef_Adcu, iPeakRef_Adcu, 0, GLOBAL_MOTOR.I_MAX_AMPS);
-    Linear_ADC_Init_ZeroToPeak(&p_motor->UnitsIb, p_motor->Parameters.IbZeroRef_Adcu, iPeakRef_Adcu, 0, GLOBAL_MOTOR.I_MAX_AMPS);
-    Linear_ADC_Init_ZeroToPeak(&p_motor->UnitsIc, p_motor->Parameters.IcZeroRef_Adcu, iPeakRef_Adcu, 0, GLOBAL_MOTOR.I_MAX_AMPS);
+    Motor_ResetUnitsIa(p_motor);
+    Motor_ResetUnitsIb(p_motor);
+    Motor_ResetUnitsIc(p_motor);
+}
+
+void Motor_ResetUnitsIa(MotorPtr_T p_motor)
+{
+    Linear_ADC_Init_ZeroToPeak(&p_motor->UnitsIa, p_motor->Parameters.IaZeroRef_Adcu, Motor_GetIPeakRef_Adcu(p_motor), 0, GLOBAL_MOTOR.I_MAX_AMPS);
 #ifdef CONFIG_MOTOR_I_SENSORS_INVERT
     Linear_ADC_SetInverted(&p_motor->UnitsIa);
+#endif
+}
+
+void Motor_ResetUnitsIb(MotorPtr_T p_motor)
+{
+    Linear_ADC_Init_ZeroToPeak(&p_motor->UnitsIb, p_motor->Parameters.IbZeroRef_Adcu, Motor_GetIPeakRef_Adcu(p_motor), 0, GLOBAL_MOTOR.I_MAX_AMPS);
+#ifdef CONFIG_MOTOR_I_SENSORS_INVERT
     Linear_ADC_SetInverted(&p_motor->UnitsIb);
+#endif
+}
+
+void Motor_ResetUnitsIc(MotorPtr_T p_motor)
+{
+    Linear_ADC_Init_ZeroToPeak(&p_motor->UnitsIc, p_motor->Parameters.IcZeroRef_Adcu, Motor_GetIPeakRef_Adcu(p_motor), 0, GLOBAL_MOTOR.I_MAX_AMPS);
+#ifdef CONFIG_MOTOR_I_SENSORS_INVERT
     Linear_ADC_SetInverted(&p_motor->UnitsIc);
 #endif
 }

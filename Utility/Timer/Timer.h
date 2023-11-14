@@ -66,6 +66,8 @@ TimerN_T;
 
 #define TIMER_INIT(p_Base, BaseFreq) { .CONFIG = {.P_BASE = p_Base, .BASE_FREQ = BaseFreq, }, }
 
+//todo define pow2 divider
+
 /******************************************************************************/
 /*!
     @brief    Timer Common
