@@ -30,6 +30,7 @@
 /******************************************************************************/
 #include "math_general.h"
 
+/* One point of access to reduce flash use */
 uint32_t math_muldiv64_unsigned(uint32_t value, uint32_t factor, uint32_t divisor)
 {
     return (uint64_t)value * factor / divisor;

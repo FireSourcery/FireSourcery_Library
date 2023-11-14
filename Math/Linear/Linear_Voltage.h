@@ -155,7 +155,7 @@ static inline uint16_t Linear_Voltage_CalcAdcu_FracS16(const Linear_T * p_linear
     @brief
 */
 /******************************************************************************/
-extern void Linear_Voltage_Init(Linear_T * p_linear, uint16_t r1, uint16_t r2, uint8_t adcBits, uint16_t adcVRef_MilliV, uint16_t vInMax);
+extern void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint8_t adcBits, uint16_t adcVRef_MilliV, uint16_t vInMax);
 extern uint16_t Linear_Voltage_CalcAdcuInput_V(const Linear_T * p_linear, uint16_t volts);
 extern uint16_t Linear_Voltage_CalcAdcuInput_MilliV(const Linear_T * p_linear, uint32_t milliV);
 

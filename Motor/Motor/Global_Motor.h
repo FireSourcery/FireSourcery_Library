@@ -47,8 +47,8 @@ typedef const struct Global_Motor
 {
     const uint16_t CONTROL_FREQ;
     const uint16_t V_MAX_VOLTS;         /* VSource Limit */
-    const uint16_t V_ABC_R1;
-    const uint16_t V_ABC_R2;
+    const uint32_t V_ABC_R1;
+    const uint32_t V_ABC_R2;
     const uint16_t I_MAX_ADCU;          /* Sensor calibration. Zero-To-Peak, derived from sensor hardware */
     const uint16_t I_MAX_AMPS;          /* Motor I controller rating. pass to Linear_ADC. Unit conversion, UI input/output, param set. */
     const uint16_t ALIGN_VPWM_MAX;

@@ -509,6 +509,7 @@ void Motor_ResetUnitsSensor(MotorPtr_T p_motor)
     }
 }
 
+//todo as frac
 void Motor_ResetUnitsVabc(MotorPtr_T p_motor)
 {
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)

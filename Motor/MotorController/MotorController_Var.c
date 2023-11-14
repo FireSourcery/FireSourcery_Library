@@ -494,7 +494,7 @@ static inline MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId
                     case MOT_VAR_IA_ZERO_REF_ADCU:          Motor_Params_SetIaZero_Adcu(p_motor, varValue);                 break;
                     case MOT_VAR_IB_ZERO_REF_ADCU:          Motor_Params_SetIbZero_Adcu(p_motor, varValue);                 break;
                     case MOT_VAR_IC_ZERO_REF_ADCU:          Motor_Params_SetIcZero_Adcu(p_motor, varValue);                 break;
-                    case MOT_VAR_I_PEAK_REF_ADCU:           Motor_Params_SetIPeakRef_Adcu_Debug(p_motor, varValue);         break;
+                    case MOT_VAR_I_PEAK_REF_ADCU:           Motor_Params_SetIPeakRef_Adcu(p_motor, varValue);               break;
                     default:  break;
                 }
             }

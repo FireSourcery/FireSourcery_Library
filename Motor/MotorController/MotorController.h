@@ -354,6 +354,9 @@ typedef struct MotorController
     MotorController_FaultFlags_T FaultFlags;
 #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
     MotAnalog_Results_T FaultAnalogRecord;
+    uint16_t VSource;  /* Controller Supply */
+    uint16_t VSense;   /* ~5V */
+    uint16_t VAccs;    /* ~12V */
 #endif
     MotorController_DriveId_T DriveState;
     /* Blocking/Calibration SubState */

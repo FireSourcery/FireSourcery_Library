@@ -242,9 +242,9 @@ typedef struct __attribute__((aligned(2U))) Motor_Params
     uint16_t IaZeroRef_Adcu;
     uint16_t IbZeroRef_Adcu;
     uint16_t IcZeroRef_Adcu;
-#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+// #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
     uint16_t IPeakRef_Adcu;
-#endif
+// #endif
 
     uint16_t SpeedLimitForward_Scalar16;   /* "Root" Limits. Persistent User Param. Frac16 of SpeedFeedbackRef_Rpm */
     uint16_t SpeedLimitReverse_Scalar16;

@@ -62,8 +62,8 @@ VMonitor_Params_T;
 
 typedef const struct VMonitor_Config
 {
-    const uint16_t UNITS_R1;
-    const uint16_t UNITS_R2;
+    const uint32_t UNITS_R1;
+    const uint32_t UNITS_R2;
     const VMonitor_Params_T * const P_PARAMS;
 }
 VMonitor_Config_T;
