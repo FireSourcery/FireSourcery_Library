@@ -120,6 +120,8 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
                     //Motor_User_GetHeat_DegC(p_motor, 1U);
                 case MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT:      value = Motor_User_GetActiveSpeedLimit(p_motor);    break;
                 case MOT_VAR_MOTOR_ACTIVE_I_LIMIT:          value = Motor_User_GetActiveILimit(p_motor);        break;
+                case MOT_VAR_MOTOR_V_SPEED:                 value = Motor_GetVSpeed_Frac16(p_motor);            break;
+
                 default: break;
             }
             break;
@@ -331,9 +333,11 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
                 // case MOT_VAR_ALIGN_MODE:                 value = Motor_Params_GetAlignMode(p_motor);                 break;
                 case MOT_VAR_ALIGN_POWER:                   value = Motor_Params_GetAlignPower_Scalar16(p_motor);           break;
                 case MOT_VAR_ALIGN_TIME_CYCLES:             value = Motor_Params_GetAlignTime_Cycles(p_motor);              break;
+                #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
                 case MOT_VAR_OPEN_LOOP_POWER:               value = Motor_Params_GetOpenLoopPower_Scalar16(p_motor);        break;
                 case MOT_VAR_OPEN_LOOP_SPEED:               value = Motor_Params_GetOpenLoopSpeed_Scalar16(p_motor);        break;
                 case MOT_VAR_OPEN_LOOP_ACCEL_TIME_CYCLES:   value = Motor_Params_GetOpenLoopAccel_Cycles(p_motor);          break;
+                #endif
                 // case MOT_VAR_PHASE_PWM_MODE:             value = Motor_Params_GetPhaseModeParam(p_motor);            break;
                 default: break;
             }

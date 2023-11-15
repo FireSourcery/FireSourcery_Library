@@ -185,6 +185,7 @@ void Motor_User_SetPositionCmdValue(MotorPtr_T p_motor, uint16_t angle)
     Open Loop
 */
 /******************************************************************************/
+#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 /*!
 
 */
@@ -212,6 +213,8 @@ void Motor_User_SetOpenLoopModeCmd(MotorPtr_T p_motor, int16_t ivMagnitude)
     Motor_User_SetOpenLoopMode(p_motor);
     Motor_User_SetOpenLoopCmdValue(p_motor, ivMagnitude);
 }
+#endif
+
 
 /******************************************************************************/
 /*!

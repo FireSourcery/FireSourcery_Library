@@ -66,9 +66,6 @@ static inline int32_t Motor_User_GetVPhase_UFrac16(const MotorPtr_T p_motor) { r
 /* Ideal electrical power [0:49152] <=> [0:1.5] */
 static inline int32_t Motor_User_GetElectricalPower_UFrac16(const MotorPtr_T p_motor) { return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetElectricalPower_UFrac16, 0U); }
 
-//check DC current limit
-// Motor_FOC_GetElectricalPower_FracS16Abs(p_motor) / Global_Motor_GetVSource_V() ;
-
 static inline uint16_t Motor_User_GetAdcu(const MotorPtr_T p_motor, MotorAnalog_Channel_T adcChannel)       { return p_motor->AnalogResults.Channels[adcChannel]; }
 static inline uint8_t Motor_User_GetAdcu_Msb8(const MotorPtr_T p_motor, MotorAnalog_Channel_T adcChannel)   { return Motor_User_GetAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
 
@@ -80,6 +77,8 @@ static inline int16_t Motor_User_GetIPhase_Amps(const MotorPtr_T p_motor)       
 static inline int16_t Motor_User_GetVPhase_Volts(const MotorPtr_T p_motor)          { return _Motor_ConvertV_FracS16ToVolts(Motor_User_GetVPhase_UFrac16(p_motor)); }
 static inline int32_t Motor_User_GetElectricalPower_VA(const MotorPtr_T p_motor)    { return _Motor_ConvertPower_FracS16ToWatts(Motor_User_GetElectricalPower_UFrac16(p_motor)); }
 static inline int32_t Motor_User_GetHeat_DegCScalar(const MotorPtr_T p_motor, uint16_t scalar)  { return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
+//check DC current limit
+// Motor_FOC_GetElectricalPower_FracS16Abs(p_motor) / Global_Motor_GetVSource_V() ;
 static inline thermal_t Motor_User_GetHeat_DegC(const MotorPtr_T p_motor)                       { return Thermistor_ConvertToDegC(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 #endif
 
@@ -113,6 +112,56 @@ static inline uint16_t Motor_User_GetActiveSpeedLimit(const MotorPtr_T p_motor) 
 
 /******************************************************************************/
 /*!
+   by Id
+*/
+/******************************************************************************/
+// typedef enum Motor_User_Id
+// {
+//     MOTOR_VAR_SPEED,
+//     MOTOR_VAR_I_PHASE,
+//     MOTOR_VAR_V_PHASE,
+//     MOTOR_VAR_POWER,
+//     MOTOR_VAR_RAMP_SET_POINT,
+//     MOTOR_VAR_ELECTRICAL_ANGLE,
+//     MOTOR_VAR_MECHANICAL_ANGLE,
+//     MOTOR_VAR_MOTOR_STATE,
+//     MOTOR_VAR_MOTOR_STATUS_FLAGS,
+//     MOTOR_VAR_MOTOR_FAULT_FLAGS,
+//     MOTOR_VAR_MOTOR_HEAT,
+//     MOTOR_VAR_MOTOR_ACTIVE_SPEED_LIMIT,
+//     MOTOR_VAR_MOTOR_ACTIVE_I_LIMIT,
+//     MOTOR_VAR_MOTOR_V_SPEED,
+//     MOTOR_VAR_MOTOR_END,
+// }
+// Motor_User_Id_T;
+
+// #include <assert.h>
+// static_assert((MOTOR_VAR_MOTOR_END <= 16U));
+
+// static inline int32_t Motor_GetVar(const MotorPtr_T p_motor, Motor_User_Id_T varId)
+// {
+//     int32_t value;
+//     switch(varId)
+//     {
+//         case MOTOR_VAR_SPEED:                     value = Motor_User_GetSpeed_UFrac16(p_motor);               break;
+//         case MOTOR_VAR_I_PHASE:                   value = Motor_User_GetIPhase_UFrac16(p_motor);              break;
+//         case MOTOR_VAR_V_PHASE:                   value = Motor_User_GetVPhase_UFrac16(p_motor);              break;
+//         case MOTOR_VAR_POWER:                     value = Motor_User_GetElectricalPower_UFrac16(p_motor);     break;
+//         case MOTOR_VAR_RAMP_SET_POINT:            value = Linear_Ramp_GetOutput(&p_motor->Ramp);              break;
+//         case MOTOR_VAR_MOTOR_STATE:               value = Motor_User_GetStateId(p_motor);                     break;
+//         case MOTOR_VAR_MOTOR_STATUS_FLAGS:        value = Motor_User_GetStatusFlags(p_motor).Word;            break;
+//         case MOTOR_VAR_MOTOR_FAULT_FLAGS:         value = Motor_User_GetFaultFlags(p_motor).Word;             break;
+//         case MOTOR_VAR_MOTOR_HEAT:                value = Motor_User_GetHeat_Adcu(p_motor);                   break;
+//         case MOTOR_VAR_MOTOR_ACTIVE_SPEED_LIMIT:  value = Motor_User_GetActiveSpeedLimit(p_motor);            break;
+//         case MOTOR_VAR_MOTOR_ACTIVE_I_LIMIT:      value = Motor_User_GetActiveILimit(p_motor);                break;
+//         case MOTOR_VAR_MOTOR_V_SPEED:             value = Motor_GetVSpeed_Frac16(p_motor);                    break;
+//         default: value = 0; break;
+//     }
+//     return value;
+// }
+
+/******************************************************************************/
+/*!
     Extern
 */
 /******************************************************************************/
@@ -133,9 +182,11 @@ extern void Motor_User_SetSpeedMode(MotorPtr_T p_motor);
 extern void Motor_User_SetSpeedCmdValue(MotorPtr_T p_motor, int16_t speed);
 extern void Motor_User_SetSpeedModeCmd(MotorPtr_T p_motor, int16_t speed);
 extern void Motor_User_SetPositionCmdValue(MotorPtr_T p_motor, uint16_t angle);
+#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 extern void Motor_User_SetOpenLoopMode(MotorPtr_T p_motor);
 extern void Motor_User_SetOpenLoopCmdValue(MotorPtr_T p_motor, int16_t ivCmd);
 extern void Motor_User_SetOpenLoopModeCmd(MotorPtr_T p_motor, int16_t ivMagnitude);
+#endif
 extern void Motor_User_SetActiveCmdValue(MotorPtr_T p_motor, int16_t userCmd);
 extern void Motor_User_ActivateDefaultFeedbackMode(MotorPtr_T p_motor);
 

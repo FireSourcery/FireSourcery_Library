@@ -272,7 +272,6 @@ bool Motor_CheckSensorFeedback(const MotorPtr_T p_motor)
     return isAvailable;
 }
 
-
 static inline bool _Motor_CheckOpenLoop(const MotorPtr_T p_motor)
 {
 #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)

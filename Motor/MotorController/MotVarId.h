@@ -93,6 +93,7 @@ typedef enum MotVarId_Monitor_Motor
     MOT_VAR_MOTOR_HEAT,
     MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT,
     MOT_VAR_MOTOR_ACTIVE_I_LIMIT,
+    MOT_VAR_MOTOR_V_SPEED,
 }
 MotVarId_Monitor_Motor_T;
 
