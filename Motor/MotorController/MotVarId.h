@@ -402,65 +402,101 @@ MotVarId_Params_VMonitor_T;
     Type of NameId e.g. MotVarId_Monitor_General_T
     struct id
 */
-typedef enum MotVarId_Prefix_RealTime
+typedef enum MotVarId_Type_RealTime
 {
     // Monitor - Read-Only
-    MOT_VAR_ID_PREFIX_MONITOR_GENERAL,
-    MOT_VAR_ID_PREFIX_MONITOR_ANALOG_USER,
-    MOT_VAR_ID_PREFIX_MONITOR_MOTOR,
-    MOT_VAR_ID_PREFIX_MONITOR_MOTOR_FOC,
-    MOT_VAR_ID_PREFIX_MONITOR_MOTOR_SENSOR,
+    MOT_VAR_ID_TYPE_MONITOR_GENERAL,
+    MOT_VAR_ID_TYPE_MONITOR_ANALOG_USER,
+    MOT_VAR_ID_TYPE_MONITOR_MOTOR,
+    MOT_VAR_ID_TYPE_MONITOR_MOTOR_FOC,
+    MOT_VAR_ID_TYPE_MONITOR_MOTOR_SENSOR,
     // MonitorControl - Read/Write
-    MOT_VAR_ID_PREFIX_MONITOR_CONTROL,
-    MOT_VAR_ID_PREFIX_MONITOR_CONTROL_MOTOR,
+    MOT_VAR_ID_TYPE_MONITOR_CONTROL,
+    MOT_VAR_ID_TYPE_MONITOR_CONTROL_MOTOR,
     // Control - Write-Only
-    MOT_VAR_ID_PREFIX_CONTROL,
-    MOT_VAR_ID_PREFIX_CONTROL_MOTOR,
-    MOT_VAR_ID_PREFIX_REAL_TIME_END = 16U,
+    MOT_VAR_ID_TYPE_CONTROL,
+    MOT_VAR_ID_TYPE_CONTROL_MOTOR,
+    MOT_VAR_ID_TYPE_REAL_TIME_END = 16U,
 }
-MotVarId_Prefix_RealTime_T;
+MotVarId_Type_RealTime_T;
 
-typedef enum MotVarId_Prefix_Parameter
+typedef enum MotVarId_Type_Parameter
 {
-    MOT_VAR_ID_PREFIX_PARAMS_MOTOR_PRIMARY,
-    MOT_VAR_ID_PREFIX_PARAMS_MOTOR_SECONDARY,
-    MOT_VAR_ID_PREFIX_PARAMS_MOTOR_HALL,
-    MOT_VAR_ID_PREFIX_PARAMS_MOTOR_ENCODER,
-    MOT_VAR_ID_PREFIX_PARAMS_MOTOR_PID,
-    MOT_VAR_ID_PREFIX_PARAMS_MOTOR_THERMISTOR,
-    MOT_VAR_ID_PREFIX_PARAMS_GENERAL,
-    MOT_VAR_ID_PREFIX_PARAMS_ANALOG_USER,
-    MOT_VAR_ID_PREFIX_PARAMS_PROTOCOL,
-    MOT_VAR_ID_PREFIX_PARAMS_VMONITOR,
-    MOT_VAR_ID_PREFIX_PARAMS_BOARD_THERMISTOR,
-    MOT_VAR_ID_PREFIX_PARAMS_END = 16U,
+    MOT_VAR_ID_TYPE_PARAMS_MOTOR_PRIMARY,
+    MOT_VAR_ID_TYPE_PARAMS_MOTOR_SECONDARY,
+    MOT_VAR_ID_TYPE_PARAMS_MOTOR_HALL,
+    MOT_VAR_ID_TYPE_PARAMS_MOTOR_ENCODER,
+    MOT_VAR_ID_TYPE_PARAMS_MOTOR_PID,
+    MOT_VAR_ID_TYPE_PARAMS_GENERAL,
+    MOT_VAR_ID_TYPE_PARAMS_ANALOG_USER,
+    MOT_VAR_ID_TYPE_PARAMS_VMONITOR,
+    MOT_VAR_ID_TYPE_PARAMS_THERMISTOR,
+    MOT_VAR_ID_TYPE_PARAMS_PROTOCOL,
+    MOT_VAR_ID_TYPE_PARAMS_END = 16U,
 }
-MotVarId_Prefix_Parameter_T;
+MotVarId_Type_Parameter_T;
 
-/* Type of MotVarId_Prefix_Parameter_T */
-typedef enum MotVarId_Prefix_Prefix
+/* Type of MotVarId_Type_Parameter_T */
+typedef enum MotVarId_Type_Type
 {
-    MOT_VAR_ID_PREFIX_REAL_TIME,
-    MOT_VAR_ID_PREFIX_PARAMS,
+    MOT_VAR_ID_TYPE_REAL_TIME,
+    MOT_VAR_ID_TYPE_PARAMS,
 }
-MotVarId_Prefix_Prefix_T;
+MotVarId_Type_Type_T;
+
+typedef enum MotVarId_Instance_BoardThermistor
+{
+    MOT_VAR_ID_THERMISTOR_PCB,
+    MOT_VAR_ID_THERMISTOR_MOSFETS_0,
+    MOT_VAR_ID_THERMISTOR_MOSFETS_1,
+    MOT_VAR_ID_THERMISTOR_MOSFETS_2,
+    MOT_VAR_ID_THERMISTOR_MOSFETS_3,
+}
+MotVarId_Instance_BoardThermistor_T;
+
+typedef enum MotVarId_Instance_VMonitor
+{
+    MOT_VAR_ID_VMONITOR_SOURCE,
+    MOT_VAR_ID_VMONITOR_SENSOR,
+    MOT_VAR_ID_VMONITOR_ACCS,
+}
+MotVarId_Instance_VMonitor_T;
+
+// handle via prefix
+typedef enum MotVarId_Instance_MotorThermistor
+{
+  MOT_VAR_ID_THERMISTOR_MOTOR_0,
+  MOT_VAR_ID_THERMISTOR_MOTOR_1,
+  MOT_VAR_ID_THERMISTOR_MOTOR_2,
+  MOT_VAR_ID_THERMISTOR_MOTOR_3,
+}
+MotVarId_Instance_MotorThermistor_T;
+
+
+typedef enum MotVarId_Instance_Prefix
+{
+    MOT_VAR_ID_INSTANCE_PREFIX_BOARD,
+    MOT_VAR_ID_INSTANCE_PREFIX_MOTOR,
+}
+MotVarId_Instance_Prefix_T;
 
 typedef union MotVarId
 {
     struct
     {
         uint16_t NameId             : 4U;
-        uint16_t NamePrefix         : 4U; /* Name's Type */
-        uint16_t NamePrefixPrefix   : 1U; /* Name Type's Type */
-        uint16_t Instance           : 3U; /* Upto 8 Instances Per Prefix Type */
-        // uint16_t InstancePrefix  : 1U; /* Motor or Board, thermistor */
-        uint16_t Alt                : 2U; /* Alternative unit/format */
-        uint16_t Resv               : 2U;
+        uint16_t NameType           : 4U; /* Name's Type - corresponds 1:1 with enum type */
+        uint16_t NameTypeType       : 1U; /* Name Type's Type */
+        uint16_t Instance           : 3U; /* TypeInstance1 - Upto 8 Instances Per Type */
+        uint16_t InstancePrefix     : 1U; /* TypeInstance2 - Restart Instance count for convience, Motor or Board Thermistor */
+        uint16_t Alt                : 3U; /* Alternative unit/format */
     };
+    /* Correspond to host side */
     struct
     {
-        uint16_t NameFull       : 9U; /* name can be determined by nameId + nameId_Type if prefix maps to nameId_Type 1:1 */
-        uint16_t Overload       : 7U;
+        uint16_t NamePart       : 9U; /* name can be determined by nameId + nameId_Type if prefix maps to nameId_Type 1:1 */
+        uint16_t InstancePart   : 4U;
+        uint16_t ResvPart       : 3U;
     };
     uint16_t Word16;
 }

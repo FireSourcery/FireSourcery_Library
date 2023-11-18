@@ -258,18 +258,19 @@ static inline uint32_t MotorController_User_GetMainVersion(const MotorController
 static inline uint8_t MotorController_User_GetMainVersionIndex(const MotorControllerPtr_T p_mc, uint8_t charIndex) { return p_mc->CONFIG.MAIN_VERSION[charIndex]; }
 
 /******************************************************************************/
-/*
+/*!
     Instance Select
+    @return may return null
 */
 /******************************************************************************/
 static inline MotorPtr_T MotorController_User_GetPtrMotor(const MotorControllerPtr_T p_mc, uint8_t motorIndex)
 {
-    return (motorIndex < p_mc->CONFIG.MOTOR_COUNT) ? MotorController_GetPtrMotor(p_mc, motorIndex) : MotorController_GetPtrMotor(p_mc, 0U);
+    return (motorIndex < p_mc->CONFIG.MOTOR_COUNT) ? MotorController_GetPtrMotor(p_mc, motorIndex) : NULL;
 }
 
 static inline Protocol_T * MotorController_User_GetPtrProtocol(const MotorControllerPtr_T p_mc, uint8_t protocolIndex)
 {
-    return (protocolIndex < p_mc->CONFIG.PROTOCOL_COUNT) ? &p_mc->CONFIG.P_PROTOCOLS[protocolIndex] : &p_mc->CONFIG.P_PROTOCOLS[0U];
+    return (protocolIndex < p_mc->CONFIG.PROTOCOL_COUNT) ? &p_mc->CONFIG.P_PROTOCOLS[protocolIndex] : NULL;
 }
 
 static inline Thermistor_T * MotorController_User_GetPtrThermistor(const MotorControllerPtr_T p_mc, uint8_t index)
