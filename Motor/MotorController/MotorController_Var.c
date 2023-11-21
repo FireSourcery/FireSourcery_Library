@@ -706,6 +706,8 @@ static inline MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId
 
         default: break;
     }
+
+    return status;
 }
 
 /******************************************************************************/
