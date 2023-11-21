@@ -46,6 +46,10 @@ void VMonitor_Init(VMonitor_T * p_vMonitor)
     ResetUnitConversion(p_vMonitor);
     p_vMonitor->Status = VMONITOR_STATUS_OK;
     // Linear_ADC_Init(&p_vMonitor->LinearLimits, p_vMonitor->Params.FaultLower_Adcu, p_vMonitor->Params.WarningLower_Adcu, 0, 0);
+    if(p_vMonitor->Params.FaultUpper_Adcu == 0U)        { p_vMonitor->Params.IsMonitorEnable = false; }
+    if(p_vMonitor->Params.FaultLower_Adcu == 0U)        { p_vMonitor->Params.IsMonitorEnable = false; }
+    // if(p_vMonitor->Params.WarningUpper_Adcu == 0U)      { p_vMonitor->Params.IsMonitorEnable = false; }
+    // if(p_vMonitor->Params.WarningLower_Adcu == 0U)      { p_vMonitor->Params.IsMonitorEnable = false; }
 }
 
 /*

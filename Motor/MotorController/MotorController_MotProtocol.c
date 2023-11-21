@@ -103,10 +103,10 @@ static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_Call
             MotorController_User_ProcBlocking_Blocking(p_mc, (MotorController_BlockingId_T)p_rxPacket->CallReq.Arg);
             switch((MotorController_BlockingId_T)p_rxPacket->CallReq.Arg)
             {
-                case MOTOR_CONTROLLER_BLOCKING_ENTER:               status = 0U;        break;
-                case MOTOR_CONTROLLER_BLOCKING_EXIT:                status = 0U;        break;
-                case MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR:    status = 0U;        break;
-                case MOTOR_CONTROLLER_BLOCKING_CALIBRATE_ADC:       status = 0U;        break;
+                case MOTOR_CONTROLLER_BLOCKING_ENTER:               status = MOT_STATUS_OK;        break;
+                case MOTOR_CONTROLLER_BLOCKING_EXIT:                status = MOT_STATUS_OK;        break;
+                case MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR:    status = MOT_STATUS_OK;        break; // calibration status todo
+                case MOTOR_CONTROLLER_BLOCKING_CALIBRATE_ADC:       status = MOT_STATUS_OK;        break;
                 case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:      status = p_mc->NvmStatus;   break;
                 case MOTOR_CONTROLLER_BLOCKING_NVM_READ_ONCE:       status = p_mc->NvmStatus;   break;
                 case MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS:     status = p_mc->NvmStatus;   break;

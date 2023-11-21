@@ -137,17 +137,17 @@ static inline uint32_t r_parallel(uint32_t rNet, uint32_t rParallel)
     return ((uint64_t)rNet * rParallel) / (rNet - rParallel);                 /* 1 / (1/rNet - 1/rParallel) */
 }
 
-/*
+/*!
     1/T = 1/T0 + (1/B)*ln(R/R0)
-    return 1/T
+    @return 1/T
 */
 static inline float steinhart(double b, double t0, double r0, double rTh)
 {
     return (log(rTh / r0) / b) + (1.0F / t0);
 }
 
-/*
-    return R_Thermistor
+/*!
+    @return R_Thermistor
 */
 static inline float invsteinhart(double b, double t0, double r0, double invT_Kelvin)
 {

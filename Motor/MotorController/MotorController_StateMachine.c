@@ -365,6 +365,7 @@ static void Blocking_Proc(MotorControllerPtr_T p_mc)
         case MOTOR_CONTROLLER_BLOCKING_CALIBRATE_ADC:       break;
         // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_SaveOnce_Blocking(p_mc);           break;
         // case MOTOR_CONTROLLER_NVM_BOOT:          p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc);       break;
+        // case MOTOR_CONTROLLER_BLOCKING_END:               break; //todo send end response
         default: break;
     }
 }

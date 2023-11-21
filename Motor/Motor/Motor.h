@@ -422,10 +422,10 @@ typedef struct Motor
 }
 Motor_T, * MotorPtr_T;
 
-#define MOTOR_CONTROL_CYCLES(MilliSeconds, Freq) ((uint32_t)MilliSeconds * (uint32_t)Freq / 1000UL)
-#define MOTOR_CONTROL_TIME_MS(Cycles, Freq) ((uint32_t)Cycles * 1000UL / (uint32_t)Freq)
+#define MOTOR_CONTROL_CYCLES(MilliSeconds, Freq) (uint32_t)((uint64_t)MilliSeconds * Freq / 1000U)
+#define MOTOR_CONTROL_TIME_MS(Cycles, Freq) (uint32_t)((uint64_t)Cycles * 1000U / Freq)
 
-static inline uint32_t _Motor_MillisOf(uint32_t controlCycles) { return controlCycles * 1000 / GLOBAL_MOTOR.CONTROL_FREQ; }
+static inline uint32_t _Motor_MillisOf(uint32_t controlCycles) { return controlCycles * 1000U / GLOBAL_MOTOR.CONTROL_FREQ; }
 static inline uint32_t _Motor_ControlCyclesOf(uint32_t millis) { return millis * GLOBAL_MOTOR.CONTROL_FREQ / 1000; }
 
 /******************************************************************************/

@@ -62,6 +62,16 @@ typedef enum Thermistor_Type
 }
 Thermistor_Type_T;
 
+// // optionally place in configurable Params, or CONFIG
+// typedef struct Thermistor_Coeffs
+// {
+//     uint16_t VInRef_MilliV;
+//     uint32_t R0;
+//     uint16_t T0; /* In Kelvin*/
+//     uint16_t B;
+// }
+// Thermistor_Coeffs_T;
+
 /*
     Set Vin to same decimal precision as ADC_VREF
 */
@@ -76,6 +86,9 @@ typedef struct __attribute__((aligned(2U))) Thermistor_Params
     uint16_t B;
 
     /* Back Up Linear Unit Conversion. Bypass R, alternatively derive from DeltaT, DeltaR */
+    // uint16_t LinearAdcuZeroRef;
+    // uint16_t LinearFactor;
+    // uint8_t LinearDivisor;
     uint16_t LinearT0_Adcu;
     uint16_t LinearT1_Adcu;
     uint8_t LinearT0_DegC;

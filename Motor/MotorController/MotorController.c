@@ -136,7 +136,7 @@ NvMemory_Status_T _MotorController_WriteNvm_Blocking(MotorControllerPtr_T p_mc, 
 */
 NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p_mc)
 {
-    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+    volatile  NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
     MotorPtr_T p_motor;
     Protocol_T * p_protocol;
 

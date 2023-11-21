@@ -328,10 +328,6 @@ extern void MotPacket_VarWriteResp_BuildVarStatus(MotPacket_VarWriteResp_T * p_r
 extern void MotPacket_VarWriteResp_BuildInnerHeader(MotPacket_VarWriteResp_T * p_respPacket, uint16_t idChecksum, uint16_t status16);
 extern uint8_t MotPacket_VarWriteResp_BuildHeader(MotPacket_VarWriteResp_T * p_respPacket, uint8_t varsCount);
 
-// extern uint32_t MotPacket_ReadDataReq_ParseAddress(const MotPacket_DataModeReq_T * p_reqPacket);
-// extern uint32_t MotPacket_ReadDataReq_ParseSize(const MotPacket_DataModeReq_T * p_reqPacket);
-// extern uint32_t MotPacket_WriteDataReq_ParseAddress(const MotPacket_DataModeReq_T * p_reqPacket);
-// extern uint32_t MotPacket_WriteDataReq_ParseSize(const MotPacket_DataModeReq_T * p_reqPacket);
 extern void MotPacket_DataModeReq_Parse(const MotPacket_DataModeReq_T * p_reqPacket, uint32_t * p_addressStart, uint32_t * p_sizeBytes);
 extern uint32_t MotPacket_DataModReq_ParseAddress(const MotPacket_DataModeReq_T * p_reqPacket);
 extern uint32_t MotPacket_DataModReq_ParseSize(const MotPacket_DataModeReq_T * p_reqPacket);

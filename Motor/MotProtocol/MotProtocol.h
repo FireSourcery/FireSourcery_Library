@@ -38,6 +38,15 @@
 #define MOT_PROTOCOL_TIMEOUT_RX         (2000U)     /* Timeout Rx Packet */
 #define MOT_PROTOCOL_TIMEOUT_REQ        (5000U)     /* Timeout Req */
 
+/* Generic common status */
+typedef enum MotProtocol_Status
+{
+    MOT_STATUS_OK = 0x00U,
+    MOT_STATUS_ERROR = 0x01U,
+    MOT_STATUS_RESERVED = 0xFFU,
+}
+MotProtocol_Status_T;
+
 /* For flashloader only */
 typedef struct MotProtocol_SubState
 {
