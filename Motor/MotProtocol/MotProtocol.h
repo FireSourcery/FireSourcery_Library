@@ -39,15 +39,15 @@
 #define MOT_PROTOCOL_TIMEOUT_REQ        (5000U)     /* Timeout Req */
 
 /* Generic common status */
-typedef enum MotProtocol_Status
+typedef enum MotProtocol_GenericStatus
 {
     MOT_STATUS_OK = 0x00U,
     MOT_STATUS_ERROR = 0x01U,
-    MOT_STATUS_RESERVED = 0xFFU,
+    // MOT_STATUS_RESERVED = 0xFFU,
 }
-MotProtocol_Status_T;
+MotProtocol_GenericStatus_T;
 
-/* For flashloader only */
+/* For Stateful DataMode Read/Write */
 typedef struct MotProtocol_SubState
 {
     uint8_t StateIndex;
@@ -58,12 +58,12 @@ typedef struct MotProtocol_SubState
     // uint16_t WriteModeStatus;
     uint8_t OnceBuffer[8U];
 }
-MotProtocol_SubState_T;
+MotProtocol_DataModeState_T;
 
-static inline void MotProtocol_ResetSubState(MotProtocol_SubState_T * p_subState) { p_subState->StateIndex = 0U; }
+static inline void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState) { p_subState->StateIndex = 0U; }
 
 extern void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, Protocol_TxSyncId_T txId);
-extern void MotProtocol_ResetSubState(MotProtocol_SubState_T * p_subState);
+extern void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState);
 extern Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, size_t rxCount);
 
 #endif

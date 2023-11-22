@@ -30,6 +30,7 @@
 /******************************************************************************/
 #include "QFrac16.h"
 
+/*! Resolution: 1024 steps per revolution */
 const qfrac16_t QFRAC16_SINE_90_TABLE[QFRAC16_SINE_90_TABLE_LENGTH] =
 {
     0, 201, 402, 603, 804, 1005, 1206, 1406,
@@ -67,9 +68,10 @@ const qfrac16_t QFRAC16_SINE_90_TABLE[QFRAC16_SINE_90_TABLE_LENGTH] =
 };
 
 /*
+    sin_quadrant_265
     0b xx11 1111 11xx xxxx
     Use 8 most significant digits of 90 degree bound.
-    Remove sign / 180 degree bit, 90 degree bit, and 6 lsb.
+    Removes sign / 180 degree bit, 90 degree bit, and 6 lsb.
 */
 static inline qfrac16_t sin90(qangle16_t theta)
 {
@@ -123,7 +125,7 @@ void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16_t theta)
     return; /* (*p_cos, *p_sin) */
 }
 
-uint16_t qfrac16_vectormagnitude(qfrac16_t x, qfrac16_t y)
+uint16_t qfrac16_vector_magnitude(qfrac16_t x, qfrac16_t y)
 {
     return q_sqrt((int32_t)x * x + (int32_t)y * y);
 }
@@ -132,7 +134,7 @@ uint16_t qfrac16_vectormagnitude(qfrac16_t x, qfrac16_t y)
     Vector Circle Limit
     @return sqrt(x^2 + y^2) if limited
 */
-uint16_t qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax)
+uint16_t qfrac16_vector_limit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax)
 {
     uint32_t magnitudeMaxSquared = (int32_t)magnitudeMax * magnitudeMax;
     uint32_t vectorMagnitudeSquared = ((int32_t)(*p_x) * (*p_x)) + ((int32_t)(*p_y) * (*p_y));
@@ -155,7 +157,7 @@ uint16_t qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitu
 */
 qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
 {
-    int32_t mask = (y >> QFRAC16_N_FRAC_BITS);
+    int32_t mask = (y >> QFRAC16_N_BITS);
     int32_t yAbs = (y + mask) ^ mask;
     int32_t r, r_3, angle;
 

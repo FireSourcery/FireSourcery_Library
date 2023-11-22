@@ -92,6 +92,11 @@ static inline bool CheckTransitionTable(StateMachine_T * p_stateMachine, statema
 //     return p_active->P_TRANSITION_TABLE[inputId](p_context, inputValue);
 // }
 
+// static inline StateMachine_Transition_T TransitionFunction(StateMachine_State_T * p_active, statemachine_inputid_t inputId)
+// {
+//     return p_active->P_TRANSITION_TABLE[inputId];
+// }
+
 /*!
     Transistion Function maps current state to new state for each input
     private helper without input error checking

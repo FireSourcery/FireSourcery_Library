@@ -67,7 +67,7 @@ static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 
         if(p_req->PROC_EXT != 0U)
         {
-            // if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_SUBSTATE_BUFFER); }
+            // if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_REQ_STATE_BUFFER); }
             if(p_req->SYNC.RX_ACK == true)     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC; }
             else                             { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_EXT; }
 

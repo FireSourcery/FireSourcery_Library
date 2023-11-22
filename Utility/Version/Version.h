@@ -22,19 +22,40 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Config.h
+    @file   Version.h
     @author FireSourcery
     @brief
     @version V0
 */
 /******************************************************************************/
-#ifndef CONFIG_PROTOCOL_H
-#define CONFIG_PROTOCOL_H
+#ifndef VERSION_FIRE_SOURCERY_H
+#define VERSION_FIRE_SOURCERY_H
 
-// #if     defined(CONFIG_PROTOCOL_XCVR_ENABLE)
-// // #elif     defined(CONFIG_PROTOCOL_XCVR_SERIAL)
-// #else
-//     // #define CONFIG_PROTOCOL_XCVR_ENABLE
-// #endif
+#include <stdint.h>
+
+// class Version {
+//   const Version(int? value) : value = value ?? 0;
+//   // Version.list(List<int> chars, [Endian endian = Endian.little]);
+//   final int value;
+
+//   List<int> get charsMsb => charViewOf(value, Endian.big);
+//   List<int> get charsLsb => charViewOf(value, Endian.little);
+//   // (int, int, int, int) get record => (charsLsb[0], charsLsb[1], charsLsb[2], charsLsb[3]);
+
+//   @override
+//   String toString([Endian endian = Endian.little]) => charViewOf(value, endian).toString();
+
+//   static List<int> charViewOf(int rawValue, [Endian endian = Endian.little]) => Uint8List(4)..buffer.asByteData().setUint32(0, rawValue, endian);
+// }
+
+#include <stdint.h>
+
+typedef union Version
+{
+    uint8_t Bytes[4U];
+    char Chars[4U];
+    uint32_t Word32;
+}
+Version_T;
 
 #endif

@@ -77,17 +77,17 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
             /* (RxCount == RxMeta.Length) => (xcvrRxLimit == 0), when rxStatus == PROTOCOL_RX_CODE_WAIT_PACKET erroneously i.e. received full packet without completion status */
         }
         /* PacketLength is unkown */
-        /* RX_LENGTH_INDEX > RX_LENGTH_MIN. Check in order, incase another length is determined by another property */
         else if(p_protocol->RxCount < p_protocol->p_Specs->RX_LENGTH_MIN)   { nextRxIndex = p_protocol->p_Specs->RX_LENGTH_MIN; }
-        else if(p_protocol->RxCount < p_protocol->p_Specs->RX_REQ_ID_INDEX) { nextRxIndex = p_protocol->p_Specs->RX_REQ_ID_INDEX + 1U; }
-        else if(p_protocol->RxCount < p_protocol->p_Specs->RX_LENGTH_INDEX) { nextRxIndex = p_protocol->p_Specs->RX_LENGTH_INDEX + 1U; }
+        /* RX_LENGTH_INDEX > RX_LENGTH_MIN. Check for length determined by another property */
+        // else if(p_protocol->RxCount < p_protocol->p_Specs->RX_REQ_ID_INDEX) { nextRxIndex = p_protocol->p_Specs->RX_REQ_ID_INDEX + 1U; }
+        // else if(p_protocol->RxCount < p_protocol->p_Specs->RX_LENGTH_INDEX) { nextRxIndex = p_protocol->p_Specs->RX_LENGTH_INDEX + 1U; }
         else                                                                { nextRxIndex = p_protocol->RxCount + 1U; }
 
         if (nextRxIndex > p_protocol->p_Specs->RX_LENGTH_MAX) { rxStatus = PROTOCOL_RX_CODE_ERROR_META; break; }
         /* Copy from Xcvr buffer to Protocol buffer, up to xcvrRxLimit */
         p_protocol->RxCount += Xcvr_RxMax(&p_protocol->Xcvr, &p_protocol->CONFIG.P_RX_PACKET_BUFFER[p_protocol->RxCount], nextRxIndex - p_protocol->RxCount);
 
-        if(p_protocol->RxCount == nextRxIndex) //(xcvrRxCount == xcvrRxLimit)
+        if(p_protocol->RxCount == nextRxIndex) /* (xcvrRxCount == xcvrRxLimit) */
         {
             /* Implicitly: (xcvrRxCount != 0), (xcvrRxLimit != 0). (RxCount >= RX_LENGTH_MIN)  */
             /* returns PROTOCOL_RX_CODE_AWAIT_PACKET on successful set of meta data *//* more bytes in Xcvr Buffer, continue while loop */
@@ -293,7 +293,7 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
 
                         if(p_protocol->p_ReqActive->PROC_EXT != 0U)
                         {
-                            if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_SUBSTATE_BUFFER); }
+                            if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_REQ_STATE_BUFFER); }
                             // if((p_protocol->p_ReqActive->PROC == 0U) || (p_protocol->p_ReqActive->SYNC.RX_ACK == false || (p_protocol->TxLength == 0U)))
                             if(reqStatus != PROTOCOL_REQ_CODE_AWAIT_RX_SYNC) /* Is there a better way to check this? */
                             {

@@ -171,7 +171,7 @@ static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_
 }
 
 /* unitize, q d proportional */
-static inline uint16_t foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax) { return qfrac16_vectorlimit(p_d, p_q, vectorMax); }
+static inline uint16_t foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax) { return qfrac16_vector_limit(p_d, p_q, vectorMax); }
 
 /* limit, prioritize maintaining d */
 static inline void foc_circlelimit_dmax(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax, qfrac16_t dMax)

@@ -114,9 +114,9 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc)
 }
 
 /* [0:32767] <=> [0:1] */
-static inline uint16_t FOC_GetIMagnitude(const FOC_T * p_foc)     { return qfrac16_vectormagnitude(p_foc->Ialpha, p_foc->Ibeta); }
-static inline uint16_t FOC_GetVMagnitude(const FOC_T * p_foc)     { return qfrac16_vectormagnitude(p_foc->Valpha, p_foc->Vbeta); }
-static inline uint16_t FOC_GetIMagnitude_Idq(const FOC_T * p_foc) { return qfrac16_vectormagnitude(p_foc->Id, p_foc->Iq); }
+static inline uint16_t FOC_GetIMagnitude(const FOC_T * p_foc)     { return qfrac16_vector_magnitude(p_foc->Ialpha, p_foc->Ibeta); }
+static inline uint16_t FOC_GetVMagnitude(const FOC_T * p_foc)     { return qfrac16_vector_magnitude(p_foc->Valpha, p_foc->Vbeta); }
+static inline uint16_t FOC_GetIMagnitude_Idq(const FOC_T * p_foc) { return qfrac16_vector_magnitude(p_foc->Id, p_foc->Iq); }
 
 /* [-32768:32767] <=> [-1:1] */
 static inline qfrac16_t FOC_GetIPhase(const FOC_T * p_foc) { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }

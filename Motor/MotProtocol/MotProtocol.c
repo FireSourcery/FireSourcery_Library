@@ -61,20 +61,23 @@ void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, P
     *p_txSize = MotPacket_Sync_Build(p_txPacket, syncChar);
 }
 
+// static inline uint8_t MotPacket_GetTotalLength(const MotPacket_T * p_packet, uint8_t rxCount)
+// { return (rxCount > 2U) ? 0U : p_packet->Header.Length; }
+
 Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, size_t rxCount)
 {
     Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_AWAIT_PACKET;
 
-    if(rxCount > MOT_PACKET_LENGTH_BYTE_INDEX) /* length index is valid */
+    if(rxCount > MOT_PACKET_LENGTH_INDEX) /* length index is valid */
     {
-        if(rxCount == MotPacket_ParseTotalLength(p_rxPacket)) /* Packet Complete */
+        if(rxCount == MotPacket_GetTotalLength(p_rxPacket)) /* Packet Complete */
         {
             p_rxMeta->ReqId = p_rxPacket->Header.Id;
             rxCode = (MotPacket_CheckChecksum(p_rxPacket) == true) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_ERROR_DATA;
         }
         else /* Packet Length Known */
         {
-            p_rxMeta->Length = MotPacket_ParseTotalLength(p_rxPacket);
+            p_rxMeta->Length = MotPacket_GetTotalLength(p_rxPacket);
         }
     }
     else if(rxCount >= MOT_PACKET_LENGTH_MIN) /* Check Packet is Sync type */

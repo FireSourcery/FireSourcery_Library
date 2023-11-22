@@ -111,19 +111,30 @@ static inline bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, 
 /* Blocking */
 /******************************************************************************/
 static inline void MotorController_User_ProcBlocking_Blocking(MotorControllerPtr_T p_mc, MotorController_BlockingId_T opId) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BLOCKING, opId); }
-static inline void MotorController_User_EnterBlockingState(MotorControllerPtr_T p_mc)   { MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_ENTER); }
-static inline void MotorController_User_ExitBlockingState(MotorControllerPtr_T p_mc)    { MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_EXIT); }
+static inline bool MotorController_User_EnterBlockingState(MotorControllerPtr_T p_mc)
+{
+    MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_ENTER);
+    return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_BLOCKING);
+}
+
+static inline bool MotorController_User_ExitBlockingState(MotorControllerPtr_T p_mc)
+{
+    MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_EXIT);
+    return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_PARK);
+}
 
 /*! @param[in] opId MOTOR_CONTROLLER_NVM_BOOT, MOTOR_CONTROLLER_NVM_WRITE_ONCE, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS */
 static inline NvMemory_Status_T _MotorController_User_SaveNvm_Blocking(MotorControllerPtr_T p_mc, MotorController_BlockingId_T opId)
 {
     MotorController_User_ProcBlocking_Blocking(p_mc, opId);
-    return p_mc->NvmStatus; // all nvm status
+    return p_mc->NvmStatus;
 }
 
 static inline NvMemory_Status_T MotorController_User_SaveParameters_Blocking(MotorControllerPtr_T p_mc)
 {
-   return _MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);
+    return _MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);
+    // return StateMachine_ProcAsyncInput(p_mc, MCSM_INPUT_BLOCKING, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);
+    // return p_mc->NvmStatus;
 }
 
 /******************************************************************************/

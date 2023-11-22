@@ -150,7 +150,7 @@ static void SaveNvm_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t 
 // }
 
 //todo stateful req
-// static void InitUnits_ProcReqRespExt(MotProtocol_SubState_T * p_substate, MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize)
+// static void InitUnits_ProcReqRespExt(MotProtocol_DataModeState_T * p_substate, MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t * p_txSize, const uint8_t * p_rxPacket, size_t rxSize)
 // {
 //      (void)rxSize;
 //     switch(p_substate->StateId)

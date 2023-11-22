@@ -36,9 +36,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define QFRAC16_N_FRAC_BITS (15U) /*!< Q1.15, 15 fractional bits, shift mul/div by 32768 */
+#define QFRAC16_N_BITS (15U)   /*!< Q1.15, 15 fractional bits, shift mul/div by 32768 */
 
-typedef int16_t qfrac16_t;         /*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
+typedef int16_t qfrac16_t;          /*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
+
+typedef int32_t qfrac16_sat32_t;    /*!< Q17.15 */
 
 static const qfrac16_t QFRAC16_MAX = INT16_MAX; /*!< (32767) */
 static const qfrac16_t QFRAC16_MIN = INT16_MIN; /*!< (-32768) */
@@ -65,8 +67,7 @@ static const int32_t QFRAC16_3PI_DIV_4      = 0x00012D97; /* Over saturated */
 #define QFRAC16_FLOAT_MIN (-1.0F)
 #define QFRAC16_FLOAT(x) ((qfrac16_t)(((x) < QFRAC16_FLOAT_MAX) ? (((x) >= QFRAC16_FLOAT_MIN) ? ((x)*32768.0F) : INT16_MIN) : INT16_MAX))
 
-static inline qfrac16_t qfrac16(int16_t num, int32_t max) { return (qfrac16_t)(((int32_t)num << QFRAC16_N_FRAC_BITS) / max); }
-static inline qfrac16_t qfrac16_convert(int16_t num, int32_t max) { return qfrac16(num, max); }
+static inline qfrac16_t qfrac16(int16_t num, int32_t max) { return (qfrac16_t)(((int32_t)num << QFRAC16_N_BITS) / max); }
 static inline qfrac16_t qfrac16_sat(int32_t qfrac) { return math_clamp(qfrac, -QFRAC16_MAX, QFRAC16_MAX); }
 
 /*!
@@ -83,7 +84,7 @@ static inline qfrac16_t qfrac16_sat(int32_t qfrac) { return math_clamp(qfrac, -Q
 */
 static inline int32_t qfrac16_mul(int32_t factor, int32_t frac)
 {
-    return (((int32_t)factor * (int32_t)frac) >> QFRAC16_N_FRAC_BITS);
+    return (((int32_t)factor * (int32_t)frac) >> QFRAC16_N_BITS);
 }
 
 /*!
@@ -111,7 +112,7 @@ static inline qfrac16_t qfrac16_mul_sat(int32_t factor, int32_t frac)
 */
 static inline int32_t qfrac16_div(int16_t dividend, int32_t divisor)
 {
-    return (((int32_t)dividend << QFRAC16_N_FRAC_BITS) / (int32_t)divisor);
+    return (((int32_t)dividend << QFRAC16_N_BITS) / (int32_t)divisor);
 }
 
 /*!
@@ -129,7 +130,7 @@ static inline qfrac16_t qfrac16_abs(qfrac16_t x)
 
 static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
 {
-    return q_sqrt((int32_t)x << QFRAC16_N_FRAC_BITS);
+    return q_sqrt((int32_t)x << QFRAC16_N_BITS);
 }
 
 /******************************************************************************/
@@ -139,24 +140,23 @@ static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
 /******************************************************************************/
 typedef int16_t qangle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
 
-#define QFRAC16_SINE_90_TABLE_LENGTH     (256U)
-#define QFRAC16_SINE_90_TABLE_LSB         (6U)    /*!< Insignificant bits, shifted away*/
-extern const qfrac16_t QFRAC16_SINE_90_TABLE[QFRAC16_SINE_90_TABLE_LENGTH];    /*! Resolution: 1024 steps per revolution */
+#define QFRAC16_SINE_90_TABLE_LENGTH    (256U)
+#define QFRAC16_SINE_90_TABLE_LSB       (6U)    /*!< Insignificant bits, shifted away*/
 
 static const qangle16_t QANGLE16_0 = 0;         /*! 0 */
-static const qangle16_t QANGLE16_30 = 0x1555;     /*! 5461 */
-static const qangle16_t QANGLE16_60 = 0x2AAA;     /*! 10922 */
-static const qangle16_t QANGLE16_90 = 0x4000;     /*! 16384 */
-static const qangle16_t QANGLE16_120 = 0x5555;    /*! 21845 */
-static const qangle16_t QANGLE16_150 = 0x6AAA;    /*! 27306 */
-static const qangle16_t QANGLE16_180 = 0x8000;    /*! 32768, -32768, 180 == -180 */
-static const qangle16_t QANGLE16_210 = 0x9555;    /*! 38229 */
-static const qangle16_t QANGLE16_240 = 0xAAAA;    /*! 43690, -21845 */
-static const qangle16_t QANGLE16_270 = 0xC000;    /*! 49152, -16384, 270 == -90 */
+static const qangle16_t QANGLE16_30 = 0x1555;   /*! 5461 */
+static const qangle16_t QANGLE16_60 = 0x2AAA;   /*! 10922 */
+static const qangle16_t QANGLE16_90 = 0x4000;   /*! 16384 */
+static const qangle16_t QANGLE16_120 = 0x5555;  /*! 21845 */
+static const qangle16_t QANGLE16_150 = 0x6AAA;  /*! 27306 */
+static const qangle16_t QANGLE16_180 = 0x8000;  /*! 32768, -32768, 180 == -180 */
+static const qangle16_t QANGLE16_210 = 0x9555;  /*! 38229 */
+static const qangle16_t QANGLE16_240 = 0xAAAA;  /*! 43690, -21845 */
+static const qangle16_t QANGLE16_270 = 0xC000;  /*! 49152, -16384, 270 == -90 */
 
 #define QANGLE16_QUADRANT_MASK (0xC000U)
 
-typedef enum qangle16_quadrant_tag
+typedef enum qangle16_quadrant
 {
     QANGLE16_QUADRANT_I,        /* 0_90 */
     QANGLE16_QUADRANT_II,       /* 90_180 */
@@ -165,7 +165,7 @@ typedef enum qangle16_quadrant_tag
 }
 qangle16_quadrant_t;
 
-/* Mechanical Angle */
+/* e.g. Mechanical Angle */
 static inline qangle16_quadrant_t qangle16_quadrant(qangle16_t theta)
 {
     qangle16_quadrant_t quadrant;
@@ -179,12 +179,6 @@ static inline qangle16_quadrant_t qangle16_quadrant(qangle16_t theta)
     }
     return quadrant;
 }
-
-/* Previous andgle and new angle changed a full cycle */
-// static inline bool qangle16_cycle(qangle16_t theta0, qangle16_t theta1)
-// {
-//     // return ((theta0 < 0) && (theta1 > 0));
-// }
 
 static inline bool qangle16_cycle2(qangle16_t theta0, qangle16_t theta1)
 {
@@ -200,8 +194,8 @@ static inline bool qangle16_cycle4(qangle16_t theta0, qangle16_t theta1)
 extern qfrac16_t qfrac16_sin(qangle16_t theta);
 extern qfrac16_t qfrac16_cos(qangle16_t theta);
 extern void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16_t theta);
-extern uint16_t qfrac16_vectormagnitude(qfrac16_t x, qfrac16_t y);
-extern uint16_t qfrac16_vectorlimit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax);
+extern uint16_t qfrac16_vector_magnitude(qfrac16_t x, qfrac16_t y);
+extern uint16_t qfrac16_vector_limit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax);
 extern qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x);
 
 #endif

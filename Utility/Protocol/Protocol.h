@@ -34,16 +34,13 @@
 #include "Config.h"
 //#include "Datagram.h"
 
-// #if defined(CONFIG_PROTOCOL_XCVR_ENABLE)
 #include "Peripheral/Xcvr/Xcvr.h"
-// #endif
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 
-
-typedef uint8_t protocol_reqid_t; /* Index into P_REQ_TABLE. child module define */
+typedef uint8_t protocol_reqid_t; /* Index into P_REQ_TABLE. Child module define */
 
 /******************************************************************************/
 /*!
@@ -79,11 +76,11 @@ typedef enum Protocol_RxCode
 }
 Protocol_RxCode_T;
 
-//Control Meta
+/* Parse with PARSE_RX_META */
 typedef struct Protocol_HeaderMeta
 {
-    protocol_reqid_t ReqId;    /* Parse with PARSE_RX_META. protocol_reqid_t values defined by child module. Index into P_REQ_TABLE */
-    size_t Length;             /* Parse with PARSE_RX_META. Rx Packet Total Length. */
+    protocol_reqid_t ReqId;    /* protocol_reqid_t values defined by child module. Index into P_REQ_TABLE */
+    size_t Length;             /* Rx Packet Total Length. */
 }
 Protocol_HeaderMeta_T;
 
@@ -322,7 +319,7 @@ typedef const struct Protocol_Config
     uint8_t * const P_TX_PACKET_BUFFER;
     const uint8_t PACKET_BUFFER_LENGTH;                         /* Must be greater than Specs RX_LENGTH_MAX */
     void * const P_APP_INTERFACE;                               /* User app context for packet processing */
-    void * const P_SUBSTATE_BUFFER;                             /* Child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context referred by specs */
+    void * const P_REQ_STATE_BUFFER;                            /* Child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context referred by specs */
     const Protocol_Specs_T * const * const PP_SPECS_TABLE;      /* Bound and verify specs selection. Pointer to table of pointers to Specs, Specs not necessarily in a contiguous array */
     const uint8_t SPECS_COUNT;
     const volatile uint32_t * const P_TIMER;
@@ -335,8 +332,8 @@ typedef struct Protocol
     const Protocol_Config_T CONFIG;
     Protocol_Params_T Params;
     Xcvr_T Xcvr;
-    const Protocol_Specs_T * p_Specs;
-    //    Datagram_T Datagram; //configurable broadcast
+    const Protocol_Specs_T * p_Specs; /* Active protocol */
+    // Datagram_T Datagram; // configurable broadcast
 
     /* Rx Parse Packet Meta */
     Protocol_HeaderMeta_T RxMeta;
@@ -381,7 +378,7 @@ Protocol_T;
         .P_TX_PACKET_BUFFER     = p_TxBuffer,                    \
         .PACKET_BUFFER_LENGTH   = PacketBufferLength,            \
         .P_APP_INTERFACE        = p_AppInterface,                \
-        .P_SUBSTATE_BUFFER      = p_SubstateBuffer,              \
+        .P_REQ_STATE_BUFFER      = p_SubstateBuffer,              \
         .PP_SPECS_TABLE         = p_SpecsTable,                  \
         .SPECS_COUNT            = SpecsCount,                    \
         .P_TIMER                = p_Timer,                       \

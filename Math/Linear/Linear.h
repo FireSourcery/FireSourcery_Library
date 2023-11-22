@@ -48,6 +48,7 @@ typedef struct Linear
     int32_t SlopeFactor;
     int32_t SlopeDivisor;
 #endif
+    //todo remove in favor of 2 conversion structs when needed
     int32_t XOffset;
     int32_t YOffset;
     int32_t XReference;        /* f([0:XRef]) => frac16(x)[0:65536] *//* User Info only for now */
@@ -123,6 +124,7 @@ static inline int32_t Linear_InvFunction(const Linear_T * p_linear, int32_t y)
 #endif
 }
 
+//todo remove for Fixed
 /******************************************************************************/
 /*!
     @brief Frac16 with division

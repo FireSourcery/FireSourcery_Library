@@ -349,7 +349,10 @@ static const StateMachine_State_T STATE_NEUTRAL =
 
 /******************************************************************************/
 /*!
-    @brief  Thread blocking functions, and 'blocking' operations
+    @brief Blocking and alike functions
+        True thread blocking functions, and extended async operations
+        Nvm functions block.
+        Calibration routines set status id upon completion.
 */
 /******************************************************************************/
 static void Blocking_Entry(MotorControllerPtr_T p_mc) { (void)p_mc; }
@@ -358,14 +361,14 @@ static void Blocking_Proc(MotorControllerPtr_T p_mc)
 {
     switch(p_mc->BlockingState)
     {
-        case MOTOR_CONTROLLER_BLOCKING_ENTER: break;
+        case MOTOR_CONTROLLER_BLOCKING_ENTER:               break;
         case MOTOR_CONTROLLER_BLOCKING_EXIT:                break;
         case MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS:     break;
         case MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR:    break;
         case MOTOR_CONTROLLER_BLOCKING_CALIBRATE_ADC:       break;
         // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_SaveOnce_Blocking(p_mc);           break;
-        // case MOTOR_CONTROLLER_NVM_BOOT:          p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc);       break;
-        // case MOTOR_CONTROLLER_BLOCKING_END:               break; //todo send end response
+        // case MOTOR_CONTROLLER_NVM_BOOT:                  p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc);       break;
+        // case MOTOR_CONTROLLER_BLOCKING_END:              break; //todo send end response
         default: break;
     }
 }
@@ -379,14 +382,16 @@ static StateMachine_State_T * Blocking_InputBlocking_Blocking(MotorControllerPtr
     switch(blockingId)
     {
         case MOTOR_CONTROLLER_BLOCKING_ENTER: break;
-        case MOTOR_CONTROLLER_BLOCKING_EXIT:                p_nextState = &STATE_PARK;  break;
-        case MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS:     p_mc->NvmStatus = MotorController_SaveParameters_Blocking(p_mc);    break;     /* Flash Write will disable interrupts */
-        case MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR:    Motor_User_CalibrateSensor(p_motor);                                break; // todo for each MotorController_CalibrateSensorAll_Blocking(p_mc);
+        case MOTOR_CONTROLLER_BLOCKING_EXIT:                p_nextState = &STATE_PARK;  break; //todo check calibration complete
+
+        case MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR:    Motor_User_CalibrateSensor(p_motor);                                break;
         case MOTOR_CONTROLLER_BLOCKING_CALIBRATE_ADC:       MotorController_CalibrateAdc(p_mc);                                 break;
 
+        /* NvM function will block + disable interrupts */
+        case MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS:     p_mc->NvmStatus = MotorController_SaveParameters_Blocking(p_mc);    break;
         // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_SaveOnce_Blocking(p_mc);          break;
+        // case MOTOR_CONTROLLER_BLOCKING_NVM_READ_ONCE:   p_mc->NvmStatus = MotorController_ReadOnce_Blocking(p_mc);          break;
         // buffered read, send to protocol
-
         // case MOTOR_CONTROLLER_NVM_BOOT:          p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc);       break;
         default: break;
     }
@@ -458,8 +463,7 @@ static StateMachine_State_T * Servo_InputServo(MotorControllerPtr_T p_mc, statem
     switch(servoId)
     {
         case 0:  break;
-
-        default:   break;
+        default: break;
     }
 }
 
@@ -480,7 +484,6 @@ static const StateMachine_State_T STATE_SERVO =
     .LOOP               = (StateMachine_Function_T)Servo_Proc,
 };
 #endif
-
 
 /******************************************************************************/
 /*!

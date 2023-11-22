@@ -172,4 +172,8 @@ static inline bool Timer_OneShot_Poll(Timer_T * p_timer)
 
 static inline void Timer_OneShot_Init(Timer_T * p_timer) { p_timer->IsOneShot = true; p_timer->Period = 0U; }
 
+// extern bool Timer_Poll(Timer_T * p_timer);
+// extern bool Timer_Periodic_Poll(Timer_T * p_timer);
+// extern bool Timer_OneShot_Poll(Timer_T * p_timer);
+
 #endif /* TIMER_H */

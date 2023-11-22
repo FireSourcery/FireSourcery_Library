@@ -567,14 +567,13 @@ static inline void Motor_SetFeedbackMode(MotorPtr_T p_motor, Motor_FeedbackMode_
     V of Speed
     VPhase approximation using Kv and Speed
         = Speed_FracS16 * VSpeedRef_Rpm / SpeedFeedbackRef_Rpm
+        // VSpeedRef_Rpm =
     User sets lower VSpeedRef_Rpm to ensure not match to higher speed
     Saturated output for use as input into next operation
 */
 static inline int16_t Motor_GetVSpeed_Frac16(MotorPtr_T p_motor)
 {
     return Linear_Frac16_Signed(&p_motor->UnitsVSpeed, p_motor->Speed_FracS16);
-    // return Linear_Function_Sat(&p_motor->UnitsVSpeed, p_motor->Speed_FracS16);
-    // return Linear_Function_FracS16(&p_motor->UnitsVSpeed, p_motor->Speed_FracS16);
 }
 
 /******************************************************************************/

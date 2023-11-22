@@ -58,10 +58,16 @@ static inline int32_t Motor_User_GetIPhase_Frac16(const MotorPtr_T p_motor) { re
 static inline int32_t Motor_User_GetIPhase_UFrac16(const MotorPtr_T p_motor) { return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_UFrac16, 0U); }
 
 /*
-    BEMF during freewheel or VOut during active control
+    Sampled BEMF during freewheel or VOut during active control
 */
 static inline int32_t Motor_User_GetVPhase_Frac16(const MotorPtr_T p_motor) { return Motor_LogicalDirectionCmd(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_Frac16, 0U)); }
 static inline int32_t Motor_User_GetVPhase_UFrac16(const MotorPtr_T p_motor) { return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_UFrac16, 0U); }
+
+/*
+
+*/
+static inline int32_t Motor_User_GetVSpeed_Frac16(const MotorPtr_T p_motor) { return Motor_GetVSpeed_Frac16(p_motor); }
+static inline int32_t Motor_User_GetVSpeed_UFrac16(const MotorPtr_T p_motor) { return math_abs(Motor_GetVSpeed_Frac16(p_motor)); }
 
 /* Ideal electrical power [0:49152] <=> [0:1.5] */
 static inline int32_t Motor_User_GetElectricalPower_UFrac16(const MotorPtr_T p_motor) { return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetElectricalPower_UFrac16, 0U); }

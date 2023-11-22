@@ -60,13 +60,13 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint8_t 
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
     p_linear->Slope             = (((uint64_t)adcVRef_MilliV * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 1000U; /* (ADC_VREF*(R1 + R2) << 16)/(ADC_MAX*R2) */
-    // p_linear->Slope             = math_muldiv64_unsigned(adcVRef_MilliV, (r1 + r2), divisor); /* (ADC_VREF*(R1 + R2) << 16)/(ADC_MAX*R2) */
+    // p_linear->Slope             = math_muldiv64_unsigned((r1 + r2), math_muldiv64_unsigned(adcVRef_MilliV, ((uint32_t)1UL << LINEAR_VOLTAGE_SHIFT), ((uint32_t)1UL << adcBits)), r2 * 1000U); /* (ADC_VREF*(R1 + R2) << 16)/(ADC_MAX*R2) */
     p_linear->SlopeShift        = LINEAR_VOLTAGE_SHIFT;
-    p_linear->InvSlope          = ((uint64_t)r2 << LINEAR_VOLTAGE_SHIFT) / adcVRef_MilliV * 1000U / (r1 + r2); /* (R2 << 16)/(ADC_VREF*(R1 + R2)) */
+    p_linear->InvSlope          = ((uint64_t)r2 << LINEAR_VOLTAGE_SHIFT) * 1000U / adcVRef_MilliV / (r1 + r2); /* (R2 << 16)/(ADC_VREF*(R1 + R2)) */
     p_linear->InvSlopeShift     = LINEAR_VOLTAGE_SHIFT - adcBits;
 #elif defined (CONFIG_LINEAR_DIVIDE_NUMERICAL)
-    p_linear->SlopeFactor       = adcVRef_MilliV * (r1 + r2) / 1000U;           /* (ADC_VREF*(R1+R2)) */
-    p_linear->SlopeDivisor      = (((uint32_t)1UL << adcBits) - 1U) * r2;       /* (ADC_MAX*R2) */
+    p_linear->SlopeFactor       = (uint64_t)adcVRef_MilliV * (r1 + r2) / 1000U;           /* (ADC_VREF*(R1+R2)) */
+    p_linear->SlopeDivisor      = (((uint64_t)1UL << adcBits) - 1U) * r2;       /* (ADC_MAX*R2) */
 #endif
     p_linear->XOffset             = 0;
     p_linear->YOffset             = 0;
@@ -76,12 +76,13 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint8_t 
     p_linear->DeltaY             = vInRef - p_linear->YOffset;
 }
 
+/* round up .5 volts */
 uint16_t Linear_Voltage_CalcAdcuInput_V(const Linear_T * p_linear, uint16_t volts)
 {
-    return Linear_Voltage_CalcAdcu_V(p_linear, volts) + Linear_Voltage_CalcAdcu_V(p_linear, 1U);
+    return Linear_Voltage_CalcAdcu_V(p_linear, volts) + Linear_Voltage_CalcAdcu_V(p_linear, 1U) / 2U;
 }
 
 uint16_t Linear_Voltage_CalcAdcuInput_MilliV(const Linear_T * p_linear, uint32_t milliV)
 {
-    return Linear_Voltage_CalcAdcu_MilliV(p_linear, milliV) + Linear_Voltage_CalcAdcu_MilliV(p_linear, 1U);
+    return Linear_Voltage_CalcAdcu_MilliV(p_linear, milliV) + Linear_Voltage_CalcAdcu_MilliV(p_linear, 1U) / 2U;
 }
