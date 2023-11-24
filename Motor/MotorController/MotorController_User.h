@@ -170,9 +170,9 @@ static inline MotorController_FaultFlags_T MotorController_User_GetFaultFlags(co
 static inline uint16_t MotorController_User_GetAdcu(const MotorControllerPtr_T p_mc, MotAnalog_Channel_T adcChannel)     { return p_mc->AnalogResults.Channels[adcChannel]; }
 static inline uint8_t MotorController_User_GetAdcu_Msb8(const MotorControllerPtr_T p_mc, MotAnalog_Channel_T adcChannel) { return MotorController_User_GetAdcu(p_mc, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
 
-static inline uint32_t MotorController_User_GetVSource(const MotorControllerPtr_T p_mc, uint16_t vScalar)                { return VMonitor_ConvertToScalarV(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu, vScalar); }
-static inline uint32_t MotorController_User_GetVSense(const MotorControllerPtr_T p_mc, uint16_t vScalar)                 { return VMonitor_ConvertToScalarV(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu, vScalar); }
-static inline uint32_t MotorController_User_GetVAccs(const MotorControllerPtr_T p_mc, uint16_t vScalar)                  { return VMonitor_ConvertToScalarV(&p_mc->VMonitorAccs, p_mc->AnalogResults.VAccs_Adcu, vScalar); }
+static inline uint32_t MotorController_User_GetVSource_V(const MotorControllerPtr_T p_mc, uint16_t vScalar)                { return VMonitor_ConvertToScalarV(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu, vScalar); }
+static inline uint32_t MotorController_User_GetVSense_V(const MotorControllerPtr_T p_mc, uint16_t vScalar)                 { return VMonitor_ConvertToScalarV(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu, vScalar); }
+static inline uint32_t MotorController_User_GetVAccs_V(const MotorControllerPtr_T p_mc, uint16_t vScalar)                  { return VMonitor_ConvertToScalarV(&p_mc->VMonitorAccs, p_mc->AnalogResults.VAccs_Adcu, vScalar); }
 
 static inline uint16_t MotorController_User_GetHeatPcb_Adcu(const MotorControllerPtr_T p_mc)        { return p_mc->AnalogResults.HeatPcb_Adcu; }
 static inline uint16_t MotorController_User_GetHeatMosfets_Adcu(const MotorControllerPtr_T p_mc)    { return p_mc->AnalogResults.HeatMosfets_Adcu; }

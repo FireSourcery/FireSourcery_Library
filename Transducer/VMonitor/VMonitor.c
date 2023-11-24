@@ -54,7 +54,7 @@ void VMonitor_Init(VMonitor_T * p_vMonitor)
 
 /*
     No previous state
-    Monitor: FaultLower_Adcu < WarningLower_Adcu < V_adcu < WarningUpper_Adcu < FaultUpper_Adcu
+    Monitor: FaultLower_Adcu < WarningLower_Adcu <  adcu < WarningUpper_Adcu < FaultUpper_Adcu
 */
 VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
 {

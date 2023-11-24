@@ -751,9 +751,9 @@ static Cmd_Status_T Cmd_v(MotorControllerPtr_T p_mc, int argc, char ** argv)
 
     if(argc == 1U)
     {
-        vSource = MotorController_User_GetVSource(p_mc, 1000U);
-        vSense = MotorController_User_GetVSense(p_mc, 1000U);
-        vAcc = MotorController_User_GetVAccs(p_mc, 1000U);
+        vSource = MotorController_User_GetVSource_V(p_mc, 1000U);
+        vSense = MotorController_User_GetVSense_V(p_mc, 1000U);
+        vAcc = MotorController_User_GetVAccs_V(p_mc, 1000U);
         battery = MotorController_User_GetBatteryCharge_Unit1000(p_mc);
         Terminal_SendString(p_term, "VSource: "); Terminal_SendNum(p_term, vSource); Terminal_SendString(p_term, " mV\r\n");
         Terminal_SendString(p_term, "VSense: "); Terminal_SendNum(p_term, vSense); Terminal_SendString(p_term, " mV\r\n");

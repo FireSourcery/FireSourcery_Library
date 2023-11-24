@@ -272,9 +272,9 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
             _MotorController_ProcHeatMonitor(p_mc);
             // Blinky_Toggle(&p_mc->Buzzer);
         #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
-            p_mc->VSource = MotorController_User_GetVSource(p_mc, 10U);
-            p_mc->VSense = MotorController_User_GetVSense(p_mc, 1000U);
-            p_mc->VAccs = MotorController_User_GetVAccs(p_mc, 1000U);
+            p_mc->VSource = MotorController_User_GetVSource_V(p_mc, 10U);
+            p_mc->VSense = MotorController_User_GetVSense_V(p_mc, 1000U);
+            p_mc->VAccs = MotorController_User_GetVAccs_V(p_mc, 1000U);
         #endif
         }
     }

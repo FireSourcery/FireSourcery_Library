@@ -225,7 +225,7 @@ MotorController_InitFlags_T;
     GLOBAL_MOTOR.VMAX -> controller voltage max
     MotorControllerMain.Params.VSourceRef, Global_Motor.VSourceRef_V -> user set nominal voltage
     MotorController_User_GetVSourceRef() -> user set nominal voltage
-    MotorController_User_GetVSource() -> live voltage
+    MotorController_User_GetVSource_V() -> live voltage
 */
 typedef struct __attribute__((aligned(2U))) MotorController_Params
 {
@@ -335,9 +335,9 @@ typedef struct MotorController
     VMonitor_T VMonitorSense;   /* ~5V */
     VMonitor_T VMonitorAccs;    /* ~12V */
 
-// #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL  // move to host
+#ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
     Linear_T BatteryLife;       /* Battery Life percentage */
-// #endif
+#endif
     Timer_T TimerMillis;
     uint32_t MainDividerCounter;
     uint32_t TimerDividerCounter;
