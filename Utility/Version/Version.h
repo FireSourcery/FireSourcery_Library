@@ -53,6 +53,8 @@
 typedef union Version
 {
     uint8_t Bytes[4U];
+    // struct { uint8_t Fix; uint8_t Minor; uint8_t Major; uint8_t Opt; };
+    // struct { uint16_t Lower; uint16_t Upper; };
     char Chars[4U];
     uint32_t Word32;
 }

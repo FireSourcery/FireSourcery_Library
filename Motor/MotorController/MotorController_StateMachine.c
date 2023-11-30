@@ -66,35 +66,46 @@ static StateMachine_State_T * TransitionBlocking(MotorControllerPtr_T p_mc, stat
     Init State does not transistion to fault, wait for ADC
 */
 /******************************************************************************/
-static void Init_Entry(MotorControllerPtr_T p_mc) { (void)p_mc; }
+static void Init_Entry(MotorControllerPtr_T p_mc)
+{
+    (void)p_mc;
+    // p_mc->FaultFlags.VSenseLimit = 1u;
+    // p_mc->FaultFlags.VAccsLimit = 1u;
+    // p_mc->FaultFlags.VSourceLimit = 1u;
+    // p_mc->FaultFlags.PcbOverheat = 1u;
+    // p_mc->FaultFlags.MosfetsOverheat = 1u;
+}
 
 static void Init_Exit(MotorControllerPtr_T p_mc)
 {
-    p_mc->FaultFlags.Word = 0U; /* Clear initial ADC readings */
     MotorController_BeepShort(p_mc);
 }
 
 static void Init_Proc(MotorControllerPtr_T p_mc)
 {
-    if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT)
-    {
-        //verify params
-        if(p_mc->InitFlags.Word == 0U)   //indirectly poll inputs
-        {
-            if(p_mc->Parameters.InitMode == MOTOR_CONTROLLER_INIT_MODE_SERVO)   { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_SERVO); }
-            else                                                                { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_PARK); }
-        }
-    }
-}
-// static StateMachine_State_T * Init_InputThrottle(MotorControllerPtr_T p_mc)
-// {
+    bool proceed = true;
+
+    // if(p_mc->AnalogResults.HeatMosfets_Adcu == 0U) { proceed = false; }
+    // if(p_mc->AnalogResults.HeatPcb_Adcu == 0U) { proceed = false; }
+    // if(p_mc->AnalogResults.VAccs_Adcu == 0U) { proceed = false; }
+    // if(p_mc->AnalogResults.VSense_Adcu == 0U) { proceed = false; }
+    // if(p_mc->AnalogResults.VSource_Adcu == 0U) { proceed = false; }
+    // MotorController_PollFaultFlags(p_mc);
+    if(p_mc->FaultFlags.Word != 0U) { proceed = false; }
+    // if(p_mc->InitFlags.Word == 0U)   // indirectly poll inputs
 //     if((p_mc->Parameters.BuzzerFlagsEnable.ThrottleOnInit == true) && (p_mc->BuzzerFlagsActive.ThrottleOnInit == 0U))
 //     {
 //         p_mc->BuzzerFlagsActive.ThrottleOnInit = 1U;
         // MotorController_BeepShort(p_mc);
 //     }
-//     return 0U;
-// }
+
+    if(proceed == true)
+    {
+        // p_mc->FaultFlags.Word = 0U; /* Clear faults set by adc */
+        if(p_mc->Parameters.InitMode == MOTOR_CONTROLLER_INIT_MODE_SERVO) { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_SERVO); }
+        else { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_PARK); }
+    }
+}
 
 static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
@@ -143,8 +154,6 @@ static StateMachine_State_T * Park_InputDirection(MotorControllerPtr_T p_mc, sta
         case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
         default: break;
     }
-
-
     return p_nextState;
 }
 
@@ -524,17 +533,18 @@ static void Fault_Proc(MotorControllerPtr_T p_mc)
 static StateMachine_State_T * Fault_InputFault(MotorControllerPtr_T p_mc, statemachine_inputvalue_t voidVar)
 {
     (void)voidVar;
-    p_mc->FaultFlags.Motors         = (MotorController_ClearFaultAll(p_mc) == false);
-    p_mc->FaultFlags.VSenseLimit    = VMonitor_GetIsFault(&p_mc->VMonitorSense);
-    p_mc->FaultFlags.VAccsLimit     = VMonitor_GetIsFault(&p_mc->VMonitorAccs);
-    p_mc->FaultFlags.VSourceLimit   = VMonitor_GetIsFault(&p_mc->VMonitorSource);
-    p_mc->FaultFlags.PcbOverheat    = Thermistor_GetIsFault(&p_mc->ThermistorPcb);
-#if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
-    p_mc->FaultFlags.MosfetsTopOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsTop);
-    p_mc->FaultFlags.MosfetsBotOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsBot);
-#else
-    p_mc->FaultFlags.MosfetsOverheat = Thermistor_GetIsFault(&p_mc->ThermistorMosfets);
-#endif
+    p_mc->FaultFlags.Motors = (MotorController_ClearMotorsFaultAll(p_mc) == false);
+    MotorController_PollFaultFlags(p_mc);
+//     p_mc->FaultFlags.VSenseLimit    = VMonitor_GetIsFault(&p_mc->VMonitorSense);
+//     p_mc->FaultFlags.VAccsLimit     = VMonitor_GetIsFault(&p_mc->VMonitorAccs);
+//     p_mc->FaultFlags.VSourceLimit   = VMonitor_GetIsFault(&p_mc->VMonitorSource);
+//     p_mc->FaultFlags.PcbOverheat    = Thermistor_GetIsFault(&p_mc->ThermistorPcb);
+// #if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
+//     p_mc->FaultFlags.MosfetsTopOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsTop);
+//     p_mc->FaultFlags.MosfetsBotOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsBot);
+// #else
+//     p_mc->FaultFlags.MosfetsOverheat = Thermistor_GetIsFault(&p_mc->ThermistorMosfets);
+// #endif
 
     p_mc->FaultFlags.User = 0U;
     return 0U;

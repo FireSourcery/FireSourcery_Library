@@ -34,9 +34,9 @@
 #include "HAL_EEPROM.h"
 #include "Peripheral/NvMemory/NvMemory/NvMemory.h"
 
-#define EEPROM_START            HAL_EEPROM_START
-#define EEPROM_SIZE                HAL_EEPROM_SIZE
-#define EEPROM_UNIT_WRITE_SIZE     HAL_EEPROM_UNIT_WRITE_SIZE
+#define EEPROM_START                HAL_EEPROM_START
+#define EEPROM_SIZE                 HAL_EEPROM_SIZE
+#define EEPROM_UNIT_WRITE_SIZE      HAL_EEPROM_UNIT_WRITE_SIZE
 
 typedef NvMemory_Partition_T EEPROM_Partition_T;
 typedef NvMemory_T EEPROM_T;
@@ -45,8 +45,8 @@ typedef NvMemory_T EEPROM_T;
     NV_MEMORY_INIT(p_Hal, HAL_EEPROM_ReadCompleteFlag, HAL_EEPROM_ReadErrorFlags, HAL_EEPROM_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)
 
 extern void EEPROM_Init_Blocking(EEPROM_T * p_eeprom);
-extern NvMemory_Status_T EEPROM_SetWrite        (EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes);
-extern NvMemory_Status_T EEPROM_Write_Blocking    (EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes);
+extern NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes);
+extern NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes);
 
 // extern void EEPROM_Init_NonBlocking(EEPROM_T * p_eeprom);
 // extern bool EEPROM_ProcOp_NonBlocking(EEPROM_T * p_flash);

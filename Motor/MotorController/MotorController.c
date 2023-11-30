@@ -53,6 +53,9 @@ void MotorController_Init(MotorControllerPtr_T p_mc)
     VMonitor_Init(&p_mc->VMonitorSource);
     VMonitor_Init(&p_mc->VMonitorSense);
     VMonitor_Init(&p_mc->VMonitorAccs);
+
+    // todo as array
+    // for(uint8_t iTherm = 0U; iTherm < p_mc->CONFIG.THERMISTOR_COUNT; iTherm++) { Thermistor_Init(&p_mc->CONFIG.P_THERMISTORS[iTherm]); }
     Thermistor_Init(&p_mc->ThermistorPcb);
 #if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
     Thermistor_Init(&p_mc->ThermistorMosfetsTop);
@@ -60,6 +63,11 @@ void MotorController_Init(MotorControllerPtr_T p_mc)
 #else
     Thermistor_Init(&p_mc->ThermistorMosfets);
 #endif
+    // p_mc->AnalogResults.VAccs_Adcu = VMonitor_GetNominal(&p_mc->VMonitorAccs);
+    // p_mc->AnalogResults.VSense_Adcu =
+    // p_mc->AnalogResults.VSource_Adcu =
+    if(Thermistor_IsMonitorEnable(&p_mc->ThermistorPcb) == true) { p_mc->AnalogResults.HeatPcb_Adcu = Thermistor_GetWarningThreshold_Adcu(&p_mc->ThermistorPcb); };
+    if(Thermistor_IsMonitorEnable(&p_mc->ThermistorMosfets) == true) { p_mc->AnalogResults.HeatMosfets_Adcu = Thermistor_GetWarningThreshold_Adcu(&p_mc->ThermistorMosfets); };
 
     Global_Motor_InitVSourceRef_V(p_mc->Parameters.VSourceRef);
     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Init(&p_mc->CONFIG.P_MOTORS[iMotor]); }
@@ -84,6 +92,22 @@ void MotorController_Init(MotorControllerPtr_T p_mc)
     StateMachine_Init(&p_mc->StateMachine);
 }
 
+void MotorController_PollFaultFlags(MotorController_T * p_mc)
+{
+    // p_mc->FaultFlags.Motors         = (MotorController_ClearMotorsFaultAll(p_mc) == false);
+    p_mc->FaultFlags.VSenseLimit    = VMonitor_GetIsFault(&p_mc->VMonitorSense);
+    p_mc->FaultFlags.VAccsLimit     = VMonitor_GetIsFault(&p_mc->VMonitorAccs);
+    p_mc->FaultFlags.VSourceLimit   = VMonitor_GetIsFault(&p_mc->VMonitorSource);
+    p_mc->FaultFlags.PcbOverheat    = Thermistor_GetIsFault(&p_mc->ThermistorPcb);
+#if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
+    p_mc->FaultFlags.MosfetsTopOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsTop);
+    p_mc->FaultFlags.MosfetsBotOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsBot);
+#else
+    p_mc->FaultFlags.MosfetsOverheat = Thermistor_GetIsFault(&p_mc->ThermistorMosfets);
+#endif
+}
+
+
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 void MotorController_ResetUnitsBatteryLife(MotorControllerPtr_T p_mc)
@@ -99,9 +123,13 @@ void MotorController_ResetUnitsBatteryLife(MotorControllerPtr_T p_mc)
 */
 void MotorController_LoadParamsDefault(MotorController_T * p_mc)
 {
-    VMonitor_SetLimitsDefault(&p_mc->VMonitorSource);
+    VMonitor_SetNominal_MilliV(&p_mc->VMonitorSource, (uint32_t)p_mc->Parameters.VSourceRef * 1000U);
+    VMonitor_ResetLimitsDefault(&p_mc->VMonitorSource);
+    // VMonitor_ResetLimitsDefault(&p_mc->VMonitorAccs);
+    // VMonitor_ResetLimitsDefault(&p_mc->VMonitorSense);
+#ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
     // MotorController_User_SetBatteryLifeDefault(p_mc); //todo
-
+#endif
     // Calculate values when adcu default is not provided
     // Thermistor_SetLimits_DegC(&p_mc->ThermistorPcb, 100U, 90U, 80U, 78U);
     // Thermistor_SetLimits_DegC(&p_mc->ThermistorMosfets, 100U, 90U, 80U, 78U);
@@ -122,11 +150,12 @@ void MotorController_LoadParamsDefault(MotorController_T * p_mc)
     Nvm Wrappers Call from State Machine
 */
 /******************************************************************************/
-NvMemory_Status_T _MotorController_WriteNvm_Blocking(MotorControllerPtr_T p_mc, const void * p_dest, const void * p_source, size_t sizeBytes)
+static NvMemory_Status_T WriteNvm_Blocking(MotorControllerPtr_T p_mc, const void * p_dest, const void * p_source, size_t sizeBytes)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
     return EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_dest, p_source, sizeBytes);
 #elif   defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
+    assert(NvMemory_IsPtrAligned(p_dest, FLASH_UNIT_WRITE_SIZE));
     return Flash_Write_Blocking(p_mc->CONFIG.P_FLASH, p_dest, p_source, sizeBytes);
 #endif
 }
@@ -141,54 +170,55 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p
     Protocol_T * p_protocol;
 
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
-    Flash_Erase_Blocking(p_mc->CONFIG.P_FLASH, p_mc->CONFIG.P_PARAMS_START, p_mc->CONFIG.PARAMS_SIZE);    /* Flash must erase before write */
+   status = Flash_Erase_Blocking(p_mc->CONFIG.P_FLASH, p_mc->CONFIG.P_PARAMS_START, p_mc->CONFIG.PARAMS_SIZE); /* Flash must erase before write */
 #endif
 
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_PARAMS_NVM, &p_mc->Parameters, sizeof(MotorController_Params_T)); };
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_MEM_MAP_BOOT, &p_mc->MemMapBoot, sizeof(MemMapBoot_T)); };
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_mc->AnalogUser.CONFIG.P_PARAMS, &p_mc->AnalogUser.Params, sizeof(MotAnalogUser_Params_T)); };
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_mc->ThermistorPcb.CONFIG.P_PARAMS, &p_mc->ThermistorPcb.Params, sizeof(Thermistor_Params_T)); };
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_PARAMS_NVM, &p_mc->Parameters, sizeof(MotorController_Params_T)); };
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_MEM_MAP_BOOT, &p_mc->MemMapBoot, sizeof(MemMapBoot_T)); };
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->AnalogUser.CONFIG.P_PARAMS, &p_mc->AnalogUser.Params, sizeof(MotAnalogUser_Params_T)); };
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->ThermistorPcb.CONFIG.P_PARAMS, &p_mc->ThermistorPcb.Params, sizeof(Thermistor_Params_T)); };
 
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_mc->VMonitorSource.CONFIG.P_PARAMS, &p_mc->VMonitorSource.Params, sizeof(VMonitor_Params_T)); };
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_mc->VMonitorAccs.CONFIG.P_PARAMS, &p_mc->VMonitorAccs.Params, sizeof(VMonitor_Params_T)); };
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_mc->VMonitorSense.CONFIG.P_PARAMS, &p_mc->VMonitorSense.Params, sizeof(VMonitor_Params_T)); };
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->VMonitorSource.CONFIG.P_PARAMS, &p_mc->VMonitorSource.Params, sizeof(VMonitor_Params_T)); };
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->VMonitorAccs.CONFIG.P_PARAMS, &p_mc->VMonitorAccs.Params, sizeof(VMonitor_Params_T)); };
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->VMonitorSense.CONFIG.P_PARAMS, &p_mc->VMonitorSense.Params, sizeof(VMonitor_Params_T)); };
 #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_mc->Shell.CONFIG.P_PARAMS, &p_mc->Shell.Params, sizeof(Shell_Params_T)); };
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->Shell.CONFIG.P_PARAMS, &p_mc->Shell.Params, sizeof(Shell_Params_T)); };
 #endif
 
 #if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_mc->ThermistorMosfetsTop.CONFIG.P_PARAMS, &p_mc->ThermistorMosfetsTop.Params, sizeof(Thermistor_Params_T)); };
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_mc->ThermistorMosfetsBot.CONFIG.P_PARAMS, &p_mc->ThermistorMosfetsBot.Params, sizeof(Thermistor_Params_T)); };
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->ThermistorMosfetsTop.CONFIG.P_PARAMS, &p_mc->ThermistorMosfetsTop.Params, sizeof(Thermistor_Params_T)); };
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->ThermistorMosfetsBot.CONFIG.P_PARAMS, &p_mc->ThermistorMosfetsBot.Params, sizeof(Thermistor_Params_T)); };
 #else
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_mc->ThermistorMosfets.CONFIG.P_PARAMS, &p_mc->ThermistorMosfets.Params, sizeof(Thermistor_Params_T)); };
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->ThermistorMosfets.CONFIG.P_PARAMS, &p_mc->ThermistorMosfets.Params, sizeof(Thermistor_Params_T)); };
 #endif
-
-    if(status == NV_MEMORY_STATUS_SUCCESS)
-    {
-        for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
-        {
-            p_motor = MotorController_GetPtrMotor(p_mc, iMotor);
-            if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_motor->CONFIG.P_PARAMS_NVM, &p_motor->Parameters, sizeof(Motor_Params_T)); }
-            if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_motor->Hall.CONFIG.P_PARAMS_NVM, &p_motor->Hall.Params, sizeof(Hall_Params_T)); }
-            if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_motor->Encoder.CONFIG.P_PARAMS, &p_motor->Encoder.Params, sizeof(Encoder_Params_T)); }
-            if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_motor->PidSpeed.CONFIG.P_PARAMS, &p_motor->PidSpeed.Params, sizeof(PID_Params_T)); }
-            if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_motor->PidIq.CONFIG.P_PARAMS, &p_motor->PidIq.Params, sizeof(PID_Params_T)); }
-            if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_motor->PidId.CONFIG.P_PARAMS, &p_motor->PidId.Params, sizeof(PID_Params_T)); }
-            // if (status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_motor->PidIBus.CONFIG.P_PARAMS,     &p_motor->PidIBus.Params,         sizeof(PID_Params_T)); }
-            if(status == NV_MEMORY_STATUS_SUCCESS) { status = _MotorController_WriteNvm_Blocking(p_mc, p_motor->Thermistor.CONFIG.P_PARAMS, &p_motor->Thermistor.Params, sizeof(Thermistor_Params_T)); }
-            if(status != NV_MEMORY_STATUS_SUCCESS) { break; }
-        }
-    }
 
     if(status == NV_MEMORY_STATUS_SUCCESS)
     {
         for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++)
         {
             p_protocol = &p_mc->CONFIG.P_PROTOCOLS[iProtocol];
-            status = _MotorController_WriteNvm_Blocking(p_mc, p_protocol->CONFIG.P_PARAMS, &p_protocol->Params, sizeof(Protocol_Params_T));
+            status = WriteNvm_Blocking(p_mc, p_protocol->CONFIG.P_PARAMS, &p_protocol->Params, sizeof(Protocol_Params_T));
             if(status != NV_MEMORY_STATUS_SUCCESS) { break; }
         }
     }
+
+    if(status == NV_MEMORY_STATUS_SUCCESS)
+    {
+        for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
+        {
+            p_motor = MotorController_GetPtrMotor(p_mc, iMotor);
+            if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_motor->CONFIG.P_PARAMS_NVM, &p_motor->Parameters, sizeof(Motor_Params_T)); }
+            if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_motor->Hall.CONFIG.P_PARAMS_NVM, &p_motor->Hall.Params, sizeof(Hall_Params_T)); }
+            if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_motor->Encoder.CONFIG.P_PARAMS, &p_motor->Encoder.Params, sizeof(Encoder_Params_T)); }
+            if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_motor->PidSpeed.CONFIG.P_PARAMS, &p_motor->PidSpeed.Params, sizeof(PID_Params_T)); }
+            if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_motor->PidIq.CONFIG.P_PARAMS, &p_motor->PidIq.Params, sizeof(PID_Params_T)); }
+            if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_motor->PidId.CONFIG.P_PARAMS, &p_motor->PidId.Params, sizeof(PID_Params_T)); }
+            // if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_motor->PidIBus.CONFIG.P_PARAMS, &p_motor->PidIBus.Params, sizeof(PID_Params_T)); }
+            if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_motor->Thermistor.CONFIG.P_PARAMS, &p_motor->Thermistor.Params, sizeof(Thermistor_Params_T)); }
+            if(status != NV_MEMORY_STATUS_SUCCESS) { break; }
+        }
+    }
+
 
     return status;
 }
@@ -196,7 +226,7 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p
 NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorControllerPtr_T p_mc)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
-    return _MotorController_WriteNvm_Blocking(p_mc->CONFIG.P_MEM_MAP_BOOT, &p_mc->MemMapBoot, sizeof(MemMapBoot_T));
+    return WriteNvm_Blocking(p_mc->CONFIG.P_MEM_MAP_BOOT, &p_mc->MemMapBoot, sizeof(MemMapBoot_T));
 #elif   defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
     return NV_MEMORY_STATUS_ERROR_OTHER; /* Save on all params */
 #endif

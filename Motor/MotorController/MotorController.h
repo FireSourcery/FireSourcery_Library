@@ -223,17 +223,12 @@ MotorController_InitFlags_T;
 /*
     MotorController Voltages
     GLOBAL_MOTOR.VMAX -> controller voltage max
-    MotorControllerMain.Params.VSourceRef, Global_Motor.VSourceRef_V -> user set nominal voltage
-    MotorController_User_GetVSourceRef() -> user set nominal voltage
+    MotorController_User_GetVSourceRef(), Params.VSourceRef, Global_Motor.VSourceRef_V -> user set nominal voltage
     MotorController_User_GetVSource_V() -> live voltage
 */
 typedef struct __attribute__((aligned(2U))) MotorController_Params
 {
-    uint16_t VSourceRef;        /* Nominal Battery Voltage. Sync with Global_Motor VSourceRef_V */
-// #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-    uint16_t BatteryZero_Adcu;  // todo, use Vsource warning?
-    uint16_t BatteryFull_Adcu;
-// #endif
+    uint16_t VSourceRef;        /* Source/Battery Voltage. Sync with Global_Motor VSourceRef_V */
     uint16_t ILimitLowV_Scalar16;
     MotorController_InitMode_T InitMode;
     MotorController_InputMode_T InputMode;
@@ -246,6 +241,10 @@ typedef struct __attribute__((aligned(2U))) MotorController_Params
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     uint8_t CanServicesId;
     bool CanIsEnable;
+#endif
+#ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
+    uint16_t BatteryZero_Adcu;  // todo, use Vsource warning?
+    uint16_t BatteryFull_Adcu;
 #endif
     // MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
 }
@@ -321,13 +320,12 @@ typedef struct MotorController
     Pin_T Relay;
     Debounce_T OptDin;     /* Configurable input */
 
-    // init outside as array todo
+    // init   as array todo
     Thermistor_T ThermistorPcb;
 #if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
     Thermistor_T ThermistorMosfetsTop;
     Thermistor_T ThermistorMosfetsBot;
 #else
-    // todo compile time select as top or bot?
     Thermistor_T ThermistorMosfets;
 #endif
 
@@ -351,12 +349,9 @@ typedef struct MotorController
     StateMachine_T StateMachine;
     MotorController_StatusFlags_T StatusFlags;
     MotorController_InitFlags_T InitFlags;
-    MotorController_FaultFlags_T FaultFlags;
+   volatile MotorController_FaultFlags_T FaultFlags;
 #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
     MotAnalog_Results_T FaultAnalogRecord;
-    uint16_t VSource;  /* Controller Supply */
-    uint16_t VSense;   /* ~5V */
-    uint16_t VAccs;    /* ~12V */
 #endif
     MotorController_DriveId_T DriveState;
     /* Blocking/Calibration SubState */
@@ -381,9 +376,9 @@ static inline MotorPtr_T MotorController_GetPtrMotor(const MotorControllerPtr_T 
     Alarm
 */
 /******************************************************************************/
-static inline void MotorController_BeepShort(MotorControllerPtr_T p_mc) { Blinky_Blink(&p_mc->Buzzer, 500U); }
-static inline void MotorController_BeepPeriodicType1(MotorControllerPtr_T p_mc) { Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U); }
-static inline void MotorController_BeepDouble(MotorControllerPtr_T p_mc) { Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 2U); }
+static inline void MotorController_BeepShort(MotorControllerPtr_T p_mc)             { Blinky_Blink(&p_mc->Buzzer, 500U); }
+static inline void MotorController_BeepPeriodicType1(MotorControllerPtr_T p_mc)     { Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U); }
+static inline void MotorController_BeepDouble(MotorControllerPtr_T p_mc)            { Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 2U); }
 // static inline void MotorController_BeepType1(MotorControllerPtr_T p_mc) { Blinky_BlinkN(&p_mc->Buzzer, Type1OnTime, Type1OffTime); }
 
 /******************************************************************************/
@@ -391,9 +386,8 @@ static inline void MotorController_BeepDouble(MotorControllerPtr_T p_mc) { Blink
    MotorN Array Functions - Proc by StateMachine
 */
 /******************************************************************************/
-// remove?
-static inline void MotorController_ProcAll(MotorControllerPtr_T p_mc, Motor_User_ProcVoid_T cmdFunction) { MotorN_User_ProcFunction(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, cmdFunction); }
-static inline void MotorController_SetCmdAll(MotorControllerPtr_T p_mc, Motor_User_SetCmd_T cmdFunction, int16_t userCmd) { MotorN_User_SetCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, cmdFunction, userCmd); }
+static inline void _MotorController_ProcAll(MotorControllerPtr_T p_mc, Motor_User_ProcVoid_T cmdFunction) { MotorN_User_ProcFunction(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, cmdFunction); }
+static inline void _MotorController_SetCmdAll(MotorControllerPtr_T p_mc, Motor_User_SetCmd_T cmdFunction, int16_t userCmd) { MotorN_User_SetCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, cmdFunction, userCmd); }
 
 static inline void MotorController_DisableAll(MotorControllerPtr_T p_mc)    { MotorN_User_ProcFunction(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_DisableControl); }
 static inline void MotorController_ReleaseAll(MotorControllerPtr_T p_mc)    { MotorN_User_ProcFunction(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_ReleaseControl); }
@@ -406,8 +400,8 @@ static inline bool MotorController_CheckForwardAll(const MotorControllerPtr_T p_
 static inline bool MotorController_CheckReverseAll(const MotorControllerPtr_T p_mc)  { return MotorN_User_CheckStatusAll(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_IsDirectionReverse); }
 static inline bool MotorController_CheckStopAll(const MotorControllerPtr_T p_mc)     { return MotorN_User_CheckStatusAll(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_IsStop); }
 /* returns true if no faults remain active */
-static inline bool MotorController_ClearFaultAll(MotorControllerPtr_T p_mc)          { return MotorN_User_ProcStatusAll(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_StateMachine_ClearFault); }
-static inline bool MotorController_CheckFaultAny(const MotorControllerPtr_T p_mc)    { return MotorN_User_CheckStatusAny(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_StateMachine_IsFault); }
+static inline bool MotorController_ClearMotorsFaultAll(MotorControllerPtr_T p_mc)          { return MotorN_User_ProcStatusAll(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_StateMachine_ClearFault); }
+static inline bool MotorController_CheckMotorsFaultAny(const MotorControllerPtr_T p_mc)    { return MotorN_User_CheckStatusAny(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_StateMachine_IsFault); }
 
 static inline void MotorController_SetSpeedLimitAll(MotorControllerPtr_T p_mc, uint16_t limit_scalar16)  { MotorN_User_SetScalar16(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetSpeedLimitActive, limit_scalar16); }
 static inline void MotorController_ClearSpeedLimitAll(MotorControllerPtr_T p_mc)                         { MotorN_User_ProcFunction(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_ClearSpeedLimitActive); }
@@ -422,14 +416,14 @@ static inline bool MotorController_SetILimitAll_Id(MotorControllerPtr_T p_mc, ui
 static inline void MotorController_SetCmdModeDefault(MotorControllerPtr_T p_mc)                                 { MotorN_User_SetFeedbackMode(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->Parameters.DefaultCmdMode); }
 static inline void MotorController_SetCmdMode(MotorControllerPtr_T p_mc, Motor_FeedbackMode_T feedbackMode)     { MotorN_User_SetFeedbackMode(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, feedbackMode);}
 static inline void MotorController_SetCmdModeValue(MotorControllerPtr_T p_mc, int16_t userCmd)                  { MotorN_User_SetCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetActiveCmdValue, userCmd); }
-// static inline void MotorController_SetCmdModeValue(MotorControllerPtr_T p_mc, int16_t userCmd)               { MotorController_SetCmdAll(p_mc, Motor_User_SetActiveCmdValue, userCmd); }
+// static inline void MotorController_SetCmdModeValue(MotorControllerPtr_T p_mc, int16_t userCmd)               { _MotorController_SetCmdAll(p_mc, Motor_User_SetActiveCmdValue, userCmd); }
 
 static inline void MotorController_StartThrottleMode(MotorControllerPtr_T p_mc)
 {
     switch(p_mc->Parameters.ThrottleMode)
     {
-        case MOTOR_CONTROLLER_THROTTLE_MODE_SPEED:  MotorController_ProcAll(p_mc, Motor_User_SetSpeedMode);     break;
-        case MOTOR_CONTROLLER_THROTTLE_MODE_TORQUE: MotorController_ProcAll(p_mc, Motor_User_SetTorqueMode);    break;
+        case MOTOR_CONTROLLER_THROTTLE_MODE_SPEED:  _MotorController_ProcAll(p_mc, Motor_User_SetSpeedMode);     break;
+        case MOTOR_CONTROLLER_THROTTLE_MODE_TORQUE: _MotorController_ProcAll(p_mc, Motor_User_SetTorqueMode);    break;
         default: break;
     }
     MotorController_ActivateAll(p_mc);
@@ -440,8 +434,8 @@ static inline void MotorController_SetThrottleValue(MotorControllerPtr_T p_mc, u
     int16_t cmdValue = (int32_t)userCmdThrottle / 2;
     switch(p_mc->Parameters.ThrottleMode)
     {
-        case MOTOR_CONTROLLER_THROTTLE_MODE_SPEED:  MotorController_SetCmdAll(p_mc, Motor_User_SetSpeedCmdValue, cmdValue);     break;
-        case MOTOR_CONTROLLER_THROTTLE_MODE_TORQUE: MotorController_SetCmdAll(p_mc, Motor_User_SetTorqueCmdValue, cmdValue);    break;
+        case MOTOR_CONTROLLER_THROTTLE_MODE_SPEED:  _MotorController_SetCmdAll(p_mc, Motor_User_SetSpeedCmdValue, cmdValue);     break;
+        case MOTOR_CONTROLLER_THROTTLE_MODE_TORQUE: _MotorController_SetCmdAll(p_mc, Motor_User_SetTorqueCmdValue, cmdValue);    break;
         default: break;
     }
 }
@@ -476,7 +470,7 @@ static inline void MotorController_StartBrakeMode(MotorControllerPtr_T p_mc)
 {
     switch(p_mc->Parameters.BrakeMode)
     {
-        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: MotorController_ProcAll(p_mc, Motor_User_SetTorqueMode); break;
+        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: _MotorController_ProcAll(p_mc, Motor_User_SetTorqueMode); break;
         case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: break;
         default: break;
     }
@@ -488,7 +482,7 @@ static inline void MotorController_SetBrakeValue(MotorControllerPtr_T p_mc, uint
     int16_t cmdValue = userCmdBrake / 2;
     switch(p_mc->Parameters.BrakeMode)
     {
-        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: MotorController_SetCmdAll(p_mc, _SetBrakeCmd, cmdValue);
+        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: _MotorController_SetCmdAll(p_mc, _SetBrakeCmd, cmdValue);
         case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: break;
         default: break;
     }
@@ -529,14 +523,14 @@ static inline void MotorController_ProcDriveZero(MotorControllerPtr_T p_mc)
 
 static inline void MotorController_CalibrateAdc(MotorControllerPtr_T p_mc)
 {
-    MotorController_ProcAll(p_mc, Motor_User_CalibrateAdc);
+    _MotorController_ProcAll(p_mc, Motor_User_CalibrateAdc);
     MotAnalogUser_SetThrottleZero(&p_mc->AnalogUser, p_mc->AnalogResults.Throttle_Adcu); // todo wait filter state
     MotAnalogUser_SetBrakeZero(&p_mc->AnalogUser, p_mc->AnalogResults.Brake_Adcu);
 }
 
 // static inline void MotorController_CalibrateSensorAll(MotorControllerPtr_T p_mc)
 // {
-//     // MotorController_ProcAll(p_mc, Motor_User_CalibrateSensor);
+//     // _MotorController_ProcAll(p_mc, Motor_User_CalibrateSensor);
 // }
 
 /******************************************************************************/
@@ -549,6 +543,8 @@ extern void MotorController_Init(MotorControllerPtr_T p_mc);
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 extern void MotorController_ResetUnitsBatteryLife(MotorControllerPtr_T p_mc);
 #endif
+
+extern void MotorController_PollFaultFlags(MotorController_T * p_mc);
 
 extern NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p_mc);
 extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorControllerPtr_T p_mc);

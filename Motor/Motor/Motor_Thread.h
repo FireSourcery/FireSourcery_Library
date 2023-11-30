@@ -54,7 +54,7 @@ static inline void Motor_PWM_Thread(MotorPtr_T p_motor)
 
 static inline void Motor_Heat_Thread(MotorPtr_T p_motor)
 {
-    if(Thermistor_GetIsMonitorEnable(&p_motor->Thermistor) == true)
+    if(Thermistor_IsMonitorEnable(&p_motor->Thermistor) == true)
     {
         AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT);
 
@@ -69,7 +69,7 @@ static inline void Motor_Heat_Thread(MotorPtr_T p_motor)
                 break;
             case THERMISTOR_STATUS_WARNING:     /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
                 p_motor->StatusFlags.HeatWarning = 1U;
-                Motor_User_SetILimitActive_Id(p_motor, Thermistor_GetHeatLimit_FracU16(&p_motor->Thermistor), MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
+                Motor_User_SetILimitActive_Id(p_motor, Thermistor_GetHeatLimit_Scalar16(&p_motor->Thermistor), MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
                 break;
             case THERMISTOR_STATUS_FAULT:
                 p_motor->FaultFlags.Overheat = 1U;

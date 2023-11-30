@@ -37,7 +37,7 @@
     Common
 */
 /******************************************************************************/
-static uint16_t CalcChecksum(const uint8_t * p_src, uint8_t bytes)
+static uint16_t Checksum(const uint8_t * p_src, uint8_t bytes)
 {
     uint16_t checkSum = 0U;
     for(uint8_t iByte = 0U; iByte < bytes; iByte++) { checkSum += p_src[iByte]; }
@@ -47,8 +47,8 @@ static uint16_t CalcChecksum(const uint8_t * p_src, uint8_t bytes)
 static uint16_t Packet_CalcChecksum(const MotPacket_T * p_packet)
 {
     uint16_t checkSum = 0U;
-    checkSum += CalcChecksum((uint8_t *)&p_packet->Header, sizeof(MotPacket_Header_T) - sizeof(p_packet->Header.Checksum));
-    checkSum += CalcChecksum((uint8_t *)&p_packet->Payload[0U], p_packet->Header.Length - sizeof(MotPacket_Header_T));
+    checkSum += Checksum((uint8_t *)&p_packet->Header, sizeof(MotPacket_Header_T) - sizeof(p_packet->Header.Checksum));
+    checkSum += Checksum((uint8_t *)&p_packet->Payload[0U], p_packet->Header.Length - sizeof(MotPacket_Header_T));
     return checkSum;
 }
 
@@ -156,7 +156,7 @@ uint8_t MotPacket_CallResp_Build(MotPacket_CallResp_T * p_respPacket, uint16_t i
 // static uint16_t VarId_CalcChecksum(const MotPacket_T * p_packet)
 // {
 //     uint16_t checkSum = 0U;
-//     checkSum += CalcChecksum((uint8_t *)&p_packet->Payload[0U], p_packet->Header.Length - sizeof(MotPacket_Header_T));
+//     checkSum += Checksum((uint8_t *)&p_packet->Payload[0U], p_packet->Header.Length - sizeof(MotPacket_Header_T));
 //     return checkSum;
 // }
 /******************************************************************************/

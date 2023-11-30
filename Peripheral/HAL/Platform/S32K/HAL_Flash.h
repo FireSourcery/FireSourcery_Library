@@ -93,8 +93,8 @@
 // #define S32K_FLASH_RESERVED_END        0x0400    /* */
 
 /* Data(FlexNvM) Flash IFR */
-#define S32K_FLASH_RESERVED_EEPROM_SIZE            0x03FD
-#define S32K_FLASH_RESERVED_FLEX_NVM_CODE        0x03FC
+#define S32K_FLASH_RESERVED_EEPROM_SIZE     0x03FD
+#define S32K_FLASH_RESERVED_FLEX_NVM_CODE   0x03FC
 
 /*
     Register rename
@@ -157,15 +157,15 @@
 /*
     Map to upper software layer
 */
-#define HAL_FLASH_UNIT_ERASE_SIZE            S32K_FLASH_SECTOR_SIZE
-#define HAL_FLASH_UNIT_WRITE_SIZE            S32K_FLASH_PHRASE_SIZE /* 8 byte aligned */
-#define HAL_FLASH_ERASE_SECTOR_SIZE            HAL_FLASH_UNIT_ERASE_SIZE /* alias */
-#define HAL_FLASH_WRITE_PAGE_SIZE            HAL_FLASH_UNIT_WRITE_SIZE
+#define HAL_FLASH_UNIT_ERASE_SIZE           S32K_FLASH_SECTOR_SIZE
+#define HAL_FLASH_UNIT_WRITE_SIZE           S32K_FLASH_PHRASE_SIZE      /* 8 byte aligned */
 #define HAL_FLASH_UNIT_VERIFY_ERASE_SIZE    S32K_FLASH_SECTOR_SIZE
 #define HAL_FLASH_UNIT_VERIFY_WRITE_SIZE    4U /* Chip min is 1 */
-#define HAL_FLASH_UNIT_WRITE_ONCE_SIZE        S32K_FLASH_PHRASE_SIZE
-#define HAL_FLASH_UNIT_READ_ONCE_SIZE        S32K_FLASH_PHRASE_SIZE
+#define HAL_FLASH_UNIT_WRITE_ONCE_SIZE      S32K_FLASH_PHRASE_SIZE
+#define HAL_FLASH_UNIT_READ_ONCE_SIZE       S32K_FLASH_PHRASE_SIZE
 #define HAL_FLASH_UNIT_ERASE_PATTERN        (0xFFU)
+#define HAL_FLASH_ERASE_SECTOR_SIZE         HAL_FLASH_UNIT_ERASE_SIZE   /* alias */
+#define HAL_FLASH_WRITE_PAGE_SIZE           HAL_FLASH_UNIT_WRITE_SIZE
 
 /*
     S32K  FLASH/EEPROM use same controller, same HAL
@@ -197,8 +197,8 @@ static inline void _HAL_Flash_WriteCmdData(HAL_Flash_T * p_regs, const uint8_t *
     }
 }
 
-static inline void HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static inline void HAL_Flash_WriteCmdStart(HAL_Flash_T * p_regs)
+static inline void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static inline void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs)
 {
     (void)p_regs;
     FTFC_FSTAT |= FTFC_FSTAT_CCIF_MASK;
@@ -255,14 +255,14 @@ static inline void HAL_Flash_StartCmdWritePage(HAL_Flash_T * p_regs, const uint8
     FTFx_FCCOB0 = FTFx_PROGRAM_PHRASE;
     _HAL_Flash_WriteCmdDest(p_regs, p_dest);
     _HAL_Flash_WriteCmdData(p_regs, p_data);
-    HAL_Flash_WriteCmdStart(p_regs);
+    _HAL_Flash_LaunchCmd(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdEraseSector(HAL_Flash_T * p_regs, const uint8_t * p_dest)
 {
     FTFx_FCCOB0 = FTFx_ERASE_SECTOR;
     _HAL_Flash_WriteCmdDest(p_regs, p_dest);
-    HAL_Flash_WriteCmdStart(p_regs);
+    _HAL_Flash_LaunchCmd(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdVerifyWriteUnit(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
@@ -274,7 +274,7 @@ static inline void HAL_Flash_StartCmdVerifyWriteUnit(HAL_Flash_T * p_regs, const
     {
         p_regs->FCCOB[iByte + 0x08U] = p_data[iByte]; // ((uint8_t *)FTFx_BASE)[iByte + 0x0CU] = p_data[iByte];
     }
-    HAL_Flash_WriteCmdStart(p_regs);
+    _HAL_Flash_LaunchCmd(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdVerifyEraseUnit(HAL_Flash_T * p_regs, const uint8_t * p_dest)
@@ -284,7 +284,7 @@ static inline void HAL_Flash_StartCmdVerifyEraseUnit(HAL_Flash_T * p_regs, const
     FTFx_FCCOB4 = GET_BIT_8_15(0U);
     FTFx_FCCOB5 = GET_BIT_0_7(1U);
     FTFx_FCCOB6 = 1U; //CONFIG_HAL_FLASH_MARGIN_LEVEL
-    HAL_Flash_WriteCmdStart(p_regs);
+    _HAL_Flash_LaunchCmd(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, const uint8_t * p_dest, uint16_t units)
@@ -294,7 +294,7 @@ static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, cons
     FTFx_FCCOB4 = GET_BIT_8_15(units);
     FTFx_FCCOB5 = GET_BIT_0_7(units);
     FTFx_FCCOB6 = 1U; //CONFIG_HAL_FLASH_MARGIN_LEVEL
-    HAL_Flash_WriteCmdStart(p_regs);
+    _HAL_Flash_LaunchCmd(p_regs);
 }
 
 /*
@@ -311,7 +311,7 @@ static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, const uint8
     FTFx_FCCOB0 = FTFx_PROGRAM_ONCE;
     FTFx_FCCOB1 = recordIndex;
     _HAL_Flash_WriteCmdData(p_regs, p_data);
-    HAL_Flash_WriteCmdStart(p_regs);
+    _HAL_Flash_LaunchCmd(p_regs);
 }
 
 static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, const uint8_t * p_dest)
@@ -319,7 +319,7 @@ static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, const uint8_
     uint8_t recordIndex = (p_dest - (uint8_t *)S32K_FLASH_PROGRAM_ONCE_START) / S32K_FLASH_PHRASE_SIZE;
     FTFx_FCCOB0 = FTFx_READ_ONCE;
     FTFx_FCCOB1 = recordIndex;
-    HAL_Flash_WriteCmdStart(p_regs);
+    _HAL_Flash_LaunchCmd(p_regs);
 }
 
 static inline void HAL_Flash_ReadOnceData(HAL_Flash_T * p_regs, uint8_t * p_result)
@@ -333,7 +333,7 @@ static inline void HAL_Flash_ReadOnceData(HAL_Flash_T * p_regs, uint8_t * p_resu
 static inline void HAL_Flash_StartCmdEraseAll(HAL_Flash_T * p_regs)
 {
     FTFx_FCCOB0 = FTFx_ERASE_ALL_BLOCK;
-    HAL_Flash_WriteCmdStart(p_regs);
+    _HAL_Flash_LaunchCmd(p_regs);
 }
 
 static inline void HAL_Flash_Init(HAL_Flash_T * p_regs)

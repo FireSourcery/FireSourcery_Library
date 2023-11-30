@@ -134,7 +134,7 @@ static inline void HalEepromProgramPartition(void)
             FTFx_FCCOB3 = 0x01U; //(uint8_t)(flexRamEnableLoadEEEData ? 0U : 1U);
             FTFx_FCCOB4 = S32K_EEERAMSIZE_CODE;                    //EEEDataSizeCode = 0x02u: EEPROM size = 4 Kbytes
             FTFx_FCCOB5 = CONFIG_HAL_EEPROM_S32K_DEPART_CODE;     //DEPartitionCode = 0x08u: EEPROM backup size = 64 Kbytes */
-            HAL_Flash_WriteCmdStart(0);
+            _HAL_Flash_LaunchCmd(0);
 
             while(HAL_Flash_ReadCompleteFlag(0) == false)
             {
@@ -167,7 +167,7 @@ static void HalEepromInitBlocking(void)
             FTFx_FCCOB1 = (uint8_t)EEE_ENABLE;
             FTFx_FCCOB4 = (uint8_t)(0x00U);
             FTFx_FCCOB5 = (uint8_t)(0x00U);
-            HAL_Flash_WriteCmdStart(0);
+            _HAL_Flash_LaunchCmd(0);
         }
 
         while(HAL_Flash_ReadCompleteFlag(0) == false)

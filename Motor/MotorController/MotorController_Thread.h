@@ -141,7 +141,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorControllerPtr_T p_mc)
 
     if(isFault == true)
     {
-        MotorController_StateMachine_SetFault(p_mc);         /* Shutdown repeat set ok */
+        MotorController_StateMachine_SetFault(p_mc); /* Shutdown repeat set ok */
     }
     else
     {
@@ -162,7 +162,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorControllerPtr_T p_mc)
                 constantly compares lowest active limit, alternatively, check and restore prev on clear limit
                 Increasing Limit only, reset on warning clear.
             */
-            MotorController_SetILimitAll_Id(p_mc, Thermistor_GetHeatLimit_FracU16(&p_mc->ThermistorMosfets));
+            MotorController_SetILimitAll_Id(p_mc, Thermistor_GetHeatLimit_Scalar16(&p_mc->ThermistorMosfets));
 
             // Thermistor_PollWarningRisingEdge(&p_mc->ThermistorMosfetsTop);
             if(p_mc->StatusFlags.HeatWarning == false)
@@ -182,7 +182,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorControllerPtr_T p_mc)
         }
     }
 
-    // for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
+    for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 }
 
 static inline void _MotorController_ProcVoltageMonitor(MotorControllerPtr_T p_mc)
@@ -196,8 +196,8 @@ static inline void _MotorController_ProcVoltageMonitor(MotorControllerPtr_T p_mc
 
     VMonitor_PollStatus(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu);
     VMonitor_PollStatus(&p_mc->VMonitorAccs, p_mc->AnalogResults.VAccs_Adcu);
-    if(VMonitor_GetIsFault(&p_mc->VMonitorSense) == true) { p_mc->FaultFlags.VSenseLimit = 1U; isFault = true; }
-    if(VMonitor_GetIsFault(&p_mc->VMonitorAccs) == true)   { p_mc->FaultFlags.VAccsLimit = 1U; isFault = true; }
+    if(VMonitor_GetIsFault(&p_mc->VMonitorSense) == true)   { p_mc->FaultFlags.VSenseLimit = 1U; isFault = true; }
+    if(VMonitor_GetIsFault(&p_mc->VMonitorAccs) == true)    { p_mc->FaultFlags.VAccsLimit = 1U; isFault = true; }
 
     if(isFault == true) { MotorController_StateMachine_SetFault(p_mc); } /* Sensors checks fault only */
 }
@@ -225,6 +225,8 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
             case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL:
                 /* MotorController_Var_Set voluntarily checks InputMode for proc */
                 if(MotAnalogUser_PollBrakePins(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
+
+                // todo
                 // if(Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]) == true)
                 // {
                 //     MotorController_User_DisableControl(p_mc);
@@ -265,17 +267,17 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
             for(uint8_t iSerial = 0U; iSerial < p_mc->CONFIG.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONFIG.P_SERIALS[iSerial]); }
 
             /* Can use low priority check, as motor is already in fault state */
-            if(MotorController_CheckFaultAny(p_mc) != 0U) { p_mc->FaultFlags.Motors = 1U; MotorController_StateMachine_SetFault(p_mc); }
+            if(MotorController_CheckMotorsFaultAny(p_mc) != 0U) { p_mc->FaultFlags.Motors = 1U; MotorController_StateMachine_SetFault(p_mc); }
 
             _MotorController_ProcOptDin(p_mc);
             _MotorController_ProcVoltageMonitor(p_mc); /* Except VSupply */
             _MotorController_ProcHeatMonitor(p_mc);
+        #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+            // Blinky_Toggle(&p_mc->Meter);
             // Blinky_Toggle(&p_mc->Buzzer);
-        #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
-            p_mc->VSource = MotorController_User_GetVSource_V(p_mc, 10U);
-            p_mc->VSense = MotorController_User_GetVSense_V(p_mc, 1000U);
-            p_mc->VAccs = MotorController_User_GetVAccs_V(p_mc, 1000U);
+           volatile uint32_t test = VMonitor_ChargeLevelOfAdcu_Scalar16(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu);
         #endif
+
         }
     }
 }
@@ -327,8 +329,8 @@ static inline void MotorController_Timer1Ms_Thread(MotorControllerPtr_T p_mc)
     //     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
     // }
 #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-#endif
     // Blinky_Toggle(&p_mc->Meter);
+#endif
 }
 
 /*

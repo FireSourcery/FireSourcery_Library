@@ -34,7 +34,7 @@
 
 static void ResetUnitsLinear(Thermistor_T * p_therm)
 {
-    Linear_ADC_Init(&p_therm->LinearHeatLimit, p_therm->Params.FaultTrigger_Adcu, p_therm->Params.WarningTrigger_Adcu, 0, 0);
+    Linear_ADC_Init(&p_therm->HeatLimit, p_therm->Params.FaultTrigger_Adcu, p_therm->Params.WarningTrigger_Adcu, 0, 0);
     /*
         Max resolution
         12-bit ADC, 200 physical degrees interval
@@ -69,13 +69,14 @@ bool CheckThreshold(uint16_t threshold, bool isActive, uint16_t adcu) { return((
 
 /*!
     Monitor: heat < WarningThreshold_DegC < Warning_DegC < FaultThreshold_DegC < Fault_DegC
-    Lower adcu is higher heat, ntc
+    Lower adcu is higher heat, ntc, as pulldown
     @return
 */
 Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t captureAdcu)
 {
     Thermistor_Status_T status;
-    uint16_t adcu = (captureAdcu + p_therm->Adcu) / 2U;
+    // uint16_t adcu = (captureAdcu + p_therm->Adcu) / 2U;
+    uint16_t adcu = captureAdcu;
 
     // todo linear ntc/ptc
     // int16_t adcuCompare = (Type == NTC) ? adcu : -adcu;

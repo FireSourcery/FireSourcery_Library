@@ -43,9 +43,9 @@
     typedef float thermal_t;
 #endif
 
+/* Monitor Status Return */
 typedef enum Thermistor_Status
 {
-    /* Main Status Return */
     THERMISTOR_STATUS_OK,
     THERMISTOR_STATUS_WARNING_THRESHOLD,
     THERMISTOR_STATUS_WARNING,
@@ -81,8 +81,8 @@ typedef struct __attribute__((aligned(2U))) Thermistor_Params
 
     /* NTC Coffceients Conversion */
     uint32_t R0;
-    uint16_t T0; /* In Kelvin*/
-    uint16_t B;
+    uint16_t T0;    /* In Kelvin*/
+    uint16_t B;     /* In Kelvin*/
     uint16_t VInRef_MilliV; /* Generally the same as VADC */
 
     //todo combine? T0_adcu, T1_adcu, DeltaDegrees
@@ -122,7 +122,7 @@ typedef struct Thermistor
     const Thermistor_Config_T CONFIG;
     Thermistor_Params_T Params;
     Linear_T LinearUnits;       /* Back up linear fit. */
-    Linear_T LinearHeatLimit;   /* Linear fit for warning region, return value [WarningTrigger_Adcu:FaultTrigger_Adcu] as [65535:0], Roughly linear 70-100C */
+    Linear_T HeatLimit;   /* Linear fit for warning region, return value [WarningTrigger_Adcu:FaultTrigger_Adcu] as [65535:0], Roughly linear 70-100C */
 // Thermistor_Type_T Type;
     Thermistor_Status_T Status;
     uint16_t Adcu; /* Previous ADC sample */
@@ -160,9 +160,9 @@ Thermistor_T;
     [WarningTrigger_Adcu:FaultTrigger_Adcu] as [65535:0]
 */
 /******************************************************************************/
-static inline uint16_t Thermistor_ConvertHeatLimit_FracU16(const Thermistor_T * p_therm, uint16_t adcu)   { return Linear_ADC_CalcFracU16(&p_therm->LinearHeatLimit, adcu); }
+static inline uint16_t Thermistor_HeatLimitOfAdcu_Scalar16(const Thermistor_T * p_therm, uint16_t adcu) { return Linear_ADC_CalcFracU16(&p_therm->HeatLimit, adcu); }
 /* Captured adcu on Monitor */
-static inline uint16_t Thermistor_GetHeatLimit_FracU16(const Thermistor_T * p_therm)                      { return Thermistor_ConvertHeatLimit_FracU16(p_therm, p_therm->Adcu); }
+static inline uint16_t Thermistor_GetHeatLimit_Scalar16(const Thermistor_T * p_therm) { return Thermistor_HeatLimitOfAdcu_Scalar16(p_therm, p_therm->Adcu); }
 
 /******************************************************************************/
 /*
@@ -181,7 +181,7 @@ static inline bool Thermistor_GetIsWarning(const Thermistor_T * p_therm)        
 /******************************************************************************/
 /* Monitor */
 /******************************************************************************/
-static inline bool Thermistor_GetIsMonitorEnable(const Thermistor_T * p_therm)              { return p_therm->Params.IsMonitorEnable; }
+static inline bool Thermistor_IsMonitorEnable(const Thermistor_T * p_therm)                 { return p_therm->Params.IsMonitorEnable; }
 static inline uint16_t Thermistor_GetFaultTrigger_Adcu(const Thermistor_T * p_therm)        { return p_therm->Params.FaultTrigger_Adcu; }
 static inline uint16_t Thermistor_GetFaultThreshold_Adcu(const Thermistor_T * p_therm)      { return p_therm->Params.FaultThreshold_Adcu; }
 static inline uint16_t Thermistor_GetWarningTrigger_Adcu(const Thermistor_T * p_therm)      { return p_therm->Params.WarningTrigger_Adcu; }
@@ -190,10 +190,11 @@ static inline uint16_t Thermistor_GetWarningThreshold_Adcu(const Thermistor_T * 
 static inline void Thermistor_EnableMonitor(Thermistor_T * p_therm)                                         { p_therm->Params.IsMonitorEnable = true; }
 static inline void Thermistor_DisableMonitor(Thermistor_T * p_therm)                                        { p_therm->Params.IsMonitorEnable = false; }
 static inline void Thermistor_SetIsMonitorEnable(Thermistor_T * p_therm, bool isEnable)                     { p_therm->Params.IsMonitorEnable = isEnable; }
-static inline void Thermistor_SetFaultTrigger_Adcu(Thermistor_T * p_therm, uint8_t fault)                   { p_therm->Params.FaultTrigger_Adcu = fault; }
-static inline void Thermistor_SetFaultThreshold_Adcu(Thermistor_T * p_therm, uint8_t faultThreshold)        { p_therm->Params.FaultThreshold_Adcu = faultThreshold; }
-static inline void Thermistor_SetWarningTrigger_Adcu(Thermistor_T * p_therm, uint8_t warning)               { p_therm->Params.WarningTrigger_Adcu = warning; }
-static inline void Thermistor_SetWarningThreshold_Adcu(Thermistor_T * p_therm, uint8_t warningThreshold)    { p_therm->Params.WarningThreshold_Adcu = warningThreshold; }
+static inline void Thermistor_SetFaultTrigger_Adcu(Thermistor_T * p_therm, uint16_t fault)                   { p_therm->Params.FaultTrigger_Adcu = fault; }
+static inline void Thermistor_SetFaultThreshold_Adcu(Thermistor_T * p_therm, uint16_t faultThreshold)        { p_therm->Params.FaultThreshold_Adcu = faultThreshold; }
+//todo fault as boundary
+static inline void Thermistor_SetWarningTrigger_Adcu(Thermistor_T * p_therm, uint16_t warning)               { p_therm->Params.WarningTrigger_Adcu = warning; }
+static inline void Thermistor_SetWarningThreshold_Adcu(Thermistor_T * p_therm, uint16_t warningThreshold)    { p_therm->Params.WarningThreshold_Adcu = warningThreshold; }
 
 /******************************************************************************/
 /* Units */
@@ -210,8 +211,7 @@ static inline void Thermistor_SetR0(Thermistor_T * p_therm, uint16_t value)     
 static inline void Thermistor_SetT0(Thermistor_T * p_therm, uint16_t value)                 { p_therm->Params.T0 = value; } /* Degrees Kelvin */
 static inline void Thermistor_SetT0_DegC(Thermistor_T * p_therm, uint16_t value)            { p_therm->Params.T0 = value + 273; }
 static inline void Thermistor_SetB(Thermistor_T * p_therm, uint16_t value)                  { p_therm->Params.B = value; }
-static inline void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint32_t vIn_MilliV) { p_therm->Params.VInRef_MilliV = vIn_MilliV; }
-
+static inline void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint16_t vIn_MilliV) { p_therm->Params.VInRef_MilliV = vIn_MilliV; }
 
 static inline uint16_t Thermistor_GetLinearT0_Adcu(const Thermistor_T * p_therm)    { return p_therm->Params.LinearT0_Adcu; }
 static inline uint16_t Thermistor_GetLinearT1_Adcu(const Thermistor_T * p_therm)    { return p_therm->Params.LinearT1_Adcu; }

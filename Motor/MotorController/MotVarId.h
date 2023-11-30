@@ -373,7 +373,6 @@ MotVarId_Params_Thermistor_T;
 */
 typedef enum MotVarId_Params_VMonitor
 {
-    // or use board command?
     MOT_VAR_VMONITOR_R1, // All instance Read-Only
     MOT_VAR_VMONITOR_R2, // All instance Read-Only
     MOT_VAR_VMONITOR_FAULT_UPPER_ADCU,
@@ -384,6 +383,7 @@ typedef enum MotVarId_Params_VMonitor
 }
 MotVarId_Params_VMonitor_T;
 
+    // or use board command for const?
 // typedef enum MotVarId_Params_Board
 // {
 //     MOT_VAR_BOARD_V_MAX,

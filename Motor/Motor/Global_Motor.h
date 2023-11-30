@@ -53,7 +53,7 @@ typedef const struct Global_Motor
     const uint16_t I_MAX_AMPS;          /* Motor I controller rating. pass to Linear_ADC. Unit conversion, UI input/output, param set. */
     const uint16_t ALIGN_VPWM_MAX;
     const uint32_t CONTROL_ANALOG_DIVIDER;  /* In Pow2 - 1 */
-    const uint8_t INIT_WAIT;
+    const uint16_t INIT_WAIT;
     // OpenLoopZcdTransition
 }
 Global_Motor_T;

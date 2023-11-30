@@ -39,6 +39,7 @@
     HAL Launch Cmd
 */
 /******************************************************************************/
+//todo use struct, regularize hal or flash
 static void StartCmdWritePage           (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static void StartCmdEraseSector         (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static void StartCmdVerifyWriteUnit     (HAL_Flash_T * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
@@ -57,7 +58,7 @@ static void StartCmdEraseAll            (HAL_Flash_T * p_hal, const uint8_t * p_
 
 /******************************************************************************/
 /*!
-    HAL Finalize Cmd
+    Wrap HAL Finalize Cmd
 */
 /******************************************************************************/
 // static Flash_Status_T FinalizeCmdNull(Flash_T * p_flash) { (void)p_flash; }
@@ -69,7 +70,7 @@ static Flash_Status_T FinalizeCmdReadOnce(Flash_T * p_flash, size_t opIndex)
 
 /******************************************************************************/
 /*!
-    HAL Parse Error
+    Wrap HAL Parse Error
     Individual HAL interface for parsing error registers
         as register meaning might differ depending on Cmd
 */
@@ -101,7 +102,7 @@ static Flash_Status_T ParseCmdErrorVerify(Flash_T * p_flash)
 static Flash_Status_T ParseCmdErrorWriteOnce(Flash_T * p_flash)
 {
     (void)p_flash;
-    return FLASH_STATUS_ERROR_CMD; /* Cmd failed */
+    return FLASH_STATUS_ERROR_CMD;
 }
 
 static Flash_Status_T ParseCmdErrorReadOnce(Flash_T * p_flash)
@@ -110,68 +111,18 @@ static Flash_Status_T ParseCmdErrorReadOnce(Flash_T * p_flash)
     return FLASH_STATUS_ERROR_CMD;
 }
 
-/******************************************************************************/
-/*!
-    Finalize Op
-*/
-/******************************************************************************/
-static inline void SetWriteControl(Flash_T * p_flash);
-static inline void SetEraseControl(Flash_T * p_flash);
-static inline void SetVerifyWriteControl(Flash_T * p_flash);
-static inline void SetVerifyEraseControl(Flash_T * p_flash);
 
-static inline Flash_Status_T CheckStartVerify(Flash_T * p_flash)
-{
-    return (p_flash->IsVerifyEnable == true) ? FLASH_STATUS_START_VERIFY : FLASH_STATUS_SUCCESS;
-}
-
-static inline Flash_Status_T FinalizeErase(Flash_T * p_flash)
-{
-    Flash_Status_T status = CheckStartVerify(p_flash);
-    if(status == FLASH_STATUS_START_VERIFY) { SetVerifyEraseControl(p_flash); }
-    return status;
-}
-
-static inline Flash_Status_T FinalizeWrite(Flash_T * p_flash)
-{
-    Flash_Status_T status = CheckStartVerify(p_flash);
-    if(status == FLASH_STATUS_START_VERIFY)
-    {
-        if(NvMemory_CheckOpChecksum(p_flash) == false) { status = FLASH_STATUS_ERROR_CHECKSUM; }
-        else { SetVerifyWriteControl(p_flash); }
-    }
-    return status;
-}
-
-static inline Flash_Status_T FinalizeVerify(Flash_T * p_flash)
-{
-    (void)p_flash;
-    return FLASH_STATUS_SUCCESS;
-}
-
-static inline Flash_Status_T FinalizeWriteOnce(Flash_T * p_flash)
-{
-    (void)p_flash;
-    return FLASH_STATUS_SUCCESS;
-}
-
-static inline Flash_Status_T FinalizeReadOnce(Flash_T * p_flash)
-{
-    (void)p_flash;
-    return FLASH_STATUS_SUCCESS;
-}
 
 /******************************************************************************/
 /*!
     Private Set - Referenced by Finalize and Set todo struct
-    todo replace with set image
-
+    todo replace with set image precompile fixed
 */
 /******************************************************************************/
-static inline size_t CalcVerifyEraseUnitsPerCmd(size_t bytes)
+static inline size_t VerifyEraseUnitsPerCmd(size_t totalBytes)
 {
 #ifdef CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
-    return bytes / FLASH_UNIT_VERIFY_ERASE_SIZE;
+    return totalBytes / FLASH_UNIT_VERIFY_ERASE_SIZE;
 #elif defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
     return 1U;
 #endif
@@ -188,26 +139,26 @@ static inline size_t CalcVerifyEraseUnitsPerCmd(size_t bytes)
 
 static inline void SetWriteControl(Flash_T * p_flash)
 {
-    NvMemory_SetOpFunctions(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdWritePage, (NvMemory_Process_T)FinalizeWrite, (NvMemory_Process_T)ParseCmdErrorWrite);
+    NvMemory_SetOpControl(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdWritePage, (NvMemory_Process_T)ParseCmdErrorWrite);
     NvMemory_SetOpCmdSize(p_flash, FLASH_UNIT_WRITE_SIZE, 1U);
 }
 
 static inline void SetEraseControl(Flash_T * p_flash)
 {
-    NvMemory_SetOpFunctions(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdEraseSector, (NvMemory_Process_T)FinalizeErase, (NvMemory_Process_T)ParseCmdErrorErase);
+    NvMemory_SetOpControl(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdEraseSector, (NvMemory_Process_T)ParseCmdErrorErase);
     NvMemory_SetOpCmdSize(p_flash, FLASH_UNIT_ERASE_SIZE, 1U);
 }
 
 static inline void SetVerifyWriteControl(Flash_T * p_flash)
 {
-    NvMemory_SetOpFunctions(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdVerifyWriteUnit, (NvMemory_Process_T)FinalizeVerify, (NvMemory_Process_T)ParseCmdErrorVerify);
+    NvMemory_SetOpControl(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdVerifyWriteUnit, (NvMemory_Process_T)ParseCmdErrorVerify);
     NvMemory_SetOpCmdSize(p_flash, FLASH_UNIT_VERIFY_WRITE_SIZE, 1U);
 }
 
 static inline void SetVerifyEraseControl(Flash_T * p_flash)
 {
-    NvMemory_SetOpFunctions(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdVerifyEraseUnits, (NvMemory_Process_T)FinalizeVerify, (NvMemory_Process_T)ParseCmdErrorVerify);
-    NvMemory_SetOpCmdSize(p_flash, FLASH_UNIT_VERIFY_ERASE_SIZE, CalcVerifyEraseUnitsPerCmd(p_flash->OpSize));
+    NvMemory_SetOpControl(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdVerifyEraseUnits, (NvMemory_Process_T)ParseCmdErrorVerify);
+    NvMemory_SetOpCmdSize(p_flash, FLASH_UNIT_VERIFY_ERASE_SIZE, VerifyEraseUnitsPerCmd(p_flash->OpSize));
 }
 
 /******************************************************************************/
@@ -219,7 +170,7 @@ void Flash_Init(Flash_T * p_flash)
 {
     HAL_Flash_Init(p_flash->CONFIG.P_HAL);
     NvMemory_Init(p_flash);
-    p_flash->IsForceAlignEnable = true;
+    p_flash->IsFillAlignEnable = true;
 }
 
 /* Yield must point to RAM address for Flash case  */
@@ -227,20 +178,21 @@ void Flash_SetYield(Flash_T * p_flash, void (*yield)(void *), void * p_callbackD
 
 bool Flash_ReadSecurityFlag(Flash_T * p_flash) { return HAL_Flash_ReadSecurityFlag(p_flash->CONFIG.P_HAL); }
 
-void Flash_EnableForceAlign(Flash_T * p_flash) { NvMemory_EnableForceAlign(p_flash); }
-void Flash_DisableForceAlign(Flash_T * p_flash) { NvMemory_DisableForceAlign(p_flash); }
+void Flash_EnableFillAlign(Flash_T * p_flash) { NvMemory_EnableFillAlign(p_flash); }
+void Flash_DisableFillAlign(Flash_T * p_flash) { NvMemory_DisableFillAlign(p_flash); }
 
 /******************************************************************************/
 /*!
-    Set - Common Blocking Non Blocking
-    todo template with struct
+    Set Op - Common Blocking Non Blocking
+    change to private?
+    template function with struct?
 */
 /******************************************************************************/
 Flash_Status_T Flash_SetWrite(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
 {
     Flash_Status_T status = NvMemory_SetOpDest(p_flash, p_destFlash, size, FLASH_UNIT_WRITE_SIZE);
     if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpSizeAlignDown(p_flash, size, FLASH_UNIT_WRITE_SIZE); }
-    if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpDataWrite(p_flash, p_source, size); }
+    if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpDataSource(p_flash, p_source, size); }
     if(status == FLASH_STATUS_SUCCESS) { SetWriteControl(p_flash); /* p_flash->p_OpControl = &FLASH_OP_WRITE; */ }
     return status;
 }
@@ -257,7 +209,7 @@ Flash_Status_T Flash_SetVerifyWrite(Flash_T * p_flash, const uint8_t * p_destFla
 {
     Flash_Status_T status = NvMemory_SetOpDest(p_flash, p_destFlash, size, FLASH_UNIT_VERIFY_WRITE_SIZE);
     if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpSizeAlignDown(p_flash, size, FLASH_UNIT_VERIFY_WRITE_SIZE); }
-    if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpDataWrite(p_flash, p_source, size); } /* will redo copy, for verify after write case */
+    if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpDataSource(p_flash, p_source, size); } /* will repeat copy for verify after write case */
     if(status == FLASH_STATUS_SUCCESS) { SetVerifyWriteControl(p_flash); }
     return status;
 }
@@ -270,26 +222,28 @@ Flash_Status_T Flash_SetVerifyErase(Flash_T * p_flash, const uint8_t * p_destFla
     return status;
 }
 
+/* Aligned source only */
 Flash_Status_T Flash_SetWriteOnce(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
 {
     Flash_Status_T status = NvMemory_SetOpDest(p_flash, p_destFlash, size, FLASH_UNIT_WRITE_ONCE_SIZE);
     if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_flash, size, FLASH_UNIT_WRITE_ONCE_SIZE); }
-    if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpDataWrite(p_flash, p_source, size); }
+    if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpDataSource(p_flash, p_source, size); }
     if(status == FLASH_STATUS_SUCCESS)
     {
-        NvMemory_SetOpFunctions(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdWriteOnce, (NvMemory_Process_T)FinalizeWriteOnce, (NvMemory_Process_T)ParseCmdErrorWriteOnce);
+        NvMemory_SetOpControl(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdWriteOnce, (NvMemory_Process_T)ParseCmdErrorWriteOnce);
         NvMemory_SetOpCmdSize(p_flash, FLASH_UNIT_WRITE_ONCE_SIZE, 1U);
     }
     return status;
 }
 
+/* Aligned source only */
 Flash_Status_T Flash_SetReadOnce(Flash_T * p_flash, uint8_t * p_dataResult, const uint8_t * p_destOnce, size_t size)
 {
     Flash_Status_T status = NvMemory_SetOpDest(p_flash, p_destOnce, size, FLASH_UNIT_READ_ONCE_SIZE);
     if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_flash, size, FLASH_UNIT_READ_ONCE_SIZE); }
     if(status == FLASH_STATUS_SUCCESS)
     {
-        NvMemory_SetOpFunctions(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdReadOnce, (NvMemory_Process_T)FinalizeReadOnce, (NvMemory_Process_T)ParseCmdErrorReadOnce);
+        NvMemory_SetOpControl(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdReadOnce, (NvMemory_Process_T)ParseCmdErrorReadOnce);
         NvMemory_SetOpCmdSize(p_flash, FLASH_UNIT_READ_ONCE_SIZE, 1U);
         p_flash->p_OpData = p_dataResult; /* Sets p_OpData to result buffer */
         p_flash->FinalizeCmd = (NvMemory_FinalizeCmd_T)FinalizeCmdReadOnce;
@@ -300,7 +254,7 @@ Flash_Status_T Flash_SetReadOnce(Flash_T * p_flash, uint8_t * p_dataResult, cons
 
 Flash_Status_T Flash_SetEraseAll(Flash_T * p_flash)
 {
-    NvMemory_SetOpFunctions(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdEraseAll, 0U, 0U);
+    NvMemory_SetOpControl(p_flash, (HAL_NvMemory_StartCmd_T)StartCmdEraseAll, (NvMemory_Process_T)0U);
     return FLASH_STATUS_SUCCESS;
 }
 
@@ -310,21 +264,16 @@ Flash_Status_T Flash_SetOp(Flash_T * p_flash, const uint8_t * p_destFlash, const
 
     switch(opId)
     {
-        case FLASH_OPERATION_WRITE:            status = Flash_SetWrite(p_flash, p_destFlash, p_data, size);             break;
-        case FLASH_OPERATION_ERASE:            status = Flash_SetErase(p_flash, p_destFlash, size);                     break;
-        case FLASH_OPERATION_VERIFY_WRITE:    status = Flash_SetVerifyWrite(p_flash, p_destFlash, p_data, size);         break;
-        case FLASH_OPERATION_VERIFY_ERASE:    status = Flash_SetVerifyErase(p_flash, p_destFlash, size);                 break;
-        case FLASH_OPERATION_WRITE_ONCE:    status = Flash_SetWriteOnce(p_flash, p_destFlash, p_data, size);         break;
-        case FLASH_OPERATION_READ_ONCE:        status = Flash_SetReadOnce(p_flash, (uint8_t *)p_data, p_destFlash, size);         break;
-        default:                              status = FLASH_STATUS_ERROR_INVALID_OP;                                 break;
+        case FLASH_OPERATION_WRITE:             status = Flash_SetWrite(p_flash, p_destFlash, p_data, size);                break;
+        case FLASH_OPERATION_ERASE:             status = Flash_SetErase(p_flash, p_destFlash, size);                        break;
+        case FLASH_OPERATION_VERIFY_WRITE:      status = Flash_SetVerifyWrite(p_flash, p_destFlash, p_data, size);          break;
+        case FLASH_OPERATION_VERIFY_ERASE:      status = Flash_SetVerifyErase(p_flash, p_destFlash, size);                  break;
+        case FLASH_OPERATION_WRITE_ONCE:        status = Flash_SetWriteOnce(p_flash, p_destFlash, p_data, size);            break;
+        case FLASH_OPERATION_READ_ONCE:         status = Flash_SetReadOnce(p_flash, (uint8_t *)p_data, p_destFlash, size);  break;
+        default:                                status = FLASH_STATUS_ERROR_INVALID_OP;                                     break;
     }
 
     return status;
-}
-
-void Flash_GetReadOnce(const Flash_T * p_flash, uint8_t * p_result)
-{
-    memcpy(p_result, &p_flash->CONFIG.P_BUFFER[0U], p_flash->OpSize);
 }
 
 /******************************************************************************/
@@ -335,100 +284,113 @@ void Flash_GetReadOnce(const Flash_T * p_flash, uint8_t * p_result)
 /******************************************************************************/
 Flash_Status_T Flash_ProcThisOp_Blocking(Flash_T * p_flash)
 {
-    Flash_Status_T status;
+   volatile Flash_Status_T status;
     Critical_Enter(); /* Flash Op must not invoke isr table stored in flash */
     status = NvMemory_ProcOp_Blocking(p_flash);
     Critical_Exit();
     return status;
 }
 
-// todo move to NvMemory
-static Flash_Status_T WriteBytesAlignFilled(Flash_T * p_flash, size_t unitSize)
+// uint8_t alignedData[FLASH_UNIT_WRITE_SIZE] = { [0U ... (FLASH_UNIT_WRITE_SIZE - 1U)] = FLASH_UNIT_ERASE_PATTERN };
+// todo move to NvMemory, with flexible buffer
+static Flash_Status_T WriteRemainder(Flash_T * p_flash, uint8_t unitSize)
 {
-    Flash_Status_T status;
-    uint32_t alignedData[FLASH_UNIT_WRITE_SIZE] = { [0 ... (FLASH_UNIT_WRITE_SIZE - 1)] = FLASH_UNIT_ERASE_PATTERN };
-    memcpy(alignedData, &p_flash->p_OpData[p_flash->OpSize], p_flash->ForceAlignBytes); /* start from remaining data */
-    p_flash->p_OpData = (uint8_t *)alignedData;
+    volatile Flash_Status_T status;
+    uint8_t alignedData[FLASH_UNIT_WRITE_SIZE]; // assume FLASH_UNIT_WRITE_SIZE >= FLASH_UNIT_WRITE_ONCE_SIZE
+    memcpy(&alignedData[0U], &p_flash->p_OpData[p_flash->OpSize], p_flash->OpSizeRemainder); /* start from remaining data */
+    memset(&alignedData[p_flash->OpSizeRemainder], FLASH_UNIT_ERASE_PATTERN, unitSize - p_flash->OpSizeRemainder);
+    p_flash->p_OpData = &alignedData[0U];
+    p_flash->p_OpDest = p_flash->p_OpDest + p_flash->OpSize;
     p_flash->OpSize = unitSize;
 
     status = Flash_ProcThisOp_Blocking(p_flash);
     return status;
 }
 
-/*
-    Continue write starting from last p_dest
-    Append Write Operation, incrementing p_OpDest
-*/
-Flash_Status_T Flash_ContinueWrite_Blocking(Flash_T * p_flash, const uint8_t * p_source, size_t size)
-{
-    Flash_Status_T status = FLASH_STATUS_SUCCESS;
-
-    if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpSizeAlignDown(p_flash, size, FLASH_UNIT_WRITE_SIZE); }
-    if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpDataWrite(p_flash, p_source, size); }
-    if(status == FLASH_STATUS_SUCCESS) { status = Flash_ProcThisOp_Blocking(p_flash); }
-    if(status == FLASH_STATUS_SUCCESS) /* If verify returns NV_MEMORY_STATUS_START_VERIFY */
-    {
-        p_flash->p_OpDest += p_flash->OpSize;
-        if(p_flash->IsVerifyEnable == true) { SetWriteControl(p_flash); } /* Restore write if verify */
-        if(p_flash->ForceAlignBytes != 0U) { status = WriteBytesAlignFilled(p_flash, FLASH_UNIT_WRITE_SIZE); }
-    }
-
-    return status;
-}
-
 /* Shortcut check status proc */
-static inline Flash_Status_T ProcOpReturn_Blocking(Flash_T * p_flash, Flash_Status_T status)
+static inline Flash_Status_T ProcAfterSet(Flash_T * p_flash, Flash_Status_T status)
 {
     return (status == FLASH_STATUS_SUCCESS) ? Flash_ProcThisOp_Blocking(p_flash) : status;
 }
 
-
+/******************************************************************************/
+/*!
+    Public
+*/
+/******************************************************************************/
 Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
 {
-    assert(NvMemory_IsAligned_Ptr(p_destFlash, FLASH_UNIT_WRITE_SIZE));
-    assert(size >= FLASH_UNIT_WRITE_SIZE);
-
-    Flash_Status_T status = ProcOpReturn_Blocking(p_flash, Flash_SetWrite(p_flash, p_destFlash, p_source, size));
-    if(status == FLASH_STATUS_SUCCESS) { if(p_flash->ForceAlignBytes != 0U) { status = WriteBytesAlignFilled(p_flash, FLASH_UNIT_WRITE_SIZE); } }
+    volatile Flash_Status_T status = ProcAfterSet(p_flash, Flash_SetWrite(p_flash, p_destFlash, p_source, size));
+    if(status == FLASH_STATUS_SUCCESS) { if(p_flash->OpSizeRemainder != 0U) { status = WriteRemainder(p_flash, FLASH_UNIT_WRITE_SIZE); } }
+    // if(p_flash->IsVerifyEnable == true) { status = ProcAfterSet(p_flash, Flash_SetVerifyWrite(p_flash, p_destFlash, p_source, size)); }
     return status;
+}
+
+/*
+    Continue write starting from last p_dest
+    Append Write Operation, incrementing p_OpDest
+    Previous cmd must end on aligned boundry
+    previsou verfy cmd maisints OpSize if also set to align down. todo
+*/
+Flash_Status_T Flash_ContinueWrite_Blocking(Flash_T * p_flash, const uint8_t * p_source, size_t size)
+{
+    assert(p_flash->OpSizeRemainder == 0);
+    return Flash_Write_Blocking(p_flash, p_flash->p_OpDest + p_flash->OpSize, p_source, size);
+
+    // Flash_Status_T status = FLASH_STATUS_SUCCESS;
+    // if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpSizeAlignDown(p_flash, size, FLASH_UNIT_WRITE_SIZE); }
+    // if(status == FLASH_STATUS_SUCCESS) { status = NvMemory_SetOpDataSource(p_flash, p_source, size); }
+    // if(status == FLASH_STATUS_SUCCESS) { status = Flash_ProcThisOp_Blocking(p_flash); }
+    // if(status == FLASH_STATUS_SUCCESS) /* If verify returns NV_MEMORY_STATUS_START_VERIFY */
+    // {
+    //     p_flash->p_OpDest += p_flash->OpSize;
+    //     if(p_flash->IsVerifyEnable == true) { SetWriteControl(p_flash); } /* Restore write if verify */
+    //     if(p_flash->OpSizeRemainder != 0U) { status = WriteRemainder(p_flash, FLASH_UNIT_WRITE_SIZE); }
+    // }
+    // return status;
 }
 
 Flash_Status_T Flash_Erase_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
 {
-    return ProcOpReturn_Blocking(p_flash, Flash_SetErase(p_flash, p_destFlash, size));
+    return ProcAfterSet(p_flash, Flash_SetErase(p_flash, p_destFlash, size));
 }
 
 Flash_Status_T Flash_VerifyWrite_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
 {
-    return ProcOpReturn_Blocking(p_flash, Flash_SetVerifyWrite(p_flash, p_destFlash, p_source, size));
+#if defined(FLASH_UNIT_VERIFY_WRITE_SIZE) && (FLASH_UNIT_VERIFY_WRITE_SIZE != 0U)
+    return ProcAfterSet(p_flash, Flash_SetVerifyWrite(p_flash, p_destFlash, p_source, size));
+    // if(status == FLASH_STATUS_SUCCESS) { if(p_flash->OpSizeRemainder != 0U) { status = VerifyWriteRemainder(p_flash, FLASH_UNIT_WRITE_SIZE); } } //todo verify mains original size in case of continue write
+#else  /* Manual compare if no hw verify implemented */
+    return NvMemory_VerifyWrite(p_flash, p_destFlash, p_source, size) ? FLASH_STATUS_SUCCESS : FLASH_STATUS_ERROR_VERIFY;
+#endif
 }
 
 Flash_Status_T Flash_VerifyErase_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
 {
-    return ProcOpReturn_Blocking(p_flash, Flash_SetVerifyErase(p_flash, p_destFlash, size));
+    return ProcAfterSet(p_flash, Flash_SetVerifyErase(p_flash, p_destFlash, size));
 }
 
-/* Force align should write remainder filling with erase pattern which can be overwritten */
+/* Caller ensure align. Alternatively write remainder filling with erase pattern which can be overwritten */
 Flash_Status_T Flash_WriteOnce_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
 {
-    Flash_Status_T status =  ProcOpReturn_Blocking(p_flash, Flash_SetWriteOnce(p_flash, p_destFlash, p_source, size));
-    if(status == FLASH_STATUS_SUCCESS) { if(p_flash->ForceAlignBytes != 0U) { status = WriteBytesAlignFilled(p_flash, FLASH_UNIT_WRITE_ONCE_SIZE); } }
+    Flash_Status_T status = ProcAfterSet(p_flash, Flash_SetWriteOnce(p_flash, p_destFlash, p_source, size));
+    // if(status == FLASH_STATUS_SUCCESS) { if(p_flash->OpSizeRemainder != 0U) { status = WriteRemainder(p_flash, FLASH_UNIT_WRITE_ONCE_SIZE); } }
     return status;
 }
 
 Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, uint8_t * p_dataResult, const uint8_t * p_destOnce, size_t size)
 {
-    return ProcOpReturn_Blocking(p_flash, Flash_SetReadOnce(p_flash, p_dataResult, p_destOnce, size));
+    return ProcAfterSet(p_flash, Flash_SetReadOnce(p_flash, p_dataResult, p_destOnce, size));
 }
 
 Flash_Status_T Flash_EraseAll_Blocking(Flash_T *p_flash)
 {
-    return ProcOpReturn_Blocking(p_flash, Flash_SetEraseAll(p_flash));
+    return ProcAfterSet(p_flash, Flash_SetEraseAll(p_flash));
 }
 
 Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size, Flash_Operation_T opId)
 {
-    return ProcOpReturn_Blocking(p_flash, Flash_SetOp(p_flash, p_destFlash, p_source, size, opId));
+    return ProcAfterSet(p_flash, Flash_SetOp(p_flash, p_destFlash, p_source, size, opId));
 }
 
 
@@ -440,48 +402,51 @@ Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, const uint8_t * p_destFl
 /*
     returns true when complete
 */
-bool Flash_ProcOp(Flash_T * p_flash) { return NvMemory_ProcOp(p_flash); }
+// bool Flash_ProcOp(Flash_T * p_flash) { return NvMemory_ProcOp(p_flash); }
 
-size_t Flash_GetOpBytesRemaining(Flash_T * p_flash) { return NvMemory_GetOpBytesRemaining(p_flash); }
+// size_t Flash_GetOpBytesRemaining(Flash_T * p_flash) { return NvMemory_GetOpBytesRemaining(p_flash); }
 
-// bool Flash_ReadIsOpComplete(Flash_T * p_flash) { return NvMemory_ReadIsOpComplete(p_flash); }
+// // bool Flash_ReadIsOpComplete(Flash_T * p_flash) { return NvMemory_ReadIsOpComplete(p_flash); }
 
-Flash_Status_T Flash_StartWrite_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
-{
-    p_flash->Status = (Flash_SetWrite(p_flash, p_destFlash, p_source, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
-    return p_flash->Status;
-}
+// Flash_Status_T Flash_StartWrite_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
+// {
+//     p_flash->Status = (Flash_SetWrite(p_flash, p_destFlash, p_source, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
+//     return p_flash->Status;
+// }
 
-Flash_Status_T Flash_StartErase_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
-{
-    p_flash->Status = (Flash_SetErase(p_flash, p_destFlash, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
-    return p_flash->Status;
-}
+// Flash_Status_T Flash_StartErase_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
+// {
+//     p_flash->Status = (Flash_SetErase(p_flash, p_destFlash, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
+//     return p_flash->Status;
+// }
 
-Flash_Status_T Flash_StartVerifyWrite_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
-{
-    p_flash->Status = (Flash_SetVerifyWrite(p_flash, p_destFlash, p_source, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
-    return p_flash->Status;
-}
+// Flash_Status_T Flash_StartVerifyWrite_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
+// {
+//     p_flash->Status = (Flash_SetVerifyWrite(p_flash, p_destFlash, p_source, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
+//     return p_flash->Status;
+// }
 
-Flash_Status_T Flash_StartVerifyErase_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
-{
-    p_flash->Status = (Flash_SetVerifyErase(p_flash, p_destFlash, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
-    return p_flash->Status;
-}
+// Flash_Status_T Flash_StartVerifyErase_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size)
+// {
+//     p_flash->Status = (Flash_SetVerifyErase(p_flash, p_destFlash, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
+//     return p_flash->Status;
+// }
 
-Flash_Status_T Flash_StartWriteOnce_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
-{
-    p_flash->Status = (Flash_SetWriteOnce(p_flash, p_destFlash, p_source, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
-    return p_flash->Status;
-}
+// Flash_Status_T Flash_StartWriteOnce_NonBlocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
+// {
+//     p_flash->Status = (Flash_SetWriteOnce(p_flash, p_destFlash, p_source, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
+//     return p_flash->Status;
+// }
 
-Flash_Status_T Flash_StartReadOnce_NonBlocking(Flash_T * p_flash, uint8_t * p_dataResult, const uint8_t * p_once, size_t size)
-{
-    p_flash->Status = (Flash_SetReadOnce(p_flash, p_dataResult, p_once, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
-    return p_flash->Status;
-}
-
+// Flash_Status_T Flash_StartReadOnce_NonBlocking(Flash_T * p_flash, uint8_t * p_dataResult, const uint8_t * p_once, size_t size)
+// {
+//     p_flash->Status = (Flash_SetReadOnce(p_flash, p_dataResult, p_once, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);
+//     return p_flash->Status;
+// }
+// void Flash_GetReadOnce(const Flash_T * p_flash, uint8_t * p_result)
+// {
+//     memcpy(p_result, &p_flash->CONFIG.P_BUFFER[0U], p_flash->OpSize);
+// }
 // Flash_Status_T Flash_StartReadOnce_Direct_NonBlocking(Flash_T * p_flash, uint8_t * p_destResult, const uint8_t * p_destFlash, size_t size)
 // {
 //     p_flash->Status = (Flash_SetReadOnce(p_flash, p_destFlash, size) == FLASH_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : FLASH_STATUS_ERROR_INPUT);

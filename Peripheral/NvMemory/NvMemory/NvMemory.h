@@ -24,7 +24,7 @@
 /*!
     @file
     @author FireSourcery
-    @brief    Non Volatile Memory Operations. Abstract Base Class. Template Pattern.
+    @brief  Non Volatile Memory Operations. Abstract Base Class. Template Pattern.
     @version V0
 */
 /******************************************************************************/
@@ -44,7 +44,7 @@ typedef enum NvMemory_Status
 {
     NV_MEMORY_STATUS_SUCCESS,
     NV_MEMORY_STATUS_PROCESSING,        /* NonBlocking Only */
-    NV_MEMORY_STATUS_START_VERIFY,      /* Follow up Op after complete */
+    NV_MEMORY_STATUS_START_VERIFY,      /* Follow up Op after complete */ //todo remove
     // NV_MEMORY_STATUS_ERROR,
     NV_MEMORY_STATUS_ERROR_BUSY,
     NV_MEMORY_STATUS_ERROR_INPUT,       /* op params, dest address or size */ //todo   parse error destination, align
@@ -63,6 +63,7 @@ NvMemory_Status_T;
 /*
     Partition Group
     Partition defines writable ranges. Checked on op cmd.
+    Only provides range check. Caller account for overlapping address id
 */
 typedef const struct NvMemory_Partition
 {
@@ -71,7 +72,7 @@ typedef const struct NvMemory_Partition
 #ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE /* or HAL functions handle offset */
     int32_t OP_ADDRESS_OFFSET;
 #endif
-    //    uint8_t Alignment;
+    // uint8_t Alignment; per parition algin if not determined by cmd
 }
 NvMemory_Partition_T;
 
@@ -93,12 +94,25 @@ NvMemory_Partition_T;
 */
 typedef bool (* const HAL_NvMemory_ReadFlags_T) (const void * p_hal);
 typedef void (* const HAL_NvMemory_ClearFlags_T) (void * p_hal);
+
 typedef void (*HAL_NvMemory_StartCmd_T) (void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
+// typedef void (*HAL_NvMemory_FinalizeCmd_T) (void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
+// typedef NvMemory_Status_T(*HAL_NvMemory_ParseCmdStatus_T) (const void * p_hal);
+
+typedef void (*NvMemory_Callback_T)(void * p_callbackData);
 
 struct NvMemory;
-typedef NvMemory_Status_T(*NvMemory_Process_T) (struct NvMemory * p_this);
 typedef NvMemory_Status_T(*NvMemory_FinalizeCmd_T) (struct NvMemory * p_this, size_t opIndex);
-typedef void (*NvMemory_Callback_T)(void * p_callbackData);
+typedef NvMemory_Status_T(*NvMemory_Process_T) (struct NvMemory * p_this);
+
+// typedef const struct NvMemory_OpControl
+// {
+//     HAL_NvMemory_StartCmd_T START_CMD;
+//     NvMemory_FinalizeCmd_T FINALIZE_CMD;
+//     NvMemory_Process_T PARSE_CMD_ERROR;
+//     size_t UNIT_SIZE;
+// }
+// NvMemory_OpControl_T;
 
 typedef enum NvMemory_State
 {
@@ -109,16 +123,6 @@ typedef enum NvMemory_State
 }
 NvMemory_State_T;
 
-// typedef const struct NvMemory_OpControl
-// {
-//     HAL_NvMemory_StartCmd_T START_CMD;
-//     NvMemory_FinalizeCmd_T FINALIZE_CMD;
-//     NvMemory_Process_T PARSE_CMD_ERROR;
-//     NvMemory_Process_T FINALIZE_OP;
-//     size_t UNIT_SIZE;
-// }
-// NvMemory_OpControl_T;
-
 typedef const struct NvMemory_Config
 {
     void * const P_HAL;
@@ -126,9 +130,9 @@ typedef const struct NvMemory_Config
     const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM, for Flash case*/
     const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM, for Flash case*/
     const HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
-    NvMemory_Partition_T * const P_PARTITIONS;
+    const NvMemory_Partition_T * const P_PARTITIONS;
     const uint8_t PARTITION_COUNT;
-    uint8_t * const P_BUFFER; /* IsForceAlignEnable need buffer of UNIT_WRITE_SIZE for fill with erase pattern. (Even if IsOpBuffered is not used ) */
+    uint8_t * const P_BUFFER;
     const size_t BUFFER_SIZE;
 }
 NvMemory_Config_T;
@@ -140,33 +144,33 @@ typedef struct NvMemory
 {
     NvMemory_Config_T CONFIG;
 
-    bool IsVerifyEnable;
-    bool IsOpBuffered;     /* copy to buffer first or use pointer to source */
-    bool IsForceAlignEnable;
+    bool IsOpBuffered;      /* copy to buffer first or use pointer to source */
+    bool IsVerifyEnable;    /* Auto call verify, alternatively user call */
+    bool IsFillAlignEnable; /* if implement in this module, need buffer of UNIT_WRITE_SIZE for fill with erase pattern (Even if IsOpBuffered is not used ) */
 
     const uint8_t * p_OpDest;
-    const uint8_t * p_OpData;
-    size_t OpSize;          /* Total bytes at start */
-    size_t BytesPerCmd;     /* Used by Erase for now */
-    size_t UnitsPerCmd;
-    size_t ForceAlignBytes; /* Filler */
+    const uint8_t * p_OpData;   /* Op data source. internal buffer, caller provided address */
+    size_t OpSize;              /* Retain for ContinueWrite. Total bytes at start, aligned */
+    //todo derivce aligned and remainder otf
+    size_t OpSizeRemainder;     /* Remainder, retain total from user */
 
-    const NvMemory_Partition_T * p_OpPartition; /* Op Dest */
+    const NvMemory_Partition_T * p_OpPartition; /* Op Dest boundary check, remov*/
 
     // NvMemory_OpControl_T * p_OpControl;
     HAL_NvMemory_StartCmd_T StartCmd;       /* Start HAL Cmd, many iterations per Op */
     NvMemory_FinalizeCmd_T FinalizeCmd;     /* On end per Cmd iteration */
     NvMemory_Process_T ParseCmdError;       /* On end all Cmd iteration, Op Complete Error */
-    NvMemory_Process_T FinalizeOp;          /* On end all Cmd iteration, Op Complete Success */
+    size_t BytesPerCmd;     /* Used by Erase for now */
+    size_t UnitsPerCmd;     /* count of UNIT_SIZE */
 
-    void * p_CallbackData;
+    void * p_CallbackContext;
     NvMemory_Callback_T Yield;             /*!< On Block */
-    // NvMemory_Callback_T OnComplete;     /*!< OnComplete */
 
     /* Nonblocking use only */
     NvMemory_State_T State;
     NvMemory_Status_T Status;
     size_t OpIndex;     /* in bytes */
+    // NvMemory_Callback_T OnComplete;     /*!< OnComplete */
 }
 NvMemory_T;
 
@@ -201,21 +205,24 @@ NvMemory_T;
     }                                                                                                                                                   \
 }
 
-static inline bool NvMemory_IsAligned(size_t pointer, size_t align) { return pointer % align == 0U; }
-static inline bool NvMemory_IsAligned_Ptr(const void * pointer, size_t align) { return (uintptr_t)pointer % align == 0U; }
-static inline bool _NvMemory_AssertAligned(size_t pointer, size_t size, size_t align) { return NvMemory_IsAligned(pointer, align) && (size >= align); }
+extern bool NvMemory_IsAligned(size_t num, size_t align);
+extern bool NvMemory_IsPtrAligned(const void * ptr, size_t align);
+
+// static size_t NvMemory_GetOpSizeAligned(NvMemory_T * p_this)     {  NvMemory_AlignDown(OpSize) }
+// static size_t NvMemory_GetOpSizeRemainder(NvMemory_T * p_this)   {  OpSize- NvMemory_AlignDown(OpSize) }
 
 extern void NvMemory_Init(NvMemory_T * p_this);
-extern void NvMemory_SetYield(NvMemory_T * p_this, void (*yield)(void *), void * p_callbackData);
-extern void NvMemory_EnableForceAlign(NvMemory_T * p_this);
-extern void NvMemory_DisableForceAlign(NvMemory_T * p_this);
+extern void NvMemory_SetYield(NvMemory_T * p_this, NvMemory_Callback_T yield, void * p_callbackData);
+extern void NvMemory_EnableFillAlign(NvMemory_T * p_this);
+extern void NvMemory_DisableFillAlign(NvMemory_T * p_this);
 
 extern void NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd);
-extern void NvMemory_SetOpFunctions(NvMemory_T * p_this, HAL_NvMemory_StartCmd_T startCmd, NvMemory_Process_T finalizeOp, NvMemory_Process_T parseCmdError);
-extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this);
+extern void NvMemory_SetOpControl(NvMemory_T * p_this, HAL_NvMemory_StartCmd_T startCmd, NvMemory_Process_T parseCmdError);
+extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this, const uint8_t * p_source, size_t size);
+extern bool NvMemory_VerifyWrite(const NvMemory_T * p_this, const uint8_t * p_dest, const uint8_t * p_source, size_t size);
 
 extern NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize, size_t unitSize);
-extern NvMemory_Status_T NvMemory_SetOpDataWrite(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpDataSource(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
 extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize, size_t unitSize);
 extern NvMemory_Status_T NvMemory_SetOpSizeAlignDown(NvMemory_T * p_this, size_t opSize, size_t unitSize);
 extern NvMemory_Status_T NvMemory_SetOpSizeAlignUp(NvMemory_T * p_this, size_t opSize, size_t unitSize);
@@ -223,15 +230,25 @@ extern NvMemory_Status_T NvMemory_SetOpSizeAlignUp(NvMemory_T * p_this, size_t o
 /*
     Blocking
 */
-/* Store in RAM for case of Flash */
 extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 
 /*
     Non Blocking
 */
 extern size_t NvMemory_GetOpBytesRemaining(NvMemory_T * p_this);
-extern bool NvMemory_ProcOp(NvMemory_T * p_this) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+extern bool NvMemory_ProcOp(NvMemory_T * p_this);
 extern NvMemory_Status_T NvMemory_StartOp(NvMemory_T * p_this);
 
 #endif /* NV_MEMORY_H */
 
+// static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs);
+// static inline void HAL_Flash_StartCmdEraseSector(HAL_Flash_T * p_regs, const uint8_t * p_dest);
+// static inline void HAL_Flash_StartCmdEraseAll(HAL_Flash_T * p_regs);
+// static inline void HAL_Flash_StartCmdWritePage(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data);
+// static inline void HAL_Flash_StartCmdVerifyWriteUnit(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data);
+// static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data);
+
+// static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, const uint8_t * p_dest);
+// static inline void HAL_Flash_ReadOnceData(HAL_Flash_T * p_regs, uint8_t * p_result);
+// static inline void HAL_Flash_StartCmdVerifyEraseUnit(HAL_Flash_T * p_regs, const uint8_t * p_dest);
+// static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, const uint8_t * p_dest, uint16_t units);

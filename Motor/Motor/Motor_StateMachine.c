@@ -79,9 +79,14 @@ static void Init_Entry(MotorPtr_T p_motor)
 
 static void Init_Proc(MotorPtr_T p_motor)
 {
-    /* Wait for thermistor Adc */
-    if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
+    //poll fault flags
+    // bool proceed;
+    // if(p_motor->AnalogResults.Heat_Adcu == 0U) { proceed = false; }
+    p_motor->FaultFlags.Overheat = Thermistor_GetIsFault(&p_motor->Thermistor);
+
+    // if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
     //(&& Motor_CheckParams() == true)    //check params
+    if(p_motor->FaultFlags.Word == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
 }
 
 static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
@@ -209,7 +214,6 @@ static const StateMachine_State_T STATE_STOP =
 /******************************************************************************/
 static void Run_Entry(MotorPtr_T p_motor)
 {
-    // Motor_ProcCommutationMode(p_motor, Motor_FOC_ClearObserveState, 0U);
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, 0U);
     // Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcFeedbackMatch, 0U); /* Sync mode can match feedback here */
 }
@@ -502,15 +506,20 @@ static const StateMachine_State_T STATE_CALIBRATION =
 */
 /******************************************************************************/
 static void Fault_Entry(MotorPtr_T p_motor) { Phase_Float(&p_motor->Phase); }
-/* repeat ok */
-static void Fault_Proc(MotorPtr_T p_motor) { Phase_Float(&p_motor->Phase); }
+
+static void Fault_Proc(MotorPtr_T p_motor)
+{
+    Phase_Float(&p_motor->Phase);
+    if(p_motor->FaultFlags.Word == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
+}
 
 static StateMachine_State_T * Fault_InputClearFault(MotorPtr_T p_motor, statemachine_inputvalue_t voidIn)
 {
     (void)voidIn;
-    if(Thermistor_GetIsFault(&p_motor->Thermistor) == false) { p_motor->FaultFlags.Overheat = 0U; }
-    if(p_motor->FaultFlags.AlignStartUp == 1U) { p_motor->FaultFlags.AlignStartUp = 0U; }
-    return (p_motor->FaultFlags.Word == 0U) ? &STATE_STOP : 0U;
+    p_motor->FaultFlags.Overheat = Thermistor_GetIsFault(&p_motor->Thermistor);
+    p_motor->FaultFlags.AlignStartUp = 0U;
+    // return (p_motor->FaultFlags.Word == 0U) ? &STATE_STOP : 0U;
+    return 0U;
 }
 
 static StateMachine_State_T * Fault_InputAll(MotorPtr_T p_motor, statemachine_inputvalue_t voidIn)
