@@ -170,9 +170,9 @@ static inline MotorController_FaultFlags_T MotorController_User_GetFaultFlags(co
 static inline uint16_t MotorController_User_GetAdcu(const MotorControllerPtr_T p_mc, MotAnalog_Channel_T adcChannel)     { return p_mc->AnalogResults.Channels[adcChannel]; }
 static inline uint8_t MotorController_User_GetAdcu_Msb8(const MotorControllerPtr_T p_mc, MotAnalog_Channel_T adcChannel) { return MotorController_User_GetAdcu(p_mc, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
 
-static inline uint32_t MotorController_User_GetVSource_V(const MotorControllerPtr_T p_mc, uint16_t vScalar)                { return VMonitor_ScalarVOf(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu, vScalar); }
-static inline uint32_t MotorController_User_GetVSense_V(const MotorControllerPtr_T p_mc, uint16_t vScalar)                 { return VMonitor_ScalarVOf(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu, vScalar); }
-static inline uint32_t MotorController_User_GetVAccs_V(const MotorControllerPtr_T p_mc, uint16_t vScalar)                  { return VMonitor_ScalarVOf(&p_mc->VMonitorAccs, p_mc->AnalogResults.VAccs_Adcu, vScalar); }
+static inline uint32_t MotorController_User_GetVSource_V(const MotorControllerPtr_T p_mc, uint16_t vScalar) { return VMonitor_ScalarVOf(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu, vScalar); }
+static inline uint32_t MotorController_User_GetVSense_V(const MotorControllerPtr_T p_mc, uint16_t vScalar)  { return VMonitor_ScalarVOf(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu, vScalar); }
+static inline uint32_t MotorController_User_GetVAccs_V(const MotorControllerPtr_T p_mc, uint16_t vScalar)   { return VMonitor_ScalarVOf(&p_mc->VMonitorAccs, p_mc->AnalogResults.VAccs_Adcu, vScalar); }
 
 static inline uint16_t MotorController_User_GetHeatPcb_Adcu(const MotorControllerPtr_T p_mc)        { return p_mc->AnalogResults.HeatPcb_Adcu; }
 static inline uint16_t MotorController_User_GetHeatMosfets_Adcu(const MotorControllerPtr_T p_mc)    { return p_mc->AnalogResults.HeatMosfets_Adcu; }
@@ -205,15 +205,17 @@ static inline int32_t MotorController_User_GetFaultHeatMosfetsBot_DegC(const Mot
 #endif
 
 /*
-    Controller NvM Variables Parameters
+    Boot Buffer
 */
-static inline uint16_t MotorController_User_GetVSourceRef(const MotorControllerPtr_T p_mc)           { return p_mc->Parameters.VSourceRef; }
-
-/* Wrappers */
 static inline MemMapBoot_T MotorController_User_GetBootReg(const MotorControllerPtr_T p_mc)          { return p_mc->MemMapBoot; }
 static inline void MotorController_User_SetBootReg(MotorControllerPtr_T p_mc, MemMapBoot_T bootReg)  { p_mc->MemMapBoot = bootReg; }
 static inline void MotorController_User_SetFastBoot(MotorControllerPtr_T p_mc, bool isEnable)        { p_mc->MemMapBoot.FastBoot = isEnable; }
 static inline void MotorController_User_SetLoadDefault(MotorControllerPtr_T p_mc, bool isEnable)     { p_mc->MemMapBoot.LoadDefault = isEnable; }
+
+/*
+    Controller NvM Variables Parameters
+*/
+static inline uint16_t MotorController_User_GetVSourceRef(const MotorControllerPtr_T p_mc)           { return p_mc->Parameters.VSourceRef; }
 
 static inline MotorController_InitMode_T MotorController_User_GetInitMode(const MotorControllerPtr_T p_mc)           { return p_mc->Parameters.InitMode; }
 static inline MotorController_InputMode_T MotorController_User_GetInputMode(const MotorControllerPtr_T p_mc)         { return p_mc->Parameters.InputMode; }

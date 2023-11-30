@@ -105,8 +105,7 @@ static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_Call
             MotorController_User_ProcBlocking_Blocking(p_mc, (MotorController_BlockingId_T)p_rxPacket->CallReq.Arg);
             switch((MotorController_BlockingId_T)p_rxPacket->CallReq.Arg)
             {
-                case MOTOR_CONTROLLER_BLOCKING_ENTER:               status =  (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_BLOCKING) ? MOT_STATUS_OK : MOT_STATUS_ERROR; break;
-
+                case MOTOR_CONTROLLER_BLOCKING_ENTER:               status = (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_BLOCKING) ? MOT_STATUS_OK : MOT_STATUS_ERROR; break;
                 case MOTOR_CONTROLLER_BLOCKING_EXIT:                status = MOT_STATUS_OK;        break;
 
                 /* Non Blocking function, host/caller poll status after. */

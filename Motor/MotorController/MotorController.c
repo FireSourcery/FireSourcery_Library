@@ -176,7 +176,6 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_PARAMS_NVM, &p_mc->Parameters, sizeof(MotorController_Params_T)); };
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_MEM_MAP_BOOT, &p_mc->MemMapBoot, sizeof(MemMapBoot_T)); };
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->AnalogUser.CONFIG.P_PARAMS, &p_mc->AnalogUser.Params, sizeof(MotAnalogUser_Params_T)); };
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->ThermistorPcb.CONFIG.P_PARAMS, &p_mc->ThermistorPcb.Params, sizeof(Thermistor_Params_T)); };
 
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->VMonitorSource.CONFIG.P_PARAMS, &p_mc->VMonitorSource.Params, sizeof(VMonitor_Params_T)); };
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->VMonitorAccs.CONFIG.P_PARAMS, &p_mc->VMonitorAccs.Params, sizeof(VMonitor_Params_T)); };
@@ -185,6 +184,7 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->Shell.CONFIG.P_PARAMS, &p_mc->Shell.Params, sizeof(Shell_Params_T)); };
 #endif
 
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->ThermistorPcb.CONFIG.P_PARAMS, &p_mc->ThermistorPcb.Params, sizeof(Thermistor_Params_T)); };
 #if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->ThermistorMosfetsTop.CONFIG.P_PARAMS, &p_mc->ThermistorMosfetsTop.Params, sizeof(Thermistor_Params_T)); };
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->ThermistorMosfetsBot.CONFIG.P_PARAMS, &p_mc->ThermistorMosfetsBot.Params, sizeof(Thermistor_Params_T)); };
@@ -219,14 +219,13 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p
         }
     }
 
-
     return status;
 }
 
 NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorControllerPtr_T p_mc)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
-    return WriteNvm_Blocking(p_mc->CONFIG.P_MEM_MAP_BOOT, &p_mc->MemMapBoot, sizeof(MemMapBoot_T));
+    return WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_MEM_MAP_BOOT, &p_mc->MemMapBoot, sizeof(MemMapBoot_T));
 #elif   defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
     return NV_MEMORY_STATUS_ERROR_OTHER; /* Save on all params */
 #endif

@@ -276,13 +276,14 @@ MotorController_Manufacture_T;
 */
 typedef const struct MotorController_Config
 {
-    const uint8_t MAIN_VERSION[4U];
     const MotorController_Params_T * const P_PARAMS_NVM;
-    const MotorController_Manufacture_T * const P_MANUFACTURE;  /* Require interface function, if FlashOnce is selected */
-    const MemMapBoot_T * const P_MEM_MAP_BOOT;
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
     const void * const P_PARAMS_START; const uint16_t PARAMS_SIZE;  /* Flash params start */
 #endif
+    const MemMapBoot_T * const P_MEM_MAP_BOOT;
+    // const void * const P_ONCE_START; const uint8_t ONCE_SIZE;
+    const MotorController_Manufacture_T * const P_MANUFACTURE;  /* Require interface function, if FlashOnce is selected */
+    const uint8_t MAIN_VERSION[4U];
 
     MotorPtr_T const P_MOTORS; const uint8_t MOTOR_COUNT;
     /* Simultaneous active serial */

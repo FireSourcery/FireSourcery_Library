@@ -72,7 +72,7 @@ typedef const struct NvMemory_Partition
 #ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE /* or HAL functions handle offset */
     int32_t OP_ADDRESS_OFFSET;
 #endif
-    // uint8_t Alignment; per parition algin if not determined by cmd
+    // uint8_t Alignment; per partition algin if not determined by cmd
 }
 NvMemory_Partition_T;
 
@@ -96,23 +96,25 @@ typedef bool (* const HAL_NvMemory_ReadFlags_T) (const void * p_hal);
 typedef void (* const HAL_NvMemory_ClearFlags_T) (void * p_hal);
 
 typedef void (*HAL_NvMemory_StartCmd_T) (void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
-// typedef void (*HAL_NvMemory_FinalizeCmd_T) (void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
-// typedef NvMemory_Status_T(*HAL_NvMemory_ParseCmdStatus_T) (const void * p_hal);
+typedef void (*HAL_NvMemory_OnEndCmd_T) (void * p_hal, const uint8_t * p_cmdDest, uint8_t * p_cmdData, size_t units);
+typedef NvMemory_Status_T(*HAL_NvMemory_CmdStatus_T) (const void * p_hal);
 
 typedef void (*NvMemory_Callback_T)(void * p_callbackData);
 
-struct NvMemory;
-typedef NvMemory_Status_T(*NvMemory_FinalizeCmd_T) (struct NvMemory * p_this, size_t opIndex);
-typedef NvMemory_Status_T(*NvMemory_Process_T) (struct NvMemory * p_this);
+/* VTable */
+typedef const struct NvMemory_OpControl
+{
+    HAL_NvMemory_StartCmd_T START_CMD;          /* Start HAL Cmd, multiple iterations per Op */
+    HAL_NvMemory_OnEndCmd_T FINALIZE_CMD;       /* On end per Cmd iteration */
+    HAL_NvMemory_CmdStatus_T PARSE_CMD_ERROR;   /* On end all Cmd iteration, Op Complete Error */
+    size_t UNIT_SIZE;                           /* Align Size */
+    size_t(*FILL_ALIGN)(size_t opSize, size_t alignSize);
 
-// typedef const struct NvMemory_OpControl
-// {
-//     HAL_NvMemory_StartCmd_T START_CMD;
-//     NvMemory_FinalizeCmd_T FINALIZE_CMD;
-//     NvMemory_Process_T PARSE_CMD_ERROR;
-//     size_t UNIT_SIZE;
-// }
-// NvMemory_OpControl_T;
+    // size_t CMD_UNITS;                           /* Used by EraseVerify for now */
+    // size_t BytesPerCmd;     /* Used by Erase for now */
+    // size_t UnitsPerCmd;     /* count of UNIT_SIZE */
+}
+NvMemory_OpControl_T;
 
 typedef enum NvMemory_State
 {
@@ -148,20 +150,14 @@ typedef struct NvMemory
     bool IsVerifyEnable;    /* Auto call verify, alternatively user call */
     bool IsFillAlignEnable; /* if implement in this module, need buffer of UNIT_WRITE_SIZE for fill with erase pattern (Even if IsOpBuffered is not used ) */
 
+    const NvMemory_OpControl_T * p_OpControl;
     const uint8_t * p_OpDest;
     const uint8_t * p_OpData;   /* Op data source. internal buffer, caller provided address */
     size_t OpSize;              /* Retain for ContinueWrite. Total bytes at start, aligned */
-    //todo derivce aligned and remainder otf
-    size_t OpSizeRemainder;     /* Remainder, retain total from user */
-
-    const NvMemory_Partition_T * p_OpPartition; /* Op Dest boundary check, remov*/
-
-    // NvMemory_OpControl_T * p_OpControl;
-    HAL_NvMemory_StartCmd_T StartCmd;       /* Start HAL Cmd, many iterations per Op */
-    NvMemory_FinalizeCmd_T FinalizeCmd;     /* On end per Cmd iteration */
-    NvMemory_Process_T ParseCmdError;       /* On end all Cmd iteration, Op Complete Error */
-    size_t BytesPerCmd;     /* Used by Erase for now */
-    size_t UnitsPerCmd;     /* count of UNIT_SIZE */
+    size_t OpSizeAligned;
+    // size_t OpSizeRemainder;     /* Remainder, retain total from user */
+    // size_t BytesPerCmd; overwrite if not equal unit size p_this->BytesPerCmd = unitsPerCmd * unitSize
+    const NvMemory_Partition_T * p_OpPartition; /* Op Dest boundary check */
 
     void * p_CallbackContext;
     NvMemory_Callback_T Yield;             /*!< On Block */
@@ -205,27 +201,41 @@ NvMemory_T;
     }                                                                                                                                                   \
 }
 
-extern bool NvMemory_IsAligned(size_t num, size_t align);
-extern bool NvMemory_IsPtrAligned(const void * ptr, size_t align);
+/*!
+    @param[in] num - address or size
+    @param[in] align - unit must be power of 2
+*/
+static inline size_t NvMemory_AlignDown(size_t num, size_t align) { return ((num) & -(align)); }
+static inline size_t NvMemory_AlignUp(size_t num, size_t align) { return (-(-(num) & -(align))); }
+static inline bool NvMemory_IsAligned(size_t num, size_t align) { return ((num & (align - 1U)) == 0UL); }
+static inline bool NvMemory_IsPtrAligned(const void * ptr, size_t align) { return NvMemory_IsAligned((uintptr_t)ptr, align); }
 
-// static size_t NvMemory_GetOpSizeAligned(NvMemory_T * p_this)     {  NvMemory_AlignDown(OpSize) }
-// static size_t NvMemory_GetOpSizeRemainder(NvMemory_T * p_this)   {  OpSize- NvMemory_AlignDown(OpSize) }
+static inline void NvMemory_SetOpControl(NvMemory_T * p_this, NvMemory_OpControl_T * p_opControl) { p_this->p_OpControl = p_opControl; }
+
+static inline void NvMemory_EnableFillAlign(NvMemory_T * p_this) { p_this->IsFillAlignEnable = true; }
+static inline void NvMemory_DisableFillAlign(NvMemory_T * p_this) { p_this->IsFillAlignEnable = false; }
+
+static inline void NvMemory_SetYield(NvMemory_T * p_this, NvMemory_Callback_T yield, void * p_callbackData)
+{
+    p_this->Yield = yield;
+    p_this->p_CallbackContext = p_callbackData;
+}
+// extern void NvMemory_SetYield(NvMemory_T * p_this, NvMemory_Callback_T yield, void * p_callbackData);
+// extern void NvMemory_EnableFillAlign(NvMemory_T * p_this);
+// extern void NvMemory_DisableFillAlign(NvMemory_T * p_this);
 
 extern void NvMemory_Init(NvMemory_T * p_this);
-extern void NvMemory_SetYield(NvMemory_T * p_this, NvMemory_Callback_T yield, void * p_callbackData);
-extern void NvMemory_EnableFillAlign(NvMemory_T * p_this);
-extern void NvMemory_DisableFillAlign(NvMemory_T * p_this);
-
 extern void NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd);
-extern void NvMemory_SetOpControl(NvMemory_T * p_this, HAL_NvMemory_StartCmd_T startCmd, NvMemory_Process_T parseCmdError);
+extern void NvMemory_SetOpControl(NvMemory_T * p_this, NvMemory_OpControl_T * p_opControl);
 extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this, const uint8_t * p_source, size_t size);
 extern bool NvMemory_VerifyWrite(const NvMemory_T * p_this, const uint8_t * p_dest, const uint8_t * p_source, size_t size);
 
-extern NvMemory_Status_T NvMemory_SetOpDest(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize, size_t unitSize);
-extern NvMemory_Status_T NvMemory_SetOpDataSource(NvMemory_T * p_this, const uint8_t * p_source, size_t size);
-extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize, size_t unitSize);
-extern NvMemory_Status_T NvMemory_SetOpSizeAlignDown(NvMemory_T * p_this, size_t opSize, size_t unitSize);
-extern NvMemory_Status_T NvMemory_SetOpSizeAlignUp(NvMemory_T * p_this, size_t opSize, size_t unitSize);
+extern NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize);
+extern NvMemory_Status_T NvMemory_SetOpDataSource(NvMemory_T * p_this, const uint8_t * p_source, size_t opSize);
+extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize);
+// extern NvMemory_Status_T NvMemory_SetOpSizeAligned(NvMemory_T * p_this, size_t opSize, size_t unitSize);
+// extern NvMemory_Status_T NvMemory_SetOpSizeAlignDown(NvMemory_T * p_this, size_t opSize, size_t unitSize);
+// extern NvMemory_Status_T NvMemory_SetOpSizeAlignUp(NvMemory_T * p_this, size_t opSize, size_t unitSize);
 
 /*
     Blocking

@@ -59,19 +59,6 @@ typedef enum Flash_Operation
 }
 Flash_Operation_T;
 
-//tod replace
-#define FLASH_STATUS_SUCCESS            (NV_MEMORY_STATUS_SUCCESS)
-#define FLASH_STATUS_PROCESSING         (NV_MEMORY_STATUS_PROCESSING)
-#define FLASH_STATUS_START_VERIFY       (NV_MEMORY_STATUS_START_VERIFY)
-// #define FLASH_STATUS_ERROR           (NV_MEMORY_STATUS_ERROR)
-#define FLASH_STATUS_ERROR_BUSY         (NV_MEMORY_STATUS_ERROR_BUSY)
-#define FLASH_STATUS_ERROR_INPUT        (NV_MEMORY_STATUS_ERROR_INPUT)
-#define FLASH_STATUS_ERROR_CMD          (NV_MEMORY_STATUS_ERROR_CMD)
-#define FLASH_STATUS_ERROR_VERIFY       (NV_MEMORY_STATUS_ERROR_VERIFY)
-#define FLASH_STATUS_ERROR_PROTECTION   (NV_MEMORY_STATUS_ERROR_PROTECTION)
-#define FLASH_STATUS_ERROR_CHECKSUM     (NV_MEMORY_STATUS_ERROR_CHECKSUM)
-#define FLASH_STATUS_ERROR_INVALID_OP   (NV_MEMORY_STATUS_ERROR_INVALID_OP)
-
 typedef NvMemory_Status_T Flash_Status_T;
 typedef NvMemory_Partition_T Flash_Partition_T;
 typedef NvMemory_T Flash_T; /* Flash struct must reside in RAM */
@@ -81,7 +68,7 @@ typedef NvMemory_T Flash_T; /* Flash struct must reside in RAM */
     NV_MEMORY_INIT(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)
 
 /*
-
+51328
 */
 extern void Flash_Init(Flash_T * p_flash);
 extern void Flash_SetYield(Flash_T * p_flash, NvMemory_Callback_T yield, void * p_callbackData);

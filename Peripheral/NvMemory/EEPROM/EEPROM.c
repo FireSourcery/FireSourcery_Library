@@ -30,18 +30,24 @@
 /******************************************************************************/
 #include "EEPROM.h"
 
+#if (EEPROM_UNIT_WRITE_SIZE == 4U)
+typedef uint32_t eeprom_word_t;
+#elif (EEPROM_UNIT_WRITE_SIZE == 2U)
+typedef uint16_t eeprom_word_t;
+#elif (EEPROM_UNIT_WRITE_SIZE == 1U)
+typedef uint8_t eeprom_word_t;
+#else
+typedef uint32_t eeprom_word_t;
+#endif
+
 /*
     HAL_NvMemory_StartCmd_T
 */
-static void StartCmdWrite(void * p_hal, const void * p_cmdDest, const void * p_cmdData, size_t units)
+static void StartCmdWrite(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units)
 {
     (void)units;
-#if (EEPROM_UNIT_WRITE_SIZE == 4U)
-    if(*(uint32_t *)p_cmdDest != (*(uint32_t *)p_cmdData))
-#elif (EEPROM_UNIT_WRITE_SIZE == 2U)
-    if(*(uint16_t *)p_cmdDest != (*(uint16_t *)p_cmdData))
-#elif (EEPROM_UNIT_WRITE_SIZE == 1U)
-    if(*(uint8_t *)p_cmdDest != (*(uint8_t *)p_cmdData))
+#ifdef EEPROM_UNIT_WRITE_SIZE
+    if((*(eeprom_word_t *)p_cmdDest) != (*(eeprom_word_t *)p_cmdData))
 #endif
     {
         HAL_EEPROM_StartCmdWriteUnit(p_hal, p_cmdDest, p_cmdData);
@@ -49,11 +55,28 @@ static void StartCmdWrite(void * p_hal, const void * p_cmdDest, const void * p_c
     /* else finalizeOp will return no error and continue to next  */
 }
 
-static inline NvMemory_Status_T ParseCmdErrorWrite(EEPROM_T * p_eeprom)
+static inline NvMemory_Status_T ParseCmdErrorWrite(const void * p_hal)
 {
     NvMemory_Status_T status;
-    if(HAL_EEPROM_ReadErrorProtectionFlag(p_eeprom->CONFIG.P_HAL) == true)  { status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
-    else                                                                    { status = NV_MEMORY_STATUS_ERROR_CMD; }
+    if(HAL_EEPROM_ReadErrorProtectionFlag(p_hal) == true)   { status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
+    else                                                    { status = NV_MEMORY_STATUS_ERROR_CMD; }
+    return status;
+}
+
+static const NvMemory_OpControl_T EEPROM_OP_WRITE =
+{
+    .START_CMD           = (HAL_NvMemory_StartCmd_T)StartCmdWrite,
+    .FINALIZE_CMD        = 0U,
+    .PARSE_CMD_ERROR     = ParseCmdErrorWrite,
+    .UNIT_SIZE           = EEPROM_UNIT_WRITE_SIZE,
+};
+
+NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
+{
+    NvMemory_SetOpControl(p_eeprom, &EEPROM_OP_WRITE);
+    NvMemory_Status_T status = NvMemory_SetOpAddress(p_eeprom, p_dest, sizeBytes);
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_eeprom, sizeBytes); }
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpDataSource(p_eeprom, p_source, sizeBytes); }
     return status;
 }
 
@@ -64,7 +87,6 @@ void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 {
     //todo isfirsttime, use startcmd template
     // if(HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL))    { EEPROM_ProgramPartition_Blocking(p_eeprom); }
-
     // NvMemory_Status_T status = EEPROM_SetInit(p_eeprom);
     // if(status == NV_MEMORY_STATUS_SUCCESS)
     // {
@@ -79,19 +101,6 @@ void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 }
 
 // void EEPROM_ReadIsFirstTime(EEPROM_T * p_eeprom) { HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL); }
-
-NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
-{
-    NvMemory_Status_T status = NvMemory_SetOpDest(p_eeprom, p_dest, sizeBytes, EEPROM_UNIT_WRITE_SIZE);
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_eeprom, sizeBytes, EEPROM_UNIT_WRITE_SIZE); }
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpDataSource(p_eeprom, p_source, sizeBytes); }
-    if(status == NV_MEMORY_STATUS_SUCCESS)
-    {
-        NvMemory_SetOpControl(p_eeprom, (HAL_NvMemory_StartCmd_T)StartCmdWrite, (NvMemory_Process_T)ParseCmdErrorWrite);
-        NvMemory_SetOpCmdSize(p_eeprom, EEPROM_UNIT_WRITE_SIZE, 1U);
-    }
-    return status;
-}
 
 NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
 {
