@@ -142,7 +142,7 @@ typedef enum Hall_Direction
 }
 Hall_Direction_T;
 
-typedef struct __attribute__((aligned(4U))) Hall_Params
+typedef struct Hall_Params
 {
     Hall_Id_T SensorsTable[HALL_SENSORS_TABLE_LENGTH];
     // uint8_t BoundaryType; /* 3 states 120 degree active, or 6 step, 180 degree active */

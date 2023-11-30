@@ -316,7 +316,7 @@ Flash_Status_T Flash_SetOp(Flash_T * p_flash, const uint8_t * p_destFlash, const
 /******************************************************************************/
 Flash_Status_T Flash_ProcThisOp_Blocking(Flash_T * p_flash)
 {
-   volatile Flash_Status_T status;
+   Flash_Status_T status;
     Critical_Enter(); /* Flash Op must not invoke isr table stored in flash */
     status = NvMemory_ProcOp_Blocking(p_flash);
     Critical_Exit();
@@ -327,7 +327,7 @@ Flash_Status_T Flash_ProcThisOp_Blocking(Flash_T * p_flash)
 // todo move to NvMemory, with flexible buffer
 static Flash_Status_T WriteRemainder(Flash_T * p_flash, uint8_t unitSize)
 {
-    volatile Flash_Status_T status;
+    Flash_Status_T status;
     size_t remainder = p_flash->OpSize - p_flash->OpSizeAligned;
     uint8_t alignedData[FLASH_UNIT_WRITE_SIZE]; // assume FLASH_UNIT_WRITE_SIZE >= FLASH_UNIT_WRITE_ONCE_SIZE
     memcpy(&alignedData[0U], &p_flash->p_OpData[p_flash->OpSizeAligned], remainder); /* start from remaining data */
@@ -352,7 +352,7 @@ static inline Flash_Status_T ProcAfterSet(Flash_T * p_flash, Flash_Status_T stat
 /******************************************************************************/
 Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, const uint8_t * p_destFlash, const uint8_t * p_source, size_t size)
 {
-    volatile Flash_Status_T status = ProcAfterSet(p_flash, Flash_SetWrite(p_flash, p_destFlash, p_source, size));
+    Flash_Status_T status = ProcAfterSet(p_flash, Flash_SetWrite(p_flash, p_destFlash, p_source, size));
     if(status == NV_MEMORY_STATUS_SUCCESS) { if(p_flash->OpSize != p_flash->OpSizeAligned) { status = WriteRemainder(p_flash, FLASH_UNIT_WRITE_SIZE); } }
     // if(p_flash->IsVerifyEnable == true) { status = ProcAfterSet(p_flash, Flash_SetVerifyWrite(p_flash, p_destFlash, p_source, size)); }
     return status;

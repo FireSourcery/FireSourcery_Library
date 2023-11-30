@@ -44,7 +44,7 @@ typedef void (*Motor_User_ProcVoid_T)(MotorPtr_T p_motor);
 typedef void (*Motor_User_SetCmd_T)(MotorPtr_T p_motor, int16_t cmd);
 typedef void (*Motor_User_SetScalar16_T)(MotorPtr_T p_motor, uint16_t cmd);
 // typedef void (*Motor_User_SetId_T)(MotorPtr_T p_motor, uint32_t enumValue);
-typedef void (*Motor_User_SetEnum32_T)(MotorPtr_T p_motor, uint32_t enumValue);
+// typedef void (*Motor_User_SetEnum32_T)(MotorPtr_T p_motor, uint32_t enumValue);
 typedef void (*Motor_User_SetFeedbackMode_T)(MotorPtr_T p_motor, Motor_FeedbackMode_T feedbackMode);
 typedef bool (*Motor_User_ProcStatus_T)(MotorPtr_T p_motor);
 typedef bool (*Motor_User_CheckStatus_T)(const MotorPtr_T p_motor);

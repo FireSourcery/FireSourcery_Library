@@ -154,8 +154,7 @@ typedef struct NvMemory
     const uint8_t * p_OpDest;
     const uint8_t * p_OpData;   /* Op data source. internal buffer, caller provided address */
     size_t OpSize;              /* Retain for ContinueWrite. Total bytes at start, aligned */
-    size_t OpSizeAligned;
-    // size_t OpSizeRemainder;     /* Remainder, retain total from user */
+    size_t OpSizeAligned;       /* Cached calculation */
     // size_t BytesPerCmd; overwrite if not equal unit size p_this->BytesPerCmd = unitsPerCmd * unitSize
     const NvMemory_Partition_T * p_OpPartition; /* Op Dest boundary check */
 

@@ -75,7 +75,7 @@ Thermistor_Type_T;
 /*
     Set Vin to same decimal precision as ADC_VREF
 */
-typedef struct __attribute__((aligned(2U))) Thermistor_Params
+typedef struct Thermistor_Params
 {
     // Thermistor_Type_T Type;
 
@@ -190,11 +190,12 @@ static inline uint16_t Thermistor_GetWarningThreshold_Adcu(const Thermistor_T * 
 static inline void Thermistor_EnableMonitor(Thermistor_T * p_therm)                                         { p_therm->Params.IsMonitorEnable = true; }
 static inline void Thermistor_DisableMonitor(Thermistor_T * p_therm)                                        { p_therm->Params.IsMonitorEnable = false; }
 static inline void Thermistor_SetIsMonitorEnable(Thermistor_T * p_therm, bool isEnable)                     { p_therm->Params.IsMonitorEnable = isEnable; }
-static inline void Thermistor_SetFaultTrigger_Adcu(Thermistor_T * p_therm, uint16_t fault)                   { p_therm->Params.FaultTrigger_Adcu = fault; }
-static inline void Thermistor_SetFaultThreshold_Adcu(Thermistor_T * p_therm, uint16_t faultThreshold)        { p_therm->Params.FaultThreshold_Adcu = faultThreshold; }
-//todo fault as boundary
-static inline void Thermistor_SetWarningTrigger_Adcu(Thermistor_T * p_therm, uint16_t warning)               { p_therm->Params.WarningTrigger_Adcu = warning; }
-static inline void Thermistor_SetWarningThreshold_Adcu(Thermistor_T * p_therm, uint16_t warningThreshold)    { p_therm->Params.WarningThreshold_Adcu = warningThreshold; }
+
+/* Caller handle validation */
+static inline void Thermistor_SetFaultTrigger_Adcu(Thermistor_T * p_therm, uint16_t fault)                  { p_therm->Params.FaultTrigger_Adcu = fault; }
+static inline void Thermistor_SetFaultThreshold_Adcu(Thermistor_T * p_therm, uint16_t faultThreshold)       { p_therm->Params.FaultThreshold_Adcu = faultThreshold; }
+static inline void Thermistor_SetWarningTrigger_Adcu(Thermistor_T * p_therm, uint16_t warning)              { p_therm->Params.WarningTrigger_Adcu = warning; }
+static inline void Thermistor_SetWarningThreshold_Adcu(Thermistor_T * p_therm, uint16_t warningThreshold)   { p_therm->Params.WarningThreshold_Adcu = warningThreshold; }
 
 /******************************************************************************/
 /* Units */

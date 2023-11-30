@@ -457,7 +457,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
                     case MOT_VAR_VMONITOR_FAULT_LOWER_ADCU:     value = VMonitor_GetFaultLower(p_vMonitor);     break;
                     case MOT_VAR_VMONITOR_WARNING_UPPER_ADCU:   value = VMonitor_GetWarningUpper(p_vMonitor);   break;
                     case MOT_VAR_VMONITOR_WARNING_LOWER_ADCU:   value = VMonitor_GetWarningLower(p_vMonitor);   break;
-                    case MOT_VAR_VMONITOR_IS_ENABLE:            value = VMonitor_GetIsEnable(p_vMonitor);       break;
+                    case MOT_VAR_VMONITOR_IS_ENABLE:            value = VMonitor_IsEnable(p_vMonitor);       break;
                     default: break;
                 }
             }

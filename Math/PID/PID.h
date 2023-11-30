@@ -44,7 +44,7 @@ typedef enum PID_Mode
 }
 PID_Mode_T;
 
-typedef struct __attribute__((aligned(4U))) PID_Params
+typedef struct PID_Params
 {
     PID_Mode_T Mode;
     uint32_t SampleFreq;

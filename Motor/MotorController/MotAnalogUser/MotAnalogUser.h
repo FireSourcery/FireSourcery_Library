@@ -83,7 +83,7 @@ typedef struct MotAnalogUser_AIn
 }
 MotAnalogUser_AIn_T;
 
-typedef struct __attribute__((aligned(2U))) MotAnalogUser_Params
+typedef struct MotAnalogUser_Params
 {
     uint16_t ThrottleZero_Adcu;
     uint16_t ThrottleMax_Adcu;

@@ -34,9 +34,9 @@
 #include <stdio.h>
 
 
-static inline void ResetUnitConversion(VMonitor_T * p_vMonitor)
+static void ResetUnitConversion(VMonitor_T * p_vMonitor)
 {
-    Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONFIG.UNITS_R1, p_vMonitor->CONFIG.UNITS_R2, GLOBAL_ANALOG.ADC_BITS, GLOBAL_ANALOG.ADC_VREF_MILLIV, p_vMonitor->Params.VInRef);
+    Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONFIG.UNITS_R1, p_vMonitor->CONFIG.UNITS_R2, GLOBAL_ANALOG.ADC_BITS, GLOBAL_ANALOG.ADC_VREF_MILLIV, 0);
 }
 
 void VMonitor_Init(VMonitor_T * p_vMonitor)
@@ -45,11 +45,11 @@ void VMonitor_Init(VMonitor_T * p_vMonitor)
 
     ResetUnitConversion(p_vMonitor);
     p_vMonitor->Status = VMONITOR_STATUS_OK;
-    // Linear_ADC_Init(&p_vMonitor->LinearLimits, p_vMonitor->Params.FaultLower_Adcu, p_vMonitor->Params.WarningLower_Adcu, 0, 0);
     if(p_vMonitor->Params.FaultUpper_Adcu == 0U)        { p_vMonitor->Params.IsMonitorEnable = false; }
     if(p_vMonitor->Params.FaultLower_Adcu == 0U)        { p_vMonitor->Params.IsMonitorEnable = false; }
     if(p_vMonitor->Params.WarningUpper_Adcu == 0U)      { p_vMonitor->Params.WarningUpper_Adcu = p_vMonitor->Params.FaultUpper_Adcu; }
     if(p_vMonitor->Params.WarningLower_Adcu == 0U)      { p_vMonitor->Params.WarningLower_Adcu = p_vMonitor->Params.FaultLower_Adcu; }
+    // Linear_ADC_Init(&p_vMonitor->LinearLimits, p_vMonitor->Params.FaultLower_Adcu, p_vMonitor->Params.WarningLower_Adcu, 0, 0);
 }
 
 /*
@@ -73,29 +73,8 @@ VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
     Params
 */
 /******************************************************************************/
-// Frac16 conversion use only, tod remove
-// void VMonitor_SetVInRef(VMonitor_T * p_vMonitor, uint32_t vInRef)
-// {
-//     if(p_vMonitor->Params.VInRef != vInRef)
-//     {
-//         p_vMonitor->Params.VInRef = vInRef;
-//         ResetUnitConversion(p_vMonitor);
-//     }
-// }
-
-// void VMonitor_SetLimits_MilliV(VMonitor_T * p_vMonitor, uint32_t faultLower, uint32_t faultUpper, uint32_t warningLower, uint32_t warningUpper)
-// {
-//     VMonitor_SetFaultLower_MilliV(p_vMonitor, faultLower);
-//     VMonitor_SetFaultUpper_MilliV(p_vMonitor, faultUpper);
-//     VMonitor_SetWarningLower_MilliV(p_vMonitor, warningLower);
-//     VMonitor_SetWarningUpper_MilliV(p_vMonitor, warningUpper);
-// }
-
 void VMonitor_ResetLimitsDefault(VMonitor_T * p_vMonitor)
 {
-    // uint32_t vRef = p_vMonitor->Params.VInRef * 1000U;
-    // VMonitor_SetLimits_MilliV(p_vMonitor, vRef * 3U / 4U, vRef * 5U / 4U, vRef * 7U / 8U, vRef * 9U / 8U);
-
     uint32_t vRef = p_vMonitor->Params.Nominal_Adcu;
     VMonitor_SetFaultLower(p_vMonitor, vRef * 3U / 4U);
     VMonitor_SetFaultUpper(p_vMonitor, vRef * 5U / 4U);

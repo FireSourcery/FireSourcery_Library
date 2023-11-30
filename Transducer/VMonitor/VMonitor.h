@@ -48,15 +48,15 @@ typedef enum VMonitor_Status
 }
 VMonitor_Status_T;
 
-typedef struct __attribute__((aligned(2U))) VMonitor_Params
+typedef struct VMonitor_Params
 {
     uint16_t FaultUpper_Adcu;
     uint16_t FaultLower_Adcu;
     uint16_t WarningUpper_Adcu;
     uint16_t WarningLower_Adcu;
     uint16_t Nominal_Adcu; /* VIn 100%, for Defaults and Charge */
-    uint16_t VInRef;    /* VIn 100%, frac16 use only, alternatively as adcu */
     bool IsMonitorEnable;
+    // uint16_t VInRef;    /* VIn 100%, frac16 use only, alternatively as adcu */
     // Linear_T LinearChargeLevel; /* return value [VRef:FaultLower_Adcu] as [65535:0] */
 }
 VMonitor_Params_T;
@@ -92,7 +92,6 @@ static inline VMonitor_Status_T VMonitor_GetStatus(const VMonitor_T * p_vMonitor
 static inline bool VMonitor_GetIsFault(const VMonitor_T * p_vMonitor)               { return ((p_vMonitor->Status == VMONITOR_FAULT_UPPER) || (p_vMonitor->Status == VMONITOR_FAULT_LOWER)); }
 static inline bool VMonitor_GetIsWarning(const VMonitor_T * p_vMonitor)             { return ((p_vMonitor->Status == VMONITOR_WARNING_UPPER) || (p_vMonitor->Status == VMONITOR_WARNING_LOWER)); }
 
-
 /******************************************************************************/
 /*!
     Local Unit Conversion
@@ -102,7 +101,7 @@ static inline int32_t VMonitor_ScalarVOf(const VMonitor_T * p_vMonitor, uint16_t
 static inline int32_t VMonitor_AdcuOfMilliV(const VMonitor_T * p_vMonitor, uint32_t milliV)              { return Linear_Voltage_CalcAdcu_MilliV(&p_vMonitor->Units, milliV); }
 static inline int32_t VMonitor_AdcuOfV(VMonitor_T * p_vMonitor, uint16_t v)                              { return Linear_Voltage_CalcAdcu_V(&p_vMonitor->Units, v); }
 /* Map [0:VRef] to [0:65535] */
-// static inline int32_t VMonitor_ConvertToScalar16(const VMonitor_T * p_vMonitor, uint16_t adcu)                  { return Linear_Voltage_CalcScalar16(&p_vMonitor->Units, adcu); }
+// static inline int32_t VMonitor_ConvertToScalar16(const VMonitor_T * p_vMonitor, uint16_t adcu)       { return Linear_Voltage_CalcScalar16(&p_vMonitor->Units, adcu); }
 
 /******************************************************************************/
 /*!
@@ -119,22 +118,24 @@ static inline uint32_t VMonitor_ChargeLevelOfAdcu_Scalar16(const VMonitor_T * p_
     Params
 */
 /******************************************************************************/
-static inline bool VMonitor_GetIsEnable(const VMonitor_T * p_vMonitor)          { return p_vMonitor->Params.IsMonitorEnable; }
-static inline uint16_t VMonitor_GetVInRef(const VMonitor_T * p_vMonitor)        { return p_vMonitor->Params.VInRef; }
+static inline bool VMonitor_IsEnable(const VMonitor_T * p_vMonitor)             { return p_vMonitor->Params.IsMonitorEnable; }
+static inline uint16_t VMonitor_GetNominal(const VMonitor_T * p_vMonitor)       { return p_vMonitor->Params.Nominal_Adcu; }
 static inline uint16_t VMonitor_GetFaultUpper(const VMonitor_T * p_vMonitor)    { return p_vMonitor->Params.FaultUpper_Adcu; }
 static inline uint16_t VMonitor_GetFaultLower(const VMonitor_T * p_vMonitor)    { return p_vMonitor->Params.FaultLower_Adcu; }
 static inline uint16_t VMonitor_GetWarningUpper(const VMonitor_T * p_vMonitor)  { return p_vMonitor->Params.WarningUpper_Adcu; }
 static inline uint16_t VMonitor_GetWarningLower(const VMonitor_T * p_vMonitor)  { return p_vMonitor->Params.WarningLower_Adcu; }
+// static inline uint16_t VMonitor_GetVInRef(const VMonitor_T * p_vMonitor)        { return p_vMonitor->Params.VInRef; }
 
 static inline void VMonitor_Enable(VMonitor_T * p_vMonitor)                                     { p_vMonitor->Params.IsMonitorEnable = true; }
 static inline void VMonitor_Disable(VMonitor_T * p_vMonitor)                                    { p_vMonitor->Params.IsMonitorEnable = false; }
 static inline void VMonitor_SetIsEnable(VMonitor_T * p_vMonitor, bool isEnable)                 { p_vMonitor->Params.IsMonitorEnable = isEnable; }
+
+/* Caller handle validation */
 static inline void VMonitor_SetFaultUpper(VMonitor_T * p_vMonitor, uint16_t limit_adcu)         { p_vMonitor->Params.FaultUpper_Adcu = limit_adcu; }
 static inline void VMonitor_SetFaultLower(VMonitor_T * p_vMonitor, uint16_t limit_adcu)         { p_vMonitor->Params.FaultLower_Adcu = limit_adcu; }
 static inline void VMonitor_SetWarningUpper(VMonitor_T * p_vMonitor, uint16_t limit_adcu)       { p_vMonitor->Params.WarningUpper_Adcu = limit_adcu; }
 static inline void VMonitor_SetWarningLower(VMonitor_T * p_vMonitor, uint16_t limit_adcu)       { p_vMonitor->Params.WarningLower_Adcu = limit_adcu; }
 static inline void VMonitor_SetNominal(VMonitor_T * p_vMonitor, uint16_t nominal_adcu)          { p_vMonitor->Params.Nominal_Adcu = nominal_adcu; }
-
 
 static inline uint32_t VMonitor_GetFaultUpper_V(const VMonitor_T * p_vMonitor, uint16_t vScalar)      { return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.FaultUpper_Adcu, vScalar); }
 static inline uint32_t VMonitor_GetFaultLower_V(const VMonitor_T * p_vMonitor, uint16_t vScalar)      { return Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.FaultLower_Adcu, vScalar); }
@@ -157,7 +158,6 @@ static inline void VMonitor_SetNominal_MilliV(VMonitor_T * p_vMonitor, uint32_t 
 /******************************************************************************/
 extern void VMonitor_Init(VMonitor_T * p_vMonitor);
 extern VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu);
-extern void VMonitor_SetVInRef(VMonitor_T * p_vMonitor, uint32_t vInRef);
-// extern void VMonitor_SetLimits_MilliV(VMonitor_T * p_vMonitor, uint32_t faultLower, uint32_t faultUpper, uint32_t warningLower, uint32_t warningUpper);
 extern void VMonitor_ResetLimitsDefault(VMonitor_T * p_vMonitor);
+// extern void VMonitor_SetVInRef(VMonitor_T * p_vMonitor, uint32_t vInRef);
 #endif

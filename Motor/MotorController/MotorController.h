@@ -226,7 +226,7 @@ MotorController_InitFlags_T;
     MotorController_User_GetVSourceRef(), Params.VSourceRef, Global_Motor.VSourceRef_V -> user set nominal voltage
     MotorController_User_GetVSource_V() -> live voltage
 */
-typedef struct __attribute__((aligned(2U))) MotorController_Params
+typedef struct MotorController_Params
 {
     uint16_t VSourceRef;        /* Source/Battery Voltage. Sync with Global_Motor VSourceRef_V */
     uint16_t ILimitLowV_Scalar16;

@@ -223,7 +223,7 @@ Motor_SectorId_T;
 /*!
     @brief Motor Parameters - Runtime variable configuration. Load from non volatile memory.
 */
-typedef struct __attribute__((aligned(2U))) Motor_Params
+typedef struct Motor_Params
 {
     Motor_CommutationMode_T     CommutationMode;
     Motor_SensorMode_T          SensorMode;

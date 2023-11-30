@@ -69,11 +69,6 @@ static StateMachine_State_T * TransitionBlocking(MotorControllerPtr_T p_mc, stat
 static void Init_Entry(MotorControllerPtr_T p_mc)
 {
     (void)p_mc;
-    // p_mc->FaultFlags.VSenseLimit = 1u;
-    // p_mc->FaultFlags.VAccsLimit = 1u;
-    // p_mc->FaultFlags.VSourceLimit = 1u;
-    // p_mc->FaultFlags.PcbOverheat = 1u;
-    // p_mc->FaultFlags.MosfetsOverheat = 1u;
 }
 
 static void Init_Exit(MotorControllerPtr_T p_mc)

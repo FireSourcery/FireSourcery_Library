@@ -47,6 +47,10 @@
 #define MOT_PACKET_LENGTH_MAX           (MOT_PACKET_HEADER_LENGTH + MOT_PACKET_PAYLOAD_MAX)
 #define MOT_PACKET_LENGTH_MIN           (2U) /* sizeof(MotPacket_Sync_T) */
 
+#define MOT_PACKET_PACKED __attribute__((packed))
+
+typedef uint8_t checksum_t;
+
 /*
     Packet and correspondence type. Per unique packet structure/parsing/processing pattern
     May process directly as cmd, or lead extended cmd id
@@ -110,20 +114,18 @@ typedef enum MotPacket_Id
 }
 MotPacket_Id_T;
 
-typedef uint8_t checksum_t;
-
 /*
     Packet struct defs use sized type
     Method Functions use type cast
 */
 
 /* 2-Byte Sync Packet */
-typedef struct __attribute__((packed)) MotPacket_Sync
+typedef struct MOT_PACKET_PACKED MotPacket_Sync
 {
     uint8_t Start;  /* MOT_PACKET_START_BYTE */
     uint8_t SyncId; /* MotPacket_HeaderId_T */
 }
-MotPacket_Sync_T;
+ MotPacket_Sync_T;
 
 // static const MotPacket_Sync_T MOT_PACKET_SYNC_ACK_BYTES = { .Start = MOT_PACKET_START_BYTE, .SyncId = MOT_PACKET_SYNC_ACK };
 
@@ -148,7 +150,7 @@ MotPacket_Sync_T;
 // MotPacket_Header_T;
 
 /*   */
-typedef struct __attribute__((packed)) MotPacket_Header
+typedef struct MOT_PACKET_PACKED MotPacket_Header
 {
     uint8_t Start;      /* MOT_PACKET_START_BYTE */
     uint8_t Id;         /* MotPacket_HeaderId_T - Cmd / Descriptor of packet contents */
@@ -157,7 +159,7 @@ typedef struct __attribute__((packed)) MotPacket_Header
 }
 MotPacket_Header_T;
 
-typedef union  __attribute__((packed)) MotPacket_Packet
+typedef union MOT_PACKET_PACKED MotPacket_Packet
 {
     struct
     {
