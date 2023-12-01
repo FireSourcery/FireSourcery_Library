@@ -11,7 +11,7 @@
             ],
             "includePath": [
                 "${workspaceFolder}",
-                "../FireSourcery_Library",
+                "../..",
                 "${default}"
             ],
             "forcedInclude": [

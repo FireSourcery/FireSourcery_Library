@@ -468,7 +468,6 @@ static inline int32_t _Motor_ConvertPower_Scalar16ToWatts(int32_t vi_scalar16)  
 // static inline int32_t _Motor_VSpeed_ConvertRpmToVFrac16(MotorPtr_T p_motor, int32_t speed_rpm)        { return _Motor_VSpeed_ConvertSpeedToVFrac16(p_motor, _Motor_ConvertSpeed_RpmToScalar16(p_motor, speed_rpm) ); }
 // static inline uint32_t _Motor_VSpeed_ConvertToVSpeed(MotorPtr_T p_motor, uint16_t rpm)                { return Linear_Function(&p_motor->UnitsVSpeed, _Motor_ConvertSpeed_RpmToScalar16(p_motor, rpm)); }
 
-
 /******************************************************************************/
 /*
     Simplify CommutationMode Check
@@ -527,6 +526,17 @@ static inline uint16_t Motor_GetIPeakRef_Adcu(MotorPtr_T p_motor)
     return GLOBAL_MOTOR.I_MAX_ADCU;
 #endif
 }
+
+// #define Motor_CommutationModeFn(p_motor, T) _Generic((T), \
+//         Motor_FunctionGetInt32_T :   T(p_motor),           \
+//         Motor_FunctionSetUInt32_T :   T(p_motor),            \
+//         Motor_Function_T: T(p_motor)                         \
+//          )
+
+// static inline void test(MotorPtr_T p_motor, Motor_Function_T focFunction)
+// {
+//     Motor_CommutationModeFn(p_motor, focFunction);
+// }
 
 /******************************************************************************/
 /*

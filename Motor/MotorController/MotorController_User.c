@@ -30,7 +30,6 @@
 /******************************************************************************/
 #include "MotorController_User.h"
 
-
 /*
     Controller NvM Variables Parameters Set
 */
@@ -46,6 +45,17 @@ void MotorController_User_SetVSourceRef(MotorControllerPtr_T p_mc, uint16_t volt
     MotorController_User_SetBatteryLifeDefault(p_mc);
 #endif
 }
+
+// void MotorController_User_SetILimit_DC(MotorControllerPtr_T p_mc, uint16_t dc)
+// {
+//     uint16_t iPeakAc = dc;
+//     uint16_t motoring = iPeakAc;
+
+//     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
+//     {
+//         Motor_User_SetILimitMotoringParam_Amp(&p_mc->CONFIG.P_MOTORS[iMotor], motoring);
+//     }
+// }
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 /*
@@ -74,59 +84,3 @@ void MotorController_User_SetBatteryLife_MilliV(MotorControllerPtr_T p_mc, uint3
     MotorController_ResetUnitsBatteryLife(p_mc);
 }
 #endif
-
-// void MotorController_User_SetILimit_DC(MotorControllerPtr_T p_mc, uint16_t dc)
-// {
-//     uint16_t iPeakAc = dc;
-//     uint16_t motoring = iPeakAc;
-
-//     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
-//     {
-//         Motor_User_SetILimitMotoringParam_Amp(&p_mc->CONFIG.P_MOTORS[iMotor], motoring);
-//     }
-// }
-
-/*
-    WriteOnce Variables
-*/
-// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-/* Save Once does not need state machine */
-// static inline void MotorController_User_WriteManufacture_Blocking(MotorControllerPtr_T p_mc, const MotorController_Manufacture_T * p_data)
-// {
-// #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_COPY_ENABLE)
-//     memcpy(&p_mc->Manufacture, p_data, sizeof(MotorController_Manufacture_T));
-// #endif
-//     MotorController_User_ProcCalibration_Blocking(p_mc, MOTOR_CONTROLLER_NVM_WRITE_ONCE);
-// }
-
-// static inline void MotorController_User_ReadManufacture_Blocking(MotorControllerPtr_T p_mc)
-// {
-//     MotorController_User_ProcCalibration_Blocking(p_mc, MOTOR_CONTROLLER_NVM_READ_ONCE);
-// }
-
-// #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_COPY_ENABLE)
-
-// static inline void MotorController_User_GetName(MotorControllerPtr_T p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.NAME[0U], 8U); }
-// static inline char * MotorController_User_GetPtrName(MotorControllerPtr_T p_mc) { return &p_mc->Manufacture.NAME[0U]; }
-// // static inline char MotorController_User_GetNameIndex(MotorControllerPtr_T p_mc, uint8_t charIndex) { return p_mc->Manufacture.NAME[charIndex]; }
-
-// static inline void MotorController_User_GetManufacture(MotorControllerPtr_T p_mc, MotorController_Manufacture_T * p_dest) { memcpy(p_dest, &p_mc->Manufacture, sizeof(MotorController_Manufacture_T)); }
-// static inline uint32_t MotorController_User_GetSerialNumber(MotorControllerPtr_T p_mc) { return p_mc->Manufacture.SERIAL_NUMBER_WORD; }
-// static inline uint32_t MotorController_User_GetManufactureDate(MotorControllerPtr_T p_mc) { return p_mc->Manufacture.MANUFACTURE_NUMBER_WORD; }
-// // static inline void MotorController_User_GetIdExt(MotorControllerPtr_T p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.ID_EXT[0U], 8U); }
-// #endif
-
-// static inline Flash_Status_T MotorController_User_ReadName_Blocking(MotorControllerPtr_T p_mc, uint8_t charIndex)
-// {
-//     //set read once, goto statemachine
-// // #if defined(CONFIG_MOTOR_CONTROLLER_ONCE_USE_FLASH)
-// //     return p_mc->CONFIG.P_MANUFACTURE->NAME[charIndex];
-// // #elif defined(CONFIG_MOTOR_CONTROLLER_ONCE_USE_ONCE)
-//     return Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_MANUFACTURE->NAME[charIndex], 8U);
-// // #endif
-// }
-// static inline Flash_Status_T MotorController_User_WriteName_Blocking(MotorControllerPtr_T p_mc, const uint8_t * p_nameString)
-// {
-//     return Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_MANUFACTURE->NAME[0U], p_nameString, 8U);
-// };
-// #endif

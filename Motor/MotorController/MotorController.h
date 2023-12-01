@@ -58,7 +58,7 @@
 #include "Utility/Shell/Shell.h"
 #endif
 
-#include "System/MemMapBoot/MemMapBoot.h"
+#include "Utility/MemMapBoot/MemMapBoot.h"
 
 #include "Math/Linear/Linear_Voltage.h"
 #include "Math/Linear/Linear.h"
@@ -250,55 +250,37 @@ typedef struct MotorController_Params
 }
 MotorController_Params_T;
 
-typedef struct __attribute__((aligned(FLASH_UNIT_WRITE_ONCE_SIZE))) MotorController_Manufacture
-{
-    char NAME[8U];
-    union { uint8_t SERIAL_NUMBER[4U]; uint32_t SERIAL_NUMBER_WORD32; };
-    union
-    {
-        uint8_t MANUFACTURE_NUMBER[4U];
-        uint32_t MANUFACTURE_NUMBER_WORD32;
-        struct { uint8_t MANUFACTURE_DAY; uint8_t MANUFACTURE_MONTH; uint8_t MANUFACTURE_YEAR; uint8_t MANUFACTURE_RESV; };
-    };
-    union
-    {
-        uint8_t HARDWARE_VERSION[4U];
-        uint32_t HARDWARE_VERSION_WORD32;
-        struct { uint16_t BOARD_SENSOR; uint8_t BOARD_AMPS; uint8_t BOARD_VOLTS; };
-    };
-    uint8_t ID_EXT[4U];
-    uint8_t RESERVED[8U];
-}
-MotorController_Manufacture_T;
-
 /*
     Allocated memory outside for less CONFIG define repetition
 */
 typedef const struct MotorController_Config
 {
     const MotorController_Params_T * const P_PARAMS_NVM;
-#if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
-    const void * const P_PARAMS_START; const uint16_t PARAMS_SIZE;  /* Flash params start */
-#endif
-    const MemMapBoot_T * const P_MEM_MAP_BOOT;
-    // const void * const P_ONCE_START; const uint8_t ONCE_SIZE;
-    const MotorController_Manufacture_T * const P_MANUFACTURE;  /* Require interface function, if FlashOnce is selected */
     const uint8_t MAIN_VERSION[4U];
 
-    MotorPtr_T const P_MOTORS; const uint8_t MOTOR_COUNT;
-    /* Simultaneous active serial */
-    Serial_T * const P_SERIALS; const uint8_t SERIAL_COUNT;
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE) || defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
     Flash_T * const P_FLASH;    /* Flash controller defined outside module, ensure flash config/params are in RAM */
 // #endif
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
     EEPROM_T * const P_EEPROM;   /* Defined outside for regularity */
 #endif
+    // NvMemory_Partition_T * P_PARAMS_PARTITION;
+    // NvMemory_Partition_T * P_MANUFACTURE_PARTITION; /* pointer to partition table held by P_FLASH */
+#if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
+    const void * const P_PARAMS_START; const uint16_t PARAMS_SIZE;  /* Flash params start */
+#endif
+    const void * const P_MANUFACTURE; const uint8_t MANUFACTURE_SIZE;
+    const MemMapBoot_T * const P_MEM_MAP_BOOT;
+
+    AnalogN_T * const P_ANALOG_N;
+    const MotAnalog_Conversions_T ANALOG_CONVERSIONS;
+
+    MotorPtr_T const P_MOTORS; const uint8_t MOTOR_COUNT;
+    /* Simultaneous active serial */
+    Serial_T * const P_SERIALS; const uint8_t SERIAL_COUNT;
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     CanBus_T * const P_CAN_BUS;
 #endif
-    AnalogN_T * const P_ANALOG_N;
-    const MotAnalog_Conversions_T ANALOG_CONVERSIONS;
     Protocol_T * const P_PROTOCOLS; const uint8_t PROTOCOL_COUNT; /* Simultaneously active protocols */
     const uint32_t ANALOG_USER_DIVIDER;  /* In Pow2 - 1 */
     const uint32_t MAIN_DIVIDER_10;
@@ -380,7 +362,6 @@ static inline MotorPtr_T MotorController_GetPtrMotor(const MotorControllerPtr_T 
 static inline void MotorController_BeepShort(MotorControllerPtr_T p_mc)             { Blinky_Blink(&p_mc->Buzzer, 500U); }
 static inline void MotorController_BeepPeriodicType1(MotorControllerPtr_T p_mc)     { Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U); }
 static inline void MotorController_BeepDouble(MotorControllerPtr_T p_mc)            { Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 2U); }
-// static inline void MotorController_BeepType1(MotorControllerPtr_T p_mc) { Blinky_BlinkN(&p_mc->Buzzer, Type1OnTime, Type1OffTime); }
 
 /******************************************************************************/
 /*
@@ -549,8 +530,9 @@ extern void MotorController_PollFaultFlags(MotorController_T * p_mc);
 
 extern NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p_mc);
 extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorControllerPtr_T p_mc);
-extern NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_sourceBuffer);
-extern NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorControllerPtr_T p_mc, const uint8_t * p_destBuffer);
+extern NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_sourceBuffer, uint8_t size);
+extern NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorControllerPtr_T p_mc, const uint8_t * p_destBuffer, uint8_t size);
+
 extern void MotorController_LoadParamsDefault(MotorControllerPtr_T p_mc);
 
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE) && defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)

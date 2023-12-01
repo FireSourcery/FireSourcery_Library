@@ -110,7 +110,12 @@ static inline bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, 
 /******************************************************************************/
 /* Blocking */
 /******************************************************************************/
-static inline void MotorController_User_ProcBlocking_Blocking(MotorControllerPtr_T p_mc, MotorController_BlockingId_T opId) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BLOCKING, opId); }
+//change to locked
+static inline void MotorController_User_ProcBlocking_Blocking(MotorControllerPtr_T p_mc, MotorController_BlockingId_T opId)
+{
+    StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BLOCKING, opId);
+}
+
 static inline bool MotorController_User_EnterBlockingState(MotorControllerPtr_T p_mc)
 {
     MotorController_User_ProcBlocking_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_ENTER);
@@ -133,6 +138,13 @@ static inline NvMemory_Status_T _MotorController_User_SaveNvm_Blocking(MotorCont
 static inline NvMemory_Status_T MotorController_User_SaveParameters_Blocking(MotorControllerPtr_T p_mc)
 {
     return _MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);
+    // return StateMachine_ProcAsyncInput(p_mc, MCSM_INPUT_BLOCKING, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);
+    // return p_mc->NvmStatus;
+}
+
+static inline NvMemory_Status_T MotorController_User_SaveManufacture_Blocking(MotorControllerPtr_T p_mc)
+{
+    return _MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE);
     // return StateMachine_ProcAsyncInput(p_mc, MCSM_INPUT_BLOCKING, MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS);
     // return p_mc->NvmStatus;
 }

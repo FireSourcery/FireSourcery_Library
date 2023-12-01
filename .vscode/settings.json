@@ -1,6 +1,7 @@
 {
-    "C_Cpp.clang_format_sortIncludes": true,
-
+    "C_Cpp.default.forcedInclude": [
+        "${default}"
+    ],
     "C_Cpp.formatting": "vcFormat",
     "C_Cpp.vcFormat.wrap.preserveBlocks": "allOneLineScopes",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "newLine",
@@ -32,9 +33,10 @@
     "C_Cpp.vcFormat.indent.caseContentsWhenBlock": true,
     "C_Cpp.vcFormat.space.withinSquareBrackets": false,
     "C_Cpp.vcFormat.space.insertAfterSemicolon": true,
+    // "C_Cpp.clang_format_sortIncludes": true,
 
     "C_Cpp.doxygen.generatedStyle": "/*!",
-
+    // "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
     "editor.defaultFormatter": "ms-vscode.cpptools",
     "editor.rulers": [
         160
@@ -45,26 +47,24 @@
     "editor.formatOnPaste": true,
     "editor.indentSize": "tabSize",
     "editor.semanticHighlighting.enabled": "configuredByTheme",
-    // "editor.semanticHighlighting.enabled": false,
 
     "files.trimTrailingWhitespace": true,
-    "cmake.configureOnOpen": false,
-    "[c]": {
-        "editor.tabSize": 4,
-        "editor.insertSpaces": true,
-        "editor.formatOnPaste": false,
-        "editor.indentSize": "tabSize",
-        "editor.detectIndentation": false,
-        "editor.defaultFormatter": "ms-vscode.cpptools",
-        "editor.semanticHighlighting.enabled": "configuredByTheme",
-        // "editor.semanticHighlighting.enabled": true,
-    },
+
+    // "[c]": {
+    //     "editor.tabSize": 4,
+    //     "editor.insertSpaces": true,
+    //     "editor.formatOnPaste": false,
+    //     "editor.indentSize": "tabSize",
+    //     "editor.detectIndentation": false,
+    //     "editor.defaultFormatter": "ms-vscode.cpptools",
+    //     "editor.semanticHighlighting.enabled": "configuredByTheme",
+    //     // "editor.semanticHighlighting.enabled": true,
+    // },
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features"
     },
+    "cmake.configureOnOpen": false,
 
-    // "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
-    "explorer.copyRelativePathSeparator": "/",
     "cSpell.words": [
         "Accs",
         "Blinky",

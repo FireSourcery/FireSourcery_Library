@@ -564,6 +564,7 @@ static const StateMachine_State_T STATE_FAULT =
 /******************************************************************************/
 /* Fault Interface Functions */
 /******************************************************************************/
+
 bool MotorController_StateMachine_IsFault(const MotorControllerPtr_T p_mc) { return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_FAULT); }
 
 bool MotorController_StateMachine_ClearFault(MotorControllerPtr_T p_mc)

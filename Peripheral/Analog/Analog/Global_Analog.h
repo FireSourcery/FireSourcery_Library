@@ -47,7 +47,6 @@ Global_Analog_T;
 
 #define GLOBAL_ANALOG_ADC_MAX(AdcBits) ((1U << AdcBits) - 1U)
 
-/* MISRA violation */
 /* Define in Main App */
 extern const Global_Analog_T GLOBAL_ANALOG;
 

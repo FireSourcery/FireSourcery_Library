@@ -75,7 +75,7 @@ typedef const struct Xcvr_Interface
 Xcvr_Interface_T;
 
 /*
-    Xcvr Entry/Core
+    Xcvr Entry/Instance
     Entry in P_XCVR_TABLE
 */
 typedef const struct Xcvr_Xcvr
