@@ -30,7 +30,6 @@
 /******************************************************************************/
 #include "Protocol_Cmdr.h"
 
-
 /*
     Begin Req, then wait for process in Protocol_Proc
 
@@ -47,81 +46,81 @@
 
     alternatively, resp Queue, match RespLength
 */
-static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
-{
-    Protocol_Req_T * p_req = _Protocol_SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, cmdId);
-    bool isSuccess = (p_req != 0U);
-
-    if(isSuccess == true)
-    {
-        p_protocol->p_Specs->CMDR_BUILD_TX_REQ(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_APP_INTERFACE, cmdId);
-
-        // p_req->CMDR_BUILD_REQ(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_APP_INTERFACE);
-        //if resp length is known, and wait sync, PROTOCOL_RX_STATE_AWAIT_PACKET, skip wait byte one
-
-        if((p_req->PROC_EXT != 0U) || (p_req->SYNC.RX_ACK == true))
-        {
-            p_protocol->p_ReqActive = p_req;
-            p_protocol->RxReqId = cmdId;
-        }
-
-        if(p_req->PROC_EXT != 0U)
-        {
-            // if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_REQ_STATE_BUFFER); }
-            if(p_req->SYNC.RX_ACK == true)     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC; }
-            else                             { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_EXT; }
-
-        }
-        else if(p_req->SYNC.RX_ACK == true)     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC_FINAL; }
-        else                                     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_INITIAL; }
-
-        //set inactive or wait id, cannot distinguish, without queue count. only distinguish sync wait and non sync
-        p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
-    }
-
-    return isSuccess;
-}
-
-/* Does not start state if sync is active */
-// bool _Protocol_Cmdr_StartReq_Background(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 // {
-//     return (p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) ? StartReq(p_protocol, cmdId) : false;
+//     Protocol_Req_T * p_req = _Protocol_SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, cmdId);
+//     bool isSuccess = (p_req != 0U);
+
+//     if(isSuccess == true)
+//     {
+//         p_protocol->p_Specs->CMDR_BUILD_TX_REQ(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_APP_INTERFACE, cmdId);
+
+//         // p_req->CMDR_BUILD_REQ(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_APP_INTERFACE);
+//         //if resp length is known, and wait sync, PROTOCOL_RX_STATE_AWAIT_PACKET, skip wait byte one
+
+//         if((p_req->PROC_EXT != 0U) || (p_req->SYNC.RX_ACK == true))
+//         {
+//             p_protocol->p_ReqActive = p_req;
+//             p_protocol->RxReqId = cmdId;
+//         }
+
+//         if(p_req->PROC_EXT != 0U)
+//         {
+//             // if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_REQ_STATE_BUFFER); }
+//             if(p_req->SYNC.RX_ACK == true)     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC; }
+//             else                             { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_CONTINUE; }
+
+//         }
+//         else if(p_req->SYNC.RX_ACK == true)     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC_FINAL; }
+//         else                                     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID; }
+
+//         //set inactive or wait id, cannot distinguish, without queue count. only distinguish sync wait and non sync
+//         p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
+//     }
+
+//     return isSuccess;
 // }
 
-// /* Does not start if ReqState WAIT_SYNC WAIT_EXT */
-bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
-{
-    return (p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_INITIAL) ? StartReq(p_protocol, cmdId) : false;
-    //(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) ||
-}
+// /* Does not start state if sync is active */
+// // bool _Protocol_Cmdr_StartReq_Background(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// // {
+// //     return (p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) ? StartReq(p_protocol, cmdId) : false;
+// // }
 
-/*
-    overwrite sync wait
-    Tx new Req before Rx Reponse to previous Req
-    Prioir Resp will be discarded
-*/
-bool _Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId)
-{
-    return StartReq(p_protocol, cmdId);
-}
+// // /* Does not start if ReqState WAIT_SYNC WAIT_EXT */
+// bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// {
+//     return (p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_ID) ? StartReq(p_protocol, cmdId) : false;
+//     //(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) ||
+// }
 
-/*
-    No overwrite existing
-*/
-void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
-{
-    if(_Protocol_Cmdr_StartReq(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
-}
+// /*
+//     overwrite sync wait
+//     Tx new Req before Rx Reponse to previous Req
+//     Prioir Resp will be discarded
+// */
+// bool _Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// {
+//     return StartReq(p_protocol, cmdId);
+// }
 
-void Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId)
-{
-    if(_Protocol_Cmdr_StartReq_Overwrite(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
-}
+// /*
+//     No overwrite existing
+// */
+// void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// {
+//     if(_Protocol_Cmdr_StartReq(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
+// }
 
-bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
-{
-    return (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.WatchdogTime); //(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) &&
-}
+// void Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// {
+//     if(_Protocol_Cmdr_StartReq_Overwrite(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
+// }
+
+// bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
+// {
+//     return (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.WatchdogTime); //(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) &&
+// }
 
 
 // /*
@@ -163,14 +162,14 @@ bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
 //     Using known resp length.
 
 //     Alternatively,
-//         BuildRxPacket(p_protocol), handles out of sequence packets
+//         CaptureRx(p_protocol), handles out of sequence packets
 //         Resp queue
 // */
 // bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 // {
 //     // p_protocol->RxCode = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxPacketReqId);
 //     //change to handle with build
-//     // BuildRxPacket(p_protocol);
+//     // CaptureRx(p_protocol);
 //     // if Req return == RxPacketReqId,
 //     bool isSuccess = false;
 

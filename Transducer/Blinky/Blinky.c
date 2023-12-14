@@ -80,7 +80,7 @@ void Blinky_Stop(Blinky_T * p_blinky)         { Blinky_Disable(p_blinky);}
 
 void Blinky_Toggle(Blinky_T * p_blinky)
 {
-    // if(p_blinky->IsOn == true)     { Blinky_Off(p_blinky) }
+    // if(p_blinky->IsOn == true)   { Blinky_Off(p_blinky) }
     // else                         { Blinky_On(p_blinky); }
     Pin_Output_Toggle(&p_blinky->Pin);
 }

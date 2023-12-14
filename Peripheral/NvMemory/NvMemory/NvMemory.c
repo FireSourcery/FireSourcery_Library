@@ -86,12 +86,9 @@ void NvMemory_Init(NvMemory_T * p_this)
 /*!   */
 /******************************************************************************/
 /* When hw verify is not implemented */
-bool NvMemory_VerifyWrite(const NvMemory_T * p_this, const uint8_t * p_dest, const uint8_t * p_source, size_t size)
+NvMemory_Status_T NvMemory_MemCompare(const uint8_t * p_dest, const uint8_t * p_source, size_t size)
 {
-    bool status = true;
-    //todo +align
-    for(size_t iByte = 0U; iByte < size; iByte++) { if(p_dest[iByte] != p_source[iByte]) { status = false; break; } }
-    return status;
+    return (memcmp(p_dest, p_source, size) == 0U) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_VERIFY;
 }
 
 static uint32_t Checksum(const uint8_t * p_data, size_t size)
@@ -144,11 +141,13 @@ static inline bool ValidateOpPartition(NvMemory_T * p_this, const uint8_t * p_de
     return (p_this->p_OpPartition != 0U);
 }
 
-/* Todo template set with struct, containing unit size */
+/*
+    Set Analogous to memcpy, memset
+*/
 /*
     Checks Boundary and Dest Align
 */
-NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize)
+NvMemory_Status_T NvMemory_SetOpDestination(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize)
 {
     NvMemory_Status_T status;
 
@@ -186,18 +185,12 @@ static NvMemory_Status_T SetOpDataBuffer(NvMemory_T * p_this, const uint8_t * p_
 /*
     For Write
     Accepts p_source == 0 as NV_MEMORY_STATUS_SUCCESS
-        use to indicate preliminary set, for dest boundary checking
 */
-NvMemory_Status_T NvMemory_SetOpDataSource(NvMemory_T * p_this, const uint8_t * p_source, size_t opSize)
+NvMemory_Status_T NvMemory_SetOpSource(NvMemory_T * p_this, const uint8_t * p_source, size_t opSize)
 {
-    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
-
-    if(p_source != 0U)
-    {
-        if(p_this->IsOpBuffered == true) { status = SetOpDataBuffer(p_this, p_source, opSize); }
-        else { p_this->p_OpData = p_source; }
-    }
-
+    NvMemory_Status_T status;
+    if(p_this->IsOpBuffered == true) { status = SetOpDataBuffer(p_this, p_source, opSize); }
+    else { p_this->p_OpData = p_source; status = NV_MEMORY_STATUS_SUCCESS; }
     return status;
 }
 
@@ -218,29 +211,22 @@ NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize)
     return status;
 }
 
-// NvMemory_Status_T NvMemory_ValidateOpRange(NvMemory_T * p_this, const uint8_t * p_destNvm, const uint8_t * p_data, size_t size)
-// {
-//     // p_this->p_OpDest = p_destNvm;
-//     // p_this->p_OpData = p_data;
-//     // p_this->OpSize = size;
-//     NvMemory_SetOpAddress(p_this, p_destNvm, size);
-//     NvMemory_SetOpDataSource(p_this, p_data, size);
-//     NvMemory_SetOpSize(p_this, size);
-    // if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_flash, size); }
-    // if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpDataSource(p_flash, p_source, size); }
-// }
-NvMemory_Status_T NvMemory_SetOpSizeUnitsPerCmd(NvMemory_T * p_this, size_t opSize)
+NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_this, NvMemory_OpControl_T * p_opControl, const uint8_t * p_dest, const uint8_t * p_source, size_t size)
 {
-    //overwrite bytepercmd
+    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+    p_this->p_OpControl = p_opControl;
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpDestination(p_this, p_dest, size); }
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSource(p_this, p_source, size); }
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_this, size); }
 }
 
-// static inline void NvMemory_SetOpControl(NvMemory_T * p_this, NvMemory_OpControl_T * p_opControl, const uint8_t * p_destNvm, const uint8_t * p_data, size_t size)
+// NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd)
+// NvMemory_Status_T NvMemory_SetOpSizeUnitsPerCmd(NvMemory_T * p_this, size_t opSize)
 // {
-//     p_this->p_OpControl = p_opControl;
+//     //overwrite bytepercmd
 // }
 
-// static size_t NvMemory_GetOpSizeAligned(NvMemory_T * p_this)     {  NvMemory_AlignDown(OpSizeAligned) }
-// static size_t NvMemory_GetOpSizeRemainder(NvMemory_T * p_this)   {  OpSizeAligned- NvMemory_AlignDown(OpSizeAligned) }
+
 
 /******************************************************************************/
 /*!
@@ -267,6 +253,8 @@ static void ProcCmd_Blocking(NvMemory_T * p_this, size_t opIndex)
     }
 }
 
+// static size_t NvMemory_GetOpSizeAligned(NvMemory_T * p_this)     {  NvMemory_AlignDown(OpSizeAligned) }
+// static size_t NvMemory_GetOpSizeRemainder(NvMemory_T * p_this)   {  OpSizeAligned- NvMemory_AlignDown(OpSizeAligned) }
 NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
 {

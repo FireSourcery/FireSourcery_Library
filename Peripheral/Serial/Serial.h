@@ -68,13 +68,14 @@ static inline size_t Serial_GetRxFullCount(const Serial_T * p_serial)   { return
 static inline size_t Serial_GetTxEmptyCount(const Serial_T * p_serial)  { return Ring_GetEmptyCount(&p_serial->TxRing); }
 static inline void Serial_EnableTxIsr(const Serial_T * p_serial)        { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
 static inline void Serial_DisableTxIsr(const Serial_T * p_serial)       { HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
-static inline void Serial_EnableRx(const Serial_T * p_serial)           { HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
-static inline void Serial_DisableRx(const Serial_T * p_serial)          { HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+static inline void Serial_EnableRxIsr(const Serial_T * p_serial)        { HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+static inline void Serial_DisableRxIsr(const Serial_T * p_serial)       { HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
 
-static inline bool Serial_IsRxFull(const Serial_T * p_serial)
-{
-    return ((HAL_Serial_ReadRxOverrun(p_serial->CONFIG.P_HAL_SERIAL) == true) || (Ring_GetIsFull(&p_serial->RxRing) == true));
-}
+/* Check for Overrun */
+// static inline bool Serial_IsRxOverrun(const Serial_T * p_serial)
+// {
+//     return ((HAL_Serial_ReadRxOverrun(p_serial->CONFIG.P_HAL_SERIAL) == true) || (Ring_GetIsFull(&p_serial->RxRing) == true));
+// }
 
 /*
     Extern
@@ -95,7 +96,8 @@ extern bool Serial_RecvN(Serial_T * p_serial, uint8_t * p_destBuffer, size_t len
 
 extern bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
 extern size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
-extern uint8_t * Serial_AcquireTxBuffer(Serial_T * p_serial);
-extern void Serial_ReleaseTxBuffer(Serial_T * p_serial, size_t writeSize);
+
+// extern uint8_t * Serial_AcquireTxBuffer(Serial_T * p_serial);
+// extern void Serial_ReleaseTxBuffer(Serial_T * p_serial, size_t writeSize);
 
 #endif

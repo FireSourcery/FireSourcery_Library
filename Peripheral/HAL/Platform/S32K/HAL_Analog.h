@@ -29,23 +29,24 @@
     @version V0
 */
 /******************************************************************************/
-/*
-    ADC TOTAL CONVERSION TIME = Sample Phase Time (set by SMPLTS + 1) + Hold
-    Phase (1 ADC Cycle) + Compare Phase Time (8-bit Mode = 20 ADC Cycles, 10-bit
-    Mode = 24 ADC Cycles, 12-bit Mode = 28 ADC Cycles) + Single or First continuous
-    time adder (5 ADC cycles + 5 bus clock cycles)
-*/
 #ifndef HAL_ANALOG_PLATFORM_H
 #define HAL_ANALOG_PLATFORM_H
 
-#include "External/S32K142/include/S32K142.h" /* use drivers or direct register access */
-#include "External/CMSIS/Core/Include/cmsis_compiler.h"
+#include "External/S32K142/include/S32K142.h"
+// #include "External/CMSIS/Core/Include/cmsis_compiler.h"
+#include "CMSIS/Core/Include/core_cm4.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
 typedef ADC_Type HAL_Analog_T;
 
+/*
+    ADC TOTAL CONVERSION TIME = Sample Phase Time (set by SMPLTS + 1) + Hold
+    Phase (1 ADC Cycle) + Compare Phase Time (8-bit Mode = 20 ADC Cycles, 10-bit
+    Mode = 24 ADC Cycles, 12-bit Mode = 28 ADC Cycles) + Single or First continuous
+    time adder (5 ADC cycles + 5 bus clock cycles)
+*/
 static inline void HAL_Analog_Activate(HAL_Analog_T * p_hal, uint32_t pinChannel) { p_hal->SC1[0U] = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel); }
 static inline uint32_t HAL_Analog_ReadResult(const HAL_Analog_T * p_hal, uint32_t pinChannel) { (void)pinChannel; return (uint32_t)p_hal->R[0U]; }
 
@@ -53,37 +54,37 @@ static inline void HAL_Analog_WriteFifoCount(HAL_Analog_T * p_hal, uint32_t coun
 static inline void HAL_Analog_WriteFifoPin(HAL_Analog_T * p_hal, uint32_t pinChannel) { (void)p_hal;(void)pinChannel; }
 static inline void HAL_Analog_ActivateFifo(HAL_Analog_T * p_hal, uint32_t pinChannel) { (void)p_hal;(void)pinChannel; }
 
-/**
-  \brief   Enable Interrupt
-  \details Enables a device specific interrupt in the NVIC interrupt controller.
-  \param [in]      IRQn  Device specific interrupt number.
-  \note    IRQn must not be negative.
- */
-__STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
-{
-  if ((int32_t)(IRQn) >= 0)
-  {
-    __COMPILER_BARRIER();
-    S32_NVIC->ISER[(((uint32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)IRQn) & 0x1FUL));
-    __COMPILER_BARRIER();
-  }
-}
+// /**
+//   \brief   Enable Interrupt
+//   \details Enables a device specific interrupt in the NVIC interrupt controller.
+//   \param [in]      IRQn  Device specific interrupt number.
+//   \note    IRQn must not be negative.
+//  */
+// __STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
+// {
+//   if ((int32_t)(IRQn) >= 0)
+//   {
+//     __COMPILER_BARRIER();
+//     S32_NVIC->ISER[(((uint32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)IRQn) & 0x1FUL));
+//     __COMPILER_BARRIER();
+//   }
+// }
 
-/**
-  \brief   Disable Interrupt
-  \details Disables a device specific interrupt in the NVIC interrupt controller.
-  \param [in]      IRQn  Device specific interrupt number.
-  \note    IRQn must not be negative.
- */
-__STATIC_INLINE void __NVIC_DisableIRQ(IRQn_Type IRQn)
-{
-  if ((int32_t)(IRQn) >= 0)
-  {
-    S32_NVIC->ICER[(((uint32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)IRQn) & 0x1FUL));
-    __DSB();
-    __ISB();
-  }
-}
+// /**
+//   \brief   Disable Interrupt
+//   \details Disables a device specific interrupt in the NVIC interrupt controller.
+//   \param [in]      IRQn  Device specific interrupt number.
+//   \note    IRQn must not be negative.
+//  */
+// __STATIC_INLINE void __NVIC_DisableIRQ(IRQn_Type IRQn)
+// {
+//   if ((int32_t)(IRQn) >= 0)
+//   {
+//     S32_NVIC->ICER[(((uint32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)IRQn) & 0x1FUL));
+//     __DSB();
+//     __ISB();
+//   }
+// }
 
 /*
     Use NVIC interrupt for local critical section
@@ -133,10 +134,10 @@ static inline void HAL_Analog_AbortConversion(HAL_Analog_T * p_hal) { p_hal->SC1
 */
 static inline void HAL_Analog_Deactivate(HAL_Analog_T * p_hal) { p_hal->SC1[0U] |= ADC_SC1_ADCH_MASK; }
 
-static inline void HAL_Analog_EnableHwTrigger(HAL_Analog_T * p_hal){    p_hal->SC2 |= ADC_SC2_ADTRG_MASK;}
-static inline void HAL_Analog_DisableHwTrigger(HAL_Analog_T * p_hal){    p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK);}
-static inline void HAL_Analog_DisableContinuousConversion(HAL_Analog_T * p_hal){    p_hal->SC3 &= ~ADC_SC3_ADCO_MASK;}
-static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal){    p_hal->SC3 |= ADC_SC3_ADCO_MASK;}
+static inline void HAL_Analog_EnableHwTrigger(HAL_Analog_T * p_hal) { p_hal->SC2 |= ADC_SC2_ADTRG_MASK; }
+static inline void HAL_Analog_DisableHwTrigger(HAL_Analog_T * p_hal) { p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK); }
+static inline void HAL_Analog_DisableContinuousConversion(HAL_Analog_T * p_hal) { p_hal->SC3 &= ~ADC_SC3_ADCO_MASK; }
+static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal) { p_hal->SC3 |= ADC_SC3_ADCO_MASK; }
 
 /*
     In Board_Init

@@ -32,26 +32,23 @@
 
 volatile uint32_t SysTime_Millis = 0U;
 
-static void (*Yield)(void);
+// static void (*Yield)(void);
 
 /* Blocking delay */
-void SysTime_Delay(uint32_t ms)
+void SysTime_Delay(uint32_t ms, void (*yield)(void))
 {
     uint32_t start = SysTime_Millis;
     uint32_t time = SysTime_Millis;
 
     while(SysTime_Millis < start + ms)
     {
-        if(Yield != 0U)
-        {
-            Yield();
-        }
+        if(yield != 0U) { yield(); }
         while(SysTime_Millis <= time);
         time = SysTime_Millis;
     }
 }
 
-void SysTime_SetDelayYield(void (*fp)(void)) { Yield = fp; }
+// void SysTime_SetDelayYield(void (*fp)(void)) { Yield = fp; }
 
 /* App init must set priority */
 void SysTime_Init(void)

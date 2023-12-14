@@ -22,22 +22,27 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   HAL_Peripheral.h
+    @file   Reboot.h
     @author FireSourcery
-    @brief    Define configurable HAL Peripheral path
+    @brief  Implements Critical Section
     @version V0
 */
 /******************************************************************************/
-#ifndef HAL_PERIPHERAL_H
-#define HAL_PERIPHERAL_H
+#ifndef REBOOT_H
+#define REBOOT_H
 
-#define XSTR(String) #String
-#define STR(String) XSTR(String)
+#ifdef CONFIG_SYSTEM_MCU_ARM
 
-#if     defined(CONFIG_HAL_PERIPHERAL_PATH)         /* External directory */
-    #define HAL_PERIPHERAL_PATH(File) STR(CONFIG_HAL_PERIPHERAL_PATH/File)
-#elif   defined(CONFIG_HAL_PERIPHERAL_PLATFORM)     /* Library platform directory */
-    #define HAL_PERIPHERAL_PATH(File) STR(Peripheral/HAL/Platform/CONFIG_HAL_PERIPHERAL_PLATFORM/File)
+#include "External/CMSIS/Core/Include/cmsis_compiler.h"
+// caller includes header
+
+static inline void Reboot(void)
+{
+    NVIC_SystemReset();
+}
+
 #endif
+
+
 
 #endif

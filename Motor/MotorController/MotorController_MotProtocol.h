@@ -33,7 +33,6 @@
 
 #include "Utility/Protocol/Protocol.h"
 
-/* MISRA violation */
 extern const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS;
 
 #endif

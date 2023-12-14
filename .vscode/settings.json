@@ -1,7 +1,23 @@
 {
-    "C_Cpp.default.forcedInclude": [
-        "${default}"
-    ],
+    // "C_Cpp.default.defines": [
+    //     "${default}",
+    //     "_DEBUG",
+    //     "UNICODE",
+    //     "_UNICODE"
+    // ],
+    // "C_Cpp.default.includePath": [
+    //     "${default}",
+    //     "${workspaceFolder}"
+    // ],
+    // "C_Cpp.default.forcedInclude": [
+    //     "${default}"
+    // ],
+    "C_Cpp.default.mergeConfigurations": true,
+
+    "C_Cpp.default.cStandard": "c17",
+    "C_Cpp.default.cppStandard": "c++17",
+    "C_Cpp.default.intelliSenseMode": "gcc-arm",
+
     "C_Cpp.formatting": "vcFormat",
     "C_Cpp.vcFormat.wrap.preserveBlocks": "allOneLineScopes",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "newLine",
@@ -24,7 +40,6 @@
     "C_Cpp.vcFormat.space.removeBeforeSemicolon": true,
     "C_Cpp.vcFormat.space.preserveInInitializerList": true,
     "C_Cpp.vcFormat.indent.preserveWithinParentheses": false,
-    // "C_Cpp.vcFormat.indent.preprocessor": "oneLeft",
     "C_Cpp.vcFormat.indent.preprocessor": "oneLeft",
     "C_Cpp.vcFormat.indent.preserveComments": false,
     "C_Cpp.vcFormat.indent.accessSpecifiers": true,
@@ -33,7 +48,6 @@
     "C_Cpp.vcFormat.indent.caseContentsWhenBlock": true,
     "C_Cpp.vcFormat.space.withinSquareBrackets": false,
     "C_Cpp.vcFormat.space.insertAfterSemicolon": true,
-    // "C_Cpp.clang_format_sortIncludes": true,
 
     "C_Cpp.doxygen.generatedStyle": "/*!",
     // "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
@@ -58,7 +72,6 @@
     //     "editor.detectIndentation": false,
     //     "editor.defaultFormatter": "ms-vscode.cpptools",
     //     "editor.semanticHighlighting.enabled": "configuredByTheme",
-    //     // "editor.semanticHighlighting.enabled": true,
     // },
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features"

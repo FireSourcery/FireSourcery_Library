@@ -73,11 +73,7 @@ static const NvMemory_OpControl_T EEPROM_OP_WRITE =
 
 NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
 {
-    NvMemory_SetOpControl(p_eeprom, &EEPROM_OP_WRITE);
-    NvMemory_Status_T status = NvMemory_SetOpAddress(p_eeprom, p_dest, sizeBytes);
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_eeprom, sizeBytes); }
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpDataSource(p_eeprom, p_source, sizeBytes); }
-    return status;
+    return NvMemory_SetOpControl(p_eeprom, &EEPROM_OP_WRITE, p_dest, p_source, sizeBytes);
 }
 
 /*
@@ -110,7 +106,7 @@ NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, const void * p_dest
     {
         if(p_eeprom->IsVerifyEnable == true)
         {
-            status = NvMemory_VerifyWrite(p_eeprom, p_dest, p_source, sizeBytes) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_VERIFY;
+            status = NvMemory_MemCompare(p_dest, p_source, sizeBytes) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_VERIFY;
         }
     }
     return status;

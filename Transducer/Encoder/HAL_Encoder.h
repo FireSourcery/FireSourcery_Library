@@ -39,6 +39,7 @@
 #elif defined(CONFIG_HAL_ENCODER_PLATFORM)
     #include STR(HAL/Platform/CONFIG_HAL_ENCODER_PLATFORM/HAL_Encoder.h)
 #elif defined(CONFIG_HAL_PERIPHERAL_PATH) || defined(CONFIG_HAL_PERIPHERAL_PLATFORM)
+    #include "Peripheral/HAL/HAL_Peripheral.h"
     #include HAL_PERIPHERAL_PATH(HAL_Encoder.h)
 #endif
 

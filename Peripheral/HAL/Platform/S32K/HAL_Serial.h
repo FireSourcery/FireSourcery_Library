@@ -46,22 +46,22 @@
 
 typedef LPUART_Type HAL_Serial_T; /* Peripheral register map provided by chip manufacturer */
 
-static inline void HAL_Serial_WriteTxChar(HAL_Serial_T * p_hal, uint8_t txChar)     { *((volatile uint8_t *)&(p_hal->DATA)) = txChar; }
-static inline uint8_t HAL_Serial_ReadRxChar(const HAL_Serial_T * p_hal)             { return ((uint8_t)p_hal->DATA); }
-static inline bool HAL_Serial_ReadIsTxRegEmpty(const HAL_Serial_T * p_hal)             { return ((p_hal->STAT & LPUART_STAT_TDRE_MASK) != 0U); }
-static inline bool HAL_Serial_ReadIsRxRegFull(const HAL_Serial_T * p_hal)             { return ((p_hal->STAT & LPUART_STAT_RDRF_MASK) != 0U); }
-static inline uint8_t _HAL_Serial_ReadTxFifoFullCount(const HAL_Serial_T * p_hal)     { return ((p_hal->WATER & LPUART_WATER_TXCOUNT_MASK) >> LPUART_WATER_TXCOUNT_SHIFT); }
-static inline uint8_t HAL_Serial_ReadRxFifoFullCount(const HAL_Serial_T * p_hal)     { return ((p_hal->WATER & LPUART_WATER_RXCOUNT_MASK) >> LPUART_WATER_RXCOUNT_SHIFT); }
-static inline uint8_t HAL_Serial_ReadTxFifoEmptyCount(const HAL_Serial_T * p_hal)     { return (CONFIG_HAL_SERIAL_FIFO_SIZE - _HAL_Serial_ReadTxFifoFullCount(p_hal)); }
+static inline void HAL_Serial_WriteTxChar(HAL_Serial_T * p_hal, uint8_t txChar) { *((volatile uint8_t *)&(p_hal->DATA)) = txChar; }
+static inline uint8_t HAL_Serial_ReadRxChar(const HAL_Serial_T * p_hal) { return ((uint8_t)p_hal->DATA); }
+static inline bool HAL_Serial_ReadIsTxRegEmpty(const HAL_Serial_T * p_hal) { return ((p_hal->STAT & LPUART_STAT_TDRE_MASK) != 0U); }
+static inline bool HAL_Serial_ReadIsRxRegFull(const HAL_Serial_T * p_hal) { return ((p_hal->STAT & LPUART_STAT_RDRF_MASK) != 0U); }
+static inline uint8_t _HAL_Serial_ReadTxFifoFullCount(const HAL_Serial_T * p_hal) { return ((p_hal->WATER & LPUART_WATER_TXCOUNT_MASK) >> LPUART_WATER_TXCOUNT_SHIFT); }
+static inline uint8_t HAL_Serial_ReadRxFifoFullCount(const HAL_Serial_T * p_hal) { return ((p_hal->WATER & LPUART_WATER_RXCOUNT_MASK) >> LPUART_WATER_RXCOUNT_SHIFT); }
+static inline uint8_t HAL_Serial_ReadTxFifoEmptyCount(const HAL_Serial_T * p_hal) { return (CONFIG_HAL_SERIAL_FIFO_SIZE - _HAL_Serial_ReadTxFifoFullCount(p_hal)); }
 //todo change back to hw fifo
-static inline uint8_t HAL_Serial_ReadTxEmptyCount(const HAL_Serial_T * p_hal)     { return HAL_Serial_ReadIsTxRegEmpty(p_hal); }
-static inline uint8_t HAL_Serial_ReadRxFullCount(const HAL_Serial_T * p_hal)     { return HAL_Serial_ReadIsRxRegFull(p_hal); }
-static inline bool HAL_Serial_ReadRxOverrun(HAL_Serial_T * p_hal)         { return ((p_hal->STAT & LPUART_STAT_OR_MASK) != 0U); }
-static inline void HAL_Serial_ClearRxErrors(HAL_Serial_T * p_hal)         { p_hal->STAT = 0xC01FC000U; } //FEATURE_LPUART_STAT_REG_FLAGS_MASK;
-static inline void HAL_Serial_EnableTxInterrupt(HAL_Serial_T * p_hal)     { p_hal->CTRL |= LPUART_CTRL_TIE_MASK; }
-static inline void HAL_Serial_DisableTxInterrupt(HAL_Serial_T * p_hal)     { p_hal->CTRL &= ~LPUART_CTRL_TIE_MASK; }
-static inline void HAL_Serial_EnableRxInterrupt(HAL_Serial_T * p_hal)     { p_hal->CTRL |= LPUART_CTRL_RIE_MASK; }
-static inline void HAL_Serial_DisableRxInterrupt(HAL_Serial_T * p_hal)     { p_hal->CTRL &= ~LPUART_CTRL_RIE_MASK; }
+static inline uint8_t HAL_Serial_ReadTxEmptyCount(const HAL_Serial_T * p_hal) { return HAL_Serial_ReadIsTxRegEmpty(p_hal); }
+static inline uint8_t HAL_Serial_ReadRxFullCount(const HAL_Serial_T * p_hal) { return HAL_Serial_ReadIsRxRegFull(p_hal); }
+static inline bool HAL_Serial_ReadRxOverrun(HAL_Serial_T * p_hal) { return ((p_hal->STAT & LPUART_STAT_OR_MASK) != 0U); }
+static inline void HAL_Serial_ClearRxErrors(HAL_Serial_T * p_hal) { p_hal->STAT = 0xC01FC000U; } //FEATURE_LPUART_STAT_REG_FLAGS_MASK;
+static inline void HAL_Serial_EnableTxInterrupt(HAL_Serial_T * p_hal) { p_hal->CTRL |= LPUART_CTRL_TIE_MASK; }
+static inline void HAL_Serial_DisableTxInterrupt(HAL_Serial_T * p_hal) { p_hal->CTRL &= ~LPUART_CTRL_TIE_MASK; }
+static inline void HAL_Serial_EnableRxInterrupt(HAL_Serial_T * p_hal) { p_hal->CTRL |= LPUART_CTRL_RIE_MASK; }
+static inline void HAL_Serial_DisableRxInterrupt(HAL_Serial_T * p_hal) { p_hal->CTRL &= ~LPUART_CTRL_RIE_MASK; }
 
 static inline void HAL_Serial_WriteTxSwitch(HAL_Serial_T * p_hal, bool enable)
 {

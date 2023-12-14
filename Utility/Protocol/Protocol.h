@@ -55,7 +55,7 @@ typedef uint8_t protocol_reqid_t; /* Index into P_REQ_TABLE. Child module define
 */
 typedef enum Protocol_RxCode
 {
-    PROTOCOL_RX_CODE_AWAIT_PACKET,       /* Wait BuildRxPacket */
+    PROTOCOL_RX_CODE_AWAIT_PACKET,       /* Wait CaptureRx */
     PROTOCOL_RX_CODE_PACKET_COMPLETE,   /* Success Complete Req/ReqExt Packet */
 
     // PROTOCOL_RX_CODE_ERROR,
@@ -119,13 +119,10 @@ typedef enum Protocol_ReqCode
     // PROTOCOL_REQ_CODE_AWAIT_RX_REQ_INITIAL,
     PROTOCOL_REQ_CODE_PROCESS_CONTINUE,             /* continue using default sync settings, wait for next packet */
     PROTOCOL_REQ_CODE_PROCESS_COMPLETE,             /* Exit nonblocking wait processing state upon reception */
+    /* ack after process */
     PROTOCOL_REQ_CODE_PROCESS_ACK,
     PROTOCOL_REQ_CODE_PROCESS_NACK,
     PROTOCOL_REQ_CODE_ABORT,
-
-    //remove
-    PROTOCOL_REQ_CODE_AWAIT_PROCESS,                 /* Child Protocol NonBlocking Wait ReqExt processing */
-    PROTOCOL_REQ_CODE_AWAIT_PROCESS_EXTEND_TIMER,    /* Child Protocol NonBlocking Wait, Extend timer for RxLost and Timeout */
 
     /* User Function Manual select next step */
     PROTOCOL_REQ_CODE_AWAIT_RX_EXT,             /* Expecting Rx new packet */
@@ -138,6 +135,10 @@ typedef enum Protocol_ReqCode
     PROTOCOL_REQ_CODE_ERROR_ID,             /* ID not found */
     PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED,  /* Out of sequence packet */
     PROTOCOL_REQ_CODE_ERROR_TIMEOUT,
+
+    //remove
+    // PROTOCOL_REQ_CODE_AWAIT_PROCESS,                 /* Child Protocol NonBlocking Wait ReqExt processing */
+    // PROTOCOL_REQ_CODE_AWAIT_PROCESS_EXTEND_TIMER,    /* Child Protocol NonBlocking Wait, Extend timer for RxLost and Timeout */
 }
 Protocol_ReqCode_T;
 
@@ -219,6 +220,7 @@ Protocol_Req_T;
 /*!
     Tx Sync
     User supply function to build Tx Ack, Nack, etc
+    alternatively combine rx sync with map
 */
 /******************************************************************************/
 typedef enum Protocol_TxSyncId
@@ -248,6 +250,7 @@ typedef const struct Protocol_Specs
     const uint8_t RX_LENGTH_MAX;
     const Protocol_ParseRxMeta_T PARSE_RX_META;     /* Parse Header for RxReqId and RxRemaining, and check data */
     const Protocol_BuildTxSync_T BUILD_TX_SYNC;     /* Build Sync Packets */
+    // const Protocol_BuildTxHeader_T BUILD_TX_Header;     /*  */
 
     /* Req Resp Table */
     const Protocol_Req_T * const P_REQ_TABLE;       /* Protocol_Req_T */
@@ -256,8 +259,9 @@ typedef const struct Protocol_Specs
 
     /* Optional */
     const uint32_t RX_START_ID;             /* set to 0x00 for not applicable */
-    const uint32_t RX_END_ID;
+    // const uint32_t RX_END_ID;
 
+    // if all packets common
     //todo defaults over write in protocol Param
     // const uint32_t BAUD_RATE_DEFAULT;
     const uint32_t RX_TIMEOUT;              /* Reset cumulative per packet */
@@ -266,8 +270,8 @@ typedef const struct Protocol_Specs
     const uint8_t NACK_COUNT;
 
     // alternative to PARSE_RX_META while building
-    const size_t RX_LENGTH_INDEX;
-    const size_t RX_REQ_ID_INDEX;
+    // const size_t RX_LENGTH_INDEX;
+    // const size_t RX_REQ_ID_INDEX;
     // const size_t RX_HEADER_LENGTH;     /* fixed header length known to include contain data length value */
 
     // const bool ENCODED;                  /* TODO Encoded data, non encoded use TIMEOUT only. No meta chars past first char. */
@@ -293,8 +297,8 @@ Protocol_RxState_T;
 typedef enum Protocol_ReqState
 {
     PROTOCOL_REQ_STATE_INACTIVE,
-    PROTOCOL_REQ_STATE_WAIT_RX_INITIAL,
-    PROTOCOL_REQ_STATE_WAIT_RX_EXT,             /* Wait for next ReqExt packet in stateful routine */
+    PROTOCOL_REQ_STATE_WAIT_RX_ID,
+    PROTOCOL_REQ_STATE_WAIT_RX_CONTINUE,             /* Wait for next ReqExt packet in stateful routine */
     PROTOCOL_REQ_STATE_WAIT_RX_SYNC,
     PROTOCOL_REQ_STATE_PROCESS_REQ_EXT,         /* Wait for ReqExt process */
 }
@@ -353,7 +357,7 @@ typedef struct Protocol
     /* Response */
     size_t TxLength;
 
-    // Protocol_ReqContext_T buffer for extended request keep in heap memory.
+    Protocol_ReqContext_T ReqContext; //for extended request keep in heap memory.
 
     /* Common */
     uint8_t NackCount;
@@ -361,10 +365,10 @@ typedef struct Protocol
     uint8_t RxNackTxCount;
 
     /* Debug */
-    uint16_t TxPacketCount;
-    uint16_t RxPacketSuccessCount;
-    uint16_t RxPacketErrorCount;
-    uint16_t RxPacketErrorSync;
+    // uint16_t TxPacketCount;
+    // uint16_t RxPacketSuccessCount;
+    // uint16_t RxPacketErrorCount;
+    // uint16_t RxPacketErrorSync;
 }
 Protocol_T;
 
@@ -390,15 +394,15 @@ Protocol_T;
 static inline Protocol_RxCode_T Protocol_GetRxStatus(const Protocol_T * p_protocol)     { return p_protocol->RxStatus; }
 static inline Protocol_ReqCode_T Protocol_GetReqStatus(const Protocol_T * p_protocol)   { return p_protocol->ReqStatus; }
 
-static inline uint16_t Protocol_GetTxPacketCount(const Protocol_T * p_protocol) { return p_protocol->TxPacketCount; }
-static inline uint16_t Protocol_GetRxPacketCount(const Protocol_T * p_protocol) { return p_protocol->RxPacketErrorCount + p_protocol->RxPacketSuccessCount; }
+// static inline uint16_t Protocol_GetTxPacketCount(const Protocol_T * p_protocol) { return p_protocol->TxPacketCount; }
+// static inline uint16_t Protocol_GetRxPacketCount(const Protocol_T * p_protocol) { return p_protocol->RxPacketErrorCount + p_protocol->RxPacketSuccessCount; }
 
-static inline void Protocol_ClearTxRxPacketCount(Protocol_T * p_protocol)
-{
-    p_protocol->TxPacketCount = 0U;
-    p_protocol->RxPacketSuccessCount = 0U;
-    p_protocol->RxPacketErrorCount = 0U;
-}
+// static inline void Protocol_ClearTxRxPacketCount(Protocol_T * p_protocol)
+// {
+//     p_protocol->TxPacketCount = 0U;
+//     p_protocol->RxPacketSuccessCount = 0U;
+//     p_protocol->RxPacketErrorCount = 0U;
+// }
 
 /*
     User must reboot. Does propagate set. Current settings remain active until reboot.

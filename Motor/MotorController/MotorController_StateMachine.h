@@ -34,23 +34,25 @@
 #include "MotorController.h"
 #include "Utility/StateMachine/StateMachine.h"
 
-#ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
-    #define _MCSM_TRANSITION_TABLE_LENGTH_SERVO (1U)
-#else
-    #define _MCSM_TRANSITION_TABLE_LENGTH_SERVO (0U)
-#endif
+// #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
+//     #define _MCSM_TRANSITION_TABLE_LENGTH_SERVO (1U)
+// #else
+//     #define _MCSM_TRANSITION_TABLE_LENGTH_SERVO (0U)
+// #endif
 
-#define MCSM_TRANSITION_TABLE_LENGTH (6U + _MCSM_TRANSITION_TABLE_LENGTH_SERVO)
+// #define MCSM_TRANSITION_TABLE_LENGTH (6U + _MCSM_TRANSITION_TABLE_LENGTH_SERVO)
+#define MCSM_TRANSITION_TABLE_LENGTH (7U)
 
 typedef enum MotorController_StateMachine_Input
 {
     MCSM_INPUT_FAULT,
-    MCSM_INPUT_BLOCKING,
+    MCSM_INPUT_LOCKED,
     MCSM_INPUT_CMD,
     MCSM_INPUT_DIRECTION,   /* Drive Direction */
     MCSM_INPUT_DRIVE,       /* Drive Throttle/Brake */
     MCSM_INPUT_RELEASE,
     MCSM_INPUT_SERVO,
+    // MCSM_INPUT_USER,
 }
 MotorController_StateMachine_Input_T;
 
@@ -60,7 +62,7 @@ typedef enum MotorController_StateMachine_StateId
     MCSM_STATE_ID_PARK,
     MCSM_STATE_ID_DRIVE,
     MCSM_STATE_ID_NEUTRAL,
-    MCSM_STATE_ID_BLOCKING,
+    MCSM_STATE_ID_LOCKED,
     MCSM_STATE_ID_FAULT,
     MCSM_STATE_ID_SERVO,
 }

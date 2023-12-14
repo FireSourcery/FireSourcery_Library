@@ -40,6 +40,7 @@
 
 typedef int16_t qfrac16_t;          /*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
 
+typedef uint16_t uqfrac16_t;        /*!< Q1.15 [0, 1.999969482421875], res 1/(2^15) == .000030517578125 */
 typedef int32_t qfrac16_sat32_t;    /*!< Q17.15 */
 
 static const qfrac16_t QFRAC16_MAX = INT16_MAX; /*!< (32767) */
@@ -141,18 +142,18 @@ static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
 typedef int16_t qangle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
 
 #define QFRAC16_SINE_90_TABLE_LENGTH    (256U)
-#define QFRAC16_SINE_90_TABLE_LSB       (6U)    /*!< Insignificant bits, shifted away*/
+#define QFRAC16_SINE_90_TABLE_LSB       (6U)    /*!< Insignificant bits, shifted away */
 
-static const qangle16_t QANGLE16_0 = 0;         /*! 0 */
-static const qangle16_t QANGLE16_30 = 0x1555;   /*! 5461 */
-static const qangle16_t QANGLE16_60 = 0x2AAA;   /*! 10922 */
-static const qangle16_t QANGLE16_90 = 0x4000;   /*! 16384 */
-static const qangle16_t QANGLE16_120 = 0x5555;  /*! 21845 */
-static const qangle16_t QANGLE16_150 = 0x6AAA;  /*! 27306 */
-static const qangle16_t QANGLE16_180 = 0x8000;  /*! 32768, -32768, 180 == -180 */
-static const qangle16_t QANGLE16_210 = 0x9555;  /*! 38229 */
-static const qangle16_t QANGLE16_240 = 0xAAAA;  /*! 43690, -21845 */
-static const qangle16_t QANGLE16_270 = 0xC000;  /*! 49152, -16384, 270 == -90 */
+static const qangle16_t QANGLE16_0 = 0U;         /*! 0 */
+static const qangle16_t QANGLE16_30 = 0x1555U;   /*! 5461 */
+static const qangle16_t QANGLE16_60 = 0x2AAAU;   /*! 10922 */
+static const qangle16_t QANGLE16_90 = 0x4000U;   /*! 16384 */
+static const qangle16_t QANGLE16_120 = 0x5555U;  /*! 21845 */
+static const qangle16_t QANGLE16_150 = 0x6AAAU;  /*! 27306 */
+static const qangle16_t QANGLE16_180 = 0x8000U;  /*! 32768, -32768, 180 == -180 */
+static const qangle16_t QANGLE16_210 = 0x9555U;  /*! 38229 */
+static const qangle16_t QANGLE16_240 = 0xAAAAU;  /*! 43690, -21845 */
+static const qangle16_t QANGLE16_270 = 0xC000U;  /*! 49152, -16384, 270 == -90 */
 
 #define QANGLE16_QUADRANT_MASK (0xC000U)
 

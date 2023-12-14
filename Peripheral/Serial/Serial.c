@@ -255,9 +255,12 @@ bool Serial_PollRestartRxIsr(const Serial_T * p_serial)
 void Serial_Init(Serial_T * p_serial)
 {
     HAL_Serial_Init(p_serial->CONFIG.P_HAL_SERIAL);
+    HAL_Serial_WriteTxSwitch(p_serial->CONFIG.P_HAL_SERIAL, true);
+    HAL_Serial_WriteRxSwitch(p_serial->CONFIG.P_HAL_SERIAL, true);
     Ring_Init(&p_serial->TxRing);
     Ring_Init(&p_serial->RxRing);
-    Serial_EnableRx(p_serial);
+    Serial_EnableRxIsr(p_serial);
+    Serial_EnableTxIsr(p_serial);
 }
 
 void Serial_Deinit(Serial_T * p_serial)
@@ -417,6 +420,12 @@ size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
     return Serial_RecvMax(p_serial, p_destBuffer, length);
 }
 
+void Serial_FlushBuffers(Serial_T * p_serial)
+{
+    Ring_Clear(&p_serial->TxRing);
+    Ring_Clear(&p_serial->RxRing);
+}
+
 /*
     Experimental
 */
@@ -425,63 +434,58 @@ size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length)
     Passes buffer to upper layer to avoid double buffer write.
     Must flush buffer to start at 0 index.
 */
-uint8_t * Serial_AcquireTxBuffer(Serial_T * p_serial)
-{
-    uint8_t * p_buffer = 0U;
+// uint8_t * Serial_AcquireTxBuffer(Serial_T * p_serial)
+// {
+//     uint8_t * p_buffer = 0U;
 
-    if(AcquireCriticalTx(p_serial) == true) //todo possibly must be mutex
-    {
-        p_buffer = Ring_AcquireBuffer(&p_serial->TxRing);
-    }
+//     if(AcquireCriticalTx(p_serial) == true) //todo possibly must be mutex
+//     {
+//         p_buffer = Ring_AcquireBuffer(&p_serial->TxRing);
+//     }
 
-    return p_buffer;
-}
+//     return p_buffer;
+// }
 
-void Serial_ReleaseTxBuffer(Serial_T * p_serial, size_t writeSize)
-{
-    Ring_ReleaseBuffer(&p_serial->TxRing, writeSize);
-    if(Ring_GetIsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
-    ReleaseCriticalTx(p_serial);
-}
+// void Serial_ReleaseTxBuffer(Serial_T * p_serial, size_t writeSize)
+// {
+//     Ring_ReleaseBuffer(&p_serial->TxRing, writeSize);
+//     if(Ring_GetIsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+//     ReleaseCriticalTx(p_serial);
+// }
 
-bool Serial_SendCharString(Serial_T * p_serial, const uint8_t * p_srcBuffer)
-{
-    bool status = false;
+// bool Serial_SendCharString(Serial_T * p_serial, const uint8_t * p_srcBuffer)
+// {
+//     bool status = false;
 
-    const uint8_t * p_char = p_srcBuffer;
+//     const uint8_t * p_char = p_srcBuffer;
 
-    if(AcquireCriticalTx(p_serial) == true)
-    {
-        while(*p_char != '\0')
-        {
-            status = Ring_Enqueue(&p_serial->TxRing, p_char);
-            if(status == false) { break; }
-            p_char++;
-        }
-        if(p_char != p_srcBuffer) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
-        ReleaseCriticalTx(p_serial);
-    }
+//     if(AcquireCriticalTx(p_serial) == true)
+//     {
+//         while(*p_char != '\0')
+//         {
+//             status = Ring_Enqueue(&p_serial->TxRing, p_char);
+//             if(status == false) { break; }
+//             p_char++;
+//         }
+//         if(p_char != p_srcBuffer) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+//         ReleaseCriticalTx(p_serial);
+//     }
 
-    return status;
-}
+//     return status;
+// }
 
-//todo polling via hw fifo buffer
-void Serial_PollRxData(Serial_T * p_serial)
-{
-    HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-    Serial_RxData_ISR(p_serial);
-    HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-}
+// //todo polling via hw fifo buffer
+// void Serial_PollRxData(Serial_T * p_serial)
+// {
+//     HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+//     Serial_RxData_ISR(p_serial);
+//     HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+// }
 
-void Serial_PollTxData(Serial_T * p_serial)
-{
-    HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
-    Serial_TxData_ISR(p_serial);
-    if(Ring_GetIsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
-}
+// void Serial_PollTxData(Serial_T * p_serial)
+// {
+//     HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+//     Serial_TxData_ISR(p_serial);
+//     if(Ring_GetIsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+// }
 
-void Serial_FlushBuffers(Serial_T * p_serial)
-{
-    Ring_Clear(&p_serial->TxRing);
-    Ring_Clear(&p_serial->RxRing);
-}

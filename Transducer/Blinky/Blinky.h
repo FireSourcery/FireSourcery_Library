@@ -59,10 +59,10 @@ typedef struct Blinky
 }
 Blinky_T;
 
-#define BLINKY_INIT(p_PinHal, PinId, p_TimerBase, TimerBaseFreq)     \
-{                                                                    \
-    .Pin     = PIN_INIT(p_PinHal, PinId),                            \
-    .Timer     = TIMER_INIT(p_TimerBase, TimerBaseFreq)                \
+#define BLINKY_INIT(p_PinHal, PinId, p_TimerBase, TimerBaseFreq)    \
+{                                                                   \
+    .Pin    = PIN_INIT(p_PinHal, PinId),                            \
+    .Timer  = TIMER_INIT(p_TimerBase, TimerBaseFreq)                \
 }
 
 extern void Blinky_Init(Blinky_T * p_blinky);

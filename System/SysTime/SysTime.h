@@ -58,16 +58,13 @@
 #define SYST_COUNT() (SYST_CVR)
 #endif
 
-/*
-    MISRA Violation
-    extern variable to inline wrapper
-*/
 extern volatile uint32_t SysTime_Millis;
 
 /*
-    User Map to 1ms ISR
+    App maps to 1ms ISR
 */
 static inline void SysTime_CaptureMillis_ISR(void)  { SysTime_Millis++; }
+
 static inline uint32_t SysTime_GetMillis(void)      { return SysTime_Millis; }
 static inline uint32_t Millis(void)                 { return SysTime_GetMillis(); }
 static inline void SysTime_ZeroMillis(void)         { SysTime_Millis = 0U; }

@@ -40,14 +40,13 @@
 //#include "Peripheral/EEPROM/EEPROM.h"
 //#include "Peripheral/Flash/Flash.h"
 
-
-typedef enum
-{
-    NV_MEMORY_ID_FLASH,
-    NV_MEMORY_ID_EEPROM,
-//    NV_MEMORY__ONCE,
-}
-NvMemoryN_Id_T;
+// typedef enum
+// {
+//     NV_MEMORY_ID_FLASH,
+//     NV_MEMORY_ID_EEPROM,
+// //    NV_MEMORY__ONCE,
+// }
+// NvMemoryN_Id_T;
 
 //static inline Memory_Id_T GetParitionId(const Memory_T * p_nvMemory, const uint8_t * p_dest)
 //{

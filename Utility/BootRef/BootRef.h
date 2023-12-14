@@ -22,36 +22,34 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MemMapBoot.h
+    @file   BootRef.h
     @author FireSourcery
     @brief
     @version V0
 */
 /******************************************************************************/
-#ifndef MEM_MAP_BOOT_H
-#define MEM_MAP_BOOT_H
+#ifndef BOOT_REF_H
+#define BOOT_REF_H
 
-/*
-    User define externally
-    Align to minium NvM write size
-*/
-#define MEM_MAP_BOOT ((MemMapBoot_T *)CONFIG_MEM_MAP_BOOT_ADDRESS)
+#include <stdint.h>
+#include <stdbool.h>
 
 /*
     Calling apps are compiled to the same platform, endianess should be consistent
 */
 
 /* use 2 bits do differentiate unwritten memory patterns */
-typedef enum MemMapBoot_IsValid
+/* IsFirstTime check for first time set */
+typedef enum BootRef_IsValid
 {
-    MEM_MAP_BOOT_IS_VALID_01 = 0b01,
-    MEM_MAP_BOOT_IS_VALID_10 = 0b10,
-    MEM_MAP_BOOT_IS_INVALID_00 = 0b00,
-    MEM_MAP_BOOT_IS_INVALID_11 = 0b11,
+    BOOT_REF_IS_INVALID_00 = 0b00,
+    BOOT_REF_IS_VALID_01 = 0b01,
+    BOOT_REF_IS_VALID_10 = 0b10,
+    BOOT_REF_IS_INVALID_11 = 0b11,
 }
-MemMapBoot_IsValid_T;
+BootRef_IsValid_T;
 
-typedef union MemMapBoot
+typedef union BootRef
 {
     struct
     {
@@ -59,26 +57,33 @@ typedef union MemMapBoot
         volatile uint32_t FastBoot      : 1U;
         volatile uint32_t Beep          : 1U;
         volatile uint32_t Blink         : 1U;
-        volatile uint32_t LoadDefault   : 1U;
-        volatile uint32_t ProtocolId    : 1U;
+        // volatile uint32_t LoadDefault   : 1U;
+        volatile uint32_t ProtocolId    : 2U;
     };
     volatile uint32_t Word;
 }
-MemMapBoot_T;
+BootRef_T;
 
-static inline bool MemMapBoot_IsValid(void)
+/*
+    User define externally
+    Align to minium NvM write size
+*/
+#define BOOT_REF ((BootRef_T *)BOOT_REF_ADDRESS)
+
+/* !IsFirstTime */
+static inline bool BootRef_IsValid(void)
 {
-    return ((MEM_MAP_BOOT->IsValid == MEM_MAP_BOOT_IS_VALID_01) || (MEM_MAP_BOOT->IsValid == MEM_MAP_BOOT_IS_VALID_10));
+    return ((BOOT_REF->IsValid == BOOT_REF_IS_VALID_01) || (BOOT_REF->IsValid == BOOT_REF_IS_VALID_10));
 }
 
-/* Load Default by default */
-static inline bool MemMapBoot_GetLoadDefault(void) { return ((MemMapBoot_IsValid() == false) || (MEM_MAP_BOOT->LoadDefault == 1U)); }
+/* No FastBoot by default */
+static inline bool BootRef_IsFastBoot(void) { return ((BootRef_IsValid() == true) && (BOOT_REF->FastBoot == 1U)); }
 
 /* Beep by default */
-static inline bool MemMapBoot_GetBeep(void) { return ((MemMapBoot_IsValid() == false) || (MEM_MAP_BOOT->Beep == 1U)); }
+static inline bool BootRef_IsBeep(void) { return ((BootRef_IsValid() == false) || (BOOT_REF->Beep == 1U)); }
 
-/* No FastBoot by default */
-static inline bool MemMapBoot_GetFastBoot(void) { return ((MemMapBoot_IsValid() == true) && (MEM_MAP_BOOT->FastBoot == 1U)); }
+/* Load Default by default */
+// static inline bool BootRef_IsLoadDefault(void) { return ((BootRef_IsValid() == false) || (BOOT_REF->LoadDefault == 1U)); }
 
 
 #endif

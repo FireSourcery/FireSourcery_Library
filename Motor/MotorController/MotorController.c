@@ -39,7 +39,7 @@ void MotorController_Init(MotorControllerPtr_T p_mc)
 #endif
 
     if(p_mc->CONFIG.P_PARAMS_NVM != 0U) { memcpy(&p_mc->Parameters, p_mc->CONFIG.P_PARAMS_NVM, sizeof(MotorController_Params_T)); }
-    if(p_mc->CONFIG.P_MEM_MAP_BOOT != 0U) { p_mc->MemMapBoot.Word = p_mc->CONFIG.P_MEM_MAP_BOOT->Word; }
+    if(p_mc->CONFIG.P_BOOT_REF != 0U) { p_mc->BootRef.Word = p_mc->CONFIG.P_BOOT_REF->Word; }
 
     // MotorController_LoadParamsDefault(p_mc);
 
@@ -119,20 +119,17 @@ void MotorController_LoadParamsDefault(MotorController_T * p_mc)
     VMonitor_SetNominal_MilliV(&p_mc->VMonitorSource, (uint32_t)p_mc->Parameters.VSourceRef * 1000U);
     VMonitor_ResetLimitsDefault(&p_mc->VMonitorSource);
     VMonitor_Enable(&p_mc->VMonitorSource);
-    //update bootRef
-
     // VMonitor_ResetLimitsDefault(&p_mc->VMonitorAccs);
     // VMonitor_ResetLimitsDefault(&p_mc->VMonitorSense);
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-    // MotorController_User_SetBatteryLifeDefault(p_mc); //todo
+    MotorController_ResetUnitsBatteryLife(p_mc);
 #endif
-    // Calculate values when adcu default is not provided
-    // Thermistor_SetLimits_DegC(&p_mc->ThermistorPcb, 100U, 90U, 80U, 78U);
-    // Thermistor_SetLimits_DegC(&p_mc->ThermistorMosfets, 100U, 90U, 80U, 78U);
-    // for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Thermistor_SetLimits_DegC(&p_mc->CONFIG.P_MOTORS[iMotor].Thermistor, 100U, 90U, 80U, 78U); }
-//     PID_SetTunings(&p_motor->PidSpeed, 1U, 1U, 1U, 2U, 0U, 0U);
-//     PID_SetTunings(&p_motor->PidIq, 1U, 1U, 1U, 2U, 0U, 0U);
-//     PID_SetTunings(&p_motor->PidId, 1U, 1U, 1U, 2U, 0U, 0U);
+    // for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
+    // {
+    //     PID_SetTunings(&(p_mc->CONFIG.P_MOTORS[iMotor].PidSpeed), 1U, 1U, 1U, 2U, 0U, 0U);
+    //     PID_SetTunings(&(p_mc->CONFIG.P_MOTORS[iMotor].PidIq), 1U, 1U, 1U, 2U, 0U, 0U);
+    //     PID_SetTunings(&(p_mc->CONFIG.P_MOTORS[iMotor].PidId), 1U, 1U, 1U, 2U, 0U, 0U);
+    // }
 }
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
@@ -177,7 +174,7 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p
 #endif
 
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_PARAMS_NVM, &p_mc->Parameters, sizeof(MotorController_Params_T)); };
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_MEM_MAP_BOOT, &p_mc->MemMapBoot, sizeof(MemMapBoot_T)); };
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T)); };
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->AnalogUser.CONFIG.P_PARAMS, &p_mc->AnalogUser.Params, sizeof(MotAnalogUser_Params_T)); };
 
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->VMonitorSource.CONFIG.P_PARAMS, &p_mc->VMonitorSource.Params, sizeof(VMonitor_Params_T)); };
@@ -229,7 +226,7 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p
 NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorControllerPtr_T p_mc)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
-    return WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_MEM_MAP_BOOT, &p_mc->MemMapBoot, sizeof(MemMapBoot_T));
+    return WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T));
 #elif   defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
     return NV_MEMORY_STATUS_ERROR_OTHER; /* Save on all params */
 #endif
@@ -237,66 +234,21 @@ NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorControllerPtr_T p_mc
 
 NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_destBuffer, uint8_t size)
 {
-#if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
+#if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
     return Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, p_destBuffer, (uint8_t *)p_mc->CONFIG.P_MANUFACTURE, size);
-#elif defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
+#elif   defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
     if(size < p_mc->CONFIG.MANUFACTURE_SIZE) { memcpy(p_destBuffer, p_mc->CONFIG.P_MANUFACTURE, size); }
 #endif
 }
 
 NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorControllerPtr_T p_mc, const uint8_t * p_sourceBuffer, uint8_t size)
 {
-#if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
+#if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_ONCE)
     return Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_MANUFACTURE, p_sourceBuffer, size);
-#elif defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
+#elif   defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_FLASH)
     return Flash_Write_Blocking(p_mc->CONFIG.P_FLASH, (uint8_t *)p_mc->CONFIG.P_MANUFACTURE, p_dataBuffer, size);
 #endif
 }
-
-
-/*
-    WriteOnce Variables
-*/
-// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-/* Save Once does not need state machine */
-// static inline void MotorController_User_WriteManufacture_Blocking(MotorControllerPtr_T p_mc, const MotorController_Manufacture_T * p_data)
-// {
-// #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_COPY_ENABLE)
-//     memcpy(&p_mc->Manufacture, p_data, sizeof(MotorController_Manufacture_T));
-// #endif
-//     MotorController_User_ProcCalibration_Blocking(p_mc, MOTOR_CONTROLLER_NVM_WRITE_ONCE);
-// }
-
-// static inline void MotorController_User_ReadManufacture_Blocking(MotorControllerPtr_T p_mc)
-// {
-//     MotorController_User_ProcCalibration_Blocking(p_mc, MOTOR_CONTROLLER_NVM_READ_ONCE);
-// }
-
-// #if defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_PARAMS_RAM_COPY_ENABLE)
-// static inline void MotorController_User_GetName(MotorControllerPtr_T p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.NAME[0U], 8U); }
-// static inline char * MotorController_User_GetPtrName(MotorControllerPtr_T p_mc) { return &p_mc->Manufacture.NAME[0U]; }
-// // static inline char MotorController_User_GetNameIndex(MotorControllerPtr_T p_mc, uint8_t charIndex) { return p_mc->Manufacture.NAME[charIndex]; }
-
-// static inline void MotorController_User_GetManufacture(MotorControllerPtr_T p_mc, MotorController_Manufacture_T * p_dest) { memcpy(p_dest, &p_mc->Manufacture, sizeof(MotorController_Manufacture_T)); }
-// static inline uint32_t MotorController_User_GetSerialNumber(MotorControllerPtr_T p_mc) { return p_mc->Manufacture.SERIAL_NUMBER_WORD; }
-// static inline uint32_t MotorController_User_GetManufactureDate(MotorControllerPtr_T p_mc) { return p_mc->Manufacture.MANUFACTURE_NUMBER_WORD; }
-// static inline void MotorController_User_GetIdExt(MotorControllerPtr_T p_mc, uint8_t * p_stringBuffer) { memcpy(p_stringBuffer, &p_mc->Manufacture.ID_EXT[0U], 8U); }
-// #endif
-
-// static inline Flash_Status_T MotorController_User_ReadName_Blocking(MotorControllerPtr_T p_mc, uint8_t charIndex)
-// {
-//     //set read once, goto statemachine
-// // #if defined(CONFIG_MOTOR_CONTROLLER_ONCE_USE_FLASH)
-// //     return p_mc->CONFIG.P_MANUFACTURE->NAME[charIndex];
-// // #elif defined(CONFIG_MOTOR_CONTROLLER_ONCE_USE_ONCE)
-//     return Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_MANUFACTURE->NAME[charIndex], 8U);
-//     // #endif
-// }
-// static inline Flash_Status_T MotorController_User_WriteName_Blocking(MotorControllerPtr_T p_mc, const uint8_t * p_nameString)
-// {
-//     return Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, &p_mc->CONFIG.P_MANUFACTURE->NAME[0U], p_nameString, 8U);
-// };
-// // #endif
 
 
 

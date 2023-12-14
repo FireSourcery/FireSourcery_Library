@@ -33,6 +33,7 @@
 
 #include "MotPacket.h"
 #include "Utility/Protocol/Protocol.h"
+#include "Peripheral/NvMemory/Flash/Flash.h"
 
 #define MOT_PROTOCOL_BAUD_RATE_DEFAULT  (19200U)
 #define MOT_PROTOCOL_TIMEOUT_RX         (2000U)     /* Timeout Rx Packet */
@@ -47,16 +48,24 @@ typedef enum MotProtocol_GenericStatus
 }
 MotProtocol_GenericStatus_T;
 
+typedef enum MotProtocol_DataModeStateId
+{
+    MOT_PROTOCOL_DATA_MODE_INACTIVE,
+    MOT_PROTOCOL_DATA_MODE_READ_ACTIVE,
+    MOT_PROTOCOL_DATA_MODE_WRITE_ACTIVE,
+}
+MotProtocol_DataModeStateId_T;
+
+
 /* For Stateful DataMode Read/Write */
 typedef struct MotProtocol_SubState
 {
-    uint8_t StateIndex;
     uint32_t DataModeAddress;
     uint16_t DataModeSize;
     uint16_t SequenceIndex;
     bool IsDataModeActive;
-    // uint16_t WriteModeStatus;
-    uint8_t OnceBuffer[8U];
+    uint8_t StateIndex;
+    MotProtocol_DataModeStateId_T DataModeStateId;
 }
 MotProtocol_DataModeState_T;
 
@@ -65,5 +74,10 @@ static inline void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_sub
 extern void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, size_t * p_txSize, Protocol_TxSyncId_T txId);
 extern void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState);
 extern Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, size_t rxCount);
+
+extern Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext_T * p_reqContext);
+extern Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * const p_flash, Protocol_ReqContext_T * p_reqContext);
+extern protocol_txsize_t MotProtocol_Flash_WriteOnce_Blocking(Flash_T * p_flash, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket);
+extern protocol_txsize_t MotProtocol_Flash_ReadOnce_Blocking(Flash_T * p_flash, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket);
 
 #endif

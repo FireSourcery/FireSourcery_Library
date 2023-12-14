@@ -82,7 +82,9 @@ typedef const struct Xcvr_Xcvr
 {
     void * P_CONTEXT; /* Xcvr data struct */
     Xcvr_Type_T TYPE;
+#if defined(CONFIG_XCVR_INTERFACE_VTABLE)
     Xcvr_Interface_T * P_INTERFACE; /* If applicable, user external defined */
+#endif
 }
 Xcvr_Entry_T;
 
@@ -136,10 +138,10 @@ extern bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate);
 extern size_t Xcvr_GetRxFullCount(const Xcvr_T * p_xcvr);
 extern size_t Xcvr_GetTxEmptyCount(const Xcvr_T * p_xcvr);
 
-#if defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
-extern uint8_t * Xcvr_AcquireTxBuffer(const Xcvr_T * p_xcvr);
-extern void Xcvr_ReleaseTxBuffer(const Xcvr_T * p_xcvr, size_t writeSize);
-#endif
+// #if defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
+// extern uint8_t * Xcvr_AcquireTxBuffer(const Xcvr_T * p_xcvr);
+// extern void Xcvr_ReleaseTxBuffer(const Xcvr_T * p_xcvr, size_t writeSize);
+// #endif
 
 #endif
 

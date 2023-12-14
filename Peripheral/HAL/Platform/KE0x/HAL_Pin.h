@@ -22,22 +22,30 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   HAL_Peripheral.h
-    @author FireSourcery
-    @brief    Define configurable HAL Peripheral path
+    @file
+    @author
+    @brief
     @version V0
 */
 /******************************************************************************/
-#ifndef HAL_PERIPHERAL_H
-#define HAL_PERIPHERAL_H
+#ifndef HAL_PIN_PLATFORM_H
+#define HAL_PIN_PLATFORM_H
 
-#define XSTR(String) #String
-#define STR(String) XSTR(String)
+#include "Include.h"
 
-#if     defined(CONFIG_HAL_PERIPHERAL_PATH)         /* External directory */
-    #define HAL_PERIPHERAL_PATH(File) STR(CONFIG_HAL_PERIPHERAL_PATH/File)
-#elif   defined(CONFIG_HAL_PERIPHERAL_PLATFORM)     /* Library platform directory */
-    #define HAL_PERIPHERAL_PATH(File) STR(Peripheral/HAL/Platform/CONFIG_HAL_PERIPHERAL_PLATFORM/File)
-#endif
+#include <stdint.h>
+#include <stdbool.h>
+
+typedef GPIO_Type HAL_Pin_T;
+
+static inline void HAL_Pin_WriteOutputOn(HAL_Pin_T * p_hal, uint32_t pinId) { (p_hal->PSOR |= pinId); }
+static inline void HAL_Pin_WriteOutputOff(HAL_Pin_T * p_hal, uint32_t pinId) { (p_hal->PCOR |= pinId); }
+static inline void HAL_Pin_WriteOutput(HAL_Pin_T * p_hal, uint32_t pinId, bool isOn) { isOn ? (p_hal->PDOR |= pinId) : (p_hal->PDOR &= ~(pinId)); }
+static inline void HAL_Pin_ToggleOutput(HAL_Pin_T * p_hal, uint32_t pinId) { (p_hal->PTOR |= pinId); }
+static inline bool HAL_Pin_ReadInput(const HAL_Pin_T * p_hal, uint32_t pinId) { return ((p_hal->PDIR & pinId) == pinId); }
+
+static inline void HAL_Pin_InitInput(HAL_Pin_T * p_hal, uint32_t pinId) { p_hal->PDDR &= ~(pinId); p_hal->PIDR &= ~(pinId); }
+static inline void HAL_Pin_InitOutput(HAL_Pin_T * p_hal, uint32_t pinId) { p_hal->PDDR |= (pinId); p_hal->PIDR |= (pinId); }
+static inline void HAL_Pin_Deinit(HAL_Pin_T * p_hal, uint32_t pinId) { p_hal->PDDR &= ~(pinId);    p_hal->PIDR |= (pinId); }
 
 #endif

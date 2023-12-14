@@ -52,7 +52,7 @@ void Protocol_Init(Protocol_T * p_protocol)
     Receive into P_RX_PACKET_BUFFER and run PARSE_RX_META for RxMeta.Length and ReqCode / Rx completion
     Packet is complete => Req, ReqExt or Sync, or Error
 */
-static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
+static inline Protocol_RxCode_T CaptureRx(Protocol_T * p_protocol)
 {
     Protocol_RxCode_T rxStatus = PROTOCOL_RX_CODE_AWAIT_PACKET;
     uint8_t nextRxIndex;
@@ -70,7 +70,7 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
             RxMeta.Length unknown => Check 1 byte or a known const value, until RxMeta.Length is known
             RxMeta.Length known => Check Rx remaining
         */
-        if(p_protocol->RxMeta.Length > 0U)  /* PacketLength is known. RxMeta.Length > 0 */
+        if(p_protocol->RxMeta.Length > 0U)  /* PacketLength is known. */
         {
             if(p_protocol->RxCount < p_protocol->RxMeta.Length) { nextRxIndex = p_protocol->RxMeta.Length; }
             else { rxStatus = PROTOCOL_RX_CODE_ERROR_META; break; }
@@ -104,7 +104,7 @@ static inline Protocol_RxCode_T BuildRxPacket(Protocol_T * p_protocol)
 
 static void TxSync(Protocol_T * p_protocol, Protocol_TxSyncId_T txId)
 {
-    size_t txLength = 0U; /* local length. not overwrite in case of retranmission */
+    size_t txLength = 0U; /* local length. not overwrite in case of retransmission */
     if(p_protocol->p_Specs->BUILD_TX_SYNC != 0U)
     {
         p_protocol->p_Specs->BUILD_TX_SYNC(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &txLength, txId);
@@ -118,14 +118,14 @@ static void TxSync(Protocol_T * p_protocol, Protocol_TxSyncId_T txId)
 */
 static inline bool TxResp(Protocol_T * p_protocol)
 {
-    bool status = (p_protocol->TxLength > 0U);
-    if(status == true)
-    {
-        p_protocol->TxPacketCount++;
-        status = Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
-    }
-    return status;
-    // return (length > 0U) ? Xcvr_TxN(&p_protocol->Xcvr, p_txBuffer, length) : false;
+    // bool status = (p_protocol->TxLength > 0U);
+    // if(status == true)
+    // {
+    //     p_protocol->TxPacketCount++;
+    //     status = Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength);
+    // }
+    // return status;
+    return (p_protocol->TxLength > 0U) ? Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength) : false;
 }
 
 /*
@@ -182,7 +182,7 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
             break;
 
         case PROTOCOL_RX_STATE_WAIT_PACKET: /* nonblocking wait state, timer started */
-            rxStatus = BuildRxPacket(p_protocol);
+            rxStatus = CaptureRx(p_protocol);
             switch(rxStatus)
             {
                 case PROTOCOL_RX_CODE_AWAIT_PACKET:
@@ -190,15 +190,16 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
                     if(*p_protocol->CONFIG.P_TIMER - p_protocol->RxTimeStart > p_protocol->p_Specs->RX_TIMEOUT)  /* No need to check for overflow if using millis */
                     {
                         // ProcNackRepeat(p_protocol, p_protocol->p_Specs->NACK_COUNT, PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT, PROTOCOL_TX_SYNC_ABORT);
-                         // Xcvr_FlushRxBuffer(&p_protocol->Xcvr);
+                        // Xcvr_FlushRxBuffer(&p_protocol->Xcvr);
                         TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT);
                         p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
                         rxStatus = PROTOCOL_RX_CODE_ERROR_TIMEOUT;
                     }
                     break;
+
                 case PROTOCOL_RX_CODE_PACKET_COMPLETE:
                     p_protocol->NackCount = 0U; // p_protocol->NackDataCount = 0U;
-                    p_protocol->RxPacketSuccessCount++;
+                    // p_protocol->RxPacketSuccessCount++;
                     break;
 
                 case PROTOCOL_RX_CODE_ERROR_META:
@@ -206,25 +207,25 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
                     // Xcvr_FlushRxBuffer(&p_protocol->Xcvr);
                     // ProcNackRepeat(p_protocol, p_protocol->p_Specs->NACK_COUNT, PROTOCOL_TX_SYNC_NACK_PACKET_META, PROTOCOL_TX_SYNC_ABORT);
                     TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_PACKET_META);
-                    p_protocol->RxPacketErrorCount++;
+                    // p_protocol->RxPacketErrorCount++;
                     break;
 
                 case PROTOCOL_RX_CODE_ERROR_DATA:
                     // ProcNackRepeat(p_protocol, p_protocol->p_Specs->NACK_COUNT, PROTOCOL_TX_SYNC_NACK_PACKET_DATA, PROTOCOL_TX_SYNC_ABORT);
                     TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_PACKET_DATA);
-                    p_protocol->RxPacketErrorCount++;
+                    // p_protocol->RxPacketErrorCount++;
                     break;
 
                 default: break;
             }
 
             /*
-                Continue BuildRxPacket during ReqExt processing
+                Continue CaptureRx during ReqExt processing
                 Buffers will not be overwritten until user function returns.
                 Req ensure packet data is processed, or copied
                 Rx can queue out of sequence. Invalid Rx sequence until timeout buffer flush
 
-                Alternatively, pause BuildRxPacket during ReqExt processing
+                Alternatively, pause CaptureRx during ReqExt processing
                 Incoming packet bytes wait in queue. Cannot miss packets (unless overflow)
                 Cannot check for Abort without user signal, persistent wait process
             */
@@ -262,7 +263,7 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
 
     switch(p_protocol->ReqState)
     {
-        case PROTOCOL_REQ_STATE_WAIT_RX_INITIAL: /* Initial packet containing Req Id */
+        case PROTOCOL_REQ_STATE_WAIT_RX_ID: /* Initial packet containing Req Id */
             switch(rxCode)
             {
                 case PROTOCOL_RX_CODE_AWAIT_PACKET: reqStatus = PROTOCOL_REQ_CODE_PROCESS_CONTINUE; break;
@@ -273,6 +274,7 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                     {
                         p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER; /* Reset timer on all non error packets, feed RxLost Timer */
 
+                        // disallow both types?
                         if(p_protocol->p_ReqActive->SYNC.TX_ACK == true) { TxSync(p_protocol, PROTOCOL_TX_SYNC_ACK_REQ); }
 
                         if(p_protocol->p_ReqActive->PROC != 0U) /* Does not invoke state machine, no loop / nonblocking wait. */
@@ -288,18 +290,16 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                             else if(p_protocol->p_ReqActive->PROC_EXT == 0U)
                             {
                                 reqStatus = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+                                /* p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID; */
                             }
                         }
 
-                        if(p_protocol->p_ReqActive->PROC_EXT != 0U)
+                        if((p_protocol->p_ReqActive->PROC_EXT != 0U) && (reqStatus != PROTOCOL_REQ_CODE_AWAIT_RX_SYNC))
+                            /* ((p_protocol->p_ReqActive->PROC == 0U) || (p_protocol->p_ReqActive->SYNC.RX_ACK == false || (p_protocol->TxLength == 0U))) */
                         {
-                            if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_REQ_STATE_BUFFER); }
-                            // if((p_protocol->p_ReqActive->PROC == 0U) || (p_protocol->p_ReqActive->SYNC.RX_ACK == false || (p_protocol->TxLength == 0U)))
-                            if(reqStatus != PROTOCOL_REQ_CODE_AWAIT_RX_SYNC) /* Is there a better way to check this? */
-                            {
-                                p_protocol->ReqState = PROTOCOL_REQ_STATE_PROCESS_REQ_EXT;
-                                reqStatus = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
-                            }
+                            // if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_REQ_STATE_BUFFER); }
+                            p_protocol->ReqState = PROTOCOL_REQ_STATE_PROCESS_REQ_EXT;
+                            reqStatus = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
                         }
                         /* if (p_protocol->p_ReqActive->PROC == 0U) && (p_protocol->p_ReqActive->PROC_EXT == 0U) reqStatus = PROTOCOL_REQ_CODE_PROCESS_COMPLETE; */
                     }
@@ -309,24 +309,30 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                         reqStatus = PROTOCOL_REQ_CODE_ERROR_ID;
                     }
                     break;
-                case PROTOCOL_RX_CODE_ACK:      p_protocol->RxPacketErrorSync++; reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
-                case PROTOCOL_RX_CODE_NACK:     p_protocol->RxPacketErrorSync++; reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
-                case PROTOCOL_RX_CODE_ABORT:    p_protocol->RxPacketErrorSync++; reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+                case PROTOCOL_RX_CODE_ACK:      /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+                case PROTOCOL_RX_CODE_NACK:     /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+                case PROTOCOL_RX_CODE_ABORT:    /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+
                 /* (rxCode == PROTOCOL_RX_CODE_ERROR_META) || (rxCode == PROTOCOL_RX_CODE_ERROR_DATA) || (rxCode == PROTOCOL_RX_CODE_ERROR_TIMEOUT) */
                 default: reqStatus = PROTOCOL_REQ_CODE_PROCESS_COMPLETE; break;
             }
             break;
 
-        case PROTOCOL_REQ_STATE_PROCESS_REQ_EXT:
+        case PROTOCOL_REQ_STATE_PROCESS_REQ_EXT: //blocking handler
             switch(rxCode)
             {
-                case PROTOCOL_RX_CODE_AWAIT_PACKET:
-                    // p_protocol->TxLength = 0U; //todo
-                    // reqStatus = p_protocol->p_ReqActive->PROC_EXT(p_protocol->CONFIG.P_APP_INTERFACE, );
+                case PROTOCOL_RX_CODE_AWAIT_PACKET: // handlke once before checking rx?
+                    reqStatus = p_protocol->p_ReqActive->PROC_EXT(p_protocol->CONFIG.P_APP_INTERFACE, &p_protocol->ReqContext);
+                    p_protocol->TxLength = p_protocol->ReqContext.TxSize;
 
                     switch(reqStatus)
                     {
-                        case PROTOCOL_REQ_CODE_PROCESS_CONTINUE: //await rx
+                        //split complete_clear_state and continue with id
+                        // state saved
+                        // case PROTOCOL_REQ_CODE_PROCESS_RETURN: p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID;
+                        //     break;
+
+                        case PROTOCOL_REQ_CODE_PROCESS_CONTINUE: //tx and await await rx
                             if((TxResp(p_protocol) == true) && (p_protocol->p_ReqActive->SYNC.RX_ACK_EXT == true))
                             {
                                 p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC;
@@ -334,55 +340,60 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                             }
                             else
                             {
-                                p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_EXT;
+                                p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_CONTINUE; //override next rx id
                             }
                             break;
 
-                        case PROTOCOL_REQ_CODE_PROCESS_COMPLETE: p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_INITIAL; break;
 
-                        /* ACK by PROC_EXT instead of on reception */
-                        case PROTOCOL_REQ_CODE_PROCESS_ACK:
-                            TxSync(p_protocol, PROTOCOL_TX_SYNC_ACK_REQ_EXT);
-                            p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_EXT;
+                        case PROTOCOL_REQ_CODE_PROCESS_COMPLETE: p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID;
+                            // if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_REQ_STATE_BUFFER); }
                             break;
 
-                        /* NACK by PROC_EXT */
-                        case PROTOCOL_REQ_CODE_PROCESS_NACK:
-                            TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_REQ_EXT);
-                            p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_EXT;
-                            // if(ProcTxNackRxRepeat(p_protocol, &p_protocol->TxNackRxCount, p_protocol->p_ReqActive->SYNC.NACK_REPEAT, PROTOCOL_TX_SYNC_NACK_REQ_EXT, PROTOCOL_TX_SYNC_NACK_REQ_EXT) == true)
-                            // { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_INITIAL; }
-                            break;
 
-                        case PROTOCOL_REQ_CODE_ABORT: p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_INITIAL; break;
+                        case PROTOCOL_REQ_CODE_ABORT: p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID; break;
 
-                        //user process needs to copy packet buffers
-                        case PROTOCOL_REQ_CODE_AWAIT_PROCESS:                                                                           break;     /* PROC_EXT implements nonblocking wait */
-                        case PROTOCOL_REQ_CODE_AWAIT_PROCESS_EXTEND_TIMER: p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;      break;
-
-                        /* Granular funtcion, manually initiated, if a custom sequence is needed  */
+                        /* Granular function, manually initiated, if a custom sequence is needed  */
                         case PROTOCOL_REQ_CODE_AWAIT_RX_SYNC:       p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC;         break;
-                        case PROTOCOL_REQ_CODE_AWAIT_RX_EXT:        p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_EXT;          break;
+                        case PROTOCOL_REQ_CODE_AWAIT_RX_EXT:        p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_CONTINUE;     break;
                         /* Tx Response and transfer control back to PROC_EXT */
                         case PROTOCOL_REQ_CODE_TX_RESPONSE:         TxResp(p_protocol);                                             break;
                         case PROTOCOL_REQ_CODE_TX_ACK:              TxSync(p_protocol, PROTOCOL_TX_SYNC_ACK_REQ_EXT);               break;
                         case PROTOCOL_REQ_CODE_TX_NACK:             TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_REQ_EXT);              break;
 
+                        /* ACK by PROC_EXT, after proc, instead of on reception */
+                        case PROTOCOL_REQ_CODE_PROCESS_ACK:
+                            TxSync(p_protocol, PROTOCOL_TX_SYNC_ACK_REQ_EXT);
+                            p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_CONTINUE;
+                            break;
+
+                        /* NACK by PROC_EXT */
+                        case PROTOCOL_REQ_CODE_PROCESS_NACK:
+                            TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_REQ_EXT);
+                            p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_CONTINUE;
+                            // if(ProcTxNackRxRepeat(p_protocol, &p_protocol->TxNackRxCount, p_protocol->p_ReqActive->SYNC.NACK_REPEAT, PROTOCOL_TX_SYNC_NACK_REQ_EXT, PROTOCOL_TX_SYNC_NACK_REQ_EXT) == true)
+                            // { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID; }
+                            break;
+
+                        // // noop
+                        // /* PROC_EXT implements nonblocking wait, copy packet buffers*/
+                        // case PROTOCOL_REQ_CODE_AWAIT_PROCESS:                                                                           break;
+                        // case PROTOCOL_REQ_CODE_AWAIT_PROCESS_EXTEND_TIMER: p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;      break;
                         case PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED:   break;
 
                         default: break;
                     }
                     break;
-                case PROTOCOL_RX_CODE_PACKET_COMPLETE:  p_protocol->RxPacketErrorSync++; reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
-                case PROTOCOL_RX_CODE_ACK:              p_protocol->RxPacketErrorSync++; reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
-                case PROTOCOL_RX_CODE_NACK:             p_protocol->RxPacketErrorSync++; reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
+                case PROTOCOL_RX_CODE_PACKET_COMPLETE:  /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
+                case PROTOCOL_RX_CODE_ACK:              /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
+                case PROTOCOL_RX_CODE_NACK:             /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
                 case PROTOCOL_RX_CODE_ABORT: /* handle outside */ break;
+
                 /* (rxCode == PROTOCOL_RX_CODE_ERROR_META) || (rxCode == PROTOCOL_RX_CODE_ERROR_DATA) || (rxCode == PROTOCOL_RX_CODE_ERROR_TIMEOUT) */
-                default: p_protocol->RxPacketErrorSync++; reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
+                default: /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
             }
             break;
 
-        case PROTOCOL_REQ_STATE_WAIT_RX_EXT: /* Wait Rx Req Ext Continue */
+        case PROTOCOL_REQ_STATE_WAIT_RX_CONTINUE: /* Wait Rx Req Ext Continue - Treats next rx id as current req id */ // can combine iwth wait init, if a eclusive loop is not needed
             switch(rxCode)
             {
                 case PROTOCOL_RX_CODE_AWAIT_PACKET: reqStatus = PROTOCOL_REQ_CODE_AWAIT_RX_EXT; break;
@@ -392,23 +403,25 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                     p_protocol->ReqState = PROTOCOL_REQ_STATE_PROCESS_REQ_EXT;
                     reqStatus = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
                     break;
-                case PROTOCOL_RX_CODE_ACK:  p_protocol->RxPacketErrorSync++; reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
-                case PROTOCOL_RX_CODE_NACK: p_protocol->RxPacketErrorSync++; reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+                case PROTOCOL_RX_CODE_ACK:  /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+                case PROTOCOL_RX_CODE_NACK: /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
                 case PROTOCOL_RX_CODE_ABORT: break;
+
                 /* (rxCode == PROTOCOL_RX_CODE_ERROR_META) || (rxCode == PROTOCOL_RX_CODE_ERROR_DATA) || (rxCode == PROTOCOL_RX_CODE_ERROR_TIMEOUT) */
                 default: reqStatus = PROTOCOL_REQ_CODE_AWAIT_RX_EXT; break;
             }
             break;
 
-        case PROTOCOL_REQ_STATE_WAIT_RX_SYNC:
+        case PROTOCOL_REQ_STATE_WAIT_RX_SYNC: /* continue loop/ goto reqid split */
             switch(rxCode)
             {
                 case PROTOCOL_RX_CODE_AWAIT_PACKET: reqStatus = PROTOCOL_REQ_CODE_AWAIT_RX_SYNC; break;
-                case PROTOCOL_RX_CODE_PACKET_COMPLETE: p_protocol->RxPacketErrorSync++; reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+                case PROTOCOL_RX_CODE_PACKET_COMPLETE: /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
                 case PROTOCOL_RX_CODE_ACK:
                     p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
+                    //check req status for if prcoext remain active
                     if(p_protocol->p_ReqActive->PROC_EXT != 0U) { p_protocol->ReqState = PROTOCOL_REQ_STATE_PROCESS_REQ_EXT; reqStatus = PROTOCOL_REQ_CODE_PROCESS_CONTINUE; }
-                    else                                        { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_INITIAL; reqStatus = PROTOCOL_REQ_CODE_PROCESS_COMPLETE; }
+                    else                                        { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID; reqStatus = PROTOCOL_REQ_CODE_PROCESS_COMPLETE; }
                     break;
                 case PROTOCOL_RX_CODE_NACK:
                     TxResp(p_protocol); /* Retransmit Buffered Packet */
@@ -422,11 +435,12 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                     // else
                     // {
                     //     p_protocol->RxNackTxCount = 0U;
-                    //     p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_INITIAL;
+                    //     p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID;
                     //     reqStatus = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
                     // }
                     break;
                 case PROTOCOL_RX_CODE_ABORT: break;
+
                 /* (rxCode == PROTOCOL_RX_CODE_ERROR_META) || (rxCode == PROTOCOL_RX_CODE_ERROR_DATA) || (rxCode == PROTOCOL_RX_CODE_ERROR_TIMEOUT) */
                 default: reqStatus = PROTOCOL_REQ_CODE_AWAIT_RX_SYNC; break;
             }
@@ -435,22 +449,21 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
         case PROTOCOL_REQ_STATE_INACTIVE: break;
 
         default: break;
-
     }
 
     /* States Common */
-    if((p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_EXT) || (p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_SYNC) || (p_protocol->ReqState == PROTOCOL_REQ_STATE_PROCESS_REQ_EXT))
+    if((p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_CONTINUE) || (p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_SYNC) || (p_protocol->ReqState == PROTOCOL_REQ_STATE_PROCESS_REQ_EXT))
     {
         if(*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->p_Specs->REQ_TIMEOUT) /* Timer restarts on Req packet and Ack */
         {
             TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_REQ_TIMEOUT);
-            p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_INITIAL;
+            p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID;
             reqStatus = PROTOCOL_REQ_CODE_ERROR_TIMEOUT;
         }
         else if(rxCode == PROTOCOL_RX_CODE_ABORT)
         {
             if(p_protocol->p_ReqActive->SYNC.TX_ACK_ABORT == true) { TxSync(p_protocol, PROTOCOL_TX_SYNC_ACK_ABORT); }
-            p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_INITIAL;
+            p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID;
             reqStatus = PROTOCOL_REQ_CODE_ABORT;
         }
     }
@@ -483,7 +496,7 @@ void Protocol_Proc(Protocol_T * p_protocol)
 
 /*!
 
-    @return true if WatchdogTime reached, a sucessful Req has not occured
+    @return true if WatchdogTime reached, a successful Req has not occurred
 */
 bool Protocol_CheckRxLost(Protocol_T * p_protocol)
 {
@@ -523,7 +536,7 @@ bool Protocol_Enable(Protocol_T * p_protocol)
     if(isEnable == true)
     {
         p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
-        p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_INITIAL;
+        p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID;
         p_protocol->RxCount = 0U;
         p_protocol->TxLength = 0U;
         p_protocol->p_ReqActive = 0U;

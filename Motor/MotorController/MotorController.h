@@ -58,7 +58,7 @@
 #include "Utility/Shell/Shell.h"
 #endif
 
-#include "Utility/MemMapBoot/MemMapBoot.h"
+#include "Utility/BootRef/BootRef.h"
 
 #include "Math/Linear/Linear_Voltage.h"
 #include "Math/Linear/Linear.h"
@@ -137,18 +137,18 @@ typedef enum MotorController_DriveId
 MotorController_DriveId_T;
 
 /* Blocking SubState/Function Id */
-typedef enum MotorController_BlockingId
+typedef enum MotorController_LockedId
 {
-    MOTOR_CONTROLLER_BLOCKING_ENTER,
-    MOTOR_CONTROLLER_BLOCKING_EXIT,
-    MOTOR_CONTROLLER_BLOCKING_NVM_SAVE_PARAMS,
-    MOTOR_CONTROLLER_BLOCKING_NVM_BOOT,
-    MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE,
-    MOTOR_CONTROLLER_BLOCKING_NVM_READ_ONCE,
-    MOTOR_CONTROLLER_BLOCKING_CALIBRATE_SENSOR,
-    MOTOR_CONTROLLER_BLOCKING_CALIBRATE_ADC,
+    MOTOR_CONTROLLER_LOCKED_ENTER,
+    MOTOR_CONTROLLER_LOCKED_EXIT,
+    MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR,
+    MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC,
+    MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS,
+    // MOTOR_CONTROLLER_BLOCKING_NVM_BOOT,
+    // MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE,
+    // MOTOR_CONTROLLER_BLOCKING_NVM_READ_ONCE,
 }
-MotorController_BlockingId_T;
+MotorController_LockedId_T;
 
 typedef union MotorController_StatusFlags
 {
@@ -157,9 +157,9 @@ typedef union MotorController_StatusFlags
         uint16_t HeatWarning        : 1U; // ILimit by Heat
         uint16_t LowV               : 1U; // ILimit by LowV
         uint16_t SpeedLimit         : 1U; // use active speed limit?
-        // repeat
+        // uint16_t ILimit          : 1U;
+
         // derive from thermistor functions
-        // uint16_t ILimitLowV         : 1U;
         // uint16_t ILimitHeatMosfets  : 1U;
         // uint16_t ILimitHeatPcb      : 1U;
         // uint16_t ILimitHeatMotors   : 1U;
@@ -270,7 +270,7 @@ typedef const struct MotorController_Config
     const void * const P_PARAMS_START; const uint16_t PARAMS_SIZE;  /* Flash params start */
 #endif
     const void * const P_MANUFACTURE; const uint8_t MANUFACTURE_SIZE;
-    const MemMapBoot_T * const P_MEM_MAP_BOOT;
+    const BootRef_T * const P_BOOT_REF;
 
     AnalogN_T * const P_ANALOG_N;
     const MotAnalog_Conversions_T ANALOG_CONVERSIONS;
@@ -294,7 +294,7 @@ typedef struct MotorController
 {
     const MotorController_Config_T CONFIG;
     MotorController_Params_T Parameters;
-    MemMapBoot_T MemMapBoot;
+    BootRef_T BootRef; /* Buffer */
     volatile MotAnalog_Results_T AnalogResults; // todo split for thermistor
 
     MotAnalogUser_T AnalogUser;
@@ -338,7 +338,7 @@ typedef struct MotorController
 #endif
     MotorController_DriveId_T DriveState;
     /* Blocking/Calibration SubState */
-    MotorController_BlockingId_T BlockingState;
+    MotorController_LockedId_T BlockingState;
     /* Async return status */
     NvMemory_Status_T NvmStatus; /* Common NvmStatus, e.g. EEPROM/Flash */
     // calibration status?
@@ -394,7 +394,7 @@ static inline void MotorController_ClearILimitAll(MotorControllerPtr_T p_mc)    
 static inline bool MotorController_ClearILimitAll_Id(MotorControllerPtr_T p_mc)                          { return MotorN_User_ClearLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_ClearILimitActive_Id, MOTOR_I_LIMIT_ACTIVE_UPPER); }
 static inline bool MotorController_SetILimitAll_Id(MotorControllerPtr_T p_mc, uint16_t limit_scalar16)   { return MotorN_User_SetLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetILimitActive_Id, limit_scalar16, MOTOR_I_LIMIT_ACTIVE_UPPER); }
 
-// move feeedback mode defautl to mc, active mode in motor
+// move feeedback mode default to mc, active mode in motor
 static inline void MotorController_SetCmdModeDefault(MotorControllerPtr_T p_mc)                                 { MotorN_User_SetFeedbackMode(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->Parameters.DefaultCmdMode); }
 static inline void MotorController_SetCmdMode(MotorControllerPtr_T p_mc, Motor_FeedbackMode_T feedbackMode)     { MotorN_User_SetFeedbackMode(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, feedbackMode);}
 static inline void MotorController_SetCmdModeValue(MotorControllerPtr_T p_mc, int16_t userCmd)                  { MotorN_User_SetCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetActiveCmdValue, userCmd); }
@@ -522,6 +522,7 @@ static inline void MotorController_CalibrateAdc(MotorControllerPtr_T p_mc)
 /******************************************************************************/
 extern void MotorController_Init(MotorControllerPtr_T p_mc);
 // extern void MotorController_SetVSourceRef(MotorControllerPtr_T p_mc, uint16_t volts);
+extern void MotorController_LoadParamsDefault(MotorControllerPtr_T p_mc);
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 extern void MotorController_ResetUnitsBatteryLife(MotorControllerPtr_T p_mc);
 #endif
@@ -533,7 +534,6 @@ extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorControllerPtr
 extern NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_sourceBuffer, uint8_t size);
 extern NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorControllerPtr_T p_mc, const uint8_t * p_destBuffer, uint8_t size);
 
-extern void MotorController_LoadParamsDefault(MotorControllerPtr_T p_mc);
 
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE) && defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
 extern void MotorController_ServoExtern_Start(MotorControllerPtr_T p_mc);

@@ -33,31 +33,16 @@
 
 #include <stdint.h>
 
-// class Version {
-//   const Version(int? value) : value = value ?? 0;
-//   // Version.list(List<int> chars, [Endian endian = Endian.little]);
-//   final int value;
-
-//   List<int> get charsMsb => charViewOf(value, Endian.big);
-//   List<int> get charsLsb => charViewOf(value, Endian.little);
-//   // (int, int, int, int) get record => (charsLsb[0], charsLsb[1], charsLsb[2], charsLsb[3]);
-
-//   @override
-//   String toString([Endian endian = Endian.little]) => charViewOf(value, endian).toString();
-
-//   static List<int> charViewOf(int rawValue, [Endian endian = Endian.little]) => Uint8List(4)..buffer.asByteData().setUint32(0, rawValue, endian);
-// }
-
-#include <stdint.h>
-
 typedef union Version
 {
     uint8_t Bytes[4U];
-    // struct { uint8_t Fix; uint8_t Minor; uint8_t Major; uint8_t Opt; };
-    // struct { uint16_t Lower; uint16_t Upper; };
     char Chars[4U];
+    struct { uint8_t Fix; uint8_t Minor; uint8_t Major; uint8_t Opt; };
+    struct { uint16_t Lower; uint16_t Upper; };
     uint32_t Word32;
 }
 Version_T;
+
+#define VERSION_WORD(Opt, Major, Minor, Fix) ((Opt << 24U) | (Major << 16U) | (Minor << 8U) | (Fix))
 
 #endif

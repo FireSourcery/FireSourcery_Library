@@ -22,22 +22,19 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   HAL_Peripheral.h
+    @file
     @author FireSourcery
-    @brief    Define configurable HAL Peripheral path
+    @brief
     @version V0
 */
 /******************************************************************************/
-#ifndef HAL_PERIPHERAL_H
-#define HAL_PERIPHERAL_H
+#ifndef HAL_INCLUDE_PLATFORM_H
+#define HAL_INCLUDE_PLATFORM_H
 
-#define XSTR(String) #String
-#define STR(String) XSTR(String)
-
-#if     defined(CONFIG_HAL_PERIPHERAL_PATH)         /* External directory */
-    #define HAL_PERIPHERAL_PATH(File) STR(CONFIG_HAL_PERIPHERAL_PATH/File)
-#elif   defined(CONFIG_HAL_PERIPHERAL_PLATFORM)     /* Library platform directory */
-    #define HAL_PERIPHERAL_PATH(File) STR(Peripheral/HAL/Platform/CONFIG_HAL_PERIPHERAL_PLATFORM/File)
+#if     defined(KE06Z4_SERIES)
+#include "MKE06Z4/MKE06Z4.h"
+#elif   defined(KE02Z4_SERIES)
+#include "MKE02Z4/MKE02Z4.h"
 #endif
 
 #endif
