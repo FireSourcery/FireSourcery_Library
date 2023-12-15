@@ -125,7 +125,7 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, cons
 Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext_T * p_reqContext)
 {
     MotProtocol_DataModeState_T * p_subState = (MotProtocol_DataModeState_T *)p_reqContext->p_SubState;
-    Protocol_ReqCode_T reqCode; // = PROTOCOL_REQ_CODE_AWAIT_PROCESS;
+    Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE; // = PROTOCOL_REQ_CODE_AWAIT_PROCESS;
     void * p_txPacket;
     const void * p_rxPacket;
     uint16_t readSize;
@@ -244,7 +244,7 @@ Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Proto
     MotProtocol_DataModeState_T * p_subState = (MotProtocol_DataModeState_T *)p_reqContext->p_SubState;
     void * p_txPacket;
     const void * p_rxPacket;
-    Protocol_ReqCode_T reqCode; // = PROTOCOL_REQ_CODE_AWAIT_PROCESS;
+    Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE; // = PROTOCOL_REQ_CODE_AWAIT_PROCESS;
 
     Flash_Status_T flashStatus;
     const uint8_t * p_sourceData; /* DataPacket Payload */
