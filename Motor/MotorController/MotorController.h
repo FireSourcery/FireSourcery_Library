@@ -206,7 +206,7 @@ typedef union MotorController_InitFlags
 }
 MotorController_InitFlags_T;
 
-// typedef union MotorController_BuzzerFlags
+// typedef union MotorController_BuzzerOptionsFlags
 // {
 //     struct
 //     {
@@ -275,7 +275,12 @@ typedef const struct MotorController_Config
     AnalogN_T * const P_ANALOG_N;
     const MotAnalog_Conversions_T ANALOG_CONVERSIONS;
 
+    // alternatively pass count by macro, allows aliasing in struct
     MotorPtr_T const P_MOTORS; const uint8_t MOTOR_COUNT;
+
+    // Thermistor_T const P_THERMISTORS; const uint8_t THERMISTOR_COUNT;
+    // VMonitor_T const P_VMONITORS; const uint8_t VMONITOR_COUNT;
+
     /* Simultaneous active serial */
     Serial_T * const P_SERIALS; const uint8_t SERIAL_COUNT;
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)

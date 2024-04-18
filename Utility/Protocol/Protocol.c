@@ -292,7 +292,7 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                                 reqStatus = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
                                 /* p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID; */
                             }
-                        }
+                        } //todo exclusive or determine sync
 
                         if((p_protocol->p_ReqActive->PROC_EXT != 0U) && (reqStatus != PROTOCOL_REQ_CODE_AWAIT_RX_SYNC))
                             /* ((p_protocol->p_ReqActive->PROC == 0U) || (p_protocol->p_ReqActive->SYNC.RX_ACK == false || (p_protocol->TxLength == 0U))) */

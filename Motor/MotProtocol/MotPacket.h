@@ -183,17 +183,17 @@ typedef MotPacket_Sync_T MotPacket_PingResp_T;
 /******************************************************************************/
 /*! Version - Static Response */
 /******************************************************************************/
-typedef MotPacket_Header_T                                                                                                  MotPacket_VersionReq_T;
 typedef struct MotPacket_VersionReq_Payload {}                                                                              MotPacket_VersionReq_Payload_T;
 typedef struct MotPacket_VersionResp_Payload { uint32_t Protocol; uint32_t Library; uint32_t Firmware; uint32_t Board; }    MotPacket_VersionResp_Payload_T;
+typedef MotPacket_Header_T                                                                                                  MotPacket_VersionReq_T;
 typedef struct MotPacket_VersionResp { MotPacket_Header_T Header; MotPacket_VersionResp_Payload_T VersionResp; }            MotPacket_VersionResp_T;
 
 /******************************************************************************/
 /*! Stop - Stop All */
 /******************************************************************************/
-typedef MotPacket_Header_T                                                                                      MotPacket_StopReq_T;
 typedef struct MotPacket_StopReq_Payload {}                                                                     MotPacket_StopReq_Payload_T;
 typedef struct MotPacket_StopResp_Payload { uint16_t Status; }                                                  MotPacket_StopResp_Payload_T;
+typedef MotPacket_Header_T                                                                                      MotPacket_StopReq_T;
 typedef struct MotPacket_StopResp { MotPacket_Header_T Header; MotPacket_StopResp_Payload_T StopResp; }         MotPacket_StopResp_T;
 
 /******************************************************************************/
@@ -252,7 +252,7 @@ typedef struct MotPacket_VarWriteResp { MotPacket_Header_T Header; MotPacket_Var
 /*! Mem Address Read */
 /******************************************************************************/
 typedef struct MotPacket_MemReadReq_Payload { uint32_t Address; uint8_t Size; uint8_t Resv; uint16_t ConfigFlags; }     MotPacket_MemReadReq_Payload_T;
-typedef struct MotPacket_MemReadResp_Payload { uint8_t ByteData[MOT_PACKET_PAYLOAD_LENGTH_MAX]; }                             MotPacket_MemReadResp_Payload_T;
+typedef struct MotPacket_MemReadResp_Payload { uint8_t ByteData[MOT_PACKET_PAYLOAD_LENGTH_MAX]; }                       MotPacket_MemReadResp_Payload_T;
 typedef struct MotPacket_MemReadReq { MotPacket_Header_T Header; MotPacket_MemReadReq_Payload_T MemReadReq; }           MotPacket_MemReadReq_T;
 typedef struct MotPacket_MemReadResp { MotPacket_Header_T Header; MotPacket_MemReadResp_Payload_T MemReadResp; }        MotPacket_MemReadResp_T;
 
@@ -287,7 +287,7 @@ typedef struct MotPacket_DataMode { MotPacket_Header_T Header; MotPacket_DataMod
 /*! Once Read */
 /******************************************************************************/
 typedef struct MotPacket_OnceReadReq_Payload { uint32_t Address; uint8_t Size; uint8_t Resv[3U]; }                      MotPacket_OnceReadReq_Payload_T;
-typedef struct MotPacket_OnceReadResp_Payload { uint8_t ByteData[MOT_PACKET_PAYLOAD_LENGTH_MAX]; }                            MotPacket_OnceReadResp_Payload_T;
+typedef struct MotPacket_OnceReadResp_Payload { uint8_t ByteData[MOT_PACKET_PAYLOAD_LENGTH_MAX]; }                      MotPacket_OnceReadResp_Payload_T;
 typedef struct MotPacket_OnceReadReq { MotPacket_Header_T Header; MotPacket_OnceReadReq_Payload_T OnceReadReq; }        MotPacket_OnceReadReq_T;
 typedef struct MotPacket_OnceReadResp { MotPacket_Header_T Header; MotPacket_OnceReadResp_Payload_T OnceReadResp; }     MotPacket_OnceReadResp_T;
 

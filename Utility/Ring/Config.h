@@ -31,7 +31,9 @@
 #ifndef CONFIG_RING_H
 #define CONFIG_RING_H
 
-#if     defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)    /* Power 2 length only. Integer overflow wrap only */
+#if     defined(CONFIG_RING_LENGTH_POW2)    /* Power 2 length only. Integer overflow wrap only */
+    #define CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED
+#elif   defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)    /* Power 2 length only. Integer overflow wrap only */
 #elif   defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)      /* Power 2 length only. Does not need integer overflow wrap */
 #elif   defined(CONFIG_RING_LENGTH_ANY)
 #else

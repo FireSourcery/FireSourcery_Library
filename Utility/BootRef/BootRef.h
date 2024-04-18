@@ -64,6 +64,10 @@ typedef union BootRef
 }
 BootRef_T;
 
+#ifndef BOOT_REF_ADDRESS
+    #error "BOOT_REF_ADDRESS not defined"
+#endif
+
 /*
     User define externally
     Align to minium NvM write size

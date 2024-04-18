@@ -211,9 +211,7 @@ uint8_t MotPacket_VarWriteResp_BuildHeader(MotPacket_VarWriteResp_T * p_respPack
 // }
 
 /******************************************************************************/
-/*!
-    Stateful Read/Write
-*/
+/*! Stateful Read/Write */
 /******************************************************************************/
 /******************************************************************************/
 /*! DataModeReq Read/Write Initial Common */
