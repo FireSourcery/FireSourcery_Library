@@ -144,6 +144,7 @@ typedef int16_t qangle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angl
 #define QFRAC16_SINE_90_TABLE_LENGTH    (256U)
 #define QFRAC16_SINE_90_TABLE_LSB       (6U)    /*!< Insignificant bits, shifted away */
 
+// todo remove dependency on compile options
 static const qangle16_t QANGLE16_0 = 0U;         /*! 0 */
 static const qangle16_t QANGLE16_30 = 0x1555U;   /*! 5461 */
 static const qangle16_t QANGLE16_60 = 0x2AAAU;   /*! 10922 */
@@ -181,6 +182,7 @@ static inline qangle16_quadrant_t qangle16_quadrant(qangle16_t theta)
     return quadrant;
 }
 
+// polling freq must be sufficent
 static inline bool qangle16_cycle2(qangle16_t theta0, qangle16_t theta1)
 {
     // return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U);

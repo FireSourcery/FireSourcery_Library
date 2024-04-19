@@ -64,13 +64,6 @@ void MotorController_Init(MotorControllerPtr_T p_mc)
     Thermistor_Init(&p_mc->ThermistorMosfets);
 #endif
 
-    if(VMonitor_IsEnable(&p_mc->VMonitorSense) == true) { p_mc->AnalogResults.VSense_Adcu = VMonitor_GetNominal(&p_mc->VMonitorSense); };
-    if(VMonitor_IsEnable(&p_mc->VMonitorAccs) == true) { p_mc->AnalogResults.VAccs_Adcu = VMonitor_GetNominal(&p_mc->VMonitorAccs); };
-    if(VMonitor_IsEnable(&p_mc->VMonitorSource) == true) { p_mc->AnalogResults.VSource_Adcu = VMonitor_GetNominal(&p_mc->VMonitorSource); };
-
-    if(Thermistor_IsMonitorEnable(&p_mc->ThermistorPcb) == true) { p_mc->AnalogResults.HeatPcb_Adcu = Thermistor_GetWarningThreshold_Adcu(&p_mc->ThermistorPcb); };
-    if(Thermistor_IsMonitorEnable(&p_mc->ThermistorMosfets) == true) { p_mc->AnalogResults.HeatMosfets_Adcu = Thermistor_GetWarningThreshold_Adcu(&p_mc->ThermistorMosfets); };
-
     Global_Motor_InitVSourceRef_V(p_mc->Parameters.VSourceRef);
     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Init(&p_mc->CONFIG.P_MOTORS[iMotor]); }
 
@@ -91,30 +84,27 @@ void MotorController_Init(MotorControllerPtr_T p_mc)
     MotorController_ResetUnitsBatteryLife(p_mc);
 #endif
 
+    // /* Load derived values to RAM */
+    // if(BootRef_IsValid() == false)
+    // {
+    //     MotorController_LoadParamsDefault(&MotorControllerMain);  /* Load runtime calculated */
+    //     /* or prompt user, resets every boot until user saves params */
+    // }
+
     StateMachine_Init(&p_mc->StateMachine);
 }
 
-void MotorController_PollFaultFlags(MotorController_T * p_mc)
-{
-    // p_mc->FaultFlags.Motors         = (MotorController_ClearMotorsFaultAll(p_mc) == false);
-    p_mc->FaultFlags.VSenseLimit    = VMonitor_GetIsFault(&p_mc->VMonitorSense);
-    p_mc->FaultFlags.VAccsLimit     = VMonitor_GetIsFault(&p_mc->VMonitorAccs);
-    p_mc->FaultFlags.VSourceLimit   = VMonitor_GetIsFault(&p_mc->VMonitorSource);
-    p_mc->FaultFlags.PcbOverheat    = Thermistor_GetIsFault(&p_mc->ThermistorPcb);
-#if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
-    p_mc->FaultFlags.MosfetsTopOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsTop);
-    p_mc->FaultFlags.MosfetsBotOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsBot);
-#else
-    p_mc->FaultFlags.MosfetsOverheat = Thermistor_GetIsFault(&p_mc->ThermistorMosfets);
-#endif
-}
-
+/******************************************************************************/
+/*!
+    Set/Reset
+*/
+/******************************************************************************/
 /*
     Set runtime Params (RAM copy) via abstraction layer functions (in user units)
     Convience function over p_mc->Parameters compile time initializers
     On first time boot up. propagate defaults
 */
-void MotorController_LoadParamsDefault(MotorController_T * p_mc)
+void MotorController_LoadParamsDefault(MotorControllerPtr_T p_mc)
 {
     VMonitor_SetNominal_MilliV(&p_mc->VMonitorSource, (uint32_t)p_mc->Parameters.VSourceRef * 1000U);
     VMonitor_ResetLimitsDefault(&p_mc->VMonitorSource);
@@ -130,7 +120,17 @@ void MotorController_LoadParamsDefault(MotorController_T * p_mc)
     //     PID_SetTunings(&(p_mc->CONFIG.P_MOTORS[iMotor].PidIq), 1U, 1U, 1U, 2U, 0U, 0U);
     //     PID_SetTunings(&(p_mc->CONFIG.P_MOTORS[iMotor].PidId), 1U, 1U, 1U, 2U, 0U, 0U);
     // }
+    MotorController_ResetBootDefault(p_mc); /* Set Boot Options Buffer in RAM */
+    //  save to nvm? or wait user confirmation in gui
+    /* following boots will still reload defaults until user  */
 }
+
+void MotorController_ResetBootDefault(MotorControllerPtr_T p_mc)
+{
+    static const BootRef_T BOOT_REF_DEFAULT = { .IsValid = BOOT_REF_IS_VALID_01, .FastBoot = 0U, .Beep = 1U, .Blink = 1U, }; /* Overwrite after first time boot */
+    p_mc->BootRef.Word = BOOT_REF_DEFAULT.Word;
+}
+
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 void MotorController_ResetUnitsBatteryLife(MotorControllerPtr_T p_mc)
@@ -144,6 +144,39 @@ void MotorController_ResetUnitsBatteryLife(MotorControllerPtr_T p_mc)
     Call from State Machine
 */
 /******************************************************************************/
+void MotorController_SetAdcResultsNominal(MotorControllerPtr_T p_mc)
+{
+    // alternatively enqueue adc during init
+    // handle via init state wait
+    if(VMonitor_IsEnable(&p_mc->VMonitorSense) == true) { p_mc->AnalogResults.VSense_Adcu = VMonitor_GetNominal(&p_mc->VMonitorSense); };
+    if(VMonitor_IsEnable(&p_mc->VMonitorAccs) == true) { p_mc->AnalogResults.VAccs_Adcu = VMonitor_GetNominal(&p_mc->VMonitorAccs); };
+    if(VMonitor_IsEnable(&p_mc->VMonitorSource) == true) { p_mc->AnalogResults.VSource_Adcu = VMonitor_GetNominal(&p_mc->VMonitorSource); };
+    if(Thermistor_IsMonitorEnable(&p_mc->ThermistorPcb) == true) { p_mc->AnalogResults.HeatPcb_Adcu = Thermistor_GetWarningThreshold_Adcu(&p_mc->ThermistorPcb); };
+    if(Thermistor_IsMonitorEnable(&p_mc->ThermistorMosfets) == true) { p_mc->AnalogResults.HeatMosfets_Adcu = Thermistor_GetWarningThreshold_Adcu(&p_mc->ThermistorMosfets); };
+
+    //updating mosfets to array
+    // if(VMonitor_IsEnable(&p_mc->VMonitorSense) == true) { p_mc->AnalogResults.Channels[MOT_ANALOG_CHANNEL_VSENSE] = VMonitor_GetNominal(&p_mc->VMonitorSense); };
+
+    // for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONFIG.P_MOTORS[iMotor]); }
+}
+
+void MotorController_PollAdcFaultFlags(MotorControllerPtr_T p_mc)
+{
+    // p_mc->FaultFlags.Motors         = (MotorController_ClearMotorsFaultAll(p_mc) == false);
+    p_mc->FaultFlags.VSenseLimit = VMonitor_GetIsFault(&p_mc->VMonitorSense);
+    p_mc->FaultFlags.VAccsLimit = VMonitor_GetIsFault(&p_mc->VMonitorAccs);
+    p_mc->FaultFlags.VSourceLimit = VMonitor_GetIsFault(&p_mc->VMonitorSource);
+    p_mc->FaultFlags.PcbOverheat = Thermistor_GetIsFault(&p_mc->ThermistorPcb);
+#if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
+    p_mc->FaultFlags.MosfetsTopOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsTop);
+    p_mc->FaultFlags.MosfetsBotOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsBot);
+#else
+    p_mc->FaultFlags.MosfetsOverheat = Thermistor_GetIsFault(&p_mc->ThermistorMosfets);
+#endif
+
+    for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONFIG.P_MOTORS[iMotor]); }
+}
+
 /******************************************************************************/
 /*!
     Nvm Wrappers Call from State Machine

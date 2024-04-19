@@ -50,6 +50,12 @@ static inline void Motor_PWM_Thread(MotorPtr_T p_motor)
     // Motor_Analog_Proc(p_motor);
     StateMachine_Async_ProcState(&p_motor->StateMachine);
     // Motor_Debug_CaptureTime(p_motor, 5U);
+    // Motor_ClearPwmInterrupt(&p_mc->CONFIG.P_MOTORS[0U]); define as empty for collective clear
+}
+
+static inline void Motor_Main_Thread(MotorPtr_T p_motor)
+{
+
 }
 
 static inline void Motor_Heat_Thread(MotorPtr_T p_motor)

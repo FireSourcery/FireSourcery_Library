@@ -176,7 +176,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorControllerPtr_T p_mc)
             // Thermistor_PollWarningFallingEdge(&p_mc->ThermistorMosfetsTop);
             if(p_mc->StatusFlags.HeatWarning == true)
             {
-                MotorController_ClearILimitAll_Id(p_mc);
+                MotorController_ClearILimitAll_Id(p_mc); //clear mosfet
                 p_mc->StatusFlags.HeatWarning = false;
             }
         }
@@ -272,6 +272,8 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
             _MotorController_ProcOptDin(p_mc);
             _MotorController_ProcVoltageMonitor(p_mc); /* Except VSupply */
             _MotorController_ProcHeatMonitor(p_mc);
+            // for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
+
         #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
             // Blinky_Toggle(&p_mc->Meter);
             // Blinky_Toggle(&p_mc->Buzzer);

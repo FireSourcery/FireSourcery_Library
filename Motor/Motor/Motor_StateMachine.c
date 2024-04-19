@@ -81,11 +81,8 @@ static void Init_Proc(MotorPtr_T p_motor)
 {
     //poll fault flags
     // bool proceed;
-    // if(p_motor->AnalogResults.Heat_Adcu == 0U) { proceed = false; }
-    p_motor->FaultFlags.Overheat = Thermistor_GetIsFault(&p_motor->Thermistor);
-
-    // if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
-    //(&& Motor_CheckParams() == true)    //check params
+    //(  Motor_CheckParams() == true)    //check params
+    // if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT)
     if(p_motor->FaultFlags.Word == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
 }
 
@@ -516,7 +513,8 @@ static void Fault_Proc(MotorPtr_T p_motor)
 static StateMachine_State_T * Fault_InputClearFault(MotorPtr_T p_motor, statemachine_inputvalue_t voidIn)
 {
     (void)voidIn;
-    p_motor->FaultFlags.Overheat = Thermistor_GetIsFault(&p_motor->Thermistor);
+    // p_motor->FaultFlags.Overheat = Thermistor_GetIsFault(&p_motor->Thermistor);
+    Motor_PollAdcFaultFlags(p_motor);
     p_motor->FaultFlags.AlignStartUp = 0U;
     // return (p_motor->FaultFlags.Word == 0U) ? &STATE_STOP : 0U;
     return 0U;
@@ -566,3 +564,5 @@ void Motor_StateMachine_SetFault(MotorPtr_T p_motor)
 {
     if(Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_FAULT, STATE_MACHINE_INPUT_VALUE_NULL); }
 }
+
+void Motor_PollAdcFaultFlags(MotorPtr_T p_motor) { p_motor->FaultFlags.Overheat = Thermistor_GetIsFault(&p_motor->Thermistor); }

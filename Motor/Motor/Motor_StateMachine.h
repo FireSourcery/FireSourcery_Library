@@ -73,5 +73,6 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 extern bool Motor_StateMachine_IsFault(const MotorPtr_T p_motor);
 extern bool Motor_StateMachine_ClearFault(MotorPtr_T p_motor);
 extern void Motor_StateMachine_SetFault(MotorPtr_T p_motor);
+extern void Motor_PollAdcFaultFlags(MotorPtr_T p_motor);
 
 #endif

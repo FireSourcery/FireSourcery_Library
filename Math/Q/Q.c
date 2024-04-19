@@ -31,7 +31,12 @@
 #include "Q.h"
 #include "Math/math_general.h"
 
+// #include <stdbit.h>
+
 //move to math_general
+
+// math_fixed
+// math_q
 
 /*!
     @brief Calculates square root
@@ -81,9 +86,17 @@ uint16_t q_sqrt(int32_t x)
 */
 uint8_t q_log2(uint32_t num)
 {
+
+#if (__STDC_VERSION__ >= 202311L)
+    return stdc_bit_width(num) - 1U;
+#elif defined(__GNUC__)
+    if(num == 0U) { return 0U; }
+    return 31U - __builtin_clz(num);
+#else
     uint8_t shift = 0U;
     while((num >> shift) > 1U) { shift++; }
     return shift;
+#endif
 }
 
 /*
@@ -93,14 +106,13 @@ uint8_t q_log2(uint32_t num)
     32767 -> 15
     32768 -> 16
     65535 -> 16
-    65536 -> 16
 */
-uint8_t q_log2_ceiling(uint32_t num)
-{
-    uint8_t shift = 0U;
-    while((num >> shift) > 0U) { shift++; }
-    return shift;
-}
+// uint8_t q_log2_ceiling(uint32_t num)
+// {
+//     uint8_t shift = 0U;
+//     while((num >> shift) > 0U) { shift++; }
+//     return shift;
+// }
 
 uint32_t q_pow2bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t num)
 {
@@ -140,6 +152,7 @@ uint8_t q_lshift_max_signed(int32_t num)
     return 30U - q_log2(positiveNum); /* q_log2(INT32_MAX) - q_log2(positiveNum); */
 }
 
+// leading zeros
 uint8_t q_lshift_max_unsigned(uint32_t num)
 {
     return 31U - q_log2(num);

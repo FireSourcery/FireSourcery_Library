@@ -50,7 +50,6 @@
     "C_Cpp.vcFormat.space.insertAfterSemicolon": true,
 
     "C_Cpp.doxygen.generatedStyle": "/*!",
-    // "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
     "editor.defaultFormatter": "ms-vscode.cpptools",
     "editor.rulers": [
         160
@@ -74,7 +73,7 @@
     //     "editor.semanticHighlighting.enabled": "configuredByTheme",
     // },
     "[jsonc]": {
-        "editor.defaultFormatter": "vscode.json-language-features"
+        "editor.defaultFormatter": "vscode.json-language-features",
     },
     "cmake.configureOnOpen": false,
 

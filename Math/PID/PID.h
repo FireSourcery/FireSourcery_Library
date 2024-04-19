@@ -54,6 +54,7 @@ typedef struct PID_Params
     int32_t Ki_Fixed32;
     int32_t Kd_Fixed32;
 
+    // alternatively store fixed and keep these in ram
     int16_t PropGain;
     int8_t PropGainShift;
     int16_t IntegralGain;

@@ -24,7 +24,7 @@
 /*!
     @file   Motor_Params.h
     @author FireSourcery
-    @brief  Params
+    @brief  Params, part of User
     @version V0
 */
 /******************************************************************************/

@@ -146,14 +146,14 @@ Motor_FaultFlags_T;
 typedef enum Motor_ILimitActiveId
 {
     MOTOR_I_LIMIT_ACTIVE_HEAT_THIS,     /* MotorHeat */
-    MOTOR_I_LIMIT_ACTIVE_UPPER,         /* From upper module */
+    MOTOR_I_LIMIT_ACTIVE_MC,         /* From upper module */
     MOTOR_I_LIMIT_ACTIVE_USER,
 }
 Motor_ILimitActiveId_T;
 
 typedef enum Motor_SpeedLimitActiveId
 {
-    MOTOR_SPEED_LIMIT_ACTIVE_UPPER, /* From upper module */
+    MOTOR_SPEED_LIMIT_ACTIVE_MC, /* From upper module */
     MOTOR_SPEED_LIMIT_ACTIVE_USER,
 }
 Motor_SpeedLimitActiveId_T;
@@ -459,6 +459,7 @@ static inline int32_t _Motor_ConvertPower_Scalar16ToWatts(int32_t vi_scalar16)  
 #endif
 
 /* todo */
+// for sensor which report an delta angle instead of speed.
 // static inline uint32_t speed_angle16torpm(uint16_t angle16, uint32_t sampleFreq)                     { return  (angle16 * sampleFreq >> 16U) * 60U; }
 // static inline uint32_t speed_rpmtoangle16(uint16_t rpm, uint32_t sampleFreq)                         { return (rpm << 16U) / (60U * sampleFreq); }
 // static inline uint32_t _Motor_ConvertMechAngleToRpm(MotorPtr_T p_motor, uint16_t angle16 )            { return (angle16 * GLOBAL_MOTOR.SPEED_FREQ >> 16U) * 60U; }
@@ -548,6 +549,7 @@ static inline void Motor_DisablePwm(MotorPtr_T p_motor)         { Phase_DisableI
 static inline void Motor_EnablePwm(MotorPtr_T p_motor)          { Phase_EnableInterrupt(&p_motor->Phase); }
 
 static inline void Motor_DisableOutput(MotorPtr_T p_motor) { Phase_Float(&p_motor->Phase); }
+
 
 /******************************************************************************/
 /*

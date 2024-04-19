@@ -74,7 +74,7 @@ static inline void MotorController_User_SetDriveCmd(MotorControllerPtr_T p_mc, M
 static inline void MotorController_User_SetCmdThrottle(MotorControllerPtr_T p_mc, uint16_t userCmd)  { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_THROTTLE, userCmd); }
 static inline void MotorController_User_SetCmdBrake(MotorControllerPtr_T p_mc, uint16_t userCmd)     { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_BRAKE, userCmd); }
 /* Same as Brake/Throttle 0 */
-static inline void MotorController_User_SetDriveCmdZero(MotorControllerPtr_T p_mc)                   { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_ZERO, 0); }
+static inline void MotorController_User_SetDriveCmdZero(MotorControllerPtr_T p_mc)                   { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_ZERO, 0U); }
 
 /******************************************************************************/
 /* Drive Direction */
@@ -281,19 +281,19 @@ static inline uint16_t MotorController_User_GetIMax(void) { return GLOBAL_MOTOR.
 static inline uint16_t MotorController_User_GetIMaxAdcu(void) { return GLOBAL_MOTOR.I_MAX_ADCU; }
 
 static inline uint32_t MotorController_User_GetLibraryVersion(void) { return MOTOR_LIBRARY_VERSION_ID; }
-// static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIndex)
-// {
-//     uint8_t versionChar;
-//     switch(charIndex)
-//     {
-//         case 0U: versionChar = MOTOR_LIBRARY_VERSION_FIX; break;
-//         case 1U: versionChar = MOTOR_LIBRARY_VERSION_MINOR;  break;
-//         case 2U: versionChar = MOTOR_LIBRARY_VERSION_MAJOR;  break;
-//         case 3U: versionChar = MOTOR_LIBRARY_VERSION_OPT;    break;
-//         default: versionChar = 0U; break;
-//     }
-//     return versionChar;
-// }
+static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIndex)
+{
+    uint8_t versionChar;
+    switch(charIndex)
+    {
+        case 0U: versionChar = MOTOR_LIBRARY_VERSION_FIX; break;
+        case 1U: versionChar = MOTOR_LIBRARY_VERSION_MINOR;  break;
+        case 2U: versionChar = MOTOR_LIBRARY_VERSION_MAJOR;  break;
+        case 3U: versionChar = MOTOR_LIBRARY_VERSION_OPT;    break;
+        default: versionChar = 0U; break;
+    }
+    return versionChar;
+}
 
 static inline uint32_t MotorController_User_GetMainVersion(const MotorControllerPtr_T p_mc) { return *((uint32_t *)(&p_mc->CONFIG.MAIN_VERSION[0U])); }
 static inline uint8_t MotorController_User_GetMainVersionIndex(const MotorControllerPtr_T p_mc, uint8_t charIndex) { return p_mc->CONFIG.MAIN_VERSION[charIndex]; }
