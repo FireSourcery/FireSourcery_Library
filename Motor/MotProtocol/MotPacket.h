@@ -52,6 +52,12 @@
 
 #define MOT_PACKET_PACKED __attribute__((packed))
 
+#if (__STDC_VERSION__ >= 202311L)
+#define ENUM8_T : uint8_t
+#else
+#define ENUM8_T
+#endif
+
 typedef uint16_t checksum_t;
 
 /*
@@ -60,7 +66,7 @@ typedef uint16_t checksum_t;
     Essentially the packets "OpCode"
 */
 // typedef enum MotProtocol_HeaderId
-typedef enum MotPacket_Id
+typedef enum MotPacket_Id ENUM8_T
 {
     /*
         2-Byte Sync Packets
@@ -134,6 +140,7 @@ typedef struct MOT_PACKET_PACKED MotPacket_Header
     {
         struct { uint8_t Length; uint8_t Flex0; uint8_t Flex1; uint8_t Flex2; };
         struct { uint16_t FlexLower16; uint16_t FlexUpper16; };
+        struct { uint16_t FlexLower16; uint16_t Status; };
         uint32_t Flex;
     };
 }
@@ -141,7 +148,7 @@ MotPacket_Header_T;
 
 typedef union MOT_PACKET_PACKED MotPacket
 {
-    union
+    struct
     {
         MotPacket_Header_T Header;
         uint8_t Payload[MOT_PACKET_LENGTH_MAX - sizeof(MotPacket_Header_T)];
@@ -300,25 +307,26 @@ typedef struct MotPacket_OnceWriteReq { MotPacket_Header_T Header; MotPacket_Onc
 typedef struct MotPacket_OnceWriteResp { MotPacket_Header_T Header; MotPacket_OnceWriteResp_Payload_T OnceWriteResp; }      MotPacket_OnceWriteResp_T;
 
 /******************************************************************************/
-/*!
-    Extern
-*/
+/*! Ctrlr side */
 /******************************************************************************/
 /******************************************************************************/
 /*! Common */
 /******************************************************************************/
 static inline uint8_t MotPacket_GetPayloadLength(const MotPacket_T * p_packet) { return p_packet->Header.Length - sizeof(MotPacket_Header_T); }
 static inline uint8_t MotPacket_GetTotalLength(const MotPacket_T * p_packet) { return p_packet->Header.Length; }
-static inline uint8_t MotPacket_SetPayloadLength(MotPacket_T * p_packet, uint8_t payloadLength) { p_packet->Header.Length = payloadLength + sizeof(MotPacket_Header_T); }
-static inline uint8_t MotPacket_SetTotalLength(MotPacket_T * p_packet, uint8_t totalLength) { p_packet->Header.Length = totalLength; }
+static inline void MotPacket_SetPayloadLength(MotPacket_T * p_packet, uint8_t payloadLength) { p_packet->Header.Length = payloadLength + sizeof(MotPacket_Header_T); }
+static inline void MotPacket_SetTotalLength(MotPacket_T * p_packet, uint8_t totalLength) { p_packet->Header.Length = totalLength; }
 
+/******************************************************************************/
+/*!
+    Extern
+*/
+/******************************************************************************/
 extern bool MotPacket_ProcChecksum(const MotPacket_T * p_packet);
 extern uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId);
 extern uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength);
 
-/******************************************************************************/
-/*! Ctrlr side */
-/******************************************************************************/
+
 extern uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket);
 extern uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket, uint32_t library, uint32_t firmware, uint32_t board);
 extern uint8_t MotPacket_StopResp_Build(MotPacket_StopResp_T * p_respPacket, uint16_t status);
@@ -344,7 +352,7 @@ extern uint8_t MotPacket_DataModeReadResp_Build(MotPacket_DataModeResp_T * p_res
 extern uint8_t MotPacket_DataModeWriteResp_Build(MotPacket_DataModeResp_T * p_respPacket, uint16_t status);
 
 extern void MotPacket_DataRead_BuildStatus(MotPacket_DataMode_T * p_dataPacket, uint16_t sequence, uint16_t checksum);
-extern uint8_t MotPacket_ByteData_Build(MotPacket_DataMode_T * p_dataPacket, const uint8_t * p_data, uint8_t sizeData);
+extern uint8_t MotPacket_ByteData_Build(MotPacket_DataMode_T * p_dataPacket, const uint8_t * p_data, uint8_t size);
 
 extern const uint8_t * MotPacket_ByteData_ParsePtrData(const MotPacket_DataMode_T * p_dataPacket);
 extern uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataPacket);
@@ -385,9 +393,9 @@ extern uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataP
 
 // extern uint16_t MotPacket_FixedVarReadReq_ParseVarId(const MotPacket_FixedVarReadReq_T * p_reqPacket);
 // extern uint8_t MotPacket_FixedVarReadResp_Build(MotPacket_FixedVarReadResp_T * p_respPacket, uint32_t value);
-// extern uint16_t MotPacket_WriteVarReq_ParseVarId(const MotPacket_WriteVarReq_T * p_reqPacket);
-// extern uint32_t MotPacket_WriteVarReq_ParseVarValue(const MotPacket_WriteVarReq_T * p_reqPacket);
-// extern uint8_t MotPacket_WriteVarResp_Build(MotPacket_WriteVarResp_T * p_respPacket, uint16_t status);
+// extern uint16_t MotPacket_FixedWriteVarReq_ParseVarId(const MotPacket_WriteVarReq_T * p_reqPacket);
+// extern uint32_t MotPacket_FixedWriteVarReq_ParseVarValue(const MotPacket_WriteVarReq_T * p_reqPacket);
+// extern uint8_t MotPacket_FixedWriteVarResp_Build(MotPacket_WriteVarResp_T * p_respPacket, uint16_t status);
 
 /******************************************************************************/
 /*! Cmdr side */

@@ -58,7 +58,7 @@ MotProtocol_DataModeStateId_T;
 
 
 /* For Stateful DataMode Read/Write */
-typedef struct MotProtocol_SubState
+typedef struct MotProtocol_DataModeState
 {
     uint32_t DataModeAddress;
     uint16_t DataModeSize;

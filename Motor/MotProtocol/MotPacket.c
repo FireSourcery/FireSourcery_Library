@@ -38,7 +38,7 @@
     Common
 */
 /******************************************************************************/
-static uint16_t Checksum(const uint8_t * p_src, uint8_t bytes)
+static uint16_t Sum(const uint8_t * p_src, uint8_t bytes)
 {
     uint16_t checkSum = 0U;
     for(uint8_t iByte = 0U; iByte < bytes; iByte++) { checkSum += p_src[iByte]; }
@@ -52,9 +52,9 @@ static uint16_t Packet_Checksum(const MotPacket_T * p_packet, uint8_t payloadLen
     static const uint8_t lengthAfterCheckSum = sizeof(MotPacket_Header_T) - checksumEnd;
 
     volatile uint16_t checkSum = 0U;
-    checkSum += Checksum((uint8_t *)p_packet, checksumStart);
-    checkSum += Checksum((uint8_t *)p_packet + checksumEnd, lengthAfterCheckSum);
-    checkSum += Checksum((uint8_t *)&p_packet->Payload[0U], payloadLength);
+    checkSum += Sum((uint8_t *)p_packet, checksumStart);
+    checkSum += Sum((uint8_t *)p_packet + checksumEnd, lengthAfterCheckSum);
+    checkSum += Sum((uint8_t *)&p_packet->Payload[0U], payloadLength);
     return checkSum;
 }
 
@@ -240,10 +240,10 @@ uint8_t MotPacket_DataModeWriteResp_Build(MotPacket_DataModeResp_T * p_respPacke
 /******************************************************************************/
 /*! Data */
 /******************************************************************************/
-uint8_t MotPacket_ByteData_Build(MotPacket_DataMode_T * p_dataPacket, const uint8_t * p_data, uint8_t sizeData)
+uint8_t MotPacket_ByteData_Build(MotPacket_DataMode_T * p_dataPacket, const uint8_t * p_data, uint8_t size)
 {
-    memcpy(&p_dataPacket->DataMode.ByteData[0U], p_data, sizeData);
-    return MotPacket_BuildHeader((MotPacket_T *)p_dataPacket, MOT_PACKET_DATA_MODE_DATA, sizeData);
+    memcpy(&p_dataPacket->DataMode.ByteData[0U], p_data, size);
+    return MotPacket_BuildHeader((MotPacket_T *)p_dataPacket, MOT_PACKET_DATA_MODE_DATA, size);
 }
 
 const uint8_t * MotPacket_ByteData_ParsePtrData(const MotPacket_DataMode_T * p_dataPacket)  { return &p_dataPacket->DataMode.ByteData[0U]; } /* Flash loader handle from here */
@@ -258,21 +258,17 @@ uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataPacket) 
 /******************************************************************************/
 /*! Once */
 /******************************************************************************/
-// uint8_t MotProtocol_Flash_WriteOnce_Blocking( const MotPacket_OnceWriteReq_T * p_rxPacket)
-// uint8_t MotProtocol_Flash_ReadOnce_Blocking( const MotPacket_OnceReadReq_T * p_rxPacket)
-// uint8_t MotProtocol_Flash_WriteOnce_Blocking(MotPacket_OnceWriteResp_T * p_txPacket )
-// {
-//     // NvMemory_Status_T status = Flash_WriteOnce_Blocking(p_flash, (uint8_t *)p_rxPacket->OnceWriteReq.Address, &(p_rxPacket->OnceWriteReq.ByteData[0U]), p_rxPacket->OnceWriteReq.Size);
-//     // p_txPacket->OnceWriteResp.Status = status;
-//     return MotPacket_BuildHeader((MotPacket_T *)p_txPacket, MOT_PACKET_WRITE_ONCE, sizeof(MotPacket_OnceWriteResp_Payload_T));
-// }
+uint8_t MotPacket_OnceWriteResp_Build(MotPacket_OnceWriteResp_T * p_respPacket, uint16_t status)
+{
+    p_respPacket->OnceWriteResp.Status = status;
+    return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_WRITE_ONCE, sizeof(MotPacket_OnceWriteResp_Payload_T));
+}
 
-// uint8_t MotProtocol_Flash_ReadOnce_Blocking(MotPacket_OnceReadResp_T * p_txPacket, uint8_t sizeData)
-// {
-//     // NvMemory_Status_T status = Flash_ReadOnce_Blocking(p_flash, &(p_txPacket->OnceReadResp.ByteData[0U]), (uint8_t *)p_rxPacket->OnceReadReq.Address, p_rxPacket->OnceReadReq.Size);
-//     // p_txPacket->Header.Imm16 = status;
-//     return MotPacket_BuildHeader((MotPacket_T *)p_txPacket, MOT_PACKET_READ_ONCE, p_rxPacket->OnceReadReq.Size);
-// }
+uint8_t MotPacket_OnceReadResp_Build(MotPacket_OnceReadResp_T * p_respPacket, uint8_t * p_data, uint8_t size)
+{
+    memcpy(&p_respPacket->OnceReadResp.ByteData[0U], p_data, size);
+    return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_READ_ONCE, size);
+}
 
 
 /******************************************************************************/

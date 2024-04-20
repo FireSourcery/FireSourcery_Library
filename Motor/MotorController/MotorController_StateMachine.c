@@ -169,7 +169,7 @@ static StateMachine_State_T * Park_InputServo(MotorControllerPtr_T p_mc, statema
 static const StateMachine_Transition_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]      = (StateMachine_Transition_T)TransitionFault,
-    [MCSM_INPUT_LOCKED]   = (StateMachine_Transition_T)Park_InputBlocking,
+    [MCSM_INPUT_LOCK]   = (StateMachine_Transition_T)Park_InputBlocking,
     [MCSM_INPUT_DIRECTION]  = (StateMachine_Transition_T)Park_InputDirection,
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
     [MCSM_INPUT_SERVO]      = (StateMachine_Transition_T)Park_InputServo,
@@ -441,12 +441,12 @@ static StateMachine_State_T * Blocking_InputBlocking_Blocking(MotorControllerPtr
 static const StateMachine_Transition_T BLOCKING_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]      = (StateMachine_Transition_T)TransitionFault,
-    [MCSM_INPUT_LOCKED]     = (StateMachine_Transition_T)Blocking_InputBlocking_Blocking,
+    [MCSM_INPUT_LOCK]     = (StateMachine_Transition_T)Blocking_InputBlocking_Blocking,
 };
 
 static const StateMachine_State_T STATE_LOCK =
 {
-    .ID                 = MCSM_STATE_ID_LOCKED,
+    .ID                 = MCSM_STATE_ID_LOCK,
     .P_TRANSITION_TABLE = &BLOCKING_TRANSITION_TABLE[0U],
     .ENTRY              = (StateMachine_Function_T)Blocking_Entry,
     .LOOP               = (StateMachine_Function_T)Blocking_Proc,
@@ -512,7 +512,7 @@ static const StateMachine_Transition_T SERVO_TRANSITION_TABLE[MCSM_TRANSITION_TA
     [MCSM_INPUT_DIRECTION]      = (StateMachine_Transition_T)Servo_InputExit,
     [MCSM_INPUT_CMD]            = (StateMachine_Transition_T)Servo_InputCmd,
     [MCSM_INPUT_SERVO]          = (StateMachine_Transition_T)Servo_InputServo,
-    [MCSM_INPUT_LOCKED]       = (StateMachine_Transition_T)TransitionLock,
+    [MCSM_INPUT_LOCK]       = (StateMachine_Transition_T)TransitionLock,
 };
 
 static const StateMachine_State_T STATE_SERVO =
@@ -583,7 +583,7 @@ static StateMachine_State_T * Fault_InputFault(MotorControllerPtr_T p_mc, statem
 static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]          = (StateMachine_Transition_T)Fault_InputFault,
-    [MCSM_INPUT_LOCKED]       = (StateMachine_Transition_T)TransitionLock,
+    [MCSM_INPUT_LOCK]       = (StateMachine_Transition_T)TransitionLock,
     // [MCSM_INPUT_DIRECTION]      = (StateMachine_Transition_T)0U,
     // [MCSM_INPUT_CMD]            = (StateMachine_Transition_T)0U,
 };
