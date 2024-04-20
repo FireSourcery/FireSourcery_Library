@@ -720,7 +720,7 @@ MotVarId_Status_T MotorController_Var_Set(MotorControllerPtr_T p_mc, MotVarId_T 
                 SetRealTime(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
             break;
         case MOT_VAR_ID_TYPE_PARAMS:
-            status = (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_LOCKED) ?
+            status = (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_LOCK) ?
                 SetParameter(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_RUNNING;
             break;
         default: break;

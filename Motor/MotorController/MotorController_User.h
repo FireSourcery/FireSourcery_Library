@@ -85,6 +85,7 @@ static inline MotorController_Direction_T MotorController_User_GetDirection(cons
     MotorController_Direction_T direction;
     switch (StateMachine_GetActiveStateId(&p_mc->StateMachine))
     {
+        case MCSM_STATE_ID_LOCK:        direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
         case MCSM_STATE_ID_PARK:        direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
         case MCSM_STATE_ID_NEUTRAL:     direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;         break;
         case MCSM_STATE_ID_DRIVE:
@@ -112,12 +113,12 @@ static inline bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, 
 /******************************************************************************/
 static inline void MotorController_User_InputLocked_Blocking(MotorControllerPtr_T p_mc, MotorController_LockedId_T opId)
 {
-    StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_LOCKED, opId);
+    StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_LOCK, opId);
 }
 
 static inline bool MotorController_User_IsLockedState(MotorControllerPtr_T p_mc)
 {
-    return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_LOCKED);
+    return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_LOCK);
 }
 
 static inline bool MotorController_User_EnterLockedState(MotorControllerPtr_T p_mc)
@@ -149,7 +150,7 @@ static inline NvMemory_Status_T MotorController_User_SaveParameters_Blocking(Mot
 // static inline NvMemory_Status_T MotorController_User_SaveManufacture_Blocking(MotorControllerPtr_T p_mc)
 // {
 //     return _MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE);
-//     // return StateMachine_ProcAsyncInput(p_mc, MCSM_INPUT_LOCKED, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS);
+//     // return StateMachine_ProcAsyncInput(p_mc, MCSM_INPUT_LOCK, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS);
 //     // return p_mc->NvmStatus;
 // }
 

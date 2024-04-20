@@ -46,7 +46,7 @@
 typedef enum MotorController_StateMachine_Input
 {
     MCSM_INPUT_FAULT,
-    MCSM_INPUT_LOCKED,
+    MCSM_INPUT_LOCK,
     MCSM_INPUT_CMD,
     MCSM_INPUT_DIRECTION,   /* Drive Direction */
     MCSM_INPUT_DRIVE,       /* Drive Throttle/Brake */
@@ -62,7 +62,7 @@ typedef enum MotorController_StateMachine_StateId
     MCSM_STATE_ID_PARK,
     MCSM_STATE_ID_DRIVE,
     MCSM_STATE_ID_NEUTRAL,
-    MCSM_STATE_ID_LOCKED,
+    MCSM_STATE_ID_LOCK,
     MCSM_STATE_ID_FAULT,
     MCSM_STATE_ID_SERVO,
 }
