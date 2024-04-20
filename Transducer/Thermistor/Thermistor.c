@@ -35,12 +35,7 @@
 static void ResetUnitsLinear(Thermistor_T * p_therm)
 {
     Linear_ADC_Init(&p_therm->HeatLimit, p_therm->Params.FaultTrigger_Adcu, p_therm->Params.WarningTrigger_Adcu, 0, 0);
-    /*
-        Max resolution
-        12-bit ADC, 200 physical degrees interval
-        .1 to .05 physical degrees resolution.
-        x20 for max resolution
-    */
+
     Linear_Init_Map(&p_therm->LinearUnits, p_therm->Params.LinearT0_Adcu, p_therm->Params.LinearT1_Adcu, p_therm->Params.LinearT0_DegC, p_therm->Params.LinearT1_DegC);
 }
 
@@ -141,7 +136,7 @@ static inline uint32_t r_parallel(uint32_t rNet, uint32_t rParallel)
     1/T = 1/T0 + (1/B)*ln(R/R0)
     @return 1/T
 */
-static inline float steinhart(double b, double t0, double r0, double rTh)
+static inline double steinhart(double b, double t0, double r0, double rTh)
 {
     return (log(rTh / r0) / b) + (1.0F / t0);
 }
@@ -149,7 +144,7 @@ static inline float steinhart(double b, double t0, double r0, double rTh)
 /*!
     @return R_Thermistor
 */
-static inline float invsteinhart(double b, double t0, double r0, double invT_Kelvin)
+static inline double invsteinhart(double b, double t0, double r0, double invT_Kelvin)
 {
     return exp((invT_Kelvin - 1.0F / t0) * b) * r0;
 }

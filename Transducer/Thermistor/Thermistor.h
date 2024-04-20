@@ -39,7 +39,9 @@
 
 #if     defined(CONFIG_THERMISTOR_UNITS_LINEAR) || defined(CONFIG_THERMISTOR_UNITS_LUT)
     typedef int16_t thermal_t;
+    static const thermal_t ABSOLUTE_ZERO_CELSIUS = -273U;
 #elif   defined(CONFIG_THERMISTOR_UNITS_FLOAT)
+    static const thermal_t ABSOLUTE_ZERO_CELSIUS = -273.15F;
     typedef float thermal_t;
 #endif
 
@@ -55,12 +57,12 @@ typedef enum Thermistor_Status
 Thermistor_Status_T;
 
 /*   */
-typedef enum Thermistor_Type
-{
-    THERMISTOR_TYPE_NTC,
-    THERMISTOR_TYPE_PTC,
-}
-Thermistor_Type_T;
+// typedef enum Thermistor_Type
+// {
+//     THERMISTOR_TYPE_NTC,
+//     THERMISTOR_TYPE_PTC,
+// }
+// Thermistor_Type_T;
 
 // // optionally place in configurable Params, or CONFIG
 // typedef struct Thermistor_Coeffs
@@ -85,11 +87,9 @@ typedef struct Thermistor_Params
     uint16_t B;     /* In Kelvin*/
     uint16_t VInRef_MilliV; /* Generally the same as VADC */
 
-    //todo combine? T0_adcu, T1_adcu, DeltaDegrees
     /* Back Up Linear Unit Conversion. Bypass R, alternatively derive from DeltaT, DeltaR */
-    // uint16_t LinearAdcuZeroRef;
-    // uint16_t LinearFactor;
-    // uint8_t LinearDivisor;
+    // uint32_t R1;
+    // uint16_t T1;
     uint16_t LinearT0_Adcu;
     uint16_t LinearT1_Adcu;
     uint8_t LinearT0_DegC;
@@ -203,14 +203,14 @@ static inline void Thermistor_SetWarningThreshold_Adcu(Thermistor_T * p_therm, u
 // static inline Thermistor_Type_T Thermistor_GetType(const Thermistor_T * p_therm)    { return p_therm->Params.Type; }
 static inline uint32_t Thermistor_GetR0(const Thermistor_T * p_therm)               { return p_therm->Params.R0; }
 static inline uint16_t Thermistor_GetT0(const Thermistor_T * p_therm)               { return p_therm->Params.T0; } /* Degrees Kelvin */
-static inline uint16_t Thermistor_GetT0_DegC(const Thermistor_T * p_therm)          { return p_therm->Params.T0 - 273; }
+static inline uint16_t Thermistor_GetT0_DegC(const Thermistor_T * p_therm)          { return p_therm->Params.T0 + ABSOLUTE_ZERO_CELSIUS; }
 static inline uint16_t Thermistor_GetB(const Thermistor_T * p_therm)                { return p_therm->Params.B; }
 static inline uint16_t Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm)    { return p_therm->Params.VInRef_MilliV; }
 
 // static inline void Thermistor_SetType(Thermistor_T * p_therm, uint16_t value)               { p_therm->Params.Type = value; }
 static inline void Thermistor_SetR0(Thermistor_T * p_therm, uint16_t value)                 { p_therm->Params.R0 = value; }
 static inline void Thermistor_SetT0(Thermistor_T * p_therm, uint16_t value)                 { p_therm->Params.T0 = value; } /* Degrees Kelvin */
-static inline void Thermistor_SetT0_DegC(Thermistor_T * p_therm, uint16_t value)            { p_therm->Params.T0 = value + 273; }
+static inline void Thermistor_SetT0_DegC(Thermistor_T * p_therm, uint16_t value)            { p_therm->Params.T0 = value - ABSOLUTE_ZERO_CELSIUS; }
 static inline void Thermistor_SetB(Thermistor_T * p_therm, uint16_t value)                  { p_therm->Params.B = value; }
 static inline void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint16_t vIn_MilliV) { p_therm->Params.VInRef_MilliV = vIn_MilliV; }
 
