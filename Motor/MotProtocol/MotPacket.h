@@ -67,7 +67,7 @@ typedef enum MotPacket_Id
         Response Packet must use different ID - Length compare determined by Id
     */
     MOT_PACKET_PING = 0xA0U,            /* */
-    MOT_PACKET_PING_RESP = 0xA1U,       /* */
+    // MOT_PACKET_PING_RESP = 0xA1U,       /* */
     MOT_PACKET_SYNC_ACK = 0xA2U,
     MOT_PACKET_SYNC_NACK = 0xA3U,
     MOT_PACKET_SYNC_ABORT = 0xA4U,
@@ -76,12 +76,12 @@ typedef enum MotPacket_Id
     /* Fixed Length */
     MOT_PACKET_STOP_ALL = 0x00U,
     MOT_PACKET_VERSION = 0x01U,
-    MOT_PACKET_REBOOT = 0xC0U,
+    // MOT_PACKET_REBOOT = 0xC0U,
     MOT_PACKET_CALL = 0xCCU,
-    MOT_PACKET_CALL_ADDRESS = 0xCAU,
+    // MOT_PACKET_CALL_ADDRESS = 0xCAU,
 
-    MOT_PACKET_FIXED_VAR_READ = 0xB1U,     /* Read Single Var32 */
-    MOT_PACKET_FIXED_VAR_WRITE = 0xB2U,    /* Write Single Var32 */
+    // MOT_PACKET_FIXED_VAR_READ = 0xB1U,     /* Read Single Var32 */
+    // MOT_PACKET_FIXED_VAR_WRITE = 0xB2U,    /* Write Single Var32 */
 
     /* Configurable Length */
     /*
@@ -92,8 +92,8 @@ typedef enum MotPacket_Id
     MOT_PACKET_VAR_WRITE = 0xB4U,        /* Up to 8 uint16_t values */ /* Up to 4 uint32_t values */
 
     /* Read/Write by Address */
-    MOT_PACKET_MEM_READ = 0xD1U,            /* Read Memory Address */
-    MOT_PACKET_MEM_WRITE = 0xD2U,           /* Write Memory Address */
+    // MOT_PACKET_MEM_READ = 0xD1U,            /* Read Memory Address */
+    // MOT_PACKET_MEM_WRITE = 0xD2U,           /* Write Memory Address */
     /* Stateful Read/Write */
     MOT_PACKET_DATA_MODE_READ = 0xDAU,      /* Stateful NvMemory Read using Address */
     MOT_PACKET_DATA_MODE_WRITE = 0xDBU,     /* Stateful NvMemory Write using Address */
