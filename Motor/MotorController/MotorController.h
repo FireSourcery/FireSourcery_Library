@@ -250,6 +250,12 @@ typedef struct MotorController_Params
 }
 MotorController_Params_T;
 
+typedef const struct MotorController_Manfacture
+{
+    const uint8_t NAME[4U]; //8 chars to determine  name, remaining determined by host
+
+} MotorController_Manfacture_T;
+
 /*
     Allocated memory outside for less CONFIG define repetition
 */

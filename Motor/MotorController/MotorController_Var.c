@@ -429,20 +429,11 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
         case MOT_VAR_ID_TYPE_PARAMS_THERMISTOR:
             switch((MotVarId_Instance_Prefix_T)varId.InstancePrefix)
             {
-                case MOT_VAR_ID_INSTANCE_PREFIX_BOARD:
-                    p_thermistor = MotorController_User_GetPtrThermistor(p_mc, varId.Instance);
-                    value = GetParameterThermistor(p_thermistor, (MotVarId_Params_Thermistor_T)varId.NameId);
-                    break;
-                case MOT_VAR_ID_INSTANCE_PREFIX_MOTOR:
-                    if(p_motor != 0U)
-                    {
-                        p_thermistor = &(p_motor->Thermistor);
-                        value = GetParameterThermistor(p_thermistor, (MotVarId_Params_Thermistor_T)varId.NameId);
-                    }
-                    break;
-
+                case MOT_VAR_ID_INSTANCE_PREFIX_BOARD:  p_thermistor = MotorController_User_GetPtrThermistor(p_mc, varId.Instance);  break;
+                case MOT_VAR_ID_INSTANCE_PREFIX_MOTOR:  if(p_motor != NULL) { p_thermistor = &(p_motor->Thermistor); }   break;
                 default: break;
             }
+            if(p_thermistor != NULL) { value = GetParameterThermistor(p_thermistor, (MotVarId_Params_Thermistor_T)varId.NameId); }
             break;
 
         case MOT_VAR_ID_TYPE_PARAMS_VMONITOR:
@@ -457,7 +448,7 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
                     case MOT_VAR_VMONITOR_FAULT_LOWER_ADCU:     value = VMonitor_GetFaultLower(p_vMonitor);     break;
                     case MOT_VAR_VMONITOR_WARNING_UPPER_ADCU:   value = VMonitor_GetWarningUpper(p_vMonitor);   break;
                     case MOT_VAR_VMONITOR_WARNING_LOWER_ADCU:   value = VMonitor_GetWarningLower(p_vMonitor);   break;
-                    case MOT_VAR_VMONITOR_IS_ENABLE:            value = VMonitor_IsEnable(p_vMonitor);       break;
+                    case MOT_VAR_VMONITOR_IS_ENABLE:            value = VMonitor_IsEnable(p_vMonitor);          break;
                     default: break;
                 }
             }

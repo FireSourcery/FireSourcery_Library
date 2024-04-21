@@ -140,7 +140,7 @@ typedef struct MOT_PACKET_PACKED MotPacket_Header
     {
         struct { uint8_t Length; uint8_t Flex0; uint8_t Flex1; uint8_t Flex2; };
         struct { uint16_t FlexLower16; uint16_t FlexUpper16; };
-        struct { uint16_t FlexLower16; uint16_t Status; };
+        struct { uint16_t _FlexLower16; uint16_t Status; };
         uint32_t Flex;
     };
 }
