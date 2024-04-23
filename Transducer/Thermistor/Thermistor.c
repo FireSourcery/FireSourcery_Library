@@ -207,10 +207,6 @@ static uint16_t ConvertDegCToAdcu(const Thermistor_T * p_therm, thermal_t degC)
 
 thermal_t Thermistor_ConvertToDegC(const Thermistor_T * p_therm, uint16_t adcu)                         { return ConvertAdcuToDegC(p_therm, adcu); }
 uint16_t Thermistor_ConvertToAdcu_DegC(const Thermistor_T * p_therm, thermal_t degC)                    { return ConvertDegCToAdcu(p_therm, degC); }
-#if defined(CONFIG_THERMISTOR_UNITS_LINEAR)
-/* Scalar < 20 */
-int32_t Thermistor_ConvertToDegC_Scalar(const Thermistor_T * p_therm, uint16_t adcu, uint8_t scalar)    { return ConvertAdcuToDegC(p_therm, adcu * scalar); }
-#endif
 
 
 /******************************************************************************/
@@ -243,6 +239,8 @@ thermal_t Thermistor_GetWarning_DegC(const Thermistor_T * p_therm)            { 
 thermal_t Thermistor_GetWarningThreshold_DegC(const Thermistor_T * p_therm)   { return ConvertAdcuToDegC(p_therm, p_therm->Params.WarningThreshold_Adcu); }
 
 #if defined(CONFIG_THERMISTOR_UNITS_LINEAR)
+/* Scalar < 20 */
+int32_t Thermistor_ConvertToDegC_Scalar(const Thermistor_T * p_therm, uint16_t adcu, uint8_t scalar) { return ConvertAdcuToDegC(p_therm, adcu * scalar); }
 int32_t Thermistor_GetFault_DegCScalar(const Thermistor_T * p_therm, uint16_t scalar)              { return Thermistor_ConvertToDegC_Scalar(p_therm, p_therm->Params.FaultTrigger_Adcu, scalar); }
 int32_t Thermistor_GetFaultThreshold_DegCScalar(const Thermistor_T * p_therm, uint16_t scalar)     { return Thermistor_ConvertToDegC_Scalar(p_therm, p_therm->Params.FaultThreshold_Adcu, scalar); }
 int32_t Thermistor_GetWarning_DegCScalar(const Thermistor_T * p_therm, uint16_t scalar)            { return Thermistor_ConvertToDegC_Scalar(p_therm, p_therm->Params.WarningTrigger_Adcu, scalar); }

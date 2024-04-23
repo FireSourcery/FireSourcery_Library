@@ -41,8 +41,8 @@
     typedef int16_t thermal_t;
     static const thermal_t ABSOLUTE_ZERO_CELSIUS = -273U;
 #elif   defined(CONFIG_THERMISTOR_UNITS_FLOAT)
-    static const thermal_t ABSOLUTE_ZERO_CELSIUS = -273.15F;
     typedef float thermal_t;
+    static const thermal_t ABSOLUTE_ZERO_CELSIUS = -273.15F;
 #endif
 
 /* Monitor Status Return */
@@ -67,10 +67,10 @@ Thermistor_Status_T;
 // // optionally place in configurable Params, or CONFIG
 // typedef struct Thermistor_Coeffs
 // {
-//     uint16_t VInRef_MilliV;
+//     uint16_t B;
 //     uint32_t R0;
 //     uint16_t T0; /* In Kelvin*/
-//     uint16_t B;
+//     uint16_t VInRef_MilliV;
 // }
 // Thermistor_Coeffs_T;
 
@@ -82,12 +82,12 @@ typedef struct Thermistor_Params
     // Thermistor_Type_T Type;
 
     /* NTC Coffceients Conversion */
+    uint16_t B;     /* In Kelvin*/
     uint32_t R0;
     uint16_t T0;    /* In Kelvin*/
-    uint16_t B;     /* In Kelvin*/
     uint16_t VInRef_MilliV; /* Generally the same as VADC */
 
-    /* Back Up Linear Unit Conversion. Bypass R, alternatively derive from DeltaT, DeltaR */
+    /* Back Up Linear Unit Conversion. Bypass R. alternatively derive from DeltaT, DeltaR */
     // uint32_t R1;
     // uint16_t T1;
     uint16_t LinearT0_Adcu;
@@ -109,7 +109,7 @@ typedef struct Thermistor_Config
 {
     const uint32_t R_SERIES;    /* Pull-up */
     const uint32_t R_PARALLEL;  /* Parallel pull-down if applicable. 0 for Disable */
-    //bool IS_CONST;            /* Disable Coefficient set functions */
+    // bool IS_CONST;            /* Disable Coefficient set functions */
     // uint32_t R0;
     // uint16_t T0; /* In Kelvin*/
     // uint16_t B;
@@ -121,8 +121,8 @@ typedef struct Thermistor
 {
     const Thermistor_Config_T CONFIG;
     Thermistor_Params_T Params;
-    Linear_T LinearUnits;       /* Back up linear fit. */
-    Linear_T HeatLimit;   /* Linear fit for warning region, return value [WarningTrigger_Adcu:FaultTrigger_Adcu] as [65535:0], Roughly linear 70-100C */
+    Linear_T LinearUnits;   /* Back up linear fit. */
+    Linear_T HeatLimit;     /* Linear fit for warning region, return value [WarningTrigger_Adcu:FaultTrigger_Adcu] as [65535:0], Roughly linear 70-100C */
 // Thermistor_Type_T Type;
     Thermistor_Status_T Status;
     uint16_t Adcu; /* Previous ADC sample */
@@ -136,7 +136,7 @@ Thermistor_T;
     .P_PARAMS       = p_Params,                                 \
 }
 
-#define _THERMISTOR_INIT_PARAMS_B(R0, T0_Kelvin, B)     \
+#define _THERMISTOR_INIT_PARAMS_B(B, R0, T0_Kelvin)     \
 {                                                       \
     .R0  = R0,                                          \
     .T0  = T0_Kelvin,                                   \
@@ -148,10 +148,10 @@ Thermistor_T;
     .CONFIG = _THERMISTOR_INIT_CONFIG(RSeries, RParallel, p_Params),    \
 }
 
-#define THERMISTOR_INIT_WITH_B(RSeries, RParallel, p_Params, coeffR0, coeffT0_Kelvin, coeffB)       \
-{                                                                                                   \
-    .CONFIG = _THERMISTOR_INIT_CONFIG(RSeries, RParallel, p_Params),                                \
-    .Params = _THERMISTOR_INIT_PARAMS_B(R0, coeffT0_Kelvin, coeffB),                                \
+#define THERMISTOR_INIT_FIXED(RSeries, RParallel, p_Params, B, R0, T0_Kelvin)   \
+{                                                                               \
+    .CONFIG = _THERMISTOR_INIT_CONFIG(RSeries, RParallel, p_Params),            \
+    .Params = _THERMISTOR_INIT_PARAMS_B(B, R0, T0_Kelvin),                      \
 }
 
 /******************************************************************************/
@@ -161,7 +161,7 @@ Thermistor_T;
 */
 /******************************************************************************/
 static inline uint16_t Thermistor_HeatLimitOfAdcu_Scalar16(const Thermistor_T * p_therm, uint16_t adcu) { return Linear_ADC_CalcFracU16(&p_therm->HeatLimit, adcu); }
-/* Captured adcu on Monitor */
+/* Captured adcu on Thermistor_PollMonitor */
 static inline uint16_t Thermistor_GetHeatLimit_Scalar16(const Thermistor_T * p_therm) { return Thermistor_HeatLimitOfAdcu_Scalar16(p_therm, p_therm->Adcu); }
 
 /******************************************************************************/
@@ -235,9 +235,6 @@ extern Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16
 
 extern thermal_t Thermistor_ConvertToDegC(const Thermistor_T * p_therm, uint16_t adcu);
 extern uint16_t Thermistor_ConvertToAdcu_DegC(const Thermistor_T * p_therm, thermal_t degC) ;
-#if defined(CONFIG_THERMISTOR_UNITS_LINEAR)
-extern int32_t Thermistor_ConvertToDegC_Scalar(const Thermistor_T * p_therm, uint16_t adcu, uint8_t scalar);
-#endif
 
 extern void Thermistor_SetFault_DegC(Thermistor_T * p_therm, thermal_t fault_degC, thermal_t faultThreshold_degC);
 extern void Thermistor_SetWarning_DegC(Thermistor_T * p_therm, thermal_t warning_degC, thermal_t warningThreshold_degC);
@@ -249,6 +246,7 @@ extern thermal_t Thermistor_GetWarning_DegC(const Thermistor_T * p_therm);
 extern thermal_t Thermistor_GetWarningThreshold_DegC(const Thermistor_T * p_therm);
 
 #if defined(CONFIG_THERMISTOR_UNITS_LINEAR)
+extern int32_t Thermistor_ConvertToDegC_Scalar(const Thermistor_T * p_therm, uint16_t adcu, uint8_t scalar);
 extern int32_t Thermistor_GetFault_DegCScalar(const Thermistor_T * p_therm, uint16_t scalar);
 extern int32_t Thermistor_GetFaultThreshold_DegCScalar(const Thermistor_T * p_therm, uint16_t scalar);
 extern int32_t Thermistor_GetWarning_DegCScalar(const Thermistor_T * p_therm, uint16_t scalar);

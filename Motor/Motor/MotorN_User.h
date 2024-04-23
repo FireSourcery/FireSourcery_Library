@@ -52,6 +52,23 @@ typedef bool (*Motor_User_CheckStatus_T)(const MotorPtr_T p_motor);
 typedef bool (*Motor_User_SetLimit_T)(MotorPtr_T p_motor, uint16_t scalar16, uint8_t id);
 typedef bool (*Motor_User_ClearLimit_T)(MotorPtr_T p_motor, uint8_t id);
 
+
+
+// #define MotorN_User_Set(function, p_motor, value) \
+// _Generic((function), \
+//     Motor_User_SetFeedbackMode_T:   function(p_motor, value),  \
+//     Motor_User_SetScalar16_T:       function(p_motor, value),  \
+//     Motor_User_SetCmd_T:            function(p_motor, value)  \
+// )
+
+    // Motor_User_SetLimit_T:          function(p_motor, value, 0U)  \
+    // Motor_User_ProcVoid_T:          function(p_motor),  \
+    // Motor_User_ClearLimit_T:        function(p_motor, 0U),  \
+// #define MotorN_User_SetLimit(function, p_motor, value) \
+// _Generic((function), \
+//     Motor_User_SetLimit_T:          function(p_motor, value, 0U), \
+// )
+
 /*
     Motor_User_ReleaseControl
     Motor_User_DisableControl
@@ -64,6 +81,7 @@ static inline void MotorN_User_ProcFunction(MotorPtr_T p_motorArray, uint8_t mot
 
 static inline void MotorN_User_SetCmd(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_User_SetCmd_T function, int16_t cmdValue)
 {
+    // for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { MotorN_User_Set(function, &p_motorArray[iMotor], cmdValue); }
     for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { function(&p_motorArray[iMotor], cmdValue); }
 }
 
