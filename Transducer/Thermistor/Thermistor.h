@@ -39,7 +39,7 @@
 
 #if     defined(CONFIG_THERMISTOR_UNITS_LINEAR) || defined(CONFIG_THERMISTOR_UNITS_LUT)
     typedef int16_t thermal_t;
-    static const thermal_t ABSOLUTE_ZERO_CELSIUS = -273U;
+    static const thermal_t ABSOLUTE_ZERO_CELSIUS = -273;
 #elif   defined(CONFIG_THERMISTOR_UNITS_FLOAT)
     typedef float thermal_t;
     static const thermal_t ABSOLUTE_ZERO_CELSIUS = -273.15F;

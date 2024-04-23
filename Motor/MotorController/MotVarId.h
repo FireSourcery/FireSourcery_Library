@@ -123,48 +123,54 @@ MotVarId_Monitor_MotorSensor_T;
 /*
     Real-Time Control -> Disabled on select
     MonitorControl -> Read/Write
+        Effectively paired request/reponse Ids
+        Control is readable, analagously a control loop in/out may differ
     Control -> Write-Only, Read returns 0
+        Cmd is not readable
 */
 /******************************************************************************/
 /*
     Read Values may differ from write
     Motor Vars use instance
 */
-typedef enum MotVarId_MonitorControl
+typedef enum MotVarId_Control
 {
-    MOT_VAR_USER_SET_POINT,                 // Throttle, Brake, Servo In
-    MOT_VAR_DIRECTION,                      // MotorController_Direction_T
+    MOT_VAR_USER_SET_POINT,                 // Throttle, Brake, Servo In, Value pending feedbackMode
+    MOT_VAR_DIRECTION,                      // MotorController_Direction_T,
 //  MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE,      // not saved to Nvm
 }
-MotVarId_MonitorControl_T;
+MotVarId_Control_T;
 
-typedef enum MotVarId_MonitorControl_Motor
+typedef enum MotVarId_Control_Motor
 {
     MOT_VAR_MOTOR_USER_SET_POINT,           // Ramp Input
+    // MOT_VAR_MOTOR_USER_SET_POINT,           // Ramp In (UserCmd), Ramp Out (SetPoint)
+    // MOT_VAR_MOTOR_USER_SET_POINT,           // Ramp In
     MOT_VAR_MOTOR_DIRECTION,                // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
     MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,     // Write buffered user value, read state value
     MOT_VAR_MOTOR_USER_SPEED_LIMIT,
     MOT_VAR_MOTOR_USER_I_LIMIT,
 }
-MotVarId_MonitorControl_Motor_T;
+MotVarId_Control_Motor_T;
 
 /* Write-Only */
-typedef enum MotVarId_Control
+typedef enum MotVarId_Cmd
 {
     MOT_VAR_BEEP,
+    // MOT_VAR_USER_CMD,
     MOT_VAR_THROTTLE,
     MOT_VAR_BRAKE,
     MOT_VAR_RELEASE_CONTROL,
     MOT_VAR_DISABLE_CONTROL,
     MOT_VAR_CLEAR_FAULT,
 }
-MotVarId_Control_T;
+MotVarId_Cmd_T;
 
 /*
     Use instance index
     Value [-32768:32767]
 */
-typedef enum MotVarId_Control_Motor
+typedef enum MotVarId_Cmd_Motor
 {
     MOT_VAR_MOTOR_CMD_SPEED,
     MOT_VAR_MOTOR_CMD_CURRENT,
@@ -175,7 +181,7 @@ typedef enum MotVarId_Control_Motor
     // MOT_VAR_MOTOR_DISABLE,
     // MOT_VAR_MOTOR_CLEAR_FAULT,
 }
-MotVarId_Control_Motor_T;
+MotVarId_Cmd_Motor_T;
 
 /******************************************************************************/
 /*
@@ -219,13 +225,13 @@ typedef enum MotVarId_Params_MotorSecondary
     MOT_VAR_BASE_SPEED_LIMIT_REVERSE,
     MOT_VAR_BASE_I_LIMIT_MOTORING,
     MOT_VAR_BASE_I_LIMIT_GENERATING,
-    MOT_VAR_RAMP_ACCEL_TIME_CYCLES,
+    MOT_VAR_RAMP_ACCEL_TIME,
     MOT_VAR_ALIGN_MODE,
     MOT_VAR_ALIGN_POWER,
-    MOT_VAR_ALIGN_TIME_CYCLES,
+    MOT_VAR_ALIGN_TIME,
     MOT_VAR_OPEN_LOOP_POWER,
     MOT_VAR_OPEN_LOOP_SPEED,
-    MOT_VAR_OPEN_LOOP_ACCEL_TIME_CYCLES,
+    MOT_VAR_OPEN_LOOP_ACCEL_TIME,
     MOT_VAR_PHASE_PWM_MODE,
 }
 MotVarId_Params_MotorSecondary_T;
@@ -366,6 +372,9 @@ typedef enum MotVarId_Params_Thermistor
 }
 MotVarId_Params_Thermistor_T;
 
+// typedef MotVarId_Params_Thermistor_T MotVarId_Params_BoardThermistor_T;
+// typedef MotVarId_Params_Thermistor_T MotVarId_Params_MotorThermistor_T;
+
 /*
     Instance0 -> VSource
     Instance1 -> VSensor
@@ -383,18 +392,17 @@ typedef enum MotVarId_Params_VMonitor
 }
 MotVarId_Params_VMonitor_T;
 
-    // or use board command for const?
+//accept consts
 // typedef enum MotVarId_Params_Board
 // {
 //     MOT_VAR_BOARD_V_MAX,
 //     MOT_VAR_BOARD_I_MAX,
 //     MOT_VAR_BOARD_VABC_R1,
 //     MOT_VAR_BOARD_VABC_R2,
+//      Version
 // }
 // MotVarId_Params_Board_T;
 
-// typedef MotVarId_Params_Thermistor_T MotVarId_Params_MotorThermistor_T;
-// typedef MotVarId_Params_Thermistor_T MotVarId_Params_BoardThermistor_T;
 
 /******************************************************************************/
 /*
@@ -413,12 +421,12 @@ typedef enum MotVarId_Type_RealTime
     MOT_VAR_ID_TYPE_MONITOR_MOTOR,
     MOT_VAR_ID_TYPE_MONITOR_MOTOR_FOC,
     MOT_VAR_ID_TYPE_MONITOR_MOTOR_SENSOR,
-    // MonitorControl - Read/Write
-    MOT_VAR_ID_TYPE_MONITOR_CONTROL,
-    MOT_VAR_ID_TYPE_MONITOR_CONTROL_MOTOR,
-    // Control - Write-Only
+    // Control - Read/Write
     MOT_VAR_ID_TYPE_CONTROL,
     MOT_VAR_ID_TYPE_CONTROL_MOTOR,
+    // Cmd - Write-Only
+    MOT_VAR_ID_TYPE_CMD,
+    MOT_VAR_ID_TYPE_CMD_MOTOR,
     MOT_VAR_ID_TYPE_REAL_TIME_END = 16U,
 }
 MotVarId_Type_RealTime_T;
@@ -434,18 +442,24 @@ typedef enum MotVarId_Type_Parameter
     MOT_VAR_ID_TYPE_PARAMS_ANALOG_USER,
     MOT_VAR_ID_TYPE_PARAMS_VMONITOR,
     MOT_VAR_ID_TYPE_PARAMS_THERMISTOR,
+    /*
+        Thermistor type effectively include 1 bit instance type.
+        TypeInstance2 - Restart Instance count for convience, Motor or Board Thermistor
+    */
+    // MOT_VAR_ID_TYPE_PARAMS_BOARD_THERMISTOR,
+    // MOT_VAR_ID_TYPE_PARAMS_MOTOR_THERMISTOR,
     MOT_VAR_ID_TYPE_PARAMS_PROTOCOL,
     MOT_VAR_ID_TYPE_PARAMS_END = 16U,
 }
 MotVarId_Type_Parameter_T;
 
-/* Type of MotVarId_Type_Parameter_T */
-typedef enum MotVarId_Type_Type
+/* Type of MotVarId_Type_Parameter_T, MotVarId_Type_RealTime_T */
+typedef enum MotVarId_TypeType
 {
     MOT_VAR_ID_TYPE_REAL_TIME,
-    MOT_VAR_ID_TYPE_PARAMS,
+    MOT_VAR_ID_TYPE_PARAMETER,
 }
-MotVarId_Type_Type_T;
+MotVarId_TypeType_T;
 
 typedef enum MotVarId_Instance_BoardThermistor
 {
@@ -468,20 +482,38 @@ MotVarId_Instance_VMonitor_T;
 // handle via prefix
 typedef enum MotVarId_Instance_MotorThermistor
 {
-  MOT_VAR_ID_THERMISTOR_MOTOR_0,
-  MOT_VAR_ID_THERMISTOR_MOTOR_1,
-  MOT_VAR_ID_THERMISTOR_MOTOR_2,
-  MOT_VAR_ID_THERMISTOR_MOTOR_3,
+    MOT_VAR_ID_THERMISTOR_MOTOR_0,
+    MOT_VAR_ID_THERMISTOR_MOTOR_1,
+    MOT_VAR_ID_THERMISTOR_MOTOR_2,
+    MOT_VAR_ID_THERMISTOR_MOTOR_3,
 }
 MotVarId_Instance_MotorThermistor_T;
 
+typedef enum MotVarId_Instance_Motor
+{
+    MOT_VAR_ID_MOTOR_0,
+    MOT_VAR_ID_MOTOR_1,
+    MOT_VAR_ID_MOTOR_2,
+    MOT_VAR_ID_MOTOR_3,
+}
+MotVarId_Instance_Motor_T;
 
 typedef enum MotVarId_Instance_Prefix
 {
     MOT_VAR_ID_INSTANCE_PREFIX_BOARD,
     MOT_VAR_ID_INSTANCE_PREFIX_MOTOR,
+    // map 1 to 1 with type?
 }
 MotVarId_Instance_Prefix_T;
+
+// typedef enum MotVarId_InstanceType
+// {
+//     MOT_VAR_ID_INSTANCE_PREFIX_BOARD,
+//     MOT_VAR_ID_INSTANCE_PREFIX_MOTOR,
+//     MOT_VAR_ID_INSTANCE_PREFIX_VMONITOR,
+//     MOT_VAR_ID_INSTANCE_PREFIX_BOARD_THERMISTOR,
+// }
+// MotVarId_InstanceType_T;
 
 typedef union MotVarId
 {
