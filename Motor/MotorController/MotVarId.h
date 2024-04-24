@@ -39,10 +39,6 @@
 */
 /******************************************************************************/
 /*
-    VSource
-        Units0 => Volts * 10
-    VSensor, VAccs
-        Units0 => mV
 */
 typedef enum MotVarId_Monitor_General
 {
@@ -73,7 +69,6 @@ MotVarId_Monitor_AnalogUser_T;
 /*
     Speed/IPhase
         Units0 => UFrac16, may over saturate
-        Units1 => SFrac16, Clip
 */
 // ControlTimerBase;
 // Motor_OpenLoopState_T OpenLoopState;
@@ -300,6 +295,8 @@ MotVarId_Params_MotorPid_T;
 // Prop_Gain_Shift,
 // Integral_Gain,
 // Integral_Gain_Shift,
+
+
 typedef enum MotVarId_Params_General
 {
     MOT_VAR_V_SOURCE_REF_VOLTS,
@@ -416,16 +413,16 @@ MotVarId_Params_VMonitor_T;
 */
 typedef enum MotVarId_Type_RealTime
 {
-    // Monitor - Read-Only
+    /* Monitor - Read-Only */
     MOT_VAR_ID_TYPE_MONITOR_GENERAL,
     MOT_VAR_ID_TYPE_MONITOR_ANALOG_USER,
     MOT_VAR_ID_TYPE_MONITOR_MOTOR,
     MOT_VAR_ID_TYPE_MONITOR_MOTOR_FOC,
     MOT_VAR_ID_TYPE_MONITOR_MOTOR_SENSOR,
-    // Control - Read/Write
+    /* Control - Read/Write */
     MOT_VAR_ID_TYPE_CONTROL,
     MOT_VAR_ID_TYPE_CONTROL_MOTOR,
-    // Cmd - Write-Only
+    /* Cmd - Write-Only */
     MOT_VAR_ID_TYPE_CMD,
     MOT_VAR_ID_TYPE_CMD_MOTOR,
     MOT_VAR_ID_TYPE_REAL_TIME_END = 16U,
@@ -443,12 +440,6 @@ typedef enum MotVarId_Type_Parameter
     MOT_VAR_ID_TYPE_PARAMS_ANALOG_USER,
     MOT_VAR_ID_TYPE_PARAMS_VMONITOR,
     MOT_VAR_ID_TYPE_PARAMS_THERMISTOR,
-    /*
-        Thermistor type effectively include 1 bit instance type.
-        TypeInstance2 - Restart Instance count for convience, Motor or Board Thermistor
-    */
-    // MOT_VAR_ID_TYPE_PARAMS_BOARD_THERMISTOR,
-    // MOT_VAR_ID_TYPE_PARAMS_MOTOR_THERMISTOR,
     MOT_VAR_ID_TYPE_PARAMS_PROTOCOL,
     MOT_VAR_ID_TYPE_PARAMS_END = 16U,
 }
@@ -480,7 +471,6 @@ typedef enum MotVarId_Instance_VMonitor
 }
 MotVarId_Instance_VMonitor_T;
 
-// handle via prefix
 typedef enum MotVarId_Instance_MotorThermistor
 {
     MOT_VAR_ID_THERMISTOR_MOTOR_0,
@@ -499,11 +489,11 @@ typedef enum MotVarId_Instance_Motor
 }
 MotVarId_Instance_Motor_T;
 
+/* Alternatively map 1:1 with type */
 typedef enum MotVarId_Instance_Prefix
 {
     MOT_VAR_ID_INSTANCE_PREFIX_BOARD,
     MOT_VAR_ID_INSTANCE_PREFIX_MOTOR,
-    // map 1 to 1 with type?
 }
 MotVarId_Instance_Prefix_T;
 
