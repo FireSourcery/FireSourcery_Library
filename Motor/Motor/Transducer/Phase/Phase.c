@@ -36,6 +36,11 @@ void Phase_Init(Phase_T * p_phase)
     PWM_InitChannel(&p_phase->PwmA);
     PWM_InitChannel(&p_phase->PwmB);
     PWM_InitChannel(&p_phase->PwmC);
+#ifdef CONFIG_PHASE_PIN_SWITCH
+    Pin_T PinA;
+    Pin_T PinB;
+    Pin_T PinC;
+#endif
     p_phase->PhaseMode = PHASE_MODE_UNIPOLAR_1;
 }
 

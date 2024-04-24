@@ -538,21 +538,21 @@ static inline uint16_t Motor_GetIPeakRef_Adcu(MotorPtr_T p_motor)
 //          )()
 //         // void :   Motor_ProcCommutationMode,           \
 
-#define Motor_FnSelection( T, R, voidFn, setInt, setUint, getInt, getUint) _Generic((T), \
-    void:  voidFn, \
-    int32_t:  setInt, \
-    uint32_t:  setUint,\
-     )
+// #define Motor_FnSelection( T, R, voidFn, setInt, setUint, getInt, getUint) _Generic((T), \
+//     void:  voidFn, \
+//     int32_t:  setInt, \
+//     uint32_t:  setUint,\
+//      )
 
-#define Motor_FnSelection1( T ) _Generic((T){0}, \
-    int32_t:  Motor_GetIPeakRef_Adcu, \
-    uint32_t:  Motor_SetFeedbackMode_Cast, \
-    default: NULL )
+// #define Motor_FnSelection1( T ) _Generic((T){0}, \
+//     int32_t:  Motor_GetIPeakRef_Adcu, \
+//     uint32_t:  Motor_SetFeedbackMode_Cast, \
+//     default: NULL )
 
-static inline void test(MotorPtr_T p_motor, Motor_Function_T focFunction, Motor_Function_T sixStepFunction)
-{
-    Motor_FnSelection1(uint32_t)(p_motor, 0);
-}
+// static inline void test(MotorPtr_T p_motor, Motor_Function_T focFunction, Motor_Function_T sixStepFunction)
+// {
+//     Motor_FnSelection1(uint32_t)(p_motor, 0);
+// }
 
 /******************************************************************************/
 /*

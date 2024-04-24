@@ -75,37 +75,6 @@ static inline void MotorController_User_SetCmdThrottle(MotorControllerPtr_T p_mc
 static inline void MotorController_User_SetCmdBrake(MotorControllerPtr_T p_mc, uint16_t userCmd)    { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
 
 /******************************************************************************/
-/* Drive Direction */
-/******************************************************************************/
-static inline MotorController_Direction_T MotorController_User_GetDirection(const MotorControllerPtr_T p_mc)
-{
-    MotorController_Direction_T direction;
-    switch (StateMachine_GetActiveStateId(&p_mc->StateMachine))
-    {
-        case MCSM_STATE_ID_LOCK:        direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
-        case MCSM_STATE_ID_PARK:        direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
-        case MCSM_STATE_ID_NEUTRAL:     direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;         break;
-        case MCSM_STATE_ID_DRIVE:
-            if      (MotorController_CheckForwardAll(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
-            else if (MotorController_CheckReverseAll(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
-            else                                                    { direction = MOTOR_CONTROLLER_DIRECTION_ERROR; }
-            break;
-        default: direction = MOTOR_CONTROLLER_DIRECTION_ERROR; break;
-    }
-    return direction;
-}
-
-static inline bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, MotorController_Direction_T direction)
-{
-    bool isSuccess;
-    if(MotorController_User_GetDirection(p_mc) != direction) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
-    else { MotorController_BeepDouble(p_mc); }
-    isSuccess = (MotorController_User_GetDirection(p_mc) == direction);
-    if (isSuccess == false) { MotorController_BeepShort(p_mc); }
-    return isSuccess;
-}
-
-/******************************************************************************/
 /* Blocking */
 /******************************************************************************/
 /* Maybe blocking */
@@ -365,6 +334,8 @@ static inline VMonitor_T * MotorController_User_GetPtrVMonitor(const MotorContro
     Extern
 */
 /******************************************************************************/
+extern MotorController_Direction_T MotorController_User_GetDirection(const MotorControllerPtr_T p_mc);
+extern bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, MotorController_Direction_T direction);
 extern void MotorController_User_SetVSourceRef(MotorControllerPtr_T p_mc, uint16_t volts);
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
