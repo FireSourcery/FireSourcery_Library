@@ -465,9 +465,8 @@ static inline int32_t _Motor_ConvertPower_Scalar16ToWatts(int32_t vi_scalar16)  
 // static inline uint32_t _Motor_ConvertMechAngleToRpm(MotorPtr_T p_motor, uint16_t angle16 )            { return (angle16 * GLOBAL_MOTOR.SPEED_FREQ >> 16U) * 60U; }
 // static inline uint32_t _Motor_ConvertMechRpmToAngle(MotorPtr_T p_motor, uint16_t rpm )                { return (rpm << 16U) / (60U * GLOBAL_MOTOR.SPEED_FREQ); }
 
-// static inline int32_t _Motor_VSpeed_ConvertSpeedToVFrac16(MotorPtr_T p_motor, int32_t speed_frac16)   { return speed_frac16 * p_motor->Parameters.VSpeedRef_Rpm / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
-// static inline int32_t _Motor_VSpeed_ConvertRpmToVFrac16(MotorPtr_T p_motor, int32_t speed_rpm)        { return _Motor_VSpeed_ConvertSpeedToVFrac16(p_motor, _Motor_ConvertSpeed_RpmToScalar16(p_motor, speed_rpm) ); }
-// static inline uint32_t _Motor_VSpeed_ConvertToVSpeed(MotorPtr_T p_motor, uint16_t rpm)                { return Linear_Function(&p_motor->UnitsVSpeed, _Motor_ConvertSpeed_RpmToScalar16(p_motor, rpm)); }
+
+
 
 /******************************************************************************/
 /*
@@ -528,16 +527,32 @@ static inline uint16_t Motor_GetIPeakRef_Adcu(MotorPtr_T p_motor)
 #endif
 }
 
-// #define Motor_CommutationModeFn(p_motor, T) _Generic((T), \
+// #define Motor_CommutationModeFn(p_motor, foc, sixStep, T) _Generic((T), \
 //         Motor_FunctionGetInt32_T :   T(p_motor),           \
 //         Motor_FunctionSetUInt32_T :   T(p_motor),            \
 //         Motor_Function_T: T(p_motor)                         \
 //          )
+// #define Motor_CommutationModeFn(p_motor, foc, sixStep, X) _Generic((X), \
+//         uint32_t :   Motor_SetCommutationModeUInt32,            \
+//         int32_t: Motor_SetCommutationModeUInt32                       \
+//          )()
+//         // void :   Motor_ProcCommutationMode,           \
 
-// static inline void test(MotorPtr_T p_motor, Motor_Function_T focFunction)
-// {
-//     Motor_CommutationModeFn(p_motor, focFunction);
-// }
+#define Motor_FnSelection( T, R, voidFn, setInt, setUint, getInt, getUint) _Generic((T), \
+    void:  voidFn, \
+    int32_t:  setInt, \
+    uint32_t:  setUint,\
+     )
+
+#define Motor_FnSelection1( T ) _Generic((T){0}, \
+    int32_t:  Motor_GetIPeakRef_Adcu, \
+    uint32_t:  Motor_SetFeedbackMode_Cast, \
+    default: NULL )
+
+static inline void test(MotorPtr_T p_motor, Motor_Function_T focFunction, Motor_Function_T sixStepFunction)
+{
+    Motor_FnSelection1(uint32_t)(p_motor, 0);
+}
 
 /******************************************************************************/
 /*
@@ -587,6 +602,9 @@ static inline int16_t Motor_GetVSpeed_Frac16(MotorPtr_T p_motor)
 {
     return Linear_Frac16_Signed(&p_motor->UnitsVSpeed, p_motor->Speed_FracS16);
 }
+// static inline int32_t _Motor_VSpeed_ConvertSpeedToVFrac16(MotorPtr_T p_motor, int32_t speed_frac16)   { return speed_frac16 * p_motor->Parameters.VSpeedRef_Rpm / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
+// static inline int32_t _Motor_VSpeed_ConvertRpmToVFrac16(MotorPtr_T p_motor, int32_t speed_rpm)        { return _Motor_VSpeed_ConvertSpeedToVFrac16(p_motor, _Motor_ConvertSpeed_RpmToScalar16(p_motor, speed_rpm) ); }
+// static inline uint32_t _Motor_VSpeed_ConvertToVSpeed(MotorPtr_T p_motor, uint16_t rpm)                { return Linear_Function(&p_motor->UnitsVSpeed, _Motor_ConvertSpeed_RpmToScalar16(p_motor, rpm)); }
 
 /******************************************************************************/
 /*!

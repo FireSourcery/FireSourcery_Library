@@ -34,7 +34,6 @@
 // #include <stdbit.h>
 
 //move to math_general
-
 // math_fixed
 // math_q
 
@@ -78,87 +77,79 @@ uint16_t q_sqrt(int32_t x)
 
 /* Iterative log2 */
 /*
-    0 -> 0
-    1 -> 0
-    2 -> 1
     65535 -> 15
     65536 -> 16
+    65537 -> 16
 */
-uint8_t q_log2(uint32_t num)
+uint8_t q_log2(uint32_t x)
 {
 
 #if (__STDC_VERSION__ >= 202311L)
-    return stdc_bit_width(num) - 1U;
+    return stdc_bit_width(x) - 1U;
 #elif defined(__GNUC__)
-    if(num == 0U) { return 0U; }
-    return 31U - __builtin_clz(num);
+    return (x == 0U) ? 0U : (31U - __builtin_clz(x));
 #else
     uint8_t shift = 0U;
-    while((num >> shift) > 1U) { shift++; }
+    while((x >> shift) > 1U) { shift++; }
     return shift;
 #endif
 }
 
 /*
-    0 -> 0
-    1 -> 1
-    2 -> 2
-    32767 -> 15
-    32768 -> 16
-    65535 -> 16
+    32768 -> 15
+    32769 -> 16
+    65536 -> 16
+    65537 -> 17
 */
-// uint8_t q_log2_ceiling(uint32_t num)
-// {
-//     uint8_t shift = 0U;
-//     while((num >> shift) > 0U) { shift++; }
-//     return shift;
-// }
-
-uint32_t q_pow2bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t num)
+uint8_t q_log2_ceiling(uint32_t x)
 {
-    uint32_t lower = q_log2(num);
+    q_log2(x - 1U) + 1U;
+}
+
+uint32_t q_pow2bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t x)
+{
+    uint32_t lower = q_log2(x);
     *p_lower = 1U << lower;
     *p_upper = 1U << (lower + 1U);
 }
 
-uint8_t q_log2_round(uint32_t num)
+uint8_t q_log2_round(uint32_t x)
 {
-    uint32_t lower = q_log2(num);
+    uint32_t lower = q_log2(x);
     uint32_t upper = lower + 1U;
     uint32_t pow2Lower = 1U << lower;
     uint32_t pow2Upper = 1U << upper;
 
-    return (pow2Upper - num) < (num - pow2Lower) ? upper : lower;
+    return (pow2Upper - x) < (x - pow2Lower) ? upper : lower;
 }
 
 /* nearest pow2 */
-uint32_t q_pow2_round(uint32_t num)
+uint32_t q_pow2_round(uint32_t x)
 {
-    uint32_t lower = q_log2(num);
+    uint32_t lower = q_log2(x);
     uint32_t upper = lower + 1U;
     uint32_t pow2Lower = 1U << lower;
     uint32_t pow2Upper = 1U << upper;
 
-    return (pow2Upper - num) < (num - pow2Lower) ? pow2Upper : pow2Lower;
+    return (pow2Upper - x) < (x - pow2Lower) ? pow2Upper : pow2Lower;
 }
 
-/* num != INT32_MIN */
+/* x != INT32_MIN */
 /*
     131,071 -> 14
 */
-uint8_t q_lshift_max_signed(int32_t num)
+uint8_t q_lshift_max_signed(int32_t x)
 {
-    uint32_t positiveNum = math_abs(num);
-    return 30U - q_log2(positiveNum); /* q_log2(INT32_MAX) - q_log2(positiveNum); */
+    return 30U - q_log2(math_abs(x)); /* q_log2(INT32_MAX) - q_log2(abs); */
 }
 
 // leading zeros
-uint8_t q_lshift_max_unsigned(uint32_t num)
+uint8_t q_lshift_max_unsigned(uint32_t x)
 {
-    return 31U - q_log2(num);
+    return 31U - q_log2(x);
 }
 
-int32_t q_maxfactor_signed(uint32_t num)
+int32_t q_maxfactor_signed(uint32_t x)
 {
 
 }

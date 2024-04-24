@@ -41,16 +41,18 @@
 // #endif
 
 // #define MCSM_TRANSITION_TABLE_LENGTH (6U + _MCSM_TRANSITION_TABLE_LENGTH_SERVO)
-#define MCSM_TRANSITION_TABLE_LENGTH (7U)
+#define MCSM_TRANSITION_TABLE_LENGTH (8U)
 
 typedef enum MotorController_StateMachine_Input
 {
     MCSM_INPUT_FAULT,
     MCSM_INPUT_LOCK,
-    MCSM_INPUT_CMD,
     MCSM_INPUT_DIRECTION,   /* Drive Direction */
-    MCSM_INPUT_DRIVE,       /* Drive Throttle/Brake */
-    MCSM_INPUT_RELEASE,
+    MCSM_INPUT_CMD,
+    // MCSM_INPUT_DRIVE,    /* Drive Throttle/Brake */
+    MCSM_INPUT_THROTTLE,
+    MCSM_INPUT_BRAKE,
+    // MCSM_INPUT_RELEASE,
     MCSM_INPUT_SERVO,
     // MCSM_INPUT_USER,
 }

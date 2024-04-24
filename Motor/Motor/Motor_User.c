@@ -47,7 +47,7 @@ static int32_t Scale16(uint16_t scalar16, int32_t value) { return (int32_t)scala
     control proc may overwrite pid state set
 
     Sync Mode
-    Must check input flags every pwm cycle. Input value before Input Id, suffcient?
+    Must check input flags every pwm cycle. Input value before Input Id, sufficient?
 
     CmdValue (Ramp Target) and CmdMode selectively sync inputs for StateMachine
 */
@@ -82,9 +82,16 @@ void Motor_User_ActivateFeedbackMode_Cast(MotorPtr_T p_motor, uint8_t modeWord) 
 */
 /* may need to be private */
 void Motor_User_SetCmd(MotorPtr_T p_motor, int16_t userCmd) { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_LogicalDirectionCmd(p_motor, userCmd)); }
-// void Motor_User_ClearState(MotorPtr_T p_motor) { Linear_Ramp_SetTarget(&p_motor->Ramp, 0); }
+// void Motor_User_ClearState(MotorPtr_T p_motor) { Linear_Ramp_SetState(&p_motor->Ramp, 0); }
 int32_t Motor_User_GetCmd(const MotorPtr_T p_motor) { return Motor_LogicalDirectionCmd(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
+int32_t Motor_User_GetSetPoint(const MotorPtr_T p_motor) { return Motor_LogicalDirectionCmd(p_motor, Linear_Ramp_GetOutput(&p_motor->Ramp)); }
 
+
+/******************************************************************************/
+/*!
+   Applies limits
+*/
+/******************************************************************************/
 /******************************************************************************/
 /*!
     Voltage Mode
@@ -235,10 +242,10 @@ void Motor_User_SetActiveCmdValue(MotorPtr_T p_motor, int16_t userCmd)
     else                            { Motor_User_SetVoltageCmdValue(p_motor, userCmd); }
 }
 
-void Motor_User_ActivateDefaultFeedbackMode(MotorPtr_T p_motor)
-{
-    Motor_User_ActivateFeedbackMode(p_motor, p_motor->Parameters.FeedbackModeDefault);
-}
+// void Motor_User_ActivateDefaultFeedbackMode(MotorPtr_T p_motor)
+// {
+//     Motor_User_ActivateFeedbackMode(p_motor, p_motor->Parameters.FeedbackModeDefault);
+// }
 
 
 /******************************************************************************/

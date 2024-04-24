@@ -90,7 +90,7 @@ void MotorController_Init(MotorControllerPtr_T p_mc)
     //     MotorController_LoadParamsDefault(&MotorControllerMain);  /* Load runtime calculated */
     //     /* or prompt user, resets every boot until user saves params */
     // }
-
+    MotorController_SetAdcResultsNominal(p_mc);
     StateMachine_Init(&p_mc->StateMachine);
 }
 
@@ -121,8 +121,8 @@ void MotorController_LoadParamsDefault(MotorControllerPtr_T p_mc)
     //     PID_SetTunings(&(p_mc->CONFIG.P_MOTORS[iMotor].PidId), 1U, 1U, 1U, 2U, 0U, 0U);
     // }
     MotorController_ResetBootDefault(p_mc); /* Set Boot Options Buffer in RAM */
+    /* following boots will still reload defaults until user save */
     //  save to nvm? or wait user confirmation in gui
-    /* following boots will still reload defaults until user  */
 }
 
 void MotorController_ResetBootDefault(MotorControllerPtr_T p_mc)
@@ -202,8 +202,8 @@ NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p
     Protocol_T * p_protocol;
 
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
-   status = Flash_Erase_Blocking(p_mc->CONFIG.P_FLASH, p_mc->CONFIG.P_PARAMS_START, p_mc->CONFIG.PARAMS_SIZE); /* Flash must erase before write */
-   // status = Flash_Erase_Blocking(p_mc->CONFIG.P_FLASH, p_mc->CONFIG.P_PARAMS_PARTITION->P_START, p_mc->CONFIG.P_PARAMS_PARTITION->SIZE); /* Flash must erase before write */
+   status = Flash_Erase_Blocking(p_mc->CONFIG.P_FLASH, p_mc->CONFIG.P_PARAMS_START, p_mc->CONFIG.PARAMS_SIZE); /* Flash must erase, all parameters in most cases, before write */
+//    status = Flash_Erase_Blocking(p_mc->CONFIG.P_FLASH, p_mc->CONFIG.P_FLASH->CONFIG.P_PARAMS_PARTITION->P_START, p_mc->CONFIG.P_FLASH->CONFIG.P_PARAMS_PARTITION->SIZE);
 #endif
 
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->CONFIG.P_PARAMS_NVM, &p_mc->Parameters, sizeof(MotorController_Params_T)); };

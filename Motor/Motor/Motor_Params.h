@@ -73,8 +73,7 @@ static inline Motor_CommutationMode_T Motor_Params_GetCommutationMode(MotorPtr_T
 static inline void Motor_Params_SetCommutationMode(MotorPtr_T p_motor, Motor_CommutationMode_T mode)        { p_motor->Parameters.CommutationMode = mode; }
 
 static inline Motor_FeedbackMode_T Motor_Params_GetDefaultFeedbackMode(MotorPtr_T p_motor)                  { return p_motor->Parameters.FeedbackModeDefault; }
-static inline void Motor_Params_SetDefaultFeedbackMode(MotorPtr_T p_motor, Motor_FeedbackMode_T mode)       { p_motor->Parameters.FeedbackModeDefault = mode; }
-static inline void Motor_Params_SetDefaultFeedbackMode_Cast(MotorPtr_T p_motor, uint16_t wordValue)         { p_motor->Parameters.FeedbackModeDefault.Word = wordValue; }
+static inline void Motor_Params_SetDefaultFeedbackMode(MotorPtr_T p_motor, uint16_t wordValue)              { p_motor->Parameters.FeedbackModeDefault.Word = wordValue; }
 
 /*  */
 static inline uint32_t Motor_Params_GetRampAccel_Cycles(MotorPtr_T p_motor)                     { return p_motor->Parameters.RampAccel_Cycles; }

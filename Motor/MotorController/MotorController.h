@@ -133,6 +133,7 @@ typedef enum MotorController_DriveId
     MOTOR_CONTROLLER_DRIVE_ZERO,
     MOTOR_CONTROLLER_DRIVE_THROTTLE,
     MOTOR_CONTROLLER_DRIVE_BRAKE,
+    MOTOR_CONTROLLER_DRIVE_CMD,
 }
 MotorController_DriveId_T;
 
@@ -144,9 +145,9 @@ typedef enum MotorController_LockedId
     MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR,
     MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC,
     MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS,
-    // MOTOR_CONTROLLER_BLOCKING_NVM_BOOT,
-    // MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE,
-    // MOTOR_CONTROLLER_BLOCKING_NVM_READ_ONCE,
+    // MOTOR_CONTROLLER_LOCKED_NVM_SAVE_BOOT,
+    // MOTOR_CONTROLLER_LOCKED_NVM_WRITE_ONCE,
+    // MOTOR_CONTROLLER_LOCKED_NVM_READ_ONCE,
 }
 MotorController_LockedId_T;
 
@@ -347,14 +348,16 @@ typedef struct MotorController
 #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
     MotAnalog_Results_T FaultAnalogRecord;
 #endif
-    MotorController_DriveId_T DriveState;
-    /* Blocking/Calibration SubState */
-    MotorController_LockedId_T BlockingState;
+    /* SubStates - effectively previous input */
+    MotorController_DriveId_T DriveSubState;
+    MotorController_LockedId_T LockSubState;
+    // int32_t UserCmdValue; /* Not needed unless comparing greater/less then */
     /* Async return status */
+    // union
+    // {
     NvMemory_Status_T NvmStatus; /* Common NvmStatus, e.g. EEPROM/Flash */
-    // calibration status?
-    // MotorController_Direction_T DriveDirection; /* status */
-    int32_t UserCmdValue; /* Pass outside StateMachine, User Get */
+    //     Calibration_Status_T CalibrationStatus;
+    // } AsyncStatus;
 }
 MotorController_T, * MotorControllerPtr_T;
 
@@ -406,8 +409,8 @@ static inline void MotorController_ClearILimitAll(MotorControllerPtr_T p_mc)    
 static inline bool MotorController_ClearILimitAll_Id(MotorControllerPtr_T p_mc)                          { return MotorN_User_ClearLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_ClearILimitActive_Id, MOTOR_I_LIMIT_ACTIVE_MC); }
 static inline bool MotorController_SetILimitAll_Id(MotorControllerPtr_T p_mc, uint16_t limit_scalar16)   { return MotorN_User_SetLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetILimitActive_Id, limit_scalar16, MOTOR_I_LIMIT_ACTIVE_MC); }
 
-// move feeedback mode default to mc, active mode in motor
-static inline void MotorController_SetCmdModeDefault(MotorControllerPtr_T p_mc)                                 { MotorN_User_SetFeedbackMode(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->Parameters.DefaultCmdMode); }
+/* Default FeedbackMode store in MC, active mode in Motor */
+static inline void MotorController_StartCmdModeDefault(MotorControllerPtr_T p_mc)                               { MotorN_User_SetFeedbackMode(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->Parameters.DefaultCmdMode); }
 static inline void MotorController_SetCmdMode(MotorControllerPtr_T p_mc, Motor_FeedbackMode_T feedbackMode)     { MotorN_User_SetFeedbackMode(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, feedbackMode);}
 static inline void MotorController_SetCmdModeValue(MotorControllerPtr_T p_mc, int16_t userCmd)                  { MotorN_User_SetCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetActiveCmdValue, userCmd); }
 // static inline void MotorController_SetCmdModeValue(MotorControllerPtr_T p_mc, int16_t userCmd)               { _MotorController_SetCmdAll(p_mc, Motor_User_SetActiveCmdValue, userCmd); }
@@ -447,8 +450,8 @@ static inline void MotorController_SetThrottleValue(MotorControllerPtr_T p_mc, u
 // todo brake hold threshold
 static inline void _SetBrakeCmd(MotorPtr_T p_motor, int16_t brake)
 {
-
-    if(Motor_User_GetSpeed_UFrac16(p_motor) > INT16_MAX / 50)
+    //todo change to current
+    if(Motor_User_GetSpeed_UFrac16(p_motor) >  (INT16_MAX * .02))
     {
         Motor_User_SetTorqueCmdValue(p_motor, (int32_t)0 - brake);
     }

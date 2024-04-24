@@ -135,17 +135,17 @@ MotVarId_Monitor_MotorSensor_T;
 */
 typedef enum MotVarId_Control
 {
-    MOT_VAR_USER_SET_POINT,                 // Throttle, Brake, Servo In, Value pending feedbackMode
+    // MOT_VAR_USER_SET_POINT,                 // Throttle, Brake, Servo In, Value pending feedbackMode
     MOT_VAR_DIRECTION,                      // MotorController_Direction_T,
+    // MOT_VAR_ACTIVE_INIT_MODE,            // MotorController_InitMode_T
 //  MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE,      // not saved to Nvm
 }
 MotVarId_Control_T;
 
 typedef enum MotVarId_Control_Motor
 {
-    MOT_VAR_MOTOR_USER_SET_POINT,           // Ramp Input
-    // MOT_VAR_MOTOR_USER_SET_POINT,           // Ramp In (UserCmd), Ramp Out (SetPoint)
-    // MOT_VAR_MOTOR_USER_SET_POINT,           // Ramp In
+    MOT_VAR_MOTOR_USER_SET_POINT,           // Ramp In (UserCmd), Ramp Out (SetPoint)
+    MOT_VAR_MOTOR_USER_CMD,                 // Ramp In
     MOT_VAR_MOTOR_DIRECTION,                // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
     MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,     // Write buffered user value, read state value
     MOT_VAR_MOTOR_USER_SPEED_LIMIT,
@@ -157,7 +157,7 @@ MotVarId_Control_Motor_T;
 typedef enum MotVarId_Cmd
 {
     MOT_VAR_BEEP,
-    // MOT_VAR_USER_CMD,
+    MOT_VAR_USER_CMD, // Throttle, Brake, Servo In, pending feedbackMode
     MOT_VAR_THROTTLE,
     MOT_VAR_BRAKE,
     MOT_VAR_RELEASE_CONTROL,
@@ -199,7 +199,7 @@ typedef enum MotVarId_Params_MotorPrimary
 {
     MOT_VAR_COMMUTATION_MODE,
     MOT_VAR_SENSOR_MODE,
-    MOT_VAR_DEFAULT_FEEDBACK_MODE,
+    MOT_VAR_MOTOR_DEFAULT_FEEDBACK_MODE, //depreciate
     MOT_VAR_DIRECTION_CALIBRATION,
     MOT_VAR_POLE_PAIRS,
     MOT_VAR_KV,
@@ -307,6 +307,7 @@ typedef enum MotVarId_Params_General
     MOT_VAR_BATTERY_FULL_ADCU,
     MOT_VAR_USER_INIT_MODE,                 // MotorController_InitMode_T
     MOT_VAR_USER_INPUT_MODE,                // MotorController_InputMode_T
+    MOT_VAR_DEFAULT_FEEDBACK_MODE,          // Motor_FeedbackMode_T
     MOT_VAR_THROTTLE_MODE,                  // MotorController_ThrottleMode_T
     MOT_VAR_BRAKE_MODE,                     // MotorController_BrakeMode_T
     MOT_VAR_DRIVE_ZERO_MODE,                // MotorController_DriveZeroMode_T

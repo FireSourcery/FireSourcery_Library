@@ -66,7 +66,7 @@ typedef uint16_t checksum_t;
     Essentially the packets "OpCode"
 */
 // typedef enum MotProtocol_HeaderId
-typedef enum MotPacket_Id ENUM8_T
+typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
 {
     /*
         2-Byte Sync Packets
@@ -132,7 +132,6 @@ MotPacket_Sync_T;
 
 typedef struct MOT_PACKET_PACKED MotPacket_Header
 {
-    // MotPacket_HeaderFixed_T Fixed;
     uint8_t Start;  /* MOT_PACKET_START_BYTE */
     uint8_t Id;     /* MotPacket_HeaderId_T */
     uint16_t Checksum;

@@ -175,6 +175,7 @@ extern void Motor_User_ActivateFeedbackMode(MotorPtr_T p_motor, Motor_FeedbackMo
 extern void Motor_User_ActivateFeedbackMode_Cast(MotorPtr_T p_motor, uint8_t modeWord);
 extern void Motor_User_SetCmd(MotorPtr_T p_motor, int16_t userCmd);
 extern int32_t Motor_User_GetCmd(const MotorPtr_T p_motor);
+extern int32_t Motor_User_GetSetPoint(const MotorPtr_T p_motor);
 extern void Motor_User_SetVoltageMode(MotorPtr_T p_motor);
 extern void Motor_User_SetVoltageCmdValue(MotorPtr_T p_motor, int16_t vCmd);
 extern void Motor_User_SetVoltageModeCmd(MotorPtr_T p_motor, int16_t voltage);

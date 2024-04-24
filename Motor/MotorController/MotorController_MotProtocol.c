@@ -97,8 +97,8 @@ static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_Call
                 case MOTOR_CONTROLLER_LOCKED_ENTER:     status = MotorController_User_EnterLockedState(p_mc) ? MOT_STATUS_OK : MOT_STATUS_ERROR;  break;
                 case MOTOR_CONTROLLER_LOCKED_EXIT:      status = MotorController_User_ExitLockedState(p_mc) ? MOT_STATUS_OK : MOT_STATUS_ERROR;   break;
                 /* Non Blocking function, host/caller poll status after. */ // calibration status todo
-                case MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR:    MotorController_User_InputLocked_Blocking(p_mc, MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR);    status = MOT_STATUS_OK; break;
-                case MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC:       MotorController_User_InputLocked_Blocking(p_mc, MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC);       status = MOT_STATUS_OK; break;
+                case MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR:    MotorController_User_InputLocked(p_mc, MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR);    status = MOT_STATUS_OK; break;
+                case MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC:       MotorController_User_InputLocked(p_mc, MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC);       status = MOT_STATUS_OK; break;
                 /* Blocking functions can directly return status. */
                 case MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS:     status = MotorController_User_SaveParameters_Blocking(p_mc);    break;
                 default: break;
@@ -148,13 +148,14 @@ static protocol_txsize_t VarWrite(MotorControllerPtr_T p_mc, MotPacket_VarWriteR
 
 /******************************************************************************/
 /*! Once */
+/* using voluntary StateMachine Check */
 /******************************************************************************/
-static protocol_txsize_t ReadOnce_Blocking(MotorControllerPtr_T p_app, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket)
+static protocol_txsize_t ReadOnce_Blocking(MotorControllerPtr_T p_mc, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket)
 {
     protocol_txsize_t txSize;
-    if(MotorController_User_IsLockedState(p_app) == true)
+    if(MotorController_User_IsLockedState(p_mc) == true)
     {
-        txSize = MotProtocol_Flash_ReadOnce_Blocking(p_app->CONFIG.P_FLASH, p_txPacket, p_rxPacket);
+        txSize = MotProtocol_Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, p_txPacket, p_rxPacket);
     }
     else
     {
@@ -163,12 +164,12 @@ static protocol_txsize_t ReadOnce_Blocking(MotorControllerPtr_T p_app, MotPacket
     return txSize;
 }
 
-static protocol_txsize_t WriteOnce_Blocking(MotorControllerPtr_T p_app, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket)
+static protocol_txsize_t WriteOnce_Blocking(MotorControllerPtr_T p_mc, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket)
 {
     protocol_txsize_t txSize;
-    if(MotorController_User_IsLockedState(p_app) == true)
+    if(MotorController_User_IsLockedState(p_mc) == true)
     {
-        txSize = MotProtocol_Flash_WriteOnce_Blocking(p_app->CONFIG.P_FLASH, p_txPacket, p_rxPacket);
+        txSize = MotProtocol_Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, p_txPacket, p_rxPacket);
     }
     else
     {
@@ -181,8 +182,10 @@ static protocol_txsize_t WriteOnce_Blocking(MotorControllerPtr_T p_app, MotPacke
 /******************************************************************************/
 /*! Stateful Read Data */
 /******************************************************************************/
-static Protocol_ReqCode_T ReadData(MotorControllerPtr_T p_app, Protocol_ReqContext_T * p_reqContext)
+static Protocol_ReqCode_T ReadData(MotorControllerPtr_T p_mc, Protocol_ReqContext_T * p_reqContext)
 {
+    // if(MotorController_User_IsLockedState(p_mc) == true)
+
     return MotProtocol_ReadData(NULL, p_reqContext);
 }
 
@@ -190,9 +193,9 @@ static Protocol_ReqCode_T ReadData(MotorControllerPtr_T p_app, Protocol_ReqConte
 /*! Stateful Write Data */
 /******************************************************************************/
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-static Protocol_ReqCode_T WriteData_Blocking(MotorControllerPtr_T p_app, Protocol_ReqContext_T * p_reqContext)
+static Protocol_ReqCode_T WriteData_Blocking(MotorControllerPtr_T p_mc, Protocol_ReqContext_T * p_reqContext)
 {
-    return MotProtocol_Flash_WriteData_Blocking(p_app->CONFIG.P_FLASH, p_reqContext);
+    return MotProtocol_Flash_WriteData_Blocking(p_mc->CONFIG.P_FLASH, p_reqContext);
 }
 // #endif
 
@@ -233,9 +236,9 @@ static const Protocol_Req_T REQ_TABLE[] =
     // PROTOCOL_REQ(MOT_PACKET_READ_VAR,        ReadVar,            0U,     PROTOCOL_SYNC_DISABLE),
     PROTOCOL_REQ(MOT_PACKET_DATA_MODE_READ,      0U,     ReadData,               REQ_SYNC_DATA_MODE),
     // PROTOCOL_REQ(MOT_PACKET_DATA_MODE_DATA,      0U,     ReadData,               REQ_SYNC_DATA_MODE),
-#if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
+// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
     PROTOCOL_REQ(MOT_PACKET_DATA_MODE_WRITE,     0U,     WriteData_Blocking,     REQ_SYNC_DATA_MODE),
-#endif
+// #endif
 };
 
 const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
