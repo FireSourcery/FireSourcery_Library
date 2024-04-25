@@ -29,23 +29,6 @@
     @version V0
 */
 /******************************************************************************/
-/*
-    Reference Manual pg 326
-    The total conversion time depends on the sample time (as determined by
-    ADC_SC3[ADLSMP]), the MCU bus frequency, the conversion mode (8-bit, 10-bit or
-    12-bit), and the frequency of the conversion clock (fADCK). After the module becomes
-    active, sampling of the input begins.ADC_SC3[ADLSMP] selects between short (3.5
-    ADCK cycles) and long (23.5 ADCK cycles) sample times.
-
-    Conversion type ADICLK ADLSMP Max total conversion time
-    Single or first continuous 8-bit                 0x, 10 0     20 ADCK cycles + 5 bus clock cycles
-    Single or first continuous 10-bit or 12-bit     0x, 10 0     23 ADCK cycles + 5 bus clock cycles
-    => 3.125us @8Mhz
-
-    Subsequent continuous 10-bit or 12-bit; fBUS > fADCK
-        20 ADCK cycles
-    => 2.5us @8Mhz
-*/
 #ifndef HAL_ANALOG_PLATFORM_H
 #define HAL_ANALOG_PLATFORM_H
 
@@ -111,31 +94,34 @@ static inline void HAL_Analog_DisableContinuousConversion(HAL_Analog_T * p_hal) 
 static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal) { p_hal->SC1 |= ADC_SC1_ADCO_MASK; }
 
 /*
-    In Board_Init
+    Reference Manual pg 326
+    The total conversion time depends on the sample time (as determined by
+    ADC_SC3[ADLSMP]), the MCU bus frequency, the conversion mode (8-bit, 10-bit or
+    12-bit), and the frequency of the conversion clock (fADCK). After the module becomes
+    active, sampling of the input begins.ADC_SC3[ADLSMP] selects between short (3.5
+    ADCK cycles) and long (23.5 ADCK cycles) sample times.
+
+    Conversion type ADICLK ADLSMP Max total conversion time
+    Single or first continuous 8-bit                0x, 10 0     20 ADCK cycles + 5 bus clock cycles
+    Single or first continuous 10-bit or 12-bit     0x, 10 0     23 ADCK cycles + 5 bus clock cycles
+    => 3.125us @8Mhz
+
+    Subsequent continuous 10-bit or 12-bit; fBUS > fADCK
+        20 ADCK cycles
+    => 2.5us @8Mhz
+
+    High speed (ADLPC=0) fADCK 8.0 Max
+    Asynchronous clock (ADACK). + 5us
 */
-static inline void HAL_Analog_Init(const HAL_Analog_T * p_hal)
+static inline void HAL_Analog_Init(HAL_Analog_T * p_hal)
 {
-    (void)p_hal;
-    // p_hal->SC2 = ADC_SC2_REFSEL(referenceVoltageSource);
-    // p_hal->SC3 = ADC_SC3_ADICLK(clockSource) | ADC_SC3_MODE(ResolutionMode) | ADC_SC3_ADIV(clockDivider);
-
-    /* Configure SC2 register. */
-    // tmp32 = (base->SC2) & (~ADC_SC2_REFSEL_MASK);
-    // tmp32 |= ADC_SC2_REFSEL(config->referenceVoltageSource);
-    // base->SC2 = tmp32;
-
-    // /* Configure SC3 register. */
-    // tmp32 =
-    //     ADC_SC3_ADICLK(config->clockSource) | ADC_SC3_MODE(config->ResolutionMode) | ADC_SC3_ADIV(config->clockDivider);
-    // if (config->enableLowPower)
-    // {
-    //     tmp32 |= ADC_SC3_ADLPC_MASK;
-    // }
-    // if (config->enableLongSampleTime)
-    // {
-    //     tmp32 |= ADC_SC3_ADLSMP_MASK;
-    // }
-    // base->SC3 = tmp32;
+    p_hal->SC2 = (p_hal->SC2 & ~ADC_SC2_REFSEL_MASK) | ADC_SC2_REFSEL(1U); /*!< Analog supply pin pair (VDDA/VSSA). >*/
+    p_hal->SC3 = ADC_SC3_ADICLK(2U) | ADC_SC3_MODE(2U) | ADC_SC3_ADIV(0U);
+    /*!< Alternate clock (ALTCLK). >*/
+    /*!< 12-bit conversion (N = 12) >*/
+    /*!< Divide ration = 1, and clock rate = Input clock. >*/
+    // tmp32 |= ADC_SC3_ADLPC_MASK; enableLowPower
+    // tmp32 |= ADC_SC3_ADLSMP_MASK; enableLongSampleTime
 }
 
 #endif

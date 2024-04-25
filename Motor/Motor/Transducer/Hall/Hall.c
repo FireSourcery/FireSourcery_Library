@@ -47,8 +47,12 @@ const uint16_t _HALL_DEGREES_TABLE[HALL_SENSORS_TABLE_LENGTH] =
 */
 void Hall_Init(Hall_T * p_hall)
 {
-    p_hall->Direction = HALL_DIRECTION_CCW;
+    Pin_Input_Init(&p_hall->PinA);
+    Pin_Input_Init(&p_hall->PinB);
+    Pin_Input_Init(&p_hall->PinC);
+
     if(p_hall->CONFIG.P_PARAMS_NVM != 0U) { memcpy(&p_hall->Params, p_hall->CONFIG.P_PARAMS_NVM, sizeof(Hall_Params_T)); }
+    p_hall->Direction = HALL_DIRECTION_CCW;
 }
 
 void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC, uint8_t sensorsB, uint8_t sensorsInvA, uint8_t sensorsC, uint8_t sensorsInvB)

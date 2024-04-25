@@ -79,7 +79,7 @@ typedef enum Encoder_Align
 }
 Encoder_Align_T;
 
-typedef struct __attribute__((aligned(2U))) Encoder_Params
+typedef struct Encoder_Params
 {
     uint16_t CountsPerRevolution;         /* Derive Angular Units. Max for counting AngularD, CaptureDeltaT mode need 2nd TimerCounterMax */
     uint16_t ScalarSpeedRef_Rpm;         /* Derive Scalar16 Units. */
@@ -112,7 +112,6 @@ typedef const struct Encoder_Config
     const uint32_t EXTENDED_TIMER_FREQ;
     const uint32_t POLLING_FREQ;        /*!< DeltaT Interpolation Freq. */
     const uint32_t SAMPLE_FREQ;         /*!< DeltaD Speed Sample Freq. */
-    void(* const HAL_INIT)(void);
     const Encoder_Params_T * const P_PARAMS;
 }
 Encoder_Config_T;

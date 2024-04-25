@@ -40,13 +40,12 @@ void _Encoder_DeltaD_InitCounter(Encoder_T * p_encoder)
     HAL_Encoder_InitCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
     HAL_Encoder_WriteCounterMax(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, p_encoder->Params.CountsPerRevolution - 1U);
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
-    /* Pins HAL init in main app */
     // #ifdef CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
-    // if(p_encoder->Params.IsQuadratureCaptureEnabled == true)
-    // {
-    //     Pin_Input_Init(&p_encoder->PinA);
-    //     Pin_Input_Init(&p_encoder->PinB);
-    // }
+    if(p_encoder->Params.IsQuadratureCaptureEnabled == true)
+    {
+        Pin_Input_Init(&p_encoder->PinA);
+        Pin_Input_Init(&p_encoder->PinB);
+    }
     // #endif
 #endif
 }

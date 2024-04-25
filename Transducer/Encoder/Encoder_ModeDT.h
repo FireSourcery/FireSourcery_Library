@@ -169,6 +169,10 @@ static inline int32_t Encoder_ModeDT_GetGroundVelocity_Kmh(Encoder_T * p_encoder
 */
 /******************************************************************************/
 extern void Encoder_ModeDT_Init(Encoder_T * p_encoder);
+extern void Encoder_ModeDT_Init_Polling(Encoder_T * p_encoder);
+extern void Encoder_ModeDT_Init_InterruptQuadrature(Encoder_T * p_encoder);
+extern void Encoder_ModeDT_Init_InterruptAbc(Encoder_T * p_encoder);
+
 extern void Encoder_ModeDT_SetInitial(Encoder_T * p_encoder);
 
 #endif

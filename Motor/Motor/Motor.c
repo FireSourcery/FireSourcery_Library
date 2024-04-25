@@ -96,17 +96,15 @@ void Motor_InitSensor(MotorPtr_T p_motor)
     switch(p_motor->Parameters.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL:
-            p_motor->CONFIG.INIT_SENSOR_HALL();  //todo move to hal
-            Encoder_ModeDT_Init(&p_motor->Encoder);
             Hall_Init(&p_motor->Hall);
-#if defined(CONFIG_MOTOR_HALL_MODE_ISR)
+#if     defined(CONFIG_MOTOR_HALL_MODE_POLLING) || !defined(CONFIG_MOTOR_HALL_MODE_ISR)
+            Encoder_ModeDT_Init_Polling(&p_motor->Encoder);
+#elif   defined(CONFIG_MOTOR_HALL_MODE_ISR)
             Encoder_InitInterrupts_ABC(&p_motor->Encoder);
 #endif
             break;
         case MOTOR_SENSOR_MODE_ENCODER:
-            p_motor->CONFIG.INIT_SENSOR_ENCODER(); //todo move to hal
-            Encoder_ModeDT_Init(&p_motor->Encoder);
-            Encoder_InitInterrupts_Quadrature(&p_motor->Encoder);
+            Encoder_ModeDT_Init_InterruptQuadrature(&p_motor->Encoder);
             Encoder_EnableQuadratureMode(&p_motor->Encoder);
             break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)

@@ -46,12 +46,14 @@ static inline bool HAL_Encoder_ReadTimerOverflow(const HAL_Encoder_Timer_T * p_e
 static inline uint32_t HAL_Encoder_ReadTimer(const HAL_Encoder_Timer_T * p_encoder)         { return p_encoder->CNT; }
 static inline void HAL_Encoder_WriteTimer(HAL_Encoder_Timer_T * p_encoder, uint32_t count)  { p_encoder->CNT = FTM_CNT_COUNT(count); }
 
-// #ifndef CONFIG_HAL_ENCODER_CLOCK_SOURCE_FREQ
-// #define CONFIG_HAL_ENCODER_CLOCK_SOURCE_FREQ CPU_FREQ
-// #endif
+static inline void HAL_Encoder_Enable(HAL_Encoder_Timer_T * p_encoder)                      { p_encoder->SC |= FTM_SC_CLKS(0b01U); }
 
-// #ifndef CONFIG_HAL_ENCODER_TIMER_FREQ
-// #define CONFIG_HAL_ENCODER_TIMER_FREQ (0xFFFFFFFFU/1000U)
+#ifndef HAL_ENCODER_CLOCK_SOURCE_FREQ
+#define HAL_ENCODER_CLOCK_SOURCE_FREQ CPU_FREQ
+#endif
+
+// #ifndef HAL_ENCODER_TIMER_FREQ
+// #define HAL_ENCODER_TIMER_FREQ (0xFFFFFFFFU/1000U)
 // #endif
 
 /*!
@@ -69,20 +71,20 @@ static inline void HAL_Encoder_WriteTimer(HAL_Encoder_Timer_T * p_encoder, uint3
 */
 static inline uint32_t HAL_Encoder_InitTimerFreq(HAL_Encoder_Timer_T * p_encoder, uint32_t freq)
 {
-    // uint8_t preScalerValue = CONFIG_HAL_ENCODER_CLOCK_SOURCE_FREQ / freq;
-    // uint8_t preScaler = 0U;
-    // while(preScalerValue > 1U) { preScalerValue = (preScalerValue >> 1U); preScaler++; } /* log base2 */
-    // p_encoder->SC |= FTM_SC_CLKS(0b00U); //check disable
-    // p_encoder->SC = (p_encoder->SC & ~FTM_SC_PS_MASK) | FTM_SC_PS(preScaler);
-    // p_encoder->SC |= FTM_SC_CLKS(0b01U);
-    // return CONFIG_HAL_ENCODER_CLOCK_SOURCE_FREQ / ((uint32_t)1UL << preScaler);
+    uint8_t preScalerValue = HAL_ENCODER_CLOCK_SOURCE_FREQ / freq;
+    uint8_t preScaler = 0U;
+    while((preScalerValue >> preScaler) > 1U) { preScaler++; } /* log base2 */
+    p_encoder->SC &= ~FTM_SC_CLKS_MASK;
+    p_encoder->SC = (p_encoder->SC & ~FTM_SC_PS_MASK) | FTM_SC_PS(preScaler);
+    p_encoder->SC |= FTM_SC_CLKS(0b01U);
+    return HAL_ENCODER_CLOCK_SOURCE_FREQ / ((uint32_t)1UL << preScaler);
 }
 
 static inline void HAL_Encoder_InitTimer(HAL_Encoder_Timer_T * p_encoder)
 {
-    // p_encoder->MOD = FTM_MOD_MOD(0xFFFFU);
-    // p_encoder->SC |= FTM_SC_CLKS(0b01U);
-    // HAL_Encoder_InitTimerFreq(p_encoder, CONFIG_HAL_ENCODER_TIMER_FREQ);
+    p_encoder->MOD = FTM_MOD_MOD(0xFFFFU);
+    p_encoder->SC |= FTM_SC_CLKS(0b01U);
+    // HAL_Encoder_InitTimerFreq(p_encoder, HAL_ENCODER_TIMER_FREQ);
 }
 
 /*
@@ -110,16 +112,20 @@ static inline void HAL_Encoder_ClearPinInterrupt(HAL_Encoder_Pin_T * p_encoder, 
     01 Input Capture Capture on Rising Edge Only
     10 Capture on Falling Edge Only
 */
-// static inline void HAL_Encoder_EnablePinInterrupt(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)                 { p_encoder->CONTROLS[phaseId].CnSC |= FTM_CnSC_CHIE_MASK; }
-// static inline void HAL_Encoder_EnablePinInterruptDualEdge(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)         { p_encoder->CONTROLS[phaseId].CnSC |= FTM_CnSC_CHIE_MASK | FTM_CnSC_ELSA_MASK | FTM_CnSC_ELSB_MASK; }
-// static inline void HAL_Encoder_EnablePinInterruptFallingEdge(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)     { p_encoder->CONTROLS[phaseId].CnSC |= FTM_CnSC_CHIE_MASK | FTM_CnSC_ELSB_MASK; }
-// static inline void HAL_Encoder_DisablePinInterrupt(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)             { p_encoder->CONTROLS[phaseId].CnSC &= ~FTM_CnSC_CHIE_MASK; }
-// static inline void HAL_Encoder_InitPin(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)                         { p_encoder->SC |= FTM_SC_CLKS(0b01U); }
+static inline void HAL_Encoder_EnablePinInterrupt(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)          { p_encoder->CONTROLS[phaseId].CnSC |= FTM_CnSC_CHIE_MASK; }
+static inline void HAL_Encoder_DisablePinInterrupt(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)         { p_encoder->CONTROLS[phaseId].CnSC &= ~FTM_CnSC_CHIE_MASK; }
+static inline void HAL_Encoder_InitPinInterruptDualEdge(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)     { p_encoder->CONTROLS[phaseId].CnSC = FTM_CnSC_CHIE_MASK | FTM_CnSC_ELSA_MASK | FTM_CnSC_ELSB_MASK; }
+static inline void HAL_Encoder_InitPinInterruptFallingEdge(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)  { p_encoder->CONTROLS[phaseId].CnSC = FTM_CnSC_CHIE_MASK | FTM_CnSC_ELSB_MASK; }
+static inline void HAL_Encoder_InitPinInterruptRisingEdge(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)   { p_encoder->CONTROLS[phaseId].CnSC = FTM_CnSC_CHIE_MASK | FTM_CnSC_ELSA_MASK; }
 
-static inline void HAL_Encoder_EnablePinInterrupt(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId) {}
-static inline void HAL_Encoder_EnablePinInterruptDualEdge(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId) {}
-static inline void HAL_Encoder_EnablePinInterruptFallingEdge(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId) {}
-static inline void HAL_Encoder_DisablePinInterrupt(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId) {}
-static inline void HAL_Encoder_InitPin(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId) {}
+// static inline void HAL_Encoder_EnablePinInterrupt(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)
+// {
+//     switch((uintptr_t)p_encoder)
+//     {
+//         case 0: NVIC_EnableIRQ(FTM0_IRQn); break;
+//         case 1: NVIC_EnableIRQ(FTM1_IRQn); break;
+//         case 2: NVIC_EnableIRQ(FTM2_IRQn); break;
+//     }
+// }
 
 #endif

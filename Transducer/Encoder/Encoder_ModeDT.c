@@ -33,8 +33,9 @@
 #include "Encoder_DeltaT.h"
 
 #include <string.h>
+#include "Encoder_ModeDT.h"
 
-static void Init(Encoder_T * p_encoder)
+static void InitValues(Encoder_T * p_encoder)
 {
     if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
 
@@ -47,7 +48,7 @@ static void Init(Encoder_T * p_encoder)
 void Encoder_ModeDT_Init_Polling(Encoder_T * p_encoder)
 {
     _Encoder_DeltaT_InitTimer(p_encoder);
-    Init(p_encoder);
+    InitValues(p_encoder);
 }
 
 void Encoder_ModeDT_Init_InterruptQuadrature(Encoder_T * p_encoder)
@@ -55,7 +56,8 @@ void Encoder_ModeDT_Init_InterruptQuadrature(Encoder_T * p_encoder)
     _Encoder_DeltaT_InitTimer(p_encoder);
     _Encoder_DeltaD_InitCounter(p_encoder);
     Encoder_InitInterrupts_Quadrature(p_encoder);
-    Init(p_encoder);
+    InitValues(p_encoder);
+    p_encoder->Params.IsQuadratureCaptureEnabled = true;
 }
 
 void Encoder_ModeDT_Init_InterruptAbc(Encoder_T * p_encoder)
@@ -63,24 +65,24 @@ void Encoder_ModeDT_Init_InterruptAbc(Encoder_T * p_encoder)
     _Encoder_DeltaT_InitTimer(p_encoder);
     _Encoder_DeltaD_InitCounter(p_encoder);
     Encoder_InitInterrupts_ABC(p_encoder);
-    Init(p_encoder);
+    InitValues(p_encoder);
 }
 
 
-void Encoder_ModeDT_Init(Encoder_T * p_encoder)
-{
-    if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
-    if(p_encoder->CONFIG.HAL_INIT != 0U) { p_encoder->CONFIG.HAL_INIT(); }
-    else
-    {
-        _Encoder_DeltaT_InitTimer(p_encoder);
-        _Encoder_DeltaD_InitCounter(p_encoder);
-    }
-    p_encoder->UnitT_Freq = 1U;
-    _Encoder_ResetUnits(p_encoder);
-    Encoder_DeltaD_SetInitial(p_encoder);
-    Encoder_DeltaT_SetInitial(p_encoder);
-}
+// void Encoder_ModeDT_Init(Encoder_T * p_encoder)
+// {
+//     if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
+//     if(p_encoder->CONFIG.HAL_INIT != 0U) { p_encoder->CONFIG.HAL_INIT(); }
+//     else
+//     {
+//         _Encoder_DeltaT_InitTimer(p_encoder);
+//         _Encoder_DeltaD_InitCounter(p_encoder);
+//     }
+//     p_encoder->UnitT_Freq = 1U;
+//     _Encoder_ResetUnits(p_encoder);
+//     Encoder_DeltaD_SetInitial(p_encoder);
+//     Encoder_DeltaT_SetInitial(p_encoder);
+// }
 
 
 void Encoder_ModeDT_SetInitial(Encoder_T * p_encoder)

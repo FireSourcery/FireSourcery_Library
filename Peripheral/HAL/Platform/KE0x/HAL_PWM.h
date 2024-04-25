@@ -36,12 +36,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifndef CONFIG_HAL_PWM_CLOCK_SOURCE_FREQ
-#define CONFIG_HAL_PWM_CLOCK_SOURCE_FREQ CPU_FREQ
+#ifndef HAL_PWM_CLOCK_SOURCE_FREQ
+#define HAL_PWM_CLOCK_SOURCE_FREQ CPU_FREQ
 #endif
 
-// #ifndef CONFIG_HAL_PWM_FREQ
-// #define CONFIG_HAL_PWM_FREQ 20000U
+// #ifndef HAL_PWM_FREQ
+// #define HAL_PWM_FREQ 20000U
 // #endif
 
 typedef FTM_Type HAL_PWM_T;
@@ -81,7 +81,7 @@ static inline void HAL_PWM_SyncModule(HAL_PWM_T * p_hal)        { p_hal->SYNC |=
 
 static inline void HAL_PWM_InitModuleFreq(HAL_PWM_T * p_hal, uint32_t freq)
 {
-    p_hal->MOD = FTM_MOD_MOD(CONFIG_HAL_PWM_CLOCK_SOURCE_FREQ / freq / 2U);
+    p_hal->MOD = FTM_MOD_MOD(HAL_PWM_CLOCK_SOURCE_FREQ / freq / 2U);
 }
 
 /*
@@ -97,7 +97,7 @@ static inline void HAL_PWM_InitModule(HAL_PWM_T * p_hal)
     // p_hal->OUTMASK      = FTM_OUTMASK_CH0OM_MASK | FTM_OUTMASK_CH1OM_MASK | FTM_OUTMASK_CH2OM_MASK | FTM_OUTMASK_CH3OM_MASK | FTM_OUTMASK_CH4OM_MASK | FTM_OUTMASK_CH5OM_MASK | FTM_OUTMASK_CH6OM_MASK | FTM_OUTMASK_CH7OM_MASK;
     // p_hal->EXTTRIG      = FTM_EXTTRIG_INITTRIGEN_MASK;
     // p_hal->CONF         = FTM_CONF_BDMMODE(0x03U);
-    // HAL_PWM_InitModuleFreq(p_hal, CONFIG_HAL_PWM_FREQ);
+    // HAL_PWM_InitModuleFreq(p_hal, HAL_PWM_FREQ);
     // p_hal->SC           = FTM_SC_CPWMS_MASK | FTM_SC_TOIE_MASK;
     // p_hal->SC           |= FTM_SC_CLKS(0x01U);
 }

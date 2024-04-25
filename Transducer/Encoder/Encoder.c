@@ -53,27 +53,25 @@ const int8_t _ENCODER_TABLE_PHASE_A[_ENCODER_TABLE_LENGTH] =
     Init
 */
 /******************************************************************************/
-static void InitPhases(Encoder_T * p_encoder)
-{
-    HAL_Encoder_InitPin(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
-    HAL_Encoder_InitPin(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
-    HAL_Encoder_InitPin(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
-}
+// static void InitPhasePins(Encoder_T * p_encoder)
+// {
+//     HAL_Encoder_InitPin(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
+//     HAL_Encoder_InitPin(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
+//     HAL_Encoder_InitPin(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
+// }
 
 void Encoder_InitInterrupts_Quadrature(Encoder_T * p_encoder)
 {
-    InitPhases(p_encoder);
-    HAL_Encoder_EnablePinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
-    HAL_Encoder_EnablePinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
-    HAL_Encoder_EnablePinInterruptFallingEdge(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
+    HAL_Encoder_InitPinInterruptFallingEdge(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
 }
 
 void Encoder_InitInterrupts_ABC(Encoder_T * p_encoder)
 {
-    InitPhases(p_encoder);
-    HAL_Encoder_EnablePinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
-    HAL_Encoder_EnablePinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
-    HAL_Encoder_EnablePinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
 }
 
 
@@ -267,42 +265,11 @@ void Encoder_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter
 }
 
 
-
 /******************************************************************************/
 /*!
-    Calibration Routine
+    Calibration
 */
 /******************************************************************************/
-    void Encoder_CalibrateAlignZero(Encoder_T * p_encoder)
-    {
-        p_encoder->Angle32 = 0U;
-        _Encoder_ZeroPulseCount(p_encoder);
-    }
-
-    /* todo */
-    void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder)
-    {
-        p_encoder->Align = ENCODER_ALIGN_PHASE;
-        _Encoder_ZeroPulseCount(p_encoder);
-    }
-
-    void Encoder_CalibrateIndexStart(Encoder_T * p_encoder)
-    {
-        // _Encoder_ZeroPulseCount(p_encoder);
-    }
-
-    void Encoder_CalibrateIndex(Encoder_T * p_encoder)
-    {
-        p_encoder->Align = ENCODER_ALIGN_ABSOLUTE;
-        // p_encoder->AbsoluteOffset = p_encoder->IndexOffset;
-    }
-
-    void Encoder_ClearAlign(Encoder_T * p_encoder)
-    {
-        p_encoder->Align = ENCODER_ALIGN_NO;
-    }
-
-
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)   { p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled; }
 void Encoder_EnableQuadratureMode(Encoder_T * p_encoder)                { p_encoder->Params.IsQuadratureCaptureEnabled = true; }
@@ -339,5 +306,34 @@ void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder)
     p_encoder->Params.IsALeadBPositive = (p_encoder->CounterD > 0);
 #endif
 }
+
+    void Encoder_CalibrateAlignZero(Encoder_T * p_encoder)
+    {
+        p_encoder->Angle32 = 0U;
+        _Encoder_ZeroPulseCount(p_encoder);
+    }
+
+    /* todo */
+    void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder)
+    {
+        p_encoder->Align = ENCODER_ALIGN_PHASE;
+        _Encoder_ZeroPulseCount(p_encoder);
+    }
+
+    void Encoder_CalibrateIndexStart(Encoder_T * p_encoder)
+    {
+        // _Encoder_ZeroPulseCount(p_encoder);
+    }
+
+    void Encoder_CalibrateIndex(Encoder_T * p_encoder)
+    {
+        p_encoder->Align = ENCODER_ALIGN_ABSOLUTE;
+        // p_encoder->AbsoluteOffset = p_encoder->IndexOffset;
+    }
+
+    void Encoder_ClearAlign(Encoder_T * p_encoder)
+    {
+        p_encoder->Align = ENCODER_ALIGN_NO;
+    }
 
 #endif

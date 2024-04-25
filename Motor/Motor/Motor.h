@@ -283,8 +283,6 @@ typedef const struct Motor_Init
     AnalogN_T * const P_ANALOG_N;
     const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
     const Motor_Params_T * const P_PARAMS_NVM;
-    void (*INIT_SENSOR_HALL)(void);
-    void (*INIT_SENSOR_ENCODER)(void);
 }
 Motor_Config_T;
 
