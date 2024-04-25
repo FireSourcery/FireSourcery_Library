@@ -45,9 +45,3 @@ void Pin_Deinit(const Pin_T * p_pin)
 {
     HAL_Pin_Deinit(p_pin->CONFIG.P_HAL_PIN, p_pin->CONFIG.ID);
 }
-
-
-void Pin_Input_Init(Pin_T * p_pin)
-{
-    HAL_Pin_InitInput(p_pin->CONFIG.P_HAL_PIN, p_pin->CONFIG.ID);
-}

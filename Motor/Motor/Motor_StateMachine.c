@@ -241,6 +241,7 @@ static void Run_Proc(MotorPtr_T p_motor)
 static StateMachine_State_T * Run_InputRelease(MotorPtr_T p_motor, statemachine_input_value_t voidIn)
 {
     (void)voidIn;
+    // Phase_Float(&p_motor->Phase);
     return &STATE_FREEWHEEL;  // return (Motor_CheckSpeed(p_motor) == true) ? &STATE_FREEWHEEL : 0U; // check speed range
 }
 

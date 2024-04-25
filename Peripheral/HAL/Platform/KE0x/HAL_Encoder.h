@@ -71,9 +71,9 @@ static inline void HAL_Encoder_Enable(HAL_Encoder_Timer_T * p_encoder)          
 */
 static inline uint32_t HAL_Encoder_InitTimerFreq(HAL_Encoder_Timer_T * p_encoder, uint32_t freq)
 {
-    uint8_t preScalerValue = HAL_ENCODER_CLOCK_SOURCE_FREQ / freq;
+    uint32_t preScalerValue = HAL_ENCODER_CLOCK_SOURCE_FREQ / freq;
     uint8_t preScaler = 0U;
-    while((preScalerValue >> preScaler) > 1U) { preScaler++; } /* log base2 */
+    while((preScalerValue >> preScaler) > 1U) { preScaler++; } /* log2 */
     p_encoder->SC &= ~FTM_SC_CLKS_MASK;
     p_encoder->SC = (p_encoder->SC & ~FTM_SC_PS_MASK) | FTM_SC_PS(preScaler);
     p_encoder->SC |= FTM_SC_CLKS(0b01U);

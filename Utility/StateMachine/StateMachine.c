@@ -128,8 +128,8 @@ static bool ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t i
 void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState)
 {
     if(p_stateMachine->p_StateActive->EXIT != NULL) { p_stateMachine->p_StateActive->EXIT(p_stateMachine->CONFIG.P_CONTEXT); }
-    if(p_newState->ENTRY != NULL) { p_newState->ENTRY(p_stateMachine->CONFIG.P_CONTEXT); }
     p_stateMachine->p_StateActive = p_newState;
+    if(p_newState->ENTRY != NULL) { p_newState->ENTRY(p_stateMachine->CONFIG.P_CONTEXT); }
     /*
         SemiSync may selectively implement critical. If unprotected:
         Set p_StateActive after proc ENTRY. This way SemiSync will not proc OUTPUT of p_newState until after ENTRY.
