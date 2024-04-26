@@ -95,7 +95,7 @@ Phase_T;
 //p_PwmAHal, p_PwmBHal, p_PwmCHal
 #define PHASE_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel, p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId)    \
 {                                                                   \
-    .PwmModule = PWM_INIT(p_PwmHal, 0, 0),                          \
+    .PwmModule = PWM_MODULE_INIT(p_PwmHal, PwmPeriodTicks),         \
     .PwmA = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel),        \
     .PwmB = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmBChannel),        \
     .PwmC = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmCChannel),        \

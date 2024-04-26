@@ -293,13 +293,13 @@ static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_
     Parameter
 */
 /******************************************************************************/
-static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T varId)
+static int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T varId)
 {
     int32_t value = 0;
     MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
-    Protocol_T * p_protocol;
-    Thermistor_T * p_thermistor;
-    VMonitor_T * p_vMonitor;
+    Protocol_T * p_protocol = NULL;
+    Thermistor_T * p_thermistor = NULL;
+    VMonitor_T * p_vMonitor = NULL;
 
     switch((MotVarId_Type_Parameter_T)varId.NameType)
     {
@@ -475,14 +475,14 @@ static inline int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T v
     return value;
 }
 
-static inline MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
+static MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
 {
     MotVarId_Status_T status = MOT_VAR_STATUS_OK;
     bool boolStatus = true;
     MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance); //todo as nullable to indicate invalid motor
-    Protocol_T * p_protocol;
-    Thermistor_T * p_thermistor;
-    VMonitor_T * p_vMonitor;
+    Protocol_T * p_protocol = NULL;
+    Thermistor_T * p_thermistor = NULL;
+    VMonitor_T * p_vMonitor = NULL;
 
     switch((MotVarId_Type_Parameter_T)varId.NameType)
     {

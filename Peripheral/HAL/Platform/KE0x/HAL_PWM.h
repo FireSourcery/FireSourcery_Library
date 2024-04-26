@@ -62,8 +62,8 @@ static inline void HAL_PWM_WriteLow(HAL_PWM_T * p_hal, uint32_t channel)        
 
 static inline void HAL_PWM_InitChannel(HAL_PWM_T * p_hal, uint32_t channel)
 {
-    // p_hal->CONTROLS[channel].CnSC = FTM_CnSC_ELSB_MASK; /* High-true pulses (clear Output on match-up) */
-    // HAL_PWM_EnableOutput(p_hal, channel);
+    p_hal->CONTROLS[channel].CnSC = FTM_CnSC_ELSB_MASK; /* High-true pulses (clear Output on match-up) */
+    HAL_PWM_EnableOutput(p_hal, channel);
 }
 
 /*
@@ -77,11 +77,20 @@ static inline void HAL_PWM_EnableInterrupt(HAL_PWM_T * p_hal)   { p_hal->SC |= F
 /* Common Sync, Syncs all register configured during init. */
 static inline void HAL_PWM_SyncModule(HAL_PWM_T * p_hal)        { p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK; }
 
-
-
+/* Divided 2 for center align mode */
 static inline void HAL_PWM_InitModuleFreq(HAL_PWM_T * p_hal, uint32_t freq)
 {
+    p_hal->SC &= ~FTM_SC_CLKS_MASK;
     p_hal->MOD = FTM_MOD_MOD(HAL_PWM_CLOCK_SOURCE_FREQ / freq / 2U);
+    p_hal->SC |= FTM_SC_CLKS(0x01U);
+}
+
+/* Caller accounts for factor of 2 */
+static inline void HAL_PWM_InitModulePeriod(HAL_PWM_T * p_hal, uint32_t ticks)
+{
+    p_hal->SC &= ~FTM_SC_CLKS_MASK;
+    p_hal->MOD = FTM_MOD_MOD(ticks);
+    p_hal->SC |= FTM_SC_CLKS(0x01U);
 }
 
 /*
@@ -90,16 +99,15 @@ static inline void HAL_PWM_InitModuleFreq(HAL_PWM_T * p_hal, uint32_t freq)
 */
 static inline void HAL_PWM_InitModule(HAL_PWM_T * p_hal)
 {
-    // p_hal->MODE         = FTM_MODE_WPDIS_MASK | FTM_MODE_FTMEN_MASK; /* Enable FTM mode */
-    // p_hal->COMBINE      = FTM_COMBINE_SYNCEN0_MASK | FTM_COMBINE_SYNCEN1_MASK | FTM_COMBINE_SYNCEN2_MASK | FTM_COMBINE_SYNCEN3_MASK;    /* All channel sync set to enable. */
-    // p_hal->SYNC         = FTM_SYNC_SWSYNC_MASK | FTM_SYNC_CNTMIN_MASK | FTM_SYNC_CNTMAX_MASK; // | FTM_SYNC_SYNCHOM_MASK;
-    // p_hal->SYNCONF      = FTM_SYNCONF_SYNCMODE_MASK | FTM_SYNCONF_SWWRBUF_MASK; //| FTM_SYNCONF_INVC_MASK  // | FTM_SYNCONF_SWOC_MASK | FTM_SYNCONF_SWINVC_MASK | FTM_SYNCONF_SWOM_MASK| FTM_SYNCONF_SWSOC_MASK;// | FTM_SYNCONF_SWRSTCNT_MASK;
-    // p_hal->OUTMASK      = FTM_OUTMASK_CH0OM_MASK | FTM_OUTMASK_CH1OM_MASK | FTM_OUTMASK_CH2OM_MASK | FTM_OUTMASK_CH3OM_MASK | FTM_OUTMASK_CH4OM_MASK | FTM_OUTMASK_CH5OM_MASK | FTM_OUTMASK_CH6OM_MASK | FTM_OUTMASK_CH7OM_MASK;
-    // p_hal->EXTTRIG      = FTM_EXTTRIG_INITTRIGEN_MASK;
-    // p_hal->CONF         = FTM_CONF_BDMMODE(0x03U);
-    // HAL_PWM_InitModuleFreq(p_hal, HAL_PWM_FREQ);
-    // p_hal->SC           = FTM_SC_CPWMS_MASK | FTM_SC_TOIE_MASK;
-    // p_hal->SC           |= FTM_SC_CLKS(0x01U);
+    p_hal->MODE         = FTM_MODE_WPDIS_MASK | FTM_MODE_FTMEN_MASK; /* Enable FTM mode */
+    p_hal->COMBINE      = FTM_COMBINE_SYNCEN0_MASK | FTM_COMBINE_SYNCEN1_MASK | FTM_COMBINE_SYNCEN2_MASK | FTM_COMBINE_SYNCEN3_MASK;    /* All channel sync set to enable. */
+    p_hal->SYNC         = FTM_SYNC_SWSYNC_MASK | FTM_SYNC_CNTMIN_MASK | FTM_SYNC_CNTMAX_MASK; // | FTM_SYNC_SYNCHOM_MASK;
+    p_hal->SYNCONF      = FTM_SYNCONF_SYNCMODE_MASK | FTM_SYNCONF_SWWRBUF_MASK; //| FTM_SYNCONF_INVC_MASK  // | FTM_SYNCONF_SWOC_MASK | FTM_SYNCONF_SWINVC_MASK | FTM_SYNCONF_SWOM_MASK| FTM_SYNCONF_SWSOC_MASK;// | FTM_SYNCONF_SWRSTCNT_MASK;
+    p_hal->OUTMASK      = FTM_OUTMASK_CH0OM_MASK | FTM_OUTMASK_CH1OM_MASK | FTM_OUTMASK_CH2OM_MASK | FTM_OUTMASK_CH3OM_MASK | FTM_OUTMASK_CH4OM_MASK | FTM_OUTMASK_CH5OM_MASK | FTM_OUTMASK_CH6OM_MASK | FTM_OUTMASK_CH7OM_MASK;
+    p_hal->EXTTRIG      = FTM_EXTTRIG_INITTRIGEN_MASK;
+    p_hal->CONF         = FTM_CONF_BDMMODE(0x03U);
+    p_hal->SC           = FTM_SC_CPWMS_MASK | FTM_SC_TOIE_MASK;
+    p_hal->SC           |= FTM_SC_CLKS(0x01U);
 }
 
 #endif
