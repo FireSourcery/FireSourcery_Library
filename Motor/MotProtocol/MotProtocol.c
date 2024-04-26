@@ -149,7 +149,7 @@ Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext_T * p_
             {
                 // sequenceid*32 == data
                 readSize = (p_subState->DataModeSize > 32U) ? 32U : p_subState->DataModeSize;
-                p_reqContext->TxSize = MotPacket_ByteData_Build(p_txPacket, (uint8_t *)p_subState->DataModeAddress, readSize);
+                p_reqContext->TxSize = MotPacket_ByteData_Build(p_txPacket, (const uint8_t *)p_subState->DataModeAddress, readSize);
                 p_subState->DataModeSize -= readSize;
                 p_subState->DataModeAddress += readSize;
                 reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
@@ -166,71 +166,7 @@ Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext_T * p_
     return reqCode;
 }
 
-Protocol_ReqCode_T MotProtocol_DataModeReadInit(void * p_app, Protocol_ReqContext_T * p_reqContext)
-{
-    MotProtocol_DataModeState_T * p_subState = (MotProtocol_DataModeState_T *)p_reqContext->p_SubState;
-    const MotPacket_DataModeReq_T * p_rxPacket = (const MotPacket_DataModeReq_T *)p_reqContext->p_RxPacket;
-    MotPacket_DataModeResp_T * p_txPacket = (MotPacket_DataModeResp_T *)p_reqContext->p_TxPacket;
-    Protocol_ReqCode_T reqCode;
 
-    /* Tx Ack Sync on reception */
-    if(p_subState->StateIndex == 0U)
-    {
-        p_subState->DataModeAddress = MotPacket_DataModeReq_ParseAddress(p_rxPacket);
-        p_subState->DataModeSize = MotPacket_DataModeReq_ParseSize(p_rxPacket);
-        p_subState->StateIndex = 1U;
-        p_subState->DataModeStateId = MOT_PROTOCOL_DATA_MODE_READ_ACTIVE;
-        // p_subState->SequenceIndex = 0U;
-        p_reqContext->TxSize = MotPacket_DataModeReadResp_Build(p_txPacket, MOT_STATUS_OK);
-        reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
-    }
-    else
-    {
-        reqCode = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;
-    }
-
-    return reqCode;
-}
-
-// Protocol_ReqCode_T MotProtocol_DataModeRead(void * p_app, Protocol_ReqContext_T * p_reqContext)
-// {
-//     MotProtocol_DataModeState_T * p_subState = (MotProtocol_DataModeState_T *)p_reqContext->p_SubState;
-//     const MotPacket_DataMode_T * p_rxPacket = (const MotPacket_DataMode_T *)p_reqContext->p_RxPacket;
-//     MotPacket_DataMode_T * p_txPacket = (MotPacket_DataMode_T *)p_reqContext->p_TxPacket;
-//     Protocol_ReqCode_T reqCode;
-//     uint16_t readSize;
-
-//     if(p_subState->StateIndex == 1U) /* set by init */
-//     {
-//         if(p_subState->DataModeSize > 0U)
-//         {
-//             readSize = (p_subState->DataModeSize > 32U) ? 32U : p_subState->DataModeSize;
-//             p_reqContext->TxSize = MotPacket_ByteData_Build(p_txPacket, (uint8_t *)p_subState->DataModeAddress, readSize);
-//             p_subState->DataModeSize -= readSize;
-//             p_subState->DataModeAddress += readSize; //change to index?
-//             reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
-//         }
-//         else /* (p_subState->DataModeSize == 0U) */
-//         {
-//             p_reqContext->TxSize = MotPacket_DataModeReadResp_Build(p_txPacket, MOT_STATUS_OK);
-//             p_subState->StateIndex = 0U; // or handler clear
-//             p_subState->DataModeStateId = MOT_PROTOCOL_DATA_MODE_INACTIVE;
-//             reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
-//         }
-//     }
-//     else
-//     {
-//         reqCode = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;
-//     }
-
-//     return reqCode;
-// }
-
-/* Share for read and write */
-// Protocol_ReqCode_T MotProtocol_DataModeData(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext)
-// {
-
-// }
 
 /******************************************************************************/
 /*! Stateful Write Data */
@@ -302,6 +238,75 @@ Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Proto
 
     return reqCode;
 }
+
+/******************************************************************************/
+/*! Separate Init */
+/******************************************************************************/
+Protocol_ReqCode_T MotProtocol_DataModeReadInit(void * p_app, Protocol_ReqContext_T * p_reqContext)
+{
+    MotProtocol_DataModeState_T * p_subState = (MotProtocol_DataModeState_T *)p_reqContext->p_SubState;
+    const MotPacket_DataModeReq_T * p_rxPacket = (const MotPacket_DataModeReq_T *)p_reqContext->p_RxPacket;
+    MotPacket_DataModeResp_T * p_txPacket = (MotPacket_DataModeResp_T *)p_reqContext->p_TxPacket;
+    Protocol_ReqCode_T reqCode;
+
+    /* Tx Ack Sync on reception */
+    if(p_subState->StateIndex == 0U)
+    {
+        p_subState->DataModeAddress = MotPacket_DataModeReq_ParseAddress(p_rxPacket);
+        p_subState->DataModeSize = MotPacket_DataModeReq_ParseSize(p_rxPacket);
+        p_subState->StateIndex = 1U;
+        p_subState->DataModeStateId = MOT_PROTOCOL_DATA_MODE_READ_ACTIVE;
+        // p_subState->SequenceIndex = 0U;
+        p_reqContext->TxSize = MotPacket_DataModeReadResp_Build(p_txPacket, MOT_STATUS_OK);
+        reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+    }
+    else
+    {
+        reqCode = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;
+    }
+
+    return reqCode;
+}
+
+// Protocol_ReqCode_T MotProtocol_DataModeRead(void * p_app, Protocol_ReqContext_T * p_reqContext)
+// {
+//     MotProtocol_DataModeState_T * p_subState = (MotProtocol_DataModeState_T *)p_reqContext->p_SubState;
+//     const MotPacket_DataMode_T * p_rxPacket = (const MotPacket_DataMode_T *)p_reqContext->p_RxPacket;
+//     MotPacket_DataMode_T * p_txPacket = (MotPacket_DataMode_T *)p_reqContext->p_TxPacket;
+//     Protocol_ReqCode_T reqCode;
+//     uint16_t readSize;
+
+//     if(p_subState->StateIndex == 1U) /* set by init */
+//     {
+//         if(p_subState->DataModeSize > 0U)
+//         {
+//             readSize = (p_subState->DataModeSize > 32U) ? 32U : p_subState->DataModeSize;
+//             p_reqContext->TxSize = MotPacket_ByteData_Build(p_txPacket, (uint8_t *)p_subState->DataModeAddress, readSize);
+//             p_subState->DataModeSize -= readSize;
+//             p_subState->DataModeAddress += readSize; //change to index?
+//             reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+//         }
+//         else /* (p_subState->DataModeSize == 0U) */
+//         {
+//             p_reqContext->TxSize = MotPacket_DataModeReadResp_Build(p_txPacket, MOT_STATUS_OK);
+//             p_subState->StateIndex = 0U; // or handler clear
+//             p_subState->DataModeStateId = MOT_PROTOCOL_DATA_MODE_INACTIVE;
+//             reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+//         }
+//     }
+//     else
+//     {
+//         reqCode = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;
+//     }
+
+//     return reqCode;
+// }
+
+/* Share for read and write */
+// Protocol_ReqCode_T MotProtocol_DataModeData(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext)
+// {
+
+// }
 
 /******************************************************************************/
 /*! Once */

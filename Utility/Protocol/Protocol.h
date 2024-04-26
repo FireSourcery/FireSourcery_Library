@@ -382,7 +382,7 @@ Protocol_T;
         .P_TX_PACKET_BUFFER     = p_TxBuffer,                    \
         .PACKET_BUFFER_LENGTH   = PacketBufferLength,            \
         .P_APP_INTERFACE        = p_AppInterface,                \
-        .P_REQ_STATE_BUFFER      = p_SubstateBuffer,              \
+        .P_REQ_STATE_BUFFER     = p_SubstateBuffer,              \
         .PP_SPECS_TABLE         = p_SpecsTable,                  \
         .SPECS_COUNT            = SpecsCount,                    \
         .P_TIMER                = p_Timer,                       \
