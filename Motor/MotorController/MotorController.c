@@ -187,7 +187,7 @@ static NvMemory_Status_T WriteNvm_Blocking(MotorControllerPtr_T p_mc, const void
 #if     defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
     return EEPROM_Write_Blocking(p_mc->CONFIG.P_EEPROM, p_dest, p_source, sizeBytes);
 #elif   defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
-    assert(NvMemory_IsPtrAligned(p_dest, FLASH_UNIT_WRITE_SIZE));
+    assert(NvMemory_IsAligned((uintptr_t)p_dest, FLASH_UNIT_WRITE_SIZE));
     return Flash_Write_Blocking(p_mc->CONFIG.P_FLASH, p_dest, p_source, sizeBytes);
 #endif
 }

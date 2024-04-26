@@ -48,7 +48,7 @@ typedef enum Motor_StateMachine_Input
     MSM_INPUT_HOLD,             /* Stop */
 
     /* Feedback and Direction Inputs process by StateMachine */
-    MSM_INPUT_FEEDBACK,
+    // MSM_INPUT_FEEDBACK,
     MSM_INPUT_DIRECTION,
     MSM_INPUT_CALIBRATION,
 }

@@ -133,12 +133,12 @@ void Motor_FOC_ProcFeedbackMatch(MotorPtr_T p_motor)
 
     if(p_motor->FeedbackMode.Speed == 1U)
     {
-        Linear_Ramp_SetState(&p_motor->Ramp, p_motor->Speed_FracS16);
+        Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->Speed_FracS16);
         PID_SetOutputState(&p_motor->PidSpeed, qReq);
     }
     else /* CONSTANT_CURRENT, or CONSTANT_VOLTAGE */
     {
-        Linear_Ramp_SetState(&p_motor->Ramp, qReq);
+        Linear_Ramp_SetOutputState(&p_motor->Ramp, qReq);
     }
 }
 

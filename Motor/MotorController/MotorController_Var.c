@@ -238,7 +238,7 @@ static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_
             {
                 case MOT_VAR_MOTOR_USER_SET_POINT:          Motor_User_SetActiveCmdValue(p_motor, varValue);                                                break;
                 case MOT_VAR_MOTOR_DIRECTION:               Motor_User_TryDirection(p_motor, (Motor_Direction_T)varValue);                                  break;
-                case MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE:    Motor_User_ActivateFeedbackMode_Cast(p_motor, (uint8_t)varValue);                               break;
+                case MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE:    Motor_User_ActivateControl_Cast(p_motor, (uint8_t)varValue);                               break;
                 case MOT_VAR_MOTOR_USER_SPEED_LIMIT:        Motor_User_SetSpeedLimitActive_Id(p_motor, varValue, MOTOR_SPEED_LIMIT_ACTIVE_USER);            break;
                 case MOT_VAR_MOTOR_USER_I_LIMIT:            Motor_User_SetILimitActive_Id(p_motor, varValue, MOTOR_I_LIMIT_ACTIVE_USER);                    break;
                 case MOT_VAR_MOTOR_USER_CMD:                Motor_User_SetActiveCmdValue(p_motor, varValue);                                                break;

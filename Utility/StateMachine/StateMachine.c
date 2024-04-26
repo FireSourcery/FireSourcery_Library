@@ -74,28 +74,27 @@ static void Reset(StateMachine_T * p_stateMachine)
 /*
     No null pointer check. User ensure LOOP is defined when using this interface. supply empty for no op
 */
-static inline void ProcState(StateMachine_T * p_stateMachine)
+static inline void ProcStateOuput(const StateMachine_T * p_stateMachine)
 {
     p_stateMachine->p_StateActive->LOOP(p_stateMachine->CONFIG.P_CONTEXT);
 }
 
 /*!
-    @return false indicates not accepted input, transition does not exist.
+    @return false indicates not accepted input, transition does not exist, no mapped input function.
             true indicates accepted input, state may transition or self transition (with or without entry and exit function).
 */
-static inline bool CheckTransitionTable(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId)
+static inline bool isAcceptInput(const StateMachine_T * p_stateMachine, statemachine_input_id_t inputId)
 {
     return ((inputId < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH) && (p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId] != NULL));
 }
-
-// static inline StateMachine_State_T * TransitionFunction(StateMachine_State_T * p_active, void * p_context, statemachine_input_t inputId, statemachine_inputext_t inputValue)
+/*!
+    @return null for self-transition without processing ENTRY,
+            self for self-transition processing ENTRY
+            another State for transition to another State
+*/
+// static inline StateMachine_State_T * TransitionFunction(StateMachine_State_T * p_active, void * p_context, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 // {
 //     return p_active->P_TRANSITION_TABLE[inputId](p_context, inputValue);
-// }
-
-// static inline StateMachine_Transition_T TransitionFunction(StateMachine_State_T * p_active, statemachine_input_id_t inputId)
-// {
-//     return p_active->P_TRANSITION_TABLE[inputId];
 // }
 
 /*!
@@ -111,7 +110,7 @@ static inline void ProcTransitionFunction(StateMachine_T * p_stateMachine, state
 
 static bool ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    bool isAccept = CheckTransitionTable(p_stateMachine, inputId);
+    bool isAccept = isAcceptInput(p_stateMachine, inputId);
     if(isAccept == true) { ProcTransitionFunction(p_stateMachine, inputId, inputValue); }
     return isAccept;
 }
@@ -122,22 +121,30 @@ static bool ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t i
 */
 /******************************************************************************/
 /*
-    Unconditional Transition - Maps active state to new state, input assumed error checked
-    user must ensure correctness, call from state machine / output function only
+    Unconditional Transition - Maps active state to new state.
+        input assumed error checked, caller ensure correctness, call from state machine / output function only
 */
 void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState)
 {
     if(p_stateMachine->p_StateActive->EXIT != NULL) { p_stateMachine->p_StateActive->EXIT(p_stateMachine->CONFIG.P_CONTEXT); }
-    p_stateMachine->p_StateActive = p_newState;
     if(p_newState->ENTRY != NULL) { p_newState->ENTRY(p_stateMachine->CONFIG.P_CONTEXT); }
+    p_stateMachine->p_StateActive = p_newState;
     /*
-        SemiSync may selectively implement critical. If unprotected:
-        Set p_StateActive after proc ENTRY. This way SemiSync will not proc OUTPUT of p_newState until after ENTRY.
-        May proc prev State OUTPUT after ENTRY, overwrite ENTRY settings. cannot reject during entry
+        Async may selectively implement critical. If unprotected:
+        Set p_StateActive after proc ENTRY.
+            This way Async will not proc OUTPUT of p_newState until after ENTRY.
+            May proc p_StateActive->OUTPUT (the prev State) after ENTRY. cannot reject during entry
+            p_newState->OUTPUT after p_newState->ENTRY correctly
+            p_StateActive->OUTPUT may overwrite p_newState->ENTRY incorrectly
 
         Alternatively:
-        Set p_StateActive before ENTRY. This way SemiSync might proc OUTPUT of p_newState before ENTRY.
-        p_newState->ENTRY overwrite prev State OUTPUT
+        Set p_StateActive before ENTRY. This way Async might proc OUTPUT of p_newState before ENTRY.
+            p_newState->ENTRY overwrite p_StateActive->OUTPUT correctly
+            p_newState->OUTPUT prior to p_newState->ENTRY incorrectly
+            if newState OUTPUT transitions:
+                newState2 ENTRY
+                newState ENTRY
+
     */
 }
 
@@ -171,46 +178,52 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 /******************************************************************************/
 /*
     Synchronous Machine
-    Synchronous State Update - ProcState synchronous to timer
-    Synchronous Proc User Input - Async user inputs proc synchronously during ProcState
+    Synchronous State Update - ProcStateOuput synchronous to timer
+    Synchronous Proc User Input - Async user inputs proc synchronously during ProcStateOuput
 
     Proc last set input, always single threaded proc, inputs may overwrite
-    Does not need Critical Section if Proc thread is higher priority than Input Thread,
-       SyncInputValue set before SyncInput, SyncInputValue clear on higher priority thread, SyncInput as Signal
+    Does not need Critical Section if:
+        ProcState thread is higher priority than SetInput Thread
+        All SetInput on same thread
 */
 /******************************************************************************/
-void StateMachine_Sync_Proc(StateMachine_T * p_stateMachine)
+void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine)
 {
     if(p_stateMachine->SyncInput != STATE_MACHINE_INPUT_ID_NULL)
     {
-        p_stateMachine->IsSyncInputAccept = ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
+        ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
         p_stateMachine->SyncInput = STATE_MACHINE_INPUT_ID_NULL; /* clear input, reserved char */
     }
 
-    ProcState(p_stateMachine);
+    ProcStateOuput(p_stateMachine);
 }
 
 bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    // bool isAccept = CheckTransitionTable(p_stateMachine, inputId);
-    // if(isAccept == true) { p_stateMachine->SyncInput = inputId; p_stateMachine->SyncInputExt = inputValue; }
-    // return isAccept;
-    // if(EnterCritical(p_stateMachine))
-    {
-        p_stateMachine->SyncInputValue = inputValue;
-        p_stateMachine->SyncInput = inputId;
-        // ExitCritical(p_stateMachine);
-    }
+    bool isAccept = isAcceptInput(p_stateMachine, inputId);
+    if(isAccept == true) { p_stateMachine->SyncInputValue = inputValue; p_stateMachine->SyncInput = inputId; }
+    return isAccept;
+    // // if(EnterCritical(p_stateMachine))
+    // {
+    //     p_stateMachine->SyncInputValue = inputValue;
+    //     p_stateMachine->SyncInput = inputId;
+    //     // ExitCritical(p_stateMachine);
+    // }
 }
 
 /******************************************************************************/
 /*
     Asynchronous Machine
     Async user input may change state immediately,
-    optionally implement periodic ProcState
+        optionally implement periodic ProcStateOuput
 
-    Need Critical section to prevent ProcState state transition in between checking input and proc input
-    User may selective implement critical in calling layer, if protection not require for all inputs
+    Input/State on the same thread: same behavior as synchrounous
+
+    Input/State on different threads:
+        Need Critical on input to gurantee correct behavior
+            prevent ProcStateOuput state transition in between checking input and proc input
+
+    Selectively implement critical in calling layer, if protection not require for all inputs
 */
 /******************************************************************************/
 bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
@@ -225,29 +238,25 @@ bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_
 }
 
 /*
-    Assuming ProcState runs higher prioity than ProcInput, critical is implemented in ProcInput only
+    Assuming ProcStateOuput runs higher prioity than ProcInput, critical is implemented in ProcInput only
 */
 void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine)
 {
-   ProcState(p_stateMachine);
+   ProcStateOuput(p_stateMachine);
 }
 
 /*
-    Optionally run without periodic proc function. Use State Function as common output.
-    need critical if inputs on different threads
+    As Purely Async, without periodic proc function.
+    Proc Output on input only, effectively common output.
+    need critical only if inputs on different threads
 */
-bool StateMachine_Async_Proc(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
-{
-    bool isAccept = false;
-    // if(EnterCritical(p_stateMachine))
-    // {
-    isAccept = ProcInput(p_stateMachine, inputId, inputValue);
-    if(isAccept == true) { ProcState(p_stateMachine); }
-    //     ExitCritical(p_stateMachine);
-    // }
-    return isAccept;
-}
-
+// bool StateMachine_Async_ProcInputState(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+// {
+//     bool isAccept = false;
+//     isAccept = ProcInput(p_stateMachine, inputId, inputValue);
+//     if(isAccept == true) { ProcStateOuput(p_stateMachine); }
+//     return isAccept;
+// }
 
 /******************************************************************************/
 /*
@@ -255,35 +264,30 @@ bool StateMachine_Async_Proc(StateMachine_T * p_stateMachine, statemachine_input
     supports both operation as expense of superflous condition checking
 */
 /******************************************************************************/
-void StateMachine_Proc(StateMachine_T * p_stateMachine)
-{
-    StateMachine_Sync_Proc(p_stateMachine);
-}
-
 void StateMachine_ProcState(StateMachine_T * p_stateMachine)
 {
-   ProcState(p_stateMachine);
+    StateMachine_Sync_ProcState(p_stateMachine);
 }
 
-bool StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+bool StateMachine_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
     return StateMachine_Async_ProcInput(p_stateMachine, inputId, inputValue);
 }
 
-void StateMachine_SetSyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+bool StateMachine_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    StateMachine_Sync_SetInput(p_stateMachine, inputId, inputValue);
+    return StateMachine_Sync_SetInput(p_stateMachine, inputId, inputValue);
 }
 
 /******************************************************************************/
 /*
-    Simple Menu
+    Linked Menus
 */
 /******************************************************************************/
 #ifdef CONFIG_STATE_MACHINE_MENU_ENABLE
 void StateMachine_Menu_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t input, statemachine_input_value_t inputValue)
 {
-    StateMachine_ProcAsyncInput(p_stateMachine, input, statemachine_input_value_t inputValue)
+    StateMachine_ProcInput(p_stateMachine, input, statemachine_input_value_t inputValue)
 }
 
 StateMachine_State_T * StateMachine_Menu_GetPtrActive(StateMachine_T * p_stateMachine)
@@ -315,7 +319,7 @@ void StateMachine_Menu_StartNext(StateMachine_T * p_stateMachine)
 
 void StateMachine_Menu_ProcFunction(StateMachine_T * p_stateMachine, statemachine_input_id_t input, statemachine_input_value_t inputValue)
 {
-    StateMachine_ProcAsyncInput(p_stateMachine, input, statemachine_input_value_t inputValue)
+    StateMachine_ProcInput(p_stateMachine, input, statemachine_input_value_t inputValue)
 }
 
 void StateMachine_Menu_ProcLoop(StateMachine_T * p_stateMachine)

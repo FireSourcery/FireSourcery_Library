@@ -218,6 +218,7 @@ NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_this, NvMemory_OpControl_
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpDestination(p_this, p_dest, size); }
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSource(p_this, p_source, size); }
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_this, size); }
+    return status;
 }
 
 // NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd)
@@ -268,7 +269,6 @@ NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
             ProcCmd_Blocking(p_this, opIndex);
             if(p_this->CONFIG.READ_ERROR_FLAGS(p_this->CONFIG.P_HAL) == true)
             {
-                // status = (p_this->ParseCmdStatus != 0U) ? p_this->ParseCmdStatus(p_this) : NV_MEMORY_STATUS_SUCCESS;
                 status = (p_this->p_OpControl->PARSE_CMD_ERROR != 0U) ? p_this->p_OpControl->PARSE_CMD_ERROR(p_this) : NV_MEMORY_STATUS_ERROR_CMD;
                 break;
             }

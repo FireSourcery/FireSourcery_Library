@@ -41,9 +41,8 @@
 
 typedef uint8_t statemachine_input_id_t;        /* Input ID/Category. Index into transition table. User may overwrite with enum. */
 typedef uint32_t statemachine_input_value_t;    /* User define 32-bit wide type */
-typedef uint8_t statemachine_state_t;           /* State ID. User may overwrite with enum */
 
-typedef void (*StateMachine_Function_T)(void * p_context);
+typedef uint8_t statemachine_state_t;           /* State ID. User may overwrite with enum */
 
 struct StateMachine_State;
 /*!
@@ -53,8 +52,8 @@ struct StateMachine_State;
             0 - no transition, bypass exit and entry, indicates user defined non transition
             !0 - transition, perform exist and entry. User may return same state, for self transition, proc exit and entry
 */
-typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_input_value_t inputValue);
-
+typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_input_value_t inputValue); // InputFunction
+typedef void (*StateMachine_Function_T)(void * p_context); // Output Function
 
 /*
     Array Implementation - 2D input table
@@ -71,13 +70,14 @@ typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_contex
 typedef const struct StateMachine_State
 {
     const statemachine_state_t ID;
-    const StateMachine_Transition_T * const P_TRANSITION_TABLE; /* Forms the TransitionFunction */
-    const StateMachine_Function_T LOOP;       /* Synchronous periodic proc. No null pointer check, user must supply empty function */
+    const StateMachine_Transition_T * const P_TRANSITION_TABLE; /* f(statemachine_input_id_t) input map. Forms the TransitionFunction.  */
+    const StateMachine_Function_T LOOP;       /* Output of the State. Synchronous periodic proc. No null pointer check, user must supply empty function */
     const StateMachine_Function_T ENTRY;      /* Common to all transition to current state, including self transition */
     const StateMachine_Function_T EXIT;
+    // void * const P_STATE_CONTEXT;
 #ifdef CONFIG_STATE_MACHINE_MENU_ENABLE
-    const struct StateMachine_State * P_NEXT_MENU;
-    const struct StateMachine_State * P_PREV_MENU;
+    const struct StateMachine_State * P_LINK_NEXT;
+    const struct StateMachine_State * P_LINK_PREV;
 #endif
 }
 StateMachine_State_T;
@@ -91,8 +91,8 @@ StateMachine_Machine_T;
 
 typedef const struct StateMachine_Config
 {
-    const StateMachine_Machine_T * const P_MACHINE;     /* Const definition of state transition behaviors */
-    void * const P_CONTEXT;                                /* Mutable state information per state machine */
+    const StateMachine_Machine_T * const P_MACHINE;         /* Const definition of state transition behaviors */
+    void * const P_CONTEXT;                                 /* Mutable state information per state machine */
 #if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
     const bool USE_CRITICAL;
 #endif
@@ -103,8 +103,9 @@ typedef struct StateMachine
 {
     const StateMachine_Config_T CONFIG;
     const StateMachine_State_T * p_StateActive;
+    /* Sync machine store result until process */
     volatile statemachine_input_id_t SyncInput;
-    volatile uint32_t SyncInputValue;
+    volatile statemachine_input_value_t SyncInputValue;
     volatile bool IsSyncInputAccept;
 #if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
     volatile critical_mutex_t Mutex;
@@ -139,14 +140,16 @@ static inline bool StateMachine_IsActiveState(const StateMachine_T * p_stateMach
 extern void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState);
 extern void StateMachine_Init(StateMachine_T * p_stateMachine);
 extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
-extern void StateMachine_Sync_Proc(StateMachine_T * p_stateMachine);
+
+extern void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine);
 extern bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
+
 extern bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
 extern void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine);
-extern bool StateMachine_Async_Proc(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
-extern void StateMachine_Proc(StateMachine_T * p_stateMachine);
+// extern bool StateMachine_Async_ProcInputState(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
+
 extern void StateMachine_ProcState(StateMachine_T * p_stateMachine);
-extern bool StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
-extern void StateMachine_SetSyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
+extern bool StateMachine_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
+extern bool StateMachine_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
 
 #endif

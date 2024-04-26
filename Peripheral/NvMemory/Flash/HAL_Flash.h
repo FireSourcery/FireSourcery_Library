@@ -56,4 +56,6 @@
 // extern void HAL_Flash_UnlockSecurity(HAL_Flash_T * p_regs, uint8_t * p_key);
 // extern void HAL_Flash_Init(HAL_Flash_T * p_regs);
 
+// // static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs);
+
 #endif /* HAL_FLASH_H */

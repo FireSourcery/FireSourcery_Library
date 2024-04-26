@@ -69,12 +69,15 @@ static int32_t Scale16(uint16_t scalar16, int32_t value) { return (int32_t)scala
 /*
     FeedbackMode update: Set mode flags => match Ramp and PID state to output on change
 */
-void Motor_User_ActivateFeedbackMode(MotorPtr_T p_motor, Motor_FeedbackMode_T mode)
+void Motor_User_ActivateControl(MotorPtr_T p_motor, Motor_FeedbackMode_T mode)
 {
-    if(p_motor->FeedbackMode.Word != mode.Word) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_FEEDBACK, mode.Word); }
+    Critical_Enter();
+    // if(p_motor->FeedbackMode.Word != mode.Word)
+    { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Word); }
+    Critical_Exit();
 }
 
-void Motor_User_ActivateFeedbackMode_Cast(MotorPtr_T p_motor, uint8_t modeWord) { Motor_User_ActivateFeedbackMode(p_motor, Motor_FeedbackMode(modeWord)); }
+void Motor_User_ActivateControl_Cast(MotorPtr_T p_motor, uint8_t modeWord) { Motor_User_ActivateControl(p_motor, Motor_FeedbackMode(modeWord)); }
 
 /*
     Sets Ramp Target
@@ -82,7 +85,7 @@ void Motor_User_ActivateFeedbackMode_Cast(MotorPtr_T p_motor, uint8_t modeWord) 
 */
 /* may need to be private */
 void Motor_User_SetCmd(MotorPtr_T p_motor, int16_t userCmd) { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_LogicalDirectionCmd(p_motor, userCmd)); }
-// void Motor_User_ClearState(MotorPtr_T p_motor) { Linear_Ramp_SetState(&p_motor->Ramp, 0); }
+// void Motor_User_ClearState(MotorPtr_T p_motor) { Linear_Ramp_SetOutputState(&p_motor->Ramp, 0); }
 int32_t Motor_User_GetCmd(const MotorPtr_T p_motor) { return Motor_LogicalDirectionCmd(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
 int32_t Motor_User_GetSetPoint(const MotorPtr_T p_motor) { return Motor_LogicalDirectionCmd(p_motor, Linear_Ramp_GetOutput(&p_motor->Ramp)); }
 
@@ -99,7 +102,7 @@ int32_t Motor_User_GetSetPoint(const MotorPtr_T p_motor) { return Motor_LogicalD
 /******************************************************************************/
 void Motor_User_SetVoltageMode(MotorPtr_T p_motor)
 {
-    Motor_User_ActivateFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE);
+    Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE);
 }
 
 /*!
@@ -124,7 +127,7 @@ void Motor_User_SetVoltageModeCmd(MotorPtr_T p_motor, int16_t voltageCmd)
 /******************************************************************************/
 void Motor_User_SetTorqueMode(MotorPtr_T p_motor)
 {
-    Motor_User_ActivateFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
+    Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
 }
 
 /*!
@@ -152,7 +155,7 @@ void Motor_User_SetTorqueModeCmd(MotorPtr_T p_motor, int16_t torqueCmd)
 */
 void Motor_User_SetSpeedMode(MotorPtr_T p_motor)
 {
-    Motor_User_ActivateFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_SPEED_CURRENT);
+    Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_SPEED_CURRENT);
 }
 
 /*!
@@ -198,7 +201,7 @@ void Motor_User_SetPositionCmdValue(MotorPtr_T p_motor, uint16_t angle)
 */
 void Motor_User_SetOpenLoopMode(MotorPtr_T p_motor)
 {
-    Motor_User_ActivateFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR);
+    Motor_User_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR);
 }
 
 void Motor_User_SetOpenLoopSpeed(MotorPtr_T p_motor, int32_t speed_Frac16)
@@ -244,7 +247,7 @@ void Motor_User_SetActiveCmdValue(MotorPtr_T p_motor, int16_t userCmd)
 
 // void Motor_User_ActivateDefaultFeedbackMode(MotorPtr_T p_motor)
 // {
-//     Motor_User_ActivateFeedbackMode(p_motor, p_motor->Parameters.FeedbackModeDefault);
+//     Motor_User_ActivateControl(p_motor, p_motor->Parameters.FeedbackModeDefault);
 // }
 
 
@@ -260,7 +263,7 @@ void Motor_User_DisableControl(MotorPtr_T p_motor)
 {
     Phase_Float(&p_motor->Phase);
     Motor_User_SetCmd(p_motor, 0);
-    StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
 }
 
 /*
@@ -269,14 +272,14 @@ void Motor_User_DisableControl(MotorPtr_T p_motor)
 /* no critical for transition. no sync issue if states do no contain transition during proc, or may result in running input function on a different state */
 void Motor_User_ReleaseControl(MotorPtr_T p_motor)
 {
-    Motor_User_SetCmd(p_motor, 0);
-    StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
+    // Motor_User_SetCmd(p_motor, 0);
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
 }
 
-void Motor_User_ActivateControl(MotorPtr_T p_motor) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, STATE_MACHINE_INPUT_VALUE_NULL); }
+// void Motor_User_ActivateControl(MotorPtr_T p_motor) { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, STATE_MACHINE_INPUT_VALUE_NULL); }
 
 // return if stop
-bool Motor_User_TryHold(MotorPtr_T p_motor) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL); }
+bool Motor_User_TryHold(MotorPtr_T p_motor) { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL); }
 
 /******************************************************************************/
 /*!
@@ -288,7 +291,7 @@ bool Motor_User_TryHold(MotorPtr_T p_motor) { StateMachine_ProcAsyncInput(&p_mot
 */
 bool Motor_User_TryDirection(MotorPtr_T p_motor, Motor_Direction_T direction)
 {
-    if(p_motor->Direction != direction) { StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction); }
+    if(p_motor->Direction != direction) { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction); }
     return (direction == p_motor->Direction);
 }
 
@@ -305,17 +308,17 @@ bool Motor_User_TryDirectionReverse(MotorPtr_T p_motor) { return Motor_User_TryD
 /******************************************************************************/
 void Motor_User_CalibrateAdc(MotorPtr_T p_motor)
 {
-    StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ADC);
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ADC);
 }
 
 void Motor_User_CalibrateSensor(MotorPtr_T p_motor)
 {
     switch(p_motor->Parameters.SensorMode)
     {
-        case MOTOR_SENSOR_MODE_HALL:        StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL);       break;
-        case MOTOR_SENSOR_MODE_ENCODER:     StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER);    break;
+        case MOTOR_SENSOR_MODE_HALL:        StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL);       break;
+        case MOTOR_SENSOR_MODE_ENCODER:     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER);    break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SIN_COS:     StateMachine_ProcAsyncInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_SIN_COS);    break;
+        case MOTOR_SENSOR_MODE_SIN_COS:     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_SIN_COS);    break;
 #endif
         default: break;
     }

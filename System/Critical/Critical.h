@@ -48,8 +48,8 @@ extern uint32_t _Critical_StateOnEnter;
 #include "External/CMSIS/Core/Include/cmsis_compiler.h"
 
 #if defined(__GNUC__)
-#define CRITICAL_DISABLE_INTERRUPTS() __asm volatile ("cpsid i" : : : "memory");
-#define CRITICAL_ENABLE_INTERRUPTS() __asm volatile ("cpsie i" : : : "memory");
+#define CRITICAL_DISABLE_INTERRUPTS() __disable_irq()
+#define CRITICAL_ENABLE_INTERRUPTS() __enable_irq()
 #else
 #define CRITICAL_DISABLE_INTERRUPTS() __asm("cpsid i")
 #define CRITICAL_ENABLE_INTERRUPTS() __asm("cpsie i")
@@ -58,17 +58,17 @@ extern uint32_t _Critical_StateOnEnter;
 /*
     No nesting Critical within Critical
 */
-static inline void Critical_Enter(void) { _Critical_StateOnEnter = __get_PRIMASK(); CRITICAL_DISABLE_INTERRUPTS(); }
-static inline void Critical_Exit(void)     { __set_PRIMASK(_Critical_StateOnEnter); }
-// static inline void Critical_Enter(uint32_t * p_state) { uint32_t regPrimask = __get_PRIMASK(); __disable_irq(); p_state = regPrimask; }
-// static inline void Critical_Exit(uint32_t state) { __set_PRIMASK(state); }
+static inline void Critical_Enter(void) { __disable_irq(); }
+static inline void Critical_Exit(void) { __enable_irq(); }
+
+static inline void _Critical_Enter(uint32_t * p_state)  { *p_state = __get_PRIMASK(); __disable_irq(); }
+static inline void _Critical_Exit(uint32_t state)       { __set_PRIMASK(state); }
 #elif defined(CONFIG_CRITICAL_DISABLED)
 #define CRITICAL_DISABLE_INTERRUPTS()
 #define CRITICAL_ENABLE_INTERRUPTS()
 static inline void Critical_Enter(void) {}
 static inline void Critical_Exit(void) {}
 #endif
-
 
 static inline void Critical_DisableIrq(void)
 {
@@ -89,7 +89,7 @@ static inline void Critical_EnableIrq(void)
 }
 
 /*
-    Non blocking mutex. must check if process completed
+    Non blocking mutex. process must be polling. none user input
 */
 typedef volatile uint32_t critical_mutex_t;
 

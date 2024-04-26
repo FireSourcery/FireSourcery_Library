@@ -145,7 +145,7 @@ static StateMachine_State_T * Park_InputBlocking(MotorControllerPtr_T p_mc, stat
 static StateMachine_State_T * Park_InputDirection(MotorControllerPtr_T p_mc, statemachine_input_value_t direction)
 {
     StateMachine_State_T * p_nextState = NULL;
-    // p_mc->UserCmdValue = 0U; // non polling input enter on brake
+
     switch((MotorController_Direction_T)direction)
     {
         case MOTOR_CONTROLLER_DIRECTION_PARK: p_nextState = NULL; break;
@@ -194,8 +194,9 @@ static void SetBrake(MotorControllerPtr_T p_mc, uint32_t cmdValue)
     if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_BRAKE)
     {
         // check for 0 speed, motor run does nto transition
-        if(MotorController_CheckStopAll(p_mc) == true) { MotorController_TryHoldAll(p_mc); }
-        else { MotorController_SetBrakeValue(p_mc, cmdValue); }
+        // if(MotorController_CheckStopAll(p_mc) == true) { MotorController_TryHoldAll(p_mc); }
+        // else
+        { MotorController_SetBrakeValue(p_mc, cmdValue); }
     }
     else /* overwrite throttle */
     {
@@ -211,7 +212,7 @@ static void SetThrottle(MotorControllerPtr_T p_mc, uint32_t cmdValue)
     {
         MotorController_SetThrottleValue(p_mc, cmdValue);
     }
-    else if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO) /* do not overwrite brake/cmd */
+    else if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO || p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_CMD) /* do not overwrite brake */
     {
         MotorController_StartThrottleMode(p_mc);
         MotorController_SetThrottleValue(p_mc, cmdValue);
@@ -292,23 +293,23 @@ static StateMachine_State_T * Drive_InputBrake(MotorControllerPtr_T p_mc, statem
 /*! @param[in] cmdValue int16  */
 static StateMachine_State_T * Drive_InputCmd(MotorControllerPtr_T p_mc, statemachine_input_value_t cmdValue)
 {
-    if(cmdValue != 0U)
-    {
-        if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_CMD)
-        {
-            MotorController_SetCmdModeValue(p_mc, cmdValue);
-        }
-        else if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO)
-        {
-            MotorController_StartCmdModeDefault(p_mc);
-            MotorController_SetCmdModeValue(p_mc, cmdValue);
-            p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD;
-        }
-    }
-    else
-    {
-        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_ZERO;
-    }
+    // if(cmdValue != 0U)
+    // {
+    //     if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_CMD)
+    //     {
+    //         MotorController_SetCmdModeValue(p_mc, cmdValue);
+    //     }
+    //     else if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO)
+    //     {
+    //         MotorController_StartCmdModeDefault(p_mc);
+    //         MotorController_SetCmdModeValue(p_mc, cmdValue);
+    //         p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD;
+    //     }
+    // }
+    // else
+    // {
+    //     p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_ZERO;
+    // }
     return NULL;
 }
 
@@ -491,8 +492,8 @@ static void Servo_Entry(MotorControllerPtr_T p_mc)
     MotorController_ServoExtern_Start(p_mc);
 #else
     MotorController_Servo_Start(p_mc);
-    MotorController_SetCmdMode(p_mc, p_mc->Parameters.DefaultCmdMode);
-    MotorController_ActivateAll(p_mc);
+    MotorController_StartCmdMode(p_mc, p_mc->Parameters.DefaultCmdMode);
+    // MotorController_ActivateAll(p_mc);
 #endif
 }
 
@@ -621,13 +622,13 @@ bool MotorController_StateMachine_IsFault(const MotorControllerPtr_T p_mc) { ret
 bool MotorController_StateMachine_ClearFault(MotorControllerPtr_T p_mc)
 {
     bool isFault = MotorController_StateMachine_IsFault(p_mc);
-    if(isFault == true) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_FAULT, false); }
+    if(isFault == true) { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT, false); }
     return (MotorController_StateMachine_IsFault(p_mc) != isFault);
 }
 
 void MotorController_StateMachine_SetFault(MotorControllerPtr_T p_mc)
 {
-    if(MotorController_StateMachine_IsFault(p_mc) == false) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_FAULT, true); }
+    if(MotorController_StateMachine_IsFault(p_mc) == false) { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT, true); }
 }
 
 

@@ -48,9 +48,11 @@ static inline void Motor_PWM_Thread(MotorPtr_T p_motor)
     // Motor_Debug_CaptureRefTime(p_motor);
     p_motor->ControlTimerBase++;
     // Motor_Analog_Proc(p_motor);
-    StateMachine_Async_ProcState(&p_motor->StateMachine);
+    StateMachine_ProcState(&p_motor->StateMachine);
     // Motor_Debug_CaptureTime(p_motor, 5U);
-    // Motor_ClearPwmInterrupt(&p_mc->CONFIG.P_MOTORS[0U]); define as empty for collective clear
+#ifdef CONFIG_MOTOR_PWM_INTERRUPT_CLEAR_PER_MOTOR
+    // Motor_ClearInterrupt(&p_mc->CONFIG.P_MOTORS[0U]);
+#endif
 }
 
 static inline void Motor_Main_Thread(MotorPtr_T p_motor)

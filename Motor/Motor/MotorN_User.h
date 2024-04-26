@@ -106,9 +106,13 @@ static inline void MotorN_User_SetScalar16(MotorPtr_T p_motorArray, uint8_t moto
 //     for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { function(&p_motorArray[iMotor], cmdValue); }
 // }
 
-static inline void MotorN_User_SetFeedbackMode(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_FeedbackMode_T feedbackMode)
+// static inline void MotorN_User_SetFeedbackMode(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_FeedbackMode_T feedbackMode)
+// {
+//     for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_ActivateControl(&p_motorArray[iMotor], feedbackMode); }
+// }
+static inline void MotorN_User_ActivateControl(MotorPtr_T p_motorArray, uint8_t motorCount, Motor_FeedbackMode_T feedbackMode)
 {
-    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_ActivateFeedbackMode(&p_motorArray[iMotor], feedbackMode); }
+    for(uint8_t iMotor = 0U; iMotor < motorCount; iMotor++) { Motor_User_ActivateControl(&p_motorArray[iMotor], feedbackMode); }
 }
 
 /*

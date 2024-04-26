@@ -391,7 +391,7 @@ static inline bool MotorController_CheckMotorsFaultAny(const MotorControllerPtr_
 
 static inline void MotorController_DisableAll(MotorControllerPtr_T p_mc)    { MotorN_User_ProcFunction(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_DisableControl); }
 static inline void MotorController_ReleaseAll(MotorControllerPtr_T p_mc)    { MotorN_User_ProcFunction(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_ReleaseControl); }
-static inline void MotorController_ActivateAll(MotorControllerPtr_T p_mc)   { MotorN_User_ProcFunction(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_ActivateControl); }
+// static inline void MotorController_ActivateAll(MotorControllerPtr_T p_mc)   { MotorN_User_ProcFunction(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_ActivateControl); }
 static inline void MotorController_TryHoldAll(MotorControllerPtr_T p_mc)    { MotorN_User_ProcStatusAll(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_TryHold); }
 
 static inline bool MotorController_TryDirectionForwardAll(MotorControllerPtr_T p_mc, MotorController_Direction_T direction) { return MotorN_User_ProcStatusAll(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_TryDirectionForward); }
@@ -410,8 +410,8 @@ static inline bool MotorController_ClearILimitAll_Id(MotorControllerPtr_T p_mc) 
 static inline bool MotorController_SetILimitAll_Id(MotorControllerPtr_T p_mc, uint16_t limit_scalar16)   { return MotorN_User_SetLimit(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetILimitActive_Id, limit_scalar16, MOTOR_I_LIMIT_ACTIVE_MC); }
 
 /* Default FeedbackMode store in MC, active mode in Motor */
-static inline void MotorController_StartCmdModeDefault(MotorControllerPtr_T p_mc)                               { MotorN_User_SetFeedbackMode(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->Parameters.DefaultCmdMode); }
-static inline void MotorController_SetCmdMode(MotorControllerPtr_T p_mc, Motor_FeedbackMode_T feedbackMode)     { MotorN_User_SetFeedbackMode(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, feedbackMode);}
+static inline void MotorController_StartCmdModeDefault(MotorControllerPtr_T p_mc)                               { MotorN_User_ActivateControl(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, p_mc->Parameters.DefaultCmdMode); }
+static inline void MotorController_StartCmdMode(MotorControllerPtr_T p_mc, Motor_FeedbackMode_T feedbackMode)   { MotorN_User_ActivateControl(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, feedbackMode);}
 static inline void MotorController_SetCmdModeValue(MotorControllerPtr_T p_mc, int16_t userCmd)                  { MotorN_User_SetCmd(p_mc->CONFIG.P_MOTORS, p_mc->CONFIG.MOTOR_COUNT, Motor_User_SetActiveCmdValue, userCmd); }
 // static inline void MotorController_SetCmdModeValue(MotorControllerPtr_T p_mc, int16_t userCmd)               { _MotorController_SetCmdAll(p_mc, Motor_User_SetActiveCmdValue, userCmd); }
 
@@ -423,7 +423,7 @@ static inline void MotorController_StartThrottleMode(MotorControllerPtr_T p_mc)
         case MOTOR_CONTROLLER_THROTTLE_MODE_TORQUE: _MotorController_ProcAll(p_mc, Motor_User_SetTorqueMode);    break;
         default: break;
     }
-    MotorController_ActivateAll(p_mc);
+    // MotorController_ActivateAll(p_mc);
 }
 
 static inline void MotorController_SetThrottleValue(MotorControllerPtr_T p_mc, uint16_t userCmdThrottle)
@@ -450,8 +450,7 @@ static inline void MotorController_SetThrottleValue(MotorControllerPtr_T p_mc, u
 // todo brake hold threshold
 static inline void _SetBrakeCmd(MotorPtr_T p_motor, int16_t brake)
 {
-    //todo change to current
-    if(Motor_User_GetSpeed_UFrac16(p_motor) >  (INT16_MAX * .02))
+    if(Motor_User_GetSpeed_UFrac16(p_motor) >  (INT16_MAX * .05))
     {
         Motor_User_SetTorqueCmdValue(p_motor, (int32_t)0 - brake);
     }
@@ -471,7 +470,7 @@ static inline void MotorController_StartBrakeMode(MotorControllerPtr_T p_mc)
         case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: break;
         default: break;
     }
-    MotorController_ActivateAll(p_mc);
+    // MotorController_ActivateAll(p_mc);
 }
 
 static inline void MotorController_SetBrakeValue(MotorControllerPtr_T p_mc, uint16_t userCmdBrake)

@@ -280,9 +280,9 @@ static inline bool _Motor_CheckOpenLoop(const MotorPtr_T p_motor)
 }
 
 /* User request or no sensor feedback */
-bool Motor_CheckOpenLoop(const MotorPtr_T p_motor)
+bool Motor_CheckFeedback(const MotorPtr_T p_motor)
 {
-    return ((Motor_CheckSensorFeedback(p_motor) == false) || (_Motor_CheckOpenLoop(p_motor) == true));
+    return ((Motor_CheckSensorFeedback(p_motor) == true) && (_Motor_CheckOpenLoop(p_motor) == false));
 }
 
 /******************************************************************************/
@@ -292,7 +292,7 @@ bool Motor_CheckOpenLoop(const MotorPtr_T p_motor)
 /******************************************************************************/
 // static inline bool Motor_CheckSpeedOverLimit(MotorPtr_T p_motor)
 // {
-//     return !math_isbound(p_motor->Speed_FracS16, p_motor->SpeedLimitCw_FracS16, p_motor->SpeedLimitCcw_FracS16);
+//     return !math_is_bounded(p_motor->Speed_FracS16, p_motor->SpeedLimitCw_FracS16, p_motor->SpeedLimitCcw_FracS16);
 // }
 
 int32_t Motor_GetSpeedLimitReq(const MotorPtr_T p_motor)

@@ -214,7 +214,7 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
     if(Timer_Periodic_Poll(&p_mc->TimerMillis) == true)
     {
         p_mc->MainDividerCounter++;
-        StateMachine_Proc(&p_mc->StateMachine);
+        StateMachine_Async_ProcState(&p_mc->StateMachine);
 
         for(uint8_t iProtocol = 0U; iProtocol < p_mc->CONFIG.PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_mc->CONFIG.P_PROTOCOLS[iProtocol]); }
 
@@ -341,7 +341,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorControllerPtr_T p_mc)
 static inline void MotorController_PWM_Thread(MotorControllerPtr_T p_mc)
 {
     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_PWM_Thread(&p_mc->CONFIG.P_MOTORS[iMotor]); }
-    Motor_ClearPwmInterrupt(&p_mc->CONFIG.P_MOTORS[0U]);
+    Motor_ClearInterrupt(&p_mc->CONFIG.P_MOTORS[0U]);
 }
 
 #endif

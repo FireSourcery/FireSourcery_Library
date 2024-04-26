@@ -124,14 +124,14 @@ static inline void * GetPtrFront(const Ring_T * p_ring)                 { return
 static inline void * GetPtrBack(const Ring_T * p_ring)                  { return CalcPtrUnit(p_ring->CONFIG.P_BUFFER, p_ring->CONFIG.UNIT_SIZE, GetIndex(p_ring, p_ring->Head)); }
 static inline void * GetPtrIndex(const Ring_T * p_ring, size_t index)   { return CalcPtrUnit(p_ring->CONFIG.P_BUFFER, p_ring->CONFIG.UNIT_SIZE, GetIndex(p_ring, p_ring->Tail + index)); }
 
-static inline void SwitchCopy(void *p_dest, const void *p_source, size_t unitSize)
+static inline void SwitchCopy(void * p_dest, const void * p_source, size_t unitSize)
 {
-    switch (unitSize)
+    switch(unitSize)
     {
         case sizeof(uint32_t): *((uint32_t *)p_dest) = *((uint32_t *)p_source); break;
         case sizeof(uint16_t): *((uint16_t *)p_dest) = *((uint16_t *)p_source); break;
         case sizeof(uint8_t) : *((uint8_t  *)p_dest) = *((uint8_t  *)p_source); break;
-        default: memcpy(p_dest, p_source, unitSize);  break;
+        default: memcpy(p_dest, p_source, unitSize); break;
     }
 }
 

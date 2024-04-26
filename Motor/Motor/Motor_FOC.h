@@ -116,7 +116,7 @@ static inline int32_t Motor_FOC_GetElectricalPower_UFrac16(const MotorPtr_T p_mo
 static inline void Motor_FOC_ClearControlState(MotorPtr_T p_motor)
 {
     FOC_ClearControlState(&p_motor->Foc);
-    Linear_Ramp_ZeroState(&p_motor->Ramp);
+    Linear_Ramp_ZeroOutputState(&p_motor->Ramp);
     PID_Reset(&p_motor->PidIq);
     PID_Reset(&p_motor->PidId);
     PID_Reset(&p_motor->PidSpeed);
@@ -151,19 +151,5 @@ extern void Motor_FOC_SetDirectionCw(MotorPtr_T p_motor);
 extern void Motor_FOC_SetDirection(MotorPtr_T p_motor, Motor_Direction_T direction);
 extern void Motor_FOC_SetDirectionForward(MotorPtr_T p_motor);
 
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-#include "System/Critical/Critical.h"
-
-static inline bool Motor_FOC_SetFeedbackMode_Async(MotorPtr_T p_motor, Motor_FeedbackMode_T reqMode)
-{
-    Critical_Enter(); /* Block PWM Thread, do not proc new flags before matching output with StateMachine */
-    p_motor->FeedbackMode.Word = reqMode.Word;
-    Motor_FOC_ProcFeedbackMatch(p_motor);
-    Critical_Exit();
-}
 
 #endif

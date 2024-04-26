@@ -439,6 +439,7 @@ static inline uint32_t _Motor_ControlCyclesOf(uint32_t millis) { return millis *
 */
 /******************************************************************************/
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
+/* Internal unit representations only */
 static inline int32_t _Motor_ConvertSpeed_RpmToFracS16(const MotorPtr_T p_motor, int32_t speed_rpm)        { return speed_rpm * INT16_MAX / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
 static inline int16_t _Motor_ConvertSpeed_FracS16ToRpm(const MotorPtr_T p_motor, int32_t speed_frac16)     { return speed_frac16 * p_motor->Parameters.SpeedFeedbackRef_Rpm / 32768; }
 static inline int32_t _Motor_ConvertI_AmpsToIFracS16(int32_t i_amp)                                 { return i_amp * INT16_MAX / GLOBAL_MOTOR.I_MAX_AMPS; }
@@ -457,6 +458,7 @@ static inline int32_t _Motor_ConvertPower_Scalar16ToWatts(int32_t vi_scalar16)  
 #endif
 
 /* todo */
+// external units
 // for sensor which report an delta angle instead of speed.
 // static inline uint32_t speed_angle16torpm(uint16_t angle16, uint32_t sampleFreq)                     { return  (angle16 * sampleFreq >> 16U) * 60U; }
 // static inline uint32_t speed_rpmtoangle16(uint16_t rpm, uint32_t sampleFreq)                         { return (rpm << 16U) / (60U * sampleFreq); }
@@ -557,12 +559,12 @@ static inline uint16_t Motor_GetIPeakRef_Adcu(MotorPtr_T p_motor)
     Interrupts
 */
 /******************************************************************************/
-static inline void Motor_ClearPwmInterrupt(MotorPtr_T p_motor)  { Phase_ClearInterrupt(&p_motor->Phase); }
-static inline void Motor_DisablePwm(MotorPtr_T p_motor)         { Phase_DisableInterrupt(&p_motor->Phase); }
-static inline void Motor_EnablePwm(MotorPtr_T p_motor)          { Phase_EnableInterrupt(&p_motor->Phase); }
+static inline void Motor_ClearInterrupt(MotorPtr_T p_motor)     { Phase_ClearInterrupt(&p_motor->Phase); }
+/* Controls StateMachine Proc. Local Critical */
+static inline void Motor_DisableInterrupt(MotorPtr_T p_motor)   { Phase_DisableInterrupt(&p_motor->Phase); }
+static inline void Motor_EnableInterrupt(MotorPtr_T p_motor)    { Phase_EnableInterrupt(&p_motor->Phase); }
 
-static inline void Motor_DisableOutput(MotorPtr_T p_motor) { Phase_Float(&p_motor->Phase); }
-
+static inline void Motor_DisableOutput(MotorPtr_T p_motor)      { Phase_Float(&p_motor->Phase); }
 
 /******************************************************************************/
 /*
@@ -622,7 +624,7 @@ extern void Motor_ZeroSensor(MotorPtr_T p_motor);
 extern void Motor_CalibrateSensorZero(MotorPtr_T p_motor);
 extern void Motor_ValidateSensorAlign(MotorPtr_T p_motor);
 extern bool Motor_CheckSensorFeedback(const MotorPtr_T p_motor);
-extern bool Motor_CheckOpenLoop(const MotorPtr_T p_motor);
+extern bool Motor_CheckFeedback(const MotorPtr_T p_motor);
 extern bool Motor_PollAlignFault(MotorPtr_T p_motor);
 
 extern int32_t Motor_GetSpeedLimitReq(const MotorPtr_T p_motor);

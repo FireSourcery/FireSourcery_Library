@@ -31,4 +31,3 @@
 #include "Critical.h"
 
 uint32_t _Critical_InterruptDisableCount = 0U;
-uint32_t _Critical_StateOnEnter;

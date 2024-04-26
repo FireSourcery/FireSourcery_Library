@@ -171,8 +171,8 @@ static inline uint16_t Motor_User_GetActiveSpeedLimit(const MotorPtr_T p_motor) 
     Extern
 */
 /******************************************************************************/
-extern void Motor_User_ActivateFeedbackMode(MotorPtr_T p_motor, Motor_FeedbackMode_T mode);
-extern void Motor_User_ActivateFeedbackMode_Cast(MotorPtr_T p_motor, uint8_t modeWord);
+extern void Motor_User_ActivateControl(MotorPtr_T p_motor, Motor_FeedbackMode_T mode);
+extern void Motor_User_ActivateControl_Cast(MotorPtr_T p_motor, uint8_t modeWord);
 extern void Motor_User_SetCmd(MotorPtr_T p_motor, int16_t userCmd);
 extern int32_t Motor_User_GetCmd(const MotorPtr_T p_motor);
 extern int32_t Motor_User_GetSetPoint(const MotorPtr_T p_motor);
@@ -199,7 +199,7 @@ extern void Motor_User_ActivateDefaultFeedbackMode(MotorPtr_T p_motor);
 
 extern void Motor_User_ReleaseControl(MotorPtr_T p_motor);
 extern void Motor_User_DisableControl(MotorPtr_T p_motor);
-extern void Motor_User_ActivateControl(MotorPtr_T p_motor);
+// extern void Motor_User_ActivateControl(MotorPtr_T p_motor);
 extern bool Motor_User_TryHold(MotorPtr_T p_motor);
 extern bool Motor_User_TryDirection(MotorPtr_T p_motor, Motor_Direction_T direction);
 extern bool Motor_User_TryDirectionForward(MotorPtr_T p_motor);

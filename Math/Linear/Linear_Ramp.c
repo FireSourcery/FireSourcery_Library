@@ -92,7 +92,7 @@ void Linear_Ramp_Init(Linear_T * p_linear, uint32_t duration_Ticks, int32_t init
     p_linear->SlopeShift = LINEAR_RAMP_SHIFT;
     p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT;
     Linear_Ramp_SetSlope(p_linear, duration_Ticks, initial, final);
-    Linear_Ramp_SetState(p_linear, 0);
+    Linear_Ramp_SetOutputState(p_linear, 0);
     Linear_Ramp_SetTarget(p_linear, 0);
 }
 
@@ -104,7 +104,7 @@ void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16
     p_linear->SlopeShift = LINEAR_RAMP_SHIFT;
     p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT;
     Linear_Ramp_SetSlope_Millis(p_linear, updateFreq_Hz, duration_Ms, initial, final);
-    Linear_Ramp_SetState(p_linear, 0);
+    Linear_Ramp_SetOutputState(p_linear, 0);
     Linear_Ramp_SetTarget(p_linear, 0);
 }
 
@@ -133,14 +133,14 @@ void Linear_Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, ui
 void Linear_Ramp_Set(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final)
 {
     Linear_Ramp_SetSlope(p_linear, duration_Ticks, initial, final);
-    Linear_Ramp_SetState(p_linear, initial);
+    Linear_Ramp_SetOutputState(p_linear, initial);
     Linear_Ramp_SetTarget(p_linear, final);
 }
 
 void Linear_Ramp_Set_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
 {
     Linear_Ramp_SetSlope_Millis(p_linear, updateFreq_Hz, duration_Ms, initial, final);
-    Linear_Ramp_SetState(p_linear, initial);
+    Linear_Ramp_SetOutputState(p_linear, initial);
     Linear_Ramp_SetTarget(p_linear, final);
 }
 

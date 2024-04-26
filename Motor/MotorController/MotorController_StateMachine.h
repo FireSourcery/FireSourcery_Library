@@ -41,7 +41,7 @@
 // #endif
 
 // #define MCSM_TRANSITION_TABLE_LENGTH (6U + _MCSM_TRANSITION_TABLE_LENGTH_SERVO)
-#define MCSM_TRANSITION_TABLE_LENGTH (8U)
+#define MCSM_TRANSITION_TABLE_LENGTH (7U)
 
 typedef enum MotorController_StateMachine_Input
 {

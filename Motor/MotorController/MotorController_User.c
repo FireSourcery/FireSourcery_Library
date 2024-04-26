@@ -55,7 +55,7 @@ MotorController_Direction_T MotorController_User_GetDirection(const MotorControl
 bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, MotorController_Direction_T direction)
 {
     bool isSuccess;
-    if(MotorController_User_GetDirection(p_mc) != direction) { StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
+    if(MotorController_User_GetDirection(p_mc) != direction) { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
     else { MotorController_BeepDouble(p_mc); }
     isSuccess = (MotorController_User_GetDirection(p_mc) == direction);
     if(isSuccess == false) { MotorController_BeepShort(p_mc); }
