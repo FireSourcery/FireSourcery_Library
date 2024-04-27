@@ -36,11 +36,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define HAL_SERIAL_FIFO_SIZE 0U
-
-#ifndef HAL_SERIAL_BASE_FREQ
-#define HAL_SERIAL_BASE_FREQ (CPU_FREQ / 2U)
+#ifndef HAL_SERIAL_CLOCK_SOURCE_FREQ
+#define HAL_SERIAL_CLOCK_SOURCE_FREQ (CPU_FREQ / 2U)
 #endif
+
+#define HAL_SERIAL_FIFO_SIZE 0U
 
 typedef UART_Type HAL_Serial_T;
 
@@ -80,17 +80,17 @@ static inline bool HAL_Serial_ConfigBaudRate(HAL_Serial_T * p_hal, uint32_t baud
     bool isSuccess;
 
     /* Calculate the baud rate modulo divisor, sbr*/
-    sbr = HAL_SERIAL_BASE_FREQ / (baudRate_Bps * 16U);
+    sbr = HAL_SERIAL_CLOCK_SOURCE_FREQ / (baudRate_Bps * 16U);
     /* set sbrTemp to 1 if the sourceClockInHz can not satisfy the desired baud rate */
     if(sbr == 0U) { sbr = 1U; }
 
     /* Calculate the baud rate based on the temporary SBR values */
-    baudDiff = (HAL_SERIAL_BASE_FREQ / (sbr * 16U)) - baudRate_Bps;
+    baudDiff = (HAL_SERIAL_CLOCK_SOURCE_FREQ / (sbr * 16U)) - baudRate_Bps;
 
     /* Select the better value between sbr and (sbr + 1) */
-    if (baudDiff > (baudRate_Bps - (HAL_SERIAL_BASE_FREQ / (16U * (sbr + 1U)))))
+    if (baudDiff > (baudRate_Bps - (HAL_SERIAL_CLOCK_SOURCE_FREQ / (16U * (sbr + 1U)))))
     {
-        baudDiff = baudRate_Bps - (HAL_SERIAL_BASE_FREQ / (16U * (sbr + 1U)));
+        baudDiff = baudRate_Bps - (HAL_SERIAL_CLOCK_SOURCE_FREQ / (16U * (sbr + 1U)));
         sbr++;
     }
 

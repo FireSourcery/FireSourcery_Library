@@ -36,6 +36,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifndef HAL_ENCODER_CLOCK_SOURCE_FREQ
+#define HAL_ENCODER_CLOCK_SOURCE_FREQ CPU_FREQ
+#endif
+
 typedef FTM_Type HAL_Encoder_Pin_T;
 typedef FTM_Type HAL_Encoder_Timer_T;
 typedef FTM_Type HAL_Encoder_Counter_T;
@@ -47,14 +51,6 @@ static inline uint32_t HAL_Encoder_ReadTimer(const HAL_Encoder_Timer_T * p_encod
 static inline void HAL_Encoder_WriteTimer(HAL_Encoder_Timer_T * p_encoder, uint32_t count)  { p_encoder->CNT = FTM_CNT_COUNT(count); }
 
 static inline void HAL_Encoder_Enable(HAL_Encoder_Timer_T * p_encoder)                      { p_encoder->SC |= FTM_SC_CLKS(0b01U); }
-
-#ifndef HAL_ENCODER_CLOCK_SOURCE_FREQ
-#define HAL_ENCODER_CLOCK_SOURCE_FREQ CPU_FREQ
-#endif
-
-// #ifndef HAL_ENCODER_TIMER_FREQ
-// #define HAL_ENCODER_TIMER_FREQ (0xFFFFFFFFU/1000U)
-// #endif
 
 /*!
     @return freq set

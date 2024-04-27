@@ -148,9 +148,9 @@ typedef struct Protocol_ReqInterface
     const struct
     {
         void * const p_SubState;
-        const uint8_t * const p_RxPacket;
+        const void * const p_RxPacket;
         const Protocol_HeaderMeta_T * const p_RxMeta;
-        uint8_t * const p_TxPacket;
+        void * const p_TxPacket;
     };
     size_t TxSize;
 }

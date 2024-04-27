@@ -40,10 +40,6 @@
 #define HAL_PWM_CLOCK_SOURCE_FREQ CPU_FREQ
 #endif
 
-// #ifndef HAL_PWM_FREQ
-// #define HAL_PWM_FREQ 20000U
-// #endif
-
 typedef FTM_Type HAL_PWM_T;
 
 /*

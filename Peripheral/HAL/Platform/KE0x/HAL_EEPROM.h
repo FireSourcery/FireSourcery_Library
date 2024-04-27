@@ -36,6 +36,7 @@
 typedef HAL_Flash_T HAL_EEPROM_T; /* Flash/EEPROM use same controller */
 
 #if     defined(KE06Z4_SERIES) // No EEPROM on KE06
+
 #define HAL_EEPROM_START                0U
 #define HAL_EEPROM_END                  0U
 #define HAL_EEPROM_SIZE                 0U

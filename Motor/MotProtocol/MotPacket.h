@@ -191,6 +191,7 @@ typedef MotPacket_Sync_T MotPacket_PingResp_T;
 /******************************************************************************/
 typedef struct MotPacket_VersionReq_Payload {}                                                                              MotPacket_VersionReq_Payload_T;
 typedef struct MotPacket_VersionResp_Payload { uint32_t Protocol; uint32_t Library; uint32_t Firmware; uint32_t Board; }    MotPacket_VersionResp_Payload_T;
+// typedef struct MotPacket_VersionResp_Payload { uint32_t Versions[MOT_PACKET_PAYLOAD_LENGTH_MAX / 4U]; }                     MotPacket_VersionResp_Payload_T;
 typedef MotPacket_Header_T                                                                                                  MotPacket_VersionReq_T;
 typedef struct MotPacket_VersionResp { MotPacket_Header_T Header; MotPacket_VersionResp_Payload_T VersionResp; }            MotPacket_VersionResp_T;
 
