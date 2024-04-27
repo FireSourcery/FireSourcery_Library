@@ -1,18 +1,22 @@
 {
-    // "C_Cpp.default.defines": [
-    //     "${default}",
-    //     "_DEBUG",
-    //     "UNICODE",
-    //     "_UNICODE"
-    // ],
-    // "C_Cpp.default.includePath": [
-    //     "${default}",
-    //     "${workspaceFolder}"
-    // ],
-    // "C_Cpp.default.forcedInclude": [
-    //     "${default}"
-    // ],
-    "C_Cpp.default.mergeConfigurations": true,
+    "C_Cpp.default.forcedInclude": [
+        // "${default}",
+        "${workspaceFolder:Project}/Config_Precompile.h", // define CONFIG_HAL_PERIPHERAL_PLATFORM from workspace root
+        "${workspaceFolder:mcux-sdx}/core/CMSIS/Core/Include/cmsis_gcc.h",
+    ],
+
+    "C_Cpp.default.includePath": [
+        // "${default}",
+        "${workspaceFolder:FireSourcery_Library}",
+        "${workspaceFolder:Project}",
+
+        "${workspaceFolder:mcux-sdk}/core",
+        "${workspaceFolder:mcux-sdk}/core/CMSIS/Core/Include",
+        "${workspaceFolder:mcux-sdk}/core/devices",
+        "${workspaceFolder:mcux-sdk}/core/drivers/common",
+    ],
+    "C_Cpp.default.compilerPath": "${workspaceFolder:gcc-arm}/bin/arm-none-eabi-gcc.exe",
+    // "C_Cpp.default.mergeConfigurations": true,
 
     "C_Cpp.default.cStandard": "c17",
     "C_Cpp.default.cppStandard": "c++17",

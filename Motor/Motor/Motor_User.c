@@ -72,7 +72,7 @@ static int32_t Scale16(uint16_t scalar16, int32_t value) { return (int32_t)scala
 void Motor_User_ActivateControl(MotorPtr_T p_motor, Motor_FeedbackMode_T mode)
 {
     Critical_Enter();
-    // if(p_motor->FeedbackMode.Word != mode.Word)
+    // if(p_motor->FeedbackMode.Word != mode.Word) // need disabled flag
     { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Word); }
     Critical_Exit();
 }
@@ -114,11 +114,11 @@ void Motor_User_SetVoltageCmdValue(MotorPtr_T p_motor, int16_t voltageCmd)
     Motor_User_SetCmd(p_motor, voltageCmdIn);
 }
 
-void Motor_User_SetVoltageModeCmd(MotorPtr_T p_motor, int16_t voltageCmd)
-{
-    Motor_User_SetVoltageMode(p_motor);
-    Motor_User_SetVoltageCmdValue(p_motor, voltageCmd);
-}
+// void Motor_User_SetVoltageModeCmd(MotorPtr_T p_motor, int16_t voltageCmd)
+// {
+//     Motor_User_SetVoltageMode(p_motor);
+//     Motor_User_SetVoltageCmdValue(p_motor, voltageCmd);
+// }
 
 /******************************************************************************/
 /*!
@@ -139,11 +139,11 @@ void Motor_User_SetTorqueCmdValue(MotorPtr_T p_motor, int16_t torqueCmd)
     Motor_User_SetCmd(p_motor, torqueCmdIn);
 }
 
-void Motor_User_SetTorqueModeCmd(MotorPtr_T p_motor, int16_t torqueCmd)
-{
-    Motor_User_SetTorqueMode(p_motor);
-    Motor_User_SetTorqueCmdValue(p_motor, torqueCmd);
-}
+// void Motor_User_SetTorqueModeCmd(MotorPtr_T p_motor, int16_t torqueCmd)
+// {
+//     Motor_User_SetTorqueMode(p_motor);
+//     Motor_User_SetTorqueCmdValue(p_motor, torqueCmd);
+// }
 
 /******************************************************************************/
 /*!
@@ -169,11 +169,11 @@ void Motor_User_SetSpeedCmdValue(MotorPtr_T p_motor, int16_t speedCmd)
     Motor_User_SetCmd(p_motor, speedCmdIn);
 }
 
-void Motor_User_SetSpeedModeCmd(MotorPtr_T p_motor, int16_t speedCmd)
-{
-    Motor_User_SetSpeedMode(p_motor);
-    Motor_User_SetSpeedCmdValue(p_motor, speedCmd);
-}
+// void Motor_User_SetSpeedModeCmd(MotorPtr_T p_motor, int16_t speedCmd)
+// {
+//     Motor_User_SetSpeedMode(p_motor);
+//     Motor_User_SetSpeedCmdValue(p_motor, speedCmd);
+// }
 
 /******************************************************************************/
 /*!
@@ -218,11 +218,11 @@ void Motor_User_SetOpenLoopCmdValue(MotorPtr_T p_motor, int16_t ivCmd)
     Motor_User_SetCmd(p_motor, ivCmdIn);
 }
 
-void Motor_User_SetOpenLoopModeCmd(MotorPtr_T p_motor, int16_t ivMagnitude)
-{
-    Motor_User_SetOpenLoopMode(p_motor);
-    Motor_User_SetOpenLoopCmdValue(p_motor, ivMagnitude);
-}
+// void Motor_User_SetOpenLoopModeCmd(MotorPtr_T p_motor, int16_t ivMagnitude)
+// {
+//     Motor_User_SetOpenLoopMode(p_motor);
+//     Motor_User_SetOpenLoopCmdValue(p_motor, ivMagnitude);
+// }
 #endif
 
 

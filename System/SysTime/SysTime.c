@@ -54,6 +54,7 @@ void SysTime_Delay(uint32_t ms, void (*yield)(void))
 void SysTime_Init(void)
 {
 #ifdef CONFIG_SYSTIME_SYSTICK
+    // SysTick_Config(ticks)
     SYST_RVR = (CPU_FREQ / 1000U) - 1U;
     SYST_CVR = 0U;
     SYST_CSR = SYST_CSR_CLKSOURCE_MASK | SYST_CSR_TICKINT_MASK | SYST_CSR_ENABLE_MASK;

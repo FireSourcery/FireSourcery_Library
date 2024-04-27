@@ -72,7 +72,7 @@ static inline void SysTime_ZeroMillis(void)         { SysTime_Millis = 0U; }
 #if defined(CONFIG_SYSTIME_SYSTICK) && defined(CPU_FREQ)
 static inline uint32_t SysTime_GetMicros(void)
 {
-    volatile uint32_t micros = (CPU_FREQ / 1000U - 1U) - (SYST_CVR / (CPU_FREQ / 1000000U)); /* SYST_CVR ticks down */
+    uint32_t micros = (CPU_FREQ / 1000U - 1U) - (SYST_CVR / (CPU_FREQ / 1000000U)); /* SYST_CVR ticks down */
     return SysTime_Millis * 1000U + micros;
 }
 

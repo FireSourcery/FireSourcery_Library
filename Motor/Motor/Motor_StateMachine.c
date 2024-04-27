@@ -253,6 +253,7 @@ static StateMachine_State_T * Run_InputControl(MotorPtr_T p_motor, statemachine_
         Observed bemf may experience larger discontinuity than control voltage
     */
     // Critical_Enter(); /* Block PWM Thread, do not proc new flags before matching output with StateMachine */
+    // if(feedbackModeWord != p_motor->FeedbackMode.Word)
     Motor_SetFeedbackMode_Cast(p_motor, feedbackModeWord);
     // Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcFeedbackMatch, 0U);
     // Critical_Exit();
