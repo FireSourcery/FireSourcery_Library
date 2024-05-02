@@ -49,7 +49,7 @@
 /******************************************************************************/
 /*! Ping */
 /******************************************************************************/
-static protocol_txsize_t Ping(MotorControllerPtr_T p_mc, MotPacket_PingResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
+static protocol_size_t Ping(MotorControllerPtr_T p_mc, MotPacket_PingResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
     MotorController_User_BeepN(p_mc, 500U, 500U, 1U);
@@ -59,7 +59,7 @@ static protocol_txsize_t Ping(MotorControllerPtr_T p_mc, MotPacket_PingResp_T * 
 /******************************************************************************/
 /*! Version */
 /******************************************************************************/
-static protocol_txsize_t Version(MotorControllerPtr_T p_mc, MotPacket_VersionResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
+static protocol_size_t Version(MotorControllerPtr_T p_mc, MotPacket_VersionResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
     return MotPacket_VersionResp_Build(p_txPacket, MotorController_User_GetLibraryVersion(), MotorController_User_GetMainVersion(p_mc), MotorController_User_GetBoardVersion());
@@ -68,7 +68,7 @@ static protocol_txsize_t Version(MotorControllerPtr_T p_mc, MotPacket_VersionRes
 /******************************************************************************/
 /*! Stop All */
 /******************************************************************************/
-static protocol_txsize_t StopAll(MotorControllerPtr_T p_mc, MotPacket_StopResp_T * p_txPacket, const MotPacket_StopReq_T * p_rxPacket)
+static protocol_size_t StopAll(MotorControllerPtr_T p_mc, MotPacket_StopResp_T * p_txPacket, const MotPacket_StopReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
     MotorController_User_DisableControl(p_mc);
@@ -84,7 +84,7 @@ typedef enum MotProtocol_CallId
 }
 MotProtocol_CallId_T;
 
-static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_CallResp_T * p_txPacket, const MotPacket_CallReq_T * p_rxPacket)
+static protocol_size_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_CallResp_T * p_txPacket, const MotPacket_CallReq_T * p_rxPacket)
 {
     MotorPtr_T p_motor = MotorController_GetPtrMotor(p_mc, 0U);
     uint16_t status = 0U; /* Overloaded status */
@@ -114,7 +114,7 @@ static protocol_txsize_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_Call
 /*! Read Vars */
 /******************************************************************************/
 /* Resp Truncates 32-Bit Vars */
-static protocol_txsize_t VarRead(MotorControllerPtr_T p_mc, MotPacket_VarReadResp_T * p_txPacket, const MotPacket_VarReadReq_T * p_rxPacket)
+static protocol_size_t VarRead(MotorControllerPtr_T p_mc, MotPacket_VarReadResp_T * p_txPacket, const MotPacket_VarReadReq_T * p_rxPacket)
 {
     uint8_t varsCount = MotPacket_VarReadReq_ParseVarIdCount(p_rxPacket);
 
@@ -130,7 +130,7 @@ static protocol_txsize_t VarRead(MotorControllerPtr_T p_mc, MotPacket_VarReadRes
 /******************************************************************************/
 /*! Write Vars */
 /******************************************************************************/
-static protocol_txsize_t VarWrite(MotorControllerPtr_T p_mc, MotPacket_VarWriteResp_T * p_txPacket, const MotPacket_VarWriteReq_T * p_rxPacket)
+static protocol_size_t VarWrite(MotorControllerPtr_T p_mc, MotPacket_VarWriteResp_T * p_txPacket, const MotPacket_VarWriteReq_T * p_rxPacket)
 {
     uint8_t varsCount = MotPacket_VarWriteReq_ParseVarCount(p_rxPacket);
 
@@ -150,9 +150,9 @@ static protocol_txsize_t VarWrite(MotorControllerPtr_T p_mc, MotPacket_VarWriteR
 /*! Once */
 /* using voluntary StateMachine Check */
 /******************************************************************************/
-static protocol_txsize_t ReadOnce_Blocking(MotorControllerPtr_T p_mc, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket)
+static protocol_size_t ReadOnce_Blocking(MotorControllerPtr_T p_mc, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket)
 {
-    protocol_txsize_t txSize;
+    protocol_size_t txSize;
     if(MotorController_User_IsLockedState(p_mc) == true)
     {
         txSize = MotProtocol_Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, p_txPacket, p_rxPacket);
@@ -164,9 +164,9 @@ static protocol_txsize_t ReadOnce_Blocking(MotorControllerPtr_T p_mc, MotPacket_
     return txSize;
 }
 
-static protocol_txsize_t WriteOnce_Blocking(MotorControllerPtr_T p_mc, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket)
+static protocol_size_t WriteOnce_Blocking(MotorControllerPtr_T p_mc, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket)
 {
-    protocol_txsize_t txSize;
+    protocol_size_t txSize;
     if(MotorController_User_IsLockedState(p_mc) == true)
     {
         txSize = MotProtocol_Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, p_txPacket, p_rxPacket);
