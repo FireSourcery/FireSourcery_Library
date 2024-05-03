@@ -33,6 +33,7 @@
 #include "MotorController_StateMachine.h"
 #include "Utility/StateMachine/StateMachine.h"
 #include "System/SysTime/SysTime.h"
+#include "System/Reboot/Reboot.h"
 #include <string.h>
 
 static const StateMachine_State_T STATE_INIT;
@@ -459,6 +460,7 @@ static StateMachine_State_T * Blocking_InputBlocking_Blocking(MotorControllerPtr
         case MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC:       MotorController_CalibrateAdc(p_mc);                               break;
         /* NvM function will block + disable interrupts */
         case MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS:     p_mc->NvmStatus = MotorController_SaveParameters_Blocking(p_mc);  break;
+        case MOTOR_CONTROLLER_LOCKED_REBOOT:       Reboot();                               break;
         default: break;
     }
 

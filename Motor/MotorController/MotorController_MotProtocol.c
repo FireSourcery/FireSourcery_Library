@@ -81,6 +81,7 @@ static protocol_size_t StopAll(MotorControllerPtr_T p_mc, MotPacket_StopResp_T *
 typedef enum MotProtocol_CallId
 {
     MOT_CALL_LOCKED_STATE,
+    // MOT_CALL_REBOOT,
 }
 MotProtocol_CallId_T;
 
@@ -92,6 +93,7 @@ static protocol_size_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_CallRe
     switch((MotProtocol_CallId_T)p_rxPacket->CallReq.Id)
     {
         case MOT_CALL_LOCKED_STATE:
+            // status = MotorController_User_InputLocked(p_mc, p_rxPacket->CallReq.Arg);
             switch((MotorController_LockedId_T)p_rxPacket->CallReq.Arg) /* StateMachine will check for invalid BlockingId */
             {
                 case MOTOR_CONTROLLER_LOCKED_ENTER:     status = MotorController_User_EnterLockedState(p_mc) ? MOT_STATUS_OK : MOT_STATUS_ERROR;  break;
@@ -101,6 +103,7 @@ static protocol_size_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_CallRe
                 case MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC:       MotorController_User_InputLocked(p_mc, MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC);       status = MOT_STATUS_OK; break;
                 /* Blocking functions can directly return status. */
                 case MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS:     status = MotorController_User_SaveParameters_Blocking(p_mc);    break;
+                case MOTOR_CONTROLLER_LOCKED_REBOOT:       MotorController_User_InputLocked(p_mc, MOTOR_CONTROLLER_LOCKED_REBOOT);       status = MOT_STATUS_OK; break;
                 default: break;
             }
             break;
@@ -249,9 +252,7 @@ const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
     .BUILD_TX_SYNC = (Protocol_BuildTxSync_T)MotProtocol_BuildTxSync,
     .P_REQ_TABLE = &REQ_TABLE[0U],
     .REQ_TABLE_LENGTH = sizeof(REQ_TABLE) / sizeof(Protocol_Req_T),
-    .REQ_EXT_RESET = 0U,
     .RX_START_ID = MOT_PACKET_START_BYTE,
-    // .RX_END_ID = 0x00U,
     .RX_TIMEOUT = MOT_PROTOCOL_TIMEOUT_RX,
     .REQ_TIMEOUT = MOT_PROTOCOL_TIMEOUT_REQ,
     // .BAUD_RATE_DEFAULT = MOT_PROTOCOL_BAUD_RATE_DEFAULT,

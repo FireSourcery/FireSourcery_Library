@@ -34,12 +34,15 @@
 #ifdef CONFIG_SYSTEM_MCU_ARM
 
 #include "External/CMSIS/Core/Include/cmsis_compiler.h"
-// caller includes header
 
 static inline void Reboot(void)
 {
     NVIC_SystemReset();
 }
+
+#else
+
+extern void Reboot(void);
 
 #endif
 

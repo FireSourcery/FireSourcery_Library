@@ -134,7 +134,6 @@ Protocol_ReqCode_T MotProtocol_DataModeReadInit(void * p_app, Protocol_ReqContex
     p_subState->DataModeIndex = 0U;
     *p_reqContext->p_TxSize = MotPacket_DataModeReadResp_Build(p_txPacket, MOT_STATUS_OK);
     *p_reqContext->p_SubStateIndex = 1U;
-    // p_subState->DataModeStateId = MOT_PROTOCOL_DATA_MODE_READ_ACTIVE;
     reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE; // after receiving ack, control is transferred back to MotProtocol_DataModeReadData
 
     return reqCode;
@@ -157,9 +156,8 @@ Protocol_ReqCode_T MotProtocol_DataModeReadData(void * p_app, Protocol_ReqContex
         p_subState->DataModeIndex += readSize;
         reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
     }
-    else /* (p_subState->DataModeSize == 0U) */
+    else
     {
-        // p_subState->DataModeStateId = MOT_PROTOCOL_DATA_MODE_INACTIVE;
         *p_reqContext->p_TxSize = MotPacket_DataModeReadResp_Build((MotPacket_DataModeResp_T *)p_txPacket, MOT_STATUS_OK);
         *p_reqContext->p_SubStateIndex = 2U;
         reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
@@ -211,8 +209,7 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flas
     p_subState->DataModeIndex = 0U;
 
     //alternatively share with read, check boundaries
-    // flashStatus = Flash_StartContinueWrite(p_flash, (const uint8_t *)p_subState->DataModeAddress, p_subState->DataModeSize);
-    flashStatus = NV_MEMORY_STATUS_SUCCESS;
+    flashStatus = Flash_StartContinueWrite(p_flash, (const uint8_t *)p_subState->DataModeAddress, p_subState->DataModeSize);
 
     *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build(p_txPacket, flashStatus);
     *p_reqContext->p_SubStateIndex = 1U;
@@ -231,20 +228,26 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteData_Blocking(Flash_T * p_flas
     const uint8_t * p_sourceData; /* DataPacket Payload */
     uint8_t writeSize; /* DataPacket Size */
 
-    // if(p_subState->DataModeSize >= writeSize)
-    if(p_subState->DataModeIndex < p_subState->DataModeSize)
-    {
+    // if(p_subState->DataModeIndex < p_subState->DataModeSize)
+    // {
         p_sourceData = MotPacket_ByteData_ParsePtrData(p_rxPacket);
         writeSize = MotPacket_ByteData_ParseSize(p_rxPacket);
-        // flashStatus = Flash_ContinueWrite_Blocking(p_flash, p_sourceData, writeSize);
-        flashStatus = NV_MEMORY_STATUS_SUCCESS;
+        flashStatus = Flash_ContinueWrite_Blocking(p_flash, p_sourceData, writeSize);
 
         if(flashStatus == NV_MEMORY_STATUS_SUCCESS)
         {
-            // p_subState->DataModeSize -= writeSize;
             p_subState->DataModeIndex += writeSize;
-            *p_reqContext->p_TxSize = 0U; /* Tx Ack already handled on reception */
-            reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_CONTINUE;
+            if(p_subState->DataModeIndex < p_subState->DataModeSize)
+            {
+                *p_reqContext->p_TxSize = 0U; /* Tx Ack already handled on reception */
+                reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_CONTINUE;
+            }
+            else
+            {
+                *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build((MotPacket_DataModeResp_T *)p_txPacket, MOT_STATUS_OK);
+                *p_reqContext->p_SubStateIndex = 3U;
+                reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
+            }
             // further nacks must refer to previous pack or separate state for tx ack after process
         }
         else /* Error */
@@ -253,13 +256,7 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteData_Blocking(Flash_T * p_flas
             *p_reqContext->p_SubStateIndex = 0U;
             reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
         }
-    }
-    else /* (p_subState->DataModeSize == 0U) */
-    {
-        *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build((MotPacket_DataModeResp_T *)p_txPacket, MOT_STATUS_OK);
-        *p_reqContext->p_SubStateIndex = 3U;
-        reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
-    }
+    // }
 
     return reqCode;
 }
@@ -319,7 +316,13 @@ protocol_size_t MotProtocol_Flash_ReadOnce_Blocking(Flash_T * p_flash, MotPacket
 
 
 
+/******************************************************************************/
+/*! Reboot */
+/******************************************************************************/
+protocol_size_t MotProtocol_Reboot(Flash_T * p_flash, void * p_txPacket, const void * p_rxPacket)
+{
 
+}
 
 
 
