@@ -169,6 +169,11 @@ uint8_t MotPacket_CallResp_Build(MotPacket_CallResp_T * p_respPacket, uint32_t i
 /******************************************************************************/
 /*! Variable Length */
 /******************************************************************************/
+// uint8_t MotPacket_VersionFlexResp_Build(MotPacket_VersionResp_T * p_respPacket, uint32_t * p_versions, uint8_t size)
+// {
+//     memcpy(&p_respPacket->VersionResp.Versions[0U], p_versions, size);
+//     return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, size);
+// }
 
 /* Var build/parse wrapper in sections, pass index avoids double buffer */
 /******************************************************************************/
@@ -219,11 +224,6 @@ uint8_t MotPacket_VarWriteResp_BuildHeader(MotPacket_VarWriteResp_T * p_respPack
 uint32_t MotPacket_DataModeReq_ParseAddress(const MotPacket_DataModeReq_T * p_reqPacket)        { return p_reqPacket->DataModeReq.AddressStart; }
 uint32_t MotPacket_DataModeReq_ParseSize(const MotPacket_DataModeReq_T * p_reqPacket)           { return p_reqPacket->DataModeReq.SizeBytes; }
 uint32_t MotPacket_DataModeReq_ParseConfigFlags(const MotPacket_DataModeReq_T * p_reqPacket)    { return p_reqPacket->DataModeReq.ConfigFlags; }
-// void MotPacket_DataModeReq_Parse(const MotPacket_DataModeReq_T * p_reqPacket, uint32_t * p_addressStart, uint32_t * p_sizeBytes)
-// {
-//     *p_addressStart = p_reqPacket->DataModeReq.AddressStart;
-//     *p_sizeBytes = p_reqPacket->DataModeReq.SizeBytes;
-// }
 
 uint8_t MotPacket_DataModeReadResp_Build(MotPacket_DataModeResp_T * p_respPacket, uint16_t status)
 {
@@ -249,9 +249,9 @@ uint8_t MotPacket_ByteData_Build(MotPacket_DataMode_T * p_dataPacket, const uint
 const uint8_t * MotPacket_ByteData_ParsePtrData(const MotPacket_DataMode_T * p_dataPacket)  { return &p_dataPacket->DataMode.ByteData[0U]; } /* Flash loader handle from here */
 uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataPacket)             { return MotPacket_GetPayloadLength((MotPacket_T *)p_dataPacket); }
 
-// void MotPacket_DataRead_BuildMeta(MotPacket_DataMode_T * p_dataPacket, uint16_t checksum, uint16_t sequence)
+// void MotPacket_DataRead_BuildMeta(MotPacket_DataMode_T * p_dataPacket,  uint16_t sequence)
 // {
-//     // p_dataPacket->DataMode.Sequence = sequence;
+//     // p_dataPacket->Header.Resv = sequence;
 // }
 // uint16_t MotPacket_DataWrite_ParseMetaSequence(const MotPacket_DataMode_T * p_dataPacket)    { return p_dataPacket->Header.Resv; }
 

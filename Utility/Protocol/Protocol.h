@@ -118,7 +118,9 @@ typedef enum Protocol_ReqCode
 {
     // PROTOCOL_REQ_CODE_AWAIT_RX_REQ_INITIAL,
     PROTOCOL_REQ_CODE_PROCESS_CONTINUE,             /* continue using default sync settings, wait for next packet */
+    // PROTOCOL_REQ_CODE_PROCESS_AWAIT_RX,        /* Expecting Rx new packet */
     PROTOCOL_REQ_CODE_PROCESS_COMPLETE,             /* Exit nonblocking wait processing state upon reception */
+    // PROTOCOL_REQ_CODE_PROCESS_COMPLETE_WITH_ERROR,
     PROTOCOL_REQ_CODE_ABORT, /* Terminate */
 
     /* ack after process */
@@ -126,7 +128,7 @@ typedef enum Protocol_ReqCode
     PROTOCOL_REQ_CODE_PROCESS_NACK,
 
     /* User Function Manual select next step */
-    PROTOCOL_REQ_CODE_AWAIT_RX_CONTINUE,             /* Expecting Rx new packet */
+    PROTOCOL_REQ_CODE_AWAIT_RX_CONTINUE,        /* Expecting Rx new packet */
     PROTOCOL_REQ_CODE_AWAIT_RX_SYNC,            /* Expecting static ack nack */
     PROTOCOL_REQ_CODE_TX_RESPONSE,
     PROTOCOL_REQ_CODE_TX_ACK,
