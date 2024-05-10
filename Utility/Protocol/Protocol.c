@@ -352,6 +352,8 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                     }
                     break;
 
+                case PROTOCOL_REQ_CODE_AWAIT_RX_CONTINUE:   p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_CONTINUE;     break;
+
                 // case PROTOCOL_REQ_CODE_PROCESS_CONTINUE_AWAIT_RX: //
                 //     if((TxResp(p_protocol) == true) && (p_protocol->p_ReqActive->SYNC.RX_ACK_EXT == true))
                 //     {
@@ -377,8 +379,6 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
 
                 /* Granular function, manually initiated, if a custom sequence is needed  */
                 case PROTOCOL_REQ_CODE_AWAIT_RX_SYNC:       p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC;         break;
-                case PROTOCOL_REQ_CODE_AWAIT_RX_CONTINUE:   p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_CONTINUE;     break;
-
                 /* Tx Response and transfer control back to PROC_EXT */
                 // alternatively directly call helper
                 case PROTOCOL_REQ_CODE_TX_RESPONSE:         TxResp(p_protocol);                                             break;

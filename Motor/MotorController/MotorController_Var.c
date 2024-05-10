@@ -469,6 +469,16 @@ static int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T varId)
             }
             break;
 
+        case MOT_VAR_ID_TYPE_PARAMS_BOOT_REF:
+            switch((MotVarId_Params_BootRef_T)varId.NameId)
+            {
+                case MOT_VAR_BOOT_REF_FAST_BOOT:    MotorController_User_GetBootReg(p_mc).FastBoot; break;
+                case MOT_VAR_BOOT_REF_BEEP:         MotorController_User_GetBootReg(p_mc).Beep; break;
+                case MOT_VAR_BOOT_REF_BLINK:        MotorController_User_GetBootReg(p_mc).Blink; break;
+                default: break;
+            }
+            break;
+
         default: break;
     }
 
@@ -479,7 +489,7 @@ static MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T varI
 {
     MotVarId_Status_T status = MOT_VAR_STATUS_OK;
     bool boolStatus = true;
-    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance); //todo as nullable to indicate invalid motor
+    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance); /* for convience, invalid if varId.NameId is not Motor type */
     Protocol_T * p_protocol = NULL;
     Thermistor_T * p_thermistor = NULL;
     VMonitor_T * p_vMonitor = NULL;
@@ -673,6 +683,16 @@ static MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T varI
             }
             break;
 
+        case MOT_VAR_ID_TYPE_PARAMS_BOOT_REF:
+            switch((MotVarId_Params_BootRef_T)varId.NameId)
+            {
+                case MOT_VAR_BOOT_REF_FAST_BOOT:    MotorController_User_SetFastBoot(p_mc, varValue); break;
+                case MOT_VAR_BOOT_REF_BEEP:         MotorController_User_SetBeep(p_mc, varValue); break;
+                case MOT_VAR_BOOT_REF_BLINK:        MotorController_User_SetBlink(p_mc, varValue); break;
+                default: break;
+            }
+            break;
+
         default: break;
     }
 
@@ -706,7 +726,7 @@ MotVarId_Status_T MotorController_Var_Set(MotorControllerPtr_T p_mc, MotVarId_T 
     switch((MotVarId_TypeType_T)varId.NameTypeType)
     {
         case MOT_VAR_ID_TYPE_REAL_TIME:
-            status = (p_mc->Parameters.InputMode == MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL) ?
+            status = (p_mc->Parameters.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL_ONLY) ?
                 SetRealTime(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
             break;
         case MOT_VAR_ID_TYPE_PARAMETER:

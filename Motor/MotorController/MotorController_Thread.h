@@ -222,7 +222,7 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
         switch(p_mc->Parameters.InputMode)
         {
             case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_mc);  break;
-            case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL:
+            case MOTOR_CONTROLLER_INPUT_MODE_SERIAL_ONLY:
                 /* MotorController_Var_Set voluntarily checks InputMode for proc */
                 if(MotAnalogUser_PollBrakePins(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
 
@@ -234,7 +234,7 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
                 //     p_mc->FaultFlags.RxLost = 1U;
                 // }
                 break;
-            case MOTOR_CONTROLLER_INPUT_MODE_DISABLE: break;
+            // case MOTOR_CONTROLLER_INPUT_MODE_DISABLE: break;
             case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
             default:  break;
         }

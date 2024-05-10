@@ -75,9 +75,8 @@ MotorController_InitMode_T;
 
 typedef enum MotorController_InputMode
 {
-    MOTOR_CONTROLLER_INPUT_MODE_DISABLE,
+    MOTOR_CONTROLLER_INPUT_MODE_SERIAL_ONLY,
     MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
-    MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL,
     MOTOR_CONTROLLER_INPUT_MODE_CAN,
 }
 MotorController_InputMode_T;
@@ -160,7 +159,6 @@ typedef union MotorController_StatusFlags
         uint16_t LowV               : 1U; // ILimit by LowV
         uint16_t SpeedLimit         : 1U; // use active speed limit?
         // uint16_t ILimit          : 1U;
-
         // derive from thermistor functions
         // uint16_t ILimitHeatMosfets  : 1U;
         // uint16_t ILimitHeatPcb      : 1U;
@@ -212,8 +210,10 @@ MotorController_InitFlags_T;
 // {
 //     struct
 //     {
-//         uint16_t ThrottleOnInit : 1U;
-//         uint16_t OnReverse      : 2U; /* 0: Off, 1: Short Beep, 2: Continuous */
+//         uint16_t OnInit              : 1U;
+//         uint16_t OnDirectionChange   : 1U;
+//         uint16_t ThrottleOnInit      : 1U;
+//         uint16_t OnReverse           : 2U; /* 0: Off, 1: Short Beep, 2: Continuous */
 //         // uint16_t ThrottleOnBrakeCmd;
 //         // uint16_t ThrottleOnBrakeRelease;
 //         // uint16_t ThrottleOnNeutralRelease;
@@ -252,11 +252,11 @@ typedef struct MotorController_Params
 }
 MotorController_Params_T;
 
-typedef const struct MotorController_Manfacture
-{
-    const uint8_t NAME[4U]; //8 chars to determine  name, remaining determined by host
+// typedef const struct MotorController_Manfacture
+// {
+//     const uint8_t NAME[4U]; //8 chars to determine  name, remaining determined by host
 
-} MotorController_Manfacture_T;
+// } MotorController_Manufacture_T;
 
 /*
     Allocated memory outside for less CONFIG define repetition
@@ -345,7 +345,7 @@ typedef struct MotorController
     StateMachine_T StateMachine;
     MotorController_StatusFlags_T StatusFlags;
     MotorController_InitFlags_T InitFlags;
-   volatile MotorController_FaultFlags_T FaultFlags;
+    MotorController_FaultFlags_T FaultFlags;
 #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
     MotAnalog_Results_T FaultAnalogRecord;
 #endif

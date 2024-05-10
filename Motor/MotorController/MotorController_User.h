@@ -214,7 +214,9 @@ static inline int32_t MotorController_User_GetFaultHeatMosfetsBot_DegC(const Mot
 */
 static inline BootRef_T MotorController_User_GetBootReg(const MotorControllerPtr_T p_mc)                { return p_mc->BootRef; }
 static inline void MotorController_User_SetBootReg(MotorControllerPtr_T p_mc, BootRef_T bootReg)        { p_mc->BootRef.Word = bootReg.Word; }
-// static inline void MotorController_User_SetFastBoot(MotorControllerPtr_T p_mc, bool isEnable)        { p_mc->BootRef.FastBoot = isEnable; }
+static inline void MotorController_User_SetFastBoot(MotorControllerPtr_T p_mc, bool isEnable)           { p_mc->BootRef.FastBoot = isEnable; }
+static inline void MotorController_User_SetBeep(MotorControllerPtr_T p_mc, bool isEnable)               { p_mc->BootRef.Beep  = isEnable; }
+static inline void MotorController_User_SetBlink(MotorControllerPtr_T p_mc, bool isEnable)              { p_mc->BootRef.Blink = isEnable; }
 // static inline void MotorController_User_SetLoadDefault(MotorControllerPtr_T p_mc, bool isEnable)     { p_mc->BootRef.LoadDefault = isEnable; }
 
 /*
@@ -247,18 +249,22 @@ static inline bool MotorController_User_SetOptDinSpeedLimit(MotorControllerPtr_T
     return isSuccess;
 }
 
+/******************************************************************************/
 /*
-    Read Only Params
+    Read Only
 */
+/******************************************************************************/
+/* For host side unit calibration only */
+static inline uint16_t MotorController_User_GetVMax(void) { return GLOBAL_MOTOR.V_MAX_VOLTS; }
+static inline uint16_t MotorController_User_GetIMax(void) { return GLOBAL_MOTOR.I_MAX_AMPS; }
+static inline uint16_t MotorController_User_GetIMaxAdcu(void) { return GLOBAL_MOTOR.I_MAX_ADCU; }
+
+// split
 static inline uint32_t MotorController_User_GetBoardVersion(void)
 {
     uint8_t version[4U] = { GLOBAL_MOTOR.I_MAX_ADCU, GLOBAL_MOTOR.I_MAX_ADCU >> 8U, GLOBAL_MOTOR.I_MAX_AMPS, GLOBAL_MOTOR.V_MAX_VOLTS };
     return *((uint32_t *)(&version[0U]));
 }
-
-static inline uint16_t MotorController_User_GetVMax(void) { return GLOBAL_MOTOR.V_MAX_VOLTS; }
-static inline uint16_t MotorController_User_GetIMax(void) { return GLOBAL_MOTOR.I_MAX_AMPS; }
-static inline uint16_t MotorController_User_GetIMaxAdcu(void) { return GLOBAL_MOTOR.I_MAX_ADCU; }
 
 static inline uint32_t MotorController_User_GetLibraryVersion(void) { return MOTOR_LIBRARY_VERSION_ID; }
 static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIndex)

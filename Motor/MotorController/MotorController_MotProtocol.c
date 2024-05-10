@@ -59,9 +59,10 @@ static protocol_size_t Ping(MotorControllerPtr_T p_mc, MotPacket_PingResp_T * p_
 /******************************************************************************/
 /*! Version */
 /******************************************************************************/
-static protocol_size_t Version(MotorControllerPtr_T p_mc, MotPacket_VersionResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
+static protocol_size_t Version(MotorControllerPtr_T p_mc, MotPacket_VersionResp_T * p_txPacket, const MotPacket_VersionReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
+    // todo with variable
     return MotPacket_VersionResp_Build(p_txPacket, MotorController_User_GetLibraryVersion(), MotorController_User_GetMainVersion(p_mc), MotorController_User_GetBoardVersion());
 }
 

@@ -33,6 +33,8 @@
 
 #include <stdint.h>
 
+/* Alternatively move to individual modules */
+
 /******************************************************************************/
 /*
     RealTime Monitor -> Read-Only, always active
@@ -132,7 +134,6 @@ typedef enum MotVarId_Control
 {
     // MOT_VAR_USER_SET_POINT,                 // Throttle, Brake, Servo In, Value pending feedbackMode
     MOT_VAR_DIRECTION,                      // MotorController_Direction_T,
-    // MOT_VAR_ACTIVE_INIT_MODE,            // MotorController_InitMode_T
 //  MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE,      // not saved to Nvm
 }
 MotVarId_Control_T;
@@ -194,7 +195,7 @@ typedef enum MotVarId_Params_MotorPrimary
 {
     MOT_VAR_COMMUTATION_MODE,
     MOT_VAR_SENSOR_MODE,
-    MOT_VAR_MOTOR_DEFAULT_FEEDBACK_MODE, //depreciate
+    MOT_VAR_MOTOR_DEFAULT_FEEDBACK_MODE, // depreciate
     MOT_VAR_DIRECTION_CALIBRATION,
     MOT_VAR_POLE_PAIRS,
     MOT_VAR_KV,
@@ -300,11 +301,9 @@ MotVarId_Params_MotorPid_T;
 typedef enum MotVarId_Params_General
 {
     MOT_VAR_V_SOURCE_REF_VOLTS,
-    MOT_VAR_BATTERY_ZERO_ADCU,
-    MOT_VAR_BATTERY_FULL_ADCU,
+    MOT_VAR_DEFAULT_FEEDBACK_MODE,          // Motor_FeedbackMode_T
     MOT_VAR_USER_INIT_MODE,                 // MotorController_InitMode_T
     MOT_VAR_USER_INPUT_MODE,                // MotorController_InputMode_T
-    MOT_VAR_DEFAULT_FEEDBACK_MODE,          // Motor_FeedbackMode_T
     MOT_VAR_THROTTLE_MODE,                  // MotorController_ThrottleMode_T
     MOT_VAR_BRAKE_MODE,                     // MotorController_BrakeMode_T
     MOT_VAR_DRIVE_ZERO_MODE,                // MotorController_DriveZeroMode_T
@@ -312,8 +311,11 @@ typedef enum MotVarId_Params_General
     MOT_VAR_BUZZER_FLAGS_ENABLE,            // MotorController_BuzzerFlags_T
     MOT_VAR_OPT_DIN_FUNCTION,               // MotorController_OptDinMode_T
     MOT_VAR_OPT_DIN_SPEED_LIMIT,
-    MOT_VAR_CAN_SERVICES_ID,
-    MOT_VAR_CAN_IS_ENABLE,
+    // MOT_VAR_CAN_SERVICES_ID,
+    // MOT_VAR_CAN_IS_ENABLE,
+    // MOT_VAR_BATTERY_ZERO_ADCU,
+    // MOT_VAR_BATTERY_FULL_ADCU,
+    // MOT_VAR_BOOT_REF,
 }
 MotVarId_Params_General_T;
 
@@ -390,16 +392,14 @@ typedef enum MotVarId_Params_VMonitor
 }
 MotVarId_Params_VMonitor_T;
 
-//accept consts
-// typedef enum MotVarId_Params_Board
-// {
-//     MOT_VAR_BOARD_V_MAX,
-//     MOT_VAR_BOARD_I_MAX,
-//     MOT_VAR_BOARD_VABC_R1,
-//     MOT_VAR_BOARD_VABC_R2,
-//      Version
-// }
-// MotVarId_Params_Board_T;
+typedef enum MotVarId_Params_BootRef
+{
+    MOT_VAR_BOOT_REF_FAST_BOOT,
+    MOT_VAR_BOOT_REF_BEEP,
+    MOT_VAR_BOOT_REF_BLINK,
+    // MOT_VAR_BOOT_REF_PROTOCOL_INDEX,
+}
+MotVarId_Params_BootRef_T;
 
 
 /******************************************************************************/
@@ -441,6 +441,7 @@ typedef enum MotVarId_Type_Parameter
     MOT_VAR_ID_TYPE_PARAMS_VMONITOR,
     MOT_VAR_ID_TYPE_PARAMS_THERMISTOR,
     MOT_VAR_ID_TYPE_PARAMS_PROTOCOL,
+    MOT_VAR_ID_TYPE_PARAMS_BOOT_REF,
     MOT_VAR_ID_TYPE_PARAMS_END = 16U,
 }
 MotVarId_Type_Parameter_T;

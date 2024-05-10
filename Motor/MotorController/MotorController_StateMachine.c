@@ -438,7 +438,7 @@ static void Blocking_Proc(MotorControllerPtr_T p_mc)
         case MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC:       break;
         // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_SaveOnce_Blocking(p_mc);           break;
         // case MOTOR_CONTROLLER_NVM_BOOT:                  p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc);       break;
-        // case MOTOR_CONTROLLER_BLOCKING_END:              break; //todo send end response
+        // case MOTOR_CONTROLLER_BLOCKING_END:            Protocol_Send  break; //todo send end response
         default: break;
     }
     //todo check for completion p_mc->LockSubState = MOTOR_CONTROLLER_LOCKED_ENTER;
@@ -451,6 +451,7 @@ static StateMachine_State_T * Blocking_InputBlocking_Blocking(MotorControllerPtr
     MotorPtr_T p_motor = MotorController_GetPtrMotor(p_mc, 0U); // todo set all
 
     p_mc->LockSubState = blockingId;
+    //clear status or set callback
     switch(blockingId)
     {
         case MOTOR_CONTROLLER_LOCKED_ENTER: break;
@@ -573,7 +574,7 @@ static void Fault_Proc(MotorControllerPtr_T p_mc)
 
     switch(p_mc->Parameters.InputMode)
     {
-        case MOTOR_CONTROLLER_INPUT_MODE_PROTOCOL: /* Protocol Rx Lost use auto recover, without user input */
+        case MOTOR_CONTROLLER_INPUT_MODE_SERIAL_ONLY: /* Protocol Rx Lost use auto recover, without user input */
             p_mc->FaultFlags.RxLost = Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]);
             break;
         case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;

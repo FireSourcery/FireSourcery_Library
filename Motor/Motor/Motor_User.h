@@ -83,7 +83,7 @@ static inline int16_t Motor_User_GetIPhase_Amps(const MotorPtr_T p_motor)       
 static inline int16_t Motor_User_GetVPhase_Volts(const MotorPtr_T p_motor)          { return _Motor_ConvertV_FracS16ToVolts(Motor_User_GetVPhase_UFrac16(p_motor)); }
 static inline int32_t Motor_User_GetElectricalPower_VA(const MotorPtr_T p_motor)    { return _Motor_ConvertPower_FracS16ToWatts(Motor_User_GetElectricalPower_UFrac16(p_motor)); }
 static inline int32_t Motor_User_GetHeat_DegCScalar(const MotorPtr_T p_motor, uint16_t scalar)  { return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
-//check DC current limit
+// check DC current limit
 // Motor_FOC_GetElectricalPower_FracS16Abs(p_motor) / Global_Motor_GetVSource_V() ;
 static inline thermal_t Motor_User_GetHeat_DegC(const MotorPtr_T p_motor)                       { return Thermistor_ConvertToDegC(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 #endif
@@ -226,24 +226,7 @@ extern void Motor_User_SetGroundSpeed_Mph(MotorPtr_T p_motor, uint32_t wheelDiam
 #endif
 
 
-// protocol only values
-// typedef union Motor_StatusFlags
-// {
-//     struct
-//     {
-//         uint16_t HeatWarning        : 1U;
-//         uint16_t ILimitActive       : 1U;
-//         uint16_t SpeedLimitActive   : 1U;
-//         uint16_t ILimitReached      : 1U;
-//         uint16_t SpeedLimitReached  : 1U;
-//         // uint16_t SensorFeedback  : 1U;
-//         // uint16_t Hold        : 1U;
-//         // uint16_t Control     : 1U;
-//         // uint16_t Release     : 1U;
-//     };
-//     uint16_t Word;
-// }
-// Motor_StatusFlags_T;
+
 
 /* Feedback Control Variable Mode  */
 // typedef enum Motor_FeedbackModeId
