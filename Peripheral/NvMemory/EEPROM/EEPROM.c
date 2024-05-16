@@ -43,14 +43,14 @@ typedef uint32_t eeprom_word_t;
 /*
     HAL_NvMemory_StartCmd_T
 */
-static void StartCmdWrite(void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units)
+static void StartCmdWrite(void * p_hal, uintptr_t destAddress, const uint8_t * p_cmdData, size_t units)
 {
     (void)units;
 #ifdef EEPROM_UNIT_WRITE_SIZE
-    if((*(eeprom_word_t *)p_cmdDest) != (*(eeprom_word_t *)p_cmdData))
+    if((*(eeprom_word_t *)destAddress) != (*(eeprom_word_t *)p_cmdData))
 #endif
     {
-        HAL_EEPROM_StartCmdWriteUnit(p_hal, p_cmdDest, p_cmdData);
+        HAL_EEPROM_StartCmdWriteUnit(p_hal, destAddress, p_cmdData);
     }
     /* else finalizeOp will return no error and continue to next  */
 }
@@ -71,9 +71,9 @@ static const NvMemory_OpControl_T EEPROM_OP_WRITE =
     .UNIT_SIZE           = EEPROM_UNIT_WRITE_SIZE,
 };
 
-NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
+NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, uintptr_t destAddress, const void * p_source, size_t sizeBytes)
 {
-    return NvMemory_SetOpControl(p_eeprom, &EEPROM_OP_WRITE, p_dest, p_source, sizeBytes);
+    return NvMemory_SetOpControl(p_eeprom, &EEPROM_OP_WRITE, destAddress, p_source, sizeBytes);
 }
 
 /*
@@ -82,7 +82,7 @@ NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, const void * p_dest, cons
 void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 {
     //todo isfirsttime, use startcmd template
-    // if(HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL))    { EEPROM_ProgramPartition_Blocking(p_eeprom); }
+    // if(HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL)) { EEPROM_ProgramPartition_Blocking(p_eeprom); }
     // NvMemory_Status_T status = EEPROM_SetInit(p_eeprom);
     // if(status == NV_MEMORY_STATUS_SUCCESS)
     // {
@@ -98,15 +98,15 @@ void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 
 // void EEPROM_ReadIsFirstTime(EEPROM_T * p_eeprom) { HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL); }
 
-NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, const void * p_dest, const void * p_source, size_t sizeBytes)
+NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, uintptr_t destAddress, const void * p_source, size_t sizeBytes)
 {
-    NvMemory_Status_T status = EEPROM_SetWrite(p_eeprom, p_dest, p_source, sizeBytes);
+    NvMemory_Status_T status = EEPROM_SetWrite(p_eeprom, destAddress, p_source, sizeBytes);
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_ProcOp_Blocking(p_eeprom); }
     if(status == NV_MEMORY_STATUS_SUCCESS)
     {
         if(p_eeprom->IsVerifyEnable == true)
         {
-            status = NvMemory_MemCompare(p_dest, p_source, sizeBytes) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_VERIFY;
+            status = NvMemory_MemCompare((const uint8_t *)destAddress, p_source, sizeBytes) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_VERIFY;
         }
     }
     return status;
@@ -118,15 +118,15 @@ NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, const void * p_dest
 // void EEPROM_Init_NonBlocking(EEPROM_T * p_eeprom) { HAL_EEPROM_Init_NonBlocking(p_eeprom->CONFIG.P_HAL); }
 // bool EEPROM_ProcOp_NonBlocking(EEPROM_T * p_flash) { return NvMemory_ProcOp(p_flash); }
 // bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom) { return HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONFIG.P_HAL); }
-// NvMemory_Status_T EEPROM_StartWrite_NonBlocking(EEPROM_T * p_eeprom, void * p_dest, const void * p_source, size_t sizeBytes)
+// NvMemory_Status_T EEPROM_StartWrite_NonBlocking(EEPROM_T * p_eeprom, void * destAddress, const void * p_source, size_t sizeBytes)
 // {
-//     return (p_eeprom->Status = (EEPROM_SetWrite(p_eeprom, p_dest, p_source, sizeBytes) == NV_MEMORY_STATUS_SUCCESS ? NvMemory_StartOp(p_eeprom) : NV_MEMORY_STATUS_ERROR_INPUT));
+//     return (p_eeprom->Status = (EEPROM_SetWrite(p_eeprom, destAddress, p_source, sizeBytes) == NV_MEMORY_STATUS_SUCCESS ? NvMemory_StartOp(p_eeprom) : NV_MEMORY_STATUS_ERROR_INPUT));
 // }
 
-//static void StartCmdProgramPartition(void * p_hal, const void * p_cmdDest, const void * p_cmdData, size_t units)
+//static void StartCmdProgramPartition(void * p_hal, const void * destAddress, const void * p_cmdData, size_t units)
 //{
 //    (void)units;
-//    (void)p_cmdDest;
+//    (void)destAddress;
 //    (void)p_cmdData;
 //    HAL_EEPROM_ProgramPartition(p_hal);
 //}

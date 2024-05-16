@@ -82,8 +82,8 @@ typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
     /* Fixed Length */
     MOT_PACKET_STOP_ALL = 0x00U,
     MOT_PACKET_VERSION = 0x01U,
-    // MOT_PACKET_REBOOT = 0xC0U,
     MOT_PACKET_CALL = 0xCCU,
+    // MOT_PACKET_REBOOT = 0xC0U,
     // MOT_PACKET_CALL_ADDRESS = 0xCAU,
 
     // MOT_PACKET_FIXED_VAR_READ = 0xB1U,     /* Read Single Var32 */
@@ -106,10 +106,9 @@ typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
     MOT_PACKET_DATA_MODE_DATA = 0xDDU,      /* Data Mode Data */
     MOT_PACKET_DATA_MODE_ABORT = MOT_PACKET_SYNC_ABORT,
 
-    /* Extended Id Modes */
-    // MOT_PACKET_EXT_CMD = 0xE1U,
     MOT_PACKET_READ_ONCE = 0xF1U,
     MOT_PACKET_WRITE_ONCE = 0xF2U,
+
     MOT_PACKET_ID_RESERVED_255 = 0xFFU,
     /// Datagram
 }

@@ -159,11 +159,11 @@ static protocol_size_t ReadOnce_Blocking(MotorControllerPtr_T p_mc, MotPacket_On
     protocol_size_t txSize;
     if(MotorController_User_IsLockedState(p_mc) == true)
     {
-        txSize = MotProtocol_Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, p_txPacket, p_rxPacket);
+        txSize = MotorController_User_ReadOnce_Blocking(p_mc, &p_txPacket->OnceReadResp.ByteData[0U], p_rxPacket->OnceReadReq.Address, p_rxPacket->OnceReadReq.Size);
     }
     else
     {
-        txSize = MotPacket_BuildHeader((MotPacket_T *)p_txPacket, MOT_PACKET_READ_ONCE, 0U);
+        txSize = MotPacket_BuildHeader((MotPacket_T *)p_txPacket, MOT_PACKET_READ_ONCE, p_rxPacket->OnceReadReq.Size);
     }
     return txSize;
 }
@@ -173,7 +173,7 @@ static protocol_size_t WriteOnce_Blocking(MotorControllerPtr_T p_mc, MotPacket_O
     protocol_size_t txSize;
     if(MotorController_User_IsLockedState(p_mc) == true)
     {
-        txSize = MotProtocol_Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, p_txPacket, p_rxPacket);
+        txSize = MotorController_User_WriteOnce_Blocking(p_mc, p_rxPacket->OnceWriteReq.Address, &p_rxPacket->OnceWriteReq.ByteData[0U], p_rxPacket->OnceWriteReq.Size);
     }
     else
     {

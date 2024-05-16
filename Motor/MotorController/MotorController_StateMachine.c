@@ -436,7 +436,7 @@ static void Blocking_Proc(MotorControllerPtr_T p_mc)
         case MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS:     break;
         case MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR:    break;//todo check calibration complete
         case MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC:       break;
-        // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_SaveOnce_Blocking(p_mc);           break;
+        // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_WriteOnce_Blocking(p_mc);           break;
         // case MOTOR_CONTROLLER_NVM_BOOT:                  p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc);       break;
         // case MOTOR_CONTROLLER_BLOCKING_END:            Protocol_Send  break; //todo send end response
         default: break;

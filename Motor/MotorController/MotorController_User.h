@@ -343,6 +343,8 @@ static inline VMonitor_T * MotorController_User_GetPtrVMonitor(const MotorContro
 extern MotorController_Direction_T MotorController_User_GetDirection(const MotorControllerPtr_T p_mc);
 extern bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, MotorController_Direction_T direction);
 extern void MotorController_User_SetVSourceRef(MotorControllerPtr_T p_mc, uint16_t volts);
+extern NvMemory_Status_T MotorController_User_ReadOnce_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size);
+extern NvMemory_Status_T MotorController_User_WriteOnce_Blocking(MotorControllerPtr_T p_mc, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size);
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 extern void MotorController_User_SetBatteryLifeDefault(MotorControllerPtr_T p_mc);

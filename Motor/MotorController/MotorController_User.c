@@ -116,3 +116,39 @@ void MotorController_User_SetBatteryLife_MilliV(MotorControllerPtr_T p_mc, uint3
     MotorController_ResetUnitsBatteryLife(p_mc);
 }
 #endif
+
+/******************************************************************************/
+/* Once */
+/******************************************************************************/
+NvMemory_Status_T MotorController_User_ReadOnce_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size)
+{
+    NvMemory_Status_T status;
+
+    // todo call from state machine
+    if(MotorController_User_IsLockedState(p_mc) == true)
+    {
+        status = MotorController_ReadOnce_Blocking(p_mc, p_destBuffer, onceAddress, size);
+    }
+    else
+    {
+        status = NV_MEMORY_STATUS_ERROR_OTHER;
+    }
+
+    return status;
+}
+
+NvMemory_Status_T MotorController_User_WriteOnce_Blocking(MotorControllerPtr_T p_mc, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size)
+{
+    NvMemory_Status_T status;
+
+    if(MotorController_User_IsLockedState(p_mc) == true)
+    {
+        status = MotorController_WriteOnce_Blocking(p_mc, onceAddress, p_source, size);
+    }
+    else
+    {
+        status = NV_MEMORY_STATUS_ERROR_OTHER;
+    }
+
+    return status;
+}

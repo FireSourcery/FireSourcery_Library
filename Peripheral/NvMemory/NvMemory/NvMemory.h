@@ -71,7 +71,7 @@ NvMemory_Status_T;
 */
 typedef const struct NvMemory_Partition
 {
-    uint8_t * P_START;
+    uintptr_t ADDRESS;
     size_t SIZE;
 #ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE /* or HAL functions handle offset */
     int32_t OP_ADDRESS_OFFSET;
@@ -86,29 +86,29 @@ NvMemory_Partition_T;
 #define _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)
 #endif
 
-#define NV_MEMORY_INIT_PARTITION(p_Start, SizeBytes, OpAddressOffset)   \
-{                                                                       \
-    .P_START     = (void *)p_Start,                                     \
-    .SIZE         = SizeBytes,                                          \
-    _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)                   \
+#define NV_MEMORY_INIT_PARTITION(AddressStart, SizeBytes, OpAddressOffset)  \
+{                                                                           \
+    .ADDRESS    = AddressStart,                                             \
+    .SIZE       = SizeBytes,                                                \
+    _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)                       \
 }
 
-#define NV_MEMORY_PARTITION_INIT(p_Start, SizeBytes, ...)   \
-{                                                           \
-    .P_START     = (void *)p_Start,                         \
-    .SIZE         = SizeBytes,                              \
-    _NV_MEMORY_INIT_PARTITION_OFFSET(...)                   \
+#define NV_MEMORY_PARTITION_INIT(AddressStart, SizeBytes, ...)  \
+{                                                               \
+    .ADDRESS    = AddressStart,                                 \
+    .SIZE       = SizeBytes,                                    \
+    _NV_MEMORY_INIT_PARTITION_OFFSET(...)                       \
 }
 
 /*
     typedefs
 */
-typedef bool (* const HAL_NvMemory_ReadFlags_T) (const void * p_hal);
-typedef void (* const HAL_NvMemory_ClearFlags_T) (void * p_hal);
+typedef bool (* const HAL_NvMemory_ReadFlags_T)(const void * p_hal);
+typedef void (* const HAL_NvMemory_ClearFlags_T)(void * p_hal);
 
-typedef void (*HAL_NvMemory_StartCmd_T) (void * p_hal, const uint8_t * p_cmdDest, const uint8_t * p_cmdData, size_t units);
-typedef void (*HAL_NvMemory_FinalizeCmd_T) (void * p_hal, const uint8_t * p_cmdDest, uint8_t * p_cmdData, size_t units);
-typedef NvMemory_Status_T(*HAL_NvMemory_CmdStatus_T) (const void * p_hal);
+typedef void (*HAL_NvMemory_StartCmd_T)(void * p_hal, uintptr_t destAddress, const uint8_t * p_source, size_t units);
+typedef void (*HAL_NvMemory_FinalizeCmd_T)(void * p_hal, uintptr_t destAddress, uint8_t * p_buffer, size_t units);
+typedef NvMemory_Status_T(*HAL_NvMemory_CmdStatus_T)(const void * p_hal);
 
 typedef void (*NvMemory_Callback_T)(void * p_callbackData);
 
@@ -161,8 +161,8 @@ typedef struct NvMemory
     bool IsFillAlignEnable; /* if implement in this module, need buffer of UNIT_WRITE_SIZE for fill with erase pattern (Even if IsOpBuffered is not used ) */
 
     const NvMemory_OpControl_T * p_OpControl;
-    const uint8_t * p_OpDest;
-    const uint8_t * p_OpData;   /* Op data source. internal buffer, caller provided address */
+    uintptr_t OpDestAddress;
+    const uint8_t * p_OpData;   /* Op data source. internal buffer, caller provided address, written only in read case */
     size_t OpSize;              /* Retain for ContinueWrite. Total bytes at start, aligned */
     size_t OpSizeAligned;       /* Cached calculation */
     // size_t BytesPerCmd; overwrite if not equal unit size p_this->BytesPerCmd = unitsPerCmd * unitSize
@@ -214,7 +214,7 @@ NvMemory_T;
 */
 static inline uintptr_t NvMemory_AlignDown(uintptr_t address, size_t align) { return (address & (-align)); }
 static inline uintptr_t NvMemory_AlignUp(uintptr_t address, size_t align) { return (-(-address & (-align))); }
-static inline bool NvMemory_IsAligned(uintptr_t address, size_t align) { return ((address & (align - 1U)) == (uintptr_t)0U); }
+static inline bool NvMemory_IsAligned(uintptr_t address, size_t align) { return ((address & (align - 1UL)) == (uintptr_t)0UL); }
 
 static inline void NvMemory_EnableFillAlign(NvMemory_T * p_this) { p_this->IsFillAlignEnable = true; }
 static inline void NvMemory_DisableFillAlign(NvMemory_T * p_this) { p_this->IsFillAlignEnable = false; }
@@ -239,11 +239,11 @@ extern void NvMemory_Init(NvMemory_T * p_this);
 // extern void NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd);
 extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this, const uint8_t * p_source, size_t size);
 
-/* Destination is not intended to be dereference use uintptr_t type */
-extern NvMemory_Status_T NvMemory_SetOpDestination(NvMemory_T * p_this, const uint8_t * p_dest, size_t opSize);
-extern NvMemory_Status_T NvMemory_SetOpSource(NvMemory_T * p_this, const uint8_t * p_source, size_t opSize);
+/* Destination is not intended to be dereference as uintptr_t type */
+extern NvMemory_Status_T NvMemory_SetOpDestination(NvMemory_T * p_this, uintptr_t destAddress, size_t opSize);
+extern NvMemory_Status_T NvMemory_SetOpSource(NvMemory_T * p_this, const uint8_t * p_data, size_t opSize);
 extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize);
-extern NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_this, NvMemory_OpControl_T * p_opControl, const uint8_t * p_dest, const uint8_t * p_source, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_this, NvMemory_OpControl_T * p_opControl, uintptr_t destAddress, const uint8_t * p_data, size_t size);
 
 
 /*

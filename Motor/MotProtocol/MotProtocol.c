@@ -209,7 +209,7 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flas
     p_subState->DataModeIndex = 0U;
 
     //alternatively share with read, check boundaries
-    flashStatus = Flash_StartContinueWrite(p_flash, (const uint8_t *)p_subState->DataModeAddress, p_subState->DataModeSize);
+    flashStatus = Flash_StartContinueWrite(p_flash, p_subState->DataModeAddress, p_subState->DataModeSize);
 
     *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build(p_txPacket, flashStatus);
     *p_reqContext->p_SubStateIndex = 1U;
@@ -301,18 +301,19 @@ Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Proto
 /******************************************************************************/
 /*! Once */
 /******************************************************************************/
-protocol_size_t MotProtocol_Flash_WriteOnce_Blocking(Flash_T * p_flash, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket)
-{
-    // blocking operation should block protocol buffer
-    p_txPacket->Header.Status = Flash_WriteOnce_Blocking(p_flash, (uint8_t *)p_rxPacket->OnceWriteReq.Address, &(p_rxPacket->OnceWriteReq.ByteData[0U]), p_rxPacket->OnceWriteReq.Size);
-    return MotPacket_BuildHeader((MotPacket_T *)p_txPacket, MOT_PACKET_WRITE_ONCE, sizeof(MotPacket_OnceWriteResp_Payload_T));
-}
+// call handle address mapping
+// protocol_size_t MotProtocol_Flash_WriteOnce_Blocking(Flash_T * p_flash, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket)
+// {
+//     // blocking operation should block protocol buffer
+//     p_txPacket->Header.Status = Flash_WriteOnce_Blocking(p_flash, (uint8_t *)p_rxPacket->OnceWriteReq.Address, &(p_rxPacket->OnceWriteReq.ByteData[0U]), p_rxPacket->OnceWriteReq.Size);
+//     return MotPacket_BuildHeader((MotPacket_T *)p_txPacket, MOT_PACKET_WRITE_ONCE, sizeof(MotPacket_OnceWriteResp_Payload_T));
+// }
 
-protocol_size_t MotProtocol_Flash_ReadOnce_Blocking(Flash_T * p_flash, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket)
-{
-    p_txPacket->Header.Status = Flash_ReadOnce_Blocking(p_flash, &(p_txPacket->OnceReadResp.ByteData[0U]), (uint8_t *)p_rxPacket->OnceReadReq.Address, p_rxPacket->OnceReadReq.Size);
-    return MotPacket_BuildHeader((MotPacket_T *)p_txPacket, MOT_PACKET_READ_ONCE, p_rxPacket->OnceReadReq.Size);
-}
+// protocol_size_t MotProtocol_Flash_ReadOnce_Blocking(Flash_T * p_flash, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket)
+// {
+//     p_txPacket->Header.Status = Flash_ReadOnce_Blocking(p_flash, &(p_txPacket->OnceReadResp.ByteData[0U]), (uint8_t *)p_rxPacket->OnceReadReq.Address, p_rxPacket->OnceReadReq.Size);
+//     return MotPacket_BuildHeader((MotPacket_T *)p_txPacket, MOT_PACKET_READ_ONCE, p_rxPacket->OnceReadReq.Size);
+// }
 
 
 
