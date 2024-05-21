@@ -62,8 +62,9 @@ static protocol_size_t Ping(MotorControllerPtr_T p_mc, MotPacket_PingResp_T * p_
 static protocol_size_t Version(MotorControllerPtr_T p_mc, MotPacket_VersionResp_T * p_txPacket, const MotPacket_VersionReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
+    return MotPacket_VersionResp_Build(p_txPacket, MotorController_User_GetLibraryVersion(), MotorController_User_GetMainVersion(p_mc), 0);
     // todo with variable
-    return MotPacket_VersionResp_Build(p_txPacket, MotorController_User_GetLibraryVersion(), MotorController_User_GetMainVersion(p_mc), MotorController_User_GetBoardVersion());
+    // return MotPacket_VersionFlexResp_Build(p_txPacket, MotorController_User_GetLibraryVersion(), MotorController_User_GetMainVersion(p_mc), 0);
 }
 
 /******************************************************************************/
@@ -151,36 +152,47 @@ static protocol_size_t VarWrite(MotorControllerPtr_T p_mc, MotPacket_VarWriteRes
 }
 
 /******************************************************************************/
-/*! Once */
-/* using voluntary StateMachine Check */
+/*! Mem */
+/* with StateMachine check and address virtualization */
 /******************************************************************************/
-static protocol_size_t ReadOnce_Blocking(MotorControllerPtr_T p_mc, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket)
+static protocol_size_t ReadMem_Blocking(MotorControllerPtr_T p_mc, MotPacket_MemReadResp_T * p_txPacket, const MotPacket_MemReadReq_T * p_rxPacket)
 {
-    protocol_size_t txSize;
-    if(MotorController_User_IsLockedState(p_mc) == true)
+    uint32_t address = p_rxPacket->MemReadReq.Address;
+    uint8_t size = p_rxPacket->MemReadReq.Size;
+    uint16_t config = p_rxPacket->MemReadReq.Config;
+
+    uint8_t * p_buffer = &(p_txPacket->MemReadResp.ByteData[0U]);
+    uint8_t * p_data;
+    NvMemory_Status_T status;
+
+    switch(config)
     {
-        txSize = MotProtocol_Flash_ReadOnce_Blocking(p_mc->CONFIG.P_FLASH, p_txPacket, p_rxPacket);
+        case MOT_MEM_CONFIG_RAM: memcpy(p_buffer, (void *)address, size);  status = NV_MEMORY_STATUS_SUCCESS; break;
+        case MOT_MEM_CONFIG_ONCE: status = MotorController_User_ReadManufacture_Blocking(p_mc, p_buffer, address, size); break;
+        // case MOT_MEM_CONFIG_FLASH: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
+        default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
     }
-    else
-    {
-        txSize = MotPacket_BuildHeader((MotPacket_T *)p_txPacket, MOT_PACKET_READ_ONCE, 0U);
-    }
-    return txSize;
+
+    return MotPacket_MemReadResp_BuildHeader(p_txPacket, size, status);
 }
 
-static protocol_size_t WriteOnce_Blocking(MotorControllerPtr_T p_mc, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket)
+static protocol_size_t WriteMem_Blocking(MotorControllerPtr_T p_mc, MotPacket_MemWriteResp_T * p_txPacket, const MotPacket_MemWriteReq_T * p_rxPacket)
 {
-    protocol_size_t txSize;
-    if(MotorController_User_IsLockedState(p_mc) == true)
+    uint32_t address = p_rxPacket->MemWriteReq.Address;
+    const uint8_t * p_data = &(p_rxPacket->MemWriteReq.ByteData[0U]);
+    uint8_t size = p_rxPacket->MemWriteReq.Size;
+    uint16_t config = p_rxPacket->MemWriteReq.Config;
+    NvMemory_Status_T status;
+
+    switch(config)
     {
-        txSize = MotProtocol_Flash_WriteOnce_Blocking(p_mc->CONFIG.P_FLASH, p_txPacket, p_rxPacket);
+        case MOT_MEM_CONFIG_RAM: memcpy((void *)address, p_data, size); status = NV_MEMORY_STATUS_SUCCESS; break;
+        case MOT_MEM_CONFIG_ONCE: status = MotorController_User_WriteManufacture_Blocking(p_mc, address, p_data, size); break;
+        // case MOT_MEM_CONFIG_FLASH: status = Flash_Write_Blocking(p_flash, address, p_data, size); break;
+        default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
     }
-    else
-    {
-        p_txPacket->OnceWriteResp.Status = NV_MEMORY_STATUS_ERROR_OTHER;
-        txSize = MotPacket_BuildHeader((MotPacket_T *)p_txPacket, MOT_PACKET_WRITE_ONCE, sizeof(MotPacket_OnceWriteResp_Payload_T));
-    }
-    return txSize;
+
+    return MotPacket_MemWriteResp_Build(p_txPacket, status);
 }
 
 /******************************************************************************/
@@ -189,7 +201,6 @@ static protocol_size_t WriteOnce_Blocking(MotorControllerPtr_T p_mc, MotPacket_O
 static Protocol_ReqCode_T ReadData(MotorControllerPtr_T p_mc, Protocol_ReqContext_T * p_reqContext)
 {
     // if(MotorController_User_IsLockedState(p_mc) == true)
-
     return MotProtocol_ReadData(NULL, p_reqContext);
 }
 
@@ -234,8 +245,8 @@ static const Protocol_Req_T REQ_TABLE[] =
     PROTOCOL_REQ(MOT_PACKET_CALL,           Call_Blocking,      0U,     PROTOCOL_SYNC_DISABLE),
     PROTOCOL_REQ(MOT_PACKET_VAR_WRITE,      VarWrite,           0U,     PROTOCOL_SYNC_DISABLE),
     PROTOCOL_REQ(MOT_PACKET_VAR_READ,       VarRead,            0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_READ_ONCE,      ReadOnce_Blocking,  0U,     PROTOCOL_SYNC_DISABLE),
-    PROTOCOL_REQ(MOT_PACKET_WRITE_ONCE,     WriteOnce_Blocking, 0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_MEM_READ,      ReadMem_Blocking,  0U,     PROTOCOL_SYNC_DISABLE),
+    PROTOCOL_REQ(MOT_PACKET_MEM_WRITE,     WriteMem_Blocking, 0U,     PROTOCOL_SYNC_DISABLE),
     // PROTOCOL_REQ(MOT_PACKET_WRITE_VAR,       WriteVar,           0U,     PROTOCOL_SYNC_DISABLE),
     // PROTOCOL_REQ(MOT_PACKET_READ_VAR,        ReadVar,            0U,     PROTOCOL_SYNC_DISABLE),
     PROTOCOL_REQ(MOT_PACKET_DATA_MODE_READ,      0U,     ReadData,               REQ_SYNC_DATA_MODE),

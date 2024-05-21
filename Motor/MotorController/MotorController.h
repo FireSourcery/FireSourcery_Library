@@ -252,11 +252,6 @@ typedef struct MotorController_Params
 }
 MotorController_Params_T;
 
-// typedef const struct MotorController_Manfacture
-// {
-//     const uint8_t NAME[4U]; //8 chars to determine  name, remaining determined by host
-
-// } MotorController_Manufacture_T;
 
 /*
     Allocated memory outside for less CONFIG define repetition
@@ -264,7 +259,7 @@ MotorController_Params_T;
 typedef const struct MotorController_Config
 {
     const MotorController_Params_T * const P_PARAMS_NVM;
-    const uint8_t MAIN_VERSION[4U];
+    // const uint8_t MAIN_VERSION[4U]; //alternatively pass using macro
 
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE) || defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
     Flash_T * const P_FLASH;    /* Flash controller defined outside module, ensure flash config/params are in RAM */
@@ -272,12 +267,13 @@ typedef const struct MotorController_Config
 #if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_EEPROM)
     EEPROM_T * const P_EEPROM;   /* Defined outside for regularity */
 #endif
+#if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
+    const uintptr_t PARAMS_ADDRESS; const uint16_t PARAMS_SIZE;  /* Flash params start */
+    // alternatively use p_mc->CONFIG..P_FLASH->P_PARTITIONS[id]
     // NvMemory_Partition_T * P_PARAMS_PARTITION;
     // NvMemory_Partition_T * P_MANUFACTURE_PARTITION; /* pointer to partition table held by P_FLASH */
-#if defined(CONFIG_MOTOR_CONTROLLER_PARAMETERS_FLASH)
-    const void * const P_PARAMS_START; const uint16_t PARAMS_SIZE;  /* Flash params start */
 #endif
-    const void * const P_MANUFACTURE; const uint8_t MANUFACTURE_SIZE;
+    const uintptr_t MANUFACTURE_ADDRESS; const uint8_t MANUFACTURE_SIZE;
     const BootRef_T * const P_BOOT_REF;
 
     AnalogN_T * const P_ANALOG_N;
@@ -546,8 +542,8 @@ extern void MotorController_PollAdcFaultFlags(MotorControllerPtr_T p_mc);
 
 extern NvMemory_Status_T MotorController_SaveParameters_Blocking(MotorControllerPtr_T p_mc);
 extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorControllerPtr_T p_mc);
-extern NvMemory_Status_T MotorController_ReadOnce_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_sourceBuffer, uint8_t size);
-extern NvMemory_Status_T MotorController_SaveOnce_Blocking(MotorControllerPtr_T p_mc, const uint8_t * p_destBuffer, uint8_t size);
+extern NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size);
+extern NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorControllerPtr_T p_mc, uintptr_t onceAddress, const uint8_t * p_sourceBuffer, uint8_t size);
 
 
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE) && defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)

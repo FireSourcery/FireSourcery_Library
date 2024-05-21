@@ -52,7 +52,8 @@ struct StateMachine_State;
             0 - no transition, bypass exit and entry, indicates user defined non transition
             !0 - transition, perform exist and entry. User may return same state, for self transition, proc exit and entry
 */
-typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_input_value_t inputValue); // InputFunction
+// include additional arg to optimize for r0-r3?
+typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_input_value_t inputValue); // Input Function
 typedef void (*StateMachine_Function_T)(void * p_context); // Output Function
 
 /*

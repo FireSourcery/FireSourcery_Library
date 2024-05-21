@@ -131,7 +131,7 @@ Protocol_ReqCode_T MotProtocol_DataModeReadInit(void * p_app, Protocol_ReqContex
 
     p_subState->DataModeAddress = MotPacket_DataModeReq_ParseAddress(p_rxPacket);
     p_subState->DataModeSize = MotPacket_DataModeReq_ParseSize(p_rxPacket);
-    p_subState->DataModeIndex = 0U;
+    p_subState->DataIndex = 0U;
     *p_reqContext->p_TxSize = MotPacket_DataModeReadResp_Build(p_txPacket, MOT_STATUS_OK);
     *p_reqContext->p_SubStateIndex = 1U;
     reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE; // after receiving ack, control is transferred back to MotProtocol_DataModeReadData
@@ -148,12 +148,12 @@ Protocol_ReqCode_T MotProtocol_DataModeReadData(void * p_app, Protocol_ReqContex
     uint16_t readSize;
 
     /* Passing control for Tx, RxPacket is not valid during this time */
-    if(p_subState->DataModeIndex < p_subState->DataModeSize)
+    if(p_subState->DataIndex < p_subState->DataModeSize)
     {
-        readSize = (p_subState->DataModeSize - p_subState->DataModeIndex);
+        readSize = (p_subState->DataModeSize - p_subState->DataIndex);
         if(readSize > 32U) readSize = 32U;
-        *p_reqContext->p_TxSize = MotPacket_ByteData_Build(p_txPacket, (const uint8_t *)(p_subState->DataModeAddress + p_subState->DataModeIndex), readSize);
-        p_subState->DataModeIndex += readSize;
+        *p_reqContext->p_TxSize = MotPacket_ByteData_Build(p_txPacket, (const uint8_t *)(p_subState->DataModeAddress + p_subState->DataIndex), readSize);
+        p_subState->DataIndex += readSize;
         reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
     }
     else
@@ -206,10 +206,10 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flas
 
     p_subState->DataModeAddress = MotPacket_DataModeReq_ParseAddress(p_rxPacket);
     p_subState->DataModeSize = MotPacket_DataModeReq_ParseSize(p_rxPacket);
-    p_subState->DataModeIndex = 0U;
+    p_subState->DataIndex = 0U;
 
     //alternatively share with read, check boundaries
-    flashStatus = Flash_StartContinueWrite(p_flash, (const uint8_t *)p_subState->DataModeAddress, p_subState->DataModeSize);
+    flashStatus = Flash_StartContinueWrite(p_flash, p_subState->DataModeAddress, p_subState->DataModeSize);
 
     *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build(p_txPacket, flashStatus);
     *p_reqContext->p_SubStateIndex = 1U;
@@ -228,7 +228,7 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteData_Blocking(Flash_T * p_flas
     const uint8_t * p_sourceData; /* DataPacket Payload */
     uint8_t writeSize; /* DataPacket Size */
 
-    // if(p_subState->DataModeIndex < p_subState->DataModeSize)
+    // if(p_subState->DataIndex < p_subState->DataModeSize)
     // {
         p_sourceData = MotPacket_ByteData_ParsePtrData(p_rxPacket);
         writeSize = MotPacket_ByteData_ParseSize(p_rxPacket);
@@ -236,8 +236,8 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteData_Blocking(Flash_T * p_flas
 
         if(flashStatus == NV_MEMORY_STATUS_SUCCESS)
         {
-            p_subState->DataModeIndex += writeSize;
-            if(p_subState->DataModeIndex < p_subState->DataModeSize)
+            p_subState->DataIndex += writeSize;
+            if(p_subState->DataIndex < p_subState->DataModeSize)
             {
                 *p_reqContext->p_TxSize = 0U; /* Tx Ack already handled on reception */
                 reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_CONTINUE;
@@ -299,21 +299,49 @@ Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Proto
 
 
 /******************************************************************************/
-/*! Once */
+/*! Mem */
 /******************************************************************************/
-protocol_size_t MotProtocol_Flash_WriteOnce_Blocking(Flash_T * p_flash, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket)
+// caller handle address mapping
+protocol_size_t MotProtocol_ReadMem_Blocking(Flash_T * p_flash, MotPacket_MemReadResp_T * p_txPacket, const MotPacket_MemReadReq_T * p_rxPacket)
 {
-    // blocking operation should block protocol buffer
-    p_txPacket->Header.Status = Flash_WriteOnce_Blocking(p_flash, (uint8_t *)p_rxPacket->OnceWriteReq.Address, &(p_rxPacket->OnceWriteReq.ByteData[0U]), p_rxPacket->OnceWriteReq.Size);
-    return MotPacket_BuildHeader((MotPacket_T *)p_txPacket, MOT_PACKET_WRITE_ONCE, sizeof(MotPacket_OnceWriteResp_Payload_T));
+    uint32_t address = p_rxPacket->MemReadReq.Address;
+    uint8_t size = p_rxPacket->MemReadReq.Size;
+    uint16_t config = p_rxPacket->MemReadReq.Config;
+
+    uint8_t * p_buffer = &(p_txPacket->MemReadResp.ByteData[0U]);
+    uint8_t * p_data;
+    NvMemory_Status_T status;
+
+    switch(config)
+    {
+        case MOT_MEM_CONFIG_RAM: memcpy(p_buffer, (void *)address, size);  status = NV_MEMORY_STATUS_SUCCESS; break;
+        case MOT_MEM_CONFIG_FLASH: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
+        case MOT_MEM_CONFIG_ONCE: status = Flash_ReadOnce_Blocking(p_flash, p_buffer, address, size); break;
+        default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
+    }
+
+    return MotPacket_MemReadResp_BuildHeader(p_txPacket, size, status);
 }
 
-protocol_size_t MotProtocol_Flash_ReadOnce_Blocking(Flash_T * p_flash, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket)
+protocol_size_t MotProtocol_WriteMem_Blocking(Flash_T * p_flash, MotPacket_MemWriteResp_T * p_txPacket, const MotPacket_MemWriteReq_T * p_rxPacket)
 {
-    p_txPacket->Header.Status = Flash_ReadOnce_Blocking(p_flash, &(p_txPacket->OnceReadResp.ByteData[0U]), (uint8_t *)p_rxPacket->OnceReadReq.Address, p_rxPacket->OnceReadReq.Size);
-    return MotPacket_BuildHeader((MotPacket_T *)p_txPacket, MOT_PACKET_READ_ONCE, p_rxPacket->OnceReadReq.Size);
-}
+    uint32_t address = p_rxPacket->MemWriteReq.Address;
+    const uint8_t * p_data = &(p_rxPacket->MemWriteReq.ByteData[0U]);
+    uint8_t size = p_rxPacket->MemWriteReq.Size;
+    uint16_t config = p_rxPacket->MemWriteReq.Config;
+    NvMemory_Status_T status;
 
+    switch(config)
+    {
+        // blocking operation should block protocol buffer
+        case MOT_MEM_CONFIG_RAM: memcpy((void *)address, p_data, size); status = NV_MEMORY_STATUS_SUCCESS; break;
+        case MOT_MEM_CONFIG_FLASH: status = Flash_Write_Blocking(p_flash, address, p_data, size); break;
+        case MOT_MEM_CONFIG_ONCE: status = Flash_WriteOnce_Blocking(p_flash, address, p_data, size); break;
+        default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
+    }
+
+    return MotPacket_MemWriteResp_Build(p_txPacket, status);
+}
 
 
 /******************************************************************************/

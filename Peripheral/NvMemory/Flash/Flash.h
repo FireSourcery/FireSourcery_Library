@@ -78,28 +78,27 @@ static inline void Flash_DisableFillAlign(Flash_T * p_flash) { NvMemory_DisableF
 */
 extern void Flash_Init(Flash_T * p_flash);
 
-extern Flash_Status_T Flash_StartContinueWrite(Flash_T * p_flash, const uint8_t * p_destFlash, size_t size);
+extern Flash_Status_T Flash_StartContinueWrite(Flash_T * p_flash, uintptr_t destAddress, size_t size);
 extern Flash_Status_T Flash_ContinueWrite_Blocking(Flash_T * p_flash, const uint8_t * p_data, size_t size);
 
-/// todo dest as uintptr_t
-extern Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, const uint8_t * p_dest, const uint8_t * p_data, size_t size);
-extern Flash_Status_T Flash_Erase_Blocking(Flash_T * p_flash, const uint8_t * p_dest, size_t size);
-extern Flash_Status_T Flash_VerifyWrite_Blocking(Flash_T * p_flash, const uint8_t * p_dest, const uint8_t * p_data, size_t size);
-extern Flash_Status_T Flash_VerifyErase_Blocking(Flash_T * p_flash, const uint8_t * p_dest, size_t size);
-extern Flash_Status_T Flash_WriteOnce_Blocking(Flash_T * p_flash, const uint8_t * p_dest, const uint8_t * p_data, size_t size);
-extern Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, uint8_t * p_buffer, const uint8_t * p_once, size_t size);
+extern Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size);
+extern Flash_Status_T Flash_Erase_Blocking(Flash_T * p_flash, uintptr_t destAddress, size_t size);
+extern Flash_Status_T Flash_VerifyWrite_Blocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size);
+extern Flash_Status_T Flash_VerifyErase_Blocking(Flash_T * p_flash, uintptr_t destAddress, size_t size);
+extern Flash_Status_T Flash_WriteOnce_Blocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size);
+extern Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, uint8_t * p_resultBuffer, uintptr_t destAddress, size_t size);
 extern Flash_Status_T Flash_EraseAll_Blocking(Flash_T * p_flash);
-extern Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, const uint8_t * p_dest, const uint8_t * p_data, size_t size, Flash_Operation_T opId);
+extern Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size, Flash_Operation_T opId);
 
 // extern bool Flash_ProcOp(Flash_T * p_flash);
 // extern size_t Flash_GetOpBytesRemaining(Flash_T * p_flash);
 // extern bool Flash_ReadIsOpComplete(Flash_T * p_flash);
-// extern Flash_Status_T Flash_StartWrite_NonBlocking(Flash_T * p_flash, const uint8_t * p_dest, const uint8_t * p_data, size_t size);
-// extern Flash_Status_T Flash_StartErase_NonBlocking(Flash_T * p_flash, const uint8_t * p_dest, size_t size);
-// extern Flash_Status_T Flash_StartVerifyWrite_NonBlocking(Flash_T * p_flash, const uint8_t * p_dest, const uint8_t * p_data, size_t size);
-// extern Flash_Status_T Flash_StartVerifyErase_NonBlocking(Flash_T * p_flash, const uint8_t * p_dest, size_t size);
-// extern Flash_Status_T Flash_StartWriteOnce_NonBlocking(Flash_T * p_flash, const uint8_t * p_dest, const uint8_t * p_data, size_t size);
-// extern Flash_Status_T Flash_StartReadOnce_NonBlocking(Flash_T * p_flash, uint8_t * p_dataResult, const uint8_t * p_destOnce, size_t size);
+// extern Flash_Status_T Flash_StartWrite_NonBlocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size);
+// extern Flash_Status_T Flash_StartErase_NonBlocking(Flash_T * p_flash, uintptr_t destAddress, size_t size);
+// extern Flash_Status_T Flash_StartVerifyWrite_NonBlocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size);
+// extern Flash_Status_T Flash_StartVerifyErase_NonBlocking(Flash_T * p_flash, uintptr_t destAddress, size_t size);
+// extern Flash_Status_T Flash_StartWriteOnce_NonBlocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size);
+// extern Flash_Status_T Flash_StartReadOnce_NonBlocking(Flash_T * p_flash, uint8_t * p_resultBuffer, uintptr_t destAddressOnce, size_t size);
 // extern void Flash_GetReadOnce(const Flash_T * p_flash, uint8_t * p_result);
 
 #endif /* FLASH_H */

@@ -28,6 +28,7 @@
     @version V0
 */
 /******************************************************************************/
+
 #include "Motor_Analog.h"
 #include "Motor_FOC.h"
 #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)

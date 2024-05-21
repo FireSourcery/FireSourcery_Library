@@ -33,6 +33,11 @@
 
 #include "KE0x.h"
 
+/*
+    Use CONFIG_FLASH_ATTRIBUTE_RAM_SECTION incase functions are not inlined (and stored in ram with calling function)
+*/
+#include "Peripheral/NvMemory/Flash/Config.h"
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <assert.h>
@@ -153,16 +158,22 @@
 #define HAL_FLASH_UNIT_READ_ONCE_SIZE       KE0x_FLASH_PHRASE_SIZE
 #define HAL_FLASH_UNIT_ERASE_PATTERN        (0xFFU)
 
+/*
+    BUSCLK frequency(MHz) FDIV[5:0]
+    20.6 21.6 0x14
+    21.6 22.6 0x15
+    22.6 23.6 0x16
+    23.6 24.6 0x17
+    24.6 25.6 0x18
+*/
+#define KE0x_FLASH_CLK_DIVIER ((uint8_t)(CPU_FREQ / 2UL / 1000000UL))
+
 #if     defined(KE06Z4_SERIES)
 typedef FTMRE_Type HAL_Flash_T;
 #elif   defined(KE02Z4_SERIES)
 typedef FTMRH_Type HAL_Flash_T;
 #endif
 
-/*
-    Use CONFIG_FLASH_ATTRIBUTE_RAM_SECTION incase functions are not inlined (and stored in ram with calling function)
-*/
-#include "Peripheral/NvMemory/Flash/Config.h"
 
 /*
     Module Helper
@@ -180,12 +191,12 @@ static void _flash_set_command(uint32_t index, uint32_t fValue, uint32_t sValue)
     FTMRx->FCCOBHI = FTMRx_FCCOBHI_CCOB(sValue);
 }
 
-static void _HAL_Flash_WriteCmdDest(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t cmd)
+static void _HAL_Flash_WriteCmdDest(HAL_Flash_T * p_regs, uintptr_t destAddress, const uint8_t cmd)
 {
     (void)p_regs;
     /* Write index to specify the command code to be loaded */
-    _flash_set_command(0UL, ((uint32_t)p_dest) >> 16UL, cmd);
-    _flash_set_command(1UL, ((uint32_t)p_dest), ((uint32_t)p_dest) >> 8UL);
+    _flash_set_command(0UL, (destAddress) >> 16UL, cmd);
+    _flash_set_command(1UL, (destAddress), (destAddress) >> 8UL);
 }
 
 static void _HAL_Flash_WriteCmdData(HAL_Flash_T * p_regs, const uint8_t * p_data)
@@ -220,16 +231,16 @@ static inline bool HAL_Flash_ReadErrorProtectionFlag(const HAL_Flash_T * p_regs)
 
 static inline bool HAL_Flash_ReadSecurityFlag(const HAL_Flash_T * p_regs)           { (void)p_regs; return ((FTMRx->FSEC & FTMRx_FSEC_SEC_MASK) >> FTMRE_FSEC_SEC_SHIFT != 0x02U); }
 
-static inline void HAL_Flash_StartCmdWritePage(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
+static inline void HAL_Flash_StartCmdWritePage(HAL_Flash_T * p_regs, uintptr_t destAddress, const uint8_t * p_data)
 {
-    _HAL_Flash_WriteCmdDest(p_regs, p_dest, FTMRx_PROGRAM);
+    _HAL_Flash_WriteCmdDest(p_regs, destAddress, FTMRx_PROGRAM);
     _HAL_Flash_WriteCmdData(p_regs, p_data);
     _HAL_Flash_LaunchCmd(p_regs);
 }
 
-static inline void HAL_Flash_StartCmdEraseSector(HAL_Flash_T * p_regs, const uint8_t * p_dest)
+static inline void HAL_Flash_StartCmdEraseSector(HAL_Flash_T * p_regs, uintptr_t destAddress)
 {
-    _HAL_Flash_WriteCmdDest(p_regs, p_dest, FTMRx_ERASE_SECTOR);
+    _HAL_Flash_WriteCmdDest(p_regs, destAddress, FTMRx_ERASE_SECTOR);
     _HAL_Flash_LaunchCmd(p_regs);
 }
 
@@ -240,21 +251,21 @@ static inline void HAL_Flash_StartCmdEraseAll(HAL_Flash_T * p_regs)
 }
 
 /* Not supported on KE0x */
-static inline void HAL_Flash_StartCmdVerifyWriteUnit(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
+static inline void HAL_Flash_StartCmdVerifyWriteUnit(HAL_Flash_T * p_regs, uintptr_t destAddress, const uint8_t * p_data)
 {
-    (void)p_regs; (void)p_dest; (void)p_data;
+    (void)p_regs; (void)destAddress; (void)p_data;
 }
 
-static inline void HAL_Flash_StartCmdVerifyEraseUnit(HAL_Flash_T * p_regs, const uint8_t * p_dest)
+static inline void HAL_Flash_StartCmdVerifyEraseUnit(HAL_Flash_T * p_regs, uintptr_t destAddress)
 {
-    _HAL_Flash_WriteCmdDest(p_regs, p_dest, FTMRx_ERASE_VERIFY_SECTION);
+    _HAL_Flash_WriteCmdDest(p_regs, destAddress, FTMRx_ERASE_VERIFY_SECTION);
     _flash_set_command(2UL, 1U, 0U);
     _HAL_Flash_LaunchCmd(p_regs);
 }
 
-static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, const uint8_t * p_dest, uint16_t units)
+static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, uintptr_t destAddress, uint16_t units)
 {
-    _HAL_Flash_WriteCmdDest(p_regs, p_dest, FTMRx_ERASE_VERIFY_SECTION);
+    _HAL_Flash_WriteCmdDest(p_regs, destAddress, FTMRx_ERASE_VERIFY_SECTION);
     _flash_set_command(2UL, units, units >> 16U);
     _HAL_Flash_LaunchCmd(p_regs);
 }
@@ -267,18 +278,20 @@ static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, cons
     0x0008 => 1
     0x0038 => 7
 */
-static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, const uint8_t * p_dest, const uint8_t * p_data)
+static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, uintptr_t destAddress, const uint8_t * p_data)
 {
-    uint8_t recordIndex = (p_dest - (uint8_t *)KE0x_FLASH_PROGRAM_ONCE_START) / KE0x_FLASH_PROGRAM_ONCE_SIZE;
+    // assert(destAddress < 64U, "Invalid address");
+    uint8_t recordIndex = (destAddress - KE0x_FLASH_PROGRAM_ONCE_START) / KE0x_FLASH_PHRASE_SIZE;
     _flash_set_command(0UL, 0UL, FTMRx_PROGRAM_ONCE);
     _flash_set_command(1UL, recordIndex, 0U);
     _HAL_Flash_WriteCmdData(p_regs, p_data);
     _HAL_Flash_LaunchCmd(p_regs);
 }
 
-static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, const uint8_t * p_dest)
+static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, uintptr_t destAddress)
 {
-    uint8_t recordIndex = (p_dest - (uint8_t *)KE0x_FLASH_PROGRAM_ONCE_START) / KE0x_FLASH_PHRASE_SIZE;
+    // assert(destAddress < 64U, "Invalid address");
+    uint8_t recordIndex = (destAddress - KE0x_FLASH_PROGRAM_ONCE_START) / KE0x_FLASH_PHRASE_SIZE;
     _flash_set_command(0UL, 0UL, FTMRx_READ_ONCE);
     _flash_set_command(1UL, recordIndex, 0U);
     _HAL_Flash_LaunchCmd(p_regs);
@@ -305,15 +318,7 @@ static inline void HAL_Flash_UnlockSecurity(HAL_Flash_T * p_regs, uint8_t * p_ke
     _flash_set_command(4U, p_key[6U], p_key[7U]);
 }
 
-/*
-    BUSCLK frequency(MHz) FDIV[5:0]
-    20.6 21.6 0x14
-    21.6 22.6 0x15
-    22.6 23.6 0x16
-    23.6 24.6 0x17
-    24.6 25.6 0x18
-*/
-#define KE0x_FLASH_CLK_DIVIER ((uint8_t)(CPU_FREQ / 2UL / 1000000UL))
+
 
 // static inline void HAL_Flash_ConfigClock(HAL_Flash_T * p_regs)
 // {

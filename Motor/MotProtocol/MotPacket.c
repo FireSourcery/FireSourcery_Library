@@ -32,6 +32,7 @@
 
 #include <string.h>
 #include <stddef.h>
+#include <assert.h>
 
 /******************************************************************************/
 /*!
@@ -78,7 +79,7 @@ bool MotPacket_ProcChecksum(const MotPacket_T * p_packet)
 
 uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId)
 {
-    // assert((syncId == MOT_PACKET_PING) || (syncId == MOT_PACKET_SYNC_ACK) || (syncId == MOT_PACKET_SYNC_NACK) || (syncId == MOT_PACKET_SYNC_ABORT));
+    assert((syncId == MOT_PACKET_PING) || (syncId == MOT_PACKET_SYNC_ACK) || (syncId == MOT_PACKET_SYNC_NACK) || (syncId == MOT_PACKET_SYNC_ABORT));
     p_txPacket->Start = MOT_PACKET_START_BYTE;
     p_txPacket->SyncId = syncId;
     return sizeof(MotPacket_Sync_T);
@@ -91,6 +92,7 @@ uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncI
 //     p_packet->Header.Checksum = Packet_Checksum(p_packet);
 //     return payloadLength + sizeof(MotPacket_Fixed_T);
 // }
+
 // bool MotPacket_Fixed_CheckChecksum(const MotPacket_Fixed_T * p_packet)
 // {
 //     return ((checksum_t)Packet_Checksum(p_packet) == p_packet->Header.Checksum);
@@ -167,15 +169,24 @@ uint8_t MotPacket_CallResp_Build(MotPacket_CallResp_T * p_respPacket, uint32_t i
 // }
 
 /******************************************************************************/
-/*! Variable Length */
+/*!
+    Variable Length
+*/
 /******************************************************************************/
-// uint8_t MotPacket_VersionFlexResp_Build(MotPacket_VersionResp_T * p_respPacket, uint32_t * p_versions, uint8_t size)
-// {
-//     memcpy(&p_respPacket->VersionResp.Versions[0U], p_versions, size);
-//     return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, size);
-// }
+uint8_t MotPacket_VersionFlexResp_Build(MotPacket_VersionFlexResp_T * p_respPacket, uint32_t * p_versions, uint8_t count)
+{
+    uint8_t size = count * sizeof(uint32_t);
+    memcpy(&p_respPacket->VersionResp.Versions[0U], p_versions, size);
+    return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, size);
+}
 
+/******************************************************************************/
+/*!
+    Read/Write Vars
+*/
+/******************************************************************************/
 /* Var build/parse wrapper in sections, pass index avoids double buffer */
+
 /******************************************************************************/
 /*! ReadVars */
 /******************************************************************************/
@@ -216,6 +227,31 @@ uint8_t MotPacket_VarWriteResp_BuildHeader(MotPacket_VarWriteResp_T * p_respPack
 // }
 
 /******************************************************************************/
+/*! Mem */
+/******************************************************************************/
+// uint16_t MotPacket_MemWriteReq_Parse(const MotPacket_MemWriteReq_T * p_reqPacket) { return p_reqPacket->MemWriteReq.Config; }
+
+uint8_t MotPacket_MemWriteResp_Build(MotPacket_MemWriteResp_T * p_respPacket, uint16_t status)
+{
+    p_respPacket->MemWriteResp.Status = status;
+    // p_respPacket->Header.Status = MOT_STATUS_OK;
+    return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_MEM_WRITE, sizeof(MotPacket_MemWriteResp_Payload_T));
+}
+
+/* Data filled by caller. No double buffering */
+uint8_t MotPacket_MemReadResp_BuildHeader(MotPacket_MemReadResp_T * p_respPacket, uint8_t size, uint16_t status)
+{
+    p_respPacket->Header.Status = status;
+    return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_MEM_READ, size);
+}
+
+uint8_t MotPacket_MemReadResp_Build(MotPacket_MemReadResp_T * p_respPacket, const uint8_t * p_data, uint8_t size, uint16_t status)
+{
+    memcpy(&p_respPacket->MemReadResp.ByteData[0U], p_data, size);
+    return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_MEM_READ, size);
+}
+
+/******************************************************************************/
 /*! Stateful Read/Write */
 /******************************************************************************/
 /******************************************************************************/
@@ -223,7 +259,7 @@ uint8_t MotPacket_VarWriteResp_BuildHeader(MotPacket_VarWriteResp_T * p_respPack
 /******************************************************************************/
 uint32_t MotPacket_DataModeReq_ParseAddress(const MotPacket_DataModeReq_T * p_reqPacket)        { return p_reqPacket->DataModeReq.AddressStart; }
 uint32_t MotPacket_DataModeReq_ParseSize(const MotPacket_DataModeReq_T * p_reqPacket)           { return p_reqPacket->DataModeReq.SizeBytes; }
-uint32_t MotPacket_DataModeReq_ParseConfigFlags(const MotPacket_DataModeReq_T * p_reqPacket)    { return p_reqPacket->DataModeReq.ConfigFlags; }
+uint32_t MotPacket_DataModeReq_ParseConfigFlags(const MotPacket_DataModeReq_T * p_reqPacket)    { return p_reqPacket->DataModeReq.Config; }
 
 uint8_t MotPacket_DataModeReadResp_Build(MotPacket_DataModeResp_T * p_respPacket, uint16_t status)
 {
@@ -254,21 +290,6 @@ uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataPacket) 
 //     // p_dataPacket->Header.Resv = sequence;
 // }
 // uint16_t MotPacket_DataWrite_ParseMetaSequence(const MotPacket_DataMode_T * p_dataPacket)    { return p_dataPacket->Header.Resv; }
-
-/******************************************************************************/
-/*! Once */
-/******************************************************************************/
-uint8_t MotPacket_OnceWriteResp_Build(MotPacket_OnceWriteResp_T * p_respPacket, uint16_t status)
-{
-    p_respPacket->OnceWriteResp.Status = status;
-    return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_WRITE_ONCE, sizeof(MotPacket_OnceWriteResp_Payload_T));
-}
-
-uint8_t MotPacket_OnceReadResp_Build(MotPacket_OnceReadResp_T * p_respPacket, uint8_t * p_data, uint8_t size)
-{
-    memcpy(&p_respPacket->OnceReadResp.ByteData[0U], p_data, size);
-    return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_READ_ONCE, size);
-}
 
 
 /******************************************************************************/

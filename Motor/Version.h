@@ -24,25 +24,22 @@
 /*!
     @file   Version.h
     @author FireSourcery
-    @brief
+    @brief  For all Motors
     @version V0
 */
 /******************************************************************************/
-#ifndef VERSION_UTILITY_H
-#define VERSION_UTILITY_H
+#ifndef MOTOR_VERSION_H
+#define MOTOR_VERSION_H
 
-#include <stdint.h>
+/* Library Software Version */
+#define MOTOR_LIBRARY_VERSION_OPT       0U
+#define MOTOR_LIBRARY_VERSION_MAJOR     0U
+#define MOTOR_LIBRARY_VERSION_MINOR     0U
+#define MOTOR_LIBRARY_VERSION_FIX       1U
+#define MOTOR_LIBRARY_VERSION           ((MOTOR_LIBRARY_VERSION_OPT << 24U) | (MOTOR_LIBRARY_VERSION_MAJOR << 16U) | (MOTOR_LIBRARY_VERSION_MINOR << 8U) | (MOTOR_LIBRARY_VERSION_FIX))
 
-typedef union Version
-{
-    uint8_t Bytes[4U];
-    char Chars[4U];
-    struct { uint8_t Fix; uint8_t Minor; uint8_t Major; uint8_t Opt; };
-    struct { uint16_t Lower; uint16_t Upper; };
-    uint32_t Word32;
-}
-Version_T;
-
-#define VERSION_WORD(Opt, Major, Minor, Fix) ((Opt << 24U) | (Major << 16U) | (Minor << 8U) | (Fix))
+#if !defined(MOTOR_MAIN_FIRMWARE_VERSION)
+#define MOTOR_MAIN_FIRMWARE_VERSION MOTOR_LIBRARY_VERSION
+#endif
 
 #endif
