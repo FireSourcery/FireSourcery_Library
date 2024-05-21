@@ -89,6 +89,7 @@ typedef struct Encoder_Params
     /* DistancePerRevolution_Factor, DistancePerRevolution_Factor_Divider */
     uint16_t ExtendedDeltaTStop;        /* ExtendedTimer time read as deltaT stopped, default as 1s or .5rpm */
     uint32_t InterpolateAngleScalar;    /* Sets UnitInterpolateAngle Scalar and InterpolateAngleLimit. e.g electrical angle conversion */
+    uint32_t ZeroIndexOffset;
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
     bool IsQuadratureCaptureEnabled;     /* Quadrature Mode - enable hardware/emulated quadrature speed capture */
     bool IsALeadBPositive;                 /* User runtime calibration for encoder install direction, combine with compile time defined QUADRATURE_A_LEAD_B_INCREMENT */

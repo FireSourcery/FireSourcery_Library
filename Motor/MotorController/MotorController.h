@@ -231,15 +231,15 @@ MotorController_InitFlags_T;
 typedef struct MotorController_Params
 {
     uint16_t VSourceRef;        /* Source/Battery Voltage. Sync with Global_Motor VSourceRef_V */
-    uint16_t ILimitLowV_Scalar16;
+    Motor_FeedbackMode_T DefaultCmdMode;
     MotorController_InitMode_T InitMode;
     MotorController_InputMode_T InputMode;
     MotorController_BrakeMode_T BrakeMode;
     MotorController_ThrottleMode_T ThrottleMode;
     MotorController_DriveZeroMode_T DriveZeroMode;
-    Motor_FeedbackMode_T DefaultCmdMode;
     MotorController_OptDinMode_T OptDinMode;
     uint16_t OptDinSpeedLimit_Scalar16;
+    uint16_t ILimitLowV_Scalar16;
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     uint8_t CanServicesId;
     bool CanIsEnable;

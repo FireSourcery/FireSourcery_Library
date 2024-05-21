@@ -259,7 +259,7 @@ static void ProcCmd_Blocking(NvMemory_T * p_this, size_t opIndex)
 NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
 {
-    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+   volatile NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
 
     if(p_this->CONFIG.READ_COMPLETE_FLAG(p_this->CONFIG.P_HAL) == true)
     {
