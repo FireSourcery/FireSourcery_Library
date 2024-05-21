@@ -33,6 +33,7 @@
 #define MOTOR_CONTROLLER_USER_H
 
 #include "MotorController_StateMachine.h"
+#include "../Version.h"
 
 /******************************************************************************/
 /*
@@ -67,8 +68,6 @@ static inline void MotorController_User_SetCmdValue(MotorControllerPtr_T p_mc, i
 // }
 // /* Same as Brake/Throttle 0 */
 // static inline void MotorController_User_SetDriveCmdZero(MotorControllerPtr_T p_mc)                   { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_ZERO, 0U); }
-// static inline void MotorController_User_SetCmdThrottle(MotorControllerPtr_T p_mc, uint16_t userCmd)  { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_THROTTLE, userCmd); }
-// static inline void MotorController_User_SetCmdBrake(MotorControllerPtr_T p_mc, uint16_t userCmd)     { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_BRAKE, userCmd); }
 
 static inline void MotorController_User_SetDriveCmdZero(MotorControllerPtr_T p_mc)                  { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, 0U); }
 static inline void MotorController_User_SetCmdThrottle(MotorControllerPtr_T p_mc, uint16_t userCmd) { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd); }
@@ -106,25 +105,6 @@ static inline NvMemory_Status_T MotorController_User_SaveParameters_Blocking(Mot
     return p_mc->NvmStatus;
 }
 
-// return _MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS);
-/*! @param[in] opId MOTOR_CONTROLLER_NVM_BOOT, MOTOR_CONTROLLER_NVM_WRITE_ONCE, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS */
-// static inline NvMemory_Status_T _MotorController_User_SaveNvm_Blocking(MotorControllerPtr_T p_mc, MotorController_LockedId_T opId)
-// {
-//     MotorController_User_InputLocked(p_mc, opId);
-//     return p_mc->NvmStatus;
-// }
-// static inline NvMemory_Status_T MotorController_User_SaveManufacture_Blocking(MotorControllerPtr_T p_mc)
-// {
-//     return _MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE);
-//     // return StateMachine_ProcInput(p_mc, MCSM_INPUT_LOCK, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS);
-//     // return p_mc->NvmStatus;
-// }
-
-// static inline NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorControllerPtr_T p_mc)
-// {
-//     MotorController_User_InputLocked(p_mc, MOTOR_CONTROLLER_LOCKED_NVM_READ_ONCE);
-//     return p_mc->NvmStatus;
-// }
 
 /******************************************************************************/
 /* Servo */
@@ -254,19 +234,25 @@ static inline bool MotorController_User_SetOptDinSpeedLimit(MotorControllerPtr_T
     Read Only
 */
 /******************************************************************************/
-/* For host side unit calibration only */
+/* For host side unit calibration */
 static inline uint16_t MotorController_User_GetVMax(void) { return GLOBAL_MOTOR.V_MAX_VOLTS; }
 static inline uint16_t MotorController_User_GetIMax(void) { return GLOBAL_MOTOR.I_MAX_AMPS; }
 static inline uint16_t MotorController_User_GetIMaxAdcu(void) { return GLOBAL_MOTOR.I_MAX_ADCU; }
 
-// split
-static inline uint32_t MotorController_User_GetBoardVersion(void)
-{
-    uint8_t version[4U] = { GLOBAL_MOTOR.I_MAX_ADCU, GLOBAL_MOTOR.I_MAX_ADCU >> 8U, GLOBAL_MOTOR.I_MAX_AMPS, GLOBAL_MOTOR.V_MAX_VOLTS };
-    return *((uint32_t *)(&version[0U]));
-}
+// static inline char * MotorController_User_GetBoardName(void)
+// {
+//     static const char boardName[8U] = MOTOR_BOARD_NAME;
+//     return (char *)(&boardName[0U]);
+// }
 
-static inline uint32_t MotorController_User_GetLibraryVersion(void) { return MOTOR_LIBRARY_VERSION_ID; }
+// split
+// static inline uint32_t MotorController_User_GetBoardVersion(void)
+// {
+//     uint8_t version[4U] = { GLOBAL_MOTOR.I_MAX_ADCU, GLOBAL_MOTOR.I_MAX_ADCU >> 8U, GLOBAL_MOTOR.I_MAX_AMPS, GLOBAL_MOTOR.V_MAX_VOLTS };
+//     return *((uint32_t *)(&version[0U]));
+// }
+
+static inline uint32_t MotorController_User_GetLibraryVersion(void) { return MOTOR_LIBRARY_VERSION; }
 static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIndex)
 {
     uint8_t versionChar;
@@ -281,8 +267,11 @@ static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIn
     return versionChar;
 }
 
-static inline uint32_t MotorController_User_GetMainVersion(const MotorControllerPtr_T p_mc) { return *((uint32_t *)(&p_mc->CONFIG.MAIN_VERSION[0U])); }
-static inline uint8_t MotorController_User_GetMainVersionIndex(const MotorControllerPtr_T p_mc, uint8_t charIndex) { return p_mc->CONFIG.MAIN_VERSION[charIndex]; }
+static inline uint32_t MotorController_User_GetMainVersion(const MotorControllerPtr_T p_mc) { return MOTOR_MAIN_FIRMWARE_VERSION; }
+
+//to do as config macro?
+// static inline uint32_t MotorController_User_GetMainVersion(const MotorControllerPtr_T p_mc) { return *((uint32_t *)(&p_mc->CONFIG.MAIN_VERSION[0U])); }
+// static inline uint8_t MotorController_User_GetMainVersionIndex(const MotorControllerPtr_T p_mc, uint8_t charIndex) { return p_mc->CONFIG.MAIN_VERSION[charIndex]; }
 
 /******************************************************************************/
 /*!
@@ -343,8 +332,8 @@ static inline VMonitor_T * MotorController_User_GetPtrVMonitor(const MotorContro
 extern MotorController_Direction_T MotorController_User_GetDirection(const MotorControllerPtr_T p_mc);
 extern bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, MotorController_Direction_T direction);
 extern void MotorController_User_SetVSourceRef(MotorControllerPtr_T p_mc, uint16_t volts);
-extern NvMemory_Status_T MotorController_User_ReadOnce_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size);
-extern NvMemory_Status_T MotorController_User_WriteOnce_Blocking(MotorControllerPtr_T p_mc, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size);
+extern NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size);
+extern NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(MotorControllerPtr_T p_mc, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size);
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 extern void MotorController_User_SetBatteryLifeDefault(MotorControllerPtr_T p_mc);

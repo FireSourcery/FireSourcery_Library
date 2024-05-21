@@ -473,6 +473,47 @@ static inline int32_t _Motor_ConvertPower_Scalar16ToWatts(int32_t vi_scalar16)  
     Simplify CommutationMode Check
 */
 /******************************************************************************/
+/* This function should optimize away select if only 1 mode is enabled */
+static inline void * _Motor_CommutationModeFn(MotorPtr_T p_motor, void * focFunction, void * sixStepFunction)
+{
+    void * fn;
+    switch(p_motor->Parameters.CommutationMode)
+    {
+#if     defined(CONFIG_MOTOR_FOC_ENABLE)
+        case MOTOR_COMMUTATION_MODE_FOC: fn = focFunction;
+#endif
+#if     defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+        case MOTOR_COMMUTATION_MODE_SIX_STEP: fn = sixStepFunction;
+#endif
+        default: return NULL; // error
+    }
+    return fn;
+}
+
+// #define Motor_CommutationModeFn(T, p_motor, foc, sixStep) _Generic((T){0}, \
+//         Motor_FunctionGetInt32_T :   (T) ,           \
+//         Motor_FunctionSetUInt32_T :  (T) ,            \
+//         Motor_Function_T: (T)                         \
+//         )_Motor_CommutationModeFn(p_motor, foc, sixStep)
+// #define Motor_CommutationModeFn(T, p_motor, foc, sixStep) _Generic((T)0, \
+//         Motor_FunctionGetInt32_T :   (T)  ,           \
+//         Motor_FunctionSetUInt32_T :  (T)  ,            \
+//         Motor_Function_T: (T)                          \
+//         )_Motor_CommutationModeFn(p_motor, foc, sixStep)
+
+// static inline void test(MotorPtr_T p_motor )
+// {
+//    void * var = Motor_CommutationModeFn(Motor_ProcVoid_T, p_motor, 0, 0);
+// }
+
+
+typedef void(*Motor_ProcVoid_T)(MotorPtr_T p_motor);
+typedef int32_t(*Motor_GetterInt32_T)(const MotorPtr_T p_motor);
+typedef uint32_t(*Motor_GetterUInt32_T)(const MotorPtr_T p_motor);
+typedef void(*Motor_SetterUInt32_T)(MotorPtr_T p_motor, uint32_t value);
+typedef void(*Motor_SetterInt32_T)(MotorPtr_T p_motor, int32_t value);
+
+
 typedef void(*Motor_Function_T)(MotorPtr_T p_motor);
 
 static inline void Motor_ProcCommutationMode(MotorPtr_T p_motor, Motor_Function_T focFunction, Motor_Function_T sixStepFunction)

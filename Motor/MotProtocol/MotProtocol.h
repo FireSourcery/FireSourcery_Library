@@ -48,6 +48,17 @@ typedef enum MotProtocol_GenericStatus
 }
 MotProtocol_GenericStatus_T;
 
+typedef enum MotProtocol_MemConfig
+{
+    MOT_MEM_CONFIG_RAM = 0x00U,
+    MOT_MEM_CONFIG_FLASH = 0x01U,
+    MOT_MEM_CONFIG_EEPROM = 0x02U,
+    MOT_MEM_CONFIG_ONCE = 0x03U,
+    MOT_MEM_CONFIG_RESERVED = 0xFFU,
+}
+MotProtocol_MemConfig_T;
+
+
 typedef enum MotProtocol_DataModeStateId
 {
     MOT_PROTOCOL_DATA_MODE_INACTIVE,
@@ -62,7 +73,7 @@ typedef struct MotProtocol_DataModeState
 {
     uintptr_t DataModeAddress;
     size_t DataModeSize;
-    size_t DataModeIndex;
+    size_t DataIndex;
     bool IsDataModeActive;
     // uint8_t StateIndex;
     // MotProtocol_DataModeStateId_T DataModeStateId;

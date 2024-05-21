@@ -60,6 +60,7 @@ typedef enum NvMemory_Status
 
     NV_MEMORY_STATUS_ERROR_VERIFY,      /* Verify cmd */
     NV_MEMORY_STATUS_ERROR_CHECKSUM,    /*  */
+    NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED,
     NV_MEMORY_STATUS_ERROR_OTHER,
 }
 NvMemory_Status_T;

@@ -228,11 +228,11 @@ static const NvMemory_OpControl_T FLASH_OP_READ_ONCE =
 };
 
 /* Use Nvm Source as data Result set Nvm Dest */
-static Flash_Status_T SetReadOnce(Flash_T * p_flash, uint8_t * p_dataResult, uintptr_t destAddress, size_t size)
+static Flash_Status_T SetReadOnce(Flash_T * p_flash, uint8_t * p_resultBuffer, uintptr_t destAddress, size_t size)
 {
     Flash_Status_T status = NvMemory_SetOpDestination(p_flash, destAddress, size);
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_flash, size); }
-    if(status == NV_MEMORY_STATUS_SUCCESS) { p_flash->p_OpData = p_dataResult; } /* Sets p_OpData to result buffer */
+    if(status == NV_MEMORY_STATUS_SUCCESS) { p_flash->p_OpData = p_resultBuffer; } /* Sets p_OpData to result buffer */
     return status;
 }
 
@@ -384,9 +384,9 @@ Flash_Status_T Flash_WriteOnce_Blocking(Flash_T * p_flash, uintptr_t destAddress
     return status;
 }
 
-Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, uint8_t * p_dataResult, uintptr_t destAddress, size_t size)
+Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, uint8_t * p_resultBuffer, uintptr_t destAddress, size_t size)
 {
-    return ProcAfterSet(p_flash, SetReadOnce(p_flash, p_dataResult, destAddress, size));
+    return ProcAfterSet(p_flash, SetReadOnce(p_flash, p_resultBuffer, destAddress, size));
 }
 
 Flash_Status_T Flash_EraseAll_Blocking(Flash_T *p_flash)
@@ -444,9 +444,9 @@ Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, uintptr_t destAddress, c
 //     return p_flash->Status;
 // }
 
-// Flash_Status_T Flash_StartReadOnce_NonBlocking(Flash_T * p_flash, uint8_t * p_dataResult, const uint8_t * p_once, size_t size)
+// Flash_Status_T Flash_StartReadOnce_NonBlocking(Flash_T * p_flash, uint8_t * p_resultBuffer, const uint8_t * p_once, size_t size)
 // {
-//     p_flash->Status = (Flash_SetReadOnce(p_flash, p_dataResult, p_once, size) == NV_MEMORY_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : NV_MEMORY_STATUS_ERROR_INPUT);
+//     p_flash->Status = (Flash_SetReadOnce(p_flash, p_resultBuffer, p_once, size) == NV_MEMORY_STATUS_SUCCESS ? NvMemory_StartOp(p_flash) : NV_MEMORY_STATUS_ERROR_INPUT);
 //     return p_flash->Status;
 // }
 // void Flash_GetReadOnce(const Flash_T * p_flash, uint8_t * p_result)

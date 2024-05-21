@@ -118,16 +118,16 @@ void MotorController_User_SetBatteryLife_MilliV(MotorControllerPtr_T p_mc, uint3
 #endif
 
 /******************************************************************************/
-/* Once */
+/* Manufacture */
 /******************************************************************************/
-NvMemory_Status_T MotorController_User_ReadOnce_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size)
+NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size)
 {
     NvMemory_Status_T status;
 
     // todo call from state machine
     if(MotorController_User_IsLockedState(p_mc) == true)
     {
-        status = MotorController_ReadOnce_Blocking(p_mc, p_destBuffer, onceAddress, size);
+        status = MotorController_ReadManufacture_Blocking(p_mc, p_destBuffer, onceAddress, size);
     }
     else
     {
@@ -137,13 +137,13 @@ NvMemory_Status_T MotorController_User_ReadOnce_Blocking(MotorControllerPtr_T p_
     return status;
 }
 
-NvMemory_Status_T MotorController_User_WriteOnce_Blocking(MotorControllerPtr_T p_mc, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size)
+NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(MotorControllerPtr_T p_mc, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size)
 {
     NvMemory_Status_T status;
 
     if(MotorController_User_IsLockedState(p_mc) == true)
     {
-        status = MotorController_WriteOnce_Blocking(p_mc, onceAddress, p_source, size);
+        status = MotorController_WriteManufacture_Blocking(p_mc, onceAddress, p_source, size);
     }
     else
     {
@@ -152,3 +152,24 @@ NvMemory_Status_T MotorController_User_WriteOnce_Blocking(MotorControllerPtr_T p
 
     return status;
 }
+
+// alternatively write to buffer
+// return _MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS);
+/*! @param[in] opId MOTOR_CONTROLLER_NVM_BOOT, MOTOR_CONTROLLER_NVM_WRITE_ONCE, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS */
+// static inline NvMemory_Status_T _MotorController_User_SaveNvm_Blocking(MotorControllerPtr_T p_mc, MotorController_LockedId_T opId)
+// {
+//     MotorController_User_InputLocked(p_mc, opId);
+//     return p_mc->NvmStatus;
+// }
+// static inline NvMemory_Status_T MotorController_User_SaveManufacture_Blocking(MotorControllerPtr_T p_mc)
+// {
+//     return _MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE);
+//     // return StateMachine_ProcInput(p_mc, MCSM_INPUT_LOCK, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS);
+//     // return p_mc->NvmStatus;
+// }
+
+// static inline NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorControllerPtr_T p_mc)
+// {
+//     MotorController_User_InputLocked(p_mc, MOTOR_CONTROLLER_LOCKED_NVM_READ_ONCE);
+//     return p_mc->NvmStatus;
+// }

@@ -86,7 +86,7 @@ extern Flash_Status_T Flash_Erase_Blocking(Flash_T * p_flash, uintptr_t destAddr
 extern Flash_Status_T Flash_VerifyWrite_Blocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size);
 extern Flash_Status_T Flash_VerifyErase_Blocking(Flash_T * p_flash, uintptr_t destAddress, size_t size);
 extern Flash_Status_T Flash_WriteOnce_Blocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size);
-extern Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, uint8_t * p_buffer, uintptr_t destAddress, size_t size);
+extern Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, uint8_t * p_resultBuffer, uintptr_t destAddress, size_t size);
 extern Flash_Status_T Flash_EraseAll_Blocking(Flash_T * p_flash);
 extern Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size, Flash_Operation_T opId);
 
@@ -98,7 +98,7 @@ extern Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, uintptr_t destAdd
 // extern Flash_Status_T Flash_StartVerifyWrite_NonBlocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size);
 // extern Flash_Status_T Flash_StartVerifyErase_NonBlocking(Flash_T * p_flash, uintptr_t destAddress, size_t size);
 // extern Flash_Status_T Flash_StartWriteOnce_NonBlocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size);
-// extern Flash_Status_T Flash_StartReadOnce_NonBlocking(Flash_T * p_flash, uint8_t * p_dataResult, uintptr_t destAddressOnce, size_t size);
+// extern Flash_Status_T Flash_StartReadOnce_NonBlocking(Flash_T * p_flash, uint8_t * p_resultBuffer, uintptr_t destAddressOnce, size_t size);
 // extern void Flash_GetReadOnce(const Flash_T * p_flash, uint8_t * p_result);
 
 #endif /* FLASH_H */

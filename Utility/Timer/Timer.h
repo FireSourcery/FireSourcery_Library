@@ -28,8 +28,8 @@
     @version V0
 */
 /******************************************************************************/
-#ifndef TIMER_FIRE_SOURCERY_H
-#define TIMER_FIRE_SOURCERY_H
+#ifndef TIMER_UTILITY_H
+#define TIMER_UTILITY_H
 
 #include "Config.h"
 #include <stdbool.h>
