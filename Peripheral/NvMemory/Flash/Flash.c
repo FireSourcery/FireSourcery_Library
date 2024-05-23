@@ -230,10 +230,11 @@ static const NvMemory_OpControl_T FLASH_OP_READ_ONCE =
 /* Use Nvm Source as data Result set Nvm Dest */
 static Flash_Status_T SetReadOnce(Flash_T * p_flash, uint8_t * p_resultBuffer, uintptr_t destAddress, size_t size)
 {
-    Flash_Status_T status = NvMemory_SetOpDestination(p_flash, destAddress, size);
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_flash, size); }
-    if(status == NV_MEMORY_STATUS_SUCCESS) { p_flash->p_OpData = p_resultBuffer; } /* Sets p_OpData to result buffer */
-    return status;
+    return NvMemory_SetOpControl(p_flash, &FLASH_OP_READ_ONCE, destAddress, p_resultBuffer, size);
+    // Flash_Status_T status = NvMemory_SetOpDestination(p_flash, destAddress, size);
+    // if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_flash, size); }
+    // if(status == NV_MEMORY_STATUS_SUCCESS) { p_flash->p_OpData = p_resultBuffer; } /* Sets p_OpData to result buffer */
+    // return status;
 }
 
 // void Flash_GetReadOnceResults(const Flash_T * p_flash, uint8_t * p_result)
