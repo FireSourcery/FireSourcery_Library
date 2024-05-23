@@ -280,7 +280,8 @@ static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, uint
 */
 static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, uintptr_t destAddress, const uint8_t * p_data)
 {
-    // assert(destAddress < 64U, "Invalid address");
+    (void)p_regs;
+    // assert(destAddress < 64U);
     uint8_t recordIndex = (destAddress - KE0x_FLASH_PROGRAM_ONCE_START) / KE0x_FLASH_PHRASE_SIZE;
     _flash_set_command(0UL, 0UL, FTMRx_PROGRAM_ONCE);
     _flash_set_command(1UL, recordIndex, 0U);
@@ -290,7 +291,8 @@ static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, uintptr_t d
 
 static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, uintptr_t destAddress)
 {
-    // assert(destAddress < 64U, "Invalid address");
+    (void)p_regs;
+    // assert(destAddress < 64U);
     uint8_t recordIndex = (destAddress - KE0x_FLASH_PROGRAM_ONCE_START) / KE0x_FLASH_PHRASE_SIZE;
     _flash_set_command(0UL, 0UL, FTMRx_READ_ONCE);
     _flash_set_command(1UL, recordIndex, 0U);

@@ -120,6 +120,7 @@ void MotorController_User_SetBatteryLife_MilliV(MotorControllerPtr_T p_mc, uint3
 /******************************************************************************/
 /* Manufacture */
 /******************************************************************************/
+/* Caller clears buffer */
 NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size)
 {
     NvMemory_Status_T status;

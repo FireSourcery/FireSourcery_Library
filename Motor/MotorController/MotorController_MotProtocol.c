@@ -165,6 +165,8 @@ static protocol_size_t ReadMem_Blocking(MotorControllerPtr_T p_mc, MotPacket_Mem
     uint8_t * p_data;
     NvMemory_Status_T status;
 
+    memset(p_buffer, 0U, size);
+
     switch(config)
     {
         case MOT_MEM_CONFIG_RAM: memcpy(p_buffer, (void *)address, size);  status = NV_MEMORY_STATUS_SUCCESS; break;

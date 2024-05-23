@@ -248,7 +248,7 @@ NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize)
 {
     NvMemory_Status_T status;
     p_this->OpSize = opSize;
-    if((p_this->IsFillAlignEnable == true) && p_this->p_OpControl->FILL_ALIGN != 0U)
+    if((p_this->IsFillAlignEnable == true) && (p_this->p_OpControl->FILL_ALIGN != 0U))
     {
         status = NV_MEMORY_STATUS_SUCCESS;
         p_this->OpSizeAligned = p_this->p_OpControl->FILL_ALIGN(opSize, p_this->p_OpControl->UNIT_SIZE);
@@ -304,7 +304,7 @@ static void ProcCmd_Blocking(NvMemory_T * p_this, size_t opIndex)
 NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; // potentially remove from RAM
 NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
 {
-    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+    volatile NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
 
     if(p_this->CONFIG.READ_COMPLETE_FLAG(p_this->CONFIG.P_HAL) == true)
     {

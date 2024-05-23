@@ -39,23 +39,23 @@
     Common
 */
 /******************************************************************************/
-static uint16_t Sum(const uint8_t * p_src, uint8_t bytes)
+static uint16_t Sum(const uint8_t * p_src, size_t size)
 {
-    uint16_t checkSum = 0U;
-    for(uint8_t iByte = 0U; iByte < bytes; iByte++) { checkSum += p_src[iByte]; }
-    return checkSum;
+    uint16_t checksum = 0U;
+    for(size_t iByte = 0U; iByte < size; iByte++) { checksum += p_src[iByte]; }
+    return checksum;
 }
 
-static uint16_t Packet_Checksum(const MotPacket_T * p_packet, uint8_t payloadLength)
+static uint16_t Packet_Checksum(const MotPacket_T * p_packet, size_t totalSize)
 {
     static const uint8_t checksumStart = offsetof(MotPacket_Header_T, Checksum);
-    static const uint8_t checksumEnd = checksumStart + sizeof(checksum_t);
-    static const uint8_t lengthAfterCheckSum = sizeof(MotPacket_Header_T) - checksumEnd;
+    static const uint8_t checksumSize = sizeof(checksum_t);
+    static const uint8_t checksumEnd = checksumStart + checksumSize;
+    size_t afterChecksumSize = totalSize - checksumEnd;
 
-    volatile uint16_t checkSum = 0U;
-    checkSum += Sum((uint8_t *)p_packet, checksumStart);
-    checkSum += Sum((uint8_t *)p_packet + checksumEnd, lengthAfterCheckSum);
-    checkSum += Sum((uint8_t *)&p_packet->Payload[0U], payloadLength);
+    uint16_t checkSum = 0U;
+    checkSum += Sum(&(p_packet->Bytes[0U]), checksumStart);
+    checkSum += Sum(&(p_packet->Bytes[checksumEnd]), afterChecksumSize);
     return checkSum;
 }
 
@@ -68,13 +68,13 @@ uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, u
     p_packet->Header.Start = MOT_PACKET_START_BYTE;
     p_packet->Header.Id = headerId;
     p_packet->Header.Length = payloadLength + sizeof(MotPacket_Header_T);
-    p_packet->Header.Checksum = Packet_Checksum(p_packet, payloadLength);
+    p_packet->Header.Checksum = Packet_Checksum(p_packet, payloadLength + sizeof(MotPacket_Header_T));
     return p_packet->Header.Length;
 }
 
-bool MotPacket_ProcChecksum(const MotPacket_T * p_packet)
+bool MotPacket_ProcChecksum(const MotPacket_T * p_packet, size_t totalSize)
 {
-    return ((checksum_t)Packet_Checksum(p_packet, MotPacket_GetPayloadLength(p_packet)) == p_packet->Header.Checksum);
+    return (Packet_Checksum(p_packet, totalSize) == p_packet->Header.Checksum);
 }
 
 uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId)
@@ -91,11 +91,6 @@ uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncI
 //     p_packet->Header.Id = headerId;
 //     p_packet->Header.Checksum = Packet_Checksum(p_packet);
 //     return payloadLength + sizeof(MotPacket_Fixed_T);
-// }
-
-// bool MotPacket_Fixed_CheckChecksum(const MotPacket_Fixed_T * p_packet)
-// {
-//     return ((checksum_t)Packet_Checksum(p_packet) == p_packet->Header.Checksum);
 // }
 
 /******************************************************************************/

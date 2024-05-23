@@ -297,7 +297,7 @@ Flash_Status_T Flash_SetOp(Flash_T * p_flash, uintptr_t destAddress, const uint8
 
 Flash_Status_T Flash_ProcThisOp_Blocking(Flash_T * p_flash)
 {
-   Flash_Status_T status;
+    volatile Flash_Status_T status;
     Critical_Enter(); /* Flash Op must not invoke isr table stored in flash */
     status = NvMemory_ProcOp_Blocking(p_flash);
     Critical_Exit();

@@ -33,6 +33,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #define MOT_PACKET_VERSION_OPT          (255U)
 #define MOT_PACKET_VERSION_MAJOR        (24U)
@@ -311,7 +312,7 @@ static inline void MotPacket_SetTotalLength(MotPacket_T * p_packet, uint8_t tota
     Extern
 */
 /******************************************************************************/
-extern bool MotPacket_ProcChecksum(const MotPacket_T * p_packet);
+extern bool MotPacket_ProcChecksum(const MotPacket_T * p_packet, size_t totalSize);
 extern uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId);
 extern uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength);
 
