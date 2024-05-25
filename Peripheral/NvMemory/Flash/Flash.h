@@ -70,8 +70,8 @@ typedef NvMemory_T Flash_T;
 static inline bool Flash_ReadSecurityFlag(Flash_T * p_flash) { return HAL_Flash_ReadSecurityFlag(p_flash->CONFIG.P_HAL); }
 /* Yield must point to RAM address for Flash case  */
 static inline void Flash_SetYield(Flash_T * p_flash, NvMemory_Callback_T yield, void * p_callbackData) { NvMemory_SetYield(p_flash, yield, p_callbackData); }
-static inline void Flash_EnableFillAlign(Flash_T * p_flash) { NvMemory_EnableFillAlign(p_flash); }
-static inline void Flash_DisableFillAlign(Flash_T * p_flash) { NvMemory_DisableFillAlign(p_flash); }
+static inline void Flash_EnableFillAlign(Flash_T * p_flash) { NvMemory_EnableForceAlign(p_flash); }
+static inline void Flash_DisableFillAlign(Flash_T * p_flash) { NvMemory_DisableForceAlign(p_flash); }
 
 /*
     extern

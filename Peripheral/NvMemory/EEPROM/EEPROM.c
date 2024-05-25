@@ -92,7 +92,7 @@ void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
     NvMemory_Init(p_eeprom);
     p_eeprom->IsVerifyEnable = false;
     p_eeprom->IsOpBuffered = false;
-    p_eeprom->IsFillAlignEnable = false;
+    p_eeprom->IsForceAlignEnable = false;
     while(HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONFIG.P_HAL) == false);
 }
 

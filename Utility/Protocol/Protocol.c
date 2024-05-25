@@ -279,14 +279,14 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                 case PROTOCOL_RX_CODE_PACKET_COMPLETE:
                     p_protocol->p_ReqActive = _Protocol_SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, p_protocol->RxMeta.ReqId);
 
-                    if(p_protocol->p_ReqActive != 0U)
+                    if(p_protocol->p_ReqActive != NULL)
                     {
                         p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER; /* Reset timer on all non error packets, feed RxLost Timer */
 
                         if(p_protocol->p_ReqActive->SYNC.TX_ACK == true) { TxSync(p_protocol, PROTOCOL_TX_SYNC_ACK_REQ); }
 
                         // disallow both types? PROC, PROC_EXT
-                        if(p_protocol->p_ReqActive->PROC != 0U) /* Does not invoke state machine, no loop / nonblocking wait. */
+                        if(p_protocol->p_ReqActive->PROC != NULL) /* Does not invoke state machine, no loop / nonblocking wait. */
                         {
                             p_protocol->TxLength = p_protocol->p_ReqActive->PROC(p_protocol->CONFIG.P_APP_INTERFACE, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->CONFIG.P_RX_PACKET_BUFFER);
                             // p_protocol->p_Specs->BUILD_TX_HEADER(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, txId, payloadLength);
@@ -303,7 +303,7 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                             }
                         } //todo exclusive or determine sync
 
-                        if((p_protocol->p_ReqActive->PROC_EXT != 0U) && (reqStatus != PROTOCOL_REQ_CODE_AWAIT_RX_SYNC))
+                        if((p_protocol->p_ReqActive->PROC_EXT != NULL) && (reqStatus != PROTOCOL_REQ_CODE_AWAIT_RX_SYNC))
                             /* ((p_protocol->p_ReqActive->PROC == 0U) || (p_protocol->p_ReqActive->SYNC.RX_ACK == false || (p_protocol->TxLength == 0U))) */
                         {
                             // if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_REQ_STATE_BUFFER); }
@@ -448,7 +448,7 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                 case PROTOCOL_RX_CODE_PACKET_COMPLETE: /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
                 case PROTOCOL_RX_CODE_ACK:
                     p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
-                    if(p_protocol->p_ReqActive->PROC_EXT != 0U)
+                    if(p_protocol->p_ReqActive->PROC_EXT != NULL)
                     {
                         //flag for final?/* continue loop/ goto reqid split */
                         p_protocol->ReqState = PROTOCOL_REQ_STATE_PROCESS_REQ_EXT;
@@ -511,7 +511,7 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
 /*! @return pointer to Req */
 const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, protocol_reqid_t id)
 {
-    const Protocol_Req_T * p_req = 0U;
+    const Protocol_Req_T * p_req = NULL;
     for(uint8_t iChar = 0U; iChar < tableLength; iChar++) { if(p_reqTable[iChar].ID == id) { p_req = &p_reqTable[iChar]; break; } }
     return p_req;
 }
@@ -528,6 +528,7 @@ void Protocol_Proc(Protocol_T * p_protocol)
 {
     p_protocol->RxStatus = ProcRxState(p_protocol);
     p_protocol->ReqStatus = ProcReqState(p_protocol, p_protocol->RxStatus);
+    // todo ProcTxAsync(p_protocol);
     // ProcDatagram(p_protocol);  /* Enqueue Datagram for processing in parallel */
 }
 
