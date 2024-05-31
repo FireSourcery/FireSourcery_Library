@@ -209,8 +209,8 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flas
     p_subState->DataModeSize = MotPacket_DataModeReq_ParseSize(p_rxPacket);
     p_subState->DataIndex = 0U;
 
-    //alternatively share with read, check boundaries
-    flashStatus = Flash_StartContinueWrite(p_flash, p_subState->DataModeAddress, p_subState->DataModeSize);
+    // alternatively share with read, check boundaries
+    flashStatus = Flash_SetContinueWrite(p_flash, p_subState->DataModeAddress, p_subState->DataModeSize);
 
     *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build(p_txPacket, flashStatus);
     *p_reqContext->p_SubStateIndex = 1U;
@@ -229,35 +229,31 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteData_Blocking(Flash_T * p_flas
     const uint8_t * p_sourceData; /* DataPacket Payload */
     uint8_t writeSize; /* DataPacket Size */
 
-    // if(p_subState->DataIndex < p_subState->DataModeSize)
-    // {
-        p_sourceData = MotPacket_ByteData_ParsePtrData(p_rxPacket);
-        writeSize = MotPacket_ByteData_ParseSize(p_rxPacket);
-        flashStatus = Flash_ContinueWrite_Blocking(p_flash, p_sourceData, writeSize);
+    p_sourceData = MotPacket_ByteData_ParsePtrData(p_rxPacket);
+    writeSize = MotPacket_ByteData_ParseSize(p_rxPacket);
+    flashStatus = Flash_ContinueWrite_Blocking(p_flash, p_sourceData, writeSize);
 
-        if(flashStatus == NV_MEMORY_STATUS_SUCCESS)
+    if(flashStatus == NV_MEMORY_STATUS_SUCCESS)
+    {
+        p_subState->DataIndex += writeSize;
+        if(p_subState->DataIndex < p_subState->DataModeSize)
         {
-            p_subState->DataIndex += writeSize;
-            if(p_subState->DataIndex < p_subState->DataModeSize)
-            {
-                *p_reqContext->p_TxSize = 0U; /* Tx Ack already handled on reception */
-                reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_CONTINUE;
-            }
-            else
-            {
-                *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build((MotPacket_DataModeResp_T *)p_txPacket, MOT_STATUS_OK);
-                *p_reqContext->p_SubStateIndex = 3U;
-                reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
-            }
-            // further nacks must refer to previous pack or separate state for tx ack after process
+            *p_reqContext->p_TxSize = 0U; /* Tx Ack already handled on reception */
+            reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_CONTINUE;
         }
-        else /* Error */
+        else
         {
-            *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build((MotPacket_DataModeResp_T *)p_txPacket, flashStatus);
-            *p_reqContext->p_SubStateIndex = 0U;
-            reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+            *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build((MotPacket_DataModeResp_T *)p_txPacket, MOT_STATUS_OK);
+            *p_reqContext->p_SubStateIndex = 3U;
+            reqCode = PROTOCOL_REQ_CODE_PROCESS_CONTINUE;
         }
-    // }
+    }
+    else /* Error */
+    {
+        *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build((MotPacket_DataModeResp_T *)p_txPacket, flashStatus);
+        *p_reqContext->p_SubStateIndex = 0U;
+        reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+    }
 
     return reqCode;
 }

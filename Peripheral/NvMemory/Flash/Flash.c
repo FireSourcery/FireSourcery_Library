@@ -120,7 +120,7 @@ static const NvMemory_OpControl_T FLASH_OP_WRITE =
     .FINALIZE_CMD        = 0U,
     .PARSE_CMD_ERROR     = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorWrite,
     .UNIT_SIZE           = FLASH_UNIT_WRITE_SIZE,
-    .FORCE_ALIGN            = NvMemory_AlignDown,
+    .FORCE_ALIGN         = NvMemory_AlignDown,
 };
 
 static Flash_Status_T SetWrite(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size)
@@ -138,13 +138,12 @@ static const NvMemory_OpControl_T FLASH_OP_ERASE =
     .FINALIZE_CMD        = 0U,
     .PARSE_CMD_ERROR     = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorErase,
     .UNIT_SIZE           = FLASH_UNIT_ERASE_SIZE,
-    .FORCE_ALIGN            = NvMemory_AlignUp,
+    .FORCE_ALIGN         = NvMemory_AlignUp,
 };
 
 static Flash_Status_T SetErase(Flash_T * p_flash, uintptr_t destAddress, size_t size)
 {
-    p_flash->IsOpBuffered = false;
-    return NvMemory_SetOpControl(p_flash, &FLASH_OP_ERASE, destAddress, 0U, size);
+    return NvMemory_SetOpControl(p_flash, &FLASH_OP_ERASE, destAddress, NULL, size);
 }
 
 /******************************************************************************/
@@ -174,7 +173,7 @@ static const NvMemory_OpControl_T FLASH_OP_VERIFY_ERASE =
     .FINALIZE_CMD        = 0U,
     .PARSE_CMD_ERROR     = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorVerify,
     .UNIT_SIZE           = FLASH_UNIT_VERIFY_ERASE_SIZE,
-    .FORCE_ALIGN            = NvMemory_AlignUp,
+    .FORCE_ALIGN         = NvMemory_AlignUp,
 
 // #ifdef CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
 //     return 0U; // overwrite with totalBytes / FLASH_UNIT_VERIFY_ERASE_SIZE;
@@ -195,7 +194,7 @@ static const NvMemory_OpControl_T FLASH_OP_VERIFY_ERASE =
 
 static Flash_Status_T SetVerifyErase(Flash_T * p_flash, uintptr_t destAddress, size_t size)
 {
-    return NvMemory_SetOpControl(p_flash, &FLASH_OP_VERIFY_ERASE, destAddress, 0U, size);
+    return NvMemory_SetOpControl(p_flash, &FLASH_OP_VERIFY_ERASE, destAddress, NULL, size);
 }
 
 /******************************************************************************/
@@ -208,7 +207,7 @@ static const NvMemory_OpControl_T FLASH_OP_WRITE_ONCE =
     .FINALIZE_CMD       = NULL,
     .PARSE_CMD_ERROR    = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorWriteOnce,
     .UNIT_SIZE          = FLASH_UNIT_WRITE_ONCE_SIZE,
-    .FORCE_ALIGN           = NULL,
+    .FORCE_ALIGN        = NULL,
 };
 
 static Flash_Status_T SetWriteOnce(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size)
@@ -253,7 +252,7 @@ static const NvMemory_OpControl_T FLASH_OP_ERASE_ALL =
 
 static Flash_Status_T SetEraseAll(Flash_T * p_flash)
 {
-    NvMemory_SetOpControl(p_flash, &FLASH_OP_ERASE_ALL, 0U, 0U, 0u);
+    NvMemory_SetOpControl(p_flash, &FLASH_OP_ERASE_ALL, 0U, NULL, 0u);
     return NV_MEMORY_STATUS_SUCCESS;
 }
 
@@ -336,25 +335,27 @@ Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, uintptr_t destAddress, co
 {
     Flash_Status_T status = ProcAfterSet(p_flash, SetWrite(p_flash, destAddress, p_data, size));
     if(status == NV_MEMORY_STATUS_SUCCESS) { if(p_flash->OpSize != p_flash->OpSizeAligned) { status = WriteRemainder(p_flash, FLASH_UNIT_WRITE_SIZE); } }
-    // if(p_flash->IsVerifyEnable == true) { status = ProcAfterSet(p_flash, Flash_SetVerifyWrite(p_flash, destAddress, p_data, size)); }
     return status;
 }
 
-/* Check total size. Total size is not retained on following writes */
-Flash_Status_T Flash_StartContinueWrite(Flash_T * p_flash, uintptr_t destAddress, size_t size)
+/*
+    Validates write boundaries.
+    Total size is not retained on following writes.
+*/
+Flash_Status_T Flash_SetContinueWrite(Flash_T * p_flash, uintptr_t destAddress, size_t size)
 {
-    return SetWrite(p_flash, destAddress, 0U, size);
+    return SetWrite(p_flash, destAddress, NULL, size);
 }
 
 /*
     Append Write Operation, from prev p_dest, incrementing OpDestAddress
     Previous cmd must end on aligned boundary
-    todo account for verify
 */
 Flash_Status_T Flash_ContinueWrite_Blocking(Flash_T * p_flash, const uint8_t * p_data, size_t size)
 {
-    assert(p_flash->OpSize == p_flash->OpSizeAligned);
-    return Flash_Write_Blocking(p_flash, p_flash->OpDestAddress + p_flash->OpSizeAligned, p_data, size);
+    assert(p_flash->OpSize == p_flash->OpSizeAligned); /* Previous Write must have ended on an aligned boundary */
+    // NV_MEMORY_STATUS_ERROR_ALIGNMENT
+    return Flash_Write_Blocking(p_flash, p_flash->OpDestAddress + p_flash->OpSize, p_data, size);
 }
 
 Flash_Status_T Flash_Erase_Blocking(Flash_T * p_flash, uintptr_t destAddress, size_t size)
@@ -366,7 +367,6 @@ Flash_Status_T Flash_VerifyWrite_Blocking(Flash_T * p_flash, uintptr_t destAddre
 {
 #if defined(FLASH_UNIT_VERIFY_WRITE_SIZE) && (FLASH_UNIT_VERIFY_WRITE_SIZE != 0U)
     return ProcAfterSet(p_flash, SetVerifyWrite(p_flash, destAddress, p_data, size));
-    // if(status == NV_MEMORY_STATUS_SUCCESS) { if(p_flash->OpSizeRemainder != 0U) { status = VerifyWriteRemainder(p_flash, FLASH_UNIT_WRITE_SIZE); } } //todo verify mains original size in case of continue write
 #else  /* Manual compare if no hw verify implemented */
     return (memcmp((const uint8_t *)destAddress, p_data, size) == 0U) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_VERIFY;
 #endif

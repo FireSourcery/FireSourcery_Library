@@ -78,7 +78,7 @@ static inline void Flash_DisableFillAlign(Flash_T * p_flash) { NvMemory_DisableF
 */
 extern void Flash_Init(Flash_T * p_flash);
 
-extern Flash_Status_T Flash_StartContinueWrite(Flash_T * p_flash, uintptr_t destAddress, size_t size);
+extern Flash_Status_T Flash_SetContinueWrite(Flash_T * p_flash, uintptr_t destAddress, size_t size);
 extern Flash_Status_T Flash_ContinueWrite_Blocking(Flash_T * p_flash, const uint8_t * p_data, size_t size);
 
 extern Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size);
