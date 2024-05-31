@@ -120,7 +120,7 @@ static const NvMemory_OpControl_T FLASH_OP_WRITE =
     .FINALIZE_CMD        = 0U,
     .PARSE_CMD_ERROR     = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorWrite,
     .UNIT_SIZE           = FLASH_UNIT_WRITE_SIZE,
-    .ALIGN_OP            = NvMemory_AlignDown,
+    .FORCE_ALIGN            = NvMemory_AlignDown,
 };
 
 static Flash_Status_T SetWrite(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size)
@@ -138,7 +138,7 @@ static const NvMemory_OpControl_T FLASH_OP_ERASE =
     .FINALIZE_CMD        = 0U,
     .PARSE_CMD_ERROR     = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorErase,
     .UNIT_SIZE           = FLASH_UNIT_ERASE_SIZE,
-    .ALIGN_OP            = NvMemory_AlignUp,
+    .FORCE_ALIGN            = NvMemory_AlignUp,
 };
 
 static Flash_Status_T SetErase(Flash_T * p_flash, uintptr_t destAddress, size_t size)
@@ -156,7 +156,7 @@ static const NvMemory_OpControl_T FLASH_OP_VERIFY_WRITE =
     .FINALIZE_CMD        = 0U,
     .PARSE_CMD_ERROR     = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorVerify,
     .UNIT_SIZE           = FLASH_UNIT_VERIFY_WRITE_SIZE,
-    .ALIGN_OP          = NvMemory_AlignDown,
+    .FORCE_ALIGN          = NvMemory_AlignDown,
 };
 
 /* will repeat copy buffer for buffered verify after write case */
@@ -174,7 +174,7 @@ static const NvMemory_OpControl_T FLASH_OP_VERIFY_ERASE =
     .FINALIZE_CMD        = 0U,
     .PARSE_CMD_ERROR     = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorVerify,
     .UNIT_SIZE           = FLASH_UNIT_VERIFY_ERASE_SIZE,
-    .ALIGN_OP            = NvMemory_AlignUp,
+    .FORCE_ALIGN            = NvMemory_AlignUp,
 
 // #ifdef CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
 //     return 0U; // overwrite with totalBytes / FLASH_UNIT_VERIFY_ERASE_SIZE;
@@ -208,7 +208,7 @@ static const NvMemory_OpControl_T FLASH_OP_WRITE_ONCE =
     .FINALIZE_CMD       = NULL,
     .PARSE_CMD_ERROR    = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorWriteOnce,
     .UNIT_SIZE          = FLASH_UNIT_WRITE_ONCE_SIZE,
-    .ALIGN_OP           = NULL,
+    .FORCE_ALIGN           = NULL,
 };
 
 static Flash_Status_T SetWriteOnce(Flash_T * p_flash, uintptr_t destAddress, const uint8_t * p_data, size_t size)
@@ -226,7 +226,7 @@ static const NvMemory_OpControl_T FLASH_OP_READ_ONCE =
     .FINALIZE_CMD       = FinalizeCmdReadOnce,
     .PARSE_CMD_ERROR    = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorReadOnce,
     .UNIT_SIZE          = FLASH_UNIT_READ_ONCE_SIZE,
-    .ALIGN_OP           = NULL,
+    .FORCE_ALIGN        = NULL,
 };
 
 /* Sets p_OpData to result buffer */

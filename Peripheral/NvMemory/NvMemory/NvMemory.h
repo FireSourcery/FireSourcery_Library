@@ -120,7 +120,7 @@ typedef const struct NvMemory_OpControl
     HAL_NvMemory_FinalizeCmd_T FINALIZE_CMD;    /* On end per Cmd iteration */
     HAL_NvMemory_CmdStatus_T PARSE_CMD_ERROR;   /* On end all Cmd iteration, Op Complete Error */
     size_t UNIT_SIZE;                           /* Align Size */
-    size_t(*ALIGN_OP)(size_t opSize, size_t alignSize); /* Align up or down */
+    size_t(*FORCE_ALIGN)(size_t opSize, size_t alignSize); /* Align up or down */
     // size_t CMD_UNITS;        /* Used by EraseVerify for now */
     // size_t BytesPerCmd;      /* Used by Erase for now */
     // size_t UnitsPerCmd;      /* count of UNIT_SIZE */
