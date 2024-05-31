@@ -78,13 +78,14 @@ typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
     MOT_PACKET_SYNC_ACK = 0xA2U,
     MOT_PACKET_SYNC_NACK = 0xA3U,
     MOT_PACKET_SYNC_ABORT = 0xA4U,
+    MOT_PACKET_SYNC_RESV = MOT_PACKET_START_BYTE,
     // MOT_PACKET_FEED_WATCHDOG = 0xA6U,
+    MOT_PACKET_PING_ALT = 0xABU,
 
     /* Fixed Length */
     MOT_PACKET_STOP_ALL = 0x00U,
     MOT_PACKET_VERSION = 0x01U,
-    MOT_PACKET_CALL = 0xCCU,
-    // MOT_PACKET_REBOOT = 0xC0U,
+    MOT_PACKET_CALL = 0xC0U,
     // MOT_PACKET_CALL_ADDRESS = 0xCAU,
 
     // MOT_PACKET_FIXED_VAR_READ = 0xB1U,     /* Read Single Var32 */
@@ -128,6 +129,15 @@ typedef struct MOT_PACKET_PACKED MotPacket_Sync
 }
 MotPacket_Sync_T;
 
+// /* Header as Fixed */
+// typedef struct MOT_PACKET_PACKED MotPacket_HeaderFixed
+// {
+//     uint8_t Start;
+//     uint8_t Id;
+//     uint16_t Checksum;
+// }
+// MotPacket_HeaderFixed_T;
+
 typedef struct MOT_PACKET_PACKED MotPacket_Header
 {
     uint8_t Start;  /* MOT_PACKET_START_BYTE */
@@ -154,15 +164,6 @@ typedef union MOT_PACKET_PACKED MotPacket
 }
 MotPacket_T;
 
-// /* Header as Fixed */
-// typedef struct MOT_PACKET_PACKED MotPacket_HeaderFixed
-// {
-//     uint8_t Start;
-//     uint8_t Id;
-//     uint16_t Checksum;
-// }
-// MotPacket_HeaderFixed_T;
-
 // todo passing payload separately eliminates need for combined packet + payload struct
 // extern uint8_t MotPacket_VersionResp1_Build(MotPacket_VersionResp_T * p_payload, MotPacket_T * p_header, uint32_t library, uint32_t firmware, uint32_t board);
 
@@ -172,15 +173,15 @@ MotPacket_T;
 */
 /******************************************************************************/
 /******************************************************************************/
-/*! Common Resp */
-/******************************************************************************/
-// typedef struct  MotPacket_StatusResp { MotPacket_HeaderFixed_T Header; uint16_t StatusResp; } MotPacket_StatusResp_T;
-
-/******************************************************************************/
 /*
     For simplicity Packet Payload should not contain meta/format information
 */
 /******************************************************************************/
+/******************************************************************************/
+/*! Common Resp */
+/******************************************************************************/
+// typedef struct  MotPacket_StatusResp { MotPacket_HeaderFixed_T Header; uint16_t StatusResp; } MotPacket_StatusResp_T;
+
 /******************************************************************************/
 /*! Ping */
 /******************************************************************************/
@@ -316,7 +317,7 @@ extern bool MotPacket_ProcChecksum(const MotPacket_T * p_packet, size_t totalSiz
 extern uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId);
 extern uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength);
 
-extern uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket);
+extern uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket, MotPacket_Id_T syncId);
 extern uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket, uint32_t library, uint32_t firmware, uint32_t board);
 extern uint8_t MotPacket_StopResp_Build(MotPacket_StopResp_T * p_respPacket, uint16_t status);
 extern uint8_t MotPacket_CallResp_Build(MotPacket_CallResp_T * p_respPacket, uint32_t id, uint16_t status);

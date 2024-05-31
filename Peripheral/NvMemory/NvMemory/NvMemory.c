@@ -191,8 +191,8 @@ NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize)
     p_this->OpSize = opSize;
     if((p_this->IsForceAlignEnable == true) && (p_this->p_OpControl->FORCE_ALIGN != NULL))
     {
-        p_this->OpSizeAligned = p_this->p_OpControl->FORCE_ALIGN(opSize, p_this->p_OpControl->UNIT_SIZE);
         status = NV_MEMORY_STATUS_SUCCESS;
+        p_this->OpSizeAligned = p_this->p_OpControl->FORCE_ALIGN(opSize, p_this->p_OpControl->UNIT_SIZE); // alternatively use getter
     }
     else
     {

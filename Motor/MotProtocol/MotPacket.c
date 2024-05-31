@@ -59,6 +59,27 @@ static uint16_t Packet_Checksum(const MotPacket_T * p_packet, size_t totalSize)
     return checkSum;
 }
 
+bool MotPacket_ProcChecksum(const MotPacket_T * p_packet, size_t totalSize)
+{
+    return (Packet_Checksum(p_packet, totalSize) == p_packet->Header.Checksum);
+}
+
+uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId)
+{
+    // assert((syncId == MOT_PACKET_PING) || (syncId == MOT_PACKET_SYNC_ACK) || (syncId == MOT_PACKET_SYNC_NACK) || (syncId == MOT_PACKET_SYNC_ABORT));
+    p_txPacket->Start = MOT_PACKET_START_BYTE;
+    p_txPacket->SyncId = syncId;
+    return sizeof(MotPacket_Sync_T);
+}
+
+// static inline uint8_t MotPacket_BuildFixed(MotPacket_Fixed_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength)
+// {
+//     p_packet->Header.Start = MOT_PACKET_START_BYTE;
+//     p_packet->Header.Id = headerId;
+//     p_packet->Header.Checksum = Packet_Checksum(p_packet);
+//     return payloadLength + sizeof(MotPacket_Fixed_T);
+// }
+
 /*!
     @brief  Set header and build checksum. call last.
     @return size of full packet. Header + Payload
@@ -71,27 +92,6 @@ uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, u
     p_packet->Header.Checksum = Packet_Checksum(p_packet, payloadLength + sizeof(MotPacket_Header_T));
     return p_packet->Header.Length;
 }
-
-bool MotPacket_ProcChecksum(const MotPacket_T * p_packet, size_t totalSize)
-{
-    return (Packet_Checksum(p_packet, totalSize) == p_packet->Header.Checksum);
-}
-
-uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId)
-{
-    assert((syncId == MOT_PACKET_PING) || (syncId == MOT_PACKET_SYNC_ACK) || (syncId == MOT_PACKET_SYNC_NACK) || (syncId == MOT_PACKET_SYNC_ABORT));
-    p_txPacket->Start = MOT_PACKET_START_BYTE;
-    p_txPacket->SyncId = syncId;
-    return sizeof(MotPacket_Sync_T);
-}
-
-// static inline uint8_t Fixed_BuildHeader(MotPacket_Fixed_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength)
-// {
-//     p_packet->Header.Start = MOT_PACKET_START_BYTE;
-//     p_packet->Header.Id = headerId;
-//     p_packet->Header.Checksum = Packet_Checksum(p_packet);
-//     return payloadLength + sizeof(MotPacket_Fixed_T);
-// }
 
 /******************************************************************************/
 /*!
@@ -106,9 +106,9 @@ uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncI
 /******************************************************************************/
 /*! Ping */
 /******************************************************************************/
-uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket)
+uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket, MotPacket_Id_T syncId)
 {
-    return MotPacket_Sync_Build((MotPacket_Sync_T *)p_respPacket, MOT_PACKET_SYNC_ACK);
+    return MotPacket_Sync_Build((MotPacket_Sync_T *)p_respPacket, syncId);
 }
 
 /******************************************************************************/
