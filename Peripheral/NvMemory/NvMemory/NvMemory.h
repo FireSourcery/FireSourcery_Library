@@ -214,12 +214,12 @@ NvMemory_T;
 }
 
 /*!
-    @param[in] address - address or size
+    @param[in] value - address or size
     @param[in] align - unit must be power of 2
 */
-static inline uintptr_t NvMemory_AlignDown(uintptr_t address, size_t align) { return (address & (-align)); }
-static inline uintptr_t NvMemory_AlignUp(uintptr_t address, size_t align) { return (-(-address & (-align))); }
-static inline bool NvMemory_IsAligned(uintptr_t address, size_t align) { return ((address & (align - 1UL)) == (uintptr_t)0UL); }
+static inline uintptr_t NvMemory_AlignDown(uintptr_t value, size_t align) { return (value & (-align)); }
+static inline uintptr_t NvMemory_AlignUp(uintptr_t value, size_t align) { return (-(-value & (-align))); }
+static inline bool NvMemory_IsAligned(uintptr_t value, size_t align) { return ((value & (align - 1UL)) == (uintptr_t)0UL); }
 
 static inline void NvMemory_EnableForceAlign(NvMemory_T * p_this) { p_this->IsForceAlignEnable = true; }
 static inline void NvMemory_DisableForceAlign(NvMemory_T * p_this) { p_this->IsForceAlignEnable = false; }

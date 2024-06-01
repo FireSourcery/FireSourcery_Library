@@ -354,8 +354,10 @@ Flash_Status_T Flash_SetContinueWrite(Flash_T * p_flash, uintptr_t destAddress, 
 Flash_Status_T Flash_ContinueWrite_Blocking(Flash_T * p_flash, const uint8_t * p_data, size_t size)
 {
     assert(p_flash->OpSize == p_flash->OpSizeAligned); /* Previous Write must have ended on an aligned boundary */
-    // NV_MEMORY_STATUS_ERROR_ALIGNMENT
-    return Flash_Write_Blocking(p_flash, p_flash->OpDestAddress + p_flash->OpSize, p_data, size);
+
+    Flash_Status_T status = Flash_Write_Blocking(p_flash, p_flash->OpDestAddress, p_data, size);
+    p_flash->OpDestAddress += size;
+    return status;
 }
 
 Flash_Status_T Flash_Erase_Blocking(Flash_T * p_flash, uintptr_t destAddress, size_t size)
