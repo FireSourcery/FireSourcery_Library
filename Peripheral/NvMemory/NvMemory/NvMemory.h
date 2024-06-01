@@ -61,7 +61,7 @@ typedef enum NvMemory_Status
     NV_MEMORY_STATUS_ERROR_VERIFY,      /* Verify cmd */
     NV_MEMORY_STATUS_ERROR_CHECKSUM,    /*  */
     NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED,
-    NV_MEMORY_STATUS_ERROR_OTHER,
+    NV_MEMORY_STATUS_ERROR_OTHER, /* External error requring common a return type */
 }
 NvMemory_Status_T;
 
