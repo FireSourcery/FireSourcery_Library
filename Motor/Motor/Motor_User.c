@@ -84,10 +84,10 @@ void Motor_User_ActivateControl_Cast(MotorPtr_T p_motor, uint8_t modeWord) { Mot
     Concurrency note: only 1 thread updates RampTarget. StateMachine Proc thread only updates OutputState
 */
 /* may need to be private */
-void Motor_User_SetCmd(MotorPtr_T p_motor, int16_t userCmd) { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_LogicalDirectionCmd(p_motor, userCmd)); }
+void Motor_User_SetCmd(MotorPtr_T p_motor, int16_t userCmd) { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd)); }
 // void Motor_User_ClearState(MotorPtr_T p_motor) { Linear_Ramp_SetOutputState(&p_motor->Ramp, 0); }
-int32_t Motor_User_GetCmd(const MotorPtr_T p_motor) { return Motor_LogicalDirectionCmd(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
-int32_t Motor_User_GetSetPoint(const MotorPtr_T p_motor) { return Motor_LogicalDirectionCmd(p_motor, Linear_Ramp_GetOutput(&p_motor->Ramp)); }
+int32_t Motor_User_GetCmd(const MotorPtr_T p_motor) { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
+int32_t Motor_User_GetSetPoint(const MotorPtr_T p_motor) { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetOutput(&p_motor->Ramp)); }
 
 
 /******************************************************************************/

@@ -574,7 +574,7 @@ static void Fault_Proc(MotorControllerPtr_T p_mc)
 
     switch(p_mc->Parameters.InputMode)
     {
-        case MOTOR_CONTROLLER_INPUT_MODE_SERIAL_ONLY: /* Protocol Rx Lost use auto recover, without user input */
+        case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: /* Protocol Rx Lost use auto recover, without user input */
             p_mc->FaultFlags.RxLost = Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]);
             break;
         case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;

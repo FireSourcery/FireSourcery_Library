@@ -726,7 +726,7 @@ MotVarId_Status_T MotorController_Var_Set(MotorControllerPtr_T p_mc, MotVarId_T 
     switch((MotVarId_TypeType_T)varId.NameTypeType)
     {
         case MOT_VAR_ID_TYPE_REAL_TIME:
-            status = (p_mc->Parameters.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL_ONLY) ?
+            status = (p_mc->Parameters.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL) ?
                 SetRealTime(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
             break;
         case MOT_VAR_ID_TYPE_PARAMETER:

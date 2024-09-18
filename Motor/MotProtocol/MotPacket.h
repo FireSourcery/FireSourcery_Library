@@ -390,21 +390,6 @@ extern uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataP
 // extern uint32_t MotPacket_FixedWriteVarReq_ParseVarValue(const MotPacket_WriteVarReq_T * p_reqPacket);
 // extern uint8_t MotPacket_FixedWriteVarResp_Build(MotPacket_WriteVarResp_T * p_respPacket, uint16_t status);
 
-// /******************************************************************************/
-// /*! Once Read */
-// /******************************************************************************/
-// typedef struct MotPacket_OnceReadReq_Payload { uint32_t Address; uint8_t Size; uint8_t Resv[3U]; }                      MotPacket_OnceReadReq_Payload_T;
-// typedef struct MotPacket_OnceReadResp_Payload { uint8_t ByteData[MOT_PACKET_PAYLOAD_LENGTH_MAX]; }                      MotPacket_OnceReadResp_Payload_T;
-// typedef struct MotPacket_OnceReadReq { MotPacket_Header_T Header; MotPacket_OnceReadReq_Payload_T OnceReadReq; }        MotPacket_OnceReadReq_T;
-// typedef struct MotPacket_OnceReadResp { MotPacket_Header_T Header; MotPacket_OnceReadResp_Payload_T OnceReadResp; }     MotPacket_OnceReadResp_T;
-
-// /******************************************************************************/
-// /*! Once Write */
-// /******************************************************************************/
-// typedef struct MotPacket_OnceWriteReq_Payload { uint32_t Address; uint8_t Size; uint8_t Resv[3U]; uint8_t ByteData[16U]; }  MotPacket_OnceWriteReq_Payload_T;
-// typedef struct MotPacket_OnceWriteResp_Payload { uint16_t Status; }                                                         MotPacket_OnceWriteResp_Payload_T;
-// typedef struct MotPacket_OnceWriteReq { MotPacket_Header_T Header; MotPacket_OnceWriteReq_Payload_T OnceWriteReq; }         MotPacket_OnceWriteReq_T;
-// typedef struct MotPacket_OnceWriteResp { MotPacket_Header_T Header; MotPacket_OnceWriteResp_Payload_T OnceWriteResp; }      MotPacket_OnceWriteResp_T;
 
 /******************************************************************************/
 /*! Cmdr side */

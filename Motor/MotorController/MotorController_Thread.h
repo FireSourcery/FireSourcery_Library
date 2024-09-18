@@ -85,7 +85,7 @@ static inline void _MotorController_ProcOptDin(MotorControllerPtr_T p_mc)
         switch(p_mc->Parameters.OptDinMode)
         {
             case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
-                switch(Debounce_PollDualEdge(&p_mc->OptDin))
+                switch(Debounce_PollEdge(&p_mc->OptDin))
                 {
                     case DEBOUNCE_EDGE_RISING:  MotorController_SetSpeedLimitAll(p_mc, p_mc->Parameters.OptDinSpeedLimit_Scalar16); break;
                     case DEBOUNCE_EDGE_FALLING: MotorController_ClearSpeedLimitAll(p_mc); break;
@@ -94,7 +94,7 @@ static inline void _MotorController_ProcOptDin(MotorControllerPtr_T p_mc)
                 break;
             #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
             case MOTOR_CONTROLLER_OPT_DIN_SERVO:
-                switch(Debounce_PollDualEdge(&p_mc->OptDin))
+                switch(Debounce_PollEdge(&p_mc->OptDin))
                 {
                     case DEBOUNCE_EDGE_RISING:  MotorController_User_EnterServoMode(p_mc);  break;
                     case DEBOUNCE_EDGE_FALLING: MotorController_User_ExitServoMode(p_mc);   break;
@@ -222,7 +222,7 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
         switch(p_mc->Parameters.InputMode)
         {
             case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_mc);  break;
-            case MOTOR_CONTROLLER_INPUT_MODE_SERIAL_ONLY:
+            case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
                 /* MotorController_Var_Set voluntarily checks InputMode for proc */
                 if(MotAnalogUser_PollBrakePins(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
 

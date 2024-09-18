@@ -57,7 +57,7 @@ bool Debounce_CaptureState(Debounce_T * p_debounce)
     }
     else
     {
-        // if(p_debounce->DebouncedState != p_debounce->DebouncedStatePrev) //change polling state var
+        // if(p_debounce->DebouncedState != p_debounce->DebouncedStatePrev) // change polling state var
         {
             if(*p_debounce->CONFIG.P_TIMER - p_debounce->TimePrev > p_debounce->DebounceTime)
             {
@@ -68,32 +68,37 @@ bool Debounce_CaptureState(Debounce_T * p_debounce)
         }
     }
 
-    return (p_debounce->DebouncedStatePrev ^ p_debounce->DebouncedState);
+    return Debounce_GetIsEdge(p_debounce);
 }
+
+
+static inline void updateDebounceState(Debounce_T * p_debounce, bool isEdge) { if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; } }
 
 /* todo change state var */
 bool Debounce_PollFallingEdge(Debounce_T * p_debounce)
 {
-    bool isEdge = ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true));
-    if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
+    bool isEdge = Debounce_GetIsFallingEdge(p_debounce);
+    updateDebounceState(p_debounce, isEdge);
     return isEdge;
 }
 
 bool Debounce_PollRisingEdge(Debounce_T * p_debounce)
 {
-    bool isEdge = ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false));
-    if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
+    bool isEdge = Debounce_GetIsRisingEdge(p_debounce);
+    updateDebounceState(p_debounce, isEdge);
     return isEdge;
 }
 
-bool Debounce_PollIsDualEdge(Debounce_T * p_debounce)
+bool Debounce_PollDualEdge(Debounce_T * p_debounce)
 {
-    bool isEdge = ((p_debounce->DebouncedState ^ p_debounce->DebouncedStatePrev) == true);
-    if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; }
+    bool isEdge = Debounce_GetIsEdge(p_debounce);
+    updateDebounceState(p_debounce, isEdge);
     return isEdge;
 }
 
-Debounce_Edge_T Debounce_PollDualEdge(Debounce_T * p_debounce)
+Debounce_Edge_T Debounce_PollEdge(Debounce_T * p_debounce)
 {
-    return ((Debounce_PollIsDualEdge(p_debounce) == true) ? ((p_debounce->DebouncedState = true) ? DEBOUNCE_EDGE_RISING : DEBOUNCE_EDGE_FALLING) : DEBOUNCE_EDGE_NULL);
+    Debounce_Edge_T edge = Debounce_GetEdge(p_debounce);
+    updateDebounceState(p_debounce, edge != DEBOUNCE_EDGE_NULL);
+    return edge;
 }

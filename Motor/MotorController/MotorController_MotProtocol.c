@@ -95,7 +95,7 @@ static protocol_size_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_CallRe
     switch((MotProtocol_CallId_T)p_rxPacket->CallReq.Id)
     {
         case MOT_CALL_LOCKED_STATE:
-            // status = MotorController_User_InputLocked(p_mc, p_rxPacket->CallReq.Arg);
+            // status = MotorController_User_InputLocked(p_mc, p_rxPacket->CallReq.Arg); //todo
             switch((MotorController_LockedId_T)p_rxPacket->CallReq.Arg) /* StateMachine will check for invalid BlockingId */
             {
                 case MOTOR_CONTROLLER_LOCKED_ENTER:     status = MotorController_User_EnterLockedState(p_mc) ? MOT_STATUS_OK : MOT_STATUS_ERROR;  break;

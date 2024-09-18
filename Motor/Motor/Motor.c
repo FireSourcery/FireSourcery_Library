@@ -347,7 +347,7 @@ static void UpdateILimitsCcw(MotorPtr_T p_motor)
     p_motor->ILimitCcw_FracS16 = p_motor->ILimitMotoring_Scalar16 / 2;
     p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitGenerating_Scalar16 / 2;
     if((p_motor->FeedbackMode.Speed == 1U) && (p_motor->FeedbackMode.Current == 1U))      /* Only when SpeedPid Output is I */
-        { PID_SetOutputLimits(&p_motor->PidSpeed, (int16_t)0 - p_motor->ILimitGenerating_Scalar16 / 2, p_motor->ILimitMotoring_Scalar16 / 2); }
+        { PID_SetOutputLimits(&p_motor->PidSpeed, p_motor->ILimitCw_FracS16, p_motor->ILimitCcw_FracS16); }
 }
 
 static void UpdateILimitsCw(MotorPtr_T p_motor)
@@ -355,7 +355,7 @@ static void UpdateILimitsCw(MotorPtr_T p_motor)
     p_motor->ILimitCw_FracS16 = (int16_t)0 - p_motor->ILimitMotoring_Scalar16 / 2;
     p_motor->ILimitCcw_FracS16 = p_motor->ILimitGenerating_Scalar16 / 2;
     if((p_motor->FeedbackMode.Speed == 1U) && (p_motor->FeedbackMode.Current == 1U))
-        { PID_SetOutputLimits(&p_motor->PidSpeed, (int16_t)0 - p_motor->ILimitMotoring_Scalar16 / 2, p_motor->ILimitGenerating_Scalar16 / 2); }
+        { PID_SetOutputLimits(&p_motor->PidSpeed, p_motor->ILimitCw_FracS16, p_motor->ILimitCcw_FracS16); }
 }
 
 static void UpdateSpeedLimitsCcw(MotorPtr_T p_motor)
@@ -466,7 +466,7 @@ void Motor_ResetSpeedLimitActive(MotorPtr_T p_motor)
     p_motor->SpeedLimitForward_Scalar16 = p_motor->Parameters.SpeedLimitForward_Scalar16;
     p_motor->SpeedLimitReverse_Scalar16 = p_motor->Parameters.SpeedLimitReverse_Scalar16;
     p_motor->SpeedLimitDirect_Scalar16 = UINT16_MAX;
-    for(uint8_t idIndex = 0U; idIndex < sizeof(p_motor->SpeedLimitBuffer) / sizeof(p_motor->SpeedLimitBuffer[0]); idIndex++)
+    for(uint8_t idIndex = 0U; idIndex < sizeof(p_motor->SpeedLimitBuffer) / sizeof(p_motor->SpeedLimitBuffer[0U]); idIndex++)
         { p_motor->SpeedLimitBuffer[idIndex] = UINT16_MAX; }
 }
 
@@ -475,7 +475,7 @@ void Motor_ResetILimitActive(MotorPtr_T p_motor)
     p_motor->ILimitMotoring_Scalar16 = p_motor->Parameters.ILimitMotoring_Scalar16;
     p_motor->ILimitGenerating_Scalar16 = p_motor->Parameters.ILimitGenerating_Scalar16;
     p_motor->ILimitActiveSentinel_Scalar16 = UINT16_MAX;
-    for(uint8_t idIndex = 0U; idIndex < sizeof(p_motor->ILimitBuffer) / sizeof(p_motor->ILimitBuffer[0]); idIndex++)
+    for(uint8_t idIndex = 0U; idIndex < sizeof(p_motor->ILimitBuffer) / sizeof(p_motor->ILimitBuffer[0U]); idIndex++)
         { p_motor->ILimitBuffer[idIndex] = UINT16_MAX; }
 }
 
@@ -506,7 +506,7 @@ void Motor_ResetUnitsSensor(MotorPtr_T p_motor)
     }
 }
 
-//todo as frac
+// todo as frac
 void Motor_ResetUnitsVabc(MotorPtr_T p_motor)
 {
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)

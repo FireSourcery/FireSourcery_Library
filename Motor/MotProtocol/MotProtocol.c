@@ -213,11 +213,13 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flas
     p_subState->DataModeSize = MotPacket_DataModeReq_ParseSize(p_rxPacket);
     p_subState->DataIndex = 0U;
 
+    //todo split
     if(p_rxPacket->DataModeReq.Config == MOT_PROTOCOL_DATA_MODE_CONFIG_ERASE)
     {
         flashStatus = Flash_Erase_Blocking(p_flash, p_subState->DataModeAddress, p_subState->DataModeSize);
     }
     // alternatively share with read, check boundaries
+    // checks alignment
     if(flashStatus == NV_MEMORY_STATUS_SUCCESS)
     {
         flashStatus = Flash_SetContinueWrite(p_flash, p_subState->DataModeAddress, p_subState->DataModeSize);
@@ -254,7 +256,7 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteData_Blocking(Flash_T * p_flas
         }
         else
         {
-            *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build((MotPacket_DataModeResp_T *)p_txPacket, MOT_STATUS_OK);
+            *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build((MotPacket_DataModeResp_T *)p_txPacket, NV_MEMORY_STATUS_SUCCESS);
             *p_reqContext->p_SubStateIndex = 3U;
             reqCode = PROTOCOL_REQ_CODE_TX_CONTINUE;
         }

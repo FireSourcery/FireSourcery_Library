@@ -229,11 +229,11 @@ typedef struct Motor_Params
     Motor_SensorMode_T          SensorMode;
     Motor_FeedbackMode_T        FeedbackModeDefault;     /* Default FeedbackMode  */
     Motor_Direction_T           DirectionForward;
+    uint8_t PolePairs;
 
     /*
         Ref values, known calibration parameter provide by user
     */
-    uint8_t PolePairs;
     uint16_t Kv;
     uint16_t SpeedFeedbackRef_Rpm;  /* Feedback / PID Regulator Limits Ref, User IO units conversion, Encoder speed calc ref. */
                                     /* A value greater than achievable will cause integral windup */
@@ -246,9 +246,10 @@ typedef struct Motor_Params
     uint16_t IPeakRef_Adcu;
 // #endif
 
-    uint16_t SpeedLimitForward_Scalar16;   /* "Root" Limits. Persistent User Param. Frac16 of SpeedFeedbackRef_Rpm */
+    /* Base Limits. Persistent User Param. */
+    uint16_t SpeedLimitForward_Scalar16;   /* Frac16 of SpeedFeedbackRef_Rpm */
     uint16_t SpeedLimitReverse_Scalar16;
-    uint16_t ILimitMotoring_Scalar16;      /* Persistent User Param. Frac16 of RefMax I_MAX_AMPS. ILimit must be < 100% to account for I_Frac saturation. */
+    uint16_t ILimitMotoring_Scalar16;      /* Frac16 of RefMax I_MAX_AMPS. ILimit must be < 100% to account for I_Frac saturation. */
     uint16_t ILimitGenerating_Scalar16;
 
     uint32_t RampAccel_Cycles;
@@ -278,7 +279,7 @@ Motor_Params_T;
 /*!
     @brief Motor Config - Compile time const configuration. Unique per Motor
 */
-typedef const struct Motor_Init
+typedef const struct Motor_Config
 {
     AnalogN_T * const P_ANALOG_N;
     const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
@@ -292,7 +293,7 @@ typedef struct Motor
     Motor_Params_T Parameters;
 
     volatile MotorAnalog_Results_T AnalogResults;
-    // MotorAnalog_ChannelGroup_T AnalogCmd;
+    // MotorAnalog_ChannelGroup_T AnalogGroup;
 
     Encoder_T Encoder;
     Hall_T Hall;
@@ -620,8 +621,13 @@ static inline Motor_Direction_T Motor_DirectionReverse(const MotorPtr_T p_motor)
     @param[in] userCmd int32_t[-65536:65536] frac16 or scalar16. positive is forward relative to the user.
     @return int32_t[-65536:65536], Over saturated if input is -32768
 */
-static inline int32_t Motor_LogicalDirectionCmd(const MotorPtr_T p_motor, int32_t userCmd) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? userCmd : (int32_t)0 - userCmd; }
+static inline int32_t Motor_DirectionalValueOf(const MotorPtr_T p_motor, int32_t userCmd) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? userCmd : (int32_t)0 - userCmd; }
 
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
 /* Call from StateMachine only */
 static inline void Motor_SetFeedbackMode_Cast(MotorPtr_T p_motor, uint8_t modeWord) { p_motor->FeedbackMode.Word = modeWord; }
 static inline void Motor_SetFeedbackMode(MotorPtr_T p_motor, Motor_FeedbackMode_T mode) { p_motor->FeedbackMode.Word = mode.Word; }

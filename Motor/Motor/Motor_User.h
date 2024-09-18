@@ -46,7 +46,7 @@
     Conversion functions only on user call. No periodic proc.
 */
 /*! @return [-32767:32767] <=> [-1:1] speed forward as positive. reverse as negative. */
-static inline int32_t Motor_User_GetSpeed_Frac16(const MotorPtr_T p_motor) { return Motor_LogicalDirectionCmd(p_motor, p_motor->Speed_FracS16); }
+static inline int32_t Motor_User_GetSpeed_Frac16(const MotorPtr_T p_motor) { return Motor_DirectionalValueOf(p_motor, p_motor->Speed_FracS16); }
 /*! @return [0:65535] <=> [0:2] */
 static inline uint16_t Motor_User_GetSpeed_UFrac16(const MotorPtr_T p_motor) { return math_abs(p_motor->Speed_FracS16); }
 
@@ -54,13 +54,13 @@ static inline uint16_t Motor_User_GetSpeed_UFrac16(const MotorPtr_T p_motor) { r
     @return IPhase Zero to Peak.
     iPhase motoring as positive. generating as negative.
 */
-static inline int32_t Motor_User_GetIPhase_Frac16(const MotorPtr_T p_motor) { return Motor_LogicalDirectionCmd(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_Frac16, 0U)); }
+static inline int32_t Motor_User_GetIPhase_Frac16(const MotorPtr_T p_motor) { return Motor_DirectionalValueOf(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_Frac16, 0U)); }
 static inline int32_t Motor_User_GetIPhase_UFrac16(const MotorPtr_T p_motor) { return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetIPhase_UFrac16, 0U); }
 
 /*
     Sampled BEMF during freewheel or VOut during active control
 */
-static inline int32_t Motor_User_GetVPhase_Frac16(const MotorPtr_T p_motor) { return Motor_LogicalDirectionCmd(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_Frac16, 0U)); }
+static inline int32_t Motor_User_GetVPhase_Frac16(const MotorPtr_T p_motor) { return Motor_DirectionalValueOf(p_motor, Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_Frac16, 0U)); }
 static inline int32_t Motor_User_GetVPhase_UFrac16(const MotorPtr_T p_motor) { return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetVPhase_UFrac16, 0U); }
 
 /*
@@ -85,7 +85,7 @@ static inline int32_t Motor_User_GetElectricalPower_VA(const MotorPtr_T p_motor)
 static inline int32_t Motor_User_GetHeat_DegCScalar(const MotorPtr_T p_motor, uint16_t scalar)  { return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
 // check DC current limit
 // Motor_FOC_GetElectricalPower_FracS16Abs(p_motor) / Global_Motor_GetVSource_V() ;
-static inline thermal_t Motor_User_GetHeat_DegC(const MotorPtr_T p_motor)                       { return Thermistor_ConvertToDegC(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
+static inline thermal_t Motor_User_GetHeat_DegC(const MotorPtr_T p_motor)           { return Thermistor_ConvertToDegC(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 #endif
 
 /*

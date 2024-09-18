@@ -314,8 +314,8 @@ void Motor_FOC_StartAlignValidate(MotorPtr_T p_motor)
 void Motor_FOC_StartOpenLoop(MotorPtr_T p_motor)
 {
     p_motor->Speed_FracS16 = 0;
-    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_LogicalDirectionCmd(p_motor, p_motor->Parameters.OpenLoopPower_Scalar16 / 2U));    // alternatively, clamp user input ramp
-    Linear_Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0, Motor_LogicalDirectionCmd(p_motor, p_motor->Parameters.OpenLoopSpeed_Scalar16 / 2U));
+    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Parameters.OpenLoopPower_Scalar16 / 2U));    // alternatively, clamp user input ramp
+    Linear_Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Parameters.OpenLoopSpeed_Scalar16 / 2U));
     // FOC_SetDReq(&p_motor->Foc, 0); //Motor_FOC_ProcAngleFeedforward
 }
 

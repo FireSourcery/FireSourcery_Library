@@ -61,22 +61,22 @@ typedef struct Debounce
 }
 Debounce_T;
 
-#define DEBOUNCE_INIT(p_PinHal, PinId, PinIsInvert, p_Timer)     \
-{                                                                \
-    .CONFIG =  { .P_TIMER = p_Timer, },                            \
-    .Pin = PIN_INIT_INVERT(p_PinHal, PinId, PinIsInvert),        \
+#define DEBOUNCE_INIT(p_PinHal, PinId, PinIsInvert, p_Timer)    \
+{                                                               \
+    .CONFIG =  { .P_TIMER = p_Timer, },                         \
+    .Pin = PIN_INIT_INVERT(p_PinHal, PinId, PinIsInvert),       \
 }
 
 static inline bool Debounce_GetState(const Debounce_T * p_debounce)     { return p_debounce->DebouncedState;}
-static inline bool Debounce_GetRawState(const Debounce_T * p_debounce)     { return p_debounce->RawStatePrev; }
+// static inline bool Debounce_GetRawState(const Debounce_T * p_debounce)  { return p_debounce->RawStatePrev; }
 
 /* During same synchronous cycle only */
 static inline bool Debounce_GetIsFallingEdge(Debounce_T * p_debounce)   { return ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true)); }
 static inline bool Debounce_GetIsRisingEdge(Debounce_T * p_debounce)    { return ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false)); }
-static inline bool Debounce_GetIsDualEdge(Debounce_T * p_debounce)      { return ((p_debounce->DebouncedState ^ p_debounce->DebouncedStatePrev) == true); }
-static inline Debounce_Edge_T Debounce_GetDualEdge(Debounce_T * p_debounce)
+static inline bool Debounce_GetIsEdge(Debounce_T * p_debounce)          { return ((p_debounce->DebouncedState ^ p_debounce->DebouncedStatePrev) == true); }
+static inline Debounce_Edge_T Debounce_GetEdge(Debounce_T * p_debounce)
 {
-    return ((Debounce_GetIsDualEdge(p_debounce) == true) ? ((p_debounce->DebouncedState = true) ? DEBOUNCE_EDGE_RISING : DEBOUNCE_EDGE_FALLING) : DEBOUNCE_EDGE_NULL);
+    return ((Debounce_GetIsEdge(p_debounce) == true) ? ((p_debounce->DebouncedState = true) ? DEBOUNCE_EDGE_RISING : DEBOUNCE_EDGE_FALLING) : DEBOUNCE_EDGE_NULL);
 }
 
 static inline void Debounce_SetTime(Debounce_T * p_debounce, uint16_t millis) { p_debounce->DebounceTime = millis; }
@@ -87,7 +87,7 @@ extern void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime);
 extern bool Debounce_CaptureState(Debounce_T * p_debounce);
 extern bool Debounce_PollFallingEdge(Debounce_T * p_debounce);
 extern bool Debounce_PollRisingEdge(Debounce_T * p_debounce);
-extern Debounce_Edge_T Debounce_PollDualEdge(Debounce_T * p_debounce);
+extern Debounce_Edge_T Debounce_PollEdge(Debounce_T * p_debounce);
 
 //static inline uint16_t Debounce_GetStateTime()   { }
 //static inline bool Debounce_GetLongPress(Debounce_T * p_debounce){}
