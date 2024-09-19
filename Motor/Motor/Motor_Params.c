@@ -186,15 +186,15 @@ void Motor_Params_SetSpeedFeedbackRef_Rpm(MotorPtr_T p_motor, uint16_t rpm)
 {
     p_motor->Parameters.SpeedFeedbackRef_Rpm = rpm;
     // if(rpm > kv * Global_Motor_GetVSource_V())
-    if(p_motor->Parameters.VSpeedRef_Rpm > rpm) { p_motor->Parameters.VSpeedRef_Rpm = rpm; }
+    if(p_motor->Parameters.SpeedVRef_Rpm > rpm) { p_motor->Parameters.SpeedVRef_Rpm = rpm; }
     PropagateSet(p_motor, Motor_ResetUnitsVSpeed);
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
 
 /* SpeedVRef =< SetSpeedFeedbackRef to ensure not match to higher speed */
-void Motor_Params_SetVSpeedRef_Rpm(MotorPtr_T p_motor, uint16_t rpm)
+void Motor_Params_SetSpeedVRef_Rpm(MotorPtr_T p_motor, uint16_t rpm)
 {
-    p_motor->Parameters.VSpeedRef_Rpm = (rpm > p_motor->Parameters.SpeedFeedbackRef_Rpm) ? p_motor->Parameters.SpeedFeedbackRef_Rpm : rpm;
+    p_motor->Parameters.SpeedVRef_Rpm = (rpm > p_motor->Parameters.SpeedFeedbackRef_Rpm) ? p_motor->Parameters.SpeedFeedbackRef_Rpm : rpm;
     PropagateSet(p_motor, Motor_ResetUnitsVSpeed);
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
@@ -210,7 +210,7 @@ static void SetSpeedFeedbackRef_Kv(MotorPtr_T p_motor, uint16_t kv)
 
 static void SetVSpeedRef_Kv(MotorPtr_T p_motor, uint16_t kv)
 {
-    Motor_Params_SetVSpeedRef_Rpm(p_motor, kv * Global_Motor_GetVSource_V());
+    Motor_Params_SetSpeedVRef_Rpm(p_motor, kv * Global_Motor_GetVSource_V());
 }
 
 /* Setting Kv overwrites higher SpeedFeedbackRef. SpeedFeedbackRef can be set independently from Kv */

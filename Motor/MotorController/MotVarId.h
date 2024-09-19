@@ -80,17 +80,17 @@ typedef enum MotVarId_Monitor_Motor
     MOT_VAR_SPEED,
     MOT_VAR_I_PHASE,
     MOT_VAR_V_PHASE,
-    MOT_VAR_POWER,
-    MOT_VAR_RAMP_OUTPUT,
+    // MOT_VAR_POWER,
     MOT_VAR_ELECTRICAL_ANGLE,
     MOT_VAR_MECHANICAL_ANGLE,
+    MOT_VAR_MOTOR_HEAT,
     MOT_VAR_MOTOR_STATE,
     MOT_VAR_MOTOR_STATUS_FLAGS,
     MOT_VAR_MOTOR_FAULT_FLAGS,
-    MOT_VAR_MOTOR_HEAT,
+    // MOT_VAR_RAMP_OUTPUT,
     MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT,
     MOT_VAR_MOTOR_ACTIVE_I_LIMIT,
-    MOT_VAR_MOTOR_V_SPEED,
+    // MOT_VAR_MOTOR_V_SPEED,
 }
 MotVarId_Monitor_Motor_T;
 
@@ -132,20 +132,19 @@ MotVarId_Monitor_MotorSensor_T;
 */
 typedef enum MotVarId_Control
 {
-    // MOT_VAR_USER_SET_POINT,                 // Throttle, Brake, Servo In, Value pending feedbackMode
+    // MOT_VAR_USER_CMD,                 // move from cmd if stored for ref
     MOT_VAR_DIRECTION,                      // MotorController_Direction_T,
-//  MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE,      // not saved to Nvm
+
 }
 MotVarId_Control_T;
 
 typedef enum MotVarId_Control_Motor
 {
+    MOT_VAR_MOTOR_USER_CMD,                 // Ramp In (UserCmd), Ramp Out (SetPoint)
     MOT_VAR_MOTOR_USER_SET_POINT,           // Ramp In (UserCmd), Ramp Out (SetPoint)
-    MOT_VAR_MOTOR_USER_CMD,                 // Ramp In
     MOT_VAR_MOTOR_DIRECTION,                // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
     MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,     // Write buffered user value, read state value
-    MOT_VAR_MOTOR_USER_SPEED_LIMIT,
-    MOT_VAR_MOTOR_USER_I_LIMIT,
+
 }
 MotVarId_Control_Motor_T;
 
@@ -176,6 +175,8 @@ typedef enum MotVarId_Cmd_Motor
     // MOT_VAR_MOTOR_RELEASE_CONTROL,
     // MOT_VAR_MOTOR_DISABLE,
     // MOT_VAR_MOTOR_CLEAR_FAULT,
+    MOT_VAR_MOTOR_USER_SPEED_LIMIT,
+    MOT_VAR_MOTOR_USER_I_LIMIT,
 }
 MotVarId_Cmd_Motor_T;
 
@@ -341,7 +342,8 @@ typedef enum MotVarId_Params_Protocol
     MOT_VAR_PROTOCOL_XCVR_ID,
     MOT_VAR_PROTOCOL_SPECS_ID,
     MOT_VAR_PROTOCOL_WATCHDOG_TIME,
-    MOT_VAR_PROTOCOL_BAUD_RATE,
+    MOT_VAR_PROTOCOL_BAUD_RATE, // On boot
+ //  MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE,
     MOT_VAR_PROTOCOL_IS_ENABLED,
 }
 MotVarId_Params_Protocol_T;

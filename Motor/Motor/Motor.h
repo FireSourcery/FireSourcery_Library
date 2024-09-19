@@ -237,7 +237,7 @@ typedef struct Motor_Params
     uint16_t Kv;
     uint16_t SpeedFeedbackRef_Rpm;  /* Feedback / PID Regulator Limits Ref, User IO units conversion, Encoder speed calc ref. */
                                     /* A value greater than achievable will cause integral windup */
-    uint16_t VSpeedRef_Rpm;         /* Derive from Kv + offset. Use < SpeedFeedbackRef_Rpm to begin at lower speed. */
+    uint16_t SpeedVRef_Rpm;         /* Derive from Kv + offset. Use < SpeedFeedbackRef_Rpm to begin at lower speed. */
         // Motor_ResumeMode_T    ResumeMode; // option Scale to KvSpeed or Bemf on resume
     uint16_t IaZeroRef_Adcu;
     uint16_t IbZeroRef_Adcu;
@@ -640,16 +640,16 @@ static inline void Motor_SetFeedbackMode(MotorPtr_T p_motor, Motor_FeedbackMode_
 /*
     V of Speed
     VPhase approximation using Kv and Speed
-        = Speed_FracS16 * VSpeedRef_Rpm / SpeedFeedbackRef_Rpm
-        // VSpeedRef_Rpm =
-    User sets lower VSpeedRef_Rpm to ensure not match to higher speed
+        = Speed_FracS16 * SpeedVRef_Rpm / SpeedFeedbackRef_Rpm
+        // SpeedVRef_Rpm =
+    User sets lower SpeedVRef_Rpm to ensure not match to higher speed
     Saturated output for use as input into next operation
 */
 static inline int16_t Motor_GetVSpeed_Frac16(MotorPtr_T p_motor)
 {
     return Linear_Frac16_Signed(&p_motor->UnitsVSpeed, p_motor->Speed_FracS16);
 }
-// static inline int32_t _Motor_VSpeed_ConvertSpeedToVFrac16(MotorPtr_T p_motor, int32_t speed_frac16)   { return speed_frac16 * p_motor->Parameters.VSpeedRef_Rpm / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
+// static inline int32_t _Motor_VSpeed_ConvertSpeedToVFrac16(MotorPtr_T p_motor, int32_t speed_frac16)   { return speed_frac16 * p_motor->Parameters.SpeedVRef_Rpm / p_motor->Parameters.SpeedFeedbackRef_Rpm; }
 // static inline int32_t _Motor_VSpeed_ConvertRpmToVFrac16(MotorPtr_T p_motor, int32_t speed_rpm)        { return _Motor_VSpeed_ConvertSpeedToVFrac16(p_motor, _Motor_ConvertSpeed_RpmToScalar16(p_motor, speed_rpm) ); }
 // static inline uint32_t _Motor_VSpeed_ConvertToVSpeed(MotorPtr_T p_motor, uint16_t rpm)                { return Linear_Function(&p_motor->UnitsVSpeed, _Motor_ConvertSpeed_RpmToScalar16(p_motor, rpm)); }
 

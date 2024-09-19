@@ -83,8 +83,9 @@ void Motor_User_ActivateControl_Cast(MotorPtr_T p_motor, uint8_t modeWord) { Mot
     Sets Ramp Target
     Concurrency note: only 1 thread updates RampTarget. StateMachine Proc thread only updates OutputState
 */
-/* may need to be private */
+/* may need to be private, setting bypasses mode restrictions  */
 void Motor_User_SetCmd(MotorPtr_T p_motor, int16_t userCmd) { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd)); }
+
 // void Motor_User_ClearState(MotorPtr_T p_motor) { Linear_Ramp_SetOutputState(&p_motor->Ramp, 0); }
 int32_t Motor_User_GetCmd(const MotorPtr_T p_motor) { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
 int32_t Motor_User_GetSetPoint(const MotorPtr_T p_motor) { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetOutput(&p_motor->Ramp)); }
@@ -298,31 +299,6 @@ bool Motor_User_TryDirection(MotorPtr_T p_motor, Motor_Direction_T direction)
 bool Motor_User_TryDirectionForward(MotorPtr_T p_motor) { return Motor_User_TryDirection(p_motor, p_motor->Parameters.DirectionForward); }
 bool Motor_User_TryDirectionReverse(MotorPtr_T p_motor) { return Motor_User_TryDirection(p_motor, Motor_DirectionReverse(p_motor)); }
 
-/******************************************************************************/
-/*
-    Calibration State - Blocking Run Calibration functions
-
-    Check SensorMode on input to determine start, or proc may run before checking during entry
-    alternatively, implement critical, move check into state machine, share 1 active function this way.
-*/
-/******************************************************************************/
-void Motor_User_CalibrateAdc(MotorPtr_T p_motor)
-{
-    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ADC);
-}
-
-void Motor_User_CalibrateSensor(MotorPtr_T p_motor)
-{
-    switch(p_motor->Parameters.SensorMode)
-    {
-        case MOTOR_SENSOR_MODE_HALL:        StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL);       break;
-        case MOTOR_SENSOR_MODE_ENCODER:     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER);    break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SIN_COS:     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_SIN_COS);    break;
-#endif
-        default: break;
-    }
-}
 
 /******************************************************************************/
 /*!
@@ -450,6 +426,31 @@ bool Motor_User_ClearILimitActive_Id(MotorPtr_T p_motor, uint8_t id)
     return clearActive;
 }
 
+/******************************************************************************/
+/*
+    Calibration State - Blocking Run Calibration functions
+
+    Check SensorMode on input to determine start, or proc may run before checking during entry
+    alternatively, implement critical, move check into state machine, share 1 active function this way.
+*/
+/******************************************************************************/
+void Motor_User_CalibrateAdc(MotorPtr_T p_motor)
+{
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ADC);
+}
+
+void Motor_User_CalibrateSensor(MotorPtr_T p_motor)
+{
+    switch(p_motor->Parameters.SensorMode)
+    {
+        case MOTOR_SENSOR_MODE_HALL:        StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL);       break;
+        case MOTOR_SENSOR_MODE_ENCODER:     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER);    break;
+        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        case MOTOR_SENSOR_MODE_SIN_COS:     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_SIN_COS);    break;
+        #endif
+        default: break;
+    }
+}
 
 /******************************************************************************/
 /*

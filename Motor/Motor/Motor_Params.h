@@ -62,7 +62,7 @@ static inline Motor_Direction_T Motor_Params_GetDirectionCalibration(MotorPtr_T 
 static inline uint8_t Motor_Params_GetPolePairs(MotorPtr_T p_motor)                         { return p_motor->Parameters.PolePairs; }
 static inline uint16_t Motor_Params_GetKv(MotorPtr_T p_motor)                               { return p_motor->Parameters.Kv; }
 static inline uint16_t Motor_Params_GetSpeedFeedbackRef_Rpm(MotorPtr_T p_motor)             { return p_motor->Parameters.SpeedFeedbackRef_Rpm; }
-static inline uint16_t Motor_Params_GetVSpeedRef_Rpm(MotorPtr_T p_motor)                    { return p_motor->Parameters.VSpeedRef_Rpm; }
+static inline uint16_t Motor_Params_GetSpeedVRef_Rpm(MotorPtr_T p_motor)                    { return p_motor->Parameters.SpeedVRef_Rpm; }
 static inline uint16_t Motor_Params_GetIaZero_Adcu(MotorPtr_T p_motor)                      { return p_motor->Parameters.IaZeroRef_Adcu; }
 static inline uint16_t Motor_Params_GetIbZero_Adcu(MotorPtr_T p_motor)                      { return p_motor->Parameters.IbZeroRef_Adcu; }
 static inline uint16_t Motor_Params_GetIcZero_Adcu(MotorPtr_T p_motor)                      { return p_motor->Parameters.IcZeroRef_Adcu; }
@@ -72,6 +72,7 @@ static inline uint16_t Motor_Params_GetIPeakRef_Adcu(MotorPtr_T p_motor)        
 static inline Motor_CommutationMode_T Motor_Params_GetCommutationMode(MotorPtr_T p_motor)                   { return p_motor->Parameters.CommutationMode; }
 static inline void Motor_Params_SetCommutationMode(MotorPtr_T p_motor, Motor_CommutationMode_T mode)        { p_motor->Parameters.CommutationMode = mode; }
 
+//deprecate
 static inline Motor_FeedbackMode_T Motor_Params_GetDefaultFeedbackMode(MotorPtr_T p_motor)                  { return p_motor->Parameters.FeedbackModeDefault; }
 static inline void Motor_Params_SetDefaultFeedbackMode(MotorPtr_T p_motor, uint16_t wordValue)              { p_motor->Parameters.FeedbackModeDefault.Word = wordValue; }
 
@@ -84,8 +85,8 @@ static inline void Motor_Params_SetRampAccel_Millis(MotorPtr_T p_motor, uint16_t
 // static inline void Motor_Params_GetAlignMode(MotorPtr_T p_motor, Motor_AlignMode_T mode)         { return p_motor->Parameters.AlignMode; }
 // static inline void Motor_Params_SetAlignMode(MotorPtr_T p_motor, Motor_AlignMode_T mode)         { p_motor->Parameters.AlignMode = mode; }
 static inline uint16_t Motor_Params_GetAlignPower_Scalar16(MotorPtr_T p_motor)                      { return p_motor->Parameters.AlignPower_Scalar16; }
-static inline uint32_t Motor_Params_GetAlignTime_Cycles(MotorPtr_T p_motor)                         { return p_motor->Parameters.AlignTime_Cycles; }
 static inline void Motor_Params_SetAlignPower_Scalar16(MotorPtr_T p_motor, uint16_t v_scalar16)     { p_motor->Parameters.AlignPower_Scalar16 = (v_scalar16 > GLOBAL_MOTOR.ALIGN_VPWM_MAX) ? GLOBAL_MOTOR.ALIGN_VPWM_MAX : v_scalar16; }
+static inline uint32_t Motor_Params_GetAlignTime_Cycles(MotorPtr_T p_motor)                         { return p_motor->Parameters.AlignTime_Cycles; }
 static inline void Motor_Params_SetAlignTime_Cycles(MotorPtr_T p_motor, uint32_t cycles)            { p_motor->Parameters.AlignTime_Cycles = cycles; }
 static inline uint16_t Motor_Params_GetAlignTime_Millis(MotorPtr_T p_motor)                         { return _Motor_MillisOf(p_motor->Parameters.AlignTime_Cycles); }
 static inline void Motor_Params_SetAlignTime_Millis(MotorPtr_T p_motor, uint16_t millis)            { p_motor->Parameters.AlignTime_Cycles = _Motor_ControlCyclesOf(millis); }
@@ -132,7 +133,7 @@ extern void Motor_Params_SetILimit_Amp(MotorPtr_T p_motor, uint16_t motoring_Amp
 
 extern void Motor_Params_SetSpeedFeedbackRef_Rpm(MotorPtr_T p_motor, uint16_t rpm);
 extern void Motor_Params_SetSpeedFeedbackRef_Kv(MotorPtr_T p_motor, uint16_t kv);
-extern void Motor_Params_SetVSpeedRef_Rpm(MotorPtr_T p_motor, uint16_t rpm);
+extern void Motor_Params_SetSpeedVRef_Rpm(MotorPtr_T p_motor, uint16_t rpm);
 extern void Motor_Params_SetVSpeedRef_Kv(MotorPtr_T p_motor, uint16_t kv);
 extern void Motor_Params_SetKv(MotorPtr_T p_motor, uint16_t kv);
 

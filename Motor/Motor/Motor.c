@@ -555,8 +555,8 @@ void Motor_ResetUnitsIc(MotorPtr_T p_motor)
 */
 void Motor_ResetUnitsVSpeed(MotorPtr_T p_motor)
 {
-    Linear_Frac16_Init(&p_motor->UnitsVSpeed, 0, p_motor->Parameters.SpeedFeedbackRef_Rpm * INT16_MAX / p_motor->Parameters.VSpeedRef_Rpm, 0, 0);
-    // Linear_Init(&p_motor->UnitsVSpeed, p_motor->Parameters.VSpeedRef_Rpm, p_motor->Parameters.SpeedFeedbackRef_Rpm, 0, INT16_MAX);
+    Linear_Frac16_Init(&p_motor->UnitsVSpeed, 0, p_motor->Parameters.SpeedFeedbackRef_Rpm * INT16_MAX / p_motor->Parameters.SpeedVRef_Rpm, 0, 0);
+    // Linear_Init(&p_motor->UnitsVSpeed, p_motor->Parameters.SpeedVRef_Rpm, p_motor->Parameters.SpeedFeedbackRef_Rpm, 0, INT16_MAX);
 }
 
 /* SinCos, Mechanical Rotation Sensor */
