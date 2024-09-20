@@ -80,14 +80,14 @@ typedef enum MotVarId_Monitor_Motor
     MOT_VAR_SPEED,
     MOT_VAR_I_PHASE,
     MOT_VAR_V_PHASE,
-    // MOT_VAR_POWER,
     MOT_VAR_ELECTRICAL_ANGLE,
     MOT_VAR_MECHANICAL_ANGLE,
-    MOT_VAR_MOTOR_HEAT,
+    MOT_VAR_POWER,
+    MOT_VAR_MOTOR_SET_POINT,        // Ramp Output
     MOT_VAR_MOTOR_STATE,
     MOT_VAR_MOTOR_STATUS_FLAGS,
     MOT_VAR_MOTOR_FAULT_FLAGS,
-    // MOT_VAR_RAMP_OUTPUT,
+    MOT_VAR_MOTOR_HEAT,
     MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT,
     MOT_VAR_MOTOR_ACTIVE_I_LIMIT,
     // MOT_VAR_MOTOR_V_SPEED,
@@ -141,7 +141,6 @@ MotVarId_Control_T;
 typedef enum MotVarId_Control_Motor
 {
     MOT_VAR_MOTOR_USER_CMD,                 // Ramp In (UserCmd), Ramp Out (SetPoint)
-    MOT_VAR_MOTOR_USER_SET_POINT,           // Ramp In (UserCmd), Ramp Out (SetPoint)
     MOT_VAR_MOTOR_DIRECTION,                // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
     MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,     // Write buffered user value, read state value
 
