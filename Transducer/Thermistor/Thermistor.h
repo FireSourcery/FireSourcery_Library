@@ -109,6 +109,7 @@ typedef struct Thermistor_Config
 {
     const uint32_t R_SERIES;    /* Pull-up */
     const uint32_t R_PARALLEL;  /* Parallel pull-down if applicable. 0 for Disable */
+    // allocate both, if const load from config
     // bool IS_CONST;            /* Disable Coefficient set functions */
     // uint32_t R0;
     // uint16_t T0; /* In Kelvin*/
@@ -142,6 +143,16 @@ Thermistor_T;
     .T0  = T0_Kelvin,                                   \
     .B   = B,                                           \
 }                                                       \
+
+// #define _THERMISTOR_INIT_CONFIG_CONST_COEFF(B, R0, T0_Kelvin)     \
+// {                                                       \
+//     .R_SERIES       = RSeries,                          \
+//     .R_PARALLEL     = RParallel,                        \
+//     .P_PARAMS       = p_Params,                         \
+//     .R0  = R0,                                          \
+//     .T0  = T0_Kelvin,                                   \
+//     .B   = B,                                           \
+// }                                                       \
 
 #define THERMISTOR_INIT(RSeries, RParallel, p_Params)                   \
 {                                                                       \
@@ -208,6 +219,7 @@ static inline uint16_t Thermistor_GetB(const Thermistor_T * p_therm)            
 static inline uint16_t Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm)    { return p_therm->Params.VInRef_MilliV; }
 
 // static inline void Thermistor_SetType(Thermistor_T * p_therm, uint16_t value)               { p_therm->Params.Type = value; }
+// check IsConst?
 static inline void Thermistor_SetR0(Thermistor_T * p_therm, uint16_t value)                 { p_therm->Params.R0 = value; }
 static inline void Thermistor_SetT0(Thermistor_T * p_therm, uint16_t value)                 { p_therm->Params.T0 = value; } /* Degrees Kelvin */
 static inline void Thermistor_SetT0_DegC(Thermistor_T * p_therm, uint16_t value)            { p_therm->Params.T0 = value - ABSOLUTE_ZERO_CELSIUS; }

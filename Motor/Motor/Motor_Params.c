@@ -44,6 +44,7 @@ static inline void PropagateSet(MotorPtr_T p_motor, Motor_PropagateSet_T reset)
     reset(p_motor);
 #else
     (void)p_motor;
+    (void)reset;
 #endif
 }
 
@@ -199,21 +200,10 @@ void Motor_Params_SetSpeedVRef_Rpm(MotorPtr_T p_motor, uint16_t rpm)
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
 
-static void SetSpeedFeedbackRef_Kv(MotorPtr_T p_motor, uint16_t kv)
-{
-    uint16_t rpm = kv * Global_Motor_GetVSource_V();
-    if((p_motor->Parameters.SpeedFeedbackRef_Rpm == 0U) || rpm < p_motor->Parameters.SpeedFeedbackRef_Rpm)
-    {
-        Motor_Params_SetSpeedFeedbackRef_Rpm(p_motor, rpm);
-    }
-}
+static void SetSpeedFeedbackRef_Kv(MotorPtr_T p_motor, uint16_t kv) { Motor_Params_SetSpeedFeedbackRef_Rpm(p_motor, kv * Global_Motor_GetVSource_V()); }
+static void SetVSpeedRef_Kv(MotorPtr_T p_motor, uint16_t kv) { Motor_Params_SetSpeedVRef_Rpm(p_motor, kv * Global_Motor_GetVSource_V()); }
 
-static void SetVSpeedRef_Kv(MotorPtr_T p_motor, uint16_t kv)
-{
-    Motor_Params_SetSpeedVRef_Rpm(p_motor, kv * Global_Motor_GetVSource_V());
-}
-
-/* Setting Kv overwrites higher SpeedFeedbackRef. SpeedFeedbackRef can be set independently from Kv */
+/* Setting Kv overwrites SpeedFeedbackRef. SpeedFeedbackRef can be set independently from Kv */
 void Motor_Params_SetKv(MotorPtr_T p_motor, uint16_t kv)
 {
     p_motor->Parameters.Kv = kv;

@@ -53,7 +53,7 @@ typedef enum MotVarId_Monitor_General
     MOT_VAR_V_SOURCE,
     MOT_VAR_V_SENSOR,
     MOT_VAR_V_ACCS,
-    MOT_VAR_BATTERY_CHARGE,
+    MOT_VAR_BATTERY_CHARGE, // if CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
     MOT_VAR_HEAT_PCB,
     MOT_VAR_HEAT_MOSFETS,
 }
@@ -120,8 +120,8 @@ MotVarId_Monitor_MotorSensor_T;
 /*
     Real-Time Control -> Disabled on select
     MonitorControl -> Read/Write
-        Effectively paired request/reponse Ids
-        Control is readable, analagously a control loop in/out may differ
+        Effectively paired request/response Ids
+        Control is readable, analogously a control loop in/out may differ
     Control -> Write-Only, Read returns 0
         Cmd is not readable
 */
@@ -132,33 +132,29 @@ MotVarId_Monitor_MotorSensor_T;
 */
 typedef enum MotVarId_Control
 {
-    // MOT_VAR_USER_CMD,                 // move from cmd if stored for ref
     MOT_VAR_DIRECTION,                      // MotorController_Direction_T,
-
 }
 MotVarId_Control_T;
-
-typedef enum MotVarId_Control_Motor
-{
-    MOT_VAR_MOTOR_USER_CMD,                 // Ramp In (UserCmd), Ramp Out (SetPoint)
-    MOT_VAR_MOTOR_DIRECTION,                // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
-    MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,     // Write buffered user value, read state value
-
-}
-MotVarId_Control_Motor_T;
 
 /* Write-Only */
 typedef enum MotVarId_Cmd
 {
     MOT_VAR_BEEP,
-    MOT_VAR_USER_CMD, // Throttle, Brake, Servo In, pending feedbackMode
-    MOT_VAR_THROTTLE,
-    MOT_VAR_BRAKE,
+    MOT_VAR_USER_CMD,                       // Value [-32768:32767] Throttle, Brake, Servo In, pending feedbackMode
+    MOT_VAR_THROTTLE,                       // Value [0:65535]
+    MOT_VAR_BRAKE,                          // Value [0:65535]
     MOT_VAR_RELEASE_CONTROL,
     MOT_VAR_DISABLE_CONTROL,
     MOT_VAR_CLEAR_FAULT,
 }
 MotVarId_Cmd_T;
+
+typedef enum MotVarId_Control_Motor
+{
+    MOT_VAR_MOTOR_DIRECTION,                // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
+    MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,     // Write buffered user value, read state value
+}
+MotVarId_Control_Motor_T;
 
 /*
     Use instance index
@@ -166,7 +162,8 @@ MotVarId_Cmd_T;
 */
 typedef enum MotVarId_Cmd_Motor
 {
-    MOT_VAR_MOTOR_CMD_SPEED,
+    MOT_VAR_MOTOR_USER_CMD,                 // RampIn/UserCmd, (RampOut/SetPoint). Always reflects the input value. Processed read value use MOT_VAR_MOTOR_SET_POINT
+    MOT_VAR_MOTOR_CMD_SPEED,                // UserCmd as Speed
     MOT_VAR_MOTOR_CMD_CURRENT,
     MOT_VAR_MOTOR_CMD_VOLTAGE,
     MOT_VAR_MOTOR_CMD_ANGLE,
@@ -195,7 +192,7 @@ typedef enum MotVarId_Params_MotorPrimary
 {
     MOT_VAR_COMMUTATION_MODE,
     MOT_VAR_SENSOR_MODE,
-    MOT_VAR_MOTOR_DEFAULT_FEEDBACK_MODE, // depreciate
+    // MOT_VAR_MOTOR_DEFAULT_FEEDBACK_MODE, // depreciate
     MOT_VAR_DIRECTION_CALIBRATION,
     MOT_VAR_POLE_PAIRS,
     MOT_VAR_KV,
@@ -212,9 +209,6 @@ MotVarId_Params_MotorPrimary_T;
     Limits
         Units0 - > Scalar16
 */
-// uint16_t SurfaceDiameter;
-// uint16_t GearRatio_Factor;
-// uint16_t GearRatio_Divisor;
 typedef enum MotVarId_Params_MotorSecondary
 {
     MOT_VAR_BASE_SPEED_LIMIT_FORWARD,
@@ -231,6 +225,11 @@ typedef enum MotVarId_Params_MotorSecondary
     MOT_VAR_PHASE_PWM_MODE,
 }
 MotVarId_Params_MotorSecondary_T;
+
+// HostSide
+// uint16_t SurfaceDiameter;
+// uint16_t GearRatio_Factor;
+// uint16_t GearRatio_Divisor;
 
 typedef enum MotVarId_Params_MotorHall
 {
@@ -373,8 +372,8 @@ typedef enum MotVarId_Params_Thermistor
 }
 MotVarId_Params_Thermistor_T;
 
-// typedef MotVarId_Params_Thermistor_T MotVarId_Params_BoardThermistor_T;
-// typedef MotVarId_Params_Thermistor_T MotVarId_Params_MotorThermistor_T;
+typedef MotVarId_Params_Thermistor_T MotVarId_Params_BoardThermistor_T;
+typedef MotVarId_Params_Thermistor_T MotVarId_Params_MotorThermistor_T;
 
 /*
     Instance0 -> VSource
@@ -409,10 +408,10 @@ MotVarId_Params_BootRef_T;
 */
 /******************************************************************************/
 /*
-    Type of NameId e.g. MotVarId_Monitor_General_T
+    Type of NameBase e.g. MotVarId_Monitor_General_T
     struct id
 */
-typedef enum MotVarId_Type_RealTime
+typedef enum MotVarId_Type_RealTime /* : uint16_t */
 {
     /* Monitor - Read-Only */
     MOT_VAR_ID_TYPE_MONITOR_GENERAL,
@@ -436,14 +435,16 @@ typedef enum MotVarId_Type_Parameter
     MOT_VAR_ID_TYPE_PARAMS_MOTOR_SECONDARY,
     MOT_VAR_ID_TYPE_PARAMS_MOTOR_HALL,
     MOT_VAR_ID_TYPE_PARAMS_MOTOR_ENCODER,
+    MOT_VAR_ID_TYPE_PARAMS_MOTOR_THERMISTOR,
     MOT_VAR_ID_TYPE_PARAMS_MOTOR_PID,
     MOT_VAR_ID_TYPE_PARAMS_GENERAL,
     MOT_VAR_ID_TYPE_PARAMS_ANALOG_USER,
     MOT_VAR_ID_TYPE_PARAMS_VMONITOR,
-    MOT_VAR_ID_TYPE_PARAMS_THERMISTOR,
+    MOT_VAR_ID_TYPE_PARAMS_BOARD_THERMISTOR,
     MOT_VAR_ID_TYPE_PARAMS_PROTOCOL,
     MOT_VAR_ID_TYPE_PARAMS_BOOT_REF,
     MOT_VAR_ID_TYPE_PARAMS_END = 16U,
+    // MOT_VAR_ID_TYPE_PARAMS_THERMISTOR,
 }
 MotVarId_Type_Parameter_T;
 
@@ -473,15 +474,6 @@ typedef enum MotVarId_Instance_VMonitor
 }
 MotVarId_Instance_VMonitor_T;
 
-typedef enum MotVarId_Instance_MotorThermistor
-{
-    MOT_VAR_ID_THERMISTOR_MOTOR_0,
-    MOT_VAR_ID_THERMISTOR_MOTOR_1,
-    MOT_VAR_ID_THERMISTOR_MOTOR_2,
-    MOT_VAR_ID_THERMISTOR_MOTOR_3,
-}
-MotVarId_Instance_MotorThermistor_T;
-
 typedef enum MotVarId_Instance_Motor
 {
     MOT_VAR_ID_MOTOR_0,
@@ -492,39 +484,30 @@ typedef enum MotVarId_Instance_Motor
 MotVarId_Instance_Motor_T;
 
 /* Alternatively map 1:1 with type */
-typedef enum MotVarId_Instance_Prefix
-{
-    MOT_VAR_ID_INSTANCE_PREFIX_BOARD,
-    MOT_VAR_ID_INSTANCE_PREFIX_MOTOR,
-}
-MotVarId_Instance_Prefix_T;
-
-// typedef enum MotVarId_InstanceType
+// typedef enum MotVarId_Instance_Prefix
 // {
 //     MOT_VAR_ID_INSTANCE_PREFIX_BOARD,
 //     MOT_VAR_ID_INSTANCE_PREFIX_MOTOR,
-//     MOT_VAR_ID_INSTANCE_PREFIX_VMONITOR,
-//     MOT_VAR_ID_INSTANCE_PREFIX_BOARD_THERMISTOR,
 // }
-// MotVarId_InstanceType_T;
+// MotVarId_Instance_Prefix_T;
+
 
 typedef union MotVarId
 {
     struct
     {
-        uint16_t NameId             : 4U;
+        uint16_t NameBase           : 4U;
         uint16_t NameType           : 4U; /* Name's Type - corresponds 1:1 with enum type */
         uint16_t NameTypeType       : 1U; /* Name Type's Type */
         uint16_t Instance           : 3U; /* TypeInstance1 - Upto 8 Instances Per Type */
-        uint16_t InstancePrefix     : 1U; /* TypeInstance2 - Restart Instance count for convience, Motor or Board Thermistor */
-        uint16_t Alt                : 3U; /* Alternative unit/format */
+        uint16_t Alt                : 4U; /* Alternative unit/format */
     };
     /* Correspond to host side */
     struct
     {
         uint16_t NamePart       : 9U; /* name can be determined by nameId + nameId_Type if prefix maps to nameId_Type 1:1 */
-        uint16_t InstancePart   : 4U;
-        uint16_t ResvPart       : 3U;
+        uint16_t InstancePart   : 3U;
+        uint16_t ResvPart       : 4U;
     };
     uint16_t Word16;
 }
