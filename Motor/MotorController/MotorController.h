@@ -37,7 +37,7 @@
 
 #include "Motor/Motor/Motor_Config.h"
 #include "Motor/Motor/Motor_User.h"
-#include "Motor/Motor/MotorN_User.h"
+#include "Motor/Motor/MotorN.h"
 
 #include "Transducer/Blinky/Blinky.h"
 #include "Transducer/Thermistor/Thermistor.h"
@@ -385,38 +385,41 @@ static inline void MotorController_BeepDouble(MotorControllerPtr_T p_mc)        
    todo move call by state machine to StateMachine
 */
 /******************************************************************************/
-static inline void _MotorController_ProcAll(MotorControllerPtr_T p_mc, Motor_User_ProcVoid_T cmdFunction)                   { MotorN_User_ProcFunction(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, cmdFunction); }
-static inline void _MotorController_SetCmdAll(MotorControllerPtr_T p_mc, Motor_User_SetCmd_T cmdFunction, int16_t userCmd)  { MotorN_User_SetCmd(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, cmdFunction, userCmd); }
+static inline void _MotorController_ProcAll(MotorControllerPtr_T p_mc, Motor_ProcVoid_T cmdFunction)                        { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, cmdFunction); }
+static inline void _MotorController_SetCmdAll(MotorControllerPtr_T p_mc, Motor_SetInt16_T cmdFunction, int16_t userCmd)     { MOTOR_N_SET_EACH(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, cmdFunction, userCmd); }
 
-/* returns true if no faults remain active */
-static inline bool MotorController_ClearMotorsFaultAll(MotorControllerPtr_T p_mc)       { return MotorN_User_ProcStatusAll(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_StateMachine_ClearFault); }
-static inline bool MotorController_CheckMotorsFaultAny(const MotorControllerPtr_T p_mc) { return MotorN_User_IsAny(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_StateMachine_IsFault); }
+static inline bool MotorController_CheckMotorsFaultAny(const MotorControllerPtr_T p_mc) { return MotorN_IsAny(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_StateMachine_IsFault); }
+/* returns true if all faults were cleared, atleast 1 fault start, no faults remain active */
+static inline bool MotorController_ClearMotorsFaultAll(MotorControllerPtr_T p_mc)       { return MotorN_Poll(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_StateMachine_ClearFault); }
 
-static inline void MotorController_DisableAll(MotorControllerPtr_T p_mc)    { MotorN_User_ProcFunction(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_ForceDisableControl); }
-static inline void MotorController_TryReleaseAll(MotorControllerPtr_T p_mc) { MotorN_User_ProcStatusAll(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_TryRelease); }
-// static inline void MotorController_ActivateAll(MotorControllerPtr_T p_mc)   { MotorN_User_ProcFunction(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ActivateControl); }
-static inline void MotorController_TryHoldAll(MotorControllerPtr_T p_mc)    { MotorN_User_ProcStatusAll(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_TryHold); }
+static inline void MotorController_DisableAll(MotorControllerPtr_T p_mc)    { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_ForceDisableControl); }
+static inline void MotorController_TryReleaseAll(MotorControllerPtr_T p_mc) { MotorN_Poll(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_TryRelease); }
+// static inline void MotorController_ActivateAll(MotorControllerPtr_T p_mc)   { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ActivateControl); }
+static inline void MotorController_TryHoldAll(MotorControllerPtr_T p_mc)    { MotorN_Poll(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_TryHold); }
 
-static inline bool MotorController_TryDirectionForwardAll(MotorControllerPtr_T p_mc, MotorController_Direction_T direction) { return MotorN_User_ProcStatusAll(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_TryDirectionForward); }
-static inline bool MotorController_TryDirectionReverseAll(MotorControllerPtr_T p_mc, MotorController_Direction_T direction) { return MotorN_User_ProcStatusAll(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_TryDirectionReverse); }
-static inline bool MotorController_CheckForwardAll(const MotorControllerPtr_T p_mc)  { return MotorN_User_IsEvery(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_IsDirectionForward); }
-static inline bool MotorController_CheckReverseAll(const MotorControllerPtr_T p_mc)  { return MotorN_User_IsEvery(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_IsDirectionReverse); }
-static inline bool MotorController_CheckStopAll(const MotorControllerPtr_T p_mc)     { return MotorN_User_IsEvery(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_IsStop); }
+static inline bool MotorController_TryDirectionForwardAll(MotorControllerPtr_T p_mc, MotorController_Direction_T direction) { return MotorN_Poll(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_TryDirectionForward); }
+static inline bool MotorController_TryDirectionReverseAll(MotorControllerPtr_T p_mc, MotorController_Direction_T direction) { return MotorN_Poll(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_TryDirectionReverse); }
+static inline bool MotorController_CheckForwardAll(const MotorControllerPtr_T p_mc)  { return MotorN_IsEvery(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_IsDirectionForward); }
+static inline bool MotorController_CheckReverseAll(const MotorControllerPtr_T p_mc)  { return MotorN_IsEvery(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_IsDirectionReverse); }
+static inline bool MotorController_CheckStopAll(const MotorControllerPtr_T p_mc)     { return MotorN_IsEvery(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_IsStop); }
 
 static inline void MotorController_SetSpeedLimitAll(MotorControllerPtr_T p_mc, uint16_t limit_scalar16)  { MotorN_User_SetScalar16(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_SetSpeedLimitActive, limit_scalar16); }
-static inline void MotorController_ClearSpeedLimitAll(MotorControllerPtr_T p_mc)                         { MotorN_User_ProcFunction(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearSpeedLimitActive); }
+static inline void MotorController_ClearSpeedLimitAll(MotorControllerPtr_T p_mc)                         { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearSpeedLimitActive); }
 static inline void MotorController_SetILimitAll(MotorControllerPtr_T p_mc, uint16_t limit_scalar16)      { MotorN_User_SetScalar16(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_SetILimitActive, limit_scalar16); }
-static inline void MotorController_ClearILimitAll(MotorControllerPtr_T p_mc)                             { MotorN_User_ProcFunction(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearILimitActive); }
+static inline void MotorController_ClearILimitAll(MotorControllerPtr_T p_mc)                             { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearILimitActive); }
 
 /* returns true if limit of id is cleared on at least 1 motor */
 static inline bool MotorController_ClearILimitAll_Id(MotorControllerPtr_T p_mc)                          { return MotorN_User_ClearLimit(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearILimitEntry, MOTOR_I_LIMIT_ACTIVE_MC); }
 static inline bool MotorController_SetILimitAll_Id(MotorControllerPtr_T p_mc, uint16_t limit_scalar16)   { return MotorN_User_SetLimit(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_SetILimitEntry, limit_scalar16, MOTOR_I_LIMIT_ACTIVE_MC); }
 
+// static inline bool MotorController_SetILimitEntryOfAll(MotorControllerPtr_T p_mc, uint16_t limit_scalar16) { return MOTOR_N_POLL_EACH_ENTRY(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_SetILimitEntry, MOTOR_I_LIMIT_ACTIVE_MC, limit_scalar16); }
+
 /* Default FeedbackMode store in MC, active mode in Motor */
 static inline void MotorController_StartCmdModeDefault(MotorControllerPtr_T p_mc)                               { MotorN_User_ActivateControl(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, p_mc->Config.DefaultCmdMode); }
 static inline void MotorController_StartCmdMode(MotorControllerPtr_T p_mc, Motor_FeedbackMode_T feedbackMode)   { MotorN_User_ActivateControl(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, feedbackMode);}
-static inline void MotorController_SetCmdModeValue(MotorControllerPtr_T p_mc, int16_t userCmd)                  { MotorN_User_SetCmd(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_SetActiveCmdValue, userCmd); }
-// static inline void MotorController_SetCmdModeValue(MotorControllerPtr_T p_mc, int16_t userCmd)               { _MotorController_SetCmdAll(p_mc, Motor_User_SetActiveCmdValue, userCmd); }
+static inline void MotorController_SetCmdModeValue(MotorControllerPtr_T p_mc, int16_t userCmd)                  { _MotorController_SetCmdAll(p_mc, Motor_User_SetActiveCmdValue, userCmd); }
+// static inline void MotorController_StartCmdMode(MotorControllerPtr_T p_mc, Motor_FeedbackMode_T feedbackMode)   { MOTOR_N_SET_EACH(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ActivateControl_Cast, feedbackMode.Word); }
+// static inline void MotorController_SetCmdModeValue(MotorControllerPtr_T p_mc, int16_t userCmd)                  { MOTOR_N_SET_EACH(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_SetActiveCmdValue, userCmd); }
 
 static inline void MotorController_StartThrottleMode(MotorControllerPtr_T p_mc)
 {

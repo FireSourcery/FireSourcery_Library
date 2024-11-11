@@ -91,10 +91,9 @@ typedef union Motor_FeedbackMode
     struct
     {
         uint8_t OpenLoop   : 1U;   /* 0 -> Position feedback, 1 -> OpenLoop */
-        // uint8_t Ramp       : 1U;
         uint8_t Speed      : 1U;   /* 0 -> Voltage or Current only, 1 -> Speed feedback */
         uint8_t Current    : 1U;   /* 0 -> Voltage, 1-> Current */
-        // uint8_t Position   : 1U;
+        uint8_t Position   : 1U;
     };
     uint8_t Word;
 }

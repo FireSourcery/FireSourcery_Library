@@ -136,7 +136,7 @@ static inline void MotorController_User_SetSpeedLimitAll(MotorControllerPtr_T p_
     { MotorN_User_SetScalar16(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_SetSpeedLimitActive, limit_scalar16); }
 
 static inline void MotorController_User_ClearSpeedLimitAll(MotorControllerPtr_T p_mc)
-    { MotorN_User_ProcFunction(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearSpeedLimitActive); }
+    { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearSpeedLimitActive); }
 
 static inline bool MotorController_User_SetILimitAll(MotorControllerPtr_T p_mc, uint16_t limit_scalar16)
     { return MotorN_User_SetLimit(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_SetILimitEntry, limit_scalar16, MOTOR_I_LIMIT_ACTIVE_USER); }
