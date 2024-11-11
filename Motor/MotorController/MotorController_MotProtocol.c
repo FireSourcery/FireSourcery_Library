@@ -104,7 +104,7 @@ static protocol_size_t Call_Blocking(MotorControllerPtr_T p_mc, MotPacket_CallRe
                 case MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR:    MotorController_User_InputLocked(p_mc, MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR);    status = MOT_STATUS_OK; break;
                 case MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC:       MotorController_User_InputLocked(p_mc, MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC);       status = MOT_STATUS_OK; break;
                 /* Blocking functions can directly return status. */
-                case MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS:     status = MotorController_User_SaveParameters_Blocking(p_mc);    break;
+                case MOTOR_CONTROLLER_LOCKED_NVM_SAVE_CONFIG:     status = MotorController_User_SaveConfig_Blocking(p_mc);    break;
                 case MOTOR_CONTROLLER_LOCKED_REBOOT:       MotorController_User_InputLocked(p_mc, MOTOR_CONTROLLER_LOCKED_REBOOT);       status = MOT_STATUS_OK; break;
                 default: break;
             }
@@ -212,7 +212,7 @@ static Protocol_ReqCode_T ReadData(MotorControllerPtr_T p_mc, Protocol_ReqContex
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 static Protocol_ReqCode_T WriteData_Blocking(MotorControllerPtr_T p_mc, Protocol_ReqContext_T * p_reqContext)
 {
-    return MotProtocol_Flash_WriteData_Blocking(p_mc->CONFIG.P_FLASH, p_reqContext);
+    return MotProtocol_Flash_WriteData_Blocking(p_mc->CONST.P_FLASH, p_reqContext);
 }
 // #endif
 

@@ -50,7 +50,7 @@
 static inline void EnterCritical(const Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
-    if(p_ring.CONFIG.USE_CRITICAL == true) { Critical_Enter(); }
+    if(p_ring.CONST.USE_CRITICAL == true) { Critical_Enter(); }
 #elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
     (void)p_ring;
 #endif
@@ -59,7 +59,7 @@ static inline void EnterCritical(const Ring_T * p_ring)
 static inline void ExitCritical(const Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
-    if(p_ring.CONFIG.USE_CRITICAL == true) { Critical_Exit(); }
+    if(p_ring.CONST.USE_CRITICAL == true) { Critical_Exit(); }
 #elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
     (void)p_ring;
 #endif
@@ -68,7 +68,7 @@ static inline void ExitCritical(const Ring_T * p_ring)
 static inline bool AcquireMutex(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
-    return (p_ring.CONFIG.USE_CRITICAL == true) ? Critical_AcquireMutex(&p_ring->Mutex) : true;
+    return (p_ring.CONST.USE_CRITICAL == true) ? Critical_AcquireMutex(&p_ring->Mutex) : true;
 #elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
     (void)p_ring;
     return true;
@@ -78,7 +78,7 @@ static inline bool AcquireMutex(Ring_T * p_ring)
 static inline void ReleaseMutex(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
-    if(p_ring.CONFIG.USE_CRITICAL == true) { Critical_ReleaseMutex(&p_ring->Mutex) };
+    if(p_ring.CONST.USE_CRITICAL == true) { Critical_ReleaseMutex(&p_ring->Mutex) };
 #elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
     (void)p_ring;
 #endif
@@ -87,7 +87,7 @@ static inline void ReleaseMutex(Ring_T * p_ring)
 static inline bool AcquireCritical(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
-    return (p_ring.CONFIG.USE_CRITICAL == true) ? Critical_AcquireEnter(&p_ring->Mutex) : true;
+    return (p_ring.CONST.USE_CRITICAL == true) ? Critical_AcquireEnter(&p_ring->Mutex) : true;
 #elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
     (void)p_ring;
     return true;
@@ -97,7 +97,7 @@ static inline bool AcquireCritical(Ring_T * p_ring)
 static inline void ReleaseCritical(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
-    if(p_ring.CONFIG.USE_CRITICAL == true) { Critical_ReleaseExit(&p_ring->Mutex) };
+    if(p_ring.CONST.USE_CRITICAL == true) { Critical_ReleaseExit(&p_ring->Mutex) };
 #elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
     (void)p_ring;
 #endif
@@ -120,9 +120,9 @@ static inline size_t GetIndex(const Ring_T * p_ring, size_t index)
 #endif
 }
 
-static inline void * GetPtrFront(const Ring_T * p_ring)                 { return CalcPtrUnit(p_ring->CONFIG.P_BUFFER, p_ring->CONFIG.UNIT_SIZE, GetIndex(p_ring, p_ring->Tail)); }
-static inline void * GetPtrBack(const Ring_T * p_ring)                  { return CalcPtrUnit(p_ring->CONFIG.P_BUFFER, p_ring->CONFIG.UNIT_SIZE, GetIndex(p_ring, p_ring->Head)); }
-static inline void * GetPtrIndex(const Ring_T * p_ring, size_t index)   { return CalcPtrUnit(p_ring->CONFIG.P_BUFFER, p_ring->CONFIG.UNIT_SIZE, GetIndex(p_ring, p_ring->Tail + index)); }
+static inline void * GetPtrFront(const Ring_T * p_ring)                 { return CalcPtrUnit(p_ring->CONST.P_BUFFER, p_ring->CONST.UNIT_SIZE, GetIndex(p_ring, p_ring->Tail)); }
+static inline void * GetPtrBack(const Ring_T * p_ring)                  { return CalcPtrUnit(p_ring->CONST.P_BUFFER, p_ring->CONST.UNIT_SIZE, GetIndex(p_ring, p_ring->Head)); }
+static inline void * GetPtrIndex(const Ring_T * p_ring, size_t index)   { return CalcPtrUnit(p_ring->CONST.P_BUFFER, p_ring->CONST.UNIT_SIZE, GetIndex(p_ring, p_ring->Tail + index)); }
 
 static inline void SwitchCopy(void * p_dest, const void * p_source, size_t unitSize)
 {
@@ -135,11 +135,11 @@ static inline void SwitchCopy(void * p_dest, const void * p_source, size_t unitS
     }
 }
 
-static inline void PeekFront(const Ring_T * p_ring, void * p_dest)                  { SwitchCopy(p_dest, GetPtrFront(p_ring), p_ring->CONFIG.UNIT_SIZE); }
-static inline void PeekBack(const Ring_T * p_ring, void * p_dest)                   { SwitchCopy(p_dest, GetPtrBack(p_ring), p_ring->CONFIG.UNIT_SIZE); }
-static inline void PeekIndex(const Ring_T * p_ring, void * p_dest, size_t index)    { SwitchCopy(p_dest, GetPtrIndex(p_ring, index), p_ring->CONFIG.UNIT_SIZE); }
-static inline void PlaceFront(Ring_T * p_ring, const void * p_unit)                 { SwitchCopy(GetPtrFront(p_ring), p_unit, p_ring->CONFIG.UNIT_SIZE); }
-static inline void PlaceBack(Ring_T * p_ring, const void * p_unit)                  { SwitchCopy(GetPtrBack(p_ring), p_unit, p_ring->CONFIG.UNIT_SIZE); }
+static inline void PeekFront(const Ring_T * p_ring, void * p_dest)                  { SwitchCopy(p_dest, GetPtrFront(p_ring), p_ring->CONST.UNIT_SIZE); }
+static inline void PeekBack(const Ring_T * p_ring, void * p_dest)                   { SwitchCopy(p_dest, GetPtrBack(p_ring), p_ring->CONST.UNIT_SIZE); }
+static inline void PeekIndex(const Ring_T * p_ring, void * p_dest, size_t index)    { SwitchCopy(p_dest, GetPtrIndex(p_ring, index), p_ring->CONST.UNIT_SIZE); }
+static inline void PlaceFront(Ring_T * p_ring, const void * p_unit)                 { SwitchCopy(GetPtrFront(p_ring), p_unit, p_ring->CONST.UNIT_SIZE); }
+static inline void PlaceBack(Ring_T * p_ring, const void * p_unit)                  { SwitchCopy(GetPtrBack(p_ring), p_unit, p_ring->CONST.UNIT_SIZE); }
 static inline void RemoveFront(Ring_T * p_ring, size_t nUnits)                      { p_ring->Tail = _Ring_CalcIndexInc(p_ring, p_ring->Tail, nUnits); }
 static inline void RemoveBack(Ring_T * p_ring, size_t nUnits)                       { p_ring->Head = _Ring_CalcIndexDec(p_ring, p_ring->Head, nUnits); }
 static inline void AddFront(Ring_T * p_ring, size_t nUnits)                         { p_ring->Tail = _Ring_CalcIndexDec(p_ring, p_ring->Tail, nUnits); }
@@ -150,6 +150,8 @@ static inline void PushFront(Ring_T * p_ring, const void * p_unit)              
 static inline void PopBack(Ring_T * p_ring, void * p_dest)                          { RemoveBack(p_ring, 1U); PeekBack(p_ring, p_dest); }
 static inline void Seek(Ring_T * p_ring, void * p_dest, size_t index)               { RemoveFront(p_ring, index); PeekFront(p_ring, p_dest); }
 static inline void * SeekPtr(Ring_T * p_ring, size_t index)                         { RemoveFront(p_ring, index); return GetPtrFront(p_ring); }
+
+
 
 /******************************************************************************/
 /*!
@@ -192,7 +194,7 @@ bool Ring_EnqueueN(Ring_T * p_ring, const void * p_units, size_t nUnits)
     {
         if(nUnits <= Ring_GetEmptyCount(p_ring))
         {
-            for(size_t iUnit = 0U; iUnit < nUnits; iUnit++) { Enqueue(p_ring, CalcPtrUnit(p_units, p_ring->CONFIG.UNIT_SIZE, iUnit)); }
+            for(size_t iUnit = 0U; iUnit < nUnits; iUnit++) { Enqueue(p_ring, CalcPtrUnit(p_units, p_ring->CONST.UNIT_SIZE, iUnit)); }
             isSuccess = true;
         }
         ReleaseCritical(p_ring);
@@ -207,7 +209,7 @@ bool Ring_DequeueN(Ring_T * p_ring, void * p_dest, size_t nUnits)
     {
         if(nUnits <= Ring_GetFullCount(p_ring))
         {
-            for(size_t iUnit = 0U; iUnit < nUnits; iUnit++) { Dequeue(p_ring, CalcPtrUnit(p_dest, p_ring->CONFIG.UNIT_SIZE, iUnit)); }
+            for(size_t iUnit = 0U; iUnit < nUnits; iUnit++) { Dequeue(p_ring, CalcPtrUnit(p_dest, p_ring->CONST.UNIT_SIZE, iUnit)); }
             isSuccess = true;
         }
         ReleaseCritical(p_ring);
@@ -225,7 +227,7 @@ size_t Ring_EnqueueMax(Ring_T * p_ring, const void * p_units, size_t nUnits)
     {
         count = Ring_GetEmptyCount(p_ring);
         if(count > nUnits) { count = nUnits; }
-        for(size_t iCount = 0U; iCount < count; iCount++) { Enqueue(p_ring, CalcPtrUnit(p_units, p_ring->CONFIG.UNIT_SIZE, iCount)); }
+        for(size_t iCount = 0U; iCount < count; iCount++) { Enqueue(p_ring, CalcPtrUnit(p_units, p_ring->CONST.UNIT_SIZE, iCount)); }
         ReleaseCritical(p_ring);
     }
     return count;
@@ -241,7 +243,7 @@ size_t Ring_DequeueMax(Ring_T * p_ring, void * p_dest, size_t nUnits)
     {
         count = Ring_GetFullCount(p_ring);
         if(count > nUnits) { count = nUnits; }
-        for(size_t iCount = 0U; iCount < count; iCount++) { Dequeue(p_ring, CalcPtrUnit(p_dest, p_ring->CONFIG.UNIT_SIZE, iCount)); }
+        for(size_t iCount = 0U; iCount < count; iCount++) { Dequeue(p_ring, CalcPtrUnit(p_dest, p_ring->CONST.UNIT_SIZE, iCount)); }
         ReleaseCritical(p_ring);
     }
     return count;
@@ -324,14 +326,18 @@ bool Ring_RemoveBack(Ring_T * p_ring, size_t nUnits)
     Experimental
 */
 /******************************************************************************/
-/*
-    single threaded use only, buffer may be overwritten, alternatively use mutex
-    result in return value, pointer 0 indicates invalid
+/******************************************************************************/
+/*!
+    Protected
 */
-void * Ring_PeekPtrFront(Ring_T * p_ring)               { return (Ring_GetIsEmpty(p_ring) == false) ? GetPtrFront(p_ring) : 0U; }
-void * Ring_PeekPtrBack(Ring_T * p_ring)                { return (Ring_GetIsEmpty(p_ring) == false) ? GetPtrBack(p_ring) : 0U; }
-void * Ring_PeekPtrIndex(Ring_T * p_ring, size_t index) { return (index < Ring_GetFullCount(p_ring)) ? GetPtrIndex(p_ring, index) : 0U; }
-void * Ring_SeekPtr(Ring_T * p_ring, size_t index)      { return (index < Ring_GetFullCount(p_ring)) ? SeekPtr(p_ring, index) : 0U; }
+/******************************************************************************/
+/*
+    When a pointer is returned, there is no guarantee that the data will not be overwritten, unless the Ring is locked, or single threaded.
+*/
+void * Ring_PeekPtrFront(Ring_T * p_ring)                   { return (Ring_GetIsEmpty(p_ring) == false) ? GetPtrFront(p_ring) : NULL; }
+void * Ring_PeekPtrBack(Ring_T * p_ring)                    { return (Ring_GetIsEmpty(p_ring) == false) ? GetPtrBack(p_ring) : NULL; }
+void * Ring_PeekPtrIndex(Ring_T * p_ring, size_t index)     { return (index < Ring_GetFullCount(p_ring)) ? GetPtrIndex(p_ring, index) : NULL; }
+void * Ring_SeekPtr(Ring_T * p_ring, size_t index)          { return (index < Ring_GetFullCount(p_ring)) ? SeekPtr(p_ring, index) : NULL; }
 
 /*
     Give caller exclusive buffer write. Will flush buffer to start from index 0
@@ -343,7 +349,7 @@ void * Ring_AcquireBuffer(Ring_T * p_ring)
     if(AcquireMutex(p_ring) == true)
     {
         Ring_Clear(p_ring);
-        p_buffer = p_ring->CONFIG.P_BUFFER;
+        p_buffer = p_ring->CONST.P_BUFFER;
     }
 
     return p_buffer;
@@ -363,9 +369,9 @@ Ring_T * Ring_New(size_t unitCount, size_t unitSize)
 
     if(p_ring != 0U && p_buffer != 0U)
     {
-        *(void *)&p_ring->CONFIG.P_BUFFER = p_buffer; /* bypass const typedef */
-        *(size_t)&p_ring->CONFIG.LENGTH = unitCount;
-        *(size_t)&p_ring->CONFIG.UNIT_SIZE = unitSize;
+        *(void *)&p_ring->CONST.P_BUFFER = p_buffer; /* bypass const typedef */
+        *(size_t)&p_ring->CONST.LENGTH = unitCount;
+        *(size_t)&p_ring->CONST.UNIT_SIZE = unitSize;
         Ring_Init(p_ring);
     }
 

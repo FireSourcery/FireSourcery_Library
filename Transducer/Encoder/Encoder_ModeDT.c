@@ -37,7 +37,7 @@
 
 static void InitValues(Encoder_T * p_encoder)
 {
-    if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
+    if(p_encoder->CONST.P_CONFIG != 0U) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
 
     p_encoder->UnitT_Freq = 1U;
     _Encoder_ResetUnits(p_encoder);
@@ -57,7 +57,7 @@ void Encoder_ModeDT_Init_InterruptQuadrature(Encoder_T * p_encoder)
     _Encoder_DeltaD_InitCounter(p_encoder);
     Encoder_InitInterrupts_Quadrature(p_encoder);
     InitValues(p_encoder);
-    p_encoder->Params.IsQuadratureCaptureEnabled = true;
+    p_encoder->Config.IsQuadratureCaptureEnabled = true;
 }
 
 void Encoder_ModeDT_Init_InterruptAbc(Encoder_T * p_encoder)
@@ -71,8 +71,8 @@ void Encoder_ModeDT_Init_InterruptAbc(Encoder_T * p_encoder)
 
 // void Encoder_ModeDT_Init(Encoder_T * p_encoder)
 // {
-//     if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
-//     if(p_encoder->CONFIG.HAL_INIT != 0U) { p_encoder->CONFIG.HAL_INIT(); }
+//     if(p_encoder->CONST.P_CONFIG != 0U) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
+//     if(p_encoder->CONST.HAL_INIT != 0U) { p_encoder->CONST.HAL_INIT(); }
 //     else
 //     {
 //         _Encoder_DeltaT_InitTimer(p_encoder);

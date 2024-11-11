@@ -49,7 +49,7 @@ static Cmd_Status_T Cmd_stop(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     (void)argc; (void)argv;
     MotorController_User_DisableControl(p_mc);
-    p_mc->CONFIG.P_MOTORS[0].Encoder.Align = ENCODER_ALIGN_NO;
+    p_mc->CONST.P_MOTORS[0].Encoder.Align = ENCODER_ALIGN_NO;
     return CMD_STATUS_SUCCESS;
 }
 
@@ -170,7 +170,7 @@ static Cmd_Status_T Cmd_phase(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     //    Terminal_T * p_term = &p_mc->Shell.Terminal;
-    const uint16_t duty = p_motor->Parameters.AlignPower_ScalarU16;
+    const uint16_t duty = p_motor->Config.AlignPower_ScalarU16;
 
     if(argc == 2U)
     {
@@ -368,7 +368,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorControllerPtr_T p_mc)
             Terminal_SendString(p_term, "IPhase: ");
             Terminal_SendNum(p_term, Motor_User_GetIPhase_Amps(p_motor));       Terminal_SendString(p_term, " Amps, ");
             Terminal_SendNum(p_term, Motor_User_GetIPhase_UFrac16(p_motor));    Terminal_SendString(p_term, " FracS16\r\n");
-            Terminal_SendString(p_term, "IPeakAdcu: "); Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsIa, FOC_GetIMagnitude(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
+            Terminal_SendString(p_term, "IPeakAdcu: "); Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsIa, FOC_GetIMagnitude(&p_motor->Foc)) - p_motor->Config.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
             // Terminal_SendString(p_term, "Capture: ");             Terminal_SendNum(p_term, p_motor->IPhasePeak_Adcu);             Terminal_SendString(p_term, " ADCU\r\n");
             // Terminal_SendString(p_term, "Ia: ");     Terminal_SendNum(p_term, p_motor->Foc.Ia); Terminal_SendString(p_term, "\r\n");
             // Terminal_SendString(p_term, "Ib: ");     Terminal_SendNum(p_term, p_motor->Foc.Ib); Terminal_SendString(p_term, "\r\n");
@@ -378,8 +378,8 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorControllerPtr_T p_mc)
         case 3U:
             // Terminal_SendString(p_term, "Bemf Peak: ");      Terminal_SendNum(p_term, Motor_User_GetVPhase_UFrac16(p_motor)); Terminal_SendString(p_term, " Frac16\r\n");
             // Terminal_SendString(p_term, "Capture: ");        Terminal_SendNum(p_term, p_motor->VBemfPeak_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
-            // Terminal_SendString(p_term, "FOC: ");            Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsVa, FOC_GetIMagnitude(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
-            // Terminal_SendString(p_term, "FOC Clarke: ");     Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsVa, FOC_GetIMagnitude_Clarke(&p_motor->Foc)) - p_motor->Parameters.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
+            // Terminal_SendString(p_term, "FOC: ");            Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsVa, FOC_GetIMagnitude(&p_motor->Foc)) - p_motor->Config.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
+            // Terminal_SendString(p_term, "FOC Clarke: ");     Terminal_SendNum(p_term, Linear_ADC_CalcAdcu_FracS16(&p_motor->UnitsVa, FOC_GetIMagnitude_Clarke(&p_motor->Foc)) - p_motor->Config.IaZeroRef_Adcu); Terminal_SendString(p_term, " ADCU\r\n");
 
         case 4U:
             // Terminal_SendString(p_term, "VectorMagnitude: "); Terminal_SendNum(p_term, VectorMagnitude); Terminal_SendString(p_term, " FracS16\r\n");
@@ -471,7 +471,7 @@ static Cmd_Status_T Cmd_mode(MotorControllerPtr_T p_mc, int argc, char ** argv)
         else if (strncmp(argv[1U], "protocol", 9U) == 0U)
         {
             Shell_DisableOnInit(&p_mc->Shell);
-            Protocol_EnableOnInit(&p_mc->CONFIG.P_PROTOCOLS[0U]);
+            Protocol_EnableOnInit(&p_mc->CONST.P_PROTOCOLS[0U]);
         }
         else if(strncmp(argv[1U], "brakevf", 7U) == 0U)
         {
@@ -520,21 +520,21 @@ static Cmd_Status_T Cmd_calibrate_Proc(MotorControllerPtr_T p_mc)
 
         if(p_motor->CalibrationState == MOTOR_CALIBRATION_STATE_HALL)
         {
-            Terminal_SendNum(p_term, p_motor->Hall.Params.SensorsTable[0U]); Terminal_SendString(p_term, "\r\n");
-            Terminal_SendNum(p_term, p_motor->Hall.Params.SensorsTable[1U]); Terminal_SendString(p_term, "\r\n");
-            Terminal_SendNum(p_term, p_motor->Hall.Params.SensorsTable[2U]); Terminal_SendString(p_term, "\r\n");
-            Terminal_SendNum(p_term, p_motor->Hall.Params.SensorsTable[3U]); Terminal_SendString(p_term, "\r\n");
-            Terminal_SendNum(p_term, p_motor->Hall.Params.SensorsTable[4U]); Terminal_SendString(p_term, "\r\n");
-            Terminal_SendNum(p_term, p_motor->Hall.Params.SensorsTable[5U]); Terminal_SendString(p_term, "\r\n");
-            Terminal_SendNum(p_term, p_motor->Hall.Params.SensorsTable[6U]); Terminal_SendString(p_term, "\r\n");
-            Terminal_SendNum(p_term, p_motor->Hall.Params.SensorsTable[7U]); Terminal_SendString(p_term, "\r\n");
-            Terminal_SendString(p_term, "Boundary Count "); Terminal_SendNum(p_term, p_motor->Hall.Params.BoundaryType); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendNum(p_term, p_motor->Hall.Config.SensorsTable[0U]); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendNum(p_term, p_motor->Hall.Config.SensorsTable[1U]); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendNum(p_term, p_motor->Hall.Config.SensorsTable[2U]); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendNum(p_term, p_motor->Hall.Config.SensorsTable[3U]); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendNum(p_term, p_motor->Hall.Config.SensorsTable[4U]); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendNum(p_term, p_motor->Hall.Config.SensorsTable[5U]); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendNum(p_term, p_motor->Hall.Config.SensorsTable[6U]); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendNum(p_term, p_motor->Hall.Config.SensorsTable[7U]); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendString(p_term, "Boundary Count "); Terminal_SendNum(p_term, p_motor->Hall.Config.BoundaryType); Terminal_SendString(p_term, "\r\n");
         }
     #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
         else if(p_motor->CalibrationState == MOTOR_CALIBRATION_STATE_SIN_COS)
         {
-            Terminal_SendString(p_term, "AngleOffset: ");         Terminal_SendNum(p_term, p_motor->SinCos.Params.AngleOffet);         Terminal_SendString(p_term, "\r\n");
-            Terminal_SendString(p_term, "IsCcwPositive: ");     Terminal_SendNum(p_term, p_motor->SinCos.Params.IsCcwPositive);     Terminal_SendString(p_term, "\r\n");
+            Terminal_SendString(p_term, "AngleOffset: ");         Terminal_SendNum(p_term, p_motor->SinCos.Config.AngleOffet);         Terminal_SendString(p_term, "\r\n");
+            Terminal_SendString(p_term, "IsCcwPositive: ");     Terminal_SendNum(p_term, p_motor->SinCos.Config.IsCcwPositive);     Terminal_SendString(p_term, "\r\n");
 
             Terminal_SendString(p_term, "DebugAPreMech: ");     Terminal_SendNum(p_term, p_motor->SinCos.DebugAPre);         Terminal_SendString(p_term, "\r\n");
             Terminal_SendString(p_term, "DebugBPreMech: ");     Terminal_SendNum(p_term, p_motor->SinCos.DebugBPre);         Terminal_SendString(p_term, "\r\n");
@@ -543,9 +543,9 @@ static Cmd_Status_T Cmd_calibrate_Proc(MotorControllerPtr_T p_mc)
             Terminal_SendString(p_term, "DebugAPostElec: ");     Terminal_SendNum(p_term, p_motor->SinCos.DebugAPostElec);     Terminal_SendString(p_term, "\r\n");
             Terminal_SendString(p_term, "DebugBPostElec: ");     Terminal_SendNum(p_term, p_motor->SinCos.DebugBPostElec);     Terminal_SendString(p_term, "\r\n");
 
-            //            Terminal_SendString(p_term, "Zero_Adcu: ");     Terminal_SendNum(p_term, p_motor->SinCos.Params.Zero_Adcu);     Terminal_SendString(p_term, "\r\n");
-            //            Terminal_SendString(p_term, "Max_Adcu: ");         Terminal_SendNum(p_term, p_motor->SinCos.Params.Max_Adcu);         Terminal_SendString(p_term, "\r\n");
-            //            Terminal_SendString(p_term, "Max_MilliV: ");     Terminal_SendNum(p_term, p_motor->SinCos.Params.Max_MilliV);     Terminal_SendString(p_term, "\r\n");
+            //            Terminal_SendString(p_term, "Zero_Adcu: ");     Terminal_SendNum(p_term, p_motor->SinCos.Config.Zero_Adcu);     Terminal_SendString(p_term, "\r\n");
+            //            Terminal_SendString(p_term, "Max_Adcu: ");         Terminal_SendNum(p_term, p_motor->SinCos.Config.Max_Adcu);         Terminal_SendString(p_term, "\r\n");
+            //            Terminal_SendString(p_term, "Max_MilliV: ");     Terminal_SendNum(p_term, p_motor->SinCos.Config.Max_MilliV);     Terminal_SendString(p_term, "\r\n");
             //            Terminal_SendString(p_term, "Phase 0: "); Terminal_SendNum(p_term, p_motor->Debug[9U]); Terminal_SendString(p_term, "Deg16\r\n");
             //            Terminal_SendString(p_term, "Phase A: "); Terminal_SendNum(p_term, p_motor->Debug[0U]); Terminal_SendString(p_term, "Deg16\r\n");
             //            Terminal_SendString(p_term, "Sin: "); Terminal_SendNum(p_term, p_motor->Debug[3U]);
@@ -713,13 +713,13 @@ size_t VMonitor_ToString_Verbose(VMonitor_T * p_vMonitor, char * p_stringBuffer,
     memcpy(p_stringDest, STR_LIMIT, strlen(STR_LIMIT)); p_stringDest += strlen(STR_LIMIT);
 
     memcpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)); p_stringDest += strlen(STR_UPPER);
-    num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.FaultUpper_Adcu, unitVScalar);
+    num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Config.FaultUpper_Adcu, unitVScalar);
     snprintf(numStr, 16U, "%d", (int)num);
     memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
     *p_stringDest = ' '; p_stringDest++;
 
     memcpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)); p_stringDest += strlen(STR_LOWER);
-    num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.FaultLower_Adcu, unitVScalar);
+    num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Config.FaultLower_Adcu, unitVScalar);
     snprintf(numStr, 16U, "%d", (int)num);
     memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
     *p_stringDest = ' '; p_stringDest++;
@@ -727,13 +727,13 @@ size_t VMonitor_ToString_Verbose(VMonitor_T * p_vMonitor, char * p_stringBuffer,
     memcpy(p_stringDest, STR_WARNING, strlen(STR_WARNING)); p_stringDest += strlen(STR_WARNING);
 
     memcpy(p_stringDest, STR_UPPER, strlen(STR_UPPER)); p_stringDest += strlen(STR_UPPER);
-    num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningUpper_Adcu, unitVScalar);
+    num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Config.WarningUpper_Adcu, unitVScalar);
     snprintf(numStr, 16U, "%d", (int)num);
     memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
     *p_stringDest = ' '; p_stringDest++;
 
     memcpy(p_stringDest, STR_LOWER, strlen(STR_LOWER)); p_stringDest += strlen(STR_LOWER);
-    num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Params.WarningLower_Adcu, unitVScalar);
+    num = Linear_Voltage_CalcScalarV(&p_vMonitor->Units, p_vMonitor->Config.WarningLower_Adcu, unitVScalar);
     snprintf(numStr, 16U, "%d", (int)num);
     memcpy(p_stringDest, numStr, strlen(numStr)); p_stringDest += strlen(numStr);
     *p_stringDest = ' '; p_stringDest++;
@@ -852,7 +852,7 @@ static Cmd_Status_T Cmd_save(MotorControllerPtr_T p_mc, int argc, char ** argv)
 {
     (void)argc;
     (void)argv;
-    MotorController_User_SaveParameters_Blocking(p_mc);
+    MotorController_User_SaveConfig_Blocking(p_mc);
     return CMD_STATUS_SUCCESS;
 }
 
@@ -947,18 +947,18 @@ static Cmd_Status_T Cmd_ipeak(MotorControllerPtr_T p_mc, int argc, char ** argv)
         Motor_User_SetIPeakRef_Adcu_Debug(p_motor, zeroToPeak_Adcu);
 
         Terminal_SendString(p_term, "Phase A:\r\n");
-        min_Adcu = p_motor->Parameters.IaZeroRef_Adcu - p_motor->Parameters.IPeakRef_Adcu;
-        max_Adcu = p_motor->Parameters.IaZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
+        min_Adcu = p_motor->Config.IaZeroRef_Adcu - p_motor->Config.IPeakRef_Adcu;
+        max_Adcu = p_motor->Config.IaZeroRef_Adcu + p_motor->Config.IPeakRef_Adcu;
         PrintIPeak(p_term, min_Adcu, Linear_ADC_CalcFracS16(&p_motor->UnitsIa, min_Adcu), max_Adcu, Linear_ADC_CalcFracS16(&p_motor->UnitsIa, max_Adcu));
 
         Terminal_SendString(p_term, "Phase B:\r\n");
-        min_Adcu = p_motor->Parameters.IbZeroRef_Adcu - p_motor->Parameters.IPeakRef_Adcu;
-        max_Adcu = p_motor->Parameters.IbZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
+        min_Adcu = p_motor->Config.IbZeroRef_Adcu - p_motor->Config.IPeakRef_Adcu;
+        max_Adcu = p_motor->Config.IbZeroRef_Adcu + p_motor->Config.IPeakRef_Adcu;
         PrintIPeak(p_term, min_Adcu, Linear_ADC_CalcFracS16(&p_motor->UnitsIb, min_Adcu), max_Adcu, Linear_ADC_CalcFracS16(&p_motor->UnitsIb, max_Adcu));
 
         Terminal_SendString(p_term, "Phase C:\r\n");
-        min_Adcu = p_motor->Parameters.IcZeroRef_Adcu - p_motor->Parameters.IPeakRef_Adcu;
-        max_Adcu = p_motor->Parameters.IcZeroRef_Adcu + p_motor->Parameters.IPeakRef_Adcu;
+        min_Adcu = p_motor->Config.IcZeroRef_Adcu - p_motor->Config.IPeakRef_Adcu;
+        max_Adcu = p_motor->Config.IcZeroRef_Adcu + p_motor->Config.IPeakRef_Adcu;
         PrintIPeak(p_term, min_Adcu, Linear_ADC_CalcFracS16(&p_motor->UnitsIc, min_Adcu), max_Adcu, Linear_ADC_CalcFracS16(&p_motor->UnitsIc, max_Adcu));
 
         Terminal_SendString(p_term, "\r\n");
@@ -978,7 +978,7 @@ static Cmd_Status_T Cmd_ilimit(MotorControllerPtr_T p_mc, int argc, char ** argv
     {
         ilimit_Frac16 = strtoul(argv[1U], 0U, 10);
         Motor_User_SetILimitParam_Scalar16(p_motor, ilimit_Frac16, ilimit_Frac16);
-        Terminal_SendString(p_term, "ILimitMotoringParam: "); Terminal_SendNum(p_term, p_motor->Parameters.ILimitMotoring_ScalarU16);
+        Terminal_SendString(p_term, "ILimitMotoringParam: "); Terminal_SendNum(p_term, p_motor->Config.ILimitMotoring_ScalarU16);
         Terminal_SendString(p_term, " ILimitMotoringActive: "); Terminal_SendNum(p_term, p_motor->ILimitMotoring_ScalarU16);
         Terminal_SendString(p_term, "\r\n");
 

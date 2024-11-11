@@ -48,7 +48,6 @@ typedef enum Motor_StateMachine_Input
     MSM_INPUT_HOLD,             /* Stop */
 
     /* Feedback and Direction Inputs process by StateMachine */
-    // MSM_INPUT_FEEDBACK,
     MSM_INPUT_DIRECTION,
     MSM_INPUT_CALIBRATION,
 }
@@ -70,9 +69,12 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 
 #define MOTOR_STATE_MACHINE_INIT(p_Motor) STATE_MACHINE_INIT(&MSM_MACHINE, p_Motor, false)
 
+extern void Motor_ActivateControl(MotorPtr_T p_motor, Motor_FeedbackMode_T mode);
+extern void Motor_ActivateControl_Cast(MotorPtr_T p_motor, uint8_t modeWord);
+
 extern bool Motor_StateMachine_IsFault(const MotorPtr_T p_motor);
 extern bool Motor_StateMachine_ClearFault(MotorPtr_T p_motor);
 extern void Motor_StateMachine_SetFault(MotorPtr_T p_motor);
-extern void Motor_PollAdcFaultFlags(MotorPtr_T p_motor);
+// extern void Motor_PollAdcFaultFlags(MotorPtr_T p_motor);
 
 #endif

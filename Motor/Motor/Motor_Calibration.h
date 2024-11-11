@@ -42,12 +42,12 @@
 /******************************************************************************/
 static inline void Motor_Calibration_StartHall(MotorPtr_T p_motor)
 {
-    Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
+    Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
 }
 
 static inline bool Motor_Calibration_ProcHall(MotorPtr_T p_motor)
 {
-    const uint16_t duty = p_motor->Parameters.AlignPower_Scalar16;
+    const uint16_t duty = p_motor->Config.AlignPower_Scalar16;
     bool isComplete = false;
     if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
     {
@@ -84,8 +84,8 @@ static inline bool Motor_Calibration_ProcAdc(MotorPtr_T p_motor)
 /******************************************************************************/
 static inline void Motor_Calibration_StartEncoder(MotorPtr_T p_motor)
 {
-    Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_Cycles);
-    Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_Scalar16, 0U, 0U);
+    Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
+    Phase_ActivateDuty(&p_motor->Phase, p_motor->Config.AlignPower_Scalar16, 0U, 0U);
 }
 
 static inline bool Motor_Calibration_ProcEncoder(MotorPtr_T p_motor)
@@ -98,7 +98,7 @@ static inline bool Motor_Calibration_ProcEncoder(MotorPtr_T p_motor)
         {
             case 0U:
                 Encoder_CalibrateQuadratureReference(&p_motor->Encoder);
-                Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignPower_Scalar16, 0U);
+                Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Config.AlignPower_Scalar16, 0U);
                 p_motor->CalibrationStateIndex = 1U;
                 break;
 
@@ -117,7 +117,7 @@ static inline bool Motor_Calibration_ProcEncoder(MotorPtr_T p_motor)
     void Motor_CalibrateSensorZero(MotorPtr_T p_motor)
     {
         p_motor->ElectricalAngle = 0U;
-        switch(p_motor->Parameters.SensorMode)
+        switch(p_motor->Config.SensorMode)
         {
             case MOTOR_SENSOR_MODE_ENCODER: Encoder_CalibrateAlignZero(&p_motor->Encoder);    break;
     #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
@@ -129,7 +129,7 @@ static inline bool Motor_Calibration_ProcEncoder(MotorPtr_T p_motor)
 
     void Motor_ValidateSensorAlign(MotorPtr_T p_motor)
     {
-        switch(p_motor->Parameters.SensorMode)
+        switch(p_motor->Config.SensorMode)
         {
             case MOTOR_SENSOR_MODE_ENCODER: Encoder_CalibrateAlignValidate(&p_motor->Encoder);    break; /* Quadrature direction must be set first */
     #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
@@ -142,7 +142,7 @@ static inline bool Motor_Calibration_ProcEncoder(MotorPtr_T p_motor)
     /* Using Signed Ramp mode */
     bool Motor_PollAlignFault(MotorPtr_T p_motor)
     {
-        switch(p_motor->Parameters.SensorMode)
+        switch(p_motor->Config.SensorMode)
         {
             case MOTOR_SENSOR_MODE_ENCODER: if((p_motor->Speed_FracS16 ^ Linear_Ramp_GetTarget(&p_motor->Ramp)) < 0) { p_motor->FaultFlags.AlignStartUp = 1U; } break;
 
@@ -157,7 +157,7 @@ static inline bool Motor_Calibration_ProcEncoder(MotorPtr_T p_motor)
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
 static inline void Motor_Calibrate_StartSinCos(MotorPtr_T p_motor)
 {
-    Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Parameters.AlignTime_ControlCycles);
+    Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_ControlCycles);
 }
 
 static inline bool Motor_Calibrate_SinCos(MotorPtr_T p_motor)
@@ -169,44 +169,44 @@ static inline bool Motor_Calibrate_SinCos(MotorPtr_T p_motor)
         switch (p_motor->CalibrationStateIndex)
         {
             case 0U:
-                Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_Scalar16, 0U, 0U);
+                Phase_ActivateDuty(&p_motor->Phase, p_motor->Config.AlignPower_Scalar16, 0U, 0U);
                 p_motor->CalibrationStateIndex = 2U;
                 /* wait 1s */
                 break;
 
             // case 1U:
             //     //can repeat adc and filter results, or skip state use check in sensor routine
-            //     AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-            //     AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+            //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
+            //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
             //     p_motor->CalibrationStateIndex = 2U;
             //     /* wait 50us, 1s */
             //     break;
 
             case 2U:
                 SinCos_CalibrateA(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
-                Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignPower_Scalar16, 0U);
+                Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Config.AlignPower_Scalar16, 0U);
                 p_motor->CalibrationStateIndex = 4U;
                 /* wait 1s */
                 break;
 
             // case 3U:
-            //     AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_SIN);
-            //     AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_COS);
+            //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
+            //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
             //     p_motor->CalibrationStateIndex = 4U;
             //     break;
 
             case 4U:
                 SinCos_CalibrateB(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
-//                Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, p_motor->Parameters.AlignPower_Scalar16);
+//                Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, p_motor->Config.AlignPower_Scalar16);
                 p_motor->CalibrationStateIndex = 5U;
                 // isComplete = true;
-                Phase_ActivateDuty(&p_motor->Phase, p_motor->Parameters.AlignPower_Scalar16, 0U, 0U);
+                Phase_ActivateDuty(&p_motor->Phase, p_motor->Config.AlignPower_Scalar16, 0U, 0U);
                 break;
 
             case 5U:
                 p_motor->SinCos.DebugAPostMech = SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
                 p_motor->SinCos.DebugAPostElec = SinCos_GetElectricalAngle(&p_motor->SinCos);
-                Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Parameters.AlignPower_Scalar16, 0U);
+                Phase_ActivateDuty(&p_motor->Phase, 0U, p_motor->Config.AlignPower_Scalar16, 0U);
                 p_motor->CalibrationStateIndex = 6U;
                 break;
 

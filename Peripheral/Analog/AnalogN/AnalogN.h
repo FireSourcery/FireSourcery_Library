@@ -80,16 +80,16 @@ typedef const struct
 }
 AnalogN_ConversionGroup_T;
 
-typedef const struct AnalogN_Config
+typedef const struct AnalogN_Const
 {
     Analog_T * const P_ANALOGS;
     uint8_t ANALOG_COUNT;
 }
-AnalogN_Config_T;
+AnalogN_Const_T;
 
 typedef struct AnalogN
 {
-    const AnalogN_Config_T CONFIG;
+    const AnalogN_Const_T CONST;
 }
 AnalogN_T;
 
@@ -115,9 +115,9 @@ static inline bool AnalogN_EnqueueOptions(const AnalogN_T * p_analogn, const Ana
 {
     bool isSuccess = true;
 
-    for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONFIG.ANALOG_COUNT; iAnalog++)
+    for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONST.ANALOG_COUNT; iAnalog++)
     {
-        if(Analog_EnqueueOptions(&p_analogn->CONFIG.P_ANALOGS[iAnalog], p_options) == false) { isSuccess = false; }
+        if(Analog_EnqueueOptions(&p_analogn->CONST.P_ANALOGS[iAnalog], p_options) == false) { isSuccess = false; }
     }
 
     return isSuccess;
@@ -140,10 +140,10 @@ static inline void AnalogN_Group_PauseQueue(const AnalogN_T * p_analogn, AnalogN
     (void)p_analogn; (void)activeAdcs;
     Critical_Enter();
 #elif defined(CONFIG_ANALOG_SINGLE_THREADED)
-    for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONFIG.ANALOG_COUNT; iAnalog++)
+    for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONST.ANALOG_COUNT; iAnalog++)
     {
         /* Assuming little endian */
-        if(((1U << iAnalog) & activeAdcs.Flags) != 0U) { Analog_Group_PauseQueue(&p_analogn->CONFIG.P_ANALOGS[iAnalog]); }
+        if(((1U << iAnalog) & activeAdcs.Flags) != 0U) { Analog_Group_PauseQueue(&p_analogn->CONST.P_ANALOGS[iAnalog]); }
     }
 #endif
 }
@@ -152,15 +152,15 @@ static inline void AnalogN_Group_ResumeQueue(const AnalogN_T * p_analogn, Analog
 {
 #if  defined(CONFIG_ANALOG_MULTITHREADED) /* Proc all queues, common Critical_Exit */
     (void)p_analogn;
-    for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONFIG.ANALOG_COUNT; iAnalog++)
+    for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONST.ANALOG_COUNT; iAnalog++)
     {
-        if(((1U << iAnalog) & activeAdcs.Flags) != 0U) { _Analog_Group_ResumeQueue(&p_analogn->CONFIG.P_ANALOGS[iAnalog]); }
+        if(((1U << iAnalog) & activeAdcs.Flags) != 0U) { _Analog_Group_ResumeQueue(&p_analogn->CONST.P_ANALOGS[iAnalog]); }
     }
     Critical_Exit();
 #elif defined(CONFIG_ANALOG_SINGLE_THREADED)
-    for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONFIG.ANALOG_COUNT; iAnalog++)
+    for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONST.ANALOG_COUNT; iAnalog++)
     {
-        if(((1U << iAnalog) & activeAdcs.Flags) != 0U) { Analog_Group_ResumeQueue(&p_analogn->CONFIG.P_ANALOGS[iAnalog]); }
+        if(((1U << iAnalog) & activeAdcs.Flags) != 0U) { Analog_Group_ResumeQueue(&p_analogn->CONST.P_ANALOGS[iAnalog]); }
     }
 #endif
 }
@@ -173,9 +173,9 @@ static inline bool AnalogN_Group_EnqueueConversion(const AnalogN_T * p_analogn, 
 
 // static inline bool AnalogN_Group_EnqueueOptions(const AnalogN_T * p_analogn, const Analog_Options_T * p_options, AnalogN_AdcFlags_T activeAdcs)
 // {
-//     for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONFIG.ANALOG_COUNT; iAnalog++)
+//     for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONST.ANALOG_COUNT; iAnalog++)
 //     {
-//         if(((1U << iAnalog) & activeAdcs.Flags) != 0U) { Analog_EnqueueOptions(&p_analogn->CONFIG.P_ANALOGS[iAnalog], p_options); }
+//         if(((1U << iAnalog) & activeAdcs.Flags) != 0U) { Analog_EnqueueOptions(&p_analogn->CONST.P_ANALOGS[iAnalog], p_options); }
 //     }
 // }
 

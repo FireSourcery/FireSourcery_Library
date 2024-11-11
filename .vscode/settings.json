@@ -90,7 +90,9 @@
         "inputvalue",
         "MCSM",
         "MOSFETS",
+        "SENSORLESS",
         "setpoint",
+        "Sourcery",
         "statemachine",
         "txsize"
     ],

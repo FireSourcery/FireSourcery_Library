@@ -32,16 +32,16 @@
 
 void Pin_Output_Init(Pin_T * p_pin)
 {
-    HAL_Pin_InitOutput(p_pin->CONFIG.P_HAL_PIN, p_pin->CONFIG.ID);
-    HAL_Pin_WriteOutputOff(p_pin->CONFIG.P_HAL_PIN, p_pin->CONFIG.ID);
+    HAL_Pin_InitOutput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID);
+    HAL_Pin_WriteOutputOff(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID);
 }
 
 void Pin_Input_Init(Pin_T * p_pin)
 {
-    HAL_Pin_InitInput(p_pin->CONFIG.P_HAL_PIN, p_pin->CONFIG.ID);
+    HAL_Pin_InitInput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID);
 }
 
 void Pin_Deinit(const Pin_T * p_pin)
 {
-    HAL_Pin_Deinit(p_pin->CONFIG.P_HAL_PIN, p_pin->CONFIG.ID);
+    HAL_Pin_Deinit(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID);
 }

@@ -56,8 +56,8 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 {
 #if defined(CONFIG_ENCODER_HW_DECODER)
     /* For common interface functions. Emulated Capture in ISR */
-    uint16_t counterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
-    p_encoder->DeltaD = _Encoder_CaptureDeltaD(p_encoder, p_encoder->Params.CountsPerRevolution - 1U, counterD);
+    uint16_t counterD = HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
+    p_encoder->DeltaD = _Encoder_CaptureDeltaD(p_encoder, p_encoder->Config.CountsPerRevolution - 1U, counterD);
     // p_encoder->TotalD += p_encoder->DeltaD;
     // p_encoder->Angle32 = counterD * p_encoder->UnitAngularD;
     //quadrature check overflow flag
@@ -102,12 +102,12 @@ static inline uint32_t Encoder_DeltaD_GetScalarSpeed(Encoder_T * p_encoder)
 */
 static inline uint32_t Encoder_DeltaD_FromRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t rpm)
 {
-    return (rpm * p_encoder->Params.CountsPerRevolution) / (p_encoder->CONFIG.SAMPLE_FREQ * 60U);
+    return (rpm * p_encoder->Config.CountsPerRevolution) / (p_encoder->CONST.SAMPLE_FREQ * 60U);
 }
 
 static inline uint32_t Encoder_DeltaD_ToRotationalSpeed_RPM(Encoder_T * p_encoder, uint32_t deltaD_Ticks)
 {
-    return (deltaD_Ticks * p_encoder->CONFIG.SAMPLE_FREQ * 60U) / p_encoder->Params.CountsPerRevolution;
+    return (deltaD_Ticks * p_encoder->CONST.SAMPLE_FREQ * 60U) / p_encoder->Config.CountsPerRevolution;
 }
 
 

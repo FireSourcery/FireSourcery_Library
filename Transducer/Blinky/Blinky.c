@@ -52,7 +52,7 @@ void Blinky_Proc(Blinky_T * p_blinky)
 {
     if(Timer_Poll(&p_blinky->Timer) == true)
     {
-        if(Timer_GetIsOneShot(&p_blinky->Timer) == true) /* Timer is in OneShot Mode */
+        if(Timer_IsOneShot(&p_blinky->Timer) == true) /* Timer is in OneShot Mode */
         {
             if (p_blinky->Index < p_blinky->Max) /* OneShot Pattern */
             {

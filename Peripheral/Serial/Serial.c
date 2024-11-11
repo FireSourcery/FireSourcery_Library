@@ -43,7 +43,7 @@
 static inline void EnterCriticalTx(Serial_T * p_serial)
 {
 #if     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+    HAL_Serial_DisableTxInterrupt(p_serial->CONST.P_HAL_SERIAL);
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) || defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
     (void)p_serial;
     Critical_Enter();
@@ -63,7 +63,7 @@ static inline void ExitCriticalTx(Serial_T * p_serial)
 static inline void EnterCriticalRx(Serial_T * p_serial)
 {
 #if     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+    HAL_Serial_DisableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) || defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
     (void)p_serial;
     Critical_Enter();
@@ -73,7 +73,7 @@ static inline void EnterCriticalRx(Serial_T * p_serial)
 static inline void ExitCriticalRx(Serial_T * p_serial)
 {
 #if     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+    HAL_Serial_EnableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) || defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
     (void)p_serial;
     Critical_Exit();
@@ -93,7 +93,7 @@ static inline bool AcquireCriticalTx(Serial_T * p_serial)
     Critical_Enter();
     return true;
 #elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+    HAL_Serial_DisableTxInterrupt(p_serial->CONST.P_HAL_SERIAL);
     return true;
 #endif
 }
@@ -120,7 +120,7 @@ static inline bool AcquireCriticalRx(Serial_T * p_serial)
     Critical_Enter();
     return true;
 #elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+    HAL_Serial_DisableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
     return true;
 #endif
 }
@@ -133,7 +133,7 @@ static inline void ReleaseCriticalRx(Serial_T * p_serial)
     (void)p_serial;
     Critical_Exit();
 #elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+    HAL_Serial_EnableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
 #endif
 }
 
@@ -142,8 +142,8 @@ static inline void ReleaseCriticalRx(Serial_T * p_serial)
 */
 static inline bool Hal_SendChar(Serial_T * p_serial, const uint8_t txchar)
 {
-    bool isSuccess = (HAL_Serial_ReadTxEmptyCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U);
-    if(isSuccess == true) { HAL_Serial_WriteTxChar(p_serial->CONFIG.P_HAL_SERIAL, txchar); }
+    bool isSuccess = (HAL_Serial_ReadTxEmptyCount(p_serial->CONST.P_HAL_SERIAL) > 0U);
+    if(isSuccess == true) { HAL_Serial_WriteTxChar(p_serial->CONST.P_HAL_SERIAL, txchar); }
     return isSuccess;
 }
 
@@ -152,8 +152,8 @@ static inline bool Hal_SendChar(Serial_T * p_serial, const uint8_t txchar)
 */
 static inline bool Hal_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
 {
-    bool isSuccess = (HAL_Serial_ReadRxFullCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U);
-    if(isSuccess == true) { *p_rxChar = HAL_Serial_ReadRxChar(p_serial->CONFIG.P_HAL_SERIAL); }
+    bool isSuccess = (HAL_Serial_ReadRxFullCount(p_serial->CONST.P_HAL_SERIAL) > 0U);
+    if(isSuccess == true) { *p_rxChar = HAL_Serial_ReadRxChar(p_serial->CONST.P_HAL_SERIAL); }
     return isSuccess;
 }
 
@@ -199,17 +199,17 @@ void Serial_RxData_ISR(Serial_T * p_serial)
 {
     uint8_t rxChar;
 
-    while(HAL_Serial_ReadRxFullCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U) /* Rx until hw buffer is empty */
+    while(HAL_Serial_ReadRxFullCount(p_serial->CONST.P_HAL_SERIAL) > 0U) /* Rx until hw buffer is empty */
     {
         if(Ring_GetIsFull(&p_serial->RxRing) == true) /* Rx until software buffer is full */
         {
             /* if buffer stays full, disable irq to prevent blocking lower priority threads. user must restart rx irq */
-            HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+            HAL_Serial_DisableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
             break;
         }
         else
         {
-            rxChar = HAL_Serial_ReadRxChar(p_serial->CONFIG.P_HAL_SERIAL);
+            rxChar = HAL_Serial_ReadRxChar(p_serial->CONST.P_HAL_SERIAL);
             Ring_Enqueue(&p_serial->RxRing, &rxChar);
         }
     }
@@ -223,17 +223,17 @@ void Serial_TxData_ISR(Serial_T * p_serial)
 {
     uint8_t txChar;
 
-    while(HAL_Serial_ReadTxEmptyCount(p_serial->CONFIG.P_HAL_SERIAL) > 0U) /* Tx until hw buffer is full */
+    while(HAL_Serial_ReadTxEmptyCount(p_serial->CONST.P_HAL_SERIAL) > 0U) /* Tx until hw buffer is full */
     {
         if(Ring_GetIsEmpty(&p_serial->TxRing) == true) /* Tx until software buffer is empty */
         {
-            HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+            HAL_Serial_DisableTxInterrupt(p_serial->CONST.P_HAL_SERIAL);
             break;
         }
         else
         {
             Ring_Dequeue(&p_serial->TxRing, &txChar);
-            HAL_Serial_WriteTxChar(p_serial->CONFIG.P_HAL_SERIAL, txChar);
+            HAL_Serial_WriteTxChar(p_serial->CONST.P_HAL_SERIAL, txChar);
         }
     }
 }
@@ -242,10 +242,10 @@ bool Serial_PollRestartRxIsr(const Serial_T * p_serial)
 {
     bool status = false;
     /* Continue waiting for buffer read, before restarting interrupts, if buffer is full */
-    if((HAL_Serial_ReadRxOverrun(p_serial->CONFIG.P_HAL_SERIAL) == true) && (Ring_GetIsFull(&p_serial->RxRing) == false))
+    if((HAL_Serial_ReadRxOverrun(p_serial->CONST.P_HAL_SERIAL) == true) && (Ring_GetIsFull(&p_serial->RxRing) == false))
     {
-        HAL_Serial_ClearRxErrors(p_serial->CONFIG.P_HAL_SERIAL);
-        HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+        HAL_Serial_ClearRxErrors(p_serial->CONST.P_HAL_SERIAL);
+        HAL_Serial_EnableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
         status = true;
     }
     return status;
@@ -254,9 +254,9 @@ bool Serial_PollRestartRxIsr(const Serial_T * p_serial)
 
 void Serial_Init(Serial_T * p_serial)
 {
-    HAL_Serial_Init(p_serial->CONFIG.P_HAL_SERIAL);
-    HAL_Serial_WriteTxSwitch(p_serial->CONFIG.P_HAL_SERIAL, true);
-    HAL_Serial_WriteRxSwitch(p_serial->CONFIG.P_HAL_SERIAL, true);
+    HAL_Serial_Init(p_serial->CONST.P_HAL_SERIAL);
+    HAL_Serial_WriteTxSwitch(p_serial->CONST.P_HAL_SERIAL, true);
+    HAL_Serial_WriteRxSwitch(p_serial->CONST.P_HAL_SERIAL, true);
     Ring_Init(&p_serial->TxRing);
     Ring_Init(&p_serial->RxRing);
     Serial_EnableRxIsr(p_serial);
@@ -265,20 +265,20 @@ void Serial_Init(Serial_T * p_serial)
 
 void Serial_Deinit(Serial_T * p_serial)
 {
-    HAL_Serial_Deinit(p_serial->CONFIG.P_HAL_SERIAL);
+    HAL_Serial_Deinit(p_serial->CONST.P_HAL_SERIAL);
 }
 
 bool Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate)
 {
     volatile bool isSuccess = true;
 
-    HAL_Serial_WriteTxSwitch(p_serial->CONFIG.P_HAL_SERIAL, false);
-    HAL_Serial_WriteRxSwitch(p_serial->CONFIG.P_HAL_SERIAL, false);
+    HAL_Serial_WriteTxSwitch(p_serial->CONST.P_HAL_SERIAL, false);
+    HAL_Serial_WriteRxSwitch(p_serial->CONST.P_HAL_SERIAL, false);
 
-    isSuccess = HAL_Serial_ConfigBaudRate(p_serial->CONFIG.P_HAL_SERIAL, baudRate);
+    isSuccess = HAL_Serial_ConfigBaudRate(p_serial->CONST.P_HAL_SERIAL, baudRate);
 
-    HAL_Serial_WriteTxSwitch(p_serial->CONFIG.P_HAL_SERIAL, true);
-    HAL_Serial_WriteRxSwitch(p_serial->CONFIG.P_HAL_SERIAL, true);
+    HAL_Serial_WriteTxSwitch(p_serial->CONST.P_HAL_SERIAL, true);
+    HAL_Serial_WriteRxSwitch(p_serial->CONST.P_HAL_SERIAL, true);
 
     return isSuccess;
 }
@@ -296,7 +296,7 @@ bool Serial_SendByte(Serial_T * p_serial, uint8_t txChar)
     //    else
     //    {
     isSuccess = Ring_Enqueue(&p_serial->TxRing, &txChar);
-    if(isSuccess == true) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+    if(isSuccess == true) { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
     //    }
     ExitCriticalTx(p_serial);
 
@@ -350,7 +350,7 @@ size_t Serial_SendMax(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t s
         //        if (charCount < srcSize)
         //        {
         charCount += Ring_EnqueueMax(&p_serial->RxRing, p_srcBuffer, srcSize - charCount);
-        if(charCount > 0U) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+        if(charCount > 0U) { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
         //        }
         ReleaseCriticalTx(p_serial);
     }
@@ -387,7 +387,7 @@ bool Serial_SendN(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t lengt
     if(AcquireCriticalTx(p_serial) == true)
     {
         status = Ring_EnqueueN(&p_serial->TxRing, p_srcBuffer, length);
-        if(status == true) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+        if(status == true) { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
         ReleaseCriticalTx(p_serial);
     }
 
@@ -449,7 +449,7 @@ void Serial_FlushBuffers(Serial_T * p_serial)
 // void Serial_ReleaseTxBuffer(Serial_T * p_serial, size_t writeSize)
 // {
 //     Ring_ReleaseBuffer(&p_serial->TxRing, writeSize);
-//     if(Ring_GetIsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+//     if(Ring_GetIsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
 //     ReleaseCriticalTx(p_serial);
 // }
 
@@ -467,7 +467,7 @@ void Serial_FlushBuffers(Serial_T * p_serial)
 //             if(status == false) { break; }
 //             p_char++;
 //         }
-//         if(p_char != p_srcBuffer) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+//         if(p_char != p_srcBuffer) { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
 //         ReleaseCriticalTx(p_serial);
 //     }
 
@@ -477,15 +477,15 @@ void Serial_FlushBuffers(Serial_T * p_serial)
 // //todo polling via hw fifo buffer
 // void Serial_PollRxData(Serial_T * p_serial)
 // {
-//     HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+//     HAL_Serial_DisableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
 //     Serial_RxData_ISR(p_serial);
-//     HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+//     HAL_Serial_EnableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
 // }
 
 // void Serial_PollTxData(Serial_T * p_serial)
 // {
-//     HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL);
+//     HAL_Serial_DisableTxInterrupt(p_serial->CONST.P_HAL_SERIAL);
 //     Serial_TxData_ISR(p_serial);
-//     if(Ring_GetIsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+//     if(Ring_GetIsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
 // }
 

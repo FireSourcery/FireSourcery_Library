@@ -51,7 +51,7 @@ static inline void Motor_PWM_Thread(MotorPtr_T p_motor)
     StateMachine_ProcState(&p_motor->StateMachine);
     // Motor_Debug_CaptureTime(p_motor, 5U);
 #ifdef CONFIG_MOTOR_PWM_INTERRUPT_CLEAR_PER_MOTOR
-    // Motor_ClearInterrupt(&p_mc->CONFIG.P_MOTORS[0U]);
+    // Motor_ClearInterrupt(&p_mc->CONST.P_MOTORS[0U]);
 #endif
 }
 
@@ -64,7 +64,7 @@ static inline void Motor_Heat_Thread(MotorPtr_T p_motor)
 {
     if(Thermistor_IsMonitorEnable(&p_motor->Thermistor) == true)
     {
-        AnalogN_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_HEAT);
+        AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_HEAT);
 
         switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
         {
@@ -72,12 +72,12 @@ static inline void Motor_Heat_Thread(MotorPtr_T p_motor)
                 if(p_motor->StatusFlags.HeatWarning == 1U)
                 {
                     p_motor->StatusFlags.HeatWarning = 0U;
-                    Motor_User_ClearILimitActive_Id(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
+                    Motor_ClearILimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
                 }
                 break;
             case THERMISTOR_STATUS_WARNING:     /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
                 p_motor->StatusFlags.HeatWarning = 1U;
-                Motor_User_SetILimitActive_Id(p_motor, Thermistor_GetHeatLimit_Scalar16(&p_motor->Thermistor), MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
+                Motor_SetILimitEntry(p_motor, Thermistor_GetHeatLimit_Scalar16(&p_motor->Thermistor), MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
                 break;
             case THERMISTOR_STATUS_FAULT:
                 p_motor->FaultFlags.Overheat = 1U;
@@ -94,7 +94,7 @@ static inline void Motor_HallEncoderA_ISR(MotorPtr_T p_motor)
 {
     Encoder_OnPhaseA_ISR(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
-    if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureRotorAngle_ISR(&p_motor->Hall); }
+    if(p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureRotorAngle_ISR(&p_motor->Hall); }
 #endif
 }
 
@@ -102,7 +102,7 @@ static inline void Motor_HallEncoderB_ISR(MotorPtr_T p_motor)
 {
     Encoder_OnPhaseB_ISR(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
-    if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureRotorAngle_ISR(&p_motor->Hall); }
+    if(p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureRotorAngle_ISR(&p_motor->Hall); }
 #endif
 }
 
@@ -110,13 +110,13 @@ static inline void Motor_HallEncoderAB_ISR(MotorPtr_T p_motor)
 {
     Encoder_OnPhaseAB_ISR(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
-    if(p_motor->Parameters.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureRotorAngle_ISR(&p_motor->Hall); }
+    if(p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureRotorAngle_ISR(&p_motor->Hall); }
 #endif
 }
 
 static inline void Motor_HallEncoderCZ_ISR(MotorPtr_T p_motor)
 {
-    switch(p_motor->Parameters.SensorMode)
+    switch(p_motor->Config.SensorMode)
     {
         case MOTOR_SENSOR_MODE_ENCODER:
             Encoder_OnIndex_ISR(&p_motor->Encoder);

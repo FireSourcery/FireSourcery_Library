@@ -94,7 +94,7 @@ typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
     /* Configurable Length */
     /*
         Read/Write by VarId:
-        Real-Time Variable, NvMemory Parameters, Call functions passing 1 argument
+        Real-Time Variable, NvMemory Config, Call functions passing 1 argument
     */
     MOT_PACKET_VAR_READ = 0xB3U,         /* Up to 16 uint16_t values */ /* Up to 8 uint32_t values */
     MOT_PACKET_VAR_WRITE = 0xB4U,        /* Up to 8 uint16_t values */ /* Up to 4 uint32_t values */

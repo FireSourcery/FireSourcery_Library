@@ -319,11 +319,11 @@ uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataPacket) 
 // uint32_t MotPacket_VersionResp_Parse(const MotPacket_VersionResp_T * p_respPacket) { return (*(uint32_t *)&p_respPacket->VersionResp.Version[0U]); }
 
 // /******************************************************************************/
-// /*! Save Nvm Params */
+// /*! Save Nvm Config */
 // /******************************************************************************/
 // uint8_t MotPacket_CallReq_Build(MotPacket_CallReq_T * p_reqPacket)
 // {
-//     return MotPacket_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_SAVE_PARAMS, 0U, MOT_PACKET_STATUS_OK);
+//     return MotPacket_BuildHeader((MotPacket_T *)p_reqPacket, MOT_PACKET_SAVE_CONFIG, 0U, MOT_PACKET_STATUS_OK);
 // }
 // uint8_t MotPacket_CallReq_GetRespLength(void) { return sizeof(MotPacket_CallResp_T); }
 // /* returns NvMemory Write Status */

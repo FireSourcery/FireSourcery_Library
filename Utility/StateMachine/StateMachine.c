@@ -49,7 +49,7 @@
 static inline bool EnterCritical(StateMachine_T * p_stateMachine)
 {
 #if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
-    return (p_stateMachine.CONFIG.USE_CRITICAL == true) ? Critical_AcquireEnter(&p_stateMachine->Mutex) : true;
+    return (p_stateMachine.CONST.USE_CRITICAL == true) ? Critical_AcquireEnter(&p_stateMachine->Mutex) : true;
 #else
     (void)p_stateMachine;
     return true;
@@ -59,7 +59,7 @@ static inline bool EnterCritical(StateMachine_T * p_stateMachine)
 static inline void ExitCritical(StateMachine_T * p_stateMachine)
 {
 #if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
-    if(p_stateMachine.CONFIG.USE_CRITICAL == true) { Critical_ReleaseExit(&p_stateMachine->Mutex) };
+    if(p_stateMachine.CONST.USE_CRITICAL == true) { Critical_ReleaseExit(&p_stateMachine->Mutex) };
 #else
     (void)p_stateMachine;
 #endif
@@ -67,8 +67,8 @@ static inline void ExitCritical(StateMachine_T * p_stateMachine)
 
 static void Reset(StateMachine_T * p_stateMachine)
 {
-    p_stateMachine->p_StateActive = p_stateMachine->CONFIG.P_MACHINE->P_STATE_INITIAL;
-    if(p_stateMachine->p_StateActive->ENTRY != NULL) { p_stateMachine->p_StateActive->ENTRY(p_stateMachine->CONFIG.P_CONTEXT); }
+    p_stateMachine->p_StateActive = p_stateMachine->CONST.P_MACHINE->P_STATE_INITIAL;
+    if(p_stateMachine->p_StateActive->ENTRY != NULL) { p_stateMachine->p_StateActive->ENTRY(p_stateMachine->CONST.P_CONTEXT); }
 }
 
 /*
@@ -76,7 +76,7 @@ static void Reset(StateMachine_T * p_stateMachine)
 */
 static inline void ProcStateOuput(const StateMachine_T * p_stateMachine)
 {
-    p_stateMachine->p_StateActive->LOOP(p_stateMachine->CONFIG.P_CONTEXT);
+    p_stateMachine->p_StateActive->LOOP(p_stateMachine->CONST.P_CONTEXT);
 }
 
 /*!
@@ -85,7 +85,7 @@ static inline void ProcStateOuput(const StateMachine_T * p_stateMachine)
 */
 static inline bool isAcceptInput(const StateMachine_T * p_stateMachine, statemachine_input_id_t inputId)
 {
-    return ((inputId < p_stateMachine->CONFIG.P_MACHINE->TRANSITION_TABLE_LENGTH) && (p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId] != NULL));
+    return ((inputId < p_stateMachine->CONST.P_MACHINE->TRANSITION_TABLE_LENGTH) && (p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId] != NULL));
 }
 /*!
     @return null for self-transition without processing ENTRY,
@@ -103,8 +103,8 @@ static inline bool isAcceptInput(const StateMachine_T * p_stateMachine, statemac
 */
 static inline void ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    // StateMachine_State_T * p_newState = TransitionFunction(p_stateMachine->p_StateActive, p_stateMachine->CONFIG.P_CONTEXT, inputId, inputValue);
-    StateMachine_State_T * p_newState = p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId](p_stateMachine->CONFIG.P_CONTEXT, inputValue);
+    // StateMachine_State_T * p_newState = TransitionFunction(p_stateMachine->p_StateActive, p_stateMachine->CONST.P_CONTEXT, inputId, inputValue);
+    StateMachine_State_T * p_newState = p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId](p_stateMachine->CONST.P_CONTEXT, inputValue);
     if(p_newState != NULL) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); }
 }
 
@@ -126,8 +126,8 @@ static bool ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t i
 */
 void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState)
 {
-    if(p_stateMachine->p_StateActive->EXIT != NULL) { p_stateMachine->p_StateActive->EXIT(p_stateMachine->CONFIG.P_CONTEXT); }
-    if(p_newState->ENTRY != NULL) { p_newState->ENTRY(p_stateMachine->CONFIG.P_CONTEXT); }
+    if(p_stateMachine->p_StateActive->EXIT != NULL) { p_stateMachine->p_StateActive->EXIT(p_stateMachine->CONST.P_CONTEXT); }
+    if(p_newState->ENTRY != NULL) { p_newState->ENTRY(p_stateMachine->CONST.P_CONTEXT); }
     p_stateMachine->p_StateActive = p_newState;
     /*
         Async may selectively implement critical. If unprotected:

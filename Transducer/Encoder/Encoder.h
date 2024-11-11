@@ -79,7 +79,7 @@ typedef enum Encoder_Align
 }
 Encoder_Align_T;
 
-typedef struct Encoder_Params
+typedef struct Encoder_Config
 {
     uint16_t CountsPerRevolution;         /* Derive Angular Units. Max for counting AngularD, CaptureDeltaT mode need 2nd TimerCounterMax */
     uint16_t ScalarSpeedRef_Rpm;         /* Derive Scalar16 Units. */
@@ -95,10 +95,11 @@ typedef struct Encoder_Params
     bool IsALeadBPositive;                 /* User runtime calibration for encoder install direction, combine with compile time defined QUADRATURE_A_LEAD_B_INCREMENT */
 #endif
 }
-Encoder_Params_T;
+Encoder_Config_T;
 
-typedef const struct Encoder_Config
+typedef const struct Encoder_Const
 {
+    const Encoder_Config_T * const P_CONFIG;
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     HAL_Encoder_Counter_T * const P_HAL_ENCODER_COUNTER; /*!< Pulse Counter */
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
@@ -113,14 +114,13 @@ typedef const struct Encoder_Config
     const uint32_t EXTENDED_TIMER_FREQ;
     const uint32_t POLLING_FREQ;        /*!< DeltaT Interpolation Freq. */
     const uint32_t SAMPLE_FREQ;         /*!< DeltaD Speed Sample Freq. */
-    const Encoder_Params_T * const P_PARAMS;
 }
-Encoder_Config_T;
+Encoder_Const_T;
 
 typedef struct Encoder
 {
-    const Encoder_Config_T CONFIG;
-    Encoder_Params_T Params;
+    const Encoder_Const_T CONST;
+    Encoder_Config_T Config;
 #if defined(CONFIG_ENCODER_HW_EMULATED)
     Pin_T PinA;
     Pin_T PinB;
@@ -156,7 +156,7 @@ typedef struct Encoder
     // uint32_t DeltaSpeed;     /*!< Save for acceleration calc */
 
     /*
-        Unit conversion. derived on init from Nv Params
+        Unit conversion. derived on init from Nv Config
     */
     uint32_t UnitT_Freq;                    /*!< Common Units propagating set depending on mode. T unit(seconds) conversion factor. */
     uint32_t UnitAngularD;                     /*!< [0xFFFFFFFFU/CountsPerRevolution + 1]         => Angle = PulseCounter * UnitAngle_Factor >> (32 - DEGREES_BITS) */
@@ -198,15 +198,15 @@ Encoder_T;
     #define _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)
 #endif
 
-#define ENCODER_INIT(p_CounterHal, p_PhaseAHal, PhaseAId, p_PinAHal, PinAId, p_PhaseBHal, PhaseBId, p_PinBHal, PinBId, p_PhaseZHal, PhaseZId, p_TimerHal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, p_Params)    \
+#define ENCODER_INIT(p_CounterHal, p_PhaseAHal, PhaseAId, p_PinAHal, PinAId, p_PhaseBHal, PhaseBId, p_PinBHal, PinBId, p_PhaseZHal, PhaseZId, p_TimerHal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, p_Config)    \
 {                                                                                                                           \
-    .CONFIG =                                                                                                               \
+    .CONST =                                                                                                               \
     {                                                                                                                       \
         _ENCODER_INIT_HW_COUNTER(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId)         \
         .P_HAL_ENCODER_TIMER    = p_TimerHal,            .TIMER_FREQ           = TimerFreq,                                 \
         .P_EXTENDED_TIMER       = p_ExtendedTimer,       .EXTENDED_TIMER_FREQ  = ExtendedTimerFreq,                         \
         .POLLING_FREQ           = PollingFreq,           .SAMPLE_FREQ          = SpeedSampleFreq,                           \
-        .P_PARAMS               = p_Params,                                                                                 \
+        .P_CONFIG               = p_Config,                                                                                 \
     },                                                                                                                      \
     _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)                                                             \
 }
@@ -222,7 +222,7 @@ typedef int32_t(*Encoder_Get_T)(const Encoder_T * p_encoder);
 static inline void Encoder_CaptureMode_Proc(Encoder_T * p_encoder, Encoder_Proc_T quadratureFunction, Encoder_Proc_T singlePhaseFunction)
 {
 #if     defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-    if(p_encoder->Params.IsQuadratureCaptureEnabled == true)     { quadratureFunction(p_encoder); }
+    if(p_encoder->Config.IsQuadratureCaptureEnabled == true)     { quadratureFunction(p_encoder); }
     else                                                         { singlePhaseFunction(p_encoder); }
 #else
     (void)quadratureFunction; singlePhaseFunction(p_encoder);
@@ -232,7 +232,7 @@ static inline void Encoder_CaptureMode_Proc(Encoder_T * p_encoder, Encoder_Proc_
 static inline int32_t Encoder_CaptureMode_Get(const Encoder_T * p_encoder, Encoder_Get_T quadratureFunction, Encoder_Get_T singlePhaseFunction)
 {
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-    return (p_encoder->Params.IsQuadratureCaptureEnabled == true) ? quadratureFunction(p_encoder) : singlePhaseFunction(p_encoder);
+    return (p_encoder->Config.IsQuadratureCaptureEnabled == true) ? quadratureFunction(p_encoder) : singlePhaseFunction(p_encoder);
 #else
     (void)quadratureFunction; return singlePhaseFunction(p_encoder);
 #endif
@@ -252,7 +252,7 @@ static inline void _Encoder_ZeroPulseCount(Encoder_T * p_encoder)
 static inline int32_t Encoder_GetCounterD(const Encoder_T * p_encoder)
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
-    return HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
+    return HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
     return p_encoder->CounterD;
 #endif
@@ -261,7 +261,7 @@ static inline int32_t Encoder_GetCounterD(const Encoder_T * p_encoder)
 static inline uint32_t _Encoder_GetAngle32(const Encoder_T * p_encoder)
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
-    return HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER) * (int32_t)p_encoder->UnitAngularD;
+    return HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER) * (int32_t)p_encoder->UnitAngularD;
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
     return p_encoder->Angle32;
 #endif
@@ -280,7 +280,7 @@ static inline uint16_t Encoder_GetAngle_SinglePhase(Encoder_T * p_encoder) { ret
     Convert signed capture to user reference
     Captured as ALeadB is positive by default
 */
-static inline int32_t Encoder_GetDirection_Quadrature(const Encoder_T * p_encoder) { return (p_encoder->Params.IsALeadBPositive == true) ? 1 : -1; }
+static inline int32_t Encoder_GetDirection_Quadrature(const Encoder_T * p_encoder) { return (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }
 static inline uint16_t Encoder_GetAngle_Quadrature(Encoder_T * p_encoder) { return Encoder_GetDirection_Quadrature(p_encoder) * _Encoder_GetAngle(p_encoder); }
 
 
@@ -302,9 +302,9 @@ static inline uint16_t Encoder_GetAngle_Scalar(const Encoder_T * p_encoder, uint
     /* Overflow: counterD > CountsPerRevolution, UnitAngularD == UINT32_MAX / CountsPerRevolution */
 static inline uint32_t Encoder_AngleFromCounterD(Encoder_T * p_encoder, uint32_t counterD_Ticks)
 {
-    return (counterD_Ticks < p_encoder->Params.CountsPerRevolution) ?
+    return (counterD_Ticks < p_encoder->Config.CountsPerRevolution) ?
         ((counterD_Ticks * p_encoder->UnitAngularD) >> ENCODER_ANGLE_SHIFT) :
-        ((counterD_Ticks << ENCODER_ANGLE_BITS) / p_encoder->Params.CountsPerRevolution);
+        ((counterD_Ticks << ENCODER_ANGLE_BITS) / p_encoder->Config.CountsPerRevolution);
 }
 
 static inline uint32_t Encoder_CounterDFromAngle(Encoder_T * p_encoder, uint16_t angle_UserDegrees)

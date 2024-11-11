@@ -89,7 +89,7 @@ static void ReadVar_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t 
     //     case MOT_VAR_PARAM_TEST_2:        break;                        /* Value 32-bit */
     //     case MOT_VAR_PARAM_TEST_3:        break;                        /* Value 0, 1 */
     //     case MOT_VAR_PARAM_TEST_4:        break;                        /* Value enum: 0:White, 1:Black, 2:Red, */
-    //     // case MOT_VAR_PARAM_TEST_5:    value = p_mc->Parameters.Test[4U];    break;                        /*   */
+    //     // case MOT_VAR_PARAM_TEST_5:    value = p_mc->Config.Test[4U];    break;                        /*   */
 
     //     case MOT_VAR_POLE_PAIRS:                        break;
     //     case MOT_VAR_SPEED_FEEDBACK_REF_RPM:    break;
@@ -180,7 +180,7 @@ static const Protocol_Req_T REQ_TABLE[] =
     PROTOCOL_REQ_DEFINE(MOT_PACKET_STOP_ALL,             StopAll_ParseResp,         0U,     PROTOCOL_SYNC_ID_DISABLE),  //todo sync set wait for ack, retx if resp is nack
     PROTOCOL_REQ_DEFINE(MOT_PACKET_READ_VAR,             ReadVar_ParseResp,         0U,     PROTOCOL_SYNC_ID_DISABLE),
     PROTOCOL_REQ_DEFINE(MOT_PACKET_WRITE_VAR,             WriteVar_ParseResp,     0U,     PROTOCOL_SYNC_ID_DISABLE),
-    PROTOCOL_REQ_DEFINE(MOT_PACKET_SAVE_PARAMS,             SaveNvm_ParseResp,         0U,     PROTOCOL_SYNC_ID_DISABLE),
+    PROTOCOL_REQ_DEFINE(MOT_PACKET_SAVE_CONFIG,             SaveNvm_ParseResp,         0U,     PROTOCOL_SYNC_ID_DISABLE),
     // PROTOCOL_REQ_DEFINE(MOT_PACKET_INIT_UNITS,             InitUnits_ParseResp,     0U,     PROTOCOL_SYNC_ID_DISABLE),
     // PROTOCOL_REQ_DEFINE(MOT_PACKET_INIT_UNITS,             0U,     InitUnits_ProcReqRespExt,     PROTOCOL_SYNC_ID_DISABLE), /todo statful
     // PROTOCOL_REQ_DEFINE(MOT_PACKET_CONTROL_TYPE,         Control_ParseResp,         0U,     PROTOCOL_SYNC_ID_DISABLE),
@@ -200,7 +200,7 @@ void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_
         case MOT_PACKET_STOP_ALL:             *p_txLength = MotPacket_StopReq_Build((MotPacket_StopReq_T *)p_txPacket);             break;
         case MOT_PACKET_READ_VAR:              *p_txLength = MotPacket_ReadVarReq_Build((MotPacket_ReadVarReq_T *)p_txPacket, p_app->MotorReadVarId); break;
         case MOT_PACKET_WRITE_VAR:             *p_txLength = MotPacket_WriteVarReq_Build((MotPacket_WriteVarReq_T *)p_txPacket, p_app->MotorWriteVarId, p_app->MotorWriteVarValue); break;
-        case MOT_PACKET_SAVE_PARAMS:             *p_txLength = MotPacket_SaveNvmReq_Build((MotPacket_SaveNvmReq_T *)p_txPacket);        break;
+        case MOT_PACKET_SAVE_CONFIG:             *p_txLength = MotPacket_SaveNvmReq_Build((MotPacket_SaveNvmReq_T *)p_txPacket);        break;
 
         // case MOT_PACKET_INIT_UNITS:         *p_txLength = MotPacket_InitUnitsReq_Build((MotPacket_InitUnitsReq_T *)p_txPacket);        break;
         case MOT_PACKET_REBOOT:                         break;

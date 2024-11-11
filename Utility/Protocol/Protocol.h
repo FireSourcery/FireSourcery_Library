@@ -312,7 +312,9 @@ typedef enum Protocol_ReqState
 }
 Protocol_ReqState_T;
 
-typedef struct Protocol_Params
+
+
+typedef struct Protocol_Config
 {
     uint8_t XcvrId;
     uint8_t SpecsId;
@@ -323,10 +325,11 @@ typedef struct Protocol_Params
     //uint32_t ReqExtTimeOut
     bool IsEnableOnInit;     /* enable on start up */
 }
-Protocol_Params_T;
+Protocol_Config_T;
 
-typedef const struct Protocol_Config
+typedef const struct Protocol_Const
 {
+    const Protocol_Config_T * const P_CONFIG;
     uint8_t * const P_RX_PACKET_BUFFER;
     uint8_t * const P_TX_PACKET_BUFFER;
     const uint8_t PACKET_BUFFER_LENGTH;                         /* Must be greater than Specs RX_LENGTH_MAX */
@@ -335,14 +338,13 @@ typedef const struct Protocol_Config
     const Protocol_Specs_T * const * const PP_SPECS_TABLE;      /* Bound and verify specs selection. Pointer to table of pointers to Specs, Specs not necessarily in a contiguous array */
     const uint8_t SPECS_COUNT;
     const volatile uint32_t * const P_TIMER;
-    const Protocol_Params_T * const P_PARAMS;
 }
-Protocol_Config_T;
+Protocol_Const_T;
 
 typedef struct Protocol
 {
-    const Protocol_Config_T CONFIG;
-    Protocol_Params_T Params;
+    const Protocol_Const_T CONST;
+    Protocol_Config_T Config;
     Xcvr_T Xcvr;
     const Protocol_Specs_T * p_Specs; /* Active protocol */
     // Datagram_T Datagram; // configurable broadcast
@@ -381,9 +383,9 @@ Protocol_T;
 
 #define _PROTOCOL_XCVR_INIT(p_XcvrTable, TableLength) .Xcvr = XCVR_INIT(p_XcvrTable, TableLength),
 
-#define PROTOCOL_INIT(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubstateBuffer, p_SpecsTable, SpecsCount, p_XcvrTable, XcvrCount, p_Timer, p_Params)    \
+#define PROTOCOL_INIT(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubstateBuffer, p_SpecsTable, SpecsCount, p_XcvrTable, XcvrCount, p_Timer, p_Config)    \
 {                                                                \
-    .CONFIG =                                                    \
+    .CONST =                                                    \
     {                                                            \
         .P_RX_PACKET_BUFFER     = p_RxBuffer,                    \
         .P_TX_PACKET_BUFFER     = p_TxBuffer,                    \
@@ -393,7 +395,7 @@ Protocol_T;
         .PP_SPECS_TABLE         = p_SpecsTable,                  \
         .SPECS_COUNT            = SpecsCount,                    \
         .P_TIMER                = p_Timer,                       \
-        .P_PARAMS               = p_Params,                      \
+        .P_CONFIG               = p_Config,                      \
     },                                                           \
     _PROTOCOL_XCVR_INIT(p_XcvrTable, XcvrCount)                  \
 }
@@ -415,8 +417,8 @@ static inline Protocol_ReqCode_T Protocol_GetReqStatus(const Protocol_T * p_prot
 /*
     User must reboot. Does propagate set. Current settings remain active until reboot.
 */
-static inline void Protocol_EnableOnInit(Protocol_T * p_protocol)   { p_protocol->Params.IsEnableOnInit = true; }
-static inline void Protocol_DisableOnInit(Protocol_T * p_protocol)  { p_protocol->Params.IsEnableOnInit = false; }
+static inline void Protocol_EnableOnInit(Protocol_T * p_protocol)   { p_protocol->Config.IsEnableOnInit = true; }
+static inline void Protocol_DisableOnInit(Protocol_T * p_protocol)  { p_protocol->Config.IsEnableOnInit = false; }
 
 /*
     Extern

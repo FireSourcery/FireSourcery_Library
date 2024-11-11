@@ -24,7 +24,7 @@
 /*!
     @file   Config.h
     @author FireSourcery
-    @brief  Motor module preprocessor configuration options and defaults
+    @brief  Motor module preprocessor conditional compilation options and defaults
     @version V0
 */
 /******************************************************************************/
@@ -98,10 +98,10 @@
 #endif
 
 /* reboot for params to take effect when disabled */
-#if     defined(CONFIG_MOTOR_PARAMS_PROPAGATE_SET_DISABLE)
-#elif   defined(CONFIG_MOTOR_PARAMS_PROPAGATE_SET_ENABLE)
+#if     defined(CONFIG_MOTOR_CONFIG_PROPAGATE_SET_DISABLE)
+#elif   defined(CONFIG_MOTOR_CONFIG_PROPAGATE_SET_ENABLE)
 #else
-        #define CONFIG_MOTOR_PARAMS_PROPAGATE_SET_ENABLE
+        #define CONFIG_MOTOR_CONFIG_PROPAGATE_SET_ENABLE
 #endif
 
 #if     defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL)

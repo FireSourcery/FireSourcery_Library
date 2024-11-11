@@ -55,11 +55,11 @@
 //    //for each partition in flash, check dest
 //    for (uint8_t iPartition = 0; iPartition < 1U; iPartition++) //CONFIG_NV_MEMORY_PARTITION_COUNT
 //    {
-//        if (Flash_CheckBoundary(p_nvMemory->CONFIG.P_FLASH, p_dest) == true)
+//        if (Flash_CheckBoundary(p_nvMemory->CONST.P_FLASH, p_dest) == true)
 //        {
 //            id = NV_MEMORY_ID_FLASH;
 //        }
-//        else if (EEPROM_CheckBoundary(p_nvMemory->CONFIG.P_EEPROM, p_dest) == true)
+//        else if (EEPROM_CheckBoundary(p_nvMemory->CONST.P_EEPROM, p_dest) == true)
 //        {
 //            id = NV_MEMORY_ID_EEPROM;
 //        }

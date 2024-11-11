@@ -43,15 +43,15 @@ typedef enum Debounce_Edge
 }
 Debounce_Edge_T;
 
-typedef const struct Debounce_Config
+typedef const struct Debounce_Const
 {
     const volatile uint32_t * const P_TIMER;
 }
-Debounce_Config_T;
+Debounce_Const_T;
 
 typedef struct Debounce
 {
-    Debounce_Config_T CONFIG;
+    Debounce_Const_T CONST;
     Pin_T Pin;
     uint16_t DebounceTime;    /* Outer module set single param */
     uint16_t TimePrev;
@@ -63,7 +63,7 @@ Debounce_T;
 
 #define DEBOUNCE_INIT(p_PinHal, PinId, PinIsInvert, p_Timer)    \
 {                                                               \
-    .CONFIG =  { .P_TIMER = p_Timer, },                         \
+    .CONST =  { .P_TIMER = p_Timer, },                         \
     .Pin = PIN_INIT_INVERT(p_PinHal, PinId, PinIsInvert),       \
 }
 

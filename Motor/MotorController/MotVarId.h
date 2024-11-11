@@ -33,48 +33,32 @@
 
 #include <stdint.h>
 
-/* Alternatively move to individual modules */
+/* todo move base layer to individual modules */
+
+/******************************************************************************/
+/*!
+    @note
+    RealTime
+        Monitor -> Read-Only
+            Get/Output
+        Cmd -> Write-Only, Get returns 0
+            Set/Input
+        Control -> Read/Write
+            Access/IO
+            May be paired getter/setter or a single variable
+            Analogously a control loop in/out may differ
+*/
+/******************************************************************************/
 
 /******************************************************************************/
 /*
-    RealTime Monitor -> Read-Only, always active
+    Motor - Use instance index
 */
 /******************************************************************************/
 /*
-*/
-typedef enum MotVarId_Monitor_General
-{
-    MOT_VAR_ZERO,
-    MOT_VAR_MILLIS,
-    MOT_VAR_DEBUG,
-    MOT_VAR_MC_STATE,
-    MOT_VAR_MC_STATUS_FLAGS,
-    MOT_VAR_MC_FAULT_FLAGS,
-    MOT_VAR_V_SOURCE,
-    MOT_VAR_V_SENSOR,
-    MOT_VAR_V_ACCS,
-    MOT_VAR_BATTERY_CHARGE, // if CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-    MOT_VAR_HEAT_PCB,
-    MOT_VAR_HEAT_MOSFETS,
-}
-MotVarId_Monitor_General_T;
-
-typedef enum MotVarId_Monitor_AnalogUser
-{
-    MOT_VAR_ANALOG_THROTTLE,
-    MOT_VAR_ANALOG_THROTTLE_DIN,
-    MOT_VAR_ANALOG_BRAKE,
-    MOT_VAR_ANALOG_BRAKE_DIN,
-}
-MotVarId_Monitor_AnalogUser_T;
-
-/*
-    Speed/IPhase
+    Speed/IPhase/VPhase/Power
         Units0 => UFrac16, may over saturate
 */
-// ControlTimerBase;
-// Motor_OpenLoopState_T OpenLoopState;
-// Motor_CalibrationState_T CalibrationState;
 typedef enum MotVarId_Monitor_Motor
 {
     MOT_VAR_SPEED,
@@ -83,14 +67,17 @@ typedef enum MotVarId_Monitor_Motor
     MOT_VAR_ELECTRICAL_ANGLE,
     MOT_VAR_MECHANICAL_ANGLE,
     MOT_VAR_POWER,
-    MOT_VAR_MOTOR_SET_POINT,        // Ramp Output
+    MOT_VAR_MOTOR_HEAT,
     MOT_VAR_MOTOR_STATE,
     MOT_VAR_MOTOR_STATUS_FLAGS,
     MOT_VAR_MOTOR_FAULT_FLAGS,
-    MOT_VAR_MOTOR_HEAT,
+    MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,
     MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT,
     MOT_VAR_MOTOR_ACTIVE_I_LIMIT,
     // MOT_VAR_MOTOR_V_SPEED,
+// ControlTimerBase;
+// Motor_OpenLoopState_T OpenLoopState;
+// Motor_CalibrationState_T CalibrationState;
 }
 MotVarId_Monitor_Motor_T;
 
@@ -115,84 +102,118 @@ typedef enum MotVarId_Monitor_MotorSensor
 }
 MotVarId_Monitor_MotorSensor_T;
 
+/*
+    Value [-32768:32767]
+*/
+typedef enum MotVarId_Cmd_Motor
+{
+    // MOT_VAR_MOTOR_USER_CMD,      // RampIn/UserCmd, (RampOut/SetPoint). Always reflects the input value. Processed read value use MOT_VAR_MOTOR_SET_POINT
+    MOT_VAR_MOTOR_CMD_SPEED,        // UserCmd as Speed
+    MOT_VAR_MOTOR_CMD_CURRENT,
+    MOT_VAR_MOTOR_CMD_VOLTAGE,
+    MOT_VAR_MOTOR_CMD_ANGLE,
+    MOT_VAR_MOTOR_CMD_OPEN_LOOP,
+    MOT_VAR_MOTOR_FORCE_DISABLE_CONTROL,
+    MOT_VAR_MOTOR_TRY_RELEASE,
+    MOT_VAR_MOTOR_TRY_HOLD,
+    MOT_VAR_MOTOR_CLEAR_FAULT,
+}
+MotVarId_Cmd_Motor_T;
+
+typedef enum MotVarId_Control_Motor
+{
+    MOT_VAR_MOTOR_DIRECTION,            // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
+    MOT_VAR_MOTOR_USER_SET_POINT,       // RampIn/RampOut, Generic mode select
+    MOT_VAR_MOTOR_USER_SPEED_LIMIT,     // Read Active, Write buffered user value
+    MOT_VAR_MOTOR_USER_I_LIMIT,
+    // MOT_VAR_MOTOR_USER_FEEDBACK_MODE, // generally set by inclusion, or config base
+}
+MotVarId_Control_Motor_T;
 
 /******************************************************************************/
 /*
-    Real-Time Control -> Disabled on select
-    MonitorControl -> Read/Write
-        Effectively paired request/response Ids
-        Control is readable, analogously a control loop in/out may differ
-    Control -> Write-Only, Read returns 0
-        Cmd is not readable
+    MotorController/General
 */
 /******************************************************************************/
+typedef enum MotVarId_Monitor_General
+{
+    MOT_VAR_ZERO,
+    MOT_VAR_MILLIS,
+    MOT_VAR_DEBUG,
+    MOT_VAR_MC_STATE,
+    MOT_VAR_MC_STATUS_FLAGS,
+    MOT_VAR_MC_FAULT_FLAGS,
+    MOT_VAR_V_SOURCE,
+    MOT_VAR_V_SENSOR,
+    MOT_VAR_V_ACCS,
+    MOT_VAR_BATTERY_CHARGE, // if CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
+    MOT_VAR_HEAT_PCB,
+    MOT_VAR_HEAT_MOSFETS,
+    // MOT_VAR_HEAT_MOSFETS_TOP,
+    // MOT_VAR_HEAT_MOSFETS_BOT,
+    // MOT_VAR_HEAT_MOSFETS_2,
+    // MOT_VAR_HEAT_MOSFETS_3,
+}
+MotVarId_Monitor_General_T;
+
+typedef enum MotVarId_Monitor_AnalogUser
+{
+    MOT_VAR_ANALOG_THROTTLE,
+    MOT_VAR_ANALOG_THROTTLE_DIN,
+    MOT_VAR_ANALOG_BRAKE,
+    MOT_VAR_ANALOG_BRAKE_DIN,
+}
+MotVarId_Monitor_AnalogUser_T;
+
 /*
-    Read Values may differ from write
-    Motor Vars use instance
+    Collective set motors for convenience
+    get use individual motor instanace
+
+    Direction or DriveState use feedback. Other
 */
+typedef enum MotVarId_Cmd
+{
+    MOT_VAR_BEEP,
+    MOT_VAR_USER_CMD,                       // [-32768:32767] Drive Value - Throttle, Brake, Servo In, pending FeedbackMode
+    MOT_VAR_USER_FEEDBACK_MODE,             // Pair with MOT_VAR_USER_CMD
+    MOT_VAR_TRY_HOLD,                       // bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
+    MOT_VAR_TRY_RELEASE,                    // same as either neutral or driveZero
+    MOT_VAR_FORCE_DISABLE_CONTROL,          // Force Disable control Non StateMachine checked, also handled via Call
+    MOT_VAR_CLEAR_FAULT,
+    /*
+        Brake and Throttle invoke SubStates
+        If both are set, one must be 0 and is ignored
+        if both are 0, invoke DriveZeroMode
+    */
+    MOT_VAR_THROTTLE,                       // [0:65535]
+    MOT_VAR_BRAKE,                          // [0:65535]
+}
+MotVarId_Cmd_T;
+
 typedef enum MotVarId_Control
 {
     MOT_VAR_DIRECTION,                      // MotorController_Direction_T,
 }
 MotVarId_Control_T;
 
-/* Write-Only */
-typedef enum MotVarId_Cmd
-{
-    MOT_VAR_BEEP,
-    MOT_VAR_USER_CMD,                       // Value [-32768:32767] Throttle, Brake, Servo In, pending feedbackMode
-    MOT_VAR_THROTTLE,                       // Value [0:65535]
-    MOT_VAR_BRAKE,                          // Value [0:65535]
-    MOT_VAR_RELEASE_CONTROL,
-    MOT_VAR_DISABLE_CONTROL,
-    MOT_VAR_CLEAR_FAULT,
-}
-MotVarId_Cmd_T;
-
-typedef enum MotVarId_Control_Motor
-{
-    MOT_VAR_MOTOR_DIRECTION,                // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
-    MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,     // Write buffered user value, read state value
-}
-MotVarId_Control_Motor_T;
-
-/*
-    Use instance index
-    Value [-32768:32767]
-*/
-typedef enum MotVarId_Cmd_Motor
-{
-    MOT_VAR_MOTOR_USER_CMD,                 // RampIn/UserCmd, (RampOut/SetPoint). Always reflects the input value. Processed read value use MOT_VAR_MOTOR_SET_POINT
-    MOT_VAR_MOTOR_CMD_SPEED,                // UserCmd as Speed
-    MOT_VAR_MOTOR_CMD_CURRENT,
-    MOT_VAR_MOTOR_CMD_VOLTAGE,
-    MOT_VAR_MOTOR_CMD_ANGLE,
-    MOT_VAR_MOTOR_CMD_OPEN_LOOP,
-    // MOT_VAR_MOTOR_RELEASE_CONTROL,
-    // MOT_VAR_MOTOR_DISABLE,
-    // MOT_VAR_MOTOR_CLEAR_FAULT,
-    MOT_VAR_MOTOR_USER_SPEED_LIMIT,
-    MOT_VAR_MOTOR_USER_I_LIMIT,
-}
-MotVarId_Cmd_Motor_T;
 
 /******************************************************************************/
 /*
-    Parameter
+    Config
 */
 /******************************************************************************/
 /*
     Instance0 -> Motor[0]
-    Enum values for => Motor_CommutationMode_T,
-    Motor_SensorMode_T,
-    Motor_FeedbackModeId_T,
-    Motor_DirectionCalibration_T
+    Enum values for =>
+        Motor_CommutationMode_T,
+        Motor_SensorMode_T,
+        Motor_FeedbackModeId_T,
+        Motor_DirectionCalibration_T
 */
-typedef enum MotVarId_Params_MotorPrimary
+typedef enum MotVarId_Config_MotorPrimary
 {
-    MOT_VAR_COMMUTATION_MODE,
+    MOT_VAR_COMMUTATION_MODE, // if runtime supported
     MOT_VAR_SENSOR_MODE,
-    // MOT_VAR_MOTOR_DEFAULT_FEEDBACK_MODE, // depreciate
     MOT_VAR_DIRECTION_CALIBRATION,
     MOT_VAR_POLE_PAIRS,
     MOT_VAR_KV,
@@ -203,13 +224,13 @@ typedef enum MotVarId_Params_MotorPrimary
     MOT_VAR_IC_ZERO_REF_ADCU,
     MOT_VAR_I_PEAK_REF_ADCU,
 }
-MotVarId_Params_MotorPrimary_T;
+MotVarId_Config_MotorPrimary_T;
 
 /*
     Limits
         Units0 - > Scalar16
 */
-typedef enum MotVarId_Params_MotorSecondary
+typedef enum MotVarId_Config_MotorSecondary
 {
     MOT_VAR_BASE_SPEED_LIMIT_FORWARD,
     MOT_VAR_BASE_SPEED_LIMIT_REVERSE,
@@ -224,14 +245,14 @@ typedef enum MotVarId_Params_MotorSecondary
     MOT_VAR_OPEN_LOOP_ACCEL_TIME,
     MOT_VAR_PHASE_PWM_MODE,
 }
-MotVarId_Params_MotorSecondary_T;
+MotVarId_Config_MotorSecondary_T;
 
 // HostSide
 // uint16_t SurfaceDiameter;
 // uint16_t GearRatio_Factor;
 // uint16_t GearRatio_Divisor;
 
-typedef enum MotVarId_Params_MotorHall
+typedef enum MotVarId_Config_MotorHall
 {
     MOT_VAR_HALL_SENSOR_TABLE_1,
     MOT_VAR_HALL_SENSOR_TABLE_2,
@@ -240,9 +261,9 @@ typedef enum MotVarId_Params_MotorHall
     MOT_VAR_HALL_SENSOR_TABLE_5,
     MOT_VAR_HALL_SENSOR_TABLE_6,
 }
-MotVarId_Params_MotorHall_T;
+MotVarId_Config_MotorHall_T;
 
-typedef enum MotVarId_Params_MotorEncoder
+typedef enum MotVarId_Config_MotorEncoder
 {
     MOT_VAR_ENCODER_COUNTS_PER_REVOLUTION,
     MOT_VAR_ENCODER_EXTENDED_TIMER_DELTA_T_STOP,
@@ -250,12 +271,12 @@ typedef enum MotVarId_Params_MotorEncoder
     MOT_VAR_ENCODER_IS_QUADRATURE_CAPTURE_ENABLED,
     MOT_VAR_ENCODER_IS_A_LEAD_B_POSITIVE,
 }
-MotVarId_Params_MotorEncoder_T;
+MotVarId_Config_MotorEncoder_T;
 
 /*
     Sine Cos Encoder
 */
-// typedef enum MotVarId_Params_MotorSinCos
+// typedef enum MotVarId_Config_MotorSinCos
 // {
 //     MOT_VAR_SIN_COS_ZERO_ADCU,
 //     MOT_VAR_SIN_COS_MAX_ADCU,
@@ -264,13 +285,13 @@ MotVarId_Params_MotorEncoder_T;
 //     MOT_VAR_SIN_COS_IS_B_POSITIVE,
 //     MOT_VAR_SIN_COS_ELECTRICAL_ROTATIONS_PER_CYCLE,
 // }
-// MotVarId_Params_MotorSinCos_T;
+// MotVarId_Config_MotorSinCos_T;
 
 /*
     PID
     Fixed 16 Set with interface functions
 */
-typedef enum MotVarId_Params_MotorPid
+typedef enum MotVarId_Config_MotorPid
 {
     MOT_VAR_PID_SPEED_KP_FIXED16,
     MOT_VAR_PID_SPEED_KI_FIXED16,
@@ -285,7 +306,7 @@ typedef enum MotVarId_Params_MotorPid
     MOT_VAR_PID_FOC_ID_KD_FIXED16,
     MOT_VAR_PID_FOC_ID_SAMPLE_FREQ,
 }
-MotVarId_Params_MotorPid_T;
+MotVarId_Config_MotorPid_T;
 
 /*
     PID
@@ -295,9 +316,7 @@ MotVarId_Params_MotorPid_T;
 // Prop_Gain_Shift,
 // Integral_Gain,
 // Integral_Gain_Shift,
-
-
-typedef enum MotVarId_Params_General
+typedef enum MotVarId_Config_General
 {
     MOT_VAR_V_SOURCE_REF_VOLTS,
     MOT_VAR_DEFAULT_FEEDBACK_MODE,          // Motor_FeedbackMode_T
@@ -316,9 +335,9 @@ typedef enum MotVarId_Params_General
     // MOT_VAR_BATTERY_FULL_ADCU,
     // MOT_VAR_BOOT_REF,
 }
-MotVarId_Params_General_T;
+MotVarId_Config_General_T;
 
-typedef enum MotVarId_Params_AnalogUser
+typedef enum MotVarId_Config_AnalogUser
 {
     MOT_VAR_ANALOG_THROTTLE_ZERO_ADCU,
     MOT_VAR_ANALOG_THROTTLE_MAX_ADCU,
@@ -330,12 +349,12 @@ typedef enum MotVarId_Params_AnalogUser
     MOT_VAR_ANALOG_DIN_BRAKE_IS_ENABLE,
     MOT_VAR_ANALOG_DIRECTION_PINS,
 }
-MotVarId_Params_AnalogUser_T;
+MotVarId_Config_AnalogUser_T;
 
 /*
     Use instance Id
 */
-typedef enum MotVarId_Params_Protocol
+typedef enum MotVarId_Config_Protocol
 {
     MOT_VAR_PROTOCOL_XCVR_ID,
     MOT_VAR_PROTOCOL_SPECS_ID,
@@ -344,7 +363,7 @@ typedef enum MotVarId_Params_Protocol
  //  MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE,
     MOT_VAR_PROTOCOL_IS_ENABLED,
 }
-MotVarId_Params_Protocol_T;
+MotVarId_Config_Protocol_T;
 
 /*
     Instance0 -> Pcb
@@ -352,7 +371,7 @@ MotVarId_Params_Protocol_T;
     Instance2 -> Mosfets1
     Instance3 -> Motor[0]
 */
-typedef enum MotVarId_Params_Thermistor
+typedef enum MotVarId_Config_Thermistor
 {
     MOT_VAR_THERMISTOR_R_SERIES, // All instance Read-Only
     MOT_VAR_THERMISTOR_R_PARALLEL, // All instance Read-Only
@@ -370,17 +389,17 @@ typedef enum MotVarId_Params_Thermistor
     MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU,
     MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE,
 }
-MotVarId_Params_Thermistor_T;
+MotVarId_Config_Thermistor_T;
 
-typedef MotVarId_Params_Thermistor_T MotVarId_Params_BoardThermistor_T;
-typedef MotVarId_Params_Thermistor_T MotVarId_Params_MotorThermistor_T;
+typedef MotVarId_Config_Thermistor_T MotVarId_Config_BoardThermistor_T;
+typedef MotVarId_Config_Thermistor_T MotVarId_Config_MotorThermistor_T;
 
 /*
     Instance0 -> VSource
     Instance1 -> VSensor
     Instance2 -> VAcc
 */
-typedef enum MotVarId_Params_VMonitor
+typedef enum MotVarId_Config_VMonitor
 {
     MOT_VAR_VMONITOR_R1, // All instance Read-Only
     MOT_VAR_VMONITOR_R2, // All instance Read-Only
@@ -390,16 +409,16 @@ typedef enum MotVarId_Params_VMonitor
     MOT_VAR_VMONITOR_WARNING_LOWER_ADCU,
     MOT_VAR_VMONITOR_IS_ENABLE,
 }
-MotVarId_Params_VMonitor_T;
+MotVarId_Config_VMonitor_T;
 
-typedef enum MotVarId_Params_BootRef
+typedef enum MotVarId_Config_BootRef
 {
     MOT_VAR_BOOT_REF_FAST_BOOT,
     MOT_VAR_BOOT_REF_BEEP,
     MOT_VAR_BOOT_REF_BLINK,
     // MOT_VAR_BOOT_REF_PROTOCOL_INDEX,
 }
-MotVarId_Params_BootRef_T;
+MotVarId_Config_BootRef_T;
 
 
 /******************************************************************************/
@@ -429,30 +448,30 @@ typedef enum MotVarId_Type_RealTime /* : uint16_t */
 }
 MotVarId_Type_RealTime_T;
 
-typedef enum MotVarId_Type_Parameter
+typedef enum MotVarId_Type_Config
 {
-    MOT_VAR_ID_TYPE_PARAMS_MOTOR_PRIMARY,
-    MOT_VAR_ID_TYPE_PARAMS_MOTOR_SECONDARY,
-    MOT_VAR_ID_TYPE_PARAMS_MOTOR_HALL,
-    MOT_VAR_ID_TYPE_PARAMS_MOTOR_ENCODER,
-    MOT_VAR_ID_TYPE_PARAMS_MOTOR_THERMISTOR,
-    MOT_VAR_ID_TYPE_PARAMS_MOTOR_PID,
-    MOT_VAR_ID_TYPE_PARAMS_GENERAL,
-    MOT_VAR_ID_TYPE_PARAMS_ANALOG_USER,
-    MOT_VAR_ID_TYPE_PARAMS_VMONITOR,
-    MOT_VAR_ID_TYPE_PARAMS_BOARD_THERMISTOR,
-    MOT_VAR_ID_TYPE_PARAMS_PROTOCOL,
-    MOT_VAR_ID_TYPE_PARAMS_BOOT_REF,
-    MOT_VAR_ID_TYPE_PARAMS_END = 16U,
-    // MOT_VAR_ID_TYPE_PARAMS_THERMISTOR,
+    MOT_VAR_ID_TYPE_CONFIG_MOTOR_PRIMARY,
+    MOT_VAR_ID_TYPE_CONFIG_MOTOR_SECONDARY,
+    MOT_VAR_ID_TYPE_CONFIG_MOTOR_HALL,
+    MOT_VAR_ID_TYPE_CONFIG_MOTOR_ENCODER,
+    MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR,
+    MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID,
+    MOT_VAR_ID_TYPE_CONFIG_GENERAL,
+    MOT_VAR_ID_TYPE_CONFIG_ANALOG_USER,
+    MOT_VAR_ID_TYPE_CONFIG_VMONITOR,
+    MOT_VAR_ID_TYPE_CONFIG_BOARD_THERMISTOR,
+    MOT_VAR_ID_TYPE_CONFIG_PROTOCOL,
+    MOT_VAR_ID_TYPE_CONFIG_BOOT_REF,
+    MOT_VAR_ID_TYPE_CONFIG_END = 16U,
+    // MOT_VAR_ID_TYPE_CONFIG_THERMISTOR,
 }
-MotVarId_Type_Parameter_T;
+MotVarId_Type_Config_T;
 
-/* Type of MotVarId_Type_Parameter_T, MotVarId_Type_RealTime_T */
+/* Type of MotVarId_Type_Config_T, MotVarId_Type_RealTime_T */
 typedef enum MotVarId_TypeType
 {
     MOT_VAR_ID_TYPE_REAL_TIME,
-    MOT_VAR_ID_TYPE_PARAMETER,
+    MOT_VAR_ID_TYPE_CONFIG,
 }
 MotVarId_TypeType_T;
 
@@ -490,7 +509,6 @@ MotVarId_Instance_Motor_T;
 //     MOT_VAR_ID_INSTANCE_PREFIX_MOTOR,
 // }
 // MotVarId_Instance_Prefix_T;
-
 
 typedef union MotVarId
 {

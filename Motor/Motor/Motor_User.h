@@ -84,7 +84,7 @@ static inline int16_t Motor_User_GetVPhase_Volts(const MotorPtr_T p_motor)      
 static inline int32_t Motor_User_GetElectricalPower_VA(const MotorPtr_T p_motor)    { return _Motor_ConvertPower_FracS16ToWatts(Motor_User_GetElectricalPower_UFrac16(p_motor)); }
 static inline int32_t Motor_User_GetHeat_DegCScalar(const MotorPtr_T p_motor, uint16_t scalar)  { return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
 // check DC current limit
-// Motor_FOC_GetElectricalPower_FracS16Abs(p_motor) / Global_Motor_GetVSource_V() ;
+// Motor_FOC_GetElectricalPower_FracS16Abs(p_motor) / Motor_Static_GetVSource_V() ;
 static inline thermal_t Motor_User_GetHeat_DegC(const MotorPtr_T p_motor)           { return Thermistor_ConvertToDegC(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 #endif
 
@@ -108,7 +108,7 @@ static inline uint8_t Motor_User_GetCalibrationStateIndex(const MotorPtr_T p_mot
     Write via interface functions
 */
 static inline Motor_Direction_T Motor_User_GetDirection(const MotorPtr_T p_motor)               { return p_motor->Direction; }
-static inline bool Motor_User_IsDirectionForward(const MotorPtr_T p_motor)                      { return (p_motor->Parameters.DirectionForward == p_motor->Direction); }
+static inline bool Motor_User_IsDirectionForward(const MotorPtr_T p_motor)                      { return (p_motor->Config.DirectionForward == p_motor->Direction); }
 static inline bool Motor_User_IsDirectionReverse(const MotorPtr_T p_motor)                      { return !Motor_User_IsDirectionForward(p_motor); }
 static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackMode(const MotorPtr_T p_motor)   { return p_motor->FeedbackMode; }
 
@@ -171,9 +171,6 @@ static inline uint16_t Motor_User_GetActiveSpeedLimit(const MotorPtr_T p_motor) 
     Extern
 */
 /******************************************************************************/
-extern void Motor_User_ActivateControl(MotorPtr_T p_motor, Motor_FeedbackMode_T mode);
-extern void Motor_User_ActivateControl_Cast(MotorPtr_T p_motor, uint8_t modeWord);
-extern void Motor_User_SetCmd(MotorPtr_T p_motor, int16_t userCmd);
 extern int32_t Motor_User_GetCmd(const MotorPtr_T p_motor);
 extern int32_t Motor_User_GetSetPoint(const MotorPtr_T p_motor);
 extern void Motor_User_SetVoltageMode(MotorPtr_T p_motor);
@@ -195,27 +192,25 @@ extern void Motor_User_SetOpenLoopCmdValue(MotorPtr_T p_motor, int16_t ivCmd);
 extern void Motor_User_SetOpenLoopModeCmd(MotorPtr_T p_motor, int16_t ivMagnitude);
 #endif
 extern void Motor_User_SetActiveCmdValue(MotorPtr_T p_motor, int16_t userCmd);
-extern void Motor_User_ActivateDefaultFeedbackMode(MotorPtr_T p_motor);
 
-extern void Motor_User_ReleaseControl(MotorPtr_T p_motor);
-extern void Motor_User_DisableControl(MotorPtr_T p_motor);
-// extern void Motor_User_ActivateControl(MotorPtr_T p_motor);
+// extern void Motor_User_ActivateDefaultFeedbackMode(MotorPtr_T p_motor);
+// extern void Motor_ActivateControl(MotorPtr_T p_motor);
+
+extern void Motor_User_ForceDisableControl(MotorPtr_T p_motor);
+extern bool Motor_User_TryRelease(MotorPtr_T p_motor);
 extern bool Motor_User_TryHold(MotorPtr_T p_motor);
 extern bool Motor_User_TryDirection(MotorPtr_T p_motor, Motor_Direction_T direction);
 extern bool Motor_User_TryDirectionForward(MotorPtr_T p_motor);
 extern bool Motor_User_TryDirectionReverse(MotorPtr_T p_motor);
 
+extern bool Motor_User_TrySpeedLimit(MotorPtr_T p_motor, uint16_t scalar16);
+extern bool Motor_User_TryILimit(MotorPtr_T p_motor, uint16_t scalar16);
+extern bool Motor_User_ClearSpeedLimit(MotorPtr_T p_motor);
+extern bool Motor_User_ClearILimit(MotorPtr_T p_motor);
+
 extern void Motor_User_CalibrateSensor(MotorPtr_T p_motor);
 extern void Motor_User_CalibrateAdc(MotorPtr_T p_motor);
 
-extern void Motor_User_SetILimitActive(MotorPtr_T p_motor, uint16_t scalar16);
-extern void Motor_User_ClearILimitActive(MotorPtr_T p_motor);
-extern void Motor_User_SetSpeedLimitActive(MotorPtr_T p_motor, uint16_t scalar_frac16);
-extern void Motor_User_ClearSpeedLimitActive(MotorPtr_T p_motor);
-extern bool Motor_User_SetSpeedLimitActive_Id(MotorPtr_T p_motor, uint16_t scalar_frac16, uint8_t id);
-extern bool Motor_User_ClearSpeedLimitActive_Id(MotorPtr_T p_motor, uint8_t id);
-extern bool Motor_User_SetILimitActive_Id(MotorPtr_T p_motor, uint16_t scalar_frac16, uint8_t id);
-extern bool Motor_User_ClearILimitActive_Id(MotorPtr_T p_motor, uint8_t id);
 
 #if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
 extern int16_t Motor_User_GetGroundSpeed_Mph(MotorPtr_T p_motor);

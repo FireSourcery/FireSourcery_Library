@@ -38,15 +38,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct Serial_Config
+typedef const struct Serial_Const
 {
     HAL_Serial_T * const P_HAL_SERIAL;
 }
-Serial_Config_T;
+Serial_Const_T;
 
 typedef struct Serial
 {
-    const Serial_Config_T CONFIG;
+    const Serial_Const_T CONST;
     Ring_T RxRing;
     Ring_T TxRing;
 #if CONFIG_SERIAL_DMA_ENABLE
@@ -59,22 +59,22 @@ Serial_T;
 
 #define SERIAL_INIT(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)  \
 {                                                                               \
-    .CONFIG = { .P_HAL_SERIAL = p_Hal, },                                       \
+    .CONST = { .P_HAL_SERIAL = p_Hal, },                                       \
     .TxRing = RING_INIT(p_TxBuffer, TxBufferSize, 1U, 0U),                      \
     .RxRing = RING_INIT(p_RxBuffer, RxBufferSize, 1U, 0U),                      \
 }
 
 static inline size_t Serial_GetRxFullCount(const Serial_T * p_serial)   { return Ring_GetFullCount(&p_serial->RxRing); }
 static inline size_t Serial_GetTxEmptyCount(const Serial_T * p_serial)  { return Ring_GetEmptyCount(&p_serial->TxRing); }
-static inline void Serial_EnableTxIsr(const Serial_T * p_serial)        { HAL_Serial_EnableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
-static inline void Serial_DisableTxIsr(const Serial_T * p_serial)       { HAL_Serial_DisableTxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
-static inline void Serial_EnableRxIsr(const Serial_T * p_serial)        { HAL_Serial_EnableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
-static inline void Serial_DisableRxIsr(const Serial_T * p_serial)       { HAL_Serial_DisableRxInterrupt(p_serial->CONFIG.P_HAL_SERIAL); }
+static inline void Serial_EnableTxIsr(const Serial_T * p_serial)        { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
+static inline void Serial_DisableTxIsr(const Serial_T * p_serial)       { HAL_Serial_DisableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
+static inline void Serial_EnableRxIsr(const Serial_T * p_serial)        { HAL_Serial_EnableRxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
+static inline void Serial_DisableRxIsr(const Serial_T * p_serial)       { HAL_Serial_DisableRxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
 
 /* Check for Overrun */
 // static inline bool Serial_IsRxOverrun(const Serial_T * p_serial)
 // {
-//     return ((HAL_Serial_ReadRxOverrun(p_serial->CONFIG.P_HAL_SERIAL) == true) || (Ring_GetIsFull(&p_serial->RxRing) == true));
+//     return ((HAL_Serial_ReadRxOverrun(p_serial->CONST.P_HAL_SERIAL) == true) || (Ring_GetIsFull(&p_serial->RxRing) == true));
 // }
 
 /*

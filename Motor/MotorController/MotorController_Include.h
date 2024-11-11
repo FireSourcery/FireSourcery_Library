@@ -36,5 +36,5 @@
 #include "MotorController_Shell.h"
 #endif
 #include "MotorController_MotProtocol.h"
-#include "Motor/MotProtocol/MotProtocol.h"
 #include "Motor/Motor/Motor_Include.h"
+#include "Motor/MotProtocol/MotProtocol.h"

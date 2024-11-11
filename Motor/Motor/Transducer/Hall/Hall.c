@@ -51,41 +51,41 @@ void Hall_Init(Hall_T * p_hall)
     Pin_Input_Init(&p_hall->PinB);
     Pin_Input_Init(&p_hall->PinC);
 
-    if(p_hall->CONFIG.P_PARAMS_NVM != 0U) { memcpy(&p_hall->Params, p_hall->CONFIG.P_PARAMS_NVM, sizeof(Hall_Params_T)); }
+    if(p_hall->CONST.P_NVM_CONFIG != 0U) { memcpy(&p_hall->Config, p_hall->CONST.P_NVM_CONFIG, sizeof(Hall_Config_T)); }
     p_hall->Direction = HALL_DIRECTION_CCW;
 }
 
 void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC, uint8_t sensorsB, uint8_t sensorsInvA, uint8_t sensorsC, uint8_t sensorsInvB)
 {
-    p_hall->Params.SensorsTable[sensorsA]       = HALL_SENSORS_VIRTUAL_A;
-    p_hall->Params.SensorsTable[sensorsInvC]    = HALL_SENSORS_VIRTUAL_INV_C;
-    p_hall->Params.SensorsTable[sensorsB]       = HALL_SENSORS_VIRTUAL_B;
-    p_hall->Params.SensorsTable[sensorsInvA]    = HALL_SENSORS_VIRTUAL_INV_A;
-    p_hall->Params.SensorsTable[sensorsC]       = HALL_SENSORS_VIRTUAL_C;
-    p_hall->Params.SensorsTable[sensorsInvB]    = HALL_SENSORS_VIRTUAL_INV_B;
-    p_hall->Params.SensorsTable[0U] = 0U;
-    p_hall->Params.SensorsTable[7U] = 7U;
+    p_hall->Config.SensorsTable[sensorsA]       = HALL_SENSORS_VIRTUAL_A;
+    p_hall->Config.SensorsTable[sensorsInvC]    = HALL_SENSORS_VIRTUAL_INV_C;
+    p_hall->Config.SensorsTable[sensorsB]       = HALL_SENSORS_VIRTUAL_B;
+    p_hall->Config.SensorsTable[sensorsInvA]    = HALL_SENSORS_VIRTUAL_INV_A;
+    p_hall->Config.SensorsTable[sensorsC]       = HALL_SENSORS_VIRTUAL_C;
+    p_hall->Config.SensorsTable[sensorsInvB]    = HALL_SENSORS_VIRTUAL_INV_B;
+    p_hall->Config.SensorsTable[0U] = 0U;
+    p_hall->Config.SensorsTable[7U] = 7U;
 }
 
 /*
     180 Degree Active
     Sensors are aligned to motor phase, 0 degree offset.
 */
-static void CalibratePhaseA(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_A; }
-static void CalibratePhaseInvC(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_INV_C; }
-static void CalibratePhaseB(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_B; }
-static void CalibratePhaseInvA(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_INV_A; }
-static void CalibratePhaseC(Hall_T * p_hall)    { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_C; }
-static void CalibratePhaseInvB(Hall_T * p_hall) { p_hall->Params.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_INV_B; }
+static void CalibratePhaseA(Hall_T * p_hall)    { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_A; }
+static void CalibratePhaseInvC(Hall_T * p_hall) { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_INV_C; }
+static void CalibratePhaseB(Hall_T * p_hall)    { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_B; }
+static void CalibratePhaseInvA(Hall_T * p_hall) { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_INV_A; }
+static void CalibratePhaseC(Hall_T * p_hall)    { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_C; }
+static void CalibratePhaseInvB(Hall_T * p_hall) { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_INV_B; }
 
 /* For 180 degree active. 120 degree active todo */
-void Hall_StartCalibrate(Hall_T * p_hall)       { Hall_ResetCapture(p_hall); /* p_hall->Params.BoundaryType = 0U; */ }
-void Hall_CalibratePhaseA(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseA(p_hall); /* p_hall->Params.BoundaryType++; */ } }
-void Hall_CalibratePhaseInvC(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvC(p_hall); /* p_hall->Params.BoundaryType++; */ } }
-void Hall_CalibratePhaseB(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseB(p_hall); /* p_hall->Params.BoundaryType++; */ } }
-void Hall_CalibratePhaseInvA(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvA(p_hall); /* p_hall->Params.BoundaryType++; */ } }
-void Hall_CalibratePhaseC(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseC(p_hall); /* p_hall->Params.BoundaryType++; */ } }
-void Hall_CalibratePhaseInvB(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvB(p_hall); /* p_hall->Params.BoundaryType++; */ } }
+void Hall_StartCalibrate(Hall_T * p_hall)       { Hall_ResetCapture(p_hall); /* p_hall->Config.BoundaryType = 0U; */ }
+void Hall_CalibratePhaseA(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseA(p_hall); /* p_hall->Config.BoundaryType++; */ } }
+void Hall_CalibratePhaseInvC(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvC(p_hall); /* p_hall->Config.BoundaryType++; */ } }
+void Hall_CalibratePhaseB(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseB(p_hall); /* p_hall->Config.BoundaryType++; */ } }
+void Hall_CalibratePhaseInvA(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvA(p_hall); /* p_hall->Config.BoundaryType++; */ } }
+void Hall_CalibratePhaseC(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseC(p_hall); /* p_hall->Config.BoundaryType++; */ } }
+void Hall_CalibratePhaseInvB(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvB(p_hall); /* p_hall->Config.BoundaryType++; */ } }
 
 // void Hall_Calibrate
 // (
@@ -96,7 +96,7 @@ void Hall_CalibratePhaseInvB(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_h
 //     void * p_waitContext
 // )
 // {
-//     const uint16_t duty = p_motor->Parameters.AlignPower_ScalarU16;
+//     const uint16_t duty = p_motor->Config.AlignPower_ScalarU16;
 //     bool isComplete = false;
 
 //     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)

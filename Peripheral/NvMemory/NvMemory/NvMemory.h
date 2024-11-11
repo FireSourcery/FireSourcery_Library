@@ -137,7 +137,7 @@ typedef enum NvMemory_State
 NvMemory_State_T;
 
 /* Per sub-type VTable, abstract functions provided by concrete child class */
-typedef const struct NvMemory_Config
+typedef const struct NvMemory_Const
 {
     void * const P_HAL;
     const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM, for Flash case*/
@@ -148,14 +148,14 @@ typedef const struct NvMemory_Config
     uint8_t * const P_BUFFER;
     const size_t BUFFER_SIZE;
 }
-NvMemory_Config_T;
+NvMemory_Const_T;
 
 /*
     NvMemory controller
 */
 typedef struct NvMemory
 {
-    NvMemory_Config_T CONFIG;
+    NvMemory_Const_T CONST;
 
     bool IsOpBuffered;      /* copy to buffer first or use pointer to source */
     bool IsVerifyEnable;    /* Auto call verify, alternatively user call */
@@ -205,7 +205,7 @@ NvMemory_T;
 */
 #define NV_MEMORY_INIT(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags, p_Partitions, PartitionsCount, p_Buffer, BufferSize) \
 {                                                                                                                                                       \
-    .CONFIG =                                                                                                                                           \
+    .CONST =                                                                                                                                           \
     {                                                                                                                                                   \
         _NV_MEMORY_INIT_HAL(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags)                                                 \
         _NV_MEMORY_INIT_PARTITIONS(p_Partitions, PartitionsCount)                                                                                       \

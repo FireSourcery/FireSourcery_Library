@@ -32,19 +32,19 @@
 
 void Shell_Init(Shell_T * p_shell)
 {
-    if(p_shell->CONFIG.P_PARAMS != 0U)
+    if(p_shell->CONST.P_CONFIG != 0U)
     {
-        memcpy(&p_shell->Params, p_shell->CONFIG.P_PARAMS, sizeof(Shell_Params_T));
+        memcpy(&p_shell->Config, p_shell->CONST.P_CONFIG, sizeof(Shell_Config_T));
     }
 
     // Terminal_Init(&p_shell->Terminal);
 #ifdef CONFIG_SHELL_XCVR_ENABLE
-    Terminal_SetXcvr(&p_shell->Terminal, p_shell->Params.XcvrId);
+    Terminal_SetXcvr(&p_shell->Terminal, p_shell->Config.XcvrId);
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
-    Terminal_SetSerial(&p_shell->Terminal, p_shell->Params.p_Serial);     /* need xcvr module to validate xcvr pointer */
+    Terminal_SetSerial(&p_shell->Terminal, p_shell->Config.p_Serial);     /* need xcvr module to validate xcvr pointer */
 #endif
 
-    if(p_shell->Params.IsEnableOnInit == true)
+    if(p_shell->Config.IsEnableOnInit == true)
     {
         Shell_ResetBaudRate(p_shell);
         p_shell->State = SHELL_STATE_PROMPT;
@@ -78,11 +78,11 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
         case SHELL_STATE_PROCESS_CMD:
             if(Terminal_ParseCmdline(&p_shell->Terminal) == TERMINAL_SUCCESS)
             {
-                p_shell->p_Cmd = Cmd_Search(p_shell->CONFIG.P_CMD_TABLE, p_shell->CONFIG.CMD_COUNT, Terminal_GetCmdlineVar(&p_shell->Terminal, 0U));
+                p_shell->p_Cmd = Cmd_Search(p_shell->CONST.P_CMD_TABLE, p_shell->CONST.CMD_COUNT, Terminal_GetCmdlineVar(&p_shell->Terminal, 0U));
 
                 if (p_shell->p_Cmd != 0U)
                 {
-                    p_shell->CmdReturnCode = p_shell->p_Cmd->FUNCTION(p_shell->CONFIG.P_CMD_CONTEXT, Terminal_GetCmdlineArgC(&p_shell->Terminal), Terminal_GetCmdlineArgV(&p_shell->Terminal));
+                    p_shell->CmdReturnCode = p_shell->p_Cmd->FUNCTION(p_shell->CONST.P_CMD_CONTEXT, Terminal_GetCmdlineArgC(&p_shell->Terminal), Terminal_GetCmdlineArgV(&p_shell->Terminal));
 
                     switch(p_shell->CmdReturnCode)
                     {
@@ -131,11 +131,11 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
             }
             else
             {
-                if (*p_shell->CONFIG.P_TIMER - p_shell->ProcTimeRef > p_shell->p_Cmd->PROCESS.PERIOD)
+                if (*p_shell->CONST.P_TIMER - p_shell->ProcTimeRef > p_shell->p_Cmd->PROCESS.PERIOD)
                 {
-                    p_shell->CmdReturnCode = p_shell->p_Cmd->PROCESS.FUNCTION(p_shell->CONFIG.P_CMD_CONTEXT);
+                    p_shell->CmdReturnCode = p_shell->p_Cmd->PROCESS.FUNCTION(p_shell->CONST.P_CMD_CONTEXT);
                     if (p_shell->CmdReturnCode == CMD_STATUS_PROCESS_END) { p_shell->State = SHELL_STATE_PROMPT; }
-                    p_shell->ProcTimeRef = *p_shell->CONFIG.P_TIMER;
+                    p_shell->ProcTimeRef = *p_shell->CONST.P_TIMER;
                 }
             }
             break;
@@ -153,32 +153,32 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
 bool Shell_SetXcvr(Shell_T * p_shell, uint8_t xcvrId)
 {
     bool isSuccess = Terminal_SetXcvr(&p_shell->Terminal, xcvrId);
-    if(isSuccess == true) { p_shell->Params.XcvrId = xcvrId; }
+    if(isSuccess == true) { p_shell->Config.XcvrId = xcvrId; }
     return isSuccess;
 }
 #elif defined(CONFIG_SHELL_XCVR_SERIAL)
 void Shell_SetSerial(Shell_T * p_shell, Serial_T * p_serial)
 {
-    p_shell->Params.p_Serial = p_serial;
+    p_shell->Config.p_Serial = p_serial;
     Terminal_SetSerial(&p_shell->Terminal, p_serial);
 }
 #endif
 
 void Shell_ConfigBaudRate(Shell_T * p_shell, uint16_t baudRate)
 {
-    p_shell->Params.BaudRate = baudRate;
+    p_shell->Config.BaudRate = baudRate;
     Shell_ResetBaudRate(p_shell);
 }
 
 void Shell_ResetBaudRate(Shell_T * p_shell)
 {
 #ifdef CONFIG_PROTOCOL_XCVR_ENABLE
-    if(Xcvr_CheckIsSet(&p_shell->Terminal.Xcvr, p_shell->Params.XcvrId))
+    if(Xcvr_CheckIsSet(&p_shell->Terminal.Xcvr, p_shell->Config.XcvrId))
 #elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
-    if(p_protocol->Params.p_Serial != 0U))
+    if(p_protocol->Config.p_Serial != 0U))
 #endif
     {
-        Terminal_ConfigBaudRate(&p_shell->Terminal, p_shell->Params.BaudRate);
+        Terminal_ConfigBaudRate(&p_shell->Terminal, p_shell->Config.BaudRate);
     }
 }
 

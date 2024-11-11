@@ -78,10 +78,11 @@ Xcvr_Interface_T;
     Xcvr Entry/Instance
     Entry in P_XCVR_TABLE
 */
-typedef const struct Xcvr_Xcvr
+typedef const struct Xcvr_Entry
 {
     void * P_CONTEXT; /* Xcvr data struct */
     Xcvr_Type_T TYPE;
+    // remove type and use vtable only
 #if defined(CONFIG_XCVR_INTERFACE_VTABLE)
     Xcvr_Interface_T * P_INTERFACE; /* If applicable, user external defined */
 #endif
@@ -101,24 +102,24 @@ Xcvr_Entry_T;
     .P_INTERFACE    = p_Interface,                      \
 }
 
-typedef const struct Xcvr_Config
+typedef const struct Xcvr_Const
 {
     const Xcvr_Entry_T * const P_XCVR_TABLE;
     const uint8_t XCVR_TABLE_LENGTH;
 }
-Xcvr_Config_T;
+Xcvr_Const_T;
 
 /*
    Todo  Xcvr_T, Xcvr_Table_T => 1 layer of dereference for operations
 */
 typedef struct Xcvr
 {
-    const Xcvr_Config_T CONFIG;
+    const Xcvr_Const_T CONST;
     Xcvr_Entry_T * p_Xcvr;
 }
 Xcvr_T;
 
-#define XCVR_INIT(p_XcvrTable, Count) { .CONFIG = { .P_XCVR_TABLE = p_XcvrTable, .XCVR_TABLE_LENGTH = Count, }, }
+#define XCVR_INIT(p_XcvrTable, Count) { .CONST = { .P_XCVR_TABLE = p_XcvrTable, .XCVR_TABLE_LENGTH = Count, }, }
 
 extern bool Xcvr_TxByte(const Xcvr_T * p_xcvr, uint8_t txChar);
 extern bool Xcvr_RxByte(const Xcvr_T * p_xcvr, uint8_t * p_rxChar);

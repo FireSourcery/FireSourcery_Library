@@ -37,15 +37,16 @@
 /******************************************************************************/
 void Motor_FOC_EnqueueVabc(MotorPtr_T p_motor)
 {
+    // todo move to threads
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
+    if((p_motor->ControlTimerBase & MOTOR_STATIC.CONTROL_ANALOG_DIVIDER) == 0UL)
     {
-        AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VA);
-        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VB);
-        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_VC);
-        AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-        // AnalogN_SetChannelConversion(p_motor->CONFIG.P_ANALOG_N, MOTOR_ANALOG_CHANNEL_VA);
+        AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+        AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA);
+        AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB);
+        AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VC);
+        AnalogN_Group_ResumeQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+        // AnalogN_SetChannelConversion(p_motor->CONST.P_ANALOG_N, MOTOR_ANALOG_CHANNEL_VA);
     }
 #else
     (void)p_motor;
@@ -54,15 +55,15 @@ void Motor_FOC_EnqueueVabc(MotorPtr_T p_motor)
 
 void Motor_FOC_EnqueueIabc(MotorPtr_T p_motor)
 {
-    if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
+    if((p_motor->ControlTimerBase & MOTOR_STATIC.CONTROL_ANALOG_DIVIDER) == 0UL)
     {
-        AnalogN_Group_PauseQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IA);
-        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IB);
+        AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+        AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);
+        AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB);
 #if defined(CONFIG_MOTOR_I_SENSORS_ABC)
-        AnalogN_Group_EnqueueConversion(p_motor->CONFIG.P_ANALOG_N, &p_motor->CONFIG.ANALOG_CONVERSIONS.CONVERSION_IC);
+        AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC);
 #endif
-        AnalogN_Group_ResumeQueue(p_motor->CONFIG.P_ANALOG_N, p_motor->CONFIG.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+        AnalogN_Group_ResumeQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_I);
 
     }
 }
@@ -165,7 +166,7 @@ static void ActivateAngle(MotorPtr_T p_motor)
 
 static void ProcInnerFeedbackOutput(MotorPtr_T p_motor)
 {
-    if((p_motor->ControlTimerBase & GLOBAL_MOTOR.CONTROL_ANALOG_DIVIDER) == 0UL)
+    if((p_motor->ControlTimerBase & MOTOR_STATIC.CONTROL_ANALOG_DIVIDER) == 0UL)
     {
         ProcClarkePark(p_motor);
         ProcInnerFeedback(p_motor); /* Set Vd Vq */
@@ -277,7 +278,7 @@ void Motor_FOC_SetDirection(MotorPtr_T p_motor, Motor_Direction_T direction)
     if(direction == MOTOR_DIRECTION_CCW) { Motor_FOC_SetDirectionCcw(p_motor); } else { Motor_FOC_SetDirectionCw(p_motor); }
 }
 
-void Motor_FOC_SetDirectionForward(MotorPtr_T p_motor) { Motor_FOC_SetDirection(p_motor, p_motor->Parameters.DirectionForward); }
+void Motor_FOC_SetDirectionForward(MotorPtr_T p_motor) { Motor_FOC_SetDirection(p_motor, p_motor->Config.DirectionForward); }
 
 /******************************************************************************/
 /*!
@@ -288,7 +289,7 @@ void Motor_FOC_SetDirectionForward(MotorPtr_T p_motor) { Motor_FOC_SetDirection(
 void Motor_FOC_StartAlign(MotorPtr_T p_motor)
 {
     p_motor->FeedbackMode.Current = 1U;
-    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.AlignTime_Cycles, 0, p_motor->Parameters.AlignPower_Scalar16 / 2U);
+    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Config.AlignTime_Cycles, 0, p_motor->Config.AlignPower_Scalar16 / 2U);
     Motor_FOC_ProcFeedbackMatch(p_motor);
 }
 
@@ -302,7 +303,7 @@ void Motor_FOC_StartAlignValidate(MotorPtr_T p_motor)
     // Motor_CalibrateSensorZero(p_motor);
     // Motor_ZeroSensor(p_motor);
     // FOC_SetDReq(&p_motor->Foc, 0);
-    // // Linear_Ramp_Set(&p_motor->Ramp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_DirectionalCmd(p_motor, INT16_MAX / 2U)); //clmap user input?
+    // // Linear_Ramp_Set(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles, 0, Motor_DirectionalCmd(p_motor, INT16_MAX / 2U)); //clmap user input?
     // Motor_FOC_ProcFeedbackMatch(p_motor);
     // // p_motor->FeedbackMode.OpenLoop = 0U;
 }
@@ -314,8 +315,8 @@ void Motor_FOC_StartAlignValidate(MotorPtr_T p_motor)
 void Motor_FOC_StartOpenLoop(MotorPtr_T p_motor)
 {
     p_motor->Speed_FracS16 = 0;
-    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Parameters.RampAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Parameters.OpenLoopPower_Scalar16 / 2U));    // alternatively, clamp user input ramp
-    Linear_Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Parameters.OpenLoopAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Parameters.OpenLoopSpeed_Scalar16 / 2U));
+    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopPower_Scalar16 / 2U));    // alternatively, clamp user input ramp
+    Linear_Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopSpeed_Scalar16 / 2U));
     // FOC_SetDReq(&p_motor->Foc, 0); //Motor_FOC_ProcAngleFeedforward
 }
 
@@ -326,7 +327,7 @@ void Motor_FOC_StartOpenLoop(MotorPtr_T p_motor)
 static void _Motor_FOC_ProcOpenLoop(MotorPtr_T p_motor)
 {
     p_motor->Speed_FracS16 = Linear_Ramp_ProcOutput(&p_motor->OpenLoopSpeedRamp);
-    p_motor->ElectricalAngle += ((p_motor->Speed_FracS16 * p_motor->Parameters.SpeedFeedbackRef_Rpm * p_motor->Parameters.PolePairs * 2) / ((int32_t)60 * GLOBAL_MOTOR.CONTROL_FREQ));
+    p_motor->ElectricalAngle += ((p_motor->Speed_FracS16 * p_motor->Config.SpeedFeedbackRef_Rpm * p_motor->Config.PolePairs * 2) / ((int32_t)60 * MOTOR_STATIC.CONTROL_FREQ));
 }
 
 void Motor_FOC_ProcOpenLoop(MotorPtr_T p_motor)

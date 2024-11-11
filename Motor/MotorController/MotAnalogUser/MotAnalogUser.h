@@ -83,7 +83,7 @@ typedef struct MotAnalogUser_AIn
 }
 MotAnalogUser_AIn_T;
 
-typedef struct MotAnalogUser_Params
+typedef struct MotAnalogUser_Config
 {
     uint16_t ThrottleZero_Adcu;
     uint16_t ThrottleMax_Adcu;
@@ -109,21 +109,21 @@ typedef struct MotAnalogUser_Params
     // bool UseErrorAdcuRange; //report error if adcu read falls outside Zero_Adcu and Max_Adcu
     // MotAnalogUser_InvertPins_T InvertPins;
 }
-MotAnalogUser_Params_T;
+MotAnalogUser_Config_T;
 
 /*
     Activate ADC outside module
 */
-typedef const struct MotAnalogUser_Config
+typedef const struct MotAnalogUser_Const
 {
-    const MotAnalogUser_Params_T * const P_PARAMS;
+    const MotAnalogUser_Config_T * const P_CONFIG;
 }
-MotAnalogUser_Config_T;
+MotAnalogUser_Const_T;
 
 typedef struct MotAnalogUser
 {
-    MotAnalogUser_Config_T CONFIG;
-    MotAnalogUser_Params_T Params;
+    MotAnalogUser_Const_T CONST;
+    MotAnalogUser_Config_T Config;
     MotAnalogUser_AIn_T ThrottleAIn;
     MotAnalogUser_AIn_T BrakeAIn;
     Debounce_T ReversePin;
@@ -135,9 +135,9 @@ typedef struct MotAnalogUser
 MotAnalogUser_T;
 
 
-#define MOT_ANALOG_USER_INIT(p_BrakePinHal, BrakePinId, p_ThrottlePinHal, ThrottlePinId, p_ForwardPinHal, ForwardPinId, p_ReversePinHal, ReversePinId, p_BistateBrakePinHal, BistateBrakePinId, InputPinsInvert, p_Millis, p_Params)    \
+#define MOT_ANALOG_USER_INIT(p_BrakePinHal, BrakePinId, p_ThrottlePinHal, ThrottlePinId, p_ForwardPinHal, ForwardPinId, p_ReversePinHal, ReversePinId, p_BistateBrakePinHal, BistateBrakePinId, InputPinsInvert, p_Millis, p_Config)    \
 {                                                                                                                       \
-    .CONFIG             = { .P_PARAMS = p_Params, },                                                                    \
+    .CONST              = { .P_CONFIG = p_Config, },                                                                    \
     .ThrottleAIn        = { .EdgePin = DEBOUNCE_INIT(p_ThrottlePinHal,  ThrottlePinId,  InputPinsInvert, p_Millis), },  \
     .BrakeAIn           = { .EdgePin = DEBOUNCE_INIT(p_BrakePinHal,     BrakePinId,     InputPinsInvert, p_Millis), },  \
     .ForwardPin         = DEBOUNCE_INIT(p_ForwardPinHal,        ForwardPinId,           InputPinsInvert, p_Millis ),    \
@@ -203,9 +203,9 @@ static inline void MotAnalogUser_CaptureBrakeValue(MotAnalogUser_T * p_user, uin
 static inline void MotAnalogUser_CapturePins(MotAnalogUser_T * p_user)
 {
     Debounce_CaptureState(&p_user->ReversePin);
-    if(p_user->Params.UseForwardPin == true)        { Debounce_CaptureState(&p_user->ForwardPin); }
-    if(p_user->Params.UseNeutralPin == true)        { Debounce_CaptureState(&p_user->NeutralPin); }
-    if(p_user->Params.UseBistateBrakePin == true)   { Debounce_CaptureState(&p_user->BistateBrakePin); }
+    if(p_user->Config.UseForwardPin == true)        { Debounce_CaptureState(&p_user->ForwardPin); }
+    if(p_user->Config.UseNeutralPin == true)        { Debounce_CaptureState(&p_user->NeutralPin); }
+    if(p_user->Config.UseBistateBrakePin == true)   { Debounce_CaptureState(&p_user->BistateBrakePin); }
 }
 
 /*
@@ -223,20 +223,20 @@ static inline void MotAnalogUser_CaptureInput(MotAnalogUser_T * p_user, uint16_t
 */
 static inline bool _MotAnalogUser_PollBistateBrakeFallingEdge(MotAnalogUser_T * p_user)
 {
-    return ((p_user->Params.UseBistateBrakePin == true) && Debounce_PollFallingEdge(&p_user->BistateBrakePin));
+    return ((p_user->Config.UseBistateBrakePin == true) && Debounce_PollFallingEdge(&p_user->BistateBrakePin));
 }
 
 /* Default off when not used */
 static inline bool MotAnalogUser_GetIsBistateBrakeOn(const MotAnalogUser_T * p_user)
 {
-    return ((p_user->Params.UseBistateBrakePin == true) && (Debounce_GetState(&p_user->BistateBrakePin) == true));
+    return ((p_user->Config.UseBistateBrakePin == true) && (Debounce_GetState(&p_user->BistateBrakePin) == true));
 }
 
 /*
     Direction
 */
-static inline bool _MotAnalogUser_GetIsNeutralOn(const MotAnalogUser_T * p_user)    { return (p_user->Params.UseNeutralPin == true) && (Debounce_GetState(&p_user->NeutralPin) == true); }
-static inline bool MotAnalogUser_GetIsForwardOn(const MotAnalogUser_T * p_user)     { return (p_user->Params.UseForwardPin == true) ? Debounce_GetState(&p_user->ForwardPin) : !Debounce_GetState(&p_user->ReversePin); }
+static inline bool _MotAnalogUser_GetIsNeutralOn(const MotAnalogUser_T * p_user)    { return (p_user->Config.UseNeutralPin == true) && (Debounce_GetState(&p_user->NeutralPin) == true); }
+static inline bool MotAnalogUser_GetIsForwardOn(const MotAnalogUser_T * p_user)     { return (p_user->Config.UseForwardPin == true) ? Debounce_GetState(&p_user->ForwardPin) : !Debounce_GetState(&p_user->ReversePin); }
 static inline bool MotAnalogUser_GetIsReverseOn(const MotAnalogUser_T * p_user)     { return Debounce_GetState(&p_user->ReversePin); }
 
 static inline MotAnalogUser_Direction_T MotAnalogUser_PollDirection(MotAnalogUser_T * p_user)
@@ -316,8 +316,8 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user
 /* Optional separate Brake polling */
 static inline bool MotAnalogUser_PollBrakePins(MotAnalogUser_T * p_user)
 {
-    if(p_user->Params.UseBrakeEdgePin == true)      { Debounce_CaptureState(&p_user->BrakeAIn.EdgePin); }
-    if(p_user->Params.UseBistateBrakePin == true)   { Debounce_CaptureState(&p_user->BistateBrakePin); }
+    if(p_user->Config.UseBrakeEdgePin == true)      { Debounce_CaptureState(&p_user->BrakeAIn.EdgePin); }
+    if(p_user->Config.UseBistateBrakePin == true)   { Debounce_CaptureState(&p_user->BistateBrakePin); }
     return ((Debounce_GetState(&p_user->BrakeAIn.EdgePin) == true) || (Debounce_GetState(&p_user->BistateBrakePin) == true)) ;
 }
 
@@ -329,9 +329,9 @@ static inline uint16_t MotAnalogUser_GetThrottle(const MotAnalogUser_T * p_user)
 static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user)
 {
     uint16_t brakeValue = _MotAnalogUser_AIn_GetValue(&p_user->BrakeAIn);
-    if((MotAnalogUser_GetIsBistateBrakeOn(p_user) == true) && (p_user->Params.BistateBrakeValue_Scalar16 > brakeValue))
+    if((MotAnalogUser_GetIsBistateBrakeOn(p_user) == true) && (p_user->Config.BistateBrakeValue_Scalar16 > brakeValue))
     {
-        brakeValue = p_user->Params.BistateBrakeValue_Scalar16;
+        brakeValue = p_user->Config.BistateBrakeValue_Scalar16;
     }
     return brakeValue;
 }

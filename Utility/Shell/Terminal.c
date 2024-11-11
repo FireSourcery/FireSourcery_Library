@@ -163,7 +163,7 @@ bool Terminal_PollEsc(const Terminal_T * p_terminal)
 //}
 
 /*
-    Terminal layer passthrough xcvr settings. Params stored in upper Shell layer
+    Terminal layer passthrough xcvr settings. Config stored in upper Shell layer
 */
 #ifdef CONFIG_SHELL_XCVR_ENABLE
 bool Terminal_SetXcvr(Terminal_T * p_terminal, uint8_t xcvrID)

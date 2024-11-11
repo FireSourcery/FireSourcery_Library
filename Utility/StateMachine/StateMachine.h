@@ -40,11 +40,12 @@
 #define STATE_MACHINE_INPUT_VALUE_NULL      (0U)
 
 typedef uint8_t statemachine_input_id_t;        /* Input ID/Category. Index into transition table. User may overwrite with enum. */
-typedef uint32_t statemachine_input_value_t;    /* User define 32-bit wide type */
+typedef uint32_t statemachine_input_value_t;    /* User define platform register size */
 
 typedef uint8_t statemachine_state_t;           /* State ID. User may overwrite with enum */
 
 struct StateMachine_State;
+
 /*!
     Transition Function - defined by user via P_TRANSITION_TABLE
     1 Additional input passed as arguments
@@ -52,7 +53,7 @@ struct StateMachine_State;
             0 - no transition, bypass exit and entry, indicates user defined non transition
             !0 - transition, perform exist and entry. User may return same state, for self transition, proc exit and entry
 */
-// include additional arg to optimize for r0-r3?
+// include additional arg to optimize for r2-r3?
 typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_input_value_t inputValue); // Input Function
 typedef void (*StateMachine_Function_T)(void * p_context); // Output Function
 
@@ -90,19 +91,19 @@ typedef struct StateMachine_Machine
 }
 StateMachine_Machine_T;
 
-typedef const struct StateMachine_Config
+typedef const struct StateMachine_Const
 {
     const StateMachine_Machine_T * const P_MACHINE;         /* Const definition of state transition behaviors */
-    void * const P_CONTEXT;                                 /* Mutable state information per state machine */
+    void * const P_CONTEXT;                                 /* Mutable state information per state machine. Alternatively, in each function */
 #if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
     const bool USE_CRITICAL;
 #endif
 }
-StateMachine_Config_T;
+StateMachine_Const_T;
 
 typedef struct StateMachine
 {
-    const StateMachine_Config_T CONFIG;
+    const StateMachine_Const_T CONST;
     const StateMachine_State_T * p_StateActive;
     /* Sync machine store result until process */
     volatile statemachine_input_id_t SyncInput;
@@ -122,7 +123,7 @@ StateMachine_T;
 
 #define STATE_MACHINE_INIT(p_Machine, p_Context, UseCritical)   \
 {                                                               \
-    .CONFIG =                                                   \
+    .CONST =                                                   \
     {                                                           \
         .P_MACHINE = p_Machine,                                 \
         .P_CONTEXT = p_Context,                                 \
@@ -145,8 +146,8 @@ extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
 extern void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine);
 extern bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
 
-extern bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
 extern void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine);
+extern bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
 // extern bool StateMachine_Async_ProcInputState(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
 
 extern void StateMachine_ProcState(StateMachine_T * p_stateMachine);

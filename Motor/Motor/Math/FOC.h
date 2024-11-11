@@ -38,7 +38,7 @@
 
 typedef struct FOC
 {
-    /* Params */
+    /* Config */
     // qfrac16_t IdqMagnitudeMax;
     // qfrac16_t IdMax; /* default 1/sqrt3 */
 

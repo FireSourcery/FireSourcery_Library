@@ -53,9 +53,9 @@
 
 //     if(isSuccess == true)
 //     {
-//         p_protocol->p_Specs->CMDR_BUILD_TX_REQ(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_APP_INTERFACE, cmdId);
+//         p_protocol->p_Specs->CMDR_BUILD_TX_REQ(p_protocol->CONST.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONST.P_APP_INTERFACE, cmdId);
 
-//         // p_req->CMDR_BUILD_REQ(p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONFIG.P_APP_INTERFACE);
+//         // p_req->CMDR_BUILD_REQ(p_protocol->CONST.P_TX_PACKET_BUFFER, &p_protocol->TxLength, p_protocol->CONST.P_APP_INTERFACE);
 //         //if resp length is known, and wait sync, PROTOCOL_RX_STATE_AWAIT_PACKET, skip wait byte one
 
 //         if((p_req->PROC_EXT != 0U) || (p_req->SYNC.RX_ACK == true))
@@ -66,7 +66,7 @@
 
 //         if(p_req->PROC_EXT != 0U)
 //         {
-//             // if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONFIG.P_REQ_STATE_BUFFER); }
+//             // if(p_protocol->p_Specs->REQ_EXT_RESET != 0U) { p_protocol->p_Specs->REQ_EXT_RESET(p_protocol->CONST.P_REQ_STATE_BUFFER); }
 //             if(p_req->SYNC.RX_ACK == true)     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC; }
 //             else                             { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_CONTINUE; }
 
@@ -75,7 +75,7 @@
 //         else                                     { p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID; }
 
 //         //set inactive or wait id, cannot distinguish, without queue count. only distinguish sync wait and non sync
-//         p_protocol->ReqTimeStart = *p_protocol->CONFIG.P_TIMER;
+//         p_protocol->ReqTimeStart = *p_protocol->CONST.P_TIMER;
 //     }
 
 //     return isSuccess;
@@ -109,17 +109,17 @@
 // */
 // void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 // {
-//     if(_Protocol_Cmdr_StartReq(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
+//     if(_Protocol_Cmdr_StartReq(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONST.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
 // }
 
 // void Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId)
 // {
-//     if(_Protocol_Cmdr_StartReq_Overwrite(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONFIG.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
+//     if(_Protocol_Cmdr_StartReq_Overwrite(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONST.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
 // }
 
 // bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
 // {
-//     return (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Params.WatchdogTime); //(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) &&
+//     return (*p_protocol->CONST.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Config.WatchdogTime); //(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) &&
 // }
 
 
@@ -152,7 +152,7 @@
 // */
 // bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol)
 // {
-//     bool isTimeout = (*p_protocol->CONFIG.P_TIMER - p_protocol->ReqTimeStart > p_protocol->p_Specs->REQ_TIMEOUT);
+//     bool isTimeout = (*p_protocol->CONST.P_TIMER - p_protocol->ReqTimeStart > p_protocol->p_Specs->REQ_TIMEOUT);
 //     if(isTimeout == true) { p_protocol->ReqState = PROTOCOL_REQ_STATE_INACTIVE; }
 //     return isTimeout;
 // }
@@ -167,7 +167,7 @@
 // */
 // bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol)
 // {
-//     // p_protocol->RxCode = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxPacketReqId);
+//     // p_protocol->RxCode = p_protocol->p_Specs->CHECK_PACKET(p_protocol->CONST.P_RX_PACKET_BUFFER, p_protocol->RxPacketReqId);
 //     //change to handle with build
 //     // CaptureRx(p_protocol);
 //     // if Req return == RxPacketReqId,
@@ -175,18 +175,18 @@
 
 //     if(p_protocol->RxCode == PROTOCOL_RX_CODE_PACKET_COMPLETE)
 //     {
-//         ((Protocol_Cmdr_Req_T *)p_protocol->p_CmdrReqActive)->PARSE_RESP(p_protocol->CONFIG.P_APP_INTERFACE, p_protocol->CONFIG.P_RX_PACKET_BUFFER);
+//         ((Protocol_Cmdr_Req_T *)p_protocol->p_CmdrReqActive)->PARSE_RESP(p_protocol->CONST.P_APP_INTERFACE, p_protocol->CONST.P_RX_PACKET_BUFFER);
 //         // parse packet may need to check packet seqeunce correctness p_protocol->RxPacketReqId
 
 //         // Proc ReqResp
 //         // p_protocol->p_CmdrReqActive->PROC
 //         // (
-//         //     p_protocol->CONFIG.P_APP_INTERFACE,
-//         //     p_protocol->CONFIG.P_TX_PACKET_BUFFER, &p_protocol->TxLength,
-//         //     p_protocol->CONFIG.P_RX_PACKET_BUFFER, p_protocol->RxIndex
+//         //     p_protocol->CONST.P_APP_INTERFACE,
+//         //     p_protocol->CONST.P_TX_PACKET_BUFFER, &p_protocol->TxLength,
+//         //     p_protocol->CONST.P_RX_PACKET_BUFFER, p_protocol->RxIndex
 //         // );
 
-//         // p_protocol->TimeStart = *p_protocol->CONFIG.P_TIMER; //restart watch tx idle
+//         // p_protocol->TimeStart = *p_protocol->CONST.P_TIMER; //restart watch tx idle
 //         p_protocol->ReqState = PROTOCOL_REQ_STATE_INACTIVE;
 //         isSuccess = true;
 //     }

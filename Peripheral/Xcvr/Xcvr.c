@@ -41,23 +41,23 @@ void Xcvr_Init(Xcvr_T * p_xcvr, uint8_t xcvrDefaultIndex)
 
 bool Xcvr_SetXcvr(Xcvr_T * p_xcvr, uint8_t xcvrIndex)
 {
-    bool status = xcvrIndex < p_xcvr->CONFIG.XCVR_TABLE_LENGTH;
-    if(status == true) { p_xcvr->p_Xcvr = &p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex]; }
+    bool status = xcvrIndex < p_xcvr->CONST.XCVR_TABLE_LENGTH;
+    if(status == true) { p_xcvr->p_Xcvr = &p_xcvr->CONST.P_XCVR_TABLE[xcvrIndex]; }
     return status;
 }
 
 bool Xcvr_CheckIsSet(const Xcvr_T * p_xcvr, uint8_t xcvrIndex)
 {
-    return ((xcvrIndex < p_xcvr->CONFIG.XCVR_TABLE_LENGTH) && (p_xcvr->p_Xcvr->P_CONTEXT == p_xcvr->CONFIG.P_XCVR_TABLE[xcvrIndex].P_CONTEXT));
+    return ((xcvrIndex < p_xcvr->CONST.XCVR_TABLE_LENGTH) && (p_xcvr->p_Xcvr->P_CONTEXT == p_xcvr->CONST.P_XCVR_TABLE[xcvrIndex].P_CONTEXT));
 }
 
 bool Xcvr_CheckIsValid(const Xcvr_T * p_xcvr, void * p_target)
 {
     bool isValid = false;
 
-    for(uint8_t iXcvr = 0U; iXcvr < p_xcvr->CONFIG.XCVR_TABLE_LENGTH; iXcvr++)
+    for(uint8_t iXcvr = 0U; iXcvr < p_xcvr->CONST.XCVR_TABLE_LENGTH; iXcvr++)
     {
-        if(p_target == p_xcvr->CONFIG.P_XCVR_TABLE[iXcvr].P_CONTEXT) { isValid = true; break; }
+        if(p_target == p_xcvr->CONST.P_XCVR_TABLE[iXcvr].P_CONTEXT) { isValid = true; break; }
     }
 
     return isValid;
@@ -71,7 +71,7 @@ bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate) //todo check 
     {
 #if defined(CONFIG_XCVR_INTERFACE_VTABLE)
         case XCVR_TYPE_INTERFACE:
-            if(p_xcvr->p_Xcvr->P_INTERFACE->CONFIG_BAUD_RATE != 0U) { p_xcvr->p_Xcvr->P_INTERFACE->CONFIG_BAUD_RATE(p_xcvr->p_Xcvr->P_CONTEXT, baudRate); }
+            if(p_xcvr->p_Xcvr->P_INTERFACE->CONST_BAUD_RATE != 0U) { p_xcvr->p_Xcvr->P_INTERFACE->CONST_BAUD_RATE(p_xcvr->p_Xcvr->P_CONTEXT, baudRate); }
             break;
 #endif
         case XCVR_TYPE_SERIAL:      isSuccess = Serial_ConfigBaudRate(p_xcvr->p_Xcvr->P_CONTEXT, baudRate);    break;
@@ -81,7 +81,7 @@ bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate) //todo check 
         default: break;
     }
 #elif     defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
-    if(p_xcvr->p_Xcvr->P_INTERFACE->CONFIG_BAUD_RATE != 0U) { p_xcvr->p_Xcvr->P_INTERFACE->CONFIG_BAUD_RATE(p_xcvr->p_Xcvr->P_CONTEXT, baudRate); }
+    if(p_xcvr->p_Xcvr->P_INTERFACE->CONST_BAUD_RATE != 0U) { p_xcvr->p_Xcvr->P_INTERFACE->CONST_BAUD_RATE(p_xcvr->p_Xcvr->P_CONTEXT, baudRate); }
 #endif
     return isSuccess;
 }

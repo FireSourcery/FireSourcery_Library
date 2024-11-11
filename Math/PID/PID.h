@@ -44,7 +44,7 @@ typedef enum PID_Mode
 }
 PID_Mode_T;
 
-typedef struct PID_Params
+typedef struct PID_Config
 {
     PID_Mode_T Mode;
     uint32_t SampleFreq;
@@ -60,18 +60,18 @@ typedef struct PID_Params
     int16_t IntegralGain;
     int8_t IntegralGainShift;
 }
-PID_Params_T;
-
-typedef const struct PID_Config
-{
-    const PID_Params_T * const P_PARAMS;
-}
 PID_Config_T;
+
+typedef const struct PID_Const
+{
+    const PID_Config_T * const P_CONFIG;
+}
+PID_Const_T;
 
 typedef struct PID
 {
-    const PID_Config_T CONFIG;
-    PID_Params_T Params;
+    const PID_Const_T CONST;
+    PID_Config_T Config;
     int32_t Integral32; /* Q16.16, Shifted 16 */
     int32_t ErrorPrev;
     int16_t OutputMin; /* -32768 Min */
@@ -80,13 +80,14 @@ typedef struct PID
 }
 PID_T;
 
-#define PID_INIT(p_Params) { .CONFIG = { .P_PARAMS = p_Params, } }
+#define PID_INIT(p_Config) { .CONST = { .P_CONFIG = p_Config, } }
 
 static inline int16_t PID_GetOutput(PID_T * p_pid)          { return p_pid->Output; }
-// static inline int32_t PID_GetKpParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Kp_Fixed32; }
-// static inline int32_t PID_GetKiParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Ki_Fixed32; }
-// static inline int32_t PID_GetKdParam_Fixed32(PID_T * p_pid) { return p_pid->Params.Kd_Fixed32; }
-static inline uint32_t PID_GetSampleFreq(PID_T * p_pid)     { return p_pid->Params.SampleFreq; }
+
+static inline uint32_t PID_GetSampleFreq(PID_T * p_pid)     { return p_pid->Config.SampleFreq; }
+// static inline int32_t PID_GetKpParam_Fixed32(PID_T * p_pid) { return p_pid->Config.Kp_Fixed32; }
+// static inline int32_t PID_GetKiParam_Fixed32(PID_T * p_pid) { return p_pid->Config.Ki_Fixed32; }
+// static inline int32_t PID_GetKdParam_Fixed32(PID_T * p_pid) { return p_pid->Config.Kd_Fixed32; }
 
 /******************************************************************************/
 /*!

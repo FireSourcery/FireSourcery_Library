@@ -63,14 +63,14 @@ bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, MotorControlle
 }
 
 /******************************************************************************/
-/* Parameters */
+/* Config */
 /******************************************************************************/
-/*! @param[in] volts < GLOBAL_MOTOR.VMAX and Parameters.VSourceRef */
+/*! @param[in] volts < MOTOR_STATIC.VMAX and Config.VSourceRef */
 void MotorController_User_SetVSourceRef(MotorControllerPtr_T p_mc, uint16_t volts)
 {
-    Global_Motor_InitVSourceRef_V(volts);
-    p_mc->Parameters.VSourceRef = Global_Motor_GetVSource_V();
-    for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++) { Motor_ResetUnitsVabc(&p_mc->CONFIG.P_MOTORS[iMotor]); }
+    Motor_Static_InitVSourceRef_V(volts);
+    p_mc->Config.VSourceRef = Motor_Static_GetVSource_V();
+    for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_ResetUnitsVabc(&p_mc->CONST.P_MOTORS[iMotor]); }
     VMonitor_SetNominal_MilliV(&p_mc->VMonitorSource, volts * 1000U);
     VMonitor_ResetLimitsDefault(&p_mc->VMonitorSource);
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
@@ -83,9 +83,9 @@ void MotorController_User_SetVSourceRef(MotorControllerPtr_T p_mc, uint16_t volt
 //     uint16_t iPeakAc = dc;
 //     uint16_t motoring = iPeakAc;
 
-//     for(uint8_t iMotor = 0U; iMotor < p_mc->CONFIG.MOTOR_COUNT; iMotor++)
+//     for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++)
 //     {
-//         Motor_User_SetILimitMotoringParam_Amp(&p_mc->CONFIG.P_MOTORS[iMotor], motoring);
+//         Motor_User_SetILimitMotoringParam_Amp(&p_mc->CONST.P_MOTORS[iMotor], motoring);
 //     }
 // }
 
@@ -104,28 +104,28 @@ void MotorController_User_SetVSourceRef(MotorControllerPtr_T p_mc, uint16_t volt
 */
 void MotorController_User_SetBatteryLifeDefault(MotorControllerPtr_T p_mc)
 {
-    p_mc->Parameters.BatteryZero_Adcu = VMonitor_GetFaultLower(&p_mc->VMonitorSource);
-    p_mc->Parameters.BatteryFull_Adcu = VMonitor_AdcuOfMilliV(&p_mc->VMonitorSource, (uint32_t)p_mc->Parameters.VSourceRef * 1000U);
+    p_mc->Config.BatteryZero_Adcu = VMonitor_GetFaultLower(&p_mc->VMonitorSource);
+    p_mc->Config.BatteryFull_Adcu = VMonitor_AdcuOfMilliV(&p_mc->VMonitorSource, (uint32_t)p_mc->Config.VSourceRef * 1000U);
     MotorController_ResetUnitsBatteryLife(p_mc);
 }
 
 void MotorController_User_SetBatteryLife_MilliV(MotorControllerPtr_T p_mc, uint32_t zero_mV, uint32_t max_mV)
 {
-    p_mc->Parameters.BatteryZero_Adcu = VMonitor_AdcuOfMilliV(&p_mc->VMonitorSource, zero_mV);
-    p_mc->Parameters.BatteryFull_Adcu = VMonitor_AdcuOfMilliV(&p_mc->VMonitorSource, max_mV);
+    p_mc->Config.BatteryZero_Adcu = VMonitor_AdcuOfMilliV(&p_mc->VMonitorSource, zero_mV);
+    p_mc->Config.BatteryFull_Adcu = VMonitor_AdcuOfMilliV(&p_mc->VMonitorSource, max_mV);
     MotorController_ResetUnitsBatteryLife(p_mc);
 }
 #endif
 
 /******************************************************************************/
 /* Manufacture */
+// use outer layer StateMachine check, simplifies handling of signature type.
 /******************************************************************************/
 /* Caller clears buffer */
 NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size)
 {
     NvMemory_Status_T status;
 
-    // todo call from state machine
     if(MotorController_User_IsLockedState(p_mc) == true)
     {
         status = MotorController_ReadManufacture_Blocking(p_mc, p_destBuffer, onceAddress, size);
@@ -155,17 +155,18 @@ NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(MotorController
 }
 
 // alternatively write to buffer
-// return _MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS);
-/*! @param[in] opId MOTOR_CONTROLLER_NVM_BOOT, MOTOR_CONTROLLER_NVM_WRITE_ONCE, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS */
+
+/*! @param[in] opId MOTOR_CONTROLLER_NVM_BOOT, MOTOR_CONTROLLER_NVM_WRITE_ONCE, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_CONFIG */
 // static inline NvMemory_Status_T _MotorController_User_SaveNvm_Blocking(MotorControllerPtr_T p_mc, MotorController_LockedId_T opId)
 // {
 //     MotorController_User_InputLocked(p_mc, opId);
 //     return p_mc->NvmStatus;
 // }
+
 // static inline NvMemory_Status_T MotorController_User_SaveManufacture_Blocking(MotorControllerPtr_T p_mc)
 // {
 //     return _MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE);
-//     // return StateMachine_ProcInput(p_mc, MCSM_INPUT_LOCK, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS);
+//     // return StateMachine_ProcInput(p_mc, MCSM_INPUT_LOCK, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_CONFIG);
 //     // return p_mc->NvmStatus;
 // }
 

@@ -36,20 +36,20 @@
 
 static void ResetUnitConversion(VMonitor_T * p_vMonitor)
 {
-    Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONFIG.UNITS_R1, p_vMonitor->CONFIG.UNITS_R2, GLOBAL_ANALOG.ADC_BITS, GLOBAL_ANALOG.ADC_VREF_MILLIV, 0);
+    Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONST.UNITS_R1, p_vMonitor->CONST.UNITS_R2, GLOBAL_ANALOG.ADC_BITS, GLOBAL_ANALOG.ADC_VREF_MILLIV, 0);
 }
 
 void VMonitor_Init(VMonitor_T * p_vMonitor)
 {
-    if(p_vMonitor->CONFIG.P_PARAMS != 0U) { memcpy(&p_vMonitor->Params, p_vMonitor->CONFIG.P_PARAMS, sizeof(VMonitor_Params_T)); }
+    if(p_vMonitor->CONST.P_CONFIG != 0U) { memcpy(&p_vMonitor->Config, p_vMonitor->CONST.P_CONFIG, sizeof(VMonitor_Config_T)); }
 
     ResetUnitConversion(p_vMonitor);
     p_vMonitor->Status = VMONITOR_STATUS_OK;
-    if(p_vMonitor->Params.FaultUpper_Adcu == 0U)        { p_vMonitor->Params.IsMonitorEnable = false; }
-    if(p_vMonitor->Params.FaultLower_Adcu == 0U)        { p_vMonitor->Params.IsMonitorEnable = false; }
-    if(p_vMonitor->Params.WarningUpper_Adcu == 0U)      { p_vMonitor->Params.WarningUpper_Adcu = p_vMonitor->Params.FaultUpper_Adcu; }
-    if(p_vMonitor->Params.WarningLower_Adcu == 0U)      { p_vMonitor->Params.WarningLower_Adcu = p_vMonitor->Params.FaultLower_Adcu; }
-    // Linear_ADC_Init(&p_vMonitor->LinearLimits, p_vMonitor->Params.FaultLower_Adcu, p_vMonitor->Params.WarningLower_Adcu, 0, 0);
+    if(p_vMonitor->Config.FaultUpper_Adcu == 0U)        { p_vMonitor->Config.IsMonitorEnable = false; }
+    if(p_vMonitor->Config.FaultLower_Adcu == 0U)        { p_vMonitor->Config.IsMonitorEnable = false; }
+    if(p_vMonitor->Config.WarningUpper_Adcu == 0U)      { p_vMonitor->Config.WarningUpper_Adcu = p_vMonitor->Config.FaultUpper_Adcu; }
+    if(p_vMonitor->Config.WarningLower_Adcu == 0U)      { p_vMonitor->Config.WarningLower_Adcu = p_vMonitor->Config.FaultLower_Adcu; }
+    // Linear_ADC_Init(&p_vMonitor->LinearLimits, p_vMonitor->Config.FaultLower_Adcu, p_vMonitor->Config.WarningLower_Adcu, 0, 0);
 }
 
 /*
@@ -58,10 +58,10 @@ void VMonitor_Init(VMonitor_T * p_vMonitor)
 */
 VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
 {
-    if(p_vMonitor->Params.IsMonitorEnable == true)
+    if(p_vMonitor->Config.IsMonitorEnable == true)
     {
-        if      (adcu > p_vMonitor->Params.WarningUpper_Adcu)   { p_vMonitor->Status = (adcu > p_vMonitor->Params.FaultUpper_Adcu) ? VMONITOR_FAULT_UPPER : VMONITOR_WARNING_UPPER; }
-        else if (adcu < p_vMonitor->Params.WarningLower_Adcu)   { p_vMonitor->Status = (adcu < p_vMonitor->Params.FaultLower_Adcu) ? VMONITOR_FAULT_LOWER : VMONITOR_WARNING_LOWER; }
+        if      (adcu > p_vMonitor->Config.WarningUpper_Adcu)   { p_vMonitor->Status = (adcu > p_vMonitor->Config.FaultUpper_Adcu) ? VMONITOR_FAULT_UPPER : VMONITOR_WARNING_UPPER; }
+        else if (adcu < p_vMonitor->Config.WarningLower_Adcu)   { p_vMonitor->Status = (adcu < p_vMonitor->Config.FaultLower_Adcu) ? VMONITOR_FAULT_LOWER : VMONITOR_WARNING_LOWER; }
         else                                                    { p_vMonitor->Status = VMONITOR_STATUS_OK; }
     }
 
@@ -70,12 +70,12 @@ VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
 
 /******************************************************************************/
 /*!
-    Params
+    Config
 */
 /******************************************************************************/
 void VMonitor_ResetLimitsDefault(VMonitor_T * p_vMonitor)
 {
-    uint32_t vRef = p_vMonitor->Params.Nominal_Adcu;
+    uint32_t vRef = p_vMonitor->Config.Nominal_Adcu;
     VMonitor_SetFaultLower(p_vMonitor, vRef * 3U / 4U);
     VMonitor_SetFaultUpper(p_vMonitor, vRef * 5U / 4U);
     VMonitor_SetWarningLower(p_vMonitor, vRef * 7U / 8U);

@@ -262,9 +262,9 @@ void Thread_SetPeriod(Thread_T * p_thread, uint16_t period)
 void Thread_SetFreq(Thread_T * p_thread, uint16_t freq)
 {
     Timer_SetFreq(&p_thread->Timer, freq);
-//    if         (freq > p_thread->Timer.CONFIG.COUNTER_FREQ/p_thread->Timer.PeriodMin)    p_thread->Timer.Period = p_thread->Timer.CONFIG.COUNTER_FREQ / p_thread->Timer.PeriodMin;
-//    else if (freq < p_thread->Timer.CONFIG.COUNTER_FREQ/p_thread->Timer.PeriodMax)    p_thread->Timer.Period = p_thread->Timer.CONFIG.COUNTER_FREQ / p_thread->Timer.PeriodMax;
-//    else                                                        p_thread->Timer.Period = p_thread->Timer.CONFIG.COUNTER_FREQ / freq;
+//    if         (freq > p_thread->Timer.CONST.COUNTER_FREQ/p_thread->Timer.PeriodMin)    p_thread->Timer.Period = p_thread->Timer.CONST.COUNTER_FREQ / p_thread->Timer.PeriodMin;
+//    else if (freq < p_thread->Timer.CONST.COUNTER_FREQ/p_thread->Timer.PeriodMax)    p_thread->Timer.Period = p_thread->Timer.CONST.COUNTER_FREQ / p_thread->Timer.PeriodMax;
+//    else                                                        p_thread->Timer.Period = p_thread->Timer.CONST.COUNTER_FREQ / freq;
 }
 
 void Thread_SetPeriodic(Thread_T * p_thread)
@@ -287,7 +287,7 @@ void Thread_SetOneShotProcs(Thread_T * p_thread, uint32_t procCounts, void (*onC
 
 void Thread_SetOneShotTime_MillisProcs(Thread_T * p_thread, uint32_t millis, uint32_t procCounts)
 {
-    Timer_SetPeriod(&p_thread->Timer, p_thread->Timer.CONFIG.BASE_FREQ * millis / procCounts / 1000U);
+    Timer_SetPeriod(&p_thread->Timer, p_thread->Timer.CONST.BASE_FREQ * millis / procCounts / 1000U);
     p_thread->OneShotProcs = procCounts;
     p_thread->OneShotProcsRemaining = p_thread->OneShotProcs;
 }
@@ -338,18 +338,18 @@ static uint32_t CalcSlower(uint32_t timerFreq, uint16_t freqDec, uint16_t freqCu
 
 //void Thread_SetFaster(Thread_T * p_thread, uint8_t freqInc, bool useLoopBoundary)
 //{
-//    uint32_t freqCurrent = p_thread->Timer.CONFIG.COUNTER_FREQ / p_thread->Timer.Period;
-//    uint32_t freqMin = p_thread->Timer.CONFIG.COUNTER_FREQ / p_thread->Timer.PeriodMax;
-//    uint32_t freqMax = p_thread->Timer.CONFIG.COUNTER_FREQ / p_thread->Timer.PeriodMin;
+//    uint32_t freqCurrent = p_thread->Timer.CONST.COUNTER_FREQ / p_thread->Timer.Period;
+//    uint32_t freqMin = p_thread->Timer.CONST.COUNTER_FREQ / p_thread->Timer.PeriodMax;
+//    uint32_t freqMax = p_thread->Timer.CONST.COUNTER_FREQ / p_thread->Timer.PeriodMin;
 //
 //    p_thread->Timer.Period = BoundedFaster(freqInc, freqMin, freqCurrent, freqMax, useLoopBoundary);
 //}
 //
 //void Thread_SetSlower(Thread_T * p_thread, uint8_t freqDec, bool useLoopBoundary)
 //{
-//    uint32_t freqCurrent = p_thread->Timer.CONFIG.COUNTER_FREQ / p_thread->Timer.Period;
-//    uint32_t freqMin = p_thread->Timer.CONFIG.COUNTER_FREQ / p_thread->Timer.PeriodMax;
-//    uint32_t freqMax = p_thread->Timer.CONFIG.COUNTER_FREQ / p_thread->Timer.PeriodMin;
+//    uint32_t freqCurrent = p_thread->Timer.CONST.COUNTER_FREQ / p_thread->Timer.Period;
+//    uint32_t freqMin = p_thread->Timer.CONST.COUNTER_FREQ / p_thread->Timer.PeriodMax;
+//    uint32_t freqMax = p_thread->Timer.CONST.COUNTER_FREQ / p_thread->Timer.PeriodMin;
 //
 //    p_thread->Timer.Period = CalcSlower(freqDec, freqMin, freqCurrent, freqMax, useLoopBoundary);
 //}

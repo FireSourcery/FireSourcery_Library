@@ -37,11 +37,11 @@
 void _Encoder_DeltaD_InitCounter(Encoder_T * p_encoder)
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
-    HAL_Encoder_InitCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
-    HAL_Encoder_WriteCounterMax(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, p_encoder->Params.CountsPerRevolution - 1U);
+    HAL_Encoder_InitCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
+    HAL_Encoder_WriteCounterMax(p_encoder->CONST.P_HAL_ENCODER_COUNTER, p_encoder->Config.CountsPerRevolution - 1U);
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
     // #ifdef CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
-    if(p_encoder->Params.IsQuadratureCaptureEnabled == true)
+    if(p_encoder->Config.IsQuadratureCaptureEnabled == true)
     {
         Pin_Input_Init(&p_encoder->PinA);
         Pin_Input_Init(&p_encoder->PinB);
@@ -55,9 +55,9 @@ void _Encoder_DeltaD_InitCounter(Encoder_T * p_encoder)
 */
 void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 {
-    if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
+    if(p_encoder->CONST.P_CONFIG != 0U) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
     _Encoder_DeltaD_InitCounter(p_encoder);
-    p_encoder->UnitT_Freq = p_encoder->CONFIG.SAMPLE_FREQ;
+    p_encoder->UnitT_Freq = p_encoder->CONST.SAMPLE_FREQ;
     _Encoder_ResetUnits(p_encoder);
     p_encoder->DeltaT = 1U;
     Encoder_DeltaD_SetInitial(p_encoder);
@@ -68,8 +68,8 @@ void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder)
 {
     p_encoder->DeltaD = 0U;
 #if     defined(CONFIG_ENCODER_HW_DECODER)
-    HAL_Encoder_ClearCounterOverflow(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
-    HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0U);
+    HAL_Encoder_ClearCounterOverflow(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
+    HAL_Encoder_WriteCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER, 0U);
     p_encoder->IndexCount = 0U;
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
     _Encoder_ZeroPulseCount(p_encoder);

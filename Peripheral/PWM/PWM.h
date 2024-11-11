@@ -36,23 +36,23 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct PWM_Config
+typedef const struct PWM_Const
 {
     // HAL_PWM_Module_T * const P_HAL_PWM_MODULE;
     HAL_PWM_T * const P_HAL_PWM;
     const uint32_t CHANNEL_ID;
     const uint32_t PERIOD_TICKS;
 }
-PWM_Config_T;
+PWM_Const_T;
 
 typedef struct PWM
 {
-    const PWM_Config_T CONFIG;
+    const PWM_Const_T CONST;
 }
 PWM_T;
 
-#define PWM_INIT(p_Hal, Peroid_Ticks, Channel)  { .CONFIG = { .P_HAL_PWM = p_Hal, .PERIOD_TICKS = Peroid_Ticks, .CHANNEL_ID = Channel }, }
-#define PWM_MODULE_INIT(p_Hal, Peroid_Ticks)    { .CONFIG = { .P_HAL_PWM = p_Hal, .PERIOD_TICKS = Peroid_Ticks }, }
+#define PWM_INIT(p_Hal, Peroid_Ticks, Channel)  { .CONST = { .P_HAL_PWM = p_Hal, .PERIOD_TICKS = Peroid_Ticks, .CHANNEL_ID = Channel }, }
+#define PWM_MODULE_INIT(p_Hal, Peroid_Ticks)    { .CONST = { .P_HAL_PWM = p_Hal, .PERIOD_TICKS = Peroid_Ticks }, }
 
 #ifndef PWM_DUTY_MAX
     #define PWM_DUTY_MAX (65536U)
@@ -60,35 +60,35 @@ PWM_T;
 /*
     Channel
 */
-static inline uint32_t _PWM_CalcPwmDutyTicks(const PWM_T * p_pwm, uint32_t duty) { return p_pwm->CONFIG.PERIOD_TICKS * duty / PWM_DUTY_MAX; }
+static inline uint32_t _PWM_CalcPwmDutyTicks(const PWM_T * p_pwm, uint32_t duty) { return p_pwm->CONST.PERIOD_TICKS * duty / PWM_DUTY_MAX; }
 
 /*
     Actuate arguments immediately, unless use sync is enabled
 */
-static inline void PWM_ActuateDuty_Ticks(const PWM_T * p_pwm, uint32_t pwmDuty_Ticks) { HAL_PWM_WriteDuty(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID, pwmDuty_Ticks); }
+static inline void PWM_ActuateDuty_Ticks(const PWM_T * p_pwm, uint32_t pwmDuty_Ticks) { HAL_PWM_WriteDuty(p_pwm->CONST.P_HAL_PWM, p_pwm->CONST.CHANNEL_ID, pwmDuty_Ticks); }
 
 /* where PWM_DUTY_MAX is 100% duty */
 static inline void PWM_ActuateDuty(const PWM_T * p_pwm, uint32_t pwmDuty)           { PWM_ActuateDuty_Ticks(p_pwm, _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)); }
-static inline void PWM_ActuateDutyMidPlus(const PWM_T * p_pwm, uint32_t pwmDuty)    { PWM_ActuateDuty_Ticks(p_pwm, (p_pwm->CONFIG.PERIOD_TICKS + _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)) / 2U); }
-static inline void PWM_ActuateDutyMidMinus(const PWM_T * p_pwm, uint32_t pwmDuty)   { PWM_ActuateDuty_Ticks(p_pwm, (p_pwm->CONFIG.PERIOD_TICKS - _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)) / 2U); }
+static inline void PWM_ActuateDutyMidPlus(const PWM_T * p_pwm, uint32_t pwmDuty)    { PWM_ActuateDuty_Ticks(p_pwm, (p_pwm->CONST.PERIOD_TICKS + _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)) / 2U); }
+static inline void PWM_ActuateDutyMidMinus(const PWM_T * p_pwm, uint32_t pwmDuty)   { PWM_ActuateDuty_Ticks(p_pwm, (p_pwm->CONST.PERIOD_TICKS - _PWM_CalcPwmDutyTicks(p_pwm, pwmDuty)) / 2U); }
 
-static inline void PWM_ActuateDuty_Scalar16(const PWM_T * p_pwm, uint16_t pwmDuty16)    { PWM_ActuateDuty_Ticks(p_pwm, (uint32_t)pwmDuty16 * p_pwm->CONFIG.PERIOD_TICKS >> 16U); }
-static inline void PWM_ActuateDuty_Frac16(const PWM_T * p_pwm, uint16_t pwmDuty15)      { PWM_ActuateDuty_Ticks(p_pwm, (uint32_t)pwmDuty15 * p_pwm->CONFIG.PERIOD_TICKS >> 15U); }
+static inline void PWM_ActuateDuty_Scalar16(const PWM_T * p_pwm, uint16_t pwmDuty16)    { PWM_ActuateDuty_Ticks(p_pwm, (uint32_t)pwmDuty16 * p_pwm->CONST.PERIOD_TICKS >> 16U); }
+static inline void PWM_ActuateDuty_Frac16(const PWM_T * p_pwm, uint16_t pwmDuty15)      { PWM_ActuateDuty_Ticks(p_pwm, (uint32_t)pwmDuty15 * p_pwm->CONST.PERIOD_TICKS >> 15U); }
 
-static inline void PWM_Enable(const PWM_T * p_pwm)                  { HAL_PWM_EnableOutput(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
-static inline void PWM_Disable(const PWM_T * p_pwm)                 { HAL_PWM_DisableOutput(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
-static inline void PWM_EnableInvertPolarity(const PWM_T * p_pwm)    { HAL_PWM_EnableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
-static inline void PWM_DisableInvertPolarity(const PWM_T * p_pwm)   { HAL_PWM_DisableInvertPolarity(p_pwm->CONFIG.P_HAL_PWM, p_pwm->CONFIG.CHANNEL_ID); }
+static inline void PWM_Enable(const PWM_T * p_pwm)                  { HAL_PWM_EnableOutput(p_pwm->CONST.P_HAL_PWM, p_pwm->CONST.CHANNEL_ID); }
+static inline void PWM_Disable(const PWM_T * p_pwm)                 { HAL_PWM_DisableOutput(p_pwm->CONST.P_HAL_PWM, p_pwm->CONST.CHANNEL_ID); }
+static inline void PWM_EnableInvertPolarity(const PWM_T * p_pwm)    { HAL_PWM_EnableInvertPolarity(p_pwm->CONST.P_HAL_PWM, p_pwm->CONST.CHANNEL_ID); }
+static inline void PWM_DisableInvertPolarity(const PWM_T * p_pwm)   { HAL_PWM_DisableInvertPolarity(p_pwm->CONST.P_HAL_PWM, p_pwm->CONST.CHANNEL_ID); }
 
 /*
     Module
 */
 /* Shared interrupt */
-static inline void PWM_ClearInterrupt(const PWM_T * p_pwm)      { HAL_PWM_ClearInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
-static inline void PWM_DisableInterrupt(const PWM_T * p_pwm)    { HAL_PWM_DisableInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
-static inline void PWM_EnableInterrupt(const PWM_T * p_pwm)     { HAL_PWM_EnableInterrupt(p_pwm->CONFIG.P_HAL_PWM); }
+static inline void PWM_ClearInterrupt(const PWM_T * p_pwm)      { HAL_PWM_ClearInterrupt(p_pwm->CONST.P_HAL_PWM); }
+static inline void PWM_DisableInterrupt(const PWM_T * p_pwm)    { HAL_PWM_DisableInterrupt(p_pwm->CONST.P_HAL_PWM); }
+static inline void PWM_EnableInterrupt(const PWM_T * p_pwm)     { HAL_PWM_EnableInterrupt(p_pwm->CONST.P_HAL_PWM); }
 /* If multiple PWMs share a register. may interfere with sync. todo buffered module sync */
-static inline void PWM_ActuateSync(const PWM_T * p_pwm)         { HAL_PWM_SyncModule(p_pwm->CONFIG.P_HAL_PWM); }
+static inline void PWM_ActuateSync(const PWM_T * p_pwm)         { HAL_PWM_SyncModule(p_pwm->CONST.P_HAL_PWM); }
 
 /*
     Extern

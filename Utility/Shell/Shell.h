@@ -70,7 +70,7 @@ typedef struct __attribute__((aligned(2U)))
     bool IsEnableOnInit;
     bool EnablePrintStatus;
 }
-Shell_Params_T;
+Shell_Config_T;
 
 typedef const struct
 {
@@ -79,14 +79,14 @@ typedef const struct
     void * const P_CMD_CONTEXT;
     volatile const uint32_t * const P_TIMER;
     const uint32_t TIMER_FREQ;
-    const Shell_Params_T * const P_PARAMS;
+    const Shell_Config_T * const P_CONFIG;
 }
 Shell_Config_T;
 
 typedef struct
 {
-    Shell_Config_T CONFIG;
-    Shell_Params_T Params;
+    Shell_Const_T CONST;
+    Shell_Config_T Config;
     Terminal_T Terminal;
     Shell_State_T State;
     Cmd_T * p_Cmd;             /*!< Cmd  in process preserve across state change */
@@ -101,16 +101,16 @@ Shell_T;
     #define _SHELL_INIT_XCVR(p_XcvrTable, TableLength)
 #endif
 
-#define SHELL_INIT(p_CmdTable, CmdCount, p_Context, p_Timer, TimerFreq, p_Params, p_XcvrTable, TableLength)    \
+#define SHELL_INIT(p_CmdTable, CmdCount, p_Context, p_Timer, TimerFreq, p_Config, p_XcvrTable, TableLength)    \
 {                                                            \
-    .CONFIG =                                                 \
+    .CONST =                                                 \
     {                                                        \
         .P_CMD_TABLE             = p_CmdTable,                \
         .CMD_COUNT                 = CmdCount,                    \
         .P_CMD_CONTEXT             = p_Context,                \
         .P_TIMER                 = p_Timer,                    \
         .TIMER_FREQ             = TimerFreq,                \
-        .P_PARAMS                = p_Params                    \
+        .P_CONFIG                = p_Config                    \
     },                                                        \
     .Terminal =                                                \
     {                                                        \
@@ -120,8 +120,8 @@ Shell_T;
 
 static inline void Shell_Disable(Shell_T * p_shell) { p_shell->State = SHELL_STATE_INACTIVE; }
 static inline void Shell_Enable(Shell_T * p_shell) { p_shell->State = SHELL_STATE_PROMPT; Terminal_Reset(&p_shell->Terminal);}
-static inline void Shell_EnableOnInit(Shell_T * p_shell) { p_shell->Params.IsEnableOnInit = true; }
-static inline void Shell_DisableOnInit(Shell_T * p_shell) { p_shell->Params.IsEnableOnInit = false; }
+static inline void Shell_EnableOnInit(Shell_T * p_shell) { p_shell->Config.IsEnableOnInit = true; }
+static inline void Shell_DisableOnInit(Shell_T * p_shell) { p_shell->Config.IsEnableOnInit = false; }
 
 extern void Shell_Init(Shell_T * p_shell);
 extern Shell_Status_T Shell_Proc(Shell_T * p_shell);

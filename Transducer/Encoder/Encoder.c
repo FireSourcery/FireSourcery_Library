@@ -55,23 +55,23 @@ const int8_t _ENCODER_TABLE_PHASE_A[_ENCODER_TABLE_LENGTH] =
 /******************************************************************************/
 // static void InitPhasePins(Encoder_T * p_encoder)
 // {
-//     HAL_Encoder_InitPin(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
-//     HAL_Encoder_InitPin(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
-//     HAL_Encoder_InitPin(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
+//     HAL_Encoder_InitPin(p_encoder->CONST.P_HAL_PIN_A, p_encoder->CONST.PIN_A_ID);
+//     HAL_Encoder_InitPin(p_encoder->CONST.P_HAL_PIN_B, p_encoder->CONST.PIN_B_ID);
+//     HAL_Encoder_InitPin(p_encoder->CONST.P_HAL_PIN_Z, p_encoder->CONST.PIN_Z_ID);
 // }
 
 void Encoder_InitInterrupts_Quadrature(Encoder_T * p_encoder)
 {
-    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
-    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
-    HAL_Encoder_InitPinInterruptFallingEdge(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONST.P_HAL_PIN_A, p_encoder->CONST.PIN_A_ID);
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONST.P_HAL_PIN_B, p_encoder->CONST.PIN_B_ID);
+    HAL_Encoder_InitPinInterruptFallingEdge(p_encoder->CONST.P_HAL_PIN_Z, p_encoder->CONST.PIN_Z_ID);
 }
 
 void Encoder_InitInterrupts_ABC(Encoder_T * p_encoder)
 {
-    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_A, p_encoder->CONFIG.PIN_A_ID);
-    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_B, p_encoder->CONFIG.PIN_B_ID);
-    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONFIG.P_HAL_PIN_Z, p_encoder->CONFIG.PIN_Z_ID);
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONST.P_HAL_PIN_A, p_encoder->CONST.PIN_A_ID);
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONST.P_HAL_PIN_B, p_encoder->CONST.PIN_B_ID);
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONST.P_HAL_PIN_Z, p_encoder->CONST.PIN_Z_ID);
 }
 
 
@@ -92,7 +92,7 @@ void Encoder_InitInterrupts_ABC(Encoder_T * p_encoder)
 */
 void _Encoder_ResetUnitsAngle(Encoder_T * p_encoder)
 {
-    p_encoder->UnitAngularD = UINT32_MAX / p_encoder->Params.CountsPerRevolution + 1U;
+    p_encoder->UnitAngularD = UINT32_MAX / p_encoder->Config.CountsPerRevolution + 1U;
 }
 
 /*
@@ -100,8 +100,8 @@ void _Encoder_ResetUnitsAngle(Encoder_T * p_encoder)
 */
 void _Encoder_ResetUnitsInterpolateAngle(Encoder_T * p_encoder)
 {
-    p_encoder->UnitInterpolateAngle = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES * p_encoder->Params.InterpolateAngleScalar, p_encoder->CONFIG.TIMER_FREQ, p_encoder->CONFIG.POLLING_FREQ * p_encoder->Params.CountsPerRevolution);
-    p_encoder->InterpolateAngleLimit = ENCODER_ANGLE_DEGREES * p_encoder->Params.InterpolateAngleScalar / p_encoder->Params.CountsPerRevolution;
+    p_encoder->UnitInterpolateAngle = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES * p_encoder->Config.InterpolateAngleScalar, p_encoder->CONST.TIMER_FREQ, p_encoder->CONST.POLLING_FREQ * p_encoder->Config.CountsPerRevolution);
+    p_encoder->InterpolateAngleLimit = ENCODER_ANGLE_DEGREES * p_encoder->Config.InterpolateAngleScalar / p_encoder->Config.CountsPerRevolution;
 }
 
 /*
@@ -112,14 +112,14 @@ void _Encoder_ResetUnitsInterpolateAngle(Encoder_T * p_encoder)
     Max = 2 * ScalarSpeedRef_Rpm * CountsPerRevolution / (60 * UnitT_Freq)
 */
 static uint32_t DeltaDOverflow(Encoder_T * p_encoder)
-    { return math_muldiv64_unsigned(p_encoder->Params.ScalarSpeedRef_Rpm * 2U, p_encoder->Params.CountsPerRevolution, 60U * p_encoder->UnitT_Freq); }
+    { return math_muldiv64_unsigned(p_encoder->Config.ScalarSpeedRef_Rpm * 2U, p_encoder->Config.CountsPerRevolution, 60U * p_encoder->UnitT_Freq); }
 
 
 static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_t * p_unitsSpeedShift, uint32_t unitsFactor, uint32_t unitsDivisor)
 {
-    uint32_t speedDivisor = p_encoder->Params.CountsPerRevolution * unitsDivisor;
+    uint32_t speedDivisor = p_encoder->Config.CountsPerRevolution * unitsDivisor;
 
-    if (p_encoder->UnitT_Freq == p_encoder->CONFIG.TIMER_FREQ)
+    if (p_encoder->UnitT_Freq == p_encoder->CONST.TIMER_FREQ)
     {
         *p_unitsSpeedShift = 0U;
         *p_unitsSpeed = math_muldiv64_unsigned(p_encoder->UnitT_Freq, unitsFactor, speedDivisor);
@@ -128,7 +128,7 @@ static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_
     else
     {
         /* max = unitsFactor * ScalarSpeedRef_Rpm/60 * 2 / unitsDivisor = deltaDMax * speedFactor / speedDivisor */
-        *p_unitsSpeedShift = q_lshift_max_signed(math_muldiv64_unsigned(unitsFactor * 2U - 1U, p_encoder->Params.ScalarSpeedRef_Rpm, 60U * unitsDivisor));
+        *p_unitsSpeedShift = q_lshift_max_signed(math_muldiv64_unsigned(unitsFactor * 2U - 1U, p_encoder->Config.ScalarSpeedRef_Rpm, 60U * unitsDivisor));
         *p_unitsSpeed = math_muldiv64_unsigned(unitsFactor, p_encoder->UnitT_Freq << (*p_unitsSpeedShift), speedDivisor);
         // *p_unitsSpeed = (uint64_t)(unitsFactor)*p_encoder->UnitT_Freq << (*p_unitsSpeedShift) / speedDivisor;
     }
@@ -160,7 +160,7 @@ static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_
 */
 void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 {
-    SetUnitsSpeed(p_encoder, &p_encoder->UnitScalarSpeed, &p_encoder->UnitScalarSpeedShift, (uint32_t)65536U * 60U, p_encoder->Params.ScalarSpeedRef_Rpm);
+    SetUnitsSpeed(p_encoder, &p_encoder->UnitScalarSpeed, &p_encoder->UnitScalarSpeedShift, (uint32_t)65536U * 60U, p_encoder->Config.ScalarSpeedRef_Rpm);
 
     p_encoder->_FreqDMax = DeltaDOverflow(p_encoder);
 }
@@ -217,7 +217,7 @@ void _Encoder_ResetUnitsAngularSpeed(Encoder_T * p_encoder)
 */
 void _Encoder_ResetUnitsLinearSpeed(Encoder_T * p_encoder)
 {
-    SetUnitsSpeed(p_encoder, &p_encoder->UnitSurfaceSpeed, &p_encoder->UnitSurfaceSpeedShift, (p_encoder->Params.GearRatio_Divisor * p_encoder->Params.SurfaceDiameter * 314), (p_encoder->Params.GearRatio_Factor * 100));
+    SetUnitsSpeed(p_encoder, &p_encoder->UnitSurfaceSpeed, &p_encoder->UnitSurfaceSpeedShift, (p_encoder->Config.GearRatio_Divisor * p_encoder->Config.SurfaceDiameter * 314), (p_encoder->Config.GearRatio_Factor * 100));
 }
 
 void _Encoder_ResetUnits(Encoder_T * p_encoder)
@@ -231,13 +231,13 @@ void _Encoder_ResetUnits(Encoder_T * p_encoder)
 
 void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRevolution)
 {
-    p_encoder->Params.CountsPerRevolution = countsPerRevolution;
+    p_encoder->Config.CountsPerRevolution = countsPerRevolution;
     _Encoder_ResetUnits(p_encoder);
 }
 
 void Encoder_SetScalarSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
 {
-    p_encoder->Params.ScalarSpeedRef_Rpm = speedRef;
+    p_encoder->Config.ScalarSpeedRef_Rpm = speedRef;
     _Encoder_ResetUnitsScalarSpeed(p_encoder);
     _Encoder_ResetUnitsAngularSpeed(p_encoder);
     _Encoder_ResetUnitsLinearSpeed(p_encoder);
@@ -248,9 +248,9 @@ void Encoder_SetScalarSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
 */
 void Encoder_SetSurfaceRatio(Encoder_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatio_Factor, uint32_t gearRatio_Divisor)
 {
-    p_encoder->Params.SurfaceDiameter = surfaceDiameter;
-    p_encoder->Params.GearRatio_Factor = gearRatio_Factor;
-    p_encoder->Params.GearRatio_Divisor = gearRatio_Divisor;
+    p_encoder->Config.SurfaceDiameter = surfaceDiameter;
+    p_encoder->Config.GearRatio_Factor = gearRatio_Factor;
+    p_encoder->Config.GearRatio_Divisor = gearRatio_Divisor;
     _Encoder_ResetUnitsLinearSpeed(p_encoder);
 }
 
@@ -271,11 +271,11 @@ void Encoder_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter
 */
 /******************************************************************************/
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)   { p_encoder->Params.IsQuadratureCaptureEnabled = isEnabled; }
-void Encoder_EnableQuadratureMode(Encoder_T * p_encoder)                { p_encoder->Params.IsQuadratureCaptureEnabled = true; }
-void Encoder_DisableQuadratureMode(Encoder_T * p_encoder)               { p_encoder->Params.IsQuadratureCaptureEnabled = false; }
+void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)   { p_encoder->Config.IsQuadratureCaptureEnabled = isEnabled; }
+void Encoder_EnableQuadratureMode(Encoder_T * p_encoder)                { p_encoder->Config.IsQuadratureCaptureEnabled = true; }
+void Encoder_DisableQuadratureMode(Encoder_T * p_encoder)               { p_encoder->Config.IsQuadratureCaptureEnabled = false; }
 /*!    isALeadBPositive - User runtime calibrate */
-void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive) { p_encoder->Params.IsALeadBPositive = isALeadBPositive; }
+void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALeadBPositive) { p_encoder->Config.IsALeadBPositive = isALeadBPositive; }
 
 /*
     Run on calibration routine start
@@ -283,8 +283,8 @@ void Encoder_SetQuadratureDirectionCalibration(Encoder_T * p_encoder, bool isALe
 void Encoder_CalibrateQuadratureReference(Encoder_T * p_encoder)
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
-    p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
-    HAL_Encoder_WriteCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER, 0);
+    p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
+    HAL_Encoder_WriteCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER, 0);
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
     p_encoder->CounterD = 0;
 #endif
@@ -296,14 +296,14 @@ void Encoder_CalibrateQuadratureReference(Encoder_T * p_encoder)
 void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder)
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
-    uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->CONFIG.P_HAL_ENCODER_COUNTER);
+    uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
     // #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-    // p_encoder->Params.IsALeadBPositive = (counterValue > p_encoder->CounterD);
+    // p_encoder->Config.IsALeadBPositive = (counterValue > p_encoder->CounterD);
     // #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-    // p_encoder->Params.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
+    // p_encoder->Config.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
     // #endif
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
-    p_encoder->Params.IsALeadBPositive = (p_encoder->CounterD > 0);
+    p_encoder->Config.IsALeadBPositive = (p_encoder->CounterD > 0);
 #endif
 }
 

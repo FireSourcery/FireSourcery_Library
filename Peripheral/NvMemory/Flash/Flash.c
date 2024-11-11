@@ -236,7 +236,7 @@ static Flash_Status_T SetReadOnce(Flash_T * p_flash, uint8_t * p_resultBuffer, u
 
 // void Flash_GetReadOnceResults(const Flash_T * p_flash, uint8_t * p_result)
 // {
-//     memcpy(p_result, &p_flash->CONFIG.P_BUFFER[0U], p_flash->OpSizeAligned);
+//     memcpy(p_result, &p_flash->CONST.P_BUFFER[0U], p_flash->OpSizeAligned);
 // }
 
 /******************************************************************************/
@@ -263,7 +263,7 @@ static Flash_Status_T SetEraseAll(Flash_T * p_flash)
 /******************************************************************************/
 void Flash_Init(Flash_T * p_flash)
 {
-    HAL_Flash_Init(p_flash->CONFIG.P_HAL);
+    HAL_Flash_Init(p_flash->CONST.P_HAL);
     NvMemory_Init(p_flash);
     p_flash->IsForceAlignEnable = true;
 }
@@ -454,7 +454,7 @@ Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, uintptr_t destAddress, c
 // }
 // void Flash_GetReadOnce(const Flash_T * p_flash, uint8_t * p_result)
 // {
-//     memcpy(p_result, &p_flash->CONFIG.P_BUFFER[0U], p_flash->OpSizeAligned);
+//     memcpy(p_result, &p_flash->CONST.P_BUFFER[0U], p_flash->OpSizeAligned);
 // }
 // Flash_Status_T Flash_StartReadOnce_Direct_NonBlocking(Flash_T * p_flash, uint8_t * p_destResult, uintptr_t destAddress, size_t size)
 // {

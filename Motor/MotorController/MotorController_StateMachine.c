@@ -87,7 +87,7 @@ static void Init_Proc(MotorControllerPtr_T p_mc)
         valid independent of adc polling thread that set fault.
         This way regular adc sample may occur on any thread, blocked or not blocked by the StateMachine.
     */
-    if(SysTime_GetMillis() > GLOBAL_MOTOR.INIT_WAIT)
+    if(SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT)
     {
         MotorController_PollAdcFaultFlags(p_mc);
     }
@@ -95,7 +95,7 @@ static void Init_Proc(MotorControllerPtr_T p_mc)
     if(p_mc->FaultFlags.Word != 0U) { proceed = false; }
 
     // if(p_mc->InitFlags.Word != 0U) { proceed = false; }   // indirectly poll inputs
-//     if((p_mc->Parameters.BuzzerFlagsEnable.ThrottleOnInit == true) && (p_mc->BuzzerFlagsActive.ThrottleOnInit == 0U))
+//     if((p_mc->Config.BuzzerFlagsEnable.ThrottleOnInit == true) && (p_mc->BuzzerFlagsActive.ThrottleOnInit == 0U))
 //     {
 //         p_mc->BuzzerFlagsActive.ThrottleOnInit = 1U;
         // MotorController_BeepShort(p_mc);
@@ -103,7 +103,7 @@ static void Init_Proc(MotorControllerPtr_T p_mc)
 
     if(proceed == true)
     {
-        if(p_mc->Parameters.InitMode == MOTOR_CONTROLLER_INIT_MODE_SERVO) { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_SERVO); }
+        if(p_mc->Config.InitMode == MOTOR_CONTROLLER_INIT_MODE_SERVO) { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_SERVO); }
         else { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_PARK); }
     }
 }
@@ -346,8 +346,8 @@ static const StateMachine_State_T STATE_DRIVE =
 /******************************************************************************/
 static void Neutral_Entry(MotorControllerPtr_T p_mc)
 {
-    if(p_mc->DriveSubState != MOTOR_CONTROLLER_DRIVE_BRAKE) { MotorController_ReleaseAll(p_mc); }  /* If enter neutral while braking, handle discontinuity */
-    // MotorController_ReleaseAll(p_mc);
+    if(p_mc->DriveSubState != MOTOR_CONTROLLER_DRIVE_BRAKE) { MotorController_TryReleaseAll(p_mc); }  /* If enter neutral while braking, handle discontinuity */
+    // MotorController_TryReleaseAll(p_mc);
     // p_mc->DriveDirection = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;
 }
 static void Neutral_Proc(MotorControllerPtr_T p_mc) { (void)p_mc; }
@@ -374,7 +374,7 @@ static StateMachine_State_T * Neutral_InputDirection(MotorControllerPtr_T p_mc, 
 //     switch(_driveCmd)
 //     {
 //         case MOTOR_CONTROLLER_DRIVE_BRAKE: DriveNeutral_SetBrake(p_mc, ); break;
-//         case MOTOR_CONTROLLER_DRIVE_ZERO: if(p_mc->DriveSubState != MOTOR_CONTROLLER_DRIVE_ZERO) { MotorController_ReleaseAll(p_mc); } break;
+//         case MOTOR_CONTROLLER_DRIVE_ZERO: if(p_mc->DriveSubState != MOTOR_CONTROLLER_DRIVE_ZERO) { MotorController_TryReleaseAll(p_mc); } break;
 //         case MOTOR_CONTROLLER_DRIVE_THROTTLE: break;
 //         default: break;
 //     }
@@ -388,7 +388,7 @@ static StateMachine_State_T * Neutral_InputBrake(MotorControllerPtr_T p_mc, stat
     {
         if(p_mc->DriveSubState != MOTOR_CONTROLLER_DRIVE_ZERO)
         {
-            MotorController_ReleaseAll(p_mc);
+            MotorController_TryReleaseAll(p_mc);
             p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_ZERO;
         }
     }
@@ -433,7 +433,7 @@ static void Blocking_Proc(MotorControllerPtr_T p_mc)
     {
         case MOTOR_CONTROLLER_LOCKED_ENTER:               break;
         case MOTOR_CONTROLLER_LOCKED_EXIT:                break;
-        case MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS:     break;
+        case MOTOR_CONTROLLER_LOCKED_NVM_SAVE_CONFIG:     break;
         case MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR:    break;//todo check calibration complete
         case MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC:       break;
         // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_WriteOnce_Blocking(p_mc);           break;
@@ -460,7 +460,7 @@ static StateMachine_State_T * Blocking_InputBlocking_Blocking(MotorControllerPtr
         /* blocks briefly */
         case MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC:       MotorController_CalibrateAdc(p_mc);                               break;
         /* NvM function will block + disable interrupts */
-        case MOTOR_CONTROLLER_LOCKED_NVM_SAVE_PARAMS:     p_mc->NvmStatus = MotorController_SaveParameters_Blocking(p_mc);  break;
+        case MOTOR_CONTROLLER_LOCKED_NVM_SAVE_CONFIG:     p_mc->NvmStatus = MotorController_SaveConfig_Blocking(p_mc);  break;
         case MOTOR_CONTROLLER_LOCKED_REBOOT:       Reboot();                               break;
         default: break;
     }
@@ -495,7 +495,7 @@ static void Servo_Entry(MotorControllerPtr_T p_mc)
     MotorController_ServoExtern_Start(p_mc);
 #else
     MotorController_Servo_Start(p_mc);
-    MotorController_StartCmdMode(p_mc, p_mc->Parameters.DefaultCmdMode);
+    MotorController_StartCmdMode(p_mc, p_mc->Config.DefaultCmdMode);
     // MotorController_ActivateAll(p_mc);
 #endif
 }
@@ -512,7 +512,7 @@ static void Servo_Proc(MotorControllerPtr_T p_mc)
 static StateMachine_State_T * Servo_InputExit(MotorControllerPtr_T p_mc, statemachine_input_value_t voidVar)
 {
     (void)voidVar;
-    MotorController_ReleaseAll(p_mc);
+    MotorController_TryReleaseAll(p_mc);
     return &STATE_PARK;
 }
 
@@ -572,10 +572,10 @@ static void Fault_Proc(MotorControllerPtr_T p_mc)
 {
     MotorController_DisableAll(p_mc);
 
-    switch(p_mc->Parameters.InputMode)
+    switch(p_mc->Config.InputMode)
     {
         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: /* Protocol Rx Lost use auto recover, without user input */
-            p_mc->FaultFlags.RxLost = Protocol_CheckRxLost(&p_mc->CONFIG.P_PROTOCOLS[0U]);
+            p_mc->FaultFlags.RxLost = Protocol_CheckRxLost(&p_mc->CONST.P_PROTOCOLS[0U]);
             break;
         case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
         default:  break;

@@ -82,21 +82,21 @@ NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, uintptr_t destAddress, co
 void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 {
     //todo isfirsttime, use startcmd template
-    // if(HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL)) { EEPROM_ProgramPartition_Blocking(p_eeprom); }
+    // if(HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONST.P_HAL)) { EEPROM_ProgramPartition_Blocking(p_eeprom); }
     // NvMemory_Status_T status = EEPROM_SetInit(p_eeprom);
     // if(status == NV_MEMORY_STATUS_SUCCESS)
     // {
     //     status = NvMemory_ProcOp_Blocking(p_eeprom);
 
-    HAL_EEPROM_Init_Blocking(p_eeprom->CONFIG.P_HAL);
+    HAL_EEPROM_Init_Blocking(p_eeprom->CONST.P_HAL);
     NvMemory_Init(p_eeprom);
     p_eeprom->IsVerifyEnable = false;
     p_eeprom->IsOpBuffered = false;
     p_eeprom->IsForceAlignEnable = false;
-    while(HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONFIG.P_HAL) == false);
+    while(HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONST.P_HAL) == false);
 }
 
-// void EEPROM_ReadIsFirstTime(EEPROM_T * p_eeprom) { HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONFIG.P_HAL); }
+// void EEPROM_ReadIsFirstTime(EEPROM_T * p_eeprom) { HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONST.P_HAL); }
 
 NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, uintptr_t destAddress, const void * p_source, size_t sizeBytes)
 {
@@ -115,9 +115,9 @@ NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, uintptr_t destAddre
 /*
     Non Blocking - UNTESTED
 */
-// void EEPROM_Init_NonBlocking(EEPROM_T * p_eeprom) { HAL_EEPROM_Init_NonBlocking(p_eeprom->CONFIG.P_HAL); }
+// void EEPROM_Init_NonBlocking(EEPROM_T * p_eeprom) { HAL_EEPROM_Init_NonBlocking(p_eeprom->CONST.P_HAL); }
 // bool EEPROM_ProcOp_NonBlocking(EEPROM_T * p_flash) { return NvMemory_ProcOp(p_flash); }
-// bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom) { return HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONFIG.P_HAL); }
+// bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom) { return HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONST.P_HAL); }
 // NvMemory_Status_T EEPROM_StartWrite_NonBlocking(EEPROM_T * p_eeprom, void * destAddress, const void * p_source, size_t sizeBytes)
 // {
 //     return (p_eeprom->Status = (EEPROM_SetWrite(p_eeprom, destAddress, p_source, sizeBytes) == NV_MEMORY_STATUS_SUCCESS ? NvMemory_StartOp(p_eeprom) : NV_MEMORY_STATUS_ERROR_INPUT));

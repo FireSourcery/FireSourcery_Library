@@ -37,10 +37,10 @@
 void _Encoder_DeltaT_InitTimer(Encoder_T * p_encoder)
 {
 
-    // if(p_encoder->CONFIG.P_HAL_ENCODER_TIMER_INIT) { p_encoder->CONFIG.P_HAL_ENCODER_TIMER_INIT(); }
+    // if(p_encoder->CONST.P_HAL_ENCODER_TIMER_INIT) { p_encoder->CONST.P_HAL_ENCODER_TIMER_INIT(); }
     // else{}
 
-    HAL_Encoder_InitTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
+    HAL_Encoder_InitTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER);
     /*
         RPM * CPR / 60[Seconds] = CPS
         CPS = T_FREQ [Hz] / deltaT_ticks [timerticks/Count]
@@ -63,13 +63,13 @@ void _Encoder_DeltaT_InitTimer(Encoder_T * p_encoder)
             => RPM Min ~= 10RPM
     */
 #ifdef CONFIG_ENCODER_DYNAMIC_TIMER
-    // uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, p_encoder->Params.CountsPerRevolution * 16666U);
-    uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, p_encoder->CONFIG.TIMER_FREQ);
-    p_encoder->ExtendedTimerConversion = timerFreq / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
+    // uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->CONST.P_HAL_ENCODER_TIMER, p_encoder->Config.CountsPerRevolution * 16666U);
+    uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->CONST.P_HAL_ENCODER_TIMER, p_encoder->CONST.TIMER_FREQ);
+    p_encoder->ExtendedTimerConversion = timerFreq / p_encoder->CONST.EXTENDED_TIMER_FREQ;
 #else
     /* Compile time defined TIMER_FREQ */
-    HAL_Encoder_InitTimerFreq(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, p_encoder->CONFIG.TIMER_FREQ);
-    p_encoder->ExtendedTimerConversion = p_encoder->CONFIG.TIMER_FREQ / p_encoder->CONFIG.EXTENDED_TIMER_FREQ;
+    HAL_Encoder_InitTimerFreq(p_encoder->CONST.P_HAL_ENCODER_TIMER, p_encoder->CONST.TIMER_FREQ);
+    p_encoder->ExtendedTimerConversion = p_encoder->CONST.TIMER_FREQ / p_encoder->CONST.EXTENDED_TIMER_FREQ;
 #endif
 }
 
@@ -78,7 +78,7 @@ void _Encoder_DeltaT_InitTimer(Encoder_T * p_encoder)
 */
 void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 {
-    if(p_encoder->CONFIG.P_PARAMS != 0U) { memcpy(&p_encoder->Params, p_encoder->CONFIG.P_PARAMS, sizeof(Encoder_Params_T)); }
+    if(p_encoder->CONST.P_CONFIG != 0U) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
     _Encoder_DeltaT_InitTimer(p_encoder);
     _Encoder_ResetUnits(p_encoder);
     p_encoder->DeltaD = 1U; /* Effective for shared functions only */
@@ -91,12 +91,12 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 */
 void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 {
-    p_encoder->DeltaT = p_encoder->CONFIG.TIMER_FREQ; /* Set as 1s */
+    p_encoder->DeltaT = p_encoder->CONST.TIMER_FREQ; /* Set as 1s */
     p_encoder->InterpolateAngleIndex = 0U;
     _Encoder_ZeroPulseCount(p_encoder);
-    p_encoder->ExtendedTimerPrev = *p_encoder->CONFIG.P_EXTENDED_TIMER;
-    HAL_Encoder_ClearTimerOverflow(p_encoder->CONFIG.P_HAL_ENCODER_TIMER);
-    HAL_Encoder_WriteTimer(p_encoder->CONFIG.P_HAL_ENCODER_TIMER, 0U);
+    p_encoder->ExtendedTimerPrev = *p_encoder->CONST.P_EXTENDED_TIMER;
+    HAL_Encoder_ClearTimerOverflow(p_encoder->CONST.P_HAL_ENCODER_TIMER);
+    HAL_Encoder_WriteTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER, 0U);
 }
 
 /*
@@ -105,17 +105,17 @@ void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 */
 void Encoder_DeltaT_SetExtendedWatchStop_Millis(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
 {
-    p_encoder->Params.ExtendedDeltaTStop = effectiveStopTime_Millis * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / 1000U;
+    p_encoder->Config.ExtendedDeltaTStop = effectiveStopTime_Millis * p_encoder->CONST.EXTENDED_TIMER_FREQ / 1000U;
 }
 
 void Encoder_DeltaT_SetExtendedWatchStop_RPM(Encoder_T * p_encoder)
 {
-    p_encoder->Params.ExtendedDeltaTStop = Encoder_DeltaT_FromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONFIG.EXTENDED_TIMER_FREQ / p_encoder->CONFIG.TIMER_FREQ;
+    p_encoder->Config.ExtendedDeltaTStop = Encoder_DeltaT_FromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONST.EXTENDED_TIMER_FREQ / p_encoder->CONST.TIMER_FREQ;
 }
 
 void Encoder_DeltaT_SetInterpolateAngleScalar(Encoder_T * p_encoder, uint16_t scalar)
 {
-    p_encoder->Params.InterpolateAngleScalar = scalar;
+    p_encoder->Config.InterpolateAngleScalar = scalar;
     _Encoder_ResetUnitsInterpolateAngle(p_encoder);
 }
 

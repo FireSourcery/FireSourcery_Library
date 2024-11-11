@@ -87,7 +87,7 @@ CanBus_Config_T;
 typedef struct CanBus
 {
     //buffer id map
-    const CanBus_Config_T CONFIG;
+    const CanBus_Const_T CONST;
 
 #define    CONFIG_CAN_BUS_TX_RX_SHARED
 #define CONFIG_CAN_BUS_MESSAGE_BUFFER_COUNT 4
@@ -116,7 +116,7 @@ typedef struct CanBus
 
 #define CAN_BUS_INIT(p_Hal, p_App, p_ServiceTable, TableLength, p_Timer)    \
 {                                                                            \
-    .CONFIG =                                                                 \
+    .CONST =                                                                 \
     {                                                                        \
         .P_HAL_CAN_BUS = p_Hal,                                             \
         .P_APP_INTERFACE = p_App,                                             \
@@ -146,8 +146,8 @@ static inline void CanBus_TxRx_ISR(CanBus_T * p_can)
 
     for(uint8_t iBuffer = 0; iBuffer < CONFIG_CAN_BUS_MESSAGE_BUFFER_COUNT; iBuffer++)
     {
-        hwBufferIndex = HAL_CanBus_CalcMessageBufferIndex(p_can->CONFIG.P_HAL_CAN_BUS, iBuffer);
-        if(HAL_CanBus_ReadIsBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex) == true)
+        hwBufferIndex = HAL_CanBus_CalcMessageBufferIndex(p_can->CONST.P_HAL_CAN_BUS, iBuffer);
+        if(HAL_CanBus_ReadIsBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, hwBufferIndex) == true)
         {
             bufferId = iBuffer;
             break;
@@ -158,11 +158,11 @@ static inline void CanBus_TxRx_ISR(CanBus_T * p_can)
     {
         if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_RX_WAIT_DATA)
         {
-            if(HAL_CanBus_LockRxBuffer(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex) == true)
+            if(HAL_CanBus_LockRxBuffer(p_can->CONST.P_HAL_CAN_BUS, hwBufferIndex) == true)
             {
-                HAL_CanBus_ReadRxMessageBuffer(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex, &p_can->Buffers[bufferId]);
-                HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
-                HAL_CanBus_UnlockRxBuffer(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
+                HAL_CanBus_ReadRxMessageBuffer(p_can->CONST.P_HAL_CAN_BUS, hwBufferIndex, &p_can->Buffers[bufferId]);
+                HAL_CanBus_ClearBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, hwBufferIndex);
+                HAL_CanBus_UnlockRxBuffer(p_can->CONST.P_HAL_CAN_BUS, hwBufferIndex);
 
                 p_can->Buffers[bufferId].Status = CAN_MESSAGE_RX_WAIT_SERVICE;
                 //rx into buffer then wait for protocol service, double buffering? or call handler directly?
@@ -176,7 +176,7 @@ static inline void CanBus_TxRx_ISR(CanBus_T * p_can)
         }
         else if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_RX_WAIT_REMOTE)
         {
-//            if(HAL_CanBus_ReadIsBufferrRxRemoteTxEmpty(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex) == true)
+//            if(HAL_CanBus_ReadIsBufferrRxRemoteTxEmpty(p_can->CONST.P_HAL_CAN_BUS, hwBufferIndex) == true)
 //            {
 //                 //remote recived
 //            }
@@ -187,13 +187,13 @@ static inline void CanBus_TxRx_ISR(CanBus_T * p_can)
         }
         else if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_TX_REMOTE)
         {
-            if(HAL_CanBus_ReadIsBufferTxRemoteRxEmpty(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex) == true) //or wait tx remote, rx empty
+            if(HAL_CanBus_ReadIsBufferTxRemoteRxEmpty(p_can->CONST.P_HAL_CAN_BUS, hwBufferIndex) == true) //or wait tx remote, rx empty
             {
                 //interrupt is from tx complete
-                HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
+                HAL_CanBus_ClearBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, hwBufferIndex);
                 p_can->Buffers[bufferId].Status = CAN_MESSAGE_RX_WAIT_DATA;
                 //ensure rx enabled if not autoset
-//                HAL_CanBus_EnableRxBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+//                HAL_CanBus_EnableRxBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, bufferId);
             }
             else //rx full
             {
@@ -203,15 +203,15 @@ static inline void CanBus_TxRx_ISR(CanBus_T * p_can)
         }
         else //if(p_can->Buffers[bufferId].Status != CAN_MESSAGE_RX_WAIT)
         {
-            HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
-            HAL_CanBus_DisableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
+            HAL_CanBus_ClearBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, hwBufferIndex);
+            HAL_CanBus_DisableBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, hwBufferIndex);
             p_can->Buffers[bufferId].Status = CAN_MESSAGE_IDLE;
         }
 //        else if(p_can->Buffers[bufferId].Status == CAN_MESSAGE_IDLE) //or init
 //        {
 //            //error  or ISR without message set interrupt
-//            HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
-//            HAL_CanBus_DisableBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, hwBufferIndex);
+//            HAL_CanBus_ClearBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, hwBufferIndex);
+//            HAL_CanBus_DisableBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, hwBufferIndex);
 //        }
     }
     else
@@ -224,16 +224,16 @@ static inline void CanBus_TxRx_ISR(CanBus_T * p_can)
 // {
 // //    if(p_can->TxBuffers[bufferId].Status == CAN_MESSAGE_TX_REMOTE)
 // //    {
-// //        if(HAL_CanBus_ReadTxBufferWaitRemote(p_can->CONFIG.P_HAL_CAN_BUS, bufferId) == true)
+// //        if(HAL_CanBus_ReadTxBufferWaitRemote(p_can->CONST.P_HAL_CAN_BUS, bufferId) == true)
 // //        {
-// //            HAL_CanBus_ClearBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+// //            HAL_CanBus_ClearBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, bufferId);
 // //            //ensure rx enabled
-// //            HAL_CanBus_EnableRxBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+// //            HAL_CanBus_EnableRxBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, bufferId);
 // //        }
 // //    }
 // //    else if (p_can->TxBuffers[bufferId].Status == CAN_MESSAGE_TX_DATA)
 // //    {
-// //        HAL_CanBus_ClearTxBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+// //        HAL_CanBus_ClearTxBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, bufferId);
 // //    }
 // //    else if (p_can->TxBuffers[bufferId].Status == CAN_MESSAGE_IDLE)
 // //    {
@@ -242,7 +242,7 @@ static inline void CanBus_TxRx_ISR(CanBus_T * p_can)
 // //    }
 // //
 // //    p_can->TxBuffers[bufferId].Status = CAN_MESSAGE_IDLE;
-// //    HAL_CanBus_DisableTxBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+// //    HAL_CanBus_DisableTxBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, bufferId);
 // //    if (p_can->TxCompleteCallback != 0U) p_can->TxCompleteCallback(p_can->p_CallbackContext);
 // }
 
@@ -251,17 +251,17 @@ static inline void CanBus_TxRx_ISR(CanBus_T * p_can)
 // {
 // //    if(p_can->RxBuffers[bufferId].Status == CAN_MESSAGE_RX_BUSY)
 // //    {
-// //        if(HAL_CanBus_LockRxBuffer(p_can->CONFIG.P_HAL_CAN_BUS, bufferId) == true)
+// //        if(HAL_CanBus_LockRxBuffer(p_can->CONST.P_HAL_CAN_BUS, bufferId) == true)
 // //        {
-// //            HAL_CanBus_ReadRxMessageBuffer(p_can->CONFIG.P_HAL_CAN_BUS, &p_can->RxBuffers[bufferId], bufferId);
-// //            HAL_CanBus_ClearRxBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
-// //            HAL_CanBus_UnlockRxBuffer(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+// //            HAL_CanBus_ReadRxMessageBuffer(p_can->CONST.P_HAL_CAN_BUS, &p_can->RxBuffers[bufferId], bufferId);
+// //            HAL_CanBus_ClearRxBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, bufferId);
+// //            HAL_CanBus_UnlockRxBuffer(p_can->CONST.P_HAL_CAN_BUS, bufferId);
 // //        }
 // //    }
 // //    else if (p_can->RxBuffers[bufferId].Status == CAN_MESSAGE_IDLE)
 // //    {
 // //        //clear error state
-// //        HAL_CanBus_ClearRxBufferInterrupt(p_can->CONFIG.P_HAL_CAN_BUS, bufferId);
+// //        HAL_CanBus_ClearRxBufferInterrupt(p_can->CONST.P_HAL_CAN_BUS, bufferId);
 // //    }
 // //    CanBus_TxRx_Buffer_ISR(p_can, rxBufferId);
 // //    if (p_can->RxCompleteCallback != 0U) p_can->RxCompleteCallback(p_can->p_CallbackContext);
