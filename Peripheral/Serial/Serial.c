@@ -201,7 +201,7 @@ void Serial_RxData_ISR(Serial_T * p_serial)
 
     while(HAL_Serial_ReadRxFullCount(p_serial->CONST.P_HAL_SERIAL) > 0U) /* Rx until hw buffer is empty */
     {
-        if(Ring_GetIsFull(&p_serial->RxRing) == true) /* Rx until software buffer is full */
+        if(Ring_IsFull(&p_serial->RxRing) == true) /* Rx until software buffer is full */
         {
             /* if buffer stays full, disable irq to prevent blocking lower priority threads. user must restart rx irq */
             HAL_Serial_DisableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
@@ -225,7 +225,7 @@ void Serial_TxData_ISR(Serial_T * p_serial)
 
     while(HAL_Serial_ReadTxEmptyCount(p_serial->CONST.P_HAL_SERIAL) > 0U) /* Tx until hw buffer is full */
     {
-        if(Ring_GetIsEmpty(&p_serial->TxRing) == true) /* Tx until software buffer is empty */
+        if(Ring_IsEmpty(&p_serial->TxRing) == true) /* Tx until software buffer is empty */
         {
             HAL_Serial_DisableTxInterrupt(p_serial->CONST.P_HAL_SERIAL);
             break;
@@ -242,7 +242,7 @@ bool Serial_PollRestartRxIsr(const Serial_T * p_serial)
 {
     bool status = false;
     /* Continue waiting for buffer read, before restarting interrupts, if buffer is full */
-    if((HAL_Serial_ReadRxOverrun(p_serial->CONST.P_HAL_SERIAL) == true) && (Ring_GetIsFull(&p_serial->RxRing) == false))
+    if((HAL_Serial_ReadRxOverrun(p_serial->CONST.P_HAL_SERIAL) == true) && (Ring_IsFull(&p_serial->RxRing) == false))
     {
         HAL_Serial_ClearRxErrors(p_serial->CONST.P_HAL_SERIAL);
         HAL_Serial_EnableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
@@ -289,7 +289,7 @@ bool Serial_SendByte(Serial_T * p_serial, uint8_t txChar)
 
     EnterCriticalTx(p_serial);
     //write directly to hw fifo/reg todo
-    //    if (Ring_GetIsEmpty(&p_serial->TxRing) == true) && HAL_Serial_GetIsActive == false
+    //    if (Ring_IsEmpty(&p_serial->TxRing) == true) && HAL_Serial_GetIsActive == false
     //    {?Tx need not disable interrupt after checking empty, hw buffer can only decrease.
     //        isSuccess = Hal_SendChar(p_serial, txChar);
     //    }
@@ -308,7 +308,7 @@ bool Serial_RecvByte(Serial_T * p_serial, uint8_t * p_rxChar)
     bool isSuccess = false;
 
     EnterCriticalRx(p_serial);
-    //    if (Ring_GetIsEmpty(&p_serial->RxRing) == true)
+    //    if (Ring_IsEmpty(&p_serial->RxRing) == true)
     //    {?Rx must prevent interrupt after checking full, hw buffer can increase.
     //        isSuccess = Hal_RecvChar(p_serial, p_rxChar);
     //    }
@@ -342,7 +342,7 @@ size_t Serial_SendMax(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t s
     if(AcquireCriticalTx(p_serial) == true)
     {
         //send immediate if fits in hardware fifo
-        //        if (Ring_GetIsEmpty(&p_serial->TxRing) == true)
+        //        if (Ring_IsEmpty(&p_serial->TxRing) == true)
         //        {
         //            charCount += Hal_Send(p_serial, p_srcBuffer, srcSize);
         //        }
@@ -364,7 +364,7 @@ size_t Serial_RecvMax(Serial_T * p_serial, uint8_t * p_destBuffer, size_t destSi
 
     if(AcquireCriticalRx(p_serial) == true)
     {
-        //        if (Ring_GetIsEmpty(&p_serial->RxRing) == true)
+        //        if (Ring_IsEmpty(&p_serial->RxRing) == true)
         //        {
         //            EnterCriticalRx(p_serial);
         //            charCount += Hal_Recv(p_serial, p_destBuffer, destSize);
@@ -449,7 +449,7 @@ void Serial_FlushBuffers(Serial_T * p_serial)
 // void Serial_ReleaseTxBuffer(Serial_T * p_serial, size_t writeSize)
 // {
 //     Ring_ReleaseBuffer(&p_serial->TxRing, writeSize);
-//     if(Ring_GetIsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
+//     if(Ring_IsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
 //     ReleaseCriticalTx(p_serial);
 // }
 
@@ -486,6 +486,6 @@ void Serial_FlushBuffers(Serial_T * p_serial)
 // {
 //     HAL_Serial_DisableTxInterrupt(p_serial->CONST.P_HAL_SERIAL);
 //     Serial_TxData_ISR(p_serial);
-//     if(Ring_GetIsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
+//     if(Ring_IsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
 // }
 

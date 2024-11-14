@@ -130,7 +130,7 @@ bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p
 {
     bool isSuccess;
     _Analog_EnterCritical(p_analog);
-    if(Ring_GetIsEmpty(&p_analog->ConversionQueue) == true) { WriteAdcChannel(p_analog, p_conversion); }
+    if(Ring_IsEmpty(&p_analog->ConversionQueue) == true) { WriteAdcChannel(p_analog, p_conversion); }
     isSuccess = Ring_Enqueue(&p_analog->ConversionQueue, &p_conversion);
     _Analog_ExitCritical(p_analog);
     return isSuccess;
@@ -140,7 +140,7 @@ bool Analog_EnqueueOptions(Analog_T * p_analog, const Analog_Options_T * p_optio
 {
     bool isSuccess;
     _Analog_EnterCritical(p_analog);
-    if(Ring_GetIsEmpty(&p_analog->ConversionQueue) == true)
+    if(Ring_IsEmpty(&p_analog->ConversionQueue) == true)
     {
         WriteAdcOptions(p_analog, p_options);
         HAL_Analog_Deactivate(p_analog->CONST.P_HAL_ANALOG);

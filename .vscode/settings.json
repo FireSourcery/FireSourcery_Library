@@ -7,9 +7,8 @@
 
     "C_Cpp.default.includePath": [
         // "${default}",
-        "${workspaceFolder:FireSourcery_Library}",
         "${workspaceFolder:Project}",
-
+        "${workspaceFolder:FireSourcery_Library}",
         "${workspaceFolder:mcux-sdk}/core",
         "${workspaceFolder:mcux-sdk}/core/CMSIS/Core/Include",
         "${workspaceFolder:mcux-sdk}/core/devices",
@@ -84,9 +83,7 @@
     "cSpell.words": [
         "Accs",
         "Blinky",
-        "Coffceients",
         "EEPROM",
-        "Feedforward",
         "inputvalue",
         "MCSM",
         "MOSFETS",

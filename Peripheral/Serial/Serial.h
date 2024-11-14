@@ -74,7 +74,7 @@ static inline void Serial_DisableRxIsr(const Serial_T * p_serial)       { HAL_Se
 /* Check for Overrun */
 // static inline bool Serial_IsRxOverrun(const Serial_T * p_serial)
 // {
-//     return ((HAL_Serial_ReadRxOverrun(p_serial->CONST.P_HAL_SERIAL) == true) || (Ring_GetIsFull(&p_serial->RxRing) == true));
+//     return ((HAL_Serial_ReadRxOverrun(p_serial->CONST.P_HAL_SERIAL) == true) || (Ring_IsFull(&p_serial->RxRing) == true));
 // }
 
 /*

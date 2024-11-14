@@ -221,7 +221,7 @@ static inline void _Analog_CaptureAdcResults(Analog_T * p_analog, Analog_Convers
     // }
 }
 
-/* isAllChannelsComplete == Ring_GetIsEmpty(&p_analog->ConversionQueue) */
+/* isAllChannelsComplete == Ring_IsEmpty(&p_analog->ConversionQueue) */
 static inline void _Analog_CaptureResults(Analog_T * p_analog)
 {
     Analog_Conversion_T * p_completedConversion;
