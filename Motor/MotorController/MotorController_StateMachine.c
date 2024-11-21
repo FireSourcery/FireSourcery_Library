@@ -147,12 +147,14 @@ static StateMachine_State_T * Park_InputDirection(MotorControllerPtr_T p_mc, sta
 {
     StateMachine_State_T * p_nextState = NULL;
 
+    volatile MotorController_Direction_T dir = direction;
+
     switch((MotorController_Direction_T)direction)
     {
-        case MOTOR_CONTROLLER_DIRECTION_PARK: p_nextState = NULL; break;
-        case MOTOR_CONTROLLER_DIRECTION_NEUTRAL: p_nextState = &STATE_NEUTRAL; break;
-        case MOTOR_CONTROLLER_DIRECTION_FORWARD: p_nextState = MotorController_TryDirectionForwardAll(p_mc, direction) ? &STATE_DRIVE : NULL; break;
-        case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : NULL; break;
+        case MOTOR_CONTROLLER_DIRECTION_PARK:       p_nextState = NULL; break;
+        case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:    p_nextState = &STATE_NEUTRAL; break;
+        case MOTOR_CONTROLLER_DIRECTION_FORWARD:    p_nextState = MotorController_TryDirectionForwardAll(p_mc, direction) ? &STATE_DRIVE : NULL; break;
+        case MOTOR_CONTROLLER_DIRECTION_REVERSE:    p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : NULL; break;
         default: break;
     }
     return p_nextState;

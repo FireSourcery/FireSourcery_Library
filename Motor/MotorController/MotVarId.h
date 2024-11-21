@@ -444,7 +444,7 @@ typedef enum MotVarId_Type_RealTime /* : uint16_t */
     /* Cmd - Write-Only */
     MOT_VAR_ID_TYPE_CMD,
     MOT_VAR_ID_TYPE_CMD_MOTOR,
-    MOT_VAR_ID_TYPE_REAL_TIME_END = 16U,
+    MOT_VAR_ID_TYPE_REAL_TIME_END = 15U,
 }
 MotVarId_Type_RealTime_T;
 
@@ -462,7 +462,7 @@ typedef enum MotVarId_Type_Config
     MOT_VAR_ID_TYPE_CONFIG_BOARD_THERMISTOR,
     MOT_VAR_ID_TYPE_CONFIG_PROTOCOL,
     MOT_VAR_ID_TYPE_CONFIG_BOOT_REF,
-    MOT_VAR_ID_TYPE_CONFIG_END = 16U,
+    MOT_VAR_ID_TYPE_CONFIG_END = 15U,
     // MOT_VAR_ID_TYPE_CONFIG_THERMISTOR,
 }
 MotVarId_Type_Config_T;

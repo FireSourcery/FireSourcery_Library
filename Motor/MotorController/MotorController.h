@@ -130,6 +130,7 @@ MotorController_DriveId_T;
 /* Blocking SubState/Function Id */
 typedef enum MotorController_LockedId
 {
+    MOTOR_CONTROLLER_LOCKED_PARK,
     MOTOR_CONTROLLER_LOCKED_ENTER,
     MOTOR_CONTROLLER_LOCKED_EXIT,
     MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR,

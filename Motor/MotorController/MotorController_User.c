@@ -43,9 +43,9 @@ MotorController_Direction_T MotorController_User_GetDirection(const MotorControl
         case MCSM_STATE_ID_PARK:        direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
         case MCSM_STATE_ID_NEUTRAL:     direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;         break;
         case MCSM_STATE_ID_DRIVE:
-            if(MotorController_CheckForwardAll(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
-            else if(MotorController_CheckReverseAll(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
-            else { direction = MOTOR_CONTROLLER_DIRECTION_ERROR; }
+            if      (MotorController_CheckForwardAll(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
+            else if (MotorController_CheckReverseAll(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
+            else                                                    { direction = MOTOR_CONTROLLER_DIRECTION_ERROR; }
             break;
         default: direction = MOTOR_CONTROLLER_DIRECTION_ERROR; break;
     }
@@ -56,7 +56,7 @@ bool MotorController_User_SetDirection(MotorControllerPtr_T p_mc, MotorControlle
 {
     bool isSuccess;
     if(MotorController_User_GetDirection(p_mc) != direction) { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
-    else { MotorController_BeepDouble(p_mc); }
+    // else { MotorController_BeepDouble(p_mc); }
     isSuccess = (MotorController_User_GetDirection(p_mc) == direction);
     if(isSuccess == false) { MotorController_BeepShort(p_mc); }
     return isSuccess;

@@ -219,7 +219,7 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
 static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
 {
     MotVarId_Status_T status = MOT_VAR_STATUS_OK;
-    bool boolStatus = true;
+   volatile bool boolStatus = true;
     MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
 
     switch((MotVarId_Type_RealTime_T)varId.NameType)
@@ -302,6 +302,8 @@ static int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T varId)
     Protocol_T * p_protocol = NULL;
     Thermistor_T * p_thermistor = NULL;
     VMonitor_T * p_vMonitor = NULL;
+
+    // volatile int32_t id = varId.Word16;
 
     switch((MotVarId_Type_Config_T)varId.NameType)
     {
@@ -435,7 +437,7 @@ static int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T varId)
             break;
 
         case MOT_VAR_ID_TYPE_CONFIG_BOARD_THERMISTOR:
-            p_thermistor = MotorController_User_GetPtrThermistor(p_mc, varId.Instance);     break;
+            p_thermistor = MotorController_User_GetPtrThermistor(p_mc, varId.Instance);
             if(p_thermistor != NULL) { value = GetParameterThermistor(p_thermistor, (MotVarId_Config_Thermistor_T)varId.NameBase); }
             break;
 
@@ -445,8 +447,8 @@ static int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T varId)
             {
                 switch((MotVarId_Config_VMonitor_T)varId.NameBase)
                 {
-                    case MOT_VAR_VMONITOR_R1:                   value = p_vMonitor->CONST.UNITS_R1 / 10U;      break;
-                    case MOT_VAR_VMONITOR_R2:                   value = p_vMonitor->CONST.UNITS_R2 / 10U;      break;
+                    case MOT_VAR_VMONITOR_R1:                   value = p_vMonitor->CONST.UNITS_R1 / 10U;       break;
+                    case MOT_VAR_VMONITOR_R2:                   value = p_vMonitor->CONST.UNITS_R2 / 10U;       break;
                     case MOT_VAR_VMONITOR_FAULT_UPPER_ADCU:     value = VMonitor_GetFaultUpper(p_vMonitor);     break;
                     case MOT_VAR_VMONITOR_FAULT_LOWER_ADCU:     value = VMonitor_GetFaultLower(p_vMonitor);     break;
                     case MOT_VAR_VMONITOR_WARNING_UPPER_ADCU:   value = VMonitor_GetWarningUpper(p_vMonitor);   break;
