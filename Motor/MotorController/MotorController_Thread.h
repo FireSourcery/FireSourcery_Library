@@ -42,7 +42,7 @@ static inline bool CheckDividerMask(uint32_t num, uint32_t align) { return ((num
     Mapped to Thread - Proc in All States
 */
 /******************************************************************************/
-static inline void _MotorController_ProcAnalogUser(MotorControllerPtr_T p_mc)
+static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 {
     MotAnalogUser_Cmd_T cmd = MotAnalogUser_PollCmd(&p_mc->AnalogUser);
     MotAnalogUser_CaptureInput(&p_mc->AnalogUser, p_mc->AnalogResults.Throttle_Adcu, p_mc->AnalogResults.Brake_Adcu);
@@ -74,7 +74,7 @@ static inline void _MotorController_ProcAnalogUser(MotorControllerPtr_T p_mc)
 /*
     Optional Din
 */
-static inline void _MotorController_ProcOptDin(MotorControllerPtr_T p_mc)
+static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
 {
     uint8_t dinStatus = 0U;
 
@@ -87,8 +87,8 @@ static inline void _MotorController_ProcOptDin(MotorControllerPtr_T p_mc)
             case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
                 switch(Debounce_PollEdge(&p_mc->OptDin))
                 {
-                    case DEBOUNCE_EDGE_RISING:  MotorController_SetSpeedLimitAll(p_mc, p_mc->Config.OptDinSpeedLimit_Scalar16); break;
-                    case DEBOUNCE_EDGE_FALLING: MotorController_ClearSpeedLimitAll(p_mc); break;
+                    case DEBOUNCE_EDGE_RISING:  MotorController_User_SetSpeedLimitAll(p_mc, p_mc->Config.OptSpeedLimit_Scalar16); break;
+                    case DEBOUNCE_EDGE_FALLING: MotorController_User_ClearSpeedLimitAll(p_mc); break;
                     default: break;
                 }
                 break;
@@ -108,7 +108,7 @@ static inline void _MotorController_ProcOptDin(MotorControllerPtr_T p_mc)
 }
 
 /* Monitor Threads only set fault flags. Do not clear until user input clear */
-static inline void _MotorController_ProcHeatMonitor(MotorControllerPtr_T p_mc)
+static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
 {
     bool isFault = false;
     bool isWarning = false;
@@ -162,7 +162,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorControllerPtr_T p_mc)
                 constantly compares lowest active limit, alternatively, check and restore prev on clear limit
                 Increasing Limit only, reset on warning clear.
             */
-            MotorController_SetILimitAll_Id(p_mc, Thermistor_GetHeatLimit_Scalar16(&p_mc->ThermistorMosfets));
+            MotorController_SetSystemILimitAll(p_mc, Thermistor_GetHeatLimit_Scalar16(&p_mc->ThermistorMosfets));
 
             // Thermistor_PollWarningRisingEdge(&p_mc->ThermistorMosfetsTop);
             if(p_mc->StatusFlags.HeatWarning == false)
@@ -176,7 +176,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorControllerPtr_T p_mc)
             // Thermistor_PollWarningFallingEdge(&p_mc->ThermistorMosfetsTop);
             if(p_mc->StatusFlags.HeatWarning == true)
             {
-                MotorController_ClearILimitAll_Id(p_mc); //clear mosfet
+                MotorController_ClearSystemILimitAll(p_mc); //clear mosfet
                 p_mc->StatusFlags.HeatWarning = false;
             }
         }
@@ -185,7 +185,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorControllerPtr_T p_mc)
     for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
 }
 
-static inline void _MotorController_ProcVoltageMonitor(MotorControllerPtr_T p_mc)
+static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
 {
     bool isFault = false;
 
@@ -206,7 +206,7 @@ static inline void _MotorController_ProcVoltageMonitor(MotorControllerPtr_T p_mc
     Main
     High Freq, Low Priority,
 */
-static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
+static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 {
     /* High Freq, Low Priority */
 
@@ -267,7 +267,7 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
             for(uint8_t iSerial = 0U; iSerial < p_mc->CONST.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONST.P_SERIALS[iSerial]); }
 
             /* Can use low priority check, as motor is already in fault state */
-            if(MotorController_CheckMotorsFaultAny(p_mc) != 0U) { p_mc->FaultFlags.Motors = 1U; MotorController_StateMachine_SetFault(p_mc); }
+            if(MotorController_IsAnyMotorFault(p_mc) != 0U) { p_mc->FaultFlags.Motors = 1U; MotorController_StateMachine_SetFault(p_mc); }
 
             _MotorController_ProcOptDin(p_mc);
             _MotorController_ProcVoltageMonitor(p_mc); /* Except VSupply */
@@ -290,7 +290,7 @@ static inline void MotorController_Main_Thread(MotorControllerPtr_T p_mc)
     Thread Safety: Async Set Fault, is okay?
         Set ILimit - possible mix match sentinel value to id?
 */
-static inline void MotorController_Timer1Ms_Thread(MotorControllerPtr_T p_mc)
+static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 {
     p_mc->TimerDividerCounter++;
     //    BrakeThread(p_mc);
@@ -307,7 +307,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorControllerPtr_T p_mc)
             if(p_mc->StatusFlags.LowV == 0U)
             {
                 p_mc->StatusFlags.LowV = 1U;
-                MotorController_SetILimitAll_Id(p_mc, p_mc->Config.ILimitLowV_Scalar16);
+                MotorController_SetSystemILimitAll(p_mc, p_mc->Config.VLowILimit_Scalar16);
                 Blinky_BlinkN(&p_mc->Buzzer, 500U, 250U, 2U);
             }
             break;
@@ -315,7 +315,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorControllerPtr_T p_mc)
             if(p_mc->StatusFlags.LowV == 1U)
             {
                 p_mc->StatusFlags.LowV = 0U;
-                MotorController_ClearILimitAll_Id(p_mc);
+                MotorController_ClearSystemILimitAll(p_mc);
             }
             break;
         default: break;
@@ -338,7 +338,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorControllerPtr_T p_mc)
 /*
     High Freq, High Priority
 */
-static inline void MotorController_PWM_Thread(MotorControllerPtr_T p_mc)
+static inline void MotorController_PWM_Thread(MotorController_T * p_mc)
 {
     for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PWM_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
     Motor_ClearInterrupt(&p_mc->CONST.P_MOTORS[0U]);

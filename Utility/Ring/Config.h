@@ -31,13 +31,13 @@
 #ifndef CONFIG_RING_H
 #define CONFIG_RING_H
 
-#if     defined(CONFIG_RING_LENGTH_POW2)    /* Power 2 length only. Integer overflow wrap only */
-    #define CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED
-#elif   defined(CONFIG_RING_LENGTH_POW2_INDEX_UNBOUNDED)    /* Power 2 length only. Integer overflow wrap only */
-#elif   defined(CONFIG_RING_LENGTH_POW2_INDEX_WRAPPED)      /* Power 2 length only. Does not need integer overflow wrap */
-#elif   defined(CONFIG_RING_LENGTH_ANY)
+#if     defined(CONFIG_RING_LENGTH_POW2)    /* Power 2 length only. */
+    #define CONFIG_RING_POW2_MASK
+#elif   defined(CONFIG_RING_POW2_MASK)      /* Power 2 length only. Mask on access */
+#elif   defined(CONFIG_RING_POW2_WRAP)      /* Power 2 length only. Mask and update index */
+#elif   defined(CONFIG_RING_LENGTH_COMPARE)
 #else
-    #define CONFIG_RING_LENGTH_ANY
+    #define CONFIG_RING_LENGTH_COMPARE
 #endif
 
 #if     defined(CONFIG_RING_MULTITHREADED_ENABLE)

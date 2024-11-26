@@ -67,14 +67,14 @@ Motor_StateMachine_StateId_T;
 
 extern const StateMachine_Machine_T MSM_MACHINE;
 
+
 #define MOTOR_STATE_MACHINE_INIT(p_Motor) STATE_MACHINE_INIT(&MSM_MACHINE, p_Motor, false)
+extern void Motor_ActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T mode);
+extern void Motor_ActivateControl_Cast(Motor_T * p_motor, uint8_t modeWord);
 
-extern void Motor_ActivateControl(MotorPtr_T p_motor, Motor_FeedbackMode_T mode);
-extern void Motor_ActivateControl_Cast(MotorPtr_T p_motor, uint8_t modeWord);
-
-extern bool Motor_StateMachine_IsFault(const MotorPtr_T p_motor);
-extern bool Motor_StateMachine_ClearFault(MotorPtr_T p_motor);
-extern void Motor_StateMachine_SetFault(MotorPtr_T p_motor);
-// extern void Motor_PollAdcFaultFlags(MotorPtr_T p_motor);
+extern bool Motor_StateMachine_IsFault(const Motor_T * p_motor);
+extern bool Motor_StateMachine_ClearFault(Motor_T * p_motor);
+extern void Motor_StateMachine_SetFault(Motor_T * p_motor);
+// extern void Motor_PollAdcFaultFlags(Motor_T * p_motor);
 
 #endif

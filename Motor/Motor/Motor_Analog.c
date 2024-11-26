@@ -45,18 +45,18 @@
     @brief  Vabc
 */
 /******************************************************************************/
-void Motor_Analog_CaptureVa(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVa, 0U/* Motor_SixStep_CaptureBemfA */); }
-void Motor_Analog_CaptureVb(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVb, 0U/* Motor_SixStep_CaptureBemfB */); }
-void Motor_Analog_CaptureVc(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVc, 0U/* Motor_SixStep_CaptureBemfC */); }
+void Motor_Analog_CaptureVa(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVa, 0U/* Motor_SixStep_CaptureBemfA */); }
+void Motor_Analog_CaptureVb(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVb, 0U/* Motor_SixStep_CaptureBemfB */); }
+void Motor_Analog_CaptureVc(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureVc, 0U/* Motor_SixStep_CaptureBemfC */); }
 
 /******************************************************************************/
 /*!
     @brief  Iabc
 */
 /******************************************************************************/
-void Motor_Analog_CaptureIa(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIa, 0U/* Motor_SixStep_CaptureIa */); }
-void Motor_Analog_CaptureIb(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIb, 0U/* Motor_SixStep_CaptureIb */); }
-void Motor_Analog_CaptureIc(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIc, 0U/* Motor_SixStep_CaptureIc */); }
+void Motor_Analog_CaptureIa(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIa, 0U/* Motor_SixStep_CaptureIa */); }
+void Motor_Analog_CaptureIb(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIb, 0U/* Motor_SixStep_CaptureIb */); }
+void Motor_Analog_CaptureIc(Motor_T * p_motor) { Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIc, 0U/* Motor_SixStep_CaptureIc */); }
 
 
 /******************************************************************************/
@@ -64,9 +64,9 @@ void Motor_Analog_CaptureIc(MotorPtr_T p_motor) { Motor_ProcCommutationMode(p_mo
     @brief
 */
 /******************************************************************************/
-static inline bool CheckDivider(MotorPtr_T p_motor) { return ((p_motor->ControlTimerBase & MOTOR_STATIC.CONTROL_ANALOG_DIVIDER) == 0UL); }
+static inline bool CheckDivider(Motor_T * p_motor) { return ((p_motor->ControlTimerBase & MOTOR_STATIC.CONTROL_ANALOG_DIVIDER) == 0UL); }
 
-void Motor_Analog_EnqueueVabc(MotorPtr_T p_motor)
+void Motor_Analog_EnqueueVabc(Motor_T * p_motor)
 {
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
     if(CheckDivider(p_motor) == true)
@@ -82,7 +82,7 @@ void Motor_Analog_EnqueueVabc(MotorPtr_T p_motor)
 #endif
 }
 
-void Motor_Analog_EnqueueIabc(MotorPtr_T p_motor)
+void Motor_Analog_EnqueueIabc(Motor_T * p_motor)
 {
     if(CheckDivider(p_motor) == true)
     {
@@ -98,7 +98,7 @@ void Motor_Analog_EnqueueIabc(MotorPtr_T p_motor)
 }
 
 
-void Motor_Analog_Proc(MotorPtr_T p_motor)
+void Motor_Analog_Proc(Motor_T * p_motor)
 {
 //    AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_PWM);
 
@@ -127,7 +127,7 @@ void Motor_Analog_Proc(MotorPtr_T p_motor)
     @brief
 */
 /******************************************************************************/
-void Motor_Analog_StartCalibration(MotorPtr_T p_motor)
+void Motor_Analog_StartCalibration(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, MOTOR_STATIC.CONTROL_FREQ * 2U); /* 2 Seconds */
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, 0U /*Phase_Ground(&p_motor->Phase)*/);
@@ -141,7 +141,7 @@ void Motor_Analog_StartCalibration(MotorPtr_T p_motor)
     Motor_Analog_EnqueueIabc(p_motor);
 }
 
-bool Motor_Analog_ProcCalibration(MotorPtr_T p_motor)
+bool Motor_Analog_ProcCalibration(Motor_T * p_motor)
 {
     static const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
     bool isComplete = Timer_Periodic_Poll(&p_motor->ControlTimer);

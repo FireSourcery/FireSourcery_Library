@@ -36,12 +36,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define QFRAC16_N_BITS (15U)   /*!< Q1.15, 15 fractional bits, shift mul/div by 32768 */
+#define QFRAC16_N_BITS (15)   /*!< Q1.15, 15 fractional bits, shift mul/div by 32768 */
 
 typedef int16_t qfrac16_t;          /*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
 
 typedef uint16_t uqfrac16_t;        /*!< Q1.15 [0, 1.999969482421875], res 1/(2^15) == .000030517578125 */
-typedef int32_t qfrac16_sat32_t;    /*!< Q17.15 */
+typedef int32_t qfrac16_32_t;    /*!< Q17.15 */
 
 static const qfrac16_t QFRAC16_MAX = INT16_MAX; /*!< (32767) */
 static const qfrac16_t QFRAC16_MIN = INT16_MIN; /*!< (-32768) */

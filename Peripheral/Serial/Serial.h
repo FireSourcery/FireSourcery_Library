@@ -60,8 +60,8 @@ Serial_T;
 #define SERIAL_INIT(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)  \
 {                                                                               \
     .CONST = { .P_HAL_SERIAL = p_Hal, },                                       \
-    .TxRing = RING_INIT(p_TxBuffer, TxBufferSize, 1U, 0U),                      \
-    .RxRing = RING_INIT(p_RxBuffer, RxBufferSize, 1U, 0U),                      \
+    .TxRing = RING_INIT(p_TxBuffer, TxBufferSize, sizeof(uint8_t), 0U),                      \
+    .RxRing = RING_INIT(p_RxBuffer, RxBufferSize, sizeof(uint8_t), 0U),                      \
 }
 
 static inline size_t Serial_GetRxFullCount(const Serial_T * p_serial)   { return Ring_GetFullCount(&p_serial->RxRing); }

@@ -40,12 +40,12 @@
     Calibration State Functions - Mapped to StateMachine, Nonblocking
 */
 /******************************************************************************/
-static inline void Motor_Calibration_StartHall(MotorPtr_T p_motor)
+static inline void Motor_Calibration_StartHall(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
 }
 
-static inline bool Motor_Calibration_ProcHall(MotorPtr_T p_motor)
+static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
 {
     const uint16_t duty = p_motor->Config.AlignPower_Scalar16;
     bool isComplete = false;
@@ -69,12 +69,12 @@ static inline bool Motor_Calibration_ProcHall(MotorPtr_T p_motor)
 /*
     Calibrate Current ADC
 */
-static inline void Motor_Calibration_StartAdc(MotorPtr_T p_motor)
+static inline void Motor_Calibration_StartAdc(Motor_T * p_motor)
 {
     Motor_Analog_StartCalibration(p_motor);
 }
 
-static inline bool Motor_Calibration_ProcAdc(MotorPtr_T p_motor)
+static inline bool Motor_Calibration_ProcAdc(Motor_T * p_motor)
 {
     Motor_Analog_ProcCalibration(p_motor);
 }
@@ -82,13 +82,13 @@ static inline bool Motor_Calibration_ProcAdc(MotorPtr_T p_motor)
 /******************************************************************************/
 /*   */
 /******************************************************************************/
-static inline void Motor_Calibration_StartEncoder(MotorPtr_T p_motor)
+static inline void Motor_Calibration_StartEncoder(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
     Phase_ActivateDuty(&p_motor->Phase, p_motor->Config.AlignPower_Scalar16, 0U, 0U);
 }
 
-static inline bool Motor_Calibration_ProcEncoder(MotorPtr_T p_motor)
+static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
 {
     bool isComplete = false;
 
@@ -114,7 +114,7 @@ static inline bool Motor_Calibration_ProcEncoder(MotorPtr_T p_motor)
     return isComplete;
 }
 /* todo */
-    void Motor_CalibrateSensorZero(MotorPtr_T p_motor)
+    void Motor_CalibrateSensorZero(Motor_T * p_motor)
     {
         p_motor->ElectricalAngle = 0U;
         switch(p_motor->Config.SensorMode)
@@ -127,7 +127,7 @@ static inline bool Motor_Calibration_ProcEncoder(MotorPtr_T p_motor)
         }
     }
 
-    void Motor_ValidateSensorAlign(MotorPtr_T p_motor)
+    void Motor_ValidateSensorAlign(Motor_T * p_motor)
     {
         switch(p_motor->Config.SensorMode)
         {
@@ -140,7 +140,7 @@ static inline bool Motor_Calibration_ProcEncoder(MotorPtr_T p_motor)
     }
 
     /* Using Signed Ramp mode */
-    bool Motor_PollAlignFault(MotorPtr_T p_motor)
+    bool Motor_PollAlignFault(Motor_T * p_motor)
     {
         switch(p_motor->Config.SensorMode)
         {
@@ -155,12 +155,12 @@ static inline bool Motor_Calibration_ProcEncoder(MotorPtr_T p_motor)
 
 
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-static inline void Motor_Calibrate_StartSinCos(MotorPtr_T p_motor)
+static inline void Motor_Calibrate_StartSinCos(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_ControlCycles);
 }
 
-static inline bool Motor_Calibrate_SinCos(MotorPtr_T p_motor)
+static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
 {
     bool isComplete = false;
 

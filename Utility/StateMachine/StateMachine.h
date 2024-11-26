@@ -35,14 +35,19 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <sys/types.h>
 
 #define STATE_MACHINE_INPUT_ID_NULL         (0xFFU)
 #define STATE_MACHINE_INPUT_VALUE_NULL      (0U)
 
-typedef uint8_t statemachine_input_id_t;        /* Input ID/Category. Index into transition table. User may overwrite with enum. */
+typedef uint8_t  statemachine_input_id_t;       /* Input ID/Category. Index into transition table. User may overwrite with enum. */
 typedef uint32_t statemachine_input_value_t;    /* User define platform register size */
 
 typedef uint8_t statemachine_state_t;           /* State ID. User may overwrite with enum */
+
+// typedef enum uint8_t { STATE_MACHINE_INPUT_ID_NULL = 0xFF } statemachine_input_id_t; /* Input ID/Category. Index into transition table. User may overwrite with enum. */
+// typedef register_t statemachine_input_value_t;  /* User define platform register size */
+
 
 struct StateMachine_State;
 

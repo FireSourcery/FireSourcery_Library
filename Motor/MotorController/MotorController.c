@@ -31,7 +31,7 @@
 #include "MotorController.h"
 #include <string.h>
 
-void MotorController_Init(MotorControllerPtr_T p_mc)
+void MotorController_Init(MotorController_T * p_mc)
 {
     Flash_Init(p_mc->CONST.P_FLASH);
 #if defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_EEPROM)
@@ -104,7 +104,7 @@ void MotorController_Init(MotorControllerPtr_T p_mc)
     Convience function over p_mc->Config compile time initializers
     On first time boot up. propagate defaults
 */
-void MotorController_LoadConfigDefault(MotorControllerPtr_T p_mc)
+void MotorController_LoadConfigDefault(MotorController_T * p_mc)
 {
     VMonitor_SetNominal_MilliV(&p_mc->VMonitorSource, (uint32_t)p_mc->Config.VSourceRef * 1000U);
     VMonitor_ResetLimitsDefault(&p_mc->VMonitorSource);
@@ -125,7 +125,7 @@ void MotorController_LoadConfigDefault(MotorControllerPtr_T p_mc)
     //  save to nvm? or wait user confirmation in gui
 }
 
-void MotorController_ResetBootDefault(MotorControllerPtr_T p_mc)
+void MotorController_ResetBootDefault(MotorController_T * p_mc)
 {
     static const BootRef_T BOOT_REF_DEFAULT = { .IsValid = BOOT_REF_IS_VALID_01, .FastBoot = 0U, .Beep = 1U, .Blink = 1U, }; /* Overwrite after first time boot */
     p_mc->BootRef.Word = BOOT_REF_DEFAULT.Word;
@@ -133,7 +133,7 @@ void MotorController_ResetBootDefault(MotorControllerPtr_T p_mc)
 
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-void MotorController_ResetUnitsBatteryLife(MotorControllerPtr_T p_mc)
+void MotorController_ResetUnitsBatteryLife(MotorController_T * p_mc)
 {
     Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Config.BatteryZero_Adcu, p_mc->Config.BatteryFull_Adcu, 0U, 1000U);
 }
@@ -144,7 +144,7 @@ void MotorController_ResetUnitsBatteryLife(MotorControllerPtr_T p_mc)
     Call from State Machine
 */
 /******************************************************************************/
-void MotorController_SetAdcResultsNominal(MotorControllerPtr_T p_mc)
+void MotorController_SetAdcResultsNominal(MotorController_T * p_mc)
 {
     // alternatively enqueue adc during init
     // handle via init state wait
@@ -160,9 +160,9 @@ void MotorController_SetAdcResultsNominal(MotorControllerPtr_T p_mc)
     // for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONST.P_MOTORS[iMotor]); }
 }
 
-void MotorController_PollAdcFaultFlags(MotorControllerPtr_T p_mc)
+void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
 {
-    // p_mc->FaultFlags.Motors         = (MotorController_ClearMotorsFaultAll(p_mc) == false);
+    // p_mc->FaultFlags.Motors         = (MotorController_IsAnyClearMotorFault(p_mc) == false);
     p_mc->FaultFlags.VSenseLimit = VMonitor_GetIsFault(&p_mc->VMonitorSense);
     p_mc->FaultFlags.VAccsLimit = VMonitor_GetIsFault(&p_mc->VMonitorAccs);
     p_mc->FaultFlags.VSourceLimit = VMonitor_GetIsFault(&p_mc->VMonitorSource);
@@ -184,7 +184,7 @@ void MotorController_PollAdcFaultFlags(MotorControllerPtr_T p_mc)
 /******************************************************************************/
 
 /* Write Config */
-static NvMemory_Status_T WriteNvm_Blocking(MotorControllerPtr_T p_mc, const void * p_nvm, const void * p_ram, size_t sizeBytes)
+static NvMemory_Status_T WriteNvm_Blocking(MotorController_T * p_mc, const void * p_nvm, const void * p_ram, size_t sizeBytes)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_EEPROM)
     return EEPROM_Write_Blocking(p_mc->CONST.P_EEPROM, (uintptr_t)p_nvm, p_ram, sizeBytes);
@@ -195,10 +195,10 @@ static NvMemory_Status_T WriteNvm_Blocking(MotorControllerPtr_T p_mc, const void
 }
 
 
-NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorControllerPtr_T p_mc)
+NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorController_T * p_mc)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
-    MotorPtr_T p_motor;
+    Motor_T * p_motor;
     Protocol_T * p_protocol;
 
 #if defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_FLASH)
@@ -257,7 +257,7 @@ NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorControllerPtr_T p_mc)
 }
 
 // eeprom only
-NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorControllerPtr_T p_mc)
+NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_EEPROM)
     return EEPROM_Write_Blocking(p_mc->CONST.P_EEPROM, (uintptr_t)p_mc->CONST.P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T));
@@ -267,7 +267,7 @@ NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorControllerPtr_T p_mc
 #endif
 }
 
-NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorControllerPtr_T p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size)
+NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_CONFIG_ONCE)
     // if(p_mc->CONST.MANUFACTURE_ADDRESS != 0) handle offset
@@ -277,7 +277,7 @@ NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorControllerPtr_T 
 #endif
 }
 
-NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorControllerPtr_T p_mc, uintptr_t onceAddress, const uint8_t * p_sourceBuffer, uint8_t size)
+NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, const uint8_t * p_sourceBuffer, uint8_t size)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_CONFIG_ONCE)
     return Flash_WriteOnce_Blocking(p_mc->CONST.P_FLASH, onceAddress, p_sourceBuffer, size);

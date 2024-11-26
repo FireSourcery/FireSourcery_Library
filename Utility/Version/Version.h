@@ -33,6 +33,26 @@
 
 #include <stdint.h>
 
+typedef union { uint32_t Unsigned; int32_t Signed; } var32_t;
+typedef union { uint16_t Unsigned; int16_t Signed; } var16_t;
+typedef union { uint8_t Unsigned; int8_t Signed; } var8_t;
+
+typedef union __attribute__((packed, aligned(4U))) Word
+{
+    uint8_t Bytes[4U];
+    char Chars[4U];
+    var16_t Var16s[2U];
+    struct { uint16_t Lower16; uint16_t Upper16; };
+    uint32_t Word32;
+}
+Word_T;
+
+Word_T Word32_Cast(uint32_t value)
+{
+    Word_T word = { .Word32 = value };
+    return word;
+}
+
 typedef union Version
 {
     uint8_t Bytes[4U];

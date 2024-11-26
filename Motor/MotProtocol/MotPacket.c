@@ -96,7 +96,8 @@ uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, u
 /******************************************************************************/
 /*!
     Controller Side - Parse Req In, Build Resp Out
-    Build Packet Functions
+    Build Packet Functions - pass all parameters
+    Parse Packet Functions - return single value, or double buffer
     @return size of Packet(TxLength)
 */
 /******************************************************************************/

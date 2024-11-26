@@ -250,6 +250,7 @@ typedef void (* const Protocol_BuildTxSync_T)(uint8_t * p_txPacket, protocol_siz
 /******************************************************************************/
 /*!
     Packet Format Specs
+    Packet Class
 */
 /******************************************************************************/
 typedef const struct Protocol_Specs

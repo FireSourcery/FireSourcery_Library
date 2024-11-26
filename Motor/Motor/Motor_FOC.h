@@ -57,38 +57,38 @@
     where 32767 is fully saturated current sensor
 */
 /******************************************************************************/
-static inline void Motor_FOC_CaptureIa(MotorPtr_T p_motor)
+static inline void Motor_FOC_CaptureIa(Motor_T * p_motor)
 {
     qfrac16_t iPhase = ((int32_t)Linear_ADC_CalcFracS16(&p_motor->UnitsIa, p_motor->AnalogResults.Ia_Adcu) + FOC_GetIa(&p_motor->Foc)) / 2;
     FOC_SetIa(&p_motor->Foc, iPhase);
 }
 
-static inline void Motor_FOC_CaptureIb(MotorPtr_T p_motor)
+static inline void Motor_FOC_CaptureIb(Motor_T * p_motor)
 {
     qfrac16_t iPhase = ((int32_t)Linear_ADC_CalcFracS16(&p_motor->UnitsIb, p_motor->AnalogResults.Ib_Adcu) + FOC_GetIb(&p_motor->Foc)) / 2;
     FOC_SetIb(&p_motor->Foc, iPhase);
 }
 
-static inline void Motor_FOC_CaptureIc(MotorPtr_T p_motor)
+static inline void Motor_FOC_CaptureIc(Motor_T * p_motor)
 {
     qfrac16_t iPhase = ((int32_t)Linear_ADC_CalcFracS16(&p_motor->UnitsIc, p_motor->AnalogResults.Ic_Adcu) + FOC_GetIc(&p_motor->Foc)) / 2;
     FOC_SetIc(&p_motor->Foc, iPhase);
 }
 
 //todo remove division
-static inline void Motor_FOC_CaptureVa(MotorPtr_T p_motor)
+static inline void Motor_FOC_CaptureVa(Motor_T * p_motor)
 {
     qfrac16_t vPhase = ((int32_t)Linear_Voltage_CalcFracS16(&p_motor->UnitsVabc, p_motor->AnalogResults.Va_Adcu) + FOC_GetVBemfA(&p_motor->Foc)) / 2;
     FOC_SetVBemfA(&p_motor->Foc, vPhase);
 }
 
-static inline void Motor_FOC_CaptureVb(MotorPtr_T p_motor)
+static inline void Motor_FOC_CaptureVb(Motor_T * p_motor)
 {
     qfrac16_t vPhase = ((int32_t)Linear_Voltage_CalcFracS16(&p_motor->UnitsVabc, p_motor->AnalogResults.Vb_Adcu) + FOC_GetVBemfB(&p_motor->Foc)) / 2;
     FOC_SetVBemfB(&p_motor->Foc, vPhase);
 }
 
-static inline void Motor_FOC_CaptureVc(MotorPtr_T p_motor)
+static inline void Motor_FOC_CaptureVc(Motor_T * p_motor)
 {
     qfrac16_t vPhase = ((int32_t)Linear_Voltage_CalcFracS16(&p_motor->UnitsVabc, p_motor->AnalogResults.Vc_Adcu) + FOC_GetVBemfC(&p_motor->Foc)) / 2;
     FOC_SetVBemfC(&p_motor->Foc, vPhase);
@@ -99,13 +99,13 @@ static inline void Motor_FOC_CaptureVc(MotorPtr_T p_motor)
 
 */
 /******************************************************************************/
-static inline int32_t Motor_FOC_GetIPhase_Frac16(const MotorPtr_T p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetVPhase_Frac16(const MotorPtr_T p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetIPhase_Frac16(const Motor_T * p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetVPhase_Frac16(const Motor_T * p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
 
 /* return int32 for function pointer casting compatibility */
-static inline int32_t Motor_FOC_GetIPhase_UFrac16(const MotorPtr_T p_motor)            { return FOC_GetIMagnitude(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetVPhase_UFrac16(const MotorPtr_T p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetElectricalPower_UFrac16(const MotorPtr_T p_motor)   { return FOC_GetPower(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetIPhase_UFrac16(const Motor_T * p_motor)            { return FOC_GetIMagnitude(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetVPhase_UFrac16(const Motor_T * p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
+static inline int32_t Motor_FOC_GetElectricalPower_UFrac16(const Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
 
 /******************************************************************************/
 /*!
@@ -113,7 +113,7 @@ static inline int32_t Motor_FOC_GetElectricalPower_UFrac16(const MotorPtr_T p_mo
 */
 /******************************************************************************/
 /* Begin Observe, Ifeedback not updated */
-static inline void Motor_FOC_ClearControlState(MotorPtr_T p_motor)
+static inline void Motor_FOC_ClearControlState(Motor_T * p_motor)
 {
     FOC_ClearControlState(&p_motor->Foc);
     Linear_Ramp_ZeroOutputState(&p_motor->Ramp);
@@ -123,7 +123,7 @@ static inline void Motor_FOC_ClearControlState(MotorPtr_T p_motor)
 }
 
 /* Begin Control, Vabc not updated */
-static inline void Motor_FOC_ClearObserveState(MotorPtr_T p_motor)
+static inline void Motor_FOC_ClearObserveState(Motor_T * p_motor)
 {
     FOC_ClearObserveState(&p_motor->Foc);
 }
@@ -133,23 +133,24 @@ static inline void Motor_FOC_ClearObserveState(MotorPtr_T p_motor)
     Extern
 */
 /******************************************************************************/
-extern void Motor_FOC_ProcAngleControl(MotorPtr_T p_motor);
-extern void Motor_FOC_ProcAngleVBemf(MotorPtr_T p_motor);
+extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);
+extern void Motor_FOC_ProcAngleVBemf(Motor_T * p_motor);
 
-extern void Motor_FOC_StartAlign(MotorPtr_T p_motor);
-extern void Motor_FOC_ProcAlign(MotorPtr_T p_motor);
-extern void Motor_FOC_StartAlignValidate(MotorPtr_T p_motor);
-extern void Motor_FOC_StartOpenLoop(MotorPtr_T p_motor);
-extern void Motor_FOC_ProcOpenLoop(MotorPtr_T p_motor);
+extern void Motor_FOC_StartAlign(Motor_T * p_motor);
+extern void Motor_FOC_ProcAlign(Motor_T * p_motor);
+extern void Motor_FOC_StartAlignValidate(Motor_T * p_motor);
+extern void Motor_FOC_StartOpenLoop(Motor_T * p_motor);
+extern void Motor_FOC_ProcOpenLoop(Motor_T * p_motor);
 
-extern void Motor_FOC_ActivateOutput(MotorPtr_T p_motor);
-extern void Motor_FOC_ActivateAngle(MotorPtr_T p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd);
-extern void Motor_FOC_ProcFeedbackMatch(MotorPtr_T p_motor);
+extern void Motor_FOC_ActivateOutput(Motor_T * p_motor);
+extern void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd);
+extern void Motor_FOC_ProcFeedbackMatch(Motor_T * p_motor);
 
-extern void Motor_FOC_SetDirectionCcw(MotorPtr_T p_motor);
-extern void Motor_FOC_SetDirectionCw(MotorPtr_T p_motor);
-extern void Motor_FOC_SetDirection(MotorPtr_T p_motor, Motor_Direction_T direction);
-extern void Motor_FOC_SetDirectionForward(MotorPtr_T p_motor);
+extern void Motor_FOC_SetDirectionCcw(Motor_T * p_motor);
+extern void Motor_FOC_SetDirectionCw(Motor_T * p_motor);
+extern void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
+extern void Motor_FOC_SetDirection_Cast(Motor_T * p_motor, uint8_t direction);
+extern void Motor_FOC_SetDirectionForward(Motor_T * p_motor);
 
 
 #endif

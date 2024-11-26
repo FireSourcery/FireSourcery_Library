@@ -44,6 +44,7 @@ typedef enum MotProtocol_GenericStatus
 {
     MOT_STATUS_OK = 0x00U,
     MOT_STATUS_ERROR = 0x01U,
+    // MOT_STATUS_WAITING = 0x02U,
     // MOT_STATUS_RESERVED = 0xFFU,
 }
 MotProtocol_GenericStatus_T;

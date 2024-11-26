@@ -46,17 +46,17 @@
 /******************************************************************************/
 void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef)
 {
-    Linear_Frac16_Init(p_linear, adcuZero, adcuRef, physicalZero, physicalRef);
+    Linear_Num16_Init(p_linear, adcuZero, adcuRef, physicalZero, physicalRef);
 }
 
 void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef, int16_t physicalZero, int16_t physicalRef)
 {
-    Linear_Frac16_Init(p_linear, adcuZero, adcuZero + adcuZtPRef, physicalZero, physicalRef);
+    Linear_Num16_Init(p_linear, adcuZero, adcuZero + adcuZtPRef, physicalZero, physicalRef);
 }
 
 void Linear_ADC_Init_MinMax(Linear_T * p_linear, uint16_t adcuMin, uint16_t adcuMax, int16_t physicalMin, int16_t physicalMax)
 {
-    Linear_Frac16_Init(p_linear, (adcuMin + adcuMax) / 2, adcuMax, (physicalMin + physicalMax) / 2, physicalMax);
+    Linear_Num16_Init(p_linear, (adcuMin + adcuMax) / 2, adcuMax, (physicalMin + physicalMax) / 2, physicalMax);
 }
 
 

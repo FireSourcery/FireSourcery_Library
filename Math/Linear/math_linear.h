@@ -48,6 +48,8 @@ static inline int32_t linear_f_x0(int32_t m_factor, int32_t m_divisor, int32_t x
     return ((x - x0) * m_factor / m_divisor);
 }
 
+// static inline int32_t linear_f_shift(int32_t m_shifted, uint8_t shift, int32_t x)
+
 /* Overflow: m_shifted * (x - x0) > INT32_MAX[2,147,483,647] */
 static inline int32_t linear_f_shift(int32_t m_shifted, uint8_t shift, int32_t x0, int32_t y0, int32_t x)
 {
@@ -113,9 +115,14 @@ static inline int32_t linear_invf_round(int32_t m_factor, int32_t m_divisor, int
 
 /******************************************************************************/
 /*
-    frac16 with division
+
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*
+    fixed32 with division
     f16(x) = 65536 * (x - x0) / (xref - x0)
-    invf16(y_frac16) = y_frac16 * (xref - x0) / 65536 - x0;
+    invf16(y_fixed32) = y_fixed32 * (xref - x0) / 65536 - x0;
 */
 /******************************************************************************/
 static inline int32_t linear_f16(int32_t x0, int32_t deltax, int32_t x)
@@ -123,14 +130,14 @@ static inline int32_t linear_f16(int32_t x0, int32_t deltax, int32_t x)
     return ((x - x0) * 65536 / (deltax));
 }
 
-static inline int32_t linear_invf16(int32_t x0, int32_t deltax, int32_t y_frac16)
+static inline int32_t linear_invf16(int32_t x0, int32_t deltax, int32_t y_fixed32)
 {
-    return y_frac16 * (deltax) / 65536 - x0;
+    return y_fixed32 * (deltax) / 65536 - x0;
 }
 
 /******************************************************************************/
 /*
-    Slope is set to frac16 conversion without division, m16_f returns user units secondarily
+    Slope is set to fixed32 conversion without division, m16_f returns user units secondarily
     y0 == 0
     m16_shifted == [65536 / (xref - x0) << shift]
     f16([x0:xRef]) = [0:65536]
@@ -139,28 +146,28 @@ static inline int32_t linear_invf16(int32_t x0, int32_t deltax, int32_t y_frac16
 */
 /******************************************************************************/
 /* ((m16_shifted * (x - x0)) >> shift) */
-/* x to y_frac16 */
+/* x to y_fixed32 */
 static inline int32_t linear_m16_f16(int32_t m16_shifted, uint8_t shift, int32_t x0, int32_t x)
 {
     return linear_f_x0_shift(m16_shifted, shift, x0, x);
 }
 
-/* (((invm16_shifted * (y_frac16 - 0)) >> shift) + x0) */
-/* y_frac16 to x */
-static inline int32_t linear_m16_invf16(int32_t invm16_shifted, uint8_t shift, int32_t x0, int32_t y_frac16)
+/* (((invm16_shifted * (y_fixed32 - 0)) >> shift) + x0) */
+/* y_fixed32 to x */
+static inline int32_t linear_m16_invf16(int32_t invm16_shifted, uint8_t shift, int32_t x0, int32_t y_fixed32)
 {
-    return linear_invf_x0_shift(invm16_shifted, shift, x0, y_frac16);
+    return linear_invf_x0_shift(invm16_shifted, shift, x0, y_fixed32);
 }
 
-/* y_frac16 * (yref_units - y0_units) >> 16U + y0_units */
-/* frac16 to y_units */
-static inline int32_t linear_m16_g(int32_t y0_units, int32_t deltay_units, int32_t y_frac16)
+/* y_fixed32 * (yref_units - y0_units) >> 16U + y0_units */
+/* fixed32 to y_units */
+static inline int32_t linear_m16_g(int32_t y0_units, int32_t deltay_units, int32_t y_fixed32)
 {
-    return ((y_frac16 * deltay_units) / 65536) + y0_units;
+    return ((y_fixed32 * deltay_units) / 65536) + y0_units;
 }
 
 /* (y_units - y0_units) << 16U / (yref_units - y0_units) */
-/* y_units to frac16 */
+/* y_units to fixed32 */
 static inline int32_t linear_m16_invg(int32_t y0_units, int32_t deltay_units, int32_t y_units)
 {
     return ((y_units - y0_units) * 65536 / deltay_units);

@@ -32,17 +32,17 @@
 #ifndef LINEAR_H
 #define LINEAR_H
 
-#include "math_linear.h"
 #include "Config.h"
+#include "math_linear.h"
 #include "Math/math_general.h"
 #include <stdint.h>
 
 typedef struct Linear
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
-    int32_t Slope;            /* y = (x - XOffset) * Slope >> SlopeShift + YOffset */
+    int32_t Slope;              /* y = (x - XOffset) * Slope >> SlopeShift + YOffset */
     uint8_t SlopeShift;
-    int32_t InvSlope;        /* x = (y - YOffset) * InvSlope >> InvSlopeShift + XOffset */
+    int32_t InvSlope;           /* x = (y - YOffset) * InvSlope >> InvSlopeShift + XOffset */
     uint8_t InvSlopeShift;
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
     int32_t SlopeFactor;
@@ -96,7 +96,7 @@ static inline void _Linear_SetSlope(Linear_T * p_linear, int32_t slopeFactor, in
 
 /******************************************************************************/
 /*!
-    @brief Linear Essential Functions - User Units
+    @brief Linear Main Functions - User Units
 */
 /******************************************************************************/
 /*
@@ -134,7 +134,7 @@ static inline int32_t Linear_InvFunction(const Linear_T * p_linear, int32_t y)
 */
 /******************************************************************************/
 /*  */
-static inline int32_t Linear_Function_Fixed32(const Linear_T * p_linear, int32_t x)
+static inline int32_t Linear_Fixed32(const Linear_T * p_linear, int32_t x)
 {
     return linear_f16(p_linear->XOffset, p_linear->DeltaX, x);
 }
@@ -143,13 +143,14 @@ static inline int32_t Linear_Function_Fixed32(const Linear_T * p_linear, int32_t
     y_fixed32 in q16.16 format
     @param[in] y_fixed32 overflow limit ~q1.16
 */
-static inline int32_t Linear_InvFunction_Fixed32(const Linear_T * p_linear, int32_t y_fixed32)
+static inline int32_t Linear_InvFixed32(const Linear_T * p_linear, int32_t y_fixed32)
 {
     return linear_invf16(p_linear->XOffset, p_linear->DeltaX, y_fixed32);
 }
 
 /******************************************************************************/
 /*!
+// todo remove in favor of
     Frac16 Saturated Output
     Saturate to uint16_t, q0.16 [0:65535]
     f([-XRef:XRef]) => [0:65536]
@@ -158,19 +159,19 @@ static inline int32_t Linear_InvFunction_Fixed32(const Linear_T * p_linear, int3
 /* negative returns zero */
 static inline uint16_t Linear_Function_FracU16(const Linear_T * p_linear, int32_t x)
 {
-    return _Linear_SatUnsigned16(Linear_Function_Fixed32(p_linear, x));
+    return _Linear_SatUnsigned16(Linear_Fixed32(p_linear, x));
 }
 
 /* negative returns abs */
 static inline uint16_t Linear_Function_FracU16_Abs(const Linear_T * p_linear, int32_t x)
 {
-    return _Linear_SatUnsigned16_Abs(Linear_Function_Fixed32(p_linear, x));
+    return _Linear_SatUnsigned16_Abs(Linear_Fixed32(p_linear, x));
 }
 
 /* y_frac16 in q0.16 format is handled by q16.16 case */
 static inline int32_t Linear_InvFunction_FracU16(const Linear_T * p_linear, uint16_t y_fracU16)
 {
-    return Linear_InvFunction_Fixed32(p_linear, y_fracU16);
+    return Linear_InvFixed32(p_linear, y_fracU16);
 }
 
 /******************************************************************************/
@@ -182,19 +183,19 @@ static inline int32_t Linear_InvFunction_FracU16(const Linear_T * p_linear, uint
 /* */
 static inline int16_t Linear_Function_FracS16(const Linear_T * p_linear, int32_t x)
 {
-    return _Linear_SatSigned16(Linear_Function_Fixed32(p_linear, x) / 2);
+    return _Linear_SatSigned16(Linear_Fixed32(p_linear, x) / 2);
 }
 
 /* y_frac16 use q1.15 */
 static inline int32_t Linear_InvFunction_FracS16(const Linear_T * p_linear, int16_t y_fracS16)
 {
-    return Linear_InvFunction_Fixed32(p_linear, (int32_t)y_fracS16 * 2);
+    return Linear_InvFixed32(p_linear, (int32_t)y_fracS16 * 2);
 }
 
 
 /******************************************************************************/
 /*!
-    Saturated on Input - indirectly saturates output and avoids overflow
+    Saturated on Input - indirectly saturates output to prevent overflow
     x2?
 */
 /******************************************************************************/

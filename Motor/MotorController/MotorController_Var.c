@@ -55,10 +55,6 @@ static int32_t GetParameterThermistor(const Thermistor_T * p_thermistor, MotVarI
             case MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU:     value = Thermistor_GetWarningThreshold_Adcu(p_thermistor);  break;
             case MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE:          value = Thermistor_IsMonitorEnable(p_thermistor);           break;
             // case MOT_VAR_THERMISTOR_TYPE:                       value = Thermistor_GetType(p_thermistor);                   break;
-            case MOT_VAR_THERMISTOR_LINEAR_T0_ADCU:             value = Thermistor_GetLinearT0_Adcu(p_thermistor);          break;
-            case MOT_VAR_THERMISTOR_LINEAR_T1_ADCU:             value = Thermistor_GetLinearT1_Adcu(p_thermistor);          break;
-            case MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C:            value = Thermistor_GetLinearT0_DegC(p_thermistor);          break;
-            case MOT_VAR_THERMISTOR_LINEAR_T1_DEG_C:            value = Thermistor_GetLinearT1_DegC(p_thermistor);          break;
             default: break;
         }
     }
@@ -83,10 +79,6 @@ static void SetParameterThermistor(Thermistor_T * p_thermistor, MotVarId_Config_
             case MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU:     Thermistor_SetWarningThreshold_Adcu(p_thermistor, varValue);  break;
             case MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE:          Thermistor_SetIsMonitorEnable(p_thermistor, varValue);        break;
             // case MOT_VAR_THERMISTOR_TYPE:                       Thermistor_SetType(p_thermistor, varValue);                   break;
-            case MOT_VAR_THERMISTOR_LINEAR_T0_ADCU:             Thermistor_SetLinearT0_Adcu(p_thermistor, varValue);          break;
-            case MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C:            Thermistor_SetLinearT0_DegC(p_thermistor, varValue);          break;
-            case MOT_VAR_THERMISTOR_LINEAR_T1_ADCU:             Thermistor_SetLinearT1_Adcu(p_thermistor, varValue);          break;
-            case MOT_VAR_THERMISTOR_LINEAR_T1_DEG_C:            Thermistor_SetLinearT1_DegC(p_thermistor, varValue);          break;
             default: break;
         }
     }
@@ -97,10 +89,10 @@ static void SetParameterThermistor(Thermistor_T * p_thermistor, MotVarId_Config_
     RealTime
 */
 /******************************************************************************/
-static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T varId)
+static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T varId)
 {
     int32_t value = 0;
-    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance); /* for convience, invalid if varId.NameBase is not Motor type */
+    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance); /* for convience, invalid if varId.NameBase is not Motor type */
 
     switch((MotVarId_Type_RealTime_T)varId.NameType)
     {
@@ -196,10 +188,10 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
         case MOT_VAR_ID_TYPE_CONTROL_MOTOR:
             switch((MotVarId_Control_Motor_T)varId.NameBase)
             {
-                case MOT_VAR_MOTOR_DIRECTION:           value = Motor_User_GetDirection(p_motor);                   break;
-                case MOT_VAR_MOTOR_USER_SET_POINT:      value = Motor_User_GetSetPoint(p_motor);                    break;
-                case MOT_VAR_MOTOR_USER_SPEED_LIMIT:    value = Motor_User_GetActiveSpeedLimit(p_motor);            break;
-                case MOT_VAR_MOTOR_USER_I_LIMIT:        value = Motor_User_GetActiveILimit(p_motor);                break;
+                case MOT_VAR_MOTOR_DIRECTION:         value = Motor_User_GetDirection(p_motor);                   break;
+                case MOT_VAR_MOTOR_USER_SET_POINT:    value = Motor_User_GetSetPoint(p_motor);                    break;
+                case MOT_VAR_MOTOR_IO_SPEED_LIMIT:    value = Motor_User_GetActiveSpeedLimit(p_motor);            break;
+                case MOT_VAR_MOTOR_IO_I_LIMIT:        value = Motor_User_GetActiveILimit(p_motor);                break;
                 // case MOT_VAR_MOTOR_USER_FEEDBACK_MODE:    value = Motor_User_GetActiveFeedbackMode(p_motor).Word;             break;
                 default: break;
             }
@@ -216,11 +208,11 @@ static inline int32_t GetRealTime(const MotorControllerPtr_T p_mc, MotVarId_T va
 /*!
 
 */
-static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
+static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T varId, int32_t varValue)
 {
     MotVarId_Status_T status = MOT_VAR_STATUS_OK;
-   volatile bool boolStatus = true;
-    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
+    bool isSuccess = true;
+    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
 
     switch((MotVarId_Type_RealTime_T)varId.NameType)
     {
@@ -244,10 +236,10 @@ static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_
         case MOT_VAR_ID_TYPE_CONTROL_MOTOR:
             switch((MotVarId_Control_Motor_T)varId.NameBase)
             {
-                case MOT_VAR_MOTOR_DIRECTION:               boolStatus = Motor_User_TryDirection(p_motor, (Motor_Direction_T)varValue);  break;
+                case MOT_VAR_MOTOR_DIRECTION:               isSuccess = Motor_User_TryDirection(p_motor, (Motor_Direction_T)varValue);  break;
                 case MOT_VAR_MOTOR_USER_SET_POINT:          Motor_User_SetActiveCmdValue(p_motor, varValue);  break;
-                case MOT_VAR_MOTOR_USER_SPEED_LIMIT:        Motor_User_TrySpeedLimit(p_motor, varValue);   break;
-                case MOT_VAR_MOTOR_USER_I_LIMIT:            Motor_User_TryILimit(p_motor, varValue);       break;
+                case MOT_VAR_MOTOR_IO_SPEED_LIMIT:          Motor_User_TrySpeedLimit(p_motor, varValue);   break;
+                case MOT_VAR_MOTOR_IO_I_LIMIT:              Motor_User_TryILimit(p_motor, varValue);       break;
                 // case MOT_VAR_MOTOR_USER_FEEDBACK_MODE:   Motor_User_ActivateControl_Cast(p_motor, (uint8_t)varValue);    break;
                 default: break;
             }
@@ -256,14 +248,15 @@ static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_
         case MOT_VAR_ID_TYPE_CMD:
             switch((MotVarId_Cmd_T)varId.NameBase)
             {
-                case MOT_VAR_BEEP:              MotorController_User_BeepN(p_mc, 500U, 500U, varValue); break;
-                case MOT_VAR_USER_CMD:          MotorController_User_SetCmdValue(p_mc, varValue);       break;
+                case MOT_VAR_BEEP:                  MotorController_User_BeepN(p_mc, 500U, 500U, varValue);     break;
+                case MOT_VAR_USER_CMD:              MotorController_User_SetCmdValue(p_mc, varValue);           break;
+                case MOT_VAR_THROTTLE:              MotorController_User_SetCmdThrottle(p_mc, varValue);        break;
+                case MOT_VAR_BRAKE:                 MotorController_User_SetCmdBrake(p_mc, varValue);           break;
+                case MOT_VAR_OPT_SPEED_LIMIT:       MotorController_User_SetOptSpeedLimitAll(p_mc, varValue);   break;
                 case MOT_VAR_USER_FEEDBACK_MODE:        break;
                 case MOT_VAR_TRY_HOLD:                  break;
                 case MOT_VAR_TRY_RELEASE:               break;
                 case MOT_VAR_FORCE_DISABLE_CONTROL:     break;
-                case MOT_VAR_THROTTLE:          MotorController_User_SetCmdThrottle(p_mc, varValue);    break;
-                case MOT_VAR_BRAKE:             MotorController_User_SetCmdBrake(p_mc, varValue);       break;
                 case MOT_VAR_CLEAR_FAULT:               break;
                 default: break;
             }
@@ -272,7 +265,7 @@ static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_
         case MOT_VAR_ID_TYPE_CONTROL:
             switch((MotVarId_Control_T)varId.NameBase)
             {
-                case MOT_VAR_DIRECTION:         boolStatus = MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)varValue);    break;
+                case MOT_VAR_DIRECTION:     isSuccess = MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)varValue);    break;
                 default: break;
             }
             break;
@@ -285,7 +278,7 @@ static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_
         default: break;
     }
 
-    if(boolStatus == false) { status = MOT_VAR_STATUS_ERROR; };
+    if(isSuccess == false) { status = MOT_VAR_STATUS_ERROR; };
 
     return status;
 }
@@ -295,10 +288,10 @@ static inline MotVarId_Status_T SetRealTime(MotorControllerPtr_T p_mc, MotVarId_
     Parameter
 */
 /******************************************************************************/
-static int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T varId)
+static int32_t GetParameter(const MotorController_T * p_mc, MotVarId_T varId)
 {
     int32_t value = 0;
-    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
+    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
     Protocol_T * p_protocol = NULL;
     Thermistor_T * p_thermistor = NULL;
     VMonitor_T * p_vMonitor = NULL;
@@ -406,9 +399,9 @@ static int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T varId)
                 case MOT_VAR_DEFAULT_FEEDBACK_MODE:     value = MotorController_User_GetDefaultFeedbackMode(p_mc).Word; break;
                 case MOT_VAR_BRAKE_MODE:                value = MotorController_User_GetBrakeMode(p_mc);                break;
                 case MOT_VAR_DRIVE_ZERO_MODE:           value = MotorController_User_GetDriveZeroMode(p_mc);            break;
-                case MOT_VAR_I_LIMIT_LOW_V:             value = (p_mc->Config.ILimitLowV_Scalar16);                 break;
+                case MOT_VAR_I_LIMIT_LOW_V:             value = (p_mc->Config.VLowILimit_Scalar16);                 break;
                 case MOT_VAR_OPT_DIN_FUNCTION:          value = (p_mc->Config.OptDinMode);                          break;
-                case MOT_VAR_OPT_DIN_SPEED_LIMIT:       value = (p_mc->Config.OptDinSpeedLimit_Scalar16);           break;
+                case MOT_VAR_OPT_DIN_SPEED_LIMIT:       value = (p_mc->Config.OptSpeedLimit_Scalar16);           break;
                 // case MOT_VAR_BUZZER_FLAGS_ENABLE:    value = (p_mc->Config.Buzzer); break;
                 // case MOT_VAR_CAN_SERVICES_ID:        value = (p_mc->Config.CanServicesId); break;
                 // case MOT_VAR_CAN_IS_ENABLE:          value = (p_mc->Config.CanIsEnable); break;
@@ -488,11 +481,11 @@ static int32_t GetParameter(const MotorControllerPtr_T p_mc, MotVarId_T varId)
     return value;
 }
 
-static MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
+static MotVarId_Status_T SetParameter(MotorController_T * p_mc, MotVarId_T varId, int32_t varValue)
 {
     MotVarId_Status_T status = MOT_VAR_STATUS_OK;
-    bool boolStatus = true;
-    MotorPtr_T p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance); /* for convience, invalid if varId.NameBase is not Motor type */
+    bool isSuccess = true;
+    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance); /* for convience, invalid if varId.NameBase is not Motor type */
     Protocol_T * p_protocol = NULL;
     Thermistor_T * p_thermistor = NULL;
     VMonitor_T * p_vMonitor = NULL;
@@ -609,10 +602,10 @@ static MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T varI
                 case MOT_VAR_THROTTLE_MODE:                 p_mc->Config.ThrottleMode = varValue;           break;
                 case MOT_VAR_BRAKE_MODE:                    p_mc->Config.BrakeMode = varValue;              break;
                 case MOT_VAR_DRIVE_ZERO_MODE:               p_mc->Config.DriveZeroMode = varValue;          break;
-                case MOT_VAR_I_LIMIT_LOW_V:                 p_mc->Config.ILimitLowV_Scalar16 = varValue;    break;
+                case MOT_VAR_I_LIMIT_LOW_V:                 p_mc->Config.VLowILimit_Scalar16 = varValue;    break;
                 // case MOT_VAR_BUZZER_FLAGS_ENABLE:                        (p_mc->Config.Buzzer); break;
                 // case MOT_VAR_OPT_DIN_FUNCTION:                           (p_mc->Config.OptDinMode);              break;
-                // case MOT_VAR_OPT_DIN_SPEED_LIMIT:                        (p_mc->Config.OptDinSpeedLimit_Scalar16);   break;
+                // case MOT_VAR_OPT_DIN_SPEED_LIMIT:                        (p_mc->Config.OptSpeedLimit_Scalar16);   break;
                 // case MOT_VAR_CAN_SERVICES_ID:                            (p_mc->Config.CanServicesId); break;
                 // case MOT_VAR_CAN_IS_ENABLE:                              (p_mc->Config.CanIsEnable); break;
                 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
@@ -706,7 +699,7 @@ static MotVarId_Status_T SetParameter(MotorControllerPtr_T p_mc, MotVarId_T varI
     Var Reg Read Write Interface
     Variables, Single-Argument Functions
 */
-int32_t MotorController_Var_Get(const MotorControllerPtr_T p_mc, MotVarId_T varId)
+int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId)
 {
     int32_t value = 0;
     switch((MotVarId_TypeType_T)varId.NameTypeType)
@@ -718,7 +711,7 @@ int32_t MotorController_Var_Get(const MotorControllerPtr_T p_mc, MotVarId_T varI
     return value;
 }
 
-MotVarId_Status_T MotorController_Var_Set(MotorControllerPtr_T p_mc, MotVarId_T varId, int32_t varValue)
+MotVarId_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T varId, int32_t varValue)
 {
     MotVarId_Status_T status = MOT_VAR_STATUS_OK;
     switch((MotVarId_TypeType_T)varId.NameTypeType)
@@ -736,7 +729,7 @@ MotVarId_Status_T MotorController_Var_Set(MotorControllerPtr_T p_mc, MotVarId_T 
     return status;
 }
 
-// uint8_t MotorController_Var_GetSize(MotorControllerPtr_T p_mc, uint16_t varId)
+// uint8_t MotorController_Var_GetSize(MotorController_T * p_mc, uint16_t varId)
 // {
 
 // }

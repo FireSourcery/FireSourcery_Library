@@ -124,8 +124,8 @@ typedef enum MotVarId_Control_Motor
 {
     MOT_VAR_MOTOR_DIRECTION,            // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
     MOT_VAR_MOTOR_USER_SET_POINT,       // RampIn/RampOut, Generic mode select
-    MOT_VAR_MOTOR_USER_SPEED_LIMIT,     // Read Active, Write buffered user value
-    MOT_VAR_MOTOR_USER_I_LIMIT,
+    MOT_VAR_MOTOR_IO_SPEED_LIMIT,       // Read Active, Write buffered user value
+    MOT_VAR_MOTOR_IO_I_LIMIT,
     // MOT_VAR_MOTOR_USER_FEEDBACK_MODE, // generally set by inclusion, or config base
 }
 MotVarId_Control_Motor_T;
@@ -187,6 +187,7 @@ typedef enum MotVarId_Cmd
     */
     MOT_VAR_THROTTLE,                       // [0:65535]
     MOT_VAR_BRAKE,                          // [0:65535]
+    MOT_VAR_OPT_SPEED_LIMIT,                // 1:Enable, 0:Disable
 }
 MotVarId_Cmd_T;
 

@@ -135,7 +135,7 @@ static inline uint16_t Linear_Voltage_CalcAdcu_ScalarV(const Linear_T * p_linear
 
 static inline uint16_t Linear_Voltage_CalcAdcu_Frac16(const Linear_T * p_linear, int32_t frac16)
 {
-    return (uint16_t)Linear_InvFunction_Fixed32(p_linear, frac16);
+    return (uint16_t)Linear_InvFixed32(p_linear, frac16);
 }
 
 /* Same as general Linear_Voltage_CalcAdcu_Frac16 */

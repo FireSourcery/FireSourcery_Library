@@ -142,5 +142,5 @@ static void Pattern_PeriodicToggle(Blinky_T * p_blinky)
 
 */
 /******************************************************************************/
-// static inline void Blinky_Blink_Short(MotorControllerPtr_T p_mc) { Blinky_Blink(&p_mc->Buzzer, 500U); }
-// static inline void Blinky_Blink_PeriodicType1(MotorControllerPtr_T p_mc) { Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U); }
+// static inline void Blinky_Blink_Short(MotorController_T * p_mc) { Blinky_Blink(&p_mc->Buzzer, 500U); }
+// static inline void Blinky_Blink_PeriodicType1(MotorController_T * p_mc) { Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U); }

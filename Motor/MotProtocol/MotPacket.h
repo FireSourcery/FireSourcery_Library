@@ -138,6 +138,16 @@ MotPacket_Sync_T;
 // }
 // MotPacket_HeaderFixed_T;
 
+// typedef struct MOT_PACKET_PACKED MotPacket_HeaderFixed
+// {
+//     uint8_t Start;
+//     uint8_t Id;
+//     uint16_t Checksum;
+//     struct { uint8_t Length; uint8_t Flex0; uint8_t Flex1; uint8_t Flex2; };
+// }
+// MotPacket_HeaderVariable_T;
+
+// generic via union
 typedef struct MOT_PACKET_PACKED MotPacket_Header
 {
     uint8_t Start;  /* MOT_PACKET_START_BYTE */
@@ -160,9 +170,16 @@ typedef union MOT_PACKET_PACKED MotPacket
         MotPacket_Header_T Header;
         uint8_t Payload[MOT_PACKET_LENGTH_MAX - sizeof(MotPacket_Header_T)];
     };
+    // struct
+    // {
+    //     MotPacket_HeaderFixed_T Header;
+    //     uint32_t FixedData;
+    //     // uint8_t Payload[MOT_PACKET_LENGTH_MAX - sizeof(MotPacket_Header_T)];
+    // };
     uint8_t Bytes[MOT_PACKET_LENGTH_MAX];
 }
 MotPacket_T;
+
 
 // todo passing payload separately eliminates need for combined packet + payload struct
 // extern uint8_t MotPacket_VersionResp1_Build(MotPacket_VersionResp_T * p_payload, MotPacket_T * p_header, uint32_t library, uint32_t firmware, uint32_t board);
@@ -286,7 +303,7 @@ typedef struct MotPacket_MemWriteResp { MotPacket_Header_T Header; MotPacket_Mem
 /******************************************************************************/
 /*! Data Mode Read/Write Control/Framing Common */
 /******************************************************************************/
-typedef struct MotPacket_DataModeReq_Payload { uint32_t AddressStart; uint32_t SizeBytes; uint32_t Config; }       MotPacket_DataModeReq_Payload_T;
+typedef struct MotPacket_DataModeReq_Payload { uint32_t AddressStart; uint32_t SizeBytes; uint32_t Config; }            MotPacket_DataModeReq_Payload_T;
 typedef struct MotPacket_DataModeResp_Payload { uint16_t Status; }                                                      MotPacket_DataModeResp_Payload_T;
 typedef struct MotPacket_DataModeReq { MotPacket_Header_T Header; MotPacket_DataModeReq_Payload_T DataModeReq; }        MotPacket_DataModeReq_T;
 typedef struct MotPacket_DataModeResp { MotPacket_Header_T Header; MotPacket_DataModeResp_Payload_T DataModeResp; }     MotPacket_DataModeResp_T;
@@ -303,10 +320,10 @@ typedef struct MotPacket_DataMode { MotPacket_Header_T Header; MotPacket_DataMod
 /******************************************************************************/
 /*! Common */
 /******************************************************************************/
-static inline uint8_t MotPacket_GetPayloadLength(const MotPacket_T * p_packet) { return p_packet->Header.Length - sizeof(MotPacket_Header_T); }
-static inline uint8_t MotPacket_GetTotalLength(const MotPacket_T * p_packet) { return p_packet->Header.Length; }
-static inline void MotPacket_SetPayloadLength(MotPacket_T * p_packet, uint8_t payloadLength) { p_packet->Header.Length = payloadLength + sizeof(MotPacket_Header_T); }
-static inline void MotPacket_SetTotalLength(MotPacket_T * p_packet, uint8_t totalLength) { p_packet->Header.Length = totalLength; }
+static inline uint8_t MotPacket_GetPayloadLength(const MotPacket_T * p_packet)  { return p_packet->Header.Length - sizeof(MotPacket_Header_T); }
+static inline uint8_t MotPacket_GetTotalLength(const MotPacket_T * p_packet)    { return p_packet->Header.Length; }
+static inline void MotPacket_SetPayloadLength(MotPacket_T * p_packet, uint8_t payloadLength)    { p_packet->Header.Length = payloadLength + sizeof(MotPacket_Header_T); }
+static inline void MotPacket_SetTotalLength(MotPacket_T * p_packet, uint8_t totalLength)        { p_packet->Header.Length = totalLength; }
 
 /******************************************************************************/
 /*!

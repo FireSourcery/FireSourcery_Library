@@ -57,9 +57,9 @@
 }
 
 
-// static inline uint16_t MotorController_Analog_GetHeatPcb(const MotorControllerPtr_T p_mc)        { return p_mc->AnalogResults.HeatPcb_Adcu; }
-// static inline uint16_t MotorController_Analog_GetHeatMosfets(const MotorControllerPtr_T p_mc)    { return p_mc->AnalogResults.HeatMosfets_Adcu; }
-// static inline uint16_t MotorController_User_GetHeat_Adcu(const MotorControllerPtr_T p_mc, uint8_t index)    {  return p_mc->AnalogResultsThermal[index]; }
+// static inline uint16_t MotorController_Analog_GetHeatPcb(const MotorController_T * p_mc)        { return p_mc->AnalogResults.HeatPcb_Adcu; }
+// static inline uint16_t MotorController_Analog_GetHeatMosfets(const MotorController_T * p_mc)    { return p_mc->AnalogResults.HeatMosfets_Adcu; }
+// static inline uint16_t MotorController_User_GetHeat_Adcu(const MotorController_T * p_mc, uint8_t index)    {  return p_mc->AnalogResultsThermal[index]; }
 
 // typedef enum MotVarId_Instance_ThermistorBoard
 // {

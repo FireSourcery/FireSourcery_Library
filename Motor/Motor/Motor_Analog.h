@@ -34,12 +34,12 @@
 #include "Peripheral/Analog/AnalogN/AnalogN.h"
 #include "Motor.h"
 
-extern void Motor_Analog_CaptureVa(MotorPtr_T p_motor);
-extern void Motor_Analog_CaptureVb(MotorPtr_T p_motor);
-extern void Motor_Analog_CaptureVc(MotorPtr_T p_motor);
-extern void Motor_Analog_CaptureIa(MotorPtr_T p_motor);
-extern void Motor_Analog_CaptureIb(MotorPtr_T p_motor);
-extern void Motor_Analog_CaptureIc(MotorPtr_T p_motor);
+extern void Motor_Analog_CaptureVa(Motor_T * p_motor);
+extern void Motor_Analog_CaptureVb(Motor_T * p_motor);
+extern void Motor_Analog_CaptureVc(Motor_T * p_motor);
+extern void Motor_Analog_CaptureIa(Motor_T * p_motor);
+extern void Motor_Analog_CaptureIb(Motor_T * p_motor);
+extern void Motor_Analog_CaptureIc(Motor_T * p_motor);
 
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
     #define _MOTOR_ANALOG_N_CONVERSION_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor)                                                                  \
@@ -64,9 +64,9 @@ extern void Motor_Analog_CaptureIc(MotorPtr_T p_motor);
     .ADCS_GROUP_PWM     = { .Flags = (uint8_t)((1U << VaHost) | (1U << VbHost) | (1U << VcHost) | (1U << IaHost) | (1U << IbHost) | (1U << IcHost)| (1U << SinHost) | (1U << CosHost)), },                  \
 }
 
-extern void Motor_Analog_EnqueueVabc(MotorPtr_T p_motor);
-extern void Motor_Analog_EnqueueIabc(MotorPtr_T p_motor);
-extern void Motor_Analog_StartCalibration(MotorPtr_T p_motor);
-extern bool Motor_Analog_ProcCalibration(MotorPtr_T p_motor);
+extern void Motor_Analog_EnqueueVabc(Motor_T * p_motor);
+extern void Motor_Analog_EnqueueIabc(Motor_T * p_motor);
+extern void Motor_Analog_StartCalibration(Motor_T * p_motor);
+extern bool Motor_Analog_ProcCalibration(Motor_T * p_motor);
 
 #endif
