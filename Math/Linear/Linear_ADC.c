@@ -32,47 +32,37 @@
 
 /******************************************************************************/
 /*!
-    f16(adcu) = adc_frac16
-    f16(adcuZero) = 0
-    f16(adcuRef) = 65535
-    f(adcu) = physical
+    f(adcu) = frac16
     f(adcuZero) = 0
-    f(adcuRef) = physicalRef
-
-    adcu to frac16 conversion returns without division
-    adcu to physical returns without division
-    division in physical to adcu, frac16 to physical units
+    f(adcuRef) = 65535
 */
 /******************************************************************************/
-void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef)
+void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef)
 {
-    Linear_Num16_Init(p_linear, adcuZero, adcuRef, physicalZero, physicalRef);
+    Linear_Q16_Init(p_linear, adcuZero, adcuRef);
 }
 
-void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef, int16_t physicalZero, int16_t physicalRef)
+void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef)
 {
-    Linear_Num16_Init(p_linear, adcuZero, adcuZero + adcuZtPRef, physicalZero, physicalRef);
+    Linear_Q16_Init(p_linear, adcuZero, adcuZero + adcuZtPRef);
 }
 
-void Linear_ADC_Init_MinMax(Linear_T * p_linear, uint16_t adcuMin, uint16_t adcuMax, int16_t physicalMin, int16_t physicalMax)
+void Linear_ADC_Init_MinMax(Linear_T * p_linear, uint16_t adcuMin, uint16_t adcuMax)
 {
-    Linear_Num16_Init(p_linear, (adcuMin + adcuMax) / 2, adcuMax, (physicalMin + physicalMax) / 2, physicalMax);
+    Linear_Q16_Init(p_linear, (adcuMin + adcuMax) / 2, adcuMax);
 }
-
 
 /******************************************************************************/
 /*!
     Inverted pivot on 0
     f(adcuZero) = 0
-    f(adcuRef) = -physicalRef
-    f(-adcuRef) = physicalRef
-    f16(adcuRef) = -65536
-    f16(-adcuRef) = 65536
+    f(adcuRef) = -65536
+    f(-adcuRef) = 65536
 */
 /******************************************************************************/
-void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef)
+void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef)
 {
-    Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalZero, physicalRef);
+    Linear_ADC_Init(p_linear, adcuZero, adcuRef);
     Linear_ADC_SetInverted(p_linear);
 }
 
@@ -82,22 +72,21 @@ void Linear_ADC_SetInverted(Linear_T * p_linear)
     p_linear->InvSlope = 0 - p_linear->InvSlope;
 }
 
-
 /******************************************************************************/
 /*!
 
 */
 /******************************************************************************/
-void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t min_MilliV, uint16_t max_MilliV, int16_t physicalZero, int16_t physicalRef)
+void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t min_MilliV, uint16_t max_MilliV)
 {
     uint16_t adcuZero = ((uint32_t)max_MilliV + min_MilliV) * adcMax / 2U / adcVRef_MilliV;
     uint16_t adcuRef = (uint32_t)max_MilliV * adcMax / adcVRef_MilliV;
-    Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalZero, physicalRef);
+    Linear_ADC_Init(p_linear, adcuZero, adcuRef);
 }
 
-void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t zero_MilliV, uint16_t max_MilliV, int16_t physicalZero, int16_t physicalRef)
+void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t zero_MilliV, uint16_t max_MilliV)
 {
     uint16_t adcuZero = (uint32_t)zero_MilliV * adcMax / adcVRef_MilliV;
     uint16_t adcuRef = (uint32_t)max_MilliV * adcMax / adcVRef_MilliV;
-    Linear_ADC_Init(p_linear, adcuZero, adcuRef, physicalZero, physicalRef);
+    Linear_ADC_Init(p_linear, adcuZero, adcuRef);
 }

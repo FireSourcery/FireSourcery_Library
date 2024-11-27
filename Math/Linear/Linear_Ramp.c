@@ -30,53 +30,79 @@
 /******************************************************************************/
 #include "Linear_Ramp.h"
 
-#define LINEAR_RAMP_SHIFT 14U /* Output range [INT16_MIN:INT16_MAX]x2 without overflow */
+#define LINEAR_RAMP_SHIFT 14U /* Output range [-UINT16_MAX:UINT16_MAX]x2 without overflow */
 
 /*
-    store as y shifted
-    y_shifted = y0_shifted + m_shifted
-
-    alternatively, y0 = ((m_shifted * x0) >> shift)
+    store as y_shifted = y0_shifted + m_shifted
+    Linear_Of before shift back
 */
-static inline int32_t CalcOutputInner(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps)
+static inline int32_t OutputValueOf(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps)
 {
-    return ((currentRampValue) + (p_linear->Slope * steps));
+    return ((currentRampValue)+(p_linear->Slope * steps));
 }
 
-static int32_t CalcOutput(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps)
+static int32_t OutputOf(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps)
 {
-    int32_t newRampValue;
+    int32_t newRampValue = currentRampValue;
 
-    if(currentRampValue < p_linear->YReference)
+    if(currentRampValue < p_linear->YReference) // incrementing
     {
-        newRampValue = CalcOutputInner(p_linear, currentRampValue, steps);
+        newRampValue = OutputValueOf(p_linear, currentRampValue, steps);
         if(newRampValue > p_linear->YReference) { newRampValue = p_linear->YReference; }
     }
-    else if(currentRampValue > p_linear->YReference)
+    else if(currentRampValue > p_linear->YReference) // decrementing
     {
-        newRampValue = CalcOutputInner(p_linear, currentRampValue, 0 - steps);
+        newRampValue = OutputValueOf(p_linear, currentRampValue, 0 - steps); // Ramp slope always positive
         if(newRampValue < p_linear->YReference) { newRampValue = p_linear->YReference; }
     }
-    else { newRampValue = currentRampValue; }
+
+    // if (currentRampValue != p_linear->YReference)
+    // {
+    //     newRampValue = OutputValueOf(p_linear, currentRampValue, steps);
+
+    //     if (
+    //         ((p_linear->Slope < 0) && (newRampValue < p_linear->YReference)) ||
+    //         ((p_linear->Slope > 0) && (newRampValue > p_linear->YReference))
+    //         )
+    //         { newRampValue = p_linear->YReference; }
+
+    // }
 
     return newRampValue;
 }
 
-/* Seek output */
-int32_t Linear_Ramp_CalcOutputN(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps)
+
+int32_t Linear_Ramp_NextOutputOfState(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps)
 {
-    return CalcOutput(p_linear, currentRampValue, steps) >> p_linear->SlopeShift;
+    return OutputOf(p_linear, currentRampValue, steps) >> p_linear->SlopeShift; //linearOf
 }
 
+int32_t Linear_Ramp_NextOutputOfN(const Linear_T * p_linear, int32_t steps)
+{
+    return Linear_Ramp_NextOutputOfState(p_linear, p_linear->YOffset, steps);
+}
+
+int32_t Linear_Ramp_NextOutputOf(const Linear_T * p_linear, int32_t currentRampValue)
+{
+    return Linear_Ramp_NextOutputOfState(p_linear, currentRampValue, 1U);
+}
+
+// static inline int32_t ProcOutputN(Linear_T * p_linear, int32_t steps)
+// {
+//    return _Ramp_Sat(p_linear, Linear_Of(p_linear, steps)); //set step direction, or set slope
+// }
+
+// LinearOf, sat output
 int32_t Linear_Ramp_ProcOutputN(Linear_T * p_linear, int32_t steps)
 {
-    if(p_linear->YOffset != p_linear->YReference) { p_linear->YOffset = CalcOutput(p_linear, p_linear->YOffset, steps); }
+    if(p_linear->YOffset != p_linear->YReference) { p_linear->YOffset = OutputOf(p_linear, p_linear->YOffset, steps); }
     return Linear_Ramp_GetOutput(p_linear);
 }
 
-/* Next sequential output */
-int32_t Linear_Ramp_CalcOutput(const Linear_T * p_linear, int32_t currentRampValue) { return Linear_Ramp_CalcOutputN(p_linear, currentRampValue, 1U); }
-int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear) { return Linear_Ramp_ProcOutputN(p_linear, 1U); }
+int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear)
+{
+    return Linear_Ramp_ProcOutputN(p_linear, 1U);
+}
 
 /******************************************************************************/
 /*
@@ -85,12 +111,13 @@ int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear) { return Linear_Ramp_ProcOut
 /******************************************************************************/
 /*
     if initial > final AND acceleration is positive, ramp returns final value
-    Overflow: final > 65535
+    using fixed LINEAR_RAMP_SHIFT, so that dynamic ramps do not need to recalculate.
+    Overflow: final > 65535*2 to include percent16 input
 */
 void Linear_Ramp_Init(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final)
 {
     p_linear->SlopeShift = LINEAR_RAMP_SHIFT;
-    p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT;
+    p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT; // unused set to 0?
     Linear_Ramp_SetSlope(p_linear, duration_Ticks, initial, final);
     Linear_Ramp_SetOutputState(p_linear, 0);
     Linear_Ramp_SetTarget(p_linear, 0);

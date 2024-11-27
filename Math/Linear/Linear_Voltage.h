@@ -60,24 +60,19 @@
     @return Calculated voltage
 */
 /******************************************************************************/
-static inline int32_t Linear_Voltage_CalcV(const Linear_T * p_linear, uint16_t adcu)
+static inline int32_t Linear_Voltage_Of(const Linear_T * p_linear, uint16_t adcu)
 {
-    return Linear_Function(p_linear, adcu);
+    return Linear_Of(p_linear, adcu);
 }
 
-static inline int32_t Linear_Voltage_CalcMilliV(const Linear_T * p_linear, uint16_t adcu)
+static inline int32_t Linear_Voltage_MilliV(const Linear_T * p_linear, uint16_t adcu)
 {
-    return Linear_Function_Scalar(p_linear, adcu, 1000U);
+    return Linear_Of_Scalar(p_linear, adcu, 1000U);
 }
 
-static inline int32_t Linear_Voltage_CalcScalarV(const Linear_T * p_linear, uint16_t adcu, uint16_t scalar)
+static inline int32_t Linear_Voltage_ScalarV(const Linear_T * p_linear, uint16_t adcu, uint16_t scalar)
 {
-    return Linear_Function_Scalar(p_linear, adcu, scalar);
-}
-
-static inline int32_t Linear_Voltage_CalcV_Frac16(const Linear_T * p_linear, uint16_t frac16)
-{
-
+    return Linear_Of_Scalar(p_linear, adcu, scalar);
 }
 
 /******************************************************************************/
@@ -86,27 +81,28 @@ static inline int32_t Linear_Voltage_CalcV_Frac16(const Linear_T * p_linear, uin
 */
 /******************************************************************************/
 /*!
-    @brief     results expressed in Q16.16, where 65356 => 100% of vInMax
+    @brief  results in Q16.16, with 2x input interval
 */
-static inline int32_t Linear_Voltage_CalcScalar16(const Linear_T * p_linear, uint16_t adcu)
+static inline int32_t Linear_Voltage_CalcScalar16Of(const Linear_T * p_linear, uint16_t adcu)
 {
-    return Linear_Function_FracS16(p_linear, adcu);
+    return _Linear_Fixed32(p_linear, adcu);
 }
 
 /*!
-    @brief     results expressed in Q0.16, Saturated to 65535 max
+    @brief  results in Q0.16, where 65356 => 100% of vInMax
+    Saturated to 65535 max
 */
-static inline uint16_t Linear_Voltage_CalcFracU16(const Linear_T * p_linear, uint16_t adcu)
+static inline uint16_t Linear_Voltage_Percent16OfAdcu(const Linear_T * p_linear, uint16_t adcu)
 {
-    return Linear_Function_FracU16(p_linear, adcu);
+    return _Linear_Percent16(p_linear, adcu);
 }
 
 /*!
-    @brief     results expressed in Q1.15 where 32,767 => 100% of vInMax
+    @brief  results in Q1.15 where 32,767 => 100% of vInMax
 */
-static inline int16_t Linear_Voltage_CalcFracS16(const Linear_T * p_linear, uint16_t adcu)
+static inline int16_t Linear_Voltage_Frac16OfAdcu(const Linear_T * p_linear, uint16_t adcu)
 {
-    return Linear_Function_FracS16(p_linear, adcu);
+    return _Linear_Frac16(p_linear, adcu);
 }
 
 /******************************************************************************/
@@ -118,37 +114,38 @@ static inline int16_t Linear_Voltage_CalcFracS16(const Linear_T * p_linear, uint
     @return Calculated ADC value
 */
 /******************************************************************************/
-static inline uint16_t Linear_Voltage_CalcAdcu_V(const Linear_T * p_linear, uint16_t volts)
+static inline uint16_t Linear_Voltage_AdcuOfV(const Linear_T * p_linear, uint16_t volts)
 {
-    return (uint16_t)Linear_InvFunction(p_linear, volts);
+    return (uint16_t)Linear_InvOf(p_linear, volts);
 }
 
-static inline uint16_t Linear_Voltage_CalcAdcu_MilliV(const Linear_T * p_linear, uint32_t milliV)
+static inline uint16_t Linear_Voltage_AdcuOfMilliV(const Linear_T * p_linear, uint32_t milliV)
 {
-    return (uint16_t)(Linear_InvFunction(p_linear, milliV) / 1000U);
+    return (uint16_t)(Linear_InvOf(p_linear, milliV) / 1000U);
 }
 
-static inline uint16_t Linear_Voltage_CalcAdcu_ScalarV(const Linear_T * p_linear, uint16_t scalarV, uint16_t scalar)
+static inline uint16_t Linear_Voltage_AdcuOfScalarV(const Linear_T * p_linear, uint16_t scalarV, uint16_t scalar)
 {
-    return (uint16_t)Linear_InvFunction_Scalar(p_linear, scalarV, scalar); //todo
+    return (uint16_t)Linear_InvOf_Scalar(p_linear, scalarV, scalar);
 }
 
-static inline uint16_t Linear_Voltage_CalcAdcu_Frac16(const Linear_T * p_linear, int32_t frac16)
+/*  */
+static inline uint16_t Linear_Voltage_AdcuOfPercent16(const Linear_T * p_linear, uint16_t percent16)
 {
-    return (uint16_t)Linear_InvFixed32(p_linear, frac16);
-}
-
-/* Same as general Linear_Voltage_CalcAdcu_Frac16 */
-static inline uint16_t Linear_Voltage_CalcAdcu_FracU16(const Linear_T * p_linear, uint16_t frac16)
-{
-    return (uint16_t)Linear_InvFunction_FracU16(p_linear, frac16);
+    return (uint16_t)_Linear_InvPercent16(p_linear, percent16);
 }
 
 /* frac16 in Q1.15 */
-static inline uint16_t Linear_Voltage_CalcAdcu_FracS16(const Linear_T * p_linear, int16_t frac16)
+static inline uint16_t Linear_Voltage_AdcuOfFrac16(const Linear_T * p_linear, int16_t frac16)
 {
-    return (uint16_t)Linear_InvFunction_FracS16(p_linear, frac16);
+    return (uint16_t)_Linear_InvFrac16(p_linear, frac16);
 }
+
+static inline int32_t Linear_Voltage_OfFrac16(const Linear_T * p_linear, uint16_t frac16)
+{
+    return Linear_Of(p_linear, Linear_Voltage_AdcuOfFrac16(p_linear, frac16));
+}
+
 
 /******************************************************************************/
 /*!

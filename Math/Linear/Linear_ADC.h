@@ -32,7 +32,7 @@
 #ifndef LINEAR_ADC_H
 #define LINEAR_ADC_H
 
-#include "Linear_Num16.h"
+#include "Linear_Q16.h"
 #include <stdint.h>
 
 /******************************************************************************/
@@ -40,43 +40,81 @@
     From ADCU
 */
 /******************************************************************************/
-static inline int32_t Linear_ADC_CalcFrac16(const Linear_T * p_linear, uint16_t adcu) { return Linear_Num16(p_linear, adcu); }
-static inline int16_t Linear_ADC_CalcFracS16(const Linear_T * p_linear, uint16_t adcu) { return Linear_Num16_Signed(p_linear, adcu); }
-static inline uint16_t Linear_ADC_CalcFracU16(const Linear_T * p_linear, uint16_t adcu) { return Linear_Num16_Unsigned(p_linear, adcu); }
-static inline uint16_t Linear_ADC_CalcFracU16_Abs(const Linear_T * p_linear, uint16_t adcu) { return Linear_Num16_Unsigned_Abs(p_linear, adcu); }
-static inline int32_t Linear_ADC_CalcPhysical(const Linear_T * p_linear, uint16_t adcu) { return Linear_Num16_Units(p_linear, adcu); }
-
-/******************************************************************************/
-/*!
-    Intermediary
-*/
-/******************************************************************************/
-static inline int32_t Linear_ADC_CalcPhysical_Frac16(const Linear_T * p_linear, uint16_t frac16) { return Linear_Num16_Units16(p_linear, frac16); }
-
-/* Division in this function */
-static inline int32_t Linear_ADC_CalcFrac16_Physical(const Linear_T * p_linear, int32_t units) { return Linear_Num16_InvUnits16(p_linear, units); }
-
-/******************************************************************************/
-/*!
-    To ADCU
-*/
-/******************************************************************************/
-/* Division in this function */
-static inline uint16_t Linear_ADC_CalcAdcu_Physical(const Linear_T * p_linear, int16_t units) { return Linear_Num16_InvUnits(p_linear, units); }
-static inline uint16_t Linear_ADC_CalcAdcu_FracS16(const Linear_T * p_linear, int32_t signedFrac16) { return Linear_Num16_InvSigned(p_linear, signedFrac16); }
-static inline uint16_t Linear_ADC_CalcAdcu_FracU16(const Linear_T * p_linear, uint32_t unsignedFrac16) { return Linear_Num16_InvUnsigned(p_linear, unsignedFrac16); }
+// static inline int32_t Linear_ADC_Q16(const Linear_T * p_linear, uint16_t adcu)                   { return Linear_Q16_Of(p_linear, adcu); }
+static inline int16_t Linear_ADC_Frac16(const Linear_T * p_linear, uint16_t adcu)                   { return Linear_Q16_Frac(p_linear, adcu); }
+static inline uint16_t Linear_ADC_Percent16(const Linear_T * p_linear, uint16_t adcu)               { return Linear_Q16_Percent(p_linear, adcu); }
+static inline uint16_t Linear_ADC_Percent16_Abs(const Linear_T * p_linear, uint16_t adcu)           { return Linear_Q16_Percent_Abs(p_linear, adcu); }
+static inline uint16_t Linear_ADC_AdcuOfFrac16(const Linear_T * p_linear, int32_t frac16)           { return Linear_Q16_ValueOfFrac(p_linear, frac16); }
+static inline uint16_t Linear_ADC_AdcuOfPercent16(const Linear_T * p_linear, uint32_t percent16)    { return Linear_Q16_ValueOfPercent(p_linear, percent16); }
 
 /******************************************************************************/
 /*!
     Extern
 */
 /******************************************************************************/
-extern void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef);
-extern void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef, int16_t physicalZero, int16_t physicalRef);
-extern void Linear_ADC_Init_MinMax(Linear_T * p_linear, uint16_t adcuMin, uint16_t adcuMax, int16_t physicalMin, int16_t physicalMax);
-extern void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef, int16_t physicalZero, int16_t physicalRef);
+extern void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef);
+extern void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef);
+extern void Linear_ADC_Init_MinMax(Linear_T * p_linear, uint16_t adcuMin, uint16_t adcuMax);
+extern void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef);
 extern void Linear_ADC_SetInverted(Linear_T * p_linear);
-extern void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t min_MilliV, uint16_t max_MilliV, int16_t physicalZero, int16_t physicalRef);
-extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t zero_MilliV, uint16_t max_MilliV, int16_t physicalZero, int16_t physicalRef);
+extern void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t min_MilliV, uint16_t max_MilliV);
+extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t zero_MilliV, uint16_t max_MilliV);
 
 #endif
+
+// Alternatively
+// typedef struct Linear_ADC
+// {
+//     Linear_T Linear;
+//     int32_t UnitsRef;
+// }
+// Linear_ADC_T;
+
+// static inline int32_t Linear_ADC_CalcPhysical(const Linear_T * p_linear, uint16_t adcu) { return Linear_Q16_Units(p_linear, adcu); }
+
+// static inline int32_t Linear_ADC_CalcPhysical_Frac16(const Linear_T * p_linear, uint16_t frac16) { return Linear_Q16_Units16(p_linear, frac16); }
+// /* Division in this function */
+// static inline int32_t Linear_ADC_CalcFrac16_Physical(const Linear_T * p_linear, int32_t units) { return Linear_Q16_InvUnits16(p_linear, units); }
+// /* Division in this function */
+// static inline uint16_t Linear_ADC_CalcAdcu_Physical(const Linear_T * p_linear, int16_t units) { return Linear_Q16_InvUnits(p_linear, units); }
+
+/******************************************************************************/
+/*
+*/
+/*
+    todo remove for separate  module
+*/
+/******************************************************************************/
+// static inline int32_t Linear_Q16_Units16(const Linear_T * p_linear, int32_t y_frac16)
+// {
+//     return linear_units_of_fixed(p_linear->YOffset, p_linear->YDeltaRef, y_frac16);
+// }
+
+// static inline int32_t Linear_Q16_InvUnits16(const Linear_T * p_linear, int32_t y_units)
+// {
+//     return linear_fixed_of_units(p_linear->YOffset, p_linear->YDeltaRef, y_units);
+// }
+
+// /* x to fixed to y_units */
+// static inline int32_t linear_m16_f(int32_t m16_shifted, uint8_t shift, int32_t x0, int32_t y0_units, int32_t deltay_units, int32_t x)
+// {
+//     return linear_units_of_fixed(deltay_units, y0_units, linear_shift_f_x0(m16_shifted, shift, x0, x));
+// }
+
+// /* y_units to fixed to x */
+// static inline int32_t linear_m16_invf(int32_t invm16_shifted, uint8_t shift, int32_t x0, int32_t y0_units, int32_t deltay_units, int32_t y_units)
+// {
+//     return linear_shift_invf_x0(invm16_shifted, shift, x0, linear_fixed_of_units(deltay_units, y0_units, y_units));
+// }
+
+// /* User Units using YRef */
+// static inline int32_t Linear_Q16_Units(const Linear_T * p_linear, int32_t x)
+// {
+//     return linear_m16_f(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, p_linear->YOffset, p_linear->YDeltaRef, x);
+// }
+
+// /* Division limited to this function only */
+// static inline int32_t Linear_Q16_InvUnits(const Linear_T * p_linear, int32_t y)
+// {
+//     return linear_m16_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, p_linear->YOffset, p_linear->YDeltaRef, y);
+// }

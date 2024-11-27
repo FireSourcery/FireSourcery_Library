@@ -149,7 +149,7 @@ static inline size_t Ring_GetFullCount(const Ring_T * p_ring)
 #elif   defined(CONFIG_RING_POW2_WRAP)
     return _Ring_IndexWrappedOf(p_ring, p_ring->Tail - p_ring->Head);
 #elif   defined(CONFIG_RING_LENGTH_COMPARE)
-    return _Ring_IndexWrappedOf(p_ring, p_ring->CONST.LENGTH + p_ring->Tail - p_ring->Head);
+       return (p_ring->Tail >= p_ring->Head) ? (p_ring->Tail - p_ring->Head) : (p_ring->CONST.LENGTH - p_ring->Head + p_ring->Tail);
 #endif
 }
 
@@ -163,8 +163,7 @@ static inline size_t Ring_GetEmptyCount(const Ring_T * p_ring)
 #elif   defined(CONFIG_RING_POW2_WRAP)
     return _Ring_IndexWrappedOf(p_ring, p_ring->CONST.LENGTH + p_ring->Head - p_ring->Tail - 1U);
 #elif   defined(CONFIG_RING_LENGTH_COMPARE)
-    return _Ring_IndexWrappedOf(p_ring, p_ring->CONST.LENGTH + p_ring->Head - p_ring->Tail - 1U);
-    //    return (p_ring->Head > p_ring->Tail) ? (p_ring->Head - p_ring->Tail - 1U) : (p_ring->CONST.LENGTH - p_ring->Tail + p_ring->Head - 1U);
+       return (p_ring->Tail >= p_ring->Head) ? (p_ring->CONST.LENGTH - p_ring->Tail + p_ring->Head - 1U) : (p_ring->Head - p_ring->Tail - 1U);
 #endif
 }
 

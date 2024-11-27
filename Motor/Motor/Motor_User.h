@@ -46,9 +46,9 @@
     Conversion functions only on user call. No periodic proc.
 */
 /*! @return [-32767:32767] <=> [-1:1] speed forward as positive. reverse as negative. */
-static inline int32_t Motor_User_GetSpeed_Frac16(const Motor_T * p_motor) { return Motor_DirectionalValueOf(p_motor, p_motor->Speed_FracS16); }
+static inline int32_t Motor_User_GetSpeed_Frac16(const Motor_T * p_motor) { return Motor_DirectionalValueOf(p_motor, p_motor->Speed_Frac16); }
 /*! @return [0:65535] <=> [0:2] */
-static inline uint16_t Motor_User_GetSpeed_UFrac16(const Motor_T * p_motor) { return math_abs(p_motor->Speed_FracS16); }
+static inline uint16_t Motor_User_GetSpeed_UFrac16(const Motor_T * p_motor) { return math_abs(p_motor->Speed_Frac16); }
 
 /*!
     @return IPhase Zero to Peak.
@@ -78,13 +78,13 @@ static inline uint8_t Motor_User_GetAdcu_Msb8(const Motor_T * p_motor, MotorAnal
 static inline uint16_t Motor_User_GetHeat_Adcu(const Motor_T * p_motor)                                    { return p_motor->AnalogResults.Heat_Adcu; }
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-static inline int16_t Motor_User_GetSpeed_Rpm(const Motor_T * p_motor)             { return _Motor_ConvertSpeed_FracS16ToRpm(p_motor, Motor_User_GetSpeed_Frac16(p_motor)); }
-static inline int16_t Motor_User_GetIPhase_Amps(const Motor_T * p_motor)           { return _Motor_ConvertI_FracS16ToAmps(Motor_User_GetIPhase_UFrac16(p_motor)); }
-static inline int16_t Motor_User_GetVPhase_Volts(const Motor_T * p_motor)          { return _Motor_ConvertV_FracS16ToVolts(Motor_User_GetVPhase_UFrac16(p_motor)); }
-static inline int32_t Motor_User_GetElectricalPower_VA(const Motor_T * p_motor)    { return _Motor_ConvertPower_FracS16ToWatts(Motor_User_GetElectricalPower_UFrac16(p_motor)); }
+static inline int16_t Motor_User_GetSpeed_Rpm(const Motor_T * p_motor)             { return _Motor_ConvertSpeed_Frac16ToRpm(p_motor, Motor_User_GetSpeed_Frac16(p_motor)); }
+static inline int16_t Motor_User_GetIPhase_Amps(const Motor_T * p_motor)           { return _Motor_ConvertI_Frac16ToAmps(Motor_User_GetIPhase_UFrac16(p_motor)); }
+static inline int16_t Motor_User_GetVPhase_Volts(const Motor_T * p_motor)          { return _Motor_ConvertV_Frac16ToVolts(Motor_User_GetVPhase_UFrac16(p_motor)); }
+static inline int32_t Motor_User_GetElectricalPower_VA(const Motor_T * p_motor)    { return _Motor_ConvertPower_Frac16ToWatts(Motor_User_GetElectricalPower_UFrac16(p_motor)); }
 static inline int32_t Motor_User_GetHeat_DegCScalar(const Motor_T * p_motor, uint16_t scalar)  { return Thermistor_ConvertToDegC_Scalar(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu, scalar); }
 // check DC current limit
-// Motor_FOC_GetElectricalPower_FracS16Abs(p_motor) / Motor_Static_GetVSource_V() ;
+// Motor_FOC_GetElectricalPower_Frac16Abs(p_motor) / Motor_Static_GetVSource_V() ;
 static inline thermal_t Motor_User_GetHeat_DegC(const Motor_T * p_motor)           { return Thermistor_ConvertToDegC(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 #endif
 
@@ -98,7 +98,7 @@ static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(const Motor_T *
 static inline Motor_StatusFlags_T Motor_User_GetStatusFlags(const Motor_T * p_motor)           { return p_motor->StatusFlags; }
 static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_T * p_motor)             { return p_motor->FaultFlags; }
 static inline bool Motor_User_IsStopState(const Motor_T * p_motor)                             { return (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP); }
-static inline bool Motor_User_IsZeroSpeed(const Motor_T * p_motor)                             { return (p_motor->Speed_FracS16 == 0); }
+static inline bool Motor_User_IsZeroSpeed(const Motor_T * p_motor)                             { return (p_motor->Speed_Frac16 == 0); }
 /* SubStates */
 static inline Motor_OpenLoopState_T Motor_User_GetOpenLoopState(const Motor_T * p_motor)       { return p_motor->OpenLoopState; }
 static inline Motor_CalibrationState_T Motor_User_GetCalibrationState(const Motor_T * p_motor) { return p_motor->CalibrationState; }

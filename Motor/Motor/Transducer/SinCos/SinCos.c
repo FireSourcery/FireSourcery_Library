@@ -45,7 +45,7 @@ void SinCos_Init(SinCos_T * p_sincos)
 
 void SinCos_ResetUnitsAngle(SinCos_T * p_sincos)
 {
-    Linear_ADC_Init(&p_sincos->UnitsAngle, p_sincos->Config.Min_Adcu, p_sincos->Config.Max_Adcu, p_sincos->Config.Min_MilliV, p_sincos->Config.Max_MilliV);
+    Linear_ADC_Init(&p_sincos->UnitsAngle, p_sincos->Config.Min_Adcu, p_sincos->Config.Max_Adcu);
 }
 
 void SinCos_SetConfigAdc(SinCos_T * p_sincos, uint16_t min_Adcu, uint16_t max_Adcu, uint16_t min_mV, uint16_t max_mV)

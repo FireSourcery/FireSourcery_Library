@@ -59,38 +59,38 @@
 /******************************************************************************/
 static inline void Motor_FOC_CaptureIa(Motor_T * p_motor)
 {
-    qfrac16_t iPhase = ((int32_t)Linear_ADC_CalcFracS16(&p_motor->UnitsIa, p_motor->AnalogResults.Ia_Adcu) + FOC_GetIa(&p_motor->Foc)) / 2;
+    qfrac16_t iPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsIa, p_motor->AnalogResults.Ia_Adcu) + FOC_GetIa(&p_motor->Foc)) / 2;
     FOC_SetIa(&p_motor->Foc, iPhase);
 }
 
 static inline void Motor_FOC_CaptureIb(Motor_T * p_motor)
 {
-    qfrac16_t iPhase = ((int32_t)Linear_ADC_CalcFracS16(&p_motor->UnitsIb, p_motor->AnalogResults.Ib_Adcu) + FOC_GetIb(&p_motor->Foc)) / 2;
+    qfrac16_t iPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsIb, p_motor->AnalogResults.Ib_Adcu) + FOC_GetIb(&p_motor->Foc)) / 2;
     FOC_SetIb(&p_motor->Foc, iPhase);
 }
 
 static inline void Motor_FOC_CaptureIc(Motor_T * p_motor)
 {
-    qfrac16_t iPhase = ((int32_t)Linear_ADC_CalcFracS16(&p_motor->UnitsIc, p_motor->AnalogResults.Ic_Adcu) + FOC_GetIc(&p_motor->Foc)) / 2;
+    qfrac16_t iPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsIc, p_motor->AnalogResults.Ic_Adcu) + FOC_GetIc(&p_motor->Foc)) / 2;
     FOC_SetIc(&p_motor->Foc, iPhase);
 }
 
 //todo remove division
 static inline void Motor_FOC_CaptureVa(Motor_T * p_motor)
 {
-    qfrac16_t vPhase = ((int32_t)Linear_Voltage_CalcFracS16(&p_motor->UnitsVabc, p_motor->AnalogResults.Va_Adcu) + FOC_GetVBemfA(&p_motor->Foc)) / 2;
+    qfrac16_t vPhase = ((int32_t)Linear_Voltage_Frac16OfAdcu(&p_motor->UnitsVabc, p_motor->AnalogResults.Va_Adcu) + FOC_GetVBemfA(&p_motor->Foc)) / 2;
     FOC_SetVBemfA(&p_motor->Foc, vPhase);
 }
 
 static inline void Motor_FOC_CaptureVb(Motor_T * p_motor)
 {
-    qfrac16_t vPhase = ((int32_t)Linear_Voltage_CalcFracS16(&p_motor->UnitsVabc, p_motor->AnalogResults.Vb_Adcu) + FOC_GetVBemfB(&p_motor->Foc)) / 2;
+    qfrac16_t vPhase = ((int32_t)Linear_Voltage_Frac16OfAdcu(&p_motor->UnitsVabc, p_motor->AnalogResults.Vb_Adcu) + FOC_GetVBemfB(&p_motor->Foc)) / 2;
     FOC_SetVBemfB(&p_motor->Foc, vPhase);
 }
 
 static inline void Motor_FOC_CaptureVc(Motor_T * p_motor)
 {
-    qfrac16_t vPhase = ((int32_t)Linear_Voltage_CalcFracS16(&p_motor->UnitsVabc, p_motor->AnalogResults.Vc_Adcu) + FOC_GetVBemfC(&p_motor->Foc)) / 2;
+    qfrac16_t vPhase = ((int32_t)Linear_Voltage_Frac16OfAdcu(&p_motor->UnitsVabc, p_motor->AnalogResults.Vc_Adcu) + FOC_GetVBemfC(&p_motor->Foc)) / 2;
     FOC_SetVBemfC(&p_motor->Foc, vPhase);
 }
 

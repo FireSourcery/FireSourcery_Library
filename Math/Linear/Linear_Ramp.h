@@ -43,7 +43,7 @@
 static inline int32_t Linear_Ramp_GetTarget(const Linear_T * p_linear) { return (p_linear->YReference >> p_linear->SlopeShift); }
 static inline int32_t Linear_Ramp_GetOutput(const Linear_T * p_linear) { return (p_linear->YOffset >> p_linear->SlopeShift); }
 
-static inline void Linear_Ramp_SetTarget(Linear_T * p_linear, int32_t target) { p_linear->YReference = (target << p_linear->SlopeShift); }
+static inline void Linear_Ramp_SetTarget(Linear_T * p_linear, int32_t target) { p_linear->YReference = (target << p_linear->SlopeShift); } //alternatively update slope if sign changed
 static inline void Linear_Ramp_SetOutputState(Linear_T * p_linear, int32_t match) { p_linear->YOffset = (match << p_linear->SlopeShift); }
 static inline void Linear_Ramp_ZeroOutputState(Linear_T * p_linear) { p_linear->YOffset = 0; }
 
@@ -59,9 +59,9 @@ extern void Linear_Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq
 extern void Linear_Ramp_Set(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
 extern void Linear_Ramp_Set_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
 
-extern int32_t Linear_Ramp_CalcOutputN(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps);
+extern int32_t Linear_Ramp_NextOutputOfState(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps);
+extern int32_t Linear_Ramp_NextOutputOf(const Linear_T * p_linear, int32_t currentRampValue);
 extern int32_t Linear_Ramp_ProcOutputN(Linear_T * p_linear, int32_t steps);
-extern int32_t Linear_Ramp_CalcOutput(const Linear_T * p_linear, int32_t currentRampValue);
 extern int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear);
 
 #endif

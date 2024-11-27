@@ -34,7 +34,7 @@
 
 static void ResetUnitsLinear(Thermistor_T * p_therm)
 {
-    Linear_ADC_Init(&p_therm->HeatLimit, p_therm->Config.FaultTrigger_Adcu, p_therm->Config.WarningTrigger_Adcu, 0, 0); /* for scalar16 only */
+    Linear_ADC_Init(&p_therm->HeatLimit, p_therm->Config.FaultTrigger_Adcu, p_therm->Config.WarningTrigger_Adcu); /* for scalar16 only */
 
     // Linear_Init_Map(&p_therm->LinearUnits, p_therm->Config.LinearT0_Adcu, p_therm->Config.LinearT1_Adcu, p_therm->Config.LinearT0_DegC, p_therm->Config.LinearT1_DegC);
 }
@@ -176,8 +176,8 @@ static uint16_t ConvertDegCToAdcu_Steinhart(const Thermistor_T * p_therm, float 
 }
 #endif
 
-static int16_t ConvertAdcuToDegC_Linear(const Thermistor_T * p_therm, uint16_t adcu)     { return Linear_Function(&p_therm->LinearUnits, adcu); }
-static uint16_t ConvertDegCToAdcu_Linear(const Thermistor_T * p_therm, int16_t degC)     { return Linear_InvFunction(&p_therm->LinearUnits, degC); }
+static int16_t ConvertAdcuToDegC_Linear(const Thermistor_T * p_therm, uint16_t adcu)     { return Linear_Of(&p_therm->LinearUnits, adcu); }
+static uint16_t ConvertDegCToAdcu_Linear(const Thermistor_T * p_therm, int16_t degC)     { return Linear_InvOf(&p_therm->LinearUnits, degC); }
 
 static thermal_t ConvertAdcuToDegC(const Thermistor_T * p_therm, uint16_t adcu)
 {

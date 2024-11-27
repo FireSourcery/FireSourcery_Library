@@ -80,8 +80,8 @@ SinCos_T;
 */
 static inline qangle16_t _SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-    qfrac16_t sin = Linear_ADC_CalcFracS16(&p_sincos->UnitsAngle, sin_Adcu);
-    qfrac16_t cos = Linear_ADC_CalcFracS16(&p_sincos->UnitsAngle, cos_Adcu);
+    qfrac16_t sin = Linear_ADC_Frac16(&p_sincos->UnitsAngle, sin_Adcu);
+    qfrac16_t cos = Linear_ADC_Frac16(&p_sincos->UnitsAngle, cos_Adcu);
     qangle16_t angle = qfrac16_atan2(sin, cos);
     return angle;
 }

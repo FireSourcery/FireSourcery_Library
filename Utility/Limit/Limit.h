@@ -64,20 +64,6 @@ static inline bool Limit_IsActive(const Limit_T * p_limit) {  return (p_limit->v
 static inline bool Limit_IsUpperActive(const Limit_T * p_limit) {  return (p_limit->valuesMin != LIMIT_MAX); }
 static inline bool Limit_IsLowerActive(const Limit_T * p_limit) {  return (p_limit->valuesMax != LIMIT_MIN); }
 
-// static inline bool Limit_SetUpper(Limit_T * p_limit, limit_t value)
-// {
-//     bool isSet = false;
-//     if(value < p_limit->valuesMin) { p_limit->valuesMin = value; isSet = true; }
-//     return isSet;
-// }
-
-// static inline bool Limit_SetLower(Limit_T * p_limit, limit_t value)
-// {
-//     bool isSet = false;
-//     if(value > p_limit->valuesMax) { p_limit->valuesMax = value; isSet = true; }
-//     return isSet;
-// }
-
 extern void Limit_Init(Limit_T * p_limit);
 extern void Limit_ClearAll(Limit_T * p_limit);
 

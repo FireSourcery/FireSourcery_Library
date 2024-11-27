@@ -45,11 +45,14 @@ static inline bool math_is_bounded(int32_t value, int32_t low, int32_t high) { r
 
 static inline int32_t math_add_sat(int32_t a, int32_t b)
 {
-    // __builtin_sadd(a, b); //todo
+// #if defined(__GNUC__)
+//     // __builtin_sadd(a, b); //todo
+// #else
     int32_t result = a + b;
-    if      ((a > 0) && (b > 0) && (result < 0)) { result = INT32_MAX; } /* (a > 0 && b > INT_MAX - a) */
-    else if ((a < 0) && (b < 0) && (result > 0)) { result = (0 - INT32_MAX); } /* (a < 0 && b < INT_MIN - a) */
+    if      ((a > 0) && (b > 0) && (result < 0)) { result = INT32_MAX; }
+    else if ((a < 0) && (b < 0) && (result > 0)) { result = (0 - INT32_MAX); }
     return result;
+// #endif
 }
 
 static inline uintptr_t align_down(uintptr_t address, size_t align) { return (address & (-align)); }

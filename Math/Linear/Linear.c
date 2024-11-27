@@ -31,10 +31,13 @@
 #include "Linear.h"
 #include "Math/Q/Q.h"
 
-/* Shift <= log2(INT32_MAX / ((x_max - x0) * Slope)) */
-uint8_t _Linear_GetMaxSlopeShift_Signed(int32_t factor, int32_t divisor, int32_t maxInputDelta)
+/*!
+    Shift <= log2(INT32_MAX / ((xRef - x0) * Slope))
+    @param[in] inputInterval - max input delta without overflow
+*/
+uint8_t _Linear_SlopeShift(int32_t factor, int32_t divisor, int32_t inputInterval)
 {
-    return q_lshift_max_signed((maxInputDelta * 2 - 1) * factor / divisor); /* divide first rounds up log2 */
+    return q_lshift_max_signed((inputInterval * 2 - 1) * factor / divisor); /* divide first rounds up log2 */
 }
 
 /******************************************************************************/
@@ -43,9 +46,13 @@ uint8_t _Linear_GetMaxSlopeShift_Signed(int32_t factor, int32_t divisor, int32_t
     f(x) = (factor * (x - x0) / divisor) + y0
     f(xRef) = yRef
 
-    Overflow: factor, divisor > 131,071. (divisor * (yRef - y0)) > INT32_MAX
+    By known slope
+    Derive XRef => x input max [X0 + 2*(XRef - X0)]
 
-    max x input at least [X0 + 2*(XRef - X0)]
+    Overflow: factor, divisor > 131,071.
+        (divisor * (yRef - y0)) > INT32_MAX
+        (factor * (xRef - x0)) > INT32_MAX
+
     if slope < 1, (factor < divisor), shift 14, => max input [65536+65535]
     if slope > 1, (factor > divisor), bound with yRef.
 
@@ -56,15 +63,15 @@ uint8_t _Linear_GetMaxSlopeShift_Signed(int32_t factor, int32_t divisor, int32_t
 void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-    p_linear->YReference        = yRef;
-    p_linear->XReference        = linear_invf(factor, divisor, y0, yRef);     /* (yRef - y0)*divisor/factor + 0 */
     p_linear->XOffset           = 0;
-    p_linear->YOffset           = y0;
-    p_linear->DeltaX            = p_linear->XReference - p_linear->XOffset;
-    p_linear->DeltaY            = yRef - y0;
-    p_linear->SlopeShift        = _Linear_GetMaxSlopeShift_Signed(factor, divisor, p_linear->DeltaX);
+    p_linear->XReference        = linear_invf(factor, divisor, y0, yRef); /* (yRef - y0)*divisor/factor + 0 */
+    p_linear->XDeltaRef         = p_linear->XReference - p_linear->XOffset;
+    p_linear->SlopeShift        = _Linear_SlopeShift(factor, divisor, p_linear->XDeltaRef);
     p_linear->Slope             = (factor << p_linear->SlopeShift) / divisor;
-    p_linear->InvSlopeShift     = _Linear_GetMaxSlopeShift_Signed(divisor, factor, p_linear->DeltaY);
+    p_linear->YOffset           = y0;
+    p_linear->YReference        = yRef;
+    p_linear->YDeltaRef         = yRef - y0;
+    p_linear->InvSlopeShift     = _Linear_SlopeShift(divisor, factor, p_linear->YDeltaRef);
     p_linear->InvSlope          = (divisor << p_linear->InvSlopeShift) / factor;
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
     p_linear->SlopeFactor = factor;
@@ -76,6 +83,7 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 
 /*
     Map [x0:xRef] to [y0:yRef]. Interpolate from (x0, y0) to (xRef, yRef).
+    xRef - x0 must be > INT32_MIN
     Derive slope
 */
 void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, int32_t yRef)
@@ -83,16 +91,17 @@ void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
     p_linear->XOffset           = x0;
     p_linear->YOffset           = y0;
-    p_linear->DeltaX            = xRef - x0;
-    p_linear->DeltaY            = yRef - y0;
-    p_linear->YReference        = yRef;
     p_linear->XReference        = xRef;
-    p_linear->SlopeShift        = _Linear_GetMaxSlopeShift_Signed(p_linear->DeltaY, p_linear->DeltaX, p_linear->DeltaX);
-    p_linear->Slope             = (p_linear->DeltaY << p_linear->SlopeShift) / p_linear->DeltaX;
-    p_linear->InvSlopeShift     = _Linear_GetMaxSlopeShift_Signed(p_linear->DeltaY, p_linear->DeltaX, p_linear->DeltaY);
-    p_linear->InvSlope          = (p_linear->DeltaX << p_linear->InvSlopeShift) / p_linear->DeltaY;
+    p_linear->YReference        = yRef;
+    p_linear->XDeltaRef         = xRef - x0;
+    p_linear->YDeltaRef         = yRef - y0;
+    p_linear->SlopeShift        = _Linear_SlopeShift(p_linear->YDeltaRef, p_linear->XDeltaRef, p_linear->XDeltaRef);
+    p_linear->Slope             = (p_linear->YDeltaRef << p_linear->SlopeShift) / p_linear->XDeltaRef;
+    p_linear->InvSlopeShift     = _Linear_SlopeShift(p_linear->YDeltaRef, p_linear->XDeltaRef, p_linear->YDeltaRef);
+    p_linear->InvSlope          = (p_linear->XDeltaRef << p_linear->InvSlopeShift) / p_linear->YDeltaRef;
 #endif
 }
+
 
 /******************************************************************************/
 /*!
@@ -100,32 +109,32 @@ void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 */
 /******************************************************************************/
 /* scalar may be compile time constant, can compiler unroll loop to optimize? */
-int32_t Linear_Function_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
+int32_t Linear_Of_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
 {
     int32_t factor = x * p_linear->Slope;
     int32_t result = 0U;
 
     /*
-        Loop N = Log_[Divisor*=](scalar)
+        Loop N = Log_[DivisorN](scalar)
         scalar 1000
-            [Divisor*=] == 10 => 4
-            [Divisor*=] == 2 => 10
+            [DivisorN==10] => 4
+            [DivisorN==2]  => 10
     */
-    for(uint16_t iDivisor = 1U; scalar >= iDivisor; iDivisor *= 4U)     /* scalar / iDivisor > 0U */
+    for(uint16_t iDivisor = 1U; scalar >= iDivisor; iDivisor *= 4U) /* scalar / iDivisor > 0U */
     {
         if(factor < INT32_MAX / scalar * iDivisor) /* (factor * (scalar / iDivisor) < INT32_MAX  ) */
         {
-            result = Linear_Function(p_linear, x * scalar / iDivisor) * iDivisor;
+            result = Linear_Of(p_linear, x * scalar / iDivisor) * iDivisor;
             break;
         }
     }
 
-    if(result == 0) { result = Linear_Function(p_linear, x) * scalar; }
+    if(result == 0) { result = Linear_Of(p_linear, x) * scalar; }
 
     return result;
 }
 
-int32_t Linear_InvFunction_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar)
+int32_t Linear_InvOf_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar)
 {
     (void)p_linear;
     (void)y;

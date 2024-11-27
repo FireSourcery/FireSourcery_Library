@@ -144,9 +144,9 @@ static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
     {
         switch(p_motor->Config.SensorMode)
         {
-            case MOTOR_SENSOR_MODE_ENCODER: if((p_motor->Speed_FracS16 ^ Linear_Ramp_GetTarget(&p_motor->Ramp)) < 0) { p_motor->FaultFlags.AlignStartUp = 1U; } break;
+            case MOTOR_SENSOR_MODE_ENCODER: if((p_motor->Speed_Frac16 ^ Linear_Ramp_GetTarget(&p_motor->Ramp)) < 0) { p_motor->FaultFlags.AlignStartUp = 1U; } break;
 
-            // (p_motor->Speed_FracS16 ^ Iq)
+            // (p_motor->Speed_Frac16 ^ Iq)
             default: break;
         }
 

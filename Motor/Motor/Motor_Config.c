@@ -59,16 +59,16 @@ static inline void PropagateSet(Motor_T * p_motor, Motor_PropagateSet_T reset)
 void Motor_Config_SetSpeedLimitForward_Scalar16(Motor_T * p_motor, uint16_t forward_Frac16)
 {
     p_motor->Config.SpeedLimitForward_Scalar16 = forward_Frac16;
-    // if(p_motor->Config.DirectionForward == MOTOR_FORWARD_IS_CCW)     { p_motor->Config.SpeedLimitCcw_FracS16 = forward_Frac16; }
-    // else                                                                 { p_motor->Config.SpeedLimitCw_FracS16 = forward_Frac16; }
+    // if(p_motor->Config.DirectionForward == MOTOR_FORWARD_IS_CCW)     { p_motor->Config.SpeedLimitCcw_Frac16 = forward_Frac16; }
+    // else                                                                 { p_motor->Config.SpeedLimitCw_Frac16 = forward_Frac16; }
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
 
 void Motor_Config_SetSpeedLimitReverse_Scalar16(Motor_T * p_motor, uint16_t reverse_Frac16)
 {
     p_motor->Config.SpeedLimitReverse_Scalar16 = reverse_Frac16;
-    // if(p_motor->Config.DirectionForward == MOTOR_FORWARD_IS_CCW)     { p_motor->Config.SpeedLimitCw_FracS16 = reverse_Frac16; }
-    // else                                                                 { p_motor->Config.SpeedLimitCcw_FracS16 = reverse_Frac16; }
+    // if(p_motor->Config.DirectionForward == MOTOR_FORWARD_IS_CCW)     { p_motor->Config.SpeedLimitCw_Frac16 = reverse_Frac16; }
+    // else                                                                 { p_motor->Config.SpeedLimitCcw_Frac16 = reverse_Frac16; }
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
 
@@ -78,13 +78,13 @@ void Motor_Config_SetSpeedLimit_Scalar16(Motor_T * p_motor, uint16_t forwardScal
     p_motor->Config.SpeedLimitReverse_Scalar16 = reverseScalar16;
     // if(p_motor->Config.DirectionForward == MOTOR_FORWARD_IS_CCW)
     // {
-    //     p_motor->Config.SpeedLimitCcw_FracS16 = forward_Frac16;
-    //     p_motor->Config.SpeedLimitCw_FracS16 = reverse_Frac16;
+    //     p_motor->Config.SpeedLimitCcw_Frac16 = forward_Frac16;
+    //     p_motor->Config.SpeedLimitCw_Frac16 = reverse_Frac16;
     // }
     // else
     // {
-    //     p_motor->Config.SpeedLimitCcw_FracS16 = reverse_Frac16;
-    //     p_motor->Config.SpeedLimitCw_FracS16 = forward_Frac16;
+    //     p_motor->Config.SpeedLimitCcw_Frac16 = reverse_Frac16;
+    //     p_motor->Config.SpeedLimitCw_Frac16 = forward_Frac16;
     // }
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
@@ -140,7 +140,7 @@ uint16_t Motor_Config_GetSpeedLimitForward_Rpm(Motor_T * p_motor)
 {
     return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, p_motor->Config.SpeedLimitForward_Scalar16);
     // uint16_t speedLimit = (p_motor->Config.DirectionForward == MOTOR_FORWARD_IS_CCW) ?
-    //     p_motor->Config.SpeedLimitCcw_FracS16 : p_motor->Config.SpeedLimitCw_FracS16;
+    //     p_motor->Config.SpeedLimitCcw_Frac16 : p_motor->Config.SpeedLimitCw_Frac16;
     // return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, speedLimit);
 }
 
@@ -148,7 +148,7 @@ uint16_t Motor_Config_GetSpeedLimitReverse_Rpm(Motor_T * p_motor)
 {
     return _Motor_ConvertSpeed_Scalar16ToRpm(p_motor, p_motor->Config.SpeedLimitReverse_Scalar16);
     // uint16_t speedLimit = (p_motor->Config.DirectionForward == MOTOR_FORWARD_IS_CCW) ?
-    //  p_motor->Config.SpeedLimitCw_FracS16 : p_motor->Config.SpeedLimitCcw_FracS16;
+    //  p_motor->Config.SpeedLimitCw_Frac16 : p_motor->Config.SpeedLimitCcw_Frac16;
 }
 
 static uint16_t ConvertToILimitScalar16(Motor_T * p_motor, uint16_t i_amp)

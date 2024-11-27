@@ -166,7 +166,7 @@ Thermistor_T;
     [WarningTrigger_Adcu:FaultTrigger_Adcu] as [65535:0]
 */
 /******************************************************************************/
-static inline uint16_t Thermistor_HeatLimitOfAdcu_Scalar16(const Thermistor_T * p_therm, uint16_t adcu) { return Linear_ADC_CalcFracU16(&p_therm->HeatLimit, adcu); }
+static inline uint16_t Thermistor_HeatLimitOfAdcu_Scalar16(const Thermistor_T * p_therm, uint16_t adcu) { return Linear_ADC_Percent16(&p_therm->HeatLimit, adcu); }
 /* Captured adcu on Thermistor_PollMonitor */
 static inline uint16_t Thermistor_GetHeatLimit_Scalar16(const Thermistor_T * p_therm) { return Thermistor_HeatLimitOfAdcu_Scalar16(p_therm, p_therm->Adcu); }
 

@@ -135,7 +135,7 @@ void MotorController_ResetBootDefault(MotorController_T * p_mc)
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 void MotorController_ResetUnitsBatteryLife(MotorController_T * p_mc)
 {
-    Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Config.BatteryZero_Adcu, p_mc->Config.BatteryFull_Adcu, 0U, 1000U);
+    Linear_ADC_Init(&p_mc->BatteryLife, p_mc->Config.BatteryZero_Adcu, p_mc->Config.BatteryFull_Adcu);
 }
 #endif
 

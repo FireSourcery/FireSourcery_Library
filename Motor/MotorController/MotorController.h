@@ -246,7 +246,7 @@ typedef struct MotorController_Config
     bool CanIsEnable;
 #endif
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-    uint16_t BatteryZero_Adcu;  // todo, use Vsource warning?
+    uint16_t BatteryZero_Adcu;
     uint16_t BatteryFull_Adcu;
 #endif
     // MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */

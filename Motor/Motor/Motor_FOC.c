@@ -92,10 +92,10 @@ static inline void ProcInnerFeedback(Motor_T * p_motor)
 
 /*
     Speed Feedback Loop
-    SpeedControl_FracS16 update ~1000Hz, Ramp input 1000Hz, Ramp proc output 20000Hz
-    input   RampCmd[-32767:32767] - Speed_FracS16[-32767:32767]
+    SpeedControl_Frac16 update ~1000Hz, Ramp input 1000Hz, Ramp proc output 20000Hz
+    input   RampCmd[-32767:32767] - Speed_Frac16[-32767:32767]
             accepts over saturated inputs
-    output  SpeedControl_FracS16[-32767:32767] => IqReq or VqReq
+    output  SpeedControl_Frac16[-32767:32767] => IqReq or VqReq
 */
 static inline void ProcOuterFeedback(Motor_T * p_motor)
 {
@@ -103,7 +103,7 @@ static inline void ProcOuterFeedback(Motor_T * p_motor)
 
     if((Motor_ProcSensorSpeed(p_motor) == true) && (p_motor->FeedbackMode.Speed == 1U))
     {
-        FOC_SetQReq(&p_motor->Foc, PID_ProcPI(&p_motor->PidSpeed, req, p_motor->Speed_FracS16));
+        FOC_SetQReq(&p_motor->Foc, PID_ProcPI(&p_motor->PidSpeed, req, p_motor->Speed_Frac16));
         FOC_SetDReq(&p_motor->Foc, 0);
     }
     else if(p_motor->FeedbackMode.Speed == 0U) /* Current or Voltage Control mode */
@@ -134,7 +134,7 @@ void Motor_FOC_ProcFeedbackMatch(Motor_T * p_motor)
 
     if(p_motor->FeedbackMode.Speed == 1U)
     {
-        Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->Speed_FracS16);
+        Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->Speed_Frac16);
         PID_SetOutputState(&p_motor->PidSpeed, qReq);
     }
     else /* CONSTANT_CURRENT, or CONSTANT_VOLTAGE */
@@ -319,20 +319,20 @@ void Motor_FOC_StartAlignValidate(Motor_T * p_motor)
 */
 void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
 {
-    p_motor->Speed_FracS16 = 0;
+    p_motor->Speed_Frac16 = 0;
     Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopPower_Scalar16 / 2U));    // alternatively, clamp user input ramp
     Linear_Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopSpeed_Scalar16 / 2U));
     // FOC_SetDReq(&p_motor->Foc, 0); //Motor_FOC_ProcAngleFeedforward
 }
 
 /*
-    RPM = Speed_FracS16 * 2 * SpeedFeedbackRef_Rpm / 65535
+    RPM = Speed_Frac16 * 2 * SpeedFeedbackRef_Rpm / 65535
     ElectricalAngle += (RPM * 65536 * PolePairs) / (60 * CONTROL_FREQ)
 */
 static void _Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
 {
-    p_motor->Speed_FracS16 = Linear_Ramp_ProcOutput(&p_motor->OpenLoopSpeedRamp);
-    p_motor->ElectricalAngle += ((p_motor->Speed_FracS16 * p_motor->Config.SpeedFeedbackRef_Rpm * p_motor->Config.PolePairs * 2) / ((int32_t)60 * MOTOR_STATIC.CONTROL_FREQ));
+    p_motor->Speed_Frac16 = Linear_Ramp_ProcOutput(&p_motor->OpenLoopSpeedRamp);
+    p_motor->ElectricalAngle += ((p_motor->Speed_Frac16 * p_motor->Config.SpeedFeedbackRef_Rpm * p_motor->Config.PolePairs * 2) / ((int32_t)60 * MOTOR_STATIC.CONTROL_FREQ));
 }
 
 void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)

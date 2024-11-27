@@ -188,7 +188,7 @@ static inline uint16_t MotorController_User_GetHeatMosfets_Adcu(const MotorContr
 // static inline uint16_t MotorController_User_GetHeat_Adcu(const MotorController_T * p_mc, uint8_t index)    {  return p_mc->AnalogResultsThermal[index]; }
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-    static inline uint32_t MotorController_User_GetBatteryCharge_Scalar16(const MotorController_T * p_mc)              { return Linear_ADC_CalcFracU16(&p_mc->BatteryLife, p_mc->AnalogResults.VSource_Adcu); }
+    static inline uint32_t MotorController_User_GetBatteryCharge_Scalar16(const MotorController_T * p_mc)              { return Linear_ADC_Percent16(&p_mc->BatteryLife, p_mc->AnalogResults.VSource_Adcu); }
     static inline uint32_t MotorController_User_GetBatteryCharge_Scalar1000(const MotorController_T * p_mc)            { return Linear_ADC_CalcPhysical(&p_mc->BatteryLife, p_mc->AnalogResults.VSource_Adcu); }
     static inline int32_t MotorController_User_GetHeatPcb_DegC(const MotorController_T * p_mc, uint8_t scalar)         { return Thermistor_ConvertToDegC_Scalar(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu, scalar); }
     static inline int32_t MotorController_User_GetHeatMosfets_DegC(const MotorController_T * p_mc, uint8_t scalar)     { return Thermistor_ConvertToDegC_Scalar(&p_mc->ThermistorMosfets, p_mc->AnalogResults.HeatMosfets_Adcu, scalar); }
@@ -263,7 +263,7 @@ static inline uint16_t MotorController_User_GetVMax(void) { return MOTOR_STATIC.
 static inline uint16_t MotorController_User_GetIMax(void) { return MOTOR_STATIC.I_MAX_AMPS; }
 static inline uint16_t MotorController_User_GetIMaxAdcu(void) { return MOTOR_STATIC.I_MAX_ADCU; }
 
-// static inline char * MotorController_User_GetBoardName(void)
+// static inline uint32_t MotorController_User_GetBoardName(void)
 // {
 //     static const char boardName[8U] = MOTOR_BOARD_NAME;
 //     return (char *)(&boardName[0U]);
@@ -297,10 +297,17 @@ static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIn
 // move to flash?
 static inline uint32_t MotorController_User_GetMainVersion(const MotorController_T * p_mc) { return MOTOR_MAIN_FIRMWARE_VERSION; }
 
-// static inline uint32_t MotorController_User_GetBoardRef(void)
-// {
-//
-// }
+static inline void MotorController_User_GetBoardRef(MotorController_T * p_mc, void * p_destBuffer)
+{
+    ((uint32_t *)p_destBuffer)[0U] = p_mc->VMonitorSource.CONST.UNITS_R1;
+    ((uint32_t *)p_destBuffer)[1U] = p_mc->VMonitorSource.CONST.UNITS_R2;
+    ((uint32_t *)p_destBuffer)[2U] = p_mc->ThermistorPcb.CONST.R_SERIES;
+    ((uint32_t *)p_destBuffer)[3U] = p_mc->ThermistorPcb.CONST.R_PARALLEL;
+    // ((uint32_t *)p_destBuffer)[4U] = p_mc->ThermistorMosfets.CONST.R_SERIES;
+    // ((uint32_t *)p_destBuffer)[5U] = p_mc->ThermistorMosfets.CONST.R_PARALLEL;
+}
+
+
 
 /******************************************************************************/
 /*!
