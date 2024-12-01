@@ -23,10 +23,10 @@ static inline void void_copy(void * p_dest, const void * p_src, size_t unit_size
 {
     switch(unit_size)
     {
-        case sizeof(uint8_t) : *((uint8_t *)p_dest) = *((const uint8_t *)p_src); break;
-        case sizeof(uint16_t) : *((uint16_t *)p_dest) = *((const uint16_t *)p_src); break;
-        case sizeof(uint32_t) : *((uint32_t *)p_dest) = *((const uint32_t *)p_src); break;
-        case sizeof(uint64_t) : *((uint64_t *)p_dest) = *((const uint64_t *)p_src); break;
+        case sizeof(uint8_t) : *((uint8_t  *)p_dest) = *((const uint8_t  *)p_src); break;
+        case sizeof(uint16_t): *((uint16_t *)p_dest) = *((const uint16_t *)p_src); break;
+        case sizeof(uint32_t): *((uint32_t *)p_dest) = *((const uint32_t *)p_src); break;
+        case sizeof(uint64_t): *((uint64_t *)p_dest) = *((const uint64_t *)p_src); break;
         default: memcpy(p_dest, p_src, unit_size); break;
     }
 }
@@ -49,12 +49,16 @@ static inline void void_array_set(void * p_buffer, size_t unit_size, size_t inde
 
 
 typedef void(*void_op_t)(void * p_unit);
-typedef bool(*void_poll_t)(void * p_unit);
 
+/*
+    length in units
+*/
 static inline void void_array_foreach(void * p_buffer, size_t unit_size, size_t length, void_op_t unit_op)
 {
     for(size_t index = 0U; index < length; index++) { unit_op(void_pointer_at(p_buffer, unit_size, index)); }
 }
+
+typedef bool(*void_poll_t)(void * p_unit);
 
 /*!
     @return true if all are set
@@ -128,9 +132,9 @@ static inline int void_as_int(const void * p_unit, size_t unit_size)
     int value = 0;
     switch (unit_size)
     {
-        case sizeof(int8_t) : value = *((const int8_t *)p_unit); break;
-        case sizeof(int16_t) : value = *((const int16_t *)p_unit); break;
-        case sizeof(int32_t) : value = *((const int32_t *)p_unit); break;
+        case sizeof(int8_t):  value = *((const int8_t *)p_unit);  break;
+        case sizeof(int16_t): value = *((const int16_t *)p_unit); break;
+        case sizeof(int32_t): value = *((const int32_t *)p_unit); break;
         // case sizeof(int64_t) : value = *((const int64_t *)p_unit); break;
     }
     return value;

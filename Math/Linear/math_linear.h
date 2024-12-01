@@ -119,14 +119,14 @@ static inline int32_t linear_shift_invf_y0(int32_t invm_shifted, uint8_t shift, 
     invf16(y_fixed32) = y_fixed32 * (xref - x0) / 65536 - x0;
 */
 /******************************************************************************/
-// static inline int32_t linear_units(int32_t x0, int32_t deltax, int32_t units_delta, int32_t x)
+// static inline int32_t linear_q(int32_t x0, int32_t deltax, int32_t q_delta, int32_t x)
 // {
-//     return linear_f_x0(units_delta, deltax, x0, x);
+//     return linear_f_x0(q_delta, deltax, x0, x);
 // }
 
-// static inline int32_t linear_inv_units(int32_t x0, int32_t deltax, int32_t units_delta, int32_t value)
+// static inline int32_t linear_inv_q(int32_t x0, int32_t deltax, int32_t q_delta, int32_t value)
 // {
-//     return linear_invf_x0(units_delta, deltax, x0, value);
+//     return linear_invf_x0(q_delta, deltax, x0, value);
 // }
 
 static inline int32_t linear_fixed32(int32_t x0, int32_t deltax, int32_t x)

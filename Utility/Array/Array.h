@@ -40,6 +40,12 @@ Array_T;
     .LENGTH = (length) \
 }
 
+#define ARRAY_NEW(length, unitSize) { \
+    .UNIT_SIZE = (unitSize), \
+    .P_BUFFER = &(Array_T){0}, \
+    .LENGTH = (length) \
+}
+
 #define ARRAY_INIT_AS(T, buffer, length) { \
     .P_BUFFER = (buffer), \
     .UNIT_SIZE = sizeof(T), \

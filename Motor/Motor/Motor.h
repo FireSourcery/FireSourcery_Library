@@ -321,12 +321,11 @@ Motor_Config_T;
     @brief Motor Const - Compile time const configuration. Per instance.
     program, meta, parameters. unrelated to end user.
 */
-typedef const struct Motor_Const
+typedef const struct /* __attribute__((section(".rodata"))) */ Motor_Const
 {
     AnalogN_T * const P_ANALOG_N;
     const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
     const Motor_Config_T * const P_NVM_CONFIG;
-    // const StateMachine_Machine_T MSM_MACHINE;
 }
 Motor_Const_T;
 

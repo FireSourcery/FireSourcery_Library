@@ -205,7 +205,7 @@ NvMemory_T;
 */
 #define NV_MEMORY_INIT(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags, p_Partitions, PartitionsCount, p_Buffer, BufferSize) \
 {                                                                                                                                                       \
-    .CONST =                                                                                                                                           \
+    .CONST =                                                                                                                                            \
     {                                                                                                                                                   \
         _NV_MEMORY_INIT_HAL(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags)                                                 \
         _NV_MEMORY_INIT_PARTITIONS(p_Partitions, PartitionsCount)                                                                                       \

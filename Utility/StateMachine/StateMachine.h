@@ -77,7 +77,7 @@ typedef void (*StateMachine_Function_T)(void * p_context); // Output Function
 typedef const struct StateMachine_State
 {
     const statemachine_state_t ID;
-    const StateMachine_Transition_T * const P_TRANSITION_TABLE; /* f(statemachine_input_id_t) input map. Forms the TransitionFunction.  */
+    const StateMachine_Transition_T * const P_TRANSITION_TABLE;     /* f(statemachine_input_id_t) input map. Forms the TransitionFunction.  */
     const StateMachine_Function_T LOOP;       /* Output of the State. Synchronous periodic proc. No null pointer check, user must supply empty function */
     const StateMachine_Function_T ENTRY;      /* Common to all transition to current state, including self transition */
     const StateMachine_Function_T EXIT;
@@ -128,7 +128,7 @@ StateMachine_T;
 
 #define STATE_MACHINE_INIT(p_Machine, p_Context, UseCritical)   \
 {                                                               \
-    .CONST =                                                   \
+    .CONST =                                                    \
     {                                                           \
         .P_MACHINE = p_Machine,                                 \
         .P_CONTEXT = p_Context,                                 \

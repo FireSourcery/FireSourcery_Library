@@ -13,7 +13,7 @@
     Compile time typed
     alternative to handling size parameter, may be faster depending on compiler.
 
-    Macro buffer pointer assumed to be origin. Not wrapped with parenthesis.
+    Macro buffer pointer assumed to be origin.
 */
 /******************************************************************************/
 /*!
@@ -66,11 +66,7 @@ _Generic(p_dest, \
 
 // #define value_array_assign(p_typed, index, value) (_int_copy(&((p_typed)[index]), &value))
 
-/*
-    alternative to void_array.
-*/
-
-typedef void(*void_op_t)(void * p_unit);
+// typedef void(*void_op_t)(void * p_unit);
 typedef void(*uint8_op_t)(uint8_t * p_value);
 typedef void(*uint16_op_t)(uint16_t * p_value);
 typedef void(*uint32_op_t)(uint32_t * p_value);
@@ -78,15 +74,27 @@ typedef void(*uint64_op_t)(uint64_t * p_value);
 
 
 /*
+    alternative to void_array.
+    call directly or use a function code gen
+*/
+
+/*!
     (p_typed)[index] accounts for unit size, p_typed is typed
     p_typed and unit_op mismatch will result in compiler warning
+    alternatively, directly passing array can omit length
+
+    @param[in] unit_op void(*unit_op)(void * p_unit)
 */
 #define array_foreach(p_typed, length, unit_op) ({ for(size_t index = 0U; index < length; index++) { unit_op((p_typed) + index); } })
 
 // typedef bool(*void_test_t)(const void * p_unit);
 // typedef bool(*void_poll_t)(void * p_unit);
 
-#define array_for_every(p_typed, length, unit_poll) ({ bool is_every = true; for (size_t index = 0U; index < length; index++) { if (unit_poll(((p_typed) + index)) == false) { is_every = false; } } is_every; })
+#define array_for_every(p_typed, length, unit_poll) \
+    ({ bool is_every = true; for (size_t index = 0U; index < length; index++) { if (unit_poll(((p_typed) + index)) == false) { is_every = false; } } is_every; })
+
+#define array_for_any(p_typed, length, unit_poll) \
+    ({ bool is_any = false; for (size_t index = 0U; index < length; index++) { if (unit_poll(((p_typed) + index)) == true) { is_any = true; } } is_any; })
 
 // #define array_is_every(p_typed, length, unit_test) ({ \
 //     bool result = true; \
@@ -106,9 +114,6 @@ typedef void(*uint64_op_t)(uint64_t * p_value);
 //     for (size_t index = 1U; index < length; index++) { if (p_typed[index] < min_value) { min_value = p_typed[index]; } } \
 //     min_value; \
 // })
-
-
-
 
 
 

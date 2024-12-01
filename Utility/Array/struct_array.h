@@ -21,7 +21,7 @@
 /******************************************************************************/
 typedef int32_t(*get_int32_t)(const void * p_struct);
 
-/* Both versions are needed. Casting parameter sign will result in compiler warning */
+/* Both signed and unsigned versions are needed. Casting parameter sign will result in compiler warning */
 typedef void (*set_int8_t)(void * p_struct, int8_t value);
 typedef void (*set_int16_t)(void * p_struct, int16_t value);
 typedef void (*set_int32_t)(void * p_struct, int32_t value);
