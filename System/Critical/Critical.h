@@ -35,6 +35,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdatomic.h>
 
 extern uint32_t _Critical_InterruptDisableCount;
 extern uint32_t _Critical_StateOnEnter;
@@ -63,63 +64,57 @@ static inline void Critical_Exit(void) { __enable_irq(); }
 
 static inline void _Critical_Enter(uint32_t * p_state)  { *p_state = __get_PRIMASK(); __disable_irq(); }
 static inline void _Critical_Exit(uint32_t state)       { __set_PRIMASK(state); }
+
 #elif defined(CONFIG_CRITICAL_DISABLED)
-#define CRITICAL_DISABLE_INTERRUPTS()
-#define CRITICAL_ENABLE_INTERRUPTS()
 static inline void Critical_Enter(void) {}
 static inline void Critical_Exit(void) {}
 #endif
 
 static inline void Critical_DisableIrq(void)
 {
-    CRITICAL_DISABLE_INTERRUPTS();
+    __disable_irq();
     _Critical_InterruptDisableCount++;
 }
 
 static inline void Critical_EnableIrq(void)
 {
-    if(_Critical_InterruptDisableCount > 0U)
+    if (_Critical_InterruptDisableCount > 0U)
     {
         _Critical_InterruptDisableCount--;
-        if(_Critical_InterruptDisableCount <= 0U)
-        {
-            CRITICAL_ENABLE_INTERRUPTS();
-        }
+        if (_Critical_InterruptDisableCount <= 0U) { __enable_irq(); }
     }
 }
 
 /*
-    Non blocking mutex. process must be polling. none user input
+    process must be polling.
 */
-typedef volatile uint32_t critical_mutex_t;
+typedef volatile atomic_flag critical_signal_t;
 
-static inline bool Critical_AquireMutex(critical_mutex_t * p_mutex)
+static inline bool Critical_InitSignal(critical_signal_t * p_mutex)
 {
-    bool status = false;
-    Critical_Enter();
-    if(*p_mutex == 1U)
-    {
-        *p_mutex = 0U;
-        status = true;
-    }
-    Critical_Exit();
-    return status;
+    atomic_flag_clear(p_mutex);
 }
 
-static inline void Critical_ReleaseMutex(critical_mutex_t * p_mutex)
+static inline bool Critical_AcquireSignal(critical_signal_t * p_mutex)
 {
-    Critical_Enter();
-    if(*p_mutex == 0U)
-    {
-        *p_mutex = 1U;
-    }
-    Critical_Exit();
+    return atomic_flag_test_and_set(p_mutex) ? false : true; // true if mutex is available
 }
 
-static inline bool Critical_AquireEnter(critical_mutex_t * p_mutex)
+static inline void Critical_ReleaseSignal(critical_signal_t * p_mutex)
+{
+    atomic_flag_clear(p_mutex);
+}
+
+static inline bool Critical_AwaitSignal(critical_signal_t * p_mutex)
+{
+    while (atomic_flag_test_and_set(p_mutex) == true) {}
+}
+
+
+static inline bool Critical_AcquireEnter(critical_signal_t * p_mutex)
 {
 #if defined(CONFIG_CRITICAL_USE_MUTEX)
-    return Critical_AquireMutex(p_mutex) ? true : false;
+    return Critical_AquireMutex(p_mutex);
 #else
     (void)p_mutex;
     Critical_Enter();
@@ -127,10 +122,10 @@ static inline bool Critical_AquireEnter(critical_mutex_t * p_mutex)
 #endif
 }
 
-static inline void Critical_ReleaseExit(critical_mutex_t * p_mutex)
+static inline void Critical_ReleaseExit(critical_signal_t * p_mutex)
 {
 #if defined(CONFIG_CRITICAL_USE_MUTEX)
-    Critical_ReleaseMutex(p_mutex);
+    Critical_ReleaseSignal(p_mutex);
 #else
     (void)p_mutex;
     Critical_Exit();

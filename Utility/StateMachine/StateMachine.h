@@ -37,6 +37,8 @@
 #include <stdbool.h>
 #include <sys/types.h>
 
+#include "System/Critical/Critical.h"
+
 #define STATE_MACHINE_INPUT_ID_NULL         (0xFFU)
 #define STATE_MACHINE_INPUT_VALUE_NULL      (0U)
 
@@ -45,6 +47,7 @@ typedef uint32_t statemachine_input_value_t;    /* User define platform register
 
 typedef uint8_t statemachine_state_t;           /* State ID. User may overwrite with enum */
 
+// id is not passed in a function pointer. will not affect function pointer casting compatibility
 // typedef enum uint8_t { STATE_MACHINE_INPUT_ID_NULL = 0xFF } statemachine_input_id_t; /* Input ID/Category. Index into transition table. User may overwrite with enum. */
 // typedef register_t statemachine_input_value_t;  /* User define platform register size */
 
@@ -82,7 +85,7 @@ typedef const struct StateMachine_State
     const StateMachine_Function_T ENTRY;      /* Common to all transition to current state, including self transition */
     const StateMachine_Function_T EXIT;
     // void * const P_STATE_CONTEXT;
-#ifdef CONFIG_STATE_MACHINE_MENU_ENABLE
+#ifdef CONFIG_STATE_MACHINE_LINKED_MENU_ENABLE
     const struct StateMachine_State * P_LINK_NEXT;
     const struct StateMachine_State * P_LINK_PREV;
 #endif
@@ -92,7 +95,7 @@ StateMachine_State_T;
 typedef struct StateMachine_Machine
 {
     const StateMachine_State_T * const P_STATE_INITIAL;
-    const uint8_t TRANSITION_TABLE_LENGTH;     /* Total input count. Shared table length for all states, i.e. all states allocate for all inputs */
+    const uint8_t TRANSITION_TABLE_LENGTH;     /* statemachine_input_id_t count. Shared table length for all states, i.e. all states allocate for all inputs */
 }
 StateMachine_Machine_T;
 
@@ -110,12 +113,14 @@ typedef struct StateMachine
 {
     const StateMachine_Const_T CONST;
     const StateMachine_State_T * p_StateActive;
+
     /* Sync machine store result until process */
     volatile statemachine_input_id_t SyncInput;
     volatile statemachine_input_value_t SyncInputValue;
-    volatile bool IsSyncInputAccept;
+    // volatile bool IsSyncInputAccept;
+
 #if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
-    volatile critical_mutex_t Mutex;
+    volatile critical_signal_t Mutex;
 #endif
 }
 StateMachine_T;
@@ -144,7 +149,8 @@ static inline bool StateMachine_IsActiveState(const StateMachine_T * p_stateMach
     Extern
 */
 /******************************************************************************/
-extern void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState);
+extern void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_newState);
+
 extern void StateMachine_Init(StateMachine_T * p_stateMachine);
 extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
 

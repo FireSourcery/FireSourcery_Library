@@ -128,7 +128,7 @@ typedef union Motor_FeedbackMode
         uint8_t Current    : 1U;   /* 0 -> Voltage, 1-> Current */
         uint8_t Position   : 1U;
     };
-    uint8_t Word;
+    uint8_t Word; /* Id */
 }
 Motor_FeedbackMode_T;
 
@@ -139,7 +139,8 @@ static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_CURRENT              = { .
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_VOLTAGE        = { .OpenLoop = 0U, .Speed = 1U, .Current = 0U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .OpenLoop = 0U, .Speed = 1U, .Current = 1U, };
 
-static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t word) { Motor_FeedbackMode_T flags = { .Word = word }; return flags; }
+// static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t word) { Motor_FeedbackMode_T flags = { .Word = word }; return flags; }
+static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t word) { return ((Motor_FeedbackMode_T) { .Word = word }); }
 
 /*
     Effectively sync mailbox for async calculations
@@ -519,7 +520,7 @@ static inline int32_t _Motor_ConvertPower_Scalar16ToWatts(int32_t vi_scalar16)  
     These function should optimize away select if only 1 mode is enabled
 */
 /******************************************************************************/
-static inline const void * _Motor_CommutationModeFn(const Motor_T * p_motor, void * focFunction, void * sixStepFunction)
+static inline const void * _Motor_CommutationModeFn(const Motor_T * p_motor, const void * focFunction, const void * sixStepFunction)
 {
     const void * fn;
     switch(p_motor->Config.CommutationMode)
@@ -532,6 +533,7 @@ static inline const void * _Motor_CommutationModeFn(const Motor_T * p_motor, voi
 #endif
         default: fn = NULL; // error
     }
+    assert(fn != NULL);
     return fn;
 }
 
@@ -657,7 +659,7 @@ extern bool Motor_CheckFeedback(const Motor_T * p_motor);
 extern bool Motor_PollAlignFault(Motor_T * p_motor);
 
 extern int32_t Motor_GetSpeedLimitReq(const Motor_T * p_motor);
-extern int32_t Motor_GetILimitReq(const Motor_T * p_motor,  int32_t req, int32_t feedback);
+extern int32_t Motor_GetILimitReq(const Motor_T * p_motor, int32_t req, int32_t feedback);
 extern void Motor_UpdateFeedbackILimits(Motor_T * p_motor);
 extern void Motor_UpdateFeedbackSpeedLimits(Motor_T * p_motor);
 
@@ -665,6 +667,7 @@ extern void Motor_SetILimitActive(Motor_T * p_motor, uint16_t scalar16);
 extern void Motor_ClearILimitActive(Motor_T * p_motor);
 extern void Motor_SetSpeedLimitActive(Motor_T * p_motor, uint16_t scalar_frac16);
 extern void Motor_ClearSpeedLimitActive(Motor_T * p_motor);
+
 extern bool Motor_SetSpeedLimitEntry(Motor_T * p_motor, uint8_t id, uint16_t scalar_frac16);
 extern bool Motor_ClearSpeedLimitEntry(Motor_T * p_motor, uint8_t id);
 extern bool Motor_SetILimitEntry(Motor_T * p_motor, uint8_t id, uint16_t scalar_frac16);

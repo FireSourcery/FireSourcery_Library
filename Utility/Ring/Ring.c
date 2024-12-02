@@ -70,7 +70,7 @@ static inline void ExitCritical(const Ring_T * p_ring)
 static inline bool AcquireMutex(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
-    return (p_ring.CONST.USE_CRITICAL == true) ? Critical_AcquireMutex(&p_ring->Mutex) : true;
+    return (p_ring.CONST.USE_CRITICAL == true) ? Critical_AcquireSignal(&p_ring->Mutex) : true;
 #elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
     (void)p_ring;
     return true;
@@ -80,7 +80,7 @@ static inline bool AcquireMutex(Ring_T * p_ring)
 static inline void ReleaseMutex(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
-    if (p_ring.CONST.USE_CRITICAL == true) { Critical_ReleaseMutex(&p_ring->Mutex) };
+    if (p_ring.CONST.USE_CRITICAL == true) { Critical_ReleaseSignal(&p_ring->Mutex) };
 #elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
     (void)p_ring;
 #endif

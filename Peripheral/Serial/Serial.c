@@ -101,7 +101,7 @@ static inline bool AcquireCriticalTx(Serial_T * p_serial)
 static inline void ReleaseCriticalTx(Serial_T * p_serial)
 {
 #if        defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    Critical_ReleaseMutex(&p_serial->TxMutex); // UNTESTED
+    Critical_ReleaseSignal(&p_serial->TxMutex); // UNTESTED
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
     (void)p_serial;
     Critical_Exit();
@@ -128,7 +128,7 @@ static inline bool AcquireCriticalRx(Serial_T * p_serial)
 static inline void ReleaseCriticalRx(Serial_T * p_serial)
 {
 #if        defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    Critical_ReleaseMutex(&p_serial->RxMutex); // UNTESTED
+    Critical_ReleaseSignal(&p_serial->RxMutex); // UNTESTED
 #elif    defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
     (void)p_serial;
     Critical_Exit();

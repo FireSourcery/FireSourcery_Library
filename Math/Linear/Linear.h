@@ -186,6 +186,7 @@ static inline int32_t _Linear_Fixed32(const Linear_T * p_linear, int32_t x)
 static inline int32_t _Linear_InvFixed32(const Linear_T * p_linear, int32_t y_fixed32)
 {
     return linear_invfixed32(p_linear->XOffset, p_linear->XDeltaRef, y_fixed32);
+    // return linear_invf_x0(65536, deltax, x0, y_fixed32);
 }
 
 /******************************************************************************/

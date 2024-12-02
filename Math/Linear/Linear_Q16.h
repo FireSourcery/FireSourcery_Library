@@ -39,17 +39,23 @@
     UFrac16 => [0:65535],       [0:2)   in Q1.15,
     Percent16 <=> Fixed32 => [0:65535], [0:1) in Q0.16
     Fixed32 => [INT32_MIN:INT32_MAX], [-1:1] <=> [-65536:65536] in Q16.16
-
-    f([-XRef:XRef]) => [-65536:65536], with over saturation of [-65535*2:65535*2] (via shift 14)
 */
 /******************************************************************************/
-/*! @return y_fixed32 in q16.16 format. */
+/*!
+    f([-XRef:XRef]) => [-65536:65536]
+        with over saturation of [-65535*2:65535*2] (via INT32_MAX/2)
+
+    @param[in]  x [-XRef*2:XRef*2]
+    @return     y_fixed32 q16.16 format. [-65535*2:65535*2]
+*/
 static inline int32_t Linear_Q16_Of(const Linear_T * p_linear, int32_t x)
 {
     return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, x);
 }
 
-/*! @param[in] y_fixed32 in q16.16 format. range bounded to 17-bits */
+/*!
+    @param[in] y_fixed32 in q16.16 format. range bounded to 17-bits
+*/
 static inline int32_t Linear_Q16_InvOf(const Linear_T * p_linear, int32_t y_fixed32)
 {
     return linear_shift_invf_x0(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, y_fixed32);
@@ -63,6 +69,13 @@ static inline int32_t Linear_Q16_InvOf(const Linear_T * p_linear, int32_t y_fixe
 static inline int16_t Linear_Q16_Frac(const Linear_T * p_linear, int32_t x)
 {
     return _Linear_SatSigned16(Linear_Q16_Of(p_linear, x) / 2);
+    // return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, x);
+}
+
+/* [0:2) */
+static inline uint16_t Linear_Q16_UFrac(const Linear_T * p_linear, int32_t x)
+{
+    return _Linear_SatUnsigned16(Linear_Q16_Of(p_linear, x) / 2);
     // return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, x);
 }
 
@@ -93,6 +106,18 @@ static inline int32_t Linear_Q16_ValueOfPercent(const Linear_T * p_linear, uint1
 {
     return Linear_Q16_InvOf(p_linear, y_fracU16);
 }
+
+
+/******************************************************************************/
+/*!
+    Q8.8 [0:65535]
+*/
+/******************************************************************************/
+static inline uint16_t Linear_Q16_General(const Linear_T * p_linear, int32_t x)
+{
+    return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift + 8U, p_linear->XOffset, x);
+}
+
 
 /******************************************************************************/
 /*!

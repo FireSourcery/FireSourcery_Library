@@ -64,7 +64,7 @@ typedef struct Ring
     volatile size_t Tail;    /* FIFO In/Back. */
     volatile size_t Head;    /* FIFO Out/Front. */
 #if defined(CONFIG_RING_MULTITHREADED_ENABLE)
-    volatile critical_mutex_t Mutex;
+    volatile critical_signal_t Mutex;
 #endif
 }
 Ring_T;

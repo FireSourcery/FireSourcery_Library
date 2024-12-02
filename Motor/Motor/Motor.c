@@ -383,18 +383,14 @@ static void UpdateSpeedLimitsCw(Motor_T * p_motor)
 */
 void Motor_UpdateFeedbackILimits(Motor_T * p_motor)
 {
-    if (p_motor->Direction == MOTOR_DIRECTION_CCW)
-        { UpdateILimitsCcw(p_motor); }
-    else
-        { UpdateILimitsCw(p_motor); }
+    if (p_motor->Direction == MOTOR_DIRECTION_CCW) { UpdateILimitsCcw(p_motor); }
+    else { UpdateILimitsCw(p_motor); }
 }
 
 void Motor_UpdateFeedbackSpeedLimits(Motor_T * p_motor)
 {
-    if (p_motor->Direction == MOTOR_DIRECTION_CCW)
-        { UpdateSpeedLimitsCcw(p_motor); }
-    else
-        { UpdateSpeedLimitsCw(p_motor); }
+    if (p_motor->Direction == MOTOR_DIRECTION_CCW) { UpdateSpeedLimitsCcw(p_motor); }
+    else { UpdateSpeedLimitsCw(p_motor); }
 }
 
 /******************************************************************************/
