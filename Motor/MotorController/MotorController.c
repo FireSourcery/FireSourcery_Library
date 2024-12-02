@@ -90,7 +90,7 @@ void MotorController_Init(MotorController_T * p_mc)
     //     MotorController_LoadConfigDefault(&MotorControllerMain);  /* Load runtime calculated */
     //     /* or prompt user, resets every boot until user saves params */
     // }
-    MotorController_SetAdcResultsNominal(p_mc);
+    MotorController_SetAdcResultsNominal(p_mc); // alternatively every status implements sample adc except init
     StateMachine_Init(&p_mc->StateMachine);
 }
 
@@ -139,11 +139,6 @@ void MotorController_ResetUnitsBatteryLife(MotorController_T * p_mc)
 }
 #endif
 
-/******************************************************************************/
-/*!
-    Call from State Machine
-*/
-/******************************************************************************/
 void MotorController_SetAdcResultsNominal(MotorController_T * p_mc)
 {
     // alternatively enqueue adc during init
@@ -159,13 +154,17 @@ void MotorController_SetAdcResultsNominal(MotorController_T * p_mc)
 
     // for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONST.P_MOTORS[iMotor]); }
 }
+/******************************************************************************/
+/*!
+    Call from State Machine
+*/
+/******************************************************************************/
 
 void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
 {
-    // p_mc->FaultFlags.Motors         = (MotorController_IsAnyClearMotorFault(p_mc) == false);
-    p_mc->FaultFlags.VSenseLimit = VMonitor_GetIsFault(&p_mc->VMonitorSense);
-    p_mc->FaultFlags.VAccsLimit = VMonitor_GetIsFault(&p_mc->VMonitorAccs);
-    p_mc->FaultFlags.VSourceLimit = VMonitor_GetIsFault(&p_mc->VMonitorSource);
+    p_mc->FaultFlags.VSenseLimit = VMonitor_IsFault(&p_mc->VMonitorSense);
+    p_mc->FaultFlags.VAccsLimit = VMonitor_IsFault(&p_mc->VMonitorAccs);
+    p_mc->FaultFlags.VSourceLimit = VMonitor_IsFault(&p_mc->VMonitorSource);
     p_mc->FaultFlags.PcbOverheat = Thermistor_GetIsFault(&p_mc->ThermistorPcb);
 #if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
     p_mc->FaultFlags.MosfetsTopOverHeat = Thermistor_GetIsFault(&p_mc->ThermistorMosfetsTop);
@@ -174,6 +173,7 @@ void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
     p_mc->FaultFlags.MosfetsOverheat = Thermistor_GetIsFault(&p_mc->ThermistorMosfets);
 #endif
 
+    // p_mc->FaultFlags.Motors         = (MotorController_IsAnyMotorFault(p_mc) == false);
     for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONST.P_MOTORS[iMotor]); }
 }
 
@@ -189,7 +189,7 @@ static NvMemory_Status_T WriteNvm_Blocking(MotorController_T * p_mc, const void 
 #if     defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_EEPROM)
     return EEPROM_Write_Blocking(p_mc->CONST.P_EEPROM, (uintptr_t)p_nvm, p_ram, sizeBytes);
 #elif   defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_FLASH)
-    assert(NvMemory_IsAligned((uintptr_t)p_nvm, FLASH_UNIT_WRITE_SIZE)); /* Compile time config ensure all structs are write unit size aligned */
+    assert(nvmemory_is_aligned((uintptr_t)p_nvm, FLASH_UNIT_WRITE_SIZE)); /* Compile time config ensure all structs are write unit size aligned */
     return Flash_Write_Blocking(p_mc->CONST.P_FLASH, (uintptr_t)p_nvm, p_ram, sizeBytes);
 #endif
 }
@@ -203,7 +203,6 @@ NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorController_T * p_mc)
 
 #if defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_FLASH)
    status = Flash_Erase_Blocking(p_mc->CONST.P_FLASH, p_mc->CONST.CONFIG_ADDRESS, p_mc->CONST.CONFIG_SIZE); /* Flash must erase parameters flash region before write */
-
 #endif
 
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->CONST.P_NVM_CONFIG, &p_mc->Config, sizeof(MotorController_Config_T)); };
@@ -267,11 +266,11 @@ NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
 #endif
 }
 
-NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size)
+NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_CONFIG_ONCE)
     // if(p_mc->CONST.MANUFACTURE_ADDRESS != 0) handle offset
-    return Flash_ReadOnce_Blocking(p_mc->CONST.P_FLASH, p_destBuffer, onceAddress, size);
+    return Flash_ReadOnce_Blocking(p_mc->CONST.P_FLASH, onceAddress, size, p_destBuffer);
 #elif   defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_CONFIG_FLASH)
     if(size < p_mc->CONST.MANUFACTURE_SIZE) { memcpy(p_destBuffer, onceAddress, size); }
 #endif

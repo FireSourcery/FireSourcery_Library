@@ -55,6 +55,7 @@ typedef enum MotorController_StateMachine_Input
     // MCSM_INPUT_RELEASE,
     MCSM_INPUT_SERVO,
     // MCSM_INPUT_USER,
+    // MCSM_INPUT_CONFIG, // alternatively manuall check fault or lock
 }
 MotorController_StateMachine_Input_T;
 

@@ -58,7 +58,7 @@ const StateMachine_Machine_T MCSM_MACHINE =
 };
 
 static StateMachine_State_T * TransitionFault(MotorController_T * p_mc, statemachine_input_value_t isSet)   { (void)p_mc; return (isSet == true) ? &STATE_FAULT : NULL; }
-// static StateMachine_State_T * TransitionLock(MotorController_T * p_mc, statemachine_input_value_t id)       { (void)p_mc; return ((MotorController_LockedId_T)id == MOTOR_CONTROLLER_LOCKED_ENTER) ? &STATE_LOCK : NULL; }
+// static StateMachine_State_T * TransitionLock(MotorController_T * p_mc, statemachine_input_value_t id)       { (void)p_mc; return ((MotorController_LockId_T)id == MOTOR_CONTROLLER_LOCK_ENTER) ? &STATE_LOCK : NULL; }
 
 /******************************************************************************/
 /*!
@@ -140,7 +140,7 @@ static void Park_Proc(MotorController_T * p_mc) { (void)p_mc; }
 
 static StateMachine_State_T * Park_InputBlocking(MotorController_T * p_mc, statemachine_input_value_t blockingId)
 {
-    return (blockingId == MOTOR_CONTROLLER_LOCKED_ENTER) ? &STATE_LOCK : NULL;
+    return (blockingId == MOTOR_CONTROLLER_LOCK_ENTER) ? &STATE_LOCK : NULL;
 }
 
 static StateMachine_State_T * Park_InputDirection(MotorController_T * p_mc, statemachine_input_value_t direction)
@@ -427,23 +427,23 @@ static const StateMachine_State_T STATE_NEUTRAL =
         Calibration routines set status id upon completion.
 */
 /******************************************************************************/
-static void Blocking_Entry(MotorController_T * p_mc) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCKED_ENTER; }
+static void Blocking_Entry(MotorController_T * p_mc) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; }
 
 static void Blocking_Proc(MotorController_T * p_mc)
 {
     switch(p_mc->LockSubState)
     {
-        case MOTOR_CONTROLLER_LOCKED_ENTER:               break;
-        case MOTOR_CONTROLLER_LOCKED_EXIT:                break;
-        case MOTOR_CONTROLLER_LOCKED_NVM_SAVE_CONFIG:     break;
-        case MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR:    break;//todo check calibration complete
-        case MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC:       break;
+        case MOTOR_CONTROLLER_LOCK_ENTER:               break;
+        case MOTOR_CONTROLLER_LOCK_EXIT:                break;
+        case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     break;
+        case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:    break;//todo check calibration complete
+        case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:       break;
         // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_WriteOnce_Blocking(p_mc);           break;
         // case MOTOR_CONTROLLER_NVM_BOOT:                  p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc);       break;
         // case MOTOR_CONTROLLER_BLOCKING_END:            Protocol_Send  break; //todo send end response
         default: break;
     }
-    //todo check for completion p_mc->LockSubState = MOTOR_CONTROLLER_LOCKED_ENTER;
+    //todo check for completion p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER;
 }
 
 /* Lock SubState by passed value */
@@ -456,14 +456,14 @@ static StateMachine_State_T * Blocking_InputBlocking_Blocking(MotorController_T 
     //clear status or set callback
     switch(blockingId)
     {
-        case MOTOR_CONTROLLER_LOCKED_ENTER: break;
-        case MOTOR_CONTROLLER_LOCKED_EXIT:                p_nextState = &STATE_PARK;                                        break;
-        case MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR:    Motor_User_CalibrateSensor(p_motor);                              break;
+        case MOTOR_CONTROLLER_LOCK_ENTER: break;
+        case MOTOR_CONTROLLER_LOCK_EXIT:                p_nextState = &STATE_PARK;                                        break;
+        case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:    Motor_User_CalibrateSensor(p_motor);                              break;
         /* blocks briefly */
-        case MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC:       MotorController_CalibrateAdc(p_mc);                               break;
+        case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:       MotorController_CalibrateAdc(p_mc);                               break;
         /* NvM function will block + disable interrupts */
-        case MOTOR_CONTROLLER_LOCKED_NVM_SAVE_CONFIG:     p_mc->NvmStatus = MotorController_SaveConfig_Blocking(p_mc);  break;
-        case MOTOR_CONTROLLER_LOCKED_REBOOT:        Reboot();                               break;
+        case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     p_mc->NvmStatus = MotorController_SaveConfig_Blocking(p_mc);  break;
+        case MOTOR_CONTROLLER_LOCK_REBOOT:        Reboot();                               break;
         default: break;
     }
 

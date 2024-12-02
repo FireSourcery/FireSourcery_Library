@@ -78,38 +78,50 @@ static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, ui
 static inline void MotorController_User_SetCmdDriveZero(MotorController_T * p_mc)                  { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, 0U); }
 
 /******************************************************************************/
-/* Blocking */
+/* Lock/Blocking */
 /******************************************************************************/
 /* Maybe blocking */
-static inline void MotorController_User_InputLocked(MotorController_T * p_mc, MotorController_LockedId_T opId)
+static inline void MotorController_User_InputLock(MotorController_T * p_mc, MotorController_LockId_T opId)
 {
     StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_LOCK, opId);
 }
 
-static inline bool MotorController_User_IsLockedState(MotorController_T * p_mc)
+static inline bool MotorController_User_IsLockState(MotorController_T * p_mc)
 {
     return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_LOCK);
 }
 
-static inline bool MotorController_User_EnterLockedState(MotorController_T * p_mc)
+static inline bool MotorController_User_EnterLockState(MotorController_T * p_mc)
 {
-    MotorController_User_InputLocked(p_mc, MOTOR_CONTROLLER_LOCKED_ENTER);
-    return MotorController_User_IsLockedState(p_mc);
+    MotorController_User_InputLock(p_mc, MOTOR_CONTROLLER_LOCK_ENTER);
+    return MotorController_User_IsLockState(p_mc);
 }
 
-static inline bool MotorController_User_ExitLockedState(MotorController_T * p_mc)
+static inline bool MotorController_User_ExitLockState(MotorController_T * p_mc)
 {
-    MotorController_User_InputLocked(p_mc, MOTOR_CONTROLLER_LOCKED_EXIT);
+    MotorController_User_InputLock(p_mc, MOTOR_CONTROLLER_LOCK_EXIT);
     return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_PARK);
 }
 
 // Save RAM to NVM
 static inline NvMemory_Status_T MotorController_User_SaveConfig_Blocking(MotorController_T * p_mc)
 {
-    MotorController_User_InputLocked(p_mc, MOTOR_CONTROLLER_LOCKED_NVM_SAVE_CONFIG);
+    MotorController_User_InputLock(p_mc, MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG);
     return p_mc->NvmStatus;
 }
 
+static inline bool MotorController_User_IsConfigState(MotorController_T * p_mc)
+{
+    return (MotorController_User_IsLockState(p_mc) || MotorController_StateMachine_IsFault(p_mc));
+}
+
+/******************************************************************************/
+/* Fault */
+/******************************************************************************/
+static inline bool MotorController_User_ClearFault(MotorController_T * p_mc, uint16_t flags)
+{
+    bool isFault = MotorController_StateMachine_ClearFault(p_mc);
+}
 
 /******************************************************************************/
 /* Servo */
@@ -131,6 +143,13 @@ static inline void MotorController_User_DisableControl(MotorController_T * p_mc)
 static inline void MotorController_User_BeepN(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime, uint8_t n)   { Blinky_BlinkN(&p_mc->Buzzer, onTime, offTime, n); }
 static inline void MotorController_User_BeepStart(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime)          { Blinky_StartPeriodic(&p_mc->Buzzer, onTime, offTime); }
 static inline void MotorController_User_BeepStop(MotorController_T * p_mc)                                              { Blinky_Stop(&p_mc->Buzzer); }
+
+static inline void MotorController_User_DisableBuzzer(MotorController_T * p_mc)
+{
+    Blinky_Stop(&p_mc->Buzzer);
+    p_mc->StatusFlags.BuzzerEnable = 0U;
+}
+
 
 static inline bool MotorController_User_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_scalar16)
 {
@@ -297,7 +316,7 @@ static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIn
 // move to flash?
 static inline uint32_t MotorController_User_GetMainVersion(const MotorController_T * p_mc) { return MOTOR_MAIN_FIRMWARE_VERSION; }
 
-static inline void MotorController_User_GetBoardRef(MotorController_T * p_mc, void * p_destBuffer)
+static inline void MotorController_User_GetBoardRef(const MotorController_T * p_mc, void * p_destBuffer)
 {
     ((uint32_t *)p_destBuffer)[0U] = p_mc->VMonitorSource.CONST.UNITS_R1;
     ((uint32_t *)p_destBuffer)[1U] = p_mc->VMonitorSource.CONST.UNITS_R2;
@@ -368,7 +387,7 @@ static inline VMonitor_T * MotorController_User_GetPtrVMonitor(const MotorContro
 extern MotorController_Direction_T MotorController_User_GetDirection(const MotorController_T * p_mc);
 extern bool MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction);
 extern void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts);
-extern NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size);
+extern NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
 extern NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size);
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL

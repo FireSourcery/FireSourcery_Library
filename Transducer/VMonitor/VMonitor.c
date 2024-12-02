@@ -68,6 +68,9 @@ VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
     return p_vMonitor->Status;
 }
 
+// VMonitor_Status_T VMonitor_PollStatusWithEdge(VMonitor_T * p_vMonitor, uint16_t adcu)
+
+
 /******************************************************************************/
 /*!
     Config

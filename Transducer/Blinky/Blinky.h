@@ -65,12 +65,13 @@ Blinky_T;
     .Timer  = TIMER_INIT(p_TimerBase, TimerBaseFreq)                \
 }
 
+static inline void _Blinky_Toggle(Blinky_T * p_blinky) { Pin_Output_Toggle(&p_blinky->Pin); }
+
 extern void Blinky_Init(Blinky_T * p_blinky);
 extern void Blinky_Proc(Blinky_T * p_blinky);
 extern void Blinky_On(Blinky_T * p_blinky);
 extern void Blinky_Off(Blinky_T * p_blinky);
-extern void Blinky_Toggle(Blinky_T * p_blinky);
-extern void Blinky_Disable(Blinky_T * p_blinky);
+extern void _Blinky_Toggle(Blinky_T * p_blinky);
 extern void Blinky_Stop(Blinky_T * p_blinky);
 extern void Blinky_Blink_OnOff(Blinky_T * p_blinky, uint32_t duration);
 extern void Blinky_Blink_Toggle(Blinky_T * p_blinky, uint32_t duration);

@@ -249,7 +249,7 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteData_Blocking(Flash_T * p_flas
     if(flashStatus == NV_MEMORY_STATUS_SUCCESS)
     {
         p_subState->DataIndex += writeSize;
-        if(p_subState->DataIndex < p_subState->DataModeSize) /* p_flash->OpDestAddress < p_subState->DataModeAddress + p_subState->DataModeSize */
+        if(p_subState->DataIndex < p_subState->DataModeSize) /* p_flash->OpAddress < p_subState->DataModeAddress + p_subState->DataModeSize */
         {
             *p_reqContext->p_TxSize = 0U; /* Tx Ack already handled on reception */
             reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_CONTINUE;
@@ -351,7 +351,7 @@ protocol_size_t MotProtocol_ReadMem_Blocking(Flash_T * p_flash, MotPacket_MemRea
     {
         case MOT_MEM_CONFIG_RAM: memcpy(p_buffer, (void *)address, size);  status = NV_MEMORY_STATUS_SUCCESS; break;
         case MOT_MEM_CONFIG_FLASH: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
-        case MOT_MEM_CONFIG_ONCE: status = Flash_ReadOnce_Blocking(p_flash, p_buffer, address, size); break;
+        case MOT_MEM_CONFIG_ONCE: status = Flash_ReadOnce_Blocking(p_flash, address, size, p_buffer); break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
     }
 
