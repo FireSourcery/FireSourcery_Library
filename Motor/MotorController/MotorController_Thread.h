@@ -256,7 +256,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
         #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
             Shell_Proc(&p_mc->Shell);
         #endif
-            if (p_mc->StatusFlags.BuzzerEnable) { Blinky_Proc(&p_mc->Buzzer); }
+            // if (p_mc->StatusFlags.BuzzerEnable) { Blinky_Proc(&p_mc->Buzzer); }
+            Blinky_Proc(&p_mc->Buzzer);
             Blinky_Proc(&p_mc->Meter);
         }
 

@@ -172,7 +172,7 @@ static protocol_size_t ReadMem_Blocking(MotorController_T * p_mc, MotPacket_MemR
     switch(config)
     {
         case MOT_MEM_CONFIG_RAM: memcpy(p_buffer, (void *)address, size);  status = NV_MEMORY_STATUS_SUCCESS; break;
-        case MOT_MEM_CONFIG_ONCE: status = MotorController_User_ReadManufacture_Blocking(p_mc, p_buffer, address, size); break;
+        case MOT_MEM_CONFIG_ONCE: status = MotorController_User_ReadManufacture_Blocking(p_mc, address, size, p_buffer); break;
         // case MOT_MEM_CONFIG_FLASH: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
     }

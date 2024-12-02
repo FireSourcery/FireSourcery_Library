@@ -203,7 +203,6 @@ NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorController_T * p_mc)
 
 #if defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_FLASH)
    status = Flash_Erase_Blocking(p_mc->CONST.P_FLASH, p_mc->CONST.CONFIG_ADDRESS, p_mc->CONST.CONFIG_SIZE); /* Flash must erase parameters flash region before write */
-
 #endif
 
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm_Blocking(p_mc, p_mc->CONST.P_NVM_CONFIG, &p_mc->Config, sizeof(MotorController_Config_T)); };
@@ -267,7 +266,7 @@ NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
 #endif
 }
 
-NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size)
+NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_CONFIG_ONCE)
     // if(p_mc->CONST.MANUFACTURE_ADDRESS != 0) handle offset

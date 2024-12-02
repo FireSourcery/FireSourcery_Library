@@ -122,13 +122,13 @@ void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32
 // use outer layer StateMachine check, simplifies handling of signature type.
 /******************************************************************************/
 /* Caller clears buffer */
-NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size)
+NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)
 {
     NvMemory_Status_T status;
 
     if(MotorController_User_IsLockState(p_mc) == true)
     {
-        status = MotorController_ReadManufacture_Blocking(p_mc, p_destBuffer, onceAddress, size);
+        status = MotorController_ReadManufacture_Blocking(p_mc, onceAddress, size, p_destBuffer);
     }
     else
     {

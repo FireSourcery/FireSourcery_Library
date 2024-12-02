@@ -229,9 +229,14 @@ static const NvMemory_OpControl_T FLASH_OP_READ_ONCE =
 };
 
 /* Sets p_OpData to result buffer */
-static Flash_Status_T SetReadOnce(Flash_T * p_flash, uint8_t * p_resultBuffer, uintptr_t flashAddress, size_t size)
+static Flash_Status_T SetReadOnce(Flash_T * p_flash, uintptr_t flashAddress, size_t size, uint8_t * p_resultBuffer)
 {
-    return NvMemory_SetOpControl(p_flash, &FLASH_OP_READ_ONCE, flashAddress, p_resultBuffer, size); // care this must be rewritten for buffer mode
+    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+    p_flash->p_OpControl = &FLASH_OP_READ_ONCE;
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpAddress(p_flash, flashAddress, size); }
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_flash, size); }
+    if (status == NV_MEMORY_STATUS_SUCCESS) { p_flash->p_OpData = p_resultBuffer; } /* bypass buffer mode selection */
+    return status;
 }
 
 // void Flash_GetReadOnceResults(const Flash_T * p_flash, uint8_t * p_result)
@@ -286,8 +291,8 @@ Flash_Status_T Flash_SetOp(Flash_T * p_flash, uintptr_t flashAddress, const uint
         case FLASH_OPERATION_VERIFY_WRITE:      status = SetVerifyWrite(p_flash, flashAddress, p_data, size);          break;
         case FLASH_OPERATION_VERIFY_ERASE:      status = SetVerifyErase(p_flash, flashAddress, size);                  break;
         case FLASH_OPERATION_WRITE_ONCE:        status = SetWriteOnce(p_flash, flashAddress, p_data, size);            break;
-        case FLASH_OPERATION_READ_ONCE:         status = SetReadOnce(p_flash, (uint8_t *)p_data, flashAddress, size);  break;
-        default:                                status = NV_MEMORY_STATUS_ERROR_INVALID_OP;                           break;
+        case FLASH_OPERATION_READ_ONCE:         status = SetReadOnce(p_flash, flashAddress, size, (uint8_t *)p_data);  break;
+        default:                                status = NV_MEMORY_STATUS_ERROR_INVALID_OP;                            break;
     }
 
     return status;
@@ -295,7 +300,7 @@ Flash_Status_T Flash_SetOp(Flash_T * p_flash, uintptr_t flashAddress, const uint
 
 Flash_Status_T Flash_ProcThisOp_Blocking(Flash_T * p_flash)
 {
-    volatile Flash_Status_T status;
+    Flash_Status_T status;
     Critical_Enter(); /* Flash Op must not invoke isr table stored in flash */
     status = NvMemory_ProcOp_Blocking(p_flash);
     Critical_Exit();
@@ -371,6 +376,7 @@ Flash_Status_T Flash_VerifyWrite_Blocking(Flash_T * p_flash, uintptr_t flashAddr
     return ProcAfterSet(p_flash, SetVerifyWrite(p_flash, flashAddress, p_data, size));
 #else  /* Manual compare if no hw verify implemented */
     return (memcmp((const uint8_t *)flashAddress, p_data, size) == 0U) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_VERIFY;
+    // return NvMemory_MemCompare(flashAddress, p_data, size);
 #endif
 }
 
@@ -380,16 +386,15 @@ Flash_Status_T Flash_VerifyErase_Blocking(Flash_T * p_flash, uintptr_t flashAddr
 }
 
 /* Caller ensure align. Alternatively write remainder filling with erase pattern which can be overwritten */
+// if(status == NV_MEMORY_STATUS_SUCCESS) { if(p_flash->OpSizeRemainder != 0U) { status = WriteRemainder(p_flash, FLASH_UNIT_WRITE_ONCE_SIZE); } }
 Flash_Status_T Flash_WriteOnce_Blocking(Flash_T * p_flash, uintptr_t flashAddress, const uint8_t * p_data, size_t size)
 {
-    Flash_Status_T status = ProcAfterSet(p_flash, SetWriteOnce(p_flash, flashAddress, p_data, size));
-    // if(status == NV_MEMORY_STATUS_SUCCESS) { if(p_flash->OpSizeRemainder != 0U) { status = WriteRemainder(p_flash, FLASH_UNIT_WRITE_ONCE_SIZE); } }
-    return status;
+    return ProcAfterSet(p_flash, SetWriteOnce(p_flash, flashAddress, p_data, size));
 }
 
 Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, uintptr_t flashAddress, size_t size, uint8_t * p_resultBuffer)
 {
-    return ProcAfterSet(p_flash, SetReadOnce(p_flash, p_resultBuffer, flashAddress, size));
+    return ProcAfterSet(p_flash, SetReadOnce(p_flash, flashAddress, size, p_resultBuffer));
 }
 
 Flash_Status_T Flash_EraseAll_Blocking(Flash_T *p_flash)

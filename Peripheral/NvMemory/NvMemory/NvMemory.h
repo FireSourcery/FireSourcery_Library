@@ -223,7 +223,6 @@ static inline uintptr_t nvmemory_align_down(uintptr_t value, size_t align)   { r
 static inline uintptr_t nvmemory_align_up(uintptr_t value, size_t align)     { return (-((-value) & (-align))); }
 static inline bool nvmemory_is_aligned(uintptr_t value, size_t align)        { return ((value & (align - 1UL)) == (uintptr_t)0UL); }
 
-extern NvMemory_Status_T NvMemory_MemCompare(const uint8_t * p_dest, const uint8_t * p_source, size_t size);
 
 static inline void NvMemory_EnableForceAlign(NvMemory_T * p_this) { p_this->IsForceAlignEnable = true; }
 static inline void NvMemory_DisableForceAlign(NvMemory_T * p_this) { p_this->IsForceAlignEnable = false; }
@@ -242,12 +241,12 @@ static inline void NvMemory_SetYield(NvMemory_T * p_this, NvMemory_Callback_T yi
 extern void NvMemory_Init(NvMemory_T * p_this);
 extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this, const uint8_t * p_source, size_t size);
 
+extern NvMemory_Status_T NvMemory_MemCompare(const uint8_t * p_dest, const uint8_t * p_source, size_t size);
 /* Destination is not intended to be dereference, pass as uintptr_t type */
 extern NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_this, uintptr_t memAddress, size_t opSize);
 extern NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_this, const uint8_t * p_data, size_t opSize);
 extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize);
 extern NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t memAddress, const uint8_t * p_data, size_t size);
-
 
 /*
     Blocking

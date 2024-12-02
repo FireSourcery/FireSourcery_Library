@@ -140,6 +140,8 @@ static inline bool ValidateOpPartition(NvMemory_T * p_this, uintptr_t memAddress
     return (p_this->p_OpPartition != 0U);
 }
 
+// static size_t NvMemory_GetOpSizeAligned(NvMemory_T * p_this)     { p_this->p_OpControl->FORCE_ALIGN(p_this->OpSize, p_this->p_OpControl->UNIT_SIZE); }
+// static size_t NvMemory_GetOpSizeRemainder(NvMemory_T * p_this)   { OpSize - nvmemory_align_down(OpSize) }
 
 /*
     Checks Boundary and Dest Align
@@ -165,7 +167,7 @@ NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize)
     else
     {
         status = (nvmemory_is_aligned(opSize, p_this->p_OpControl->UNIT_SIZE) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT;
-        p_this->OpSizeAligned = 0U;  /* Not in effect when status returns error */
+        p_this->OpSizeAligned = p_this->OpSize;  /* Not in effect when status returns error */
     }
     return status;
 }
@@ -228,17 +230,15 @@ static void ProcCmd_Blocking(NvMemory_T * p_this, size_t opIndex)
         while(p_this->CONST.READ_COMPLETE_FLAG(p_this->CONST.P_HAL) == false)
         {
             if(p_this->CONST.READ_ERROR_FLAGS(p_this->CONST.P_HAL) == true) { break; }
-            if(p_this->Yield != 0U) { p_this->Yield(p_this->p_CallbackContext); }
+            if(p_this->Yield != NULL) { p_this->Yield(p_this->p_CallbackContext); }
         }
     }
 }
 
-// static size_t NvMemory_GetOpSizeAligned(NvMemory_T * p_this)     { p_this->p_OpControl->FORCE_ALIGN(p_this->OpSize, p_this->p_OpControl->UNIT_SIZE); }
-// static size_t NvMemory_GetOpSizeRemainder(NvMemory_T * p_this)   { OpSize - nvmemory_align_down(OpSize) }
 NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; // potentially remove from RAM
 NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
 {
-    volatile NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
 
     if(p_this->CONST.READ_COMPLETE_FLAG(p_this->CONST.P_HAL) == true)
     {

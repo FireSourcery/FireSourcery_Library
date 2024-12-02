@@ -559,7 +559,7 @@ extern void MotorController_PollAdcFaultFlags(MotorController_T * p_mc);
 
 extern NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorController_T * p_mc);
 extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc);
-extern NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_mc, uint8_t * p_destBuffer, uintptr_t onceAddress, uint8_t size);
+extern NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
 extern NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, const uint8_t * p_sourceBuffer, uint8_t size);
 
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE) && defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)

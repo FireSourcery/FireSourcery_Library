@@ -40,6 +40,7 @@
 void Blinky_Init(Blinky_T * p_blinky)
 {
     Pin_Output_Init(&p_blinky->Pin);
+    Pin_Output_Off(&p_blinky->Pin);
     Timer_Init(&p_blinky->Timer);
     p_blinky->PatternFunction = 0U;
 }
