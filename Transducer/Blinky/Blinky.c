@@ -32,6 +32,8 @@
 #include "Peripheral/Pin/Pin.h"
 #include "Utility/Timer/Timer.h"
 
+#include <stddef.h>
+
 /*!
     @brief initialize blink switch
 */
@@ -62,7 +64,7 @@ void Blinky_Proc(Blinky_T * p_blinky)
             }
             else
             {
-                Blinky_Toggle(p_blinky);
+                _Blinky_Toggle(p_blinky);
                 Timer_StartPeriodic(&p_blinky->Timer, p_blinky->OffTime);  /* Restore Periodic */
             }
         }
@@ -73,16 +75,15 @@ void Blinky_Proc(Blinky_T * p_blinky)
     }
 }
 
-void Blinky_On(Blinky_T * p_blinky)            { p_blinky->IsOn = true;     Pin_Output_High(&p_blinky->Pin); }
-void Blinky_Off(Blinky_T * p_blinky)        { p_blinky->IsOn = false;     Pin_Output_Low(&p_blinky->Pin); }
-void Blinky_Disable(Blinky_T * p_blinky)     { Blinky_Off(p_blinky); Timer_Disable(&p_blinky->Timer); p_blinky->PatternFunction = Blinky_Disable;}
-void Blinky_Stop(Blinky_T * p_blinky)         { Blinky_Disable(p_blinky);}
+void Blinky_On(Blinky_T * p_blinky)     { p_blinky->IsOn = true;    Pin_Output_High(&p_blinky->Pin); }
+void Blinky_Off(Blinky_T * p_blinky)    { p_blinky->IsOn = false;   Pin_Output_Low(&p_blinky->Pin); }
+void Blinky_Toggle(Blinky_T * p_blinky) { if (p_blinky->IsOn == true) { Blinky_Off(p_blinky); } else { Blinky_On(p_blinky); } }
 
-void Blinky_Toggle(Blinky_T * p_blinky)
+void Blinky_Stop(Blinky_T * p_blinky)
 {
-    // if(p_blinky->IsOn == true)   { Blinky_Off(p_blinky) }
-    // else                         { Blinky_On(p_blinky); }
-    Pin_Output_Toggle(&p_blinky->Pin);
+    Blinky_Off(p_blinky);
+    Timer_Disable(&p_blinky->Timer);
+    p_blinky->PatternFunction = NULL;
 }
 
 /* Start with On first */
@@ -95,7 +96,7 @@ void Blinky_Blink_OnOff(Blinky_T * p_blinky, uint32_t duration)
 /* Toggle */
 void Blinky_Blink_Toggle(Blinky_T * p_blinky, uint32_t duration)
 {
-    Blinky_Toggle(p_blinky);
+    _Blinky_Toggle(p_blinky);
     Timer_StartOneShot(&p_blinky->Timer, duration);
 }
 

@@ -109,7 +109,7 @@ typedef struct Thermistor_Const
     const uint32_t R_PARALLEL;  /* Parallel pull-down if applicable. 0 for Disable */
     // Thermistor_Coeffs_T // configure as pointer to config ram or const?
     // allocate both, if const load from config
-    // bool IS_CONST;            /* Disable Coefficient set functions */
+    // bool IS_BOARD;            /* Non detachable. Disable Coefficient set functions */
 }
 Thermistor_Const_T;
 
@@ -149,9 +149,9 @@ Thermistor_T;
 //     .B   = B,                                           \
 // }                                                       \
 
-#define THERMISTOR_INIT(RSeries, RParallel, p_Config)           \
-{                                                               \
-    .CONST = _THERMISTOR_INIT_CONST(RSeries, RParallel, p_Config),    \
+#define THERMISTOR_INIT(RSeries, RParallel, p_Config)                   \
+{                                                                       \
+    .CONST = _THERMISTOR_INIT_CONST(RSeries, RParallel, p_Config),      \
 }
 
 #define THERMISTOR_INIT_FIXED(RSeries, RParallel, p_Config, B, R0, T0_Kelvin)   \
@@ -204,7 +204,7 @@ static inline void Thermistor_SetWarningTrigger_Adcu(Thermistor_T * p_therm, uin
 static inline void Thermistor_SetWarningThreshold_Adcu(Thermistor_T * p_therm, uint16_t warningThreshold)   { p_therm->Config.WarningThreshold_Adcu = warningThreshold; }
 
 /******************************************************************************/
-/* Units */
+/* Units Calibration */
 /******************************************************************************/
 // static inline Thermistor_Type_T Thermistor_GetType(const Thermistor_T * p_therm)    { return p_therm->Config.Type; }
 static inline uint32_t Thermistor_GetR0(const Thermistor_T * p_therm)               { return p_therm->Config.R0; }

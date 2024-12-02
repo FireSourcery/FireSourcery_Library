@@ -129,18 +129,18 @@ MotorController_DriveId_T;
 /* Blocking SubState/Function Id */
 typedef enum MotorController_LockedId
 {
-    MOTOR_CONTROLLER_LOCKED_PARK,
-    MOTOR_CONTROLLER_LOCKED_ENTER,
-    MOTOR_CONTROLLER_LOCKED_EXIT,
-    MOTOR_CONTROLLER_LOCKED_CALIBRATE_SENSOR,
-    MOTOR_CONTROLLER_LOCKED_CALIBRATE_ADC,
-    MOTOR_CONTROLLER_LOCKED_NVM_SAVE_CONFIG,
-    MOTOR_CONTROLLER_LOCKED_REBOOT,
-    // MOTOR_CONTROLLER_LOCKED_NVM_SAVE_BOOT,
-    // MOTOR_CONTROLLER_LOCKED_NVM_WRITE_ONCE,
-    // MOTOR_CONTROLLER_LOCKED_NVM_READ_ONCE,
+    MOTOR_CONTROLLER_LOCK_PARK,
+    MOTOR_CONTROLLER_LOCK_ENTER,
+    MOTOR_CONTROLLER_LOCK_EXIT,
+    MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR,
+    MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC,
+    MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG,
+    MOTOR_CONTROLLER_LOCK_REBOOT,
+    // MOTOR_CONTROLLER_LOCK_NVM_SAVE_BOOT,
+    // MOTOR_CONTROLLER_LOCK_NVM_WRITE_ONCE,
+    // MOTOR_CONTROLLER_LOCK_NVM_READ_ONCE,
 }
-MotorController_LockedId_T;
+MotorController_LockId_T;
 
 typedef enum MotorController_OptDinMode
 {
@@ -151,19 +151,21 @@ typedef enum MotorController_OptDinMode
 }
 MotorController_OptDinMode_T;
 
+// todo split status and state
 typedef union MotorController_StatusFlags
 {
     struct
     {
         uint16_t HeatWarning        : 1U; // ILimit by Heat
         uint16_t LowV               : 1U; // ILimit by LowV
-        uint16_t SpeedLimit         : 1U; // use active speed limit?
+        // uint16_t SpeedLimit         : 1U; // use active speed limit?
         // uint16_t ILimit          : 1U;
         // derive from thermistor functions
         // uint16_t ILimitHeatMosfets  : 1U;
         // uint16_t ILimitHeatPcb      : 1U;
         // uint16_t ILimitHeatMotors   : 1U;
         // uint16_t IsStopped          : 1U;
+        uint16_t BuzzerEnable       : 1U;
     };
     uint16_t Word;
 }
@@ -206,21 +208,23 @@ typedef union MotorController_InitFlags
 }
 MotorController_InitFlags_T;
 
-// typedef union MotorController_BuzzerOptionsFlags
-// {
-//     struct
-//     {
-//         uint16_t OnInit              : 1U;
-//         uint16_t OnDirectionChange   : 1U;
-//         uint16_t ThrottleOnInit      : 1U;
-//         uint16_t OnReverse           : 2U; /* 0: Off, 1: Short Beep, 2: Continuous */
-//         // uint16_t ThrottleOnBrakeCmd;
-//         // uint16_t ThrottleOnBrakeRelease;
-//         // uint16_t ThrottleOnNeutralRelease;
-//     };
-//     uint16_t Word;
-// }
-// MotorController_BuzzerFlags_T;
+/* Buzzer Control */
+typedef union MotorController_BuzzerFlags
+{
+    struct
+    {
+        uint16_t IsEnableOnBoot         : 1U; /* Primary Enable */
+        // uint16_t OnInit              : 1U;
+        // uint16_t OnDirectionChange   : 1U;
+        // uint16_t OnReverse           : 2U; /* 0: Off, 1: Short Beep, 2: Continuous */
+        // uint16_t OnInitThrottle      : 1U;
+        // uint16_t ThrottleOnBrakeCmd;
+        // uint16_t ThrottleOnBrakeRelease;
+        // uint16_t ThrottleOnNeutralRelease;
+    };
+    uint16_t Word;
+}
+MotorController_BuzzerFlags_T;
 
 /*
     MotorController Voltages
@@ -249,7 +253,7 @@ typedef struct MotorController_Config
     uint16_t BatteryZero_Adcu;
     uint16_t BatteryFull_Adcu;
 #endif
-    // MotorController_BuzzerFlags_T BuzzerFlagsEnable; /* which options are enabled for use */
+    // MotorController_BuzzerFlags_T BuzzerFlags; /* which options are enabled for use */
 }
 MotorController_Config_T;
 
@@ -309,7 +313,11 @@ typedef struct MotorController
     const MotorController_Const_T CONST;
     MotorController_Config_T Config;
     BootRef_T BootRef; /* Buffer */
+
     volatile MotAnalog_Results_T AnalogResults; // todo split for thermistor
+#if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) // NDEBUG
+    MotAnalog_Results_T FaultAnalogRecord;
+#endif
 
     MotAnalogUser_T AnalogUser;
     Blinky_T Buzzer;
@@ -347,12 +355,10 @@ typedef struct MotorController
     MotorController_StatusFlags_T StatusFlags;
     MotorController_InitFlags_T InitFlags;
     MotorController_FaultFlags_T FaultFlags;
-#if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
-    MotAnalog_Results_T FaultAnalogRecord;
-#endif
+
     /* SubStates - effectively previous input */
     MotorController_DriveId_T DriveSubState;
-    MotorController_LockedId_T LockSubState;
+    MotorController_LockId_T LockSubState;
     // int32_t UserCmdValue; /* Not needed unless comparing greater/less then */
     /* Async return status */
     // union

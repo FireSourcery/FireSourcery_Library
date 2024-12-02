@@ -317,7 +317,7 @@ int32_t Motor_GetSpeedLimitReq(const Motor_T * p_motor)
         else if(p_motor->Speed_Frac16 > p_motor->SpeedLimitCcw_Frac16)    { req = p_motor->SpeedLimitCcw_Frac16 / p_motor->Speed_Frac16; }
 
         // req = math_clamp(p_motor->Speed_Frac16, p_motor->SpeedLimitCw_Frac16, p_motor->SpeedLimitCcw_Frac16) / p_motor->Speed_Frac16;
-        //alternatively enable PID
+        // alternatively enable PID
         // p_motor->FeedbackMode.Speed = 1U;
         // MatchOutput
     }
@@ -450,6 +450,7 @@ void Motor_ClearILimitActive(Motor_T * p_motor)
 /******************************************************************************/
 /*
     Conditional - set compare with array
+    Each source use unique entry id
 */
 /******************************************************************************/
 bool Motor_SetSpeedLimitEntry(Motor_T * p_motor, uint8_t id, uint16_t scalar16)
@@ -506,6 +507,7 @@ bool Motor_ClearILimitEntry(Motor_T * p_motor, uint8_t id)
     return isActiveLimit;
 }
 
+/* May need to split channels */
 inline bool Motor_TrySystemSpeedLimit(Motor_T * p_motor, uint16_t scalar16)     { return Motor_SetSpeedLimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_MC, scalar16); }
 inline bool Motor_ClearSystemSpeedLimit(Motor_T * p_motor)                      { return Motor_ClearSpeedLimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_MC); }
 inline bool Motor_TrySystemILimit(Motor_T * p_motor, uint16_t scalar16)         { return Motor_SetILimitEntry(p_motor, MOTOR_SPEED_LIMIT_ACTIVE_MC, scalar16); }

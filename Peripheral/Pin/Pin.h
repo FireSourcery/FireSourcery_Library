@@ -77,7 +77,7 @@ Pin_T;
     },                                          \
 }
 
-#define PIN_INIT_VA(p_Hal, Id, ...) PIN_INIT_INVERT(p_Hal, Id, ...)
+// #define PIN_INIT_VA(p_Hal, Id, ...) PIN_INIT_INVERT(p_Hal, Id, __VA_ARGS__)
 
 // static inline uint32_t _Pin_GetHalId(const Pin_T * p_pin)
 // {
@@ -98,6 +98,7 @@ static inline void Pin_Output_WritePhysical(const Pin_T * p_pin, bool isOn) { HA
 static inline void Pin_Output_Off(const Pin_T * p_pin)  { if(p_pin->CONST.IS_INVERT == true) { Pin_Output_High(p_pin); } else { Pin_Output_Low(p_pin); } }
 static inline void Pin_Output_On(const Pin_T * p_pin)   { if(p_pin->CONST.IS_INVERT == true) { Pin_Output_Low(p_pin); } else { Pin_Output_High(p_pin); } }
 static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn) { Pin_Output_WritePhysical(p_pin, (isOn ^ p_pin->CONST.IS_INVERT)); }
+
 
 /* Ignore invert check, when handled by upper layer */
 static inline bool Pin_Input_ReadPhysical(const Pin_T * p_pin) { return HAL_Pin_ReadInput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID); }

@@ -705,7 +705,7 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
     switch((MotVarId_TypeType_T)varId.NameTypeType)
     {
         case MOT_VAR_ID_TYPE_REAL_TIME: value = GetRealTime(p_mc, varId);   break;
-        case MOT_VAR_ID_TYPE_CONFIG: value = GetParameter(p_mc, varId);  break;
+        case MOT_VAR_ID_TYPE_CONFIG:    value = GetParameter(p_mc, varId);  break;
         default: break;
     }
     return value;
@@ -721,7 +721,7 @@ MotVarId_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T v
                 SetRealTime(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
             break;
         case MOT_VAR_ID_TYPE_CONFIG:
-            status = (MotorController_User_GetStateId(p_mc) == MCSM_STATE_ID_LOCK) ?
+            status = (MotorController_User_IsConfigState(p_mc)) ?
                 SetParameter(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_RUNNING;
             break;
         default: break;

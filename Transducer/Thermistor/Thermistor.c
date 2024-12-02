@@ -41,17 +41,18 @@ static void ResetUnitsLinear(Thermistor_T * p_therm)
 
 void Thermistor_Init(Thermistor_T * p_therm)
 {
-    if(p_therm->CONST.P_CONFIG != 0U) { memcpy(&p_therm->Config, p_therm->CONST.P_CONFIG, sizeof(Thermistor_Config_T)); }
+    if (p_therm->CONST.P_CONFIG != 0U) { memcpy(&p_therm->Config, p_therm->CONST.P_CONFIG, sizeof(Thermistor_Config_T)); }
 
     ResetUnitsLinear(p_therm);
 
     // type = LinearT_DegC/LinearT_Adcu < 0
 
-    if(p_therm->Config.FaultTrigger_Adcu == 0U)         { p_therm->Config.IsMonitorEnable = false; }
-    if(p_therm->Config.FaultThreshold_Adcu == 0U)       { p_therm->Config.IsMonitorEnable = false; }
-    if(p_therm->Config.WarningTrigger_Adcu == 0U)       { p_therm->Config.IsMonitorEnable = false; }
-    if(p_therm->Config.WarningThreshold_Adcu == 0U)     { p_therm->Config.IsMonitorEnable = false; }
+    if (p_therm->Config.FaultTrigger_Adcu == 0U)         { p_therm->Config.IsMonitorEnable = false; }
+    if (p_therm->Config.FaultThreshold_Adcu == 0U)       { p_therm->Config.IsMonitorEnable = false; }
+    if (p_therm->Config.WarningTrigger_Adcu == 0U)       { p_therm->Config.IsMonitorEnable = false; }
+    if (p_therm->Config.WarningThreshold_Adcu == 0U)     { p_therm->Config.IsMonitorEnable = false; }
 
+    p_therm->Adcu = p_therm->Config.WarningThreshold_Adcu; /* Set to a nominal value, so poll on init does not fault. */
     p_therm->Status = THERMISTOR_STATUS_OK;
 }
 
@@ -60,7 +61,8 @@ void Thermistor_Init(Thermistor_T * p_therm)
     Limits Monitor
 */
 /******************************************************************************/
-bool CheckThreshold(uint16_t threshold, bool isActive, uint16_t adcu) { return((adcu < threshold) && (isActive)); }
+bool CheckThreshold(uint16_t threshold, bool isActive, uint16_t adcu) { return ((adcu < threshold) && (isActive)); }
+// bool Check(uint16_t trigger, uint16_t threshold, bool isActive, uint16_t adcu) { return((adcu < threshold) && (isActive)); }
 
 /*!
     Monitor: heat < WarningThreshold_DegC < Warning_DegC < FaultThreshold_DegC < Fault_DegC
@@ -74,7 +76,7 @@ Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t capt
     // uint16_t adcu = captureAdcu;
 
     // todo linear ntc/ptc
-    // int16_t adcuCompare = (Type == NTC) ? adcu : -adcu;
+    // int16_t adcuCompare = (Type == PTC) ? adcu : -adcu;
 
     if(p_therm->Config.IsMonitorEnable == true)
     {
