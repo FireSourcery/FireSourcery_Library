@@ -168,6 +168,17 @@ void Phase_Ground(const Phase_T * p_phase)
     Phase_ActivateOutputABC(p_phase);
 }
 
+// bool Phase_IsGrounded(const Phase_T * p_phase)
+// {
+//     return (PWM_GetDuty(&p_phase->PwmA) == 0)  && (PWM_GetDuty(&p_phase->PwmB) == 0) && (PWM_GetDuty(&p_phase->PwmC) == 0)
+//         && (Phase_IsEnabledA(p_phase) == true) && (Phase_IsEnabledB(p_phase) == true) && (Phase_IsEnabledC(p_phase) == true);
+// }
+
+// bool Phase_IsFloating(const Phase_T * p_phase)
+// {
+//     return (Phase_IsEnabledA(p_phase) == false) && (Phase_IsEnabledB(p_phase) == false) && (Phase_IsEnabledC(p_phase) == false);
+// }
+
 /******************************************************************************/
 /*
     3-Phase Polar

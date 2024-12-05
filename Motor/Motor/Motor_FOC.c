@@ -64,7 +64,6 @@ void Motor_FOC_EnqueueIabc(Motor_T * p_motor)
         AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC);
 #endif
         AnalogN_Group_ResumeQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-
     }
 }
 
@@ -108,7 +107,7 @@ static inline void ProcOuterFeedback(Motor_T * p_motor)
     }
     else if(p_motor->FeedbackMode.Speed == 0U) /* Current or Voltage Control mode */
     {
-        FOC_SetQReq(&p_motor->Foc, req);
+        FOC_SetQReq(&p_motor->Foc, req); /* pass ramp value */
         FOC_SetDReq(&p_motor->Foc, 0);
     }
 }

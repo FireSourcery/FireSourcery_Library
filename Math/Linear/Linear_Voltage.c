@@ -68,12 +68,12 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint8_t 
     p_linear->SlopeFactor       = (uint64_t)adcVRef_MilliV * (r1 + r2) / 1000U;           /* (ADC_VREF*(R1+R2)) */
     p_linear->SlopeDivisor      = (((uint64_t)1UL << adcBits) - 1U) * r2;       /* (ADC_MAX*R2) */
 #endif
-    p_linear->XOffset           = 0;
-    p_linear->YOffset           = 0;
+    p_linear->X0                = 0;
+    p_linear->Y0                = 0;
     p_linear->YReference        = vInRef;
     p_linear->XReference        = linear_invf(p_linear->Slope, ((uint32_t)1UL << LINEAR_VOLTAGE_SHIFT), 0, vInRef); /* Frac16 reference */
-    p_linear->XDeltaRef         = p_linear->XReference - p_linear->XOffset;
-    p_linear->YDeltaRef         = vInRef - p_linear->YOffset;
+    p_linear->XDeltaRef         = p_linear->XReference - p_linear->X0;
+    p_linear->YDeltaRef         = vInRef - p_linear->Y0;
 }
 
 /* round up .5 volts */

@@ -38,7 +38,7 @@
 #elif   defined(CONFIG_MOTOR_DEBUG_DISABLE)
   #define CONFIG_MOTOR_DEBUG 0U
 #else
-    #define CONFIG_MOTOR_DEBUG_DISABLE
+    // #define CONFIG_MOTOR_DEBUG_DISABLE
     #define CONFIG_MOTOR_DEBUG (!NDEBUG)
 #endif
 

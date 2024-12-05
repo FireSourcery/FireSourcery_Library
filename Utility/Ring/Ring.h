@@ -45,7 +45,7 @@ typedef const struct Ring_Const
 #if defined(CONFIG_RING_POW2_MASK) || defined(CONFIG_RING_POW2_WRAP)
     const uint32_t POW2_MASK;
 #endif
-#if defined(CONFIG_RING_MULTITHREADED_ENABLE)   /* Ring layer enable */
+#if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)   /* Ring layer enable */
     const bool USE_CRITICAL;                    /* Per instance enable */
 #endif
 }
@@ -63,7 +63,7 @@ typedef struct Ring
     const Ring_Const_T CONST;
     volatile size_t Tail;    /* FIFO In/Back. */
     volatile size_t Head;    /* FIFO Out/Front. */
-#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
+#if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
     volatile critical_signal_t Mutex;
 #endif
 }
@@ -75,10 +75,16 @@ Ring_T;
 #define _RING_INIT_POW2(Pow2Mask)
 #endif
 
-#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
+#if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
 #define _RING_INIT_CRITICAL(UseCritical) .USE_CRITICAL = UseCritical,
 #else
 #define _RING_INIT_CRITICAL(UseCritical)
+#endif
+
+#if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
+#define _RING_INIT_CRITICAL_VA(UseCritical) UseCritical
+#else
+#define _RING_INIT_CRITICAL_VA(UseCritical)
 #endif
 
 #define RING_INIT(p_Buffer, Length, UnitSize, UseCritical)  \
@@ -93,8 +99,19 @@ Ring_T;
     },                                                      \
 }
 
-// #define RING_INIT(p_Buffer, Length, UnitSize)
-// #define RING_INIT_MULTITHREADED(p_Buffer, Length, UnitSize, UseCritical)
+// #define RING_INIT_AS(TYPE, Length, ...) RING_INIT((TYPE[Length]){0}, Length, sizeof(TYPE), __VA_ARGS__)
+#define RING_INIT_AS(TYPE, Length, ...)     \
+{                                           \
+    .CONST =                                \
+    {                                       \
+        .P_BUFFER   = (TYPE[Length]){0},    \
+        .LENGTH     = Length,               \
+        .UNIT_SIZE  = sizeof(TYPE),         \
+        _RING_INIT_POW2(Length - 1U)        \
+        _RING_INIT_CRITICAL_VA(__VA_ARGS__) \
+    },                                      \
+}
+
 
 /******************************************************************************/
 /*!

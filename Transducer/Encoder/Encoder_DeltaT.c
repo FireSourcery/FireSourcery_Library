@@ -78,7 +78,7 @@ void _Encoder_DeltaT_InitTimer(Encoder_T * p_encoder)
 */
 void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 {
-    if(p_encoder->CONST.P_CONFIG != 0U) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
+    if(p_encoder->CONST.P_CONFIG != NULL) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
     _Encoder_DeltaT_InitTimer(p_encoder);
     _Encoder_ResetUnits(p_encoder);
     p_encoder->DeltaD = 1U; /* Effective for shared functions only */

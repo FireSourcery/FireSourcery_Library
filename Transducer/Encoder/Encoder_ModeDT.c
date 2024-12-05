@@ -37,7 +37,7 @@
 
 static void InitValues(Encoder_T * p_encoder)
 {
-    if(p_encoder->CONST.P_CONFIG != 0U) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
+    if(p_encoder->CONST.P_CONFIG != NULL) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
 
     p_encoder->UnitT_Freq = 1U;
     _Encoder_ResetUnits(p_encoder);
@@ -71,7 +71,7 @@ void Encoder_ModeDT_Init_InterruptAbc(Encoder_T * p_encoder)
 
 // void Encoder_ModeDT_Init(Encoder_T * p_encoder)
 // {
-//     if(p_encoder->CONST.P_CONFIG != 0U) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
+//     if(p_encoder->CONST.P_CONFIG != NULL) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
 //     if(p_encoder->CONST.HAL_INIT != 0U) { p_encoder->CONST.HAL_INIT(); }
 //     else
 //     {

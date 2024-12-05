@@ -49,7 +49,7 @@
 #ifndef ENCODER_ANGLE_DEGREES
 #define ENCODER_ANGLE_BITS      (16U)
 #define ENCODER_ANGLE_SHIFT     (32U - ENCODER_ANGLE_BITS)
-#define ENCODER_ANGLE_DEGREES   ((uint32_t)1UL << ENCODER_ANGLE_BITS)
+#define ENCODER_ANGLE_DEGREES   ((uint32_t)1UL << ENCODER_ANGLE_BITS) //ENCODER_ANGLE_WRAP
 #endif
 
 #define _ENCODER_TABLE_ERROR (2U)
@@ -61,13 +61,13 @@ typedef union Encoder_Phases
 {
     struct
     {
-        uint8_t B : 1U;
-        uint8_t A : 1U;
-        uint8_t PrevB : 1U;
-        uint8_t PrevA : 1U;
-        uint8_t Resv : 4U;
+        uint8_t B       : 1U;
+        uint8_t A       : 1U;
+        uint8_t PrevB   : 1U;
+        uint8_t PrevA   : 1U;
+        uint8_t Resv    : 4U;
     };
-    uint8_t State;
+    uint8_t Value;
 }
 Encoder_Phases_T;
 

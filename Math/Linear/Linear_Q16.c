@@ -53,7 +53,7 @@ void Linear_Fixed_Init(Linear_T * p_linear, uint8_t nFractionalBits, int32_t x0,
     // p_linear->SlopeShift = ((LINEAR_INT32_MAX_SHIFT - nIntegerBits) - nFractionalBits); // Adjust the shift to match the fractional bits
     p_linear->InvSlope = (xRef - x0);
     p_linear->InvSlopeShift = nFractionalBits;
-    p_linear->XOffset = x0;
+    p_linear->X0 = x0;
     p_linear->XDeltaRef = xRef - x0;
     p_linear->XReference = xRef;    // unused
 }

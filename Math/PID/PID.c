@@ -40,7 +40,7 @@ static void ResetGains(PID_T * p_pid)
 
 void PID_Init(PID_T * p_pid)
 {
-    if(p_pid->CONST.P_CONFIG != 0U) { memcpy(&p_pid->Config, p_pid->CONST.P_CONFIG, sizeof(PID_Config_T)); }
+    if (p_pid->CONST.P_CONFIG != NULL) { memcpy(&p_pid->Config, p_pid->CONST.P_CONFIG, sizeof(PID_Config_T)); }
     PID_SetOutputLimits(p_pid, INT16_MIN, INT16_MAX);
     ResetGains(p_pid);
     PID_Reset(p_pid);
@@ -49,19 +49,15 @@ void PID_Init(PID_T * p_pid)
 static inline int16_t GetIntegral(PID_T * p_pid) { return (p_pid->Integral32 >> 16); }
 static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integral32 = ((int32_t)integral << 16); }
 
-/*
+/*!
     Conventional parallel PID calculation
-    control = (Kp * error) + (Ki * error * SampleTime + IntegralPrev) + (Kd * (error - ErrorPrev) / SampleTime)
+    @return control = (Kp * error) + (Ki * error * SampleTime + IntegralPrev) + (Kd * (error - ErrorPrev) / SampleTime)
 */
 static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 {
-    int32_t proportional, integral32, integral32Part, integral, integralMin, integralMax, derivative;
+    int32_t proportional, integral32, integral32Part, integral, integralMin, integralMax;
 
     proportional = (p_pid->Config.PropGain * error) >> p_pid->Config.PropGainShift; /* Inclusive of 16 shift */
-
-    /* Dynamic Clamp */
-    integralMin = math_min(p_pid->OutputMin - proportional, 0);
-    integralMax = math_max(p_pid->OutputMax - proportional, 0);
 
     /*
         Store as Integral ("integrate" then sum). Allows compute time gain adjustment. Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
@@ -71,8 +67,17 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     integral32 = math_add_sat(p_pid->Integral32, integral32Part);
     integral = integral32 >> 16;
 
-    if      (integral > integralMax) { integral = integralMax; if(error < 0) { SetIntegral(p_pid, integralMax); } }
-    else if (integral < integralMin) { integral = integralMin; if(error > 0) { SetIntegral(p_pid, integralMin); } }
+    /* Dynamic Clamp */
+    integralMin = math_min(p_pid->OutputMin - proportional, 0);
+    integralMax = math_max(p_pid->OutputMax - proportional, 0);
+
+    /*
+        Clamp integral to prevent windup.
+        Determine integral storage, Integral32, using `integral`
+        if integral and error are in opposite directions, reset stored integral.
+    */
+    if      (integral > integralMax) { integral = integralMax; if (error < 0) { SetIntegral(p_pid, integralMax); } }
+    else if (integral < integralMin) { integral = integralMin; if (error > 0) { SetIntegral(p_pid, integralMin); } }
     else                             { p_pid->Integral32 = integral32; }
 
     return proportional + integral;
@@ -117,7 +122,7 @@ void PID_SetIntegral(PID_T * p_pid, int16_t integral)
 void PID_SetOutputState(PID_T * p_pid, int16_t integral)
 {
     PID_SetIntegral(p_pid, integral);
-    p_pid->Output = integral;
+    p_pid->Output = GetIntegral(p_pid);
 }
 
 void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)

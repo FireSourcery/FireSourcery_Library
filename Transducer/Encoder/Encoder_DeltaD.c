@@ -55,7 +55,7 @@ void _Encoder_DeltaD_InitCounter(Encoder_T * p_encoder)
 */
 void Encoder_DeltaD_Init(Encoder_T * p_encoder)
 {
-    if(p_encoder->CONST.P_CONFIG != 0U) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
+    if(p_encoder->CONST.P_CONFIG != NULL) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
     _Encoder_DeltaD_InitCounter(p_encoder);
     p_encoder->UnitT_Freq = p_encoder->CONST.SAMPLE_FREQ;
     _Encoder_ResetUnits(p_encoder);

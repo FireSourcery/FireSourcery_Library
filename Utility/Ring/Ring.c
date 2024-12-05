@@ -32,7 +32,7 @@
 
 #include "../Array/void_array.h"
 
-#if defined(CONFIG_RING_MULTITHREADED_ENABLE)
+#if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
 #include "System/Critical/Critical.h"
 #endif
 
@@ -51,27 +51,27 @@
 /******************************************************************************/
 static inline void EnterCritical(const Ring_T * p_ring)
 {
-#if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
+#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
     if (p_ring.CONST.USE_CRITICAL == true) { Critical_Enter(); }
-#elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
+#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
 }
 
 static inline void ExitCritical(const Ring_T * p_ring)
 {
-#if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
+#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
     if (p_ring.CONST.USE_CRITICAL == true) { Critical_Exit(); }
-#elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
+#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
 }
 
 static inline bool AcquireMutex(Ring_T * p_ring)
 {
-#if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
+#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
     return (p_ring.CONST.USE_CRITICAL == true) ? Critical_AcquireSignal(&p_ring->Mutex) : true;
-#elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
+#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
     return true;
 #endif
@@ -79,18 +79,18 @@ static inline bool AcquireMutex(Ring_T * p_ring)
 
 static inline void ReleaseMutex(Ring_T * p_ring)
 {
-#if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
+#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
     if (p_ring.CONST.USE_CRITICAL == true) { Critical_ReleaseSignal(&p_ring->Mutex) };
-#elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
+#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
 }
 
 static inline bool AcquireCritical(Ring_T * p_ring)
 {
-#if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
+#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
     return (p_ring.CONST.USE_CRITICAL == true) ? Critical_AcquireEnter(&p_ring->Mutex) : true;
-#elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
+#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
     return true;
 #endif
@@ -98,9 +98,9 @@ static inline bool AcquireCritical(Ring_T * p_ring)
 
 static inline void ReleaseCritical(Ring_T * p_ring)
 {
-#if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
+#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
     if (p_ring.CONST.USE_CRITICAL == true) { Critical_ReleaseExit(&p_ring->Mutex) };
-#elif   defined(CONFIG_RING_MULTITHREADED_DISABLE)
+#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
 }

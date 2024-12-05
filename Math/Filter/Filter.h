@@ -44,7 +44,7 @@ typedef struct Filter
 }
 Filter_T;
 
-static inline void Filter_InitAvg(Filter_T * p_filter)
+static inline void Filter_Avg_Init(Filter_T * p_filter)
 {
     p_filter->Accumulator = 0;
     p_filter->Index = 0U;

@@ -35,13 +35,13 @@
 #include "Math/math_general.h"
 #include <stdint.h>
 #include <stdbool.h>
+// #include <stdfix.h>
 
-#define QFRAC16_N_BITS (15)   /*!< Q1.15, 15 fractional bits, shift mul/div by 32768 */
+#define QFRAC16_N_BITS (15)   /*!< Q1.15, 15 fractional bits. Scalar 32768. Resolution 1/(2^15) == .000030517578125 */
 
-typedef int16_t qfrac16_t;          /*!< Q1.15 [-1.0, 0.999969482421875], res 1/(2^15) == .000030517578125 */
-
-typedef uint16_t uqfrac16_t;        /*!< Q1.15 [0, 1.999969482421875], res 1/(2^15) == .000030517578125 */
-typedef int32_t qfrac16_32_t;    /*!< Q17.15 */
+typedef int16_t qfrac16_t;      /*!< Q1.15 [-1.0, 1) */
+typedef uint16_t uqfrac16_t;    /*!< Q1.15 [0, 2) */
+typedef int32_t qaccum32_t;     /*!< Q17.15 */
 
 static const qfrac16_t QFRAC16_MAX = INT16_MAX; /*!< (32767) */
 static const qfrac16_t QFRAC16_MIN = INT16_MIN; /*!< (-32768) */
@@ -58,11 +58,10 @@ static const qfrac16_t QFRAC16_SQRT3_DIV_4 = 0x376D;
 static const qfrac16_t QFRAC16_SQRT2_DIV_2 = 0x5A82;
 static const qfrac16_t QFRAC16_PI_DIV_4 = 0x6487;
 
-/* Allow calculation with over saturation */
-// typedef int32_t qfrac16_t;
-static const int32_t QFRAC16_1_OVERSAT      = 0x00008000; /*!< (32768) */
-static const int32_t QFRAC16_PI             = 0x0001921F; /* Over saturated */
-static const int32_t QFRAC16_3PI_DIV_4      = 0x00012D97; /* Over saturated */
+/* Calculation with over saturation */
+static const qaccum32_t QFRAC16_1_OVERSAT      = 0x00008000; /*!< (32768) */
+static const qaccum32_t QFRAC16_PI             = 0x0001921F; /* Over saturated */
+static const qaccum32_t QFRAC16_3PI_DIV_4      = 0x00012D97; /* Over saturated */
 
 #define QFRAC16_FLOAT_MAX (0.999969482421875F)
 #define QFRAC16_FLOAT_MIN (-1.0F)
@@ -74,18 +73,21 @@ static inline qfrac16_t qfrac16_sat(int32_t qfrac) { return math_clamp(qfrac, -Q
 /*!
     @brief Unsaturated Multiply
 
-    overflow input max factor1 * factor2 < INT32_MAX (2,147,483,647)
-        e.g. (65,536, 32,767), (131,072, 16,383)
+    input max factor1 * factor2 < INT32_MAX
+    overflow
+        e.g. (65,536, 32,768)
 
     qfrac16_mul(+/-32768, +/-32768) returns 32768 [0x8000]
         (int32_t)32768 -> positive 32768, over saturated 1
         (int16_t)32768 -> -32768, -1
+    Call qfrac16_sat
 
+    @param[in]
     @return int32_t[-65536:65535] <=> [-2:2)
 */
-static inline int32_t qfrac16_mul(int32_t factor, int32_t frac)
+static inline qaccum32_t qfrac16_mul(qaccum32_t factor, qaccum32_t frac)
 {
-    return (((int32_t)factor * (int32_t)frac) >> QFRAC16_N_BITS);
+    return ((factor * frac) >> QFRAC16_N_BITS);
 }
 
 /*!
@@ -94,9 +96,9 @@ static inline int32_t qfrac16_mul(int32_t factor, int32_t frac)
     qfrac16_mul(int16_t factor, int16_t frac) must still check for 32768 case
         (product == +32768) ? 32767 : product;
 
-    @return int16_t[-32768, 32767] <=> [-1:1)
+    @return int16_t[-32767, 32767] <=> (-1:1)
 */
-static inline qfrac16_t qfrac16_mul_sat(int32_t factor, int32_t frac)
+static inline qfrac16_t qfrac16_mul_sat(qaccum32_t factor, qaccum32_t frac)
 {
     return qfrac16_sat(qfrac16_mul(factor, frac));
 }
@@ -109,17 +111,18 @@ static inline qfrac16_t qfrac16_mul_sat(int32_t factor, int32_t frac)
     dividend < divisor returns [-32767:32767] <=> (-1:1)
         within qfrac16_t range
 
+    @param[in] dividend [-65536:65535] <=> [-2:2)
     @return int32_t[-1073741824:1073709056], [0XC0000000, 0X3FFF8000]
 */
-static inline int32_t qfrac16_div(int16_t dividend, int32_t divisor)
+static inline int32_t qfrac16_div(qaccum32_t dividend, qaccum32_t divisor)
 {
-    return (((int32_t)dividend << QFRAC16_N_BITS) / (int32_t)divisor);
+    return ((dividend << QFRAC16_N_BITS) / divisor);
 }
 
 /*!
-    @return int16_t[-32768, 32767]
+    @return int16_t[-32767, 32767]
 */
-static inline qfrac16_t qfrac16_div_sat(int16_t dividend, int32_t divisor)
+static inline qfrac16_t qfrac16_div_sat(qaccum32_t dividend, qaccum32_t divisor)
 {
     return qfrac16_sat(qfrac16_div(dividend, divisor));
 }
@@ -142,9 +145,8 @@ static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
 typedef int16_t qangle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
 
 #define QFRAC16_SINE_90_TABLE_LENGTH    (256U)
-#define QFRAC16_SINE_90_TABLE_LSB       (6U)    /*!< Insignificant bits, shifted away */
+#define QFRAC16_SINE_90_TABLE_LSB       (6U)    /*!< Least significant bits, shifted away */
 
-// todo remove dependency on compile options
 static const qangle16_t QANGLE16_0 = 0U;         /*! 0 */
 static const qangle16_t QANGLE16_30 = 0x1555U;   /*! 5461 */
 static const qangle16_t QANGLE16_60 = 0x2AAAU;   /*! 10922 */

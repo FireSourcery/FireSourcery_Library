@@ -217,6 +217,11 @@ static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T
     switch((MotVarId_Type_RealTime_T)varId.NameType)
     {
         case MOT_VAR_ID_TYPE_CMD_MOTOR:
+        //todo wrap motor cmd with MotorController StateMachine check
+        //    if (MotorController_User_IsActiveState(p_mc))
+        //    {
+
+        //    }
             switch((MotVarId_Cmd_Motor_T)varId.NameBase)
             {
                 // case MOT_VAR_MOTOR_USER_CMD:        Motor_User_SetActiveCmdValue(p_motor, varValue);    break;
@@ -248,11 +253,11 @@ static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T
         case MOT_VAR_ID_TYPE_CMD:
             switch((MotVarId_Cmd_T)varId.NameBase)
             {
-                case MOT_VAR_BEEP:                  MotorController_User_BeepN(p_mc, 500U, 500U, varValue);     break;
-                case MOT_VAR_USER_CMD:              MotorController_User_SetCmdValue(p_mc, varValue);           break;
-                case MOT_VAR_THROTTLE:              MotorController_User_SetCmdThrottle(p_mc, varValue);        break;
-                case MOT_VAR_BRAKE:                 MotorController_User_SetCmdBrake(p_mc, varValue);           break;
-                case MOT_VAR_OPT_SPEED_LIMIT:       MotorController_User_SetOptSpeedLimitAll(p_mc, varValue);   break;
+                case MOT_VAR_BEEP:                      MotorController_User_BeepN(p_mc, 500U, 500U, varValue);     break;
+                case MOT_VAR_USER_CMD:                  MotorController_User_SetCmdValue(p_mc, varValue);           break;
+                case MOT_VAR_THROTTLE:                  MotorController_User_SetCmdThrottle(p_mc, varValue);        break;
+                case MOT_VAR_BRAKE:                     MotorController_User_SetCmdBrake(p_mc, varValue);           break;
+                case MOT_VAR_OPT_SPEED_LIMIT_ON_OFF:    MotorController_User_SetOptSpeedLimitOnOff(p_mc, varValue);   break;
                 case MOT_VAR_USER_FEEDBACK_MODE:        break;
                 case MOT_VAR_TRY_HOLD:                  break;
                 case MOT_VAR_TRY_RELEASE:               break;
@@ -310,7 +315,7 @@ static int32_t GetParameter(const MotorController_T * p_mc, MotVarId_T varId)
                 case MOT_VAR_POLE_PAIRS:                    value = Motor_Config_GetPolePairs(p_motor);                 break;
                 case MOT_VAR_KV:                            value = Motor_Config_GetKv(p_motor);                        break;
                 case MOT_VAR_SPEED_FEEDBACK_REF_RPM:        value = Motor_Config_GetSpeedFeedbackRef_Rpm(p_motor);      break;
-                case MOT_VAR_SPEED_V_REF_RPM:               value = Motor_Config_GetSpeedVRef_Rpm(p_motor);             break;
+                case MOT_VAR_SPEED_MATCH_REF_RPM:               value = Motor_Config_GetSpeedVRef_Rpm(p_motor);             break;
                 case MOT_VAR_IA_ZERO_REF_ADCU:              value = Motor_Config_GetIaZero_Adcu(p_motor);               break;
                 case MOT_VAR_IB_ZERO_REF_ADCU:              value = Motor_Config_GetIbZero_Adcu(p_motor);               break;
                 case MOT_VAR_IC_ZERO_REF_ADCU:              value = Motor_Config_GetIcZero_Adcu(p_motor);               break;
@@ -399,9 +404,9 @@ static int32_t GetParameter(const MotorController_T * p_mc, MotVarId_T varId)
                 case MOT_VAR_DEFAULT_FEEDBACK_MODE:     value = MotorController_User_GetDefaultFeedbackMode(p_mc).Word; break;
                 case MOT_VAR_BRAKE_MODE:                value = MotorController_User_GetBrakeMode(p_mc);                break;
                 case MOT_VAR_DRIVE_ZERO_MODE:           value = MotorController_User_GetDriveZeroMode(p_mc);            break;
-                case MOT_VAR_I_LIMIT_LOW_V:             value = (p_mc->Config.VLowILimit_Scalar16);                 break;
-                case MOT_VAR_OPT_DIN_FUNCTION:          value = (p_mc->Config.OptDinMode);                          break;
-                case MOT_VAR_OPT_DIN_SPEED_LIMIT:       value = (p_mc->Config.OptSpeedLimit_Scalar16);           break;
+                case MOT_VAR_I_LIMIT_LOW_V:             value = (p_mc->Config.VLowILimit_Scalar16);                     break;
+                case MOT_VAR_OPT_DIN_FUNCTION:          value = (p_mc->Config.OptDinMode);                              break;
+                case MOT_VAR_OPT_SPEED_LIMIT:           value = (p_mc->Config.OptSpeedLimit_Scalar16);                  break;
                 // case MOT_VAR_BUZZER_FLAGS_ENABLE:    value = (p_mc->Config.Buzzer); break;
                 // case MOT_VAR_CAN_SERVICES_ID:        value = (p_mc->Config.CanServicesId); break;
                 // case MOT_VAR_CAN_IS_ENABLE:          value = (p_mc->Config.CanIsEnable); break;
@@ -468,9 +473,9 @@ static int32_t GetParameter(const MotorController_T * p_mc, MotVarId_T varId)
         case MOT_VAR_ID_TYPE_CONFIG_BOOT_REF:
             switch((MotVarId_Config_BootRef_T)varId.NameBase)
             {
-                case MOT_VAR_BOOT_REF_FAST_BOOT:    MotorController_User_GetBootReg(p_mc).FastBoot; break;
-                case MOT_VAR_BOOT_REF_BEEP:         MotorController_User_GetBootReg(p_mc).Beep; break;
-                case MOT_VAR_BOOT_REF_BLINK:        MotorController_User_GetBootReg(p_mc).Blink; break;
+                case MOT_VAR_BOOT_REF_FAST_BOOT:    MotorController_User_GetBootReg(p_mc).FastBoot;     break;
+                case MOT_VAR_BOOT_REF_BEEP:         MotorController_User_GetBootReg(p_mc).Beep;         break;
+                case MOT_VAR_BOOT_REF_BLINK:        MotorController_User_GetBootReg(p_mc).Blink;        break;
                 default: break;
             }
             break;
@@ -504,7 +509,7 @@ static MotVarId_Status_T SetParameter(MotorController_T * p_mc, MotVarId_T varId
                     case MOT_VAR_SPEED_FEEDBACK_REF_RPM:        Motor_Config_SetSpeedFeedbackRef_Rpm(p_motor, varValue);        break;
                     case MOT_VAR_POLE_PAIRS:                    Motor_Config_SetPolePairs(p_motor, varValue);                   break;
                     case MOT_VAR_KV:                            Motor_Config_SetKv(p_motor, varValue);                          break;
-                    case MOT_VAR_SPEED_V_REF_RPM:               Motor_Config_SetSpeedVRef_Rpm(p_motor, varValue);               break;
+                    case MOT_VAR_SPEED_MATCH_REF_RPM:               Motor_Config_SetSpeedMatchRef_Rpm(p_motor, varValue);               break;
                     case MOT_VAR_IA_ZERO_REF_ADCU:              Motor_Config_SetIaZero_Adcu(p_motor, varValue);                 break;
                     case MOT_VAR_IB_ZERO_REF_ADCU:              Motor_Config_SetIbZero_Adcu(p_motor, varValue);                 break;
                     case MOT_VAR_IC_ZERO_REF_ADCU:              Motor_Config_SetIcZero_Adcu(p_motor, varValue);                 break;
@@ -595,17 +600,17 @@ static MotVarId_Status_T SetParameter(MotorController_T * p_mc, MotVarId_T varId
         case MOT_VAR_ID_TYPE_CONFIG_GENERAL:
             switch((MotVarId_Config_General_T)varId.NameBase)
             {
-                case MOT_VAR_V_SOURCE_REF_VOLTS:            MotorController_User_SetVSourceRef(p_mc, varValue);                 break;
-                case MOT_VAR_USER_INIT_MODE:                p_mc->Config.InitMode = (MotorController_InitMode_T)varValue;       break;
-                case MOT_VAR_USER_INPUT_MODE:               p_mc->Config.InputMode = (MotorController_InputMode_T)varValue;     break;
-                case MOT_VAR_DEFAULT_FEEDBACK_MODE:         MotorController_User_SetDefaultFeedbackMode(p_mc, varValue);        break;
-                case MOT_VAR_THROTTLE_MODE:                 p_mc->Config.ThrottleMode = varValue;           break;
-                case MOT_VAR_BRAKE_MODE:                    p_mc->Config.BrakeMode = varValue;              break;
-                case MOT_VAR_DRIVE_ZERO_MODE:               p_mc->Config.DriveZeroMode = varValue;          break;
+                case MOT_VAR_V_SOURCE_REF_VOLTS:            MotorController_User_SetVSourceRef(p_mc, varValue);                                 break;
+                case MOT_VAR_USER_INIT_MODE:                p_mc->Config.InitMode           = (MotorController_InitMode_T)varValue;             break;
+                case MOT_VAR_USER_INPUT_MODE:               p_mc->Config.InputMode          = (MotorController_InputMode_T)varValue;            break;
+                case MOT_VAR_DEFAULT_FEEDBACK_MODE:         MotorController_User_SetDefaultFeedbackMode_Cast(p_mc, varValue);                   break;
+                case MOT_VAR_THROTTLE_MODE:                 p_mc->Config.ThrottleMode       = (MotorController_ThrottleMode_T)varValue;         break;
+                case MOT_VAR_BRAKE_MODE:                    p_mc->Config.BrakeMode          = (MotorController_BrakeMode_T)varValue;            break;
+                case MOT_VAR_DRIVE_ZERO_MODE:               p_mc->Config.DriveZeroMode      = (MotorController_DriveZeroMode_T)varValue;        break;
                 case MOT_VAR_I_LIMIT_LOW_V:                 p_mc->Config.VLowILimit_Scalar16 = varValue;    break;
                 // case MOT_VAR_BUZZER_FLAGS_ENABLE:                        (p_mc->Config.Buzzer); break;
                 // case MOT_VAR_OPT_DIN_FUNCTION:                           (p_mc->Config.OptDinMode);              break;
-                // case MOT_VAR_OPT_DIN_SPEED_LIMIT:                        (p_mc->Config.OptSpeedLimit_Scalar16);   break;
+                // case MOT_VAR_OPT_SPEED_LIMIT:                        (p_mc->Config.OptSpeedLimit_Scalar16);   break;
                 // case MOT_VAR_CAN_SERVICES_ID:                            (p_mc->Config.CanServicesId); break;
                 // case MOT_VAR_CAN_IS_ENABLE:                              (p_mc->Config.CanIsEnable); break;
                 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
@@ -677,9 +682,9 @@ static MotVarId_Status_T SetParameter(MotorController_T * p_mc, MotVarId_T varId
         case MOT_VAR_ID_TYPE_CONFIG_BOOT_REF:
             switch((MotVarId_Config_BootRef_T)varId.NameBase)
             {
-                case MOT_VAR_BOOT_REF_FAST_BOOT:    MotorController_User_SetFastBoot(p_mc, varValue); break;
-                case MOT_VAR_BOOT_REF_BEEP:         MotorController_User_SetBeep(p_mc, varValue); break;
-                case MOT_VAR_BOOT_REF_BLINK:        MotorController_User_SetBlink(p_mc, varValue); break;
+                case MOT_VAR_BOOT_REF_FAST_BOOT:    MotorController_User_SetFastBoot(p_mc, varValue);   break;
+                case MOT_VAR_BOOT_REF_BEEP:         MotorController_User_SetBeep(p_mc, varValue);       break;
+                case MOT_VAR_BOOT_REF_BLINK:        MotorController_User_SetBlink(p_mc, varValue);      break;
                 default: break;
             }
             break;

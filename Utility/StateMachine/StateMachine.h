@@ -65,6 +65,9 @@ struct StateMachine_State;
 typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_input_value_t inputValue); // Input Function
 typedef void (*StateMachine_Function_T)(void * p_context); // Output Function
 
+// input only function, check state only, no transition
+// typedef void (*StateMachine_Input_T)(void * p_context, statemachine_input_value_t inputValue0, statemachine_input_value_t inputValue1, statemachine_input_value_t inputValue2); // Input Function
+
 /*
     Array Implementation - 2D input table
     Map allocates for all possible transitions/inputs for each state, valid and invalid

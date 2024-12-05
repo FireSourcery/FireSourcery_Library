@@ -56,7 +56,7 @@ static inline int32_t math_add_sat(int32_t a, int32_t b)
 }
 
 static inline uintptr_t align_down(uintptr_t address, size_t align) { return (address & (-align)); }
-static inline uintptr_t align_up(uintptr_t address, size_t align) { return (-(-address & (-align))); }
+static inline uintptr_t align_up(uintptr_t address, size_t align) { return (-((-address) & (-align))); }
 static inline bool is_aligned(uintptr_t address, size_t align) { return ((address & (align - 1U)) == (uintptr_t)0U); }
 
 static inline bool is_aligned_mask(uint32_t value, uint32_t mask) { return ((value & mask) == (uint32_t)0U); }

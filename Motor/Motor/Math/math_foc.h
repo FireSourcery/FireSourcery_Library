@@ -47,7 +47,7 @@
     Ialpha = Ia
     Ibeta = (Ib - Ic)/sqrt(3)
     alpha = a;
-    beta = (int32_t)qfrac16_mul(b, QFRAC16_1_DIV_SQRT3) - (int32_t)qfrac16_mul(c, QFRAC16_1_DIV_SQRT3);
+    beta =  qfrac16_mul(b, QFRAC16_1_DIV_SQRT3) -  qfrac16_mul(c, QFRAC16_1_DIV_SQRT3);
 
     @param[out] p_alpha
     @param[out] p_beta
@@ -62,7 +62,7 @@ static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t
     int32_t alpha = qfrac16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, QFRAC16_1_DIV_3);
     int32_t beta = qfrac16_mul((int32_t)b - (int32_t)c, QFRAC16_1_DIV_SQRT3);
 
-    *p_alpha = qfrac16_sat(alpha);  /* Can 2*a - b - c > 113,509 ? */
+    *p_alpha = qfrac16_sat(alpha);
     *p_beta = qfrac16_sat(beta);
 }
 
@@ -130,8 +130,8 @@ static inline void foc_invclarke(qfrac16_t * p_a, qfrac16_t * p_b, qfrac16_t * p
 /* shared sin cos calc */
 static inline void foc_park_vector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t alpha, qfrac16_t beta, qfrac16_t sin, qfrac16_t cos)
 {
-    int32_t d = (int32_t)qfrac16_mul(alpha, cos) + (int32_t)qfrac16_mul(beta, sin);
-    int32_t q = (int32_t)qfrac16_mul(beta, cos) - (int32_t)qfrac16_mul(alpha, sin);
+    int32_t d = qfrac16_mul(alpha, cos) + qfrac16_mul(beta, sin);
+    int32_t q = qfrac16_mul(beta, cos) - qfrac16_mul(alpha, sin);
 
     *p_d = qfrac16_sat(d);
     *p_q = qfrac16_sat(q);
@@ -155,8 +155,8 @@ static inline void foc_park(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t alpha, q
 /******************************************************************************/
 static inline void foc_invpark_vector(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t d, qfrac16_t q, qfrac16_t sin, qfrac16_t cos)
 {
-    int32_t alpha = (int32_t)qfrac16_mul(d, cos) - (int32_t)qfrac16_mul(q, sin);
-    int32_t beta = (int32_t)qfrac16_mul(d, sin) + (int32_t)qfrac16_mul(q, cos);
+    int32_t alpha = qfrac16_mul(d, cos) - qfrac16_mul(q, sin);
+    int32_t beta = qfrac16_mul(d, sin) + qfrac16_mul(q, cos);
 
     *p_alpha = qfrac16_sat(alpha);
     *p_beta = qfrac16_sat(beta);

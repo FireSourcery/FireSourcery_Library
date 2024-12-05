@@ -136,7 +136,7 @@ static void PrintSensor(Terminal_T * p_term, Motor_T * p_motor)
             //     Terminal_SendString(p_term, "\r\n");
             //     Terminal_SendString(p_term, "Hall: ");
             // }
-            Terminal_SendNum(p_term, Hall_ReadSensors(&p_motor->Hall).State); Terminal_SendString(p_term, " ");
+            Terminal_SendNum(p_term, Hall_ReadSensors(&p_motor->Hall).Value); Terminal_SendString(p_term, " ");
             break;
 
         case MOTOR_SENSOR_MODE_ENCODER:
@@ -580,8 +580,8 @@ static Cmd_Status_T Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
     {
         Hall_CaptureSensors_ISR(&p_motor->Hall);
         Terminal_SendString(p_term, "\r\n");
-        Terminal_SendString(p_term, "Hall Sensors: "); Terminal_SendNum(p_term, Hall_GetSensorsId(&p_motor->Hall)); Terminal_SendString(p_term, "\r\n");
-        Terminal_SendString(p_term, "Electrical Angle: "); Terminal_SendNum(p_term, Hall_GetRotorAngle_Degrees16(&p_motor->Hall)); Terminal_SendString(p_term, "\r\n");
+        Terminal_SendString(p_term, "Hall Sensors: "); Terminal_SendNum(p_term, Hall_GetSensorsValue(&p_motor->Hall)); Terminal_SendString(p_term, "\r\n");
+        Terminal_SendString(p_term, "Electrical Angle: "); Terminal_SendNum(p_term, Hall_GetAngle16(&p_motor->Hall)); Terminal_SendString(p_term, "\r\n");
         Terminal_SendString(p_term, "\r\n");
     }
     // else if(argc == 2U)

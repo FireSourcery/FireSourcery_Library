@@ -84,6 +84,7 @@ static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
 
         switch(p_mc->Config.OptDinMode)
         {
+            case MOTOR_CONTROLLER_OPT_DIN_DISABLE: break;
             case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
                 switch(Debounce_PollEdge(&p_mc->OptDin))
                 {

@@ -33,7 +33,7 @@
 
 void Protocol_Init(Protocol_T * p_protocol)
 {
-    if(p_protocol->CONST.P_CONFIG != 0U)
+    if(p_protocol->CONST.P_CONFIG != NULL)
     {
         memcpy(&p_protocol->Config, p_protocol->CONST.P_CONFIG, sizeof(Protocol_Config_T));
 

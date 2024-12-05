@@ -106,8 +106,8 @@ const StateMachine_Machine_T MSM_MACHINE =
     .TRANSITION_TABLE_LENGTH = MSM_TRANSITION_TABLE_LENGTH,
 };
 
-static StateMachine_State_T * TransitionFault(Motor_T * p_motor, statemachine_input_value_t isFault)       { (void)p_motor; return (isFault == true) ? &STATE_FAULT : NULL; }
-static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, statemachine_input_value_t voidIn)    { (void)p_motor; (void)voidIn; return &STATE_FREEWHEEL; }
+static StateMachine_State_T * TransitionFault(Motor_T * p_motor, statemachine_input_value_t isFault)    { (void)p_motor; return (isFault == true) ? &STATE_FAULT : NULL; }
+static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, statemachine_input_value_t _void)  { (void)p_motor; (void)_void; return &STATE_FREEWHEEL; }
 
 /******************************************************************************/
 /*!
@@ -247,8 +247,8 @@ static const StateMachine_State_T STATE_STOP =
 /******************************************************************************/
 /*!
     @brief  Run State
-
-    Active control - UserCmdValue => RampCmd => FeedbackLoop is in effect
+    Active Control, FeedbackLoop is in effect
+        UserCmd => RampOutput => PID => AngleControl
 */
 /******************************************************************************/
 static void Run_Entry(Motor_T * p_motor)
@@ -266,7 +266,7 @@ static void Run_Proc(Motor_T * p_motor)
 // static StateMachine_State_T * Run_InputHold(Motor_T * p_motor, statemachine_input_value_t voidIn)
 // {
 //     (void)voidIn;
-//     StateMachine_State_T * p_nextState = 0U;
+//     StateMachine_State_T * p_nextState = NULL;
 
 //     if(p_motor->Speed_Frac16 == 0U)
 //     {
@@ -287,7 +287,7 @@ static StateMachine_State_T * Run_InputRelease(Motor_T * p_motor, statemachine_i
 // return &STATE_RUN; /* repeat entry function */
 static StateMachine_State_T * Run_InputControl(Motor_T * p_motor, statemachine_input_value_t feedbackModeWord)
 {
-    StateMachine_State_T * p_nextState = 0U;
+    StateMachine_State_T * p_nextState = NULL;
     /*
         Prevent ProcAngleControl before ProcFeedbackMatch.
         alternatively transition through freewheel first
@@ -324,6 +324,7 @@ static const StateMachine_State_T STATE_RUN =
 /******************************************************************************/
 /*!
     @brief State
+    Release Control,
 */
 /******************************************************************************/
 static void Freewheel_Entry(Motor_T * p_motor)
@@ -335,14 +336,13 @@ static void Freewheel_Entry(Motor_T * p_motor)
 static void Freewheel_Proc(Motor_T * p_motor)
 {
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleVBemf, 0U /* Motor_SixStep_ProcPhaseObserve */);
-    // Motor_CommutationModeFn(p_motor, Motor_FOC_ProcAngleVBemf, 0U /* Motor_SixStep_ProcPhaseObserve */)(p_motor);
     if(p_motor->Speed_Frac16 == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
 }
 
 /* Match Feedback to ProcAngleBemf on Resume */
 static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, statemachine_input_value_t feedbackModeWord)
 {
-    StateMachine_State_T * p_nextState = 0U;
+    StateMachine_State_T * p_nextState = NULL;
 
     Motor_SetFeedbackMode_Cast(p_motor, feedbackModeWord);
 
@@ -352,7 +352,7 @@ static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, statemac
     }
     else
     {
-        p_nextState = 0U; /* OpenLoop does not resume */
+        p_nextState = NULL; /* OpenLoop does not resume */
     }
 
     return p_nextState;

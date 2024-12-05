@@ -59,6 +59,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <assert.h>
 
 
 /******************************************************************************/
@@ -271,16 +272,16 @@ typedef struct Motor_Config
     Motor_SensorMode_T          SensorMode;
     Motor_FeedbackMode_T        FeedbackModeDefault;     /* Default FeedbackMode */
     Motor_Direction_T           DirectionForward;
-    uint8_t PolePairs;
+    uint8_t PolePairs;          /* Motor Pole Pairs. Use to derive Hall/Encoder speed calibration */
+    uint16_t Kv;                /* Motor Constant. Use to derive SpeedRef */
 
     /*
-        Ref values, known calibration parameter provide by user
+        Ref values, calibration parameters
     */
-    uint16_t Kv;
-    uint16_t SpeedFeedbackRef_Rpm;  /* Feedback / PID Regulator Limits Ref, User IO units conversion, Encoder speed calc ref. */
-                                    /* A value greater than achievable will cause integral windup */
-    uint16_t SpeedVRef_Rpm;         /* Derive from Kv + offset. Use < SpeedFeedbackRef_Rpm to begin at lower speed. */
-        // Motor_ResumeMode_T    ResumeMode; // option Scale to KvSpeed or Bemf on resume
+    uint16_t SpeedFeedbackRef_Rpm;  /* VSource*Kv. Feedback / PID Regulator Limits Ref. Sensor/User Frac16, unit conversion. */
+                                        /* A value greater than achievable will cause integral windup */
+    uint16_t SpeedMatchRef_Rpm;     /* Must be < SpeedFeedbackRef_Rpm to ensure resume control at lower speed. */
+    // Motor_ResumeMode_T    ResumeMode; // option Scale to VSpeed or VBemf on resume
     uint16_t IaZeroRef_Adcu;
     uint16_t IbZeroRef_Adcu;
     uint16_t IcZeroRef_Adcu;
@@ -299,21 +300,21 @@ typedef struct Motor_Config
     uint16_t AlignPower_Scalar16;          /* V or I */
     uint32_t AlignTime_Cycles;
 
-#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+// #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     uint16_t OpenLoopSpeed_Scalar16;    /* Max, 65536 will overflow */
     uint16_t OpenLoopPower_Scalar16;    /* V or I */
     uint32_t OpenLoopAccel_Cycles;      /* Time to reach OpenLoopSpeed */
     // uint16_t OpenLoopGain_VHz;
-#endif
-
-#if defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
-    uint16_t SurfaceDiameter;
-    uint16_t GearRatio_Factor;
-    uint16_t GearRatio_Divisor;
-#endif
+// #endif
 
 #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
     Phase_Mode_T PhasePwmMode;     /* Only 1 nvm param for phase module. */
+#endif
+
+#if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
+    uint16_t SurfaceDiameter;
+    uint16_t GearRatio_Factor;
+    uint16_t GearRatio_Divisor;
 #endif
 }
 Motor_Config_T;
@@ -322,7 +323,7 @@ Motor_Config_T;
     @brief Motor Const - Compile time const configuration. Per instance.
     program, meta, parameters. unrelated to end user.
 */
-typedef const struct /* __attribute__((section(".rodata"))) */ Motor_Const
+typedef const struct Motor_Const
 {
     AnalogN_T * const P_ANALOG_N;
     const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
@@ -419,8 +420,8 @@ typedef struct Motor
     Linear_T UnitsIa;           /* Frac16 and Amps */
     Linear_T UnitsIb;
     Linear_T UnitsIc;
-    Linear_T UnitsVabc;         /* Bemf V,mV, and Frac16 conversion */
-    Linear_T UnitsVSpeed;       /* Speed_Frac16 => VBemf_Frac16 */
+    Linear_T UnitsVabc;         /* Vbemf V and Frac16 conversion of adcu */
+    Linear_T UnitsVSpeed;       /* VbemfSpeed. Vbemf_Frac16 of Speed_Frac16. Resume voltage, alternative to ADC Vbemf sampling */
 
     Filter_T FilterA;           /* Calibration use */
     Filter_T FilterB;
@@ -454,14 +455,14 @@ typedef struct Motor
 #endif
 
     /*
-        OpenLoops speed ramp
+        OpenLoop speed ramp
     */
-#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+// #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     Linear_T OpenLoopSpeedRamp;            /* OpenLoopSpeed Ramp */
     #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
     uint32_t OpenLoopCommutationPeriod;
     #endif
-#endif
+// #endif
 }
 Motor_T, * Motor_Ptr;
 
@@ -520,6 +521,11 @@ static inline int32_t _Motor_ConvertPower_Scalar16ToWatts(int32_t vi_scalar16)  
     These function should optimize away select if only 1 mode is enabled
 */
 /******************************************************************************/
+#if     defined(CONFIG_MOTOR_FOC_ENABLE) && !defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+#define _Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction) (focFunction)
+#elif   !defined(CONFIG_MOTOR_FOC_ENABLE) && defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+#define _Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction) (sixStepFunction)
+#else
 static inline const void * _Motor_CommutationModeFn(const Motor_T * p_motor, const void * focFunction, const void * sixStepFunction)
 {
     const void * fn;
@@ -531,11 +537,11 @@ static inline const void * _Motor_CommutationModeFn(const Motor_T * p_motor, con
 #if     defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
         case MOTOR_COMMUTATION_MODE_SIX_STEP: fn = sixStepFunction; break;
 #endif
-        default: fn = NULL; // error
+        default: assert(false); // error
     }
-    assert(fn != NULL);
     return fn;
 }
+#endif
 
 typedef void(*Motor_ProcVoid_T)(Motor_T * p_motor);
 typedef int32_t(*Motor_GetInt32_T)(const Motor_T * p_motor);
@@ -624,16 +630,16 @@ static inline void Motor_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeWor
 /*
     V of Speed
     VPhase approximation using Kv and Speed
-        = Speed_Frac16 * SpeedVRef_Rpm / SpeedFeedbackRef_Rpm
-        // SpeedVRef_Rpm =
-    User sets lower SpeedVRef_Rpm to ensure not match to higher speed
+        = Speed_Frac16 * SpeedMatchRef_Rpm / SpeedFeedbackRef_Rpm
+        // SpeedMatchRef_Rpm =
+    User sets lower SpeedMatchRef_Rpm to ensure not match to higher speed
     Saturated output for use as input into next operation
 */
 static inline int16_t Motor_GetVSpeed_Frac16(const Motor_T * p_motor)
 {
     return Linear_Q16_Frac(&p_motor->UnitsVSpeed, p_motor->Speed_Frac16);
 }
-// static inline int32_t _Motor_VSpeed_ConvertSpeedToVFrac16(Motor_T * p_motor, int32_t speed_frac16)   { return speed_frac16 * p_motor->Config.SpeedVRef_Rpm / p_motor->Config.SpeedFeedbackRef_Rpm; }
+// static inline int32_t _Motor_VSpeed_ConvertSpeedToVFrac16(Motor_T * p_motor, int32_t speed_frac16)   { return speed_frac16 * p_motor->Config.SpeedMatchRef_Rpm / p_motor->Config.SpeedFeedbackRef_Rpm; }
 // static inline int32_t _Motor_VSpeed_ConvertRpmToVFrac16(Motor_T * p_motor, int32_t speed_rpm)        { return _Motor_VSpeed_ConvertSpeedToVFrac16(p_motor, _Motor_ConvertSpeed_RpmToScalar16(p_motor, speed_rpm) ); }
 // static inline uint32_t _Motor_VSpeed_ConvertToVSpeed(Motor_T * p_motor, uint16_t rpm)                { return Linear_Of(&p_motor->UnitsVSpeed, _Motor_ConvertSpeed_RpmToScalar16(p_motor, rpm)); }
 

@@ -22,9 +22,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Q.c
+    @file   QFrac16.c
     @author FireSourcery
-    @brief
+    @brief This file contains functions for fixed-point trigonometric calculations using 16-bit fractional values.
     @version V0
 */
 /******************************************************************************/
@@ -66,6 +66,7 @@ const qfrac16_t QFRAC16_SINE_90_TABLE[QFRAC16_SINE_90_TABLE_LENGTH] =
     32609, 32628, 32646, 32662, 32678, 32692, 32705, 32717,
     32727, 32736, 32744, 32751, 32757, 32761, 32764, 32766
 };
+
 
 /*
     sin_quadrant_265
@@ -117,12 +118,11 @@ qfrac16_t qfrac16_cos(qangle16_t theta)
     return cosine;
 }
 
-/* compiler optimize into single switch? */
+/* Can compiler optimize into single switch? */
 void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16_t theta)
 {
     *p_sin = qfrac16_sin(theta);
     *p_cos = qfrac16_cos(theta);
-    return; /* (*p_cos, *p_sin) */
 }
 
 uint16_t qfrac16_vector_magnitude(qfrac16_t x, qfrac16_t y)
@@ -130,23 +130,28 @@ uint16_t qfrac16_vector_magnitude(qfrac16_t x, qfrac16_t y)
     return q_sqrt((int32_t)x * x + (int32_t)y * y);
 }
 
+
 /*!
     Vector Circle Limit
-    @return sqrt(x^2 + y^2) if limited
+    @brief Limits the components a vector.
+    @param p_x Pointer to the x component of the vector.
+    @param p_y Pointer to the y component of the vector.
+    @param magnitudeMax The maximum allowed magnitude for the vector.
+    @return The original magnitude of the vector before limiting,  sqrt(x^2 + y^2), for reference.
 */
 uint16_t qfrac16_vector_limit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax)
 {
-    uint32_t magnitudeMaxSquared = (int32_t)magnitudeMax * magnitudeMax;
     uint32_t vectorMagnitudeSquared = ((int32_t)(*p_x) * (*p_x)) + ((int32_t)(*p_y) * (*p_y));
+    uint32_t magnitudeMaxSquared = (int32_t)magnitudeMax * magnitudeMax;
     uint16_t vectorMagnitude = 0U;
-    int32_t ratio; /* Q1.15 where 32767 ~= 1 */
+    int32_t ratio; /* Q17.15 */
 
-    if(vectorMagnitudeSquared > magnitudeMaxSquared)
+    if (vectorMagnitudeSquared > magnitudeMaxSquared) /* magnitudeMaxSquared / vectorMagnitudeSquared < 1 */
     {
         vectorMagnitude = q_sqrt(vectorMagnitudeSquared);
-        ratio = qfrac16_div(magnitudeMax, vectorMagnitude); /* no saturation needed, vectorMagnitude > magnitudeMax, max return 32768 ~= 1 */
-        *p_x = (qfrac16_t)qfrac16_mul(*p_x, ratio); /* no saturation needed, ratio < 1 */
-        *p_y = (qfrac16_t)qfrac16_mul(*p_y, ratio);
+        ratio = qfrac16_div_sat(magnitudeMax, vectorMagnitude); /* no saturation needed, magnitudeMax < vectorMagnitude, max return 32767 ~= 1 */
+        *p_x = (qfrac16_t)qfrac16_mul_sat(*p_x, ratio); /* no saturation needed, ratio < 1 */
+        *p_y = (qfrac16_t)qfrac16_mul_sat(*p_y, ratio);
     }
 
     return vectorMagnitude;
@@ -176,5 +181,5 @@ qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
 
     if(y < 0) { angle = 0 - angle; }
 
-    return angle; /* angle loops, no need to saturate */
+    return angle; /* angle wraps, no need to saturate */
 }

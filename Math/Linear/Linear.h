@@ -41,16 +41,16 @@
 typedef struct Linear
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
-    int32_t Slope;              /* y = (x - XOffset) * Slope >> SlopeShift + YOffset */
+    int32_t Slope;              /* y = (x - X0) * Slope >> SlopeShift + Y0 */
     uint8_t SlopeShift;
-    int32_t InvSlope;           /* x = (y - YOffset) * InvSlope >> InvSlopeShift + XOffset */
+    int32_t InvSlope;           /* x = (y - Y0) * InvSlope >> InvSlopeShift + X0 */
     uint8_t InvSlopeShift;
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
     int32_t SlopeFactor;
     int32_t SlopeDivisor;
 #endif
-    int32_t XOffset;
-    int32_t YOffset;
+    int32_t X0;
+    int32_t Y0;
     /* Zero-to-peak */
     int32_t XDeltaRef;      /* (XRef - X0), f([X0-XDeltaRef:X0+XDeltaRef]) => [-YRef:YRef] */
     int32_t YDeltaRef;
@@ -67,8 +67,8 @@ Linear_T;
     .SlopeShift         = ,                     \
     .InvSlope           = ,                     \
     .InvSlopeShift      = ,                     \
-    .XOffset            = ,                     \
-    .YOffset            = ,                     \
+    .X0                 = ,                     \
+    .Y0                 = ,                     \
     .XReference         = ,                     \
     .YReference         = ,                     \
 }
@@ -79,9 +79,9 @@ Linear_T;
     Protected
 */
 /******************************************************************************/
-static inline int16_t _Linear_SatSigned16(int32_t frac16)           { return ((int16_t)math_clamp(frac16, INT16_MIN, INT16_MAX)); }
-static inline uint16_t _Linear_SatUnsigned16(int32_t frac16)        { return ((uint16_t)math_clamp(frac16, 0, UINT16_MAX)); }
-static inline uint16_t _Linear_SatUnsigned16_Abs(int32_t frac16)    { return _Linear_SatUnsigned16(math_abs(frac16)); }
+static inline int16_t _Linear_SatSigned16(int32_t value16)           { return ((int16_t)math_clamp(value16, INT16_MIN, INT16_MAX)); }
+static inline uint16_t _Linear_SatUnsigned16(int32_t value16)        { return ((uint16_t)math_clamp(value16, 0, UINT16_MAX)); }
+static inline uint16_t _Linear_SatUnsigned16_Abs(int32_t value16)    { return _Linear_SatUnsigned16(math_abs(value16)); }
 
 /* NonError Checked */
 static inline void _Linear_SetSlope(Linear_T * p_linear, int32_t slopeFactor, int32_t slopeDivisor)
@@ -102,9 +102,9 @@ static inline void _Linear_SetSlope(Linear_T * p_linear, int32_t slopeFactor, in
 static inline int32_t Linear_Of(const Linear_T * p_linear, int32_t x)
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
-    return linear_shift_f(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, p_linear->YOffset, x);
+    return linear_shift_f(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, p_linear->Y0, x);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-    return linear_f(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, x);
+    return linear_f(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, x);
 #endif
 }
 
@@ -114,9 +114,9 @@ static inline int32_t Linear_Of(const Linear_T * p_linear, int32_t x)
 static inline int32_t Linear_InvOf(const Linear_T * p_linear, int32_t y)
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
-    return linear_shift_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, p_linear->YOffset, y);
+    return linear_shift_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->X0, p_linear->Y0, y);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-    return linear_invf(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, y);
+    return linear_invf(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, y);
 #endif
 }
 
@@ -127,12 +127,12 @@ static inline int32_t Linear_InvOf(const Linear_T * p_linear, int32_t y)
 /******************************************************************************/
 static inline int32_t Linear_Of_Sat(const Linear_T * p_linear, int32_t x)
 {
-    return Linear_Of(p_linear, math_clamp(x, p_linear->XOffset - p_linear->XDeltaRef, p_linear->XReference));
+    return Linear_Of(p_linear, math_clamp(x, p_linear->X0 - p_linear->XDeltaRef, p_linear->XReference));
 }
 
 static inline int32_t Linear_InvOf_Sat(const Linear_T * p_linear, int32_t y)
 {
-    return Linear_InvOf(p_linear, math_clamp(y, p_linear->YOffset - p_linear->YDeltaRef, p_linear->YReference));
+    return Linear_InvOf(p_linear, math_clamp(y, p_linear->Y0 - p_linear->YDeltaRef, p_linear->YReference));
 }
 
 /******************************************************************************/
@@ -145,7 +145,7 @@ static inline int32_t Linear_Of_Round(const Linear_T * p_linear, int32_t x)
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
     return Linear_Of(p_linear, x);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-    return linear_f_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, x);
+    return linear_f_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, x);
 #endif
 }
 
@@ -154,7 +154,7 @@ static inline int32_t Linear_InvOf_Round(const Linear_T * p_linear, int32_t y)
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
     return Linear_InvOf(p_linear, y);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-    return linear_invf_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->XOffset, p_linear->YOffset, y);
+    return linear_invf_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, y);
 #endif
 }
 
@@ -167,7 +167,7 @@ static inline int32_t Linear_InvOf_Round(const Linear_T * p_linear, int32_t y)
 /******************************************************************************/
 /*!
     @brief Fixed32 with division
-        aux to primary configuration. Use Linear_Fixed for fixed as primary.
+        aux configuration. Use Linear_Fixed for fixed as primary.
     Format q16.16
     f([-XRef:XRef]) => [-65536:65536]
 */
@@ -175,8 +175,7 @@ static inline int32_t Linear_InvOf_Round(const Linear_T * p_linear, int32_t y)
 /*  */
 static inline int32_t _Linear_Fixed32(const Linear_T * p_linear, int32_t x)
 {
-    return linear_fixed32(p_linear->XOffset, p_linear->XDeltaRef, x);
-    // return linear_f_x0(65536, deltax, x0, x);
+    return linear_f_x0(65536, p_linear->XDeltaRef, p_linear->X0, x);
 }
 
 /*!
@@ -185,8 +184,7 @@ static inline int32_t _Linear_Fixed32(const Linear_T * p_linear, int32_t x)
 */
 static inline int32_t _Linear_InvFixed32(const Linear_T * p_linear, int32_t y_fixed32)
 {
-    return linear_invfixed32(p_linear->XOffset, p_linear->XDeltaRef, y_fixed32);
-    // return linear_invf_x0(65536, deltax, x0, y_fixed32);
+    return linear_invf_x0(65536, p_linear->XDeltaRef, p_linear->X0, y_fixed32);
 }
 
 /******************************************************************************/
@@ -196,7 +194,7 @@ static inline int32_t _Linear_InvFixed32(const Linear_T * p_linear, int32_t y_fi
 */
 /******************************************************************************/
 /* negative returns zero */
-static inline uint16_t _Linear_Percent16(const Linear_T * p_linear, int32_t x)
+static inline uint16_t _Linear_Percent16_Clamp(const Linear_T * p_linear, int32_t x)
 {
     return _Linear_SatUnsigned16(_Linear_Fixed32(p_linear, x));
 }
@@ -243,7 +241,7 @@ extern void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32
 extern int32_t Linear_Of_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar);
 extern int32_t Linear_InvOf_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar);
 
-// extern uint16_t _Linear_Percent16(const Linear_T * p_linear, int32_t x);
+// extern uint16_t _Linear_Percent16_Clamp(const Linear_T * p_linear, int32_t x);
 // extern uint16_t _Linear_Percent16_Abs(const Linear_T * p_linear, int32_t x);
 // extern int32_t _Linear_InvPercent16(const Linear_T * p_linear, uint16_t y_fracU16);
 // extern int16_t _Linear_Frac16(const Linear_T * p_linear, int32_t x);

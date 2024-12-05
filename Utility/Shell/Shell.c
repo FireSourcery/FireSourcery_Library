@@ -32,7 +32,7 @@
 
 void Shell_Init(Shell_T * p_shell)
 {
-    if(p_shell->CONST.P_CONFIG != 0U)
+    if(p_shell->CONST.P_CONFIG != NULL)
     {
         memcpy(&p_shell->Config, p_shell->CONST.P_CONFIG, sizeof(Shell_Config_T));
     }

@@ -187,7 +187,7 @@ typedef union MotorController_FaultFlags
         uint16_t Motors             : 1U;
         // uint16_t DirectionSync      : 1U;
         uint16_t RxLost             : 1U;
-        uint16_t User               : 1U;
+        // uint16_t User               : 1U;
     };
     uint16_t Word;
 }
@@ -388,8 +388,6 @@ static inline void MotorController_BeepDouble(MotorController_T * p_mc)         
 /******************************************************************************/
 /*
    MotorN Array Functions - Proc by StateMachine
-
-   todo move call by state machine to StateMachine
 */
 /******************************************************************************/
 // static inline void void_array_foreach(MotorController_T * p_mc, Motor_ProcVoid_T cmdFunction)                        { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, cmdFunction); }
@@ -399,10 +397,10 @@ static inline bool MotorController_IsAnyMotorFault(const MotorController_T * p_m
 /* returns true if atleast 1 fault is cleared */
 static inline bool MotorController_IsAnyClearMotorFault(MotorController_T * p_mc)  { return void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_StateMachine_ClearFault); }
 
-static inline void MotorController_DisableAll(MotorController_T * p_mc)        { void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_ForceDisableControl); }
-static inline bool MotorController_TryReleaseAll(MotorController_T * p_mc)     { void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_TryRelease); }
-// static inline bool MotorController_ActivateAll(MotorController_T * p_mc)    { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ActivateControl); }
-static inline bool MotorController_TryHoldAll(MotorController_T * p_mc)        { void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_TryHold); }
+static inline void MotorController_ForceDisableAll(MotorController_T * p_mc)    { void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_ForceDisableControl); }
+static inline bool MotorController_TryReleaseAll(MotorController_T * p_mc)      { void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_TryRelease); }
+static inline bool MotorController_TryHoldAll(MotorController_T * p_mc)         { void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_TryHold); }
+// static inline bool MotorController_ActivateAll(MotorController_T * p_mc)     { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ActivateControl); }
 
 static inline bool MotorController_TryDirectionForwardAll(MotorController_T * p_mc, MotorController_Direction_T direction) { return void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_TryDirectionForward); }
 static inline bool MotorController_TryDirectionReverseAll(MotorController_T * p_mc, MotorController_Direction_T direction) { return void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_TryDirectionReverse); }

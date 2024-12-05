@@ -120,6 +120,7 @@ void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32
 /******************************************************************************/
 /* Manufacture */
 // use outer layer StateMachine check, simplifies handling of signature type.
+// Multi variable StateMachine call
 /******************************************************************************/
 /* Caller clears buffer */
 NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)

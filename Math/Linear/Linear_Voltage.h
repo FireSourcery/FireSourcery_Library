@@ -46,8 +46,8 @@
     .SlopeShift         = LINEAR_VOLTAGE_SHIFT,                                                                         \
     .InvSlope           = ((int32_t)r2 << LINEAR_VOLTAGE_SHIFT) / adcVRef_MilliV * 1000U / (r1 + r2),                   \
     .InvSlopeShift      = LINEAR_VOLTAGE_SHIFT - adcBits,                                                               \
-    .YOffset            = 0U,                                                                                           \
-    .XOffset            = 0U,                                                                                           \
+    .Y0                 = 0U,                                                                                           \
+    .X0                 = 0U,                                                                                           \
     .YReference         = vInRef,                                                                                       \
 }
 
@@ -94,7 +94,7 @@ static inline int32_t Linear_Voltage_CalcScalar16Of(const Linear_T * p_linear, u
 */
 static inline uint16_t Linear_Voltage_Percent16OfAdcu(const Linear_T * p_linear, uint16_t adcu)
 {
-    return _Linear_Percent16(p_linear, adcu);
+    return _Linear_Percent16_Clamp(p_linear, adcu);
 }
 
 /*!

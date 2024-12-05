@@ -46,9 +46,11 @@ static inline uint32_t _Encoder_DeltaT_GetTimerFreq(Encoder_T * p_encoder)
 static inline bool _Encoder_DeltaT_Capture(Encoder_T * p_encoder)
 {
     bool isValid = !HAL_Encoder_ReadTimerOverflow(p_encoder->CONST.P_HAL_ENCODER_TIMER);
+    if (isValid == true)
+        { p_encoder->DeltaT = HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER); }
+    else
+        { HAL_Encoder_ClearTimerOverflow(p_encoder->CONST.P_HAL_ENCODER_TIMER); }
     // p_encoder->DeltaT = (HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER) + p_encoder->DeltaT) / 2U;
-    if(isValid == true) { p_encoder->DeltaT = HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER); }
-    else { HAL_Encoder_ClearTimerOverflow(p_encoder->CONST.P_HAL_ENCODER_TIMER); }
     HAL_Encoder_WriteTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER, 0U);
     return isValid;
 }

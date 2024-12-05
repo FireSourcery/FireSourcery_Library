@@ -50,7 +50,7 @@
 */
 static inline int32_t Linear_Q16_Of(const Linear_T * p_linear, int32_t x)
 {
-    return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, x);
+    return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, x);
 }
 
 /*!
@@ -58,7 +58,7 @@ static inline int32_t Linear_Q16_Of(const Linear_T * p_linear, int32_t x)
 */
 static inline int32_t Linear_Q16_InvOf(const Linear_T * p_linear, int32_t y_fixed32)
 {
-    return linear_shift_invf_x0(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, y_fixed32);
+    return linear_shift_invf_x0(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->X0, y_fixed32);
 }
 
 /******************************************************************************/
@@ -69,14 +69,14 @@ static inline int32_t Linear_Q16_InvOf(const Linear_T * p_linear, int32_t y_fixe
 static inline int16_t Linear_Q16_Frac(const Linear_T * p_linear, int32_t x)
 {
     return _Linear_SatSigned16(Linear_Q16_Of(p_linear, x) / 2);
-    // return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, x);
+    // return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, x);
 }
 
 /* [0:2) */
 static inline uint16_t Linear_Q16_UFrac(const Linear_T * p_linear, int32_t x)
 {
     return _Linear_SatUnsigned16(Linear_Q16_Of(p_linear, x) / 2);
-    // return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, x);
+    // return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, x);
 }
 
 /* Input interval units */
@@ -93,7 +93,7 @@ static inline int32_t Linear_Q16_ValueOfFrac(const Linear_T * p_linear, int16_t 
 static inline uint16_t Linear_Q16_Percent(const Linear_T * p_linear, int32_t x)
 {
     return _Linear_SatUnsigned16(Linear_Q16_Of(p_linear, x));
-    // return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift - 1, p_linear->XOffset, x);
+    // return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift - 1, p_linear->X0, x);
 }
 
 static inline uint16_t Linear_Q16_Percent_Abs(const Linear_T * p_linear, int32_t x)
@@ -115,7 +115,7 @@ static inline int32_t Linear_Q16_ValueOfPercent(const Linear_T * p_linear, uint1
 /******************************************************************************/
 static inline uint16_t Linear_Q16_General(const Linear_T * p_linear, int32_t x)
 {
-    return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift + 8U, p_linear->XOffset, x);
+    return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift + 8U, p_linear->X0, x);
 }
 
 

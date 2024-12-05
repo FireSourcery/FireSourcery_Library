@@ -40,11 +40,10 @@
     #define CONFIG_RING_LENGTH_COMPARE
 #endif
 
-#if     defined(CONFIG_RING_MULTITHREADED_ENABLE)
-#elif   defined(CONFIG_RING_MULTITHREADED_DISABLE) || defined(CONFIG_RING_SINGLE_THREADED)
+#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
+#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE) /* Disable Critical at Ring Buffer 'class' level */
 #else
-    #define CONFIG_RING_MULTITHREADED_DISABLE
-    #define CONFIG_RING_SINGLE_THREADED
+    #define CONFIG_RING_LOCAL_CRITICAL_DISABLE
 #endif
 
 #endif

@@ -63,12 +63,12 @@ uint8_t _Linear_SlopeShift(int32_t factor, int32_t divisor, int32_t inputInterva
 void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-    p_linear->XOffset           = 0;
+    p_linear->X0                = 0;
     p_linear->XReference        = linear_invf(factor, divisor, y0, yRef); /* (yRef - y0)*divisor/factor + 0 */
-    p_linear->XDeltaRef         = p_linear->XReference - p_linear->XOffset;
+    p_linear->XDeltaRef         = p_linear->XReference - p_linear->X0;
     p_linear->SlopeShift        = _Linear_SlopeShift(factor, divisor, p_linear->XDeltaRef);
     p_linear->Slope             = (factor << p_linear->SlopeShift) / divisor;
-    p_linear->YOffset           = y0;
+    p_linear->Y0                = y0;
     p_linear->YReference        = yRef;
     p_linear->YDeltaRef         = yRef - y0;
     p_linear->InvSlopeShift     = _Linear_SlopeShift(divisor, factor, p_linear->YDeltaRef);
@@ -76,7 +76,7 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
     p_linear->SlopeFactor = factor;
     p_linear->SlopeDivisor = divisor;
-    p_linear->YOffset = y0;
+    p_linear->Y0 = y0;
     p_linear->YReference = yRef;
 #endif
 }
@@ -89,8 +89,8 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, int32_t yRef)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-    p_linear->XOffset           = x0;
-    p_linear->YOffset           = y0;
+    p_linear->X0                = x0;
+    p_linear->Y0                = y0;
     p_linear->XReference        = xRef;
     p_linear->YReference        = yRef;
     p_linear->XDeltaRef         = xRef - x0;
@@ -117,8 +117,8 @@ int32_t Linear_Of_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
     /*
         Loop N = Log_[DivisorN](scalar)
         scalar 1000
-            [DivisorN==10] => 4
-            [DivisorN==2]  => 10
+            [DivisorN == 10] => 4
+            [DivisorN == 2]  => 10
     */
     for(uint16_t iDivisor = 1U; scalar >= iDivisor; iDivisor *= 4U) /* scalar / iDivisor > 0U */
     {

@@ -48,6 +48,85 @@ static inline void PropagateSet(Motor_T * p_motor, Motor_PropagateSet_T reset)
 #endif
 }
 
+
+
+/******************************************************************************/
+/*
+    Nvm Reference/Calibration
+    Optionally propagate values during set, or wait for reboot
+*/
+/******************************************************************************/
+/* Reboot unless deinit is implemented in HAL */
+void Motor_Config_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode) { p_motor->Config.SensorMode = mode; PropagateSet(p_motor, Motor_InitSensor); }
+void Motor_Config_SetPolePairs(Motor_T * p_motor, uint8_t polePairs) { p_motor->Config.PolePairs = polePairs; PropagateSet(p_motor, Motor_ResetUnitsSensor); }
+
+// static void SetSpeedFeedbackRef(Motor_T * p_motor, uint16_t rpm)
+// {
+//     p_motor->Config.SpeedFeedbackRef_Rpm = rpm;
+//     if (p_motor->Config.SpeedMatchRef_Rpm > rpm) { p_motor->Config.SpeedMatchRef_Rpm = rpm; }
+// }
+
+// static void SetVSpeedRef(Motor_T * p_motor, uint16_t rpm)
+// {
+//     p_motor->Config.SpeedMatchRef_Rpm = (rpm > p_motor->Config.SpeedFeedbackRef_Rpm) ? p_motor->Config.SpeedFeedbackRef_Rpm : rpm;
+// }
+
+/* Setting Kv overwrites SpeedRefs. SpeedRefs can be set independently from Kv or lock */
+void Motor_Config_SetKv(Motor_T * p_motor, uint16_t kv)
+{
+    p_motor->Config.Kv = kv;
+    Motor_Config_SetSpeedFeedbackRef_Rpm(p_motor, kv * Motor_Static_GetVSource_V());
+    Motor_Config_SetSpeedMatchRef_Rpm(p_motor, kv * Motor_Static_GetVSource_V());
+}
+
+/* SpeedFeedbackRef_Rpm => 100% speed for PID feedback. */
+void Motor_Config_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm)
+{
+    p_motor->Config.SpeedFeedbackRef_Rpm = rpm;
+    if (p_motor->Config.SpeedMatchRef_Rpm > rpm) { p_motor->Config.SpeedMatchRef_Rpm = rpm; }
+    PropagateSet(p_motor, Motor_ResetUnitsVSpeed);
+    PropagateSet(p_motor, Motor_ResetUnitsSensor);
+}
+
+/* SpeedVRef =< SetSpeedFeedbackRef to ensure not match to higher speed */
+void Motor_Config_SetSpeedMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm)
+{
+    p_motor->Config.SpeedMatchRef_Rpm = (rpm > p_motor->Config.SpeedFeedbackRef_Rpm) ? p_motor->Config.SpeedFeedbackRef_Rpm : rpm;
+    PropagateSet(p_motor, Motor_ResetUnitsVSpeed);
+    PropagateSet(p_motor, Motor_ResetUnitsSensor);
+}
+
+/******************************************************************************/
+/* ISensorRef */
+/******************************************************************************/
+void Motor_Config_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Config.IaZeroRef_Adcu = adcu; PropagateSet(p_motor, Motor_ResetUnitsIa); }
+void Motor_Config_SetIbZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Config.IbZeroRef_Adcu = adcu; PropagateSet(p_motor, Motor_ResetUnitsIb); }
+void Motor_Config_SetIcZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Config.IcZeroRef_Adcu = adcu; PropagateSet(p_motor, Motor_ResetUnitsIc); }
+
+void Motor_Config_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
+{
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+    p_motor->Config.IPeakRef_Adcu = adcu;
+    Motor_ResetUnitsIabc(p_motor);
+#else
+    p_motor->Config.IPeakRef_Adcu = (adcu > MOTOR_STATIC.I_MAX_ADCU) ? MOTOR_STATIC.I_MAX_ADCU : adcu;
+    PropagateSet(p_motor, Motor_ResetUnitsIabc);
+#endif
+}
+
+void Motor_Config_SetIPeakRef_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV)
+{
+    uint16_t adcuZero = (uint32_t)(max_MilliV + min_MilliV) * GLOBAL_ANALOG.ADC_MAX / 2U / GLOBAL_ANALOG.ADC_VREF_MILLIV;
+    uint16_t adcuMax = (uint32_t)max_MilliV * GLOBAL_ANALOG.ADC_MAX / GLOBAL_ANALOG.ADC_VREF_MILLIV;
+    Motor_Config_SetIPeakRef_Adcu(p_motor, adcuMax - adcuZero);
+}
+
+void Motor_Config_SetDirectionCalibration(Motor_T * p_motor, Motor_Direction_T directionForward)
+{
+    p_motor->Config.DirectionForward = directionForward;
+    PropagateSet(p_motor, Motor_SetDirectionForward);
+}
+
 /******************************************************************************/
 /*
     Nvm Param Persistent Limits
@@ -175,74 +254,3 @@ void Motor_Config_SetILimitGenerating_Amp(Motor_T * p_motor, uint16_t generating
 uint16_t Motor_Config_GetILimitMotoring_Amp(Motor_T * p_motor) { return _Motor_ConvertI_Scalar16ToAmp(p_motor->Config.ILimitMotoring_Scalar16); }
 uint16_t Motor_Config_GetILimitGenerating_Amp(Motor_T * p_motor) { return _Motor_ConvertI_Scalar16ToAmp(p_motor->Config.ILimitGenerating_Scalar16); }
 #endif
-
-/******************************************************************************/
-/*
-    Nvm Reference/Calibration
-    Optionally propagate values during set, or wait for reboot
-*/
-/******************************************************************************/
-/* SpeedFeedbackRef_Rpm => 100% speed for PID feedback. */
-void Motor_Config_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm)
-{
-    p_motor->Config.SpeedFeedbackRef_Rpm = rpm;
-    // if(rpm > kv * Motor_Static_GetVSource_V())
-    if(p_motor->Config.SpeedVRef_Rpm > rpm) { p_motor->Config.SpeedVRef_Rpm = rpm; }
-    PropagateSet(p_motor, Motor_ResetUnitsVSpeed);
-    PropagateSet(p_motor, Motor_ResetUnitsSensor);
-}
-
-/* SpeedVRef =< SetSpeedFeedbackRef to ensure not match to higher speed */
-void Motor_Config_SetSpeedVRef_Rpm(Motor_T * p_motor, uint16_t rpm)
-{
-    p_motor->Config.SpeedVRef_Rpm = (rpm > p_motor->Config.SpeedFeedbackRef_Rpm) ? p_motor->Config.SpeedFeedbackRef_Rpm : rpm;
-    PropagateSet(p_motor, Motor_ResetUnitsVSpeed);
-    PropagateSet(p_motor, Motor_ResetUnitsSensor);
-}
-
-static void SetSpeedFeedbackRef_Kv(Motor_T * p_motor, uint16_t kv) { Motor_Config_SetSpeedFeedbackRef_Rpm(p_motor, kv * Motor_Static_GetVSource_V()); }
-static void SetVSpeedRef_Kv(Motor_T * p_motor, uint16_t kv) { Motor_Config_SetSpeedVRef_Rpm(p_motor, kv * Motor_Static_GetVSource_V()); }
-
-/* Setting Kv overwrites SpeedFeedbackRef. SpeedFeedbackRef can be set independently from Kv */
-void Motor_Config_SetKv(Motor_T * p_motor, uint16_t kv)
-{
-    p_motor->Config.Kv = kv;
-    SetSpeedFeedbackRef_Kv(p_motor, kv);
-    SetVSpeedRef_Kv(p_motor, kv);
-}
-
-void Motor_Config_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Config.IaZeroRef_Adcu = adcu; PropagateSet(p_motor, Motor_ResetUnitsIa); }
-void Motor_Config_SetIbZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Config.IbZeroRef_Adcu = adcu; PropagateSet(p_motor, Motor_ResetUnitsIb); }
-void Motor_Config_SetIcZero_Adcu(Motor_T * p_motor, uint16_t adcu) { p_motor->Config.IcZeroRef_Adcu = adcu; PropagateSet(p_motor, Motor_ResetUnitsIc); }
-
-void Motor_Config_SetDirectionCalibration(Motor_T * p_motor, Motor_Direction_T directionForward)
-{
-    p_motor->Config.DirectionForward = directionForward;
-    PropagateSet(p_motor, Motor_SetDirectionForward);
-}
-
-void Motor_Config_SetPolePairs(Motor_T * p_motor, uint8_t polePairs) { p_motor->Config.PolePairs = polePairs; PropagateSet(p_motor, Motor_ResetUnitsSensor); }
-
-/* Reboot unless deinit is implemented in HAL */
-void Motor_Config_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode) { p_motor->Config.SensorMode = mode; PropagateSet(p_motor, Motor_InitSensor); }
-
-/******************************************************************************/
-/* IPeak  */
-/******************************************************************************/
-void Motor_Config_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
-{
-#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
-    p_motor->Config.IPeakRef_Adcu = adcu;
-    Motor_ResetUnitsIabc(p_motor);
-#else
-    p_motor->Config.IPeakRef_Adcu = (adcu > MOTOR_STATIC.I_MAX_ADCU) ? MOTOR_STATIC.I_MAX_ADCU : adcu;
-    PropagateSet(p_motor, Motor_ResetUnitsIabc);
-#endif
-}
-
-void Motor_Config_SetIPeakRef_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV)
-{
-    uint16_t adcuZero = (uint32_t)(max_MilliV + min_MilliV) * GLOBAL_ANALOG.ADC_MAX / 2U / GLOBAL_ANALOG.ADC_VREF_MILLIV;
-    uint16_t adcuMax = (uint32_t)max_MilliV * GLOBAL_ANALOG.ADC_MAX / GLOBAL_ANALOG.ADC_VREF_MILLIV;
-    Motor_Config_SetIPeakRef_Adcu(p_motor, adcuMax - adcuZero);
-}

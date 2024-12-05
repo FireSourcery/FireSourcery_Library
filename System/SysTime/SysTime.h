@@ -67,6 +67,7 @@ static inline void SysTime_CaptureMillis_ISR(void)  { SysTime_Millis++; }
 
 static inline uint32_t SysTime_GetMillis(void)      { return SysTime_Millis; }
 static inline uint32_t Millis(void)                 { return SysTime_GetMillis(); }
+
 static inline void SysTime_ZeroMillis(void)         { SysTime_Millis = 0U; }
 
 #if defined(CONFIG_SYSTIME_SYSTICK) && defined(CPU_FREQ)

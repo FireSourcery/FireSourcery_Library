@@ -132,9 +132,9 @@ void Motor_Analog_StartCalibration(Motor_T * p_motor)
     Timer_StartPeriod(&p_motor->ControlTimer, MOTOR_STATIC.CONTROL_FREQ * 2U); /* 2 Seconds */
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, 0U /*Phase_Ground(&p_motor->Phase)*/);
 
-    Filter_InitAvg(&p_motor->FilterA);
-    Filter_InitAvg(&p_motor->FilterB);
-    Filter_InitAvg(&p_motor->FilterC);
+    Filter_Avg_Init(&p_motor->FilterA);
+    Filter_Avg_Init(&p_motor->FilterB);
+    Filter_Avg_Init(&p_motor->FilterC);
     p_motor->AnalogResults.Ia_Adcu = 0U;
     p_motor->AnalogResults.Ib_Adcu = 0U;
     p_motor->AnalogResults.Ic_Adcu = 0U;
@@ -143,7 +143,7 @@ void Motor_Analog_StartCalibration(Motor_T * p_motor)
 
 bool Motor_Analog_ProcCalibration(Motor_T * p_motor)
 {
-    static const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
+    const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
     bool isComplete = Timer_Periodic_Poll(&p_motor->ControlTimer);
     if (isComplete == true)
     {

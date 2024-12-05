@@ -33,7 +33,6 @@
 
 // #include <stdbit.h>
 
-//move to math_general
 // math_fixed
 // math_q
 

@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "Encoder.h"
 
-/* Phase in ABAB order, ALeadB as increment */
+/* Phase in XXXXABAB order, ALeadB as increment */
 const int8_t _ENCODER_TABLE[_ENCODER_TABLE_LENGTH] =
 {
     0,-1,1,_ENCODER_TABLE_ERROR,

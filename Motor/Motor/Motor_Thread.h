@@ -47,11 +47,11 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
     // Motor_Debug_CaptureRefTime(p_motor);
     p_motor->ControlTimerBase++;
-    // Motor_Analog_Proc(p_motor);
+    // Motor_Analog_Proc(p_motor); // todo
     StateMachine_ProcState(&p_motor->StateMachine);
     // Motor_Debug_CaptureTime(p_motor, 5U);
 #ifdef CONFIG_MOTOR_PWM_INTERRUPT_CLEAR_PER_MOTOR
-    // Motor_ClearInterrupt(&p_mc->CONST.P_MOTORS[0U]);
+    Motor_ClearInterrupt(p_motor);
 #endif
 }
 
@@ -94,7 +94,7 @@ static inline void Motor_HallEncoderA_ISR(Motor_T * p_motor)
 {
     Encoder_OnPhaseA_ISR(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
-    if(p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureRotorAngle_ISR(&p_motor->Hall); }
+    if(p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureAngle_ISR(&p_motor->Hall); }
 #endif
 }
 
@@ -102,7 +102,7 @@ static inline void Motor_HallEncoderB_ISR(Motor_T * p_motor)
 {
     Encoder_OnPhaseB_ISR(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
-    if(p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureRotorAngle_ISR(&p_motor->Hall); }
+    if(p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureAngle_ISR(&p_motor->Hall); }
 #endif
 }
 
@@ -110,7 +110,7 @@ static inline void Motor_HallEncoderAB_ISR(Motor_T * p_motor)
 {
     Encoder_OnPhaseAB_ISR(&p_motor->Encoder);
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
-    if(p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureRotorAngle_ISR(&p_motor->Hall); }
+    if(p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_HALL) { Hall_CaptureAngle_ISR(&p_motor->Hall); }
 #endif
 }
 
@@ -124,12 +124,13 @@ static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_motor)
 #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
         case MOTOR_SENSOR_MODE_HALL:
             Encoder_OnPhaseC_Hall_ISR(&p_motor->Encoder);
-            Hall_CaptureRotorAngle_ISR(&p_motor->Hall);
+            Hall_CaptureAngle_ISR(&p_motor->Hall);
             break;
 #endif
         default: break;
     }
 }
+
 #endif
 
 

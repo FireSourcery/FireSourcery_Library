@@ -113,10 +113,10 @@ typedef enum MotVarId_Cmd_Motor
     MOT_VAR_MOTOR_CMD_VOLTAGE,
     MOT_VAR_MOTOR_CMD_ANGLE,
     MOT_VAR_MOTOR_CMD_OPEN_LOOP,
-    MOT_VAR_MOTOR_FORCE_DISABLE_CONTROL,
-    MOT_VAR_MOTOR_TRY_RELEASE,
-    MOT_VAR_MOTOR_TRY_HOLD,
-    MOT_VAR_MOTOR_CLEAR_FAULT,
+    MOT_VAR_MOTOR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call
+    MOT_VAR_MOTOR_TRY_RELEASE,              // No value arg. same as either neutral or driveZero
+    MOT_VAR_MOTOR_TRY_HOLD,                 // No value arg. bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
+    MOT_VAR_MOTOR_CLEAR_FAULT,              // No value arg. Clear Faults
 }
 MotVarId_Cmd_Motor_T;
 
@@ -124,9 +124,9 @@ typedef enum MotVarId_Control_Motor
 {
     MOT_VAR_MOTOR_DIRECTION,            // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
     MOT_VAR_MOTOR_USER_SET_POINT,       // RampIn/RampOut, Generic mode select
+    // MOT_VAR_MOTOR_USER_FEEDBACK_MODE, // generally set by inclusion, or config base
     MOT_VAR_MOTOR_IO_SPEED_LIMIT,       // Read Active, Write buffered user value
     MOT_VAR_MOTOR_IO_I_LIMIT,
-    // MOT_VAR_MOTOR_USER_FEEDBACK_MODE, // generally set by inclusion, or config base
 }
 MotVarId_Control_Motor_T;
 
@@ -187,7 +187,8 @@ typedef enum MotVarId_Cmd
     */
     MOT_VAR_THROTTLE,                       // [0:65535]
     MOT_VAR_BRAKE,                          // [0:65535]
-    MOT_VAR_OPT_SPEED_LIMIT,                // 1:Enable, 0:Disable
+    MOT_VAR_OPT_SPEED_LIMIT_ON_OFF,         // 1:Enable, 0:Disable
+    MOT_VAR_OPT_I_LIMIT_ON_OFF,             // 1:Enable, 0:Disable
 }
 MotVarId_Cmd_T;
 
@@ -219,7 +220,7 @@ typedef enum MotVarId_Config_MotorPrimary
     MOT_VAR_POLE_PAIRS,
     MOT_VAR_KV,
     MOT_VAR_SPEED_FEEDBACK_REF_RPM,
-    MOT_VAR_SPEED_V_REF_RPM,
+    MOT_VAR_SPEED_MATCH_REF_RPM,
     MOT_VAR_IA_ZERO_REF_ADCU,
     MOT_VAR_IB_ZERO_REF_ADCU,
     MOT_VAR_IC_ZERO_REF_ADCU,
@@ -329,7 +330,8 @@ typedef enum MotVarId_Config_General
     MOT_VAR_I_LIMIT_LOW_V,
     MOT_VAR_BUZZER_FLAGS_ENABLE,            // MotorController_BuzzerFlags_T
     MOT_VAR_OPT_DIN_FUNCTION,               // MotorController_OptDinMode_T
-    MOT_VAR_OPT_DIN_SPEED_LIMIT,
+    MOT_VAR_OPT_SPEED_LIMIT,
+    MOT_VAR_OPT_I_LIMIT,
     // MOT_VAR_CAN_SERVICES_ID,
     // MOT_VAR_CAN_IS_ENABLE,
     // MOT_VAR_BATTERY_ZERO_ADCU,

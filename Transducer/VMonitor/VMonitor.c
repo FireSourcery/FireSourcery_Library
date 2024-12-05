@@ -41,7 +41,7 @@ static void ResetUnitConversion(VMonitor_T * p_vMonitor)
 
 void VMonitor_Init(VMonitor_T * p_vMonitor)
 {
-    if(p_vMonitor->CONST.P_CONFIG != 0U) { memcpy(&p_vMonitor->Config, p_vMonitor->CONST.P_CONFIG, sizeof(VMonitor_Config_T)); }
+    if(p_vMonitor->CONST.P_CONFIG != NULL) { memcpy(&p_vMonitor->Config, p_vMonitor->CONST.P_CONFIG, sizeof(VMonitor_Config_T)); }
 
     ResetUnitConversion(p_vMonitor);
     p_vMonitor->Status = VMONITOR_STATUS_OK;

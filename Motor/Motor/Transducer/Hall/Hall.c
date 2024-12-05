@@ -32,7 +32,7 @@
 
 #include <string.h>
 
-const uint16_t _HALL_DEGREES_TABLE[HALL_SENSORS_TABLE_LENGTH] =
+const uint16_t _HALL_ANGLE_TABLE[HALL_SENSORS_TABLE_LENGTH] =
 {
     [HALL_ANGLE_330_30]     = 0U,         /* 0 */
     [HALL_ANGLE_30_90]      = 10922U,     /* 60 */
@@ -71,12 +71,12 @@ void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC
     180 Degree Active
     Sensors are aligned to motor phase, 0 degree offset.
 */
-static void CalibratePhaseA(Hall_T * p_hall)    { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_A; }
-static void CalibratePhaseInvC(Hall_T * p_hall) { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_INV_C; }
-static void CalibratePhaseB(Hall_T * p_hall)    { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_B; }
-static void CalibratePhaseInvA(Hall_T * p_hall) { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_INV_A; }
-static void CalibratePhaseC(Hall_T * p_hall)    { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_C; }
-static void CalibratePhaseInvB(Hall_T * p_hall) { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).State] = HALL_SENSORS_VIRTUAL_INV_B; }
+static void CalibratePhaseA(Hall_T * p_hall)    { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).Value] = HALL_SENSORS_VIRTUAL_A; }
+static void CalibratePhaseInvC(Hall_T * p_hall) { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).Value] = HALL_SENSORS_VIRTUAL_INV_C; }
+static void CalibratePhaseB(Hall_T * p_hall)    { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).Value] = HALL_SENSORS_VIRTUAL_B; }
+static void CalibratePhaseInvA(Hall_T * p_hall) { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).Value] = HALL_SENSORS_VIRTUAL_INV_A; }
+static void CalibratePhaseC(Hall_T * p_hall)    { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).Value] = HALL_SENSORS_VIRTUAL_C; }
+static void CalibratePhaseInvB(Hall_T * p_hall) { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).Value] = HALL_SENSORS_VIRTUAL_INV_B; }
 
 /* For 180 degree active. 120 degree active todo */
 void Hall_StartCalibrate(Hall_T * p_hall)       { Hall_ResetCapture(p_hall); /* p_hall->Config.BoundaryType = 0U; */ }

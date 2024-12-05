@@ -41,7 +41,7 @@ static void ResetUnitsLinear(Thermistor_T * p_therm)
 
 void Thermistor_Init(Thermistor_T * p_therm)
 {
-    if (p_therm->CONST.P_CONFIG != 0U) { memcpy(&p_therm->Config, p_therm->CONST.P_CONFIG, sizeof(Thermistor_Config_T)); }
+    if (p_therm->CONST.P_CONFIG != NULL) { memcpy(&p_therm->Config, p_therm->CONST.P_CONFIG, sizeof(Thermistor_Config_T)); }
 
     ResetUnitsLinear(p_therm);
 

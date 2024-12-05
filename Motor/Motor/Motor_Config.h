@@ -50,11 +50,6 @@
 //     if(StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP) { setFunction(p_motor, value); }
 // }
 
-/* Persistent Base Limits */
-static inline uint16_t Motor_Config_GetSpeedLimitForward_Scalar16(Motor_T * p_motor)   { return p_motor->Config.SpeedLimitForward_Scalar16; }
-static inline uint16_t Motor_Config_GetSpeedLimitReverse_Scalar16(Motor_T * p_motor)   { return p_motor->Config.SpeedLimitReverse_Scalar16; }
-static inline uint16_t Motor_Config_GetILimitMotoring_Scalar16(Motor_T * p_motor)      { return p_motor->Config.ILimitMotoring_Scalar16; }
-static inline uint16_t Motor_Config_GetILimitGenerating_Scalar16(Motor_T * p_motor)    { return p_motor->Config.ILimitGenerating_Scalar16; }
 
 /* Calibration */
 static inline Motor_SensorMode_T Motor_Config_GetSensorMode(Motor_T * p_motor)             { return p_motor->Config.SensorMode; }
@@ -62,11 +57,12 @@ static inline Motor_Direction_T Motor_Config_GetDirectionCalibration(Motor_T * p
 static inline uint8_t Motor_Config_GetPolePairs(Motor_T * p_motor)                         { return p_motor->Config.PolePairs; }
 static inline uint16_t Motor_Config_GetKv(Motor_T * p_motor)                               { return p_motor->Config.Kv; }
 static inline uint16_t Motor_Config_GetSpeedFeedbackRef_Rpm(Motor_T * p_motor)             { return p_motor->Config.SpeedFeedbackRef_Rpm; }
-static inline uint16_t Motor_Config_GetSpeedVRef_Rpm(Motor_T * p_motor)                    { return p_motor->Config.SpeedVRef_Rpm; }
+static inline uint16_t Motor_Config_GetSpeedVRef_Rpm(Motor_T * p_motor)                    { return p_motor->Config.SpeedMatchRef_Rpm; }
 static inline uint16_t Motor_Config_GetIaZero_Adcu(Motor_T * p_motor)                      { return p_motor->Config.IaZeroRef_Adcu; }
 static inline uint16_t Motor_Config_GetIbZero_Adcu(Motor_T * p_motor)                      { return p_motor->Config.IbZeroRef_Adcu; }
 static inline uint16_t Motor_Config_GetIcZero_Adcu(Motor_T * p_motor)                      { return p_motor->Config.IcZeroRef_Adcu; }
 static inline uint16_t Motor_Config_GetIPeakRef_Adcu(Motor_T * p_motor)                    { return Motor_GetIPeakRef_Adcu(p_motor); }
+static inline uint16_t Motor_Config_GetKvRpm(Motor_T * p_motor)                            { return p_motor->Config.Kv * Motor_Static_GetVSource_V(); }
 
 /*  */
 static inline Motor_CommutationMode_T Motor_Config_GetCommutationMode(Motor_T * p_motor)                   { return p_motor->Config.CommutationMode; }
@@ -111,11 +107,35 @@ static inline void Motor_Config_SetOpenLoopAccel_Millis(Motor_T * p_motor, uint1
 static inline void Motor_Config_SetPhaseModeParam(Motor_T * p_motor, Phase_Mode_T mode)       { p_motor->Config.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->Phase, mode); }
 #endif
 
+/* Persistent Base Limits */
+static inline uint16_t Motor_Config_GetSpeedLimitForward_Scalar16(Motor_T * p_motor) { return p_motor->Config.SpeedLimitForward_Scalar16; }
+static inline uint16_t Motor_Config_GetSpeedLimitReverse_Scalar16(Motor_T * p_motor) { return p_motor->Config.SpeedLimitReverse_Scalar16; }
+static inline uint16_t Motor_Config_GetILimitMotoring_Scalar16(Motor_T * p_motor) { return p_motor->Config.ILimitMotoring_Scalar16; }
+static inline uint16_t Motor_Config_GetILimitGenerating_Scalar16(Motor_T * p_motor) { return p_motor->Config.ILimitGenerating_Scalar16; }
+
 /******************************************************************************/
 /*!
     Extern
 */
 /******************************************************************************/
+extern void Motor_Config_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm);
+extern void Motor_Config_SetSpeedFeedbackRef_Kv(Motor_T * p_motor, uint16_t kv);
+extern void Motor_Config_SetSpeedMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm);
+extern void Motor_Config_SetKv(Motor_T * p_motor, uint16_t kv);
+
+extern void Motor_Config_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu);
+extern void Motor_Config_SetIbZero_Adcu(Motor_T * p_motor, uint16_t adcu);
+extern void Motor_Config_SetIcZero_Adcu(Motor_T * p_motor, uint16_t adcu);
+extern void Motor_Config_SetDirectionCalibration(Motor_T * p_motor, Motor_Direction_T directionForward);
+extern void Motor_Config_SetPolePairs(Motor_T * p_motor, uint8_t polePairs);
+extern void Motor_Config_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode);
+
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+extern void Motor_Config_SetIPeakRef_Adcu_Debug(Motor_T * p_motor, uint16_t adcu);
+extern void Motor_Config_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu);
+extern void Motor_Config_SetIPeakRef_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV);
+#endif
+
 extern void Motor_Config_SetSpeedLimitForward_Scalar16(Motor_T * p_motor, uint16_t forward_Frac16);
 extern void Motor_Config_SetSpeedLimitReverse_Scalar16(Motor_T * p_motor, uint16_t reverse_Frac16);
 extern void Motor_Config_SetSpeedLimit_Scalar16(Motor_T * p_motor, uint16_t forward_Frac16, uint16_t reverse_Frac16);
@@ -130,25 +150,6 @@ extern void Motor_Config_SetSpeedLimit_Rpm(Motor_T * p_motor, uint16_t forward_R
 extern void Motor_Config_SetILimitMotoring_Amp(Motor_T * p_motor, uint16_t motoring_Amp);
 extern void Motor_Config_SetILimitGenerating_Amp(Motor_T * p_motor, uint16_t generating_Amp);
 extern void Motor_Config_SetILimit_Amp(Motor_T * p_motor, uint16_t motoring_Amp, uint16_t generating_Amp);
-#endif
-
-extern void Motor_Config_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm);
-extern void Motor_Config_SetSpeedFeedbackRef_Kv(Motor_T * p_motor, uint16_t kv);
-extern void Motor_Config_SetSpeedVRef_Rpm(Motor_T * p_motor, uint16_t rpm);
-extern void Motor_Config_SetVSpeedRef_Kv(Motor_T * p_motor, uint16_t kv);
-extern void Motor_Config_SetKv(Motor_T * p_motor, uint16_t kv);
-
-extern void Motor_Config_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu);
-extern void Motor_Config_SetIbZero_Adcu(Motor_T * p_motor, uint16_t adcu);
-extern void Motor_Config_SetIcZero_Adcu(Motor_T * p_motor, uint16_t adcu);
-extern void Motor_Config_SetDirectionCalibration(Motor_T * p_motor, Motor_Direction_T directionForward);
-extern void Motor_Config_SetPolePairs(Motor_T * p_motor, uint8_t polePairs);
-extern void Motor_Config_SetSensorMode(Motor_T * p_motor, Motor_SensorMode_T mode);
-
-#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
-extern void Motor_Config_SetIPeakRef_Adcu_Debug(Motor_T * p_motor, uint16_t adcu);
-extern void Motor_Config_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu);
-extern void Motor_Config_SetIPeakRef_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV);
 #endif
 
 #endif

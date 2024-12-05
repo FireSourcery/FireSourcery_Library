@@ -87,12 +87,12 @@ extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVR
 /******************************************************************************/
 // static inline int32_t Linear_Q16_Units16(const Linear_T * p_linear, int32_t y_frac16)
 // {
-//     return linear_units_of_fixed(p_linear->YOffset, p_linear->YDeltaRef, y_frac16);
+//     return linear_units_of_fixed(p_linear->Y0, p_linear->YDeltaRef, y_frac16);
 // }
 
 // static inline int32_t Linear_Q16_InvUnits16(const Linear_T * p_linear, int32_t y_units)
 // {
-//     return linear_fixed_of_units(p_linear->YOffset, p_linear->YDeltaRef, y_units);
+//     return linear_fixed_of_units(p_linear->Y0, p_linear->YDeltaRef, y_units);
 // }
 
 // /* x to fixed to y_units */
@@ -110,11 +110,11 @@ extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVR
 // /* User Units using YRef */
 // static inline int32_t Linear_Q16_Units(const Linear_T * p_linear, int32_t x)
 // {
-//     return linear_m16_f(p_linear->Slope, p_linear->SlopeShift, p_linear->XOffset, p_linear->YOffset, p_linear->YDeltaRef, x);
+//     return linear_m16_f(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, p_linear->Y0, p_linear->YDeltaRef, x);
 // }
 
 // /* Division limited to this function only */
 // static inline int32_t Linear_Q16_InvUnits(const Linear_T * p_linear, int32_t y)
 // {
-//     return linear_m16_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->XOffset, p_linear->YOffset, p_linear->YDeltaRef, y);
+//     return linear_m16_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->X0, p_linear->Y0, p_linear->YDeltaRef, y);
 // }

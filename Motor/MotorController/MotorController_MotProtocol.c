@@ -80,10 +80,11 @@ static protocol_size_t StopAll(MotorController_T * p_mc, MotPacket_StopResp_T * 
 /******************************************************************************/
 /*! Call - Blocking  */
 // functions of the same cast type
+// blocking + async responses
 /******************************************************************************/
 typedef enum MotProtocol_CallId
 {
-    MOT_CALL_LOCKED_STATE,
+    MOT_CALL_LOCK_STATE,
     // MOT_CALL_REBOOT,
 }
 MotProtocol_CallId_T;
@@ -95,7 +96,7 @@ static protocol_size_t Call_Blocking(MotorController_T * p_mc, MotPacket_CallRes
 
     switch((MotProtocol_CallId_T)p_rxPacket->CallReq.Id)
     {
-        case MOT_CALL_LOCKED_STATE:
+        case MOT_CALL_LOCK_STATE:
             // status = MotorController_User_InputLock(p_mc, (MotorController_LockId_T)p_rxPacket->CallReq.Arg); //todo
             switch((MotorController_LockId_T)p_rxPacket->CallReq.Arg) /* StateMachine will check for invalid BlockingId */
             {

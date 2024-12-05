@@ -54,7 +54,7 @@ typedef struct PID_Config
     int32_t Ki_Fixed32;
     int32_t Kd_Fixed32;
 
-    // alternatively store fixed and keep these in ram
+    // alternatively store fixed32 and keep these in ram
     int16_t PropGain;
     int8_t PropGainShift;
     int16_t IntegralGain;
@@ -72,7 +72,7 @@ typedef struct PID
 {
     const PID_Const_T CONST;
     PID_Config_T Config;
-    int32_t Integral32; /* Q16.16, Shifted 16 */
+    int32_t Integral32; /* Shifted 16 */
     int32_t ErrorPrev;
     int16_t OutputMin; /* -32768 Min */
     int16_t OutputMax; /* 32767 Max */

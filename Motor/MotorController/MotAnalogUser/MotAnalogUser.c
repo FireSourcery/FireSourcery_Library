@@ -38,7 +38,7 @@ static inline void ResetThrottleUnits(MotAnalogUser_T * p_user) { Linear_ADC_Ini
 
 void MotAnalogUser_Init(MotAnalogUser_T * p_user)
 {
-    if(p_user->CONST.P_CONFIG != 0U)
+    if(p_user->CONST.P_CONFIG != NULL)
     {
         memcpy(&p_user->Config, p_user->CONST.P_CONFIG, sizeof(MotAnalogUser_Config_T));
         ResetBrakeUnits(p_user);
