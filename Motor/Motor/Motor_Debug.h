@@ -35,15 +35,6 @@
 #include "System/SysTime/SysTime.h"
 #include "Motor.h"
 
-#if  defined(CONFIG_MOTOR_DEBUG_ENABLE)
-    uint32_t MicrosRef;
-    volatile bool DebugFlag;
-    volatile uint32_t DebugError;
-    volatile uint32_t DebugTime[10U];
-    volatile uint32_t DebugTimeABC[3U];
-    volatile uint32_t DebugCounter;
-    volatile uint32_t DebugCounter2;
-#endif
 
 static inline void Motor_Debug_CaptureRefTime(Motor_T * p_motor)
 {

@@ -5,7 +5,7 @@
     //     "${workspaceFolder:mcux-sdx}/core/CMSIS/Core/Include/cmsis_gcc.h",
     // ],
     "C_Cpp.default.includePath": [
-        "${default}",
+        // "${default}",
         "${workspaceFolder:Project}",
         "${workspaceFolder:FireSourcery_Library}",
         "${workspaceFolder:mcux-sdk}/core",

@@ -36,6 +36,8 @@
 #include "math_svpwm.h"
 #include "Math/Q/QFrac16.h"
 
+#include "System/SysTime/SysTime.h"
+
 typedef struct FOC
 {
     /* Config */
@@ -66,15 +68,14 @@ typedef struct FOC
 
     /* Request in V or I  */
     /* PID Setpoint Variable - From Ramp, SpeedPid, OpenLoop */
-    qfrac16_t DReq;
-    qfrac16_t QReq;
+    qfrac16_t ReqD;
+    qfrac16_t ReqQ;
+    uint16_t ReqScalar;   /* UFrac16, Q1.15 Unsigned */
 
     /* VOutput/VBemf */
     /* PID Control Variable, or intermediate input bypass current feedback */
     qfrac16_t Vd;
     qfrac16_t Vq;
-
-    uint16_t ReqMagnitude;   /* UFrac16, Q1.15 Unsigned, vector magnitude prior to limit */
 
     qfrac16_t Valpha;
     qfrac16_t Vbeta;
@@ -100,10 +101,11 @@ static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
 
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 {
-    // foc_circlelimit_dmax(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
-    p_foc->ReqMagnitude = foc_circlelimit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX);
+    // p_foc->ReqScalar = qfrac16_vector_limit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX);
+    // foc_circlelimit(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
+    foc_circlelimit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX, QFRAC16_1_DIV_2);
     foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
-    svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
+    svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta); /* altnernatively return Va,Vb,Vc */
 }
 
 /* VBemf */
@@ -126,6 +128,7 @@ static inline qfrac16_t FOC_GetVPhase(const FOC_T * p_foc) { return FOC_GetVMagn
 static inline int32_t FOC_GetPower(const FOC_T * p_foc) { return (qfrac16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2); }
 
 static inline void FOC_SetTheta(FOC_T * p_foc, qangle16_t theta) { qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, theta); }
+
 static inline void FOC_SetIa(FOC_T * p_foc, qfrac16_t ia) { p_foc->Ia = ia; }
 static inline void FOC_SetIb(FOC_T * p_foc, qfrac16_t ib) { p_foc->Ib = ib; }
 static inline void FOC_SetIc(FOC_T * p_foc, qfrac16_t ic) { p_foc->Ic = ic; }
@@ -155,10 +158,10 @@ static inline qfrac16_t FOC_GetVBemfA(const FOC_T * p_foc) { return p_foc->Va; }
 static inline qfrac16_t FOC_GetVBemfB(const FOC_T * p_foc) { return p_foc->Vb; }
 static inline qfrac16_t FOC_GetVBemfC(const FOC_T * p_foc) { return p_foc->Vc; }
 
-static inline void FOC_SetDReq(FOC_T * p_foc, qfrac16_t id) { p_foc->DReq = id; }
-static inline void FOC_SetQReq(FOC_T * p_foc, qfrac16_t iq) { p_foc->QReq = iq; }
-static inline qfrac16_t FOC_GetDReq(const FOC_T * p_foc) { return p_foc->DReq; }
-static inline qfrac16_t FOC_GetQReq(const FOC_T * p_foc) { return p_foc->QReq; }
+static inline void FOC_SetReqD(FOC_T * p_foc, qfrac16_t d) { p_foc->ReqD = d; }
+static inline void FOC_SetReqQ(FOC_T * p_foc, qfrac16_t q) { p_foc->ReqQ = q; }
+static inline qfrac16_t FOC_GetReqD(const FOC_T * p_foc) { return p_foc->ReqD; }
+static inline qfrac16_t FOC_GetReqQ(const FOC_T * p_foc) { return p_foc->ReqQ; }
 
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd);

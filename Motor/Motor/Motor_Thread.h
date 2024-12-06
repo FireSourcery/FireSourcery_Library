@@ -35,6 +35,7 @@
 #include "Motor_StateMachine.h"
 #include "Motor_Analog.h"
 #include "Motor_User.h"
+#include "Motor_Debug.h"
 #include "Motor.h"
 
 #include "Transducer/Encoder/Encoder_ISR.h"
@@ -45,7 +46,8 @@
 */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-    // Motor_Debug_CaptureRefTime(p_motor);
+//   #ifdef CONFIG_MOTOR_DEBUG
+    Motor_Debug_CaptureRefTime(p_motor);
     p_motor->ControlTimerBase++;
     // Motor_Analog_Proc(p_motor); // todo
     StateMachine_ProcState(&p_motor->StateMachine);

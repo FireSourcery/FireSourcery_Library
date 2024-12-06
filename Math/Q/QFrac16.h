@@ -67,8 +67,8 @@ static const qaccum32_t QFRAC16_3PI_DIV_4      = 0x00012D97; /* Over saturated *
 #define QFRAC16_FLOAT_MIN (-1.0F)
 #define QFRAC16_FLOAT(x) ((qfrac16_t)(((x) < QFRAC16_FLOAT_MAX) ? (((x) >= QFRAC16_FLOAT_MIN) ? ((x)*32768.0F) : INT16_MIN) : INT16_MAX))
 
-static inline qfrac16_t qfrac16(int16_t num, int32_t max) { return (qfrac16_t)(((int32_t)num << QFRAC16_N_BITS) / max); }
-static inline qfrac16_t qfrac16_sat(int32_t qfrac) { return math_clamp(qfrac, -QFRAC16_MAX, QFRAC16_MAX); }
+static inline qfrac16_t qfrac16(int16_t numerator, int32_t denominator) { return (qfrac16_t)(((int32_t)numerator << QFRAC16_N_BITS) / denominator); }
+static inline qfrac16_t qfrac16_sat(qaccum32_t qfrac) { return math_clamp(qfrac, -QFRAC16_MAX, QFRAC16_MAX); }
 
 /*!
     @brief Unsaturated Multiply
@@ -114,7 +114,7 @@ static inline qfrac16_t qfrac16_mul_sat(qaccum32_t factor, qaccum32_t frac)
     @param[in] dividend [-65536:65535] <=> [-2:2)
     @return int32_t[-1073741824:1073709056], [0XC0000000, 0X3FFF8000]
 */
-static inline int32_t qfrac16_div(qaccum32_t dividend, qaccum32_t divisor)
+static inline qaccum32_t qfrac16_div(qaccum32_t dividend, qaccum32_t divisor)
 {
     return ((dividend << QFRAC16_N_BITS) / divisor);
 }

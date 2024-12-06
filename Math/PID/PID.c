@@ -83,7 +83,7 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     return proportional + integral;
 }
 
-// int32_t PID_ProcPID(PID_T * p_pid, int32_t setpoint, int32_t feedback)
+// int32_t PID_ProcPID(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 // {
 //     int32_t error = setpoint - feedback;
 //     int32_t pi = CalcPI(p_pid, error);
@@ -99,7 +99,7 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     @param[in] setpoint [-65536:65535]
     @param[in] feedback [-65536:65535]
 */
-int32_t PID_ProcPI(PID_T * p_pid, int32_t setpoint, int32_t feedback)
+int32_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
     p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
     return p_pid->Output;
@@ -151,7 +151,8 @@ void PID_SetFreq(PID_T * p_pid, uint32_t sampleFreq)
 /******************************************************************************/
 
 /*!
-    Proportional(k) = Kp * error(k) = kp_Fixed32 * error(k) >> 16
+    Proportional(k) = Kp * error(k)
+                    = kp_Fixed32 * error(k) >> 16
 
     kp_Fixed32 >> 16 = PropGain >> PropGainShift, inclusive of shift 16
     PropGain = kp_Fixed32 << PropGainShift >> 16

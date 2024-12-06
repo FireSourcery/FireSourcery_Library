@@ -119,7 +119,8 @@ static inline bool MotorController_User_IsConfigState(MotorController_T * p_mc)
 /******************************************************************************/
 static inline bool MotorController_User_ClearFault(MotorController_T * p_mc, uint16_t flags)
 {
-    bool isFault = MotorController_StateMachine_ClearFault(p_mc);
+    bool isCleared = MotorController_StateMachine_ClearFault(p_mc);
+    return isCleared;
 }
 
 /******************************************************************************/

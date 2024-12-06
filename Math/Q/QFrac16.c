@@ -29,6 +29,7 @@
 */
 /******************************************************************************/
 #include "QFrac16.h"
+#include <assert.h>
 
 /*! Resolution: 1024 steps per revolution */
 const qfrac16_t QFRAC16_SINE_90_TABLE[QFRAC16_SINE_90_TABLE_LENGTH] =
@@ -67,6 +68,13 @@ const qfrac16_t QFRAC16_SINE_90_TABLE[QFRAC16_SINE_90_TABLE_LENGTH] =
     32727, 32736, 32744, 32751, 32757, 32761, 32764, 32766
 };
 
+/* Alternatively, use 180 table to include sin(90) == 1 */
+// #ifdef CONFIG_QFRAC16_QFRAC16_SINE_180_TABLE
+// const accum_t QFRAC16_SINE_180_TABLE[QFRAC16_SINE_90_TABLE_LENGTH] =
+// {
+//     32768,
+// }
+// #endif
 
 /*
     sin_quadrant_265
@@ -118,45 +126,6 @@ qfrac16_t qfrac16_cos(qangle16_t theta)
     return cosine;
 }
 
-/* Can compiler optimize into single switch? */
-void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16_t theta)
-{
-    *p_sin = qfrac16_sin(theta);
-    *p_cos = qfrac16_cos(theta);
-}
-
-uint16_t qfrac16_vector_magnitude(qfrac16_t x, qfrac16_t y)
-{
-    return q_sqrt((int32_t)x * x + (int32_t)y * y);
-}
-
-
-/*!
-    Vector Circle Limit
-    @brief Limits the components a vector.
-    @param p_x Pointer to the x component of the vector.
-    @param p_y Pointer to the y component of the vector.
-    @param magnitudeMax The maximum allowed magnitude for the vector.
-    @return The original magnitude of the vector before limiting,  sqrt(x^2 + y^2), for reference.
-*/
-uint16_t qfrac16_vector_limit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax)
-{
-    uint32_t vectorMagnitudeSquared = ((int32_t)(*p_x) * (*p_x)) + ((int32_t)(*p_y) * (*p_y));
-    uint32_t magnitudeMaxSquared = (int32_t)magnitudeMax * magnitudeMax;
-    uint16_t vectorMagnitude = 0U;
-    int32_t ratio; /* Q17.15 */
-
-    if (vectorMagnitudeSquared > magnitudeMaxSquared) /* magnitudeMaxSquared / vectorMagnitudeSquared < 1 */
-    {
-        vectorMagnitude = q_sqrt(vectorMagnitudeSquared);
-        ratio = qfrac16_div_sat(magnitudeMax, vectorMagnitude); /* no saturation needed, magnitudeMax < vectorMagnitude, max return 32767 ~= 1 */
-        *p_x = (qfrac16_t)qfrac16_mul_sat(*p_x, ratio); /* no saturation needed, ratio < 1 */
-        *p_y = (qfrac16_t)qfrac16_mul_sat(*p_y, ratio);
-    }
-
-    return vectorMagnitude;
-}
-
 /*
     Adapted from libfixmath https://github.com/PetteriAimonen/libfixmath/blob/master/libfixmath/qfrac16_trig.c
 */
@@ -166,7 +135,7 @@ qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
     int32_t yAbs = (y + mask) ^ mask;
     int32_t r, r_3, angle;
 
-    if(x >= 0)
+    if (x >= 0)
     {
         r = qfrac16_div((x - yAbs), (x + yAbs));
         r_3 = qfrac16_mul(qfrac16_mul(r, r), r);
@@ -179,7 +148,96 @@ qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
         angle = qfrac16_mul(0x07FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_3_DIV_4;
     }
 
-    if(y < 0) { angle = 0 - angle; }
+    if (y < 0) { angle = 0 - angle; }
 
     return angle; /* angle wraps, no need to saturate */
 }
+
+/*
+    vector_init
+    Can compiler optimize into single switch?
+*/
+void qfrac16_vector(qfrac16_t * p_x, qfrac16_t * p_y, qangle16_t theta)
+{
+    *p_y = qfrac16_sin(theta);
+    *p_x = qfrac16_cos(theta);
+}
+
+uint16_t qfrac16_vector_magnitude(qfrac16_t x, qfrac16_t y)
+{
+    return q_sqrt((int32_t)x * x + (int32_t)y * y);
+}
+
+// // Function to approximate the inverse square root using Newton's method
+// static inline int32_t fast_inverse_sqrt(int32_t x)
+// {
+//     int32_t half_x = x >> 1;  // x / 2
+//     int32_t y = x;  // Start with an initial guess
+
+//     // Newton's method iteration to improve the estimate
+//     y = (y + (x / y)) >> 1;
+//     y = (y + (x / y)) >> 1;
+//     return y;
+// }
+
+// // Function to limit the vector to a unit vector (magnitude = 1) without using division
+// static inline uint16_t qfrac16_vector_limit_fast(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t limit)
+// {
+//     int32_t mag_squared = (*p_x) * (*p_x) + (*p_y) * (*p_y);
+//     int32_t inv_mag = 0;
+
+//     // If the magnitude squared exceeds the limit squared, scale the vector
+//     if (mag_squared > limit * limit)
+//     {
+//         // Approximate the inverse of the magnitude using the fast inverse square root
+//         inv_mag = fast_inverse_sqrt(mag_squared);
+
+//         // Multiply x and y by the inverse magnitude
+//         *p_x = (qfrac16_t)qfrac16_mul(*p_x, inv_mag);
+//         *p_y = (qfrac16_t)qfrac16_mul(*p_y, inv_mag);
+//     }
+
+//     return inv_mag;
+// }
+
+/*!
+    Component scalar for Circle Limit
+    @return max/|Vxy|, < 1.0F,
+*/
+uint16_t qfrac16_vector_limit_scalar(qfrac16_t x, qfrac16_t y, qfrac16_t magnitudeLimit)
+{
+    uint32_t magnitudeSquared = ((int32_t)x * x) + ((int32_t)y * y); /* Max sqrt 46339, 1.41F */
+    int32_t scalar = QFRAC16_MAX; /* Q17.15, or use QFRAC16_1_OVERSAT */
+    uint16_t magnitude;
+
+    if (magnitudeSquared > (int32_t)magnitudeLimit * magnitudeLimit) /* magnitudeLimit / magnitude < 1 */
+    {
+        magnitude = q_sqrt(magnitudeSquared);
+        scalar = qfrac16_div(magnitudeLimit, magnitude); /* no saturation needed, magnitudeLimit < magnitude, max return 32767 ~= 1 */
+    }
+
+    return scalar;
+}
+
+/*!
+    Vector Circle Limit
+    @brief Limits the components a vector.
+    @param p_x Pointer to the x component of the vector.
+    @param p_y Pointer to the y component of the vector.
+    @param magnitudeLimit The maximum allowed magnitude for the vector.
+    @return max/|Vxy| for reference.
+*/
+uint16_t qfrac16_vector_limit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeLimit)
+{
+    int32_t scalar = qfrac16_vector_limit_scalar(*p_x, *p_y, magnitudeLimit);
+
+    if (scalar < QFRAC16_MAX)
+    {
+        *p_x = (qfrac16_t)qfrac16_mul(*p_x, scalar); /* no saturation needed, scalar < 1 */
+        *p_y = (qfrac16_t)qfrac16_mul(*p_y, scalar);
+    }
+
+    return scalar;
+}
+
+

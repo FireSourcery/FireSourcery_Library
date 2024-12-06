@@ -90,9 +90,9 @@ typedef enum MotVarId_Monitor_MotorFoc
     MOT_VAR_FOC_ID,
     MOT_VAR_FOC_VQ,
     MOT_VAR_FOC_VD,
-    MOT_VAR_FOC_Q_REQ,
-    MOT_VAR_FOC_D_REQ,
-    MOT_VAR_FOC_REQ_PRELIMIT,
+    MOT_VAR_FOC_REQ_Q,
+    MOT_VAR_FOC_REQ_D,
+    MOT_VAR_FOC_REQ_SCALAR,
 }
 MotVarId_Monitor_MotorFoc_T;
 
@@ -174,8 +174,10 @@ MotVarId_Monitor_AnalogUser_T;
 typedef enum MotVarId_Cmd
 {
     MOT_VAR_BEEP,
+
     MOT_VAR_USER_CMD,                       // [-32768:32767] Drive Value - Throttle, Brake, Servo In, pending FeedbackMode
     MOT_VAR_USER_FEEDBACK_MODE,             // Pair with MOT_VAR_USER_CMD
+
     MOT_VAR_TRY_HOLD,                       // bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
     MOT_VAR_TRY_RELEASE,                    // same as either neutral or driveZero
     MOT_VAR_FORCE_DISABLE_CONTROL,          // Force Disable control Non StateMachine checked, also handled via Call

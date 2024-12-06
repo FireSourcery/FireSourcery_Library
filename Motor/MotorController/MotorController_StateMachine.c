@@ -619,7 +619,8 @@ static StateMachine_State_T * Fault_InputFault(MotorController_T * p_mc, statema
 {
     if((bool)isSet == false)
     {
-        p_mc->FaultFlags.Motors = (MotorController_IsAnyClearMotorFault(p_mc) == false);
+        p_mc->FaultFlags.Motors = 0U; /* updated by [MotorController_Main_Thread] */
+        MotorController_IsAnyClearMotorFault(p_mc);
         MotorController_PollAdcFaultFlags(p_mc);
         // p_mc->FaultFlags.User = 0U;
     }

@@ -76,7 +76,7 @@ typedef struct PID
     int32_t ErrorPrev;
     int16_t OutputMin; /* -32768 Min */
     int16_t OutputMax; /* 32767 Max */
-    int16_t Output;
+    int16_t Output; /* Polling use */
 }
 PID_T;
 
@@ -94,7 +94,7 @@ static inline uint32_t PID_GetSampleFreq(PID_T * p_pid)     { return p_pid->Conf
 */
 /******************************************************************************/
 extern void PID_Init(PID_T * p_pid);
-extern int32_t PID_ProcPI(PID_T *p_pid, int32_t setpoint, int32_t feedback);
+extern int32_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint);
 extern void PID_Reset(PID_T * p_pid);
 extern void PID_SetIntegral(PID_T * p_pid, int16_t integral);
 extern void PID_SetOutputState(PID_T * p_pid, int16_t integral);

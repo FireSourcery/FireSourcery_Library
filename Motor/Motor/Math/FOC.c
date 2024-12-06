@@ -66,8 +66,8 @@ void FOC_ClearControlState(FOC_T * p_foc)
     p_foc->Ic = 0;
     p_foc->Id = 0;  /* Feedback */
     p_foc->Iq = 0;
-    p_foc->DReq = 0; /* Req */
-    p_foc->QReq = 0;
+    p_foc->ReqD = 0; /* Req */
+    p_foc->ReqQ = 0;
     FOC_ZeroSvpwm(p_foc);
 }
 
@@ -85,8 +85,8 @@ void FOC_ClearObserveState(FOC_T * p_foc)
 //     p_foc->Ic = 0;
 //     p_foc->Id = 0;  /* Feedback */
 //     p_foc->Iq = 0;
-//     p_foc->DReq = 0; /* Req */
-//     p_foc->QReq = 0;
+//     p_foc->ReqD = 0; /* Req */
+//     p_foc->ReqQ = 0;
 
 //     p_foc->Sine = 0;
 //     p_foc->Cosine = 0;

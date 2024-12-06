@@ -268,18 +268,17 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
             /* In case of Serial Rx Overflow Timeout */
             for(uint8_t iSerial = 0U; iSerial < p_mc->CONST.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONST.P_SERIALS[iSerial]); }
 
-            /* Can use low priority check, as motor is already in fault state */
-            if(MotorController_IsAnyMotorFault(p_mc) == true) { p_mc->FaultFlags.Motors = 1U; MotorController_StateMachine_SetFault(p_mc); }
-
             _MotorController_ProcOptDin(p_mc);
             _MotorController_ProcVoltageMonitor(p_mc); /* Except VSupply */
             _MotorController_ProcHeatMonitor(p_mc);
+            /* Can use low priority check, as motor is already in fault state */
+            if(MotorController_IsAnyMotorFault(p_mc) == true) { p_mc->FaultFlags.Motors = 1U; MotorController_StateMachine_SetFault(p_mc); }
             // for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
 
         #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
             // _Blinky_Toggle(&p_mc->Meter);
             // _Blinky_Toggle(&p_mc->Buzzer);
-           volatile uint32_t test = VMonitor_ChargeLevelOfAdcu_Scalar16(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu);
+            // volatile uint32_t test = VMonitor_ChargeLevelOfAdcu_Scalar16(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu);
         #endif
 
         }
@@ -309,7 +308,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
             if(p_mc->StatusFlags.LowV == 0U)
             {
                 p_mc->StatusFlags.LowV = 1U;
-                MotorController_SetSystemILimitAll(p_mc, p_mc->Config.VLowILimit_Scalar16);
+                // MotorController_SetSystemILimitAll(p_mc, p_mc->Config.VLowILimit_Scalar16);
                 Blinky_BlinkN(&p_mc->Buzzer, 500U, 250U, 2U);
             }
             break;
@@ -317,7 +316,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
             if(p_mc->StatusFlags.LowV == 1U)
             {
                 p_mc->StatusFlags.LowV = 0U;
-                MotorController_ClearSystemILimitAll(p_mc);
+                // MotorController_ClearSystemILimitAll(p_mc);
             }
             break;
         default: break;

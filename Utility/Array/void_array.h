@@ -61,7 +61,7 @@ static inline void void_array_foreach(void * p_buffer, size_t unit_size, size_t 
 typedef bool(*void_poll_t)(void * p_unit);
 
 /*!
-    @return true if all are set
+    @return true if all return true
 */
 static inline bool void_array_for_every(void * p_buffer, size_t unit_size, size_t length, void_poll_t unit_poll)
 {
@@ -71,7 +71,7 @@ static inline bool void_array_for_every(void * p_buffer, size_t unit_size, size_
 }
 
 /*!
-    @return true if at least one is set
+    @return true if at least one return true
 */
 static inline bool void_array_for_any(void * p_buffer, size_t unit_size, size_t length, void_poll_t unit_poll)
 {

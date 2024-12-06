@@ -279,7 +279,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
             Terminal_SendNum(p_term, Encoder_ModeDT_GetScalarVelocity(&p_motor->Encoder)); Terminal_SendString(p_term, " Frac16\r\n");
 
             // Terminal_SendString(p_term, "SpeedControl: "); Terminal_SendNum(p_term, PID_GetOutput(&p_motor->PidSpeed)); Terminal_SendString(p_term, "\r\n");
-            Terminal_SendString(p_term, "IdReq: "); Terminal_SendNum(p_term, p_motor->Foc.QReq); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendString(p_term, "IdReq: "); Terminal_SendNum(p_term, p_motor->Foc.ReqQ); Terminal_SendString(p_term, "\r\n");
 
             Terminal_SendString(p_term, "RampOut: "); Terminal_SendNum(p_term, Linear_Ramp_GetOutput(&p_motor->Ramp)); Terminal_SendString(p_term, "\r\n");
             Terminal_SendString(p_term, "RampTarget: "); Terminal_SendNum(p_term, Linear_Ramp_GetTarget(&p_motor->Ramp)); Terminal_SendString(p_term, "\r\n");

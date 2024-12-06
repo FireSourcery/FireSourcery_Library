@@ -171,29 +171,30 @@ static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_
 }
 
 /* unitize, q d proportional */
-static inline uint16_t foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax) { return qfrac16_vector_limit(p_d, p_q, vectorMax); }
+// static inline uint16_t foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t magnitude_limit) { return qfrac16_vector_limit(p_d, p_q, magnitude_limit); }
 
 /* limit, prioritize maintaining d */
-static inline void foc_circlelimit_dmax(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t vectorMax, qfrac16_t dMax)
+static inline void foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t magnitude_limit, qfrac16_t d_limit)
 {
-    uint32_t vectorMaxSquared = (int32_t)vectorMax * vectorMax;
-    uint32_t dSquared = (int32_t)(*p_d) * (*p_d);
-    uint32_t qSquared = (int32_t)(*p_q) * (*p_q);
-    uint32_t dqSquared = dSquared + qSquared;
-    uint32_t qMaxSquared;
-    uint16_t qMax;
+    uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
+    uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
+    uint32_t q_squared = (int32_t)(*p_q) * (*p_q);
+    // uint32_t dq_squared = d_squared + q_squared;
+    uint32_t q_limit_squared;
+    uint16_t q_limit;
 
-    if(dqSquared > vectorMaxSquared)
+    if (d_squared + q_squared > mag_limit_squared)
     {
-        if(qfrac16_abs(*p_d) > dMax)
+        if(qfrac16_abs(*p_d) > d_limit)
         {
-            *p_d = (*p_d < 0) ? 0 - dMax : dMax;
-            dSquared = dMax * dMax;
+            *p_d = (*p_d < 0) ? 0 - d_limit : d_limit;
+            d_squared = d_limit * d_limit;
         }
-        qMaxSquared = vectorMaxSquared - dSquared;
-        qMax = q_sqrt(qMaxSquared);
-        *p_q = (*p_q < 0) ? 0 - qMax : qMax;
+        q_limit_squared = mag_limit_squared - d_squared;
+        q_limit = q_sqrt(q_limit_squared);
+        *p_q = (*p_q < 0) ? 0 - q_limit : q_limit;
     }
 }
+
 
 #endif
