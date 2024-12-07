@@ -170,7 +170,7 @@ static inline void ProcClarkePark(Motor_T * p_motor)
 static void ActivateAngle(Motor_T * p_motor)
 {
     FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
-    Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
+    Phase_ActuateDuty_Frac16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 }
 
 static void ProcInnerFeedbackOutput(Motor_T * p_motor)
@@ -199,10 +199,6 @@ void Motor_FOC_ActivateOutput(Motor_T * p_motor)
     Phase_ActivateOutputABC(&p_motor->Phase);
 }
 
-#ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
-extern void Motor_ExternControl(Motor_T * p_motor);
-#endif
-
 /*
     Feedback Control Loop
     StateMachine calls each PWM, ~20kHz
@@ -214,11 +210,12 @@ void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 #ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
     Motor_ExternControl(p_motor);
 #endif
+
     p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
     FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
     Linear_Ramp_ProcOutput(&p_motor->Ramp);
-    ProcOuterFeedback(p_motor);
 
+    ProcOuterFeedback(p_motor);
     ProcInnerFeedbackOutput(p_motor);
 
     Motor_Debug_CaptureTime(p_motor, 4U);

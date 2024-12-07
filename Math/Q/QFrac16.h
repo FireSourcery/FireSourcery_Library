@@ -137,6 +137,7 @@ static inline qfrac16_t qfrac16_sqrt(qfrac16_t x)
     return q_sqrt((int32_t)x << QFRAC16_N_BITS);
 }
 
+
 /******************************************************************************/
 /*!
     qangle16
@@ -198,9 +199,16 @@ static inline bool qangle16_cycle4(qangle16_t theta0, qangle16_t theta1)
 
 extern qfrac16_t qfrac16_sin(qangle16_t theta);
 extern qfrac16_t qfrac16_cos(qangle16_t theta);
+extern qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x);
 extern void qfrac16_vector(qfrac16_t * p_cos, qfrac16_t * p_sin, qangle16_t theta);
 extern uint16_t qfrac16_vector_magnitude(qfrac16_t x, qfrac16_t y);
 extern uint16_t qfrac16_vector_limit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeMax);
-extern qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x);
+extern uint16_t qfrac16_vector_limit_fast(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t limit);
+
+extern uint16_t qfrac16_vector_scalar_fast(qfrac16_t x, qfrac16_t y, qfrac16_t mag_limit);
+extern uint16_t qfrac16_vector_scalar(qfrac16_t x, qfrac16_t y, qfrac16_t mag_limit);
+
+extern int32_t fast_inv_sqrt(int32_t x);
+// qfrac16_t fast_inv_sqrt(qfrac16_t x);
 
 #endif

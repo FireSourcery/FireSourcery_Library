@@ -99,7 +99,7 @@ extern void PID_Reset(PID_T * p_pid);
 extern void PID_SetIntegral(PID_T * p_pid, int16_t integral);
 extern void PID_SetOutputState(PID_T * p_pid, int16_t integral);
 extern void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max);
-extern void PID_SetFreq(PID_T * p_pid, uint32_t sampleFreq);
+extern void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq);
 extern void PID_SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32);
 extern void PID_SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32);
 extern void PID_SetKd_Fixed32(PID_T * p_pid, uint32_t kd_Fixed32);

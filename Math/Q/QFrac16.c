@@ -163,74 +163,39 @@ void qfrac16_vector(qfrac16_t * p_x, qfrac16_t * p_y, qangle16_t theta)
     *p_x = qfrac16_cos(theta);
 }
 
+/* Max sqrt 46339, 1.41F */
+uint16_t qfrac16_vector_magnitude_squared(qfrac16_t x, qfrac16_t y)
+{
+    return (int32_t)x * x + (int32_t)y * y;
+}
+
 uint16_t qfrac16_vector_magnitude(qfrac16_t x, qfrac16_t y)
 {
     return q_sqrt((int32_t)x * x + (int32_t)y * y);
 }
 
-// // Function to approximate the inverse square root using Newton's method
-// static inline int32_t fast_inverse_sqrt(int32_t x)
-// {
-//     int32_t half_x = x >> 1;  // x / 2
-//     int32_t y = x;  // Start with an initial guess
-
-//     // Newton's method iteration to improve the estimate
-//     y = (y + (x / y)) >> 1;
-//     y = (y + (x / y)) >> 1;
-//     return y;
-// }
-
-// // Function to limit the vector to a unit vector (magnitude = 1) without using division
-// static inline uint16_t qfrac16_vector_limit_fast(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t limit)
-// {
-//     int32_t mag_squared = (*p_x) * (*p_x) + (*p_y) * (*p_y);
-//     int32_t inv_mag = 0;
-
-//     // If the magnitude squared exceeds the limit squared, scale the vector
-//     if (mag_squared > limit * limit)
-//     {
-//         // Approximate the inverse of the magnitude using the fast inverse square root
-//         inv_mag = fast_inverse_sqrt(mag_squared);
-
-//         // Multiply x and y by the inverse magnitude
-//         *p_x = (qfrac16_t)qfrac16_mul(*p_x, inv_mag);
-//         *p_y = (qfrac16_t)qfrac16_mul(*p_y, inv_mag);
-//     }
-
-//     return inv_mag;
-// }
 
 /*!
-    Component scalar for Circle Limit
+    Component scalar
     @return max/|Vxy|, < 1.0F,
 */
-uint16_t qfrac16_vector_limit_scalar(qfrac16_t x, qfrac16_t y, qfrac16_t magnitudeLimit)
+uint16_t qfrac16_vector_scalar(qfrac16_t x, qfrac16_t y, qfrac16_t mag_limit)
 {
-    uint32_t magnitudeSquared = ((int32_t)x * x) + ((int32_t)y * y); /* Max sqrt 46339, 1.41F */
+    uint32_t mag_squared = ((int32_t)x * x) + ((int32_t)y * y);
     int32_t scalar = QFRAC16_MAX; /* Q17.15, or use QFRAC16_1_OVERSAT */
     uint16_t magnitude;
 
-    if (magnitudeSquared > (int32_t)magnitudeLimit * magnitudeLimit) /* magnitudeLimit / magnitude < 1 */
+    if (mag_squared > (int32_t)mag_limit * mag_limit)
     {
-        magnitude = q_sqrt(magnitudeSquared);
-        scalar = qfrac16_div(magnitudeLimit, magnitude); /* no saturation needed, magnitudeLimit < magnitude, max return 32767 ~= 1 */
+        magnitude = q_sqrt(mag_squared);
+        scalar = qfrac16_div(mag_limit, magnitude); /* no saturation needed, mag_limit / magnitude < 1  */
     }
 
     return scalar;
 }
 
-/*!
-    Vector Circle Limit
-    @brief Limits the components a vector.
-    @param p_x Pointer to the x component of the vector.
-    @param p_y Pointer to the y component of the vector.
-    @param magnitudeLimit The maximum allowed magnitude for the vector.
-    @return max/|Vxy| for reference.
-*/
-uint16_t qfrac16_vector_limit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnitudeLimit)
+uint16_t qfrac16_vector_scale(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t scalar)
 {
-    int32_t scalar = qfrac16_vector_limit_scalar(*p_x, *p_y, magnitudeLimit);
-
     if (scalar < QFRAC16_MAX)
     {
         *p_x = (qfrac16_t)qfrac16_mul(*p_x, scalar); /* no saturation needed, scalar < 1 */
@@ -241,3 +206,55 @@ uint16_t qfrac16_vector_limit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t magnit
 }
 
 
+/*!
+    Vector Circle Limit
+    @brief Limits the components a vector.
+    @param p_x Pointer to the x component of the vector.
+    @param p_y Pointer to the y component of the vector.
+    @param mag_limit The maximum allowed magnitude for the vector.
+    @return max/|Vxy| for reference.
+*/
+uint16_t qfrac16_vector_limit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t mag_limit)
+{
+    return qfrac16_vector_scale(p_x, p_y, qfrac16_vector_scalar(*p_x, *p_y, mag_limit));
+}
+
+
+/*
+    1 / sqrt(x)
+    "The fast inverse square root algorithm is well-known for its use in computer graphics
+        and was popularized by its use in the Quake III Arena game engine."
+*/
+// int32_t fast_inv_sqrt(int32_t x)
+// {
+//     int32_t i = x;
+//     int32_t xhalf = x >> 1; // x / 2
+//     // Initial guess
+//     x =  (i >> 1) + (1 << 29);
+//     // Newton's method iteration
+//     x = x * 3 / 2 - (xhalf * x * x) * x;
+//     return x;
+// }
+
+
+/*!
+    @return max/|Vxy|, < 1.0F,
+*/
+// uint16_t qfrac16_vector_scalar_fast(qfrac16_t x, qfrac16_t y, qfrac16_t mag_limit)
+// {
+//     uint32_t mag_squared = ((int32_t)x * x) + ((int32_t)y * y);
+//     int32_t scalar = QFRAC16_MAX; /* Q17.15, or use QFRAC16_1_OVERSAT */
+//     uint16_t magnitude;
+
+//     // if (mag_squared > (int32_t)mag_limit * mag_limit)
+//     {
+//         scalar = fast_inv_sqrt(mag_squared);
+//     }
+
+//     return scalar;
+// }
+// // Function to limit the vector to a unit vector (magnitude = 1) without using division
+// uint16_t qfrac16_vector_limit_fast(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t mag_limit)
+// {
+//     return qfrac16_vector_scale(p_x, p_y, qfrac16_vector_scalar_fast(*p_x, *p_y, mag_limit));
+// }

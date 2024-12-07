@@ -44,34 +44,73 @@
 
     <https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method>
 */
+// uint16_t q_sqrt(int32_t x)
+// {
+//     uint32_t yPrev;
+//     uint32_t y;
+
+//     if(x > 0)
+//     {
+//         /*
+//             Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
+
+//             8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
+//             128*128 == (1 << 14), solve < 1048576
+//             1048576U == (1 << 20)
+//         */
+//         yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
+//         for(uint8_t iteration = 0U; iteration < 6U; iteration++)
+//         {
+//             y = (yPrev + (x / yPrev)) / 2U;
+//             if(y == yPrev) { break; }
+//             yPrev = y;
+//         }
+//     }
+//     else
+//     {
+//         y = 0U;
+//     }
+
+//     return (uint16_t)y;
+// }
+
+/*!
+    @brief Calculate the square root of a fixed-point number
+    @param x Fixed-point number
+    @return Square root of x
+*/
 uint16_t q_sqrt(int32_t x)
 {
-    uint32_t yPrev;
-    uint32_t y;
-
-    if(x > 0)
+    if (x < 0)
     {
-        /*
-            Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
+        // Return 0 for negative input (undefined behavior for square root of negative number)
+        return 0;
+    }
 
-            8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
-            128*128 == (1 << 14), solve < 1048576
-            1048576U == (1 << 20)
-        */
-        yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
-        for(uint8_t iteration = 0U; iteration < 6U; iteration++)
+    int32_t result = 0;
+    int32_t bit = 1 << 30; // The second-to-top bit is set
+
+    // "bit" starts at the highest power of four <= the argument.
+    while (bit > x)
+    {
+        bit >>= 2;
+    }
+
+    while (bit != 0)
+    {
+        if (x >= result + bit)
         {
-            y = (yPrev + (x / yPrev)) / 2U;
-            if(y == yPrev) { break; }
-            yPrev = y;
+            x -= result + bit;
+            result = (result >> 1) + bit;
         }
-    }
-    else
-    {
-        y = 0U;
+        else
+        {
+            result >>= 1;
+        }
+        bit >>= 2;
     }
 
-    return (uint16_t)y;
+    return result;
 }
 
 /* Iterative log2 */

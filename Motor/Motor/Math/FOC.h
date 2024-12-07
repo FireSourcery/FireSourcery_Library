@@ -80,7 +80,7 @@ typedef struct FOC
     qfrac16_t Valpha;
     qfrac16_t Vbeta;
 
-    /* DutyA, DutyB, DutyC -> 16 bits, q0.16, always positive */
+    /* DutyA, DutyB, DutyC -> 16 bits, q0.15, always positive */
     uint16_t DutyA;
     uint16_t DutyB;
     uint16_t DutyC;
@@ -102,10 +102,10 @@ static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 {
     // p_foc->ReqScalar = qfrac16_vector_limit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX);
-    // foc_circlelimit(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
-    foc_circlelimit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX, QFRAC16_1_DIV_2);
+    // foc_circle_limit(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
+    foc_circle_limit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX, QFRAC16_1_DIV_2);
     foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
-    svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta); /* altnernatively return Va,Vb,Vc */
+    svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
 }
 
 /* VBemf */

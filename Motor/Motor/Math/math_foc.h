@@ -170,25 +170,26 @@ static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_
     foc_invpark_vector(p_alpha, p_beta, d, q, sin, cos);
 }
 
-/* unitize, q d proportional */
-// static inline uint16_t foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t magnitude_limit) { return qfrac16_vector_limit(p_d, p_q, magnitude_limit); }
-
-/* limit, prioritize maintaining d */
-static inline void foc_circlelimit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t magnitude_limit, qfrac16_t d_limit)
+/*
+    limit around d
+    mag_limit^2 - d^2 = q^2
+*/
+static inline void foc_circle_limit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t magnitude_limit, qfrac16_t d_limit)
 {
     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
     uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
     uint32_t q_squared = (int32_t)(*p_q) * (*p_q);
-    // uint32_t dq_squared = d_squared + q_squared;
+    uint32_t d_limit_squared;
     uint32_t q_limit_squared;
     uint16_t q_limit;
 
     if (d_squared + q_squared > mag_limit_squared)
     {
-        if(qfrac16_abs(*p_d) > d_limit)
+        d_limit_squared = (int32_t)d_limit * d_limit;
+        if (d_squared > d_limit_squared) /* (qfrac16_abs(*p_d) > d_limit) */
         {
+            d_squared = d_limit_squared;
             *p_d = (*p_d < 0) ? 0 - d_limit : d_limit;
-            d_squared = d_limit * d_limit;
         }
         q_limit_squared = mag_limit_squared - d_squared;
         q_limit = q_sqrt(q_limit_squared);

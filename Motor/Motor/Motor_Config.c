@@ -48,8 +48,6 @@ static inline void PropagateSet(Motor_T * p_motor, Motor_PropagateSet_T reset)
 #endif
 }
 
-
-
 /******************************************************************************/
 /*
     Nvm Reference/Calibration

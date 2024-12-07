@@ -114,7 +114,7 @@ static inline void Phase_EnableInterrupt(const Phase_T * p_phase)   { PWM_Enable
 /******************************************************************************/
 extern void Phase_ActivateDuty(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
 extern void Phase_ActuateDuty_Frac16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
-extern void Phase_ActuateDuty_Scalar16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
+extern void Phase_ActuateDuty_Percent16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
 extern void Phase_ActivateOutputABC(const Phase_T * p_phase);
 extern void Phase_Float(const Phase_T * p_phase);
 extern void Phase_Ground(const Phase_T * p_phase);

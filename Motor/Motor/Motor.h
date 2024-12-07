@@ -616,7 +616,8 @@ static inline int16_t Motor_IReqLimitOf(const Motor_T * p_motor, int16_t req)   
 static inline int16_t Motor_SpeedReqLimitOf(const Motor_T * p_motor, int16_t req)   { return math_clamp(req, p_motor->SpeedLimitCw_Frac16, p_motor->SpeedLimitCcw_Frac16); };
 
 /*
-    Apply limit scalar, req = limit/feedback
+    Apply limit scalar,
+    or replace request with scalar, req = limit/feedback
     todo set is active flag
 */
 /*

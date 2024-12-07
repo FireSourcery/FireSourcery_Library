@@ -68,7 +68,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
                 Sector 1: X >= 0 and Z < 0
 
                 Duty Cycle:
-                A:        |v100| = (sqrt3 * alpha - beta) / 2 = -Z;
+                A:       |v100| = (sqrt3 * alpha - beta) / 2 = -Z;
                 invC:    |v110| = beta = X;
 
                 SVPWM:
@@ -198,13 +198,10 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
         }
     }
 
-    *p_dutyA = qfrac16_sat(*p_dutyA) * 2U;
-    *p_dutyB = qfrac16_sat(*p_dutyB) * 2U;
-    *p_dutyC = qfrac16_sat(*p_dutyC) * 2U;
+    *p_dutyA = qfrac16_sat(*p_dutyA);
+    *p_dutyB = qfrac16_sat(*p_dutyB);
+    *p_dutyC = qfrac16_sat(*p_dutyC);
 
-    // *p_dutyA = ((int32_t)*p_dutyA >= QFRAC16_1_DIV_2) ? UINT16_MAX : (*p_dutyA) * 2U;
-    // *p_dutyB = ((int32_t)*p_dutyB >= QFRAC16_1_DIV_2) ? UINT16_MAX : (*p_dutyB) * 2U;
-    // *p_dutyC = ((int32_t)*p_dutyC >= QFRAC16_1_DIV_2) ? UINT16_MAX : (*p_dutyC) * 2U;
 }
 
 #endif

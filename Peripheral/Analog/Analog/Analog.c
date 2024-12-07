@@ -47,7 +47,6 @@ static inline void WriteAdcChannel(Analog_T * p_analog, const Analog_Conversion_
 }
 
 #ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
-//untested
 static inline void WriteAdcFifo(Analog_T * p_analog)
 {
     Analog_Conversion_T * p_conversion;

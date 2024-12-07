@@ -152,5 +152,9 @@ extern void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T directio
 extern void Motor_FOC_SetDirection_Cast(Motor_T * p_motor, uint8_t direction);
 extern void Motor_FOC_SetDirectionForward(Motor_T * p_motor);
 
+#ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
+extern void Motor_ExternControl(Motor_T * p_motor);
+#endif
+
 
 #endif
