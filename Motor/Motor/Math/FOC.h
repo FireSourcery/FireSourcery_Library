@@ -102,7 +102,6 @@ static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 {
     // p_foc->ReqScalar = qfrac16_vector_limit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX);
-    // foc_circle_limit(&p_foc->Vd, &p_foc->Vq, p_foc->VectorMaxMagnitude, p_foc->VectorMaxD);
     foc_circle_limit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX, QFRAC16_1_DIV_2);
     foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
     svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);

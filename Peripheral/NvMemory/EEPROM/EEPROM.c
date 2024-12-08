@@ -73,7 +73,7 @@ static const NvMemory_OpControl_T EEPROM_OP_WRITE =
 
 NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, uintptr_t destAddress, const void * p_source, size_t sizeBytes)
 {
-    return NvMemory_SetOpControl(p_eeprom, &EEPROM_OP_WRITE, destAddress, p_source, sizeBytes);
+    return NvMemory_SetOpControl_Write(p_eeprom, &EEPROM_OP_WRITE, destAddress, p_source, sizeBytes);
 }
 
 /*

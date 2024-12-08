@@ -202,6 +202,9 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
     *p_dutyB = qfrac16_sat(*p_dutyB);
     *p_dutyC = qfrac16_sat(*p_dutyC);
 
+    assert((int16_t)*p_dutyA > 0);
+    assert((int16_t)*p_dutyB > 0);
+    assert((int16_t)*p_dutyC > 0);
 }
 
 #endif

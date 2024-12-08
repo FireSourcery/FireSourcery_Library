@@ -1,6 +1,10 @@
 // #include <stdint.h>
 // #include <stdbool.h>
 
+
+/*!
+    @brief Potentiometer polling and edge detection
+*/
 // typedef struct MotAnalogUser_AIn
 // {
 //     Debounce_T EdgePin;

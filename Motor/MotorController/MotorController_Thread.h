@@ -86,7 +86,7 @@ static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
         {
             case MOTOR_CONTROLLER_OPT_DIN_DISABLE: break;
             case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
-                switch(Debounce_PollEdge(&p_mc->OptDin))
+                switch(Debounce_GetEdge(&p_mc->OptDin))
                 {
                     case DEBOUNCE_EDGE_RISING:  MotorController_User_SetSpeedLimitAll(p_mc, p_mc->Config.OptSpeedLimit_Scalar16); break;
                     case DEBOUNCE_EDGE_FALLING: MotorController_User_ClearSpeedLimitAll(p_mc); break;
@@ -95,7 +95,7 @@ static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
                 break;
             #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
             case MOTOR_CONTROLLER_OPT_DIN_SERVO:
-                switch(Debounce_PollEdge(&p_mc->OptDin))
+                switch(Debounce_GetEdge(&p_mc->OptDin))
                 {
                     case DEBOUNCE_EDGE_RISING:  MotorController_User_EnterServoMode(p_mc);  break;
                     case DEBOUNCE_EDGE_FALLING: MotorController_User_ExitServoMode(p_mc);   break;

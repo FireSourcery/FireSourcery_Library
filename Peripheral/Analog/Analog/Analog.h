@@ -138,6 +138,16 @@ Analog_Const_T;
 // }
 // Analog_ChannelFlags_T ;
 
+// todo combine modules, per adc and abstraction
+// remove buffer for modified bit, remove critical
+// typedef struct Analog_ADC
+// {
+//      HAL_Analog_T * const P_HAL_ANALOG;     /*!< pointer to ADC register map base address */
+//      Analog_Conversion_T P_CONVERSIONS;
+//      Analog_ChannelFlags_T ChannelFlags; /* at the expense of checking every channel, eliminate critical section for */
+// }
+// Analog_ADC_T;
+
 /*
     Analog_T per ADC
 */
@@ -158,7 +168,7 @@ Analog_T;
 */
 #define ANALOG_INIT(p_HalAnalog, p_ConversionBuffer, ConversionQueueLength)                                     \
 {                                                                                                               \
-    .CONST = { .P_HAL_ANALOG = p_HalAnalog, },                                                                 \
+    .CONST = { .P_HAL_ANALOG = p_HalAnalog, },                                                                  \
     .ConversionQueue = RING_INIT(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),  \
 }
 

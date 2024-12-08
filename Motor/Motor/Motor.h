@@ -590,6 +590,8 @@ static inline void Motor_DisableOutput(Motor_T * p_motor)      { Phase_Float(&p_
 /******************************************************************************/
 static inline void Motor_PollAdcFaultFlags(Motor_T * p_motor)  { p_motor->FaultFlags.Overheat = Thermistor_GetIsFault(&p_motor->Thermistor); }
 
+static inline  bool Motor_IsAnalogCycle(const Motor_T * p_motor) { return ((p_motor->ControlTimerBase & MOTOR_STATIC.CONTROL_ANALOG_DIVIDER) == 0UL); }
+
 static inline Motor_Direction_T Motor_DirectionForward(const Motor_T * p_motor) { return p_motor->Config.DirectionForward; }
 static inline Motor_Direction_T Motor_DirectionReverse(const Motor_T * p_motor) { return ((p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? MOTOR_DIRECTION_CW : MOTOR_DIRECTION_CCW); }
 
@@ -605,13 +607,23 @@ static inline Motor_Direction_T Motor_DirectionReverse(const Motor_T * p_motor) 
 */
 static inline int32_t Motor_DirectionalValueOf(const Motor_T * p_motor, int32_t userCmd) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? userCmd : (int32_t)0 - userCmd; }
 
+static inline int32_t Motor_GetCmd(const Motor_T * p_motor)         { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
+static inline int32_t Motor_GetSetPoint(const Motor_T * p_motor)    { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetOutput(&p_motor->Ramp)); }
+
 /*
     Sets Ramp Target
     Bypasses User Mode restrictions, bounds
     Concurrency note: only 1 thread updates RampTarget. StateMachine Proc thread only updates OutputState
 */
 static inline void Motor_SetCmd(Motor_T * p_motor, int16_t userCmd) { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd)); }
+// static inline void Motor_ClearCmdState(Motor_T * p_motor) { Linear_Ramp_SetOutputState(&p_motor->Ramp, 0); }
 
+/******************************************************************************/
+/*
+    Apply Limits
+    Call from Feedback loop
+*/
+/******************************************************************************/
 static inline int16_t Motor_IReqLimitOf(const Motor_T * p_motor, int16_t req)       { return math_clamp(req, p_motor->ILimitCw_Frac16, p_motor->ILimitCcw_Frac16); };
 static inline int16_t Motor_SpeedReqLimitOf(const Motor_T * p_motor, int16_t req)   { return math_clamp(req, p_motor->SpeedLimitCw_Frac16, p_motor->SpeedLimitCcw_Frac16); };
 
@@ -647,10 +659,9 @@ static inline int16_t Motor_VReqOfILimit(const Motor_T * p_motor, int32_t feedba
     return limitedReq;
 };
 
-/******************************************************************************/
-/*
 
-*/
+/******************************************************************************/
+/* */
 /******************************************************************************/
 /* Call from StateMachine only */
 static inline void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)  { p_motor->FeedbackMode.Word = mode.Word; }

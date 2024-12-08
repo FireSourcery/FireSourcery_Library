@@ -219,6 +219,11 @@ uint16_t qfrac16_vector_limit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t mag_li
     return qfrac16_vector_scale(p_x, p_y, qfrac16_vector_scalar(*p_x, *p_y, mag_limit));
 }
 
+uint16_t qfrac16_vector_normalize(qfrac16_t * p_x, qfrac16_t * p_y)
+{
+    return qfrac16_vector_limit(p_x, p_y, QFRAC16_MAX);
+}
+
 
 /*
     1 / sqrt(x)

@@ -24,7 +24,7 @@
 /*!
     @file   math_general.h
     @author FireSourcery
-    @brief  Re-implementation of C++ library not found in C
+    @brief  Re-implementation of C++ library not available in C
     @version V0
 */
 /******************************************************************************/
@@ -38,15 +38,21 @@
 static inline int32_t math_max(int32_t value1, int32_t value2) { return ((value1 > value2) ? value1 : value2); }
 static inline int32_t math_min(int32_t value1, int32_t value2) { return ((value1 < value2) ? value1 : value2); }
 static inline int32_t math_clamp(int32_t value, int32_t low, int32_t high) { return math_min(math_max(value, low), high); }
-static inline uint32_t math_abs(int32_t value) { return abs(value); } // todo check - INT_MIN
 static inline int32_t math_sign(int32_t value) { return (value > 0) - (value < 0); } /* +1, 0, -1 */
+static inline uint32_t math_abs(int32_t value) { return abs(value); } // todo check - INT_MIN
 
-static inline bool math_is_bounded(int32_t value, int32_t low, int32_t high) { return (value == math_clamp(value, low, high)); }
+static inline bool math_in_range(int32_t value, int32_t low, int32_t high) { return (value == math_clamp(value, low, high)); }
 
 static inline int32_t math_add_sat(int32_t a, int32_t b)
 {
 // #if defined(__GNUC__)
-//     // __builtin_sadd(a, b); //todo
+    // int32_t result;
+    // if (__builtin_add_overflow(a, b, &result))
+    // {
+    //     if (a > 0 && b > 0) { result = INT32_MAX; }
+    //     else if (a < 0 && b < 0) { result = (0 - INT32_MAX); }
+    // }
+    // return result;
 // #else
     int32_t result = a + b;
     if      ((a > 0) && (b > 0) && (result < 0)) { result = INT32_MAX; }
@@ -55,11 +61,6 @@ static inline int32_t math_add_sat(int32_t a, int32_t b)
 // #endif
 }
 
-static inline uintptr_t align_down(uintptr_t address, size_t align) { return (address & (-align)); }
-static inline uintptr_t align_up(uintptr_t address, size_t align) { return (-((-address) & (-align))); }
-static inline bool is_aligned(uintptr_t address, size_t align) { return ((address & (align - 1U)) == (uintptr_t)0U); }
-
-static inline bool is_aligned_mask(uint32_t value, uint32_t mask) { return ((value & mask) == (uint32_t)0U); }
 
 extern uint32_t math_muldiv64_unsigned(uint32_t value, uint32_t factor, uint32_t divisor);
 

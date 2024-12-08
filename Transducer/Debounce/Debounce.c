@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Debounce.c
+    @file   Debounce.c
     @author FireSourcery
     @brief
     @version V0
@@ -33,11 +33,18 @@
 void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime)
 {
     Pin_Input_Init(&p_debounce->Pin);
-    p_debounce->DebounceTime         = debounceTime;
-    p_debounce->DebouncedState         = Pin_Input_Read(&p_debounce->Pin);
-    p_debounce->DebouncedStatePrev     = p_debounce->DebouncedState;
-    p_debounce->RawStatePrev         = p_debounce->DebouncedState;
+    p_debounce->DebounceTime = debounceTime;
+    p_debounce->DebouncedState = Pin_Input_Read(&p_debounce->Pin);
+    p_debounce->EdgeState = p_debounce->DebouncedState;
+    p_debounce->PinState = p_debounce->DebouncedState;
 }
+
+/* Ain or din */
+bool _Debounce_CaptureState(Debounce_T * p_debounce, bool state)
+{
+
+}
+
 
 /*!
     @return true if state changed
@@ -50,55 +57,55 @@ bool Debounce_CaptureState(Debounce_T * p_debounce)
         check if state is the same for specified duration,
         vs preemptive lock out - noise may lock out real input
     */
-    if(pinState != p_debounce->RawStatePrev)
+    if (pinState != p_debounce->PinState)
     {
-        p_debounce->TimePrev = *p_debounce->CONST.P_TIMER;
-        p_debounce->RawStatePrev = pinState;
+        p_debounce->TimeStart = *p_debounce->CONST.P_TIMER;
+        p_debounce->PinState = pinState;
     }
     else
     {
-        // if(p_debounce->DebouncedState != p_debounce->DebouncedStatePrev) // change polling state var
+        if (*p_debounce->CONST.P_TIMER - p_debounce->TimeStart > p_debounce->DebounceTime)
         {
-            if(*p_debounce->CONST.P_TIMER - p_debounce->TimePrev > p_debounce->DebounceTime)
-            {
-                p_debounce->TimePrev = UINT32_MAX - p_debounce->DebounceTime; /* disable until next change in pin */
-                p_debounce->DebouncedStatePrev = p_debounce->DebouncedState;
-                p_debounce->DebouncedState = pinState;
-            }
+            p_debounce->TimeStart = UINT32_MAX - p_debounce->DebounceTime; /* disable repeat set until next change in pin */
+            // if (p_debounce->DebouncedState != p_debounce->EdgeState) // same as timer disable
+            p_debounce->EdgeState = p_debounce->DebouncedState; /* record the previous state when an edge has occurred */
+            p_debounce->DebouncedState = pinState;
         }
     }
 
-    return Debounce_GetIsEdge(p_debounce);
+    return Debounce_IsEdge(p_debounce);
 }
 
 
-static inline void updateDebounceState(Debounce_T * p_debounce, bool isEdge) { if(isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; } }
+static inline void UpdateEdgeState(Debounce_T * p_debounce, bool isEdge)
+    { if(isEdge == true) { p_debounce->EdgeState = p_debounce->DebouncedState; } }
 
-/* todo change state var */
+/* The last edge, valid until poll, or another edge */
+
+bool Debounce_PollDualEdge(Debounce_T * p_debounce)
+{
+    bool isEdge = Debounce_IsEdge(p_debounce);
+    UpdateEdgeState(p_debounce, isEdge);
+    return isEdge;
+}
+
 bool Debounce_PollFallingEdge(Debounce_T * p_debounce)
 {
-    bool isEdge = Debounce_GetIsFallingEdge(p_debounce);
-    updateDebounceState(p_debounce, isEdge);
+    bool isEdge = Debounce_IsFallingEdge(p_debounce);
+    UpdateEdgeState(p_debounce, isEdge);
     return isEdge;
 }
 
 bool Debounce_PollRisingEdge(Debounce_T * p_debounce)
 {
-    bool isEdge = Debounce_GetIsRisingEdge(p_debounce);
-    updateDebounceState(p_debounce, isEdge);
-    return isEdge;
-}
-
-bool Debounce_PollDualEdge(Debounce_T * p_debounce)
-{
-    bool isEdge = Debounce_GetIsEdge(p_debounce);
-    updateDebounceState(p_debounce, isEdge);
+    bool isEdge = Debounce_IsRisingEdge(p_debounce);
+    UpdateEdgeState(p_debounce, isEdge);
     return isEdge;
 }
 
 Debounce_Edge_T Debounce_PollEdge(Debounce_T * p_debounce)
 {
     Debounce_Edge_T edge = Debounce_GetEdge(p_debounce);
-    updateDebounceState(p_debounce, edge != DEBOUNCE_EDGE_NULL);
+    UpdateEdgeState(p_debounce, edge != DEBOUNCE_EDGE_NULL);
     return edge;
 }

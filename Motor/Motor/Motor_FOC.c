@@ -40,7 +40,7 @@ void Motor_FOC_EnqueueVabc(Motor_T * p_motor)
 {
     // todo move to threads
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    if((p_motor->ControlTimerBase & MOTOR_STATIC.CONTROL_ANALOG_DIVIDER) == 0UL)
+    if ((p_motor->ControlTimerBase & MOTOR_STATIC.CONTROL_ANALOG_DIVIDER) == 0UL)
     {
         AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_V);
         AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA);
@@ -56,14 +56,15 @@ void Motor_FOC_EnqueueVabc(Motor_T * p_motor)
 
 void Motor_FOC_EnqueueIabc(Motor_T * p_motor)
 {
-    if((p_motor->ControlTimerBase & MOTOR_STATIC.CONTROL_ANALOG_DIVIDER) == 0UL)
+    // if ((p_motor->ControlTimerBase & MOTOR_STATIC.CONTROL_ANALOG_DIVIDER) == 0UL)
+    if ((p_motor->ControlTimerBase & 0x03U) == 0UL)
     {
         AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_I);
         AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);
         AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB);
-#if defined(CONFIG_MOTOR_I_SENSORS_ABC)
+    #if defined(CONFIG_MOTOR_I_SENSORS_ABC)
         AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC);
-#endif
+    #endif
         AnalogN_Group_ResumeQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_I);
     }
 }
@@ -81,7 +82,7 @@ static inline void ProcInnerFeedback(Motor_T * p_motor)
 {
     int32_t req = FOC_GetReqQ(&p_motor->Foc);
 
-    if(p_motor->FeedbackMode.Current == 1U) /* Current Control mode - proc using last adc measure */
+    if (p_motor->FeedbackMode.Current == 1U) /* Current Control mode - proc using last adc measure */
     {
         req = Motor_IReqLimitOf(p_motor, req);
         FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), req)); /* PidIq configured with VLimits */
@@ -108,13 +109,13 @@ static inline void ProcOuterFeedback(Motor_T * p_motor)
 {
     int32_t req = Linear_Ramp_GetOutput(&p_motor->Ramp);
 
-    if((Motor_ProcSensorSpeed(p_motor) == true) && (p_motor->FeedbackMode.Speed == 1U))
+    if ((Motor_ProcSensorSpeed(p_motor) == true) && (p_motor->FeedbackMode.Speed == 1U))
     {
         req = Motor_SpeedReqLimitOf(p_motor, req);
         FOC_SetReqQ(&p_motor->Foc, PID_ProcPI(&p_motor->PidSpeed, p_motor->Speed_Frac16, req));
         FOC_SetReqD(&p_motor->Foc, 0);
     }
-    else if(p_motor->FeedbackMode.Speed == 0U) /* Current or Voltage Control mode */
+    else if (p_motor->FeedbackMode.Speed == 0U) /* Current or Voltage Control mode */
     {
         req = Motor_ReqOfSpeedLimit(p_motor, req);
         FOC_SetReqQ(&p_motor->Foc, req);
@@ -130,7 +131,7 @@ void Motor_FOC_ProcFeedbackMatch(Motor_T * p_motor)
 {
     int32_t qReq;
 
-    if(p_motor->FeedbackMode.Current == 1U)
+    if (p_motor->FeedbackMode.Current == 1U)
     {
         PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
         PID_SetOutputState(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
@@ -141,7 +142,7 @@ void Motor_FOC_ProcFeedbackMatch(Motor_T * p_motor)
         qReq = FOC_GetVq(&p_motor->Foc); /* alternatively use phase q_sqrt(vd vq) */
     }
 
-    if(p_motor->FeedbackMode.Speed == 1U)
+    if (p_motor->FeedbackMode.Speed == 1U)
     {
         Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->Speed_Frac16);
         PID_SetOutputState(&p_motor->PidSpeed, qReq);
@@ -176,7 +177,7 @@ static void ActivateAngle(Motor_T * p_motor)
 static void ProcInnerFeedbackOutput(Motor_T * p_motor)
 {
     // if((p_motor->ControlTimerBase & MOTOR_STATIC.CONTROL_ANALOG_DIVIDER) == 0UL)
-    if((p_motor->ControlTimerBase & 0x03U) == 0UL)
+    if ((p_motor->ControlTimerBase & 0x03U) == 0UL)
     {
         ProcClarkePark(p_motor);
         ProcInnerFeedback(p_motor); /* Set Vd Vq */

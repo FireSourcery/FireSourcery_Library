@@ -22,21 +22,29 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   HAL_CanBus.h
+    @file   math_general.h
     @author FireSourcery
-    @brief
+    @brief  Re-implementation of C++ library not found in C
     @version V0
 */
 /******************************************************************************/
-#ifndef HAL_CAN_BUS_H
-#define HAL_CAN_BUS_H
+#ifndef MATH_BITS_H
+#define MATH_BITS_H
 
-#include "Peripheral/HAL/HAL_Peripheral.h"
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
-#if defined(CONFIG_HAL_CAN_BUS_PATH)
-    #include STR(CONFIG_HAL_CAN_BUS_PATH/HAL_CanBus.h)
-#else
-    #include HAL_PERIPHERAL_PATH(HAL_CanBus.h)
+static inline uintptr_t align_down(uintptr_t bits, size_t align) { return (bits & (-align)); }
+static inline uintptr_t align_up(uintptr_t bits, size_t align) { return (-((-bits) & (-align))); }
+static inline bool is_aligned(uintptr_t bits, size_t align) { return ((bits & (align - 1U)) == (uintptr_t)0U); }
+
+/* is_aligned_mask */
+static inline bool is_masked(uint32_t value, uint32_t mask) { return ((value & mask) == (uint32_t)0U); }
+
+static inline uint32_t is_bits_edge(uint32_t prevState, uint32_t newState) { return (prevState ^ newState); }
+static inline int8_t edge_value(bool prevState, bool newState) { return ((int8_t)newState - (int8_t)prevState); }
+
 #endif
 
-#endif
+

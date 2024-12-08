@@ -42,13 +42,13 @@
     Private
 */
 /******************************************************************************/
-static inline uintptr_t OpCmdAddress(const NvMemory_T * p_this, uintptr_t memAddress) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; /* incase inline disabled by optimization level */
-static inline uintptr_t OpCmdAddress(const NvMemory_T * p_this, uintptr_t memAddress)
+static inline uintptr_t OpCmdAddress(const NvMemory_T * p_this, uintptr_t address) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; /* incase inline disabled by optimization level */
+static inline uintptr_t OpCmdAddress(const NvMemory_T * p_this, uintptr_t address)
 {
 #ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE
-    return (memAddress + p_this->p_OpPartition->OP_ADDRESS_OFFSET);
+    return (address + p_this->p_OpPartition->OP_ADDRESS_OFFSET);
 #elif defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE)
-    (void)p_this; return memAddress;
+    (void)p_this; return address;
 #endif
 }
 
@@ -116,58 +116,57 @@ static inline bool CheckAddressBoundary(uintptr_t targetStart, size_t targetSize
     return ((targetStart >= boundaryStart) && ((targetStart + targetSize) <= (boundaryStart + boundarySize)));
 }
 
-static inline bool CheckPartitionBoundary(const NvMemory_Partition_T * p_partition, uintptr_t memAddress, size_t size)
+static inline bool CheckPartitionBoundary(const NvMemory_Partition_T * p_partition, uintptr_t address, size_t size)
 {
-    return CheckAddressBoundary(memAddress, size, p_partition->ADDRESS, p_partition->SIZE);
+    return CheckAddressBoundary(address, size, p_partition->ADDRESS, p_partition->SIZE);
 }
 
-static inline NvMemory_Partition_T * SearchPartitionTable(const NvMemory_Partition_T * p_partitionTable, uint8_t partitionCount, uintptr_t memAddress, size_t size)
+static inline NvMemory_Partition_T * SearchPartitionTable(const NvMemory_Partition_T * p_partitionTable, uint8_t partitionCount, uintptr_t address, size_t size)
 {
     NvMemory_Partition_T * p_partition = 0U;
 
     for(uint8_t iPartition = 0U; iPartition < partitionCount; iPartition++)
     {
-        if(CheckPartitionBoundary(&p_partitionTable[iPartition], memAddress, size) == true) { p_partition = &p_partitionTable[iPartition]; }
+        if(CheckPartitionBoundary(&p_partitionTable[iPartition], address, size) == true) { p_partition = &p_partitionTable[iPartition]; }
     }
 
     return p_partition;
 }
 
 /* Check all partitions for op fit */
-static inline bool ValidateOpPartition(NvMemory_T * p_this, uintptr_t memAddress, size_t size)
+static inline bool ValidateOpPartition(NvMemory_T * p_this, uintptr_t address, size_t size)
 {
-    p_this->p_OpPartition = SearchPartitionTable(p_this->CONST.P_PARTITIONS, p_this->CONST.PARTITION_COUNT, memAddress, size);
+    p_this->p_OpPartition = SearchPartitionTable(p_this->CONST.P_PARTITIONS, p_this->CONST.PARTITION_COUNT, address, size);
     return (p_this->p_OpPartition != 0U);
 }
 
-// static size_t NvMemory_GetOpSizeAligned(NvMemory_T * p_this)     { p_this->p_OpControl->FORCE_ALIGN(p_this->OpSize, p_this->p_OpControl->UNIT_SIZE); }
-// static size_t NvMemory_GetOpSizeRemainder(NvMemory_T * p_this)   { OpSize - nvmemory_align_down(OpSize) }
 
 /*
     Checks Boundary and Dest Align
     p_this->p_OpControl must be set
 */
-NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_this, uintptr_t memAddress, size_t opSize)
+NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_this, uintptr_t address, size_t opSize)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
-    p_this->OpAddress = memAddress;
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = (ValidateOpPartition(p_this, memAddress, opSize) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_BOUNDARY; }
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = (nvmemory_is_aligned(memAddress, p_this->p_OpControl->UNIT_SIZE) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT; }
+    p_this->OpAddress = address;
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = (ValidateOpPartition(p_this, address, opSize) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_BOUNDARY; }
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = (nvmemory_is_aligned(address, p_this->p_OpControl->UNIT_SIZE) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT; }
     return status;
 }
 
 NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize)
 {
-    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+    NvMemory_Status_T status;
     p_this->OpSize = opSize;
     if((p_this->IsForceAlignEnable == true) && (p_this->p_OpControl->FORCE_ALIGN != NULL))
     {
         p_this->OpSizeAligned = p_this->p_OpControl->FORCE_ALIGN(opSize, p_this->p_OpControl->UNIT_SIZE); // alternatively use getter
+        status = NV_MEMORY_STATUS_SUCCESS;
     }
     else
     {
-        status = (nvmemory_is_aligned(opSize, p_this->p_OpControl->UNIT_SIZE) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT;
         p_this->OpSizeAligned = p_this->OpSize;  /* Not in effect when status returns error */
+        status = (nvmemory_is_aligned(opSize, p_this->p_OpControl->UNIT_SIZE) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT;
     }
     return status;
 }
@@ -197,16 +196,36 @@ NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_this, const uint8_t * p_data
     return status;
 }
 
-NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t memAddress, const uint8_t * p_data, size_t size)
+
+NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
     p_this->p_OpControl = p_opControl;
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpAddress(p_this, memAddress, size); }
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_this, size); }
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpData(p_this, p_data, size); }
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpAddress(p_this, address, size); }
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_this, size); }
     return status;
 }
 
+NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size, uint8_t * p_data)
+{
+    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpControl(p_this, p_opControl, address, size); }
+    if (status == NV_MEMORY_STATUS_SUCCESS) { p_this->p_OpData = p_data; }
+    return status;
+}
+
+
+NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, const uint8_t * p_data, size_t size)
+{
+    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpControl(p_this, p_opControl, address, size); }
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpData(p_this, p_data, size); }
+    return status;
+}
+
+
+
+// determine bytes per cmd
 // NvMemory_SetOpCmdSize(NvMemory_T * p_this, size_t unitSize, uint8_t unitsPerCmd)
 // NvMemory_Status_T NvMemory_SetOpSizeUnitsPerCmd(NvMemory_T * p_this, size_t opSize)
 // {
@@ -407,14 +426,14 @@ NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
  //    }
  //}
  //
- //void Flash_ReadVirtual(Flash_T * p_flash, uint8_t * memAddress, const uint8_t * p_physical, size_t size)
+ //void Flash_ReadVirtual(Flash_T * p_flash, uint8_t * address, const uint8_t * p_physical, size_t size)
  //{
  //    uint32_t offset;
  //
  //    if (p_physical >= p_flash->OpAddress && p_physical <= p_flash->OpAddress + p_flash->OpSizeAligned)
  //    {
  //        offset = p_physical - p_flash->OpAddress;
- //        memcpy(memAddress, &p_flash->Buffer[offset], size);
+ //        memcpy(address, &p_flash->Buffer[offset], size);
  //    }
  //}
  //

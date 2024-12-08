@@ -98,7 +98,7 @@ void Motor_Analog_EnqueueIabc(Motor_T * p_motor)
 }
 
 
-void Motor_Analog_Proc(Motor_T * p_motor)
+void Motor_Analog_Start(Motor_T * p_motor)
 {
 //    AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_PWM);
 

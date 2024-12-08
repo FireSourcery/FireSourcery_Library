@@ -21,10 +21,18 @@
     buffer must be typed for _Generic selection (NOT void*)
 */
 /******************************************************************************/
+// #define value_array_get(p_values, index, p_result) (*p_result = ((p_values) + index))
+// #define value_array_set(p_values, index, p_value) (*((p_values) + index) = *p_value)
+
 static inline void uint8_copy(uint8_t * p_dest, const uint8_t * p_source) { *p_dest = *p_source; }
 static inline void uint16_copy(uint16_t * p_dest, const uint16_t * p_source) { *p_dest = *p_source; }
 static inline void uint32_copy(uint32_t * p_dest, const uint32_t * p_source) { *p_dest = *p_source; }
 static inline void uint64_copy(uint64_t * p_dest, const uint64_t * p_source) { *p_dest = *p_source; }
+// match memcpy signature
+// static inline void uint8_copy(uint8_t * p_dest, const uint8_t * p_source, size_t _void) { *p_dest = *p_source; }
+// static inline void uint16_copy(uint16_t * p_dest, const uint16_t * p_source, size_t _void) { *p_dest = *p_source; }
+// static inline void uint32_copy(uint32_t * p_dest, const uint32_t * p_source, size_t _void) { *p_dest = *p_source; }
+// static inline void uint64_copy(uint64_t * p_dest, const uint64_t * p_source, size_t _void) { *p_dest = *p_source; }
 
 // typed_value_copy
 #define _int_copy(p_dest, p_source) \
@@ -43,9 +51,10 @@ _Generic(p_dest, \
     base for type checking This way other functions do not need to define typed selections
     p_typed_values
 */
-#define array_get(p_typed, index, p_result) (_int_copy(p_result, (p_typed + index)))
-#define array_set(p_typed, index, p_value) (_int_copy((p_typed + index), p_value))
+#define typed_array_get(p_typed, index, p_result) (_int_copy(p_result, (p_typed + index)))
+#define typed_array_set(p_typed, index, p_value) (_int_copy((p_typed + index), p_value))
 // #define array_copy(p_typed, p_source, length) ({ for (size_t index = 0U; index < length; index++) { _int_copy((p_typed + index), (p_source + index)); } })
+
 
 // addition casting for safety? caller can handle directly
 // static inline uint8_t uint8_get(const uint8_t * p_source, size_t index) { return  p_source[index]; }
@@ -83,7 +92,7 @@ typedef void(*uint64_op_t)(uint64_t * p_value);
     p_typed and unit_op mismatch will result in compiler warning
     alternatively, directly passing array can omit length
 
-    @param[in] unit_op void(*unit_op)(void * p_unit)
+    @param[in] unit_op void(*unit_op)(  * p_unit)
 */
 #define array_foreach(p_typed, length, unit_op) ({ for(size_t index = 0U; index < length; index++) { unit_op((p_typed) + index); } })
 
@@ -114,7 +123,6 @@ typedef void(*uint64_op_t)(uint64_t * p_value);
 //     for (size_t index = 1U; index < length; index++) { if (p_typed[index] < min_value) { min_value = p_typed[index]; } } \
 //     min_value; \
 // })
-
 
 
 

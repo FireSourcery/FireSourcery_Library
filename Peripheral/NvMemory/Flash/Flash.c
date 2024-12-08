@@ -75,7 +75,7 @@ static void FinalizeCmdReadOnce(void * p_hal, uintptr_t address, size_t units, u
 static Flash_Status_T ParseCmdErrorWrite(void * p_hal)
 {
     Flash_Status_T status;
-    if(HAL_Flash_ReadErrorProtectionFlag(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
+    if (HAL_Flash_ReadErrorProtectionFlag(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
     else { status = NV_MEMORY_STATUS_ERROR_CMD; }
     return status;
 }
@@ -83,7 +83,7 @@ static Flash_Status_T ParseCmdErrorWrite(void * p_hal)
 static Flash_Status_T ParseCmdErrorErase(void * p_hal)
 {
     Flash_Status_T status;
-    if(HAL_Flash_ReadErrorProtectionFlag(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
+    if (HAL_Flash_ReadErrorProtectionFlag(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
     else { status = NV_MEMORY_STATUS_ERROR_CMD; }
     return status;
 }
@@ -91,7 +91,7 @@ static Flash_Status_T ParseCmdErrorErase(void * p_hal)
 static Flash_Status_T ParseCmdErrorVerify(void * p_hal)
 {
     Flash_Status_T status;
-    if(HAL_Flash_ReadErrorVerifyFlag(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_VERIFY; }
+    if (HAL_Flash_ReadErrorVerifyFlag(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_VERIFY; }
     else { status = NV_MEMORY_STATUS_ERROR_CMD; }
     return status;
 }
@@ -108,7 +108,6 @@ static Flash_Status_T ParseCmdErrorReadOnce(void * p_hal)
     return NV_MEMORY_STATUS_ERROR_CMD;
 }
 
-
 /******************************************************************************/
 /*!
     Set Op - Common Blocking Non Blocking
@@ -118,16 +117,15 @@ static const NvMemory_OpControl_T FLASH_OP_WRITE =
 {
     .START_CMD           = (HAL_NvMemory_StartCmd_T)StartCmdWritePage,
     .FINALIZE_CMD        = NULL,
-    .PARSE_CMD_ERROR     = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorWrite,
+    .PARSE_CMD_ERROR     = (HAL_NvMemory_MapStatus_T)ParseCmdErrorWrite,
     .UNIT_SIZE           = FLASH_UNIT_WRITE_SIZE,
     .FORCE_ALIGN         = nvmemory_align_down,
 };
 
 static Flash_Status_T SetWrite(Flash_T * p_flash, uintptr_t flashAddress, const uint8_t * p_data, size_t size)
 {
-    return NvMemory_SetOpControl(p_flash, &FLASH_OP_WRITE, flashAddress, p_data, size);
+    return NvMemory_SetOpControl_Write(p_flash, &FLASH_OP_WRITE, flashAddress, p_data, size);
 }
-
 
 /******************************************************************************/
 /*! */
@@ -136,14 +134,14 @@ static const NvMemory_OpControl_T FLASH_OP_ERASE =
 {
     .START_CMD           = (HAL_NvMemory_StartCmd_T)StartCmdEraseSector,
     .FINALIZE_CMD        = NULL,
-    .PARSE_CMD_ERROR     = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorErase,
+    .PARSE_CMD_ERROR     = (HAL_NvMemory_MapStatus_T)ParseCmdErrorErase,
     .UNIT_SIZE           = FLASH_UNIT_ERASE_SIZE,
     .FORCE_ALIGN         = nvmemory_align_up,
 };
 
 static Flash_Status_T SetErase(Flash_T * p_flash, uintptr_t flashAddress, size_t size)
 {
-    return NvMemory_SetOpControl(p_flash, &FLASH_OP_ERASE, flashAddress, NULL, size);
+    return NvMemory_SetOpControl(p_flash, &FLASH_OP_ERASE, flashAddress, size);
 }
 
 /******************************************************************************/
@@ -153,15 +151,15 @@ static const NvMemory_OpControl_T FLASH_OP_VERIFY_WRITE =
 {
     .START_CMD           = (HAL_NvMemory_StartCmd_T)StartCmdVerifyWriteUnit,
     .FINALIZE_CMD        = NULL,
-    .PARSE_CMD_ERROR     = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorVerify,
+    .PARSE_CMD_ERROR     = (HAL_NvMemory_MapStatus_T)ParseCmdErrorVerify,
     .UNIT_SIZE           = FLASH_UNIT_VERIFY_WRITE_SIZE,
     .FORCE_ALIGN         = nvmemory_align_down,
 };
 
-/* will repeat copy buffer for buffered verify after write case */
+
 static Flash_Status_T SetVerifyWrite(Flash_T * p_flash, uintptr_t flashAddress, const uint8_t * p_data, size_t size)
 {
-    return NvMemory_SetOpControl(p_flash, &FLASH_OP_VERIFY_WRITE, flashAddress, p_data, size);
+    return NvMemory_SetOpControl_Write(p_flash, &FLASH_OP_VERIFY_WRITE, flashAddress, p_data, size); /* will repeat copy buffer for buffered verify after write case */
 }
 
 /******************************************************************************/
@@ -171,18 +169,17 @@ static const NvMemory_OpControl_T FLASH_OP_VERIFY_ERASE =
 {
     .START_CMD           = (HAL_NvMemory_StartCmd_T)StartCmdVerifyEraseUnits,
     .FINALIZE_CMD        = NULL,
-    .PARSE_CMD_ERROR     = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorVerify,
+    .PARSE_CMD_ERROR     = (HAL_NvMemory_MapStatus_T)ParseCmdErrorVerify,
     .UNIT_SIZE           = FLASH_UNIT_VERIFY_ERASE_SIZE,
     .FORCE_ALIGN         = nvmemory_align_up,
+};
 
+//todo units
 // #ifdef CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
 //     return 0U; // overwrite with totalBytes / FLASH_UNIT_VERIFY_ERASE_SIZE;
 // #elif defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
 //     return FLASH_UNIT_VERIFY_ERASE_SIZE;
 // #endif
-};
-
-//todo units
 // static inline size_t VerifyEraseUnitsPerCmd(size_t totalBytes)
 // {
 // #ifdef CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
@@ -194,7 +191,7 @@ static const NvMemory_OpControl_T FLASH_OP_VERIFY_ERASE =
 
 static Flash_Status_T SetVerifyErase(Flash_T * p_flash, uintptr_t flashAddress, size_t size)
 {
-    return NvMemory_SetOpControl(p_flash, &FLASH_OP_VERIFY_ERASE, flashAddress, NULL, size);
+    return NvMemory_SetOpControl(p_flash, &FLASH_OP_VERIFY_ERASE, flashAddress, size);
 }
 
 /******************************************************************************/
@@ -205,14 +202,14 @@ static const NvMemory_OpControl_T FLASH_OP_WRITE_ONCE =
 {
     .START_CMD          = (HAL_NvMemory_StartCmd_T)StartCmdWriteOnce,
     .FINALIZE_CMD       = NULL,
-    .PARSE_CMD_ERROR    = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorWriteOnce,
+    .PARSE_CMD_ERROR    = (HAL_NvMemory_MapStatus_T)ParseCmdErrorWriteOnce,
     .UNIT_SIZE          = FLASH_UNIT_WRITE_ONCE_SIZE,
     .FORCE_ALIGN        = NULL,
 };
 
 static Flash_Status_T SetWriteOnce(Flash_T * p_flash, uintptr_t flashAddress, const uint8_t * p_data, size_t size)
 {
-    return NvMemory_SetOpControl(p_flash, &FLASH_OP_WRITE_ONCE, flashAddress, p_data, size);
+    return NvMemory_SetOpControl_Write(p_flash, &FLASH_OP_WRITE_ONCE, flashAddress, p_data, size);
 }
 
 /******************************************************************************/
@@ -222,8 +219,8 @@ static Flash_Status_T SetWriteOnce(Flash_T * p_flash, uintptr_t flashAddress, co
 static const NvMemory_OpControl_T FLASH_OP_READ_ONCE =
 {
     .START_CMD          = (HAL_NvMemory_StartCmd_T)StartCmdReadOnce,
-    .FINALIZE_CMD       = FinalizeCmdReadOnce,
-    .PARSE_CMD_ERROR    = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorReadOnce,
+    .FINALIZE_CMD       = (HAL_NvMemory_FinalizeCmd_T)FinalizeCmdReadOnce,
+    .PARSE_CMD_ERROR    = (HAL_NvMemory_MapStatus_T)ParseCmdErrorReadOnce,
     .UNIT_SIZE          = FLASH_UNIT_READ_ONCE_SIZE,
     .FORCE_ALIGN        = NULL,
 };
@@ -231,12 +228,7 @@ static const NvMemory_OpControl_T FLASH_OP_READ_ONCE =
 /* Sets p_OpData to result buffer */
 static Flash_Status_T SetReadOnce(Flash_T * p_flash, uintptr_t flashAddress, size_t size, uint8_t * p_resultBuffer)
 {
-    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
-    p_flash->p_OpControl = &FLASH_OP_READ_ONCE;
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpAddress(p_flash, flashAddress, size); }
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpSize(p_flash, size); }
-    if (status == NV_MEMORY_STATUS_SUCCESS) { p_flash->p_OpData = p_resultBuffer; } /* bypass buffer mode selection */
-    return status;
+    return NvMemory_SetOpControl_Read(p_flash, &FLASH_OP_READ_ONCE, flashAddress, size, p_resultBuffer);
 }
 
 // void Flash_GetReadOnceResults(const Flash_T * p_flash, uint8_t * p_result)
@@ -251,13 +243,13 @@ static const NvMemory_OpControl_T FLASH_OP_ERASE_ALL =
 {
     .START_CMD           = (HAL_NvMemory_StartCmd_T)StartCmdEraseAll,
     .FINALIZE_CMD        = NULL,
-    .PARSE_CMD_ERROR     = (HAL_NvMemory_CmdStatus_T)ParseCmdErrorErase,
+    .PARSE_CMD_ERROR     = (HAL_NvMemory_MapStatus_T)ParseCmdErrorErase,
     .UNIT_SIZE           = 0U,
 };
 
 static Flash_Status_T SetEraseAll(Flash_T * p_flash)
 {
-    NvMemory_SetOpControl(p_flash, &FLASH_OP_ERASE_ALL, 0U, NULL, 0u);
+    NvMemory_SetOpControl(p_flash, &FLASH_OP_ERASE_ALL, 0U, 0U);
     return NV_MEMORY_STATUS_SUCCESS;
 }
 

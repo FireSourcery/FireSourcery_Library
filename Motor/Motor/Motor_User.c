@@ -56,7 +56,7 @@ static int32_t Scale16(uint16_t scalar16, int32_t value) { return (int32_t)scala
 /******************************************************************************/
 int32_t Motor_User_GetCmd(const Motor_T * p_motor)         { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
 int32_t Motor_User_GetSetPoint(const Motor_T * p_motor)    { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetOutput(&p_motor->Ramp)); }
-// void Motor_User_ClearState(Motor_T * p_motor) { Linear_Ramp_SetOutputState(&p_motor->Ramp, 0); }
+
 
 /******************************************************************************/
 /*!

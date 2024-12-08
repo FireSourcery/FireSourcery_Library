@@ -49,7 +49,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 //   #ifdef CONFIG_MOTOR_DEBUG
     Motor_Debug_CaptureRefTime(p_motor);
     p_motor->ControlTimerBase++;
-    // Motor_Analog_Proc(p_motor); // todo
+    // Motor_Analog_Start(p_motor); // todo
     StateMachine_ProcState(&p_motor->StateMachine);
     // Motor_Debug_CaptureTime(p_motor, 5U);
 #ifdef CONFIG_MOTOR_PWM_INTERRUPT_CLEAR_PER_MOTOR

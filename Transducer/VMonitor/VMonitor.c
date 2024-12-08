@@ -52,6 +52,13 @@ void VMonitor_Init(VMonitor_T * p_vMonitor)
     // Linear_ADC_Init(&p_vMonitor->LinearLimits, p_vMonitor->Config.FaultLower_Adcu, p_vMonitor->Config.WarningLower_Adcu, 0, 0);
 }
 
+/* select from compound literal or flash */
+// void _VMonitor_Init(VMonitor_T * p_vMonitor, const VMonitor_Config_T * p_config)
+// {
+//     const VMonitor_Config_T * p_effectiveConfig = (p_config == NULL) ? &p_vMonitor->CONST.P_CONFIG : p_config;
+//     if (p_effectiveConfig != NULL) { memcpy(&p_vMonitor->Config, p_vMonitor->CONST.P_CONFIG, sizeof(VMonitor_Config_T)); }
+// }
+
 /*
     No previous state
     Monitor: FaultLower_Adcu < WarningLower_Adcu <  adcu < WarningUpper_Adcu < FaultUpper_Adcu

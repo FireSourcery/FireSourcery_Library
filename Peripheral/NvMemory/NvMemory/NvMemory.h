@@ -38,6 +38,14 @@
 #include <stddef.h>
 #include <assert.h>
 
+/*!
+    @param[in] value - address or size
+    @param[in] align - unit must be power of 2
+*/
+static inline uintptr_t nvmemory_align_down(uintptr_t value, size_t align) { return (value & (-align)); }
+static inline uintptr_t nvmemory_align_up(uintptr_t value, size_t align) { return (-((-value) & (-align))); }
+static inline bool nvmemory_is_aligned(uintptr_t value, size_t align) { return ((value & (align - 1UL)) == (uintptr_t)0UL); }
+
 /*
     Common return status by public module functions
 */
@@ -107,9 +115,18 @@ NvMemory_Partition_T;
 typedef bool (* const HAL_NvMemory_ReadFlags_T)(const void * p_hal);
 typedef void (* const HAL_NvMemory_ClearFlags_T)(void * p_hal);
 
-typedef void (*HAL_NvMemory_StartCmd_T)(void * p_hal, uintptr_t memAddress, const uint8_t * p_source, size_t units);
-typedef void (*HAL_NvMemory_FinalizeCmd_T)(void * p_hal, uintptr_t memAddress, size_t units, uint8_t * p_buffer);
-typedef NvMemory_Status_T(*HAL_NvMemory_CmdStatus_T)(const void * p_hal);
+typedef void (*HAL_NvMemory_StartCmd_T)(void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
+typedef void (*HAL_NvMemory_FinalizeCmd_T)(void * p_hal, uintptr_t address, size_t units, uint8_t * p_buffer);
+
+// typedef bool(*HAL_NvMemory_ReadStatus_T)(const void * p_hal);
+// typedef NvMemory_Status_T(*NvMemory_ParseStatus_T)(const void * p_hal);
+typedef NvMemory_Status_T(*HAL_NvMemory_MapStatus_T)(const void * p_hal);
+
+/* implementation mapping each operation type to vtable, instead of using generic startCmd */
+typedef void (*HAL_NvMemory_CmdReadUnit_T)(void * p_hal, uintptr_t address, uint8_t * p_result);
+typedef void (*HAL_NvMemory_CmdWriteUnit_T)(void * p_hal, uintptr_t address, const uint8_t * p_data);
+typedef void (*HAL_NvMemory_CmdEraseUnit_T)(void * p_hal, uintptr_t address);
+typedef void (*HAL_NvMemory_CmdUnits_T)(void * p_hal, uintptr_t address, size_t units);
 
 typedef void (*NvMemory_Callback_T)(void * p_callbackData);
 
@@ -118,7 +135,7 @@ typedef const struct NvMemory_OpControl
 {
     HAL_NvMemory_StartCmd_T START_CMD;          /* Start HAL Cmd, multiple iterations per Op */
     HAL_NvMemory_FinalizeCmd_T FINALIZE_CMD;    /* On end per Cmd iteration */
-    HAL_NvMemory_CmdStatus_T PARSE_CMD_ERROR;   /* On end all Cmd iteration, Op Complete Error */
+    HAL_NvMemory_MapStatus_T PARSE_CMD_ERROR;   /* On end all Cmd iteration, Op Complete Error */
     size_t UNIT_SIZE;                           /* Align Size */
     size_t(*FORCE_ALIGN)(uintptr_t value, size_t align); /* Align up or down */
     // size_t CMD_UNITS;        /* Used by EraseVerify for now */
@@ -215,14 +232,9 @@ NvMemory_T;
     }                                                                                                                                                   \
 }
 
-/*!
-    @param[in] value - address or size
-    @param[in] align - unit must be power of 2
-*/
-static inline uintptr_t nvmemory_align_down(uintptr_t value, size_t align)   { return (value & (-align)); }
-static inline uintptr_t nvmemory_align_up(uintptr_t value, size_t align)     { return (-((-value) & (-align))); }
-static inline bool nvmemory_is_aligned(uintptr_t value, size_t align)        { return ((value & (align - 1UL)) == (uintptr_t)0UL); }
-
+/* Alternatively Cached on SetOp */
+static size_t NvMemory_GetOpSizeAligned(NvMemory_T * p_this)    { p_this->p_OpControl->FORCE_ALIGN(p_this->OpSize, p_this->p_OpControl->UNIT_SIZE); }
+static size_t NvMemory_GetOpSizeRemainder(NvMemory_T * p_this)  { p_this->OpSize - nvmemory_align_down(p_this->OpSize, p_this->p_OpControl->UNIT_SIZE); }
 
 static inline void NvMemory_EnableForceAlign(NvMemory_T * p_this) { p_this->IsForceAlignEnable = true; }
 static inline void NvMemory_DisableForceAlign(NvMemory_T * p_this) { p_this->IsForceAlignEnable = false; }
@@ -243,10 +255,13 @@ extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this, const uint8_t * 
 
 extern NvMemory_Status_T NvMemory_MemCompare(const uint8_t * p_dest, const uint8_t * p_source, size_t size);
 /* Destination is not intended to be dereference, pass as uintptr_t type */
-extern NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_this, uintptr_t memAddress, size_t opSize);
+extern NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_this, uintptr_t address, size_t opSize);
 extern NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_this, const uint8_t * p_data, size_t opSize);
 extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize);
-extern NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t memAddress, const uint8_t * p_data, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size, uint8_t * p_data);
+extern NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, const uint8_t * p_data, size_t size);
+
 
 /*
     Blocking

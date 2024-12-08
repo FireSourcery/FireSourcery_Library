@@ -105,7 +105,7 @@ static inline void Critical_ReleaseSignal(critical_signal_t * p_mutex)
     atomic_flag_clear(p_mutex);
 }
 
-static inline bool Critical_AwaitSignal(critical_signal_t * p_mutex)
+static inline bool Critical_AwaitSignal_Blocking(critical_signal_t * p_mutex)
 {
     while (atomic_flag_test_and_set(p_mutex) == true) {}
 }

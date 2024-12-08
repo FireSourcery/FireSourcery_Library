@@ -63,9 +63,9 @@ VMonitor_Config_T;
 
 typedef const struct VMonitor_Const
 {
-    const VMonitor_Config_T * const P_CONFIG;
     const uint32_t UNITS_R1;
     const uint32_t UNITS_R2;
+    const VMonitor_Config_T * const P_CONFIG;
 }
 VMonitor_Const_T;
 
@@ -87,6 +87,22 @@ VMonitor_T;
         .UNITS_R2 = R2,                 \
     },                                  \
 }
+
+/*
+    VMONITOR_INIT_NAMED(
+        .P_CONFIG = p_Config,
+        .UNITS_R1 = R1,
+        .UNITS_R2 = R2,
+    )
+*/
+// #define VMONITOR_INIT_NAMED(...) \
+// {                                       \
+//     .CONST =                            \
+//     {                                   \
+//         __VA_ARGS__                     \
+//     },                                  \
+// }
+
 
 static inline VMonitor_Status_T VMonitor_GetStatus(const VMonitor_T * p_vMonitor)   { return (p_vMonitor->Status); }
 static inline bool VMonitor_IsFault(const VMonitor_T * p_vMonitor)               { return ((p_vMonitor->Status == VMONITOR_FAULT_UPPER) || (p_vMonitor->Status == VMONITOR_FAULT_LOWER)); }

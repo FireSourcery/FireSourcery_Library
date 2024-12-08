@@ -127,7 +127,14 @@ static inline qfrac16_t qfrac16_div_sat(qaccum32_t dividend, qaccum32_t divisor)
     return qfrac16_sat(qfrac16_div(dividend, divisor));
 }
 
-static inline qfrac16_t qfrac16_abs(qfrac16_t x)
+/* cast overflow as ufrac */
+// static inline uqfrac16_t ufrac16_abs(qfrac16_t x)
+// {
+//     int32_t mask = (x >> QFRAC16_N_BITS); // Create a mask based on the sign bit
+//     return (x + mask) ^ mask; // Apply the mask to get the absolute value
+// }
+
+static inline qfrac16_t qfrac16_abs_sat(qfrac16_t x)
 {
     return (x < 0) ? ((x == -32768) ? 32767 : 0 - x) : x;
 }

@@ -99,7 +99,6 @@ Encoder_Config_T;
 
 typedef const struct Encoder_Const
 {
-    const Encoder_Config_T * const P_CONFIG;
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     HAL_Encoder_Counter_T * const P_HAL_ENCODER_COUNTER; /*!< Pulse Counter */
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
@@ -114,6 +113,8 @@ typedef const struct Encoder_Const
     const uint32_t EXTENDED_TIMER_FREQ;
     const uint32_t POLLING_FREQ;        /*!< DeltaT Interpolation Freq. */
     const uint32_t SAMPLE_FREQ;         /*!< DeltaD Speed Sample Freq. */
+
+    const Encoder_Config_T * const P_CONFIG;
 }
 Encoder_Const_T;
 
