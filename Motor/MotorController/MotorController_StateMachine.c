@@ -104,9 +104,16 @@ static void Init_Proc(MotorController_T * p_mc)
     if (proceed == true)
     {
         if (p_mc->Config.InitMode == MOTOR_CONTROLLER_INIT_MODE_SERVO)
-            { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_SERVO); }
+        {
+            _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_SERVO);
+        }
         else
-            { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_PARK); }
+        {
+
+            //check motor stop all, otherwise change to neutral state.
+            /* In the case the motor is spinning and the controller rebooted without first entering fault. Do not apply sudden brake of Park state. */
+            _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_PARK);
+        }
     }
 }
 

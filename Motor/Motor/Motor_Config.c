@@ -74,7 +74,7 @@ void Motor_Config_SetKv(Motor_T * p_motor, uint16_t kv)
 {
     p_motor->Config.Kv = kv;
     Motor_Config_SetSpeedFeedbackRef_Rpm(p_motor, kv * Motor_Static_GetVSource_V());
-    Motor_Config_SetSpeedMatchRef_Rpm(p_motor, kv * Motor_Static_GetVSource_V());
+    Motor_Config_SetSpeedMatchRef_Rpm(p_motor, kv * Motor_Static_GetVSource_V() * 9 / 10);
 }
 
 /* SpeedFeedbackRef_Rpm => 100% speed for PID feedback. */

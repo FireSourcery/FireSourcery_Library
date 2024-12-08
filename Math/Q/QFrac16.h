@@ -69,6 +69,7 @@ static const qaccum32_t QFRAC16_3PI_DIV_4      = 0x00012D97; /* Over saturated *
 
 static inline qfrac16_t qfrac16(int16_t numerator, int32_t denominator) { return (qfrac16_t)(((int32_t)numerator << QFRAC16_N_BITS) / denominator); }
 static inline qfrac16_t qfrac16_sat(qaccum32_t qfrac) { return math_clamp(qfrac, -QFRAC16_MAX, QFRAC16_MAX); }
+static inline qfrac16_t qfrac16_sat_abs(qaccum32_t qfrac) { return math_clamp(qfrac, 0, QFRAC16_MAX); }
 
 /*!
     @brief Unsaturated Multiply

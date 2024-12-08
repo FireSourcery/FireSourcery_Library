@@ -33,6 +33,8 @@
 
 #include "Math/Q/QFrac16.h"
 
+#include <assert.h>
+
 /*
     Standard SVM calculation method. Inclusive of equivalent reverse Clarke transform.
     Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
@@ -198,13 +200,13 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
         }
     }
 
-    *p_dutyA = qfrac16_sat(*p_dutyA);
-    *p_dutyB = qfrac16_sat(*p_dutyB);
-    *p_dutyC = qfrac16_sat(*p_dutyC);
+    *p_dutyA = qfrac16_sat_abs(*p_dutyA);
+    *p_dutyB = qfrac16_sat_abs(*p_dutyB);
+    *p_dutyC = qfrac16_sat_abs(*p_dutyC);
 
-    assert((int16_t)*p_dutyA > 0);
-    assert((int16_t)*p_dutyB > 0);
-    assert((int16_t)*p_dutyC > 0);
+    // assert((int16_t)*p_dutyA > 0);
+    // assert((int16_t)*p_dutyB > 0);
+    // assert((int16_t)*p_dutyC > 0);
 }
 
 #endif

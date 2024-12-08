@@ -279,7 +279,7 @@ typedef struct Motor_Config
         Ref values, calibration parameters
     */
     uint16_t SpeedFeedbackRef_Rpm;  /* VSource*Kv. Feedback / PID Regulator Limits Ref. Sensor/User Frac16, unit conversion. */
-                                        /* A value greater than achievable will cause integral windup */
+                                        /* A value greater than achievable will cause integral windup. too low will lose PID control range */
     uint16_t SpeedMatchRef_Rpm;     /* Must be < SpeedFeedbackRef_Rpm to ensure resume control at lower speed. */
     // Motor_ResumeMode_T    ResumeMode; // option Scale to VSpeed or VBemf on resume
     uint16_t IaZeroRef_Adcu;
