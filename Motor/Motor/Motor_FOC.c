@@ -40,7 +40,7 @@ void Motor_FOC_EnqueueVabc(Motor_T * p_motor)
 {
     // todo move to threads
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    if (Motor_IsAnalogCycle(p_motor) = true)
+    if (Motor_IsAnalogCycle(p_motor) == true)
     {
         AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_V);
         AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA);
@@ -56,7 +56,7 @@ void Motor_FOC_EnqueueVabc(Motor_T * p_motor)
 
 void Motor_FOC_EnqueueIabc(Motor_T * p_motor)
 {
-    if (Motor_IsAnalogCycle(p_motor) = true)
+    if (Motor_IsAnalogCycle(p_motor) == true)
     {
         AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_I);
         AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);
@@ -175,7 +175,7 @@ static void ActivateAngle(Motor_T * p_motor)
 
 static void ProcInnerFeedbackOutput(Motor_T * p_motor)
 {
-    if(Motor_IsAnalogCycle(p_motor) = true)
+    if(Motor_IsAnalogCycle(p_motor) == true)
     {
         ProcClarkePark(p_motor);
         ProcInnerFeedback(p_motor); /* Set Vd Vq */
