@@ -61,9 +61,6 @@ void Thermistor_Init(Thermistor_T * p_therm)
     Limits Monitor
 */
 /******************************************************************************/
-bool CheckThreshold(uint16_t threshold, bool isActive, uint16_t adcu) { return ((adcu < threshold) && (isActive)); }
-// bool Check(uint16_t trigger, uint16_t threshold, bool isActive, uint16_t adcu) { return((adcu < threshold) && (isActive)); }
-
 /*!
     Monitor: heat < WarningThreshold_DegC < Warning_DegC < FaultThreshold_DegC < Fault_DegC
     Lower adcu is higher heat, ntc, as pulldown
@@ -79,12 +76,12 @@ Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t capt
 
     if(p_therm->Config.IsMonitorEnable == true)
     {
-        if      (adcu > p_therm->Config.WarningThreshold_Adcu)                                                           { p_therm->Status = THERMISTOR_STATUS_OK; }
-        else if (adcu < p_therm->Config.FaultTrigger_Adcu)                                                               { p_therm->Status = THERMISTOR_STATUS_FAULT; }
-        else if (CheckThreshold(p_therm->Config.FaultThreshold_Adcu, Thermistor_IsFault(p_therm), adcu) == true)         { p_therm->Status = THERMISTOR_STATUS_FAULT_THRESHOLD; }
-        else if (adcu < p_therm->Config.WarningTrigger_Adcu)                                                             { p_therm->Status = THERMISTOR_STATUS_WARNING; }
-        else if (CheckThreshold(p_therm->Config.WarningThreshold_Adcu, Thermistor_IsWarning(p_therm), adcu) == true)     { p_therm->Status = THERMISTOR_STATUS_WARNING_THRESHOLD; }
-        else                                                                                                             { p_therm->Status = THERMISTOR_STATUS_OK; }
+        if      (adcu > p_therm->Config.WarningThreshold_Adcu)                                      { p_therm->Status = THERMISTOR_STATUS_OK; }
+        else if (adcu < p_therm->Config.FaultTrigger_Adcu)                                          { p_therm->Status = THERMISTOR_STATUS_FAULT; }
+        else if ((adcu < p_therm->Config.FaultThreshold_Adcu) && Thermistor_IsFault(p_therm))       { p_therm->Status = THERMISTOR_STATUS_FAULT_THRESHOLD; }
+        else if (adcu < p_therm->Config.WarningTrigger_Adcu)                                        { p_therm->Status = THERMISTOR_STATUS_WARNING; }
+        else if ((adcu < p_therm->Config.WarningThreshold_Adcu) && Thermistor_IsWarning(p_therm))   { p_therm->Status = THERMISTOR_STATUS_WARNING_THRESHOLD; }
+        else                                                                                        { p_therm->Status = THERMISTOR_STATUS_OK; }
 
         p_therm->Adcu = adcu;
     }

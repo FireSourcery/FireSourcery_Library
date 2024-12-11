@@ -286,7 +286,7 @@ void Analog_MarkConversion(Analog_T * p_analog, const Analog_Conversion_T * p_co
     p_analog->CONST.P_CHANNEL_ENTRIES[p_conversion->CHANNEL].IsMarked = true;
 }
 
-void Analog_MarkConversionGroup(Analog_T * p_analog, const Analog_ConversionBatch_T * p_conversion)
+void Analog_MarkConversionBatch(Analog_T * p_analog, const Analog_ConversionBatch_T * p_conversion)
 {
     p_analog->CONST.P_BATCH_ENTRIES[p_conversion->BATCH].IsMarked = true;
 }

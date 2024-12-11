@@ -43,8 +43,8 @@ MotorController_Direction_T MotorController_User_GetDirection(const MotorControl
         case MCSM_STATE_ID_PARK:        direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
         case MCSM_STATE_ID_NEUTRAL:     direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;         break;
         case MCSM_STATE_ID_DRIVE:
-            if      (MotorController_CheckForwardAll(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
-            else if (MotorController_CheckReverseAll(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
+            if      (MotorController_IsEveryMotorForward(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
+            else if (MotorController_IsEveryMotorReverse(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
             else                                                    { direction = MOTOR_CONTROLLER_DIRECTION_ERROR; }
             break;
         default: direction = MOTOR_CONTROLLER_DIRECTION_ERROR; break;

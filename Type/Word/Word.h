@@ -40,13 +40,10 @@ typedef union { uint8_t Unsigned; int8_t Signed; } var8_t;
 
 #define REGISTER_SIZE sizeof(register_t)
 
-// static_assert(sizeof(register_t) );
-
 typedef union __attribute__((packed, aligned(4U))) Word32
 {
-    uint8_t Bytes[4U];
     char Chars[4U];
-    var16_t Var16s[2U];
+    uint8_t Bytes[4U];
     struct { uint16_t Lower16; uint16_t Upper16; };
     uint32_t Value32;
 }
@@ -56,9 +53,8 @@ static inline Word32_T Word32_Cast(uint32_t value) { return ((Word32_T) { .Value
 
 typedef union __attribute__((packed, aligned(8U))) Word64
 {
-    uint8_t Bytes[8U];
     char Chars[8U];
-    var16_t Var16s[4U];
+    uint8_t Bytes[8U];
     Word32_T Word32s[2U];
 }
 Word64_T;

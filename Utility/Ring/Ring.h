@@ -61,8 +61,8 @@ Ring_Const_T;
 typedef struct Ring
 {
     const Ring_Const_T CONST;
-    volatile size_t Tail;    /* FIFO In/Back. */
     volatile size_t Head;    /* FIFO Out/Front. */
+    volatile size_t Tail;    /* FIFO In/Back. */
 #if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
     volatile critical_signal_t Mutex;
 #endif
@@ -82,12 +82,12 @@ Ring_T;
 #endif
 
 #if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-#define _RING_INIT_CRITICAL_VA(UseCritical) UseCritical
+#define _RING_INIT_CRITICAL_VA(...) __VA_ARGS__
 #else
-#define _RING_INIT_CRITICAL_VA(UseCritical)
+#define _RING_INIT_CRITICAL_VA(...)
 #endif
 
-#define RING_INIT(p_Buffer, Length, UnitSize, UseCritical)  \
+#define RING_INIT(p_Buffer, UnitSize, Length, UseCritical)  \
 {                                                           \
     .CONST =                                                \
     {                                                       \
@@ -99,18 +99,8 @@ Ring_T;
     },                                                      \
 }
 
-// #define RING_INIT_AS(TYPE, Length, ...) RING_INIT((TYPE[Length]){0}, Length, sizeof(TYPE), __VA_ARGS__)
-#define RING_INIT_AS(TYPE, Length, ...)     \
-{                                           \
-    .CONST =                                \
-    {                                       \
-        .P_BUFFER   = (TYPE[Length]){0},    \
-        .LENGTH     = Length,               \
-        .UNIT_SIZE  = sizeof(TYPE),         \
-        _RING_INIT_POW2(Length - 1U)        \
-        _RING_INIT_CRITICAL_VA(__VA_ARGS__) \
-    },                                      \
-}
+#define RING_INIT_ALLOC(UnitSize, Length, ...) RING_INIT((uint8_t[(Length*UnitSize)]){ }, UnitSize, Length, __VA_ARGS__)
+#define RING_INIT_AS(TYPE, Length, ...) RING_INIT((TYPE[Length]){ }, sizeof(TYPE), Length, __VA_ARGS__)
 
 
 /******************************************************************************/

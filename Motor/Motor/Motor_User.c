@@ -67,12 +67,6 @@ void Motor_User_SetVoltageCmdValue(Motor_T * p_motor, int16_t voltageCmd)
     Motor_SetCmd(p_motor, voltageCmdIn);
 }
 
-// void Motor_User_SetVoltageModeCmd(Motor_T * p_motor, int16_t voltageCmd)
-// {
-//     Motor_User_SetVoltageMode(p_motor);
-//     Motor_User_SetVoltageCmdValue(p_motor, voltageCmd);
-// }
-
 /******************************************************************************/
 /*!
     Torque Mode
@@ -91,12 +85,6 @@ void Motor_User_SetTorqueCmdValue(Motor_T * p_motor, int16_t torqueCmd)
     int32_t torqueCmdIn = (torqueCmd > 0) ? Scale16(p_motor->ILimitMotoring_Scalar16, torqueCmd) : Scale16(p_motor->ILimitGenerating_Scalar16, torqueCmd);
     Motor_SetCmd(p_motor, torqueCmdIn);
 }
-
-// void Motor_User_SetTorqueModeCmd(Motor_T * p_motor, int16_t torqueCmd)
-// {
-//     Motor_User_SetTorqueMode(p_motor);
-//     Motor_User_SetTorqueCmdValue(p_motor, torqueCmd);
-// }
 
 /******************************************************************************/
 /*!
@@ -122,12 +110,6 @@ void Motor_User_SetSpeedCmdValue(Motor_T * p_motor, int16_t speedCmd)
     int16_t speedCmdIn = (speedCmd > 0) ? Scale16(Limit_GetUpper(&(p_motor->SpeedLimit)), speedCmd) : 0;
     Motor_SetCmd(p_motor, speedCmdIn);
 }
-
-// void Motor_User_SetSpeedModeCmd(Motor_T * p_motor, int16_t speedCmd)
-// {
-//     Motor_User_SetSpeedMode(p_motor);
-//     Motor_User_SetSpeedCmdValue(p_motor, speedCmd);
-// }
 
 /******************************************************************************/
 /*!
@@ -172,11 +154,6 @@ void Motor_User_SetOpenLoopCmdValue(Motor_T * p_motor, int16_t ivCmd)
     Motor_SetCmd(p_motor, ivCmdIn);
 }
 
-// void Motor_User_SetOpenLoopModeCmd(Motor_T * p_motor, int16_t ivMagnitude)
-// {
-//     Motor_User_SetOpenLoopMode(p_motor);
-//     Motor_User_SetOpenLoopCmdValue(p_motor, ivMagnitude);
-// }
 #endif
 
 
@@ -205,60 +182,16 @@ void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd)
 //     Motor_ActivateControl(p_motor, p_motor->Config.FeedbackModeDefault);
 // }
 
-
-// /******************************************************************************/
-// /*!
-//     Vehicle Wrapper
-//     Throttle and Brake accept uint16_t, wrapped functions use int16_t
-//     - UserCmdValue value in configured FeedbackModeDefault
-// */
-// /******************************************************************************/
-// /*!
-//     @param[in] throttle [0:65535] throttle percentage, 65535 => speed limit
-// */
-// void Motor_User_SetThrottleCmd(Motor_T * p_motor, uint16_t throttle)
-// {
-//     Motor_User_SetDefaultModeCmd(p_motor, throttle / 2U); // change to speed?
-// }
-
-// /*!
-//     Always request opposite direction current
-//     req opposite iq, bound vq to 0 for no plugging brake
-
-//     transition from accelerating to decelerating,
-//     use signed ramp to transition through 0 without discontinuity
-//     ramp from in-direction torque to 0 to counter-direction torque
-
-//     @param[in] brake [0:65535]
-// */
-// void Motor_User_SetBrakeCmd(Motor_T * p_motor, uint16_t brake)
-// {
-
-//     // if(p_motor->FeedbackMode.Hold == 0U)
-//     // {
-//     if(Motor_User_GetSpeed_UFrac16(p_motor) > INT16_MAX / 100U)
-//     {
-//         Motor_User_SetTorqueModeCmd(p_motor, (int32_t)0 - (brake / 2U));
-//     }
-//     else
-//     {
-//         // p_motor->FeedbackMode.Hold = 1U;  //clears on throttle
-//         // Phase_Ground(&p_motor->Phase);
-//         // Phase_Float(&p_motor->Phase);
-//         Motor_User_TryRelease(p_motor);
-//     }
-//     // }
-// }
-
-// void Motor_User_SetVBrakeCmd(Motor_T * p_motor, uint16_t brake)
-// {
-//     // Motor_User_SetScalarModeCmd(p_motor, (65535U - brake)); /* Higher brake => lower voltage */
-// }
+static void Motor_User_SetVBrakeCmd(Motor_T * p_motor, uint16_t brake)
+{
+    Motor_User_SetVoltageCmdValue(p_motor, Motor_GetVSpeed_Frac16(p_motor) / 2);
+}
 
 // void Motor_User_SetCruise(Motor_T * p_motor)
 // {
 //     Motor_User_SetTorqueModeCmd(p_motor, 0U);
 // }
+
 
 /******************************************************************************/
 /*!

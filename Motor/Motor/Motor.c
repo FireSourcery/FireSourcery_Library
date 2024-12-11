@@ -647,12 +647,12 @@ void Motor_ResetUnitsIc(Motor_T * p_motor)
 #endif
 }
 
-// void Motor_ResetKvSpeed(Motor_T * p_motor)
-// {
-//     int32_t rpm = Motor_GetSpeedVRef_Rpm(p_motor);
-//     if (p_motor->Config.SpeedFeedbackRef_Rpm > rpm) { p_motor->Config.SpeedFeedbackRef_Rpm = rpm; }
-//     if (p_motor->Config.SpeedMatchRef_Rpm > rpm) { p_motor->Config.SpeedMatchRef_Rpm = rpm; }
-// }
+void Motor_ResetKvSpeed(Motor_T * p_motor)
+{
+    int32_t rpm = Motor_GetSpeedVRef_Rpm(p_motor);
+    if (p_motor->Config.SpeedFeedbackRef_Rpm > rpm) { p_motor->Config.SpeedFeedbackRef_Rpm = rpm; }
+    if (p_motor->Config.SpeedMatchRef_Rpm > rpm) { p_motor->Config.SpeedMatchRef_Rpm = rpm; }
+}
 
 void Motor_ResetUnitsVabc(Motor_T * p_motor)
 {

@@ -78,13 +78,9 @@ typedef void (*Analog_Capture_T)(void * p_context, analog_result_t value);
 typedef const struct Analog_Conversion
 {
     /* Defined by module */
-    // const Analog_OpType_T       TYPE;
-
     const analog_channel_t CHANNEL; /* Id, same as buffer index. Globally unique or partitioned by Analog_ConversionBatch_T */
-
     // const uint8_t CHANNEL_LOCAL;  /* Results Buffer Index */
     // volatile analog_result_t * const P_RESULTS;  /*!< Persistent ADC results buffer, virtual channel index.  */
-
     volatile analog_result_t * const P_RESULT;
     // const Analog_Callback_T ON_COMPLETE;    /* On channel complete */
     const Analog_Capture_T CAPTURE;
@@ -108,11 +104,11 @@ Analog_Conversion_T;
 // #define _ANALOG_CONVERSION_INIT_P_RESULT(p_Result, p_Analog) .P_RESULT = (p_Result != NULL) ? p_Result : &(p_Analog->CONST.P_CHANNEL_ENTRIES[p_Analog->CONST.CHANNEL_COUNT].Result),
 
 #define ANALOG_CONVERSION_INIT(Channel, CaptureFn, p_Context, AdcId, PinId, ...) \
-{                                                                       \
-    .CHANNEL    = Channel,                                              \
-    _ANALOG_CONVERSION_INIT_HAL(AdcId, PinId)                 \
-    _ANALOG_CONVERSION_INIT_CALLBACK(p_Context, CaptureFn)    \
-    __VA_ARGS__                                                         \
+{                                                               \
+    .CHANNEL    = Channel,                                      \
+    _ANALOG_CONVERSION_INIT_HAL(AdcId, PinId)                   \
+    _ANALOG_CONVERSION_INIT_CALLBACK(p_Context, CaptureFn)      \
+    __VA_ARGS__                                                 \
 }
 
 // #define ANALOG_CONVERSION_INIT_STRUCT(...) ( (Analog_Conversion_T) { __VA_ARGS__ } )
@@ -280,16 +276,6 @@ extern void Analog_StartConversionBatch(Analog_T * p_analog, const Analog_Conver
 
 extern void Analog_Init(Analog_T * p_analog);
 
-// extern bool Analog_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion);
-// extern bool Analog_EnqueueOptions(Analog_T * p_analog, const Analog_Options_T * p_options);
-// extern void Analog_ActivateConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion);
-// extern void Analog_ActivateOptions(Analog_T * p_analog, const Analog_Options_T * p_options);
-
-// extern void _Analog_Group_ResumeQueue(Analog_T * p_analog);
-// extern void Analog_Group_PauseQueue(Analog_T * p_analog);
-// extern void Analog_Group_ResumeQueue(Analog_T * p_analog);
-// extern bool Analog_Group_EnqueueConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion);
-// extern bool Analog_Group_EnqueueOptions(Analog_T * p_analog, const Analog_Options_T * p_options);
 
 #endif
 

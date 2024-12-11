@@ -73,7 +73,7 @@ static protocol_size_t Version(MotorController_T * p_mc, MotPacket_VersionResp_T
 static protocol_size_t StopAll(MotorController_T * p_mc, MotPacket_StopResp_T * p_txPacket, const MotPacket_StopReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
-    MotorController_User_DisableControl(p_mc);
+    MotorController_User_ForceDisableControl(p_mc);
     return MotPacket_StopResp_Build(p_txPacket, MOT_STATUS_OK);
 }
 

@@ -208,11 +208,11 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
             case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_mc);  break;
             case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
                 /* MotorController_Var_Set voluntarily checks InputMode for proc */
-                if (MotAnalogUser_PollBrakePins(&p_mc->AnalogUser) == true) { MotorController_User_DisableControl(p_mc); }
+                if (MotAnalogUser_PollBrakePins(&p_mc->AnalogUser) == true) { MotorController_User_ForceDisableControl(p_mc); }
 
                 if (Protocol_IsRxLost(&p_mc->CONST.P_PROTOCOLS[p_mc->CONST.USER_PROTOCOL_INDEX]) == true)
                 {
-                    MotorController_User_DisableControl(p_mc);
+                    MotorController_User_ForceDisableControl(p_mc);
                     p_mc->FaultFlags.RxLost = 1U;
                     MotorController_StateMachine_EnterFault(p_mc);
                 }
@@ -274,7 +274,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
     p_mc->TimerDividerCounter++;
     //    BrakeThread(p_mc);
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    VMonitor_Status_T vStatus = VMonitor_PollStatus(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu); //todo include edge
+    VMonitor_Status_T vStatus = VMonitor_PollStatus(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu); // todo include edge
 
     switch (vStatus)
     {
@@ -283,17 +283,17 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
         case VMONITOR_WARNING_UPPER:
             break;
         case VMONITOR_WARNING_LOWER:
-            if (p_mc->StateFlags.LowV == 0U)
+            if (p_mc->StateFlags.VLow == 0U)
             {
-                p_mc->StateFlags.LowV = 1U;
+                p_mc->StateFlags.VLow = 1U;
                 // MotorController_SetSystemILimitAll(p_mc, p_mc->Config.VLowILimit_Scalar16);
                 Blinky_BlinkN(&p_mc->Buzzer, 500U, 250U, 2U);
             }
             break;
         case VMONITOR_STATUS_OK:
-            if (p_mc->StateFlags.LowV == 1U)
+            if (p_mc->StateFlags.VLow == 1U)
             {
-                p_mc->StateFlags.LowV = 0U;
+                p_mc->StateFlags.VLow = 0U;
                 // MotorController_ClearSystemILimitAll(p_mc);
             }
             break;

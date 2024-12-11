@@ -385,7 +385,7 @@ Protocol_T;
 
 #define PROTOCOL_INIT(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubstateBuffer, p_SpecsTable, SpecsCount, p_XcvrTable, XcvrCount, p_Timer, p_Config)    \
 {                                                                \
-    .CONST =                                                    \
+    .CONST =                                                     \
     {                                                            \
         .P_RX_PACKET_BUFFER     = p_RxBuffer,                    \
         .P_TX_PACKET_BUFFER     = p_TxBuffer,                    \

@@ -71,21 +71,35 @@ void Motor_ActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 void Motor_ActivateControl_Cast(Motor_T * p_motor, uint8_t modeWord) { Motor_ActivateControl(p_motor, Motor_FeedbackMode_Cast(modeWord)); }
 
 /******************************************************************************/
-/*  Fault interface functions
+/* Fault interface functions */
 /******************************************************************************/
 bool Motor_StateMachine_IsFault(const Motor_T * p_motor) { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FAULT); }
 
-/*! @return true if cleared applies, fault to non fault */
-bool Motor_StateMachine_ExitFault(Motor_T * p_motor)
-{
-    bool isFault = Motor_StateMachine_IsFault(p_motor);
-    if(isFault == true) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT, false); }
-    return (Motor_StateMachine_IsFault(p_motor) != isFault);
-}
-
 void Motor_StateMachine_EnterFault(Motor_T * p_motor)
 {
-    if(Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT, true); }
+    if(Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT, 0U); }
+}
+
+/*! @return true if no fault remains */
+bool Motor_StateMachine_ExitFault(Motor_T * p_motor)
+{
+    if (Motor_StateMachine_IsFault(p_motor) == true) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT, 0U); }
+    return Motor_StateMachine_IsFault(p_motor);
+}
+
+void Motor_StateMachine_SetFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
+{
+    // p_motor->FaultFlags.Value |= faultFlags.Value;
+    if (Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT, faultFlags.Value); }
+}
+
+/*! @return true if cleared applies, fault to non fault */
+bool Motor_StateMachine_ClearFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
+{
+    bool isFault = Motor_StateMachine_IsFault(p_motor);
+    // p_motor->FaultFlags.Value &= ~faultFlags.Value;
+    if (Motor_StateMachine_IsFault(p_motor) == true) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT, faultFlags.Value); }
+    return (Motor_StateMachine_IsFault(p_motor) != isFault);
 }
 
 /******************************************************************************/
@@ -107,7 +121,7 @@ const StateMachine_Machine_T MSM_MACHINE =
     .TRANSITION_TABLE_LENGTH = MSM_TRANSITION_TABLE_LENGTH,
 };
 
-static StateMachine_State_T * TransitionFault(Motor_T * p_motor, statemachine_input_value_t isFault)    { (void)p_motor; return (isFault == true) ? &STATE_FAULT : NULL; }
+static StateMachine_State_T * TransitionFault(Motor_T * p_motor, statemachine_input_value_t faultFlags) { p_motor->FaultFlags.Value |= faultFlags; return &STATE_FAULT; }
 static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, statemachine_input_value_t _void)  { (void)p_motor; (void)_void; return &STATE_FREEWHEEL; }
 
 /******************************************************************************/
@@ -129,12 +143,23 @@ static void Init_Entry(Motor_T * p_motor)
 
 static void Init_Proc(Motor_T * p_motor)
 {
-    // poll fault flags
-    // bool proceed;
-    //(  Motor_CheckConfig() == true)    //check params
-    // if(SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT)
-    // wait for speed sensor ensure 0 speed
-    if(p_motor->FaultFlags.Word == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
+    bool wait = true;
+
+    // Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleVBemf, 0U); /* or Transition to STOP without hold */
+
+    if(SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT) /* wait for Speed and Heat sensors */
+    {
+        wait = false;
+        //(  Motor_CheckConfig() == true)    //check params
+        Motor_PollAdcFaultFlags(p_motor); /* Clear the fault flags once */
+        // if(p_motor->FaultFlags.Value != 0U) { wait = true; } // if wait for fault to clear
+    }
+
+    if (wait == false)
+    {
+        if (p_motor->FaultFlags.Value == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
+        else                                 { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FAULT); }
+    }
 }
 
 static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
@@ -182,9 +207,6 @@ static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor, statemachin
     if(p_motor->Speed_Frac16 == 0U)
     {
         Motor_SetCommutationModeUInt8(p_motor, Motor_FOC_SetDirection_Cast, Motor_SetDirection_Cast, direction);
-        /* work around function casting warning, statemachine_input_value_t to Direction_T enum */
-        // if(direction == MOTOR_DIRECTION_CCW)    { Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionCcw, Motor_SetDirectionCcw); }
-        // else                                    { Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionCw, Motor_SetDirectionCw); }
     }
     return 0U;
 }
@@ -233,9 +255,9 @@ static const StateMachine_Transition_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABL
     [MSM_INPUT_FAULT]       = (StateMachine_Transition_T)TransitionFault,
     [MSM_INPUT_CONTROL]     = (StateMachine_Transition_T)Stop_InputControl,
     [MSM_INPUT_RELEASE]     = (StateMachine_Transition_T)Stop_InputRelease,
+    [MSM_INPUT_HOLD]        = (StateMachine_Transition_T)Stop_InputHold,
     [MSM_INPUT_DIRECTION]   = (StateMachine_Transition_T)Stop_InputDirection,
     [MSM_INPUT_CALIBRATION] = (StateMachine_Transition_T)Stop_InputCalibration,
-    [MSM_INPUT_HOLD]        = (StateMachine_Transition_T)Stop_InputHold,
 };
 
 static const StateMachine_State_T STATE_STOP =
@@ -543,19 +565,16 @@ static void Fault_Entry(Motor_T * p_motor) { Phase_Float(&p_motor->Phase); }
 static void Fault_Proc(Motor_T * p_motor)
 {
     Phase_Float(&p_motor->Phase);
-    if(p_motor->FaultFlags.Word == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
+    if(p_motor->FaultFlags.Value == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
 }
 
-static StateMachine_State_T * Fault_InputClearFault(Motor_T * p_motor, statemachine_input_value_t isFault)
+static StateMachine_State_T * Fault_InputClearFault(Motor_T * p_motor, statemachine_input_value_t faultFlags)
 {
-    if(isFault == false)
-    {
-        // p_motor->FaultFlags.Overheat = Thermistor_IsFault(&p_motor->Thermistor);
-        Motor_PollAdcFaultFlags(p_motor);
-        p_motor->FaultFlags.AlignStartUp = 0U;
-    }
-    return NULL;
-    // return (p_motor->FaultFlags.Word == 0U) ? &STATE_STOP : 0U;
+    // p_motor->FaultFlags.Value &= ~faultFlags;
+    Motor_PollAdcFaultFlags(p_motor); // p_motor->FaultFlags.Overheat = Thermistor_IsFault(&p_motor->Thermistor);
+    p_motor->FaultFlags.AlignStartUp = 0U;
+    return NULL; /* Transition on proc if no flags remain active */
+    // return (p_motor->FaultFlags.Value == 0U) ? &STATE_STOP : 0U;
 }
 
 static StateMachine_State_T * Fault_InputAll(Motor_T * p_motor, statemachine_input_value_t _void)

@@ -105,7 +105,7 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 // case MOT_VAR_DEBUG:                 value = Millis();                                               break;
                 case MOT_VAR_MC_STATE:              value = MotorController_User_GetStateId(p_mc);                  break;
                 case MOT_VAR_MC_STATUS_FLAGS:       value = MotorController_User_GetStateFlags(p_mc).Word;          break;
-                case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_User_GetFaultFlags(p_mc).Word;          break;
+                case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_User_GetFaultFlags(p_mc).Value;          break;
                 case MOT_VAR_V_SOURCE:              value = p_mc->AnalogResults.VSource_Adcu;                       break;
                 case MOT_VAR_V_SENSOR:              value = p_mc->AnalogResults.VSense_Adcu;                        break;
                 case MOT_VAR_V_ACCS:                value = p_mc->AnalogResults.VAccs_Adcu;                         break;
@@ -141,7 +141,7 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 case MOT_VAR_POWER:                 value = Motor_User_GetElectricalPower_UFrac16(p_motor);     break;
                 case MOT_VAR_MOTOR_STATE:           value = Motor_User_GetStateId(p_motor);                     break;
                 case MOT_VAR_MOTOR_STATUS_FLAGS:    value = Motor_User_GetStateFlags(p_motor).Word;            break;
-                case MOT_VAR_MOTOR_FAULT_FLAGS:     value = Motor_User_GetFaultFlags(p_motor).Word;             break;
+                case MOT_VAR_MOTOR_FAULT_FLAGS:     value = Motor_User_GetFaultFlags(p_motor).Value;             break;
                 case MOT_VAR_MOTOR_HEAT:            value = Motor_User_GetHeat_Adcu(p_motor);                   break;
                     //Motor_User_GetHeat_DegC(p_motor, 1U);
                 case MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE:    value = Motor_User_GetActiveFeedbackMode(p_motor).Word; break;
@@ -263,7 +263,7 @@ static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T
                 case MOT_VAR_TRY_HOLD:                  break;
                 case MOT_VAR_TRY_RELEASE:               break;
                 case MOT_VAR_FORCE_DISABLE_CONTROL:     break;
-                case MOT_VAR_CLEAR_FAULT:               isSuccess = MotorController_User_ClearFault(p_mc, varValue); break;
+                case MOT_VAR_CLEAR_FAULT:               isSuccess = MotorController_StateMachine_ClearFault(p_mc, varValue); break;
                 default: break;
             }
             break;

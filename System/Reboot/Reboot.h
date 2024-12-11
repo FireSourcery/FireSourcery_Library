@@ -35,14 +35,11 @@
 
 #include "External/CMSIS/Core/Include/cmsis_compiler.h"
 
-static inline void Reboot(void)
-{
-    NVIC_SystemReset();
-}
+static inline void Reboot(void) { NVIC_SystemReset(); }
 
 #else
 
-extern void Reboot(void);
+static inline void Reboot(void) {}
 
 #endif
 

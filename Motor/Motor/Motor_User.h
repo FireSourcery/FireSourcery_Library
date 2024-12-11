@@ -108,8 +108,10 @@ typedef union Motor_User_StatusFlags
     struct
     {
         uint16_t HeatWarning        : 1U;
-        uint16_t ILimitActive       : 1U;
-        uint16_t SpeedLimitActive   : 1U;
+        uint16_t ILimitSet          : 1U;
+        uint16_t SpeedLimitSet      : 1U;
+        uint16_t ILimited           : 1U;
+        uint16_t SpeedLimited       : 1U;
     };
     uint16_t Word;
 }
@@ -118,9 +120,11 @@ Motor_User_StatusFlags_T;
 static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags1(const Motor_T * p_motor)
 {
     Motor_User_StatusFlags_T status;
-    status.ILimitActive = Limit_IsUpperActive(&p_motor->ILimit);
-    status.SpeedLimitActive = Limit_IsUpperActive(&p_motor->SpeedLimit);
     status.HeatWarning = Thermistor_IsWarning(&p_motor->Thermistor);
+    status.ILimitSet = Limit_IsUpperActive(&p_motor->ILimit);
+    status.SpeedLimitSet = Limit_IsUpperActive(&p_motor->SpeedLimit);
+    status.ILimited = p_motor->StateFlags.ILimited;
+    status.SpeedLimited = p_motor->StateFlags.SpeedLimited;
 }
 
 
@@ -142,7 +146,7 @@ static inline qangle16_t Motor_User_GetElectricalAngle(const Motor_T * p_motor) 
 static inline qangle16_t Motor_User_GetMechanicalAngle(const Motor_T * p_motor)                { return Motor_GetMechanicalAngle(p_motor); }
 
 static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(const Motor_T * p_motor)      { return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
-static inline Motor_StatusFlags_T Motor_User_GetStateFlags(const Motor_T * p_motor)           { return p_motor->StateFlags; }
+static inline Motor_StateFlags_T Motor_User_GetStateFlags(const Motor_T * p_motor)           { return p_motor->StateFlags; }
 static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_T * p_motor)             { return p_motor->FaultFlags; }
 static inline bool Motor_User_IsStopState(const Motor_T * p_motor)                             { return (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP); }
 static inline bool Motor_User_IsZeroSpeed(const Motor_T * p_motor)                             { return (p_motor->Speed_Frac16 == 0); }

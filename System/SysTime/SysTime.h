@@ -58,6 +58,8 @@
 #define SYST_COUNT() (SYST_CVR)
 #endif
 
+#define MILLIS_TIMER_FREQ (1000U)
+
 extern volatile uint32_t SysTime_Millis;
 
 /*

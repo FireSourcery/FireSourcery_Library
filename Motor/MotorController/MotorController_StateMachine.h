@@ -78,5 +78,7 @@ extern const StateMachine_Machine_T MCSM_MACHINE;
 extern bool MotorController_StateMachine_IsFault(const MotorController_T * p_mc);
 extern bool MotorController_StateMachine_ExitFault(MotorController_T * p_mc);
 extern void MotorController_StateMachine_EnterFault(MotorController_T * p_mc);
+extern void MotorController_StateMachine_SetFault(MotorController_T * p_mc, uint16_t faultFlags);
+extern bool MotorController_StateMachine_ClearFault(MotorController_T * p_mc, uint16_t faultFlags);
 
 #endif

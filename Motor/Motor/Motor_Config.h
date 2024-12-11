@@ -120,8 +120,8 @@ static inline uint16_t Motor_Config_GetILimitGenerating_Scalar16(Motor_T * p_mot
 */
 /******************************************************************************/
 extern void Motor_Config_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm);
-extern void Motor_Config_SetSpeedFeedbackRef_Kv(Motor_T * p_motor, uint16_t kv);
 extern void Motor_Config_SetSpeedMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm);
+extern void Motor_Config_SetSpeedVRef_Rpm(Motor_T * p_motor, uint16_t rpm);
 extern void Motor_Config_SetKv(Motor_T * p_motor, uint16_t kv);
 
 extern void Motor_Config_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu);

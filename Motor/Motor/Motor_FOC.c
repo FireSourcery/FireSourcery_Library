@@ -79,47 +79,52 @@
 */
 static inline void ProcInnerFeedback(Motor_T * p_motor)
 {
-    int32_t req = FOC_GetReqQ(&p_motor->Foc);
+    int32_t initialReq = FOC_GetReqQ(&p_motor->Foc);
+    int32_t req;
 
     if (p_motor->FeedbackMode.Current == 1U) /* Current Control mode - proc using last adc measure */
     {
-        req = Motor_IReqLimitOf(p_motor, req);
+        req = Motor_IReqLimitOf(p_motor, initialReq);
         FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), req)); /* PidIq configured with VLimits */
         FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), FOC_GetReqD(&p_motor->Foc)));
     }
     else /* Voltage Control mode - use current feedback for over current only */
     {
-        req = Motor_VReqOfILimit(p_motor, FOC_GetIq(&p_motor->Foc), req);
+        req = Motor_VReqOfILimit(p_motor, FOC_GetIq(&p_motor->Foc), initialReq);
         FOC_SetVq(&p_motor->Foc, req);
         FOC_SetVd(&p_motor->Foc, FOC_GetReqD(&p_motor->Foc));
     }
+
+    p_motor->StateFlags.ILimited = (req != initialReq) ? 1U : 0U;
 }
 
 /*
     Speed Feedback Loop
     SpeedControl_Frac16 update ~1000Hz,
-    Ramp input ~1000Hz, Ramp proc output 20000Hz
+    Ramp input ~100Hz, Ramp proc output 20000Hz
 
-    input   RampCmd[-32767:32767] - Speed_Frac16[-32767:32767]
-            accepts over saturated inputs
+    input   RampCmd[-32767:32767] - Speed_Frac16[-32767:32767] accepts over saturated inputs
     output  SpeedControl_Frac16[-32767:32767] => IqReq or VqReq
 */
 static inline void ProcOuterFeedback(Motor_T * p_motor)
 {
-    int32_t req = Linear_Ramp_GetOutput(&p_motor->Ramp);
+    int32_t rampReq = Linear_Ramp_GetOutput(&p_motor->Ramp);
+    int32_t req = rampReq;
 
     if ((Motor_ProcSensorSpeed(p_motor) == true) && (p_motor->FeedbackMode.Speed == 1U))
     {
-        req = Motor_SpeedReqLimitOf(p_motor, req); /* todo Ramp */
+        req = Motor_SpeedReqLimitOf(p_motor, rampReq);
         FOC_SetReqQ(&p_motor->Foc, PID_ProcPI(&p_motor->PidSpeed, p_motor->Speed_Frac16, req));
         FOC_SetReqD(&p_motor->Foc, 0);
     }
     else if (p_motor->FeedbackMode.Speed == 0U) /* Current or Voltage Control mode */
     {
-        req = Motor_ReqOfSpeedLimit(p_motor, req);
+        req = Motor_ReqOfSpeedLimit(p_motor, rampReq);
         FOC_SetReqQ(&p_motor->Foc, req);
         FOC_SetReqD(&p_motor->Foc, 0);
     }
+
+    p_motor->StateFlags.SpeedLimited = (req != rampReq) ? 1U : 0U;
 }
 
 /*!
