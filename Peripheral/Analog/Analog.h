@@ -179,11 +179,11 @@ typedef const struct Analog_Const
     const uint8_t ADC_COUNT;
 
     /* ADC common. This way all virtual channel ids are shared. */
-    Analog_Entry_T * const P_CHANNEL_ENTRIES;   /* Entries buffer */
     const uint8_t CHANNEL_COUNT;                /*!< also analog_channel_t max + 1 */
+    Analog_Entry_T * const P_CHANNEL_ENTRIES;   /* Entries buffer */
 
-    Analog_BatchEntry_T * const P_BATCH_ENTRIES;
     const uint8_t BATCH_COUNT;
+    Analog_BatchEntry_T * const P_BATCH_ENTRIES;
 }
 Analog_Const_T;
 
@@ -197,32 +197,32 @@ typedef struct Analog
 }
 Analog_T;
 
-// #define ANALOG_INIT(AdcArray, ChannelCount, BatchCount) \
-// {                                                                   \
-//     .CONST =                                                        \
-//     {                                                               \
-//         .P_ADCS             = AdcArray,                             \
-//         .ADC_COUNT          = sizeof(AdcArray) / sizeof(Analog_ADC_T),  \
-//         .P_CHANNEL_ENTRIES  = ChannelArrayBuffer,                       \
-//         .CHANNEL_COUNT      = sizeof(ChannelArrayBuffer) / sizeof(Analog_Entry_T),      \
-//         .P_BATCH_ENTRIES    = GroupArrayBuffer,                                         \
-//         .BATCH_COUNT        = sizeof(GroupArrayBuffer) / sizeof(Analog_BatchEntry_T),   \
-//     },                                                                                  \
-// }
+#define ANALOG_INIT(AdcArray, AdcCount, ChannelArrayBuffer, ChannelCount, BatchArrayBuffer, BatchCount) \
+{                                                                   \
+    .CONST =                                                        \
+    {                                                               \
+        .P_ADCS             = AdcArray,                             \
+        .ADC_COUNT          = AdcCount,  \
+        .P_CHANNEL_ENTRIES  = ChannelArrayBuffer,                       \
+        .CHANNEL_COUNT      = ChannelCount,      \
+        .P_BATCH_ENTRIES    = BatchArrayBuffer,                                         \
+        .BATCH_COUNT        = BatchCount,   \
+    },                                                                                  \
+}
 
 // INIT_ALLOC
-#define ANALOG_INIT(AdcArray, ChannelCount, BatchCount) \
-{                                                                       \
-    .CONST =                                                            \
-    {                                                                   \
-        .P_ADCS             = AdcArray,                                 \
-        .ADC_COUNT          = sizeof(AdcArray) / sizeof(Analog_ADC_T),  \
-        .P_CHANNEL_ENTRIES  = (Analog_Entry_T [ChannelCount]){ },       \
-        .CHANNEL_COUNT      = ChannelCount,                             \
-        .P_BATCH_ENTRIES    = (Analog_BatchEntry_T [BatchCount]){ },    \
-        .BATCH_COUNT        = BatchCount,                               \
-    },                                                                  \
-}
+// #define ANALOG_INIT(AdcArray, ChannelCount, BatchCount) \
+// {                                                                       \
+//     .CONST =                                                            \
+//     {                                                                   \
+//         .P_ADCS             = AdcArray,                                 \
+//         .ADC_COUNT          = (sizeof(AdcArray) / sizeof(Analog_ADC_T)),  \
+//         .P_CHANNEL_ENTRIES  = (Analog_Entry_T [(ChannelCount)]){ },       \
+//         .CHANNEL_COUNT      = ChannelCount,                             \
+//         .P_BATCH_ENTRIES    = (Analog_BatchEntry_T [(BatchCount)]){ },    \
+//         .BATCH_COUNT        = BatchCount,                               \
+//     },                                                                  \
+// }
 
 
 /******************************************************************************/

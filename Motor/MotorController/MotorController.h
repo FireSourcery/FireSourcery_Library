@@ -503,7 +503,7 @@ static inline void MotorController_StartDriveZero(MotorController_T * p_mc)
     {
         case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_FLOAT: MotorController_TryReleaseAll(p_mc); break;
         case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_REGEN: /* MotorController_SetRegenMotorAll(p_mc); */ break;
-        case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_CRUISE: struct_array_set_all_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)Motor_User_SetTorqueModeCmd, 0); break;
+        case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_CRUISE: struct_array_set_all_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)Motor_User_SetTorqueCmdValue, 0); break;
         default: break;
     }
 }
@@ -518,7 +518,7 @@ static inline void MotorController_ProcDriveZero(MotorController_T * p_mc)
     {
         case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_FLOAT: break;
         case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_REGEN: /* MotorController_ProcRegenMotorAll(p_mc); */ break;
-        case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_CRUISE: break;
+        case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_CRUISE: void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_SetTorqueMode); break;
         default: break;
     }
 

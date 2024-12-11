@@ -30,6 +30,8 @@
 /******************************************************************************/
 #include "Analog.h"
 
+#include <assert.h>
+
 
 /******************************************************************************/
 /*!
@@ -110,13 +112,15 @@ static inline void ADC_StartFifo(Analog_ADC_T * p_adc)
     Set active conversions for ADC
     from Analog_T buffers to Analog_ADC_T buffer
 */
-static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId, Analog_Entry_T * p_entries, uint8_t channelCount)
+static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId, Analog_Entry_T * p_entries, uint8_t length)
 {
     Analog_Entry_T * p_entry;
 
-    if (p_adc->ActiveChannelIndex < channelCount)
+    // assert(p_entries[p_adc->ActiveChannelIndex].p_Conversion != NULL);
+
+    if (p_adc->ActiveChannelIndex < length)
     {
-        /* O(channelCount) */
+        /* O(length) */
         for (p_adc->ActiveConversionCount = 0U; p_adc->ActiveConversionCount < ADC_FIFO_LENGTH_MAX; p_adc->ActiveConversionCount++)
         {
             /*
@@ -124,11 +128,12 @@ static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId
                 Continue incrementing. Channels do not repeat until all marked channels have completed once
                 Updates ActiveChannelIndex to last index
             */
-            for (p_adc->ActiveChannelIndex; p_adc->ActiveChannelIndex < channelCount; p_adc->ActiveChannelIndex++)
+            for (p_adc->ActiveChannelIndex; p_adc->ActiveChannelIndex < length; p_adc->ActiveChannelIndex++)
             {
                 p_entry = &p_entries[p_adc->ActiveChannelIndex];
                 if (p_entry->p_Conversion->ADC_ID == adcId && p_entry->IsMarked == true)
                 {
+                    assert(p_entries[p_adc->ActiveChannelIndex].p_Conversion != NULL);
                     p_adc->ActiveConversions[p_adc->ActiveConversionCount] = p_entry->p_Conversion;
                 }
             }
@@ -136,25 +141,33 @@ static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId
     }
 }
 
-static inline void ADC_OnComplete(Analog_ADC_T * p_adc, uint8_t adcId, Analog_Entry_T * p_entries, uint8_t channelCount)
+static volatile uint32_t error1 = 0;
+static inline void ADC_OnComplete(Analog_ADC_T * p_adc, uint8_t adcId, Analog_Entry_T * p_entries, uint8_t length)
 {
-    HAL_Analog_ClearConversionCompleteFlag(p_adc->P_HAL_ANALOG);
-
-    /* includes handling mark entries */
-#ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
-    ADC_CaptureFifo(p_adc, p_entries);
-#else
-    ADC_CaptureChannel(p_adc, p_entries);
-#endif
-
-    if (p_adc->ActiveChannelIndex < channelCount)
+    error1 = 0;
+    if (HAL_Analog_ReadConversionCompleteFlag(p_adc->P_HAL_ANALOG) == true)
     {
-        ADC_FillActiveConversions(p_adc, adcId, p_entries, channelCount);
+        HAL_Analog_ClearConversionCompleteFlag(p_adc->P_HAL_ANALOG);
+        /* includes handling mark entries */
     #ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
-        ADC_StartFifo(p_adc);
+        ADC_CaptureFifo(p_adc, p_entries);
     #else
-        ADC_StartChannel(p_adc);
+        ADC_CaptureChannel(p_adc, p_entries);
     #endif
+
+        if (p_adc->ActiveChannelIndex < length)
+        {
+            ADC_FillActiveConversions(p_adc, adcId, p_entries, length);
+        #ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
+            ADC_StartFifo(p_adc);
+        #else
+            ADC_StartChannel(p_adc);
+        #endif
+        }
+    }
+    else
+    {
+        error1++;
     }
 }
 
@@ -284,6 +297,7 @@ void Analog_Init(Analog_T * p_analog)
 void Analog_MarkConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
 {
     p_analog->CONST.P_CHANNEL_ENTRIES[p_conversion->CHANNEL].IsMarked = true;
+    p_analog->CONST.P_CHANNEL_ENTRIES[p_conversion->CHANNEL].p_Conversion = p_conversion; // temp
 }
 
 void Analog_MarkConversionBatch(Analog_T * p_analog, const Analog_ConversionBatch_T * p_conversion)

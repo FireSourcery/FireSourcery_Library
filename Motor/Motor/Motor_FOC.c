@@ -31,43 +31,6 @@
 #include "Motor_FOC.h"
 #include "Motor_Debug.h"
 
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-// void Motor_FOC_EnqueueVabc(Motor_T * p_motor)
-// {
-//     // todo move to threads
-// #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-//     if (Motor_IsAnalogCycle(p_motor) == true)
-//     {
-//         AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-//         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA);
-//         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB);
-//         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VC);
-//         AnalogN_Group_ResumeQueue(p_motor->CONST.P_ANALOG, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-//         // AnalogN_SetChannelConversion(p_motor->CONST.P_ANALOG, MOTOR_ANALOG_CHANNEL_VA);
-//     }
-// #else
-//     (void)p_motor;
-// #endif
-// }
-
-// void Motor_FOC_EnqueueIabc(Motor_T * p_motor)
-// {
-//     if (Motor_IsAnalogCycle(p_motor) == true)
-//     {
-//         AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-//         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);
-//         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB);
-//     #if defined(CONFIG_MOTOR_I_SENSORS_ABC)
-//         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC);
-//     #endif
-//         AnalogN_Group_ResumeQueue(p_motor->CONST.P_ANALOG, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-//     }
-// }
-
 
 /******************************************************************************/
 /*!

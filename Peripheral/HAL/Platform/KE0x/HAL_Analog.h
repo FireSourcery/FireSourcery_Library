@@ -86,7 +86,12 @@ static inline void HAL_Analog_AbortConversion(HAL_Analog_T * p_hal) { p_hal->SC1
     when continuous conversions are not enabled because the module automatically enters a low-power
     state when a conversion completes.
 */
-static inline void HAL_Analog_Deactivate(HAL_Analog_T * p_hal) { p_hal->SC1 |= ADC_SC1_ADCH_MASK; }
+static inline void HAL_Analog_Deactivate(HAL_Analog_T * p_hal)
+{
+    p_hal->SC1 &= ~ADC_SC1_COCO_MASK;
+    p_hal->SC1 &= ~ADC_SC1_AIEN_MASK;
+    p_hal->SC1 |= ADC_SC1_ADCH_MASK;
+}
 
 static inline void HAL_Analog_EnableHwTrigger(HAL_Analog_T * p_hal)     { p_hal->SC2 |= ADC_SC2_ADTRG_MASK; }
 static inline void HAL_Analog_DisableHwTrigger(HAL_Analog_T * p_hal)    { p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK); }
@@ -116,10 +121,10 @@ static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal)  
 static inline void HAL_Analog_Init(HAL_Analog_T * p_hal)
 {
     p_hal->SC2 = (p_hal->SC2 & ~ADC_SC2_REFSEL_MASK) | ADC_SC2_REFSEL(1U); /*!< Analog supply pin pair (VDDA/VSSA). >*/
-    p_hal->SC3 = ADC_SC3_ADICLK(2U) | ADC_SC3_MODE(2U) | ADC_SC3_ADIV(0U);
     /*!< Alternate clock (ALTCLK). >*/
     /*!< 12-bit conversion (N = 12) >*/
     /*!< Divide ration = 1, and clock rate = Input clock. >*/
+    p_hal->SC3 = ADC_SC3_ADICLK(2U) | ADC_SC3_MODE(2U) | ADC_SC3_ADIV(0U);
     // tmp32 |= ADC_SC3_ADLPC_MASK; enableLowPower
     // tmp32 |= ADC_SC3_ADLSMP_MASK; enableLongSampleTime
 }
