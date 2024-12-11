@@ -39,14 +39,13 @@
     Multithread always disable all interrupts for entire duration
     must enter critical section before checking sw buffer
 */
-
 static inline void EnterCriticalTx(Serial_T * p_serial)
 {
 #if     defined(CONFIG_SERIAL_SINGLE_THREADED)
     HAL_Serial_DisableTxInterrupt(p_serial->CONST.P_HAL_SERIAL);
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) || defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
     (void)p_serial;
-    Critical_Enter();
+    _Critical_DisableIrq();
 #endif
 }
 
@@ -56,7 +55,7 @@ static inline void ExitCriticalTx(Serial_T * p_serial)
 #if     defined(CONFIG_SERIAL_SINGLE_THREADED)
     /* EnableTxInterrupt determine by checking of buffer */
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) || defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    Critical_Exit();
+    _Critical_EnableIrq();
 #endif
 }
 
@@ -66,7 +65,7 @@ static inline void EnterCriticalRx(Serial_T * p_serial)
     HAL_Serial_DisableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) || defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
     (void)p_serial;
-    Critical_Enter();
+    _Critical_DisableIrq();
 #endif
 }
 
@@ -76,21 +75,21 @@ static inline void ExitCriticalRx(Serial_T * p_serial)
     HAL_Serial_EnableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) || defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
     (void)p_serial;
-    Critical_Exit();
+    _Critical_EnableIrq();
 #endif
 }
 
 
 /*
-    Flexible selection between mutex and critical
+    Selection between mutex and critical
 */
 static inline bool AcquireCriticalTx(Serial_T * p_serial)
 {
 #if        defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    return Critical_AquireMutex(&p_serial->TxMutex); //    UNTESTED
+    return Critical_AquireMutex(&p_serial->TxMutex);
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
     (void)p_serial;
-    Critical_Enter();
+    _Critical_DisableIrq();
     return true;
 #elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
     HAL_Serial_DisableTxInterrupt(p_serial->CONST.P_HAL_SERIAL);
@@ -101,10 +100,10 @@ static inline bool AcquireCriticalTx(Serial_T * p_serial)
 static inline void ReleaseCriticalTx(Serial_T * p_serial)
 {
 #if        defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    Critical_ReleaseSignal(&p_serial->TxMutex); // UNTESTED
+    Critical_ReleaseSignal(&p_serial->TxMutex);
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
     (void)p_serial;
-    Critical_Exit();
+    _Critical_EnableIrq();
 #elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
     (void)p_serial;
     /* EnableTxInterrupt determine by checking of buffer */
@@ -117,7 +116,7 @@ static inline bool AcquireCriticalRx(Serial_T * p_serial)
     return Critical_AquireMutex(&p_serial->RxMutex); // UNTESTED
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
     (void)p_serial;
-    Critical_Enter();
+    _Critical_DisableIrq();
     return true;
 #elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
     HAL_Serial_DisableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
@@ -131,7 +130,7 @@ static inline void ReleaseCriticalRx(Serial_T * p_serial)
     Critical_ReleaseSignal(&p_serial->RxMutex); // UNTESTED
 #elif    defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
     (void)p_serial;
-    Critical_Exit();
+    _Critical_EnableIrq();
 #elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
     HAL_Serial_EnableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
 #endif
@@ -142,9 +141,10 @@ static inline void ReleaseCriticalRx(Serial_T * p_serial)
 */
 static inline bool Hal_SendChar(Serial_T * p_serial, const uint8_t txchar)
 {
-    bool isSuccess = (HAL_Serial_ReadTxEmptyCount(p_serial->CONST.P_HAL_SERIAL) > 0U);
-    if(isSuccess == true) { HAL_Serial_WriteTxChar(p_serial->CONST.P_HAL_SERIAL, txchar); }
-    return isSuccess;
+    bool isNotFull = (HAL_Serial_ReadTxEmptyCount(p_serial->CONST.P_HAL_SERIAL) > 0U);
+    if (isNotFull == true) { HAL_Serial_WriteTxChar(p_serial->CONST.P_HAL_SERIAL, txchar); }
+    return isNotFull;
+    // return (HAL_Serial_ReadTxEmptyCount(p_serial->CONST.P_HAL_SERIAL) > 0U) ? ({ HAL_Serial_WriteTxChar(p_serial->CONST.P_HAL_SERIAL, txchar); true; }) : false;
 }
 
 /*
@@ -152,9 +152,9 @@ static inline bool Hal_SendChar(Serial_T * p_serial, const uint8_t txchar)
 */
 static inline bool Hal_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
 {
-    bool isSuccess = (HAL_Serial_ReadRxFullCount(p_serial->CONST.P_HAL_SERIAL) > 0U);
-    if(isSuccess == true) { *p_rxChar = HAL_Serial_ReadRxChar(p_serial->CONST.P_HAL_SERIAL); }
-    return isSuccess;
+    bool isNotEmpty = (HAL_Serial_ReadRxFullCount(p_serial->CONST.P_HAL_SERIAL) > 0U);
+    if(isNotEmpty == true) { *p_rxChar = HAL_Serial_ReadRxChar(p_serial->CONST.P_HAL_SERIAL); }
+    return isNotEmpty;
 }
 
 static inline uint8_t Hal_GetLoopCount(size_t length)

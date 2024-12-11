@@ -138,7 +138,7 @@ static inline void AnalogN_Group_PauseQueue(const AnalogN_T * p_analogn, AnalogN
 {
 #if  defined(CONFIG_ANALOG_MULTITHREADED)
     (void)p_analogn; (void)activeAdcs;
-    Critical_Enter();
+    _Critical_DisableIrq();
 #elif defined(CONFIG_ANALOG_SINGLE_THREADED)
     for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONST.ANALOG_COUNT; iAnalog++)
     {
@@ -156,7 +156,7 @@ static inline void AnalogN_Group_ResumeQueue(const AnalogN_T * p_analogn, Analog
     {
         if(((1U << iAnalog) & activeAdcs.Flags) != 0U) { _Analog_Group_ResumeQueue(&p_analogn->CONST.P_ANALOGS[iAnalog]); }
     }
-    Critical_Exit();
+    _Critical_EnableIrq();
 #elif defined(CONFIG_ANALOG_SINGLE_THREADED)
     for(uint8_t iAnalog = 0U; iAnalog < p_analogn->CONST.ANALOG_COUNT; iAnalog++)
     {

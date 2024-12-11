@@ -82,6 +82,8 @@ typedef const struct Analog_Conversion
 }
 Analog_Conversion_T;
 
+
+
 #define ANALOG_CONVERSION_INIT(Channel, OnComplete, p_CallbackContext, p_Results, PinId)    \
 {                                                                                           \
     .TYPE               = ANALOG_QUEUE_TYPE_CHANNEL,                                        \
@@ -132,21 +134,6 @@ typedef const struct Analog_Const
 Analog_Const_T;
 
 
-// typedef struct Analog_ChannelFlags
-// {
-//     uint32_t Channel0 :1U;
-// }
-// Analog_ChannelFlags_T ;
-
-// todo combine modules, per adc and abstraction
-// remove buffer for modified bit, remove critical
-// typedef struct Analog_ADC
-// {
-//      HAL_Analog_T * const P_HAL_ANALOG;     /*!< pointer to ADC register map base address */
-//      Analog_Conversion_T P_CONVERSIONS;
-//      Analog_ChannelFlags_T ChannelFlags; /* at the expense of checking every channel, eliminate critical section for */
-// }
-// Analog_ADC_T;
 
 /*
     Analog_T per ADC
@@ -183,16 +170,16 @@ static inline void _Analog_EnterCritical(Analog_T * p_analog)
 {
 #if defined(CONFIG_ANALOG_MULTITHREADED)
     /*
-        Multithreaded calling of Activate. Must implement Critical_Enter
+        Multithreaded calling of Activate. Must implement _Critical_DisableIrq
         Higher priority thread may overwrite Conversion setup data before ADC ISR returns.
         e.g. must be implemented if calling from inside interrupts and main.
     */
     (void)p_analog;
-    Critical_Enter();
+    _Critical_DisableIrq();
 #elif defined(CONFIG_ANALOG_SINGLE_THREADED)
     /*
         Single threaded calling of Activate. Or Threads of same priority level
-        Single threaded case, and calling thread is lower priority than ADC ISR, ADC_DisableInterrupt local critical is suffcient over Critical_Enter global disable interrupt
+        Single threaded case, and calling thread is lower priority than ADC ISR, ADC_DisableInterrupt local critical is suffcient over _Critical_DisableIrq global disable interrupt
         If calling thread is *lower* priority than ADC ISR, ADC ISR may occur after Conversion setup data is written by lower priority thread.
         If calling thread is *higher* priority than ADC ISR, Activate will run to completion, overwriting the active conversion. ADC ISR need global critcal
         Use global critical if disable ADC interrupts aborts active conversion
@@ -205,7 +192,7 @@ static inline void _Analog_ExitCritical(Analog_T * p_analog)
 {
 #if defined(CONFIG_ANALOG_MULTITHREADED)
     (void)p_analog;
-    Critical_Exit();
+    _Critical_EnableIrq();
 #elif  defined(CONFIG_ANALOG_SINGLE_THREADED)
     HAL_Analog_EnableInterrupt(p_analog->CONST.P_HAL_ANALOG);
 #endif

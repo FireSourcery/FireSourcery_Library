@@ -42,7 +42,7 @@
 #include "Transducer/Thermistor/Thermistor.h"
 #include "Transducer/VMonitor/VMonitor.h"
 
-#include "Peripheral/Analog/AnalogN/AnalogN.h"
+#include "Peripheral/Analog/Analog.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 #include "Peripheral/Serial/Serial.h"
@@ -50,7 +50,7 @@
 #include "Peripheral/CanBus/CanBus.h"
 #endif
 
-#include "Utility/Array/struct_array.h"
+#include "Type/Array/struct_array.h"
 #include "Utility/Timer/Timer.h"
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/Protocol/Protocol.h"
@@ -135,6 +135,7 @@ typedef enum MotorController_LockedId
     MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR,
     MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC,
     MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG,
+    // MOTOR_CONTROLLER_LOCK_NVM_RESTORE_CONFIG, /* on Error read from Nvm to RAM */
     MOTOR_CONTROLLER_LOCK_REBOOT,
     // MOTOR_CONTROLLER_LOCK_NVM_SAVE_BOOT,
     // MOTOR_CONTROLLER_LOCK_NVM_WRITE_ONCE,
@@ -200,8 +201,8 @@ typedef union MotorController_InitFlags
 {
     struct
     {
-        uint16_t IsThrottleZero : 1U;
-        uint16_t IsDirectionSet : 1U;
+        uint16_t ThrottleZero : 1U;
+        uint16_t DirectionSet : 1U;
         // uint16_t IsConfigLoaded : 1U;
     };
     uint16_t Word;
@@ -213,7 +214,7 @@ typedef union MotorController_BuzzerFlags
 {
     struct
     {
-        uint16_t IsEnableOnBoot         : 1U; /* Primary Enable */
+        uint16_t IsEnabled              : 1U; /* Primary Enable */
         // uint16_t OnInit              : 1U;
         // uint16_t OnDirectionChange   : 1U;
         // uint16_t OnReverse           : 2U; /* 0: Off, 1: Short Beep, 2: Continuous */
@@ -257,6 +258,7 @@ typedef struct MotorController_Config
 }
 MotorController_Config_T;
 
+
 /*
     Allocated memory outside for less CONFIG define repetition
 */
@@ -271,14 +273,23 @@ typedef const struct MotorController_Const
     // Thermistor_T const P_THERMISTORS; const uint8_t THERMISTOR_COUNT;
     // VMonitor_T const P_VMONITORS; const uint8_t VMONITOR_COUNT;
 
-// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE) || defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_FLASH)
+// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE) || defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
     Flash_T * const P_FLASH;    /* Flash controller defined outside module, ensure flash config/params are in RAM */
 // #endif
 #if defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_EEPROM)
     EEPROM_T * const P_EEPROM;   /* Defined outside for regularity */
 #endif
-    AnalogN_T * const P_ANALOG_N;
-    const MotAnalog_Conversions_T ANALOG_CONVERSIONS;
+    Analog_T * const P_ANALOG; /* pointer since it is shared */
+
+    const Analog_Conversion_T CONVERSION_VSOURCE;
+    const Analog_Conversion_T CONVERSION_VSENSE;
+    const Analog_Conversion_T CONVERSION_VACCS;
+    const Analog_Conversion_T CONVERSION_HEAT_PCB;
+    /* COUNT is defined by macro. It is also needed to determine global channel index  */
+    const Analog_Conversion_T HEAT_MOSFETS_CONVERSIONS[MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT];
+    const Analog_Conversion_T CONVERSION_THROTTLE;
+    const Analog_Conversion_T CONVERSION_BRAKE;
+
     // alternatively pass count by macro, allows aliasing in struct
     /* Simultaneous active serial */
     Serial_T * const P_SERIALS; const uint8_t SERIAL_COUNT;
@@ -287,6 +298,7 @@ typedef const struct MotorController_Const
 #endif
 
     Protocol_T * const P_PROTOCOLS; const uint8_t PROTOCOL_COUNT; /* Simultaneously active protocols */
+    uint8_t USER_PROTOCOL_INDEX; /* The corresponding Xcvr will not be changed for now */
 
     /*
         Static Config
@@ -325,14 +337,9 @@ typedef struct MotorController
     Pin_T Relay;
     Debounce_T OptDin;     /* Configurable input */
 
-    // init   as array todo
     Thermistor_T ThermistorPcb;
-#if defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
-    Thermistor_T ThermistorMosfetsTop;
-    Thermistor_T ThermistorMosfetsBot;
-#else
-    Thermistor_T ThermistorMosfets;
-#endif
+    // Thermistor_T ThermistorMosfets;
+    Thermistor_T MosfetsThermistors[MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT];
 
     VMonitor_T VMonitorSource;  /* Controller Supply */
     VMonitor_T VMonitorSense;   /* ~5V */
@@ -352,9 +359,9 @@ typedef struct MotorController
 
     /* State and SubState */
     StateMachine_T StateMachine;
-    MotorController_StatusFlags_T StatusFlags;
+    MotorController_StatusFlags_T StateFlags;
     MotorController_InitFlags_T InitFlags;
-    MotorController_FaultFlags_T FaultFlags;
+    MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
 
     /* SubStates - effectively previous input */
     MotorController_DriveId_T DriveSubState;
@@ -376,6 +383,7 @@ MotorController_T, * MotorControllerPtr_T;
 /******************************************************************************/
 static inline Motor_T * MotorController_GetPtrMotor(const MotorController_T * p_mc, uint8_t motorIndex) { return &(p_mc->CONST.P_MOTORS[motorIndex]); }
 
+
 /******************************************************************************/
 /*
     Alarm
@@ -395,7 +403,7 @@ static inline void MotorController_BeepDouble(MotorController_T * p_mc)         
 
 static inline bool MotorController_IsAnyMotorFault(const MotorController_T * p_mc) { return void_array_is_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_StateMachine_IsFault); }
 /* returns true if atleast 1 fault is cleared */
-static inline bool MotorController_IsAnyClearMotorFault(MotorController_T * p_mc)  { return void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_StateMachine_ClearFault); }
+static inline bool MotorController_IsAnyClearMotorFault(MotorController_T * p_mc)  { return void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_StateMachine_ExitFault); }
 
 static inline void MotorController_ForceDisableAll(MotorController_T * p_mc)    { void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_ForceDisableControl); }
 static inline bool MotorController_TryReleaseAll(MotorController_T * p_mc)      { void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_TryRelease); }
@@ -525,7 +533,7 @@ static inline void MotorController_ProcDriveZero(MotorController_T * p_mc)
     // if(MotorController_CheckStopAll(p_mc) == true)
     // {
     //     MotorController_TryHoldAll(p_mc);
-    //     // p_mc->StatusFlags.IsStopped = 1U;
+    //     // p_mc->StateFlags.IsStopped = 1U;
     // }
 }
 

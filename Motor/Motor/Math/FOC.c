@@ -66,6 +66,8 @@ void FOC_ClearControlState(FOC_T * p_foc)
     p_foc->Ic = 0;
     p_foc->Id = 0;  /* Feedback */
     p_foc->Iq = 0;
+    p_foc->Ialpha = 0; /* User view Phase values */
+    p_foc->Ibeta = 0;
     p_foc->ReqD = 0; /* Req */
     p_foc->ReqQ = 0;
     FOC_ZeroSvpwm(p_foc);

@@ -23,8 +23,8 @@
 typedef const struct ArrayMeta
 {
     void * const P_BUFFER;  // Pointer to the p_array buffer
+    const size_t UNIT_SIZE; // or TYPE_SIZE, Size of each element in the p_array
     const size_t LENGTH;    // Length of the p_array
-    const size_t UNIT_SIZE; // Size of each element in the p_array
 }
 Array_T;
 

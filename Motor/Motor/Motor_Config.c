@@ -82,6 +82,7 @@ void Motor_Config_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
     p_motor->Config.SpeedFeedbackRef_Rpm = rpm;
     if (p_motor->Config.SpeedMatchRef_Rpm > rpm) { p_motor->Config.SpeedMatchRef_Rpm = rpm; }
+    // PropagateSet(p_motor, Motor_ResetKvSpeed);
     PropagateSet(p_motor, Motor_ResetUnitsVSpeed);
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
@@ -90,6 +91,7 @@ void Motor_Config_SetSpeedFeedbackRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 void Motor_Config_SetSpeedMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
     p_motor->Config.SpeedMatchRef_Rpm = (rpm > p_motor->Config.SpeedFeedbackRef_Rpm) ? p_motor->Config.SpeedFeedbackRef_Rpm : rpm;
+    // PropagateSet(p_motor, Motor_ResetKvSpeed);
     PropagateSet(p_motor, Motor_ResetUnitsVSpeed);
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }

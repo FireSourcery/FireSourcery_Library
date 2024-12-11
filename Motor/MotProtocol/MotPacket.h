@@ -70,7 +70,7 @@ typedef uint16_t checksum_t;
 typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
 {
     /*
-        2-Byte Sync Packets
+        2-Byte Id Packets
         Response Packet must use different ID - Length compare determined by Id
     */
     MOT_PACKET_PING = 0xA0U,            /* */
@@ -79,8 +79,8 @@ typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
     MOT_PACKET_SYNC_NACK = 0xA3U,
     MOT_PACKET_SYNC_ABORT = 0xA4U,
     MOT_PACKET_SYNC_RESV = MOT_PACKET_START_BYTE,
-    // MOT_PACKET_FEED_WATCHDOG = 0xA6U,
-    MOT_PACKET_PING_ALT = 0xABU,
+    MOT_PACKET_PING_ALT = 0xAAU,
+    // MOT_PACKET_PING_WATCHDOG = 0xAAU,
 
     /* Fixed Length */
     MOT_PACKET_STOP_ALL = 0x00U,
@@ -228,6 +228,7 @@ typedef struct MotPacket_StopResp { MotPacket_Header_T Header; MotPacket_StopRes
 /*! Call - Arbitrary Functions */
 /******************************************************************************/
 typedef struct MotPacket_CallReq_Payload { uint32_t Id; uint32_t Arg; }                                     MotPacket_CallReq_Payload_T;
+// typedef struct MotPacket_CallReq_Payload { uint32_t Id; uint32_t ArgC; uint32_t ArgV[MOT_PACKET_PAYLOAD_LENGTH_MAX - 8U]; } MotPacket_CallReq_Payload_T;
 typedef struct MotPacket_CallResp_Payload { uint32_t Id; uint16_t Status; }                                 MotPacket_CallResp_Payload_T;
 typedef struct MotPacket_CallReq { MotPacket_Header_T Header; MotPacket_CallReq_Payload_T CallReq; }        MotPacket_CallReq_T;
 typedef struct MotPacket_CallResp { MotPacket_Header_T Header; MotPacket_CallResp_Payload_T CallResp; }     MotPacket_CallResp_T;

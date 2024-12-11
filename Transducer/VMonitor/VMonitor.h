@@ -32,7 +32,7 @@
 #define VMONITOR_H
 
 #include "Config.h"
-#include "Peripheral/Analog/Analog/Global_Analog.h"
+#include "Peripheral/Analog/Global_Analog.h"
 #include "Math/Linear/Linear_Voltage.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -121,7 +121,7 @@ static inline int32_t VMonitor_AdcuOfV(VMonitor_T * p_vMonitor, uint16_t v)     
 
 /******************************************************************************/
 /*!
-    Map [VRef:FaultLower] to [65535:0]
+    Map [VNominalRef:FaultLower] to [65535:0]
 */
 /******************************************************************************/
 static inline uint32_t VMonitor_ChargeLevelOfAdcu_Scalar16(const VMonitor_T * p_vMonitor, uint16_t adcu)
@@ -165,6 +165,7 @@ static inline void VMonitor_SetFaultUpper_MilliV(VMonitor_T * p_vMonitor, uint32
 static inline void VMonitor_SetFaultLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)    { p_vMonitor->Config.FaultLower_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, limit_mV); }
 static inline void VMonitor_SetWarningUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)  { p_vMonitor->Config.WarningUpper_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, limit_mV); }
 static inline void VMonitor_SetWarningLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)  { p_vMonitor->Config.WarningLower_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, limit_mV); }
+
 static inline void VMonitor_SetNominal_MilliV(VMonitor_T * p_vMonitor, uint32_t mV)             { p_vMonitor->Config.Nominal_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, mV); }
 
 /******************************************************************************/

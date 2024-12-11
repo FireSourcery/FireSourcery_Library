@@ -8,8 +8,8 @@
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    the Free Software Foundation, either word 3 of the License, or
+    (at your option) any later word.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,31 +22,46 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   math_general.h
+    @file   Word.h
     @author FireSourcery
     @brief
-    @version V0
+    @word V0
 */
 /******************************************************************************/
-#ifndef MATH_BITS_H
-#define MATH_BITS_H
+#ifndef WORD_UTILITY_H
+#define WORD_UTILITY_H
 
 #include <stdint.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#include <sys/types.h>
 
-static inline uintptr_t align_down(uintptr_t bits, size_t align) { return (bits & (-align)); }
-static inline uintptr_t align_up(uintptr_t bits, size_t align) { return (-((-bits) & (-align))); }
-static inline bool is_aligned(uintptr_t bits, size_t align) { return ((bits & (align - 1U)) == (uintptr_t)0U); }
+typedef union { uint32_t Unsigned; int32_t Signed; } var32_t;
+typedef union { uint16_t Unsigned; int16_t Signed; } var16_t;
+typedef union { uint8_t Unsigned; int8_t Signed; } var8_t;
 
-/* is_aligned_mask */
-static inline bool is_masked(uint32_t value, uint32_t mask) { return ((value & mask) == (uint32_t)0U); }
+#define REGISTER_SIZE sizeof(register_t)
 
-static inline uint32_t bits_edge(uint32_t prevState, uint32_t newState) { return (prevState ^ newState); }
-static inline int8_t edge_value(bool prevState, bool newState) { return ((int8_t)newState - (int8_t)prevState); }
+// static_assert(sizeof(register_t) );
 
+typedef union __attribute__((packed, aligned(4U))) Word32
+{
+    uint8_t Bytes[4U];
+    char Chars[4U];
+    var16_t Var16s[2U];
+    struct { uint16_t Lower16; uint16_t Upper16; };
+    uint32_t Value32;
+}
+Word32_T;
+
+static inline Word32_T Word32_Cast(uint32_t value) { return ((Word32_T) { .Value32 = value }); }
+
+typedef union __attribute__((packed, aligned(8U))) Word64
+{
+    uint8_t Bytes[8U];
+    char Chars[8U];
+    var16_t Var16s[4U];
+    Word32_T Word32s[2U];
+}
+Word64_T;
 
 
 #endif
-
-

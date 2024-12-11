@@ -31,7 +31,7 @@
 #ifndef MOTOR_ANALOG_H
 #define MOTOR_ANALOG_H
 
-#include "Peripheral/Analog/AnalogN/AnalogN.h"
+#include "Peripheral/Analog/Analog.h"
 
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
     #define _MOTOR_ANALOG_CHANNEL_COUNT_SIN_COS (2U)
@@ -39,10 +39,10 @@
     #define _MOTOR_ANALOG_CHANNEL_COUNT_SIN_COS (0U)
 #endif
 
-#define MOTOR_ANALOG_CHANNEL_COUNT     (7U + _MOTOR_ANALOG_CHANNEL_COUNT_SIN_COS)
+#define MOTOR_ANALOG_CHANNEL_COUNT (7U + _MOTOR_ANALOG_CHANNEL_COUNT_SIN_COS)
 
 /*!
-    @brief Virtual channel identifiers, index into arrays containing Analog channel
+    @brief Virtual channel identifiers, index into arrays. Local to Motor
 */
 typedef enum MotorAnalog_Channel
 {
@@ -52,7 +52,7 @@ typedef enum MotorAnalog_Channel
     MOTOR_ANALOG_CHANNEL_IA,
     MOTOR_ANALOG_CHANNEL_IB,
     MOTOR_ANALOG_CHANNEL_IC,
-    MOTOR_ANALOG_CHANNEL_HEAT,    /* Temperature */
+    MOTOR_ANALOG_CHANNEL_HEAT,
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
     MOTOR_ANALOG_CHANNEL_SIN,
     MOTOR_ANALOG_CHANNEL_COS,
@@ -80,39 +80,33 @@ typedef union MotorAnalog_Results
 }
 MotorAnalog_Results_T;
 
-typedef struct MotorAnalog_Conversions
+typedef union MotorAnalog_Conversions
 {
-    union
+    struct
     {
-        struct
-        {
-            const AnalogN_Conversion_T CONVERSION_VA;
-            const AnalogN_Conversion_T CONVERSION_VB;
-            const AnalogN_Conversion_T CONVERSION_VC;
-            const AnalogN_Conversion_T CONVERSION_IA;
-            const AnalogN_Conversion_T CONVERSION_IB;
-            const AnalogN_Conversion_T CONVERSION_IC;
-            const AnalogN_Conversion_T CONVERSION_HEAT;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-            const AnalogN_Conversion_T CONVERSION_SIN;
-            const AnalogN_Conversion_T CONVERSION_COS;
-#endif
-        };
-        AnalogN_Conversion_T CONVERSIONS[MOTOR_ANALOG_CHANNEL_COUNT];
+        const Analog_Conversion_T CONVERSION_VA;
+        const Analog_Conversion_T CONVERSION_VB;
+        const Analog_Conversion_T CONVERSION_VC;
+        const Analog_Conversion_T CONVERSION_IA;
+        const Analog_Conversion_T CONVERSION_IB;
+        const Analog_Conversion_T CONVERSION_IC;
+        const Analog_Conversion_T CONVERSION_HEAT;
+    #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        const Analog_Conversion_T CONVERSION_SIN;
+        const Analog_Conversion_T CONVERSION_COS;
+    #endif
     };
-
-    const AnalogN_AdcFlags_T ADCS_GROUP_V;
-    const AnalogN_AdcFlags_T ADCS_GROUP_I;
-    const AnalogN_AdcFlags_T ADCS_GROUP_PWM;
+    Analog_Conversion_T CONVERSIONS[MOTOR_ANALOG_CHANNEL_COUNT];
 }
 MotorAnalog_Conversions_T;
 
-// typedef enum MotorAnalog_Channel
+
+// typedef enum MotorAnalog_Batch
 // {
 //     MOTOR_ANALOG_CHANNEL_DISABLED,
-//     MOTOR_ANALOG_CHANNEL_V_ABC,
-//     MOTOR_ANALOG_CHANNEL_I_ABC,
+//     MOTOR_ANALOG_BATCH_V_ABC,
+//     MOTOR_ANALOG_BATCH_I_ABC,
 // }
-// MotorAnalog_ChannelGroup_T;
+// MotorAnalog_Batch_T;
 
 #endif

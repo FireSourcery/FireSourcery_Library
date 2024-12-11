@@ -59,7 +59,7 @@ Pin_T;
 
 #define PIN_INIT(p_Hal, Id)         \
 {                                   \
-    .CONST =                       \
+    .CONST =                        \
     {                               \
         .P_HAL_PIN = p_Hal,         \
         .ID = _PIN_INIT_ID(Id),     \
@@ -69,7 +69,7 @@ Pin_T;
 
 #define PIN_INIT_INVERT(p_Hal, Id, IsInvert)    \
 {                                               \
-    .CONST =                                   \
+    .CONST =                                    \
     {                                           \
         .P_HAL_PIN = p_Hal,                     \
         .ID = _PIN_INIT_ID(Id),                 \

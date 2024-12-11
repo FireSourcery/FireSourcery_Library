@@ -48,8 +48,8 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
 //   #ifdef CONFIG_MOTOR_DEBUG
     Motor_Debug_CaptureRefTime(p_motor);
+    p_motor->PhaseFlags.Value = 0U;
     p_motor->ControlTimerBase++;
-    // Motor_Analog_Start(p_motor); // todo
     StateMachine_ProcState(&p_motor->StateMachine);
     // Motor_Debug_CaptureTime(p_motor, 5U);
 #ifdef CONFIG_MOTOR_PWM_INTERRUPT_CLEAR_PER_MOTOR
@@ -57,33 +57,59 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 #endif
 }
 
-static inline void Motor_Main_Thread(Motor_T * p_motor)
+/* Optionally mark before Start */
+void Motor_MarkAnalog_Thread(Motor_T * p_motor)
 {
+#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+    if (p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
+    {
+        Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
+        Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
+    }
+#endif
 
+    switch (StateMachine_GetActiveStateId(&p_motor->StateMachine))
+    {
+        case MSM_STATE_ID_STOP:         Motor_Analog_MarkVabc(p_motor);            break;
+        case MSM_STATE_ID_RUN:          Motor_Analog_MarkIabc(p_motor);            break;
+        case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_motor);            break;
+        default:            break;
+    }
+    //    switch(p_motor->AnalogCmd)
+    //    {
+    //        case FOC_I_ABC :
+    //            break;
+
+    //        case FOC_VBEMF :
+    //            break;
+
+    //        default :
+    //            break;
+    //    }
 }
 
 static inline void Motor_Heat_Thread(Motor_T * p_motor)
 {
-    if(Thermistor_IsMonitorEnable(&p_motor->Thermistor) == true)
+    if (Thermistor_IsMonitorEnable(&p_motor->Thermistor) == true)
     {
-        AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_HEAT);
+        Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_HEAT);
 
-        switch(Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
+        switch (Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
         {
             case THERMISTOR_STATUS_OK:
-                if(p_motor->StatusFlags.HeatWarning == 1U)
+                if (p_motor->StateFlags.HeatWarning == 1U) /* todo move to thermistor */
                 {
-                    p_motor->StatusFlags.HeatWarning = 0U;
+                    p_motor->StateFlags.HeatWarning = 0U;
                     Motor_ClearILimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
                 }
                 break;
             case THERMISTOR_STATUS_WARNING:     /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
-                p_motor->StatusFlags.HeatWarning = 1U;
-                Motor_SetILimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT_THIS, Thermistor_GetHeatLimit_Scalar16(&p_motor->Thermistor));
+                p_motor->StateFlags.HeatWarning = 1U;
+                Motor_SetILimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT_THIS, Thermistor_GetHeatLimit_Percent16(&p_motor->Thermistor));
                 break;
             case THERMISTOR_STATUS_FAULT:
                 p_motor->FaultFlags.Overheat = 1U;
-                Motor_StateMachine_SetFault(p_motor);
+                Motor_StateMachine_EnterFault(p_motor);
                 break;
             default: break;
         }

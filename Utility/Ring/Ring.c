@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "Ring.h"
 
-#include "../Array/void_array.h"
+#include "Type/Array/void_array.h"
 
 #if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
 #include "System/Critical/Critical.h"
@@ -52,7 +52,7 @@
 static inline void EnterCritical(const Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    if (p_ring.CONST.USE_CRITICAL == true) { Critical_Enter(); }
+    if (p_ring.CONST.USE_CRITICAL == true) { _Critical_DisableIrq(); }
 #elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
@@ -61,7 +61,7 @@ static inline void EnterCritical(const Ring_T * p_ring)
 static inline void ExitCritical(const Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    if (p_ring.CONST.USE_CRITICAL == true) { Critical_Exit(); }
+    if (p_ring.CONST.USE_CRITICAL == true) { _Critical_EnableIrq(); }
 #elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif

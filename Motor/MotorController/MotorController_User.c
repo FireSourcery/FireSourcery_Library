@@ -68,11 +68,15 @@ bool MotorController_User_SetDirection(MotorController_T * p_mc, MotorController
 /*! @param[in] volts < MOTOR_STATIC.VMAX and Config.VSourceRef */
 void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts)
 {
-    Motor_Static_InitVSourceRef_V(volts);
-    p_mc->Config.VSourceRef = Motor_Static_GetVSource_V();
-    for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_ResetUnitsVabc(&p_mc->CONST.P_MOTORS[iMotor]); }
-    VMonitor_SetNominal_MilliV(&p_mc->VMonitorSource, volts * 1000U);
+    /* VSource Monitor Ref */
+    p_mc->Config.VSourceRef = Motor_VSourceLimitOf(volts);
+    VMonitor_SetNominal_MilliV(&p_mc->VMonitorSource, p_mc->Config.VSourceRef * 1000U);
     VMonitor_ResetLimitsDefault(&p_mc->VMonitorSource);
+
+    /* VSource Active Ref *//* todo Set Motor Ref using read Value */
+    // MotorController_ResetVSourceActiveRef(p_mc);
+    Motor_Static_InitVSourceRef_V(volts);
+    for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_ResetUnitsVabc(&p_mc->CONST.P_MOTORS[iMotor]); }
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
     MotorController_User_SetBatteryLifeDefault(p_mc);
 #endif
@@ -91,16 +95,6 @@ void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 /*
-    e.g. 42V Source:
-    VSource 100% 42V
-    VSource 0% 0V
-    VSource VInRef 42V
-    VSource FaultUpper 52.5V
-    VSource WarningUpper 47.25V
-    VSource WarningLower 36.75V - begin ILimitLowV
-    VSource FaultLower 31.5V
-    VBattery 100% 42V
-    VBattery 0% 31.5V
 */
 void MotorController_User_SetBatteryLifeDefault(MotorController_T * p_mc)
 {

@@ -45,18 +45,8 @@ static int32_t Scale16(uint16_t scalar16, int32_t value) { return (int32_t)scala
 
     SetMode     - Invokes StateMachine - Sets control mode only
     SetCmdValue - Without invoking StateMachine - Sets buffered cmd value, sets on all states even when inactive
-        SetModeCmd  - Check/sets control mode and cmd value
 */
 /******************************************************************************/
-
-/******************************************************************************/
-/*!
-    Getters satisfy generic use. Setters are specific to control mode.
-*/
-/******************************************************************************/
-int32_t Motor_User_GetCmd(const Motor_T * p_motor)         { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
-int32_t Motor_User_GetSetPoint(const Motor_T * p_motor)    { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetOutput(&p_motor->Ramp)); }
-
 
 /******************************************************************************/
 /*!

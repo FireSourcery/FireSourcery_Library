@@ -62,7 +62,8 @@ static inline uint16_t Motor_Config_GetIaZero_Adcu(Motor_T * p_motor)           
 static inline uint16_t Motor_Config_GetIbZero_Adcu(Motor_T * p_motor)                      { return p_motor->Config.IbZeroRef_Adcu; }
 static inline uint16_t Motor_Config_GetIcZero_Adcu(Motor_T * p_motor)                      { return p_motor->Config.IcZeroRef_Adcu; }
 static inline uint16_t Motor_Config_GetIPeakRef_Adcu(Motor_T * p_motor)                    { return Motor_GetIPeakRef_Adcu(p_motor); }
-static inline uint16_t Motor_Config_GetKvRpm(Motor_T * p_motor)                            { return p_motor->Config.Kv * Motor_Static_GetVSource_V(); }
+
+
 
 /*  */
 static inline Motor_CommutationMode_T Motor_Config_GetCommutationMode(Motor_T * p_motor)                   { return p_motor->Config.CommutationMode; }

@@ -109,25 +109,7 @@ void _Analog_ProcQueue(Analog_T * p_analog)
     if(isComplete == true) { HAL_Analog_Deactivate(p_analog->CONST.P_HAL_ANALOG); }
 }
 
-// void _Analog_StartConversions(Analog_T * p_analog)
-// {
-//     Analog_ADC_T * p_adc;
-//     for (uint8_t iAdc = 0U; iAdc < p_analog->CONST.ADC_COUNT; iAdc++)
-//     {
-//         p_adc = p_analog->CONST.P_ADCS[iAdc];
-//         for (uint8_t iChannel = 0U; iChannel < p_analog->CONST.ADC_CHANNEL_COUNT; iChannel++)
-//         {
-//             if (p_analog->P_ADCS[p_conversion->ADC_ID].ConversionFlags[p_conversion->PIN])
-//             {
-//             #ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
-//                 WriteAdcFifo(p_analog, p_adc);
-//             #else
-//                 WriteAdcChannel(p_analog, );
-//             #endif
-//             }
-//         }
-//     }
-// }
+
 
 /******************************************************************************/
 /*!

@@ -119,6 +119,7 @@ typedef struct StateMachine
 
     /* Sync machine store result until process */
     volatile statemachine_input_id_t SyncInput;
+    // volatile atomic_uint_fast8_t SyncInput;
     volatile statemachine_input_value_t SyncInputValue;
     // volatile bool IsSyncInputAccept;
 

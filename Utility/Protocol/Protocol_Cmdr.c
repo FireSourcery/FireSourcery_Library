@@ -119,7 +119,7 @@
 
 // bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol)
 // {
-//     return (*p_protocol->CONST.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Config.WatchdogTime); //(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) &&
+//     return (*p_protocol->CONST.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Config.WatchdogTimeout); //(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) &&
 // }
 
 

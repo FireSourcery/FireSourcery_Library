@@ -36,37 +36,37 @@
 
 */
 /******************************************************************************/
-void Motor_FOC_EnqueueVabc(Motor_T * p_motor)
-{
-    // todo move to threads
-#if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    if (Motor_IsAnalogCycle(p_motor) == true)
-    {
-        AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-        AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA);
-        AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB);
-        AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VC);
-        AnalogN_Group_ResumeQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_V);
-        // AnalogN_SetChannelConversion(p_motor->CONST.P_ANALOG_N, MOTOR_ANALOG_CHANNEL_VA);
-    }
-#else
-    (void)p_motor;
-#endif
-}
+// void Motor_FOC_EnqueueVabc(Motor_T * p_motor)
+// {
+//     // todo move to threads
+// #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
+//     if (Motor_IsAnalogCycle(p_motor) == true)
+//     {
+//         AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+//         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA);
+//         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB);
+//         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VC);
+//         AnalogN_Group_ResumeQueue(p_motor->CONST.P_ANALOG, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_V);
+//         // AnalogN_SetChannelConversion(p_motor->CONST.P_ANALOG, MOTOR_ANALOG_CHANNEL_VA);
+//     }
+// #else
+//     (void)p_motor;
+// #endif
+// }
 
-void Motor_FOC_EnqueueIabc(Motor_T * p_motor)
-{
-    if (Motor_IsAnalogCycle(p_motor) == true)
-    {
-        AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-        AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);
-        AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB);
-    #if defined(CONFIG_MOTOR_I_SENSORS_ABC)
-        AnalogN_Group_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC);
-    #endif
-        AnalogN_Group_ResumeQueue(p_motor->CONST.P_ANALOG_N, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_I);
-    }
-}
+// void Motor_FOC_EnqueueIabc(Motor_T * p_motor)
+// {
+//     if (Motor_IsAnalogCycle(p_motor) == true)
+//     {
+//         AnalogN_Group_PauseQueue(p_motor->CONST.P_ANALOG, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+//         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);
+//         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB);
+//     #if defined(CONFIG_MOTOR_I_SENSORS_ABC)
+//         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC);
+//     #endif
+//         AnalogN_Group_ResumeQueue(p_motor->CONST.P_ANALOG, p_motor->CONST.ANALOG_CONVERSIONS.ADCS_GROUP_I);
+//     }
+// }
 
 
 /******************************************************************************/
@@ -154,7 +154,7 @@ void Motor_FOC_ProcFeedbackMatch(Motor_T * p_motor)
 
 /******************************************************************************/
 /*!
-
+    Common
 */
 /******************************************************************************/
 static inline void ProcClarkePark(Motor_T * p_motor)
@@ -175,6 +175,12 @@ static void ActivateAngle(Motor_T * p_motor)
 
 static void ProcInnerFeedbackOutput(Motor_T * p_motor)
 {
+    if (p_motor->PhaseFlags.Value != 0x07)
+    {
+        p_motor->DebugCounter++;
+        p_motor->DebugTime[0] = p_motor->PhaseFlags.Value;
+    }
+
     if(Motor_IsAnalogCycle(p_motor) == true)
     {
         ProcClarkePark(p_motor);
@@ -204,7 +210,7 @@ void Motor_FOC_ActivateOutput(Motor_T * p_motor)
 */
 void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
-    Motor_FOC_EnqueueIabc(p_motor);     /* Samples chain completes sometime after queue resumes. if ADC ISR priority higher than PWM. */
+    // Motor_FOC_EnqueueIabc(p_motor);     /* Samples chain completes sometime after queue resumes. if ADC ISR priority higher than PWM. */
 
 #ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
     Motor_ExternControl(p_motor);
@@ -215,6 +221,7 @@ void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
     Linear_Ramp_ProcOutput(&p_motor->Ramp);
 
     ProcOuterFeedback(p_motor);
+    /* Optionally set adc callback */
     ProcInnerFeedbackOutput(p_motor);
 
     Motor_Debug_CaptureTime(p_motor, 4U);
@@ -222,11 +229,10 @@ void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 
 /*
     activate angle with current feedback for align and openloop
-    Super function antipattern, but meaningful
 */
 void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, qangle16_t angle, qfrac16_t dReq, qfrac16_t qReq)
 {
-    Motor_FOC_EnqueueIabc(p_motor);
+    // Motor_FOC_EnqueueIabc(p_motor);
     FOC_SetTheta(&p_motor->Foc, angle);
     FOC_SetReqD(&p_motor->Foc, dReq);
     FOC_SetReqQ(&p_motor->Foc, qReq);
@@ -234,12 +240,13 @@ void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, qangle16_t angle, qfrac16
 }
 
 /*
+    ProcAngleObserve
     Angle Observe VBemf FreeWheel and Stop State
-    Updates Vabc, Valphabeta, Vd, Vq
+    Updates Vabc, Valpha, Vbeta, Vd, Vq
 */
 void Motor_FOC_ProcAngleVBemf(Motor_T * p_motor)
 {
-    Motor_FOC_EnqueueVabc(p_motor);
+    // Motor_FOC_EnqueueVabc(p_motor);
     p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
     FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
     Motor_ProcSensorSpeed(p_motor);

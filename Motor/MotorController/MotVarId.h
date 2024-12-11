@@ -171,7 +171,7 @@ MotVarId_Monitor_AnalogUser_T;
 
     Direction or DriveState use feedback. Other
 */
-typedef enum MotVarId_Cmd
+typedef enum MotVarId_Cmd_General
 {
     MOT_VAR_BEEP,
 
@@ -192,13 +192,15 @@ typedef enum MotVarId_Cmd
     MOT_VAR_OPT_SPEED_LIMIT_ON_OFF,         // 1:Enable, 0:Disable
     MOT_VAR_OPT_I_LIMIT_ON_OFF,             // 1:Enable, 0:Disable
 }
-MotVarId_Cmd_T;
+MotVarId_Cmd_General_T;
 
-typedef enum MotVarId_Control
+typedef enum MotVarId_Control_General
 {
     MOT_VAR_DIRECTION,                      // MotorController_Direction_T,
 }
-MotVarId_Control_T;
+MotVarId_Control_General_T;
+
+
 
 
 /******************************************************************************/
@@ -444,10 +446,11 @@ typedef enum MotVarId_Type_RealTime /* : uint16_t */
     MOT_VAR_ID_TYPE_MONITOR_MOTOR_FOC,
     MOT_VAR_ID_TYPE_MONITOR_MOTOR_SENSOR,
     /* Control - Read/Write */
-    MOT_VAR_ID_TYPE_CONTROL,
+    MOT_VAR_ID_TYPE_CONTROL_GENERAL,
     MOT_VAR_ID_TYPE_CONTROL_MOTOR,
+    // MOT_VAR_ID_TYPE_VAR_PROTOCOL,
     /* Cmd - Write-Only */
-    MOT_VAR_ID_TYPE_CMD,
+    MOT_VAR_ID_TYPE_CMD_GENERAL,
     MOT_VAR_ID_TYPE_CMD_MOTOR,
     MOT_VAR_ID_TYPE_REAL_TIME_END = 15U,
 }

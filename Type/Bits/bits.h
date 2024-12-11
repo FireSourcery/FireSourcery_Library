@@ -22,29 +22,37 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   math_general.h
+    @file   general.h
     @author FireSourcery
     @brief
     @version V0
 */
 /******************************************************************************/
-#ifndef MATH_BITS_H
-#define MATH_BITS_H
+#ifndef BITS_H
+#define BITS_H
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
-static inline uintptr_t align_down(uintptr_t bits, size_t align) { return (bits & (-align)); }
-static inline uintptr_t align_up(uintptr_t bits, size_t align) { return (-((-bits) & (-align))); }
-static inline bool is_aligned(uintptr_t bits, size_t align) { return ((bits & (align - 1U)) == (uintptr_t)0U); }
+typedef uint32_t bits_t;
 
-/* is_aligned_mask */
-static inline bool is_masked(uint32_t value, uint32_t mask) { return ((value & mask) == (uint32_t)0U); }
+static inline bool bit_at(uint32_t bits, uint8_t index) { return (bits & (1U << index)); }
+static inline void fill_bit(uint32_t * p_bits, uint8_t index) { *p_bits |= (1U << index); }
+static inline void clear_bit(uint32_t * p_bits, uint8_t index) { *p_bits &= ~(1U << index); }
+static inline void set_bit(uint32_t * p_bits, uint8_t index, bool value) { (value) ? fill_bit(p_bits, index) : clear_bit(p_bits, index); }
 
-static inline uint32_t bits_edge(uint32_t prevState, uint32_t newState) { return (prevState ^ newState); }
-static inline int8_t edge_value(bool prevState, bool newState) { return ((int8_t)newState - (int8_t)prevState); }
 
+static inline void set_bits(uint32_t * p_bits, uint8_t index, uint32_t value) { *p_bits = (*p_bits & ~(1U << index)) | (value << index); }
+
+
+static inline void bits_foreach(uint32_t bits, uint8_t width, void (*fn)(uint8_t index))
+{
+    for (uint8_t i = 0U; i < width; i++) { if (bit_at(bits, i) == true) { fn(i); } }
+}
+
+static inline uint32_t bitmask_of(uint8_t index, uint32_t width) { return ((1U << width) - 1U) << index; }
+static inline uint32_t bits_of(uint32_t bits, uint8_t index, uint8_t width) { return (bits & bitmask_of(width, index)) >> index; }
 
 
 #endif

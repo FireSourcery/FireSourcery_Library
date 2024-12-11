@@ -32,7 +32,7 @@
 #define THERMISTOR_H
 
 #include "Config.h"
-#include "Peripheral/Analog/Analog/Global_Analog.h"
+#include "Peripheral/Analog/Global_Analog.h"
 #include "Math/Linear/Linear_ADC.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -65,14 +65,14 @@ Thermistor_Status_T;
 // Thermistor_Type_T;
 
 // // optionally place in configurable Config, or CONFIG
-// typedef struct Thermistor_Coeffs
+// typedef struct Thermistor_Coefficients
 // {
 //     uint16_t B;
 //     uint32_t R0;
 //     uint16_t T0; /* In Kelvin*/
 //     uint16_t VInRef_MilliV;
 // }
-// Thermistor_Coeffs_T;
+// Thermistor_Coefficients_T;
 
 /*
     Set Vin to same decimal precision as ADC_VREF
@@ -81,7 +81,7 @@ typedef struct Thermistor_Config
 {
     // Thermistor_Type_T Type;
 
-    /* NTC Coffceients Conversion */
+    /* NTC coefficients conversion */
     uint16_t B;     /* In Kelvin*/
     uint32_t R0;
     uint16_t T0;    /* In Kelvin*/
@@ -107,7 +107,8 @@ typedef struct Thermistor_Const
     const Thermistor_Config_T * P_CONFIG; /* Optional NvM */
     const uint32_t R_SERIES;    /* Pull-up */
     const uint32_t R_PARALLEL;  /* Parallel pull-down if applicable. 0 for Disable */
-    // Thermistor_Coeffs_T // configure as pointer to config ram or const?
+    // Thermistor_Coeffs_T * P_COEFFICIENTS;
+    // configure as pointer to config ram or const?
     // allocate both, if const load from config
     // bool IS_BOARD;            /* Non detachable. Disable Coefficient set functions */
 }
@@ -119,8 +120,9 @@ typedef struct Thermistor
     Thermistor_Config_T Config;
     Linear_T LinearUnits;   /* Back up linear fit. */
     Linear_T HeatLimit;     /* Linear fit for warning region, return value [WarningTrigger_Adcu:FaultTrigger_Adcu] as [65535:0], Roughly linear 70-100C */
-// Thermistor_Type_T Type;
-    Thermistor_Status_T Status;
+
+    /* State for polling compare */
+    Thermistor_Status_T Status; /* Status is sufficient for brief State */
     uint16_t Adcu; /* Previous ADC sample */
 }
 Thermistor_T;
@@ -154,7 +156,7 @@ Thermistor_T;
     .CONST = _THERMISTOR_INIT_CONST(RSeries, RParallel, p_Config),      \
 }
 
-#define THERMISTOR_INIT_FIXED(RSeries, RParallel, p_Config, B, R0, T0_Kelvin)   \
+#define THERMISTOR_INIT_FIXED(RSeries, RParallel, B, R0, T0_Kelvin, p_Config)   \
 {                                                                               \
     .CONST = _THERMISTOR_INIT(RSeries, RParallel, p_Config),                    \
     .Config = _THERMISTOR_INIT_CONFIG_B(B, R0, T0_Kelvin),                      \
@@ -166,18 +168,18 @@ Thermistor_T;
     [WarningTrigger_Adcu:FaultTrigger_Adcu] as [65535:0]
 */
 /******************************************************************************/
-static inline uint16_t Thermistor_HeatLimitOfAdcu_Scalar16(const Thermistor_T * p_therm, uint16_t adcu) { return Linear_ADC_Percent16(&p_therm->HeatLimit, adcu); }
+static inline uint16_t Thermistor_HeatLimitOfAdcu_Percent16(const Thermistor_T * p_therm, uint16_t adcu) { return Linear_ADC_Percent16(&p_therm->HeatLimit, adcu); }
 /* Captured adcu on Thermistor_PollMonitor */
-static inline uint16_t Thermistor_GetHeatLimit_Scalar16(const Thermistor_T * p_therm) { return Thermistor_HeatLimitOfAdcu_Scalar16(p_therm, p_therm->Adcu); }
+static inline uint16_t Thermistor_GetHeatLimit_Percent16(const Thermistor_T * p_therm) { return Thermistor_HeatLimitOfAdcu_Percent16(p_therm, p_therm->Adcu); }
 
 /******************************************************************************/
 /*
     Monitor
 */
 /******************************************************************************/
-static inline Thermistor_Status_T Thermistor_GetStatus(const Thermistor_T * p_therm)        { return (p_therm->Status); }
-static inline bool Thermistor_GetIsFault(const Thermistor_T * p_therm)                      { return ((p_therm->Status == THERMISTOR_STATUS_FAULT) || (p_therm->Status == THERMISTOR_STATUS_FAULT_THRESHOLD)); }
-static inline bool Thermistor_GetIsWarning(const Thermistor_T * p_therm)                    { return ((p_therm->Status == THERMISTOR_STATUS_WARNING) || (p_therm->Status == THERMISTOR_STATUS_WARNING_THRESHOLD)); }
+static inline Thermistor_Status_T Thermistor_GetStatus(const Thermistor_T * p_therm)    { return (p_therm->Status); }
+static inline bool Thermistor_IsFault(const Thermistor_T * p_therm)                     { return ((p_therm->Status == THERMISTOR_STATUS_FAULT) || (p_therm->Status == THERMISTOR_STATUS_FAULT_THRESHOLD)); }
+static inline bool Thermistor_IsWarning(const Thermistor_T * p_therm)                   { return ((p_therm->Status == THERMISTOR_STATUS_WARNING) || (p_therm->Status == THERMISTOR_STATUS_WARNING_THRESHOLD)); }
 
 /******************************************************************************/
 /*
@@ -221,7 +223,6 @@ static inline void Thermistor_SetT0_DegC(Thermistor_T * p_therm, uint16_t value)
 static inline void Thermistor_SetB(Thermistor_T * p_therm, uint16_t value)                  { p_therm->Config.B = value; }
 static inline void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint16_t vIn_MilliV) { p_therm->Config.VInRef_MilliV = vIn_MilliV; }
 
-
 // static inline uint16_t Thermistor_GetLinearR(const Thermistor_T * p_therm)            { return p_therm->Config.DeltaR; }
 // static inline uint16_t Thermistor_GetLinearT(const Thermistor_T * p_therm)            { return p_therm->Config.DeltaT; }
 // static inline void Thermistor_SetLinearR(Thermistor_T * p_therm, uint16_t value)      { p_therm->Config.DeltaR = value; }
@@ -247,7 +248,6 @@ extern thermal_t Thermistor_GetFault_DegC(const Thermistor_T * p_therm);
 extern thermal_t Thermistor_GetFaultThreshold_DegC(const Thermistor_T * p_therm);
 extern thermal_t Thermistor_GetWarning_DegC(const Thermistor_T * p_therm);
 extern thermal_t Thermistor_GetWarningThreshold_DegC(const Thermistor_T * p_therm);
-
 
 /******************************************************************************/
 /*

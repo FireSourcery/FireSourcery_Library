@@ -151,15 +151,12 @@ Protocol_ReqCode_T;
 */
 typedef const struct Protocol_ReqContext
 {
-    // const struct
-    // {
-        void * const p_SubState;
-        uint32_t * const p_SubStateIndex;
-        const Protocol_HeaderMeta_T * const p_RxMeta;
-        const void * const p_RxPacket;
-        void * const p_TxPacket;
-        protocol_size_t * const p_TxSize;
-    // };
+    void * const p_SubState;
+    uint32_t * const p_SubStateIndex;
+    const Protocol_HeaderMeta_T * const p_RxMeta;
+    const void * const p_RxPacket;
+    void * const p_TxPacket;
+    protocol_size_t * const p_TxSize;
 }
 Protocol_ReqContext_T;
 
@@ -250,7 +247,7 @@ typedef void (* const Protocol_BuildTxSync_T)(uint8_t * p_txPacket, protocol_siz
 /******************************************************************************/
 /*!
     Packet Format Specs
-    Packet Class
+    todo split Packet Class
 */
 /******************************************************************************/
 typedef const struct Protocol_Specs
@@ -313,32 +310,31 @@ typedef enum Protocol_ReqState
 }
 Protocol_ReqState_T;
 
-
-
 typedef struct Protocol_Config
 {
     uint8_t XcvrId;
     uint8_t SpecsId;
-    uint32_t WatchdogTime;
     uint32_t BaudRate;
-    //uint32_t RxTimeOutPacket
-    //uint32_t RxTimeOutByte
-    //uint32_t ReqExtTimeOut
+    uint32_t WatchdogTimeout;
+    //uint32_t RxTimeoutPacket
+    //uint32_t RxTimeoutByte
+    //uint32_t ReqExtTimeout
     bool IsEnableOnInit;     /* enable on start up */
+    // bool IsWatchdogOnInit;
 }
 Protocol_Config_T;
 
 typedef const struct Protocol_Const
 {
-    const Protocol_Config_T * const P_CONFIG;
     uint8_t * const P_RX_PACKET_BUFFER;
     uint8_t * const P_TX_PACKET_BUFFER;
     const uint8_t PACKET_BUFFER_LENGTH;                         /* Must be greater than Specs RX_LENGTH_MAX */
     void * const P_APP_INTERFACE;                               /* User app context for packet processing */
-    void * const P_REQ_STATE_BUFFER;                            /* Child protocol control variables, may be seperate from app_interface, must be largest enough to hold substate context referred by specs */
+    void * const P_REQ_STATE_BUFFER;                            /* Child protocol control variables, may be separate from app_interface, must be largest enough to hold substate context referred by specs */
     const Protocol_Specs_T * const * const PP_SPECS_TABLE;      /* Bound and verify specs selection. Pointer to table of pointers to Specs, Specs not necessarily in a contiguous array */
     const uint8_t SPECS_COUNT;
     const volatile uint32_t * const P_TIMER;
+    const Protocol_Config_T * const P_CONFIG;
 }
 Protocol_Const_T;
 
@@ -356,23 +352,26 @@ typedef struct Protocol
     /* Rx */
     Protocol_RxState_T RxState;
     Protocol_RxCode_T RxStatus;     /* Returned from child function, also return to caller. updated per proc. store as way of retaining 2 return values */
-    protocol_size_t RxCount;        /* index into P_RX_PACKET_BUFFER */
+    protocol_size_t RxIndex;        /* index into P_RX_PACKET_BUFFER */
     uint32_t RxTimeStart;
+
+    protocol_size_t TxLength;
 
     /* Req/Response */
     Protocol_ReqState_T ReqState;
     Protocol_ReqCode_T ReqStatus;    /* Returned from child function, also return to caller. updated per proc. store as way of retaining 2 return values */
     Protocol_Req_T * p_ReqActive;    /* */
     uint32_t ReqTimeStart;           /* Set on Req Start and Complete */
-    protocol_size_t TxLength;
     uint32_t ReqSubStateIndex; //track ext req index internally?
-
-    Protocol_ReqContext_T ReqContext; // for extended request keep in data memory. Alternatively, pass const block and TxLength seperately
+    Protocol_ReqContext_T ReqContext; // buffer for passing req parameters. Alternatively, pass const block and TxLength seperately
 
     /* Common */
     uint8_t NackCount;
     uint8_t TxNackRxCount;
     uint8_t RxNackTxCount;
+
+    /* */
+    bool IsRxWatchdogEnable;
 
     /* Debug */
     // uint16_t TxPacketCount;
@@ -404,6 +403,60 @@ Protocol_T;
 static inline Protocol_RxCode_T Protocol_GetRxStatus(const Protocol_T * p_protocol)     { return p_protocol->RxStatus; }
 static inline Protocol_ReqCode_T Protocol_GetReqStatus(const Protocol_T * p_protocol)   { return p_protocol->ReqStatus; }
 
+/*
+    Watchdog
+*/
+/*!
+    @return true if WatchdogTimeout reached, a successful Req has not occurred
+*/
+static inline bool Protocol_IsRxLost(Protocol_T * p_protocol)
+{
+    return ((p_protocol->IsRxWatchdogEnable == true) && (*p_protocol->CONST.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Config.WatchdogTimeout));
+}
+
+static inline void Protocol_EnableRxWatchdog(Protocol_T * p_protocol) { if (p_protocol->ReqState != PROTOCOL_REQ_STATE_INACTIVE) { p_protocol->IsRxWatchdogEnable = true; } }
+static inline void Protocol_DisableRxWatchdog(Protocol_T * p_protocol) { p_protocol->IsRxWatchdogEnable = false; }
+static inline void Protocol_SetRxWatchdogOnOff(Protocol_T * p_protocol, bool isEnable) { (isEnable == true) ? Protocol_EnableRxWatchdog(p_protocol) : Protocol_DisableRxWatchdog(p_protocol); }
+
+/*
+    User must reboot. Does propagate set. Current settings remain active until reboot.
+*/
+static inline void Protocol_EnableOnInit(Protocol_T * p_protocol) { p_protocol->Config.IsEnableOnInit = true; }
+static inline void Protocol_DisableOnInit(Protocol_T * p_protocol) { p_protocol->Config.IsEnableOnInit = false; }
+
+/*
+    Extern
+*/
+extern const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, protocol_reqid_t id);
+extern void Protocol_Init(Protocol_T * p_protocol);
+extern void Protocol_Proc(Protocol_T * p_protocol);
+extern void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId);
+extern void Protocol_ConfigXcvrBaudRate(Protocol_T * p_protocol, uint32_t baudRate);
+extern void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t specsId);
+extern bool Protocol_Enable(Protocol_T * p_protocol);
+extern void Protocol_Disable(Protocol_T * p_protocol);
+
+#endif
+
+/*
+    User
+*/
+// typedef enum Protocol_VarId_Config
+// {
+//     PROTOCOL_CONFIG_XCVR_ID,
+//     PROTOCOL_CONFIG_SPECS_ID,
+//     PROTOCOL_CONFIG_BAUD_RATE,
+//     PROTOCOL_CONFIG_WATCHDOG_TIMEOUT,
+//     PROTOCOL_CONFIG_IS_ENABLED,
+// }
+// Protocol_VarId_Config_T;
+
+// typedef enum Protocol_VarId_Active
+// {
+//     PROTOCOL_RX_WATCHDOG_ON_OFF,
+//     // PROTOCOL_ACTIVE_BAUD_RATE,
+// }
+// Protocol_VarId_Active_T;
 
 // static inline uint16_t Protocol_GetTxPacketCount(const Protocol_T * p_protocol) { return p_protocol->TxPacketCount; }
 // static inline uint16_t Protocol_GetRxPacketCount(const Protocol_T * p_protocol) { return p_protocol->RxPacketErrorCount + p_protocol->RxPacketSuccessCount; }
@@ -414,25 +467,3 @@ static inline Protocol_ReqCode_T Protocol_GetReqStatus(const Protocol_T * p_prot
 //     p_protocol->RxPacketSuccessCount = 0U;
 //     p_protocol->RxPacketErrorCount = 0U;
 // }
-
-/*
-    User must reboot. Does propagate set. Current settings remain active until reboot.
-*/
-static inline void Protocol_EnableOnInit(Protocol_T * p_protocol)   { p_protocol->Config.IsEnableOnInit = true; }
-static inline void Protocol_DisableOnInit(Protocol_T * p_protocol)  { p_protocol->Config.IsEnableOnInit = false; }
-
-/*
-    Extern
-*/
-extern const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, protocol_reqid_t id);
-extern void Protocol_Init(Protocol_T * p_protocol);
-extern void Protocol_Proc(Protocol_T * p_protocol);
-extern bool Protocol_CheckRxLost(Protocol_T * p_protocol);
-extern void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId);
-extern void Protocol_ConfigXcvrBaudRate(Protocol_T * p_protocol, uint32_t baudRate);
-extern void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t specsId);
-extern bool Protocol_Enable(Protocol_T * p_protocol);
-extern void Protocol_Disable(Protocol_T * p_protocol);
-
-#endif
-

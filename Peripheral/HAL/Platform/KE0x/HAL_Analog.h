@@ -57,9 +57,9 @@ static inline void HAL_Analog_EnableInterrupt(HAL_Analog_T * p_hal) { (void)p_ha
 /*
     Clear interrupt - Clears on reading p_hal->R
 */
-static inline void HAL_Analog_ClearConversionCompleteFlag(const HAL_Analog_T * p_hal) { (void)p_hal; }
-static inline bool HAL_Analog_ReadConversionCompleteFlag(const HAL_Analog_T * p_hal) { return ((p_hal->SC1 & (uint32_t)ADC_SC1_COCO_MASK) != 0U); }
-static inline bool HAL_Analog_ReadConversionActiveFlag(const HAL_Analog_T * p_hal) { return ((p_hal->SC2 & (uint32_t)ADC_SC2_ADACT_MASK) != 0U); }
+static inline void HAL_Analog_ClearConversionCompleteFlag(const HAL_Analog_T * p_hal)   { (void)p_hal; }
+static inline bool HAL_Analog_ReadConversionCompleteFlag(const HAL_Analog_T * p_hal)    { return ((p_hal->SC1 & (uint32_t)ADC_SC1_COCO_MASK) != 0U); }
+static inline bool HAL_Analog_ReadConversionActiveFlag(const HAL_Analog_T * p_hal)      { return ((p_hal->SC2 & (uint32_t)ADC_SC2_ADACT_MASK) != 0U); }
 
 /*
     Any conversion in progress is aborted in the following cases:
@@ -88,10 +88,10 @@ static inline void HAL_Analog_AbortConversion(HAL_Analog_T * p_hal) { p_hal->SC1
 */
 static inline void HAL_Analog_Deactivate(HAL_Analog_T * p_hal) { p_hal->SC1 |= ADC_SC1_ADCH_MASK; }
 
-static inline void HAL_Analog_EnableHwTrigger(HAL_Analog_T * p_hal) { p_hal->SC2 |= ADC_SC2_ADTRG_MASK; }
-static inline void HAL_Analog_DisableHwTrigger(HAL_Analog_T * p_hal) { p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK); }
+static inline void HAL_Analog_EnableHwTrigger(HAL_Analog_T * p_hal)     { p_hal->SC2 |= ADC_SC2_ADTRG_MASK; }
+static inline void HAL_Analog_DisableHwTrigger(HAL_Analog_T * p_hal)    { p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK); }
 static inline void HAL_Analog_DisableContinuousConversion(HAL_Analog_T * p_hal) { p_hal->SC1 &= ~ADC_SC1_ADCO_MASK; }
-static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal) { p_hal->SC1 |= ADC_SC1_ADCO_MASK; }
+static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal)  { p_hal->SC1 |= ADC_SC1_ADCO_MASK; }
 
 /*
     Reference Manual pg 326

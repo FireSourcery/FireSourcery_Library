@@ -56,9 +56,11 @@
 #endif
 
 /* Flags cannot queue options for following commands */
-#if     defined(CONFIG_ANALOG_USE_QUEUE)
-#elif     defined(CONFIG_ANALOG_USE_FLAGS)
-#endif
+// #if     defined(CONFIG_ANALOG_USE_QUEUE)
+// #elif     defined(CONFIG_ANALOG_USE_FLAGS)
+// #endif
+
+
 
 #if     defined(CONFIG_ANALOG_ADC_RESULT_UINT8)
 #elif     defined(CONFIG_ANALOG_ADC_RESULT_UINT16)

@@ -176,8 +176,8 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
 
             // case 1U:
             //     //can repeat adc and filter results, or skip state use check in sensor routine
-            //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
-            //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
+            //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
+            //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
             //     p_motor->CalibrationStateIndex = 2U;
             //     /* wait 50us, 1s */
             //     break;
@@ -190,8 +190,8 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
                 break;
 
             // case 3U:
-            //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
-            //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
+            //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
+            //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
             //     p_motor->CalibrationStateIndex = 4U;
             //     break;
 

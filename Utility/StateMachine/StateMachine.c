@@ -105,7 +105,6 @@ static inline void ReleaseSignal(StateMachine_T * p_stateMachine)
 //     return p_active->P_TRANSITION_TABLE[inputId](p_context, inputValue);
 // }
 
-
 static inline void Reset(StateMachine_T * p_stateMachine)
 {
     p_stateMachine->p_StateActive = p_stateMachine->CONST.P_MACHINE->P_STATE_INITIAL;
@@ -177,15 +176,18 @@ void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, const St
             p_StateActive->OUTPUT may overwrite p_newState->ENTRY incorrectly
 
         Alternatively:
-        Set p_StateActive before ENTRY. This way Async might proc OUTPUT of p_newState before ENTRY.
+        Set p_StateActive before ENTRY.
+            This way Async might proc OUTPUT of p_newState before ENTRY.
             p_newState->ENTRY overwrite p_StateActive->OUTPUT correctly
             p_newState->OUTPUT prior to p_newState->ENTRY incorrectly
-            if newState OUTPUT transitions:
-                newState2 ENTRY
-                newState ENTRY
 
     */
 }
+
+// void StateMachine_ProcStateTransitionId(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId)
+// {
+
+// }
 
 /******************************************************************************/
 /*!
@@ -217,19 +219,20 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 /******************************************************************************/
 /*
     Synchronous Machine
-    Synchronous State Update - ProcStateOuput synchronous to timer
-    Synchronous Proc User Input - Async user inputs proc synchronously during ProcStateOuput
+    Synchronous Proc State - ProcStateOuput synchronous to timer
+    Synchronous Proc Input - Async user inputs proc synchronously during ProcStateOuput
 
     Proc last set input, always single threaded proc, inputs may overwrite
     Does not need Critical Section -
         Check accept on ProcState
         ProcState thread is higher priority than SetInput thread
         All SetInput calls are on the same thread
-
 */
 /******************************************************************************/
 void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine)
 {
+    // statemachine_input_id_t inputId = atomic_exchange(&p_stateMachine->SyncInput, STATE_MACHINE_INPUT_ID_NULL);
+    // if (inputId != STATE_MACHINE_INPUT_ID_NULL) { ProcInput(p_stateMachine, inputId, p_stateMachine->SyncInputValue); }
     if (p_stateMachine->SyncInput != STATE_MACHINE_INPUT_ID_NULL)
     {
         ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
@@ -239,11 +242,21 @@ void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine)
     ProcStateOuput(p_stateMachine);
 }
 
+/*
+    ProcState may occur during SetInput buffers.
+    Will SyncInput always be clear while SyncInputValue is invalid?
+*/
 bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
     bool isAccept = false;
     isAccept = isAcceptInput(p_stateMachine, inputId); /* a immediate return, although may differ when checked again during ProcState */
-    if (isAccept == true) { p_stateMachine->SyncInputValue = inputValue; p_stateMachine->SyncInput = inputId; }
+    /* Can Compiler guarantee order? */
+    if (isAccept == true)
+    {
+        p_stateMachine->SyncInputValue = inputValue;
+        p_stateMachine->SyncInput = inputId;
+        // atomic_store(&p_stateMachine->SyncInput, inputId);
+    }
     return isAccept;
 }
 
@@ -300,7 +313,7 @@ void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine)
 /******************************************************************************/
 /*
     Hybrid Semi-synchronous Machine
-    supports both operation as expense of superfluous condition checking
+    supports both operation at expense of superfluous condition checking
 */
 /******************************************************************************/
 void StateMachine_ProcState(StateMachine_T * p_stateMachine)

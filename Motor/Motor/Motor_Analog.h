@@ -31,42 +31,59 @@
 #ifndef MOTOR_ANALOG_CONVERSION_H
 #define MOTOR_ANALOG_CONVERSION_H
 
-#include "Peripheral/Analog/AnalogN/AnalogN.h"
+#include "Peripheral/Analog/Analog.h"
 #include "Motor.h"
 
-extern void Motor_Analog_CaptureVa(Motor_T * p_motor);
-extern void Motor_Analog_CaptureVb(Motor_T * p_motor);
-extern void Motor_Analog_CaptureVc(Motor_T * p_motor);
-extern void Motor_Analog_CaptureIa(Motor_T * p_motor);
-extern void Motor_Analog_CaptureIb(Motor_T * p_motor);
-extern void Motor_Analog_CaptureIc(Motor_T * p_motor);
+extern void Motor_Analog_CaptureVa(Motor_T * p_motor, uint16_t adcu);
+extern void Motor_Analog_CaptureVb(Motor_T * p_motor, uint16_t adcu);
+extern void Motor_Analog_CaptureVc(Motor_T * p_motor, uint16_t adcu);
+extern void Motor_Analog_CaptureIa(Motor_T * p_motor, uint16_t adcu);
+extern void Motor_Analog_CaptureIb(Motor_T * p_motor, uint16_t adcu);
+extern void Motor_Analog_CaptureIc(Motor_T * p_motor, uint16_t adcu);
+extern void Motor_Analog_CaptureHeat(Motor_T * p_motor, uint16_t adcu);
+
+#define MOTOR_ANALOG_CONVERSION_VA_INIT(ChannelBase, VaHost, VaPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_VA), (Analog_Capture_T)Motor_Analog_CaptureVa, p_Motor, VaHost, VaPin)
+#define MOTOR_ANALOG_CONVERSION_VB_INIT(ChannelBase, VbHost, VbPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_VB), (Analog_Capture_T)Motor_Analog_CaptureVb, p_Motor, VbHost, VbPin)
+#define MOTOR_ANALOG_CONVERSION_VC_INIT(ChannelBase, VcHost, VcPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_VC), (Analog_Capture_T)Motor_Analog_CaptureVc, p_Motor, VcHost, VcPin)
+#define MOTOR_ANALOG_CONVERSION_IA_INIT(ChannelBase, IaHost, IaPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_IA), (Analog_Capture_T)Motor_Analog_CaptureIa, p_Motor, IaHost, IaPin)
+#define MOTOR_ANALOG_CONVERSION_IB_INIT(ChannelBase, IbHost, IbPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_IB), (Analog_Capture_T)Motor_Analog_CaptureIb, p_Motor, IbHost, IbPin)
+#define MOTOR_ANALOG_CONVERSION_IC_INIT(ChannelBase, IcHost, IcPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_IC), (Analog_Capture_T)Motor_Analog_CaptureIc, p_Motor, IcHost, IcPin)
+#define MOTOR_ANALOG_CONVERSION_HEAT_INIT(ChannelBase, HeatHost, HeatPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_HEAT), (Analog_Capture_T)Motor_Analog_CaptureHeat, p_Motor, HeatHost, HeatPin)
+
+
+// typedef enum Motor_Analog_Select
+// {
+//     MOTOR_ANALOG_SELECT_FOC_I_ABC,
+//     MOTOR_ANALOG_SELECT_FOC_V_ABC,
+// }
+// Motor_Analog_Select_T;
 
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-    #define _MOTOR_ANALOG_N_CONVERSION_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor)                                                                  \
-        .CONVERSION_SIN = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_SIN, 0U, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), SinPin, &(p_Hosts)[SinHost]),   \
-        .CONVERSION_COS = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_COS, 0U, p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), CosPin, &(p_Hosts)[CosHost]),
+#define _MOTOR_ANALOG_CONVERSIONS_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Motor)                      \
+        .CONVERSION_SIN = ANALOG_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_SIN,   0U, p_Motor, SinHost, SinPin), \
+        .CONVERSION_COS = ANALOG_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_COS,   0U, p_Motor, CosHost, CosPin),
 #else
-    #define _MOTOR_ANALOG_N_CONVERSION_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor)
+#define _MOTOR_ANALOG_CONVERSIONS_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Motor)
 #endif
 
-#define MOTOR_ANALOG_CONVERSIONS_INIT(VaPin, VaHost, VbPin, VbHost, VcPin, VcHost, IaPin, IaHost, IbPin, IbHost, IcPin, IcHost, HeatPin, HeatHost, SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor)      \
-{                                                                                                                                                                                                           \
-    .CONVERSION_VA      = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_VA, (Analog_Callback_T)Motor_Analog_CaptureVa,  p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), VaPin,   &(p_Hosts)[VaHost]),    \
-    .CONVERSION_VB      = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_VB, (Analog_Callback_T)Motor_Analog_CaptureVb,  p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), VbPin,   &(p_Hosts)[VbHost]),    \
-    .CONVERSION_VC      = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_VC, (Analog_Callback_T)Motor_Analog_CaptureVc,  p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), VcPin,   &(p_Hosts)[VcHost]),    \
-    .CONVERSION_IA      = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_IA, (Analog_Callback_T)Motor_Analog_CaptureIa,  p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), IaPin,   &(p_Hosts)[IaHost]),    \
-    .CONVERSION_IB      = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_IB, (Analog_Callback_T)Motor_Analog_CaptureIb,  p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), IbPin,   &(p_Hosts)[IbHost]),    \
-    .CONVERSION_IC      = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_IC, (Analog_Callback_T)Motor_Analog_CaptureIc,  p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), IcPin,   &(p_Hosts)[IcHost]),    \
-    .CONVERSION_HEAT    = ANALOG_N_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_HEAT,   0U,                                     p_Motor, &((p_Motor)->AnalogResults.Channels[0U]), HeatPin, &(p_Hosts)[HeatHost]),  \
-    _MOTOR_ANALOG_N_CONVERSION_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Hosts, p_Motor)                                                                                                                  \
-    .ADCS_GROUP_I       = { .Flags = (uint8_t)((1U << IaHost) | (1U << IbHost) | (1U << IcHost) | (1U << SinHost) | (1U << CosHost)), },                                                                    \
-    .ADCS_GROUP_V       = { .Flags = (uint8_t)((1U << VaHost) | (1U << VbHost) | (1U << VcHost) | (1U << SinHost) | (1U << CosHost)), },                                                                    \
-    .ADCS_GROUP_PWM     = { .Flags = (uint8_t)((1U << VaHost) | (1U << VbHost) | (1U << VcHost) | (1U << IaHost) | (1U << IbHost) | (1U << IcHost)| (1U << SinHost) | (1U << CosHost)), },                  \
+
+#define MOTOR_ANALOG_CONVERSIONS_INIT(VaPin, VaHost, VbPin, VbHost, VcPin, VcHost, IaPin, IaHost, IbPin, IbHost, IcPin, IcHost, HeatPin, HeatHost, SinPin, SinHost, CosPin, CosHost, ChannelBase, p_Motor)       \
+{                                                                                                                                                                                                   \
+    .CONVERSION_VA      = ANALOG_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_VA,   (Analog_Capture_T)Motor_Analog_CaptureVa,   p_Motor,  VaHost,   VaPin),    \
+    .CONVERSION_VB      = ANALOG_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_VB,   (Analog_Capture_T)Motor_Analog_CaptureVb,   p_Motor,  VbHost,   VbPin),    \
+    .CONVERSION_VC      = ANALOG_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_VC,   (Analog_Capture_T)Motor_Analog_CaptureVc,   p_Motor,  VcHost,   VcPin),    \
+    .CONVERSION_IA      = ANALOG_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_IA,   (Analog_Capture_T)Motor_Analog_CaptureIa,   p_Motor,  IaHost,   IaPin),    \
+    .CONVERSION_IB      = ANALOG_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_IB,   (Analog_Capture_T)Motor_Analog_CaptureIb,   p_Motor,  IbHost,   IbPin),    \
+    .CONVERSION_IC      = ANALOG_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_IC,   (Analog_Capture_T)Motor_Analog_CaptureIc,   p_Motor,  IcHost,   IcPin),    \
+    .CONVERSION_HEAT    = ANALOG_CONVERSION_INIT(MOTOR_ANALOG_CHANNEL_HEAT, (Analog_Capture_T)Motor_Analog_CaptureHeat, p_Motor,  HeatHost, HeatPin),  \
+    _MOTOR_ANALOG_CONVERSIONS_SIN_COS(SinPin, SinHost, CosPin, CosHost, p_Motor)                                                                       \
 }
 
-extern void Motor_Analog_EnqueueVabc(Motor_T * p_motor);
-extern void Motor_Analog_EnqueueIabc(Motor_T * p_motor);
+extern void Motor_Analog_MarkVabc(Motor_T * p_motor);
+extern void Motor_Analog_MarkIabc(Motor_T * p_motor);
 extern void Motor_Analog_StartCalibration(Motor_T * p_motor);
 extern bool Motor_Analog_ProcCalibration(Motor_T * p_motor);
+
+
 
 #endif

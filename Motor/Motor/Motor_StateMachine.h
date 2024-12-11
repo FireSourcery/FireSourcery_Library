@@ -37,22 +37,20 @@
 #define MSM_TRANSITION_TABLE_LENGTH     (7U)
 
 /*
-    INIT and OPEN_LOOP as passthrough. each other state has directly corresponding input
+    Motor State Machine Inputs
 */
 typedef enum Motor_StateMachine_Input
 {
     MSM_INPUT_FAULT,            /* Toggle Fault */
-
-    MSM_INPUT_CONTROL,          /* Spin - Activate Control Mode - Transition to Run State (Active Control), and FeedbackMode update */
+    MSM_INPUT_CONTROL,          /* Spin - Activate Control / Feedback Mode - Transition to Run State (Active Control), and FeedbackMode update */
     MSM_INPUT_RELEASE,          /* Freewheel - Release Control */
     MSM_INPUT_HOLD,             /* Stop */
-
-    /* Feedback and Direction Inputs process by StateMachine */
     MSM_INPUT_DIRECTION,
     MSM_INPUT_CALIBRATION,
 }
 Motor_StateMachine_Input_T;
 
+/* INIT and OPEN_LOOP as passthrough. each other state has directly corresponding input */
 typedef enum Motor_StateMachine_StateId
 {
     MSM_STATE_ID_INIT,
@@ -73,8 +71,8 @@ extern void Motor_ActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_ActivateControl_Cast(Motor_T * p_motor, uint8_t modeWord);
 
 extern bool Motor_StateMachine_IsFault(const Motor_T * p_motor);
-extern bool Motor_StateMachine_ClearFault(Motor_T * p_motor);
-extern void Motor_StateMachine_SetFault(Motor_T * p_motor);
+extern bool Motor_StateMachine_ExitFault(Motor_T * p_motor);
+extern void Motor_StateMachine_EnterFault(Motor_T * p_motor);
 // extern void Motor_PollAdcFaultFlags(Motor_T * p_motor);
 
 #endif

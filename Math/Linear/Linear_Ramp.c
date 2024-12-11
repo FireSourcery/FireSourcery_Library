@@ -66,14 +66,18 @@ static int32_t OutputOf(const Linear_T * p_linear, int32_t currentRampValue, int
 //
 // }
 
+/* todo store as X */
 // return Linear_Of(p_linear, steps);
 // int32_t Linear_Ramp_OutputOf(const Linear_T * p_linear, int32_t steps)
 // {
-//     int32_t directionalSteps = 0;
+//     int32_t directionalSteps =steps;
 //     int32_t output;
+//      int32_t sign = math_sign(steps);
+
+//     // if(Y0 == YReference) { return Y0; } /* no change */
 
 //     /* instead of inverting slope, which requires handling synchronization */
-//     if      (p_linear->Y0 < p_linear->YReference) { directionalSteps = steps;          }     // incrementing
+//     if      (p_linear->Y0 < p_linear->YReference) { directionalSteps = steps;          }   // incrementing
 //     else if (p_linear->Y0 > p_linear->YReference) { directionalSteps = 0 - steps;      }   // decrementing
 
 //     // return (directionalSteps != 0) ?

@@ -36,7 +36,7 @@
 
 static void ResetUnitConversion(VMonitor_T * p_vMonitor)
 {
-    Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONST.UNITS_R1, p_vMonitor->CONST.UNITS_R2, GLOBAL_ANALOG.ADC_BITS, GLOBAL_ANALOG.ADC_VREF_MILLIV, 0);
+    Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONST.UNITS_R1, p_vMonitor->CONST.UNITS_R2, GLOBAL_ANALOG.ADC_VREF_MILLIV, GLOBAL_ANALOG.ADC_BITS, p_vMonitor->Config.Nominal_Adcu);
 }
 
 void VMonitor_Init(VMonitor_T * p_vMonitor)
@@ -76,7 +76,6 @@ VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
 }
 
 // VMonitor_Status_T VMonitor_PollStatusWithEdge(VMonitor_T * p_vMonitor, uint16_t adcu)
-
 
 /******************************************************************************/
 /*!

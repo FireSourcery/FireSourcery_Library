@@ -105,6 +105,13 @@ static inline int16_t Linear_Voltage_Frac16OfAdcu(const Linear_T * p_linear, uin
     return _Linear_Frac16(p_linear, adcu);
 }
 
+// static inline uint32_t Linear_Voltage_Charge_Frac16OfAdcu(const Linear_T * p_linear, uint16_t adcuZero, uint16_t adcu)
+// {
+//     // return ((uint32_t)(adcu - adcuZero) * UINT16_MAX) / (p_linear->XReference - adcuZero);
+//     return linear_f_x0(65536, p_linear->XDeltaRef, adcuZero, adcu);
+// }
+
+
 /******************************************************************************/
 /*!
     @brief Calculate ADC value from given voltage
@@ -152,7 +159,7 @@ static inline int32_t Linear_Voltage_OfFrac16(const Linear_T * p_linear, uint16_
     @brief
 */
 /******************************************************************************/
-extern void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint8_t adcBits, uint16_t adcVRef_MilliV, uint16_t vInMax);
+extern void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits, uint16_t vInMax);
 extern uint16_t Linear_Voltage_CalcAdcuInput_V(const Linear_T * p_linear, uint16_t volts);
 extern uint16_t Linear_Voltage_CalcAdcuInput_MilliV(const Linear_T * p_linear, uint32_t milliV);
 

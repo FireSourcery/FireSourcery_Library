@@ -73,25 +73,36 @@ Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t capt
 {
     Thermistor_Status_T status;
     uint16_t adcu = (captureAdcu + p_therm->Adcu) / 2U;
-    // uint16_t adcu = captureAdcu;
 
     // todo linear ntc/ptc
     // int16_t adcuCompare = (Type == PTC) ? adcu : -adcu;
 
     if(p_therm->Config.IsMonitorEnable == true)
     {
-        if(adcu > p_therm->Config.WarningThreshold_Adcu)                                                                { p_therm->Status = THERMISTOR_STATUS_OK; }
-        else if(adcu < p_therm->Config.FaultTrigger_Adcu)                                                               { p_therm->Status = THERMISTOR_STATUS_FAULT; }
-        else if(CheckThreshold(p_therm->Config.FaultThreshold_Adcu, Thermistor_GetIsFault(p_therm), adcu) == true)      { p_therm->Status = THERMISTOR_STATUS_FAULT_THRESHOLD; }
-        else if(adcu < p_therm->Config.WarningTrigger_Adcu)                                                             { p_therm->Status = THERMISTOR_STATUS_WARNING; }
-        else if(CheckThreshold(p_therm->Config.WarningThreshold_Adcu, Thermistor_GetIsWarning(p_therm), adcu) == true)  { p_therm->Status = THERMISTOR_STATUS_WARNING_THRESHOLD; }
-        else                                                                                                            { p_therm->Status = THERMISTOR_STATUS_OK; }
+        if      (adcu > p_therm->Config.WarningThreshold_Adcu)                                                           { p_therm->Status = THERMISTOR_STATUS_OK; }
+        else if (adcu < p_therm->Config.FaultTrigger_Adcu)                                                               { p_therm->Status = THERMISTOR_STATUS_FAULT; }
+        else if (CheckThreshold(p_therm->Config.FaultThreshold_Adcu, Thermistor_IsFault(p_therm), adcu) == true)         { p_therm->Status = THERMISTOR_STATUS_FAULT_THRESHOLD; }
+        else if (adcu < p_therm->Config.WarningTrigger_Adcu)                                                             { p_therm->Status = THERMISTOR_STATUS_WARNING; }
+        else if (CheckThreshold(p_therm->Config.WarningThreshold_Adcu, Thermistor_IsWarning(p_therm), adcu) == true)     { p_therm->Status = THERMISTOR_STATUS_WARNING_THRESHOLD; }
+        else                                                                                                             { p_therm->Status = THERMISTOR_STATUS_OK; }
 
         p_therm->Adcu = adcu;
     }
 
     return p_therm->Status;
 }
+
+// with trigger
+// Thermistor_PollMonitor_Edges(Thermistor_T * p_therm, uint16_t captureAdcu)
+// {
+//     switch (p_therm->Status)
+//     {
+//         case THERMISTOR_STATUS_OK:
+//             if (captureAdcu < p_therm->Config.WarningThreshold_Adcu) { p_therm->Status = THERMISTOR_STATUS_WARNING; }
+//             if (captureAdcu < p_therm->Config.FaultThreshold_Adcu)   { p_therm->Status = THERMISTOR_STATUS_FAULT; }
+//             break;
+//     }
+// }
 
 /******************************************************************************/
 /*!

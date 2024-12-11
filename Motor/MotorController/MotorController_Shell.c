@@ -342,7 +342,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
             // Terminal_SendString(p_term, "ILimitActiveId: "); Terminal_SendNum(p_term, p_motor->ILimitActiveId); Terminal_SendString(p_term, "\r\n");
             // Terminal_SendString(p_term, "ILimitActive: "); Terminal_SendNum(p_term, p_motor->ILimitActiveSentinel_ScalarU16); Terminal_SendString(p_term, "\r\n");
             // Terminal_SendString(p_term, "ILimitMotoring_ScalarU16: "); Terminal_SendNum(p_term, p_motor->ILimitMotoring_ScalarU16); Terminal_SendString(p_term, "\r\n");
-            // Terminal_SendString(p_term, "IsILimitActive: "); Terminal_SendNum(p_term, p_motor->StatusFlags.ILimitActive); Terminal_SendString(p_term, "\r\n");
+            // Terminal_SendString(p_term, "IsILimitActive: "); Terminal_SendNum(p_term, p_motor->StateFlags.ILimitActive); Terminal_SendString(p_term, "\r\n");
 
             // Terminal_SendString(p_term, "SpeedPid Limit: "); Terminal_SendNum(p_term, p_motor->PidSpeed.OutputMax); Terminal_SendString(p_term, "\r\n");
             // Terminal_SendString(p_term, "ElecAngle: "); Terminal_SendNum(p_term, Motor_User_GetElectricalAngle(p_motor)); Terminal_SendString(p_term, " Deg16\r\n");
@@ -639,12 +639,9 @@ static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
         if(strncmp(argv[1U], "limits", 7U) == 0U)
         {
             Terminal_SendString(p_term, "PCB:\r\n"); PrintThermistorLimit(p_term, &p_mc->ThermistorPcb);
-        #if        defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_TOP_BOT_ENABLE)
-            Terminal_SendString(p_term, "MOSFETs Top:\r\n"); PrintThermistorLimit(p_term, &p_mc->ThermistorMosfetsTop);
-            Terminal_SendString(p_term, "MOSFETs Bot:\r\n"); PrintThermistorLimit(p_term, &p_mc->ThermistorMosfetsBot);
-        #else
+
             Terminal_SendString(p_term, "MOSFETs:\r\n"); PrintThermistorLimit(p_term, &p_mc->ThermistorMosfets);
-        #endif
+
             Terminal_SendString(p_term, "Motor0:\r\n"); PrintThermistorLimit(p_term, &p_motor->Thermistor);
             Terminal_SendString(p_term, "\r\n");
         }

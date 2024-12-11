@@ -32,10 +32,39 @@
 #include <string.h>
 
 /* Global Static, for all Motor instances */
-static uint16_t VSourceRef_V; /* Battery/Supply voltage. Sync with upper layer */
-//CommutationMode
+/* todo as DeciV10 */
+static uint16_t VSourceRef_V; /* Battery/Supply voltage. Active Ref. Sync with upper layer */
+static Linear_T UnitsVSource_V;
 
-void Motor_Static_InitVSourceRef_V(uint16_t vSource) { VSourceRef_V = (vSource > MOTOR_STATIC.V_MAX_VOLTS) ? MOTOR_STATIC.V_MAX_VOLTS : vSource; }
+// static uint16_t VSourceRef_V10;
+// static uint16_t VSourceRef_Adcu;
+
+// CommutationMode
+
+/* Set before Motor_Init */
+void Motor_Static_InitVSourceRef_V(uint16_t vSource_V)
+{
+    VSourceRef_V = (vSource_V > MOTOR_STATIC.V_MAX_VOLTS) ? MOTOR_STATIC.V_MAX_VOLTS : vSource_V;
+    Linear_Voltage_Init(&UnitsVSource_V, MOTOR_STATIC.V_ABC_R1, MOTOR_STATIC.V_ABC_R2, GLOBAL_ANALOG.ADC_VREF_MILLIV, GLOBAL_ANALOG.ADC_BITS, VSourceRef_V);
+}
+
+// void Motor_Static_InitVSourceRef_Adcu(uint16_t vSource_Adcu) /* Using the active read value */
+// {
+//     Linear_T UnitsVSource_V;
+//     Linear_Voltage_Init(&UnitsVSource_V, MOTOR_STATIC.V_ABC_R1, MOTOR_STATIC.V_ABC_R2, GLOBAL_ANALOG.ADC_VREF_MILLIV, GLOBAL_ANALOG.ADC_BITS, 0);
+
+//     VSourceRef_V10 = Linear_Voltage_Of(&UnitsVSource_V, vSource_Adcu * 10);
+//     if (VSourceRef_V10 < MOTOR_STATIC.V_MAX_VOLTS * 10)
+//     {
+//         VSourceRef_Adcu = vSource_Adcu;
+//     }
+//     else
+//     {
+//         VSourceRef_V10 = MOTOR_STATIC.V_MAX_VOLTS * 10;
+//         VSourceRef_Adcu = Linear_Voltage_AdcuOfV(&UnitsVSource_V, MOTOR_STATIC.V_MAX_VOLTS);
+//     }
+// }
+
 uint16_t Motor_Static_GetVSource_V(void) { return VSourceRef_V; }
 
 /*
@@ -44,7 +73,7 @@ uint16_t Motor_Static_GetVSource_V(void) { return VSourceRef_V; }
 void Motor_Init(Motor_T * p_motor)
 {
     if(p_motor->CONST.P_NVM_CONFIG != 0U) { memcpy(&p_motor->Config, p_motor->CONST.P_NVM_CONFIG, sizeof(Motor_Config_T)); }
-    Motor_InitReboot(p_motor); //move to state machine?
+    Motor_InitReboot(p_motor); // move to state machine?
     StateMachine_Init(&p_motor->StateMachine);
 }
 
@@ -158,8 +187,8 @@ qangle16_t Motor_PollSensorAngle(Motor_T * p_motor)
             SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
             electricalAngle = SinCos_GetElectricalAngle(&p_motor->SinCos);
             //todo group
-            AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
-            AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG_N, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
+            AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
+            AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
             break;
 #endif
 #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
@@ -168,8 +197,8 @@ qangle16_t Motor_PollSensorAngle(Motor_T * p_motor)
             electricalAngle = 0;
             p_motor->FeedbackMode.OpenLoop = 1U;
             p_motor->FeedbackMode.OpenLoop = 1U;
-            p_motor->StatusFlags.SensorFeedback = 0U;
-            p_motor->StatusFlags.SensorFeedback = 0U;
+            p_motor->StateFlags.SensorFeedback = 0U;
+            p_motor->StateFlags.SensorFeedback = 0U;
             break;
 #endif
         default: electricalAngle = 0; break;
@@ -261,7 +290,7 @@ void Motor_ZeroSensor(Motor_T * p_motor)
 }
 
 /* From Stop and after Align */
-bool Motor_CheckSensorFeedback(const Motor_T * p_motor)
+bool Motor_IsSensorFeedbackAvailable(const Motor_T * p_motor)
 {
     bool isAvailable;
     switch(p_motor->Config.SensorMode)
@@ -279,7 +308,7 @@ bool Motor_CheckSensorFeedback(const Motor_T * p_motor)
     return isAvailable;
 }
 
-static inline bool _Motor_CheckOpenLoop(const Motor_T * p_motor)
+static inline bool _Motor_IsOpenLoop(const Motor_T * p_motor)
 {
 #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     return (p_motor->FeedbackMode.OpenLoop == 1U);
@@ -289,9 +318,9 @@ static inline bool _Motor_CheckOpenLoop(const Motor_T * p_motor)
 }
 
 /* User request or no sensor feedback */
-bool Motor_CheckFeedback(const Motor_T * p_motor)
+bool Motor_IsFeedbackAvailable(const Motor_T * p_motor)
 {
-    return ((Motor_CheckSensorFeedback(p_motor) == true) && (_Motor_CheckOpenLoop(p_motor) == false));
+    return ((Motor_IsSensorFeedbackAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
 }
 
 
@@ -538,6 +567,8 @@ void Motor_SetDirection_Cast(Motor_T * p_motor, uint8_t direction)
 void Motor_SetDirectionForward(Motor_T * p_motor) { Motor_SetDirection(p_motor, Motor_DirectionForward(p_motor)); }
 void Motor_SetDirectionReverse(Motor_T * p_motor) { Motor_SetDirection(p_motor, Motor_DirectionReverse(p_motor)); }
 
+
+
 /******************************************************************************/
 /*
     Propagate param values
@@ -584,15 +615,6 @@ void Motor_ResetUnitsSensor(Motor_T * p_motor)
     }
 }
 
-// todo as frac
-void Motor_ResetUnitsVabc(Motor_T * p_motor)
-{
-#if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    Linear_Voltage_Init(&p_motor->UnitsVabc, MOTOR_STATIC.V_ABC_R1, MOTOR_STATIC.V_ABC_R2, GLOBAL_ANALOG.ADC_BITS, GLOBAL_ANALOG.ADC_VREF_MILLIV, Motor_Static_GetVSource_V());
-#else
-    (void)p_motor;
-#endif
-}
 
 void Motor_ResetUnitsIabc(Motor_T * p_motor)
 {
@@ -622,6 +644,28 @@ void Motor_ResetUnitsIc(Motor_T * p_motor)
     Linear_ADC_Init_ZeroToPeak(&p_motor->UnitsIc, p_motor->Config.IcZeroRef_Adcu, Motor_GetIPeakRef_Adcu(p_motor));
 #ifdef CONFIG_MOTOR_I_SENSORS_INVERT
     Linear_ADC_SetInverted(&p_motor->UnitsIc);
+#endif
+}
+
+// void Motor_ResetKvSpeed(Motor_T * p_motor)
+// {
+//     int32_t rpm = Motor_GetSpeedVRef_Rpm(p_motor);
+//     if (p_motor->Config.SpeedFeedbackRef_Rpm > rpm) { p_motor->Config.SpeedFeedbackRef_Rpm = rpm; }
+//     if (p_motor->Config.SpeedMatchRef_Rpm > rpm) { p_motor->Config.SpeedMatchRef_Rpm = rpm; }
+// }
+
+void Motor_ResetUnitsVabc(Motor_T * p_motor)
+{
+#if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
+    // Linear_Voltage_Init(&p_motor->UnitsVSource_V, MOTOR_STATIC.V_ABC_R1, MOTOR_STATIC.V_ABC_R2, GLOBAL_ANALOG.ADC_VREF_MILLIV, GLOBAL_ANALOG.ADC_BITS, Motor_Static_GetVSource_V()); /* passing vInMax can depreciate */
+    // Linear_Voltage_Init(&UnitsVSource_V, MOTOR_STATIC.V_ABC_R1, MOTOR_STATIC.V_ABC_R2, GLOBAL_ANALOG.ADC_VREF_MILLIV, GLOBAL_ANALOG.ADC_BITS, Motor_Static_GetVSource_V()); /* passing vInMax can depreciate */
+
+    // Linear_T UnitsVSource_V;
+    // Linear_Voltage_Init(&UnitsVSource_V, MOTOR_STATIC.V_ABC_R1, MOTOR_STATIC.V_ABC_R2, GLOBAL_ANALOG.ADC_VREF_MILLIV, GLOBAL_ANALOG.ADC_BITS, 0);
+
+    Linear_ADC_Init(&p_motor->UnitsVabc, 0, Linear_Voltage_AdcuOfV(&UnitsVSource_V, Motor_Static_GetVSource_V()));
+#else
+    (void)p_motor;
 #endif
 }
 

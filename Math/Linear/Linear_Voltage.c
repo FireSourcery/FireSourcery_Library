@@ -56,7 +56,7 @@
     @param[in] vInRef - Frac16 reference
 */
 /******************************************************************************/
-void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint8_t adcBits, uint16_t adcVRef_MilliV, uint16_t vInRef)
+void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits, uint16_t vInRef)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
     p_linear->Slope             = (((uint64_t)adcVRef_MilliV * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 1000U; /* (ADC_VREF*(R1 + R2) << 16)/(ADC_MAX*R2) */

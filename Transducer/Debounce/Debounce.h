@@ -77,7 +77,7 @@ static inline bool is_falling_edge(bool prevState, bool newState)   { return ((p
 static inline bool is_rising_edge(bool prevState, bool newState)    { return ((prevState == false) && (newState == true)); }
 static inline bool is_edge(bool prevState, bool newState)           { return (prevState != newState); }
 static inline int8_t edge_value(bool prevState, bool newState)      { return ((int8_t)newState - (int8_t)prevState); } /* -1: falling edge, 0: no edge, 1: rising edge */
-static inline uint32_t is_bits_edge(uint32_t prevState, uint32_t newState)  { return (prevState ^ newState); }
+static inline uint32_t bits_edges(uint32_t prevState, uint32_t newState)  { return (prevState ^ newState); }
 
 // static inline bool _Debounce_IsFallingEdge(Debounce_T * p_debounce, bool pinState)   { return ((pinState == false) && (p_debounce->EdgeState == true)); }
 

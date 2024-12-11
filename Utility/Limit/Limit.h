@@ -1,7 +1,7 @@
 #ifndef LIMIT_H
 #define LIMIT_H
 
-#include "../Array/Array.h"
+#include "Type/Array/Array.h"
 
 #ifdef CONFIG_LIMIT_SIGNED
 typedef int32_t limit_t;

@@ -31,7 +31,7 @@
 #include "SinCos.h"
 #include "Config.h"
 
-#include "Peripheral/Analog/Analog/Global_Analog.h"
+#include "Peripheral/Analog/Global_Analog.h"
 #include <string.h>
 
 void SinCos_Init(SinCos_T * p_sincos)

@@ -60,10 +60,10 @@ static inline Protocol_RxCode_T CaptureRx(Protocol_T * p_protocol)
     // uint8_t xcvrRxCount;
 
     /* Loop to empty Xcvr Rx buffer. Check for completetion, per Rx 1 byte, during unknown length, or up to known length */
-    while(p_protocol->RxCount < p_protocol->p_Specs->RX_LENGTH_MAX) /* RX_LENGTH_MAX < CONFIG.PACKET_BUFFER_LENGTH */
+    while(p_protocol->RxIndex < p_protocol->p_Specs->RX_LENGTH_MAX) /* RX_LENGTH_MAX < CONFIG.PACKET_BUFFER_LENGTH */
     {
         if(rxStatus != PROTOCOL_RX_CODE_AWAIT_PACKET) { break; } /* Packet is complete, break */
-        /* if(p_protocol->RxCount > p_protocol->p_Specs->RX_LENGTH_MAX) checked by while loop. should not occur. wait for time out */
+        /* if(p_protocol->RxIndex > p_protocol->p_Specs->RX_LENGTH_MAX) checked by while loop. should not occur. wait for time out */
 
         /*
             Set xcvrRxLimit for PARSE_RX_META. Prevent reading bytes from the following packet.
@@ -72,26 +72,26 @@ static inline Protocol_RxCode_T CaptureRx(Protocol_T * p_protocol)
         */
         if(p_protocol->RxMeta.Length > 0U)  /* PacketLength is known. */
         {
-            if(p_protocol->RxCount < p_protocol->RxMeta.Length) { nextRxIndex = p_protocol->RxMeta.Length; }
+            if(p_protocol->RxIndex < p_protocol->RxMeta.Length) { nextRxIndex = p_protocol->RxMeta.Length; }
             else { rxStatus = PROTOCOL_RX_CODE_ERROR_META; break; }
-            /* (RxCount == RxMeta.Length) => (xcvrRxLimit == 0), when rxStatus == PROTOCOL_RX_CODE_WAIT_PACKET erroneously i.e. received full packet without completion status */
+            /* (RxIndex == RxMeta.Length) => (xcvrRxLimit == 0), when rxStatus == PROTOCOL_RX_CODE_WAIT_PACKET erroneously i.e. received full packet without completion status */
         }
         /* PacketLength is unkown */
-        else if(p_protocol->RxCount < p_protocol->p_Specs->RX_LENGTH_MIN)   { nextRxIndex = p_protocol->p_Specs->RX_LENGTH_MIN; }
+        else if(p_protocol->RxIndex < p_protocol->p_Specs->RX_LENGTH_MIN)   { nextRxIndex = p_protocol->p_Specs->RX_LENGTH_MIN; }
         /* RX_LENGTH_INDEX > RX_LENGTH_MIN. Check for length determined by another property */
-        // else if(p_protocol->RxCount < p_protocol->p_Specs->RX_REQ_ID_INDEX) { nextRxIndex = p_protocol->p_Specs->RX_REQ_ID_INDEX + 1U; }
-        // else if(p_protocol->RxCount < p_protocol->p_Specs->RX_LENGTH_INDEX) { nextRxIndex = p_protocol->p_Specs->RX_LENGTH_INDEX + 1U; }
-        else                                                                { nextRxIndex = p_protocol->RxCount + 1U; }
+        // else if(p_protocol->RxIndex < p_protocol->p_Specs->RX_REQ_ID_INDEX) { nextRxIndex = p_protocol->p_Specs->RX_REQ_ID_INDEX + 1U; }
+        // else if(p_protocol->RxIndex < p_protocol->p_Specs->RX_LENGTH_INDEX) { nextRxIndex = p_protocol->p_Specs->RX_LENGTH_INDEX + 1U; }
+        else                                                                { nextRxIndex = p_protocol->RxIndex + 1U; }
 
         if (nextRxIndex > p_protocol->p_Specs->RX_LENGTH_MAX) { rxStatus = PROTOCOL_RX_CODE_ERROR_META; break; }
         /* Copy from Xcvr buffer to Protocol buffer, up to xcvrRxLimit */
-        p_protocol->RxCount += Xcvr_RxMax(&p_protocol->Xcvr, &p_protocol->CONST.P_RX_PACKET_BUFFER[p_protocol->RxCount], nextRxIndex - p_protocol->RxCount);
+        p_protocol->RxIndex += Xcvr_RxMax(&p_protocol->Xcvr, &p_protocol->CONST.P_RX_PACKET_BUFFER[p_protocol->RxIndex], nextRxIndex - p_protocol->RxIndex);
 
-        if(p_protocol->RxCount == nextRxIndex) /* (xcvrRxCount == xcvrRxLimit) */
+        if(p_protocol->RxIndex == nextRxIndex) /* (xcvrRxCount == xcvrRxLimit) */
         {
-            /* Implicitly: (xcvrRxCount != 0), (xcvrRxLimit != 0). (RxCount >= RX_LENGTH_MIN)  */
+            /* Implicitly: (xcvrRxCount != 0), (xcvrRxLimit != 0). (RxIndex >= RX_LENGTH_MIN)  */
             /* returns PROTOCOL_RX_CODE_AWAIT_PACKET on successful set of meta data *//* more bytes in Xcvr Buffer, continue while loop */
-            rxStatus = p_protocol->p_Specs->PARSE_RX_META(&p_protocol->RxMeta, p_protocol->CONST.P_RX_PACKET_BUFFER, p_protocol->RxCount);
+            rxStatus = p_protocol->p_Specs->PARSE_RX_META(&p_protocol->RxMeta, p_protocol->CONST.P_RX_PACKET_BUFFER, p_protocol->RxIndex);
         }
         else /* xcvrRxCount < xcvrRxLimit => Xcvr Rx Buffer empty, wait for Xcvr */
         {
@@ -116,15 +116,8 @@ static void TxSync(Protocol_T * p_protocol, Protocol_TxSyncId_T txId)
     ReqResp return 0, TxLength == 0, skip tx
     Error handle Xcvr TxBuffer full?
 */
-static inline bool TxResp(Protocol_T * p_protocol) // , txSize)
+static inline bool TxResp(Protocol_T * p_protocol)
 {
-    // bool status = (p_protocol->TxLength > 0U);
-    // if(status == true)
-    // {
-    //     p_protocol->TxPacketCount++;
-    //     status = Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONST.P_TX_PACKET_BUFFER, p_protocol->TxLength);
-    // }
-    // return status;
     return (p_protocol->TxLength > 0U) ? Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONST.P_TX_PACKET_BUFFER, p_protocol->TxLength) : false;
 }
 
@@ -152,6 +145,11 @@ static bool ProcTxNackRxRepeat(Protocol_T * p_protocol, uint8_t * p_nackCounter,
     return isFinal;
 }
 
+static inline bool IsRxLost(Protocol_T * p_protocol)
+{
+    return (*p_protocol->CONST.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Config.WatchdogTimeout);
+}
+
 /*
     Handle Rx Packet
     Controls Rx Packet Parser, and Timeout Timer
@@ -172,7 +170,7 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
                 */
                 if((p_protocol->CONST.P_RX_PACKET_BUFFER[0U] == p_protocol->p_Specs->RX_START_ID) || (p_protocol->p_Specs->RX_START_ID == 0x00U))
                 {
-                    p_protocol->RxCount = 1U;
+                    p_protocol->RxIndex = 1U;
                     p_protocol->RxMeta.Length = 0U; /* RxMeta.Length is unknown */
                     p_protocol->RxTimeStart = *p_protocol->CONST.P_TIMER;
                     p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_PACKET;
@@ -288,6 +286,7 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                         // disallow both types? PROC, PROC_EXT
                         if(p_protocol->p_ReqActive->PROC != NULL) /* Does not invoke state machine, no loop / nonblocking wait. */
                         {
+                            // p_protocol->TxLength = 0U; /* in case it is not set by the user function */
                             p_protocol->TxLength = p_protocol->p_ReqActive->PROC(p_protocol->CONST.P_APP_INTERFACE, p_protocol->CONST.P_TX_PACKET_BUFFER, p_protocol->CONST.P_RX_PACKET_BUFFER);
                             // p_protocol->p_Specs->BUILD_TX_HEADER(p_protocol->CONST.P_TX_PACKET_BUFFER, &p_protocol->TxLength, txId, payloadLength);
                             if((TxResp(p_protocol) == true) && (p_protocol->p_ReqActive->SYNC.RX_ACK == true)) /* Tx resp if TxLength > 0 */
@@ -504,7 +503,7 @@ const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, siz
 
 /*
     Non blocking.
-    Single threaded only, RxCount not protected
+    Single threaded only, RxIndex not protected
     Controller Side, sequential rx req, proc, tx response
     Cmdr Side -
 
@@ -518,15 +517,6 @@ void Protocol_Proc(Protocol_T * p_protocol)
     // ProcDatagram(p_protocol);  /* Enqueue Datagram for processing in parallel */
 }
 
-/*!
-
-    @return true if WatchdogTime reached, a successful Req has not occurred
-*/
-bool Protocol_CheckRxLost(Protocol_T * p_protocol)
-{
-    /* Check one, RxState or ReqState != STATE_INACTIVE */
-    return ((p_protocol->ReqState != PROTOCOL_REQ_STATE_INACTIVE) && (*p_protocol->CONST.P_TIMER - p_protocol->ReqTimeStart > p_protocol->Config.WatchdogTime));
-}
 
 void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId)
 {
@@ -561,7 +551,7 @@ bool Protocol_Enable(Protocol_T * p_protocol)
     {
         p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
         p_protocol->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_ID;
-        p_protocol->RxCount = 0U;
+        p_protocol->RxIndex = 0U;
         p_protocol->TxLength = 0U;
         p_protocol->p_ReqActive = 0U;
     }

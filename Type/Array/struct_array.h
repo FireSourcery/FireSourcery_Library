@@ -39,7 +39,7 @@ typedef bool (*try_uint32_t)(void * p_struct, uint32_t value);
 /******************************************************************************/
 /*!
     Macros version
-    Using macros to handle struct type. this way [unit_size] is accounted for.
+    Using macros to handle struct type, accounts for [unit_size].
 */
 /******************************************************************************/
 // #define struct_array_foreach array_foreach
@@ -164,6 +164,5 @@ static inline bool struct_array_is_any_set_uint8(const void * p_buffer, size_t u
     for (size_t index = 0U; index < length; index++) { if (unit_try(void_pointer_at(p_buffer, unit_size, index), value) == true) { is_any = true; } }
     return is_any;
 }
-
 
 #endif // STRUCT_ARRAY_H

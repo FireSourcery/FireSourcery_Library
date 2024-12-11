@@ -100,7 +100,7 @@ public:
     // Debuging use
     uint8_t getTxLength(void) { return motorCmdr.Protocol.TxLength; }
     uint8_t * getPtrTxPacket(void) { return motorCmdr.TxPacket; }
-    uint8_t getRxLength(void) { return motorCmdr.Protocol.RxCount; }
+    uint8_t getRxLength(void) { return motorCmdr.Protocol.RxIndex; }
     uint8_t * getPtrRxPacket(void) { return motorCmdr.RxPacket; }
 
 

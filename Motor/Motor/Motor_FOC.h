@@ -57,41 +57,49 @@
     where 32767 is fully saturated current sensor
 */
 /******************************************************************************/
-static inline void Motor_FOC_CaptureIa(Motor_T * p_motor)
+static inline void Motor_FOC_CaptureIa(Motor_T * p_motor, uint16_t adcu)
 {
-    qfrac16_t iPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsIa, p_motor->AnalogResults.Ia_Adcu) + FOC_GetIa(&p_motor->Foc)) / 2;
+    qfrac16_t iPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsIa, adcu) + FOC_GetIa(&p_motor->Foc)) / 2;
     FOC_SetIa(&p_motor->Foc, iPhase);
+    p_motor->PhaseFlags.A = 1U;
+    p_motor->AnalogResults.Ia_Adcu = adcu;
 }
 
-static inline void Motor_FOC_CaptureIb(Motor_T * p_motor)
+static inline void Motor_FOC_CaptureIb(Motor_T * p_motor, uint16_t adcu)
 {
-    qfrac16_t iPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsIb, p_motor->AnalogResults.Ib_Adcu) + FOC_GetIb(&p_motor->Foc)) / 2;
+    qfrac16_t iPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsIb, adcu) + FOC_GetIb(&p_motor->Foc)) / 2;
     FOC_SetIb(&p_motor->Foc, iPhase);
+    p_motor->PhaseFlags.B = 1U;
+    p_motor->AnalogResults.Ib_Adcu = adcu;
 }
 
-static inline void Motor_FOC_CaptureIc(Motor_T * p_motor)
+static inline void Motor_FOC_CaptureIc(Motor_T * p_motor, uint16_t adcu)
 {
-    qfrac16_t iPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsIc, p_motor->AnalogResults.Ic_Adcu) + FOC_GetIc(&p_motor->Foc)) / 2;
+    qfrac16_t iPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsIc, adcu) + FOC_GetIc(&p_motor->Foc)) / 2;
     FOC_SetIc(&p_motor->Foc, iPhase);
+    p_motor->PhaseFlags.C = 1U;
+    p_motor->AnalogResults.Ic_Adcu = adcu;
 }
 
-//todo remove division
-static inline void Motor_FOC_CaptureVa(Motor_T * p_motor)
+static inline void Motor_FOC_CaptureVa(Motor_T * p_motor, uint16_t adcu)
 {
-    qfrac16_t vPhase = ((int32_t)Linear_Voltage_Frac16OfAdcu(&p_motor->UnitsVabc, p_motor->AnalogResults.Va_Adcu) + FOC_GetVBemfA(&p_motor->Foc)) / 2;
+    qfrac16_t vPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsVabc, adcu) + FOC_GetVBemfA(&p_motor->Foc)) / 2;
     FOC_SetVBemfA(&p_motor->Foc, vPhase);
+    p_motor->AnalogResults.Va_Adcu = adcu;
 }
 
-static inline void Motor_FOC_CaptureVb(Motor_T * p_motor)
+static inline void Motor_FOC_CaptureVb(Motor_T * p_motor, uint16_t adcu)
 {
-    qfrac16_t vPhase = ((int32_t)Linear_Voltage_Frac16OfAdcu(&p_motor->UnitsVabc, p_motor->AnalogResults.Vb_Adcu) + FOC_GetVBemfB(&p_motor->Foc)) / 2;
+    qfrac16_t vPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsVabc, adcu) + FOC_GetVBemfB(&p_motor->Foc)) / 2;
     FOC_SetVBemfB(&p_motor->Foc, vPhase);
+    p_motor->AnalogResults.Vb_Adcu = adcu;
 }
 
-static inline void Motor_FOC_CaptureVc(Motor_T * p_motor)
+static inline void Motor_FOC_CaptureVc(Motor_T * p_motor, uint16_t adcu)
 {
-    qfrac16_t vPhase = ((int32_t)Linear_Voltage_Frac16OfAdcu(&p_motor->UnitsVabc, p_motor->AnalogResults.Vc_Adcu) + FOC_GetVBemfC(&p_motor->Foc)) / 2;
+    qfrac16_t vPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsVabc, adcu) + FOC_GetVBemfC(&p_motor->Foc)) / 2;
     FOC_SetVBemfC(&p_motor->Foc, vPhase);
+    p_motor->AnalogResults.Vc_Adcu = adcu;
 }
 
 /******************************************************************************/
