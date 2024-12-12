@@ -28,13 +28,9 @@
     @version V0
 */
 /******************************************************************************/
-#include "Q.h"
+#include "fixed.h"
 #include "Math/math_general.h"
 
-// #include <stdbit.h>
-
-// math_fixed
-// math_q
 
 /*!
     @brief Calculates square root

@@ -31,13 +31,18 @@
 #ifndef QFRAC16_H
 #define QFRAC16_H
 
-#include "Q.h"
+#include "fixed.h"
 #include "Math/math_general.h"
 #include <stdint.h>
 #include <stdbool.h>
 // #include <stdfix.h>
 
 #define QFRAC16_N_BITS (15)   /*!< Q1.15, 15 fractional bits. Scalar 32768. Resolution 1/(2^15) == .000030517578125 */
+
+//todo rename
+// typedef int16_t fract16_t;      /*!< Q1.15 [-1.0, 1) */
+// typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
+// typedef int32_t accum32_t;     /*!< Q17.15 */
 
 typedef int16_t qfrac16_t;      /*!< Q1.15 [-1.0, 1) */
 typedef uint16_t uqfrac16_t;    /*!< Q1.15 [0, 2) */
@@ -81,7 +86,6 @@ static inline qfrac16_t qfrac16_sat_abs(qaccum32_t qfrac) { return math_clamp(qf
     qfrac16_mul(+/-32768, +/-32768) returns 32768 [0x8000]
         (int32_t)32768 -> positive 32768, over saturated 1
         (int16_t)32768 -> -32768, -1
-    Call qfrac16_sat
 
     @param[in]
     @return int32_t[-65536:65535] <=> [-2:2)
@@ -129,11 +133,11 @@ static inline qfrac16_t qfrac16_div_sat(qaccum32_t dividend, qaccum32_t divisor)
 }
 
 /* cast overflow as ufrac */
-// static inline uqfrac16_t ufrac16_abs(qfrac16_t x)
-// {
-//     int32_t mask = (x >> QFRAC16_N_BITS); // Create a mask based on the sign bit
-//     return (x + mask) ^ mask; // Apply the mask to get the absolute value
-// }
+static inline uqfrac16_t frac16_abs(qfrac16_t x)
+{
+    int32_t mask = (x >> QFRAC16_N_BITS); // Create a mask based on the sign bit
+    return (x + mask) ^ mask; // Apply the mask to get the absolute value
+}
 
 static inline qfrac16_t qfrac16_abs_sat(qfrac16_t x)
 {

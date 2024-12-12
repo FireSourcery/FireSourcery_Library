@@ -34,7 +34,7 @@
 
 #include "math_foc.h"
 #include "math_svpwm.h"
-#include "Math/Q/QFrac16.h"
+#include "Math/Fixed/fract16.h"
 
 #include "System/SysTime/SysTime.h"
 

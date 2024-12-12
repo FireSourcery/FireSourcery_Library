@@ -47,7 +47,7 @@
 #include "Utility/Timer/Timer.h"
 #include "Utility/Limit/Limit.h"
 
-#include "Math/Q/Q.h"
+#include "Math/Fixed/fixed.h"
 #include "Math/Linear/Linear_ADC.h"
 #include "Math/Linear/Linear_Voltage.h"
 #include "Math/Linear/Linear_Ramp.h"
@@ -305,19 +305,19 @@ typedef struct Motor_Config
 // #endif
 
     /* Base Limits. Persistent User Param. */
-    uint16_t SpeedLimitForward_Scalar16;   /* Frac16 of SpeedFeedbackRef_Rpm */
-    uint16_t SpeedLimitReverse_Scalar16;
-    uint16_t ILimitMotoring_Scalar16;      /* Frac16 of RefMax I_MAX_AMPS. ILimit must be < 100% to account for I_Frac saturation. */
-    uint16_t ILimitGenerating_Scalar16;
+    uint16_t SpeedLimitForward_Percent16;   /* Percent16 of SpeedFeedbackRef_Rpm */
+    uint16_t SpeedLimitReverse_Percent16;
+    uint16_t ILimitMotoring_Percent16;      /* Percent16 of RefMax I_MAX_AMPS. ILimit must be < 100% to account for I_Frac saturation. */
+    uint16_t ILimitGenerating_Percent16;
 
     uint32_t RampAccel_Cycles;
 
-    uint16_t AlignPower_Scalar16;          /* V or I */
+    uint16_t AlignPower_Percent16;          /* V or I */
     uint32_t AlignTime_Cycles;
 
 // #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-    uint16_t OpenLoopSpeed_Scalar16;    /* Max, 65536 will overflow */
-    uint16_t OpenLoopPower_Scalar16;    /* V or I */
+    uint16_t OpenLoopSpeed_Percent16;    /* Max, 65536 will overflow */
+    uint16_t OpenLoopPower_Percent16;    /* V or I */
     uint32_t OpenLoopAccel_Cycles;      /* Time to reach OpenLoopSpeed */
     // uint16_t OpenLoopGain_VHz;
 // #endif
@@ -384,15 +384,15 @@ typedef struct Motor
     uint16_t SpeedLimitBuffer[SPEED_LIMIT_ID_COUNT];
     uint16_t ILimitBuffer[I_LIMIT_ID_COUNT];            /* Fixed buffer for 3 values, internal thermistor, user, upper layer */
     // // Motor_SpeedLimitActiveId_T SpeedLimitActiveId;
-    // uint16_t SpeedLimitDirect_Scalar16;             /* Frac16 of SpeedRefMax Param. Compare on set */
+    // uint16_t SpeedLimitDirect_Percent16;             /* Frac16 of SpeedRefMax Param. Compare on set */
     // // Motor_ILimitActiveId_T ILimitActiveId;
-    // uint16_t ILimitActiveSentinel_Scalar16;         /* Compare on set */
+    // uint16_t ILimitActiveSentinel_Percent16;         /* Compare on set */
 
     /* Non directional scalars */
-    uint16_t SpeedLimitForward_Scalar16;
-    uint16_t SpeedLimitReverse_Scalar16;
-    uint16_t ILimitMotoring_Scalar16;
-    uint16_t ILimitGenerating_Scalar16;
+    uint16_t SpeedLimitForward_Percent16;
+    uint16_t SpeedLimitReverse_Percent16;
+    uint16_t ILimitMotoring_Percent16;
+    uint16_t ILimitGenerating_Percent16;
 
     /* Active directional limits - on feedback */
     int16_t SpeedLimitCcw_Frac16;
@@ -619,7 +619,7 @@ static inline Motor_Direction_T Motor_DirectionReverse(const Motor_T * p_motor) 
 /******************************************************************************/
 /*!
     Convert between user reference direction to CCW/CW direction
-    @param[in] userCmd int32_t[-65536:65536] frac16 or scalar16. positive is forward relative to the user.
+    @param[in] userCmd int32_t[-65536:65536] frac16 or Percent16. positive is forward relative to the user.
     @return int32_t[-65536:65536], Over saturated if input is -32768
 */
 static inline int32_t Motor_DirectionalValueOf(const Motor_T * p_motor, int32_t userCmd) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? userCmd : (int32_t)0 - userCmd; }
@@ -732,7 +732,7 @@ extern bool Motor_PollAlignFault(Motor_T * p_motor);
 extern void Motor_UpdateFeedbackILimits(Motor_T * p_motor);
 extern void Motor_UpdateFeedbackSpeedLimits(Motor_T * p_motor);
 
-extern void Motor_SetILimitActive(Motor_T * p_motor, uint16_t scalar16);
+extern void Motor_SetILimitActive(Motor_T * p_motor, uint16_t Percent16);
 extern void Motor_ClearILimitActive(Motor_T * p_motor);
 extern void Motor_SetSpeedLimitActive(Motor_T * p_motor, uint16_t scalar_frac16);
 extern void Motor_ClearSpeedLimitActive(Motor_T * p_motor);
@@ -742,9 +742,9 @@ extern bool Motor_ClearSpeedLimitEntry(Motor_T * p_motor, uint8_t id);
 extern bool Motor_SetILimitEntry(Motor_T * p_motor, uint8_t id, uint16_t scalar_frac16);
 extern bool Motor_ClearILimitEntry(Motor_T * p_motor, uint8_t id);
 
-extern bool Motor_TrySystemSpeedLimit(Motor_T * p_motor, uint16_t scalar16);
+extern bool Motor_TrySystemSpeedLimit(Motor_T * p_motor, uint16_t Percent16);
 extern bool Motor_ClearSystemSpeedLimit(Motor_T * p_motor);
-extern bool Motor_TrySystemILimit(Motor_T * p_motor, uint16_t scalar16);
+extern bool Motor_TrySystemILimit(Motor_T * p_motor, uint16_t Percent16);
 extern bool Motor_ClearSystemILimit(Motor_T * p_motor);
 
 extern void Motor_SetDirectionCcw(Motor_T * p_motor);

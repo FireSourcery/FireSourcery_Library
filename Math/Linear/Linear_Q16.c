@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "Linear_Q16.h"
 
-#include "Math/Q/Q.h"
+#include "Math/Fixed/fixed.h"
 
 /*
     Allow 2x input interval (XRef-X0), over saturation before overflow

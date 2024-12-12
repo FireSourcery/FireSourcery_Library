@@ -28,7 +28,7 @@
     @version V0
 */
 /******************************************************************************/
-#include "QFrac16.h"
+#include "fract16.h"
 #include <assert.h>
 
 /*! Resolution: 1024 steps per revolution */
@@ -127,7 +127,7 @@ qfrac16_t qfrac16_cos(qangle16_t theta)
 }
 
 /*
-    Adapted from libfixmath https://github.com/PetteriAimonen/libfixmath/blob/master/libfixmath/qfrac16_trig.c
+    Adapted from libfixmath https://github.com/PetteriAimonen/libfixmath/blob/master/libfixMath/Fixedfrac16_trig.c
 */
 qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
 {

@@ -469,7 +469,7 @@ static void OpenLoop_Proc(Motor_T * p_motor)
 
 // static StateMachine_State_T * OpenLoop_InputCmdValue(Motor_T * p_motor, statemachine_input_value_t ivCmd)
 // {
-//     int32_t ivCmd_Positive = math_clamp((int32_t)ivCmd, 0, (int32_t)p_motor->Config.OpenLoopPower_Scalar16 / 2);
+//     int32_t ivCmd_Positive = math_clamp((int32_t)ivCmd, 0, (int32_t)p_motor->Config.OpenLoopPower_Percent16 / 2);
 //     Motor_SetDirectionalCmd(p_motor, ivCmd_Positive);
 //     return 0U;
 // }

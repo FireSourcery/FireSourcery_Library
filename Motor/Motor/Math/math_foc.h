@@ -32,7 +32,7 @@
 #ifndef MATH_FOC_H
 #define MATH_FOC_H
 
-#include "Math/Q/QFrac16.h"
+#include "Math/Fixed/fract16.h"
 
 /******************************************************************************/
 /*!

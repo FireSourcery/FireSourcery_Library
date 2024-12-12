@@ -46,7 +46,6 @@ static inline int32_t sum32_of(int32_t slope32, int32_t value32, int32_t x)
     return (value32 + (slope32 * x));
 }
 
-
 /******************************************************************************/
 /*
 

@@ -87,7 +87,7 @@ static inline void _MotorController_ProcOptDin(MotorController_T * p_mc)
             case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
                 switch(Debounce_GetEdge(&p_mc->OptDin))
                 {
-                    case DEBOUNCE_EDGE_RISING:  MotorController_User_SetSpeedLimitAll(p_mc, p_mc->Config.OptSpeedLimit_Scalar16); break;
+                    case DEBOUNCE_EDGE_RISING:  MotorController_User_SetSpeedLimitAll(p_mc, p_mc->Config.OptSpeedLimit_Percent16); break;
                     case DEBOUNCE_EDGE_FALLING: MotorController_User_ClearSpeedLimitAll(p_mc); break;
                     default: break;
                 }
@@ -256,7 +256,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
         #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
             // _Blinky_Toggle(&p_mc->Meter);
             // _Blinky_Toggle(&p_mc->Buzzer);
-            // volatile uint32_t test = VMonitor_ChargeLevelOfAdcu_Scalar16(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu);
+            // volatile uint32_t test = VMonitor_ChargeLevelOfAdcu_Percent16(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu);
         #endif
         }
         p_mc->MainDividerCounter++; //Timer_GetBase(p_timer)
@@ -286,7 +286,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
             if (p_mc->StateFlags.VLow == 0U)
             {
                 p_mc->StateFlags.VLow = 1U;
-                // MotorController_SetSystemILimitAll(p_mc, p_mc->Config.VLowILimit_Scalar16);
+                // MotorController_SetSystemILimitAll(p_mc, p_mc->Config.VLowILimit_Percent16);
                 Blinky_BlinkN(&p_mc->Buzzer, 500U, 250U, 2U);
             }
             break;

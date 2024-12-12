@@ -242,9 +242,9 @@ typedef struct MotorController_Config
     MotorController_ThrottleMode_T ThrottleMode;
     MotorController_DriveZeroMode_T DriveZeroMode;
     MotorController_OptDinMode_T OptDinMode;
-    uint16_t OptSpeedLimit_Scalar16;
-    uint16_t OptILimit_Scalar16;
-    uint16_t VLowILimit_Scalar16;
+    uint16_t OptSpeedLimit_Percent16;
+    uint16_t OptILimit_Percent16;
+    uint16_t VLowILimit_Percent16;
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     uint8_t CanServicesId;
     bool CanIsEnable;
@@ -416,12 +416,12 @@ static inline bool MotorController_IsEveryMotorForward(const MotorController_T *
 static inline bool MotorController_IsEveryMotorReverse(const MotorController_T * p_mc)      { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_User_IsDirectionReverse); }
 static inline bool MotorController_IsEveryMotorStopState(const MotorController_T * p_mc)    { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_User_IsStopState); }
 
-static inline bool MotorController_SetSystemILimitAll(MotorController_T * p_mc, uint16_t limit_scalar16)   { return struct_array_is_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_TrySystemILimit, limit_scalar16); }
+static inline bool MotorController_SetSystemILimitAll(MotorController_T * p_mc, uint16_t limit_Percent16)   { return struct_array_is_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_TrySystemILimit, limit_Percent16); }
 static inline bool MotorController_ClearSystemILimitAll(MotorController_T * p_mc)                          { return void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_ClearSystemILimit); }
 
-// static inline void MotorController_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_scalar16)  { MotorN_User_SetScalar16(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_SetSpeedLimitActive, limit_scalar16); }
+// static inline void MotorController_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_Percent16)  { MotorN_User_SetPercent16(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_SetSpeedLimitActive, limit_Percent16); }
 // static inline void MotorController_ClearSpeedLimitAll(MotorController_T * p_mc)                         { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearSpeedLimitActive); }
-// static inline void MotorController_SetILimitAll(MotorController_T * p_mc, uint16_t limit_scalar16)      { MotorN_User_SetScalar16(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_SetILimitActive, limit_scalar16); }
+// static inline void MotorController_SetILimitAll(MotorController_T * p_mc, uint16_t limit_Percent16)      { MotorN_User_SetPercent16(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_SetILimitActive, limit_Percent16); }
 // static inline void MotorController_ClearILimitAll(MotorController_T * p_mc)                             { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearILimitActive); }
 
 

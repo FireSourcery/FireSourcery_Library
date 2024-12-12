@@ -31,7 +31,7 @@
 #ifndef MATH_SVPWM_H
 #define MATH_SVPWM_H
 
-#include "Math/Q/QFrac16.h"
+#include "Math/Fixed/fract16.h"
 
 #include <assert.h>
 

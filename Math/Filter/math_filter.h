@@ -31,7 +31,7 @@
 #ifndef MATH_FILTER_H
 #define MATH_FILTER_H
 
-#include "Math/Q/QFrac16.h"
+#include "Math/Fixed/fract16.h"
 #include <stdint.h>
 
 /*

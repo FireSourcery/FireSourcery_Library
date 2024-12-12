@@ -35,7 +35,7 @@
 #include <stdint.h>
 
 #include "Math/math_general.h"
-#include "Math/Q/Q.h"
+#include "Math/Fixed/fixed.h"
 
 typedef enum PID_Mode
 {

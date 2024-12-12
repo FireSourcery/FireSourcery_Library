@@ -974,7 +974,7 @@ static Cmd_Status_T Cmd_ilimit(MotorController_T * p_mc, int argc, char ** argv)
     if(argc == 2U)
     {
         ilimit_Frac16 = strtoul(argv[1U], 0U, 10);
-        Motor_User_SetILimitParam_Scalar16(p_motor, ilimit_Frac16, ilimit_Frac16);
+        Motor_User_SetILimitParam_Percent16(p_motor, ilimit_Frac16, ilimit_Frac16);
         Terminal_SendString(p_term, "ILimitMotoringParam: "); Terminal_SendNum(p_term, p_motor->Config.ILimitMotoring_ScalarU16);
         Terminal_SendString(p_term, " ILimitMotoringActive: "); Terminal_SendNum(p_term, p_motor->ILimitMotoring_ScalarU16);
         Terminal_SendString(p_term, "\r\n");

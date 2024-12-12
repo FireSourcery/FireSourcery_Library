@@ -52,10 +52,10 @@ void MotAnalogUser_Init(MotAnalogUser_T * p_user)
     if(p_user->Config.UseBrakeEdgePin == true)          { AIn_EnableEdgePin(&p_user->BrakeAIn); }
     if(p_user->Config.UseBistateBrakePin == true)       { Debounce_Init(&p_user->BistateBrakePin, 5U); }
 
-    p_user->ThrottleAIn.ValuePrev_Scalar16 = 0U;
-    p_user->ThrottleAIn.Value_Scalar16 = 0U;
-    p_user->BrakeAIn.Value_Scalar16 = 0U;
-    p_user->BrakeAIn.ValuePrev_Scalar16 = 0U;
+    p_user->ThrottleAIn.ValuePrev_Percent16 = 0U;
+    p_user->ThrottleAIn.Value_Percent16 = 0U;
+    p_user->BrakeAIn.Value_Percent16 = 0U;
+    p_user->BrakeAIn.ValuePrev_Percent16 = 0U;
 }
 
 MotAnalogUser_Direction_T MotAnalogUser_GetDirection(const MotAnalogUser_T * p_user)
@@ -120,7 +120,7 @@ void MotAnalogUser_SetThrottleAIn(MotAnalogUser_T * p_user, uint16_t zero_Adcu, 
 void MotAnalogUser_SetBistateBrake(MotAnalogUser_T * p_user, bool useBistateBrake, uint16_t bistateBrakeIntensity_Frac16)
 {
     p_user->Config.UseBistateBrakePin = useBistateBrake;
-    p_user->Config.BistateBrakeValue_Scalar16 = bistateBrakeIntensity_Frac16;
+    p_user->Config.BistateBrakeValue_Percent16 = bistateBrakeIntensity_Frac16;
 }
 
 void MotAnalogUser_SetDirectionPins(MotAnalogUser_T * p_user, MotAnalogUser_DirectionPins_T pins)

@@ -117,14 +117,14 @@ static inline int32_t VMonitor_ScalarVOf(const VMonitor_T * p_vMonitor, uint16_t
 static inline int32_t VMonitor_AdcuOfMilliV(const VMonitor_T * p_vMonitor, uint32_t milliV)              { return Linear_Voltage_AdcuOfMilliV(&p_vMonitor->Units, milliV); }
 static inline int32_t VMonitor_AdcuOfV(VMonitor_T * p_vMonitor, uint16_t v)                              { return Linear_Voltage_AdcuOfV(&p_vMonitor->Units, v); }
 /* Map [0:VRef] to [0:65535] */
-// static inline int32_t VMonitor_ConvertToScalar16(const VMonitor_T * p_vMonitor, uint16_t adcu)       { return Linear_Voltage_CalcScalar16(&p_vMonitor->Units, adcu); }
+// static inline int32_t VMonitor_ConvertToPercent16(const VMonitor_T * p_vMonitor, uint16_t adcu)       { return Linear_Voltage_CalcPercent16(&p_vMonitor->Units, adcu); }
 
 /******************************************************************************/
 /*!
     Map [VNominalRef:FaultLower] to [65535:0]
 */
 /******************************************************************************/
-static inline uint32_t VMonitor_ChargeLevelOfAdcu_Scalar16(const VMonitor_T * p_vMonitor, uint16_t adcu)
+static inline uint32_t VMonitor_ChargeLevelOfAdcu_Percent16(const VMonitor_T * p_vMonitor, uint16_t adcu)
 {
    return ((uint32_t)(adcu - p_vMonitor->Config.FaultLower_Adcu) * UINT16_MAX) / (p_vMonitor->Config.Nominal_Adcu - p_vMonitor->Config.FaultLower_Adcu);
 }

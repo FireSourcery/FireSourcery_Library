@@ -31,7 +31,7 @@
 #include "Motor_User.h"
 #include "System/Critical/Critical.h"
 
-static int32_t Scale16(uint16_t scalar16, int32_t value) { return (int32_t)scalar16 * value / 65536; }
+static int32_t Scale16(uint16_t Percent16, int32_t value) { return (int32_t)Percent16 * value / 65536; }
 
 /******************************************************************************/
 /*!
@@ -82,7 +82,7 @@ void Motor_User_SetTorqueMode(Motor_T * p_motor)
 */
 void Motor_User_SetTorqueCmdValue(Motor_T * p_motor, int16_t torqueCmd)
 {
-    int32_t torqueCmdIn = (torqueCmd > 0) ? Scale16(p_motor->ILimitMotoring_Scalar16, torqueCmd) : Scale16(p_motor->ILimitGenerating_Scalar16, torqueCmd);
+    int32_t torqueCmdIn = (torqueCmd > 0) ? Scale16(p_motor->ILimitMotoring_Percent16, torqueCmd) : Scale16(p_motor->ILimitGenerating_Percent16, torqueCmd);
     Motor_SetCmd(p_motor, torqueCmdIn);
 }
 
@@ -106,7 +106,7 @@ void Motor_User_SetSpeedMode(Motor_T * p_motor)
 */
 void Motor_User_SetSpeedCmdValue(Motor_T * p_motor, int16_t speedCmd)
 {
-    // int32_t speedDirect = (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitForward_Scalar16 : p_motor->SpeedLimitReverse_Scalar16;
+    // int32_t speedDirect = (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitForward_Percent16 : p_motor->SpeedLimitReverse_Percent16;
     int16_t speedCmdIn = (speedCmd > 0) ? Scale16(Limit_GetUpper(&(p_motor->SpeedLimit)), speedCmd) : 0;
     Motor_SetCmd(p_motor, speedCmdIn);
 }
@@ -150,7 +150,7 @@ void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_Frac16)
 */
 void Motor_User_SetOpenLoopCmdValue(Motor_T * p_motor, int16_t ivCmd)
 {
-    int32_t ivCmdIn = math_clamp(ivCmd, 0, p_motor->Config.OpenLoopPower_Scalar16 / 2U);
+    int32_t ivCmdIn = math_clamp(ivCmd, 0, p_motor->Config.OpenLoopPower_Percent16 / 2U);
     Motor_SetCmd(p_motor, ivCmdIn);
 }
 
@@ -255,9 +255,9 @@ bool Motor_User_TryDirectionReverse(Motor_T * p_motor) { return Motor_User_TryDi
 /*
    User Conditional - set compare with array
 */
-bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t scalar16)    { return Motor_SetSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_ACTIVE_USER, scalar16); }
+bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t Percent16)    { return Motor_SetSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_ACTIVE_USER, Percent16); }
 bool Motor_User_ClearSpeedLimit(Motor_T * p_motor)                     { return Motor_ClearSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_ACTIVE_USER); }
-bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t scalar16)        { return Motor_SetILimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_USER, scalar16); }
+bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t Percent16)        { return Motor_SetILimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_USER, Percent16); }
 bool Motor_User_ClearILimit(Motor_T * p_motor)                         { return Motor_ClearILimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_USER); }
 
 

@@ -29,7 +29,7 @@
 */
 /******************************************************************************/
 #include "Linear.h"
-#include "Math/Q/Q.h"
+#include "Math/Fixed/fixed.h"
 
 /*!
     Shift <= log2(INT32_MAX / ((xRef - x0) * Slope))

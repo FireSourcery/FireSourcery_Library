@@ -152,9 +152,9 @@ static inline void MotorController_User_DisableBuzzer(MotorController_T * p_mc)
     p_mc->StateFlags.BuzzerEnable = 0U;
 }
 
-static inline bool MotorController_User_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_scalar16)
+static inline bool MotorController_User_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_Percent16)
 {
-    struct_array_is_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TrySpeedLimit, limit_scalar16);
+    struct_array_is_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TrySpeedLimit, limit_Percent16);
 }
 
 static inline bool MotorController_User_ClearSpeedLimitAll(MotorController_T * p_mc)
@@ -162,9 +162,9 @@ static inline bool MotorController_User_ClearSpeedLimitAll(MotorController_T * p
     void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_ClearSpeedLimit);
 }
 
-static inline bool MotorController_User_SetILimitAll(MotorController_T * p_mc, uint16_t limit_scalar16)
+static inline bool MotorController_User_SetILimitAll(MotorController_T * p_mc, uint16_t limit_Percent16)
 {
-    struct_array_is_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TryILimit, limit_scalar16);
+    struct_array_is_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TryILimit, limit_Percent16);
 }
 
 static inline bool MotorController_User_ClearILimitAll(MotorController_T * p_mc)
@@ -174,13 +174,13 @@ static inline bool MotorController_User_ClearILimitAll(MotorController_T * p_mc)
 
 static inline void MotorController_User_SetOptSpeedLimitOnOff(MotorController_T * p_mc, bool isEnable)
 {
-    if(isEnable == true)    { MotorController_User_SetSpeedLimitAll(p_mc, p_mc->Config.OptSpeedLimit_Scalar16); }
+    if(isEnable == true)    { MotorController_User_SetSpeedLimitAll(p_mc, p_mc->Config.OptSpeedLimit_Percent16); }
     else                    { MotorController_User_ClearSpeedLimitAll(p_mc); }
 }
 
 static inline void MotorController_User_SetOptILimitOnOff(MotorController_T * p_mc, bool isEnable)
 {
-    if(isEnable == true)    { MotorController_User_SetILimitAll(p_mc, p_mc->Config.OptILimit_Scalar16); }
+    if(isEnable == true)    { MotorController_User_SetILimitAll(p_mc, p_mc->Config.OptILimit_Percent16); }
     else                    { MotorController_User_ClearILimitAll(p_mc); }
 }
 
@@ -235,7 +235,7 @@ static inline uint16_t MotorController_User_GetHeatMosfetsIndex_Adcu(const Motor
 // static inline uint32_t MotorController_User_GetVSource_V(const MotorController_T * p_mc, uint16_t vScalar)      { return VMonitor_ScalarVOf(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu, vScalar); }
 // static inline uint32_t MotorController_User_GetVSense_V(const MotorController_T * p_mc, uint16_t vScalar)       { return VMonitor_ScalarVOf(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu, vScalar); }
 // static inline uint32_t MotorController_User_GetVAccs_V(const MotorController_T * p_mc, uint16_t vScalar)        { return VMonitor_ScalarVOf(&p_mc->VMonitorAccs, p_mc->AnalogResults.VAccs_Adcu, vScalar); }
-// static inline uint32_t MotorController_User_GetBatteryCharge_Scalar16(const MotorController_T * p_mc)           { return Linear_ADC_Percent16(&p_mc->BatteryLife, p_mc->AnalogResults.VSource_Adcu); }
+// static inline uint32_t MotorController_User_GetBatteryCharge_Percent16(const MotorController_T * p_mc)           { return Linear_ADC_Percent16(&p_mc->BatteryLife, p_mc->AnalogResults.VSource_Adcu); }
 // static inline int32_t MotorController_User_GetHeatPcb_DegC(const MotorController_T * p_mc, uint8_t scalar)      { return Thermistor_ConvertToDegC_Scalar(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu, scalar); }
 // static inline int32_t MotorController_User_GetHeatMosfets_DegC(const MotorController_T * p_mc, uint8_t scalar)  { return Thermistor_ConvertToDegC_Scalar(&p_mc->ThermistorMosfets, p_mc->AnalogResults.HeatMosfets_Adcu, scalar); }
 // #endif
@@ -269,14 +269,14 @@ static inline void MotorController_User_SetInputMode(MotorController_T * p_mc, M
 static inline void MotorController_User_SetBrakeMode(MotorController_T * p_mc, MotorController_BrakeMode_T mode)           { p_mc->Config.BrakeMode = mode; }
 static inline void MotorController_User_SetThrottleMode(MotorController_T * p_mc, MotorController_ThrottleMode_T mode)     { p_mc->Config.ThrottleMode = mode; }
 static inline void MotorController_User_SetDriveZeroMode(MotorController_T * p_mc, MotorController_DriveZeroMode_T mode)   { p_mc->Config.DriveZeroMode = mode; }
-static inline void MotorController_User_SetILimitOnLowV(MotorController_T * p_mc, uint16_t scalar_Frac16)                  { p_mc->Config.VLowILimit_Scalar16 = scalar_Frac16; }
+static inline void MotorController_User_SetILimitOnLowV(MotorController_T * p_mc, uint16_t scalar_Frac16)                  { p_mc->Config.VLowILimit_Percent16 = scalar_Frac16; }
 
 static inline void MotorController_User_SetOptDinMode(MotorController_T * p_mc, MotorController_OptDinMode_T mode) { p_mc->Config.OptDinMode = mode; }
 static inline void MotorController_User_DisableOptDin(MotorController_T * p_mc)                                    { p_mc->Config.OptDinMode = MOTOR_CONTROLLER_OPT_DIN_DISABLE; }
 static inline bool MotorController_User_SetOptDinSpeedLimit(MotorController_T * p_mc, uint16_t scalar_Frac16)
 {
     bool isSuccess = (p_mc->Config.OptDinMode == MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT);
-    if(isSuccess) { p_mc->Config.OptSpeedLimit_Scalar16 = scalar_Frac16; }
+    if(isSuccess) { p_mc->Config.OptSpeedLimit_Percent16 = scalar_Frac16; }
     return isSuccess;
 }
 

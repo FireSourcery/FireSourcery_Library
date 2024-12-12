@@ -32,7 +32,7 @@
 #define SIN_COS_H
 
 #include "Math/Linear/Linear_ADC.h"
-#include "Math/Q/QFrac16.h"
+#include "Math/Fixed/fract16.h"
 
 #include <stdbool.h>
 #include <stdint.h>

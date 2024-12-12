@@ -234,7 +234,7 @@ MotVarId_Config_MotorPrimary_T;
 
 /*
     Limits
-        Units0 - > Scalar16
+        Units0 - > Percent16
 */
 typedef enum MotVarId_Config_MotorSecondary
 {

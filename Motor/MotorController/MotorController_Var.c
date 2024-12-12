@@ -114,7 +114,7 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
                 // case MOT_VAR_HEAT_PCB_DEG_C:        value = MotorController_User_GetHeatPcb_DegC(p_mc, 1U);         break;
                 // case MOT_VAR_HEAT_MOSFETS_DEG_C:    value = MotorController_User_GetHeatMosfets_DegC(p_mc, 1U);     break;
-                case MOT_VAR_BATTERY_CHARGE:        value = MotorController_User_GetBatteryCharge_Scalar16(p_mc);   break;
+                case MOT_VAR_BATTERY_CHARGE:        value = MotorController_User_GetBatteryCharge_Percent16(p_mc);   break;
                 #endif
                 default: break;
             }
@@ -328,17 +328,17 @@ static int32_t GetParameter(const MotorController_T * p_mc, MotVarId_T varId)
         case MOT_VAR_ID_TYPE_CONFIG_MOTOR_SECONDARY:
             switch((MotVarId_Config_MotorSecondary_T)varId.NameBase)
             {
-                case MOT_VAR_BASE_SPEED_LIMIT_FORWARD:      value = Motor_Config_GetSpeedLimitForward_Scalar16(p_motor);    break;
-                case MOT_VAR_BASE_SPEED_LIMIT_REVERSE:      value = Motor_Config_GetSpeedLimitReverse_Scalar16(p_motor);    break;
-                case MOT_VAR_BASE_I_LIMIT_MOTORING:         value = Motor_Config_GetILimitMotoring_Scalar16(p_motor);       break;
-                case MOT_VAR_BASE_I_LIMIT_GENERATING:       value = Motor_Config_GetILimitGenerating_Scalar16(p_motor);     break;
+                case MOT_VAR_BASE_SPEED_LIMIT_FORWARD:      value = Motor_Config_GetSpeedLimitForward_Percent16(p_motor);    break;
+                case MOT_VAR_BASE_SPEED_LIMIT_REVERSE:      value = Motor_Config_GetSpeedLimitReverse_Percent16(p_motor);    break;
+                case MOT_VAR_BASE_I_LIMIT_MOTORING:         value = Motor_Config_GetILimitMotoring_Percent16(p_motor);       break;
+                case MOT_VAR_BASE_I_LIMIT_GENERATING:       value = Motor_Config_GetILimitGenerating_Percent16(p_motor);     break;
                 case MOT_VAR_RAMP_ACCEL_TIME:               value = Motor_Config_GetRampAccel_Millis(p_motor);              break;
                 // case MOT_VAR_ALIGN_MODE:                 value = Motor_Config_GetAlignMode(p_motor);                 break;
-                case MOT_VAR_ALIGN_POWER:                   value = Motor_Config_GetAlignPower_Scalar16(p_motor);           break;
+                case MOT_VAR_ALIGN_POWER:                   value = Motor_Config_GetAlignPower_Percent16(p_motor);           break;
                 case MOT_VAR_ALIGN_TIME:                    value = Motor_Config_GetAlignTime_Millis(p_motor);              break;
                 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-                case MOT_VAR_OPEN_LOOP_POWER:               value = Motor_Config_GetOpenLoopPower_Scalar16(p_motor);        break;
-                case MOT_VAR_OPEN_LOOP_SPEED:               value = Motor_Config_GetOpenLoopSpeed_Scalar16(p_motor);        break;
+                case MOT_VAR_OPEN_LOOP_POWER:               value = Motor_Config_GetOpenLoopPower_Percent16(p_motor);        break;
+                case MOT_VAR_OPEN_LOOP_SPEED:               value = Motor_Config_GetOpenLoopSpeed_Percent16(p_motor);        break;
                 case MOT_VAR_OPEN_LOOP_ACCEL_TIME:          value = Motor_Config_GetOpenLoopAccel_Millis(p_motor);          break;
                 #endif
                 // case MOT_VAR_PHASE_PWM_MODE:             value = Motor_Config_GetPhaseModeParam(p_motor);            break;
@@ -405,9 +405,9 @@ static int32_t GetParameter(const MotorController_T * p_mc, MotVarId_T varId)
                 case MOT_VAR_DEFAULT_FEEDBACK_MODE:     value = MotorController_User_GetDefaultFeedbackMode(p_mc).Word; break;
                 case MOT_VAR_BRAKE_MODE:                value = MotorController_User_GetBrakeMode(p_mc);                break;
                 case MOT_VAR_DRIVE_ZERO_MODE:           value = MotorController_User_GetDriveZeroMode(p_mc);            break;
-                case MOT_VAR_I_LIMIT_LOW_V:             value = (p_mc->Config.VLowILimit_Scalar16);                     break;
+                case MOT_VAR_I_LIMIT_LOW_V:             value = (p_mc->Config.VLowILimit_Percent16);                     break;
                 case MOT_VAR_OPT_DIN_FUNCTION:          value = (p_mc->Config.OptDinMode);                              break;
-                case MOT_VAR_OPT_SPEED_LIMIT:           value = (p_mc->Config.OptSpeedLimit_Scalar16);                  break;
+                case MOT_VAR_OPT_SPEED_LIMIT:           value = (p_mc->Config.OptSpeedLimit_Percent16);                  break;
                 // case MOT_VAR_BUZZER_FLAGS_ENABLE:    value = (p_mc->Config.Buzzer); break;
                 // case MOT_VAR_CAN_SERVICES_ID:        value = (p_mc->Config.CanServicesId); break;
                 // case MOT_VAR_CAN_IS_ENABLE:          value = (p_mc->Config.CanIsEnable); break;
@@ -428,7 +428,7 @@ static int32_t GetParameter(const MotorController_T * p_mc, MotVarId_T varId)
                 case MOT_VAR_ANALOG_BRAKE_ZERO_ADCU:                value = p_mc->AnalogUser.Config.BrakeZero_Adcu;             break;
                 case MOT_VAR_ANALOG_BRAKE_MAX_ADCU:                 value = p_mc->AnalogUser.Config.BrakeMax_Adcu;              break;
                 case MOT_VAR_ANALOG_BRAKE_EDGE_PIN_IS_ENABLE:       value = p_mc->AnalogUser.Config.UseBrakeEdgePin;            break;
-                case MOT_VAR_ANALOG_DIN_BRAKE_VALUE:                value = p_mc->AnalogUser.Config.BistateBrakeValue_Scalar16; break;
+                case MOT_VAR_ANALOG_DIN_BRAKE_VALUE:                value = p_mc->AnalogUser.Config.BistateBrakeValue_Percent16; break;
                 case MOT_VAR_ANALOG_DIN_BRAKE_IS_ENABLE:            value = p_mc->AnalogUser.Config.UseBistateBrakePin;         break;
                 case MOT_VAR_ANALOG_DIRECTION_PINS:                 value = p_mc->AnalogUser.Config.PinsSelect;                 break;
                 default: break;
@@ -525,15 +525,15 @@ static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, i
             {
                 switch((MotVarId_Config_MotorSecondary_T)varId.NameBase)
                 {
-                    case MOT_VAR_BASE_SPEED_LIMIT_FORWARD:      Motor_Config_SetSpeedLimitForward_Scalar16(p_motor, varValue);  break;
-                    case MOT_VAR_BASE_SPEED_LIMIT_REVERSE:      Motor_Config_SetSpeedLimitReverse_Scalar16(p_motor, varValue);  break;
-                    case MOT_VAR_BASE_I_LIMIT_MOTORING:         Motor_Config_SetILimitMotoring_Scalar16(p_motor, varValue);     break;
-                    case MOT_VAR_BASE_I_LIMIT_GENERATING:       Motor_Config_SetILimitGenerating_Scalar16(p_motor, varValue);   break;
+                    case MOT_VAR_BASE_SPEED_LIMIT_FORWARD:      Motor_Config_SetSpeedLimitForward_Percent16(p_motor, varValue);  break;
+                    case MOT_VAR_BASE_SPEED_LIMIT_REVERSE:      Motor_Config_SetSpeedLimitReverse_Percent16(p_motor, varValue);  break;
+                    case MOT_VAR_BASE_I_LIMIT_MOTORING:         Motor_Config_SetILimitMotoring_Percent16(p_motor, varValue);     break;
+                    case MOT_VAR_BASE_I_LIMIT_GENERATING:       Motor_Config_SetILimitGenerating_Percent16(p_motor, varValue);   break;
                     case MOT_VAR_RAMP_ACCEL_TIME:               Motor_Config_SetRampAccel_Millis(p_motor, varValue);  break;
-                    case MOT_VAR_ALIGN_POWER:                   Motor_Config_SetAlignPower_Scalar16(p_motor, varValue);  break;
+                    case MOT_VAR_ALIGN_POWER:                   Motor_Config_SetAlignPower_Percent16(p_motor, varValue);  break;
                     case MOT_VAR_ALIGN_TIME:                    Motor_Config_SetAlignTime_Millis(p_motor, varValue);  break;
-                    case MOT_VAR_OPEN_LOOP_POWER:               Motor_Config_SetOpenLoopPower_Scalar16(p_motor, varValue);  break;
-                    case MOT_VAR_OPEN_LOOP_SPEED:               Motor_Config_SetOpenLoopSpeed_Scalar16(p_motor, varValue);  break;
+                    case MOT_VAR_OPEN_LOOP_POWER:               Motor_Config_SetOpenLoopPower_Percent16(p_motor, varValue);  break;
+                    case MOT_VAR_OPEN_LOOP_SPEED:               Motor_Config_SetOpenLoopSpeed_Percent16(p_motor, varValue);  break;
                     case MOT_VAR_OPEN_LOOP_ACCEL_TIME:          Motor_Config_SetOpenLoopAccel_Millis(p_motor, varValue);  break;
                     // case MOT_VAR_PHASE_PWM_MODE:             Motor_Config_SetPhaseModeParam(p_motor,  varValue);  break;
                     default: break;
@@ -608,10 +608,10 @@ static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, i
                 case MOT_VAR_THROTTLE_MODE:                 p_mc->Config.ThrottleMode       = (MotorController_ThrottleMode_T)varValue;         break;
                 case MOT_VAR_BRAKE_MODE:                    p_mc->Config.BrakeMode          = (MotorController_BrakeMode_T)varValue;            break;
                 case MOT_VAR_DRIVE_ZERO_MODE:               p_mc->Config.DriveZeroMode      = (MotorController_DriveZeroMode_T)varValue;        break;
-                case MOT_VAR_I_LIMIT_LOW_V:                 p_mc->Config.VLowILimit_Scalar16 = varValue;    break;
+                case MOT_VAR_I_LIMIT_LOW_V:                 p_mc->Config.VLowILimit_Percent16 = varValue;    break;
                 // case MOT_VAR_BUZZER_FLAGS_ENABLE:                        (p_mc->Config.Buzzer); break;
                 // case MOT_VAR_OPT_DIN_FUNCTION:                           (p_mc->Config.OptDinMode);              break;
-                // case MOT_VAR_OPT_SPEED_LIMIT:                        (p_mc->Config.OptSpeedLimit_Scalar16);   break;
+                // case MOT_VAR_OPT_SPEED_LIMIT:                        (p_mc->Config.OptSpeedLimit_Percent16);   break;
                 // case MOT_VAR_CAN_SERVICES_ID:                            (p_mc->Config.CanServicesId); break;
                 // case MOT_VAR_CAN_IS_ENABLE:                              (p_mc->Config.CanIsEnable); break;
                 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
@@ -631,7 +631,7 @@ static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, i
                 case MOT_VAR_ANALOG_BRAKE_ZERO_ADCU:                p_mc->AnalogUser.Config.BrakeZero_Adcu = varValue;              break;
                 case MOT_VAR_ANALOG_BRAKE_MAX_ADCU:                 p_mc->AnalogUser.Config.BrakeMax_Adcu = varValue;               break;
                 case MOT_VAR_ANALOG_BRAKE_EDGE_PIN_IS_ENABLE:       p_mc->AnalogUser.Config.UseBrakeEdgePin = varValue;             break;
-                case MOT_VAR_ANALOG_DIN_BRAKE_VALUE:                p_mc->AnalogUser.Config.BistateBrakeValue_Scalar16 = varValue;  break;
+                case MOT_VAR_ANALOG_DIN_BRAKE_VALUE:                p_mc->AnalogUser.Config.BistateBrakeValue_Percent16 = varValue;  break;
                 case MOT_VAR_ANALOG_DIN_BRAKE_IS_ENABLE:            p_mc->AnalogUser.Config.UseBistateBrakePin = varValue;          break;
                 // case MOT_VAR_ANALOG_DIRECTION_PINS:          p_mc->AnalogUser.Config.; break;
                 default: break;

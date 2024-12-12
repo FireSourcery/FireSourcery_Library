@@ -24,7 +24,7 @@
 /*!
     @file   Q.h
     @author FireSourcery
-    @brief     Q fixed point math operations
+    @brief  fixed point math operations
     @version V0
 */
 /******************************************************************************/

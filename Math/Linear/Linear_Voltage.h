@@ -83,7 +83,7 @@ static inline int32_t Linear_Voltage_ScalarV(const Linear_T * p_linear, uint16_t
 /*!
     @brief  results in Q16.16, with 2x input interval
 */
-static inline int32_t Linear_Voltage_CalcScalar16Of(const Linear_T * p_linear, uint16_t adcu)
+static inline int32_t Linear_Voltage_CalcPercent16Of(const Linear_T * p_linear, uint16_t adcu)
 {
     return _Linear_Fixed32(p_linear, adcu);
 }

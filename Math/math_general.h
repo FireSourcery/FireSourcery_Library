@@ -39,7 +39,7 @@ static inline int32_t math_max(int32_t value1, int32_t value2) { return ((value1
 static inline int32_t math_min(int32_t value1, int32_t value2) { return ((value1 < value2) ? value1 : value2); }
 static inline int32_t math_clamp(int32_t value, int32_t low, int32_t high) { return math_min(math_max(value, low), high); }
 static inline int32_t math_sign(int32_t value) { return (value > 0) - (value < 0); } /* +1, 0, -1 */
-static inline uint32_t math_abs(int32_t value) { return abs(value); } // todo check - INT_MIN
+static inline uint32_t math_abs(int32_t value) { return abs(value); }
 
 static inline bool math_in_range(int32_t value, int32_t low, int32_t high) { return (value == math_clamp(value, low, high)); }
 

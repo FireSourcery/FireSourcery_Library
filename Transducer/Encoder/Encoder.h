@@ -36,7 +36,7 @@
 #include "Config.h"
 #include "Peripheral/Pin/Pin.h"
 
-#include "Math/Q/Q.h"
+#include "Math/Fixed/fixed.h"
 #include "Math/math_general.h"
 
 #include <stdint.h>
@@ -82,7 +82,7 @@ Encoder_Align_T;
 typedef struct Encoder_Config
 {
     uint16_t CountsPerRevolution;         /* Derive Angular Units. Max for counting AngularD, CaptureDeltaT mode need 2nd TimerCounterMax */
-    uint16_t ScalarSpeedRef_Rpm;         /* Derive Scalar16 Units. */
+    uint16_t ScalarSpeedRef_Rpm;         /* Derive Percent16 Units. */
     uint16_t SurfaceDiameter;            /* Derive Linear Units. */
     uint16_t GearRatio_Factor;            /* Derive Linear Units. Surface:Encoder Ratio */
     uint16_t GearRatio_Divisor;            /* Derive Linear Units. */
