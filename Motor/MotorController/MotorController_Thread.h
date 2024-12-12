@@ -113,7 +113,6 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
     bool isWarning = false;
 
     Analog_MarkConversion(p_mc->CONST.P_ANALOG, &p_mc->CONST.CONVERSION_HEAT_PCB);
-
     for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
         { Analog_MarkConversion(p_mc->CONST.P_ANALOG, &p_mc->CONST.HEAT_MOSFETS_CONVERSIONS[iMosfets]); }
 
@@ -194,7 +193,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
     /* Med Freq, Low Priority, 1 ms */
     if (Timer_Periodic_Poll(&p_mc->TimerMillis) == true)
     {
-        p_mc->MainDividerCounter++;
         StateMachine_Async_ProcState(&p_mc->StateMachine);
 
         for (uint8_t iProtocol = 0U; iProtocol < p_mc->CONST.PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_mc->CONST.P_PROTOCOLS[iProtocol]); }
@@ -260,6 +258,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
             // volatile uint32_t test = VMonitor_ChargeLevelOfAdcu_Scalar16(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu);
         #endif
         }
+        p_mc->MainDividerCounter++; //Timer_GetBase(p_timer)
     }
 }
 
@@ -274,7 +273,8 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
     p_mc->TimerDividerCounter++;
     //    BrakeThread(p_mc);
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    VMonitor_Status_T vStatus = VMonitor_PollStatus(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu); // todo include edge
+    VMonitor_Status_T vStatus = VMonitor_PollStatus(&p_mc->VMonitorSource, MotorController_GetVSource_Adcu(p_mc)); // todo include edge
+    // VMonitor_Status_T vStatus = VMonitor_PollStatus(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu); // todo include edge
 
     switch (vStatus)
     {

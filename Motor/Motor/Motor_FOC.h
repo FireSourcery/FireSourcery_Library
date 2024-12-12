@@ -32,6 +32,7 @@
 #define MOTOR_FOC_H
 
 #include "Motor.h"
+#include "Motor_Debug.h"
 
 /******************************************************************************/
 /*
@@ -62,7 +63,6 @@ static inline void Motor_FOC_CaptureIa(Motor_T * p_motor, uint16_t adcu)
     qfrac16_t iPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsIa, adcu) + FOC_GetIa(&p_motor->Foc)) / 2;
     FOC_SetIa(&p_motor->Foc, iPhase);
     p_motor->PhaseFlags.A = 1U;
-    p_motor->AnalogResults.Ia_Adcu = adcu;
 }
 
 static inline void Motor_FOC_CaptureIb(Motor_T * p_motor, uint16_t adcu)
@@ -70,7 +70,6 @@ static inline void Motor_FOC_CaptureIb(Motor_T * p_motor, uint16_t adcu)
     qfrac16_t iPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsIb, adcu) + FOC_GetIb(&p_motor->Foc)) / 2;
     FOC_SetIb(&p_motor->Foc, iPhase);
     p_motor->PhaseFlags.B = 1U;
-    p_motor->AnalogResults.Ib_Adcu = adcu;
 }
 
 static inline void Motor_FOC_CaptureIc(Motor_T * p_motor, uint16_t adcu)
@@ -78,7 +77,6 @@ static inline void Motor_FOC_CaptureIc(Motor_T * p_motor, uint16_t adcu)
     qfrac16_t iPhase = ((int32_t)Linear_ADC_Frac16(&p_motor->UnitsIc, adcu) + FOC_GetIc(&p_motor->Foc)) / 2;
     FOC_SetIc(&p_motor->Foc, iPhase);
     p_motor->PhaseFlags.C = 1U;
-    p_motor->AnalogResults.Ic_Adcu = adcu;
 }
 
 static inline void Motor_FOC_CaptureVa(Motor_T * p_motor, uint16_t adcu)

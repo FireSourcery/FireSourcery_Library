@@ -72,9 +72,11 @@ typedef void (*Analog_Setter_T)(void * p_context, analog_result_t value);
 
 typedef volatile struct Analog_ConversionState
 {
-    volatile uint32_t Result    : sizeof(analog_result_t);
-    volatile uint32_t Reserved  : 32U - sizeof(analog_result_t) - 1U;
-    volatile uint32_t IsMarked  : 1U;
+    // volatile uint32_t Result    : (sizeof(analog_result_t) * 8U);
+    // volatile uint32_t Reserved  : 32U - (sizeof(analog_result_t) * 8U) - 1U;
+    // volatile uint32_t IsMarked  : 1U;
+    volatile analog_result_t Result;
+    volatile bool IsMarked;
 }
 Analog_ConversionState_T;
 
@@ -175,9 +177,9 @@ typedef struct Analog_ADC
     volatile uint8_t ActiveConversionCount; /*! Hw fifo only. Number of active channels being processed by ADC */
     // volatile uint32_t ChannelMarkers; /* Dirty bits. May need to be atomic */
 // #endif
-#ifndef NDEBUG
+// #ifndef NDEBUG
     volatile uint8_t ErrorCount;
-#endif
+// #endif
 }
 Analog_ADC_T;
 

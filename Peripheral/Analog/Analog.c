@@ -84,7 +84,10 @@ static inline void ADC_CaptureFifo(Analog_ADC_T * p_adc)
 */
 static inline void ADC_StartChannel(Analog_ADC_T * p_adc)
 {
-    HAL_Analog_Activate(p_adc->P_HAL_ANALOG, p_adc->ActiveConversions[0U]->PIN);
+    if (p_adc->ActiveConversionCount > 0U)
+    {
+        HAL_Analog_Activate(p_adc->P_HAL_ANALOG, p_adc->ActiveConversions[0U]->PIN);
+    }
 }
 /*
 */
@@ -156,11 +159,9 @@ static inline void ADC_OnComplete(Analog_ADC_T * p_adc, uint8_t adcId, const Ana
 
         // optionally proc on complete in parallel
     }
-    else
-    {
-        assert(false);
-        HAL_Analog_Deactivate(p_adc->P_HAL_ANALOG);
-    }
+#ifndef NDEBUG
+    else { p_adc->ErrorCount++; }
+#endif
 }
 
 // void ADC_WriteOptions(Analog_ADC_T * p_adc, const Analog_Options_T * p_options)

@@ -385,6 +385,11 @@ MotorController_T, * MotorControllerPtr_T;
 /******************************************************************************/
 static inline Motor_T * MotorController_GetPtrMotor(const MotorController_T * p_mc, uint8_t motorIndex) { return &(p_mc->CONST.P_MOTORS[motorIndex]); }
 
+static inline uint16_t MotorController_GetVSource_Adcu(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_VSOURCE.P_STATE->Result; }
+
+static inline uint16_t MotorController_GetHeatPcb_Adcu(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_HEAT_PCB.P_STATE->Result; }
+static inline uint16_t MotorController_GetHeatMosfets_Adcu(const MotorController_T * p_mc) { return p_mc->AnalogResults.HeatMosfetsResults_Adcu[0U]; }
+static inline uint16_t MotorController_GetHeatMosfetsIndex_Adcu(const MotorController_T * p_mc, uint8_t index) { return p_mc->AnalogResults.HeatMosfetsResults_Adcu[index]; }
 
 /******************************************************************************/
 /*

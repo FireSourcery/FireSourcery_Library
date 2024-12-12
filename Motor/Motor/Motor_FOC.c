@@ -143,16 +143,12 @@ static void ActivateAngle(Motor_T * p_motor)
 
 static void ProcInnerFeedbackOutput(Motor_T * p_motor)
 {
-    if (p_motor->PhaseFlags.Value != 0x07)
-    {
-        p_motor->DebugCounter++;
-        p_motor->DebugTime[0] = p_motor->PhaseFlags.Value;
-    }
-
-    if(Motor_IsAnalogCycle(p_motor) == true)
+    // if(Motor_IsAnalogCycle(p_motor) == true)
+    if (p_motor->PhaseFlags.Value == 0x07)
     {
         ProcClarkePark(p_motor);
         ProcInnerFeedback(p_motor); /* Set Vd Vq */
+        p_motor->PhaseFlags.Value = 0U;
     }
     ActivateAngle(p_motor);
 }

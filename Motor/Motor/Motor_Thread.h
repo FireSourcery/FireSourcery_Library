@@ -46,12 +46,12 @@
 */
 static inline void Motor_PWM_Thread(Motor_T * p_motor)
 {
-//   #ifdef CONFIG_MOTOR_DEBUG
+// #ifndef NDEBUG
     Motor_Debug_CaptureRefTime(p_motor);
-    p_motor->PhaseFlags.Value = 0U;
+// #endif
+
     p_motor->ControlTimerBase++;
     StateMachine_ProcState(&p_motor->StateMachine);
-    // Motor_Debug_CaptureTime(p_motor, 5U);
 #ifdef CONFIG_MOTOR_PWM_INTERRUPT_CLEAR_PER_MOTOR
     Motor_ClearInterrupt(p_motor);
 #endif
@@ -73,6 +73,8 @@ void Motor_MarkAnalog_Thread(Motor_T * p_motor)
         case MSM_STATE_ID_STOP:         Motor_Analog_MarkVabc(p_motor);            break;
         case MSM_STATE_ID_RUN:          Motor_Analog_MarkIabc(p_motor);            break;
         case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_motor);            break;
+        case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_motor); Motor_Analog_MarkIabc(p_motor); break;
+
         default:            break;
     }
     //    switch(p_motor->AnalogCmd)
