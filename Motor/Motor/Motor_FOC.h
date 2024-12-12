@@ -34,6 +34,8 @@
 #include "Motor.h"
 #include "Motor_Debug.h"
 
+#include "Math/FOC.h"
+
 /******************************************************************************/
 /*
     +/- Sign indicates absolute direction, CW/CCW. NOT along/against direction selected.

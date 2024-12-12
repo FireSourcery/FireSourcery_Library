@@ -44,8 +44,8 @@ typedef ADC_Type HAL_Analog_T;
 static inline void HAL_Analog_Activate(HAL_Analog_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel); }
 static inline uint32_t HAL_Analog_ReadResult(const HAL_Analog_T * p_hal, uint32_t pinChannel) { (void)pinChannel; return p_hal->R; }
 
-static inline void HAL_Analog_WriteFifoCount(HAL_Analog_T * p_hal, uint32_t count) { p_hal->SC4 = ADC_SC4_AFDEP(count); }
-static inline uint8_t HAL_Analog_ReadFifoCount(HAL_Analog_T * p_hal) { return (p_hal->SC4 & ADC_SC4_AFDEP_MASK); }
+static inline void HAL_Analog_WriteFifoCount(HAL_Analog_T * p_hal, uint32_t count) { p_hal->SC4 = ADC_SC4_AFDEP(count - 1U); }
+static inline uint8_t HAL_Analog_ReadFifoCount(HAL_Analog_T * p_hal) { return ((p_hal->SC4 & ADC_SC4_AFDEP_MASK) + 1U); }
 static inline void HAL_Analog_WriteFifoPin(HAL_Analog_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_ADCH(pinChannel); }
 static inline void HAL_Analog_ActivateFifo(HAL_Analog_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel); }
 

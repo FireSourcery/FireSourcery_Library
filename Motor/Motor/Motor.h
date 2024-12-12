@@ -374,7 +374,8 @@ typedef struct Motor
     Motor_OpenLoopState_T OpenLoopState;
     Motor_CalibrationState_T CalibrationState;  /* SubState, selection for calibration */
     uint8_t CalibrationStateIndex;
-    volatile Motor_PhaseFlags_T PhaseFlags;
+    volatile Motor_PhaseFlags_T IFlags;
+    volatile Motor_PhaseFlags_T VFlags;
 
     /*
         Active Limits

@@ -29,8 +29,6 @@
 */
 /******************************************************************************/
 #include "Motor_FOC.h"
-#include "Motor_Debug.h"
-
 
 /******************************************************************************/
 /*!
@@ -118,8 +116,24 @@ void Motor_FOC_ProcFeedbackMatch(Motor_T * p_motor)
     {
         Linear_Ramp_SetOutputState(&p_motor->Ramp, qReq);
     }
+}
 
-    p_motor->PhaseFlags.Value = 0U;
+/* Begin Observe, Ifeedback not updated */
+void Motor_FOC_ClearControlState(Motor_T * p_motor)
+{
+    FOC_ClearControlState(&p_motor->Foc);
+    Linear_Ramp_ZeroOutputState(&p_motor->Ramp);
+    PID_Reset(&p_motor->PidIq);
+    PID_Reset(&p_motor->PidId);
+    PID_Reset(&p_motor->PidSpeed);
+    p_motor->IFlags.Value = 0U;
+}
+
+/* Begin Control, Vabc not updated */
+void Motor_FOC_ClearObserveState(Motor_T * p_motor)
+{
+    FOC_ClearObserveState(&p_motor->Foc);
+    p_motor->VFlags.Value = 0U;
 }
 
 /******************************************************************************/
@@ -127,6 +141,7 @@ void Motor_FOC_ProcFeedbackMatch(Motor_T * p_motor)
     Common
 */
 /******************************************************************************/
+/* From Iabc to Idq */
 static inline void ProcClarkePark(Motor_T * p_motor)
 {
 #if     defined(CONFIG_MOTOR_I_SENSORS_AB)
@@ -136,7 +151,7 @@ static inline void ProcClarkePark(Motor_T * p_motor)
 #endif
 }
 
-/* Vd Vq to DutyABC */
+/* From Vdq to DutyABC */
 static void ActivateAngle(Motor_T * p_motor)
 {
     FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
@@ -146,14 +161,14 @@ static void ActivateAngle(Motor_T * p_motor)
 static void ProcInnerFeedbackOutput(Motor_T * p_motor)
 {
     // if(Motor_IsAnalogCycle(p_motor) == true)
-    if (p_motor->PhaseFlags.Value == 0x07U)     /* alternatively use batch callback */
+    if (p_motor->IFlags.Value == 0x07U)     /* alternatively use batch callback */
     {
         Motor_FOC_CaptureIa(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA.P_STATE->Result);
         Motor_FOC_CaptureIb(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB.P_STATE->Result);
         Motor_FOC_CaptureIc(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC.P_STATE->Result);
         ProcClarkePark(p_motor);
-        ProcInnerFeedback(p_motor); /* Set Vd Vq */
-        p_motor->PhaseFlags.Value = 0U;
+        ProcInnerFeedback(p_motor); /* Set Vdq */
+        p_motor->IFlags.Value = 0U;
     }
     ActivateAngle(p_motor);
 }
@@ -205,30 +220,14 @@ void Motor_FOC_ProcAngleVBemf(Motor_T * p_motor)
     FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
     Motor_ProcSensorSpeed(p_motor);
 
-    if (p_motor->PhaseFlags.Value == 0x07U)
+    if (p_motor->VFlags.Value == 0x07U)
     {
         Motor_FOC_CaptureVa(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA.P_STATE->Result);
         Motor_FOC_CaptureVb(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB.P_STATE->Result);
         Motor_FOC_CaptureVc(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VC.P_STATE->Result);
         FOC_ProcVBemfClarkePark(&p_motor->Foc);
-        p_motor->PhaseFlags.Value = 0U;
+        p_motor->VFlags.Value = 0U;
     }
-}
-
-/* Begin Observe, Ifeedback not updated */
-void Motor_FOC_ClearControlState(Motor_T * p_motor)
-{
-    FOC_ClearControlState(&p_motor->Foc);
-    Linear_Ramp_ZeroOutputState(&p_motor->Ramp);
-    PID_Reset(&p_motor->PidIq);
-    PID_Reset(&p_motor->PidId);
-    PID_Reset(&p_motor->PidSpeed);
-}
-
-/* Begin Control, Vabc not updated */
-void Motor_FOC_ClearObserveState(Motor_T * p_motor)
-{
-    FOC_ClearObserveState(&p_motor->Foc);
 }
 
 

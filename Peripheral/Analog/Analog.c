@@ -77,15 +77,22 @@ static inline void ADC_CaptureFifo(Analog_ADC_T * p_adc)
 #endif
 }
 
+static inline void ADC_Capture(Analog_ADC_T * p_adc)
+{
+    assert(p_adc->ActiveConversionCount > 0U);
+#ifdef CONFIG_ANALOG_ADC_HW_FIFO_ENABLE
+    ADC_CaptureFifo(p_adc);
+#else
+    ADC_CaptureChannel(p_adc);
+#endif
+}
+
 /*
     Activate and wait for return
 */
 static inline void ADC_StartChannel(Analog_ADC_T * p_adc)
 {
-    if (p_adc->ActiveConversionCount > 0U)
-    {
-        HAL_Analog_Activate(p_adc->P_HAL_ANALOG, p_adc->ActiveConversions[0U]->PIN);
-    }
+    HAL_Analog_Activate(p_adc->P_HAL_ANALOG, p_adc->ActiveConversions[0U]->PIN);
 }
 /*
 */
@@ -102,11 +109,24 @@ static inline void ADC_StartFifo(Analog_ADC_T * p_adc)
         HAL_Analog_WriteFifoPin(p_adc->P_HAL_ANALOG, p_conversion->PIN);
     }
 
-    p_conversion = p_adc->ActiveConversions[p_adc->ActiveConversionCount];
+    p_conversion = p_adc->ActiveConversions[p_adc->ActiveConversionCount - 1U];
     HAL_Analog_ActivateFifo(p_adc->P_HAL_ANALOG, p_conversion->PIN);
 }
 
+static inline void ADC_Start(Analog_ADC_T * p_adc)
+{
+    if (p_adc->ActiveConversionCount > 0U)
+    {
+    #ifdef CONFIG_ANALOG_ADC_HW_FIFO_ENABLE
+        ADC_StartFifo(p_adc);
+    #else
+        ADC_StartChannel(p_adc);
+    #endif
+    }
+}
+
 /*
+    Critical buffer. single threaded access only
     Set active conversions for ADC
     from Analog_T buffers to Analog_ADC_T buffer
 */
@@ -124,40 +144,40 @@ static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId
     {
         p_entry = pp_entries[p_adc->ActiveChannelIndex];
         p_adc->ActiveChannelIndex += 1U;
-        if (p_entry->ADC_ID == adcId && p_entry->P_STATE->IsMarked == true)
+        if (p_entry != NULL)
         {
-            p_adc->ActiveConversions[p_adc->ActiveConversionCount] = p_entry;
-            p_adc->ActiveConversionCount += 1U;
+            if (p_entry->ADC_ID == adcId && p_entry->P_STATE->IsMarked == true)
+            {
+                // assert(p_entry != NULL);
+                p_adc->ActiveConversions[p_adc->ActiveConversionCount] = p_entry;
+                p_adc->ActiveConversionCount += 1U;
+            }
         }
     }
 }
 
 static inline void ADC_OnComplete(Analog_ADC_T * p_adc, uint8_t adcId, const Analog_Conversion_T * const * pp_entries, uint8_t length)
 {
-    if (HAL_Analog_ReadConversionCompleteFlag(p_adc->P_HAL_ANALOG) == true)
+    if ((HAL_Analog_ReadConversionCompleteFlag(p_adc->P_HAL_ANALOG) == true) || p_adc->ActiveConversionCount > 0U) /* OR logic, in case CompleteFlag does not set */
     {
         HAL_Analog_ClearConversionCompleteFlag(p_adc->P_HAL_ANALOG);
         /* includes handling mark entries */
-    #ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
-        ADC_CaptureFifo(p_adc, p_entries);
-    #else
-        ADC_CaptureChannel(p_adc);
-    #endif
+        ADC_Capture(p_adc);
 
-        if (p_adc->ActiveChannelIndex < length)
+        if (p_adc->ActiveChannelIndex < length) /* Continue until all marked are complete */
         {
             ADC_FillActiveConversions(p_adc, adcId, pp_entries, length);
-        #ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
-            ADC_StartFifo(p_adc);
-        #else
-            ADC_StartChannel(p_adc);
-        #endif
+            ADC_Start(p_adc);
         }
 
         // optionally proc on complete in parallel
     }
 #ifndef NDEBUG
-    else { p_adc->ErrorCount++; }
+    else
+    {
+        _Analog_ADC_Deactivate(p_adc);
+        p_adc->ErrorCount++;
+    }
 #endif
 }
 
@@ -221,13 +241,9 @@ void Analog_StartConversions(Analog_T * p_analog)
         p_adc = &p_analog->CONST.P_ADCS[iAdc];
         if (_Analog_ADC_ReadIsActive(p_adc) == false) /* no possibility of interrupt when this function is called by a single thread */
         {
-            p_adc->ActiveChannelIndex = 0U;
-            ADC_FillActiveConversions(p_adc, iAdc, p_analog->CONST.PP_CONVERSIONS , p_analog->CONST.CONVERSIONS_COUNT);
-        #ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
-            ADC_StartFifo(p_adc);
-        #else
-            ADC_StartChannel(p_adc);
-        #endif
+            if (p_adc->ActiveChannelIndex >= p_analog->CONST.CONVERSIONS_COUNT) { p_adc->ActiveChannelIndex = 0U; }
+            ADC_FillActiveConversions(p_adc, iAdc, p_analog->CONST.PP_CONVERSIONS, p_analog->CONST.CONVERSIONS_COUNT);
+            ADC_Start(p_adc);
         }
     }
 
