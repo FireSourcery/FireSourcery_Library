@@ -32,7 +32,6 @@
 
 #include <assert.h>
 
-
 /******************************************************************************/
 /*!
     Private
@@ -49,7 +48,7 @@ static inline analog_result_t CaptureConversionResult(const Analog_ADC_T * p_adc
     return result;
 }
 
-static inline void CaptureActiveConversion(Analog_ADC_T * p_adc, const Analog_Conversion_T * p_conversion)
+static inline void CaptureActiveConversion(const Analog_ADC_T * p_adc, const Analog_Conversion_T * p_conversion)
 {
     p_conversion->P_STATE->Result = CaptureConversionResult(p_adc, p_conversion); /* alternatively disable when ON_COMPLETE is defined */
     p_conversion->P_STATE->IsMarked = false;
@@ -79,12 +78,13 @@ static inline void ADC_CaptureFifo(Analog_ADC_T * p_adc)
 
 static inline void ADC_Capture(Analog_ADC_T * p_adc)
 {
-    assert(p_adc->ActiveConversionCount > 0U);
+    // assert(p_adc->ActiveConversionCount > 0U);
 #ifdef CONFIG_ANALOG_ADC_HW_FIFO_ENABLE
     ADC_CaptureFifo(p_adc);
 #else
     ADC_CaptureChannel(p_adc);
 #endif
+    p_adc->ActiveConversionCount = 0U;
 }
 
 /*
@@ -134,7 +134,7 @@ static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId
 {
     Analog_Conversion_T * p_entry;
 
-    p_adc->ActiveConversionCount = 0U;
+    p_adc->ActiveConversionCount = 0U; // assert(p_adc->ActiveConversionCount == 0U);
     /*
         Find the next marked channel,
         Continue incrementing. Channels do not repeat until all marked channels have completed once
@@ -148,7 +148,6 @@ static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId
         {
             if (p_entry->ADC_ID == adcId && p_entry->P_STATE->IsMarked == true)
             {
-                // assert(p_entry != NULL);
                 p_adc->ActiveConversions[p_adc->ActiveConversionCount] = p_entry;
                 p_adc->ActiveConversionCount += 1U;
             }
@@ -270,24 +269,6 @@ void Analog_Init(Analog_T * p_analog)
     }
 }
 
-/******************************************************************************/
-/*!
-    Channel Fags
-*/
-/******************************************************************************/
-/*
-    Add Conversion by marking its flag
-    Analog_Conversion_T provides ADC select abstraction
-*/
-void Analog_MarkConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
-{
-    p_conversion->P_STATE->IsMarked = true;
-}
-
-// void Analog_MarkConversionBatch(Analog_T * p_analog, const Analog_ConversionBatch_T * p_conversion)
-// {
-//     p_analog->CONST.P_BATCH_ENTRIES[p_conversion->BATCH].IsMarked = true;
-// }
 
 
 // static inline void _Analog_CaptureLocalPeak(Analog_T * p_analog, analog_result_t result)

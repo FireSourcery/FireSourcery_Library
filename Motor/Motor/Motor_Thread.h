@@ -62,8 +62,8 @@ void Motor_MarkAnalog_Thread(Motor_T * p_motor)
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
     if (p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
     {
-        Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
-        Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
+        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
+        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
     }
 #endif
 
@@ -72,7 +72,8 @@ void Motor_MarkAnalog_Thread(Motor_T * p_motor)
         case MSM_STATE_ID_STOP:         Motor_Analog_MarkVabc(p_motor);            break;
         case MSM_STATE_ID_RUN:          Motor_Analog_MarkIabc(p_motor);            break;
         case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_motor);            break;
-        case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_motor); Motor_Analog_MarkIabc(p_motor); break;
+        case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_motor);             break;
+        // case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_motor); Motor_Analog_MarkIabc(p_motor); break;
 
         default:            break;
     }
@@ -91,7 +92,7 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 {
     if (Thermistor_IsMonitorEnable(&p_motor->Thermistor) == true)
     {
-        Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_HEAT);
+        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_HEAT);
 
         switch (Thermistor_PollMonitor(&p_motor->Thermistor, Motor_Analog_GetHeat(p_motor)))
         {

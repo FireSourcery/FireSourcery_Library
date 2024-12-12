@@ -35,6 +35,9 @@
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_Analog.h)
 
+#include <stdint.h>
+#include <assert.h>
+
 /*
 typedef void HAL_Analog_T;
 
@@ -62,5 +65,25 @@ static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal) {
 
 static inline void HAL_Analog_Init(const HAL_Analog_T * p_hal) { (void)p_hal; }
 */
+
+/*
+
+*/
+
+static inline void HAL_Analog_WriteFifo(HAL_Analog_T * p_hal, uint32_t * p_pins, uint8_t count)
+{
+    assert(count <= HAL_ADC_FIFO_LENGTH_MAX);
+    HAL_Analog_WriteFifoCount(p_hal, count);
+    for (uint8_t i = 0U; i < count; i++) { HAL_Analog_WriteFifoPin(p_hal, p_pins[i]); }
+    // HAL_Analog_ActivateFifo(p_hal);
+}
+
+static inline void HAL_Analog_WriteFifo_ActivateOnLast(HAL_Analog_T * p_hal, uint32_t * p_pins, uint8_t count)
+{
+    assert(count <= HAL_ADC_FIFO_LENGTH_MAX);
+    HAL_Analog_WriteFifoCount(p_hal, count);
+    for (uint8_t i = 0U; i < count - 1U; i++) { HAL_Analog_WriteFifoPin(p_hal, p_pins[i]); }
+    HAL_Analog_ActivateFifo(p_hal, p_pins[count - 1U]);
+}
 
 #endif

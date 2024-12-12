@@ -65,8 +65,8 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 
     if(CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONST.ANALOG_USER_DIVIDER) == true)
     {
-        Analog_MarkConversion(p_mc->CONST.P_ANALOG, &p_mc->CONST.CONVERSION_THROTTLE);
-        Analog_MarkConversion(p_mc->CONST.P_ANALOG, &p_mc->CONST.CONVERSION_BRAKE);
+        Analog_MarkConversion(&p_mc->CONST.CONVERSION_THROTTLE);
+        Analog_MarkConversion(&p_mc->CONST.CONVERSION_BRAKE);
     }
 }
 
@@ -113,9 +113,9 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
     bool isFault = false;
     bool isWarning = false;
 
-    Analog_MarkConversion(p_mc->CONST.P_ANALOG, &p_mc->CONST.CONVERSION_HEAT_PCB);
+    Analog_MarkConversion(&p_mc->CONST.CONVERSION_HEAT_PCB);
     for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
-        { Analog_MarkConversion(p_mc->CONST.P_ANALOG, &p_mc->CONST.HEAT_MOSFETS_CONVERSIONS[iMosfets]); }
+        { Analog_MarkConversion(&p_mc->CONST.HEAT_MOSFETS_CONVERSIONS[iMosfets]); }
 
     Thermistor_PollMonitor(&p_mc->ThermistorPcb, MotorController_Analog_GetHeatPcb(p_mc));
     if (Thermistor_IsFault(&p_mc->ThermistorPcb) == true) { p_mc->FaultFlags.PcbOverheat = 1U; isFault = true; }
@@ -172,8 +172,8 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
 {
     bool isFault = false;
 
-    Analog_MarkConversion(p_mc->CONST.P_ANALOG, &p_mc->CONST.CONVERSION_VACCS);
-    Analog_MarkConversion(p_mc->CONST.P_ANALOG, &p_mc->CONST.CONVERSION_VSENSE);
+    Analog_MarkConversion(&p_mc->CONST.CONVERSION_VACCS);
+    Analog_MarkConversion(&p_mc->CONST.CONVERSION_VSENSE);
 
     VMonitor_PollStatus(&p_mc->VMonitorSense,  MotorController_Analog_GetVSense(p_mc));
     VMonitor_PollStatus(&p_mc->VMonitorAccs,  MotorController_Analog_GetVAccs(p_mc));
@@ -300,7 +300,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
         default: break;
     }
 
-    Analog_MarkConversion(p_mc->CONST.P_ANALOG, &p_mc->CONST.CONVERSION_VSOURCE);
+    Analog_MarkConversion(&p_mc->CONST.CONVERSION_VSOURCE);
 #endif
 
     // if(CheckDividerMask(p_mc->TimerDividerCounter, p_mc->CONST.TIMER_DIVIDER_1000) == true)

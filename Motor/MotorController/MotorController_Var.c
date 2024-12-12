@@ -163,7 +163,7 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 case MOT_VAR_FOC_VD:    value = p_motor->Foc.Vd;        break;
                 case MOT_VAR_FOC_REQ_Q: value = p_motor->Foc.ReqQ;      break;
                 case MOT_VAR_FOC_REQ_D: value = p_motor->Foc.ReqD;      break;
-                case MOT_VAR_FOC_REQ_SCALAR:  value = p_motor->Foc.ReqScalar;  break;
+                case MOT_VAR_FOC_REQ_SCALAR:  value = 0;  break;
                 default: break;
             }
             break;

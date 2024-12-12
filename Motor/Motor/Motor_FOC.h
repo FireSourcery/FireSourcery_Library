@@ -56,7 +56,7 @@
 /******************************************************************************/
 /*!
     Map to Motor Analog Conversions
-    Convert current from ADCU to QFrac
+    Convert current from ADCU to frac16
     where 32767 is fully saturated current sensor
 */
 /******************************************************************************/

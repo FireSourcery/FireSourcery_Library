@@ -24,8 +24,7 @@
 /*!
     @file   HAL_ADC.h
     @author
-    @brief     Analog import functions. Used by HAL.
-            Runtime configure options only. Runtime constant settings delegated to MCU init.
+    @brief
     @version V0
 */
 /******************************************************************************/
@@ -48,6 +47,8 @@ static inline void HAL_Analog_WriteFifoCount(HAL_Analog_T * p_hal, uint32_t coun
 static inline uint8_t HAL_Analog_ReadFifoCount(HAL_Analog_T * p_hal) { return ((p_hal->SC4 & ADC_SC4_AFDEP_MASK) + 1U); }
 static inline void HAL_Analog_WriteFifoPin(HAL_Analog_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_ADCH(pinChannel); }
 static inline void HAL_Analog_ActivateFifo(HAL_Analog_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel); }
+
+
 
 /*
     Use NVIC interrupt for local critical section
@@ -119,6 +120,8 @@ static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal)  
 
     High speed (ADLPC=0) fADCK 8.0 Max
     Asynchronous clock (ADACK). + 5us
+
+    Minimal Init, Board sets clock configuration
 */
 static inline void HAL_Analog_Init(HAL_Analog_T * p_hal)
 {
@@ -126,7 +129,7 @@ static inline void HAL_Analog_Init(HAL_Analog_T * p_hal)
     /*!< Alternate clock (ALTCLK). >*/
     /*!< 12-bit conversion (N = 12) >*/
     /*!< Divide ration = 1, and clock rate = Input clock. >*/
-    p_hal->SC3 = ADC_SC3_ADICLK(2U) | ADC_SC3_MODE(2U) | ADC_SC3_ADIV(0U);
+    // p_hal->SC3 = ADC_SC3_ADICLK(2U) | ADC_SC3_MODE(2U) | ADC_SC3_ADIV(0U);
     // tmp32 |= ADC_SC3_ADLPC_MASK; enableLowPower
     // tmp32 |= ADC_SC3_ADLSMP_MASK; enableLongSampleTime
 }

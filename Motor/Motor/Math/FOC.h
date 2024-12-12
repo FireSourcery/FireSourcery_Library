@@ -70,7 +70,6 @@ typedef struct FOC
     /* PID Setpoint Variable - From Ramp, SpeedPid, OpenLoop */
     qfrac16_t ReqD;
     qfrac16_t ReqQ;
-    uint16_t ReqScalar;   /* UFrac16, Q1.15 Unsigned */
 
     /* VOutput/VBemf */
     /* PID Control Variable, or intermediate input bypass current feedback */
@@ -101,8 +100,7 @@ static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
 
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 {
-    // p_foc->ReqScalar = qfrac16_vector_limit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX);
-    foc_circle_limit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX, QFRAC16_1_DIV_2);
+    foc_circle_limit(&p_foc->Vd, &p_foc->Vq, QFRAC16_MAX, QFRAC16_1_DIV_2); /* QFRAC16_1_DIV_SQRT3 */
     foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
     svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
 }
@@ -115,16 +113,16 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc)
 }
 
 /* [0:32767] <=> [0:1] */
-static inline uint16_t FOC_GetIMagnitude(const FOC_T * p_foc)     { return qfrac16_vector_magnitude(p_foc->Ialpha, p_foc->Ibeta); }
-static inline uint16_t FOC_GetVMagnitude(const FOC_T * p_foc)     { return qfrac16_vector_magnitude(p_foc->Valpha, p_foc->Vbeta); }
-static inline uint16_t FOC_GetIMagnitude_Idq(const FOC_T * p_foc) { return qfrac16_vector_magnitude(p_foc->Id, p_foc->Iq); }
+static inline uqfrac16_t FOC_GetIMagnitude(const FOC_T * p_foc)     { return qfrac16_vector_magnitude(p_foc->Ialpha, p_foc->Ibeta); }
+static inline uqfrac16_t FOC_GetVMagnitude(const FOC_T * p_foc)     { return qfrac16_vector_magnitude(p_foc->Valpha, p_foc->Vbeta); }
+static inline uqfrac16_t FOC_GetIMagnitude_Idq(const FOC_T * p_foc) { return qfrac16_vector_magnitude(p_foc->Id, p_foc->Iq); }
 
 /* [-32768:32767] <=> [-1:1] */
 static inline qfrac16_t FOC_GetIPhase(const FOC_T * p_foc) { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
 static inline qfrac16_t FOC_GetVPhase(const FOC_T * p_foc) { return FOC_GetVMagnitude(p_foc) * math_sign(p_foc->Vq); }
 
 /* [0:49152] <=> [0:1.5] */
-static inline int32_t FOC_GetPower(const FOC_T * p_foc) { return (qfrac16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2); }
+static inline qaccum32_t FOC_GetPower(const FOC_T * p_foc) { return (qfrac16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2); }
 
 static inline void FOC_SetTheta(FOC_T * p_foc, qangle16_t theta) { qfrac16_vector(&p_foc->Cosine, &p_foc->Sine, theta); }
 
@@ -136,9 +134,9 @@ static inline void FOC_SetIq(FOC_T * p_foc, qfrac16_t iq) { p_foc->Iq = iq; }
 static inline void FOC_SetVd(FOC_T * p_foc, qfrac16_t vd) { p_foc->Vd = vd; }
 static inline void FOC_SetVq(FOC_T * p_foc, qfrac16_t vq) { p_foc->Vq = vq; }
 
-static inline uint16_t FOC_GetDutyA(const FOC_T * p_foc) { return p_foc->DutyA; }
-static inline uint16_t FOC_GetDutyB(const FOC_T * p_foc) { return p_foc->DutyB; }
-static inline uint16_t FOC_GetDutyC(const FOC_T * p_foc) { return p_foc->DutyC; }
+static inline uqfrac16_t FOC_GetDutyA(const FOC_T * p_foc) { return p_foc->DutyA; }
+static inline uqfrac16_t FOC_GetDutyB(const FOC_T * p_foc) { return p_foc->DutyB; }
+static inline uqfrac16_t FOC_GetDutyC(const FOC_T * p_foc) { return p_foc->DutyC; }
 static inline qfrac16_t FOC_GetId(const FOC_T * p_foc) { return p_foc->Id; }
 static inline qfrac16_t FOC_GetIq(const FOC_T * p_foc) { return p_foc->Iq; }
 static inline qfrac16_t FOC_GetVd(const FOC_T * p_foc) { return p_foc->Vd; }

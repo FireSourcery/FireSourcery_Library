@@ -36,6 +36,13 @@ typedef bool (*try_uint8_t)(void * p_struct, uint8_t value);
 typedef bool (*try_uint16_t)(void * p_struct, uint16_t value);
 typedef bool (*try_uint32_t)(void * p_struct, uint32_t value);
 
+
+// typedef void (*set_t)(void * p_struct, register_t value);
+// typedef register_t (*get_t)(void * p_struct, register_t value);
+
+// typedef void (*set_entry_t)(void * p_struct, size_t key, register_t value);
+// typedef register_t(*get_entry_t)(void * p_struct, size_t key);
+
 /******************************************************************************/
 /*!
     Macros version

@@ -41,7 +41,7 @@ typedef const struct Global_Analog
     const uint16_t ADC_BITS;
     const uint16_t ADC_MAX;
     const uint16_t ADC_VREF_MILLIV;
-    const uint16_t ADC_FIFO_LENGTH;
+    // const uint16_t ADC_FIFO_LENGTH;
 }
 Global_Analog_T;
 

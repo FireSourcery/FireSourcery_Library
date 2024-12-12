@@ -37,24 +37,17 @@
 
 /******************************************************************************/
 /*!
-    @brief  Callback functions
-*/
-/******************************************************************************/
-
-
-/******************************************************************************/
-/*!
     @brief
 */
 /******************************************************************************/
 void Motor_Analog_MarkVabc(Motor_T * p_motor)
 {
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    if (Motor_IsAnalogCycle(p_motor) == true)
+    if ((Motor_IsAnalogCycle(p_motor) == true) && p_motor->VFlags.Value == 0U)
     {
-        Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA);
-        Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB);
-        Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VC);
+        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA);
+        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB);
+        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VC);
     }
 #else
     (void)p_motor;
@@ -63,12 +56,12 @@ void Motor_Analog_MarkVabc(Motor_T * p_motor)
 
 void Motor_Analog_MarkIabc(Motor_T * p_motor)
 {
-    if (Motor_IsAnalogCycle(p_motor) == true)
+    if ((Motor_IsAnalogCycle(p_motor) == true) && p_motor->IFlags.Value == 0U)
     {
-        Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);
-        Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB);
+        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);
+        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB);
     #if defined(CONFIG_MOTOR_I_SENSORS_ABC)
-        Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC);
+        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC);
     #endif
     }
 }

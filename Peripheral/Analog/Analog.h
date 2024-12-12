@@ -206,11 +206,6 @@ Analog_T;
 
 */
 /******************************************************************************/
-// static inline bool Analog_ADC_FlagAt(const Analog_ADC_T * p_adc, uint8_t index) { return (p_adc->ActiveChannelFlags.Value & (1U << index)); }
-static inline analog_result_t _Analog_ResultsOf(const Analog_Conversion_T * p_conversion)
-{
-    return p_conversion->P_STATE->Result;
-}
 
 /* Interface for void array this way */
 static inline bool _Analog_ADC_ReadIsActive(const Analog_ADC_T * p_adc)
@@ -226,7 +221,6 @@ static inline void _Analog_ADC_Deactivate(const Analog_ADC_T * p_adc)
 {
     HAL_Analog_Deactivate(p_adc->P_HAL_ANALOG);
 }
-
 
 /*
 
@@ -244,13 +238,30 @@ static inline void Analog_Deactivate(const Analog_T * p_analog)
     void_array_foreach(p_analog->CONST.P_ADCS, sizeof(Analog_ADC_T), p_analog->CONST.ADC_COUNT, (void_op_t)_Analog_ADC_Deactivate);
 }
 
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+static inline analog_result_t Analog_ResultOf(const Analog_Conversion_T * p_conversion) { return p_conversion->P_STATE->Result; }
+static inline analog_result_t Analog_ResultOfChannel(const Analog_T * p_analog, analog_channel_t channel) { return Analog_ResultOf(p_analog->CONST.PP_CONVERSIONS[channel]); }
+
+
+/*
+    Add Conversion by marking its flag
+    Analog_Conversion_T provides ADC select abstraction
+*/
+static inline void Analog_MarkConversion(const Analog_Conversion_T * p_conversion) { p_conversion->P_STATE->IsMarked = true; }
+static inline void Analog_MarkChannel(const Analog_T * p_analog, analog_channel_t channel) { Analog_MarkConversion(p_analog->CONST.PP_CONVERSIONS[channel]); }
+
+/******************************************************************************/
+/*!
+    extern
+*/
+/******************************************************************************/
 extern void Analog_OnComplete_ISR(Analog_T * p_analog, uint8_t adcId);
 extern void Analog_StartConversions(Analog_T * p_analog);
-extern void Analog_MarkConversion(Analog_T * p_analog, const Analog_Conversion_T * p_conversion);
-// extern void Analog_StartConversionBatch(Analog_T * p_analog, const Analog_ConversionBatch_T * p_group);
-
 extern void Analog_Init(Analog_T * p_analog);
-
 
 #endif
 
@@ -265,8 +276,13 @@ extern void Analog_Init(Analog_T * p_analog);
 //     volatile analog_result_t * const P_RESULTS_BUFFER;  /*!< Persistent ADC results buffer, virtual channel index.  */
 // }
 // Analog_ConversionBatch_T;
+// void Analog_MarkConversionBatch(Analog_T * p_analog, const Analog_ConversionBatch_T * p_conversion)
+// {
+//     p_analog->CONST.P_BATCH_ENTRIES[p_conversion->BATCH].IsMarked = true;
+// }
+// extern void Analog_StartConversionBatch(Analog_T * p_analog, const Analog_ConversionBatch_T * p_group);
 
-
+// static inline bool Analog_ADC_FlagAt(const Analog_ADC_T * p_adc, uint8_t index) { return (p_adc->ActiveChannelFlags.Value & (1U << index)); }
 // typedef union Analog_ChannelFlags
 // {
 //     struct

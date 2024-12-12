@@ -182,6 +182,18 @@ static void ProcInnerFeedbackOutput(Motor_T * p_motor)
 /*
     Enables PWM Output - From Stop and Freewheel
 */
+// void Motor_FOC_ActivateOutputZero(Motor_T * p_motor)
+// {
+//     FOC_ZeroSvpwm(&p_motor->Foc);
+//     Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
+//     Phase_ActivateOutputABC(&p_motor->Phase);
+// }
+// void Motor_FOC_ActivateOutputState(Motor_T * p_motor)
+// {
+//     Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
+//     Phase_ActivateOutputABC(&p_motor->Phase);
+// }
+
 void Motor_FOC_ActivateOutput(Motor_T * p_motor)
 {
     FOC_ZeroSvpwm(&p_motor->Foc);

@@ -108,8 +108,8 @@ static inline void HAL_Encoder_ClearPinInterrupt(HAL_Encoder_Pin_T * p_encoder, 
     01 Input Capture Capture on Rising Edge Only
     10 Capture on Falling Edge Only
 */
-static inline void HAL_Encoder_EnablePinInterrupt(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)          { p_encoder->CONTROLS[phaseId].CnSC |= FTM_CnSC_CHIE_MASK; }
-static inline void HAL_Encoder_DisablePinInterrupt(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)         { p_encoder->CONTROLS[phaseId].CnSC &= ~FTM_CnSC_CHIE_MASK; }
+static inline void HAL_Encoder_EnablePinInterrupt(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)           { p_encoder->CONTROLS[phaseId].CnSC |= FTM_CnSC_CHIE_MASK; }
+static inline void HAL_Encoder_DisablePinInterrupt(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)          { p_encoder->CONTROLS[phaseId].CnSC &= ~FTM_CnSC_CHIE_MASK; }
 static inline void HAL_Encoder_InitPinInterruptDualEdge(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)     { p_encoder->CONTROLS[phaseId].CnSC = FTM_CnSC_CHIE_MASK | FTM_CnSC_ELSA_MASK | FTM_CnSC_ELSB_MASK; }
 static inline void HAL_Encoder_InitPinInterruptFallingEdge(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)  { p_encoder->CONTROLS[phaseId].CnSC = FTM_CnSC_CHIE_MASK | FTM_CnSC_ELSB_MASK; }
 static inline void HAL_Encoder_InitPinInterruptRisingEdge(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)   { p_encoder->CONTROLS[phaseId].CnSC = FTM_CnSC_CHIE_MASK | FTM_CnSC_ELSA_MASK; }

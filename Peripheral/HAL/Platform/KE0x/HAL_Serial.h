@@ -40,6 +40,7 @@
 #define HAL_SERIAL_CLOCK_SOURCE_FREQ (CPU_FREQ / 2U)
 #endif
 
+// #define HAL_SERIAL_FIFO_SIZE 4U
 #define HAL_SERIAL_FIFO_SIZE 0U
 
 typedef UART_Type HAL_Serial_T;

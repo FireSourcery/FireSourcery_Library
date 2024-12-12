@@ -54,6 +54,10 @@
         Prev State Proc may run before Entry.
         control proc may overwrite pid state set
 
+    _StateMachine_ProcStateTransition inside Proc will run on PWM thread
+
+    Inputs do not directly proc transition
+
     Sync Mode - Input value before Input Id, sufficient?
     Must check input flags every pwm cycle.
 
