@@ -35,7 +35,7 @@
 #include "Motor/Motor/MotorAnalog.h"
 #include "MotorControllerAnalog.h"
 
-typedef enum
+typedef enum MotorController_Analog_ChannelGlobal
 {
     MOT_ANALOG_CHANNEL_BASE_GENERAL = 0U,
     MOT_ANALOG_CHANNEL_BASE_MOTOR0 = MOT_ANALOG_CHANNEL_BASE_GENERAL + MOT_ANALOG_CHANNEL_COUNT,
@@ -45,8 +45,9 @@ typedef enum
 }
 MotorController_Analog_ChannelGlobal_T;
 
+// , .P_RESULT = &((p_Mot)->AnalogResults.Channels[LocalChannel])
 
-#define MOT_ANALOG_CONVERSION_INIT(LocalChannel, AdcId, AdcPin, p_Mot) ANALOG_CONVERSION_INIT((MOT_ANALOG_CHANNEL_BASE_GENERAL + LocalChannel), 0U, p_Mot, AdcId, AdcPin, .P_RESULT = &((p_Mot)->AnalogResults.Channels[LocalChannel]))
+#define MOT_ANALOG_CONVERSION_INIT(LocalChannel, AdcId, AdcPin, p_Mot) ANALOG_CONVERSION_INIT((MOT_ANALOG_CHANNEL_BASE_GENERAL + LocalChannel), 0U, p_Mot, AdcId, AdcPin)
 
 #define MOT_ANALOG_CONVERSION_VSOURCE_INIT(VSourceHost, VSourcePin, p_Mot)  MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_VSOURCE, VSourceHost, VSourcePin, p_Mot)
 #define MOT_ANALOG_CONVERSION_VSENSE_INIT(VSenseHost, VSensePin, p_Mot)     MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_VSENSE, VSenseHost, VSensePin, p_Mot)

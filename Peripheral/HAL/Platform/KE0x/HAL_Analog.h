@@ -37,6 +37,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define HAL_ADC_FIFO_LENGTH_MAX 8U
+
 typedef ADC_Type HAL_Analog_T;
 
 static inline void HAL_Analog_Activate(HAL_Analog_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel); }

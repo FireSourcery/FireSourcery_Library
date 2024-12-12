@@ -39,7 +39,7 @@
 // {
 //     .P_CONVERSIONS = (const Analog_Conversion_T * []) { &CONVERSION_VA, &CONVERSION_VB, &CONVERSION_VC },
 //     .CONVERSION_COUNT = 3U,
-//     .CAPTURE = Motor_Analog_CaptureVa,
+//     .ON_COMPLETE = Motor_Analog_CaptureVa,
 // }
 
 /******************************************************************************/
