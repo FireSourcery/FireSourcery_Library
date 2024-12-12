@@ -24,54 +24,35 @@
 /*!
     @file   Config.h
     @author FireSourcery
-    @brief     Analog module preprocessor configuration options and defaults.
+    @brief  Analog module preprocessor configuration options and defaults.
     @version V0
 */
 /******************************************************************************/
 #ifndef CONFIG_ANALOG_H
 #define CONFIG_ANALOG_H
 
-#if     defined(CONFIG_ANALOG_HW_FIFO_DISABLE)
-#elif     defined(CONFIG_ANALOG_HW_FIFO_ENABLE)
+#if     defined(CONFIG_ANALOG_ADC_HW_FIFO_DISABLE)
+#elif   defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
 #else
     #define CONFIG_ANALOG_ADC_HW_FIFO_DISABLE
 #endif
 
-#if     defined(CONFIG_ANALOG_HW_CONTINUOUS_CONVERSION_ENABLE)
-#elif     defined(CONFIG_ANALOG_HW_CONTINUOUS_CONVERSION_DISABLE)
+#if     defined(CONFIG_ANALOG_ADC_HW_CONTINUOUS_CONVERSION_ENABLE)
+#elif   defined(CONFIG_ANALOG_ADC_HW_CONTINUOUS_CONVERSION_DISABLE)
 #else
-    #define CONFIG_ANALOG_HW_CONTINUOUS_CONVERSION_DISABLE
+    #define CONFIG_ANALOG_ADC_HW_CONTINUOUS_CONVERSION_DISABLE
 #endif
-
-#if     defined(CONFIG_ANALOG_CRITICAL_LIBRARY_ENABLE)
-#elif     defined(CONFIG_ANALOG_CRITICAL_DISABLE)
-#else
-    #define CONFIG_ANALOG_CRITICAL_DISABLE
-#endif
-
-#if     defined(CONFIG_ANALOG_MULTITHREADED)
-#elif     defined(CONFIG_ANALOG_SINGLE_THREADED)
-#else
-    #define CONFIG_ANALOG_SINGLE_THREADED
-#endif
-
-/* Flags cannot queue options for following commands */
-// #if     defined(CONFIG_ANALOG_USE_QUEUE)
-// #elif     defined(CONFIG_ANALOG_USE_FLAGS)
-// #endif
-
-
 
 #if     defined(CONFIG_ANALOG_ADC_RESULT_UINT8)
-#elif     defined(CONFIG_ANALOG_ADC_RESULT_UINT16)
+#elif   defined(CONFIG_ANALOG_ADC_RESULT_UINT16)
 #else
     #define CONFIG_ANALOG_ADC_RESULT_UINT16
 #endif
 
 #if     defined(CONFIG_ANALOG_ADC_PIN_UINT8)
-#elif     defined(CONFIG_ANALOG_ADC_PIN_UINT32)
+#elif   defined(CONFIG_ANALOG_ADC_PIN_UINT32)
 #else
-    #define CONFIG_ANALOG_ADC_PIN_UINT32
+    #define CONFIG_ANALOG_ADC_PIN_UINT8
 #endif
 
 #endif

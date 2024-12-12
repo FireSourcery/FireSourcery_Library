@@ -58,7 +58,7 @@ typedef uint8_t analog_pin_t;
 typedef uint32_t analog_pin_t;
 #endif
 
-#if defined(CONFIG_ANALOG_HW_FIFO_ENABLE)
+#if defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
 #define ADC_FIFO_LENGTH_MAX HAL_ADC_FIFO_LENGTH_MAX
 #else
 #define ADC_FIFO_LENGTH_MAX 1U
@@ -68,13 +68,11 @@ typedef uint8_t analog_channel_t; /* Virtual Channel Index */
 
 typedef void (*Analog_Callback_T)(void * p_context);
 typedef void (*Analog_Setter_T)(void * p_context, analog_result_t value);
+// typedef void (*Analog_Callback1_T)(Analog_Conversion_T * p_conversion, analog_result_t value);
 // typedef void (*Analog_SetBatch_T)(void * p_context, uint8_t batchIndex, analog_result_t value);
 
-typedef volatile struct Analog_ConversionState
+typedef struct Analog_ConversionState
 {
-    // volatile uint32_t Result    : (sizeof(analog_result_t) * 8U);
-    // volatile uint32_t Reserved  : 32U - (sizeof(analog_result_t) * 8U) - 1U;
-    // volatile uint32_t IsMarked  : 1U;
     volatile analog_result_t Result;
     volatile bool IsMarked;
 }
@@ -93,15 +91,10 @@ typedef const struct Analog_Conversion
     const analog_channel_t CHANNEL;
 
     /* HAL Map */
-    // HAL_Analog_T * const P_HAL_ADC;
     const uint8_t ADC_ID; /* required to associate state from Analog_T */
     const analog_pin_t PIN;
 
-    // const uint8_t CHANNEL_LOCAL;  /* Results Buffer Index */
-    // volatile analog_result_t * const P_RESULTS;  /*!< Persistent ADC results buffer, virtual channel index.  */
-    // const Analog_Callback_T ON_COMPLETE;    /* On channel complete */
     const Analog_Setter_T ON_COMPLETE; /* On complete, always runs if set */
-    // const Analog_Setter_T CAPTURE; /* Capture, if set skips P_RESULT */
     void * const P_CONTEXT;
 
     // volatile analog_result_t * const P_RESULT;
@@ -129,17 +122,6 @@ Analog_Conversion_T;
 
 // #define ANALOG_CONVERSION_INIT_STRUCT(...) ( (Analog_Conversion_T) { __VA_ARGS__ } )
 
-// typedef const struct
-// {
-//     const uint8_t BATCH;
-//     // const Analog_Conversion_T * const  P_CONVERSIONS;
-//     const Analog_Conversion_T * const * const PP_CONVERSIONS; /*  Array of pointers */
-//     const uint8_t CONVERSION_COUNT;
-//     const Analog_Callback_T COMPLETE; /* On group complete */
-//     void * const P_CONTEXT;
-//     volatile analog_result_t * const P_RESULTS_BUFFER;  /*!< Persistent ADC results buffer, virtual channel index.  */
-// }
-// Analog_ConversionBatch_T;
 
 /*
     To indicate marked channels without critical section
@@ -151,18 +133,12 @@ Analog_Conversion_T;
         each channel id is globally unique, virtual global map
         ADC local channel id, defined by _Board_ per adc map, reverse pin map
 */
-
 typedef struct Analog_ADC
 {
     /* ADC_CONST */
     const struct
     {
         HAL_Analog_T * const P_HAL_ANALOG;  /*!< ADC register map base address */
-        // optionally included shared buffers of Analog_T
-        // Analog_Entry_T * const P_CHANNEL_ENTRIES;   /* Entries buffer */
-        // const uint8_t CONVERSIONS_COUNT;                /*!< also analog_channel_t max + 1 */
-        // const Analog_Conversion_T * const * const PP_CHANNEL_CONVERSION_MAP; /* Array of pointers */
-        // const Analog_Setter_T * const P_CHANNEL_CALLBACK_MAP;
     };
 
     /*
@@ -173,13 +149,12 @@ typedef struct Analog_ADC
     volatile analog_channel_t ActiveChannelIndex; /* Index to shared P_CHANNEL_ENTRIES in Analog_T. ActiveChannelFirst */
 
     const Analog_Conversion_T * ActiveConversions[ADC_FIFO_LENGTH_MAX]; /* Critical section buffer. Access by StartConversions and ISR. Array of pointers */
-// #ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
+// #ifdef CONFIG_ANALOG_ADC_HW_FIFO_ENABLE
     volatile uint8_t ActiveConversionCount; /*! Hw fifo only. Number of active channels being processed by ADC */
-    // volatile uint32_t ChannelMarkers; /* Dirty bits. May need to be atomic */
 // #endif
-// #ifndef NDEBUG
+#ifndef NDEBUG
     volatile uint8_t ErrorCount;
-// #endif
+#endif
 }
 Analog_ADC_T;
 
@@ -225,20 +200,6 @@ Analog_T;
     }, \
 }
 
-// INIT_ALLOC
-// #define ANALOG_INIT(AdcArray, ChannelCount, BatchCount) \
-// {                                                                       \
-//     .CONST =                                                            \
-//     {                                                                   \
-//         .P_ADCS             = AdcArray,                                 \
-//         .ADC_COUNT          = (sizeof(AdcArray) / sizeof(Analog_ADC_T)),  \
-//         .P_CHANNEL_ENTRIES  = (Analog_Entry_T [(ChannelCount)]){ },       \
-//         .CONVERSIONS_COUNT      = ChannelCount,                             \
-//         .P_BATCH_ENTRIES    = (Analog_BatchEntry_T [(BatchCount)]){ },    \
-//         .BATCH_COUNT        = BatchCount,                               \
-//     },                                                                  \
-// }
-
 
 /******************************************************************************/
 /*!
@@ -250,18 +211,6 @@ static inline analog_result_t _Analog_ResultsOf(const Analog_Conversion_T * p_co
 {
     return p_conversion->P_STATE->Result;
 }
-
-// static inline analog_result_t Analog_ResultsOf(Analog_T * p_analog, const Analog_Conversion_T * p_conversion)
-// {
-//     if (p_conversion->P_STATE == NULL)
-//     {
-//         return  p_analog->CONST.P_STATES[p_conversion->CHANNEL].Result;
-//     }
-//     else
-//     {
-//         return p_conversion->P_STATE->Result;
-//     }
-// }
 
 /* Interface for void array this way */
 static inline bool _Analog_ADC_ReadIsActive(const Analog_ADC_T * p_adc)
@@ -304,6 +253,19 @@ extern void Analog_Init(Analog_T * p_analog);
 
 
 #endif
+
+// typedef const struct
+// {
+//     const uint8_t BATCH;
+//     // const Analog_Conversion_T * const  P_CONVERSIONS;
+//     const Analog_Conversion_T * const * const PP_CONVERSIONS; /*  Array of pointers */
+//     const uint8_t CONVERSION_COUNT;
+//     const Analog_Callback_T COMPLETE; /* On group complete */
+//     void * const P_CONTEXT;
+//     volatile analog_result_t * const P_RESULTS_BUFFER;  /*!< Persistent ADC results buffer, virtual channel index.  */
+// }
+// Analog_ConversionBatch_T;
+
 
 // typedef union Analog_ChannelFlags
 // {

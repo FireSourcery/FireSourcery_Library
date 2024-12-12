@@ -148,18 +148,6 @@ static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .
 // static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t word) { Motor_FeedbackMode_T flags = { .Word = word }; return flags; }
 static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t word) { return ((Motor_FeedbackMode_T) { .Word = word }); }
 
-typedef union Motor_ABC
-{
-    struct
-    {
-        uint8_t A : 1U;
-        uint8_t B : 1U;
-        uint8_t C : 1U;
-    };
-    uint8_t Value;
-}
-Motor_ABC_T;
-
 /*
     Effectively sync mailbox for async calculations
 */
@@ -189,6 +177,18 @@ typedef union
     uint16_t Value;
 }
 Motor_FaultFlags_T;
+
+typedef union Motor_PhaseFlags
+{
+    struct
+    {
+        uint8_t A : 1U;
+        uint8_t B : 1U;
+        uint8_t C : 1U;
+    };
+    uint8_t Value;
+}
+Motor_PhaseFlags_T;
 
 /*
     Direction Run SubState
@@ -351,8 +351,7 @@ typedef struct Motor
     const Motor_Const_T CONST;
     Motor_Config_T Config;
 
-    volatile MotorAnalog_Results_T AnalogResults;
-    // MotorAnalog_ChannelGroup_T AnalogGroup;
+    // volatile MotorAnalog_Results_T AnalogResults;
 
     Encoder_T Encoder;
     Hall_T Hall;
@@ -371,10 +370,11 @@ typedef struct Motor
     Motor_Direction_T Direction;                /* Active spin direction. SubState of Run State */
     Motor_FeedbackMode_T FeedbackMode;          /* Active FeedbackMode, Control/Run SubState */
     Motor_FaultFlags_T FaultFlags;              /* Fault SubState */
-    Motor_StateFlags_T StateFlags;            /* Can be pushed to modules */
+    Motor_StateFlags_T StateFlags;              /* Can be pushed to modules */
     Motor_OpenLoopState_T OpenLoopState;
     Motor_CalibrationState_T CalibrationState;  /* SubState, selection for calibration */
     uint8_t CalibrationStateIndex;
+    volatile Motor_PhaseFlags_T PhaseFlags;
 
     /*
         Active Limits
@@ -488,7 +488,7 @@ typedef struct Motor
     // volatile uint32_t DebugError;
     volatile uint32_t DebugTime[10U];
     volatile uint32_t DebugCounter;
-    volatile Motor_ABC_T PhaseFlags;
+
 #endif
 }
 Motor_T, * Motor_Ptr;

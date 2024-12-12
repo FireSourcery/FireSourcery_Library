@@ -152,7 +152,6 @@ typedef enum MotorController_OptDinMode
 }
 MotorController_OptDinMode_T;
 
-// todo split status and state
 typedef union MotorController_StatusFlags
 {
     struct
@@ -166,7 +165,7 @@ typedef union MotorController_StatusFlags
         // uint16_t ILimitHeatPcb      : 1U;
         // uint16_t ILimitHeatMotors   : 1U;
         // uint16_t IsStopped          : 1U;
-        uint16_t BuzzerEnable       : 1U;
+        uint16_t BuzzerEnable          : 1U;
     };
     uint16_t Word;
 }
@@ -328,10 +327,10 @@ typedef struct MotorController
     MotorController_Config_T Config;
     BootRef_T BootRef; /* Buffer */
 
-    volatile MotAnalog_Results_T AnalogResults;
-#if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) // NDEBUG
-    MotAnalog_Results_T FaultAnalogRecord;
-#endif
+//     volatile MotAnalog_Results_T AnalogResults;
+// #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) // NDEBUG
+//     MotAnalog_Results_T FaultAnalogRecord;
+// #endif
 
     MotAnalogUser_T AnalogUser;
     Blinky_T Buzzer;
@@ -385,11 +384,6 @@ MotorController_T, * MotorControllerPtr_T;
 /******************************************************************************/
 static inline Motor_T * MotorController_GetPtrMotor(const MotorController_T * p_mc, uint8_t motorIndex) { return &(p_mc->CONST.P_MOTORS[motorIndex]); }
 
-static inline uint16_t MotorController_GetVSource_Adcu(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_VSOURCE.P_STATE->Result; }
-
-static inline uint16_t MotorController_GetHeatPcb_Adcu(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_HEAT_PCB.P_STATE->Result; }
-static inline uint16_t MotorController_GetHeatMosfets_Adcu(const MotorController_T * p_mc) { return p_mc->AnalogResults.HeatMosfetsResults_Adcu[0U]; }
-static inline uint16_t MotorController_GetHeatMosfetsIndex_Adcu(const MotorController_T * p_mc, uint8_t index) { return p_mc->AnalogResults.HeatMosfetsResults_Adcu[index]; }
 
 /******************************************************************************/
 /*
@@ -533,18 +527,6 @@ static inline void MotorController_ProcDriveZero(MotorController_T * p_mc)
     //     MotorController_TryHoldAll(p_mc);
     //     // p_mc->StateFlags.IsStopped = 1U;
     // }
-}
-
-static inline void MotorController_CalibrateAdc(MotorController_T * p_mc)
-{
-    void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_CalibrateAdc);
-    MotAnalogUser_SetThrottleZero(&p_mc->AnalogUser, p_mc->AnalogResults.Throttle_Adcu); // todo wait filter state
-    MotAnalogUser_SetBrakeZero(&p_mc->AnalogUser, p_mc->AnalogResults.Brake_Adcu);
-}
-
-static inline void MotorController_CalibrateSensorAll(MotorController_T * p_mc)
-{
-    void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_CalibrateSensor);
 }
 
 /******************************************************************************/

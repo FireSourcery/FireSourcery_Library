@@ -49,7 +49,6 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 // #ifndef NDEBUG
     Motor_Debug_CaptureRefTime(p_motor);
 // #endif
-
     p_motor->ControlTimerBase++;
     StateMachine_ProcState(&p_motor->StateMachine);
 #ifdef CONFIG_MOTOR_PWM_INTERRUPT_CLEAR_PER_MOTOR
@@ -81,10 +80,8 @@ void Motor_MarkAnalog_Thread(Motor_T * p_motor)
     //    {
     //        case FOC_I_ABC :
     //            break;
-
     //        case FOC_VBEMF :
     //            break;
-
     //        default :
     //            break;
     //    }
@@ -96,7 +93,7 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
     {
         Analog_MarkConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_HEAT);
 
-        switch (Thermistor_PollMonitor(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu))
+        switch (Thermistor_PollMonitor(&p_motor->Thermistor, Motor_Analog_GetHeat(p_motor)))
         {
             case THERMISTOR_STATUS_OK:
                 if (p_motor->StateFlags.HeatWarning == 1U) /* todo move to thermistor */

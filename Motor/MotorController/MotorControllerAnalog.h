@@ -34,18 +34,9 @@
 #include "Peripheral/Analog/Analog.h"
 #include "Motor/Motor/MotorAnalog.h"
 
-// #if     defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_1)
-//     #define MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT (1U)
-// #elif   defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_2) /* Top/Bottom */
-//     #define MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT (2U)
-// #elif   defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_4) /*  */
-//     #define MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT (4U)
-// #elif   defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_N) /*  */
 #ifndef MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT
     #error "MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT must be defined"
 #endif
-// #endif
-
 
 #define MOT_ANALOG_CHANNEL_COUNT (7U + MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT)
 
@@ -68,14 +59,12 @@ typedef enum MotAnalog_Channel
 }
 MotAnalog_Channel_T;
 
-typedef enum MotAnalog_Channel_Heat
+typedef enum MotAnalog_Channel_HeatMosfets
 {
-    // MOT_ANALOG_CHANNEL_HEAT_PCB = MOT_ANALOG_CHANNEL_HEAT_PCB,
     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_0 = MOT_ANALOG_CHANNEL_HEAT_MOSFETS,
     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_1,
     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_2,
     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_3,
-    // MOT_ANALOG_CHANNEL_HEAT_MOSFETS = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_0,
     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_TOP = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_0,
     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_BOT = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_1,
     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_Q1 = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_0,
@@ -83,40 +72,23 @@ typedef enum MotAnalog_Channel_Heat
     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_Q3 = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_2,
     MOT_ANALOG_CHANNEL_HEAT_MOSFETS_Q4 = MOT_ANALOG_CHANNEL_HEAT_MOSFETS_3,
 }
-MotAnalog_Channel_Heat_T;
+MotAnalog_Channel_HeatMosfets_T;
 
-typedef union MotAnalog_Results
-{
-    struct
-    {
-        analog_result_t VSource_Adcu;
-        analog_result_t VSense_Adcu;
-        analog_result_t VAccs_Adcu;
-        analog_result_t HeatPcb_Adcu;
-        analog_result_t HeatMosfetsResults_Adcu[MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT];
-        analog_result_t Throttle_Adcu;
-        analog_result_t Brake_Adcu;
-    };
-    analog_result_t Channels[MOT_ANALOG_CHANNEL_COUNT];
-}
-MotAnalog_Results_T;
-
-// typedef struct MotAnalog_Conversions
+// typedef union MotAnalog_Results
 // {
-//     const Analog_Conversion_T CONVERSION_VSOURCE;
-//     const Analog_Conversion_T CONVERSION_VSENSE;
-//     const Analog_Conversion_T CONVERSION_VACCS;
-//     const Analog_Conversion_T CONVERSION_HEAT_PCB;
-//     const Analog_Conversion_T CONVERSION_HEAT_MOSFETS;
-//     // const Analog_Conversion_T HEAT_MOSFETS_CONVERSIONS[MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT];
-//     const Analog_Conversion_T CONVERSION_THROTTLE;
-//     const Analog_Conversion_T CONVERSION_BRAKE;
+//     struct
+//     {
+//         analog_result_t VSource_Adcu;
+//         analog_result_t VSense_Adcu;
+//         analog_result_t VAccs_Adcu;
+//         analog_result_t HeatPcb_Adcu;
+//         analog_result_t HeatMosfetsResults_Adcu[MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT];
+//         analog_result_t Throttle_Adcu;
+//         analog_result_t Brake_Adcu;
+//     };
+//     analog_result_t Channels[MOT_ANALOG_CHANNEL_COUNT];
 // }
-// MotAnalog_Conversions_T;
+// MotAnalog_Results_T;
 
-    //todo remove
-    // const AnalogN_AdcFlags_T ADCS_GROUP_USER;
-    // const AnalogN_AdcFlags_T ADCS_GROUP_V;
-    // const AnalogN_AdcFlags_T ADCS_GROUP_HEAT;
 
 #endif

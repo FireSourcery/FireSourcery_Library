@@ -127,7 +127,7 @@ void MotorController_ResetBootDefault(MotorController_T * p_mc)
 
 void MotorController_ResetVSourceActiveRef(MotorController_T * p_mc)
 {
-    Motor_Static_InitVSourceRef_Adcu(p_mc->AnalogResults.VSource_Adcu); /* Set Motor Ref using read Value */
+    Motor_Static_InitVSourceRef_Adcu(p_mc->CONST.CONVERSION_VSOURCE.P_STATE->Result); /* Set Motor Ref using read Value */
     for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_ResetUnitsVabc(&p_mc->CONST.P_MOTORS[iMotor]); }
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
     MotorController_User_SetBatteryLifeDefault(p_mc);
@@ -145,16 +145,16 @@ void MotorController_SetAdcResultsNominal(MotorController_T * p_mc)
 {
     // alternatively enqueue adc during init
     // handle via init state wait
-    if (VMonitor_IsEnable(&p_mc->VMonitorSense) == true) { p_mc->AnalogResults.VSense_Adcu = VMonitor_GetNominal(&p_mc->VMonitorSense); };
-    if (VMonitor_IsEnable(&p_mc->VMonitorAccs) == true) { p_mc->AnalogResults.VAccs_Adcu = VMonitor_GetNominal(&p_mc->VMonitorAccs); };
-    if (VMonitor_IsEnable(&p_mc->VMonitorSource) == true) { p_mc->AnalogResults.VSource_Adcu = VMonitor_GetNominal(&p_mc->VMonitorSource); };
-    if (Thermistor_IsMonitorEnable(&p_mc->ThermistorPcb) == true) { p_mc->AnalogResults.HeatPcb_Adcu = Thermistor_GetWarningThreshold_Adcu(&p_mc->ThermistorPcb); };
+    // if (VMonitor_IsEnable(&p_mc->VMonitorSense) == true) { p_mc->AnalogResults.VSense_Adcu = VMonitor_GetNominal(&p_mc->VMonitorSense); };
+    // if (VMonitor_IsEnable(&p_mc->VMonitorAccs) == true) { p_mc->AnalogResults.VAccs_Adcu = VMonitor_GetNominal(&p_mc->VMonitorAccs); };
+    // if (VMonitor_IsEnable(&p_mc->VMonitorSource) == true) { p_mc->AnalogResults.VSource_Adcu = VMonitor_GetNominal(&p_mc->VMonitorSource); };
+    // if (Thermistor_IsMonitorEnable(&p_mc->ThermistorPcb) == true) { p_mc->AnalogResults.HeatPcb_Adcu = Thermistor_GetWarningThreshold_Adcu(&p_mc->ThermistorPcb); };
 
-    for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
-    {
-        if (Thermistor_IsMonitorEnable(&p_mc->MosfetsThermistors[iMosfets]) == true)
-            { p_mc->AnalogResults.HeatMosfetsResults_Adcu[iMosfets] = Thermistor_GetWarningThreshold_Adcu(&p_mc->MosfetsThermistors[iMosfets]); };
-    }
+    // for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
+    // {
+    //     if (Thermistor_IsMonitorEnable(&p_mc->MosfetsThermistors[iMosfets]) == true)
+    //         { p_mc->AnalogResults.HeatMosfetsResults_Adcu[iMosfets] = Thermistor_GetWarningThreshold_Adcu(&p_mc->MosfetsThermistors[iMosfets]); };
+    // }
 
     // for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONST.P_MOTORS[iMotor]); }
 }

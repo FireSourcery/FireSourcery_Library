@@ -36,12 +36,6 @@ void FOC_Init(FOC_T * p_foc)
     // FOC_ClearState(p_foc);
 }
 
-// void FOC_SetVectorMax(FOC_T * p_foc, qfrac16_t dMax)
-// {
-//     p_foc->VectorMaxMagnitude = QFRAC16_MAX;
-//     p_foc->VectorMaxD = dMax;
-// }
-
 /* Prep Align using input intensity */
 void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd)
 {
@@ -54,9 +48,9 @@ void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd)
 
 void FOC_ZeroSvpwm(FOC_T * p_foc)
 {
-    p_foc->DutyA = 65536U / 2U;
-    p_foc->DutyB = 65536U / 2U;
-    p_foc->DutyC = 65536U / 2U;
+    p_foc->DutyA = QFRAC16_MAX / 2;
+    p_foc->DutyB = QFRAC16_MAX / 2;
+    p_foc->DutyC = QFRAC16_MAX / 2;
 }
 
 void FOC_ClearControlState(FOC_T * p_foc)
@@ -92,6 +86,7 @@ void FOC_ClearObserveState(FOC_T * p_foc)
 
 //     p_foc->Sine = 0;
 //     p_foc->Cosine = 0;
+
 //     p_foc->Va = 0;
 //     p_foc->Vb = 0;
 //     p_foc->Vc = 0;

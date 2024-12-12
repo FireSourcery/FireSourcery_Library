@@ -33,6 +33,7 @@
 #define MOTOR_CONTROLLER_THREAD_H
 
 #include "MotorController_User.h"
+#include "MotorController_Analog.h"
 #include "Motor/Motor/Motor_Thread.h"
 
 static inline bool CheckDividerMask(uint32_t num, uint32_t align) { return ((num & align) == 0UL); }
@@ -45,7 +46,7 @@ static inline bool CheckDividerMask(uint32_t num, uint32_t align) { return ((num
 static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
 {
     MotAnalogUser_Cmd_T cmd = MotAnalogUser_PollCmd(&p_mc->AnalogUser);
-    MotAnalogUser_CaptureInput(&p_mc->AnalogUser, p_mc->AnalogResults.Throttle_Adcu, p_mc->AnalogResults.Brake_Adcu);
+    MotAnalogUser_CaptureInput(&p_mc->AnalogUser, MotorController_Analog_GetThrottle(p_mc), MotorController_Analog_GetBrake(p_mc));
 
     /* MotAnalog user implements edge detect implemented and cmd priority, but handled by state machine */
     switch(cmd)
@@ -116,12 +117,12 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
     for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
         { Analog_MarkConversion(p_mc->CONST.P_ANALOG, &p_mc->CONST.HEAT_MOSFETS_CONVERSIONS[iMosfets]); }
 
-    Thermistor_PollMonitor(&p_mc->ThermistorPcb, p_mc->AnalogResults.HeatPcb_Adcu);
-    if(Thermistor_IsFault(&p_mc->ThermistorPcb) == true) { p_mc->FaultFlags.PcbOverheat = 1U; isFault = true; }
+    Thermistor_PollMonitor(&p_mc->ThermistorPcb, MotorController_Analog_GetHeatPcb(p_mc));
+    if (Thermistor_IsFault(&p_mc->ThermistorPcb) == true) { p_mc->FaultFlags.PcbOverheat = 1U; isFault = true; }
 
     for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
     {
-        Thermistor_PollMonitor(&p_mc->MosfetsThermistors[iMosfets], p_mc->AnalogResults.HeatMosfetsResults_Adcu[iMosfets]);
+        Thermistor_PollMonitor(&p_mc->MosfetsThermistors[iMosfets], MotorController_Analog_GetHeatMosfets(p_mc, iMosfets));
         if (Thermistor_IsFault(&p_mc->MosfetsThermistors[iMosfets]) == true) { p_mc->FaultFlags.MosfetsOverheat = 1U; isFault = true; }
     }
 
@@ -174,8 +175,8 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
     Analog_MarkConversion(p_mc->CONST.P_ANALOG, &p_mc->CONST.CONVERSION_VACCS);
     Analog_MarkConversion(p_mc->CONST.P_ANALOG, &p_mc->CONST.CONVERSION_VSENSE);
 
-    VMonitor_PollStatus(&p_mc->VMonitorSense, p_mc->AnalogResults.VSense_Adcu);
-    VMonitor_PollStatus(&p_mc->VMonitorAccs, p_mc->AnalogResults.VAccs_Adcu);
+    VMonitor_PollStatus(&p_mc->VMonitorSense,  MotorController_Analog_GetVSense(p_mc));
+    VMonitor_PollStatus(&p_mc->VMonitorAccs,  MotorController_Analog_GetVAccs(p_mc));
     if (VMonitor_IsFault(&p_mc->VMonitorSense) == true) { p_mc->FaultFlags.VSenseLimit = 1U; isFault = true; }
     if (VMonitor_IsFault(&p_mc->VMonitorAccs) == true) { p_mc->FaultFlags.VAccsLimit = 1U; isFault = true; }
 
@@ -273,8 +274,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
     p_mc->TimerDividerCounter++;
     //    BrakeThread(p_mc);
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    VMonitor_Status_T vStatus = VMonitor_PollStatus(&p_mc->VMonitorSource, MotorController_GetVSource_Adcu(p_mc)); // todo include edge
-    // VMonitor_Status_T vStatus = VMonitor_PollStatus(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu); // todo include edge
+    VMonitor_Status_T vStatus = VMonitor_PollStatus(&p_mc->VMonitorSource, MotorController_Analog_GetVSource(p_mc)); // todo include edge
 
     switch (vStatus)
     {

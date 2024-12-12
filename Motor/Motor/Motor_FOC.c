@@ -118,6 +118,8 @@ void Motor_FOC_ProcFeedbackMatch(Motor_T * p_motor)
     {
         Linear_Ramp_SetOutputState(&p_motor->Ramp, qReq);
     }
+
+    p_motor->PhaseFlags.Value = 0U;
 }
 
 /******************************************************************************/
@@ -144,14 +146,18 @@ static void ActivateAngle(Motor_T * p_motor)
 static void ProcInnerFeedbackOutput(Motor_T * p_motor)
 {
     // if(Motor_IsAnalogCycle(p_motor) == true)
-    if (p_motor->PhaseFlags.Value == 0x07)
+    if (p_motor->PhaseFlags.Value == 0x07U)     /* alternatively use batch callback */
     {
+        Motor_FOC_CaptureIa(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA.P_STATE->Result);
+        Motor_FOC_CaptureIb(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB.P_STATE->Result);
+        Motor_FOC_CaptureIc(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC.P_STATE->Result);
         ProcClarkePark(p_motor);
         ProcInnerFeedback(p_motor); /* Set Vd Vq */
         p_motor->PhaseFlags.Value = 0U;
     }
     ActivateAngle(p_motor);
 }
+
 
 /******************************************************************************/
 /*!
@@ -174,8 +180,6 @@ void Motor_FOC_ActivateOutput(Motor_T * p_motor)
 */
 void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
-    // Motor_FOC_EnqueueIabc(p_motor);     /* Samples chain completes sometime after queue resumes. if ADC ISR priority higher than PWM. */
-
 #ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
     Motor_ExternControl(p_motor);
 #endif
@@ -185,22 +189,9 @@ void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
     Linear_Ramp_ProcOutput(&p_motor->Ramp);
 
     ProcOuterFeedback(p_motor);
-    /* Optionally set adc callback */
     ProcInnerFeedbackOutput(p_motor);
 
     Motor_Debug_CaptureTime(p_motor, 4U);
-}
-
-/*
-    activate angle with current feedback for align and openloop
-*/
-void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, qangle16_t angle, qfrac16_t dReq, qfrac16_t qReq)
-{
-    // Motor_FOC_EnqueueIabc(p_motor);
-    FOC_SetTheta(&p_motor->Foc, angle);
-    FOC_SetReqD(&p_motor->Foc, dReq);
-    FOC_SetReqQ(&p_motor->Foc, qReq);
-    ProcInnerFeedbackOutput(p_motor);
 }
 
 /*
@@ -210,11 +201,46 @@ void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, qangle16_t angle, qfrac16
 */
 void Motor_FOC_ProcAngleVBemf(Motor_T * p_motor)
 {
-    // Motor_FOC_EnqueueVabc(p_motor);
     p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
     FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
     Motor_ProcSensorSpeed(p_motor);
-    FOC_ProcVBemfClarkePark(&p_motor->Foc);
+
+    if (p_motor->PhaseFlags.Value == 0x07U)
+    {
+        Motor_FOC_CaptureVa(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA.P_STATE->Result);
+        Motor_FOC_CaptureVb(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB.P_STATE->Result);
+        Motor_FOC_CaptureVc(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VC.P_STATE->Result);
+        FOC_ProcVBemfClarkePark(&p_motor->Foc);
+        p_motor->PhaseFlags.Value = 0U;
+    }
+}
+
+/* Begin Observe, Ifeedback not updated */
+void Motor_FOC_ClearControlState(Motor_T * p_motor)
+{
+    FOC_ClearControlState(&p_motor->Foc);
+    Linear_Ramp_ZeroOutputState(&p_motor->Ramp);
+    PID_Reset(&p_motor->PidIq);
+    PID_Reset(&p_motor->PidId);
+    PID_Reset(&p_motor->PidSpeed);
+}
+
+/* Begin Control, Vabc not updated */
+void Motor_FOC_ClearObserveState(Motor_T * p_motor)
+{
+    FOC_ClearObserveState(&p_motor->Foc);
+}
+
+
+/*
+    activate angle with current feedback for align and openloop
+*/
+void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, qangle16_t angle, qfrac16_t dReq, qfrac16_t qReq)
+{
+    FOC_SetTheta(&p_motor->Foc, angle);
+    FOC_SetReqD(&p_motor->Foc, dReq);
+    FOC_SetReqQ(&p_motor->Foc, qReq);
+    ProcInnerFeedbackOutput(p_motor);
 }
 
 /* use speed as V match */

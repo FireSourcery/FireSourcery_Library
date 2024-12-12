@@ -31,9 +31,11 @@
 #ifndef MOT_ANALOG_CONVERSION_H
 #define MOT_ANALOG_CONVERSION_H
 
+#include "MotorController.h"
+#include "MotorControllerAnalog.h"
+
 #include "Peripheral/Analog/Analog.h"
 #include "Motor/Motor/MotorAnalog.h"
-#include "MotorControllerAnalog.h"
 
 typedef enum MotorController_Analog_ChannelGlobal
 {
@@ -45,7 +47,16 @@ typedef enum MotorController_Analog_ChannelGlobal
 }
 MotorController_Analog_ChannelGlobal_T;
 
-// , .P_RESULT = &((p_Mot)->AnalogResults.Channels[LocalChannel])
+// static inline uint16_t MotorController_Analog_GetAdcu(const MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return p_mc->AnalogResults.Channels[adcChannel]; }
+// static inline uint8_t MotorController_Analog_GetAdcu_Msb8(const MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return MotorController_User_GetAdcu(p_mc, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
+
+static inline uint16_t MotorController_Analog_GetVSource(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_VSOURCE.P_STATE->Result; }
+static inline uint16_t MotorController_Analog_GetVSense(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_VSENSE.P_STATE->Result; }
+static inline uint16_t MotorController_Analog_GetVAccs(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_VACCS.P_STATE->Result; }
+static inline uint16_t MotorController_Analog_GetHeatPcb(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_HEAT_PCB.P_STATE->Result; }
+static inline uint16_t MotorController_Analog_GetHeatMosfets(const MotorController_T * p_mc, uint8_t index) { return p_mc->CONST.HEAT_MOSFETS_CONVERSIONS[index].P_STATE->Result; }
+static inline uint16_t MotorController_Analog_GetThrottle(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_THROTTLE.P_STATE->Result; }
+static inline uint16_t MotorController_Analog_GetBrake(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_BRAKE.P_STATE->Result; }
 
 #define MOT_ANALOG_CONVERSION_INIT(LocalChannel, AdcId, AdcPin, p_Mot) ANALOG_CONVERSION_INIT((MOT_ANALOG_CHANNEL_BASE_GENERAL + LocalChannel), 0U, p_Mot, AdcId, AdcPin)
 
@@ -53,26 +64,13 @@ MotorController_Analog_ChannelGlobal_T;
 #define MOT_ANALOG_CONVERSION_VSENSE_INIT(VSenseHost, VSensePin, p_Mot)     MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_VSENSE, VSenseHost, VSensePin, p_Mot)
 #define MOT_ANALOG_CONVERSION_VACCS_INIT(VAccsHost, VAccsPin, p_Mot)        MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_VACCS,  VAccsHost, VAccsPin, p_Mot)
 
-#define MOT_ANALOG_CONVERSION_HEAT_PCB_INIT(HeatPcbHost, HeatPcbPin, p_Mot) MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_HEAT_PCB, HeatPcbHost, HeatPcbPin, p_Mot)
-#define MOT_ANALOG_CONVERSION_HEAT_MOSFETS_INIT_0(HeatMosHost, HeatMosPin, p_Mot) MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_HEAT_MOSFETS, HeatMosHost, HeatMosPin, p_Mot)
-#define MOT_ANALOG_CONVERSION_HEAT_MOSFETS_INIT_N(Id, HeatMosHost, HeatMosPin, p_Mot) MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_HEAT_MOSFETS + Id, HeatMosHost, HeatMosPin, p_Mot)
+#define MOT_ANALOG_CONVERSION_HEAT_PCB_INIT(HeatPcbHost, HeatPcbPin, p_Mot)             MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_HEAT_PCB, HeatPcbHost, HeatPcbPin, p_Mot)
+#define MOT_ANALOG_CONVERSION_HEAT_MOSFETS_INIT_0(HeatMosHost, HeatMosPin, p_Mot)       MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_HEAT_MOSFETS, HeatMosHost, HeatMosPin, p_Mot)
+#define MOT_ANALOG_CONVERSION_HEAT_MOSFETS_INIT_N(Id, HeatMosHost, HeatMosPin, p_Mot)   MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_HEAT_MOSFETS + Id, HeatMosHost, HeatMosPin, p_Mot)
 
-#define MOT_ANALOG_CONVERSIONS_INIT_USER_THROTTLE(ThrottleHost, ThrottlePin, p_Mot) MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_THROTTLE, ThrottleHost, ThrottlePin, p_Mot)
-#define MOT_ANALOG_CONVERSIONS_INIT_USER_BRAKE(BrakeHost, BrakePin, p_Mot)          MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_BRAKE, BrakeHost, BrakePin, p_Mot)
+#define MOT_ANALOG_CONVERSIONS_INIT_USER_THROTTLE(ThrottleHost, ThrottlePin, p_Mot)     MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_THROTTLE, ThrottleHost, ThrottlePin, p_Mot)
+#define MOT_ANALOG_CONVERSIONS_INIT_USER_BRAKE(BrakeHost, BrakePin, p_Mot)              MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_BRAKE, BrakeHost, BrakePin, p_Mot)
 
-// #define MOT_ANALOG_CONVERSIONS_INIT(VSourcePin, VSourceHost, VAccPin, VAccHost, VSensePin, VSenseHost, HeatPcbPin, HeatPcbHost, HeatMosTopPin, HeatMosTopHost, HeatMosBotPin, HeatMosBotHost, ThrottlePin, ThrottleHost, BrakePin, BrakeHost, p_Mot) \
-// {                                                                                                                                                                                                               \
-//     .CONVERSION_VSOURCE     = ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_VSOURCE,              0U,     p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VSourcePin,      &(p_Hosts)[VSourceHost]),               \
-//     .CONVERSION_VSENSE      = ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_VSENSE,               0U,     p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VSensePin,       &(p_Hosts)[VSenseHost]),                \
-//     .CONVERSION_VACCS       = ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_VACCS,                0U,     p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), VAccPin,         &(p_Hosts)[VAccHost]),                  \
-//     .CONVERSION_HEAT_PCB    = ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_HEAT_PCB,             0U,     p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), HeatPcbPin,      &(p_Hosts)[HeatPcbHost]),               \
-//     _MOTOR_ANALOG_CONVERSION_MOSFETS(HeatMosTopPin, HeatMosTopHost, HeatMosBotPin, HeatMosBotHost, p_Hosts, p_Mot)                                                                                            \
-//     .CONVERSION_THROTTLE    = ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_THROTTLE,             0U,     p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), ThrottlePin,     &(p_Hosts)[ThrottleHost]),              \
-//     .CONVERSION_BRAKE       = ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_BRAKE,                0U,     p_Mot, &((p_Mot)->AnalogResults.Channels[0U]), BrakePin,        &(p_Hosts)[BrakeHost]),                 \
-//     .ADCS_GROUP_V           = { .Flags = (uint8_t)((1U << VAccHost) | (1U << VSenseHost)),                                  },                                                                                  \
-//     .ADCS_GROUP_HEAT        = { .Flags = (uint8_t)((1U << HeatPcbHost) | (1U << HeatMosTopHost) | (1U << HeatMosBotHost)),  },                                                                                  \
-//     .ADCS_GROUP_USER        = { .Flags = (uint8_t)((1U << ThrottleHost) | (1U << BrakeHost)),                               },                                                                                  \
-// }
 
 
 #endif

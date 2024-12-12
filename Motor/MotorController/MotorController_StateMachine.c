@@ -31,6 +31,7 @@
 */
 /******************************************************************************/
 #include "MotorController_StateMachine.h"
+#include "MotorController_Analog.h"
 #include "Utility/StateMachine/StateMachine.h"
 #include "System/SysTime/SysTime.h"
 #include "System/Reboot/Reboot.h"
@@ -89,7 +90,7 @@ static void Init_Proc(MotorController_T * p_mc)
     if (SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT)
     {
         wait = false;
-        MotorController_PollAdcFaultFlags(p_mc); /* Sensor polled in main thread, but must be cleared by function call */
+        MotorController_PollAdcFaultFlags(p_mc); /* Clear FaultFlags set by sensor polling in main thread. */
         // if (p_mc->FaultFlags.Value != 0U) { wait = true; }
         // if(p_mc->InitFlags.Word != 0U) { wait = true; }   // indirectly poll inputs
 
@@ -449,6 +450,18 @@ static const StateMachine_State_T STATE_NEUTRAL =
         Calibration routines set status id upon completion.
 */
 /******************************************************************************/
+static inline void MotorController_CalibrateAdc(MotorController_T * p_mc)
+{
+    void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_CalibrateAdc);
+    MotAnalogUser_SetThrottleZero(&p_mc->AnalogUser, MotorController_Analog_GetThrottle(p_mc)); // todo wait filter state
+    MotAnalogUser_SetBrakeZero(&p_mc->AnalogUser, MotorController_Analog_GetBrake(p_mc));
+}
+
+static inline void MotorController_CalibrateSensorAll(MotorController_T * p_mc)
+{
+    void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_CalibrateSensor);
+}
+
 static void Blocking_Entry(MotorController_T * p_mc) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; }
 
 static void Blocking_Proc(MotorController_T * p_mc)
@@ -602,9 +615,9 @@ static const StateMachine_State_T STATE_SERVO =
 static void Fault_Entry(MotorController_T * p_mc)
 {
     MotorController_ForceDisableAll(p_mc);
-#if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
-    memcpy((void *)&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
-#endif
+// #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
+//     memcpy((void *)&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
+// #endif
     Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U);
 }
 

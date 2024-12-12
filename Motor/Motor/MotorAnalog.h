@@ -60,26 +60,6 @@ typedef enum MotorAnalog_Channel
 }
 MotorAnalog_Channel_T;
 
-typedef union MotorAnalog_Results
-{
-    struct
-    {
-        analog_result_t Va_Adcu;
-        analog_result_t Vb_Adcu;
-        analog_result_t Vc_Adcu;
-        analog_result_t Ia_Adcu;
-        analog_result_t Ib_Adcu;
-        analog_result_t Ic_Adcu;
-        analog_result_t Heat_Adcu;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        analog_result_t Sin_Adcu;
-        analog_result_t Cos_Adcu;
-#endif
-    };
-    analog_result_t Channels[MOTOR_ANALOG_CHANNEL_COUNT];
-}
-MotorAnalog_Results_T;
-
 typedef union MotorAnalog_Conversions
 {
     struct
@@ -100,6 +80,25 @@ typedef union MotorAnalog_Conversions
 }
 MotorAnalog_Conversions_T;
 
+// typedef union MotorAnalog_Results
+// {
+//     struct
+//     {
+//         analog_result_t Va_Adcu;
+//         analog_result_t Vb_Adcu;
+//         analog_result_t Vc_Adcu;
+//         analog_result_t Ia_Adcu;
+//         analog_result_t Ib_Adcu;
+//         analog_result_t Ic_Adcu;
+//         analog_result_t Heat_Adcu;
+// #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+//         analog_result_t Sin_Adcu;
+//         analog_result_t Cos_Adcu;
+// #endif
+//     };
+//     analog_result_t Channels[MOTOR_ANALOG_CHANNEL_COUNT];
+// }
+// MotorAnalog_Results_T;
 
 // typedef enum MotorAnalog_Batch
 // {

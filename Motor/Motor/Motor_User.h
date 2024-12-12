@@ -32,6 +32,7 @@
 #define MOTOR_USER_H
 
 #include "Motor_StateMachine.h"
+#include "Motor_Analog.h"
 #include "Motor_FOC.h"
 
 #include <stdint.h>
@@ -84,10 +85,8 @@ static inline uint16_t Motor_User_GetVSpeed_UFrac16(const Motor_T * p_motor) { r
 */
 static inline uint16_t Motor_User_GetElectricalPower_UFrac16(const Motor_T * p_motor) { return Motor_GetCommutationModeInt32(p_motor, Motor_FOC_GetElectricalPower_UFrac16, 0U); }
 
-// static inline uint16_t Motor_User_GetAdcu(const Motor_T * p_motor, MotorAnalog_Channel_T adcChannel)       { return p_motor->AnalogResults.Channels[adcChannel]; }
-// static inline uint8_t Motor_User_GetAdcu_Msb8(const Motor_T * p_motor, MotorAnalog_Channel_T adcChannel)   { return Motor_User_GetAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
 
-static inline uint16_t Motor_User_GetHeat_Adcu(const Motor_T * p_motor) { return p_motor->AnalogResults.Heat_Adcu; }
+static inline uint16_t Motor_User_GetHeat_Adcu(const Motor_T * p_motor) { return Motor_Analog_GetHeat(p_motor); }
 
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
@@ -117,7 +116,7 @@ typedef union Motor_User_StatusFlags
 }
 Motor_User_StatusFlags_T;
 
-static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags1(const Motor_T * p_motor)
+static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags(const Motor_T * p_motor)
 {
     Motor_User_StatusFlags_T status;
     status.HeatWarning = Thermistor_IsWarning(&p_motor->Thermistor);

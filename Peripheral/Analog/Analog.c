@@ -44,9 +44,7 @@
 static inline analog_result_t CaptureConversionResult(const Analog_ADC_T * p_adc, const Analog_Conversion_T * p_conversion)
 {
     analog_result_t result = HAL_Analog_ReadResult(p_adc->P_HAL_ANALOG, p_conversion->PIN);
-    /* ON_COMPLETE May incurr additional interrupt time, while eliminating double buffer */
-    /* if the next conversion completes before OnComplete functions return, ADC ISR should flag pending, but cannot(should not) interrupt the on going ISR */
-    // if (p_conversion->P_RESULT != NULL) { *p_conversion->P_RESULT = result; }
+    /* Capture may incurr additional interrupt time, while eliminating double buffer */
     if (p_conversion->ON_COMPLETE != NULL) { p_conversion->ON_COMPLETE(p_conversion->P_CONTEXT, result); }
     return result;
 }
@@ -115,7 +113,7 @@ static inline void ADC_StartFifo(Analog_ADC_T * p_adc)
 static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId, const Analog_Conversion_T * const * pp_entries, uint8_t length)
 {
     Analog_Conversion_T * p_entry;
-    // assert(pp_entries[p_adc->ActiveChannelIndex].p_Conversion != NULL);
+
     p_adc->ActiveConversionCount = 0U;
     /*
         Find the next marked channel,
@@ -128,7 +126,6 @@ static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId
         p_adc->ActiveChannelIndex += 1U;
         if (p_entry->ADC_ID == adcId && p_entry->P_STATE->IsMarked == true)
         {
-            assert(p_entry != NULL);
             p_adc->ActiveConversions[p_adc->ActiveConversionCount] = p_entry;
             p_adc->ActiveConversionCount += 1U;
         }
@@ -176,30 +173,6 @@ static inline void ADC_OnComplete(Analog_ADC_T * p_adc, uint8_t adcId, const Ana
 //     if(p_options->ON_OPTIONS != 0U) { p_options->ON_OPTIONS(p_options->P_CALLBACK_CONTEXT); }
 // }
 
-/******************************************************************************/
-/*!
-    Protected
-*/
-/******************************************************************************/
-// /*
-//     alternatively,
-//     prep with out starting, for multiple Analog_T map
-//     for multiple channel spaces
-// */
-// void _Analog_FillConversions(Analog_T * p_analog)
-// {
-//     Analog_ADC_T * p_adc;
-//     /* if Adc is still active, all channels will remain marked until the next start call */
-//     for (uint8_t iAdc = 0U; iAdc < p_analog->CONST.ADC_COUNT; iAdc++)
-//     {
-//         p_adc = &p_analog->CONST.P_ADCS[iAdc];
-//         if (_Analog_ADC_ReadIsActive(p_adc) == false)  /* no possibility of interrupt when this function is called by a single thread */
-//         {
-//             // p_adc->ActiveChannelIndex = 0U;
-//             ADC_FillActiveConversions(p_analog, iAdc, &p_analog->CONST.P_CHANNEL_ENTRIES, p_analog->CONST.CONVERSIONS_COUNT);
-//         }
-//     }
-// }
 
 /******************************************************************************/
 /*!
@@ -286,7 +259,6 @@ void Analog_Init(Analog_T * p_analog)
     Channel Fags
 */
 /******************************************************************************/
-
 /*
     Add Conversion by marking its flag
     Analog_Conversion_T provides ADC select abstraction

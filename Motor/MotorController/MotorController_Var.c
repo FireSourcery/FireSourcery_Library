@@ -105,10 +105,10 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 // case MOT_VAR_DEBUG:                 value = Millis();                                               break;
                 case MOT_VAR_MC_STATE:              value = MotorController_User_GetStateId(p_mc);                  break;
                 case MOT_VAR_MC_STATUS_FLAGS:       value = MotorController_User_GetStateFlags(p_mc).Word;          break;
-                case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_User_GetFaultFlags(p_mc).Value;          break;
-                case MOT_VAR_V_SOURCE:              value = p_mc->AnalogResults.VSource_Adcu;                       break;
-                case MOT_VAR_V_SENSOR:              value = p_mc->AnalogResults.VSense_Adcu;                        break;
-                case MOT_VAR_V_ACCS:                value = p_mc->AnalogResults.VAccs_Adcu;                         break;
+                case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_User_GetFaultFlags(p_mc).Value;         break;
+                case MOT_VAR_V_SOURCE:              value = MotorController_Analog_GetVSource(p_mc);                break;
+                case MOT_VAR_V_SENSOR:              value = MotorController_Analog_GetVSense(p_mc);                 break;
+                case MOT_VAR_V_ACCS:                value = MotorController_Analog_GetVAccs(p_mc);                  break;
                 case MOT_VAR_HEAT_PCB:              value = MotorController_User_GetHeatPcb_Adcu(p_mc);             break;
                 case MOT_VAR_HEAT_MOSFETS:          value = MotorController_User_GetHeatMosfets_Adcu(p_mc);         break;
                 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
