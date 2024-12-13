@@ -49,11 +49,12 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 // #ifndef NDEBUG
     Motor_Debug_CaptureRefTime(p_motor);
 // #endif
-    p_motor->ControlTimerBase++;
     StateMachine_ProcState(&p_motor->StateMachine);
 #ifdef CONFIG_MOTOR_PWM_INTERRUPT_CLEAR_PER_MOTOR
     Motor_ClearInterrupt(p_motor);
 #endif
+
+    p_motor->ControlTimerBase++;
 }
 
 /* Optionally mark before Start */

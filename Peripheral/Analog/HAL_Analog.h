@@ -38,6 +38,20 @@
 #include <stdint.h>
 #include <assert.h>
 
+#ifndef HAL_ADC_VALUE_T
+#define HAL_ADC_VALUE_T uint16_t
+#endif
+
+#ifndef HAL_ADC_PIN_T
+#define HAL_ADC_PIN_T uint8_t
+#endif
+
+typedef HAL_ADC_VALUE_T adc_t;
+typedef HAL_ADC_PIN_T adc_pin_t;
+
+
+
+
 /*
 typedef void HAL_Analog_T;
 
@@ -66,9 +80,6 @@ static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal) {
 static inline void HAL_Analog_Init(const HAL_Analog_T * p_hal) { (void)p_hal; }
 */
 
-/*
-
-*/
 
 static inline void HAL_Analog_WriteFifo(HAL_Analog_T * p_hal, uint32_t * p_pins, uint8_t count)
 {

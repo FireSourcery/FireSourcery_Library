@@ -84,7 +84,6 @@ static inline void ADC_Capture(Analog_ADC_T * p_adc)
 #else
     ADC_CaptureChannel(p_adc);
 #endif
-    p_adc->ActiveConversionCount = 0U;
 }
 
 /*
@@ -126,7 +125,7 @@ static inline void ADC_Start(Analog_ADC_T * p_adc)
 }
 
 /*
-    Critical buffer. single threaded access only
+    Write Critical Buffer. single threaded access only
     Set active conversions for ADC
     from Analog_T buffers to Analog_ADC_T buffer
 */
@@ -157,16 +156,21 @@ static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId
 
 static inline void ADC_OnComplete(Analog_ADC_T * p_adc, uint8_t adcId, const Analog_Conversion_T * const * pp_entries, uint8_t length)
 {
-    if ((HAL_Analog_ReadConversionCompleteFlag(p_adc->P_HAL_ANALOG) == true) || p_adc->ActiveConversionCount > 0U) /* OR logic, in case CompleteFlag does not set */
+    HAL_Analog_ClearConversionCompleteFlag(p_adc->P_HAL_ANALOG);
+
+    if (p_adc->ActiveConversionCount > 0U)
     {
-        HAL_Analog_ClearConversionCompleteFlag(p_adc->P_HAL_ANALOG);
-        /* includes handling mark entries */
         ADC_Capture(p_adc);
+        p_adc->ActiveConversionCount = 0U;
 
         if (p_adc->ActiveChannelIndex < length) /* Continue until all marked are complete */
         {
             ADC_FillActiveConversions(p_adc, adcId, pp_entries, length);
             ADC_Start(p_adc);
+        }
+        else
+        {
+            HAL_Analog_Deactivate(p_adc->P_HAL_ANALOG);
         }
 
         // optionally proc on complete in parallel
@@ -174,7 +178,7 @@ static inline void ADC_OnComplete(Analog_ADC_T * p_adc, uint8_t adcId, const Ana
 #ifndef NDEBUG
     else
     {
-        _Analog_ADC_Deactivate(p_adc);
+        HAL_Analog_Deactivate(p_adc->P_HAL_ANALOG);
         p_adc->ErrorCount++;
     }
 #endif
@@ -225,13 +229,14 @@ void Analog_PollComplete(Analog_T * p_analog)
     }
 }
 
+// void StartConversions(Analog_T * p_analog, Analog_Conversion_T * p_conversions, uint8_t count)
+
 /*
     No Critical is needed as long as -
         Only a single thread starts the conversions.
     Activate markedChannels
 */
 void Analog_StartConversions(Analog_T * p_analog)
-// void Analog_StartConversions(Analog_T * p_analog, Analog_Conversion_T * p_conversions, uint8_t count)
 {
     Analog_ADC_T * p_adc;
     /* if Adc is still active, all channels will remain marked until the next start call */

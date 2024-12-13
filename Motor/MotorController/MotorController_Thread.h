@@ -251,7 +251,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
             _MotorController_ProcHeatMonitor(p_mc);
             /* Can use low priority check, as motor is already in fault state */
             if (MotorController_IsAnyMotorFault(p_mc) == true) { p_mc->FaultFlags.Motors = 1U; MotorController_StateMachine_EnterFault(p_mc); }
-            // for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
+            // for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
 
         #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
             // _Blinky_Toggle(&p_mc->Meter);
@@ -259,6 +259,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
             // volatile uint32_t test = VMonitor_ChargeLevelOfAdcu_Percent16(&p_mc->VMonitorSource, p_mc->AnalogResults.VSource_Adcu);
         #endif
         }
+
         p_mc->MainDividerCounter++; //Timer_GetBase(p_timer)
     }
 }
@@ -303,6 +304,11 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
     Analog_MarkConversion(&p_mc->CONST.CONVERSION_VSOURCE);
 #endif
 
+    // if (p_mc->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG)
+    // {
+    //     if (MotAnalogUser_PollBrakePins(&p_mc->AnalogUser) == true) { MotorController_User_ForceDisableControl(p_mc); }
+    // }
+
     // if(CheckDividerMask(p_mc->TimerDividerCounter, p_mc->CONST.TIMER_DIVIDER_1000) == true)
     // {
     //     _MotorController_ProcVoltageMonitor(p_mc); /* Except voltage supply */
@@ -320,7 +326,12 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 static inline void MotorController_PWM_Thread(MotorController_T * p_mc)
 {
     for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_MarkAnalog_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
-    Analog_StartConversions(p_mc->CONST.P_ANALOG);
+
+    if ((Motor_IsAnalogCycle(&p_mc->CONST.P_MOTORS[0U]) == true)) /* todo common timer */
+    {
+        Analog_StartConversions(p_mc->CONST.P_ANALOG);
+    }
+
     for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PWM_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
     Motor_ClearInterrupt(&p_mc->CONST.P_MOTORS[0U]);
 }
