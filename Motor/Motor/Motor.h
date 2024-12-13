@@ -411,8 +411,8 @@ typedef struct Motor
     /*
 
     */
-    qangle16_t MechanicalAngle;
-    qangle16_t ElectricalAngle;         /* Angle Feedback. Shared E-Cycle edge detect, User output */
+    angle16_t MechanicalAngle;
+    angle16_t ElectricalAngle;         /* Angle Feedback. Shared E-Cycle edge detect, User output */
 
     PID_T PidPosition;    /* todo */
 
@@ -453,7 +453,7 @@ typedef struct Motor
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
     Linear_T UnitsAngleSpeed;           /*  */
     Linear_T UnitsSurfaceSpeed;         /*  */
-    qangle16_t SpeedAngle;              /* Save for reference, MechanicalDelta */
+    angle16_t SpeedAngle;              /* Save for reference, MechanicalDelta */
 #endif
 
     /*
@@ -659,9 +659,9 @@ static inline int16_t Motor_IReqLimitOf(const Motor_T * p_motor, int16_t req)   
 static inline int16_t Motor_ReqOfSpeedLimit(const Motor_T * p_motor, int16_t req)
 {
     int16_t limitedReq;
-    /* qfrac16_div always return positive < 1 */
-    if      (p_motor->Speed_Frac16 < p_motor->SpeedLimitCw_Frac16)  { limitedReq = 0 - qfrac16_div(p_motor->SpeedLimitCw_Frac16, p_motor->Speed_Frac16); } /* Speed is more negative */
-    else if (p_motor->Speed_Frac16 > p_motor->SpeedLimitCcw_Frac16) { limitedReq = qfrac16_div(p_motor->SpeedLimitCcw_Frac16, p_motor->Speed_Frac16); }
+    /* fract16_div always return positive < 1 */
+    if      (p_motor->Speed_Frac16 < p_motor->SpeedLimitCw_Frac16)  { limitedReq = 0 - fract16_div(p_motor->SpeedLimitCw_Frac16, p_motor->Speed_Frac16); } /* Speed is more negative */
+    else if (p_motor->Speed_Frac16 > p_motor->SpeedLimitCcw_Frac16) { limitedReq = fract16_div(p_motor->SpeedLimitCcw_Frac16, p_motor->Speed_Frac16); }
     else                                                            { limitedReq = req; }
     return limitedReq;
 }
@@ -673,8 +673,8 @@ static inline int16_t Motor_ReqOfSpeedLimit(const Motor_T * p_motor, int16_t req
 static inline int16_t Motor_VReqOfILimit(const Motor_T * p_motor, int32_t feedback, int16_t req)
 {
     int16_t limitedReq;
-    if      (feedback < p_motor->ILimitCw_Frac16)   { limitedReq = 0 - qfrac16_div(p_motor->ILimitCw_Frac16, feedback); }
-    else if (feedback > p_motor->ILimitCcw_Frac16)  { limitedReq = qfrac16_div(p_motor->ILimitCcw_Frac16, feedback); }
+    if      (feedback < p_motor->ILimitCw_Frac16)   { limitedReq = 0 - fract16_div(p_motor->ILimitCw_Frac16, feedback); }
+    else if (feedback > p_motor->ILimitCcw_Frac16)  { limitedReq = fract16_div(p_motor->ILimitCcw_Frac16, feedback); }
     else                                            { limitedReq = req; }
     return limitedReq;
 };
@@ -715,10 +715,10 @@ extern void Motor_Init(Motor_T * p_motor);
 extern void Motor_InitReboot(Motor_T * p_motor);
 extern void Motor_InitSensor(Motor_T * p_motor);
 
-extern qangle16_t Motor_PollSensorAngle(Motor_T * p_motor);
+extern angle16_t Motor_PollSensorAngle(Motor_T * p_motor);
 extern bool Motor_ProcSensorSpeed(Motor_T * p_motor);
 extern void Motor_ProcSpeedFeedback(Motor_T * p_motor);
-extern qangle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor);
+extern angle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor);
 
 extern void Motor_ZeroSensor(Motor_T * p_motor);
 extern void Motor_CalibrateSensorZero(Motor_T * p_motor);

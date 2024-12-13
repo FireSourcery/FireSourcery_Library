@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   QFrac16.c
+    @file   Fract16.c
     @author FireSourcery
     @brief This file contains functions for fixed-point trigonometric calculations using 16-bit fractional values.
     @version V0
@@ -32,7 +32,7 @@
 #include <assert.h>
 
 /*! Resolution: 1024 steps per revolution */
-const qfrac16_t QFRAC16_SINE_90_TABLE[QFRAC16_SINE_90_TABLE_LENGTH] =
+const fract16_t FRACT16_SINE_90_TABLE[FRACT16_SINE_90_TABLE_LENGTH] =
 {
     0, 201, 402, 603, 804, 1005, 1206, 1406,
     1607, 1808, 2009, 2209, 2410, 2610, 2811, 3011,
@@ -69,8 +69,8 @@ const qfrac16_t QFRAC16_SINE_90_TABLE[QFRAC16_SINE_90_TABLE_LENGTH] =
 };
 
 /* Alternatively, use 180 table to include sin(90) == 1 */
-// #ifdef CONFIG_QFRAC16_QFRAC16_SINE_180_TABLE
-// const accum_t QFRAC16_SINE_180_TABLE[QFRAC16_SINE_90_TABLE_LENGTH] =
+// #ifdef CONFIG_FRACT16_FRACT16_SINE_180_TABLE
+// const accum_t FRACT16_SINE_180_TABLE[FRACT16_SINE_90_TABLE_LENGTH] =
 // {
 //     32768,
 // }
@@ -82,14 +82,14 @@ const qfrac16_t QFRAC16_SINE_90_TABLE[QFRAC16_SINE_90_TABLE_LENGTH] =
     Use 8 most significant digits of 90 degree bound.
     Removes sign / 180 degree bit, 90 degree bit, and 6 lsb.
 */
-static inline qfrac16_t sin90(qangle16_t theta)
+static inline fract16_t sin90(angle16_t theta)
 {
-    return QFRAC16_SINE_90_TABLE[(uint8_t)(theta >> QFRAC16_SINE_90_TABLE_LSB)];
+    return FRACT16_SINE_90_TABLE[(uint8_t)(theta >> FRACT16_SINE_90_TABLE_LSB)];
 }
 
-static inline qfrac16_t cos90(qangle16_t theta)
+static inline fract16_t cos90(angle16_t theta)
 {
-    return QFRAC16_SINE_90_TABLE[(0xFFU - (uint8_t)(theta >> QFRAC16_SINE_90_TABLE_LSB))];
+    return FRACT16_SINE_90_TABLE[(0xFFU - (uint8_t)(theta >> FRACT16_SINE_90_TABLE_LSB))];
 }
 
 /*
@@ -98,29 +98,29 @@ static inline qfrac16_t cos90(qangle16_t theta)
     [180, 270)  => [0x8000, 0xBFFF] => [0, 0xFF] == [0, -1)
     [270, 360)  => [0xC000, 0xFFFF] => [0xFF, 0] == (-1, 0]
 */
-qfrac16_t qfrac16_sin(qangle16_t theta)
+fract16_t fract16_sin(angle16_t theta)
 {
-    qfrac16_t sine;
-    switch(qangle16_quadrant(theta))
+    fract16_t sine;
+    switch(angle16_quadrant(theta))
     {
-        case QANGLE16_QUADRANT_I:   sine = sin90(theta);                            break;
-        case QANGLE16_QUADRANT_II:  sine = sin90(QANGLE16_180 - 1 - theta);         break;
-        case QANGLE16_QUADRANT_III: sine = 0 - sin90(theta);                        break;
-        case QANGLE16_QUADRANT_IV:  sine = 0 - sin90(QANGLE16_180 - 1 - theta);     break;
+        case ANGLE16_QUADRANT_I:   sine = sin90(theta);                            break;
+        case ANGLE16_QUADRANT_II:  sine = sin90(ANGLE16_180 - 1 - theta);         break;
+        case ANGLE16_QUADRANT_III: sine = 0 - sin90(theta);                        break;
+        case ANGLE16_QUADRANT_IV:  sine = 0 - sin90(ANGLE16_180 - 1 - theta);     break;
         default: sine = 0; break;
     }
     return sine;
 }
 
-qfrac16_t qfrac16_cos(qangle16_t theta)
+fract16_t fract16_cos(angle16_t theta)
 {
-    qfrac16_t cosine;
-    switch(qangle16_quadrant(theta))
+    fract16_t cosine;
+    switch(angle16_quadrant(theta))
     {
-        case QANGLE16_QUADRANT_I:   cosine = sin90(QANGLE16_180 - 1 - theta);       break;
-        case QANGLE16_QUADRANT_II:  cosine = 0 - sin90(theta);                      break;
-        case QANGLE16_QUADRANT_III: cosine = 0 - sin90(QANGLE16_180 - 1 - theta);   break;
-        case QANGLE16_QUADRANT_IV:  cosine = sin90(theta);                          break;
+        case ANGLE16_QUADRANT_I:   cosine = sin90(ANGLE16_180 - 1 - theta);       break;
+        case ANGLE16_QUADRANT_II:  cosine = 0 - sin90(theta);                      break;
+        case ANGLE16_QUADRANT_III: cosine = 0 - sin90(ANGLE16_180 - 1 - theta);   break;
+        case ANGLE16_QUADRANT_IV:  cosine = sin90(theta);                          break;
         default: cosine = 0; break;
     }
     return cosine;
@@ -129,23 +129,23 @@ qfrac16_t qfrac16_cos(qangle16_t theta)
 /*
     Adapted from libfixmath https://github.com/PetteriAimonen/libfixmath/blob/master/libfixMath/Fixedfrac16_trig.c
 */
-qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
+angle16_t fract16_atan2(fract16_t y, fract16_t x)
 {
-    int32_t mask = (y >> QFRAC16_N_BITS);
+    int32_t mask = (y >> FRACT16_N_BITS);
     int32_t yAbs = (y + mask) ^ mask;
     int32_t r, r_3, angle;
 
     if (x >= 0)
     {
-        r = qfrac16_div((x - yAbs), (x + yAbs));
-        r_3 = qfrac16_mul(qfrac16_mul(r, r), r);
-        angle = qfrac16_mul(0x07FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_1_DIV_4;
+        r = fract16_div((x - yAbs), (x + yAbs));
+        r_3 = fract16_mul(fract16_mul(r, r), r);
+        angle = fract16_mul(0x07FF, r_3) - fract16_mul(0x27FF, r) + FRACT16_1_DIV_4;
     }
     else
     {
-        r = qfrac16_div((x + yAbs), (yAbs - x));
-        r_3 = qfrac16_mul(qfrac16_mul(r, r), r);
-        angle = qfrac16_mul(0x07FF, r_3) - qfrac16_mul(0x27FF, r) + QFRAC16_3_DIV_4;
+        r = fract16_div((x + yAbs), (yAbs - x));
+        r_3 = fract16_mul(fract16_mul(r, r), r);
+        angle = fract16_mul(0x07FF, r_3) - fract16_mul(0x27FF, r) + FRACT16_3_DIV_4;
     }
 
     if (y < 0) { angle = 0 - angle; }
@@ -157,19 +157,19 @@ qangle16_t qfrac16_atan2(qfrac16_t y, qfrac16_t x)
     vector_init
     Can compiler optimize into single switch?
 */
-void qfrac16_vector(qfrac16_t * p_x, qfrac16_t * p_y, qangle16_t theta)
+void fract16_vector(fract16_t * p_x, fract16_t * p_y, angle16_t theta)
 {
-    *p_y = qfrac16_sin(theta);
-    *p_x = qfrac16_cos(theta);
+    *p_y = fract16_sin(theta);
+    *p_x = fract16_cos(theta);
 }
 
 /* Max sqrt 46339, 1.41F */
-uint16_t qfrac16_vector_magnitude_squared(qfrac16_t x, qfrac16_t y)
+uint16_t fract16_vector_magnitude_squared(fract16_t x, fract16_t y)
 {
     return (int32_t)x * x + (int32_t)y * y;
 }
 
-uint16_t qfrac16_vector_magnitude(qfrac16_t x, qfrac16_t y)
+uint16_t fract16_vector_magnitude(fract16_t x, fract16_t y)
 {
     return q_sqrt((int32_t)x * x + (int32_t)y * y);
 }
@@ -179,27 +179,27 @@ uint16_t qfrac16_vector_magnitude(qfrac16_t x, qfrac16_t y)
     Component scalar
     @return max/|Vxy|, < 1.0F,
 */
-uint16_t qfrac16_vector_scalar(qfrac16_t x, qfrac16_t y, qfrac16_t mag_limit)
+uint16_t fract16_vector_scalar(fract16_t x, fract16_t y, fract16_t mag_limit)
 {
     uint32_t mag_squared = ((int32_t)x * x) + ((int32_t)y * y);
-    int32_t scalar = QFRAC16_MAX; /* Q17.15, or use QFRAC16_1_OVERSAT */
+    int32_t scalar = FRACT16_MAX; /* Q17.15, or use FRACT16_1_OVERSAT */
     uint16_t magnitude;
 
     if (mag_squared > (int32_t)mag_limit * mag_limit)
     {
         magnitude = q_sqrt(mag_squared);
-        scalar = qfrac16_div(mag_limit, magnitude); /* no saturation needed, mag_limit / magnitude < 1  */
+        scalar = fract16_div(mag_limit, magnitude); /* no saturation needed, mag_limit / magnitude < 1  */
     }
 
     return scalar;
 }
 
-uint16_t qfrac16_vector_scale(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t scalar)
+uint16_t fract16_vector_scale(fract16_t * p_x, fract16_t * p_y, fract16_t scalar)
 {
-    if (scalar < QFRAC16_MAX)
+    if (scalar < FRACT16_MAX)
     {
-        *p_x = (qfrac16_t)qfrac16_mul(*p_x, scalar); /* no saturation needed, scalar < 1 */
-        *p_y = (qfrac16_t)qfrac16_mul(*p_y, scalar);
+        *p_x = (fract16_t)fract16_mul(*p_x, scalar); /* no saturation needed, scalar < 1 */
+        *p_y = (fract16_t)fract16_mul(*p_y, scalar);
     }
 
     return scalar;
@@ -214,14 +214,14 @@ uint16_t qfrac16_vector_scale(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t scalar
     @param mag_limit The maximum allowed magnitude for the vector.
     @return max/|Vxy| for reference.
 */
-uint16_t qfrac16_vector_limit(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t mag_limit)
+uint16_t fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, fract16_t mag_limit)
 {
-    return qfrac16_vector_scale(p_x, p_y, qfrac16_vector_scalar(*p_x, *p_y, mag_limit));
+    return fract16_vector_scale(p_x, p_y, fract16_vector_scalar(*p_x, *p_y, mag_limit));
 }
 
-uint16_t qfrac16_vector_normalize(qfrac16_t * p_x, qfrac16_t * p_y)
+uint16_t fract16_vector_normalize(fract16_t * p_x, fract16_t * p_y)
 {
-    return qfrac16_vector_limit(p_x, p_y, QFRAC16_MAX);
+    return fract16_vector_limit(p_x, p_y, FRACT16_MAX);
 }
 
 
@@ -245,10 +245,10 @@ uint16_t qfrac16_vector_normalize(qfrac16_t * p_x, qfrac16_t * p_y)
 /*!
     @return max/|Vxy|, < 1.0F,
 */
-// uint16_t qfrac16_vector_scalar_fast(qfrac16_t x, qfrac16_t y, qfrac16_t mag_limit)
+// uint16_t fract16_vector_scalar_fast(fract16_t x, fract16_t y, fract16_t mag_limit)
 // {
 //     uint32_t mag_squared = ((int32_t)x * x) + ((int32_t)y * y);
-//     int32_t scalar = QFRAC16_MAX; /* Q17.15, or use QFRAC16_1_OVERSAT */
+//     int32_t scalar = FRACT16_MAX; /* Q17.15, or use FRACT16_1_OVERSAT */
 //     uint16_t magnitude;
 
 //     // if (mag_squared > (int32_t)mag_limit * mag_limit)
@@ -259,7 +259,7 @@ uint16_t qfrac16_vector_normalize(qfrac16_t * p_x, qfrac16_t * p_y)
 //     return scalar;
 // }
 // // Function to limit the vector to a unit vector (magnitude = 1) without using division
-// uint16_t qfrac16_vector_limit_fast(qfrac16_t * p_x, qfrac16_t * p_y, qfrac16_t mag_limit)
+// uint16_t fract16_vector_limit_fast(fract16_t * p_x, fract16_t * p_y, fract16_t mag_limit)
 // {
-//     return qfrac16_vector_scale(p_x, p_y, qfrac16_vector_scalar_fast(*p_x, *p_y, mag_limit));
+//     return fract16_vector_scale(p_x, p_y, fract16_vector_scalar_fast(*p_x, *p_y, mag_limit));
 // }

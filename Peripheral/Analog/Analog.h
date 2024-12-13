@@ -31,7 +31,7 @@
 #ifndef ANALOG_H
 #define ANALOG_H
 
-#include "HAL_Analog.h"
+#include "HAL_ADC.h"
 #include "Global_Analog.h"
 #include "Config.h"
 
@@ -40,23 +40,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifdef CONFIG_ANALOG_CRITICAL_LIBRARY_ENABLE
-#include "System/Critical/Critical.h"
-#endif
-
-/* Software side data storage */
-#ifdef CONFIG_ANALOG_ADC_RESULT_UINT8
-typedef uint8_t analog_result_t;
-#elif defined(CONFIG_ANALOG_ADC_RESULT_UINT16)
-typedef uint16_t analog_result_t;
-#endif
-
-/* ADC Pin Channel - May or may not need 32 bits */
-#ifdef CONFIG_ANALOG_ADC_PIN_UINT8
-typedef uint8_t analog_pin_t;
-#elif defined(CONFIG_ANALOG_ADC_PIN_UINT32)
-typedef uint32_t analog_pin_t;
-#endif
 
 #if defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
 #define ADC_FIFO_LENGTH_MAX HAL_ADC_FIFO_LENGTH_MAX
@@ -67,13 +50,13 @@ typedef uint32_t analog_pin_t;
 typedef uint8_t analog_channel_t; /* Virtual Channel Index */
 
 typedef void (*Analog_Callback_T)(void * p_context);
-typedef void (*Analog_Setter_T)(void * p_context, analog_result_t value);
-// typedef void (*Analog_Callback1_T)(Analog_Conversion_T * p_conversion, analog_result_t value);
-// typedef void (*Analog_SetBatch_T)(void * p_context, uint8_t batchIndex, analog_result_t value);
+typedef void (*Analog_Setter_T)(void * p_context, adc_t value);
+// typedef void (*Analog_Callback1_T)(Analog_Conversion_T * p_conversion, adc_t value);
+// typedef void (*Analog_SetBatch_T)(void * p_context, uint8_t batchIndex, adc_t value);
 
 typedef struct Analog_ConversionState
 {
-    volatile analog_result_t Result;
+    volatile adc_t Result;
     volatile bool IsMarked;
 }
 Analog_ConversionState_T;
@@ -92,12 +75,12 @@ typedef const struct Analog_Conversion
 
     /* HAL Map */
     const uint8_t ADC_ID; /* required to associate state from Analog_T */
-    const analog_pin_t PIN;
+    const adc_pin_t PIN;
 
     const Analog_Setter_T ON_COMPLETE; /* On complete, always runs if set */
     void * const P_CONTEXT;
 
-    // volatile analog_result_t * const P_RESULT;
+    // volatile adc_t * const P_RESULT;
     volatile Analog_ConversionState_T * const P_STATE;
 }
 Analog_Conversion_T;
@@ -138,7 +121,7 @@ typedef struct Analog_ADC
     /* ADC_CONST */
     const struct
     {
-        HAL_Analog_T * const P_HAL_ANALOG;  /*!< ADC register map base address */
+        HAL_ADC_T * const P_HAL_ADC;  /*!< ADC register map base address */
     };
 
     /*
@@ -160,7 +143,7 @@ Analog_ADC_T;
 
 #define ANALOG_ADC_INIT(p_HalAnalog) \
 {                                                                   \
-    .P_HAL_ANALOG       = p_HalAnalog,                              \
+    .P_HAL_ADC       = p_HalAnalog,                              \
 }
 
 typedef const struct Analog_Const
@@ -212,14 +195,14 @@ static inline bool _Analog_ADC_ReadIsActive(const Analog_ADC_T * p_adc)
 {
     /*
         sufficient For lower priority thread check. lower priority thread cannot override ISR update
-        HAL_Analog_ReadConversionCompleteFlag will not be set if called from lower priority thread
+        HAL_ADC_ReadConversionCompleteFlag will not be set if called from lower priority thread
     */
-    return (HAL_Analog_ReadConversionActiveFlag(p_adc->P_HAL_ANALOG) == true);
+    return (HAL_ADC_ReadConversionActiveFlag(p_adc->P_HAL_ADC) == true);
 }
 
 static inline void _Analog_ADC_Deactivate(const Analog_ADC_T * p_adc)
 {
-    HAL_Analog_Deactivate(p_adc->P_HAL_ANALOG);
+    HAL_ADC_Deactivate(p_adc->P_HAL_ADC);
 }
 
 /*
@@ -243,8 +226,8 @@ static inline void Analog_Deactivate(const Analog_T * p_analog)
 
 */
 /******************************************************************************/
-static inline analog_result_t Analog_ResultOf(const Analog_Conversion_T * p_conversion) { return p_conversion->P_STATE->Result; }
-static inline analog_result_t Analog_ResultOfChannel(const Analog_T * p_analog, analog_channel_t channel) { return Analog_ResultOf(p_analog->CONST.PP_CONVERSIONS[channel]); }
+static inline adc_t Analog_ResultOf(const Analog_Conversion_T * p_conversion) { return p_conversion->P_STATE->Result; }
+static inline adc_t Analog_ResultOfChannel(const Analog_T * p_analog, analog_channel_t channel) { return Analog_ResultOf(p_analog->CONST.PP_CONVERSIONS[channel]); }
 
 
 /*
@@ -273,7 +256,7 @@ extern void Analog_Init(Analog_T * p_analog);
 //     const uint8_t CONVERSION_COUNT;
 //     const Analog_Callback_T COMPLETE; /* On group complete */
 //     void * const P_CONTEXT;
-//     volatile analog_result_t * const P_RESULTS_BUFFER;  /*!< Persistent ADC results buffer, virtual channel index.  */
+//     volatile adc_t * const P_RESULTS_BUFFER;  /*!< Persistent ADC results buffer, virtual channel index.  */
 // }
 // Analog_ConversionBatch_T;
 // void Analog_MarkConversionBatch(Analog_T * p_analog, const Analog_ConversionBatch_T * p_conversion)

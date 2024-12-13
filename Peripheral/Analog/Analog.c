@@ -40,9 +40,9 @@
 /******************************************************************************/
 /* Per ADC */
 /******************************************************************************/
-static inline analog_result_t CaptureConversionResult(const Analog_ADC_T * p_adc, const Analog_Conversion_T * p_conversion)
+static inline adc_t CaptureConversionResult(const Analog_ADC_T * p_adc, const Analog_Conversion_T * p_conversion)
 {
-    analog_result_t result = HAL_Analog_ReadResult(p_adc->P_HAL_ANALOG, p_conversion->PIN);
+    adc_t result = HAL_ADC_ReadResult(p_adc->P_HAL_ADC, p_conversion->PIN);
     /* Capture may incurr additional interrupt time, while eliminating double buffer */
     if (p_conversion->ON_COMPLETE != NULL) { p_conversion->ON_COMPLETE(p_conversion->P_CONTEXT, result); }
     return result;
@@ -65,7 +65,7 @@ static inline void ADC_CaptureChannel(Analog_ADC_T * p_adc)
 static inline void ADC_CaptureFifo(Analog_ADC_T * p_adc)
 {
     Analog_ConversionState_T * p_entry;
-    if (p_adc->ActiveConversionCount == HAL_Analog_ReadFifoCount(p_adc->P_HAL_ANALOG))
+    if (p_adc->ActiveConversionCount == HAL_ADC_ReadFifoCount(p_adc->P_HAL_ADC))
     {
         /* Read in the same way it was pushed */
         for (uint8_t iConversion = 0U; iConversion < p_adc->ActiveConversionCount; iConversion++)
@@ -91,7 +91,7 @@ static inline void ADC_Capture(Analog_ADC_T * p_adc)
 */
 static inline void ADC_StartChannel(Analog_ADC_T * p_adc)
 {
-    HAL_Analog_Activate(p_adc->P_HAL_ANALOG, p_adc->ActiveConversions[0U]->PIN);
+    HAL_ADC_Activate(p_adc->P_HAL_ADC, p_adc->ActiveConversions[0U]->PIN);
 }
 /*
 */
@@ -99,17 +99,17 @@ static inline void ADC_StartFifo(Analog_ADC_T * p_adc)
 {
     Analog_Conversion_T * p_conversion;
 
-    HAL_Analog_WriteFifoCount(p_adc->P_HAL_ANALOG, p_adc->ActiveConversionCount);
+    HAL_ADC_WriteFifoCount(p_adc->P_HAL_ADC, p_adc->ActiveConversionCount);
 
     // for (uint8_t iConversion = 0U; iConversion < p_adc->ActiveConversionCount; iConversion++) /* if active separate from last pin */
     for (uint8_t iConversion = 0U; iConversion < p_adc->ActiveConversionCount - 1U; iConversion++)
     {
         p_conversion = p_adc->ActiveConversions[iConversion];
-        HAL_Analog_WriteFifoPin(p_adc->P_HAL_ANALOG, p_conversion->PIN);
+        HAL_ADC_WriteFifoPin(p_adc->P_HAL_ADC, p_conversion->PIN);
     }
 
     p_conversion = p_adc->ActiveConversions[p_adc->ActiveConversionCount - 1U];
-    HAL_Analog_ActivateFifo(p_adc->P_HAL_ANALOG, p_conversion->PIN);
+    HAL_ADC_ActivateFifo(p_adc->P_HAL_ADC, p_conversion->PIN);
 }
 
 static inline void ADC_Start(Analog_ADC_T * p_adc)
@@ -156,7 +156,7 @@ static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId
 
 static inline void ADC_OnComplete(Analog_ADC_T * p_adc, uint8_t adcId, const Analog_Conversion_T * const * pp_entries, uint8_t length)
 {
-    HAL_Analog_ClearConversionCompleteFlag(p_adc->P_HAL_ANALOG);
+    HAL_ADC_ClearConversionCompleteFlag(p_adc->P_HAL_ADC);
 
     if (p_adc->ActiveConversionCount > 0U)
     {
@@ -170,7 +170,7 @@ static inline void ADC_OnComplete(Analog_ADC_T * p_adc, uint8_t adcId, const Ana
         }
         else
         {
-            HAL_Analog_Deactivate(p_adc->P_HAL_ANALOG);
+            HAL_ADC_Deactivate(p_adc->P_HAL_ADC);
         }
 
         // optionally proc on complete in parallel
@@ -178,7 +178,7 @@ static inline void ADC_OnComplete(Analog_ADC_T * p_adc, uint8_t adcId, const Ana
 #ifndef NDEBUG
     else
     {
-        HAL_Analog_Deactivate(p_adc->P_HAL_ANALOG);
+        HAL_ADC_Deactivate(p_adc->P_HAL_ADC);
         p_adc->ErrorCount++;
     }
 #endif
@@ -187,11 +187,11 @@ static inline void ADC_OnComplete(Analog_ADC_T * p_adc, uint8_t adcId, const Ana
 // void ADC_WriteOptions(Analog_ADC_T * p_adc, const Analog_Options_T * p_options)
 // {
 //     // xor with previous
-//     if(p_options->FLAGS.HwTriggerConversion == 1U)      { HAL_Analog_EnableHwTrigger(p_adc->CONST.P_HAL_ANALOG); }
-//     else                                                { HAL_Analog_DisableHwTrigger(p_adc->CONST.P_HAL_ANALOG); }
+//     if(p_options->FLAGS.HwTriggerConversion == 1U)      { HAL_ADC_EnableHwTrigger(p_adc->CONST.P_HAL_ADC); }
+//     else                                                { HAL_ADC_DisableHwTrigger(p_adc->CONST.P_HAL_ADC); }
 // #ifdef CONFIG_ANALOG_HW_CONTINOUS_CONVERSION_ENABLE
-//     if(p_options->FLAGS.ContinuousConversion == 1U)     { HAL_Analog_EnableContinuousConversion(p_adc->CONST.P_HAL_ANALOG): }
-//     else                                                { HAL_Analog_DisableContinuousConversion(p_adc->CONST.P_HAL_ANALOG); }
+//     if(p_options->FLAGS.ContinuousConversion == 1U)     { HAL_ADC_EnableContinuousConversion(p_adc->CONST.P_HAL_ADC): }
+//     else                                                { HAL_ADC_DisableContinuousConversion(p_adc->CONST.P_HAL_ADC); }
 // #endif
 //     if(p_options->ON_OPTIONS != 0U) { p_options->ON_OPTIONS(p_options->P_CALLBACK_CONTEXT); }
 // }
@@ -218,7 +218,7 @@ void Analog_OnComplete_ISR(Analog_T * p_analog, uint8_t adcId)
 */
 void _Analog_PollComplete(Analog_T * p_analog, uint8_t adcId)
 {
-    if (HAL_Analog_ReadConversionCompleteFlag(p_analog->CONST.P_ADCS[adcId].P_HAL_ANALOG) == true) { Analog_OnComplete_ISR(p_analog, adcId); }
+    if (HAL_ADC_ReadConversionCompleteFlag(p_analog->CONST.P_ADCS[adcId].P_HAL_ADC) == true) { Analog_OnComplete_ISR(p_analog, adcId); }
 }
 
 void Analog_PollComplete(Analog_T * p_analog)
@@ -251,7 +251,7 @@ void Analog_StartConversions(Analog_T * p_analog)
         }
     }
 
-    // if (isComplete == true) { HAL_Analog_Deactivate(p_analog->CONST.P_HAL_ANALOG); }
+    // if (isComplete == true) { HAL_ADC_Deactivate(p_analog->CONST.P_HAL_ADC); }
 }
 
 
@@ -269,15 +269,15 @@ void Analog_Init(Analog_T * p_analog)
 {
     for(uint8_t iAdc = 0U; iAdc < p_analog->CONST.ADC_COUNT; iAdc++)
     {
-        HAL_Analog_Init(p_analog->CONST.P_ADCS[iAdc].P_HAL_ANALOG);
-        HAL_Analog_Deactivate(p_analog->CONST.P_ADCS[iAdc].P_HAL_ANALOG);
+        HAL_ADC_Init(p_analog->CONST.P_ADCS[iAdc].P_HAL_ADC);
+        HAL_ADC_Deactivate(p_analog->CONST.P_ADCS[iAdc].P_HAL_ADC);
     }
 }
 
 
 
-// static inline void _Analog_CaptureLocalPeak(Analog_T * p_analog, analog_result_t result)
-// analog_result_t result = HAL_Analog_ReadResult(p_analog->CONST.P_HAL_ANALOG, p_activeConversion->PIN);
+// static inline void _Analog_CaptureLocalPeak(Analog_T * p_analog, adc_t result)
+// adc_t result = HAL_ADC_ReadResult(p_analog->CONST.P_HAL_ADC, p_activeConversion->PIN);
 // if(p_analog->ActiveOptions.CaptureLocalPeak == true)
 // {
 //     if(result > p_activeConversion->P_RESULTS_BUFFER[p_activeConversion->CHANNEL])

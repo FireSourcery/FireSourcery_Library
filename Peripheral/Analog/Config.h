@@ -43,17 +43,5 @@
     #define CONFIG_ANALOG_ADC_HW_CONTINUOUS_CONVERSION_DISABLE
 #endif
 
-#if     defined(CONFIG_ANALOG_ADC_RESULT_UINT8)
-#elif   defined(CONFIG_ANALOG_ADC_RESULT_UINT16)
-#else
-    #define CONFIG_ANALOG_ADC_RESULT_UINT16
-#endif
-
-#if     defined(CONFIG_ANALOG_ADC_PIN_UINT8)
-#elif   defined(CONFIG_ANALOG_ADC_PIN_UINT32)
-#else
-    #define CONFIG_ANALOG_ADC_PIN_UINT8
-#endif
-
 #endif
 

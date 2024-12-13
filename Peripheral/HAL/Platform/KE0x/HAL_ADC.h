@@ -28,8 +28,8 @@
     @version V0
 */
 /******************************************************************************/
-#ifndef HAL_ANALOG_PLATFORM_H
-#define HAL_ANALOG_PLATFORM_H
+#ifndef HAL_ADC_PLATFORM_H
+#define HAL_ADC_PLATFORM_H
 
 #include "KE0x.h"
 
@@ -38,15 +38,15 @@
 
 #define HAL_ADC_FIFO_LENGTH_MAX 8U
 
-typedef ADC_Type HAL_Analog_T;
+typedef ADC_Type HAL_ADC_T;
 
-static inline void HAL_Analog_Activate(HAL_Analog_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel); }
-static inline uint32_t HAL_Analog_ReadResult(const HAL_Analog_T * p_hal, uint32_t pinChannel) { (void)pinChannel; return p_hal->R; }
+static inline void HAL_ADC_Activate(HAL_ADC_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel); }
+static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_hal, uint32_t pinChannel) { (void)pinChannel; return p_hal->R; }
 
-static inline void HAL_Analog_WriteFifoCount(HAL_Analog_T * p_hal, uint32_t count) { p_hal->SC4 = ADC_SC4_AFDEP(count - 1U); }
-static inline uint8_t HAL_Analog_ReadFifoCount(HAL_Analog_T * p_hal) { return ((p_hal->SC4 & ADC_SC4_AFDEP_MASK) + 1U); }
-static inline void HAL_Analog_WriteFifoPin(HAL_Analog_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_ADCH(pinChannel); }
-static inline void HAL_Analog_ActivateFifo(HAL_Analog_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel); }
+static inline void HAL_ADC_WriteFifoCount(HAL_ADC_T * p_hal, uint32_t count) { p_hal->SC4 = ADC_SC4_AFDEP(count - 1U); }
+static inline uint8_t HAL_ADC_ReadFifoCount(HAL_ADC_T * p_hal) { return ((p_hal->SC4 & ADC_SC4_AFDEP_MASK) + 1U); }
+static inline void HAL_ADC_WriteFifoPin(HAL_ADC_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_ADCH(pinChannel); }
+static inline void HAL_ADC_ActivateFifo(HAL_ADC_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel); }
 
 
 
@@ -54,15 +54,15 @@ static inline void HAL_Analog_ActivateFifo(HAL_Analog_T * p_hal, uint32_t pinCha
     Use NVIC interrupt for local critical section
     p_hal->SC1 &= ~ADC_SC1_AIEN_MASK; aborts conversion
 */
-static inline void HAL_Analog_DisableInterrupt(HAL_Analog_T * p_hal) { (void)p_hal; NVIC_DisableIRQ(ADC_IRQn); }
-static inline void HAL_Analog_EnableInterrupt(HAL_Analog_T * p_hal) { (void)p_hal; NVIC_EnableIRQ(ADC_IRQn); }
+static inline void HAL_ADC_DisableInterrupt(HAL_ADC_T * p_hal) { (void)p_hal; NVIC_DisableIRQ(ADC_IRQn); }
+static inline void HAL_ADC_EnableInterrupt(HAL_ADC_T * p_hal) { (void)p_hal; NVIC_EnableIRQ(ADC_IRQn); }
 
 /*
     Clear interrupt - Clears on reading p_hal->R
 */
-static inline void HAL_Analog_ClearConversionCompleteFlag(const HAL_Analog_T * p_hal)   { (void)p_hal; }
-static inline bool HAL_Analog_ReadConversionCompleteFlag(const HAL_Analog_T * p_hal)    { return ((p_hal->SC1 & (uint32_t)ADC_SC1_COCO_MASK) != 0U); }
-static inline bool HAL_Analog_ReadConversionActiveFlag(const HAL_Analog_T * p_hal)      { return ((p_hal->SC2 & (uint32_t)ADC_SC2_ADACT_MASK) != 0U); }
+static inline void HAL_ADC_ClearConversionCompleteFlag(const HAL_ADC_T * p_hal)   { (void)p_hal; }
+static inline bool HAL_ADC_ReadConversionCompleteFlag(const HAL_ADC_T * p_hal)    { return ((p_hal->SC1 & (uint32_t)ADC_SC1_COCO_MASK) != 0U); }
+static inline bool HAL_ADC_ReadConversionActiveFlag(const HAL_ADC_T * p_hal)      { return ((p_hal->SC2 & (uint32_t)ADC_SC2_ADACT_MASK) != 0U); }
 
 /*
     Any conversion in progress is aborted in the following cases:
@@ -77,7 +77,7 @@ static inline bool HAL_Analog_ReadConversionActiveFlag(const HAL_Analog_T * p_ha
     mode of operation change has occurred and the current and rest of conversions (when
     ADC_SC4[AFDEP] are not all 0s) are therefore invalid
 */
-static inline void HAL_Analog_AbortConversion(HAL_Analog_T * p_hal) { p_hal->SC1 |= ADC_SC1_ADCH_MASK; }
+static inline void HAL_ADC_AbortConversion(HAL_ADC_T * p_hal) { p_hal->SC1 |= ADC_SC1_ADCH_MASK; }
 
 /*
     111111b - Module is disabled
@@ -89,17 +89,17 @@ static inline void HAL_Analog_AbortConversion(HAL_Analog_T * p_hal) { p_hal->SC1
     when continuous conversions are not enabled because the module automatically enters a low-power
     state when a conversion completes.
 */
-static inline void HAL_Analog_Deactivate(HAL_Analog_T * p_hal)
+static inline void HAL_ADC_Deactivate(HAL_ADC_T * p_hal)
 {
     p_hal->SC1 &= ~ADC_SC1_COCO_MASK;
     p_hal->SC1 &= ~ADC_SC1_AIEN_MASK;
     p_hal->SC1 |= ADC_SC1_ADCH_MASK;
 }
 
-static inline void HAL_Analog_EnableHwTrigger(HAL_Analog_T * p_hal)     { p_hal->SC2 |= ADC_SC2_ADTRG_MASK; }
-static inline void HAL_Analog_DisableHwTrigger(HAL_Analog_T * p_hal)    { p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK); }
-static inline void HAL_Analog_DisableContinuousConversion(HAL_Analog_T * p_hal) { p_hal->SC1 &= ~ADC_SC1_ADCO_MASK; }
-static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal)  { p_hal->SC1 |= ADC_SC1_ADCO_MASK; }
+static inline void HAL_ADC_EnableHwTrigger(HAL_ADC_T * p_hal)     { p_hal->SC2 |= ADC_SC2_ADTRG_MASK; }
+static inline void HAL_ADC_DisableHwTrigger(HAL_ADC_T * p_hal)    { p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK); }
+static inline void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_hal) { p_hal->SC1 &= ~ADC_SC1_ADCO_MASK; }
+static inline void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_hal)  { p_hal->SC1 |= ADC_SC1_ADCO_MASK; }
 
 /*
     Reference Manual pg 326
@@ -123,7 +123,7 @@ static inline void HAL_Analog_EnableContinuousConversion(HAL_Analog_T * p_hal)  
 
     Minimal Init, Board sets clock configuration
 */
-static inline void HAL_Analog_Init(HAL_Analog_T * p_hal)
+static inline void HAL_ADC_Init(HAL_ADC_T * p_hal)
 {
     p_hal->SC2 = (p_hal->SC2 & ~ADC_SC2_REFSEL_MASK) | ADC_SC2_REFSEL(1U); /*!< Analog supply pin pair (VDDA/VSSA). >*/
     /*!< Alternate clock (ALTCLK). >*/

@@ -1082,11 +1082,11 @@ static Cmd_Status_T Cmd_debug(MotorController_T * p_mc, int argc, char ** argv)
     // Terminal_SendString_Len(p_term, TestRead.NAME, 8U); Terminal_SendString(p_term, "\r\n");
     // Terminal_SendNum(p_term, TestRead.MANUFACTURE_NUMBER_WORD); Terminal_SendString(p_term, "\r\n");
 
-    // qfrac16_t atan2_0 = qfrac16_atan2(0, 32767);
-    // qfrac16_t atan2_90 = qfrac16_atan2(32767, 0);
-    // qfrac16_t atan2_180 = qfrac16_atan2(0, -32767);
-    // qfrac16_t atan2_270 = qfrac16_atan2(-32767, 0);
-    // qfrac16_t atan2_err = qfrac16_atan2(32767, 32767);
+    // fract16_t atan2_0 = fract16_atan2(0, 32767);
+    // fract16_t atan2_90 = fract16_atan2(32767, 0);
+    // fract16_t atan2_180 = fract16_atan2(0, -32767);
+    // fract16_t atan2_270 = fract16_atan2(-32767, 0);
+    // fract16_t atan2_err = fract16_atan2(32767, 32767);
 
     // Terminal_SendString(p_term, "Atan2: "); Terminal_SendString(p_term, "\r\n");
     // Terminal_SendNum(p_term, atan2_0); Terminal_SendString(p_term, "\r\n");

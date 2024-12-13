@@ -45,7 +45,7 @@ typedef struct __attribute__((aligned(2U)))
     uint16_t Max_MilliV;
     uint16_t ElectricalRotationsRatio; /* = PolePairs / CyclesPerRotation */
 //    uint16_t CyclePerMechRotation;
-    qangle16_t AngleOffet;
+    angle16_t AngleOffet;
     bool IsCcwPositive;        /* Calibrates Ccw as positive */
 }
 SinCos_Config_T;
@@ -61,15 +61,15 @@ typedef struct
     SinCos_Const_T CONST;
     SinCos_Config_T Config;
     Linear_T UnitsAngle;
-    qangle16_t Angle; /* Sensor Output Angle, Mechanical Angle or proportional */
+    angle16_t Angle; /* Sensor Output Angle, Mechanical Angle or proportional */
     // bool IsDirectionPositive;
 
-    // qangle16_t DebugAPre;
-    // qangle16_t DebugBPre;
-    // qangle16_t DebugAPostMech;
-    // qangle16_t DebugBPostMech;
-    // qangle16_t DebugAPostElec;
-    // qangle16_t DebugBPostElec;
+    // angle16_t DebugAPre;
+    // angle16_t DebugBPre;
+    // angle16_t DebugAPostMech;
+    // angle16_t DebugBPostMech;
+    // angle16_t DebugAPostElec;
+    // angle16_t DebugBPostElec;
 }
 SinCos_T;
 
@@ -78,29 +78,29 @@ SinCos_T;
 /*
     Activate Adc outside module
 */
-static inline qangle16_t _SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
+static inline angle16_t _SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-    qfrac16_t sin = Linear_ADC_Frac16(&p_sincos->UnitsAngle, sin_Adcu);
-    qfrac16_t cos = Linear_ADC_Frac16(&p_sincos->UnitsAngle, cos_Adcu);
-    qangle16_t angle = qfrac16_atan2(sin, cos);
+    fract16_t sin = Linear_ADC_Frac16(&p_sincos->UnitsAngle, sin_Adcu);
+    fract16_t cos = Linear_ADC_Frac16(&p_sincos->UnitsAngle, cos_Adcu);
+    angle16_t angle = fract16_atan2(sin, cos);
     return angle;
 }
 
 /*
     Calibration set to return CCW as positive
 */
-static inline qangle16_t SinCos_CaptureAngle(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
+static inline angle16_t SinCos_CaptureAngle(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-    qangle16_t angle = _SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu);
+    angle16_t angle = _SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu);
     angle = angle - p_sincos->Config.AngleOffet; /* move to sinCos calc */
     if(p_sincos->Config.IsCcwPositive == false) { angle = 0 - angle; };
     p_sincos->Angle = angle; //need counter to add offset if multiple cycles per rotation
     return angle;
 }
 
-static inline qangle16_t SinCos_GetMechanicalAngle(SinCos_T * p_sincos) { return p_sincos->Angle; }
+static inline angle16_t SinCos_GetMechanicalAngle(SinCos_T * p_sincos) { return p_sincos->Angle; }
 /* effectively modulus angle max */
-static inline qangle16_t SinCos_GetElectricalAngle(SinCos_T * p_sincos) { return (qangle16_t)((int32_t)p_sincos->Angle * p_sincos->Config.ElectricalRotationsRatio); }
+static inline angle16_t SinCos_GetElectricalAngle(SinCos_T * p_sincos) { return (angle16_t)((int32_t)p_sincos->Angle * p_sincos->Config.ElectricalRotationsRatio); }
 
 /*
     CCW is positive

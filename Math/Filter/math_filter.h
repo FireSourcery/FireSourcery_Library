@@ -43,9 +43,9 @@
     0.015625 -> 64 size array
     0.03125  -> 32 size array
 */
-static inline int16_t filter_mov_avg(qfrac16_t lambda, int32_t yPrev, int32_t x)
+static inline int16_t filter_mov_avg(fract16_t lambda, int32_t yPrev, int32_t x)
 {
-    return ((yPrev * (QFRAC16_1_OVERSAT - lambda)) + (x * lambda)) >> QFRAC16_N_BITS;
+    return ((yPrev * (FRACT16_1_OVERSAT - lambda)) + (x * lambda)) >> FRACT16_N_BITS;
 }
 
 /*

@@ -47,7 +47,7 @@
     Ialpha = Ia
     Ibeta = (Ib - Ic)/sqrt(3)
     alpha = a;
-    beta =  qfrac16_mul(b, QFRAC16_1_DIV_SQRT3) -  qfrac16_mul(c, QFRAC16_1_DIV_SQRT3);
+    beta =  fract16_mul(b, FRACT16_1_DIV_SQRT3) -  fract16_mul(c, FRACT16_1_DIV_SQRT3);
 
     @param[out] p_alpha
     @param[out] p_beta
@@ -57,13 +57,13 @@
     @return  void
  */
  /******************************************************************************/
-static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b, qfrac16_t c)
+static inline void foc_clarke(fract16_t * p_alpha, fract16_t * p_beta, fract16_t a, fract16_t b, fract16_t c)
 {
-    int32_t alpha = qfrac16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, QFRAC16_1_DIV_3);
-    int32_t beta = qfrac16_mul((int32_t)b - (int32_t)c, QFRAC16_1_DIV_SQRT3);
+    int32_t alpha = fract16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, FRACT16_1_DIV_3);
+    int32_t beta = fract16_mul((int32_t)b - (int32_t)c, FRACT16_1_DIV_SQRT3);
 
-    *p_alpha = qfrac16_sat(alpha);
-    *p_beta = qfrac16_sat(beta);
+    *p_alpha = fract16_sat(alpha);
+    *p_beta = fract16_sat(beta);
 }
 
 /******************************************************************************/
@@ -80,12 +80,12 @@ static inline void foc_clarke(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t
     @return  void
 */
 /******************************************************************************/
-static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t a, qfrac16_t b)
+static inline void foc_clarke_ab(fract16_t * p_alpha, fract16_t * p_beta, fract16_t a, fract16_t b)
 {
-    int32_t beta = qfrac16_mul((int32_t)a + (int32_t)b * 2, QFRAC16_1_DIV_SQRT3);
+    int32_t beta = fract16_mul((int32_t)a + (int32_t)b * 2, FRACT16_1_DIV_SQRT3);
 
     *p_alpha = a;
-    *p_beta = qfrac16_sat(beta);
+    *p_beta = fract16_sat(beta);
 }
 
 /******************************************************************************/
@@ -97,17 +97,17 @@ static inline void foc_clarke_ab(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac1
     C = (-alpha - sqrt3*beta)/2
 */
 /******************************************************************************/
-static inline void foc_invclarke(qfrac16_t * p_a, qfrac16_t * p_b, qfrac16_t * p_c, qfrac16_t alpha, qfrac16_t beta)
+static inline void foc_invclarke(fract16_t * p_a, fract16_t * p_b, fract16_t * p_c, fract16_t alpha, fract16_t beta)
 {
-    int32_t alphaDiv2 = 0 - qfrac16_mul(alpha, QFRAC16_1_DIV_2);
-    int32_t betaSqrt3Div2 = qfrac16_mul(beta, QFRAC16_SQRT3_DIV_2);
+    int32_t alphaDiv2 = 0 - fract16_mul(alpha, FRACT16_1_DIV_2);
+    int32_t betaSqrt3Div2 = fract16_mul(beta, FRACT16_SQRT3_DIV_2);
 
     int32_t b = alphaDiv2 + betaSqrt3Div2;
     int32_t c = alphaDiv2 - betaSqrt3Div2;
 
     *p_a = alpha;
-    *p_b = qfrac16_sat(b);
-    *p_c = qfrac16_sat(c);
+    *p_b = fract16_sat(b);
+    *p_c = fract16_sat(c);
 }
 
 /******************************************************************************/
@@ -128,20 +128,20 @@ static inline void foc_invclarke(qfrac16_t * p_a, qfrac16_t * p_b, qfrac16_t * p
 */
 /******************************************************************************/
 /* shared sin cos calc */
-static inline void foc_park_vector(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t alpha, qfrac16_t beta, qfrac16_t sin, qfrac16_t cos)
+static inline void foc_park_vector(fract16_t * p_d, fract16_t * p_q, fract16_t alpha, fract16_t beta, fract16_t sin, fract16_t cos)
 {
-    int32_t d = qfrac16_mul(alpha, cos) + qfrac16_mul(beta, sin);
-    int32_t q = qfrac16_mul(beta, cos) - qfrac16_mul(alpha, sin);
+    int32_t d = fract16_mul(alpha, cos) + fract16_mul(beta, sin);
+    int32_t q = fract16_mul(beta, cos) - fract16_mul(alpha, sin);
 
-    *p_d = qfrac16_sat(d);
-    *p_q = qfrac16_sat(q);
+    *p_d = fract16_sat(d);
+    *p_q = fract16_sat(q);
 }
 
-static inline void foc_park(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t alpha, qfrac16_t beta, qangle16_t theta)
+static inline void foc_park(fract16_t * p_d, fract16_t * p_q, fract16_t alpha, fract16_t beta, angle16_t theta)
 {
-    qfrac16_t cos, sin;
+    fract16_t cos, sin;
 
-    qfrac16_vector(&cos, &sin, theta);
+    fract16_vector(&cos, &sin, theta);
     foc_park_vector(p_d, p_q, alpha, beta, sin, cos);
 }
 
@@ -153,20 +153,20 @@ static inline void foc_park(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t alpha, q
     beta = q*cos(theta) + d*sin(theta)
 */
 /******************************************************************************/
-static inline void foc_invpark_vector(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t d, qfrac16_t q, qfrac16_t sin, qfrac16_t cos)
+static inline void foc_invpark_vector(fract16_t * p_alpha, fract16_t * p_beta, fract16_t d, fract16_t q, fract16_t sin, fract16_t cos)
 {
-    int32_t alpha = qfrac16_mul(d, cos) - qfrac16_mul(q, sin);
-    int32_t beta = qfrac16_mul(d, sin) + qfrac16_mul(q, cos);
+    int32_t alpha = fract16_mul(d, cos) - fract16_mul(q, sin);
+    int32_t beta = fract16_mul(d, sin) + fract16_mul(q, cos);
 
-    *p_alpha = qfrac16_sat(alpha);
-    *p_beta = qfrac16_sat(beta);
+    *p_alpha = fract16_sat(alpha);
+    *p_beta = fract16_sat(beta);
 }
 
-static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_t d, qfrac16_t q, qangle16_t theta)
+static inline void foc_invpark(fract16_t * p_alpha, fract16_t * p_beta, fract16_t d, fract16_t q, angle16_t theta)
 {
-    qfrac16_t cos, sin;
+    fract16_t cos, sin;
 
-    qfrac16_vector(&cos, &sin, theta);
+    fract16_vector(&cos, &sin, theta);
     foc_invpark_vector(p_alpha, p_beta, d, q, sin, cos);
 }
 
@@ -174,7 +174,7 @@ static inline void foc_invpark(qfrac16_t * p_alpha, qfrac16_t * p_beta, qfrac16_
     limit around d
     mag_limit^2 - d^2 = q^2
 */
-static inline void foc_circle_limit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t magnitude_limit, qfrac16_t d_limit)
+static inline void foc_circle_limit(fract16_t * p_d, fract16_t * p_q, fract16_t magnitude_limit, fract16_t d_limit)
 {
     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
     uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
@@ -186,7 +186,7 @@ static inline void foc_circle_limit(qfrac16_t * p_d, qfrac16_t * p_q, qfrac16_t 
     if (d_squared + q_squared > mag_limit_squared)  /* (|Vdq| > magnitude_limit) */
     {
         d_limit_squared = (int32_t)d_limit * d_limit;
-        if (d_squared > d_limit_squared) /* (qfrac16_abs(d) > d_limit) */
+        if (d_squared > d_limit_squared) /* (fract16_abs(d) > d_limit) */
         {
             d_squared = d_limit_squared;
             *p_d = (*p_d < 0) ? (0 - d_limit) : d_limit;

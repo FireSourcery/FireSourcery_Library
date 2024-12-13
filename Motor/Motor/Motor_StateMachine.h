@@ -34,7 +34,7 @@
 #include "Motor.h"
 #include "Utility/StateMachine/StateMachine.h"
 
-#define MSM_TRANSITION_TABLE_LENGTH     (7U)
+#define MSM_TRANSITION_TABLE_LENGTH (7U)
 
 /*
     Motor State Machine Inputs

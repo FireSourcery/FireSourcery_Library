@@ -281,8 +281,8 @@ static const StateMachine_State_T STATE_STOP =
 /******************************************************************************/
 static void Run_Entry(Motor_T * p_motor)
 {
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, 0U);
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcFeedbackMatch, 0U); /* Sync mode can match feedback here */
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutputState, 0U);
 }
 
 static void Run_Proc(Motor_T * p_motor)

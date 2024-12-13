@@ -185,19 +185,19 @@ static void ProcInnerFeedbackOutput(Motor_T * p_motor)
 // void Motor_FOC_ActivateOutputZero(Motor_T * p_motor)
 // {
 //     FOC_ZeroSvpwm(&p_motor->Foc);
-//     Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
+//     Phase_ActuateDuty_Frac16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 //     Phase_ActivateOutputABC(&p_motor->Phase);
 // }
-// void Motor_FOC_ActivateOutputState(Motor_T * p_motor)
-// {
-//     Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
-//     Phase_ActivateOutputABC(&p_motor->Phase);
-// }
+void Motor_FOC_ActivateOutputState(Motor_T * p_motor)
+{
+    Phase_ActuateDuty_Frac16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
+    Phase_ActivateOutputABC(&p_motor->Phase);
+}
 
 void Motor_FOC_ActivateOutput(Motor_T * p_motor)
 {
     FOC_ZeroSvpwm(&p_motor->Foc);
-    Phase_ActivateDuty(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
+    Phase_ActuateDuty_Frac16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
     Phase_ActivateOutputABC(&p_motor->Phase);
 }
 
@@ -246,7 +246,7 @@ void Motor_FOC_ProcAngleVBemf(Motor_T * p_motor)
 /*
     activate angle with current feedback for align and openloop
 */
-void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, qangle16_t angle, qfrac16_t dReq, qfrac16_t qReq)
+void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq)
 {
     FOC_SetTheta(&p_motor->Foc, angle);
     FOC_SetReqD(&p_motor->Foc, dReq);
@@ -357,7 +357,7 @@ void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
 /*
     Feed Forward Angle without ClarkPark on Current
 */
-void Motor_FOC_ActivateAngle(Motor_T * p_motor, qangle16_t angle, qfrac16_t vq, qfrac16_t vd)
+void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vq, fract16_t vd)
 {
     FOC_SetVq(&p_motor->Foc, vq);
     FOC_SetVd(&p_motor->Foc, vd);

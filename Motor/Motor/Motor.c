@@ -163,9 +163,9 @@ void Motor_InitSensor(Motor_T * p_motor)
     Position Sensor Feedback - Speed, Angle
 */
 /******************************************************************************/
-qangle16_t Motor_PollSensorAngle(Motor_T * p_motor)
+angle16_t Motor_PollSensorAngle(Motor_T * p_motor)
 {
-    qangle16_t electricalAngle; /* [0, 65535] maps to negative portions of qangle16_t */
+    angle16_t electricalAngle; /* [0, 65535] maps to negative portions of angle16_t */
 
     switch(p_motor->Config.SensorMode)
     {
@@ -207,9 +207,9 @@ qangle16_t Motor_PollSensorAngle(Motor_T * p_motor)
     return electricalAngle;
 }
 
-qangle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor)
+angle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor)
 {
-    qangle16_t angle;
+    angle16_t angle;
     switch(p_motor->Config.SensorMode)
     {
         // case MOTOR_SENSOR_MODE_HALL:    angle = Encoder_GetAngle(&p_motor->Encoder);    break;
@@ -226,7 +226,7 @@ qangle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor)
 }
 
 /* For SinCos, Sensorless, when not using Encoder module */
-// static inline int32_t PollAngleSpeed(Motor_T * p_motor, qangle16_t speedAngle)
+// static inline int32_t PollAngleSpeed(Motor_T * p_motor, angle16_t speedAngle)
 // {
 //     int32_t speedDelta = speedAngle - p_motor->SpeedAngle; /* loops if no overflow past 1 full cycle */
 //     int32_t speedFeedback_Frac16 = (p_motor->Speed_Frac16 + Linear_Speed_CalcAngleRpmFrac16(&p_motor->UnitsAngleRpm, speedDelta)) / 2;
@@ -486,9 +486,9 @@ bool Motor_ClearILimitEntry(Motor_T * p_motor, uint8_t id)
 
 /* May need to split channels */
 inline bool Motor_TrySystemSpeedLimit(Motor_T * p_motor, uint16_t Percent16)     { return Motor_SetSpeedLimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_MC, Percent16); }
-inline bool Motor_ClearSystemSpeedLimit(Motor_T * p_motor)                      { return Motor_ClearSpeedLimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_MC); }
+inline bool Motor_ClearSystemSpeedLimit(Motor_T * p_motor)                       { return Motor_ClearSpeedLimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_MC); }
 inline bool Motor_TrySystemILimit(Motor_T * p_motor, uint16_t Percent16)         { return Motor_SetILimitEntry(p_motor, MOTOR_SPEED_LIMIT_ACTIVE_MC, Percent16); }
-inline bool Motor_ClearSystemILimit(Motor_T * p_motor)                          { return Motor_ClearILimitEntry(p_motor, MOTOR_SPEED_LIMIT_ACTIVE_MC); }
+inline bool Motor_ClearSystemILimit(Motor_T * p_motor)                           { return Motor_ClearILimitEntry(p_motor, MOTOR_SPEED_LIMIT_ACTIVE_MC); }
 
 /******************************************************************************/
 /*
@@ -663,7 +663,7 @@ void Motor_ResetUnitsVabc(Motor_T * p_motor)
     // Linear_T UnitsVSource_V;
     // Linear_Voltage_Init(&UnitsVSource_V, MOTOR_STATIC.V_ABC_R1, MOTOR_STATIC.V_ABC_R2, GLOBAL_ANALOG.ADC_VREF_MILLIV, GLOBAL_ANALOG.ADC_BITS, 0);
 
-    Linear_ADC_Init(&p_motor->UnitsVabc, 0, Linear_Voltage_AdcuOfV(&UnitsVSource_V, Motor_Static_GetVSource_V()));
+    Linear_ADC_Init(&p_motor->UnitsVabc, 0U, Linear_Voltage_AdcuOfV(&UnitsVSource_V, Motor_Static_GetVSource_V()));
 #else
     (void)p_motor;
 #endif

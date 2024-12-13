@@ -238,8 +238,12 @@ void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine)
         ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
         p_stateMachine->SyncInput = STATE_MACHINE_INPUT_ID_NULL; /* Clear input */
     }
-
-    ProcStateOuput(p_stateMachine);
+#ifdef CONFIG_STATE_MACHINE_PROC_STATE_NO_OUTPUT_ON_INPUT
+    else
+#endif
+    {
+        ProcStateOuput(p_stateMachine);
+    }
 }
 
 /*

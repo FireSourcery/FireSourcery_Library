@@ -78,15 +78,15 @@ MotAnalog_Channel_HeatMosfets_T;
 // {
 //     struct
 //     {
-//         analog_result_t VSource_Adcu;
-//         analog_result_t VSense_Adcu;
-//         analog_result_t VAccs_Adcu;
-//         analog_result_t HeatPcb_Adcu;
-//         analog_result_t HeatMosfetsResults_Adcu[MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT];
-//         analog_result_t Throttle_Adcu;
-//         analog_result_t Brake_Adcu;
+//         adc_t VSource_Adcu;
+//         adc_t VSense_Adcu;
+//         adc_t VAccs_Adcu;
+//         adc_t HeatPcb_Adcu;
+//         adc_t HeatMosfetsResults_Adcu[MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT];
+//         adc_t Throttle_Adcu;
+//         adc_t Brake_Adcu;
 //     };
-//     analog_result_t Channels[MOT_ANALOG_CHANNEL_COUNT];
+//     adc_t Channels[MOT_ANALOG_CHANNEL_COUNT];
 // }
 // MotAnalog_Results_T;
 

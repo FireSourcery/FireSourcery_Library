@@ -31,26 +31,26 @@
 
 void FOC_Init(FOC_T * p_foc)
 {
-    // p_foc->IdqMagnitudeMax = QFRAC16_MAX;
-    // p_foc->IdMax = QFRAC16_1_DIV_SQRT3;
+    // p_foc->IdqMagnitudeMax = FRACT16_MAX;
+    // p_foc->IdMax = FRACT16_1_DIV_SQRT3;
     // FOC_ClearState(p_foc);
 }
 
 /* Prep Align using input intensity */
-void FOC_SetAlign(FOC_T * p_foc, qfrac16_t vd)
+void FOC_SetAlign(FOC_T * p_foc, fract16_t vd)
 {
     p_foc->Vd = vd;
     p_foc->Vq = 0;
     p_foc->Sine = 0;
-    p_foc->Cosine = QFRAC16_MAX;
+    p_foc->Cosine = FRACT16_MAX;
     FOC_ProcInvParkInvClarkeSvpwm(p_foc);
 }
 
 void FOC_ZeroSvpwm(FOC_T * p_foc)
 {
-    p_foc->DutyA = QFRAC16_MAX / 2;
-    p_foc->DutyB = QFRAC16_MAX / 2;
-    p_foc->DutyC = QFRAC16_MAX / 2;
+    p_foc->DutyA = FRACT16_MAX / 2;
+    p_foc->DutyB = FRACT16_MAX / 2;
+    p_foc->DutyC = FRACT16_MAX / 2;
 }
 
 void FOC_ClearControlState(FOC_T * p_foc)

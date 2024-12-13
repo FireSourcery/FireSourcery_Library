@@ -141,8 +141,8 @@ static inline uint16_t Motor_User_GetActiveSpeedLimit(const Motor_T * p_motor)  
     Read-Only
 */
 static inline uint32_t Motor_User_GetControlTimer(const Motor_T * p_motor)                     { return p_motor->ControlTimerBase; }
-static inline qangle16_t Motor_User_GetElectricalAngle(const Motor_T * p_motor)                { return p_motor->ElectricalAngle; }
-static inline qangle16_t Motor_User_GetMechanicalAngle(const Motor_T * p_motor)                { return Motor_GetMechanicalAngle(p_motor); }
+static inline angle16_t Motor_User_GetElectricalAngle(const Motor_T * p_motor)                { return p_motor->ElectricalAngle; }
+static inline angle16_t Motor_User_GetMechanicalAngle(const Motor_T * p_motor)                { return Motor_GetMechanicalAngle(p_motor); }
 
 static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(const Motor_T * p_motor)      { return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
 static inline Motor_StateFlags_T Motor_User_GetStateFlags(const Motor_T * p_motor)           { return p_motor->StateFlags; }

@@ -106,6 +106,7 @@
         "Sourcery",
         "statemachine",
         "switchcpy",
-        "txsize"
+        "txsize",
+        "ufract"
     ],
 }

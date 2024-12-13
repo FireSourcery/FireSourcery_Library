@@ -41,7 +41,7 @@
 
     dutyA, dutyB, dutyC -> 16 bits, q1.15, always positive
 */
-static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16_t * p_dutyC, qfrac16_t alpha, qfrac16_t beta)
+static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16_t * p_dutyC, fract16_t alpha, fract16_t beta)
 {
     /*
         The other 3 of 6 are inverse of the 3 derived
@@ -53,8 +53,8 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
         Z = (beta - sqrt3 * alpha) / 2;
     */
 
-    int32_t betaDiv2 = qfrac16_mul(beta, QFRAC16_1_DIV_2);
-    int32_t alphaSqrt3Div2 = qfrac16_mul(alpha, QFRAC16_SQRT3_DIV_2);
+    int32_t betaDiv2 = fract16_mul(beta, FRACT16_1_DIV_2);
+    int32_t alphaSqrt3Div2 = fract16_mul(alpha, FRACT16_SQRT3_DIV_2);
 
     int32_t magX = beta;
     int32_t magY = betaDiv2 + alphaSqrt3Div2;
@@ -84,7 +84,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
                 B = (1 + X + Z) / 2;
                 C = (1 - X + Z) / 2;
             */
-            z0 = (QFRAC16_MAX + magX + magZ) / 2;
+            z0 = (FRACT16_MAX + magX + magZ) / 2;
             *p_dutyA = (z0 - magZ);
             *p_dutyB = z0;
             *p_dutyC = (z0 - magX);
@@ -106,7 +106,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
                 B = z0 + Z;
                 C = z0 - Y;
             */
-            z0 = (QFRAC16_MAX + magY - magZ) / 2;
+            z0 = (FRACT16_MAX + magY - magZ) / 2;
             *p_dutyA = z0;
             *p_dutyB = (z0 + magZ);
             *p_dutyC = (z0 - magY);
@@ -127,7 +127,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
                 B = z0 + X;
                 C = z0;
             */
-            z0 = (QFRAC16_MAX - magX - magY) / 2;
+            z0 = (FRACT16_MAX - magX - magY) / 2;
             *p_dutyA = (z0 + magY);
             *p_dutyB = (z0 + magX);
             *p_dutyC = z0;
@@ -151,7 +151,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
                 B = z0;
                 C = z0 - X;
             */
-            z0 = (QFRAC16_MAX + magX + magZ) / 2;
+            z0 = (FRACT16_MAX + magX + magZ) / 2;
             *p_dutyA = (z0 - magZ);
             *p_dutyB = z0;
             *p_dutyC = (z0 - magX);
@@ -172,7 +172,7 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
                 B = z0 + Z;
                 C = z0 - Y;
             */
-            z0 = (QFRAC16_MAX + magY - magZ) / 2;
+            z0 = (FRACT16_MAX + magY - magZ) / 2;
             *p_dutyA = z0;
             *p_dutyB = (z0 + magZ);
             *p_dutyC = (z0 - magY);
@@ -193,20 +193,16 @@ static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16
                 B = z0 + X;
                 C = z0;
             */
-            z0 = (QFRAC16_MAX - magX - magY) / 2;
+            z0 = (FRACT16_MAX - magX - magY) / 2;
             *p_dutyA = (z0 + magY);
             *p_dutyB = (z0 + magX);
             *p_dutyC = z0;
         }
     }
 
-    *p_dutyA = qfrac16_sat_abs(*p_dutyA);
-    *p_dutyB = qfrac16_sat_abs(*p_dutyB);
-    *p_dutyC = qfrac16_sat_abs(*p_dutyC);
-
-    // assert((int16_t)*p_dutyA > 0);
-    // assert((int16_t)*p_dutyB > 0);
-    // assert((int16_t)*p_dutyC > 0);
+    *p_dutyA = ufract16_sat(*p_dutyA);
+    *p_dutyB = ufract16_sat(*p_dutyB);
+    *p_dutyC = ufract16_sat(*p_dutyC);
 }
 
 #endif

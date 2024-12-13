@@ -31,7 +31,7 @@
 #ifndef ANALOG_H
 #define ANALOG_H
 
-#include "HAL_Analog.h"
+#include "HAL_ADC.h"
 #include "Global_Analog.h"
 #include "Config.h"
 
@@ -46,16 +46,16 @@
 
 /* Software side data storage */
 #ifdef CONFIG_ANALOG_ADC_RESULT_UINT8
-typedef volatile uint8_t analog_result_t;
+typedef volatile uint8_t adc_t;
 #elif defined(CONFIG_ANALOG_ADC_RESULT_UINT16)
-typedef volatile uint16_t analog_result_t;
+typedef volatile uint16_t adc_t;
 #endif
 
 /* ADC Pin Channel - May or may not need 32 bits */
 #ifdef CONFIG_ANALOG_ADC_PIN_UINT8
-typedef uint8_t analog_pin_t;
+typedef uint8_t adc_pin_t;
 #elif defined(CONFIG_ANALOG_ADC_PIN_UINT32)
-typedef uint32_t analog_pin_t;
+typedef uint32_t adc_pin_t;
 #endif
 
 typedef uint8_t analog_channel_t; /* Virtual Channel Index */
@@ -74,11 +74,11 @@ typedef const struct Analog_Conversion
     /* Defined by module */
     const Analog_OpType_T       TYPE;
     const analog_channel_t      CHANNEL;         /* Index into results buffer */
-    volatile analog_result_t * const P_RESULTS_BUFFER;  /*!< Persistent ADC results buffer, virtual channel index.  */
+    volatile adc_t * const P_RESULTS_BUFFER;  /*!< Persistent ADC results buffer, virtual channel index.  */
     const Analog_Callback_T     ON_COMPLETE;     /* On channel complete */
     void * const P_CALLBACK_CONTEXT;
     /* Defined by main */
-    const analog_pin_t PIN;
+    const adc_pin_t PIN;
 }
 Analog_Conversion_T;
 
@@ -129,7 +129,7 @@ Analog_QueueItem_T;
 
 typedef const struct Analog_Const
 {
-    HAL_Analog_T * const P_HAL_ANALOG;     /*!< pointer to ADC register map base address */
+    HAL_ADC_T * const P_HAL_ADC;     /*!< pointer to ADC register map base address */
 }
 Analog_Const_T;
 
@@ -155,7 +155,7 @@ Analog_T;
 */
 #define ANALOG_INIT(p_HalAnalog, p_ConversionBuffer, ConversionQueueLength)                                     \
 {                                                                                                               \
-    .CONST = { .P_HAL_ANALOG = p_HalAnalog, },                                                                  \
+    .CONST = { .P_HAL_ADC = p_HalAnalog, },                                                                  \
     .ConversionQueue = RING_INIT(p_ConversionBuffer, ConversionQueueLength, sizeof(Analog_QueueItem_T *), 0U),  \
 }
 
@@ -184,7 +184,7 @@ static inline void _Analog_EnterCritical(Analog_T * p_analog)
         If calling thread is *higher* priority than ADC ISR, Activate will run to completion, overwriting the active conversion. ADC ISR need global critcal
         Use global critical if disable ADC interrupts aborts active conversion
     */
-    HAL_Analog_DisableInterrupt(p_analog->CONST.P_HAL_ANALOG);
+    HAL_ADC_DisableInterrupt(p_analog->CONST.P_HAL_ADC);
 #endif
 }
 
@@ -194,7 +194,7 @@ static inline void _Analog_ExitCritical(Analog_T * p_analog)
     (void)p_analog;
     _Critical_EnableIrq();
 #elif  defined(CONFIG_ANALOG_SINGLE_THREADED)
-    HAL_Analog_EnableInterrupt(p_analog->CONST.P_HAL_ANALOG);
+    HAL_ADC_EnableInterrupt(p_analog->CONST.P_HAL_ADC);
 #endif
 }
 
@@ -203,8 +203,8 @@ static inline void _Analog_ExitCritical(Analog_T * p_analog)
 */
 static inline void _Analog_CaptureAdcResults(Analog_T * p_analog, Analog_Conversion_T * p_activeConversion)
 {
-    p_activeConversion->P_RESULTS_BUFFER[p_activeConversion->CHANNEL] = HAL_Analog_ReadResult(p_analog->CONST.P_HAL_ANALOG, p_activeConversion->PIN);
-    // analog_result_t result = HAL_Analog_ReadResult(p_analog->CONST.P_HAL_ANALOG, p_activeConversion->PIN);
+    p_activeConversion->P_RESULTS_BUFFER[p_activeConversion->CHANNEL] = HAL_ADC_ReadResult(p_analog->CONST.P_HAL_ADC, p_activeConversion->PIN);
+    // adc_t result = HAL_ADC_ReadResult(p_analog->CONST.P_HAL_ADC, p_activeConversion->PIN);
     // if(p_analog->ActiveOptions.CaptureLocalPeak == true)
     // {
     //     if(result > p_activeConversion->P_RESULTS_BUFFER[p_activeConversion->CHANNEL])
@@ -224,7 +224,7 @@ static inline void _Analog_CaptureResults(Analog_T * p_analog)
     Analog_Conversion_T * p_completedConversion;
 #ifdef CONFIG_ANALOG_HW_FIFO_ENABLE
     static uint32_t error;
-    if(p_analog->ActiveChannelCount != HAL_Analog_ReadFifoCount(p_analog->CONST.P_HAL_ANALOG))
+    if(p_analog->ActiveChannelCount != HAL_ADC_ReadFifoCount(p_analog->CONST.P_HAL_ADC))
     {
         error++;
     }
@@ -255,7 +255,7 @@ static inline void _Analog_CaptureResults(Analog_T * p_analog)
 */
 static inline void Analog_OnComplete_ISR(Analog_T * p_analog)
 {
-    HAL_Analog_ClearConversionCompleteFlag(p_analog->CONST.P_HAL_ANALOG);
+    HAL_ADC_ClearConversionCompleteFlag(p_analog->CONST.P_HAL_ADC);
     _Analog_CaptureResults(p_analog);
 }
 
@@ -265,7 +265,7 @@ static inline void Analog_OnComplete_ISR(Analog_T * p_analog)
 static inline void Analog_PollComplete(Analog_T * p_analog)
 {
     _Analog_EnterCritical(p_analog);
-    if(HAL_Analog_ReadConversionCompleteFlag(p_analog->CONST.P_HAL_ANALOG) == true) { Analog_OnComplete_ISR(p_analog); }
+    if(HAL_ADC_ReadConversionCompleteFlag(p_analog->CONST.P_HAL_ADC) == true) { Analog_OnComplete_ISR(p_analog); }
     _Analog_ExitCritical(p_analog);
 }
 
@@ -275,8 +275,8 @@ static inline void Analog_PollComplete(Analog_T * p_analog)
 */
 static inline bool _Analog_ReadIsActive(const Analog_T * p_analog)
 {
-    return ((HAL_Analog_ReadConversionActiveFlag(p_analog->CONST.P_HAL_ANALOG) == true) ||
-        (HAL_Analog_ReadConversionCompleteFlag(p_analog->CONST.P_HAL_ANALOG) == true));
+    return ((HAL_ADC_ReadConversionActiveFlag(p_analog->CONST.P_HAL_ADC) == true) ||
+        (HAL_ADC_ReadConversionCompleteFlag(p_analog->CONST.P_HAL_ADC) == true));
 }
 
 /*
@@ -284,7 +284,7 @@ static inline bool _Analog_ReadIsActive(const Analog_T * p_analog)
 */
 static inline void Analog_Deactivate(Analog_T * p_analog)
 {
-    HAL_Analog_Deactivate(p_analog->CONST.P_HAL_ANALOG);
+    HAL_ADC_Deactivate(p_analog->CONST.P_HAL_ADC);
 }
 
 extern void Analog_Init(Analog_T * p_analog);

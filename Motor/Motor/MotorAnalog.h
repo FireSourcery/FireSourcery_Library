@@ -84,19 +84,19 @@ MotorAnalog_Conversions_T;
 // {
 //     struct
 //     {
-//         analog_result_t Va_Adcu;
-//         analog_result_t Vb_Adcu;
-//         analog_result_t Vc_Adcu;
-//         analog_result_t Ia_Adcu;
-//         analog_result_t Ib_Adcu;
-//         analog_result_t Ic_Adcu;
-//         analog_result_t Heat_Adcu;
+//         adc_t Va_Adcu;
+//         adc_t Vb_Adcu;
+//         adc_t Vc_Adcu;
+//         adc_t Ia_Adcu;
+//         adc_t Ib_Adcu;
+//         adc_t Ic_Adcu;
+//         adc_t Heat_Adcu;
 // #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-//         analog_result_t Sin_Adcu;
-//         analog_result_t Cos_Adcu;
+//         adc_t Sin_Adcu;
+//         adc_t Cos_Adcu;
 // #endif
 //     };
-//     analog_result_t Channels[MOTOR_ANALOG_CHANNEL_COUNT];
+//     adc_t Channels[MOTOR_ANALOG_CHANNEL_COUNT];
 // }
 // MotorAnalog_Results_T;
 

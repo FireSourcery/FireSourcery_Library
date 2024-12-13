@@ -41,7 +41,7 @@
     e.g. (2000 +/- 10)/100 => 20 +/- 0, (2000 +/- 10)/10 => 200 +/- 1
 */
 
-static inline void Filter_MovAvg_Init(Filter_T * p_filter, qfrac16_t lambda, int32_t y0)
+static inline void Filter_MovAvg_Init(Filter_T * p_filter, fract16_t lambda, int32_t y0)
 {
     p_filter->Accumulator = y0;
     p_filter->Coefficient = lambda;
