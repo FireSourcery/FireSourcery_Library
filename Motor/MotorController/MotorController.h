@@ -277,7 +277,7 @@ typedef const struct MotorController_Const
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE) || defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
     Flash_T * const P_FLASH;    /* Flash controller defined outside module, ensure flash config/params are in RAM */
 // #endif
-#if defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_EEPROM)
+#if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
     EEPROM_T * const P_EEPROM;   /* Defined outside for regularity */
 #endif
 
@@ -308,7 +308,7 @@ typedef const struct MotorController_Const
     */
     // const uint8_t MAIN_VERSION[4U]; // alternatively pass using macro
     const uintptr_t MANUFACTURE_ADDRESS; const uint8_t MANUFACTURE_SIZE;
-#if defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_FLASH)
+#if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
     const uintptr_t CONFIG_ADDRESS; const uint16_t CONFIG_SIZE;  /* Flash params start. */
     // alternatively use p_mc->CONST..P_FLASH->P_PARTITIONS[id]
     // NvMemory_Partition_T * P_CONFIG_PARTITION;

@@ -34,7 +34,7 @@
 void MotorController_Init(MotorController_T * p_mc)
 {
     Flash_Init(p_mc->CONST.P_FLASH);
-#if defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_EEPROM)
+#if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
     EEPROM_Init_Blocking(p_mc->CONST.P_EEPROM);
 #endif
 
@@ -189,9 +189,9 @@ void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
 /* Write Config */
 static NvMemory_Status_T WriteNvm_Blocking(MotorController_T * p_mc, const void * p_nvm, const void * p_ram, size_t sizeBytes)
 {
-#if     defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_EEPROM)
+#if     defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
     return EEPROM_Write_Blocking(p_mc->CONST.P_EEPROM, (uintptr_t)p_nvm, p_ram, sizeBytes);
-#elif   defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_FLASH)
+#elif   defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
     assert(nvmemory_is_aligned((uintptr_t)p_nvm, FLASH_UNIT_WRITE_SIZE)); /* Compile time config ensure all structs are write unit size aligned */
     return Flash_Write_Blocking(p_mc->CONST.P_FLASH, (uintptr_t)p_nvm, p_ram, sizeBytes);
 #endif
@@ -203,7 +203,7 @@ NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorController_T * p_mc)
     Motor_T * p_motor;
     Protocol_T * p_protocol;
 
-#if defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_FLASH)
+#if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
     status = Flash_Erase_Blocking(p_mc->CONST.P_FLASH, p_mc->CONST.CONFIG_ADDRESS, p_mc->CONST.CONFIG_SIZE); /* Flash must erase parameters flash region before write */
 #endif
 
@@ -263,29 +263,29 @@ NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorController_T * p_mc)
 // eeprom only
 NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
 {
-#if     defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_EEPROM)
+#if     defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
     return EEPROM_Write_Blocking(p_mc->CONST.P_EEPROM, (uintptr_t)p_mc->CONST.P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T));
     // return WriteNvm_Blocking(p_mc, p_mc->CONST.P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T));
-#elif   defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_FLASH)
+#elif   defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
     return NV_MEMORY_STATUS_ERROR_OTHER; /* Save on all params */
 #endif
 }
 
 NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)
 {
-#if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_CONFIG_ONCE)
+#if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)
     // if(p_mc->CONST.MANUFACTURE_ADDRESS != 0) handle offset
     return Flash_ReadOnce_Blocking(p_mc->CONST.P_FLASH, onceAddress, size, p_destBuffer);
-#elif   defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_CONFIG_FLASH)
+#elif   defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
     if(size < p_mc->CONST.MANUFACTURE_SIZE) { memcpy(p_destBuffer, onceAddress, size); }
 #endif
 }
 
 NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, const uint8_t * p_sourceBuffer, uint8_t size)
 {
-#if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_CONFIG_ONCE)
+#if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)
     return Flash_WriteOnce_Blocking(p_mc->CONST.P_FLASH, onceAddress, p_sourceBuffer, size);
-#elif   defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_CONFIG_FLASH)
+#elif   defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
     return Flash_Write_Blocking(p_mc->CONST.P_FLASH, onceAddress, p_dataBuffer, size);
 #endif
 }
