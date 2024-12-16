@@ -134,7 +134,7 @@ extern void Motor_FOC_ProcOpenLoop(Motor_T * p_motor);
 extern void Motor_FOC_ActivateOutputZero(Motor_T * p_motor);
 extern void Motor_FOC_ActivateOutputState(Motor_T * p_motor);
 extern void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vq, fract16_t vd);
-extern void Motor_FOC_ProcFeedbackMatch(Motor_T * p_motor);
+extern void Motor_FOC_MatchFeedbackState(Motor_T * p_motor);
 
 extern void Motor_FOC_SetDirectionCcw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirectionCw(Motor_T * p_motor);

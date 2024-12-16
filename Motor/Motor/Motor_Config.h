@@ -51,7 +51,7 @@ static inline Motor_SensorMode_T Motor_Config_GetSensorMode(Motor_T * p_motor)  
 static inline Motor_Direction_T Motor_Config_GetDirectionCalibration(Motor_T * p_motor)    { return p_motor->Config.DirectionForward; }
 static inline uint8_t Motor_Config_GetPolePairs(Motor_T * p_motor)                         { return p_motor->Config.PolePairs; }
 static inline uint16_t Motor_Config_GetKv(Motor_T * p_motor)                               { return p_motor->Config.Kv; }
-static inline uint16_t Motor_Config_GetVSpeedScalar_UFract16(Motor_T * p_motor)             { return p_motor->Config.VSpeedScalar_UFract16; }
+static inline uint16_t Motor_Config_GetVSpeedScalar_UFract16(Motor_T * p_motor)            { return p_motor->Config.VSpeedScalar_UFract16; }
 static inline uint16_t Motor_Config_GetVSpeedScalar_Percent16(Motor_T * p_motor)           { return p_motor->Config.VSpeedScalar_UFract16 << 1U; }
 
 static inline uint16_t Motor_Config_GetSpeedVRef_Rpm(Motor_T * p_motor)                    { return p_motor->Config.Kv * Motor_Static_GetVSource_V(); }

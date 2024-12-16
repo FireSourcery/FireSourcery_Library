@@ -658,7 +658,7 @@ static inline int16_t Motor_ReqOfSpeedLimit(const Motor_T * p_motor, int16_t req
     /* fract16_div always return positive < 1 */
     if      (p_motor->Speed_Fract16 < p_motor->SpeedLimitCw_Fract16)  { limitedReq = 0 - fract16_div(p_motor->SpeedLimitCw_Fract16, p_motor->Speed_Fract16); } /* Speed is more negative */
     else if (p_motor->Speed_Fract16 > p_motor->SpeedLimitCcw_Fract16) { limitedReq = fract16_div(p_motor->SpeedLimitCcw_Fract16, p_motor->Speed_Fract16); }
-    else                                                            { limitedReq = req; }
+    else                                                              { limitedReq = req; }
     return limitedReq;
 }
 
@@ -671,7 +671,7 @@ static inline int16_t Motor_VReqOfILimit(const Motor_T * p_motor, int32_t feedba
     int16_t limitedReq;
     if      (feedback < p_motor->ILimitCw_Fract16)   { limitedReq = 0 - fract16_div(p_motor->ILimitCw_Fract16, feedback); }
     else if (feedback > p_motor->ILimitCcw_Fract16)  { limitedReq = fract16_div(p_motor->ILimitCcw_Fract16, feedback); }
-    else                                            { limitedReq = req; }
+    else                                             { limitedReq = req; }
     return limitedReq;
 };
 
@@ -703,7 +703,7 @@ static inline void Motor_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeVal
     Saturated output for use as input into next operation
     @return V Fract16
 */
-static inline int16_t Motor_GetVSpeed_Fract16(const Motor_T * p_motor) { return p_motor->Speed_Fract16 * p_motor->Config.VSpeedScalar_UFract16 >> 15U; }
+static inline int32_t Motor_GetVSpeed_Fract16(const Motor_T * p_motor) { return p_motor->Speed_Fract16 * p_motor->Config.VSpeedScalar_UFract16 >> 15U; }
 
 // static inline uint32_t _Motor_Angle16OfSpeedFract16(uint16_t speed_fract16)
 // for sensor which report an delta angle instead of speed.

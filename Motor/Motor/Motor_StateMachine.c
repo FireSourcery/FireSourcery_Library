@@ -218,7 +218,7 @@ static const StateMachine_State_T STATE_STOP =
 /******************************************************************************/
 static void Run_Entry(Motor_T * p_motor)
 {
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcFeedbackMatch, NULL); /* Sync mode can match feedback here */
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_MatchFeedbackState, NULL); /* Sync mode can match feedback here */
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutputState, NULL);
 }
 
@@ -242,7 +242,7 @@ static StateMachine_State_T * Run_InputControl(Motor_T * p_motor, statemachine_i
         Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
         p_nextState = &STATE_FREEWHEEL;
         /* Alternatively, without transition through Freewheel */
-        // Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcFeedbackMatch, NULL);
+        // Motor_ProcCommutationMode(p_motor, Motor_FOC_MatchFeedbackState, NULL);
         // p_nextState = &STATE_RUN; /* repeat entry function */
     }
     else

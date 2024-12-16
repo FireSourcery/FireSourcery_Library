@@ -92,7 +92,7 @@ static inline void ProcOuterFeedback(Motor_T * p_motor)
     Match Feedback Ouput to VOutput (Vd, Vq)
     Update PID state when changing FeedbackMode
 */
-void Motor_FOC_ProcFeedbackMatch(Motor_T * p_motor)
+void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
 {
     int32_t qReq;
 
@@ -256,11 +256,11 @@ void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, angle16_t angle, fract16_
 }
 
 /* use speed as V match */
-static inline void Motor_FOC_ProcVSpeed(Motor_T * p_motor)
-{
-    FOC_SetVq(&p_motor->Foc, Motor_GetVSpeed_Fract16(p_motor));
-    FOC_SetVd(&p_motor->Foc, 0);
-}
+// static inline void Motor_FOC_ProcVSpeed(Motor_T * p_motor)
+// {
+//     FOC_SetVq(&p_motor->Foc, Motor_GetVSpeed_Fract16(p_motor));
+//     FOC_SetVd(&p_motor->Foc, 0);
+// }
 
 
 /******************************************************************************/
@@ -309,7 +309,7 @@ void Motor_FOC_StartAlign(Motor_T * p_motor)
 {
     p_motor->FeedbackMode.Current = 1U;
     Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Config.AlignTime_Cycles, 0, p_motor->Config.AlignPower_Percent16 / 2U);
-    Motor_FOC_ProcFeedbackMatch(p_motor);
+    Motor_FOC_MatchFeedbackState(p_motor);
 }
 
 void Motor_FOC_ProcAlign(Motor_T * p_motor)
@@ -323,7 +323,7 @@ void Motor_FOC_StartAlignValidate(Motor_T * p_motor)
     // Motor_ZeroSensor(p_motor);
     // FOC_SetReqD(&p_motor->Foc, 0);
     // // Linear_Ramp_Set(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles, 0, Motor_DirectionalCmd(p_motor, INT16_MAX / 2U)); //clmap user input?
-    // Motor_FOC_ProcFeedbackMatch(p_motor);
+    // Motor_FOC_MatchFeedbackState(p_motor);
     // // p_motor->FeedbackMode.OpenLoop = 0U;
 }
 
