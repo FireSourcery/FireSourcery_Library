@@ -30,17 +30,6 @@
 /******************************************************************************/
 #include "StateMachine.h"
 
-#ifdef  CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE
-#include "System/Critical/Critical.h"
-#endif
-
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdatomic.h>
-
-
-
 /******************************************************************************/
 /*!
     Private Functions
@@ -51,7 +40,7 @@
 */
 static inline bool EnterCritical(StateMachine_T * p_stateMachine)
 {
-#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
+#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
     return (p_stateMachine.CONST.USE_CRITICAL == true) ? Critical_AcquireEnter(&p_stateMachine->Mutex) : true;
 #else
     (void)p_stateMachine;
@@ -61,7 +50,7 @@ static inline bool EnterCritical(StateMachine_T * p_stateMachine)
 
 static inline void ExitCritical(StateMachine_T * p_stateMachine)
 {
-#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
+#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
     if (p_stateMachine.CONST.USE_CRITICAL == true) { Critical_ReleaseExit(&p_stateMachine->Mutex) };
 #else
     (void)p_stateMachine;
@@ -70,7 +59,7 @@ static inline void ExitCritical(StateMachine_T * p_stateMachine)
 
 static inline bool AcquireSignal(StateMachine_T * p_stateMachine)
 {
-#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE) && !defined(CONFIG_CRITICAL_USE_MUTEX)
+#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE) && !defined(CONFIG_CRITICAL_USE_MUTEX)
     return (p_stateMachine.CONST.USE_CRITICAL == true) ? Critical_AcquireSignal(&p_stateMachine->Mutex) : true;
 #else
     (void)p_stateMachine;
@@ -80,18 +69,13 @@ static inline bool AcquireSignal(StateMachine_T * p_stateMachine)
 
 static inline void ReleaseSignal(StateMachine_T * p_stateMachine)
 {
-#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE) && !defined(CONFIG_CRITICAL_USE_MUTEX)
+#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE) && !defined(CONFIG_CRITICAL_USE_MUTEX)
     if (p_stateMachine.CONST.USE_CRITICAL == true) { Critical_ReleaseSignal(&p_stateMachine->Mutex) };
 #else
     (void)p_stateMachine;
 #endif
 }
 
-
-// static inline void StateOuput(const StateMachine_State_T * p_state, void * p_context)
-// {
-//     p_state->LOOP(p_context);
-// }
 
 /*!
     Transistion Function maps current state to new state for each input
@@ -103,6 +87,11 @@ static inline void ReleaseSignal(StateMachine_T * p_stateMachine)
 // static inline StateMachine_State_T * TransitionFunction(const StateMachine_State_T * p_active, void * p_context, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 // {
 //     return p_active->P_TRANSITION_TABLE[inputId](p_context, inputValue);
+// }
+
+// static inline void StateOuput(const StateMachine_State_T * p_state, void * p_context)
+// {
+//     p_state->LOOP(p_context);
 // }
 
 static inline void Reset(StateMachine_T * p_stateMachine)
@@ -201,7 +190,7 @@ void StateMachine_Init(StateMachine_T * p_stateMachine)
 {
     p_stateMachine->SyncInput = STATE_MACHINE_INPUT_ID_NULL;
     p_stateMachine->SyncInputValue = 0U;
-#ifdef  CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE
+#ifdef  CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE
     Critical_InitSignal(&p_stateMachine->Mutex);
 #endif
     Reset(p_stateMachine);

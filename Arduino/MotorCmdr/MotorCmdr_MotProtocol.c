@@ -92,7 +92,7 @@ static void ReadVar_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t 
     //     // case MOT_VAR_PARAM_TEST_5:    value = p_mc->Config.Test[4U];    break;                        /*   */
 
     //     case MOT_VAR_POLE_PAIRS:                        break;
-    //     case MOT_VAR_SPEED_FEEDBACK_REF_RPM:    break;
+    //     case MOT_VAR_SPEED_V_REF_RPM:    break;
     //     case MOT_VAR_I_MAX_REF_AMP:           break;
     //     default: break;
     // }

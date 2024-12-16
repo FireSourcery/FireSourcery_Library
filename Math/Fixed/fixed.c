@@ -83,18 +83,18 @@ uint16_t q_sqrt(int32_t x)
         return 0;
     }
 
-    int32_t result = 0;
-    int32_t bit = 1 << 30; // The second-to-top bit is set
+    uint32_t result = 0U;
+    uint32_t bit = 1U << 30U; // The second-to-top bit is set
 
     // "bit" starts at the highest power of four <= the argument.
-    while (bit > x)
+    while (bit > (uint32_t)x)
     {
         bit >>= 2;
     }
 
     while (bit != 0)
     {
-        if (x >= result + bit)
+        if ((uint32_t)x >= result + bit)
         {
             x -= result + bit;
             result = (result >> 1) + bit;
@@ -109,7 +109,6 @@ uint16_t q_sqrt(int32_t x)
     return result;
 }
 
-/* Iterative log2 */
 /*
     65535 -> 15
     65536 -> 16
@@ -123,6 +122,7 @@ uint8_t q_log2(uint32_t x)
 #elif defined(__GNUC__)
     return (x == 0U) ? 0U : (31U - __builtin_clz(x));
 #else
+    /* Iterative log2 */
     uint8_t shift = 0U;
     while((x >> shift) > 1U) { shift++; }
     return shift;
@@ -172,6 +172,7 @@ uint32_t q_pow2_round(uint32_t x)
 /*
     131,071 -> 14
 */
+// leading zeros of abs(x) - 1
 uint8_t q_lshift_max_signed(int32_t x)
 {
     return 30U - q_log2(math_abs(x)); /* q_log2(INT32_MAX) - q_log2(abs); */

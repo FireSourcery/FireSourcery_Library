@@ -205,7 +205,7 @@ static inline uint16_t _Linear_Percent16_Abs(const Linear_T * p_linear, int32_t 
     return _Linear_SatUnsigned16_Abs(_Linear_Fixed32(p_linear, x));
 }
 
-/* y_frac16 in q0.16 format is handled by q16.16 case */
+/* y_fract16 in q0.16 format is handled by q16.16 case */
 static inline int32_t _Linear_InvPercent16(const Linear_T * p_linear, uint16_t y_percent16)
 {
     return _Linear_InvFixed32(p_linear, y_percent16);
@@ -218,16 +218,16 @@ static inline int32_t _Linear_InvPercent16(const Linear_T * p_linear, uint16_t y
 */
 /******************************************************************************/
 /* */
-static inline int16_t _Linear_Frac16(const Linear_T * p_linear, int32_t x)
+static inline int16_t _Linear_Fract16(const Linear_T * p_linear, int32_t x)
 {
     return _Linear_SatSigned16(_Linear_Fixed32(p_linear, x) / 2);
     // return  linear_f_x0(32768, deltax, x0, x);
 }
 
-/* y_frac16 use q1.15 */
-static inline int32_t _Linear_InvFrac16(const Linear_T * p_linear, int16_t y_frac16)
+/* y_fract16 use q1.15 */
+static inline int32_t _Linear_InvFract16(const Linear_T * p_linear, int16_t y_fract16)
 {
-    return _Linear_InvFixed32(p_linear, (int32_t)y_frac16 * 2);
+    return _Linear_InvFixed32(p_linear, (int32_t)y_fract16 * 2);
 }
 
 /******************************************************************************/
@@ -244,7 +244,7 @@ extern int32_t Linear_InvOf_Scalar(const Linear_T * p_linear, int32_t y, uint16_
 // extern uint16_t _Linear_Percent16_Clamp(const Linear_T * p_linear, int32_t x);
 // extern uint16_t _Linear_Percent16_Abs(const Linear_T * p_linear, int32_t x);
 // extern int32_t _Linear_InvPercent16(const Linear_T * p_linear, uint16_t y_fracU16);
-// extern int16_t _Linear_Frac16(const Linear_T * p_linear, int32_t x);
-// extern int32_t _Linear_InvFrac16(const Linear_T * p_linear, int16_t y_frac16);
+// extern int16_t _Linear_Fract16(const Linear_T * p_linear, int32_t x);
+// extern int32_t _Linear_InvFract16(const Linear_T * p_linear, int16_t y_fract16);
 
 #endif

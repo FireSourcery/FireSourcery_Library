@@ -101,12 +101,12 @@ static inline fract16_t cos90(angle16_t theta)
 fract16_t fract16_sin(angle16_t theta)
 {
     fract16_t sine;
-    switch(angle16_quadrant(theta))
+    switch (angle16_quadrant(theta))
     {
-        case ANGLE16_QUADRANT_I:   sine = sin90(theta);                            break;
-        case ANGLE16_QUADRANT_II:  sine = sin90(ANGLE16_180 - 1 - theta);         break;
-        case ANGLE16_QUADRANT_III: sine = 0 - sin90(theta);                        break;
-        case ANGLE16_QUADRANT_IV:  sine = 0 - sin90(ANGLE16_180 - 1 - theta);     break;
+        case ANGLE16_QUADRANT_I:   sine = sin90(theta);                         break;
+        case ANGLE16_QUADRANT_II:  sine = sin90(ANGLE16_180 - 1 - theta);       break;
+        case ANGLE16_QUADRANT_III: sine = 0 - sin90(theta);                     break;
+        case ANGLE16_QUADRANT_IV:  sine = 0 - sin90(ANGLE16_180 - 1 - theta);   break;
         default: sine = 0; break;
     }
     return sine;
@@ -115,19 +115,19 @@ fract16_t fract16_sin(angle16_t theta)
 fract16_t fract16_cos(angle16_t theta)
 {
     fract16_t cosine;
-    switch(angle16_quadrant(theta))
+    switch (angle16_quadrant(theta))
     {
-        case ANGLE16_QUADRANT_I:   cosine = sin90(ANGLE16_180 - 1 - theta);       break;
-        case ANGLE16_QUADRANT_II:  cosine = 0 - sin90(theta);                      break;
-        case ANGLE16_QUADRANT_III: cosine = 0 - sin90(ANGLE16_180 - 1 - theta);   break;
-        case ANGLE16_QUADRANT_IV:  cosine = sin90(theta);                          break;
+        case ANGLE16_QUADRANT_I:   cosine = sin90(ANGLE16_180 - 1 - theta);     break;
+        case ANGLE16_QUADRANT_II:  cosine = 0 - sin90(theta);                   break;
+        case ANGLE16_QUADRANT_III: cosine = 0 - sin90(ANGLE16_180 - 1 - theta); break;
+        case ANGLE16_QUADRANT_IV:  cosine = sin90(theta);                       break;
         default: cosine = 0; break;
     }
     return cosine;
 }
 
 /*
-    Adapted from libfixmath https://github.com/PetteriAimonen/libfixmath/blob/master/libfixMath/Fixedfrac16_trig.c
+    Adapted from libfixmath https://github.com/PetteriAimonen/libfixmath/blob/master/libfixMath/Fixedfract16_trig.c
 */
 angle16_t fract16_atan2(fract16_t y, fract16_t x)
 {
@@ -204,7 +204,6 @@ uint16_t fract16_vector_scale(fract16_t * p_x, fract16_t * p_y, fract16_t scalar
 
     return scalar;
 }
-
 
 /*!
     Vector Circle Limit

@@ -341,7 +341,6 @@ typedef struct MotorController
     Debounce_T OptDin;     /* Configurable input */
 
     Thermistor_T ThermistorPcb;
-    // Thermistor_T ThermistorMosfets;
     Thermistor_T MosfetsThermistors[MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT];
 
     VMonitor_T VMonitorSource;  /* Controller Supply */
@@ -401,7 +400,7 @@ static inline void MotorController_BeepDouble(MotorController_T * p_mc)         
    MotorN Array Functions - Proc by StateMachine
 */
 /******************************************************************************/
-static inline bool MotorController_IsAnyMotorFault(const MotorController_T * p_mc) { return void_array_is_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_StateMachine_IsFault); }
+static inline bool MotorController_IsAnyMotorFault(const MotorController_T * p_mc)  { return void_array_is_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_StateMachine_IsFault); }
 static inline bool MotorController_ForEveryMotorExitFault(MotorController_T * p_mc) { return void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_StateMachine_ExitFault); }
 
 static inline void MotorController_ForceDisableAll(MotorController_T * p_mc)    { void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_ForceDisableControl); }
@@ -423,9 +422,9 @@ static inline bool MotorController_ClearSystemILimitAll(MotorController_T * p_mc
 
 /* change to use id */
 // static inline void MotorController_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_Percent16)  { MotorN_User_SetPercent16(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_SetSpeedLimitActive, limit_Percent16); }
-// static inline void MotorController_ClearSpeedLimitAll(MotorController_T * p_mc)                         { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearSpeedLimitActive); }
+// static inline void MotorController_ClearSpeedLimitAll(MotorController_T * p_mc)                          { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearSpeedLimitActive); }
 // static inline void MotorController_SetILimitAll(MotorController_T * p_mc, uint16_t limit_Percent16)      { MotorN_User_SetPercent16(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_SetILimitActive, limit_Percent16); }
-// static inline void MotorController_ClearILimitAll(MotorController_T * p_mc)                             { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearILimitActive); }
+// static inline void MotorController_ClearILimitAll(MotorController_T * p_mc)                              { MotorN_Proc(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_ClearILimitActive); }
 
 
 static inline void MotorController_StartThrottleMode(MotorController_T * p_mc)
@@ -463,8 +462,9 @@ static inline void MotorController_SetThrottleValue(MotorController_T * p_mc, ui
 static inline void _SetBrakeCmd(Motor_T * p_motor, int16_t brake)
 {
     // if(p_motor->StateFlags.Hold == 0U)
-    if (Motor_User_GetSpeed_UFrac16(p_motor) > (UINT16_MAX / 40U)) // 2.5%
+    if (Motor_User_GetSpeed_UFract16(p_motor) > (INT16_MAX / 20U)) // 5%
     {
+        //if iq > (INT16_MAX / 20U)
         Motor_User_SetTorqueCmdValue(p_motor, (int32_t)0 - brake);
     }
     else
@@ -482,7 +482,7 @@ static inline void MotorController_StartBrakeMode(MotorController_T * p_mc)
     switch (p_mc->Config.BrakeMode)
     {
         case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_SetTorqueMode); break;
-        case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: break;
+        case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_SetVoltageMode); break;
         default: break;
     }
     // MotorController_ActivateAll(p_mc);
@@ -491,10 +491,11 @@ static inline void MotorController_StartBrakeMode(MotorController_T * p_mc)
 static inline void MotorController_SetBrakeValue(MotorController_T * p_mc, uint16_t userCmdBrake)
 {
     int16_t cmdValue = userCmdBrake / 2; // 32767 max
+
     switch (p_mc->Config.BrakeMode)
     {
-        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: struct_array_set_all_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)_SetBrakeCmd, cmdValue); break;
-        case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: break;
+        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: struct_array_set_all_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)_SetBrakeCmd, cmdValue); break; //todo torque mode
+        // case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: struct_array_set_all_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)Motor_User_SetVSpeedScalarCmd, 0); break; //test only
         default: break;
     }
 }
@@ -523,13 +524,6 @@ static inline void MotorController_ProcDriveZero(MotorController_T * p_mc)
         case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_CRUISE: void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_SetTorqueMode); break;
         default: break;
     }
-
-    //check for 0 speed, motor run does nto transition
-    // if(MotorController_IsEveryMotorStopState(p_mc) == true)
-    // {
-    //     MotorController_TryHoldAll(p_mc);
-    //     // p_mc->StateFlags.IsStopped = 1U;
-    // }
 }
 
 /******************************************************************************/
@@ -543,8 +537,6 @@ extern void MotorController_ResetBootDefault(MotorController_T * p_mc);
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 extern void MotorController_ResetUnitsBatteryLife(MotorController_T * p_mc);
 #endif
-extern void MotorController_SetAdcResultsNominal(MotorController_T * p_mc);
-extern void MotorController_PollAdcFaultFlags(MotorController_T * p_mc);
 
 extern NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorController_T * p_mc);
 extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc);

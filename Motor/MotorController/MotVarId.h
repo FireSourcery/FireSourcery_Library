@@ -57,7 +57,7 @@
 /******************************************************************************/
 /*
     Speed/IPhase/VPhase/Power
-        Units0 => UFrac16, may over saturate
+        Units0 => UFract16, may over saturate
 */
 typedef enum MotVarId_Monitor_Motor
 {
@@ -74,7 +74,7 @@ typedef enum MotVarId_Monitor_Motor
     MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,
     MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT,
     MOT_VAR_MOTOR_ACTIVE_I_LIMIT,
-    // MOT_VAR_MOTOR_V_SPEED,
+    MOT_VAR_MOTOR_V_SPEED,
 // ControlTimerBase;
 // Motor_OpenLoopState_T OpenLoopState;
 // Motor_CalibrationState_T CalibrationState;
@@ -223,8 +223,9 @@ typedef enum MotVarId_Config_MotorPrimary
     MOT_VAR_DIRECTION_CALIBRATION,
     MOT_VAR_POLE_PAIRS,
     MOT_VAR_KV,
-    MOT_VAR_SPEED_FEEDBACK_REF_RPM,
-    MOT_VAR_SPEED_MATCH_REF_RPM,
+    MOT_VAR_V_SPEED_SCALAR,
+    MOT_VAR_SPEED_V_REF_RPM,
+    MOT_VAR_SPEED_V_MATCH_REF_RPM,
     MOT_VAR_IA_ZERO_REF_ADCU,
     MOT_VAR_IB_ZERO_REF_ADCU,
     MOT_VAR_IC_ZERO_REF_ADCU,

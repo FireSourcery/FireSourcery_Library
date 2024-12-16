@@ -117,10 +117,10 @@ void MotAnalogUser_SetThrottleAIn(MotAnalogUser_T * p_user, uint16_t zero_Adcu, 
     if(useThrottleEdgePin == true) { AIn_EnableEdgePin(&p_user->ThrottleAIn); }
 }
 
-void MotAnalogUser_SetBistateBrake(MotAnalogUser_T * p_user, bool useBistateBrake, uint16_t bistateBrakeIntensity_Frac16)
+void MotAnalogUser_SetBistateBrake(MotAnalogUser_T * p_user, bool useBistateBrake, uint16_t bistateBrakeIntensity_Fract16)
 {
     p_user->Config.UseBistateBrakePin = useBistateBrake;
-    p_user->Config.BistateBrakeValue_Percent16 = bistateBrakeIntensity_Frac16;
+    p_user->Config.BistateBrakeValue_Percent16 = bistateBrakeIntensity_Fract16;
 }
 
 void MotAnalogUser_SetDirectionPins(MotAnalogUser_T * p_user, MotAnalogUser_DirectionPins_T pins)

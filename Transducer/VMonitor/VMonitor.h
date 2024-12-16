@@ -56,7 +56,7 @@ typedef struct VMonitor_Config
     uint16_t WarningLower_Adcu;
     uint16_t Nominal_Adcu; /* VIn 100%, for Defaults and Charge */
     bool IsMonitorEnable;
-    // uint16_t VInRef;    /* VIn 100%, frac16 use only, alternatively as adcu */
+    // uint16_t VInRef;    /* VIn 100%, fract16 use only, alternatively as adcu */
     // Linear_T LinearChargeLevel; /* return value [VRef:FaultLower_Adcu] as [65535:0] */
 }
 VMonitor_Config_T;

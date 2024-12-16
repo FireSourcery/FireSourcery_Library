@@ -84,7 +84,6 @@ void MotorController_Init(MotorController_T * p_mc)
     //     MotorController_LoadConfigDefault(&MotorControllerMain);  /* Load runtime calculated */
     //     /* or prompt user, resets every boot until user saves params */
     // }
-    MotorController_SetAdcResultsNominal(p_mc); // alternatively every status implements sample adc except init
     StateMachine_Init(&p_mc->StateMachine);
 }
 
@@ -141,44 +140,6 @@ void MotorController_ResetUnitsBatteryLife(MotorController_T * p_mc)
 }
 #endif
 
-void MotorController_SetAdcResultsNominal(MotorController_T * p_mc)
-{
-    // alternatively enqueue adc during init
-    // handle via init state wait
-    // if (VMonitor_IsEnable(&p_mc->VMonitorSense) == true) { p_mc->AnalogResults.VSense_Adcu = VMonitor_GetNominal(&p_mc->VMonitorSense); };
-    // if (VMonitor_IsEnable(&p_mc->VMonitorAccs) == true) { p_mc->AnalogResults.VAccs_Adcu = VMonitor_GetNominal(&p_mc->VMonitorAccs); };
-    // if (VMonitor_IsEnable(&p_mc->VMonitorSource) == true) { p_mc->AnalogResults.VSource_Adcu = VMonitor_GetNominal(&p_mc->VMonitorSource); };
-    // if (Thermistor_IsMonitorEnable(&p_mc->ThermistorPcb) == true) { p_mc->AnalogResults.HeatPcb_Adcu = Thermistor_GetWarningThreshold_Adcu(&p_mc->ThermistorPcb); };
-
-    // for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
-    // {
-    //     if (Thermistor_IsMonitorEnable(&p_mc->MosfetsThermistors[iMosfets]) == true)
-    //         { p_mc->AnalogResults.HeatMosfetsResults_Adcu[iMosfets] = Thermistor_GetWarningThreshold_Adcu(&p_mc->MosfetsThermistors[iMosfets]); };
-    // }
-
-    // for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONST.P_MOTORS[iMotor]); }
-}
-/******************************************************************************/
-/*!
-    Call from State Machine
-*/
-/******************************************************************************/
-/* Not needed if main loop does not block? */
-void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
-{
-    p_mc->FaultFlags.VSenseLimit = VMonitor_IsFault(&p_mc->VMonitorSense);
-    p_mc->FaultFlags.VAccsLimit = VMonitor_IsFault(&p_mc->VMonitorAccs);
-    p_mc->FaultFlags.VSourceLimit = VMonitor_IsFault(&p_mc->VMonitorSource);
-    p_mc->FaultFlags.PcbOverheat = Thermistor_IsFault(&p_mc->ThermistorPcb);
-
-    for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
-    {
-        p_mc->FaultFlags.MosfetsOverheat = Thermistor_IsFault(&p_mc->MosfetsThermistors[iMosfets]);
-        if (p_mc->FaultFlags.MosfetsOverheat == true) { break; }
-    }
-
-    for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONST.P_MOTORS[iMotor]); }
-}
 
 /******************************************************************************/
 /*!
@@ -265,9 +226,8 @@ NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T * p_mc)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_EEPROM)
     return EEPROM_Write_Blocking(p_mc->CONST.P_EEPROM, (uintptr_t)p_mc->CONST.P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T));
-    // return WriteNvm_Blocking(p_mc, p_mc->CONST.P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T));
 #elif   defined(CONFIG_MOTOR_CONTROLLER_USER_CONFIG_FLASH)
-    return NV_MEMORY_STATUS_ERROR_OTHER; /* Save on all params */
+    return NV_MEMORY_STATUS_ERROR_OTHER; /* Must erase page. Save on all params */
 #endif
 }
 

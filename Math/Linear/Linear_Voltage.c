@@ -35,9 +35,9 @@
     @brief     Initialize Linear struct using Voltage Divider parameters.
 
     f(adcu) = voltage
-    f16(adcu) = frac16
+    f16(adcu) = fract16
     invf(voltage) = adcu
-    invf16(frac16)  = adcu
+    invf16(fract16)  = adcu
 
     VDIV = VIN*(R2/(R1+R2))
     DIV = (R2/(R1+R2))
@@ -53,7 +53,7 @@
     @param[in] r2 - R2 value expressed as a whole number, < 65536
     @param[in] adcBit - Number of ADC bits
     @param[in] adcVRef - ADC reference voltage
-    @param[in] vInRef - Frac16 reference
+    @param[in] vInRef - Fract16 reference
 */
 /******************************************************************************/
 void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits, uint16_t vInRef)
@@ -71,7 +71,7 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t
     p_linear->X0                = 0;
     p_linear->Y0                = 0;
     p_linear->YReference        = vInRef;
-    p_linear->XReference        = linear_invf(p_linear->Slope, ((uint32_t)1UL << LINEAR_VOLTAGE_SHIFT), 0, vInRef); /* Frac16 reference */
+    p_linear->XReference        = linear_invf(p_linear->Slope, ((uint32_t)1UL << LINEAR_VOLTAGE_SHIFT), 0, vInRef); /* Fract16 reference */
     p_linear->XDeltaRef         = p_linear->XReference - p_linear->X0;
     p_linear->YDeltaRef         = vInRef - p_linear->Y0;
 }

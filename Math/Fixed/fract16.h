@@ -39,11 +39,6 @@
 
 #define FRACT16_N_BITS (15)   /*!< Q1.15, 15 fractional bits. Scalar 32768. Resolution 1/(2^15) == .000030517578125 */
 
-//todo rename
-// typedef int16_t fract16_t;      /*!< Q1.15 [-1.0, 1) */
-// typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
-// typedef int32_t accum32_t;     /*!< Q17.15 */
-
 typedef int16_t fract16_t;      /*!< Q1.15 [-1.0, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
 typedef int32_t accum32_t;     /*!< Q17.15 */
@@ -133,7 +128,7 @@ static inline fract16_t fract16_div_sat(accum32_t dividend, accum32_t divisor)
 }
 
 /* cast overflow as ufrac */
-static inline ufract16_t frac16_abs(fract16_t x)
+static inline ufract16_t fract16_abs(fract16_t x)
 {
     int32_t mask = (x >> FRACT16_N_BITS); // Create a mask based on the sign bit
     return (x + mask) ^ mask; // Apply the mask to get the absolute value
@@ -210,7 +205,6 @@ extern angle16_t fract16_atan2(fract16_t y, fract16_t x);
 */
 /******************************************************************************/
 // typedef struct vector32 { fract16_t x; fract16_t y; } vector32_t;
-
 extern void fract16_vector(fract16_t * p_x, fract16_t * p_y, angle16_t theta);
 extern uint16_t fract16_vector_magnitude(fract16_t x, fract16_t y);
 extern uint16_t fract16_vector_scalar(fract16_t x, fract16_t y, fract16_t mag_limit);

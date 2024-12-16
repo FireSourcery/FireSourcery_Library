@@ -110,10 +110,10 @@ extern const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U];
 /*
     For Cmdr side handling of unit conversion
 */
-static inline int32_t _MotorCmdr_ConvertToSpeedFrac16(MotorCmdr_T * p_motorCmdr, int32_t speed_rpm) { return speed_rpm * 65535 / p_motorCmdr->Units.SpeedFeedbackRef_Rpm; }
-static inline int16_t _MotorCmdr_ConvertToSpeedRpm(MotorCmdr_T * p_motorCmdr, int32_t speed_frac16) { return speed_frac16 * p_motorCmdr->Units.SpeedFeedbackRef_Rpm / 65536; }
-static inline int32_t _MotorCmdr_ConvertToIFrac16(MotorCmdr_T * p_motorCmdr, int32_t i_amp) { return i_amp * 65535 / p_motorCmdr->Units.IMaxRef_Amp; }
-static inline int16_t _MotorCmdr_ConvertToIAmp(MotorCmdr_T * p_motorCmdr, int32_t i_frac16) { return i_frac16 * p_motorCmdr->Units.IMaxRef_Amp / 65536; }
+static inline int32_t _MotorCmdr_ConvertToSpeedFract16(MotorCmdr_T * p_motorCmdr, int32_t speed_rpm) { return speed_rpm * 65535 / p_motorCmdr->Units.SpeedFeedbackRef_Rpm; }
+static inline int16_t _MotorCmdr_ConvertToSpeedRpm(MotorCmdr_T * p_motorCmdr, int32_t speed_fract16) { return speed_fract16 * p_motorCmdr->Units.SpeedFeedbackRef_Rpm / 65536; }
+static inline int32_t _MotorCmdr_ConvertToIFract16(MotorCmdr_T * p_motorCmdr, int32_t i_amp) { return i_amp * 65535 / p_motorCmdr->Units.IMaxRef_Amp; }
+static inline int16_t _MotorCmdr_ConvertToIAmp(MotorCmdr_T * p_motorCmdr, int32_t i_fract16) { return i_fract16 * p_motorCmdr->Units.IMaxRef_Amp / 65536; }
 
 static inline int16_t MotorCmdr_GetReadSpeed_Rpm(MotorCmdr_T * p_motorCmdr) { return _MotorCmdr_ConvertToSpeedRpm(p_motorCmdr, p_motorCmdr->Speed); }
 

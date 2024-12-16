@@ -134,10 +134,10 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
         case MOT_VAR_ID_TYPE_MONITOR_MOTOR:
             switch((MotVarId_Monitor_Motor_T)varId.NameBase)
             {
-                case MOT_VAR_SPEED:                 value = Motor_User_GetSpeed_UFrac16(p_motor);               break;
-                case MOT_VAR_I_PHASE:               value = Motor_User_GetIPhase_UFrac16(p_motor);              break;
-                case MOT_VAR_V_PHASE:               value = Motor_User_GetVPhase_UFrac16(p_motor);              break;
-                case MOT_VAR_POWER:                 value = Motor_User_GetElectricalPower_UFrac16(p_motor);     break;
+                case MOT_VAR_SPEED:                 value = Motor_User_GetSpeed_UFract16(p_motor);               break;
+                case MOT_VAR_I_PHASE:               value = Motor_User_GetIPhase_UFract16(p_motor);              break;
+                case MOT_VAR_V_PHASE:               value = Motor_User_GetVPhase_UFract16(p_motor);              break;
+                case MOT_VAR_POWER:                 value = Motor_User_GetElectricalPower_UFract16(p_motor);     break;
                 case MOT_VAR_MOTOR_STATE:           value = Motor_User_GetStateId(p_motor);                     break;
                 case MOT_VAR_MOTOR_STATUS_FLAGS:    value = Motor_User_GetStateFlags(p_motor).Word;            break;
                 case MOT_VAR_MOTOR_FAULT_FLAGS:     value = Motor_User_GetFaultFlags(p_motor).Value;             break;
@@ -146,7 +146,8 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 case MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE:    value = Motor_User_GetActiveFeedbackMode(p_motor).Word; break;
                 case MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT:      value = Motor_User_GetActiveSpeedLimit(p_motor);        break;
                 case MOT_VAR_MOTOR_ACTIVE_I_LIMIT:          value = Motor_User_GetActiveILimit(p_motor);            break;
-                // case MOT_VAR_MOTOR_V_SPEED:                 value = Motor_GetVSpeed_Frac16(p_motor);            break;
+                case MOT_VAR_MOTOR_V_SPEED:         value = Motor_User_GetVSpeed_UFract16(p_motor);                    break;
+                // case MOT_VAR_MOTOR_V_SPEED_EFFECTIVE:                 value = Motor_GetVSpeed_Fract16(p_motor);            break;
                 default: break;
             }
             break;
@@ -293,7 +294,7 @@ static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T
     Parameter
 */
 /******************************************************************************/
-static int32_t GetParameter(const MotorController_T * p_mc, MotVarId_T varId)
+static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
 {
     int32_t value = 0;
     Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
@@ -314,8 +315,9 @@ static int32_t GetParameter(const MotorController_T * p_mc, MotVarId_T varId)
                 case MOT_VAR_DIRECTION_CALIBRATION:         value = Motor_Config_GetDirectionCalibration(p_motor);      break;
                 case MOT_VAR_POLE_PAIRS:                    value = Motor_Config_GetPolePairs(p_motor);                 break;
                 case MOT_VAR_KV:                            value = Motor_Config_GetKv(p_motor);                        break;
-                case MOT_VAR_SPEED_FEEDBACK_REF_RPM:        value = Motor_Config_GetSpeedFeedbackRef_Rpm(p_motor);      break;
-                case MOT_VAR_SPEED_MATCH_REF_RPM:           value = Motor_Config_GetSpeedMatchRef_Rpm(p_motor);         break;
+                case MOT_VAR_V_SPEED_SCALAR:                value = Motor_Config_GetVSpeedScalar_Percent16(p_motor);    break;
+                case MOT_VAR_SPEED_V_REF_RPM:               value = Motor_Config_GetSpeedVRef_Rpm(p_motor);             break;
+                case MOT_VAR_SPEED_V_MATCH_REF_RPM:         value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);        break;
                 case MOT_VAR_IA_ZERO_REF_ADCU:              value = Motor_Config_GetIaZero_Adcu(p_motor);               break;
                 case MOT_VAR_IB_ZERO_REF_ADCU:              value = Motor_Config_GetIbZero_Adcu(p_motor);               break;
                 case MOT_VAR_IC_ZERO_REF_ADCU:              value = Motor_Config_GetIcZero_Adcu(p_motor);               break;
@@ -508,8 +510,9 @@ static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, i
                     case MOT_VAR_DIRECTION_CALIBRATION:         Motor_Config_SetDirectionCalibration(p_motor, varValue);        break;
                     case MOT_VAR_POLE_PAIRS:                    Motor_Config_SetPolePairs(p_motor, varValue);                   break;
                     case MOT_VAR_KV:                            Motor_Config_SetKv(p_motor, varValue);                          break;
-                    case MOT_VAR_SPEED_FEEDBACK_REF_RPM:        Motor_Config_SetSpeedFeedbackRef_Rpm(p_motor, varValue);        break;
-                    case MOT_VAR_SPEED_MATCH_REF_RPM:           Motor_Config_SetSpeedMatchRef_Rpm(p_motor, varValue);           break;
+                    case MOT_VAR_V_SPEED_SCALAR:                Motor_Config_SetVSpeedScalar_Percent16(p_motor, varValue);           break;
+                    case MOT_VAR_SPEED_V_REF_RPM:                   break;
+                    case MOT_VAR_SPEED_V_MATCH_REF_RPM:             break;
                     case MOT_VAR_IA_ZERO_REF_ADCU:              Motor_Config_SetIaZero_Adcu(p_motor, varValue);                 break;
                     case MOT_VAR_IB_ZERO_REF_ADCU:              Motor_Config_SetIbZero_Adcu(p_motor, varValue);                 break;
                     case MOT_VAR_IC_ZERO_REF_ADCU:              Motor_Config_SetIcZero_Adcu(p_motor, varValue);                 break;
@@ -710,7 +713,7 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
     switch((MotVarId_TypeType_T)varId.NameTypeType)
     {
         case MOT_VAR_ID_TYPE_REAL_TIME: value = GetRealTime(p_mc, varId);   break;
-        case MOT_VAR_ID_TYPE_CONFIG:    value = GetParameter(p_mc, varId);  break;
+        case MOT_VAR_ID_TYPE_CONFIG:    value = GetConfig(p_mc, varId);  break;
         default: break;
     }
     return value;

@@ -25,7 +25,7 @@
     @file   Linear_ADC.h
     @author FireSourcery
     @brief    Scale ADCU to provided reference value
-            Fast Frac16 without division. No physical units scalar for precision.
+            Fast Fract16 without division. No physical units scalar for precision.
     @version V0
 */
 /******************************************************************************/
@@ -41,10 +41,10 @@
 */
 /******************************************************************************/
 // static inline int32_t Linear_ADC_Q16(const Linear_T * p_linear, uint16_t adcu)                   { return Linear_Q16_Of(p_linear, adcu); }
-static inline int16_t Linear_ADC_Frac16(const Linear_T * p_linear, uint16_t adcu)                   { return Linear_Q16_Frac(p_linear, adcu); }
+static inline int16_t Linear_ADC_Fract16(const Linear_T * p_linear, uint16_t adcu)                   { return Linear_Q16_Frac(p_linear, adcu); }
 static inline uint16_t Linear_ADC_Percent16(const Linear_T * p_linear, uint16_t adcu)               { return Linear_Q16_Percent(p_linear, adcu); }
 static inline uint16_t Linear_ADC_Percent16_Abs(const Linear_T * p_linear, uint16_t adcu)           { return Linear_Q16_Percent_Abs(p_linear, adcu); }
-static inline uint16_t Linear_ADC_AdcuOfFrac16(const Linear_T * p_linear, int32_t frac16)           { return Linear_Q16_ValueOfFrac(p_linear, frac16); }
+static inline uint16_t Linear_ADC_AdcuOfFract16(const Linear_T * p_linear, int32_t fract16)           { return Linear_Q16_ValueOfFrac(p_linear, fract16); }
 static inline uint16_t Linear_ADC_AdcuOfPercent16(const Linear_T * p_linear, uint32_t percent16)    { return Linear_Q16_ValueOfPercent(p_linear, percent16); }
 
 /******************************************************************************/
@@ -72,9 +72,9 @@ extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVR
 
 // static inline int32_t Linear_ADC_CalcPhysical(const Linear_T * p_linear, uint16_t adcu) { return Linear_Q16_Units(p_linear, adcu); }
 
-// static inline int32_t Linear_ADC_CalcPhysical_Frac16(const Linear_T * p_linear, uint16_t frac16) { return Linear_Q16_Units16(p_linear, frac16); }
+// static inline int32_t Linear_ADC_CalcPhysical_Fract16(const Linear_T * p_linear, uint16_t fract16) { return Linear_Q16_Units16(p_linear, fract16); }
 // /* Division in this function */
-// static inline int32_t Linear_ADC_CalcFrac16_Physical(const Linear_T * p_linear, int32_t units) { return Linear_Q16_InvUnits16(p_linear, units); }
+// static inline int32_t Linear_ADC_CalcFract16_Physical(const Linear_T * p_linear, int32_t units) { return Linear_Q16_InvUnits16(p_linear, units); }
 // /* Division in this function */
 // static inline uint16_t Linear_ADC_CalcAdcu_Physical(const Linear_T * p_linear, int16_t units) { return Linear_Q16_InvUnits(p_linear, units); }
 
@@ -85,9 +85,9 @@ extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVR
     todo remove for separate  module
 */
 /******************************************************************************/
-// static inline int32_t Linear_Q16_Units16(const Linear_T * p_linear, int32_t y_frac16)
+// static inline int32_t Linear_Q16_Units16(const Linear_T * p_linear, int32_t y_fract16)
 // {
-//     return linear_units_of_fixed(p_linear->Y0, p_linear->YDeltaRef, y_frac16);
+//     return linear_units_of_fixed(p_linear->Y0, p_linear->YDeltaRef, y_fract16);
 // }
 
 // static inline int32_t Linear_Q16_InvUnits16(const Linear_T * p_linear, int32_t y_units)

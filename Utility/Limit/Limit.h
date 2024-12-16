@@ -33,15 +33,14 @@ typedef struct
         limits calculated on add/remove
         get is O(1)
     */
+    // size_t minIndex;
+    // size_t maxIndex;
     limit_t valuesMin; /* Min of the array, upper of [Limit] */
     limit_t valuesMax; /* Max of the array, lower of [Limit] */
 }
 Limit_T;
 
-#define LIMIT_INIT(p_buffer, length) \
-{ \
-    .P_ARRAY = (p_buffer), .LENGTH = (length) \
-}
+#define LIMIT_INIT(p_buffer, length) { .P_ARRAY = (p_buffer), .LENGTH = (length) }
 // VALUE_ARRAY_INIT_UNNAMED(p_buffer, length),             \
 // .ARRAY = ARRAY_INIT(p_buffer, length, unitSize),        \
 

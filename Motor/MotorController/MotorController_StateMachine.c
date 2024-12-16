@@ -60,6 +60,24 @@ const StateMachine_Machine_T MCSM_MACHINE =
 
 static StateMachine_State_T * TransitionFault(MotorController_T * p_mc, statemachine_input_value_t faultFlags) { p_mc->FaultFlags.Value |= faultFlags; return &STATE_FAULT; }
 
+/* Not needed if main loop does not block? */
+void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
+{
+    p_mc->FaultFlags.VSenseLimit = VMonitor_IsFault(&p_mc->VMonitorSense);
+    p_mc->FaultFlags.VAccsLimit = VMonitor_IsFault(&p_mc->VMonitorAccs);
+    p_mc->FaultFlags.VSourceLimit = VMonitor_IsFault(&p_mc->VMonitorSource);
+    p_mc->FaultFlags.PcbOverheat = Thermistor_IsFault(&p_mc->ThermistorPcb);
+
+    for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
+    {
+        p_mc->FaultFlags.MosfetsOverheat = Thermistor_IsFault(&p_mc->MosfetsThermistors[iMosfets]);
+        if (p_mc->FaultFlags.MosfetsOverheat == true) { break; }
+    }
+
+    // for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONST.P_MOTORS[iMotor]); }
+}
+
+
 /******************************************************************************/
 /*!
     @brief Init State
@@ -70,7 +88,6 @@ static StateMachine_State_T * TransitionFault(MotorController_T * p_mc, statemac
 static void Init_Entry(MotorController_T * p_mc)
 {
     // (void)p_mc;
-
 }
 
 static void Init_Exit(MotorController_T * p_mc)
@@ -109,6 +126,8 @@ static void Init_Proc(MotorController_T * p_mc)
         }
         else
         {
+            // MotorController_ResetVSourceActiveRef(p_mc); /* Set Motors VSourceRef using ADC reading */
+
             if (p_mc->Config.InitMode == MOTOR_CONTROLLER_INIT_MODE_SERVO)
             {
                 _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_SERVO);
@@ -125,7 +144,7 @@ static void Init_Proc(MotorController_T * p_mc)
 
 static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT] = (StateMachine_Transition_T)NULL, /* MotorController_StateMachine_EnterFault is disabled for INIT_STATE */
+    [MCSM_INPUT_FAULT] = NULL, /* MotorController_StateMachine_EnterFault is disabled for INIT_STATE */
 };
 
 static const StateMachine_State_T STATE_INIT =
@@ -436,9 +455,9 @@ static const StateMachine_Transition_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_
 static const StateMachine_State_T STATE_NEUTRAL =
 {
     .ID                 = MCSM_STATE_ID_NEUTRAL,
-    .P_TRANSITION_TABLE = &NEUTRAL_TRANSITION_TABLE[0U],
     .ENTRY              = (StateMachine_Function_T)Neutral_Entry,
     .LOOP               = (StateMachine_Function_T)Neutral_Proc,
+    .P_TRANSITION_TABLE = &NEUTRAL_TRANSITION_TABLE[0U],
 };
 
 
@@ -514,9 +533,9 @@ static const StateMachine_Transition_T BLOCKING_TRANSITION_TABLE[MCSM_TRANSITION
 static const StateMachine_State_T STATE_LOCK =
 {
     .ID                 = MCSM_STATE_ID_LOCK,
-    .P_TRANSITION_TABLE = &BLOCKING_TRANSITION_TABLE[0U],
     .ENTRY              = (StateMachine_Function_T)Blocking_Entry,
     .LOOP               = (StateMachine_Function_T)Blocking_Proc,
+    .P_TRANSITION_TABLE = &BLOCKING_TRANSITION_TABLE[0U],
 };
 
 
@@ -601,9 +620,9 @@ static const StateMachine_Transition_T SERVO_TRANSITION_TABLE[MCSM_TRANSITION_TA
 static const StateMachine_State_T STATE_SERVO =
 {
     .ID                 = MCSM_STATE_ID_SERVO,
-    .P_TRANSITION_TABLE = &SERVO_TRANSITION_TABLE[0U],
     .ENTRY              = (StateMachine_Function_T)Servo_Entry,
     .LOOP               = (StateMachine_Function_T)Servo_Proc,
+    .P_TRANSITION_TABLE = &SERVO_TRANSITION_TABLE[0U],
 };
 #endif
 
@@ -662,9 +681,9 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TA
 static const StateMachine_State_T STATE_FAULT =
 {
     .ID                 = MCSM_STATE_ID_FAULT,
-    .P_TRANSITION_TABLE = &FAULT_TRANSITION_TABLE[0U],
     .ENTRY              = (StateMachine_Function_T)Fault_Entry,
     .LOOP               = (StateMachine_Function_T)Fault_Proc,
+    .P_TRANSITION_TABLE = &FAULT_TRANSITION_TABLE[0U],
 };
 
 /******************************************************************************/

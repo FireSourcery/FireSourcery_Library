@@ -269,14 +269,14 @@ static inline void MotorController_User_SetInputMode(MotorController_T * p_mc, M
 static inline void MotorController_User_SetBrakeMode(MotorController_T * p_mc, MotorController_BrakeMode_T mode)           { p_mc->Config.BrakeMode = mode; }
 static inline void MotorController_User_SetThrottleMode(MotorController_T * p_mc, MotorController_ThrottleMode_T mode)     { p_mc->Config.ThrottleMode = mode; }
 static inline void MotorController_User_SetDriveZeroMode(MotorController_T * p_mc, MotorController_DriveZeroMode_T mode)   { p_mc->Config.DriveZeroMode = mode; }
-static inline void MotorController_User_SetILimitOnLowV(MotorController_T * p_mc, uint16_t scalar_Frac16)                  { p_mc->Config.VLowILimit_Percent16 = scalar_Frac16; }
+static inline void MotorController_User_SetILimitOnLowV(MotorController_T * p_mc, uint16_t scalar_Fract16)                  { p_mc->Config.VLowILimit_Percent16 = scalar_Fract16; }
 
 static inline void MotorController_User_SetOptDinMode(MotorController_T * p_mc, MotorController_OptDinMode_T mode) { p_mc->Config.OptDinMode = mode; }
 static inline void MotorController_User_DisableOptDin(MotorController_T * p_mc)                                    { p_mc->Config.OptDinMode = MOTOR_CONTROLLER_OPT_DIN_DISABLE; }
-static inline bool MotorController_User_SetOptDinSpeedLimit(MotorController_T * p_mc, uint16_t scalar_Frac16)
+static inline bool MotorController_User_SetOptDinSpeedLimit(MotorController_T * p_mc, uint16_t scalar_Fract16)
 {
     bool isSuccess = (p_mc->Config.OptDinMode == MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT);
-    if(isSuccess) { p_mc->Config.OptSpeedLimit_Percent16 = scalar_Frac16; }
+    if(isSuccess) { p_mc->Config.OptSpeedLimit_Percent16 = scalar_Fract16; }
     return isSuccess;
 }
 

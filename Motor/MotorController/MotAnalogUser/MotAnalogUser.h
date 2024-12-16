@@ -270,7 +270,7 @@ static inline MotAnalogUser_Direction_T MotAnalogUser_PollDirection(MotAnalogUse
 
     No throttle release detect while in neutral.
 
-    _MotAnalogUser_AIn_PollFallingEdge must follow capture when using compare Prev_Frac16
+    _MotAnalogUser_AIn_PollFallingEdge must follow capture when using compare Prev_Fract16
 */
 static inline MotAnalogUser_Cmd_T MotAnalogUser_PollCmd(MotAnalogUser_T * p_user)
 {
@@ -344,7 +344,7 @@ extern void MotAnalogUser_SetBrakeRange(MotAnalogUser_T * p_user, uint16_t zero_
 extern void MotAnalogUser_SetThrottleRange(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu);
 extern void MotAnalogUser_SetBrakeAIn(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useBrakeEdgePin);
 extern void MotAnalogUser_SetThrottleAIn(MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu, bool useThrottleEdgePin);
-extern void MotAnalogUser_SetBistateBrake(MotAnalogUser_T * p_user, bool useBistateBrake, uint16_t bistateBrakeIntensity_Frac16);
+extern void MotAnalogUser_SetBistateBrake(MotAnalogUser_T * p_user, bool useBistateBrake, uint16_t bistateBrakeIntensity_Fract16);
 extern void MotAnalogUser_SetDirectionPins(MotAnalogUser_T * p_user, MotAnalogUser_DirectionPins_T pins);
 
 #endif

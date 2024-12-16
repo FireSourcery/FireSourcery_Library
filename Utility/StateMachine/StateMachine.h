@@ -33,11 +33,15 @@
 
 #include "Config.h"
 
+#ifdef  CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE
+#include "System/Critical/Critical.h"
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdatomic.h>
 #include <sys/types.h>
-
-#include "System/Critical/Critical.h"
 
 #define STATE_MACHINE_INPUT_ID_NULL         (0xFFU)
 #define STATE_MACHINE_INPUT_VALUE_NULL      (0U)
@@ -45,13 +49,11 @@
 typedef uint8_t  statemachine_input_id_t;       /* Input ID/Category. Index into transition table. User may overwrite with enum. */
 typedef uint32_t statemachine_input_value_t;    /* User define platform register size */
 
-typedef uint8_t statemachine_state_t;           /* State ID. User may overwrite with enum */
-
 // id is not passed in a function pointer. will not affect function pointer casting compatibility
 // typedef enum uint8_t { STATE_MACHINE_INPUT_ID_NULL = 0xFF } statemachine_input_id_t; /* Input ID/Category. Index into transition table. User may overwrite with enum. */
 // typedef register_t statemachine_input_value_t;  /* User define platform register size */
 
-
+typedef uint8_t statemachine_state_t;           /* State ID. User may overwrite with enum */
 struct StateMachine_State;
 
 /*!
@@ -61,10 +63,10 @@ struct StateMachine_State;
             0 - no transition, bypass exit and entry, indicates user defined non transition
             !0 - transition, perform exist and entry. User may return same state, for self transition, proc exit and entry
 */
-// include additional arg to optimize for r2-r3?
 typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_input_value_t inputValue); // Input Function
 typedef void (*StateMachine_Function_T)(void * p_context); // Output Function
 
+// include additional arg to optimize for r2-r3?
 // input only function, check state only, no transition
 // typedef void (*StateMachine_Input_T)(void * p_context, statemachine_input_value_t inputValue0, statemachine_input_value_t inputValue1, statemachine_input_value_t inputValue2); // Input Function
 
@@ -87,7 +89,7 @@ typedef const struct StateMachine_State
     const StateMachine_Function_T LOOP;       /* Output of the State. Synchronous periodic proc. No null pointer check, user must supply empty function */
     const StateMachine_Function_T ENTRY;      /* Common to all transition to current state, including self transition */
     const StateMachine_Function_T EXIT;
-    // void * const P_STATE_CONTEXT;
+    // void * const P_STATE_CONTEXT;        /* SubState Buffer */
 #ifdef CONFIG_STATE_MACHINE_LINKED_MENU_ENABLE
     const struct StateMachine_State * P_LINK_NEXT;
     const struct StateMachine_State * P_LINK_PREV;
@@ -106,7 +108,7 @@ typedef const struct StateMachine_Const
 {
     const StateMachine_Machine_T * const P_MACHINE;         /* Const definition of state transition behaviors */
     void * const P_CONTEXT;                                 /* Mutable state information per state machine. Alternatively, in each function */
-#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
+#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
     const bool USE_CRITICAL;
 #endif
 }
@@ -123,13 +125,13 @@ typedef struct StateMachine
     volatile statemachine_input_value_t SyncInputValue;
     // volatile bool IsSyncInputAccept;
 
-#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
+#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
     volatile critical_signal_t Mutex;
 #endif
 }
 StateMachine_T;
 
-#if defined(CONFIG_STATE_MACHINE_MULTITHREADED_ENABLE)
+#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
 #define _STATE_MACHINE_INIT_CRITICAL(UseCritical) .USE_CRITICAL = UseCritical,
 #else
 #define _STATE_MACHINE_INIT_CRITICAL(UseCritical)
@@ -170,3 +172,5 @@ extern bool StateMachine_ProcInput(StateMachine_T * p_stateMachine, statemachine
 extern bool StateMachine_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
 
 #endif
+
+

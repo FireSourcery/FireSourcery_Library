@@ -228,7 +228,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
         //     Serial_PollTxData(&p_mc->CONST.P_SERIALS[iSerial]);
         // }
 
-
         /* Low Freq, Low Priority, ~10ms ~16ms, 100Hz */
         if (CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONST.MAIN_DIVIDER_10) == true)
         {

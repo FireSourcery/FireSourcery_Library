@@ -80,8 +80,8 @@ SinCos_T;
 */
 static inline angle16_t _SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-    fract16_t sin = Linear_ADC_Frac16(&p_sincos->UnitsAngle, sin_Adcu);
-    fract16_t cos = Linear_ADC_Frac16(&p_sincos->UnitsAngle, cos_Adcu);
+    fract16_t sin = Linear_ADC_Fract16(&p_sincos->UnitsAngle, sin_Adcu);
+    fract16_t cos = Linear_ADC_Fract16(&p_sincos->UnitsAngle, cos_Adcu);
     angle16_t angle = fract16_atan2(sin, cos);
     return angle;
 }

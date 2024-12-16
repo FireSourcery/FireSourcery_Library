@@ -24,7 +24,7 @@
 /*!
     @file   Linear_Q16_Of.h
     @author FireSourcery
-    @brief  Linear Frac16 calc without division
+    @brief  Linear Fract16 calc without division
     @version V0
 */
 /******************************************************************************/
@@ -35,8 +35,8 @@
 
 /******************************************************************************/
 /*!
-    Frac16 => [-32768:32767],  [-1:1)  in Q1.15
-    UFrac16 => [0:65535],       [0:2)   in Q1.15,
+    Fract16 => [-32768:32767],  [-1:1)  in Q1.15
+    UFract16 => [0:65535],       [0:2)   in Q1.15,
     Percent16 <=> Fixed32 => [0:65535], [0:1) in Q0.16
     Fixed32 => [INT32_MIN:INT32_MAX], [-1:1] <=> [-65536:65536] in Q16.16
 */
@@ -80,9 +80,9 @@ static inline uint16_t Linear_Q16_UFrac(const Linear_T * p_linear, int32_t x)
 }
 
 /* Input interval units */
-static inline int32_t Linear_Q16_ValueOfFrac(const Linear_T * p_linear, int16_t y_frac16)
+static inline int32_t Linear_Q16_ValueOfFrac(const Linear_T * p_linear, int16_t y_fract16)
 {
-    return Linear_Q16_InvOf(p_linear, (int32_t)y_frac16 * 2);
+    return Linear_Q16_InvOf(p_linear, (int32_t)y_fract16 * 2);
 }
 
 /******************************************************************************/

@@ -129,11 +129,11 @@ void Phase_ActivateDuty(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwm
     _Phase_SyncPwmDuty(p_phase);
 }
 
-void Phase_ActuateDuty_Frac16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+void Phase_ActuateDuty_Fract16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
 {
-    PWM_ActuateDuty_Frac16(&p_phase->PwmA, pwmDutyA);
-    PWM_ActuateDuty_Frac16(&p_phase->PwmB, pwmDutyB);
-    PWM_ActuateDuty_Frac16(&p_phase->PwmC, pwmDutyC);
+    PWM_ActuateDuty_Fract16(&p_phase->PwmA, pwmDutyA);
+    PWM_ActuateDuty_Fract16(&p_phase->PwmB, pwmDutyB);
+    PWM_ActuateDuty_Fract16(&p_phase->PwmC, pwmDutyC);
     _Phase_SyncPwmDuty(p_phase);
 }
 

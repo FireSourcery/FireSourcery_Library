@@ -100,12 +100,12 @@ static inline uint16_t Linear_Voltage_Percent16OfAdcu(const Linear_T * p_linear,
 /*!
     @brief  results in Q1.15 where 32,767 => 100% of vInMax
 */
-static inline int16_t Linear_Voltage_Frac16OfAdcu(const Linear_T * p_linear, uint16_t adcu)
+static inline int16_t Linear_Voltage_Fract16OfAdcu(const Linear_T * p_linear, uint16_t adcu)
 {
-    return _Linear_Frac16(p_linear, adcu);
+    return _Linear_Fract16(p_linear, adcu);
 }
 
-// static inline uint32_t Linear_Voltage_Charge_Frac16OfAdcu(const Linear_T * p_linear, uint16_t adcuZero, uint16_t adcu)
+// static inline uint32_t Linear_Voltage_Charge_Fract16OfAdcu(const Linear_T * p_linear, uint16_t adcuZero, uint16_t adcu)
 // {
 //     // return ((uint32_t)(adcu - adcuZero) * UINT16_MAX) / (p_linear->XReference - adcuZero);
 //     return linear_f_x0(65536, p_linear->XDeltaRef, adcuZero, adcu);
@@ -142,15 +142,15 @@ static inline uint16_t Linear_Voltage_AdcuOfPercent16(const Linear_T * p_linear,
     return (uint16_t)_Linear_InvPercent16(p_linear, percent16);
 }
 
-/* frac16 in Q1.15 */
-static inline uint16_t Linear_Voltage_AdcuOfFrac16(const Linear_T * p_linear, int16_t frac16)
+/* fract16 in Q1.15 */
+static inline uint16_t Linear_Voltage_AdcuOfFract16(const Linear_T * p_linear, int16_t fract16)
 {
-    return (uint16_t)_Linear_InvFrac16(p_linear, frac16);
+    return (uint16_t)_Linear_InvFract16(p_linear, fract16);
 }
 
-static inline int32_t Linear_Voltage_OfFrac16(const Linear_T * p_linear, uint16_t frac16)
+static inline int32_t Linear_Voltage_OfFract16(const Linear_T * p_linear, uint16_t fract16)
 {
-    return Linear_Of(p_linear, Linear_Voltage_AdcuOfFrac16(p_linear, frac16));
+    return Linear_Of(p_linear, Linear_Voltage_AdcuOfFract16(p_linear, fract16));
 }
 
 

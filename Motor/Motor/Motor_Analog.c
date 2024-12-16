@@ -75,7 +75,7 @@ void Motor_Analog_MarkIabc(Motor_T * p_motor)
 void Motor_Analog_StartCalibration(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, MOTOR_STATIC.CONTROL_FREQ * 2U); /* 2 Seconds */
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, 0U /*Phase_Ground(&p_motor->Phase)*/);
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutputZero, 0U /*Phase_Ground(&p_motor->Phase)*/);
 
     Filter_Avg_Init(&p_motor->FilterA);
     Filter_Avg_Init(&p_motor->FilterB);

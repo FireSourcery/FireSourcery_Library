@@ -183,15 +183,16 @@ static inline void foc_circle_limit(fract16_t * p_d, fract16_t * p_q, fract16_t 
     uint32_t q_limit_squared;
     uint16_t q_limit;
 
-    if (d_squared + q_squared > mag_limit_squared)  /* (|Vdq| > magnitude_limit) */
+    if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
     {
+        /* Apply d limit */
         d_limit_squared = (int32_t)d_limit * d_limit;
-        if (d_squared > d_limit_squared) /* (fract16_abs(d) > d_limit) */
-        {
-            d_squared = d_limit_squared;
-            *p_d = (*p_d < 0) ? (0 - d_limit) : d_limit;
-        }
-        q_limit_squared = mag_limit_squared - d_squared;
+        if (d_squared > d_limit_squared) /* abs(d) > d_limit */
+            { *p_d = (*p_d < 0) ? (0 - d_limit) : d_limit; }
+        else
+            { d_limit_squared = d_squared; }
+        /* Apply q limit */
+        q_limit_squared = mag_limit_squared - d_limit_squared;
         q_limit = q_sqrt(q_limit_squared);
         *p_q = (*p_q < 0) ? (0 - q_limit) : q_limit;
     }
