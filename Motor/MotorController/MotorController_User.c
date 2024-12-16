@@ -121,7 +121,7 @@ NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorController_
 {
     NvMemory_Status_T status;
 
-    if(MotorController_User_IsLockState(p_mc) == true)
+    if (MotorController_User_IsConfigState(p_mc) == true)
     {
         status = MotorController_ReadManufacture_Blocking(p_mc, onceAddress, size, p_destBuffer);
     }
