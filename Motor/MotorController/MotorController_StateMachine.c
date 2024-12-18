@@ -61,21 +61,21 @@ const StateMachine_Machine_T MCSM_MACHINE =
 static StateMachine_State_T * TransitionFault(MotorController_T * p_mc, statemachine_input_value_t faultFlags) { p_mc->FaultFlags.Value |= faultFlags; return &STATE_FAULT; }
 
 /* Not needed if main loop does not block? */
-// void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
-// {
-//     p_mc->FaultFlags.VSenseLimit = VMonitor_IsFault(&p_mc->VMonitorSense);
-//     p_mc->FaultFlags.VAccsLimit = VMonitor_IsFault(&p_mc->VMonitorAccs);
-//     p_mc->FaultFlags.VSourceLimit = VMonitor_IsFault(&p_mc->VMonitorSource);
-//     p_mc->FaultFlags.PcbOverheat = Thermistor_IsFault(&p_mc->ThermistorPcb);
+void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
+{
+    p_mc->FaultFlags.VSenseLimit = VMonitor_IsFault(&p_mc->VMonitorSense);
+    p_mc->FaultFlags.VAccsLimit = VMonitor_IsFault(&p_mc->VMonitorAccs);
+    p_mc->FaultFlags.VSourceLimit = VMonitor_IsFault(&p_mc->VMonitorSource);
+    p_mc->FaultFlags.PcbOverheat = Thermistor_IsFault(&p_mc->ThermistorPcb);
 
-//     for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
-//     {
-//         p_mc->FaultFlags.MosfetsOverheat = Thermistor_IsFault(&p_mc->MosfetsThermistors[iMosfets]);
-//         if (p_mc->FaultFlags.MosfetsOverheat == true) { break; }
-//     }
+    for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
+    {
+        p_mc->FaultFlags.MosfetsOverheat = Thermistor_IsFault(&p_mc->MosfetsThermistors[iMosfets]);
+        if (p_mc->FaultFlags.MosfetsOverheat == true) { break; }
+    }
 
-//     // for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONST.P_MOTORS[iMotor]); }
-// }
+    // for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONST.P_MOTORS[iMotor]); }
+}
 
 
 /******************************************************************************/
@@ -107,7 +107,7 @@ static void Init_Proc(MotorController_T * p_mc)
     if (SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT)
     {
         wait = false;
-        // MotorController_PollAdcFaultFlags(p_mc); /* Clear FaultFlags set by sensor polling in main thread. */
+        MotorController_PollAdcFaultFlags(p_mc); /* Clear FaultFlags set by sensor polling in main thread. */
         // if (p_mc->FaultFlags.Value != 0U) { wait = true; }
         // if(p_mc->InitFlags.Word != 0U) { wait = true; }   // indirectly poll inputs
 

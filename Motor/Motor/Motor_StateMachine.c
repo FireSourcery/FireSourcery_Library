@@ -63,7 +63,7 @@ const StateMachine_Machine_T MSM_MACHINE =
 };
 
 /* clears fault of type adc reading */
-// static inline void Motor_PollAdcFaultFlags(Motor_T * p_motor) { p_motor->FaultFlags.Overheat = Thermistor_IsFault(&p_motor->Thermistor); } /* is this needed? */
+static inline void Motor_PollAdcFaultFlags(Motor_T * p_motor) { p_motor->FaultFlags.Overheat = Thermistor_IsFault(&p_motor->Thermistor); } /* is this needed? */
 
 static StateMachine_State_T * TransitionFault(Motor_T * p_motor, statemachine_input_value_t faultFlags) { p_motor->FaultFlags.Value |= faultFlags; return &STATE_FAULT; }
 static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, statemachine_input_value_t _void)  { (void)p_motor; (void)_void; return &STATE_FREEWHEEL; }
@@ -91,7 +91,7 @@ static void Init_Proc(Motor_T * p_motor)
 {
     bool wait = true;
 
-    // Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleCaptureVBemf, NULL); /* or Transition to STOP without hold */
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleCaptureVBemf, NULL); /* or Transition to STOP without hold */
 
     if(SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT) /* wait for Speed and Heat sensors */
     {
