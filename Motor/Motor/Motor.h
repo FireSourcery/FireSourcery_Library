@@ -285,7 +285,7 @@ typedef struct Motor_Config
 {
     Motor_CommutationMode_T     CommutationMode;
     Motor_SensorMode_T          SensorMode;
-    Motor_FeedbackMode_T        FeedbackModeDefault;     /* Default FeedbackMode */
+    // Motor_FeedbackMode_T        FeedbackModeDefault;     /* Default FeedbackMode */
     Motor_Direction_T           DirectionForward;
 
     /*
@@ -510,16 +510,14 @@ Motor_T, * Motor_Ptr;
 /******************************************************************************/
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 /* Internal unit numeric representation conversions only */
-static inline int32_t _Motor_ConvertSpeed_RpmToFract16(const Motor_T * p_motor, int32_t speed_rpm)        { return speed_rpm * INT16_MAX / p_motor->Config.SpeedFeedbackRef_Rpm; }
-static inline int16_t _Motor_ConvertSpeed_Fract16ToRpm(const Motor_T * p_motor, int32_t speed_fract16)     { return speed_fract16 * p_motor->Config.SpeedFeedbackRef_Rpm / 32768; }
-static inline int32_t _Motor_ConvertI_AmpsToIFract16(int32_t i_amp)                                 { return i_amp * INT16_MAX / MOTOR_STATIC.I_MAX_AMPS; }
-static inline int16_t _Motor_ConvertI_Fract16ToAmps(int32_t i_fract16)                               { return i_fract16 * MOTOR_STATIC.I_MAX_AMPS / 32768; }
-static inline int32_t _Motor_ConvertV_VoltsToFract16(int32_t v_volts)                               { return v_volts * INT16_MAX / Motor_Static_GetVSource_V(); }
-static inline int16_t _Motor_ConvertV_Fract16ToVolts(int32_t v_fract16)                              { return v_fract16 * Motor_Static_GetVSource_V() / 32768; }
-static inline int32_t _Motor_ConvertPower_Fract16ToWatts(int32_t vi_fract16)                         { return vi_fract16 * MOTOR_STATIC.I_MAX_AMPS * Motor_Static_GetVSource_V() / 32768; }
+static inline int32_t _Motor_Speed_Fract16OfRpm(const Motor_T * p_motor, int32_t speed_rpm)     { return speed_rpm * INT16_MAX / p_motor->Config.SpeedFeedbackRef_Rpm; }
+static inline int16_t _Motor_Speed_RpmOfFract16(const Motor_T * p_motor, int32_t speed_fract16) { return speed_fract16 * p_motor->Config.SpeedFeedbackRef_Rpm / 32768; }
+static inline int32_t _Motor_I_Fract16OfAmps(int32_t i_amp)             { return i_amp * INT16_MAX / MOTOR_STATIC.I_MAX_AMPS; }
+static inline int16_t _Motor_I_AmpsOfFract16(int32_t i_fract16)         { return i_fract16 * MOTOR_STATIC.I_MAX_AMPS / 32768; }
+static inline int32_t _Motor_V_Fract16OfVolts(int32_t v_volts)          { return v_volts * INT16_MAX / Motor_Static_GetVSource_V(); }
+static inline int16_t _Motor_V_VoltsOfFract16(int32_t v_fract16)        { return v_fract16 * Motor_Static_GetVSource_V() / 32768; }
+static inline int32_t _Motor_Power_WattsOfFract16(int32_t vi_fract16)   { return vi_fract16 * MOTOR_STATIC.I_MAX_AMPS * Motor_Static_GetVSource_V() / 32768; }
 #endif
-
-
 
 /******************************************************************************/
 /*
@@ -685,7 +683,7 @@ static inline int16_t Motor_VReqOfILimit(const Motor_T * p_motor, int32_t feedba
 /******************************************************************************/
 /* */
 /******************************************************************************/
-/* Call from StateMachine only */
+/* Call from StateMachine only, may update feedback limits after */
 static inline void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)  { p_motor->FeedbackMode.Word = mode.Word; }
 static inline void Motor_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue)     { p_motor->FeedbackMode.Word = modeValue; }
 

@@ -352,7 +352,7 @@ typedef struct Protocol
     /* Rx */
     Protocol_RxState_T RxState;
     Protocol_RxCode_T RxStatus;     /* Returned from child function, also return to caller. updated per proc. store as way of retaining 2 return values */
-    protocol_size_t RxIndex;        /* index into P_RX_PACKET_BUFFER */
+    protocol_size_t RxIndex;        /* Index into P_RX_PACKET_BUFFER, number of bytes received */
     uint32_t RxTimeStart;
 
     protocol_size_t TxLength;

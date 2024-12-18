@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+/* pow2 only */
 static inline uintptr_t align_down(uintptr_t bits, size_t align) { return (bits & (-align)); }
 static inline uintptr_t align_up(uintptr_t bits, size_t align) { return (-((-bits) & (-align))); }
 static inline bool is_aligned(uintptr_t bits, size_t align) { return ((bits & (align - 1U)) == (uintptr_t)0U); }
@@ -43,6 +44,7 @@ static inline bool is_aligned(uintptr_t bits, size_t align) { return ((bits & (a
 static inline bool is_masked(uint32_t value, uint32_t mask) { return ((value & mask) == (uint32_t)0U); }
 
 static inline uint32_t bits_edge(uint32_t prevState, uint32_t newState) { return (prevState ^ newState); }
+/* 1: Rising Edge, 0: No Change, -1: Falling Edge */
 static inline int8_t edge_value(bool prevState, bool newState) { return ((int8_t)newState - (int8_t)prevState); }
 
 

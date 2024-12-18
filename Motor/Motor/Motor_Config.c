@@ -69,6 +69,7 @@ void Motor_Config_SetKv(Motor_T * p_motor, uint16_t kv)
 /*
     V of Speed Ref
     SpeedVRef =< SetSpeedFeedbackRef to ensure not match to higher speed
+    Base as UFract16, multiply with SpeedRef*2 without overflow.
 */
 void Motor_Config_SetVSpeedScalar_UFract16(Motor_T * p_motor, uint16_t scalar)
 {
@@ -81,7 +82,8 @@ void Motor_Config_SetVSpeedScalar_Percent16(Motor_T * p_motor, uint16_t percent1
     Motor_Config_SetVSpeedScalar_UFract16(p_motor, percent16 >> 1U);
 }
 
-/* Kv*VSource */
+/* Kv * VSource */
+/* Depreciate */
 /* SpeedFeedbackRef_Rpm => 100% speed for PID feedback. */
 void Motor_Config_SetSpeedVRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
@@ -94,7 +96,6 @@ void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
     Motor_Config_SetVSpeedScalar_UFract16(p_motor, (rpm << 15U) / Motor_GetSpeedVRef_Rpm(p_motor));
 }
-
 
 
 /******************************************************************************/

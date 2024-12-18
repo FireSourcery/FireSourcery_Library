@@ -41,10 +41,18 @@ static void ResetGains(PID_T * p_pid)
 void PID_Init(PID_T * p_pid)
 {
     if (p_pid->CONST.P_CONFIG != NULL) { memcpy(&p_pid->Config, p_pid->CONST.P_CONFIG, sizeof(PID_Config_T)); }
-    PID_SetOutputLimits(p_pid, INT16_MIN, INT16_MAX);
     ResetGains(p_pid);
+    PID_SetOutputLimits(p_pid, INT16_MIN, INT16_MAX);
     PID_Reset(p_pid);
 }
+
+// void PID_Init(PID_T * p_pid, PID_Config_T * p_config)
+// {
+//     memcpy(&p_pid->Config, p_config, sizeof(PID_Config_T));
+//     ResetGains(p_pid);
+//     PID_SetOutputLimits(p_pid, INT16_MIN, INT16_MAX);
+//     PID_Reset(p_pid);
+// }
 
 static inline int16_t GetIntegral(PID_T * p_pid) { return (p_pid->Integral32 >> 16); }
 static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integral32 = ((int32_t)integral << 16); }
@@ -60,7 +68,8 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     proportional = (p_pid->Config.PropGain * error) >> p_pid->Config.PropGainShift; /* Inclusive of 16 shift */
 
     /*
-        Store as Integral ("integrate" then sum). Allows compute time gain adjustment. Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
+        Store as Integral ("integrate" then sum). Allows compute time gain adjustment.
+            Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
     */
     /* Forward rectangular approximation. */
     integral32Part = (p_pid->Config.IntegralGain * error) >> p_pid->Config.IntegralGainShift; /* Exclusive of 16 shift */
@@ -74,7 +83,7 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     /*
         Clamp integral to prevent windup.
         Determine integral storage, Integral32, using `integral`
-        if integral and error are in opposite directions, reset stored integral.
+        if integral and error are in opposite directions, some synchronization issue has occurred, reset stored integral.
     */
     if      (integral > integralMax) { integral = integralMax; if (error < 0) { SetIntegral(p_pid, integralMax); } }
     else if (integral < integralMin) { integral = integralMin; if (error > 0) { SetIntegral(p_pid, integralMin); } }

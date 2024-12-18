@@ -95,7 +95,7 @@ static inline void Array_ForEach(const Array_T * p_array, void_op_t unit_op)
 
 static inline void Array_SetAll_Int32(const Array_T * p_array, set_int32_t unit_op, int32_t value)
 {
-    struct_array_set_all_int32(p_array->P_BUFFER, p_array->UNIT_SIZE, p_array->LENGTH, unit_op, value);
+    struct_array_foreach_set_int32(p_array->P_BUFFER, p_array->UNIT_SIZE, p_array->LENGTH, unit_op, value);
 }
 
 

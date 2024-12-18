@@ -80,7 +80,7 @@ static inline uint16_t Motor_Config_GetILimitGenerating_Percent16(Motor_T * p_mo
 
 // static inline uint16_t Motor_Config_Set(Motor_T * p_motor, Motor_Config_Set_T setFunction, uint16_t value)
 // {
-//     if(StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP) { setFunction(p_motor, value); }
+//     if (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP) { setFunction(p_motor, value); }
 // }
 
 static inline bool Motor_Config_IsConfigState(Motor_T * p_motor)

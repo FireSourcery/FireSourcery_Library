@@ -44,8 +44,8 @@ static int32_t GetParameterThermistor(const Thermistor_T * p_thermistor, MotVarI
     {
         switch(nameId)
         {
-            case MOT_VAR_THERMISTOR_R_SERIES:                   value = p_thermistor->CONST.R_SERIES / 10U;                break;
-            case MOT_VAR_THERMISTOR_R_PARALLEL:                 value = p_thermistor->CONST.R_PARALLEL / 10U;              break;
+            case MOT_VAR_THERMISTOR_R_SERIES:                   value = p_thermistor->CONST.R_SERIES / 10U;                 break;
+            case MOT_VAR_THERMISTOR_R_PARALLEL:                 value = p_thermistor->CONST.R_PARALLEL / 10U;               break;
             case MOT_VAR_THERMISTOR_R0:                         value = Thermistor_GetR0(p_thermistor) / 10U;               break;
             case MOT_VAR_THERMISTOR_T0:                         value = Thermistor_GetT0(p_thermistor);                     break;
             case MOT_VAR_THERMISTOR_B:                          value = Thermistor_GetB(p_thermistor);                      break;
@@ -138,15 +138,15 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 case MOT_VAR_I_PHASE:               value = Motor_User_GetIPhase_UFract16(p_motor);              break;
                 case MOT_VAR_V_PHASE:               value = Motor_User_GetVPhase_UFract16(p_motor);              break;
                 case MOT_VAR_POWER:                 value = Motor_User_GetElectricalPower_UFract16(p_motor);     break;
-                case MOT_VAR_MOTOR_STATE:           value = Motor_User_GetStateId(p_motor);                     break;
-                case MOT_VAR_MOTOR_STATUS_FLAGS:    value = Motor_User_GetStateFlags(p_motor).Word;            break;
+                case MOT_VAR_MOTOR_STATE:           value = Motor_User_GetStateId(p_motor);                      break;
+                case MOT_VAR_MOTOR_STATUS_FLAGS:    value = Motor_User_GetStateFlags(p_motor).Word;              break;
                 case MOT_VAR_MOTOR_FAULT_FLAGS:     value = Motor_User_GetFaultFlags(p_motor).Value;             break;
-                case MOT_VAR_MOTOR_HEAT:            value = Motor_User_GetHeat_Adcu(p_motor);                   break;
+                case MOT_VAR_MOTOR_HEAT:            value = Motor_User_GetHeat_Adcu(p_motor);                    break;
                     //Motor_User_GetHeat_DegC(p_motor, 1U);
                 case MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE:    value = Motor_User_GetActiveFeedbackMode(p_motor).Word; break;
                 case MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT:      value = Motor_User_GetActiveSpeedLimit(p_motor);        break;
                 case MOT_VAR_MOTOR_ACTIVE_I_LIMIT:          value = Motor_User_GetActiveILimit(p_motor);            break;
-                case MOT_VAR_MOTOR_V_SPEED:         value = Motor_User_GetVSpeed_UFract16(p_motor);                    break;
+                case MOT_VAR_MOTOR_V_SPEED:         value = Motor_User_GetVSpeed_UFract16(p_motor);                 break;
                 // case MOT_VAR_MOTOR_V_SPEED_EFFECTIVE:                 value = Motor_GetVSpeed_Fract16(p_motor);            break;
                 default: break;
             }
@@ -164,7 +164,7 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 case MOT_VAR_FOC_VD:    value = p_motor->Foc.Vd;        break;
                 case MOT_VAR_FOC_REQ_Q: value = p_motor->Foc.ReqQ;      break;
                 case MOT_VAR_FOC_REQ_D: value = p_motor->Foc.ReqD;      break;
-                case MOT_VAR_FOC_REQ_SCALAR:  value = p_motor->ControlTimerBase;  break;
+                // case MOT_VAR_FOC_REQ_SCALAR:  value = p_motor->ControlTimerBase;  break;
                 default: break;
             }
             break;

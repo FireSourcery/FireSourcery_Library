@@ -175,8 +175,8 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
     Analog_MarkConversion(&p_mc->CONST.CONVERSION_VACCS);
     Analog_MarkConversion(&p_mc->CONST.CONVERSION_VSENSE);
 
-    VMonitor_PollStatus(&p_mc->VMonitorSense,  MotorController_Analog_GetVSense(p_mc));
-    VMonitor_PollStatus(&p_mc->VMonitorAccs,  MotorController_Analog_GetVAccs(p_mc));
+    VMonitor_PollStatus(&p_mc->VMonitorSense, MotorController_Analog_GetVSense(p_mc));
+    VMonitor_PollStatus(&p_mc->VMonitorAccs, MotorController_Analog_GetVAccs(p_mc));
     if (VMonitor_IsFault(&p_mc->VMonitorSense) == true) { p_mc->FaultFlags.VSenseLimit = 1U; isFault = true; }
     if (VMonitor_IsFault(&p_mc->VMonitorAccs) == true) { p_mc->FaultFlags.VAccsLimit = 1U; isFault = true; }
 
@@ -326,7 +326,7 @@ static inline void MotorController_PWM_Thread(MotorController_T * p_mc)
 {
     for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_MarkAnalog_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
 
-    if ((Motor_IsAnalogCycle(&p_mc->CONST.P_MOTORS[0U]) == true)) /* todo common timer */
+    if (Motor_IsAnalogCycle(&p_mc->CONST.P_MOTORS[0U]) == true) /* todo common timer */
     {
         Analog_StartConversions(p_mc->CONST.P_ANALOG);
     }

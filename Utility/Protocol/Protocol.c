@@ -60,10 +60,9 @@ static inline Protocol_RxCode_T CaptureRx(Protocol_T * p_protocol)
     // uint8_t xcvrRxCount;
 
     /* Loop to empty Xcvr Rx buffer. Check for completetion, per Rx 1 byte, during unknown length, or up to known length */
-    while(p_protocol->RxIndex < p_protocol->p_Specs->RX_LENGTH_MAX) /* RX_LENGTH_MAX < CONFIG.PACKET_BUFFER_LENGTH */
+    while (p_protocol->RxIndex < p_protocol->p_Specs->RX_LENGTH_MAX) /* RX_LENGTH_MAX <= CONFIG.PACKET_BUFFER_LENGTH */
     {
         if(rxStatus != PROTOCOL_RX_CODE_AWAIT_PACKET) { break; } /* Packet is complete, break */
-        /* if(p_protocol->RxIndex > p_protocol->p_Specs->RX_LENGTH_MAX) checked by while loop. should not occur. wait for time out */
 
         /*
             Set xcvrRxLimit for PARSE_RX_META. Prevent reading bytes from the following packet.

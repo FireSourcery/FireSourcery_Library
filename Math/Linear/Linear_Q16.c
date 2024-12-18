@@ -30,8 +30,6 @@
 /******************************************************************************/
 #include "Linear_Q16.h"
 
-#include "Math/Fixed/fixed.h"
-
 /*
     Allow 2x input interval (XRef-X0), over saturation before overflow
         f([X0-2*XDelta:X0+2*XDelta]) == [Y0-2*YDelta:Y0+2*YDelta]

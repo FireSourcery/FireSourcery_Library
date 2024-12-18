@@ -62,7 +62,7 @@ void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, protocol_size_t * p_
         case PROTOCOL_TX_SYNC_NACK_REQ_EXT:     syncChar = MOT_PACKET_SYNC_NACK;  break;
         case PROTOCOL_TX_SYNC_ACK_ABORT:        syncChar = MOT_PACKET_SYNC_ABORT; break;
         // case PROTOCOL_TX_SYNC_ABORT:         syncChar = MOT_PACKET_SYNC_ABORT; break;
-        default: *p_txSize = 0U; syncChar = MOT_PACKET_ID_RESERVED_255; break;
+        default: *p_txSize = 0U; syncChar = 0U; break;
     }
 
     *p_txSize = MotPacket_Sync_Build(p_txPacket, syncChar);
@@ -71,7 +71,7 @@ void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, protocol_size_t * p_
 
 Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, protocol_size_t rxCount)
 {
-  volatile  Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_AWAIT_PACKET;
+     Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_AWAIT_PACKET;
 
     /* Called after rxCount > MIN, rxCount != 0 */
     if(rxCount == p_rxMeta->Length) /* Packet Complete */

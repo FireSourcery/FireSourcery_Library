@@ -122,10 +122,11 @@ void Motor_InitReboot(Motor_T * p_motor)
     Motor_ResetSpeedLimitActive(p_motor);
     Motor_ResetILimitActive(p_motor);
 
-    p_motor->FeedbackMode.Word = p_motor->Config.FeedbackModeDefault.Word; /* StateMachine init sets initial limits using this value. */
+    // p_motor->FeedbackMode.Word = p_motor->Config.FeedbackModeDefault.Word; /* StateMachine init sets initial limits using this value. */
     p_motor->ControlTimerBase = 0U;
 }
 
+/* Re init peripheral registers */
 void Motor_InitSensor(Motor_T * p_motor)
 {
     switch(p_motor->Config.SensorMode)
@@ -354,6 +355,35 @@ static void UpdateSpeedLimitsCw(Motor_T * p_motor)
     p_motor->SpeedLimitCw_Fract16 = (int16_t)0 - (cw / 2);
 }
 
+void Motor_UpdateSpeedOutputLimits(Motor_T * p_motor)
+{
+    if (p_motor->FeedbackMode.Speed == 1U)
+    {
+        if (p_motor->FeedbackMode.Current == 1U) /* SpeedPid Output is I */
+        {
+            PID_SetOutputLimits(&p_motor->PidSpeed, p_motor->ILimitCw_Fract16, p_motor->ILimitCcw_Fract16);
+        }
+        else /* SpeedPid Output is V */
+        {
+            if (p_motor->Direction == MOTOR_DIRECTION_CCW)  { PID_SetOutputLimits(&p_motor->PidSpeed, 0, INT16_MAX); }
+            else                                            { PID_SetOutputLimits(&p_motor->PidSpeed, INT16_MIN, 0); }
+        }
+    }
+}
+
+void Motor_MatchOuterOutputState(Motor_T * p_motor, int32_t speedOutput)
+{
+    if (p_motor->FeedbackMode.Speed == 1U)
+    {
+        Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->Speed_Fract16);
+        PID_SetOutputState(&p_motor->PidSpeed, speedOutput);
+    }
+    else
+    {
+        Linear_Ramp_SetOutputState(&p_motor->Ramp, speedOutput);
+    }
+}
+
 /******************************************************************************/
 /*
     UpdateLimits on FeedbackMode change
@@ -374,7 +404,7 @@ void Motor_UpdateFeedbackSpeedLimits(Motor_T * p_motor)
 
 /******************************************************************************/
 /*!
-    Sentinal Active Limits
+    Sentinel Active Limits
     Unconditional Set - Inner set, always overwrite.
     Compared on SetUserCmd. Derive directional Feedback Limits
 
@@ -526,9 +556,9 @@ void Motor_SetDirectionCcw(Motor_T * p_motor)
     {
         case MOTOR_SENSOR_MODE_HALL: Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW); Encoder_SetSinglePhaseDirection(&p_motor->Encoder, true); break;
         case MOTOR_SENSOR_MODE_ENCODER:     break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        #if defined (CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SENSORLESS:     break;
-#endif
+        #endif
         default: break;
     }
 }
@@ -537,13 +567,13 @@ void Motor_SetDirectionCw(Motor_T * p_motor)
 {
     p_motor->Direction = MOTOR_DIRECTION_CW;
     SetCwFeedbackLimits(p_motor);
-    switch(p_motor->Config.SensorMode)
+    switch (p_motor->Config.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL: Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW); Encoder_SetSinglePhaseDirection(&p_motor->Encoder, false); break;
         case MOTOR_SENSOR_MODE_ENCODER:     break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SENSORLESS:  break;
-#endif
+        #endif
         default: break;
     }
 }
@@ -553,7 +583,7 @@ void Motor_SetDirectionCw(Motor_T * p_motor)
 */
 void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if(direction == MOTOR_DIRECTION_CCW) { Motor_SetDirectionCcw(p_motor); } else { Motor_SetDirectionCw(p_motor); }
+    if (direction == MOTOR_DIRECTION_CCW) { Motor_SetDirectionCcw(p_motor); } else { Motor_SetDirectionCw(p_motor); }
 }
 
 void Motor_SetDirection_Cast(Motor_T * p_motor, uint8_t direction)

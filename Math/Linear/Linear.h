@@ -35,6 +35,8 @@
 #include "Config.h"
 #include "math_linear.h"
 #include "Math/math_general.h"
+#include "Math/Fixed/fixed.h"
+
 #include <stdint.h>
 
 

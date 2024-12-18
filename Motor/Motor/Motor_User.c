@@ -87,7 +87,7 @@ static void Motor_ActivateControl_Cast(Motor_T * p_motor, uint8_t modeWord) { Mo
     Voltage Mode
 */
 /******************************************************************************/
-void Motor_User_SetVoltageMode(Motor_T * p_motor) { Motor_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE); }
+void Motor_User_StartVoltageMode(Motor_T * p_motor) { Motor_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE); }
 
 /*!
     @param[in] voltage [-32768:32767]
@@ -110,7 +110,7 @@ void Motor_User_SetVSpeedScalarCmd(Motor_T * p_motor, uint16_t scalar)
     Current Mode
 */
 /******************************************************************************/
-void Motor_User_SetIMode(Motor_T * p_motor) { Motor_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); }
+void Motor_User_StartIMode(Motor_T * p_motor) { Motor_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); }
 
 /*!
     @param[in] i [-32768:32767]
@@ -127,7 +127,7 @@ void Motor_User_SetICmdValue(Motor_T * p_motor, int16_t iCmd)
     I with release when feedback is near 0
 */
 /******************************************************************************/
-void Motor_User_SetTorqueMode(Motor_T * p_motor) { Motor_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); }
+void Motor_User_StartTorqueMode(Motor_T * p_motor) { Motor_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); }
 
 /*!
     @param[in] torque [-32768:32767]
@@ -162,7 +162,7 @@ void Motor_User_SetTorqueCmdValue(Motor_T * p_motor, int16_t torqueCmd)
 /*!
     Default speed mode is speed torque mode
 */
-void Motor_User_SetSpeedMode(Motor_T * p_motor) { Motor_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_SPEED_CURRENT); }
+void Motor_User_StartSpeedMode(Motor_T * p_motor) { Motor_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_SPEED_CURRENT); }
 
 /*!
     Only allow forward direction, reverse direction use MOTOR_DIRECTION,
@@ -199,7 +199,7 @@ void Motor_User_SetPositionCmdValue(Motor_T * p_motor, uint16_t angle)
 /*!
 
 */
-void Motor_User_SetOpenLoopMode(Motor_T * p_motor) { Motor_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
+void Motor_User_StartOpenLoopMode(Motor_T * p_motor) { Motor_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
 
 void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_Fract16)
 {

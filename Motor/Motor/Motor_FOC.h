@@ -121,9 +121,14 @@ static inline int32_t Motor_FOC_GetElectricalPower_UFract16(const Motor_T * p_mo
 */
 /******************************************************************************/
 extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);
-extern void Motor_FOC_ProcAngleVBemf(Motor_T * p_motor);
+extern void Motor_FOC_ProcAngleCaptureVBemf(Motor_T * p_motor);
+
+extern void Motor_FOC_ActivateOutputZero(Motor_T * p_motor);
+extern void Motor_FOC_ActivateOutput(Motor_T * p_motor);
+extern void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vq, fract16_t vd);
 extern void Motor_FOC_ClearControlState(Motor_T * p_motor);
 extern void Motor_FOC_ClearObserveState(Motor_T * p_motor);
+extern void Motor_FOC_MatchFeedbackState(Motor_T * p_motor);
 
 extern void Motor_FOC_StartAlign(Motor_T * p_motor);
 extern void Motor_FOC_ProcAlign(Motor_T * p_motor);
@@ -131,17 +136,11 @@ extern void Motor_FOC_StartAlignValidate(Motor_T * p_motor);
 extern void Motor_FOC_StartOpenLoop(Motor_T * p_motor);
 extern void Motor_FOC_ProcOpenLoop(Motor_T * p_motor);
 
-extern void Motor_FOC_ActivateOutputZero(Motor_T * p_motor);
-extern void Motor_FOC_ActivateOutputState(Motor_T * p_motor);
-extern void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vq, fract16_t vd);
-extern void Motor_FOC_MatchFeedbackState(Motor_T * p_motor);
-
 extern void Motor_FOC_SetDirectionCcw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirectionCw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
 extern void Motor_FOC_SetDirection_Cast(Motor_T * p_motor, uint8_t direction);
 extern void Motor_FOC_SetDirectionForward(Motor_T * p_motor);
-
 
 #ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
 extern void Motor_ExternControl(Motor_T * p_motor);

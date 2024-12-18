@@ -6,7 +6,6 @@
 #include <stddef.h>
 #include <string.h>
 
-
 /*
     Generic array implementation - using Macros with _Generic selection for type safety
 
@@ -35,7 +34,7 @@ static inline void uint64_copy(uint64_t * p_dest, const uint64_t * p_source) { *
 // static inline void uint64_copy(uint64_t * p_dest, const uint64_t * p_source, size_t _void) { *p_dest = *p_source; }
 
 // typed_value_copy
-#define _int_copy(p_dest, p_source) \
+#define _INT_COPY(p_dest, p_source) \
 _Generic(p_dest, \
     uint8_t *: uint8_copy, \
     uint16_t *: uint16_copy, \
@@ -51,8 +50,8 @@ _Generic(p_dest, \
     base for type checking This way other functions do not need to define typed selections
     p_typed_values
 */
-#define typed_array_get(p_typed, index, p_result) (_int_copy(p_result, (p_typed + index)))
-#define typed_array_set(p_typed, index, p_value) (_int_copy((p_typed + index), p_value))
+#define TYPED_ARRAY_GET(p_typed, index, p_result) (_INT_COPY(p_result, (p_typed + index)))
+#define TYPED_ARRAY_SET(p_typed, index, p_value) (_INT_COPY((p_typed + index), p_value))
 // #define array_copy(p_typed, p_source, length) ({ for (size_t index = 0U; index < length; index++) { _int_copy((p_typed + index), (p_source + index)); } })
 
 
@@ -87,40 +86,43 @@ typedef void(*uint64_op_t)(uint64_t * p_value);
     call directly or use a function code gen
 */
 
+
+#define ARRAY_LENGTH(TypedArray) (sizeof(TypedArray) / sizeof(TypedArray[0U]))
+
 /*!
-    (p_typed)[index] accounts for unit size, p_typed is typed
-    p_typed and unit_op mismatch will result in compiler warning
+    (TypedArray)[index] accounts for unit size, TypedArray is typed
+    TypedArray and unit_op mismatch will result in compiler warning
     alternatively, directly passing array can omit length
 
     @param[in] unit_op void(*unit_op)(  * p_unit)
 */
-#define array_foreach(p_typed, length, unit_op) ({ for(size_t index = 0U; index < length; index++) { unit_op((p_typed) + index); } })
+#define ARRAY_FOREACH(TypedArray, unit_op) ({ for(size_t index = 0U; index < ARRAY_LENGTH(TypedArray); index++) { unit_op((TypedArray) + index); } })
 
 // typedef bool(*void_test_t)(const void * p_unit);
 // typedef bool(*void_poll_t)(void * p_unit);
 
-#define array_for_every(p_typed, length, unit_poll) \
-    ({ bool is_every = true; for (size_t index = 0U; index < length; index++) { if (unit_poll(((p_typed) + index)) == false) { is_every = false; } } is_every; })
+#define ARRAY_FOR_EVERY(TypedArray, unit_poll) \
+    ({ bool is_every = true; for (size_t index = 0U; index < ARRAY_LENGTH(TypedArray); index++) { if (unit_poll(((TypedArray) + index)) == false) { is_every = false; } } is_every; })
 
-#define array_for_any(p_typed, length, unit_poll) \
-    ({ bool is_any = false; for (size_t index = 0U; index < length; index++) { if (unit_poll(((p_typed) + index)) == true) { is_any = true; } } is_any; })
+#define ARRAY_FOR_ANY(TypedArray, unit_poll) \
+    ({ bool is_any = false; for (size_t index = 0U; index < ARRAY_LENGTH(TypedArray); index++) { if (unit_poll(((TypedArray) + index)) == true) { is_any = true; } } is_any; })
 
-// #define array_is_every(p_typed, length, unit_test) ({ \
+// #define array_is_every(TypedArray, unit_test) ({ \
 //     bool result = true; \
-//     for (size_t index = 0U; index < length; index++) { if (unit_test((p_typed + index))) { result = false; break; } } \
+//     for (size_t index = 0U; index < ARRAY_LENGTH(TypedArray); index++) { if (unit_test((TypedArray + index))) { result = false; break; } } \
 //     result; \
 // })
 
-// #define array_is_any(p_typed, length, unit_test) ({ \
+// #define array_is_any(TypedArray, unit_test) ({ \
 //     bool result = true; \
-//     for (size_t index = 0U; index < length; index++) { if (unit_test((p_typed + index))) { result = false; break; } } \
+//     for (size_t index = 0U; index < ARRAY_LENGTH(TypedArray); index++) { if (unit_test((TypedArray + index))) { result = false; break; } } \
 //     result; \
 // })
 
-// add cast after p_typed[index]?
-// #define array_int_min(p_typed, length) ({ \
-//     int min_value = p_typed[0U]; \
-//     for (size_t index = 1U; index < length; index++) { if (p_typed[index] < min_value) { min_value = p_typed[index]; } } \
+// add cast after TypedArray[index]?
+// #define array_int_min(TypedArray, length) ({ \
+//     int min_value = TypedArray[0U]; \
+//     for (size_t index = 1U; index < ARRAY_LENGTH(TypedArray); index++) { if (TypedArray[index] < min_value) { min_value = TypedArray[index]; } } \
 //     min_value; \
 // })
 

@@ -217,17 +217,17 @@ static inline uint8_t Motor_User_GetCalibrationStateIndex(const Motor_T * p_moto
 /******************************************************************************/
 // extern int32_t Motor_User_GetCmd(const Motor_T * p_motor);
 // extern int32_t Motor_User_GetSetPoint(const Motor_T * p_motor);
-extern void Motor_User_SetVoltageMode(Motor_T * p_motor);
+extern void Motor_User_StartVoltageMode(Motor_T * p_motor);
 extern void Motor_User_SetVoltageCmdValue(Motor_T * p_motor, int16_t vCmd);
 extern void Motor_User_SetScalarMode(Motor_T * p_motor);
 extern void Motor_User_SetScalarCmdValue(Motor_T * p_motor, uint32_t scalar);
-extern void Motor_User_SetTorqueMode(Motor_T * p_motor);
+extern void Motor_User_StartTorqueMode(Motor_T * p_motor);
 extern void Motor_User_SetTorqueCmdValue(Motor_T * p_motor, int16_t torque);
-extern void Motor_User_SetSpeedMode(Motor_T * p_motor);
+extern void Motor_User_StartSpeedMode(Motor_T * p_motor);
 extern void Motor_User_SetSpeedCmdValue(Motor_T * p_motor, int16_t speed);
 extern void Motor_User_SetPositionCmdValue(Motor_T * p_motor, uint16_t angle);
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-extern void Motor_User_SetOpenLoopMode(Motor_T * p_motor);
+extern void Motor_User_StartOpenLoopMode(Motor_T * p_motor);
 extern void Motor_User_SetOpenLoopCmdValue(Motor_T * p_motor, int16_t ivCmd);
 #endif
 extern void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd);

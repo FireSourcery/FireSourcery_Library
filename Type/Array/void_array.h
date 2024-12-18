@@ -1,12 +1,16 @@
 #ifndef VOID_ARRAY_H
 #define VOID_ARRAY_H
 
+#include "array_generic.h"
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
-#include "array_generic.h"
+typedef void(*void_op_t)(void * p_unit);
+typedef bool(*void_poll_t)(void * p_unit);
+typedef bool(*void_test_t)(const void * p_unit);
 
 /******************************************************************************/
 /*!
@@ -36,7 +40,6 @@ static inline void * void_pointer_at(const void * p_buffer, size_t type_size, si
     return ((uint8_t *)p_buffer + (unit_index * type_size));
 }
 
-
 static inline void void_array_get(const void * p_buffer, size_t type_size, size_t index, void * p_result)
 {
     void_copy(p_result, void_pointer_at(p_buffer, type_size, index), type_size);
@@ -48,7 +51,6 @@ static inline void void_array_set(void * p_buffer, size_t type_size, size_t inde
 }
 
 
-typedef void(*void_op_t)(void * p_unit);
 
 /*
     length in units
@@ -58,7 +60,6 @@ static inline void void_array_foreach(void * p_buffer, size_t type_size, size_t 
     for(size_t index = 0U; index < length; index++) { unit_op(void_pointer_at(p_buffer, type_size, index)); }
 }
 
-typedef bool(*void_poll_t)(void * p_unit);
 
 /*!
     @return true if all return true
@@ -66,7 +67,7 @@ typedef bool(*void_poll_t)(void * p_unit);
 static inline bool void_array_for_every(void * p_buffer, size_t type_size, size_t length, void_poll_t unit_poll)
 {
     bool is_every = true;
-    for(size_t index = 0U; index < length; index++) { if(unit_poll(void_pointer_at(p_buffer, type_size, index)) == false) { is_every = false; } }
+    for (size_t index = 0U; index < length; index++) { if (unit_poll(void_pointer_at(p_buffer, type_size, index)) == false) { is_every = false; } }
     return is_every;
 }
 
@@ -76,28 +77,48 @@ static inline bool void_array_for_every(void * p_buffer, size_t type_size, size_
 static inline bool void_array_for_any(void * p_buffer, size_t type_size, size_t length, void_poll_t unit_poll)
 {
     bool is_any = false;
-    for(size_t index = 0U; index < length; index++) { if(unit_poll(void_pointer_at(p_buffer, type_size, index)) == true) { is_any = true; } }
+    for (size_t index = 0U; index < length; index++) { if (unit_poll(void_pointer_at(p_buffer, type_size, index)) == true) { is_any = true; } }
     return is_any;
 }
 
 /*
     const and returns early
 */
-typedef bool(*void_test_t)(const void * p_unit);
-
 static inline bool void_array_is_every(const void * p_buffer, size_t type_size, size_t length, void_test_t unit_test)
 {
     bool is_every = true;
-    for(size_t index = 0U; index < length; index++) { if(unit_test(void_pointer_at(p_buffer, type_size, index)) == false) { is_every = false; break; } }
+    for (size_t index = 0U; index < length; index++) { if (unit_test(void_pointer_at(p_buffer, type_size, index)) == false) { is_every = false; break; } }
     return is_every;
 }
 
 static inline bool void_array_is_any(const void * p_buffer, size_t type_size, size_t length, void_test_t unit_test)
 {
     bool is_any = false;
-    for(size_t index = 0U; index < length; index++) { if(unit_test(void_pointer_at(p_buffer, type_size, index)) == true) { is_any = true; break; } }
+    for (size_t index = 0U; index < length; index++) { if (unit_test(void_pointer_at(p_buffer, type_size, index)) == true) { is_any = true; break; } }
     return is_any;
 }
+
+// typedef void (*set_register_t)(void * p_struct, register_t value);
+// typedef bool (*try_register_t)(void * p_struct, register_t value);
+
+// static inline void void_array_foreach_set(const void * p_buffer, size_t unit_size, size_t length, set_register_t unit_setter, register_t value)
+// {
+//     for (size_t index = 0U; index < length; index++) { unit_setter(void_pointer_at(p_buffer, unit_size, index), value); }
+// }
+
+// static inline bool void_array_for_every_set(const void * p_buffer, size_t unit_size, size_t length, try_register_t unit_try, register_t value)
+// {
+//     bool is_every = true;
+//     for (size_t index = 0U; index < length; index++) { if (unit_try(void_pointer_at(p_buffer, unit_size, index), value) == false) { is_every = false; } }
+//     return is_every;
+// }
+// static inline bool void_array_for_any_set(const void * p_buffer, size_t unit_size, size_t length, try_register_t unit_try, register_t value)
+// {
+//     bool is_any = false;
+//     for (size_t index = 0U; index < length; index++) { if (unit_try(void_pointer_at(p_buffer, unit_size, index), value) == true) { is_any = true; } }
+//     return is_any;
+// }
+
 
 /*
     handles numeric types

@@ -44,6 +44,15 @@ typedef enum PID_Mode
 }
 PID_Mode_T;
 
+// typedef struct PID_Coefficients
+// {
+//     // uint32_t SampleFreq;
+//     int32_t Kp_Fixed32;
+//     int32_t Ki_Fixed32;
+//     int32_t Kd_Fixed32;
+// }
+// PID_Coefficients_T;
+
 typedef struct PID_Config
 {
     PID_Mode_T Mode;
@@ -85,9 +94,9 @@ PID_T;
 static inline int16_t PID_GetOutput(PID_T * p_pid)          { return p_pid->Output; }
 
 static inline uint32_t PID_GetSampleFreq(PID_T * p_pid)     { return p_pid->Config.SampleFreq; }
-// static inline int32_t PID_GetKpParam_Fixed32(PID_T * p_pid) { return p_pid->Config.Kp_Fixed32; }
-// static inline int32_t PID_GetKiParam_Fixed32(PID_T * p_pid) { return p_pid->Config.Ki_Fixed32; }
-// static inline int32_t PID_GetKdParam_Fixed32(PID_T * p_pid) { return p_pid->Config.Kd_Fixed32; }
+// static inline int32_t PID_GetKp_Fixed32(PID_T * p_pid) { return p_pid->Config.Kp_Fixed32; }
+// static inline int32_t PID_GetKi_Fixed32(PID_T * p_pid) { return p_pid->Config.Ki_Fixed32; }
+// static inline int32_t PID_GetKd_Fixed32(PID_T * p_pid) { return p_pid->Config.Kd_Fixed32; }
 
 /******************************************************************************/
 /*!

@@ -120,6 +120,7 @@ static inline bool MotorController_User_IsConfigState(MotorController_T * p_mc)
 /******************************************************************************/
 /* Servo */
 /******************************************************************************/
+
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
 static inline void MotorController_User_SetServoCmd(MotorController_T * p_mc, int16_t userCmd) { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, userCmd); }
 static inline void MotorController_User_EnterServoMode(MotorController_T * p_mc)   { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_MACHINE_INPUT_VALUE_NULL); }
@@ -132,6 +133,20 @@ static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc) 
 //     }
 // }
 
+/******************************************************************************/
+/*
+    singular motor functions
+*/
+/******************************************************************************/
+static inline void MotorController_User_SetMotorCmdValue(MotorController_T * p_mc, uint8_t motorId, uint16_t userCmdValue)
+{
+    Motor_T * p_motor;
+    if (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_SERVO)
+    {
+        p_motor = MotorController_GetPtrMotor(p_mc, motorId);
+        if (p_motor != NULL) { Motor_User_SetActiveCmdValue(p_motor, userCmdValue); }
+    }
+}
 #endif
 
 /******************************************************************************/
@@ -154,7 +169,7 @@ static inline void MotorController_User_DisableBuzzer(MotorController_T * p_mc)
 
 static inline bool MotorController_User_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_Percent16)
 {
-    struct_array_is_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TrySpeedLimit, limit_Percent16);
+    struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TrySpeedLimit, limit_Percent16);
 }
 
 static inline bool MotorController_User_ClearSpeedLimitAll(MotorController_T * p_mc)
@@ -164,7 +179,7 @@ static inline bool MotorController_User_ClearSpeedLimitAll(MotorController_T * p
 
 static inline bool MotorController_User_SetILimitAll(MotorController_T * p_mc, uint16_t limit_Percent16)
 {
-    struct_array_is_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TryILimit, limit_Percent16);
+    struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TryILimit, limit_Percent16);
 }
 
 static inline bool MotorController_User_ClearILimitAll(MotorController_T * p_mc)
@@ -174,13 +189,13 @@ static inline bool MotorController_User_ClearILimitAll(MotorController_T * p_mc)
 
 static inline void MotorController_User_SetOptSpeedLimitOnOff(MotorController_T * p_mc, bool isEnable)
 {
-    if(isEnable == true)    { MotorController_User_SetSpeedLimitAll(p_mc, p_mc->Config.OptSpeedLimit_Percent16); }
+    if (isEnable == true)   { MotorController_User_SetSpeedLimitAll(p_mc, p_mc->Config.OptSpeedLimit_Percent16); }
     else                    { MotorController_User_ClearSpeedLimitAll(p_mc); }
 }
 
 static inline void MotorController_User_SetOptILimitOnOff(MotorController_T * p_mc, bool isEnable)
 {
-    if(isEnable == true)    { MotorController_User_SetILimitAll(p_mc, p_mc->Config.OptILimit_Percent16); }
+    if (isEnable == true)   { MotorController_User_SetILimitAll(p_mc, p_mc->Config.OptILimit_Percent16); }
     else                    { MotorController_User_ClearILimitAll(p_mc); }
 }
 
@@ -203,12 +218,12 @@ typedef union MotorController_User_StatusFlags
         uint16_t VLow               : 1U; // ILimit by VLow
         uint16_t SpeedLimit         : 1U;
         uint16_t ILimit             : 1U;
+        // uint16_t IsStopped          : 1U;
+        uint16_t BuzzerEnable       : 1U;
         // derive from thermistor functions
         // uint16_t ILimitHeatMosfets  : 1U;
         // uint16_t ILimitHeatPcb      : 1U;
         // uint16_t ILimitHeatMotors   : 1U;
-        // uint16_t IsStopped          : 1U;
-        uint16_t BuzzerEnable       : 1U;
     };
     uint16_t Word;
 }

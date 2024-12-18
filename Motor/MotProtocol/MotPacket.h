@@ -85,13 +85,14 @@ typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
     /* Fixed Length */
     MOT_PACKET_STOP_ALL = 0x00U,
     MOT_PACKET_VERSION = 0x01U,
+    // MOT_PACKET_REF = 0x02U,
     MOT_PACKET_CALL = 0xC0U,
     // MOT_PACKET_CALL_ADDRESS = 0xCAU,
 
     // MOT_PACKET_FIXED_VAR_READ = 0xB1U,     /* Read Single Var32 */
     // MOT_PACKET_FIXED_VAR_WRITE = 0xB2U,    /* Write Single Var32 */
 
-    /* Configurable Length */
+    /* Variable Length */
     /*
         Read/Write by VarId:
         Real-Time Variable, NvMemory Config, Call functions passing 1 argument
@@ -109,7 +110,7 @@ typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
     MOT_PACKET_DATA_MODE_DATA = 0xDDU,      /* Data Mode Data */
     MOT_PACKET_DATA_MODE_ABORT = MOT_PACKET_SYNC_ABORT,
 
-    MOT_PACKET_ID_RESERVED_255 = 0xFFU,
+    _MOT_PACKET_ID_END_255 = 0xFFU,
     /// Datagram todo
 }
 MotPacket_Id_T;
@@ -267,7 +268,7 @@ typedef struct MotPacket_VarReadResp { MotPacket_Header_T Header; MotPacket_VarR
     Resp    [Start, Id, Checksum[2]], [Length, IdSum, Status16],   [VarStatus8][8]
 
     Alt 32-bit
-    Req     [Start, Id, Checksum[2]], [Length, IdSum, Flags16],   [MotVarId16, MotVarId16, Value32, Value32][2]
+    Req     [Start, Id, Checksum[2]], [Length, IdSum, Flags16],   [MotVarId16, Value32][5]
     Resp    [Start, Id, Checksum[2]], [Length, IdSum, Status16],  [Status8][4]
 */
 /******************************************************************************/
@@ -340,6 +341,7 @@ extern uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacke
 extern uint8_t MotPacket_StopResp_Build(MotPacket_StopResp_T * p_respPacket, uint16_t status);
 extern uint8_t MotPacket_CallResp_Build(MotPacket_CallResp_T * p_respPacket, uint32_t id, uint16_t status);
 
+// todo flex length build cast payload pointer instead
 extern uint8_t MotPacket_VarReadReq_ParseVarIdCount(const MotPacket_VarReadReq_T * p_reqPacket);
 extern uint16_t MotPacket_VarReadReq_ParseVarId(const MotPacket_VarReadReq_T * p_reqPacket, uint8_t index);
 extern void MotPacket_VarReadResp_BuildVarValue(MotPacket_VarReadResp_T * p_respPacket, uint8_t index, uint16_t value);
@@ -374,9 +376,12 @@ extern uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataP
     Req     [Start, Id, Checksum[2]],
     Resp    [Start, Id, Checksum[2]],
 
+        Read Var n
+            [IdChecksum], [MotVarIds][16]
+            [IdChecksum, Status16], [Value16][16]
         Read Var x1
-            [MotVarId][Flags16 = 0]
-            [MotVarId][Status16], [Value16]
+            [MotVarId]
+            [MotVarId, Status16], [Value16]
 */
 /******************************************************************************/
 // typedef struct MotPacket_FixedVarReadReq_Payload { uint16_t MotVarId; }                                                         MotPacket_FixedVarReadReq_Payload_T;
@@ -390,10 +395,11 @@ extern uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataP
     Req     [Start, Id, Checksum[2]],
     Resp    [Start, Id, Checksum[2]],
 
+    Write Var n
+        [IdChecksum, ValueChecksum], [MotVarIds, Value16][8]
+        [IdChecksum, Status16], [VarStatus8][8]
     Write Var x1
-        [IdChecksum, ValuesSum], [MotVarIds, Value16][8]
-        [IdChecksum, Status16],   [VarStatus8][8]
-        [MotVarId][Flags16 = 0] [id = 0, Value16]
+        [MotVarId][Value]
         [MotVarId][Status16],
 */
 /******************************************************************************/

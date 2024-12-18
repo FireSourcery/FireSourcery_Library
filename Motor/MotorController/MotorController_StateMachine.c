@@ -61,21 +61,21 @@ const StateMachine_Machine_T MCSM_MACHINE =
 static StateMachine_State_T * TransitionFault(MotorController_T * p_mc, statemachine_input_value_t faultFlags) { p_mc->FaultFlags.Value |= faultFlags; return &STATE_FAULT; }
 
 /* Not needed if main loop does not block? */
-void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
-{
-    p_mc->FaultFlags.VSenseLimit = VMonitor_IsFault(&p_mc->VMonitorSense);
-    p_mc->FaultFlags.VAccsLimit = VMonitor_IsFault(&p_mc->VMonitorAccs);
-    p_mc->FaultFlags.VSourceLimit = VMonitor_IsFault(&p_mc->VMonitorSource);
-    p_mc->FaultFlags.PcbOverheat = Thermistor_IsFault(&p_mc->ThermistorPcb);
+// void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
+// {
+//     p_mc->FaultFlags.VSenseLimit = VMonitor_IsFault(&p_mc->VMonitorSense);
+//     p_mc->FaultFlags.VAccsLimit = VMonitor_IsFault(&p_mc->VMonitorAccs);
+//     p_mc->FaultFlags.VSourceLimit = VMonitor_IsFault(&p_mc->VMonitorSource);
+//     p_mc->FaultFlags.PcbOverheat = Thermistor_IsFault(&p_mc->ThermistorPcb);
 
-    for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
-    {
-        p_mc->FaultFlags.MosfetsOverheat = Thermistor_IsFault(&p_mc->MosfetsThermistors[iMosfets]);
-        if (p_mc->FaultFlags.MosfetsOverheat == true) { break; }
-    }
+//     for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
+//     {
+//         p_mc->FaultFlags.MosfetsOverheat = Thermistor_IsFault(&p_mc->MosfetsThermistors[iMosfets]);
+//         if (p_mc->FaultFlags.MosfetsOverheat == true) { break; }
+//     }
 
-    // for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONST.P_MOTORS[iMotor]); }
-}
+//     // for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONST.P_MOTORS[iMotor]); }
+// }
 
 
 /******************************************************************************/
@@ -107,7 +107,7 @@ static void Init_Proc(MotorController_T * p_mc)
     if (SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT)
     {
         wait = false;
-        MotorController_PollAdcFaultFlags(p_mc); /* Clear FaultFlags set by sensor polling in main thread. */
+        // MotorController_PollAdcFaultFlags(p_mc); /* Clear FaultFlags set by sensor polling in main thread. */
         // if (p_mc->FaultFlags.Value != 0U) { wait = true; }
         // if(p_mc->InitFlags.Word != 0U) { wait = true; }   // indirectly poll inputs
 
@@ -545,22 +545,6 @@ static const StateMachine_State_T STATE_LOCK =
     todo as cmd mode
 */
 /******************************************************************************/
-/******************************************************************************/
-/*
-    singular motor functions
-*/
-/******************************************************************************/
-static inline void MotorController_SetCmdValue(MotorController_T * p_mc, uint8_t motorId, uint16_t userCmdValue)
-{
-    Motor_T * p_motor;
-    if (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_SERVO)
-    {
-        p_motor = MotorController_GetPtrMotor(p_mc, motorId);
-        if (p_motor != NULL) { Motor_User_SetActiveCmdValue(p_motor, userCmdValue); }
-    }
-}
-
-
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
 static void Servo_Entry(MotorController_T * p_mc)
 {
@@ -666,9 +650,9 @@ static void Fault_Proc(MotorController_T * p_mc)
 static StateMachine_State_T * Fault_InputClearFault(MotorController_T * p_mc, statemachine_input_value_t faultFlags)
 {
     p_mc->FaultFlags.Value &= ~faultFlags;
-    p_mc->FaultFlags.Motors = 0U; /* updated by [MotorController_Main_Thread] */
+    // p_mc->FaultFlags.Motors = 0U; /* updated by [MotorController_Main_Thread] */
     MotorController_ForEveryMotorExitFault(p_mc);
-    MotorController_PollAdcFaultFlags(p_mc);
+    // MotorController_PollAdcFaultFlags(p_mc);
     // p_mc->FaultFlags.User = 0U;
     return NULL;
 }
@@ -704,8 +688,8 @@ bool MotorController_StateMachine_ExitFault(MotorController_T * p_mc)
 
 void MotorController_StateMachine_SetFault(MotorController_T * p_mc, uint16_t faultFlags)
 {
-    p_mc->FaultFlags.Value |= faultFlags;
     if (MotorController_StateMachine_IsFault(p_mc) == false) { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT, faultFlags); }
+    else { p_mc->FaultFlags.Value |= faultFlags; }
 }
 
 bool MotorController_StateMachine_ClearFault(MotorController_T * p_mc, uint16_t faultFlags)

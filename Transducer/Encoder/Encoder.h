@@ -145,6 +145,7 @@ typedef struct Encoder
     uint32_t ExtendedTimerConversion;    /* Extended Timer to Short Timer */
 
     bool IsSinglePhasePositive;
+    // int8_t SinglePhaseSign;
     Encoder_Align_T Align;
     int32_t AbsoluteOffset;
 
