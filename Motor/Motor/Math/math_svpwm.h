@@ -40,8 +40,9 @@
     Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
 
     dutyA, dutyB, dutyC -> 16 bits, q1.15, always positive
+    pass as signed to saturate as signed
 */
-static inline void svpwm_midclamp(uint16_t * p_dutyA, uint16_t * p_dutyB, uint16_t * p_dutyC, fract16_t alpha, fract16_t beta)
+static inline void svpwm_midclamp(fract16_t * p_dutyA, fract16_t * p_dutyB, fract16_t * p_dutyC, fract16_t alpha, fract16_t beta)
 {
     /*
         The other 3 of 6 are inverse of the 3 derived

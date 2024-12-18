@@ -139,7 +139,7 @@ static void Stop_Entry(Motor_T * p_motor)
 {
     Phase_Float(&p_motor->Phase);
     p_motor->ControlTimerBase = 0U; /* ok to reset timer */
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ClearControlState, NULL); /* Unobserved values remain 0 for user read */
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ClearFeedbackState, NULL); /* Unobserved values remain 0 for user read */
 }
 
 static void Stop_Proc(Motor_T * p_motor)
@@ -302,12 +302,13 @@ static const StateMachine_State_T STATE_RUN =
 static void Freewheel_Entry(Motor_T * p_motor)
 {
     Phase_Float(&p_motor->Phase);
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ClearControlState, NULL);
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ClearFeedbackState, NULL);
 }
 
 static void Freewheel_Proc(Motor_T * p_motor)
 {
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleCaptureVBemf, NULL /* Motor_SixStep_ProcPhaseObserve */);
+    // alternatively wait for input
     if (p_motor->Speed_Fract16 == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
 }
 
@@ -319,7 +320,7 @@ static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, statemac
     Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
 
     if (Motor_IsFeedbackAvailable(p_motor) == true) { p_nextState = &STATE_RUN; }
-    else { p_nextState = NULL; /* OpenLoop does not resume */ }
+    else { p_nextState = NULL; } /* OpenLoop does not resume */
 
     return p_nextState;
 }

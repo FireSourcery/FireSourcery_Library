@@ -721,7 +721,7 @@ extern void Motor_InitReboot(Motor_T * p_motor);
 extern void Motor_InitSensor(Motor_T * p_motor);
 
 extern angle16_t Motor_PollSensorAngle(Motor_T * p_motor);
-extern bool Motor_ProcSensorSpeed(Motor_T * p_motor);
+extern bool Motor_PollCaptureSpeed(Motor_T * p_motor);
 extern void Motor_ProcSpeedFeedback(Motor_T * p_motor);
 extern angle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor);
 
@@ -735,8 +735,8 @@ extern bool Motor_PollAlignFault(Motor_T * p_motor);
 // extern int32_t Motor_GetSpeedLimitReq(const Motor_T * p_motor);
 // extern int32_t Motor_GetILimitReq(const Motor_T * p_motor, int32_t req, int32_t feedback);
 
-extern void Motor_UpdateFeedbackILimits(Motor_T * p_motor);
-extern void Motor_UpdateFeedbackSpeedLimits(Motor_T * p_motor);
+// extern void Motor_UpdateFeedbackILimits(Motor_T * p_motor);
+// extern void Motor_UpdateFeedbackSpeedLimits(Motor_T * p_motor);
 
 extern void Motor_SetILimitActive(Motor_T * p_motor, uint16_t percent16);
 extern void Motor_ClearILimitActive(Motor_T * p_motor);

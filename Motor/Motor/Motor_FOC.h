@@ -80,19 +80,19 @@ static inline void Motor_FOC_CaptureIc(Motor_T * p_motor, uint16_t adcu)
 
 static inline void Motor_FOC_CaptureVa(Motor_T * p_motor, uint16_t adcu)
 {
-    fract16_t vPhase = ((int32_t)Linear_ADC_Fract16(&p_motor->UnitsVabc, adcu) + FOC_GetVBemfA(&p_motor->Foc)) / 2;
+    ufract16_t vPhase = ((int32_t)Linear_ADC_Fract16(&p_motor->UnitsVabc, adcu) + FOC_GetVBemfA(&p_motor->Foc)) / 2;
     FOC_SetVBemfA(&p_motor->Foc, vPhase);
 }
 
 static inline void Motor_FOC_CaptureVb(Motor_T * p_motor, uint16_t adcu)
 {
-    fract16_t vPhase = ((int32_t)Linear_ADC_Fract16(&p_motor->UnitsVabc, adcu) + FOC_GetVBemfB(&p_motor->Foc)) / 2;
+    ufract16_t vPhase = ((int32_t)Linear_ADC_Fract16(&p_motor->UnitsVabc, adcu) + FOC_GetVBemfB(&p_motor->Foc)) / 2;
     FOC_SetVBemfB(&p_motor->Foc, vPhase);
 }
 
 static inline void Motor_FOC_CaptureVc(Motor_T * p_motor, uint16_t adcu)
 {
-    fract16_t vPhase = ((int32_t)Linear_ADC_Fract16(&p_motor->UnitsVabc, adcu) + FOC_GetVBemfC(&p_motor->Foc)) / 2;
+    ufract16_t vPhase = ((int32_t)Linear_ADC_Fract16(&p_motor->UnitsVabc, adcu) + FOC_GetVBemfC(&p_motor->Foc)) / 2;
     FOC_SetVBemfC(&p_motor->Foc, vPhase);
 }
 
@@ -126,8 +126,7 @@ extern void Motor_FOC_ProcAngleCaptureVBemf(Motor_T * p_motor);
 extern void Motor_FOC_ActivateOutputZero(Motor_T * p_motor);
 extern void Motor_FOC_ActivateOutput(Motor_T * p_motor);
 extern void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vq, fract16_t vd);
-extern void Motor_FOC_ClearControlState(Motor_T * p_motor);
-extern void Motor_FOC_ClearObserveState(Motor_T * p_motor);
+extern void Motor_FOC_ClearFeedbackState(Motor_T * p_motor);
 extern void Motor_FOC_MatchFeedbackState(Motor_T * p_motor);
 
 extern void Motor_FOC_StartAlign(Motor_T * p_motor);

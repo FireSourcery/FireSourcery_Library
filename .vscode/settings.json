@@ -96,6 +96,7 @@
         "Accs",
         "Blinky",
         "EEPROM",
+        "Ibeta",
         "inputvalue",
         "MCSM",
         "MOSFETS",
@@ -105,6 +106,7 @@
         "setpoint",
         "Sourcery",
         "statemachine",
+        "Svpwm",
         "switchcpy",
         "txsize",
         "ufract"

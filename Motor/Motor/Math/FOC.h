@@ -44,10 +44,13 @@ typedef struct FOC
     // fract16_t IdqMagnitudeMax;
     // fract16_t IdMax; /* default 1/sqrt3 */
 
-    /* VBemf Inputs during Freewheel - Capture by ADC */
-    fract16_t Va;
-    fract16_t Vb;
-    fract16_t Vc;
+    /*
+        VDuty Outputs during AngleControl
+        VBemf Inputs during Freewheel - Capture by ADC
+    */
+    ufract16_t Va;
+    ufract16_t Vb;
+    ufract16_t Vc;
 
     /* Inputs - Capture by ADC */
     fract16_t Ia;
@@ -80,9 +83,9 @@ typedef struct FOC
     fract16_t Vbeta;
 
     /* DutyA, DutyB, DutyC -> 16 bits, q0.15, always positive */
-    ufract16_t DutyA;
-    ufract16_t DutyB;
-    ufract16_t DutyC;
+    // ufract16_t DutyA;
+    // ufract16_t DutyB;
+    // ufract16_t DutyC;
 }
 FOC_T;
 
@@ -102,7 +105,8 @@ static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 {
     foc_circle_limit(&p_foc->Vd, &p_foc->Vq, FRACT16_MAX, FRACT16_1_DIV_SQRT3);
     foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
-    svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
+    // svpwm_midclamp(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, p_foc->Valpha, p_foc->Vbeta);
+    svpwm_midclamp(&p_foc->Va, &p_foc->Vb, &p_foc->Vc, p_foc->Valpha, p_foc->Vbeta);
 }
 
 /* VBemf */
@@ -134,9 +138,12 @@ static inline void FOC_SetIq(FOC_T * p_foc, fract16_t iq) { p_foc->Iq = iq; }
 static inline void FOC_SetVd(FOC_T * p_foc, fract16_t vd) { p_foc->Vd = vd; }
 static inline void FOC_SetVq(FOC_T * p_foc, fract16_t vq) { p_foc->Vq = vq; }
 
-static inline ufract16_t FOC_GetDutyA(const FOC_T * p_foc) { return p_foc->DutyA; }
-static inline ufract16_t FOC_GetDutyB(const FOC_T * p_foc) { return p_foc->DutyB; }
-static inline ufract16_t FOC_GetDutyC(const FOC_T * p_foc) { return p_foc->DutyC; }
+// static inline ufract16_t FOC_GetDutyA(const FOC_T * p_foc) { return p_foc->DutyA; }
+// static inline ufract16_t FOC_GetDutyB(const FOC_T * p_foc) { return p_foc->DutyB; }
+// static inline ufract16_t FOC_GetDutyC(const FOC_T * p_foc) { return p_foc->DutyC; }
+static inline ufract16_t FOC_GetDutyA(const FOC_T * p_foc) { return p_foc->Va; }
+static inline ufract16_t FOC_GetDutyB(const FOC_T * p_foc) { return p_foc->Vb; }
+static inline ufract16_t FOC_GetDutyC(const FOC_T * p_foc) { return p_foc->Vc; }
 static inline fract16_t FOC_GetId(const FOC_T * p_foc) { return p_foc->Id; }
 static inline fract16_t FOC_GetIq(const FOC_T * p_foc) { return p_foc->Iq; }
 static inline fract16_t FOC_GetVd(const FOC_T * p_foc) { return p_foc->Vd; }
@@ -148,12 +155,20 @@ static inline fract16_t FOC_GetIalpha(const FOC_T * p_foc) { return p_foc->Ialph
 static inline fract16_t FOC_GetIbeta(const FOC_T * p_foc) { return p_foc->Ibeta; }
 
 /*  */
-static inline void FOC_SetVBemfA(FOC_T * p_foc, fract16_t va) { p_foc->Va = va; }
-static inline void FOC_SetVBemfB(FOC_T * p_foc, fract16_t vb) { p_foc->Vb = vb; }
-static inline void FOC_SetVBemfC(FOC_T * p_foc, fract16_t vc) { p_foc->Vc = vc; }
-static inline fract16_t FOC_GetVBemfA(const FOC_T * p_foc) { return p_foc->Va; }
-static inline fract16_t FOC_GetVBemfB(const FOC_T * p_foc) { return p_foc->Vb; }
-static inline fract16_t FOC_GetVBemfC(const FOC_T * p_foc) { return p_foc->Vc; }
+static inline void FOC_SetVBemfA(FOC_T * p_foc, ufract16_t va) { p_foc->Va = va; }
+static inline void FOC_SetVBemfB(FOC_T * p_foc, ufract16_t vb) { p_foc->Vb = vb; }
+static inline void FOC_SetVBemfC(FOC_T * p_foc, ufract16_t vc) { p_foc->Vc = vc; }
+static inline ufract16_t FOC_GetVBemfA(const FOC_T * p_foc) { return p_foc->Va; }
+static inline ufract16_t FOC_GetVBemfB(const FOC_T * p_foc) { return p_foc->Vb; }
+static inline ufract16_t FOC_GetVBemfC(const FOC_T * p_foc) { return p_foc->Vc; }
+
+// or change duty to Vabc
+// static inline void FOC_MatchDuty(FOC_T * p_foc)
+// {
+//     p_foc->DutyA = p_foc->Va;
+//     p_foc->DutyB = p_foc->Vb;
+//     p_foc->DutyC = p_foc->Vc;
+// }
 
 static inline void FOC_SetReqD(FOC_T * p_foc, fract16_t d) { p_foc->ReqD = d; }
 static inline void FOC_SetReqQ(FOC_T * p_foc, fract16_t q) { p_foc->ReqQ = q; }

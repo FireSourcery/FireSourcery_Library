@@ -131,6 +131,7 @@ void PID_SetIntegral(PID_T * p_pid, int16_t integral)
 void PID_SetOutputState(PID_T * p_pid, int16_t integral)
 {
     PID_SetIntegral(p_pid, integral);
+    // p_pid->ErrorPrev = 0;
     p_pid->Output = GetIntegral(p_pid);
 }
 

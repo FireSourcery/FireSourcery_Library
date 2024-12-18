@@ -135,8 +135,20 @@ static inline Motor_Direction_T Motor_User_GetDirection(const Motor_T * p_motor)
 static inline bool Motor_User_IsDirectionForward(const Motor_T * p_motor)                       { return (p_motor->Direction == p_motor->Config.DirectionForward); }
 static inline bool Motor_User_IsDirectionReverse(const Motor_T * p_motor)                       { return !Motor_User_IsDirectionForward(p_motor); }
 static inline Motor_FeedbackMode_T Motor_User_GetActiveFeedbackMode(const Motor_T * p_motor)    { return p_motor->FeedbackMode; }
-static inline uint16_t Motor_User_GetActiveILimit(const Motor_T * p_motor)                      { return Limit_GetUpper(&p_motor->ILimit); }
-static inline uint16_t Motor_User_GetActiveSpeedLimit(const Motor_T * p_motor)                  { return Limit_GetUpper(&p_motor->SpeedLimit); }
+
+static inline uint16_t Motor_User_GetActiveILimit(const Motor_T * p_motor)
+{
+    if (Limit_IsUpperActive(&p_motor->ILimit) == true)
+        { return Limit_GetUpper(&p_motor->ILimit); }
+    else
+        { return p_motor->ILimitMotoring_Percent16; }
+}
+
+static inline uint16_t Motor_User_GetActiveSpeedLimit(const Motor_T * p_motor)
+{
+    // return Limit_GetUpper(&p_motor->SpeedLimit);
+    return (Motor_User_IsDirectionForward(p_motor) ? p_motor->SpeedLimitForward_Percent16 : p_motor->SpeedLimitReverse_Percent16);
+}
 
 /*
     Read-Only
@@ -221,6 +233,7 @@ extern void Motor_User_StartVoltageMode(Motor_T * p_motor);
 extern void Motor_User_SetVoltageCmdValue(Motor_T * p_motor, int16_t vCmd);
 extern void Motor_User_SetScalarMode(Motor_T * p_motor);
 extern void Motor_User_SetScalarCmdValue(Motor_T * p_motor, uint32_t scalar);
+
 extern void Motor_User_StartTorqueMode(Motor_T * p_motor);
 extern void Motor_User_SetTorqueCmdValue(Motor_T * p_motor, int16_t torque);
 extern void Motor_User_StartSpeedMode(Motor_T * p_motor);

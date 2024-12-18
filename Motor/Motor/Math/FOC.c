@@ -48,9 +48,12 @@ void FOC_SetAlign(FOC_T * p_foc, fract16_t vd)
 
 void FOC_ZeroSvpwm(FOC_T * p_foc)
 {
-    p_foc->DutyA = FRACT16_MAX / 2;
-    p_foc->DutyB = FRACT16_MAX / 2;
-    p_foc->DutyC = FRACT16_MAX / 2;
+    // p_foc->DutyA = FRACT16_MAX / 2;
+    // p_foc->DutyB = FRACT16_MAX / 2;
+    // p_foc->DutyC = FRACT16_MAX / 2;
+    p_foc->Va = FRACT16_MAX / 2;
+    p_foc->Vb = FRACT16_MAX / 2;
+    p_foc->Vc = FRACT16_MAX / 2;
 }
 
 void FOC_ClearControlState(FOC_T * p_foc)
@@ -64,29 +67,6 @@ void FOC_ClearControlState(FOC_T * p_foc)
     p_foc->Ibeta = 0;
     p_foc->ReqD = 0; /* Req */
     p_foc->ReqQ = 0;
-    FOC_ZeroSvpwm(p_foc);
-}
-
-void FOC_ClearObserveState(FOC_T * p_foc)
-{
-    p_foc->Va = 0;
-    p_foc->Vb = 0;
-    p_foc->Vc = 0;
-}
-
-// void FOC_ClearState(FOC_T * p_foc)
-// {
-//     p_foc->Ia = 0;  /* ADC */
-//     p_foc->Ib = 0;
-//     p_foc->Ic = 0;
-//     p_foc->Id = 0;  /* Feedback */
-//     p_foc->Iq = 0;
-//     p_foc->ReqD = 0; /* Req */
-//     p_foc->ReqQ = 0;
-
-//     p_foc->Sine = 0;
-//     p_foc->Cosine = 0;
-
 //     p_foc->Va = 0;
 //     p_foc->Vb = 0;
 //     p_foc->Vc = 0;
@@ -94,7 +74,6 @@ void FOC_ClearObserveState(FOC_T * p_foc)
 //     p_foc->Vbeta = 0;
 //     p_foc->Vd = 0; /* Output/Bemf */
 //     p_foc->Vq = 0;
-
-//     FOC_ZeroSvpwm(p_foc);
-// }
+    FOC_ZeroSvpwm(p_foc);
+}
 

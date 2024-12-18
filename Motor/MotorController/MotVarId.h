@@ -92,7 +92,9 @@ typedef enum MotVarId_Monitor_MotorFoc
     MOT_VAR_FOC_VD,
     MOT_VAR_FOC_REQ_Q,
     MOT_VAR_FOC_REQ_D,
-    MOT_VAR_FOC_REQ_SCALAR,
+    MOT_VAR_FOC_VA,
+    MOT_VAR_FOC_VB,
+    MOT_VAR_FOC_VC,
 }
 MotVarId_Monitor_MotorFoc_T;
 

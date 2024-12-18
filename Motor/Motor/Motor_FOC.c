@@ -108,22 +108,22 @@ static inline void ProcClarkePark(Motor_T * p_motor)
 
 static inline void ProcOuterFeedback(Motor_T * p_motor)
 {
-    ProcSpeedFeedback(p_motor, Motor_ProcSensorSpeed(p_motor)); /* Set ReqD, ReqQ */
+    ProcSpeedFeedback(p_motor, Motor_PollCaptureSpeed(p_motor)); /* Set ReqD, ReqQ */
 }
 
 static void ProcInnerFeedback(Motor_T * p_motor)
 {
-    bool hasIFeedback = false;
+    bool isCaptureI = false;
     if (p_motor->IFlags.Value == 0x07U)  /* alternatively use batch callback */
     {
-        hasIFeedback = true;
+        isCaptureI = true;
         Motor_FOC_CaptureIa(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA.P_STATE->Result);
         Motor_FOC_CaptureIb(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB.P_STATE->Result);
         Motor_FOC_CaptureIc(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC.P_STATE->Result);
         ProcClarkePark(p_motor);
         p_motor->IFlags.Value = 0U;
     }
-    ProcIFeedback(p_motor, hasIFeedback); /* Set Vd, Vq */
+    ProcIFeedback(p_motor, isCaptureI); /* Set Vd, Vq */
 }
 
 /* From Vdq to DutyABC */
@@ -196,7 +196,7 @@ void Motor_FOC_ProcAngleCaptureVBemf(Motor_T * p_motor)
 {
     p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
     FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
-    Motor_ProcSensorSpeed(p_motor);
+    Motor_PollCaptureSpeed(p_motor);
 
     if (p_motor->VFlags.Value == 0x07U)
     {
@@ -232,6 +232,19 @@ void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vq, f
 }
 
 
+/* Begin Observe, Ifeedback not updated */
+void Motor_FOC_ClearFeedbackState(Motor_T * p_motor)
+{
+    FOC_ClearControlState(&p_motor->Foc); /* Clear for view, updated again on enter control */
+    // FOC_ZeroSvpwm(p_foc);
+    Linear_Ramp_ZeroOutputState(&p_motor->Ramp);
+    PID_Reset(&p_motor->PidIq);
+    PID_Reset(&p_motor->PidId);
+    PID_Reset(&p_motor->PidSpeed);
+    p_motor->IFlags.Value = 0U;
+    p_motor->VFlags.Value = 0U;
+}
+
 /*!
     Match Feedback Ouput to VOutput (Vd, Vq)
     Update PID state when changing FeedbackMode
@@ -243,6 +256,8 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
     // if match without ad sampling
     // vq = Motor_GetVSpeed_Fract16(p_motor);
     // vd = 0;
+
+    // Motor_UpdateSpeedOutputLimits(p_motor); /* Pass limits from previous mode */
 
     if (p_motor->FeedbackMode.Current == 1U)
     {
@@ -257,6 +272,9 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
 
     if (p_motor->FeedbackMode.Speed == 1U)
     {
+        // if (p_motor->FeedbackMode.Current == 1U) /* Preserve limits from previous mode */
+        //     { PID_SetOutputLimits(&p_motor->PidSpeed, p_motor->ILimitCw_Fract16, p_motor->ILimitCcw_Fract16); }
+
         Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->Speed_Fract16);
         PID_SetOutputState(&p_motor->PidSpeed, qReq);
     }
@@ -264,37 +282,20 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
     {
         Linear_Ramp_SetOutputState(&p_motor->Ramp, qReq);
     }
+
+    // FOC_MatchDuty(&p_motor->Foc);
 }
 
-// void Motor_FOC_ResetFeedbackLimits(Motor_T * p_motor)
+// void Motor_FOC_UpdateFeedbackLimits(Motor_T * p_motor)
 // {
 //     Motor_UpdateSpeedOutputLimits(p_motor);
-//     if (p_motor->FeedbackMode.Current == 1U)
-//     {
-//         if (p_motor->Direction == MOTOR_DIRECTION_CCW) { PID_SetOutputLimits(&p_motor->PidIq, 0, INT16_MAX); }
-//         else { PID_SetOutputLimits(&p_motor->PidIq, INT16_MIN, 0); }
-//     }
+//     // if (p_motor->FeedbackMode.Current == 1U)
+//     // {
+//     //     if (p_motor->Direction == MOTOR_DIRECTION_CCW) { PID_SetOutputLimits(&p_motor->PidIq, 0, INT16_MAX); }
+//     //     else { PID_SetOutputLimits(&p_motor->PidIq, INT16_MIN, 0); }
+//     // }
 // }
 
-/* Begin Observe, Ifeedback not updated */
-void Motor_FOC_ClearControlState(Motor_T * p_motor)
-{
-    FOC_ClearControlState(&p_motor->Foc);
-    Linear_Ramp_ZeroOutputState(&p_motor->Ramp);
-    PID_Reset(&p_motor->PidIq);
-    PID_Reset(&p_motor->PidId);
-    PID_Reset(&p_motor->PidSpeed);
-    p_motor->IFlags.Value = 0U;
-    p_motor->VFlags.Value = 0U;
-}
-
-/* Begin Control, Vabc not updated */
-// void Motor_FOC_ClearObserveState(Motor_T * p_motor)
-// {
-//     FOC_ClearObserveState(&p_motor->Foc);
-//     p_motor->IFlags.Value = 0U;
-//     p_motor->VFlags.Value = 0U;
-// }
 
 /******************************************************************************/
 /*!
