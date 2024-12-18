@@ -694,6 +694,8 @@ void MotorController_StateMachine_SetFault(MotorController_T * p_mc, uint16_t fa
     else { p_mc->FaultFlags.Value |= faultFlags; }
 }
 
+//alternatively
+// (MotorController_FaultFlags_T){ .Value = }
 bool MotorController_StateMachine_ClearFault(MotorController_T * p_mc, uint16_t faultFlags)
 {
     if (MotorController_StateMachine_IsFault(p_mc) == true) { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT, faultFlags); }

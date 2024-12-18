@@ -106,30 +106,33 @@ static inline void ProcClarkePark(Motor_T * p_motor)
 #endif
 }
 
+/* From Ramp to ReqDQ */
 static inline void ProcOuterFeedback(Motor_T * p_motor)
 {
-    ProcSpeedFeedback(p_motor, Motor_PollCaptureSpeed(p_motor)); /* Set ReqD, ReqQ */
+    ProcSpeedFeedback(p_motor, Motor_PollCaptureSpeed(p_motor)); /* Set ReqDQ */
 }
 
+/* From Iabc to Idq to Vdq */
 static void ProcInnerFeedback(Motor_T * p_motor)
 {
     bool isCaptureI = false;
     if (p_motor->IFlags.Value == 0x07U)  /* alternatively use batch callback */
     {
         isCaptureI = true;
+        Motor_Debug_CaptureTime(p_motor, 4U);
         Motor_FOC_CaptureIa(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA.P_STATE->Result);
         Motor_FOC_CaptureIb(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB.P_STATE->Result);
         Motor_FOC_CaptureIc(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC.P_STATE->Result);
         ProcClarkePark(p_motor);
         p_motor->IFlags.Value = 0U;
     }
-    ProcIFeedback(p_motor, isCaptureI); /* Set Vd, Vq */
+    ProcIFeedback(p_motor, isCaptureI); /* Set Vdq */
 }
 
-/* From Vdq to DutyABC */
+/* From Vdq to Vabc */
 static void ProcAngleOutput(Motor_T * p_motor)
 {
-    FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);
+    FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);  /* Set Vabc */
     Phase_ActuateDuty_Fract16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 }
 
@@ -169,15 +172,6 @@ void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
     ProcOuterFeedback(p_motor);
     ProcInnerFeedback(p_motor);
     ProcAngleOutput(p_motor);
-
-    if (p_motor->IFlags.Value == 0x00U)
-    {
-        Motor_Debug_CaptureTime(p_motor, 4U);
-    }
-    else
-    {
-        Motor_Debug_CaptureTime(p_motor, 5U);
-    }
 }
 
 /* use speed as V match */
@@ -192,7 +186,7 @@ void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
     Angle Observe VBemf FreeWheel and Stop State
     Updates Vabc, Valpha, Vbeta, Vd, Vq
 */
-void Motor_FOC_ProcAngleCaptureVBemf(Motor_T * p_motor)
+void Motor_FOC_ProcCaptureAngleVBemf(Motor_T * p_motor)
 {
     p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
     FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
@@ -221,7 +215,7 @@ void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, angle16_t angle, fract16_
 }
 
 /*
-    Feed Forward Angle without ClarkPark on Current
+    Feed Forward Angle without ClarkePark on Current
 */
 void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vq, fract16_t vd)
 {
@@ -282,8 +276,6 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
     {
         Linear_Ramp_SetOutputState(&p_motor->Ramp, qReq);
     }
-
-    // FOC_MatchDuty(&p_motor->Foc);
 }
 
 // void Motor_FOC_UpdateFeedbackLimits(Motor_T * p_motor)

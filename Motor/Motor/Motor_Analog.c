@@ -34,6 +34,7 @@
 #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
 #include "Motor_SixStep.h"
 #endif
+#include "Motor_Debug.h"
 
 /******************************************************************************/
 /*!
@@ -58,6 +59,7 @@ void Motor_Analog_MarkIabc(Motor_T * p_motor)
 {
     if ((Motor_IsAnalogCycle(p_motor) == true) && p_motor->IFlags.Value == 0U)
     {
+        Motor_Debug_CaptureRefTime(p_motor);
         Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);
         Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB);
     #if defined(CONFIG_MOTOR_I_SENSORS_ABC)

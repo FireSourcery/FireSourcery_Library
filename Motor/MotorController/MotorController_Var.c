@@ -104,7 +104,8 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 case MOT_VAR_DEBUG:                 value = p_motor->DebugTime[4];                                  break;
                 // case MOT_VAR_DEBUG:                 value = Millis();                                               break;
                 case MOT_VAR_MC_STATE:              value = MotorController_User_GetStateId(p_mc);                  break;
-                case MOT_VAR_MC_STATUS_FLAGS:       value = MotorController_User_GetStateFlags(p_mc).Word;          break;
+                case MOT_VAR_MC_STATE_FLAGS:        value = MotorController_User_GetStateFlags(p_mc).Word;          break;
+                // case MOT_VAR_MC_STATUS_FLAGS:       value = MotorController_User_GetStatusFlags(p_mc).Word;          break;
                 case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_User_GetFaultFlags(p_mc).Value;         break;
                 case MOT_VAR_V_SOURCE:              value = MotorController_Analog_GetVSource(p_mc);                break;
                 case MOT_VAR_V_SENSOR:              value = MotorController_Analog_GetVSense(p_mc);                 break;
@@ -139,15 +140,16 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 case MOT_VAR_V_PHASE:               value = Motor_User_GetVPhase_UFract16(p_motor);              break;
                 case MOT_VAR_POWER:                 value = Motor_User_GetElectricalPower_UFract16(p_motor);     break;
                 case MOT_VAR_MOTOR_STATE:           value = Motor_User_GetStateId(p_motor);                      break;
-                case MOT_VAR_MOTOR_STATUS_FLAGS:    value = Motor_User_GetStateFlags(p_motor).Word;              break;
+                case MOT_VAR_MOTOR_STATE_FLAGS:     value = Motor_User_GetStateFlags(p_motor).Word;              break;
+                // case MOT_VAR_MOTOR_STATUS_FLAGS:    value = Motor_User_GetStateFlags(p_motor).Word;              break;
                 case MOT_VAR_MOTOR_FAULT_FLAGS:     value = Motor_User_GetFaultFlags(p_motor).Value;             break;
                 case MOT_VAR_MOTOR_HEAT:            value = Motor_User_GetHeat_Adcu(p_motor);                    break;
                     //Motor_User_GetHeat_DegC(p_motor, 1U);
                 case MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE:    value = Motor_User_GetActiveFeedbackMode(p_motor).Word; break;
                 case MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT:      value = Motor_User_GetActiveSpeedLimit(p_motor);        break;
                 case MOT_VAR_MOTOR_ACTIVE_I_LIMIT:          value = Motor_User_GetActiveILimit(p_motor);            break;
-                case MOT_VAR_MOTOR_V_SPEED:         value = Motor_User_GetVSpeed_UFract16(p_motor);                 break;
-                // case MOT_VAR_MOTOR_V_SPEED_EFFECTIVE:                 value = Motor_GetVSpeed_Fract16(p_motor);            break;
+                case MOT_VAR_MOTOR_V_SPEED:                 value = Motor_User_GetVSpeed_UFract16(p_motor);             break;
+                case MOT_VAR_MOTOR_V_SPEED_EFFECTIVE:       value = Motor_User_GetVSpeedEffective_UFract16(p_motor);    break;
                 default: break;
             }
             break;

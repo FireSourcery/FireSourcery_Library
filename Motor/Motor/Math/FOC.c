@@ -67,7 +67,7 @@ void FOC_ClearControlState(FOC_T * p_foc)
     p_foc->Ibeta = 0;
     p_foc->ReqD = 0; /* Req */
     p_foc->ReqQ = 0;
-//     p_foc->Va = 0;
+//     p_foc->Va = 0; /* Clear in case of VSpeed selected over VBemf */
 //     p_foc->Vb = 0;
 //     p_foc->Vc = 0;
 //     p_foc->Valpha = 0;

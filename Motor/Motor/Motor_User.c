@@ -58,10 +58,10 @@ static int32_t Scale16(uint16_t percent16, int32_t value) { return (int32_t)perc
 */
 static void Motor_ActivateControl(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-    _Critical_DisableIrq(); /* is this needed for setting buffers? */
+    // _Critical_DisableIrq(); /* is this needed for setting buffers? */
     // if(p_motor->FeedbackMode.Word != mode.Word)
     { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Word); }
-    _Critical_EnableIrq();
+    // _Critical_EnableIrq();
 }
 
 /* Generic array functions use */
@@ -99,7 +99,7 @@ void Motor_User_SetVoltageCmdValue(Motor_T * p_motor, int16_t voltageCmd)
 }
 
 // [v/2 +/- scalar * ]
-void Motor_User_SetVSpeedScalarCmd(Motor_T * p_motor, uint16_t scalar)
+void Motor_User_SetVSpeedScalarCmd(Motor_T * p_motor, int16_t scalar)
 {
     Motor_User_SetVoltageCmdValue(p_motor, Motor_GetVSpeed_Fract16(p_motor) / 2);
 }
@@ -127,25 +127,31 @@ void Motor_User_SetICmdValue(Motor_T * p_motor, int16_t iCmd)
     I with release when feedback is near 0
 */
 /******************************************************************************/
-void Motor_User_StartTorqueMode(Motor_T * p_motor) { Motor_ActivateControl(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); }
+void Motor_User_StartTorqueMode(Motor_T * p_motor) { Motor_User_StartIMode(p_motor); }
 
 /*!
     @param[in] torque [-32768:32767]
 */
 void Motor_User_SetTorqueCmdValue(Motor_T * p_motor, int16_t torqueCmd)
 {
-    int32_t limitedCmd = (torqueCmd > 0) ? Scale16(p_motor->ILimitMotoring_Percent16, torqueCmd) : Scale16(p_motor->ILimitGenerating_Percent16, torqueCmd);
+    // int32_t limitedCmd = (torqueCmd > 0) ? Scale16(p_motor->ILimitMotoring_Percent16, torqueCmd) : Scale16(p_motor->ILimitGenerating_Percent16, torqueCmd);
 
-    // if (Motor_FOC_GetIPhase_UFract16(p_motor) > (INT16_MAX / 20U)) // 5%
-    // {
-    //     Motor_User_SetICmdValue(p_motor, limitedCmd);
-    // }
-    // else
-    // {
-    //     Motor_User_TryRelease(p_motor);
-    // }
-
-    Motor_SetCmd(p_motor, limitedCmd);
+    if (torqueCmd < 0)
+    {
+        if (Motor_FOC_GetIPhase_UFract16(p_motor) > (INT16_MAX / 20)) // 5%
+        {
+            Motor_User_SetICmdValue(p_motor, torqueCmd);
+        }
+        else
+        {
+            // Motor_User_SetICmdValue(p_motor, 0U);
+            Motor_User_TryRelease(p_motor);
+        }
+    }
+    else
+    {
+        Motor_User_SetICmdValue(p_motor, torqueCmd);
+    }
 }
 
 // void Motor_User_SetIFollow(Motor_T * p_motor)

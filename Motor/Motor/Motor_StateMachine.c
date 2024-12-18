@@ -91,18 +91,18 @@ static void Init_Proc(Motor_T * p_motor)
 {
     bool wait = true;
 
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleCaptureVBemf, NULL); /* or Transition to STOP without hold */
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL); /* or Transition to STOP without hold */
 
-    if(SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT) /* wait for Speed and Heat sensors */
+    if (SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT) /* wait for Speed and Heat sensors */
     {
         wait = false;
-        //(  Motor_CheckConfig() == true)    //check params
+        //(Motor_CheckConfig() == true)    //check params
         // Motor_PollAdcFaultFlags(p_motor); /* Clear the fault flags once */
-        // if(p_motor->FaultFlags.Value != 0U) { wait = true; } // if wait for fault to clear
     }
 
     if (wait == false)
     {
+        // if(p_motor->FaultFlags.Value != 0U) { wait = true; } // if wait for fault to clear, main thread must clear
         if (p_motor->FaultFlags.Value == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
         else                                 { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FAULT); }
     }
@@ -144,7 +144,7 @@ static void Stop_Entry(Motor_T * p_motor)
 
 static void Stop_Proc(Motor_T * p_motor)
 {
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleCaptureVBemf, NULL);
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
     // and not hold // if(p_motor->Speed_Fract16 > 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FREEWHEEL); }
 }
 
@@ -307,7 +307,7 @@ static void Freewheel_Entry(Motor_T * p_motor)
 
 static void Freewheel_Proc(Motor_T * p_motor)
 {
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleCaptureVBemf, NULL /* Motor_SixStep_ProcPhaseObserve */);
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL /* Motor_SixStep_ProcPhaseObserve */);
     // alternatively wait for input
     if (p_motor->Speed_Fract16 == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
 }

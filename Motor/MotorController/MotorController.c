@@ -305,6 +305,17 @@ void MotorController_SetThrottleValue(MotorController_T * p_mc, uint16_t userCmd
     }
 }
 
+void MotorController_StartBrakeMode(MotorController_T * p_mc)
+{
+    switch (p_mc->Config.BrakeMode)
+    {
+        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_StartTorqueMode); break;
+        case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_StartVoltageMode); break;
+        default: break;
+    }
+    // MotorController_ActivateAll(p_mc);
+}
+
 /*!
     Always request opposite direction current
     req opposite iq, bound vq to 0 for no plugging brake
@@ -315,44 +326,14 @@ void MotorController_SetThrottleValue(MotorController_T * p_mc, uint16_t userCmd
 
     @param[in] brake [0:32767]
 */
-// todo brake hold threshold
-void _SetBrakeCmd(Motor_T * p_motor, int16_t brake)
-{
-    // if(p_motor->StateFlags.Hold == 0U)
-    if (Motor_User_GetSpeed_UFract16(p_motor) > (INT16_MAX / 20U)) // 5%
-    {
-        //if iq > (INT16_MAX / 20U)
-        Motor_User_SetTorqueCmdValue(p_motor, (int32_t)0 - brake);
-    }
-    else
-    {
-        Motor_User_TryRelease(p_motor);
-        // Motor_User_TryHold(p_motor);
-        // Motor_User_SetVoltageModeCmd(p_motor);
-    }
-}
-
-
-
-void MotorController_StartBrakeMode(MotorController_T * p_mc)
-{
-    switch (p_mc->Config.BrakeMode)
-    {
-        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_StartTorqueMode); break;
-        // case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_StartVoltageMode); break;
-        default: break;
-    }
-    // MotorController_ActivateAll(p_mc);
-}
-
 void MotorController_SetBrakeValue(MotorController_T * p_mc, uint16_t userCmdBrake)
 {
-    int16_t cmdValue = userCmdBrake / 2; // 32767 max
+    int16_t cmdValue = 0 - (userCmdBrake / 2); // 32767 max
 
     switch (p_mc->Config.BrakeMode)
     {
-        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: struct_array_foreach_set_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)_SetBrakeCmd, cmdValue); break; //todo torque mode
-            // case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: struct_array_foreach_set_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)Motor_User_SetVSpeedScalarCmd, 0); break; //test only
+        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE: struct_array_foreach_set_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)Motor_User_SetTorqueCmdValue, cmdValue); break;
+        case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: struct_array_foreach_set_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)Motor_User_SetVSpeedScalarCmd, 0); break;
         default: break;
     }
 }

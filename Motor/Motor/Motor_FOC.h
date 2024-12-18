@@ -121,7 +121,7 @@ static inline int32_t Motor_FOC_GetElectricalPower_UFract16(const Motor_T * p_mo
 */
 /******************************************************************************/
 extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);
-extern void Motor_FOC_ProcAngleCaptureVBemf(Motor_T * p_motor);
+extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_T * p_motor);
 
 extern void Motor_FOC_ActivateOutputZero(Motor_T * p_motor);
 extern void Motor_FOC_ActivateOutput(Motor_T * p_motor);

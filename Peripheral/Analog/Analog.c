@@ -128,6 +128,10 @@ static inline void ADC_Start(Analog_ADC_T * p_adc)
     Write Critical Buffer. single threaded access only
     Set active conversions for ADC
     from Analog_T buffers to Analog_ADC_T buffer
+
+    No critical is needed, given:
+    In a single thread while ADC is inactive
+    In the ADC ISR
 */
 static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId, const Analog_Conversion_T * const * pp_entries, uint8_t length)
 {

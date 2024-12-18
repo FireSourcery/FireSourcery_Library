@@ -110,7 +110,7 @@ void Motor_InitReboot(Motor_T * p_motor)
         e.g. Ramp 0 to 32767 max in ~500ms, 3.2767 per ControlCycle
         Final value is overwritten, Slope is persistent unless reset
     */
-    Linear_Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles, 0, INT16_MAX);
+    Linear_Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles, -INT16_MAX, INT16_MAX); /* common input ramp */
     Linear_Ramp_Init(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, 0, 0);
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     /* Start at 0 speed in FOC mode for continuous angle displacements */

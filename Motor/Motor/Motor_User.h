@@ -231,8 +231,9 @@ static inline uint8_t Motor_User_GetCalibrationStateIndex(const Motor_T * p_moto
 // extern int32_t Motor_User_GetSetPoint(const Motor_T * p_motor);
 extern void Motor_User_StartVoltageMode(Motor_T * p_motor);
 extern void Motor_User_SetVoltageCmdValue(Motor_T * p_motor, int16_t vCmd);
-extern void Motor_User_SetScalarMode(Motor_T * p_motor);
-extern void Motor_User_SetScalarCmdValue(Motor_T * p_motor, uint32_t scalar);
+// extern void Motor_User_SetScalarMode(Motor_T * p_motor);
+// extern void Motor_User_SetScalarCmdValue(Motor_T * p_motor, uint16_t scalar);
+extern void Motor_User_SetVSpeedScalarCmd(Motor_T * p_motor, int16_t scalar);
 
 extern void Motor_User_StartTorqueMode(Motor_T * p_motor);
 extern void Motor_User_SetTorqueCmdValue(Motor_T * p_motor, int16_t torque);
