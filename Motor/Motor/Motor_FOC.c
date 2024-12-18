@@ -380,7 +380,7 @@ void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
 static void ProcOpenLoop(Motor_T * p_motor)
 {
     p_motor->Speed_Fract16 = Linear_Ramp_ProcOutput(&p_motor->OpenLoopSpeedRamp);
-    p_motor->ElectricalAngle += ((p_motor->Speed_Fract16 * p_motor->Config.SpeedFeedbackRef_Rpm * p_motor->Config.PolePairs * 2) / ((int32_t)60 * MOTOR_STATIC.CONTROL_FREQ));
+    p_motor->ElectricalAngle += ((p_motor->Speed_Fract16 * Motor_GetSpeedVRef_Rpm(p_motor) * p_motor->Config.PolePairs * 2) / ((int32_t)60 * MOTOR_STATIC.CONTROL_FREQ));
 }
 
 void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)

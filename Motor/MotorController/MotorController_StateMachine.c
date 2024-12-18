@@ -107,6 +107,7 @@ static void Init_Proc(MotorController_T * p_mc)
     if (SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT)
     {
         wait = false;
+
         MotorController_PollAdcFaultFlags(p_mc); /* Clear FaultFlags set by sensor polling in main thread. */
         // if (p_mc->FaultFlags.Value != 0U) { wait = true; }
         // if(p_mc->InitFlags.Word != 0U) { wait = true; }   // indirectly poll inputs
@@ -649,7 +650,8 @@ static void Fault_Proc(MotorController_T * p_mc)
 /* Sensor faults only clear on user input */
 static StateMachine_State_T * Fault_InputClearFault(MotorController_T * p_mc, statemachine_input_value_t faultFlags)
 {
-    p_mc->FaultFlags.Value &= ~faultFlags;
+    // p_mc->FaultFlags.Value &= ~faultFlags;
+    p_mc->FaultFlags.Value = 0U;
     // p_mc->FaultFlags.Motors = 0U; /* updated by [MotorController_Main_Thread] */
     MotorController_ForEveryMotorExitFault(p_mc);
     // MotorController_PollAdcFaultFlags(p_mc);

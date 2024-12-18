@@ -171,8 +171,8 @@ void Motor_User_StartSpeedMode(Motor_T * p_motor) { Motor_ActivateControl(p_moto
 */
 void Motor_User_SetSpeedCmdValue(Motor_T * p_motor, int16_t speedCmd)
 {
-    // int32_t speedDirect = (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitForward_Percent16 : p_motor->SpeedLimitReverse_Percent16;
-    int16_t limitedCmd = (speedCmd > 0) ? Scale16(Limit_GetUpper(&(p_motor->SpeedLimit)), speedCmd) : 0;
+    // int32_t limitedCmd = (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitForward_Percent16 : p_motor->SpeedLimitReverse_Percent16;
+    int16_t limitedCmd = (speedCmd > 0) ? Scale16(Limit_GetUpper(&p_motor->SpeedLimit), speedCmd) : 0;
     Motor_SetCmd(p_motor, limitedCmd);
 }
 

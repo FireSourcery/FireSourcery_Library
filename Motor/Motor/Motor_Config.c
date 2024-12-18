@@ -62,7 +62,7 @@ void Motor_Config_SetPolePairs(Motor_T * p_motor, uint8_t polePairs) { p_motor->
 void Motor_Config_SetKv(Motor_T * p_motor, uint16_t kv)
 {
     p_motor->Config.Kv = kv;
-    p_motor->Config.SpeedFeedbackRef_Rpm = kv * Motor_Static_GetVSource_V();
+    // Motor_GetSpeedVRef_Rpm(p_motor) = kv * Motor_Static_GetVSource_V();
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
 
@@ -87,7 +87,7 @@ void Motor_Config_SetVSpeedScalar_Percent16(Motor_T * p_motor, uint16_t percent1
 /* SpeedFeedbackRef_Rpm => 100% speed for PID feedback. */
 void Motor_Config_SetSpeedVRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
-    p_motor->Config.SpeedFeedbackRef_Rpm = rpm;
+    // Motor_GetSpeedVRef_Rpm(p_motor) = rpm;
     p_motor->Config.Kv = rpm / Motor_Static_GetVSource_V();
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }

@@ -297,8 +297,8 @@ typedef struct Motor_Config
                                     /* 9/10 scalar => 100% Speed => 90% V */
 
     /* replace with getter */
-    uint16_t SpeedFeedbackRef_Rpm;  /* VSource*Kv. Feedback / PID Regulator Limits Ref. Sensor/User Fract16, unit conversion. */
-                                    /* A value greater than achievable will cause integral windup. too low will lose PID control range */
+    // uint16_t SpeedFeedbackRef_Rpm;   /* VSource*Kv. Feedback / PID Regulator Limits Ref. Sensor/User Fract16, unit conversion. */
+                                        /* A value greater than achievable will cause integral windup. too low will lose PID control range */
 
     // Motor_ResumeMode_T    ResumeMode; // option Scale to VSpeed or VBemf on resume
     uint16_t IaZeroRef_Adcu;
@@ -510,8 +510,8 @@ Motor_T, * Motor_Ptr;
 /******************************************************************************/
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 /* Internal unit numeric representation conversions only */
-static inline int32_t _Motor_Speed_Fract16OfRpm(const Motor_T * p_motor, int32_t speed_rpm)     { return speed_rpm * INT16_MAX / p_motor->Config.SpeedFeedbackRef_Rpm; }
-static inline int16_t _Motor_Speed_RpmOfFract16(const Motor_T * p_motor, int32_t speed_fract16) { return speed_fract16 * p_motor->Config.SpeedFeedbackRef_Rpm / 32768; }
+static inline int32_t _Motor_Speed_Fract16OfRpm(const Motor_T * p_motor, int32_t speed_rpm)     { return speed_rpm * INT16_MAX / Motor_GetSpeedVRef_Rpm(p_motor); }
+static inline int16_t _Motor_Speed_RpmOfFract16(const Motor_T * p_motor, int32_t speed_fract16) { return speed_fract16 * Motor_GetSpeedVRef_Rpm(p_motor) / 32768; }
 static inline int32_t _Motor_I_Fract16OfAmps(int32_t i_amp)             { return i_amp * INT16_MAX / MOTOR_STATIC.I_MAX_AMPS; }
 static inline int16_t _Motor_I_AmpsOfFract16(int32_t i_fract16)         { return i_fract16 * MOTOR_STATIC.I_MAX_AMPS / 32768; }
 static inline int32_t _Motor_V_Fract16OfVolts(int32_t v_volts)          { return v_volts * INT16_MAX / Motor_Static_GetVSource_V(); }

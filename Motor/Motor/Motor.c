@@ -615,7 +615,7 @@ void Motor_ResetSpeedLimitActive(Motor_T * p_motor)
     // // let direction propagate limits
     // p_motor->SpeedLimitForward_Percent16 = p_motor->Config.SpeedLimitForward_Percent16;
     // p_motor->SpeedLimitReverse_Percent16 = p_motor->Config.SpeedLimitReverse_Percent16;
-    // Limit_ClearAll(&p_motor->SpeedLimit);
+    Limit_ClearAll(&p_motor->SpeedLimit);
     Motor_ClearSpeedLimitActive(p_motor);
 
 }
@@ -624,14 +624,14 @@ void Motor_ResetILimitActive(Motor_T * p_motor)
 {
     // p_motor->ILimitMotoring_Percent16 = p_motor->Config.ILimitMotoring_Percent16;
     // p_motor->ILimitGenerating_Percent16 = p_motor->Config.ILimitGenerating_Percent16;
-    // Limit_ClearAll(&p_motor->ILimit);
+    Limit_ClearAll(&p_motor->ILimit);
     Motor_ClearILimitActive(p_motor);
 }
 
 // void Motor_ResetSpeedFeedbackRef(Motor_T * p_motor)
 // {
 //     int32_t rpm = Motor_GetSpeedVRef_Rpm(p_motor);
-//     if (p_motor->Config.SpeedFeedbackRef_Rpm > rpm) { p_motor->Config.SpeedFeedbackRef_Rpm = rpm; }
+//     if (Motor_GetSpeedVRef_Rpm(p_motor) > rpm) { Motor_GetSpeedVRef_Rpm(p_motor) = rpm; }
 // }
 
 /******************************************************************************/
@@ -716,12 +716,12 @@ void Motor_ResetUnitsVabc(Motor_T * p_motor)
 /* SinCos, Mechanical Rotation Sensor */
 void Motor_ResetUnitsAngleSpeed_ElecControl(Motor_T * p_motor)
 {
-    // Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitsAngleRpm, MOTOR_STATIC.CONTROL_FREQ, 16U, p_motor->Config.PolePairs, p_motor->Config.SpeedFeedbackRef_Rpm);
+    // Linear_Speed_InitElectricalAngleRpm(&p_motor->UnitsAngleRpm, MOTOR_STATIC.CONTROL_FREQ, 16U, p_motor->Config.PolePairs, Motor_GetSpeedVRef_Rpm(p_motor));
 }
 
 void Motor_ResetUnitsAngleSpeed_Mech(Motor_T * p_motor)
 {
-    // Linear_Speed_InitAngleRpm(&p_motor->UnitsAngleRpm, 1000U, 16U, p_motor->Config.SpeedFeedbackRef_Rpm);
+    // Linear_Speed_InitAngleRpm(&p_motor->UnitsAngleRpm, 1000U, 16U, Motor_GetSpeedVRef_Rpm(p_motor));
 }
 
 /*
@@ -748,9 +748,9 @@ void Motor_ResetUnitsHallEncoder(Motor_T * p_motor)
 /* Common, Set after PolePairs */
 void Motor_ResetUnitsEncoder(Motor_T * p_motor)
 {
-    if(p_motor->Config.SpeedFeedbackRef_Rpm != p_motor->Encoder.Config.ScalarSpeedRef_Rpm)
+    if(Motor_GetSpeedVRef_Rpm(p_motor) != p_motor->Encoder.Config.ScalarSpeedRef_Rpm)
     {
-        Encoder_SetScalarSpeedRef(&p_motor->Encoder, p_motor->Config.SpeedFeedbackRef_Rpm);
+        Encoder_SetScalarSpeedRef(&p_motor->Encoder, Motor_GetSpeedVRef_Rpm(p_motor));
     }
     if(p_motor->Config.PolePairs != p_motor->Encoder.Config.InterpolateAngleScalar) /* Set for electrical cycle */
     {
