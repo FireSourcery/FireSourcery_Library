@@ -43,7 +43,7 @@ const uint16_t _HALL_ANGLE_TABLE[HALL_SENSORS_TABLE_LENGTH] =
 };
 
 /*
-    PinA,B,C HAL initialized in main app
+    PinA, B, C HAL initialized in main app
 */
 void Hall_Init(Hall_T * p_hall)
 {

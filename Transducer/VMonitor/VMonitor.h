@@ -161,12 +161,12 @@ static inline uint32_t VMonitor_GetFaultUpper_MilliV(const VMonitor_T * p_vMonit
 static inline uint32_t VMonitor_GetFaultLower_MilliV(const VMonitor_T * p_vMonitor)             { return Linear_Voltage_MilliV(&p_vMonitor->Units, p_vMonitor->Config.FaultLower_Adcu); }
 static inline uint32_t VMonitor_GetWarningUpper_MilliV(const VMonitor_T * p_vMonitor)           { return Linear_Voltage_MilliV(&p_vMonitor->Units, p_vMonitor->Config.WarningUpper_Adcu); }
 static inline uint32_t VMonitor_GetWarningLower_MilliV(const VMonitor_T * p_vMonitor)           { return Linear_Voltage_MilliV(&p_vMonitor->Units, p_vMonitor->Config.WarningLower_Adcu); }
-static inline void VMonitor_SetFaultUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)    { p_vMonitor->Config.FaultUpper_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, limit_mV); }
-static inline void VMonitor_SetFaultLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)    { p_vMonitor->Config.FaultLower_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, limit_mV); }
-static inline void VMonitor_SetWarningUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)  { p_vMonitor->Config.WarningUpper_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, limit_mV); }
-static inline void VMonitor_SetWarningLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)  { p_vMonitor->Config.WarningLower_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, limit_mV); }
+static inline void VMonitor_SetFaultUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)    { p_vMonitor->Config.FaultUpper_Adcu = Linear_Voltage_AdcuInputOfMilliV(&p_vMonitor->Units, limit_mV); }
+static inline void VMonitor_SetFaultLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)    { p_vMonitor->Config.FaultLower_Adcu = Linear_Voltage_AdcuInputOfMilliV(&p_vMonitor->Units, limit_mV); }
+static inline void VMonitor_SetWarningUpper_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)  { p_vMonitor->Config.WarningUpper_Adcu = Linear_Voltage_AdcuInputOfMilliV(&p_vMonitor->Units, limit_mV); }
+static inline void VMonitor_SetWarningLower_MilliV(VMonitor_T * p_vMonitor, uint32_t limit_mV)  { p_vMonitor->Config.WarningLower_Adcu = Linear_Voltage_AdcuInputOfMilliV(&p_vMonitor->Units, limit_mV); }
 
-static inline void VMonitor_SetNominal_MilliV(VMonitor_T * p_vMonitor, uint32_t mV)             { p_vMonitor->Config.Nominal_Adcu = Linear_Voltage_CalcAdcuInput_MilliV(&p_vMonitor->Units, mV); }
+static inline void VMonitor_SetNominal_MilliV(VMonitor_T * p_vMonitor, uint32_t mV)             { p_vMonitor->Config.Nominal_Adcu = Linear_Voltage_AdcuInputOfMilliV(&p_vMonitor->Units, mV); }
 
 /******************************************************************************/
 /*!

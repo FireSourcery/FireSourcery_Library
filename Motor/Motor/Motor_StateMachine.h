@@ -50,7 +50,6 @@ typedef enum Motor_StateMachine_Input
 }
 Motor_StateMachine_Input_T;
 
-/* INIT and OPEN_LOOP as passthrough. each other state has directly corresponding input */
 typedef enum Motor_StateMachine_StateId
 {
     MSM_STATE_ID_INIT,
@@ -66,6 +65,9 @@ Motor_StateMachine_StateId_T;
 extern const StateMachine_Machine_T MSM_MACHINE;
 
 #define MOTOR_STATE_MACHINE_INIT(p_Motor) STATE_MACHINE_INIT(&MSM_MACHINE, p_Motor, false)
+
+/* Wrap for array */
+static inline bool Motor_StateMachine_IsState(const Motor_T * p_motor, uint8_t stateId) { return (StateMachine_IsActiveState(&p_motor->StateMachine, (Motor_StateMachine_StateId_T)stateId)); }
 
 extern bool Motor_StateMachine_IsFault(const Motor_T * p_motor);
 extern bool Motor_StateMachine_ExitFault(Motor_T * p_motor);

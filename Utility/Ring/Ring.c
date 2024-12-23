@@ -52,7 +52,7 @@
 static inline void EnterCritical(const Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    if (p_ring.CONST.USE_CRITICAL == true) { _Critical_DisableIrq(); }
+    _Critical_DisableIrq();
 #elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
@@ -61,26 +61,27 @@ static inline void EnterCritical(const Ring_T * p_ring)
 static inline void ExitCritical(const Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    if (p_ring.CONST.USE_CRITICAL == true) { _Critical_EnableIrq(); }
+    _Critical_EnableIrq();
 #elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
 }
 
-static inline bool AcquireMutex(Ring_T * p_ring)
+/* Multithreaded may use disable interrupts, if-test, or spin-wait with thread scheduler */
+static inline bool AcquireSignal(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    return (p_ring.CONST.USE_CRITICAL == true) ? Critical_AcquireSignal(&p_ring->Mutex) : true;
+    return Critical_AcquireSignal(&p_ring->Mutex);
 #elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
     return true;
 #endif
 }
 
-static inline void ReleaseMutex(Ring_T * p_ring)
+static inline void ReleaseSignal(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    if (p_ring.CONST.USE_CRITICAL == true) { Critical_ReleaseSignal(&p_ring->Mutex) };
+    Critical_ReleaseSignal(&p_ring->Mutex);
 #elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
@@ -89,7 +90,7 @@ static inline void ReleaseMutex(Ring_T * p_ring)
 static inline bool AcquireCritical(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    return (p_ring.CONST.USE_CRITICAL == true) ? Critical_AcquireEnter(&p_ring->Mutex) : true;
+    return Critical_AcquireEnter(&p_ring->Mutex);
 #elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
     return true;
@@ -99,7 +100,7 @@ static inline bool AcquireCritical(Ring_T * p_ring)
 static inline void ReleaseCritical(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    if (p_ring.CONST.USE_CRITICAL == true) { Critical_ReleaseExit(&p_ring->Mutex) };
+    Critical_ReleaseExit(&p_ring->Mutex);
 #elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
@@ -170,6 +171,7 @@ inline bool _Ring_PeekAt(const Ring_T * p_ring, size_t index, void * p_result)
     return isSuccess;
 }
 
+// without critical
 // inline void _Ring_PushBack(Ring_T * p_ring, const void * p_unit)
 // inline void _Ring_PopFront(Ring_T * p_ring, void * p_result)
 // inline void _Ring_PushFront(Ring_T * p_ring, const void * p_unit)
@@ -350,7 +352,7 @@ void * Ring_AcquireBuffer(Ring_T * p_ring)
 {
     void * p_buffer = NULL;
 
-    if (AcquireMutex(p_ring) == true)
+    if (AcquireSignal(p_ring) == true)
     {
         Ring_Clear(p_ring);
         p_buffer = p_ring->CONST.P_BUFFER;
@@ -362,7 +364,7 @@ void * Ring_AcquireBuffer(Ring_T * p_ring)
 void Ring_ReleaseBuffer(Ring_T * p_ring, size_t writeSize)
 {
     p_ring->Tail = writeSize;
-    ReleaseMutex(p_ring);
+    ReleaseSignal(p_ring);
 }
 
 #ifdef CONFIG_RING_DYNAMIC_MEMORY_ALLOCATION

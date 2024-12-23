@@ -89,12 +89,12 @@ typedef enum MotProtocol_CallId
 }
 MotProtocol_CallId_T;
 
-typedef enum MotProtocol_Call_System
-{
-    MOT_CALL_SYSTEM_RX_WATCHDOG_ENABLE,
-    MOT_CALL_SYSTEM_RX_WATCHDOG_DISABLE,
-}
-MotProtocol_Call_System_T;
+// typedef enum MotProtocol_Call_System
+// {
+//     MOT_CALL_SYSTEM_RX_WATCHDOG_ENABLE,
+//     MOT_CALL_SYSTEM_RX_WATCHDOG_DISABLE,
+// }
+// MotProtocol_Call_System_T;
 
 static protocol_size_t Call_Blocking(MotorController_T * p_mc, MotPacket_CallResp_T * p_txPacket, const MotPacket_CallReq_T * p_rxPacket)
 {
@@ -119,14 +119,14 @@ static protocol_size_t Call_Blocking(MotorController_T * p_mc, MotPacket_CallRes
                 default: break;
             }
             break;
-        case MOT_CALL_SYSTEM:
-            switch ((MotProtocol_Call_System_T)p_rxPacket->CallReq.Arg)
-            {
-                case MOT_CALL_SYSTEM_RX_WATCHDOG_ENABLE:    Protocol_EnableRxWatchdog(MotorController_User_GetMainProtocol(p_mc));    status = MOT_STATUS_OK; break;
-                case MOT_CALL_SYSTEM_RX_WATCHDOG_DISABLE:   Protocol_DisableRxWatchdog(MotorController_User_GetMainProtocol(p_mc));   status = MOT_STATUS_OK; break;
-                default: break;
-            }
-            break;
+        // case MOT_CALL_SYSTEM:
+        //     switch ((MotProtocol_Call_System_T)p_rxPacket->CallReq.Arg)
+        //     {
+        //         case MOT_CALL_SYSTEM_RX_WATCHDOG_ENABLE:    Protocol_EnableRxWatchdog(MotorController_User_GetMainProtocol(p_mc));    status = MOT_STATUS_OK; break;
+        //         case MOT_CALL_SYSTEM_RX_WATCHDOG_DISABLE:   Protocol_DisableRxWatchdog(MotorController_User_GetMainProtocol(p_mc));   status = MOT_STATUS_OK; break;
+        //         default: break;
+        //     }
+        //     break;
 
         default: break;
     }
@@ -142,7 +142,7 @@ static protocol_size_t VarRead(MotorController_T * p_mc, MotPacket_VarReadResp_T
 {
     uint8_t varCount = MotPacket_VarReadReq_ParseVarIdCount(p_rxPacket);
 
-    for(uint8_t index = 0U; index < varCount; index++)
+    for (uint8_t index = 0U; index < varCount; index++)
     {
         MotPacket_VarReadResp_BuildVarValue(p_txPacket, index, (uint16_t)MotorController_Var_Get(p_mc, (MotVarId_T)MotPacket_VarReadReq_ParseVarId(p_rxPacket, index)));
     }
@@ -160,11 +160,11 @@ static protocol_size_t VarWrite(MotorController_T * p_mc, MotPacket_VarWriteResp
 
     MotVarId_Status_T headerStatus = MOT_VAR_STATUS_OK;
     MotVarId_Status_T varStatus;
-    for(uint8_t index = 0U; index < varCount; index++)
+    for (uint8_t index = 0U; index < varCount; index++)
     {
         varStatus = MotorController_Var_Set(p_mc, (MotVarId_T)MotPacket_VarWriteReq_ParseVarId(p_rxPacket, index), MotPacket_VarWriteReq_ParseVarValue(p_rxPacket, index));
         MotPacket_VarWriteResp_BuildVarStatus(p_txPacket, index, varStatus);
-        if(varStatus != MOT_VAR_STATUS_OK) { headerStatus = MOT_VAR_STATUS_ERROR; }
+        if (varStatus != MOT_VAR_STATUS_OK) { headerStatus = MOT_VAR_STATUS_ERROR; }
     }
     // MotPacket_VarWriteResp_BuildMeta(p_txPacket, headerStatus);
     return MotPacket_VarWriteResp_BuildHeader(p_txPacket, varCount);
@@ -186,11 +186,11 @@ static protocol_size_t ReadMem_Blocking(MotorController_T * p_mc, MotPacket_MemR
 
     memset(p_buffer, 0U, size);
 
-    switch(config)
+    switch (config)
     {
         case MOT_MEM_CONFIG_RAM: memcpy(p_buffer, (void *)address, size);  status = NV_MEMORY_STATUS_SUCCESS; break;
         case MOT_MEM_CONFIG_ONCE: status = MotorController_User_ReadManufacture_Blocking(p_mc, address, size, p_buffer); break;
-        // case MOT_MEM_CONFIG_FLASH: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
+            // case MOT_MEM_CONFIG_FLASH: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
     }
 
@@ -205,11 +205,11 @@ static protocol_size_t WriteMem_Blocking(MotorController_T * p_mc, MotPacket_Mem
     uint16_t config = p_rxPacket->MemWriteReq.Config;
     NvMemory_Status_T status;
 
-    switch(config)
+    switch (config)
     {
         case MOT_MEM_CONFIG_RAM: memcpy((void *)address, p_data, size); status = NV_MEMORY_STATUS_SUCCESS; break;
         case MOT_MEM_CONFIG_ONCE: status = MotorController_User_WriteManufacture_Blocking(p_mc, address, p_data, size); break;
-        // case MOT_MEM_CONFIG_FLASH: status = Flash_Write_Blocking(p_flash, address, p_data, size); break;
+            // case MOT_MEM_CONFIG_FLASH: status = Flash_Write_Blocking(p_flash, address, p_data, size); break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
     }
 
@@ -221,7 +221,7 @@ static protocol_size_t WriteMem_Blocking(MotorController_T * p_mc, MotPacket_Mem
 /******************************************************************************/
 static Protocol_ReqCode_T ReadData(MotorController_T * p_mc, Protocol_ReqContext_T * p_reqContext)
 {
-    // if(MotorController_User_IsLockState(p_mc) == true)
+    // if (MotorController_User_IsLockState(p_mc) == true)
     return MotProtocol_ReadData(NULL, p_reqContext);
 }
 

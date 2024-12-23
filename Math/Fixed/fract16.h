@@ -141,7 +141,7 @@ static inline fract16_t fract16_abs_sat(fract16_t x)
 
 static inline fract16_t fract16_sqrt(fract16_t x)
 {
-    return q_sqrt((int32_t)x << FRACT16_N_BITS);
+    return fixed_sqrt((int32_t)x << FRACT16_N_BITS);
 }
 
 

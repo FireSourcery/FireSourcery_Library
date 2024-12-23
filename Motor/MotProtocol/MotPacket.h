@@ -135,10 +135,18 @@ MotPacket_Sync_T;
 // {
 //     uint8_t Start;
 //     uint8_t Id;
+// }
+// MotPacket_HeaderId_T;
+
+// typedef struct MOT_PACKET_PACKED MotPacket_HeaderFixed
+// {
+//     uint8_t Start;
+//     uint8_t Id;
 //     uint16_t Checksum;
 // }
 // MotPacket_HeaderFixed_T;
 
+// alternatively use 8bit checksum + trailer data checksum
 // typedef struct MOT_PACKET_PACKED MotPacket_HeaderFixed
 // {
 //     uint8_t Start;
@@ -248,8 +256,8 @@ typedef struct MotPacket_CallResp { MotPacket_Header_T Header; MotPacket_CallRes
 /******************************************************************************/
 /*!
     Read Vars - flex length extensible
-    Req     [Start, Id, Checksum[2]], [Length, IdSum, Flags16],   [MotVarIds][16]
-    Resp    [Start, Id, Checksum[2]], [Length, IdSum, Status16],  [Value16][16]
+    Req     [Start, Id, Checksum[2]], [Length, IdSum/SenderId, Flags16],   [MotVarIds][16]
+    Resp    [Start, Id, Checksum[2]], [Length, IdSum/SenderId, Status16],  [Value16][16]
 
     Alt 32-bit
     Req     [Start, Id, Checksum[2]], [Length, IdSum, Flags16_Alt],   [MotVarIds][8]
@@ -377,8 +385,8 @@ extern uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataP
     Resp    [Start, Id, Checksum[2]],
 
         Read Var n
-            [IdChecksum], [MotVarIds][16]
-            [IdChecksum, Status16], [Value16][16]
+            Req  [IdChecksum], [MotVarIds][16]
+            Resp [IdChecksum, Status16], [Value16][16]
         Read Var x1
             [MotVarId]
             [MotVarId, Status16], [Value16]
@@ -396,7 +404,7 @@ extern uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataP
     Resp    [Start, Id, Checksum[2]],
 
     Write Var n
-        [IdChecksum, ValueChecksum], [MotVarIds, Value16][8]
+        [IdChecksum, ValueChecksum/Resv], [MotVarIds, Value16][8]
         [IdChecksum, Status16], [VarStatus8][8]
     Write Var x1
         [MotVarId][Value]

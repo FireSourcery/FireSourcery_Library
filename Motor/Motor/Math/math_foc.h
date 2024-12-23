@@ -193,7 +193,7 @@ static inline void foc_circle_limit(fract16_t * p_d, fract16_t * p_q, fract16_t 
             { d_limit_squared = d_squared; }
         /* Apply q limit */
         q_limit_squared = mag_limit_squared - d_limit_squared;
-        q_limit = q_sqrt(q_limit_squared);
+        q_limit = fixed_sqrt(q_limit_squared);
         *p_q = (*p_q < 0) ? (0 - q_limit) : q_limit;
     }
 }

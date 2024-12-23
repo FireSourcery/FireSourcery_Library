@@ -40,6 +40,25 @@
     Calibration State Functions - Mapped to StateMachine, Nonblocking
 */
 /******************************************************************************/
+/*
+    Calibrate Current ADC
+*/
+static inline void Motor_Calibration_StartAdc(Motor_T * p_motor)
+{
+    Motor_Analog_StartCalibration(p_motor);
+}
+
+static inline bool Motor_Calibration_ProcAdc(Motor_T * p_motor)
+{
+    Motor_Analog_ProcCalibration(p_motor);
+}
+
+
+/******************************************************************************/
+/*
+    Sensors
+*/
+/******************************************************************************/
 static inline void Motor_Calibration_StartHall(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
@@ -66,22 +85,8 @@ static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
     return isComplete;
 }
 
-/*
-    Calibrate Current ADC
-*/
-static inline void Motor_Calibration_StartAdc(Motor_T * p_motor)
-{
-    Motor_Analog_StartCalibration(p_motor);
-}
 
-static inline bool Motor_Calibration_ProcAdc(Motor_T * p_motor)
-{
-    Motor_Analog_ProcCalibration(p_motor);
-}
 
-/******************************************************************************/
-/*   */
-/******************************************************************************/
 static inline void Motor_Calibration_StartEncoder(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
@@ -113,6 +118,7 @@ static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
 
     return isComplete;
 }
+
 /* todo */
     void Motor_CalibrateSensorZero(Motor_T * p_motor)
     {
@@ -224,8 +230,6 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
 }
 #endif
 
-/******************************************************************************/
-/*! @} */
-/******************************************************************************/
+
 
 #endif

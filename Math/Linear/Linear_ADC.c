@@ -47,10 +47,10 @@ void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t
     Linear_Q16_Init(p_linear, adcuZero, adcuZero + adcuZtPRef);
 }
 
-void Linear_ADC_Init_MinMax(Linear_T * p_linear, uint16_t adcuMin, uint16_t adcuMax)
-{
-    Linear_Q16_Init(p_linear, (adcuMin + adcuMax) / 2, adcuMax);
-}
+// void Linear_ADC_Init_MinMax(Linear_T * p_linear, uint16_t adcuMin, uint16_t adcuMax)
+// {
+//     Linear_Q16_Init(p_linear, (adcuMin + adcuMax) / 2, adcuMax);
+// }
 
 /******************************************************************************/
 /*!

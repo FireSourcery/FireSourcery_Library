@@ -31,13 +31,15 @@
 #include "MotorController_User.h"
 
 /******************************************************************************/
-/* Real Time */
+/*
+    Real Time
+*/
 /******************************************************************************/
 /* Drive Direction */
 MotorController_Direction_T MotorController_User_GetDirection(const MotorController_T * p_mc)
 {
     MotorController_Direction_T direction;
-    switch(StateMachine_GetActiveStateId(&p_mc->StateMachine))
+    switch (StateMachine_GetActiveStateId(&p_mc->StateMachine))
     {
         case MCSM_STATE_ID_LOCK:        direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
         case MCSM_STATE_ID_PARK:        direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
@@ -45,7 +47,7 @@ MotorController_Direction_T MotorController_User_GetDirection(const MotorControl
         case MCSM_STATE_ID_DRIVE:
             if      (MotorController_IsEveryMotorForward(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
             else if (MotorController_IsEveryMotorReverse(p_mc) == true) { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
-            else                                                    { direction = MOTOR_CONTROLLER_DIRECTION_ERROR; }
+            else                                                        { direction = MOTOR_CONTROLLER_DIRECTION_ERROR; }
             break;
         default: direction = MOTOR_CONTROLLER_DIRECTION_ERROR; break;
     }
@@ -55,30 +57,31 @@ MotorController_Direction_T MotorController_User_GetDirection(const MotorControl
 bool MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction)
 {
     bool isSuccess;
-    if(MotorController_User_GetDirection(p_mc) != direction) { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
+    if (MotorController_User_GetDirection(p_mc) != direction) { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
     // else { MotorController_BeepDouble(p_mc); }
     isSuccess = (MotorController_User_GetDirection(p_mc) == direction);
-    if(isSuccess == false) { MotorController_BeepShort(p_mc); }
+    if (isSuccess == false) { MotorController_BeepShort(p_mc); }
     return isSuccess;
 }
 
+// static inline MotorController_MainMode_T MotorController_User_GetMainMode(MotorController_T * p_mc)
+// {
+//     return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_SERVO) ? MOTOR_CONTROLLER_MAIN_MODE_SERVO : MOTOR_CONTROLLER_MAIN_MODE_DRIVE;
+// }
+
 /******************************************************************************/
-/* Config */
+/*
+    Config
+*/
 /******************************************************************************/
 /*! @param[in] volts < MOTOR_STATIC.VMAX and Config.VSourceRef */
 void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts)
 {
-    /* VSource Monitor Ref */
     p_mc->Config.VSourceRef = Motor_VSourceLimitOf(volts);
-    VMonitor_SetNominal_MilliV(&p_mc->VMonitorSource, p_mc->Config.VSourceRef * 1000U);
-    VMonitor_ResetLimitsDefault(&p_mc->VMonitorSource);
-
-    /* VSource Active Ref *//* todo Set Motor Ref using read Value */
-    // MotorController_ResetVSourceActiveRef(p_mc);
-    Motor_Static_InitVSourceRef_V(volts);
-    for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_ResetUnitsVabc(&p_mc->CONST.P_MOTORS[iMotor]); }
+    MotorController_ResetVSourceActiveRef(p_mc);
+    MotorController_ResetVSourceMonitorDefaults(p_mc);
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-    MotorController_User_SetBatteryLifeDefault(p_mc);
+    MotorController_ResetBatteryLifeDefault(p_mc);
 #endif
 }
 
@@ -86,7 +89,6 @@ void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts
 // {
 //     uint16_t iPeakAc = dc;
 //     uint16_t motoring = iPeakAc;
-
 //     for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++)
 //     {
 //         Motor_User_SetILimitMotoringParam_Amp(&p_mc->CONST.P_MOTORS[iMotor], motoring);
@@ -94,15 +96,6 @@ void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts
 // }
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-/*
-*/
-void MotorController_User_SetBatteryLifeDefault(MotorController_T * p_mc)
-{
-    p_mc->Config.BatteryZero_Adcu = VMonitor_GetFaultLower(&p_mc->VMonitorSource);
-    p_mc->Config.BatteryFull_Adcu = VMonitor_AdcuOfMilliV(&p_mc->VMonitorSource, (uint32_t)p_mc->Config.VSourceRef * 1000U);
-    MotorController_ResetUnitsBatteryLife(p_mc);
-}
-
 void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32_t zero_mV, uint32_t max_mV)
 {
     p_mc->Config.BatteryZero_Adcu = VMonitor_AdcuOfMilliV(&p_mc->VMonitorSource, zero_mV);
@@ -113,60 +106,144 @@ void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32
 
 /******************************************************************************/
 /* Manufacture */
-// use outer layer StateMachine check, simplifies handling of signature type.
-// Multi variable StateMachine call
 /******************************************************************************/
-/* Caller clears buffer */
+/*
+    Multi variable StateMachine call
+    Use outer layer StateMachine check, simplifies handling of signature type.
+*/
 NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)
 {
-    NvMemory_Status_T status;
-
-    if (MotorController_User_IsConfigState(p_mc) == true)
-    {
-        status = MotorController_ReadManufacture_Blocking(p_mc, onceAddress, size, p_destBuffer);
-    }
-    else
-    {
-        status = NV_MEMORY_STATUS_ERROR_OTHER;
-    }
-
+    NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
+    if (MotorController_User_IsConfigState(p_mc) == true) { status = MotorController_ReadManufacture_Blocking(p_mc, onceAddress, size, p_destBuffer); }
     return status;
 }
 
 NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size)
 {
-    NvMemory_Status_T status;
-
-    if(MotorController_User_IsLockState(p_mc) == true)
-    {
-        status = MotorController_WriteManufacture_Blocking(p_mc, onceAddress, p_source, size);
-    }
-    else
-    {
-        status = NV_MEMORY_STATUS_ERROR_OTHER;
-    }
-
+    NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
+    if (MotorController_User_IsLockState(p_mc) == true) { status = MotorController_WriteManufacture_Blocking(p_mc, onceAddress, p_source, size); }
     return status;
 }
 
-// alternatively write to buffer
+/******************************************************************************/
+/*
+    VarId Key/Value based I/O
+*/
+/******************************************************************************/
+/* with status */
+static inline uint32_t _MotorController_User_InputLockOp(MotorController_T * p_mc, MotorController_LockId_T opId)
+{
+    uint32_t status = MOT_VAR_STATUS_OK;
+    bool isSuccess = true;
 
-/*! @param[in] opId MOTOR_CONTROLLER_NVM_BOOT, MOTOR_CONTROLLER_NVM_WRITE_ONCE, MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG */
-// static inline NvMemory_Status_T _MotorController_User_SaveNvm_Blocking(MotorController_T * p_mc, MotorController_LockId_T opId)
-// {
-//     MotorController_User_InputLock(p_mc, opId);
-//     return p_mc->NvmStatus;
-// }
+    // status = MotorController_User_InputLock(p_mc, opId); // match return status
 
-// static inline NvMemory_Status_T MotorController_User_SaveManufacture_Blocking(MotorController_T * p_mc)
-// {
-//     return _MotorController_User_SaveNvm_Blocking(p_mc, MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE);
-//     // return StateMachine_ProcInput(p_mc, MCSM_INPUT_LOCK, MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG);
-//     // return p_mc->NvmStatus;
-// }
+    switch (opId) /* StateMachine will check for invalid Id */
+    {
+        case MOTOR_CONTROLLER_LOCK_PARK:      isSuccess = MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);  break;
+        case MOTOR_CONTROLLER_LOCK_ENTER:     isSuccess = MotorController_User_EnterLockState(p_mc);  break;
+        case MOTOR_CONTROLLER_LOCK_EXIT:      isSuccess = MotorController_User_ExitLockState(p_mc);   break;
+            /* Non Blocking function, host/caller poll Async return status after. */ // calibration status todo
+        case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:    MotorController_User_InputLock(p_mc, MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR);   break;
+        case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:       MotorController_User_InputLock(p_mc, MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC);      break;
+            /* Blocking functions can directly return status. */
+        case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     status = MotorController_User_SaveConfig_Blocking(p_mc);                        break;
+        case MOTOR_CONTROLLER_LOCK_REBOOT:              MotorController_User_InputLock(p_mc, MOTOR_CONTROLLER_LOCK_REBOOT); break; /* No return */
+        default: break;
+    }
 
-// static inline NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc)
-// {
-//     MotorController_User_InputLock(p_mc, MOTOR_CONTROLLER_LOCKED_NVM_READ_ONCE);
-//     return p_mc->NvmStatus;
-// }
+    if (isSuccess == false) { status = MOT_VAR_STATUS_ERROR; }
+    return status;
+}
+
+
+uint32_t MotorController_User_InputSystem(MotorController_T * p_mc, MotorController_User_System_T id, int32_t value)
+{
+    uint32_t status = MOT_VAR_STATUS_OK;
+    bool isSuccess = true;
+
+    switch (id)
+    {
+        case MOT_USER_SYSTEM_BEEP:                  MotorController_User_BeepN(p_mc, 500U, 500U, value);                                  break;
+        case MOT_USER_SYSTEM_CLEAR_FAULT:           isSuccess = MotorController_StateMachine_ClearFault(p_mc, value);                     break;
+        case MOT_USER_SYSTEM_RX_WATCHDOG:           MotorController_User_SetRxWatchdog(p_mc, value);                                      break;
+        case MOT_USER_SYSTEM_LOCK_STATE:            status = _MotorController_User_InputLockOp(p_mc, (MotorController_LockId_T)value); break;
+        case MOT_USER_SYSTEM_SERVO:                 MotorController_User_InputServoMode(p_mc, (MotorController_ServoMode_T)value);        break;
+        // case MOT_USER_SYSTEM_SYSTEM_GENERAL:     MotorController_User_InputSystemGeneral(p_mc, (MotorController_SystemGeneral_T)value); break;
+        default: break;
+    }
+
+    if (isSuccess == false) { status = MOT_VAR_STATUS_ERROR; }
+    return status;
+}
+
+
+/******************************************************************************/
+/* Inputs disabled on Analog Mode */
+/******************************************************************************/
+/* SetIO */
+uint32_t MotorController_User_InputControl(MotorController_T * p_mc, MotVarId_Control_General_T id, int32_t value)
+{
+    bool isSet = true;
+    if (p_mc->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL)
+    {
+        switch (id)
+        {
+            case MOT_VAR_DIRECTION:  isSet = MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)value);    break;
+            default: break;
+        }
+    }
+
+    return (isSet == true) ? MOT_VAR_STATUS_OK : MOT_VAR_STATUS_ERROR;
+}
+
+uint32_t _MotorController_User_InputDriveCmd(MotorController_T * p_mc, MotVarId_Cmd_General_T id, int32_t value)
+{
+    bool isSet = (p_mc->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL);
+
+    if (isSet)
+    {
+        switch (id)
+        {
+            case MOT_VAR_THROTTLE:  MotorController_User_SetCmdThrottle(p_mc, value);        break;
+            case MOT_VAR_BRAKE:     MotorController_User_SetCmdBrake(p_mc, value);           break;
+            // case MOT_VAR_DRIVE_DIRECTION:  isSet = MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)value);    break;
+            default: break;
+        }
+    }
+
+    return  (isSet == true) ? MOT_VAR_STATUS_OK : MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
+}
+
+uint32_t MotorController_User_InputCmd(MotorController_T * p_mc, MotVarId_Cmd_General_T id, int32_t value)
+{
+    bool isSuccess = true;
+
+    switch (id)
+    {
+        // case MOT_VAR_BEEP:                      MotorController_User_BeepN(p_mc, 500U, 500U, varValue);     break;
+        // case MOT_VAR_CONTROLLER_MODE:           MotorController_User_SetMainMode(p_mc, varValue);           break;
+        // case MOT_VAR_CLEAR_FAULT:               isSuccess = MotorController_StateMachine_ClearFault(p_mc, varValue);   break;
+
+        case MOT_VAR_THROTTLE:                  _MotorController_User_InputDriveCmd(p_mc, id, value);            break;
+        case MOT_VAR_BRAKE:                     _MotorController_User_InputDriveCmd(p_mc, id, value);            break;
+
+        case MOT_VAR_USER_CMD:                  MotorController_User_SetCmdValue(p_mc, value);               break;
+        case MOT_VAR_USER_FEEDBACK_MODE:        MotorController_User_SetFeedbackMode_Cast(p_mc, value);      break;
+
+        case MOT_VAR_OPT_SPEED_LIMIT_ON_OFF:    MotorController_User_SetOptSpeedLimitOnOff(p_mc, value);     break;
+        case MOT_VAR_OPT_I_LIMIT_ON_OFF:        MotorController_User_SetOptILimitOnOff(p_mc, value);         break;
+
+        // case MOT_VAR_TRY_HOLD:                  break;
+        // case MOT_VAR_TRY_RELEASE:               break;
+        // case MOT_VAR_FORCE_DISABLE_CONTROL:     break;
+        default: break;
+    }
+
+    return (isSuccess == true) ? MOT_VAR_STATUS_OK : MOT_VAR_STATUS_ERROR;
+}
+
+int32_t MotorController_User_OutputVar(MotorController_T * p_mc, MotVarId_Monitor_General_T varKey)
+{
+
+}

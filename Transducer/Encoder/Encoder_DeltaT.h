@@ -137,6 +137,8 @@ static inline uint32_t Encoder_DeltaT_InterpolateAngleIndex(Encoder_T * p_encode
 {
     uint32_t angle = pollingIndex * p_encoder->UnitInterpolateAngle / p_encoder->DeltaT;
     return (angle > p_encoder->InterpolateAngleLimit) ? p_encoder->InterpolateAngleLimit : angle;
+
+    // math_min(pollingIndex * p_encoder->UnitInterpolateAngle / p_encoder->DeltaT, p_encoder->InterpolateAngleLimit);
 }
 
 static inline uint32_t Encoder_DeltaT_ProcInterpolateAngle(Encoder_T * p_encoder)

@@ -125,6 +125,8 @@ static inline ufract16_t FOC_GetIMagnitude_Idq(const FOC_T * p_foc) { return fra
 static inline fract16_t FOC_GetIPhase(const FOC_T * p_foc) { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
 static inline fract16_t FOC_GetVPhase(const FOC_T * p_foc) { return FOC_GetVMagnitude(p_foc) * math_sign(p_foc->Vq); }
 
+static inline int8_t FOC_GetISign(const FOC_T * p_foc) { return math_sign(p_foc->Iq); }
+
 /* [0:49152] <=> [0:1.5] */
 static inline accum32_t FOC_GetPower(const FOC_T * p_foc) { return (fract16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2); }
 

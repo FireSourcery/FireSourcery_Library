@@ -28,13 +28,8 @@
     @version V0
 */
 /******************************************************************************/
-
 #include "Motor_Analog.h"
-#include "Motor_FOC.h"
-#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-#include "Motor_SixStep.h"
-#endif
-#include "Motor_Debug.h"
+
 
 /******************************************************************************/
 /*!
@@ -44,7 +39,8 @@
 void Motor_Analog_MarkVabc(Motor_T * p_motor)
 {
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    if ((Motor_IsAnalogCycle(p_motor) == true) && p_motor->VFlags.Value == 0U)
+    /* Without checking for previous completion. Conversions must complete in within the analog cycle or feedback will never process  */
+    // if (p_motor->VFlags.Value == 0U)
     {
         Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA);
         Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB);
@@ -57,7 +53,7 @@ void Motor_Analog_MarkVabc(Motor_T * p_motor)
 
 void Motor_Analog_MarkIabc(Motor_T * p_motor)
 {
-    if ((Motor_IsAnalogCycle(p_motor) == true) && p_motor->IFlags.Value == 0U)
+    // if (p_motor->IFlags.Value == 0U)
     {
         Motor_Debug_CaptureRefTime(p_motor);
         Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);

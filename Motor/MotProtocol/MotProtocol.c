@@ -199,6 +199,9 @@ Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext_T * p_
 
 
 /******************************************************************************/
+/*! Memory common, non application state based */
+/******************************************************************************/
+/******************************************************************************/
 /*! Stateful Write Data */
 /******************************************************************************/
 Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext)

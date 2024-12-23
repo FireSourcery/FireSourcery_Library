@@ -171,7 +171,7 @@ uint16_t fract16_vector_magnitude_squared(fract16_t x, fract16_t y)
 
 uint16_t fract16_vector_magnitude(fract16_t x, fract16_t y)
 {
-    return q_sqrt((int32_t)x * x + (int32_t)y * y);
+    return fixed_sqrt((int32_t)x * x + (int32_t)y * y);
 }
 
 
@@ -187,7 +187,7 @@ uint16_t fract16_vector_scalar(fract16_t x, fract16_t y, fract16_t mag_limit)
 
     if (mag_squared > (int32_t)mag_limit * mag_limit)
     {
-        magnitude = q_sqrt(mag_squared);
+        magnitude = fixed_sqrt(mag_squared);
         scalar = fract16_div(mag_limit, magnitude); /* no saturation needed, mag_limit / magnitude < 1  */
     }
 

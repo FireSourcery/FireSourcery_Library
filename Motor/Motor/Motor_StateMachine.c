@@ -62,11 +62,11 @@ const StateMachine_Machine_T MSM_MACHINE =
     .TRANSITION_TABLE_LENGTH = MSM_TRANSITION_TABLE_LENGTH,
 };
 
-/* clears fault of type adc reading */
-// static inline void Motor_PollAdcFaultFlags(Motor_T * p_motor) { p_motor->FaultFlags.Overheat = Thermistor_IsFault(&p_motor->Thermistor); } /* is this needed? */
-
-static StateMachine_State_T * TransitionFault(Motor_T * p_motor, statemachine_input_value_t faultFlags) { p_motor->FaultFlags.Value |= faultFlags; return &STATE_FAULT; }
+static StateMachine_State_T * TransitionFault(Motor_T * p_motor, statemachine_input_value_t faultFlags) { return &STATE_FAULT; }
 static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, statemachine_input_value_t _void)  { (void)p_motor; (void)_void; return &STATE_FREEWHEEL; }
+
+/* clears fault of type adc reading */
+static inline void Motor_PollAdcFaultFlags(Motor_T * p_motor) { p_motor->FaultFlags.Overheat = Thermistor_IsFault(&p_motor->Thermistor); }
 
 /******************************************************************************/
 /*!
@@ -83,7 +83,7 @@ static StateMachine_State_T * TransitionFreewheel(Motor_T * p_motor, statemachin
 static void Init_Entry(Motor_T * p_motor)
 {
     /* alternatively null until a direction is set */
-    /* Sets Iq Id Limits using direction */
+    /* Sets Speed/I Limits using direction */
     Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionForward, Motor_SetDirectionForward); /* Eliminate circular inclusion from Motor_Init */
 }
 
@@ -91,20 +91,23 @@ static void Init_Proc(Motor_T * p_motor)
 {
     bool wait = true;
 
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL); /* or Transition to STOP without hold */
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
 
     if (SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT) /* wait for Speed and Heat sensors */
     {
         wait = false;
-        //(Motor_CheckConfig() == true)    //check params
-        // Motor_PollAdcFaultFlags(p_motor); /* Clear the fault flags once */
+        // (Motor_CheckConfig() == true)    // check params
+        Motor_PollAdcFaultFlags(p_motor); /* Clear the fault flags once */
     }
 
     if (wait == false)
     {
-        // if(p_motor->FaultFlags.Value != 0U) { wait = true; } // if wait for fault to clear, main thread must clear
-        if (p_motor->FaultFlags.Value == 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
-        else                                 { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FAULT); }
+        if (p_motor->FaultFlags.Value != 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FAULT); }
+        else
+        {
+            if (p_motor->Speed_Fract16 > 0) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FREEWHEEL); }
+            else                            { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
+        }
     }
 }
 
@@ -145,7 +148,7 @@ static void Stop_Entry(Motor_T * p_motor)
 static void Stop_Proc(Motor_T * p_motor)
 {
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
-    // and not hold // if(p_motor->Speed_Fract16 > 0U) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FREEWHEEL); }
+    // if ((Motor_IsHold(p_motor) == false) && (p_motor->Speed_Fract16 > 0)) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FREEWHEEL); }
 }
 
 static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor, statemachine_input_value_t direction)
@@ -161,7 +164,7 @@ static StateMachine_State_T * Stop_InputControl(Motor_T * p_motor, statemachine_
     StateMachine_State_T * p_nextState;
 
     Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
-    if (Motor_IsFeedbackAvailable(p_motor) == true)
+    if (Motor_IsSensorAvailable(p_motor) == true)
     {
         Motor_ZeroSensor(p_motor);
         p_nextState = &STATE_RUN;
@@ -222,7 +225,9 @@ static const StateMachine_State_T STATE_STOP =
 /******************************************************************************/
 static void Run_Entry(Motor_T * p_motor)
 {
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_MatchFeedbackState, NULL); /* Sync mode can match feedback here */
+    /* Optionally poll angle sensor or let interpolate angle be off by 1 */
+    // Motor_UpdateSpeedOutputLimits(p_motor); /* Alternatively run in SetFeedbackMode does not need to updated unless feedback mode changed */
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_MatchFeedbackState, NULL);
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, NULL);
 }
 
@@ -232,28 +237,18 @@ static void Run_Proc(Motor_T * p_motor)
 }
 
 /*
-    Prevent ProcAngleControl before ProcFeedbackMatch.
-    alternatively transition through freewheel first
-    Observed bemf may experience larger discontinuity than control voltage
+    StateMachine in Sync mode, [ProcInput] in the same thread as [Run_Proc]/[ProcAngleControl]
+    Process [Motor_FOC_MatchFeedbackState] before [Motor_FOC_ProcAngleControl]
 */
-/* Block PWM Thread, do not proc new flags before matching output with StateMachine */
 static StateMachine_State_T * Run_InputControl(Motor_T * p_motor, statemachine_input_value_t feedbackMode)
 {
-    StateMachine_State_T * p_nextState;
+    StateMachine_State_T * p_nextState = NULL;
 
-    if (feedbackMode != p_motor->FeedbackMode.Word)
-    {
-        Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
-        // Motor_UpdateFeedbackModeSpeedLimits(p_motor);
-        p_nextState = &STATE_FREEWHEEL;
-        /* Alternatively, without transition through Freewheel */
-        // Motor_ProcCommutationMode(p_motor, Motor_FOC_MatchFeedbackState, NULL);
-        // p_nextState = &STATE_RUN; /* repeat entry function */
-    }
-    else
-    {
-        p_nextState = NULL;
-    }
+    Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
+    // p_nextState = &STATE_FREEWHEEL; /* Observed bemf may experience larger discontinuity than control voltage */
+
+    /* Alternatively, without transition through Freewheel */
+    p_nextState = &STATE_RUN; /* repeat entry function */
 
     return p_nextState;
 }
@@ -268,7 +263,7 @@ static StateMachine_State_T * Run_InputRelease(Motor_T * p_motor, statemachine_i
 // {
 //     (void)_void;
 //     StateMachine_State_T * p_nextState = NULL;
-//     if(p_motor->Speed_Fract16 == 0U)
+//     if (p_motor->Speed_Fract16 == 0U)
 //     {
 //        p_nextState = &STATE_STOP;
 //     }
@@ -315,12 +310,11 @@ static void Freewheel_Proc(Motor_T * p_motor)
 /* Match Feedback to ProcAngleBemf on Resume */
 static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, statemachine_input_value_t feedbackMode)
 {
-    StateMachine_State_T * p_nextState;
+    StateMachine_State_T * p_nextState = NULL;
 
     Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
-
-    if (Motor_IsFeedbackAvailable(p_motor) == true) { p_nextState = &STATE_RUN; }
-    else { p_nextState = NULL; } /* OpenLoop does not resume */
+    if (Motor_IsSensorAvailable(p_motor) == true) { p_nextState = &STATE_RUN; }
+    /* OpenLoop does not resume */
 
     return p_nextState;
 }
@@ -346,6 +340,8 @@ static const StateMachine_State_T STATE_FREEWHEEL =
 /******************************************************************************/
 /*!
     @brief  State OpenLoop - OpenLoop, Align, and Start Up, Feedback Acquisition
+
+    Only Entry is from [STOP] State
 */
 /******************************************************************************/
 static void OpenLoop_Entry(Motor_T * p_motor)
@@ -369,6 +365,7 @@ static void OpenLoop_Proc(Motor_T * p_motor)
             }
             else
             {
+                // if (Motor_PollSensorSpeed(p_motor) != 0U)
                 // if(p_motor->Speed_Fixed32 != 0U) /* direct check sensor speed  todo */
                 // {
                 //     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
@@ -392,7 +389,7 @@ static void OpenLoop_Proc(Motor_T * p_motor)
         case MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN: /* ClosedLoop Sensor Start Up - OpenLoop Feedback Mode, UserRamp as Torque or Voltage */
             if(Timer_Periodic_Poll(&p_motor->ControlTimer) == false)
             {
-                Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, NULL);
+                Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, NULL); /* */
                 if(Motor_PollAlignFault(p_motor) == true) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_FAULT); }
             }
             else
@@ -402,7 +399,7 @@ static void OpenLoop_Proc(Motor_T * p_motor)
             }
             break;
         case MOTOR_OPEN_LOOP_STATE_RUN: /* OpenLoop */
-            if(Motor_IsFeedbackAvailable(p_motor) == true)
+            if(Motor_IsSensorAvailable(p_motor) == true)
             {
                 _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN);
             }
@@ -512,7 +509,8 @@ static void Fault_Proc(Motor_T * p_motor)
 
 static StateMachine_State_T * Fault_InputClearFault(Motor_T * p_motor, statemachine_input_value_t faultFlags)
 {
-    p_motor->FaultFlags.Value &= ~faultFlags;
+    // p_motor->FaultFlags.Value &= ~faultFlags;
+    p_motor->FaultFlags.Value = 0U;
     p_motor->FaultFlags.AlignStartUp = 0U;
     // Motor_PollAdcFaultFlags(p_motor); // p_motor->FaultFlags.Overheat = Thermistor_IsFault(&p_motor->Thermistor);
     return NULL; /* Transition on proc if no flags remain active */
@@ -558,8 +556,8 @@ bool Motor_StateMachine_ExitFault(Motor_T * p_motor)
 
 void Motor_StateMachine_SetFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
+    p_motor->FaultFlags.Value |= faultFlags.Value;
     if (Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_FAULT, faultFlags.Value); }
-    else { p_motor->FaultFlags.Value |= faultFlags.Value; }
 }
 
 /*! @return true if cleared applies, fault to non fault */

@@ -62,7 +62,7 @@ void Motor_Config_SetPolePairs(Motor_T * p_motor, uint8_t polePairs) { p_motor->
 void Motor_Config_SetKv(Motor_T * p_motor, uint16_t kv)
 {
     p_motor->Config.Kv = kv;
-    // Motor_GetSpeedVRef_Rpm(p_motor) = kv * Motor_Static_GetVSource_V();
+    // p_motor->Config.SpeedFeedback_Rpm = kv * Motor_Static_GetVSource_V();
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
 
@@ -73,7 +73,7 @@ void Motor_Config_SetKv(Motor_T * p_motor, uint16_t kv)
 */
 void Motor_Config_SetVSpeedScalar_UFract16(Motor_T * p_motor, uint16_t scalar)
 {
-    p_motor->Config.VSpeedScalar_UFract16 = scalar > INT16_MAX ? INT16_MAX : scalar;
+    p_motor->Config.VSpeedScalar_UFract16 = math_min(scalar, INT16_MAX);
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
 
@@ -87,14 +87,14 @@ void Motor_Config_SetVSpeedScalar_Percent16(Motor_T * p_motor, uint16_t percent1
 /* SpeedFeedbackRef_Rpm => 100% speed for PID feedback. */
 void Motor_Config_SetSpeedVRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
-    // Motor_GetSpeedVRef_Rpm(p_motor) = rpm;
+    // p_motor->Config.SpeedFeedback_Rpm = rpm;
     p_motor->Config.Kv = rpm / Motor_Static_GetVSource_V();
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
 
 void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
-    Motor_Config_SetVSpeedScalar_UFract16(p_motor, (rpm << 15U) / Motor_GetSpeedVRef_Rpm(p_motor));
+    Motor_Config_SetVSpeedScalar_UFract16(p_motor, ((uint32_t)rpm << 15U) / Motor_GetSpeedVRef_Rpm(p_motor));
 }
 
 
@@ -111,7 +111,7 @@ void Motor_Config_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
     p_motor->Config.IPeakRef_Adcu = adcu;
     Motor_ResetUnitsIabc(p_motor);
 #else
-    p_motor->Config.IPeakRef_Adcu = (adcu > MOTOR_STATIC.I_MAX_ADCU) ? MOTOR_STATIC.I_MAX_ADCU : adcu;
+    p_motor->Config.IPeakRef_Adcu = (adcu > MOTOR_STATIC.I_PEAK_ADCU) ? MOTOR_STATIC.I_PEAK_ADCU : adcu;
     PropagateSet(p_motor, Motor_ResetUnitsIabc);
 #endif
 }
@@ -135,46 +135,46 @@ void Motor_Config_SetDirectionCalibration(Motor_T * p_motor, Motor_Direction_T d
 */
 /******************************************************************************/
 /*
-    Persistent Base SpeedLimit - effective SpeedFeedback Mode only
+    Persistent Base SpeedLimit
 */
-void Motor_Config_SetSpeedLimitForward_Percent16(Motor_T * p_motor, uint16_t forward_Fract16)
+void Motor_Config_SetSpeedLimitForward_Fract16(Motor_T * p_motor, uint16_t forward_Fract16)
 {
-    p_motor->Config.SpeedLimitForward_Percent16 = forward_Fract16;
+    p_motor->Config.SpeedLimitForward_Fract16 = forward_Fract16;
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
 
-void Motor_Config_SetSpeedLimitReverse_Percent16(Motor_T * p_motor, uint16_t reverse_Fract16)
+void Motor_Config_SetSpeedLimitReverse_Fract16(Motor_T * p_motor, uint16_t reverse_Fract16)
 {
-    p_motor->Config.SpeedLimitReverse_Percent16 = reverse_Fract16;
+    p_motor->Config.SpeedLimitReverse_Fract16 = reverse_Fract16;
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
 
-void Motor_Config_SetSpeedLimit_Percent16(Motor_T * p_motor, uint16_t forwardPercent16, uint16_t reversePercent16)
+void Motor_Config_SetSpeedLimit_Fract16(Motor_T * p_motor, uint16_t forward_Fract16, uint16_t reverse_Fract16)
 {
-    p_motor->Config.SpeedLimitForward_Percent16 = forwardPercent16;
-    p_motor->Config.SpeedLimitReverse_Percent16 = reversePercent16;
+    p_motor->Config.SpeedLimitForward_Fract16 = forward_Fract16;
+    p_motor->Config.SpeedLimitReverse_Fract16 = reverse_Fract16;
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
 
 /*
-    Persistent ILimit
+    Persistent Base ILimit
 */
-void Motor_Config_SetILimitMotoring_Percent16(Motor_T * p_motor, uint16_t motoring_Fract16)
+void Motor_Config_SetILimitMotoring_Fract16(Motor_T * p_motor, uint16_t motoring_Fract16)
 {
-    p_motor->Config.ILimitMotoring_Percent16 = motoring_Fract16;
+    p_motor->Config.ILimitMotoring_Fract16 = motoring_Fract16;
     PropagateSet(p_motor, Motor_ResetILimitActive);
 }
 
-void Motor_Config_SetILimitGenerating_Percent16(Motor_T * p_motor, uint16_t generating_Fract16)
+void Motor_Config_SetILimitGenerating_Fract16(Motor_T * p_motor, uint16_t generating_Fract16)
 {
-    p_motor->Config.ILimitGenerating_Percent16 = generating_Fract16;
+    p_motor->Config.ILimitGenerating_Fract16 = generating_Fract16;
     PropagateSet(p_motor, Motor_ResetILimitActive);
 }
 
-void Motor_Config_SetILimit_Percent16(Motor_T * p_motor, uint16_t motoring_Fract16, uint16_t generating_Fract16)
+void Motor_Config_SetILimit_Fract16(Motor_T * p_motor, uint16_t motoring_Fract16, uint16_t generating_Fract16)
 {
-    p_motor->Config.ILimitMotoring_Percent16 = motoring_Fract16;
-    p_motor->Config.ILimitGenerating_Percent16 = generating_Fract16;
+    p_motor->Config.ILimitMotoring_Fract16 = motoring_Fract16;
+    p_motor->Config.ILimitGenerating_Fract16 = generating_Fract16;
     PropagateSet(p_motor, Motor_ResetILimitActive);
 }
 
@@ -195,22 +195,22 @@ static uint16_t ConvertToSpeedLimitPercent16(Motor_T * p_motor, uint16_t speed_r
 
 void Motor_Config_SetSpeedLimit_Rpm(Motor_T * p_motor, uint16_t forward_Rpm, uint16_t reverse_Rpm)
 {
-    Motor_Config_SetSpeedLimit_Percent16(p_motor, ConvertToSpeedLimitPercent16(p_motor, forward_Rpm), ConvertToSpeedLimitPercent16(p_motor, reverse_Rpm));
+    Motor_Config_SetSpeedLimit_Fract16(p_motor, ConvertToSpeedLimitPercent16(p_motor, forward_Rpm), ConvertToSpeedLimitPercent16(p_motor, reverse_Rpm));
 }
 
 void Motor_Config_SetSpeedLimitForward_Rpm(Motor_T * p_motor, uint16_t forward_Rpm)
 {
-    Motor_Config_SetSpeedLimitForward_Percent16(p_motor, ConvertToSpeedLimitPercent16(p_motor, forward_Rpm));
+    Motor_Config_SetSpeedLimitForward_Fract16(p_motor, ConvertToSpeedLimitPercent16(p_motor, forward_Rpm));
 }
 
 void Motor_Config_SetSpeedLimitReverse_Rpm(Motor_T * p_motor, uint16_t reverse_Rpm)
 {
-    Motor_Config_SetSpeedLimitReverse_Percent16(p_motor, ConvertToSpeedLimitPercent16(p_motor, reverse_Rpm));
+    Motor_Config_SetSpeedLimitReverse_Fract16(p_motor, ConvertToSpeedLimitPercent16(p_motor, reverse_Rpm));
 }
 
 uint16_t Motor_Config_GetSpeedLimitForward_Rpm(Motor_T * p_motor)
 {
-    return _Motor_ConvertSpeed_Percent16ToRpm(p_motor, p_motor->Config.SpeedLimitForward_Percent16);
+    return _Motor_ConvertSpeed_Percent16ToRpm(p_motor, p_motor->Config.SpeedLimitForward_Fract16);
     // uint16_t speedLimit = (p_motor->Config.DirectionForward == MOTOR_FORWARD_IS_CCW) ?
     //     p_motor->Config.SpeedLimitCcw_Fract16 : p_motor->Config.SpeedLimitCw_Fract16;
     // return _Motor_ConvertSpeed_Percent16ToRpm(p_motor, speedLimit);
@@ -218,7 +218,7 @@ uint16_t Motor_Config_GetSpeedLimitForward_Rpm(Motor_T * p_motor)
 
 uint16_t Motor_Config_GetSpeedLimitReverse_Rpm(Motor_T * p_motor)
 {
-    return _Motor_ConvertSpeed_Percent16ToRpm(p_motor, p_motor->Config.SpeedLimitReverse_Percent16);
+    return _Motor_ConvertSpeed_Percent16ToRpm(p_motor, p_motor->Config.SpeedLimitReverse_Fract16);
     // uint16_t speedLimit = (p_motor->Config.DirectionForward == MOTOR_FORWARD_IS_CCW) ?
     //  p_motor->Config.SpeedLimitCw_Fract16 : p_motor->Config.SpeedLimitCcw_Fract16;
 }
@@ -231,19 +231,19 @@ static uint16_t ConvertToILimitPercent16(Motor_T * p_motor, uint16_t i_amp)
 
 void Motor_Config_SetILimit_Amp(Motor_T * p_motor, uint16_t motoring_Amp, uint16_t generating_Amp)
 {
-    Motor_Config_SetILimit_Percent16(p_motor, ConvertToILimitPercent16(p_motor, motoring_Amp), ConvertToILimitPercent16(p_motor, generating_Amp));
+    Motor_Config_SetILimit_Fract16(p_motor, ConvertToILimitPercent16(p_motor, motoring_Amp), ConvertToILimitPercent16(p_motor, generating_Amp));
 }
 
 void Motor_Config_SetILimitMotoring_Amp(Motor_T * p_motor, uint16_t motoring_Amp)
 {
-    Motor_Config_SetILimitMotoring_Percent16(p_motor, ConvertToILimitPercent16(p_motor, motoring_Amp));
+    Motor_Config_SetILimitMotoring_Fract16(p_motor, ConvertToILimitPercent16(p_motor, motoring_Amp));
 }
 
 void Motor_Config_SetILimitGenerating_Amp(Motor_T * p_motor, uint16_t generating_Amp)
 {
-    Motor_Config_SetILimitGenerating_Percent16(p_motor, ConvertToILimitPercent16(p_motor, generating_Amp));
+    Motor_Config_SetILimitGenerating_Fract16(p_motor, ConvertToILimitPercent16(p_motor, generating_Amp));
 }
 
-uint16_t Motor_Config_GetILimitMotoring_Amp(Motor_T * p_motor) { return _Motor_ConvertI_Percent16ToAmp(p_motor->Config.ILimitMotoring_Percent16); }
-uint16_t Motor_Config_GetILimitGenerating_Amp(Motor_T * p_motor) { return _Motor_ConvertI_Percent16ToAmp(p_motor->Config.ILimitGenerating_Percent16); }
+uint16_t Motor_Config_GetILimitMotoring_Amp(Motor_T * p_motor) { return _Motor_ConvertI_Percent16ToAmp(p_motor->Config.ILimitMotoring_Fract16); }
+uint16_t Motor_Config_GetILimitGenerating_Amp(Motor_T * p_motor) { return _Motor_ConvertI_Percent16ToAmp(p_motor->Config.ILimitGenerating_Fract16); }
 #endif

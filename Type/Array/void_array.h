@@ -25,12 +25,12 @@ typedef bool(*void_test_t)(const void * p_unit);
 */
 static inline void void_copy(void * p_dest, const void * p_src, size_t type_size)
 {
-    switch(type_size)
+    switch (type_size)
     {
-        case sizeof(uint8_t) : *((uint8_t  *)p_dest) = *((const uint8_t  *)p_src); break;
-        case sizeof(uint16_t): *((uint16_t *)p_dest) = *((const uint16_t *)p_src); break;
-        case sizeof(uint32_t): *((uint32_t *)p_dest) = *((const uint32_t *)p_src); break;
-        case sizeof(uint64_t): *((uint64_t *)p_dest) = *((const uint64_t *)p_src); break;
+        case sizeof(uint8_t)  : *((uint8_t  *)p_dest) = *((const uint8_t  *)p_src); break;
+        case sizeof(uint16_t) : *((uint16_t *)p_dest) = *((const uint16_t *)p_src); break;
+        case sizeof(uint32_t) : *((uint32_t *)p_dest) = *((const uint32_t *)p_src); break;
+        case sizeof(uint64_t) : *((uint64_t *)p_dest) = *((const uint64_t *)p_src); break;
         default: memcpy(p_dest, p_src, type_size); break;
     }
 }

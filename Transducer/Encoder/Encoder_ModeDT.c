@@ -84,7 +84,6 @@ void Encoder_ModeDT_Init_InterruptAbc(Encoder_T * p_encoder)
 //     Encoder_DeltaT_SetInitial(p_encoder);
 // }
 
-
 void Encoder_ModeDT_SetInitial(Encoder_T * p_encoder)
 {
     Encoder_DeltaD_SetInitial(p_encoder);

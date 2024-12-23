@@ -111,5 +111,4 @@ static inline int32_t linear_shift_invf_y0(int32_t invm_shifted, uint8_t shift, 
 }
 
 
-
 #endif

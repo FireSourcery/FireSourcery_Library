@@ -32,12 +32,13 @@
 
 
 /*!
-    Shift <= log2(INT32_MAX / ((xRef - x0) * Slope))
+    Shift <= log2(INT32_MAX / ((xRef - x0) * Slope)) - 1
     @param[in] inputInterval - max input delta without overflow
 */
 uint8_t _Linear_SlopeShift(int32_t factor, int32_t divisor, int32_t inputInterval)
 {
-    return q_lshift_max_signed((inputInterval * 2 - 1) * factor / divisor); /* divide first rounds up log2 */
+    return fixed_lshift_max_signed((inputInterval * 2 - 1) * factor / divisor); /* divide first rounds up log2 */
+
 }
 
 /******************************************************************************/
@@ -66,7 +67,7 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
     p_linear->X0                = 0;
     p_linear->XReference        = linear_invf(factor, divisor, y0, yRef); /* (yRef - y0)*divisor/factor + 0 */
     p_linear->XDeltaRef         = p_linear->XReference - p_linear->X0;
-    p_linear->SlopeShift        = _Linear_SlopeShift(factor, divisor, p_linear->XDeltaRef);
+    p_linear->SlopeShift        = _Linear_SlopeShift(factor, divisor, p_linear->XDeltaRef); // log2(INT32_MAX / ((xRef - x0) * Slope)) - 1
     p_linear->Slope             = (factor << p_linear->SlopeShift) / divisor;
     p_linear->Y0                = y0;
     p_linear->YReference        = yRef;
@@ -112,7 +113,7 @@ void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 int32_t Linear_Of_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
 {
     int32_t factor = x * p_linear->Slope;
-    int32_t result = 0U;
+    int32_t result = 0;
 
     /*
         Loop N = Log_[DivisorN](scalar)
@@ -120,9 +121,9 @@ int32_t Linear_Of_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
             [DivisorN == 10] => 4
             [DivisorN == 2]  => 10
     */
-    for(uint16_t iDivisor = 1U; scalar >= iDivisor; iDivisor *= 4U) /* scalar / iDivisor > 0U */
+    for (uint16_t iDivisor = 1U; scalar >= iDivisor; iDivisor *= 4U) /* scalar / iDivisor > 0U */
     {
-        if(factor < INT32_MAX / scalar * iDivisor) /* (factor * (scalar / iDivisor) < INT32_MAX  ) */
+        if (factor < INT32_MAX / scalar * iDivisor) /* (factor * (scalar / iDivisor) < INT32_MAX) */
         {
             result = Linear_Of(p_linear, x * scalar / iDivisor) * iDivisor;
             break;

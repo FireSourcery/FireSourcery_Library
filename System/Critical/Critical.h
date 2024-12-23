@@ -38,7 +38,6 @@
 #include <stdatomic.h>
 
 extern uint32_t _Critical_InterruptDisableCount;
-extern uint32_t _Critical_StateOnEnter;
 
 /*
     HAL implement within module.
@@ -47,14 +46,6 @@ extern uint32_t _Critical_StateOnEnter;
 #ifdef CONFIG_SYSTEM_MCU_ARM
 
 #include "External/CMSIS/Core/Include/cmsis_compiler.h"
-
-// #if defined(__GNUC__)
-// #define CRITICAL_DISABLE_INTERRUPTS() __disable_irq()
-// #define CRITICAL_ENABLE_INTERRUPTS() __enable_irq()
-// #else
-// #define CRITICAL_DISABLE_INTERRUPTS() __asm("cpsid i")
-// #define CRITICAL_ENABLE_INTERRUPTS() __asm("cpsie i")
-// #endif
 
 /*
     No nesting Critical within Critical
@@ -72,20 +63,20 @@ static inline void _Critical_Enter(uint32_t * p_state);
 static inline void _Critical_Exit(uint32_t state);
 #endif
 
-static inline void Critical_DisableIrq(void)
-{
-    __disable_irq();
-    _Critical_InterruptDisableCount++;
-}
+// static inline void Critical_DisableIrq(void)
+// {
+//     __disable_irq();
+//     _Critical_InterruptDisableCount++;
+// }
 
-static inline void Critical_EnableIrq(void)
-{
-    if (_Critical_InterruptDisableCount > 0U)
-    {
-        _Critical_InterruptDisableCount--;
-        if (_Critical_InterruptDisableCount <= 0U) { __enable_irq(); }
-    }
-}
+// static inline void Critical_EnableIrq(void)
+// {
+//     if (_Critical_InterruptDisableCount > 0U)
+//     {
+//         _Critical_InterruptDisableCount--;
+//         if (_Critical_InterruptDisableCount <= 0U) { __enable_irq(); }
+//     }
+// }
 
 /*
     process must be polling.
@@ -99,7 +90,7 @@ static inline bool Critical_InitSignal(critical_signal_t * p_signal)
 
 static inline bool Critical_AcquireSignal(critical_signal_t * p_signal)
 {
-    return atomic_flag_test_and_set(p_signal) ? false : true; // true if mutex is available
+    return (atomic_flag_test_and_set(p_signal) == false); // true if signal is available
 }
 
 static inline void Critical_ReleaseSignal(critical_signal_t * p_signal)
@@ -122,6 +113,9 @@ static inline bool Critical_AcquireEnter(critical_signal_t * p_signal)
     _Critical_DisableIrq();
     return true;
 #endif
+// #else
+//     _Critical_Enter(p_signal);
+// #endif
 }
 
 static inline void Critical_ReleaseExit(critical_signal_t * p_signal)

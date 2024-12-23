@@ -146,8 +146,9 @@ static inline int32_t Linear_Of_Round(const Linear_T * p_linear, int32_t x)
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
     return Linear_Of(p_linear, x);
+    // return Linear_Of(p_linear, x) + Linear_Of(p_linear, 1) / 2;
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-    return linear_f_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, x);
+    return linear_f_round(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, x);
 #endif
 }
 
@@ -155,8 +156,9 @@ static inline int32_t Linear_InvOf_Round(const Linear_T * p_linear, int32_t y)
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
     return Linear_InvOf(p_linear, y);
+    // return Linear_InvOf(p_linear, y) + Linear_InvOf(p_linear, 1) / 2;
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
-    return linear_invf_rounded(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, y);
+    return linear_invf_round(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, y);
 #endif
 }
 
@@ -165,7 +167,6 @@ static inline int32_t Linear_InvOf_Round(const Linear_T * p_linear, int32_t y)
     @brief Auxiliary extension to primary configuration
 */
 /******************************************************************************/
-
 /******************************************************************************/
 /*!
     @brief Fixed32 with division
@@ -242,11 +243,5 @@ extern void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32
 
 extern int32_t Linear_Of_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar);
 extern int32_t Linear_InvOf_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar);
-
-// extern uint16_t _Linear_Percent16_Clamp(const Linear_T * p_linear, int32_t x);
-// extern uint16_t _Linear_Percent16_Abs(const Linear_T * p_linear, int32_t x);
-// extern int32_t _Linear_InvPercent16(const Linear_T * p_linear, uint16_t y_fracU16);
-// extern int16_t _Linear_Fract16(const Linear_T * p_linear, int32_t x);
-// extern int32_t _Linear_InvFract16(const Linear_T * p_linear, int16_t y_fract16);
 
 #endif

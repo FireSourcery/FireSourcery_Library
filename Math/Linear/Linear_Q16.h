@@ -112,10 +112,10 @@ static inline int32_t Linear_Q16_ValueOfPercent(const Linear_T * p_linear, uint1
 
 /******************************************************************************/
 /*!
-    Q8.8 [0:65535]
+    Q8.8
 */
 /******************************************************************************/
-static inline uint16_t Linear_Q16_General(const Linear_T * p_linear, int32_t x)
+static inline int16_t Linear_Q16_General(const Linear_T * p_linear, int32_t x)
 {
     return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift + 8U, p_linear->X0, x);
 }

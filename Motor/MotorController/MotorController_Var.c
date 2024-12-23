@@ -24,13 +24,11 @@
 /*!
     @file   MotorController_Var.c
     @author FireSourcery
-    @brief  User Get Set Vars by Id
+    @brief  User Get Set Vars by Id, key-value paradigm
     @version V0
 */
 /******************************************************************************/
 #include "MotorController_Var.h"
-#include "Motor/MotorController/MotorController_User.h"
-#include "System/SysTime/SysTime.h"
 
 /******************************************************************************/
 /*!
@@ -145,11 +143,11 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 case MOT_VAR_MOTOR_FAULT_FLAGS:     value = Motor_User_GetFaultFlags(p_motor).Value;             break;
                 case MOT_VAR_MOTOR_HEAT:            value = Motor_User_GetHeat_Adcu(p_motor);                    break;
                     //Motor_User_GetHeat_DegC(p_motor, 1U);
-                case MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE:    value = Motor_User_GetActiveFeedbackMode(p_motor).Word; break;
-                case MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT:      value = Motor_User_GetActiveSpeedLimit(p_motor);        break;
-                case MOT_VAR_MOTOR_ACTIVE_I_LIMIT:          value = Motor_User_GetActiveILimit(p_motor);            break;
-                case MOT_VAR_MOTOR_V_SPEED:                 value = Motor_User_GetVSpeed_UFract16(p_motor);             break;
-                case MOT_VAR_MOTOR_V_SPEED_EFFECTIVE:       value = Motor_User_GetVSpeedEffective_UFract16(p_motor);    break;
+                case MOT_VAR_MOTOR_EFFECTIVE_FEEDBACK_MODE:    value = Motor_User_GetFeedbackMode(p_motor).Word;  break;
+                case MOT_VAR_MOTOR_EFFECTIVE_SPEED_LIMIT:      value = Motor_User_GetSpeedLimit(p_motor);         break;
+                case MOT_VAR_MOTOR_EFFECTIVE_I_LIMIT:          value = Motor_User_GetILimit(p_motor);             break;
+                case MOT_VAR_MOTOR_V_SPEED_DEBUG:               value = Motor_User_GetVSpeedDebug_UFract16(p_motor);             break;
+                case MOT_VAR_MOTOR_V_SPEED_EFFECTIVE:           value = Motor_User_GetVSpeedEffective_UFract16(p_motor);    break;
                 default: break;
             }
             break;
@@ -193,11 +191,11 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
         case MOT_VAR_ID_TYPE_CONTROL_MOTOR:
             switch((MotVarId_Control_Motor_T)varId.NameBase)
             {
-                case MOT_VAR_MOTOR_DIRECTION:         value = Motor_User_GetDirection(p_motor);                   break;
-                case MOT_VAR_MOTOR_USER_SET_POINT:    value = Motor_User_GetSetPoint(p_motor);                    break;
-                case MOT_VAR_MOTOR_IO_SPEED_LIMIT:    value = Motor_User_GetActiveSpeedLimit(p_motor);            break;
-                case MOT_VAR_MOTOR_IO_I_LIMIT:        value = Motor_User_GetActiveILimit(p_motor);                break;
-                // case MOT_VAR_MOTOR_USER_FEEDBACK_MODE:    value = Motor_User_GetActiveFeedbackMode(p_motor).Word;             break;
+                case MOT_VAR_MOTOR_DIRECTION:           value = Motor_User_GetDirection(p_motor);                   break;
+                case MOT_VAR_MOTOR_USER_SET_POINT:      value = Motor_User_GetSetPoint(p_motor);                    break;
+                case MOT_VAR_MOTOR_USER_FEEDBACK_MODE:  value = Motor_User_GetFeedbackMode(p_motor).Word;     break;
+                case MOT_VAR_MOTOR_USER_SPEED_LIMIT:    value = Motor_User_GetSpeedLimit(p_motor);            break;
+                case MOT_VAR_MOTOR_USER_I_LIMIT:        value = Motor_User_GetILimit(p_motor);                break;
                 default: break;
             }
             break;
@@ -222,7 +220,7 @@ static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T
     switch((MotVarId_Type_RealTime_T)varId.NameType)
     {
         case MOT_VAR_ID_TYPE_CMD_MOTOR:
-        //todo wrap motor cmd with MotorController StateMachine check
+        // todo wrap motor cmd with MotorController StateMachine check
         //    if (MotorController_User_IsActiveState(p_mc))
         //    {
 
@@ -230,11 +228,11 @@ static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T
             switch((MotVarId_Cmd_Motor_T)varId.NameBase)
             {
                 // case MOT_VAR_MOTOR_USER_CMD:        Motor_User_SetActiveCmdValue(p_motor, varValue);    break;
-                case MOT_VAR_MOTOR_CMD_SPEED:       Motor_User_SetSpeedCmdValue(p_motor, varValue);     break;
-                case MOT_VAR_MOTOR_CMD_CURRENT:     Motor_User_SetTorqueCmdValue(p_motor, varValue);    break;
-                case MOT_VAR_MOTOR_CMD_VOLTAGE:     Motor_User_SetVoltageCmdValue(p_motor, varValue);   break;
-                case MOT_VAR_MOTOR_CMD_ANGLE:       Motor_User_SetPositionCmdValue(p_motor, varValue);  break;
-                case MOT_VAR_MOTOR_CMD_OPEN_LOOP:   Motor_User_SetOpenLoopCmdValue(p_motor, varValue);  break;
+                case MOT_VAR_MOTOR_CMD_SPEED:       Motor_User_SetSpeedCmd(p_motor, varValue);     break;
+                case MOT_VAR_MOTOR_CMD_CURRENT:     Motor_User_SetICmd(p_motor, varValue);         break;
+                case MOT_VAR_MOTOR_CMD_VOLTAGE:     Motor_User_SetVoltageCmd(p_motor, varValue);   break;
+                case MOT_VAR_MOTOR_CMD_ANGLE:       Motor_User_SetPositionCmd(p_motor, varValue);  break;
+                case MOT_VAR_MOTOR_CMD_OPEN_LOOP:   Motor_User_SetOpenLoopCmd(p_motor, varValue);  break;
                 case MOT_VAR_MOTOR_FORCE_DISABLE_CONTROL:           break;
                 case MOT_VAR_MOTOR_TRY_RELEASE:                     break;
                 case MOT_VAR_MOTOR_TRY_HOLD:                        break;
@@ -247,37 +245,24 @@ static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T
             switch((MotVarId_Control_Motor_T)varId.NameBase)
             {
                 case MOT_VAR_MOTOR_DIRECTION:               isSuccess = Motor_User_TryDirection(p_motor, (Motor_Direction_T)varValue);  break;
-                case MOT_VAR_MOTOR_USER_SET_POINT:          Motor_User_SetActiveCmdValue(p_motor, varValue);            break;
-                case MOT_VAR_MOTOR_IO_SPEED_LIMIT:          isSuccess = Motor_User_TrySpeedLimit(p_motor, varValue);    break;
-                case MOT_VAR_MOTOR_IO_I_LIMIT:              isSuccess = Motor_User_TryILimit(p_motor, varValue);        break;
-                // case MOT_VAR_MOTOR_USER_FEEDBACK_MODE:   Motor_User_ActivateControl_Cast(p_motor, (uint8_t)varValue);    break;
+                case MOT_VAR_MOTOR_USER_SET_POINT:          Motor_User_SetActiveCmdValue(p_motor, varValue);                break;
+                case MOT_VAR_MOTOR_USER_FEEDBACK_MODE:      Motor_User_SetFeedbackMode_Cast(p_motor, (uint8_t)varValue);    break;
+                case MOT_VAR_MOTOR_USER_SPEED_LIMIT:        isSuccess = Motor_User_TrySpeedLimit(p_motor, varValue);        break;
+                case MOT_VAR_MOTOR_USER_I_LIMIT:            isSuccess = Motor_User_TryILimit(p_motor, varValue);            break;
                 default: break;
             }
             break;
 
         case MOT_VAR_ID_TYPE_CMD_GENERAL:
-            switch((MotVarId_Cmd_General_T)varId.NameBase)
-            {
-                case MOT_VAR_BEEP:                      MotorController_User_BeepN(p_mc, 500U, 500U, varValue);     break;
-                case MOT_VAR_USER_CMD:                  MotorController_User_SetCmdValue(p_mc, varValue);           break;
-                case MOT_VAR_THROTTLE:                  MotorController_User_SetCmdThrottle(p_mc, varValue);        break;
-                case MOT_VAR_BRAKE:                     MotorController_User_SetCmdBrake(p_mc, varValue);           break;
-                case MOT_VAR_OPT_SPEED_LIMIT_ON_OFF:    MotorController_User_SetOptSpeedLimitOnOff(p_mc, varValue); break;
-                case MOT_VAR_USER_FEEDBACK_MODE:        break;
-                case MOT_VAR_TRY_HOLD:                  break;
-                case MOT_VAR_TRY_RELEASE:               break;
-                case MOT_VAR_FORCE_DISABLE_CONTROL:     break;
-                case MOT_VAR_CLEAR_FAULT:               isSuccess = MotorController_StateMachine_ClearFault(p_mc, varValue); break;
-                default: break;
-            }
+            status = MotorController_User_InputCmd(p_mc, (MotVarId_Cmd_General_T)varId.NameBase, varValue);
             break;
 
         case MOT_VAR_ID_TYPE_CONTROL_GENERAL:
-            switch((MotVarId_Control_General_T)varId.NameBase)
-            {
-                case MOT_VAR_DIRECTION:     isSuccess = MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)varValue);    break;
-                default: break;
-            }
+            status = MotorController_User_InputControl(p_mc, (MotVarId_Control_General_T)varId.NameBase, varValue);
+            break;
+
+        case MOT_VAR_ID_TYPE_CMD_SYSTEM:
+            status = MotorController_User_InputSystem(p_mc, (MotorController_User_System_T)varId.NameBase, varValue);
             break;
 
         case MOT_VAR_ID_TYPE_MONITOR_GENERAL:         status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
@@ -410,9 +395,9 @@ static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
                 case MOT_VAR_DEFAULT_FEEDBACK_MODE:     value = MotorController_User_GetDefaultFeedbackMode(p_mc).Word; break;
                 case MOT_VAR_BRAKE_MODE:                value = MotorController_User_GetBrakeMode(p_mc);                break;
                 case MOT_VAR_DRIVE_ZERO_MODE:           value = MotorController_User_GetDriveZeroMode(p_mc);            break;
-                case MOT_VAR_I_LIMIT_LOW_V:             value = (p_mc->Config.VLowILimit_Percent16);                     break;
+                case MOT_VAR_I_LIMIT_LOW_V:             value = (p_mc->Config.VLowILimit_Fract16);                     break;
                 case MOT_VAR_OPT_DIN_FUNCTION:          value = (p_mc->Config.OptDinMode);                              break;
-                case MOT_VAR_OPT_SPEED_LIMIT:           value = (p_mc->Config.OptSpeedLimit_Percent16);                  break;
+                case MOT_VAR_OPT_SPEED_LIMIT:           value = (p_mc->Config.OptSpeedLimit_Fract16);                  break;
                 // case MOT_VAR_BUZZER_FLAGS_ENABLE:    value = (p_mc->Config.Buzzer); break;
                 // case MOT_VAR_CAN_SERVICES_ID:        value = (p_mc->Config.CanServicesId); break;
                 // case MOT_VAR_CAN_IS_ENABLE:          value = (p_mc->Config.CanIsEnable); break;
@@ -531,10 +516,10 @@ static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, i
             {
                 switch((MotVarId_Config_MotorSecondary_T)varId.NameBase)
                 {
-                    case MOT_VAR_BASE_SPEED_LIMIT_FORWARD:      Motor_Config_SetSpeedLimitForward_Percent16(p_motor, varValue);  break;
-                    case MOT_VAR_BASE_SPEED_LIMIT_REVERSE:      Motor_Config_SetSpeedLimitReverse_Percent16(p_motor, varValue);  break;
-                    case MOT_VAR_BASE_I_LIMIT_MOTORING:         Motor_Config_SetILimitMotoring_Percent16(p_motor, varValue);     break;
-                    case MOT_VAR_BASE_I_LIMIT_GENERATING:       Motor_Config_SetILimitGenerating_Percent16(p_motor, varValue);   break;
+                    case MOT_VAR_BASE_SPEED_LIMIT_FORWARD:      Motor_Config_SetSpeedLimitForward_Fract16(p_motor, varValue);  break;
+                    case MOT_VAR_BASE_SPEED_LIMIT_REVERSE:      Motor_Config_SetSpeedLimitReverse_Fract16(p_motor, varValue);  break;
+                    case MOT_VAR_BASE_I_LIMIT_MOTORING:         Motor_Config_SetILimitMotoring_Fract16(p_motor, varValue);     break;
+                    case MOT_VAR_BASE_I_LIMIT_GENERATING:       Motor_Config_SetILimitGenerating_Fract16(p_motor, varValue);   break;
                     case MOT_VAR_RAMP_ACCEL_TIME:               Motor_Config_SetRampAccel_Millis(p_motor, varValue);  break;
                     case MOT_VAR_ALIGN_POWER:                   Motor_Config_SetAlignPower_Percent16(p_motor, varValue);  break;
                     case MOT_VAR_ALIGN_TIME:                    Motor_Config_SetAlignTime_Millis(p_motor, varValue);  break;
@@ -608,16 +593,16 @@ static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, i
             switch((MotVarId_Config_General_T)varId.NameBase)
             {
                 case MOT_VAR_V_SOURCE_REF_VOLTS:            MotorController_User_SetVSourceRef(p_mc, varValue);                                 break;
-                case MOT_VAR_USER_INIT_MODE:                p_mc->Config.InitMode           = (MotorController_InitMode_T)varValue;             break;
+                case MOT_VAR_USER_INIT_MODE:                p_mc->Config.InitMode           = (MotorController_MainMode_T)varValue;             break;
                 case MOT_VAR_USER_INPUT_MODE:               p_mc->Config.InputMode          = (MotorController_InputMode_T)varValue;            break;
                 case MOT_VAR_DEFAULT_FEEDBACK_MODE:         MotorController_User_SetDefaultFeedbackMode_Cast(p_mc, varValue);                   break;
                 case MOT_VAR_THROTTLE_MODE:                 p_mc->Config.ThrottleMode       = (MotorController_ThrottleMode_T)varValue;         break;
                 case MOT_VAR_BRAKE_MODE:                    p_mc->Config.BrakeMode          = (MotorController_BrakeMode_T)varValue;            break;
                 case MOT_VAR_DRIVE_ZERO_MODE:               p_mc->Config.DriveZeroMode      = (MotorController_DriveZeroMode_T)varValue;        break;
-                case MOT_VAR_I_LIMIT_LOW_V:                 p_mc->Config.VLowILimit_Percent16 = varValue;    break;
+                case MOT_VAR_I_LIMIT_LOW_V:                 p_mc->Config.VLowILimit_Fract16 = varValue;    break;
                 // case MOT_VAR_BUZZER_FLAGS_ENABLE:                        (p_mc->Config.Buzzer); break;
                 // case MOT_VAR_OPT_DIN_FUNCTION:                           (p_mc->Config.OptDinMode);              break;
-                // case MOT_VAR_OPT_SPEED_LIMIT:                        (p_mc->Config.OptSpeedLimit_Percent16);   break;
+                // case MOT_VAR_OPT_SPEED_LIMIT:                        (p_mc->Config.OptSpeedLimit_Fract16);   break;
                 // case MOT_VAR_CAN_SERVICES_ID:                            (p_mc->Config.CanServicesId); break;
                 // case MOT_VAR_CAN_IS_ENABLE:                              (p_mc->Config.CanIsEnable); break;
                 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
@@ -729,8 +714,9 @@ MotVarId_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T v
     switch((MotVarId_TypeType_T)varId.NameTypeType)
     {
         case MOT_VAR_ID_TYPE_REAL_TIME:
-            status = (p_mc->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL) ?
-                SetRealTime(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
+            // status = (p_mc->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL) ?
+            //     SetRealTime(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
+            SetRealTime(p_mc, varId, varValue);
             break;
         case MOT_VAR_ID_TYPE_CONFIG:
             status = (MotorController_User_IsConfigState(p_mc) == true) ?

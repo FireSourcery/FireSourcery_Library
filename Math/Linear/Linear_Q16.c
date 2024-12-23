@@ -34,7 +34,7 @@
     Allow 2x input interval (XRef-X0), over saturation before overflow
         f([X0-2*XDelta:X0+2*XDelta]) == [Y0-2*YDelta:Y0+2*YDelta]
 */
-#define LINEAR_INT32_MAX_SHIFT (30U)  // INT32_MAX/2
+#define LINEAR_INT32_MAX_SHIFT (30)  // INT32_MAX/2
 
 /******************************************************************************/
 /*!
@@ -45,15 +45,16 @@
 /******************************************************************************/
 void Linear_Fixed_Init(Linear_T * p_linear, uint8_t nFractionalBits, int32_t x0, int32_t xRef)
 {
-    p_linear->Slope = (1 << LINEAR_INT32_MAX_SHIFT) / (xRef - x0);  // (1 << 30) ensures the result is within the INT32_MAX/2 range
+    p_linear->Slope = (1 << LINEAR_INT32_MAX_SHIFT) / (xRef - x0);  // (1 << 30) ensures the result is within the [INT32_MAX/2] range
     p_linear->SlopeShift = (LINEAR_INT32_MAX_SHIFT - nFractionalBits); // Adjust the shift to match the fractional bits
-    // p_linear->Slope = (1 << (LINEAR_INT32_MAX_SHIFT - nIntegerBits)) / (xRef - x0);  // (1 << 30) ensures the result is within the INT32_MAX/2 range
+    // p_linear->Slope = (1 << (LINEAR_INT32_MAX_SHIFT - nIntegerBits)) / (xRef - x0);  // (1 << 30) ensures the result is within the [INT32_MAX/2] range
     // p_linear->SlopeShift = ((LINEAR_INT32_MAX_SHIFT - nIntegerBits) - nFractionalBits); // Adjust the shift to match the fractional bits
     p_linear->InvSlope = (xRef - x0);
     p_linear->InvSlopeShift = nFractionalBits;
     p_linear->X0 = x0;
+    // unused
+    p_linear->XReference = xRef;
     p_linear->XDeltaRef = xRef - x0;
-    p_linear->XReference = xRef;    // unused
 }
 
 /******************************************************************************/

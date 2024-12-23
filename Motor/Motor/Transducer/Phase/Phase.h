@@ -40,6 +40,7 @@
 #include "Peripheral/PWM/PWM.h"
 #include "Peripheral/Pin/Pin.h"
 #include <stdint.h>
+#include <assert.h>
 
 typedef enum Phase_Mode
 {

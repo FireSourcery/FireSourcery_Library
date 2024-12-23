@@ -33,7 +33,7 @@ void Limit_ClearAll(Limit_T * p_limit)
 */
 
 /*!
-   @brief   a value to the p_limit control.
+   @brief a value to the p_limit control.
    @param p_limit Pointer to the Limit_T structure.
    @param value The value to add.
    @param id The ID associated with the value.
@@ -64,14 +64,12 @@ bool Limit_Entry_SetUpper(Limit_T * p_limit, uint8_t id, limit_t value)
 */
 bool Limit_Entry_Clear(Limit_T * p_limit, uint8_t id)
 {
-    // static const limit_t LIMIT_CLEAR_VALUE = LIMIT_CLEAR;
     bool isLimit = false;
-    limit_t value;
+    limit_t value = p_limit->P_ARRAY[id];
     limit_t bufferValue;
     limit_t bufferMin;
     limit_t bufferMax;
 
-    value = p_limit->P_ARRAY[id];
     p_limit->P_ARRAY[id] = LIMIT_CLEAR;
 
     isLimit = (value == p_limit->valuesMin || value == p_limit->valuesMax); /*  */
@@ -80,9 +78,9 @@ bool Limit_Entry_Clear(Limit_T * p_limit, uint8_t id)
     {
         bufferMin = LIMIT_MAX;
         bufferMax = LIMIT_MIN;
-        for (uint8_t id = 0U; id < p_limit->LENGTH; id++)
+        for (uint8_t index = 0U; index < p_limit->LENGTH; index++)
         {
-            bufferValue = p_limit->P_ARRAY[id];
+            bufferValue = p_limit->P_ARRAY[index];
             if (bufferValue != LIMIT_CLEAR)
             {
                 if (bufferValue < p_limit->valuesMin) { bufferMin = bufferValue; }

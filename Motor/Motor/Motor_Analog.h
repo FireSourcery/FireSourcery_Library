@@ -31,10 +31,15 @@
 #ifndef MOTOR_ANALOG_CONVERSION_H
 #define MOTOR_ANALOG_CONVERSION_H
 
+#include "Motor_FOC.h"
+#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+#include "Motor_SixStep.h"
+#endif
+#include "Motor_Debug.h"
 #include "Motor.h"
 
-static inline uint16_t Motor_Analog_GetAdcu(const Motor_T * p_motor, MotorAnalog_Channel_T adcChannel) { return p_motor->CONST.ANALOG_CONVERSIONS.CONVERSIONS[adcChannel].P_STATE->Result; }
-static inline uint8_t Motor_Analog_GetAdcu_Msb8(const Motor_T * p_motor, MotorAnalog_Channel_T adcChannel) { return Motor_Analog_GetAdcu(p_motor, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
+static inline uint16_t Motor_Analog_GetAdcu(const Motor_T * p_motor, MotorAnalog_Channel_T localChannel) { return p_motor->CONST.ANALOG_CONVERSIONS.CONVERSIONS[localChannel].P_STATE->Result; }
+static inline uint8_t Motor_Analog_GetAdcu_Msb8(const Motor_T * p_motor, MotorAnalog_Channel_T localChannel) { return Motor_Analog_GetAdcu(p_motor, localChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
 
 static inline uint16_t Motor_Analog_GetVa(const Motor_T * p_motor) { return p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA.P_STATE->Result; }
 static inline uint16_t Motor_Analog_GetVb(const Motor_T * p_motor) { return p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB.P_STATE->Result; }
@@ -49,12 +54,12 @@ static inline uint16_t Motor_Analog_GetHeat(const Motor_T * p_motor) { return p_
     @brief  Adc Capture
 */
 /******************************************************************************/
-static inline void Motor_Analog_OnCompleteVa(Motor_T * p_motor, uint16_t adcu) { p_motor->VFlags.A = 1U; }
-static inline void Motor_Analog_OnCompleteVb(Motor_T * p_motor, uint16_t adcu) { p_motor->VFlags.B = 1U; }
-static inline void Motor_Analog_OnCompleteVc(Motor_T * p_motor, uint16_t adcu) { p_motor->VFlags.C = 1U; }
-static inline void Motor_Analog_OnCompleteIa(Motor_T * p_motor, uint16_t adcu) { p_motor->IFlags.A = 1U; }
-static inline void Motor_Analog_OnCompleteIb(Motor_T * p_motor, uint16_t adcu) { p_motor->IFlags.B = 1U; }
-static inline void Motor_Analog_OnCompleteIc(Motor_T * p_motor, uint16_t adcu) { p_motor->IFlags.C = 1U; }
+static inline void Motor_Analog_OnCompleteVa(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->VFlags.A = 1U; }
+static inline void Motor_Analog_OnCompleteVb(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->VFlags.B = 1U; }
+static inline void Motor_Analog_OnCompleteVc(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->VFlags.C = 1U; }
+static inline void Motor_Analog_OnCompleteIa(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->IFlags.A = 1U; }
+static inline void Motor_Analog_OnCompleteIb(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->IFlags.B = 1U; }
+static inline void Motor_Analog_OnCompleteIc(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->IFlags.C = 1U; }
 
 // static inline void Motor_Analog_CaptureVa(Motor_T * p_motor, uint16_t adcu) { Motor_SetCommutationModeUInt16(p_motor, Motor_FOC_CaptureVa, 0U /* Motor_SixStep_CaptureVBemfA */, adcu); }
 // static inline void Motor_Analog_CaptureVb(Motor_T * p_motor, uint16_t adcu) { Motor_SetCommutationModeUInt16(p_motor, Motor_FOC_CaptureVb, 0U /* Motor_SixStep_CaptureVBemfB */, adcu); }
@@ -74,7 +79,7 @@ static inline void Motor_Analog_OnCompleteIc(Motor_T * p_motor, uint16_t adcu) {
 #define MOTOR_ANALOG_CONVERSION_COS_INIT(ChannelBase, CosHost, CosPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_COS), NULL, p_Motor, CosHost, CosPin)
 
 /* For Channel Map */
-#define MOTOR_ANALOG_CONVERSION_OF_CHANNEL(p_Motor, LocalChannel) (&(p_Motor)->CONST.ANALOG_CONVERSIONS.CONVERSIONS[LocalChannel])
+#define MOTOR_ANALOG_CONVERSION_OF_CHANNEL(p_Motor, LocalChannel) (&((p_Motor)->CONST.ANALOG_CONVERSIONS.CONVERSIONS[LocalChannel]))
 #define MOTOR_ANALOG_CONVERSION_VA(p_Motor) MOTOR_ANALOG_CONVERSION_OF_CHANNEL(p_Motor, MOTOR_ANALOG_CHANNEL_VA)
 #define MOTOR_ANALOG_CONVERSION_VB(p_Motor) (&(p_Motor)->CONST.ANALOG_CONVERSIONS.CONVERSIONS[MOTOR_ANALOG_CHANNEL_VB])
 #define MOTOR_ANALOG_CONVERSION_VC(p_Motor) (&(p_Motor)->CONST.ANALOG_CONVERSIONS.CONVERSIONS[MOTOR_ANALOG_CHANNEL_VC])

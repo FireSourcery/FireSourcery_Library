@@ -82,7 +82,7 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 
     /*
         Clamp integral to prevent windup.
-        Determine integral storage, Integral32, using `integral`
+        Determine integral storage, Integral32, using [integral]
         if integral and error are in opposite directions, some synchronization issue has occurred, reset stored integral.
     */
     if      (integral > integralMax) { integral = integralMax; if (error < 0) { SetIntegral(p_pid, integralMax); } }
@@ -150,7 +150,14 @@ void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 */
 void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq)
 {
-    if(sampleFreq > 0U) { p_pid->Config.SampleFreq = sampleFreq; }
+    int32_t ki;
+
+    if (sampleFreq > 0U)
+    {
+        p_pid->Config.SampleFreq = sampleFreq;
+        ki = PID_GetKi_Fixed32(p_pid);
+        PID_SetKi_Fixed32(p_pid, ki);
+    }
 }
 
 /******************************************************************************/
@@ -178,7 +185,7 @@ void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq)
 */
 void PID_SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
 {
-    p_pid->Config.PropGainShift = q_log2(INT32_MAX / kp_Fixed32);
+    p_pid->Config.PropGainShift = fixed_log2(INT32_MAX / kp_Fixed32);
     p_pid->Config.PropGain = kp_Fixed32 >> (16U - p_pid->Config.PropGainShift);
 }
 
@@ -197,7 +204,7 @@ int32_t PID_GetKp_Fixed32(PID_T * p_pid) { return (int32_t)p_pid->Config.PropGai
 */
 void PID_SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
 {
-    p_pid->Config.IntegralGainShift = q_log2((INT32_MAX >> 16) * p_pid->Config.SampleFreq / ki_Fixed32);
+    p_pid->Config.IntegralGainShift = fixed_log2((INT32_MAX >> 16) * p_pid->Config.SampleFreq / ki_Fixed32);
     p_pid->Config.IntegralGain = (ki_Fixed32 << p_pid->Config.IntegralGainShift) / p_pid->Config.SampleFreq;
 }
 

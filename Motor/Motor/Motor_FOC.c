@@ -39,6 +39,9 @@
     Current Feedback Loop
 
     input ReqQ
+
+    Speed Mode, PID clamps IReq
+    Current Mode, IReq clamped on set
 */
 static inline void ProcIFeedback(Motor_T * p_motor, bool hasIFeedback)
 {
@@ -47,7 +50,7 @@ static inline void ProcIFeedback(Motor_T * p_motor, bool hasIFeedback)
 
     if (hasIFeedback && (p_motor->FeedbackMode.Current == 1U)) /* Current Control mode - Proc FeedbackLoop, Iq Id set by ADC routine */
     {
-        req = Motor_IReqLimitOf(p_motor, initialReq);
+        if (p_motor->FeedbackMode.Speed == 0U) { req = Motor_IReqLimitOf(p_motor, initialReq); }
         FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), req)); /* PidIq configured with VLimits */
         FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), FOC_GetReqD(&p_motor->Foc)));
     }
@@ -76,7 +79,7 @@ static inline void ProcSpeedFeedback(Motor_T * p_motor, bool hasSpeedFeedback)
 
     if (hasSpeedFeedback && (p_motor->FeedbackMode.Speed == 1U))
     {
-        req = Motor_SpeedReqLimitOf(p_motor, rampReq);
+        req = Motor_SpeedReqLimitOf(p_motor, rampReq); /* Clamp again in case input discontinued */
         FOC_SetReqQ(&p_motor->Foc, PID_ProcPI(&p_motor->PidSpeed, p_motor->Speed_Fract16, req));
         FOC_SetReqD(&p_motor->Foc, 0);
     }
@@ -231,17 +234,20 @@ void Motor_FOC_ClearFeedbackState(Motor_T * p_motor)
 {
     FOC_ClearControlState(&p_motor->Foc); /* Clear for view, updated again on enter control */
     // FOC_ZeroSvpwm(p_foc);
-    Linear_Ramp_ZeroOutputState(&p_motor->Ramp);
     PID_Reset(&p_motor->PidIq);
     PID_Reset(&p_motor->PidId);
     PID_Reset(&p_motor->PidSpeed);
+    Linear_Ramp_ZeroOutputState(&p_motor->Ramp);
     p_motor->IFlags.Value = 0U;
     p_motor->VFlags.Value = 0U;
+    // in case partial ADC results pending, mark all
+    // Motor_Analog_MarkVabc(p_motor);
+    // Motor_Analog_MarkIabc(p_motor);
 }
 
 /*!
+    On FeedbackMode change, match Feedback state; Ramp, PID.
     Match Feedback Ouput to VOutput (Vd, Vq)
-    Update PID state when changing FeedbackMode
 */
 void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
 {
@@ -251,7 +257,7 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
     // vq = Motor_GetVSpeed_Fract16(p_motor);
     // vd = 0;
 
-    // Motor_UpdateSpeedOutputLimits(p_motor); /* Pass limits from previous mode */
+    // int32_t vEffective = FOC_GetVq(&p_motor->Foc) * p_motor->Config.VSpeedScalar_UFract16 >> 15;
 
     if (p_motor->FeedbackMode.Current == 1U)
     {
@@ -261,14 +267,11 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
     }
     else
     {
-        qReq = FOC_GetVq(&p_motor->Foc); /* alternatively use phase q_sqrt(vd vq) */
+        qReq = FOC_GetVq(&p_motor->Foc); /* alternatively use phase fixed_sqrt(vd vq) */
     }
 
     if (p_motor->FeedbackMode.Speed == 1U)
     {
-        // if (p_motor->FeedbackMode.Current == 1U) /* Preserve limits from previous mode */
-        //     { PID_SetOutputLimits(&p_motor->PidSpeed, p_motor->ILimitCw_Fract16, p_motor->ILimitCcw_Fract16); }
-
         Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->Speed_Fract16);
         PID_SetOutputState(&p_motor->PidSpeed, qReq);
     }
@@ -278,15 +281,16 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
     }
 }
 
-// void Motor_FOC_UpdateFeedbackLimits(Motor_T * p_motor)
-// {
-//     Motor_UpdateSpeedOutputLimits(p_motor);
-//     // if (p_motor->FeedbackMode.Current == 1U)
-//     // {
-//     //     if (p_motor->Direction == MOTOR_DIRECTION_CCW) { PID_SetOutputLimits(&p_motor->PidIq, 0, INT16_MAX); }
-//     //     else { PID_SetOutputLimits(&p_motor->PidIq, INT16_MIN, 0); }
-//     // }
-// }
+void Motor_UpdateIOutputLimits(Motor_T * p_motor)
+{
+    // update on direction only for now
+    // if (p_motor->FeedbackMode.Current == 1U)
+    // {
+    //     if (p_motor->Direction == MOTOR_DIRECTION_CCW) { PID_SetOutputLimits(&p_motor->PidIq, 0, INT16_MAX); }
+    //     else { PID_SetOutputLimits(&p_motor->PidIq, INT16_MIN, 0); }
+    // }
+    // PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
+}
 
 
 /******************************************************************************/
@@ -335,11 +339,16 @@ void Motor_FOC_StartAlign(Motor_T * p_motor)
 {
     p_motor->FeedbackMode.Current = 1U;
     Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Config.AlignTime_Cycles, 0, p_motor->Config.AlignPower_Percent16 / 2U);
-    Motor_FOC_MatchFeedbackState(p_motor);
+    // p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
+    // Motor_FOC_MatchFeedbackState(p_motor);
 }
 
 void Motor_FOC_ProcAlign(Motor_T * p_motor)
 {
+    // p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
+    // FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
+    // Motor_PollCaptureSpeed(p_motor);
+
     Motor_FOC_ProcAngleFeedforward(p_motor, 0, Linear_Ramp_ProcOutput(&p_motor->AuxRamp), 0);
 }
 

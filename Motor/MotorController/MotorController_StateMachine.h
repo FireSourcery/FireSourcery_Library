@@ -54,8 +54,8 @@ typedef enum MotorController_StateMachine_Input
     MCSM_INPUT_BRAKE,
     // MCSM_INPUT_RELEASE,
     MCSM_INPUT_SERVO,
-    // MCSM_INPUT_USER,
-    // MCSM_INPUT_CONFIG, // alternatively manuall check fault or lock
+    // MCSM_INPUT_MAIN_MODE,
+    // MCSM_INPUT_CONFIG,
 }
 MotorController_StateMachine_Input_T;
 
@@ -68,13 +68,17 @@ typedef enum MotorController_StateMachine_StateId
     MCSM_STATE_ID_LOCK,
     MCSM_STATE_ID_FAULT,
     MCSM_STATE_ID_SERVO,
+    // MCSM_STATE_ID_USER,
+    // MCSM_STATE_ID_EXTERNAL,
 }
 MotorController_StateMachine_StateId_T;
 
+/*
+    Must be extern for Init
+*/
 extern const StateMachine_Machine_T MCSM_MACHINE;
 
 #define MOTOR_CONTROLLER_STATE_MACHINE_INIT(p_MotorController) STATE_MACHINE_INIT(&MCSM_MACHINE, p_MotorController, false)
-
 
 extern bool MotorController_StateMachine_IsFault(const MotorController_T * p_mc);
 extern bool MotorController_StateMachine_ExitFault(MotorController_T * p_mc);

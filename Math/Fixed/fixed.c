@@ -40,7 +40,7 @@
 
     <https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method>
 */
-// uint16_t q_sqrt(int32_t x)
+// uint16_t fixed_sqrt(int32_t x)
 // {
 //     uint32_t yPrev;
 //     uint32_t y;
@@ -75,7 +75,7 @@
     @param x Fixed-point number
     @return Square root of x
 */
-uint16_t q_sqrt(int32_t x)
+uint16_t fixed_sqrt(int32_t x)
 {
     if (x < 0)
     {
@@ -109,18 +109,30 @@ uint16_t q_sqrt(int32_t x)
     return result;
 }
 
+
+uint8_t _leading_zeros(uint32_t x)
+{
+#if (__STDC_VERSION__ >= 202311L)
+    return stdc_leading_zeros(x);
+#elif defined(__GNUC__)
+    return (x == 0U) ? 0U : __builtin_clz(x);
+    // return  __builtin_stdc_leading_zeros (x);
+#endif
+}
+
 /*
     65535 -> 15
     65536 -> 16
     65537 -> 16
 */
-uint8_t q_log2(uint32_t x)
+uint8_t fixed_log2(uint32_t x)
 {
 
 #if (__STDC_VERSION__ >= 202311L)
     return stdc_bit_width(x) - 1U;
 #elif defined(__GNUC__)
     return (x == 0U) ? 0U : (31U - __builtin_clz(x));
+    // return  __builtin_stdc_bit_width(x) - 1U;
 #else
     /* Iterative log2 */
     uint8_t shift = 0U;
@@ -135,21 +147,22 @@ uint8_t q_log2(uint32_t x)
     65536 -> 16
     65537 -> 17
 */
-uint8_t q_log2_ceiling(uint32_t x)
+uint8_t fixed_log2_ceiling(uint32_t x)
 {
-    q_log2(x - 1U) + 1U;
+    fixed_log2(x - 1U) + 1U;
 }
 
-uint32_t q_pow2bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t x)
+uint32_t fixed_pow2_bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t x)
 {
-    uint32_t lower = q_log2(x);
+    uint32_t lower = fixed_log2(x);
+    uint32_t upper = lower + 1U;
     *p_lower = 1U << lower;
-    *p_upper = 1U << (lower + 1U);
+    *p_upper = 1U << upper;
 }
 
-uint8_t q_log2_round(uint32_t x)
+uint8_t fixed_log2_round(uint32_t x)
 {
-    uint32_t lower = q_log2(x);
+    uint32_t lower = fixed_log2(x);
     uint32_t upper = lower + 1U;
     uint32_t pow2Lower = 1U << lower;
     uint32_t pow2Upper = 1U << upper;
@@ -158,9 +171,9 @@ uint8_t q_log2_round(uint32_t x)
 }
 
 /* nearest pow2 */
-uint32_t q_pow2_round(uint32_t x)
+uint32_t fixed_pow2_round(uint32_t x)
 {
-    uint32_t lower = q_log2(x);
+    uint32_t lower = fixed_log2(x);
     uint32_t upper = lower + 1U;
     uint32_t pow2Lower = 1U << lower;
     uint32_t pow2Upper = 1U << upper;
@@ -168,23 +181,19 @@ uint32_t q_pow2_round(uint32_t x)
     return (pow2Upper - x) < (x - pow2Lower) ? pow2Upper : pow2Lower;
 }
 
-/* x != INT32_MIN */
-/*
-    131,071 -> 14
-*/
-// leading zeros of abs(x) - 1
-uint8_t q_lshift_max_signed(int32_t x)
+/* leading zeros of abs(x) - 1 */
+uint8_t fixed_lshift_max_signed(int32_t x)
 {
-    return 30U - q_log2(math_abs(x)); /* q_log2(INT32_MAX) - q_log2(abs); */
+    return 30U - fixed_log2(math_abs(x)); /* fixed_log2(INT32_MAX/(abs(x))) */
 }
 
-// leading zeros
-uint8_t q_lshift_max_unsigned(uint32_t x)
+/* leading zeros */
+uint8_t fixed_lshift_max_unsigned(uint32_t x)
 {
-    return 31U - q_log2(x);
+    return 31U - fixed_log2(x);
 }
 
-int32_t q_maxfactor_signed(uint32_t x)
+int32_t fixed_scalar_max_signed(int32_t x)
 {
-
+    return INT32_MAX >> fixed_lshift_max_signed(x);
 }

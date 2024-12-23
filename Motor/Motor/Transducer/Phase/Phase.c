@@ -164,6 +164,7 @@ void Phase_Float(const Phase_T * p_phase)
 /* DO NOT USE if Bipolar active. Enable all at 0 duty */
 void Phase_Ground(const Phase_T * p_phase)
 {
+    assert(p_phase->PhaseMode != PHASE_MODE_BIPOLAR);
     Phase_ActivateDuty(p_phase, 0U, 0U, 0U);
     Phase_ActivateOutputABC(p_phase);
 }

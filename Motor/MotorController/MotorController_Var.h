@@ -31,8 +31,10 @@
 #ifndef MOTOR_CONTROLLER_VAR_H
 #define MOTOR_CONTROLLER_VAR_H
 
+#include "MotorController_User.h"
 #include "MotorController.h"
-#include "MotVarId.h"
+#include "../MotVarId.h"
+#include "System/SysTime/SysTime.h"
 
 typedef union { uint32_t Unsigned; int32_t Signed; } var32_t;
 typedef union { uint16_t Unsigned; int16_t Signed; } var16_t;

@@ -65,10 +65,10 @@ static inline uint16_t Motor_Config_GetIPeakRef_Adcu(Motor_T * p_motor)         
 /******************************************************************************/
 /* Persistent Base Limits */
 /******************************************************************************/
-static inline uint16_t Motor_Config_GetSpeedLimitForward_Percent16(Motor_T * p_motor) { return p_motor->Config.SpeedLimitForward_Percent16; }
-static inline uint16_t Motor_Config_GetSpeedLimitReverse_Percent16(Motor_T * p_motor) { return p_motor->Config.SpeedLimitReverse_Percent16; }
-static inline uint16_t Motor_Config_GetILimitMotoring_Percent16(Motor_T * p_motor)    { return p_motor->Config.ILimitMotoring_Percent16; }
-static inline uint16_t Motor_Config_GetILimitGenerating_Percent16(Motor_T * p_motor)  { return p_motor->Config.ILimitGenerating_Percent16; }
+static inline uint16_t Motor_Config_GetSpeedLimitForward_Percent16(Motor_T * p_motor) { return p_motor->Config.SpeedLimitForward_Fract16; }
+static inline uint16_t Motor_Config_GetSpeedLimitReverse_Percent16(Motor_T * p_motor) { return p_motor->Config.SpeedLimitReverse_Fract16; }
+static inline uint16_t Motor_Config_GetILimitMotoring_Percent16(Motor_T * p_motor)    { return p_motor->Config.ILimitMotoring_Fract16; }
+static inline uint16_t Motor_Config_GetILimitGenerating_Percent16(Motor_T * p_motor)  { return p_motor->Config.ILimitGenerating_Fract16; }
 
 
 /******************************************************************************/
@@ -155,12 +155,12 @@ extern void Motor_Config_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu);
 extern void Motor_Config_SetIPeakRef_MilliV(Motor_T * p_motor, uint16_t min_MilliV, uint16_t max_MilliV);
 #endif
 
-extern void Motor_Config_SetSpeedLimitForward_Percent16(Motor_T * p_motor, uint16_t forward_Fract16);
-extern void Motor_Config_SetSpeedLimitReverse_Percent16(Motor_T * p_motor, uint16_t reverse_Fract16);
-extern void Motor_Config_SetILimitMotoring_Percent16(Motor_T * p_motor, uint16_t motoring_Fract16);
-extern void Motor_Config_SetILimitGenerating_Percent16(Motor_T * p_motor, uint16_t generating_Fract16);
-extern void Motor_Config_SetSpeedLimit_Percent16(Motor_T * p_motor, uint16_t forward_Fract16, uint16_t reverse_Fract16);
-extern void Motor_Config_SetILimit_Percent16(Motor_T * p_motor, uint16_t motoring_Fract16, uint16_t generating_Fract16);
+extern void Motor_Config_SetSpeedLimitForward_Fract16(Motor_T * p_motor, uint16_t forward_Fract16);
+extern void Motor_Config_SetSpeedLimitReverse_Fract16(Motor_T * p_motor, uint16_t reverse_Fract16);
+extern void Motor_Config_SetILimitMotoring_Fract16(Motor_T * p_motor, uint16_t motoring_Fract16);
+extern void Motor_Config_SetILimitGenerating_Fract16(Motor_T * p_motor, uint16_t generating_Fract16);
+extern void Motor_Config_SetSpeedLimit_Fract16(Motor_T * p_motor, uint16_t forward_Fract16, uint16_t reverse_Fract16);
+extern void Motor_Config_SetILimit_Fract16(Motor_T * p_motor, uint16_t motoring_Fract16, uint16_t generating_Fract16);
 
 #if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL)
 extern void Motor_Config_SetSpeedLimitForward_Rpm(Motor_T * p_motor, uint16_t forward_Rpm);

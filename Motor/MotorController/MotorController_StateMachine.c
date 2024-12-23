@@ -58,9 +58,22 @@ const StateMachine_Machine_T MCSM_MACHINE =
     .TRANSITION_TABLE_LENGTH = MCSM_TRANSITION_TABLE_LENGTH,
 };
 
-static StateMachine_State_T * TransitionFault(MotorController_T * p_mc, statemachine_input_value_t faultFlags) { p_mc->FaultFlags.Value |= faultFlags; return &STATE_FAULT; }
+static StateMachine_State_T * TransitionFault(MotorController_T * p_mc, statemachine_input_value_t _void) { (void)_void; return &STATE_FAULT; }
 
-/* Not needed if main loop does not block? */
+#ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
+static StateMachine_State_T * TransitionServo(MotorController_T * p_mc, statemachine_input_value_t servoMode)
+{
+    StateMachine_State_T * p_nextState = NULL;
+    switch ((MotorController_ServoMode_T)servoMode)
+    {
+        case MOTOR_CONTROLLER_SERVO_MODE_ENTER:  p_nextState = &STATE_SERVO;  break;
+        default: break;
+    }
+    return p_nextState;
+}
+#endif
+
+/* Main thread only sets fault flags, does not clear, call to check clear */
 void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
 {
     p_mc->FaultFlags.VSenseLimit = VMonitor_IsFault(&p_mc->VMonitorSense);
@@ -73,8 +86,6 @@ void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
         p_mc->FaultFlags.MosfetsOverheat = Thermistor_IsFault(&p_mc->MosfetsThermistors[iMosfets]);
         if (p_mc->FaultFlags.MosfetsOverheat == true) { break; }
     }
-
-    // for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PollAdcFaultFlags(&p_mc->CONST.P_MOTORS[iMotor]); }
 }
 
 
@@ -87,36 +98,24 @@ void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
 /******************************************************************************/
 static void Init_Entry(MotorController_T * p_mc)
 {
-    // (void)p_mc;
+    (void)p_mc;
 }
 
-static void Init_Exit(MotorController_T * p_mc)
-{
-    MotorController_BeepShort(p_mc);
-}
+// static void Init_Exit(MotorController_T * p_mc)
+// {
+//     MotorController_BeepShort(p_mc);
+// }
 
 static void Init_Proc(MotorController_T * p_mc)
 {
     bool wait = true;
 
-    /* Clear sensors fault flags once after sensors stabilize */
-    /*
-        valid independent of adc polling thread that set fault.
-        This way regular adc sample may occur on any thread, blocked or not blocked by the StateMachine.
-    */
-    if (SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT)
+    /* Wait for initial ADC readings and clear fault flags set by sensor polling in Main thread */
+    if (SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT + 5U)
     {
         wait = false;
-
-        MotorController_PollAdcFaultFlags(p_mc); /* Clear FaultFlags set by sensor polling in main thread. */
-        // if (p_mc->FaultFlags.Value != 0U) { wait = true; }
-        // if(p_mc->InitFlags.Word != 0U) { wait = true; }   // indirectly poll inputs
-
-    //     if((p_mc->Config.BuzzerFlagsEnable.ThrottleOnInit == true) && (p_mc->BuzzerFlagsActive.ThrottleOnInit == 0U))
-    //     {
-    //         p_mc->BuzzerFlagsActive.ThrottleOnInit = 1U;
-            // MotorController_BeepShort(p_mc);
-    //     }
+        MotorController_PollAdcFaultFlags(p_mc);
+        // MotorController_ResetVSourceActiveRef(p_mc); /* Set Motors VSourceRef using ADC reading */
     }
 
     if (wait == false)
@@ -127,9 +126,8 @@ static void Init_Proc(MotorController_T * p_mc)
         }
         else
         {
-            // MotorController_ResetVSourceActiveRef(p_mc); /* Set Motors VSourceRef using ADC reading */
-
-            if (p_mc->Config.InitMode == MOTOR_CONTROLLER_INIT_MODE_SERVO)
+            MotorController_BeepShort(p_mc);
+            if (p_mc->Config.InitMode == MOTOR_CONTROLLER_MAIN_MODE_SERVO)
             {
                 _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_SERVO);
             }
@@ -152,7 +150,6 @@ static const StateMachine_State_T STATE_INIT =
 {
     .ID                 = MCSM_STATE_ID_INIT,
     .ENTRY              = (StateMachine_Function_T)Init_Entry,
-    .EXIT               = (StateMachine_Function_T)Init_Exit,
     .LOOP               = (StateMachine_Function_T)Init_Proc,
     .P_TRANSITION_TABLE = &INIT_TRANSITION_TABLE[0U],
     // .P_TRANSITION_TABLE = (StateMachine_Transition_T[MCSM_TRANSITION_TABLE_LENGTH])
@@ -171,7 +168,6 @@ static const StateMachine_State_T STATE_INIT =
 static void Park_Entry(MotorController_T * p_mc)
 {
     if (MotorController_IsEveryMotorStopState(p_mc) == true) { MotorController_TryHoldAll(p_mc); }
-
     // p_mc->StateFlags.IsStopped = 1U;
     // p_mc->DriveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 }
@@ -197,21 +193,14 @@ static StateMachine_State_T * Park_InputDirection(MotorController_T * p_mc, stat
     return p_nextState;
 }
 
-#ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
-static StateMachine_State_T * Park_InputServo(MotorController_T * p_mc, statemachine_input_value_t voidVar)
-{
-    (void)voidVar;
-    return &STATE_SERVO;
-}
-#endif
-
 static const StateMachine_Transition_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]      = (StateMachine_Transition_T)TransitionFault,
     [MCSM_INPUT_LOCK]       = (StateMachine_Transition_T)Park_InputBlocking,
     [MCSM_INPUT_DIRECTION]  = (StateMachine_Transition_T)Park_InputDirection,
+    // [MCSM_INPUT_USER_MODE]  = (StateMachine_Transition_T)Park_InputUser,
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
-    [MCSM_INPUT_SERVO]      = (StateMachine_Transition_T)Park_InputServo,
+    [MCSM_INPUT_SERVO] = (StateMachine_Transition_T)TransitionServo,
 #endif
 };
 
@@ -231,38 +220,35 @@ static const StateMachine_State_T STATE_PARK =
 /******************************************************************************/
 static void SetBrake(MotorController_T * p_mc, uint32_t cmdValue)
 {
-    if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_BRAKE)
+    if (p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_BRAKE)
     {
-        // check for 0 speed, motor run does nto transition
-        // if(MotorController_IsEveryMotorStopState(p_mc) == true) { MotorController_TryHoldAll(p_mc); }
-        // else
-        { MotorController_SetBrakeValue(p_mc, cmdValue); }
+        MotorController_SetBrakeValue(p_mc, cmdValue);
     }
     else /* overwrite throttle */
     {
         // Brake has been released, and reapplied. Drive case need check for 0 speed for transition to park
-        // if (p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO)
-        // {
-        //      if(MotorController_IsEveryMotorStopState(p_mc) == true) { MotorController_TryHoldAll(p_mc); }
-        //     // p_mc->StateFlags.IsStopped = 1U;
-        // }
+        if (p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO)
+        {
+            if (MotorController_IsEveryMotorStopState(p_mc) == true) { MotorController_TryHoldAll(p_mc); }
+            // p_mc->StateFlags.IsStopped = 1U;
+        }
+        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_BRAKE;
         MotorController_StartBrakeMode(p_mc);
         MotorController_SetBrakeValue(p_mc, cmdValue);
-        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_BRAKE;
     }
 }
 
 static void SetThrottle(MotorController_T * p_mc, uint32_t cmdValue)
 {
-    if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_THROTTLE)
+    if (p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_THROTTLE)
     {
         MotorController_SetThrottleValue(p_mc, cmdValue);
     }
-    else if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO || p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_CMD) /* do not overwrite brake */
+    else if (p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO || p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_CMD) /* do not overwrite brake */
     {
+        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_THROTTLE;
         MotorController_StartThrottleMode(p_mc);
         MotorController_SetThrottleValue(p_mc, cmdValue);
-        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_THROTTLE;
     }
 }
 
@@ -270,21 +256,21 @@ static void SetThrottle(MotorController_T * p_mc, uint32_t cmdValue)
 /* Non-zero cmd simultaneous with throttle/brake results in error */
 static void SetDriveZero(MotorController_T * p_mc, MotorController_DriveId_T driveSubState)
 {
-    if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO)
+    if (p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO)
     {
         MotorController_ProcDriveZero(p_mc);
     }
-    else if(p_mc->DriveSubState == driveSubState) /* do not overwrite other mode on 0 */
+    else if (p_mc->DriveSubState == driveSubState) /* Only override is prev input mode matches. Do not overwrite other mode on 0 */
     {
-        MotorController_StartDriveZero(p_mc);
         p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_ZERO;
+        MotorController_StartDriveZero(p_mc);
     }
 }
 
 /******************************************************************************/
 /*!
     @brief Drive State
-    Analogous to in Fwd/Rev,
+    SubStates: Fwd/Rev,
     Motor States: Run, Freewheel, Stop
     Accepted Inputs: Throttle, Brake
 
@@ -299,8 +285,6 @@ static void Drive_Entry(MotorController_T * p_mc)
     p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_ZERO;
 }
 
-// static void Drive_Exit(MotorController_T * p_mc) {   }
-
 static void Drive_Proc(MotorController_T * p_mc)
 {
     (void)p_mc;
@@ -308,54 +292,31 @@ static void Drive_Proc(MotorController_T * p_mc)
 
 static StateMachine_State_T * Drive_InputDirection(MotorController_T * p_mc, statemachine_input_value_t direction)
 {
-    StateMachine_State_T * p_nextState = 0U;
+    StateMachine_State_T * p_nextState = NULL;
     switch((MotorController_Direction_T)direction)
     {
-        //try hold
-        case MOTOR_CONTROLLER_DIRECTION_PARK:       p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : 0U; break;
+        case MOTOR_CONTROLLER_DIRECTION_PARK:       p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : NULL; break;
         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:    p_nextState = &STATE_NEUTRAL; break;
-        // case MOTOR_CONTROLLER_DIRECTION_FORWARD: p_nextState = 0U; break;
-        // case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = 0U; break;
-        // case MOTOR_CONTROLLER_DIRECTION_FORWARD: p_nextState = MotorController_TryDirectionForwardAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
-        // case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
+        case MOTOR_CONTROLLER_DIRECTION_FORWARD:    p_nextState = NULL; break;
+        case MOTOR_CONTROLLER_DIRECTION_REVERSE:    p_nextState = NULL; break;
+        // case MOTOR_CONTROLLER_DIRECTION_FORWARD: p_nextState = MotorController_TryDirectionForwardAll(p_mc, direction) ? &STATE_DRIVE : NULL; break;
+        // case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : NULL; break;
         default: break;
     }
 
     return p_nextState;
 }
 
+/* either set drive 0 first, Motor set control twice. or motor directly transition */
 static StateMachine_State_T * Drive_InputThrottle(MotorController_T * p_mc, statemachine_input_value_t cmdValue)
 {
-    if(cmdValue == 0U) { SetDriveZero(p_mc, MOTOR_CONTROLLER_DRIVE_THROTTLE); } else { SetThrottle(p_mc, cmdValue); }
+    if (cmdValue == 0U) { SetDriveZero(p_mc, MOTOR_CONTROLLER_DRIVE_THROTTLE); } else { SetThrottle(p_mc, cmdValue); }
     return NULL;
 }
 
 static StateMachine_State_T * Drive_InputBrake(MotorController_T * p_mc, statemachine_input_value_t cmdValue)
 {
-    if(cmdValue == 0U) { SetDriveZero(p_mc, MOTOR_CONTROLLER_DRIVE_BRAKE); } else { SetBrake(p_mc, cmdValue); }
-    return NULL;
-}
-
-/*! @param[in] cmdValue int16  */
-static StateMachine_State_T * Drive_InputCmd(MotorController_T * p_mc, statemachine_input_value_t cmdValue)
-{
-    // if(cmdValue != 0U)
-    // {
-    //     if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_CMD)
-    //     {
-    //         MotorController_SetCmdModeValue(p_mc, cmdValue);
-    //     }
-    //     else if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO)
-    //     {
-    //         MotorController_StartCmdModeDefault(p_mc);
-    //         MotorController_SetCmdModeValue(p_mc, cmdValue);
-    //         p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD;
-    //     }
-    // }
-    // else
-    // {
-    //     p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_ZERO;
-    // }
+    if (cmdValue == 0U) { SetDriveZero(p_mc, MOTOR_CONTROLLER_DRIVE_BRAKE); } else { SetBrake(p_mc, cmdValue); }
     return NULL;
 }
 
@@ -363,17 +324,15 @@ static const StateMachine_Transition_T DRIVE_TRANSITION_TABLE[MCSM_TRANSITION_TA
 {
     [MCSM_INPUT_FAULT]      = (StateMachine_Transition_T)TransitionFault,
     [MCSM_INPUT_DIRECTION]  = (StateMachine_Transition_T)Drive_InputDirection,
-    // [MCSM_INPUT_DRIVE]      = (StateMachine_Transition_T)Drive_InputDrive,
     [MCSM_INPUT_THROTTLE]   = (StateMachine_Transition_T)Drive_InputThrottle,
     [MCSM_INPUT_BRAKE]      = (StateMachine_Transition_T)Drive_InputBrake,
-    [MCSM_INPUT_CMD]        = (StateMachine_Transition_T)Drive_InputCmd,
+    // [MCSM_INPUT_CMD]        = (StateMachine_Transition_T)Drive_InputCmd,
 };
 
 static const StateMachine_State_T STATE_DRIVE =
 {
     .ID                 = MCSM_STATE_ID_DRIVE,
     .ENTRY              = (StateMachine_Function_T)Drive_Entry,
-    // .EXIT               = (StateMachine_Function_T)Drive_Exit,
     .LOOP               = (StateMachine_Function_T)Drive_Proc,
     .P_TRANSITION_TABLE = &DRIVE_TRANSITION_TABLE[0U],
 };
@@ -381,6 +340,7 @@ static const StateMachine_State_T STATE_DRIVE =
 /******************************************************************************/
 /*!
     @brief  Neutral State
+    Drive extension
     Motor States: Drive, Freewheel, Stop
         Motor maybe in Drive when Braking
         Transition between Freewheel and Stop on 0 Speed
@@ -395,15 +355,19 @@ static void Neutral_Entry(MotorController_T * p_mc)
     // MotorController_TryReleaseAll(p_mc);
     // p_mc->DriveDirection = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;
 }
-static void Neutral_Proc(MotorController_T * p_mc) { (void)p_mc; }
+
+static void Neutral_Proc(MotorController_T * p_mc)
+{
+    (void)p_mc;
+}
 
 static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc, statemachine_input_value_t direction)
 {
-    StateMachine_State_T * p_nextState = 0U;
+    StateMachine_State_T * p_nextState = NULL;
     switch((MotorController_Direction_T)direction)
     {
         case MOTOR_CONTROLLER_DIRECTION_PARK:       p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : 0U; break; // release on low speed
-        case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:    p_nextState = 0U; break;
+        case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:    p_nextState = NULL; break;
         case MOTOR_CONTROLLER_DIRECTION_FORWARD:    p_nextState = MotorController_TryDirectionForwardAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
         case MOTOR_CONTROLLER_DIRECTION_REVERSE:    p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : 0U; break;
         default: break;
@@ -412,29 +376,14 @@ static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc, s
     return p_nextState;
 }
 
-// static StateMachine_State_T * Neutral_InputDrive(MotorController_T * p_mc, statemachine_input_value_t driveCmd)
-// {
-//     MotorController_DriveId_T _driveCmd = (p_mc->UserCmdValue == 0) ? MOTOR_CONTROLLER_DRIVE_ZERO : (MotorController_DriveId_T)driveCmd;
-//     StateMachine_State_T * p_nextState = 0U;
-//     switch(_driveCmd)
-//     {
-//         case MOTOR_CONTROLLER_DRIVE_BRAKE: DriveNeutral_SetBrake(p_mc, ); break;
-//         case MOTOR_CONTROLLER_DRIVE_ZERO: if(p_mc->DriveSubState != MOTOR_CONTROLLER_DRIVE_ZERO) { MotorController_TryReleaseAll(p_mc); } break;
-//         case MOTOR_CONTROLLER_DRIVE_THROTTLE: break;
-//         default: break;
-//     }
-//     p_mc->DriveSubState = _driveCmd;
-//     return p_nextState;
-// }
-
 static StateMachine_State_T * Neutral_InputBrake(MotorController_T * p_mc, statemachine_input_value_t cmdValue)
 {
     if(cmdValue == 0U)
     {
         if(p_mc->DriveSubState != MOTOR_CONTROLLER_DRIVE_ZERO)
         {
-            MotorController_TryReleaseAll(p_mc);
             p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_ZERO;
+            MotorController_TryReleaseAll(p_mc);
         }
     }
     else
@@ -470,55 +419,50 @@ static const StateMachine_State_T STATE_NEUTRAL =
         Calibration routines set status id upon completion.
 */
 /******************************************************************************/
-static inline void MotorController_CalibrateAdc(MotorController_T * p_mc)
+static void Lock_Entry(MotorController_T * p_mc)
 {
-    void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_CalibrateAdc);
-    MotAnalogUser_SetThrottleZero(&p_mc->AnalogUser, MotorController_Analog_GetThrottle(p_mc)); // todo wait filter state
-    MotAnalogUser_SetBrakeZero(&p_mc->AnalogUser, MotorController_Analog_GetBrake(p_mc));
+    p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER;
 }
 
-static inline void MotorController_CalibrateSensorAll(MotorController_T * p_mc)
-{
-    void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_CalibrateSensor);
-}
-
-static void Blocking_Entry(MotorController_T * p_mc) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; }
-
-static void Blocking_Proc(MotorController_T * p_mc)
+static void Lock_Proc(MotorController_T * p_mc)
 {
     switch(p_mc->LockSubState)
     {
         case MOTOR_CONTROLLER_LOCK_ENTER:               break;
         case MOTOR_CONTROLLER_LOCK_EXIT:                break;
         case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     break;
-        case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:    break;//todo check calibration complete
-        case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:       break;
+        case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:
+            if (Motor_User_IsStopState(MotorController_GetPtrMotor(p_mc, 0U)) == true) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; p_mc->CalibrationStatus = 0U; }
+            break; // todo check calibration complete
+        case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:
+            if (Motor_User_IsStopState(MotorController_GetPtrMotor(p_mc, 0U)) == true) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; p_mc->CalibrationStatus = 0U; }
+            break;
         // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_WriteOnce_Blocking(p_mc);           break;
         // case MOTOR_CONTROLLER_NVM_BOOT:                  p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc);       break;
-        // case MOTOR_CONTROLLER_BLOCKING_END:            Protocol_Send  break; //todo send end response
+        // case MOTOR_CONTROLLER_BLOCKING_END:            Protocol_Send  break; // todo send end response
         default: break;
     }
-    //todo check for completion p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER;
 }
 
 /* Lock SubState by passed value */
-static StateMachine_State_T * Blocking_InputBlocking_Blocking(MotorController_T * p_mc, statemachine_input_value_t blockingId)
+static StateMachine_State_T * Locking_InputBlocking_Blocking(MotorController_T * p_mc, statemachine_input_value_t blockingId)
 {
-    StateMachine_State_T * p_nextState = 0U;
+    StateMachine_State_T * p_nextState = NULL;
     Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U); // todo set all
 
     p_mc->LockSubState = blockingId;
-    //clear status or set callback
-    switch(blockingId)
+    p_mc->CalibrationStatus = -1;
+
+    switch (blockingId)
     {
         case MOTOR_CONTROLLER_LOCK_ENTER: break;
         case MOTOR_CONTROLLER_LOCK_EXIT:                p_nextState = &STATE_PARK;                                        break;
         case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:    Motor_User_CalibrateSensor(p_motor);                              break;
-        /* blocks briefly */
         case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:       MotorController_CalibrateAdc(p_mc);                               break;
-        /* NvM function will block + disable interrupts */
-        case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     p_mc->NvmStatus = MotorController_SaveConfig_Blocking(p_mc);  break;
-        case MOTOR_CONTROLLER_LOCK_REBOOT: Reboot(); break;
+            /* NvM function will block + disable interrupts */
+        case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     p_mc->NvmStatus = MotorController_SaveConfig_Blocking(p_mc);      break;
+        case MOTOR_CONTROLLER_LOCK_REBOOT:              Reboot(); break;
+        // case MOTOR_CONTROLLER_LOCK_ENTER_SERVO:         p_nextState = &STATE_SERVO; break;
         default: break;
     }
 
@@ -528,14 +472,15 @@ static StateMachine_State_T * Blocking_InputBlocking_Blocking(MotorController_T 
 static const StateMachine_Transition_T BLOCKING_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]      = (StateMachine_Transition_T)TransitionFault,
-    [MCSM_INPUT_LOCK]       = (StateMachine_Transition_T)Blocking_InputBlocking_Blocking,
+    [MCSM_INPUT_LOCK]       = (StateMachine_Transition_T)Locking_InputBlocking_Blocking,
+    [MCSM_INPUT_SERVO]      = (StateMachine_Transition_T)TransitionServo,
 };
 
 static const StateMachine_State_T STATE_LOCK =
 {
     .ID                 = MCSM_STATE_ID_LOCK,
-    .ENTRY              = (StateMachine_Function_T)Blocking_Entry,
-    .LOOP               = (StateMachine_Function_T)Blocking_Proc,
+    .ENTRY              = (StateMachine_Function_T)Lock_Entry,
+    .LOOP               = (StateMachine_Function_T)Lock_Proc,
     .P_TRANSITION_TABLE = &BLOCKING_TRANSITION_TABLE[0U],
 };
 
@@ -543,9 +488,27 @@ static const StateMachine_State_T STATE_LOCK =
 /******************************************************************************/
 /*!
     @brief Servo State
-    todo as cmd mode
+    User State, Motor_User interface
 */
 /******************************************************************************/
+/*
+    Handle per motor functions
+    multi parameter input into StateMachine. No transition
+*/
+/*! @param[in] cmdValue int16  */
+// void MotorController_ServoState_InputCmd(MotorController_T * p_mc, uint8_t motorId, int16_t cmdValue)
+// {
+//     if (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_SERVO)
+//     {
+//     #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
+//         MotorController_ServoExtern_SetMotorCmd(p_mc, motorId, cmdValue);
+//     #else
+//         Motor_User_SetActiveCmdValue(MotorController_GetPtrMotor(p_mc, motorId), cmdValue);
+//     #endif
+//     }
+// }
+
+
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
 static void Servo_Entry(MotorController_T * p_mc)
 {
@@ -563,41 +526,77 @@ static void Servo_Proc(MotorController_T * p_mc)
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
     MotorController_ServoExtern_Proc(p_mc);
 #else
-    MotorController_Servo_Proc(p_mc);
+    // MotorController_Servo_Proc(p_mc);
 #endif
 }
 
-static StateMachine_State_T * Servo_InputExit(MotorController_T * p_mc, statemachine_input_value_t voidVar)
+static StateMachine_State_T * Servo_InputExit(MotorController_T * p_mc, statemachine_input_value_t _void)
 {
-    (void)voidVar;
+    (void)_void;
     MotorController_TryReleaseAll(p_mc);
     return &STATE_PARK;
 }
 
-static StateMachine_State_T * Servo_InputCmd(MotorController_T * p_mc, statemachine_input_value_t userCmd)
+/*! @param[in] cmdValue int16  */
+static StateMachine_State_T * Servo_InputCmd(MotorController_T * p_mc, statemachine_input_value_t cmdValue)
 {
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
-    MotorController_ServoExtern_SetCmd(p_mc, userCmd);
+    MotorController_ServoExtern_SetCmd(p_mc, cmdValue);
 #else
     // MotorController_Servo_SetCmd(p_mc, userCmd);
-    // MotorController_SetCmdModeValue(p_mc, userCmd);
+    MotorController_SetCmdValueAll(p_mc, cmdValue);
 #endif
-    return 0U;
+    //     // if(cmdValue != 0U)
+    //     // {
+    //     //     if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_CMD)
+    //     //     {
+    //     //         MotorController_SetCmdModeValue(p_mc, cmdValue);
+    //     //     }
+    //     //     else if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO)
+    //     //     {
+    //     //         MotorController_StartCmdModeDefault(p_mc);
+    //     //         MotorController_SetCmdModeValue(p_mc, cmdValue);
+    //     //         p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD;
+    //     //     }
+    //     // }
+    //     // else
+    //     // {
+    //     //     p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_ZERO;
+    //     // }
+    return NULL;
 }
 
-static StateMachine_State_T * Servo_InputServo(MotorController_T * p_mc, statemachine_input_value_t servoId)
+// static StateMachine_State_T * Servo_InputDirection(MotorController_T * p_mc, statemachine_input_value_t direction)
+// {
+//     StateMachine_State_T * p_nextState = NULL;
+//     switch((MotorController_Direction_T)direction)
+//     {
+//         case MOTOR_CONTROLLER_DIRECTION_PARK:       p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : NULL; break;
+//         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:    p_nextState = &STATE_NEUTRAL; break;
+//         case MOTOR_CONTROLLER_DIRECTION_FORWARD:    p_nextState = MotorController_TryDirectionForwardAll(p_mc, direction) ? &STATE_DRIVE : NULL; break;
+//         case MOTOR_CONTROLLER_DIRECTION_REVERSE:    p_nextState = MotorController_TryDirectionReverseAll(p_mc, direction) ? &STATE_DRIVE : NULL; break;
+//         default: break;
+//     }
+//     return p_nextState;
+// }
+
+static StateMachine_State_T * Servo_InputServo(MotorController_T * p_mc, statemachine_input_value_t servoMode)
 {
-    switch(servoId)
+    StateMachine_State_T * p_nextState = NULL;
+    switch ((MotorController_ServoMode_T)servoMode)
     {
-        case 0:  break;
+        case MOTOR_CONTROLLER_SERVO_MODE_EXIT:
+            if (MotorController_IsEveryMotorStopState(p_mc) == true) { p_nextState = &STATE_PARK; }
+            break;
         default: break;
     }
+    return p_nextState;
 }
 
 static const StateMachine_Transition_T SERVO_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]          = (StateMachine_Transition_T)TransitionFault,
-    [MCSM_INPUT_DIRECTION]      = (StateMachine_Transition_T)Servo_InputExit,
+    // [MCSM_INPUT_DIRECTION]   = (StateMachine_Transition_T)Servo_InputDirection,
     [MCSM_INPUT_CMD]            = (StateMachine_Transition_T)Servo_InputCmd,
     [MCSM_INPUT_SERVO]          = (StateMachine_Transition_T)Servo_InputServo,
 };
@@ -690,8 +689,8 @@ bool MotorController_StateMachine_ExitFault(MotorController_T * p_mc)
 
 void MotorController_StateMachine_SetFault(MotorController_T * p_mc, uint16_t faultFlags)
 {
+    p_mc->FaultFlags.Value |= faultFlags;
     if (MotorController_StateMachine_IsFault(p_mc) == false) { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_FAULT, faultFlags); }
-    else { p_mc->FaultFlags.Value |= faultFlags; }
 }
 
 //alternatively

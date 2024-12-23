@@ -33,9 +33,9 @@
 
 #include "Config.h"
 
-#ifdef  CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE
+// #ifdef  CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE
 #include "System/Critical/Critical.h"
-#endif
+// #endif
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -66,6 +66,9 @@ struct StateMachine_State;
 typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_input_value_t inputValue); // Input Function
 typedef void (*StateMachine_Function_T)(void * p_context); // Output Function
 
+/* Alternatively include handle transition, no external input, "clock only" on internal state. Transition occurs last this way */
+// typedef struct StateMachine_State * (*StateMachine_StateOutput_T)(void * p_context);
+
 // include additional arg to optimize for r2-r3?
 // input only function, check state only, no transition
 // typedef void (*StateMachine_Input_T)(void * p_context, statemachine_input_value_t inputValue0, statemachine_input_value_t inputValue1, statemachine_input_value_t inputValue2); // Input Function
@@ -81,6 +84,8 @@ typedef void (*StateMachine_Function_T)(void * p_context); // Output Function
     Not accept input => define null pointer.
     Non-transition (Output only / Mealy machine style outputs), does not proc entry function => function return 0
     Self-transition, proc entry function => function return pointer to self
+
+    Input directly to output functions, without transition, can simply check State ID
 */
 typedef const struct StateMachine_State
 {
@@ -88,7 +93,9 @@ typedef const struct StateMachine_State
     const StateMachine_Transition_T * const P_TRANSITION_TABLE;     /* f(statemachine_input_id_t) input map. Forms the TransitionFunction.  */
     const StateMachine_Function_T LOOP;       /* Output of the State. Synchronous periodic proc. No null pointer check, user must supply empty function */
     const StateMachine_Function_T ENTRY;      /* Common to all transition to current state, including self transition */
+#ifdef CONFIG_STATE_MACHINE_EXIT_FUNCTION_ENABLE
     const StateMachine_Function_T EXIT;
+#endif
     // void * const P_STATE_CONTEXT;        /* SubState Buffer */
 #ifdef CONFIG_STATE_MACHINE_LINKED_MENU_ENABLE
     const struct StateMachine_State * P_LINK_NEXT;
@@ -108,9 +115,6 @@ typedef const struct StateMachine_Const
 {
     const StateMachine_Machine_T * const P_MACHINE;         /* Const definition of state transition behaviors */
     void * const P_CONTEXT;                                 /* Mutable state information per state machine. Alternatively, in each function */
-#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
-    const bool USE_CRITICAL;
-#endif
 }
 StateMachine_Const_T;
 
@@ -121,21 +125,11 @@ typedef struct StateMachine
 
     /* Sync machine store result until process */
     volatile statemachine_input_id_t SyncInput;
-    // volatile atomic_uint_fast8_t SyncInput;
     volatile statemachine_input_value_t SyncInputValue;
-    // volatile bool IsSyncInputAccept;
 
-#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
-    volatile critical_signal_t Mutex;
-#endif
+    volatile atomic_flag InputSignal;
 }
 StateMachine_T;
-
-#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
-#define _STATE_MACHINE_INIT_CRITICAL(UseCritical) .USE_CRITICAL = UseCritical,
-#else
-#define _STATE_MACHINE_INIT_CRITICAL(UseCritical)
-#endif
 
 #define STATE_MACHINE_INIT(p_Machine, p_Context, UseCritical)   \
 {                                                               \
@@ -143,9 +137,25 @@ StateMachine_T;
     {                                                           \
         .P_MACHINE = p_Machine,                                 \
         .P_CONTEXT = p_Context,                                 \
-        _STATE_MACHINE_INIT_CRITICAL(UseCritical)               \
     }                                                           \
 }
+
+// static inline StateMachine_State_T * TransitionFunction(const StateMachine_State_T * p_active, void * p_context, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+// {
+//     return p_active->P_TRANSITION_TABLE[inputId](p_context, inputValue);
+// }
+
+// static inline StateMachine_State_T * StateOuput(const StateMachine_State_T * p_state, void * p_context)
+// {
+//     return p_state->LOOP(p_context);
+// }
+
+// static inline StateMachine_State_T * StateTransition(const StateMachine_State_T * p_active, void * p_context, StateMachine_State_T * p_newState)
+// {
+//     if (p_active->EXIT != NULL) { p_active->EXIT(p_context); }
+//     if (p_newState->ENTRY != NULL) { p_newState->ENTRY(p_context); }
+//     return p_newState;
+// }
 
 static inline statemachine_state_t StateMachine_GetActiveStateId(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_StateActive->ID; }
 static inline bool StateMachine_IsActiveState(const StateMachine_T * p_stateMachine, statemachine_state_t stateId) { return (stateId == p_stateMachine->p_StateActive->ID); }

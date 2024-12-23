@@ -68,25 +68,30 @@ void Motor_MarkAnalog_Thread(Motor_T * p_motor)
     }
 #endif
 
-    switch (StateMachine_GetActiveStateId(&p_motor->StateMachine))
+    if (Motor_IsAnalogCycle(p_motor) == true)
     {
-        case MSM_STATE_ID_STOP:         Motor_Analog_MarkVabc(p_motor);            break;
-        case MSM_STATE_ID_RUN:          Motor_Analog_MarkIabc(p_motor);            break;
-        case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_motor);            break;
-        case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_motor);             break;
-        // case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_motor); Motor_Analog_MarkIabc(p_motor); break;
-
-        default:            break;
+        switch (StateMachine_GetActiveStateId(&p_motor->StateMachine))
+        {
+            case MSM_STATE_ID_STOP:         Motor_Analog_MarkVabc(p_motor);            break;
+            case MSM_STATE_ID_RUN:          Motor_Analog_MarkIabc(p_motor);            break;
+            case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_motor);            break;
+            case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_motor);            break;
+            case MSM_STATE_ID_INIT:                      break;
+            case MSM_STATE_ID_CALIBRATION:               break;
+            case MSM_STATE_ID_OPEN_LOOP:                 break;
+            // case MSM_STATE_ID_FAULT:     Motor_Analog_MarkVabc(p_motor); Motor_Analog_MarkIabc(p_motor); break;
+            default:            break;
+        }
+        //    switch(p_motor->AnalogCmd)
+        //    {
+        //        case FOC_I_ABC :
+        //            break;
+        //        case FOC_VBEMF :
+        //            break;
+        //        default :
+        //            break;
+        //    }
     }
-    //    switch(p_motor->AnalogCmd)
-    //    {
-    //        case FOC_I_ABC :
-    //            break;
-    //        case FOC_VBEMF :
-    //            break;
-    //        default :
-    //            break;
-    //    }
 }
 
 static inline void Motor_Heat_Thread(Motor_T * p_motor)
@@ -101,12 +106,12 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
                 if (p_motor->StateFlags.HeatWarning == 1U) /* todo move to thermistor */
                 {
                     p_motor->StateFlags.HeatWarning = 0U;
-                    Motor_ClearILimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT_THIS);
+                    Motor_ClearILimitEntry(p_motor, MOTOR_I_LIMIT_HEAT_THIS);
                 }
                 break;
             case THERMISTOR_STATUS_WARNING:     /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
                 p_motor->StateFlags.HeatWarning = 1U;
-                Motor_SetILimitEntry(p_motor, MOTOR_I_LIMIT_ACTIVE_HEAT_THIS, Thermistor_GetHeatLimit_Percent16(&p_motor->Thermistor));
+                Motor_SetILimitEntry(p_motor, MOTOR_I_LIMIT_HEAT_THIS, Thermistor_GetHeatLimit_Percent16(&p_motor->Thermistor));
                 break;
             case THERMISTOR_STATUS_FAULT:
                 p_motor->FaultFlags.Overheat = 1U;

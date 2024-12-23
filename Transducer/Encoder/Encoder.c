@@ -128,7 +128,7 @@ static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_
     else
     {
         /* max = unitsFactor * ScalarSpeedRef_Rpm/60 * 2 / unitsDivisor = deltaDMax * speedFactor / speedDivisor */
-        *p_unitsSpeedShift = q_lshift_max_signed(math_muldiv64_unsigned(unitsFactor * 2U - 1U, p_encoder->Config.ScalarSpeedRef_Rpm, 60U * unitsDivisor));
+        *p_unitsSpeedShift = fixed_lshift_max_signed(math_muldiv64_unsigned(unitsFactor * 2U - 1U, p_encoder->Config.ScalarSpeedRef_Rpm, 60U * unitsDivisor));
         *p_unitsSpeed = math_muldiv64_unsigned(unitsFactor, p_encoder->UnitT_Freq << (*p_unitsSpeedShift), speedDivisor);
         // *p_unitsSpeed = (uint64_t)(unitsFactor)*p_encoder->UnitT_Freq << (*p_unitsSpeedShift) / speedDivisor;
     }

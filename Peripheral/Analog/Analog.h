@@ -79,8 +79,6 @@ typedef const struct Analog_Conversion
 
     const Analog_Setter_T ON_COMPLETE; /* On complete, always runs if set */
     void * const P_CONTEXT;
-
-    // volatile adc_t * const P_RESULT;
     volatile Analog_ConversionState_T * const P_STATE;
 }
 Analog_Conversion_T;
@@ -122,6 +120,10 @@ typedef struct Analog_ADC
     const struct
     {
         HAL_ADC_T * const P_HAL_ADC;  /*!< ADC register map base address */
+
+        // alternatively point to shared channel table, or compile time define per ADC
+        // const Analog_Conversion_T * const * const PP_CONVERSIONS; /* Array of pointers */
+        // const uint8_t CONVERSIONS_COUNT;
     };
 
     /*
@@ -129,7 +131,7 @@ typedef struct Analog_ADC
         Shared by ISR and StartConversions.
     */
     // const Analog_Conversion_T * pp_ConversionsList;
-    volatile analog_channel_t ActiveChannelIndex; /* Index to shared P_CHANNEL_ENTRIES in Analog_T. ActiveChannelFirst */
+    volatile analog_channel_t ActiveChannelIndex; /* Index to shared PP_CONVERSIONS in Analog_T. */
 
     const Analog_Conversion_T * ActiveConversions[ADC_FIFO_LENGTH_MAX]; /* Critical section buffer. Access by StartConversions and ISR. Array of pointers */
 // #ifdef CONFIG_ANALOG_ADC_HW_FIFO_ENABLE
@@ -141,9 +143,9 @@ typedef struct Analog_ADC
 }
 Analog_ADC_T;
 
-#define ANALOG_ADC_INIT(p_HalAnalog) \
-{                                                                   \
-    .P_HAL_ADC       = p_HalAnalog,                              \
+#define ANALOG_ADC_INIT(p_HalAnalog)    \
+{                                       \
+    .P_HAL_ADC       = p_HalAnalog,     \
 }
 
 typedef const struct Analog_Const
@@ -182,7 +184,6 @@ Analog_T;
         .CONVERSIONS_COUNT          = ChannelCount                          \
     }, \
 }
-
 
 /******************************************************************************/
 /*!

@@ -65,7 +65,7 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t
     p_linear->InvSlope          = ((uint64_t)r2 << LINEAR_VOLTAGE_SHIFT) * 1000U / adcVRef_MilliV / (r1 + r2); /* (R2 << 16)/(ADC_VREF*(R1 + R2)) */
     p_linear->InvSlopeShift     = LINEAR_VOLTAGE_SHIFT - adcBits;
 #elif defined (CONFIG_LINEAR_DIVIDE_NUMERICAL)
-    p_linear->SlopeFactor       = (uint64_t)adcVRef_MilliV * (r1 + r2) / 1000U;           /* (ADC_VREF*(R1+R2)) */
+    p_linear->SlopeFactor       = (uint64_t)adcVRef_MilliV * (r1 + r2) / 1000U; /* (ADC_VREF*(R1+R2)) */
     p_linear->SlopeDivisor      = (((uint64_t)1UL << adcBits) - 1U) * r2;       /* (ADC_MAX*R2) */
 #endif
     p_linear->X0                = 0;
@@ -76,13 +76,3 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t
     p_linear->YDeltaRef         = vInRef - p_linear->Y0;
 }
 
-/* round up .5 volts */
-uint16_t Linear_Voltage_CalcAdcuInput_V(const Linear_T * p_linear, uint16_t volts)
-{
-    return Linear_Voltage_AdcuOfV(p_linear, volts) + Linear_Voltage_AdcuOfV(p_linear, 1U) / 2U;
-}
-
-uint16_t Linear_Voltage_CalcAdcuInput_MilliV(const Linear_T * p_linear, uint32_t milliV)
-{
-    return Linear_Voltage_AdcuOfMilliV(p_linear, milliV) + Linear_Voltage_AdcuOfMilliV(p_linear, 1U) / 2U;
-}

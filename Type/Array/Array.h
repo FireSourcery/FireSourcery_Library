@@ -30,27 +30,13 @@ Array_T;
 
 /*!
     @brief Macro to initialize the Array_T structure.
-    @param buffer Pointer to the p_array buffer.
+    @param p_buffer Pointer to the p_array buffer.
     @param unitSize Size of each element in the p_array.
     @param length Length of the p_array.
 */
-#define ARRAY_INIT(buffer, length, unitSize) { \
-    .UNIT_SIZE = (unitSize), \
-    .P_BUFFER = (buffer), \
-    .LENGTH = (length) \
-}
-
-#define ARRAY_NEW(length, unitSize) { \
-    .UNIT_SIZE = (unitSize), \
-    .P_BUFFER = &(Array_T){0}, \
-    .LENGTH = (length) \
-}
-
-#define ARRAY_INIT_AS(T, buffer, length) { \
-    .P_BUFFER = (buffer), \
-    .UNIT_SIZE = sizeof(T), \
-    .LENGTH = (length) \
-}
+#define ARRAY_INIT(p_buffer, unitSize, length) { .P_BUFFER = (p_buffer), .UNIT_SIZE = (unitSize), .LENGTH = (length) }
+#define ARRAY_INIT_ALLOC(unitSize, length) ARRAY_INIT((uint8_t[(length * unitSize)]){ }, unitSize, length)
+#define ARRAY_INIT_AS(T, length) ARRAY_INIT_ALLOC(sizeof(T), length)
 
 /*!
     Protected
@@ -101,6 +87,7 @@ static inline void Array_SetAll_Int32(const Array_T * p_array, set_int32_t unit_
 
 /*
     Value Array.
+
     Wrapped version of array/value_array
     Macro generic - for primatives without swith_copy/memcpy
     call can wrap array without helper

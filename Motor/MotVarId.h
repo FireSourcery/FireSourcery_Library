@@ -71,14 +71,11 @@ typedef enum MotVarId_Monitor_Motor
     MOT_VAR_MOTOR_STATE,
     MOT_VAR_MOTOR_STATE_FLAGS,
     MOT_VAR_MOTOR_FAULT_FLAGS,
-    MOT_VAR_MOTOR_ACTIVE_FEEDBACK_MODE,
-    MOT_VAR_MOTOR_ACTIVE_SPEED_LIMIT,
-    MOT_VAR_MOTOR_ACTIVE_I_LIMIT,
-    MOT_VAR_MOTOR_V_SPEED,
+    MOT_VAR_MOTOR_EFFECTIVE_FEEDBACK_MODE,
+    MOT_VAR_MOTOR_EFFECTIVE_SPEED_LIMIT,
+    MOT_VAR_MOTOR_EFFECTIVE_I_LIMIT,
+    MOT_VAR_MOTOR_V_SPEED_DEBUG,
     MOT_VAR_MOTOR_V_SPEED_EFFECTIVE,
-// ControlTimerBase;
-// Motor_OpenLoopState_T OpenLoopState;
-// Motor_CalibrationState_T CalibrationState;
 }
 MotVarId_Monitor_Motor_T;
 
@@ -110,7 +107,7 @@ MotVarId_Monitor_MotorSensor_T;
 */
 typedef enum MotVarId_Cmd_Motor
 {
-    // MOT_VAR_MOTOR_USER_CMD,      // RampIn/UserCmd, (RampOut/SetPoint). Always reflects the input value. Processed read value use MOT_VAR_MOTOR_SET_POINT
+    // MOT_VAR_MOTOR_USER_CMD,      // RampIn Always reflects the input value
     MOT_VAR_MOTOR_CMD_SPEED,        // UserCmd as Speed
     MOT_VAR_MOTOR_CMD_CURRENT,
     MOT_VAR_MOTOR_CMD_VOLTAGE,
@@ -125,11 +122,12 @@ MotVarId_Cmd_Motor_T;
 
 typedef enum MotVarId_Control_Motor
 {
-    MOT_VAR_MOTOR_DIRECTION,            // Motor_Direction_T - CW/CCW. Write buffered user value, read state value
-    MOT_VAR_MOTOR_USER_SET_POINT,       // RampIn/RampOut, Generic mode select
-    // MOT_VAR_MOTOR_USER_FEEDBACK_MODE, // generally set by inclusion, or config base
-    MOT_VAR_MOTOR_IO_SPEED_LIMIT,       // Read Active, Write buffered user value
-    MOT_VAR_MOTOR_IO_I_LIMIT,
+    MOT_VAR_MOTOR_DIRECTION,            // Motor_Direction_T - CW/CCW. Read state value, write interface value,
+    MOT_VAR_MOTOR_USER_SET_POINT,       // RampIn(UserCmd)/RampOut(SetPoint), Generic mode select
+    /* IO Vars, Read effective value, write interface value */
+    MOT_VAR_MOTOR_USER_FEEDBACK_MODE,
+    MOT_VAR_MOTOR_USER_SPEED_LIMIT,
+    MOT_VAR_MOTOR_USER_I_LIMIT,
 }
 MotVarId_Control_Motor_T;
 
@@ -176,15 +174,20 @@ MotVarId_Monitor_AnalogUser_T;
 */
 typedef enum MotVarId_Cmd_General
 {
-    MOT_VAR_BEEP,
+    // MOT_VAR_BEEP,
+    // MOT_VAR_CONTROLLER_MODE,                // Servo Or Drive
+    // MOT_VAR_CLEAR_FAULT,
 
-    MOT_VAR_USER_CMD,                       // [-32768:32767] Drive Value - Throttle, Brake, Servo In, pending FeedbackMode
-    MOT_VAR_USER_FEEDBACK_MODE,             // Pair with MOT_VAR_USER_CMD
+    /*
+        for all motors, or primary Motor
+        per motor use use motor instance functions
+    */
+    // MOT_VAR_FORCE_DISABLE_CONTROL,          // Force Disable control Non StateMachine checked, also handled via Call
+    // MOT_VAR_TRY_HOLD,                       // bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
+    // MOT_VAR_TRY_RELEASE,                    // same as either neutral or driveZero
+    MOT_VAR_USER_CMD,                           // [-32768:32767]
+    MOT_VAR_USER_FEEDBACK_MODE,                 //
 
-    MOT_VAR_TRY_HOLD,                       // bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
-    MOT_VAR_TRY_RELEASE,                    // same as either neutral or driveZero
-    MOT_VAR_FORCE_DISABLE_CONTROL,          // Force Disable control Non StateMachine checked, also handled via Call
-    MOT_VAR_CLEAR_FAULT,
     /*
         Brake and Throttle invoke SubStates
         If both are set, one must be 0 and is ignored
@@ -192,6 +195,9 @@ typedef enum MotVarId_Cmd_General
     */
     MOT_VAR_THROTTLE,                       // [0:65535]
     MOT_VAR_BRAKE,                          // [0:65535]
+    /*
+        Stateless apply to all motors, move to control to share with analog input
+    */
     MOT_VAR_OPT_SPEED_LIMIT_ON_OFF,         // 1:Enable, 0:Disable
     MOT_VAR_OPT_I_LIMIT_ON_OFF,             // 1:Enable, 0:Disable
 }
@@ -202,8 +208,6 @@ typedef enum MotVarId_Control_General
     MOT_VAR_DIRECTION,                      // MotorController_Direction_T,
 }
 MotVarId_Control_General_T;
-
-
 
 
 /******************************************************************************/
@@ -330,7 +334,7 @@ typedef enum MotVarId_Config_General
 {
     MOT_VAR_V_SOURCE_REF_VOLTS,
     MOT_VAR_DEFAULT_FEEDBACK_MODE,          // Motor_FeedbackMode_T
-    MOT_VAR_USER_INIT_MODE,                 // MotorController_InitMode_T
+    MOT_VAR_USER_INIT_MODE,                 // MotorController_MainMode_T
     MOT_VAR_USER_INPUT_MODE,                // MotorController_InputMode_T
     MOT_VAR_THROTTLE_MODE,                  // MotorController_ThrottleMode_T
     MOT_VAR_BRAKE_MODE,                     // MotorController_BrakeMode_T
@@ -338,7 +342,7 @@ typedef enum MotVarId_Config_General
     MOT_VAR_I_LIMIT_LOW_V,
     MOT_VAR_BUZZER_FLAGS_ENABLE,            // MotorController_BuzzerFlags_T
     MOT_VAR_OPT_DIN_FUNCTION,               // MotorController_OptDinMode_T
-    MOT_VAR_OPT_SPEED_LIMIT,
+    MOT_VAR_OPT_SPEED_LIMIT,                // Selectable Speed Limit
     MOT_VAR_OPT_I_LIMIT,
     // MOT_VAR_CAN_SERVICES_ID,
     // MOT_VAR_CAN_IS_ENABLE,
@@ -456,6 +460,7 @@ typedef enum MotVarId_Type_RealTime /* : uint16_t */
     /* Cmd - Write-Only */
     MOT_VAR_ID_TYPE_CMD_GENERAL,
     MOT_VAR_ID_TYPE_CMD_MOTOR,
+    MOT_VAR_ID_TYPE_CMD_SYSTEM,
     MOT_VAR_ID_TYPE_REAL_TIME_END = 15U,
 }
 MotVarId_Type_RealTime_T;
@@ -556,6 +561,7 @@ typedef enum MotVarId_Status
     MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED,
     MOT_VAR_STATUS_ERROR_RUNNING,
     // MOT_VAR_STATUS_ERROR_REFUSED_BY_STATE_MACHINE,
+    // MOT_VAR_STATUS_ASYNC,
     MOT_VAR_STATUS_RESERVED = 0xFFU,
 }
 MotVarId_Status_T;
