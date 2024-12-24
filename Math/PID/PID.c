@@ -189,7 +189,7 @@ void PID_SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
     p_pid->Config.PropGain = kp_Fixed32 >> (16U - p_pid->Config.PropGainShift);
 }
 
-int32_t PID_GetKp_Fixed32(PID_T * p_pid) { return (int32_t)p_pid->Config.PropGain << (16U - p_pid->Config.PropGainShift); }
+int32_t PID_GetKp_Fixed32(const PID_T * p_pid) { return (int32_t)p_pid->Config.PropGain << (16U - p_pid->Config.PropGainShift); }
 
 /*!
     Integral(k) = Ki * error(k) / SampleFreq + Integral(k-1)
@@ -208,7 +208,7 @@ void PID_SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
     p_pid->Config.IntegralGain = (ki_Fixed32 << p_pid->Config.IntegralGainShift) / p_pid->Config.SampleFreq;
 }
 
-int32_t PID_GetKi_Fixed32(PID_T * p_pid) { return (int32_t)p_pid->Config.IntegralGain * p_pid->Config.SampleFreq >> p_pid->Config.IntegralGainShift; }
+int32_t PID_GetKi_Fixed32(const PID_T * p_pid) { return (int32_t)p_pid->Config.IntegralGain * p_pid->Config.SampleFreq >> p_pid->Config.IntegralGainShift; }
 
 
 /*!
@@ -216,13 +216,13 @@ int32_t PID_GetKi_Fixed32(PID_T * p_pid) { return (int32_t)p_pid->Config.Integra
 */
 void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 8); }
 
-int16_t PID_GetKp_Fixed16(PID_T * p_pid) { return PID_GetKp_Fixed32(p_pid) >> 8; }
+int16_t PID_GetKp_Fixed16(const PID_T * p_pid) { return PID_GetKp_Fixed32(p_pid) >> 8; }
 
 /*!
 */
 void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 8); }
 
-int16_t PID_GetKi_Fixed16(PID_T * p_pid) { return PID_GetKi_Fixed32(p_pid) >> 8; }
+int16_t PID_GetKi_Fixed16(const PID_T * p_pid) { return PID_GetKi_Fixed32(p_pid) >> 8; }
 
 
 /*!

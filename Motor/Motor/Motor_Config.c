@@ -77,10 +77,10 @@ void Motor_Config_SetVSpeedScalar_UFract16(Motor_T * p_motor, uint16_t scalar)
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
 
-void Motor_Config_SetVSpeedScalar_Percent16(Motor_T * p_motor, uint16_t percent16)
-{
-    Motor_Config_SetVSpeedScalar_UFract16(p_motor, percent16 >> 1U);
-}
+// void Motor_Config_SetVSpeedScalar_Percent16(Motor_T * p_motor, uint16_t percent16)
+// {
+//     Motor_Config_SetVSpeedScalar_UFract16(p_motor, percent16 >> 1U);
+// }
 
 /* Kv * VSource */
 /* Depreciate */

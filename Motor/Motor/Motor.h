@@ -321,12 +321,12 @@ typedef struct Motor_Config
 
     uint32_t RampAccel_Cycles;
 
-    uint16_t AlignPower_Percent16;          /* V or I */
+    uint16_t AlignPower_UFract16;          /* V or I */
     uint32_t AlignTime_Cycles;
 
 // #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-    uint16_t OpenLoopSpeed_Percent16;    /* Max, 65536 will overflow */
-    uint16_t OpenLoopPower_Percent16;    /* V or I */
+    uint16_t OpenLoopSpeed_UFract16;    /*   */
+    uint16_t OpenLoopPower_UFract16;    /* V or I */
     uint32_t OpenLoopAccel_Cycles;      /* Time to reach OpenLoopSpeed */
     // uint16_t OpenLoopGain_VHz;
 // #endif
@@ -576,7 +576,7 @@ static inline void Motor_SetCommutationModeUInt8(Motor_T * p_motor, Motor_SetUIn
 static inline int32_t Motor_GetCommutationModeInt32(const Motor_T * p_motor, Motor_GetInt32_T focGet, Motor_GetInt32_T sixStepGet)
     { return ((Motor_GetInt32_T)_Motor_CommutationModeFn(p_motor, focGet, sixStepGet))(p_motor); }
 
-static inline uint16_t Motor_GetIPeakRef_Adcu(Motor_T * p_motor)
+static inline uint16_t Motor_GetIPeakRef_Adcu(const Motor_T * p_motor)
 {
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
     return p_motor->Config.IPeakRef_Adcu;
@@ -723,7 +723,7 @@ static inline int16_t Motor_VReqOfILimit(const Motor_T * p_motor, int32_t feedba
 
 // static inline int16_t Motor_OpenLoopReqLimitOf(const Motor_T * p_motor, int16_t req)
 // {
-//     int16_t limitedReqAbs = p_motor->Config.OpenLoopPower_Percent16 / 2;
+//     int16_t limitedReqAbs = p_motor->Config.OpenLoopPower_UFract16 / 2;
 //     return math_clamp(req, 0 - limitedReqAbs, limitedReqAbs);
 // };
 

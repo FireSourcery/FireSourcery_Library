@@ -286,10 +286,10 @@ static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T
 static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
 {
     int32_t value = 0;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
-    Protocol_T * p_protocol = NULL;
-    Thermistor_T * p_thermistor = NULL;
-    VMonitor_T * p_vMonitor = NULL;
+    const Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
+    const Protocol_T * p_protocol = NULL;
+    const Thermistor_T * p_thermistor = NULL;
+    const VMonitor_T * p_vMonitor = NULL;
 
     // volatile int32_t id = varId.Word16;
 
@@ -324,11 +324,11 @@ static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
                 case MOT_VAR_BASE_I_LIMIT_GENERATING:       value = Motor_Config_GetILimitGenerating_Fract16(p_motor);     break;
                 case MOT_VAR_RAMP_ACCEL_TIME:               value = Motor_Config_GetRampAccel_Millis(p_motor);              break;
                 // case MOT_VAR_ALIGN_MODE:                 value = Motor_Config_GetAlignMode(p_motor);                 break;
-                case MOT_VAR_ALIGN_POWER:                   value = Motor_Config_GetAlignPower_Percent16(p_motor);           break;
+                case MOT_VAR_ALIGN_POWER:                   value = Motor_Config_GetAlignPower_Fract16(p_motor);           break;
                 case MOT_VAR_ALIGN_TIME:                    value = Motor_Config_GetAlignTime_Millis(p_motor);              break;
                 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-                case MOT_VAR_OPEN_LOOP_POWER:               value = Motor_Config_GetOpenLoopPower_Percent16(p_motor);        break;
-                case MOT_VAR_OPEN_LOOP_SPEED:               value = Motor_Config_GetOpenLoopSpeed_Percent16(p_motor);        break;
+                case MOT_VAR_OPEN_LOOP_POWER:               value = Motor_Config_GetOpenLoopPower_Fract16(p_motor);        break;
+                case MOT_VAR_OPEN_LOOP_SPEED:               value = Motor_Config_GetOpenLoopSpeed_Fract16(p_motor);        break;
                 case MOT_VAR_OPEN_LOOP_ACCEL_TIME:          value = Motor_Config_GetOpenLoopAccel_Millis(p_motor);          break;
                 #endif
                 // case MOT_VAR_PHASE_PWM_MODE:             value = Motor_Config_GetPhaseModeParam(p_motor);            break;
@@ -499,7 +499,7 @@ static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, i
                     case MOT_VAR_DIRECTION_CALIBRATION:         Motor_Config_SetDirectionCalibration(p_motor, varValue);        break;
                     case MOT_VAR_POLE_PAIRS:                    Motor_Config_SetPolePairs(p_motor, varValue);                   break;
                     case MOT_VAR_KV:                            Motor_Config_SetKv(p_motor, varValue);                          break;
-                    case MOT_VAR_V_SPEED_SCALAR:                Motor_Config_SetVSpeedScalar_Percent16(p_motor, varValue);           break;
+                    case MOT_VAR_V_SPEED_SCALAR:                Motor_Config_SetVSpeedScalar_UFract16(p_motor, varValue);           break;
                     case MOT_VAR_SPEED_V_REF_RPM:                   break;
                     case MOT_VAR_SPEED_V_MATCH_REF_RPM:             break;
                     case MOT_VAR_IA_ZERO_REF_ADCU:              Motor_Config_SetIaZero_Adcu(p_motor, varValue);                 break;
@@ -521,10 +521,10 @@ static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, i
                     case MOT_VAR_BASE_I_LIMIT_MOTORING:         Motor_Config_SetILimitMotoring_Fract16(p_motor, varValue);     break;
                     case MOT_VAR_BASE_I_LIMIT_GENERATING:       Motor_Config_SetILimitGenerating_Fract16(p_motor, varValue);   break;
                     case MOT_VAR_RAMP_ACCEL_TIME:               Motor_Config_SetRampAccel_Millis(p_motor, varValue);  break;
-                    case MOT_VAR_ALIGN_POWER:                   Motor_Config_SetAlignPower_Percent16(p_motor, varValue);  break;
+                    case MOT_VAR_ALIGN_POWER:                   Motor_Config_SetAlignPower_Fract16(p_motor, varValue);  break;
                     case MOT_VAR_ALIGN_TIME:                    Motor_Config_SetAlignTime_Millis(p_motor, varValue);  break;
-                    case MOT_VAR_OPEN_LOOP_POWER:               Motor_Config_SetOpenLoopPower_Percent16(p_motor, varValue);  break;
-                    case MOT_VAR_OPEN_LOOP_SPEED:               Motor_Config_SetOpenLoopSpeed_Percent16(p_motor, varValue);  break;
+                    case MOT_VAR_OPEN_LOOP_POWER:               Motor_Config_SetOpenLoopPower_Fract16(p_motor, varValue);  break;
+                    case MOT_VAR_OPEN_LOOP_SPEED:               Motor_Config_SetOpenLoopSpeed_Fract16(p_motor, varValue);  break;
                     case MOT_VAR_OPEN_LOOP_ACCEL_TIME:          Motor_Config_SetOpenLoopAccel_Millis(p_motor, varValue);  break;
                     // case MOT_VAR_PHASE_PWM_MODE:             Motor_Config_SetPhaseModeParam(p_motor,  varValue);  break;
                     default: break;

@@ -854,7 +854,7 @@ void Motor_ResetUnitsSinCos(Motor_T * p_motor)
 /******************************************************************************/
 void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
 {
-    const uint16_t duty = p_motor->Config.AlignPower_Percent16;
+    const uint16_t duty = p_motor->Config.AlignPower_UFract16;
     uint16_t index = step % 12U;
     switch(index)
     {
@@ -876,7 +876,7 @@ void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
 
 void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
 {
-    const uint16_t duty = p_motor->Config.AlignPower_Percent16;
+    const uint16_t duty = p_motor->Config.AlignPower_UFract16;
     uint16_t index = step % 6U;
     switch(index)
     {
@@ -895,7 +895,7 @@ void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
 */
 void Motor_Jog6Step(Motor_T * p_motor, uint8_t step)
 {
-    const uint16_t duty = p_motor->Config.AlignPower_Percent16;
+    const uint16_t duty = p_motor->Config.AlignPower_UFract16;
     uint16_t index = step % 6U;
     switch(index)
     {

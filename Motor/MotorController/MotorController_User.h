@@ -115,7 +115,10 @@ static inline Protocol_T * MotorController_User_GetPtrProtocol(const MotorContro
 }
 
 /* UserMain, which may use Watchdog  */
-static inline Protocol_T * MotorController_User_GetMainProtocol(const MotorController_T * p_mc) { &p_mc->CONST.P_PROTOCOLS[p_mc->CONST.USER_PROTOCOL_INDEX]; }
+static inline Protocol_T * MotorController_User_GetMainProtocol(const MotorController_T * p_mc)
+{
+    &p_mc->CONST.P_PROTOCOLS[p_mc->CONST.USER_PROTOCOL_INDEX];
+}
 
 
 /******************************************************************************/

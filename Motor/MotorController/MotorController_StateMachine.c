@@ -233,8 +233,7 @@ static void SetBrake(MotorController_T * p_mc, uint32_t cmdValue)
             // p_mc->StateFlags.IsStopped = 1U;
         }
 
-        MotorController_StartBrakeMode(p_mc);
-        MotorController_SetBrakeValue(p_mc, cmdValue);
+        MotorController_StartBrakeMode(p_mc);  /* Do not set cmd value in case mode is overwritten */
         p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_BRAKE;
         // if (MotorController_IsEveryMotorRunState(p_mc) == true) { p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_BRAKE; }
         // else { p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_ZERO; }
@@ -249,9 +248,8 @@ static void SetThrottle(MotorController_T * p_mc, uint32_t cmdValue)
     }
     else if (p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO || p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_CMD) /* do not overwrite brake */
     {
-        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_THROTTLE;
         MotorController_StartThrottleMode(p_mc);
-        MotorController_SetThrottleValue(p_mc, cmdValue);
+        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_THROTTLE;
     }
 }
 

@@ -232,7 +232,7 @@ void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_Fract16)
 */
 void Motor_User_SetOpenLoopCmd(Motor_T * p_motor, int16_t ivCmd)
 {
-    int32_t ivCmdIn = math_clamp(ivCmd, 0, p_motor->Config.OpenLoopPower_Percent16 / 2U);
+    int32_t ivCmdIn = math_clamp(ivCmd, 0, p_motor->Config.OpenLoopPower_UFract16);
     Motor_SetCmd(p_motor, ivCmdIn);
 }
 

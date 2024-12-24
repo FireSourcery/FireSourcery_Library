@@ -48,9 +48,14 @@ static inline void ProcIFeedback(Motor_T * p_motor, bool hasIFeedback)
     int32_t initialReq = FOC_GetReqQ(&p_motor->Foc);
     int32_t req = initialReq;
 
+    /* if Iq_req is in the opposite direction and Iq is small, set as 0 instead of bounce */
+    // if(math_sign(FOC_GetIq(&p_motor->Foc)) != math_sign(initialReq))
+    // {
+    //     if (math_abs(FOC_GetIq(&p_motor->Foc)) < (INT16_MAX / 20)) { initialReq = 0; }
+    // }
+
     if (hasIFeedback && (p_motor->FeedbackMode.Current == 1U)) /* Current Control mode - Proc FeedbackLoop, Iq Id set by ADC routine */
     {
-        // if (p_motor->FeedbackMode.Speed == 0U) { req = Motor_IReqLimitOf(p_motor, initialReq); }
         FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), req)); /* PidIq configured with VLimits */
         FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), FOC_GetReqD(&p_motor->Foc)));
     }
@@ -85,6 +90,7 @@ static inline void ProcSpeedFeedback(Motor_T * p_motor, bool hasSpeedFeedback)
     }
     else if (p_motor->FeedbackMode.Speed == 0U) /* Current or Voltage Control mode */
     {
+        // if (p_motor->FeedbackMode.Current == 1U) { req = Motor_IReqLimitOf(p_motor, initialReq); } /* clamp again in case a new limit is set while input discontinued */
         req = Motor_ReqOfSpeedLimit(p_motor, rampReq);
         FOC_SetReqQ(&p_motor->Foc, req);
         FOC_SetReqD(&p_motor->Foc, 0);
@@ -338,7 +344,7 @@ void Motor_FOC_SetDirectionForward(Motor_T * p_motor) { Motor_FOC_SetDirection(p
 void Motor_FOC_StartAlign(Motor_T * p_motor)
 {
     p_motor->FeedbackMode.Current = 1U;
-    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Config.AlignTime_Cycles, 0, p_motor->Config.AlignPower_Percent16 / 2U);
+    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Config.AlignTime_Cycles, 0, p_motor->Config.AlignPower_UFract16 / 2U);
     // p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
     // Motor_FOC_MatchFeedbackState(p_motor);
 }
@@ -369,8 +375,8 @@ void Motor_FOC_StartAlignValidate(Motor_T * p_motor)
 void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
 {
     p_motor->Speed_Fract16 = 0;
-    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopPower_Percent16 / 2U));    // alternatively, clamp user input ramp
-    Linear_Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopSpeed_Percent16 / 2U));
+    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopPower_UFract16  ));    // alternatively, clamp user input ramp
+    Linear_Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopSpeed_UFract16  ));
     // FOC_SetReqD(&p_motor->Foc, 0); // Motor_FOC_ProcAngleFeedforward
 }
 
