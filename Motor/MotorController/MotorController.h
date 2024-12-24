@@ -257,7 +257,7 @@ typedef struct MotorController_Config
     MotorController_DriveZeroMode_T DriveZeroMode;
     MotorController_OptDinMode_T OptDinMode;
     uint16_t OptSpeedLimit_Fract16;
-    uint16_t OptILimit_Percent16;
+    uint16_t OptILimit_Fract16;
     uint16_t VLowILimit_Fract16;
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     uint8_t CanServicesId;

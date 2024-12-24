@@ -319,9 +319,9 @@ bool Motor_User_TryDirectionReverse(Motor_T * p_motor) { return Motor_User_TryDi
 /*
    User Conditional - set compare with array
 */
-bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t speed_Fract16) { return Motor_SetSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER, speed_Fract16); }
+bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t speed_fract16) { return Motor_SetSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER, speed_fract16); }
 bool Motor_User_ClearSpeedLimit(Motor_T * p_motor)                       { return Motor_ClearSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER); }
-bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t speed_Fract16)     { return Motor_SetILimitEntry(p_motor, MOTOR_I_LIMIT_USER, speed_Fract16); }
+bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t i_fract16)         { return Motor_SetILimitEntry(p_motor, MOTOR_I_LIMIT_USER, i_fract16); }
 bool Motor_User_ClearILimit(Motor_T * p_motor)                           { return Motor_ClearILimitEntry(p_motor, MOTOR_I_LIMIT_USER); }
 
 /******************************************************************************/

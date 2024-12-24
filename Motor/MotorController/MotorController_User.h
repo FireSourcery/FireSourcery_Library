@@ -289,9 +289,10 @@ static inline void MotorController_User_DisableBuzzer(MotorController_T * p_mc)
     p_mc->StateFlags.BuzzerEnable = 0U;
 }
 
-static inline bool MotorController_User_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_Percent16)
+static inline bool MotorController_User_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_fract16)
 {
-    struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TrySpeedLimit, limit_Percent16);
+    struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TrySpeedLimit, limit_fract16);
+    // MotorController_SetSpeedLimitAll(MotorController_T * p_mc, USER,   limit_fract16)
 }
 
 static inline bool MotorController_User_ClearSpeedLimitAll(MotorController_T * p_mc)
@@ -299,9 +300,9 @@ static inline bool MotorController_User_ClearSpeedLimitAll(MotorController_T * p
     void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_ClearSpeedLimit);
 }
 
-static inline bool MotorController_User_SetILimitAll(MotorController_T * p_mc, uint16_t limit_Percent16)
+static inline bool MotorController_User_SetILimitAll(MotorController_T * p_mc, uint16_t limit_fract16)
 {
-    struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TryILimit, limit_Percent16);
+    struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TryILimit, limit_fract16);
 }
 
 static inline bool MotorController_User_ClearILimitAll(MotorController_T * p_mc)
@@ -317,7 +318,7 @@ static inline void MotorController_User_SetOptSpeedLimitOnOff(MotorController_T 
 
 static inline void MotorController_User_SetOptILimitOnOff(MotorController_T * p_mc, bool isEnable)
 {
-    if (isEnable == true)   { MotorController_User_SetILimitAll(p_mc, p_mc->Config.OptILimit_Percent16); }
+    if (isEnable == true)   { MotorController_User_SetILimitAll(p_mc, p_mc->Config.OptILimit_Fract16); }
     else                    { MotorController_User_ClearILimitAll(p_mc); }
 }
 

@@ -539,6 +539,7 @@ void Motor_ClearILimit(Motor_T * p_motor)
 /******************************************************************************/
 bool Motor_SetSpeedLimitEntry(Motor_T * p_motor, uint8_t id, uint16_t speed_UFract16)
 {
+    // p_motor->SpeedLimitForward_Fract16 = math_min(speed_Fract16, p_motor->Config.SpeedLimitForward_Fract16); maintain sync
     bool isActiveLimit = Limit_Entry_Set(&p_motor->SpeedLimit, id, speed_UFract16);
     if (isActiveLimit == true) { Motor_SetSpeedLimit(p_motor, speed_UFract16); }
     return isActiveLimit;
@@ -546,11 +547,10 @@ bool Motor_SetSpeedLimitEntry(Motor_T * p_motor, uint8_t id, uint16_t speed_UFra
 
 bool Motor_SetSpeedLimitEntry_Scalar(Motor_T * p_motor, uint8_t id, uint16_t scalar_UFact16)
 {
-
-    int32_t speed_Fract16 = fract16_mul(Motor_GetSpeedLimit(p_motor), scalar_UFact16);
-    bool isActiveLimit = Limit_Entry_Set(&p_motor->SpeedLimit, id, speed_Fract16);
-    if (isActiveLimit == true) { Motor_SetSpeedLimit_Scalar(p_motor, scalar_UFact16); }
-    return isActiveLimit;
+    // int32_t speed_Fract16 = fract16_mul(Motor_GetSpeedLimit(p_motor), scalar_UFact16); // of base
+    // bool isActiveLimit = Limit_Entry_Set(&p_motor->SpeedLimit, id, speed_Fract16);
+    // if (isActiveLimit == true) { Motor_SetSpeedLimit_Scalar(p_motor, scalar_UFact16); }
+    // return isActiveLimit;
 }
 
 bool Motor_ClearSpeedLimitEntry(Motor_T * p_motor, uint8_t id)

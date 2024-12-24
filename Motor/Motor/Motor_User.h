@@ -210,8 +210,8 @@ extern bool Motor_User_TryDirection(Motor_T * p_motor, Motor_Direction_T directi
 extern bool Motor_User_TryDirectionForward(Motor_T * p_motor);
 extern bool Motor_User_TryDirectionReverse(Motor_T * p_motor);
 
-extern bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t speed_Fract16);
-extern bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t speed_Fract16);
+extern bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t speed_fract16);
+extern bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t i_fract16);
 extern bool Motor_User_ClearSpeedLimit(Motor_T * p_motor);
 extern bool Motor_User_ClearILimit(Motor_T * p_motor);
 
