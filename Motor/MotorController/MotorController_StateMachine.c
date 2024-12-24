@@ -232,9 +232,12 @@ static void SetBrake(MotorController_T * p_mc, uint32_t cmdValue)
             if (MotorController_IsEveryMotorStopState(p_mc) == true) { MotorController_TryHoldAll(p_mc); }
             // p_mc->StateFlags.IsStopped = 1U;
         }
-        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_BRAKE;
+
         MotorController_StartBrakeMode(p_mc);
         MotorController_SetBrakeValue(p_mc, cmdValue);
+        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_BRAKE;
+        // if (MotorController_IsEveryMotorRunState(p_mc) == true) { p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_BRAKE; }
+        // else { p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_ZERO; }
     }
 }
 

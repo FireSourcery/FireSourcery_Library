@@ -451,6 +451,7 @@ extern void MotorController_ServoExtern_SetCmd(MotorController_T * p_mc, int32_t
 extern bool MotorController_IsEveryMotorForward(const MotorController_T * p_mc);
 extern bool MotorController_IsEveryMotorReverse(const MotorController_T * p_mc);
 extern bool MotorController_IsEveryMotorStopState(const MotorController_T * p_mc);
+extern bool MotorController_IsEveryMotorRunState(const MotorController_T * p_mc);
 
 extern bool MotorController_IsAnyMotorFault(const MotorController_T * p_mc);
 extern bool MotorController_ForEveryMotorExitFault(MotorController_T * p_mc);

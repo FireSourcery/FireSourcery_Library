@@ -127,6 +127,7 @@ static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(const Motor_T *
 static inline Motor_StateFlags_T Motor_User_GetStateFlags(const Motor_T * p_motor) { return p_motor->StateFlags; }
 static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_T * p_motor) { return p_motor->FaultFlags; }
 static inline bool Motor_User_IsStopState(const Motor_T * p_motor) { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP); }
+static inline bool Motor_User_IsRunState(const Motor_T * p_motor) { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_RUN); }
 
 
 /*

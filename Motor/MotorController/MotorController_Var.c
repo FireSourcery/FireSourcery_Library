@@ -213,7 +213,7 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
 */
 static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T varId, int32_t varValue)
 {
-    MotVarId_Status_T status = MOT_VAR_STATUS_OK;
+   volatile MotVarId_Status_T status = MOT_VAR_STATUS_OK;
     bool isSuccess = true;
     Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
 
@@ -304,7 +304,7 @@ static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
                 case MOT_VAR_DIRECTION_CALIBRATION:         value = Motor_Config_GetDirectionCalibration(p_motor);      break;
                 case MOT_VAR_POLE_PAIRS:                    value = Motor_Config_GetPolePairs(p_motor);                 break;
                 case MOT_VAR_KV:                            value = Motor_Config_GetKv(p_motor);                        break;
-                case MOT_VAR_V_SPEED_SCALAR:                value = Motor_Config_GetVSpeedScalar_Percent16(p_motor);    break;
+                case MOT_VAR_V_SPEED_SCALAR:                value = Motor_Config_GetVSpeedScalar_UFract16(p_motor);    break;
                 case MOT_VAR_SPEED_V_REF_RPM:               value = Motor_Config_GetSpeedVRef_Rpm(p_motor);             break;
                 case MOT_VAR_SPEED_V_MATCH_REF_RPM:         value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);        break;
                 case MOT_VAR_IA_ZERO_REF_ADCU:              value = Motor_Config_GetIaZero_Adcu(p_motor);               break;
@@ -318,10 +318,10 @@ static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
         case MOT_VAR_ID_TYPE_CONFIG_MOTOR_SECONDARY:
             switch((MotVarId_Config_MotorSecondary_T)varId.NameBase)
             {
-                case MOT_VAR_BASE_SPEED_LIMIT_FORWARD:      value = Motor_Config_GetSpeedLimitForward_Percent16(p_motor);    break;
-                case MOT_VAR_BASE_SPEED_LIMIT_REVERSE:      value = Motor_Config_GetSpeedLimitReverse_Percent16(p_motor);    break;
-                case MOT_VAR_BASE_I_LIMIT_MOTORING:         value = Motor_Config_GetILimitMotoring_Percent16(p_motor);       break;
-                case MOT_VAR_BASE_I_LIMIT_GENERATING:       value = Motor_Config_GetILimitGenerating_Percent16(p_motor);     break;
+                case MOT_VAR_BASE_SPEED_LIMIT_FORWARD:      value = Motor_Config_GetSpeedLimitForward_Fract16(p_motor);    break;
+                case MOT_VAR_BASE_SPEED_LIMIT_REVERSE:      value = Motor_Config_GetSpeedLimitReverse_Fract16(p_motor);    break;
+                case MOT_VAR_BASE_I_LIMIT_MOTORING:         value = Motor_Config_GetILimitMotoring_Fract16(p_motor);       break;
+                case MOT_VAR_BASE_I_LIMIT_GENERATING:       value = Motor_Config_GetILimitGenerating_Fract16(p_motor);     break;
                 case MOT_VAR_RAMP_ACCEL_TIME:               value = Motor_Config_GetRampAccel_Millis(p_motor);              break;
                 // case MOT_VAR_ALIGN_MODE:                 value = Motor_Config_GetAlignMode(p_motor);                 break;
                 case MOT_VAR_ALIGN_POWER:                   value = Motor_Config_GetAlignPower_Percent16(p_motor);           break;

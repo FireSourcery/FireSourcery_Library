@@ -271,7 +271,7 @@ void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd)
 void Motor_User_ForceDisableControl(Motor_T * p_motor)
 {
     Phase_Float(&p_motor->Phase);
-    Motor_SetCmd(p_motor, 0);
+    // Motor_SetCmd(p_motor, 0);
     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
 }
 
@@ -281,6 +281,7 @@ void Motor_User_ForceDisableControl(Motor_T * p_motor)
 */
 bool Motor_User_TryRelease(Motor_T * p_motor)
 {
+    // Motor_SetCmd(p_motor, 0);
     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
     return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FREEWHEEL ||
         StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP);

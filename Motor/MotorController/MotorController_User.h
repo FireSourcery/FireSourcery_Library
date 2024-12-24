@@ -268,7 +268,11 @@ static inline void MotorController_User_SetMotorCmdValue(MotorController_T * p_m
 */
 /******************************************************************************/
 /* StateMachine unchecked disable motors, use with caution */
-static inline void MotorController_User_ForceDisableControl(MotorController_T * p_mc) { MotorController_ForceDisableAll(p_mc); }
+static inline void MotorController_User_ForceDisableControl(MotorController_T * p_mc)
+{
+    MotorController_ForceDisableAll(p_mc);
+    p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO;
+}
 
 static inline void MotorController_User_EnableRxWatchdog(MotorController_T * p_mc) { Protocol_EnableRxWatchdog(MotorController_User_GetMainProtocol(p_mc)); }
 static inline void MotorController_User_DisableRxWatchdog(MotorController_T * p_mc) { Protocol_DisableRxWatchdog(MotorController_User_GetMainProtocol(p_mc)); }

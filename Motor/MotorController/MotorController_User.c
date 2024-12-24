@@ -217,7 +217,7 @@ uint32_t _MotorController_User_InputDriveCmd(MotorController_T * p_mc, MotVarId_
 
 uint32_t MotorController_User_InputCmd(MotorController_T * p_mc, MotVarId_Cmd_General_T id, int32_t value)
 {
-    bool isSuccess = true;
+   volatile bool isSuccess = true;
 
     switch (id)
     {
