@@ -245,10 +245,10 @@ static StateMachine_State_T * Run_InputControl(Motor_T * p_motor, statemachine_i
     StateMachine_State_T * p_nextState = NULL;
 
     Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
-    // p_nextState = &STATE_FREEWHEEL; /* Observed bemf may experience larger discontinuity than control voltage */
+    p_nextState = &STATE_FREEWHEEL; /* Observed bemf may experience larger discontinuity than control voltage */
 
     /* Alternatively, without transition through Freewheel */
-    p_nextState = &STATE_RUN; /* repeat entry function */
+    // p_nextState = &STATE_RUN; /* repeat entry function */
 
     return p_nextState;
 }
