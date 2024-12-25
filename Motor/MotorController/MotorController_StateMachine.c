@@ -139,6 +139,8 @@ static StateMachine_State_T * Init_Proc(MotorController_T * p_mc)
             }
         }
     }
+
+    return NULL;
 }
 
 static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
@@ -172,7 +174,7 @@ static void Park_Entry(MotorController_T * p_mc)
     // p_mc->DriveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 }
 
-static StateMachine_State_T * Park_Proc(MotorController_T * p_mc) { (void)p_mc; }
+static StateMachine_State_T * Park_Proc(MotorController_T * p_mc) { (void)p_mc; return NULL; }
 
 static StateMachine_State_T * Park_InputBlocking(MotorController_T * p_mc, statemachine_input_value_t lockId)
 {
@@ -259,7 +261,7 @@ static StateMachine_State_T * _Drive_InputDrive(MotorController_T * p_mc, MotorC
             switch (id)
             {
                 case MOTOR_CONTROLLER_DRIVE_BRAKE:
-                    if (value != 0U) /* ignore brake if simultaneous input for 0 */
+                    if (value != 0U) /* ignore brake if simultaneous input for 0, async input only */
                     {
                         MotorController_StartDriveZero(p_mc);
                         p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
@@ -328,7 +330,7 @@ static void Drive_Entry(MotorController_T * p_mc)
 
 static StateMachine_State_T * Drive_Proc(MotorController_T * p_mc)
 {
-    (void)p_mc;
+    (void)p_mc;   return NULL;
 }
 
 static StateMachine_State_T * Drive_InputDirection(MotorController_T * p_mc, statemachine_input_value_t direction)
@@ -401,7 +403,7 @@ static void Neutral_Entry(MotorController_T * p_mc)
 
 static StateMachine_State_T * Neutral_Proc(MotorController_T * p_mc)
 {
-    (void)p_mc;
+    (void)p_mc;  return NULL;
 }
 
 static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc, statemachine_input_value_t direction)
@@ -495,6 +497,7 @@ static StateMachine_State_T * Lock_Proc(MotorController_T * p_mc)
         // case MOTOR_CONTROLLER_BLOCKING_END:            Protocol_Send  break; // todo send end response
         default: break;
     }
+    return NULL;
 }
 
 /* Lock SubState by passed value */
@@ -694,6 +697,8 @@ static StateMachine_State_T * Fault_Proc(MotorController_T * p_mc)
         Blinky_Stop(&p_mc->Buzzer);
         _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_PARK);
     }
+
+    return NULL;
 }
 
 /* Fault State Input Fault Checks Fault */

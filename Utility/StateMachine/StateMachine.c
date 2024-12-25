@@ -191,7 +191,6 @@ static inline void ProcTransitionFunction(StateMachine_T * p_stateMachine, state
 static void ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
     if (isAcceptInput(p_stateMachine, inputId) == true) { ProcTransitionFunction(p_stateMachine, inputId, inputValue); }
-
 }
 
 /******************************************************************************/
@@ -238,7 +237,7 @@ void _StateMachine_ProcStateOutput(StateMachine_T * p_stateMachine)
     ProcStateOuput(p_stateMachine);
 }
 
-// void _StateMachine_ProcSyncState(StateMachine_T * p_stateMachine)
+// void _StateMachine_ProcState_OrSyncInput(StateMachine_T * p_stateMachine)
 // {
 //     if (p_stateMachine->SyncInput != STATE_MACHINE_INPUT_ID_NULL)
 //     {
@@ -336,7 +335,7 @@ void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine)
             Multithreaded calls to SetInput must use additional sentinel value
             Signal flag must be cleared to provide indication to other inputs
 
-            Single thread can use atomic flag as bufferHasData
+            Single thread can use atomic flag as bufferEmpty
         */
     #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
         _StateMachine_ProcSyncInput(p_stateMachine);

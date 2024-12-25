@@ -52,6 +52,15 @@ typedef enum MotorController_User_System
 }
 MotorController_User_System_T;
 
+typedef enum MotorController_User_SubState
+{
+    MOT_USER_DRIVE_SUB_STATE,
+    MOT_USER_LOCK_SUB_STATE,
+    MOT_USER_NVM_STATUS,
+    MOT_USER_CALIBRATION_STATUS,
+}
+MotorController_User_SubState_T;
+
 /******************************************************************************/
 /*!
     Instance Select

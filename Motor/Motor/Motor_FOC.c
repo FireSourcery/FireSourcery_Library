@@ -260,20 +260,21 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
     int32_t qReq;
 
     // if match without ad sampling
-    // vq = Motor_GetVSpeed_Fract16(p_motor);
+    // int32_t vq = Motor_GetVSpeed_Fract16(p_motor);
+    int32_t vq = FOC_GetVq(&p_motor->Foc);
     // vd = 0;
 
     // int32_t vEffective = FOC_GetVq(&p_motor->Foc) * p_motor->Config.VSpeedScalar_UFract16 >> 15;
 
     if (p_motor->FeedbackMode.Current == 1U)
     {
-        PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
-        PID_SetOutputState(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
+        PID_SetOutputState(&p_motor->PidIq, vq);
+        PID_SetOutputState(&p_motor->PidId, 0);
         qReq = FOC_GetIq(&p_motor->Foc);
     }
     else
     {
-        qReq = FOC_GetVq(&p_motor->Foc); /* alternatively use phase fixed_sqrt(vd vq) */
+        qReq = vq;
     }
 
     if (p_motor->FeedbackMode.Speed == 1U)
